@@ -255,6 +255,18 @@ def hub():
             answers_7d_series = []
             answers_7d_spark_points = ""
 
+    # 获取用户头像
+    avatar = None
+    if uid:
+        try:
+            user_row = conn.execute(
+                "SELECT avatar FROM users WHERE id = ?", (uid,)
+            ).fetchone()
+            if user_row:
+                avatar = user_row['avatar']
+        except Exception:
+            avatar = None
+
     return render_template(
         'main/hub/hub.html',
         subject_total=subject_total,
@@ -272,6 +284,7 @@ def hub():
         answers_7d_spark_points=answers_7d_spark_points,
         logged_in=bool(uid),
         username=session.get('username'),
+        avatar=avatar,
         is_admin=session.get('is_admin', False),
         is_subject_admin=session.get('is_subject_admin', False),
         is_notification_admin=session.get('is_notification_admin', False),
