@@ -98,7 +98,15 @@ def user_checkin_status():
     uid = int(current_user_id() or 0)
     conn = get_db()
 
-    today_s = today_bj().isoformat()
+    today = today_bj()
+    today_s = today.isoformat()
+
+    # 获取本月第一天和最后一天
+    month_start = today.replace(day=1).isoformat()
+    if today.month == 12:
+        month_end = today.replace(year=today.year + 1, month=1, day=1).isoformat()
+    else:
+        month_end = today.replace(month=today.month + 1, day=1).isoformat()
 
     try:
         row_today = conn.execute(
@@ -117,6 +125,13 @@ def user_checkin_status():
 
         streak_days = int(calculate_checkin_streak_days(conn, uid) or 0)
 
+        # 获取本月已签到日期列表
+        month_rows = conn.execute(
+            'SELECT checkin_date FROM user_checkins WHERE user_id = ? AND checkin_date >= ? AND checkin_date < ? ORDER BY checkin_date',
+            (uid, month_start, month_end),
+        ).fetchall()
+        checked_dates = [str(r['checkin_date']) for r in (month_rows or [])]
+
         return jsonify({
             'status': 'success',
             'data': {
@@ -125,6 +140,7 @@ def user_checkin_status():
                 'checked_in_at': checked_in_at,
                 'streak_days': streak_days,
                 'total_days': total_days,
+                'checked_dates': checked_dates,
             }
         })
     except Exception as e:
@@ -139,8 +155,16 @@ def user_checkin():
     uid = int(current_user_id() or 0)
     conn = get_db()
 
-    today_s = today_bj().isoformat()
+    today = today_bj()
+    today_s = today.isoformat()
     now_s = now_bj().strftime('%Y-%m-%d %H:%M:%S')
+
+    # 获取本月第一天和最后一天
+    month_start = today.replace(day=1).isoformat()
+    if today.month == 12:
+        month_end = today.replace(year=today.year + 1, month=1, day=1).isoformat()
+    else:
+        month_end = today.replace(month=today.month + 1, day=1).isoformat()
 
     try:
         cur = conn.execute(
@@ -165,6 +189,13 @@ def user_checkin():
 
         streak_days = int(calculate_checkin_streak_days(conn, uid) or 0)
 
+        # 获取本月已签到日期列表
+        month_rows = conn.execute(
+            'SELECT checkin_date FROM user_checkins WHERE user_id = ? AND checkin_date >= ? AND checkin_date < ? ORDER BY checkin_date',
+            (uid, month_start, month_end),
+        ).fetchall()
+        checked_dates = [str(r['checkin_date']) for r in (month_rows or [])]
+
         return jsonify({
             'status': 'success',
             'data': {
@@ -174,6 +205,7 @@ def user_checkin():
                 'streak_days': streak_days,
                 'total_days': total_days,
                 'just_checked_in': just_checked_in,
+                'checked_dates': checked_dates,
             }
         })
     except Exception as e:

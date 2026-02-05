@@ -126,6 +126,135 @@
     cursor: not-allowed;
   }
 
+  /* Checkin Calendar Card - 签到日历卡片 */
+  .hub-checkin-card {
+    padding: 20px;
+    background: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius-xl);
+    box-shadow: var(--app-shadow-soft);
+  }
+
+  .hub-checkin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .hub-checkin-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--app-text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .hub-checkin-title svg {
+    width: 18px;
+    height: 18px;
+    color: var(--app-muted);
+  }
+
+  .hub-checkin-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 1px solid var(--app-border);
+    background: var(--app-primary);
+    color: var(--app-primary-contrast);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 160ms ease;
+  }
+
+  .hub-checkin-action:hover {
+    opacity: 0.9;
+  }
+
+  .hub-checkin-action:disabled {
+    background: var(--app-surface);
+    color: var(--app-muted);
+    border-color: var(--app-border);
+    cursor: not-allowed;
+  }
+
+  .hub-checkin-calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  .hub-checkin-weekday {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--app-muted);
+    padding: 4px 0;
+  }
+
+  .hub-checkin-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--app-muted);
+    border-radius: 8px;
+    background: transparent;
+    transition: all 160ms ease;
+  }
+
+  .hub-checkin-day.is-other-month {
+    color: color-mix(in srgb, var(--app-muted) 40%, transparent);
+  }
+
+  .hub-checkin-day.is-today {
+    background: var(--app-primary-soft);
+    color: var(--app-text);
+    font-weight: 700;
+  }
+
+  .hub-checkin-day.is-checked {
+    background: var(--app-primary);
+    color: var(--app-primary-contrast);
+  }
+
+  .hub-checkin-day.is-today.is-checked {
+    box-shadow: 0 0 0 2px var(--app-surface), 0 0 0 4px var(--app-primary);
+  }
+
+  .hub-checkin-stats {
+    display: flex;
+    gap: 20px;
+    padding-top: 12px;
+    border-top: 1px solid var(--app-border);
+  }
+
+  .hub-checkin-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .hub-checkin-stat-value {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--app-text);
+  }
+
+  .hub-checkin-stat-label {
+    font-size: 11px;
+    color: var(--app-muted);
+  }
+
   /* Continue Card */
   .hub-continue-card {
     padding: 18px;
@@ -185,7 +314,7 @@
   /* Bento Grid */
   .hub-bento-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 10px;
   }
 
@@ -478,6 +607,9 @@
     .hub-features-grid {
       grid-template-columns: repeat(2, 1fr);
     }
+    .hub-bento-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
   }
 
   @media (max-width: 560px) {
@@ -492,6 +624,13 @@
     }
     .hub-features-grid {
       grid-template-columns: 1fr;
+    }
+    .hub-checkin-calendar {
+      gap: 4px;
+    }
+    .hub-checkin-stats {
+      flex-wrap: wrap;
+      gap: 16px;
     }
   }
 
@@ -545,6 +684,40 @@
         <h2 class="hub-continue-title" id="hubContinueTitle">加载中...</h2>
         <a class="hub-continue-btn" href="/public/banks" id="hubContinueBtn">进入题库广场</a>
       </div>
+
+      <!-- Checkin Calendar Card: 签到日历 -->
+      <div class="hub-checkin-card" id="hubCheckinCalendarCard">
+        <div class="hub-checkin-header">
+          <span class="hub-checkin-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2"/>
+              <path d="M16 2v4M8 2v4M3 10h18"/>
+            </svg>
+            签到日历
+          </span>
+          <button class="hub-checkin-action" id="hubCalendarCheckinBtn" type="button">签到</button>
+        </div>
+        <div class="hub-checkin-calendar" id="hubCheckinCalendar">
+          <span class="hub-checkin-weekday">日</span>
+          <span class="hub-checkin-weekday">一</span>
+          <span class="hub-checkin-weekday">二</span>
+          <span class="hub-checkin-weekday">三</span>
+          <span class="hub-checkin-weekday">四</span>
+          <span class="hub-checkin-weekday">五</span>
+          <span class="hub-checkin-weekday">六</span>
+          <!-- 日历日期由 JS 动态生成 -->
+        </div>
+        <div class="hub-checkin-stats">
+          <div class="hub-checkin-stat">
+            <span class="hub-checkin-stat-value" id="hubCalendarStreak">-</span>
+            <span class="hub-checkin-stat-label">连续签到</span>
+          </div>
+          <div class="hub-checkin-stat">
+            <span class="hub-checkin-stat-value" id="hubCalendarTotal">-</span>
+            <span class="hub-checkin-stat-label">累计签到</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="hub-top-right">
@@ -574,11 +747,6 @@
           <span class="hub-bento-label">正确率</span>
           <span class="hub-bento-value">{{ answers_7d_accuracy or 0 }}%</span>
           <span class="hub-bento-note">近7天</span>
-        </div>
-        <div class="hub-bento-card" id="hubCheckinCard">
-          <span class="hub-bento-label">签到</span>
-          <span class="hub-bento-value" id="hubStreakDays">-</span>
-          <span class="hub-bento-note" id="hubCheckinNote">连续天数</span>
         </div>
       </div>
 
@@ -789,32 +957,106 @@
 <script>
 (function() {
   {% if logged_in %}
-  // 签到功能
-  var checkinBtn = document.getElementById('hubCheckinBtn');
+  // 签到日历功能
+  var calendarCheckinBtn = document.getElementById('hubCalendarCheckinBtn');
   var checkinStatus = document.getElementById('hubCheckinStatus');
-  var streakDays = document.getElementById('hubStreakDays');
-  var checkinNote = document.getElementById('hubCheckinNote');
+  var checkinBtn = document.getElementById('hubCheckinBtn');
+  var calendarContainer = document.getElementById('hubCheckinCalendar');
+  var calendarStreak = document.getElementById('hubCalendarStreak');
+  var calendarTotal = document.getElementById('hubCalendarTotal');
+
+  var checkedDates = []; // 已签到日期列表
+
+  function renderCalendar(checkedDays) {
+    checkedDates = checkedDays || [];
+    var today = new Date();
+    var year = today.getFullYear();
+    var month = today.getMonth();
+
+    // 获取本月第一天和最后一天
+    var firstDay = new Date(year, month, 1);
+    var lastDay = new Date(year, month + 1, 0);
+    var startWeekday = firstDay.getDay(); // 0=周日
+    var daysInMonth = lastDay.getDate();
+
+    // 清空日历（保留星期标题）
+    var weekdays = calendarContainer.querySelectorAll('.hub-checkin-weekday');
+    calendarContainer.innerHTML = '';
+    weekdays.forEach(function(w) { calendarContainer.appendChild(w); });
+
+    // 添加上月占位
+    var prevMonth = new Date(year, month, 0);
+    var prevDays = prevMonth.getDate();
+    for (var i = startWeekday - 1; i >= 0; i--) {
+      var dayEl = document.createElement('span');
+      dayEl.className = 'hub-checkin-day is-other-month';
+      dayEl.textContent = prevDays - i;
+      calendarContainer.appendChild(dayEl);
+    }
+
+    // 添加本月日期
+    var todayDate = today.getDate();
+    for (var d = 1; d <= daysInMonth; d++) {
+      var dayEl = document.createElement('span');
+      dayEl.className = 'hub-checkin-day';
+      dayEl.textContent = d;
+
+      // 检查是否是今天
+      if (d === todayDate) {
+        dayEl.classList.add('is-today');
+      }
+
+      // 检查是否已签到
+      var dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+      if (checkedDates.indexOf(dateStr) !== -1) {
+        dayEl.classList.add('is-checked');
+      }
+
+      calendarContainer.appendChild(dayEl);
+    }
+
+    // 添加下月占位（填满最后一行）
+    var totalCells = startWeekday + daysInMonth;
+    var remaining = (7 - (totalCells % 7)) % 7;
+    for (var n = 1; n <= remaining; n++) {
+      var dayEl = document.createElement('span');
+      dayEl.className = 'hub-checkin-day is-other-month';
+      dayEl.textContent = n;
+      calendarContainer.appendChild(dayEl);
+    }
+  }
 
   function renderCheckin(data) {
     var checked = !!(data && data.checked_in_today);
     var streak = parseInt((data && data.streak_days) || 0, 10) || 0;
     var total = parseInt((data && data.total_days) || 0, 10) || 0;
+    var dates = (data && data.checked_dates) || [];
 
+    // 更新日历签到按钮
+    if (calendarCheckinBtn) {
+      calendarCheckinBtn.disabled = checked;
+      calendarCheckinBtn.textContent = checked ? '已签到' : '签到';
+    }
+    // 更新 Hero 区域签到按钮
     if (checkinBtn) {
       checkinBtn.disabled = checked;
       checkinBtn.textContent = checked ? '已签到' : '签到';
     }
+    // 更新 Hero 区域签到状态
     if (checkinStatus) {
       checkinStatus.textContent = checked
         ? '今日已签到 · 连续 ' + streak + ' 天'
         : '今日未签到 · 累计 ' + total + ' 天';
     }
-    if (streakDays) {
-      streakDays.textContent = streak;
+    // 更新日历统计
+    if (calendarStreak) {
+      calendarStreak.textContent = streak;
     }
-    if (checkinNote) {
-      checkinNote.textContent = checked ? '今日已签到' : '连续天数';
+    if (calendarTotal) {
+      calendarTotal.textContent = total;
     }
+    // 渲染日历
+    renderCalendar(dates);
   }
 
   async function loadCheckin() {
@@ -826,35 +1068,51 @@
       }
     } catch (e) {
       if (checkinStatus) checkinStatus.textContent = '签到状态加载失败';
+      renderCalendar([]);
     }
   }
 
-  if (checkinBtn) {
-    checkinBtn.addEventListener('click', async function() {
-      if (checkinBtn.disabled) return;
-      checkinBtn.disabled = true;
-      checkinBtn.textContent = '签到中...';
-      try {
-        var res = await fetch('/api/user/checkin', {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: { 'Content-Type': 'application/json' },
-          body: '{}'
-        });
-        var json = await res.json();
-        if (json.status === 'success') {
-          renderCheckin(json.data);
-        } else {
-          throw new Error(json.message || '签到失败');
-        }
-      } catch (e) {
-        checkinBtn.disabled = false;
-        checkinBtn.textContent = '签到';
-        if (checkinStatus) checkinStatus.textContent = '签到失败，请重试';
+  async function doCheckin(btn) {
+    if (btn.disabled) return;
+    btn.disabled = true;
+    var originalText = btn.textContent;
+    btn.textContent = '签到中...';
+    try {
+      var res = await fetch('/api/user/checkin', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}'
+      });
+      var json = await res.json();
+      if (json.status === 'success') {
+        renderCheckin(json.data);
+      } else {
+        throw new Error(json.message || '签到失败');
       }
-    });
-    loadCheckin();
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = originalText;
+      if (checkinStatus) checkinStatus.textContent = '签到失败，请重试';
+    }
   }
+
+  // 绑定日历签到按钮
+  if (calendarCheckinBtn) {
+    calendarCheckinBtn.addEventListener('click', function() {
+      doCheckin(calendarCheckinBtn);
+    });
+  }
+  // 绑定 Hero 区域签到按钮
+  if (checkinBtn) {
+    checkinBtn.addEventListener('click', function() {
+      doCheckin(checkinBtn);
+    });
+  }
+
+  // 初始化
+  renderCalendar([]);
+  loadCheckin();
 
   // 继续练习功能
   var continueTitle = document.getElementById('hubContinueTitle');
