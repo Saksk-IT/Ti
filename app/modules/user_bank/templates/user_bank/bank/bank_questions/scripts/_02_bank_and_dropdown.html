@@ -1,0 +1,28 @@
+    async function loadBank() {
+        try {
+            const res = await api(`/user/banks/api/${bankId}`);
+            document.getElementById('bankName').textContent = res.data.name;
+        } catch (e) {
+            showToast(e.message, 'error');
+        }
+    }
+
+    function toggleDropdown(id) {
+        const menu = document.getElementById(id);
+        const isOpen = menu.classList.contains('open') || menu.style.display === 'block' || menu.style.display === 'flex';
+        // 先关闭其它菜单
+        document.querySelectorAll('.dropdown-menu').forEach(m => { m.classList.remove('open'); m.style.display = 'none'; });
+        if (!isOpen) {
+            menu.classList.add('open');
+            if (id === 'batch-menu') {
+                menu.style.display = 'flex';
+                menu.style.flexWrap = 'nowrap';
+                menu.style.alignItems = 'center';
+                menu.style.whiteSpace = 'nowrap';
+                menu.style.gap = '8px';
+            } else {
+                menu.style.display = 'block';
+            }
+        }
+    }
+

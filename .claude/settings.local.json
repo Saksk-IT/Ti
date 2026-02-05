@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(claude mcp add:*)",
+      "Bash(Get-ChildItem \"C:\\\\Users\\\\Administrator\\\\.claude\" -File -Filter \"*.json\" -ErrorAction SilentlyContinue)",
+      "Bash(Select-Object:*)",
+      "Bash(if:*)",
+      "Bash(copy :)"
+    ]
+  }
+}

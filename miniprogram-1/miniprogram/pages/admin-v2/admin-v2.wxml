@@ -1,0 +1,47 @@
+<!-- admin-v2.wxml - 对齐 Web /admin（小程序端管理入口占位） -->
+<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="管理" back="{{false}}" color="var(--app-nav-fg)" background="var(--app-nav-bg)">
+    <view slot="left" class="nav-left">
+      <view class="icon-btn" bindtap="onHamburgerTap" aria-role="button" aria-label="打开侧边栏">
+        <view class="icon-hamburger"></view>
+      </view>
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <v2-drawer
+    open="{{drawerOpen}}"
+    themeStyle="{{themeStyle}}"
+    activeKey="admin"
+    bind:close="onDrawerClose"
+    bind:navigate="onDrawerNavigate"
+    bind:selectstyle="onDrawerSelectStyle"
+  />
+
+  <view class="page-container">
+    <scroll-view class="content-area" scroll-y bounces="{{false}}">
+      <view class="container">
+        <view class="card hero" aria-label="管理入口">
+          <text class="hero-title">管理</text>
+          <text class="hero-sub">对齐 Web /admin（小程序端管理入口占位）</text>
+        </view>
+
+        <view class="card section-card" aria-label="工具">
+          <text class="section-title">工具</text>
+          <text class="section-sub" wx:if="{{showDevTools}}">提供开发设置入口（仅开发版可见）。</text>
+          <view class="nav-list" wx:if="{{showDevTools}}">
+            <view class="nav-row" bindtap="onGoDevSettings" aria-role="button" aria-label="开发设置">
+              <text class="nav-label">开发设置</text>
+              <text class="nav-chev">&gt;</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

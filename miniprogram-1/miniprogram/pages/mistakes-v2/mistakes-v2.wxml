@@ -1,0 +1,356 @@
+<!-- mistakes-v2.wxml - 对齐 Web /mistakes（原生组件复刻） -->
+<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="复盘" back="{{false}}" color="var(--app-nav-fg)" background="var(--app-nav-bg)">
+    <view slot="left" class="nav-left">
+      <view class="icon-btn" bindtap="onHamburgerTap" aria-role="button" aria-label="打开侧边栏">
+        <view class="icon-hamburger"></view>
+      </view>
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <v2-drawer
+    open="{{drawerOpen}}"
+    themeStyle="{{themeStyle}}"
+    activeKey="review"
+    bind:close="onDrawerClose"
+    bind:navigate="onDrawerNavigate"
+    bind:selectstyle="onDrawerSelectStyle"
+  />
+
+  <view class="page-container">
+    <scroll-view
+      class="content-area"
+      scroll-y
+      bounces="{{false}}"
+      refresher-enabled="{{true}}"
+      bindrefresherrefresh="onPullDownRefresh"
+    >
+      <view class="container">
+        <view wx:if="{{false}}">
+        <view class="card hero" aria-label="错题页概览">
+          <view class="hero-head">
+            <view class="hero-left">
+              <text class="hero-title">错题</text>
+            </view>
+            <view class="hero-pills">
+              <view class="pill" aria-label="错题总数">
+                <text class="k">总数</text>
+                <text class="v">{{totalCount}}</text>
+              </view>
+              <view class="pill" aria-label="当前科目">
+                <text class="k">科目</text>
+                <text class="v">{{subjectLabel}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="basebar" role="tablist" aria-label="错题页基础栏">
+          <view class="tabs">
+            <view class="tab {{tab==='practice' ? 'active' : ''}}" bindtap="onTabTap" data-tab="practice">
+              <text>练习</text>
+            </view>
+            <view class="tab {{tab==='stats' ? 'active' : ''}}" bindtap="onTabTap" data-tab="stats">
+              <text>数据</text>
+            </view>
+          </view>
+        </view>
+
+        <view wx:if="{{tab === 'practice'}}">
+          <view class="card section-card" aria-label="筛选与开始">
+            <view class="section-head">
+              <text class="section-title">练习</text>
+              <text class="section-hint">{{subjectLabel}}{{qType !== 'all' ? (' · ' + qType) : ''}}{{tag !== 'all' ? (' · ' + tag) : ''}}</text>
+            </view>
+
+            <view class="form">
+              <view class="form-row" aria-label="科目筛选">
+                <text class="label">科目</text>
+                <picker mode="selector" range="{{subjectOptions}}" range-key="label" value="{{subjectIndex}}" bindchange="onSubjectPickerChange">
+                  <view class="picker">
+                    <text class="picker-text">{{subjectLabel}}</text>
+                    <text class="picker-arrow">›</text>
+                  </view>
+                </picker>
+              </view>
+
+              <view class="form-row" aria-label="题型筛选">
+                <text class="label">题型</text>
+                <picker mode="selector" range="{{typeOptions}}" range-key="label" value="{{typeIndex}}" bindchange="onTypePickerChange">
+                  <view class="picker">
+                    <text class="picker-text">{{qType === 'all' ? '全部题型' : qType}}</text>
+                    <text class="picker-arrow">›</text>
+                  </view>
+                </picker>
+              </view>
+
+              <view class="form-row" aria-label="标签筛选" wx:if="{{tagOptions.length}}">
+                <text class="label">标签</text>
+                <picker mode="selector" range="{{tagOptions}}" range-key="label" value="{{tagIndex}}" bindchange="onTagPickerChange">
+                  <view class="picker">
+                    <text class="picker-text">{{tag === 'all' ? '全部标签' : tag}}</text>
+                    <text class="picker-arrow">›</text>
+                  </view>
+                </picker>
+              </view>
+            </view>
+
+            <view class="divider"></view>
+
+            <view class="toggles toggles-compact" aria-label="练习选项">
+              <view
+                class="toggle"
+                bindtap="onToggleTap"
+                data-key="shuffleQuestions"
+                aria-role="switch"
+                aria-label="打乱题目"
+                aria-checked="{{shuffleQuestions}}"
+              >
+                <view class="toggle-left">
+                  <text class="toggle-label">打乱题目</text>
+                  <text class="toggle-desc">随机顺序</text>
+                </view>
+                <view class="toggle-right">
+                  <view class="mini-switch {{shuffleQuestions ? 'on' : ''}}">
+                    <view class="mini-knob"></view>
+                  </view>
+                </view>
+              </view>
+
+              <view
+                class="toggle {{shuffleOptionsDisabled ? 'disabled' : ''}}"
+                bindtap="onToggleTap"
+                data-key="shuffleOptions"
+                aria-role="switch"
+                aria-label="打乱选项"
+                aria-checked="{{shuffleOptions}}"
+              >
+                <view class="toggle-left">
+                  <text class="toggle-label">打乱选项</text>
+                  <text class="toggle-desc">仅选择/多选可用</text>
+                </view>
+                <view class="toggle-right">
+                  <view class="mini-switch {{shuffleOptions ? 'on' : ''}} {{shuffleOptionsDisabled ? 'disabled' : ''}}">
+                    <view class="mini-knob"></view>
+                  </view>
+                </view>
+              </view>
+            </view>
+
+            <view class="divider"></view>
+
+            <view class="start-row">
+              <view class="count-pill" aria-label="可用题目数量">
+                <text class="k">可用</text>
+                <text class="v">{{startCountText}}</text>
+              </view>
+
+              <view class="start-actions">
+                <view class="btn btn-primary {{startDisabled ? 'disabled' : ''}}" bindtap="onStartQuiz">
+                  <text>刷错题</text>
+                </view>
+                <view class="btn {{startDisabled ? 'disabled' : ''}}" bindtap="onStartMemo">
+                  <text>背错题</text>
+                </view>
+              </view>
+            </view>
+
+            <view class="msg error" wx:if="{{startError}}" role="alert">
+              <text>{{startError}}</text>
+            </view>
+          </view>
+        </view>
+
+        <view wx:else>
+          <view class="card section-card" aria-label="统计概览">
+            <view class="kpi-grid">
+              <view class="kpi">
+                <text class="kpi-label">错题总数</text>
+                <text class="kpi-value">{{totalCount}}</text>
+                <text class="kpi-meta">优先复盘，减少重复错误</text>
+              </view>
+              <view class="kpi">
+                <text class="kpi-label">涉及科目</text>
+                <text class="kpi-value">{{kpiSubjectCount}}</text>
+                <text class="kpi-meta">仅统计有错题的科目</text>
+              </view>
+              <view class="kpi">
+                <text class="kpi-label">题型种类</text>
+                <text class="kpi-value">{{kpiTypeCount}}</text>
+                <text class="kpi-meta">用于判断薄弱题型</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="card section-card" aria-label="科目分布">
+            <text class="section-title">科目分布</text>
+            <text class="section-sub">按错题数量排序。</text>
+
+            <view class="loading" wx:if="{{statsLoading}}">
+              <text>加载中...</text>
+            </view>
+
+            <view class="empty" wx:if="{{!statsLoading && statsBySubject.length === 0}}">
+              <text>暂无错题数据。</text>
+            </view>
+
+            <view class="weak-list" wx:if="{{!statsLoading && statsBySubjectTop.length}}">
+              <view class="weak-row" wx:for="{{statsBySubjectTop}}" wx:key="subject">
+                <view class="weak-main">
+                  <text class="weak-title">{{item.subject}}</text>
+                  <text class="weak-meta">{{item.count}} 题</text>
+                  <view class="weak-bar">
+                    <view class="progress"><view class="progress-inner" style="width: {{item.pct}}%;"></view></view>
+                  </view>
+                </view>
+                <view class="weak-actions">
+                  <view class="mini-btn primary" bindtap="onQuickStart" data-mode="quiz" data-subject="{{item.subject}}" data-type="all">
+                    <text>刷错题</text>
+                  </view>
+                  <view class="mini-btn" bindtap="onQuickStart" data-mode="memo" data-subject="{{item.subject}}" data-type="all">
+                    <text>背错题</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view class="card section-card" aria-label="题型分布">
+            <text class="section-title">题型分布</text>
+            <text class="section-sub">用于判断错题集中在哪类题型。</text>
+
+            <view class="loading" wx:if="{{statsLoading}}">
+              <text>加载中...</text>
+            </view>
+
+            <view class="empty" wx:if="{{!statsLoading && statsByType.length === 0}}">
+              <text>暂无题型分布数据。</text>
+            </view>
+
+            <view class="weak-list" wx:if="{{!statsLoading && statsByTypeTop.length}}">
+              <view class="weak-row" wx:for="{{statsByTypeTop}}" wx:key="q_type">
+                <view class="weak-main">
+                  <text class="weak-title">{{item.q_type}}</text>
+                  <text class="weak-meta">{{item.count}} 题</text>
+                  <view class="weak-bar">
+                    <view class="progress"><view class="progress-inner" style="width: {{item.pct}}%;"></view></view>
+                  </view>
+                </view>
+                <view class="weak-actions">
+                  <view class="mini-btn primary" bindtap="onQuickStart" data-mode="quiz" data-subject="all" data-type="{{item.q_type}}">
+                    <text>刷错题</text>
+                  </view>
+                  <view class="mini-btn" bindtap="onQuickStart" data-mode="memo" data-subject="all" data-type="{{item.q_type}}">
+                    <text>背错题</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+        </view>
+
+        <view class="basebar review-switchbar" role="tablist" aria-label="复盘子页面">
+          <view class="tabs">
+            <view class="tab active" bindtap="onReviewTabTap" data-kind="mistakes"><text>错题</text></view>
+            <view class="tab" bindtap="onReviewTabTap" data-kind="favorites"><text>收藏</text></view>
+            <view class="tab" bindtap="onReviewTabTap" data-kind="tags"><text>标签</text></view>
+          </view>
+        </view>
+
+        <view class="card hero" aria-label="错题-选择题库">
+          <view class="hero-head">
+            <view class="hero-left">
+              <text class="hero-title">错题</text>
+              <text class="hero-sub">先选择题库，再进入练习设置与题库数据</text>
+            </view>
+            <view class="hero-pills">
+              <view class="pill" aria-label="公共题库数量">
+                <text class="k">公共</text>
+                <text class="v">{{publicTotal}}</text>
+              </view>
+              <view class="pill" aria-label="个人题库数量">
+                <text class="k">个人</text>
+                <text class="v">{{bankTotal}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="basebar" role="tablist" aria-label="题库来源">
+          <view class="tabs">
+            <view class="tab {{tab==='public' ? 'active' : ''}}" bindtap="onTabTap" data-tab="public">
+              <text>公共题库</text>
+            </view>
+            <view class="tab {{tab==='bank' ? 'active' : ''}}" bindtap="onTabTap" data-tab="bank">
+              <text>个人题库</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="card pb-toolbar" aria-label="搜索题库">
+          <view class="pb-toolbar-left">
+            <view class="search-wrap">
+              <text class="search-icon">⌕</text>
+              <input class="search-input" type="text" placeholder="搜索题库" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" />
+              <view class="search-clear" wx:if="{{keyword}}" bindtap="onClearKeyword" aria-role="button" aria-label="清空搜索">
+                <text>×</text>
+              </view>
+            </view>
+          </view>
+          <view class="pb-toolbar-right">
+            <view class="pill"><text>显示 {{shownTotal}} / {{currentTotal}}</text></view>
+          </view>
+        </view>
+
+        <view wx:if="{{tab === 'public'}}">
+          <view class="pb-grid" wx:if="{{filteredSubjects.length}}">
+            <view class="pb-card" wx:for="{{filteredSubjects}}" wx:key="id" bindtap="onPublicBankTap" data-id="{{item.id}}" data-name="{{item.name}}">
+              <view class="pb-card-top">
+                <text class="pb-card-title">{{item.name}}</text>
+                <view class="pb-card-arrow"><text>›</text></view>
+              </view>
+              <view class="pb-card-meta">
+                <text>{{item.question_count}} 题</text>
+                <text class="pb-dot">·</text>
+                <text>进入中心</text>
+              </view>
+            </view>
+          </view>
+          <view class="pb-empty" wx:else>
+            <text>{{keyword ? '没有匹配的题库。' : '暂无可用公共题库。'}}</text>
+          </view>
+        </view>
+
+        <view wx:else>
+          <view class="pb-grid" wx:if="{{filteredBanks.length}}">
+            <view class="pb-card" wx:for="{{filteredBanks}}" wx:key="id" bindtap="onBankTap" data-id="{{item.id}}">
+              <view class="pb-card-top">
+                <text class="pb-card-title">{{item.name}}</text>
+                <view class="pb-card-arrow"><text>›</text></view>
+              </view>
+              <view class="pb-card-meta">
+                <text>{{item.question_count}} 题</text>
+                <text class="pb-dot">·</text>
+                <text>进入中心</text>
+              </view>
+            </view>
+          </view>
+          <view class="pb-empty" wx:else>
+            <text>{{keyword ? '没有匹配的题库。' : '暂无可用个人题库。'}}</text>
+          </view>
+        </view>
+
+        <view class="loading" wx:if="{{loading}}">
+          <text>加载中...</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

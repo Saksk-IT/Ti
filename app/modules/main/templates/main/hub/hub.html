@@ -1,0 +1,1448 @@
+{% extends "main/shared/app_shell.html" %}
+
+{% block title %}SAK · 题库中心{% endblock %}
+{% block page_title %}题库中心{% endblock %}
+
+{% block head_extra %}
+<style>
+  html { scroll-behavior: smooth; }
+
+  .hub {
+    position: relative;
+    display: grid;
+    gap: 18px;
+    --hub-accent: var(--app-primary);
+    --hub-accent-strong: color-mix(in srgb, var(--app-primary) 86%, var(--app-text));
+    --hub-accent-soft: var(--app-primary-soft);
+    --hub-line: color-mix(in srgb, var(--app-border) 70%, transparent);
+  }
+
+  .hub > * { position: relative; z-index: 1; }
+
+  .hub-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 28px 26px;
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 24px;
+    align-items: start;
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--app-surface) 88%, transparent), var(--app-surface));
+  }
+
+  .hub-hero::after {
+    content: '';
+    position: absolute;
+    inset: -20%;
+    background:
+      linear-gradient(to right, color-mix(in srgb, var(--hub-line) 70%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in srgb, var(--hub-line) 70%, transparent) 1px, transparent 1px);
+    background-size: 46px 46px;
+    mask-image: radial-gradient(circle at 32% 12%, rgba(0,0,0,0.7), transparent 68%);
+    pointer-events: none;
+  }
+
+  .hub-hero-content,
+  .hub-hero-aside {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+  }
+
+  .hub-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--hub-accent) 30%, var(--app-border));
+    background: color-mix(in srgb, var(--hub-accent) 10%, var(--app-surface));
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 0.2px;
+    color: var(--app-text);
+  }
+
+  .hub-title {
+    margin: 14px 0 0;
+    font-size: 36px;
+    font-weight: 950;
+    letter-spacing: -0.8px;
+    line-height: 1.1;
+  }
+
+  .hub-lead {
+    margin: 10px 0 0;
+    color: var(--app-muted);
+    font-size: 14px;
+    line-height: 1.7;
+    max-width: 62ch;
+  }
+
+  .hub-next {
+    margin-top: 14px;
+    display: grid;
+    gap: 12px;
+  }
+
+  .hub-next-card {
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--hub-accent) 22%, var(--app-border));
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--hub-accent) 10%, var(--app-surface)),
+        var(--app-surface)
+      );
+    box-shadow: var(--app-shadow-soft);
+    padding: 16px;
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .hub-next-meta {
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 0.2px;
+    color: var(--app-muted);
+  }
+
+  .hub-next-title {
+    font-size: 16px;
+    font-weight: 950;
+    letter-spacing: -0.3px;
+  }
+
+  .hub-next-desc {
+    color: var(--app-muted);
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .hub-next-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .hub-text-link {
+    font-size: 12px;
+    font-weight: 850;
+    color: color-mix(in srgb, var(--hub-accent) 72%, var(--app-text));
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .hub-text-link:hover { opacity: 0.92; }
+  .hub-text-link:focus { outline: none; box-shadow: 0 0 0 3px var(--hub-accent-soft), var(--app-shadow-soft); border-radius: 10px; }
+
+  .hub-actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .hub-hero-tags {
+    margin-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .hub-hero-tags span {
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--app-border);
+    background: var(--app-surface);
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--app-text);
+    box-shadow: var(--app-shadow-soft);
+  }
+
+  .hub-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .hub-stat {
+    border-radius: 16px;
+    border: 1px solid var(--app-border);
+    background: color-mix(in srgb, var(--app-surface) 82%, transparent);
+    box-shadow: var(--app-shadow-soft);
+    padding: 14px;
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .hub-stat.is-primary {
+    padding: 16px;
+    border-color: color-mix(in srgb, var(--hub-accent) 22%, var(--app-border));
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--hub-accent) 8%, var(--app-surface)),
+        var(--app-surface)
+      );
+  }
+
+  .hub-stat.is-wide { grid-column: 1 / -1; }
+
+  .hub-stat.is-checkin {
+    border-color: color-mix(in srgb, var(--hub-accent) 18%, var(--app-border));
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--hub-accent) 6%, var(--app-surface)),
+        var(--app-surface)
+      );
+  }
+
+  .hub-stat.is-checkin .hub-stat-action {
+    border-color: color-mix(in srgb, var(--hub-accent) 18%, var(--app-border));
+    background: color-mix(in srgb, var(--hub-accent) 8%, var(--app-surface));
+  }
+
+  .hub-stat.is-checkin .hub-stat-note { min-height: 36px; }
+
+  .hub-stat-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .hub-stat-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid var(--app-border);
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow-soft);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 850;
+    color: var(--app-text);
+    white-space: nowrap;
+    transition: box-shadow 160ms ease, transform 160ms ease;
+  }
+
+  .hub-stat-action:hover { box-shadow: var(--app-shadow); transform: translateY(-1px); }
+  .hub-stat-action:active { transform: translateY(0); }
+  .hub-stat-action:focus { outline: none; box-shadow: 0 0 0 3px var(--hub-accent-soft), var(--app-shadow-soft); }
+  .hub-stat-action[disabled] { cursor: not-allowed; opacity: 0.6; box-shadow: var(--app-shadow-soft); transform: none; }
+  .hub-stat-action[disabled]:hover { box-shadow: var(--app-shadow-soft); transform: none; }
+
+  .hub-stat-label {
+    color: var(--app-muted);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.2px;
+  }
+
+  .hub-stat-value {
+    font-size: 26px;
+    font-weight: 950;
+    letter-spacing: -0.6px;
+    line-height: 1;
+  }
+
+  .hub-stat.is-primary .hub-stat-value { font-size: 32px; }
+
+  .hub-stat-value.is-text {
+    font-size: 16px;
+    letter-spacing: -0.2px;
+  }
+
+  .hub-trend {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--app-border);
+    background: color-mix(in srgb, var(--app-surface) 76%, transparent);
+    font-size: 12px;
+    font-weight: 850;
+    color: var(--app-muted);
+    white-space: nowrap;
+  }
+
+  .hub-trend.is-up {
+    color: color-mix(in srgb, var(--hub-accent) 70%, var(--app-text));
+    border-color: color-mix(in srgb, var(--hub-accent) 22%, var(--app-border));
+  }
+
+  .hub-trend.is-down {
+    color: color-mix(in srgb, #ef4444 72%, var(--app-text));
+    border-color: color-mix(in srgb, #ef4444 22%, var(--app-border));
+  }
+
+  .hub-stat-note {
+    color: var(--app-muted);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .hub-stat-spark {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .hub-spark {
+    width: 96px;
+    height: 28px;
+    flex: 0 0 auto;
+  }
+
+  .hub-spark polyline {
+    fill: none;
+    stroke: var(--hub-accent);
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.95;
+  }
+
+  .hub-nav {
+    position: sticky;
+    top: calc(var(--app-topbar-h) + 10px);
+    z-index: 20;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    background: color-mix(in srgb, var(--app-surface) 76%, transparent);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+  }
+
+  .hub-progress {
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    top: 8px;
+    height: 2px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--app-border) 70%, transparent);
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .hub-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--hub-accent), color-mix(in srgb, var(--hub-accent) 55%, transparent));
+  }
+
+  .hub-nav-title {
+    font-size: 12px;
+    font-weight: 950;
+    letter-spacing: -0.2px;
+    color: var(--app-muted);
+    white-space: nowrap;
+  }
+
+  .hub-nav-links {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 4px;
+    border: 1px solid var(--app-border);
+    border-radius: 999px;
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow-soft);
+  }
+
+  .hub-nav a {
+    display: inline-flex;
+    align-items: center;
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    background: transparent;
+    box-shadow: none;
+    font-size: 12px;
+    font-weight: 850;
+    color: var(--app-muted);
+    transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+    white-space: nowrap;
+  }
+
+  .hub-nav a:hover { background: color-mix(in srgb, var(--app-border) 62%, transparent); color: var(--app-text); }
+  .hub-nav a:active { background: color-mix(in srgb, var(--app-border) 72%, transparent); }
+  .hub-nav a:focus { outline: none; box-shadow: 0 0 0 3px var(--hub-accent-soft), var(--app-shadow-soft); }
+  .hub-nav a[aria-current="true"] {
+    border-color: color-mix(in srgb, var(--hub-accent) 22%, var(--app-border));
+    background: var(--hub-accent-soft);
+    color: var(--app-text);
+  }
+
+  .hub-section {
+    padding: 22px;
+    display: grid;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  .hub-section[data-section] { scroll-margin-top: calc(var(--app-topbar-h) + 90px); }
+
+  .hub-section-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 950;
+    letter-spacing: -0.4px;
+  }
+
+  .hub-section-sub {
+    margin: 6px 0 0;
+    color: var(--app-muted);
+    font-size: 13px;
+    line-height: 1.6;
+    max-width: 80ch;
+  }
+
+  .hub-module-groups {
+    display: grid;
+    gap: 16px;
+  }
+
+  .hub-module-group {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .hub-module-group-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .hub-module-group-title {
+    font-size: 12px;
+    font-weight: 950;
+    letter-spacing: 0.2px;
+    color: var(--app-muted);
+    white-space: nowrap;
+  }
+
+  .hub-module-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .hub-module {
+    grid-column: span 6;
+    border-radius: 16px;
+    border: 1px solid var(--app-border);
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow-soft);
+    padding: 16px;
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+    cursor: pointer;
+    transition: box-shadow 160ms ease, transform 160ms ease, border-color 160ms ease, background 160ms ease;
+  }
+
+  .hub-module.is-primary {
+    grid-column: span 7;
+    border-color: color-mix(in srgb, var(--hub-accent) 22%, var(--app-border));
+    background: color-mix(in srgb, var(--hub-accent) 6%, var(--app-surface));
+  }
+
+  .hub-module.is-secondary { grid-column: span 5; }
+
+  .hub-module:hover {
+    box-shadow: var(--app-shadow);
+    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--hub-accent) 26%, var(--app-border));
+    background: color-mix(in srgb, var(--hub-accent) 6%, var(--app-surface));
+  }
+
+  .hub-module-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .hub-module-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--hub-accent) 20%, var(--app-border));
+    background: color-mix(in srgb, var(--hub-accent) 10%, var(--app-surface));
+    box-shadow: var(--app-shadow-soft);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+  }
+
+  .hub-module-icon svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+    color: var(--app-text);
+  }
+
+  .hub-module h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 950;
+    letter-spacing: -0.2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .hub-module p {
+    margin: 0;
+    color: var(--app-muted);
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .hub-module-footer {
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    color: var(--app-muted);
+    font-size: 12px;
+  }
+
+  .hub-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--hub-accent) 18%, var(--app-border));
+    background: color-mix(in srgb, var(--hub-accent) 10%, var(--app-surface));
+    box-shadow: var(--app-shadow-soft);
+    font-weight: 850;
+    color: var(--app-text);
+    transition: box-shadow 160ms ease, background 160ms ease, border-color 160ms ease;
+  }
+
+  .hub-module.is-secondary .hub-link {
+    border-color: var(--app-border);
+    background: var(--app-surface);
+  }
+
+  .hub-accordion {
+    display: grid;
+    gap: 14px;
+    min-width: 0;
+  }
+
+  .hub-accordion summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    outline: none;
+  }
+
+  .hub-accordion summary::-webkit-details-marker { display: none; }
+
+  .hub-accordion-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    border: 1px solid var(--app-border);
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow-soft);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    color: var(--app-muted);
+    transition: transform 160ms ease, color 160ms ease;
+  }
+
+  details[open] .hub-accordion-icon { transform: rotate(45deg); color: var(--app-text); }
+
+  .hub-accordion:focus-within .hub-accordion-icon { box-shadow: 0 0 0 3px var(--hub-accent-soft), var(--app-shadow-soft); }
+
+  .hub-flow {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .hub-flow-card {
+    border-radius: 16px;
+    border: 1px solid var(--app-border);
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow-soft);
+    padding: 16px;
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .hub-flow-index {
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    background: var(--hub-accent-soft);
+    color: var(--hub-accent-strong);
+    font-size: 12px;
+    font-weight: 900;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hub-flow-title {
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: -0.2px;
+  }
+
+  .hub-flow-desc {
+    color: var(--app-muted);
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .hub-governance-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .hub-governance-card {
+    border-radius: 16px;
+    border: 1px solid var(--app-border);
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow-soft);
+    padding: 16px;
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .hub-governance-card h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 950;
+    letter-spacing: -0.2px;
+  }
+
+  .hub-governance-card ul {
+    margin: 0;
+    padding-left: 16px;
+    color: var(--app-muted);
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  .hub-cta {
+    padding: 20px 22px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .hub-cta h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 950;
+    letter-spacing: -0.4px;
+  }
+
+  .hub-cta p {
+    margin: 8px 0 0;
+    color: var(--app-muted);
+    font-size: 13px;
+    line-height: 1.6;
+    max-width: 68ch;
+  }
+
+  .hub-cta-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .hub-footer {
+    margin: 6px 4px 0;
+    color: var(--app-muted);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .hub-footer a { text-decoration: underline; text-underline-offset: 3px; }
+
+  .reveal { opacity: 1; transform: none; }
+
+  html.reveal-on .reveal {
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 420ms ease, transform 420ms ease;
+  }
+
+  html.reveal-on .reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (max-width: 980px) {
+    .hub-hero { grid-template-columns: 1fr; }
+    .hub-module { grid-column: span 12; }
+    .hub-module.is-primary, .hub-module.is-secondary { grid-column: span 12; }
+    .hub-flow { grid-template-columns: 1fr; }
+    .hub-governance-grid { grid-template-columns: 1fr; }
+    .hub-cta { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 560px) {
+    .hub-title { font-size: 28px; }
+    .hub-stat-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    html.reveal-on .reveal { opacity: 1; transform: none; transition: none; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="app-container hub" id="hub">
+  <section class="app-card hub-hero reveal" id="overview" data-section aria-label="概览">
+    <div class="hub-hero-content">
+      <div class="hub-eyebrow">SAK 题库中心</div>
+      <h1 class="hub-title">企业级题库训练工作台</h1>
+      <p class="hub-lead">
+        统一入口、标准流程、跨端一致。面向个人与团队的题库训练平台，收藏/错题/答题记录/进度全链路同语义。
+      </p>
+
+      <div class="hub-next" aria-label="下一步" id="hubNextCard">
+        {% if logged_in %}
+          <!-- 登录用户：动态加载"继续上次"数据 -->
+          <div class="hub-next-card" id="hubContinueCard">
+            <div>
+              <div class="hub-next-meta">下一步</div>
+              <div class="hub-next-title" id="hubContinueTitle">加载中…</div>
+              <div class="hub-next-desc" id="hubContinueDesc">正在获取上次练习记录</div>
+            </div>
+            <div class="hub-next-actions" id="hubContinueActions">
+              <a class="app-btn app-btn-primary" href="/public/banks" id="hubContinuePrimary" aria-label="进入题库广场">进入题库广场</a>
+              <a class="app-btn app-btn-secondary" href="/review?kind=mistakes" aria-label="去复盘">去复盘{% if mistakes_count %}（{{ mistakes_count }}）{% endif %}</a>
+              <a class="app-btn app-btn-secondary" href="/user/banks" aria-label="进入个人题库">个人题库</a>
+              <a class="hub-text-link" href="/data" aria-label="查看数据">查看数据</a>
+            </div>
+          </div>
+        {% else %}
+          <div class="hub-next-card">
+            <div>
+              <div class="hub-next-meta">下一步</div>
+              <div class="hub-next-title">从题库广场开始</div>
+              <div class="hub-next-desc">公共题库 + 用户公开题库，一处完成搜索、筛选与练习设置。</div>
+            </div>
+            <div class="hub-next-actions">
+              <a class="app-btn app-btn-primary" href="/public/banks" aria-label="进入题库广场">进入题库广场</a>
+              <a class="app-btn app-btn-secondary" href="/login" aria-label="登录">登录后继续</a>
+              <a class="hub-text-link" href="/search" aria-label="搜索">搜索</a>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="hub-hero-tags" aria-label="平台特性">
+        <span>统一数据语义</span>
+        <span>权限边界清晰</span>
+        <span>训练闭环可复盘</span>
+      </div>
+    </div>
+
+    <div class="hub-hero-aside" aria-label="关键指标">
+      <div class="hub-stat-grid">
+        <div class="hub-stat is-wide is-checkin" id="hubCheckinCard">
+          <div class="hub-stat-head">
+            <div class="hub-stat-label">当前时间（北京）</div>
+            {% if logged_in %}
+              <button class="hub-stat-action" type="button" id="hubCheckinBtn" aria-label="今日签到">签到</button>
+            {% else %}
+              <a class="hub-stat-action" href="/login?redirect=/hub" aria-label="登录后签到">登录</a>
+            {% endif %}
+          </div>
+          <div class="hub-stat-value is-text" id="hubNowTime" style="font-variant-numeric: tabular-nums;">--</div>
+          <div class="hub-stat-note" id="hubCheckinNote">
+            {% if logged_in %}
+              正在加载签到状态…
+            {% else %}
+              登录后解锁：每日签到与连续天数
+            {% endif %}
+          </div>
+        </div>
+        {% if logged_in %}
+          <div class="hub-stat is-primary">
+            <div class="hub-stat-head">
+              <div>
+                <div class="hub-stat-label">待复盘（错题）</div>
+                <div class="hub-stat-value">{{ mistakes_count or 0 }}</div>
+              </div>
+              <a class="hub-stat-action" href="/review?kind=mistakes" aria-label="去复盘">去复盘</a>
+            </div>
+            <div class="hub-stat-note">收藏 {{ favorites_count or 0 }} · 近7天答对 {{ answers_7d_correct or 0 }} / {{ answers_7d_total or 0 }}</div>
+          </div>
+
+          <div class="hub-stat">
+            <div class="hub-stat-label">个人题库</div>
+            <div class="hub-stat-value">{{ my_bank_total or 0 }}</div>
+            <div class="hub-stat-note">自建与协作共享</div>
+          </div>
+
+          <div class="hub-stat">
+            <div class="hub-stat-head">
+              <div class="hub-stat-label">近7天答题</div>
+              {% if (answers_7d_delta or 0) > 0 %}
+                <span class="hub-trend is-up">▲ +{{ answers_7d_delta }}</span>
+              {% elif (answers_7d_delta or 0) < 0 %}
+                <span class="hub-trend is-down">▼ {{ answers_7d_delta }}</span>
+              {% else %}
+                <span class="hub-trend">— 0</span>
+              {% endif %}
+            </div>
+            <div class="hub-stat-spark">
+              <div class="hub-stat-value">{{ answers_7d_total or 0 }}</div>
+              <svg class="hub-spark" viewBox="0 0 96 28" aria-hidden="true">
+                <polyline points="{{ answers_7d_spark_points }}"></polyline>
+              </svg>
+            </div>
+            <div class="hub-stat-note">以每题最近一次答题记录为准</div>
+          </div>
+
+          <div class="hub-stat">
+            <div class="hub-stat-head">
+              <div class="hub-stat-label">正确率（近7天）</div>
+              {% if (accuracy_7d_delta or 0) > 0 %}
+                <span class="hub-trend is-up">▲ +{{ accuracy_7d_delta }}%</span>
+              {% elif (accuracy_7d_delta or 0) < 0 %}
+                <span class="hub-trend is-down">▼ {{ accuracy_7d_delta }}%</span>
+              {% else %}
+                <span class="hub-trend">— 0%</span>
+              {% endif %}
+            </div>
+            <div class="hub-stat-value">{{ answers_7d_accuracy or 0 }}%</div>
+            <div class="hub-stat-note">近7天答对 {{ answers_7d_correct or 0 }} 题</div>
+          </div>
+        {% else %}
+          <div class="hub-stat is-primary">
+            <div class="hub-stat-label">可用科目（公共）</div>
+            <div class="hub-stat-value">{{ subject_total or 0 }}</div>
+            <div class="hub-stat-note">未登录：展示未锁定科目</div>
+          </div>
+
+          <div class="hub-stat">
+            <div class="hub-stat-label">题目数量（公共）</div>
+            <div class="hub-stat-value">{{ question_total or 0 }}</div>
+            <div class="hub-stat-note">覆盖全部可访问科目</div>
+          </div>
+
+          <div class="hub-stat">
+            <div class="hub-stat-label">登录后可见</div>
+            <div class="hub-stat-value is-text">待复盘 · 近7天</div>
+            <div class="hub-stat-note">错题/收藏/答题记录/进度</div>
+          </div>
+
+          <div class="hub-stat">
+            <div class="hub-stat-label">开始使用</div>
+            <div class="hub-stat-value is-text">从题库广场进入</div>
+            <div class="hub-stat-note">支持搜索、筛选与练习设置</div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <nav class="app-card hub-nav reveal" aria-label="页面目录">
+    <div class="hub-progress" aria-hidden="true"><div class="hub-progress-bar" id="hubProgressBar"></div></div>
+    <span class="hub-nav-title">页面导航</span>
+    <div class="hub-nav-links">
+      <a href="#overview">概览</a>
+      <a href="#modules">入口</a>
+      <a href="#workflow">流程</a>
+      <a href="#governance">治理</a>
+      <a href="#start">开始</a>
+    </div>
+  </nav>
+
+  <section class="app-card hub-section reveal" id="modules" data-section aria-label="模块概览">
+    <div>
+      <h2 class="hub-section-title">快捷入口</h2>
+      <p class="hub-section-sub">把高频动作前置：开始练习与复盘回看。低频说明与规则下沉到“流程/治理”。</p>
+    </div>
+
+    <div class="hub-module-groups" aria-label="入口分组">
+      <div class="hub-module-group" aria-label="开始练习">
+        <div class="hub-module-group-head">
+          <div class="hub-module-group-title">开始练习</div>
+          <a class="hub-text-link" href="/public/banks" aria-label="进入题库广场">题库广场</a>
+        </div>
+        <div class="hub-module-grid" aria-label="练习入口">
+          <a class="hub-module is-primary" href="/public/banks" aria-label="进入题库广场">
+            <div class="hub-module-head">
+              <span class="hub-module-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M4 6.5c0-1.1.9-2 2-2h12c1.1 0 2 .9 2 2V19c0 .6-.4 1-1 1H7a3 3 0 0 1-3-3V6.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                  <path d="M7 8h10M7 12h10M7 16h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <h3>题库广场</h3>
+            </div>
+            <p>系统题库 + 用户公开题库：搜索、筛选、进入练习设置一条路径。</p>
+            <div class="hub-module-footer">
+              <span>筛选 → 设置 → 开始</span>
+              <span class="hub-link">开始</span>
+            </div>
+          </a>
+
+          <a class="hub-module is-secondary" href="{% if logged_in %}/user/banks{% else %}/login?redirect=/user/banks{% endif %}" aria-label="进入个人题库">
+            <div class="hub-module-head">
+              <span class="hub-module-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M4 7a2 2 0 0 1 2-2h10a3 3 0 0 1 3 3v11a1 1 0 0 1-1 1H7a3 3 0 0 1-3-3V7Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                  <path d="M7 9h8M7 13h8M7 17h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <h3>个人题库</h3>
+            </div>
+            <p>自建专项题库，支持维护题目与协作共享。</p>
+            <div class="hub-module-footer">
+              <span>自建 → 维护 → 专项训练</span>
+              <span class="hub-link">{% if logged_in %}进入{% else %}登录后进入{% endif %}</span>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <div class="hub-module-group" aria-label="沉淀复盘">
+        <div class="hub-module-group-head">
+          <div class="hub-module-group-title">沉淀复盘</div>
+          {% if logged_in %}
+            <a class="hub-text-link" href="/review?kind=mistakes" aria-label="去复盘">去复盘</a>
+          {% else %}
+            <a class="hub-text-link" href="/login?redirect=/review" aria-label="登录">登录</a>
+          {% endif %}
+        </div>
+        <div class="hub-module-grid" aria-label="复盘入口">
+          <a class="hub-module is-primary" href="{% if logged_in %}/review{% else %}/login?redirect=/review{% endif %}" aria-label="进入复盘清单">
+            <div class="hub-module-head">
+              <span class="hub-module-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M12 8v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M12 16h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                  <path d="M10.3 4.3 2.8 17.3A2 2 0 0 0 4.5 20h15a2 2 0 0 0 1.7-2.7L13.7 4.3a2 2 0 0 0-3.4 0Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <h3>复盘清单</h3>
+            </div>
+            <p>错题/收藏自动沉淀，一处聚合，便于集中复盘。</p>
+            <div class="hub-module-footer">
+              <span>沉淀 → 聚合 → 复习</span>
+              <span class="hub-link">{% if logged_in %}进入{% else %}登录后进入{% endif %}</span>
+            </div>
+          </a>
+
+          <a class="hub-module is-secondary" href="{% if logged_in %}/data{% else %}/login?redirect=/data{% endif %}" aria-label="进入数据中心">
+            <div class="hub-module-head">
+              <span class="hub-module-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M4 19V5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M4 19h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M8 15v-3M12 15V8M16 15v-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <h3>数据中心</h3>
+            </div>
+            <p>可视化回溯训练节奏，持续优化策略。</p>
+            <div class="hub-module-footer">
+              <span>记录 → 回溯 → 调整</span>
+              <span class="hub-link">{% if logged_in %}进入{% else %}登录后进入{% endif %}</span>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="app-card hub-section reveal" id="workflow" data-section aria-label="标准流程">
+    <details class="hub-accordion">
+      <summary>
+        <div>
+          <h2 class="hub-section-title">标准流程</h2>
+          <p class="hub-section-sub">固定路径、统一语义：让训练可复用、可复盘、可优化。</p>
+        </div>
+        <span class="hub-accordion-icon" aria-hidden="true">+</span>
+      </summary>
+
+      <ol class="hub-flow" aria-label="流程步骤">
+        <li class="hub-flow-card">
+          <div class="hub-flow-index">01</div>
+          <div class="hub-flow-title">入口选择</div>
+          <div class="hub-flow-desc">从题库广场或个人题库确定训练范围。</div>
+        </li>
+        <li class="hub-flow-card">
+          <div class="hub-flow-index">02</div>
+          <div class="hub-flow-title">训练配置</div>
+          <div class="hub-flow-desc">按题型、标签、数量配置节奏，保持可控。</div>
+        </li>
+        <li class="hub-flow-card">
+          <div class="hub-flow-index">03</div>
+          <div class="hub-flow-title">复盘迭代</div>
+          <div class="hub-flow-desc">错题/收藏/历史记录沉淀，形成优化闭环。</div>
+        </li>
+      </ol>
+    </details>
+  </section>
+
+  <section class="app-card hub-section reveal" id="governance" data-section aria-label="治理与一致性">
+    <details class="hub-accordion">
+      <summary>
+        <div>
+          <h2 class="hub-section-title">治理与一致性</h2>
+          <p class="hub-section-sub">面向团队场景：边界清晰、体验统一、资产可复用。</p>
+        </div>
+        <span class="hub-accordion-icon" aria-hidden="true">+</span>
+      </summary>
+
+      <div class="hub-governance-grid" aria-label="能力支柱">
+        <div class="hub-governance-card">
+          <h3>权限治理</h3>
+          <ul>
+            <li>科目访问按权限过滤，不可访问内容不展示。</li>
+            <li>管理员入口按角色开放，减少路径干扰。</li>
+          </ul>
+        </div>
+        <div class="hub-governance-card">
+          <h3>跨端一致</h3>
+          <ul>
+            <li>Web（Session）与小程序（JWT）并行，语义一致。</li>
+            <li>收藏/错题/答题记录/进度同一套数据与规则。</li>
+          </ul>
+        </div>
+        <div class="hub-governance-card">
+          <h3>可复用资产</h3>
+          <ul>
+            <li>个人题库支持专项沉淀与协作共享。</li>
+            <li>复盘清单快速回看薄弱点，强化记忆曲线。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <section class="app-card hub-cta reveal" id="start" data-section aria-label="开始使用">
+    <div>
+      <h2>开始使用</h2>
+      <p>建议先从题库广场进入；需要专项沉淀与协作时，再使用个人题库与复盘模块。</p>
+    </div>
+    <div class="hub-cta-actions">
+      <a class="app-btn app-btn-primary" href="/public/banks" aria-label="进入题库广场">进入题库广场</a>
+      {% if logged_in %}
+        <a class="app-btn app-btn-secondary" href="/user/banks" aria-label="进入个人题库">进入个人题库</a>
+      {% else %}
+        <a class="app-btn app-btn-secondary" href="/login" aria-label="登录">登录</a>
+      {% endif %}
+    </div>
+  </section>
+
+  <div class="hub-footer" aria-label="页脚">
+    <span>SAK</span>
+    <span>·</span>
+    <a href="/about">关于</a>
+    <span>·</span>
+    <a href="/search">搜索</a>
+  </div>
+</div>
+
+<script>
+  (function () {
+    try {
+      var root = document.documentElement;
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var canObserve = ('IntersectionObserver' in window);
+
+      if (!reduce && canObserve) {
+        var revealEls = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
+        if (revealEls.length) {
+          root.classList.add('reveal-on');
+          var io = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) {
+              if (!e.isIntersecting) return;
+              e.target.classList.add('is-visible');
+              io.unobserve(e.target);
+            });
+          }, { threshold: 0.08 });
+          revealEls.forEach(function (el) { io.observe(el); });
+        }
+      }
+
+      var progressBar = document.getElementById('hubProgressBar');
+      if (progressBar) {
+        var rafId = null;
+        var update = function () {
+          rafId = null;
+          var doc = document.documentElement;
+          var scrollTop = doc.scrollTop || document.body.scrollTop || 0;
+          var total = (doc.scrollHeight - doc.clientHeight) || 1;
+          var pct = Math.max(0, Math.min(1, scrollTop / total));
+          progressBar.style.width = (pct * 100).toFixed(2) + '%';
+        };
+        var onScroll = function () {
+          if (rafId !== null) return;
+          rafId = window.requestAnimationFrame(update);
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll);
+        update();
+      }
+
+      var tocLinks = Array.prototype.slice.call(document.querySelectorAll('.hub-nav a[href^=\"#\"]'));
+      if (tocLinks.length) {
+        var linkById = {};
+        tocLinks.forEach(function (a) {
+          var href = a.getAttribute('href') || '';
+          var id = href.slice(1);
+          if (!id) return;
+          linkById[id] = a;
+        });
+
+        var setCurrent = function (id) {
+          tocLinks.forEach(function (a) { a.removeAttribute('aria-current'); });
+          if (id && linkById[id]) linkById[id].setAttribute('aria-current', 'true');
+        };
+
+        if (canObserve) {
+          var sections = Object.keys(linkById)
+            .map(function (id) { return document.getElementById(id); })
+            .filter(Boolean);
+
+          if (sections.length) {
+            var spy = new IntersectionObserver(function (entries) {
+              entries.forEach(function (e) {
+                if (!e.isIntersecting) return;
+                setCurrent(e.target.id);
+              });
+            }, { rootMargin: '-18% 0px -70% 0px', threshold: 0.02 });
+
+            sections.forEach(function (el) { spy.observe(el); });
+          }
+        } else {
+          setCurrent((tocLinks[0].getAttribute('href') || '').slice(1));
+        }
+      }
+    } catch (e) {
+      try { document.documentElement.classList.remove('reveal-on'); } catch (e2) {}
+      try { document.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('is-visible'); }); } catch (e3) {}
+    }
+  })();
+</script>
+
+<script>
+  (function () {
+    try {
+      function pad2(n) { return String(n).padStart(2, '0'); }
+      function nowBjDate() {
+        var now = new Date();
+        var utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
+        return new Date(utcMs + 8 * 3600000);
+      }
+      function formatBj(d) {
+        var dt = d || nowBjDate();
+        var y = dt.getFullYear();
+        var m = pad2(dt.getMonth() + 1);
+        var day = pad2(dt.getDate());
+        var hh = pad2(dt.getHours());
+        var mm = pad2(dt.getMinutes());
+        var ss = pad2(dt.getSeconds());
+        return y + '-' + m + '-' + day + ' ' + hh + ':' + mm + ':' + ss;
+      }
+
+      var nowEl = document.getElementById('hubNowTime');
+      var noteEl = document.getElementById('hubCheckinNote');
+      var btn = document.getElementById('hubCheckinBtn');
+
+      function tick() {
+        if (!nowEl) return;
+        nowEl.textContent = formatBj(nowBjDate());
+      }
+
+      tick();
+      if (nowEl) window.setInterval(tick, 1000);
+
+      function renderStatus(data) {
+        if (!noteEl || !btn) return;
+        var checked = !!(data && data.checked_in_today);
+        var streak = parseInt((data && data.streak_days) || 0, 10) || 0;
+        var total = parseInt((data && data.total_days) || 0, 10) || 0;
+        var at = (data && data.checked_in_at) ? String(data.checked_in_at) : '';
+        var atShort = at.length >= 16 ? at.slice(11, 16) : '';
+
+        btn.disabled = checked;
+        btn.textContent = checked ? '已签到' : '签到';
+        btn.setAttribute('aria-disabled', checked ? 'true' : 'false');
+
+        var parts = [];
+        parts.push(checked ? '今日已签到' : '今日未签到');
+        if (checked && atShort) parts.push('签到于 ' + atShort);
+        parts.push('连续 ' + streak + ' 天');
+        parts.push('累计 ' + total + ' 天');
+        noteEl.textContent = parts.join(' · ');
+      }
+
+      async function loadStatus() {
+        if (!btn || !noteEl) return;
+        try {
+          var res = await fetch('/api/user/checkin/status', { credentials: 'same-origin' });
+          var json = await res.json().catch(function () { return null; });
+          if (!res.ok || !json || json.status !== 'success') {
+            throw new Error((json && json.message) || ('HTTP ' + res.status));
+          }
+          renderStatus(json.data || {});
+        } catch (e) {
+          noteEl.textContent = '签到状态获取失败';
+        }
+      }
+
+      if (btn) {
+        btn.addEventListener('click', async function () {
+          if (btn.disabled) return;
+          var oldText = btn.textContent;
+          btn.disabled = true;
+          btn.textContent = '签到中…';
+          try {
+            var res = await fetch('/api/user/checkin', {
+              method: 'POST',
+              credentials: 'same-origin',
+              headers: { 'Content-Type': 'application/json' },
+              body: '{}'
+            });
+            var json = await res.json().catch(function () { return null; });
+            if (!res.ok || !json || json.status !== 'success') {
+              throw new Error((json && json.message) || ('HTTP ' + res.status));
+            }
+            renderStatus(json.data || {});
+          } catch (e) {
+            btn.disabled = false;
+            btn.textContent = oldText || '签到';
+            if (noteEl) noteEl.textContent = '签到失败，请稍后重试';
+          }
+        });
+
+        loadStatus();
+      }
+    } catch (e) {}
+  })();
+</script>
+
+{% if logged_in %}
+<script>
+  (function () {
+    try {
+      var titleEl = document.getElementById('hubContinueTitle');
+      var descEl = document.getElementById('hubContinueDesc');
+      var primaryBtn = document.getElementById('hubContinuePrimary');
+
+      if (!titleEl || !descEl || !primaryBtn) return;
+
+      // 从session数据构建练习URL
+      function buildPracticeUrl(session) {
+        if (!session || typeof session !== 'object') return null;
+
+        // 如果有直接的url字段，优先使用
+        if (session.url && typeof session.url === 'string') {
+          return session.url.trim() || null;
+        }
+
+        // 否则从字段构建URL
+        var params = [];
+
+        if (session.source_type === 'bank' && session.bank_id) {
+          params.push('bank_id=' + encodeURIComponent(session.bank_id));
+        } else if (session.subject) {
+          params.push('subject=' + encodeURIComponent(session.subject));
+        } else if (session.source_id) {
+          if (session.source_type === 'bank') {
+            params.push('bank_id=' + encodeURIComponent(session.source_id));
+          } else {
+            params.push('subject=' + encodeURIComponent(session.source_id));
+          }
+        } else {
+          return null;
+        }
+
+        if (session.mode && session.mode !== 'quiz') {
+          params.push('mode=' + encodeURIComponent(session.mode));
+        }
+        if (session.type && session.type !== 'all') {
+          params.push('type=' + encodeURIComponent(session.type));
+        }
+        if (session.source && session.source !== 'all') {
+          params.push('source=' + encodeURIComponent(session.source));
+        }
+        if (session.shuffle_questions === 1 || session.shuffle_questions === '1' || session.shuffle_questions === true) {
+          params.push('shuffle_questions=1');
+        }
+        if (session.shuffle_options === 1 || session.shuffle_options === '1' || session.shuffle_options === true) {
+          params.push('shuffle_options=1');
+        }
+
+        return '/quiz?' + params.join('&');
+      }
+
+      // 格式化时间戳
+      function formatTimestamp(ts) {
+        if (!ts) return '';
+        try {
+          var d = new Date(Number(ts));
+          var now = new Date();
+          var diff = now - d;
+          if (diff < 60000) return '刚刚';
+          if (diff < 3600000) return Math.floor(diff / 60000) + ' 分钟前';
+          if (diff < 86400000) return Math.floor(diff / 3600000) + ' 小时前';
+          if (diff < 604800000) return Math.floor(diff / 86400000) + ' 天前';
+          var y = d.getFullYear();
+          var m = String(d.getMonth() + 1).padStart(2, '0');
+          var day = String(d.getDate()).padStart(2, '0');
+          return y + '-' + m + '-' + day;
+        } catch (e) {
+          return '';
+        }
+      }
+
+      // 生成模式描述文本
+      function buildMetaText(session) {
+        if (!session) return '';
+        var parts = [];
+        var modeText = session.mode === 'memo' ? '背题' : '刷题';
+        var sourceText = session.source === 'favorites' ? '收藏' : session.source === 'mistakes' ? '错题' : '全部';
+        var typeText = session.type === 'all' ? '全部题型' : (session.type || '全部题型');
+        parts.push(modeText);
+        parts.push(sourceText);
+        parts.push(typeText);
+        return parts.join(' · ');
+      }
+
+      // 获取本地存储的session
+      function getLocalSession() {
+        try {
+          var raw = localStorage.getItem('last_practice_session');
+          if (!raw) return null;
+          return JSON.parse(raw);
+        } catch (e) {
+          return null;
+        }
+      }
+
+      // 选择最新的session
+      function pickLatest(a, b) {
+        if (!a && !b) return null;
+        if (a && !b) return a;
+        if (!a && b) return b;
+        var ta = Number(a && a.timestamp) || 0;
+        var tb = Number(b && b.timestamp) || 0;
+        return tb >= ta ? b : a;
+      }
+
+      // 更新UI
+      function updateUI(session) {
+        var url = session ? buildPracticeUrl(session) : null;
+
+        if (url && session) {
+          // 有上次练习记录
+          titleEl.textContent = '继续上次';
+          var displayName = session.display_name || session.subject || '上次练习';
+          var timeText = formatTimestamp(session.timestamp);
+          var metaText = buildMetaText(session);
+          descEl.textContent = displayName + (timeText ? ' · ' + timeText : '') + (metaText ? ' · ' + metaText : '');
+          primaryBtn.setAttribute('href', url);
+          primaryBtn.textContent = '继续练习';
+          primaryBtn.setAttribute('aria-label', '继续练习：' + displayName);
+        } else {
+          // 无记录，引导去题库广场
+          titleEl.textContent = '开始练习';
+          descEl.textContent = '从题库广场选择范围 → 设置练习 → 进入刷题。';
+          primaryBtn.setAttribute('href', '/public/banks');
+          primaryBtn.textContent = '进入题库广场';
+          primaryBtn.setAttribute('aria-label', '进入题库广场');
+        }
+      }
+
+      // 先用本地数据快速渲染
+      var localSession = getLocalSession();
+      updateUI(localSession);
+
+      // 异步获取云端数据
+      (async function() {
+        try {
+          var res = await fetch('/api/progress?key=last_practice_session', { credentials: 'same-origin' });
+          if (!res.ok) return;
+          var json = await res.json();
+          if (json.status !== 'success') return;
+
+          var remoteSession = json.data || null;
+          var merged = pickLatest(localSession, remoteSession);
+
+          // 如果云端数据更新，同步到本地
+          if (remoteSession && merged === remoteSession) {
+            try {
+              localStorage.setItem('last_practice_session', JSON.stringify(remoteSession));
+              if (remoteSession.url) {
+                localStorage.setItem('sak:lastPracticeUrl', remoteSession.url);
+              }
+              if (remoteSession.timestamp) {
+                localStorage.setItem('sak:lastPracticeAt', String(remoteSession.timestamp));
+              }
+            } catch (e) {}
+          }
+
+          // 更新UI
+          updateUI(merged);
+        } catch (e) {
+          // 网络错误时保持本地数据
+        }
+      })();
+
+    } catch (e) {}
+  })();
+</script>
+{% endif %}
+{% endblock %}

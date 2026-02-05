@@ -1,0 +1,28 @@
+<!-- 导入Excel模态框 -->
+<div id="modalImportExcel" class="drawer" style="right:auto; left:50%; transform: translateX(-50%); width: 520px; height: auto; top: 20%; display:none;">
+    <div class="drawer-header">导入Excel文件</div>
+    <div class="drawer-body">
+        <div class="form-group">
+            <label>选择Excel文件 (.xlsx)</label>
+            <input type="file" id="importExcelFile" accept=".xlsx">
+        </div>
+        <div class="form-group">
+            <small style="color: var(--text-sub); line-height: 1.6;">
+                Excel文件格式要求：<br>
+                - 推荐使用模板（sheet：<code>题目示例</code>）：<a href="/admin/download_template" style="color: var(--primary); text-decoration: none;">下载Excel模板</a><br>
+                - 必需列：<code>q_type</code>（题型）、<code>content</code>（题干）<br>
+                - 选择题/多选题：选项列 <code>option_A</code>、<code>option_B</code>…；答案列 <code>answer</code> 填写字母（如 <code>C</code> / <code>ABC</code>）<br>
+                - 判断题：<code>answer</code> 填写“正确/错误”<br>
+                - 填空题：<code>answer</code> 留空，使用 <code>blank_1</code>、<code>blank_2</code>…；同一空多答案用分号 <code>;</code> 分隔<br>
+                - 简答题：<code>answer</code> 填写参考答案文本<br>
+                - 解析（可选）：<code>explanation</code>
+            </small>
+        </div>
+        <div id="importExcelResult" style="margin-top: 12px;"></div>
+    </div>
+    <div class="drawer-footer">
+        <button class="btn-secondary" onclick="closeModal('modalImportExcel')">取消</button>
+        <button class="btn-primary" onclick="confirmImportExcel()">确认导入</button>
+    </div>
+</div>
+

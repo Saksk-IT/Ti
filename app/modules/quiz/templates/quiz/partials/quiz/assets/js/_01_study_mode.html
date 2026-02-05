@@ -1,0 +1,325 @@
+
+const STUDY_STATE = {
+    queue: [],
+    cursor: 0,
+    repeatMap: {},
+    ratingMap: {},
+    masteredMap: {},
+    streakMap: {},
+    learnedSet: new Set(),
+    pendingRating: false,
+    pendingReset: new Set(),
+    targetN: null
+};
+
+function isStudyMode(){
+    return STUDY_MODE === true;
+}
+
+function isSubjectiveType(type){
+    return type === '简答题' || type === '计算题';
+}
+
+function isAutoCheckType(type, qEl = null){
+    // 对齐小程序：单选题/判断题点选即判；多选题/填空/主观题需要“提交答案”
+    // 注意：部分“选择题”可能存在多答案（例如答案为 'AB'），此时应视为“需要提交”的题型
+    if (type === '判断题') return true;
+    if (type !== '选择题') return false;
+    const ans = qEl ? (qEl.getAttribute('data-answer') || '') : '';
+    return String(ans || '').trim().length <= 1;
+}
+
+function isJudgableType(type){
+    return type === '选择题' || type === '判断题' || type === '多选题' || type === '填空题';
+}
+
+function isPracticeMode(){
+    // 兼容 favorites/mistakes 等“范围模式”：行为与刷题一致
+    return mode !== 'exam' && mode !== 'memo';
+}
+
+function getStudyProgressInfo(){
+    if (!isStudyMode()) {
+        return { current: currentIndex + 1, total: totalQuestions };
+    }
+    return {
+        current: Math.min(STUDY_STATE.cursor + 1, Math.max(1, STUDY_STATE.queue.length)),
+        total: Math.max(1, STUDY_STATE.queue.length)
+    };
+}
+
+function setStudyCursorForIndex(index){
+    if (!isStudyMode()) return;
+    const start = Math.max(0, STUDY_STATE.cursor);
+    let pos = STUDY_STATE.queue.findIndex((v, i) => i >= start && v === index);
+    if (pos < 0) pos = STUDY_STATE.queue.findIndex(v => v === index);
+    if (pos < 0) pos = 0;
+    STUDY_STATE.cursor = pos;
+}
+
+function clearStudyResultForIndex(index){
+    const li = document.getElementById(`list-item-${index}`);
+    if (li) li.classList.remove('done-correct', 'done-wrong', 'answered');
+}
+
+function resetStudyQuestion(qEl){
+    if (!qEl) return;
+    qEl.classList.remove('checked-mode');
+    qEl.removeAttribute('data-study-rated');
+    qEl.querySelectorAll('input, textarea').forEach(el => {
+        el.disabled = false;
+        if (el instanceof HTMLInputElement) {
+            if (el.type === 'checkbox' || el.type === 'radio') {
+                el.checked = false;
+            } else {
+                el.value = '';
+            }
+        } else if (el instanceof HTMLTextAreaElement) {
+            el.value = '';
+        }
+    });
+    qEl.querySelectorAll('label').forEach(lab => lab.classList.remove('selected', 'correct-opt', 'wrong-opt'));
+    qEl.querySelectorAll('.option-card').forEach(card => card.classList.remove('selected', 'correct-opt', 'wrong-opt'));
+    hideAnswerExplainDock(qEl);
+}
+
+function updateStudyProgressTip(){
+    if (!isStudyMode() || mode !== 'learn') return;
+    const target = STUDY_STATE.targetN || 0;
+    const learned = STUDY_STATE.learnedSet ? STUDY_STATE.learnedSet.size : 0;
+    const text = target ? `本轮已学会 ${learned}/${target}` : `本轮已学会 ${learned}`;
+    document.querySelectorAll('[data-study-tip]').forEach((el) => {
+        el.textContent = text;
+    });
+}
+
+function getQuestionIndexFromEl(qEl){
+    const idx = parseInt(qEl?.getAttribute('data-index') || '');
+    return Number.isFinite(idx) ? idx : null;
+}
+
+function isQuestionAlreadyChecked(qEl){
+    if (!qEl) return false;
+    if (qEl.classList.contains('checked-mode')) return true;
+    const idx = getQuestionIndexFromEl(qEl);
+    if (idx === null) return false;
+    const li = document.getElementById(`list-item-${idx}`);
+    return !!(li && (li.classList.contains('done-correct') || li.classList.contains('done-wrong')));
+}
+
+function getBottomSubmitElements(){
+    const btnCheck = document.getElementById('btn-check');
+    const wrapper = btnCheck ? btnCheck.closest('.submit-btn-wrapper') : null;
+    return { btnCheck, wrapper };
+}
+
+function shouldShowBottomSubmit(type, qEl){
+    if (!isPracticeMode()) return false;
+    if (!qEl) return false;
+    if (isSubjectiveType(type)) return false; // 主观题使用右侧输入区内提交按钮
+    // 多选题：按需求放到选项下面（不占用底部栏）
+    if (type === '多选题') return false;
+    // 填空题/多答案“选择题”已在题目内提供提交按钮（对齐小程序：按钮紧跟输入区/选项区）
+    if (type === '填空题') return false;
+    if (type === '选择题' && !isAutoCheckType(type, qEl)) return false;
+    return false;
+}
+
+function syncFixedBarsMetrics(){
+    if (!document.body.classList.contains('quiz-layout-card')) return;
+    const root = document.documentElement;
+    const header = document.querySelector('.header');
+    const footer = document.querySelector('.footer');
+    const bottomActions = document.querySelector('.footer .bottom-actions');
+
+    try {
+        if (header) {
+            const pt = parseFloat(getComputedStyle(header).paddingTop) || 0;
+            const safeTop = Math.max(0, pt - 10); // parity CSS: padding-top = env(safe-area-inset-top) + 10px
+            const base = Math.max(0, header.getBoundingClientRect().height - safeTop);
+            root.style.setProperty('--quiz-topbar-h', `${base}px`);
+        }
+        let safeBottom = 0;
+        if (bottomActions) {
+            const pb = parseFloat(getComputedStyle(bottomActions).paddingBottom) || 0;
+            safeBottom = Math.max(0, pb - 14); // parity CSS: padding-bottom = 14px + env(safe-area-inset-bottom)
+        }
+        if (footer) {
+            const rectHeight = footer.getBoundingClientRect().height || 0;
+            const scrollHeight = footer.scrollHeight || 0;
+            const measured = Math.max(rectHeight, scrollHeight);
+            const base = Math.max(0, measured - safeBottom);
+            root.style.setProperty('--quiz-bottombar-h', `${base + 8}px`);
+        }
+    } catch(e) {}
+}
+
+function updateBottomSubmitState(qEl){
+    const { btnCheck, wrapper } = getBottomSubmitElements();
+    if (!btnCheck || !wrapper) return;
+
+    if (!isPracticeMode()) {
+        wrapper.style.display = 'none';
+        btnCheck.disabled = true;
+        syncFixedBarsMetrics();
+        return;
+    }
+
+    if (!qEl) {
+        wrapper.style.display = 'none';
+        btnCheck.disabled = true;
+        syncFixedBarsMetrics();
+        return;
+    }
+
+    const type = (qEl.getAttribute('data-type') || '').toString();
+    const show = !isQuestionAlreadyChecked(qEl) && shouldShowBottomSubmit(type, qEl);
+
+    wrapper.style.display = show ? 'block' : 'none';
+    btnCheck.disabled = show ? (!hasAnswered(qEl, type)) : true;
+    syncFixedBarsMetrics();
+}
+
+function updateSubjectiveSubmitState(qEl){
+    if (!qEl) return;
+    const type = (qEl.getAttribute('data-type') || '').toString();
+    if (!isSubjectiveType(type)) return;
+    const btn = qEl.querySelector('.subjective-submit-btn');
+    if (!btn) return;
+    const disabled = !hasAnswered(qEl, type);
+    // 为避免“按钮失效”问题，这里只做视觉禁用（仍允许点击，由 checkAnswer 做兜底校验）
+    btn.disabled = false;
+    btn.classList.toggle('disabled', disabled);
+}
+
+function updateFillBlankSubmitState(qEl){
+    if (!qEl) return;
+    const type = (qEl.getAttribute('data-type') || '').toString();
+    if (type !== '填空题') return;
+    const btn = qEl.querySelector('.fillblank-submit-btn');
+    if (!btn) return;
+    const disabled = !hasAnswered(qEl, type);
+    // 与主观题一致：只做视觉禁用，仍允许点击以触发 toast 提示
+    btn.disabled = false;
+    btn.classList.toggle('disabled', disabled);
+}
+
+function updateMultiSubmitState(qEl){
+    if (!qEl) return;
+    const type = (qEl.getAttribute('data-type') || '').toString();
+    const wrapper = qEl.querySelector('.multi-submit-wrapper');
+    const btn = qEl.querySelector('.multi-submit-btn');
+    if (!wrapper || !btn) return;
+
+    const needInlineSubmit = isPracticeMode()
+        && (type === '多选题' || (type === '选择题' && !isAutoCheckType(type, qEl)));
+
+    if (!needInlineSubmit) {
+        wrapper.style.display = 'none';
+        btn.disabled = true;
+        return;
+    }
+
+    const alreadyChecked = isQuestionAlreadyChecked(qEl);
+    wrapper.style.display = alreadyChecked ? 'none' : 'block';
+    btn.disabled = alreadyChecked ? true : !hasAnswered(qEl, type);
+}
+
+function initStudyState(){
+    if (!isStudyMode()) return;
+    STUDY_STATE.queue = Array.from({ length: totalQuestions }, (_, i) => i);
+    STUDY_STATE.cursor = Math.min(currentIndex, Math.max(0, STUDY_STATE.queue.length - 1));
+    STUDY_STATE.repeatMap = {};
+    STUDY_STATE.ratingMap = {};
+    STUDY_STATE.masteredMap = {};
+    STUDY_STATE.streakMap = {};
+    STUDY_STATE.learnedSet = new Set();
+    STUDY_STATE.pendingRating = false;
+    STUDY_STATE.pendingReset = new Set();
+    STUDY_STATE.targetN = (STUDY_META && Number(STUDY_META.target_n)) ? Number(STUDY_META.target_n) : null;
+
+    const qidToIndex = {};
+    questions.forEach((q, idx) => {
+        const id = parseInt(q.getAttribute('data-id') || '', 10);
+        if (Number.isFinite(id)) qidToIndex[id] = idx;
+    });
+
+    const streakMap = (STUDY_META && STUDY_META.streak_map) ? STUDY_META.streak_map : null;
+    if (streakMap && typeof streakMap === 'object') {
+        Object.keys(streakMap).forEach((qid) => {
+            const idx = qidToIndex[Number(qid)];
+            if (Number.isFinite(idx)) {
+                STUDY_STATE.streakMap[idx] = Number(streakMap[qid]) || 0;
+            }
+        });
+    }
+    updateStudyProgressTip();
+}
+
+function getStudyEvalCard(qEl){
+    return qEl ? qEl.querySelector('[data-study-eval]') : null;
+}
+
+function showStudyEval(qEl){
+    if (!qEl) return;
+    const card = getStudyEvalCard(qEl);
+    if (!card) return;
+    card.style.display = 'block';
+    card.dataset.mode = mode === 'review' ? 'review' : 'learn';
+
+    const streakEl = card.querySelector('[data-study-streak]');
+    if (streakEl) {
+        if (mode === 'learn') {
+            const idx = qEl.getAttribute('data-index');
+            const streak = Number(STUDY_STATE.streakMap[idx] || 0) || 0;
+            streakEl.textContent = `连续答对 ${streak}/${STUDY_STREAK_TARGET}`;
+            streakEl.style.display = '';
+        } else {
+            streakEl.style.display = 'none';
+        }
+    }
+}
+
+function hideStudyEval(qEl){
+    const card = getStudyEvalCard(qEl);
+    if (card) {
+        card.style.display = 'none';
+        card.removeAttribute('data-mode');
+    }
+}
+
+function setStudyEvalLocked(qEl, locked, labelText){
+    const card = getStudyEvalCard(qEl);
+    if (!card) return;
+    card.querySelectorAll('[data-study-rate]').forEach((btn) => {
+        btn.disabled = !!locked;
+        btn.classList.toggle('disabled', !!locked);
+    });
+    if (labelText) {
+        const tip = card.querySelector('[data-study-tip]');
+        if (tip) tip.textContent = labelText;
+    }
+}
+
+function setStudyNextDisabled(disabled){
+    const btnNext = document.getElementById('btn-next');
+    if (!btnNext) return;
+    btnNext.disabled = !!disabled;
+    btnNext.classList.toggle('disabled', !!disabled);
+}
+
+function scheduleStudyRepeat(index){
+    const count = Number(STUDY_STATE.repeatMap[index] || 0);
+    if (count >= STUDY_REPEAT_LIMIT) return false;
+    STUDY_STATE.repeatMap[index] = count + 1;
+    STUDY_STATE.queue.push(index);
+    STUDY_STATE.pendingReset.add(index);
+    return true;
+}
+
+function applyStudyListStatus(index, rating){
+    const li = document.getElementById(`list-item-${index}`);
+    if (!li) return;
+    li.classList.remove('done-correct', 'done-wrong', 'answered');
+    if (rating === 'correct' || rating === 'known') {
+        li.classList.add('done-correct');

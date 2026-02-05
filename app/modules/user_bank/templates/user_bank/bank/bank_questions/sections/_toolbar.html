@@ -1,0 +1,87 @@
+    <!-- 工具栏 -->
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <div class="dropdown">
+                <button class="btn-primary" onclick="toggleDropdown('add-menu')">新增题目</button>
+                <div id="add-menu" class="dropdown-menu add-menu">
+                    <button class="dropdown-item" onclick="openDrawer(); toggleDropdown('add-menu');">
+                        <span class="item-icon">➕</span>
+                        <span class="item-content">
+                            <span class="item-text">新增题目</span>
+                            <span class="item-desc">手动创建新题目</span>
+                        </span>
+                    </button>
+                    <button class="dropdown-item" onclick="openImportModal(); toggleDropdown('add-menu');">
+                        <span class="item-icon">📥</span>
+                        <span class="item-content">
+                            <span class="item-text">导入JSON</span>
+                            <span class="item-desc">从JSON文件或文本导入</span>
+                        </span>
+                    </button>
+                    <button class="dropdown-item" onclick="openImportExcelModal(); toggleDropdown('add-menu');">
+                        <span class="item-icon">📊</span>
+                        <span class="item-content">
+                            <span class="item-text">导入Excel</span>
+                            <span class="item-desc">从.xlsx文件导入</span>
+                        </span>
+                    </button>
+                    <button class="dropdown-item" onclick="openImportPackageModal(); toggleDropdown('add-menu');">
+                        <span class="item-icon">📦</span>
+                        <span class="item-content">
+                            <span class="item-text">导入题库包</span>
+                            <span class="item-desc">从ZIP文件导入</span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button class="btn-primary" onclick="toggleDropdown('export-menu')">导出题库</button>
+                <div id="export-menu" class="dropdown-menu add-menu">
+                    <button class="dropdown-item" onclick="exportExcel(); toggleDropdown('export-menu');">
+                        <span class="item-icon">📊</span>
+                        <span class="item-content">
+                            <span class="item-text">导出Excel</span>
+                            <span class="item-desc">导出为.xlsx格式</span>
+                        </span>
+                    </button>
+                    <button class="dropdown-item" onclick="exportPackage(); toggleDropdown('export-menu');">
+                        <span class="item-icon">📦</span>
+                        <span class="item-content">
+                            <span class="item-text">导出题库包</span>
+                            <span class="item-desc">导出为ZIP格式（含图片）</span>
+                        </span>
+                    </button>
+                    <button class="dropdown-item" onclick="exportQuestions(); toggleDropdown('export-menu');">
+                        <span class="item-icon">📄</span>
+                        <span class="item-content">
+                            <span class="item-text">导出JSON</span>
+                            <span class="item-desc">导出为JSON格式</span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button class="btn-outline" onclick="toggleDropdown('batch-menu')">批量操作</button>
+                <div id="batch-menu" class="dropdown-menu">
+                    <button class="btn" onclick="openBatchTypeChange()">修改题型</button>
+                    <button class="btn" onclick="openBatchDifficulty()">设置难度</button>
+                </div>
+            </div>
+        </div>
+        <div class="toolbar-right">
+            <button class="btn-danger" id="batchDeleteBtn" onclick="batchDeleteQuestions()" style="display: none;">批量删除</button>
+            <select id="typeFilter" onchange="loadQuestions()" title="题型筛选">
+                <option value="all">全部题型</option>
+                <option value="选择题">选择题</option>
+                <option value="多选题">多选题</option>
+                <option value="填空题">填空题</option>
+                <option value="判断题">判断题</option>
+                <option value="简答题">简答题</option>
+            </select>
+            <div class="search-box">
+                <span class="search-icon"></span>
+                <input type="text" id="searchInput" placeholder="搜索题干内容..." oninput="searchQuestions()">
+            </div>
+        </div>
+    </div>
+

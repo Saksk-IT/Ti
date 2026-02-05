@@ -1,0 +1,426 @@
+// ===== 题目编辑（管理员/科目管理员） =====
+function closeEditQuestionModal(e){
+    if (e) {
+        // 点击遮罩关闭
+        if (e.target && e.target.id !== 'editQuestionOverlay') return;
+    }
+    const ov = document.getElementById('editQuestionOverlay');
+    if (!ov) return;
+    if (ov.dataset && ov.dataset.saving === '1') return;
+    ov.style.display = 'none';
+}
+
+function getEditOptionKeysFromQuestion(qEl){
+    const keys = [];
+    try {
+        qEl.querySelectorAll('.options-container .option-card label[data-opt]').forEach(label => {
+            const k = (label.getAttribute('data-opt') || '').trim();
+            if (k && !keys.includes(k)) keys.push(k);
+        });
+        // 兜底：传统布局
+        if (!keys.length) {
+            qEl.querySelectorAll('.options.mc-options label[data-opt]').forEach(label => {
+                const k = (label.getAttribute('data-opt') || '').trim();
+                if (k && !keys.includes(k)) keys.push(k);
+            });
+        }
+    } catch(e) {}
+    return keys;
+}
+
+function buildEditOptionsText(qEl, keys){
+    try {
+        return (keys || []).map(k => {
+            const el =
+                qEl.querySelector(`.options-container label[data-opt="${k}"] [data-opt-text]`) ||
+                qEl.querySelector(`label[data-opt="${k}"] [data-opt-text]`);
+            const val = el ? ((el.innerText || el.textContent || '').trim()) : '';
+            return `${k}. ${val}`.trim();
+        }).join('\n');
+    } catch(e) {
+        return '';
+    }
+}
+
+function normalizeEditText(val){
+    return (val == null ? '' : String(val)).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+}
+
+function getEditOptionTextFromQuestion(qEl, key){
+    try {
+        const el =
+            qEl.querySelector(`.options-container label[data-opt="${key}"] [data-opt-text]`) ||
+            qEl.querySelector(`label[data-opt="${key}"] [data-opt-text]`);
+        return el ? normalizeEditText(el.textContent || '') : '';
+    } catch(e) {
+        return '';
+    }
+}
+
+function buildEditOptionsFromQuestion(qEl, keys){
+    const out = [];
+    try {
+        (keys || []).forEach(k => {
+            const key = String(k || '').trim();
+            out.push({ key, value: getEditOptionTextFromQuestion(qEl, key) });
+        });
+    } catch(e) {}
+    return out;
+}
+
+function handleTextareaTabIndent(e){
+    try {
+        if (!e || e.key !== 'Tab') return;
+        const ta = e.target;
+        if (!ta || typeof ta.value !== 'string') return;
+        e.preventDefault();
+
+        const value = ta.value;
+        const start = ta.selectionStart || 0;
+        const end = ta.selectionEnd || 0;
+
+        const lineStart = value.lastIndexOf('\n', start - 1) + 1;
+        const endIndex = (start === end)
+            ? end
+            : (end > 0 && value[end - 1] === '\n' ? end - 1 : end);
+        const nextLf = value.indexOf('\n', endIndex);
+        const blockEnd = (nextLf === -1) ? value.length : nextLf;
+
+        const block = value.slice(lineStart, blockEnd);
+        const lines = block.split('\n');
+        if (!lines.length) return;
+
+        if (!e.shiftKey) {
+            const newBlock = lines.map(l => '\t' + l).join('\n');
+            ta.value = value.slice(0, lineStart) + newBlock + value.slice(blockEnd);
+            const lineCount = lines.length;
+            ta.selectionStart = start + 1;
+            ta.selectionEnd = end + lineCount;
+            return;
+        }
+
+        let removedTotal = 0;
+        let removedFirst = 0;
+        const newLines = lines.map((l, idx) => {
+            let removed = 0;
+            if (l.startsWith('\t')) {
+                removed = 1;
+                l = l.slice(1);
+            } else if (l.startsWith('    ')) {
+                removed = 4;
+                l = l.slice(4);
+            } else if (l.startsWith('  ')) {
+                removed = 2;
+                l = l.slice(2);
+            }
+            removedTotal += removed;
+            if (idx === 0) removedFirst = removed;
+            return l;
+        });
+
+        const newBlock = newLines.join('\n');
+        ta.value = value.slice(0, lineStart) + newBlock + value.slice(blockEnd);
+        ta.selectionStart = Math.max(start - removedFirst, lineStart);
+        ta.selectionEnd = Math.max(end - removedTotal, ta.selectionStart);
+    } catch(err) {}
+}
+
+function renderEditOptionsList(options){
+    const listEl = document.getElementById('editQuestionOptionsList');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+
+    (options || []).forEach(opt => {
+        const key = opt && opt.key != null ? String(opt.key).trim() : '';
+        const value = opt && opt.value != null ? normalizeEditText(opt.value) : '';
+        if (!key) return;
+
+        const row = document.createElement('div');
+        row.className = 'modal-option-row';
+
+        const keyEl = document.createElement('div');
+        keyEl.className = 'modal-option-key';
+        keyEl.textContent = key;
+
+        const ta = document.createElement('textarea');
+        ta.className = 'modal-textarea mono modal-option-textarea';
+        ta.setAttribute('data-opt', key);
+        ta.placeholder = `${key}. 选项内容（支持多行）`;
+        ta.value = value;
+        const rows = Math.max(2, Math.min(10, (value ? value.split('\n').length : 2)));
+        ta.rows = rows;
+        ta.addEventListener('keydown', handleTextareaTabIndent);
+
+        row.appendChild(keyEl);
+        row.appendChild(ta);
+        listEl.appendChild(row);
+    });
+}
+
+function collectEditOptionsFromList(){
+    const listEl = document.getElementById('editQuestionOptionsList');
+    if (!listEl) return [];
+    const out = [];
+    try {
+        listEl.querySelectorAll('textarea[data-opt]').forEach(ta => {
+            const key = (ta.getAttribute('data-opt') || '').trim();
+            const value = normalizeEditText(ta.value || '');
+            if (!key) return;
+            out.push({ key, value });
+        });
+    } catch(e) {}
+    return out;
+}
+
+function setEditQuestionSaving(on){
+    const ov = document.getElementById('editQuestionOverlay');
+    if (ov && ov.dataset) ov.dataset.saving = on ? '1' : '0';
+    const btn = document.getElementById('editQuestionSaveBtn');
+    if (btn) {
+        btn.disabled = !!on;
+        btn.textContent = on ? '保存中...' : '保存';
+    }
+}
+
+function openEditQuestionModal(){
+    const ov = document.getElementById('editQuestionOverlay');
+    if (!ov) { showToast('编辑弹窗未加载'); return; }
+    const q = questions[currentIndex];
+    if (!q) { showToast('未找到当前题目'); return; }
+
+    const qid = (q.getAttribute('data-id') || '').toString().trim();
+    const qtype = (q.getAttribute('data-type') || '').toString().trim();
+    if (!qid) { showToast('题目ID获取失败'); return; }
+
+    ov.dataset.qid = qid;
+    ov.dataset.qtype = qtype;
+
+    const meta = document.getElementById('editQuestionMeta');
+    if (meta) meta.textContent = `ID: ${qid} · 题型: ${qtype} · 第 ${currentIndex + 1} 题 / ${totalQuestions}`;
+
+    const contentTa = document.getElementById('editQuestionContent');
+    if (contentTa) {
+        const el = q.querySelector('.question-layout-traditional .q-content') || q.querySelector('.q-content');
+        contentTa.value = el ? ((el.innerText || el.textContent || '').trim()) : '';
+    }
+
+    const ansInp = document.getElementById('editQuestionAnswer');
+    if (ansInp) ansInp.value = (q.getAttribute('data-answer') || '').toString();
+
+    const expTa = document.getElementById('editQuestionExplanation');
+    if (expTa) {
+        const el = q.querySelector('.quiz-card.card-explain .answer');
+        expTa.value = el ? ((el.innerText || el.textContent || '').toString()) : '';
+    }
+
+    const optWrap = document.getElementById('editQuestionOptionsWrap');
+    const optTa = document.getElementById('editQuestionOptions');
+    const optList = document.getElementById('editQuestionOptionsList');
+    if (optWrap) {
+        const show = (qtype === '选择题' || qtype === '多选题');
+        optWrap.style.display = show ? 'flex' : 'none';
+        if (show) {
+            const keys = getEditOptionKeysFromQuestion(q);
+            const safeKeys = keys && keys.length ? keys : ['A', 'B', 'C', 'D'];
+            ov.dataset.optionKeys = safeKeys.join(',');
+            renderEditOptionsList(buildEditOptionsFromQuestion(q, safeKeys));
+            if (optTa) optTa.value = buildEditOptionsText(q, safeKeys);
+            if (optList) optList.style.display = 'grid';
+            if (optTa) optTa.style.display = 'none';
+        } else {
+            ov.dataset.optionKeys = '';
+            if (optTa) optTa.value = '';
+            if (optList) optList.innerHTML = '';
+            if (optList) optList.style.display = 'none';
+            if (optTa) optTa.style.display = '';
+        }
+    }
+
+    setEditQuestionSaving(false);
+    ov.style.display = 'flex';
+}
+
+function parseOptionsTextForEdit(optionsText){
+    const lines = (optionsText || '').toString().split('\n').map(x => x.trim()).filter(Boolean);
+    const options = [];
+    for (const line of lines) {
+        const m = line.match(/^([A-Za-z0-9]{1,3})\s*[、.．:：]\s*(.+)$/);
+        if (m) {
+            const key = (m[1] || '').trim().slice(0, 1).toUpperCase();
+            const value = (m[2] || '').trim();
+            if (key || value) options.push({ key, value });
+            continue;
+        }
+        const first = line.slice(0, 1).toUpperCase();
+        if (first && 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.includes(first)) {
+            const rest = line.slice(1).replace(/^[\s:：.,、]+/, '').trim();
+            options.push({ key: first, value: rest || line });
+            continue;
+        }
+        options.push({ key: '', value: line });
+    }
+
+    // 补齐缺失 key（仅兜底）
+    if (options.some(x => !(x.key || '').trim())) {
+        const used = new Set(options.map(x => (x.key || '').trim().toUpperCase()).filter(Boolean));
+        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        let p = 0;
+        options.forEach(x => {
+            if ((x.key || '').trim()) return;
+            while (p < letters.length && used.has(letters[p])) p += 1;
+            const nextKey = letters[p] || '';
+            if (nextKey) {
+                x.key = nextKey;
+                used.add(nextKey);
+                p += 1;
+            }
+        });
+    }
+
+    return options;
+}
+
+function applyUpdatedQuestionToDom(qid, updated){
+    const qEl = document.querySelector(`.question-box[data-id="${qid}"]`);
+    if (!qEl) return;
+
+    try {
+        if (updated && typeof updated.q_type === 'string' && updated.q_type) {
+            qEl.setAttribute('data-type', updated.q_type);
+        }
+        if (updated && updated.answer != null) {
+            qEl.setAttribute('data-answer', String(updated.answer));
+        }
+        if (updated && updated.content != null) {
+            qEl.querySelectorAll('.q-content').forEach(el => { el.textContent = String(updated.content); });
+        }
+
+        // 更新选项文本（仅支持保持原有 A/B/C... 数量不变的编辑）
+        const qType = (updated && updated.q_type) ? updated.q_type : (qEl.getAttribute('data-type') || '');
+        if ((qType === '选择题' || qType === '多选题') && Array.isArray(updated && updated.options)) {
+            (updated.options || []).forEach(opt => {
+                const key = (opt && opt.key != null) ? String(opt.key).trim() : '';
+                const val = (opt && opt.value != null) ? String(opt.value) : '';
+                if (!key) return;
+                qEl.querySelectorAll(`label[data-opt="${key}"] [data-opt-text]`).forEach(span => {
+                    span.textContent = val;
+                });
+            });
+        }
+
+        // 题内答案/解析卡片（用于 dock 渲染）
+        const ansSpan = qEl.querySelector('.quiz-card.card-answer .answer.correct');
+        if (ansSpan) ansSpan.textContent = String((updated && updated.answer) || '');
+
+        const explainText = ((updated && updated.explanation) || '').toString();
+        let explainCard = qEl.querySelector('.quiz-card.card-explain');
+        if (explainText.trim()) {
+            if (!explainCard) {
+                const div = document.createElement('div');
+                div.className = 'quiz-card card-explain';
+                div.style.display = 'none';
+                div.innerHTML = `
+                    <div class="analysis-title">
+                        <span class="dot" aria-hidden="true"></span>
+                        <strong>解析</strong>
+                    </div>
+                    <p><span class="answer"></span></p>
+                `;
+                qEl.appendChild(div);
+                explainCard = div;
+            }
+            const exSpan = explainCard.querySelector('.answer');
+            if (exSpan) exSpan.textContent = explainText;
+        } else if (explainCard) {
+            explainCard.remove();
+        }
+
+        // 如果当前正在展示 dock，刷新内容
+        try { renderAnswerExplainFromQuestion(qEl); } catch(e) {}
+    } catch(e) {}
+}
+
+async function submitEditQuestion(){
+    const ov = document.getElementById('editQuestionOverlay');
+    if (!ov) return;
+    if (ov.dataset && ov.dataset.saving === '1') return;
+
+    const qid = Number((ov.dataset && ov.dataset.qid) ? ov.dataset.qid : 0);
+    const qtype = (ov.dataset && ov.dataset.qtype) ? ov.dataset.qtype : '';
+    if (!qid) { showToast('题目ID异常'); return; }
+
+    const contentTa = document.getElementById('editQuestionContent');
+    const content = contentTa ? (contentTa.value || '').toString().trim() : '';
+    if (!content) { showToast('题干不能为空'); return; }
+
+    const ansInp = document.getElementById('editQuestionAnswer');
+    const answer = ansInp ? (ansInp.value || '').toString().trim() : '';
+    const expTa = document.getElementById('editQuestionExplanation');
+    const explanation = expTa ? (expTa.value || '').toString() : '';
+
+    let options = undefined;
+    if (qtype === '选择题' || qtype === '多选题') {
+        let parsed = [];
+        const optList = document.getElementById('editQuestionOptionsList');
+        if (optList && optList.querySelector('textarea[data-opt]')) {
+            parsed = collectEditOptionsFromList();
+        } else {
+            const optTa = document.getElementById('editQuestionOptions');
+            const optionsText = optTa ? (optTa.value || '').toString() : '';
+            parsed = parseOptionsTextForEdit(optionsText);
+        }
+        if (!parsed.length) { showToast('请填写选项'); return; }
+        if (parsed.some(x => !String((x && x.value) || '').trim())) { showToast('选项内容不能为空'); return; }
+
+        // 为了避免重建 DOM，这里要求选项 key 集合保持不变（数量不变）
+        const allowedKeys = (ov.dataset && ov.dataset.optionKeys) ? ov.dataset.optionKeys.split(',').map(x => x.trim()).filter(Boolean) : [];
+        if (allowedKeys.length) {
+            const setA = new Set(allowedKeys);
+            const setB = new Set(parsed.map(x => (x.key || '').trim()).filter(Boolean));
+            let mismatch = (setA.size !== setB.size);
+            if (!mismatch) {
+                for (const k of setA) { if (!setB.has(k)) { mismatch = true; break; } }
+            }
+            if (mismatch) {
+                showToast('选项数量/标记需保持不变（可在题库管理中新增/删除选项）');
+                return;
+            }
+        }
+        options = parsed;
+    }
+
+    setEditQuestionSaving(true);
+    try {
+        const url = IS_USER_BANK ? `${getUserBankApiPrefix()}/questions/${qid}` : `/api/quiz/questions/${qid}`;
+        const res = await fetch(url, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content, q_type: qtype, options, answer, explanation })
+        });
+        const js = await res.json().catch(() => ({}));
+
+        if (IS_USER_BANK) {
+            const ok = res.ok && js && (Number(js.code) === 0 || js.status === 'success');
+            if (!ok) {
+                showToast((js && (js.message || js.msg)) || '保存失败');
+                setEditQuestionSaving(false);
+                return;
+            }
+            applyUpdatedQuestionToDom(qid, { q_type: qtype, content, options: options || [], answer, explanation });
+        } else {
+            if (!res.ok || !js || js.status !== 'success') {
+                showToast((js && js.message) || '保存失败');
+                setEditQuestionSaving(false);
+                return;
+            }
+            applyUpdatedQuestionToDom(qid, js.data);
+        }
+        setEditQuestionSaving(false);
+        showToast('已保存');
+        closeEditQuestionModal();
+    } catch(e) {
+        setEditQuestionSaving(false);
+        showToast('保存失败');
+    }
+}
+

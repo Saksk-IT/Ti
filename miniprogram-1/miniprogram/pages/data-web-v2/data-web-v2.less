@@ -1,0 +1,63 @@
+/* data-web-v2.less */
+page {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.page-root {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--app-bg);
+}
+
+.page-container {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.loading {
+  padding: 40rpx 24rpx;
+  color: var(--app-text-secondary);
+  font-size: 26rpx;
+}
+
+.error {
+  padding: 56rpx 24rpx;
+}
+
+.error-title {
+  font-size: 32rpx;
+  font-weight: 800;
+  color: var(--app-text);
+}
+
+.error-sub {
+  margin-top: 10rpx;
+  font-size: 26rpx;
+  color: var(--app-text-secondary);
+  line-height: 1.4;
+}
+
+.error-btn {
+  margin-top: 18rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 76rpx;
+  padding: 0 26rpx;
+  border-radius: 999px;
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface);
+  box-shadow: 0 10rpx 22rpx rgba(0, 0, 0, 0.05);
+  font-weight: 800;
+  color: var(--app-text);
+}
+
+.error-btn:active {
+  opacity: 0.92;
+  transform: scale(0.99);
+}
+

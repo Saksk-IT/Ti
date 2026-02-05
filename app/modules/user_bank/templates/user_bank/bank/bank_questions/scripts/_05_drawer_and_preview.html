@@ -1,0 +1,147 @@
+    function openDrawer(id = null) {
+        editingId = id;
+        document.getElementById('editingId').value = id || '';
+
+        if (id) {
+            document.getElementById('drawer-title').textContent = '修改题目';
+            const q = allQuestions.find(q => q.id === id);
+            if (q) {
+                document.getElementById('qType').value = q.q_type;
+                handleQuestionTypeChange();
+
+                document.getElementById('qDifficulty').value = q.difficulty || 3;
+                document.getElementById('qContent').value = q.content;
+
+                if (q.options) {
+                    try {
+                        const options = JSON.parse(q.options);
+                        setOptions(options);
+                    } catch(e) {
+                        const options = Array.isArray(q.options) ? q.options : [];
+                        setOptions(options);
+                    }
+                } else {
+                    setOptions([]);
+                }
+
+                const answerInput = document.getElementById('qAnswer');
+                if(answerInput) answerInput.value = q.answer || '';
+
+                document.getElementById('qExplanation').value = q.explanation || '';
+                updatePreview();
+            }
+        } else {
+            document.getElementById('drawer-title').textContent = '新增题目';
+            ['qDifficulty', 'qContent', 'qExplanation'].forEach(elId => document.getElementById(elId).value = '');
+            setOptions([]);
+            document.getElementById('qDifficulty').value = 3;
+            document.getElementById('qType').selectedIndex = 0;
+            handleQuestionTypeChange();
+            updatePreview();
+        }
+        document.getElementById('drawer').classList.add('open');
+        document.getElementById('drawerOverlay').classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeDrawer() {
+        document.getElementById('drawer').classList.remove('open');
+        document.getElementById('drawerOverlay').classList.remove('show');
+        document.body.style.overflow = '';
+        editingId = null;
+    }
+
+    async function saveQuestion() {
+        const id = document.getElementById('editingId').value;
+        const content = document.getElementById('qContent').value.trim();
+        const answerInput = document.getElementById('qAnswer');
+        const answer = answerInput ? answerInput.value.trim() : '';
+
+        if (!content) {
+            showToast('请输入题干内容', 'error');
+            return;
+        }
+        if (!answer) {
+            showToast('请输入答案', 'error');
+            return;
+        }
+
+        const options = getOptions();
+        const payload = {
+            q_type: document.getElementById('qType').value,
+            difficulty: parseInt(document.getElementById('qDifficulty').value) || 3,
+            content: content,
+            options: options,
+            answer: answer,
+            explanation: document.getElementById('qExplanation').value.trim()
+        };
+
+        try {
+            if (id) {
+                await api(`/user/banks/api/${bankId}/questions/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(payload)
+                });
+                showToast('题目修改成功');
+            } else {
+                await api(`/user/banks/api/${bankId}/questions`, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                showToast('题目添加成功');
+            }
+            closeDrawer();
+            loadQuestions();
+        } catch (error) {
+            console.error('保存题目失败:', error);
+            showToast(error.message || '保存失败，请稍后重试', 'error');
+        }
+    }
+
+    async function deleteQuestion(id) {
+        if (!confirmAction('确定要删除该题目吗？此操作不可恢复！')) return;
+
+        try {
+            await api(`/user/banks/api/${bankId}/questions/${id}`, { method: 'DELETE' });
+            showToast('题目删除成功');
+            loadQuestions();
+        } catch (error) {
+            console.error('删除题目失败:', error);
+            showToast(error.message || '删除失败', 'error');
+        }
+    }
+
+    async function batchDeleteQuestions() {
+        const ids = Array.from(document.querySelectorAll('.questionSelect:checked')).map(cb => cb.dataset.id);
+        if (!ids.length) {
+            showToast('请先选择要删除的题目', 'error');
+            return;
+        }
+
+        if (!confirmAction(`确定要删除选中的 ${ids.length} 道题目吗？此操作不可恢复！`)) return;
+
+        try {
+            await api(`/user/banks/api/${bankId}/questions/batch_delete`, {
+                method: 'POST',
+                body: JSON.stringify({ question_ids: ids.map(id => parseInt(id)) })
+            });
+            showToast(`成功删除 ${ids.length} 道题目`);
+            loadQuestions();
+        } catch (error) {
+            console.error('批量删除失败:', error);
+            showToast(error.message || '批量删除失败', 'error');
+        }
+    }
+
+    function updatePreview() {
+        document.getElementById('previewContent').innerHTML = (document.getElementById('qContent').value || '').replace(/\n/g, '<br>');
+        const opts = getOptions();
+        const optsHtml = opts.map((o, index) => {
+            const optionKey = String.fromCharCode(65 + index);
+            const optText = o.replace(/\n/g, '<br>');
+            return `<label><strong>${optionKey}.</strong> ${optText}</label>`;
+        }).join('');
+        document.getElementById('previewOptions').innerHTML = optsHtml;
+    }
+
+    // ======= 批量操作 =======

@@ -1,0 +1,67 @@
+{# Quiz feature sheet (replaces floating Fab menu) #}
+<div class="overlay modal-overlay" id="featureOverlay" style="z-index: 2200; display:none;" onclick="closeFeatureModal(event)">
+  <div class="card-container modal-panel feature-modal" role="dialog" aria-modal="true" aria-labelledby="featureModalTitle" onclick="event.stopPropagation()">
+    <div class="feature-modal-header">
+      <div>
+        <div class="feature-modal-title" id="featureModalTitle">设置</div>
+        <div class="feature-modal-subtitle">快捷功能</div>
+      </div>
+      <button class="feature-modal-close" type="button" onclick="closeFeatureModal()" aria-label="关闭">
+        <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="feature-list">
+      <div class="feature-item">
+        <div class="feature-text">
+          <div class="feature-title">答对自动切题</div>
+          <div class="feature-desc">答对后自动跳到下一题</div>
+        </div>
+        <label class="feature-switch" aria-label="答对自动切题">
+          <input type="checkbox" id="featureAutoNextSwitch" onchange="onFeatureAutoNextToggle(this.checked)">
+          <span class="feature-switch-slider" aria-hidden="true"></span>
+        </label>
+      </div>
+
+      <div class="feature-item">
+        <div class="feature-text">
+          <div class="feature-title">做错自动收藏</div>
+          <div class="feature-desc">自动加入收藏夹</div>
+        </div>
+        <label class="feature-switch" aria-label="做错自动收藏">
+          <input type="checkbox" id="featureAutoFavoriteSwitch" onchange="onFeatureAutoFavoriteToggle(this.checked)">
+          <span class="feature-switch-slider" aria-hidden="true"></span>
+        </label>
+      </div>
+
+      <div class="feature-item">
+        <div class="feature-text">
+          <div class="feature-title">主题风格</div>
+          <div class="feature-desc">全局配色风格</div>
+        </div>
+        <button type="button" class="feature-pill" id="featureThemeStyleBtn" onclick="onFeatureThemeStyleCycle()">默认</button>
+      </div>
+
+      <div class="feature-item">
+        <div class="feature-text">
+          <div class="feature-title">字体大小</div>
+          <div class="feature-desc">仅影响答题页字体</div>
+        </div>
+        <div class="feature-seg" role="group" aria-label="字体大小">
+          <button type="button" class="feature-seg-btn" data-size="sm" onclick="onFeatureFontSizeSelect('sm')">A-</button>
+          <button type="button" class="feature-seg-btn" data-size="md" onclick="onFeatureFontSizeSelect('md')">A</button>
+          <button type="button" class="feature-seg-btn" data-size="lg" onclick="onFeatureFontSizeSelect('lg')">A+</button>
+        </div>
+      </div>
+
+      <div class="feature-actions">
+        <button class="feature-action-btn" type="button" onclick="clearCurrentQuestionProgress(); closeFeatureModal();">清除本题进度</button>
+        <button class="feature-action-btn secondary" type="button" onclick="goToShortcutSettings()">更多设置</button>
+      </div>
+    </div>
+  </div>
+</div>
+

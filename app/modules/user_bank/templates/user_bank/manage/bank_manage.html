@@ -1,0 +1,50 @@
+{% extends "user_bank/manage/manage_base.html" %}
+
+{% set manage_tab = 'card' %}
+
+{% block manage_content %}
+  <section class="ubm-card" aria-label="内部名片">
+    <h2>内部名片</h2>
+    <div class="ubm-sub">用于题库创建者查看题库信息与状态（仅展示，不在此页操作）。</div>
+
+    <div class="ubm-grid" style="margin-top: 12px;">
+      <div class="ubm-stat">
+        <div class="k">题库ID</div>
+        <div class="v">{{ bank_id }}</div>
+      </div>
+      <div class="ubm-stat">
+        <div class="k">题目数</div>
+        <div class="v">{{ question_count }}</div>
+      </div>
+      <div class="ubm-stat">
+        <div class="k">分享数</div>
+        <div class="v">{{ share_count }}</div>
+      </div>
+      <div class="ubm-stat">
+        <div class="k">题库属性</div>
+        <div class="v">{{ '公开' if is_public else '私有' }}</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ubm-card" aria-label="描述">
+    <h2>描述</h2>
+    <div class="ubm-sub">公开状态的切换请在“设置 → 题库属性”中进行。</div>
+
+    <div class="ubm-field">
+      <div class="ubm-label">题库名称</div>
+      <div style="font-size: 15px; font-weight: 950; letter-spacing: -0.1px;">{{ bank_name }}</div>
+    </div>
+
+    <div class="ubm-field">
+      <div class="ubm-label">私人描述</div>
+      <div style="white-space: pre-wrap; line-height: 1.6;">{{ bank_description or '—' }}</div>
+    </div>
+
+    <div class="ubm-field">
+      <div class="ubm-label">公开描述</div>
+      <div style="white-space: pre-wrap; line-height: 1.6;">{{ public_description or '—' }}</div>
+    </div>
+  </section>
+{% endblock %}
+

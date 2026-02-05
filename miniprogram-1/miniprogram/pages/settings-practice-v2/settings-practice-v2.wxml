@@ -1,0 +1,59 @@
+<!-- settings-practice-v2.wxml - 对齐 Web /settings/practice（原生组件复刻） -->
+<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="设置" back="{{false}}" color="var(--app-nav-fg)" background="var(--app-bg)">
+    <view slot="left" class="nav-left">
+      <view class="icon-btn" bindtap="onHamburgerTap" aria-role="button" aria-label="打开侧边栏">
+        <view class="icon-hamburger"></view>
+      </view>
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+    <view slot="right" class="nav-right">
+      <view class="pill-btn" bindtap="onContinueLast" aria-role="button" aria-label="继续上次">
+        <text>继续上次</text>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <v2-drawer
+    open="{{drawerOpen}}"
+    themeStyle="{{themeStyle}}"
+    activeKey="settings"
+    bind:close="onDrawerClose"
+    bind:navigate="onDrawerNavigate"
+    bind:selectstyle="onDrawerSelectStyle"
+  />
+
+  <view class="page-container">
+    <scroll-view class="content-area" scroll-y bounces="{{false}}">
+      <view class="container">
+        <view class="card hero" aria-label="通用设置概览">
+          <text class="hero-title">通用</text>
+          <text class="hero-sub">通用设置与基础操作。</text>
+        </view>
+
+        <view class="card nav-card" aria-label="设置分区导航">
+          <view class="tabs">
+            <view class="tab {{navKey==='account' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="account"><text>账号管理</text></view>
+            <view class="tab {{navKey==='practice' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="practice"><text>通用</text></view>
+            <view class="tab {{navKey==='theme' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="theme"><text>主题</text></view>
+            <view class="tab {{navKey==='about' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="about"><text>关于</text></view>
+          </view>
+        </view>
+
+        <view class="msg" wx:if="{{msg}}">
+          <text>{{msg}}</text>
+        </view>
+
+        <view class="card section-card" aria-label="待开发">
+          <text class="section-title">待开发</text>
+          <text class="section-sub">该页面功能正在完善中，敬请期待。</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

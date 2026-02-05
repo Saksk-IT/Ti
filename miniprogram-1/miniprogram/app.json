@@ -1,0 +1,141 @@
+{
+  "pages": [
+    "pages/hub-v2/hub-v2",
+    "pages/index/index",
+    "pages/exams-select-v2/exams-select-v2",
+    "pages/public-bank-v2/public-bank-v2",
+    "pages/subject-data-global/subject-data-global",
+    "pages/subject-data-mistakes/subject-data-mistakes",
+    "pages/subject-data-favorites/subject-data-favorites",
+    "pages/my-banks-v2/my-banks-v2",
+    "pages/bank-add-v2/bank-add-v2",
+    "pages/search-v2/search-v2",
+    "pages/review-hub-v3/review-hub-v3",
+    "pages/mistakes-v2/mistakes-v2",
+    "pages/favorites-v2/favorites-v2",
+    "pages/tags-v2/tags-v2",
+    "pages/notifications-v2/notifications-v2",
+    "pages/coding-v2/coding-v2",
+    "pages/admin-v2/admin-v2",
+    "pages/settings-center-v2/settings-center-v2",
+    "pages/settings-account-profile-v2/settings-account-profile-v2",
+    "pages/settings-account-security-v2/settings-account-security-v2",
+    "pages/settings-account-bindings-v2/settings-account-bindings-v2",
+    "pages/settings-practice-v2/settings-practice-v2",
+    "pages/settings-theme-v2/settings-theme-v2",
+    "pages/settings-about-v2/settings-about-v2",
+    "pages/profile-view-v2/profile-view-v2",
+    "pages/subjects/subjects",
+    "pages/my-banks/my-banks",
+    "pages/mine/mine",
+    "pages/login/login",
+    "pages/dev-settings/dev-settings",
+    "pages/wechat-bind/wechat-bind",
+    "pages/web-login/web-login",
+    "pages/web-bind/web-bind",
+    "pages/web-frontend/web-frontend",
+    "pages/question-list/question-list",
+    "pages/practice/practice",
+    "pages/practice-setup/practice-setup",
+    "pages/subject-detail/subject-detail",
+    "pages/subject-stats/subject-stats",
+    "pages/search/search",
+    "pages/bank-join/bank-join",
+    "pages/exam-setup/exam-setup",
+    "pages/exam-run/exam-run",
+    "pages/exam-settlement/exam-settlement",
+    "pages/quiz-settlement/quiz-settlement",
+    "pages/bank-data-global/bank-data-global",
+    "pages/bank-data-mistakes/bank-data-mistakes",
+    "pages/bank-data-favorites/bank-data-favorites",
+    "pages/bank-share/bank-share",
+    "pages/bank-exam-setup/bank-exam-setup",
+    "pages/logs/logs"
+  ],
+  "subPackages": [
+    {
+      "root": "packages/data",
+      "pages": [
+        "pages/data-center-v2/data-center-v2",
+        "pages/data-global-v2/data-global-v2",
+        "pages/data-bank-v2/data-bank-v2",
+        "pages/data-mistakes-v2/data-mistakes-v2",
+        "pages/data-favorites-v2/data-favorites-v2",
+        "pages/data-tags-v2/data-tags-v2"
+      ]
+    },
+    {
+      "root": "pages/review-center-v2",
+      "pages": ["review-center-v2"]
+    },
+    {
+      "root": "pages/index-v2",
+      "pages": ["index-v2"]
+    },
+    {
+      "root": "pages/subject-detail-v2",
+      "pages": ["subject-detail-v2"]
+    },
+    {
+      "root": "pages/quiz",
+      "pages": ["quiz"]
+    },
+    {
+      "root": "pages/bank-detail",
+      "pages": ["bank-detail"]
+    }
+  ],
+  "window": {
+    "navigationStyle": "custom",
+    "backgroundColor": "@backgroundColor",
+    "backgroundTextStyle": "@backgroundTextStyle",
+    "navigationBarBackgroundColor": "@navigationBarBackgroundColor",
+    "navigationBarTextStyle": "@navigationBarTextStyle"
+  },
+  "tabBar": {
+    "color": "@tabBarColor",
+    "selectedColor": "@tabBarSelectedColor",
+    "borderStyle": "@tabBarBorderStyle",
+    "backgroundColor": "@tabBarBackgroundColor",
+    "list": [
+      {
+        "pagePath": "pages/hub-v2/hub-v2",
+        "iconPath": "images/tabbar/home.png",
+        "selectedIconPath": "images/tabbar/home-active.png",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/subjects/subjects",
+        "iconPath": "images/tabbar/subject.png",
+        "selectedIconPath": "images/tabbar/subject-active.png",
+        "text": "科目"
+      },
+      {
+        "pagePath": "pages/my-banks/my-banks",
+        "iconPath": "images/tabbar/practice.png",
+        "selectedIconPath": "images/tabbar/practice-active.png",
+        "text": "题库"
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "iconPath": "images/tabbar/mine.png",
+        "selectedIconPath": "images/tabbar/mine-active.png",
+        "text": "我的"
+      }
+    ]
+  },
+  "style": "v2",
+  "darkmode": true,
+  "themeLocation": "theme.json",
+  "rendererOptions": {
+    "skyline": {
+      "defaultDisplayBlock": true,
+      "disableABTest": true,
+      "sdkVersionBegin": "3.0.0",
+      "sdkVersionEnd": "15.255.255"
+    }
+  },
+  "componentFramework": "glass-easel",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

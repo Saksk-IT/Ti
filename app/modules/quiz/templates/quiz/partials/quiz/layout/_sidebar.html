@@ -1,0 +1,49 @@
+{# toast + sidebar + overlay #}
+<div id="toast">请先完成作答！</div>
+<div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-title-row">
+      <span>题目列表</span>
+      <span class="sidebar-close" onclick="toggleSidebar()" aria-label="关闭" role="button">
+        <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </span>
+    </div>
+
+    {% if mode != 'exam' %}
+      <div style="display: flex; gap: 8px; width: 100%;">
+        <script>
+          const params = new URLSearchParams(window.location.search);
+          if (params.get('shuffle_questions') === '1') {
+            document.write('<button class="btn-menu" style="flex:1;" onclick="reshuffle()">重排</button>');
+          }
+        </script>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="sidebar-content" id="question-list">
+    {% if questions|length == 0 %}
+      <div class="empty-state">
+        没有题目，请重新选择科目和题型。
+        <div style="margin-top:10px;">
+          <a class="btn-menu" href="/" style="text-decoration:none; padding:8px 12px; border:1px solid var(--border-color); border-radius:6px;">返回首页</a>
+        </div>
+      </div>
+    {% else %}
+      {% for q in questions %}
+        <div class="q-item" id="list-item-{{ loop.index0 }}" onclick="jumpTo({{ loop.index0 }})">
+          <span style="width:25px; font-size:12px; color:#999;">{{ loop.index }}</span>
+          <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex:1;">{{ q.content }}</span>
+          {% if mode == 'exam' %}
+            <span style="font-size:12px; color:#6610f2; margin-left:5px;">{{ q.score_val }}分</span>
+          {% endif %}
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+</div>

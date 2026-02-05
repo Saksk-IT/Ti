@@ -1,0 +1,107 @@
+// ===== 悬浮球功能提示横幅 =====
+function showFabHint() {
+    // 卡片布局已移除悬浮球：直接跳过该提示
+    if (document.body.classList.contains('quiz-layout-card')) {
+        closeCurrentHintAndShowNext();
+        return;
+    }
+    // 检查用户是否选择了"不再提示"
+    const dismissed = localStorage.getItem(FAB_HINT_DISMISSED_KEY);
+    if (dismissed === '1') {
+        closeCurrentHintAndShowNext(); // 尝试显示下一个
+        return;
+    }
+    
+    // 确保 DOM 已加载，重试机制
+    function tryShowHint(retries) {
+        retries = retries || 0;
+        const hint = document.getElementById('fabHint');
+        if (!hint) {
+            // 如果元素还不存在，最多重试10次（1秒）
+            if (retries < 10) {
+                setTimeout(() => tryShowHint(retries + 1), 100);
+            } else {
+                closeCurrentHintAndShowNext(); // 元素不存在，尝试显示下一个
+            }
+            return;
+        }
+        
+        // 显示提示
+        hint.style.display = 'flex';
+        hint.style.opacity = '0.9'; // 确保初始透明度正确
+        
+        // 5秒后自动淡出（但不关闭，用户仍可手动关闭）
+        setTimeout(() => {
+            if (hint && hint.style.display !== 'none') {
+                hint.style.opacity = '0.5';
+            }
+        }, 5000);
+    }
+    
+    tryShowHint();
+}
+
+// 关闭本次提示（不保存状态，下次仍会显示）
+function dismissFabHint() {
+    const hint = document.getElementById('fabHint');
+    if (hint) {
+        hint.style.display = 'none';
+        hint.style.opacity = '0';
+    }
+    // 临时关闭：标记为本次会话已关闭，清除当前提示ID，然后显示下一个
+    if (currentHintId === 'fabHint') {
+        temporarilyDismissedHints.add('fabHint');
+        currentHintId = null;
+        // 延迟显示下一个提示，避免视觉跳动
+        setTimeout(() => {
+            showNextHint();
+        }, 500);
+    }
+}
+
+// 不再提示（保存状态，下次不再显示）
+function dismissFabHintPermanently() {
+    const hint = document.getElementById('fabHint');
+    if (hint) {
+        hint.style.display = 'none';
+        hint.style.opacity = '0';
+        localStorage.setItem(FAB_HINT_DISMISSED_KEY, '1');
+    }
+    // 永久关闭：触发队列显示下一个提示
+    closeCurrentHintAndShowNext();
+}
+
+// 试试看：打开悬浮球菜单
+function tryFabHint() {
+    const fab = document.getElementById('quizFab');
+    const menu = document.getElementById('quizFabMenu');
+    
+    if (!fab || !menu) {
+        return;
+    }
+    
+    // 用户主动试用，说明已知悉功能，永久关闭提示（不会在下次访问时再显示）
+    dismissFabHintPermanently();
+    
+    // 延迟300ms打开悬浮球，让用户注意到过渡
+    setTimeout(() => {
+        // 如果悬浮球未打开，则打开它
+        if (!fabOpen) {
+            toggleFab(true);
+            
+            // 3秒后自动关闭（给用户足够时间查看菜单项）
+            setTimeout(() => {
+                if (fabOpen) {
+                    toggleFab(false);
+                    showToast('提示：再次点击悬浮球可打开菜单');
+                }
+            }, 3000);
+        }
+    }, 300);
+}
+
+// 全局函数，供HTML onclick调用
+window.dismissFabHint = dismissFabHint;
+window.dismissFabHintPermanently = dismissFabHintPermanently;
+window.tryFabHint = tryFabHint;
+

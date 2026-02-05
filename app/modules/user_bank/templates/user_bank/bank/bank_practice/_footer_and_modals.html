@@ -1,0 +1,37 @@
+        <footer class="footer">By: Saksk</footer>
+
+        <div class="qb-modal-overlay" id="tabOrderModal" aria-hidden="true">
+          <div class="qb-modal" role="dialog" aria-modal="true" aria-label="自定义排序">
+            <div class="qb-modal-head">
+              <div>
+                <div class="qb-modal-title">自定义排序</div>
+                <div class="qb-modal-sub">调整左侧功能顺序（支持移动端），会自动保存。</div>
+              </div>
+              <button class="qb-modal-x" type="button" onclick="closeTabOrderModal()" aria-label="关闭">×</button>
+            </div>
+            <div class="qb-modal-body" id="tabOrderList"></div>
+            <div class="qb-modal-foot">
+              <button type="button" class="pill" onclick="resetTabOrder()">重置</button>
+              <button type="button" class="pill primary" onclick="closeTabOrderModal()">完成</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="qb-modal-overlay" id="searchQuestionModal" aria-hidden="true">
+          <div class="qb-modal" role="dialog" aria-modal="true" aria-label="题目详情">
+            <div class="qb-modal-head">
+              <div>
+                <div class="qb-modal-title">题目详情</div>
+                <div class="qb-modal-sub" id="searchQuestionModalSub">点击搜索结果可查看题目详细信息。</div>
+              </div>
+              <button class="qb-modal-x" type="button" onclick="closeSearchQuestionModal()" aria-label="关闭">×</button>
+            </div>
+            <div class="qb-modal-body" id="searchQuestionModalBody"></div>
+            <div class="qb-modal-foot">
+              <button type="button" class="pill" onclick="closeSearchQuestionModal()">关闭</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>

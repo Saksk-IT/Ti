@@ -1,0 +1,102 @@
+{% extends "main/shared/app_shell.html" %}
+{% block title %}数据{% endblock %}
+{% block page_title %}数据{% endblock %}
+
+{% block head_extra %}
+  <link rel="stylesheet" href="/static/css/data_center.css" />
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+{% endblock %}
+
+{% block content %}
+  <div class="dc-shell">
+    <header class="dc-hero" aria-label="数据中心">
+      <div class="dc-hero-left" style="min-width:0;">
+        <h1>数据中心</h1>
+        <p>公共题库 + 个人题库的学习数据总览与分析。</p>
+      </div>
+      <div class="dc-hero-kpis" aria-label="关键指标">
+        <div class="dc-hero-pill">
+          <div class="k">已做题</div>
+          <div class="v mono">{{ all_summary.answered }}</div>
+        </div>
+        <div class="dc-hero-pill">
+          <div class="k">正确率</div>
+          <div class="v mono">{{ all_summary.accuracy }}%</div>
+        </div>
+        <div class="dc-hero-pill">
+          <div class="k">完成度</div>
+          <div class="v mono">{{ all_summary.completion }}%</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="dc-body">
+      <aside class="dc-basebar" aria-label="数据中心导航">
+        <nav class="dc-tabs" aria-label="模块">
+          <a class="dc-tab {{ 'active' if active_tab == 'overview' else '' }}" href="/data?days={{ window_days }}">概览</a>
+          <a class="dc-tab {{ 'active' if active_tab == 'banks' else '' }}" href="/data/banks?days={{ window_days }}">题库</a>
+          <a class="dc-tab {{ 'active' if active_tab == 'trend' else '' }}" href="/data/trend?days={{ window_days }}">趋势</a>
+          <a class="dc-tab {{ 'active' if active_tab == 'ai' else '' }}" href="/data/ai?days={{ window_days }}">AI助手</a>
+        </nav>
+
+        <div class="dc-basebar-actions" aria-label="趋势窗口">
+          {% set _p = request.path or '/data' %}
+          <div class="dc-window">
+            <a class="{{ 'active' if window_days == 7 else '' }}" href="{{ _p }}?days=7">7天</a>
+            <a class="{{ 'active' if window_days == 30 else '' }}" href="{{ _p }}?days=30">30天</a>
+            <a class="{{ 'active' if window_days == 90 else '' }}" href="{{ _p }}?days=90">90天</a>
+          </div>
+        </div>
+      </aside>
+
+      <div class="dc-content">
+        {% block data_content %}{% endblock %}
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.__DATA_CENTER__ = {{ {
+      "active_tab": active_tab,
+      "window_days": window_days,
+      "all_summary": all_summary,
+      "public_summary": {
+        "total_questions": total_questions,
+        "answered": answered_count,
+        "correct": correct_count,
+        "accuracy": accuracy,
+        "completion": completion,
+        "favorites": favorites_count,
+        "mistakes": mistakes_count,
+        "mistakes_times": mistakes_times,
+        "streak_days": streak_days,
+        "last_activity": last_activity,
+        "answered_7d": answered_7d,
+        "correct_7d": correct_7d,
+        "answered_30d": answered_30d,
+        "correct_30d": correct_30d,
+        "window_answered": window_answered,
+        "window_correct": window_correct,
+        "window_accuracy": window_accuracy
+      },
+      "bank_summary": bank_summary,
+      "daily": daily,
+      "bank_daily": bank_daily,
+      "all_daily": all_daily,
+      "subjects": subject_rows,
+      "types": type_rows,
+      "difficulty": difficulty_rows,
+      "weakness": weakness_rows,
+      "recent_mistakes": recent_mistakes,
+      "next_actions": next_actions,
+      "bank_rows": bank_rows,
+      "bank_categories": bank_category_rows,
+      "ability_radar": ability_radar,
+      "activity_hourly": activity_hourly,
+      "activity_heatmap": activity_heatmap
+    } | tojson }};
+  </script>
+  <script src="/static/js/data_center.js"></script>
+  {% block data_scripts %}{% endblock %}
+{% endblock %}
+

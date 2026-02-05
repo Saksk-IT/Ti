@@ -1,0 +1,105 @@
+{% extends "main/shared/app_shell.html" %}
+{% block title %}资源{% endblock %}
+{% block page_title %}资源{% endblock %}
+
+{% block head_extra %}
+  <style>
+    .res-hero { padding: 14px; }
+    .res-hero-row { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .res-title { font-size: 18px; font-weight: 950; letter-spacing: -0.2px; }
+    .res-sub { margin-top: 6px; color: var(--app-muted); font-size: 13px; line-height: 1.55; max-width: 56ch; }
+
+    .res-list { display: grid; gap: 12px; margin-top: 12px; }
+    .res-item { padding: 14px; }
+    .res-item-head { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+    .res-item-name { margin: 0; font-size: 15px; font-weight: 950; letter-spacing: -0.1px; overflow-wrap: anywhere; }
+    .res-item-meta { margin-top: 4px; color: var(--app-muted); font-size: 12px; line-height: 1.4; }
+    .res-item-desc { margin-top: 10px; color: var(--app-text); font-size: 13px; line-height: 1.65; }
+
+    .res-actions { display:flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+    .res-btn {
+      height: 38px;
+      border-radius: 999px;
+      border: 1px solid var(--app-border);
+      background: var(--app-surface);
+      box-shadow: var(--app-shadow-soft);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 12px;
+      transition: background 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+      font-weight: 900;
+      font-size: 13px;
+      color: var(--app-text);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .res-btn:hover { box-shadow: var(--app-shadow); transform: translateY(-1px); }
+    .res-btn:active { transform: translateY(0); }
+    .res-btn:focus { outline: none; box-shadow: 0 0 0 3px var(--app-primary-soft), var(--app-shadow-soft); }
+
+    .res-btn-primary {
+      border-color: color-mix(in srgb, var(--app-primary) 45%, var(--app-border));
+      background: color-mix(in srgb, var(--app-primary) 10%, var(--app-surface));
+    }
+    .res-btn-secondary { background: transparent; }
+    .res-icon { width: 18px; height: 18px; display: block; }
+
+    .res-footnote { margin-top: 12px; color: var(--app-muted); font-size: 12px; line-height: 1.55; }
+    .res-footnote code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid var(--app-border);
+      background: var(--app-surface);
+      color: var(--app-text);
+      white-space: nowrap;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="app-container">
+    <div class="app-card res-hero">
+      <div class="res-title">脚本资源</div>
+      <div class="res-footnote">下载后你可以直接在浏览器扩展中导入（例如 <code>Tampermonkey</code>），或按脚本说明运行。</div>
+    </div>
+
+    <div class="res-list">
+      {% for key, item in resources.items() %}
+        <div class="app-card res-item">
+          <div class="res-item-head">
+            <div style="min-width:0;">
+              <h2 class="res-item-name">{{ item.title }}{% if item.filename %}<span style="font-weight:800;opacity:.8;"> · {{ item.filename }}</span>{% endif %}</h2>
+              <div class="res-item-meta">类型：{{ item.kind }}</div>
+            </div>
+          </div>
+
+          <div class="res-item-desc">
+            {% if key == 'xuexitong' %}
+              用于学习通作业相关内容导出（以脚本能力为准）。
+            {% elif key == 'pta' %}
+              用于 PTA 题目导出（以脚本能力为准）。
+            {% else %}
+              常用脚本资源。
+            {% endif %}
+          </div>
+
+          <div class="res-actions">
+            <a class="res-btn res-btn-primary" href="/resources/download/{{ key }}" aria-label="下载 {{ item.filename }}" title="下载 {{ item.filename }}">
+              <svg class="res-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 3v10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="m8 11 4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M4 17v3h16v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              下载脚本
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}

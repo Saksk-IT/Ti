@@ -1,0 +1,173 @@
+    const tabOrderState = {
+      defaultOrder: [],
+      order: []
+    };
+
+    function getDomTabOrder(){
+      const wrap = document.querySelector('.basebar .tabs');
+      if (!wrap) return [];
+      return Array.from(wrap.querySelectorAll('.tab[data-tab]'))
+        .map((b) => (b && b.dataset ? (b.dataset.tab || '') : ''))
+        .map((s) => String(s || '').trim().toLowerCase())
+        .filter(Boolean);
+    }
+
+    function normalizeTabOrder(input, fallback){
+      const base = Array.isArray(fallback) ? fallback : [];
+      const out = [];
+      const seen = new Set();
+      (Array.isArray(input) ? input : []).forEach((k) => {
+        const key = String(k || '').trim().toLowerCase();
+        if (!VALID_DETAIL_TABS.has(key)) return;
+        if (seen.has(key)) return;
+        seen.add(key);
+        out.push(key);
+      });
+      base.forEach((k) => {
+        const key = String(k || '').trim().toLowerCase();
+        if (!VALID_DETAIL_TABS.has(key)) return;
+        if (seen.has(key)) return;
+        seen.add(key);
+        out.push(key);
+      });
+      return out;
+    }
+
+    function applyTabOrder(order){
+      const wrap = document.querySelector('.basebar .tabs');
+      if (!wrap) return;
+      const buttons = Array.from(wrap.querySelectorAll('.tab[data-tab]'));
+      const fixed = Array.from(wrap.children).filter((el) => !el.matches('.tab[data-tab]'));
+      const map = {};
+      buttons.forEach((b) => {
+        const k = String(b?.dataset?.tab || '').trim().toLowerCase();
+        if (!k) return;
+        map[k] = b;
+      });
+      const normalized = normalizeTabOrder(order, tabOrderState.defaultOrder);
+      const frag = document.createDocumentFragment();
+      normalized.forEach((k) => {
+        const el = map[k];
+        if (el) frag.appendChild(el);
+      });
+      buttons.forEach((b) => {
+        const k = String(b?.dataset?.tab || '').trim().toLowerCase();
+        if (!k) return;
+        if (normalized.includes(k)) return;
+        frag.appendChild(b);
+      });
+      fixed.forEach((el) => frag.appendChild(el));
+      wrap.appendChild(frag);
+      tabOrderState.order = normalized.slice();
+    }
+
+    function loadTabOrder(){
+      try {
+        const raw = localStorage.getItem(TAB_ORDER_KEY) || '';
+        const parsed = raw ? JSON.parse(raw) : null;
+        return normalizeTabOrder(parsed, tabOrderState.defaultOrder);
+      } catch (e) {
+        return tabOrderState.defaultOrder.slice();
+      }
+    }
+
+    function persistTabOrder(){
+      try { localStorage.setItem(TAB_ORDER_KEY, JSON.stringify(tabOrderState.order || [])); } catch (e) {}
+    }
+
+    function initTabOrder(){
+      tabOrderState.defaultOrder = getDomTabOrder();
+      tabOrderState.order = loadTabOrder();
+      applyTabOrder(tabOrderState.order);
+    }
+
+    function renderTabOrderList(){
+      const list = document.getElementById('tabOrderList');
+      if (!list) return;
+      const order = Array.isArray(tabOrderState.order) ? tabOrderState.order : [];
+      list.innerHTML = order.map((key, idx) => {
+        const label = escapeHtml(TAB_LABELS[key] || key);
+        const k = escapeHtml(key);
+        const upDisabled = idx <= 0 ? 'disabled' : '';
+        const downDisabled = idx >= order.length - 1 ? 'disabled' : '';
+        return `
+          <div class="qb-sort-item" data-key="${k}">
+            <div class="qb-sort-left">
+              <span class="qb-handle" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="3" cy="2" r="1" fill="currentColor"></circle>
+                  <circle cx="3" cy="6" r="1" fill="currentColor"></circle>
+                  <circle cx="3" cy="10" r="1" fill="currentColor"></circle>
+                  <circle cx="9" cy="2" r="1" fill="currentColor"></circle>
+                  <circle cx="9" cy="6" r="1" fill="currentColor"></circle>
+                  <circle cx="9" cy="10" r="1" fill="currentColor"></circle>
+                </svg>
+              </span>
+              <span class="qb-sort-label">${label}</span>
+            </div>
+            <div class="qb-sort-actions">
+              <button class="qb-mini-btn" type="button" data-act="up" ${upDisabled} aria-label="上移">↑</button>
+              <button class="qb-mini-btn" type="button" data-act="down" ${downDisabled} aria-label="下移">↓</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openTabOrderModal(){
+      const modal = document.getElementById('tabOrderModal');
+      if (!modal) return;
+      renderTabOrderList();
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeTabOrderModal(){
+      const modal = document.getElementById('tabOrderModal');
+      if (!modal) return;
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+
+    function moveTabOrder(key, delta){
+      const k = String(key || '').trim().toLowerCase();
+      if (!VALID_DETAIL_TABS.has(k)) return;
+      const order = Array.isArray(tabOrderState.order) ? tabOrderState.order : [];
+      const idx = order.indexOf(k);
+      if (idx < 0) return;
+      const next = idx + Number(delta || 0);
+      if (next < 0 || next >= order.length) return;
+      const copy = order.slice();
+      const [it] = copy.splice(idx, 1);
+      copy.splice(next, 0, it);
+      tabOrderState.order = copy;
+      applyTabOrder(copy);
+      persistTabOrder();
+      renderTabOrderList();
+    }
+
+    function resetTabOrder(){
+      tabOrderState.order = (tabOrderState.defaultOrder || []).slice();
+      applyTabOrder(tabOrderState.order);
+      persistTabOrder();
+      renderTabOrderList();
+    }
+
+    document.getElementById('tabOrderModal')?.addEventListener('click', (e) => {
+      if (e.target && e.target.id === 'tabOrderModal') closeTabOrderModal();
+    });
+    document.getElementById('tabOrderList')?.addEventListener('click', (e) => {
+      const btn = e.target && e.target.closest ? e.target.closest('button[data-act]') : null;
+      const item = e.target && e.target.closest ? e.target.closest('.qb-sort-item[data-key]') : null;
+      if (!btn || !item || btn.disabled) return;
+      const act = btn.getAttribute('data-act') || '';
+      const key = item.getAttribute('data-key') || '';
+      if (act === 'up') moveTabOrder(key, -1);
+      if (act === 'down') moveTabOrder(key, 1);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      const modal = document.getElementById('tabOrderModal');
+      if (modal && modal.classList.contains('show')) closeTabOrderModal();
+    });
+

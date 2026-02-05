@@ -1,0 +1,24 @@
+<!-- 导入题库包模态框 -->
+<div id="modalImportPackage" class="drawer" style="right:auto; left:50%; transform: translateX(-50%); width: 520px; height: auto; top: 20%; display:none;">
+    <div class="drawer-header">导入题库包</div>
+    <div class="drawer-body">
+        <div class="form-group">
+            <label>选择ZIP文件</label>
+            <input type="file" id="importPackageFile" accept=".zip">
+        </div>
+        <div class="form-group">
+            <small style="color: var(--text-sub); line-height: 1.6;">
+                ZIP文件格式要求：<br>
+                - 包含data.json文件（题目数据）<br>
+                - 可包含images文件夹（图片资源）<br>
+                - 推荐使用本系统导出的题库包
+            </small>
+        </div>
+        <div id="importPackageResult" style="margin-top: 12px;"></div>
+    </div>
+    <div class="drawer-footer">
+        <button class="btn-secondary" onclick="closeModal('modalImportPackage')">取消</button>
+        <button class="btn-primary" onclick="confirmImportPackage()">确认导入</button>
+    </div>
+</div>
+

@@ -1,0 +1,15 @@
+<!-- 批量设置难度模态框 -->
+<div id="modalDifficulty" class="drawer" style="right:auto; left:50%; transform: translateX(-50%); width: 420px; height:auto; top: 20%; display:none;">
+    <div class="drawer-header">批量设置难度</div>
+    <div class="drawer-body">
+        <div class="form-group">
+            <label>难度 (1-5)</label>
+            <input type="number" id="diffValue" min="1" max="5" value="3" title="难度">
+        </div>
+    </div>
+    <div class="drawer-footer">
+        <button class="btn-secondary" onclick="closeModal('modalDifficulty')">取消</button>
+        <button class="btn-primary" onclick="doBatchDifficulty()">确定</button>
+    </div>
+</div>
+

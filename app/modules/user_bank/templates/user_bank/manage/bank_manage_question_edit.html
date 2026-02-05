@@ -1,0 +1,813 @@
+{% extends "user_bank/manage/manage_base.html" %}
+
+{% set manage_tab = 'questions' %}
+{% set _mode = mode or 'add' %}
+
+{% block manage_head %}
+  <style>
+    .ubm-opt-list { display: grid; gap: 10px; margin-top: 10px; }
+    .ubm-opt-row { display: grid; grid-template-columns: 36px 1fr 40px; gap: 10px; align-items: flex-start; }
+    .ubm-opt-label {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      border: 1px solid var(--app-border);
+      background: var(--app-surface-2);
+      box-shadow: var(--app-shadow-soft);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 950;
+      color: var(--app-text);
+      font-variant-numeric: tabular-nums;
+    }
+    .ubm-icon-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: 1px solid var(--app-border);
+      background: var(--app-surface);
+      box-shadow: var(--app-shadow-soft);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 950;
+      color: var(--app-text);
+      transition: background 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+    }
+    .ubm-icon-btn:hover { box-shadow: var(--app-shadow); transform: translateY(-1px); }
+    .ubm-icon-btn:active { transform: translateY(0); }
+    .ubm-icon-btn.danger {
+      border-color: color-mix(in srgb, #ef4444 40%, var(--app-border));
+      background: color-mix(in srgb, #ef4444 10%, var(--app-surface));
+    }
+
+    .ubm-textarea-sm {
+      height: auto;
+      min-height: 60px;
+      padding: 10px 12px;
+      resize: vertical;
+      line-height: 1.5;
+      font-family: inherit;
+    }
+
+    .ubm-textarea-lg {
+      height: auto;
+      min-height: 160px;
+      line-height: 1.6;
+      font-family: inherit;
+    }
+
+    /* 动态渲染的答案输入区：默认 textarea/select 是 inline-block，会出现“很窄一块”的问题 */
+    #ubmAnswerWrap > .ubm-input,
+    #ubmAnswerWrap > .ubm-select,
+    #ubmAnswerWrap > textarea,
+    #ubmAnswerWrap > input,
+    #ubmAnswerWrap > select {
+      width: 100%;
+      box-sizing: border-box;
+      display: block;
+    }
+
+    .ubm-btn-sm {
+      height: 32px;
+      padding: 0 12px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+
+    .ubm-inline-btn {
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 1px solid var(--app-border);
+      background: color-mix(in srgb, var(--app-surface) 78%, transparent);
+      box-shadow: var(--app-shadow-soft);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-weight: 900;
+      font-size: 12px;
+      color: var(--app-text);
+      transition: background 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+      white-space: nowrap;
+    }
+    .ubm-inline-btn:hover { box-shadow: var(--app-shadow); transform: translateY(-1px); }
+    .ubm-inline-btn:active { transform: translateY(0); }
+
+    .ubm-blank-editor {
+      margin-top: 8px;
+      border: 1px solid var(--app-border);
+      border-radius: 16px;
+      background: var(--app-surface);
+      box-shadow: var(--app-shadow-soft);
+      padding: 12px;
+    }
+    .ubm-blank-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .ubm-blank-title { font-weight: 950; font-size: 13px; letter-spacing: -0.1px; color: var(--app-text); }
+    .ubm-blank-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .ubm-blank-groups { display: grid; gap: 10px; }
+    .ubm-blank-group {
+      border: 1px solid var(--app-border);
+      border-radius: 14px;
+      background: var(--app-surface-2);
+      box-shadow: var(--app-shadow-soft);
+      padding: 10px;
+    }
+    .ubm-blank-group-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+    .ubm-blank-group-name { font-weight: 950; font-size: 13px; color: var(--app-text); }
+    .ubm-blank-opt-list { display: grid; gap: 8px; }
+    .ubm-blank-opt-row { display: flex; gap: 10px; align-items: center; }
+    .ubm-blank-opt-row .ubm-input { flex: 1 1 auto; }
+
+    .ubm-blank-raw { margin-top: 10px; }
+    .ubm-blank-raw-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+    .ubm-blank-raw-title { font-weight: 950; font-size: 13px; color: var(--app-text); }
+
+    @media (max-width: 640px) {
+      .ubm-opt-row { grid-template-columns: 32px 1fr 38px; gap: 8px; }
+      .ubm-opt-label { width: 32px; height: 32px; border-radius: 10px; }
+      .ubm-icon-btn { width: 38px; height: 38px; border-radius: 10px; }
+      .ubm-textarea-sm { min-height: 56px; }
+    }
+  </style>
+{% endblock %}
+
+{% block manage_content %}
+  <section class="ubm-card" aria-label="题目编辑">
+    <h2>{{ '添加题目' if _mode == 'add' else '编辑题目' }}</h2>
+    <div class="ubm-sub">提示：仅“自建题目”允许编辑；复制/导入来源的题目如需修改，请删除后重新添加。</div>
+
+    <form id="ubmQuestionForm">
+      <div class="ubm-field">
+        <div class="ubm-label">题型 *</div>
+        <select class="ubm-select" id="ubmQType" required title="选择题型">
+          <option value="选择题">选择题</option>
+          <option value="多选题">多选题</option>
+          <option value="判断题">判断题</option>
+          <option value="填空题">填空题</option>
+          <option value="简答题">简答题</option>
+          <option value="计算题">计算题</option>
+        </select>
+      </div>
+
+      <div class="ubm-field">
+        <div class="ubm-label">题干 *</div>
+        <textarea class="ubm-input ubm-textarea" id="ubmContent" placeholder="请输入题目内容" required></textarea>
+        <div class="ubm-sub" id="ubmFillContentHint" style="display:none;">
+          <span>填空题提示：用 <b>__</b> 表示一个空位（双下划线），当前检测到 <b id="ubmBlankCount">1</b> 个空位。</span>
+          <button type="button" class="ubm-inline-btn" id="ubmInsertBlankBtn">+ 插入空位</button>
+        </div>
+      </div>
+
+      <div class="ubm-field" id="ubmOptionsGroup">
+        <div class="ubm-label">选项（选择题/多选题，支持多行）</div>
+        <div class="ubm-opt-list" id="ubmOptionsList"></div>
+        <div class="ubm-actions">
+          <button class="ubm-btn" type="button" id="ubmAddOptionBtn">添加选项</button>
+        </div>
+      </div>
+
+      <div class="ubm-field">
+        <div class="ubm-label">答案 *</div>
+        <div id="ubmAnswerWrap"></div>
+        <div class="ubm-sub" id="ubmAnswerHint" style="margin-top: 6px;"></div>
+      </div>
+
+      <div class="ubm-field">
+        <div class="ubm-label">解析</div>
+        <textarea class="ubm-input ubm-textarea" id="ubmExplanation" placeholder="请输入答案解析（可选）"></textarea>
+      </div>
+
+      <div class="ubm-field">
+        <div class="ubm-label">难度</div>
+        <select class="ubm-select" id="ubmDifficulty" title="选择难度">
+          <option value="1">★☆☆☆☆ 简单</option>
+          <option value="2">★★☆☆☆ 较易</option>
+          <option value="3" selected>★★★☆☆ 中等</option>
+          <option value="4">★★★★☆ 较难</option>
+          <option value="5">★★★★★ 困难</option>
+        </select>
+      </div>
+
+      <div class="ubm-actions">
+        <button class="ubm-btn ubm-btn-primary" type="submit" id="ubmSaveBtn">{{ '添加' if _mode == 'add' else '保存' }}</button>
+        <a class="ubm-btn ubm-btn-ghost" href="/user/banks/{{ bank_id }}">返回题目管理</a>
+      </div>
+
+      <div class="ubm-sub" id="ubmFormHint" style="margin-top: 8px;"></div>
+    </form>
+  </section>
+{% endblock %}
+
+{% block manage_scripts %}
+  <script>
+    (function () {
+      const mode = {{ _mode|tojson }};
+      const bankId = {{ bank_id|tojson }};
+      const questionId = {{ (question_id if question_id is defined and question_id else None)|tojson }};
+
+      const form = document.getElementById('ubmQuestionForm');
+      const qTypeEl = document.getElementById('ubmQType');
+      const contentEl = document.getElementById('ubmContent');
+      const answerWrapEl = document.getElementById('ubmAnswerWrap');
+      const answerHintEl = document.getElementById('ubmAnswerHint');
+      const explanationEl = document.getElementById('ubmExplanation');
+      const difficultyEl = document.getElementById('ubmDifficulty');
+      const optionsGroup = document.getElementById('ubmOptionsGroup');
+      const optionsListEl = document.getElementById('ubmOptionsList');
+      const addOptionBtn = document.getElementById('ubmAddOptionBtn');
+      const hintEl = document.getElementById('ubmFormHint');
+      const saveBtn = document.getElementById('ubmSaveBtn');
+
+      const fillContentHintEl = document.getElementById('ubmFillContentHint');
+      const blankCountEl = document.getElementById('ubmBlankCount');
+      const insertBlankBtn = document.getElementById('ubmInsertBlankBtn');
+
+      let answerEl = null;
+      let options = ['', '', '', ''];
+      let blankEditorTimer = null;
+
+      function setHint(text, kind) {
+        if (!hintEl) return;
+        hintEl.textContent = String(text || '');
+        hintEl.style.color = (kind === 'error') ? 'color-mix(in srgb, #ef4444 70%, var(--app-text))' : 'var(--app-muted)';
+      }
+
+      function setAnswerHint(text) {
+        if (!answerHintEl) return;
+        answerHintEl.innerHTML = text ? String(text) : '';
+      }
+
+      function optionLabel(i) {
+        return String.fromCharCode(65 + i);
+      }
+
+      function renderOptions() {
+        if (!optionsListEl) return;
+        optionsListEl.innerHTML = '';
+        options.forEach((val, idx) => {
+          const row = document.createElement('div');
+          row.className = 'ubm-opt-row';
+
+          const lab = document.createElement('div');
+          lab.className = 'ubm-opt-label';
+          lab.textContent = optionLabel(idx);
+
+          const textarea = document.createElement('textarea');
+          textarea.className = 'ubm-input ubm-textarea-sm';
+          textarea.rows = 2;
+          textarea.value = String(val || '');
+          textarea.placeholder = `选项 ${optionLabel(idx)} 内容（支持多行）`;
+          textarea.addEventListener('input', () => { options[idx] = textarea.value; });
+
+          const del = document.createElement('button');
+          del.className = 'ubm-icon-btn danger';
+          del.type = 'button';
+          del.textContent = '－';
+          del.title = '删除选项';
+          del.disabled = options.length <= 2;
+          del.addEventListener('click', () => {
+            if (options.length <= 2) return;
+            options.splice(idx, 1);
+            renderOptions();
+          });
+
+          row.appendChild(lab);
+          row.appendChild(textarea);
+          row.appendChild(del);
+          optionsListEl.appendChild(row);
+        });
+      }
+
+      function normalizeChoiceAnswer(raw, qt) {
+        const s = String(raw || '');
+        const letters = s.replace(/[^A-Za-z]/g, '').toUpperCase();
+        if (qt === '选择题') return (letters[0] || '').toUpperCase();
+        if (qt === '多选题') {
+          const uniq = Array.from(new Set(letters.split(''))).sort();
+          return uniq.join('');
+        }
+        return letters;
+      }
+
+      function normalizeJudgeAnswer(raw) {
+        const v = String(raw || '').trim().toLowerCase();
+        if (['正确', '对', 'true', 't', '1', 'yes', 'y', '是', 'a'].includes(v)) return '正确';
+        if (['错误', '错', 'false', 'f', '0', 'no', 'n', '否', 'b'].includes(v)) return '错误';
+        return String(raw || '').trim();
+      }
+
+      function normalizeFillBlankAnswer(raw) {
+        return String(raw || '').trim().replace(/；；/g, ';;').replace(/；/g, ';');
+      }
+
+      function countBlanksFromContent(content) {
+        try {
+          const c = String(content || '');
+          const n = (c.match(/__/g) || []).length;
+          return Math.max(1, n);
+        } catch (e) {
+          return 1;
+        }
+      }
+
+      function updateFillContentHintVisibility() {
+        const qt = String(qTypeEl?.value || '');
+        const show = qt === '填空题';
+        if (!fillContentHintEl) return;
+        fillContentHintEl.style.display = show ? 'flex' : 'none';
+        fillContentHintEl.style.gap = '10px';
+        fillContentHintEl.style.alignItems = 'center';
+        fillContentHintEl.style.flexWrap = 'wrap';
+        if (show && blankCountEl) blankCountEl.textContent = String(countBlanksFromContent(contentEl?.value || ''));
+      }
+
+      function insertAtCursor(textarea, text) {
+        if (!textarea) return;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const v = textarea.value || '';
+        textarea.value = v.slice(0, start) + text + v.slice(end);
+        const nextPos = start + text.length;
+        textarea.selectionStart = textarea.selectionEnd = nextPos;
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        textarea.focus();
+      }
+
+      // =============================
+      // 填空题结构化答案编辑器
+      // 约定：不同空用 ";;" 分隔；同一空多答案用 ";" 分隔
+      // =============================
+
+      function blankEditorParseAnswer(answerStr) {
+        const s = normalizeFillBlankAnswer(answerStr);
+        if (!s) return [];
+        return s.split(';;').map(group => {
+          const g = String(group || '').trim();
+          if (!g) return [''];
+          const arr = g.split(';').map(x => String(x || '').trim()).filter(Boolean);
+          return arr.length ? arr : [''];
+        });
+      }
+
+      function blankEditorSerialize(groups) {
+        const safeGroups = (groups || []).map(opts => {
+          const cleaned = (opts || []).map(x => String(x || '').trim()).filter(Boolean);
+          return cleaned.join(';');
+        });
+        return safeGroups.join(';;');
+      }
+
+      function blankEditorGetGroupsFromDOM() {
+        const wrap = document.getElementById('ubmBlankGroups');
+        if (!wrap) return [];
+        const groups = [];
+        wrap.querySelectorAll('[data-blank-group]').forEach(groupEl => {
+          const opts = [];
+          groupEl.querySelectorAll('input[data-blank-opt]').forEach(inp => {
+            opts.push(String(inp.value || '').trim());
+          });
+          groups.push(opts);
+        });
+        return groups;
+      }
+
+      function blankEditorSyncHiddenAnswer() {
+        if (!answerEl) return;
+        const rawBox = document.getElementById('ubmBlankRaw');
+        const isRaw = rawBox && rawBox.style.display !== 'none';
+        if (isRaw) {
+          const rawInput = document.getElementById('ubmBlankRawInput');
+          answerEl.value = rawInput ? normalizeFillBlankAnswer(rawInput.value) : '';
+          return;
+        }
+        const groups = blankEditorGetGroupsFromDOM();
+        answerEl.value = blankEditorSerialize(groups);
+      }
+
+      function blankEditorCreateOptRow(val) {
+        const row = document.createElement('div');
+        row.className = 'ubm-blank-opt-row';
+
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.className = 'ubm-input';
+        inp.setAttribute('data-blank-opt', '1');
+        inp.value = String(val || '');
+        inp.placeholder = '可接受答案（例如：北京）';
+        inp.addEventListener('input', blankEditorSyncHiddenAnswer);
+
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'ubm-btn ubm-btn-ghost ubm-btn-sm';
+        del.textContent = '删除';
+        del.addEventListener('click', () => {
+          const parent = row.parentElement;
+          row.remove();
+          if (parent && parent.querySelectorAll('input[data-blank-opt]').length === 0) {
+            parent.appendChild(blankEditorCreateOptRow(''));
+          }
+          blankEditorSyncHiddenAnswer();
+        });
+
+        row.appendChild(inp);
+        row.appendChild(del);
+        return row;
+      }
+
+      function blankEditorRender(groups) {
+        const wrap = document.getElementById('ubmBlankGroups');
+        if (!wrap) return;
+        wrap.innerHTML = '';
+
+        (groups || []).forEach((opts, idx) => {
+          const group = document.createElement('div');
+          group.className = 'ubm-blank-group';
+          group.setAttribute('data-blank-group', '1');
+
+          const head = document.createElement('div');
+          head.className = 'ubm-blank-group-head';
+          head.innerHTML = `
+            <div class="ubm-blank-group-name">空 ${idx + 1}</div>
+            <div class="ubm-blank-actions">
+              <button type="button" class="ubm-btn ubm-btn-ghost ubm-btn-sm" data-add-opt>+ 增加答案</button>
+              <button type="button" class="ubm-btn ubm-btn-danger ubm-btn-sm" data-del-blank>删除此空</button>
+            </div>
+          `;
+
+          const list = document.createElement('div');
+          list.className = 'ubm-blank-opt-list';
+          const normOpts = (opts && opts.length) ? opts : [''];
+          normOpts.forEach((v) => list.appendChild(blankEditorCreateOptRow(v)));
+
+          group.appendChild(head);
+          group.appendChild(list);
+          wrap.appendChild(group);
+
+          head.querySelector('[data-add-opt]')?.addEventListener('click', () => {
+            list.appendChild(blankEditorCreateOptRow(''));
+            blankEditorSyncHiddenAnswer();
+          });
+
+          head.querySelector('[data-del-blank]')?.addEventListener('click', () => {
+            const all = wrap.querySelectorAll('[data-blank-group]');
+            if (all.length <= 1) return;
+            group.remove();
+
+            // 重新编号：重建一遍 groups（保持顺序）
+            const current = blankEditorGetGroupsFromDOM();
+            blankEditorRender(current);
+            blankEditorSyncHiddenAnswer();
+          });
+        });
+      }
+
+      function blankEditorInitFromContentAndAnswer(content, answerStr) {
+        const blankCount = countBlanksFromContent(content);
+        const parsed = blankEditorParseAnswer(answerStr);
+
+        const groups = [];
+        for (let i = 0; i < blankCount; i++) {
+          groups.push(parsed[i] ? parsed[i] : ['']);
+        }
+
+        blankEditorRender(groups);
+
+        const rawInput = document.getElementById('ubmBlankRawInput');
+        if (rawInput) {
+          rawInput.value = blankEditorSerialize(groups);
+          rawInput.addEventListener('input', () => {
+            blankEditorSyncHiddenAnswer();
+          });
+        }
+
+        blankEditorSyncHiddenAnswer();
+      }
+
+      function blankEditorAddBlank() {
+        const groups = blankEditorGetGroupsFromDOM();
+        groups.push(['']);
+        blankEditorRender(groups);
+
+        const rawInput = document.getElementById('ubmBlankRawInput');
+        if (rawInput) rawInput.value = blankEditorSerialize(groups);
+        blankEditorSyncHiddenAnswer();
+      }
+
+      function blankEditorToggleRaw(toRaw) {
+        const rawBox = document.getElementById('ubmBlankRaw');
+        const rawInput = document.getElementById('ubmBlankRawInput');
+        const wrap = document.getElementById('ubmBlankGroups');
+        if (!rawBox || !wrap) return;
+
+        if (toRaw) {
+          const groups = blankEditorGetGroupsFromDOM();
+          if (rawInput) rawInput.value = blankEditorSerialize(groups);
+          rawBox.style.display = 'block';
+          wrap.style.display = 'none';
+        } else {
+          const parsed = blankEditorParseAnswer(rawInput ? rawInput.value : '');
+          const blankCount = countBlanksFromContent(contentEl?.value || '');
+          const groups = [];
+          for (let i = 0; i < blankCount; i++) groups.push(parsed[i] ? parsed[i] : ['']);
+          rawBox.style.display = 'none';
+          wrap.style.display = 'grid';
+          blankEditorRender(groups);
+        }
+        blankEditorSyncHiddenAnswer();
+      }
+
+      function blankEditorOnContentChanged() {
+        const qt = String(qTypeEl?.value || '');
+        if (qt !== '填空题') return;
+        if (!answerWrapEl) return;
+
+        // raw 模式下不重建结构化（避免打断用户）
+        const rawBox = document.getElementById('ubmBlankRaw');
+        const isRaw = rawBox && rawBox.style.display !== 'none';
+        if (isRaw) {
+          blankEditorSyncHiddenAnswer();
+          return;
+        }
+
+        const blankCount = countBlanksFromContent(contentEl?.value || '');
+        const current = blankEditorGetGroupsFromDOM();
+        const groups = [];
+        for (let i = 0; i < blankCount; i++) groups.push(current[i] ? current[i] : ['']);
+        blankEditorRender(groups);
+
+        const rawInput = document.getElementById('ubmBlankRawInput');
+        if (rawInput) rawInput.value = blankEditorSerialize(groups);
+        blankEditorSyncHiddenAnswer();
+      }
+
+      function normalizeQTypeForUi(qt) {
+        return String(qt || '').trim();
+      }
+
+      function rebuildAnswerInput(defaultValue = '') {
+        if (!answerWrapEl) return;
+        const qt = normalizeQTypeForUi(qTypeEl?.value);
+        answerWrapEl.innerHTML = '';
+        answerEl = null;
+
+        if (qt === '判断题') {
+          const sel = document.createElement('select');
+          sel.className = 'ubm-select';
+          sel.id = 'ubmAnswer';
+          sel.title = '答案';
+          sel.add(new Option('对', '正确'));
+          sel.add(new Option('错', '错误'));
+          sel.value = normalizeJudgeAnswer(defaultValue) || '正确';
+          answerWrapEl.appendChild(sel);
+          answerEl = sel;
+          setAnswerHint('判断题：直接选择 <b>对</b> / <b>错</b>（系统保存为“正确/错误”）。');
+          return;
+        }
+
+        if (qt === '简答题' || qt === '计算题') {
+          const ta = document.createElement('textarea');
+          ta.className = 'ubm-input ubm-textarea ubm-textarea-lg';
+          ta.id = 'ubmAnswer';
+          ta.rows = 10;
+          ta.placeholder = '请输入详细答案（支持多行）';
+          ta.value = String(defaultValue || '');
+          answerWrapEl.appendChild(ta);
+          answerEl = ta;
+          setAnswerHint('简答题/计算题：答案支持多行输入。');
+          return;
+        }
+
+        if (qt === '填空题') {
+          const editor = document.createElement('div');
+          editor.className = 'ubm-blank-editor';
+          editor.innerHTML = `
+            <div class="ubm-blank-head">
+              <div style="min-width:0;">
+                <div class="ubm-blank-title">结构化答案（推荐）</div>
+                <div class="ubm-sub" style="margin-top:4px;">规则：不同空用 <b>;;</b> 分隔；同一空多答案用 <b>;</b> 分隔。</div>
+              </div>
+              <div class="ubm-blank-actions">
+                <button type="button" class="ubm-btn ubm-btn-ghost ubm-btn-sm" id="ubmBlankAddBlankBtn">+ 增加一空</button>
+                <button type="button" class="ubm-btn ubm-btn-ghost ubm-btn-sm" id="ubmBlankToggleRawBtn">手写模式</button>
+              </div>
+            </div>
+
+            <div class="ubm-blank-groups" id="ubmBlankGroups"></div>
+
+            <div class="ubm-blank-raw" id="ubmBlankRaw" style="display:none;">
+              <div class="ubm-blank-raw-head">
+                <div class="ubm-blank-raw-title">手写答案</div>
+                <button type="button" class="ubm-btn ubm-btn-ghost ubm-btn-sm" id="ubmBlankToggleStructuredBtn">返回结构化</button>
+              </div>
+              <input class="ubm-input" id="ubmBlankRawInput" type="text" placeholder="例如：北京;北平;;上海;沪" />
+              <div class="ubm-sub" style="margin-top:6px;">提示：切回结构化会尝试自动解析。</div>
+            </div>
+
+            <input id="ubmAnswer" type="hidden" value="" />
+          `;
+          answerWrapEl.appendChild(editor);
+          answerEl = editor.querySelector('#ubmAnswer');
+
+          blankEditorInitFromContentAndAnswer(contentEl?.value || '', defaultValue);
+
+          editor.querySelector('#ubmBlankAddBlankBtn')?.addEventListener('click', blankEditorAddBlank);
+          editor.querySelector('#ubmBlankToggleRawBtn')?.addEventListener('click', () => blankEditorToggleRaw(true));
+          editor.querySelector('#ubmBlankToggleStructuredBtn')?.addEventListener('click', () => blankEditorToggleRaw(false));
+
+          setAnswerHint('填空题：每空可设置多个可接受答案；系统保存格式为 <b>北京;北平;;上海;沪</b>。');
+          return;
+        }
+
+        const input = document.createElement('input');
+        input.className = 'ubm-input';
+        input.type = 'text';
+        input.id = 'ubmAnswer';
+        if (qt === '选择题') {
+          input.placeholder = '例如：A';
+          input.value = normalizeChoiceAnswer(defaultValue, '选择题');
+          setAnswerHint('选择题：填写 <b>A</b>/<b>B</b>/<b>C</b>…');
+        } else if (qt === '多选题') {
+          input.placeholder = '例如：AB 或 ABC（可输入 A,B，系统会自动规范化）';
+          input.value = normalizeChoiceAnswer(defaultValue, '多选题');
+          setAnswerHint('多选题：填写 <b>AB</b>/<b>ABC</b>…（不区分顺序，保存会自动规范化）。');
+        } else {
+          input.placeholder = '请输入答案';
+          input.value = String(defaultValue || '');
+          setAnswerHint('');
+        }
+        answerWrapEl.appendChild(input);
+        answerEl = input;
+      }
+
+      function updateOptionsVisibility() {
+        const qt = String(qTypeEl?.value || '');
+        const show = qt === '选择题' || qt === '多选题';
+        if (optionsGroup) optionsGroup.style.display = show ? 'block' : 'none';
+      }
+
+      function collectPayload() {
+        const qt = String(qTypeEl?.value || '').trim();
+        const rawAnswer = String(answerEl?.value || '');
+        let normalizedAnswer = rawAnswer;
+        if (qt === '选择题' || qt === '多选题') normalizedAnswer = normalizeChoiceAnswer(rawAnswer, qt);
+        if (qt === '判断题') normalizedAnswer = normalizeJudgeAnswer(rawAnswer);
+        if (qt === '填空题') normalizedAnswer = normalizeFillBlankAnswer(rawAnswer);
+
+        const payload = {
+          q_type: qt,
+          content: String(contentEl?.value || '').trim(),
+          answer: String(normalizedAnswer || '').trim(),
+          explanation: String(explanationEl?.value || '').trim(),
+          difficulty: parseInt(String(difficultyEl?.value || '3'), 10) || 3,
+        };
+
+        if (qt === '选择题' || qt === '多选题') {
+          const valid = options.map((x) => String(x || '').trim()).filter(Boolean);
+          payload.options = valid;
+        }
+        return payload;
+      }
+
+      async function loadQuestion() {
+        if (!questionId) return;
+        try {
+          setHint('正在加载题目…', '');
+          const res = await window.ubmApi(`/user/banks/api/${encodeURIComponent(String(bankId))}/questions/${encodeURIComponent(String(questionId))}`);
+          const q = (res && res.data) ? res.data : null;
+          if (!q) {
+            setHint('题目不存在', 'error');
+            return;
+          }
+          qTypeEl.value = normalizeQTypeForUi(q.q_type) || '选择题';
+          contentEl.value = q.content || '';
+          explanationEl.value = q.explanation || '';
+          difficultyEl.value = String(q.difficulty || 3);
+
+          if (q.options !== undefined && q.options !== null) {
+            const raw = q.options;
+            if (Array.isArray(raw)) {
+              options = raw.map((x) => (x === null || x === undefined) ? '' : String(x));
+            } else if (typeof raw === 'string') {
+              try {
+                const parsed = JSON.parse(raw);
+                options = Array.isArray(parsed) ? parsed.map((x) => (x === null || x === undefined) ? '' : String(x)) : [];
+              } catch (e) {
+                options = [];
+              }
+            } else {
+              options = [];
+            }
+            if (!Array.isArray(options) || !options.length) options = ['', '', '', ''];
+          } else {
+            options = ['', '', '', ''];
+          }
+          renderOptions();
+          updateOptionsVisibility();
+          updateFillContentHintVisibility();
+          rebuildAnswerInput(q.answer || '');
+          setHint('', '');
+        } catch (e) {
+          setHint(e && e.message ? e.message : '加载失败', 'error');
+        }
+      }
+
+      form?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = collectPayload();
+        if (!payload.content) {
+          setHint('请输入题干', 'error');
+          return;
+        }
+        if (!payload.q_type) {
+          setHint('请选择题型', 'error');
+          return;
+        }
+        if (!payload.answer) {
+          setHint('请输入答案', 'error');
+          return;
+        }
+        if ((payload.q_type === '选择题' || payload.q_type === '多选题') && (!payload.options || payload.options.length < 2)) {
+          setHint('选择题/多选题至少需要 2 个选项', 'error');
+          return;
+        }
+        if (payload.q_type === '填空题') {
+          const blankCount = countBlanksFromContent(payload.content);
+          const ansCount = String(payload.answer || '').trim() ? String(payload.answer || '').split(';;').length : 0;
+          if (blankCount !== ansCount) {
+            setHint(`填空题题干检测到 ${blankCount} 个空位（__），但答案包含 ${ansCount} 组（;;）。请保持一致。`, 'error');
+            return;
+          }
+        }
+
+        try {
+          saveBtn && (saveBtn.disabled = true);
+          setHint('正在保存…', '');
+          if (mode === 'add') {
+            await window.ubmApi(`/user/banks/api/${encodeURIComponent(String(bankId))}/questions`, {
+              method: 'POST',
+              body: JSON.stringify(payload),
+            });
+            window.ubmToast('添加成功', 'success');
+          } else {
+            await window.ubmApi(`/user/banks/api/${encodeURIComponent(String(bankId))}/questions/${encodeURIComponent(String(questionId))}`, {
+              method: 'PUT',
+              body: JSON.stringify(payload),
+            });
+            window.ubmToast('保存成功', 'success');
+          }
+          setTimeout(() => { window.location.href = `/user/banks/${encodeURIComponent(String(bankId))}`; }, 650);
+        } catch (err) {
+          setHint(err && err.message ? err.message : '保存失败', 'error');
+          window.ubmToast(err && err.message ? err.message : '保存失败', 'error');
+        } finally {
+          saveBtn && (saveBtn.disabled = false);
+        }
+      });
+
+      addOptionBtn?.addEventListener('click', () => {
+        options.push('');
+        renderOptions();
+      });
+      qTypeEl?.addEventListener('change', () => {
+        updateOptionsVisibility();
+        updateFillContentHintVisibility();
+        rebuildAnswerInput('');
+      });
+
+      contentEl?.addEventListener('input', () => {
+        updateFillContentHintVisibility();
+        if (blankEditorTimer) clearTimeout(blankEditorTimer);
+        blankEditorTimer = setTimeout(blankEditorOnContentChanged, 120);
+      });
+
+      insertBlankBtn?.addEventListener('click', () => {
+        insertAtCursor(contentEl, '__');
+      });
+
+      renderOptions();
+      updateOptionsVisibility();
+      updateFillContentHintVisibility();
+      rebuildAnswerInput('');
+      loadQuestion();
+    })();
+  </script>
+{% endblock %}

@@ -1,0 +1,236 @@
+<!-- search-v2.wxml - 对齐 Web /search（全局搜索） -->
+<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="搜索" back="{{false}}" color="var(--app-nav-fg)" background="var(--app-nav-bg)">
+    <view slot="left" class="nav-left">
+      <view class="icon-btn" bindtap="onHamburgerTap" aria-role="button" aria-label="打开侧边栏">
+        <view class="icon-hamburger"></view>
+      </view>
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <v2-drawer
+    open="{{drawerOpen}}"
+    themeStyle="{{themeStyle}}"
+    activeKey="search"
+    bind:close="onDrawerClose"
+    bind:navigate="onDrawerNavigate"
+    bind:selectstyle="onDrawerSelectStyle"
+  />
+
+  <view class="page-container">
+    <scroll-view
+      class="content-area"
+      scroll-y
+      bounces="{{false}}"
+      bindscrolltolower="onReachBottom"
+      refresher-enabled="{{true}}"
+      bindrefresherrefresh="onPullDownRefresh"
+    >
+      <view class="container">
+        <view class="card search-hero">
+          <view class="search-hero-head">
+            <view class="search-hero-left">
+              <text class="search-title">搜索</text>
+              <text class="search-sub">搜索题干/答案/解析（按权限过滤）。可选科目与题型进行高级筛选。</text>
+            </view>
+            <view class="search-hero-side"><text>全局搜索</text></view>
+          </view>
+
+          <view class="search-form">
+            <view class="search-input-wrap">
+              <text class="search-icon">⌕</text>
+              <input
+                class="search-input"
+                placeholder="输入关键词"
+                value="{{keyword}}"
+                bindinput="onKeywordInput"
+                confirm-type="search"
+                bindconfirm="onSearch"
+                maxlength="60"
+              />
+              <view class="search-clear" wx:if="{{keyword}}" bindtap="onClearKeyword" aria-role="button" aria-label="清空关键词">
+                <text>×</text>
+              </view>
+            </view>
+            <view class="search-btn {{keyword ? '' : 'disabled'}}" bindtap="onSearch">
+              <text>搜索</text>
+            </view>
+          </view>
+
+          <view class="adv-toggle" bindtap="onToggleAdvanced" aria-role="button" aria-label="展开高级筛选">
+            <text>高级筛选</text>
+            <text class="adv-arrow">{{advancedOpen ? '˄' : '˅'}}</text>
+          </view>
+
+          <view class="advanced" wx:if="{{advancedOpen}}">
+            <view class="filters">
+              <view class="filter">
+                <text class="filter-label">科目</text>
+                <picker mode="selector" range="{{subjectOptions}}" range-key="label" value="{{subjectIndex}}" bindchange="onSubjectPicker">
+                  <view class="select">
+                    <text class="select-text">{{subjectLabel}}</text>
+                    <text class="select-arrow">›</text>
+                  </view>
+                </picker>
+              </view>
+              <view class="filter">
+                <text class="filter-label">题型</text>
+                <picker mode="selector" range="{{typeOptions}}" range-key="label" value="{{typeIndex}}" bindchange="onTypePicker">
+                  <view class="select">
+                    <text class="select-text">{{typeLabel}}</text>
+                    <text class="select-arrow">›</text>
+                  </view>
+                </picker>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="card summary" wx:if="{{searched}}">
+          <view class="summary-left">
+            <view class="summary-pill" wx:if="{{keyword}}">
+              <text class="summary-pill-text">关键词：{{keyword}}</text>
+            </view>
+            <text class="summary-count">共 {{total}} 条</text>
+          </view>
+          <view class="summary-right">
+            <view class="tag-pill" wx:if="{{subject !== 'all'}}"><text>{{subject}}</text></view>
+            <view class="tag-pill" wx:if="{{qType !== 'all'}}"><text>{{qType}}</text></view>
+          </view>
+        </view>
+
+        <view class="result-list">
+          <view
+            class="result-item"
+            wx:for="{{questions}}"
+            wx:key="id"
+            bindtap="onResultTap"
+            data-id="{{item.id}}"
+            data-subject="{{item.subject}}"
+            data-qtype="{{item.q_type}}"
+          >
+            <text class="result-content">{{item.content_preview || item.content}}</text>
+            <view class="result-meta">
+              <view class="meta-pill"><text>{{item.subject || '未分类'}}</text></view>
+              <view class="meta-pill"><text>{{item.q_type || '-'}}</text></view>
+              <view class="meta-pill meta-fav" wx:if="{{item.is_fav}}"><text>收藏</text></view>
+              <view class="meta-pill meta-mis" wx:if="{{item.is_mistake}}"><text>错题</text></view>
+            </view>
+          </view>
+        </view>
+
+        <view class="loading" wx:if="{{loading}}">
+          <text>加载中...</text>
+        </view>
+
+        <view class="no-more" wx:if="{{!loading && searched && !hasMore && questions.length > 0}}">
+          <text>没有更多了</text>
+        </view>
+
+        <view class="empty" wx:if="{{!loading && searched && questions.length === 0}}">
+          <text>暂无结果</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 题目详情弹窗（点击搜索结果展示，不跳转答题页） -->
+  <view
+    class="qdetail-mask"
+    wx:if="{{detailOpen}}"
+    bindtap="onDetailClose"
+    catchtouchmove="noop"
+    aria-role="button"
+    aria-label="关闭题目详情弹窗"
+  ></view>
+
+  <view
+    class="qdetail-sheet"
+    wx:if="{{detailOpen}}"
+    catchtap="noop"
+    catchtouchmove="noop"
+    aria-role="dialog"
+    aria-label="题目详情"
+  >
+    <view class="qdetail-header">
+      <view class="qdetail-header-left">
+        <text class="qdetail-title">题目详情</text>
+        <text class="qdetail-sub">ID {{detailQuestionId}}</text>
+      </view>
+      <view class="qdetail-header-right">
+        <view
+          class="qdetail-action"
+          bindtap="onDetailGoQuiz"
+          aria-role="button"
+          aria-label="去答题"
+        >
+          <text>去答题</text>
+        </view>
+        <view class="qdetail-close" bindtap="onDetailClose" aria-role="button" aria-label="关闭">
+          <text>×</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="qdetail-loading" wx:if="{{detailLoading}}">
+      <text>加载中...</text>
+    </view>
+
+    <view class="qdetail-error" wx:if="{{!detailLoading && detailError}}">
+      <text class="qdetail-error-text">{{detailError}}</text>
+      <view class="qdetail-retry" bindtap="onDetailRetry" aria-role="button" aria-label="重试">
+        <text>重试</text>
+      </view>
+    </view>
+
+    <scroll-view class="qdetail-body" scroll-y wx:if="{{!detailLoading && !detailError && detailQuestion}}">
+      <view class="qdetail-meta">
+        <view class="meta-pill"><text>{{detailQuestion.subject || '未分类'}}</text></view>
+        <view class="meta-pill"><text>{{detailQuestion.q_type || '-'}}</text></view>
+        <view class="meta-pill meta-fav" wx:if="{{detailQuestion.is_fav}}"><text>收藏</text></view>
+        <view class="meta-pill meta-mis" wx:if="{{detailQuestion.is_mistake}}"><text>错题</text></view>
+      </view>
+
+      <view class="qdetail-section">
+        <text class="qdetail-label">题干</text>
+        <text class="qdetail-text {{detailQuestion.contentIsCode ? 'mono' : ''}}" selectable="true">{{detailQuestion.displayContent || detailQuestion.content}}</text>
+        <view class="qdetail-images" wx:if="{{detailImages.length}}">
+          <image
+            class="qdetail-image"
+            wx:for="{{detailImages}}"
+            wx:key="*this"
+            src="{{item}}"
+            mode="widthFix"
+            show-menu-by-longpress="true"
+          />
+        </view>
+      </view>
+
+      <view class="qdetail-section" wx:if="{{detailOptions.length}}">
+        <text class="qdetail-label">选项</text>
+        <view class="qdetail-options">
+          <view class="qdetail-option" wx:for="{{detailOptions}}" wx:key="index">
+            <text class="qdetail-option-key">{{item.key}}</text>
+            <text class="qdetail-option-val" selectable="true">{{item.value}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="qdetail-section" wx:if="{{detailQuestion.answer}}">
+        <text class="qdetail-label">答案</text>
+        <text class="qdetail-text mono" selectable="true">{{detailQuestion.displayAnswer || detailQuestion.answer}}</text>
+      </view>
+
+      <view class="qdetail-section" wx:if="{{detailQuestion.explanation}}">
+        <text class="qdetail-label">解析</text>
+        <text class="qdetail-text {{detailQuestion.explanationIsCode ? 'mono' : ''}}" selectable="true">{{detailQuestion.displayExplanation || detailQuestion.explanation}}</text>
+      </view>
+    </scroll-view>
+  </view>
+</view>

@@ -1,0 +1,348 @@
+const mode = '{{ mode }}';
+const source = '{{ source or "" }}';
+const LOGGED_IN = {{ 'true' if logged_in else 'false' }};
+const USER_KEY = "{{ user_id if logged_in else 'guest' }}"; // 用 user_id 作为进度隔离键
+const STUDY_META = {{ study_meta_json|safe if study_meta_json else 'null' }};
+const STUDY_MODE = (mode === 'learn' || mode === 'review');
+const STUDY_STREAK_TARGET = 3;
+const STUDY_REPEAT_LIMIT = 3;
+const QUIZ_SESSION_STARTED_AT = Date.now();
+
+// 退出/结束：返回进入本次答题页的页面（优先 from，其次 referrer，再次 sessionStorage）
+const QUIZ_RETURN_TO_STORAGE_KEY = 'sak:quiz:returnTo';
+
+function normalizeSameOriginPath(rawUrl) {
+    try {
+        if (!rawUrl || typeof rawUrl !== 'string') return null;
+        const trimmed = rawUrl.trim();
+        if (!trimmed) return null;
+        const u = new URL(trimmed, window.location.origin);
+        if (u.origin !== window.location.origin) return null;
+        const p = (u.pathname || '/') + (u.search || '') + (u.hash || '');
+        return p.startsWith('/') ? p : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function getQuizReturnToUrl() {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const fromRaw = params.get('from');
+        if (fromRaw) {
+            try {
+                const decoded = decodeURIComponent(fromRaw);
+                const p = normalizeSameOriginPath(decoded);
+                if (p) return p;
+            } catch (e) {}
+        }
+
+        const ref = normalizeSameOriginPath(document.referrer);
+        if (ref) return ref;
+
+        const stored = normalizeSameOriginPath(sessionStorage.getItem(QUIZ_RETURN_TO_STORAGE_KEY));
+        if (stored) return stored;
+    } catch (e) {}
+    return '/';
+}
+
+(function rememberQuizReturnToUrl(){
+    try {
+        const current = window.location.pathname + window.location.search + window.location.hash;
+        const candidate = getQuizReturnToUrl();
+        if (candidate && candidate !== current) {
+            sessionStorage.setItem(QUIZ_RETURN_TO_STORAGE_KEY, candidate);
+        }
+    } catch (e) {}
+})();
+
+function exitQuizToEntry(evt){
+    try { if (evt && evt.preventDefault) evt.preventDefault(); } catch (e) {}
+    const current = window.location.pathname + window.location.search + window.location.hash;
+    const target = getQuizReturnToUrl();
+    if (target && target !== current) {
+        window.location.href = target;
+        return false;
+    }
+    try {
+        if (history && history.length > 1) {
+            history.back();
+            return false;
+        }
+    } catch (e) {}
+    window.location.href = '/';
+    return false;
+}
+
+function getThemeMode() {
+    try {
+        const stored = localStorage.getItem('theme');
+        return (stored === 'dark' || stored === 'light') ? stored : 'system';
+    } catch (e) {
+        return 'system';
+    }
+}
+
+function getTheme() {
+    const mode = getThemeMode();
+    if (mode === 'system') {
+        return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+    }
+    return mode;
+}
+
+function applyTheme(theme) {
+    const next = theme === 'dark' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    document.body.classList.toggle('dark-mode', next === 'dark');
+    try {
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', next === 'dark' ? '#0B0B0C' : '#F6F7F8');
+    } catch (e) {}
+}
+
+function setTheme(theme) {
+    try { localStorage.setItem('theme', theme); } catch (e) {}
+    applyTheme(theme);
+}
+
+const THEME_STYLE_KEY = 'app_theme_style_v1';
+const THEME_STYLE_LIST = ['default', 'mist', 'dune', 'pine', 'celadon'];
+const THEME_STYLE_LABELS = {
+    default: '默认',
+    mist: '雾蓝',
+    dune: '暖砂',
+    pine: '岩松',
+    celadon: '影青'
+};
+
+function normalizeThemeStyle(raw){
+    const v = (raw || '').toString().trim().toLowerCase();
+    return THEME_STYLE_LIST.includes(v) ? v : 'default';
+}
+
+function getThemeStyle() {
+    try { return normalizeThemeStyle(localStorage.getItem(THEME_STYLE_KEY)); } catch (e) { return 'default'; }
+}
+
+function applyThemeStyle(style) {
+    document.documentElement.setAttribute('data-theme-style', normalizeThemeStyle(style));
+}
+
+function setThemeStyle(style){
+    const next = normalizeThemeStyle(style);
+    try { localStorage.setItem(THEME_STYLE_KEY, next); } catch (e) {}
+    applyThemeStyle(next);
+    return next;
+}
+
+function cycleThemeStyle(){
+    const current = normalizeThemeStyle(getThemeStyle());
+    const idx = THEME_STYLE_LIST.indexOf(current);
+    const next = THEME_STYLE_LIST[(idx + 1) % THEME_STYLE_LIST.length];
+    setThemeStyle(next);
+    return next;
+}
+
+function getThemeStyleLabel(style){
+    const key = normalizeThemeStyle(style);
+    return THEME_STYLE_LABELS[key] || '默认';
+}
+
+// ===== 答题页字体大小（仅影响本页） =====
+const QUIZ_FONT_SIZE_KEY = 'quiz_font_size_v1'; // 'sm' | 'md' | 'lg'
+
+function normalizeQuizFontSize(raw) {
+    const v = (raw || '').toString().trim().toLowerCase();
+    return (v === 'sm' || v === 'md' || v === 'lg') ? v : 'md';
+}
+
+function getQuizFontSize() {
+    try {
+        return normalizeQuizFontSize(localStorage.getItem(QUIZ_FONT_SIZE_KEY));
+    } catch (e) {
+        return 'md';
+    }
+}
+
+function applyQuizFontSize(size) {
+    const s = normalizeQuizFontSize(size);
+    if (!document.body) return;
+    document.body.classList.remove('quiz-font-sm', 'quiz-font-md', 'quiz-font-lg');
+    document.body.classList.add(`quiz-font-${s}`);
+}
+
+function setQuizFontSize(size) {
+    const s = normalizeQuizFontSize(size);
+    try { localStorage.setItem(QUIZ_FONT_SIZE_KEY, s); } catch (e) {}
+    applyQuizFontSize(s);
+}
+
+// 记录"上次练习入口"，用于侧边栏/移动端的"继续上次"
+// 与小程序端保持一致的数据格式，支持云端同步
+const LAST_PRACTICE_SESSION_KEY = 'last_practice_session';
+
+function buildLastPracticeSession() {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const currentMode = params.get('mode') || mode || 'quiz';
+        // 考试/学习/复习模式不记录为"上次练习"
+        if (currentMode === 'exam' || currentMode === 'learn' || currentMode === 'review') return null;
+
+        const timestamp = Date.now();
+        const shuffleQuestions = params.get('shuffle_questions') === '1' ? 1 : 0;
+        const shuffleOptions = params.get('shuffle_options') === '1' ? 1 : 0;
+        const qType = params.get('type') || 'all';
+        const sourceParam = params.get('source') || 'all';
+
+        // 构建与小程序一致的数据结构
+        const payload = {
+            mode: currentMode,
+            type: qType,
+            source: sourceParam,
+            shuffle_questions: shuffleQuestions,
+            shuffle_options: shuffleOptions,
+            progress_key: progressKey(),
+            timestamp: timestamp
+        };
+
+        // 判断来源类型：个人题库 or 公共题库
+        if (IS_USER_BANK && BANK_ID) {
+            payload.source_type = 'bank';
+            payload.source_id = BANK_ID;
+            payload.bank_id = BANK_ID;
+            // 尝试获取题库名称（从页面标题或其他地方）
+            const titleEl = document.querySelector('.quiz-header-title, .quiz-title, [data-bank-name]');
+            payload.display_name = titleEl ? (titleEl.dataset.bankName || titleEl.textContent || `题库 ${BANK_ID}`) : `题库 ${BANK_ID}`;
+        } else {
+            const subject = params.get('subject') || 'all';
+            payload.source_type = 'public';
+            payload.source_id = subject;
+            payload.subject = subject;
+            // 尝试获取科目名称
+            const titleEl = document.querySelector('.quiz-header-title, .quiz-title, [data-subject-name]');
+            payload.display_name = titleEl ? (titleEl.dataset.subjectName || titleEl.textContent || subject) : subject;
+        }
+
+        // 同时保存URL用于兼容旧逻辑
+        payload.url = window.location.pathname + window.location.search;
+
+        return payload;
+    } catch (e) {
+        console.error('[上次练习] 构建数据失败:', e);
+        return null;
+    }
+}
+
+// 保存"上次练习"到本地和云端
+async function saveLastPracticeSession(force = false) {
+    try {
+        const payload = buildLastPracticeSession();
+        if (!payload) return;
+
+        // 保存到本地
+        localStorage.setItem(LAST_PRACTICE_SESSION_KEY, JSON.stringify(payload));
+        // 兼容旧格式
+        localStorage.setItem('sak:lastPracticeUrl', payload.url);
+        localStorage.setItem('sak:lastPracticeAt', String(payload.timestamp));
+
+        // 登录用户同步到云端（仅在强制模式或首次进入时）
+        if (LOGGED_IN && force) {
+            try {
+                await fetch('/api/progress', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: LAST_PRACTICE_SESSION_KEY, data: payload })
+                });
+            } catch (e) {
+                console.error('[上次练习] 云端同步失败:', e);
+            }
+        }
+    } catch (e) {
+        console.error('[上次练习] 保存失败:', e);
+    }
+}
+
+// 页面加载时立即保存本地，页面离开时同步云端
+(function rememberLastPracticeUrl(){
+    try {
+        const payload = buildLastPracticeSession();
+        if (!payload) return;
+        // 立即保存到本地
+        localStorage.setItem(LAST_PRACTICE_SESSION_KEY, JSON.stringify(payload));
+        localStorage.setItem('sak:lastPracticeUrl', payload.url);
+        localStorage.setItem('sak:lastPracticeAt', String(payload.timestamp));
+    } catch (e) {}
+})();
+
+// 页面离开时强制同步到云端
+window.addEventListener('pagehide', function() {
+    saveLastPracticeSession(true);
+});
+window.addEventListener('beforeunload', function() {
+    saveLastPracticeSession(true);
+});
+
+
+// 优化后的进度键生成函数 - 标准化参数顺序,避免重复进度
+// 重要：必须与后端 quiz.py 中的 key 生成逻辑保持一致！
+// 个人题库：/quiz?bank_id=<id>
+const BANK_ID = (() => {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const v = (params.get('bank_id') || '').trim();
+        const n = v ? parseInt(v, 10) : NaN;
+        return Number.isFinite(n) && n > 0 ? n : null;
+    } catch (e) {
+        return null;
+    }
+})();
+const IS_USER_BANK = !!BANK_ID;
+function getUserBankApiPrefix(){
+    return IS_USER_BANK ? `/user/banks/api/${BANK_ID}` : '';
+}
+
+function progressKey(){
+    const params = new URLSearchParams(window.location.search);
+    let subject = params.get('subject') || 'all';
+    if (IS_USER_BANK) subject = `bank_${BANK_ID}`;
+    const type = params.get('type') || 'all';
+    const currentMode = params.get('mode') || mode || 'quiz';
+    const tag = (params.get('tag') || '').trim();
+    
+    // 考试模式使用exam_id作为唯一标识
+    if (currentMode === 'exam') {
+        const examId = params.get('exam_id');
+        if (examId) {
+            return `quiz_progress_${USER_KEY}_exam_${examId}`;
+        }
+    }
+    
+    // 计算 data_scope（与后端 quiz.py 保持一致）
+    // 后端逻辑：data_scope = target if target in ('favorites', 'mistakes') else 'all'
+    // target = source if source in ('favorites', 'mistakes') else mode
+    const sourceParam = params.get('source') || '';
+    let dataScope = 'all';
+    if (sourceParam === 'favorites' || sourceParam === 'mistakes') {
+        dataScope = sourceParam;
+    }
+    
+    // 其他模式使用标准化的科目+题型+模式+data_scope+打乱设置
+    const shuffleQ = params.get('shuffle_questions') === '1' ? '1' : '0';
+    const shuffleO = params.get('shuffle_options') === '1' ? '1' : '0';
+    const tagPart = (tag && tag.toLowerCase() !== 'all') ? `_tag${tag}` : '';
+    let rkPart = '';
+    if (currentMode === 'reinforce') {
+        const rkRaw = (params.get('rk') || '').trim().toLowerCase();
+        if (rkRaw === 'wrong' || rkRaw === 'similar') rkPart = `_rk${rkRaw}`;
+    }
+    if (currentMode === 'learn' || currentMode === 'review') {
+        return `study_progress_${USER_KEY}_${currentMode}_${subject}_${type}_${dataScope}${tagPart}_q${shuffleQ}_o${shuffleO}`;
+    }
+    return `quiz_progress_${USER_KEY}_${currentMode}_${subject}_${type}_${dataScope}${tagPart}${rkPart}_q${shuffleQ}_o${shuffleO}`;
+}
+let questions = document.querySelectorAll('.question-box');
+const EXAM_ID = (function(){ const el = document.getElementById('mainCard'); return el ? (el.dataset.examId || '') : ''; })();
+const EXAM_SUBMITTED = {{ 'true' if submitted else 'false' }};
+const USER_ANSWERS = {{ user_answers_json|safe if user_answers_json else '{}' }};
+let listItems = document.querySelectorAll('.q-item');

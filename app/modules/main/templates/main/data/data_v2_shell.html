@@ -1,0 +1,72 @@
+{% extends "main/shared/app_shell.html" %}
+{% block title %}数据{% endblock %}
+{% block page_title %}数据{% endblock %}
+
+{% block head_extra %}
+  <link rel="stylesheet" href="/static/css/data_center.css" />
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+{% endblock %}
+
+{% block content %}
+  <div class="app-container dc-shell">
+    <header class="dc-hero" aria-label="数据中心概览">
+      <div class="dc-hero-main">
+        <div class="dc-hero-title" style="min-width:0;">
+          <h1>{{ (hero_title or '数据中心') }}</h1>
+          <p>{{ (hero_subtitle or '公共题库 + 个人题库：从全局到复盘，再到标签体系的一致数据视角。') }}</p>
+        </div>
+
+        <div class="dc-hero-actions" aria-label="时间窗口与操作">
+          {% set _p = request.path or '/data/global' %}
+          <div class="dc-window" aria-label="时间窗口">
+            <a class="{{ 'active' if window_days == 7 else '' }}" href="{{ _p }}?days=7">7天</a>
+            <a class="{{ 'active' if window_days == 30 else '' }}" href="{{ _p }}?days=30">30天</a>
+            <a class="{{ 'active' if window_days == 90 else '' }}" href="{{ _p }}?days=90">90天</a>
+          </div>
+          <button class="dc-mini-btn" type="button" id="dcExportBtn" title="导出当前页面数据">导出</button>
+        </div>
+      </div>
+
+      <div class="dc-hero-kpis" aria-label="关键指标">
+        {% if hero_kpis %}
+          {% for kpi in hero_kpis %}
+            <div class="dc-kpi-pill">
+              <div class="k">{{ kpi.k }}</div>
+              <div class="v mono">{{ kpi.v }}</div>
+              {% if kpi.hint %}
+                <div class="m">{{ kpi.hint }}</div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="dc-kpi-pill">
+            <div class="k">已做题</div>
+            <div class="v mono">{{ all_summary.answered }}</div>
+          </div>
+          <div class="dc-kpi-pill">
+            <div class="k">正确率</div>
+            <div class="v mono">{{ all_summary.accuracy }}%</div>
+          </div>
+          <div class="dc-kpi-pill">
+            <div class="k">完成度</div>
+            <div class="v mono">{{ all_summary.completion }}%</div>
+          </div>
+          <div class="dc-kpi-pill">
+            <div class="k">健康分</div>
+            <div class="v mono">{{ health_score or 0 }}</div>
+          </div>
+        {% endif %}
+      </div>
+    </header>
+
+    <div class="dc-content">
+      {% block data_content %}{% endblock %}
+    </div>
+  </div>
+
+  <script>
+    window.__DATA_CENTER__ = {{ (data_payload or {}) | tojson }};
+  </script>
+  <script src="/static/js/data_center.js"></script>
+  {% block data_scripts %}{% endblock %}
+{% endblock %}

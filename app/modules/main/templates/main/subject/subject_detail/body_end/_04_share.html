@@ -1,0 +1,68 @@
+    function buildShareUrl(){
+      try {
+        const u = new URL(location.href);
+        u.searchParams.delete('tab');
+        u.searchParams.delete('entry');
+        const qs = u.searchParams.toString();
+        u.search = qs ? ('?' + qs) : '';
+        return u.toString();
+      } catch (e) {
+        return location.href;
+      }
+    }
+
+    function renderShareUrl(){
+      const el = document.getElementById('shareUrl');
+      if (!el) return;
+      el.value = buildShareUrl();
+    }
+
+    async function copyText(text){
+      const s = String(text || '');
+      if (!s) return false;
+      try {
+        await navigator.clipboard.writeText(s);
+        return true;
+      } catch (e) {}
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = s;
+        ta.setAttribute('readonly', 'readonly');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        return !!ok;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    async function copyShareUrl(){
+      const el = document.getElementById('shareUrl');
+      const ok = await copyText(el?.value || buildShareUrl());
+      if (!ok) alert('复制失败，请手动复制');
+    }
+
+    async function nativeShare(){
+      const url = buildShareUrl();
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: SUBJECT_NAME || '题库', url });
+          return;
+        }
+      } catch (e) {}
+      await copyText(url);
+      alert('已复制链接');
+    }
+
+    // ===== 统计详情（图表/建议）=====
+    const statsState = {
+      days: 14,
+      loading: false,
+      loadedDays: 0,
+      data: null,
+    };
+

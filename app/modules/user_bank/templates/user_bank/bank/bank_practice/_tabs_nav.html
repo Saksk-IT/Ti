@@ -1,0 +1,14 @@
+      <nav class="basebar" role="tablist" aria-label="题库详情子页">
+        <div class="tabs">
+          <button type="button" class="tab active" data-tab="practice">练习</button>
+          <button type="button" class="tab" data-tab="reinforce">加强</button>
+          <button type="button" class="tab" data-tab="exam">考试</button>
+          <button type="button" class="tab" data-tab="search">搜索</button>
+          <button type="button" class="tab" data-tab="stats">数据</button>
+          <button type="button" class="tab" data-tab="share">分享</button>
+          {% if access_type == 'owner' %}
+            <a class="tab" href="/user/banks/{{ bank_id }}/manage" role="tab">管理</a>
+          {% endif %}
+        </div>
+      </nav>
+

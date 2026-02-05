@@ -1,0 +1,108 @@
+    <div id="pageTabExam" data-tab-panel="exam" hidden>
+      {% if logged_in %}
+        <div id="inlineExamBuilderSubject"
+             data-inline-exam-builder
+             data-source="public"
+             data-subject="{{ subject_name|e }}"
+             data-scope-label="公共题库 · {{ subject_name|e }}"
+             data-template-manage-url="{{ url_for('exam.exam_pages.page_exams', tab='templates', source='public', subject=subject_name, lock=1) }}"
+             data-require-scope-all="1"
+             data-require-scope-tip="考试仅支持“全部”范围，请先切换范围。">
+          <div class="exam-layout">
+            <section class="app-card exam-card" aria-label="新建考试">
+              <div class="exam-card-head">
+                <div style="min-width:0;">
+                  <h2>新建考试</h2>
+                  <div class="exam-card-sub">范围已锁定，在本页直接创建并开始。</div>
+                </div>
+              </div>
+
+              <div class="exam-section">
+                <div class="exam-section-title">考试范围</div>
+                <div class="exam-scope-lock" role="status">范围已锁定：公共题库 · {{ subject_name }}</div>
+              </div>
+
+              <div class="exam-section">
+                <div class="exam-section-title">考试模板</div>
+                <div data-inline-exam-template-picker></div>
+              </div>
+
+              <div class="exam-section">
+                <div class="exam-section-title">快捷参数</div>
+                <div class="exam-quick-grid">
+                  <button class="exam-quick-btn" type="button" data-inline-exam-preset data-duration="15" data-total="20">15 分钟 · 20 题</button>
+                  <button class="exam-quick-btn" type="button" data-inline-exam-preset data-duration="30" data-total="30">30 分钟 · 30 题</button>
+                  <button class="exam-quick-btn" type="button" data-inline-exam-preset data-duration="60" data-total="50">60 分钟 · 50 题</button>
+                </div>
+                <div class="exam-fields" style="margin-top:10px;">
+                  <div class="exam-field">
+                    <div class="exam-label">时长（分钟）</div>
+                    <input class="app-input" data-inline-exam-duration type="number" inputmode="numeric" min="1" max="1440" value="60" />
+                  </div>
+                  <div class="exam-field">
+                    <div class="exam-label">目标题量（用于均分）</div>
+                    <input class="app-input" data-inline-exam-total type="number" inputmode="numeric" min="1" max="300" value="30" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="exam-section">
+                <div class="exam-section-title">题型与分值</div>
+                <div class="exam-types-box" data-inline-exam-types>
+                  {% if types %}
+                    <div class="exam-types-row exam-types-head"><div>题型</div><div>题量</div><div>分值</div><div>小计</div></div>
+                    {% for t in types %}
+                      <div class="exam-types-row" data-qtype="{{ t|e }}">
+                        <label class="exam-type-name">
+                          <input class="exam-type-enable" type="checkbox" />
+                          <span>{{ t }}</span>
+                        </label>
+                        <div class="exam-type-input">
+                          <input class="app-input exam-mini exam-type-count" type="number" min="0" value="0" />
+                          <span class="exam-unit">题</span>
+                        </div>
+                        <div class="exam-type-input">
+                          <input class="app-input exam-mini exam-type-score" type="number" min="0" step="0.5" value="1" />
+                          <span class="exam-unit">分</span>
+                        </div>
+                        <div class="exam-subtotal">0</div>
+                      </div>
+                    {% endfor %}
+                  {% else %}
+                    <div class="exam-empty">当前范围暂无题型数据。</div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="exam-inline-actions">
+                <button class="exam-btn" type="button" data-inline-exam-distribute>按目标题量均分</button>
+                <button class="exam-btn" type="button" data-inline-exam-reset-scores>分值重置为 1</button>
+                <button class="exam-btn" type="button" data-inline-exam-save-template>保存为模板</button>
+                <button class="exam-btn exam-btn-primary" type="button" data-inline-exam-start>开始考试</button>
+              </div>
+              <div class="exam-msg" data-inline-exam-msg></div>
+            </section>
+
+            <section class="app-card exam-summary-card" aria-label="本次考试预览">
+              <div class="exam-summary-title">本次考试预览</div>
+              <div class="exam-summary-kv">
+                <div class="exam-kv"><div class="k">范围</div><div class="v" data-inline-exam-sum-scope>-</div></div>
+                <div class="exam-kv"><div class="k">时长</div><div class="v" data-inline-exam-sum-duration>-</div></div>
+                <div class="exam-kv"><div class="k">已分配题量</div><div class="v" data-inline-exam-sum-assigned>-</div></div>
+                <div class="exam-kv"><div class="k">总分</div><div class="v" data-inline-exam-sum-score>-</div></div>
+              </div>
+              <div class="exam-summary-types" data-inline-exam-sum-types></div>
+            </section>
+          </div>
+        </div>
+      {% else %}
+        <section class="card" aria-label="考试-登录提示">
+          <h2>考试</h2>
+          <div class="sub">登录后可创建并开始考试。</div>
+          <div class="links">
+            <a class="link" href="/login">去登录</a>
+          </div>
+        </section>
+      {% endif %}
+    </div>
+

@@ -1,0 +1,45 @@
+    <div id="pageTabSearch" data-tab-panel="search" hidden>
+      {% if logged_in %}
+        <section class="card" aria-label="科目内搜索">
+          <h2>搜索</h2>
+          <div class="sub">范围限定在当前科目，结果直接显示在下方。</div>
+          <div class="search">
+            <input id="kw" type="text" placeholder="搜索题干/答案/解析/关键词…" autocomplete="off" onkeydown="if(event.key==='Enter'){doSubjectSearch(true);}" />
+            <button class="btn primary" type="button" onclick="doSubjectSearch(true)">搜索</button>
+          </div>
+        </section>
+
+        <section class="card" aria-label="题型筛选-搜索">
+          <h2>题型筛选</h2>
+          <div class="sub">仅影响本页搜索结果，不影响练习/收藏/错题的筛选。</div>
+          <div class="chips" id="chipsSearchType">
+            <button type="button" class="chip active" data-val="all" onclick="selectSearchType(this)">全部题型</button>
+            {% for t in types %}
+              <button type="button" class="chip" data-val="{{ t }}" onclick="selectSearchType(this)">{{ t }}</button>
+            {% endfor %}
+          </div>
+        </section>
+
+        <section class="search-results" aria-label="搜索结果" id="searchResultCard" hidden>
+          <div class="result-head">
+            <h2 style="margin-bottom: 6px;">搜索结果</h2>
+            <div class="sub" id="searchMeta">输入关键词后点击搜索。</div>
+            <div class="sub">提示：点击题目气泡可查看详细信息。</div>
+          </div>
+          <div class="result-list" id="searchList"></div>
+          <div class="links" style="margin-top: 10px;">
+            <button class="link" type="button" id="searchLoadMoreBtn" onclick="loadMoreSubjectSearch()" hidden>加载更多</button>
+            <button class="link" type="button" onclick="clearSubjectSearch()">清空结果</button>
+          </div>
+        </section>
+      {% else %}
+        <section class="card" aria-label="搜索-登录提示">
+          <h2>搜索</h2>
+          <div class="sub">登录后可在题库内搜索并查看结果。</div>
+          <div class="links">
+            <a class="link" href="/login">去登录</a>
+          </div>
+        </section>
+      {% endif %}
+    </div>
+

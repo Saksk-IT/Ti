@@ -1,0 +1,14 @@
+{% extends "main/shared/app_shell.html" %}
+{% block title %}{{ bank_name }} · 题库详情{% endblock %}
+{% block page_title %}{{ bank_name }}{% endblock %}
+{% block head_extra %}
+  {% include "user_bank/bank/bank_practice/_head_extra.html" %}
+{% endblock %}
+
+{% block content %}
+  {% include "user_bank/bank/bank_practice/_content.html" %}
+{% endblock %}
+
+{% block body_end %}
+  {% include "user_bank/bank/bank_practice/_body_end.html" %}
+{% endblock %}

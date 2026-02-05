@@ -1,0 +1,828 @@
+function showQuestion(index) {
+    if (isWholeView) return; 
+
+    if (!questions || questions.length === 0) return;
+    index = normalizeQuestionIndex(index);
+
+    questions.forEach(q => q.classList.remove('active'));
+    const target = questions[index];
+    if (!target) return;
+    target.classList.add('active');
+    
+    listItems.forEach(item => item.classList.remove('active'));
+    if(listItems[index]) {
+        listItems[index].classList.add('active');
+        listItems[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // 先更新当前索引，避免回顾模式下无法翻页
+    currentIndex = index;
+    if (isStudyMode() && STUDY_STATE.queue[STUDY_STATE.cursor] !== index) {
+        setStudyCursorForIndex(index);
+    }
+
+    const currentQ = questions[index];
+    const type = currentQ.getAttribute('data-type');
+    const answer = currentQ.getAttribute('data-answer');
+
+    // 题目页已统一为小程序风格卡片布局；主观题（问答/简答/计算）使用左右分栏
+    const mainArea = document.querySelector('.main-area');
+    if (mainArea) {
+        mainArea.classList.toggle('subjective-layout', isSubjectiveType(type));
+    }
+
+    // 答案/解析渲染：由 renderAnswerExplainFromQuestion 控制
+    setupImageGallery(currentQ);
+
+    // 自动聚焦填空题/主观题输入框（避免聚焦到被隐藏的传统布局输入框）
+    const qType = currentQ.getAttribute('data-type');
+    if (qType === '填空题' || isSubjectiveType(qType)) {
+        const inputField = getPrimaryAnswerInput(currentQ, qType);
+        if (inputField && !inputField.disabled) {
+            // 动画结束后聚焦，以确保元素可见
+            setTimeout(() => {
+                try { inputField.focus({ preventScroll: true }); }
+                catch(e) { try { inputField.focus(); } catch(_) {} }
+            }, 400);
+        }
+    }
+
+    const btnPrev = document.getElementById('btn-prev');
+    if (btnPrev) {
+        btnPrev.disabled = isStudyMode() ? (STUDY_STATE.cursor === 0) : (index === 0);
+    }
+
+    if (mode === 'exam') {
+        const btnNextExam = document.getElementById('btn-next-exam');
+        const btnSubmitExam = document.getElementById('btn-submit-exam');
+        
+        // 如果已交卷：回顾模式（显示答案/解析，禁用作答），同时更新进度条
+        if (isSubmitted) {
+            renderAnswerExplainFromQuestion(currentQ);
+
+            if (btnNextExam) {
+                btnNextExam.style.display = (index === totalQuestions - 1) ? 'none' : 'block';
+            }
+            if (btnSubmitExam) btnSubmitExam.style.display = 'none';
+
+            // 回顾时的结果徽标：主观题不判对错，显示“待核对”
+            if (isSubjectiveType(type)) {
+                setAnswerResultBadge('pending');
+            } else {
+                try {
+                    const inferredCorrect = judgeQuestion(currentQ, type, answer);
+                    setAnswerResultBadge(inferredCorrect);
+                } catch(e) {
+                    setAnswerResultBadge(null);
+                }
+            }
+
+            const plabel = document.getElementById('progress-label');
+            if (plabel) plabel.innerText = `${currentIndex + 1} / ${totalQuestions}`;
+            const pf = document.getElementById('progress-fill');
+            if (pf) pf.style.width = ((currentIndex + 1) / totalQuestions * 100) + '%';
+            const topTitle = document.getElementById('topbar-title');
+            if (topTitle) topTitle.innerText = `${currentIndex + 1}/${totalQuestions}`;
+            return;
+        }
+
+        if (index === totalQuestions - 1) {
+            btnNextExam.style.display = 'none';
+            btnSubmitExam.style.display = 'block';
+        } else {
+            btnNextExam.style.display = 'block';
+            btnSubmitExam.style.display = 'none';
+        }
+    } else {
+        const btnNext = document.getElementById('btn-next');
+        
+        if (mode === 'memo') {
+            renderAnswerExplainFromQuestion(currentQ);
+            if (btnNext) btnNext.style.display = 'block';
+            updateBottomSubmitState(currentQ);
+            updateFillBlankSubmitState(currentQ);
+            updateMultiSubmitState(currentQ);
+            fillAnswer(currentQ, type, answer);
+            disableInputs(currentQ); 
+        } else {
+            // 默认：切题先隐藏；若该题已做过（正确/错误），自动展示答案/解析
+            hideAnswerExplainDock();
+            if (isStudyMode()) {
+                hideStudyEval(currentQ);
+                if (STUDY_STATE.pendingReset.has(index)) {
+                    resetStudyQuestion(currentQ);
+                    clearStudyResultForIndex(index);
+                    STUDY_STATE.pendingReset.delete(index);
+                }
+                const rated = currentQ.getAttribute('data-study-rated');
+                if (rated) {
+                    renderAnswerExplainFromQuestion(currentQ, 'pending');
+                }
+            } else {
+                const hasResult = isQuestionAlreadyChecked(currentQ);
+                if (hasResult) {
+                    renderAnswerExplainFromQuestion(currentQ);
+                }
+            }
+
+            if (btnNext) btnNext.style.display = 'block';
+            updateBottomSubmitState(currentQ);
+            updateSubjectiveSubmitState(currentQ);
+            updateFillBlankSubmitState(currentQ);
+            updateMultiSubmitState(currentQ);
+
+            if (btnNext) {
+                const isLast = isStudyMode()
+                    ? (STUDY_STATE.cursor >= STUDY_STATE.queue.length - 1)
+                    : (index === totalQuestions - 1);
+                if (isLast) {
+                    btnNext.innerText = "完成";
+                    btnNext.onclick = finishQuiz;
+                } else {
+                    btnNext.innerText = "下一题";
+                    btnNext.onclick = nextQuestion;
+                }
+            }
+            if (isStudyMode()) {
+                setStudyNextDisabled(STUDY_STATE.pendingRating);
+            }
+        }
+    }
+
+    currentIndex = index;
+    const prog = getStudyProgressInfo();
+    const plabel = document.getElementById('progress-label');
+    if (plabel) plabel.innerText = `${prog.current} / ${prog.total}`;
+    const pf = document.getElementById('progress-fill');
+    if (pf) pf.style.width = ((prog.current) / prog.total * 100) + '%';
+
+    const topTitle = document.getElementById('topbar-title');
+    if (topTitle) topTitle.innerText = `${prog.current}/${prog.total}`;
+    
+    // 保存进度：考试模式（未交卷）也保存，已交卷不再写进度
+    if (mode !== 'exam' || (mode === 'exam' && !isSubmitted)) saveState();
+}
+
+function fillAnswer(q, type, answer) {
+    if (type === '选择题' || type === '判断题' || type === '多选题') {
+        q.querySelectorAll('input').forEach(input => {
+            const label = input.parentElement;
+            const optionCard = label ? label.closest('.option-card') : null;
+            label.classList.remove('correct-opt');
+            if (optionCard) optionCard.classList.remove('correct-opt', 'wrong-opt');
+            // For choice questions, the value is the key ('A', 'B', etc.)
+            // For judgment questions, the value is '正确' or '错误'
+            if (answer.includes(input.value)) {
+                label.classList.add('correct-opt');
+                if (optionCard) optionCard.classList.add('correct-opt');
+                input.checked = true;
+            }
+        });
+    } else if (type === '填空题') {
+        const inputs = getActiveFillBlankInputs(q);
+        const correctBlanks = answer.split(';;').map(a => a.trim());
+
+        inputs.forEach((input, i) => {
+            // 默认填充每个空的第一个正确答案
+            const firstCorrectAnswer = (correctBlanks[i] || '').split(';')[0].trim();
+            input.value = firstCorrectAnswer;
+            input.classList.add('input-correct');
+        });
+    }
+}
+
+function disableInputs(q) {
+    q.classList.add('checked-mode');
+    q.querySelectorAll('input, textarea').forEach(el => el.disabled = true);
+}
+
+function autoCheck() {
+    // 方案A：选择题/判断题自动出结果；多选题/填空/问答保留"查看结果"按钮
+    const currentQ = questions[currentIndex];
+    if (!currentQ) return;
+    const type = currentQ.getAttribute('data-type');
+    if (type === '判断题' || (type === '选择题' && isAutoCheckType(type, currentQ))) {
+        checkAnswer(false);
+    }
+    // 多选题不自动检查，需要用户点击"查看结果"按钮
+}
+
+// 判断题：隐藏原生 radio 后，用整行高亮来表现选中态
+document.addEventListener('change', function(e){
+    const t = e.target;
+    if (!(t instanceof HTMLInputElement)) return;
+
+    // 判断题（radio）：处理传统布局和卡片布局
+    if (t.type === 'radio') {
+        // 传统布局
+        const wrap = t.closest('.tf-options');
+        if (wrap) {
+            const name = t.name;
+            wrap.querySelectorAll(`input[type="radio"][name="${CSS.escape(name)}"]`).forEach(r => {
+                const lab = r.closest('label');
+                if (lab) lab.classList.toggle('selected', r.checked);
+            });
+        }
+        // 卡片布局
+        const cardWrap = t.closest('.tf-option-card');
+        if (cardWrap) {
+            const name = t.name;
+            const container = cardWrap.closest('.options-container');
+            if (container) {
+                container.querySelectorAll(`input[type="radio"][name="${CSS.escape(name)}"]`).forEach(r => {
+                    const card = r.closest('.option-card');
+                    if (card) {
+                        const lab = r.closest('label');
+                        if (lab) {
+                            lab.classList.toggle('selected', r.checked);
+                            // 同时给选项卡片添加 selected 类，用于整体高亮
+                            card.classList.toggle('selected', r.checked);
+                        }
+                    }
+                });
+            }
+        }
+        try {
+            const qEl = t.closest('.question-box');
+            updateBottomSubmitState(qEl);
+            updateSubjectiveSubmitState(qEl);
+            updateFillBlankSubmitState(qEl);
+            updateMultiSubmitState(qEl);
+        } catch(e) {}
+        return;
+    }
+
+    // 选择题（checkbox）：统一成判断题同款"整行高亮 + 左侧标记"
+    if (t.type === 'checkbox') {
+        // 传统布局
+        const wrap = t.closest('.options');
+        if (wrap && !wrap.classList.contains('tf-options')) {
+            const lab = t.closest('label');
+            if (lab) lab.classList.toggle('selected', t.checked);
+        }
+        // 卡片布局
+        const cardWrap = t.closest('.option-card');
+        if (cardWrap) {
+            const lab = t.closest('label');
+            if (lab) {
+                lab.classList.toggle('selected', t.checked);
+                // 同时给选项卡片添加 selected 类，用于整体高亮
+                cardWrap.classList.toggle('selected', t.checked);
+            }
+        }
+        try {
+            const qEl = t.closest('.question-box');
+            updateBottomSubmitState(qEl);
+            updateSubjectiveSubmitState(qEl);
+            updateFillBlankSubmitState(qEl);
+            updateMultiSubmitState(qEl);
+        } catch(e) {}
+        return;
+    }
+});
+
+// 输入：用于动态启用/禁用“提交答案”（多选/填空）和主观题右侧提交按钮
+document.addEventListener('input', function(e){
+    const t = e.target;
+    if (!(t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement)) return;
+    const qEl = t.closest ? t.closest('.question-box') : null;
+    if (!qEl) return;
+    updateBottomSubmitState(qEl);
+    updateSubjectiveSubmitState(qEl);
+    updateFillBlankSubmitState(qEl);
+    updateMultiSubmitState(qEl);
+});
+
+// 主观题（问答/简答/计算）：输入区内提交按钮
+document.addEventListener('click', function(e){
+    const target = e.target;
+    if (!target) return;
+    const btn = target.closest ? target.closest('.subjective-submit-btn') : null;
+    if (!btn) return;
+    e.preventDefault();
+    checkAnswer(true);
+});
+
+// 学习/复习：自评按钮
+document.addEventListener('click', function(e){
+    if (!isStudyMode()) return;
+    const target = e.target;
+    if (!target) return;
+    const btn = target.closest ? target.closest('[data-study-rate]') : null;
+    if (!btn) return;
+    const qEl = btn.closest ? btn.closest('.question-box') : null;
+    if (!qEl) return;
+    const rating = (btn.getAttribute('data-study-rate') || '').trim();
+    if (!rating) return;
+    handleStudyRating(qEl, rating);
+});
+
+// 学习/复习：标熟
+document.addEventListener('click', function(e){
+    if (!isStudyMode()) return;
+    const target = e.target;
+    if (!target) return;
+    const btn = target.closest ? target.closest('[data-study-master-toggle]') : null;
+    if (!btn) return;
+    const qEl = btn.closest ? btn.closest('.question-box') : null;
+    if (!qEl) return;
+    toggleStudyMaster(qEl, btn);
+});
+
+// 多选题：提交按钮放在选项下方
+document.addEventListener('click', function(e){
+    const target = e.target;
+    if (!target) return;
+    const btn = target.closest ? target.closest('.multi-submit-btn') : null;
+    if (!btn) return;
+    e.preventDefault();
+    if (btn.disabled) {
+        showToast('请先选择答案');
+        return;
+    }
+    checkAnswer(true);
+});
+
+// 更新答案卡片右侧徽标（答对/答错）
+function setAnswerResultBadge(state) {
+    // state: true(答对) / false(答错) / 'pending'(待核对) / null(隐藏)
+    const host = document.getElementById('answerCard');
+    if (!host) return;
+
+    const isCorrect = (state === true);
+    const isWrong = (state === false);
+    const isPending = (state === 'pending');
+
+    host.classList.toggle('result-correct', isCorrect);
+    host.classList.toggle('result-wrong', isWrong);
+    host.classList.toggle('result-pending', isPending);
+
+    const badge = host.querySelector('.result-badge');
+    if (!badge) return;
+
+    if (isCorrect) {
+        badge.textContent = '答对';
+        badge.setAttribute('data-state', 'correct');
+    } else if (isWrong) {
+        badge.textContent = '答错';
+        badge.setAttribute('data-state', 'wrong');
+    } else if (isPending) {
+        badge.textContent = '待核对';
+        badge.setAttribute('data-state', 'pending');
+    } else {
+        badge.textContent = '';
+        badge.setAttribute('data-state', '');
+    }
+}
+
+// 将“当前题”的答案/解析内容渲染到 mainCard 外部的独立卡片容器
+function formatFillBlankAnswerForDock(raw, blankCountHint) {
+    // raw 格式约定（历史兼容）：
+    // - 多空：用 ';;' 分隔每一空
+    // - 一空多答案：同一空内用 ';' 分隔备选
+    // 示例："1;一;;2;二;;3;三" => 3 空，每空有 2 个备选
+    const text = (raw || '').toString().trim();
+    if (!text) return '';
+
+    const blanks = text.split(';;').map(s => s.trim()).filter(Boolean);
+    const isMultiBlank = blanks.length > 1 || (blankCountHint && blankCountHint > 1);
+
+    // 单空：展示为“可接受答案：A / B / C”
+    if (!isMultiBlank) {
+        const alts = text.split(';').map(s => s.trim()).filter(Boolean);
+        if (alts.length <= 1) {
+            return `<div class="blank-ans one"><span class="label">答案</span><span class="val">${escapeHtmlLocal(alts[0] || text)}</span></div>`;
+        }
+        return `<div class="blank-ans one"><span class="label">可接受答案</span><span class="val">${alts.map(a => `<span class="pill">${escapeHtmlLocal(a)}</span>`).join('')}</span></div>`;
+    }
+
+    // 多空：按“空1/空2...”列出，每空内用 pill 展示备选
+    const rows = blanks.map((b, i) => {
+        const alts = b.split(';').map(s => s.trim()).filter(Boolean);
+        const valHtml = (alts.length <= 1)
+            ? `<span class="text">${escapeHtmlLocal(alts[0] || '')}</span>`
+            : alts.map(a => `<span class="pill">${escapeHtml(a)}</span>`).join('');
+        return `<div class="blank-ans-row"><span class="blank-no">空 ${i + 1}</span><span class="blank-val">${valHtml}</span></div>`;
+    }).join('');
+
+    return `<div class="blank-ans multi">${rows}</div>`;
+}
+
+function escapeHtml(str){
+    return (str ?? '').toString()
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+}
+
+function escapeHtmlLocal(str){
+    return (str ?? '').toString()
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+}
+
+// 转义HTML并处理换行：将\n转换为<br>标签
+function escapeHtmlWithBreaks(str){
+    return escapeHtml(str ?? '').replaceAll('\n', '<br>');
+}
+
+function updateDockEmptyState(){
+    // 仅影响布局：右侧 dock 是否“有内容”
+    const mainArea = document.querySelector('.main-area');
+    if (!mainArea) return;
+    const a = document.getElementById('answerCard');
+    const e = document.getElementById('explainCard');
+    const ai = document.getElementById('aiExplainCard');
+    const aShown = a && a.style.display !== 'none' && a.innerHTML.trim().length > 0;
+    const eShown = e && e.style.display !== 'none' && e.innerHTML.trim().length > 0;
+    const aiShown = ai && ai.style.display !== 'none' && ai.innerHTML.trim().length > 0;
+    mainArea.classList.toggle('dock-empty', !(aShown || eShown || aiShown));
+}
+
+function getUserAnswerTextForDisplay(qEl, type){
+    try {
+        if (!qEl) return '';
+
+        if (type === '选择题' || type === '多选题') {
+            const checked = Array.from(qEl.querySelectorAll('input[type="checkbox"]:checked')).map(i => i.value);
+            return checked.sort().join('');
+        }
+        if (type === '判断题') {
+            const r = qEl.querySelector('input[type="radio"]:checked');
+            return r ? (r.value || '').toString() : '';
+        }
+        if (type === '填空题') {
+            const inputs = getActiveFillBlankInputs(qEl);
+            const vals = inputs.map(i => (i.value || '').toString().trim()).filter(v => v.length > 0);
+            return vals.join(' / ');
+        }
+        if (isSubjectiveType(type)) {
+            const preferCard = document.body.classList.contains('quiz-layout-card');
+            const ta = preferCard ? qEl.querySelector('.question-layout-card textarea') : qEl.querySelector('textarea');
+            if (ta) return (ta.value || '').toString().trim();
+            const inp = qEl.querySelector('input[type="text"], .main-input');
+            return inp ? (inp.value || '').toString().trim() : '';
+        }
+    } catch (e) {}
+    return '';
+}
+
+function getInlineAnswerHosts(qEl){
+    const answerHost = qEl ? (qEl.querySelector('.answer-inline-host') || document.getElementById('answerCard')) : null;
+    const explainHost = qEl ? (qEl.querySelector('.explain-inline-host') || document.getElementById('explainCard')) : null;
+    return { answerHost, explainHost };
+}
+
+function renderAnswerExplainFromQuestion(qEl, resultState = null) {
+    if (!qEl) return;
+    const { answerHost, explainHost } = getInlineAnswerHosts(qEl);
+    if (!answerHost || !explainHost) return;
+
+    answerHost.innerHTML = '';
+    explainHost.innerHTML = '';
+    answerHost.style.display = 'none';
+    explainHost.style.display = 'none';
+
+    const type = (qEl.getAttribute('data-type') || '').toString();
+    const correctRaw = (qEl.getAttribute('data-answer') || '').toString();
+    const userAnswerText = getUserAnswerTextForDisplay(qEl, type);
+
+    const blankCountHint = (qEl.querySelectorAll('.blank-item').length) || null;
+    const correctAnswerHtml = (type === '填空题')
+        ? (formatFillBlankAnswerForDock(correctRaw, blankCountHint) || escapeHtmlWithBreaks(correctRaw))
+        : escapeHtmlWithBreaks(correctRaw);
+
+    const isSubjective = isSubjectiveType(type);
+    const isShortAnswer = (type === '简答题');
+    const judgable = isJudgableType(type) && !isSubjective;
+    const showAiBtn = (mode !== 'exam');
+
+    let state = resultState;
+    if (state === null && judgable) {
+        try { state = judgeQuestion(qEl, type, correctRaw); } catch(e) { state = null; }
+    }
+    if (state === null && isSubjective && mode !== 'memo') {
+        state = (mode === 'exam' && EXAM_SUBMITTED) ? 'pending' : 'submitted';
+    }
+
+    if (mode === 'memo') {
+        const tip = (type === '选择题' || type === '多选题' || type === '判断题')
+            ? '已在选项中高亮正确答案'
+            : '请对照答案巩固记忆';
+         const memoAnswerTitle = isShortAnswer
+            ? `<span class="answer-title-label">正确答案：</span><br><span class="answer-title-value">${escapeHtmlWithBreaks(correctRaw)}</span>`
+            : `正确答案：${escapeHtmlWithBreaks(correctRaw)}`;
+        answerHost.innerHTML = `
+            <div class="answer-display-card">
+              <div class="answer-card-toprow">
+                <div class="answer-title">${memoAnswerTitle}</div>
+                ${showAiBtn ? `<button type="button" class="answer-ai-btn" aria-label="AI解析" title="AI解析" onclick="toggleAIExplain()">AI</button>` : ``}
+              </div>
+              <div class="answer-divider"></div>
+              <div class="answer-tip">${tip}</div>
+            </div>
+        `;
+        answerHost.style.display = 'block';
+    } else {
+        const iconCheck = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+        const iconWrong = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+        const iconInfo = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
+        let headerClass = 'submitted';
+        let icon = iconInfo;
+        let headerText = '已提交';
+        if (state === 'pending') {
+            headerClass = 'submitted';
+            icon = iconInfo;
+            headerText = '待核对';
+        } else if (judgable) {
+            const isCorrect = (state === true);
+            headerClass = isCorrect ? 'correct' : 'wrong';
+            icon = isCorrect ? iconCheck : iconWrong;
+            headerText = isCorrect ? '回答正确' : '回答错误';
+        }
+
+        const showUserAnswer = (!judgable) || (state === false) || (state === 'pending');
+        answerHost.innerHTML = `
+            <div class="answer-result-card">
+              <div class="answer-card-toprow">
+                <div class="result-header ${headerClass}">
+                  <span class="result-icon" aria-hidden="true">${icon}</span>
+                  <span class="result-text">${headerText}</span>
+                </div>
+                ${showAiBtn ? `<button type="button" class="answer-ai-btn" aria-label="AI解析" title="AI解析" onclick="toggleAIExplain()">AI</button>` : ``}
+              </div>
+              <div class="correct-answer ${isShortAnswer ? 'short-answer-block' : ''}">
+                <span class="answer-label">正确答案：</span>
+                <div class="answer-value">${correctAnswerHtml}</div>
+              </div>
+              ${showUserAnswer ? `
+              <div class="user-answer ${isShortAnswer ? 'short-answer-block' : ''}">
+                <span class="answer-label">你的答案：</span>
+                <div class="answer-value wrong">${escapeHtmlWithBreaks(userAnswerText || '')}</div>
+              </div>` : ``}
+            </div>
+        `;
+        answerHost.style.display = 'block';
+    }
+
+    try { syncAnswerAiButtonState(); } catch(e) {}
+
+    const explainSpan = qEl.querySelector('.quiz-card.card-explain .answer');
+    const explainRaw = explainSpan ? (explainSpan.textContent || explainSpan.innerText || '') : '';
+    if (explainRaw && explainRaw.toString().trim()) {
+        explainHost.innerHTML = `
+            <div class="explanation-card">
+              <div class="explanation-title">解析</div>
+              <div class="explanation-text">${escapeHtmlWithBreaks(explainRaw)}</div>
+              <div class="explain-disclaimer">解析仅供参考</div>
+            </div>
+        `;
+        explainHost.style.display = 'block';
+    }
+}
+
+function hideAnswerExplainDock(qEl = null) {
+    const list = qEl ? [qEl] : Array.from(document.querySelectorAll('.question-box'));
+    list.forEach(q => {
+        const a = q.querySelector('.answer-inline-host');
+        const e = q.querySelector('.explain-inline-host');
+        const ai = q.querySelector('.ai-inline-host');
+        if (a) { a.style.display = 'none'; a.innerHTML = ''; }
+        if (e) { e.style.display = 'none'; e.innerHTML = ''; }
+        if (ai) { ai.style.display = 'none'; ai.innerHTML = ''; }
+    });
+
+    // 兼容旧 dock（即使已在 CSS 中隐藏）
+    const answerHost = document.getElementById('answerCard');
+    const explainHost = document.getElementById('explainCard');
+    const aiHost = document.getElementById('aiExplainCard');
+    if (answerHost) { answerHost.style.display = 'none'; answerHost.innerHTML = ''; answerHost.classList.remove('show'); }
+    if (explainHost) { explainHost.style.display = 'none'; explainHost.innerHTML = ''; explainHost.classList.remove('show'); }
+    if (aiHost) { aiHost.style.display = 'none'; aiHost.innerHTML = ''; aiHost.classList.remove('show'); }
+    try { aiExplainState.open = false; } catch(e) {}
+    try { syncAnswerAiButtonState(); } catch(e) {}
+    setAnswerResultBadge(null);
+    updateDockEmptyState();
+}
+
+function getStudyScopePayload(){
+    if (!isStudyMode()) return {};
+    const params = new URLSearchParams(window.location.search || '');
+    const subject = (STUDY_META && STUDY_META.subject) ? STUDY_META.subject : (params.get('subject') || '');
+    if (IS_USER_BANK || (STUDY_META && STUDY_META.source === 'user_bank')) {
+        return { source: 'user_bank', bank_id: BANK_ID };
+    }
+    return { source: 'public', subject };
+}
+
+async function recordStudyLearn(questionId, isCorrect){
+    const payload = {
+        question_id: questionId,
+        is_correct: !!isCorrect,
+        ...getStudyScopePayload()
+    };
+    const res = await fetch('/api/quiz/study/learn/record', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    const data = await res.json().catch(() => ({}));
+    const ok = data && data.status === 'success';
+    if (!ok) {
+        throw new Error((data && data.message) || '学习记录失败');
+    }
+    return data.data || {};
+}
+
+async function recordStudyReview(questionId, rating){
+    const payload = {
+        question_id: questionId,
+        rating: rating,
+        ...getStudyScopePayload()
+    };
+    const res = await fetch('/api/quiz/study/review/record', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    const data = await res.json().catch(() => ({}));
+    const ok = data && data.status === 'success';
+    if (!ok) {
+        throw new Error((data && data.message) || '复习记录失败');
+    }
+    return data.data || {};
+}
+
+async function toggleStudyMaster(qEl, btn){
+    if (!qEl || !btn) return;
+    if (!LOGGED_IN) { showToast('请先登录'); return; }
+    const qId = qEl.getAttribute('data-id');
+    const idx = Number(qEl.getAttribute('data-index'));
+    const current = !!STUDY_STATE.masteredMap[idx];
+    const next = !current;
+
+    btn.disabled = true;
+    try {
+        const payload = {
+            question_id: qId,
+            is_mastered: next,
+            ...getStudyScopePayload()
+        };
+        const res = await fetch('/api/quiz/study/review/master', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => ({}));
+        const ok = data && data.status === 'success';
+        if (!ok) throw new Error((data && data.message) || '标熟失败');
+
+        STUDY_STATE.masteredMap[idx] = next;
+        btn.textContent = next ? '已标熟' : '标熟';
+        showToast(next ? '已标熟，后续不再复习' : '已取消标熟');
+
+        if (next) {
+            // 移除后续队列中的重复出现
+            const before = STUDY_STATE.queue.slice(0, STUDY_STATE.cursor + 1);
+            const after = STUDY_STATE.queue.slice(STUDY_STATE.cursor + 1).filter(v => v !== idx);
+            STUDY_STATE.queue = before.concat(after);
+        }
+    } catch (e) {
+        showToast(e.message || '标熟失败');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+async function handleStudyRating(qEl, rating){
+    if (!qEl) return;
+    if (!LOGGED_IN) { showToast('请先登录'); return; }
+    const qId = qEl.getAttribute('data-id');
+    const idx = Number(qEl.getAttribute('data-index'));
+
+    try {
+        if (mode === 'learn') {
+            const isCorrect = (rating === 'correct');
+            const res = await recordStudyLearn(qId, isCorrect);
+            STUDY_STATE.streakMap[idx] = Number(res.streak || 0) || 0;
+            if (res.is_learned) {
+                STUDY_STATE.learnedSet.add(idx);
+                updateStudyProgressTip();
+            }
+            showStudyEval(qEl);
+            const streakLabel = `连续答对 ${STUDY_STATE.streakMap[idx]}/${STUDY_STREAK_TARGET}`;
+            setStudyEvalLocked(qEl, true, `${isCorrect ? '已记录：对' : '已记录：错'} · ${streakLabel}`);
+            applyStudyListStatus(idx, isCorrect ? 'correct' : 'wrong');
+            qEl.setAttribute('data-study-rated', isCorrect ? 'correct' : 'wrong');
+
+            if (!res.is_learned) {
+                scheduleStudyRepeat(idx);
+            }
+        } else if (mode === 'review') {
+            if (!['known', 'fuzzy', 'unknown'].includes(rating)) return;
+            await recordStudyReview(qId, rating);
+            applyStudyListStatus(idx, rating);
+            qEl.setAttribute('data-study-rated', rating);
+            showStudyEval(qEl);
+            setStudyEvalLocked(qEl, true, `已记录：${rating === 'known' ? '认识' : (rating === 'fuzzy' ? '模糊' : '不认识')}`);
+
+            if (rating !== 'known') {
+                scheduleStudyRepeat(idx);
+            }
+        }
+
+        STUDY_STATE.pendingRating = false;
+        setStudyNextDisabled(false);
+        saveState(true);
+    } catch (e) {
+        showToast(e.message || '保存失败');
+        setStudyEvalLocked(qEl, false);
+    }
+}
+
+async function checkAnswerStudyAuto(isManualClick){
+    const currentQ = questions[currentIndex];
+    const type = currentQ.getAttribute('data-type');
+    const answer = currentQ.getAttribute('data-answer');
+    const qId = currentQ.getAttribute('data-id');
+
+    if (!hasAnswered(currentQ, type)) {
+        if (isManualClick) showToast("请先作答！");
+        return;
+    }
+
+    const isSubjective = isSubjectiveType(type);
+    const judgable = isJudgableType(type) && !isSubjective;
+    if (!judgable) {
+        await checkAnswerStudy(isManualClick);
+        return;
+    }
+
+    let isCorrect = false;
+    try {
+        isCorrect = judgeQuestion(currentQ, type, answer);
+    } catch (e) {
+        isCorrect = false;
+    }
+
+    renderAnswerExplainFromQuestion(currentQ, isCorrect);
+    styleFeedback(currentQ, type, answer, isCorrect);
+    disableInputs(currentQ);
+    updateBottomSubmitState(currentQ);
+    updateSubjectiveSubmitState(currentQ);
+    updateFillBlankSubmitState(currentQ);
+    updateMultiSubmitState(currentQ);
+
+    try {
+        if (mode === 'learn') {
+            const res = await recordStudyLearn(qId, isCorrect);
+            const idx = Number(currentQ.getAttribute('data-index'));
+            STUDY_STATE.streakMap[idx] = Number(res.streak || 0) || 0;
+            if (res.is_learned) {
+                STUDY_STATE.learnedSet.add(idx);
+                updateStudyProgressTip();
+            }
+            applyStudyListStatus(idx, isCorrect ? 'correct' : 'wrong');
+            currentQ.setAttribute('data-study-rated', isCorrect ? 'correct' : 'wrong');
+            if (!res.is_learned) scheduleStudyRepeat(idx);
+            showToast(`已记录：${isCorrect ? '对' : '错'}（连续答对 ${STUDY_STATE.streakMap[idx]}/${STUDY_STREAK_TARGET}）`);
+        } else if (mode === 'review') {
+            const rating = isCorrect ? 'known' : 'unknown';
+            await recordStudyReview(qId, rating);
+            const idx = Number(currentQ.getAttribute('data-index'));
+            applyStudyListStatus(idx, rating);
+            currentQ.setAttribute('data-study-rated', rating);
+            if (!isCorrect) scheduleStudyRepeat(idx);
+            showToast(`已记录：${isCorrect ? '认识' : '不认识'}`);
+        }
+        saveState(true);
+    } catch (e) {
+        showToast(e.message || '保存失败');
+    }
+}
+
+async function checkAnswerStudy(isManualClick){
+    const currentQ = questions[currentIndex];
+    const type = currentQ.getAttribute('data-type');
+    if (!hasAnswered(currentQ, type)) {
+        if (isManualClick) showToast("请先作答！");
+        return;
+    }
+
+    renderAnswerExplainFromQuestion(currentQ, 'pending');
+    disableInputs(currentQ);
+    showStudyEval(currentQ);
+    setStudyEvalLocked(currentQ, false);
+    STUDY_STATE.pendingRating = true;
+    setStudyNextDisabled(true);
+
+    updateBottomSubmitState(currentQ);
+    updateSubjectiveSubmitState(currentQ);
+    updateFillBlankSubmitState(currentQ);
+    updateMultiSubmitState(currentQ);
+}

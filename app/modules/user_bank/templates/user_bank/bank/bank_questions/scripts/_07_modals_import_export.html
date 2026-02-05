@@ -1,0 +1,217 @@
+    function openModal(id){
+        const m = document.getElementById(id);
+        if(m){
+            m.style.display = 'block';
+        }
+        document.getElementById('drawerOverlay').classList.add('show');
+    }
+
+    function closeModal(id){
+        const m = document.getElementById(id);
+        if(m){
+            m.style.display = 'none';
+        }
+        document.getElementById('drawerOverlay').classList.remove('show');
+    }
+
+    // ======= 导入/导出 =======
+    function openImportModal(){
+        openModal('modalImport');
+        document.getElementById('importPreview').innerHTML = '';
+    }
+
+    function renderImportPreview(){
+        const txt = document.getElementById('importText').value.trim();
+        const file = document.getElementById('importFile').files[0];
+        if(txt){
+            try{
+                const data = JSON.parse(txt);
+                window.__importData = data;
+                showImportPreview(data);
+            } catch(e){
+                showToast('粘贴内容不是有效JSON', 'error');
+            }
+            return;
+        }
+        if(file){
+            const fr = new FileReader();
+            fr.onload = () => {
+                try{
+                    const data = JSON.parse(fr.result);
+                    window.__importData = data;
+                    showImportPreview(data);
+                } catch(e){
+                    showToast('文件内容不是有效JSON', 'error');
+                }
+            };
+            fr.readAsText(file);
+            return;
+        }
+        showToast('请粘贴JSON或选择文件', 'error');
+    }
+
+    function showImportPreview(list){
+        let questions = [];
+        if (Array.isArray(list)) questions = list;
+        else if (list && typeof list === 'object' && Array.isArray(list.questions)) questions = list.questions;
+        else {
+            showToast('格式不支持：需要数组或包含 questions 的对象', 'error');
+            return;
+        }
+        const box = document.getElementById('importPreview');
+        let ok = 0, bad = 0, html = '';
+        questions.forEach((it, i) => {
+            const isPortable = it && typeof it === 'object' && (it.type || (Array.isArray(it.answer) && it.content !== undefined));
+            const valid = isPortable
+                ? (it.type && it.content !== undefined)
+                : (it && it['题型'] && it['题干'] !== undefined);
+            if(valid) ok++; else bad++;
+            const title = isPortable ? (it.type || '(缺少type)') : (it['题型'] || '(缺少题型)');
+            const content = isPortable ? (it.content || '') : (it['题干'] || '');
+            html += `<div style="padding:6px; border-bottom:1px solid var(--border-color); ${valid ? '' : 'background:#fff3cd'}">#${i+1} ${title} - ${String(content).slice(0,60)}</div>`;
+        });
+        box.innerHTML = `<div style="margin-bottom:6px;">共 ${questions.length} 条；有效 ${ok}，问题 ${bad}</div>` + html;
+    }
+
+    async function confirmImport(){
+        const data = window.__importData;
+        const questions = Array.isArray(data) ? data : (data && typeof data === 'object' && Array.isArray(data.questions) ? data.questions : []);
+        if(!questions.length) { showToast('暂无可导入数据', 'error'); return; }
+
+        try {
+            await api(`/user/banks/api/${bankId}/questions/import/json`, {
+                method: 'POST',
+                body: JSON.stringify({ questions })
+            });
+            showToast('导入成功');
+            closeModal('modalImport');
+            loadQuestions();
+        } catch (error) {
+            showToast(error.message || '导入失败', 'error');
+        }
+    }
+
+    function exportQuestions(){
+        window.open(`/user/banks/api/${bankId}/questions/export`, '_blank');
+    }
+
+    // ======= Excel和ZIP导入导出 =======
+    function exportExcel(){
+        showToast('正在生成Excel文件...');
+        window.location.href = `/user/banks/api/${bankId}/questions/export/excel`;
+    }
+
+    function exportPackage(){
+        showToast('正在生成题库包...');
+        window.location.href = `/user/banks/api/${bankId}/questions/export/package`;
+    }
+
+    function openImportExcelModal(){
+        document.getElementById('importExcelFile').value = '';
+        document.getElementById('importExcelResult').innerHTML = '';
+        openModal('modalImportExcel');
+    }
+
+    function openImportPackageModal(){
+        document.getElementById('importPackageFile').value = '';
+        document.getElementById('importPackageResult').innerHTML = '';
+        openModal('modalImportPackage');
+    }
+
+    async function confirmImportExcel(){
+        const fileInput = document.getElementById('importExcelFile');
+        const file = fileInput.files[0];
+
+        if(!file){
+            showToast('请选择Excel文件', 'error');
+            return;
+        }
+
+        if(!file.name.endsWith('.xlsx')){
+            showToast('请选择.xlsx格式的文件', 'error');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            showToast('正在导入...');
+            const response = await fetch(`/user/banks/api/${bankId}/questions/import/excel`, {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            });
+
+            const result = await response.json();
+
+            if(result.code === 0){
+                let msg = result.message || `成功导入${result.data.imported}道题目`;
+                if(result.data.errors && result.data.errors.length > 0){
+                    document.getElementById('importExcelResult').innerHTML =
+                        `<div style="color: var(--warning); margin-top: 10px;">
+                            <strong>部分导入失败:</strong><br>
+                            ${result.data.errors.slice(0, 5).join('<br>')}
+                            ${result.data.errors.length > 5 ? `<br>...还有${result.data.errors.length - 5}条错误` : ''}
+                        </div>`;
+                }
+                showToast(msg);
+                closeModal('modalImportExcel');
+                loadQuestions();
+            } else {
+                showToast(result.message || '导入失败', 'error');
+            }
+        } catch (error) {
+            console.error('导入Excel失败:', error);
+            showToast('导入失败，请检查文件格式', 'error');
+        }
+    }
+
+    async function confirmImportPackage(){
+        const fileInput = document.getElementById('importPackageFile');
+        const file = fileInput.files[0];
+
+        if(!file){
+            showToast('请选择ZIP文件', 'error');
+            return;
+        }
+
+        if(!file.name.endsWith('.zip')){
+            showToast('请选择.zip格式的文件', 'error');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            showToast('正在导入...');
+            const response = await fetch(`/user/banks/api/${bankId}/questions/import/package`, {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            });
+
+            const result = await response.json();
+
+            if(result.code === 0){
+                let msg = result.message || `成功导入${result.data.imported}道题目`;
+                if(result.data.errors && result.data.errors.length > 0){
+                    document.getElementById('importPackageResult').innerHTML =
+                        `<div style="color: var(--warning); margin-top: 10px;">
+                            <strong>部分导入失败:</strong><br>
+                            ${result.data.errors.slice(0, 5).join('<br>')}
+                            ${result.data.errors.length > 5 ? `<br>...还有${result.data.errors.length - 5}条错误` : ''}
+                        </div>`;
+                }
+                showToast(msg);
+                closeModal('modalImportPackage');
+                loadQuestions();
+            } else {
+                showToast(result.message || '导入失败', 'error');
+            }
+        } catch (error) {
+            console.error('导入题库包失败:', error);
+            showToast('导入失败，请检查文件格式', 'error');
+        }
+    }

@@ -1,0 +1,25 @@
+<!-- 导入模态框 -->
+<div id="modalImport" class="drawer" style="right:auto; left:50%; transform: translateX(-50%); width: 620px; height: 70%; top: 10%; display:none;">
+    <div class="drawer-header">导入题库（JSON预览）</div>
+    <div class="drawer-body">
+        <div class="form-group">
+            <label>粘贴JSON数组</label>
+            <textarea id="importText" rows="8" placeholder='[{"题型":"选择题","题干":"...","选项":["A","B"],"答案":"A","解析":"..."}]'></textarea>
+        </div>
+        <div class="form-group">
+            <label>或 选择JSON文件</label>
+            <input type="file" id="importFile" accept="application/json">
+        </div>
+        <div class="form-group">
+            <button class="btn-outline" onclick="renderImportPreview()">预览</button>
+        </div>
+        <div class="form-group">
+            <div id="importPreview" style="max-height:220px; overflow:auto; background:#f8f9fa; padding:10px; border-radius:6px; border:1px solid var(--border-color);"></div>
+        </div>
+    </div>
+    <div class="drawer-footer">
+        <button class="btn-secondary" onclick="closeModal('modalImport')">取消</button>
+        <button class="btn-primary" onclick="confirmImport()">确认导入</button>
+    </div>
+</div>
+

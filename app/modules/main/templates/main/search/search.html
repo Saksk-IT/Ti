@@ -1,0 +1,862 @@
+﻿{% extends "main/shared/app_shell.html" %}
+{% block title %}搜索 · {{ keyword }}{% endblock %}
+{% block page_title %}搜索{% endblock %}
+
+{% block head_extra %}
+  <style>
+    .search-page {
+      display: grid;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .search-hero {
+      padding: 18px;
+      border-radius: var(--app-radius-xl);
+      border: 1px solid var(--app-border);
+      background:
+        radial-gradient(120% 140% at 0% -10%, color-mix(in srgb, var(--app-primary) 10%, transparent), transparent 60%),
+        var(--app-surface-2);
+      box-shadow: var(--app-shadow-soft);
+      display: grid;
+      gap: 14px;
+    }
+
+    .search-hero-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .search-title {
+      font-size: 18px;
+      font-weight: 950;
+      letter-spacing: -0.2px;
+    }
+
+    .search-sub {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--app-muted);
+      line-height: 1.5;
+    }
+
+    .search-hero-side {
+      font-size: 12px;
+      color: var(--app-muted);
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px dashed var(--app-border);
+      background: color-mix(in srgb, var(--app-surface) 70%, transparent);
+      align-self: flex-start;
+      white-space: nowrap;
+    }
+
+    .search-form {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .search-field {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .search-label {
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.3px;
+      color: var(--app-muted);
+    }
+
+    .search-input-wrap {
+      position: relative;
+      min-width: 0;
+    }
+
+    .search-input {
+      width: 100%;
+      height: 42px;
+      border-radius: 12px;
+      border: 1px solid var(--app-border);
+      background: var(--app-surface);
+      color: var(--app-text);
+      padding: 0 14px 0 40px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .search-input:focus {
+      box-shadow: 0 0 0 3px var(--app-primary-soft);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      color: var(--app-muted);
+    }
+
+    .search-btn {
+      height: 42px;
+      padding: 0 18px;
+      border-radius: 12px;
+      border: 1px solid color-mix(in srgb, var(--app-primary) 40%, var(--app-border));
+      background: color-mix(in srgb, var(--app-primary) 12%, var(--app-surface));
+      color: var(--app-text);
+      font-size: 14px;
+      font-weight: 900;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+      white-space: nowrap;
+    }
+
+    .search-btn:hover {
+      box-shadow: var(--app-shadow-soft);
+      transform: translateY(-1px);
+    }
+
+    .search-btn:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px var(--app-primary-soft), var(--app-shadow-soft);
+    }
+
+    .search-btn-icon {
+      width: 16px;
+      height: 16px;
+    }
+
+    .search-advanced-toggle {
+      border: 0;
+      background: transparent;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--app-muted);
+      cursor: pointer;
+      user-select: none;
+      border-top: 1px dashed var(--app-border);
+      padding-top: 12px;
+      width: fit-content;
+    }
+
+    .search-advanced-toggle:hover {
+      color: var(--app-text);
+    }
+
+    .search-advanced-toggle .toggle-icon {
+      width: 16px;
+      height: 16px;
+      transition: transform 140ms ease;
+    }
+
+    .search-advanced-toggle.expanded .toggle-icon {
+      transform: rotate(180deg);
+      color: var(--app-text);
+    }
+
+    .search-advanced {
+      display: none;
+      gap: 12px;
+    }
+
+    .search-advanced.show {
+      display: grid;
+    }
+
+    .search-filters {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .search-select {
+      height: 40px;
+      border-radius: 12px;
+      border: 1px solid var(--app-border);
+      background: var(--app-surface);
+      color: var(--app-text);
+      font-size: 13px;
+      padding: 0 12px;
+      outline: none;
+    }
+
+    .search-select:focus {
+      box-shadow: 0 0 0 3px var(--app-primary-soft);
+    }
+
+    .search-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 12px 14px;
+      border-radius: var(--app-radius-lg);
+      border: 1px solid var(--app-border);
+      background: var(--app-surface);
+      box-shadow: var(--app-shadow-soft);
+    }
+
+    .search-summary-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .search-keyword {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--app-primary) 35%, var(--app-border));
+      background: var(--app-primary-soft);
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--app-text);
+    }
+
+    .search-keyword svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .search-count {
+      font-size: 12px;
+      color: var(--app-muted);
+    }
+
+    .search-summary-right {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .search-tag {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--app-border);
+      background: color-mix(in srgb, var(--app-surface) 80%, transparent);
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--app-muted);
+    }
+
+    .results-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .result-card {
+      border: 1px solid var(--app-border);
+      border-radius: var(--app-radius-lg);
+      background: var(--app-surface);
+      padding: 14px;
+      box-shadow: var(--app-shadow-soft);
+      display: grid;
+      gap: 10px;
+      cursor: pointer;
+      transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+    }
+
+    .result-card:hover {
+      border-color: color-mix(in srgb, var(--app-primary) 35%, var(--app-border));
+      box-shadow: var(--app-shadow);
+      transform: translateY(-1px);
+    }
+
+    .result-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .result-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .result-tag {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--app-border);
+      background: var(--app-surface-2);
+      font-size: 11px;
+      font-weight: 900;
+      color: var(--app-text);
+      white-space: nowrap;
+    }
+
+    .result-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .result-fav {
+      height: 34px;
+      width: 34px;
+      border-radius: 10px;
+      border: 1px solid var(--app-border);
+      background: var(--app-surface);
+      color: var(--app-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+    }
+
+    .result-fav svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+    }
+
+    .result-fav:hover {
+      color: var(--app-text);
+    }
+
+    .result-fav.active {
+      color: #f59e0b;
+      border-color: color-mix(in srgb, #f59e0b 55%, var(--app-border));
+      background: color-mix(in srgb, #f59e0b 12%, var(--app-surface));
+    }
+
+    .result-fav.active svg {
+      fill: currentColor;
+    }
+
+    .result-content {
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--app-text);
+    }
+
+    .result-media img {
+      width: 100%;
+      max-height: 360px;
+      border-radius: 12px;
+      border: 1px solid var(--app-border);
+      object-fit: contain;
+    }
+
+    .result-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--app-muted);
+      font-size: 12px;
+    }
+
+    .result-chevron {
+      width: 18px;
+      height: 18px;
+      transition: transform 160ms ease;
+    }
+
+    .result-card.expanded .result-chevron {
+      transform: rotate(180deg);
+      color: var(--app-text);
+    }
+
+    .result-detail {
+      display: none;
+      border-top: 1px dashed var(--app-border);
+      padding-top: 12px;
+      gap: 12px;
+    }
+
+    .result-card.expanded .result-detail {
+      display: grid;
+    }
+
+    .result-label {
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--app-muted);
+      margin-bottom: 6px;
+    }
+
+    .result-options ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 6px;
+    }
+
+    .result-options li {
+      font-size: 14px;
+      color: var(--app-muted);
+    }
+
+    .result-options li.correct-answer {
+      color: #16a34a;
+      font-weight: 900;
+    }
+
+    .result-answer,
+    .result-explanation {
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--app-border);
+      background: color-mix(in srgb, var(--app-surface) 85%, transparent);
+    }
+
+    .result-answer {
+      border-left: 3px solid #16a34a;
+    }
+
+    .result-explanation {
+      border-left: 3px solid var(--app-primary);
+    }
+
+    .highlight {
+      background: color-mix(in srgb, #fbbf24 35%, transparent);
+      color: inherit;
+      padding: 0 3px;
+      border-radius: 4px;
+      font-weight: 700;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 32px 20px;
+      border-radius: var(--app-radius-xl);
+      border: 1px solid var(--app-border);
+      background: var(--app-surface);
+      box-shadow: var(--app-shadow-soft);
+      display: grid;
+      gap: 12px;
+    }
+
+    .empty-icon svg {
+      width: 48px;
+      height: 48px;
+      color: var(--app-muted);
+    }
+
+    .empty-title {
+      font-size: 18px;
+      font-weight: 900;
+      margin: 0;
+    }
+
+    .empty-desc {
+      font-size: 13px;
+      color: var(--app-muted);
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    .suggestion-list {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .suggestion-tag {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--app-border);
+      background: var(--app-surface-2);
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+    }
+
+    .suggestion-tag:hover {
+      background: var(--app-primary-soft);
+      border-color: color-mix(in srgb, var(--app-primary) 35%, var(--app-border));
+      color: var(--app-text);
+    }
+
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    .page-btn {
+      height: 36px;
+      padding: 0 12px;
+      border-radius: 10px;
+      border: 1px solid var(--app-border);
+      background: var(--app-surface);
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+    }
+
+    .page-btn:hover:not(.active):not(:disabled) {
+      background: var(--app-primary-soft);
+      border-color: color-mix(in srgb, var(--app-primary) 35%, var(--app-border));
+      color: var(--app-text);
+    }
+
+    .page-btn.active {
+      background: var(--app-primary);
+      color: var(--app-bg);
+      border-color: var(--app-primary);
+    }
+
+    .page-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 900px) {
+      .search-form {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .search-btn {
+        width: 100%;
+      }
+
+      .search-filters {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .result-head {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .search-hero {
+        padding: 16px;
+      }
+
+      .result-card {
+        padding: 12px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="app-container search-page">
+    <section class="search-hero">
+      <div class="search-hero-head">
+        <div>
+          <div class="search-title">全局搜索</div>
+          <div class="search-sub">搜索题干、答案与解析，支持关键词与模糊匹配。</div>
+        </div>
+        <div class="search-hero-side">支持：题干 / 答案 / 解析</div>
+      </div>
+
+      <form class="search-form" onsubmit="doSearch(event)">
+        <div class="search-field">
+          <label class="search-label" for="searchInput">关键词</label>
+          <div class="search-input-wrap">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" stroke="currentColor" stroke-width="2"/>
+              <path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <input type="text" class="search-input" id="searchInput" value="{{ keyword }}" placeholder="搜索题干、答案、解析关键词" autocomplete="off" />
+          </div>
+        </div>
+        <button type="submit" class="search-btn">
+          <svg class="search-btn-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" stroke="currentColor" stroke-width="2"/>
+            <path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span>搜索</span>
+        </button>
+      </form>
+
+      <button class="search-advanced-toggle" type="button" onclick="toggleAdvanced(this)" aria-expanded="false" aria-controls="advancedOptions">
+        <span>高级筛选</span>
+        <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+      <div class="search-advanced" id="advancedOptions">
+        <div class="search-filters">
+          <div class="search-field">
+            <label class="search-label" for="filterSubject">科目</label>
+            <select class="search-select" id="filterSubject">
+              <option value="">全部科目</option>
+              {% for sub in subjects %}
+                <option value="{{ sub }}" {{ 'selected' if subject == sub else '' }}>{{ sub }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="search-field">
+            <label class="search-label" for="filterType">题型</label>
+            <select class="search-select" id="filterType">
+              <option value="">全部题型</option>
+              {% for t in q_types %}
+                <option value="{{ t }}" {{ 'selected' if q_type == t else '' }}>{{ t }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {% if keyword %}
+      <div class="search-summary">
+        <div class="search-summary-left">
+          <span class="search-keyword">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" stroke="currentColor" stroke-width="2"/>
+              <path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span>{{ keyword }}</span>
+          </span>
+          <span class="search-count">找到 {{ questions|length }} 个结果</span>
+        </div>
+        <div class="search-summary-right">
+          {% if subject %}
+            <span class="search-tag">{{ subject }}</span>
+          {% endif %}
+          {% if q_type %}
+            <span class="search-tag">{{ q_type }}</span>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+
+    {% if questions|length > 0 %}
+      <div class="results-list" id="resultsList">
+        {% for q in questions %}
+          <div class="result-card" onclick="toggleExpand(this)" aria-expanded="false">
+            <div class="result-head">
+              <div class="result-tags">
+                <span class="result-tag">{{ q.subject }}</span>
+                <span class="result-tag">{{ q.q_type }}</span>
+              </div>
+              <div class="result-actions" onclick="event.stopPropagation()">
+                <button class="result-fav {{ 'active' if q.is_fav else '' }}" type="button" onclick="toggleFav(this, {{ q.id }})" title="{{ '取消收藏' if q.is_fav else '收藏' }}" aria-label="收藏">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 17.3 6.3 20.6l1.2-6.6L2.6 9.8l6.7-.9L12 3l2.7 5.9 6.7.9-4.9 4.2 1.2 6.6L12 17.3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="result-content" data-content="{{ q.content }}">
+              {{ q.content|replace('\n', '<br>')|safe }}
+            </div>
+
+            {% if q.image_path %}
+              <div class="result-media">
+                <img src="{{ url_for('main.main_pages.serve_upload', filename=q.image_path) }}" alt="题目图片">
+              </div>
+            {% endif %}
+
+            <div class="result-footer">
+              <span>点击展开答案与解析</span>
+              <svg class="result-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+
+            <div class="result-detail">
+              {% if q.options and (q.q_type == '选择题' or q.q_type == '多选题') %}
+                <div class="result-options">
+                  <div class="result-label">选项</div>
+                  <ul>
+                    {% for option in q.options %}
+                      <li class="{{ 'correct-answer' if option.key in q.answer else '' }}"><strong>{{ option.key }}:</strong> {{ option.value }}</li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              {% endif %}
+
+              <div class="result-answer">
+                <div class="result-label">答案</div>
+                <div class="result-answer-body">{{ q.full_answer|replace('\n', '<br>')|safe }}</div>
+              </div>
+
+              {% if q.explanation %}
+                <div class="result-explanation">
+                  <div class="result-label">解析</div>
+                  <div class="result-explanation-body" data-explanation="{{ q.explanation }}">{{ q.explanation|replace('\n', '<br>')|safe }}</div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      {% if total_pages > 1 %}
+        <div class="pagination">
+          <button class="page-btn" onclick="goPage({{ page - 1 }})" {{ 'disabled' if page <= 1 else '' }}>&larr; 上一页</button>
+          {% for p in range(1, total_pages + 1) %}
+            {% if p == page %}
+              <button class="page-btn active">{{ p }}</button>
+            {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+              <button class="page-btn" onclick="goPage({{ p }})">{{ p }}</button>
+            {% elif p == page - 3 or p == page + 3 %}
+              <span style="color: var(--app-muted);">...</span>
+            {% endif %}
+          {% endfor %}
+          <button class="page-btn" onclick="goPage({{ page + 1 }})" {{ 'disabled' if page >= total_pages else '' }}>下一页 &rarr;</button>
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" stroke="currentColor" stroke-width="2"/>
+            <path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h2 class="empty-title">暂无相关结果</h2>
+        <p class="empty-desc">
+          {% if keyword %}
+            没有找到与“{{ keyword }}”相关的题目
+          {% else %}
+            请输入关键词进行搜索
+          {% endif %}
+        </p>
+        <div class="suggestion-list">
+          <button class="suggestion-tag" onclick="searchSuggestion('Python')">Python</button>
+          <button class="suggestion-tag" onclick="searchSuggestion('网络')">网络</button>
+          <button class="suggestion-tag" onclick="searchSuggestion('统计')">统计</button>
+          <button class="suggestion-tag" onclick="searchSuggestion('循环')">循环</button>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}
+
+{% block body_end %}
+  <script>
+    const LOGGED_IN = {{ 'true' if logged_in else 'false' }};
+    const KEYWORD = {{ keyword|tojson }};
+
+    function toggleAdvanced(el) {
+      const options = document.getElementById('advancedOptions');
+      const expanded = options.classList.toggle('show');
+      el.classList.toggle('expanded', expanded);
+      el.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      localStorage.setItem('advanced_search_expanded', expanded ? '1' : '0');
+    }
+
+    if (localStorage.getItem('advanced_search_expanded') === '1') {
+      const toggle = document.querySelector('.search-advanced-toggle');
+      const options = document.getElementById('advancedOptions');
+      if (toggle && options) {
+        toggle.classList.add('expanded');
+        toggle.setAttribute('aria-expanded', 'true');
+        options.classList.add('show');
+      }
+    }
+
+    function doSearch(e) {
+      if (e) e.preventDefault();
+      const keyword = document.getElementById('searchInput').value.trim();
+      if (!keyword) {
+        document.getElementById('searchInput').focus();
+        return;
+      }
+
+      const subject = document.getElementById('filterSubject').value;
+      const type = document.getElementById('filterType').value;
+
+      let url = '/search?keyword=' + encodeURIComponent(keyword);
+      if (subject) url += '&subject=' + encodeURIComponent(subject);
+      if (type) url += '&type=' + encodeURIComponent(type);
+
+      window.location.href = url;
+    }
+
+    function searchSuggestion(keyword) {
+      document.getElementById('searchInput').value = keyword;
+      doSearch();
+    }
+
+    function goPage(p) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('page', p);
+      window.location.href = url.toString();
+    }
+
+    function highlightText(text, keyword) {
+      if (!keyword || !text) return text;
+      const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp('(' + escaped + ')', 'gi');
+      return text.replace(regex, '<span class="highlight">$1</span>');
+    }
+
+    function applyHighlights() {
+      if (!KEYWORD) return;
+
+      document.querySelectorAll('.result-content').forEach(el => {
+        const original = el.dataset.content || el.textContent;
+        const highlighted = highlightText(original, KEYWORD).replace(/\n/g, '<br>');
+        el.innerHTML = highlighted;
+      });
+
+      document.querySelectorAll('.result-explanation-body').forEach(el => {
+        const original = el.dataset.explanation || el.textContent;
+        const highlighted = highlightText(original, KEYWORD).replace(/\n/g, '<br>');
+        el.innerHTML = highlighted;
+      });
+    }
+
+    async function toggleFav(btn, qid) {
+      if (!LOGGED_IN) {
+        alert('请先登录后再收藏');
+        return;
+      }
+      try {
+        const res = await fetch('/api/favorite', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ question_id: qid })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+          btn.classList.toggle('active');
+        }
+      } catch(e) {
+        console.error('Toggle favorite failed:', e);
+      }
+    }
+
+    function toggleExpand(card) {
+      const expanded = card.classList.toggle('expanded');
+      card.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    }
+
+    applyHighlights();
+  </script>
+{% endblock %}

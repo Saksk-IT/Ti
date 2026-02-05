@@ -1,0 +1,292 @@
+{% extends "main/shared/app_shell.html" %}
+{% block title %}数据{% endblock %}
+{% block page_title %}数据{% endblock %}
+
+{% block head_extra %}
+  <link rel="stylesheet" href="/static/css/data_center.css" />
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+{% endblock %}
+
+{% block content %}
+  <div class="dc-shell">
+    <header class="dc-hero" aria-label="数据中心">
+      <div class="dc-hero-left" style="min-width:0;">
+        <h1>数据中心</h1>
+        <p>全局学习数据 + 题库维度概览（公共题库 + 个人题库）。</p>
+      </div>
+      <div class="dc-hero-kpis" aria-label="关键指标">
+        <div class="dc-hero-pill">
+          <div class="k">已做题</div>
+          <div class="v mono">{{ all_summary.answered }}</div>
+        </div>
+        <div class="dc-hero-pill">
+          <div class="k">正确率</div>
+          <div class="v mono">{{ all_summary.accuracy }}%</div>
+        </div>
+        <div class="dc-hero-pill">
+          <div class="k">完成度</div>
+          <div class="v mono">{{ all_summary.completion }}%</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="dc-body">
+      <aside class="dc-basebar" aria-label="数据中心导航">
+        <nav class="dc-tabs" aria-label="模块">
+          <a class="dc-tab" href="#overview">概览</a>
+          <a class="dc-tab" href="#banks">题库</a>
+          <a class="dc-tab" href="#trend">趋势</a>
+          <a class="dc-tab" href="#ai">AI助手</a>
+        </nav>
+
+        <div class="dc-basebar-actions" aria-label="趋势窗口">
+          <div class="dc-window">
+            <a class="{{ 'active' if window_days == 7 else '' }}" href="/data?days=7">7天</a>
+            <a class="{{ 'active' if window_days == 30 else '' }}" href="/data?days=30">30天</a>
+            <a class="{{ 'active' if window_days == 90 else '' }}" href="/data?days=90">90天</a>
+          </div>
+        </div>
+      </aside>
+
+      <div class="dc-content">
+        <section class="app-card dc-card" id="overview" aria-label="全局概览">
+          <div class="dc-card-head">
+            <div style="min-width:0;">
+              <h2>全局概览</h2>
+              <p>公共题库按科目权限与锁定规则过滤；个人题库仅统计你创建的题库。</p>
+            </div>
+            <div class="dc-ai-badge" title="最近活跃">
+              最近活跃：{{ all_summary.last_activity[:10] if all_summary.last_activity else '—' }}
+            </div>
+          </div>
+
+          <div class="dc-kpi-grid">
+            <div class="dc-kpi">
+              <div class="dc-kpi-top">
+                <div class="k">已做题</div>
+                <svg class="dc-kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M4 6.5c0-1.1.9-2 2-2h12c1.1 0 2 .9 2 2V19c0 .6-.4 1-1 1H7a3 3 0 0 1-3-3V6.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                  <path d="M7 8h10M7 12h10M7 16h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div class="v mono">{{ all_summary.answered }}</div>
+              <div class="m">总题 {{ all_summary.total_questions }} · 公共 {{ answered_count }} / 个人 {{ bank_summary.answered }}</div>
+            </div>
+
+            <div class="dc-kpi">
+              <div class="dc-kpi-top">
+                <div class="k">正确率</div>
+                <div class="dc-ring" style="--val: {{ all_summary.accuracy }};">
+                  <span class="mono">{{ all_summary.accuracy }}%</span>
+                </div>
+              </div>
+              <div class="m">正确 {{ all_summary.correct }} / {{ all_summary.answered }}</div>
+            </div>
+
+            <div class="dc-kpi">
+              <div class="dc-kpi-top">
+                <div class="k">完成度</div>
+                <div class="dc-ring" style="--val: {{ all_summary.completion }};">
+                  <span class="mono">{{ all_summary.completion }}%</span>
+                </div>
+              </div>
+              <div class="m">公共 {{ completion }}% · 个人 {{ bank_summary.completion }}%</div>
+            </div>
+
+            <div class="dc-kpi">
+              <div class="dc-kpi-top">
+                <div class="k">连续天数</div>
+                <svg class="dc-kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M7 2v3M17 2v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M4 7h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M6 5h12a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="v mono">{{ all_summary.streak_days }}</div>
+              <div class="m">公共 {{ streak_days }} · 个人 {{ bank_summary.streak_days }}</div>
+            </div>
+
+            <div class="dc-kpi">
+              <div class="dc-kpi-top">
+                <div class="k">收藏</div>
+                <svg class="dc-kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 17.3 6.3 20.6l1.2-6.6L2.6 9.8l6.7-.9L12 3l2.7 5.9 6.7.9-4.9 4.2 1.2 6.6L12 17.3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="v mono">{{ all_summary.favorites }}</div>
+              <div class="m">公共 {{ favorites_count }} · 个人 {{ bank_summary.favorites }}</div>
+            </div>
+
+            <div class="dc-kpi">
+              <div class="dc-kpi-top">
+                <div class="k">错题</div>
+                <svg class="dc-kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 8v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M12 16h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                  <path d="M10.3 4.3 2.8 17.3A2 2 0 0 0 4.5 20h15a2 2 0 0 0 1.7-2.7L13.7 4.3a2 2 0 0 0-3.4 0Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="v mono">{{ all_summary.mistakes }}</div>
+              <div class="m">累计错 {{ all_summary.mistakes_times }} 次 · 公共 {{ mistakes_times }} / 个人 {{ bank_summary.mistakes_times }}</div>
+            </div>
+          </div>
+
+          <div class="dc-split" aria-label="分题库汇总">
+            <div class="dc-box">
+              <h3>公共题库</h3>
+              <div class="dc-kv"><div class="k">已做 / 总题</div><div class="v mono">{{ answered_count }} / {{ total_questions }}</div></div>
+              <div class="dc-kv"><div class="k">正确率</div><div class="v mono">{{ accuracy }}%</div></div>
+              <div class="dc-kv"><div class="k">完成度</div><div class="v mono">{{ completion }}%</div></div>
+            </div>
+            <div class="dc-box">
+              <h3>个人题库</h3>
+              <div class="dc-kv"><div class="k">题库数量</div><div class="v mono">{{ bank_summary.bank_total }}</div></div>
+              <div class="dc-kv"><div class="k">已做 / 总题</div><div class="v mono">{{ bank_summary.answered }} / {{ bank_summary.total_questions }}</div></div>
+              <div class="dc-kv"><div class="k">正确率</div><div class="v mono">{{ bank_summary.accuracy }}%</div></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="app-card dc-card" id="trend" aria-label="趋势">
+          <div class="dc-card-head">
+            <div style="min-width:0;">
+              <h2>趋势</h2>
+              <p>最近 {{ window_days }} 天：总答题与正确题趋势。</p>
+            </div>
+            <div class="dc-ai-badge">窗口答题：{{ all_daily|length }}</div>
+          </div>
+
+          <div class="dc-chart-grid">
+            <div class="dc-chart" id="dcTrendChart" role="img" aria-label="答题趋势图"></div>
+            <div class="dc-chart" id="dcDistChart" role="img" aria-label="题库贡献分布图"></div>
+          </div>
+        </section>
+
+        <section class="app-card dc-card" id="banks" aria-label="题库数据">
+          <div class="dc-card-head">
+            <div style="min-width:0;">
+              <h2>题库数据</h2>
+              <p>按题库查看完成度与正确率，并可直接开始练习。</p>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+              <a class="dc-mini-btn" href="/quiz?mode=quiz&source=mistakes">刷公共错题</a>
+              <a class="dc-mini-btn" href="/user/banks/">我的题库</a>
+            </div>
+          </div>
+
+          <div class="dc-bank-grid">
+            <div class="dc-panel">
+              <h3>公共题库（科目）</h3>
+              {% if subject_rows %}
+                <div class="dc-list">
+                  {% for s in subject_rows %}
+                    <div class="dc-item">
+                      <div class="dc-item-top">
+                        <div style="min-width:0;">
+                          <div class="dc-item-title">{{ s.subject }}</div>
+                          <div class="dc-item-meta">已做 {{ s.answered }} / {{ s.total }} · 正确率 {{ s.accuracy }}% · 错题 {{ s.mistakes }}</div>
+                        </div>
+                        <div class="dc-item-actions">
+                          <a class="dc-mini-btn" href="/subjects/{{ s.subject_id }}">详情</a>
+                          <a class="dc-mini-btn primary" href="/quiz?subject={{ s.subject|urlencode }}&type=all&mode=quiz&source=mistakes">错题</a>
+                        </div>
+                      </div>
+                      <div class="dc-bars" aria-hidden="true">
+                        <div class="dc-bar"><span style="width: {{ s.completion }}%"></span></div>
+                        <div class="dc-bar secondary"><span style="width: {{ s.accuracy }}%"></span></div>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <div class="dc-empty">暂无公共题库统计数据。</div>
+              {% endif %}
+            </div>
+
+            <div class="dc-panel">
+              <h3>个人题库（我创建的）</h3>
+              {% if bank_rows %}
+                <div class="dc-list">
+                  {% for b in bank_rows %}
+                    <div class="dc-item">
+                      <div class="dc-item-top">
+                        <div style="min-width:0;">
+                          <div class="dc-item-title">{{ b.name }}</div>
+                          <div class="dc-item-meta">已做 {{ b.answered }} / {{ b.total }} · 正确率 {{ b.accuracy }}% · 错题 {{ b.mistakes }}</div>
+                        </div>
+                        <div class="dc-item-actions">
+                          <a class="dc-mini-btn" href="/user/banks/{{ b.bank_id }}/practice">详情</a>
+                          <a class="dc-mini-btn primary" href="/quiz?bank_id={{ b.bank_id }}&mode=quiz&source=mistakes">错题</a>
+                        </div>
+                      </div>
+                      <div class="dc-bars" aria-hidden="true">
+                        <div class="dc-bar"><span style="width: {{ b.completion }}%"></span></div>
+                        <div class="dc-bar secondary"><span style="width: {{ b.accuracy }}%"></span></div>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <div class="dc-empty">你还没有创建个人题库，先去「我的题库」创建一个吧。</div>
+              {% endif %}
+            </div>
+          </div>
+        </section>
+
+        <section class="app-card dc-card" id="ai" aria-label="AI助手">
+          <div class="dc-card-head">
+            <div style="min-width:0;">
+              <h2>AI助手</h2>
+              <p>基于你的数据生成训练建议，也可以提问“先练哪个题库/如何提正确率/怎么安排计划”。</p>
+            </div>
+            <div class="dc-ai-badge" id="dcAiProvider">provider：—</div>
+          </div>
+
+          {% if ai_seed_tips %}
+            <div class="dc-tip-grid" aria-label="建议（兜底）">
+              {% for t in ai_seed_tips %}
+                <div class="dc-tip">
+                  <div class="t">{{ t.title }}</div>
+                  <div class="c">{{ t.content }}</div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <div class="dc-ai-chat">
+            <div class="dc-ai-messages" id="dcAiMessages" aria-label="对话">
+              <div class="dc-ai-msg bot">
+                <div class="bubble">我会根据你的数据给出可执行的建议。你可以直接问：先练什么？怎么提高正确率？</div>
+              </div>
+            </div>
+
+            <div class="dc-ai-quick" aria-label="快捷问题">
+              <button class="dc-chip" type="button" data-prompt="给我一个今天的学习建议，控制在5条以内。">今日建议</button>
+              <button class="dc-chip" type="button" data-prompt="我应该先练哪个题库？请给出优先级和理由。">先练什么</button>
+              <button class="dc-chip" type="button" data-prompt="如何在不增加太多时间的情况下提升正确率？">提升正确率</button>
+            </div>
+
+            <form class="dc-ai-input" id="dcAiForm" aria-label="输入问题">
+              <textarea id="dcAiInput" rows="2" placeholder="问我：先练哪个科目？怎么安排本周计划？"></textarea>
+              <button class="app-btn" type="submit" id="dcAiSend">发送</button>
+            </form>
+
+            <div class="muted" style="font-size:12px;line-height:1.5;">
+              提示：若未配置 <span class="mono">DASHSCOPE_API_KEY</span>，将返回“模板建议”（不影响使用）。
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.__DATA_CENTER__ = {{ {
+      "window_days": window_days,
+      "all_daily": all_daily,
+      "subjects": subject_rows,
+      "banks": bank_rows
+    } | tojson }};
+  </script>
+  <script src="/static/js/data_center.js"></script>
+{% endblock %}

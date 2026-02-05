@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    {% set is_fav_scope = (source == 'favorites' or mode == 'favorites') %}
+    {% set is_mis_scope = (source == 'mistakes' or mode == 'mistakes') %}
+
+  {% include 'quiz/partials/quiz/head/_head_meta.html' %}
+</head>
+<body class="quiz-layout-card {{ 'memo-mode' if mode == 'memo' else ('exam-mode' if mode == 'exam' else '') }}">
+  <div class="app-container">
+    {% include 'quiz/partials/quiz/layout/_sidebar.html' %}
+    {% include 'quiz/partials/quiz/layout/_main_layout.html' %}
+    </div>
+
+  {% include 'quiz/partials/quiz/modals/_modals_forward.html' %}
+  {% include 'quiz/partials/quiz/modals/_modals_score.html' %}
+  {% include 'quiz/partials/quiz/modals/_modals_tags.html' %}
+  {% include 'quiz/partials/quiz/modals/_modals_features.html' %}
+  {% include 'quiz/partials/quiz/modals/_modals_edit_question.html' %}
+
+  {# 悬浮球功能提示横幅 - 放在 script 之前确保 DOM 已存在 #}
+  <div id="fabHint" class="fab-hint" style="display: none;">
+    <span class="fab-hint-icon" aria-hidden="true">
+    <svg class="icon icon-md" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="16" x2="12" y2="12"></line>
+      <line x1="12" y1="8" x2="12.01" y2="8"></line>
+    </svg>
+  </span>
+    <div class="fab-hint-content">
+      <div class="fab-hint-title">发现快捷功能</div>
+      <div class="fab-hint-text">点击右下角悬浮球，体验：<span class="fab-hint-feature">自动切题</span>、<span class="fab-hint-feature">AI解析</span>、<span class="fab-hint-feature">布局切换</span>等功能</div>
+    </div>
+    <button class="fab-hint-try" aria-label="试试看" onclick="tryFabHint()" title="打开悬浮球菜单">试试看</button>
+    <button class="fab-hint-dismiss" aria-label="不再提示" onclick="dismissFabHintPermanently()" title="不再提示">不再提示</button>
+    <button class="fab-hint-close" aria-label="关闭" onclick="dismissFabHint()" title="关闭">
+    <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+  </button>
+    <div class="fab-hint-arrow" aria-hidden="true">
+    <svg class="icon icon-md" viewBox="0 0 24 24">
+      <line x1="5" y1="12" x2="19" y2="12"></line>
+      <polyline points="12 5 19 12 12 19"></polyline>
+    </svg>
+  </div>
+  </div>
+
+  {% include 'quiz/partials/quiz/scripts/_scripts_main.html' %}
+</body>
+</html>

@@ -1,0 +1,99 @@
+{% extends "main/shared/app_shell.html" %}
+{% block title %}{{ bank_name }} · 数据{% endblock %}
+{% block page_title %}{{ bank_name }} · 数据{% endblock %}
+
+{% block head_extra %}
+  <link rel="stylesheet" href="/static/css/user_bank_data_v2.css" />
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+{% endblock %}
+
+{% block content %}
+  <div class="ubdv2-shell" data-bank-id="{{ bank_id }}" data-subtab="{{ subtab }}" data-days="{{ window_days }}">
+    <header class="ubdv2-hero" aria-label="题库数据题头">
+      <div class="ubdv2-hero-left" style="min-width:0;">
+        <h1>{{ bank_name }}</h1>
+        <p>
+          {% if bank_description %}{{ bank_description }} · {% endif %}
+          {% if subtab == 'mistakes' %}
+            错题视角：把“风险、优先级与回收路径”放到一张图里。
+          {% elif subtab == 'favorites' %}
+            收藏视角：把“结构、节奏与复习质量”放到一张图里。
+          {% else %}
+            全局视角：把“覆盖、正确与节奏”放到一张图里。
+          {% endif %}
+        </p>
+      </div>
+      <div class="ubdv2-hero-pills" aria-label="题库概览指标">
+        <div class="ubdv2-pill">
+          <div class="k">总题</div>
+          <div class="v mono">{{ total_count }}</div>
+        </div>
+        <div class="ubdv2-pill">
+          <div class="k">收藏</div>
+          <div class="v mono">{{ fav_count }}</div>
+        </div>
+        <div class="ubdv2-pill">
+          <div class="k">错题</div>
+          <div class="v mono">{{ mistake_count }}</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="ubdv2-body" aria-label="题库数据布局">
+      <nav class="basebar ubdv2-side" role="navigation" aria-label="题库详情侧边栏">
+        <div class="tabs" role="tablist" aria-label="题库详情导航">
+          <a class="tab" href="/user/banks/{{ bank_id }}/practice" role="tab" aria-selected="false">练习</a>
+          <a class="tab" href="/user/banks/{{ bank_id }}/practice?tab=exam" role="tab" aria-selected="false">考试</a>
+          <a class="tab" href="/user/banks/{{ bank_id }}/practice?tab=search" role="tab" aria-selected="false">搜索</a>
+          <a class="tab active" href="/user/banks/{{ bank_id }}/data/{{ subtab }}?days={{ window_days }}" role="tab" aria-selected="true">数据</a>
+          <a class="tab" href="/user/banks/{{ bank_id }}/practice?tab=share" role="tab" aria-selected="false">分享</a>
+          {% if access_type == 'owner' %}
+            <a class="tab" href="/user/banks/{{ bank_id }}/manage" role="tab" aria-selected="false">管理</a>
+          {% endif %}
+        </div>
+      </nav>
+
+      <div class="ubdv2-content" aria-label="数据内容区域">
+        <div class="ubdv2-subnav" role="navigation" aria-label="数据子页面导航">
+          <nav class="ubdv2-tabs" role="tablist" aria-label="全局/错题/收藏">
+            <a class="ubdv2-tab {{ 'active' if subtab=='global' else '' }}"
+               href="/user/banks/{{ bank_id }}/data/global?days={{ window_days }}"
+               role="tab"
+               aria-selected="{{ 'true' if subtab=='global' else 'false' }}">全局</a>
+            <a class="ubdv2-tab {{ 'active' if subtab=='mistakes' else '' }}"
+               href="/user/banks/{{ bank_id }}/data/mistakes?days={{ window_days }}"
+               role="tab"
+               aria-selected="{{ 'true' if subtab=='mistakes' else 'false' }}">错题</a>
+            <a class="ubdv2-tab {{ 'active' if subtab=='favorites' else '' }}"
+               href="/user/banks/{{ bank_id }}/data/favorites?days={{ window_days }}"
+               role="tab"
+               aria-selected="{{ 'true' if subtab=='favorites' else 'false' }}">收藏</a>
+          </nav>
+
+          <div class="ubdv2-subnav-right" aria-label="时间范围与快捷入口">
+            <div class="ubdv2-days" role="tablist" aria-label="时间窗口">
+              <a class="{{ 'active' if window_days==7 else '' }}" href="?days=7" role="tab">7天</a>
+              <a class="{{ 'active' if window_days==14 else '' }}" href="?days=14" role="tab">14天</a>
+              <a class="{{ 'active' if window_days==30 else '' }}" href="?days=30" role="tab">30天</a>
+              <a class="{{ 'active' if window_days==90 else '' }}" href="?days=90" role="tab">90天</a>
+            </div>
+          </div>
+        </div>
+
+        {% block ubdv2_main %}{% endblock %}
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.__UBDV2__ = {{ {
+      'bank_id': bank_id,
+      'subtab': subtab,
+      'window_days': window_days,
+      'bank_total': total_count,
+      'bank_favorites': fav_count,
+      'bank_mistakes': mistake_count,
+    }|tojson }};
+  </script>
+  <script src="/static/js/user_bank_data_v2.js"></script>
+{% endblock %}

@@ -1,0 +1,107 @@
+<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="AI助手" back="{{false}}" color="var(--app-nav-fg)" background="var(--app-nav-bg)">
+    <view slot="left" class="nav-left">
+      <view class="icon-btn" bindtap="onHamburgerTap" aria-role="button" aria-label="打开侧边栏">
+        <view class="icon-hamburger"></view>
+      </view>
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <v2-drawer
+    open="{{drawerOpen}}"
+    themeStyle="{{themeStyle}}"
+    activeKey="history"
+    bind:close="onDrawerClose"
+    bind:navigate="onDrawerNavigate"
+    bind:selectstyle="onDrawerSelectStyle"
+  />
+
+  <view class="page-container">
+    <scroll-view
+      class="content-area"
+      scroll-y
+      bounces="{{false}}"
+      refresher-enabled="{{true}}"
+      bindrefresherrefresh="onPullDownRefresh"
+    >
+      <view class="container">
+        <view class="card hero" aria-label="AI助手">
+          <view class="hero-head">
+            <view class="hero-left">
+              <text class="hero-title">AI助手</text>
+              <text class="hero-sub">基于你的数据给出训练建议，专注“可执行”。</text>
+              <text class="hero-sub">建议优先级会结合薄弱点与覆盖率。</text>
+            </view>
+          </view>
+          <view class="data-tabs" aria-label="数据中心导航">
+            <view class="data-tab" bindtap="onTabTap" data-tab="overview"><text>概览</text></view>
+            <view class="data-tab" bindtap="onTabTap" data-tab="banks"><text>题库</text></view>
+            <view class="data-tab" bindtap="onTabTap" data-tab="trend"><text>趋势</text></view>
+            <view class="data-tab active"><text>AI助手</text></view>
+          </view>
+        </view>
+
+        <view class="card section-card" aria-label="能力画像">
+          <text class="section-title">能力画像</text>
+          <text class="section-sub">覆盖率 × 正确率 × 连续性 × 错题治理。</text>
+
+          <view class="rank-list">
+            <view class="rank-item" wx:for="{{abilityList}}" wx:for-item="ab" wx:key="name">
+              <text class="rank-name">{{ab.name}}</text>
+              <text class="rank-meta">{{ab.value}} 分</text>
+              <view class="rank-bar"><view class="rank-fill" style="width: {{ab.value}}%;"></view></view>
+            </view>
+          </view>
+        </view>
+
+        <view class="card section-card" aria-label="优先级建议">
+          <text class="section-title">优先级建议</text>
+          <text class="section-sub">提升空间越大，优先级越高。</text>
+
+          <view class="rank-list">
+            <view class="rank-item" wx:for="{{focusRows}}" wx:for-item="it" wx:key="name">
+              <text class="rank-name">{{it.name}}</text>
+              <text class="rank-meta">正确率 {{it.accuracy}}% · 已做 {{it.answered}}</text>
+              <view class="rank-bar"><view class="rank-fill" style="width: {{it.gap}}%;"></view></view>
+            </view>
+          </view>
+        </view>
+
+        <view class="card section-card" aria-label="AI建议">
+          <text class="section-title">AI建议</text>
+          <text class="section-sub">点击生成，或输入你的问题。</text>
+
+          <view class="ai-panel">
+            <view class="ai-bubble">{{aiReply}}</view>
+            <view class="ai-input">
+              <textarea class="ai-textarea" placeholder="问我：先练哪个题库？怎么提正确率？" value="{{aiPrompt}}" bindinput="onPromptInput"></textarea>
+              <view class="ai-actions">
+                <view class="mini-btn primary" bindtap="onGenerateAdvice" wx:if="{{!aiLoading}}"><text>生成建议</text></view>
+                <view class="mini-btn" bindtap="onAskPrompt" wx:if="{{!aiLoading}}"><text>提问</text></view>
+                <view class="mini-btn" wx:if="{{aiLoading}}"><text>生成中...</text></view>
+              </view>
+            </view>
+            <view class="tag-pills">
+              <view class="tag-pill" bindtap="onQuickPrompt" data-prompt="给我一个今天的学习建议，控制在5条以内。"><text>今日建议</text></view>
+              <view class="tag-pill" bindtap="onQuickPrompt" data-prompt="我应该先练哪个题库？请给出优先级和理由。"><text>先练什么</text></view>
+              <view class="tag-pill" bindtap="onQuickPrompt" data-prompt="如何在不增加太多时间的情况下提升正确率？"><text>提升正确率</text></view>
+            </view>
+          </view>
+        </view>
+
+        <view class="msg error" wx:if="{{errorMsg}}">
+          <text>{{errorMsg}}</text>
+        </view>
+        <view class="loading" wx:if="{{loading}}">
+          <text>正在加载数据...</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

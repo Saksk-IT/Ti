@@ -1,0 +1,55 @@
+# 生产环境配置（独立完整版）
+# 使用方式: docker compose --env-file .env.production -f compose.prod.yml up -d
+
+services:
+  web:
+    image: saksk-ti:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      FLASK_ENV: production
+      DATA_DIR: /data
+      SECRET_KEY: ${SECRET_KEY}
+      REDIS_URL: redis://redis:6379/0
+      RATELIMIT_STORAGE_URI: redis://redis:6379/0
+      RQ_QUEUE_NAME: saksk
+      PROXY_FIX_ENABLED: ${PROXY_FIX_ENABLED:-true}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-true}
+      WECHAT_APPID: ${WECHAT_APPID}
+      WECHAT_SECRET: ${WECHAT_SECRET}
+      DASHSCOPE_BASE_URL: ${DASHSCOPE_BASE_URL}
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY}
+    volumes:
+      - ./var:/data
+    depends_on:
+      - redis
+
+  worker:
+    image: saksk-ti:latest
+    restart: unless-stopped
+    command: sh -c "rq worker -u $$REDIS_URL $$RQ_QUEUE_NAME"
+    environment:
+      FLASK_ENV: production
+      DATA_DIR: /data
+      SECRET_KEY: ${SECRET_KEY}
+      REDIS_URL: redis://redis:6379/0
+      RQ_QUEUE_NAME: saksk
+      WECHAT_APPID: ${WECHAT_APPID}
+      WECHAT_SECRET: ${WECHAT_SECRET}
+      DASHSCOPE_BASE_URL: ${DASHSCOPE_BASE_URL}
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY}
+    volumes:
+      - ./var:/data
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:

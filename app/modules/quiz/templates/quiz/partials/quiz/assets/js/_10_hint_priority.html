@@ -1,0 +1,64 @@
+// ===== 提示框优先级管理系统 =====
+const HINT_PRIORITY_QUEUE = [
+    {
+        id: 'fabHint',
+        storageKey: FAB_HINT_DISMISSED_KEY,
+        showFunc: 'showFabHint',
+        priority: 1, // 优先级：数字越小越优先
+        delay: 800 // 显示延迟（ms）
+    },
+    {
+        id: 'shortcutHint',
+        storageKey: 'shortcut_hint_dismissed',
+        showFunc: 'showShortcutHint',
+        priority: 2,
+        delay: 800
+    }
+];
+
+// 当前显示的提示框ID
+let currentHintId = null;
+
+// 本次会话中临时关闭的提示（刷新页面后重置）
+const temporarilyDismissedHints = new Set();
+
+// 检查并显示下一个提示
+function showNextHint() {
+    // 如果当前有提示正在显示，不处理
+    if (currentHintId) {
+        return;
+    }
+    
+    // 按优先级排序
+    const sortedHints = [...HINT_PRIORITY_QUEUE].sort((a, b) => a.priority - b.priority);
+    
+    // 查找第一个未被永久关闭且未被临时关闭的提示
+    for (const hint of sortedHints) {
+        const permanentlyDismissed = localStorage.getItem(hint.storageKey) === '1';
+        const temporarilyDismissed = temporarilyDismissedHints.has(hint.id);
+        
+        if (!permanentlyDismissed && !temporarilyDismissed) {
+            currentHintId = hint.id;
+            
+            // 延迟显示，确保页面加载完成
+            setTimeout(() => {
+                const showFunc = window[hint.showFunc];
+                if (typeof showFunc === 'function') {
+                    showFunc();
+                }
+            }, hint.delay);
+            return;
+        }
+    }
+}
+
+// 关闭当前提示并尝试显示下一个
+function closeCurrentHintAndShowNext() {
+    currentHintId = null;
+    
+    // 延迟显示下一个提示，避免视觉跳动
+    setTimeout(() => {
+        showNextHint();
+    }, 500);
+}
+

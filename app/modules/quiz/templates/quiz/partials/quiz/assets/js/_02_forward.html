@@ -1,0 +1,147 @@
+    } else if (rating) {
+        li.classList.add('done-wrong');
+    }
+}
+
+// ===== 题目转发（发送到站内聊天） =====
+const forwardBtn = document.getElementById('forward-question-btn');
+if (forwardBtn) {
+    forwardBtn.addEventListener('click', ()=>{
+        if (!LOGGED_IN) { showToast('请先登录后再转发'); return; }
+        openForwardModal();
+    });
+}
+
+function closeForwardModal(e){
+    if (e) {
+        // 点击遮罩关闭
+        if (e.target && e.target.id !== 'forwardOverlay') return;
+    }
+    const ov = document.getElementById('forwardOverlay');
+    if (ov) ov.style.display = 'none';
+    const list = document.getElementById('forwardUserList');
+    if (list) list.innerHTML = '';
+}
+
+function openForwardModal(){
+    const ov = document.getElementById('forwardOverlay');
+    if (!ov) return;
+    ov.style.display = 'flex';
+
+    // 预览当前题目
+    try {
+        const q = questions[currentIndex];
+        const qid = q ? (q.getAttribute('data-id') || '') : '';
+        const qtype = q ? (q.getAttribute('data-type') || '') : '';
+        const meta = document.getElementById('forwardQMeta');
+        const content = document.getElementById('forwardQContent');
+        if (meta) meta.textContent = `ID: ${qid} · 题型: ${qtype} · 第 ${currentIndex+1} 题 / ${totalQuestions}`;
+        if (content) {
+            const el = q ? q.querySelector('.q-content') : null;
+            content.textContent = el ? (el.innerText || '').trim() : '';
+        }
+    } catch(err) {}
+
+    // 默认拉一次用户列表
+    fetchForwardUsers();
+}
+
+function onForwardUserSearchKey(e){
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        fetchForwardUsers();
+    }
+}
+
+function escapeHtml(s){
+    const div = document.createElement('div');
+    div.textContent = s || '';
+    return div.innerHTML;
+}
+
+async function fetchForwardUsers(){
+    const inp = document.getElementById('forwardUserSearch');
+    const kw = (inp && inp.value) ? inp.value.trim() : '';
+    // 只获取已有会话的用户列表
+    const res = await fetch(`/api/chat/conversation_users?q=${encodeURIComponent(kw)}`);
+    const js = await res.json();
+    if (!res.ok || js.status !== 'success') {
+        showToast(js.message || '获取用户列表失败');
+        return;
+    }
+    renderForwardUserList(js.data || []);
+}
+
+function renderForwardUserList(users){
+    const list = document.getElementById('forwardUserList');
+    if (!list) return;
+    if (!users.length) {
+        list.innerHTML = `<div style="padding:10px 6px; color:var(--text-sub);">暂无聊天会话，请先在聊天中与用户建立会话</div>`;
+        return;
+    }
+
+    list.innerHTML = users.slice(0, 50).map(u=>{
+        // 优先显示备注，没有备注则显示用户名
+        const displayName = (u.remark && u.remark.trim()) ? u.remark.trim() : (u.username || '用户');
+        const avatar = u.avatar || '';
+        const initial = (displayName || 'U').slice(0,1).toUpperCase();
+        const avHtml = avatar
+          ? (()=>{
+                const safeUrl = String(avatar||'')
+                    .replace(/'/g, '%27')
+                    .replace(/\)/g, '%29');
+                return '<div style="width:38px;height:38px;border-radius:999px;background-image:url(&quot;' + safeUrl + '&quot;);background-size:cover;background-position:center;"></div>';
+            })()
+          : `<div style="width:38px;height:38px;border-radius:999px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;">${escapeHtml(initial)}</div>`;
+
+        // 如果有备注，显示备注和用户名；否则只显示用户名
+        const nameHtml = u.remark && u.remark.trim()
+            ? `<div style="font-weight:700;">${escapeHtml(displayName)}</div><div style="font-size:11px; color:var(--text-sub);">${escapeHtml(u.username || '')}</div>`
+            : `<div style="font-weight:700;">${escapeHtml(displayName)}</div>`;
+
+        return `
+          <div style="display:flex; align-items:center; gap:10px; padding:10px 10px; border-radius:14px; border:1px solid var(--border-color); cursor:pointer;" onclick="forwardToUser(${Number(u.id||0)})">
+            ${avHtml}
+            <div style="flex:1; min-width:0;">
+              ${nameHtml}
+              <div style="font-size:12px; color:var(--text-sub);">ID: ${escapeHtml(String(u.id||''))}</div>
+            </div>
+            <div style="color:var(--primary); font-weight:700;">发送</div>
+          </div>
+        `;
+    }).join('');
+}
+
+async function forwardToUser(peerUserId){
+    if (!peerUserId) return;
+    const q = questions[currentIndex];
+    const qid = q ? (q.getAttribute('data-id') || '') : '';
+    if (!qid) { showToast('题目ID获取失败'); return; }
+
+    try {
+        // 1) 创建/复用会话
+        const cRes = await fetch('/api/chat/conversations/create', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ peer_user_id: peerUserId })
+        });
+        const cJs = await cRes.json();
+        if (!cRes.ok || cJs.status !== 'success') { showToast(cJs.message || '创建会话失败'); return; }
+        const cid = cJs.conversation_id;
+
+        // 2) 发送“题目卡片”消息
+        const sRes = await fetch('/api/chat/messages/send_question', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ conversation_id: cid, question_id: Number(qid) })
+        });
+        const sJs = await sRes.json();
+        if (!sRes.ok || sJs.status !== 'success') { showToast(sJs.message || '转发失败'); return; }
+
+        showToast('已转发');
+        closeForwardModal();
+    } catch(e) {
+        showToast('转发失败');
+    }
+}
+

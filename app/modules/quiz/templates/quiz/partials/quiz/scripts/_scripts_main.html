@@ -1,0 +1,24 @@
+<script src="https://cdn.jsdelivr.net/npm/marked@11/marked.min.js"></script>
+<script>
+{% include 'quiz/partials/quiz/assets/_inline_js.html' %}
+</script>
+{# 快捷键提示横幅 #}
+<div id="shortcutHint" class="shortcut-hint" style="display: none;">
+    <span class="shortcut-hint-icon" aria-hidden="true">
+    <svg class="icon icon-md" viewBox="0 0 24 24">
+      <path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"></path>
+    </svg>
+  </span>
+    <div class="shortcut-hint-content">
+        <div class="shortcut-hint-title">快捷键支持自定义</div>
+        <div class="shortcut-hint-text">可在题库设置页自定义答题界面快捷键，支持组合键</div>
+    </div>
+    <button class="shortcut-hint-try" aria-label="去设置" onclick="goToShortcutSettings()" title="前往题库设置">去设置</button>
+    <button class="shortcut-hint-dismiss" aria-label="不再提示" onclick="dismissShortcutHintPermanently()" title="不再提示">不再提示</button>
+    <button class="shortcut-hint-close" aria-label="关闭" onclick="dismissShortcutHint()" title="关闭">
+    <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+  </button>
+</div>

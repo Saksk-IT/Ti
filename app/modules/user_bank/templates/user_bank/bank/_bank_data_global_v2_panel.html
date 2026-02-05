@@ -1,0 +1,174 @@
+<main class="ubdv2-grid" aria-label="全局数据内容">
+  <section class="ubdv2-card ubdv2-kpis span-12" aria-label="战略总览">
+    <div class="ubdv2-card-head">
+      <div style="min-width:0;">
+        <h2 class="ubdv2-title">战略总览</h2>
+        <p class="ubdv2-sub" id="ubdHeadline">加载中…</p>
+      </div>
+      <div class="ubdv2-badge" id="ubdUpdatedAt">—</div>
+    </div>
+
+    <div class="ubdv2-kpi-grid" role="list" aria-label="关键指标列表">
+      <div class="ubdv2-kpi" role="listitem">
+        <div class="k">题库总题</div>
+        <div class="v mono" id="kpiTotal">—</div>
+        <div class="m" id="kpiTotalMeta">—</div>
+      </div>
+      <div class="ubdv2-kpi" role="listitem">
+        <div class="k">已做</div>
+        <div class="v mono" id="kpiAnswered">—</div>
+        <div class="m" id="kpiAnsweredMeta">—</div>
+      </div>
+      <div class="ubdv2-kpi" role="listitem">
+        <div class="k">正确率</div>
+        <div class="v mono" id="kpiAccuracy">—</div>
+        <div class="m" id="kpiAccuracyMeta">—</div>
+      </div>
+      <div class="ubdv2-kpi" role="listitem">
+        <div class="k">覆盖率</div>
+        <div class="v mono" id="kpiCompletion">—</div>
+        <div class="m" id="kpiCompletionMeta">—</div>
+      </div>
+      <div class="ubdv2-kpi" role="listitem">
+        <div class="k">错题次数</div>
+        <div class="v mono" id="kpiMistakeTimes">—</div>
+        <div class="m" id="kpiMistakeTimesMeta">—</div>
+      </div>
+      <div class="ubdv2-kpi" role="listitem">
+        <div class="k">收藏</div>
+        <div class="v mono" id="kpiFav">—</div>
+        <div class="m" id="kpiFavMeta">—</div>
+      </div>
+      <div class="ubdv2-kpi" role="listitem">
+        <div class="k">错题池</div>
+        <div class="v mono" id="kpiMis">—</div>
+        <div class="m" id="kpiMisMeta">—</div>
+      </div>
+      <div class="ubdv2-kpi" role="listitem">
+        <div class="k">连刷</div>
+        <div class="v mono" id="kpiStreak">—</div>
+        <div class="m" id="kpiStreakMeta">—</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ubdv2-card span-7" aria-label="学习热力">
+    <div class="ubdv2-card-head">
+      <div style="min-width:0;">
+        <h2 class="ubdv2-title">学习热力</h2>
+        <p class="ubdv2-sub">日历视角观察投入强度与节奏（按天作答）。</p>
+      </div>
+    </div>
+    <div class="ubdv2-chart ubdv2-chart-calendar" id="ubdCalendarChart" role="img" aria-label="学习热力图"></div>
+  </section>
+
+  <section class="ubdv2-card span-5" aria-label="掌握指数">
+    <div class="ubdv2-card-head">
+      <div style="min-width:0;">
+        <h2 class="ubdv2-title">掌握指数</h2>
+        <p class="ubdv2-sub">综合正确率与覆盖率（仅用于辅助判断）。</p>
+      </div>
+    </div>
+    <div class="ubdv2-chart ubdv2-chart-tall" id="ubdGaugeChart" role="img" aria-label="掌握指数仪表盘"></div>
+    <div class="ubdv2-metrics" aria-label="指标拆解">
+      <div class="ubdv2-metric">
+        <div class="k">稳定度</div>
+        <div class="bar"><div class="bar-i" id="metricStability"></div></div>
+        <div class="v mono" id="metricStabilityText">—</div>
+      </div>
+      <div class="ubdv2-metric">
+        <div class="k">效率</div>
+        <div class="bar"><div class="bar-i" id="metricPace"></div></div>
+        <div class="v mono" id="metricPaceText">—</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ubdv2-card span-7" aria-label="趋势分析">
+    <div class="ubdv2-card-head">
+      <div style="min-width:0;">
+        <h2 class="ubdv2-title">趋势分析</h2>
+        <p class="ubdv2-sub">作答量（柱）+ 正确率（线）按天变化。</p>
+      </div>
+    </div>
+    <div class="ubdv2-chart" id="ubdTrendChart" role="img" aria-label="趋势图表"></div>
+  </section>
+
+  <section class="ubdv2-card span-5" aria-label="结构拆解">
+    <div class="ubdv2-card-head">
+      <div style="min-width:0;">
+        <h2 class="ubdv2-title">结构拆解</h2>
+        <p class="ubdv2-sub">题型层面：正确/错误堆叠，附覆盖率线。</p>
+      </div>
+    </div>
+    <div class="ubdv2-chart" id="ubdTypeChart" role="img" aria-label="题型结构图"></div>
+  </section>
+
+  <section class="ubdv2-card span-6" aria-label="学习漏斗">
+    <div class="ubdv2-card-head">
+      <div style="min-width:0;">
+        <h2 class="ubdv2-title">学习漏斗</h2>
+        <p class="ubdv2-sub">从“题库总量”到“稳定掌握”的路径（以最新作答为准）。</p>
+      </div>
+    </div>
+    <div class="ubdv2-chart ubdv2-chart-tall" id="ubdFunnelChart" role="img" aria-label="学习漏斗图"></div>
+  </section>
+
+  <section class="ubdv2-card span-6" aria-label="风险雷达">
+    <div class="ubdv2-card-head">
+      <div style="min-width:0;">
+        <h2 class="ubdv2-title">风险雷达</h2>
+        <p class="ubdv2-sub">优先关注：覆盖低 + 错题集中或正确率低的题型。</p>
+      </div>
+    </div>
+    <div class="ubdv2-chart ubdv2-chart-tall" id="ubdRiskRadarChart" role="img" aria-label="风险雷达图"></div>
+  </section>
+
+  <section class="ubdv2-card span-12" aria-label="题型画像">
+    <div class="ubdv2-card-head">
+      <div style="min-width:0;">
+        <h2 class="ubdv2-title">题型画像</h2>
+        <p class="ubdv2-sub">覆盖率 = 已做 / 总题；正确率 = 正确 / 已做。附收藏/错题分布。</p>
+      </div>
+    </div>
+    <div class="ubdv2-table-wrap">
+      <table class="ubdv2-table" aria-label="题型画像表格">
+        <thead>
+          <tr>
+            <th>题型</th>
+            <th>已做/总题</th>
+            <th>正确率</th>
+            <th>覆盖率</th>
+            <th>收藏</th>
+            <th>错题</th>
+          </tr>
+        </thead>
+        <tbody id="ubdTypeTbody">
+          <tr><td colspan="6" class="ubdv2-muted">加载中…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="ubdv2-card span-12" aria-label="难度拆解" id="ubdDiffCard" hidden>
+    <div class="ubdv2-card-head">
+      <div style="min-width:0;">
+        <h2 class="ubdv2-title">难度拆解</h2>
+        <p class="ubdv2-sub">按难度观察覆盖与正确率（题库未配置难度时自动隐藏）。</p>
+      </div>
+    </div>
+    <div class="ubdv2-chart" id="ubdDiffChart" role="img" aria-label="难度拆解图"></div>
+  </section>
+
+  <section class="ubdv2-card span-12" aria-label="行动建议">
+    <div class="ubdv2-card-head">
+      <div style="min-width:0;">
+        <h2 class="ubdv2-title">行动建议</h2>
+        <p class="ubdv2-sub">结合覆盖率/正确率/错题表现给出下一步方向。</p>
+      </div>
+    </div>
+    <div class="ubdv2-advice" id="ubdAdvice">
+      <div class="ubdv2-muted">加载中…</div>
+    </div>
+  </section>
+</main>

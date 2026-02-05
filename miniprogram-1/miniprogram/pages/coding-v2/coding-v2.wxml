@@ -1,0 +1,41 @@
+<!-- coding-v2.wxml - 对齐 Web /coding（原生组件复刻占位） -->
+<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="编程" back="{{false}}" color="var(--app-nav-fg)" background="var(--app-nav-bg)">
+    <view slot="left" class="nav-left">
+      <view class="icon-btn" bindtap="onHamburgerTap" aria-role="button" aria-label="打开侧边栏">
+        <view class="icon-hamburger"></view>
+      </view>
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <v2-drawer
+    open="{{drawerOpen}}"
+    themeStyle="{{themeStyle}}"
+    activeKey="coding"
+    bind:close="onDrawerClose"
+    bind:navigate="onDrawerNavigate"
+    bind:selectstyle="onDrawerSelectStyle"
+  />
+
+  <view class="page-container">
+    <scroll-view class="content-area" scroll-y bounces="{{false}}">
+      <view class="container">
+        <view class="card hero" aria-label="编程模式">
+          <text class="hero-title">编程</text>
+          <text class="hero-sub">对齐 Web /coding（小程序端原生复刻中）</text>
+        </view>
+
+        <view class="card section-card" aria-label="状态说明">
+          <text class="section-title">当前状态</text>
+          <text class="section-sub">该模块已在 Web 端上线，小程序端将按相同语义接入（题目 / 收藏 / 错题 / 进度 / 考试）。</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

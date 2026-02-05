@@ -1,0 +1,277 @@
+<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="数据" back="{{false}}" color="var(--app-nav-fg)" background="var(--app-nav-bg)">
+    <view slot="left" class="nav-left">
+      <view class="icon-btn" bindtap="onHamburgerTap" aria-role="button" aria-label="打开侧边栏">
+        <view class="icon-hamburger"></view>
+      </view>
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <v2-drawer
+    open="{{drawerOpen}}"
+    themeStyle="{{themeStyle}}"
+    activeKey="data"
+    bind:close="onDrawerClose"
+    bind:navigate="onDrawerNavigate"
+    bind:selectstyle="onDrawerSelectStyle"
+  />
+
+  <view class="page-container">
+    <scroll-view
+      class="content-area"
+      scroll-y
+      bounces="{{false}}"
+      refresher-enabled="{{true}}"
+      bindrefresherrefresh="onPullDownRefresh"
+    >
+      <view class="container">
+        <view class="dc-hero" aria-label="数据中心 · 收藏">
+          <view class="dc-hero-main">
+            <view class="dc-hero-title" style="min-width:0;">
+              <text class="dc-h1">数据中心 · 收藏</text>
+              <text class="dc-p">收藏是高价值题库：复习、背题、冲刺都能复用。</text>
+            </view>
+
+            <view class="dc-hero-actions" aria-label="时间窗口与操作">
+              <view class="dc-window" aria-label="时间窗口">
+                <view class="dc-window-tab {{days===7 ? 'active' : ''}}" bindtap="onDaysTap" data-days="7"><text>7天</text></view>
+                <view class="dc-window-tab {{days===30 ? 'active' : ''}}" bindtap="onDaysTap" data-days="30"><text>30天</text></view>
+                <view class="dc-window-tab {{days===90 ? 'active' : ''}}" bindtap="onDaysTap" data-days="90"><text>90天</text></view>
+              </view>
+            </view>
+          </view>
+
+          <view class="dc-hero-kpis" aria-label="关键指标">
+            <view class="dc-kpi-pill">
+              <text class="k">收藏数</text>
+              <text class="v mono">{{all_summary.favorites}}</text>
+            </view>
+            <view class="dc-kpi-pill">
+              <text class="k">近{{window_days}}天新增</text>
+              <text class="v mono">{{favorites_new}}</text>
+            </view>
+            <view class="dc-kpi-pill">
+              <text class="k">收藏密度</text>
+              <text class="v mono">{{favorites_density}}%</text>
+            </view>
+            <view class="dc-kpi-pill">
+              <text class="k">健康分</text>
+              <text class="v mono">{{health_score}}</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="dc-basebar" aria-label="数据中心导航">
+          <scroll-view class="dc-tabs" scroll-x enhanced show-scrollbar="{{false}}">
+            <view class="dc-tabs-inner">
+              <view class="dc-tab" bindtap="onTabTap" data-tab="global"><text>全局</text></view>
+              <view class="dc-tab" bindtap="onTabTap" data-tab="banks"><text>题库</text></view>
+              <view class="dc-tab" bindtap="onTabTap" data-tab="mistakes"><text>错题</text></view>
+              <view class="dc-tab active"><text>收藏</text></view>
+              <view class="dc-tab" bindtap="onTabTap" data-tab="tags"><text>标签</text></view>
+            </view>
+          </scroll-view>
+        </view>
+
+        <view class="dc-bento" aria-label="收藏数据看板">
+          <view class="dc-card dc-span-4" aria-label="收藏总览">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">收藏总览</text>
+                <text class="dc-card-sub">收藏是“高价值题库”：用于复习、背题与考前冲刺。</text>
+              </view>
+              <view class="dc-mini-btn" bindtap="onGoFavoritesCenter" aria-role="button"><text>收藏中心</text></view>
+            </view>
+
+            <view class="dc-list">
+              <view class="dc-item">
+                <view class="dc-item-top">
+                  <view style="min-width:0;">
+                    <text class="dc-item-title">收藏数量</text>
+                    <text class="dc-item-meta">{{all_summary.favorites}}（公共 + 个人）</text>
+                  </view>
+                </view>
+              </view>
+              <view class="dc-item">
+                <view class="dc-item-top">
+                  <view style="min-width:0;">
+                    <text class="dc-item-title">近 {{window_days}} 天新增</text>
+                    <text class="dc-item-meta">{{favorites_new}}（按创建日期统计）</text>
+                  </view>
+                </view>
+              </view>
+              <view class="dc-item">
+                <view class="dc-item-top">
+                  <view style="min-width:0;">
+                    <text class="dc-item-title">收藏密度</text>
+                    <text class="dc-item-meta">{{favorites_density}}% · 收藏/已做题（越高越“精挑细选”）</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+
+            <view class="dc-item-actions" style="margin-top:20rpx;">
+              <view class="dc-mini-btn primary" bindtap="onGoFavoritesCenter" aria-role="button"><text>去复习</text></view>
+              <view class="dc-mini-btn" bindtap="onTabTap" data-tab="global" aria-role="button"><text>回全局</text></view>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-8" aria-label="收藏新增趋势">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">收藏新增趋势</text>
+                <text class="dc-card-sub">公共 + 个人（近 {{window_days}} 天）：你的“精选题库”是如何长出来的。</text>
+              </view>
+            </view>
+            <view class="dc-chart lg" aria-label="收藏新增趋势图">
+              <ec-canvas id="dcFavoriteTrendChart" canvas-id="dcFavoriteTrendChart" ec="{{ecLazy}}" class="dc-echart"></ec-canvas>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-12 dc-lazy-card" wx:if="{{lazyStage < 2}}" id="dcLazyStage2Trigger" aria-label="继续下滑加载更多">
+            <text class="dc-lazy-title">继续下滑加载更多</text>
+            <text class="dc-lazy-sub">下方榜单与分布图将按需渲染</text>
+          </view>
+
+          <block wx:if="{{lazyStage >= 2}}">
+          <view class="dc-card dc-span-6" aria-label="收藏 Top 领域">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">收藏 Top 领域</text>
+                <text class="dc-card-sub">公共按科目 / 个人按题库：把收藏变成“可复用的复习体系”。</text>
+              </view>
+            </view>
+            <view class="dc-chart lg" aria-label="收藏 Top 领域图">
+              <ec-canvas id="dcFavoriteTopChart" canvas-id="dcFavoriteTopChart" ec="{{ecLazy}}" class="dc-echart"></ec-canvas>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-6" aria-label="收藏难度分布">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">难度分布</text>
+                <text class="dc-card-sub">数量（公共 + 个人）：你收藏的题更偏“基础巩固”还是“冲刺难题”。</text>
+              </view>
+            </view>
+            <view class="dc-chart lg" aria-label="收藏难度分布图">
+              <ec-canvas id="dcFavoriteDifficultyChart" canvas-id="dcFavoriteDifficultyChart" ec="{{ecLazy}}" class="dc-echart"></ec-canvas>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-12" aria-label="收藏题型分布">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">题型分布</text>
+                <text class="dc-card-sub">数量（公共 + 个人）：用题型结构做“专项复习清单”。</text>
+              </view>
+            </view>
+            <view class="dc-chart lg" aria-label="收藏题型分布图">
+              <ec-canvas id="dcFavoriteTypeChart" canvas-id="dcFavoriteTypeChart" ec="{{ecLazy}}" class="dc-echart"></ec-canvas>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-6" aria-label="收藏 Top 列表">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">收藏 Top 列表</text>
+                <text class="dc-card-sub">建议：每周固定一次“收藏回顾”，把收藏变成可持续的复习闭环。</text>
+              </view>
+            </view>
+
+            <view class="dc-list" wx:if="{{favorites_top_items.length}}">
+              <view class="dc-item" wx:for="{{favorites_top_items}}" wx:for-item="it" wx:key="key">
+                <view class="dc-item-top">
+                  <view style="min-width:0;">
+                    <text class="dc-item-title">{{it.scope_label}} · {{it.name}}</text>
+                    <text class="dc-item-meta">收藏 {{it.count}}</text>
+                  </view>
+                  <view class="dc-item-actions">
+                    <view class="dc-mini-btn primary" wx:if="{{it.can_quiz_bank}}" bindtap="onGoBankFavorites" data-bank-id="{{it.bank_id}}" aria-role="button"><text>刷收藏</text></view>
+                    <view class="dc-mini-btn" wx:else bindtap="onGoFavoritesCenter" aria-role="button"><text>去中心下钻</text></view>
+                  </view>
+                </view>
+                <view class="dc-bars" aria-hidden="true">
+                  <view class="dc-bar">
+                    <view class="dc-bar-inner" style="width: {{it.bar_pct}}%;"></view>
+                  </view>
+                </view>
+              </view>
+            </view>
+            <view class="dc-empty" wx:else>暂无可用收藏排行数据。</view>
+          </view>
+
+          <view class="dc-card dc-span-6" aria-label="最近收藏（公共/个人）">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">最近收藏</text>
+                <text class="dc-card-sub">建议每周花 10 分钟：把新增收藏“复习一遍 + 总结原因”。</text>
+              </view>
+            </view>
+
+            <view class="dc-bento" aria-label="最近收藏列表">
+              <view class="dc-span-6">
+                <view class="dc-card-head">
+                  <view style="min-width:0;">
+                    <text class="dc-h3">公共题库</text>
+                    <text class="dc-card-sub">可直接去收藏中心继续复习。</text>
+                  </view>
+                </view>
+                <view class="dc-list" wx:if="{{recent_favorites_public.length}}">
+                  <view class="dc-item" wx:for="{{recent_favorites_public}}" wx:for-item="f" wx:key="key">
+                    <view class="dc-item-top">
+                      <view style="min-width:0;">
+                        <text class="dc-item-title">{{f.subject}} · {{f.q_type}} · 难度{{f.difficulty}}</text>
+                        <text class="dc-item-meta">{{f.snippet}}</text>
+                      </view>
+                      <view class="dc-item-actions">
+                        <view class="dc-mini-btn primary" bindtap="onGoFavoritesCenter" aria-role="button"><text>去中心</text></view>
+                      </view>
+                    </view>
+                  </view>
+                </view>
+                <view class="dc-empty" wx:else>暂无收藏记录。</view>
+              </view>
+
+              <view class="dc-span-6">
+                <view class="dc-card-head">
+                  <view style="min-width:0;">
+                    <text class="dc-h3">个人题库</text>
+                    <text class="dc-card-sub">直接进入题库收藏模式，快速复习。</text>
+                  </view>
+                </view>
+                <view class="dc-list" wx:if="{{recent_favorites_bank.length}}">
+                  <view class="dc-item" wx:for="{{recent_favorites_bank}}" wx:for-item="f" wx:key="key">
+                    <view class="dc-item-top">
+                      <view style="min-width:0;">
+                        <text class="dc-item-title">{{f.bank_name}} · {{f.q_type}} · 难度{{f.difficulty}}</text>
+                        <text class="dc-item-meta">{{f.snippet}}</text>
+                      </view>
+                      <view class="dc-item-actions">
+                        <view class="dc-mini-btn primary" bindtap="onGoQuizBankFavorites" data-bank-id="{{f.bank_id}}" aria-role="button"><text>刷收藏</text></view>
+                      </view>
+                    </view>
+                  </view>
+                </view>
+                <view class="dc-empty" wx:else>暂无个人题库收藏记录。</view>
+              </view>
+            </view>
+          </view>
+          </block>
+        </view>
+
+        <view class="msg error" wx:if="{{errorMsg}}">
+          <text>{{errorMsg}}</text>
+        </view>
+        <view class="loading" wx:if="{{loading}}">
+          <text>正在加载数据...</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

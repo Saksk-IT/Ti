@@ -1,0 +1,199 @@
+<view class="exam-layout">
+  <view class="card exam-card">
+    <view class="card-head">
+      <view class="card-head-left">
+        <text class="card-title">新建考试</text>
+        <text class="card-sub">先确认范围，再设定时长与题量，最后调整题型与分值。</text>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">考试范围</text>
+      <view class="fields">
+        <view class="field">
+          <text class="field-label">范围</text>
+          <view class="select disabled" aria-disabled="true">
+            <text class="select-text">{{scopeText}}</text>
+            <text class="select-arrow">›</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-title-row">
+        <text class="section-title">考试模板</text>
+        <view class="section-link" bindtap="onGoExamCenterTemplates" aria-role="button" aria-label="去考试中心管理模板">
+          <text>管理</text>
+        </view>
+      </view>
+      <view class="fields">
+        <view class="field">
+          <text class="field-label">我的模板</text>
+          <picker
+            mode="selector"
+            range="{{templateOptions}}"
+            range-key="label"
+            value="{{templateIndex}}"
+            bindchange="onTemplatePickerChange"
+            disabled="{{templatesLoading}}"
+          >
+            <view class="select {{templatesLoading ? 'disabled' : ''}}">
+              <text class="select-text">{{templateLabel}}</text>
+              <text class="select-arrow">▼</text>
+            </view>
+          </picker>
+          <text class="template-meta" wx:if="{{templateMeta}}">{{templateMeta}}</text>
+          <text class="template-hint" wx:if="{{!templatesLoading && templateOptions.length <= 1}}">暂无自定义模板，可在考试中心设为模板</text>
+          <text class="template-msg {{templateMsgKind}}" wx:if="{{templateMsg}}">{{templateMsg}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">快捷参数</text>
+      <view class="quick-grid">
+        <view
+          class="quick-btn"
+          wx:for="{{quickPresets}}"
+          wx:key="label"
+          bindtap="onQuickPresetTap"
+          data-duration="{{item.duration}}"
+          data-total="{{item.total}}"
+        >
+          <text>{{item.label}}</text>
+        </view>
+      </view>
+
+      <view class="fields">
+        <view class="field">
+          <text class="field-label">时长（分钟）</text>
+          <input class="input" type="number" value="{{examDuration}}" bindinput="onExamDurationInput" inputmode="numeric" maxlength="4" />
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">题型与分值</text>
+      <text class="section-sub">点击题型行可启用/禁用；题量不超过可用题目数。</text>
+
+      <view class="types-box">
+        <view class="types-row types-head">
+          <text class="col-type">题型</text>
+          <text class="col-count">题量</text>
+          <text class="col-score">分值</text>
+          <text class="col-subtotal">小计</text>
+        </view>
+
+        <view class="types-row {{item.enabled ? '' : 'disabled'}}" wx:for="{{examTypes}}" wx:key="name">
+          <view class="type-name" bindtap="onTypeToggleTap" data-name="{{item.name}}">
+            <view class="check {{item.enabled ? 'on' : ''}}"></view>
+            <view class="type-text-wrap">
+              <text class="type-text">{{item.name}}</text>
+              <text class="type-meta">可用 {{item.available}} 题</text>
+            </view>
+          </view>
+
+          <view class="type-input">
+            <input
+              class="mini-input"
+              type="number"
+              value="{{item.count}}"
+              disabled="{{!item.enabled}}"
+              bindinput="onTypeCountInput"
+              data-name="{{item.name}}"
+              inputmode="numeric"
+              maxlength="4"
+            />
+            <text class="unit">题</text>
+          </view>
+
+          <view class="type-input">
+            <input
+              class="mini-input"
+              type="digit"
+              value="{{item.score}}"
+              disabled="{{!item.enabled}}"
+              bindinput="onTypeScoreInput"
+              data-name="{{item.name}}"
+              maxlength="6"
+            />
+            <text class="unit">分</text>
+          </view>
+
+          <text class="subtotal col-subtotal">{{item.subtotalText}}</text>
+        </view>
+
+        <view class="types-empty" wx:if="{{!examLoading && examTypes.length === 0}}">
+          <text>{{emptyText}}</text>
+        </view>
+        <view class="types-loading" wx:if="{{examLoading}}">
+          <text>加载中…</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="inline-actions">
+      <view class="btn" bindtap="onOpenSaveTemplate"><text>设为模板</text></view>
+      <view class="btn btn-primary {{examStartDisabled ? 'disabled' : ''}}" bindtap="onStartExamTap">
+        <text>{{examCreating ? '创建中…' : '开始考试'}}</text>
+      </view>
+    </view>
+
+    <view class="msg {{examMsgKind}}" wx:if="{{examMsg}}">
+      <text>{{examMsg}}</text>
+    </view>
+  </view>
+
+  <view class="card exam-summary-card">
+    <view class="summary-title">本次考试预览</view>
+    <view class="summary-kv">
+      <view class="kv">
+        <text class="k">范围</text>
+        <text class="v">{{examSumScope}}</text>
+      </view>
+      <view class="kv">
+        <text class="k">时长</text>
+        <text class="v">{{examSumDuration}}</text>
+      </view>
+      <view class="kv">
+        <text class="k">已分配题量</text>
+        <text class="v">{{examSumAssigned}}</text>
+      </view>
+      <view class="kv">
+        <text class="k">总分</text>
+        <text class="v">{{examSumScore}}</text>
+      </view>
+    </view>
+    <view class="summary-types">
+      <view class="muted" wx:if="{{examSumTypes.length === 0}}">
+        <text>请勾选题型并设置题量。</text>
+      </view>
+      <view class="type-pill" wx:for="{{examSumTypes}}" wx:key="name">
+        <text class="l">{{item.name}}</text>
+        <text class="r">{{item.meta}} = {{item.subtotal}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="modal-root" wx:if="{{saveModalOpen}}">
+    <view class="modal-overlay" bindtap="onCloseSaveModal"></view>
+    <view class="modal-panel" catchtap="stopTap">
+      <text class="modal-title">设为模板</text>
+      <text class="modal-sub">请输入模板名称（云端同步）</text>
+      <input
+        class="modal-input"
+        value="{{saveTemplateTitle}}"
+        bindinput="onSaveTemplateTitleInput"
+        placeholder="例如：自定义模板 2026-01-13"
+        maxlength="30"
+      />
+      <view class="modal-actions">
+        <view class="btn" bindtap="onCloseSaveModal"><text>取消</text></view>
+        <view class="btn btn-primary {{savingTemplate ? 'disabled' : ''}}" bindtap="onConfirmSaveTemplate">
+          <text>{{savingTemplate ? '保存中…' : '保存'}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

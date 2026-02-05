@@ -1,0 +1,190 @@
+// ===== 题目标签（用户私有） =====
+const tagModalState = {
+    open: false,
+    qid: null,
+    subjectId: null,
+    allTags: [],
+    selected: [],
+    saving: false
+};
+
+function getCurrentQuestionId(){
+    try {
+        const q = questions[currentIndex];
+        const qid = q ? (q.getAttribute('data-id') || '') : '';
+        return qid ? String(qid) : '';
+    } catch(e) { return ''; }
+}
+
+function closeTagModal(e){
+    if (e) {
+        // 点击遮罩关闭
+        if (e.target && e.target.id !== 'tagOverlay') return;
+    }
+    const ov = document.getElementById('tagOverlay');
+    if (ov) ov.style.display = 'none';
+    tagModalState.open = false;
+    tagModalState.qid = null;
+    tagModalState.subjectId = null;
+    tagModalState.selected = [];
+    tagModalState.allTags = [];
+}
+
+async function openTagModal(){
+    if (!LOGGED_IN) { showToast('请先登录后再使用标签'); return; }
+    const qid = getCurrentQuestionId();
+    if (!qid) { showToast('题目ID获取失败'); return; }
+
+    const ov = document.getElementById('tagOverlay');
+    if (!ov) return;
+    ov.style.display = 'flex';
+    tagModalState.open = true;
+    tagModalState.qid = qid;
+
+    const inp = document.getElementById('tagNewInput');
+    if (inp) inp.value = '';
+
+    await refreshTagModalData();
+}
+
+async function refreshTagModalData(){
+    const qid = tagModalState.qid;
+    if (!qid) return;
+
+    const list = document.getElementById('tagChipList');
+    if (list) list.innerHTML = `<div style="padding:10px 6px; color:var(--text-sub);">加载中...</div>`;
+
+    try {
+        const qRes = await fetch(`${IS_USER_BANK ? getUserBankApiPrefix() : '/api/quiz'}/questions/${encodeURIComponent(qid)}/tags`);
+        const qJs = await qRes.json();
+
+        const selected = (qRes.ok && qJs && qJs.status === 'success' && qJs.data && Array.isArray(qJs.data.tags))
+            ? qJs.data.tags.map(x => String(x)).filter(Boolean)
+            : [];
+
+        let subjectId = 0;
+        if (!IS_USER_BANK && qRes.ok && qJs && qJs.status === 'success' && qJs.data) {
+            try { subjectId = parseInt(qJs.data.subject_id || '0', 10) || 0; } catch(e) { subjectId = 0; }
+        }
+        tagModalState.subjectId = subjectId > 0 ? subjectId : null;
+
+        const tagListUrl = IS_USER_BANK
+            ? `${getUserBankApiPrefix()}/tags`
+            : (subjectId > 0 ? `/api/quiz/tags?subject_id=${encodeURIComponent(String(subjectId))}` : '/api/quiz/tags');
+
+        const tRes = await fetch(tagListUrl);
+        const tJs = await tRes.json();
+        const allTags = (tRes.ok && tJs && tJs.status === 'success' && tJs.data && Array.isArray(tJs.data.tags))
+            ? tJs.data.tags.map(x => x && x.name ? String(x.name) : '').filter(Boolean)
+            : [];
+
+        tagModalState.allTags = allTags;
+        tagModalState.selected = selected;
+        renderTagChips();
+    } catch(e) {
+        if (list) list.innerHTML = `<div style="padding:10px 6px; color:var(--text-sub);">加载失败</div>`;
+    }
+}
+
+function renderTagChips(){
+    const list = document.getElementById('tagChipList');
+    if (!list) return;
+    const tags = Array.isArray(tagModalState.allTags) ? tagModalState.allTags : [];
+    const selected = Array.isArray(tagModalState.selected) ? tagModalState.selected : [];
+
+    if (!tags.length) {
+        list.innerHTML = `<div style="padding:10px 6px; color:var(--text-sub);">暂无标签，可在上方输入新建</div>`;
+        return;
+    }
+
+    list.innerHTML = tags.map(name => {
+        const on = selected.includes(name);
+        return `<span class="tag-chip ${on ? 'active' : ''}" data-tag="${encodeURIComponent(name)}" onclick="toggleTagChip(this)">${on ? '<span class="tag-chip-check" aria-hidden="true"><svg class="icon icon-xs" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></span>' : ''}${escapeHtml(name)}</span>`;
+    }).join('');
+}
+
+async function toggleTagChip(el){
+    const raw = el && el.dataset ? (el.dataset.tag || '') : '';
+    let tag = '';
+    try { tag = decodeURIComponent(String(raw || '')); } catch(e) { tag = String(raw || ''); }
+    tag = tag.trim();
+    if (!tag) return;
+
+    const selected = Array.isArray(tagModalState.selected) ? tagModalState.selected.slice() : [];
+    const idx = selected.indexOf(tag);
+    if (idx >= 0) selected.splice(idx, 1);
+    else selected.push(tag);
+
+    tagModalState.selected = selected;
+    renderTagChips();
+    await saveQuestionTagsFromModal();
+}
+
+async function saveQuestionTagsFromModal(){
+    const qid = tagModalState.qid;
+    if (!qid) return;
+    if (tagModalState.saving) return;
+
+    tagModalState.saving = true;
+    try {
+        const res = await fetch(`${IS_USER_BANK ? getUserBankApiPrefix() : '/api/quiz'}/questions/${encodeURIComponent(qid)}/tags`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ tags: tagModalState.selected || [] })
+        });
+        const js = await res.json();
+        if (!res.ok || !js || js.status !== 'success') {
+            showToast((js && (js.message || js.msg)) || '保存失败');
+            return;
+        }
+        const next = (js.data && Array.isArray(js.data.tags)) ? js.data.tags.map(x => String(x)).filter(Boolean) : [];
+        tagModalState.selected = next;
+        renderTagChips();
+    } catch(e) {
+        showToast('网络错误，请重试');
+    } finally {
+        tagModalState.saving = false;
+    }
+}
+
+function onTagNewKey(e){
+    if (e && e.key === 'Enter') {
+        e.preventDefault();
+        createTagFromModal();
+    }
+}
+
+async function createTagFromModal(){
+    if (!LOGGED_IN) { showToast('请先登录'); return; }
+    const inp = document.getElementById('tagNewInput');
+    const name = (inp && inp.value) ? inp.value.trim() : '';
+    if (!name) { showToast('请输入标签名'); return; }
+
+    try {
+        const payload = { name };
+        if (!IS_USER_BANK) {
+            const sid = tagModalState && tagModalState.subjectId ? parseInt(tagModalState.subjectId, 10) : 0;
+            if (!sid || sid <= 0) { showToast('无法识别当前题目的科目，无法新建标签'); return; }
+            payload.subject_id = sid;
+        }
+        const res = await fetch(`${IS_USER_BANK ? getUserBankApiPrefix() : '/api/quiz'}/tags`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        const js = await res.json();
+        if (!res.ok || !js || js.status !== 'success') {
+            showToast((js && (js.message || js.msg)) || '创建失败');
+            return;
+        }
+        const tags = (js.data && Array.isArray(js.data.tags)) ? js.data.tags.map(x => x && x.name ? String(x.name) : '').filter(Boolean) : [];
+        tagModalState.allTags = tags;
+
+        const created = (js.data && js.data.tag) ? String(js.data.tag) : name;
+        if (!tagModalState.selected.includes(created)) {
+            tagModalState.selected = (tagModalState.selected || []).concat([created]);
+        }
+
+        if (inp) inp.value = '';
+        renderTagChips();
+        await saveQuestionTagsFromModal();

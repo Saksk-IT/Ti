@@ -1,0 +1,14 @@
+    <section class="qb-hero" aria-label="题头">
+      <div style="min-width:0;">
+        <h1>{{ bank_name }}</h1>
+        <p>
+          {% if bank_description %}{{ bank_description }} · {% endif %}
+          个人题库 · {{ total_count }} 题 · 已做 {{ my_stats.total_answered }} 题 · 正确率 {{ my_stats.accuracy }}%
+          · 收藏 {{ fav_count }} · 错题 {{ mistake_count }}
+        </p>
+      </div>
+      <div class="qb-hero-actions">
+        <button type="button" class="pill" onclick="openTabOrderModal()">自定义排序</button>
+      </div>
+    </section>
+

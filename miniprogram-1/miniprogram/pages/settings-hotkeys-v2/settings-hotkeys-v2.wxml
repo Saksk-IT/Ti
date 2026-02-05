@@ -1,0 +1,78 @@
+<!-- settings-hotkeys-v2.wxml - 对齐 Web /settings/hotkeys（原生组件复刻） -->
+<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="设置" back="{{false}}" color="var(--app-nav-fg)" background="var(--app-bg)">
+    <view slot="left" class="nav-left">
+      <view class="icon-btn" bindtap="onHamburgerTap" aria-role="button" aria-label="打开侧边栏">
+        <view class="icon-hamburger"></view>
+      </view>
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+    <view slot="right" class="nav-right">
+      <view class="pill-btn" bindtap="onContinueLast" aria-role="button" aria-label="继续上次">
+        <text>继续上次</text>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <v2-drawer
+    open="{{drawerOpen}}"
+    themeStyle="{{themeStyle}}"
+    activeKey="settings"
+    bind:close="onDrawerClose"
+    bind:navigate="onDrawerNavigate"
+    bind:selectstyle="onDrawerSelectStyle"
+  />
+
+  <view class="page-container">
+    <scroll-view class="content-area" scroll-y bounces="{{false}}">
+      <view class="container">
+        <view class="card hero" aria-label="快捷键页概览">
+          <text class="hero-title">快捷键</text>
+          <text class="hero-sub">快捷键仅在 Web 端刷题/背题生效，小程序端用于查看与同步。</text>
+        </view>
+
+        <view class="card nav-card" aria-label="设置分区导航">
+          <view class="tabs">
+            <view class="tab {{navKey==='account' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="account"><text>账号管理</text></view>
+            <view class="tab {{navKey==='practice' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="practice"><text>通用</text></view>
+            <view class="tab {{navKey==='theme' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="theme"><text>主题</text></view>
+            <view class="tab {{navKey==='hotkeys' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="hotkeys"><text>快捷键</text></view>
+            <view class="tab {{navKey==='about' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="about"><text>关于</text></view>
+          </view>
+        </view>
+
+        <view class="msg" wx:if="{{msg}}">
+          <text>{{msg}}</text>
+        </view>
+
+        <view class="card section-card" aria-label="快捷键列表">
+          <text class="section-title">快捷键</text>
+          <text class="section-sub">小程序端不支持录入键盘按键；建议在 Web 端设置。这里可查看、恢复默认并同步。</text>
+          <view class="divider"></view>
+
+          <view class="hk-list">
+            <view class="hk-row" wx:for="{{hotkeyRows}}" wx:key="key">
+              <view class="hk-left">
+                <text class="hk-name">{{item.label}}</text>
+                <text class="hk-desc">{{item.desc}}</text>
+              </view>
+              <view class="hk-right">
+                <text class="hk-val">{{item.display}}</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="actions">
+            <view class="btn btn-quiet" bindtap="onResetDefault"><text>恢复默认</text></view>
+            <view class="btn btn-primary" bindtap="onSyncNow"><text>同步到云端</text></view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

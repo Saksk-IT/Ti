@@ -1,0 +1,51 @@
+        <div id="pageTabReinforce" data-tab-panel="reinforce" hidden>
+          <div class="reinforce-shell" id="reinforcePanels" aria-label="加强训练">
+            <div class="ubdv2-subnav reinforce-subnav" role="navigation" aria-label="加强子页面">
+              <nav class="ubdv2-tabs" role="tablist" aria-label="错题/相似题">
+                <button type="button" class="ubdv2-tab active" data-reinforce-tab="wrong" role="tab" aria-selected="true">错题</button>
+                <button type="button" class="ubdv2-tab" data-reinforce-tab="similar" role="tab" aria-selected="false">相似题</button>
+              </nav>
+            </div>
+
+            <div class="reinforce-panel" data-reinforce-panel="wrong">
+              <div class="reinforce-item">
+                <div class="reinforce-title">错题加强</div>
+                <div class="reinforce-desc" id="reinforceWrongDesc">正在分析...</div>
+                <div class="reinforce-actions">
+                  <button class="btn primary" type="button" id="reinforceWrongBtn" disabled>开始加强</button>
+                  <button class="btn" type="button" id="reinforceWrongAllBtn" disabled>练全部错题</button>
+                </div>
+              </div>
+
+              <div class="reinforce-subhead">
+                <div class="reinforce-subtitle">高频错题</div>
+                <div class="sub" id="reinforceWrongListMeta">正在加载...</div>
+              </div>
+              <div class="reinforce-list" id="reinforceWrongList"></div>
+            </div>
+
+            <div class="reinforce-panel" data-reinforce-panel="similar" hidden>
+              <div class="reinforce-item">
+                <div class="reinforce-title">相似题加强</div>
+                <div class="reinforce-desc" id="reinforceSimilarDesc">正在分析...</div>
+                <div class="reinforce-actions">
+                  <button class="btn primary" type="button" id="reinforceSimilarBtn" disabled>开始加强</button>
+                </div>
+              </div>
+
+              <div class="reinforce-subhead">
+                <div class="reinforce-subtitle">相似题目</div>
+                <div class="sub" id="reinforceSimilarListMeta">正在加载...</div>
+              </div>
+              <div class="reinforce-list" id="reinforceSimilarList"></div>
+            </div>
+
+            {% if not logged_in %}
+              <div class="reinforce-item" role="note" aria-label="登录提示">
+                <div class="reinforce-desc">登录后可基于错题生成加强训练。</div>
+                <div class="links"><a class="link" href="/login">去登录</a></div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+

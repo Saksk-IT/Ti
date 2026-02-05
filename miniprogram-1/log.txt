@@ -1,0 +1,109 @@
+pages/my-banks/my-banks.js
+pages/exams-select-v2/exams-select-v2.js
+pages/history-v2/history-v2.js
+pages/index/index.js
+pages/exam-setup/exam-setup.js
+pages/data-global-v2/data-global-v2.js
+pages/my-banks-v2/my-banks-v2.js
+pages/question-list/question-list.js
+pages/profile-view-v2/profile-view-v2.js
+pages/exam-run/exam-run.js
+pages/practice/practice.js
+pages/mistakes-v2/mistakes-v2.js
+pages/login/login.js
+pages/settings-about-v2/settings-about-v2.js
+pages/search/search.js
+pages/settings-hotkeys-v2/settings-hotkeys-v2.js
+pages/settings-theme-v2/settings-theme-v2.js
+pages/settings-v2/settings-v2.js
+pages/public-bank-v2/public-bank-v2.js
+pages/subject-detail/subject-detail.js
+pages/practice-setup/practice-setup.js
+pages/subjects/subjects.js
+pages/subject-stats/subject-stats.js
+pages/search-v2/search-v2.js
+pages/web-frontend/web-frontend.js
+pages/settings-practice-v2/settings-practice-v2.js
+pages/web-bind/web-bind.js
+pages/settings-account-profile-v2/settings-account-profile-v2.js
+pages/web-login/web-login.js
+pages/notifications-v2/notifications-v2.js
+pages/wechat-bind/wechat-bind.js
+pages/subject-data-favorites/subject-data-favorites.js
+pages/subject-data-global/subject-data-global.js
+pages/subject-data-mistakes/subject-data-mistakes.js
+pages/bank-detail/bank-detail.js
+pages/tags-v2/tags-v2.js
+pages/review-center-v2/review-center-v2.js
+pages/subject-detail-v2/subject-detail-v2.js
+pages/index-v2/index-v2.js
+pages/quiz/quiz.js
+追加 babel helper 文件
+封装代码包
+analyzing codes...
+ignoring files: miniprogram/app.miniapp.json,miniprogram/styles/data-center.wxss,miniprogram/styles/data-suite.wxss
+analyzing codes success
+Pack resource file finish
+编译所有文件完成，共编译 409 个文件，耗时：7616ms
+过滤文件
+正在处理编译结果
+处理编译结果完成，耗时：2ms
+正在对比文件列表
+analyzing codes...
+ignoring files: miniprogram/app.miniapp.json,miniprogram/styles/data-center.wxss,miniprogram/styles/data-suite.wxss
+analyzing codes success
+对比文件列表完成，耗时：8ms
+正在打包
+打包完成，耗时：11ms
+上传中
+上传完成，耗时：3973ms
+下载项目资源包中...
+下载项目资源包成功
+生成项目资源包中...
+编译 app.json
+编译 ext.json
+编译 60 个页面json文件
+编译 theme.json
+生成项目资源包成功
+构建项目资源包成功
+runNative-1
+update app base info...
+update app module info...
+updatePrivacyBackgroundImage contentViewImage
+updatePrivacyBackgroundImage confirmButtonImage
+updatePrivacyBackgroundImage cancelButtonImage
+no PlugIns folder...
+not using tpush...
+update app icons...
+genAssetCar: false
+using default app icons when appStore1024 is not config...
+using default app icons when mainIcon120 is not config...
+更新 App 图标可能不生效，可使用远程构建验证图标设置；工具将会缓存图标构建结果
+update splashscreen image...
+update splashscreen video...
+update extendsdk...
+useExtendedSdks: {"WeAppOpenFuns":true,"WeAppNetwork":false,"WeAppBluetooth":false,"WeAppMedia":false,"WeAppLBS":false,"WeAppOthers":false}
+packing the ipa...
+signing the app...
+Run command: MiniappBuilder.exe --appid wxfc4c270f007773ab --action sign --ipa C:/Users/ADMINI~1/AppData/Local/Temp/miniapp-unsigned.ipa --type appleId --entitlements com.apple.developer.associated-domains=applinks%3Ahelp.wechat.com%2Fweappdemo%2F --install true --deviceId 00008120-001A316C0E13C01E --bundleId auto...
+Init the sign environment...
+
+Detected device:My iPhone
+Starting notification connection to device: My iPhone
+
+Swizzled Client Info: <MacBookPro15,1> <Mac OS X;10.15.2;19C57> <com.apple.AuthKit/1 (com.apple.dt.Xcode/3594.4.19)>
+
+Swizzled Device ID: 84ecf4c5-898e-4912-9f37-6afa08de3839
+
+Cryptographic DRBG state is bigger than necessary. Need 1176, Got 1280,
+Received auth response status code: 200
+
+Received auth response status code: 200
+
+Received auth response status code: 503
+
+Error: com.tencent.ALTAppleAPI (Server returned invalid response.).
+
+Failed to exec command: MiniappBuilder.exe --appid wxfc4c270f007773ab --action sign --ipa C:/Users/ADMINI~1/AppData/Local/Temp/miniapp-unsigned.ipa --type appleId --entitlements com.apple.developer.associated-domains=applinks%3Ahelp.wechat.com%2Fweappdemo%2F --install true --deviceId 00008120-001A316C0E13C01E --bundleId auto
+IPA 构建失败，请前往社区反馈[url:https://developers.weixin.qq.com/community/minihome/mixflow/2889188691586351105]
+IPA 构建失败，请前往社区反馈[url:https://developers.weixin.qq.com/community/minihome/mixflow/2889188691586351105]

@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>编程题中心 - 首页</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Crect width='128' height='128' rx='24' fill='%23007bff'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-size='88' fill='white'%3EC%3C/text%3E%3C/svg%3E">
+    <style>
+        :root {
+            --bg-color: #f5f5f7;
+            --card-bg: rgba(255, 255, 255, 0.72);
+            --card-bg-solid: rgba(255, 255, 255, 0.92);
+            --text-color: #1d1d1f;
+            --text-sub: #6e6e73;
+            --border-color: rgba(0, 0, 0, 0.06);
+            --primary: #007AFF;
+            --primary-light: rgba(0, 122, 255, 0.12);
+            --shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+            --shadow-hover: 0 14px 44px rgba(0, 0, 0, 0.10);
+            --success: #34c759;
+            --warning: #ff9500;
+            --danger: #ff3b30;
+            --blur: blur(40px) saturate(180%);
+            --radius-lg: 18px;
+            --radius-sm: 12px;
+            --sidebar-width: 160px;
+        }
+
+        body.dark-mode {
+            --bg-color: #000000;
+            --card-bg: rgba(28, 28, 30, 0.6);
+            --card-bg-solid: rgba(28, 28, 30, 0.95);
+            --text-color: #f5f5f7;
+            --text-sub: #a1a1a6;
+            --border-color: rgba(255, 255, 255, 0.12);
+            --primary: #0a84ff;
+            --primary-light: rgba(10, 132, 255, 0.2);
+            --shadow: 0 2px 16px rgba(0, 0, 0, 0.5);
+            --shadow-hover: 0 4px 24px rgba(0, 0, 0, 0.6);
+        }
+
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: transparent transparent;
+        }
+        *:hover {
+            scrollbar-color: rgba(128, 128, 128, 0.3) transparent;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: transparent;
+            border-radius: 3px;
+            transition: background 0.3s ease;
+        }
+        *:hover::-webkit-scrollbar-thumb {
+            background: rgba(128, 128, 128, 0.3);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* 顶部Header */
+        .top-header {
+            background: var(--card-bg);
+            backdrop-filter: var(--blur);
+            -webkit-backdrop-filter: var(--blur);
+            border-bottom: 0.5px solid var(--border-color);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .platform-name {
+            font-size: 14px;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .nav-tab {
+            color: var(--text-sub);
+            text-decoration: none;
+            font-size: 14px;
+            padding: 6px 0;
+            transition: color 0.2s ease;
+        }
+
+        .nav-tab:hover {
+            color: var(--primary);
+        }
+
+        .nav-tab.active {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-color);
+            font-size: 14px;
+        }
+
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            color: var(--text-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease;
+        }
+
+        .icon-btn:hover {
+            background: var(--primary-light);
+        }
+
+        /* 主布局 */
+        .main-layout {
+            display: flex;
+            min-height: calc(100vh - 60px);
+        }
+
+        /* 左侧导航栏 */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--card-bg);
+            backdrop-filter: var(--blur);
+            -webkit-backdrop-filter: var(--blur);
+            border-right: 0.5px solid var(--border-color);
+            padding: 24px 0;
+        }
+
+        .sidebar-title {
+            padding: 0 24px 16px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-color);
+            border-bottom: 0.5px solid var(--border-color);
+            margin-bottom: 16px;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 24px;
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .nav-item.active {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-left-color: var(--primary);
+            font-weight: 500;
+        }
+
+        .nav-icon {
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .nav-icon svg {
+            width: 100%;
+            height: 100%;
+            color: inherit;
+        }
+
+        /* 主内容区 */
+        .content-area {
+            flex: 1;
+            padding: 40px;
+            background: var(--bg-color);
+            overflow-y: auto;
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 32px;
+        }
+
+        /* 科目卡片网格 */
+        .subjects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .subject-card {
+            background: var(--card-bg);
+            backdrop-filter: var(--blur);
+            -webkit-backdrop-filter: var(--blur);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            border: 0.5px solid var(--border-color);
+            padding: 24px;
+            transition: all 0.24s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .subject-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            opacity: 0;
+            transition: opacity 0.24s ease;
+        }
+
+        .subject-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .subject-card:hover::before {
+            opacity: 1;
+        }
+
+        .subject-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .subject-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-color);
+            line-height: 1.4;
+            flex: 1;
+        }
+
+        .subject-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-sm);
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+            margin-left: 12px;
+        }
+
+        .subject-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: var(--text-sub);
+        }
+
+        .stat-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .stat-value {
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--card-bg-solid);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 12px;
+            color: var(--text-sub);
+            text-align: right;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 16px;
+            border-top: 0.5px solid var(--border-color);
+        }
+
+        .btn-enter {
+            padding: 8px 20px;
+            border: 0.5px solid var(--primary);
+            border-radius: var(--radius-sm);
+            background: var(--primary);
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-enter:hover {
+            background: #0051d5;
+            border-color: #0051d5;
+            transform: translateX(2px);
+        }
+
+        .loading, .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-sub);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .main-layout {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 0.5px solid var(--border-color);
+            }
+            .sidebar-nav {
+                flex-direction: row;
+                overflow-x: auto;
+            }
+            .nav-item {
+                white-space: nowrap;
+            }
+            .subjects-grid {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .top-header {
+                flex-direction: column;
+                gap: 12px;
+                padding: 12px 16px;
+            }
+            .header-nav {
+                width: 100%;
+                justify-content: space-around;
+            }
+            .content-area {
+                padding: 20px;
+            }
+            .subjects-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    
+        /* ??????? */
+        * {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        *::-webkit-scrollbar {
+            width: 0;
+            height: 0;
+        }
+</style>
+</head>
+<body>
+    <!-- 顶部Header -->
+    <header class="top-header">
+        <div class="header-left">
+            <div class="logo">
+                <span>SAK</span>
+            </div>
+            <div class="platform-name">程序设计教学平台</div>
+        </div>
+        <nav class="header-nav">
+            <a href="/" class="nav-tab">考试练习</a>
+            <a href="/coding" class="nav-tab">编程题中心</a>
+        </nav>
+        <div class="header-right">
+            <button class="icon-btn" title="通知">🔔</button>
+            <div class="user-info">
+                <span id="username">{{ username|default('用户') }}</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主布局 -->
+    <div class="main-layout">
+        <!-- 左侧导航栏 -->
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <a href="/coding/home" class="nav-item active">
+                    <span class="nav-icon">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#007AFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 9L9 3L15 9"/>
+                            <path d="M3 9V15H15V9"/>
+                            <rect x="7" y="11" width="4" height="4"/>
+                        </svg>
+                    </span>
+                    <span>首页</span>
+                </a>
+                <a href="/coding" class="nav-item">
+                    <span class="nav-icon">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="4" y="2" width="10" height="14" rx="0.5"/>
+                            <line x1="4.5" y1="5.5" x2="4.5" y2="5.5" stroke-width="2"/>
+                            <line x1="4.5" y1="8" x2="4.5" y2="8" stroke-width="2"/>
+                            <line x1="4.5" y1="10.5" x2="4.5" y2="10.5" stroke-width="2"/>
+                            <line x1="13" y1="3" x2="13" y2="15"/>
+                        </svg>
+                    </span>
+                    <span>题目集</span>
+                </a>
+                <a href="/chat" class="nav-item">
+                    <span class="nav-icon">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 1C4.5 1 1 4 1 8c0 1.5.5 3 1.5 4L1 17l5-1.5c1 .5 2 .5 3 .5 4.5 0 8-3 8-7s-3.5-7-8-7z"/>
+                            <circle cx="6" cy="8" r="1" fill="currentColor"/>
+                            <circle cx="9" cy="8" r="1" fill="currentColor"/>
+                            <circle cx="12" cy="8" r="1" fill="currentColor"/>
+                        </svg>
+                    </span>
+                    <span>聊天</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="content-area">
+            <h1 class="page-title">选择科目或题集</h1>
+            
+            <div id="subjects-container">
+                <div class="loading">加载中...</div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 加载科目统计信息
+        async function loadSubjects() {
+            const container = document.getElementById('subjects-container');
+            container.innerHTML = '<div class="loading">加载中...</div>';
+
+            try {
+                const res = await fetch('/coding/api/subjects/stats');
+                const result = await res.json();
+
+                if (result.status === 'success') {
+                    renderSubjects(result.data.subjects);
+                } else {
+                    container.innerHTML = '<div class="empty-state">加载失败</div>';
+                }
+            } catch (error) {
+                console.error('加载科目失败:', error);
+                container.innerHTML = '<div class="empty-state">加载失败，请刷新重试</div>';
+            }
+        }
+
+        // 渲染科目卡片
+        function renderSubjects(subjects) {
+            const container = document.getElementById('subjects-container');
+            
+            if (subjects.length === 0) {
+                container.innerHTML = '<div class="empty-state">暂无科目</div>';
+                return;
+            }
+
+            const grid = document.createElement('div');
+            grid.className = 'subjects-grid';
+
+            subjects.forEach(subject => {
+                const card = document.createElement('a');
+                card.href = `/coding/subject/${subject.id}`;
+                card.className = 'subject-card';
+
+                const progress = subject.total_questions > 0 
+                    ? (subject.solved_questions / subject.total_questions * 100).toFixed(1)
+                    : 0;
+
+                // 根据科目名称选择图标
+                const icon = getSubjectIcon(subject.name);
+
+                card.innerHTML = `
+                    <div class="subject-header">
+                        <div class="subject-title">${escapeHtml(subject.name)}</div>
+                        <div class="subject-icon">${icon}</div>
+                    </div>
+                    <div class="subject-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">
+                                <span>📝</span>
+                                <span>总题目数</span>
+                            </span>
+                            <span class="stat-value">${subject.total_questions}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">
+                                <span>✅</span>
+                                <span>已解决</span>
+                            </span>
+                            <span class="stat-value">${subject.solved_questions}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">
+                                <span>📊</span>
+                                <span>总提交</span>
+                            </span>
+                            <span class="stat-value">${subject.total_submissions}</span>
+                        </div>
+                    </div>
+                    ${subject.total_questions > 0 ? `
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${progress}%"></div>
+                        </div>
+                        <div class="progress-text">完成度: ${progress}%</div>
+                    ` : ''}
+                    <div class="card-footer">
+                        <span style="font-size: 12px; color: var(--text-sub);">点击进入</span>
+                        <span class="btn-enter">进入 →</span>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+
+            container.innerHTML = '';
+            container.appendChild(grid);
+        }
+
+        // 根据科目名称返回图标
+        function getSubjectIcon(name) {
+            const nameLower = name.toLowerCase();
+            if (nameLower.includes('python')) return '🐍';
+            if (nameLower.includes('java')) return '☕';
+            if (nameLower.includes('c++') || nameLower.includes('cpp')) return '⚙️';
+            if (nameLower.includes('c语言') || nameLower.includes('c ')) return '🔧';
+            if (nameLower.includes('数据结构')) return '📚';
+            if (nameLower.includes('算法')) return '🧮';
+            return '💻';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 页面加载时初始化
+        loadSubjects();
+    </script>
+</body>
+</html>

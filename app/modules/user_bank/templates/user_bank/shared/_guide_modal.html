@@ -1,0 +1,244 @@
+{# 个人题库全流程指南（通用弹窗） #}
+<div class="ubg-overlay" id="ubGuideOverlay" aria-hidden="true">
+  <div class="ubg-modal" role="dialog" aria-modal="true" aria-labelledby="ubgTitle">
+    <div class="ubg-head">
+      <div class="ubg-head-main">
+        <div class="ubg-kicker">SAK · 个人题库</div>
+        <h2 class="ubg-title" id="ubgTitle">个人题库全流程指南</h2>
+        <div class="ubg-sub">从新建题库 → 导出题目 → 导入题目 → 编辑维护，一次说明白。</div>
+      </div>
+      <button class="ubg-close" type="button" aria-label="关闭" data-ubg-close>
+        <svg class="ubg-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="ubg-body">
+      <nav class="ubg-nav" aria-label="指南目录">
+        <button class="ubg-tab" type="button" data-ubg-tab="flow">全流程</button>
+        <button class="ubg-tab" type="button" data-ubg-tab="import">导入方式</button>
+        <button class="ubg-tab" type="button" data-ubg-tab="xxt">学习通题目导入</button>
+        <button class="ubg-tab" type="button" data-ubg-tab="pta">PTA 题目导入</button>
+        <button class="ubg-tab" type="button" data-ubg-tab="manage">题目管理与修改</button>
+        <button class="ubg-tab" type="button" data-ubg-tab="word">Word 导入规则</button>
+      </nav>
+
+      <div class="ubg-content" id="ubgContent" tabindex="0">
+        <section class="ubg-pane" data-ubg-pane="flow">
+          <h3 class="ubg-h3">0) 先想清楚：你要“按什么维度建库”</h3>
+          <div class="ubg-muted">推荐命名：科目/章节/来源，例如：<b>计算机网络-第3章-学习通</b>。</div>
+
+          <h3 class="ubg-h3" style="margin-top:14px;">1) 新建个人题库</h3>
+          <ol class="ubg-steps">
+            <li>进入 <a class="ubg-link" href="/user/banks">个人题库</a>，点击「新建题库」。</li>
+            <li>填写题库名称与描述（可选），建议把“来源/章节/考试名称”写清楚。</li>
+            <li>创建后进入题库详情页，你会看到「题目管理 / 设置 / 分享 / 练习」等入口。</li>
+          </ol>
+
+          <h3 class="ubg-h3" style="margin-top:14px;">2) 导出题目 → 导入题目（推荐优先 JSON）</h3>
+          <div class="ubg-callout">
+            <strong>学习通 / PTA：优先用脚本导出 JSON 再导入</strong>
+            <div class="ubg-muted">原因：更稳定、信息更完整；并且能避免 Word 只能识别 A-F（选项超过 6 会丢失）等问题。</div>
+            <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="ubg-chip" type="button" data-ubg-open="xxt">学习通导入教程</button>
+              <button class="ubg-chip" type="button" data-ubg-open="pta">PTA 导入教程</button>
+            </div>
+          </div>
+          <ol class="ubg-steps">
+            <li>先在学习通 / PTA 页面使用脚本导出 JSON。</li>
+            <li>回到本站：进入题库「题目管理」，点击「导入」→「JSON 导入」。</li>
+            <li>手工整理题：可用「Word 导入」或「Excel 导入（模板）」。</li>
+          </ol>
+
+          <h3 class="ubg-h3" style="margin-top:14px;">3) 修改/维护题目（关键：抽查 + 批量修复）</h3>
+          <ol class="ubg-steps">
+            <li>导入后先抽查 3–5 题：题型、选项、答案、填空空位是否正确。</li>
+            <li>在题目管理页用搜索/题型筛选定位异常题；必要时进入编辑页逐题修正。</li>
+            <li>需要统一处理时，使用批量选择功能进行「批量设置题型/难度」等操作。</li>
+          </ol>
+
+          <h3 class="ubg-h3" style="margin-top:14px;">4) 开始练习</h3>
+          <ol class="ubg-steps">
+            <li>从题库管理页右上角「返回详情」进入练习页面。</li>
+            <li>刷题过程中会自动沉淀收藏/错题/做题记录，后续可按这些维度复习。</li>
+          </ol>
+        </section>
+
+        <section class="ubg-pane" data-ubg-pane="import">
+          <h3 class="ubg-h3">导入方式怎么选？</h3>
+          <div class="ubg-callout">
+            <strong>推荐顺序</strong>
+            <div class="ubg-muted">学习通/PTA/爬题：JSON ＞ Word；手工整理：Word ＞ Excel；系统互导：题库包（ZIP）。</div>
+          </div>
+
+          <div class="ubg-grid">
+            <div class="ubg-card">
+              <div class="ubg-card-title">JSON（推荐）</div>
+              <div class="ubg-muted">稳定、结构化、支持多题型，适合学习通脚本导出。</div>
+              <ul class="ubg-list">
+                <li>多选/判断/填空更不易误判。</li>
+                <li>选项超过 6 个也能导入。</li>
+              </ul>
+            </div>
+            <div class="ubg-card">
+              <div class="ubg-card-title">Word（适合手工/排版）</div>
+              <div class="ubg-muted">更适合编辑与复习，但有解析规则限制。</div>
+              <ul class="ubg-list">
+                <li>选择题仅识别 A-F（最多 6 个选项）。</li>
+                <li>建议按「Word 导入规则」排版。</li>
+              </ul>
+            </div>
+            <div class="ubg-card">
+              <div class="ubg-card-title">Excel（适合批量整理）</div>
+              <div class="ubg-muted">按模板填写最稳，适合团队协作与清洗数据。</div>
+              <ul class="ubg-list">
+                <li>模板可在导入弹窗内下载。</li>
+                <li>填空题用 blank_1/blank_2… 列。</li>
+              </ul>
+            </div>
+            <div class="ubg-card">
+              <div class="ubg-card-title">题库包（ZIP）</div>
+              <div class="ubg-muted">适合在本系统内导出/备份后再导入。</div>
+              <ul class="ubg-list">
+                <li>可能包含图片等资源。</li>
+                <li>用于迁移、备份、分享。</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="ubg-pane" data-ubg-pane="xxt">
+          <h3 class="ubg-h3">学习通（超星）题目：推荐脚本导出 JSON 导入</h3>
+          <div class="ubg-callout">
+            <strong>一句话原则</strong>
+            <div class="ubg-muted">要“导入刷题”就用 JSON；要“打印复习”可以导出 Word/PDF。</div>
+          </div>
+
+          <h3 class="ubg-h3" style="margin-top:14px;">A. 学习通导出（脚本端）</h3>
+          <ol class="ubg-steps">
+            <li>安装浏览器扩展 Tampermonkey（油猴）。</li>
+            <li>安装脚本「学习通作业导出助手」：<a class="ubg-link" href="https://greasyfork.org/zh-CN/scripts/559656" target="_blank" rel="noopener">打开脚本页面</a>。</li>
+            <li>打开学习通作业/考试的查看页面，右下角点击脚本按钮 → 「解析本页题目」。</li>
+            <li>优先点击「导出 JSON」，得到 <b>*_题库导入.json</b> 文件。</li>
+          </ol>
+
+          <h3 class="ubg-h3" style="margin-top:14px;">B. 本站导入（SAK 端）</h3>
+          <ol class="ubg-steps">
+            <li>进入「个人题库」→ 选择题库 → 进入「题目管理」。</li>
+            <li>点击「导入」→ 选择「JSON 导入」。</li>
+            <li>选择 JSON 文件或直接粘贴 JSON 内容 → 开始导入。</li>
+            <li>导入后抽查几题，确认选项/答案/填空空位无误。</li>
+          </ol>
+
+          <div class="ubg-callout">
+            <strong>常见提醒</strong>
+            <ul class="ubg-list">
+              <li>选择题选项超过 6：Word 导入会丢失，务必用 JSON。</li>
+              <li>填空题：题干用 <code>__</code> 表示空位；答案在 Word 里“空与空用 ; 分隔，同空多答案用 / 或 |”。</li>
+              <li>少量异常题：导入后在题目管理里逐题编辑即可。</li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="ubg-pane" data-ubg-pane="pta">
+          <h3 class="ubg-h3">PTA 题目：推荐脚本导出 JSON 导入</h3>
+          <div class="ubg-callout">
+            <strong>一句话原则</strong>
+            <div class="ubg-muted">要“导入刷题”就用 JSON；Word/PDF 更适合打印复习。</div>
+          </div>
+
+          <h3 class="ubg-h3" style="margin-top:14px;">A. PTA 导出（脚本端）</h3>
+          <ol class="ubg-steps">
+            <li>安装浏览器扩展 Tampermonkey（油猴）或 ScriptCat（脚本猫）。</li>
+            <li>安装/创建脚本「PTA题目导出-全能」（文件名通常为 <b>PTA题目导出.js</b>）。</li>
+            <li>打开 PTA 题目页（建议先滚动到最底部，确保题目都加载完成）。</li>
+            <li>点击右下角「导出」→「解析题目」→ 选择「下载 JSON / 复制 JSON」。</li>
+          </ol>
+
+          <h3 class="ubg-h3" style="margin-top:14px;">B. 本站导入（SAK 端）</h3>
+          <ol class="ubg-steps">
+            <li>进入「个人题库」→ 选择题库 → 进入「题目管理」。</li>
+            <li>点击「导入」→ 选择「JSON 导入」。</li>
+            <li>选择 JSON 文件或直接粘贴 JSON 内容 → 开始导入。</li>
+            <li>导入后抽查几题：部分 PTA 页面可能不展示标准答案，导出为空属正常。</li>
+          </ol>
+
+          <div class="ubg-callout">
+            <strong>常见提醒</strong>
+            <ul class="ubg-list">
+              <li>题量较多：先滚动到底，避免“虚拟列表/懒加载”导致缺题。</li>
+              <li>答案不确定：可勾选脚本里的「仅导出答案已确定」，先把题干/选项入库再逐步补答案。</li>
+              <li>少量异常题：导入后在题目管理里逐题编辑即可。</li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="ubg-pane" data-ubg-pane="manage">
+          <h3 class="ubg-h3">题目管理页能做什么？</h3>
+          <ol class="ubg-steps">
+            <li>搜索：支持按题干/答案/解析关键词检索。</li>
+            <li>筛选：按题型筛选，配合每页数量更快定位问题。</li>
+            <li>导入/导出：支持 Word / JSON / Excel / 题库包。</li>
+            <li>编辑：点击题目进入编辑页，修改题干/选项/答案/解析/难度。</li>
+            <li>批量：勾选题目后可进行批量设置与批量导出（适合统一修复）。</li>
+          </ol>
+
+          <div class="ubg-callout">
+            <strong>导入后推荐的“抽查动作”</strong>
+            <ol class="ubg-steps">
+              <li>随机打开 3 道选择题：答案字母是否对应正确选项。</li>
+              <li>随机打开 2 道填空题：题干空位数量是否匹配，答案是否被正确分空。</li>
+              <li>如果发现“选项被打散/答案格式不对”：优先改用 JSON 导入或回到 Word 导入页做微调。</li>
+            </ol>
+          </div>
+        </section>
+
+        <section class="ubg-pane" data-ubg-pane="word">
+          <h3 class="ubg-h3">Word 导入解析规则（核心）</h3>
+          <div class="ubg-muted">Word 导入是“按文本规则解析”，排版符合规则才能稳定识别。</div>
+
+          <div class="ubg-callout">
+            <strong>最小可用格式示例</strong>
+            <pre class="ubg-code">1. TCP 三次握手的目的是什么？
+A. 建立连接
+B. 断开连接
+答案：A
+解析：……（可选）
+
+2. 判断题示例
+答案：正确
+
+3. 填空题示例：HTTP 的默认端口是 __ 。
+答案：80</pre>
+          </div>
+
+          <ul class="ubg-list">
+            <li>题号：每题以 <code>1.</code> 或 <code>1、</code> 开头。</li>
+            <li>选项：以 <code>A.</code>/<code>A、</code>… 开头（最多识别到 <code>F</code>）。</li>
+            <li>答案行：以「答案：/正确答案：/参考答案：」开头（中英文冒号都可）。</li>
+            <li>解析行：以「解析：/分析：/详解：」等开头（可选）。</li>
+            <li>填空题空位：下划线或括号会被识别为 <code>__</code>；多空答案用 <code>;</code> 分隔（同一空多答案用 <code>/</code> 或 <code>|</code>）。</li>
+          </ul>
+
+          <div class="ubg-callout">
+            <strong>学习通用户的最佳实践</strong>
+            <div class="ubg-muted">脚本导出的 Word 已按规则排版，但若出现选项超过 6、题型复杂等情况，请直接导出 JSON 导入。</div>
+            <div style="margin-top:8px;">
+              <button class="ubg-chip" type="button" data-ubg-open="xxt">查看学习通导入教程</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div class="ubg-foot">
+      <div class="ubg-foot-links">
+        <a class="ubg-foot-link" href="/user/banks">打开个人题库</a>
+        <a class="ubg-foot-link ubg-hide" href="#" data-ubg-link="manage">打开当前题库题目管理</a>
+        <a class="ubg-foot-link ubg-hide" href="#" data-ubg-link="word">打开当前题库 Word 导入</a>
+      </div>
+      <button class="ubg-btn ubg-btn-primary" type="button" data-ubg-close>我知道了</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,49 @@
+{# Edit question modal (admin / subject admin) #}
+{% if is_admin or is_subject_admin %}
+<div class="overlay modal-overlay" id="editQuestionOverlay" style="z-index: 2200; display:none;" onclick="closeEditQuestionModal(event)">
+  <div class="card-container modal-panel modal-lg" role="dialog" aria-modal="true" aria-labelledby="editQuestionTitle" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="editQuestionTitle">编辑题目</div>
+        <div class="modal-subtitle" id="editQuestionMeta"></div>
+      </div>
+      <button class="modal-close" type="button" onclick="closeEditQuestionModal()" aria-label="关闭">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="modal-field">
+        <div class="modal-label">题干</div>
+        <textarea id="editQuestionContent" class="modal-textarea" rows="5" placeholder="请输入题干"></textarea>
+      </div>
+
+      <div class="modal-field" id="editQuestionOptionsWrap" style="display:none;">
+        <div class="modal-label">选项</div>
+        <div class="modal-hint">支持多行与缩进：回车换行，Tab 插入缩进（Shift+Tab 取消缩进）。</div>
+        <div class="modal-options-list" id="editQuestionOptionsList" style="display:none;"></div>
+        {# 兼容：保留旧 textarea，避免浏览器缓存旧 JS 时弹窗不可用 #}
+        <textarea id="editQuestionOptions" class="modal-textarea mono" rows="5" placeholder="A. 选项A&#10;B. 选项B&#10;C. 选项C"></textarea>
+      </div>
+
+      <div class="modal-field">
+        <div class="modal-label">答案</div>
+        <input id="editQuestionAnswer" class="modal-input" placeholder="请输入答案" />
+      </div>
+
+      <div class="modal-field">
+        <div class="modal-label">解析（可选）</div>
+        <textarea id="editQuestionExplanation" class="modal-textarea" rows="5" placeholder="请输入解析（可选）"></textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-nav" type="button" onclick="closeEditQuestionModal()">取消</button>
+      <button class="btn btn-primary" type="button" id="editQuestionSaveBtn" onclick="submitEditQuestion()">保存</button>
+    </div>
+  </div>
+</div>
+{% endif %}

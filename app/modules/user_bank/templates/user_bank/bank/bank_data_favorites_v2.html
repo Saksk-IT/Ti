@@ -1,0 +1,129 @@
+{% extends "user_bank/bank/bank_data_v2_base.html" %}
+
+{% block ubdv2_main %}
+  <main class="ubdv2-grid" aria-label="收藏数据内容">
+    <section class="ubdv2-card ubdv2-kpis span-12" aria-label="收藏总览">
+      <div class="ubdv2-card-head">
+        <div style="min-width:0;">
+          <h2 class="ubdv2-title">收藏总览</h2>
+          <p class="ubdv2-sub" id="ubdFavHeadline">加载中…</p>
+        </div>
+        <div class="ubdv2-badge" id="ubdFavUpdatedAt">—</div>
+      </div>
+
+      <div class="ubdv2-kpi-grid" role="list" aria-label="收藏KPI">
+        <div class="ubdv2-kpi" role="listitem">
+          <div class="k">收藏池</div>
+          <div class="v mono" id="kpiFavTotal">—</div>
+          <div class="m">当前收藏题数</div>
+        </div>
+        <div class="ubdv2-kpi" role="listitem">
+          <div class="k">已做</div>
+          <div class="v mono" id="kpiFavAnswered">—</div>
+          <div class="m" id="kpiFavAnsweredMeta">—</div>
+        </div>
+        <div class="ubdv2-kpi" role="listitem">
+          <div class="k">正确率</div>
+          <div class="v mono" id="kpiFavAccuracy">—</div>
+          <div class="m" id="kpiFavAccuracyMeta">—</div>
+        </div>
+        <div class="ubdv2-kpi" role="listitem">
+          <div class="k">覆盖率</div>
+          <div class="v mono" id="kpiFavCompletion">—</div>
+          <div class="m" id="kpiFavCompletionMeta">—</div>
+        </div>
+        <div class="ubdv2-kpi" role="listitem">
+          <div class="k">未做收藏</div>
+          <div class="v mono" id="kpiFavTodo">—</div>
+          <div class="m">建议优先补齐覆盖</div>
+        </div>
+        <div class="ubdv2-kpi" role="listitem">
+          <div class="k">近7天复习</div>
+          <div class="v mono" id="kpiFavRecent">—</div>
+          <div class="m">基于“最后一次作答”</div>
+        </div>
+        <div class="ubdv2-kpi" role="listitem">
+          <div class="k">最近新增</div>
+          <div class="v mono" id="kpiFavAdded">—</div>
+          <div class="m">按收藏时间统计</div>
+        </div>
+        <div class="ubdv2-kpi" role="listitem">
+          <div class="k">快速入口</div>
+          <div class="v"><a class="ubdv2-cta" href="/user/banks/{{ bank_id }}/quiz?mode=favorites">去收藏练习</a></div>
+          <div class="m">按收藏集刷题</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ubdv2-card span-12" aria-label="收藏新增趋势">
+      <div class="ubdv2-card-head">
+        <div style="min-width:0;">
+          <h2 class="ubdv2-title">收藏新增趋势</h2>
+          <p class="ubdv2-sub">按天统计新增收藏数量（基于收藏创建时间）。</p>
+        </div>
+      </div>
+      <div class="ubdv2-chart" id="ubdFavAddedChart" role="img" aria-label="收藏新增趋势图"></div>
+    </section>
+
+    <section class="ubdv2-card span-12" aria-label="收藏结构">
+      <div class="ubdv2-card-head">
+        <div style="min-width:0;">
+          <h2 class="ubdv2-title">收藏结构</h2>
+          <p class="ubdv2-sub">题型分布（占比）+ 难度拆解（如可用）。</p>
+        </div>
+      </div>
+      <div class="ubdv2-split">
+        <div class="ubdv2-chart ubdv2-chart-tall" id="ubdFavTypePieChart" role="img" aria-label="收藏题型分布图"></div>
+        <div class="ubdv2-chart ubdv2-chart-tall" id="ubdFavDiffChart" role="img" aria-label="收藏难度拆解图"></div>
+      </div>
+    </section>
+
+    <section class="ubdv2-card span-12" aria-label="收藏复习趋势">
+      <div class="ubdv2-card-head">
+        <div style="min-width:0;">
+          <h2 class="ubdv2-title">收藏复习趋势</h2>
+          <p class="ubdv2-sub">按天统计：复习量（柱）+ 复习正确率（线）。</p>
+        </div>
+      </div>
+      <div class="ubdv2-chart" id="ubdFavReviewTrendChart" role="img" aria-label="收藏复习趋势图"></div>
+    </section>
+
+    <section class="ubdv2-card span-12" aria-label="收藏清单">
+      <div class="ubdv2-card-head">
+        <div style="min-width:0;">
+          <h2 class="ubdv2-title">收藏清单</h2>
+          <p class="ubdv2-sub">按收藏时间倒序（仅展示前50条），附最近作答与结果。</p>
+        </div>
+      </div>
+      <div class="ubdv2-table-wrap">
+        <table class="ubdv2-table" aria-label="收藏清单表格">
+          <thead>
+            <tr>
+              <th style="min-width:320px;">题目</th>
+              <th>题型</th>
+              <th>难度</th>
+              <th>收藏时间</th>
+              <th>最近作答</th>
+              <th>上次结果</th>
+            </tr>
+          </thead>
+          <tbody id="ubdFavTbody">
+            <tr><td colspan="6" class="ubdv2-muted">加载中…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="ubdv2-card span-12" aria-label="收藏建议">
+      <div class="ubdv2-card-head">
+        <div style="min-width:0;">
+          <h2 class="ubdv2-title">收藏建议</h2>
+          <p class="ubdv2-sub">基于收藏集的覆盖/正确/结构拆解生成。</p>
+        </div>
+      </div>
+      <div class="ubdv2-advice" id="ubdFavAdvice">
+        <div class="ubdv2-muted">加载中…</div>
+      </div>
+    </section>
+  </main>
+{% endblock %}

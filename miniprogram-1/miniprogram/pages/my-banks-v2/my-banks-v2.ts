@@ -1,0 +1,239 @@
+import { api } from '../../utils/api';
+import { syncUserSettingsToServer } from '../../utils/user-settings';
+import { checkLogin } from '../../utils/auth';
+import { safeNavigate } from '../../utils/nav';
+import { themeManager, ThemeMode, ThemeStyle } from '../../utils/theme';
+
+type BankMeta = {
+  id: number;
+  name: string;
+  description?: string;
+  question_count?: number;
+  is_public?: boolean | number;
+  updated_at?: string;
+  updated_at_fmt?: string;
+};
+
+function isTrue(v: any): boolean {
+  return v === true || v === 1 || v === '1';
+}
+
+function formatDate(dateStr: any): string {
+  const raw = String(dateStr || '').trim();
+  if (!raw) return '-';
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return '-';
+  try {
+    return d.toLocaleDateString('zh-CN');
+  } catch (e) {
+    return '-';
+  }
+}
+
+Page({
+  data: {
+    drawerOpen: false,
+    loading: false,
+    inited: false,
+
+    keyword: '',
+    filter: 'all' as 'all' | 'public' | 'private',
+    banks: [] as BankMeta[],
+    filteredBanks: [] as BankMeta[],
+
+    createOpen: false,
+    createName: '',
+    createDesc: '',
+    createError: '',
+    creating: false
+  },
+
+  onShow() {
+    if (!checkLogin()) {
+      wx.redirectTo({ url: '/pages/login/login' });
+      return;
+    }
+    try {
+      this.setData(themeManager.getPageData() as any);
+    } catch (e) {}
+
+    this.loadBanks();
+  },
+
+  async loadBanks() {
+    if (this.data.loading) return;
+    this.setData({ loading: true });
+    try {
+      const res: any = await api.getMyBanks();
+      const list = Array.isArray(res?.banks) ? res.banks : [];
+      const banks: BankMeta[] = list.map((b: any) => ({
+        id: Number(b?.id || 0),
+        name: String(b?.name || '未命名题库'),
+        description: b?.description ? String(b.description) : '',
+        question_count: Number(b?.question_count || 0) || 0,
+        is_public: b?.is_public,
+        updated_at: b?.updated_at,
+        updated_at_fmt: formatDate(b?.updated_at)
+      })).filter((b) => Number.isFinite(b.id) && b.id > 0);
+
+      banks.sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')) || (b.id - a.id));
+      this.setData({ banks, inited: true }, () => this.applyFilter());
+    } catch (e: any) {
+      wx.showToast({ title: (e && e.message) || '加载失败', icon: 'none' });
+    } finally {
+      this.setData({ loading: false });
+    }
+  },
+
+  onKeywordInput(e: any) {
+    const keyword = (e && e.detail && e.detail.value) ? String(e.detail.value) : '';
+    this.setData({ keyword }, () => this.applyFilter());
+  },
+
+  onClearKeyword() {
+    this.setData({ keyword: '' }, () => this.applyFilter());
+  },
+
+  onFilterTap(e: any) {
+    const filter = e?.currentTarget?.dataset?.filter;
+    if (!filter || filter === this.data.filter) return;
+    if (filter !== 'all' && filter !== 'public' && filter !== 'private') return;
+    this.setData({ filter }, () => this.applyFilter());
+  },
+
+  applyFilter() {
+    const kw = (this.data.keyword || '').trim().toLowerCase();
+    const filter = this.data.filter;
+    let out = (this.data.banks || []).slice();
+
+    if (kw) {
+      out = out.filter((b) => {
+        const name = String(b.name || '').toLowerCase();
+        const desc = String(b.description || '').toLowerCase();
+        return name.includes(kw) || desc.includes(kw);
+      });
+    }
+
+    if (filter === 'public') out = out.filter((b) => isTrue(b.is_public));
+    if (filter === 'private') out = out.filter((b) => !isTrue(b.is_public));
+
+    this.setData({ filteredBanks: out });
+  },
+
+  onBankTap(e: any) {
+    const id = Number(e?.currentTarget?.dataset?.id || 0);
+    if (!Number.isFinite(id) || id <= 0) return;
+    safeNavigate(`/pages/bank-detail/bank-detail?id=${id}`, 'navigateTo');
+  },
+
+  onBankManageTap(e: any) {
+    const id = Number(e?.currentTarget?.dataset?.id || 0);
+    if (!Number.isFinite(id) || id <= 0) return;
+    safeNavigate(`/pages/bank-detail/bank-detail?id=${id}`, 'navigateTo');
+  },
+
+  onGoPublicBank() {
+    safeNavigate('/pages/public-bank-v2/public-bank-v2', 'redirectTo');
+  },
+
+  onGoCreateBank() {
+    if (this.data.createOpen) return;
+    this.setData({
+      createOpen: true,
+      createName: '',
+      createDesc: '',
+      createError: '',
+      creating: false
+    });
+  },
+
+  onCreateClose() {
+    if (this.data.creating) return;
+    this.setData({ createOpen: false });
+  },
+
+  onCreateSheetTap() {},
+
+  onCreateNameInput(e: any) {
+    const value = String(e?.detail?.value || '');
+    this.setData({ createName: value, createError: '' });
+  },
+
+  onCreateDescInput(e: any) {
+    const value = String(e?.detail?.value || '');
+    this.setData({ createDesc: value, createError: '' });
+  },
+
+  async onCreateSubmit() {
+    if (this.data.creating) return;
+
+    const name = String(this.data.createName || '').trim();
+    const description = String(this.data.createDesc || '').trim();
+
+    if (!name) {
+      const msg = '题库名称不能为空';
+      this.setData({ createError: msg });
+      wx.showToast({ title: msg, icon: 'none' });
+      return;
+    }
+    if (name.length < 2 || name.length > 50) {
+      const msg = '题库名称需要 2-50 个字符';
+      this.setData({ createError: msg });
+      wx.showToast({ title: msg, icon: 'none' });
+      return;
+    }
+    if (description.length > 200) {
+      const msg = '描述不能超过 200 个字符';
+      this.setData({ createError: msg });
+      wx.showToast({ title: msg, icon: 'none' });
+      return;
+    }
+
+    this.setData({ creating: true, createError: '' });
+    try {
+      await api.createBank({ name, description });
+      wx.showToast({ title: '创建成功', icon: 'success' });
+      this.setData({
+        createOpen: false,
+        createName: '',
+        createDesc: '',
+        createError: '',
+        creating: false
+      });
+      this.loadBanks();
+    } catch (e: any) {
+      const msg = (e && e.message) ? String(e.message) : '创建失败';
+      this.setData({ creating: false, createError: msg });
+      wx.showToast({ title: msg, icon: 'none' });
+    }
+  },
+
+  onHamburgerTap() {
+    this.setData({ drawerOpen: true });
+  },
+
+  onDrawerClose() {
+    this.setData({ drawerOpen: false });
+  },
+
+  onDrawerNavigate(e: any) {
+    const url = e?.detail?.url;
+    const navType = e?.detail?.navType;
+    this.setData({ drawerOpen: false });
+    if (!url) return;
+    safeNavigate(url, navType);
+  },
+
+  async onDrawerSelectStyle(e: any) {
+    const style = (e?.detail?.style || 'default') as ThemeStyle;
+    themeManager.setStyle(style);
+    this.setData(themeManager.getPageData() as any);
+    this.setData({ drawerOpen: false });
+    await syncUserSettingsToServer();
+  },
+
+  onCycleThemeModeTap() {
+    const mode = themeManager.cycleMode() as ThemeMode;
+    this.setData({ ...(themeManager.getPageData() as any), themeMode: mode });
+  }
+});

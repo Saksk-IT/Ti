@@ -1,0 +1,1001 @@
+        /* 空状态 */
+        .empty-state { margin-top: 16px; padding: 16px; text-align: center; color: var(--text-sub); background: var(--analysis-bg); border: 1px dashed var(--border-color); border-radius: 8px; }
+
+        /* ===== 弹窗（Modal）通用样式 ===== */
+        .overlay.modal-overlay{
+            /* 默认由 JS 控制 display: none / flex */
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+        }
+
+        .overlay.modal-overlay .modal-panel.card-container{
+            width: min(92vw, 520px);
+            max-height: calc(100vh - 80px);
+            overflow: auto;
+            min-height: auto;
+            margin: 0;
+            padding: 20px;
+        }
+        .overlay.modal-overlay .modal-panel.modal-lg{
+            width: min(92vw, 720px);
+        }
+
+        /* 弹窗容器：去掉主卡片的高光层，视觉更干净 */
+        .overlay.modal-overlay .modal-panel.card-container::before,
+        .overlay.modal-overlay .modal-panel.card-container::after{
+            display: none;
+        }
+
+        .modal-header{
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .modal-title{
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--text-color);
+            line-height: 1.1;
+            letter-spacing: -0.2px;
+        }
+        .modal-subtitle{
+            margin-top: 4px;
+            font-size: 13px;
+            color: var(--text-sub);
+            line-height: 1.25;
+        }
+        .modal-close{
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            border: 0.5px solid var(--border-color);
+            background: rgba(142, 142, 147, 0.10);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-color);
+            transition: background 0.2s ease, border-color 0.2s ease;
+        }
+        .modal-close:hover{
+            background: rgba(142, 142, 147, 0.16);
+            border-color: rgba(0,0,0,0.12);
+        }
+        body.dark-mode .modal-close{
+            background: rgba(142, 142, 147, 0.14);
+            border-color: rgba(255,255,255,0.14);
+        }
+        body.dark-mode .modal-close:hover{
+            background: rgba(142, 142, 147, 0.20);
+            border-color: rgba(255,255,255,0.20);
+        }
+        .modal-close svg{
+            width: 16px;
+            height: 16px;
+        }
+
+        .modal-body{
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .modal-field{
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .modal-label{
+            font-size: 12px;
+            font-weight: 650;
+            color: var(--text-sub);
+        }
+        .modal-hint{
+            font-size: 12px;
+            color: var(--text-sub);
+            line-height: 1.4;
+        }
+        .modal-input,
+        .modal-textarea{
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 0.5px solid var(--border-color);
+            background: var(--card-bg-solid);
+            color: var(--text-color);
+            font-size: 14px;
+            line-height: 1.6;
+            box-sizing: border-box;
+        }
+        .modal-textarea{
+            resize: vertical;
+        }
+        .modal-textarea.mono{
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 13px;
+            tab-size: 4;
+            -moz-tab-size: 4;
+        }
+
+        /* 编辑题目：选项多行编辑（A/B/C... 独立 textarea） */
+        .modal-options-list{
+            display: grid;
+            gap: 10px;
+        }
+        .modal-option-row{
+            display: grid;
+            grid-template-columns: 36px 1fr;
+            gap: 10px;
+            align-items: flex-start;
+        }
+        .modal-option-key{
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            border: 0.5px solid var(--border-color);
+            background: rgba(142, 142, 147, 0.10);
+            color: var(--text-color);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+            user-select: none;
+        }
+        .modal-option-textarea{
+            min-height: 72px;
+            tab-size: 4;
+            -moz-tab-size: 4;
+        }
+        body.quiz-layout-card .modal-option-key{
+            border: 1px solid var(--mini-border);
+            background: var(--mini-surface-2);
+            color: var(--mini-text);
+        }
+        .modal-input:focus,
+        .modal-textarea:focus{
+            outline: none;
+            box-shadow: none;
+        }
+
+        .modal-row{
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .modal-row .modal-input{
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        .modal-footer{
+            margin-top: 16px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* 卡片布局（对齐小程序）：弹窗表单用 mini token，更贴合整体质感 */
+        body.quiz-layout-card .overlay.modal-overlay .modal-panel.card-container{
+            background: var(--mini-card-bg) !important;
+            border: 1px solid var(--mini-divider) !important;
+            border-radius: var(--mini-radius-lg) !important;
+            box-shadow: var(--mini-shadow) !important;
+        }
+        body.quiz-layout-card .modal-title{ color: var(--mini-text); }
+        body.quiz-layout-card .modal-subtitle{ color: var(--mini-text-sub); }
+        body.quiz-layout-card .modal-label{ color: var(--mini-text-sub); }
+        body.quiz-layout-card .modal-input,
+        body.quiz-layout-card .modal-textarea{
+            border: 1px solid var(--mini-border);
+            background: var(--mini-surface-2);
+            color: var(--mini-text);
+        }
+        body.quiz-layout-card .modal-input:focus,
+        body.quiz-layout-card .modal-textarea:focus{
+            outline: none;
+            box-shadow: none;
+        }
+
+        @media (max-width: 480px){
+            .overlay.modal-overlay{ padding: 14px; }
+            .overlay.modal-overlay .modal-panel.card-container{
+                max-height: calc(100vh - 40px);
+                padding: 16px;
+            }
+            .modal-option-row{ grid-template-columns: 32px 1fr; gap: 8px; }
+            .modal-option-key{ width: 32px; height: 32px; border-radius: 10px; }
+        }
+
+        /* 选项高亮样式 */
+        .correct-opt { color: #28a745 !important; font-weight: bold; background: rgba(40,167,69,0.08) !important; border-radius: 6px; }
+        .wrong-opt { color: #dc3545 !important; font-weight: bold; background: rgba(220,53,69,0.08) !important; border-radius: 6px; }
+
+        .question-image-container {
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .question-image-container img {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            :root { --card-side-gap: 20px; }
+            html, body { overflow-x: hidden; }
+            .sidebar { width: 80vw; left: -80vw; }
+            .sidebar.open { left: 0; }
+            .main-area { padding: 12px; overflow-x: hidden; touch-action: pan-y; overscroll-behavior-x: none; }
+            .card-container { padding: 16px; margin: 10px; min-height: auto; }
+            .header { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; }
+            /* 中间模式徽标置中 */
+            .header > .mode-badge { justify-self: center; }
+            /* 右侧区域保留“主题”与“退出”按钮 */
+            .header > div:last-child { justify-self: end; display: flex; align-items: center; gap: 8px; }
+            #progress-text { display: none !important; }
+            .q-content { font-size: 16px; margin-bottom: 16px; }
+            .options label { padding: 14px 12px; font-size: 16px; }
+            .btn { padding: 12px 16px; font-size: 14px; }
+            .progress-bar { margin: 8px 0 0; }
+        }
+        @media (max-width: 480px) {
+            .sidebar { width: 86vw; left: -86vw; }
+            .btn-menu { padding: 6px 10px; font-size: 13px; }
+            .q-type-label { font-size: 11px; }
+            .fav-btn { font-size: 20px; }
+            /* 已迁移到独立卡片：保留同等字号 */
+            .quiz-card { font-size: 13px; }
+            /* 覆盖成绩弹窗宽度 */
+            .overlay .card-container.score-modal { width: 90vw !important; }
+        }
+
+        /* 快捷键提示横幅 */
+        .shortcut-hint {
+            position: fixed;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, var(--card-bg-solid) 100%);
+            color: var(--text-color);
+            padding: 14px 18px;
+            border-radius: 18px;
+            font-size: 13px;
+            z-index: 1000;
+            opacity: 0;
+            animation: shortcutHintSlideIn 0.5s ease-out forwards;
+            transition: opacity 0.3s, transform 0.3s;
+            box-shadow: 0 8px 24px rgba(0, 122, 255, 0.15), var(--shadow);
+            border: 1px solid rgba(0, 122, 255, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            max-width: min(600px, calc(100% - 32px));
+            pointer-events: auto;
+        }
+        @keyframes shortcutHintSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+        .shortcut-hint-icon {
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: var(--primary);
+            animation: shortcutHintIconPulse 2s ease-in-out infinite;
+        }
+        .shortcut-hint-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+        @keyframes shortcutHintIconPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .shortcut-hint-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .shortcut-hint-title {
+            font-weight: 650;
+            font-size: 14px;
+            color: var(--text-color);
+            line-height: 1.3;
+        }
+        .shortcut-hint-text {
+            font-size: 12px;
+            color: var(--text-sub);
+            line-height: 1.5;
+        }
+        .shortcut-hint-try {
+            background: rgba(0, 122, 255, 0.15);
+            border: 1px solid rgba(0, 122, 255, 0.3);
+            color: rgba(0, 122, 255, 0.9);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 10px;
+            flex-shrink: 0;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .shortcut-hint-try:hover {
+            background: rgba(0, 122, 255, 0.25);
+            border-color: rgba(0, 122, 255, 0.5);
+            transform: scale(1.05);
+        }
+        .shortcut-hint-dismiss {
+            background: none;
+            border: none;
+            color: var(--text-sub);
+            font-size: 11px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+            flex-shrink: 0;
+            opacity: 0.6;
+            transition: opacity 0.2s, background-color 0.2s;
+            white-space: nowrap;
+        }
+        .shortcut-hint-dismiss:hover {
+            opacity: 1;
+            background: rgba(0, 0, 0, 0.05);
+        }
+        .shortcut-hint-close {
+            background: none;
+            border: none;
+            color: var(--text-sub);
+            font-size: 20px;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        .shortcut-hint-close svg {
+            width: 14px;
+            height: 14px;
+        }
+        .shortcut-hint-close:hover {
+            opacity: 1;
+        }
+        body.dark-mode .shortcut-hint {
+            background: linear-gradient(135deg, rgba(88, 166, 255, 0.15) 0%, rgba(28, 28, 30, 0.85) 100%);
+            border-color: rgba(88, 166, 255, 0.3);
+        }
+        body.dark-mode .shortcut-hint-try {
+            background: rgba(88, 166, 255, 0.15);
+            border-color: rgba(88, 166, 255, 0.3);
+            color: rgba(88, 166, 255, 1);
+        }
+        body.dark-mode .shortcut-hint-try:hover {
+            background: rgba(88, 166, 255, 0.25);
+            border-color: rgba(88, 166, 255, 0.5);
+        }
+        body.dark-mode .shortcut-hint-dismiss:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .shortcut-hint {
+                font-size: 12px;
+                padding: 10px 12px;
+                max-width: calc(100% - 20px);
+                width: calc(100% - 20px);
+                left: 50%;
+                transform: translateX(-50%);
+                bottom: max(15px, env(safe-area-inset-bottom, 15px)); /* 考虑安全区域 */
+                flex-wrap: wrap;
+                gap: 6px;
+                border-radius: 14px;
+                box-shadow: 0 4px 16px rgba(0, 122, 255, 0.12), var(--shadow);
+                animation: shortcutHintSlideInMobile 0.4s ease-out forwards;
+            }
+            .shortcut-hint-content {
+                width: 100%;
+                order: 1;
+                flex: 1 1 100%;
+                min-width: 0;
+            }
+            .shortcut-hint-title {
+                font-size: 13px;
+                font-weight: 650;
+                line-height: 1.3;
+                margin-bottom: 2px;
+            }
+            .shortcut-hint-text {
+                font-size: 11px;
+                line-height: 1.4;
+                color: var(--text-sub);
+            }
+            .shortcut-hint-try {
+                order: 2;
+                padding: 6px 12px;
+                font-size: 12px;
+                font-weight: 600;
+                border-radius: 8px;
+                flex: 0 0 auto;
+            }
+            .shortcut-hint-dismiss {
+                order: 3;
+                font-size: 11px;
+                padding: 4px 8px;
+                border-radius: 6px;
+                flex: 0 0 auto;
+            }
+            .shortcut-hint-close {
+                order: 4;
+                width: 18px;
+                height: 18px;
+                font-size: 18px;
+                flex: 0 0 auto;
+            }
+            .shortcut-hint-icon {
+                display: none;
+            }
+        }
+        
+        /* 超小屏幕优化（iPhone SE等） */
+        @media (max-width: 375px) {
+            .shortcut-hint {
+                padding: 8px 10px;
+                gap: 4px;
+                font-size: 11px;
+            }
+            .shortcut-hint-title {
+                font-size: 12px;
+            }
+            .shortcut-hint-text {
+                font-size: 10px;
+            }
+            .shortcut-hint-try {
+                padding: 5px 10px;
+                font-size: 11px;
+            }
+            .shortcut-hint-dismiss {
+                font-size: 10px;
+                padding: 3px 6px;
+            }
+        }
+        
+        /* 移动端动画优化 */
+        @keyframes shortcutHintSlideInMobile {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        /* 科目自定义提示横幅 */
+        .subject-hint {
+            position: fixed;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, var(--card-bg-solid) 100%);
+            color: var(--text-color);
+            padding: 14px 18px;
+            border-radius: 18px;
+            font-size: 13px;
+            z-index: 1000;
+            opacity: 0;
+            animation: subjectHintSlideIn 0.5s ease-out forwards;
+            transition: opacity 0.3s, transform 0.3s;
+            box-shadow: 0 8px 24px rgba(0, 122, 255, 0.15), var(--shadow);
+            border: 1px solid rgba(0, 122, 255, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            max-width: min(600px, calc(100% - 32px));
+            pointer-events: auto;
+        }
+        @keyframes subjectHintSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+        .subject-hint-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+            animation: subjectHintIconPulse 2s ease-in-out infinite;
+        }
+        @keyframes subjectHintIconPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .subject-hint-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .subject-hint-title {
+            font-weight: 650;
+            font-size: 14px;
+            color: var(--text-color);
+            line-height: 1.3;
+        }
+        .subject-hint-text {
+            font-size: 12px;
+            color: var(--text-sub);
+            line-height: 1.5;
+        }
+        .subject-hint-try {
+            background: rgba(0, 122, 255, 0.15);
+            border: 1px solid rgba(0, 122, 255, 0.3);
+            color: rgba(0, 122, 255, 0.9);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 10px;
+            flex-shrink: 0;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .subject-hint-try:hover {
+            background: rgba(0, 122, 255, 0.25);
+            border-color: rgba(0, 122, 255, 0.5);
+            transform: scale(1.05);
+        }
+        .subject-hint-dismiss {
+            background: none;
+            border: none;
+            color: var(--text-sub);
+            font-size: 11px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+            flex-shrink: 0;
+            opacity: 0.6;
+            transition: opacity 0.2s, background-color 0.2s;
+            white-space: nowrap;
+        }
+        .subject-hint-dismiss:hover {
+            opacity: 1;
+            background: rgba(0, 0, 0, 0.05);
+        }
+        .subject-hint-close {
+            background: none;
+            border: none;
+            color: var(--text-sub);
+            font-size: 20px;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        .subject-hint-close:hover {
+            opacity: 1;
+        }
+        body.dark-mode .subject-hint {
+            background: linear-gradient(135deg, rgba(88, 166, 255, 0.15) 0%, rgba(28, 28, 30, 0.85) 100%);
+            border-color: rgba(88, 166, 255, 0.3);
+        }
+        body.dark-mode .subject-hint-try {
+            background: rgba(88, 166, 255, 0.15);
+            border-color: rgba(88, 166, 255, 0.3);
+            color: rgba(88, 166, 255, 1);
+        }
+        body.dark-mode .subject-hint-try:hover {
+            background: rgba(88, 166, 255, 0.25);
+            border-color: rgba(88, 166, 255, 0.5);
+        }
+        body.dark-mode .subject-hint-dismiss:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        @media (max-width: 768px) {
+            .subject-hint {
+                font-size: 12px;
+                padding: 10px 12px;
+                max-width: calc(100% - 20px);
+                width: calc(100% - 20px);
+                left: 50%;
+                transform: translateX(-50%);
+                bottom: max(15px, env(safe-area-inset-bottom, 15px));
+                flex-wrap: wrap;
+                gap: 6px;
+                border-radius: 14px;
+                box-shadow: 0 4px 16px rgba(0, 122, 255, 0.12), var(--shadow);
+                animation: subjectHintSlideInMobile 0.4s ease-out forwards;
+            }
+            .subject-hint-content {
+                width: 100%;
+                order: 1;
+                flex: 1 1 100%;
+                min-width: 0;
+            }
+            .subject-hint-title {
+                font-size: 13px;
+                font-weight: 650;
+                line-height: 1.3;
+                margin-bottom: 2px;
+            }
+            .subject-hint-text {
+                font-size: 11px;
+                line-height: 1.4;
+                color: var(--text-sub);
+            }
+            .subject-hint-try {
+                order: 2;
+                padding: 6px 12px;
+                font-size: 12px;
+                font-weight: 600;
+                border-radius: 8px;
+                flex: 0 0 auto;
+            }
+            .subject-hint-dismiss {
+                order: 3;
+                font-size: 11px;
+                padding: 4px 8px;
+                border-radius: 6px;
+                flex: 0 0 auto;
+            }
+            .subject-hint-close {
+                order: 4;
+                width: 18px;
+                height: 18px;
+                font-size: 18px;
+                flex: 0 0 auto;
+            }
+            .subject-hint-icon {
+                display: none;
+            }
+        }
+        
+        @media (max-width: 375px) {
+            .subject-hint {
+                padding: 8px 10px;
+                gap: 4px;
+                font-size: 11px;
+            }
+            .subject-hint-title {
+                font-size: 12px;
+            }
+            .subject-hint-text {
+                font-size: 10px;
+            }
+            .subject-hint-try {
+                padding: 5px 10px;
+                font-size: 11px;
+            }
+            .subject-hint-dismiss {
+                font-size: 10px;
+                padding: 3px 6px;
+            }
+        }
+        
+        @keyframes subjectHintSlideInMobile {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        /* 悬浮球功能提示横幅 */
+        .fab-hint {
+            position: fixed;
+            bottom: 15px; /* 贴着屏幕底部，与快捷键提示位置一致 */
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, var(--card-bg-solid) 100%);
+            color: var(--text-color);
+            padding: 14px 18px;
+            border-radius: 18px;
+            font-size: 13px;
+            z-index: 1000;
+            opacity: 0;
+            animation: fabHintSlideIn 0.5s ease-out forwards;
+            transition: opacity 0.3s, transform 0.3s;
+            box-shadow: 0 8px 24px rgba(0, 122, 255, 0.15), var(--shadow);
+            border: 1px solid rgba(0, 122, 255, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            max-width: min(600px, calc(100% - 32px));
+            pointer-events: auto;
+        }
+        @keyframes fabHintSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+        
+        /* 移动端动画优化：更快的动画，减少性能开销 */
+        @media (max-width: 768px) {
+            .fab-hint {
+                animation: fabHintSlideInMobile 0.4s ease-out forwards;
+            }
+        }
+        @keyframes fabHintSlideInMobile {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+        .fab-hint-icon {
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: var(--primary);
+            animation: fabHintIconPulse 2s ease-in-out infinite;
+        }
+        .fab-hint-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+        @keyframes fabHintIconPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .fab-hint-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .fab-hint-title {
+            font-weight: 650;
+            font-size: 14px;
+            color: var(--text-color);
+            line-height: 1.3;
+        }
+        .fab-hint-text {
+            font-size: 12px;
+            color: var(--text-sub);
+            line-height: 1.5;
+        }
+        .fab-hint-feature {
+            color: rgba(0, 122, 255, 0.9);
+            font-weight: 600;
+        }
+        body.dark-mode .fab-hint-feature {
+            color: rgba(88, 166, 255, 1);
+        }
+        .fab-hint-try {
+            background: rgba(0, 122, 255, 0.15);
+            border: 1px solid rgba(0, 122, 255, 0.3);
+            color: rgba(0, 122, 255, 0.9);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 10px;
+            flex-shrink: 0;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .fab-hint-try:hover {
+            background: rgba(0, 122, 255, 0.25);
+            border-color: rgba(0, 122, 255, 0.5);
+            transform: scale(1.05);
+        }
+        body.dark-mode .fab-hint-try {
+            background: rgba(88, 166, 255, 0.15);
+            border-color: rgba(88, 166, 255, 0.3);
+            color: rgba(88, 166, 255, 1);
+        }
+        body.dark-mode .fab-hint-try:hover {
+            background: rgba(88, 166, 255, 0.25);
+            border-color: rgba(88, 166, 255, 0.5);
+        }
+        .fab-hint-dismiss {
+            background: none;
+            border: none;
+            color: var(--text-sub);
+            font-size: 11px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+            flex-shrink: 0;
+            opacity: 0.6;
+            transition: opacity 0.2s, background-color 0.2s;
+            white-space: nowrap;
+        }
+        .fab-hint-dismiss:hover {
+            opacity: 1;
+            background: rgba(0, 0, 0, 0.05);
+        }
+        body.dark-mode .fab-hint-dismiss:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .fab-hint-arrow {
+            position: absolute;
+            right: -30px;
+            bottom: 50%;
+            transform: translateY(50%);
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(0, 122, 255, 0.6);
+            animation: fabHintArrowBounce 1.5s ease-in-out infinite;
+            pointer-events: none;
+        }
+        .fab-hint-arrow svg {
+            width: 20px;
+            height: 20px;
+        }
+        @keyframes fabHintArrowBounce {
+            0%, 100% { transform: translateY(50%) translateX(0); }
+            50% { transform: translateY(50%) translateX(8px); }
+        }
+        @media (max-width: 768px) {
+            .fab-hint-arrow {
+                display: none; /* 移动端隐藏箭头 */
+            }
+        }
+        .fab-hint-close {
+            background: none;
+            border: none;
+            color: var(--text-sub);
+            font-size: 20px;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        .fab-hint-close svg {
+            width: 14px;
+            height: 14px;
+        }
+        .fab-hint-close:hover {
+            opacity: 1;
+        }
+        body.dark-mode .fab-hint {
+            background: linear-gradient(135deg, rgba(88, 166, 255, 0.15) 0%, rgba(28, 28, 30, 0.85) 100%);
+            border-color: rgba(88, 166, 255, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .fab-hint {
+                font-size: 12px;
+                padding: 10px 12px;
+                max-width: calc(100% - 20px);
+                width: calc(100% - 20px);
+                left: 50%;
+                transform: translateX(-50%);
+                bottom: max(15px, env(safe-area-inset-bottom, 15px)); /* 考虑安全区域 */
+                flex-wrap: wrap;
+                gap: 6px;
+                border-radius: 14px;
+                box-shadow: 0 4px 16px rgba(0, 122, 255, 0.12), var(--shadow);
+            }
+            .fab-hint-content {
+                width: 100%;
+                order: 1;
+                flex: 1 1 100%;
+                min-width: 0; /* 允许内容收缩 */
+            }
+            .fab-hint-title {
+                font-size: 13px;
+                font-weight: 650;
+                line-height: 1.3;
+                margin-bottom: 2px;
+            }
+            .fab-hint-text {
+                font-size: 11px;
+                line-height: 1.4;
+                color: var(--text-sub);
+            }
+            .fab-hint-feature {
+                font-size: 11px;
+            }
+            .fab-hint-try {
+                order: 2;
+                padding: 6px 12px;
+                font-size: 12px;
+                font-weight: 600;
+                border-radius: 8px;
+                flex: 0 0 auto;
+            }
+            .fab-hint-dismiss {
+                order: 3;
+                font-size: 11px;
+                padding: 4px 8px;
+                border-radius: 6px;
+                flex: 0 0 auto;
+            }
+            .fab-hint-close {
+                order: 4;
+                width: 18px;
+                height: 18px;
+                font-size: 18px;
+                flex: 0 0 auto;
+            }
+            .fab-hint-icon {
+                display: none; /* 移动端隐藏图标节省空间 */
+            }
+            .fab-hint-arrow {
+                display: none; /* 移动端隐藏箭头 */
+            }
+        }
+        
+        /* 超小屏幕优化（iPhone SE等） */
+        @media (max-width: 375px) {
+            .fab-hint {
+                padding: 8px 10px;
+                gap: 4px;
+                font-size: 11px;
+            }
+            .fab-hint-title {
+                font-size: 12px;
+            }
+            .fab-hint-text {
+                font-size: 10px;
+            }
+            .fab-hint-try {
+                padding: 5px 10px;
+                font-size: 11px;
+            }
+            .fab-hint-dismiss {
+                font-size: 10px;
+                padding: 3px 6px;
+            }
+        }

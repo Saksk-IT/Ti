@@ -1,0 +1,162 @@
+    function handleQuestionTypeChange() {
+        rebuildAnswerInput();
+        const optionsGroup = document.getElementById('optionsGroup');
+        const qType = document.getElementById('qType').value;
+        if (qType === '选择题' || qType === '多选题') {
+            optionsGroup.style.display = 'block';
+            if (document.querySelectorAll('.option-item').length === 0) {
+                for (let i = 0; i < 4; i++) {
+                    addOption();
+                }
+            }
+        } else {
+            optionsGroup.style.display = 'none';
+        }
+    }
+
+    function rebuildAnswerInput(defaultValue = '') {
+        const qType = document.getElementById('qType').value;
+        const container = document.getElementById('answer-container');
+        container.innerHTML = '';
+
+        let inputElement;
+
+        if (qType === '判断题') {
+            inputElement = document.createElement('select');
+            inputElement.id = 'qAnswer';
+            inputElement.title = '答案';
+            inputElement.add(new Option('正确', '正确'));
+            inputElement.add(new Option('错误', '错误'));
+            if (defaultValue) inputElement.value = defaultValue;
+        } else if (['计算题', '简答题'].includes(qType)) {
+            inputElement = document.createElement('textarea');
+            inputElement.id = 'qAnswer';
+            inputElement.rows = 4;
+            inputElement.placeholder = '请输入详细答案';
+            inputElement.value = defaultValue;
+        } else {
+            inputElement = document.createElement('input');
+            inputElement.type = 'text';
+            inputElement.id = 'qAnswer';
+            if (qType === '选择题') {
+                inputElement.placeholder = '例如: A';
+            } else if (qType === '多选题') {
+                inputElement.placeholder = '例如: AB 或 ABC';
+            } else if (qType === '填空题') {
+                inputElement.placeholder = '多个空用 ;; 分隔';
+            } else {
+                inputElement.placeholder = '请输入答案';
+            }
+            inputElement.value = defaultValue;
+        }
+
+        inputElement.style.width = '100%';
+        inputElement.style.padding = '10px 14px';
+        inputElement.style.border = '1px solid #ced4da';
+        inputElement.style.borderRadius = '8px';
+        inputElement.style.fontSize = '14px';
+
+        container.appendChild(inputElement);
+    }
+
+    function addOption() {
+        const container = document.getElementById('optionsContainer');
+        const optionIndex = container.querySelectorAll('.option-item').length;
+        const optionKey = String.fromCharCode(65 + optionIndex);
+
+        const optionItem = document.createElement('div');
+        optionItem.className = 'option-item';
+        optionItem.style.cssText = 'display: flex; align-items: flex-start; gap: 12px; padding: 12px; background: rgba(142, 142, 147, 0.06); border-radius: 8px; border: 1px solid rgba(0,0,0,0.1);';
+
+        const label = document.createElement('div');
+        label.style.cssText = 'flex: 0 0 auto; width: 32px; padding-top: 8px; font-weight: 600; color: #333;';
+        label.textContent = optionKey + '.';
+
+        const textarea = document.createElement('textarea');
+        textarea.className = 'option-textarea';
+        textarea.style.cssText = 'flex: 1; min-height: 60px; padding: 8px 12px; border: 1px solid rgba(0,0,0,0.1); border-radius: 6px; font-size: 14px; line-height: 1.5; resize: vertical; font-family: inherit;';
+        textarea.rows = 2;
+        textarea.placeholder = '输入选项内容（支持多行）';
+        textarea.oninput = updatePreview;
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'btn-delete-option';
+        deleteBtn.style.cssText = 'flex: 0 0 auto; padding: 8px 12px; background: rgba(255, 59, 48, 0.1); color: #ff3b30; border: 1px solid rgba(255, 59, 48, 0.2); border-radius: 6px; cursor: pointer; font-size: 13px; white-space: nowrap;';
+        deleteBtn.textContent = '删除';
+        deleteBtn.onclick = function() {
+            optionItem.remove();
+            updateOptionLabels();
+            updatePreview();
+        };
+
+        optionItem.appendChild(label);
+        optionItem.appendChild(textarea);
+        optionItem.appendChild(deleteBtn);
+        container.appendChild(optionItem);
+
+        updatePreview();
+        textarea.focus();
+    }
+
+    function updateOptionLabels() {
+        const items = document.querySelectorAll('.option-item');
+        items.forEach((item, index) => {
+            const label = item.querySelector('div');
+            const optionKey = String.fromCharCode(65 + index);
+            label.textContent = optionKey + '.';
+        });
+    }
+
+    function getOptions() {
+        const items = document.querySelectorAll('.option-item');
+        return Array.from(items).map(item => {
+            const textarea = item.querySelector('.option-textarea');
+            if (!textarea) return '';
+            const value = textarea.value;
+            return value.replace(/^[\s\t]+|[\s\t]+$/g, '');
+        }).filter(Boolean);
+    }
+
+    function setOptions(options) {
+        const container = document.getElementById('optionsContainer');
+        container.innerHTML = '';
+
+        if (options && options.length > 0) {
+            options.forEach((opt, index) => {
+                const optionItem = document.createElement('div');
+                optionItem.className = 'option-item';
+                optionItem.style.cssText = 'display: flex; align-items: flex-start; gap: 12px; padding: 12px; background: rgba(142, 142, 147, 0.06); border-radius: 8px; border: 1px solid rgba(0,0,0,0.1);';
+
+                const optionKey = String.fromCharCode(65 + index);
+                const label = document.createElement('div');
+                label.style.cssText = 'flex: 0 0 auto; width: 32px; padding-top: 8px; font-weight: 600; color: #333;';
+                label.textContent = optionKey + '.';
+
+                const textarea = document.createElement('textarea');
+                textarea.className = 'option-textarea';
+                textarea.style.cssText = 'flex: 1; min-height: 60px; padding: 8px 12px; border: 1px solid rgba(0,0,0,0.1); border-radius: 6px; font-size: 14px; line-height: 1.5; resize: vertical; font-family: inherit;';
+                textarea.rows = 2;
+                textarea.value = opt;
+                textarea.placeholder = '输入选项内容（支持多行）';
+                textarea.oninput = updatePreview;
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.className = 'btn-delete-option';
+                deleteBtn.style.cssText = 'flex: 0 0 auto; padding: 8px 12px; background: rgba(255, 59, 48, 0.1); color: #ff3b30; border: 1px solid rgba(255, 59, 48, 0.2); border-radius: 6px; cursor: pointer; font-size: 13px; white-space: nowrap;';
+                deleteBtn.textContent = '删除';
+                deleteBtn.onclick = function() {
+                    optionItem.remove();
+                    updateOptionLabels();
+                    updatePreview();
+                };
+
+                optionItem.appendChild(label);
+                optionItem.appendChild(textarea);
+                optionItem.appendChild(deleteBtn);
+                container.appendChild(optionItem);
+            });
+        }
+    }
+

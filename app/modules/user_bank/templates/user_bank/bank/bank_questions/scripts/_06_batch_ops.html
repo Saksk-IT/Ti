@@ -1,0 +1,58 @@
+    function getSelectedIds(){
+        return Array.from(document.querySelectorAll('.questionSelect:checked')).map(cb => cb.dataset.id);
+    }
+
+    function openBatchTypeChange(){
+        openModal('modalTypeChange');
+    }
+
+    async function doBatchTypeChange(){
+        const ids = getSelectedIds();
+        if(!ids.length) {
+            showToast('请先勾选题目', 'error');
+            return;
+        }
+        const targetType = document.getElementById('typeChangeTarget').value;
+        if (!targetType) {
+            showToast('请选择一个目标题型', 'error');
+            return;
+        }
+
+        try {
+            await api(`/user/banks/api/${bankId}/questions/batch_update`, {
+                method: 'POST',
+                body: JSON.stringify({ question_ids: ids.map(id => parseInt(id)), q_type: targetType })
+            });
+            showToast('批量修改题型成功');
+            closeModal('modalTypeChange');
+            loadQuestions();
+        } catch (error) {
+            showToast(error.message || '操作失败', 'error');
+        }
+    }
+
+    function openBatchDifficulty(){
+        openModal('modalDifficulty');
+    }
+
+    async function doBatchDifficulty(){
+        const ids = getSelectedIds();
+        if(!ids.length) {
+            showToast('请先勾选题目', 'error');
+            return;
+        }
+        const difficulty = parseInt(document.getElementById('diffValue').value) || 3;
+
+        try {
+            await api(`/user/banks/api/${bankId}/questions/batch_update`, {
+                method: 'POST',
+                body: JSON.stringify({ question_ids: ids.map(id => parseInt(id)), difficulty: difficulty })
+            });
+            showToast('批量设置难度成功');
+            closeModal('modalDifficulty');
+            loadQuestions();
+        } catch (error) {
+            showToast(error.message || '操作失败', 'error');
+        }
+    }
+

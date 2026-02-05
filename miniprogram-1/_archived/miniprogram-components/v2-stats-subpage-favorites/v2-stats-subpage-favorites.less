@@ -1,0 +1,142 @@
+.quad-wrap {
+  padding: 0 18rpx 18rpx;
+  display: grid;
+  gap: 12rpx;
+}
+
+.quad-bg {
+  position: relative;
+  height: 220rpx;
+  border-radius: var(--app-radius-lg);
+  border: 1rpx solid var(--app-border);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--app-primary) 10%, transparent), var(--app-fill));
+  overflow: hidden;
+}
+
+.quad-bg::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 1rpx;
+  height: 100%;
+  background: var(--app-border);
+  opacity: 0.75;
+}
+
+.quad-bg::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 100%;
+  height: 1rpx;
+  background: var(--app-border);
+  opacity: 0.75;
+}
+
+.quad-axis {
+  position: absolute;
+  font-size: 20rpx;
+  color: var(--app-text-tertiary);
+}
+
+.quad-axis.y {
+  left: 12rpx;
+  top: 12rpx;
+}
+
+.quad-axis.x {
+  right: 12rpx;
+  bottom: 12rpx;
+}
+
+.quad-tag {
+  position: absolute;
+  padding: 8rpx 12rpx;
+  border-radius: 999px;
+  border: 1rpx solid var(--app-border);
+  background: color-mix(in srgb, var(--app-surface) 80%, transparent);
+  font-size: 20rpx;
+  font-weight: 900;
+  color: var(--app-muted);
+  backdrop-filter: blur(14rpx);
+}
+
+.quad-tag.tl {
+  left: 12rpx;
+  top: 44rpx;
+}
+
+.quad-tag.tr {
+  right: 12rpx;
+  top: 44rpx;
+}
+
+.quad-tag.bl {
+  left: 12rpx;
+  bottom: 44rpx;
+}
+
+.quad-tag.br {
+  right: 12rpx;
+  bottom: 44rpx;
+}
+
+.quad-dot {
+  position: absolute;
+  width: 18rpx;
+  height: 18rpx;
+  border-radius: 999px;
+  background: var(--app-primary);
+  border: 4rpx solid color-mix(in srgb, var(--app-surface) 90%, transparent);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 10rpx 22rpx color-mix(in srgb, var(--app-primary) 30%, transparent);
+}
+
+.quad-pulse {
+  position: absolute;
+  width: 42rpx;
+  height: 42rpx;
+  border-radius: 999px;
+  border: 2rpx solid color-mix(in srgb, var(--app-primary) 45%, transparent);
+  transform: translate(-50%, -50%);
+  animation: quadPulse 1.9s ease-out infinite;
+}
+
+@keyframes quadPulse {
+  0% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(0.55);
+  }
+  70% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.25);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.25);
+  }
+}
+
+.quad-summary {
+  display: grid;
+  gap: 6rpx;
+}
+
+.quad-pill {
+  align-self: flex-start;
+  padding: 10rpx 14rpx;
+  border-radius: 999px;
+  border: 1rpx solid var(--app-border-strong);
+  background: var(--app-primary-soft);
+  font-size: 22rpx;
+  font-weight: 950;
+  color: var(--app-text);
+}
+
+.quad-desc {
+  font-size: 22rpx;
+  color: var(--app-muted);
+  line-height: 1.45;
+}

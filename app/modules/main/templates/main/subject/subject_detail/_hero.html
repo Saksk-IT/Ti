@@ -1,0 +1,16 @@
+    <section class="qb-hero" aria-label="题头">
+      <div style="min-width:0;">
+        <h1>{{ subject_name }}</h1>
+        <p>
+          公共题库 · {{ total_count }} 题
+          {% if logged_in %}
+            · 已做 {{ my_stats.total_answered }} 题 · 正确率 {{ my_stats.accuracy }}%
+            · 收藏 {{ fav_count }} · 错题 {{ mistake_count }}
+          {% endif %}
+        </p>
+      </div>
+      <div class="qb-hero-actions">
+        <button type="button" class="pill" onclick="openTabOrderModal()">自定义排序</button>
+      </div>
+    </section>
+

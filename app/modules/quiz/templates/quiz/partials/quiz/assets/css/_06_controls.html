@@ -1,0 +1,259 @@
+        .footer { 
+            margin-top: auto; 
+            display: flex; 
+            justify-content: space-between; 
+            padding-top: 24px; 
+            border-top: 0.5px solid var(--border-color); 
+            position: relative;
+            z-index: 5;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .bottom-actions {
+            display: flex;
+            gap: 12px;
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+        .bottom-col {
+            flex: 1 1 0;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .btn { 
+            padding: 12px 24px; 
+            border-radius: 12px; 
+            border: none; 
+            cursor: pointer; 
+            font-size: 17px; 
+            font-weight: 500; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-primary{
+            background: var(--primary);
+            color: #fff;
+        }
+        .btn:hover { 
+            box-shadow: var(--shadow-hover);
+        }
+        .btn:active {
+            transform: scale(0.97);
+        }
+        .btn[disabled], .btn[data-loading="true"] { 
+            opacity: 0.5; 
+            cursor: not-allowed; 
+            pointer-events: none; 
+        }
+        .btn[data-loading="true"] { 
+            position: relative; 
+            color: transparent; 
+        }
+        .btn[data-loading="true"]::after { 
+            content: ""; 
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            width: 18px; 
+            height: 18px; 
+            margin: -9px 0 0 -9px; 
+            border-radius: 50%; 
+            border: 2px solid currentColor; 
+            border-right-color: transparent; 
+            animation: spin .8s linear infinite; 
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .btn-nav { 
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            color: var(--text-color);
+            border: 0.5px solid var(--border-color);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 0 0 0.5px rgba(255, 255, 255, 0.9) inset;
+        }
+        .btn-nav:hover {
+            background: rgba(255, 255, 255, 0.85);
+            border-color: rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06), 0 0 0 0.5px rgba(255, 255, 255, 1) inset;
+        }
+        body.dark-mode .btn-nav {
+            background: rgba(28, 28, 30, 0.6);
+            border-color: var(--border-color);
+        }
+        body.dark-mode .btn-nav:hover {
+            background: rgba(28, 28, 30, 0.75);
+            border-color: rgba(255, 255, 255, 0.18);
+        }
+        .nav-btn {
+            width: 100%;
+            padding: 12px 18px;
+            border-radius: 12px;
+            border: 0.5px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.65);
+            color: var(--text-color);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 0 0 0.5px rgba(255, 255, 255, 0.9) inset;
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+        }
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.85);
+            border-color: rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06), 0 0 0 0.5px rgba(255, 255, 255, 1) inset;
+        }
+        body.dark-mode .nav-btn {
+            background: rgba(28, 28, 30, 0.6);
+            border-color: var(--border-color);
+            color: var(--text-color);
+        }
+        body.dark-mode .nav-btn:hover {
+            background: rgba(28, 28, 30, 0.75);
+            border-color: rgba(255, 255, 255, 0.18);
+        }
+
+        .btn-check { 
+            background: rgba(0, 122, 255, 0.08);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            color: var(--primary);
+            border: 0.5px solid rgba(0, 122, 255, 0.25);
+            box-shadow: 0 1px 2px rgba(0, 122, 255, 0.08), 0 0 0 0.5px rgba(255, 255, 255, 0.9) inset;
+        }
+        .btn-check:hover {
+            background: rgba(0, 122, 255, 0.12);
+            border-color: rgba(0, 122, 255, 0.35);
+            box-shadow: 0 2px 4px rgba(0, 122, 255, 0.12), 0 0 0 0.5px rgba(255, 255, 255, 1) inset;
+        }
+        body.dark-mode .btn-check {
+            background: rgba(10, 132, 255, 0.15);
+            color: var(--primary);
+            border-color: rgba(10, 132, 255, 0.3);
+        }
+        body.dark-mode .btn-check:hover {
+            background: rgba(10, 132, 255, 0.2);
+            border-color: rgba(10, 132, 255, 0.4);
+        }
+
+        .btn-next-green { 
+            background: rgba(52, 199, 89, 0.08);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            color: var(--success);
+            border: 0.5px solid rgba(52, 199, 89, 0.25);
+            box-shadow: 0 1px 2px rgba(52, 199, 89, 0.08), 0 0 0 0.5px rgba(255, 255, 255, 0.9) inset;
+            display: none;
+        }
+        .btn-next-green:hover {
+            background: rgba(52, 199, 89, 0.12);
+            border-color: rgba(52, 199, 89, 0.35);
+            box-shadow: 0 2px 4px rgba(52, 199, 89, 0.12), 0 0 0 0.5px rgba(255, 255, 255, 1) inset;
+        }
+        body.dark-mode .btn-next-green {
+            background: rgba(52, 199, 89, 0.15);
+            color: var(--success);
+            border-color: rgba(52, 199, 89, 0.3);
+        }
+        body.dark-mode .btn-next-green:hover {
+            background: rgba(52, 199, 89, 0.2);
+            border-color: rgba(52, 199, 89, 0.4);
+        }
+
+        .btn-submit { 
+            background: rgba(175, 82, 222, 0.1);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            color: #af52de;
+            border: 0.5px solid rgba(175, 82, 222, 0.3);
+            box-shadow: 0 1px 2px rgba(175, 82, 222, 0.1), 0 0 0 0.5px rgba(255, 255, 255, 0.9) inset;
+            display: none;
+        }
+        .btn-submit:hover {
+            background: rgba(175, 82, 222, 0.15);
+            border-color: rgba(175, 82, 222, 0.4);
+            box-shadow: 0 2px 4px rgba(175, 82, 222, 0.15), 0 0 0 0.5px rgba(255, 255, 255, 1) inset;
+        }
+        body.dark-mode .btn-submit {
+            background: rgba(175, 82, 222, 0.15);
+            color: #af52de;
+            border-color: rgba(175, 82, 222, 0.3);
+        }
+        body.dark-mode .btn-submit:hover {
+            background: rgba(175, 82, 222, 0.2);
+            border-color: rgba(175, 82, 222, 0.4);
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 12px 18px;
+            border-radius: 12px;
+            border: 0.5px solid rgba(0, 122, 255, 0.25);
+            background: rgba(0, 122, 255, 0.08);
+            color: var(--primary);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0, 122, 255, 0.08), 0 0 0 0.5px rgba(255, 255, 255, 0.9) inset;
+        }
+        .submit-btn:hover {
+            background: rgba(0, 122, 255, 0.12);
+            border-color: rgba(0, 122, 255, 0.35);
+            box-shadow: 0 2px 4px rgba(0, 122, 255, 0.12), 0 0 0 0.5px rgba(255, 255, 255, 1) inset;
+        }
+        .submit-btn[disabled] {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        body.dark-mode .submit-btn {
+            background: rgba(10, 132, 255, 0.15);
+            color: var(--primary);
+            border-color: rgba(10, 132, 255, 0.3);
+        }
+        body.dark-mode .submit-btn:hover {
+            background: rgba(10, 132, 255, 0.2);
+            border-color: rgba(10, 132, 255, 0.4);
+        }
+        .submit-btn-wrapper {
+            width: 100%;
+        }
+        .mini-action-btn {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 0.5px solid var(--border-color);
+            background: rgba(142, 142, 147, 0.1);
+            color: var(--text-color);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease;
+        }
+        .mini-action-btn:hover {
+            background: rgba(142, 142, 147, 0.16);
+            border-color: rgba(0, 0, 0, 0.12);
+        }
+        body.dark-mode .mini-action-btn {
+            background: rgba(142, 142, 147, 0.12);
+            border-color: rgba(255, 255, 255, 0.14);
+        }
+        body.dark-mode .mini-action-btn:hover {
+            background: rgba(142, 142, 147, 0.18);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 20px; display: none; z-index: 2000; font-size: 14px;}
+        
+        .score-modal { text-align: center; }
+        .score-circle { width: 120px; height: 120px; border-radius: 50%; border: 8px solid #6610f2; display: flex; flex-direction: column; justify-content: center; align-items: center; margin: 0 auto 20px; color: #6610f2; }
+        .score-val { font-size: 40px; font-weight: bold; }
+        .score-label { font-size: 12px; }
+        .score-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; max-height: 200px; overflow-y: auto; margin-top: 20px; }
+        .score-item { padding: 5px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+        .score-item.s-correct { background: #d4edda; color: #155724; }
+        .score-item.s-wrong { background: #f8d7da; color: #721c24; }
+

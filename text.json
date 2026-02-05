@@ -1,0 +1,377 @@
+{
+  "questions": [
+    {
+      "id": 1,
+      "type": "single_choice",
+      "content": "Cortex-M处理器采用的架构是（ ）",
+      "options": [
+        "v4T",
+        "v5TE",
+        "v6",
+        "v7"
+      ],
+      "answer": [],
+      "analysis": "",
+      "tags": [],
+      "difficulty": 3
+    },
+    {
+      "id": 2,
+      "type": "single_choice",
+      "content": "下列不属于Cortex-M3 MCU的是（ ）",
+      "options": [
+        "调试系统",
+        "I/O",
+        "时钟和复位",
+        "LED灯"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [],
+      "difficulty": 3
+    },
+    {
+      "id": 3,
+      "type": "single_choice",
+      "content": "由下图开发板电源模块原理图可知，实验板采用（）种电源供电方式。",
+      "options": [
+        "1",
+        "2",
+        "3",
+        "4"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [],
+      "difficulty": 3
+    },
+    {
+      "id": 4,
+      "type": "single_choice",
+      "content": "如下图所示，当RST按下时，实现的功能是（ ）",
+      "options": [
+        "RSET接地，CPU将会重新启动",
+        "RSET接地，CPU进入置位状态",
+        "RSET接地，CPU进入复位状态",
+        "RSET与电容电压都为高电平，CPU进入置位状态"
+      ],
+      "answer": [],
+      "analysis": "",
+      "tags": [],
+      "difficulty": 3
+    },
+    {
+      "id": 5,
+      "type": "single_choice",
+      "content": "开发板刚接通电源时，关于下图说法正确的是（ ）",
+      "options": [
+        "开发板接通电源时，R5和C20构成了放电电路实现了CPU的置位。",
+        "开发板接通电源时，R5和C20构成了放电电路实现了CPU的复位。",
+        "开发板接通电源时，复位的持续时间受R5电阻值和C20容值影响。",
+        "开发板接通电源时，CPU处于忙碌状态。"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [],
+      "difficulty": 3
+    },
+    {
+      "id": 6,
+      "type": "single_choice",
+      "content": "为了解决不同的芯片厂商生产的 Cortex 微控制器软件 的兼容性问题，ARM 与芯片厂商建立了（ ）标准。",
+      "options": [
+        "API",
+        "CMSIS",
+        "DSP",
+        "SIMD"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [],
+      "difficulty": 3
+    },
+    {
+      "id": 7,
+      "type": "single_choice",
+      "content": "下列属于CMSIS 核心层的是（）\n①内核函数层\n②设备外设函数层\n③用户层\n④MCU",
+      "options": [
+        "②③",
+        "①②",
+        "③④",
+        "②④"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [],
+      "difficulty": 3
+    },
+    {
+      "id": 8,
+      "type": "single_choice",
+      "content": "和PC系统机相比嵌入式系统不具备以下哪个特点（ ）",
+      "options": [
+        "系统内核小",
+        "专用性强",
+        "可执行多任务",
+        "系统精简"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [],
+      "difficulty": 3
+    }
+  ],
+  "meta": {
+    "source": "PTA",
+    "exported_at": "2026-01-19T18:15:30.767Z",
+    "url": "https://pintia.cn/problem-sets/1993223747044814848/exam/problems/type/2",
+    "count": 8,
+    "per_question": [
+      {
+        "pta_id": "1993223748219265031",
+        "label": "2-1",
+        "author": "李冶",
+        "org": "沈阳师范大学",
+        "full_score": 2,
+        "got_score": 0,
+        "eval": "答案错误",
+        "is_correct": false,
+        "option_keys": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "my_answer_index": 0,
+        "my_answer_key": "A",
+        "my_answer_text": "v4T",
+        "my_answer_indices": [
+          0
+        ],
+        "my_answer_keys": [
+          "A"
+        ],
+        "my_answer_texts": [
+          "v4T"
+        ]
+      },
+      {
+        "pta_id": "1993223748219265032",
+        "label": "2-2",
+        "author": "李冶",
+        "org": "沈阳师范大学",
+        "full_score": 2,
+        "got_score": 2,
+        "eval": "答案正确",
+        "is_correct": true,
+        "option_keys": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "my_answer_index": 3,
+        "my_answer_key": "D",
+        "my_answer_text": "LED灯",
+        "my_answer_indices": [
+          3
+        ],
+        "my_answer_keys": [
+          "D"
+        ],
+        "my_answer_texts": [
+          "LED灯"
+        ]
+      },
+      {
+        "pta_id": "1993223748219265033",
+        "label": "2-3",
+        "author": "李冶",
+        "org": "沈阳师范大学",
+        "full_score": 2,
+        "got_score": 2,
+        "eval": "答案正确",
+        "is_correct": true,
+        "option_keys": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "my_answer_index": 1,
+        "my_answer_key": "B",
+        "my_answer_text": "2",
+        "my_answer_indices": [
+          1
+        ],
+        "my_answer_keys": [
+          "B"
+        ],
+        "my_answer_texts": [
+          "2"
+        ]
+      },
+      {
+        "pta_id": "1993223748219265034",
+        "label": "2-4",
+        "author": "李冶",
+        "org": "沈阳师范大学",
+        "full_score": 2,
+        "got_score": 0,
+        "eval": "答案错误",
+        "is_correct": false,
+        "option_keys": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "my_answer_index": 1,
+        "my_answer_key": "B",
+        "my_answer_text": "RSET接地，CPU进入置位状态",
+        "my_answer_indices": [
+          1
+        ],
+        "my_answer_keys": [
+          "B"
+        ],
+        "my_answer_texts": [
+          "RSET接地，CPU进入置位状态"
+        ]
+      },
+      {
+        "pta_id": "1993223748219265035",
+        "label": "2-5",
+        "author": "李冶",
+        "org": "沈阳师范大学",
+        "full_score": 2,
+        "got_score": 2,
+        "eval": "答案正确",
+        "is_correct": true,
+        "option_keys": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "my_answer_index": 2,
+        "my_answer_key": "C",
+        "my_answer_text": "开发板接通电源时，复位的持续时间受R5电阻值和C20容值影响。",
+        "my_answer_indices": [
+          2
+        ],
+        "my_answer_keys": [
+          "C"
+        ],
+        "my_answer_texts": [
+          "开发板接通电源时，复位的持续时间受R5电阻值和C20容值影响。"
+        ]
+      },
+      {
+        "pta_id": "1993223748219265036",
+        "label": "2-6",
+        "author": "李冶",
+        "org": "沈阳师范大学",
+        "full_score": 2,
+        "got_score": 2,
+        "eval": "答案正确",
+        "is_correct": true,
+        "option_keys": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "my_answer_index": 1,
+        "my_answer_key": "B",
+        "my_answer_text": "CMSIS",
+        "my_answer_indices": [
+          1
+        ],
+        "my_answer_keys": [
+          "B"
+        ],
+        "my_answer_texts": [
+          "CMSIS"
+        ]
+      },
+      {
+        "pta_id": "1993223748219265037",
+        "label": "2-7",
+        "author": "李冶",
+        "org": "沈阳师范大学",
+        "full_score": 2,
+        "got_score": 2,
+        "eval": "答案正确",
+        "is_correct": true,
+        "option_keys": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "my_answer_index": 1,
+        "my_answer_key": "B",
+        "my_answer_text": "①②",
+        "my_answer_indices": [
+          1
+        ],
+        "my_answer_keys": [
+          "B"
+        ],
+        "my_answer_texts": [
+          "①②"
+        ]
+      },
+      {
+        "pta_id": "1993223748223459328",
+        "label": "2-8",
+        "author": "李冶",
+        "org": "沈阳师范大学",
+        "full_score": 2,
+        "got_score": 2,
+        "eval": "答案正确",
+        "is_correct": true,
+        "option_keys": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "my_answer_index": 2,
+        "my_answer_key": "C",
+        "my_answer_text": "可执行多任务",
+        "my_answer_indices": [
+          2
+        ],
+        "my_answer_keys": [
+          "C"
+        ],
+        "my_answer_texts": [
+          "可执行多任务"
+        ]
+      }
+    ],
+    "stats": {
+      "mode": "all",
+      "total_blocks": 8,
+      "exported": 8,
+      "skipped_empty": 0,
+      "skipped_type": 0,
+      "skipped_option_count": 0,
+      "skipped_unknown_answer": 0
+    }
+  }
+}

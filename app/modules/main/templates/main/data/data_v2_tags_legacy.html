@@ -1,0 +1,114 @@
+{% extends "main/data/data_v2_shell.html" %}
+{# legacy backup: v2 tags before redesign #}
+
+{% block data_content %}
+  <section class="dc-card" aria-label="标签体系">
+    <div class="dc-card-head">
+      <div style="min-width:0;">
+        <h2>标签体系</h2>
+        <p>标签让“题目资产”结构化：从复盘到专项训练，再到考试冲刺，都能复用同一套语义。</p>
+      </div>
+      <a class="dc-mini-btn" href="/tags">打开标签中心</a>
+    </div>
+
+    <div class="dc-kpi-grid">
+      <div class="dc-kpi">
+        <div class="dc-kpi-top"><div class="k">标签总数</div></div>
+        <div class="v mono">{{ tags_kpis.all_tag_count if tags_kpis else 0 }}</div>
+        <div class="m">公共 {{ tags_kpis.public_tag_count if tags_kpis else 0 }} · 个人 {{ tags_kpis.banks_tag_count if tags_kpis else 0 }}</div>
+      </div>
+      <div class="dc-kpi">
+        <div class="dc-kpi-top"><div class="k">已打标签题目</div></div>
+        <div class="v mono">{{ tags_kpis.all_tagged_questions if tags_kpis else 0 }}</div>
+        <div class="m">公共 {{ tags_kpis.public_tagged_questions if tags_kpis else 0 }} · 个人 {{ tags_kpis.banks_tagged_questions if tags_kpis else 0 }}</div>
+      </div>
+      <div class="dc-kpi">
+        <div class="dc-kpi-top"><div class="k">标签覆盖率</div></div>
+        <div class="v mono">{{ tags_kpis.tagged_answered_coverage if tags_kpis else 0 }}%</div>
+        <div class="m">已做题中：有标签的比例（越高越利于复盘与专项）</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="dc-card" aria-label="标签图表">
+    <div class="dc-card-head">
+      <div style="min-width:0;">
+        <h2>标签图表</h2>
+        <p>结构 × 共现 × Top：看清你的标签体系是否“可复用”，以及哪些标签正在成为主线。</p>
+      </div>
+    </div>
+
+    <div class="dc-chart-grid">
+      <div class="dc-chart" id="dcTagTreemapChart" aria-label="标签结构（Treemap）"></div>
+      <div class="dc-chart" id="dcTagGraphChart" aria-label="标签共现网络"></div>
+      <div class="dc-chart" id="dcTagTopChart" aria-label="标签 Top"></div>
+      <div class="dc-chart" id="dcTagAccuracyChart" aria-label="标签质量（正确率/覆盖）"></div>
+    </div>
+  </section>
+
+  <section class="dc-card" aria-label="标签列表">
+    <div class="dc-card-head">
+      <div style="min-width:0;">
+        <h2>标签列表</h2>
+        <p>把标签当成“专题目录”：每次复习按标签推进，会越来越像一套自己的知识库。</p>
+      </div>
+    </div>
+
+    <div class="dc-split">
+      <div class="dc-box">
+        <h3>公共题库标签</h3>
+        {% if tags_public %}
+          <div class="dc-list" style="margin-top:8px;">
+            {% for t in tags_public[:12] %}
+              <div class="dc-item">
+                <div class="dc-item-top">
+                  <div style="min-width:0;">
+                    <div class="dc-item-title">{{ t.tag }}</div>
+                    <div class="dc-item-meta">题目 {{ t.count }} · 已做 {{ t.answered }} · 正确率 {{ t.accuracy }}% · 错题次数 {{ t.mistakes_times }} · 收藏 {{ t.favorites }}</div>
+                  </div>
+                  <div class="dc-item-actions">
+                    <a class="dc-mini-btn primary" href="/quiz?mode=quiz&tag={{ t.tag|urlencode }}">按标签练习</a>
+                    <a class="dc-mini-btn" href="/tags">去中心</a>
+                  </div>
+                </div>
+                <div class="dc-bars" aria-hidden="true">
+                  <div class="dc-bar"><span style="width: {{ (100.0 * t.count / (tags_public[0].count if tags_public[0].count else 1)) | round(1) }}%"></span></div>
+                  <div class="dc-bar secondary"><span style="width: {{ t.accuracy }}%"></span></div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="dc-empty">你还没有在公共题库给题目打标签。</div>
+        {% endif %}
+      </div>
+
+      <div class="dc-box">
+        <h3>个人题库标签</h3>
+        {% if tags_banks %}
+          <div class="dc-list" style="margin-top:8px;">
+            {% for t in tags_banks[:12] %}
+              <div class="dc-item">
+                <div class="dc-item-top">
+                  <div style="min-width:0;">
+                    <div class="dc-item-title">{{ t.tag }}</div>
+                    <div class="dc-item-meta">题目 {{ t.count }} · 已做 {{ t.answered }} · 正确率 {{ t.accuracy }}% · 错题次数 {{ t.mistakes_times }} · 收藏 {{ t.favorites }}</div>
+                  </div>
+                  <div class="dc-item-actions">
+                    <a class="dc-mini-btn primary" href="/tags">去中心下钻</a>
+                  </div>
+                </div>
+                <div class="dc-bars" aria-hidden="true">
+                  <div class="dc-bar"><span style="width: {{ (100.0 * t.count / (tags_banks[0].count if tags_banks[0].count else 1)) | round(1) }}%"></span></div>
+                  <div class="dc-bar secondary"><span style="width: {{ t.accuracy }}%"></span></div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="dc-empty">你还没有在个人题库给题目打标签。</div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+{% endblock %}

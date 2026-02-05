@@ -1,0 +1,23 @@
+    const bankId = {{ bank_id|int }};
+    let allQuestions = [];
+    let editingId = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadBank();
+        loadQuestions();
+        document.getElementById('selectAll').addEventListener('change', (e) => {
+            document.querySelectorAll('.questionSelect').forEach(cb => cb.checked = e.target.checked);
+            updateBatchDeleteBtn();
+        });
+
+        // 点击外部区域关闭下拉菜单
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown-menu').forEach(m => {
+                    m.classList.remove('open');
+                    m.style.display = 'none';
+                });
+            }
+        });
+    });
+

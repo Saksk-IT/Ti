@@ -1,0 +1,77 @@
+{% extends "main/data/data_shell.html" %}
+
+{% block data_content %}
+  <section class="app-card dc-card" aria-label="趋势与节奏">
+    <div class="dc-card-head">
+      <div style="min-width:0;">
+        <h2>趋势与节奏</h2>
+        <p>把“每天做多少、什么时候做、做得怎么样”可视化：更容易形成稳定的学习节奏。</p>
+      </div>
+      <div class="dc-ai-badge">窗口：{{ window_days }} 天</div>
+    </div>
+
+    <div class="dc-chart-grid">
+      <div class="dc-chart" id="dcTrendDetailChart" aria-label="趋势（公共+个人）"></div>
+      <div class="dc-chart" id="dcCalendarChart" aria-label="日历热力图"></div>
+      <div class="dc-chart" id="dcHourlyChart" aria-label="按小时分布"></div>
+      <div class="dc-chart" id="dcWeekdayChart" aria-label="周内分布"></div>
+    </div>
+  </section>
+
+  <section class="app-card dc-card" aria-label="窗口总结">
+    <div class="dc-card-head">
+      <div style="min-width:0;">
+        <h2>窗口总结</h2>
+        <p>最近 {{ window_days }} 天：窗口已做 {{ window_answered }} · 正确率 {{ window_accuracy }}%（公共题库窗口统计）。</p>
+      </div>
+    </div>
+
+    <div class="dc-split">
+      <div class="dc-box">
+        <h3>按题型（公共题库）</h3>
+        {% if type_rows %}
+          <div class="dc-list" style="margin-top:8px;">
+            {% for t in type_rows %}
+              <div class="dc-item">
+                <div class="dc-item-top">
+                  <div style="min-width:0;">
+                    <div class="dc-item-title">{{ t.q_type }}</div>
+                    <div class="dc-item-meta">正确率 {{ t.accuracy }}% · 已做 {{ t.answered }}</div>
+                  </div>
+                </div>
+                <div class="dc-bars" aria-hidden="true">
+                  <div class="dc-bar secondary"><span style="width: {{ t.accuracy }}%"></span></div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="dc-empty">暂无题型数据。</div>
+        {% endif %}
+      </div>
+
+      <div class="dc-box">
+        <h3>按难度（公共题库）</h3>
+        {% if difficulty_rows %}
+          <div class="dc-list" style="margin-top:8px;">
+            {% for d in difficulty_rows %}
+              <div class="dc-item">
+                <div class="dc-item-top">
+                  <div style="min-width:0;">
+                    <div class="dc-item-title">{{ d.label }}</div>
+                    <div class="dc-item-meta">正确率 {{ d.accuracy }}% · 已做 {{ d.answered }}</div>
+                  </div>
+                </div>
+                <div class="dc-bars" aria-hidden="true">
+                  <div class="dc-bar secondary"><span style="width: {{ d.accuracy }}%"></span></div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="dc-empty">暂无难度数据。</div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+{% endblock %}

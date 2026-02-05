@@ -1,0 +1,66 @@
+# 本地开发配置（独立完整版）
+# 使用方式: docker compose -f compose.dev.yml up
+
+services:
+  web:
+    image: saksk-ti:dev
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      FLASK_ENV: development
+      FLASK_DEBUG: "1"
+      DATA_DIR: /data
+      SECRET_KEY: dev-secret-key
+      REDIS_URL: redis://redis:6379/0
+      RATELIMIT_STORAGE_URI: redis://redis:6379/0
+      RQ_QUEUE_NAME: saksk
+      PROXY_FIX_ENABLED: "false"
+      # 开发环境密钥（可直接写或用 .env）
+      WECHAT_APPID: ${WECHAT_APPID:-wxfc4c270f007773ab}
+      WECHAT_SECRET: ${WECHAT_SECRET:-714b6315c5e27cb2689c3c1d5bd54e2d}
+      DASHSCOPE_BASE_URL: ${DASHSCOPE_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-sk-9305b010e9be495b8407611f14394fd5}
+    volumes:
+      # 挂载源代码实现热重载
+      - ./app:/app/app:ro
+      - ./static:/app/static:ro
+      - ./templates:/app/templates:ro
+      - ./run.py:/app/run.py:ro
+      # 挂载本地数据目录（使用现有数据库）
+      - ./var:/data
+    # 开发模式使用 flask run 支持热重载
+    command: ["flask", "run", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    depends_on:
+      - redis
+
+  worker:
+    image: saksk-ti:dev
+    command: sh -c "rq worker -u $$REDIS_URL $$RQ_QUEUE_NAME"
+    environment:
+      FLASK_ENV: development
+      DATA_DIR: /data
+      SECRET_KEY: dev-secret-key
+      REDIS_URL: redis://redis:6379/0
+      RQ_QUEUE_NAME: saksk
+      WECHAT_APPID: ${WECHAT_APPID:-wxfc4c270f007773ab}
+      WECHAT_SECRET: ${WECHAT_SECRET:-714b6315c5e27cb2689c3c1d5bd54e2d}
+      DASHSCOPE_BASE_URL: ${DASHSCOPE_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-sk-9305b010e9be495b8407611f14394fd5}
+    volumes:
+      - ./app:/app/app:ro
+      - ./var:/data
+    depends_on:
+      - web    # 确保 web 先构建镜像
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:

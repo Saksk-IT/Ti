@@ -1,0 +1,191 @@
+{% extends "main/data/data_v2_shell.html" %}
+
+{% block data_content %}
+  {% set _bank_answered = (bank_summary.answered if bank_summary else 0) | int %}
+  <div class="dc-bento" aria-label="题库数据看板">
+    <section class="dc-card dc-span-4" aria-label="题库资产总览">
+      <div class="dc-card-head">
+        <div style="min-width:0;">
+          <h2>题库资产</h2>
+          <div class="dc-card-sub">规模 × 覆盖 × 质量：把投入方向选得更聪明。</div>
+        </div>
+        <a class="dc-mini-btn" href="/user/banks">我的题库</a>
+      </div>
+
+      <div class="dc-list">
+        <div class="dc-item">
+          <div class="dc-item-top">
+            <div style="min-width:0;">
+              <div class="dc-item-title">个人题库</div>
+              <div class="dc-item-meta">{{ bank_summary.bank_total if bank_summary else 0 }} 个 · 总题 {{ bank_summary.total_questions if bank_summary else 0 }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="dc-item">
+          <div class="dc-item-top">
+            <div style="min-width:0;">
+              <div class="dc-item-title">公共题库</div>
+              <div class="dc-item-meta">总题 {{ total_questions or 0 }} · 已做 {{ answered_count or 0 }} · 正确率 {{ accuracy or 0 }}%</div>
+            </div>
+          </div>
+        </div>
+        <div class="dc-item">
+          <div class="dc-item-top">
+            <div style="min-width:0;">
+              <div class="dc-item-title">近窗表现</div>
+              <div class="dc-item-meta">已做 {{ window_answered or 0 }} · 正确率 {{ window_accuracy or 0 }}%</div>
+            </div>
+            <div class="dc-item-actions">
+              <a class="dc-mini-btn" href="/data/global?days={{ window_days }}">看全局</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="dc-card dc-span-4" aria-label="公共与个人分布">
+      <div class="dc-card-head">
+        <div style="min-width:0;">
+          <h2>公共/个人分布</h2>
+          <div class="dc-card-sub">按“已做题”看你的练习来源结构。</div>
+        </div>
+      </div>
+      <div class="dc-chart md" id="dcBankSplitChart" aria-label="公共/个人分布图"></div>
+    </section>
+
+    <section class="dc-card dc-span-4" aria-label="个人题库分类分布">
+      <div class="dc-card-head">
+        <div style="min-width:0;">
+          <h2>分类分布</h2>
+          {% if _bank_answered > 0 %}
+            <div class="dc-card-sub">个人题库（按已做题）：看清你的知识资产结构。</div>
+          {% else %}
+            <div class="dc-card-sub">个人题库暂无练习记录：先按总题看规模结构（做题后自动切回按已做题）。</div>
+          {% endif %}
+        </div>
+      </div>
+      <div class="dc-chart md" id="dcBankCategoryChart" aria-label="个人题库分类分布"></div>
+    </section>
+
+    <section class="dc-card dc-span-6" aria-label="题库画像（象限）">
+      <div class="dc-card-head">
+        <div style="min-width:0;">
+          <h2>题库画像</h2>
+          {% if _bank_answered > 0 %}
+            <div class="dc-card-sub">完成度 × 正确率：规模越大、越靠右上，越值得长期投入。</div>
+          {% else %}
+            <div class="dc-card-sub">个人题库暂无练习记录：先做几题，这张图会自动出现分布（气泡大小=总题）。</div>
+          {% endif %}
+        </div>
+      </div>
+      <div class="dc-chart lg" id="dcBankBubbleChart" aria-label="题库规模与质量（散点）"></div>
+    </section>
+
+    <section class="dc-card dc-span-6" aria-label="题库排行">
+      <div class="dc-card-head">
+        <div style="min-width:0;">
+          <h2>题库排行</h2>
+          {% if _bank_answered > 0 %}
+            <div class="dc-card-sub">按“已做题”排序：你最常用的个人题库。</div>
+          {% else %}
+            <div class="dc-card-sub">暂无做题记录：当前按总题数排序（做题后自动切回按已做题）。</div>
+          {% endif %}
+        </div>
+      </div>
+      <div class="dc-chart lg" id="dcBankRankChart" aria-label="题库排行图"></div>
+    </section>
+
+    <section class="dc-card dc-span-6" aria-label="公共题库（按科目）">
+      <div class="dc-card-head">
+        <div style="min-width:0;">
+          <h2>科目进度</h2>
+          <div class="dc-card-sub">覆盖率与正确率的组合：覆盖决定上限，正确决定稳定性。</div>
+        </div>
+      </div>
+      <div class="dc-chart lg" id="dcSubjectProgressChart" aria-label="科目进度与正确率"></div>
+    </section>
+
+    <section class="dc-card dc-span-6" aria-label="科目风险分布">
+      <div class="dc-card-head">
+        <div style="min-width:0;">
+          <h2>科目风险</h2>
+          <div class="dc-card-sub">把“投入”与“薄弱”同时摆出来：优先补短板、避免盲目刷题。</div>
+        </div>
+      </div>
+      <div class="dc-chart lg" id="dcSubjectRiskChart" aria-label="科目风险分布图"></div>
+    </section>
+
+    <section class="dc-card dc-span-12" aria-label="科目明细">
+      <div class="dc-card-head">
+        <div style="min-width:0;">
+          <h2>科目明细</h2>
+          <div class="dc-card-sub">把“题库规模、覆盖、正确、错题、收藏”放到同一张表里。</div>
+        </div>
+      </div>
+
+      {% if subject_rows %}
+        <div class="dc-list">
+          {% for s in subject_rows %}
+            <div class="dc-item">
+              <div class="dc-item-top">
+                <div style="min-width:0;">
+                  <div class="dc-item-title">{{ s.subject }}</div>
+                  <div class="dc-item-meta">
+                    总题 {{ s.total }} · 已做 {{ s.answered }} · 正确率 {{ s.accuracy }}% · 完成度 {{ s.completion }}% · 错题 {{ s.mistakes }} · 收藏 {{ s.favorites }}
+                  </div>
+                </div>
+                <div class="dc-item-actions">
+                  <a class="dc-mini-btn primary" href="/subjects/{{ s.subject_id }}">进入科目</a>
+                  <a class="dc-mini-btn" href="/quiz?mode=quiz&subject={{ s.subject|urlencode }}">去练习</a>
+                </div>
+              </div>
+              <div class="dc-bars" aria-hidden="true">
+                <div class="dc-bar"><span style="width: {{ s.completion }}%"></span></div>
+                <div class="dc-bar secondary"><span style="width: {{ s.accuracy }}%"></span></div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="dc-empty">暂无可用科目数据。</div>
+      {% endif %}
+    </section>
+
+    <section class="dc-card dc-span-12" aria-label="个人题库清单">
+      <div class="dc-card-head">
+        <div style="min-width:0;">
+          <h2>个人题库清单</h2>
+          <div class="dc-card-sub">建议：薄弱题库先“错题闭环”，再“全量重练”。</div>
+        </div>
+        <a class="dc-mini-btn" href="/user/banks">管理题库</a>
+      </div>
+
+      {% if bank_rows %}
+        <div class="dc-list">
+          {% for b in bank_rows %}
+            <div class="dc-item">
+              <div class="dc-item-top">
+                <div style="min-width:0;">
+                  <div class="dc-item-title">{{ b.name }}</div>
+                  <div class="dc-item-meta">
+                    分类 {{ b.category_name }} · 总题 {{ b.total }} · 已做 {{ b.answered }} · 正确率 {{ b.accuracy }}% · 完成度 {{ b.completion }}% · 错题 {{ b.mistakes }} · 收藏 {{ b.favorites }}
+                  </div>
+                </div>
+                <div class="dc-item-actions">
+                  <a class="dc-mini-btn primary" href="/user/banks/{{ b.bank_id }}/practice">进入练习</a>
+                  <a class="dc-mini-btn" href="/user/banks/{{ b.bank_id }}">管理</a>
+                </div>
+              </div>
+              <div class="dc-bars" aria-hidden="true">
+                <div class="dc-bar"><span style="width: {{ b.completion }}%"></span></div>
+                <div class="dc-bar secondary"><span style="width: {{ b.accuracy }}%"></span></div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="dc-empty">你还没有创建个人题库，先去“我的题库”创建一个吧。</div>
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}

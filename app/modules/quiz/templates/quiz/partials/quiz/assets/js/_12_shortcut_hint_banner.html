@@ -1,0 +1,97 @@
+// ===== 快捷键提示横幅 =====
+const SHORTCUT_HINT_DISMISSED_KEY = 'shortcut_hint_dismissed';
+
+function showShortcutHint() {
+    // 检查用户是否选择了"不再提示"
+    const dismissed = localStorage.getItem(SHORTCUT_HINT_DISMISSED_KEY);
+    if (dismissed === '1') {
+        closeCurrentHintAndShowNext(); // 尝试显示下一个
+        return;
+    }
+    
+    const hint = document.getElementById('shortcutHint');
+    if (!hint) {
+        closeCurrentHintAndShowNext(); // 元素不存在，尝试显示下一个
+        return;
+    }
+    
+    // 显示提示
+    hint.style.display = 'flex';
+    hint.style.opacity = '1';
+    
+    // 5秒后自动淡出（但不关闭，用户仍可手动关闭）
+    setTimeout(() => {
+        if (hint && hint.style.display !== 'none') {
+            hint.style.opacity = '0.5';
+        }
+    }, 5000);
+}
+
+// 关闭本次提示（不保存状态，下次仍会显示）
+function dismissShortcutHint() {
+    const hint = document.getElementById('shortcutHint');
+    if (hint) {
+        hint.style.display = 'none';
+        hint.style.opacity = '0';
+    }
+    // 临时关闭：标记为本次会话已关闭，清除当前提示ID，然后显示下一个
+    if (currentHintId === 'shortcutHint') {
+        temporarilyDismissedHints.add('shortcutHint');
+        currentHintId = null;
+        // 延迟显示下一个提示，避免视觉跳动
+        setTimeout(() => {
+            showNextHint();
+        }, 500);
+    }
+}
+
+// 不再提示（保存状态，下次不再显示）
+function dismissShortcutHintPermanently() {
+    const hint = document.getElementById('shortcutHint');
+    if (hint) {
+        hint.style.display = 'none';
+        hint.style.opacity = '0';
+        localStorage.setItem(SHORTCUT_HINT_DISMISSED_KEY, '1');
+    }
+    // 永久关闭：触发队列显示下一个提示
+    closeCurrentHintAndShowNext();
+}
+
+// 跳转到快捷键设置页
+function goToShortcutSettings() {
+    // 用户主动去设置，说明已知悉快捷键功能，永久关闭提示
+    dismissShortcutHintPermanently();
+    window.location.href = '/settings/hotkeys#hotkeys-config';
+}
+
+// 全局函数，供HTML onclick调用
+window.dismissShortcutHint = dismissShortcutHint;
+window.dismissShortcutHintPermanently = dismissShortcutHintPermanently;
+window.goToShortcutSettings = goToShortcutSettings;
+
+// 调试用：手动测试显示提示（可在控制台调用 testHints()）
+window.testHints = function() {
+    console.log('[测试] 清除所有提示状态');
+    localStorage.removeItem(FAB_HINT_DISMISSED_KEY);
+    localStorage.removeItem(SHORTCUT_HINT_DISMISSED_KEY);
+    currentHintId = null;
+    // 隐藏所有提示
+    const fabHint = document.getElementById('fabHint');
+    const shortcutHint = document.getElementById('shortcutHint');
+    if (fabHint) {
+        fabHint.style.display = 'none';
+        fabHint.style.opacity = '0';
+    }
+    if (shortcutHint) {
+        shortcutHint.style.display = 'none';
+        shortcutHint.style.opacity = '0';
+    }
+    // 重新开始显示队列
+    setTimeout(() => showNextHint(), 500);
+};
+
+// 旧的测试函数保持兼容
+window.testFabHint = function() {
+    console.log('[测试] 使用新的测试函数 testHints() 来测试完整流程');
+    window.testHints();
+};

@@ -1,0 +1,228 @@
+{% extends "main/shared/app_shell.html" %}
+{% block title %}{{ subject_name }} · 数据{% endblock %}
+{% block page_title %}{{ subject_name }} · 数据{% endblock %}
+
+{% block head_extra %}
+  <link rel="stylesheet" href="/static/css/bank_data.css" />
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+{% endblock %}
+
+{% block content %}
+  <div class="ubd-shell"
+       data-subject-id="{{ subject_id }}"
+       data-subject-name="{{ subject_name|e }}"
+       data-subtab="{{ subtab }}"
+       data-days="{{ window_days }}">
+    <header class="ubd-hero" aria-label="公共题库数据概览">
+      <div class="ubd-hero-left" style="min-width:0;">
+        <h1>{{ subject_name }}</h1>
+        <p>公共题库数据面板：全局 / 错题 / 收藏（独立页面）。</p>
+      </div>
+      <div class="ubd-hero-pills" aria-label="题库概览指标">
+        <div class="ubd-pill">
+          <div class="k">总题</div>
+          <div class="v mono">{{ total_count }}</div>
+        </div>
+        <div class="ubd-pill">
+          <div class="k">收藏</div>
+          <div class="v mono">{{ fav_count }}</div>
+        </div>
+        <div class="ubd-pill">
+          <div class="k">错题</div>
+          <div class="v mono">{{ mistake_count }}</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="ubd-subnav" role="navigation" aria-label="数据子页面导航">
+      <nav class="ubd-tabs" role="tablist" aria-label="全局/错题/收藏">
+        <a class="ubd-tab {{ 'active' if subtab=='global' else '' }}"
+           href="/subjects/{{ subject_id }}/data/global?days={{ window_days }}"
+           role="tab"
+           aria-selected="{{ 'true' if subtab=='global' else 'false' }}">全局</a>
+        <a class="ubd-tab {{ 'active' if subtab=='mistakes' else '' }}"
+           href="/subjects/{{ subject_id }}/data/mistakes?days={{ window_days }}"
+           role="tab"
+           aria-selected="{{ 'true' if subtab=='mistakes' else 'false' }}">错题</a>
+        <a class="ubd-tab {{ 'active' if subtab=='favorites' else '' }}"
+           href="/subjects/{{ subject_id }}/data/favorites?days={{ window_days }}"
+           role="tab"
+           aria-selected="{{ 'true' if subtab=='favorites' else 'false' }}">收藏</a>
+      </nav>
+
+      <div class="ubd-subnav-right" aria-label="时间范围与快捷入口">
+        <div class="ubd-days" role="tablist" aria-label="时间窗口">
+          <a class="{{ 'active' if window_days==7 else '' }}" href="?days=7" role="tab">7天</a>
+          <a class="{{ 'active' if window_days==14 else '' }}" href="?days=14" role="tab">14天</a>
+          <a class="{{ 'active' if window_days==30 else '' }}" href="?days=30" role="tab">30天</a>
+          <a class="{{ 'active' if window_days==90 else '' }}" href="?days=90" role="tab">90天</a>
+        </div>
+      </div>
+    </div>
+
+    <main class="ubd-grid" aria-label="数据内容">
+      <section class="ubd-card ubd-kpis span-12" aria-label="关键指标">
+        <div class="ubd-card-head">
+          <div style="min-width:0;">
+            <h2 class="ubd-title">关键指标</h2>
+            <p class="ubd-sub" id="ubdHeadline">加载中…</p>
+          </div>
+          <div class="ubd-badge" id="ubdUpdatedAt">—</div>
+        </div>
+
+        <div class="ubd-kpi-grid" role="list" aria-label="KPI列表">
+          <div class="ubd-kpi" role="listitem">
+            <div class="k" id="kpiTotalLabel">总题</div>
+            <div class="v mono" id="kpiTotal">—</div>
+            <div class="m" id="kpiTotalMeta">—</div>
+          </div>
+          <div class="ubd-kpi" role="listitem">
+            <div class="k">已做</div>
+            <div class="v mono" id="kpiAnswered">—</div>
+            <div class="m" id="kpiAnsweredMeta">—</div>
+          </div>
+          <div class="ubd-kpi" role="listitem">
+            <div class="k">正确率</div>
+            <div class="v mono" id="kpiAccuracy">—</div>
+            <div class="m" id="kpiAccuracyMeta">—</div>
+          </div>
+          <div class="ubd-kpi" role="listitem">
+            <div class="k">覆盖率</div>
+            <div class="v mono" id="kpiCompletion">—</div>
+            <div class="m" id="kpiCompletionMeta">—</div>
+          </div>
+          <div class="ubd-kpi" role="listitem">
+            <div class="k">错题次数</div>
+            <div class="v mono" id="kpiMistakeTimes">—</div>
+            <div class="m" id="kpiMistakeTimesMeta">—</div>
+          </div>
+          <div class="ubd-kpi" role="listitem">
+            <div class="k" id="kpiFavLabel">收藏</div>
+            <div class="v mono" id="kpiFav">—</div>
+            <div class="m" id="kpiFavMeta">—</div>
+          </div>
+          <div class="ubd-kpi" role="listitem" id="kpiMisWrap">
+            <div class="k" id="kpiMisLabel">错题</div>
+            <div class="v mono" id="kpiMis">—</div>
+            <div class="m" id="kpiMisMeta">—</div>
+          </div>
+          <div class="ubd-kpi" role="listitem">
+            <div class="k">连刷</div>
+            <div class="v mono" id="kpiStreak">—</div>
+            <div class="m" id="kpiStreakMeta">—</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="ubd-card span-7" aria-label="学习热力">
+        <div class="ubd-card-head">
+          <div style="min-width:0;">
+            <h2 class="ubd-title">学习热力</h2>
+            <p class="ubd-sub">日历视角观察投入强度与节奏（按天作答）。</p>
+          </div>
+        </div>
+        <div class="ubd-chart" id="ubdCalendarChart" role="img" aria-label="学习热力图"></div>
+      </section>
+
+      <section class="ubd-card span-5" aria-label="掌握指数">
+        <div class="ubd-card-head">
+          <div style="min-width:0;">
+            <h2 class="ubd-title">掌握指数</h2>
+            <p class="ubd-sub">综合正确率与覆盖率（仅用于辅助判断）。</p>
+          </div>
+        </div>
+        <div class="ubd-chart ubd-chart-tall" id="ubdGaugeChart" role="img" aria-label="掌握指数仪表盘"></div>
+        <div class="ubd-metrics" aria-label="指标拆解">
+          <div class="ubd-metric">
+            <div class="k">稳定度</div>
+            <div class="bar"><div class="bar-i" id="metricStability"></div></div>
+            <div class="v mono" id="metricStabilityText">—</div>
+          </div>
+          <div class="ubd-metric">
+            <div class="k">效率</div>
+            <div class="bar"><div class="bar-i" id="metricPace"></div></div>
+            <div class="v mono" id="metricPaceText">—</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="ubd-card span-7" aria-label="趋势分析">
+        <div class="ubd-card-head">
+          <div style="min-width:0;">
+            <h2 class="ubd-title">趋势分析</h2>
+            <p class="ubd-sub">作答量（柱）+ 正确率（线）按天变化。</p>
+          </div>
+        </div>
+        <div class="ubd-chart" id="ubdTrendChart" role="img" aria-label="趋势图表"></div>
+      </section>
+
+      <section class="ubd-card span-5" aria-label="结构拆解">
+        <div class="ubd-card-head">
+          <div style="min-width:0;">
+            <h2 class="ubd-title">结构拆解</h2>
+            <p class="ubd-sub">题型层面：正确/错误堆叠，附覆盖率线。</p>
+          </div>
+        </div>
+        <div class="ubd-chart" id="ubdTypeChart" role="img" aria-label="题型结构图"></div>
+      </section>
+
+      <section class="ubd-card span-12" aria-label="题型画像">
+        <div class="ubd-card-head">
+          <div style="min-width:0;">
+            <h2 class="ubd-title">题型画像</h2>
+            <p class="ubd-sub">覆盖率 = 已做 / 总题；正确率 = 正确 / 已做。支持查看收藏/错题分布。</p>
+          </div>
+        </div>
+        <div class="ubd-table-wrap">
+          <table class="ubd-table" aria-label="题型画像表格">
+            <thead>
+              <tr>
+                <th>题型</th>
+                <th>已做/总题</th>
+                <th>正确率</th>
+                <th>覆盖率</th>
+                <th>收藏</th>
+                <th>错题</th>
+              </tr>
+            </thead>
+            <tbody id="ubdTypeTbody">
+              <tr><td colspan="6" class="ubd-muted">加载中…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="ubd-card span-12" aria-label="难度拆解" id="ubdDiffCard" hidden>
+        <div class="ubd-card-head">
+          <div style="min-width:0;">
+            <h2 class="ubd-title">难度拆解</h2>
+            <p class="ubd-sub">按难度观察覆盖与正确率（题库未配置难度时自动隐藏）。</p>
+          </div>
+        </div>
+        <div class="ubd-chart" id="ubdDiffChart" role="img" aria-label="难度拆解图"></div>
+      </section>
+
+      <section class="ubd-card span-12" aria-label="行动建议">
+        <div class="ubd-card-head">
+          <div style="min-width:0;">
+            <h2 class="ubd-title">行动建议</h2>
+            <p class="ubd-sub">结合覆盖率/正确率/错题表现给出下一步方向。</p>
+          </div>
+        </div>
+        <div class="ubd-advice" id="ubdAdvice">
+          <div class="ubd-muted">加载中…</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    window.__UBD__ = {{ {
+      'subject_id': subject_id,
+      'subject_name': subject_name,
+      'subtab': subtab,
+      'window_days': window_days,
+    }|tojson }};
+  </script>
+  <script src="/static/js/bank_data.js"></script>
+{% endblock %}

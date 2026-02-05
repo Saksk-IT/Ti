@@ -1,0 +1,98 @@
+    async function start(mode){
+      if (startCountValue === null) {
+        await fetchStartCount();
+      }
+      if (typeof startCountValue !== 'number') {
+        alert('题目数量加载中，请稍后重试');
+        return;
+      }
+      if (startCountValue <= 0) {
+        alert('当前筛选暂无题目');
+        return;
+      }
+      const allowShuffleO = canShuffleOptions();
+      const params = new URLSearchParams({
+        bank_id: String(BANK_ID),
+        type: state.type || 'all',
+        mode: mode || 'quiz',
+        shuffle_questions: state.shuffleQ ? '1' : '0',
+        shuffle_options: (state.shuffleO && allowShuffleO) ? '1' : '0'
+      });
+      const source = getActiveSource();
+      if (source === 'favorites' || source === 'mistakes') params.set('source', source);
+      if (state.tag && state.tag !== 'all') params.set('tag', state.tag);
+      window.location.href = '/quiz?' + params.toString();
+    }
+
+    function openReviewCenter(kind){
+      const k = String(kind || '').trim().toLowerCase();
+      const safeKind = (k === 'favorites' || k === 'mistakes' || k === 'tags') ? k : 'favorites';
+      const allowShuffleO = canShuffleOptions();
+      const params = new URLSearchParams({
+        bank_id: String(BANK_ID),
+        tab: 'data',
+        type: state.type || 'all',
+        tag: state.tag || 'all',
+        shuffle_questions: state.shuffleQ ? '1' : '0',
+        shuffle_options: (state.shuffleO && allowShuffleO) ? '1' : '0',
+      });
+      window.location.href = `/${safeKind}/center?` + params.toString();
+    }
+
+    async function startExam(){
+      if (getPracticeSource() !== 'all') {
+        alert('考试仅支持“本题库”范围，请先切换范围。');
+        return;
+      }
+
+      const typesList = Array.isArray(ALL_TYPES) ? ALL_TYPES.filter(Boolean) : [];
+      if (!typesList.length) {
+        alert('暂无可用题型，无法创建考试');
+        return;
+      }
+
+      const duration = 60;
+      const total = 30;
+      const typesCfg = {};
+
+      if (state.type && state.type !== 'all') {
+        typesCfg[state.type] = total;
+      } else {
+        const n = Math.max(1, typesList.length);
+        const base = Math.floor(total / n);
+        let rem = total % n;
+        typesList.forEach((t) => {
+          const v = base + (rem > 0 ? 1 : 0);
+          if (rem > 0) rem -= 1;
+          if (v > 0) typesCfg[t] = v;
+        });
+      }
+
+      const keys = Object.keys(typesCfg);
+      if (!keys.length) {
+        alert('题型配置为空，无法创建考试');
+        return;
+      }
+
+      const detail = keys.map((k) => `${k}:${typesCfg[k]}`).join('，');
+      if (!confirm(`将创建考试：${BANK_NAME}\n时长：${duration} 分钟\n题量：${total}（${detail}）\n确定继续？`)) {
+        return;
+      }
+
+      try {
+        const resp = await fetch('/api/exams/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ source: 'user_bank', bank_id: BANK_ID, duration, types: typesCfg, scores: {} })
+        });
+        const js = await resp.json().catch(() => ({}));
+        if (!resp.ok || !js || js.status !== 'success' || !js.exam_id) {
+          alert((js && js.message) ? js.message : '创建考试失败，请稍后再试');
+          return;
+        }
+        window.location.href = `/quiz?mode=exam&exam_id=${js.exam_id}`;
+      } catch (e) {
+        alert('创建考试失败，请检查网络或稍后重试');
+      }
+    }
+

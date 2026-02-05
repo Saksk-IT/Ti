@@ -1,0 +1,30 @@
+{# Question tags modal #}
+<div class="overlay modal-overlay" id="tagOverlay" style="z-index: 2100; display:none;" onclick="closeTagModal(event)">
+    <div class="card-container modal-panel tag-modal" role="dialog" aria-modal="true" aria-labelledby="tagModalTitle" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <div>
+                <div class="modal-title" id="tagModalTitle">题目标签</div>
+                <div class="modal-subtitle">为当前题目添加/移除标签</div>
+            </div>
+            <button class="modal-close" type="button" onclick="closeTagModal()" aria-label="关闭">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <div class="modal-row">
+                <input id="tagNewInput" class="modal-input" placeholder="新建标签（回车添加）" onkeydown="onTagNewKey(event)" />
+                <button class="btn btn-primary" type="button" onclick="createTagFromModal()" style="white-space:nowrap;">添加</button>
+            </div>
+
+            <div id="tagChipList" class="tag-chip-list"></div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn btn-nav" type="button" onclick="closeTagModal()">完成</button>
+        </div>
+    </div>
+</div>

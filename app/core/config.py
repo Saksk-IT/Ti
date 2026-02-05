@@ -1,0 +1,193 @@
+# -*- coding: utf-8 -*-
+"""
+应用配置模块
+"""
+import os
+import logging
+from datetime import timedelta
+
+
+class Config:
+    """基础配置类"""
+    # 基础路径（项目根目录）
+    # __file__ 是 app/core/config.py，需要向上两级到项目根目录
+    BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+
+    # 运行数据根目录（用于跨平台/Docker 部署解耦 instance/logs/uploads）
+    # 默认仍保持当前行为：以项目根目录为基准（配合 Windows Junction 或 Linux 实体目录）
+    _DATA_DIR_RAW = os.environ.get('DATA_DIR')
+    if _DATA_DIR_RAW:
+        DATA_DIR = os.path.abspath(_DATA_DIR_RAW) if os.path.isabs(_DATA_DIR_RAW) else os.path.abspath(os.path.join(BASE_DIR, _DATA_DIR_RAW))
+    else:
+        DATA_DIR = BASE_DIR
+    
+    # 密钥配置
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
+    
+    # 数据库配置
+    # 统一主数据库：submissions.db
+    # 数据库文件位于项目根目录的instance文件夹（app文件夹外）
+    DATABASE_PATH = os.path.join(DATA_DIR, 'instance', 'submissions.db')
+
+    SQLITE_TIMEOUT = float(os.environ.get('SQLITE_TIMEOUT', '15') or 15)
+    SQLITE_BUSY_TIMEOUT_MS = int(os.environ.get('SQLITE_BUSY_TIMEOUT_MS', '5000') or 5000)
+    SQLITE_JOURNAL_MODE = os.environ.get('SQLITE_JOURNAL_MODE', 'WAL')
+    SQLITE_SYNCHRONOUS = os.environ.get('SQLITE_SYNCHRONOUS', 'NORMAL')
+    DB_SCHEMA_CACHE_TTL_SECONDS = int(os.environ.get('DB_SCHEMA_CACHE_TTL_SECONDS', '60') or 60)
+    
+    # 上传文件配置
+    UPLOAD_FOLDER = os.path.join(DATA_DIR, 'uploads')
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB
+    
+    # 日志配置
+    LOG_DIR = os.path.join(DATA_DIR, 'logs')
+    LOG_MAX_BYTES = 10 * 1024 * 1024  # 10MB
+    LOG_BACKUP_COUNT = 10
+    
+    # Flask配置
+    JSON_AS_ASCII = False
+    JSONIFY_MIMETYPE = 'application/json; charset=utf-8'
+
+    # 反向代理（Nginx）转发头支持：用于获取真实 IP / scheme / host
+    # 安全建议：仅在 gunicorn 绑定到 127.0.0.1 并由 Nginx 反代时开启。
+    PROXY_FIX_ENABLED = os.environ.get('PROXY_FIX_ENABLED', 'false').lower() in ['true', 'on', '1']
+    PROXY_FIX_X_FOR = int(os.environ.get('PROXY_FIX_X_FOR', '1') or 1)
+    PROXY_FIX_X_PROTO = int(os.environ.get('PROXY_FIX_X_PROTO', '1') or 1)
+    PROXY_FIX_X_HOST = int(os.environ.get('PROXY_FIX_X_HOST', '0') or 0)
+    PROXY_FIX_X_PREFIX = int(os.environ.get('PROXY_FIX_X_PREFIX', '0') or 0)
+
+    # 响应压缩（可由反向代理/Nginx 接管；直连 Flask 时可显著减少 HTML/CSS/JS/JSON 体积）
+    ENABLE_GZIP = os.environ.get('ENABLE_GZIP', 'true').lower() in ['true', 'on', '1']
+    GZIP_MINIMUM_SIZE = int(os.environ.get('GZIP_MINIMUM_SIZE', '500') or 500)
+    
+    # 会话配置：启用永久会话，默认 7 天
+    PERMANENT_SESSION_LIFETIME = timedelta(days=7)
+    SESSION_REFRESH_EACH_REQUEST = True
+
+    # Web 会话活跃时间写入节流（避免每次请求都写 SQLite）
+    LAST_ACTIVE_UPDATE_INTERVAL_SECONDS = int(os.environ.get('LAST_ACTIVE_UPDATE_INTERVAL_SECONDS', '60') or 60)
+    
+    # 限流配置
+    # 生产环境建议使用 Redis: 'redis://localhost:6379/0'
+    RATELIMIT_STORAGE_URI = (
+        os.environ.get('RATELIMIT_STORAGE_URI')
+        or os.environ.get('RATELIMIT_STORAGE_URL')
+        or 'memory://'
+    )
+    RATELIMIT_STORAGE_URL = RATELIMIT_STORAGE_URI
+    RATELIMIT_DEFAULT = "10000 per day;1000 per hour"
+    RATELIMIT_HEADERS_ENABLED = True
+
+    # Redis（缓存/队列/限流共享存储）
+    # 优先读 REDIS_URL；若未设置且限流存储为 redis://，则复用其连接
+    REDIS_URL = os.environ.get('REDIS_URL') or (
+        RATELIMIT_STORAGE_URI if str(RATELIMIT_STORAGE_URI or '').startswith(('redis://', 'rediss://')) else None
+    )
+    RQ_QUEUE_NAME = os.environ.get('RQ_QUEUE_NAME', 'saksk')
+
+    # AI 解析缓存：默认 30 天
+    AI_EXPLAIN_CACHE_TTL_SECONDS = int(os.environ.get('AI_EXPLAIN_CACHE_TTL_SECONDS', str(30 * 24 * 60 * 60)) or (30 * 24 * 60 * 60))
+
+    # Quiz/Subjects/Stats 读接口缓存（Redis 优先；未配置 Redis 时自动无缓存降级）
+    QUIZ_API_CACHE_ENABLED = os.environ.get('QUIZ_API_CACHE_ENABLED', 'true').lower() in ['true', 'on', '1']
+    QUIZ_CACHE_TTL_QUESTION_DETAIL_SECONDS = int(os.environ.get('QUIZ_CACHE_TTL_QUESTION_DETAIL_SECONDS', '300') or 300)
+    QUIZ_CACHE_TTL_COUNTS_SECONDS = int(os.environ.get('QUIZ_CACHE_TTL_COUNTS_SECONDS', '60') or 60)
+    QUIZ_CACHE_TTL_USER_COUNTS_SECONDS = int(os.environ.get('QUIZ_CACHE_TTL_USER_COUNTS_SECONDS', '30') or 30)
+    QUIZ_CACHE_TTL_HISTORY_SECONDS = int(os.environ.get('QUIZ_CACHE_TTL_HISTORY_SECONDS', '30') or 30)
+    QUIZ_CACHE_TTL_SUBJECTS_SECONDS = int(os.environ.get('QUIZ_CACHE_TTL_SUBJECTS_SECONDS', '60') or 60)
+    QUIZ_CACHE_TTL_SUBJECTS_META_SECONDS = int(os.environ.get('QUIZ_CACHE_TTL_SUBJECTS_META_SECONDS', '60') or 60)
+
+    # JWT 用户状态缓存（用于减少每次请求都查询 users 表）
+    # 注意：对会话强制失效（session_version bump）仍然以 DB 为准；缓存仅作为短 TTL 加速。
+    JWT_USER_STATE_CACHE_TTL_SECONDS = int(os.environ.get('JWT_USER_STATE_CACHE_TTL_SECONDS', '20') or 20)
+
+    # 邮件服务配置
+    MAIL_SERVER = os.environ.get('MAIL_SERVER') or 'smtp.example.com'
+    MAIL_PORT = int(os.environ.get('MAIL_PORT') or 587)
+    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', 'on', '1']
+    MAIL_USE_SSL = os.environ.get('MAIL_USE_SSL', 'false').lower() in ['true', 'on', '1']
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER') or 'noreply@example.com'
+    MAIL_DEFAULT_SENDER_NAME = os.environ.get('MAIL_DEFAULT_SENDER_NAME') or '系统通知'
+    
+    # 邮件服务开关（开发环境可以关闭真实邮件发送）
+    MAIL_ENABLED = os.environ.get('MAIL_ENABLED', 'true').lower() in ['true', 'on', '1']
+    # 开发环境控制台输出验证码（不发送真实邮件）
+    MAIL_CONSOLE_OUTPUT = os.environ.get('MAIL_CONSOLE_OUTPUT', 'false').lower() in ['true', 'on', '1']
+    
+    # 微信小程序配置
+    WECHAT_APPID = os.environ.get('WECHAT_APPID') or os.environ.get('WX_APPID')
+    WECHAT_SECRET = os.environ.get('WECHAT_SECRET') or os.environ.get('WX_SECRET')
+
+    # === 阿里云百炼（DashScope OpenAI 兼容接口）===
+    # 文档：https://help.aliyun.com/zh/model-studio/first-api-call-to-qwen
+    DASHSCOPE_API_KEY = os.environ.get('DASHSCOPE_API_KEY')
+    # 北京地域（默认）：https://dashscope.aliyuncs.com/compatible-mode/v1
+    # 新加坡地域：    https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+    DASHSCOPE_BASE_URL = os.environ.get('DASHSCOPE_BASE_URL', 'https://dashscope.aliyuncs.com/compatible-mode/v1')
+    DASHSCOPE_MODEL = os.environ.get('DASHSCOPE_MODEL', 'qwen-plus')
+    DASHSCOPE_TIMEOUT = int(os.environ.get('DASHSCOPE_TIMEOUT', '25') or 25)
+
+
+class DevelopmentConfig(Config):
+    """开发环境配置"""
+    DEBUG = True
+    TESTING = False
+    
+    # 开发环境默认使用控制台输出
+    MAIL_CONSOLE_OUTPUT = os.environ.get('MAIL_CONSOLE_OUTPUT', 'true').lower() in ['true', 'on', '1']
+
+
+class ProductionConfig(Config):
+    """生产环境配置"""
+    DEBUG = False
+    TESTING = False
+
+    # 生产环境默认启用 ProxyFix（常见部署：Nginx -> gunicorn(127.0.0.1)）
+    PROXY_FIX_ENABLED = os.environ.get('PROXY_FIX_ENABLED', 'true').lower() in ['true', 'on', '1']
+    
+    # 生产环境必须设置密钥（不允许使用默认值）
+    SECRET_KEY = os.environ.get('SECRET_KEY')
+    if not SECRET_KEY:
+        import warnings
+        warnings.warn(
+            'SECRET_KEY 未设置！生产环境必须设置 SECRET_KEY 环境变量。'
+            '生成方式: python -c "import secrets; print(secrets.token_urlsafe(32))"',
+            UserWarning
+        )
+        # 临时生成，但会显示警告
+        SECRET_KEY = os.urandom(24).hex()
+    
+    # 生产环境禁用控制台输出验证码
+    MAIL_CONSOLE_OUTPUT = False
+    
+    # 生产环境安全配置
+    # 会话Cookie安全设置（HTTPS环境下启用）
+    SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'false').lower() in ['true', 'on', '1']
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    
+    # 防止XSS攻击
+    JSONIFY_PRETTYPRINT_REGULAR = False
+    
+    # 生产环境日志级别
+    LOG_LEVEL = logging.INFO
+
+
+class TestingConfig(Config):
+    """测试环境配置"""
+    DEBUG = True
+    TESTING = True
+    
+    # 测试数据库
+    DATABASE_PATH = os.path.join(Config.DATA_DIR, 'instance', 'test.db')
+
+
+# 配置字典
+config = {
+    'development': DevelopmentConfig,
+    'production': ProductionConfig,
+    'testing': TestingConfig,
+    'default': DevelopmentConfig
+}

@@ -1,0 +1,22 @@
+<!-- 批量修改题型模态框 -->
+<div id="modalTypeChange" class="drawer" style="right:auto; left:50%; transform: translateX(-50%); width: 420px; height:auto; top: 15%; display:none;">
+    <div class="drawer-header">批量修改题型</div>
+    <div class="drawer-body">
+        <div class="form-group">
+            <label>目标题型</label>
+            <select id="typeChangeTarget" title="目标题型">
+                <option value="选择题">选择题</option>
+                <option value="多选题">多选题</option>
+                <option value="填空题">填空题</option>
+                <option value="判断题">判断题</option>
+                <option value="简答题">简答题</option>
+            </select>
+        </div>
+        <div class="form-group"><small>将把已勾选的题目修改为所选题型。</small></div>
+    </div>
+    <div class="drawer-footer">
+        <button class="btn-secondary" onclick="closeModal('modalTypeChange')">取消</button>
+        <button class="btn-primary" onclick="doBatchTypeChange()">确定</button>
+    </div>
+</div>
+

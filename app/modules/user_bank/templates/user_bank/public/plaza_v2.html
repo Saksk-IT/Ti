@@ -1,0 +1,76 @@
+{% extends "main/shared/app_shell.html" %}
+
+{% block title %}题库广场{% endblock %}
+{% block page_title %}题库广场{% endblock %}
+
+{% block head_extra %}
+  <link rel="stylesheet" href="/static/css/public_bank_plaza_v2.css" />
+{% endblock %}
+
+{% block content %}
+  <div class="plz-shell" aria-label="题库广场">
+    <header class="plz-hero" aria-label="广场题头">
+      <div class="plz-hero-left" style="min-width:0;">
+        <h1>题库广场</h1>
+        <p>系统题库 + 用户公开题库：统一入口、统一筛选、统一风格。</p>
+      </div>
+
+      <div class="plz-kpis" aria-label="广场概览">
+        <div class="plz-kpi">
+          <div class="k">总题库</div>
+          <div class="v mono" id="plzKpiTotal">—</div>
+        </div>
+        <div class="plz-kpi">
+          <div class="k">当前页</div>
+          <div class="v mono" id="plzKpiPage">—</div>
+        </div>
+        <div class="plz-kpi">
+          <div class="k">筛选</div>
+          <div class="v mono" id="plzKpiFilter">—</div>
+        </div>
+      </div>
+    </header>
+
+    <section class="plz-filter" aria-label="筛选与排序">
+      <div class="plz-filter-left">
+        <input class="app-input plz-search" id="plzKeyword" type="search" placeholder="搜索题库（名称 / 描述）" autocomplete="off" />
+
+        <div class="plz-seg" id="plzTypeSeg" role="tablist" aria-label="题库类型">
+          <button type="button" class="active" data-type="" role="tab" aria-selected="true">全部</button>
+          <button type="button" data-type="system" role="tab" aria-selected="false">系统</button>
+          <button type="button" data-type="user" role="tab" aria-selected="false">用户公开</button>
+        </div>
+      </div>
+
+      <div class="plz-filter-right">
+        <select class="app-select plz-sort" id="plzSort" aria-label="排序">
+          <option value="newest">最新</option>
+          <option value="popular">最热</option>
+          <option value="questions">题量</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="plz-list" aria-label="题库列表">
+      <div class="plz-skeleton" id="plzSkeleton" aria-hidden="true">
+        {% for _ in range(0, 6) %}
+          <div class="plz-skel-card"></div>
+        {% endfor %}
+      </div>
+      <div id="plzList"></div>
+    </section>
+
+    <footer class="plz-footer" aria-label="分页">
+      <div class="plz-pagination" id="plzPagination"></div>
+    </footer>
+  </div>
+
+  <script>
+    window.__PLZ__ = {{ {
+      'logged_in': logged_in,
+      'user_id': user_id,
+    }|tojson }};
+  </script>
+  <script src="/static/js/public_bank_plaza_v2.js"></script>
+{% endblock %}
+

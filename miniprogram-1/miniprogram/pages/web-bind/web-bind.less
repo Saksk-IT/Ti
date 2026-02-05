@@ -1,0 +1,153 @@
+page {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.page-root {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+.page-container {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24rpx;
+  box-sizing: border-box;
+}
+
+.card {
+  width: 100%;
+  max-width: 620rpx;
+  border: 1rpx solid var(--app-border);
+  border-radius: var(--app-radius-xl);
+  background: var(--app-surface-2);
+  box-shadow: var(--app-shadow-soft);
+  overflow: hidden;
+}
+
+.hero {
+  padding: 24rpx 24rpx 20rpx;
+  background:
+    radial-gradient(120% 140% at 0% -10%, color-mix(in srgb, var(--app-primary) 10%, transparent), transparent 60%),
+    var(--app-surface-2);
+}
+
+.hero-title {
+  font-size: 40rpx;
+  font-weight: 950;
+  color: var(--app-text);
+}
+
+.hero-sub {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  line-height: 1.65;
+  color: var(--app-muted);
+  display: block;
+}
+
+.card-body {
+  padding: 0 24rpx 24rpx;
+}
+
+/* 会话信息 */
+.meta {
+  padding: 14rpx 16rpx;
+  border-radius: 18rpx;
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface);
+}
+
+.meta-item {
+  font-size: 22rpx;
+  color: var(--app-muted);
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+/* 消息提示 */
+.msg {
+  margin-top: 14rpx;
+  padding: 12rpx 14rpx;
+  border-radius: 18rpx;
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface);
+  color: var(--app-text);
+  font-size: 24rpx;
+  line-height: 1.5;
+}
+
+.msg.error {
+  border-color: color-mix(in srgb, var(--app-danger) 28%, var(--app-border));
+  background: var(--app-danger-bg-soft);
+  color: var(--app-danger);
+}
+
+.msg.success {
+  border-color: color-mix(in srgb, var(--app-success) 28%, var(--app-border));
+  background: var(--app-success-bg-soft);
+  color: var(--app-success);
+}
+
+/* 按钮组 */
+.actions {
+  margin-top: 18rpx;
+  display: flex;
+  gap: 12rpx;
+}
+
+.btn {
+  flex: 1;
+  height: 88rpx;
+  padding: 0 24rpx;
+  border-radius: 999px;
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 900;
+  color: var(--app-text);
+}
+
+.btn::after {
+  border: none;
+}
+
+.btn:active {
+  opacity: 0.92;
+  transform: scale(0.99);
+}
+
+.btn-primary {
+  border-color: color-mix(in srgb, var(--app-cta) 28%, var(--app-border));
+  background: color-mix(in srgb, var(--app-cta) 12%, var(--app-surface));
+}
+
+.btn.disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* 响应式适配 */
+@media (max-width: 360px) {
+  .page-container {
+    padding: 16rpx;
+  }
+
+  .card {
+    max-width: 100%;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+}

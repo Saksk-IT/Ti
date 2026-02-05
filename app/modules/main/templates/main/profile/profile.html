@@ -1,0 +1,846 @@
+{% extends "main/shared/app_shell.html" %}
+{% block title %}账号管理{% endblock %}
+{% block page_title %}账号{% endblock %}
+{% block head_extra %}
+    <style>
+        :root {
+            --bg-color: var(--app-bg);
+            --card-bg: var(--app-surface-2);
+            --card-bg-solid: var(--app-surface);
+            --text-color: var(--app-text);
+            --text-sub: var(--app-muted);
+            --border-color: var(--app-border);
+            --shadow: var(--app-shadow);
+            --shadow-hover: var(--app-shadow);
+            --blur: blur(26px) saturate(180%);
+
+            --btn-primary-bg: color-mix(in srgb, var(--app-primary) 14%, var(--app-surface));
+            --btn-primary-fg: var(--app-text);
+            --btn-primary-border: color-mix(in srgb, var(--app-primary) 40%, var(--app-border));
+            --btn-secondary-bg: var(--app-surface);
+            --btn-secondary-fg: var(--app-text);
+            --btn-secondary-border: var(--app-border);
+            --btn-quiet-bg: color-mix(in srgb, var(--app-primary) 8%, var(--app-surface));
+            --btn-quiet-border: color-mix(in srgb, var(--app-primary) 20%, var(--app-border));
+
+            --focus-ring: var(--app-primary-soft);
+            --focus-border: color-mix(in srgb, var(--app-primary) 50%, var(--app-border));
+        }
+
+        body.dark-mode {
+            --bg-color: var(--app-bg);
+            --card-bg: var(--app-surface-2);
+            --card-bg-solid: var(--app-surface);
+            --text-color: var(--app-text);
+            --text-sub: var(--app-muted);
+            --border-color: var(--app-border);
+            --shadow: var(--app-shadow);
+            --shadow-hover: var(--app-shadow);
+
+            --btn-primary-bg: color-mix(in srgb, var(--app-primary) 18%, var(--app-surface));
+            --btn-primary-fg: var(--app-text);
+            --btn-primary-border: color-mix(in srgb, var(--app-primary) 42%, var(--app-border));
+            --btn-secondary-bg: color-mix(in srgb, var(--app-surface) 85%, transparent);
+            --btn-quiet-bg: color-mix(in srgb, var(--app-primary) 10%, var(--app-surface));
+            --btn-quiet-border: color-mix(in srgb, var(--app-primary) 24%, var(--app-border));
+
+            --focus-ring: var(--app-primary-soft);
+            --focus-border: color-mix(in srgb, var(--app-primary) 55%, var(--app-border));
+        }
+
+        /* 全局滚动条样式 - 极简风格 */
+        * { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+        *:hover { scrollbar-color: rgba(128, 128, 128, 0.3) transparent; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: transparent; border-radius: 3px; }
+        *:hover::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.3); }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(128, 128, 128, 0.5); }
+        body.dark-mode ::-webkit-scrollbar-thumb { background: transparent; }
+        body.dark-mode *:hover::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); }
+        body.dark-mode ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
+
+        body {
+            font-family: var(--app-font-body);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            transition: background-color .3s ease, color .3s ease;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+
+        .main-container { max-width: 920px; margin: 0 auto; padding: 10px 6px 24px; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; padding: 0 6px; }
+        .header-title { font-family: var(--app-font-heading); font-size: 20px; font-weight: 750; letter-spacing: -0.2px; }
+        .header-sub { margin-top: 4px; font-size: 13px; color: var(--text-sub); line-height: 1.5; }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: var(--blur);
+            -webkit-backdrop-filter: var(--blur);
+            padding: 24px;
+            border-radius: 22px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            min-width: 0;
+        }
+
+        .card h2 { margin-top: 0; font-size: 16px; font-weight: 750; border-bottom: 1px solid var(--border-color); padding-bottom: 14px; margin-bottom: 18px; letter-spacing: -0.2px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: 500; color: var(--text-sub); margin-bottom: 8px; font-size: 14px; }
+        
+        .main-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 16px;
+            background: var(--card-bg-solid);
+            color: var(--text-color);
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .main-input:focus { outline: none; border-color: var(--focus-border); box-shadow: 0 0 0 3px var(--focus-ring); }
+
+        .btn {
+            height: 42px;
+            padding: 10px 16px;
+            min-width: 96px;
+            border: 1px solid var(--btn-secondary-border);
+            border-radius: 12px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: var(--btn-secondary-bg);
+            color: var(--btn-secondary-fg);
+        }
+        .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-hover); }
+        .btn:active { transform: translateY(0); }
+
+        .btn-primary { background: var(--btn-primary-bg); color: var(--btn-primary-fg); border-color: var(--btn-primary-border); }
+        .btn-secondary { background: var(--btn-quiet-bg); color: var(--text-color); border-color: var(--btn-quiet-border); }
+        .btn-danger { background: transparent; color: var(--text-color); border-color: var(--focus-border); }
+
+        .btn.btn-sm { height: 34px; padding: 8px 12px; min-width: auto; font-size: 13px; border-radius: 999px; }
+
+        .actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+        .message { margin-top: 14px; padding: 12px 14px; border-radius: 14px; font-size: 13px; display: none; background: var(--btn-quiet-bg); border: 1px solid var(--btn-quiet-border); color: var(--text-color); line-height: 1.6; }
+        .message.success, .message.error { background: var(--btn-quiet-bg); border-color: var(--btn-quiet-border); color: var(--text-color); }
+
+        .binding-list { display: flex; flex-direction: column; gap: 12px; }
+        .binding-item { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border-color); }
+        .binding-item:first-child { border-top: none; padding-top: 0; }
+        .binding-left { min-width: 0; }
+        .binding-title { font-size: 14px; font-weight: 650; letter-spacing: -0.1px; }
+        .binding-value { margin-top: 4px; font-size: 13px; color: var(--text-sub); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .binding-actions { display: flex; gap: 10px; align-items: center; flex: 0 0 auto; flex-wrap: wrap; justify-content: flex-end; }
+
+        .bind-form { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border-color); }
+        .inline-row { display: flex; gap: 8px; align-items: center; }
+        .inline-row .main-input { flex: 1 1 auto; }
+        .inline-row .btn { white-space: nowrap; }
+
+        .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+        .kv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .kv { padding: 12px; border: 1px solid var(--border-color); border-radius: 16px; background: var(--btn-secondary-bg); }
+        .kv-label { font-size: 12px; color: var(--text-sub); letter-spacing: -0.1px; }
+        .kv-value { margin-top: 6px; font-size: 14px; font-weight: 700; letter-spacing: -0.1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .kpi-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+        .kpi { padding: 12px; border: 1px solid var(--border-color); border-radius: 16px; background: var(--btn-secondary-bg); min-width: 0; }
+        .kpi-value { font-size: 20px; font-weight: 850; letter-spacing: -0.4px; }
+        .kpi-label { margin-top: 4px; font-size: 12px; color: var(--text-sub); letter-spacing: -0.1px; }
+
+        .help-text { margin-top: 6px; font-size: 12px; color: var(--text-sub); line-height: 1.5; }
+        .input-wrap { position: relative; }
+        .input-wrap .main-input { padding-right: 78px; }
+        .input-toggle { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); }
+
+        /* 微信绑定弹窗 */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.52);
+            z-index: 9999;
+            padding: 18px;
+            box-sizing: border-box;
+        }
+        .modal-card {
+            width: 100%;
+            max-width: 420px;
+            background: var(--card-bg-solid);
+            border-radius: 22px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-hover);
+            padding: 20px;
+        }
+        .modal-title {
+            margin: 0 0 6px 0;
+            font-size: 16px;
+            font-weight: 750;
+            letter-spacing: -0.2px;
+        }
+        .modal-sub {
+            margin: 0 0 16px 0;
+            color: var(--text-sub);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .qr-box {
+            width: 240px;
+            height: 240px;
+            margin: 0 auto;
+            border-radius: 18px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg-solid);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .qr-img { width: 100%; height: 100%; object-fit: contain; display: none; }
+        .qr-ph { color: var(--text-sub); font-size: 13px; }
+        .qr-status { margin-top: 14px; font-size: 13px; color: var(--text-sub); text-align: center; line-height: 1.6; min-height: 20px; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+        .modal-actions .btn { flex: 1; justify-content: center; }
+
+        @media (max-width: 768px) {
+            .main-container { padding: 24px 16px; }
+            .header-title { font-size: 18px; }
+            .card { padding: 18px; }
+            .cards-grid { grid-template-columns: 1fr; }
+            .kv-grid { grid-template-columns: 1fr; }
+            .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="main-container">
+        <header class="page-header">
+            <div>
+                <h1 class="header-title">账号与安全</h1>
+                <div class="header-sub">管理密码与绑定方式。</div>
+            </div>
+        </header>
+
+        <div class="cards-grid">
+            <section class="card" aria-labelledby="accountOverviewTitle">
+                <h2 id="accountOverviewTitle">账号概览</h2>
+                <div class="kv-grid">
+                    <div class="kv">
+                        <div class="kv-label">用户名</div>
+                        <div class="kv-value" id="profileUsername">-</div>
+                    </div>
+                    <div class="kv">
+                        <div class="kv-label">角色</div>
+                        <div class="kv-value" id="profileRole">-</div>
+                    </div>
+                    <div class="kv">
+                        <div class="kv-label">注册时间</div>
+                        <div class="kv-value" id="profileCreatedAt">-</div>
+                    </div>
+                    <div class="kv">
+                        <div class="kv-label">邮箱状态</div>
+                        <div class="kv-value" id="profileEmailSummary">-</div>
+                    </div>
+                    <div class="kv">
+                        <div class="kv-label">微信状态</div>
+                        <div class="kv-value" id="profileWechatSummary">-</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card" aria-labelledby="accountStatsTitle">
+                <h2 id="accountStatsTitle">学习概览</h2>
+                <div class="kpi-grid">
+                    <div class="kpi">
+                        <div class="kpi-value" id="statStreakDays">-</div>
+                        <div class="kpi-label">连续学习（天）</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-value" id="statTotalAnswered">-</div>
+                        <div class="kpi-label">累计答题</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-value" id="statAccuracy">-</div>
+                        <div class="kpi-label">正确率</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-value" id="statFavorites">-</div>
+                        <div class="kpi-label">收藏</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-value" id="statMistakes">-</div>
+                        <div class="kpi-label">错题</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-value" id="statCorrectAnswered">-</div>
+                        <div class="kpi-label">答对</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card" aria-labelledby="passwordTitle">
+                <h2 id="passwordTitle">修改密码</h2>
+                <form id="passwordForm">
+                    <div class="form-group" id="currentPasswordGroup">
+                        <label for="current_password">当前密码</label>
+                        <div class="input-wrap">
+                            <input type="password" id="current_password" name="current_password" class="main-input" autocomplete="current-password">
+                            <button type="button" class="btn btn-secondary btn-sm input-toggle" data-target="current_password" aria-label="显示当前密码">显示</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="new_password" id="newPasswordLabel">新密码</label>
+                        <div class="input-wrap">
+                            <input type="password" id="new_password" name="new_password" class="main-input" placeholder="至少8位，包含字母与数字" autocomplete="new-password" required>
+                            <button type="button" class="btn btn-secondary btn-sm input-toggle" data-target="new_password" aria-label="显示新密码">显示</button>
+                        </div>
+                        <div class="help-text">至少 8 位，且同时包含字母与数字。</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm_password" id="confirmPasswordLabel">确认新密码</label>
+                        <div class="input-wrap">
+                            <input type="password" id="confirm_password" name="confirm_password" class="main-input" placeholder="请再次输入" autocomplete="new-password" required>
+                            <button type="button" class="btn btn-secondary btn-sm input-toggle" data-target="confirm_password" aria-label="显示确认密码">显示</button>
+                        </div>
+                    </div>
+                    <div class="actions">
+                        <button type="submit" class="btn btn-primary" id="passwordSubmitBtn">提交修改</button>
+                    </div>
+                    <div id="pwdMsg" class="message"></div>
+                </form>
+            </section>
+
+            <section class="card" aria-labelledby="bindingTitle">
+                <h2 id="bindingTitle">绑定方式</h2>
+                <div class="binding-list">
+                    <div class="binding-item">
+                        <div class="binding-left">
+                            <div class="binding-title">邮箱</div>
+                            <div class="binding-value"><span id="emailDisplay">加载中...</span></div>
+                        </div>
+                        <div class="binding-actions">
+                            <a href="#" id="bindEmailLink" class="btn btn-secondary btn-sm">去绑定</a>
+                        </div>
+                    </div>
+
+                    <div class="binding-item">
+                        <div class="binding-left">
+                            <div class="binding-title">微信</div>
+                            <div class="binding-value"><span id="wechatDisplay">加载中...</span></div>
+                        </div>
+                        <div class="binding-actions">
+                            <a href="#" id="bindWechatLink" class="btn btn-secondary btn-sm">去绑定</a>
+                            <a href="#" id="unbindWechatLink" class="btn btn-danger btn-sm" style="display:none;">解绑</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 邮箱绑定表单（默认隐藏） -->
+                <div id="emailBindForm" class="bind-form" style="display: none;">
+                    <div class="form-group">
+                        <label for="bindEmailInput">邮箱地址</label>
+                        <input type="email" id="bindEmailInput" class="main-input" placeholder="请输入邮箱地址" autocomplete="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bindCodeInput">验证码</label>
+                        <div class="inline-row">
+                            <input type="text" id="bindCodeInput" class="main-input" placeholder="请输入6位验证码" inputmode="numeric" maxlength="6">
+                            <button type="button" id="sendCodeBtn" class="btn btn-secondary btn-sm">发送验证码</button>
+                        </div>
+                    </div>
+                    <div class="actions">
+                        <button type="button" id="submitBindBtn" class="btn btn-primary">确认绑定</button>
+                        <button type="button" id="cancelBindBtn" class="btn btn-secondary">取消</button>
+                    </div>
+                    <div id="emailBindMsg" class="message"></div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- 微信绑定二维码弹窗 -->
+    <div id="wechatBindModal" class="modal-overlay" onclick="closeWechatBindModal(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <div class="modal-title">绑定微信</div>
+            <div class="modal-sub">打开小程序扫码，并在手机上确认绑定。</div>
+            <div class="qr-box">
+                <img id="wechatBindQrImg" class="qr-img" alt="绑定微信二维码" />
+                <div id="wechatBindQrPh" class="qr-ph">正在生成…</div>
+            </div>
+            <div id="wechatBindStatus" class="qr-status"></div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="refreshWechatBindQr()">刷新</button>
+                <button type="button" class="btn btn-primary" onclick="closeWechatBindModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block body_end %}
+    <script>
+        function setText(id, value) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (value === null || typeof value === 'undefined' || value === '') el.textContent = '-';
+            else el.textContent = String(value);
+        }
+
+        function formatCount(value) {
+            const n = Number(value);
+            if (!Number.isFinite(n)) return '-';
+            return n.toLocaleString('zh-CN');
+        }
+
+        function formatPercent(value) {
+            const n = Number(value);
+            if (!Number.isFinite(n)) return '-';
+            const fixed = Math.round(n * 10) / 10;
+            return (Number.isInteger(fixed) ? String(fixed) : fixed.toFixed(1)) + '%';
+        }
+
+        function applyPasswordMode(hasPasswordSet) {
+            const setMode = !hasPasswordSet;
+            needsPasswordSet = setMode;
+
+            if (setMode) {
+                document.getElementById('passwordTitle').textContent = '设置密码';
+                document.getElementById('currentPasswordGroup').style.display = 'none';
+                document.getElementById('current_password').required = false;
+                document.getElementById('newPasswordLabel').textContent = '密码';
+                document.getElementById('confirmPasswordLabel').textContent = '确认密码';
+                document.getElementById('passwordSubmitBtn').textContent = '设置密码';
+            } else {
+                document.getElementById('passwordTitle').textContent = '修改密码';
+                document.getElementById('currentPasswordGroup').style.display = 'block';
+                document.getElementById('current_password').required = true;
+                document.getElementById('newPasswordLabel').textContent = '新密码';
+                document.getElementById('confirmPasswordLabel').textContent = '确认新密码';
+                document.getElementById('passwordSubmitBtn').textContent = '提交修改';
+            }
+        }
+
+        function applyProfile(data) {
+            const d = data || {};
+
+            setText('profileUsername', d.username || '-');
+            setText('profileRole', d.is_admin ? '管理员' : '普通用户');
+            setText('profileCreatedAt', d.created_at || '-');
+
+            const email = (d.email || '').toString().trim();
+            const emailStatus = email ? ('已绑定' + (d.email_verified ? '（已验证）' : '（未验证）')) : '未绑定';
+            const emailText = email ? (email + (d.email_verified ? '（已验证）' : '（未验证）')) : '未绑定';
+            setText('profileEmailSummary', emailStatus);
+            setText('emailDisplay', emailText);
+
+            const wechatBound = !!d.wechat_bound;
+            const wechatText = wechatBound ? '已绑定' : '未绑定';
+            setText('profileWechatSummary', wechatText);
+            setText('wechatDisplay', wechatText);
+
+            const bindEmailLink = document.getElementById('bindEmailLink');
+            if (bindEmailLink) bindEmailLink.textContent = email ? '更换' : '去绑定';
+
+            const bindWechatLink = document.getElementById('bindWechatLink');
+            if (bindWechatLink) bindWechatLink.textContent = wechatBound ? '更换' : '去绑定';
+
+            const unbindWechatLink = document.getElementById('unbindWechatLink');
+            if (unbindWechatLink) unbindWechatLink.style.display = wechatBound ? 'inline-flex' : 'none';
+
+            setText('statStreakDays', formatCount(d.streak_days));
+            setText('statTotalAnswered', formatCount(d.total_answered));
+            setText('statCorrectAnswered', formatCount(d.correct_answered));
+            setText('statFavorites', formatCount(d.favorites_count));
+            setText('statMistakes', formatCount(d.mistakes_count));
+            setText('statAccuracy', formatPercent(d.accuracy));
+
+            applyPasswordMode(!!d.has_password_set);
+        }
+
+        function setLoadFailed() {
+            const failed = '加载失败';
+            setText('profileUsername', failed);
+            setText('profileRole', failed);
+            setText('profileCreatedAt', failed);
+            setText('profileEmailSummary', failed);
+            setText('profileWechatSummary', failed);
+            setText('emailDisplay', failed);
+            setText('wechatDisplay', failed);
+            setText('statStreakDays', '-');
+            setText('statTotalAnswered', '-');
+            setText('statCorrectAnswered', '-');
+            setText('statFavorites', '-');
+            setText('statMistakes', '-');
+            setText('statAccuracy', '-');
+            applyPasswordMode(true);
+        }
+
+        let needsPasswordSet = false;
+
+        async function loadProfile() {
+            try {
+                const res = await fetch('/api/profile', { credentials: 'include' });
+                if (!res.ok) throw new Error('加载失败');
+                const js = await res.json();
+                if (!js || js.status !== 'success' || !js.data) throw new Error(js?.message || '加载失败');
+                applyProfile(js.data);
+            } catch (err) {
+                setLoadFailed();
+            }
+        }
+
+        // 邮箱绑定相关
+        let countdownTimer = null;
+        let countdownSeconds = 0;
+        
+        function showEmailMessage(text, type) {
+            const msg = document.getElementById('emailBindMsg');
+            msg.textContent = text;
+            msg.className = `message ${type}`;
+            msg.style.display = 'block';
+        }
+        
+        function updateCountdown() {
+            const btn = document.getElementById('sendCodeBtn');
+            if (countdownSeconds > 0) {
+                btn.textContent = `${countdownSeconds}秒后重发`;
+                btn.disabled = true;
+                countdownSeconds--;
+                countdownTimer = setTimeout(updateCountdown, 1000);
+            } else {
+                btn.textContent = '发送验证码';
+                btn.disabled = false;
+            }
+        }
+        
+        document.getElementById('bindEmailLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('emailBindForm').style.display = 'block';
+            document.getElementById('bindEmailInput').focus();
+        });
+
+        // === 微信绑定（扫码确认）===
+        let wechatBindSid = null;
+        let wechatBindTimer = null;
+        let wechatBindBusy = false;
+
+        function setWechatBindStatus(text) {
+            const el = document.getElementById('wechatBindStatus');
+            if (el) el.textContent = text || '';
+        }
+
+        function setWechatBindQr(url) {
+            const img = document.getElementById('wechatBindQrImg');
+            const ph = document.getElementById('wechatBindQrPh');
+            if (!img || !ph) return;
+            if (!url) {
+                img.style.display = 'none';
+                ph.style.display = 'block';
+                return;
+            }
+            img.src = url;
+            img.style.display = 'block';
+            ph.style.display = 'none';
+        }
+
+        function openWechatBindModal() {
+            const modal = document.getElementById('wechatBindModal');
+            if (!modal) return;
+            modal.style.display = 'flex';
+            refreshWechatBindQr();
+        }
+
+        function closeWechatBindModal(e) {
+            if (e && e.target && e.target.id !== 'wechatBindModal') return;
+            const modal = document.getElementById('wechatBindModal');
+            if (modal) modal.style.display = 'none';
+            if (wechatBindTimer) {
+                clearInterval(wechatBindTimer);
+                wechatBindTimer = null;
+            }
+            wechatBindSid = null;
+            wechatBindBusy = false;
+        }
+
+        async function refreshWechatBindQr() {
+            if (wechatBindBusy) return;
+            wechatBindBusy = true;
+            if (wechatBindTimer) {
+                clearInterval(wechatBindTimer);
+                wechatBindTimer = null;
+            }
+            wechatBindSid = null;
+            setWechatBindQr(null);
+            setWechatBindStatus('正在生成二维码…');
+            try {
+                const res = await fetch('/api/wechat/bind_qrcode', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    credentials: 'include',
+                    body: JSON.stringify({})
+                });
+                const d = await res.json();
+                if (!res.ok || d.status !== 'success') throw new Error(d.message || '生成失败');
+                wechatBindSid = d.data.sid;
+                setWechatBindQr(d.data.qrcode_url);
+                setWechatBindStatus('请使用小程序扫码并确认绑定。');
+                wechatBindTimer = setInterval(pollWechatBind, 1500);
+            } catch (e2) {
+                setWechatBindStatus('二维码生成失败：' + ((e2 && e2.message) ? e2.message : '请稍后重试'));
+            } finally {
+                wechatBindBusy = false;
+            }
+        }
+
+        async function pollWechatBind() {
+            if (!wechatBindSid) return;
+            try {
+                const res = await fetch(`/api/wechat/bind_sessions/${encodeURIComponent(wechatBindSid)}`, { credentials: 'include' });
+                const d = await res.json();
+                if (!res.ok || d.status !== 'success') return;
+                const state = d.data.state;
+                if (state === 'expired') {
+                    setWechatBindStatus('二维码已过期，请刷新。');
+                    if (wechatBindTimer) { clearInterval(wechatBindTimer); wechatBindTimer = null; }
+                    return;
+                }
+                if (state === 'bound') {
+                    setWechatBindStatus('绑定成功');
+                    if (wechatBindTimer) { clearInterval(wechatBindTimer); wechatBindTimer = null; }
+                    setTimeout(() => {
+                        closeWechatBindModal();
+                        loadProfile();
+                    }, 800);
+                }
+            } catch (e) {
+                // 忽略轮询错误
+            }
+        }
+
+        document.getElementById('bindWechatLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            openWechatBindModal();
+        });
+
+        document.getElementById('unbindWechatLink').addEventListener('click', async (e) => {
+            e.preventDefault();
+            if (!confirm('确定要解绑微信吗？解绑后将无法使用微信一键登录。')) return;
+            try {
+                const res = await fetch('/api/wechat/unbind', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    credentials: 'include',
+                    body: JSON.stringify({})
+                });
+                const d = await res.json();
+                if (!res.ok || d.status !== 'success') throw new Error(d.message || '解绑失败');
+                alert('解绑成功');
+                loadProfile();
+            } catch (err) {
+                alert('解绑失败：' + ((err && err.message) ? err.message : '请稍后重试'));
+            }
+        });
+        
+        document.getElementById('cancelBindBtn').addEventListener('click', () => {
+            document.getElementById('emailBindForm').style.display = 'none';
+            document.getElementById('bindEmailInput').value = '';
+            document.getElementById('bindCodeInput').value = '';
+            document.getElementById('emailBindMsg').style.display = 'none';
+            if (countdownTimer) {
+                clearTimeout(countdownTimer);
+                countdownTimer = null;
+            }
+            countdownSeconds = 0;
+            document.getElementById('sendCodeBtn').textContent = '发送验证码';
+            document.getElementById('sendCodeBtn').disabled = false;
+        });
+        
+        document.getElementById('sendCodeBtn').addEventListener('click', async () => {
+            const email = document.getElementById('bindEmailInput').value.trim();
+            if (!email) {
+                showEmailMessage('请输入邮箱地址', 'error');
+                return;
+            }
+            
+            // 简单的邮箱格式验证
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showEmailMessage('邮箱格式不正确', 'error');
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/email/send-bind-code', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    credentials: 'include',
+                    body: JSON.stringify({ email: email })
+                });
+                const d = await res.json();
+                
+                if (!res.ok) {
+                    // 请求失败，显示错误信息
+                    const errorMsg = d.message || '发送失败';
+                    console.error('发送验证码失败:', d);
+                    showEmailMessage(errorMsg, 'error');
+                    return;
+                }
+                
+                if (d.status === 'success') {
+                    showEmailMessage('验证码已发送，请查收邮件', 'success');
+                    countdownSeconds = 60;
+                    updateCountdown();
+                } else {
+                    showEmailMessage(d.message || '发送失败', 'error');
+                }
+            } catch (err) {
+                console.error('发送验证码异常:', err);
+                showEmailMessage('发送失败，请稍后重试: ' + err.message, 'error');
+            }
+        });
+        
+        document.getElementById('submitBindBtn').addEventListener('click', async () => {
+            const email = document.getElementById('bindEmailInput').value.trim();
+            const code = document.getElementById('bindCodeInput').value.trim();
+            
+            if (!email) {
+                showEmailMessage('请输入邮箱地址', 'error');
+                return;
+            }
+            if (!code || code.length !== 6) {
+                showEmailMessage('请输入6位验证码', 'error');
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/email/bind', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    credentials: 'include',
+                    body: JSON.stringify({ email: email, code: code })
+                });
+                const d = await res.json();
+                
+                if (d.status === 'success') {
+                    showEmailMessage('邮箱绑定成功', 'success');
+                    setTimeout(() => {
+                        document.getElementById('emailBindForm').style.display = 'none';
+                        document.getElementById('bindEmailInput').value = '';
+                        document.getElementById('bindCodeInput').value = '';
+                        loadProfile(); // 重新加载信息
+                    }, 1500);
+                } else {
+                    showEmailMessage(d.message || '绑定失败', 'error');
+                }
+            } catch (err) {
+                showEmailMessage('绑定失败，请稍后重试', 'error');
+            }
+        });
+
+        document.getElementById('passwordForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const cur = document.getElementById('current_password').value;
+            const nw = document.getElementById('new_password').value;
+            const c_nw = document.getElementById('confirm_password').value;
+            const msg = document.getElementById('pwdMsg');
+            const submitBtn = document.getElementById('passwordSubmitBtn');
+            msg.style.display = 'none';
+
+            function showMessage(text, type) {
+                msg.textContent = text;
+                msg.className = `message ${type}`;
+                msg.style.display = 'block';
+            }
+
+            if (nw !== c_nw) {
+                showMessage('两次输入的密码不一致', 'error');
+                return;
+            }
+            if (nw.length < 8 || !(/[a-zA-Z]/.test(nw) && /\d/.test(nw))) {
+                showMessage('密码至少8位且包含字母和数字', 'error');
+                return;
+            }
+
+            // 如果是设置密码，不需要当前密码
+            if (needsPasswordSet && cur) {
+                showMessage('设置密码不需要输入当前密码', 'error');
+                return;
+            }
+            
+            // 如果是修改密码，需要当前密码
+            if (!needsPasswordSet && !cur) {
+                showMessage('修改密码需要输入当前密码', 'error');
+                return;
+            }
+
+            try {
+                if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '处理中…'; }
+                const res = await fetch('/api/profile/password', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        current_password: cur || '', 
+                        new_password: nw,
+                        is_set_password: needsPasswordSet
+                    })
+                });
+                const d = await res.json();
+                if (!res.ok || d.status !== 'success') throw new Error(d.message || '操作失败');
+                
+                if (needsPasswordSet) {
+                    showMessage('密码设置成功', 'success');
+                    // 重新加载状态
+                    setTimeout(() => {
+                        loadProfile();
+                        document.getElementById('passwordForm').reset();
+                    }, 1500);
+                } else {
+                    showMessage('修改成功，请重新登录', 'success');
+                    setTimeout(() => location.href = '/login', 1500);
+                }
+            } catch (err) {
+                showMessage(err.message, 'error');
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = needsPasswordSet ? '设置密码' : '提交修改';
+                }
+            }
+        });
+
+        function setupPasswordToggles() {
+            const btns = document.querySelectorAll('.input-toggle');
+            btns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const targetId = btn.getAttribute('data-target');
+                    const input = targetId ? document.getElementById(targetId) : null;
+                    if (!input) return;
+
+                    const willShow = input.type === 'password';
+                    input.type = willShow ? 'text' : 'password';
+                    btn.textContent = willShow ? '隐藏' : '显示';
+                });
+            });
+        }
+
+        setupPasswordToggles();
+        loadProfile();
+    </script>
+{% endblock %}

@@ -1,0 +1,94 @@
+    async function loadQuestions() {
+        const type = document.getElementById('typeFilter').value;
+        try {
+            let url = `/user/banks/api/${bankId}/questions?page=1&per_page=1000`;
+            if (type && type !== 'all') {
+                url += `&q_type=${encodeURIComponent(type)}`;
+            }
+            const res = await api(url);
+            allQuestions = res.data.questions || [];
+            updateStats();
+            renderTable();
+        } catch (error) {
+            console.error('加载题目失败:', error);
+            showToast('加载题目失败，请刷新页面重试', 'error');
+        }
+    }
+
+    function updateStats() {
+        const total = allQuestions.length;
+        const choice = allQuestions.filter(q => q.q_type === '选择题' || q.q_type === '多选题').length;
+        const blank = allQuestions.filter(q => q.q_type === '填空题').length;
+        const judge = allQuestions.filter(q => q.q_type === '判断题').length;
+
+        document.getElementById('statTotal').textContent = total;
+        document.getElementById('statChoice').textContent = choice;
+        document.getElementById('statBlank').textContent = blank;
+        document.getElementById('statJudge').textContent = judge;
+    }
+
+    function getTypeBadgeClass(type) {
+        if (type === '选择题' || type === '多选题') return 'choice';
+        if (type === '填空题') return 'blank';
+        if (type === '判断题') return 'judge';
+        return 'other';
+    }
+
+    function renderDifficulty(level) {
+        const stars = '★'.repeat(level) + '☆'.repeat(5 - level);
+        return `<span class="difficulty-stars" title="难度: ${level}/5">${stars}</span>`;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('questionTableBody');
+        const keyword = document.getElementById('searchInput').value.toLowerCase();
+        tbody.innerHTML = '';
+
+        const filtered = allQuestions.filter(q => q.content.toLowerCase().includes(keyword));
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="empty-state">
+                        <div class="empty-state-text">暂无题目数据</div>
+                        <div class="empty-state-hint">点击"新增题目"按钮添加第一道题目</div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        filtered.forEach((q, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="checkbox" class="questionSelect" data-id="${q.id}" onchange="updateBatchDeleteBtn()" title="选择"></td>
+                <td style="text-align: center;">${index + 1}</td>
+                <td>
+                    <span class="type-badge ${getTypeBadgeClass(q.q_type)}">${q.q_type}</span>
+                </td>
+                <td class="col-content"><div class="content-text">${escapeHtml(q.content)}</div></td>
+                <td>${renderDifficulty(q.difficulty || 3)}</td>
+                <td>
+                    <div class="action-btns">
+                        <button class="btn-sm btn-edit" onclick="openDrawer(${q.id})" title="编辑题目">编辑</button>
+                        <button class="btn-sm btn-delete" onclick="deleteQuestion(${q.id})" title="删除题目">删除</button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function searchQuestions() { renderTable(); }
+
+    function updateBatchDeleteBtn() {
+        const selected = document.querySelectorAll('.questionSelect:checked');
+        document.getElementById('batchDeleteBtn').style.display = selected.length > 0 ? 'inline-flex' : 'none';
+    }
+

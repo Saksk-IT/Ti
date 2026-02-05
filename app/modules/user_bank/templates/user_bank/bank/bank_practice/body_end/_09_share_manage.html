@@ -1,0 +1,278 @@
+    const shareState = {
+      type: 'code',
+      permission: 'read',
+      expires_in: 0,
+      max_uses: ''
+    };
+
+    function setSegActive(btn){
+      const p = btn?.parentElement;
+      if (!p) return;
+      p.querySelectorAll('button').forEach((b) => b.classList.toggle('active', b === btn));
+    }
+
+    function selectShareType(btn){
+      const t = btn?.dataset?.shareType || 'code';
+      shareState.type = (t === 'link') ? 'link' : 'code';
+      setSegActive(btn);
+    }
+
+    function selectSharePerm(btn){
+      const p = btn?.dataset?.sharePerm || 'read';
+      shareState.permission = (p === 'copy') ? 'copy' : 'read';
+      setSegActive(btn);
+    }
+
+    function selectShareExp(btn){
+      const raw = String(btn?.dataset?.shareExp ?? '0');
+      const n = Number(raw);
+      shareState.expires_in = Number.isFinite(n) ? Math.max(0, Math.min(365, n)) : 0;
+      setSegActive(btn);
+    }
+
+    function selectShareMax(btn){
+      shareState.max_uses = String(btn?.dataset?.shareMax ?? '');
+      setSegActive(btn);
+    }
+
+    function buildJoinLink(token){
+      const base = (location.origin || '').replace(/\/$/, '');
+      return `${base}/bank/join?token=${encodeURIComponent(String(token || ''))}`;
+    }
+
+    function formatDate(s){
+      const v = String(s || '').trim();
+      if (!v) return '—';
+      try {
+        const d = new Date(v);
+        if (!Number.isFinite(d.getTime())) return v;
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      } catch (e) {
+        return v;
+      }
+    }
+
+    function renderCreateResult(data){
+      const box = document.getElementById('shareCreateResult');
+      if (!box) return;
+      box.innerHTML = '';
+      if (!data) {
+        box.style.display = 'none';
+        return;
+      }
+
+      const code = data.share_code ? String(data.share_code) : '';
+      const token = data.share_token ? String(data.share_token) : '';
+      const link = data.share_link ? String(data.share_link) : (token ? buildJoinLink(token) : '');
+      const value = code || link;
+      const label = code ? '分享码' : '分享链接';
+
+      const row = document.createElement('div');
+      row.className = 'search';
+      row.style.gridTemplateColumns = '1fr auto';
+      row.style.marginTop = '10px';
+
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.readOnly = true;
+      input.value = value;
+
+      const btn = document.createElement('button');
+      btn.className = 'btn primary';
+      btn.type = 'button';
+      btn.textContent = '复制';
+      btn.addEventListener('click', async () => {
+        const ok = await copyText(value);
+        if (!ok) alert('复制失败，请手动复制');
+      });
+
+      row.appendChild(input);
+      row.appendChild(btn);
+
+      const hint = document.createElement('div');
+      hint.className = 'sub';
+      hint.style.marginTop = '8px';
+      hint.textContent = `${label}已生成，可复制发送给好友。`;
+
+      box.appendChild(row);
+      box.appendChild(hint);
+      box.style.display = 'block';
+    }
+
+    async function createShare(){
+      if (!CAN_MANAGE_SHARES) return;
+      renderCreateResult(null);
+
+      const payload = {
+        type: shareState.type,
+        permission: shareState.permission,
+        expires_in: shareState.expires_in ? shareState.expires_in : null,
+      };
+      const maxRaw = String(shareState.max_uses || '').trim();
+      if (maxRaw) payload.max_uses = Number(maxRaw) || undefined;
+
+      try {
+        const resp = await fetch(`/user/banks/api/${BANK_ID}/shares`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          credentials: 'same-origin'
+        });
+        const js = await resp.json().catch(() => ({}));
+        if (!resp.ok || !js || (js.code !== 0 && js.status !== 'success')) {
+          throw new Error((js && js.message) ? js.message : '创建分享失败');
+        }
+        renderCreateResult(js.data || {});
+        await loadShares();
+      } catch (e) {
+        alert(e?.message || '创建分享失败，请稍后重试');
+      }
+    }
+
+    async function loadShares(){
+      if (!CAN_MANAGE_SHARES) return;
+      const box = document.getElementById('shareList');
+      if (box) box.textContent = '加载中…';
+      try {
+        const resp = await fetch(`/user/banks/api/${BANK_ID}/shares`, { credentials: 'same-origin' });
+        const js = await resp.json().catch(() => ({}));
+        if (!resp.ok || !js || (js.code !== 0 && js.status !== 'success')) {
+          throw new Error((js && js.message) ? js.message : '加载失败');
+        }
+        const shares = (js.data && Array.isArray(js.data.shares)) ? js.data.shares : [];
+        renderShares(shares);
+      } catch (e) {
+        if (box) box.textContent = `加载失败：${e?.message || '请稍后重试'}`;
+      }
+    }
+
+    function renderShares(shares){
+      const box = document.getElementById('shareList');
+      if (!box) return;
+      box.innerHTML = '';
+
+      if (!shares || !shares.length) {
+        const empty = document.createElement('div');
+        empty.className = 'sub';
+        empty.textContent = '暂无分享记录。';
+        box.appendChild(empty);
+        return;
+      }
+
+      shares.forEach((s) => {
+        const id = Number(s?.id || 0);
+        const active = !!(s?.is_active === 1 || s?.is_active === true);
+        const code = s?.share_code ? String(s.share_code) : '';
+        const token = s?.share_token ? String(s.share_token) : '';
+        const permText = (s?.permission === 'copy') ? '可复制' : '只读';
+        const expText = s?.expires_at ? formatDate(s.expires_at) : '永久';
+        const usesText = `${Number(s?.current_uses || 0)}${s?.max_uses ? '/' + Number(s.max_uses) : ''}`;
+        const createdText = s?.created_at ? formatDate(s.created_at) : '—';
+        const link = token ? buildJoinLink(token) : '';
+
+        const item = document.createElement('div');
+        item.className = 'stat';
+        item.style.marginTop = '10px';
+
+        const top = document.createElement('div');
+        top.style.display = 'flex';
+        top.style.alignItems = 'flex-start';
+        top.style.justifyContent = 'space-between';
+        top.style.gap = '12px';
+        top.style.flexWrap = 'wrap';
+
+        const left = document.createElement('div');
+        left.style.minWidth = '0';
+
+        const title = document.createElement('div');
+        title.style.fontSize = '16px';
+        title.style.fontWeight = '950';
+        title.style.letterSpacing = '-0.2px';
+        title.style.wordBreak = 'break-all';
+
+        const mono = document.createElement('span');
+        mono.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+        mono.textContent = code || (token ? '链接分享' : '—');
+        title.appendChild(mono);
+
+        if (!active) {
+          const badge = document.createElement('span');
+          badge.className = 'mini-badge';
+          badge.style.marginLeft = '8px';
+          badge.textContent = '已失效';
+          title.appendChild(badge);
+        }
+
+        const meta = document.createElement('div');
+        meta.className = 'sub';
+        meta.style.marginTop = '6px';
+        meta.textContent = `权限：${permText} · 使用：${usesText} · 过期：${expText} · 创建：${createdText}`;
+
+        left.appendChild(title);
+        left.appendChild(meta);
+
+        const actions = document.createElement('div');
+        actions.className = 'links';
+        actions.style.marginTop = '0';
+
+        if (code) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'link';
+          btn.textContent = '复制码';
+          btn.addEventListener('click', async () => {
+            const ok = await copyText(code);
+            if (!ok) alert('复制失败，请手动复制');
+          });
+          actions.appendChild(btn);
+        }
+
+        if (token) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'link';
+          btn.textContent = '复制链接';
+          btn.addEventListener('click', async () => {
+            const ok = await copyText(link);
+            if (!ok) alert('复制失败，请手动复制');
+          });
+          actions.appendChild(btn);
+        }
+
+        if (active && id > 0) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'link';
+          btn.textContent = '撤销';
+          btn.style.borderColor = 'color-mix(in srgb, #ef4444 35%, var(--border))';
+          btn.style.background = 'color-mix(in srgb, #ef4444 10%, var(--card-solid))';
+          btn.addEventListener('click', () => revokeShare(id));
+          actions.appendChild(btn);
+        }
+
+        top.appendChild(left);
+        top.appendChild(actions);
+
+        item.appendChild(top);
+        box.appendChild(item);
+      });
+    }
+
+    async function revokeShare(shareId){
+      if (!CAN_MANAGE_SHARES) return;
+      if (!confirm('确认撤销该分享？撤销后，已加入用户将无法继续访问。')) return;
+      try {
+        const resp = await fetch(`/user/banks/api/${BANK_ID}/shares/${shareId}`, { method: 'DELETE', credentials: 'same-origin' });
+        const js = await resp.json().catch(() => ({}));
+        if (!resp.ok || !js || (js.code !== 0 && js.status !== 'success')) {
+          throw new Error((js && js.message) ? js.message : '撤销失败');
+        }
+        await loadShares();
+      } catch (e) {
+        alert(e?.message || '撤销失败，请稍后重试');
+      }
+    }
+

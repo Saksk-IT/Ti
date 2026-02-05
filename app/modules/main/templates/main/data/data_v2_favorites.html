@@ -1,0 +1,197 @@
+{% extends "main/data/data_v2_shell.html" %}
+
+{% block data_content %}
+  <div class="dc-bento" aria-label="收藏数据看板">
+    <section class="dc-card dc-span-4" aria-label="收藏总览">
+      <div class="dc-card-head">
+        <div style="min-width:0;">
+          <h2>收藏总览</h2>
+          <div class="dc-card-sub">收藏是“高价值题库”：用于复习、背题与考前冲刺。</div>
+        </div>
+        <a class="dc-mini-btn" href="/favorites">收藏中心</a>
+      </div>
+
+      <div class="dc-list">
+        <div class="dc-item">
+          <div class="dc-item-top">
+            <div style="min-width:0;">
+              <div class="dc-item-title">收藏数量</div>
+              <div class="dc-item-meta">{{ all_summary.favorites if all_summary else 0 }}（公共 + 个人）</div>
+            </div>
+          </div>
+        </div>
+        <div class="dc-item">
+          <div class="dc-item-top">
+            <div style="min-width:0;">
+              <div class="dc-item-title">近 {{ window_days }} 天新增</div>
+              <div class="dc-item-meta">{{ favorites_daily | sum(attribute='all') if favorites_daily else 0 }}（按创建日期统计）</div>
+            </div>
+          </div>
+        </div>
+        <div class="dc-item">
+          <div class="dc-item-top">
+            <div style="min-width:0;">
+              <div class="dc-item-title">收藏密度</div>
+              <div class="dc-item-meta">
+                {{ ((all_summary.favorites * 100 / all_summary.answered) | round(1)) if all_summary and all_summary.answered else 0 }}%
+                · 收藏/已做题（越高越“精挑细选”）
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dc-item-actions" style="margin-top:10px;">
+        <a class="dc-mini-btn primary" href="/favorites">去复习</a>
+        <a class="dc-mini-btn" href="/data/global?days={{ window_days }}">回全局</a>
+      </div>
+    </section>
+
+    <section class="dc-card dc-span-8" aria-label="收藏新增趋势">
+      <div class="dc-card-head">
+        <div style="min-width:0;">
+          <h2>收藏新增趋势</h2>
+          <div class="dc-card-sub">公共 + 个人（近 {{ window_days }} 天）：你的“精选题库”是如何长出来的。</div>
+        </div>
+      </div>
+      <div class="dc-chart lg" id="dcFavoriteTrendChart" aria-label="收藏新增趋势图"></div>
+    </section>
+
+    <section class="dc-card dc-span-6" aria-label="收藏 Top 领域">
+      <div class="dc-card-head">
+        <div style="min-width:0;">
+          <h2>收藏 Top 领域</h2>
+          <div class="dc-card-sub">公共按科目 / 个人按题库：把收藏变成“可复用的复习体系”。</div>
+        </div>
+      </div>
+      <div class="dc-chart lg" id="dcFavoriteTopChart" aria-label="收藏 Top 领域图"></div>
+    </section>
+
+    <section class="dc-card dc-span-6" aria-label="收藏难度分布">
+      <div class="dc-card-head">
+        <div style="min-width:0;">
+          <h2>难度分布</h2>
+          <div class="dc-card-sub">数量（公共 + 个人）：你收藏的题更偏“基础巩固”还是“冲刺难题”。</div>
+        </div>
+      </div>
+      <div class="dc-chart lg" id="dcFavoriteDifficultyChart" aria-label="收藏难度分布图"></div>
+    </section>
+
+    <section class="dc-card dc-span-12" aria-label="收藏题型分布">
+      <div class="dc-card-head">
+        <div style="min-width:0;">
+          <h2>题型分布</h2>
+          <div class="dc-card-sub">数量（公共 + 个人）：用题型结构做“专项复习清单”。</div>
+        </div>
+      </div>
+      <div class="dc-chart lg" id="dcFavoriteTypeChart" aria-label="收藏题型分布图"></div>
+    </section>
+
+    <section class="dc-card dc-span-6" aria-label="收藏 Top 列表">
+      <div class="dc-card-head">
+        <div style="min-width:0;">
+          <h2>收藏 Top 列表</h2>
+          <div class="dc-card-sub">建议：每周固定一次“收藏回顾”，把收藏变成可持续的复习闭环。</div>
+        </div>
+      </div>
+
+      {% if favorites_top_items %}
+        <div class="dc-list">
+          {% for it in favorites_top_items[:12] %}
+            <div class="dc-item">
+              <div class="dc-item-top">
+                <div style="min-width:0;">
+                  <div class="dc-item-title">{{ '公共' if it.source == 'public' else '个人' }} · {{ it.name }}</div>
+                  <div class="dc-item-meta">收藏 {{ it.count }}</div>
+                </div>
+                <div class="dc-item-actions">
+                  {% if it.source == 'banks' and it.bank_id %}
+                    <a class="dc-mini-btn primary" href="/user/banks/{{ it.bank_id }}/quiz?mode=favorites">刷收藏</a>
+                  {% else %}
+                    <a class="dc-mini-btn" href="/favorites">去中心下钻</a>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="dc-bars" aria-hidden="true">
+                {% set _w = it.count %}
+                {% set _den = (favorites_top_items[0].count if favorites_top_items and favorites_top_items[0] else 1) %}
+                {% if _den <= 0 %}{% set _den = 1 %}{% endif %}
+                {% set _p = (100.0 * _w / _den) | round(1) %}
+                <div class="dc-bar"><span style="width: {{ _p }}%"></span></div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="dc-empty">暂无可用收藏排行数据。</div>
+      {% endif %}
+    </section>
+
+    <section class="dc-card dc-span-6" aria-label="最近收藏（公共/个人）">
+      <div class="dc-card-head">
+        <div style="min-width:0;">
+          <h2>最近收藏</h2>
+          <div class="dc-card-sub">建议每周花 10 分钟：把新增收藏“复习一遍 + 总结原因”。</div>
+        </div>
+      </div>
+
+      <div class="dc-bento" aria-label="最近收藏列表">
+        <div class="dc-span-6">
+          <div class="dc-card-head">
+            <div style="min-width:0;">
+              <h3>公共题库</h3>
+              <div class="dc-card-sub">可直接去收藏中心继续复习。</div>
+            </div>
+          </div>
+          {% if recent_favorites_public %}
+            <div class="dc-list">
+              {% for f in recent_favorites_public[:6] %}
+                <div class="dc-item">
+                  <div class="dc-item-top">
+                    <div style="min-width:0;">
+                      <div class="dc-item-title">{{ f.subject }} · {{ f.q_type }} · 难度{{ f.difficulty }}</div>
+                      <div class="dc-item-meta">{{ f.snippet }}</div>
+                    </div>
+                    <div class="dc-item-actions">
+                      <a class="dc-mini-btn primary" href="/favorites">去中心</a>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="dc-empty">暂无收藏记录。</div>
+          {% endif %}
+        </div>
+
+        <div class="dc-span-6">
+          <div class="dc-card-head">
+            <div style="min-width:0;">
+              <h3>个人题库</h3>
+              <div class="dc-card-sub">直接进入题库收藏模式，快速复习。</div>
+            </div>
+          </div>
+          {% if recent_favorites_bank %}
+            <div class="dc-list">
+              {% for f in recent_favorites_bank[:6] %}
+                <div class="dc-item">
+                  <div class="dc-item-top">
+                    <div style="min-width:0;">
+                      <div class="dc-item-title">{{ f.bank_name }} · {{ f.q_type }} · 难度{{ f.difficulty }}</div>
+                      <div class="dc-item-meta">{{ f.snippet }}</div>
+                    </div>
+                    <div class="dc-item-actions">
+                      <a class="dc-mini-btn primary" href="/user/banks/{{ f.bank_id }}/quiz?mode=favorites">刷收藏</a>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="dc-empty">暂无个人题库收藏记录。</div>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+  </div>
+{% endblock %}

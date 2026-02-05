@@ -1,0 +1,557 @@
+{% extends "main/shared/app_shell.html" %}
+{% block title %}{{ bank_name }} · 题库内搜索{% endblock %}
+{% block page_title %}题库内搜索{% endblock %}
+{% block head_extra %}
+  <style>
+    :root {
+      --bg: var(--app-bg);
+      --card: var(--app-surface-2);
+      --card-solid: var(--app-surface);
+      --text: var(--app-text);
+      --muted: var(--app-muted);
+      --border: var(--app-border);
+      --shadow: var(--app-shadow);
+      --shadow2: var(--app-shadow-soft);
+      --blur: blur(18px) saturate(180%);
+      --radius-xl: var(--app-radius-xl);
+      --radius-lg: var(--app-radius-lg);
+      --radius-md: var(--app-radius-md);
+      --radius-sm: var(--app-radius-sm);
+      --focus: 0 0 0 3px var(--app-primary-soft);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: var(--app-font-body);
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button, input, select { font-family: inherit; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: calc(env(safe-area-inset-top) + 10px) 12px 10px;
+      background: color-mix(in srgb, var(--bg) 70%, transparent);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      border-bottom: 0.5px solid var(--border);
+    }
+    .topbar-inner {
+      max-width: 980px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-width: 0;
+    }
+    .left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .back {
+      height: 36px;
+      padding: 0 12px;
+      border-radius: 999px;
+      border: 0.5px solid var(--border);
+      background: var(--card);
+      box-shadow: var(--shadow2);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .title {
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: -0.3px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+    }
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow: auto hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .nav::-webkit-scrollbar { height: 0; }
+    .pill, .icon-btn {
+      height: 36px;
+      padding: 0 12px;
+      border-radius: 999px;
+      border: 0.5px solid var(--border);
+      background: var(--card);
+      box-shadow: var(--shadow2);
+      font-size: 14px;
+      font-weight: 900;
+      white-space: nowrap;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+      flex: 0 0 auto;
+    }
+    .pill:hover, .icon-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+    .pill:active, .icon-btn:active { transform: translateY(0); }
+    .icon-btn { width: 36px; padding: 0; }
+    .icon-btn img { width: 18px; height: 18px; opacity: 0.9; }
+    html[data-theme="dark"] .icon-btn img { filter: invert(1); opacity: 0.85; }
+
+    .container { max-width: 980px; margin: 0 auto; padding: 14px 12px 34px; }
+    .card {
+      border-radius: var(--radius-xl);
+      background: var(--card);
+      border: 0.5px solid var(--border);
+      box-shadow: var(--shadow2);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      padding: 16px;
+      margin-top: 12px;
+      min-width: 0;
+    }
+    .card h2 { margin: 0 0 10px; font-size: 16px; font-weight: 900; letter-spacing: -0.2px; }
+    .sub { color: var(--muted); font-size: 12px; }
+
+    .search {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .search input {
+      height: 42px;
+      padding: 0 14px;
+      border-radius: var(--radius-md);
+      border: 0.5px solid var(--border);
+      background: var(--card-solid);
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      min-width: 0;
+    }
+    .search input:focus { box-shadow: var(--focus); }
+    .btn {
+      height: 42px;
+      padding: 0 16px;
+      border-radius: var(--radius-md);
+      border: 0.5px solid var(--border);
+      background: rgba(142, 142, 147, 0.12);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+      white-space: nowrap;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow2); background: rgba(142, 142, 147, 0.18); }
+    .btn:active { transform: translateY(0); }
+    .btn.primary { background: var(--app-primary); color: var(--app-primary-contrast); border-color: var(--app-primary); }
+
+    .filters {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    @media (max-width: 520px) {
+      .filters { grid-template-columns: 1fr; }
+    }
+    .select {
+      height: 42px;
+      padding: 0 12px;
+      border-radius: var(--radius-md);
+      border: 0.5px solid var(--border);
+      background: var(--card-solid);
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      min-width: 0;
+    }
+    .select:focus { box-shadow: var(--focus); }
+
+    .list { display: grid; gap: 12px; margin-top: 10px; }
+    .item {
+      border-radius: var(--radius-xl);
+      border: 1px solid color-mix(in srgb, var(--border) 92%, transparent);
+      background:
+        radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--app-primary) 9%, transparent), transparent 62%),
+        radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--app-primary) 6%, transparent), transparent 70%),
+        var(--card);
+      padding: 14px;
+      min-width: 0;
+      box-shadow: var(--shadow2);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+    .item:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+      border-color: color-mix(in srgb, var(--app-primary) 28%, var(--border));
+    }
+    .item:focus { outline: none; box-shadow: var(--focus), var(--shadow); }
+
+    .item-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .item-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+
+    .qtype, .qid {
+      font-size: 11px;
+      font-weight: 900;
+      color: var(--text);
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--card-solid) 70%, transparent);
+      white-space: nowrap;
+      flex: 0 0 auto;
+    }
+
+    .content {
+      margin-top: 10px;
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .result-media img {
+      width: 100%;
+      max-height: 360px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      object-fit: contain;
+    }
+
+    .item-footer {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .item-chevron {
+      width: 18px;
+      height: 18px;
+      transition: transform 160ms ease;
+      flex: 0 0 auto;
+    }
+
+    .item.expanded .item-chevron {
+      transform: rotate(180deg);
+      color: var(--text);
+    }
+
+    .item-detail {
+      display: none;
+      border-top: 1px dashed var(--border);
+      padding-top: 12px;
+      margin-top: 12px;
+      gap: 12px;
+    }
+
+    .item.expanded .item-detail { display: grid; }
+
+    .result-label {
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .result-options ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 6px;
+    }
+
+    .result-options li {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .result-options li.correct-answer {
+      color: #16a34a;
+      font-weight: 900;
+    }
+
+    .result-answer,
+    .result-explanation {
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--card-solid) 85%, transparent);
+    }
+
+    .result-answer { border-left: 3px solid #16a34a; }
+    .result-explanation { border-left: 3px solid var(--app-primary); }
+
+    .highlight {
+      background: color-mix(in srgb, #fbbf24 35%, transparent);
+      color: inherit;
+      padding: 0 3px;
+      border-radius: 4px;
+      font-weight: 700;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .item .actions { margin-top: 12px; }
+    .item-head .actions { margin-top: 0; justify-content: flex-end; }
+    .pager .actions { margin-top: 0; }
+
+    .link {
+      height: 34px;
+      padding: 0 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--card-solid) 72%, transparent);
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+      color: var(--text);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .link:hover {
+      transform: translateY(-1px);
+      background: var(--app-primary-soft);
+      border-color: color-mix(in srgb, var(--app-primary) 28%, var(--border));
+    }
+    .link:active { transform: translateY(0); }
+    .link.primary { background: var(--app-primary); color: var(--app-primary-contrast); border-color: var(--app-primary); }
+
+    .pager {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .pager .info { font-size: 12px; color: var(--muted); }
+
+    .empty {
+      padding: 12px;
+      border-radius: var(--radius-lg);
+      border: 0.5px dashed var(--border);
+      color: var(--muted);
+      background: rgba(142, 142, 147, 0.06);
+      font-size: 13px;
+    }
+
+    .footer {
+      margin-top: 20px;
+      padding-bottom: env(safe-area-inset-bottom);
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <section class="card" aria-label="搜索条件">
+      <h2>题库内搜索</h2>
+      <div class="sub">范围限定在当前题库，可按题型筛选。</div>
+
+      <div class="search">
+        <input id="kw" type="text" value="{{ keyword }}" placeholder="搜索题干/答案/解析/关键词…" autocomplete="off"
+               onkeydown="if(event.key==='Enter'){doSearch();}" />
+        <button class="btn primary" type="button" onclick="doSearch()">搜索</button>
+      </div>
+
+      <div class="filters">
+        <select id="typeSel" class="select" onchange="doSearch()">
+          <option value="all">全部题型</option>
+          {% for t in available_types %}
+            <option value="{{ t }}" {% if type_filter == t %}selected{% endif %}>{{ t }}</option>
+          {% endfor %}
+        </select>
+        <button class="btn" type="button" onclick="goPractice()">回到练习设置</button>
+      </div>
+    </section>
+
+    <section class="card" aria-label="搜索结果">
+      <h2>结果</h2>
+      {% if not keyword %}
+        <div class="empty">请输入关键词开始搜索。</div>
+      {% else %}
+        {% if questions and questions|length > 0 %}
+          <div class="sub">第 {{ page }} / {{ total_pages }} 页</div>
+          <div class="list">
+            {% for q in questions %}
+              <div class="item" onclick="toggleExpand(this)" onkeydown="onCardKeydown(event, this)" role="button" tabindex="0" aria-expanded="false">
+                <div class="item-head">
+                  <div class="item-tags">
+                    <div class="qtype">{{ q.q_type }}</div>
+                    <div class="qid">#{{ q.id }}</div>
+                  </div>
+                  <div class="actions" onclick="event.stopPropagation()">
+                    <a class="link primary" href="/quiz?bank_id={{ bank_id }}&mode=quiz&type={{ q.q_type|urlencode }}">刷该题型</a>
+                    <a class="link" href="/user/banks/{{ bank_id }}/questions/{{ q.id }}/edit">编辑该题</a>
+                  </div>
+                </div>
+
+                <div class="content result-content" data-content="{{ q.content }}">
+                  {{ q.content|replace('\n', '<br>')|safe }}
+                </div>
+
+                {% if q.image_path %}
+                  <div class="result-media">
+                    <img src="{{ url_for('main.main_pages.serve_upload', filename=q.image_path) }}" alt="题目图片">
+                  </div>
+                {% endif %}
+
+                <div class="item-footer">
+                  <span>点击展开题目详情</span>
+                  <svg class="item-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+
+                <div class="item-detail">
+                  {% if q.options and q.options|length > 0 %}
+                    <div class="result-options">
+                      <div class="result-label">选项</div>
+                      <ul>
+                        {% for option in q.options %}
+                          <li class="{{ 'correct-answer' if option.key and option.key in q.answer else '' }}">
+                            {% if option.key %}<strong>{{ option.key }}:</strong>{% endif %}
+                            {{ option.value }}
+                          </li>
+                        {% endfor %}
+                      </ul>
+                    </div>
+                  {% endif %}
+
+                  <div class="result-answer">
+                    <div class="result-label">答案</div>
+                    <div class="result-answer-body">{{ (q.full_answer or '—')|replace('\n', '<br>')|safe }}</div>
+                  </div>
+
+                  {% if q.explanation %}
+                    <div class="result-explanation">
+                      <div class="result-label">解析</div>
+                      <div class="result-explanation-body" data-explanation="{{ q.explanation }}">{{ q.explanation|replace('\n', '<br>')|safe }}</div>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+
+          <div class="pager">
+            <div class="info">关键词：{{ keyword }} · 题型：{{ '全部' if type_filter == 'all' else type_filter }}</div>
+            <div class="actions">
+              {% if page > 1 %}
+                <a class="link" href="/user/banks/{{ bank_id }}/search?keyword={{ keyword|urlencode }}&type={{ type_filter|urlencode }}&page={{ page - 1 }}">上一页</a>
+              {% endif %}
+              {% if page < total_pages %}
+                <a class="link" href="/user/banks/{{ bank_id }}/search?keyword={{ keyword|urlencode }}&type={{ type_filter|urlencode }}&page={{ page + 1 }}">下一页</a>
+              {% endif %}
+            </div>
+          </div>
+        {% else %}
+          <div class="empty">未找到匹配结果，请换个关键词试试。</div>
+        {% endif %}
+      {% endif %}
+    </section>
+
+    <footer class="footer">By: Saksk</footer>
+  </div>
+{% endblock %}
+
+{% block body_end %}
+  <script>
+    const KEYWORD = {{ keyword|tojson }};
+
+    function doSearch(){
+      const kw = (document.getElementById('kw')?.value || '').trim();
+      const type = (document.getElementById('typeSel')?.value || 'all').trim();
+      const params = new URLSearchParams();
+      if (kw) params.set('keyword', kw);
+      if (type && type !== 'all') params.set('type', type);
+      window.location.href = `/user/banks/{{ bank_id }}/search?` + params.toString();
+    }
+    function goPractice(){
+      window.location.href = `/user/banks/{{ bank_id }}/practice`;
+    }
+
+    function toggleExpand(card) {
+      const expanded = card.classList.toggle('expanded');
+      card.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    }
+
+    function onCardKeydown(e, card) {
+      if (!e) return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleExpand(card);
+      }
+    }
+
+    function highlightText(text, keyword) {
+      if (!keyword || !text) return text;
+      const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp('(' + escaped + ')', 'gi');
+      return text.replace(regex, '<span class="highlight">$1</span>');
+    }
+
+    function applyHighlights() {
+      if (!KEYWORD) return;
+
+      document.querySelectorAll('.result-content').forEach(el => {
+        const original = el.dataset.content || el.textContent;
+        const highlighted = highlightText(original, KEYWORD).replace(/\n/g, '<br>');
+        el.innerHTML = highlighted;
+      });
+
+      document.querySelectorAll('.result-explanation-body').forEach(el => {
+        const original = el.dataset.explanation || el.textContent;
+        const highlighted = highlightText(original, KEYWORD).replace(/\n/g, '<br>');
+        el.innerHTML = highlighted;
+      });
+    }
+
+    applyHighlights();
+  </script>
+{% endblock %}

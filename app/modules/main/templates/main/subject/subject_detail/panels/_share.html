@@ -1,0 +1,14 @@
+    <div id="pageTabShare" data-tab-panel="share" hidden>
+      <section class="card" aria-label="分享题库">
+        <h2>分享</h2>
+        <div class="sub">公共题库支持“简单分享”（复制链接 / 系统分享）。</div>
+        <div class="search" style="grid-template-columns: 1fr auto; margin-top: 10px;">
+          <input id="shareUrl" type="text" readonly />
+          <button class="btn primary" type="button" onclick="copyShareUrl()">复制链接</button>
+        </div>
+        <div class="links">
+          <button class="link" type="button" onclick="nativeShare()">系统分享</button>
+        </div>
+      </section>
+    </div>
+

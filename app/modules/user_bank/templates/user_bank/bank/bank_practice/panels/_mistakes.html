@@ -1,0 +1,100 @@
+    <div id="pageTabMistakes" data-tab-panel="mistakes" hidden>
+      <section class="card" aria-label="错题范围">
+        <h2>错题</h2>
+        <div class="sub">范围固定为“错题”。支持题型/标签/模式选择，便于集中复盘。</div>
+        <div class="stats">
+          <div class="stat">
+            <div class="k">本题库错题</div>
+            <div class="v">{{ mistake_count }}</div>
+          </div>
+          <div class="stat">
+            <div class="k">推荐</div>
+            <div class="v" style="font-size:12px;font-weight:800;letter-spacing:-0.1px;color:var(--muted);">错因复盘</div>
+          </div>
+          <div class="stat">
+            <div class="k">提示</div>
+            <div class="v" style="font-size:12px;font-weight:800;letter-spacing:-0.1px;color:var(--muted);">筛选仅作用于错题范围</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" aria-label="错题中心数据">
+        <h2>错题中心</h2>
+        <div class="sub">数据概览与分布建议：按当前题型/标签筛选，优先处理高频错题以提升稳定性。</div>
+        <div class="actions">
+          <button class="action-btn" type="button" onclick="openReviewCenter('mistakes')">打开中心数据</button>
+        </div>
+      </section>
+
+      <section class="card" aria-label="题型选择-错题">
+        <h2>题型</h2>
+        <div class="sub">用于错题范围筛选（混合练习请保持“全部题型”）。</div>
+        <div class="chips" data-chip-group="type">
+          <button type="button" class="chip" data-chip-kind="type" data-val="all" onclick="selectChip('type', this)">全部题型</button>
+          {% for t in types %}
+            <button type="button" class="chip" data-chip-kind="type" data-val="{{ t }}" onclick="selectChip('type', this)">{{ t }}</button>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="card" aria-label="标签选择-错题">
+        <h2>标签</h2>
+        <div class="sub">仅对当前用户生效（题库标签）。</div>
+        <div class="chips" data-chip-group="tag">
+            <button type="button" class="chip" data-chip-kind="tag" data-val="all" onclick="selectChip('tag', this)">全部标签</button>
+            {% for tg in user_tags %}
+              <button type="button" class="chip chip-with-close" data-chip-kind="tag" data-val="{{ tg.name|e }}" onclick="selectChip('tag', this)" title="{{ tg.count }}题">
+                <span class="chip-label">{{ tg.name }}</span>
+                <span class="mini-badge">{{ tg.count }}</span>
+                <span class="chip-close" data-tag="{{ tg.name|e }}" onclick="event.stopPropagation(); deleteBankTag(this.dataset.tag);" title="删除" aria-label="删除标签">×</span>
+              </button>
+            {% endfor %}
+          </div>
+        </section>
+
+      <section class="card" aria-label="练习选项-错题">
+        <h2>练习选项</h2>
+        <div class="toggles">
+          <div class="toggle">
+            <div>
+              <div class="label">打乱题目</div>
+              <div class="desc">顺序随机，更接近实战</div>
+            </div>
+            <div class="switch" data-switch="shuffleQ" role="switch" aria-checked="false" tabindex="0" onclick="toggleSwitch('shuffleQ')"></div>
+          </div>
+          <div class="toggle">
+            <div>
+              <div class="label">打乱选项</div>
+              <div class="desc">选择题更抗“背选项”（仅选择题/多选题可用）</div>
+            </div>
+            <div class="switch" data-switch="shuffleO" role="switch" aria-checked="false" tabindex="0" onclick="toggleSwitch('shuffleO')"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" aria-label="开始-错题">
+        <div class="card-head">
+          <h2>开始</h2>
+          <div class="start-meta">
+            <div class="start-count loading" data-start-count-pill>
+              <span>当前可用</span>
+              <span class="num" data-start-count>—</span>
+              <span>题</span>
+            </div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="action-btn primary" type="button" onclick="start('quiz')">开始刷题</button>
+          <button class="action-btn" type="button" onclick="start('memo')">开始背题</button>
+        </div>
+      </section>
+      <section class="card" aria-label="清除进度-错题">
+        <h2>清除进度</h2>
+        <div class="sub">仅清除当前筛选与练习选项对应的答题记录。</div>
+        <div class="actions">
+          <button class="action-btn danger" type="button" onclick="clearPracticeProgress('quiz')">清除刷题进度</button>
+          <button class="action-btn danger" type="button" onclick="clearPracticeProgress('memo')">清除背题进度</button>
+        </div>
+      </section>
+    </div>
+

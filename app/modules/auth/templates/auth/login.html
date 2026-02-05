@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>{{ '用户登录' if mode=='login' else '用户注册' }}</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Crect width='128' height='128' rx='24' fill='%232563eb'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-size='72' font-family='Arial' fill='white'%3ES%3C/text%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Crect width='128' height='128' rx='24' fill='%232563eb'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-size='72' font-family='Arial' fill='white'%3ES%3C/text%3E%3C/svg%3E">
+  <meta name="theme-color" content="#f8fafc">
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap');
+
+    :root {
+      --bg: #f8fafc;
+      --bg-soft: #f1f5f9;
+      --panel: #ffffff;
+      --text: #0f172a;
+      --text-sub: #475569;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-strong: #1d4ed8;
+      --primary-soft: rgba(37, 99, 235, 0.12);
+      --cta: #f97316;
+      --danger: #dc2626;
+      --shadow-lg: 0 30px 80px rgba(15, 23, 42, 0.12);
+      --shadow-sm: 0 12px 24px rgba(15, 23, 42, 0.08);
+      --radius-lg: 26px;
+      --radius-md: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Source Sans 3', 'Segoe UI', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at top, rgba(37, 99, 235, 0.12), transparent 45%),
+        radial-gradient(circle at 20% 80%, rgba(249, 115, 22, 0.12), transparent 40%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .auth-shell {
+      width: 100%;
+      max-width: 1200px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 36px;
+      align-items: start;
+      position: relative;
+      z-index: 1;
+    }
+
+    .auth-left {
+      padding: 42px 40px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Lexend', sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: 1px;
+    }
+
+    .brand-name {
+      font-family: 'Lexend', sans-serif;
+      font-weight: 600;
+      font-size: 18px;
+    }
+
+    .brand-sub {
+      margin-top: 2px;
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+
+    .form-card {
+      border: none;
+      border-radius: 0;
+      padding: 0;
+      box-shadow: none;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .form-header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-family: 'Lexend', sans-serif;
+    }
+
+    .form-header p {
+      margin: 8px 0 0;
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text-sub);
+    }
+
+    .tip-message {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: var(--primary-soft);
+      color: var(--primary-strong);
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .login-tabs {
+      display: flex;
+      gap: 8px;
+      padding: 6px;
+      border-radius: 12px;
+      background: var(--bg-soft);
+    }
+
+    .login-tab {
+      flex: 1;
+      padding: 10px 12px;
+      text-align: center;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-sub);
+      background: transparent;
+      transition: all 0.2s ease;
+    }
+
+    .login-tab.active {
+      background: #ffffff;
+      color: var(--primary-strong);
+      border-color: var(--border);
+      box-shadow: 0 6px 12px rgba(15, 23, 42, 0.08);
+    }
+
+    .login-forms-container {
+      position: relative;
+      min-height: 340px;
+    }
+
+    .login-form {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+
+    .login-form.active {
+      position: relative;
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .field {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-sub);
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      font-size: 15px;
+      box-sizing: border-box;
+      background: #ffffff;
+      color: var(--text);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      -webkit-appearance: none;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.16);
+    }
+
+    button {
+      font-family: inherit;
+    }
+
+    button:focus-visible,
+    a:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    input[type="checkbox"] {
+      width: 18px !important;
+      height: 18px !important;
+      padding: 0 !important;
+      border-radius: 6px !important;
+      border: 1.5px solid rgba(15, 23, 42, 0.3) !important;
+      background: #ffffff !important;
+      cursor: pointer;
+      display: inline-grid;
+      place-content: center;
+      transition: all 0.15s ease;
+      appearance: none;
+    }
+
+    input[type="checkbox"]:hover {
+      border-color: rgba(37, 99, 235, 0.6) !important;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    }
+
+    input[type="checkbox"]:focus {
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18);
+    }
+
+    input[type="checkbox"]:checked {
+      background: var(--primary) !important;
+      border-color: var(--primary) !important;
+    }
+
+    input[type="checkbox"]:checked::after {
+      content: '';
+      width: 9px;
+      height: 5px;
+      border: 2px solid #ffffff;
+      border-top: 0;
+      border-right: 0;
+      transform: rotate(-45deg);
+      margin-top: -1px;
+    }
+
+    .btn {
+      width: 100%;
+      margin-top: 6px;
+      padding: 12px 16px;
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: background 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 10px 20px rgba(37, 99, 235, 0.25);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn:hover {
+      background: var(--primary-strong);
+    }
+
+    .btn:active {
+      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.22);
+    }
+
+    .btn[disabled],
+    .btn[data-loading="true"] {
+      opacity: 0.6;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .btn[data-loading="true"] {
+      position: relative;
+      color: transparent;
+    }
+
+    .btn[data-loading="true"]::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 18px;
+      height: 18px;
+      margin: -9px 0 0 -9px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.9);
+      border-right-color: transparent;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .link {
+      display: block;
+      text-align: center;
+      margin-top: 6px;
+      font-size: 14px;
+      color: var(--text-sub);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .link:hover {
+      color: var(--primary-strong);
+    }
+
+    .err {
+      color: var(--danger);
+      font-size: 13px;
+      margin-top: 8px;
+      min-height: 18px;
+      font-weight: 600;
+    }
+
+    .code-field {
+      display: flex;
+      gap: 8px;
+    }
+
+    .code-field input {
+      flex: 1;
+    }
+
+    .code-send-btn {
+      padding: 12px 18px;
+      background: #ffffff;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .code-send-btn:hover:not(:disabled) {
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    .code-send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .hint-text {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    .info-strip {
+      border: 1px dashed rgba(37, 99, 235, 0.35);
+      background: rgba(37, 99, 235, 0.08);
+      padding: 12px 14px;
+      border-radius: 12px;
+    }
+
+    .info-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary-strong);
+      margin-bottom: 4px;
+    }
+
+    .info-desc {
+      font-size: 13px;
+      color: var(--text-sub);
+      line-height: 1.5;
+    }
+
+    .qr-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .qr-box {
+      width: 220px;
+      height: 220px;
+      border-radius: 16px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .qr-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .qr-status {
+      font-size: 13px;
+      color: var(--text-sub);
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    .qr-actions {
+      width: 100%;
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-secondary {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      border-color: rgba(37, 99, 235, 0.4);
+      box-shadow: 0 8px 16px rgba(15, 23, 42, 0.08);
+    }
+
+    .auth-right {
+      padding: 44px 40px;
+      background: linear-gradient(140deg, #e0f2fe 0%, #eef2ff 45%, #f8fafc 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .auth-right::before {
+      content: '';
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: rgba(37, 99, 235, 0.12);
+      top: -90px;
+      right: -90px;
+    }
+
+    .auth-right::after {
+      content: '';
+      position: absolute;
+      width: 190px;
+      height: 190px;
+      border-radius: 26px;
+      background: rgba(249, 115, 22, 0.14);
+      bottom: -70px;
+      left: 30px;
+      transform: rotate(12deg);
+    }
+
+    .aside-inner {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .aside-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(37, 99, 235, 0.16);
+      color: var(--primary-strong);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      width: fit-content;
+    }
+
+    .aside-inner h2 {
+      margin: 0;
+      font-size: 28px;
+      font-family: 'Lexend', sans-serif;
+    }
+
+    .aside-inner p {
+      margin: 0;
+      color: var(--text-sub);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .feature-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 12px;
+    }
+
+    .feature-list li {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .feature-list li::before {
+      content: '';
+      width: 10px;
+      height: 10px;
+      margin-top: 6px;
+      border-radius: 999px;
+      background: var(--primary);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18);
+      flex-shrink: 0;
+    }
+
+    .trust-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 6px;
+    }
+
+    .trust-card {
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06);
+    }
+
+    .trust-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .trust-desc {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    a[href="/terms"],
+    a[href="/privacy"] {
+      color: var(--primary-strong);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    a[href="/terms"]:hover,
+    a[href="/privacy"]:hover {
+      color: var(--primary);
+      text-decoration: underline;
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border);
+      padding: 32px;
+      width: 90%;
+      max-width: 440px;
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 24px;
+      color: var(--text-sub);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .modal-close:hover {
+      background: rgba(15, 23, 42, 0.08);
+      color: var(--text);
+    }
+
+    .modal-title {
+      font-size: 22px;
+      font-weight: 600;
+      margin: 0 0 8px 0;
+      font-family: 'Lexend', sans-serif;
+    }
+
+    .modal-subtitle {
+      color: var(--text-sub);
+      font-size: 14px;
+      margin: 0 0 24px 0;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 960px) {
+      .auth-shell {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+
+      .auth-right {
+        order: 2;
+      }
+
+      .auth-left {
+        order: 1;
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 16px;
+      }
+
+      .auth-left,
+      .auth-right {
+        padding: 28px 22px;
+      }
+
+      .form-card {
+        padding: 0;
+      }
+
+      .login-tabs {
+        flex-direction: row;
+      }
+
+      .login-tab {
+        font-size: 13px;
+        padding: 10px 8px;
+        white-space: nowrap;
+      }
+
+      .code-field {
+        flex-direction: column;
+      }
+
+      .qr-box {
+        width: 200px;
+        height: 200px;
+      }
+
+      .trust-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+
+</style>
+</head>
+<body>
+  <main class="auth-shell">
+    <section class="auth-left">
+      <div class="brand">
+        <div class="brand-mark">S</div>
+        <div class="brand-text">
+          <div class="brand-name">Saksk 题库</div>
+          <div class="brand-sub">高效刷题，轻松备考</div>
+        </div>
+      </div>
+      <div class="form-card">
+        {% if mode=='login' %}
+          <div class="form-header">
+            <h1>欢迎回来</h1>
+            {% if tip_message %}
+              <div class="tip-message">{{ tip_message }}</div>
+            {% else %}
+              <p>登录后可同步收藏、错题与学习进度。</p>
+            {% endif %}
+          </div>
+
+          <div class="login-tabs">
+            <button class="login-tab active" onclick="switchLoginMode('password')" type="button">账号</button>
+            <button class="login-tab" onclick="switchLoginMode('code')" type="button">验证码</button>
+            <button class="login-tab" onclick="switchLoginMode('qr')" type="button">微信</button>
+          </div>
+
+          <div class="login-forms-container">
+          <div id="password-form" class="login-form active">
+            <div class="field">
+              <label>用户名 / 邮箱</label>
+              <input id="username" placeholder="支持用户名或邮箱" autocomplete="username" />
+              <div class="hint-text">可使用用户名或已绑定邮箱登录</div>
+            </div>
+            <div class="field">
+              <label>密码</label>
+              <input id="password" type="password" autocomplete="current-password" />
+              <div style="text-align: right; margin-top: 8px;">
+                <a href="#" onclick="event.preventDefault(); showForgotPasswordModal();" style="font-size: 13px; color: var(--primary); text-decoration: none;">忘记密码？</a>
+              </div>
+            </div>
+            <div class="field" style="margin-top: 6px; margin-bottom: 12px;">
+              <label style="text-transform:none; letter-spacing:0; display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none;">
+                <input id="remember" type="checkbox" />
+                <span style="font-size: 14px; color: var(--text-sub);">记住密码 / 保持登录</span>
+              </label>
+            </div>
+            <div class="field" style="margin-top: 6px; margin-bottom: 12px;">
+              <label style="text-transform:none; letter-spacing:0; display:flex; align-items:flex-start; gap:10px; cursor:pointer; user-select:none;">
+                <input id="agreeTerms" type="checkbox" required />
+                <span style="font-size: 13px; color: var(--text-sub); line-height: 1.5;">
+                  我已阅读并同意
+                  <a href="/terms" target="_blank" style="color: var(--primary); text-decoration: none;">《服务协议》</a>
+                  和
+                  <a href="/privacy" target="_blank" style="color: var(--primary); text-decoration: none;">《隐私保护协议》</a>
+                </span>
+              </label>
+            </div>
+            <div class="err" id="err-password"></div>
+            <button class="btn" onclick="doLogin(this)" type="button">登录</button>
+          </div>
+
+          <div id="code-form" class="login-form">
+            <div class="field">
+              <label>邮箱</label>
+              <input id="email" type="email" placeholder="请输入邮箱地址" autocomplete="email" />
+              <div class="hint-text">输入邮箱地址，未注册将自动创建账户</div>
+            </div>
+            <div class="field">
+              <label>验证码</label>
+              <div class="code-field">
+                <input id="code" type="text" placeholder="6位数字验证码" maxlength="6" autocomplete="one-time-code" />
+                <button class="code-send-btn" id="send-code-btn" onclick="sendLoginCode()" type="button">发送验证码</button>
+              </div>
+              <div class="hint-text" id="code-hint">验证码将发送到您的邮箱，有效期10分钟。未注册邮箱将自动创建账户</div>
+            </div>
+            <div class="field" style="margin-top: 6px; margin-bottom: 12px;">
+              <label style="text-transform:none; letter-spacing:0; display:flex; align-items:flex-start; gap:10px; cursor:pointer; user-select:none;">
+                <input id="agreeTermsCode" type="checkbox" required />
+                <span style="font-size: 13px; color: var(--text-sub); line-height: 1.5;">
+                  我已阅读并同意
+                  <a href="/terms" target="_blank" style="color: var(--primary); text-decoration: none;">《服务协议》</a>
+                  和
+                  <a href="/privacy" target="_blank" style="color: var(--primary); text-decoration: none;">《隐私保护协议》</a>
+                </span>
+              </label>
+            </div>
+            <div class="err" id="err-code"></div>
+            <button class="btn" onclick="doEmailLogin(this)" type="button">登录</button>
+          </div>
+
+          <div id="qr-form" class="login-form">
+            <div class="qr-wrap">
+              <div class="qr-box">
+                <img id="qr-image" alt="扫码登录二维码" style="display:none;" />
+                <div id="qr-placeholder" style="color: var(--text-sub); font-size: 14px;">正在加载...</div>
+              </div>
+              <div class="qr-status" id="qr-status">请使用小程序扫码，并在手机上点击确认登录。</div>
+              <div class="qr-actions">
+                <button class="btn-secondary" onclick="refreshQrLogin()" type="button">刷新二维码</button>
+              </div>
+            </div>
+          </div>
+          </div>
+
+          <div class="info-strip">
+            <div class="info-title">新用户提示</div>
+            <div class="info-desc">使用验证码登录，未注册邮箱将自动创建账户。</div>
+          </div>
+        {% endif %}
+
+        <a class="link" href="/">返回首页</a>
+      </div>
+    </section>
+    <aside class="auth-right">
+      <div class="aside-inner">
+        <div class="aside-tag">备考神器</div>
+        <h2>刷题提分，一站搞定</h2>
+        <p>专为学生和备考人群打造的智能题库平台，海量真题模拟，错题自动归纳，助你高效复习、轻松通关。</p>
+        <ul class="feature-list">
+          <li>海量题库覆盖多学科，真题模拟随时练</li>
+          <li>智能错题本自动收集，薄弱点一目了然</li>
+          <li>学习进度实时追踪，复习计划更科学</li>
+        </ul>
+        <div class="trust-grid">
+          <div class="trust-card">
+            <div class="trust-title">随时随地</div>
+            <div class="trust-desc">小程序与网页同步，碎片时间也能刷题</div>
+          </div>
+          <div class="trust-card">
+            <div class="trust-title">智能分析</div>
+            <div class="trust-desc">答题数据统计，精准定位薄弱环节</div>
+          </div>
+          <div class="trust-card">
+            <div class="trust-title">收藏错题</div>
+            <div class="trust-desc">重点题目一键收藏，错题自动归档</div>
+          </div>
+          <div class="trust-card">
+            <div class="trust-title">模拟考试</div>
+            <div class="trust-desc">限时答题模拟真实考场，提前适应</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+
+  <div id="forgot-password-modal" class="modal-overlay" onclick="if(event.target === this) closeForgotPasswordModal()">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeForgotPasswordModal()">×</button>
+      <h2 class="modal-title">忘记密码</h2>
+      <p class="modal-subtitle">请输入您的邮箱地址，我们将发送验证码到您的邮箱</p>
+      
+      <div class="field">
+        <label>邮箱地址</label>
+        <input id="forgot-email" type="email" placeholder="请输入已绑定的邮箱" autocomplete="email" />
+        <div class="hint-text">请输入您账户绑定的邮箱地址</div>
+      </div>
+      
+      <div class="field">
+        <label>验证码</label>
+        <div class="code-field">
+          <input id="forgot-code" type="text" placeholder="6位数字验证码" maxlength="6" autocomplete="one-time-code" />
+          <button class="code-send-btn" id="forgot-send-code-btn" onclick="sendForgotPasswordCode()">发送验证码</button>
+        </div>
+        <div class="hint-text" id="forgot-code-hint">验证码将发送到您的邮箱，有效期10分钟</div>
+      </div>
+      
+      <div class="field">
+        <label>新密码</label>
+        <input id="forgot-password" type="password" placeholder="请输入新密码" autocomplete="new-password" />
+        <div class="hint-text">密码长度至少8位，建议包含字母和数字</div>
+      </div>
+      
+      <div class="field">
+        <label>确认密码</label>
+        <input id="forgot-password-confirm" type="password" placeholder="请再次输入新密码" autocomplete="new-password" />
+      </div>
+      
+      <div class="err" id="err-forgot"></div>
+      <button class="btn" onclick="resetPassword(this)">重置密码</button>
+    </div>
+  </div>
+
+  <script>
+    function setErr(msg, formType = ''){ 
+      const errId = formType ? `err-${formType}` : 'err';
+      const errEl = document.getElementById(errId);
+      if(errEl) errEl.innerText = msg || ''; 
+    }
+    function val(id){ 
+      const el = document.getElementById(id);
+      return el ? el.value.trim() : ''; 
+    }
+
+    // 切换登录方式
+    function switchLoginMode(mode) {
+      // 更新标签状态
+      document.querySelectorAll('.login-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
+      // 切换表单显示
+      document.getElementById('password-form').classList.toggle('active', mode === 'password');
+      document.getElementById('code-form').classList.toggle('active', mode === 'code');
+      document.getElementById('qr-form').classList.toggle('active', mode === 'qr');
+      
+      // 清空错误信息
+      setErr('', 'password');
+      setErr('', 'code');
+
+      if (mode === 'qr') {
+        startQrLogin();
+      } else {
+        stopQrLogin();
+      }
+    }
+
+    // === 扫码登录 ===
+    let _qrSid = null;
+    let _qrPollTimer = null;
+    let _qrBusy = false;
+
+    function setQrStatus(msg) {
+      const el = document.getElementById('qr-status');
+      if (el) el.innerText = msg || '';
+    }
+
+    function setQrImage(url) {
+      const img = document.getElementById('qr-image');
+      const ph = document.getElementById('qr-placeholder');
+      if (!img || !ph) return;
+      if (!url) {
+        img.style.display = 'none';
+        ph.style.display = 'block';
+        return;
+      }
+      img.src = url;
+      img.style.display = 'block';
+      ph.style.display = 'none';
+    }
+
+    async function refreshQrLogin() {
+      stopQrLogin();
+      await startQrLogin();
+    }
+
+    async function startQrLogin() {
+      if (_qrBusy) return;
+      _qrBusy = true;
+      try {
+        setQrStatus('正在生成二维码…');
+        setQrImage(null);
+        const res = await fetch('/api/web_login/qrcode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const payload = await res.json();
+        if (!res.ok || payload.status !== 'success') {
+          throw new Error(payload.message || '生成二维码失败');
+        }
+        _qrSid = payload.data.sid;
+        setQrImage(payload.data.qrcode_url);
+        setQrStatus('请使用小程序扫码，并在手机上点击“确认登录”。');
+        _qrPollTimer = setInterval(pollQrLogin, 1500);
+      } catch (e) {
+        setQrStatus((e && e.message) ? e.message : '二维码加载失败');
+      } finally {
+        _qrBusy = false;
+      }
+    }
+
+    function stopQrLogin() {
+      if (_qrPollTimer) {
+        clearInterval(_qrPollTimer);
+        _qrPollTimer = null;
+      }
+      _qrSid = null;
+    }
+
+    async function pollQrLogin() {
+      if (!_qrSid) return;
+      try {
+        const res = await fetch(`/api/web_login/sessions/${encodeURIComponent(_qrSid)}`, { method: 'GET' });
+        const payload = await res.json();
+        if (!res.ok || payload.status !== 'success') return;
+        const state = payload.data.state;
+
+        if (state === 'expired') {
+          setQrStatus('二维码已过期，请刷新二维码。');
+          stopQrLogin();
+          return;
+        }
+
+        if (state === 'confirmed' && payload.data.token) {
+          setQrStatus('已确认，正在登录…');
+          stopQrLogin();
+          const ex = await fetch('/api/web_login/exchange', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: payload.data.token })
+          });
+          const exData = await ex.json();
+          if (!ex.ok || exData.status !== 'success') {
+            throw new Error(exData.message || '登录失败');
+          }
+          const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/';
+          location.href = redirectUrl || '/';
+        }
+      } catch (e) {
+        // 轮询失败不打断，减少闪动
+      }
+    }
+
+    // 密码登录
+    async function doLogin(btn){
+      setErr('', 'password');
+      const username = val('username');
+      const password = val('password');
+      
+      // 检查是否同意协议
+      const agreeTerms = document.getElementById('agreeTerms');
+      if (!agreeTerms || !agreeTerms.checked) {
+        setErr('请先阅读并同意《服务协议》和《隐私保护协议》', 'password');
+        return;
+      }
+      
+      if(!username || !password) {
+        setErr('请输入用户名/邮箱和密码', 'password');
+        return;
+      }
+      
+      btn.setAttribute('data-loading', 'true');
+      const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/';
+      
+      try {
+        const res = await fetch('/api/login', { 
+          method:'POST', 
+          headers:{'Content-Type':'application/json'}, 
+          body: JSON.stringify({ 
+            username: username, 
+            password: password,
+            remember: document.getElementById('remember') ? document.getElementById('remember').checked : false,
+            redirect: redirectUrl
+          }) 
+        });
+        const data = await res.json();
+        
+        if(!res.ok || data.status!=='success') {
+          setErr(data.message || '登录失败', 'password');
+          return;
+        }
+        
+        // 如果用户需要设置密码，保存标记到sessionStorage
+        if (data.needs_password_set) {
+          sessionStorage.setItem('needs_password_set', 'true');
+          sessionStorage.removeItem('password_set_modal_shown'); // 清除已显示标记，确保显示弹窗
+        }
+        
+        // 登录成功后跳转
+        location.href = data.redirect || redirectUrl || '/';
+      } catch(error) {
+        setErr('网络错误，请稍后重试', 'password');
+      } finally {
+        btn.removeAttribute('data-loading');
+      }
+    }
+
+    // 发送登录验证码
+    let codeCountdown = 0;
+    let codeTimer = null;
+    
+    async function sendLoginCode(){
+      const email = val('email');
+      if(!email) {
+        setErr('请输入邮箱地址', 'code');
+        return;
+      }
+      
+      // 简单的邮箱格式验证
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if(!emailRegex.test(email)) {
+        setErr('请输入有效的邮箱地址', 'code');
+        return;
+      }
+      
+      const btn = document.getElementById('send-code-btn');
+      if(codeCountdown > 0) return; // 倒计时中不允许重复发送
+      
+      btn.setAttribute('data-loading', 'true');
+      setErr('', 'code');
+      
+      try {
+        const res = await fetch('/api/email/send-login-code', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ email: email })
+        });
+        const data = await res.json();
+        
+        if(data.status === 'success') {
+          // 开始倒计时
+          codeCountdown = 60;
+          startCodeCountdown();
+          setErr('验证码已发送，请查收邮件', 'code');
+          document.getElementById('code-hint').textContent = '验证码已发送，请查收邮件（60秒后可重新发送）。未注册邮箱将自动创建账户';
+        } else {
+          setErr(data.message || '发送验证码失败', 'code');
+        }
+      } catch(error) {
+        setErr('网络错误，请稍后重试', 'code');
+      } finally {
+        btn.removeAttribute('data-loading');
+      }
+    }
+    
+    // 验证码倒计时
+    function startCodeCountdown() {
+      const btn = document.getElementById('send-code-btn');
+      const hint = document.getElementById('code-hint');
+      
+      if(codeTimer) clearInterval(codeTimer);
+      
+      codeTimer = setInterval(() => {
+        codeCountdown--;
+        if(codeCountdown > 0) {
+          btn.disabled = true;
+          btn.textContent = `${codeCountdown}秒后重发`;
+          hint.textContent = `验证码已发送，${codeCountdown}秒后可重新发送`;
+        } else {
+          btn.disabled = false;
+          btn.textContent = '发送验证码';
+          hint.textContent = '验证码将发送到您的邮箱，有效期10分钟';
+          clearInterval(codeTimer);
+          codeTimer = null;
+        }
+      }, 1000);
+    }
+
+    // 显示忘记密码模态框
+    function showForgotPasswordModal() {
+      document.getElementById('forgot-password-modal').classList.add('active');
+      // 清空表单
+      document.getElementById('forgot-email').value = '';
+      document.getElementById('forgot-code').value = '';
+      document.getElementById('forgot-password').value = '';
+      document.getElementById('forgot-password-confirm').value = '';
+      setErr('', 'forgot');
+      // 重置发送验证码按钮
+      const btn = document.getElementById('forgot-send-code-btn');
+      btn.disabled = false;
+      btn.textContent = '发送验证码';
+      if(forgotCodeTimer) {
+        clearInterval(forgotCodeTimer);
+        forgotCodeTimer = null;
+      }
+      forgotCodeCountdown = 0;
+    }
+    
+    // 关闭忘记密码模态框
+    function closeForgotPasswordModal() {
+      document.getElementById('forgot-password-modal').classList.remove('active');
+    }
+    
+    // 忘记密码验证码倒计时
+    let forgotCodeCountdown = 0;
+    let forgotCodeTimer = null;
+    
+    // 发送忘记密码验证码
+    async function sendForgotPasswordCode() {
+      const email = document.getElementById('forgot-email').value.trim();
+      if(!email) {
+        setErr('请输入邮箱地址', 'forgot');
+        return;
+      }
+      
+      // 简单的邮箱格式验证
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if(!emailRegex.test(email)) {
+        setErr('请输入有效的邮箱地址', 'forgot');
+        return;
+      }
+      
+      const btn = document.getElementById('forgot-send-code-btn');
+      if(forgotCodeCountdown > 0) return; // 倒计时中不允许重复发送
+      
+      btn.setAttribute('data-loading', 'true');
+      setErr('', 'forgot');
+      
+      try {
+        const res = await fetch('/api/forgot-password/send-code', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ email: email })
+        });
+        const data = await res.json();
+        
+        if(data.status === 'success') {
+          // 开始倒计时
+          forgotCodeCountdown = 60;
+          startForgotCodeCountdown();
+          setErr('验证码已发送，请查收邮件', 'forgot');
+          document.getElementById('forgot-code-hint').textContent = '验证码已发送，请查收邮件（60秒后可重新发送）';
+        } else {
+          setErr(data.message || '发送验证码失败', 'forgot');
+        }
+      } catch(error) {
+        setErr('网络错误，请稍后重试', 'forgot');
+      } finally {
+        btn.removeAttribute('data-loading');
+      }
+    }
+    
+    // 忘记密码验证码倒计时
+    function startForgotCodeCountdown() {
+      const btn = document.getElementById('forgot-send-code-btn');
+      const hint = document.getElementById('forgot-code-hint');
+      
+      if(forgotCodeTimer) clearInterval(forgotCodeTimer);
+      
+      forgotCodeTimer = setInterval(() => {
+        forgotCodeCountdown--;
+        if(forgotCodeCountdown > 0) {
+          btn.disabled = true;
+          btn.textContent = `${forgotCodeCountdown}秒后重发`;
+          hint.textContent = `验证码已发送，${forgotCodeCountdown}秒后可重新发送`;
+        } else {
+          btn.disabled = false;
+          btn.textContent = '发送验证码';
+          hint.textContent = '验证码将发送到您的邮箱，有效期10分钟';
+          clearInterval(forgotCodeTimer);
+          forgotCodeTimer = null;
+        }
+      }, 1000);
+    }
+    
+    // 重置密码
+    async function resetPassword(btn) {
+      setErr('', 'forgot');
+      const email = document.getElementById('forgot-email').value.trim();
+      const code = document.getElementById('forgot-code').value.trim();
+      const password = document.getElementById('forgot-password').value;
+      const passwordConfirm = document.getElementById('forgot-password-confirm').value;
+      
+      if(!email) {
+        setErr('请输入邮箱地址', 'forgot');
+        return;
+      }
+      if(!code) {
+        setErr('请输入验证码', 'forgot');
+        return;
+      }
+      if(code.length !== 6 || !/^\d{6}$/.test(code)) {
+        setErr('验证码为6位数字', 'forgot');
+        return;
+      }
+      if(!password) {
+        setErr('请输入新密码', 'forgot');
+        return;
+      }
+      if(password.length < 8) {
+        setErr('密码长度至少8位', 'forgot');
+        return;
+      }
+      if(password !== passwordConfirm) {
+        setErr('两次输入的密码不一致', 'forgot');
+        return;
+      }
+      
+      btn.setAttribute('data-loading', 'true');
+      
+      try {
+        const res = await fetch('/api/forgot-password/reset', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ 
+            email: email, 
+            code: code,
+            new_password: password
+          })
+        });
+        const data = await res.json();
+        
+        if(!res.ok || data.status !== 'success') {
+          setErr(data.message || '重置密码失败', 'forgot');
+          return;
+        }
+        
+        // 重置密码成功
+        setErr('密码重置成功，请使用新密码登录', 'forgot');
+        setTimeout(() => {
+          closeForgotPasswordModal();
+          // 切换到密码登录表单
+          switchLoginMode('password');
+          // 自动填充邮箱
+          document.getElementById('username').value = email;
+        }, 1500);
+      } catch(error) {
+        setErr('网络错误，请稍后重试', 'forgot');
+      } finally {
+        btn.removeAttribute('data-loading');
+      }
+    }
+
+    // 验证码登录
+    async function doEmailLogin(btn){
+      setErr('', 'code');
+      const email = val('email');
+      const code = val('code');
+      
+      // 检查是否同意协议
+      const agreeTermsCode = document.getElementById('agreeTermsCode');
+      if (!agreeTermsCode || !agreeTermsCode.checked) {
+        setErr('请先阅读并同意《服务协议》和《隐私保护协议》', 'code');
+        return;
+      }
+      
+      if(!email) {
+        setErr('请输入邮箱地址', 'code');
+        return;
+      }
+      if(!code) {
+        setErr('请输入验证码', 'code');
+        return;
+      }
+      if(code.length !== 6 || !/^\d{6}$/.test(code)) {
+        setErr('验证码为6位数字', 'code');
+        return;
+      }
+      
+      btn.setAttribute('data-loading', 'true');
+      const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/';
+      
+      try {
+        const res = await fetch('/api/email/login', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ 
+            email: email, 
+            code: code,
+            redirect: redirectUrl
+          })
+        });
+        const data = await res.json();
+        
+        if(!res.ok || data.status !== 'success') {
+          setErr(data.message || '登录失败', 'code');
+          return;
+        }
+        
+        // 如果用户需要设置密码，保存标记到sessionStorage
+        if (data.needs_password_set) {
+          sessionStorage.setItem('needs_password_set', 'true');
+          sessionStorage.removeItem('password_set_modal_shown'); // 清除已显示标记，确保显示弹窗
+        }
+        
+        // 登录成功后跳转
+        location.href = data.redirect || redirectUrl || '/';
+      } catch(error) {
+        setErr('网络错误，请稍后重试', 'code');
+      } finally {
+        btn.removeAttribute('data-loading');
+      }
+    }
+
+    
+    // 回车键登录
+    document.addEventListener('DOMContentLoaded', function() {
+      // 密码登录表单回车
+      const passwordForm = document.getElementById('password-form');
+      if(passwordForm) {
+        ['username', 'password'].forEach(id => {
+          const el = document.getElementById(id);
+          if(el) {
+            el.addEventListener('keypress', function(e) {
+              if(e.key === 'Enter') {
+                document.querySelector('#password-form .btn').click();
+              }
+            });
+          }
+        });
+      }
+      
+      // 验证码登录表单回车
+      const codeForm = document.getElementById('code-form');
+      if(codeForm) {
+        ['email', 'code'].forEach(id => {
+          const el = document.getElementById(id);
+          if(el) {
+            el.addEventListener('keypress', function(e) {
+              if(e.key === 'Enter') {
+                if(id === 'email') {
+                  document.getElementById('send-code-btn').click();
+                } else {
+                  document.querySelector('#code-form .btn').click();
+                }
+              }
+            });
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>

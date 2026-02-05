@@ -1,0 +1,322 @@
+{% extends "main/settings/shell.html" %}
+{% block settings_title %}设置 · 主题{% endblock %}
+{% block settings_header_title %}主题{% endblock %}
+{% block settings_header_sub %}调整网页端主色与背景氛围。{% endblock %}
+
+{% block settings_head_extra %}
+  <style>
+    .set-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: center;
+      padding: 14px 0;
+      border-top: 1px solid var(--acc-border);
+      min-width: 0;
+    }
+    .set-row:first-of-type { border-top: none; }
+
+    .set-name { font-size: 14px; font-weight: 850; letter-spacing: -0.1px; color: var(--acc-text); }
+    .set-desc { margin-top: 6px; font-size: 13px; color: var(--acc-muted); line-height: 1.5; }
+
+    .set-chips {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+    .set-chip {
+      height: 38px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid var(--acc-border);
+      background: var(--acc-btn-secondary-bg);
+      color: var(--acc-text);
+      font-size: 13px;
+      font-weight: 850;
+      letter-spacing: -0.1px;
+      cursor: pointer;
+      transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease, background 140ms ease;
+      white-space: nowrap;
+    }
+    .set-chip:hover { transform: translateY(-1px); box-shadow: var(--acc-shadow-soft); }
+    .set-chip:active { transform: translateY(0); }
+    .set-chip.active {
+      background: var(--acc-btn-primary-bg);
+      border-color: var(--acc-btn-primary-border);
+      box-shadow: var(--acc-shadow-soft);
+    }
+    .set-chip:focus { outline: none; border-color: var(--acc-focus-border); box-shadow: 0 0 0 3px var(--acc-focus-ring); }
+
+    .set-section { scroll-margin-top: 80px; }
+
+    @media (max-width: 860px) {
+      .set-row { grid-template-columns: 1fr; }
+      .set-chips { justify-content: flex-start; }
+    }
+  </style>
+{% endblock %}
+
+{% block settings_content %}
+  <div class="acc-msg" id="themeMsg" role="status" aria-live="polite"></div>
+
+  <section class="acc-card set-section" id="theme-mode" aria-labelledby="themeModeTitle">
+    <h2 class="acc-card-title" id="themeModeTitle">主题模式</h2>
+    <p class="acc-card-sub">浅色 / 深色 / 跟随系统（本机生效，不同步）。</p>
+    <div class="acc-divider"></div>
+
+    <div class="set-row">
+      <div>
+        <div class="set-name">模式</div>
+        <div class="set-desc">跟随系统时，会根据操作系统主题自动切换。</div>
+      </div>
+      <div class="set-chips" role="group" aria-label="主题模式">
+        <button type="button" class="set-chip" data-theme-mode="light" aria-pressed="false">浅色</button>
+        <button type="button" class="set-chip" data-theme-mode="dark" aria-pressed="false">深色</button>
+        <button type="button" class="set-chip" data-theme-mode="system" aria-pressed="false">跟随系统</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="acc-card set-section" id="theme-style" aria-labelledby="themeStyleTitle">
+    <h2 class="acc-card-title" id="themeStyleTitle">页面风格主题</h2>
+    <p class="acc-card-sub">调整网页端主色与背景氛围，会随设置同步到云端（已登录）。</p>
+    <div class="acc-divider"></div>
+
+    <div class="set-row">
+      <div>
+        <div class="set-name">风格</div>
+        <div class="set-desc">默认保留现有风格，也可切换到更清爽的主题。</div>
+      </div>
+      <div class="set-chips" role="group" aria-label="主题风格">
+        <button type="button" class="set-chip" data-theme-style="default" aria-pressed="false">默认</button>
+        <button type="button" class="set-chip" data-theme-style="mist" aria-pressed="false">雾蓝</button>
+        <button type="button" class="set-chip" data-theme-style="dune" aria-pressed="false">暖砂</button>
+        <button type="button" class="set-chip" data-theme-style="pine" aria-pressed="false">岩松</button>
+        <button type="button" class="set-chip" data-theme-style="celadon" aria-pressed="false">影青</button>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+
+{% block settings_body_end %}
+  <script>
+    (function(){
+      const HOME_VISIBLE_SUBJECTS_KEY = 'home_visible_subjects';
+      const SETTINGS_SYNC_KEY = 'user_settings_v1';
+      const QUIZ_HOTKEYS_KEY = 'quiz_hotkeys_v1';
+      const QUIZ_FAB_ENABLED_KEY = 'quiz_fab_enabled_v1';
+      const QUIZ_LAYOUT_THEME_KEY = 'quiz_layout_theme_v1';
+      const THEME_STYLE_KEY = 'app_theme_style_v1';
+      const THEME_STYLE_LIST = ['default', 'mist', 'dune', 'pine', 'celadon'];
+      const THEME_STYLE_LABELS = {
+        default: '默认',
+        mist: '雾蓝',
+        dune: '暖砂',
+        pine: '岩松',
+        celadon: '影青'
+      };
+
+      const DEFAULT_QUIZ_HOTKEYS = {
+        prev_question: 'ArrowLeft',
+        next_question: 'ArrowRight',
+        toggle_favorite: 'KeyF',
+        choose_option_1: 'Digit1',
+        choose_option_2: 'Digit2',
+        choose_option_3: 'Digit3',
+        choose_option_4: 'Digit4',
+        blank_prev: 'ArrowUp',
+        blank_next: 'ArrowDown',
+        submit_or_next: 'Enter'
+      };
+
+      const msgEl = document.getElementById('themeMsg');
+      const modeBtns = Array.from(document.querySelectorAll('[data-theme-mode]'));
+      const styleBtns = Array.from(document.querySelectorAll('[data-theme-style]'));
+
+      function showMsg(text){
+        if (!msgEl) return;
+        const t = (text || '').trim();
+        if (!t) { msgEl.style.display = 'none'; msgEl.textContent = ''; return; }
+        msgEl.textContent = t;
+        msgEl.style.display = 'block';
+      }
+
+      function getThemeMode(){
+        try {
+          const stored = localStorage.getItem('theme');
+          if (stored === 'dark' || stored === 'light') return stored;
+        } catch(e) {}
+        return 'system';
+      }
+
+      function setThemeMode(mode){
+        const m = (mode === 'dark' || mode === 'light') ? mode : 'system';
+        try {
+          const api = window.__sakApp && window.__sakApp.theme;
+          if (api && typeof api.setMode === 'function') {
+            api.setMode(m);
+            return;
+          }
+        } catch(e) {}
+
+        try {
+          if (m === 'system') localStorage.removeItem('theme');
+          else localStorage.setItem('theme', m);
+        } catch(e) {}
+
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = (m === 'system') ? (prefersDark ? 'dark' : 'light') : m;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.body.classList.toggle('dark-mode', theme === 'dark');
+        try {
+          document.querySelector('meta[name=\"theme-color\"]')?.setAttribute('content', theme === 'dark' ? '#0B0B0C' : '#F6F7F8');
+        } catch(e) {}
+      }
+
+      function applyThemeModeToUI(){
+        const mode = getThemeMode();
+        modeBtns.forEach(btn => {
+          const key = String(btn.getAttribute('data-theme-mode') || 'system');
+          const active = key === mode;
+          btn.classList.toggle('active', active);
+          btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+      }
+
+      function getVisibleSubjects(){
+        try {
+          const arr = JSON.parse(localStorage.getItem(HOME_VISIBLE_SUBJECTS_KEY) || '[]');
+          return Array.isArray(arr) ? arr : [];
+        } catch(e) { return []; }
+      }
+      function setVisibleSubjects(arr){
+        localStorage.setItem(HOME_VISIBLE_SUBJECTS_KEY, JSON.stringify(Array.isArray(arr) ? arr : []));
+      }
+
+      function isQuizFabEnabled(){ return localStorage.getItem(QUIZ_FAB_ENABLED_KEY) !== '0'; }
+      function setQuizFabEnabled(on){ localStorage.setItem(QUIZ_FAB_ENABLED_KEY, on ? '1' : '0'); }
+      function getQuizLayoutTheme(){ return localStorage.getItem(QUIZ_LAYOUT_THEME_KEY) || 'traditional'; }
+      function setQuizLayoutTheme(theme){ localStorage.setItem(QUIZ_LAYOUT_THEME_KEY, theme); }
+      function getThemeStyle(){
+        const stored = localStorage.getItem(THEME_STYLE_KEY) || 'default';
+        return THEME_STYLE_LIST.includes(stored) ? stored : 'default';
+      }
+      function setThemeStyle(style){
+        const next = THEME_STYLE_LIST.includes(style) ? style : 'default';
+        localStorage.setItem(THEME_STYLE_KEY, next);
+        document.documentElement.setAttribute('data-theme-style', next);
+      }
+
+      function getHotkeys(){
+        try {
+          const js = JSON.parse(localStorage.getItem(QUIZ_HOTKEYS_KEY) || 'null');
+          if (!js || typeof js !== 'object') return { ...DEFAULT_QUIZ_HOTKEYS };
+          const result = { ...DEFAULT_QUIZ_HOTKEYS };
+          for (const key in js) {
+            if (key in DEFAULT_QUIZ_HOTKEYS) {
+              if (js[key] !== undefined) result[key] = js[key];
+            }
+          }
+          return result;
+        } catch(e) { return { ...DEFAULT_QUIZ_HOTKEYS }; }
+      }
+
+      function setHotkeys(obj){
+        const merged = { ...DEFAULT_QUIZ_HOTKEYS };
+        if (obj && typeof obj === 'object') {
+          for (const key in obj) {
+            if (key in DEFAULT_QUIZ_HOTKEYS) merged[key] = obj[key];
+          }
+        }
+        localStorage.setItem(QUIZ_HOTKEYS_KEY, JSON.stringify(merged));
+      }
+
+      function collectSettings(){
+        return {
+          version: 1,
+          home_visible_subjects: getVisibleSubjects(),
+          quiz_hotkeys_v1: getHotkeys(),
+          quiz_fab_enabled_v1: isQuizFabEnabled(),
+          quiz_layout_theme_v1: getQuizLayoutTheme(),
+          app_theme_style_v1: getThemeStyle(),
+          updated_at: Date.now()
+        };
+      }
+
+      async function syncSettingsToServer(){
+        try {
+          const payload = collectSettings();
+          await fetch('/api/progress', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: SETTINGS_SYNC_KEY, data: payload })
+          });
+        } catch(e) {}
+      }
+
+      async function loadSettingsFromServerAndMerge(){
+        try {
+          const res = await fetch(`/api/progress?key=${encodeURIComponent(SETTINGS_SYNC_KEY)}`);
+          if (!res.ok) return;
+          const js = await res.json().catch(()=> ({}));
+          if (!js || js.status !== 'success' || !js.data) return;
+
+          const remote = js.data || {};
+          const remoteTs = Number(remote.updated_at || 0);
+          const localTs = Number(localStorage.getItem('settings_updated_at') || '0');
+
+          if (remoteTs > localTs) {
+            setVisibleSubjects(Array.isArray(remote.home_visible_subjects) ? remote.home_visible_subjects : []);
+            if (typeof remote.quiz_fab_enabled_v1 !== 'undefined') setQuizFabEnabled(!!remote.quiz_fab_enabled_v1);
+            if (typeof remote.quiz_layout_theme_v1 === 'string') setQuizLayoutTheme(remote.quiz_layout_theme_v1 === 'card' ? 'card' : 'traditional');
+            if (typeof remote.app_theme_style_v1 === 'string') setThemeStyle(remote.app_theme_style_v1);
+            if (remote.quiz_hotkeys_v1 && typeof remote.quiz_hotkeys_v1 === 'object') {
+              setHotkeys(remote.quiz_hotkeys_v1);
+            }
+            localStorage.setItem('settings_updated_at', String(remoteTs));
+          } else if (localTs > remoteTs) {
+            await syncSettingsToServer();
+          }
+        } catch(e) {}
+      }
+
+      function applyThemeStyleToUI(){
+        const current = getThemeStyle();
+        setThemeStyle(current);
+        styleBtns.forEach(btn => {
+          const key = String(btn.getAttribute('data-theme-style') || '');
+          const active = key === current;
+          btn.classList.toggle('active', active);
+          btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+      }
+
+      modeBtns.forEach(btn => btn.addEventListener('click', function(){
+        const key = String(btn.getAttribute('data-theme-mode') || 'system');
+        const next = (key === 'dark' || key === 'light') ? key : 'system';
+        setThemeMode(next);
+        applyThemeModeToUI();
+        showMsg(next === 'system' ? '已切换为跟随系统' : (next === 'dark' ? '已切换为深色模式' : '已切换为浅色模式'));
+      }));
+
+      styleBtns.forEach(btn => btn.addEventListener('click', async function(){
+        const key = String(btn.getAttribute('data-theme-style') || 'default');
+        const next = THEME_STYLE_LIST.includes(key) ? key : 'default';
+        setThemeStyle(next);
+        applyThemeStyleToUI();
+        localStorage.setItem('settings_updated_at', String(Date.now()));
+        await syncSettingsToServer();
+        const label = THEME_STYLE_LABELS[next] || '默认';
+        showMsg(`已切换到${label}主题`);
+      }));
+
+      loadSettingsFromServerAndMerge().finally(() => {
+        applyThemeModeToUI();
+        applyThemeStyleToUI();
+      });
+    })();
+  </script>
+{% endblock %}

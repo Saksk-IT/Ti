@@ -1,0 +1,45 @@
+<!-- bank-join.wxml - 题库加入确认页（支持 token / 分享码） -->
+<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}} bank-join-page">
+  <view class="bank-join-container">
+    <view class="card">
+      <view class="head">
+        <text class="title">{{mode === 'token' ? (loading ? '正在加入题库…' : (errorMsg ? '加入失败' : '加入题库')) : '输入分享码加入'}}</text>
+        <text class="sub" wx:if="{{mode === 'token' && !errorMsg}}">打开分享将自动加入，无需确认。</text>
+        <text class="sub" wx:if="{{errorMsg}}">{{errorMsg}}</text>
+      </view>
+
+      <view class="form" wx:if="{{mode !== 'token'}}">
+        <text class="label">分享码</text>
+        <input
+          class="input"
+          placeholder="如: ABC123"
+          maxlength="6"
+          value="{{shareCode}}"
+          bindinput="onShareCodeInput"
+        />
+        <text class="hint">可在「题库 → 个人题库 → 分享管理」生成分享码。</text>
+      </view>
+
+      <view class="actions">
+        <view class="btn btn-primary" wx:if="{{mode !== 'token'}}" bindtap="onJoinByCodeTap">
+          <text>加入</text>
+        </view>
+        <view class="btn btn-primary" wx:if="{{mode === 'token' && errorMsg}}" bindtap="onRetry">
+          <text>重试</text>
+        </view>
+        <view class="btn" bindtap="onCancel">
+          <text>返回首页</text>
+        </view>
+      </view>
+
+      <view class="loading" wx:if="{{loading}}">
+        <text>处理中...</text>
+      </view>
+
+      <view class="alt" wx:if="{{mode === 'token'}}">
+        <text class="alt-text">也可以改用分享码加入：</text>
+        <view class="alt-btn" bindtap="onSwitchToCode"><text>输入分享码</text></view>
+      </view>
+    </view>
+  </view>
+</view>

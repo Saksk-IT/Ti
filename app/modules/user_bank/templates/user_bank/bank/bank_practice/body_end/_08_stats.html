@@ -1,0 +1,508 @@
+    var statsState = {
+      days: 14,
+      subtab: 'global',
+      loading: false,
+      loadedKey: '',
+      data: null,
+    };
+
+    try {
+      const savedSub = String(localStorage.getItem(KEY_DATA_SUBTAB) || '').trim().toLowerCase();
+      if (savedSub === 'global' || savedSub === 'mistakes' || savedSub === 'favorites') statsState.subtab = savedSub;
+    } catch (e) {}
+
+    function statsSourceForSubTab(subtab){
+      const t = String(subtab || '').trim().toLowerCase();
+      if (t === 'mistakes') return 'mistakes';
+      if (t === 'favorites') return 'favorites';
+      return 'all';
+    }
+
+    function getStatsSource(){
+      return statsSourceForSubTab(statsState.subtab || 'global');
+    }
+
+    function syncStatsSubTabUI(){
+      if (!statsState) return;
+      const cur = String(statsState.subtab || 'global');
+      document.querySelectorAll('[data-stats-tab]').forEach((btn) => {
+        const key = String(btn?.dataset?.statsTab || '').trim().toLowerCase();
+        btn.classList.toggle('active', key === cur);
+      });
+    }
+
+    function setStatsSubTab(subtab){
+      if (!statsState) return;
+      const raw = String(subtab || '').trim().toLowerCase();
+      const next = (raw === 'mistakes' || raw === 'favorites') ? raw : 'global';
+      if (next === statsState.subtab) return;
+      statsState.subtab = next;
+      try { localStorage.setItem(KEY_DATA_SUBTAB, next); } catch (e) {}
+      syncStatsSubTabUI();
+      statsState.loadedKey = '';
+      ensureStats();
+    }
+
+    function syncStatsDaysUI(){
+      if (!statsState) return;
+      const d = Number(statsState.days || 14) || 14;
+      document.querySelectorAll('#statsDaysChips .chip[data-days]').forEach((btn) => {
+        btn.classList.toggle('active', Number(btn.dataset.days || 0) === d);
+      });
+    }
+
+    function cssVar(name, fallback){
+      try {
+        const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        return v || fallback;
+      } catch (e) {
+        return fallback;
+      }
+    }
+
+    function formatLastActivity(value){
+      const raw = String(value || '').trim();
+      if (!raw) return '—';
+      try {
+        const s = raw.includes('T') ? raw : raw.replace(' ', 'T');
+        const d = new Date(s);
+        if (!Number.isNaN(d.getTime())) {
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          const hh = String(d.getHours()).padStart(2, '0');
+          const mm = String(d.getMinutes()).padStart(2, '0');
+          return `${y}-${m}-${day} ${hh}:${mm}`;
+        }
+      } catch (e) {}
+      return raw;
+    }
+
+    function setText(id, v){
+      const el = document.getElementById(id);
+      if (el) el.textContent = String(v ?? '—');
+    }
+
+    function drawTrendChart(){
+      const canvas = document.getElementById('statsTrendCanvas');
+      const empty = document.getElementById('statsTrendEmpty');
+      if (!canvas) return;
+
+      const trend = Array.isArray(statsState.data?.trend) ? statsState.data.trend : [];
+      const maxAnswered = trend.reduce((m, it) => Math.max(m, Number(it?.answered || 0) || 0), 0);
+
+      if (!trend.length || maxAnswered <= 0) {
+        if (empty) empty.hidden = false;
+        const ctx0 = canvas.getContext('2d');
+        if (ctx0) ctx0.clearRect(0, 0, canvas.width || 0, canvas.height || 0);
+        return;
+      }
+      if (empty) empty.hidden = true;
+
+      const w = canvas.clientWidth || 320;
+      const h = canvas.clientHeight || 160;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+
+      const padX = 6;
+      const padTop = 10;
+      const padBottom = 18;
+      const chartH = h - padTop - padBottom;
+      const n = trend.length;
+      const gap = Math.max(2, Math.min(6, Math.floor(w / (n * 10))));
+      const barW = Math.max(3, Math.floor((w - padX * 2 - gap * (n - 1)) / n));
+
+      const border = cssVar('--border', 'rgba(0,0,0,0.15)');
+      const fill = cssVar('--primary', cssVar('--app-primary', '#111827'));
+      const axis = cssVar('--muted', 'rgba(0,0,0,0.55)');
+
+      ctx.lineWidth = 1;
+      ctx.font = '11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+
+      trend.forEach((it, i) => {
+        const answered = Number(it?.answered || 0) || 0;
+        const correct = Math.min(answered, Number(it?.correct || 0) || 0);
+
+        const x = padX + i * (barW + gap);
+        const barH = Math.max(0, Math.round((answered / maxAnswered) * chartH));
+        const fillH = Math.max(0, Math.round((correct / maxAnswered) * chartH));
+        const y = padTop + (chartH - barH);
+        const fy = padTop + (chartH - fillH);
+
+        ctx.strokeStyle = border;
+        ctx.strokeRect(x + 0.5, y + 0.5, Math.max(1, barW - 1), Math.max(1, barH - 1));
+
+        ctx.fillStyle = fill;
+        if (fillH > 0) {
+          ctx.fillRect(x + 1, fy + 1, Math.max(1, barW - 2), Math.max(1, fillH - 2));
+        }
+
+        const show = (i === 0) || (i === n - 1) || (n >= 9 && i === Math.floor(n / 2));
+        if (show) {
+          const day = String(it?.day || '');
+          const label = day ? day.slice(5) : '';
+          ctx.fillStyle = axis;
+          ctx.fillText(label, x + barW / 2, padTop + chartH + 4);
+        }
+      });
+    }
+
+    function renderByTypeTable(){
+      const tbody = document.querySelector('#statsByTypeTable tbody');
+      if (!tbody) return;
+      const items = Array.isArray(statsState.data?.by_type) ? statsState.data.by_type : [];
+      if (!items.length) {
+        tbody.innerHTML = `<tr><td colspan="6" style="color:var(--muted);font-weight:900;">暂无数据</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = items
+        .map((it) => {
+          const t = escapeHtml(it?.q_type || '未知');
+          const total = Number(it?.total || 0) || 0;
+          const answered = Number(it?.answered || 0) || 0;
+          const accuracy = Number(it?.accuracy || 0) || 0;
+          const completion = Number(it?.completion || 0) || 0;
+          const fav = Number(it?.favorites || 0) || 0;
+          const mis = Number(it?.mistakes || 0) || 0;
+          const barW = Math.max(0, Math.min(100, completion));
+          return `
+            <tr>
+              <td>${t}</td>
+              <td>${answered}/${total}</td>
+              <td>${accuracy.toFixed(1)}%</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div class="bar" aria-hidden="true"><span style="width:${barW}%;"></span></div>
+                  <span style="color:var(--muted);font-weight:900;">${completion.toFixed(1)}%</span>
+                </div>
+              </td>
+              <td>${fav}</td>
+              <td>${mis}</td>
+            </tr>
+          `;
+        })
+        .join('');
+    }
+
+    function renderDiffTable(){
+      const card = document.getElementById('statsDiffCard');
+      const tbody = document.querySelector('#statsDiffTable tbody');
+      if (!card || !tbody) return;
+      const items = Array.isArray(statsState.data?.by_difficulty) ? statsState.data.by_difficulty : [];
+      if (!items.length) {
+        card.hidden = true;
+        return;
+      }
+      card.hidden = false;
+      tbody.innerHTML = items
+        .map((it) => {
+          const label = escapeHtml(it?.label || String(it?.difficulty || ''));
+          const total = Number(it?.total || 0) || 0;
+          const answered = Number(it?.answered || 0) || 0;
+          const accuracy = Number(it?.accuracy || 0) || 0;
+          const completion = Number(it?.completion || 0) || 0;
+          const barW = Math.max(0, Math.min(100, completion));
+          return `
+            <tr>
+              <td>${label}</td>
+              <td>${answered}/${total}</td>
+              <td>${accuracy.toFixed(1)}%</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div class="bar" aria-hidden="true"><span style="width:${barW}%;"></span></div>
+                  <span style="color:var(--muted);font-weight:900;">${completion.toFixed(1)}%</span>
+                </div>
+              </td>
+            </tr>
+          `;
+        })
+        .join('');
+    }
+
+    function renderAdvice(){
+      const list = document.getElementById('statsAdviceList');
+      if (!list) return;
+      const items = Array.isArray(statsState.data?.advice) ? statsState.data.advice : [];
+      if (!items.length) {
+        list.innerHTML = `<div class="advice"><div class="t">暂无建议</div><div class="c">先完成一些练习后，这里会给出更贴合你的建议。</div></div>`;
+        return;
+      }
+      list.innerHTML = items
+        .map((it) => {
+          const t = escapeHtml(it?.title || '建议');
+          const c = escapeHtml(it?.content || '');
+          return `<div class="advice"><div class="t">${t}</div><div class="c">${c}</div></div>`;
+        })
+        .join('');
+    }
+
+    function renderStats(){
+      const d = statsState.data || {};
+      const total = Number(d.total_count || 0) || 0;
+      const answered = Number(d.answered || 0) || 0;
+      const correct = Number(d.correct || 0) || 0;
+      const wrong = Number(d.wrong || 0) || 0;
+      const accuracy = Number(d.accuracy || 0) || 0;
+      const completion = Number(d.completion || 0) || 0;
+      const favorites = Number(d.favorites || 0) || 0;
+      const mistakes = Number(d.mistakes || 0) || 0;
+      const mistakesTimes = Number(d.mistakes_times || 0) || 0;
+      const streak = Number(d.streak_days || 0) || 0;
+      const last = formatLastActivity(d.last_activity);
+
+      const source = getStatsSource();
+      const scopeLabel = source === 'favorites' ? '收藏' : (source === 'mistakes' ? '错题' : '全局');
+
+      setText('statsTotal', total);
+      setText('statsAnswered', answered);
+      setText('statsCorrect', correct);
+      setText('statsWrong', wrong);
+      setText('statsAccuracy', `${accuracy.toFixed(1)}%`);
+      setText('statsCompletion', `${completion.toFixed(1)}%`);
+      setText('statsMistakeTimes', mistakesTimes);
+      setText('statsStreak', streak);
+      setText('statsLast', last);
+
+      // KPI：根据子页面语义调整（全局/错题/收藏）
+      const totalStat = document.querySelector('[data-kpi="total"]');
+      const favStat = document.querySelector('[data-kpi="favorites"]');
+      const misStat = document.querySelector('[data-kpi="mistakes"]');
+      const totalLabelEl = totalStat ? totalStat.querySelector('.k') : null;
+      const favLabelEl = favStat ? favStat.querySelector('.k') : null;
+
+      if (source === 'favorites') {
+        if (totalLabelEl) totalLabelEl.textContent = '收藏题';
+        if (favLabelEl) favLabelEl.textContent = '其中错题';
+        if (misStat) misStat.hidden = true;
+        if (favStat) favStat.hidden = false;
+        setText('statsFavorites', mistakes);
+      } else if (source === 'mistakes') {
+        if (totalLabelEl) totalLabelEl.textContent = '错题题数';
+        if (favLabelEl) favLabelEl.textContent = '其中收藏';
+        if (misStat) misStat.hidden = true;
+        if (favStat) favStat.hidden = false;
+        setText('statsFavorites', favorites);
+      } else {
+        if (totalLabelEl) totalLabelEl.textContent = '总题';
+        if (favLabelEl) favLabelEl.textContent = '收藏';
+        if (misStat) misStat.hidden = false;
+        if (favStat) favStat.hidden = false;
+        setText('statsFavorites', favorites);
+        setText('statsMistakes', mistakes);
+      }
+
+      const sub = document.getElementById('statsSummarySub');
+      if (sub) {
+        const days = Number(d.trend_days || statsState.days || 14) || 14;
+        sub.textContent = `${scopeLabel} · 近${days}天：覆盖率 ${completion.toFixed(1)}% · 正确率 ${accuracy.toFixed(1)}%`;
+      }
+
+      drawTrendChart();
+      renderByTypeTable();
+      renderDiffTable();
+      renderAdvice();
+    }
+
+    async function fetchStatsDetail(){
+      if (statsState.loading) return;
+      statsState.loading = true;
+      const sub = document.getElementById('statsSummarySub');
+      if (sub) sub.textContent = '加载中…';
+
+      try {
+        const days = Number(statsState.days || 14) || 14;
+        const source = getStatsSource();
+        const params = new URLSearchParams({ days: String(days) });
+        if (source !== 'all') params.set('source', source);
+        const url = `/user/banks/api/${encodeURIComponent(String(BANK_ID))}/stats?${params.toString()}`;
+        const resp = await fetch(url, { credentials: 'same-origin' });
+        const js = await resp.json().catch(() => ({}));
+        const ok = resp.ok && js && Number(js.code) === 0 && js.data;
+        if (!ok) throw new Error((js && (js.message || js.msg)) || '数据加载失败');
+        statsState.data = js.data;
+        statsState.loadedKey = `${days}:${source}`;
+        renderStats();
+      } catch (e) {
+        if (sub) sub.textContent = '数据加载失败，请稍后重试。';
+        statsState.data = null;
+        statsState.loadedKey = '';
+        drawTrendChart();
+      } finally {
+        statsState.loading = false;
+      }
+    }
+
+    function ensureStats(){
+      if (!statsState) return;
+      const days = Number(statsState.days || 14) || 14;
+      const source = getStatsSource();
+      const key = `${days}:${source}`;
+      if (statsState.loadedKey === key && statsState.data) return;
+      fetchStatsDetail();
+    }
+
+    function setStatsDays(days){
+      const d = Number(days || 14) || 14;
+      if (![7, 14, 30, 90].includes(d)) return;
+      if (d === statsState.days) return;
+      statsState.days = d;
+      syncStatsDaysUI();
+      statsState.loadedKey = '';
+      ensureStats();
+    }
+
+    function redrawStatsCharts(){
+      if (!statsState || !statsState.data) return;
+      drawTrendChart();
+    }
+
+    window.addEventListener('resize', () => {
+      redrawStatsCharts();
+    });
+    // 初始化：同步 UI
+    syncStatsSubTabUI();
+    syncStatsDaysUI();
+
+    // ===== V2 数据面板：覆盖旧统计实现（不跳转页面）=====
+    (function initStatsV2Embed() {
+      const DEFAULT_GLOBAL_DAYS = 90;
+      const DEFAULT_FOCUS_DAYS = 30;
+
+      function normalizeSubTab(input) {
+        const v = String(input || '').trim().toLowerCase();
+        return (v === 'mistakes' || v === 'favorites') ? v : 'global';
+      }
+
+      function normalizeDays(input, fallback) {
+        const d = Number(input || 0) || 0;
+        if ([7, 14, 30, 90].includes(d)) return d;
+        return Number(fallback || DEFAULT_GLOBAL_DAYS) || DEFAULT_GLOBAL_DAYS;
+      }
+
+      let saved = 'global';
+      try {
+        saved = normalizeSubTab(localStorage.getItem(KEY_DATA_SUBTAB) || 'global');
+      } catch (e) {}
+
+      statsState = {
+        subtab: saved,
+        days: normalizeDays(saved === 'global' ? DEFAULT_GLOBAL_DAYS : DEFAULT_FOCUS_DAYS, DEFAULT_GLOBAL_DAYS),
+      };
+
+      function getShell() {
+        return document.querySelector('#pageTabStats .ubdv2-shell');
+      }
+
+      function applyPanels() {
+        const cur = String(statsState?.subtab || 'global');
+        document.querySelectorAll('#pageTabStats [data-ubdv2-panel]').forEach((panel) => {
+          const key = String(panel?.dataset?.ubdv2Panel || '').trim().toLowerCase();
+          panel.hidden = key !== cur;
+        });
+
+        const shell = getShell();
+        if (shell) {
+          try {
+            shell.setAttribute('data-bank-id', String(BANK_ID));
+            shell.setAttribute('data-subtab', cur);
+            shell.setAttribute('data-days', String(statsState?.days || DEFAULT_GLOBAL_DAYS));
+          } catch (e) {}
+        }
+      }
+
+      function syncSubTab() {
+        const cur = String(statsState?.subtab || 'global');
+        document.querySelectorAll('#pageTabStats [data-stats-tab]').forEach((btn) => {
+          const key = String(btn?.dataset?.statsTab || '').trim().toLowerCase();
+          const active = key === cur;
+          btn.classList.toggle('active', active);
+          btn.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        applyPanels();
+      }
+
+      function syncDays() {
+        const d = normalizeDays(statsState?.days, DEFAULT_GLOBAL_DAYS);
+        statsState.days = d;
+        document.querySelectorAll('#ubdv2Days [data-days]').forEach((btn) => {
+          const active = Number(btn?.getAttribute('data-days') || 0) === d;
+          btn.classList.toggle('active', active);
+          btn.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        const shell = getShell();
+        if (shell) {
+          try { shell.setAttribute('data-days', String(d)); } catch (e) {}
+        }
+      }
+
+      async function ensure(opts) {
+        applyPanels();
+        if (!window.UserBankDataV2 || typeof window.UserBankDataV2.load !== 'function') return;
+        try {
+          await window.UserBankDataV2.load({
+            bank_id: BANK_ID,
+            subtab: String(statsState?.subtab || 'global'),
+            window_days: Number(statsState?.days || DEFAULT_GLOBAL_DAYS),
+            bank_total: {{ total_count }},
+            bank_favorites: {{ fav_count }},
+            bank_mistakes: {{ mistake_count }},
+            force: !!(opts && opts.force),
+          });
+        } catch (e) {}
+      }
+
+      // 覆盖旧函数：供 setDetailTab / 顶部按钮复用
+      syncStatsSubTabUI = syncSubTab;
+      syncStatsDaysUI = syncDays;
+      setStatsSubTab = function (subtab) {
+        const next = normalizeSubTab(subtab);
+        if (next === statsState.subtab) return;
+        statsState.subtab = next;
+        try { localStorage.setItem(KEY_DATA_SUBTAB, next); } catch (e) {}
+        syncSubTab();
+        ensure({ force: false });
+      };
+      setStatsDays = function (days) {
+        const next = normalizeDays(days, statsState.days || DEFAULT_GLOBAL_DAYS);
+        if (next === statsState.days) return;
+        statsState.days = next;
+        syncDays();
+        ensure({ force: true });
+      };
+      ensureStats = function (opts) { ensure(opts); };
+      redrawStatsCharts = function () {
+        try {
+          if (window.UserBankDataV2 && typeof window.UserBankDataV2.resize === 'function') {
+            window.UserBankDataV2.resize();
+          }
+        } catch (e) {}
+      };
+
+      // 事件绑定：横排基础栏切换 + 时间窗口
+      const root = document.getElementById('pageTabStats');
+      if (root && !root.__ubdv2Bound) {
+        root.__ubdv2Bound = true;
+        root.addEventListener('click', (e) => {
+          const tabBtn = e.target && e.target.closest ? e.target.closest('[data-stats-tab]') : null;
+          if (tabBtn) {
+            setStatsSubTab(tabBtn.getAttribute('data-stats-tab') || '');
+            return;
+          }
+          const dayBtn = e.target && e.target.closest ? e.target.closest('#ubdv2Days [data-days]') : null;
+          if (dayBtn) setStatsDays(dayBtn.getAttribute('data-days') || '');
+        });
+      }
+
+      // 初始化：首次进入时同步 UI
+      syncSubTab();
+      syncDays();
+    })();
+
+    // ===== 分享管理（仅创建者）=====

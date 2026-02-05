@@ -1,0 +1,318 @@
+    function syncSearchTypeUI(){
+      const v = searchState.type || 'all';
+      document.querySelectorAll('#chipsSearchType .chip[data-val]').forEach((btn) => {
+        btn.classList.toggle('active', (btn.dataset.val || 'all') === v);
+      });
+    }
+
+    function selectSearchType(btn){
+      if (!btn) return;
+      const v = btn.dataset.val || 'all';
+      if (v === (searchState.type || 'all')) return;
+      searchState.type = v;
+      try { localStorage.setItem(KEY_SEARCH_TYPE, v); } catch (e) {}
+      syncSearchTypeUI();
+      if (searchState.searched && searchState.keyword) {
+        doBankSearch(true);
+      }
+    }
+
+    function setSearchMeta(text){
+      const el = document.getElementById('searchMeta');
+      if (el) el.textContent = String(text || '');
+    }
+
+    function showSearchCard(){
+      const card = document.getElementById('searchResultCard');
+      if (card) card.hidden = false;
+    }
+
+    function renderSearchResults(){
+      const listEl = document.getElementById('searchList');
+      if (!listEl) return;
+
+      const items = Array.isArray(searchState.results) ? searchState.results : [];
+      if (!items.length) {
+        listEl.innerHTML = `<div class="result-empty">暂无匹配结果</div>`;
+      } else {
+        listEl.innerHTML = items
+          .map((q) => {
+            const qid = Number(q?.id || 0) || 0;
+            const type = escapeHtml(q?.q_type || '未知');
+            const preview = escapeHtml(q?.content_preview || buildPreview(q?.content || ''));
+            const difficulty = q?.difficulty != null ? Number(q.difficulty) : null;
+            const diffText = Number.isFinite(difficulty) ? `难度 ${difficulty}` : '';
+            return `
+              <div class="result-item" role="button" tabindex="0" aria-label="搜索结果项（点击查看详情）" data-qid="${qid || ''}">
+                <div class="result-top">
+                  <div class="result-badges">
+                    <span class="badge">${type}</span>
+                    ${diffText ? `<span class="badge badge-soft">${escapeHtml(diffText)}</span>` : ''}
+                  </div>
+                </div>
+                <div class="result-preview">${preview || '（无预览内容）'}</div>
+              </div>
+            `;
+          })
+          .join('');
+      }
+
+      const shown = items.length;
+      const total = Number(searchState.total || 0) || 0;
+      const suffix = total ? `（显示 ${shown} / ${total}）` : `（显示 ${shown}）`;
+      setSearchMeta(searchState.keyword ? `关键词：${searchState.keyword} ${suffix}` : suffix);
+
+      const btn = document.getElementById('searchLoadMoreBtn');
+      if (btn) btn.hidden = !(total && shown < total);
+    }
+
+    async function doBankSearch(reset){
+      if (searchState.loading) return;
+
+      const kw = (document.getElementById('kw')?.value || '').trim();
+      if (!kw) {
+        showSearchCard();
+        searchState.keyword = '';
+        searchState.searched = true;
+        searchState.results = [];
+        searchState.total = 0;
+        searchState.page = 1;
+        setSearchMeta('请输入关键词后搜索。');
+        renderSearchResults();
+        return;
+      }
+
+      showSearchCard();
+      searchState.keyword = kw;
+      searchState.searched = true;
+
+      const page = reset ? 1 : (Number(searchState.page || 1) || 1);
+      const perPage = Number(searchState.perPage || 20) || 20;
+      if (reset) {
+        searchState.results = [];
+        searchState.total = 0;
+      }
+
+      const params = new URLSearchParams({
+        keyword: kw,
+        page: String(page),
+        per_page: String(perPage),
+      });
+      if (searchState.type && searchState.type !== 'all') params.set('q_type', searchState.type);
+
+      searchState.loading = true;
+      setSearchMeta('搜索中…');
+      try {
+        const resp = await fetch(`/user/banks/api/${BANK_ID}/questions?` + params.toString(), { credentials: 'same-origin' });
+        const js = await resp.json().catch(() => ({}));
+        const ok = resp.ok && js && (Number(js.code) === 0 || js.status === 'success') && js.data;
+        if (!ok) throw new Error((js && (js.message || js.msg)) || '搜索失败');
+
+        const data = js.data || {};
+        const list = Array.isArray(data.questions) ? data.questions : [];
+
+        // 兼容：若后端未提供预览字段，这里补一个
+        list.forEach((q) => {
+          if (!q || q.content_preview) return;
+          q.content_preview = buildPreview(q.content || '');
+        });
+
+        const next = (reset ? [] : (Array.isArray(searchState.results) ? searchState.results : [])).concat(list);
+        searchState.results = next;
+        searchState.total = Number(data.total || 0) || 0;
+        searchState.page = page + 1;
+        renderSearchResults();
+      } catch (e) {
+        setSearchMeta('搜索失败，请稍后重试。');
+      } finally {
+        searchState.loading = false;
+      }
+    }
+
+    function loadMoreBankSearch(){
+      doBankSearch(false);
+    }
+
+    function clearBankSearch(){
+      try {
+        const input = document.getElementById('kw');
+        if (input) input.value = '';
+      } catch (e) {}
+      searchState.keyword = '';
+      searchState.searched = false;
+      searchState.results = [];
+      searchState.total = 0;
+      searchState.page = 1;
+      showSearchCard();
+      setSearchMeta('输入关键词后点击搜索。');
+      renderSearchResults();
+    }
+
+    const searchDetailState = {
+      cache: {},
+      loading: false,
+      qid: 0,
+      req: 0,
+    };
+
+    function openSearchQuestionModal(){
+      const modal = document.getElementById('searchQuestionModal');
+      if (!modal) return;
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeSearchQuestionModal(){
+      const modal = document.getElementById('searchQuestionModal');
+      if (!modal) return;
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+
+    function setSearchQuestionModalSub(text){
+      const el = document.getElementById('searchQuestionModalSub');
+      if (el) el.textContent = String(text || '');
+    }
+
+    function setSearchQuestionModalBody(html){
+      const el = document.getElementById('searchQuestionModalBody');
+      if (el) el.innerHTML = String(html || '');
+    }
+
+    function normalizeOptionsForDetail(rawOptions){
+      if (!rawOptions) return [];
+
+      let parsed = rawOptions;
+      if (typeof rawOptions === 'string') {
+        const s = rawOptions.trim();
+        if (s) {
+          try { parsed = JSON.parse(s); } catch (e) { parsed = rawOptions; }
+        }
+      }
+
+      if (Array.isArray(parsed)) {
+        const out = [];
+        parsed.forEach((opt, idx) => {
+          if (opt && typeof opt === 'object') {
+            const k = String(opt.key != null ? opt.key : '').trim();
+            const v = String(opt.value != null ? opt.value : '').trim();
+            if (k || v) out.push({ key: k || String(idx + 1), value: v });
+          } else {
+            const v = String(opt ?? '').trim();
+            if (v) out.push({ key: String(idx + 1), value: v });
+          }
+        });
+        return out;
+      }
+
+      return [];
+    }
+
+    function renderQuestionDetailCard(data){
+      const q = data || {};
+      const qType = escapeHtml(q.q_type || '未知');
+      const content = escapeHtml(q.content || '');
+      const answer = escapeHtml(q.answer || '');
+      const explanation = escapeHtml(q.explanation || '');
+      const difficulty = q.difficulty != null ? Number(q.difficulty) : null;
+      const diffText = Number.isFinite(difficulty) ? `难度 ${difficulty}` : '';
+      const opts = normalizeOptionsForDetail(q.options);
+
+      const optHtml = opts.length
+        ? `<div class="qd-block"><div class="qd-label">选项</div><div class="qd-options">${opts
+            .map((o) => `<div class="qd-opt"><div class="qd-opt-key">${escapeHtml(o.key || '')}</div><div class="qd-opt-val">${escapeHtml(o.value || '')}</div></div>`)
+            .join('')}</div></div>`
+        : '';
+
+      return `
+        <div class="qd-block">
+          <div class="qd-label">题型</div>
+          <div class="qd-text">${qType}${diffText ? ` · ${escapeHtml(diffText)}` : ''}</div>
+        </div>
+        <div class="qd-block">
+          <div class="qd-label">题干</div>
+          <div class="qd-text">${content || '（空）'}</div>
+        </div>
+        ${optHtml}
+        <div class="qd-block">
+          <div class="qd-label">答案</div>
+          <div class="qd-text">${answer || '（无）'}</div>
+        </div>
+        ${explanation ? `<div class="qd-block"><div class="qd-label">解析</div><div class="qd-text">${explanation}</div></div>` : ''}
+      `;
+    }
+
+    async function fetchQuestionDetail(qid){
+      const resp = await fetch(`/user/banks/api/${encodeURIComponent(String(BANK_ID))}/questions/${encodeURIComponent(String(qid))}`, { credentials: 'same-origin' });
+      const js = await resp.json().catch(() => ({}));
+      const ok = resp.ok && js && (Number(js.code) === 0 || js.status === 'success') && js.data;
+      if (!ok) throw new Error((js && (js.message || js.msg)) || '获取题目详情失败');
+      return js.data;
+    }
+
+    async function openSearchQuestionDetail(qid){
+      const safeId = Number(qid || 0) || 0;
+      if (!safeId) return;
+      searchDetailState.qid = safeId;
+      openSearchQuestionModal();
+
+      const cached = searchDetailState.cache && searchDetailState.cache[safeId];
+      if (cached) {
+        setSearchQuestionModalSub(`题目 ID：${safeId}`);
+        setSearchQuestionModalBody(renderQuestionDetailCard(cached));
+        return;
+      }
+
+      const reqId = ++searchDetailState.req;
+      searchDetailState.loading = true;
+      setSearchQuestionModalSub(`题目 ID：${safeId} · 加载中…`);
+      setSearchQuestionModalBody('<div class=\"result-empty\">加载中…</div>');
+
+      try {
+        const data = await fetchQuestionDetail(safeId);
+        if (reqId !== searchDetailState.req) return;
+        if (!searchDetailState.cache) searchDetailState.cache = {};
+        searchDetailState.cache[safeId] = data;
+        setSearchQuestionModalSub(`题目 ID：${safeId}`);
+        setSearchQuestionModalBody(renderQuestionDetailCard(data));
+      } catch (e) {
+        if (reqId !== searchDetailState.req) return;
+        setSearchQuestionModalSub(`题目 ID：${safeId} · 加载失败`);
+        setSearchQuestionModalBody('<div class=\"result-empty\">加载失败，请稍后重试。</div>');
+      } finally {
+        if (reqId === searchDetailState.req) searchDetailState.loading = false;
+      }
+    }
+
+    (function bindSearchDetailEvents(){
+      const modal = document.getElementById('searchQuestionModal');
+      modal?.addEventListener('click', (e) => {
+        if (e.target && e.target.id === 'searchQuestionModal') closeSearchQuestionModal();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        const m = document.getElementById('searchQuestionModal');
+        if (m && m.classList.contains('show')) closeSearchQuestionModal();
+      });
+
+      const listEl = document.getElementById('searchList');
+      if (!listEl || listEl.dataset.bound === '1') return;
+      listEl.dataset.bound = '1';
+
+      listEl.addEventListener('click', (e) => {
+        const item = e.target && e.target.closest ? e.target.closest('.result-item[data-qid]') : null;
+        if (!item) return;
+        const qid = Number(item.getAttribute('data-qid') || 0) || 0;
+        if (!qid) return;
+        openSearchQuestionDetail(qid);
+      });
+      listEl.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const item = e.target && e.target.closest ? e.target.closest('.result-item[data-qid]') : null;
+        if (!item) return;
+        e.preventDefault();
+        const qid = Number(item.getAttribute('data-qid') || 0) || 0;
+        if (!qid) return;
+        openSearchQuestionDetail(qid);
+      });
+    })();

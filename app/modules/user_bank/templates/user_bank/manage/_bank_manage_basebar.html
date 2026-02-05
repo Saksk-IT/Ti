@@ -1,0 +1,25 @@
+{# 题库管理页：基础栏子页面导航（仅创建者可访问的页面使用） #}
+<div class="ub-managebar" role="navigation" aria-label="题库管理子页面">
+  <div class="ub-managebar-tabs" role="tablist" aria-label="管理子页切换">
+    <a class="ub-managebar-tab {% if manage_tab == 'card' %}active{% endif %}"
+       href="/user/banks/{{ bank_id }}/manage"
+       role="tab"
+       aria-selected="{{ 'true' if manage_tab == 'card' else 'false' }}">名片</a>
+    <a class="ub-managebar-tab {% if manage_tab == 'share' %}active{% endif %}"
+       href="/user/banks/{{ bank_id }}/shares"
+       role="tab"
+       aria-selected="{{ 'true' if manage_tab == 'share' else 'false' }}">分享</a>
+    <a class="ub-managebar-tab {% if manage_tab == 'questions' %}active{% endif %}"
+       href="/user/banks/{{ bank_id }}"
+       role="tab"
+       aria-selected="{{ 'true' if manage_tab == 'questions' else 'false' }}">题目管理</a>
+    <a class="ub-managebar-tab {% if manage_tab == 'settings' %}active{% endif %}"
+       href="/user/banks/{{ bank_id }}/edit"
+       role="tab"
+       aria-selected="{{ 'true' if manage_tab == 'settings' else 'false' }}">设置</a>
+  </div>
+  <div class="ub-managebar-right">
+    <a class="ub-managebar-link" href="/user/banks/{{ bank_id }}/practice">返回详情</a>
+  </div>
+</div>
+

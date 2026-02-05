@@ -1,0 +1,875 @@
+    const LOGGED_IN = {{ 'true' if logged_in else 'false' }};
+    const USER_KEY = {{ (user_id if logged_in else 'guest')|tojson }};
+    const SUBJECT_ID = {{ subject_id }};
+    const SUBJECT_NAME = {{ subject_name|tojson }};
+    const ALL_TYPES = {{ types|tojson }};
+
+    const KEY_TYPE = `subject_${SUBJECT_ID}_type`;
+    const KEY_TAG = `subject_${SUBJECT_ID}_tag`;
+    const KEY_SCOPE = `subject_${SUBJECT_ID}_practice_scope`;
+    const KEY_SEARCH_TYPE = `subject_${SUBJECT_ID}_search_type`;
+    const KEY_SHUFFLE_Q = 'shuffle_questions';
+    const KEY_SHUFFLE_O = 'shuffle_options';
+    const TAB_ORDER_KEY = `subject_${SUBJECT_ID}_detail_tab_order_v1`;
+
+    const state = {
+      scope: 'all',
+      type: 'all',
+      tag: 'all',
+      shuffleQ: false,
+      shuffleO: false
+    };
+    const searchState = {
+      keyword: '',
+      type: 'all',
+      page: 1,
+      perPage: 20,
+      total: 0,
+      loading: false,
+      searched: false,
+      results: []
+    };
+
+    const TAB_LABELS = {
+      practice: '练习',
+      reinforce: '加强训练',
+      exam: '考试',
+      search: '搜索',
+      stats: '数据',
+      share: '分享',
+    };
+    const OPTION_TYPES = new Set(['选择题', '多选题']);
+    let startCountTimer = null;
+    let startCountReq = 0;
+    let startCountValue = null;
+
+    const PAGE_TAB_KEY = `subject_${SUBJECT_ID}_detail_tab`;
+    let pageTab = 'practice';
+
+    function applyThemeFromStorage(){
+      const saved = localStorage.getItem('theme') || '';
+      const preferDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const dark = saved === 'dark' || (!saved && preferDark);
+      document.body.classList.toggle('dark-mode', !!dark);
+      document.querySelector('meta[name=\"theme-color\"]')?.setAttribute('content', dark ? '#000000' : '#f5f5f7');
+    }
+    function toggleTheme(){
+      const isDark = document.body.classList.toggle('dark-mode');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      document.querySelector('meta[name=\"theme-color\"]')?.setAttribute('content', isDark ? '#000000' : '#f5f5f7');
+      redrawStatsCharts();
+    }
+    applyThemeFromStorage();
+
+    function ensureAppConfirmStyle(){
+      if (document.getElementById('appConfirmStyleV1')) return;
+      const style = document.createElement('style');
+      style.id = 'appConfirmStyleV1';
+      style.textContent = `
+        .app-confirm-overlay{
+          position: fixed;
+          inset: 0;
+          z-index: 2147483000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 16px;
+          background: rgba(0,0,0,0.42);
+          backdrop-filter: blur(10px) saturate(120%);
+          -webkit-backdrop-filter: blur(10px) saturate(120%);
+        }
+        .app-confirm-dialog{
+          width: min(420px, calc(100vw - 32px));
+          border-radius: 18px;
+          border: 0.5px solid var(--border);
+          background: color-mix(in srgb, var(--card-solid) 86%, transparent);
+          box-shadow: var(--shadow);
+          backdrop-filter: var(--blur);
+          -webkit-backdrop-filter: var(--blur);
+          padding: 14px 14px 12px;
+          color: var(--text);
+        }
+        .app-confirm-head{
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 10px;
+        }
+        .app-confirm-title{
+          font-size: 14px;
+          font-weight: 950;
+          letter-spacing: -0.2px;
+          margin: 0;
+        }
+        .app-confirm-sub{
+          margin-top: 6px;
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 8px;
+          font-size: 12px;
+          color: var(--muted);
+          line-height: 1.5;
+        }
+        .app-confirm-pill{
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          max-width: 100%;
+          padding: 6px 10px;
+          border-radius: 999px;
+          border: 0.5px solid color-mix(in srgb, var(--primary) 28%, var(--border));
+          background: color-mix(in srgb, var(--primary) 12%, transparent);
+          color: var(--text);
+          font-weight: 900;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .app-confirm-meta{
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 10px;
+          border-radius: 999px;
+          border: 0.5px solid var(--border);
+          background: color-mix(in srgb, var(--text) 6%, transparent);
+          color: var(--muted);
+          font-weight: 850;
+        }
+        .app-confirm-x{
+          width: 36px;
+          height: 36px;
+          border-radius: 12px;
+          border: 0.5px solid var(--border);
+          background: color-mix(in srgb, var(--card) 82%, transparent);
+          color: var(--text);
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          flex: 0 0 auto;
+        }
+        .app-confirm-x:focus-visible{
+          outline: none;
+          box-shadow: var(--focus), var(--shadow2);
+        }
+        .app-confirm-x svg{ width: 16px; height: 16px; opacity: 0.84; }
+
+        .app-confirm-body{
+          margin-top: 12px;
+          padding-top: 12px;
+          border-top: 0.5px solid color-mix(in srgb, var(--border) 78%, transparent);
+        }
+        .app-confirm-text{
+          font-size: 13px;
+          line-height: 1.65;
+          color: var(--text);
+        }
+        .app-confirm-text p{ margin: 0; }
+        .app-confirm-text p + p{ margin-top: 8px; }
+        .app-confirm-tip{
+          margin-top: 10px;
+          font-size: 12px;
+          line-height: 1.55;
+          color: var(--muted);
+        }
+
+        .app-confirm-actions{
+          margin-top: 14px;
+          display: flex;
+          gap: 10px;
+          justify-content: flex-end;
+        }
+        .app-confirm-btn{
+          height: 38px;
+          padding: 0 14px;
+          border-radius: 14px;
+          border: 0.5px solid var(--border);
+          background: color-mix(in srgb, var(--card) 86%, transparent);
+          color: var(--text);
+          font-weight: 900;
+          cursor: pointer;
+          transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+        }
+        .app-confirm-btn:hover{ transform: translateY(-1px); box-shadow: var(--shadow2); }
+        .app-confirm-btn:active{ transform: translateY(0); }
+        .app-confirm-btn:focus-visible{ outline: none; box-shadow: var(--focus), var(--shadow2); }
+
+        .app-confirm-btn[data-variant=\"danger\"]{
+          border-color: color-mix(in srgb, #ef4444 40%, var(--border));
+          background: color-mix(in srgb, #ef4444 14%, var(--card-solid));
+        }
+        .app-confirm-btn[data-variant=\"danger\"]:hover{
+          background: color-mix(in srgb, #ef4444 18%, var(--card-solid));
+        }
+
+        @media (max-width: 420px){
+          .app-confirm-actions{ flex-direction: column-reverse; }
+          .app-confirm-btn{ width: 100%; }
+        }
+        @media (prefers-reduced-motion: reduce){
+          .app-confirm-btn{ transition: none; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    function getFocusableEls(root){
+      const els = Array.from(root.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex=\"-1\"])'));
+      return els.filter((el) => {
+        if (!(el instanceof HTMLElement)) return false;
+        if (el.hasAttribute('disabled')) return false;
+        if (el.getAttribute('aria-hidden') === 'true') return false;
+        const style = window.getComputedStyle(el);
+        return style && style.display !== 'none' && style.visibility !== 'hidden';
+      });
+    }
+
+    function uiConfirm(opts){
+      ensureAppConfirmStyle();
+      const options = opts && typeof opts === 'object' ? opts : {};
+      const title = String(options.title || '确认操作');
+      const tag = String(options.tag || '').trim();
+      const meta = String(options.meta || '').trim();
+      const lines = Array.isArray(options.lines) ? options.lines : [];
+      const tip = String(options.tip || '').trim();
+      const confirmText = String(options.confirmText || '确定');
+      const cancelText = String(options.cancelText || '取消');
+      const variant = String(options.variant || 'danger');
+
+      const prevActive = document.activeElement;
+      const prevOverflow = document.documentElement.style.overflow;
+      const prevPaddingRight = document.documentElement.style.paddingRight;
+      const scrollbarW = window.innerWidth - document.documentElement.clientWidth;
+
+      const existing = document.querySelector('.app-confirm-overlay');
+      if (existing) { try { existing.remove(); } catch (e) {} }
+
+      const overlay = document.createElement('div');
+      overlay.className = 'app-confirm-overlay';
+      overlay.innerHTML = `
+        <div class=\"app-confirm-dialog\" role=\"dialog\" aria-modal=\"true\">
+          <div class=\"app-confirm-head\">
+            <div style=\"min-width: 0;\">
+              <div class=\"app-confirm-title\" data-el=\"title\"></div>
+              <div class=\"app-confirm-sub\" data-el=\"sub\"></div>
+            </div>
+            <button type=\"button\" class=\"app-confirm-x\" data-act=\"cancel\" aria-label=\"关闭\">\n              <svg viewBox=\"0 0 24 24\" fill=\"none\" aria-hidden=\"true\">\n                <path d=\"M18 6 6 18M6 6l12 12\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"></path>\n              </svg>\n            </button>
+          </div>
+          <div class=\"app-confirm-body\">
+            <div class=\"app-confirm-text\" data-el=\"text\"></div>
+            <div class=\"app-confirm-tip\" data-el=\"tip\" style=\"display:none;\"></div>
+          </div>
+          <div class=\"app-confirm-actions\">
+            <button type=\"button\" class=\"app-confirm-btn\" data-act=\"cancel\"></button>
+            <button type=\"button\" class=\"app-confirm-btn\" data-act=\"confirm\"></button>
+          </div>
+        </div>
+      `;
+
+      const dialog = overlay.querySelector('.app-confirm-dialog');
+      const titleEl = overlay.querySelector('[data-el=\"title\"]');
+      const subEl = overlay.querySelector('[data-el=\"sub\"]');
+      const textEl = overlay.querySelector('[data-el=\"text\"]');
+      const tipEl = overlay.querySelector('[data-el=\"tip\"]');
+      const cancelBtn = overlay.querySelector('[data-act=\"cancel\"].app-confirm-btn');
+      const confirmBtn = overlay.querySelector('[data-act=\"confirm\"].app-confirm-btn');
+
+      if (titleEl) titleEl.textContent = title;
+
+      if (subEl) {
+        subEl.innerHTML = '';
+        if (tag) {
+          const pill = document.createElement('span');
+          pill.className = 'app-confirm-pill';
+          pill.textContent = tag;
+          subEl.appendChild(pill);
+        }
+        if (meta) {
+          const metaEl = document.createElement('span');
+          metaEl.className = 'app-confirm-meta';
+          metaEl.textContent = meta;
+          subEl.appendChild(metaEl);
+        }
+        if (!tag && !meta) subEl.style.display = 'none';
+      }
+
+      if (textEl) {
+        textEl.innerHTML = '';
+        const safeLines = lines.map((s) => String(s || '').trim()).filter(Boolean);
+        if (!safeLines.length) safeLines.push('确定继续吗？');
+        safeLines.forEach((s) => {
+          const p = document.createElement('p');
+          p.textContent = s;
+          textEl.appendChild(p);
+        });
+      }
+
+      if (tipEl) {
+        if (tip) {
+          tipEl.style.display = '';
+          tipEl.textContent = tip;
+        } else {
+          tipEl.style.display = 'none';
+        }
+      }
+
+      if (cancelBtn) cancelBtn.textContent = cancelText;
+      if (confirmBtn) {
+        confirmBtn.textContent = confirmText;
+        confirmBtn.setAttribute('data-variant', variant);
+      }
+
+      function restore(){
+        document.documentElement.style.overflow = prevOverflow;
+        document.documentElement.style.paddingRight = prevPaddingRight;
+        if (prevActive && prevActive instanceof HTMLElement) {
+          try { prevActive.focus(); } catch (e) {}
+        }
+      }
+
+      function lockScroll(){
+        document.documentElement.style.overflow = 'hidden';
+        if (scrollbarW > 0) document.documentElement.style.paddingRight = `${scrollbarW}px`;
+      }
+
+      lockScroll();
+      document.body.appendChild(overlay);
+
+      return new Promise((resolve) => {
+        let done = false;
+        const finish = (val) => {
+          if (done) return;
+          done = true;
+          try { overlay.remove(); } catch (e) {}
+          restore();
+          resolve(!!val);
+        };
+
+        overlay.addEventListener('click', (e) => {
+          if (e.target === overlay) finish(false);
+        });
+
+        overlay.querySelectorAll('[data-act=\"cancel\"]').forEach((el) => {
+          el.addEventListener('click', () => finish(false));
+        });
+        if (confirmBtn) confirmBtn.addEventListener('click', () => finish(true));
+
+        overlay.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            finish(false);
+            return;
+          }
+          if (e.key !== 'Tab') return;
+          if (!dialog) return;
+          const focusables = getFocusableEls(dialog);
+          if (!focusables.length) return;
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+          const active = document.activeElement;
+          if (e.shiftKey) {
+            if (active === first || active === overlay) {
+              e.preventDefault();
+              last.focus();
+            }
+          } else {
+            if (active === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        });
+
+        const focusTarget = cancelBtn || (overlay.querySelector('[data-act=\"cancel\"]') || confirmBtn);
+        if (focusTarget && focusTarget instanceof HTMLElement) {
+          try { focusTarget.focus(); } catch (e) {}
+        }
+      });
+    }
+
+    const VALID_DETAIL_TABS = new Set(['practice','reinforce','exam','search','stats','share']);
+    function normalizeDetailTab(t){
+      const s = String(t || '').trim().toLowerCase();
+      if (s === 'data' || s === 'stats') return 'stats';
+      if (s === 'favorites' || s === 'mistakes' || s === 'tags') return 'practice';
+      return VALID_DETAIL_TABS.has(s) ? s : '';
+    }
+
+    function getDetailTabFromQuery(){
+      try {
+        const sp = new URLSearchParams(location.search || '');
+        return normalizeDetailTab(sp.get('tab') || '');
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function getEntryTab(){
+      try {
+        const sp = new URLSearchParams(location.search || '');
+        const entry = (sp.get('entry') || '').toLowerCase();
+        if (entry === 'exam') return 'exam';
+        return '';
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function normalizeScope(input){
+      const s = String(input || '').trim().toLowerCase();
+      if (s === 'favorites' || s === 'mistakes' || s === 'all') return s;
+      return 'all';
+    }
+
+    function getScopeOverride(){
+      try {
+        const sp = new URLSearchParams(location.search || '');
+        const tab = String(sp.get('tab') || '').trim().toLowerCase();
+        if (tab === 'favorites' || tab === 'mistakes') return tab;
+        const entry = String(sp.get('entry') || '').trim().toLowerCase();
+        if (entry === 'favorites' || entry === 'mistakes') return entry;
+        return '';
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function shouldFetchStartCount(){
+      return pageTab === 'practice';
+    }
+
+    function setDetailTab(tab, persistTab){
+      pageTab = normalizeDetailTab(tab) || 'practice';
+      document.querySelectorAll('[data-tab-panel]').forEach((el) => {
+        const t = el.getAttribute('data-tab-panel') || '';
+        el.hidden = t !== pageTab;
+      });
+      document.querySelectorAll('.basebar .tab[data-tab]').forEach((btn) => {
+        btn.classList.toggle('active', (btn.dataset.tab || '') === pageTab);
+      });
+      if (persistTab) {
+        try { localStorage.setItem(PAGE_TAB_KEY, pageTab); } catch (e) {}
+      }
+      try {
+        const sp = new URLSearchParams(location.search || '');
+        if (pageTab === 'practice') sp.delete('tab');
+        else sp.set('tab', pageTab);
+        const qs = sp.toString();
+        const nextUrl = qs ? (location.pathname + '?' + qs) : location.pathname;
+        history.replaceState({}, '', nextUrl);
+      } catch (e) {}
+      startCountValue = null;
+      if (shouldFetchStartCount()) {
+        queueStartCount();
+      }
+      if (pageTab === 'share') {
+        renderShareUrl();
+      }
+      if (pageTab === 'stats') {
+        syncStatsDaysUI();
+        ensureStats();
+      }
+      if (pageTab === 'reinforce') {
+        try { initReinforceModule(); } catch (e) {}
+      }
+    }
+
+    function initDetailTab(){
+      const savedRaw = (localStorage.getItem(PAGE_TAB_KEY) || '').toLowerCase();
+      const urlScope = getScopeOverride();
+      const savedScope = (savedRaw === 'favorites' || savedRaw === 'mistakes') ? savedRaw : '';
+      state.scope = normalizeScope(urlScope || savedScope || state.scope || 'all');
+      try { localStorage.setItem(KEY_SCOPE, state.scope); } catch (e) {}
+
+      const initial = getDetailTabFromQuery() || getEntryTab() || normalizeDetailTab(savedRaw) || 'practice';
+      document.querySelectorAll('.basebar .tab[data-tab]').forEach((btn) => {
+        btn.addEventListener('click', () => setDetailTab(btn.dataset.tab || 'practice', true));
+      });
+      setDetailTab(initial, false);
+    }
+
+    function restore(){
+      const savedType = localStorage.getItem(KEY_TYPE);
+      if (savedType) state.type = savedType;
+      const savedTag = localStorage.getItem(KEY_TAG);
+      if (savedTag) state.tag = savedTag;
+      state.scope = normalizeScope(localStorage.getItem(KEY_SCOPE) || state.scope || 'all');
+      const savedSearchType = localStorage.getItem(KEY_SEARCH_TYPE);
+      if (savedSearchType) searchState.type = savedSearchType;
+      state.shuffleQ = (localStorage.getItem(KEY_SHUFFLE_Q) === '1');
+      state.shuffleO = (localStorage.getItem(KEY_SHUFFLE_O) === '1');
+
+      const typesList = Array.isArray(ALL_TYPES) ? ALL_TYPES.filter(Boolean) : [];
+      if (state.type !== 'all' && typesList.length && !typesList.includes(state.type)) state.type = 'all';
+      if (searchState.type !== 'all' && typesList.length && !typesList.includes(searchState.type)) searchState.type = 'all';
+    }
+
+    function persist(){
+      localStorage.setItem(KEY_TYPE, state.type);
+      localStorage.setItem(KEY_TAG, state.tag);
+      localStorage.setItem(KEY_SCOPE, normalizeScope(state.scope));
+      localStorage.setItem(KEY_SHUFFLE_Q, state.shuffleQ ? '1' : '0');
+      localStorage.setItem(KEY_SHUFFLE_O, state.shuffleO ? '1' : '0');
+    }
+
+    function selectChip(kind, btn){
+      if (!btn) return;
+      const v = btn.dataset.val || 'all';
+      if (kind === 'scope') {
+        const nextScope = normalizeScope(v);
+        if ((nextScope === 'favorites' || nextScope === 'mistakes') && !LOGGED_IN) {
+          alert('收藏/错题范围需要先登录');
+          window.location.href = '/login';
+          return;
+        }
+        state.scope = nextScope;
+      } else if (kind === 'type') {
+        state.type = v;
+      } else if (kind === 'tag') {
+        state.tag = v;
+      }
+      persist();
+      startCountValue = null;
+      if (kind === 'type') syncShuffleAvailability();
+      syncChipsUI();
+      if (shouldFetchStartCount()) {
+        queueStartCount();
+      }
+    }
+
+    function syncUI(){
+      syncChipsUI();
+      setSwitch('shuffleQ', state.shuffleQ);
+      setSwitch('shuffleO', state.shuffleO);
+      syncShuffleAvailability();
+    }
+
+    function canShuffleOptions(){
+      return state.type === 'all' || OPTION_TYPES.has(state.type);
+    }
+
+    function syncChipsUI(){
+      document.querySelectorAll('[data-chip-kind="scope"][data-val]').forEach((btn) => {
+        btn.classList.toggle('active', (btn.dataset.val || 'all') === (state.scope || 'all'));
+      });
+      document.querySelectorAll('[data-chip-kind="type"][data-val]').forEach((btn) => {
+        btn.classList.toggle('active', (btn.dataset.val || 'all') === (state.type || 'all'));
+      });
+      document.querySelectorAll('[data-chip-kind="tag"][data-val]').forEach((btn) => {
+        btn.classList.toggle('active', (btn.dataset.val || 'all') === (state.tag || 'all'));
+      });
+      syncTagSummary();
+    }
+
+    const TAG_COUNT_MAP = (() => {
+      const map = {};
+      try {
+        const rows = {{ (user_tags or [])|tojson }};
+        (rows || []).forEach((r) => {
+          if (!r || typeof r.name !== 'string') return;
+          map[r.name] = Number(r.count || 0) || 0;
+        });
+      } catch (e) {}
+      return map;
+    })();
+
+    async function deleteSubjectTag(tagName){
+      const name = String(tagName || '').trim();
+      if (!name) return;
+      if (!LOGGED_IN) { alert('请先登录'); window.location.href = '/login'; return; }
+
+      const affected = Number(TAG_COUNT_MAP && Object.prototype.hasOwnProperty.call(TAG_COUNT_MAP, name) ? TAG_COUNT_MAP[name] : NaN);
+      const meta = Number.isFinite(affected) ? `关联题目：${affected} 题` : '';
+      const ok = await uiConfirm({
+        title: '删除标签',
+        tag: name,
+        meta,
+        lines: [
+          '仅对当前用户生效。',
+          '删除后会移除该标签在本题库（科目）下所有题目上的绑定。',
+        ],
+        tip: '此操作不可撤销。',
+        confirmText: '删除',
+        cancelText: '取消',
+        variant: 'danger',
+      });
+      if (!ok) return;
+
+      try {
+        const resp = await fetch('/api/quiz/tags', {
+          method: 'DELETE',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subject_id: SUBJECT_ID, name })
+        });
+        const js = await resp.json().catch(() => ({}));
+        if (!resp.ok || !js || js.status !== 'success') {
+          alert((js && (js.message || js.msg)) || '删除失败');
+          return;
+        }
+
+        // 移除所有标签 chip（多个面板复用同一组 chips）
+        document.querySelectorAll('[data-chip-kind="tag"][data-val]').forEach((btn) => {
+          if ((btn.dataset && btn.dataset.val) === name) {
+            try { btn.remove(); } catch (e) {}
+          }
+        });
+
+        // 更新计数（以服务端返回为准）
+        try {
+          if (js && js.data && Array.isArray(js.data.tags)) {
+            Object.keys(TAG_COUNT_MAP).forEach((k) => { try { delete TAG_COUNT_MAP[k]; } catch (e) {} });
+            js.data.tags.forEach((r) => {
+              if (!r || typeof r.name !== 'string') return;
+              TAG_COUNT_MAP[r.name] = Number(r.count || 0) || 0;
+            });
+          } else {
+            delete TAG_COUNT_MAP[name];
+          }
+        } catch (e) {}
+
+        if (state.tag === name) {
+          state.tag = 'all';
+          persist();
+        }
+
+        startCountValue = null;
+        syncChipsUI();
+        if (shouldFetchStartCount()) queueStartCount();
+      } catch (e) {
+        alert('网络错误，请重试');
+      }
+    }
+
+    function syncTagSummary(){
+      const curTag = (state.tag && state.tag !== 'all') ? String(state.tag) : 'all';
+      const label = curTag === 'all' ? '全部' : curTag;
+      const tagEl = document.getElementById('tagsCurTag');
+      if (tagEl) tagEl.textContent = label;
+
+      const cntEl = document.getElementById('tagsCurCount');
+      if (!cntEl) return;
+      if (curTag === 'all') {
+        cntEl.textContent = String({{ total_count }});
+      } else {
+        cntEl.textContent = String(TAG_COUNT_MAP[curTag] ?? 0);
+      }
+    }
+
+    function setSwitch(which, on){
+      document.querySelectorAll(`[data-switch=\"${which}\"]`).forEach((el) => {
+        el.classList.toggle('on', !!on);
+        el.setAttribute('aria-checked', on ? 'true' : 'false');
+      });
+    }
+    function setSwitchDisabled(which, disabled){
+      document.querySelectorAll(`[data-switch=\"${which}\"]`).forEach((el) => {
+        el.classList.toggle('is-disabled', !!disabled);
+        el.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+      });
+    }
+    function syncShuffleAvailability(){
+      const allow = canShuffleOptions();
+      setSwitchDisabled('shuffleO', !allow);
+      if (!allow && state.shuffleO) {
+        state.shuffleO = false;
+        persist();
+      }
+      setSwitch('shuffleO', state.shuffleO);
+    }
+    function toggleSwitch(which){
+      if (which === 'shuffleQ') state.shuffleQ = !state.shuffleQ;
+      if (which === 'shuffleO') {
+        if (!canShuffleOptions()) return;
+        state.shuffleO = !state.shuffleO;
+      }
+      persist();
+      syncUI();
+    }
+    document.querySelectorAll('[data-switch="shuffleQ"]').forEach((el) => {
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSwitch('shuffleQ'); }
+      });
+    });
+    document.querySelectorAll('[data-switch="shuffleO"]').forEach((el) => {
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSwitch('shuffleO'); }
+      });
+    });
+
+    function setStartCount(value, loading){
+      startCountValue = (typeof value === 'number' && !Number.isNaN(value)) ? value : startCountValue;
+      const panel = document.querySelector(`[data-tab-panel=\"${pageTab}\"]`);
+      if (!panel) return;
+      panel.querySelectorAll('[data-start-count]').forEach((el) => {
+        el.textContent = String(value ?? '—');
+      });
+      panel.querySelectorAll('[data-start-count-pill]').forEach((el) => {
+        el.classList.toggle('loading', !!loading);
+      });
+    }
+    function queueStartCount(){
+      if (startCountTimer) clearTimeout(startCountTimer);
+      startCountTimer = setTimeout(fetchStartCount, 200);
+    }
+    async function fetchStartCount(){
+      const reqId = ++startCountReq;
+      if ((state.scope === 'favorites' || state.scope === 'mistakes') && !LOGGED_IN) {
+        setStartCount('—', false);
+        return;
+      }
+      const params = new URLSearchParams({
+        subject: SUBJECT_NAME
+      });
+      if (state.scope === 'favorites' || state.scope === 'mistakes') params.set('source', state.scope);
+      if (state.tag && state.tag !== 'all') params.set('tag', state.tag);
+      if (state.type && state.type !== 'all') params.set('type', state.type);
+      setStartCount('...', true);
+      try {
+        const res = await fetch('/api/questions/count?' + params.toString(), { credentials: 'same-origin' });
+        if (!res.ok) throw new Error('count request failed');
+        const data = await res.json();
+        if (reqId !== startCountReq) return;
+        const count = Number(data && data.count) || 0;
+        setStartCount(count, false);
+      } catch (e) {
+        if (reqId !== startCountReq) return;
+        setStartCount('-', false);
+      }
+    }
+
+    function buildPracticeProgressKey(mode){
+      const safeMode = mode === 'memo' ? 'memo' : 'quiz';
+      const subject = SUBJECT_NAME || 'all';
+      const type = state.type || 'all';
+      const dataScope = (state.scope === 'favorites' || state.scope === 'mistakes') ? state.scope : 'all';
+      const allowShuffleO = canShuffleOptions();
+      const shuffleQ = state.shuffleQ ? '1' : '0';
+      const shuffleO = (state.shuffleO && allowShuffleO) ? '1' : '0';
+      const tagRaw = (state.tag || '').trim();
+      const tagPart = (tagRaw && tagRaw !== 'all') ? `_tag${tagRaw}` : '';
+      return `quiz_progress_${USER_KEY}_${safeMode}_${subject}_${type}_${dataScope}${tagPart}_q${shuffleQ}_o${shuffleO}`;
+    }
+
+    async function clearPracticeProgress(mode){
+      const safeMode = mode === 'memo' ? 'memo' : 'quiz';
+      const modeLabel = safeMode === 'memo' ? '背题' : '刷题';
+      const scopeLabel = state.scope === 'favorites' ? '收藏' : (state.scope === 'mistakes' ? '错题' : '全部');
+      const typeLabel = (state.type && state.type !== 'all') ? state.type : '全部题型';
+      const tagLabel = (state.tag && state.tag !== 'all') ? state.tag : '全部标签';
+      const allowShuffleO = canShuffleOptions();
+      const shuffleQ = state.shuffleQ ? '是' : '否';
+      const shuffleO = (state.shuffleO && allowShuffleO) ? '是' : '否';
+      const msg = `将清除以下组合的进度：\n科目：${SUBJECT_NAME}\n范围：${scopeLabel}\n题型：${typeLabel}\n标签：${tagLabel}\n模式：${modeLabel}\n打乱题目：${shuffleQ}  打乱选项：${shuffleO}\n\n此操作不可恢复，确定继续吗？`;
+      if (!confirm(msg)) return;
+
+      const key = buildPracticeProgressKey(safeMode);
+      try { localStorage.removeItem(key); } catch (e) {}
+      if (LOGGED_IN) {
+        try { await fetch(`/api/progress?key=${encodeURIComponent(key)}`, { method: 'DELETE' }); } catch (e) {}
+      }
+      alert('已清除');
+    }
+
+    async function start(mode){
+      if (!LOGGED_IN) { alert('请先登录'); window.location.href = '/login'; return; }
+      if (startCountValue === null) {
+        await fetchStartCount();
+      }
+      if (typeof startCountValue !== 'number') {
+        alert('题目数量加载中，请稍后重试');
+        return;
+      }
+      if (typeof startCountValue === 'number' && startCountValue <= 0) {
+        alert('当前筛选暂无题目');
+        return;
+      }
+      const allowShuffleO = canShuffleOptions();
+      const params = new URLSearchParams({
+        subject: SUBJECT_NAME,
+        type: state.type || 'all',
+        mode: mode || 'quiz',
+        shuffle_questions: state.shuffleQ ? '1' : '0',
+        shuffle_options: (state.shuffleO && allowShuffleO) ? '1' : '0'
+      });
+      if (state.scope === 'favorites' || state.scope === 'mistakes') params.set('source', state.scope);
+      if (state.tag && state.tag !== 'all') params.set('tag', state.tag);
+      window.location.href = '/quiz?' + params.toString();
+    }
+
+    function openReviewCenter(kind){
+      if (!LOGGED_IN) { alert('请先登录'); window.location.href = '/login'; return; }
+      const k = String(kind || '').trim().toLowerCase();
+      const safeKind = (k === 'favorites' || k === 'mistakes' || k === 'tags') ? k : 'favorites';
+      const allowShuffleO = canShuffleOptions();
+      const params = new URLSearchParams({
+        subject: SUBJECT_NAME,
+        tab: 'data',
+        type: state.type || 'all',
+        tag: state.tag || 'all',
+        shuffle_questions: state.shuffleQ ? '1' : '0',
+        shuffle_options: (state.shuffleO && allowShuffleO) ? '1' : '0',
+      });
+      window.location.href = `/${safeKind}/center?` + params.toString();
+    }
+
+    async function startExam(){
+      if (!LOGGED_IN) { alert('请先登录'); window.location.href = '/login'; return; }
+      if (state.scope !== 'all') {
+        alert('考试仅支持“全部”范围，请先切换范围。');
+        return;
+      }
+
+      const typesList = Array.isArray(ALL_TYPES) ? ALL_TYPES.filter(Boolean) : [];
+      if (!typesList.length) {
+        alert('暂无可用题型，无法创建考试');
+        return;
+      }
+
+      const duration = 60;
+      const total = 30;
+      const typesCfg = {};
+
+      if (state.type && state.type !== 'all') {
+        typesCfg[state.type] = total;
+      } else {
+        const n = Math.max(1, typesList.length);
+        const base = Math.floor(total / n);
+        let rem = total % n;
+        typesList.forEach((t) => {
+          const v = base + (rem > 0 ? 1 : 0);
+          if (rem > 0) rem -= 1;
+          if (v > 0) typesCfg[t] = v;
+        });
+      }
+
+      const keys = Object.keys(typesCfg);
+      if (!keys.length) {
+        alert('题型配置为空，无法创建考试');
+        return;
+      }
+
+      const detail = keys.map((k) => `${k}:${typesCfg[k]}`).join('，');
+      if (!confirm(`将创建考试：${SUBJECT_NAME}\n时长：${duration} 分钟\n题量：${total}（${detail}）\n确定继续？`)) {
+        return;
+      }
+
+      try {
+        const resp = await fetch('/api/exams/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ source: 'public', subject: SUBJECT_NAME, duration, types: typesCfg, scores: {} })
+        });
+        const js = await resp.json().catch(() => ({}));
+        if (!resp.ok || !js || js.status !== 'success' || !js.exam_id) {
+          alert((js && js.message) ? js.message : '创建考试失败，请稍后再试');
+          return;
+        }
+        window.location.href = `/quiz?mode=exam&exam_id=${js.exam_id}`;
+      } catch (e) {
+        alert('创建考试失败，请检查网络或稍后重试');
+      }
+    }
+

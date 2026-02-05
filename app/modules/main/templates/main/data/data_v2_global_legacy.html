@@ -1,0 +1,227 @@
+{% extends "main/data/data_v2_shell.html" %}
+{# legacy backup: v2 global before redesign #}
+
+{% block data_content %}
+  <section class="dc-card" aria-label="全局大局观">
+    <div class="dc-card-head">
+      <div style="min-width:0;">
+        <h2>全局大局观</h2>
+        <p>把覆盖、正确、连续、复盘资产放在同一个视角里：先稳住基本盘，再用数据做“最小代价的提升”。</p>
+      </div>
+      <div class="dc-ai-badge" title="最近活跃">
+        最近活跃：{{ all_summary.last_activity[:10] if all_summary.last_activity else '—' }}
+      </div>
+    </div>
+
+    <div class="dc-kpi-grid">
+      <div class="dc-kpi">
+        <div class="dc-kpi-top">
+          <div class="k">学习健康分</div>
+        </div>
+        <div class="v mono">{{ health_score }}</div>
+        <div class="m">覆盖 × 正确 × 连续 × 错题治理（0-100）</div>
+      </div>
+      <div class="dc-kpi">
+        <div class="dc-kpi-top">
+          <div class="k">错题资产</div>
+        </div>
+        <div class="v mono">{{ all_summary.mistakes }}</div>
+        <div class="m">累计错 {{ all_summary.mistakes_times }} 次 · 建议优先闭环</div>
+      </div>
+      <div class="dc-kpi">
+        <div class="dc-kpi-top">
+          <div class="k">收藏资产</div>
+        </div>
+        <div class="v mono">{{ all_summary.favorites }}</div>
+        <div class="m">高价值题：可用于复习与背题</div>
+      </div>
+    </div>
+
+    <div class="dc-chart-grid" style="margin-top:10px;">
+      <div class="dc-chart" id="dcHealthGaugeChart" aria-label="健康分仪表盘"></div>
+      <div class="dc-chart" id="dcAssetTrendChart" aria-label="错题与收藏新增趋势"></div>
+    </div>
+
+    <div class="dc-split">
+      <div class="dc-box">
+        <h3>全局洞察（近 {{ window_days }} 天）</h3>
+        {% if global_insights %}
+          <div class="dc-list" style="margin-top:8px;">
+            {% for it in global_insights %}
+              <div class="dc-item">
+                <div class="dc-item-top">
+                  <div style="min-width:0;">
+                    <div class="dc-item-title">{{ it.title }}</div>
+                    <div class="dc-item-meta">{{ it.value }}</div>
+                    <div class="dc-item-meta muted">{{ it.hint }}</div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="dc-empty">暂时还无法生成洞察（可能是答题数据不足）。</div>
+        {% endif %}
+      </div>
+
+      <div class="dc-box">
+        <h3>快捷跳转</h3>
+        <p style="margin:0;">从“全局”下钻到复盘与标签，保证语义一致：错题/收藏/标签都能回到练习闭环。</p>
+        <div class="dc-item-actions" style="margin-top:10px;">
+          <a class="dc-mini-btn primary" href="/data/mistakes?days={{ window_days }}">去看错题页</a>
+          <a class="dc-mini-btn" href="/data/favorites?days={{ window_days }}">去看收藏页</a>
+          <a class="dc-mini-btn" href="/data/tags?days={{ window_days }}">去看标签页</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="dc-card" aria-label="核心图表">
+    <div class="dc-card-head">
+      <div style="min-width:0;">
+        <h2>核心图表</h2>
+        <p>趋势 × 活跃 × 能力画像 × Top 维度：你在“做什么、什么时候做、做得怎么样”。</p>
+      </div>
+    </div>
+
+    <div class="dc-chart-grid">
+      <div class="dc-chart" id="dcTrendChart" aria-label="学习趋势图"></div>
+      <div class="dc-chart" id="dcHeatmapChart" aria-label="活跃热力图"></div>
+      <div class="dc-chart" id="dcRadarChart" aria-label="能力雷达图"></div>
+      <div class="dc-chart" id="dcTopMixChart" aria-label="Top 维度"></div>
+    </div>
+  </section>
+
+  <section class="dc-card" aria-label="结构分布">
+    <div class="dc-card-head">
+      <div style="min-width:0;">
+        <h2>结构分布</h2>
+        <p>用更“结构化”的视角看题型与难度：把时间投到更有杠杆的位置。</p>
+      </div>
+    </div>
+
+    <div class="dc-chart-grid">
+      <div class="dc-chart" id="dcTypeDistChart" aria-label="题型分布"></div>
+      <div class="dc-chart" id="dcDifficultyDistChart" aria-label="难度分布"></div>
+    </div>
+  </section>
+
+  <section class="dc-card" aria-label="行动建议与薄弱点">
+    <div class="dc-card-head">
+      <div style="min-width:0;">
+        <h2>行动建议与薄弱点</h2>
+        <p>优先补短板：先刷错题，再重练全量；把覆盖率与闭环复盘做扎实。</p>
+      </div>
+    </div>
+
+    <div class="dc-split">
+      <div class="dc-box">
+        <h3>下一步建议（Top 3）</h3>
+        {% if next_actions %}
+          <div class="dc-list" style="margin-top:8px;">
+            {% for a in next_actions %}
+              <div class="dc-item">
+                <div class="dc-item-top">
+                  <div style="min-width:0;">
+                    <div class="dc-item-title">{{ a.title }}</div>
+                    <div class="dc-item-meta">{{ a.meta }}</div>
+                  </div>
+                  <div class="dc-item-actions">
+                    <a class="dc-mini-btn primary" href="/quiz?mode=quiz&source=mistakes&subject={{ a.subject|urlencode }}&type={{ a.q_type|urlencode }}">刷错题</a>
+                    <a class="dc-mini-btn" href="/quiz?mode=quiz&source=all&subject={{ a.subject|urlencode }}&type={{ a.q_type|urlencode }}">重练</a>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="dc-empty">先做几道题再来看，这里会给出更有指导意义的建议。</div>
+        {% endif %}
+      </div>
+
+      <div class="dc-box">
+        <h3>薄弱点（科目 × 题型）</h3>
+        <p style="margin:0;">按正确率从低到高（至少做过 5 题）。</p>
+        {% if weakness_rows %}
+          <div class="dc-list" style="margin-top:8px;">
+            {% for w in weakness_rows %}
+              <div class="dc-item">
+                <div class="dc-item-top">
+                  <div style="min-width:0;">
+                    <div class="dc-item-title">{{ w.subject }} · {{ w.q_type }}</div>
+                    <div class="dc-item-meta">正确率 {{ w.accuracy }}% · 已做 {{ w.answered }} · 错题 {{ w.mistakes }}</div>
+                  </div>
+                  <div class="dc-item-actions">
+                    <a class="dc-mini-btn primary" href="/quiz?mode=quiz&source=mistakes&subject={{ w.subject|urlencode }}&type={{ w.q_type|urlencode }}">刷错题</a>
+                  </div>
+                </div>
+                <div class="dc-bars" aria-hidden="true">
+                  <div class="dc-bar secondary"><span style="width: {{ w.accuracy }}%"></span></div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="dc-empty">暂无可用薄弱点排行（可能是做题不足或数据为空）。</div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <section class="dc-card" aria-label="最近错题与收藏">
+    <div class="dc-card-head">
+      <div style="min-width:0;">
+        <h2>最近错题与收藏</h2>
+        <p>把“近期高频错题”和“新增收藏”快速翻一遍，能显著提升复盘效率。</p>
+      </div>
+    </div>
+
+    <div class="dc-split">
+      <div class="dc-box">
+        <h3>公共题库 · 最近错题</h3>
+        {% if recent_mistakes %}
+          <div class="dc-list" style="margin-top:8px;">
+            {% for m in recent_mistakes %}
+              <div class="dc-item">
+                <div class="dc-item-top">
+                  <div style="min-width:0;">
+                    <div class="dc-item-title">{{ m.subject }} · {{ m.q_type }} · 难度{{ m.difficulty }}</div>
+                    <div class="dc-item-meta">{{ m.snippet }}</div>
+                  </div>
+                  <div class="dc-item-actions">
+                    <a class="dc-mini-btn primary" href="/quiz?mode=quiz&source=mistakes&subject={{ m.subject|urlencode }}&type={{ m.q_type|urlencode }}">刷同类错题</a>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="dc-empty">暂无错题记录。</div>
+        {% endif %}
+      </div>
+
+      <div class="dc-box">
+        <h3>公共题库 · 最新收藏</h3>
+        {% if recent_favorites_public %}
+          <div class="dc-list" style="margin-top:8px;">
+            {% for f in recent_favorites_public %}
+              <div class="dc-item">
+                <div class="dc-item-top">
+                  <div style="min-width:0;">
+                    <div class="dc-item-title">{{ f.subject }} · {{ f.q_type }} · 难度{{ f.difficulty }}</div>
+                    <div class="dc-item-meta">{{ f.snippet }}</div>
+                  </div>
+                  <div class="dc-item-actions">
+                    <a class="dc-mini-btn" href="/quiz?mode=quiz&subject={{ f.subject|urlencode }}&type={{ f.q_type|urlencode }}">去练习</a>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="dc-empty">暂无收藏记录。</div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+{% endblock %}

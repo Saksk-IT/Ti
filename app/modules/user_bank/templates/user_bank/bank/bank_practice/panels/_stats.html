@@ -1,0 +1,32 @@
+        <div id="pageTabStats" data-tab-panel="stats" hidden>
+          <div class="ubdv2-shell ubdv2-embed" data-bank-id="{{ bank_id }}" data-subtab="global" data-days="90" data-ubdv2-autostart="0">
+            <div class="ubdv2-subnav" role="navigation" aria-label="数据子页面导航">
+              <nav class="ubdv2-tabs" role="tablist" aria-label="全局/错题/收藏">
+                <button type="button" class="ubdv2-tab" data-stats-tab="global" role="tab" aria-selected="false">全局</button>
+                <button type="button" class="ubdv2-tab" data-stats-tab="mistakes" role="tab" aria-selected="false">错题</button>
+                <button type="button" class="ubdv2-tab" data-stats-tab="favorites" role="tab" aria-selected="false">收藏</button>
+              </nav>
+              <div class="ubdv2-subnav-right" aria-label="时间范围">
+                <div class="ubdv2-days" id="ubdv2Days" role="tablist" aria-label="时间窗口">
+                  <button type="button" data-days="7" role="tab">7天</button>
+                  <button type="button" data-days="14" role="tab">14天</button>
+                  <button type="button" data-days="30" role="tab">30天</button>
+                  <button type="button" data-days="90" role="tab">90天</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="ubdv2-panels" aria-label="数据内容区">
+              <div class="ubdv2-panel" data-ubdv2-panel="global">
+                {% include "user_bank/bank/_bank_data_global_v2_panel.html" %}
+              </div>
+              <div class="ubdv2-panel" data-ubdv2-panel="mistakes" hidden>
+                {% include "user_bank/bank/_bank_data_mistakes_v2_panel.html" %}
+              </div>
+              <div class="ubdv2-panel" data-ubdv2-panel="favorites" hidden>
+                {% include "user_bank/bank/_bank_data_favorites_v2_panel.html" %}
+              </div>
+            </div>
+          </div>
+        </div>
+

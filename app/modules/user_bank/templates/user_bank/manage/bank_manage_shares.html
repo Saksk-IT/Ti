@@ -1,0 +1,436 @@
+{% extends "user_bank/manage/manage_base.html" %}
+
+{% set manage_tab = 'share' %}
+
+{% block manage_head %}
+  <style>
+    .ubm-share-list { display: grid; gap: 10px; margin-top: 10px; }
+    .ubm-share-item {
+      border: 1px solid var(--app-border);
+      border-radius: 16px;
+      background: var(--app-surface);
+      box-shadow: var(--app-shadow-soft);
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+    .ubm-share-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      min-width: 0;
+    }
+    .ubm-share-code {
+      font-variant-numeric: tabular-nums;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 18px;
+      font-weight: 950;
+      letter-spacing: 1px;
+    }
+    .ubm-share-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 24px;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 1px solid var(--app-border);
+      background: var(--app-surface-2);
+      box-shadow: var(--app-shadow-soft);
+      font-size: 12px;
+      font-weight: 950;
+      color: var(--app-text);
+      white-space: nowrap;
+      flex: 0 0 auto;
+    }
+    .ubm-share-chip.off { opacity: 0.75; }
+    .ubm-share-meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--app-muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .ubm-empty {
+      padding: 14px 12px;
+      border: 1px dashed color-mix(in srgb, var(--app-border) 80%, transparent);
+      border-radius: 16px;
+      color: var(--app-muted);
+      background: color-mix(in srgb, var(--app-surface) 88%, var(--app-bg));
+      font-size: 12px;
+      line-height: 1.5;
+    }
+  </style>
+{% endblock %}
+
+{% block manage_content %}
+  {% if is_public %}
+  <section class="ubm-card ubm-card-warning" aria-label="公开题库提示">
+    <h2>分享管理已禁用</h2>
+    <div class="ubm-sub">当前题库处于<strong>公开状态</strong>，任何人都可以通过题库广场访问，无需分享码/链接。</div>
+    <div class="ubm-sub" style="margin-top: 6px;">如需使用分享管理功能，请先在「设置」中将题库切换为私有状态。</div>
+  </section>
+  {% else %}
+  <section class="ubm-card" aria-label="分享说明">
+    <h2>分享</h2>
+    <div class="ubm-sub">创建分享码/分享链接，并为使用者配置权限、有效期与最大使用次数。</div>
+    <div class="ubm-sub" id="ubmUsageStats" style="margin-top: 6px;">可访问人数：加载中…</div>
+    <div class="ubm-actions">
+      <button class="ubm-btn ubm-btn-primary" type="button" id="ubmCreateShareBtn">创建分享</button>
+      <button class="ubm-btn" type="button" id="ubmReloadSharesBtn">刷新列表</button>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if not is_public %}
+  <section class="ubm-card" aria-label="分享列表">
+    <h2>分享列表</h2>
+    <div class="ubm-share-list" id="ubmShareList">
+      <div class="ubm-empty">加载中…</div>
+    </div>
+  </section>
+
+  <div class="ubm-modal-overlay" id="ubmShareCreateOverlay" aria-hidden="true">
+    <div class="ubm-modal" role="dialog" aria-modal="true" aria-label="创建分享">
+      <div class="ubm-modal-head">
+        <div class="ubm-modal-title">创建分享</div>
+        <button class="ubm-btn ubm-btn-ghost" type="button" id="ubmShareCreateCloseBtn">关闭</button>
+      </div>
+      <div class="ubm-modal-body">
+        <div class="ubm-field">
+          <div class="ubm-label">分享类型</div>
+          <select class="ubm-select" id="ubmShareType" title="分享类型">
+            <option value="code">分享码</option>
+            <option value="link">分享链接</option>
+          </select>
+        </div>
+        <div class="ubm-field">
+          <div class="ubm-label">权限级别</div>
+          <select class="ubm-select" id="ubmSharePerm" title="权限级别">
+            <option value="read">只读（仅可刷题）</option>
+            <option value="copy">可复制（可刷题并复制题目）</option>
+          </select>
+        </div>
+        <div class="ubm-field">
+          <div class="ubm-label">有效期</div>
+          <select class="ubm-select" id="ubmShareExp" title="有效期">
+            <option value="">永久有效</option>
+            <option value="7">7天</option>
+            <option value="30">30天</option>
+          </select>
+        </div>
+        <div class="ubm-field">
+          <div class="ubm-label">最大使用次数</div>
+          <select class="ubm-select" id="ubmShareMax" title="最大使用次数">
+            <option value="">不限</option>
+            <option value="10">10次</option>
+            <option value="50">50次</option>
+            <option value="100">100次</option>
+          </select>
+        </div>
+        <div class="ubm-sub" id="ubmShareCreateHint" style="margin-top: 10px;"></div>
+      </div>
+      <div class="ubm-modal-foot">
+        <button class="ubm-btn" type="button" id="ubmShareCreateCancelBtn">取消</button>
+        <button class="ubm-btn ubm-btn-primary" type="button" id="ubmShareCreateSubmitBtn">创建</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ubm-modal-overlay" id="ubmShareResultOverlay" aria-hidden="true">
+    <div class="ubm-modal" role="dialog" aria-modal="true" aria-label="分享创建成功">
+      <div class="ubm-modal-head">
+        <div class="ubm-modal-title">分享创建成功</div>
+        <button class="ubm-btn ubm-btn-ghost" type="button" id="ubmShareResultCloseBtn">关闭</button>
+      </div>
+      <div class="ubm-modal-body">
+        <div id="ubmShareResultContent"></div>
+      </div>
+      <div class="ubm-modal-foot">
+        <button class="ubm-btn ubm-btn-primary" type="button" id="ubmShareResultOkBtn">完成</button>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+{% endblock %}
+
+{% block manage_scripts %}
+  {% if not is_public %}
+  <script>
+    (function () {
+      const root = document.querySelector('[data-ubm-bank-id]');
+      const bankId = root ? String(root.dataset.ubmBankId || '').trim() : '';
+
+      const listEl = document.getElementById('ubmShareList');
+      const usageEl = document.getElementById('ubmUsageStats');
+      const reloadBtn = document.getElementById('ubmReloadSharesBtn');
+      const createBtn = document.getElementById('ubmCreateShareBtn');
+
+      const createOverlay = document.getElementById('ubmShareCreateOverlay');
+      const createCloseBtn = document.getElementById('ubmShareCreateCloseBtn');
+      const createCancelBtn = document.getElementById('ubmShareCreateCancelBtn');
+      const createSubmitBtn = document.getElementById('ubmShareCreateSubmitBtn');
+      const createHint = document.getElementById('ubmShareCreateHint');
+      const typeEl = document.getElementById('ubmShareType');
+      const permEl = document.getElementById('ubmSharePerm');
+      const expEl = document.getElementById('ubmShareExp');
+      const maxEl = document.getElementById('ubmShareMax');
+
+      const resultOverlay = document.getElementById('ubmShareResultOverlay');
+      const resultCloseBtn = document.getElementById('ubmShareResultCloseBtn');
+      const resultOkBtn = document.getElementById('ubmShareResultOkBtn');
+      const resultContent = document.getElementById('ubmShareResultContent');
+
+      let shares = [];
+
+      function formatDate(dateStr) {
+        try {
+          if (!dateStr) return '-';
+          const d = new Date(dateStr);
+          if (Number.isNaN(d.getTime())) return String(dateStr);
+          return d.toLocaleDateString('zh-CN');
+        } catch (e) {
+          return String(dateStr || '-');
+        }
+      }
+
+      function openModal(overlay) {
+        if (!overlay) return;
+        overlay.classList.add('show');
+        overlay.setAttribute('aria-hidden', 'false');
+      }
+      function closeModal(overlay) {
+        if (!overlay) return;
+        overlay.classList.remove('show');
+        overlay.setAttribute('aria-hidden', 'true');
+      }
+
+      function setCreateHint(text, kind) {
+        if (!createHint) return;
+        createHint.textContent = String(text || '');
+        createHint.style.color = (kind === 'error') ? 'color-mix(in srgb, #ef4444 70%, var(--app-text))' : 'var(--app-muted)';
+      }
+
+      async function loadShares() {
+        if (!bankId) return;
+        try {
+          listEl.innerHTML = '<div class="ubm-empty">加载中…</div>';
+          const res = await window.ubmApi(`/user/banks/api/${encodeURIComponent(bankId)}/shares`);
+          shares = (res && res.data && Array.isArray(res.data.shares)) ? res.data.shares : [];
+          render();
+        } catch (e) {
+          shares = [];
+          listEl.innerHTML = `<div class="ubm-empty">${e && e.message ? e.message : '加载失败'}</div>`;
+        }
+      }
+
+      async function loadUsageStats() {
+        if (!bankId || !usageEl) return;
+        try {
+          const res = await window.ubmApi(`/user/banks/api/${encodeURIComponent(bankId)}/usage-stats`);
+          const d = (res && res.data) ? res.data : (res || {});
+          const total = Number(d.total_users || 0);
+          usageEl.textContent = `可访问人数：${total}（含你）`;
+        } catch (e) {
+          usageEl.textContent = '可访问人数：—';
+        }
+      }
+
+      function render() {
+        if (!listEl) return;
+        if (!shares.length) {
+          listEl.innerHTML = '<div class="ubm-empty">暂无分享。你可以创建分享码或分享链接。</div>';
+          return;
+        }
+
+        listEl.innerHTML = '';
+        shares.forEach((s) => {
+          const item = document.createElement('div');
+          item.className = 'ubm-share-item';
+
+          const top = document.createElement('div');
+          top.className = 'ubm-share-row';
+
+          const left = document.createElement('div');
+          left.style.minWidth = '0';
+
+          const code = document.createElement('div');
+          code.className = 'ubm-share-code';
+          code.textContent = s.share_code ? String(s.share_code) : '链接分享';
+          left.appendChild(code);
+
+          const meta = document.createElement('div');
+          meta.className = 'ubm-share-meta';
+          const perm = s.permission === 'copy' ? '可复制' : '只读';
+          const used = `${s.current_uses || 0}${s.max_uses ? '/' + s.max_uses : ''}次`;
+          const exp = s.expires_at ? formatDate(s.expires_at) : '永久';
+          meta.textContent = `权限：${perm} · 使用：${used} · 过期：${exp} · 创建：${formatDate(s.created_at)}`;
+
+          const right = document.createElement('div');
+          right.style.display = 'flex';
+          right.style.gap = '8px';
+          right.style.flexWrap = 'wrap';
+          right.style.justifyContent = 'flex-end';
+          right.style.flex = '0 0 auto';
+
+          if (!s.is_active) {
+            const off = document.createElement('div');
+            off.className = 'ubm-share-chip off';
+            off.textContent = '已失效';
+            right.appendChild(off);
+          }
+
+          if (s.share_code) {
+            const btn = document.createElement('button');
+            btn.className = 'ubm-btn';
+            btn.type = 'button';
+            btn.textContent = '复制分享码';
+            btn.addEventListener('click', () => window.ubmCopyText(String(s.share_code)));
+            right.appendChild(btn);
+          }
+          if (s.share_link) {
+            const btn = document.createElement('button');
+            btn.className = 'ubm-btn';
+            btn.type = 'button';
+            btn.textContent = '复制链接';
+            btn.addEventListener('click', () => window.ubmCopyText(String(s.share_link)));
+            right.appendChild(btn);
+          }
+          if (s.is_active) {
+            const btn = document.createElement('button');
+            btn.className = 'ubm-btn ubm-btn-danger';
+            btn.type = 'button';
+            btn.textContent = '撤销';
+            btn.addEventListener('click', () => revokeShare(s.id));
+            right.appendChild(btn);
+          }
+
+          top.appendChild(left);
+          top.appendChild(right);
+
+          item.appendChild(top);
+          item.appendChild(meta);
+          listEl.appendChild(item);
+        });
+      }
+
+      async function revokeShare(shareId) {
+        if (!shareId) return;
+        if (!confirm('确定要撤销此分享吗？已使用此分享的用户将无法再访问。')) return;
+        try {
+          await window.ubmApi(`/user/banks/api/${encodeURIComponent(bankId)}/shares/${encodeURIComponent(String(shareId))}`, { method: 'DELETE' });
+          window.ubmToast('已撤销', 'success');
+          loadShares();
+          loadUsageStats();
+        } catch (e) {
+          window.ubmToast(e && e.message ? e.message : '撤销失败', 'error');
+        }
+      }
+
+      function showCreate() {
+        setCreateHint('', '');
+        openModal(createOverlay);
+      }
+
+      async function submitCreate() {
+        if (!bankId) return;
+        const payload = {
+          type: typeEl ? typeEl.value : 'code',
+          permission: permEl ? permEl.value : 'read',
+          expires_in: expEl && expEl.value ? expEl.value : null,
+          max_uses: maxEl && maxEl.value ? maxEl.value : null,
+        };
+
+        try {
+          createSubmitBtn && (createSubmitBtn.disabled = true);
+          setCreateHint('正在创建…', '');
+          const res = await window.ubmApi(`/user/banks/api/${encodeURIComponent(bankId)}/shares`, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+          });
+          closeModal(createOverlay);
+
+          const data = (res && res.data) ? res.data : {};
+          renderResult(data);
+          openModal(resultOverlay);
+          loadShares();
+          loadUsageStats();
+        } catch (e) {
+          setCreateHint(e && e.message ? e.message : '创建失败', 'error');
+        } finally {
+          createSubmitBtn && (createSubmitBtn.disabled = false);
+        }
+      }
+
+      function renderResult(data) {
+        if (!resultContent) return;
+        resultContent.innerHTML = '';
+
+        if (data && data.share_code) {
+          const box = document.createElement('div');
+          box.className = 'ubm-card';
+          box.style.background = 'var(--app-surface)';
+          box.innerHTML = `
+            <h2 style="margin-bottom:10px;">分享码</h2>
+            <div style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+                        font-size: 28px; font-weight: 950; letter-spacing: 3px;">${String(data.share_code)}</div>
+          `;
+          const actions = document.createElement('div');
+          actions.className = 'ubm-actions';
+          const btn = document.createElement('button');
+          btn.className = 'ubm-btn ubm-btn-primary';
+          btn.type = 'button';
+          btn.textContent = '复制分享码';
+          btn.addEventListener('click', () => window.ubmCopyText(String(data.share_code)));
+          actions.appendChild(btn);
+          box.appendChild(actions);
+          resultContent.appendChild(box);
+          return;
+        }
+
+        if (data && data.share_link) {
+          const box = document.createElement('div');
+          box.className = 'ubm-card';
+          box.style.background = 'var(--app-surface)';
+          box.innerHTML = `
+            <h2 style="margin-bottom:10px;">分享链接</h2>
+            <div style="font-size:12px;color:var(--app-muted);margin-bottom:8px;">复制给对方后即可加入题库。</div>
+            <input class="ubm-input" style="width:100%;" readonly value="${String(data.share_link)}" />
+          `;
+          const actions = document.createElement('div');
+          actions.className = 'ubm-actions';
+          const btn = document.createElement('button');
+          btn.className = 'ubm-btn ubm-btn-primary';
+          btn.type = 'button';
+          btn.textContent = '复制链接';
+          btn.addEventListener('click', () => window.ubmCopyText(String(data.share_link)));
+          actions.appendChild(btn);
+          box.appendChild(actions);
+          resultContent.appendChild(box);
+          return;
+        }
+
+        resultContent.innerHTML = '<div class="ubm-empty">创建成功。</div>';
+      }
+
+      createBtn?.addEventListener('click', showCreate);
+      reloadBtn?.addEventListener('click', loadShares);
+
+      createCloseBtn?.addEventListener('click', () => closeModal(createOverlay));
+      createCancelBtn?.addEventListener('click', () => closeModal(createOverlay));
+      createSubmitBtn?.addEventListener('click', submitCreate);
+      createOverlay?.addEventListener('click', (e) => { if (e.target === createOverlay) closeModal(createOverlay); });
+
+      resultCloseBtn?.addEventListener('click', () => closeModal(resultOverlay));
+      resultOkBtn?.addEventListener('click', () => closeModal(resultOverlay));
+      resultOverlay?.addEventListener('click', (e) => { if (e.target === resultOverlay) closeModal(resultOverlay); });
+
+      loadShares();
+      loadUsageStats();
+    })();
+  </script>
+  {% endif %}
+{% endblock %}

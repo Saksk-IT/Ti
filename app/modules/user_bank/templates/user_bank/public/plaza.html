@@ -1,0 +1,602 @@
+{% extends "main/shared/app_shell.html" %}
+
+{% block title %}题库广场{% endblock %}
+{% block page_title %}题库广场{% endblock %}
+
+{% block head_extra %}
+<style>
+  .pb-hero {
+    padding: 18px 18px 16px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .pb-hero h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 980;
+    letter-spacing: -0.8px;
+    line-height: 1.12;
+  }
+
+  .pb-hero p {
+    margin: 8px 0 0;
+    color: var(--app-muted);
+    font-size: 13px;
+    line-height: 1.6;
+    max-width: 62ch;
+  }
+
+  .pb-hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .pb-toolbar {
+    margin-top: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .pb-toolbar-left, .pb-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  .pb-search {
+    min-width: min(520px, 100%);
+    flex: 1 1 auto;
+  }
+
+  .pb-seg {
+    display: inline-flex;
+    border: 1px solid var(--app-border);
+    border-radius: 999px;
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow-soft);
+    overflow: hidden;
+  }
+
+  .pb-seg button {
+    height: 36px;
+    padding: 0 12px;
+    border: 0;
+    background: transparent;
+    color: var(--app-muted);
+    font-weight: 900;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 160ms ease, color 160ms ease;
+  }
+
+  .pb-seg button:hover {
+    background: color-mix(in srgb, var(--app-text) 6%, transparent);
+    color: var(--app-text);
+  }
+
+  .pb-seg button.active {
+    background: color-mix(in srgb, var(--app-text) 10%, transparent);
+    color: var(--app-text);
+  }
+
+  .pb-seg button:focus { outline: none; box-shadow: 0 0 0 3px var(--app-primary-soft) inset; }
+
+  .pb-sort {
+    width: 168px;
+  }
+
+  .pb-loading {
+    margin-top: 12px;
+    padding: 18px;
+    border-radius: var(--app-radius-xl);
+    border: 1px solid var(--app-border);
+    background: var(--app-surface-2);
+    color: var(--app-muted);
+  }
+
+  .pb-empty {
+    margin-top: 12px;
+    padding: 18px;
+    border-radius: var(--app-radius-xl);
+    border: 1px dashed color-mix(in srgb, var(--app-border) 70%, transparent);
+    color: var(--app-muted);
+    background: color-mix(in srgb, var(--app-surface) 70%, transparent);
+  }
+
+  .pb-empty a { text-decoration: underline; text-underline-offset: 3px; }
+
+  .pb-list {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .pb-card {
+    border-radius: 16px;
+    border: 1px solid var(--app-border);
+    background: var(--app-surface-2);
+    box-shadow: var(--app-shadow-soft);
+    padding: 14px;
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+    cursor: pointer;
+    transition: box-shadow 160ms ease, border-color 160ms ease, background 160ms ease;
+  }
+
+  .pb-card:hover {
+    box-shadow: var(--app-shadow);
+    border-color: color-mix(in srgb, var(--app-text) 14%, var(--app-border));
+  }
+
+  .pb-card:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--app-primary-soft), var(--app-shadow-soft);
+  }
+
+  .pb-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .pb-name {
+    font-size: 14px;
+    font-weight: 950;
+    letter-spacing: -0.2px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pb-badges {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex: 0 0 auto;
+  }
+
+  .pb-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--app-border);
+    background: color-mix(in srgb, var(--app-surface) 70%, transparent);
+    font-size: 12px;
+    font-weight: 850;
+    color: var(--app-muted);
+    white-space: nowrap;
+  }
+
+  .pb-pill.system {
+    background: color-mix(in srgb, #f97316 14%, transparent);
+    border-color: color-mix(in srgb, #f97316 24%, var(--app-border));
+    color: color-mix(in srgb, #f97316 85%, var(--app-text));
+  }
+
+  .pb-pill.user {
+    background: color-mix(in srgb, #2563eb 14%, transparent);
+    border-color: color-mix(in srgb, #2563eb 24%, var(--app-border));
+    color: color-mix(in srgb, #2563eb 85%, var(--app-text));
+  }
+
+  .pb-pill.copy {
+    background: color-mix(in srgb, #10b981 12%, transparent);
+    border-color: color-mix(in srgb, #10b981 22%, var(--app-border));
+    color: color-mix(in srgb, #10b981 85%, var(--app-text));
+  }
+
+  .pb-pill.shared {
+    background: color-mix(in srgb, #7c3aed 12%, transparent);
+    border-color: color-mix(in srgb, #7c3aed 22%, var(--app-border));
+    color: color-mix(in srgb, #7c3aed 85%, var(--app-text));
+  }
+
+  .pb-owner {
+    font-size: 12px;
+    color: var(--app-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pb-desc {
+    margin: 0;
+    color: var(--app-muted);
+    font-size: 13px;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .pb-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .pb-pagination {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .pb-page-btn {
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid var(--app-border);
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow-soft);
+    color: var(--app-text);
+    cursor: pointer;
+    font-weight: 900;
+    font-size: 12px;
+    transition: box-shadow 160ms ease, background 160ms ease, transform 160ms ease;
+  }
+
+  .pb-page-btn:hover { box-shadow: var(--app-shadow); transform: translateY(-1px); }
+  .pb-page-btn:active { transform: translateY(0); }
+  .pb-page-btn:focus { outline: none; box-shadow: 0 0 0 3px var(--app-primary-soft), var(--app-shadow-soft); }
+
+  .pb-page-btn.active {
+    background: color-mix(in srgb, var(--app-text) 10%, transparent);
+    border-color: color-mix(in srgb, var(--app-text) 18%, var(--app-border));
+  }
+
+  .pb-page-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: var(--app-shadow-soft);
+  }
+
+  .pb-ellipsis {
+    padding: 0 4px;
+    color: var(--app-muted);
+    font-weight: 800;
+  }
+
+  .pb-busy {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.82;
+    transition: opacity 160ms ease;
+  }
+
+  .pb-hold { pointer-events: none; }
+
+  .pb-busy::after {
+    content: '正在更新…';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    color: var(--app-muted);
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: -0.1px;
+    background: color-mix(in srgb, var(--app-surface) 72%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--app-border) 70%, transparent);
+    backdrop-filter: blur(6px);
+  }
+
+  @media (max-width: 980px) {
+    .pb-list { grid-template-columns: 1fr; }
+    .pb-sort { width: 100%; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="app-container">
+  <section class="app-card pb-hero">
+    <div>
+      <h1>题库广场</h1>
+      <p>系统题库 + 用户题库（公开 / 分享）。支持搜索、筛选与排序；点击卡片进入练习设置。</p>
+    </div>
+    <div class="pb-hero-actions">
+      <a class="app-btn app-btn-secondary" href="/user/banks" aria-label="进入个人题库">个人题库</a>
+    </div>
+  </section>
+
+  <section class="app-card pb-toolbar" aria-label="题库广场筛选">
+    <div class="pb-toolbar-left">
+      <input class="app-input pb-search" id="kw" type="search" placeholder="搜索题库/科目名称或描述" autocomplete="off" />
+
+      <div class="pb-seg" id="typeSeg" role="tablist" aria-label="题库类型筛选">
+        <button type="button" class="active" data-type="" role="tab" aria-selected="true">全部</button>
+        <button type="button" data-type="system" role="tab" aria-selected="false">系统题库</button>
+        <button type="button" data-type="user" role="tab" aria-selected="false">用户</button>
+      </div>
+
+      <select class="app-input pb-sort" id="sort" aria-label="排序方式">
+        <option value="newest">最新发布</option>
+        <option value="popular">最受欢迎</option>
+        <option value="questions">题目最多</option>
+      </select>
+    </div>
+
+    <div class="pb-toolbar-right">
+      <span class="app-pill" id="countPill">0 个题库</span>
+    </div>
+  </section>
+
+  <div id="list" class="pb-loading" aria-live="polite">正在加载...</div>
+  <div id="pagination" class="pb-pagination" aria-label="分页"></div>
+</div>
+{% endblock %}
+
+{% block body_end %}
+<script>
+  (function () {
+    var perPage = 12;
+    var currentPage = 1;
+    var total = 0;
+    var currentType = '';
+    var loadSeq = 0;
+
+    var kwEl = document.getElementById('kw');
+    var typeSeg = document.getElementById('typeSeg');
+    var sortEl = document.getElementById('sort');
+    var listEl = document.getElementById('list');
+    var paginationEl = document.getElementById('pagination');
+    var countPill = document.getElementById('countPill');
+
+    function escapeHtml(text) {
+      var div = document.createElement('div');
+      div.textContent = (text == null) ? '' : String(text);
+      return div.innerHTML;
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '-';
+      try { return new Date(dateStr).toLocaleDateString('zh-CN'); } catch (e) { return '-'; }
+    }
+
+    function debounce(fn, delay) {
+      var timer;
+      return function () {
+        var args = arguments;
+        clearTimeout(timer);
+        timer = setTimeout(function () { fn.apply(null, args); }, delay);
+      };
+    }
+
+    function setType(nextType) {
+      currentType = (nextType == null) ? '' : String(nextType);
+      if (typeSeg) {
+        Array.prototype.slice.call(typeSeg.querySelectorAll('button[data-type]')).forEach(function (btn) {
+          var active = (btn.getAttribute('data-type') || '') === currentType;
+          btn.classList.toggle('active', active);
+          btn.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+      }
+      currentPage = 1;
+      load();
+    }
+
+    function buildUrl() {
+      var kw = (kwEl && kwEl.value ? kwEl.value : '').trim();
+      var sort = (sortEl && sortEl.value ? sortEl.value : 'newest').trim();
+      var url = '/api/public/banks?page=' + encodeURIComponent(currentPage) +
+        '&per_page=' + encodeURIComponent(perPage) +
+        '&sort=' + encodeURIComponent(sort) +
+        '&type=' + encodeURIComponent(currentType || '');
+      if (kw) url += '&keyword=' + encodeURIComponent(kw);
+      return url;
+    }
+
+    async function load() {
+      if (!listEl) return;
+      var seq = ++loadSeq;
+      var hasCards = false;
+      var busyTimer = null;
+      var busyApplied = false;
+      try {
+        hasCards = !!(listEl.classList && listEl.classList.contains('pb-list') && listEl.querySelector && listEl.querySelector('.pb-card'));
+      } catch (e) {
+        hasCards = false;
+      }
+
+      if (hasCards) {
+        try {
+          listEl.classList.add('pb-hold');
+          listEl.setAttribute('aria-busy', 'true');
+          busyTimer = setTimeout(function () {
+            if (seq !== loadSeq) return;
+            try {
+              listEl.classList.add('pb-busy');
+              busyApplied = true;
+            } catch (e) {}
+          }, 160);
+        } catch (e) {}
+      } else {
+        listEl.className = 'pb-loading';
+        listEl.textContent = '正在加载...';
+      }
+
+      try {
+        var res = await fetch(buildUrl(), { credentials: 'same-origin' });
+        var data = await res.json();
+        if (seq !== loadSeq) return;
+        if (busyTimer) {
+          clearTimeout(busyTimer);
+          busyTimer = null;
+        }
+        if (!res.ok) throw new Error((data && data.message) || '请求失败');
+        if (!data || data.code !== 0) throw new Error((data && data.message) || '请求失败');
+
+        var banks = (data.data && data.data.banks) ? data.data.banks : [];
+        total = (data.data && typeof data.data.total !== 'undefined') ? Number(data.data.total || 0) : 0;
+        if (countPill) countPill.textContent = total + ' 个题库';
+
+        render(banks);
+        renderPagination();
+      } catch (e) {
+        if (seq !== loadSeq) return;
+        if (busyTimer) {
+          clearTimeout(busyTimer);
+          busyTimer = null;
+        }
+        listEl.className = 'pb-empty';
+        listEl.textContent = (e && e.message) ? e.message : '加载失败';
+        if (paginationEl) paginationEl.innerHTML = '';
+      } finally {
+        if (busyTimer) {
+          clearTimeout(busyTimer);
+          busyTimer = null;
+        }
+        if (seq !== loadSeq) return;
+        try {
+          listEl.classList && listEl.classList.remove('pb-hold');
+          if (busyApplied) listEl.classList && listEl.classList.remove('pb-busy');
+          listEl.removeAttribute('aria-busy');
+        } catch (e) {}
+      }
+    }
+
+    function render(banks) {
+      if (!listEl) return;
+      if (!banks || !banks.length) {
+        listEl.className = 'pb-empty';
+        listEl.innerHTML = '没有匹配的题库。试试更短的关键词，或切换「系统题库 / 用户」。';
+        return;
+      }
+
+      listEl.className = 'pb-list';
+      listEl.innerHTML = banks.map(function (b) {
+        var name = escapeHtml(b.name || '未命名题库');
+        var desc = (b.description || '').toString().trim();
+        var descHtml = desc ? ('<p class=\"pb-desc\">' + escapeHtml(desc) + '</p>') : '';
+        var qcnt = Number(b.question_count || 0) || 0;
+        var isSystem = (b.bank_type === 'system');
+        var typePill = isSystem
+          ? '<span class=\"pb-pill system\">系统</span>'
+          : '<span class=\"pb-pill user\">用户</span>';
+        var copyPill = b.allow_copy ? '<span class=\"pb-pill copy\">可复制</span>' : '';
+        var sharedPill = (!isSystem && b.is_shared) ? '<span class=\"pb-pill shared\">用户分享</span>' : '';
+        var ownerName = (b.owner_nickname || (isSystem ? '系统管理员' : '匿名')).toString();
+        var owner = '<div class=\"pb-owner\">创建者：' + escapeHtml(ownerName) + '</div>';
+        var uses = (!isSystem && !b.is_shared) ? ('<span class=\"pb-pill\">' + (Number(b.use_count || 0) || 0) + ' 人使用</span>') : '';
+        var created = formatDate(b.created_at || b.public_at);
+
+        var quizUrl = isSystem
+          ? ('/subjects/' + encodeURIComponent(b.id))
+          : ('/user/banks/' + encodeURIComponent(b.id) + '/practice');
+
+        return (
+          '<a class=\"pb-card\" href=\"' + quizUrl + '\" aria-label=\"进入题库：' + name + '\">' +
+            '<div class=\"pb-top\">' +
+              '<div class=\"pb-name\">' + name + '</div>' +
+              '<div class=\"pb-badges\">' + typePill + sharedPill + copyPill + '</div>' +
+            '</div>' +
+            owner +
+            descHtml +
+            '<div class=\"pb-meta\">' +
+              '<span class=\"pb-pill\">' + qcnt + ' 题</span>' +
+              uses +
+              '<span class=\"pb-pill\">创建 ' + escapeHtml(created) + '</span>' +
+            '</div>' +
+          '</a>'
+        );
+      }).join('');
+    }
+
+    function renderPagination() {
+      if (!paginationEl) return;
+      var totalPages = Math.ceil((total || 0) / perPage);
+      if (totalPages <= 1) {
+        paginationEl.innerHTML = '';
+        return;
+      }
+
+      function pageBtn(page, label, opts) {
+        opts = opts || {};
+        var disabled = !!opts.disabled;
+        var active = !!opts.active;
+        return '<button class=\"pb-page-btn' + (active ? ' active' : '') + '\"' +
+          ' type=\"button\" data-page=\"' + page + '\"' +
+          (disabled ? ' disabled' : '') +
+          ' aria-label=\"' + escapeHtml(label) + '\">' + escapeHtml(label) + '</button>';
+      }
+
+      var html = '';
+      html += pageBtn(currentPage - 1, '上一页', { disabled: currentPage <= 1 });
+
+      for (var i = 1; i <= totalPages; i++) {
+        var near = (i >= currentPage - 2 && i <= currentPage + 2);
+        if (i === 1 || i === totalPages || near) {
+          html += pageBtn(i, String(i), { active: i === currentPage });
+        } else if (i === currentPage - 3 || i === currentPage + 3) {
+          html += '<span class=\"pb-ellipsis\" aria-hidden=\"true\">…</span>';
+        }
+      }
+
+      html += pageBtn(currentPage + 1, '下一页', { disabled: currentPage >= totalPages });
+      paginationEl.innerHTML = html;
+    }
+
+    function goPage(page) {
+      var totalPages = Math.ceil((total || 0) / perPage) || 1;
+      var next = Math.max(1, Math.min(Number(page || 1) || 1, totalPages));
+      if (next === currentPage) return;
+      currentPage = next;
+      load();
+      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
+    }
+
+    if (kwEl) kwEl.addEventListener('input', debounce(function () {
+      currentPage = 1;
+      load();
+    }, 250));
+
+    if (sortEl) sortEl.addEventListener('change', function () {
+      currentPage = 1;
+      load();
+    });
+
+    if (typeSeg) typeSeg.addEventListener('click', function (e) {
+      var btn = e.target && e.target.closest ? e.target.closest('button[data-type]') : null;
+      if (!btn) return;
+      setType(btn.getAttribute('data-type') || '');
+    });
+
+    if (paginationEl) paginationEl.addEventListener('click', function (e) {
+      var btn = e.target && e.target.closest ? e.target.closest('button[data-page]') : null;
+      if (!btn || btn.disabled) return;
+      goPage(btn.getAttribute('data-page'));
+    });
+
+    load();
+  })();
+</script>
+{% endblock %}

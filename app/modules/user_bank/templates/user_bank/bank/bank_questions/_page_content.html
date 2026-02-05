@@ -1,0 +1,16 @@
+{% set manage_tab = 'questions' %}
+{% include "user_bank/manage/_bank_manage_basebar.html" %}
+<div class="container">
+    {% include "user_bank/bank/bank_questions/sections/_header.html" %}
+    {% include "user_bank/bank/bank_questions/sections/_stats.html" %}
+    {% include "user_bank/bank/bank_questions/sections/_toolbar.html" %}
+    {% include "user_bank/bank/bank_questions/sections/_table.html" %}
+</div>
+
+{% include "user_bank/bank/bank_questions/sections/_drawer_overlay.html" %}
+{% include "user_bank/bank/bank_questions/sections/_modal_type_change.html" %}
+{% include "user_bank/bank/bank_questions/sections/_modal_difficulty.html" %}
+{% include "user_bank/bank/bank_questions/sections/_modal_import_json.html" %}
+{% include "user_bank/bank/bank_questions/sections/_modal_import_excel.html" %}
+{% include "user_bank/bank/bank_questions/sections/_modal_import_package.html" %}
+{% include "user_bank/bank/bank_questions/sections/_drawer.html" %}

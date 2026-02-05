@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>编程题中心 - 程序设计类实验辅助教学平台</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Crect width='128' height='128' rx='24' fill='%23007bff'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-size='88' fill='white'%3EC%3C/text%3E%3C/svg%3E">
+    <style>
+        :root {
+            --bg-color: #f5f5f7;
+            --card-bg: rgba(255, 255, 255, 0.72);
+            --card-bg-solid: rgba(255, 255, 255, 0.92);
+            --text-color: #1d1d1f;
+            --text-sub: #6e6e73;
+            --border-color: rgba(0, 0, 0, 0.06);
+            --primary: #007AFF;
+            --primary-light: rgba(0, 122, 255, 0.12);
+            --shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+            --success: #34c759;
+            --warning: #ff9500;
+            --danger: #ff3b30;
+            --blur: blur(40px) saturate(180%);
+            --radius-lg: 18px;
+            --radius-sm: 12px;
+            --sidebar-width: 160px;
+        }
+
+        body.dark-mode {
+            --bg-color: #000000;
+            --card-bg: rgba(28, 28, 30, 0.6);
+            --card-bg-solid: rgba(28, 28, 30, 0.95);
+            --text-color: #f5f5f7;
+            --text-sub: #a1a1a6;
+            --border-color: rgba(255, 255, 255, 0.12);
+            --primary: #0a84ff;
+            --primary-light: rgba(10, 132, 255, 0.2);
+            --shadow: 0 2px 16px rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: transparent transparent;
+        }
+        *:hover {
+            scrollbar-color: rgba(128, 128, 128, 0.3) transparent;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: transparent;
+            border-radius: 3px;
+            transition: background 0.3s ease;
+        }
+        *:hover::-webkit-scrollbar-thumb {
+            background: rgba(128, 128, 128, 0.3);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* 顶部Header */
+        .top-header {
+            background: var(--card-bg);
+            backdrop-filter: var(--blur);
+            -webkit-backdrop-filter: var(--blur);
+            border-bottom: 0.5px solid var(--border-color);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .platform-name {
+            font-size: 14px;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .nav-tab {
+            color: var(--text-sub);
+            text-decoration: none;
+            font-size: 14px;
+            padding: 6px 0;
+            transition: color 0.2s ease;
+            position: relative;
+        }
+
+        .nav-tab:hover {
+            color: var(--primary);
+        }
+
+        .nav-tab.active {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-color);
+            font-size: 14px;
+        }
+
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            color: var(--text-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease;
+        }
+
+        .icon-btn:hover {
+            background: var(--primary-light);
+        }
+
+        /* 主布局 */
+        .main-layout {
+            display: flex;
+            min-height: calc(100vh - 60px);
+        }
+
+        /* 左侧导航栏 */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--card-bg);
+            backdrop-filter: var(--blur);
+            -webkit-backdrop-filter: var(--blur);
+            border-right: 0.5px solid var(--border-color);
+            padding: 24px 0;
+        }
+
+        .sidebar-title {
+            padding: 0 24px 16px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-color);
+            border-bottom: 0.5px solid var(--border-color);
+            margin-bottom: 16px;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 24px;
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .nav-item.active {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-left-color: var(--primary);
+            font-weight: 500;
+        }
+
+        .nav-icon {
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .nav-icon svg {
+            width: 100%;
+            height: 100%;
+            color: inherit;
+        }
+
+        /* 主内容区 */
+        .content-area {
+            flex: 1;
+            padding: 32px 40px;
+            background: var(--bg-color);
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .tab {
+            padding: 12px 24px;
+            font-size: 15px;
+            color: var(--text-sub);
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: -2px;
+        }
+
+        .tab:hover {
+            color: var(--primary);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            font-weight: 500;
+        }
+
+        .sort-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sort-select {
+            padding: 6px 12px;
+            border: 0.5px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            background: var(--card-bg-solid);
+            color: var(--text-color);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .sort-select:hover {
+            border-color: var(--primary);
+        }
+
+        /* 题目列表 */
+        .questions-list {
+            background: var(--card-bg);
+            backdrop-filter: var(--blur);
+            -webkit-backdrop-filter: var(--blur);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            border: 0.5px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .question-item {
+            display: flex;
+            align-items: center;
+            padding: 16px 24px;
+            border-bottom: 0.5px solid var(--border-color);
+            transition: background 0.2s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .question-item:last-child {
+            border-bottom: none;
+        }
+
+        .question-item:hover {
+            background: var(--primary-light);
+        }
+
+        .question-item.highlighted {
+            background: rgba(0, 122, 255, 0.08);
+        }
+
+        .question-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-sub);
+        }
+
+        .question-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .question-title {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .question-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--text-sub);
+        }
+
+        .question-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .badge-open {
+            background: rgba(0, 122, 255, 0.15);
+            color: var(--primary);
+        }
+
+        .badge-closed {
+            background: rgba(255, 149, 0, 0.15);
+            color: var(--warning);
+        }
+
+        .badge-solved {
+            background: rgba(52, 199, 89, 0.15);
+            color: var(--success);
+        }
+
+        .btn-view {
+            padding: 6px 16px;
+            border: 0.5px solid var(--primary);
+            border-radius: var(--radius-sm);
+            background: var(--primary);
+            color: white;
+            font-size: 13px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-view:hover {
+            background: #0051d5;
+            border-color: #0051d5;
+        }
+
+        .list-footer {
+            padding: 16px 24px;
+            text-align: center;
+            color: var(--text-sub);
+            font-size: 13px;
+            border-top: 0.5px solid var(--border-color);
+        }
+
+        .loading, .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-sub);
+        }
+
+        /* 筛选器（可选，放在顶部） */
+        .filters-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .filter-input, .filter-select {
+            padding: 8px 12px;
+            border: 0.5px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            background: var(--card-bg-solid);
+            color: var(--text-color);
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .filter-input:focus, .filter-select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .main-layout {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 0.5px solid var(--border-color);
+            }
+            .sidebar-nav {
+                flex-direction: row;
+                overflow-x: auto;
+            }
+            .nav-item {
+                white-space: nowrap;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .top-header {
+                flex-direction: column;
+                gap: 12px;
+                padding: 12px 16px;
+            }
+            .header-nav {
+                width: 100%;
+                justify-content: space-around;
+            }
+            .content-area {
+                padding: 20px;
+            }
+            .question-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .question-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+    
+        /* ??????? */
+        * {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        *::-webkit-scrollbar {
+            width: 0;
+            height: 0;
+        }
+</style>
+</head>
+<body>
+    <!-- 顶部Header -->
+    <header class="top-header">
+        <div class="header-left">
+            <div class="logo">
+                <span>SAK</span>
+            </div>
+            <div class="platform-name">程序设计教学平台</div>
+        </div>
+        <nav class="header-nav">
+            <a href="/" class="nav-tab">考试练习</a>
+            <a href="/coding" class="nav-tab active">编程题中心</a>
+        </nav>
+        <div class="header-right">
+            <button class="icon-btn" title="通知">🔔</button>
+            <div class="user-info">
+                <span id="username">{{ username|default('用户') }}</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主布局 -->
+    <div class="main-layout">
+        <!-- 左侧导航栏 -->
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <a href="/coding/home" class="nav-item">
+                    <span class="nav-icon">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#007AFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 9L9 3L15 9"/>
+                            <path d="M3 9V15H15V9"/>
+                            <rect x="7" y="11" width="4" height="4"/>
+                        </svg>
+                    </span>
+                    <span>首页</span>
+                </a>
+                <a href="/coding" class="nav-item active">
+                    <span class="nav-icon">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="4" y="2" width="10" height="14" rx="0.5"/>
+                            <line x1="4.5" y1="5.5" x2="4.5" y2="5.5" stroke-width="2"/>
+                            <line x1="4.5" y1="8" x2="4.5" y2="8" stroke-width="2"/>
+                            <line x1="4.5" y1="10.5" x2="4.5" y2="10.5" stroke-width="2"/>
+                            <line x1="13" y1="3" x2="13" y2="15"/>
+                        </svg>
+                    </span>
+                    <span>题目集</span>
+                </a>
+                <a href="/chat" class="nav-item">
+                    <span class="nav-icon">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 1C4.5 1 1 4 1 8c0 1.5.5 3 1.5 4L1 17l5-1.5c1 .5 2 .5 3 .5 4.5 0 8-3 8-7s-3.5-7-8-7z"/>
+                            <circle cx="6" cy="8" r="1" fill="currentColor"/>
+                            <circle cx="9" cy="8" r="1" fill="currentColor"/>
+                            <circle cx="12" cy="8" r="1" fill="currentColor"/>
+                        </svg>
+                    </span>
+                    <span>聊天</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="content-area">
+            <div class="content-header">
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('active')">活跃题目集</button>
+                    <button class="tab" onclick="switchTab('all')">所有题目集</button>
+                </div>
+                <div class="sort-control">
+                    <select class="sort-select" id="sort-select" onchange="handleSort()">
+                <option value="latest">最新创建</option>
+                <option value="title">按名称</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 筛选器 -->
+            <div class="filters-bar">
+                <input type="text" class="filter-input" id="keyword" placeholder="搜索题目集..." style="flex: 1; min-width: 200px;">
+            </div>
+
+            <!-- 题目列表 -->
+            <div class="questions-list" id="questions-container">
+                <div class="loading">加载中...</div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        const perPage = 20;
+        let currentTab = 'active';
+        let currentSort = 'latest';
+        let filters = {
+            keyword: '',
+            subject: '',
+            difficulty: '',
+            status: 'all'
+        };
+
+        // 切换标签页
+        function switchTab(tab) {
+            currentTab = tab;
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            loadSubjects();
+        }
+
+        // 处理排序
+        function handleSort() {
+            currentSort = document.getElementById('sort-select').value;
+            loadSubjects();
+        }
+
+        // 加载题目集（科目）列表
+        async function loadSubjects() {
+            const container = document.getElementById('questions-container');
+            container.innerHTML = '<div class="loading">加载中...</div>';
+
+            try {
+                const res = await fetch('/coding/api/subjects/stats');
+                const result = await res.json();
+
+                if (result.status === 'success') {
+                    let subjects = result.data.subjects || [];
+                    
+                    // 应用筛选
+                    if (filters.keyword) {
+                        subjects = subjects.filter(s => 
+                            s.name.toLowerCase().includes(filters.keyword.toLowerCase())
+                        );
+                    }
+                    
+                    // 应用排序
+                    if (currentSort === 'latest') {
+                        // 可以按创建时间排序，这里暂时不排序
+                    } else if (currentSort === 'title') {
+                        subjects.sort((a, b) => a.name.localeCompare(b.name));
+                    }
+                    
+                    // 应用活跃筛选（活跃题目集：有题目且已开放的）
+                    if (currentTab === 'active') {
+                        subjects = subjects.filter(s => s.total_questions > 0);
+                    }
+                    
+                    renderSubjects(subjects);
+                } else {
+                    container.innerHTML = '<div class="empty-state">加载失败</div>';
+                }
+            } catch (error) {
+                console.error('加载题目集失败:', error);
+                container.innerHTML = '<div class="empty-state">加载失败，请刷新重试</div>';
+            }
+        }
+
+        // 渲染题目集（科目）列表
+        function renderSubjects(subjects) {
+            const container = document.getElementById('questions-container');
+            
+            if (subjects.length === 0) {
+                container.innerHTML = '<div class="empty-state">暂无题目集</div>';
+                return;
+            }
+
+            const list = document.createElement('div');
+            list.className = 'questions-list';
+
+            subjects.forEach((subject, index) => {
+                const item = document.createElement('div');
+                item.className = 'question-item';
+                
+                // 判断是否开放（有题目且进度大于0或总题目数大于0）
+                const isOpen = subject.total_questions > 0;
+                const statusBadge = isOpen ? 
+                    '<span class="status-badge badge-open">已开放</span>' : 
+                    '<span class="status-badge badge-closed">未开放</span>';
+
+                // 根据科目名称选择图标
+                const icon = getSubjectIcon(subject.name);
+                
+                // 计算通过率
+                const acceptanceRate = subject.total_submissions > 0 
+                    ? ((subject.solved_questions / subject.total_submissions) * 100).toFixed(1)
+                    : '0.0';
+
+                item.innerHTML = `
+                    <div class="question-icon">${icon}</div>
+                    <div class="question-content">
+                        <div class="question-title">${escapeHtml(subject.name)}</div>
+                        <div class="question-meta">
+                            <span>总题目: ${subject.total_questions}</span>
+                            <span>已解决: ${subject.solved_questions}</span>
+                            <span>通过率: ${acceptanceRate}%</span>
+                        </div>
+                    </div>
+                    <div class="question-actions">
+                        ${statusBadge}
+                        <a href="/coding/subject/${subject.id}" class="btn-view" onclick="event.stopPropagation();">查看</a>
+                    </div>
+                `;
+
+                list.appendChild(item);
+            });
+
+            // 添加底部统计
+            const footer = document.createElement('div');
+            footer.className = 'list-footer';
+            footer.textContent = `共${subjects.length}条数据`;
+            list.appendChild(footer);
+
+            container.innerHTML = '';
+            container.appendChild(list);
+        }
+
+        // 根据科目名称返回图标
+        function getSubjectIcon(name) {
+            const nameLower = name.toLowerCase();
+            if (nameLower.includes('python')) return '🐍';
+            if (nameLower.includes('java')) return '☕';
+            if (nameLower.includes('c++') || nameLower.includes('cpp')) return '⚙️';
+            if (nameLower.includes('c语言') || nameLower.includes('c ')) return '🔧';
+            if (nameLower.includes('数据结构')) return '📚';
+            if (nameLower.includes('算法')) return '🧮';
+            return '💻';
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 筛选器事件
+        document.getElementById('keyword').addEventListener('input', debounce((e) => {
+            filters.keyword = e.target.value;
+            loadSubjects();
+        }, 500));
+
+        // 移除科目、难度、状态的筛选（因为这是题目集列表，不是题目列表）
+        // 或者可以保留作为备用筛选
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // 初始化加载
+        loadSubjects();
+    </script>
+</body>
+</html>

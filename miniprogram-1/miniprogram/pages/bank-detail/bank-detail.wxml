@@ -1,0 +1,1000 @@
+<!-- bank-detail.wxml - 个人题库详情（练习设置 / 题库数据） -->
+<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="{{bankName || '题库详情'}}" back="{{false}}" color="var(--app-nav-fg)" background="var(--app-nav-bg)">
+    <view slot="left" class="nav-left">
+      <view class="icon-btn" bindtap="onHamburgerTap" aria-role="button" aria-label="打开侧边栏">
+        <view class="icon-hamburger"></view>
+      </view>
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <v2-drawer
+    open="{{drawerOpen}}"
+    themeStyle="{{themeStyle}}"
+    activeKey="banks"
+    bind:close="onDrawerClose"
+    bind:navigate="onDrawerNavigate"
+    bind:selectstyle="onDrawerSelectStyle"
+  />
+
+  <view class="page-container">
+    <scroll-view
+      class="content-area"
+      scroll-y
+      type="list"
+      bounces="{{false}}"
+      refresher-enabled="{{true}}"
+      bindrefresherrefresh="onPullDownRefresh"
+    >
+      <view class="container">
+        <view class="sticky-stack">
+          <view class="basebar detail-basebar" role="tablist" aria-label="题库详情子页">
+            <view class="tabs">
+              <view
+                class="tab {{tab===item.key ? 'active' : ''}}"
+                wx:for="{{detailTabs}}"
+                wx:key="key"
+                bindtap="onTabTap"
+                data-tab="{{item.key}}"
+              >
+                <text>{{item.label}}</text>
+              </view>
+            </view>
+            <view class="tab-order-btn" bindtap="onOpenTabOrder" aria-role="button" aria-label="自定义排序">
+              <image class="tab-order-icon" src="/images/icons/list.svg" mode="aspectFit"></image>
+              <text class="tab-order-text">排序</text>
+            </view>
+          </view>
+
+          <view class="basebar reinforce-subbar" wx:if="{{tab === 'reinforce'}}" role="tablist" aria-label="加强子页面">
+            <view class="tabs">
+              <view class="tab {{reinforceSubTab==='wrong' ? 'active' : ''}}" bindtap="onReinforceSubTabTap" data-subtab="wrong"><text>错题</text></view>
+              <view class="tab {{reinforceSubTab==='similar' ? 'active' : ''}}" bindtap="onReinforceSubTabTap" data-subtab="similar"><text>相似题</text></view>
+            </view>
+          </view>
+        </view>
+
+        <view wx:if="{{tab === 'practice'}}">
+          <view class="card practice-hero" aria-label="练习设置">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">练习</text>
+                <text class="card-sub">先选范围，再开始刷题/背题；更多筛选可展开。</text>
+              </view>
+            </view>
+
+            <view class="stats scope-stats" aria-label="范围选择">
+              <view
+                class="stat scope-stat {{practiceScope==='all' ? 'active' : ''}}"
+                bindtap="onScopeTap"
+                data-scope="all"
+                aria-role="button"
+                aria-label="全题库"
+              >
+                <text class="k">全题库</text>
+                <text class="v">{{totalCount}}</text>
+              </view>
+              <view
+                class="stat scope-stat {{practiceScope==='favorites' ? 'active' : ''}}"
+                bindtap="onScopeTap"
+                data-scope="favorites"
+                aria-role="button"
+                aria-label="收藏"
+              >
+                <text class="k">收藏</text>
+                <text class="v">{{favCount}}</text>
+              </view>
+              <view
+                class="stat scope-stat {{practiceScope==='mistakes' ? 'active' : ''}}"
+                bindtap="onScopeTap"
+                data-scope="mistakes"
+                aria-role="button"
+                aria-label="错题"
+              >
+                <text class="k">错题</text>
+                <text class="v">{{mistakeCount}}</text>
+              </view>
+            </view>
+
+            <view class="start-meta start-meta-hero">
+              <view class="start-meta-row">
+                <view class="start-count {{startCountText==='…' ? 'loading' : ''}}">
+                  <text>当前筛选</text>
+                  <text class="num">{{startCountText}}</text>
+                  <text>题</text>
+                </view>
+                <view class="start-pills" aria-label="已选筛选">
+                  <view class="meta-pill" wx:if="{{qType !== 'all'}}"><text>{{qType}}</text></view>
+                  <view class="meta-pill" wx:if="{{tag !== 'all'}}"><text>{{tag}}</text></view>
+                </view>
+              </view>
+              <view class="start-error" wx:if="{{startError}}"><text>{{startError}}</text></view>
+            </view>
+
+            <view class="actions actions-hero">
+              <view class="btn btn-primary {{startDisabled ? 'disabled' : ''}}" bindtap="onStartQuiz"><text>开始刷题</text></view>
+              <view class="btn {{startDisabled ? 'disabled' : ''}}" bindtap="onStartMemo"><text>开始背题</text></view>
+            </view>
+
+            <view class="adv-toggle" bindtap="onTogglePracticeAdvanced" aria-role="button" aria-label="展开更多筛选与选项">
+              <text>更多筛选与选项</text>
+              <text class="adv-arrow">{{practiceAdvancedOpen ? '收起' : '展开'}}</text>
+            </view>
+
+            <view class="advanced" wx:if="{{practiceAdvancedOpen}}">
+              <view class="adv-section" aria-label="题型选择">
+                <text class="adv-label">题型</text>
+                <view class="chips chips-scroll" aria-label="题型列表">
+                  <view class="chip {{qType==='all' ? 'active' : ''}}" bindtap="onTypeTap" data-type="all"><text>全部题型</text></view>
+                  <view class="chip {{qType===item ? 'active' : ''}}" wx:for="{{types}}" wx:key="*this" bindtap="onTypeTap" data-type="{{item}}">
+                    <text>{{item}}</text>
+                  </view>
+                </view>
+              </view>
+
+              <view class="adv-section" aria-label="标签选择">
+                <text class="adv-label">标签</text>
+                <view class="chips chips-scroll" aria-label="标签列表">
+                  <view class="chip {{tag==='all' ? 'active' : ''}}" bindtap="onTagTap" data-tag="all"><text>全部标签</text></view>
+                  <view class="chip chip-with-close {{tag===item.name ? 'active' : ''}}" wx:for="{{tags}}" wx:key="name" bindtap="onTagTap" data-tag="{{item.name}}">
+                    <text>{{item.name}}</text>
+                    <text class="chip-count" wx:if="{{item.count != null}}">{{item.count}}</text>
+                    <view class="chip-close" catchtap="onTagDeleteTap" data-tag="{{item.name}}" aria-role="button" aria-label="删除标签">×</view>
+                  </view>
+                </view>
+              </view>
+
+              <view class="adv-section" aria-label="练习选项">
+                <text class="adv-label">练习选项</text>
+                <view class="toggles toggles-compact">
+                  <view class="toggle">
+                    <view class="toggle-left">
+                      <text class="label">打乱题目</text>
+                      <text class="desc">顺序随机，更接近实战。</text>
+                    </view>
+                    <view class="switch {{shuffleQuestions ? 'on' : ''}}" bindtap="onToggleShuffleQuestions" aria-role="switch" aria-checked="{{shuffleQuestions}}"></view>
+                  </view>
+                  <view class="toggle">
+                    <view class="toggle-left">
+                      <text class="label">打乱选项</text>
+                      <text class="desc">选择题更抗“背选项”（仅选择/多选可用）。</text>
+                    </view>
+                    <view class="switch {{shuffleOptions ? 'on' : ''}} {{shuffleOptionsDisabled ? 'is-disabled' : ''}}" bindtap="onToggleShuffleOptions" aria-role="switch" aria-checked="{{shuffleOptions}}" aria-disabled="{{shuffleOptionsDisabled}}"></view>
+                  </view>
+                </view>
+              </view>
+
+              <view class="adv-section" aria-label="进度管理">
+                <text class="adv-label">进度</text>
+                <view class="danger-action" bindtap="onClearProgressTap" aria-role="button" aria-label="清除答题进度">
+                  <view class="danger-left">
+                    <text class="danger-title">清除答题进度</text>
+                    <text class="danger-desc">可选择刷题/背题；仅清除当前筛选组合</text>
+                  </view>
+                  <view class="danger-pill"><text>清除</text></view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view wx:elif="{{tab === 'reinforce'}}">
+          <!-- 错题子页面 -->
+          <view wx:if="{{reinforceSubTab === 'wrong'}}">
+            <view class="card" aria-label="错题加强训练">
+              <view class="card-head">
+                <view class="card-head-left">
+                  <text class="card-title">错题加强</text>
+                  <text class="card-sub">{{reinforceWrong.desc}}</text>
+                </view>
+              </view>
+              <view class="actions">
+                <view class="btn btn-primary btn-primary-soft {{(reinforceWrong.recommendIds && reinforceWrong.recommendIds.length) ? '' : 'disabled'}}" bindtap="onStartReinforceWrong">
+                  <text>开始加强</text>
+                </view>
+                <view class="btn {{reinforceWrong.wrongTotal > 0 ? '' : 'disabled'}}" bindtap="onStartReinforceWrongAll">
+                  <text>练全部错题</text>
+                </view>
+              </view>
+            </view>
+
+            <view class="reinforce-results" aria-label="高频错题">
+              <view class="card-head">
+                <view class="card-head-left">
+                  <text class="card-title">高频错题</text>
+                  <text class="card-sub">{{reinforceWrong.listMeta}}</text>
+                </view>
+              </view>
+
+              <view class="loading" wx:if="{{reinforceWrong.loading}}"><text>正在加载...</text></view>
+              <view class="msg error" wx:elif="{{reinforceWrong.error}}"><text>{{reinforceWrong.error}}</text></view>
+
+              <view class="reinforce-list" wx:elif="{{reinforceWrong.top && reinforceWrong.top.length}}">
+                <view class="reinforce-row" wx:for="{{reinforceWrong.top}}" wx:key="question_id">
+                  <view class="reinforce-row-main">
+                    <text class="reinforce-row-title">{{item.content_preview || ('题目 #' + item.question_id)}}</text>
+                    <view class="reinforce-row-meta">
+                      <text class="meta-pill">#{{item.question_id}}</text>
+                      <text class="meta-pill" wx:if="{{item.q_type}}">{{item.q_type}}</text>
+                    </view>
+                  </view>
+                  <view class="reinforce-row-right">
+                    <text class="reinforce-badge">错 {{item.wrong_count}} 次</text>
+                    <view class="action-btn" bindtap="onStartReinforceWrongOne" data-id="{{item.question_id}}"><text>练这题</text></view>
+                  </view>
+                </view>
+              </view>
+
+              <view class="empty-state" wx:else>
+                <text class="empty-text">{{reinforceWrong.wrongTotal > 0 ? '暂无可展示的高频错题' : '暂无错题记录'}}</text>
+                <text class="empty-hint">{{reinforceWrong.wrongTotal > 0 ? '可先点击“开始加强”或去练习页继续做题' : '继续保持，先去做几题再回来看看'}}</text>
+              </view>
+            </view>
+          </view>
+
+          <!-- 相似题子页面 -->
+          <view wx:elif="{{reinforceSubTab === 'similar'}}">
+            <view class="card" aria-label="相似题加强训练">
+              <view class="card-head">
+                <view class="card-head-left">
+                  <text class="card-title">相似题加强</text>
+                  <text class="card-sub">{{reinforceSimilar.desc}}</text>
+                </view>
+              </view>
+              <view class="actions actions-single">
+                <view class="btn btn-primary btn-primary-soft {{(reinforceSimilar.startIds && reinforceSimilar.startIds.length) ? '' : 'disabled'}}" bindtap="onStartReinforceSimilar">
+                  <text>开始加强</text>
+                </view>
+              </view>
+            </view>
+
+            <view class="reinforce-results" aria-label="相似题目">
+              <view class="card-head">
+                <view class="card-head-left">
+                  <text class="card-title">相似题目</text>
+                  <text class="card-sub">{{reinforceSimilar.listMeta}}</text>
+                </view>
+              </view>
+
+              <view class="loading" wx:if="{{reinforceSimilar.loading}}"><text>正在加载...</text></view>
+              <view class="msg error" wx:elif="{{reinforceSimilar.error}}"><text>{{reinforceSimilar.error}}</text></view>
+
+              <view class="reinforce-list" wx:elif="{{reinforceSimilar.pairs && reinforceSimilar.pairs.length}}">
+                <view class="pair-row" wx:for="{{reinforceSimilar.pairs}}" wx:key="key">
+                  <view class="pair-grid">
+                    <view class="pair-bubble">
+                      <text class="pair-title">{{item.a_preview || ('题目 #' + item.a_id)}}</text>
+                      <view class="pair-meta">
+                        <text class="meta-pill">#{{item.a_id}}</text>
+                        <text class="meta-pill" wx:if="{{item.a_type}}">{{item.a_type}}</text>
+                      </view>
+                    </view>
+                    <view class="pair-bubble">
+                      <text class="pair-title">{{item.b_preview || ('题目 #' + item.b_id)}}</text>
+                      <view class="pair-meta">
+                        <text class="meta-pill">#{{item.b_id}}</text>
+                        <text class="meta-pill" wx:if="{{item.b_type}}">{{item.b_type}}</text>
+                      </view>
+                    </view>
+                  </view>
+                  <view class="pair-actions">
+                    <text class="reinforce-badge">{{item.sim_pct_text || '相似'}}</text>
+                    <view class="action-btn" bindtap="onStartReinforceSimilarPair" data-a="{{item.a_id}}" data-b="{{item.b_id}}"><text>练这一组</text></view>
+                  </view>
+                </view>
+              </view>
+
+              <view class="empty-state" wx:else>
+                <text class="empty-text">暂无可展示的相似题目</text>
+                <text class="empty-hint">题库有变化时会自动重新计算（已做云端缓存）。</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view wx:elif="{{tab === 'exam'}}">
+          <v2-exam-builder source="user_bank" bankId="{{bankId}}" bankName="{{bankName}}" />
+        </view>
+
+        <view wx:elif="{{tab === 'search'}}">
+          <view class="card" aria-label="题库内搜索">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">搜索</text>
+                <text class="card-sub">范围限定在当前题库。</text>
+              </view>
+            </view>
+            <view class="search">
+              <input
+                class="search-input"
+                placeholder="搜索题干/答案/解析/关键词"
+                value="{{searchKeyword}}"
+                bindinput="onSearchInput"
+                confirm-type="search"
+                bindconfirm="onBankSearch"
+                maxlength="60"
+              />
+              <view class="btn btn-primary {{searchKeyword ? '' : 'disabled'}}" bindtap="onBankSearch">
+                <text>搜索</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="card" aria-label="题型筛选-搜索">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">题型筛选</text>
+                <text class="card-sub">仅影响本页搜索结果，不影响练习/收藏/错题的筛选。</text>
+              </view>
+            </view>
+            <view class="chips" aria-label="搜索题型列表">
+              <view class="chip {{searchType==='all' ? 'active' : ''}}" bindtap="onSearchTypeTap" data-type="all">
+                <text>全部题型</text>
+              </view>
+              <view class="chip {{searchType===item ? 'active' : ''}}" wx:for="{{types}}" wx:key="*this" bindtap="onSearchTypeTap" data-type="{{item}}">
+                <text>{{item}}</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="search-results" aria-label="搜索结果" wx:if="{{searchSearched}}">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">搜索结果</text>
+                <text class="card-sub" wx:if="{{searchKeyword}}">关键词：{{searchKeyword}} · {{searchResults.length}} / {{searchTotal || 0}}</text>
+                <text class="card-sub" wx:else>请输入关键词并搜索。</text>
+                <text class="card-sub" wx:if="{{searchResults.length > 0}}">提示：点击题目气泡查看详细信息。</text>
+              </view>
+            </view>
+
+            <view class="msg error" wx:if="{{searchError}}" role="alert">
+              <text>{{searchError}}</text>
+            </view>
+
+            <view class="result-list" wx:if="{{searchResults.length > 0}}">
+              <view class="result-item" wx:for="{{searchResults}}" wx:key="id" bindtap="onSearchResultTap" data-id="{{item.id}}">
+                <text class="result-content">{{item.content_preview || item.content}}</text>
+                <view class="result-meta">
+                  <view class="meta-pill"><text>{{item.q_type || '-'}}</text></view>
+                </view>
+              </view>
+            </view>
+
+            <view class="empty-state" wx:if="{{!searchLoading && searchResults.length === 0}}">
+              <text>暂无结果</text>
+            </view>
+
+            <view class="loading" wx:if="{{searchLoading}}">
+              <text>加载中...</text>
+            </view>
+
+            <view class="links">
+              <view class="link" wx:if="{{!searchLoading && searchResults.length < (searchTotal || 0)}}" bindtap="onSearchLoadMore"><text>加载更多</text></view>
+              <view class="link" wx:if="{{searchResults.length > 0}}" bindtap="onSearchClear"><text>清空结果</text></view>
+            </view>
+          </view>
+        </view>
+
+        <view wx:elif="{{tab === 'stats'}}">
+          <v2-subject-data-ubd
+            subjectName="{{bankName}}"
+            totalCount="{{totalCount}}"
+            favCount="{{favCount}}"
+            mistakeCount="{{mistakeCount}}"
+            dataSubTab="{{statsSubTab}}"
+            statsDays="{{statsDays}}"
+            statsLoading="{{statsLoading}}"
+            statsError="{{statsError}}"
+            statsOverview="{{statsOverview}}"
+            statsTrend="{{statsTrend}}"
+            statsByType="{{statsByType}}"
+            statsByDifficulty="{{statsByDifficulty}}"
+            statsHasDifficulty="{{statsHasDifficulty}}"
+            statsAdvice="{{statsAdvice}}"
+            statsQuestions="{{statsQuestions}}"
+            favoritesTrend="{{favoritesTrend}}"
+            stickyTop="98rpx"
+            bind:subtabchange="onStatsSubTabTap"
+            bind:dayschange="onStatsDaysTap"
+            bind:quickstart="onStatsQuickStart"
+            bind:questiontap="onStatsQuestionTap"
+          />
+        </view>
+
+        <view wx:elif="{{tab === 'favorites'}}">
+          <view class="card" aria-label="收藏范围">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">收藏</text>
+                <text class="card-sub">范围固定为收藏。支持题型/标签/模式选择，便于针对性复习。</text>
+              </view>
+            </view>
+            <view class="stats">
+              <view class="stat">
+                <text class="k">本题库收藏</text>
+                <text class="v">{{favCount}}</text>
+              </view>
+              <view class="stat">
+                <text class="k">推荐</text>
+                <text class="v" style="font-size: 22rpx; color: var(--app-muted);">先刷后背</text>
+              </view>
+              <view class="stat">
+                <text class="k">提示</text>
+                <text class="v" style="font-size: 22rpx; color: var(--app-muted);">筛选仅作用于收藏范围</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="card" aria-label="题型选择-收藏">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">题型</text>
+                <text class="card-sub">用于收藏范围筛选（混合练习请保持“全部题型”）。</text>
+              </view>
+            </view>
+            <view class="chips" aria-label="题型列表">
+              <view class="chip {{qType==='all' ? 'active' : ''}}" bindtap="onTypeTap" data-type="all"><text>全部题型</text></view>
+              <view class="chip {{qType===item ? 'active' : ''}}" wx:for="{{types}}" wx:key="*this" bindtap="onTypeTap" data-type="{{item}}">
+                <text>{{item}}</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="card" aria-label="标签选择-收藏">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">标签</text>
+                <text class="card-sub">仅对当前用户生效（题库标签）。</text>
+              </view>
+            </view>
+            <view class="chips" aria-label="标签列表">
+              <view class="chip {{tag==='all' ? 'active' : ''}}" bindtap="onTagTap" data-tag="all"><text>全部标签</text></view>
+              <view class="chip chip-with-close {{tag===item.name ? 'active' : ''}}" wx:for="{{tags}}" wx:key="name" bindtap="onTagTap" data-tag="{{item.name}}">
+                <text>{{item.name}}</text>
+                <text class="chip-count" wx:if="{{item.count != null}}">{{item.count}}</text>
+                <view class="chip-close" catchtap="onTagDeleteTap" data-tag="{{item.name}}" aria-role="button" aria-label="删除标签">×</view>
+              </view>
+            </view>
+          </view>
+
+          <view class="card" aria-label="练习选项-收藏">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">练习选项</text>
+              </view>
+            </view>
+            <view class="toggles">
+              <view class="toggle">
+                <view class="toggle-left">
+                  <text class="label">打乱题目</text>
+                  <text class="desc">顺序随机，更接近实战。</text>
+                </view>
+                <view class="switch {{shuffleQuestions ? 'on' : ''}}" bindtap="onToggleShuffleQuestions" aria-role="switch" aria-checked="{{shuffleQuestions}}"></view>
+              </view>
+              <view class="toggle">
+                <view class="toggle-left">
+                  <text class="label">打乱选项</text>
+                  <text class="desc">选择题更抗“背选项”（仅选择/多选可用）。</text>
+                </view>
+                <view class="switch {{shuffleOptions ? 'on' : ''}} {{shuffleOptionsDisabled ? 'is-disabled' : ''}}" bindtap="onToggleShuffleOptions" aria-role="switch" aria-checked="{{shuffleOptions}}" aria-disabled="{{shuffleOptionsDisabled}}"></view>
+              </view>
+            </view>
+          </view>
+
+          <view class="card" aria-label="开始-收藏">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">开始</text>
+              </view>
+            </view>
+            <view class="start-meta">
+              <view class="start-count {{startCountText==='…' ? 'loading' : ''}}">
+                <text>当前筛选</text>
+                <text class="num">{{startCountText}}</text>
+                <text>题</text>
+              </view>
+              <view class="start-error" wx:if="{{startError}}"><text>{{startError}}</text></view>
+            </view>
+            <view class="actions">
+              <view class="btn btn-primary {{startDisabled ? 'disabled' : ''}}" bindtap="onStartQuiz"><text>开始刷题</text></view>
+              <view class="btn {{startDisabled ? 'disabled' : ''}}" bindtap="onStartMemo"><text>开始背题</text></view>
+            </view>
+          </view>
+        </view>
+
+        <view wx:elif="{{tab === 'mistakes'}}">
+          <view class="card" aria-label="错题范围">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">错题</text>
+                <text class="card-sub">范围固定为错题。支持题型/标签/模式选择，便于集中复盘。</text>
+              </view>
+            </view>
+            <view class="stats">
+              <view class="stat">
+                <text class="k">本题库错题</text>
+                <text class="v">{{mistakeCount}}</text>
+              </view>
+              <view class="stat">
+                <text class="k">推荐</text>
+                <text class="v" style="font-size: 22rpx; color: var(--app-muted);">错因复盘</text>
+              </view>
+              <view class="stat">
+                <text class="k">提示</text>
+                <text class="v" style="font-size: 22rpx; color: var(--app-muted);">筛选仅作用于错题范围</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="card" aria-label="题型选择-错题">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">题型</text>
+                <text class="card-sub">用于错题范围筛选（混合练习请保持“全部题型”）。</text>
+              </view>
+            </view>
+            <view class="chips" aria-label="题型列表">
+              <view class="chip {{qType==='all' ? 'active' : ''}}" bindtap="onTypeTap" data-type="all"><text>全部题型</text></view>
+              <view class="chip {{qType===item ? 'active' : ''}}" wx:for="{{types}}" wx:key="*this" bindtap="onTypeTap" data-type="{{item}}">
+                <text>{{item}}</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="card" aria-label="标签选择-错题">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">标签</text>
+                <text class="card-sub">仅对当前用户生效（题库标签）。</text>
+              </view>
+            </view>
+            <view class="chips" aria-label="标签列表">
+              <view class="chip {{tag==='all' ? 'active' : ''}}" bindtap="onTagTap" data-tag="all"><text>全部标签</text></view>
+              <view class="chip chip-with-close {{tag===item.name ? 'active' : ''}}" wx:for="{{tags}}" wx:key="name" bindtap="onTagTap" data-tag="{{item.name}}">
+                <text>{{item.name}}</text>
+                <text class="chip-count" wx:if="{{item.count != null}}">{{item.count}}</text>
+                <view class="chip-close" catchtap="onTagDeleteTap" data-tag="{{item.name}}" aria-role="button" aria-label="删除标签">×</view>
+              </view>
+            </view>
+          </view>
+
+          <view class="card" aria-label="练习选项-错题">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">练习选项</text>
+              </view>
+            </view>
+            <view class="toggles">
+              <view class="toggle">
+                <view class="toggle-left">
+                  <text class="label">打乱题目</text>
+                  <text class="desc">顺序随机，更接近实战。</text>
+                </view>
+                <view class="switch {{shuffleQuestions ? 'on' : ''}}" bindtap="onToggleShuffleQuestions" aria-role="switch" aria-checked="{{shuffleQuestions}}"></view>
+              </view>
+              <view class="toggle">
+                <view class="toggle-left">
+                  <text class="label">打乱选项</text>
+                  <text class="desc">选择题更抗“背选项”（仅选择/多选可用）。</text>
+                </view>
+                <view class="switch {{shuffleOptions ? 'on' : ''}} {{shuffleOptionsDisabled ? 'is-disabled' : ''}}" bindtap="onToggleShuffleOptions" aria-role="switch" aria-checked="{{shuffleOptions}}" aria-disabled="{{shuffleOptionsDisabled}}"></view>
+              </view>
+            </view>
+          </view>
+
+          <view class="card" aria-label="开始-错题">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">开始</text>
+              </view>
+            </view>
+            <view class="start-meta">
+              <view class="start-count {{startCountText==='…' ? 'loading' : ''}}">
+                <text>当前筛选</text>
+                <text class="num">{{startCountText}}</text>
+                <text>题</text>
+              </view>
+              <view class="start-error" wx:if="{{startError}}"><text>{{startError}}</text></view>
+            </view>
+            <view class="actions">
+              <view class="btn btn-primary {{startDisabled ? 'disabled' : ''}}" bindtap="onStartQuiz"><text>开始刷题</text></view>
+              <view class="btn {{startDisabled ? 'disabled' : ''}}" bindtap="onStartMemo"><text>开始背题</text></view>
+            </view>
+          </view>
+        </view>
+
+        <view wx:elif="{{tab === 'manage'}}">
+          <view class="card" aria-label="管理">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">管理</text>
+                <text class="card-sub">题目管理/题库设置请在网页端完成，小程序侧重刷题与数据。</text>
+              </view>
+            </view>
+
+            <view class="stats stats-2" aria-label="题库名片">
+              <view class="stat">
+                <text class="k">题库ID</text>
+                <text class="v">{{bankId}}</text>
+              </view>
+              <view class="stat">
+                <text class="k">题目数</text>
+                <text class="v">{{totalCount}}</text>
+              </view>
+              <view class="stat">
+                <text class="k">收藏</text>
+                <text class="v">{{favCount}}</text>
+              </view>
+              <view class="stat">
+                <text class="k">错题</text>
+                <text class="v">{{mistakeCount}}</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="card" aria-label="题库归属">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">题库归属</text>
+                <text class="card-sub">公共题库会出现在题库广场；个人题库仅你可见（可通过分享授权他人使用）。</text>
+              </view>
+            </view>
+
+            <view class="chips" aria-label="题库归属选择">
+              <view class="chip {{!bankIsPublic ? 'active' : ''}} {{bankPublicSaving ? 'is-disabled' : ''}}" bindtap="onBankOwnershipTap" data-public="0">
+                <text>个人（私密）</text>
+              </view>
+              <view class="chip {{bankIsPublic ? 'active' : ''}} {{bankPublicSaving ? 'is-disabled' : ''}}" bindtap="onBankOwnershipTap" data-public="1">
+                <text>公共（公开）</text>
+              </view>
+            </view>
+            <view class="msg" wx:if="{{bankPublicSaving}}"><text>保存中…</text></view>
+            <view class="msg error" wx:if="{{bankPublicError}}"><text>{{bankPublicError}}</text></view>
+          </view>
+
+          <view class="card" aria-label="Web端维护">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">Web端维护</text>
+                <text class="card-sub">小程序不跳转；点击复制链接，在浏览器/电脑打开（需要登录）。</text>
+              </view>
+            </view>
+
+            <view class="weblead-list" aria-label="Web端入口">
+              <view class="weblead-item" bindtap="onGoManageQuestions" aria-role="button" aria-label="题目管理（Web）">
+                <view class="weblead-left">
+                  <text class="weblead-title">题目管理</text>
+                  <text class="weblead-sub">新增/编辑/删除/批量导入</text>
+                </view>
+                <view class="weblead-right">
+                  <text class="weblead-tag">Web</text>
+                  <text class="weblead-arrow">›</text>
+                </view>
+              </view>
+
+              <view class="weblead-item" bindtap="onGoManageSettings" aria-role="button" aria-label="题库设置（Web）">
+                <view class="weblead-left">
+                  <text class="weblead-title">题库设置</text>
+                  <text class="weblead-sub">公开/私密、描述、复制权限</text>
+                </view>
+                <view class="weblead-right">
+                  <text class="weblead-tag">Web</text>
+                  <text class="weblead-arrow">›</text>
+                </view>
+              </view>
+
+              <view class="weblead-item {{bankIsPublic ? 'is-disabled' : ''}}" bindtap="{{bankIsPublic ? '' : 'onGoShareTab'}}" aria-role="button" aria-label="分享管理（小程序）">
+                <view class="weblead-left">
+                  <text class="weblead-title">分享管理</text>
+                  <text class="weblead-sub">{{bankIsPublic ? '公开题库无需分享管理' : '创建分享码/链接、撤销与权限'}}</text>
+                </view>
+                <view class="weblead-right">
+                  <text class="weblead-tag local">小程序</text>
+                  <text class="weblead-arrow">›</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view wx:else>
+          <!-- 公开题库时禁用分享管理 -->
+          <view wx:if="{{canManageShare && bankIsPublic}}">
+            <view class="card" aria-label="分享管理已禁用">
+              <view class="card-head">
+                <view class="card-head-left">
+                  <text class="card-title">分享管理已禁用</text>
+                  <text class="card-sub">当前题库处于公开状态，任何人都可以通过题库广场访问，无需分享码/链接。</text>
+                  <text class="card-sub">如需使用分享管理功能，请先在「管理 → 题库归属」中将题库切换为私有状态。</text>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view wx:elif="{{canManageShare}}">
+            <view class="card" aria-label="分享管理">
+              <view class="card-head">
+                <view class="card-head-left">
+                  <text class="card-title">分享管理</text>
+                  <text class="card-sub">{{shareError || '创建分享码/分享链接，并管理撤销与权限。'}}</text>
+                  <text class="card-sub" wx:if="{{usageStatsLoaded}}">可访问人数：{{usageStats.total_users || 0}}（含你）</text>
+                </view>
+              </view>
+
+              <view class="chips" aria-label="权限选择">
+                <view class="chip {{newShare.permission === 'read' ? 'active' : ''}}" bindtap="onSharePermissionTap" data-permission="read"><text>只读</text></view>
+                <view class="chip {{newShare.permission === 'copy' ? 'active' : ''}}" bindtap="onSharePermissionTap" data-permission="copy"><text>可复制</text></view>
+              </view>
+
+              <view class="chips" aria-label="有效期选择">
+                <view class="chip {{newShare.expiresIn === 0 ? 'active' : ''}}" bindtap="onShareExpiresTap" data-expires="0"><text>永久</text></view>
+                <view class="chip {{newShare.expiresIn === 7 ? 'active' : ''}}" bindtap="onShareExpiresTap" data-expires="7"><text>7天</text></view>
+                <view class="chip {{newShare.expiresIn === 30 ? 'active' : ''}}" bindtap="onShareExpiresTap" data-expires="30"><text>30天</text></view>
+              </view>
+
+              <view class="chips" aria-label="最大使用次数">
+                <view class="chip {{newShare.maxUses === 0 ? 'active' : ''}}" bindtap="onShareMaxTap" data-max="0"><text>不限</text></view>
+                <view class="chip {{newShare.maxUses === 10 ? 'active' : ''}}" bindtap="onShareMaxTap" data-max="10"><text>10次</text></view>
+                <view class="chip {{newShare.maxUses === 50 ? 'active' : ''}}" bindtap="onShareMaxTap" data-max="50"><text>50次</text></view>
+                <view class="chip {{newShare.maxUses === 100 ? 'active' : ''}}" bindtap="onShareMaxTap" data-max="100"><text>100次</text></view>
+              </view>
+
+              <view class="actions">
+                <button class="btn btn-primary" open-type="share" hover-class="none" disabled="{{!wechatShareReady}}">
+                  <text>{{wechatSharePreparing ? '准备中…' : '微信分享'}}</text>
+                </button>
+                <view class="btn" bindtap="onCreateShare" data-type="code">
+                  <text>生成分享码</text>
+                </view>
+                <view class="btn" bindtap="onCreateShare" data-type="link">
+                  <text>生成分享链接</text>
+                </view>
+                <view class="btn" bindtap="onRefreshShares">
+                  <text>刷新</text>
+                </view>
+              </view>
+            </view>
+
+            <view class="card" aria-label="分享记录">
+              <view class="card-head">
+                <view class="card-head-left">
+                  <text class="card-title">分享记录</text>
+                  <text class="card-sub">{{shares.length}} 个</text>
+                </view>
+              </view>
+
+              <view class="share-list" wx:if="{{shares.length > 0}}">
+                <view class="share-item" wx:for="{{shares}}" wx:key="id">
+                  <view class="share-main">
+                    <view class="share-code-row">
+                      <text class="share-code">{{item.share_code || '链接分享'}}</text>
+                      <text class="share-permission {{item.permission}}">{{item.permission === 'copy' ? '可复制' : '只读'}}</text>
+                    </view>
+                    <view class="share-meta">
+                      <text class="meta-text">使用 {{item.current_uses || 0}} 次</text>
+                      <text class="meta-text" wx:if="{{item.expires_at}}">有效期至 {{item.expires_at_display}}</text>
+                      <text class="meta-text" wx:else>永久有效</text>
+                    </view>
+                    <view class="share-link" wx:if="{{item.share_link}}">
+                      <text class="meta-text">{{item.share_link}}</text>
+                    </view>
+                  </view>
+                  <view class="share-actions">
+                    <view class="action-btn copy" wx:if="{{item.share_code}}" bindtap="onCopyShareCode" data-code="{{item.share_code}}">
+                      <text>复制码</text>
+                    </view>
+                    <view class="action-btn copy" wx:if="{{item.share_link}}" bindtap="onCopyShareLink" data-link="{{item.share_link}}">
+                      <text>复制链接</text>
+                    </view>
+                    <view class="action-btn delete" wx:if="{{item.is_active}}" bindtap="onDeleteShare" data-id="{{item.id}}">
+                      <text>撤销</text>
+                    </view>
+                  </view>
+                </view>
+              </view>
+
+              <view class="empty-state" wx:if="{{!shareLoading && shares.length === 0}}">
+                <text class="empty-text">暂无分享记录</text>
+                <text class="empty-hint">创建分享码/链接让好友加入题库</text>
+              </view>
+
+              <view class="loading" wx:if="{{shareLoading}}">
+                <text>加载中...</text>
+              </view>
+            </view>
+          </view>
+
+          <view wx:else>
+            <view class="card" aria-label="分享">
+              <view class="card-head">
+                <view class="card-head-left">
+                  <text class="card-title">分享</text>
+                  <text class="card-sub">个人题库的分享为“分享管理”。你当前不是创建者，无法创建/撤销分享码与链接。</text>
+                </view>
+              </view>
+              <view class="actions">
+                <button class="btn btn-primary" open-type="share">
+                  <text>微信分享</text>
+                </button>
+                <view class="btn" bindtap="onCopyBankName">
+                  <text>复制题库名</text>
+                </view>
+              </view>
+            </view>
+
+            <view class="card" aria-label="加入提示">
+              <view class="card-head">
+                <view class="card-head-left">
+                  <text class="card-title">让好友加入</text>
+                  <text class="card-sub">需要授权加入请联系创建者生成分享码/链接，好友可在“我的题库”里输入分享码加入。</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="loading" wx:if="{{loading}}">
+          <text>加载中...</text>
+        </view>
+
+        <view class="footer">
+          <text>By: Saksk</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view class="taborder-overlay" wx:if="{{tabOrderOpen}}" catchtap="onCloseTabOrder">
+    <view class="taborder-sheet" catchtap="onTabOrderSheetTap" aria-label="自定义排序">
+      <view class="taborder-head">
+        <view class="taborder-head-left">
+          <text class="taborder-title">自定义排序</text>
+          <text class="taborder-sub">调整基础栏顺序，会自动保存。</text>
+        </view>
+        <view class="taborder-x" catchtap="onCloseTabOrder" aria-role="button" aria-label="关闭">
+          <text>×</text>
+        </view>
+      </view>
+
+      <view class="taborder-body">
+        <view class="taborder-item" wx:for="{{detailTabs}}" wx:key="key">
+          <view class="taborder-left">
+            <view class="taborder-handle" aria-hidden="true"><text>⋮⋮</text></view>
+            <text class="taborder-label">{{item.label}}</text>
+          </view>
+          <view class="taborder-actions">
+            <view
+              class="taborder-mini {{index === 0 ? 'disabled' : ''}}"
+              bindtap="onMoveTabOrder"
+              data-key="{{item.key}}"
+              data-act="up"
+              aria-role="button"
+              aria-label="上移"
+            >
+              <text>↑</text>
+            </view>
+            <view
+              class="taborder-mini {{index === detailTabs.length - 1 ? 'disabled' : ''}}"
+              bindtap="onMoveTabOrder"
+              data-key="{{item.key}}"
+              data-act="down"
+              aria-role="button"
+              aria-label="下移"
+            >
+              <text>↓</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="taborder-foot">
+        <view class="btn" bindtap="onResetTabOrder"><text>重置</text></view>
+        <view class="btn btn-primary" bindtap="onCloseTabOrder"><text>完成</text></view>
+      </view>
+    </view>
+  </view>
+
+  <view class="qdetail-overlay" wx:if="{{qDetailOpen}}" catchtap="onQDetailClose">
+    <view class="qdetail-sheet" catchtap="onQDetailSheetTap" aria-label="题目详情">
+      <view class="qdetail-head">
+        <view class="qdetail-head-left">
+          <text class="qdetail-title">题目详情</text>
+          <text class="qdetail-sub">{{qDetailMeta}}</text>
+        </view>
+        <view class="qdetail-x" catchtap="onQDetailClose" aria-role="button" aria-label="关闭">
+          <text>×</text>
+        </view>
+      </view>
+
+      <view class="qdetail-body">
+        <view class="qdetail-state" wx:if="{{qDetailLoading}}"><text>加载中...</text></view>
+        <view class="qdetail-state error" wx:elif="{{qDetailError}}"><text>{{qDetailError}}</text></view>
+
+        <view wx:else>
+          <view class="qdetail-block">
+            <text class="qdetail-label">题干</text>
+            <view class="qdetail-lines">
+              <view class="qdetail-line" wx:for="{{qDetailContentLines}}" wx:key="index">
+                <text user-select="true">{{item}}</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="qdetail-block" wx:if="{{qDetailOptions.length > 0}}">
+            <text class="qdetail-label">选项</text>
+            <view class="qdetail-options">
+              <view class="qdetail-opt" wx:for="{{qDetailOptions}}" wx:key="index">
+                <view class="qdetail-opt-key"><text>{{item.key}}</text></view>
+                <view class="qdetail-opt-val"><text user-select="true">{{item.value}}</text></view>
+              </view>
+            </view>
+          </view>
+
+          <view class="qdetail-block">
+            <text class="qdetail-label">答案</text>
+            <view class="qdetail-lines">
+              <view class="qdetail-line" wx:for="{{qDetailAnswerLines}}" wx:key="index">
+                <text user-select="true">{{item}}</text>
+              </view>
+              <view class="qdetail-line" wx:if="{{qDetailAnswerLines.length === 0}}"><text>（无）</text></view>
+            </view>
+          </view>
+
+          <view class="qdetail-block" wx:if="{{qDetailExplanationLines.length > 0}}">
+            <text class="qdetail-label">解析</text>
+            <view class="qdetail-lines">
+              <view class="qdetail-line" wx:for="{{qDetailExplanationLines}}" wx:key="index">
+                <text user-select="true">{{item}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="qdetail-actions">
+        <view class="btn btn-primary" catchtap="onQDetailGoQuiz"><text>去刷这题</text></view>
+        <view class="btn" catchtap="onQDetailClose"><text>关闭</text></view>
+      </view>
+    </view>
+  </view>
+
+  <view class="qdetail-overlay weblead-overlay" wx:if="{{webLeadOpen}}" catchtap="onWebLeadClose" catchtouchmove="onWebLeadSheetTap">
+    <view class="qdetail-sheet weblead-sheet" catchtap="onWebLeadSheetTap" aria-label="打开网页端">
+      <view class="qdetail-head">
+        <view class="qdetail-head-left">
+          <text class="qdetail-title">{{webLeadTitle}}</text>
+          <text class="qdetail-sub">请在浏览器打开网页端完成操作</text>
+        </view>
+        <view class="qdetail-x" catchtap="onWebLeadClose" aria-role="button" aria-label="关闭">
+          <text>×</text>
+        </view>
+      </view>
+
+      <view class="qdetail-body">
+        <view class="weblead-msg" wx:if="{{webLeadContent}}">
+          <text>{{webLeadContent}}</text>
+        </view>
+
+        <view class="weblead-link" catchtap="onWebLeadCopy" aria-role="button" aria-label="复制网页链接">
+          <text class="weblead-link-label">网页链接（点击复制）</text>
+          <text class="weblead-link-url" user-select="true">{{webLeadUrl}}</text>
+        </view>
+
+        <view class="weblead-note">
+          <text>复制后可在手机浏览器/电脑访问并登录。</text>
+        </view>
+      </view>
+
+      <view class="qdetail-actions">
+        <view class="btn btn-primary" catchtap="onWebLeadCopy"><text>复制链接</text></view>
+        <view class="btn" catchtap="onWebLeadClose"><text>关闭</text></view>
+      </view>
+    </view>
+  </view>
+</view>

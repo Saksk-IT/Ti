@@ -1,0 +1,202 @@
+{% extends "user_bank/manage/manage_base.html" %}
+
+{% set manage_tab = 'settings' %}
+
+{% block manage_head %}
+  <style>
+    .ubm-prop-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .ubm-radio-card {
+      border: 1px solid var(--app-border);
+      border-radius: 16px;
+      background: var(--app-surface);
+      box-shadow: var(--app-shadow-soft);
+      padding: 12px;
+      cursor: pointer;
+      display: grid;
+      gap: 6px;
+      transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease, background 140ms ease;
+      user-select: none;
+      -webkit-user-select: none;
+      min-width: 0;
+    }
+    .ubm-radio-card:hover { box-shadow: var(--app-shadow); transform: translateY(-1px); }
+    .ubm-radio-card:active { transform: translateY(0); }
+    .ubm-radio-card input { display: none; }
+    .ubm-radio-card .t { font-weight: 950; letter-spacing: -0.1px; font-size: 14px; color: var(--app-text); display: flex; align-items: center; gap: 8px; }
+    .ubm-radio-card .d { font-size: 12px; color: var(--app-muted); line-height: 1.45; }
+    .ubm-radio-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--app-muted);
+      box-shadow: 0 0 0 4px var(--app-primary-soft);
+      flex: 0 0 auto;
+    }
+    .ubm-radio-card.is-checked {
+      border-color: color-mix(in srgb, var(--app-primary) 40%, var(--app-border));
+      background: color-mix(in srgb, var(--app-primary-soft) 62%, var(--app-surface));
+      box-shadow: var(--app-shadow);
+    }
+    .ubm-radio-card.is-checked .ubm-radio-dot { background: var(--app-primary); }
+
+    @media (max-width: 640px) {
+      .ubm-prop-grid { grid-template-columns: minmax(0, 1fr); }
+    }
+  </style>
+{% endblock %}
+
+{% block manage_content %}
+  <section class="ubm-card" aria-label="题库属性">
+    <h2>题库属性</h2>
+    <div class="ubm-sub">用于切换题库为“公开/私有”。公开后将出现在题库广场；私有仅你自己可见。</div>
+
+    <div class="ubm-prop-grid" role="radiogroup" aria-label="题库属性选择">
+      <label class="ubm-radio-card" data-prop-card>
+        <input type="radio" name="bank_prop" value="private" />
+        <div class="t"><span class="ubm-radio-dot" aria-hidden="true"></span>私有</div>
+        <div class="d">仅你可见；可通过分享授权给他人使用。</div>
+      </label>
+      <label class="ubm-radio-card" data-prop-card>
+        <input type="radio" name="bank_prop" value="public" />
+        <div class="t"><span class="ubm-radio-dot" aria-hidden="true"></span>公开</div>
+        <div class="d">所有用户可在题库广场看到并使用。</div>
+      </label>
+    </div>
+
+    <div class="ubm-actions">
+      <button class="ubm-btn ubm-btn-primary" type="button" id="ubmSavePropBtn">保存</button>
+      <button class="ubm-btn ubm-btn-ghost" type="button" id="ubmReloadPropBtn">刷新状态</button>
+    </div>
+
+    <div class="ubm-sub" id="ubmPropHint" style="margin-top: 8px;"></div>
+  </section>
+
+  <section class="ubm-card" aria-label="删除题库">
+    <h2>删除题库</h2>
+    <div class="ubm-sub">删除后将从你的题库列表中移除（软删除）；已创建的分享将不可用。此操作不可恢复，请谨慎。</div>
+
+    <div class="ubm-actions">
+      <button class="ubm-btn ubm-btn-danger" type="button" id="ubmDeleteBankBtn">删除本题库</button>
+    </div>
+  </section>
+{% endblock %}
+
+{% block manage_scripts %}
+  <script>
+    (function () {
+      const root = document.querySelector('[data-ubm-bank-id]');
+      const bankId = root ? String(root.dataset.ubmBankId || '').trim() : '';
+      const cards = Array.from(document.querySelectorAll('[data-prop-card]'));
+      const saveBtn = document.getElementById('ubmSavePropBtn');
+      const reloadBtn = document.getElementById('ubmReloadPropBtn');
+      const hint = document.getElementById('ubmPropHint');
+      const deleteBtn = document.getElementById('ubmDeleteBankBtn');
+      const bankName = {{ bank_name|tojson }};
+
+      function setHint(text, kind) {
+        if (!hint) return;
+        hint.textContent = String(text || '');
+        hint.style.color = (kind === 'error') ? 'color-mix(in srgb, #ef4444 70%, var(--app-text))' : 'var(--app-muted)';
+      }
+
+      function updateCardStyles() {
+        cards.forEach((c) => {
+          const input = c.querySelector('input[type=\"radio\"]');
+          c.classList.toggle('is-checked', !!(input && input.checked));
+        });
+      }
+
+      function getSelected() {
+        const checked = document.querySelector('input[name=\"bank_prop\"]:checked');
+        return checked ? String(checked.value || '') : '';
+      }
+
+      async function loadCurrent() {
+        if (!bankId) return;
+        try {
+          setHint('正在获取题库属性…', '');
+          const res = await window.ubmApi(`/user/banks/api/${encodeURIComponent(bankId)}`);
+          const bank = res && res.data ? res.data : {};
+          const isPublic = !!bank.is_public;
+          const value = isPublic ? 'public' : 'private';
+          const input = document.querySelector(`input[name=\"bank_prop\"][value=\"${value}\"]`);
+          if (input) input.checked = true;
+          updateCardStyles();
+          setHint(`当前状态：${isPublic ? '公开' : '私有'}`, '');
+          return bank;
+        } catch (e) {
+          setHint(e && e.message ? e.message : '获取失败', 'error');
+        }
+      }
+
+      async function save() {
+        if (!bankId) return;
+        const v = getSelected();
+        if (!v) return;
+
+        const isPublic = v === 'public';
+        try {
+          saveBtn && (saveBtn.disabled = true);
+          setHint('正在保存…', '');
+
+          const res = await window.ubmApi(`/user/banks/api/${encodeURIComponent(bankId)}`);
+          const bank = res && res.data ? res.data : {};
+
+          await window.ubmApi(`/user/banks/api/${encodeURIComponent(bankId)}/public`, {
+            method: 'POST',
+            body: JSON.stringify({
+              is_public: isPublic,
+              public_description: bank.public_description || '',
+              allow_copy: bank.allow_copy !== 0,
+            }),
+          });
+
+          window.ubmToast(isPublic ? '已设为公开' : '已设为私有', 'success');
+          await loadCurrent();
+        } catch (e) {
+          window.ubmToast(e && e.message ? e.message : '保存失败', 'error');
+          setHint(e && e.message ? e.message : '保存失败', 'error');
+        } finally {
+          saveBtn && (saveBtn.disabled = false);
+        }
+      }
+
+      cards.forEach((c) => {
+        c.addEventListener('click', () => {
+          const input = c.querySelector('input[type=\"radio\"]');
+          if (input) input.checked = true;
+          updateCardStyles();
+        });
+      });
+
+      saveBtn?.addEventListener('click', save);
+      reloadBtn?.addEventListener('click', loadCurrent);
+      deleteBtn?.addEventListener('click', async () => {
+        if (!bankId) return;
+        const pretty = bankName ? `「${bankName}」` : `#${bankId}`;
+        const ok = window.confirm(`确定要删除题库${pretty}吗？\n\n删除后将从你的题库列表中移除（软删除），且已创建的分享将不可用。\n此操作不可恢复。`);
+        if (!ok) return;
+
+        try {
+          deleteBtn.disabled = true;
+          window.ubmToast('正在删除…', 'info');
+          await window.ubmApi(`/user/banks/api/${encodeURIComponent(bankId)}`, { method: 'DELETE' });
+          window.ubmToast('删除成功', 'success');
+          window.location.href = '/user/banks';
+        } catch (e) {
+          window.ubmToast(e && e.message ? e.message : '删除失败', 'error');
+        } finally {
+          deleteBtn.disabled = false;
+        }
+      });
+
+      updateCardStyles();
+      loadCurrent();
+    })();
+  </script>
+{% endblock %}

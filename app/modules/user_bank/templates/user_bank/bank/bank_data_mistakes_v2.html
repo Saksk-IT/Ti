@@ -1,0 +1,140 @@
+{% extends "user_bank/bank/bank_data_v2_base.html" %}
+
+{% block ubdv2_main %}
+  <main class="ubdv2-grid" aria-label="错题数据内容">
+    <section class="ubdv2-card ubdv2-kpis span-12" aria-label="错题总览">
+      <div class="ubdv2-card-head">
+        <div style="min-width:0;">
+          <h2 class="ubdv2-title">错题总览</h2>
+          <p class="ubdv2-sub" id="ubdMisHeadline">加载中…</p>
+        </div>
+        <div class="ubdv2-badge" id="ubdMisUpdatedAt">—</div>
+      </div>
+
+      <div class="ubdv2-kpi-grid" role="list" aria-label="错题KPI">
+        <div class="ubdv2-kpi" role="listitem">
+          <div class="k">错题池</div>
+          <div class="v mono" id="kpiMisTotal">—</div>
+          <div class="m" id="kpiMisTotalMeta">—</div>
+        </div>
+        <div class="ubdv2-kpi" role="listitem">
+          <div class="k">错题次数</div>
+          <div class="v mono" id="kpiMisTimes">—</div>
+          <div class="m" id="kpiMisTimesMeta">—</div>
+        </div>
+        <div class="ubdv2-kpi" role="listitem">
+          <div class="k">高危错题</div>
+          <div class="v mono" id="kpiMisHighRisk">—</div>
+          <div class="m">wrong_count ≥ 3</div>
+        </div>
+        <div class="ubdv2-kpi" role="listitem">
+          <div class="k">冷却错题</div>
+          <div class="v mono" id="kpiMisAging">—</div>
+          <div class="m">14天未再错</div>
+        </div>
+        <div class="ubdv2-kpi" role="listitem">
+          <div class="k">复习正确率</div>
+          <div class="v mono" id="kpiMisAccuracy">—</div>
+          <div class="m" id="kpiMisAccuracyMeta">—</div>
+        </div>
+        <div class="ubdv2-kpi" role="listitem">
+          <div class="k">复习覆盖率</div>
+          <div class="v mono" id="kpiMisCompletion">—</div>
+          <div class="m" id="kpiMisCompletionMeta">—</div>
+        </div>
+        <div class="ubdv2-kpi" role="listitem">
+          <div class="k">近7天复习</div>
+          <div class="v mono" id="kpiMisRecent">—</div>
+          <div class="m">基于“最后一次作答”</div>
+        </div>
+        <div class="ubdv2-kpi" role="listitem">
+          <div class="k">快速入口</div>
+          <div class="v"><a class="ubdv2-cta" href="/user/banks/{{ bank_id }}/quiz?mode=wrong">去错题练习</a></div>
+          <div class="m">按错题集刷题</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ubdv2-card span-7" aria-label="优先级矩阵">
+      <div class="ubdv2-card-head">
+        <div style="min-width:0;">
+          <h2 class="ubdv2-title">优先级矩阵</h2>
+          <p class="ubdv2-sub">横轴=错题次数；纵轴=距上次错题的天数（越久越需要回收）。</p>
+        </div>
+      </div>
+      <div class="ubdv2-chart" id="ubdMistakeMatrixChart" role="img" aria-label="错题优先级矩阵"></div>
+    </section>
+
+    <section class="ubdv2-card span-5" aria-label="Top错题">
+      <div class="ubdv2-card-head">
+        <div style="min-width:0;">
+          <h2 class="ubdv2-title">Top 错题</h2>
+          <p class="ubdv2-sub">按错题次数排序，优先解决重复犯错。</p>
+        </div>
+      </div>
+      <div class="ubdv2-chart" id="ubdMistakeTopChart" role="img" aria-label="Top错题柱状图"></div>
+    </section>
+
+    <section class="ubdv2-card span-12" aria-label="错题复习趋势">
+      <div class="ubdv2-card-head">
+        <div style="min-width:0;">
+          <h2 class="ubdv2-title">错题复习趋势</h2>
+          <p class="ubdv2-sub">按天统计：复习量（柱）+ 复习正确率（线）。</p>
+        </div>
+      </div>
+      <div class="ubdv2-chart" id="ubdMisTrendChart" role="img" aria-label="错题复习趋势图"></div>
+    </section>
+
+    <section class="ubdv2-card span-12" aria-label="错题结构">
+      <div class="ubdv2-card-head">
+        <div style="min-width:0;">
+          <h2 class="ubdv2-title">错题结构</h2>
+          <p class="ubdv2-sub">题型分布（占比）+ 难度拆解（如可用）。</p>
+        </div>
+      </div>
+      <div class="ubdv2-split">
+        <div class="ubdv2-chart ubdv2-chart-tall" id="ubdMisTypePieChart" role="img" aria-label="错题题型分布图"></div>
+        <div class="ubdv2-chart ubdv2-chart-tall" id="ubdMisDiffChart" role="img" aria-label="错题难度拆解图"></div>
+      </div>
+    </section>
+
+    <section class="ubdv2-card span-12" aria-label="错题清单">
+      <div class="ubdv2-card-head">
+        <div style="min-width:0;">
+          <h2 class="ubdv2-title">错题清单</h2>
+          <p class="ubdv2-sub">包含错题次数与最近一次错题时间（仅展示前50条）。</p>
+        </div>
+      </div>
+      <div class="ubdv2-table-wrap">
+        <table class="ubdv2-table" aria-label="错题清单表格">
+          <thead>
+            <tr>
+              <th style="min-width:320px;">题目</th>
+              <th>题型</th>
+              <th>难度</th>
+              <th>错题次数</th>
+              <th>最近错题</th>
+              <th>最近作答</th>
+              <th>上次结果</th>
+            </tr>
+          </thead>
+          <tbody id="ubdMisTbody">
+            <tr><td colspan="7" class="ubdv2-muted">加载中…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="ubdv2-card span-12" aria-label="纠错建议">
+      <div class="ubdv2-card-head">
+        <div style="min-width:0;">
+          <h2 class="ubdv2-title">纠错建议</h2>
+          <p class="ubdv2-sub">基于错题集的覆盖/正确/结构拆解生成。</p>
+        </div>
+      </div>
+      <div class="ubdv2-advice" id="ubdMisAdvice">
+        <div class="ubdv2-muted">加载中…</div>
+      </div>
+    </section>
+  </main>
+{% endblock %}

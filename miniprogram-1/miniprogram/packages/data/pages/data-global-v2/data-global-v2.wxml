@@ -1,0 +1,388 @@
+<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="数据" back="{{false}}" color="var(--app-nav-fg)" background="var(--app-nav-bg)">
+    <view slot="left" class="nav-left">
+      <view class="icon-btn" bindtap="onHamburgerTap" aria-role="button" aria-label="打开侧边栏">
+        <view class="icon-hamburger"></view>
+      </view>
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <v2-drawer
+    open="{{drawerOpen}}"
+    themeStyle="{{themeStyle}}"
+    activeKey="data"
+    bind:close="onDrawerClose"
+    bind:navigate="onDrawerNavigate"
+    bind:selectstyle="onDrawerSelectStyle"
+  />
+
+  <view class="page-container">
+    <scroll-view
+      class="content-area"
+      scroll-y
+      bounces="{{false}}"
+      refresher-enabled="{{true}}"
+      bindrefresherrefresh="onPullDownRefresh"
+    >
+      <view class="container">
+        <view class="dc-hero" aria-label="数据中心 · 全局">
+          <view class="dc-hero-main">
+            <view class="dc-hero-title" style="min-width:0;">
+              <text class="dc-h1">数据中心 · 全局</text>
+              <text class="dc-p">全局视角：覆盖、正确、连续与复盘资产，一屏把握你的学习系统。</text>
+            </view>
+
+            <view class="dc-hero-actions" aria-label="时间窗口与操作">
+              <view class="dc-window" aria-label="时间窗口">
+                <view class="dc-window-tab {{days===7 ? 'active' : ''}}" bindtap="onDaysTap" data-days="7"><text>7天</text></view>
+                <view class="dc-window-tab {{days===30 ? 'active' : ''}}" bindtap="onDaysTap" data-days="30"><text>30天</text></view>
+                <view class="dc-window-tab {{days===90 ? 'active' : ''}}" bindtap="onDaysTap" data-days="90"><text>90天</text></view>
+              </view>
+            </view>
+          </view>
+
+          <view class="dc-hero-kpis" aria-label="关键指标">
+            <view class="dc-kpi-pill">
+              <text class="k">已做题</text>
+              <text class="v mono">{{all_summary.answered || 0}}</text>
+            </view>
+            <view class="dc-kpi-pill">
+              <text class="k">正确率</text>
+              <text class="v mono">{{all_summary.accuracy || 0}}%</text>
+            </view>
+            <view class="dc-kpi-pill">
+              <text class="k">完成度</text>
+              <text class="v mono">{{all_summary.completion || 0}}%</text>
+            </view>
+            <view class="dc-kpi-pill">
+              <text class="k">健康分</text>
+              <text class="v mono">{{health_score || 0}}</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="dc-basebar" aria-label="数据中心导航">
+          <scroll-view class="dc-tabs" scroll-x enhanced show-scrollbar="{{false}}">
+            <view class="dc-tabs-inner">
+              <view class="dc-tab active"><text>全局</text></view>
+              <view class="dc-tab" bindtap="onTabTap" data-tab="banks"><text>题库</text></view>
+              <view class="dc-tab" bindtap="onTabTap" data-tab="mistakes"><text>错题</text></view>
+              <view class="dc-tab" bindtap="onTabTap" data-tab="favorites"><text>收藏</text></view>
+              <view class="dc-tab" bindtap="onTabTap" data-tab="tags"><text>标签</text></view>
+            </view>
+          </scroll-view>
+        </view>
+
+        <view class="dc-bento" aria-label="全局数据看板">
+          <view class="dc-card dc-span-12" aria-label="趋势总览">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">趋势总览（公共 + 个人）</text>
+                <text class="dc-card-sub">近 {{window_days}} 天：公共/个人贡献、合计与正确率的联合视图（支持缩放）。</text>
+              </view>
+              <view class="dc-ai-badge" title="最近活跃">
+                <text>最近活跃：{{last_activity_16}}</text>
+              </view>
+            </view>
+            <view class="dc-chart lg" aria-label="趋势图（可缩放）">
+              <ec-canvas id="dcTrendDetailChart" canvas-id="dcTrendDetailChart" ec="{{ecLazy}}" class="dc-echart"></ec-canvas>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-12 dc-lazy-card" wx:if="{{lazyStage < 2}}" id="dcLazyStage2Trigger" aria-label="继续下滑加载更多">
+            <text class="dc-lazy-title">继续下滑加载更多</text>
+            <text class="dc-lazy-sub">下方卡片与图表会在滚动时渲染</text>
+          </view>
+
+          <block wx:if="{{lazyStage >= 2}}">
+          <view class="dc-card dc-span-8" aria-label="学习闭环地图">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">学习闭环地图</text>
+                <text class="dc-card-sub">从“题库规模 → 覆盖 → 正确 → 错题/收藏/标签”，一屏把握你的学习系统。</text>
+              </view>
+            </view>
+            <view class="dc-chart md dc-tall" aria-label="学习闭环地图（桑基图）">
+              <ec-canvas id="dcGlobalLoopChart" canvas-id="dcGlobalLoopChart" ec="{{ecLazy}}" class="dc-echart"></ec-canvas>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-4" aria-label="系统健康">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">系统健康</text>
+                <text class="dc-card-sub">覆盖 × 正确 × 连续 × 错题治理：把“大局观”压缩成可行动的单指标。</text>
+              </view>
+            </view>
+            <view class="dc-chart md dc-tall" aria-label="学习健康分仪表盘">
+              <ec-canvas id="dcHealthGaugeChart" canvas-id="dcHealthGaugeChart" ec="{{ecLazy}}" class="dc-echart"></ec-canvas>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-8" aria-label="日历热力图">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">日历热力图</text>
+                <text class="dc-card-sub">用“日历视角”看学习节奏：持续、断档与爆发日一眼看清。</text>
+              </view>
+            </view>
+            <view class="dc-chart lg" aria-label="日历热力图（每日已做题）">
+              <ec-canvas id="dcCalendarChart" canvas-id="dcCalendarChart" ec="{{ecLazy}}" class="dc-echart"></ec-canvas>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-4" aria-label="活跃热力">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">活跃热力</text>
+                <text class="dc-card-sub">周 × 小时：找到“最稳定的高产时段”。</text>
+              </view>
+            </view>
+            <view class="dc-chart lg" aria-label="活跃热力图">
+              <ec-canvas id="dcHeatmapChart" canvas-id="dcHeatmapChart" ec="{{ecLazy}}" class="dc-echart"></ec-canvas>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-4" aria-label="学习时段">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">学习时段</text>
+                <text class="dc-card-sub">24 小时分布：把训练放到最有确定性的时间。</text>
+              </view>
+            </view>
+            <view class="dc-chart md" aria-label="小时分布">
+              <ec-canvas id="dcHourlyChart" canvas-id="dcHourlyChart" ec="{{ecLazy}}" class="dc-echart"></ec-canvas>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-4" aria-label="星期分布">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">星期分布</text>
+                <text class="dc-card-sub">一周节奏：工作日/周末的投入差异。</text>
+              </view>
+            </view>
+            <view class="dc-chart md" aria-label="星期分布">
+              <ec-canvas id="dcWeekdayChart" canvas-id="dcWeekdayChart" ec="{{ecLazy}}" class="dc-echart"></ec-canvas>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-4" aria-label="资产新增">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">资产新增</text>
+                <text class="dc-card-sub">错题/收藏新增：把复盘资产当成长期收益。</text>
+              </view>
+            </view>
+            <view class="dc-chart md" aria-label="错题与收藏新增趋势">
+              <ec-canvas id="dcAssetTrendChart" canvas-id="dcAssetTrendChart" ec="{{ecLazy}}" class="dc-echart"></ec-canvas>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-6" aria-label="能力画像">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">能力画像</text>
+                <text class="dc-card-sub">结构性地看“强项/短板”，而不是只看总分。</text>
+              </view>
+            </view>
+            <view class="dc-chart md" aria-label="能力雷达图">
+              <ec-canvas id="dcRadarChart" canvas-id="dcRadarChart" ec="{{ecLazy}}" class="dc-echart"></ec-canvas>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-6" aria-label="Top 维度">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">Top 维度</text>
+                <text class="dc-card-sub">按“已做题”排序：你最投入的科目/题型是什么。</text>
+              </view>
+            </view>
+            <view class="dc-chart md" aria-label="Top 维度图">
+              <ec-canvas id="dcTopMixChart" canvas-id="dcTopMixChart" ec="{{ecLazy}}" class="dc-echart"></ec-canvas>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-6" aria-label="错题结构（题型）">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">错题结构：题型</text>
+                <text class="dc-card-sub">公共 + 个人：快速定位“容易出错”的题型。</text>
+              </view>
+            </view>
+            <view class="dc-chart md" aria-label="错题题型结构">
+              <ec-canvas id="dcTypeDistChart" canvas-id="dcTypeDistChart" ec="{{ecLazy}}" class="dc-echart"></ec-canvas>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-6" aria-label="错题结构（难度）">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">错题结构：难度</text>
+                <text class="dc-card-sub">公共 + 个人：错误主要来自“难题”还是“基础题”。</text>
+              </view>
+            </view>
+            <view class="dc-chart md" aria-label="错题难度结构">
+              <ec-canvas id="dcDifficultyDistChart" canvas-id="dcDifficultyDistChart" ec="{{ecLazy}}" class="dc-echart"></ec-canvas>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-6" aria-label="全局洞察">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">全局洞察</text>
+                <text class="dc-card-sub">把“数据现象”翻译为“可操作的结论”。</text>
+              </view>
+            </view>
+            <view class="dc-list" wx:if="{{global_insights.length}}">
+              <view class="dc-item" wx:for="{{global_insights}}" wx:for-item="it" wx:key="key">
+                <view class="dc-item-top">
+                  <view style="min-width:0;">
+                    <text class="dc-item-title">{{it.title}}</text>
+                    <text class="dc-item-meta">{{it.value}}</text>
+                    <text class="dc-item-meta muted">{{it.hint}}</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+            <view class="dc-empty" wx:else>暂时还无法生成洞察（可能是答题数据不足）。</view>
+            <view class="dc-item-actions" style="margin-top:20rpx;">
+              <view class="dc-mini-btn" bindtap="onTabTap" data-tab="banks" aria-role="button"><text>题库视角</text></view>
+              <view class="dc-mini-btn" bindtap="onTabTap" data-tab="mistakes" aria-role="button"><text>错题视角</text></view>
+              <view class="dc-mini-btn" bindtap="onTabTap" data-tab="favorites" aria-role="button"><text>收藏视角</text></view>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-6" aria-label="下一步行动">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">下一步行动</text>
+                <text class="dc-card-sub">优先做“影响大 + 可执行”的动作：错题闭环 → 薄弱点专项 → 全量重练。</text>
+              </view>
+            </view>
+
+            <view class="dc-list" wx:if="{{next_actions.length}}">
+              <view class="dc-item" wx:for="{{next_actions}}" wx:for-item="a" wx:key="key">
+                <view class="dc-item-top">
+                  <view style="min-width:0;">
+                    <text class="dc-item-title">{{a.title}}</text>
+                    <text class="dc-item-meta">{{a.reason}}</text>
+                    <text class="dc-item-meta muted">{{a.metrics}}</text>
+                  </view>
+                  <view class="dc-item-actions">
+                    <view class="dc-mini-btn primary" bindtap="onGoQuizPublicMistakes" data-subject="{{a.subject}}" data-q-type="{{a.q_type}}" aria-role="button"><text>刷错题</text></view>
+                    <view class="dc-mini-btn" bindtap="onGoQuizPublicAll" data-subject="{{a.subject}}" data-q-type="{{a.q_type}}" aria-role="button"><text>重练</text></view>
+                  </view>
+                </view>
+              </view>
+            </view>
+            <view class="dc-empty" wx:else>先做几道题再来看，这里会给出更有指导意义的建议。</view>
+
+            <view class="dc-card-head" style="margin-top:24rpx;">
+              <view style="min-width:0;">
+                <text class="dc-h3">薄弱点（科目 × 题型）</text>
+                <text class="dc-card-sub">按正确率从低到高（至少做过 5 题）。</text>
+              </view>
+            </view>
+            <view class="dc-list" wx:if="{{weakness_rows.length}}">
+              <view class="dc-item" wx:for="{{weakness_rows}}" wx:for-item="w" wx:key="key">
+                <view class="dc-item-top">
+                  <view style="min-width:0;">
+                    <text class="dc-item-title">{{w.subject}} · {{w.q_type}}</text>
+                    <text class="dc-item-meta">正确率 {{w.accuracy}}% · 已做 {{w.answered}} · 错题 {{w.mistakes}}</text>
+                  </view>
+                  <view class="dc-item-actions">
+                    <view class="dc-mini-btn primary" bindtap="onGoQuizPublicMistakes" data-subject="{{w.subject}}" data-q-type="{{w.q_type}}" aria-role="button"><text>刷错题</text></view>
+                  </view>
+                </view>
+                <view class="dc-bars" aria-hidden="true">
+                  <view class="dc-bar secondary">
+                    <view class="dc-bar-inner" style="width: {{w.accuracy}}%;"></view>
+                  </view>
+                </view>
+              </view>
+            </view>
+            <view class="dc-empty" wx:else>暂无可用薄弱点排行（可能是做题不足或数据为空）。</view>
+          </view>
+
+          <view class="dc-card dc-span-12" aria-label="最近错题与收藏">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">最近错题与收藏</text>
+                <text class="dc-card-sub">快速复盘“最近错题”与“新增收藏”，让数据真正转化为提升。</text>
+              </view>
+            </view>
+
+            <view class="dc-bento" aria-label="最近记录">
+              <view class="dc-span-6">
+                <view class="dc-card-head">
+                  <view style="min-width:0;">
+                    <text class="dc-h3">公共题库 · 最近错题</text>
+                    <text class="dc-card-sub">从“错因 + 规则/公式 + 反例”写一条复盘笔记，收益最高。</text>
+                  </view>
+                  <view class="dc-item-actions">
+                    <view class="dc-mini-btn" bindtap="onGoMistakesCenter" aria-role="button"><text>去错题中心</text></view>
+                  </view>
+                </view>
+                <view class="dc-list" wx:if="{{recent_mistakes.length}}">
+                  <view class="dc-item" wx:for="{{recent_mistakes}}" wx:for-item="m" wx:key="key">
+                    <view class="dc-item-top">
+                      <view style="min-width:0;">
+                        <text class="dc-item-title">{{m.subject}} · {{m.q_type}} · 难度{{m.difficulty}}</text>
+                        <text class="dc-item-meta">{{m.snippet}}</text>
+                      </view>
+                      <view class="dc-item-actions">
+                        <view class="dc-mini-btn primary" bindtap="onGoQuizPublicMistakes" data-subject="{{m.subject}}" data-q-type="{{m.q_type}}" aria-role="button"><text>刷同类错题</text></view>
+                      </view>
+                    </view>
+                  </view>
+                </view>
+                <view class="dc-empty" wx:else>暂无错题记录。</view>
+              </view>
+
+              <view class="dc-span-6">
+                <view class="dc-card-head">
+                  <view style="min-width:0;">
+                    <text class="dc-h3">公共题库 · 最新收藏</text>
+                    <text class="dc-card-sub">每周花 10 分钟把收藏“复习一遍 + 总结原因”，收藏才会更值钱。</text>
+                  </view>
+                  <view class="dc-item-actions">
+                    <view class="dc-mini-btn" bindtap="onGoFavoritesCenter" aria-role="button"><text>去收藏中心</text></view>
+                  </view>
+                </view>
+                <view class="dc-list" wx:if="{{recent_favorites_public.length}}">
+                  <view class="dc-item" wx:for="{{recent_favorites_public}}" wx:for-item="f" wx:key="key">
+                    <view class="dc-item-top">
+                      <view style="min-width:0;">
+                        <text class="dc-item-title">{{f.subject}} · {{f.q_type}} · 难度{{f.difficulty}}</text>
+                        <text class="dc-item-meta">{{f.snippet}}</text>
+                      </view>
+                      <view class="dc-item-actions">
+                        <view class="dc-mini-btn" bindtap="onGoQuizPublicAll" data-subject="{{f.subject}}" data-q-type="{{f.q_type}}" aria-role="button"><text>去练习</text></view>
+                      </view>
+                    </view>
+                  </view>
+                </view>
+                <view class="dc-empty" wx:else>暂无收藏记录。</view>
+              </view>
+            </view>
+          </view>
+          </block>
+        </view>
+
+        <view class="msg error" wx:if="{{errorMsg}}">
+          <text>{{errorMsg}}</text>
+        </view>
+        <view class="loading" wx:if="{{loading}}">
+          <text>正在加载数据...</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

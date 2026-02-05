@@ -1,0 +1,164 @@
+<view class="card hero-card" aria-label="收藏资产">
+  <view class="card-head">
+    <view class="card-head-left">
+      <text class="card-title">收藏资产</text>
+      <text class="card-sub">题库：{{contextName || '题库'}} · 高价值题型的结构分布与掌握度。</text>
+    </view>
+  </view>
+  <view class="hero-status" wx:if="{{statsLoading}}"><text>数据加载中...</text></view>
+  <view class="hero-status error" wx:elif="{{statsError}}"><text>{{statsError}}</text></view>
+  <view class="hero-kpis">
+    <view class="kpi">
+      <text class="k">收藏题数</text>
+      <text class="v">{{statsOverview.total}}</text>
+      <text class="s">已做 {{statsOverview.answered}}</text>
+    </view>
+    <view class="kpi">
+      <text class="k">收藏错题</text>
+      <text class="v">{{statsOverview.mistakes}}</text>
+      <text class="s">错题占比 {{favMistakeRateText}}</text>
+    </view>
+    <view class="kpi">
+      <text class="k">掌握度</text>
+      <text class="v">{{statsOverview.accuracyText}}</text>
+      <text class="s">覆盖率 {{statsOverview.completionText}}</text>
+    </view>
+  </view>
+</view>
+
+<view class="card" aria-label="收藏核心指标">
+  <view class="card-head">
+    <view class="card-head-left">
+      <text class="card-title">收藏核心指标</text>
+      <text class="card-sub">掌握度、覆盖度与复盘节奏。</text>
+    </view>
+  </view>
+  <view class="ring-grid">
+    <view class="ring-card">
+      <view class="ring" style="--val: {{ringAccuracy}};">
+        <text class="ring-value">{{statsOverview.accuracyText}}</text>
+      </view>
+      <text class="ring-sub">掌握度</text>
+    </view>
+    <view class="ring-card">
+      <view class="ring" style="--val: {{ringCompletion}};">
+        <text class="ring-value">{{statsOverview.completionText}}</text>
+      </view>
+      <text class="ring-sub">覆盖度</text>
+    </view>
+    <view class="ring-card">
+      <view class="ring" style="--val: {{ringActive}};">
+        <text class="ring-value">{{activeDaysRate}}%</text>
+      </view>
+      <text class="ring-sub">复盘节奏</text>
+    </view>
+  </view>
+</view>
+
+<view class="card" aria-label="资产象限">
+  <view class="card-head">
+    <view class="card-head-left">
+      <text class="card-title">资产象限</text>
+      <text class="card-sub">覆盖度 × 纯净度（{{purityText}}），衡量收藏池质量。</text>
+    </view>
+  </view>
+  <view class="quad-wrap">
+    <view class="quad-bg">
+      <text class="quad-axis y">纯净度 ↑</text>
+      <text class="quad-axis x">覆盖度 →</text>
+      <text class="quad-tag tl">精选扩面</text>
+      <text class="quad-tag tr">优质资产</text>
+      <text class="quad-tag bl">待清洗</text>
+      <text class="quad-tag br">高噪资产</text>
+      <view class="quad-pulse" style="left: {{quadDotLeft}}%; top: {{quadDotTop}}%;"></view>
+      <view class="quad-dot" style="left: {{quadDotLeft}}%; top: {{quadDotTop}}%;"></view>
+    </view>
+    <view class="quad-summary">
+      <view class="quad-pill"><text>当前：{{quadLabel}}</text></view>
+      <text class="quad-desc">{{quadHint}}</text>
+    </view>
+  </view>
+</view>
+
+<view class="card" aria-label="收藏趋势">
+  <view class="card-head">
+    <view class="card-head-left">
+      <text class="card-title">收藏趋势</text>
+      <text class="card-sub">作答（外框）与正确（填充）对比。</text>
+    </view>
+  </view>
+  <view class="trend-wrap">
+    <view class="trend-bars" wx:if="{{statsTrend.length}}">
+      <view class="trend-col" wx:for="{{statsTrend}}" wx:key="day">
+        <view class="trend-col-inner">
+          <view class="trend-outline" style="height: {{item.answeredPct}}%;">
+            <view class="trend-fill" style="height: {{item.correctPctInAnswered}}%;"></view>
+          </view>
+        </view>
+        <text class="trend-label">{{item.label}}</text>
+      </view>
+    </view>
+    <view class="empty-state" wx:else><text>暂无作答记录</text></view>
+  </view>
+  <view class="legend">
+    <view class="leg"><view class="dot outline"></view><text>作答</text></view>
+    <view class="leg"><view class="dot fill"></view><text>正确</text></view>
+  </view>
+</view>
+
+<view class="card" aria-label="收藏题型结构">
+  <view class="card-head">
+    <view class="card-head-left">
+      <text class="card-title">收藏题型结构</text>
+      <text class="card-sub">高价值题型的覆盖与掌握。</text>
+    </view>
+  </view>
+  <view class="type-list" wx:if="{{displayTypes.length}}">
+    <view class="type-row" wx:for="{{displayTypes}}" wx:key="q_type">
+      <view class="type-main">
+        <text class="type-title">{{item.q_type}}</text>
+        <text class="type-meta">{{item.metaText}}</text>
+        <view class="progress"><view class="progress-inner" style="width: {{item.completionWidth}}%;"></view></view>
+      </view>
+    </view>
+  </view>
+  <view class="empty-state" wx:else><text>暂无收藏题型数据</text></view>
+</view>
+
+<view class="card" aria-label="收藏热度">
+  <view class="card-head">
+    <view class="card-head-left">
+      <text class="card-title">收藏热度</text>
+      <text class="card-sub">近28天收藏复盘强度。</text>
+    </view>
+  </view>
+  <view class="heat-grid">
+    <view class="heat-cell heat-level-{{item.level}}" wx:for="{{heatCells}}" wx:key="index"></view>
+  </view>
+  <view class="heat-legend">
+    <text>低</text>
+    <view class="heat-scale">
+      <view class="heat-dot heat-level-0"></view>
+      <view class="heat-dot heat-level-1"></view>
+      <view class="heat-dot heat-level-2"></view>
+      <view class="heat-dot heat-level-3"></view>
+    </view>
+    <text>高</text>
+  </view>
+</view>
+
+<view class="card" aria-label="收藏策略">
+  <view class="card-head">
+    <view class="card-head-left">
+      <text class="card-title">收藏策略</text>
+      <text class="card-sub">基于收藏结构给出复盘建议。</text>
+    </view>
+  </view>
+  <view class="advice-list" wx:if="{{statsAdvice.length}}">
+    <view class="advice-item" wx:for="{{statsAdvice}}" wx:key="title">
+      <text class="advice-title">{{item.title}}</text>
+      <text class="advice-content">{{item.content}}</text>
+    </view>
+  </view>
+  <view class="empty-state" wx:else><text>完成更多练习后，会生成更细致的收藏策略。</text></view>
+</view>

@@ -1,0 +1,625 @@
+{% extends "main/shared/app_shell.html" %}
+
+{% block title %}{{ entry_title }}{% endblock %}
+{% block page_title %}{{ entry_title }}{% endblock %}
+
+{% block head_extra %}
+<style>
+  .pb-hero {
+    padding: 18px 18px 16px;
+    display: grid;
+    gap: 10px;
+  }
+
+  .pb-hero-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .pb-title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 980;
+    letter-spacing: -0.8px;
+    line-height: 1.12;
+  }
+
+  .pb-sub {
+    margin: 8px 0 0;
+    color: var(--app-muted);
+    font-size: 13px;
+    line-height: 1.6;
+    max-width: 62ch;
+  }
+
+  .pb-kpis { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
+  .pb-basebar {
+    margin-top: 12px;
+    padding: 10px;
+  }
+
+  .pb-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .pb-kind-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .pb-tab {
+    height: 40px;
+    border-radius: 999px;
+    border: 1px solid var(--app-border);
+    background: color-mix(in srgb, var(--app-surface) 72%, transparent);
+    box-shadow: var(--app-shadow-soft);
+    font-weight: 900;
+    letter-spacing: -0.2px;
+    cursor: pointer;
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background 160ms ease;
+  }
+
+  .pb-tab:hover { transform: translateY(-1px); box-shadow: var(--app-shadow); }
+  .pb-tab:active { transform: translateY(0); }
+  .pb-tab:focus { outline: none; box-shadow: 0 0 0 3px var(--app-primary-soft), var(--app-shadow-soft); }
+
+  .pb-tab.is-active {
+    border-color: color-mix(in srgb, var(--app-primary) 26%, var(--app-border));
+    background: color-mix(in srgb, var(--app-primary-soft) 35%, var(--app-surface));
+  }
+
+  .pb-toolbar {
+    margin-top: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .pb-toolbar-left, .pb-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  .pb-search {
+    min-width: min(520px, 100%);
+    flex: 1 1 auto;
+  }
+
+  .pb-grid {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .pb-card {
+    border-radius: 16px;
+    border: 1px solid var(--app-border);
+    background: var(--app-surface-2);
+    box-shadow: var(--app-shadow-soft);
+    padding: 14px;
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+    transition: box-shadow 160ms ease, border-color 160ms ease, background 160ms ease;
+  }
+  .pb-card:hover {
+    box-shadow: var(--app-shadow);
+    border-color: color-mix(in srgb, var(--app-text) 14%, var(--app-border));
+  }
+  .pb-card:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--app-primary-soft), var(--app-shadow-soft);
+  }
+
+  .pb-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .pb-card-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 950;
+    letter-spacing: -0.2px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pb-card-arrow {
+    width: 34px;
+    height: 34px;
+    border-radius: 14px;
+    border: 1px solid var(--app-border);
+    background: color-mix(in srgb, var(--app-surface) 72%, transparent);
+    box-shadow: var(--app-shadow-soft);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+  }
+
+  .pb-card-arrow svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+    color: var(--app-text);
+    opacity: 0.9;
+  }
+
+  .pb-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    color: var(--app-muted);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .pb-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--app-text) 35%, transparent);
+  }
+
+  .pb-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 10px;
+    height: 22px;
+    border-radius: 999px;
+    border: 1px solid var(--app-border);
+    background: color-mix(in srgb, var(--app-surface) 70%, transparent);
+    color: var(--app-muted);
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .pb-empty {
+    margin-top: 12px;
+    padding: 18px;
+    border-radius: var(--app-radius-xl);
+    border: 1px dashed color-mix(in srgb, var(--app-border) 70%, transparent);
+    color: var(--app-muted);
+    background: color-mix(in srgb, var(--app-surface) 70%, transparent);
+  }
+
+  .pb-quick {
+    margin-top: 12px;
+    padding: 14px 14px;
+  }
+
+  .pb-quick-title {
+    font-size: 14px;
+    font-weight: 950;
+    letter-spacing: -0.2px;
+  }
+
+  .pb-quick-sub {
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--app-muted);
+  }
+
+  .pb-quick-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  @media (max-width: 560px) {
+    .pb-grid { grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="app-container">
+  <section class="app-card pb-hero" aria-label="{{ entry_title }}-选择题库">
+    <div class="pb-hero-top">
+      <div>
+        <h1 class="pb-title">{{ entry_title }}</h1>
+        <p class="pb-sub">{{ entry_subtitle or '先选择题库，再进入练习设置与题库数据。' }}</p>
+      </div>
+      <div class="pb-kpis" aria-label="题库数量">
+        {% if entry_key == 'review' %}
+          <span class="app-pill" title="当前复盘类型">{{ review_kind_label or '错题' }}</span>
+        {% endif %}
+        <span class="app-pill" title="公共题库数量">公共 {{ public_total or 0 }}</span>
+        <span class="app-pill" title="个人题库数量">个人 {{ bank_total or 0 }}</span>
+      </div>
+    </div>
+  </section>
+
+  {% if entry_key == 'review' %}
+    <section class="app-card pb-basebar" aria-label="复盘类型">
+      <div class="pb-kind-tabs" role="tablist" aria-label="复盘类型切换">
+        <button class="pb-tab {{ 'is-active' if review_kind == 'mistakes' else '' }}" type="button" data-kind="mistakes" aria-pressed="{{ 'true' if review_kind == 'mistakes' else 'false' }}">错题</button>
+        <button class="pb-tab {{ 'is-active' if review_kind == 'favorites' else '' }}" type="button" data-kind="favorites" aria-pressed="{{ 'true' if review_kind == 'favorites' else 'false' }}">收藏</button>
+        <button class="pb-tab {{ 'is-active' if review_kind == 'tags' else '' }}" type="button" data-kind="tags" aria-pressed="{{ 'true' if review_kind == 'tags' else 'false' }}">标签</button>
+      </div>
+    </section>
+
+    <section class="app-card pb-quick" aria-label="快速开始">
+      <div class="pb-quick-title">快速开始</div>
+      <div class="pb-quick-sub" id="reviewQuickMeta">开始一次复盘后，这里会出现“继续上次复盘”。</div>
+      <div class="pb-quick-actions">
+        <a class="app-btn app-btn-primary" id="reviewQuickContinue" href="#" hidden>继续上次复盘</a>
+        <a class="app-btn app-btn-secondary" id="reviewQuickQuiz" href="#" hidden>继续刷题</a>
+        <a class="app-btn app-btn-secondary" id="reviewQuickMemo" href="#" hidden>继续背题</a>
+        <a class="app-btn app-btn-secondary" id="reviewQuickFocus" href="?kind=mistakes">今日重点：错题</a>
+      </div>
+    </section>
+  {% endif %}
+
+  <section class="app-card pb-basebar" aria-label="题库来源">
+    <div class="pb-tabs" role="tablist" aria-label="题库来源切换">
+      <button class="pb-tab is-active" type="button" data-tab="public" aria-pressed="true">公共题库</button>
+      <button class="pb-tab" type="button" data-tab="bank" aria-pressed="false">个人题库</button>
+    </div>
+  </section>
+
+  <section class="app-card pb-toolbar" aria-label="搜索题库">
+    <div class="pb-toolbar-left">
+      <input class="app-input pb-search" id="bankSelectKeyword" type="search" placeholder="搜索题库" autocomplete="off" />
+    </div>
+    <div class="pb-toolbar-right">
+      <span class="app-pill" id="bankSelectShownPill">显示 0 / 0</span>
+    </div>
+  </section>
+
+  <div id="bankSelectTabPublic" aria-label="公共题库列表">
+    {% if public_cards and public_cards|length %}
+      <div class="pb-grid" id="bankSelectPublicGrid">
+        {% for s in public_cards %}
+          {% set _public_href = "/subjects/%s?entry=%s"|format(s.id, entry_key|e) %}
+          {% set _entry_center_label = entry_title %}
+          {% if entry_key == 'review' %}
+            {% set _entry_center_label = (review_kind_label or '错题') %}
+            {% set _rk = (review_kind or 'mistakes') %}
+            {% if _rk in ('favorites', 'mistakes') %}
+              {% set _public_href = "/%s/center?source=public&subject=%s&tab=practice&type=all&tag=all&shuffle_questions=0&shuffle_options=0"|format(_rk, (s.name or '')|urlencode) %}
+            {% elif _rk == 'tags' %}
+              {% set _public_href = "/tags/center?source=public&subject=%s"|format((s.name or '')|urlencode) %}
+            {% endif %}
+          {% elif entry_key in ('favorites', 'mistakes') %}
+            {% set _public_href = "/%s/center?source=public&subject=%s&tab=practice&type=all&tag=all&shuffle_questions=0&shuffle_options=0"|format(entry_key, (s.name or '')|urlencode) %}
+          {% elif entry_key == 'tags' %}
+            {% set _public_href = "/%s/center?source=public&subject=%s"|format(entry_key, (s.name or '')|urlencode) %}
+          {% elif entry_key == 'exam' %}
+            {% set _public_href = "/exams?tab=new&source=public&subject=%s&lock=1"|format((s.name or '')|urlencode) %}
+          {% endif %}
+          <a
+            class="pb-card"
+            href="{{ _public_href }}"
+            data-bank-card="1"
+            data-kind="public"
+            data-name="{{ (s.name or '')|e }}"
+            aria-label="进入 {{ s.name }} {{ _entry_center_label }}中心"
+          >
+            <div class="pb-card-top">
+              <h2 class="pb-card-title">{{ s.name }}</h2>
+              <span class="pb-card-arrow" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </div>
+            <div class="pb-card-meta">
+              <span>{{ s.question_count or 0 }} 题</span>
+              <span class="pb-dot" aria-hidden="true"></span>
+              {% if entry_key == 'review' %}
+                <span>进入{{ review_kind_label or '错题' }}中心</span>
+              {% else %}
+                <span>进入中心</span>
+              {% endif %}
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+      <div class="pb-empty" id="bankSelectEmptyPublic" hidden>没有匹配的公共题库。</div>
+    {% else %}
+      <div class="pb-empty">暂无可用公共题库。</div>
+    {% endif %}
+  </div>
+
+  <div id="bankSelectTabBank" aria-label="个人题库列表" hidden>
+    {% if bank_cards and bank_cards|length %}
+      <div class="pb-grid" id="bankSelectBankGrid">
+        {% for b in bank_cards %}
+          {% set _bank_href = "/user/banks/%s/practice?entry=%s"|format(b.id, entry_key|e) %}
+          {% set _entry_center_label = entry_title %}
+          {% if entry_key == 'review' %}
+            {% set _entry_center_label = (review_kind_label or '错题') %}
+            {% set _rk = (review_kind or 'mistakes') %}
+            {% if _rk in ('favorites', 'mistakes') %}
+              {% set _bank_href = "/%s/center?source=user_bank&bank_id=%s&tab=practice&type=all&tag=all&shuffle_questions=0&shuffle_options=0"|format(_rk, b.id) %}
+            {% elif _rk == 'tags' %}
+              {% set _bank_href = "/tags/center?source=user_bank&bank_id=%s"|format(b.id) %}
+            {% endif %}
+          {% elif entry_key in ('favorites', 'mistakes') %}
+            {% set _bank_href = "/%s/center?source=user_bank&bank_id=%s&tab=practice&type=all&tag=all&shuffle_questions=0&shuffle_options=0"|format(entry_key, b.id) %}
+          {% elif entry_key == 'tags' %}
+            {% set _bank_href = "/%s/center?source=user_bank&bank_id=%s"|format(entry_key, b.id) %}
+          {% elif entry_key == 'exam' %}
+            {% set _bank_href = "/exams?tab=new&source=user_bank&bank_id=%s&lock=1"|format(b.id) %}
+          {% endif %}
+          <a
+            class="pb-card"
+            href="{{ _bank_href }}"
+            data-bank-card="1"
+            data-kind="bank"
+            data-name="{{ (b.name or '')|e }}"
+            aria-label="进入 {{ b.name }} {{ _entry_center_label }}中心"
+          >
+            <div class="pb-card-top">
+              <h2 class="pb-card-title">{{ b.name }}</h2>
+              <span class="pb-card-arrow" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </div>
+            <div class="pb-card-meta">
+              <span>{{ b.question_count or 0 }} 题</span>
+              {% if b.is_shared %}
+                <span class="pb-dot" aria-hidden="true"></span>
+                <span class="pb-badge">共享 · {{ b.owner_nickname or '好友' }}</span>
+              {% endif %}
+              <span class="pb-dot" aria-hidden="true"></span>
+              {% if entry_key == 'review' %}
+                <span>进入{{ review_kind_label or '错题' }}中心</span>
+              {% else %}
+                <span>进入中心</span>
+              {% endif %}
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+      <div class="pb-empty" id="bankSelectEmptyBank" hidden>没有匹配的个人题库。</div>
+    {% else %}
+      <div class="pb-empty">暂无可用个人题库。</div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  (function () {
+    var entryKey = {{ (entry_key or '')|tojson }};
+    var KEY_TAB = 'bank_select_tab_' + entryKey;
+
+    var tabPublic = document.getElementById('bankSelectTabPublic');
+    var tabBank = document.getElementById('bankSelectTabBank');
+    var pill = document.getElementById('bankSelectShownPill');
+    var keywordEl = document.getElementById('bankSelectKeyword');
+    var emptyPublic = document.getElementById('bankSelectEmptyPublic');
+    var emptyBank = document.getElementById('bankSelectEmptyBank');
+    var tabButtons = Array.prototype.slice.call(document.querySelectorAll('.pb-tab[data-tab]'));
+    var kindButtons = Array.prototype.slice.call(document.querySelectorAll('.pb-tab[data-kind]'));
+    var cards = Array.prototype.slice.call(document.querySelectorAll('[data-bank-card=\"1\"]'));
+
+    function normalize(s) { return String(s || '').trim().toLowerCase(); }
+
+    function getQueryTab() {
+      try {
+        var sp = new URLSearchParams(window.location.search || '');
+        return normalize(sp.get('tab') || '');
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function getQueryKind() {
+      try {
+        var sp = new URLSearchParams(window.location.search || '');
+        return normalize(sp.get('kind') || '');
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function isValidKind(k) {
+      return k === 'mistakes' || k === 'favorites' || k === 'tags';
+    }
+
+    function setQueryParam(key, value) {
+      try {
+        var sp = new URLSearchParams(window.location.search || '');
+        if (value === null || value === undefined || value === '') sp.delete(key);
+        else sp.set(key, value);
+        var q = sp.toString();
+        var url = window.location.pathname + (q ? ('?' + q) : '');
+        window.location.href = url;
+      } catch (e) {
+        window.location.href = window.location.pathname;
+      }
+    }
+
+    if (entryKey === 'review') {
+      var KEY_KIND = 'review_kind_v1';
+      var KEY_LAST = 'review_last_session_v1';
+      var qKind = getQueryKind();
+      var storedKind = '';
+      try { storedKind = normalize(localStorage.getItem(KEY_KIND) || ''); } catch (e) { storedKind = ''; }
+
+      if (!qKind && isValidKind(storedKind)) {
+        try {
+          var sp = new URLSearchParams(window.location.search || '');
+          sp.set('kind', storedKind);
+          var q = sp.toString();
+          var url = window.location.pathname + (q ? ('?' + q) : '');
+          window.location.replace(url);
+        } catch (e) {}
+      }
+
+      kindButtons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var k = normalize(btn.getAttribute('data-kind'));
+          if (!isValidKind(k)) k = 'mistakes';
+          try { localStorage.setItem(KEY_KIND, k); } catch (e) {}
+          setQueryParam('kind', k);
+        });
+      });
+
+      // 快速开始：继续上次 / 今日重点（前端 localStorage）
+      var quickContinue = document.getElementById('reviewQuickContinue');
+      var quickQuiz = document.getElementById('reviewQuickQuiz');
+      var quickMemo = document.getElementById('reviewQuickMemo');
+      var quickFocus = document.getElementById('reviewQuickFocus');
+      var quickMeta = document.getElementById('reviewQuickMeta');
+
+      function safeJsonParse(s) {
+        try { return JSON.parse(String(s || '') || ''); } catch (e) { return null; }
+      }
+
+      function kindLabel(k) {
+        k = normalize(k);
+        if (k === 'favorites') return '收藏';
+        if (k === 'tags') return '标签';
+        return '错题';
+      }
+
+      function buildFocusUrl(last) {
+        try {
+          var source = normalize(last && (last.source || last.source_type) || '');
+          if (source === 'public') {
+            var subject = String(last.subject || last.subject_name || '').trim();
+            if (!subject) return '';
+            return '/mistakes/center?source=public&subject=' + encodeURIComponent(subject) + '&tab=practice&type=all&tag=all&shuffle_questions=0&shuffle_options=0';
+          }
+          if (source === 'user_bank') {
+            var bankId = Number(last.bank_id || last.bankId || 0) || 0;
+            if (bankId <= 0) return '';
+            return '/mistakes/center?source=user_bank&bank_id=' + encodeURIComponent(String(bankId)) + '&tab=practice&type=all&tag=all&shuffle_questions=0&shuffle_options=0';
+          }
+        } catch (e) {}
+        return '';
+      }
+
+      try {
+        var lastRaw = localStorage.getItem(KEY_LAST) || '';
+        var last = safeJsonParse(lastRaw);
+        if (last && typeof last === 'object') {
+          var centerUrl = String(last.center_url || '').trim();
+          var quizUrl = String(last.quiz_url || '').trim();
+          var memoUrl = String(last.memo_url || '').trim();
+          var scopeLabel = String(last.scope_label || '').trim();
+          var scopeName = String(last.scope_name || '').trim();
+          var k = String(last.kind || '').trim();
+          var qType = String(last.q_type || last.qType || '').trim();
+          var tag = String(last.tag || '').trim();
+
+          if (centerUrl && quickContinue) {
+            quickContinue.hidden = false;
+            quickContinue.href = centerUrl;
+          }
+          if (quizUrl && quickQuiz) {
+            quickQuiz.hidden = false;
+            quickQuiz.href = quizUrl;
+          }
+          if (memoUrl && quickMemo) {
+            quickMemo.hidden = false;
+            quickMemo.href = memoUrl;
+          }
+
+          if (quickMeta) {
+            var parts = [];
+            if (scopeLabel) parts.push(scopeLabel);
+            if (scopeName) parts.push(scopeName);
+            parts.push(kindLabel(k));
+            if (qType && qType !== 'all') parts.push(qType);
+            if (tag && tag !== 'all') parts.push(tag);
+            quickMeta.textContent = parts.length ? ('上次：' + parts.join(' · ')) : '已记录上次复盘。';
+          }
+
+          var focusUrl = buildFocusUrl(last);
+          if (focusUrl && quickFocus) {
+            quickFocus.href = focusUrl;
+            quickFocus.textContent = '今日重点：错题';
+          }
+        }
+      } catch (e) {}
+    }
+
+    var activeTab = getQueryTab() || (localStorage.getItem(KEY_TAB) || 'public');
+    if (activeTab !== 'public' && activeTab !== 'bank') activeTab = 'public';
+
+    function setTab(nextTab, persist) {
+      if (nextTab !== 'public' && nextTab !== 'bank') nextTab = 'public';
+      activeTab = nextTab;
+      if (persist) {
+        try { localStorage.setItem(KEY_TAB, activeTab); } catch (e) {}
+      }
+      tabButtons.forEach(function (btn) {
+        var t = normalize(btn.getAttribute('data-tab'));
+        var on = t === activeTab;
+        btn.classList.toggle('is-active', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      if (tabPublic) tabPublic.hidden = activeTab !== 'public';
+      if (tabBank) tabBank.hidden = activeTab !== 'bank';
+      applyFilter();
+    }
+
+    function applyFilter() {
+      var q = normalize(keywordEl && keywordEl.value ? keywordEl.value : '');
+      var shown = 0;
+      var total = 0;
+
+      cards.forEach(function (el) {
+        var kind = normalize(el.getAttribute('data-kind'));
+        var inTab = kind === activeTab;
+        if (inTab) total += 1;
+
+        if (!inTab) {
+          el.hidden = true;
+          return;
+        }
+
+        var name = normalize(el.getAttribute('data-name'));
+        var match = !q || name.indexOf(q) !== -1;
+        el.hidden = !match;
+        if (match) shown += 1;
+      });
+
+      if (pill) pill.textContent = '显示 ' + shown + ' / ' + total;
+      if (emptyPublic) emptyPublic.hidden = !(activeTab === 'public' && total > 0 && shown === 0);
+      if (emptyBank) emptyBank.hidden = !(activeTab === 'bank' && total > 0 && shown === 0);
+    }
+
+    tabButtons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        setTab(normalize(btn.getAttribute('data-tab')), true);
+      });
+    });
+
+    if (keywordEl) keywordEl.addEventListener('input', applyFilter);
+
+    setTab(activeTab, false);
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,1640 @@
+{% extends "user_bank/manage/manage_base.html" %}
+
+{% set manage_tab = 'questions' %}
+
+{% block title %}{{ _bank_name }} · Word 导入{% endblock %}
+{% block page_title %}{{ _bank_name }} · Word 导入{% endblock %}
+
+{% block manage_head %}
+  <link rel="stylesheet" href="/static/css/user_bank_guide_v1.css?v=1" />
+  <style>
+    .question-preserve-fmt {
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    /* 本页：尽量做成“双屏代码编辑器”的工作区 */
+    .ubm-page {
+      max-width: none;
+      min-height: calc(100dvh - var(--app-topbar-h));
+      display: flex;
+      flex-direction: column;
+    }
+    .ubm-main {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+    }
+
+    .ubw-layout {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .ubw-toolbar {
+      border: 1px solid var(--app-border);
+      border-radius: var(--app-radius-xl);
+      background: color-mix(in srgb, var(--app-surface) 78%, transparent);
+      backdrop-filter: blur(18px) saturate(160%);
+      -webkit-backdrop-filter: blur(18px) saturate(160%);
+      box-shadow: var(--app-shadow-soft);
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      min-height: 60px;
+    }
+    .ubw-toolbar-left,
+    .ubw-toolbar-center,
+    .ubw-toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+    .ubw-toolbar-left { flex: 1 1 340px; }
+    .ubw-toolbar-center { flex: 1 1 260px; justify-content: center; }
+    .ubw-toolbar-right { flex: 0 0 auto; justify-content: flex-end; }
+
+    .ubw-file {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .ubw-filemeta {
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--app-muted);
+      min-width: 0;
+      max-width: min(320px, 40vw);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .ubw-toolbar .ubm-select { width: auto; min-width: 160px; }
+
+    .ubw-chip {
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 1px solid var(--app-border);
+      background: var(--app-surface-2);
+      box-shadow: var(--app-shadow-soft);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 950;
+      color: var(--app-text);
+      white-space: nowrap;
+    }
+    .ubw-chip .n { font-variant-numeric: tabular-nums; }
+    .ubw-chip.ok {
+      border-color: color-mix(in srgb, #22c55e 40%, var(--app-border));
+      background: color-mix(in srgb, #22c55e 10%, var(--app-surface-2));
+    }
+    .ubw-chip.warn {
+      border-color: color-mix(in srgb, #ef4444 40%, var(--app-border));
+      background: color-mix(in srgb, #ef4444 10%, var(--app-surface-2));
+    }
+    button.ubw-chip { cursor: pointer; }
+    button.ubw-chip:disabled { opacity: 0.55; cursor: not-allowed; }
+    button.ubw-chip:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px var(--app-primary-soft), var(--app-shadow-soft);
+    }
+
+    .ubw-status {
+      display: none;
+      color: var(--app-muted);
+      font-size: 12px;
+      font-weight: 900;
+      padding: 0 2px;
+    }
+    .ubw-status.show { display: block; }
+
+    .ubw-workspace {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .ubw-pane {
+      border: 1px solid var(--app-border);
+      border-radius: var(--app-radius-xl);
+      background: var(--app-surface-2);
+      box-shadow: var(--app-shadow-soft);
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .ubw-pane-head {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--app-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-width: 0;
+    }
+    .ubw-pane-title {
+      font-size: 13px;
+      font-weight: 950;
+      letter-spacing: -0.1px;
+      color: var(--app-text);
+      min-width: 0;
+    }
+    .ubw-pane-meta {
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--app-muted);
+      white-space: nowrap;
+    }
+    .ubw-pane-body {
+      padding: 10px 12px;
+      overflow: auto;
+      min-height: 0;
+      flex: 1 1 auto;
+    }
+
+    .ubw-textarea {
+      width: 100%;
+      flex: 1 1 auto;
+      min-height: 260px;
+      resize: vertical;
+      padding: 12px;
+      line-height: 1.45;
+    }
+
+    .ubw-source-body { display: flex; flex-direction: column; min-height: 0; }
+    .ubw-preview-list { display: grid; gap: 10px; align-content: start; }
+
+    .ubw-card-body { display: grid; gap: 10px; }
+
+    .ubw-item {
+      border: 1px solid var(--app-border);
+      border-radius: 16px;
+      background: var(--app-surface);
+      box-shadow: var(--app-shadow-soft);
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      min-width: 0;
+      transition: box-shadow 140ms ease, border-color 140ms ease, background 140ms ease;
+    }
+    .ubw-item:hover { box-shadow: var(--app-shadow); }
+    .ubw-item.issue {
+      border-color: color-mix(in srgb, #ef4444 55%, var(--app-border));
+      background: color-mix(in srgb, #ef4444 6%, var(--app-surface));
+    }
+
+    .ubw-item-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-width: 0;
+    }
+    .ubw-item-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .ubw-item-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .ubw-item-title {
+      font-size: 13px;
+      font-weight: 950;
+      letter-spacing: -0.1px;
+      color: var(--app-text);
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .ubw-badges { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+    .ubw-badge {
+      height: 24px;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 1px solid var(--app-border);
+      background: var(--app-surface);
+      box-shadow: var(--app-shadow-soft);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 950;
+      color: var(--app-text);
+      white-space: nowrap;
+    }
+    .ubw-badge.warn {
+      border-color: color-mix(in srgb, #ef4444 40%, var(--app-border));
+      background: color-mix(in srgb, #ef4444 10%, var(--app-surface));
+    }
+
+    .ubw-field { display: grid; gap: 6px; }
+    .ubw-field-k { font-size: 12px; font-weight: 950; color: var(--app-muted); letter-spacing: 0.2px; }
+
+    .ubw-options { display: grid; gap: 8px; }
+    .ubw-option {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) 34px;
+      gap: 8px;
+      align-items: center;
+      min-width: 0;
+    }
+    .ubw-opt-k {
+      height: 24px;
+      border-radius: 10px;
+      border: 1px solid var(--app-border);
+      background: var(--app-surface);
+      box-shadow: var(--app-shadow-soft);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 950;
+      color: var(--app-muted);
+    }
+    .ubw-opt-toggle {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--app-primary);
+      justify-self: end;
+    }
+
+    .ubw-item .ubm-btn { height: 34px; padding: 0 12px; font-size: 12px; }
+    .ubw-item .ubm-select { height: 34px; min-width: 120px; }
+    .ubw-item .ubm-input { height: 38px; border-radius: 12px; }
+    .ubw-item .ubm-textarea { height: auto; min-height: 84px; resize: vertical; }
+
+    .ubw-fill { display: grid; gap: 8px; }
+    .ubw-fill-row {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .ubw-empty { color: var(--app-muted); font-size: 12px; padding: 10px 0; }
+
+    @media (max-width: 980px) {
+      .ubw-toolbar-center { justify-content: flex-start; }
+      .ubw-workspace { grid-template-columns: minmax(0, 1fr); }
+      .ubw-textarea { min-height: 220px; }
+      .ubw-toolbar .ubm-select { min-width: 140px; }
+    }
+  </style>
+{% endblock %}
+
+{% block manage_content %}
+  <div class="ubw-layout" aria-label="Word 导入工作区">
+    <div class="ubw-toolbar" aria-label="导入工具栏">
+      <div class="ubw-toolbar-left">
+        <input class="ubw-file" id="ubwFile" type="file" accept=".docx" aria-label="选择 Word 文件（.docx）" />
+        <button class="ubm-btn" type="button" id="ubwPickFileBtn">上传 Word（.docx）</button>
+        <div class="ubw-filemeta" id="ubwFileName" title="当前文件">未选择文件</div>
+        <select class="ubm-select" id="ubwDifficulty" title="默认难度">
+          <option value="1">★☆☆☆☆ 简单</option>
+          <option value="2">★★☆☆☆ 较易</option>
+          <option value="3" selected>★★★☆☆ 中等</option>
+          <option value="4">★★★★☆ 较难</option>
+          <option value="5">★★★★★ 困难</option>
+        </select>
+      </div>
+
+      <div class="ubw-toolbar-center" aria-label="解析统计">
+        <span class="ubw-chip" title="识别题目数">识别 <span class="n" id="ubwStatTotal">0</span></span>
+        <span class="ubw-chip ok" title="可入库（已满足题型/题干/答案等必要条件）">可入库 <span class="n" id="ubwStatValid">0</span></span>
+        <button class="ubw-chip warn" type="button" id="ubwIssueBtn" title="待修（点击跳转）" disabled>待修 <span class="n" id="ubwStatNoAns">0</span></button>
+        <button class="ubw-chip" type="button" data-ubg-open="xxt" title="学习通题目建议用脚本导出 JSON 再导入（更稳定）">学习通 JSON 导入</button>
+        <button class="ubw-chip" type="button" data-ubg-open="pta" title="PTA 题目建议用脚本导出 JSON 再导入（更稳定）">PTA JSON 导入</button>
+      </div>
+
+      <div class="ubw-toolbar-right">
+        <button class="ubm-btn ubm-btn-ghost" type="button" data-ubg-open="word">Word 导入指南</button>
+        <button class="ubm-btn ubm-btn-ghost" type="button" id="ubwClearBtn">清空</button>
+        <button class="ubm-btn ubm-btn-ghost" type="button" id="ubwDownloadBtn">下载 JSON</button>
+        <button class="ubm-btn ubm-btn-primary" type="button" id="ubwImportBtn">一键入库</button>
+        <a class="ubm-btn ubm-btn-ghost" href="/user/banks/{{ bank_id }}">返回题目管理</a>
+      </div>
+    </div>
+
+    <div class="ubw-status" id="ubwHint" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    <div class="ubw-workspace" aria-label="导入内容">
+      <section class="ubw-pane" aria-label="原始文本">
+        <div class="ubw-pane-head">
+          <div class="ubw-pane-title">原始文本</div>
+          <div class="ubw-pane-meta">自动解析（300ms）</div>
+        </div>
+        <div class="ubw-pane-body ubw-source-body">
+          <textarea class="ubm-input ubm-textarea ubw-textarea question-preserve-fmt" id="ubwText" placeholder="在这里粘贴题目文本，或先上传 Word 文件…"></textarea>
+        </div>
+      </section>
+
+      <section class="ubw-pane" aria-label="解析预览">
+        <div class="ubw-pane-head">
+          <div class="ubw-pane-title">解析预览</div>
+          <div class="ubw-pane-meta" id="ubwPreviewMeta">—</div>
+        </div>
+        <div class="ubw-pane-body ubw-preview-list" id="ubwPreview">
+          <div class="ubw-empty">暂无预览。</div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  {% include "user_bank/shared/_guide_modal.html" %}
+{% endblock %}
+
+{% block manage_scripts %}
+  <script src="/static/js/user_bank_guide_v1.js?v=1"></script>
+  <script>
+    (function () {
+      const root = document.querySelector('[data-ubm-bank-id]');
+      const bankId = root ? String(root.dataset.ubmBankId || '').trim() : '';
+
+      const fileEl = document.getElementById('ubwFile');
+      const diffEl = document.getElementById('ubwDifficulty');
+      const pickFileBtn = document.getElementById('ubwPickFileBtn');
+      const fileNameEl = document.getElementById('ubwFileName');
+      const clearBtn = document.getElementById('ubwClearBtn');
+      const downloadBtn = document.getElementById('ubwDownloadBtn');
+      const importBtn = document.getElementById('ubwImportBtn');
+      const issueBtn = document.getElementById('ubwIssueBtn');
+
+      const textEl = document.getElementById('ubwText');
+      const previewEl = document.getElementById('ubwPreview');
+      const hintEl = document.getElementById('ubwHint');
+      const previewMetaEl = document.getElementById('ubwPreviewMeta');
+
+      const statTotalEl = document.getElementById('ubwStatTotal');
+      const statValidEl = document.getElementById('ubwStatValid');
+      const statNoAnsEl = document.getElementById('ubwStatNoAns');
+
+      let lastImportList = [];
+      let parseTimer = null;
+      let renderedCount = 0;
+      let rendering = false;
+      const RENDER_BATCH = 24;
+
+      // ==============================
+      // 草稿自动保存：解决刷新丢失输入
+      // ==============================
+      const DRAFT_VER = 1;
+      const DRAFT_KEY = (function () {
+        const bid = String(bankId || '').trim();
+        const scope = bid ? `bank:${bid}` : `path:${String(location.pathname || 'unknown')}`;
+        return `ubw_word_import_draft_v${DRAFT_VER}:${scope}`;
+      })();
+      const DRAFT_MAX_AGE_MS = 30 * 24 * 3600 * 1000; // 30 天
+
+      let draftSaveTimer = null;
+      let lastDraftHintAt = 0;
+
+      function safeGetLocalStorageItem(key) {
+        try { return localStorage.getItem(key) || ''; } catch (e) { return ''; }
+      }
+      function safeSetLocalStorageItem(key, value) {
+        try { localStorage.setItem(key, value); return true; } catch (e) { return false; }
+      }
+      function safeRemoveLocalStorageItem(key) {
+        try { localStorage.removeItem(key); } catch (e) {}
+      }
+
+      function buildDraftPayload() {
+        const difficulty = diffEl ? String(diffEl.value || '') : '';
+        const text = textEl ? String(textEl.value || '') : '';
+        const fileName = fileNameEl ? String(fileNameEl.textContent || '') : '';
+        const scrollTop = previewEl ? Number(previewEl.scrollTop || 0) : 0;
+        return {
+          v: DRAFT_VER,
+          saved_at: Date.now(),
+          bank_id: String(bankId || ''),
+          difficulty,
+          file_name: fileName,
+          text,
+          import_list: Array.isArray(lastImportList) ? lastImportList : [],
+          preview_scroll_top: scrollTop,
+        };
+      }
+
+      function shouldKeepDraft(payload) {
+        if (!payload) return false;
+        const hasText = Boolean(String(payload.text || '').trim());
+        const hasList = Array.isArray(payload.import_list) && payload.import_list.length > 0;
+        return hasText || hasList;
+      }
+
+      function saveDraftNow(reason) {
+        try {
+          if (!DRAFT_KEY) return;
+          const payload = buildDraftPayload();
+          if (!shouldKeepDraft(payload)) {
+            safeRemoveLocalStorageItem(DRAFT_KEY);
+            return;
+          }
+          safeSetLocalStorageItem(DRAFT_KEY, JSON.stringify(payload));
+
+          // 轻提示：避免频繁打扰（import/下载等不提示）
+          const now = Date.now();
+          if ((reason === 'text' || reason === 'edit') && now - lastDraftHintAt > 6000) {
+            lastDraftHintAt = now;
+            setHint('已自动保存草稿（刷新不会丢失）', 'info');
+          }
+        } catch (e) {}
+      }
+
+      function scheduleSaveDraft(reason) {
+        if (draftSaveTimer) clearTimeout(draftSaveTimer);
+        draftSaveTimer = setTimeout(function () { saveDraftNow(reason); }, 380);
+      }
+
+      function loadDraft() {
+        try {
+          const raw = safeGetLocalStorageItem(DRAFT_KEY);
+          if (!raw) return null;
+          const data = JSON.parse(raw);
+          if (!data || Number(data.v) !== DRAFT_VER) return null;
+          const savedAt = Number(data.saved_at || 0);
+          if (savedAt && Date.now() - savedAt > DRAFT_MAX_AGE_MS) return null;
+          return data;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function restoreDraftIfAny() {
+        const draft = loadDraft();
+        if (!draft) return false;
+
+        try {
+          if (diffEl && draft.difficulty) diffEl.value = String(draft.difficulty);
+          if (textEl && typeof draft.text === 'string') textEl.value = draft.text;
+          if (fileNameEl && draft.file_name) fileNameEl.textContent = String(draft.file_name);
+        } catch (e) {}
+
+        const list = Array.isArray(draft.import_list) ? draft.import_list : [];
+        if (list.length) {
+          lastImportList = list;
+          const scrollTop = Number(draft.preview_scroll_top || 0);
+          renderPreviewReset(lastImportList, { keepScroll: true, scrollTop });
+          updateStats(lastImportList);
+        } else {
+          const text = textEl ? String(textEl.value || '').trim() : '';
+          if (text) parseNow('manual');
+        }
+
+        setHint('已恢复上次未完成的草稿（刷新不会丢失）', 'info');
+        try { if (window.ubmToast) window.ubmToast('已恢复草稿', 'info'); } catch (e) {}
+        return true;
+      }
+
+      function clearDraft() {
+        safeRemoveLocalStorageItem(DRAFT_KEY);
+      }
+
+      // 刷新/切换标签页时，尽量写入最后一笔（避免丢字）
+      try {
+        window.addEventListener('beforeunload', function () { saveDraftNow('beforeunload'); });
+        document.addEventListener('visibilitychange', function () {
+          if (document.visibilityState === 'hidden') saveDraftNow('hidden');
+        });
+      } catch (e) {}
+
+      function escapeHtml(s) {
+        const div = document.createElement('div');
+        div.textContent = String(s || '');
+        return div.innerHTML;
+      }
+
+      function setHint(msg, kind) {
+        if (!hintEl) return;
+        const text = String(msg || '').trim();
+        hintEl.textContent = text;
+        hintEl.style.color = (kind === 'error')
+          ? 'color-mix(in srgb, #ef4444 70%, var(--app-text))'
+          : (kind === 'success')
+            ? 'color-mix(in srgb, #22c55e 60%, var(--app-text))'
+            : 'var(--app-muted)';
+        hintEl.classList.toggle('show', Boolean(text));
+      }
+
+      function normalizeNewlines(text) {
+        return String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      }
+
+      function stripOnceLeadingWs(s) {
+        if (!s) return '';
+        if (s.startsWith(' ')) return s.slice(1);
+        if (s.startsWith('\t')) return s.slice(1);
+        return s;
+      }
+
+      function alphaFromNumber(n, upper) {
+        const A = upper ? 65 : 97;
+        let x = Math.max(1, Number(n || 1));
+        let out = '';
+        while (x > 0) {
+          x -= 1;
+          out = String.fromCharCode(A + (x % 26)) + out;
+          x = Math.floor(x / 26);
+        }
+        return out;
+      }
+
+      function toChineseQType(t) {
+        const v = String(t || '').toLowerCase();
+        if (v === 'single') return '选择题';
+        if (v === 'multiple') return '多选题';
+        if (v === 'judge') return '判断题';
+        if (v === 'fill') return '填空题';
+        return '简答题';
+      }
+
+      function normalizeChoiceAnswer(ans, isMultiple) {
+        const letters = String(ans || '').toUpperCase().match(/[A-F]/g) || [];
+        const uniq = Array.from(new Set(letters));
+        uniq.sort();
+        if (!uniq.length) return '';
+        return isMultiple ? uniq.join('') : uniq[0];
+      }
+
+      function normalizeJudgeAnswer(ans, options) {
+        const a = String(ans || '').replace(/\s+/g, '').toUpperCase();
+        if (!a) return '';
+        if (a === '正确' || a === '对' || a === 'T' || a === 'TRUE' || a === '√') return '正确';
+        if (a === '错误' || a === '错' || a === 'F' || a === 'FALSE' || a === '×') return '错误';
+        if (a === 'A' || a === 'B') {
+          const first = String((options && options[0]) || '').toUpperCase();
+          const firstLooksFalse = /错|错误|FALSE|×/.test(first);
+          if (a === 'A') return firstLooksFalse ? '错误' : '正确';
+          return firstLooksFalse ? '正确' : '错误';
+        }
+        return '';
+      }
+
+      function normalizeFillAnswerToArray(ans) {
+        const raw = String(ans || '');
+        const parts = raw.split(';;').map((v) => String(v || '').trim());
+        if (!parts.length) return [''];
+        return parts;
+      }
+
+      function normalizeFillAnswerFromArray(parts) {
+        const cleaned = (parts || []).map((v) => String(v || '').trim());
+        while (cleaned.length > 1 && cleaned[cleaned.length - 1] === '') cleaned.pop();
+        return cleaned.join(';;');
+      }
+
+      class SmartParser {
+        constructor() {
+          this.patterns = {
+            questionStart: /^(\d+)[\.、]/,
+            optionStart: /^\s*(\(?)[A-F]([\.、\s\)]|$)/i,
+            answerTag: /^(答案|参考答案|正确答案|Answer|Key)[:：\s]*/i,
+            analysisTag: /^(解析|分析|详解|思路|考点)[:：\s]*/i,
+            fillFeature: /(_+)|(\(\s*\))|（\s*）/
+          };
+        }
+
+        parse(rawText) {
+          const raw = normalizeNewlines(rawText);
+          if (!raw) return [];
+
+          const normalizedText = this._normalizeKeepSpace(raw);
+          const lines = normalizedText.split('\n');
+
+          const questions = [];
+          let currentQ = null;
+
+          lines.forEach((rawLine) => {
+            const trimmedLine = String(rawLine || '').trim();
+            if (!trimmedLine && (!currentQ || currentQ._state !== 'answer')) return;
+
+            if (this.patterns.questionStart.test(trimmedLine)) {
+              if (currentQ) {
+                this._finalizeQuestion(currentQ);
+                questions.push(currentQ);
+              }
+              currentQ = this._createEmptyQuestion(rawLine);
+              return;
+            }
+
+            if (currentQ) this._processLine(currentQ, rawLine, trimmedLine);
+          });
+
+          if (currentQ) {
+            this._finalizeQuestion(currentQ);
+            questions.push(currentQ);
+          }
+          return questions;
+        }
+
+        _createEmptyQuestion(rawLine) {
+          const line = String(rawLine || '');
+          const leading = (line.match(/^\s*/) || [''])[0];
+          const rest = line.slice(leading.length);
+          const m = rest.match(this.patterns.questionStart);
+          let stemContent = line;
+          let index = 0;
+          if (m) {
+            const idxText = (m[1] || m[2] || m[3] || '').trim();
+            index = idxText ? Number(idxText) : 0;
+            const after = stripOnceLeadingWs(rest.slice(m[0].length));
+            stemContent = leading + after;
+          }
+          return {
+            index: Number.isFinite(index) ? index : 0,
+            stem: stemContent,
+            options: [],
+            rawAnswer: '',
+            answer: '',
+            analysis: '',
+            type: 'essay',
+            _state: 'stem'
+          };
+        }
+
+        _stripTaggedLine(rawLine, tagRe) {
+          const line = String(rawLine || '');
+          const leading = (line.match(/^\s*/) || [''])[0];
+          const rest = line.slice(leading.length);
+          const after = rest.replace(tagRe, '');
+          return stripOnceLeadingWs(after);
+        }
+
+        _stripOptionLine(rawLine) {
+          const line = String(rawLine || '');
+          const m = line.match(this.patterns.optionStart);
+          if (!m) return line;
+          const prefixLen = m[0].length;
+          const after = stripOnceLeadingWs(line.slice(prefixLen));
+          return after;
+        }
+
+        _processLine(q, rawLine, trimmedLine) {
+          if (this.patterns.answerTag.test(trimmedLine)) {
+            q.rawAnswer = this._stripTaggedLine(rawLine, this.patterns.answerTag);
+            q._state = 'answer';
+            return;
+          }
+          if (this.patterns.analysisTag.test(trimmedLine)) {
+            q.analysis = this._stripTaggedLine(rawLine, this.patterns.analysisTag);
+            q._state = 'analysis';
+            return;
+          }
+
+          switch (q._state) {
+            case 'analysis':
+              q.analysis += '\n' + rawLine;
+              break;
+            case 'answer':
+              q.rawAnswer += '\n' + rawLine;
+              break;
+            case 'stem':
+            case 'options': {
+              if (this.patterns.optionStart.test(trimmedLine)) {
+                q.options.push(this._stripOptionLine(rawLine));
+                q._state = 'options';
+              } else {
+                if (q._state === 'options') {
+                  if (q.options.length > 0) q.options[q.options.length - 1] += '\n' + rawLine;
+                } else {
+                  q.stem += '\n' + rawLine;
+                }
+              }
+              break;
+            }
+          }
+        }
+
+        _formatFillAnswer(rawStr) {
+          let processed = String(rawStr || '').replace(/\s*[\/|]\s*/g, '###OR###');
+          let parts = [];
+          if (/[;；]/.test(processed)) {
+            parts = processed.split(/[;；]/);
+          } else {
+            parts = processed.split(/\s{2,}|\n/);
+          }
+          return parts
+            .map((p) => String(p || '').trim())
+            .filter((p) => p)
+            .map((p) => p.replace(/###OR###/g, ';').replace(/\s*;\s*/g, ';'))
+            .join(';;');
+        }
+
+        _finalizeQuestion(q) {
+          const rawAns = String(q.rawAnswer || '');
+          const cleanAns = rawAns.replace(/[\s\n]/g, '').toUpperCase();
+
+          if (q.options.length > 0) {
+            if (q.options.length === 2 && /^[对错TFAB√×]$/.test(cleanAns)) {
+              q.type = 'judge';
+              q.answer = cleanAns;
+            } else if (cleanAns.length > 1) {
+              q.type = 'multiple';
+              q.answer = cleanAns;
+            } else {
+              q.type = 'single';
+              q.answer = cleanAns;
+            }
+          } else {
+            if (/^[对错√×TF]$|^TRUE$|^FALSE$/i.test(cleanAns)) {
+              q.type = 'judge';
+              q.answer = cleanAns;
+            } else if (this.patterns.fillFeature.test(q.stem)) {
+              q.type = 'fill';
+              q.stem = String(q.stem || '').replace(/(\(\s*\))|（\s*）|(_+)/g, '__');
+              q.answer = this._formatFillAnswer(rawAns);
+            } else {
+              q.type = 'essay';
+              q.answer = rawAns;
+            }
+          }
+          delete q.rawAnswer;
+          delete q._state;
+        }
+
+        _normalizeKeepSpace(text) {
+          return String(text || '')
+            .replace(/．/g, '.')
+            .replace(/：/g, ':')
+            .replace(/（/g, '(')
+            .replace(/）/g, ')')
+            .replace(/\u00A0/g, ' ')
+            .replace(/\r\n/g, '\n')
+            .replace(/\r/g, '\n');
+        }
+      }
+
+      function buildImportList(parsed) {
+        const defaultDifficulty = Number(diffEl && diffEl.value ? diffEl.value : 3) || 3;
+        return (parsed || []).map((q) => {
+          const type = String(q.type || '');
+          const qTypeZh = toChineseQType(type);
+          const options = Array.isArray(q.options) ? q.options : [];
+          let answer = '';
+          if (type === 'single') answer = normalizeChoiceAnswer(q.answer, false);
+          else if (type === 'multiple') answer = normalizeChoiceAnswer(q.answer, true);
+          else if (type === 'judge') answer = normalizeJudgeAnswer(q.answer, options);
+          else answer = String(q.answer || '');
+
+          return {
+            '题型': qTypeZh,
+            '题干': String(q.stem || ''),
+            '选项': options,
+            '答案': answer,
+            '解析': String(q.analysis || ''),
+            '难度': defaultDifficulty
+          };
+        });
+      }
+
+      // ======= 统一 JSON 交换格式（Portable Question Format） =======
+      function portableTypeFromZh(qTypeZh) {
+        const t = String(qTypeZh || '').trim();
+        if (t === '选择题') return 'single_choice';
+        if (t === '多选题') return 'multi_choice';
+        if (t === '判断题') return 'boolean';
+        if (t === '填空题') return 'fill';
+        return 'essay';
+      }
+
+      function fillContentToPortable(content) {
+        const s = normalizeNewlines(content);
+        if (!s.includes('__')) return s;
+        const parts = s.split('__');
+        const blanks = Math.max(0, parts.length - 1);
+        let out = '';
+        for (let i = 0; i < parts.length; i++) {
+          out += parts[i];
+          if (i < blanks) out += `{${i}}`;
+        }
+        return out;
+      }
+
+      function choiceLettersToIndices(answerStr, optionsLen, multi) {
+        const letters = String(answerStr || '').toUpperCase().match(/[A-Z]/g) || [];
+        const uniq = Array.from(new Set(letters));
+        const idxs = uniq
+          .map((c) => c.charCodeAt(0) - 65)
+          .filter((i) => Number.isFinite(i) && i >= 0 && (typeof optionsLen !== 'number' || i < optionsLen))
+          .sort((a, b) => a - b);
+        if (!idxs.length) return [];
+        return multi ? idxs : [idxs[0]];
+      }
+
+      function fillStorageToPortableAnswer(answerStr) {
+        const s = String(answerStr || '').trim();
+        if (!s) return [];
+        return s
+          .split(';;')
+          .map((g) => String(g || '').split(';').map((x) => String(x || '').trim()).filter((x) => x));
+      }
+
+      function buildPortableQuestionsFromLegacy(list) {
+        const items = Array.isArray(list) ? list : [];
+        return items.map((q, idx) => {
+          const zhType = String(q && q['题型'] ? q['题型'] : '').trim();
+          const type = portableTypeFromZh(zhType);
+          const options = Array.isArray(q && q['选项'] ? q['选项'] : []) ? q['选项'] : [];
+          const rawContent = String(q && q['题干'] ? q['题干'] : '');
+          const rawAnswer = String(q && q['答案'] ? q['答案'] : '');
+          const analysis = String(q && q['解析'] ? q['解析'] : '');
+          const difficulty = Number(q && q['难度'] ? q['难度'] : 3) || 3;
+
+          let content = rawContent;
+          let answer = [];
+
+          if (type === 'single_choice') {
+            answer = choiceLettersToIndices(rawAnswer, options.length, false);
+          } else if (type === 'multi_choice') {
+            answer = choiceLettersToIndices(rawAnswer, options.length, true);
+          } else if (type === 'boolean') {
+            const a = rawAnswer.trim();
+            if (a === '正确' || a === '对' || /^true$/i.test(a)) answer = [true];
+            else if (a === '错误' || a === '错' || /^false$/i.test(a)) answer = [false];
+            else answer = [];
+          } else if (type === 'fill') {
+            content = fillContentToPortable(rawContent);
+            answer = fillStorageToPortableAnswer(rawAnswer);
+          } else {
+            answer = rawAnswer.trim() ? [rawAnswer] : [];
+          }
+
+          return {
+            id: idx + 1,
+            type,
+            content,
+            options,
+            answer,
+            analysis,
+            tags: [],
+            difficulty
+          };
+        });
+      }
+
+      function getIssueReason(q) {
+        const type = String(q && q['题型'] ? q['题型'] : '').trim();
+        const stem = String(q && q['题干'] ? q['题干'] : '').trim();
+        if (!type || !stem) return '题型或题干为空';
+
+        const ans = String(q && q['答案'] ? q['答案'] : '').trim();
+        const options = Array.isArray(q && q['选项'] ? q['选项'] : []) ? q['选项'] : [];
+
+        if (type === '选择题' || type === '多选题') {
+          if (!options || options.length < 2) return '选项不足';
+          if (!ans) return '缺少答案';
+          const letters = ans.toUpperCase().match(/[A-F]/g) || [];
+          if (!letters.length) return '答案格式错误';
+          const maxLetter = alphaFromNumber(options.length, true);
+          const ok = letters.every((l) => l >= 'A' && l <= maxLetter);
+          if (!ok) return '答案不在选项范围';
+          if (type === '选择题' && letters.length !== 1) return '单选答案应为 1 项';
+          return '';
+        }
+
+        if (type === '判断题') {
+          if (!ans) return '缺少答案';
+          if (ans !== '正确' && ans !== '错误') return '答案应为“正确/错误”';
+          return '';
+        }
+
+        if (type === '填空题') {
+          const parts = normalizeFillAnswerToArray(ans);
+          if (!parts.length) return '缺少答案';
+          const hasEmpty = parts.some((p) => !String(p || '').trim());
+          if (hasEmpty) return '填空有空缺';
+          return '';
+        }
+
+        if (!ans) return '缺少答案';
+        return '';
+      }
+
+      function isImportReady(q) {
+        return !getIssueReason(q);
+      }
+
+      function updateStats(importList) {
+        const list = Array.isArray(importList) ? importList : [];
+        const total = list.length;
+        const ready = list.filter(isImportReady).length;
+        const issues = total - ready;
+
+        if (statTotalEl) statTotalEl.textContent = String(total);
+        if (statValidEl) statValidEl.textContent = String(ready);
+        if (statNoAnsEl) statNoAnsEl.textContent = String(issues);
+        if (issueBtn) issueBtn.disabled = !(issues > 0);
+
+        if (previewMetaEl) {
+          previewMetaEl.textContent = total ? `共 ${total} 题 · 已渲染 ${Math.min(renderedCount, total)}/${total}` : '—';
+        }
+      }
+
+      function updateCardUI(cardEl, q, idx) {
+        if (!cardEl) return;
+        const issue = getIssueReason(q);
+        cardEl.classList.toggle('issue', Boolean(issue));
+
+        const badgeWrap = cardEl.querySelector('[data-role="badges"]');
+        if (badgeWrap) {
+          badgeWrap.innerHTML = '';
+          const type = String(q && q['题型'] ? q['题型'] : '—').trim() || '—';
+
+          const tBadge = document.createElement('span');
+          tBadge.className = 'ubw-badge';
+          tBadge.textContent = type;
+          badgeWrap.appendChild(tBadge);
+
+          if (issue) {
+            const b = document.createElement('span');
+            b.className = 'ubw-badge warn';
+            b.textContent = issue;
+            badgeWrap.appendChild(b);
+          }
+        }
+
+        const titleEl = cardEl.querySelector('[data-role="title"]');
+        if (titleEl) {
+          const stem = String(q && q['题干'] ? q['题干'] : '');
+          const firstLine = stem.split('\n')[0] || '—';
+          titleEl.textContent = `#${idx + 1} · ${firstLine}`;
+        }
+      }
+
+      function createOptionRow(kind, qIdx, optIdx, optText, currentAnswer, type) {
+        const row = document.createElement('div');
+        row.className = 'ubw-option';
+
+        const k = document.createElement('div');
+        k.className = 'ubw-opt-k';
+        k.textContent = alphaFromNumber(optIdx + 1, true);
+
+        const input = document.createElement('input');
+        input.className = 'ubm-input question-preserve-fmt';
+        input.type = 'text';
+        input.value = String(optText || '');
+        input.setAttribute('data-q-idx', String(qIdx));
+        input.setAttribute('data-opt-idx', String(optIdx));
+        input.setAttribute('aria-label', `选项 ${alphaFromNumber(optIdx + 1, true)}`);
+
+        const toggle = document.createElement('input');
+        toggle.className = 'ubw-opt-toggle';
+        toggle.type = (kind === 'radio') ? 'radio' : 'checkbox';
+        toggle.name = `ubw_ans_${qIdx}`;
+        toggle.value = alphaFromNumber(optIdx + 1, true);
+        toggle.setAttribute('data-q-idx', String(qIdx));
+        toggle.setAttribute('data-action', kind === 'radio' ? 'single-answer' : 'multi-answer');
+
+        const letters = String(currentAnswer || '').toUpperCase().match(/[A-F]/g) || [];
+        if (kind === 'radio') toggle.checked = letters[0] === toggle.value;
+        else toggle.checked = letters.includes(toggle.value);
+
+        if (type === '选择题') toggle.setAttribute('aria-label', `设为答案 ${toggle.value}`);
+        else toggle.setAttribute('aria-label', `答案包含 ${toggle.value}`);
+
+        row.appendChild(k);
+        row.appendChild(input);
+        row.appendChild(toggle);
+        return row;
+      }
+
+      function createQuestionCard(idx, q) {
+        const card = document.createElement('div');
+        card.className = 'ubw-item';
+        card.setAttribute('data-idx', String(idx));
+
+        const head = document.createElement('div');
+        head.className = 'ubw-item-head';
+
+        const left = document.createElement('div');
+        left.className = 'ubw-item-left';
+
+        const title = document.createElement('div');
+        title.className = 'ubw-item-title';
+        title.setAttribute('data-role', 'title');
+
+        const typeSel = document.createElement('select');
+        typeSel.className = 'ubm-select';
+        typeSel.setAttribute('data-q-idx', String(idx));
+        typeSel.setAttribute('data-action', 'type');
+        typeSel.setAttribute('aria-label', '题型');
+        ['选择题', '多选题', '判断题', '填空题', '简答题'].forEach((t) => {
+          const opt = document.createElement('option');
+          opt.value = t;
+          opt.textContent = t;
+          typeSel.appendChild(opt);
+        });
+        typeSel.value = String(q && q['题型'] ? q['题型'] : '简答题');
+
+        left.appendChild(title);
+        left.appendChild(typeSel);
+
+        const right = document.createElement('div');
+        right.className = 'ubw-item-right';
+
+        const badges = document.createElement('div');
+        badges.className = 'ubw-badges';
+        badges.setAttribute('data-role', 'badges');
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'ubm-btn ubm-btn-ghost';
+        delBtn.type = 'button';
+        delBtn.textContent = '删除';
+        delBtn.setAttribute('data-q-idx', String(idx));
+        delBtn.setAttribute('data-action', 'delete');
+
+        right.appendChild(badges);
+        right.appendChild(delBtn);
+
+        head.appendChild(left);
+        head.appendChild(right);
+
+        const body = document.createElement('div');
+        body.className = 'ubw-card-body';
+
+        const stemField = document.createElement('div');
+        stemField.className = 'ubw-field';
+        const stemK = document.createElement('div');
+        stemK.className = 'ubw-field-k';
+        stemK.textContent = '题干';
+        const stemTa = document.createElement('textarea');
+        stemTa.className = 'ubm-input ubm-textarea question-preserve-fmt';
+        stemTa.value = String(q && q['题干'] ? q['题干'] : '');
+        stemTa.setAttribute('data-q-idx', String(idx));
+        stemTa.setAttribute('data-field', 'stem');
+        stemTa.setAttribute('aria-label', '题干');
+        stemField.appendChild(stemK);
+        stemField.appendChild(stemTa);
+        body.appendChild(stemField);
+
+        const type = String(q && q['题型'] ? q['题型'] : '').trim();
+        const options = Array.isArray(q && q['选项'] ? q['选项'] : []) ? q['选项'] : [];
+        const ans = String(q && q['答案'] ? q['答案'] : '');
+        const analysis = String(q && q['解析'] ? q['解析'] : '');
+
+        if (type === '选择题' || type === '多选题') {
+          const optField = document.createElement('div');
+          optField.className = 'ubw-field';
+          const optK = document.createElement('div');
+          optK.className = 'ubw-field-k';
+          optK.textContent = '选项（点右侧勾选答案）';
+          const optWrap = document.createElement('div');
+          optWrap.className = 'ubw-options';
+
+          const kind = (type === '多选题') ? 'checkbox' : 'radio';
+          const safeOptions = (options && options.length) ? options : ['',''];
+          safeOptions.forEach((o, i) => {
+            optWrap.appendChild(createOptionRow(kind === 'radio' ? 'radio' : 'checkbox', idx, i, o, ans, type));
+          });
+
+          const addBtn = document.createElement('button');
+          addBtn.className = 'ubm-btn ubm-btn-ghost';
+          addBtn.type = 'button';
+          addBtn.textContent = '添加选项';
+          addBtn.setAttribute('data-q-idx', String(idx));
+          addBtn.setAttribute('data-action', 'add-option');
+
+          optField.appendChild(optK);
+          optField.appendChild(optWrap);
+          optField.appendChild(addBtn);
+          body.appendChild(optField);
+        }
+
+        if (type === '判断题') {
+          const judgeField = document.createElement('div');
+          judgeField.className = 'ubw-field';
+          const judgeK = document.createElement('div');
+          judgeK.className = 'ubw-field-k';
+          judgeK.textContent = '答案';
+
+          const wrap = document.createElement('div');
+          wrap.className = 'ubw-options';
+
+          ['正确', '错误'].forEach((label) => {
+            const row = document.createElement('label');
+            row.className = 'ubw-option';
+
+            const k = document.createElement('div');
+            k.className = 'ubw-opt-k';
+            k.textContent = label === '正确' ? 'T' : 'F';
+
+            const t = document.createElement('div');
+            t.className = 'question-preserve-fmt';
+            t.textContent = label;
+
+            const r = document.createElement('input');
+            r.className = 'ubw-opt-toggle';
+            r.type = 'radio';
+            r.name = `ubw_j_${idx}`;
+            r.value = label;
+            r.checked = String(ans || '').trim() === label;
+            r.setAttribute('data-q-idx', String(idx));
+            r.setAttribute('data-action', 'judge-answer');
+            r.setAttribute('aria-label', `答案为${label}`);
+
+            row.appendChild(k);
+            row.appendChild(t);
+            row.appendChild(r);
+            wrap.appendChild(row);
+          });
+
+          judgeField.appendChild(judgeK);
+          judgeField.appendChild(wrap);
+          body.appendChild(judgeField);
+        }
+
+        if (type === '填空题') {
+          const fillField = document.createElement('div');
+          fillField.className = 'ubw-field';
+          const fillK = document.createElement('div');
+          fillK.className = 'ubw-field-k';
+          fillK.textContent = '答案（填空）';
+
+          const wrap = document.createElement('div');
+          wrap.className = 'ubw-fill';
+
+          const parts = normalizeFillAnswerToArray(ans);
+          parts.forEach((p, i) => {
+            const row = document.createElement('div');
+            row.className = 'ubw-fill-row';
+            const k = document.createElement('div');
+            k.className = 'ubw-opt-k';
+            k.textContent = String(i + 1);
+            const input = document.createElement('input');
+            input.className = 'ubm-input question-preserve-fmt';
+            input.type = 'text';
+            input.value = String(p || '');
+            input.setAttribute('data-q-idx', String(idx));
+            input.setAttribute('data-fill-idx', String(i));
+            input.setAttribute('data-field', 'fill');
+            input.setAttribute('aria-label', `填空第 ${i + 1} 空答案（多答案用 ; 分隔）`);
+            row.appendChild(k);
+            row.appendChild(input);
+            wrap.appendChild(row);
+          });
+
+          const addBtn = document.createElement('button');
+          addBtn.className = 'ubm-btn ubm-btn-ghost';
+          addBtn.type = 'button';
+          addBtn.textContent = '添加空';
+          addBtn.setAttribute('data-q-idx', String(idx));
+          addBtn.setAttribute('data-action', 'add-blank');
+
+          fillField.appendChild(fillK);
+          fillField.appendChild(wrap);
+          fillField.appendChild(addBtn);
+          body.appendChild(fillField);
+        }
+
+        if (type === '简答题') {
+          const ansField = document.createElement('div');
+          ansField.className = 'ubw-field';
+          const ansK = document.createElement('div');
+          ansK.className = 'ubw-field-k';
+          ansK.textContent = '答案';
+          const ansTa = document.createElement('textarea');
+          ansTa.className = 'ubm-input ubm-textarea question-preserve-fmt';
+          ansTa.value = String(ans || '');
+          ansTa.setAttribute('data-q-idx', String(idx));
+          ansTa.setAttribute('data-field', 'answer');
+          ansTa.setAttribute('aria-label', '答案');
+          ansField.appendChild(ansK);
+          ansField.appendChild(ansTa);
+          body.appendChild(ansField);
+        }
+
+        const analysisField = document.createElement('div');
+        analysisField.className = 'ubw-field';
+        const analysisK = document.createElement('div');
+        analysisK.className = 'ubw-field-k';
+        analysisK.textContent = '解析（可选）';
+        const analysisTa = document.createElement('textarea');
+        analysisTa.className = 'ubm-input ubm-textarea question-preserve-fmt';
+        analysisTa.value = String(analysis || '');
+        analysisTa.setAttribute('data-q-idx', String(idx));
+        analysisTa.setAttribute('data-field', 'analysis');
+        analysisTa.setAttribute('aria-label', '解析');
+        analysisField.appendChild(analysisK);
+        analysisField.appendChild(analysisTa);
+        body.appendChild(analysisField);
+
+        card.appendChild(head);
+        card.appendChild(body);
+
+        updateCardUI(card, q, idx);
+        return card;
+      }
+
+      function replaceCard(idx) {
+        if (!previewEl) return;
+        const old = previewEl.querySelector(`.ubw-item[data-idx="${idx}"]`);
+        if (!old) return;
+        old.replaceWith(createQuestionCard(idx, lastImportList[idx]));
+      }
+
+      function renderPreviewReset(importList, opts) {
+        if (!previewEl) return;
+        const list = Array.isArray(importList) ? importList : [];
+        const scrollTop = (opts && typeof opts.scrollTop === 'number') ? opts.scrollTop : 0;
+        const keepScroll = Boolean(opts && opts.keepScroll);
+
+        previewEl.innerHTML = '';
+        renderedCount = 0;
+        rendering = false;
+
+        if (!list.length) {
+          previewEl.innerHTML = '<div class="ubw-empty">暂无预览。</div>';
+          updateStats(list);
+          return;
+        }
+
+        renderMore();
+
+        if (keepScroll) restoreScroll(scrollTop);
+        else previewEl.scrollTop = 0;
+      }
+
+      function restoreScroll(targetTop) {
+        if (!previewEl) return;
+        const top = Math.max(0, Number(targetTop || 0));
+        while (previewEl.scrollHeight < top + previewEl.clientHeight && renderedCount < lastImportList.length) {
+          renderMore();
+        }
+        previewEl.scrollTop = Math.min(top, previewEl.scrollHeight);
+      }
+
+      function renderMore() {
+        if (!previewEl) return;
+        if (rendering) return;
+        if (renderedCount >= lastImportList.length) return;
+        rendering = true;
+
+        const start = renderedCount;
+        const end = Math.min(lastImportList.length, start + RENDER_BATCH);
+        const frag = document.createDocumentFragment();
+        for (let i = start; i < end; i += 1) {
+          frag.appendChild(createQuestionCard(i, lastImportList[i]));
+        }
+        previewEl.appendChild(frag);
+        renderedCount = end;
+        rendering = false;
+        updateStats(lastImportList);
+      }
+
+      function ensureRenderedTo(idx) {
+        if (idx < 0) return;
+        while (renderedCount <= idx && renderedCount < lastImportList.length) {
+          renderMore();
+        }
+      }
+
+      function jumpToFirstIssue() {
+        if (!previewEl) return;
+        const idx = lastImportList.findIndex((q) => Boolean(getIssueReason(q)));
+        if (idx < 0) return;
+        ensureRenderedTo(idx);
+        const el = previewEl.querySelector(`.ubw-item[data-idx="${idx}"]`);
+        if (el) {
+          try {
+            el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          } catch (e) {
+            el.scrollIntoView(true);
+          }
+        }
+      }
+
+      function parseNow(reason) {
+        try {
+          const text = textEl ? String(textEl.value || '') : '';
+          const parser = new SmartParser();
+          const parsed = parser.parse(text);
+          const importList = buildImportList(parsed);
+          lastImportList = importList;
+
+          renderPreviewReset(importList);
+          updateStats(importList);
+          scheduleSaveDraft('parse');
+
+          if (reason === 'upload') setHint(`读取完成：已识别 ${importList.length} 题`, 'success');
+          else if (reason === 'manual') setHint(`已解析：${importList.length} 题`, 'info');
+          else setHint('', 'info');
+        } catch (e) {
+          lastImportList = [];
+          renderPreviewReset([]);
+          updateStats([]);
+          setHint(e && e.message ? e.message : '解析失败', 'error');
+          scheduleSaveDraft('parse');
+        }
+      }
+
+      async function postDocxExtract(file) {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch(`/user/banks/api/${encodeURIComponent(bankId)}/questions/import/word/extract`, {
+          method: 'POST',
+          body: fd,
+          credentials: 'same-origin'
+        });
+        const data = await res.json().catch(() => ({}));
+        const ok = res.ok && data && data.code === 0;
+        if (!ok) throw new Error((data && data.message) ? data.message : '读取失败');
+        return data;
+      }
+
+      function bindEvents() {
+        if (pickFileBtn && fileEl) {
+          pickFileBtn.addEventListener('click', function () {
+            try { fileEl.click(); } catch (e) {}
+          });
+        }
+
+        if (fileEl) {
+          fileEl.addEventListener('change', async function () {
+            try {
+              if (!fileEl.files || !fileEl.files.length) return;
+              const file = fileEl.files[0];
+              if (fileNameEl) fileNameEl.textContent = String(file && file.name ? file.name : '未选择文件');
+              if (!file || !String(file.name || '').toLowerCase().endsWith('.docx')) {
+                window.ubmToast('仅支持 .docx 文件', 'error');
+                return;
+              }
+              if (pickFileBtn) pickFileBtn.disabled = true;
+              setHint('正在读取 Word…', 'info');
+              const data = await postDocxExtract(file);
+              const text = (data && data.data && data.data.text) ? String(data.data.text) : '';
+              if (textEl) textEl.value = text;
+              parseNow('upload');
+              saveDraftNow('upload');
+              window.ubmToast('读取成功', 'success');
+            } catch (e) {
+              setHint(e && e.message ? e.message : '读取失败', 'error');
+              window.ubmToast(e && e.message ? e.message : '读取失败', 'error');
+            } finally {
+              if (pickFileBtn) pickFileBtn.disabled = false;
+            }
+          });
+        }
+
+        if (textEl) {
+          textEl.addEventListener('input', function () {
+            if (parseTimer) clearTimeout(parseTimer);
+            parseTimer = setTimeout(function () { parseNow('debounce'); }, 300);
+            scheduleSaveDraft('text');
+          });
+        }
+
+        if (diffEl) {
+          diffEl.addEventListener('change', function () {
+            const v = Number(diffEl.value || 3) || 3;
+            lastImportList.forEach((q) => { q['难度'] = v; });
+            setHint(`默认难度已设为 ${v} 星`, 'info');
+            scheduleSaveDraft('edit');
+          });
+        }
+
+        if (clearBtn) {
+          clearBtn.addEventListener('click', function () {
+            try {
+              if (fileEl) fileEl.value = '';
+              if (fileNameEl) fileNameEl.textContent = '未选择文件';
+              if (textEl) textEl.value = '';
+              lastImportList = [];
+              renderPreviewReset([]);
+              updateStats([]);
+              setHint('', 'info');
+              clearDraft();
+              window.ubmToast('已清空', 'success');
+            } catch (e) {}
+          });
+        }
+
+        if (issueBtn) {
+          issueBtn.addEventListener('click', function () {
+            jumpToFirstIssue();
+          });
+        }
+
+        if (downloadBtn) {
+          downloadBtn.addEventListener('click', function () {
+            try {
+              if (!lastImportList || !lastImportList.length) {
+                window.ubmToast('暂无可下载的数据', 'error');
+                return;
+              }
+              const questions = buildPortableQuestionsFromLegacy(lastImportList);
+              const payload = { meta: { scope: 'user_bank_word_import', bank_id: bankId }, questions };
+              const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `bank_${bankId}_word_import.json`;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              URL.revokeObjectURL(url);
+              window.ubmToast('已开始下载', 'success');
+            } catch (e) {
+              window.ubmToast('下载失败', 'error');
+            }
+          });
+        }
+
+        if (importBtn) {
+          importBtn.addEventListener('click', async function () {
+            try {
+              if (!bankId) throw new Error('缺少 bankId');
+              if (!lastImportList || !lastImportList.length) {
+                window.ubmToast('请先解析出题目', 'error');
+                return;
+              }
+
+              const ready = lastImportList.filter((q) => isImportReady(q));
+              if (!ready.length) {
+                window.ubmToast('没有可入库的题目（请先修复待修项）', 'error');
+                return;
+              }
+
+              const issues = lastImportList.length - ready.length;
+              if (issues > 0) {
+                const ok = window.confirm(`还有 ${issues} 题待修，将只入库 ${ready.length} 题。继续吗？`);
+                if (!ok) return;
+              }
+
+              importBtn.disabled = true;
+              setHint('正在入库…', 'info');
+              const portableReady = buildPortableQuestionsFromLegacy(ready);
+              const res = await window.ubmApi(`/user/banks/api/${encodeURIComponent(bankId)}/questions/import/json`, {
+                method: 'POST',
+                body: JSON.stringify({ questions: portableReady })
+              });
+              const msg = (res && res.message) ? res.message : `成功导入 ${ready.length} 题`;
+              setHint(msg, 'success');
+              window.ubmToast(msg, 'success');
+            } catch (e) {
+              setHint(e && e.message ? e.message : '导入失败', 'error');
+              window.ubmToast(e && e.message ? e.message : '导入失败', 'error');
+            } finally {
+              if (importBtn) importBtn.disabled = false;
+            }
+          });
+        }
+
+        if (previewEl) {
+          previewEl.addEventListener('scroll', function () {
+            const nearBottom = (previewEl.scrollTop + previewEl.clientHeight) >= (previewEl.scrollHeight - 240);
+            if (nearBottom) renderMore();
+          });
+
+          previewEl.addEventListener('input', function (ev) {
+            const t = ev.target;
+            if (!t) return;
+            const qIdx = Number(t.getAttribute('data-q-idx'));
+            if (!Number.isFinite(qIdx) || qIdx < 0 || qIdx >= lastImportList.length) return;
+            const q = lastImportList[qIdx];
+
+            const field = t.getAttribute('data-field') || '';
+            if (field === 'stem') q['题干'] = normalizeNewlines(t.value);
+            else if (field === 'analysis') q['解析'] = normalizeNewlines(t.value);
+            else if (field === 'answer') q['答案'] = normalizeNewlines(t.value);
+            else if (field === 'fill') {
+              const fillIdx = Number(t.getAttribute('data-fill-idx'));
+              const parts = normalizeFillAnswerToArray(q['答案']);
+              if (Number.isFinite(fillIdx) && fillIdx >= 0) {
+                while (parts.length <= fillIdx) parts.push('');
+                parts[fillIdx] = String(t.value || '');
+                q['答案'] = normalizeFillAnswerFromArray(parts);
+              }
+            }
+
+            const optIdxAttr = t.getAttribute('data-opt-idx');
+            if (optIdxAttr !== null) {
+              const optIdx = Number(optIdxAttr);
+              if (Number.isFinite(optIdx) && optIdx >= 0) {
+                const options = Array.isArray(q['选项']) ? q['选项'] : [];
+                while (options.length <= optIdx) options.push('');
+                options[optIdx] = String(t.value || '');
+                q['选项'] = options;
+              }
+            }
+
+            const card = previewEl.querySelector(`.ubw-item[data-idx="${qIdx}"]`);
+            updateCardUI(card, q, qIdx);
+            updateStats(lastImportList);
+            scheduleSaveDraft('edit');
+          });
+
+          previewEl.addEventListener('change', function (ev) {
+            const t = ev.target;
+            if (!t) return;
+            const qIdx = Number(t.getAttribute('data-q-idx'));
+            if (!Number.isFinite(qIdx) || qIdx < 0 || qIdx >= lastImportList.length) return;
+            const q = lastImportList[qIdx];
+            const action = t.getAttribute('data-action') || '';
+
+            if (action === 'type') {
+              const newType = String(t.value || '').trim();
+              q['题型'] = newType;
+              if (newType === '选择题' || newType === '多选题') {
+                const options = Array.isArray(q['选项']) ? q['选项'] : [];
+                q['选项'] = (options.length >= 2) ? options : ['',''];
+                q['答案'] = normalizeChoiceAnswer(q['答案'], newType === '多选题');
+              } else {
+                q['选项'] = [];
+                if (newType === '判断题') q['答案'] = normalizeJudgeAnswer(q['答案'], []);
+                else q['答案'] = String(q['答案'] || '');
+              }
+              replaceCard(qIdx);
+              updateStats(lastImportList);
+              scheduleSaveDraft('edit');
+              return;
+            }
+
+            if (action === 'single-answer') {
+              q['答案'] = String(t.value || '').toUpperCase();
+            } else if (action === 'multi-answer') {
+              const card = previewEl.querySelector(`.ubw-item[data-idx="${qIdx}"]`);
+              const checks = card ? Array.from(card.querySelectorAll('input[data-action=\"multi-answer\"]')) : [];
+              const letters = checks.filter((c) => c && c.checked).map((c) => String(c.value || '').toUpperCase());
+              const uniq = Array.from(new Set(letters));
+              uniq.sort();
+              q['答案'] = uniq.join('');
+            } else if (action === 'judge-answer') {
+              q['答案'] = String(t.value || '').trim();
+            }
+
+            const card = previewEl.querySelector(`.ubw-item[data-idx="${qIdx}"]`);
+            updateCardUI(card, q, qIdx);
+            updateStats(lastImportList);
+            scheduleSaveDraft('edit');
+          });
+
+          previewEl.addEventListener('click', function (ev) {
+            const el = ev.target;
+            if (!el) return;
+            const btn = el.closest('[data-action]');
+            if (!btn) return;
+
+            const action = btn.getAttribute('data-action') || '';
+            const qIdx = Number(btn.getAttribute('data-q-idx'));
+            if (!Number.isFinite(qIdx) || qIdx < 0 || qIdx >= lastImportList.length) return;
+
+            if (action === 'delete') {
+              const ok = window.confirm(`删除第 ${qIdx + 1} 题？`);
+              if (!ok) return;
+              const prevTop = previewEl.scrollTop;
+              lastImportList.splice(qIdx, 1);
+              renderPreviewReset(lastImportList, { keepScroll: true, scrollTop: prevTop });
+              updateStats(lastImportList);
+              scheduleSaveDraft('edit');
+              return;
+            }
+
+            if (action === 'add-option') {
+              const q = lastImportList[qIdx];
+              const options = Array.isArray(q['选项']) ? q['选项'] : [];
+              options.push('');
+              q['选项'] = options;
+              replaceCard(qIdx);
+              updateStats(lastImportList);
+              scheduleSaveDraft('edit');
+              return;
+            }
+
+            if (action === 'add-blank') {
+              const q = lastImportList[qIdx];
+              const parts = normalizeFillAnswerToArray(q['答案']);
+              parts.push('');
+              q['答案'] = normalizeFillAnswerFromArray(parts);
+              replaceCard(qIdx);
+              updateStats(lastImportList);
+              scheduleSaveDraft('edit');
+            }
+          });
+        }
+      }
+
+      bindEvents();
+      const restored = restoreDraftIfAny();
+      if (!restored) {
+        updateStats([]);
+        renderPreviewReset([]);
+      }
+    })();
+  </script>
+{% endblock %}

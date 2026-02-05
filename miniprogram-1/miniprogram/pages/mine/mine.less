@@ -1,0 +1,186 @@
+/* mine.less */
+page {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.page-root {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--app-bg);
+}
+
+.page-container {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-area {
+  flex: 1;
+  min-height: 0;
+  height: 0;
+}
+
+.container {
+  padding: 24rpx;
+  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.profile-card {
+  width: 100%;
+  padding: 20rpx 20rpx;
+  background: var(--app-surface-glass);
+  border: 1rpx solid var(--app-border);
+  border-radius: 22rpx;
+  box-sizing: border-box;
+  backdrop-filter: blur(18rpx);
+  -webkit-backdrop-filter: blur(18rpx);
+  box-shadow: 0 12rpx 34rpx rgba(0, 0, 0, 0.06);
+  margin-bottom: 16rpx;
+}
+
+.profile-left {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  min-width: 0;
+}
+
+.avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 48rpx;
+  background: var(--app-surface-solid);
+  border: 1rpx solid var(--app-border);
+  flex-shrink: 0;
+}
+
+.profile-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  font-size: 36rpx;
+  font-weight: 800;
+  color: var(--app-text);
+  line-height: 1.2;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sub {
+  margin-top: 6rpx;
+  font-size: 24rpx;
+  color: var(--app-text-secondary);
+  display: block;
+}
+
+.bento-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.bento-card {
+  background: var(--app-surface);
+  border-radius: 22rpx;
+  border: 1rpx solid var(--app-border);
+  box-sizing: border-box;
+  padding: 18rpx 18rpx;
+  min-height: 150rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10rpx;
+  box-shadow: 0 10rpx 26rpx rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.bento-card:active {
+  transform: scale(0.99);
+  opacity: 0.95;
+}
+
+.bento-value {
+  font-size: 52rpx;
+  font-weight: 900;
+  color: var(--app-text);
+  line-height: 1.05;
+}
+
+.bento-label {
+  font-size: 24rpx;
+  color: var(--app-text-secondary);
+}
+
+.bento-action-title {
+  font-size: 30rpx;
+  font-weight: 900;
+  color: var(--app-text);
+}
+
+.bento-action-sub {
+  font-size: 24rpx;
+  color: var(--app-text-secondary);
+}
+
+.menu-card {
+  width: 100%;
+  background: var(--app-surface);
+  border-radius: 22rpx;
+  border: 1rpx solid var(--app-border);
+  box-shadow: 0 10rpx 26rpx rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.menu-item {
+  padding: 22rpx 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.menu-item + .menu-item {
+  border-top: 1rpx solid var(--app-border-weak);
+}
+
+.menu-item:active {
+  opacity: 0.9;
+}
+
+.menu-text {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--app-text);
+}
+
+.menu-text.danger {
+  color: #FF3B30;
+}
+
+.menu-arrow {
+  font-size: 34rpx;
+  color: var(--app-text-tertiary);
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80rpx 24rpx;
+  color: var(--app-text-secondary);
+  font-size: 26rpx;
+}

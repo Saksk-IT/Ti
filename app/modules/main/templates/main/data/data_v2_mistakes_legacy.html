@@ -1,0 +1,148 @@
+{% extends "main/data/data_v2_shell.html" %}
+{# legacy backup: v2 mistakes before redesign #}
+
+{% block data_content %}
+  <section class="dc-card" aria-label="错题概览">
+    <div class="dc-card-head">
+      <div style="min-width:0;">
+        <h2>错题概览</h2>
+        <p>错题不是“负债”，是最有杠杆的复盘资产：高频错题先闭环，薄弱维度再专项。</p>
+      </div>
+      <a class="dc-mini-btn" href="/mistakes">打开错题中心</a>
+    </div>
+
+    <div class="dc-kpi-grid">
+      <div class="dc-kpi">
+        <div class="dc-kpi-top"><div class="k">错题数量</div></div>
+        <div class="v mono">{{ all_summary.mistakes }}</div>
+        <div class="m">公共 + 个人（去中心可下钻范围）</div>
+      </div>
+      <div class="dc-kpi">
+        <div class="dc-kpi-top"><div class="k">错题次数</div></div>
+        <div class="v mono">{{ all_summary.mistakes_times }}</div>
+        <div class="m">错得越多越该优先处理</div>
+      </div>
+      <div class="dc-kpi">
+        <div class="dc-kpi-top"><div class="k">近 {{ window_days }} 天新增</div></div>
+        <div class="v mono">{{ mistakes_daily | sum(attribute='all') if mistakes_daily else 0 }}</div>
+        <div class="m">按创建日期统计（公共 + 个人）</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="dc-card" aria-label="错题图表">
+    <div class="dc-card-head">
+      <div style="min-width:0;">
+        <h2>错题图表</h2>
+        <p>趋势 × 维度 × 排行：把“错在哪、错多少、最近是不是在变好”可视化。</p>
+      </div>
+    </div>
+
+    <div class="dc-chart-grid">
+      <div class="dc-chart" id="dcMistakeTrendChart" aria-label="错题新增趋势"></div>
+      <div class="dc-chart" id="dcMistakeTopChart" aria-label="错题 Top 领域"></div>
+      <div class="dc-chart" id="dcMistakeDifficultyChart" aria-label="错题难度分布"></div>
+      <div class="dc-chart" id="dcMistakeTypeChart" aria-label="错题题型分布"></div>
+    </div>
+  </section>
+
+  <section class="dc-card" aria-label="错题 Top 领域">
+    <div class="dc-card-head">
+      <div style="min-width:0;">
+        <h2>错题 Top 领域</h2>
+        <p>公共按科目、个人按题库聚合：优先处理“次数高 + 最近仍在错”的区域。</p>
+      </div>
+    </div>
+
+    {% if mistakes_top_items %}
+      <div class="dc-list">
+        {% for it in mistakes_top_items %}
+          <div class="dc-item">
+            <div class="dc-item-top">
+              <div style="min-width:0;">
+                <div class="dc-item-title">{{ '公共' if it.source == 'public' else '个人' }} · {{ it.name }}</div>
+                <div class="dc-item-meta">错题 {{ it.count }} · 次数 {{ it.times }}</div>
+              </div>
+              <div class="dc-item-actions">
+                {% if it.source == 'banks' and it.bank_id %}
+                  <a class="dc-mini-btn primary" href="/user/banks/{{ it.bank_id }}/quiz?mode=wrong">刷错题</a>
+                {% else %}
+                  <a class="dc-mini-btn" href="/mistakes">去中心下钻</a>
+                {% endif %}
+              </div>
+            </div>
+            <div class="dc-bars" aria-hidden="true">
+              {% set _w = (it.times if it.times else it.count) %}
+              {% set _den = (mistakes_top_items[0].times if mistakes_top_items[0].times else mistakes_top_items[0].count) if mistakes_top_items and mistakes_top_items[0] else 1 %}
+              {% if _den <= 0 %}{% set _den = 1 %}{% endif %}
+              {% set _p = (100.0 * _w / _den) | round(1) %}
+              <div class="dc-bar secondary"><span style="width: {{ _p }}%"></span></div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="dc-empty">暂无可用错题排行数据。</div>
+    {% endif %}
+  </section>
+
+  <section class="dc-card" aria-label="最近错题">
+    <div class="dc-card-head">
+      <div style="min-width:0;">
+        <h2>最近错题</h2>
+        <p>从“错得多/最近更新”里挑：优先做 1 次复盘（错因 + 规则/公式 + 反例）。</p>
+      </div>
+    </div>
+
+    <div class="dc-split">
+      <div class="dc-box">
+        <h3>公共题库</h3>
+        {% if recent_mistakes %}
+          <div class="dc-list" style="margin-top:8px;">
+            {% for m in recent_mistakes %}
+              <div class="dc-item">
+                <div class="dc-item-top">
+                  <div style="min-width:0;">
+                    <div class="dc-item-title">{{ m.subject }} · {{ m.q_type }} · 难度{{ m.difficulty }}</div>
+                    <div class="dc-item-meta">{{ m.snippet }}</div>
+                  </div>
+                  <div class="dc-item-actions">
+                    <a class="dc-mini-btn primary" href="/quiz?mode=quiz&source=mistakes&subject={{ m.subject|urlencode }}&type={{ m.q_type|urlencode }}">刷同类错题</a>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="dc-empty">暂无错题记录。</div>
+        {% endif %}
+      </div>
+
+      <div class="dc-box">
+        <h3>个人题库</h3>
+        {% if recent_mistakes_bank %}
+          <div class="dc-list" style="margin-top:8px;">
+            {% for m in recent_mistakes_bank %}
+              <div class="dc-item">
+                <div class="dc-item-top">
+                  <div style="min-width:0;">
+                    <div class="dc-item-title">{{ m.bank_name }} · {{ m.q_type }} · 难度{{ m.difficulty }}</div>
+                    <div class="dc-item-meta">{{ m.snippet }}</div>
+                    {% if m.wrong_count is not none %}
+                      <div class="dc-item-meta muted">错题次数：{{ m.wrong_count }}</div>
+                    {% endif %}
+                  </div>
+                  <div class="dc-item-actions">
+                    <a class="dc-mini-btn primary" href="/user/banks/{{ m.bank_id }}/quiz?mode=wrong">刷错题</a>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="dc-empty">暂无个人题库错题记录。</div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+{% endblock %}

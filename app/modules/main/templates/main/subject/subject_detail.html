@@ -1,0 +1,14 @@
+{% extends "main/shared/app_shell.html" %}
+{% block title %}{{ subject_name }} · 科目详情{% endblock %}
+{% block page_title %}{{ subject_name }}{% endblock %}
+{% block head_extra %}
+  {% include "main/subject/subject_detail/_head_extra.html" %}
+{% endblock %}
+
+{% block content %}
+  {% include "main/subject/subject_detail/_content.html" %}
+{% endblock %}
+
+{% block body_end %}
+  {% include "main/subject/subject_detail/_body_end.html" %}
+{% endblock %}

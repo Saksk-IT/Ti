@@ -1,0 +1,568 @@
+{% extends "main/shared/app_shell.html" %}
+{% block title %}个人资料{% endblock %}
+{% block page_title %}个人资料{% endblock %}
+
+{% block head_extra %}
+  <style>
+    .pf-wrap {
+      max-width: 980px;
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .pf-hero {
+      padding: 18px;
+      overflow: hidden;
+    }
+
+    .pf-hero-inner {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .pf-avatar {
+      width: 76px;
+      height: 76px;
+      border-radius: 999px;
+      border: 1px solid var(--app-border);
+      background: color-mix(in srgb, var(--app-primary) 6%, var(--app-surface));
+      box-shadow: var(--app-shadow-soft);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex: 0 0 auto;
+      position: relative;
+    }
+
+    .pf-avatar-text {
+      font-size: 26px;
+      font-weight: 950;
+      letter-spacing: -0.8px;
+      color: var(--app-text);
+      opacity: 0.92;
+    }
+
+    .pf-main {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: grid;
+      gap: 8px;
+    }
+
+    .pf-name-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .pf-name {
+      font-size: 18px;
+      font-weight: 950;
+      letter-spacing: -0.3px;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .pf-sub {
+      font-size: 12px;
+      color: var(--app-muted);
+      letter-spacing: -0.1px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .pf-signature {
+      font-size: 13px;
+      line-height: 1.6;
+      color: color-mix(in srgb, var(--app-text) 82%, transparent);
+      letter-spacing: -0.1px;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .pf-actions {
+      flex: 0 0 auto;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .pf-btn {
+      height: 38px;
+      border-radius: 999px;
+      border: 1px solid var(--app-border);
+      background: var(--app-surface);
+      box-shadow: var(--app-shadow-soft);
+      color: var(--app-text);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 12px;
+      font-size: 13px;
+      font-weight: 850;
+      letter-spacing: -0.1px;
+      cursor: pointer;
+      transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+      white-space: nowrap;
+    }
+    .pf-btn:hover { box-shadow: var(--app-shadow); transform: translateY(-1px); }
+    .pf-btn:active { transform: translateY(0); }
+    .pf-btn:focus { outline: none; box-shadow: 0 0 0 3px var(--app-primary-soft), var(--app-shadow-soft); }
+
+    .pf-btn-primary {
+      border-color: color-mix(in srgb, var(--app-primary) 35%, var(--app-border));
+      background: color-mix(in srgb, var(--app-primary) 10%, var(--app-surface));
+      color: var(--app-text);
+    }
+
+    .pf-grid {
+      display: grid;
+      grid-template-columns: 1.12fr 0.88fr;
+      gap: 14px;
+      min-width: 0;
+      align-items: start;
+    }
+
+    .pf-card {
+      padding: 16px;
+      min-width: 0;
+    }
+
+    .pf-card-title {
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: -0.2px;
+    }
+
+    .pf-card-sub {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--app-muted);
+      line-height: 1.5;
+    }
+
+    .pf-divider {
+      height: 1px;
+      background: var(--app-border);
+      margin: 12px 0;
+    }
+
+    .pf-list {
+      display: grid;
+      gap: 0;
+      min-width: 0;
+    }
+
+    .pf-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid color-mix(in srgb, var(--app-border) 70%, transparent);
+      min-width: 0;
+    }
+    .pf-row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .pf-row:first-child { padding-top: 0; }
+
+    .pf-label {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: -0.1px;
+      color: var(--app-text);
+      opacity: 0.92;
+      white-space: nowrap;
+    }
+
+    .pf-value {
+      font-size: 13px;
+      color: var(--app-muted);
+      letter-spacing: -0.1px;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    .pf-right {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      justify-content: flex-end;
+    }
+
+    .pf-badge {
+      height: 24px;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 1px solid var(--app-border);
+      background: color-mix(in srgb, var(--app-surface) 84%, transparent);
+      box-shadow: var(--app-shadow-soft);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: -0.1px;
+      color: var(--app-text);
+      white-space: nowrap;
+    }
+
+    .pf-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .pf-metric {
+      padding: 12px;
+      border-radius: var(--app-radius-lg);
+      border: 1px solid var(--app-border);
+      background: var(--app-surface);
+      box-shadow: var(--app-shadow-soft);
+      min-width: 0;
+    }
+
+    .pf-metric-value {
+      font-size: 18px;
+      font-weight: 950;
+      letter-spacing: -0.3px;
+      line-height: 1.1;
+      color: var(--app-text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .pf-metric-label {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--app-muted);
+      letter-spacing: -0.1px;
+      line-height: 1.2;
+    }
+
+    .pf-bar {
+      margin-top: 10px;
+      height: 8px;
+      border-radius: 999px;
+      border: 1px solid var(--app-border);
+      background: color-mix(in srgb, var(--app-surface) 70%, transparent);
+      overflow: hidden;
+      box-shadow: var(--app-shadow-soft);
+    }
+
+    .pf-bar > i {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: color-mix(in srgb, var(--app-primary) 26%, var(--app-surface));
+      transition: width 220ms ease;
+    }
+
+    .pf-card-actions {
+      margin-top: 12px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .pf-card-actions .pf-btn {
+      height: 36px;
+      padding: 0 12px;
+      min-width: 0;
+    }
+
+    .pf-msg {
+      display: none;
+      padding: 12px 14px;
+      border-radius: var(--app-radius-lg);
+      border: 1px solid var(--app-border);
+      background: color-mix(in srgb, var(--app-surface) 78%, transparent);
+      box-shadow: var(--app-shadow-soft);
+      color: color-mix(in srgb, var(--app-text) 78%, transparent);
+      font-size: 13px;
+      line-height: 1.6;
+      letter-spacing: -0.1px;
+    }
+
+    @media (max-width: 980px) {
+      .pf-grid { grid-template-columns: 1fr; }
+      .pf-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 640px) {
+      .pf-hero-inner { flex-wrap: wrap; }
+      .pf-actions { width: 100%; justify-content: flex-end; }
+      .pf-metrics { grid-template-columns: 1fr; }
+      .pf-avatar { width: 70px; height: 70px; }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="app-container">
+    <div class="pf-wrap">
+      <section class="app-card app-card-solid pf-hero" aria-label="个人资料概览">
+        <div class="pf-hero-inner">
+          <div class="pf-avatar" id="pfAvatar" aria-hidden="true">
+            <span class="pf-avatar-text" id="pfAvatarText">U</span>
+          </div>
+
+          <div class="pf-main">
+            <div class="pf-name-row">
+              <div class="pf-name" id="pfName">{{ username or '-' }}</div>
+              <span class="pf-badge" id="pfRoleBadge">-</span>
+            </div>
+            <div class="pf-sub" id="pfMeta">
+              <span id="pfJoin">加入于 -</span>
+              <span class="app-pill" id="pfWechatPill" style="display:none;"></span>
+            </div>
+            <div class="pf-signature" id="pfSignature">-</div>
+          </div>
+
+          <div class="pf-actions">
+            <a class="pf-btn pf-btn-primary" href="/settings/account/profile">编辑资料</a>
+            <a class="pf-btn" href="/settings">设置</a>
+          </div>
+        </div>
+      </section>
+
+      <div class="pf-msg" id="pfMsg" role="status" aria-live="polite"></div>
+
+      <div class="pf-grid">
+        <section class="app-card pf-card" aria-label="资料">
+          <div class="pf-card-title">资料</div>
+          <div class="pf-card-sub">只展示必要信息。</div>
+          <div class="pf-divider"></div>
+
+          <div class="pf-list">
+            <div class="pf-row">
+              <div class="pf-label">昵称</div>
+              <div class="pf-value" id="pfUsername">-</div>
+            </div>
+            <div class="pf-row">
+              <div class="pf-label">学院</div>
+              <div class="pf-value" id="pfCollege">未设置</div>
+            </div>
+            <div class="pf-row">
+              <div class="pf-label">联系方式</div>
+              <div class="pf-value" id="pfContact">未设置</div>
+            </div>
+            <div class="pf-row">
+              <div class="pf-label">邮箱</div>
+              <div class="pf-right">
+                <div class="pf-value" id="pfEmail">未绑定</div>
+                <span class="pf-badge" id="pfEmailBadge">-</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pf-card-actions">
+            <a class="pf-btn" href="/settings/account/bindings">账号绑定</a>
+          </div>
+        </section>
+
+        <section class="app-card pf-card" aria-label="学习">
+          <div class="pf-card-title">学习</div>
+          <div class="pf-card-sub">你的学习概览。</div>
+          <div class="pf-divider"></div>
+
+          <div class="pf-metrics" role="list">
+            <div class="pf-metric" role="listitem">
+              <div class="pf-metric-value" id="pfStreakDays">-</div>
+              <div class="pf-metric-label">连续学习（天）</div>
+            </div>
+            <div class="pf-metric" role="listitem">
+              <div class="pf-metric-value" id="pfTotalAnswered">-</div>
+              <div class="pf-metric-label">累计答题</div>
+            </div>
+            <div class="pf-metric" role="listitem">
+              <div class="pf-metric-value" id="pfAccuracy">-</div>
+              <div class="pf-metric-label">正确率</div>
+              <div class="pf-bar" aria-hidden="true"><i id="pfAccuracyBar"></i></div>
+            </div>
+          </div>
+
+          <div class="pf-card-actions">
+            <a class="pf-btn" href="/data">数据</a>
+            <a class="pf-btn" href="/mistakes">错题</a>
+            <a class="pf-btn" href="/favorites">收藏</a>
+            <button class="pf-btn" type="button" id="pfLogoutBtn">退出登录</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block body_end %}
+  <script>
+    (function () {
+      const msgEl = document.getElementById('pfMsg');
+
+      const avatarEl = document.getElementById('pfAvatar');
+      const avatarTextEl = document.getElementById('pfAvatarText');
+      const nameEl = document.getElementById('pfName');
+      const roleBadgeEl = document.getElementById('pfRoleBadge');
+      const wechatPillEl = document.getElementById('pfWechatPill');
+      const joinEl = document.getElementById('pfJoin');
+      const signatureEl = document.getElementById('pfSignature');
+
+      const usernameEl = document.getElementById('pfUsername');
+      const collegeEl = document.getElementById('pfCollege');
+      const contactEl = document.getElementById('pfContact');
+      const emailEl = document.getElementById('pfEmail');
+      const emailBadgeEl = document.getElementById('pfEmailBadge');
+
+      const streakEl = document.getElementById('pfStreakDays');
+      const totalAnsweredEl = document.getElementById('pfTotalAnswered');
+      const accuracyEl = document.getElementById('pfAccuracy');
+      const accuracyBarEl = document.getElementById('pfAccuracyBar');
+
+      const logoutBtn = document.getElementById('pfLogoutBtn');
+
+      function showMsg(text) {
+        if (!msgEl) return;
+        msgEl.textContent = text || '';
+        msgEl.style.display = text ? 'block' : 'none';
+      }
+
+      function setText(el, value) {
+        if (!el) return;
+        el.textContent = (value == null || value === '') ? '-' : String(value);
+      }
+
+      function clamp(n, min, max) {
+        const x = Number(n);
+        if (!Number.isFinite(x)) return min;
+        return Math.max(min, Math.min(max, x));
+      }
+
+      function maskEmail(email) {
+        const s = (email == null) ? '' : String(email).trim();
+        if (!s || !s.includes('@')) return s;
+        const parts = s.split('@');
+        if (parts.length < 2) return s;
+        const name = parts[0] || '';
+        const domain = parts.slice(1).join('@') || '';
+        if (!name) return `***@${domain}`;
+        if (name.length === 1) return `${name}***@${domain}`;
+        return `${name.slice(0, 2)}***@${domain}`;
+      }
+
+      function applyAvatar(avatarUrl, username) {
+        if (!avatarEl || !avatarTextEl) return;
+        const u = (username || 'U').trim();
+        const letter = u ? u.charAt(0).toUpperCase() : 'U';
+        if (avatarUrl) {
+          avatarEl.style.backgroundImage = `url(${avatarUrl})`;
+          avatarEl.style.backgroundSize = 'cover';
+          avatarEl.style.backgroundPosition = 'center';
+          avatarTextEl.style.display = 'none';
+        } else {
+          avatarEl.style.backgroundImage = 'none';
+          avatarTextEl.textContent = letter;
+          avatarTextEl.style.display = 'inline-flex';
+        }
+      }
+
+      function applyProfile(d) {
+        const username = d && d.username ? String(d.username) : '-';
+        const createdAt = d && d.created_at ? String(d.created_at) : '-';
+        const isAdmin = !!(d && d.is_admin);
+        const signature = (d && typeof d.signature === 'string') ? d.signature.trim() : '';
+        const college = (d && typeof d.college === 'string') ? d.college.trim() : '';
+        const contact = (d && typeof d.contact === 'string') ? d.contact.trim() : '';
+        const avatar = d && d.avatar ? String(d.avatar) : '';
+
+        const email = d && d.email ? String(d.email) : '';
+        const emailVerified = !!(d && d.email_verified);
+        const wechatBound = !!(d && d.wechat_bound);
+
+        const streakDays = clamp(d && d.streak_days, 0, 99999);
+        const totalAnswered = clamp(d && d.total_answered, 0, 99999999);
+        const accuracy = clamp(d && d.accuracy, 0, 100);
+
+        setText(nameEl, username);
+        setText(usernameEl, username);
+        setText(roleBadgeEl, isAdmin ? '管理员' : '普通用户');
+        setText(joinEl, `加入于 ${createdAt}`);
+
+        setText(signatureEl, signature || '暂无签名');
+        setText(collegeEl, college || '未设置');
+        setText(contactEl, contact || '未设置');
+
+        setText(emailEl, email ? maskEmail(email) : '未绑定');
+        setText(emailBadgeEl, email ? (emailVerified ? '已验证' : '未验证') : '-');
+
+        if (wechatPillEl) {
+          if (wechatBound) {
+            wechatPillEl.textContent = '微信已绑定';
+            wechatPillEl.style.display = 'inline-flex';
+          } else {
+            wechatPillEl.style.display = 'none';
+            wechatPillEl.textContent = '';
+          }
+        }
+
+        setText(streakEl, streakDays);
+        setText(totalAnsweredEl, totalAnswered);
+        setText(accuracyEl, `${accuracy}%`);
+        if (accuracyBarEl) accuracyBarEl.style.width = `${accuracy}%`;
+
+        applyAvatar(avatar, username);
+      }
+
+      async function loadProfile() {
+        showMsg('');
+        try {
+          const res = await fetch('/api/profile', { credentials: 'include' });
+          const js = await res.json().catch(() => ({}));
+          if (!res.ok || !js || js.status !== 'success' || !js.data) {
+            throw new Error(js && js.message ? js.message : '加载失败');
+          }
+          applyProfile(js.data);
+        } catch (e) {
+          showMsg((e && e.message) ? e.message : '加载失败，请稍后重试');
+        }
+      }
+
+      async function logout() {
+        if (!logoutBtn) return;
+        logoutBtn.disabled = true;
+        const oldText = logoutBtn.textContent;
+        logoutBtn.textContent = '退出中…';
+        try {
+          await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+        } catch (e) {}
+        window.location.href = '/login';
+        logoutBtn.textContent = oldText;
+        logoutBtn.disabled = false;
+      }
+
+      logoutBtn && logoutBtn.addEventListener('click', logout);
+      loadProfile();
+    })();
+  </script>
+{% endblock %}
+

@@ -1,0 +1,1017 @@
+{% extends "main/shared/app_shell.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block head_extra %}
+<style>
+  .muted { color: var(--app-muted); }
+
+  .rc-shell { display: grid; gap: 16px; min-width: 0; margin-left: -4px; }
+  .rc-body {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+    min-width: 0;
+  }
+  .rc-content { min-width: 0; display: grid; gap: 14px; }
+
+  .rc-hero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 20px;
+    border-radius: var(--app-radius-xl);
+    border: 1px solid var(--app-border);
+    background:
+      radial-gradient(120% 140% at 10% -10%, color-mix(in srgb, var(--app-primary) 10%, transparent), transparent 55%),
+      linear-gradient(135deg, color-mix(in srgb, var(--app-surface) 92%, var(--app-bg)), var(--app-surface));
+    box-shadow: var(--app-shadow-soft);
+  }
+  .rc-hero h1 { margin: 0; font-size: 20px; font-weight: 950; letter-spacing: -0.3px; }
+  .rc-hero p { margin: 4px 0 0; font-size: 12px; color: var(--app-muted); line-height: 1.5; }
+  .rc-hero-kpis { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: flex-end; }
+
+  .rc-basebar {
+    position: sticky;
+    top: calc(env(safe-area-inset-top) + var(--app-topbar-h) + 8px);
+    z-index: 35;
+    display: grid;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 16px;
+    border: 1px solid var(--app-border);
+    background: color-mix(in srgb, var(--app-surface) 78%, transparent);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    box-shadow: var(--app-shadow-soft);
+  }
+  .rc-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .rc-tabs::-webkit-scrollbar { display: none; }
+
+  .rc-tab {
+    flex: 0 0 auto;
+    height: 38px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: -0.1px;
+    color: var(--app-muted);
+    white-space: nowrap;
+    text-decoration: none;
+    transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+  }
+  .rc-tab:hover { background: rgba(148, 163, 184, 0.12); color: var(--app-text); }
+  .rc-tab.active {
+    background: var(--app-primary-soft);
+    border-color: color-mix(in srgb, var(--app-primary) 35%, var(--app-border));
+    color: var(--app-text);
+  }
+
+  .rc-card { padding: 16px; min-width: 0; }
+  .rc-card h2 { margin: 0; font-size: 16px; font-weight: 950; letter-spacing: -0.2px; }
+  .rc-card p { margin: 6px 0 0; font-size: 12px; line-height: 1.5; color: var(--app-muted); }
+
+  .rc-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .rc-field { display: grid; gap: 6px; min-width: 0; }
+  .rc-label { color: var(--app-muted); font-size: 12px; font-weight: 900; letter-spacing: 0.2px; }
+
+  .rc-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .rc-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--app-muted);
+    font-weight: 850;
+  }
+
+  .rc-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .rc-actions-left { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+  .rc-msg {
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid var(--app-border);
+    background: color-mix(in srgb, var(--app-surface) 70%, transparent);
+    color: var(--app-muted);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .rc-msg.error {
+    color: #b91c1c;
+    border-color: color-mix(in srgb, #b91c1c 24%, var(--app-border));
+    background: color-mix(in srgb, #fecaca 16%, var(--app-surface));
+  }
+  html[data-theme="dark"] .rc-msg.error {
+    color: #fecaca;
+    border-color: rgba(255, 255, 255, 0.14);
+    background: color-mix(in srgb, #7f1d1d 18%, var(--app-surface));
+  }
+
+  .rc-results { display: grid; gap: 10px; margin-top: 10px; }
+  .rc-result {
+    padding: 14px;
+    border-radius: 16px;
+    border: 1px solid var(--app-border);
+    background: var(--app-surface-2);
+    box-shadow: var(--app-shadow-soft);
+    display: grid;
+    gap: 10px;
+    cursor: pointer;
+    transition: box-shadow 160ms ease, border-color 160ms ease, background 160ms ease;
+  }
+  .rc-result:hover { box-shadow: var(--app-shadow); border-color: color-mix(in srgb, var(--app-text) 14%, var(--app-border)); }
+  .rc-result-title { font-size: 13px; font-weight: 900; line-height: 1.55; color: var(--app-text); }
+  .rc-result-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+  .rc-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 10px;
+    height: 22px;
+    border-radius: 999px;
+    border: 1px solid var(--app-border);
+    background: color-mix(in srgb, var(--app-surface) 70%, transparent);
+    color: var(--app-muted);
+    font-size: 11px;
+    font-weight: 850;
+    letter-spacing: -0.1px;
+  }
+  .rc-badge.fav { border-color: color-mix(in srgb, var(--app-primary) 26%, var(--app-border)); color: var(--app-text); }
+  .rc-badge.mis { border-color: color-mix(in srgb, #ef4444 26%, var(--app-border)); color: var(--app-text); }
+
+  .rc-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .rc-kpi {
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid var(--app-border);
+    background: var(--app-surface);
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+  }
+  .rc-kpi .k { font-size: 12px; font-weight: 900; letter-spacing: 0.6px; text-transform: uppercase; color: var(--app-muted); }
+  .rc-kpi .v { font-size: 22px; font-weight: 980; letter-spacing: -0.2px; color: var(--app-text); }
+  .rc-kpi .m { font-size: 12px; color: var(--app-muted); line-height: 1.5; }
+
+  .rc-ring {
+    --val: 0;
+    width: 64px;
+    height: 64px;
+    border-radius: 999px;
+    background:
+      conic-gradient(var(--app-primary) calc(var(--val) * 1%), color-mix(in srgb, var(--app-border) 55%, transparent) 0);
+    display: grid;
+    place-items: center;
+    position: relative;
+    box-shadow: var(--app-shadow-soft);
+  }
+  .rc-ring::after {
+    content: '';
+    position: absolute;
+    inset: 7px;
+    border-radius: 999px;
+    background: var(--app-surface);
+    border: 1px solid var(--app-border);
+  }
+  .rc-ring > span {
+    position: relative;
+    z-index: 1;
+    font-weight: 950;
+    font-size: 12px;
+    color: var(--app-text);
+  }
+
+  .rc-mini-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 72px;
+    margin-top: 10px;
+  }
+  .rc-mini-bar {
+    flex: 1 1 0;
+    height: calc(var(--h, 0) * 1%);
+    min-height: 2px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--app-primary) 18%, transparent);
+    border: 1px solid color-mix(in srgb, var(--app-primary) 22%, var(--app-border));
+    box-shadow: var(--app-shadow-soft);
+    transition: height 180ms ease;
+  }
+  .rc-mini-labels {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--app-muted);
+  }
+  .rc-mini-labels .mono { font-family: var(--app-font-mono); }
+
+  .rc-tips { margin: 10px 0 0; padding-left: 18px; color: var(--app-text); }
+  .rc-tips li { margin: 6px 0; line-height: 1.55; }
+  .rc-tips li::marker { color: var(--app-muted); }
+  .rc-tip-row { display:flex; gap: 10px; align-items:flex-start; justify-content: space-between; }
+  .rc-tip-text { flex: 1 1 auto; min-width: 0; }
+  .rc-tip-row .app-btn { flex: 0 0 auto; white-space: nowrap; }
+
+  .rc-dist { display: grid; gap: 10px; }
+  .rc-dist-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border-radius: 16px; border: 1px solid var(--app-border); background: var(--app-surface); }
+  .rc-dist-main { min-width: 0; flex: 1 1 auto; display: grid; gap: 6px; }
+  .rc-dist-title { font-size: 13px; font-weight: 950; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rc-dist-meta { font-size: 12px; color: var(--app-muted); }
+  .rc-bar { height: 10px; border-radius: 999px; background: color-mix(in srgb, var(--app-fill) 70%, transparent); overflow: hidden; }
+  .rc-bar > span { display: block; height: 100%; background: var(--app-primary); border-radius: 999px; }
+
+  .rc-stack-bar {
+    height: 12px;
+    border-radius: 999px;
+    border: 1px solid var(--app-border);
+    background: color-mix(in srgb, var(--app-fill) 70%, transparent);
+    overflow: hidden;
+    display: flex;
+  }
+  .rc-stack-seg { height: 100%; }
+  .rc-stack-seg.correct { background: color-mix(in srgb, var(--app-primary) 55%, transparent); }
+  .rc-stack-seg.wrong { background: color-mix(in srgb, #ef4444 42%, transparent); }
+  .rc-stack-seg.unanswered { background: color-mix(in srgb, var(--app-border) 82%, transparent); }
+
+  .rc-stack-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--app-muted);
+    font-weight: 850;
+  }
+  .rc-dot { width: 8px; height: 8px; border-radius: 999px; display: inline-block; margin-right: 6px; }
+  .rc-dot.correct { background: color-mix(in srgb, var(--app-primary) 55%, transparent); }
+  .rc-dot.wrong { background: color-mix(in srgb, #ef4444 42%, transparent); }
+  .rc-dot.unanswered { background: color-mix(in srgb, var(--app-border) 82%, transparent); }
+
+  .rc-practice {
+    --card: var(--app-surface-2);
+    --card-solid: var(--app-surface);
+    --text: var(--app-text);
+    --muted: var(--app-muted);
+    --border: var(--app-border);
+    --shadow2: var(--app-shadow-soft);
+    --blur: blur(24px) saturate(180%);
+    --radius-xl: 22px;
+    --radius-lg: 18px;
+    --focus: 0 0 0 3px var(--app-primary-soft);
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+  }
+  .rc-practice .card {
+    border-radius: var(--radius-xl);
+    background: var(--card);
+    border: 0.5px solid var(--border);
+    box-shadow: var(--shadow2);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    padding: 16px;
+    min-width: 0;
+  }
+  .rc-practice .card h2 {
+    margin: 0 0 10px;
+    font-size: 16px;
+    font-weight: 950;
+    letter-spacing: -0.2px;
+  }
+  .rc-practice .sub { color: var(--muted); font-size: 12px; }
+
+  .rc-practice .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .rc-practice .chip {
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 0.5px solid var(--border);
+    background: var(--card-solid);
+    color: var(--text);
+    font-weight: 800;
+    font-size: 13px;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .rc-practice .chip:hover { transform: translateY(-1px); background: color-mix(in srgb, var(--text) 6%, var(--card-solid)); }
+  .rc-practice .chip:active { transform: translateY(0); }
+  .rc-practice .chip:focus { outline: none; box-shadow: var(--focus), var(--shadow2); }
+  .rc-practice .chip.active {
+    background: var(--app-primary-soft);
+    color: var(--text);
+    border-color: color-mix(in srgb, var(--app-primary) 35%, var(--border));
+    box-shadow: var(--shadow2);
+  }
+
+  .rc-practice .toggles { display: grid; gap: 10px; margin-top: 10px; }
+  .rc-practice .toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px;
+    border-radius: var(--radius-lg);
+    border: 0.5px solid var(--border);
+    background: var(--card-solid);
+  }
+  .rc-practice .toggle .label { font-weight: 900; font-size: 14px; }
+  .rc-practice .toggle .desc { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+  .rc-practice .switch {
+    position: relative;
+    width: 46px;
+    height: 28px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--muted) 35%, transparent);
+    border: 0.5px solid var(--border);
+    cursor: pointer;
+    flex: 0 0 auto;
+    transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  }
+  .rc-practice .switch::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    background: var(--card-solid);
+    box-shadow: var(--shadow2);
+    transition: transform 0.15s ease;
+  }
+  .rc-practice .switch.on {
+    background: color-mix(in srgb, var(--app-primary) 30%, transparent);
+    border-color: color-mix(in srgb, var(--app-primary) 35%, var(--border));
+  }
+  .rc-practice .switch.on::after { transform: translateX(18px); }
+  .rc-practice .switch:focus { outline: none; box-shadow: var(--focus), var(--shadow2); }
+  .rc-practice .switch.is-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .rc-practice .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .rc-practice .start-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+  .rc-practice .start-count {
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 0.5px solid var(--border);
+    background: var(--card-solid);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 900;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .rc-practice .start-count .num { font-size: 13px; }
+
+  .rc-practice .btn {
+    height: 46px;
+    border-radius: var(--radius-lg);
+    border: 0.5px solid var(--border);
+    background: var(--card-solid);
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    min-width: 0;
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    user-select: none;
+  }
+  .rc-practice .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow2); background: color-mix(in srgb, var(--text) 6%, var(--card-solid)); }
+  .rc-practice .btn:active { transform: translateY(0); }
+  .rc-practice .btn:focus { outline: none; box-shadow: var(--focus), var(--shadow2); }
+  .rc-practice .btn.primary {
+    border-color: color-mix(in srgb, var(--app-primary) 50%, var(--border));
+    background: color-mix(in srgb, var(--app-primary) 12%, var(--card-solid));
+    color: var(--text);
+  }
+
+  .rc-practice .links { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  .rc-practice .link {
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 0.5px solid var(--border);
+    background: var(--card-solid);
+    font-size: 13px;
+    font-weight: 900;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, background 0.15s ease;
+    color: var(--text);
+    text-decoration: none;
+    user-select: none;
+  }
+  .rc-practice .link:hover { transform: translateY(-1px); background: color-mix(in srgb, var(--text) 6%, var(--card-solid)); }
+  .rc-practice .link:active { transform: translateY(0); }
+  .rc-practice .link:focus { outline: none; box-shadow: var(--focus), var(--shadow2); }
+
+  @media (max-width: 1100px) {
+    .rc-shell { margin-left: 0; }
+    .rc-body { grid-template-columns: minmax(0, 1fr); }
+    .rc-basebar { position: static; }
+    .rc-tabs { flex-direction: row; gap: 6px; }
+    .rc-tab { justify-content: center; border-radius: 999px; height: 34px; padding: 0 12px; }
+  }
+
+  @media (max-width: 860px) {
+    .rc-fields { grid-template-columns: minmax(0, 1fr); }
+    .rc-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  @media (max-width: 480px) {
+    .rc-kpi-grid { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="app-container rc-shell">
+  <div class="rc-body">
+    <nav class="rc-basebar" role="tablist" aria-label="复盘子页面">
+      <div class="rc-tabs">
+        <a class="rc-tab {{ 'active' if tab == 'practice' else '' }}" href="{{ tab_urls.practice }}" role="tab" aria-selected="{{ 'true' if tab == 'practice' else 'false' }}">练习</a>
+        <a class="rc-tab {{ 'active' if tab == 'search' else '' }}" href="{{ tab_urls.search }}" role="tab" aria-selected="{{ 'true' if tab == 'search' else 'false' }}">搜索</a>
+        <a class="rc-tab {{ 'active' if tab == 'data' else '' }}" href="{{ tab_urls.data }}" role="tab" aria-selected="{{ 'true' if tab == 'data' else 'false' }}">数据</a>
+      </div>
+    </nav>
+
+    <div class="rc-content">
+      <div class="rc-hero" aria-label="{{ page_title }}概览">
+        <div style="min-width:0;">
+          <h1>{{ page_title }}</h1>
+          <p>{{ page_subtitle }}</p>
+        </div>
+        <div class="rc-hero-kpis" aria-label="当前范围">
+          <span class="app-pill">{{ scope_label }}</span>
+          <span class="app-pill">{{ scope_name }}</span>
+        </div>
+      </div>
+
+      {% if tab == 'practice' %}
+        <div class="rc-practice" aria-label="练习设置">
+          <form id="rcPracticeForm" method="get" action="{{ base_url }}">
+            <input type="hidden" name="tab" value="practice" />
+            {% if source_type == 'public' %}
+              <input type="hidden" name="subject" value="{{ subject_name }}" />
+              <input type="hidden" name="source" value="public" />
+            {% else %}
+              <input type="hidden" name="bank_id" value="{{ bank_id }}" />
+              <input type="hidden" name="source" value="user_bank" />
+            {% endif %}
+            <input type="hidden" name="type" id="rcFieldType" value="{{ q_type }}" />
+            <input type="hidden" name="tag" id="rcFieldTag" value="{{ tag }}" />
+            <input type="hidden" name="shuffle_questions" id="rcFieldShuffleQ" value="{{ 1 if shuffle_questions else 0 }}" />
+            <input type="hidden" name="shuffle_options" id="rcFieldShuffleO" value="{{ 1 if shuffle_options else 0 }}" />
+          </form>
+
+          <section class="card" aria-label="题型选择">
+            <h2>题型</h2>
+            <div class="sub">用于练习筛选（并同步到「搜索 / 数据」）。混合练习请保持“全部题型”。</div>
+            <div class="chips" id="rcChipsType" data-chip-group="type">
+              <button type="button" class="chip {{ 'active' if q_type == 'all' else '' }}" data-chip-kind="type" data-val="all" onclick="selectChip('type', this)">全部题型</button>
+              {% for t in types %}
+                <button type="button" class="chip {{ 'active' if q_type == t else '' }}" data-chip-kind="type" data-val="{{ t|e }}" onclick="selectChip('type', this)">{{ t }}</button>
+              {% endfor %}
+            </div>
+          </section>
+
+          <section class="card" aria-label="标签选择">
+            <h2>标签</h2>
+            <div class="sub">仅对当前用户生效。</div>
+            <div class="chips" id="rcChipsTag" data-chip-group="tag">
+              <button type="button" class="chip {{ 'active' if tag == 'all' else '' }}" data-chip-kind="tag" data-val="all" onclick="selectChip('tag', this)">全部标签</button>
+              {% for t in tags %}
+                <button type="button" class="chip {{ 'active' if tag == t.name else '' }}" data-chip-kind="tag" data-val="{{ t.name|e }}" onclick="selectChip('tag', this)" title="{{ t.count or 0 }}题">{{ t.name }}</button>
+              {% endfor %}
+            </div>
+          </section>
+
+          <section class="card" aria-label="练习选项">
+            <h2>练习选项</h2>
+            <div class="toggles">
+              <div class="toggle">
+                <div>
+                  <div class="label">打乱题目</div>
+                  <div class="desc">顺序随机，更接近实战</div>
+                </div>
+                <div class="switch {{ 'on' if shuffle_questions else '' }}" data-switch="shuffleQ" role="switch" aria-checked="{{ 'true' if shuffle_questions else 'false' }}" tabindex="0" onclick="toggleSwitch('shuffleQ')"></div>
+              </div>
+              <div class="toggle">
+                <div>
+                  <div class="label">打乱选项</div>
+                  <div class="desc">选择题更抗“背选项”（仅选择题/多选题可用）</div>
+                </div>
+                <div class="switch {{ 'on' if shuffle_options else '' }}" data-switch="shuffleO" role="switch" aria-checked="{{ 'true' if shuffle_options else 'false' }}" tabindex="0" onclick="toggleSwitch('shuffleO')"></div>
+              </div>
+            </div>
+          </section>
+
+          {% if warning %}
+            <div class="rc-msg error" role="alert">{{ warning }}</div>
+          {% endif %}
+
+          <section class="card" aria-label="开始">
+            <h2>开始</h2>
+            <div class="start-meta">
+              <div class="start-count" aria-label="当前可用题目数量">
+                <span>当前可用</span>
+                <span class="num">{{ available_count }}</span>
+                <span>题</span>
+              </div>
+            </div>
+            <div class="actions">
+              <a class="btn primary" href="{{ quiz_url }}">开始刷题</a>
+              <a class="btn" href="{{ memo_url }}">开始背题</a>
+            </div>
+            <div class="links">
+              <a class="link" href="{{ reset_url }}">重置筛选</a>
+            </div>
+          </section>
+        </div>
+
+        <script>
+          (function () {
+            var form = document.getElementById('rcPracticeForm');
+            var fieldType = document.getElementById('rcFieldType');
+            var fieldTag = document.getElementById('rcFieldTag');
+            var fieldShuffleQ = document.getElementById('rcFieldShuffleQ');
+            var fieldShuffleO = document.getElementById('rcFieldShuffleO');
+            var OPTION_TYPES = new Set(['选择题', '多选题']);
+
+            function submit() {
+              if (form) form.submit();
+            }
+
+            function setSwitch(which, on) {
+              document.querySelectorAll('[data-switch=\"' + which + '\"]').forEach(function (el) {
+                el.classList.toggle('on', !!on);
+                el.setAttribute('aria-checked', on ? 'true' : 'false');
+              });
+            }
+
+            function setSwitchDisabled(which, disabled) {
+              document.querySelectorAll('[data-switch=\"' + which + '\"]').forEach(function (el) {
+                el.classList.toggle('is-disabled', !!disabled);
+                el.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+              });
+            }
+
+            function canShuffleOptions() {
+              var t = (fieldType && fieldType.value) ? String(fieldType.value) : 'all';
+              return t === 'all' || OPTION_TYPES.has(t);
+            }
+
+            function syncShuffleAvailability() {
+              var allow = canShuffleOptions();
+              setSwitchDisabled('shuffleO', !allow);
+              if (!allow && fieldShuffleO && fieldShuffleO.value === '1') {
+                fieldShuffleO.value = '0';
+              }
+              setSwitch('shuffleO', !!(fieldShuffleO && fieldShuffleO.value === '1'));
+            }
+
+            window.selectChip = function (kind, btn) {
+              if (!btn) return;
+              var v = String(btn.dataset && btn.dataset.val ? btn.dataset.val : 'all');
+              if (kind === 'type' && fieldType) fieldType.value = v;
+              if (kind === 'tag' && fieldTag) fieldTag.value = v;
+
+              document.querySelectorAll('[data-chip-kind=\"' + kind + '\"][data-val]').forEach(function (el) {
+                el.classList.toggle('active', String(el.dataset && el.dataset.val ? el.dataset.val : 'all') === v);
+              });
+
+              if (kind === 'type') syncShuffleAvailability();
+              submit();
+            };
+
+            window.toggleSwitch = function (which) {
+              if (which === 'shuffleQ' && fieldShuffleQ) {
+                fieldShuffleQ.value = (fieldShuffleQ.value === '1') ? '0' : '1';
+                setSwitch('shuffleQ', fieldShuffleQ.value === '1');
+                submit();
+                return;
+              }
+              if (which === 'shuffleO' && fieldShuffleO) {
+                if (!canShuffleOptions()) return;
+                fieldShuffleO.value = (fieldShuffleO.value === '1') ? '0' : '1';
+                setSwitch('shuffleO', fieldShuffleO.value === '1');
+                submit();
+              }
+            };
+
+            function bindSwitchKey(which) {
+              document.querySelectorAll('[data-switch=\"' + which + '\"]').forEach(function (el) {
+                el.addEventListener('keydown', function (ev) {
+                  if (ev.key === 'Enter' || ev.key === ' ') {
+                    ev.preventDefault();
+                    window.toggleSwitch(which);
+                  }
+                });
+              });
+            }
+
+            setSwitch('shuffleQ', !!(fieldShuffleQ && fieldShuffleQ.value === '1'));
+            setSwitch('shuffleO', !!(fieldShuffleO && fieldShuffleO.value === '1'));
+            syncShuffleAvailability();
+            bindSwitchKey('shuffleQ');
+            bindSwitchKey('shuffleO');
+          })();
+        </script>
+      {% elif tab == 'search' %}
+        <section class="app-card rc-card" aria-label="搜索">
+      <div>
+        <h2>搜索</h2>
+        <p>
+          {% if kind == 'mistakes' %}
+            仅在当前题库范围内的错题中搜索（题干/答案/解析/选项）。
+          {% elif kind == 'favorites' %}
+            仅在当前题库范围内的收藏题中搜索（题干/答案/解析/选项）。
+          {% elif kind == 'tags' %}
+            仅在当前题库范围内搜索（题干/答案/解析/选项），可按标签过滤。
+          {% else %}
+            仅在当前题库范围内搜索（题干/答案/解析/选项）。
+          {% endif %}
+        </p>
+      </div>
+
+      <form method="get" action="{{ base_url }}">
+        <input type="hidden" name="tab" value="search" />
+        {% if source_type == 'public' %}
+          <input type="hidden" name="subject" value="{{ subject_name }}" />
+          <input type="hidden" name="source" value="public" />
+        {% else %}
+          <input type="hidden" name="bank_id" value="{{ bank_id }}" />
+          <input type="hidden" name="source" value="user_bank" />
+        {% endif %}
+
+        <div class="rc-fields">
+          <div class="rc-field" style="grid-column: 1 / -1;">
+            <div class="rc-label">关键词</div>
+            <input class="app-input" name="keyword" value="{{ keyword or '' }}" placeholder="输入关键词" />
+          </div>
+          <div class="rc-field">
+            <div class="rc-label">题型</div>
+            <select class="app-input" name="type">
+              <option value="all" {{ 'selected' if q_type == 'all' else '' }}>全部题型</option>
+              {% for t in types %}
+                <option value="{{ t }}" {{ 'selected' if q_type == t else '' }}>{{ t }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="rc-field">
+            <div class="rc-label">标签</div>
+            <select class="app-input" name="tag">
+              <option value="all" {{ 'selected' if tag == 'all' else '' }}>全部标签</option>
+              {% for t in tags %}
+                <option value="{{ t.name }}" {{ 'selected' if tag == t.name else '' }}>{{ t.name }}（{{ t.count or 0 }}）</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="rc-actions">
+          <div class="rc-actions-left">
+            <button class="app-btn app-btn-primary" type="submit">搜索</button>
+            <span class="app-pill">共 {{ search_total }} 条</span>
+          </div>
+          <a class="app-btn app-btn-secondary" href="{{ search_clear_url }}">清空</a>
+        </div>
+      </form>
+
+      <div class="rc-results" aria-label="搜索结果">
+        {% if keyword %}
+          {% if search_questions and search_questions|length %}
+            {% for q in search_questions %}
+              <a class="rc-result" href="{{ q.jump_url }}" aria-label="从搜索结果开始练习">
+                <div class="rc-result-title">{{ q.content_preview }}</div>
+                <div class="rc-result-meta">
+                  <span class="rc-badge">{{ q.q_type }}</span>
+                  {% if q.is_fav %}<span class="rc-badge fav">收藏</span>{% endif %}
+                  {% if q.is_mistake %}<span class="rc-badge mis">错题</span>{% endif %}
+                </div>
+              </a>
+            {% endfor %}
+          {% else %}
+            <div class="rc-msg">暂无结果。</div>
+          {% endif %}
+        {% else %}
+          <div class="rc-msg">输入关键词后即可搜索。</div>
+        {% endif %}
+      </div>
+        </section>
+      {% else %}
+        <section class="app-card rc-card" aria-label="数据概览">
+      <div>
+        <h2>数据概览</h2>
+        <p>数据按当前题型/标签筛选统计，并对你在该题库的学习情况给出建议。</p>
+      </div>
+
+      <div class="rc-kpi-grid" aria-label="关键指标">
+        <div class="rc-kpi">
+          <div class="k">范围题目</div>
+          <div class="v">{{ data_total }}</div>
+          <div class="m">当前范围内（全题型）题目总数</div>
+        </div>
+        <div class="rc-kpi">
+          <div class="k">当前题型</div>
+          <div class="v">{{ available_count }}</div>
+          <div class="m">当前题型/标签下可开始练习的题目数</div>
+        </div>
+        <div class="rc-kpi">
+          <div class="k">已做 / 已掌握</div>
+          <div class="v">{{ data_answer.answered }} / {{ data_answer.correct }}</div>
+          <div class="m">按最新一次作答统计（当前范围）</div>
+        </div>
+
+        <div class="rc-kpi">
+          <div class="k">正确率</div>
+          <div style="display:flex; align-items:center; gap: 10px;">
+            <div class="rc-ring" style="--val: {{ data_answer.accuracy }};">
+              <span>{{ data_answer.accuracy }}%</span>
+            </div>
+            <div class="m">当前范围整体正确率</div>
+          </div>
+        </div>
+        <div class="rc-kpi">
+          <div class="k">近 7 天复习</div>
+          <div class="v">{{ data_answer.answered_7d }}</div>
+          <div class="m">正确率 {{ data_answer.accuracy_7d }}%</div>
+        </div>
+        <div class="rc-kpi">
+          {% if kind == 'mistakes' %}
+            <div class="k">错题强度</div>
+            <div class="v">{{ data_mis.times }}</div>
+            <div class="m">近 7 天活跃错题 {{ data_mis.active_7d }} · 新增 {{ data_mis.new_7d }}</div>
+          {% elif kind == 'favorites' %}
+            <div class="k">收藏变化</div>
+            <div class="v">{{ data_fav.count }}</div>
+            <div class="m">近 7 天新增 {{ data_fav.new_7d }} · 近 30 天新增 {{ data_fav.new_30d }}</div>
+          {% else %}
+            <div class="k">收藏 / 错题</div>
+            <div class="v">{{ data_fav.count }} / {{ data_mis.count }}</div>
+            <div class="m">在当前范围内的收藏与错题数量</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="rc-dist" aria-label="题目状态" style="margin-top: 12px;">
+        <div class="rc-msg" role="note" style="background: var(--app-surface);">
+          <div style="font-weight:950; margin-bottom: 6px;">题目状态（当前题型/标签）</div>
+          {% if data_state and data_state.total and data_state.total > 0 %}
+            <div class="rc-stack-bar" aria-label="已掌握/已做未掌握/未做分布">
+              <div class="rc-stack-seg correct" style="width: {{ data_state.pct_correct }}%;"></div>
+              <div class="rc-stack-seg wrong" style="width: {{ data_state.pct_wrong }}%;"></div>
+              <div class="rc-stack-seg unanswered" style="width: {{ data_state.pct_unanswered }}%;"></div>
+            </div>
+            <div class="rc-stack-legend">
+              <span><i class="rc-dot correct"></i>已掌握 {{ data_state.correct }}</span>
+              <span><i class="rc-dot wrong"></i>已做未掌握 {{ data_state.wrong }}</span>
+              <span><i class="rc-dot unanswered"></i>未做 {{ data_state.unanswered }}</span>
+            </div>
+          {% else %}
+            <div class="muted">暂无可统计题目。</div>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if kind == 'mistakes' %}
+        <div class="rc-dist" aria-label="错题次数分布" style="margin-top: 12px;">
+          <div class="rc-msg" role="note" style="background: var(--app-surface);">
+            <div style="font-weight:950; margin-bottom: 6px;">错题次数分布（当前题型/标签）</div>
+            <div class="muted">用于识别高频错题：优先处理「错 4+ 次」能最快提升稳定性。</div>
+          </div>
+          {% if data_mis and data_mis.count and data_mis.count > 0 and mistake_buckets and mistake_buckets|length %}
+            {% for b in mistake_buckets %}
+              <div class="rc-dist-row">
+                <div class="rc-dist-main">
+                  <div class="rc-dist-title">{{ b.label }}</div>
+                  <div class="rc-dist-meta">{{ b.count }} 题</div>
+                  <div class="rc-bar"><span style="width: {{ b.pct }}%"></span></div>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="rc-msg">暂无错题数据。</div>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {% if kind in ('favorites', 'mistakes') %}
+        <div class="rc-dist" aria-label="快捷清单" style="margin-top: 12px;">
+          <div class="rc-msg" role="note" style="background: var(--app-surface);">
+            <div style="font-weight:950; margin-bottom: 6px;">
+              {% if kind == 'favorites' %}最近收藏（Top 8）{% else %}高频错题（Top 8）{% endif %}
+            </div>
+            <div class="muted">点击「练习」直接切到对应题型/标签范围，做一轮专项回归。</div>
+          </div>
+          {% if data_items and data_items|length %}
+            {% for it in data_items %}
+              <div class="rc-dist-row">
+                <div class="rc-dist-main">
+                  <div class="rc-dist-title">{{ it.title }}</div>
+                  <div class="rc-dist-meta">{{ it.q_type }} · {{ it.meta }}</div>
+                </div>
+                <a class="app-btn app-btn-secondary" href="{{ it.practice_url }}">练习</a>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="rc-msg">暂无数据。</div>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      <div class="rc-dist" aria-label="标签分布" style="margin-top: 12px;">
+        <div class="rc-msg" role="note" style="background: var(--app-surface);">
+          <div style="font-weight:950; margin-bottom: 6px;">
+            {% if kind == 'tags' %}共现标签（当前范围）{% else %}标签分布（当前范围）{% endif %}
+          </div>
+          <div class="muted">把范围拆到一个标签后再看数据页，会更清晰；也更适合做专项训练。</div>
+        </div>
+        {% if tag_dist and tag_dist|length %}
+          {% for row in tag_dist %}
+            <div class="rc-dist-row">
+              <div class="rc-dist-main">
+                <div class="rc-dist-title">{{ row.name }}</div>
+                <div class="rc-dist-meta">{{ row.count }} 题</div>
+                <div class="rc-bar"><span style="width: {{ row.pct }}%"></span></div>
+              </div>
+              <a class="app-btn app-btn-secondary" href="{{ row.switch_url }}">查看</a>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="rc-msg">暂无标签数据。</div>
+        {% endif %}
+      </div>
+
+      <div class="rc-kpi-grid" aria-label="趋势与建议" style="margin-top: 12px;">
+        <div class="rc-kpi" style="grid-column: 1 / -1;">
+          <div class="k">近 14 天复习趋势</div>
+          <div class="m">按“最后一次作答日期”统计：用于观察近期复习节奏（不等同于历史做题次数）。</div>
+          <div class="rc-mini-bars" aria-label="近 14 天柱状图">
+            {% if data_activity and data_activity|length %}
+              {% for d in data_activity %}
+                <div class="rc-mini-bar" style="--h: {{ d.pct }}%;" title="{{ d.day }}：{{ d.total }} 题，正确率 {{ d.acc }}%"></div>
+              {% endfor %}
+            {% else %}
+              <div class="rc-msg">暂无趋势数据。</div>
+            {% endif %}
+          </div>
+          {% if data_activity and data_activity|length %}
+            <div class="rc-mini-labels">
+              <span class="mono">{{ (data_activity[0] or {}).day }}</span>
+              <span class="mono">{{ (data_activity[(data_activity|length // 2)] or {}).day }}</span>
+              <span class="mono">{{ (data_activity[(data_activity|length - 1)] or {}).day }}</span>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="rc-dist" aria-label="建议" style="margin-top: 12px;">
+        <div class="rc-msg" role="note" style="background: var(--app-surface);">
+          <div style="font-weight:950; margin-bottom: 6px;">建议</div>
+          {% if data_tips and data_tips|length %}
+            <ul class="rc-tips">
+              {% for t in data_tips %}
+                {% if t is mapping %}
+                  <li>
+                    <div class="rc-tip-row">
+                      <div class="rc-tip-text">{{ t.text }}</div>
+                      {% if t.action_url %}
+                        <a class="app-btn app-btn-secondary" href="{{ t.action_url }}">{{ t.action_label or '去练习' }}</a>
+                      {% endif %}
+                    </div>
+                  </li>
+                {% else %}
+                  <li>
+                    <div class="rc-tip-row">
+                      <div class="rc-tip-text">{{ t }}</div>
+                    </div>
+                  </li>
+                {% endif %}
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="muted">暂无建议。</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="rc-dist" aria-label="题型分布">
+        {% if type_dist and type_dist|length %}
+          {% for row in type_dist %}
+            <div class="rc-dist-row">
+              <div class="rc-dist-main">
+                <div class="rc-dist-title">{{ row.q_type }}</div>
+                <div class="rc-dist-meta">{{ row.count }} 题</div>
+                <div class="rc-bar"><span style="width: {{ row.pct }}%"></span></div>
+              </div>
+              <a class="app-btn app-btn-secondary" href="{{ row.practice_url }}">去练习</a>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="rc-msg">暂无数据。</div>
+        {% endif %}
+      </div>
+        </section>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    try {
+      var payload = {
+        ts: Date.now(),
+        kind: {{ (kind or 'mistakes')|tojson }},
+        source: {{ (source_type or 'public')|tojson }},
+        subject: {{ (subject_name or '')|tojson }},
+        bank_id: {{ bank_id or 0 }},
+        q_type: {{ (q_type or 'all')|tojson }},
+        tag: {{ (tag or 'all')|tojson }},
+        shuffle_questions: {{ 'true' if shuffle_questions else 'false' }},
+        shuffle_options: {{ 'true' if shuffle_options else 'false' }},
+        scope_label: {{ (scope_label or '')|tojson }},
+        scope_name: {{ (scope_name or '')|tojson }},
+        center_url: window.location.pathname + window.location.search,
+        quiz_url: {{ (quiz_url or '')|tojson }},
+        memo_url: {{ (memo_url or '')|tojson }}
+      };
+      localStorage.setItem('review_last_session_v1', JSON.stringify(payload));
+    } catch (e) {}
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,478 @@
+{% extends "main/settings/shell.html" %}
+{% block settings_title %}设置 · 通用{% endblock %}
+{% block settings_header_title %}通用{% endblock %}
+{% block settings_header_sub %}通用设置与基础操作。{% endblock %}
+
+{% block settings_head_extra %}
+  <style>
+    .set-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: center;
+      padding: 14px 0;
+      border-top: 1px solid var(--acc-border);
+      min-width: 0;
+    }
+    .set-row:first-of-type { border-top: none; }
+
+    .set-name { font-size: 14px; font-weight: 850; letter-spacing: -0.1px; color: var(--acc-text); }
+    .set-desc { margin-top: 6px; font-size: 13px; color: var(--acc-muted); line-height: 1.5; }
+
+    .set-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+    .set-btn { height: 38px; min-width: 0; padding: 8px 12px; }
+
+    .set-switch {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 48px;
+      height: 28px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.12);
+      position: relative;
+      outline: none;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .set-switch::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+      transition: transform 0.2s ease;
+    }
+    .set-switch:checked { background: rgba(17, 17, 19, 0.86); }
+    body.dark-mode .set-switch { background: rgba(255, 255, 255, 0.18); }
+    body.dark-mode .set-switch::after { background: rgba(0, 0, 0, 0.92); box-shadow: 0 2px 10px rgba(0,0,0,0.42); }
+    body.dark-mode .set-switch:checked { background: rgba(245, 245, 247, 0.86); }
+    .set-switch:checked::after { transform: translateX(20px); }
+
+    .set-chips {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+    .set-chip {
+      height: 38px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid var(--acc-border);
+      background: var(--acc-btn-secondary-bg);
+      color: var(--acc-text);
+      font-size: 13px;
+      font-weight: 850;
+      letter-spacing: -0.1px;
+      cursor: pointer;
+      transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease, background 140ms ease;
+      white-space: nowrap;
+    }
+    .set-chip:hover { transform: translateY(-1px); box-shadow: var(--acc-shadow-soft); }
+    .set-chip:active { transform: translateY(0); }
+    .set-chip.active {
+      background: var(--acc-btn-primary-bg);
+      border-color: var(--acc-btn-primary-border);
+      box-shadow: var(--acc-shadow-soft);
+    }
+    .set-chip:focus { outline: none; border-color: var(--acc-focus-border); box-shadow: 0 0 0 3px var(--acc-focus-ring); }
+
+    .set-section { scroll-margin-top: 80px; }
+
+    .sub-list { margin-top: 12px; }
+    .sub-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px 0;
+      border-top: 1px solid var(--acc-border);
+      min-width: 0;
+    }
+    .sub-item:first-child { border-top: none; }
+    .sub-label {
+      font-size: 14px;
+      font-weight: 750;
+      letter-spacing: -0.1px;
+      color: var(--acc-text);
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .acc-modal.acc-modal-wide { max-width: 760px; }
+
+    .modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .modal-toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
+
+    @media (max-width: 860px) {
+      .set-row { grid-template-columns: 1fr; }
+      .set-actions, .set-chips { justify-content: flex-start; }
+    }
+  </style>
+{% endblock %}
+
+{% block settings_content %}
+  <div class="acc-msg" id="practiceMsg" role="status" aria-live="polite"></div>
+
+  <section class="acc-card set-section" id="practice-actions" aria-labelledby="practiceActionsTitle">
+    <h2 class="acc-card-title" id="practiceActionsTitle">操作</h2>
+    <p class="acc-card-sub">设置会保存在本地，并尝试同步到云端（已登录）。</p>
+    <div class="acc-divider"></div>
+
+    <div class="set-actions" style="justify-content:flex-end;">
+      <button class="acc-btn acc-btn-secondary" type="button" id="resetPracticeBtn">恢复默认</button>
+    </div>
+  </section>
+
+  <div class="acc-modal-overlay" id="subjectModal" role="dialog" aria-modal="true" aria-labelledby="subjectModalTitle">
+    <div class="acc-modal acc-modal-wide" role="document">
+      <div class="modal-head">
+        <div>
+          <h3 class="acc-modal-title" id="subjectModalTitle">选择首页显示科目</h3>
+          <p class="acc-modal-sub">不选任何项等同于“显示全部”。</p>
+        </div>
+        <button class="acc-btn set-btn" type="button" id="closeSubjectModalBtn">关闭</button>
+      </div>
+
+      <div class="acc-divider" style="margin: 14px 0;"></div>
+
+      <div class="modal-toolbar">
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="acc-btn set-btn" type="button" id="selectAllSubjectsBtn">全选</button>
+          <button class="acc-btn set-btn" type="button" id="clearAllSubjectsBtn">清空</button>
+        </div>
+      </div>
+
+      <div class="sub-list" id="subjectList" aria-label="科目列表"></div>
+
+      <div class="acc-modal-actions">
+        <button class="acc-btn" type="button" id="cancelSubjectBtn">取消</button>
+        <button class="acc-btn acc-btn-primary" type="button" id="applySubjectBtn">应用</button>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block settings_body_end %}
+  <script>
+    (function(){
+      const HOME_VISIBLE_SUBJECTS_KEY = 'home_visible_subjects';
+      const SETTINGS_SYNC_KEY = 'user_settings_v1';
+      const QUIZ_HOTKEYS_KEY = 'quiz_hotkeys_v1';
+      const QUIZ_FAB_ENABLED_KEY = 'quiz_fab_enabled_v1';
+      const QUIZ_LAYOUT_THEME_KEY = 'quiz_layout_theme_v1';
+      const THEME_STYLE_KEY = 'app_theme_style_v1';
+      const THEME_STYLE_LIST = ['default', 'mist', 'dune', 'pine', 'celadon'];
+
+      const DEFAULT_QUIZ_HOTKEYS = {
+        prev_question: 'ArrowLeft',
+        next_question: 'ArrowRight',
+        toggle_favorite: 'KeyF',
+        choose_option_1: 'Digit1',
+        choose_option_2: 'Digit2',
+        choose_option_3: 'Digit3',
+        choose_option_4: 'Digit4',
+        blank_prev: 'ArrowUp',
+        blank_next: 'ArrowDown',
+        submit_or_next: 'Enter'
+      };
+
+      const msgEl = document.getElementById('practiceMsg');
+      const resetPracticeBtn = document.getElementById('resetPracticeBtn');
+      const subjectSummaryEl = document.getElementById('subjectSummary');
+      const openSubjectModalBtn = document.getElementById('openSubjectModalBtn');
+      const clearSubjectFilterBtn = document.getElementById('clearSubjectFilterBtn');
+      const subjectModal = document.getElementById('subjectModal');
+      const subjectListEl = document.getElementById('subjectList');
+      const closeSubjectModalBtn = document.getElementById('closeSubjectModalBtn');
+      const cancelSubjectBtn = document.getElementById('cancelSubjectBtn');
+      const applySubjectBtn = document.getElementById('applySubjectBtn');
+      const selectAllSubjectsBtn = document.getElementById('selectAllSubjectsBtn');
+      const clearAllSubjectsBtn = document.getElementById('clearAllSubjectsBtn');
+      const fabToggle = document.getElementById('toggleQuizFab');
+      const layoutBtns = Array.from(document.querySelectorAll('[data-layout]'));
+
+      function showMsg(text){
+        if (!msgEl) return;
+        const t = (text || '').trim();
+        if (!t) { msgEl.style.display = 'none'; msgEl.textContent = ''; return; }
+        msgEl.textContent = t;
+        msgEl.style.display = 'block';
+      }
+
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text || '';
+        return div.innerHTML;
+      }
+      function escapeAttr(text){
+        return String(text || '')
+          .replaceAll('&','&amp;')
+          .replaceAll('"','&quot;')
+          .replaceAll("'","&#39;")
+          .replaceAll('<','&lt;')
+          .replaceAll('>','&gt;');
+      }
+
+      function getVisibleSubjects(){
+        try {
+          const arr = JSON.parse(localStorage.getItem(HOME_VISIBLE_SUBJECTS_KEY) || '[]');
+          return Array.isArray(arr) ? arr : [];
+        } catch(e) { return []; }
+      }
+      function setVisibleSubjects(arr){
+        localStorage.setItem(HOME_VISIBLE_SUBJECTS_KEY, JSON.stringify(Array.isArray(arr) ? arr : []));
+      }
+
+      function isQuizFabEnabled(){ return localStorage.getItem(QUIZ_FAB_ENABLED_KEY) !== '0'; }
+      function setQuizFabEnabled(on){ localStorage.setItem(QUIZ_FAB_ENABLED_KEY, on ? '1' : '0'); }
+      function getQuizLayoutTheme(){ return localStorage.getItem(QUIZ_LAYOUT_THEME_KEY) || 'traditional'; }
+      function setQuizLayoutTheme(theme){ localStorage.setItem(QUIZ_LAYOUT_THEME_KEY, theme); }
+      function getThemeStyle(){
+        const stored = localStorage.getItem(THEME_STYLE_KEY) || 'default';
+        return THEME_STYLE_LIST.includes(stored) ? stored : 'default';
+      }
+      function setThemeStyle(style){
+        const next = THEME_STYLE_LIST.includes(style) ? style : 'default';
+        localStorage.setItem(THEME_STYLE_KEY, next);
+        document.documentElement.setAttribute('data-theme-style', next);
+      }
+
+      function updateSubjectSummary(){
+        if (!subjectSummaryEl) return;
+        const arr = getVisibleSubjects();
+        if (!arr.length) {
+          subjectSummaryEl.textContent = '全部科目';
+          return;
+        }
+        const safe = arr.filter(s => typeof s === 'string' && s.trim());
+        if (safe.length <= 4) {
+          subjectSummaryEl.textContent = safe.join('、');
+          return;
+        }
+        subjectSummaryEl.textContent = `${safe.slice(0, 3).join('、')} 等 ${safe.length} 门`;
+      }
+
+      async function fetchAllSubjects(){
+        try {
+          const res = await fetch('/api/subjects');
+          const js = await res.json().catch(()=> ({}));
+          if (res.ok && js && js.status === 'success') return Array.isArray(js.subjects) ? js.subjects : [];
+        } catch(e) {}
+        return [];
+      }
+
+      async function openSubjectModal(){
+        if (!subjectModal || !subjectListEl) return;
+        subjectListEl.innerHTML = '<div class="acc-help">正在加载…</div>';
+
+        const all = await fetchAllSubjects();
+        const selected = new Set(getVisibleSubjects());
+        const treatAllAsSelected = selected.size === 0;
+
+        if (!all.length) {
+          subjectListEl.innerHTML = '<div class="acc-help">暂无可用科目。</div>';
+          subjectModal.style.display = 'flex';
+          return;
+        }
+
+        subjectListEl.innerHTML = all.map(name => {
+          const n = String(name || '').trim();
+          if (!n) return '';
+          const checked = (treatAllAsSelected || selected.has(n)) ? 'checked' : '';
+          return `
+            <label class="sub-item">
+              <span class="sub-label">${escapeHtml(n)}</span>
+              <input type="checkbox" class="set-switch" style="transform: scale(0.9);" data-subject="${escapeAttr(n)}" ${checked} aria-label="显示科目：${escapeAttr(n)}" />
+            </label>
+          `;
+        }).join('');
+
+        subjectModal.style.display = 'flex';
+      }
+
+      function closeSubjectModal(){
+        if (!subjectModal) return;
+        subjectModal.style.display = 'none';
+      }
+
+      function selectAllSubjectsInModal(){
+        document.querySelectorAll('#subjectList input[type="checkbox"]').forEach(cb => cb.checked = true);
+      }
+
+      function clearAllSubjectsInModal(){
+        document.querySelectorAll('#subjectList input[type="checkbox"]').forEach(cb => cb.checked = false);
+      }
+
+      async function applySubjectSelection(){
+        const checked = Array.from(document.querySelectorAll('#subjectList input[type="checkbox"]'))
+          .filter(cb => cb.checked)
+          .map(cb => cb.dataset.subject)
+          .filter(Boolean);
+        setVisibleSubjects(checked);
+
+        const ts = Date.now();
+        localStorage.setItem('settings_updated_at', String(ts));
+
+        updateSubjectSummary();
+        closeSubjectModal();
+
+        await syncSettingsToServer();
+        showMsg('已应用');
+      }
+
+      async function clearSubjectFilter(){
+        if (!confirm('确定要显示全部科目吗？')) return;
+        setVisibleSubjects([]);
+        const ts = Date.now();
+        localStorage.setItem('settings_updated_at', String(ts));
+        updateSubjectSummary();
+        await syncSettingsToServer();
+        showMsg('已设置为显示全部');
+      }
+
+      function applyQuizLayoutToUI(){
+        const current = getQuizLayoutTheme() === 'card' ? 'card' : 'traditional';
+        layoutBtns.forEach(btn => {
+          const key = String(btn.getAttribute('data-layout') || '');
+          const active = key === current;
+          btn.classList.toggle('active', active);
+          btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+      }
+
+      function applyQuizFabToUI(){
+        if (fabToggle) fabToggle.checked = isQuizFabEnabled();
+      }
+
+      function getHotkeys(){
+        try {
+          const js = JSON.parse(localStorage.getItem(QUIZ_HOTKEYS_KEY) || 'null');
+          if (!js || typeof js !== 'object') return { ...DEFAULT_QUIZ_HOTKEYS };
+          const result = { ...DEFAULT_QUIZ_HOTKEYS };
+          for (const key in js) {
+            if (key in DEFAULT_QUIZ_HOTKEYS) {
+              if (js[key] !== undefined) result[key] = js[key];
+            }
+          }
+          return result;
+        } catch(e) { return { ...DEFAULT_QUIZ_HOTKEYS }; }
+      }
+
+      function setHotkeys(obj){
+        const merged = { ...DEFAULT_QUIZ_HOTKEYS };
+        if (obj && typeof obj === 'object') {
+          for (const key in obj) {
+            if (key in DEFAULT_QUIZ_HOTKEYS) merged[key] = obj[key];
+          }
+        }
+        localStorage.setItem(QUIZ_HOTKEYS_KEY, JSON.stringify(merged));
+      }
+
+      function collectSettings(){
+        return {
+          version: 1,
+          home_visible_subjects: getVisibleSubjects(),
+          quiz_hotkeys_v1: getHotkeys(),
+          quiz_fab_enabled_v1: isQuizFabEnabled(),
+          quiz_layout_theme_v1: getQuizLayoutTheme(),
+          app_theme_style_v1: getThemeStyle(),
+          updated_at: Date.now()
+        };
+      }
+
+      async function syncSettingsToServer(){
+        try {
+          const payload = collectSettings();
+          await fetch('/api/progress', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: SETTINGS_SYNC_KEY, data: payload })
+          });
+        } catch(e) {}
+      }
+
+      async function loadSettingsFromServerAndMerge(){
+        try {
+          const res = await fetch(`/api/progress?key=${encodeURIComponent(SETTINGS_SYNC_KEY)}`);
+          if (!res.ok) return;
+          const js = await res.json().catch(()=> ({}));
+          if (!js || js.status !== 'success' || !js.data) return;
+
+          const remote = js.data || {};
+          const remoteTs = Number(remote.updated_at || 0);
+          const localTs = Number(localStorage.getItem('settings_updated_at') || '0');
+
+          if (remoteTs > localTs) {
+            setVisibleSubjects(Array.isArray(remote.home_visible_subjects) ? remote.home_visible_subjects : []);
+            if (typeof remote.quiz_fab_enabled_v1 !== 'undefined') setQuizFabEnabled(!!remote.quiz_fab_enabled_v1);
+            if (typeof remote.quiz_layout_theme_v1 === 'string') setQuizLayoutTheme(remote.quiz_layout_theme_v1 === 'card' ? 'card' : 'traditional');
+            if (typeof remote.app_theme_style_v1 === 'string') setThemeStyle(remote.app_theme_style_v1);
+            if (remote.quiz_hotkeys_v1 && typeof remote.quiz_hotkeys_v1 === 'object') {
+              setHotkeys(remote.quiz_hotkeys_v1);
+            }
+            localStorage.setItem('settings_updated_at', String(remoteTs));
+          } else if (localTs > remoteTs) {
+            await syncSettingsToServer();
+          }
+        } catch(e) {}
+      }
+
+      async function resetPractice(){
+        if (!confirm('确定要恢复通用设置的默认值吗？')) return;
+        setVisibleSubjects([]);
+        setQuizFabEnabled(true);
+        setQuizLayoutTheme('traditional');
+        localStorage.setItem('settings_updated_at', String(Date.now()));
+        await syncSettingsToServer();
+        updateSubjectSummary();
+        applyQuizFabToUI();
+        applyQuizLayoutToUI();
+        showMsg('已恢复默认');
+      }
+
+      openSubjectModalBtn && openSubjectModalBtn.addEventListener('click', openSubjectModal);
+      clearSubjectFilterBtn && clearSubjectFilterBtn.addEventListener('click', clearSubjectFilter);
+      closeSubjectModalBtn && closeSubjectModalBtn.addEventListener('click', closeSubjectModal);
+      cancelSubjectBtn && cancelSubjectBtn.addEventListener('click', closeSubjectModal);
+      selectAllSubjectsBtn && selectAllSubjectsBtn.addEventListener('click', selectAllSubjectsInModal);
+      clearAllSubjectsBtn && clearAllSubjectsBtn.addEventListener('click', clearAllSubjectsInModal);
+      applySubjectBtn && applySubjectBtn.addEventListener('click', applySubjectSelection);
+      subjectModal && subjectModal.addEventListener('click', function(e){ if (e.target === subjectModal) closeSubjectModal(); });
+
+      fabToggle && fabToggle.addEventListener('change', async function(){
+        setQuizFabEnabled(!!fabToggle.checked);
+        localStorage.setItem('settings_updated_at', String(Date.now()));
+        await syncSettingsToServer();
+        showMsg(fabToggle.checked ? '已开启悬浮球' : '已关闭悬浮球');
+      });
+
+      layoutBtns.forEach(btn => btn.addEventListener('click', async function(){
+        const key = String(btn.getAttribute('data-layout') || 'traditional');
+        const next = key === 'card' ? 'card' : 'traditional';
+        setQuizLayoutTheme(next);
+        applyQuizLayoutToUI();
+        localStorage.setItem('settings_updated_at', String(Date.now()));
+        await syncSettingsToServer();
+        showMsg(next === 'card' ? '已切换到卡片布局' : '已切换到传统布局');
+      }));
+
+      resetPracticeBtn && resetPracticeBtn.addEventListener('click', resetPractice);
+
+      loadSettingsFromServerAndMerge().finally(() => {
+        updateSubjectSummary();
+        applyQuizFabToUI();
+        applyQuizLayoutToUI();
+        setThemeStyle(getThemeStyle());
+      });
+    })();
+  </script>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "main/data/data_shell.html" %}
+
+{% block data_content %}
+  <section class="app-card dc-card" aria-label="AI助手">
+    <div class="dc-card-head">
+      <div style="min-width:0;">
+        <h2>AI助手</h2>
+        <p>基于你的数据生成训练建议，也可以提问“先练哪个题库/如何提正确率/怎么安排计划”。</p>
+      </div>
+      <div class="dc-ai-badge" id="dcAiProvider">provider：—</div>
+    </div>
+
+    <div class="dc-chart-grid" style="margin-bottom: 12px;">
+      <div class="dc-chart" id="dcAiRadarChart" aria-label="能力画像"></div>
+      <div class="dc-chart" id="dcAiFocusChart" aria-label="优先级建议"></div>
+    </div>
+
+    {% if ai_seed_tips %}
+      <div class="dc-tip-grid" aria-label="建议（兜底）">
+        {% for t in ai_seed_tips %}
+          <div class="dc-tip">
+            <div class="t">{{ t.title }}</div>
+            <div class="c">{{ t.content }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="dc-ai-chat">
+      <div class="dc-ai-messages" id="dcAiMessages" aria-label="对话">
+        <div class="dc-ai-msg bot">
+          <div class="bubble">我会根据你的数据给出可执行的建议。你可以直接问：先练什么？怎么提高正确率？</div>
+        </div>
+      </div>
+
+      <div class="dc-ai-quick" aria-label="快捷问题">
+        <button class="dc-chip" type="button" data-prompt="给我一个今天的学习建议，控制在5条以内。">今日建议</button>
+        <button class="dc-chip" type="button" data-prompt="我应该先练哪个题库？请给出优先级和理由。">先练什么</button>
+        <button class="dc-chip" type="button" data-prompt="如何在不增加太多时间的情况下提升正确率？">提升正确率</button>
+      </div>
+
+      <form class="dc-ai-input" id="dcAiForm" aria-label="输入问题">
+        <textarea id="dcAiInput" rows="2" placeholder="问我：先练哪个科目？怎么安排本周计划？"></textarea>
+        <button class="app-btn" type="submit" id="dcAiSend">发送</button>
+      </form>
+
+      <div class="muted" style="font-size:12px;line-height:1.5;">
+        提示：若未配置 <span class="mono">DASHSCOPE_API_KEY</span>，将返回“模板建议”（不影响使用）。
+      </div>
+    </div>
+  </section>
+{% endblock %}
+

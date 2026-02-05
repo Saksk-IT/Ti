@@ -1,0 +1,134 @@
+<!-- profile-view-v2.wxml - 个人资料展示（原生组件复刻 / v2） -->
+<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="个人资料" back="{{false}}" color="var(--app-nav-fg)" background="var(--app-bg)">
+    <view slot="left" class="nav-left">
+      <view class="icon-btn" bindtap="onHamburgerTap" aria-role="button" aria-label="打开侧边栏">
+        <view class="icon-hamburger"></view>
+      </view>
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <v2-drawer
+    open="{{drawerOpen}}"
+    themeStyle="{{themeStyle}}"
+    activeKey="profile"
+    bind:close="onDrawerClose"
+    bind:navigate="onDrawerNavigate"
+    bind:selectstyle="onDrawerSelectStyle"
+  />
+
+  <view class="page-container">
+    <scroll-view class="content-area" scroll-y bounces="{{false}}" refresher-enabled="{{true}}" bindrefresherrefresh="onPullDownRefresh">
+      <view class="container">
+        <view class="msg error" wx:if="{{errorMsg}}">
+          <text>{{errorMsg}}</text>
+        </view>
+
+        <view class="card hero" aria-label="个人资料概览">
+          <view class="hero-top">
+            <view class="avatar-wrap" bindtap="onAvatarTap" aria-role="button" aria-label="预览头像">
+              <image class="avatar-img" wx:if="{{avatarUrl}}" src="{{avatarUrl}}" mode="aspectFill" binderror="onAvatarError" lazy-load="{{true}}"></image>
+              <view class="avatar-text" wx:else><text>{{avatarInitial}}</text></view>
+            </view>
+
+            <view class="hero-meta">
+              <text class="hero-name">{{username}}</text>
+              <view class="hero-chips">
+                <view class="chip"><text>{{roleText}}</text></view>
+                <view class="chip"><text>{{createdAtText}}</text></view>
+                <view class="chip {{wechatBound ? 'chip-ok' : ''}}"><text>{{wechatBadge}}</text></view>
+              </view>
+            </view>
+          </view>
+
+          <view class="hero-actions">
+            <view class="btn btn-primary" bindtap="onEditProfile" aria-role="button" aria-label="编辑资料">
+              <image class="btn-icon" src="/images/icons/edit.svg" mode="aspectFit"></image>
+              <text>编辑资料</text>
+            </view>
+            <view class="btn btn-danger" bindtap="onLogoutTap" aria-role="button" aria-label="退出登录">
+              <image class="btn-icon" src="/images/icons/logout.svg" mode="aspectFit"></image>
+              <text>退出登录</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="card section-card" aria-label="资料">
+          <text class="section-title">资料</text>
+          <text class="section-sub">用于展示与账号识别。仅包含必要信息。</text>
+          <view class="divider"></view>
+
+          <view class="info-list">
+            <view class="info-row" bindtap="onCopy" data-value="{{username}}" aria-role="button" aria-label="复制昵称">
+              <text class="info-label">昵称</text>
+              <text class="info-value right">{{username}}</text>
+              <text class="info-aux">复制</text>
+            </view>
+            <view class="info-row" bindtap="onCopy" data-value="{{collegeRaw}}" aria-role="button" aria-label="复制学院">
+              <text class="info-label">学院</text>
+              <text class="info-value right {{collegeRaw ? '' : 'muted'}}">{{collegeText}}</text>
+              <text class="info-aux" wx:if="{{collegeRaw}}">复制</text>
+            </view>
+            <view class="info-row" bindtap="onCopy" data-value="{{contactRaw}}" aria-role="button" aria-label="复制联系方式">
+              <text class="info-label">联系方式</text>
+              <text class="info-value right {{contactRaw ? '' : 'muted'}}">{{contactText}}</text>
+              <text class="info-aux" wx:if="{{contactRaw}}">复制</text>
+            </view>
+            <view class="info-row" bindtap="onCopy" data-value="{{emailRaw}}" aria-role="button" aria-label="复制邮箱">
+              <text class="info-label">邮箱</text>
+              <text class="info-value right {{emailRaw ? '' : 'muted'}}">{{emailMasked}}</text>
+              <text class="badge {{emailRaw ? '' : 'badge-muted'}}">{{emailBadge}}</text>
+            </view>
+            <view class="info-row column">
+              <text class="info-label">个人签名</text>
+              <text class="info-long {{signatureRaw ? '' : 'muted'}}">{{signatureText}}</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="card section-card" aria-label="学习概览">
+          <text class="section-title">学习</text>
+          <text class="section-sub">连续学习、累计答题与正确率等。</text>
+          <view class="divider"></view>
+
+          <view class="kpi-grid" role="list">
+            <view class="kpi-card" role="listitem">
+              <text class="kpi-value">{{streakDays}}</text>
+              <text class="kpi-label">连续学习（天）</text>
+            </view>
+            <view class="kpi-card" role="listitem">
+              <text class="kpi-value">{{totalAnswered}}</text>
+              <text class="kpi-label">累计答题</text>
+            </view>
+            <view class="kpi-card" role="listitem">
+              <text class="kpi-value">{{accuracyText}}</text>
+              <text class="kpi-label">正确率</text>
+            </view>
+            <view class="kpi-card" role="listitem">
+              <text class="kpi-value">{{mistakesCount}}</text>
+              <text class="kpi-label">错题</text>
+            </view>
+            <view class="kpi-card" role="listitem">
+              <text class="kpi-value">{{favoritesCount}}</text>
+              <text class="kpi-label">收藏</text>
+            </view>
+          </view>
+
+          <view class="panel-actions">
+            <view class="btn btn-quiet btn-compact" bindtap="onGoHistory" aria-role="button"><text>进度</text></view>
+            <view class="btn btn-compact" bindtap="onGoMistakes" aria-role="button"><text>错题</text></view>
+            <view class="btn btn-compact" bindtap="onGoFavorites" aria-role="button"><text>收藏</text></view>
+          </view>
+        </view>
+
+        <view class="spacer"></view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

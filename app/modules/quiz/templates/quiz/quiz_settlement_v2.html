@@ -1,0 +1,513 @@
+{% extends "main/shared/app_shell.html" %}
+{% block title %}本次结算{% endblock %}
+{% block page_title %}结算{% endblock %}
+
+{% block head_extra %}
+  <style>
+    .settle-page {
+      max-width: 980px;
+      margin: 0 auto;
+      min-width: 0;
+      position: relative;
+      padding-bottom: calc(env(safe-area-inset-bottom) + 12px);
+    }
+    .settle-page::before{
+      content: '';
+      position: absolute;
+      inset: -14px -14px auto -14px;
+      height: 220px;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.95;
+      filter: blur(14px);
+      background:
+        radial-gradient(140px 140px at 10% 15%, color-mix(in srgb, var(--app-primary) 14%, transparent) 0%, transparent 65%),
+        radial-gradient(180px 180px at 88% 10%, color-mix(in srgb, var(--app-cta) 14%, transparent) 0%, transparent 70%),
+        radial-gradient(220px 220px at 35% 85%, color-mix(in srgb, var(--app-primary) 10%, transparent) 0%, transparent 72%);
+    }
+    html[data-theme="dark"] .settle-page::before { opacity: 0.45; filter: blur(18px); }
+    .settle-page > * { position: relative; z-index: 1; }
+
+    .mono { font-variant-numeric: tabular-nums; }
+
+    .settle-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+      min-width: 0;
+    }
+    .settle-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
+
+    .bento {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 14px;
+      margin-bottom: 14px;
+      align-items: stretch;
+    }
+
+    .cardx {
+      border: 1px solid var(--app-border);
+      border-radius: var(--app-radius-xl);
+      background: var(--app-surface-2);
+      box-shadow: var(--app-shadow-soft);
+      padding: 18px;
+      overflow: hidden;
+      min-width: 0;
+    }
+    @supports ((-webkit-backdrop-filter: blur(12px)) or (backdrop-filter: blur(12px))) {
+      .cardx {
+        backdrop-filter: blur(18px) saturate(160%);
+        -webkit-backdrop-filter: blur(18px) saturate(160%);
+      }
+    }
+
+    .metric { display: flex; flex-direction: column; gap: 6px; min-height: 72px; justify-content: center; }
+    .label { color: var(--app-muted); font-size: 12px; letter-spacing: 0.2px; font-weight: 900; }
+    .value { font-size: 22px; font-weight: 950; letter-spacing: -0.3px; }
+    .value small { font-size: 13px; font-weight: 850; color: var(--app-muted); }
+
+    .ring {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: conic-gradient(var(--app-primary) calc(var(--p) * 1%), color-mix(in srgb, var(--app-border) 60%, transparent) 0);
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+    }
+    .ring::after {
+      content: '';
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--app-surface);
+      border: 1px solid var(--app-border);
+      box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 30%, transparent);
+    }
+
+    .kpi { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .kpi-text { display:flex; flex-direction:column; gap:2px; min-width:0; }
+    .kpi-text .big { font-weight: 950; letter-spacing: -0.2px; }
+    .kpi-text .small { font-size: 12px; color: var(--app-muted); }
+
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .actions > .btnx { width: 100%; }
+    .btnx {
+      height: 38px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid var(--app-border);
+      background: var(--app-surface);
+      box-shadow: var(--app-shadow-soft);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 950;
+      font-size: 13px;
+      transition: background 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+      white-space: nowrap;
+      text-decoration: none;
+      color: var(--app-text);
+    }
+    .btnx:hover { box-shadow: var(--app-shadow); transform: translateY(-1px); }
+    .btnx:active { transform: translateY(0); }
+    .btnx:focus { outline: none; box-shadow: 0 0 0 3px var(--app-primary-soft), var(--app-shadow-soft); }
+    .btnx:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btnx[aria-disabled="true"] { opacity: 0.5; pointer-events: none; }
+
+    .btnx-primary {
+      border-color: color-mix(in srgb, var(--app-primary) 50%, var(--app-border));
+      background: color-mix(in srgb, var(--app-primary) 12%, var(--app-surface));
+    }
+    .btnx-cta {
+      border-color: color-mix(in srgb, var(--app-cta) 55%, var(--app-border));
+      background: color-mix(in srgb, var(--app-cta) 14%, var(--app-surface));
+    }
+
+    .hint {
+      margin-top: 10px;
+      color: var(--app-muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .empty-state {
+      padding: 18px;
+      border-radius: var(--app-radius-xl);
+      border: 1px dashed var(--app-border);
+      background: color-mix(in srgb, var(--app-surface) 70%, transparent);
+      color: var(--app-muted);
+      box-shadow: var(--app-shadow-soft);
+    }
+
+    .settle-toast{
+      position: fixed;
+      left: 50%;
+      bottom: calc(env(safe-area-inset-bottom) + 14px);
+      transform: translateX(-50%) translateY(14px);
+      opacity: 0;
+      pointer-events: none;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--app-border);
+      background: color-mix(in srgb, var(--app-surface) 92%, transparent);
+      box-shadow: var(--app-shadow);
+      color: var(--app-text);
+      font-size: 13px;
+      font-weight: 850;
+      max-width: min(520px, calc(100vw - 28px));
+      text-align: center;
+      transition: transform 160ms ease, opacity 160ms ease;
+      z-index: 999;
+    }
+    .settle-toast.show{ opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 720px) {
+      .bento { grid-template-columns: repeat(6, 1fr); gap: 12px; }
+      .bento > .cardx { grid-column: span 6 !important; padding: 16px; }
+      .bento > .cardx.card-half { grid-column: span 3 !important; }
+      .value { font-size: 20px; }
+      .actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .actions .btnx { height: 44px; }
+      .actions .btnx-primary,
+      .actions .btnx-cta { grid-column: span 2; }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="app-container settle-page">
+    <div class="settle-head">
+      <div class="settle-meta">
+        <span class="app-pill">结算</span>
+        <span class="app-pill" id="pillDisplayName" style="display:none;"></span>
+        <span class="app-pill mono" id="pillMode">—</span>
+        <span class="app-pill" id="pillSource">—</span>
+        <span class="app-pill" id="pillQType" style="display:none;"></span>
+        <span class="app-pill" id="pillTag" style="display:none;"></span>
+      </div>
+    </div>
+
+    <div id="settleError" class="empty-state" style="display:none;">
+      <div style="font-weight: 950; color: var(--app-text);">结算数据已过期</div>
+      <div style="margin-top: 6px;">请返回答题页重新点击“完成”。</div>
+      <div style="margin-top: 12px; display:flex; gap:10px; flex-wrap: wrap;">
+        <a class="btnx btnx-primary" href="/" id="btnBackHome">返回首页</a>
+      </div>
+    </div>
+
+    <div id="settleMain" style="display:none;">
+      <div class="bento">
+        <div class="cardx" style="grid-column: span 4;">
+          <div class="metric">
+            <div class="label">答对 / 已答</div>
+            <div class="value mono"><span id="valCorrect">0</span> <small>/ <span id="valAnswered">0</span></small></div>
+          </div>
+        </div>
+
+        <div class="cardx" style="grid-column: span 4;">
+          <div class="kpi">
+            <div style="display:flex; align-items:center; gap:12px; min-width:0;">
+              <div class="ring" id="accuracyRing" style="--p: 0;"></div>
+              <div class="kpi-text">
+                <div class="big mono"><span id="valAccuracy">0</span>%</div>
+                <div class="small">正确率（按已答）</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cardx card-half" style="grid-column: span 2;">
+          <div class="metric">
+            <div class="label">答错</div>
+            <div class="value mono" id="valWrong">0</div>
+          </div>
+        </div>
+
+        <div class="cardx card-half" style="grid-column: span 2;">
+          <div class="metric">
+            <div class="label">未答</div>
+            <div class="value mono" id="valUnanswered">0</div>
+          </div>
+        </div>
+
+        <div class="cardx card-half" style="grid-column: span 4;">
+          <div class="metric">
+            <div class="label">总题数</div>
+            <div class="value mono" id="valTotal">0</div>
+          </div>
+        </div>
+
+        <div class="cardx card-half" style="grid-column: span 4;">
+          <div class="metric">
+            <div class="label">用时</div>
+            <div class="value mono" id="valUsed">—</div>
+          </div>
+        </div>
+
+        <div class="cardx" style="grid-column: span 4;">
+          <div class="metric">
+            <div class="label">平均每题</div>
+            <div class="value mono"><span id="valAvg">—</span> <small>s</small></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cardx">
+        <div class="metric" style="gap: 10px;">
+          <div class="actions">
+            <a class="btnx btnx-primary" href="/quiz" id="btnReview">回顾题目</a>
+            <a class="btnx btnx-cta" href="/quiz" id="btnReinforceWrong" aria-disabled="true">错题加强</a>
+            <a class="btnx" href="/mistakes/center" id="btnMistakes">错题中心</a>
+            <a class="btnx" href="/exams" id="btnExams">继续考试</a>
+            <button class="btnx" type="button" onclick="shareQuizSettlement()">分享</button>
+            <a class="btnx" href="/" id="btnExit">退出</a>
+          </div>
+
+          <div class="hint" id="valHint"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="settle-toast" id="settleToast" role="status" aria-live="polite"></div>
+{% endblock %}
+
+{% block body_end %}
+  <script>
+    let __qs_toast_timer = null;
+    function __qs_toast(msg) {
+      try {
+        const el = document.getElementById('settleToast');
+        if (!el) return;
+        el.textContent = String(msg == null ? '' : msg);
+        el.classList.add('show');
+        if (__qs_toast_timer) clearTimeout(__qs_toast_timer);
+        __qs_toast_timer = setTimeout(() => { el.classList.remove('show'); }, 2200);
+      } catch (e) {}
+    }
+
+    function __qs_readPayload() {
+      try {
+        const raw = localStorage.getItem('quiz_settlement_payload_v1');
+        if (!raw) return null;
+        const js = JSON.parse(raw);
+        return (js && typeof js === 'object') ? js : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function __qs_safeText(v) {
+      return String(v == null ? '' : v).trim();
+    }
+
+    function __qs_formatSeconds(seconds) {
+      const s = Math.max(0, Math.floor(Number(seconds) || 0));
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const r = s % 60;
+      if (h > 0) return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(r).padStart(2,'0')}`;
+      return `${String(m).padStart(2,'0')}:${String(r).padStart(2,'0')}`;
+    }
+
+    function __qs_modeLabel(mode, reinforceKind) {
+      const m = __qs_safeText(mode);
+      if (m === 'memo') return '背题';
+      if (m === 'learn') return '学习';
+      if (m === 'review') return '复习';
+      if (m === 'reinforce') {
+        const rk = __qs_safeText(reinforceKind);
+        if (rk === 'similar') return '相似题加强';
+        return '错题加强';
+      }
+      return '刷题';
+    }
+
+    function __qs_sourceLabel(source) {
+      const s = __qs_safeText(source);
+      if (s === 'favorites') return '收藏';
+      if (s === 'mistakes') return '错题';
+      return '全部';
+    }
+
+    function __qs_withFrom(rawUrl, fromPath) {
+      try {
+        const url = new URL(rawUrl, window.location.origin);
+        const p = __qs_safeText(fromPath);
+        if (p) url.searchParams.set('from', p);
+        return url.pathname + url.search + url.hash;
+      } catch (e) {
+        return rawUrl;
+      }
+    }
+
+    function __qs_buildReinforceUrl(payload, wrongIds) {
+      const ids = (Array.isArray(wrongIds) ? wrongIds : []).slice(0, 200).join(',');
+      if (!ids) return '';
+      const bankId = payload && payload.sourceType === 'bank' ? __qs_safeText(payload.sourceId) : '';
+      const fromPath = __qs_safeText(payload && payload.returnTo ? payload.returnTo : '');
+
+      let url = `/quiz?mode=reinforce&rk=wrong&ids=${encodeURIComponent(ids)}`;
+      if (bankId) url += `&bank_id=${encodeURIComponent(bankId)}`;
+      if (fromPath) url += `&from=${encodeURIComponent(fromPath)}`;
+      return url;
+    }
+
+    async function shareQuizSettlement() {
+      const p = window.__QUIZ_SETTLEMENT_PAYLOAD__ || null;
+      const modeText = __qs_modeLabel(p && p.mode, p && p.reinforceKind);
+      const displayName = __qs_safeText(p && p.displayName);
+      const scope = displayName || '本次练习';
+      const accuracy = (p && typeof p.accuracy !== 'undefined') ? Number(p.accuracy || 0) : 0;
+      const text = `${scope}｜${modeText}：正确率 ${accuracy}%`;
+
+      const shareUrl = (p && p.returnTo) ? (window.location.origin + __qs_safeText(p.returnTo)) : window.location.origin;
+
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: document.title, text, url: shareUrl });
+          return;
+        }
+      } catch (e) {}
+
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+          __qs_toast('已复制结算摘要');
+          return;
+        }
+      } catch (e) {}
+
+      try { prompt('复制结算摘要', text); } catch (e) {}
+    }
+
+    (function () {
+      const errorEl = document.getElementById('settleError');
+      const mainEl = document.getElementById('settleMain');
+      const hintEl = document.getElementById('valHint');
+
+      const payload = __qs_readPayload();
+      window.__QUIZ_SETTLEMENT_PAYLOAD__ = payload;
+
+      const ts = payload && payload.ts ? Number(payload.ts || 0) : 0;
+      const expired = !ts || (Date.now() - ts > 24 * 60 * 60 * 1000);
+      if (!payload || expired) {
+        if (errorEl) errorEl.style.display = 'block';
+        if (mainEl) mainEl.style.display = 'none';
+        if (hintEl) hintEl.textContent = '';
+        return;
+      }
+
+      const total = Math.max(0, Math.floor(Number(payload.total || 0)));
+      const answered = Math.max(0, Math.floor(Number(payload.answered || 0)));
+      const correct = Math.max(0, Math.floor(Number(payload.correct || 0)));
+      const wrong = Math.max(0, Math.floor(Number(payload.wrong || 0)));
+      const unanswered = Math.max(0, total - answered);
+      const accuracy = Math.max(0, Math.min(100, Number(payload.accuracy || 0)));
+      const usedSec = Math.max(0, Math.floor(Number(payload.usedSec || 0)));
+      const avgSec = answered ? Math.round((usedSec / answered) * 10) / 10 : null;
+
+      const modeText = __qs_modeLabel(payload.mode, payload.reinforceKind);
+      const sourceText = __qs_sourceLabel(payload.source);
+      const qTypeText = __qs_safeText(payload.qType);
+      const tagText = __qs_safeText(payload.tag);
+      const displayName = __qs_safeText(payload.displayName);
+
+      try {
+        const pillMode = document.getElementById('pillMode');
+        if (pillMode) pillMode.textContent = modeText;
+        const pillSource = document.getElementById('pillSource');
+        if (pillSource) pillSource.textContent = sourceText;
+
+        const pillDisplayName = document.getElementById('pillDisplayName');
+        if (pillDisplayName && displayName) {
+          pillDisplayName.textContent = displayName;
+          pillDisplayName.style.display = 'inline-flex';
+        }
+
+        const pillQType = document.getElementById('pillQType');
+        if (pillQType && qTypeText && qTypeText.toLowerCase() !== 'all') {
+          pillQType.textContent = qTypeText;
+          pillQType.style.display = 'inline-flex';
+        }
+        const pillTag = document.getElementById('pillTag');
+        if (pillTag && tagText && tagText.toLowerCase() !== 'all') {
+          pillTag.textContent = tagText;
+          pillTag.style.display = 'inline-flex';
+        }
+      } catch (e) {}
+
+      const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = String(v); };
+      setText('valTotal', total);
+      setText('valAnswered', answered);
+      setText('valCorrect', correct);
+      setText('valWrong', wrong);
+      setText('valUnanswered', unanswered);
+      setText('valAccuracy', accuracy);
+      setText('valUsed', __qs_formatSeconds(usedSec));
+      setText('valAvg', avgSec == null ? '—' : avgSec);
+
+      try {
+        const ring = document.getElementById('accuracyRing');
+        if (ring) ring.style.setProperty('--p', String(accuracy));
+      } catch (e) {}
+
+      const fromPath = __qs_safeText(payload.returnTo);
+      const quizUrl = __qs_safeText(payload.quizUrl) || '/quiz';
+      const reviewUrl = __qs_withFrom(quizUrl, fromPath);
+
+      const btnReview = document.getElementById('btnReview');
+      if (btnReview) btnReview.setAttribute('href', reviewUrl);
+
+      const wrongIds = Array.isArray(payload.wrongIds) ? payload.wrongIds.filter((n) => Number.isFinite(Number(n)) && Number(n) > 0) : [];
+      const btnReinforce = document.getElementById('btnReinforceWrong');
+      const reinforceUrl = __qs_buildReinforceUrl(payload, wrongIds);
+      if (btnReinforce) {
+        if (reinforceUrl) {
+          btnReinforce.setAttribute('href', reinforceUrl);
+          btnReinforce.removeAttribute('aria-disabled');
+        } else {
+          btnReinforce.setAttribute('href', reviewUrl);
+          btnReinforce.setAttribute('aria-disabled', 'true');
+        }
+      }
+
+      const btnMistakes = document.getElementById('btnMistakes');
+      if (btnMistakes) {
+        if (payload.sourceType === 'bank' && payload.sourceId) {
+          const bankId = __qs_safeText(payload.sourceId);
+          let url = `/quiz?bank_id=${encodeURIComponent(bankId)}&source=mistakes`;
+          if (fromPath) url += `&from=${encodeURIComponent(fromPath)}`;
+          btnMistakes.setAttribute('href', url);
+          btnMistakes.textContent = '错题强化';
+        } else {
+          btnMistakes.setAttribute('href', '/mistakes/center');
+          btnMistakes.textContent = '错题中心';
+        }
+      }
+
+      const btnExit = document.getElementById('btnExit');
+      if (btnExit) btnExit.setAttribute('href', fromPath || '/');
+
+      if (hintEl) {
+        const part = `${modeText} · ${sourceText} · 已答 ${answered}/${total}`;
+        const shareTip = '分享提示：结算页数据仅保存在本地（更推荐分享截图或复制摘要）。';
+        hintEl.textContent = `${part}。${shareTip}`;
+      }
+
+      if (errorEl) errorEl.style.display = 'none';
+      if (mainEl) mainEl.style.display = 'block';
+    })();
+  </script>
+{% endblock %}

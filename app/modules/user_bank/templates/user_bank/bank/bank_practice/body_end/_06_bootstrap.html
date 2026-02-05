@@ -1,0 +1,28 @@
+    initTabOrder();
+    initDetailTab();
+    restore();
+
+    // 初始化题型/标签（若已失效则回退 all）
+    if (!document.querySelector(`[data-chip-kind="scope"][data-val="${cssEscape(state.scope)}"]`)) {
+      state.scope = 'all';
+    }
+    if (!document.querySelector(`[data-chip-kind="type"][data-val="${cssEscape(state.type)}"]`)) {
+      state.type = 'all';
+    }
+    if (!document.querySelector(`[data-chip-kind="tag"][data-val="${cssEscape(state.tag)}"]`)) {
+      state.tag = 'all';
+    }
+    if (!document.querySelector(`#chipsSearchType .chip[data-val="${cssEscape(searchState.type)}"]`)) {
+      searchState.type = 'all';
+    }
+    persist();
+    try { localStorage.setItem(KEY_SEARCH_TYPE, searchState.type || 'all'); } catch (e) {}
+
+    syncChipsUI();
+    setSwitch('shuffleQ', state.shuffleQ);
+    setSwitch('shuffleO', state.shuffleO);
+    syncShuffleAvailability();
+    syncSearchTypeUI();
+    queueStartCount();
+    renderShareUrl();
+

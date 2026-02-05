@@ -1,0 +1,130 @@
+{% extends "main/shared/app_shell.html" %}
+
+{% block title %}SAK · 通知{% endblock %}
+{% block page_title %}通知{% endblock %}
+
+{% block head_extra %}
+  <link rel="stylesheet" href="/static/css/notifications_v4.css" />
+{% endblock %}
+
+{% block content %}
+<div class="app-container noti-shell">
+  <section class="noti-hero">
+    <div class="noti-heroMain">
+      <h1 class="noti-h1">通知中心</h1>
+      <p class="noti-desc">未读/已读分开浏览与管理；支持搜索与分页，保持页面简洁。</p>
+    </div>
+
+    <div class="noti-stats" aria-label="通知概览">
+      <div class="noti-stat unread">
+        <div class="noti-statLabel">未读</div>
+        <div class="noti-statValue" id="statUnread">—</div>
+      </div>
+      <div class="noti-stat">
+        <div class="noti-statLabel">已读</div>
+        <div class="noti-statValue" id="statRead">—</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="noti-layout">
+    <aside class="noti-sidebar" aria-label="通知侧边栏">
+      <div class="noti-sideCard app-card">
+        <div class="noti-sideTop">
+          <div class="noti-sideTitle">切换</div>
+          <button class="noti-iconBtn" type="button" id="btnRefresh" aria-label="刷新通知">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+              <path d="M20 12a8 8 0 1 1-2.34-5.66" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M20 4v6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="noti-tabs" role="tablist" aria-label="未读与已读">
+          <button class="noti-tab active" id="tabUnread" role="tab" aria-selected="true" aria-controls="panelUnread" type="button" data-tab="unread">
+            <span>未读</span>
+            <span class="noti-pill unread" id="pillUnread">—</span>
+          </button>
+          <button class="noti-tab" id="tabRead" role="tab" aria-selected="false" aria-controls="panelRead" type="button" data-tab="read">
+            <span>已读</span>
+            <span class="noti-pill" id="pillRead">—</span>
+          </button>
+        </div>
+
+        <div class="noti-divider"></div>
+
+        <div style="display:grid; gap:8px;">
+          <button class="noti-btn noti-btn-primary" type="button" id="btnMarkAllRead" disabled>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true">
+              <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            全部标记已读
+          </button>
+        </div>
+
+        <div class="noti-divider"></div>
+
+        <div class="noti-form">
+          <div class="noti-label">搜索当前页</div>
+          <div class="noti-searchRow">
+            <div class="noti-searchWrap">
+              <svg class="noti-searchIcon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              <input class="app-input noti-searchInput" id="searchInput" type="search" placeholder="标题 / 内容" aria-label="搜索通知" autocomplete="off" enterkeyhint="search" />
+            </div>
+            <button class="noti-iconBtn" type="button" id="btnClearSearch" aria-label="清除搜索" style="display:none;">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+                <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="noti-label">每页显示</div>
+          <select class="app-input noti-select" id="pageSizeSelect" aria-label="每页显示数量">
+            <option value="10" selected>10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+
+        <div class="noti-hint" id="sideHint">
+          小提示：点击“已读”卡片可展开查看完整内容；搜索与分页仅作用于当前子页。
+        </div>
+      </div>
+    </aside>
+
+    <section class="noti-content">
+      <div class="noti-alert" id="alertBox" role="alert" style="display:none;"></div>
+
+      <div class="noti-panel" id="panelUnread" role="tabpanel" aria-labelledby="tabUnread">
+        <div class="noti-panelHd">
+          <h2 class="noti-h2">未读通知</h2>
+          <div class="noti-panelSub" id="unreadSub">—</div>
+        </div>
+        <div class="noti-list" id="unreadList">
+          <div class="noti-empty">正在加载通知…</div>
+        </div>
+        <div class="noti-pager" id="unreadPager" style="display:none;"></div>
+      </div>
+
+      <div class="noti-panel" id="panelRead" role="tabpanel" aria-labelledby="tabRead" hidden>
+        <div class="noti-panelHd">
+          <h2 class="noti-h2">已读通知</h2>
+          <div class="noti-panelSub" id="readSub">—</div>
+        </div>
+        <div class="noti-list" id="readList">
+          <div class="noti-empty">正在加载通知…</div>
+        </div>
+        <div class="noti-pager" id="readPager" style="display:none;"></div>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block body_end %}
+  <script src="/static/js/notifications_v4.js"></script>
+{% endblock %}

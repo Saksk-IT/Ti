@@ -1,0 +1,76 @@
+<!-- settings-theme-v2.wxml - 对齐 Web /settings/theme（原生组件复刻） -->
+<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="设置" back="{{false}}" color="var(--app-nav-fg)" background="var(--app-bg)">
+    <view slot="left" class="nav-left">
+      <view class="icon-btn" bindtap="onHamburgerTap" aria-role="button" aria-label="打开侧边栏">
+        <view class="icon-hamburger"></view>
+      </view>
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+    <view slot="right" class="nav-right">
+      <view class="pill-btn" bindtap="onContinueLast" aria-role="button" aria-label="继续上次">
+        <text>继续上次</text>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <v2-drawer
+    open="{{drawerOpen}}"
+    themeStyle="{{themeStyle}}"
+    activeKey="settings"
+    bind:close="onDrawerClose"
+    bind:navigate="onDrawerNavigate"
+    bind:selectstyle="onDrawerSelectStyle"
+  />
+
+  <view class="page-container">
+    <scroll-view class="content-area" scroll-y bounces="{{false}}">
+      <view class="container">
+        <view class="card hero" aria-label="主题页概览">
+          <text class="hero-title">主题</text>
+          <text class="hero-sub">调整页面主色与背景氛围。</text>
+        </view>
+
+        <view class="card nav-card" aria-label="设置分区导航">
+          <view class="tabs">
+            <view class="tab {{navKey==='account' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="account"><text>账号管理</text></view>
+            <view class="tab {{navKey==='practice' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="practice"><text>通用</text></view>
+            <view class="tab {{navKey==='theme' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="theme"><text>主题</text></view>
+            <view class="tab {{navKey==='about' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="about"><text>关于</text></view>
+          </view>
+        </view>
+
+        <view class="msg" wx:if="{{msg}}">
+          <text>{{msg}}</text>
+        </view>
+
+        <view class="card section-card" aria-label="主题模式">
+          <text class="section-title">主题模式</text>
+          <text class="section-sub">浅色 / 深色 / 跟随系统（本机生效，不同步）。</text>
+          <view class="chips">
+            <view class="chip {{themeMode==='light' ? 'active' : ''}}" bindtap="onModeTap" data-mode="light"><text>浅色</text></view>
+            <view class="chip {{themeMode==='dark' ? 'active' : ''}}" bindtap="onModeTap" data-mode="dark"><text>深色</text></view>
+            <view class="chip {{themeMode==='system' ? 'active' : ''}}" bindtap="onModeTap" data-mode="system"><text>跟随系统</text></view>
+          </view>
+        </view>
+
+        <view class="card section-card" aria-label="页面风格主题">
+          <text class="section-title">页面风格主题</text>
+          <text class="section-sub">该风格会与 Web 端设置同步（已登录）。</text>
+          <view class="chips">
+            <view class="chip {{themeStyle==='default' ? 'active' : ''}}" bindtap="onStyleTap" data-style="default"><text>默认</text></view>
+            <view class="chip {{themeStyle==='mist' ? 'active' : ''}}" bindtap="onStyleTap" data-style="mist"><text>雾蓝</text></view>
+            <view class="chip {{themeStyle==='dune' ? 'active' : ''}}" bindtap="onStyleTap" data-style="dune"><text>暖砂</text></view>
+            <view class="chip {{themeStyle==='pine' ? 'active' : ''}}" bindtap="onStyleTap" data-style="pine"><text>岩松</text></view>
+            <view class="chip {{themeStyle==='celadon' ? 'active' : ''}}" bindtap="onStyleTap" data-style="celadon"><text>影青</text></view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

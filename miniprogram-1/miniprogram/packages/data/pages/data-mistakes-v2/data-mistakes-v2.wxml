@@ -1,0 +1,278 @@
+<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="数据" back="{{false}}" color="var(--app-nav-fg)" background="var(--app-nav-bg)">
+    <view slot="left" class="nav-left">
+      <view class="icon-btn" bindtap="onHamburgerTap" aria-role="button" aria-label="打开侧边栏">
+        <view class="icon-hamburger"></view>
+      </view>
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <v2-drawer
+    open="{{drawerOpen}}"
+    themeStyle="{{themeStyle}}"
+    activeKey="data"
+    bind:close="onDrawerClose"
+    bind:navigate="onDrawerNavigate"
+    bind:selectstyle="onDrawerSelectStyle"
+  />
+
+  <view class="page-container">
+    <scroll-view
+      class="content-area"
+      scroll-y
+      bounces="{{false}}"
+      refresher-enabled="{{true}}"
+      bindrefresherrefresh="onPullDownRefresh"
+    >
+      <view class="container">
+        <view class="dc-hero" aria-label="数据中心 · 错题">
+          <view class="dc-hero-main">
+            <view class="dc-hero-title" style="min-width:0;">
+              <text class="dc-h1">数据中心 · 错题</text>
+              <text class="dc-p">错题是最有杠杆的提升入口：高频先闭环，薄弱再专项。</text>
+            </view>
+
+            <view class="dc-hero-actions" aria-label="时间窗口与操作">
+              <view class="dc-window" aria-label="时间窗口">
+                <view class="dc-window-tab {{days===7 ? 'active' : ''}}" bindtap="onDaysTap" data-days="7"><text>7天</text></view>
+                <view class="dc-window-tab {{days===30 ? 'active' : ''}}" bindtap="onDaysTap" data-days="30"><text>30天</text></view>
+                <view class="dc-window-tab {{days===90 ? 'active' : ''}}" bindtap="onDaysTap" data-days="90"><text>90天</text></view>
+              </view>
+            </view>
+          </view>
+
+          <view class="dc-hero-kpis" aria-label="关键指标">
+            <view class="dc-kpi-pill">
+              <text class="k">错题数</text>
+              <text class="v mono">{{all_summary.mistakes || 0}}</text>
+            </view>
+            <view class="dc-kpi-pill">
+              <text class="k">错题次数</text>
+              <text class="v mono">{{all_summary.mistakes_times || 0}}</text>
+            </view>
+            <view class="dc-kpi-pill">
+              <text class="k">近{{window_days}}天新增</text>
+              <text class="v mono">{{mistakes_new || 0}}</text>
+            </view>
+            <view class="dc-kpi-pill">
+              <text class="k">健康分</text>
+              <text class="v mono">{{health_score || 0}}</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="dc-basebar" aria-label="数据中心导航">
+          <scroll-view class="dc-tabs" scroll-x enhanced show-scrollbar="{{false}}">
+            <view class="dc-tabs-inner">
+              <view class="dc-tab" bindtap="onTabTap" data-tab="global"><text>全局</text></view>
+              <view class="dc-tab" bindtap="onTabTap" data-tab="banks"><text>题库</text></view>
+              <view class="dc-tab active"><text>错题</text></view>
+              <view class="dc-tab" bindtap="onTabTap" data-tab="favorites"><text>收藏</text></view>
+              <view class="dc-tab" bindtap="onTabTap" data-tab="tags"><text>标签</text></view>
+            </view>
+          </scroll-view>
+        </view>
+
+        <view class="dc-bento" aria-label="错题数据看板">
+          <view class="dc-card dc-span-4" aria-label="错题总览">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">错题总览</text>
+                <text class="dc-card-sub">错题不是“负债”，是最有杠杆的复盘资产：高频先闭环，薄弱再专项。</text>
+              </view>
+              <view class="dc-mini-btn" bindtap="onGoMistakesCenter" aria-role="button"><text>错题中心</text></view>
+            </view>
+
+            <view class="dc-list">
+              <view class="dc-item">
+                <view class="dc-item-top">
+                  <view style="min-width:0;">
+                    <text class="dc-item-title">错题数量</text>
+                    <text class="dc-item-meta">{{all_summary.mistakes || 0}}（公共 + 个人）</text>
+                  </view>
+                </view>
+              </view>
+              <view class="dc-item">
+                <view class="dc-item-top">
+                  <view style="min-width:0;">
+                    <text class="dc-item-title">错题次数</text>
+                    <text class="dc-item-meta">{{all_summary.mistakes_times || 0}}（越高越该优先处理）</text>
+                  </view>
+                </view>
+              </view>
+              <view class="dc-item">
+                <view class="dc-item-top">
+                  <view style="min-width:0;">
+                    <text class="dc-item-title">近 {{window_days}} 天新增</text>
+                    <text class="dc-item-meta">{{mistakes_new || 0}}（按创建日期统计）</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+
+            <view class="dc-item-actions" style="margin-top:20rpx;">
+              <view class="dc-mini-btn primary" bindtap="onGoMistakesCenter" aria-role="button"><text>去闭环</text></view>
+              <view class="dc-mini-btn" bindtap="onTabTap" data-tab="global" aria-role="button"><text>回全局</text></view>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-8" aria-label="错题新增趋势">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">错题新增趋势</text>
+                <text class="dc-card-sub">公共 + 个人（近 {{window_days}} 天）：新增是否在下降，是“系统变好”的强信号。</text>
+              </view>
+            </view>
+            <view class="dc-chart lg" aria-label="错题新增趋势图">
+              <ec-canvas id="dcMistakeTrendChart" canvas-id="dcMistakeTrendChart" ec="{{ecLazy}}" class="dc-echart"></ec-canvas>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-12 dc-lazy-card" wx:if="{{lazyStage < 2}}" id="dcLazyStage2Trigger" aria-label="继续下滑加载更多">
+            <text class="dc-lazy-title">继续下滑加载更多</text>
+            <text class="dc-lazy-sub">下方榜单与分布图将按需渲染</text>
+          </view>
+
+          <block wx:if="{{lazyStage >= 2}}">
+          <view class="dc-card dc-span-6" aria-label="错题 Top 领域">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">错题 Top 领域</text>
+                <text class="dc-card-sub">公共按科目 / 个人按题库：优先处理“次数高 + 仍在持续”的区域。</text>
+              </view>
+            </view>
+            <view class="dc-chart lg" aria-label="错题 Top 领域图">
+              <ec-canvas id="dcMistakeTopChart" canvas-id="dcMistakeTopChart" ec="{{ecLazy}}" class="dc-echart"></ec-canvas>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-6" aria-label="错题难度分布">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">难度分布</text>
+                <text class="dc-card-sub">次数（公共 + 个人）：错误更多来自“难题”还是“基础题”。</text>
+              </view>
+            </view>
+            <view class="dc-chart lg" aria-label="错题难度分布图">
+              <ec-canvas id="dcMistakeDifficultyChart" canvas-id="dcMistakeDifficultyChart" ec="{{ecLazy}}" class="dc-echart"></ec-canvas>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-12" aria-label="错题题型分布">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">题型分布</text>
+                <text class="dc-card-sub">次数（公共 + 个人）：把时间投到“最容易错”的题型上。</text>
+              </view>
+            </view>
+            <view class="dc-chart lg" aria-label="错题题型分布图">
+              <ec-canvas id="dcMistakeTypeChart" canvas-id="dcMistakeTypeChart" ec="{{ecLazy}}" class="dc-echart"></ec-canvas>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-6" aria-label="错题 Top 列表">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">错题 Top 列表</text>
+                <text class="dc-card-sub">建议优先处理“次数高”的维度；闭环后，再做一次巩固训练。</text>
+              </view>
+            </view>
+
+            <view class="dc-list" wx:if="{{mistakes_top_items.length}}">
+              <view class="dc-item" wx:for="{{mistakes_top_items}}" wx:for-item="it" wx:key="key">
+                <view class="dc-item-top">
+                  <view style="min-width:0;">
+                    <text class="dc-item-title">{{it.scope_label}} · {{it.name}}</text>
+                    <text class="dc-item-meta">错题 {{it.count}} · 次数 {{it.times}}</text>
+                  </view>
+                  <view class="dc-item-actions">
+                    <view class="dc-mini-btn primary" wx:if="{{it.can_quiz_bank}}" bindtap="onGoBankMistakes" data-bank-id="{{it.bank_id}}" aria-role="button"><text>刷错题</text></view>
+                    <view class="dc-mini-btn" wx:else bindtap="onGoMistakesCenter" aria-role="button"><text>去中心下钻</text></view>
+                  </view>
+                </view>
+                <view class="dc-bars" aria-hidden="true">
+                  <view class="dc-bar secondary">
+                    <view class="dc-bar-inner" style="width: {{it.bar_pct}}%;"></view>
+                  </view>
+                </view>
+              </view>
+            </view>
+            <view class="dc-empty" wx:else>暂无可用错题排行数据。</view>
+          </view>
+
+          <view class="dc-card dc-span-6" aria-label="最近错题（公共/个人）">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">最近错题</text>
+                <text class="dc-card-sub">从“错得多/最近更新”里挑：优先做 1 次复盘（错因 + 规则/公式 + 反例）。</text>
+              </view>
+            </view>
+
+            <view class="dc-bento" aria-label="最近错题列表">
+              <view class="dc-span-6">
+                <view class="dc-card-head">
+                  <view style="min-width:0;">
+                    <text class="dc-h3">公共题库</text>
+                    <text class="dc-card-sub">按科目/题型下钻，回到练习闭环。</text>
+                  </view>
+                </view>
+                <view class="dc-list" wx:if="{{recent_mistakes.length}}">
+                  <view class="dc-item" wx:for="{{recent_mistakes}}" wx:for-item="m" wx:key="key">
+                    <view class="dc-item-top">
+                      <view style="min-width:0;">
+                        <text class="dc-item-title">{{m.subject}} · {{m.q_type}} · 难度{{m.difficulty}}</text>
+                        <text class="dc-item-meta">{{m.snippet}}</text>
+                      </view>
+                      <view class="dc-item-actions">
+                        <view class="dc-mini-btn primary" bindtap="onGoQuizPublicMistakes" data-subject="{{m.subject}}" data-q-type="{{m.q_type}}" aria-role="button"><text>刷同类错题</text></view>
+                      </view>
+                    </view>
+                  </view>
+                </view>
+                <view class="dc-empty" wx:else>暂无错题记录。</view>
+              </view>
+
+              <view class="dc-span-6">
+                <view class="dc-card-head">
+                  <view style="min-width:0;">
+                    <text class="dc-h3">个人题库</text>
+                    <text class="dc-card-sub">直接进入题库错题模式，快速闭环。</text>
+                  </view>
+                </view>
+                <view class="dc-list" wx:if="{{recent_mistakes_bank.length}}">
+                  <view class="dc-item" wx:for="{{recent_mistakes_bank}}" wx:for-item="m" wx:key="key">
+                    <view class="dc-item-top">
+                      <view style="min-width:0;">
+                        <text class="dc-item-title">{{m.bank_name}} · {{m.q_type}} · 难度{{m.difficulty}}</text>
+                        <text class="dc-item-meta">{{m.snippet}}</text>
+                        <text class="dc-item-meta muted" wx:if="{{m.wrong_count !== null && m.wrong_count !== undefined}}">错题次数：{{m.wrong_count}}</text>
+                      </view>
+                      <view class="dc-item-actions">
+                        <view class="dc-mini-btn primary" bindtap="onGoQuizBankMistakes" data-bank-id="{{m.bank_id}}" aria-role="button"><text>刷错题</text></view>
+                      </view>
+                    </view>
+                  </view>
+                </view>
+                <view class="dc-empty" wx:else>暂无个人题库错题记录。</view>
+              </view>
+            </view>
+          </view>
+          </block>
+        </view>
+
+        <view class="msg error" wx:if="{{errorMsg}}">
+          <text>{{errorMsg}}</text>
+        </view>
+        <view class="loading" wx:if="{{loading}}">
+          <text>正在加载数据...</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

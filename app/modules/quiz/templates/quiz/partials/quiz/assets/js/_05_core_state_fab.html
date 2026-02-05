@@ -1,0 +1,648 @@
+    } catch(e) {
+        showToast('网络错误，请重试');
+    }
+}
+
+const totalQuestions = {{ questions|length }};
+let currentIndex = 0;
+let isWholeView = false;
+let isSubmitted = false; // 标记是否已交卷
+
+let timerSeconds = {{ duration * 60 if duration else 0 }};
+let timerInterval;
+let cachedOrder = null; // 缓存题目顺序，保存进度时需要保留
+
+// ===== 悬浮球（Fab）+ 圆环菜单 + 可拖动 =====
+const FAB_ENABLED_KEY = 'quiz_fab_enabled_v1';
+const FAB_AUTO_NEXT_KEY = 'quiz_fab_auto_next';
+const FAB_AUTO_FAVORITE_ON_WRONG_KEY = 'quiz_fab_auto_fav_on_wrong_v1';
+const FAB_POS_KEY = 'quiz_fab_pos_v1';
+const FAB_DOCK_LAYOUT_KEY = 'quiz_fab_dock_layout'; // 'default' | 'right' | 'left'
+const FAB_HINT_DISMISSED_KEY = 'quiz_fab_hint_dismissed';
+let fabOpen = false;
+
+function isFabEnabled(){
+    // 默认开启；用户在题库设置页关闭后写入 '0'
+    return localStorage.getItem(FAB_ENABLED_KEY) !== '0';
+}
+
+function getDockLayout(){
+    // 默认返回 'default'；用户设置后返回 'right' 或 'left'
+    const layout = localStorage.getItem(FAB_DOCK_LAYOUT_KEY);
+    return layout === 'right' || layout === 'left' ? layout : 'default';
+}
+
+function setDockLayout(layout){
+    // layout: 'default' | 'right' | 'left'
+    localStorage.setItem(FAB_DOCK_LAYOUT_KEY, layout);
+}
+
+function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+
+function getFabSize(){
+    // 与 CSS .quiz-fab width/height 保持一致
+    return 56;
+}
+
+function isFabAutoNextEnabled(){
+    return localStorage.getItem(FAB_AUTO_NEXT_KEY) === '1';
+}
+function setFabAutoNextEnabled(on){
+    localStorage.setItem(FAB_AUTO_NEXT_KEY, on ? '1' : '0');
+}
+
+function isFabAutoFavoriteOnWrongEnabled(){
+    return localStorage.getItem(FAB_AUTO_FAVORITE_ON_WRONG_KEY) === '1';
+}
+function setFabAutoFavoriteOnWrongEnabled(on){
+    localStorage.setItem(FAB_AUTO_FAVORITE_ON_WRONG_KEY, on ? '1' : '0');
+}
+
+// ===== 错题本刷题：答对是否清除（移出错题本） =====
+const CLEAR_MISTAKE_ON_CORRECT_KEY = 'quiz_clear_mistake_on_correct_v1'; // '1' | '0'（默认 1）
+
+function isMistakesScope(){
+    const params = new URLSearchParams(window.location.search);
+    const sourceParam = (params.get('source') || '').toLowerCase();
+    const m = String(mode || '').toLowerCase();
+    return sourceParam === 'mistakes' || m === 'mistakes';
+}
+
+function isClearMistakeOnCorrectEnabled(){
+    try { return localStorage.getItem(CLEAR_MISTAKE_ON_CORRECT_KEY) !== '0'; } catch(e) { return true; }
+}
+
+function setClearMistakeOnCorrectEnabled(on){
+    try { localStorage.setItem(CLEAR_MISTAKE_ON_CORRECT_KEY, on ? '1' : '0'); } catch(e) {}
+}
+
+function getClearMistakeOnCorrectForRequest(){
+    return isMistakesScope() ? isClearMistakeOnCorrectEnabled() : true;
+}
+
+function updateMistakeClearOnCorrectUI(){
+    const btn = document.getElementById('btnMistakeClearOnCorrect');
+    if (!btn) return;
+    const on = getClearMistakeOnCorrectForRequest();
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    btn.title = on ? '答对将从错题本移除' : '答对将保留在错题本';
+    btn.textContent = on ? '答对移出' : '答对保留';
+}
+
+function toggleMistakeClearOnCorrect(){
+    if (!isMistakesScope()) return;
+    const next = !isClearMistakeOnCorrectEnabled();
+    setClearMistakeOnCorrectEnabled(next);
+    updateMistakeClearOnCorrectUI();
+    showToast(next ? '已开启：答对移出错题本' : '已关闭：答对移出错题本');
+}
+
+function saveFabPos(left, top){
+    try { localStorage.setItem(FAB_POS_KEY, JSON.stringify({ left, top })); } catch(e) {}
+}
+function loadFabPos(){
+    try {
+        const raw = localStorage.getItem(FAB_POS_KEY);
+        if (!raw) return null;
+        const js = JSON.parse(raw);
+        if (!js || typeof js.left !== 'number' || typeof js.top !== 'number') return null;
+        return js;
+    } catch(e) { return null; }
+}
+
+function calcDefaultFabPos(){
+    const size = getFabSize();
+    const rightGap = 14;
+    const bottomGap = 84;
+    const left = Math.max(8, window.innerWidth - rightGap - size);
+    const top = Math.max(8, window.innerHeight - bottomGap - size);
+    return { left, top };
+}
+
+function normalizeFabPos(pos){
+    const size = getFabSize();
+    const margin = 8;
+    const maxLeft = window.innerWidth - size - margin;
+    const maxTop = window.innerHeight - size - margin;
+    return {
+        left: clamp(pos.left, margin, Math.max(margin, maxLeft)),
+        top: clamp(pos.top, margin, Math.max(margin, maxTop))
+    };
+}
+
+function applyFabPos(left, top){
+    const fab = document.getElementById('quizFab');
+    const menu = document.getElementById('quizFabMenu');
+    if (!fab || !menu) return;
+
+    fab.style.left = `${left}px`;
+    fab.style.top = `${top}px`;
+    fab.style.right = 'auto';
+    fab.style.bottom = 'auto';
+
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+    menu.style.right = 'auto';
+    menu.style.bottom = 'auto';
+}
+
+function updateFabUI(){
+    const fab = document.getElementById('quizFab');
+    const menu = document.getElementById('quizFabMenu');
+    if (!fab || !menu) return;
+
+    fab.classList.toggle('open', fabOpen);
+    menu.classList.toggle('open', fabOpen);
+    menu.setAttribute('aria-hidden', fabOpen ? 'false' : 'true');
+
+    const btnAuto = menu.querySelector('.quiz-fab-item[data-action="autoNext"]');
+    if (btnAuto) {
+        const enabled = isFabAutoNextEnabled();
+        btnAuto.classList.toggle('is-active', enabled);
+        btnAuto.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+    }
+
+    // 更新布局切换按钮状态
+    const btnLayout = menu.querySelector('.quiz-fab-item[data-action="toggleLayout"]');
+    if (btnLayout) {
+        const layout = getDockLayout();
+        btnLayout.dataset.layout = (layout === 'right' || layout === 'left') ? layout : 'default';
+        btnLayout.classList.toggle('active', layout !== 'default');
+        
+        // 根据布局状态显示不同的图标和提示
+        if (layout === 'right') {
+            btnLayout.title = '切换为左侧布局';
+            btnLayout.setAttribute('aria-label', '切换为左侧布局');
+        } else if (layout === 'left') {
+            btnLayout.title = '恢复默认布局';
+            btnLayout.setAttribute('aria-label', '恢复默认布局');
+        } else {
+            btnLayout.title = '切换布局';
+            btnLayout.setAttribute('aria-label', '切换布局');
+        }
+    }
+
+    // 根据贴边方向调整菜单展开方向（贴左→向右展开；贴右→向左展开）
+    try {
+        const rect = fab.getBoundingClientRect();
+        const size = getFabSize();
+        const centerX = rect.left + size / 2;
+        const isLeft = centerX < (window.innerWidth / 2);
+        menu.classList.toggle('edge-left', isLeft);
+    } catch(e) {}
+
+    // 确保菜单始终跟随悬浮球
+    try {
+        const rect = fab.getBoundingClientRect();
+        const pos = normalizeFabPos({ left: rect.left, top: rect.top });
+        applyFabPos(pos.left, pos.top);
+    } catch(e) {}
+}
+
+function toggleFab(open){
+    const wasOpen = fabOpen;
+    fabOpen = typeof open === 'boolean' ? open : !fabOpen;
+    
+    // 首次打开悬浮球时，自动永久关闭悬浮球提示（避免干扰）
+    if (!wasOpen && fabOpen) {
+        const fabHint = document.getElementById('fabHint');
+        if (fabHint && fabHint.style.display !== 'none') {
+            dismissFabHintPermanently();
+        }
+    }
+    
+    updateFabUI();
+}
+
+async function toggleCurrentFavorite(){
+    if (!LOGGED_IN) { showToast('请先登录'); return; }
+    const q = questions[currentIndex];
+    const favBtn = q ? q.querySelector('.fav-btn') : null;
+    if (favBtn && typeof favBtn.click === 'function') {
+        favBtn.click();
+        return;
+    }
+    showToast('收藏按钮不可用');
+}
+
+// Web 端 AI 解析：点击 AI 仅开关卡片，按需生成当前题目解析
+const aiExplainState = {
+    qid: null,
+    explain: '',
+    open: false,
+    loading: false,
+    lastReqId: 0
+};
+
+function getCurrentAiPayload(){
+    const q = questions[currentIndex];
+    if (!q) return null;
+    const qidRaw = q.getAttribute('data-id') || '';
+    const qtype = q.getAttribute('data-type') || '';
+    const contentEl = q.querySelector('.q-content');
+    const content = contentEl ? (contentEl.innerText || '').trim() : '';
+
+    let options = [];
+    try {
+        const preferCard = document.body.classList.contains('quiz-layout-card');
+        if (preferCard) {
+            const labels = q.querySelectorAll('.question-layout-card .option-card label');
+            if (labels && labels.length) {
+                options = Array.from(labels).map(lab => {
+                    const keyRaw = (lab.querySelector('.option-key') || {}).innerText || '';
+                    const valRaw = (lab.querySelector('.option-text') || {}).innerText || '';
+                    const key = (keyRaw || '').toString().replace(/\s+/g, ' ').trim().replace(/\.$/, '');
+                    const value = (valRaw || '').toString().trim();
+                    return { key, value };
+                });
+            }
+        } else {
+            const optNodes = q.querySelectorAll('.option');
+            if (optNodes && optNodes.length) {
+                options = Array.from(optNodes).map(node => {
+                    const key = (node.querySelector('.opt-key') || {}).innerText || '';
+                    const val = (node.querySelector('.opt-text') || {}).innerText || node.innerText || '';
+                    return { key: key.trim(), value: val.trim() };
+                });
+            }
+        }
+    } catch(e) {}
+
+    const qid = qidRaw ? Number(qidRaw) : null;
+    return { qid, qtype, content, options };
+}
+
+function getAIExplainHost(){
+    const preferCard = document.body.classList.contains('quiz-layout-card');
+    const q = questions[currentIndex];
+    if (preferCard && q) {
+        const host = q.querySelector('.ai-inline-host');
+        if (host) return host;
+    }
+    return document.getElementById('aiExplainCard') || document.getElementById('explainCard');
+}
+
+function syncAnswerAiButtonState(){
+    try {
+        const q = questions[currentIndex];
+        if (!q) return;
+        const btn = q.querySelector('.answer-ai-btn');
+        if (!btn) return;
+        const open = !!aiExplainState.open;
+        btn.classList.toggle('active', open);
+        btn.setAttribute('aria-pressed', open ? 'true' : 'false');
+    } catch(e) {}
+}
+
+function sanitizeMarkdownLinkHref(href){
+    const h = (href ?? '').toString().trim();
+    if (!h) return '';
+    const lower = h.toLowerCase();
+    if (lower.startsWith('javascript:') || lower.startsWith('data:') || lower.startsWith('vbscript:')) return '';
+    return h;
+}
+
+function tryRenderMarkdownHtml(mdText){
+    if (typeof marked === 'undefined' || !marked || typeof marked.parse !== 'function') return null;
+    try {
+        const RendererCtor = (marked && marked.Renderer) ? marked.Renderer : null;
+        const renderer = RendererCtor ? new RendererCtor() : null;
+        if (renderer) {
+            renderer.html = function(html){
+                // 禁止原始 HTML，避免 XSS
+                return escapeHtml(html);
+            };
+            renderer.image = function(){
+                // 关闭图片渲染，避免外链追踪/布局干扰
+                return '';
+            };
+            renderer.link = function(href, title, text){
+                const safeHref = sanitizeMarkdownLinkHref(href);
+                if (!safeHref) return text || '';
+                const safeTitle = title ? ` title="${escapeHtml(title)}"` : '';
+                return `<a href="${escapeHtml(safeHref)}"${safeTitle} target="_blank" rel="noopener noreferrer">${text || ''}</a>`;
+            };
+        }
+        const opts = {
+            gfm: true,
+            breaks: true,
+            mangle: false,
+            headerIds: false,
+            ...(renderer ? { renderer } : {}),
+        };
+        return marked.parse((mdText ?? '').toString(), opts);
+    } catch(e) {
+        return null;
+    }
+}
+
+function renderAIExplainCard({ loading, explainText }){
+    const host = getAIExplainHost();
+    if (!host) return;
+
+    const safeText = (explainText || '').toString();
+    const loadingText = loading ? '生成中…' : '';
+    const displayText = (safeText && safeText.trim()) ? safeText : '暂无内容';
+
+    const markdownHtml = (!loading) ? tryRenderMarkdownHtml(displayText) : null;
+    const renderedMarkdown = !!(markdownHtml && markdownHtml.toString().trim());
+
+    host.style.display = 'block';
+    host.innerHTML = `
+        <div class="ai-explain-card">
+          <div class="ai-explain-header">
+            <div class="ai-explain-title">AI 解析</div>
+            <div class="ai-explain-actions">
+              ${loading ? `<div class="ai-explain-loading">${loadingText}</div>` : ``}
+              <button class="ai-explain-btn" type="button" id="aiExplainCopyBtn" ${loading ? 'disabled' : ''}>复制</button>
+            </div>
+          </div>
+          <div class="ai-explain-body">
+            ${loading
+                ? `<div class="ai-explain-placeholder">请稍候</div>`
+                : `<div class="ai-explain-text${renderedMarkdown ? ' ai-explain-markdown' : ''}">${renderedMarkdown ? markdownHtml : escapeHtmlWithBreaks(displayText)}</div>`
+            }
+          </div>
+          <div class="explain-disclaimer">解析仅供参考</div>
+        </div>
+    `;
+
+    const copyBtn = document.getElementById('aiExplainCopyBtn');
+    if (copyBtn) {
+        copyBtn.onclick = async function(){
+            try { await navigator.clipboard.writeText(safeText || ''); showToast('已复制'); }
+            catch(e) { showToast('复制失败'); }
+        };
+    }
+}
+
+function hideAIExplainCard({ clear = false } = {}){
+    const host = getAIExplainHost();
+    if (!host) return;
+    host.style.display = 'none';
+    host.classList.remove('show');
+    if (clear) host.innerHTML = '';
+    aiExplainState.open = false;
+    syncAnswerAiButtonState();
+    updateDockEmptyState();
+}
+
+function showAIExplainCard(){
+    const host = getAIExplainHost();
+    if (!host) return;
+    host.style.display = 'block';
+    host.classList.add('show');
+    aiExplainState.open = true;
+    syncAnswerAiButtonState();
+    updateDockEmptyState();
+}
+
+async function requestAIExplain({ force = false } = {}){
+    if (!LOGGED_IN) { showToast('请先登录'); return; }
+    const payload = getCurrentAiPayload();
+    if (!payload) return;
+
+    const { qid, qtype, content, options } = payload;
+    if (!force && aiExplainState.explain && aiExplainState.qid === qid) {
+        renderAIExplainCard({ loading: false, explainText: aiExplainState.explain });
+        return;
+    }
+
+    showAIExplainCard();
+    aiExplainState.loading = true;
+    renderAIExplainCard({ loading: true, explainText: '' });
+
+    const reqId = ++aiExplainState.lastReqId;
+    try {
+        const res = await fetch('/api/ai/explain', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ question_id: qid, q_type: qtype, content, options })
+        });
+        const js = await res.json();
+        if (reqId !== aiExplainState.lastReqId) return; // 被新的请求覆盖
+        if (!res.ok || !js || js.status !== 'success') {
+            showToast((js && js.message) || 'AI 解析失败');
+            aiExplainState.loading = false;
+            renderAIExplainCard({ loading: false, explainText: 'AI 解析失败，请稍后重试。' });
+            return;
+        }
+        const explain = (js.data && js.data.explain) ? js.data.explain : '';
+        aiExplainState.qid = qid;
+        aiExplainState.explain = (explain || '').toString();
+        aiExplainState.loading = false;
+        renderAIExplainCard({ loading: false, explainText: aiExplainState.explain });
+    } catch(e) {
+        if (reqId !== aiExplainState.lastReqId) return;
+        aiExplainState.loading = false;
+        showToast('AI 解析失败');
+        renderAIExplainCard({ loading: false, explainText: 'AI 解析失败，请检查网络或稍后重试。' });
+    }
+}
+
+async function toggleAIExplain(){
+    const host = getAIExplainHost();
+    if (!host) return;
+    if (IS_USER_BANK) { showToast('个人题库暂不支持AI解析'); return; }
+    const isOpen = host.style.display !== 'none';
+    if (isOpen) {
+        // 关闭但保留内容，避免再次点击触发重复请求
+        hideAIExplainCard({ clear: false });
+        return;
+    }
+
+    showAIExplainCard();
+    const payload = getCurrentAiPayload();
+    const qid = payload ? payload.qid : null;
+    if (aiExplainState.explain && aiExplainState.qid === qid) {
+        renderAIExplainCard({ loading: false, explainText: aiExplainState.explain });
+        return;
+    }
+    await requestAIExplain({ force: true });
+}
+
+function bindFab(){
+    const fab = document.getElementById('quizFab');
+    const menu = document.getElementById('quizFabMenu');
+    if (!fab || !menu) return;
+
+    // 初始位置（优先读取已保存的位置）
+    const saved = loadFabPos();
+    const initial = normalizeFabPos(saved || calcDefaultFabPos());
+    applyFabPos(initial.left, initial.top);
+
+    // 拖拽（pointer events）
+    let dragging = false;
+    let moved = false;
+    let startX = 0;
+    let startY = 0;
+    let startLeft = 0;
+    let startTop = 0;
+
+    fab.addEventListener('pointerdown', (e)=>{
+        dragging = true;
+        moved = false;
+        startX = e.clientX;
+        startY = e.clientY;
+        const rect = fab.getBoundingClientRect();
+        startLeft = rect.left;
+        startTop = rect.top;
+
+        try { fab.setPointerCapture(e.pointerId); } catch(err) {}
+    });
+
+    fab.addEventListener('pointermove', (e)=>{
+        if (!dragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        if (!moved && Math.abs(dx) + Math.abs(dy) > 6) {
+            moved = true;
+            // 仅当用户确实在拖动时关闭菜单（否则点击“二次关闭”会被 pointerdown 抢先关掉又被 click 重新打开）
+            if (fabOpen) toggleFab(false);
+        }
+        const next = normalizeFabPos({ left: startLeft + dx, top: startTop + dy });
+        applyFabPos(next.left, next.top);
+    });
+
+    const endDrag = (e)=>{
+        if (!dragging) return;
+        dragging = false;
+        const rect = fab.getBoundingClientRect();
+        let next = normalizeFabPos({ left: rect.left, top: rect.top });
+
+        // 自动吸边（左右贴边）+ 平滑动画（仅吸附时生效）
+        const size = getFabSize();
+        const margin = 8;
+        const maxLeft = window.innerWidth - size - margin;
+        const snapLeft = margin;
+        const snapRight = Math.max(margin, maxLeft);
+        const centerX = next.left + size / 2;
+        next.left = (centerX < window.innerWidth / 2) ? snapLeft : snapRight;
+
+        // 只在吸附时开启 transition，避免拖动过程有延迟
+        try {
+            fab.style.transition = 'left .16s ease, top .16s ease, transform .22s ease, box-shadow .22s ease, background-color .22s ease';
+            const menu = document.getElementById('quizFabMenu');
+            if (menu) menu.style.transition = 'left .16s ease, top .16s ease';
+        } catch(e) {}
+
+        applyFabPos(next.left, next.top);
+        saveFabPos(next.left, next.top);
+
+        // 动画结束后恢复默认（防止拖动时“粘滞”）
+        setTimeout(()=>{
+            try {
+                fab.style.transition = '';
+                const menu = document.getElementById('quizFabMenu');
+                if (menu) menu.style.transition = '';
+            } catch(e) {}
+        }, 220);
+
+        // 如果是拖动导致的 pointerup，阻止随后 click 打开菜单
+        if (moved) {
+            fab._suppressClickOnce = true;
+            setTimeout(()=>{ fab._suppressClickOnce = false; }, 0);
+        }
+
+        try { fab.releasePointerCapture(e.pointerId); } catch(err) {}
+    };
+
+    fab.addEventListener('pointerup', endDrag);
+    fab.addEventListener('pointercancel', endDrag);
+
+    // 点击打开/关闭菜单
+    fab.addEventListener('click', (e)=>{
+        if (fab._suppressClickOnce) return;
+        e.preventDefault();
+        e.stopPropagation();
+        toggleFab();
+    });
+
+    // 菜单按钮
+    menu.querySelectorAll('.quiz-fab-item').forEach(btn => {
+        btn.addEventListener('click', async (e)=>{
+            e.preventDefault();
+            e.stopPropagation();
+            const action = btn.dataset.action;
+            if (!action) return;
+
+            if (action === 'autoNext') {
+                // 考试回顾（已交卷）禁用
+                if (mode === 'exam' && EXAM_SUBMITTED) {
+                    showToast('回顾模式：该功能不可用');
+                    toggleFab(false);
+                    return;
+                }
+                const next = !isFabAutoNextEnabled();
+                setFabAutoNextEnabled(next);
+                updateFabUI();
+                showToast(next ? '已开启：答对自动切题' : '已关闭：答对自动切题');
+                return;
+            }
+
+            if (action === 'aiExplain') {
+                await toggleAIExplain();
+                toggleFab(false);
+                return;
+            }
+
+            if (action === 'bookmark') {
+                await toggleCurrentFavorite();
+                toggleFab(false);
+                return;
+            }
+
+            if (action === 'toggleLayout') {
+                const currentLayout = getDockLayout();
+                let nextLayout;
+                if (currentLayout === 'default') {
+                    nextLayout = 'right';
+                } else if (currentLayout === 'right') {
+                    nextLayout = 'left';
+                } else {
+                    nextLayout = 'default';
+                }
+                setDockLayout(nextLayout);
+                updateFabUI();
+                // 重新应用布局到当前题目
+                showQuestion(currentIndex);
+                const messages = {
+                    'default': '已恢复默认布局',
+                    'right': '已切换为右侧布局',
+                    'left': '已切换为左侧布局'
+                };
+                showToast(messages[nextLayout]);
+                toggleFab(false);
+                return;
+            }
+
+            if (action === 'clearCurrent') {
+                clearCurrentQuestionProgress();
+                toggleFab(false);
+                return;
+            }
+
+            if (action === 'editQuestion') {
+                const q = questions[currentIndex];
+                if (!q) { showToast('未找到当前题目'); toggleFab(false); return; }
+                openEditQuestionModal();
+                toggleFab(false);
+                return;
+            }
+        });
+    });
+
+    document.addEventListener('click', ()=>{ if (fabOpen) toggleFab(false); });
+    document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape' && fabOpen) toggleFab(false); });
+
+    // resize 时保证悬浮球不出界 + 保持吸边
+    window.addEventListener('resize', ()=>{
+        const cur = loadFabPos() || calcDefaultFabPos();
+        let n = normalizeFabPos(cur);
+        const size = getFabSize();
+        const margin = 8;
+        const maxLeft = window.innerWidth - size - margin;
+        // 若当前更靠左/右，则吸附到对应边
+        const centerX = n.left + size / 2;
+        n.left = (centerX < window.innerWidth / 2) ? margin : Math.max(margin, maxLeft);
+        applyFabPos(n.left, n.top);

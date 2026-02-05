@@ -1,0 +1,43 @@
+{# 顶部操作栏：保持原结构与 class/id，确保 JS 不变 #}
+<div class="header">
+  <div style="display:flex; gap:10px; align-items:center;">
+    {% if mode != 'exam' %}
+      <button class="btn-menu btn-icon" onclick="openFeatureModal()" title="设置" aria-label="设置">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+    {% endif %}
+    <button class="btn-menu btn-icon" onclick="toggleSidebar()" title="题目列表">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+    </button>
+    <button id="forward-question-btn" class="btn-menu btn-icon" title="转发题目">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-share-2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+    </button>
+  </div>
+
+  <div class="topbar-center">
+    <div class="topbar-title" id="topbar-title">1/{{ questions|length }}</div>
+    {% if mode == 'exam' %}
+      <div class="topbar-timer" id="timer">00:00:00</div>
+    {% endif %}
+  </div>
+
+  <div style="display:flex; align-items:center; gap:10px;">
+    {% if is_mis_scope and mode != 'memo' and mode != 'exam' %}
+      <button id="btnMistakeClearOnCorrect" class="btn-menu" onclick="toggleMistakeClearOnCorrect()" aria-pressed="true" title="答对将从错题本移除">
+        答对移出
+      </button>
+    {% endif %}
+    <button class="btn-menu btn-theme" onclick="toggleTheme()" aria-label="切换深色模式">
+      <span class="theme-icon" aria-hidden="true">
+        <img src="/static/icons/theme-sun.svg" class="icon-sun" alt="" onerror="this.style.display='none'">
+        <img src="/static/icons/theme-moon.svg" class="icon-moon" alt="" onerror="this.style.display='none'">
+      </span>
+    </button>
+    <a href="/" class="btn-menu btn-icon" title="退出" onclick="return exitQuizToEntry(event)">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+    </a>
+  </div>
+</div>

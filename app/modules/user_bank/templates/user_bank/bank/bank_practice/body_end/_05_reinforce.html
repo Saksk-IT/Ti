@@ -1,0 +1,367 @@
+    function buildReinforceUrl(ids, rk){
+      const list = Array.isArray(ids)
+        ? ids.map((x) => parseInt(String(x || ''), 10)).filter((n) => Number.isFinite(n) && n > 0)
+        : [];
+      if (!list.length) return '';
+      const sp = new URLSearchParams();
+      sp.set('bank_id', String(BANK_ID));
+      sp.set('mode', 'reinforce');
+      if (rk === 'wrong' || rk === 'similar') sp.set('rk', rk);
+      sp.set('ids', list.join(','));
+      return '/quiz?' + sp.toString();
+    }
+
+    async function initReinforceModule(){
+      const wrap = document.getElementById('pageTabReinforce');
+      const root = document.getElementById('reinforcePanels');
+      const wrongDesc = document.getElementById('reinforceWrongDesc');
+      const wrongBtn = document.getElementById('reinforceWrongBtn');
+      const wrongAllBtn = document.getElementById('reinforceWrongAllBtn');
+      const wrongListMeta = document.getElementById('reinforceWrongListMeta');
+      const wrongList = document.getElementById('reinforceWrongList');
+
+      const simDesc = document.getElementById('reinforceSimilarDesc');
+      const simBtn = document.getElementById('reinforceSimilarBtn');
+      const simListMeta = document.getElementById('reinforceSimilarListMeta');
+      const simList = document.getElementById('reinforceSimilarList');
+
+      if (!wrap || !root || !wrongDesc || !simDesc) return;
+
+      const state = root.__reinforceState || (root.__reinforceState = {
+        tab: 'wrong',
+        loaded: { wrong: false, similar: false },
+        loading: { wrong: false, similar: false },
+      });
+      const STORAGE_KEY = `sak:reinforceSubTab:bank:${BANK_ID}`;
+
+      function normTab(t){
+        const v = String(t || '').trim().toLowerCase();
+        return v === 'similar' ? 'similar' : 'wrong';
+      }
+
+      function setEmpty(el, text){
+        if (!el) return;
+        el.innerHTML = '';
+        const d = document.createElement('div');
+        d.className = 'reinforce-empty';
+        d.textContent = String(text || '');
+        el.appendChild(d);
+      }
+
+      function renderWrongList(items, wrongTotal){
+        if (!wrongList) return;
+        wrongList.innerHTML = '';
+        const list = Array.isArray(items) ? items : [];
+        if (!list.length) {
+          setEmpty(wrongList, wrongTotal > 0 ? '暂无可展示的高频错题' : '暂无错题记录');
+          return;
+        }
+        list.forEach((it) => {
+          const qid = parseInt(String(it?.question_id || ''), 10);
+          if (!Number.isFinite(qid) || qid <= 0) return;
+
+          const row = document.createElement('div');
+          row.className = 'reinforce-row';
+
+          const main = document.createElement('div');
+          main.className = 'reinforce-row-main';
+
+          const title = document.createElement('div');
+          title.className = 'reinforce-row-title';
+          const preview = String(it?.content_preview || '').trim() || `题目 #${qid}`;
+          title.textContent = preview;
+
+          const meta = document.createElement('div');
+          meta.className = 'reinforce-row-meta';
+          const idSpan = document.createElement('span');
+          idSpan.textContent = `#${qid}`;
+          meta.appendChild(idSpan);
+          const qt = String(it?.q_type || '').trim();
+          if (qt) {
+            const typeSpan = document.createElement('span');
+            typeSpan.textContent = qt;
+            meta.appendChild(typeSpan);
+          }
+
+          main.appendChild(title);
+          main.appendChild(meta);
+
+          const right = document.createElement('div');
+          right.className = 'reinforce-row-right';
+
+          const badge = document.createElement('span');
+          badge.className = 'reinforce-badge';
+          const wc = parseInt(String(it?.wrong_count || 1), 10);
+          badge.textContent = `错 ${Number.isFinite(wc) ? wc : 1} 次`;
+
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'btn';
+          btn.textContent = '练这题';
+          btn.onclick = () => {
+            const url = buildReinforceUrl([qid], 'wrong');
+            if (url) window.location.href = url;
+          };
+
+          right.appendChild(badge);
+          right.appendChild(btn);
+
+          row.appendChild(main);
+          row.appendChild(right);
+          wrongList.appendChild(row);
+        });
+      }
+
+      function renderSimilarList(pairs){
+        if (!simList) return;
+        simList.innerHTML = '';
+        const list = Array.isArray(pairs) ? pairs : [];
+        if (!list.length) {
+          setEmpty(simList, '暂无可展示的相似题目');
+          return;
+        }
+        list.forEach((p) => {
+          const a = parseInt(String(p?.a_id || ''), 10);
+          const b = parseInt(String(p?.b_id || ''), 10);
+          if (!Number.isFinite(a) || !Number.isFinite(b) || a <= 0 || b <= 0) return;
+
+          const row = document.createElement('div');
+          row.className = 'reinforce-row';
+
+          const main = document.createElement('div');
+          main.className = 'reinforce-row-main';
+
+          const pair = document.createElement('div');
+          pair.className = 'reinforce-pair';
+
+          const l1 = document.createElement('div');
+          l1.className = 'reinforce-pair-line';
+          l1.textContent = String(p?.a_preview || '').trim() || `#${a}`;
+          const l2 = document.createElement('div');
+          l2.className = 'reinforce-pair-line';
+          l2.textContent = String(p?.b_preview || '').trim() || `#${b}`;
+          pair.appendChild(l1);
+          pair.appendChild(l2);
+
+          const meta = document.createElement('div');
+          meta.className = 'reinforce-row-meta';
+          meta.textContent = `#${a} · #${b}`;
+
+          main.appendChild(pair);
+          main.appendChild(meta);
+
+          const right = document.createElement('div');
+          right.className = 'reinforce-row-right';
+
+          const stem = Number(p?.stem_sim || 0) || 0;
+          const opt = Number(p?.opt_sim || 0) || 0;
+          const pct = Math.max(stem, opt) > 0 ? Math.round(Math.max(stem, opt) * 100) : 0;
+
+          const badge = document.createElement('span');
+          badge.className = 'reinforce-badge';
+          badge.textContent = pct > 0 ? `相似 ${pct}%` : '相似';
+
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'btn';
+          btn.textContent = '练这一组';
+          btn.onclick = () => {
+            const url = buildReinforceUrl([a, b], 'similar');
+            if (url) window.location.href = url;
+          };
+
+          right.appendChild(badge);
+          right.appendChild(btn);
+
+          row.appendChild(main);
+          row.appendChild(right);
+          simList.appendChild(row);
+        });
+      }
+
+      function setTab(tab, persist){
+        const next = normTab(tab);
+        state.tab = next;
+        root.querySelectorAll('[data-reinforce-panel]').forEach((el) => {
+          const t = el.getAttribute('data-reinforce-panel') || '';
+          el.hidden = t !== next;
+        });
+        wrap.querySelectorAll('[data-reinforce-tab]').forEach((btn) => {
+          const key = String(btn?.dataset?.reinforceTab || '').trim().toLowerCase();
+          const active = key === next;
+          btn.classList.toggle('active', active);
+          btn.setAttribute('aria-selected', active ? 'true' : 'false');
+          btn.setAttribute('tabindex', active ? '0' : '-1');
+        });
+        if (persist) {
+          try { localStorage.setItem(STORAGE_KEY, next); } catch (e) {}
+        }
+        if (!state.loaded[next] && !state.loading[next]) loadTab(next);
+      }
+
+      async function loadTab(tab){
+        const kind = normTab(tab);
+        state.loading[kind] = true;
+
+        if (!LOGGED_IN) {
+          wrongDesc.textContent = '登录后可基于错题生成加强训练。';
+          simDesc.textContent = '登录后可基于错题生成相似题加强。';
+          if (wrongBtn) wrongBtn.disabled = true;
+          if (wrongAllBtn) wrongAllBtn.disabled = true;
+          if (simBtn) simBtn.disabled = true;
+          if (wrongListMeta) wrongListMeta.textContent = '登录后可查看高频错题。';
+          if (simListMeta) simListMeta.textContent = '登录后可查看相似题目。';
+          if (wrongList) setEmpty(wrongList, '登录后可查看高频错题。');
+          if (simList) setEmpty(simList, '登录后可查看相似题目。');
+          state.loaded[kind] = true;
+          state.loading[kind] = false;
+          return;
+        }
+
+        try {
+          const qs = new URLSearchParams();
+          qs.set('source', 'user_bank');
+          qs.set('bank_id', String(BANK_ID));
+          if (kind === 'wrong') {
+            qs.set('include', 'wrong');
+            qs.set('wrong_list_n', '30');
+          } else {
+            qs.set('include', 'similar');
+            qs.set('pairs_n', '30');
+          }
+          const resp = await fetch(`/api/quiz/reinforce?${qs.toString()}`, { credentials: 'same-origin' });
+          const js = await resp.json().catch(() => ({}));
+          if (!resp.ok || !js || js.status !== 'success') {
+            throw new Error((js && js.message) ? js.message : '加载失败');
+          }
+
+          const data = js.data || {};
+          const wrongTotal = Number(data.wrong_total || 0) || 0;
+          const wrongIds = Array.isArray(data.wrong_recommend_ids) ? data.wrong_recommend_ids : [];
+          const wrongTop = Array.isArray(data.wrong_top) ? data.wrong_top : [];
+
+          if (kind === 'wrong') {
+            if (wrongTotal > 0) {
+              const recommendN = Array.isArray(wrongIds) && wrongIds.length ? wrongIds.length : Math.min(wrongTotal, 20);
+              wrongDesc.textContent = `你在本题库累计错题 ${wrongTotal} 道，推荐优先巩固其中 ${recommendN} 道高频错题。`;
+              if (wrongBtn) {
+                wrongBtn.disabled = !(Array.isArray(wrongIds) && wrongIds.length);
+                wrongBtn.onclick = () => {
+                  const url = buildReinforceUrl(wrongIds, 'wrong');
+                  if (url) window.location.href = url;
+                };
+              }
+              if (wrongAllBtn) {
+                wrongAllBtn.disabled = false;
+                wrongAllBtn.onclick = () => { window.location.href = `/quiz?bank_id=${BANK_ID}&source=mistakes`; };
+              }
+              if (wrongListMeta) wrongListMeta.textContent = `展示 ${wrongTop.length} 题 · 共错题 ${wrongTotal} 题`;
+            } else {
+              wrongDesc.textContent = '当前没有错题记录，继续保持！';
+              if (wrongBtn) wrongBtn.disabled = true;
+              if (wrongAllBtn) wrongAllBtn.disabled = true;
+              if (wrongListMeta) wrongListMeta.textContent = '暂无错题记录';
+            }
+            renderWrongList(wrongTop, wrongTotal);
+          } else {
+            const seedIds = Array.isArray(data.similar_seed_ids) ? data.similar_seed_ids : [];
+            const similarIds = Array.isArray(data.similar_training_ids) ? data.similar_training_ids : [];
+            const similarMode = String(data.similar_mode || '').trim().toLowerCase();
+            const similarPairsCount = Number(data.similar_pairs_count || 0) || 0;
+            const pairs = Array.isArray(data.similar_pairs) ? data.similar_pairs : [];
+
+            const seedSet = new Set(
+              (Array.isArray(seedIds) ? seedIds : [])
+                .map((x) => parseInt(String(x || ''), 10))
+                .filter((n) => Number.isFinite(n) && n > 0)
+            );
+            const similarOnlyIds = (Array.isArray(similarIds) ? similarIds : [])
+              .map((x) => parseInt(String(x || ''), 10))
+              .filter((n) => Number.isFinite(n) && n > 0 && !seedSet.has(n));
+
+            if (similarMode === 'bank_dedupe' || similarMode === 'subject_dedupe') {
+              if (similarOnlyIds.length) {
+                const extra = similarOnlyIds.length;
+                const pairsText = similarPairsCount > 0 ? `${similarPairsCount} 组` : '';
+                simDesc.textContent = `已在本题库检测到${pairsText ? (' ' + pairsText) : ''}相似题（题干相似优先，选项相似兜底），训练共 ${extra} 道。`;
+                if (simBtn) {
+                  simBtn.disabled = false;
+                  simBtn.onclick = () => {
+                    const url = buildReinforceUrl(similarOnlyIds, 'similar');
+                    if (url) window.location.href = url;
+                  };
+                }
+              } else {
+                simDesc.textContent = wrongTotal > 0 ? '暂未检测到明显相似题（题干/选项相似），可先做错题加强。' : '暂未检测到明显相似题（题干/选项相似）。';
+                if (simBtn) simBtn.disabled = true;
+              }
+            } else {
+              if (similarOnlyIds.length) {
+                const extra = similarOnlyIds.length;
+                simDesc.textContent = `基于你最近的错题，为你匹配了 ${extra} 道相似题，可用于易混强化。`;
+                if (simBtn) {
+                  simBtn.disabled = false;
+                  simBtn.onclick = () => {
+                    const url = buildReinforceUrl(similarOnlyIds, 'similar');
+                    if (url) window.location.href = url;
+                  };
+                }
+              } else {
+                if (wrongTotal > 0 && Array.isArray(seedIds) && seedIds.length) {
+                  simDesc.textContent = `暂未匹配到足够稳定的相似题，先用最近错题 ${seedIds.length} 道作为“相似题种子训练”。`;
+                  if (simBtn) {
+                    simBtn.disabled = false;
+                    simBtn.onclick = () => {
+                      const url = buildReinforceUrl(seedIds, 'similar');
+                      if (url) window.location.href = url;
+                    };
+                  }
+                } else {
+                  simDesc.textContent = wrongTotal > 0 ? '暂未匹配到足够稳定的相似题，建议先做错题加强。' : '先完成一些练习后，这里会给出相似题加强。';
+                  if (simBtn) simBtn.disabled = true;
+                }
+              }
+            }
+
+            if (simListMeta) {
+              if (pairs.length) simListMeta.textContent = `展示 ${pairs.length} / ${similarPairsCount || pairs.length} 组`;
+              else simListMeta.textContent = similarPairsCount > 0 ? `已检测到 ${similarPairsCount} 组（暂无可展示详情）` : '暂无相似题目';
+            }
+            renderSimilarList(pairs);
+          }
+
+          state.loaded[kind] = true;
+        } catch (e) {
+          if (kind === 'wrong') {
+            wrongDesc.textContent = '加载失败，请刷新重试';
+            if (wrongBtn) wrongBtn.disabled = true;
+            if (wrongAllBtn) wrongAllBtn.disabled = true;
+            if (wrongListMeta) wrongListMeta.textContent = '加载失败';
+            if (wrongList) setEmpty(wrongList, '加载失败，请刷新重试');
+          } else {
+            simDesc.textContent = '加载失败，请刷新重试';
+            if (simBtn) simBtn.disabled = true;
+            if (simListMeta) simListMeta.textContent = '加载失败';
+            if (simList) setEmpty(simList, '加载失败，请刷新重试');
+          }
+        } finally {
+          state.loading[kind] = false;
+        }
+      }
+
+      if (!wrap.__reinforceBound) {
+        wrap.__reinforceBound = true;
+        wrap.addEventListener('click', (e) => {
+          const btn = e.target && e.target.closest ? e.target.closest('[data-reinforce-tab]') : null;
+          if (btn) setTab(btn.getAttribute('data-reinforce-tab') || 'wrong', true);
+        });
+      }
+
+      let initial = 'wrong';
+      try {
+        const saved = String(localStorage.getItem(STORAGE_KEY) || '').trim().toLowerCase();
+        if (saved === 'wrong' || saved === 'similar') initial = saved;
+      } catch (e) {}
+      setTab(initial, false);
+    }
+
