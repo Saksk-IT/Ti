@@ -8,10 +8,30 @@
   .hub-home {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    max-width: 640px;
+    gap: 20px;
+    width: 100%;
+    max-width: 1120px;
     margin: 0 auto;
-    padding: 20px 16px 40px;
+    padding: 18px 18px 40px;
+  }
+
+  /* 顶部区域：用户信息 + 数据 */
+  .hub-top-section {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 16px;
+  }
+
+  .hub-top-left {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .hub-top-right {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
   }
 
   /* Hero Card */
@@ -316,7 +336,150 @@
     opacity: 0.9;
   }
 
+  /* Features Section - 企业风格功能介绍 */
+  .hub-features-section {
+    margin-top: 8px;
+  }
+
+  .hub-features-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .hub-features-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--app-text);
+    margin: 0;
+    letter-spacing: -0.3px;
+  }
+
+  .hub-features-sub {
+    font-size: 13px;
+    color: var(--app-muted);
+  }
+
+  .hub-features-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  .hub-feature-card {
+    padding: 20px 18px;
+    background: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius-lg);
+    box-shadow: var(--app-shadow-soft);
+    text-decoration: none;
+    color: inherit;
+    transition: all 200ms ease;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .hub-feature-card:hover {
+    border-color: color-mix(in srgb, var(--app-primary) 30%, var(--app-border));
+    transform: translateY(-3px);
+    box-shadow: var(--app-shadow);
+  }
+
+  .hub-feature-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--app-radius-md);
+    background: var(--app-primary-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hub-feature-icon svg {
+    width: 22px;
+    height: 22px;
+    color: var(--app-text);
+  }
+
+  .hub-feature-content h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--app-text);
+    margin: 0 0 6px;
+  }
+
+  .hub-feature-content p {
+    font-size: 12px;
+    color: var(--app-muted);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  /* CTA Section */
+  .hub-cta-section {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 20px;
+    padding: 24px;
+    background: linear-gradient(135deg, var(--app-primary-soft), color-mix(in srgb, var(--app-primary) 8%, var(--app-surface)));
+    border: 1px solid color-mix(in srgb, var(--app-primary) 20%, var(--app-border));
+    border-radius: var(--app-radius-xl);
+  }
+
+  .hub-cta-content h2 {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--app-text);
+    margin: 0 0 6px;
+  }
+
+  .hub-cta-content p {
+    font-size: 13px;
+    color: var(--app-muted);
+    margin: 0;
+  }
+
+  .hub-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    padding: 0 24px;
+    border-radius: var(--app-radius-md);
+    background: var(--app-primary);
+    color: var(--app-primary-contrast);
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 160ms ease;
+    white-space: nowrap;
+  }
+
+  .hub-cta-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  @media (max-width: 560px) {
+    .hub-cta-section {
+      grid-template-columns: 1fr;
+      text-align: center;
+    }
+  }
+
   /* Responsive */
+  @media (max-width: 860px) {
+    .hub-top-section {
+      grid-template-columns: 1fr;
+    }
+    .hub-features-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
   @media (max-width: 560px) {
     .hub-bento-grid {
       grid-template-columns: repeat(2, 1fr);
@@ -326,6 +489,9 @@
     }
     .hub-bento-value {
       font-size: 24px;
+    }
+    .hub-features-grid {
+      grid-template-columns: 1fr;
     }
   }
 
@@ -348,95 +514,170 @@
 {% block content %}
 <div class="hub-home" id="hubHome">
 {% if logged_in %}
-  <!-- Hero Card: 用户信息 -->
-  <div class="hub-hero-card hub-fade-in">
-    {% if avatar %}
-      <img class="hub-avatar" src="{{ avatar }}" alt="头像">
-    {% else %}
-      <div class="hub-avatar-placeholder">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="8" r="4"/>
-          <path d="M4 20c0-4 4-6 8-6s8 2 8 6"/>
-        </svg>
+  <!-- 顶部区域：用户信息 + 数据概览 -->
+  <div class="hub-top-section hub-fade-in">
+    <div class="hub-top-left">
+      <!-- Hero Card: 用户信息 -->
+      <div class="hub-hero-card">
+        {% if avatar %}
+          <img class="hub-avatar" src="{{ avatar }}" alt="头像">
+        {% else %}
+          <div class="hub-avatar-placeholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="8" r="4"/>
+              <path d="M4 20c0-4 4-6 8-6s8 2 8 6"/>
+            </svg>
+          </div>
+        {% endif %}
+        <div class="hub-user-info">
+          <h1 class="hub-username">{{ username or '用户' }}</h1>
+          <div class="hub-checkin-status" id="hubCheckinStatus">加载中...</div>
+        </div>
+        <button class="hub-checkin-btn" id="hubCheckinBtn" type="button">签到</button>
       </div>
-    {% endif %}
-    <div class="hub-user-info">
-      <h1 class="hub-username">{{ username or '用户' }}</h1>
-      <div class="hub-checkin-status" id="hubCheckinStatus">加载中...</div>
+
+      <!-- Continue Card: 继续练习 -->
+      <div class="hub-continue-card" id="hubContinueCard">
+        <div class="hub-continue-header">
+          <span class="hub-continue-label">继续上次</span>
+          <span class="hub-continue-time" id="hubContinueTime"></span>
+        </div>
+        <h2 class="hub-continue-title" id="hubContinueTitle">加载中...</h2>
+        <a class="hub-continue-btn" href="/public/banks" id="hubContinueBtn">进入题库广场</a>
+      </div>
     </div>
-    <button class="hub-checkin-btn" id="hubCheckinBtn" type="button">签到</button>
+
+    <div class="hub-top-right">
+      <!-- Bento Grid: 数据概览 -->
+      <div class="hub-bento-grid">
+        <div class="hub-bento-card">
+          <span class="hub-bento-label">题目数</span>
+          <span class="hub-bento-value">{{ question_total or 0 }}</span>
+          <span class="hub-bento-note">可访问题目</span>
+        </div>
+        <a class="hub-bento-card is-clickable" href="/review?kind=favorites">
+          <span class="hub-bento-label">收藏</span>
+          <span class="hub-bento-value">{{ favorites_count or 0 }}</span>
+          <span class="hub-bento-note">点击查看</span>
+        </a>
+        <a class="hub-bento-card is-clickable" href="/review?kind=mistakes">
+          <span class="hub-bento-label">错题</span>
+          <span class="hub-bento-value">{{ mistakes_count or 0 }}</span>
+          <span class="hub-bento-note">点击复盘</span>
+        </a>
+        <div class="hub-bento-card">
+          <span class="hub-bento-label">近7天</span>
+          <span class="hub-bento-value">{{ answers_7d_total or 0 }}</span>
+          <span class="hub-bento-note">答题数</span>
+        </div>
+        <div class="hub-bento-card">
+          <span class="hub-bento-label">正确率</span>
+          <span class="hub-bento-value">{{ answers_7d_accuracy or 0 }}%</span>
+          <span class="hub-bento-note">近7天</span>
+        </div>
+        <div class="hub-bento-card" id="hubCheckinCard">
+          <span class="hub-bento-label">签到</span>
+          <span class="hub-bento-value" id="hubStreakDays">-</span>
+          <span class="hub-bento-note" id="hubCheckinNote">连续天数</span>
+        </div>
+      </div>
+
+      <!-- Quick Actions: 快捷入口 -->
+      <div class="hub-quick-actions">
+        <a class="hub-action-card" href="/public/banks">
+          <span class="hub-action-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 6.5c0-1.1.9-2 2-2h12c1.1 0 2 .9 2 2V19c0 .6-.4 1-1 1H7a3 3 0 0 1-3-3V6.5Z" stroke-linejoin="round"/>
+              <path d="M7 8h10M7 12h10M7 16h6" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="hub-action-text">
+            <span class="hub-action-title">题库广场</span>
+            <span class="hub-action-desc">浏览全部题库</span>
+          </span>
+        </a>
+        <a class="hub-action-card" href="/user/banks">
+          <span class="hub-action-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 7a2 2 0 0 1 2-2h10a3 3 0 0 1 3 3v11a1 1 0 0 1-1 1H7a3 3 0 0 1-3-3V7Z" stroke-linejoin="round"/>
+              <path d="M7 9h8M7 13h8M7 17h5" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="hub-action-text">
+            <span class="hub-action-title">个人题库</span>
+            <span class="hub-action-desc">我的专属题库</span>
+          </span>
+        </a>
+      </div>
+    </div>
   </div>
 
-  <!-- Continue Card: 继续练习 -->
-  <div class="hub-continue-card hub-fade-in hub-fade-in-delay-1" id="hubContinueCard">
-    <div class="hub-continue-header">
-      <span class="hub-continue-label">继续上次</span>
-      <span class="hub-continue-time" id="hubContinueTime"></span>
+  <!-- 功能介绍区块 -->
+  <div class="hub-features-section hub-fade-in hub-fade-in-delay-1">
+    <div class="hub-features-header">
+      <h2 class="hub-features-title">核心功能</h2>
+      <span class="hub-features-sub">高效备考，轻松通关</span>
     </div>
-    <h2 class="hub-continue-title" id="hubContinueTitle">加载中...</h2>
-    <a class="hub-continue-btn" href="/public/banks" id="hubContinueBtn">进入题库广场</a>
+    <div class="hub-features-grid">
+      <a class="hub-feature-card" href="/public/banks">
+        <span class="hub-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <rect x="14" y="14" width="7" height="7" rx="1"/>
+          </svg>
+        </span>
+        <div class="hub-feature-content">
+          <h3>海量题库</h3>
+          <p>覆盖多学科、多题型，持续更新优质题目资源</p>
+        </div>
+      </a>
+      <a class="hub-feature-card" href="/review?kind=mistakes">
+        <span class="hub-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 8v5M12 16h.01"/>
+            <circle cx="12" cy="12" r="9"/>
+          </svg>
+        </span>
+        <div class="hub-feature-content">
+          <h3>智能错题本</h3>
+          <p>自动收集错题，针对性复习，攻克薄弱环节</p>
+        </div>
+      </a>
+      <a class="hub-feature-card" href="/data">
+        <span class="hub-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19V5M4 19h16M8 15v-3M12 15V8M16 15v-5M20 15v-7"/>
+          </svg>
+        </span>
+        <div class="hub-feature-content">
+          <h3>学习数据</h3>
+          <p>可视化学习轨迹，掌握进度，科学规划复习</p>
+        </div>
+      </a>
+      <a class="hub-feature-card" href="/exam">
+        <span class="hub-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 6v6l4 2"/>
+          </svg>
+        </span>
+        <div class="hub-feature-content">
+          <h3>模拟考试</h3>
+          <p>真实考试环境，限时作答，检验学习成果</p>
+        </div>
+      </a>
+    </div>
   </div>
 
-  <!-- Bento Grid: 数据概览 -->
-  <div class="hub-bento-grid hub-fade-in hub-fade-in-delay-2">
-    <div class="hub-bento-card">
-      <span class="hub-bento-label">题目数</span>
-      <span class="hub-bento-value">{{ question_total or 0 }}</span>
-      <span class="hub-bento-note">可访问题目</span>
+  <!-- CTA 区块 -->
+  <div class="hub-cta-section hub-fade-in hub-fade-in-delay-2">
+    <div class="hub-cta-content">
+      <h2>开始今天的学习</h2>
+      <p>每天坚持刷题，期末轻松过关。选择题库，开始练习吧！</p>
     </div>
-    <a class="hub-bento-card is-clickable" href="/review?kind=favorites">
-      <span class="hub-bento-label">收藏</span>
-      <span class="hub-bento-value">{{ favorites_count or 0 }}</span>
-      <span class="hub-bento-note">点击查看</span>
-    </a>
-    <a class="hub-bento-card is-clickable" href="/review?kind=mistakes">
-      <span class="hub-bento-label">错题</span>
-      <span class="hub-bento-value">{{ mistakes_count or 0 }}</span>
-      <span class="hub-bento-note">点击复盘</span>
-    </a>
-    <div class="hub-bento-card">
-      <span class="hub-bento-label">近7天</span>
-      <span class="hub-bento-value">{{ answers_7d_total or 0 }}</span>
-      <span class="hub-bento-note">答题数</span>
-    </div>
-    <div class="hub-bento-card">
-      <span class="hub-bento-label">正确率</span>
-      <span class="hub-bento-value">{{ answers_7d_accuracy or 0 }}%</span>
-      <span class="hub-bento-note">近7天</span>
-    </div>
-    <div class="hub-bento-card" id="hubCheckinCard">
-      <span class="hub-bento-label">签到</span>
-      <span class="hub-bento-value" id="hubStreakDays">-</span>
-      <span class="hub-bento-note" id="hubCheckinNote">连续天数</span>
-    </div>
-  </div>
-
-  <!-- Quick Actions: 快捷入口 -->
-  <div class="hub-quick-actions hub-fade-in hub-fade-in-delay-3">
-    <a class="hub-action-card" href="/public/banks">
-      <span class="hub-action-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M4 6.5c0-1.1.9-2 2-2h12c1.1 0 2 .9 2 2V19c0 .6-.4 1-1 1H7a3 3 0 0 1-3-3V6.5Z" stroke-linejoin="round"/>
-          <path d="M7 8h10M7 12h10M7 16h6" stroke-linecap="round"/>
-        </svg>
-      </span>
-      <span class="hub-action-text">
-        <span class="hub-action-title">题库广场</span>
-        <span class="hub-action-desc">浏览全部题库</span>
-      </span>
-    </a>
-    <a class="hub-action-card" href="/user/banks">
-      <span class="hub-action-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M4 7a2 2 0 0 1 2-2h10a3 3 0 0 1 3 3v11a1 1 0 0 1-1 1H7a3 3 0 0 1-3-3V7Z" stroke-linejoin="round"/>
-          <path d="M7 9h8M7 13h8M7 17h5" stroke-linecap="round"/>
-        </svg>
-      </span>
-      <span class="hub-action-text">
-        <span class="hub-action-title">个人题库</span>
-        <span class="hub-action-desc">我的专属题库</span>
-      </span>
-    </a>
+    <a class="hub-cta-btn" href="/public/banks">进入题库广场</a>
   </div>
 
 {% else %}
@@ -473,6 +714,74 @@
         <span class="hub-action-desc">搜索题目和题库</span>
       </span>
     </a>
+  </div>
+
+  <!-- 功能介绍区块（未登录也显示） -->
+  <div class="hub-features-section hub-fade-in hub-fade-in-delay-2">
+    <div class="hub-features-header">
+      <h2 class="hub-features-title">核心功能</h2>
+      <span class="hub-features-sub">高效备考，轻松通关</span>
+    </div>
+    <div class="hub-features-grid">
+      <a class="hub-feature-card" href="/public/banks">
+        <span class="hub-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <rect x="14" y="14" width="7" height="7" rx="1"/>
+          </svg>
+        </span>
+        <div class="hub-feature-content">
+          <h3>海量题库</h3>
+          <p>覆盖多学科、多题型，持续更新优质题目资源</p>
+        </div>
+      </a>
+      <a class="hub-feature-card" href="/login?redirect=/review">
+        <span class="hub-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 8v5M12 16h.01"/>
+            <circle cx="12" cy="12" r="9"/>
+          </svg>
+        </span>
+        <div class="hub-feature-content">
+          <h3>智能错题本</h3>
+          <p>自动收集错题，针对性复习，攻克薄弱环节</p>
+        </div>
+      </a>
+      <a class="hub-feature-card" href="/login?redirect=/data">
+        <span class="hub-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19V5M4 19h16M8 15v-3M12 15V8M16 15v-5M20 15v-7"/>
+          </svg>
+        </span>
+        <div class="hub-feature-content">
+          <h3>学习数据</h3>
+          <p>可视化学习轨迹，掌握进度，科学规划复习</p>
+        </div>
+      </a>
+      <a class="hub-feature-card" href="/login?redirect=/exam">
+        <span class="hub-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 6v6l4 2"/>
+          </svg>
+        </span>
+        <div class="hub-feature-content">
+          <h3>模拟考试</h3>
+          <p>真实考试环境，限时作答，检验学习成果</p>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- CTA 区块 -->
+  <div class="hub-cta-section hub-fade-in hub-fade-in-delay-3">
+    <div class="hub-cta-content">
+      <h2>立即开始学习</h2>
+      <p>登录后解锁全部功能，开启高效备考之旅</p>
+    </div>
+    <a class="hub-cta-btn" href="/login?redirect=/hub">登录 / 注册</a>
   </div>
 {% endif %}
 </div>
