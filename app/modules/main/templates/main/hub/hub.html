@@ -8,17 +8,17 @@
   .hub-home {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
     width: 100%;
-    max-width: 1120px;
+    max-width: 1080px;
     margin: 0 auto;
-    padding: 18px 18px 40px;
+    padding: 16px 16px 36px;
   }
 
   /* 顶部区域：用户信息 + 数据 */
   .hub-top-section {
     display: grid;
-    grid-template-columns: 1fr 1.2fr;
+    grid-template-columns: 1fr 1fr;
     gap: 16px;
     align-items: start;
   }
@@ -130,7 +130,7 @@
 
   /* Checkin Calendar Card - 签到日历卡片 */
   .hub-checkin-card {
-    padding: 20px;
+    padding: 16px;
     background: var(--app-surface);
     border: 1px solid var(--app-border);
     border-radius: var(--app-radius-xl);
@@ -141,7 +141,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
   }
 
   .hub-checkin-title {
@@ -189,8 +189,8 @@
   .hub-checkin-calendar {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 6px;
-    margin-bottom: 16px;
+    gap: 4px;
+    margin-bottom: 12px;
   }
 
   .hub-checkin-weekday {
@@ -206,10 +206,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     color: var(--app-muted);
-    border-radius: 8px;
+    border-radius: 6px;
     background: transparent;
     transition: all 160ms ease;
   }
@@ -266,7 +266,7 @@
 
   /* Chart Card: 答题趋势图表 */
   .hub-chart-card {
-    padding: 20px;
+    padding: 16px;
     background: var(--app-surface);
     border: 1px solid var(--app-border);
     border-radius: var(--app-radius-xl);
@@ -279,7 +279,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
   }
 
   .hub-chart-title {
@@ -309,11 +309,11 @@
 
   .hub-chart-container {
     flex: 1;
-    min-height: 140px;
+    min-height: 120px;
     display: flex;
     align-items: flex-end;
     gap: 8px;
-    padding-bottom: 24px;
+    padding-bottom: 20px;
     position: relative;
   }
 
@@ -455,20 +455,20 @@
   /* Bento Grid */
   .hub-bento-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 10px;
   }
 
   .hub-bento-card {
-    padding: 16px;
+    padding: 14px;
     background: var(--app-surface);
     border: 1px solid var(--app-border);
     border-radius: var(--app-radius-lg);
     box-shadow: var(--app-shadow-soft);
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    min-height: 90px;
+    gap: 4px;
+    min-height: 82px;
     text-decoration: none;
     color: inherit;
     transition: all 160ms ease;
@@ -491,10 +491,11 @@
   }
 
   .hub-bento-value {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 800;
     color: var(--app-text);
     line-height: 1;
+    letter-spacing: -0.3px;
   }
 
   .hub-bento-note {
@@ -515,7 +516,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 16px;
+    padding: 14px;
     background: var(--app-surface);
     border: 1px solid var(--app-border);
     border-radius: var(--app-radius-lg);
@@ -533,8 +534,8 @@
   }
 
   .hub-action-icon {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border-radius: var(--app-radius-md);
     background: var(--app-primary-soft);
     display: flex;
@@ -544,8 +545,8 @@
   }
 
   .hub-action-icon svg {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     color: var(--app-text);
   }
 
@@ -695,7 +696,7 @@
     grid-template-columns: 1fr auto;
     align-items: center;
     gap: 20px;
-    padding: 24px;
+    padding: 20px;
     background: linear-gradient(135deg, var(--app-primary-soft), color-mix(in srgb, var(--app-primary) 8%, var(--app-surface)));
     border: 1px solid color-mix(in srgb, var(--app-primary) 20%, var(--app-border));
     border-radius: var(--app-radius-xl);
@@ -751,7 +752,7 @@
       grid-template-columns: repeat(2, 1fr);
     }
     .hub-bento-grid {
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
     }
     .hub-stats-row {
       grid-template-columns: 1fr;
@@ -759,6 +760,10 @@
   }
 
   @media (max-width: 560px) {
+    .hub-home {
+      padding: 12px 12px 28px;
+      gap: 14px;
+    }
     .hub-bento-grid {
       grid-template-columns: repeat(2, 1fr);
     }
@@ -766,13 +771,13 @@
       grid-template-columns: 1fr;
     }
     .hub-bento-value {
-      font-size: 24px;
+      font-size: 20px;
     }
     .hub-features-grid {
       grid-template-columns: 1fr;
     }
     .hub-checkin-calendar {
-      gap: 4px;
+      gap: 3px;
     }
     .hub-checkin-stats {
       flex-wrap: wrap;
@@ -850,11 +855,6 @@
           <span class="hub-bento-value">{{ mistakes_count or 0 }}</span>
           <span class="hub-bento-note">点击复盘</span>
         </a>
-        <div class="hub-bento-card">
-          <span class="hub-bento-label">近7天</span>
-          <span class="hub-bento-value">{{ answers_7d_total or 0 }}</span>
-          <span class="hub-bento-note">答题数</span>
-        </div>
         <div class="hub-bento-card">
           <span class="hub-bento-label">正确率</span>
           <span class="hub-bento-value">{{ answers_7d_accuracy or 0 }}%</span>
@@ -955,65 +955,6 @@
           <span class="hub-chart-stat-label">日均</span>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- 功能介绍区块 -->
-  <div class="hub-features-section hub-fade-in hub-fade-in-delay-1">
-    <div class="hub-features-header">
-      <h2 class="hub-features-title">核心功能</h2>
-      <span class="hub-features-sub">高效备考，轻松通关</span>
-    </div>
-    <div class="hub-features-grid">
-      <a class="hub-feature-card" href="/public/banks">
-        <span class="hub-feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="7" height="7" rx="1"/>
-            <rect x="14" y="3" width="7" height="7" rx="1"/>
-            <rect x="3" y="14" width="7" height="7" rx="1"/>
-            <rect x="14" y="14" width="7" height="7" rx="1"/>
-          </svg>
-        </span>
-        <div class="hub-feature-content">
-          <h3>海量题库</h3>
-          <p>覆盖多学科、多题型，持续更新优质题目资源</p>
-        </div>
-      </a>
-      <a class="hub-feature-card" href="/review?kind=mistakes">
-        <span class="hub-feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 8v5M12 16h.01"/>
-            <circle cx="12" cy="12" r="9"/>
-          </svg>
-        </span>
-        <div class="hub-feature-content">
-          <h3>智能错题本</h3>
-          <p>自动收集错题，针对性复习，攻克薄弱环节</p>
-        </div>
-      </a>
-      <a class="hub-feature-card" href="/data">
-        <span class="hub-feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M4 19V5M4 19h16M8 15v-3M12 15V8M16 15v-5M20 15v-7"/>
-          </svg>
-        </span>
-        <div class="hub-feature-content">
-          <h3>学习数据</h3>
-          <p>可视化学习轨迹，掌握进度，科学规划复习</p>
-        </div>
-      </a>
-      <a class="hub-feature-card" href="/exam">
-        <span class="hub-feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="9"/>
-            <path d="M12 6v6l4 2"/>
-          </svg>
-        </span>
-        <div class="hub-feature-content">
-          <h3>模拟考试</h3>
-          <p>真实考试环境，限时作答，检验学习成果</p>
-        </div>
-      </a>
     </div>
   </div>
 
