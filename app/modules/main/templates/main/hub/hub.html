@@ -255,6 +255,145 @@
     color: var(--app-muted);
   }
 
+  /* Stats Row: 日历 + 图表并排 */
+  .hub-stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  /* Chart Card: 答题趋势图表 */
+  .hub-chart-card {
+    padding: 20px;
+    background: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius-xl);
+    box-shadow: var(--app-shadow-soft);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hub-chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .hub-chart-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--app-text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .hub-chart-title svg {
+    width: 18px;
+    height: 18px;
+    color: var(--app-muted);
+  }
+
+  .hub-chart-link {
+    font-size: 12px;
+    color: var(--app-primary);
+    text-decoration: none;
+  }
+
+  .hub-chart-link:hover {
+    text-decoration: underline;
+  }
+
+  .hub-chart-container {
+    flex: 1;
+    min-height: 140px;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding-bottom: 24px;
+    position: relative;
+  }
+
+  .hub-chart-bar-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    height: 100%;
+  }
+
+  .hub-chart-bar {
+    width: 100%;
+    max-width: 32px;
+    background: var(--app-primary-soft);
+    border-radius: 4px 4px 0 0;
+    transition: all 200ms ease;
+    position: relative;
+    min-height: 4px;
+  }
+
+  .hub-chart-bar:hover {
+    background: var(--app-primary);
+  }
+
+  .hub-chart-bar.is-today {
+    background: var(--app-primary);
+  }
+
+  .hub-chart-bar-value {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--app-text);
+    opacity: 0;
+    transition: opacity 150ms ease;
+    white-space: nowrap;
+  }
+
+  .hub-chart-bar-wrapper:hover .hub-chart-bar-value {
+    opacity: 1;
+  }
+
+  .hub-chart-label {
+    font-size: 11px;
+    color: var(--app-muted);
+    text-align: center;
+  }
+
+  .hub-chart-label.is-today {
+    color: var(--app-primary);
+    font-weight: 700;
+  }
+
+  .hub-chart-stats {
+    display: flex;
+    gap: 20px;
+    padding-top: 12px;
+    border-top: 1px solid var(--app-border);
+  }
+
+  .hub-chart-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .hub-chart-stat-value {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--app-text);
+  }
+
+  .hub-chart-stat-label {
+    font-size: 11px;
+    color: var(--app-muted);
+  }
+
   /* Continue Card */
   .hub-continue-card {
     padding: 18px;
@@ -610,6 +749,9 @@
     .hub-bento-grid {
       grid-template-columns: repeat(3, 1fr);
     }
+    .hub-stats-row {
+      grid-template-columns: 1fr;
+    }
   }
 
   @media (max-width: 560px) {
@@ -684,40 +826,6 @@
         <h2 class="hub-continue-title" id="hubContinueTitle">加载中...</h2>
         <a class="hub-continue-btn" href="/public/banks" id="hubContinueBtn">进入题库广场</a>
       </div>
-
-      <!-- Checkin Calendar Card: 签到日历 -->
-      <div class="hub-checkin-card" id="hubCheckinCalendarCard">
-        <div class="hub-checkin-header">
-          <span class="hub-checkin-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="4" width="18" height="18" rx="2"/>
-              <path d="M16 2v4M8 2v4M3 10h18"/>
-            </svg>
-            签到日历
-          </span>
-          <button class="hub-checkin-action" id="hubCalendarCheckinBtn" type="button">签到</button>
-        </div>
-        <div class="hub-checkin-calendar" id="hubCheckinCalendar">
-          <span class="hub-checkin-weekday">日</span>
-          <span class="hub-checkin-weekday">一</span>
-          <span class="hub-checkin-weekday">二</span>
-          <span class="hub-checkin-weekday">三</span>
-          <span class="hub-checkin-weekday">四</span>
-          <span class="hub-checkin-weekday">五</span>
-          <span class="hub-checkin-weekday">六</span>
-          <!-- 日历日期由 JS 动态生成 -->
-        </div>
-        <div class="hub-checkin-stats">
-          <div class="hub-checkin-stat">
-            <span class="hub-checkin-stat-value" id="hubCalendarStreak">-</span>
-            <span class="hub-checkin-stat-label">连续签到</span>
-          </div>
-          <div class="hub-checkin-stat">
-            <span class="hub-checkin-stat-value" id="hubCalendarTotal">-</span>
-            <span class="hub-checkin-stat-label">累计签到</span>
-          </div>
-        </div>
-      </div>
     </div>
 
     <div class="hub-top-right">
@@ -776,6 +884,72 @@
             <span class="hub-action-desc">我的专属题库</span>
           </span>
         </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 统计区域：签到日历 + 答题趋势 -->
+  <div class="hub-stats-row hub-fade-in hub-fade-in-delay-1">
+    <!-- Checkin Calendar Card: 签到日历 -->
+    <div class="hub-checkin-card" id="hubCheckinCalendarCard">
+      <div class="hub-checkin-header">
+        <span class="hub-checkin-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2"/>
+            <path d="M16 2v4M8 2v4M3 10h18"/>
+          </svg>
+          签到日历
+        </span>
+        <button class="hub-checkin-action" id="hubCalendarCheckinBtn" type="button">签到</button>
+      </div>
+      <div class="hub-checkin-calendar" id="hubCheckinCalendar">
+        <span class="hub-checkin-weekday">日</span>
+        <span class="hub-checkin-weekday">一</span>
+        <span class="hub-checkin-weekday">二</span>
+        <span class="hub-checkin-weekday">三</span>
+        <span class="hub-checkin-weekday">四</span>
+        <span class="hub-checkin-weekday">五</span>
+        <span class="hub-checkin-weekday">六</span>
+      </div>
+      <div class="hub-checkin-stats">
+        <div class="hub-checkin-stat">
+          <span class="hub-checkin-stat-value" id="hubCalendarStreak">-</span>
+          <span class="hub-checkin-stat-label">连续签到</span>
+        </div>
+        <div class="hub-checkin-stat">
+          <span class="hub-checkin-stat-value" id="hubCalendarTotal">-</span>
+          <span class="hub-checkin-stat-label">累计签到</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart Card: 答题趋势 -->
+    <div class="hub-chart-card" id="hubChartCard">
+      <div class="hub-chart-header">
+        <span class="hub-chart-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19V5M4 19h16M8 15v-3M12 15V8M16 15v-5M20 15v-7"/>
+          </svg>
+          近7天答题
+        </span>
+        <a class="hub-chart-link" href="/data">查看详情</a>
+      </div>
+      <div class="hub-chart-container" id="hubChartContainer">
+        <!-- 图表由 JS 动态生成 -->
+      </div>
+      <div class="hub-chart-stats">
+        <div class="hub-chart-stat">
+          <span class="hub-chart-stat-value" id="hubChartTotal">-</span>
+          <span class="hub-chart-stat-label">总答题</span>
+        </div>
+        <div class="hub-chart-stat">
+          <span class="hub-chart-stat-value" id="hubChartCorrect">-</span>
+          <span class="hub-chart-stat-label">正确率</span>
+        </div>
+        <div class="hub-chart-stat">
+          <span class="hub-chart-stat-value" id="hubChartAvg">-</span>
+          <span class="hub-chart-stat-label">日均</span>
+        </div>
       </div>
     </div>
   </div>
@@ -1113,6 +1287,107 @@
   // 初始化
   renderCalendar([]);
   loadCheckin();
+
+  // 答题趋势图表功能
+  var chartContainer = document.getElementById('hubChartContainer');
+  var chartTotal = document.getElementById('hubChartTotal');
+  var chartCorrect = document.getElementById('hubChartCorrect');
+  var chartAvg = document.getElementById('hubChartAvg');
+
+  function renderChart(dailyData) {
+    if (!chartContainer) return;
+    chartContainer.innerHTML = '';
+
+    var data = dailyData || [];
+    var maxCount = Math.max.apply(null, data.map(function(d) { return d.count || 0; })) || 1;
+    var today = new Date();
+    var todayStr = today.toISOString().split('T')[0];
+
+    // 生成近7天日期
+    var days = [];
+    for (var i = 6; i >= 0; i--) {
+      var d = new Date(today);
+      d.setDate(d.getDate() - i);
+      days.push({
+        date: d.toISOString().split('T')[0],
+        label: ['日', '一', '二', '三', '四', '五', '六'][d.getDay()],
+        dayNum: d.getDate()
+      });
+    }
+
+    // 创建数据映射
+    var dataMap = {};
+    data.forEach(function(item) {
+      dataMap[item.date] = item;
+    });
+
+    // 渲染柱状图
+    days.forEach(function(day) {
+      var item = dataMap[day.date] || { count: 0, correct: 0 };
+      var height = maxCount > 0 ? Math.max((item.count / maxCount) * 100, 4) : 4;
+      var isToday = day.date === todayStr;
+
+      var wrapper = document.createElement('div');
+      wrapper.className = 'hub-chart-bar-wrapper';
+
+      var bar = document.createElement('div');
+      bar.className = 'hub-chart-bar' + (isToday ? ' is-today' : '');
+      bar.style.height = height + '%';
+
+      var value = document.createElement('span');
+      value.className = 'hub-chart-bar-value';
+      value.textContent = item.count;
+      bar.appendChild(value);
+
+      var label = document.createElement('span');
+      label.className = 'hub-chart-label' + (isToday ? ' is-today' : '');
+      label.textContent = isToday ? '今' : day.label;
+
+      wrapper.appendChild(bar);
+      wrapper.appendChild(label);
+      chartContainer.appendChild(wrapper);
+    });
+  }
+
+  function updateChartStats(data) {
+    var totalCount = 0;
+    var correctCount = 0;
+    (data || []).forEach(function(item) {
+      totalCount += (item.count || 0);
+      correctCount += (item.correct || 0);
+    });
+    var accuracy = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
+    var avg = Math.round(totalCount / 7);
+
+    if (chartTotal) chartTotal.textContent = totalCount;
+    if (chartCorrect) chartCorrect.textContent = accuracy + '%';
+    if (chartAvg) chartAvg.textContent = avg;
+  }
+
+  async function loadChart() {
+    try {
+      var res = await fetch('/api/user/stats/daily?days=7', { credentials: 'same-origin' });
+      var json = await res.json();
+      if (json.status === 'success' && json.data) {
+        // API 返回 {date, total, correct}，转换为 {date, count, correct}
+        var daily = (json.data || []).map(function(item) {
+          return { date: item.date, count: item.total || 0, correct: item.correct || 0 };
+        });
+        renderChart(daily);
+        updateChartStats(daily);
+      } else {
+        renderChart([]);
+        updateChartStats([]);
+      }
+    } catch (e) {
+      renderChart([]);
+      updateChartStats([]);
+    }
+  }
+
+  // 初始化图表
+  renderChart([]);
+  loadChart();
 
   // 继续练习功能
   var continueTitle = document.getElementById('hubContinueTitle');
