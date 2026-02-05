@@ -14,12 +14,12 @@ class Config:
     BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
     # 运行数据根目录（用于跨平台/Docker 部署解耦 instance/logs/uploads）
-    # 默认仍保持当前行为：以项目根目录为基准（配合 Windows Junction 或 Linux 实体目录）
+    # 默认使用项目根目录下的 var 子目录，避免数据文件散落在根目录
     _DATA_DIR_RAW = os.environ.get('DATA_DIR')
     if _DATA_DIR_RAW:
         DATA_DIR = os.path.abspath(_DATA_DIR_RAW) if os.path.isabs(_DATA_DIR_RAW) else os.path.abspath(os.path.join(BASE_DIR, _DATA_DIR_RAW))
     else:
-        DATA_DIR = BASE_DIR
+        DATA_DIR = os.path.join(BASE_DIR, 'var')
     
     # 密钥配置
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'

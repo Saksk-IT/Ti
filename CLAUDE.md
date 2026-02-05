@@ -16,37 +16,12 @@
 - 允许：修改后端（Flask）代码、添加新的小程序页面、添加新的后端端点、为可维护性做必要重构。
 - 保持兼容性：小程序和网页必须共享相同的数据与语义（包括但不限于：收藏 / 错误 / 用户答案 / 用户进度 / 考试）。
 - 文件与版本控制（默认策略，除非我明确要求）：  
-  - 默认：不删除现有文件；优先在原文件上做**增量修改**，保留本地版本与上下文。  
-  - 尽量避免回滚本地文件：不主动使用会把文件还原到旧状态的命令（如 `git restore` / `git checkout --` / `git reset --hard` 等）。  
+  - 默认：不删除现有文件；优先在原文件上做**增量修改**，保留本地版本与上下文。
   - 任务完成后：在做完最小验证后，自动提交本次相关改动（只包含本次任务；提交信息需能概括改动）。  
   - 例外（需先确认）：若**必须**删除文件或进行破坏性改动/大规模重构，先给出「原因 / 替代方案 / 影响评估」，并等待确认后再执行。
 
-## 2) 工具、MCP、skills 的自动选择规则（MUST）
 
-目标：让 AI 在动手前能“先选对方法，再按流程执行”。
-
-### 2.1 skills 选择（MUST）
-
-- skills 目录：`~/.claude/skills`（全局配置，所有项目共享）
-- 多技能组合时：优先 1 个**主技能**（决定整体工作流），再选 0～2 个**辅助技能**。
-
-### 2.2 MCP 选择（MUST）
-
-- 架构、依赖、框架用法或问题：优先使用 Context7（`mcp__context7__*`；先 `resolve-library-id` 再 `query-docs`）。
-- 调试前端页面行为（需要真实页面交互/定位 DOM/网络请求/控制台）：优先使用 `mcp__chrome-devtools__*`。
-
-### 2.3 任务 → 推荐调用（速查表）
-
-| 任务类型（你识别到的意图） | 优先 skills | 常用 MCP / 工具 |
-|---|---|---|
-| UI/UX 设计、移动端适配、主题/深浅模式统一 | `UI设计专家` |（必要时）`mcp__chrome-devtools__*`（浏览器调试） |
-| 前端页面交互回归/自动化测试 | `网页测试` |（必要时）`mcp__chrome-devtools__*`（浏览器调试） |
-| 架构/依赖/框架 API 用法不确定 |（可选）`内容研究写作` | `mcp__context7__*`（文档查询） |
-| 写/改 README、规范文档、方案说明 | `内容研究写作` |（可选）`mcp__context7__*`（文档查询） |
-| GitHub PR/CI 失败排查与修复 | `CI修复助手` |（可选）`PR评论处理` |
-| 处理 Office/文档文件 | `Word文档处理` / `PPT文档处理` / `PDF文档处理` / `Excel文档处理` | - |
-
-### 2.4 执行顺序（给 AI 的固定模板）
+## 2.1 执行顺序（给 AI 的固定模板）
 
 1. 用 1～2 句话复述目标 + 关键约束（端：小程序/Web；是否涉及 UI；是否要新增接口）。
 2. 选择并声明将使用的 skills / MCP（如不需要也要声明"无"）。
@@ -54,27 +29,7 @@
 4. 修改代码尽量小步、可回滚；优先遵循现有模式与命名。
 5. 交付前做最小验证（能跑就跑；不能跑就说明原因与手动验证步骤）。
 
-### 2.5 自动触发条件（MUST - AI 必须遵守）
-
-以下情况 AI **必须**自动调用对应工具，无需用户提示：
-
-| 触发条件（关键词/意图） | 自动调用 | 调用顺序 |
-|------------------------|----------|----------|
-| 提到"框架"/"依赖"/"API用法"/"官方文档"/"最新版本" | `mcp__context7__*`（文档查询） | 先 `resolve-library-id` → 再 `query-docs` |
-| 提到"调试页面"/"DOM"/"控制台"/"网络请求"/"页面截图" | `mcp__chrome-devtools__*`（浏览器调试） | 先 `take_snapshot` 或 `list_pages` |
-| 提到"UI设计"/"主题"/"深色模式"/"响应式"/"移动端适配" | `UI设计专家` | 先加载 skill 再执行 |
-| 提到"自动化测试"/"E2E"/"Playwright"/"页面测试" | `网页测试` | 先加载 skill 再执行 |
-| 提到"PR"/"CI失败"/"GitHub Actions"/"构建失败" | `CI修复助手` | 先加载 skill 再执行 |
-| 提到"PDF"/"Word文档"/"Excel"/"PPT" | `PDF文档处理`/`Word文档处理`/`Excel文档处理`/`PPT文档处理` | 先加载对应 skill |
-| 提到"写文档"/"README"/"技术方案" | `内容研究写作` | 先加载 skill 再执行 |
-
-**自动调用纪律**：
-- 单次任务最多组合 1 主 skill + 2 辅助 skill，避免上下文膨胀
-- MCP 调用优先使用只读操作（snapshot/list/query），写操作需用户确认
-- 若触发条件重叠，按表格从上到下的优先级选择
-- 调用后必须在对话结尾注明实际使用的工具/MCP/skills
-
-### 2.6 任务开始检查清单（MUST）
+## 2.2 任务开始检查清单（MUST）
 
 每次收到新任务时，AI 必须在内部完成以下检查（无需输出给用户）：
 
@@ -112,97 +67,4 @@
 ## 6) 额外业务上下文（MUST）
 
 - 题库详情页存在两个入口：（题库广场 → 题库详情页）与（个人题库 → 题库详情页）。
-
-
-## 重要文件
-
-- `run.py` - 应用入口
-- `app/__init__.py` - Flask 应用工厂，含中间件配置
-- `app/core/config.py` - 环境配置
-- `miniprogram-1/miniprogram/utils/api.ts` - 小程序 API 客户端
-- `miniprogram-1/miniprogram/utils/auth.ts` - 小程序认证工具
-- `AGENTS.md` - 完整项目规则参考
-
-
-本文件为 Claude Code (claude.ai/code) 在此仓库中工作时提供指导。
-
-## 项目概述
-
-题库系统 - 全栈应用：
-- **后端**：Flask (Python)，同时提供 API 和网页服务
-- **前端**：微信小程序 (TypeScript + LESS) + Web (Jinja2 模板)
-
-## 开发命令
-
-### 后端
-
-```bash
-# 开发服务器（启用热重载）
-python run.py
-
-# 环境变量：FLASK_ENV=development|production|testing
-# 默认端口：5000，可通过 PORT 环境变量配置
-```
-
-### 生产环境
-
-```bash
-# 使用 gunicorn + systemd（详见 docs/systemd/README.md）
-gunicorn -w 4 -b 0.0.0.0:5000 "app:create_app('production')"
-```
-
-### 小程序
-
-- 在微信开发者工具中打开 `miniprogram-1/`
-- TypeScript 和 LESS 由开发者工具自动编译
-
-## 架构
-
-### 后端 (`app/`)
-
-```
-app/
-├── __init__.py          # 应用工厂 (create_app)
-├── core/
-│   ├── config.py        # 配置类
-│   ├── extensions.py    # Flask 扩展初始化
-│   └── utils/           # 共享工具（jwt_utils, database, email_service）
-└── modules/             # 领域模块
-    ├── auth/            # 认证（JWT + session）
-    ├── quiz/            # 答题/练习功能
-    ├── user_bank/       # 用户题库
-    ├── admin/           # 管理后台
-    ├── coding/          # 代码执行模块
-    └── notifications/   # 系统通知
-```
-
-**模块结构模式**：
-
-```
-modules/<领域>/
-├── routes/
-│   ├── api.py           # JSON API 端点
-│   ├── pages.py         # HTML 页面路由
-│   └── api_components/  # 大型模块的拆分 API 文件
-├── services/            # 业务逻辑
-├── schemas.py           # Pydantic 验证
-└── models/              # 数据库模型（如需要）
-```
-
-### 小程序 (`miniprogram-1/miniprogram/`)
-
-```
-miniprogram/
-├── app.ts               # 应用入口
-├── app.json             # 应用配置与路由
-├── pages/               # 页面组件
-│   └── <name>/
-│       ├── <name>.ts    # 页面逻辑
-│       ├── <name>.wxml  # 模板
-│       ├── <name>.less  # 样式
-│       └── <name>.json  # 页面配置
-├── components/          # 可复用组件
-├── utils/               # 共享工具（api.ts, auth.ts, config.ts）
-└── packages/            # 分包（懒加载）
-```
-
+  
