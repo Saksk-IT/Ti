@@ -12,7 +12,9 @@
       "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: 添加苏格拉底式提问技能\n\n- 支持手动触发 \\(/socratic, /苏格拉底\\) 和自动检测\n- 提供 6 层提问框架：澄清本质、探究假设、边界约束、替代方案、影响后果、验证标准\n- 每轮 4-6 个问题，避免信息过载\n- 与 CLAUDE.md 第 5 节选项式问题模板互补\nEOF\n\\)\")",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: 签到功能改为日历卡片显示\n\n- 在首页左侧添加签到日历卡片，显示本月签到记录\n- 从 Bento Grid 中移除签到项，改为独立日历展示\n- 更新签到 API 返回本月已签到日期列表 \\(checked_dates\\)\n- 日历支持显示今日标记、已签到标记\n- 统计区显示连续签到和累计签到天数\nEOF\n\\)\")",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: 添加签到日历和答题趋势图表并排显示\n\n- 将签到日历卡片移至独立的统计区域\n- 新增近7天答题趋势柱状图卡片\n- 日历和图表并排显示，充分利用页面宽度\n- 图表显示每日答题数、总答题数、正确率、日均答题\n- 响应式布局：移动端自动堆叠显示\nEOF\n\\)\")",
-      "Bash(git commit:*)"
-    ]
+      "Bash(git commit:*)",
+      "Bash(npx skills:*)"
+    ],
+    "defaultMode": "bypassPermissions"
   }
 }
