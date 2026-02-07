@@ -31,9 +31,11 @@ from app.core.utils.fill_blank_parser import parse_fill_blank
 from app.core.utils.validators import parse_int, validate_password
 
 from ..api_bp import admin_api_bp
+from app.core.utils.decorators import subject_admin_required
 
 
 @admin_api_bp.route('/questions/import', methods=['POST'])
+@subject_admin_required
 def import_questions_api():
     """导入题目"""
     data = request.json
@@ -177,6 +179,7 @@ def import_questions_api():
 
 
 @admin_api_bp.route('/questions/export', methods=['GET'])
+@subject_admin_required
 def export_questions_api():
     """导出题目"""
     subject_id = request.args.get('subject_id')
@@ -255,6 +258,7 @@ def export_questions_api():
     return jsonify({'status': 'success', 'meta': meta, 'count': len(items), 'questions': items})
 
 @admin_api_bp.route('/questions/import/excel', methods=['POST'])
+@subject_admin_required
 def import_questions_from_excel():
     """从Excel文件导入题库 (V2 - 分列格式)"""
     if 'file' not in request.files:
@@ -412,6 +416,7 @@ def import_questions_from_excel():
 
 
 @admin_api_bp.route('/download_template')
+@subject_admin_required
 def download_template():
     """提供题库导入模板文件的下载"""
     directory = os.path.join(current_app.root_path, '..', 'instance')
@@ -420,6 +425,7 @@ def download_template():
 
 
 @admin_api_bp.route('/questions/export/excel', methods=['GET'])
+@subject_admin_required
 def export_questions_to_excel():
     """导出题目为Excel文件（使用与导入相同的模板格式）"""
     subject_id = request.args.get('subject_id')
@@ -575,6 +581,7 @@ def export_questions_to_excel():
 
 
 @admin_api_bp.route('/questions/export/word', methods=['GET'])
+@subject_admin_required
 def export_questions_to_word():
     """导出题目为Word文档"""
     # 延迟导入，避免模块加载时出错
@@ -753,6 +760,7 @@ def export_questions_to_word():
 
 
 @admin_api_bp.route('/questions/upload_image', methods=['POST'])
+@subject_admin_required
 def upload_question_image():
     """上传题目图片"""
     if 'file' not in request.files:
@@ -787,6 +795,7 @@ def upload_question_image():
 
 
 @admin_api_bp.route('/questions/export_package', methods=['GET'])
+@subject_admin_required
 def export_questions_package():
     """导出包含完整数据和图片的题目包"""
     subject_id = request.args.get('subject_id')
@@ -913,6 +922,7 @@ def export_questions_package():
 
 
 @admin_api_bp.route('/questions/import_package', methods=['POST'])
+@subject_admin_required
 def import_questions_package():
     """导入题目包 (.zip)"""
     if 'file' not in request.files:
