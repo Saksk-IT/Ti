@@ -136,6 +136,33 @@ def close_db(error=None):
         db.close()
 
 
+# ---------------------------------------------------------------------------
+# IN 子句安全构建工具
+# ---------------------------------------------------------------------------
+_IN_BATCH_SIZE = 900  # SQLite 参数上限 ~999，留余量
+
+
+def safe_in_clause(column: str, values: list, sql: str, params: list) -> tuple:
+    """安全地向 SQL 追加 ``AND column IN (...)`` 子句。
+
+    - 当 *values* 不超过 ``_IN_BATCH_SIZE`` 时使用参数化占位符。
+    - 超过时，对每个值强制 ``int()`` 转换后拼接，避免 SQLite 参数上限错误。
+      ``int()`` 保证只有纯整数进入 SQL，杜绝注入风险。
+
+    返回 ``(sql, params)``，调用方直接解包即可。
+    """
+    if not values:
+        return sql, params
+    if len(values) <= _IN_BATCH_SIZE:
+        placeholders = ','.join(['?'] * len(values))
+        sql += f" AND {column} IN ({placeholders})"
+        params.extend(values)
+    else:
+        safe_ids = ','.join(str(int(v)) for v in values)
+        sql += f" AND {column} IN ({safe_ids})"
+    return sql, params
+
+
 def init_db():
     """初始化数据库（创建表和索引）"""
     conn = connect_db()

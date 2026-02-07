@@ -37,7 +37,7 @@ class Config:
     
     # 上传文件配置
     UPLOAD_FOLDER = os.path.join(DATA_DIR, 'uploads')
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB
+    MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 10MB
     
     # 日志配置
     LOG_DIR = os.path.join(DATA_DIR, 'logs')
@@ -60,8 +60,8 @@ class Config:
     ENABLE_GZIP = os.environ.get('ENABLE_GZIP', 'true').lower() in ['true', 'on', '1']
     GZIP_MINIMUM_SIZE = int(os.environ.get('GZIP_MINIMUM_SIZE', '500') or 500)
     
-    # 会话配置：启用永久会话，默认 7 天
-    PERMANENT_SESSION_LIFETIME = timedelta(days=7)
+    # 会话配置：启用永久会话，默认 24 小时
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
     SESSION_REFRESH_EACH_REQUEST = True
 
     # Web 会话活跃时间写入节流（避免每次请求都写 SQLite）
@@ -75,7 +75,7 @@ class Config:
         or 'memory://'
     )
     RATELIMIT_STORAGE_URL = RATELIMIT_STORAGE_URI
-    RATELIMIT_DEFAULT = "10000 per day;1000 per hour"
+    RATELIMIT_DEFAULT = "5000 per day;500 per hour;10 per second"
     RATELIMIT_HEADERS_ENABLED = True
 
     # Redis（缓存/队列/限流共享存储）
@@ -166,6 +166,9 @@ class ProductionConfig(Config):
     
     # 防止XSS攻击
     JSONIFY_PRETTYPRINT_REGULAR = False
+
+    # 生产环境 HTTPS 强制重定向（Flask 层备用；推荐在 Nginx 层处理）
+    FORCE_HTTPS = os.environ.get('FORCE_HTTPS', 'false').lower() in ['true', 'on', '1']
     
     # 生产环境日志级别
     LOG_LEVEL = logging.INFO

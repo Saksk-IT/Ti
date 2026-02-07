@@ -5,7 +5,7 @@ import math
 import random
 import re
 from flask import Blueprint, render_template, request, session, redirect, url_for
-from app.core.utils.database import get_db
+from app.core.utils.database import get_db, safe_in_clause
 from app.core.utils.options_parser import parse_options
 from app.modules.quiz.services.study_service import now_bj, dt_to_str
 
@@ -529,12 +529,7 @@ def quiz_page():
 
         if tag_question_ids is not None:
             tag_question_ids = sorted(set(tag_question_ids))
-            if len(tag_question_ids) <= 900:
-                placeholders = ",".join(["?"] * len(tag_question_ids))
-                sql += f" AND q.id IN ({placeholders})"
-                params.extend(tag_question_ids)
-            else:
-                sql += " AND q.id IN ({})".format(",".join(str(i) for i in tag_question_ids))
+            sql, params = safe_in_clause('q.id', tag_question_ids, sql, params)
 
         if source == 'mistakes':
             sql += " ORDER BY m.wrong_count DESC, m.updated_at DESC"

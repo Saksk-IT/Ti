@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 
 from flask import request, jsonify
 
-from app.core.utils.database import get_db
+from app.core.utils.database import get_db, safe_in_clause
 from app.core.utils.decorators import auth_required, current_user_id
 from app.core.utils.time_utils import today_bj
 
@@ -102,13 +102,7 @@ def get_quiz_questions(bank_id):
         if tag_question_ids is not None:
             # 去重，避免无意义的 SQL 变量膨胀
             tag_question_ids = sorted(set(tag_question_ids))
-            # SQLite 默认变量上限约 999；超过时改为安全的整数拼接（已强制 int 转换）
-            if len(tag_question_ids) <= 900:
-                tag_condition = ' AND q.id IN ({})'.format(','.join('?' * len(tag_question_ids)))
-                tag_params = tag_question_ids
-            else:
-                tag_condition = ' AND q.id IN ({})'.format(','.join(str(i) for i in tag_question_ids))
-                tag_params = []
+            tag_condition, tag_params = safe_in_clause('q.id', tag_question_ids, '', [])
 
         if mode == 'wrong':
             # 错题模式
@@ -421,14 +415,7 @@ def get_bank_stats_detail(bank_id):
             })
 
         tag_question_ids = sorted(set(tag_question_ids))
-        if len(tag_question_ids) <= 900:
-            placeholders = ','.join('?' * len(tag_question_ids))
-            tag_cond = f' AND q.id IN ({placeholders})'
-            tag_params = tag_question_ids
-        else:
-            # 避免 SQLite 参数上限（tag_question_ids 已强制 int 转换）
-            tag_cond = ' AND q.id IN ({})'.format(','.join(str(i) for i in tag_question_ids))
-            tag_params = []
+        tag_cond, tag_params = safe_in_clause('q.id', tag_question_ids, '', [])
 
     def _join_bank_table(table: str, alias: str):
         # 兼容旧库：favorites/mistakes 表可能缺少 user_id/bank_id 字段
@@ -831,12 +818,7 @@ def get_user_counts(bank_id):
     tag_params = []
     if tag_question_ids is not None:
         tag_question_ids = sorted(set(tag_question_ids))
-        if len(tag_question_ids) <= 900:
-            tag_condition = ' AND q.id IN ({})'.format(','.join('?' * len(tag_question_ids)))
-            tag_params = tag_question_ids
-        else:
-            tag_condition = ' AND q.id IN ({})'.format(','.join(str(i) for i in tag_question_ids))
-            tag_params = []
+        tag_condition, tag_params = safe_in_clause('q.id', tag_question_ids, '', [])
 
     # 根据 source 筛选
     if source == 'favorites':

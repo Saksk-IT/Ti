@@ -26,6 +26,10 @@ FORBIDDEN_MODULES = {
     'gzip', 'bz2', 'lzma', 'zipimport',
     # 进程与系统
     'platform', 'sysconfig', 'site', 'ensurepip', 'venv',
+    # C 层 / 内部模块（绕过 Python 层黑名单）
+    '_thread', '_io', '_socket', '_subprocess', '_posixsubprocess',
+    'io', 'builtins', 'gc', 'inspect', 'dis',
+    'runpy', 'pdb', 'rlcompleter', 'tracemalloc',
 }
 
 FORBIDDEN_FUNCTIONS = {
@@ -34,6 +38,7 @@ FORBIDDEN_FUNCTIONS = {
     'raw_input', 'help', 'license', 'credits',
     'breakpoint', 'globals', 'locals', 'vars', 'dir',
     'getattr', 'setattr', 'delattr',
+    'memoryview', '__build_class__',
     # 注意：input() 函数允许使用，因为输入通过 subprocess.communicate() 传递
 }
 
@@ -80,6 +85,8 @@ def validate_python_code(code: str) -> Tuple[bool, str]:
         (r'importlib', '禁止使用 importlib'),
         (r'\\x[0-9a-fA-F]{2}', '禁止使用十六进制转义序列'),
         (r'chr\s*\(.*\)\s*\+', '禁止使用 chr() 拼接绕过'),
+        (r'\\u[0-9a-fA-F]{4}', '禁止使用 Unicode 转义序列'),
+        (r'\\N\{', '禁止使用 Unicode 命名转义'),
     ]
     for pattern, msg in bypass_patterns:
         if re.search(pattern, code):

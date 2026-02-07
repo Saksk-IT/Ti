@@ -175,6 +175,37 @@ def _ensure_directories(app):
 
 def _setup_logging(app):
     """配置日志系统"""
+    import re
+
+    # 敏感信息脱敏模式
+    _SENSITIVE_PATTERNS = [
+        (re.compile(r'(SECRET_KEY|WECHAT_SECRET|DASHSCOPE_API_KEY|MAIL_PASSWORD|password|token|secret)[=:]\s*["\']?([^\s"\']{4})[^\s"\']*', re.IGNORECASE), r'\1=\2****'),
+        (re.compile(r'(sk-)[a-zA-Z0-9]{4}[a-zA-Z0-9]+', re.IGNORECASE), r'\1****'),
+    ]
+
+    class SensitiveDataFilter(logging.Filter):
+        """日志脱敏过滤器：自动遮蔽密钥、密码等敏感信息"""
+        def filter(self, record: logging.LogRecord) -> bool:
+            if isinstance(record.msg, str):
+                for pattern, replacement in _SENSITIVE_PATTERNS:
+                    record.msg = pattern.sub(replacement, record.msg)
+            if record.args:
+                if isinstance(record.args, dict):
+                    record.args = {
+                        k: pattern.sub(replacement, str(v)) if isinstance(v, str) else v
+                        for k, v in record.args.items()
+                        for pattern, replacement in _SENSITIVE_PATTERNS
+                    }
+                elif isinstance(record.args, tuple):
+                    new_args = []
+                    for a in record.args:
+                        if isinstance(a, str):
+                            for pattern, replacement in _SENSITIVE_PATTERNS:
+                                a = pattern.sub(replacement, a)
+                        new_args.append(a)
+                    record.args = tuple(new_args)
+            return True
+
     class RequestIdFilter(logging.Filter):
         def filter(self, record: logging.LogRecord) -> bool:
             try:
@@ -190,8 +221,10 @@ def _setup_logging(app):
 
     # 给日志记录补充 request_id 字段（formatter 使用时更利于排障）
     request_id_filter = RequestIdFilter()
+    sensitive_filter = SensitiveDataFilter()
     try:
         app.logger.addFilter(request_id_filter)
+        app.logger.addFilter(sensitive_filter)
     except Exception:
         pass
 
@@ -269,6 +302,18 @@ def _register_before_request(app):
         else:
             rid = uuid.uuid4().hex
         g.request_id = rid
+
+    @app.before_request
+    def _force_https():
+        """生产环境 HTTPS 强制重定向（Flask 层备用）。"""
+        if app.debug or app.testing:
+            return
+        if not app.config.get('FORCE_HTTPS'):
+            return
+        if request.is_secure or request.headers.get('X-Forwarded-Proto', 'http') == 'https':
+            return
+        url = request.url.replace('http://', 'https://', 1)
+        return redirect(url, code=301)
 
     @app.after_request
     def _inject_request_id_header(response):

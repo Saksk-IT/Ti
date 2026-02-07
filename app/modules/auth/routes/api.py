@@ -486,7 +486,7 @@ def api_wechat_login():
 
 
 @auth_api_bp.route('/wechat/create', methods=['POST'])
-@limiter.limit("60 per minute")
+@limiter.limit("10 per minute")
 def api_wechat_create_from_temp():
     """微信未绑定时：创建新账号（基于 wechat_temp_token）"""
     data = request.json or {}

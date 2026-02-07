@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta
 
 from flask import request, jsonify, session, g, current_app
-from app.core.utils.database import get_db
+from app.core.utils.database import get_db, safe_in_clause
 from app.core.extensions import limiter
 from app.core.utils.decorators import jwt_required, auth_required, current_user_id
 from app.core.utils.redis_utils import redis_get_json, redis_set_json
@@ -464,14 +464,7 @@ def api_subject_stats_detail(subject):
             })
 
         tag_ids = sorted({int(x) for x in tag_ids})
-        if len(tag_ids) <= 900:
-            placeholders = ','.join(['?'] * len(tag_ids))
-            tag_cond = f' AND q.id IN ({placeholders})'
-            tag_params = tag_ids
-        else:
-            # 避免 SQLite 参数上限（tag_ids 已强制 int 转换）
-            tag_cond = ' AND q.id IN ({})'.format(','.join(str(i) for i in tag_ids))
-            tag_params = []
+        tag_cond, tag_params = safe_in_clause('q.id', tag_ids, '', [])
 
     # 基于题目集合做统计：subject + (source/tag/q_type) 组合筛选
     base_from = """
@@ -884,13 +877,7 @@ def api_subject_questions(subject):
             })
 
         tag_ids = sorted({int(x) for x in tag_ids})
-        if len(tag_ids) <= 900:
-            placeholders = ','.join(['?'] * len(tag_ids))
-            tag_cond = f' AND q.id IN ({placeholders})'
-            tag_params = tag_ids
-        else:
-            tag_cond = ' AND q.id IN ({})'.format(','.join(str(i) for i in tag_ids))
-            tag_params = []
+        tag_cond, tag_params = safe_in_clause('q.id', tag_ids, '', [])
 
     def _column_exists(table: str, column: str) -> bool:
         try:
@@ -1213,13 +1200,7 @@ def api_search_questions():
             })
 
         tag_ids = sorted({int(x) for x in tag_ids})
-        if len(tag_ids) <= 900:
-            placeholders = ','.join(['?'] * len(tag_ids))
-            sql_base += f" AND q.id IN ({placeholders})"
-            params.extend(tag_ids)
-        else:
-            # 避免 SQLite 参数上限（已强制 int 转换）
-            sql_base += " AND q.id IN ({})".format(','.join(str(i) for i in tag_ids))
+        sql_base, params = safe_in_clause('q.id', tag_ids, sql_base, params)
 
     # 统计总数
     count_sql = f"SELECT COUNT(*) FROM ({sql_base})"

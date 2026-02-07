@@ -757,7 +757,8 @@ def upload_avatar():
         if old_avatar and old_avatar['avatar']:
             old_path = old_avatar['avatar'].replace('/uploads/', '')
             old_file = os.path.join(upload_folder, old_path)
-            if os.path.exists(old_file):
+            # 路径遍历防护：确保文件在 upload_folder 内
+            if os.path.realpath(old_file).startswith(os.path.realpath(upload_folder)) and os.path.exists(old_file):
                 try:
                     os.remove(old_file)
                 except:

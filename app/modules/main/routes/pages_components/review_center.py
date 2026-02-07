@@ -4,7 +4,7 @@ from urllib.parse import urlencode
 
 from flask import current_app, redirect, render_template, request, session
 
-from app.core.utils.database import get_db
+from app.core.utils.database import get_db, safe_in_clause
 from app.core.utils.decorators import login_required
 from app.core.utils.time_utils import today_bj
 
@@ -376,12 +376,7 @@ def _review_center_page(kind: str):
                 params.append(any_type_to_portable_type(tf))
 
             if isinstance(tag_ids, list):
-                if len(tag_ids) <= 900:
-                    placeholders = ','.join(['?'] * len(tag_ids))
-                    base += f" AND q.id IN ({placeholders})"
-                    params.extend(tag_ids)
-                else:
-                    base += " AND q.id IN ({})".format(','.join(str(i) for i in tag_ids))
+                base, params = safe_in_clause('q.id', tag_ids, base, params)
 
             row = conn.execute(base, params).fetchone()
             return int(row['cnt'] or 0) if row else 0
@@ -405,12 +400,7 @@ def _review_center_page(kind: str):
             params.append(any_type_to_portable_type(tf))
 
         if isinstance(tag_ids, list):
-            if len(tag_ids) <= 900:
-                placeholders = ','.join(['?'] * len(tag_ids))
-                base += f" AND q.id IN ({placeholders})"
-                params.extend(tag_ids)
-            else:
-                base += " AND q.id IN ({})".format(','.join(str(i) for i in tag_ids))
+            base, params = safe_in_clause('q.id', tag_ids, base, params)
 
         row = conn.execute(base, params).fetchone()
         return int(row['cnt'] or 0) if row else 0
@@ -502,12 +492,7 @@ def _review_center_page(kind: str):
                     params.append(any_type_to_portable_type(q_type))
 
                 if isinstance(tag_ids, list):
-                    if len(tag_ids) <= 900:
-                        placeholders = ','.join(['?'] * len(tag_ids))
-                        base += f" AND q.id IN ({placeholders})"
-                        params.extend(tag_ids)
-                    else:
-                        base += " AND q.id IN ({})".format(','.join(str(i) for i in tag_ids))
+                    base, params = safe_in_clause('q.id', tag_ids, base, params)
 
                 count_sql = f"SELECT COUNT(1) FROM ({base})"
                 search_total = int(conn.execute(count_sql, params).fetchone()[0] or 0)
@@ -549,12 +534,7 @@ def _review_center_page(kind: str):
                     params.append(any_type_to_portable_type(q_type))
 
                 if isinstance(tag_ids, list):
-                    if len(tag_ids) <= 900:
-                        placeholders = ','.join(['?'] * len(tag_ids))
-                        base += f" AND q.id IN ({placeholders})"
-                        params.extend(tag_ids)
-                    else:
-                        base += " AND q.id IN ({})".format(','.join(str(i) for i in tag_ids))
+                    base, params = safe_in_clause('q.id', tag_ids, base, params)
 
                 count_sql = f"SELECT COUNT(1) FROM ({base})"
                 search_total = int(conn.execute(count_sql, params).fetchone()[0] or 0)
@@ -595,12 +575,7 @@ def _review_center_page(kind: str):
             elif kind == 'mistakes':
                 base += " AND m.id IS NOT NULL"
             if isinstance(tag_ids, list):
-                if len(tag_ids) <= 900:
-                    placeholders = ','.join(['?'] * len(tag_ids))
-                    base += f" AND q.id IN ({placeholders})"
-                    params.extend(tag_ids)
-                else:
-                    base += " AND q.id IN ({})".format(','.join(str(i) for i in tag_ids))
+                base, params = safe_in_clause('q.id', tag_ids, base, params)
             base += " GROUP BY q.type ORDER BY cnt DESC"
             rows = conn.execute(base, params).fetchall()
             from app.core.utils.portable_question_format import portable_type_to_q_type
@@ -627,12 +602,7 @@ def _review_center_page(kind: str):
             elif kind == 'mistakes':
                 base += " AND m.id IS NOT NULL"
             if isinstance(tag_ids, list):
-                if len(tag_ids) <= 900:
-                    placeholders = ','.join(['?'] * len(tag_ids))
-                    base += f" AND q.id IN ({placeholders})"
-                    params.extend(tag_ids)
-                else:
-                    base += " AND q.id IN ({})".format(','.join(str(i) for i in tag_ids))
+                base, params = safe_in_clause('q.id', tag_ids, base, params)
             base += " GROUP BY q.type ORDER BY cnt DESC"
             rows = conn.execute(base, params).fetchall()
             from app.core.utils.portable_question_format import portable_type_to_q_type
@@ -701,12 +671,7 @@ def _review_center_page(kind: str):
 
         def _append_tag_clause(sql: str, params: list, col: str = 'q.id') -> tuple[str, list]:
             if isinstance(tag_ids, list):
-                if len(tag_ids) <= 900:
-                    placeholders = ','.join(['?'] * len(tag_ids))
-                    sql += f" AND {col} IN ({placeholders})"
-                    params.extend(tag_ids)
-                else:
-                    sql += " AND {} IN ({})".format(col, ','.join(str(i) for i in tag_ids))
+                sql, params = safe_in_clause(col, tag_ids, sql, params)
             return sql, params
 
         def _append_type_clause(sql: str, params: list, col: str = 'q.type') -> tuple[str, list]:

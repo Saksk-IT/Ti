@@ -112,7 +112,7 @@ def chat_users():
         return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
 
     uid = session.get('user_id')
-    q = (request.args.get('q') or '').strip()
+    q = (request.args.get('q') or '').strip()[:100]
 
     conn = get_db()
     params = [uid]
@@ -223,7 +223,7 @@ def chat_conversation_users():
         return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
 
     uid = session.get('user_id')
-    q = (request.args.get('q') or '').strip()
+    q = (request.args.get('q') or '').strip()[:100]
     conn = get_db()
 
     # 查询已有direct会话的对方用户

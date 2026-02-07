@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 from flask import request, jsonify, current_app
 
-from app.core.utils.database import get_db
+from app.core.utils.database import get_db, safe_in_clause
 from app.core.utils.decorators import auth_required, current_user_id
 from app.core.utils.time_utils import today_bj
 
@@ -208,12 +208,7 @@ def get_bank_questions(bank_id):
 
     if tag_question_ids is not None:
         tag_question_ids = sorted(set(tag_question_ids))
-        if len(tag_question_ids) <= 900:
-            placeholders = ','.join('?' * len(tag_question_ids))
-            where += f' AND q.id IN ({placeholders})'
-            where_params.extend(tag_question_ids)
-        else:
-            where += ' AND q.id IN ({})'.format(','.join(str(i) for i in tag_question_ids))
+        where, where_params = safe_in_clause('q.id', tag_question_ids, where, where_params)
 
     count_sql = f'SELECT COUNT(*) as cnt FROM user_bank_questions q{joins}{where}'
     total = conn.execute(count_sql, join_params + where_params).fetchone()['cnt']

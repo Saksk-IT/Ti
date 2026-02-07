@@ -508,10 +508,16 @@ class EmailAuthService:
                    WHERE id = ?''',
                 (now, code_record['id'])
             )
-            
+
             # 更新密码
             User.update_password(user_id, new_password)
-            
+
+            # 递增 session_version，强制所有旧 JWT / session 失效
+            conn.execute(
+                'UPDATE users SET session_version = COALESCE(session_version, 0) + 1 WHERE id = ?',
+                (user_id,)
+            )
+
             conn.commit()
             
             current_app.logger.info(f'密码重置成功: email={email}, user_id={user_id}')
