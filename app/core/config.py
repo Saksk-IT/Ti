@@ -150,14 +150,10 @@ class ProductionConfig(Config):
     # 生产环境必须设置密钥（不允许使用默认值）
     SECRET_KEY = os.environ.get('SECRET_KEY')
     if not SECRET_KEY:
-        import warnings
-        warnings.warn(
+        raise RuntimeError(
             'SECRET_KEY 未设置！生产环境必须设置 SECRET_KEY 环境变量。'
-            '生成方式: python -c "import secrets; print(secrets.token_urlsafe(32))"',
-            UserWarning
+            '生成方式: python -c "import secrets; print(secrets.token_urlsafe(32))"'
         )
-        # 临时生成，但会显示警告
-        SECRET_KEY = os.urandom(24).hex()
     
     # 生产环境禁用控制台输出验证码
     MAIL_CONSOLE_OUTPUT = False

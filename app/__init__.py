@@ -20,6 +20,7 @@ except ImportError:
 from .core.config import config
 from .core.extensions import init_extensions
 from .core.utils.database import close_db, init_db
+from markupsafe import Markup, escape as _escape
 
 
 _LAST_ACTIVE_LOCK = threading.Lock()
@@ -71,6 +72,15 @@ def create_app(config_name=None):
     
     # 初始化扩展
     init_extensions(app)
+
+    # 注册自定义 Jinja2 过滤器
+    def _nl2br(value):
+        """将换行符转为 <br>，同时转义 HTML（防止 XSS）"""
+        if value is None:
+            return ''
+        return Markup(_escape(value).replace('\n', Markup('<br>')))
+
+    app.jinja_env.filters['nl2br'] = _nl2br
     
     # 配置日志
     _setup_logging(app)
@@ -80,6 +90,9 @@ def create_app(config_name=None):
     
     # 注册蓝图
     _register_blueprints(app)
+
+    # CSRF 豁免：所有 API 蓝图使用 JWT 认证，不需要 CSRF token
+    _csrf_exempt_api_blueprints(app)
     
     # 注册上下文处理器
     _register_context_processors(app)
@@ -214,6 +227,14 @@ def _register_blueprints(app):
     # 注册所有模块
     from .modules import register_all_modules
     register_all_modules(app)
+
+
+def _csrf_exempt_api_blueprints(app):
+    """豁免所有 API 蓝图的 CSRF 检查（API 使用 JWT 认证，不依赖 cookie）"""
+    from .core.extensions import csrf
+    for name, bp in app.blueprints.items():
+        if 'api' in name:
+            csrf.exempt(bp)
 
 
 def _register_context_processors(app):

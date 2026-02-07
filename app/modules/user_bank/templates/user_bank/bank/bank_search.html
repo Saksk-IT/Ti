@@ -432,7 +432,7 @@
                 </div>
 
                 <div class="content result-content" data-content="{{ q.content }}">
-                  {{ q.content|replace('\n', '<br>')|safe }}
+                  {{ q.content|nl2br }}
                 </div>
 
                 {% if q.image_path %}
@@ -465,13 +465,13 @@
 
                   <div class="result-answer">
                     <div class="result-label">答案</div>
-                    <div class="result-answer-body">{{ (q.full_answer or '—')|replace('\n', '<br>')|safe }}</div>
+                    <div class="result-answer-body">{{ (q.full_answer or '—')|nl2br }}</div>
                   </div>
 
                   {% if q.explanation %}
                     <div class="result-explanation">
                       <div class="result-label">解析</div>
-                      <div class="result-explanation-body" data-explanation="{{ q.explanation }}">{{ q.explanation|replace('\n', '<br>')|safe }}</div>
+                      <div class="result-explanation-body" data-explanation="{{ q.explanation }}">{{ q.explanation|nl2br }}</div>
                     </div>
                   {% endif %}
                 </div>

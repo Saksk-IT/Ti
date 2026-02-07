@@ -13,14 +13,30 @@ FORBIDDEN_MODULES = {
     'os', 'sys', 'subprocess', 'socket', 'urllib', 'requests',
     'open', 'file', 'input', 'eval', 'exec', 'compile',
     'importlib', 'imp', 'pkgutil', '__import__', 'ctypes',
-    'multiprocessing', 'threading', 'pickle', 'marshal'
+    'multiprocessing', 'threading', 'pickle', 'marshal',
+    'shutil', 'signal', 'pathlib', 'glob', 'tempfile',
+    'webbrowser', 'antigravity', 'turtle', 'code', 'codeop',
+    'compileall', 'py_compile',
 }
 
 FORBIDDEN_FUNCTIONS = {
     'open', 'file', 'eval', 'exec', 'compile',
     '__import__', 'execfile', 'reload', 'exit', 'quit',
-    'raw_input', 'help', 'license', 'credits'
+    'raw_input', 'help', 'license', 'credits',
+    'breakpoint', 'globals', 'locals', 'vars', 'dir',
+    'getattr', 'setattr', 'delattr',
     # 注意：input() 函数允许使用，因为输入通过 subprocess.communicate() 传递
+}
+
+# 禁止的双下划线属性（防止通过元编程绕过黑名单，如 __subclasses__、__bases__ 等）
+FORBIDDEN_DUNDER_ATTRS = {
+    '__subclasses__', '__bases__', '__mro__', '__class__',
+    '__globals__', '__code__', '__closure__', '__func__',
+    '__self__', '__module__', '__dict__', '__weakref__',
+    '__init_subclass__', '__set_name__', '__reduce__',
+    '__reduce_ex__', '__getstate__', '__setstate__',
+    '__builtins__', '__loader__', '__spec__', '__path__',
+    '__file__', '__cached__', '__package__',
 }
 
 
@@ -64,14 +80,19 @@ def validate_python_code(code: str) -> Tuple[bool, str]:
                 module_name = alias.name.split('.')[0]
                 if module_name in FORBIDDEN_MODULES:
                     return False, f'禁止导入模块: {module_name}'
-        
+
         # 检查 from ... import
         if isinstance(node, ast.ImportFrom):
             if node.module:
                 module_name = node.module.split('.')[0]
                 if module_name in FORBIDDEN_MODULES:
                     return False, f'禁止导入模块: {module_name}'
-        
+
+        # 检查危险的双下划线属性访问（防止元编程绕过）
+        if isinstance(node, ast.Attribute):
+            if node.attr in FORBIDDEN_DUNDER_ATTRS:
+                return False, f'禁止访问属性: {node.attr}'
+
         # 检查函数调用
         if isinstance(node, ast.Call):
             if isinstance(node.func, ast.Name):

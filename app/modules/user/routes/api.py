@@ -283,7 +283,8 @@ def user_stats():
             }
         })
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        current_app.logger.error('请求处理异常: %s', e, exc_info=True)
+        return jsonify({'status': 'error', 'message': '服务器内部错误'}), 500
 
 
 @user_api_bp.route('/user/update', methods=['POST'])
@@ -442,7 +443,8 @@ def update_profile():
             conn.rollback()
         except Exception:
             pass
-        return jsonify({'status': 'error', 'message': f'更新失败: {str(e)}'}), 500
+        current_app.logger.error('更新失败: %s', e, exc_info=True)
+        return jsonify({'status': 'error', 'message': '更新失败，请稍后重试'}), 500
 
 
 @user_api_bp.route('/profile')
@@ -542,7 +544,8 @@ def api_profile():
             }
         })
     except Exception as e:
-        return jsonify({'status': 'error', 'message': f'加载失败: {str(e)}'}), 500
+        current_app.logger.error('加载失败: %s', e, exc_info=True)
+        return jsonify({'status': 'error', 'message': '加载失败，请稍后重试'}), 500
 
 
 @user_api_bp.route('/profile/password', methods=['POST'])
@@ -602,7 +605,8 @@ def change_password():
             User.update_password(uid, new_password, set_password=False)
             return jsonify({'status': 'success', 'message': '密码修改成功'})
     except Exception as e:
-        return jsonify({'status': 'error', 'message': f'操作失败: {str(e)}'}), 500
+        current_app.logger.error('操作失败: %s', e, exc_info=True)
+        return jsonify({'status': 'error', 'message': '操作失败，请稍后重试'}), 500
 
 
 @user_api_bp.route('/stats/daily')
@@ -632,7 +636,8 @@ def stats_daily():
         
         return jsonify({'status': 'success', 'data': data})
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        current_app.logger.error('请求处理异常: %s', e, exc_info=True)
+        return jsonify({'status': 'error', 'message': '服务器内部错误'}), 500
 
 
 @user_api_bp.route('/stats/by_subject')
@@ -662,7 +667,8 @@ def stats_by_subject():
         
         return jsonify({'status': 'success', 'data': data})
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        current_app.logger.error('请求处理异常: %s', e, exc_info=True)
+        return jsonify({'status': 'error', 'message': '服务器内部错误'}), 500
 
 
 @user_api_bp.route('/stats/by_type')
@@ -700,7 +706,8 @@ def stats_by_type():
         
         return jsonify({'status': 'success', 'data': data})
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        current_app.logger.error('请求处理异常: %s', e, exc_info=True)
+        return jsonify({'status': 'error', 'message': '服务器内部错误'}), 500
 
 
 @user_api_bp.route('/profile/avatar', methods=['POST'])
@@ -769,12 +776,17 @@ def upload_avatar():
             'avatar_url': avatar_url
         })
     except Exception as e:
-        return jsonify({'status': 'error', 'message': f'上传失败: {str(e)}'}), 500
+        current_app.logger.error('上传失败: %s', e, exc_info=True)
+        return jsonify({'status': 'error', 'message': '上传失败，请稍后重试'}), 500
 
 
 @user_api_bp.route('/uploads/<path:filename>')
 def uploaded_file(filename):
     """访问上传的文件"""
+    # 路径遍历防护：拒绝包含 .. 的路径
+    if '..' in filename or filename.startswith('/'):
+        from flask import abort
+        abort(400)
     upload_folder = current_app.config['UPLOAD_FOLDER']
     return send_from_directory(upload_folder, filename)
 

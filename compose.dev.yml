@@ -18,11 +18,11 @@ services:
       RATELIMIT_STORAGE_URI: redis://redis:6379/0
       RQ_QUEUE_NAME: saksk
       PROXY_FIX_ENABLED: "false"
-      # 开发环境密钥（可直接写或用 .env）
-      WECHAT_APPID: ${WECHAT_APPID:-wxfc4c270f007773ab}
-      WECHAT_SECRET: ${WECHAT_SECRET:-714b6315c5e27cb2689c3c1d5bd54e2d}
+      # 开发环境密钥（从 .env 文件读取，不要在此硬编码）
+      WECHAT_APPID: ${WECHAT_APPID}
+      WECHAT_SECRET: ${WECHAT_SECRET}
       DASHSCOPE_BASE_URL: ${DASHSCOPE_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
-      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-sk-9305b010e9be495b8407611f14394fd5}
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY}
     volumes:
       # 挂载源代码实现热重载
       - ./app:/app/app:ro
@@ -45,10 +45,10 @@ services:
       SECRET_KEY: dev-secret-key
       REDIS_URL: redis://redis:6379/0
       RQ_QUEUE_NAME: saksk
-      WECHAT_APPID: ${WECHAT_APPID:-wxfc4c270f007773ab}
-      WECHAT_SECRET: ${WECHAT_SECRET:-714b6315c5e27cb2689c3c1d5bd54e2d}
+      WECHAT_APPID: ${WECHAT_APPID}
+      WECHAT_SECRET: ${WECHAT_SECRET}
       DASHSCOPE_BASE_URL: ${DASHSCOPE_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
-      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-sk-9305b010e9be495b8407611f14394fd5}
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY}
     volumes:
       - ./app:/app/app:ro
       - ./var:/data
