@@ -31,9 +31,11 @@ from app.core.utils.fill_blank_parser import parse_fill_blank
 from app.core.utils.validators import parse_int, validate_password
 
 from ..api_bp import admin_api_bp
+from app.core.utils.decorators import admin_required
 
 
 @admin_api_bp.route('/coding/questions', methods=['GET'])
+@admin_required
 def api_get_coding_questions():
     """获取编程题列表"""
     try:
@@ -89,6 +91,7 @@ def api_get_coding_questions():
 
 
 @admin_api_bp.route('/coding/questions', methods=['POST'])
+@admin_required
 def api_create_coding_question():
     """创建编程题"""
     try:
@@ -197,6 +200,7 @@ def api_create_coding_question():
 
 
 @admin_api_bp.route('/coding/questions/<int:question_id>', methods=['PUT'])
+@admin_required
 def api_update_coding_question(question_id):
     """更新编程题"""
     try:
@@ -320,6 +324,7 @@ def api_update_coding_question(question_id):
 
 
 @admin_api_bp.route('/coding/questions/<int:question_id>', methods=['DELETE'])
+@admin_required
 def api_delete_coding_question(question_id):
     """删除编程题"""
     try:

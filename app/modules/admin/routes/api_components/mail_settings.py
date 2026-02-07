@@ -30,9 +30,11 @@ from app.core.utils.fill_blank_parser import parse_fill_blank
 from app.core.utils.validators import parse_int, validate_password
 
 from ..api_bp import admin_api_bp
+from app.core.utils.decorators import admin_required
 
 
 @admin_api_bp.route('/settings/mail', methods=['GET'])
+@admin_required
 def api_get_mail_config():
     """获取邮件配置"""
     if not session.get('is_admin'):
@@ -61,6 +63,7 @@ def api_get_mail_config():
 
 
 @admin_api_bp.route('/settings/mail', methods=['POST'])
+@admin_required
 def api_save_mail_config():
     """保存邮件配置"""
     if not session.get('is_admin'):
@@ -141,6 +144,7 @@ def api_save_mail_config():
 
 @admin_api_bp.route('/settings/mail/test', methods=['POST'])
 @limiter.limit("5 per minute")  # 测试邮件限制：每分钟5次
+@admin_required
 def api_test_mail_config():
     """测试邮件配置"""
     if not session.get('is_admin'):
@@ -257,6 +261,7 @@ def api_test_mail_config():
 
 
 @admin_api_bp.route('/settings/mail/template-preview', methods=['POST'])
+@admin_required
 def api_get_mail_template_preview():
     """获取邮件模板预览"""
     if not session.get('is_admin'):

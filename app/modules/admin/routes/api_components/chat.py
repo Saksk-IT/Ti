@@ -30,9 +30,11 @@ from app.core.utils.fill_blank_parser import parse_fill_blank
 from app.core.utils.validators import parse_int, validate_password
 
 from ..api_bp import admin_api_bp
+from app.core.utils.decorators import admin_required
 
 
 @admin_api_bp.route('/chat/stats', methods=['GET'])
+@admin_required
 def api_chat_stats():
     """获取聊天统计数据"""
     try:
@@ -82,6 +84,7 @@ def api_chat_stats():
 
 
 @admin_api_bp.route('/chat/conversations', methods=['GET'])
+@admin_required
 def api_chat_conversations():
     """获取会话列表（支持分页和搜索）"""
     try:
@@ -166,6 +169,7 @@ def api_chat_conversations():
 
 
 @admin_api_bp.route('/chat/conversations/<int:conversation_id>/messages', methods=['GET'])
+@admin_required
 def api_chat_conversation_messages(conversation_id: int):
     """获取会话消息列表"""
     try:
@@ -229,6 +233,7 @@ def api_chat_conversation_messages(conversation_id: int):
 
 
 @admin_api_bp.route('/chat/conversations/<int:conversation_id>', methods=['DELETE'])
+@admin_required
 def api_delete_conversation(conversation_id: int):
     """删除会话（级联删除相关消息和成员）"""
     try:
@@ -264,6 +269,7 @@ def api_delete_conversation(conversation_id: int):
 
 
 @admin_api_bp.route('/chat/messages/<int:message_id>', methods=['DELETE'])
+@admin_required
 def api_delete_message(message_id: int):
     """删除消息"""
     try:
