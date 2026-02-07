@@ -5,6 +5,12 @@
     return Math.max(min, Math.min(max, val));
   }
 
+  function escapeHtml(s) {
+    var d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
+  }
+
   function getVar(name) {
     try {
       return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -613,7 +619,7 @@
         var completion = toNum(row.completion);
         return (
           '<tr>' +
-          '<td>' + String(row.q_type || '未知') + '</td>' +
+          '<td>' + escapeHtml(row.q_type || '未知') + '</td>' +
           '<td>' + fmtCount(answered) + ' / ' + fmtCount(total) + '</td>' +
           '<td>' + fmtPercent(accuracy) + '</td>' +
           '<td>' + fmtPercent(completion) + '</td>' +
@@ -639,8 +645,8 @@
         var content = item && item.content ? String(item.content) : '';
         return (
           '<div class="ubd-advice-item">' +
-          '<div class="t">' + title + '</div>' +
-          '<div class="c">' + content + '</div>' +
+          '<div class="t">' + escapeHtml(title) + '</div>' +
+          '<div class="c">' + escapeHtml(content) + '</div>' +
           '</div>'
         );
       })

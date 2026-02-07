@@ -276,6 +276,15 @@ def _register_before_request(app):
         if rid:
             response.headers.setdefault('X-Request-ID', rid)
 
+        # 安全 HTTP 头
+        response.headers.setdefault('X-Content-Type-Options', 'nosniff')
+        response.headers.setdefault('X-Frame-Options', 'SAMEORIGIN')
+        response.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
+        if not app.debug:
+            response.headers.setdefault(
+                'Strict-Transport-Security', 'max-age=31536000; includeSubDomains'
+            )
+
         # 统一 API 返回信封（尽量不破坏现有前端：保留原字段，同时补齐 data/message/request_id）
         try:
             if getattr(response, 'direct_passthrough', False):

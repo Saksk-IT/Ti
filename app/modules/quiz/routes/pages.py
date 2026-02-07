@@ -356,7 +356,7 @@ def quiz_page():
                 mode=mode,
                 source=source,
                 exam_id=None,
-                user_answers_json=json.dumps(ua_map, ensure_ascii=False),
+                user_answers_json=ua_map,
                 logged_in=True,
                 user_id=uid,
                 username=session.get('username'),
@@ -472,7 +472,7 @@ def quiz_page():
                 is_subject_admin=bool(session.get('is_subject_admin')),
                 duration=0,
                 submitted=False,
-                study_meta_json=json.dumps(study_meta, ensure_ascii=False),
+                study_meta_json=study_meta,
             )
 
         # tag 过滤：bank_<bank_id>_tags 存储在 user_progress
@@ -567,7 +567,7 @@ def quiz_page():
             mode=mode,
             source=source,
             exam_id=None,
-            user_answers_json=json.dumps(ua_map, ensure_ascii=False),
+            user_answers_json=ua_map,
             logged_in=True,
             user_id=uid,
             username=session.get('username'),
@@ -595,7 +595,7 @@ def quiz_page():
                 is_subject_admin=bool(session.get('is_subject_admin')),
                 duration=0,
                 submitted=False,
-                study_meta_json=json.dumps({'mode': mode, 'source': 'public', 'subject': subject, 'target_n': _parse_positive_int(learn_n if mode == 'learn' else review_n, default=10), 'review_extra': bool(review_extra), 'due_count': 0}, ensure_ascii=False),
+                study_meta_json={'mode': mode, 'source': 'public', 'subject': subject, 'target_n': _parse_positive_int(learn_n if mode == 'learn' else review_n, default=10), 'review_extra': bool(review_extra), 'due_count': 0},
             )
 
         subject_row = conn.execute('SELECT id FROM subjects WHERE name = ?', (subject,)).fetchone()
@@ -614,7 +614,7 @@ def quiz_page():
                 is_subject_admin=bool(session.get('is_subject_admin')),
                 duration=0,
                 submitted=False,
-                study_meta_json=json.dumps({'mode': mode, 'source': 'public', 'subject': subject, 'target_n': _parse_positive_int(learn_n if mode == 'learn' else review_n, default=10), 'review_extra': bool(review_extra), 'due_count': 0}, ensure_ascii=False),
+                study_meta_json={'mode': mode, 'source': 'public', 'subject': subject, 'target_n': _parse_positive_int(learn_n if mode == 'learn' else review_n, default=10), 'review_extra': bool(review_extra), 'due_count': 0},
             )
 
         subject_id = int(subject_row['id'])
@@ -727,7 +727,7 @@ def quiz_page():
             is_subject_admin=bool(session.get('is_subject_admin')),
             duration=0,
             submitted=False,
-            study_meta_json=json.dumps(study_meta, ensure_ascii=False),
+            study_meta_json=study_meta,
         )
     # 获取用户可访问的科目ID列表（用于权限过滤）
     accessible_subject_ids = None
@@ -770,7 +770,7 @@ def quiz_page():
         questions = _build_public_questions(conn, ordered_rows, uid if uid != -1 else None)
         question_ids = [int(q['id']) for q in (questions or []) if q and q.get('id') is not None]
 
-        user_answers_json = '{}'
+        user_answers_json = {}
         real_uid = session.get('user_id')
         if real_uid and question_ids:
             try:
@@ -793,9 +793,9 @@ def quiz_page():
                         }
                         seen_questions.add(q_id)
 
-                user_answers_json = json.dumps(user_answers, ensure_ascii=False)
+                user_answers_json = user_answers
             except Exception:
-                user_answers_json = '{}'
+                user_answers_json = {}
 
         return render_template(
             'quiz/quiz.html',
@@ -1124,29 +1124,29 @@ def quiz_page():
                 conn.commit()
     
     # 获取用户的答题记录（用于恢复答题状态）
-    user_answers_json = '{}'
+    user_answers_json = {}
     uid = session.get('user_id')
-    
+
     # 考试模式：从 exam_questions 表获取用户答案
     if mode == 'exam' and exam_id:
         user_answers = {}
         for q in questions:
             if q.get('user_answer'):
                 user_answers[str(q['id'])] = q['user_answer']
-        user_answers_json = json.dumps(user_answers, ensure_ascii=False)
+        user_answers_json = user_answers
     # 其他模式：从 user_answers 表获取答题记录
     elif uid and question_ids:
         try:
             # 获取用户对这些题目的最新答题记录
             placeholders = ','.join(['?'] * len(question_ids))
             answer_rows = conn.execute(
-                f'''SELECT question_id, is_correct 
-                   FROM user_answers 
+                f'''SELECT question_id, is_correct
+                   FROM user_answers
                    WHERE user_id = ? AND question_id IN ({placeholders})
                    ORDER BY created_at DESC''',
                 [uid] + question_ids
             ).fetchall()
-            
+
             # 构建答题记录字典（每道题只保留最新的一条记录）
             user_answers = {}
             seen_questions = set()
@@ -1157,12 +1157,12 @@ def quiz_page():
                         'is_correct': bool(row['is_correct'])
                     }
                     seen_questions.add(q_id)
-            
-            user_answers_json = json.dumps(user_answers, ensure_ascii=False)
+
+            user_answers_json = user_answers
         except Exception as e:
             # 如果出错，使用空字典
-            user_answers_json = '{}'
-    
+            user_answers_json = {}
+
     # 考试模式：获取考试信息(时长、状态等)
     duration = 0
     submitted = False

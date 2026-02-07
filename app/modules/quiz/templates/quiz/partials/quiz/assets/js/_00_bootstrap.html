@@ -2,7 +2,7 @@ const mode = '{{ mode }}';
 const source = '{{ source or "" }}';
 const LOGGED_IN = {{ 'true' if logged_in else 'false' }};
 const USER_KEY = "{{ user_id if logged_in else 'guest' }}"; // 用 user_id 作为进度隔离键
-const STUDY_META = {{ study_meta_json|safe if study_meta_json else 'null' }};
+const STUDY_META = {{ study_meta_json|tojson if study_meta_json else 'null' }};
 const STUDY_MODE = (mode === 'learn' || mode === 'review');
 const STUDY_STREAK_TARGET = 3;
 const STUDY_REPEAT_LIMIT = 3;
@@ -344,5 +344,5 @@ function progressKey(){
 let questions = document.querySelectorAll('.question-box');
 const EXAM_ID = (function(){ const el = document.getElementById('mainCard'); return el ? (el.dataset.examId || '') : ''; })();
 const EXAM_SUBMITTED = {{ 'true' if submitted else 'false' }};
-const USER_ANSWERS = {{ user_answers_json|safe if user_answers_json else '{}' }};
+const USER_ANSWERS = {{ user_answers_json|tojson if user_answers_json else '{}' }};
 let listItems = document.querySelectorAll('.q-item');

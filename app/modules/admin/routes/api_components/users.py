@@ -30,9 +30,11 @@ from app.core.utils.fill_blank_parser import parse_fill_blank
 from app.core.utils.validators import parse_int, validate_password
 
 from ..api_bp import admin_api_bp
+from app.core.utils.decorators import admin_required
 
 
 @admin_api_bp.route('/users')
+@admin_required
 @limiter.exempt
 def admin_api_users():
     """用户列表API"""
@@ -241,6 +243,7 @@ def admin_api_users():
 
 
 @admin_api_bp.route('/users/<int:user_id>/toggle_admin', methods=['POST'])
+@admin_required
 def toggle_admin_status(user_id):
     """切换管理员权限"""
     from app.core.utils.user_state_cache import invalidate_user_state
@@ -276,6 +279,7 @@ def toggle_admin_status(user_id):
 
 
 @admin_api_bp.route('/users/<int:user_id>/toggle_subject_admin', methods=['POST'])
+@admin_required
 def toggle_subject_admin_status(user_id):
     """切换科目管理员权限"""
     from app.core.utils.user_state_cache import invalidate_user_state
@@ -304,6 +308,7 @@ def toggle_subject_admin_status(user_id):
 
 
 @admin_api_bp.route('/users/<int:user_id>/toggle_notification_admin', methods=['POST'])
+@admin_required
 def toggle_notification_admin_status(user_id):
     """切换通知管理员权限"""
     from app.core.utils.user_state_cache import invalidate_user_state
@@ -376,6 +381,7 @@ def toggle_notification_admin_status(user_id):
 
 
 @admin_api_bp.route('/permissions/batch', methods=['POST'])
+@admin_required
 def batch_set_permissions():
     """批量设置用户权限"""
     from app.core.utils.user_state_cache import invalidate_user_state
@@ -477,6 +483,7 @@ def batch_set_permissions():
 
 
 @admin_api_bp.route('/users/<int:user_id>', methods=['DELETE'])
+@admin_required
 def delete_user(user_id):
     """删除用户"""
     from app.core.utils.user_state_cache import invalidate_user_state
@@ -608,6 +615,7 @@ def delete_user(user_id):
 
 
 @admin_api_bp.route('/users/create', methods=['POST'])
+@admin_required
 def admin_create_user():
     """创建用户"""
     payload = request.json or {}
@@ -638,6 +646,7 @@ def admin_create_user():
 
 
 @admin_api_bp.route('/users/<int:user_id>/reset_password', methods=['POST'])
+@admin_required
 def admin_reset_password(user_id):
     """重置用户密码"""
     from app.core.utils.user_state_cache import invalidate_user_state
@@ -672,6 +681,7 @@ def admin_reset_password(user_id):
 
 
 @admin_api_bp.route('/users/<int:user_id>/toggle_lock', methods=['POST'])
+@admin_required
 def admin_toggle_lock(user_id):
     """切换锁定状态"""
     from app.core.utils.user_state_cache import invalidate_user_state
@@ -698,6 +708,7 @@ def admin_toggle_lock(user_id):
 
 
 @admin_api_bp.route('/users/<int:user_id>/force_logout', methods=['POST'])
+@admin_required
 def admin_force_logout(user_id):
     """强制用户下线"""
     from app.core.utils.user_state_cache import invalidate_user_state
@@ -725,6 +736,7 @@ def admin_force_logout(user_id):
 
 
 @admin_api_bp.route('/users/export')
+@admin_required
 def admin_export_users():
     """导出用户CSV"""
     conn = get_db()

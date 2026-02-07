@@ -485,8 +485,8 @@
   <script>
     const TAB = {{ tab|tojson }};
     const LOGGED_IN = {{ 'true' if logged_in else 'false' }};
-    const SUBJECT_Q_TYPES = {{ subject_q_types_json|safe }};
-    const BANK_Q_TYPES = {{ bank_q_types_json|safe }};
+    const SUBJECT_Q_TYPES = {{ subject_q_types_json|tojson }};
+    const BANK_Q_TYPES = {{ bank_q_types_json|tojson }};
     const ALL_Q_TYPES = {{ q_types|tojson }};
     const EXAM_URL_PRESET = {
       apply: {{ 'true' if preset_apply else 'false' }},

@@ -496,7 +496,7 @@
 {% block body_end %}
   <script>
     const LOGGED_IN = {{ 'true' if logged_in else 'false' }};
-    const SUBJECT_Q_TYPES = {{ subject_q_types_json|safe }};
+    const SUBJECT_Q_TYPES = {{ subject_q_types_json|tojson }};
     const ALL_Q_TYPES = {{ q_types|tojson }};
     let examPresetApplied = false;
 

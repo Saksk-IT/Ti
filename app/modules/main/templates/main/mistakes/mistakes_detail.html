@@ -225,7 +225,7 @@
 
 {% block body_end %}
   <script>
-    const SUBJECT_Q_TYPES = {{ subject_q_types_json|safe }};
+    const SUBJECT_Q_TYPES = {{ subject_q_types_json|tojson }};
     const SELECTED_SUBJECT = {{ selected_subject|tojson }};
     const KEY_TAB = 'mistakes_tab';
     const KEY_SUBJECT = 'mistakes_subject';

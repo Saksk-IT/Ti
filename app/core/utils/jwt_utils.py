@@ -3,6 +3,7 @@
 JWT工具函数
 用于生成和验证JWT token
 """
+import uuid
 import jwt
 from datetime import datetime, timedelta
 from flask import current_app
@@ -12,17 +13,17 @@ from typing import Dict, Any, Optional
 def generate_jwt_token(
     user_id: int,
     openid: str,
-    expires_in: int = 7 * 24 * 60 * 60,
+    expires_in: int = 2 * 60 * 60,
     session_version: Optional[int] = None,
 ) -> str:
     """
     生成JWT token
-    
+
     Args:
         user_id: 用户ID
         openid: 微信openid
-        expires_in: token过期时间（秒），默认7天
-    
+        expires_in: token过期时间（秒），默认2小时
+
     Returns:
         JWT token字符串
     """
@@ -31,7 +32,8 @@ def generate_jwt_token(
         'openid': openid,
         'session_version': int(session_version or 0),
         'exp': datetime.utcnow() + timedelta(seconds=expires_in),
-        'iat': datetime.utcnow()
+        'iat': datetime.utcnow(),
+        'jti': uuid.uuid4().hex,
     }
     
     secret_key = current_app.config.get('SECRET_KEY')
