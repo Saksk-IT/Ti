@@ -60,8 +60,8 @@ class Config:
     ENABLE_GZIP = os.environ.get('ENABLE_GZIP', 'true').lower() in ['true', 'on', '1']
     GZIP_MINIMUM_SIZE = int(os.environ.get('GZIP_MINIMUM_SIZE', '500') or 500)
     
-    # 会话配置：启用永久会话，默认 24 小时
-    PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
+    # 会话配置：启用永久会话，默认 7 天
+    PERMANENT_SESSION_LIFETIME = timedelta(days=7)
     SESSION_REFRESH_EACH_REQUEST = True
 
     # Web 会话活跃时间写入节流（避免每次请求都写 SQLite）
