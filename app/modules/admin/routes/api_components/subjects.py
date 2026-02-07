@@ -31,9 +31,11 @@ from app.core.utils.fill_blank_parser import parse_fill_blank
 from app.core.utils.validators import parse_int, validate_password
 
 from ..api_bp import admin_api_bp
+from app.core.utils.decorators import subject_admin_required
 
 
 @admin_api_bp.route('/subjects', methods=['GET'])
+@subject_admin_required
 def api_get_subjects():
     """获取科目列表（管理后台，包含锁定状态）"""
     conn = get_db()
@@ -51,6 +53,7 @@ def api_get_subjects():
 
 
 @admin_api_bp.route('/subjects', methods=['POST'])
+@subject_admin_required
 def api_add_subject():
     """添加科目"""
     data = request.json
@@ -80,6 +83,7 @@ def api_add_subject():
 
 
 @admin_api_bp.route('/subjects/<int:subject_id>', methods=['PUT'])
+@subject_admin_required
 def api_edit_subject(subject_id):
     """编辑科目"""
     data = request.json
@@ -103,6 +107,7 @@ def api_edit_subject(subject_id):
 
 
 @admin_api_bp.route('/subjects/<int:subject_id>', methods=['DELETE'])
+@subject_admin_required
 def api_delete_subject(subject_id):
     """删除科目"""
     force = request.args.get('force') in ('1','true','yes')
@@ -138,6 +143,7 @@ def api_delete_subject(subject_id):
 
 
 @admin_api_bp.route('/subjects/<int:subject_id>/lock', methods=['POST'])
+@subject_admin_required
 def api_lock_subject(subject_id):
     """锁定科目"""
     conn = get_db()
@@ -161,6 +167,7 @@ def api_lock_subject(subject_id):
 
 
 @admin_api_bp.route('/subjects/<int:subject_id>/unlock', methods=['POST'])
+@subject_admin_required
 def api_unlock_subject(subject_id):
     """解锁科目"""
     conn = get_db()
