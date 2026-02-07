@@ -122,10 +122,10 @@ gunzip saksk-ti-latest.tar.gz
 unzip saksk-ti-latest.zip
 
 # 2. 停止现有服务
-docker compose --env-file .env.production -f compose.prod.yml down
+# docker compose --env-file .env.production -f compose.prod.yml down
 
 # 3. 删除旧镜像（防止缓存）
-docker rmi saksk-ti:latest 2>/dev/null || true
+# docker rmi saksk-ti:latest 2>/dev/null || true
 
 # 4. 加载新镜像
 docker load -i saksk-ti-latest.tar
