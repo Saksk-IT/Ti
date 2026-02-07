@@ -42,7 +42,7 @@ def api_login():
         login_data = LoginSchema.model_validate(data)
     except Exception as e:
         current_app.logger.warning(f'登录失败: 数据验证失败 - {str(e)}, IP: {request.remote_addr}')
-        return jsonify({'status': 'error', 'message': f'数据验证失败: {str(e)}'}), 400
+        return jsonify({'status': 'error', 'message': '请求数据格式不正确'}), 400
     
     identifier = login_data.username.strip()
     password = login_data.password
@@ -165,7 +165,7 @@ def api_send_bind_code():
         # 提取更友好的错误信息
         if 'email' in error_msg.lower() or 'value_error' in error_msg.lower():
             return jsonify({'status': 'error', 'message': '邮箱格式不正确，请检查邮箱地址'}), 400
-        return jsonify({'status': 'error', 'message': f'数据验证失败: {error_msg}'}), 400
+        return jsonify({'status': 'error', 'message': '请求数据格式不正确'}), 400
     
     # 调用业务逻辑服务
     success, error_msg = EmailAuthService.send_bind_code(user_id, schema.email)
@@ -195,8 +195,8 @@ def api_bind_email():
     try:
         schema = BindEmailSchema.model_validate(data)
     except Exception as e:
-        return jsonify({'status': 'error', 'message': f'数据验证失败: {str(e)}'}), 400
-    
+        return jsonify({'status': 'error', 'message': '请求数据格式不正确'}), 400
+
     # 调用业务逻辑服务
     success, error_msg, user_data = EmailAuthService.bind_email(
         user_id, schema.email, schema.code
@@ -222,8 +222,8 @@ def api_send_login_code():
     try:
         schema = SendLoginCodeSchema.model_validate(data)
     except Exception as e:
-        return jsonify({'status': 'error', 'message': f'数据验证失败: {str(e)}'}), 400
-    
+        return jsonify({'status': 'error', 'message': '请求数据格式不正确'}), 400
+
     # 调用业务逻辑服务
     success, error_msg = EmailAuthService.send_login_code(schema.email)
     
@@ -251,7 +251,7 @@ def api_email_login():
         schema = EmailLoginSchema.model_validate(data)
     except Exception as e:
         current_app.logger.warning(f'验证码登录失败: 数据验证失败 - {str(e)}, IP: {request.remote_addr}')
-        return jsonify({'status': 'error', 'message': f'数据验证失败: {str(e)}'}), 400
+        return jsonify({'status': 'error', 'message': '请求数据格式不正确'}), 400
     
     # 调用业务逻辑服务
     success, error_msg, user = EmailAuthService.verify_login_code(
@@ -311,7 +311,7 @@ def api_send_forgot_password_code():
         schema = SendForgotPasswordCodeSchema.model_validate(data)
     except Exception as e:
         current_app.logger.warning(f'发送忘记密码验证码失败: 数据验证失败 - {str(e)}, IP: {request.remote_addr}')
-        return jsonify({'status': 'error', 'message': f'数据验证失败: {str(e)}'}), 400
+        return jsonify({'status': 'error', 'message': '请求数据格式不正确'}), 400
     
     # 调用业务逻辑服务
     success, error_msg = EmailAuthService.send_reset_password_code(schema.email)
@@ -342,7 +342,7 @@ def api_reset_password():
         schema = ResetPasswordSchema.model_validate(data)
     except Exception as e:
         current_app.logger.warning(f'重置密码失败: 数据验证失败 - {str(e)}, IP: {request.remote_addr}')
-        return jsonify({'status': 'error', 'message': f'数据验证失败: {str(e)}'}), 400
+        return jsonify({'status': 'error', 'message': '请求数据格式不正确'}), 400
     
     # 调用业务逻辑服务
     success, error_msg = EmailAuthService.reset_password(
@@ -381,7 +381,7 @@ def api_wechat_login():
             current_app.logger.warning(f'微信登录失败: 数据验证失败 - {str(e)}, IP: {request.remote_addr}')
             return jsonify({
                 'status': 'error',
-                'message': f'数据验证失败: {str(e)}'
+                'message': '请求数据格式不正确'
             }), 400
         
         # 验证code
@@ -674,7 +674,7 @@ def api_web_login_qrcode():
         }), 200
     except Exception as e:
         current_app.logger.error(f'生成扫码二维码失败: {e}', exc_info=True)
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "生成二维码失败，请稍后重试"}), 500
 
 
 @auth_api_bp.route('/web_login/sessions/<sid>', methods=['GET'])
@@ -732,7 +732,8 @@ def api_web_login_confirm():
     except PermissionError:
         return jsonify({"status": "error", "message": "nonce无效"}), 403
     except RuntimeError as e:
-        return jsonify({"status": "error", "message": str(e)}), 409
+        current_app.logger.warning(f'确认扫码登录冲突: {e}')
+        return jsonify({"status": "error", "message": "操作冲突，请重试"}), 409
     except Exception as e:
         current_app.logger.error(f'确认扫码登录失败: {e}', exc_info=True)
         return jsonify({"status": "error", "message": "确认失败"}), 500
@@ -842,7 +843,7 @@ def api_wechat_bind_qrcode():
         }), 200
     except Exception as e:
         current_app.logger.error(f'生成绑定微信二维码失败: {e}', exc_info=True)
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        return jsonify({'status': 'error', 'message': '生成二维码失败，请稍后重试'}), 500
 
 
 @auth_api_bp.route('/wechat/bind_sessions/<sid>', methods=['GET'])
@@ -898,7 +899,8 @@ def api_wechat_bind_confirm():
     except PermissionError:
         return jsonify({'status': 'error', 'message': 'nonce无效'}), 403
     except RuntimeError as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 409
+        current_app.logger.warning(f'确认绑定微信冲突: {e}')
+        return jsonify({'status': 'error', 'message': '操作冲突，请重试'}), 409
     except Exception as e:
         current_app.logger.error(f'确认绑定微信失败: {e}', exc_info=True)
         return jsonify({'status': 'error', 'message': '绑定失败'}), 500

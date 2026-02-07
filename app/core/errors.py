@@ -149,12 +149,11 @@ def register_error_handlers(app: Flask) -> None:
             request.headers.get('Accept', '').startswith('application/json')
         )
         if is_api_request:
-            return BadRequestError(message=f'Invalid value: {str(e)}').get_response()
+            return BadRequestError(message='请求参数无效').get_response()
         # 页面请求返回简单错误页面
         from flask import render_template_string
         return render_template_string(
-            '<h1>400 - 请求错误</h1><p>无效的值: {{ error }}</p>',
-            error=str(e)
+            '<h1>400 - 请求错误</h1><p>请求参数无效，请检查后重试。</p>',
         ), 400
     
     @app.errorhandler(Exception)

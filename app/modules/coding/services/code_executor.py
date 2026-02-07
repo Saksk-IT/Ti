@@ -127,14 +127,27 @@ class PythonExecutor(CodeExecutor):
             python_cmd = 'python3' if sys.platform != 'win32' else 'python'
             
             # 使用 subprocess 执行（注意：生产环境应使用 Docker）
+            # 安全措施：清理环境变量，仅保留必要项，防止泄露密钥
+            safe_env = {
+                'PATH': os.environ.get('PATH', ''),
+                'PYTHONIOENCODING': 'utf-8',
+                'LANG': 'en_US.UTF-8',
+            }
+            # Windows 需要 SystemRoot 和 TEMP
+            if sys.platform == 'win32':
+                safe_env['SystemRoot'] = os.environ.get('SystemRoot', r'C:\Windows')
+                safe_env['TEMP'] = os.environ.get('TEMP', '')
+                safe_env['TMP'] = os.environ.get('TMP', '')
+
             process = subprocess.Popen(
-                [python_cmd, code_file],
+                [python_cmd, '-u', code_file],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
                 encoding='utf-8',
-                errors='replace'
+                errors='replace',
+                env=safe_env,
             )
             
             try:

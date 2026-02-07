@@ -17,6 +17,15 @@ FORBIDDEN_MODULES = {
     'shutil', 'signal', 'pathlib', 'glob', 'tempfile',
     'webbrowser', 'antigravity', 'turtle', 'code', 'codeop',
     'compileall', 'py_compile',
+    # 网络与 I/O 相关
+    'http', 'ftplib', 'smtplib', 'xmlrpc', 'asyncio',
+    'selectors', 'select', 'mmap', 'fcntl', 'termios',
+    'pty', 'resource', 'grp', 'pwd',
+    # 序列化与反射
+    'shelve', 'dbm', 'sqlite3', 'zipfile', 'tarfile',
+    'gzip', 'bz2', 'lzma', 'zipimport',
+    # 进程与系统
+    'platform', 'sysconfig', 'site', 'ensurepip', 'venv',
 }
 
 FORBIDDEN_FUNCTIONS = {
@@ -63,6 +72,24 @@ def validate_python_code(code: str) -> Tuple[bool, str]:
         pattern = r'\b' + re.escape(func) + r'\s*\('
         if re.search(pattern, code):
             return False, f'禁止使用函数: {func}'
+
+    # 2.5 检查常见绕过手法（字符串拼接调用 __import__ 等）
+    bypass_patterns = [
+        (r'__import__', '禁止使用 __import__'),
+        (r'builtins', '禁止访问 builtins'),
+        (r'importlib', '禁止使用 importlib'),
+        (r'\\x[0-9a-fA-F]{2}', '禁止使用十六进制转义序列'),
+        (r'chr\s*\(.*\)\s*\+', '禁止使用 chr() 拼接绕过'),
+    ]
+    for pattern, msg in bypass_patterns:
+        if re.search(pattern, code):
+            # 排除注释中的匹配
+            for line in code.splitlines():
+                stripped = line.lstrip()
+                if stripped.startswith('#'):
+                    continue
+                if re.search(pattern, line):
+                    return False, msg
     
     # 3. 使用 AST 解析代码
     try:
@@ -103,6 +130,12 @@ def validate_python_code(code: str) -> Tuple[bool, str]:
                 if isinstance(node.func.value, ast.Name):
                     if node.func.value.id in FORBIDDEN_MODULES:
                         return False, f'禁止使用模块: {node.func.value.id}'
+
+        # 检查下标访问后的属性链（如 __bases__[0].__subclasses__）
+        if isinstance(node, ast.Subscript):
+            if isinstance(node.value, ast.Attribute):
+                if node.value.attr in FORBIDDEN_DUNDER_ATTRS:
+                    return False, f'禁止访问属性: {node.value.attr}'
     
     return True, ''
 
