@@ -30,9 +30,11 @@ from app.core.utils.fill_blank_parser import parse_fill_blank
 from app.core.utils.validators import parse_int, validate_password
 
 from ..api_bp import admin_api_bp
+from app.core.utils.decorators import notification_admin_required
 
 
 @admin_api_bp.route('/notifications', methods=['GET'])
+@notification_admin_required
 def admin_api_notifications_list():
     """获取所有通知列表"""
     conn = get_db()
@@ -53,6 +55,7 @@ def admin_api_notifications_list():
 
 
 @admin_api_bp.route('/notifications', methods=['POST'])
+@notification_admin_required
 def admin_api_notifications_create():
     """创建通知"""
     data = request.json or {}
@@ -89,6 +92,7 @@ def admin_api_notifications_create():
 
 
 @admin_api_bp.route('/notifications/<int:nid>', methods=['GET'])
+@notification_admin_required
 def admin_api_notifications_get(nid):
     """获取单个通知"""
     conn = get_db()
@@ -102,6 +106,7 @@ def admin_api_notifications_get(nid):
 
 
 @admin_api_bp.route('/notifications/<int:nid>', methods=['PUT'])
+@notification_admin_required
 def admin_api_notifications_update(nid):
     """更新通知"""
     data = request.json or {}
@@ -139,6 +144,7 @@ def admin_api_notifications_update(nid):
 
 
 @admin_api_bp.route('/notifications/<int:nid>', methods=['DELETE'])
+@notification_admin_required
 def admin_api_notifications_delete(nid):
     """删除通知"""
     conn = get_db()
@@ -156,6 +162,7 @@ def admin_api_notifications_delete(nid):
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @admin_api_bp.route('/notifications/<int:nid>/toggle', methods=['POST'])
+@notification_admin_required
 def admin_api_notifications_toggle(nid):
     """切换通知启用状态"""
     conn = get_db()
