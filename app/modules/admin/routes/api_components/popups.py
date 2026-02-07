@@ -30,9 +30,11 @@ from app.core.utils.fill_blank_parser import parse_fill_blank
 from app.core.utils.validators import parse_int, validate_password
 
 from ..api_bp import admin_api_bp
+from app.core.utils.decorators import notification_admin_required
 
 
 @admin_api_bp.route('/popups', methods=['GET'])
+@notification_admin_required
 def admin_api_popups_list():
     """获取所有弹窗列表"""
     conn = get_db()
@@ -53,6 +55,7 @@ def admin_api_popups_list():
 
 
 @admin_api_bp.route('/popups', methods=['POST'])
+@notification_admin_required
 def admin_api_popups_create():
     """创建弹窗"""
     from app.modules.popups.schemas import PopupCreateSchema
@@ -95,6 +98,7 @@ def admin_api_popups_create():
 
 
 @admin_api_bp.route('/popups/<int:pid>', methods=['GET'])
+@notification_admin_required
 def admin_api_popups_get(pid):
     """获取单个弹窗"""
     conn = get_db()
@@ -115,6 +119,7 @@ def admin_api_popups_get(pid):
 
 
 @admin_api_bp.route('/popups/<int:pid>', methods=['PUT'])
+@notification_admin_required
 def admin_api_popups_update(pid):
     """更新弹窗"""
     from app.modules.popups.schemas import PopupUpdateSchema
@@ -179,6 +184,7 @@ def admin_api_popups_update(pid):
 
 
 @admin_api_bp.route('/popups/<int:pid>', methods=['DELETE'])
+@notification_admin_required
 def admin_api_popups_delete(pid):
     """删除弹窗"""
     # 允许管理员和通知管理员删除弹窗
@@ -207,6 +213,7 @@ def admin_api_popups_delete(pid):
 
 
 @admin_api_bp.route('/popups/stats', methods=['GET'])
+@notification_admin_required
 def admin_api_popups_stats():
     """获取所有弹窗的统计信息"""
     from app.modules.popups.services.popup_service import PopupService
@@ -231,6 +238,7 @@ def admin_api_popups_stats():
 
 
 @admin_api_bp.route('/popups/<int:pid>/stats', methods=['GET'])
+@notification_admin_required
 def admin_api_popup_stats(pid):
     """获取单个弹窗的统计信息"""
     from app.modules.popups.services.popup_service import PopupService
