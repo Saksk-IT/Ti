@@ -31,9 +31,11 @@ from app.core.utils.fill_blank_parser import parse_fill_blank
 from app.core.utils.validators import parse_int, validate_password
 
 from ..api_bp import admin_api_bp
+from app.core.utils.decorators import subject_admin_required
 
 
 @admin_api_bp.route('/types', methods=['GET'])
+@subject_admin_required
 def get_question_types():
     """获取题型列表"""
     from app.core.utils.portable_question_format import portable_type_to_q_type
@@ -54,6 +56,7 @@ def get_question_types():
 
 
 @admin_api_bp.route('/questions', methods=['GET'])
+@subject_admin_required
 def get_filtered_questions():
     """获取筛选后的题目列表"""
     from app.core.utils.portable_question_format import any_type_to_portable_type, portable_question_to_internal, tags_to_storage_str
@@ -126,6 +129,7 @@ def get_filtered_questions():
 
 
 @admin_api_bp.route('/questions/<int:question_id>', methods=['GET'])
+@subject_admin_required
 def get_single_question(question_id):
     """获取单个题目"""
     from app.core.utils.portable_question_format import portable_question_to_internal, tags_to_storage_str
@@ -177,6 +181,7 @@ def get_single_question(question_id):
 
 
 @admin_api_bp.route('/questions', methods=['POST'])
+@subject_admin_required
 def add_question():
     """添加题目"""
     data = request.json
@@ -252,6 +257,7 @@ def add_question():
 
 
 @admin_api_bp.route('/questions/<int:question_id>', methods=['PUT'])
+@subject_admin_required
 def edit_question(question_id):
     """编辑题目"""
     data = request.json
@@ -334,6 +340,7 @@ def edit_question(question_id):
 
 
 @admin_api_bp.route('/questions/<int:question_id>', methods=['DELETE'])
+@subject_admin_required
 def delete_question(question_id):
     """删除题目"""
     conn = get_db()
@@ -349,6 +356,7 @@ def delete_question(question_id):
 
 
 @admin_api_bp.route('/questions/batch_delete', methods=['POST'])
+@subject_admin_required
 def batch_delete_questions():
     """批量删除题目"""
     data = request.json
@@ -372,6 +380,7 @@ def batch_delete_questions():
 
 
 @admin_api_bp.route('/questions/batch_change_type', methods=['POST'])
+@subject_admin_required
 def batch_change_type():
     """批量修改题型"""
     data = request.json
@@ -490,6 +499,7 @@ def batch_change_type():
 
 
 @admin_api_bp.route('/questions/batch_move_subject', methods=['POST'])
+@subject_admin_required
 def batch_move_subject():
     """批量移动题目到其他科目"""
     data = request.json
@@ -515,6 +525,7 @@ def batch_move_subject():
 
 
 @admin_api_bp.route('/questions/batch_set_difficulty', methods=['POST'])
+@subject_admin_required
 def batch_set_difficulty():
     """批量设置题目难度"""
     data = request.json
@@ -542,6 +553,7 @@ def batch_set_difficulty():
 
 
 @admin_api_bp.route('/questions/batch_tags', methods=['POST'])
+@subject_admin_required
 def batch_tags():
     """批量操作标签"""
     data = request.json
@@ -594,6 +606,7 @@ def batch_tags():
 
 
 @admin_api_bp.route('/questions/duplicate-check/start', methods=['POST'])
+@subject_admin_required
 def start_duplicate_check():
     """启动查重并保存记录"""
     from app.modules.admin.services.duplicate_check_service import DuplicateCheckService
@@ -632,6 +645,7 @@ def start_duplicate_check():
 
 
 @admin_api_bp.route('/questions/duplicate-check/results', methods=['GET'])
+@subject_admin_required
 def get_duplicate_check_results():
     """获取查重结果（优先返回历史记录，如果没有则执行新查重）"""
     from app.modules.admin.services.duplicate_check_service import DuplicateCheckService
