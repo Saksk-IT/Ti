@@ -66,4 +66,36 @@
 ## 6) 额外业务上下文（MUST）
 
 - 题库详情页存在两个入口：（题库广场 → 题库详情页）与（个人题库 → 题库详情页）。
-  
+
+## 7) ECC 插件可用命令参考
+
+本项目已配置 Everything Claude Code 插件，以下命令可直接使用：
+
+| 命令 | 用途 |
+| ---- | ---- |
+| `/plan` | 创建实现计划（复杂功能前必用） |
+| `/tdd` | 测试驱动开发工作流 |
+| `/code-review` | 代码质量审查 |
+| `/python-review` | Python 专项代码审查 |
+| `/build-fix` | 修复构建错误 |
+| `/refactor-clean` | 清理死代码和冗余文件 |
+| `/e2e` | 端到端测试 |
+| `/test-coverage` | 检查测试覆盖率 |
+| `/update-docs` | 更新文档 |
+
+### 项目级 Python 规则
+
+位于 `.claude/rules/`：
+
+- `python-coding-style.md` — PEP 8、类型注解、不可变性
+- `python-patterns.md` — Protocol、Dataclass、Flask 蓝图模式
+- `python-testing.md` — pytest、覆盖率、Flask 测试 fixtures
+- `python-security.md` — 密钥管理、bandit 扫描、Flask 安全要点
+- `python-hooks.md` — PostToolUse hooks 说明
+
+### 项目级 Hooks
+
+配置于 `.claude/settings.local.json`：
+
+- **PostToolUse**: 编辑 `.py` 文件后检测 `print()` 语句并警告；检测硬编码密钥
+- **PreToolUse**: Flask 开发服务器和 pytest 运行前提醒使用 tmux

@@ -7,14 +7,55 @@
       "Bash(Select-Object:*)",
       "Bash(if:*)",
       "Bash(copy :)",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nrefactor: 重新设计 Web 端首页，简洁风格\n\n- Hero Card: 显示用户头像、昵称、签到状态\n- Bento Grid: 6 项数据（题目数、收藏、错题、近7天、正确率、签到）\n- 快捷入口: 题库广场、个人题库\n- 移除流程/治理折叠区域，追求极简\n- 响应式布局适配移动端\n- 保留签到和继续练习功能\nEOF\n\\)\")",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: 扩展首页布局，添加企业风格功能介绍\n\n- 扩展页面宽度至 1120px，与题库广场保持一致\n- 顶部区域改为左右两栏布局（用户信息 + 数据概览）\n- 新增核心功能介绍区块（海量题库、智能错题本、学习数据、模拟考试）\n- 新增 CTA 行动号召区块\n- 响应式适配：860px 以下单列布局\nEOF\n\\)\")",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: 添加苏格拉底式提问技能\n\n- 支持手动触发 \\(/socratic, /苏格拉底\\) 和自动检测\n- 提供 6 层提问框架：澄清本质、探究假设、边界约束、替代方案、影响后果、验证标准\n- 每轮 4-6 个问题，避免信息过载\n- 与 CLAUDE.md 第 5 节选项式问题模板互补\nEOF\n\\)\")",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: 签到功能改为日历卡片显示\n\n- 在首页左侧添加签到日历卡片，显示本月签到记录\n- 从 Bento Grid 中移除签到项，改为独立日历展示\n- 更新签到 API 返回本月已签到日期列表 \\(checked_dates\\)\n- 日历支持显示今日标记、已签到标记\n- 统计区显示连续签到和累计签到天数\nEOF\n\\)\")",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: 添加签到日历和答题趋势图表并排显示\n\n- 将签到日历卡片移至独立的统计区域\n- 新增近7天答题趋势柱状图卡片\n- 日历和图表并排显示，充分利用页面宽度\n- 图表显示每日答题数、总答题数、正确率、日均答题\n- 响应式布局：移动端自动堆叠显示\nEOF\n\\)\")",
       "Bash(git commit:*)",
       "Bash(npx skills:*)"
     ],
     "defaultMode": "bypassPermissions"
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "tool == \"Edit\" && tool_input.file_path matches \"\\\\.py$\"",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const fs=require('fs');let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{const i=JSON.parse(d);const p=i.tool_input?.file_path;if(p&&fs.existsSync(p)){const c=fs.readFileSync(p,'utf8');const lines=c.split('\\n');const matches=[];lines.forEach((l,idx)=>{if(/^\\s*print\\s*\\(/.test(l)&&!/#\\s*noqa/.test(l)&&!/logging|logger|debug/.test(l))matches.push((idx+1)+': '+l.trim())});if(matches.length){console.error('[Hook] WARNING: print() found in '+p);matches.slice(0,5).forEach(m=>console.error(m));console.error('[Hook] Consider using logging module instead')}}console.log(d)})\""
+          }
+        ],
+        "description": "Warn about print() statements in Python files (use logging instead)"
+      },
+      {
+        "matcher": "tool == \"Edit\" && tool_input.file_path matches \"\\\\.py$\"",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const fs=require('fs');let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{const i=JSON.parse(d);const p=i.tool_input?.file_path;if(p&&fs.existsSync(p)){const c=fs.readFileSync(p,'utf8');const patterns=[/['\\\"]sk-[a-zA-Z0-9]{20,}/,/['\\\"]password\\s*=\\s*['\\\"][^'\\\"]+['\\\"]/,/['\\\"]secret\\s*=\\s*['\\\"][^'\\\"]+['\\\"]/];for(const pat of patterns){if(pat.test(c)){console.error('[Hook] SECURITY: Possible hardcoded secret in '+p);console.error('[Hook] Use environment variables instead');break}}}console.log(d)})\""
+          }
+        ],
+        "description": "Detect hardcoded secrets in Python files"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "tool == \"Bash\" && tool_input.command matches \"(flask run|python run\\\\.py|python -m flask)\"",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"if(!process.env.TMUX){console.error('[Hook] Consider running Flask dev server in tmux for log access');console.error('[Hook] tmux new -s flask  |  tmux attach -t flask')}\""
+          }
+        ],
+        "description": "Remind to use tmux for Flask dev server"
+      },
+      {
+        "matcher": "tool == \"Bash\" && tool_input.command matches \"(pytest|python -m pytest)\"",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"if(!process.env.TMUX){console.error('[Hook] Consider running pytest in tmux for session persistence');console.error('[Hook] tmux new -s test  |  tmux attach -t test')}\""
+          }
+        ],
+        "description": "Remind to use tmux for pytest"
+      }
+    ]
   }
 }
