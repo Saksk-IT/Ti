@@ -2,6 +2,26 @@
 
 本文件用于约束 AI 助手在此仓库内的工作方式，专注于工程规则与交付质量。请将标注为 **MUST/禁止** 的内容视为硬约束。
 
+## Communication
+
+用户使用英文和中文（中文）进行交流。请使用与用户相同的语言回复。当生成面向中国市场应用（微信小程序、WPF 应用）的用户可见字符串、标签或文档时，使用中文文本。
+
+## Code Editing
+
+在执行 Edit 操作前，必须先完整读取文件。禁止基于对文件内容的假设进行编辑——先用 Read 读取，再用 Edit 修改。
+
+## Platform Compatibility
+
+本项目使用 Python、HTML 和 C#（.NET/WPF）。处理 WPF/XAML 时，避免使用 UWP 专属属性（如 `CharacterSpacing`），始终验证 API 与 WPF 的兼容性。编写 PowerShell 脚本时，以 PowerShell 5.1 语法为目标（不使用 PS 7+ 特性，如三元运算符或空合并运算符）。
+
+## Debugging Guidelines
+
+诊断 bug 时，先请用户明确具体的复现条件，再提出修复方案。不要假设根因——先通过阅读相关代码路径和日志收集证据。
+
+## Build & Test
+
+进行多文件变更后，必须在报告完成前运行项目构建命令和所有测试。对于 .NET/WPF 项目使用 `dotnet build`，对于 Python 项目使用已配置的测试运行器。
+
 ## 0) 不可协商（MUST）
 
 - 始终使用简体中文进行响应。
