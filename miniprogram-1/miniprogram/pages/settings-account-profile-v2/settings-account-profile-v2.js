@@ -348,6 +348,9 @@ Page({
                         (0, avatar_1.bumpAvatarRev)();
                         url = (0, avatar_1.decorateAvatarUrl)((0, api_1.resolveUploadUrl)(res === null || res === void 0 ? void 0 : res.avatar_url));
                         this.setData({ avatarUrl: url, msg: '头像已更新' });
+                        // 同步更新本地缓存，确保其他页面（首页等）能立即显示新头像
+                        cachedUserInfo = wx.getStorageSync('userInfo') || {};
+                        wx.setStorageSync('userInfo', Object.assign({}, cachedUserInfo, { avatar: res === null || res === void 0 ? void 0 : res.avatar_url }));
                         return [4 /*yield*/, this.loadProfile(true)];
                     case 6:
                         _a.sent();

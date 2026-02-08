@@ -1,6 +1,7 @@
 // mine.ts - 我的
-import { api } from '../../utils/api';
+import { api, resolveUploadUrl } from '../../utils/api';
 import { checkLogin, logout } from '../../utils/auth';
+import { decorateAvatarUrl } from '../../utils/avatar';
 
 Page({
   data: {
@@ -18,6 +19,13 @@ Page({
       return;
     }
     const userInfo = wx.getStorageSync('userInfo');
+    // 将相对路径的 avatar 转为完整 URL
+    if (userInfo && (userInfo.avatar || userInfo.avatar_url)) {
+      const rawAvatar = userInfo.avatar || userInfo.avatar_url;
+      const fullUrl = decorateAvatarUrl(resolveUploadUrl(rawAvatar));
+      userInfo.avatar = fullUrl;
+      userInfo.avatar_url = fullUrl;
+    }
     this.setData({ userInfo });
     this.loadStats();
   },

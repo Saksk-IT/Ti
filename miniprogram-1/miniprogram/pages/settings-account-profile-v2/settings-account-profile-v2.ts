@@ -273,6 +273,9 @@ Page({
       bumpAvatarRev();
       const url = decorateAvatarUrl(resolveUploadUrl(res?.avatar_url));
       this.setData({ avatarUrl: url, msg: '头像已更新' });
+      // 同步更新本地缓存，确保其他页面（首页等）能立即显示新头像
+      const cachedUserInfo = wx.getStorageSync('userInfo') || {};
+      wx.setStorageSync('userInfo', { ...cachedUserInfo, avatar: res?.avatar_url });
       await this.loadProfile(true);
     } catch (e: any) {
       wx.showToast({ title: e?.message || '上传失败', icon: 'none' });
@@ -340,6 +343,9 @@ Page({
       bumpAvatarRev();
       const url = decorateAvatarUrl(resolveUploadUrl(res?.avatar_url));
       this.setData({ avatarUrl: url, msg: '头像已更新' });
+      // 同步更新本地缓存，确保其他页面（首页等）能立即显示新头像
+      const cachedUserInfo = wx.getStorageSync('userInfo') || {};
+      wx.setStorageSync('userInfo', { ...cachedUserInfo, avatar: res?.avatar_url });
       await this.loadProfile(true);
     } catch (e: any) {
       wx.showToast({ title: e?.message || '设置失败', icon: 'none' });

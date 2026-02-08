@@ -1,7 +1,8 @@
 // index.ts
-import { api } from '../../utils/api';
+import { api, resolveUploadUrl } from '../../utils/api';
 import { checkLogin } from '../../utils/auth';
 import { themeManager } from '../../utils/theme';
+import { decorateAvatarUrl } from '../../utils/avatar';
 
 function parseQuery(raw: string): Record<string, string> {
   const out: Record<string, string> = {};
@@ -103,6 +104,13 @@ Page({
     const isLoggedIn = checkLogin();
     if (isLoggedIn) {
       const userInfo = wx.getStorageSync('userInfo');
+      // 将相对路径的 avatar 转为完整 URL，确保 <image> 能正常加载
+      if (userInfo && (userInfo.avatar || userInfo.avatar_url)) {
+        const rawAvatar = userInfo.avatar || userInfo.avatar_url;
+        const fullUrl = decorateAvatarUrl(resolveUploadUrl(rawAvatar));
+        userInfo.avatar = fullUrl;
+        userInfo.avatar_url = fullUrl;
+      }
       this.setData({ userInfo, isLoggedIn: true });
     } else {
       this.setData({ isLoggedIn: false, userInfo: null });

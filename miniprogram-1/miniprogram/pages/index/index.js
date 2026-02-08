@@ -40,6 +40,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var api_1 = require("../../utils/api");
 var auth_1 = require("../../utils/auth");
 var theme_1 = require("../../utils/theme");
+var avatar_1 = require("../../utils/avatar");
 function parseQuery(raw) {
     var out = {};
     if (!raw)
@@ -125,7 +126,14 @@ Page({
                 }
                 else {
                     userInfo = wx.getStorageSync('userInfo');
-                    this.setData({ userInfo: userInfo });
+                    // 将相对路径的 avatar 转为完整 URL，确保 <image> 能正常加载
+                    if (userInfo && (userInfo.avatar || userInfo.avatar_url)) {
+                        var rawAvatar = userInfo.avatar || userInfo.avatar_url;
+                        var fullUrl = (0, avatar_1.decorateAvatarUrl)((0, api_1.resolveUploadUrl)(rawAvatar));
+                        userInfo.avatar = fullUrl;
+                        userInfo.avatar_url = fullUrl;
+                    }
+                    this.setData({ userInfo: userInfo, isLoggedIn: true });
                     this.loadHome();
                 }
                 return [2 /*return*/];

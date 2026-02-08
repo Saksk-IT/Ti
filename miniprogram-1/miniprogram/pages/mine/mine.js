@@ -39,6 +39,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // mine.ts - 我的
 var api_1 = require("../../utils/api");
 var auth_1 = require("../../utils/auth");
+var avatar_1 = require("../../utils/avatar");
 Page({
     data: {
         userInfo: null,
@@ -54,6 +55,13 @@ Page({
             return;
         }
         var userInfo = wx.getStorageSync('userInfo');
+        // 将相对路径的 avatar 转为完整 URL
+        if (userInfo && (userInfo.avatar || userInfo.avatar_url)) {
+            var rawAvatar = userInfo.avatar || userInfo.avatar_url;
+            var fullUrl = (0, avatar_1.decorateAvatarUrl)((0, api_1.resolveUploadUrl)(rawAvatar));
+            userInfo.avatar = fullUrl;
+            userInfo.avatar_url = fullUrl;
+        }
         this.setData({ userInfo: userInfo });
         this.loadStats();
     },
