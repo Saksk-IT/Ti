@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from flask import current_app, redirect, render_template, request, session
 
 from app.core.utils.database import get_db
+from app.core.utils.time_utils import today_bj
 
 from .bp import main_pages_bp
 from .common import _get_accessible_subject_rows
@@ -109,22 +110,24 @@ def hub():
 
                 from datetime import date
 
-                today = date.today()
+                today = today_bj()
                 day_keys = [(today - timedelta(days=i)).isoformat() for i in range(6, -1, -1)]
 
-                start_dt = datetime.combine(today - timedelta(days=6), datetime.min.time())
-                end_dt = datetime.combine(today + timedelta(days=1), datetime.min.time())
+                # created_at 存储 UTC，需将北京时间 00:00 边界转为 UTC（减 8 小时）
+                bj_offset = timedelta(hours=8)
+                start_dt = datetime.combine(today - timedelta(days=6), datetime.min.time()) - bj_offset
+                end_dt = datetime.combine(today + timedelta(days=1), datetime.min.time()) - bj_offset
                 start_s = start_dt.strftime('%Y-%m-%d %H:%M:%S')
                 end_s = end_dt.strftime('%Y-%m-%d %H:%M:%S')
 
-                prev_start_dt = datetime.combine(today - timedelta(days=13), datetime.min.time())
-                prev_end_dt = datetime.combine(today - timedelta(days=6), datetime.min.time())
+                prev_start_dt = datetime.combine(today - timedelta(days=13), datetime.min.time()) - bj_offset
+                prev_end_dt = datetime.combine(today - timedelta(days=6), datetime.min.time()) - bj_offset
                 prev_start_s = prev_start_dt.strftime('%Y-%m-%d %H:%M:%S')
                 prev_end_s = prev_end_dt.strftime('%Y-%m-%d %H:%M:%S')
 
                 rows = conn.execute(
                     f"""
-                    SELECT DATE(ua.created_at) AS d, COUNT(*) AS cnt
+                    SELECT DATE(ua.created_at, '+8 hours') AS d, COUNT(*) AS cnt
                     FROM user_answers ua
                     JOIN questions q ON ua.question_id = q.id
                     LEFT JOIN subjects s ON q.subject_id = s.id

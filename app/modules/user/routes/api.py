@@ -620,14 +620,16 @@ def stats_daily():
     conn = get_db()
     
     try:
-        # 获取最近N天的答题记录
+        # 获取最近N天的答题记录（以北京时间为日期边界）
+        # created_at 存储 UTC，需将北京日期边界转回 UTC 来做 WHERE 过滤
         rows = conn.execute(
-            '''SELECT DATE(created_at) as date, 
+            '''SELECT DATE(created_at, '+8 hours') as date,
                       COUNT(*) as total,
                       SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) as correct
-               FROM user_answers 
-               WHERE user_id = ? AND created_at >= DATE('now', ?)
-               GROUP BY DATE(created_at)
+               FROM user_answers
+               WHERE user_id = ?
+                 AND created_at >= datetime(DATE('now', '+8 hours', ?), '-8 hours')
+               GROUP BY DATE(created_at, '+8 hours')
                ORDER BY date''',
             (uid, f'-{days} days')
         ).fetchall()
