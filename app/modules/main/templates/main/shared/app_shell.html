@@ -415,13 +415,14 @@
         left: 0;
         top: 0;
         height: 100vh;
+        z-index: 50;
       }
       :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) {
         padding-left: var(--app-sidebar-w-collapsed);
       }
     }
 
-    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar { width: var(--app-sidebar-w-collapsed); padding: 10px; overflow: hidden; }
+    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar { width: var(--app-sidebar-w-collapsed); padding: 10px; overflow: visible; }
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-nav-label,
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-nav-title,
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-cta-title,
