@@ -129,7 +129,7 @@
   }
   .app-nav-label { font-size: 13px; font-weight: 850; letter-spacing: -0.1px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-  /* 导航手风琴 */
+  /* 导航悬浮菜单 */
   .app-nav-accordion {
     position: relative;
   }
@@ -148,13 +148,12 @@
     background: transparent;
   }
   .app-nav-accordion-trigger:hover { background: rgba(148, 163, 184, 0.10); }
-  .app-nav-accordion.open .app-nav-accordion-trigger,
   .app-nav-accordion-trigger.active {
     background: var(--app-primary-soft);
     border-color: color-mix(in srgb, var(--app-primary) 35%, var(--app-border));
   }
 
-  /* 侧边栏收起状态下的手风琴样式 */
+  /* 侧边栏收起状态下的触发器样式 */
   html.sidebar-collapsed .app-sidebar .app-nav-accordion,
   .sidebar-collapsed .app-sidebar .app-nav-accordion {
     width: 40px !important;
@@ -164,10 +163,8 @@
   }
   html.sidebar-collapsed .app-sidebar .app-nav-accordion .app-nav-accordion-trigger,
   html.sidebar-collapsed .app-sidebar .app-nav-accordion .app-nav-accordion-trigger.active,
-  html.sidebar-collapsed .app-sidebar .app-nav-accordion.open .app-nav-accordion-trigger,
   .sidebar-collapsed .app-sidebar .app-nav-accordion .app-nav-accordion-trigger,
-  .sidebar-collapsed .app-sidebar .app-nav-accordion .app-nav-accordion-trigger.active,
-  .sidebar-collapsed .app-sidebar .app-nav-accordion.open .app-nav-accordion-trigger {
+  .sidebar-collapsed .app-sidebar .app-nav-accordion .app-nav-accordion-trigger.active {
     justify-content: center !important;
     padding: 0 !important;
     width: 40px !important;
@@ -187,12 +184,20 @@
   html.sidebar-collapsed .app-sidebar .app-nav-accordion .nav-arrow,
   .sidebar-collapsed .app-sidebar .app-nav-accordion .nav-arrow { display: none !important; }
 
-  /* 收起状态：悬浮弹出面板 */
-  html.sidebar-collapsed .app-sidebar .app-nav-accordion-panel,
-  .sidebar-collapsed .app-sidebar .app-nav-accordion-panel {
-    display: block !important;
-    max-height: none !important;
-    overflow: visible !important;
+  .app-nav-accordion-trigger .nav-arrow {
+    margin-left: auto;
+    width: 14px;
+    height: 14px;
+    opacity: 0.5;
+    transition: transform 180ms ease;
+    flex-shrink: 0;
+  }
+  .app-nav-accordion.flyout-open .app-nav-accordion-trigger .nav-arrow {
+    transform: rotate(90deg);
+  }
+
+  /* 悬浮弹出面板（展开和收起状态统一） */
+  .app-nav-accordion-panel {
     position: absolute;
     left: calc(100% + 8px);
     top: 0;
@@ -209,16 +214,14 @@
     z-index: 200;
     pointer-events: none;
   }
-  html.sidebar-collapsed .app-sidebar .app-nav-accordion.flyout-open > .app-nav-accordion-panel,
-  .sidebar-collapsed .app-sidebar .app-nav-accordion.flyout-open > .app-nav-accordion-panel {
+  .app-nav-accordion.flyout-open > .app-nav-accordion-panel {
     opacity: 1;
     visibility: visible;
     transform: translateX(0);
     pointer-events: auto;
   }
-  /* 弹出面板桥接区域：防止鼠标移动到面板时丢失 hover */
-  html.sidebar-collapsed .app-sidebar .app-nav-accordion-panel::before,
-  .sidebar-collapsed .app-sidebar .app-nav-accordion-panel::before {
+  /* 桥接区域：防止鼠标移动到面板时丢失 hover */
+  .app-nav-accordion-panel::before {
     content: '';
     position: absolute;
     left: -12px;
@@ -228,56 +231,21 @@
   }
   /* 弹出面板标题 */
   .app-nav-flyout-title {
-    display: none;
-  }
-  html.sidebar-collapsed .app-sidebar .app-nav-flyout-title,
-  .sidebar-collapsed .app-sidebar .app-nav-flyout-title {
-    display: block;
     font-size: 11px;
     font-weight: 800;
     letter-spacing: 0.2px;
     color: var(--app-muted);
     padding: 6px 10px 4px;
   }
-  /* 收起状态下子项样式覆盖 */
-  html.sidebar-collapsed .app-sidebar .app-nav-accordion-items,
-  .sidebar-collapsed .app-sidebar .app-nav-accordion-items {
-    padding: 0;
-  }
-  html.sidebar-collapsed .app-sidebar .app-nav-sub-item,
-  .sidebar-collapsed .app-sidebar .app-nav-sub-item {
-    white-space: nowrap;
-    padding: 0 12px;
-    height: 36px;
-  }
-  .app-nav-accordion-trigger .nav-arrow {
-    margin-left: auto;
-    width: 14px;
-    height: 14px;
-    opacity: 0.5;
-    transition: transform 180ms ease;
-    flex-shrink: 0;
-  }
-  .app-nav-accordion.open .app-nav-accordion-trigger .nav-arrow {
-    transform: rotate(90deg);
-  }
-  .app-nav-accordion-panel {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 200ms ease;
-  }
-  .app-nav-accordion.open .app-nav-accordion-panel {
-    max-height: 200px;
-  }
   .app-nav-accordion-items {
     display: grid;
     gap: 2px;
-    padding: 4px 0 0 28px;
+    padding: 0;
   }
   .app-nav-sub-item {
-    height: 34px;
+    height: 36px;
     border-radius: 10px;
-    padding: 0 10px;
+    padding: 0 12px;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -285,6 +253,7 @@
     font-size: 13px;
     font-weight: 700;
     transition: background 140ms ease;
+    white-space: nowrap;
   }
   .app-nav-sub-item:hover { background: rgba(148, 163, 184, 0.10); }
   .app-nav-sub-item.active {
@@ -342,49 +311,33 @@
   }
   .app-mini-btn:focus { outline: none; box-shadow: 0 0 0 3px var(--app-primary-soft), var(--app-shadow-soft); }
 
-  /* 快捷菜单弹出层 */
+  /* 快捷菜单弹出层（统一右侧悬浮弹出） */
   .app-quick-menu {
     position: absolute;
-    bottom: calc(100% + 8px);
-    left: 0;
-    right: 0;
-    background: var(--app-surface);
-    border: 1px solid var(--app-border);
-    border-radius: 14px;
-    box-shadow: var(--app-shadow);
-    padding: 6px;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(8px);
-    transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
-    z-index: 100;
-  }
-  .app-quick-menu.open {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-  }
-
-  /* 收起状态：快捷菜单改为右侧悬浮弹出 */
-  html.sidebar-collapsed .app-sidebar .app-quick-menu,
-  .sidebar-collapsed .app-sidebar .app-quick-menu {
-    bottom: auto;
-    top: auto;
     bottom: 0;
     left: calc(100% + 8px);
     right: auto;
     min-width: 160px;
+    background: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+    padding: 6px;
+    opacity: 0;
+    visibility: hidden;
     transform: translateX(-6px);
+    transition: opacity 160ms ease, transform 160ms ease, visibility 160ms ease;
+    z-index: 200;
     pointer-events: none;
   }
-  html.sidebar-collapsed .app-sidebar .app-quick-menu.open,
-  .sidebar-collapsed .app-sidebar .app-quick-menu.open {
+  .app-quick-menu.open {
+    opacity: 1;
+    visibility: visible;
     transform: translateX(0);
     pointer-events: auto;
   }
-  /* 收起状态：桥接区域 */
-  html.sidebar-collapsed .app-sidebar .app-quick-menu::before,
-  .sidebar-collapsed .app-sidebar .app-quick-menu::before {
+  /* 桥接区域 */
+  .app-quick-menu::before {
     content: '';
     position: absolute;
     right: 100%;
@@ -565,7 +518,7 @@
 
   <div class="app-nav-section">
     <div class="app-nav-title">复盘</div>
-    <div class="app-nav-accordion {{ 'open' if (_path.startswith('/mistakes') or _path.startswith('/favorites') or _path.startswith('/tags')) else '' }}" id="reviewAccordion">
+    <div class="app-nav-accordion" id="reviewAccordion">
       <button class="app-nav-accordion-trigger {{ 'active' if (_path.startswith('/mistakes') or _path.startswith('/favorites') or _path.startswith('/tags')) else '' }}" type="button" aria-expanded="false" aria-controls="reviewPanel">
         <svg class="app-nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M4.5 12a7.5 7.5 0 0 1 12.75-5.303l1.5 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -607,7 +560,7 @@
 
   <div class="app-nav-section">
     <div class="app-nav-title">成长</div>
-    <div class="app-nav-accordion {{ 'open' if (_path.startswith('/data') or _path.startswith('/history')) else '' }}" id="dataAccordion">
+    <div class="app-nav-accordion" id="dataAccordion">
       <button class="app-nav-accordion-trigger {{ 'active' if (_path.startswith('/data') or _path.startswith('/history')) else '' }}" type="button" aria-expanded="false" aria-controls="dataPanel">
         <svg class="app-nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M4 19V5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -841,48 +794,20 @@
   var themeToggle = themeSubmenu ? themeSubmenu.querySelector('.app-quick-menu-item') : null;
   var root = document.documentElement;
 
-  // 复盘手风琴
-  var reviewAccordion = document.getElementById('reviewAccordion');
-  if (reviewAccordion) {
-    var reviewTrigger = reviewAccordion.querySelector('.app-nav-accordion-trigger');
-    if (reviewTrigger) {
-      reviewTrigger.addEventListener('click', function(e) {
-        e.preventDefault();
-        if (isSidebarCollapsed()) return;
-        reviewAccordion.classList.toggle('open');
-        var expanded = reviewAccordion.classList.contains('open');
-        reviewTrigger.setAttribute('aria-expanded', expanded);
-      });
-    }
-  }
-
-  // 数据手风琴
-  var dataAccordion = document.getElementById('dataAccordion');
-  if (dataAccordion) {
-    var dataTrigger = dataAccordion.querySelector('.app-nav-accordion-trigger');
-    if (dataTrigger) {
-      dataTrigger.addEventListener('click', function(e) {
-        e.preventDefault();
-        if (isSidebarCollapsed()) return;
-        dataAccordion.classList.toggle('open');
-        var expanded = dataAccordion.classList.contains('open');
-        dataTrigger.setAttribute('aria-expanded', expanded);
-      });
-    }
-  }
-
   // 判断侧边栏是否收起
   function isSidebarCollapsed() {
     return document.documentElement.classList.contains('sidebar-collapsed')
       || (document.getElementById('appShell') && document.getElementById('appShell').classList.contains('sidebar-collapsed'));
   }
 
-  // 收起状态下的悬浮弹出
-  function setupCollapsedFlyout(accordion) {
+  // 悬浮弹出菜单（展开和收起状态统一）
+  var reviewAccordion = document.getElementById('reviewAccordion');
+  var dataAccordion = document.getElementById('dataAccordion');
+
+  function setupFlyout(accordion) {
     if (!accordion) return;
     var timer = null;
     function show() {
-      if (!isSidebarCollapsed()) return;
       clearTimeout(timer);
       document.querySelectorAll('.app-nav-accordion.flyout-open').forEach(function(el) {
         if (el !== accordion) el.classList.remove('flyout-open');
@@ -897,38 +822,17 @@
     accordion.addEventListener('mouseenter', show);
     accordion.addEventListener('mouseleave', hide);
   }
-  setupCollapsedFlyout(reviewAccordion);
-  setupCollapsedFlyout(dataAccordion);
+  setupFlyout(reviewAccordion);
+  setupFlyout(dataAccordion);
 
   if (!quickMenu) return;
 
   var footerRow = quickMenu.closest('.app-footer-row');
 
-  // 切换菜单显示（展开状态下点击触发）
-  function toggleMenu(e) {
-    e.stopPropagation();
-    if (isSidebarCollapsed()) return;
-    quickMenu.classList.toggle('open');
-    // 关闭主题子菜单
-    if (themeSubmenu) themeSubmenu.classList.remove('open');
-    updateThemeActiveState();
-  }
-
-  if (userTrigger) {
-    userTrigger.addEventListener('click', toggleMenu);
-    userTrigger.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        toggleMenu(e);
-      }
-    });
-  }
-
-  // 收起状态下：悬浮 footer-row 弹出快捷菜单
+  // 悬浮 footer-row 弹出快捷菜单（展开和收起统一）
   if (footerRow) {
     var footerTimer = null;
     footerRow.addEventListener('mouseenter', function() {
-      if (!isSidebarCollapsed()) return;
       clearTimeout(footerTimer);
       // 关闭其他弹出菜单
       document.querySelectorAll('.app-nav-accordion.flyout-open').forEach(function(el) {
@@ -938,7 +842,6 @@
       updateThemeActiveState();
     });
     footerRow.addEventListener('mouseleave', function() {
-      if (!isSidebarCollapsed()) return;
       footerTimer = setTimeout(function() {
         quickMenu.classList.remove('open');
         if (themeSubmenu) themeSubmenu.classList.remove('open');
