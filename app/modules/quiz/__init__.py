@@ -31,6 +31,13 @@ def init_quiz_module(app: Flask):
     app.register_blueprint(quiz_api_bp, url_prefix='/api/quiz')
 
     # Web 端历史代码使用 /api/*（不带 /quiz 前缀）；这里加别名确保互通与兼容
+    # 注意：别名路由不属于 quiz_api_bp 蓝图，需单独豁免 CSRF
+    from app.core.extensions import csrf
+    alias_post_views = [toggle_favorite, record_result, progress_api,
+                        api_ai_explain, api_ai_explain_async]
+    for view_func in alias_post_views:
+        csrf.exempt(view_func)
+
     app.add_url_rule('/api/favorite', endpoint='api_favorite', view_func=toggle_favorite, methods=['POST'])
     app.add_url_rule('/api/record_result', endpoint='api_record_result', view_func=record_result, methods=['POST'])
     app.add_url_rule('/api/progress', endpoint='api_progress', view_func=progress_api, methods=['GET', 'POST', 'DELETE'])
