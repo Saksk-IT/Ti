@@ -1307,7 +1307,7 @@
 
   async function loadChart() {
     try {
-      var res = await fetch('/api/user/stats/daily?days=7', { credentials: 'same-origin' });
+      var res = await fetch('/api/stats/daily?days=7', { credentials: 'same-origin' });
       var json = await res.json();
       if (json.status === 'success' && json.data) {
         // API 返回 {date, total, correct}，转换为 {date, count, correct}
