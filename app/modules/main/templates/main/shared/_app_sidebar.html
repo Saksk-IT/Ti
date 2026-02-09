@@ -129,7 +129,7 @@
   }
   .app-nav-label { font-size: 13px; font-weight: 850; letter-spacing: -0.1px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-  /* 导航悬浮菜单 */
+  /* 导航手风琴 */
   .app-nav-accordion {
     position: relative;
   }
@@ -148,6 +148,7 @@
     background: transparent;
   }
   .app-nav-accordion-trigger:hover { background: rgba(148, 163, 184, 0.10); }
+  .app-nav-accordion.open .app-nav-accordion-trigger,
   .app-nav-accordion-trigger.active {
     background: var(--app-primary-soft);
     border-color: color-mix(in srgb, var(--app-primary) 35%, var(--app-border));
@@ -159,12 +160,14 @@
     width: 40px !important;
     max-width: 40px !important;
     justify-self: center;
-    overflow: visible;
+    overflow: hidden;
   }
   html.sidebar-collapsed .app-sidebar .app-nav-accordion .app-nav-accordion-trigger,
   html.sidebar-collapsed .app-sidebar .app-nav-accordion .app-nav-accordion-trigger.active,
+  html.sidebar-collapsed .app-sidebar .app-nav-accordion.open .app-nav-accordion-trigger,
   .sidebar-collapsed .app-sidebar .app-nav-accordion .app-nav-accordion-trigger,
-  .sidebar-collapsed .app-sidebar .app-nav-accordion .app-nav-accordion-trigger.active {
+  .sidebar-collapsed .app-sidebar .app-nav-accordion .app-nav-accordion-trigger.active,
+  .sidebar-collapsed .app-sidebar .app-nav-accordion.open .app-nav-accordion-trigger {
     justify-content: center !important;
     padding: 0 !important;
     width: 40px !important;
@@ -183,6 +186,8 @@
   }
   html.sidebar-collapsed .app-sidebar .app-nav-accordion .nav-arrow,
   .sidebar-collapsed .app-sidebar .app-nav-accordion .nav-arrow { display: none !important; }
+  html.sidebar-collapsed .app-sidebar .app-nav-accordion-panel,
+  .sidebar-collapsed .app-sidebar .app-nav-accordion-panel { display: none !important; }
   .app-nav-accordion-trigger .nav-arrow {
     margin-left: auto;
     width: 14px;
@@ -191,51 +196,26 @@
     transition: transform 180ms ease;
     flex-shrink: 0;
   }
-  .app-nav-accordion.hover-open .app-nav-accordion-trigger .nav-arrow {
+  .app-nav-accordion.open .app-nav-accordion-trigger .nav-arrow {
     transform: rotate(90deg);
   }
-
-  /* 悬浮弹出面板 */
   .app-nav-accordion-panel {
-    position: absolute;
-    left: calc(100% + 8px);
-    top: 0;
-    min-width: 180px;
-    background: var(--app-surface);
-    border: 1px solid var(--app-border);
-    border-radius: 14px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
-    padding: 6px;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateX(-6px);
-    transition: opacity 160ms ease, transform 160ms ease, visibility 160ms ease;
-    z-index: 200;
-    pointer-events: none;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 200ms ease;
   }
-  .app-nav-accordion.hover-open > .app-nav-accordion-panel {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(0);
-    pointer-events: auto;
-  }
-  /* 面板标题 */
-  .app-nav-flyout-title {
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.2px;
-    color: var(--app-muted);
-    padding: 6px 10px 4px;
+  .app-nav-accordion.open .app-nav-accordion-panel {
+    max-height: 200px;
   }
   .app-nav-accordion-items {
     display: grid;
     gap: 2px;
-    padding: 0;
+    padding: 4px 0 0 28px;
   }
   .app-nav-sub-item {
-    height: 36px;
+    height: 34px;
     border-radius: 10px;
-    padding: 0 12px;
+    padding: 0 10px;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -243,7 +223,6 @@
     font-size: 13px;
     font-weight: 700;
     transition: background 140ms ease;
-    white-space: nowrap;
   }
   .app-nav-sub-item:hover { background: rgba(148, 163, 184, 0.10); }
   .app-nav-sub-item.active {
@@ -254,15 +233,6 @@
     height: 16px;
     opacity: 0.8;
     flex-shrink: 0;
-  }
-  /* 悬浮桥接区域：防止鼠标从触发器移到面板时丢失 hover */
-  .app-nav-accordion-panel::before {
-    content: '';
-    position: absolute;
-    left: -12px;
-    top: 0;
-    width: 12px;
-    height: 100%;
   }
 
   .app-sidebar-footer {
@@ -505,7 +475,7 @@
 
   <div class="app-nav-section">
     <div class="app-nav-title">复盘</div>
-    <div class="app-nav-accordion" id="reviewAccordion">
+    <div class="app-nav-accordion {{ 'open' if (_path.startswith('/mistakes') or _path.startswith('/favorites') or _path.startswith('/tags')) else '' }}" id="reviewAccordion">
       <button class="app-nav-accordion-trigger {{ 'active' if (_path.startswith('/mistakes') or _path.startswith('/favorites') or _path.startswith('/tags')) else '' }}" type="button" aria-expanded="false" aria-controls="reviewPanel">
         <svg class="app-nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M4.5 12a7.5 7.5 0 0 1 12.75-5.303l1.5 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -519,7 +489,6 @@
         </svg>
       </button>
       <div class="app-nav-accordion-panel" id="reviewPanel">
-        <div class="app-nav-flyout-title">复盘中心</div>
         <div class="app-nav-accordion-items">
           <a class="app-nav-sub-item {{ 'active' if _path.startswith('/mistakes') else '' }}" href="/mistakes" aria-label="错题" title="错题">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -547,7 +516,7 @@
 
   <div class="app-nav-section">
     <div class="app-nav-title">成长</div>
-    <div class="app-nav-accordion" id="dataAccordion">
+    <div class="app-nav-accordion {{ 'open' if (_path.startswith('/data') or _path.startswith('/history')) else '' }}" id="dataAccordion">
       <button class="app-nav-accordion-trigger {{ 'active' if (_path.startswith('/data') or _path.startswith('/history')) else '' }}" type="button" aria-expanded="false" aria-controls="dataPanel">
         <svg class="app-nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M4 19V5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -560,7 +529,6 @@
         </svg>
       </button>
       <div class="app-nav-accordion-panel" id="dataPanel">
-        <div class="app-nav-flyout-title">数据中心</div>
         <div class="app-nav-accordion-items">
           <a class="app-nav-sub-item {{ 'active' if _path == '/data' or _path == '/data/' else '' }}" href="/data" aria-label="全局" title="全局数据">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -781,46 +749,33 @@
   var themeToggle = themeSubmenu ? themeSubmenu.querySelector('.app-quick-menu-item') : null;
   var root = document.documentElement;
 
-  // 悬浮弹出菜单 - 复盘 & 数据
+  // 复盘手风琴
   var reviewAccordion = document.getElementById('reviewAccordion');
-  var dataAccordion = document.getElementById('dataAccordion');
-  var hoverDelay = 80;
-
-  function setupFlyout(accordion) {
-    if (!accordion) return;
-    var timer = null;
-    var trigger = accordion.querySelector('.app-nav-accordion-trigger');
-
-    function show() {
-      clearTimeout(timer);
-      // 关闭其他弹出菜单
-      document.querySelectorAll('.app-nav-accordion.hover-open').forEach(function(el) {
-        if (el !== accordion) el.classList.remove('hover-open');
-      });
-      accordion.classList.add('hover-open');
-      if (trigger) trigger.setAttribute('aria-expanded', 'true');
-    }
-    function hide() {
-      timer = setTimeout(function() {
-        accordion.classList.remove('hover-open');
-        if (trigger) trigger.setAttribute('aria-expanded', 'false');
-      }, hoverDelay);
-    }
-
-    accordion.addEventListener('mouseenter', show);
-    accordion.addEventListener('mouseleave', hide);
-
-    // 点击触发器也可以导航到默认页面（可选）
-    if (trigger) {
-      trigger.addEventListener('click', function(e) {
+  if (reviewAccordion) {
+    var reviewTrigger = reviewAccordion.querySelector('.app-nav-accordion-trigger');
+    if (reviewTrigger) {
+      reviewTrigger.addEventListener('click', function(e) {
         e.preventDefault();
-        show();
+        reviewAccordion.classList.toggle('open');
+        var expanded = reviewAccordion.classList.contains('open');
+        reviewTrigger.setAttribute('aria-expanded', expanded);
       });
     }
   }
 
-  setupFlyout(reviewAccordion);
-  setupFlyout(dataAccordion);
+  // 数据手风琴
+  var dataAccordion = document.getElementById('dataAccordion');
+  if (dataAccordion) {
+    var dataTrigger = dataAccordion.querySelector('.app-nav-accordion-trigger');
+    if (dataTrigger) {
+      dataTrigger.addEventListener('click', function(e) {
+        e.preventDefault();
+        dataAccordion.classList.toggle('open');
+        var expanded = dataAccordion.classList.contains('open');
+        dataTrigger.setAttribute('aria-expanded', expanded);
+      });
+    }
+  }
 
   if (!userTrigger || !quickMenu) return;
 
