@@ -364,6 +364,34 @@
     visibility: visible;
     transform: translateY(0);
   }
+
+  /* 收起状态：快捷菜单改为右侧悬浮弹出 */
+  html.sidebar-collapsed .app-sidebar .app-quick-menu,
+  .sidebar-collapsed .app-sidebar .app-quick-menu {
+    bottom: auto;
+    top: auto;
+    bottom: 0;
+    left: calc(100% + 8px);
+    right: auto;
+    min-width: 160px;
+    transform: translateX(-6px);
+    pointer-events: none;
+  }
+  html.sidebar-collapsed .app-sidebar .app-quick-menu.open,
+  .sidebar-collapsed .app-sidebar .app-quick-menu.open {
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+  /* 收起状态：桥接区域 */
+  html.sidebar-collapsed .app-sidebar .app-quick-menu::before,
+  .sidebar-collapsed .app-sidebar .app-quick-menu::before {
+    content: '';
+    position: absolute;
+    right: 100%;
+    top: 0;
+    width: 12px;
+    height: 100%;
+  }
   .app-quick-menu-item {
     display: flex;
     align-items: center;
@@ -872,24 +900,51 @@
   setupCollapsedFlyout(reviewAccordion);
   setupCollapsedFlyout(dataAccordion);
 
-  if (!userTrigger || !quickMenu) return;
+  if (!quickMenu) return;
 
-  // 切换菜单显示
+  var footerRow = quickMenu.closest('.app-footer-row');
+
+  // 切换菜单显示（展开状态下点击触发）
   function toggleMenu(e) {
     e.stopPropagation();
+    if (isSidebarCollapsed()) return;
     quickMenu.classList.toggle('open');
     // 关闭主题子菜单
     if (themeSubmenu) themeSubmenu.classList.remove('open');
     updateThemeActiveState();
   }
 
-  userTrigger.addEventListener('click', toggleMenu);
-  userTrigger.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      toggleMenu(e);
-    }
-  });
+  if (userTrigger) {
+    userTrigger.addEventListener('click', toggleMenu);
+    userTrigger.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleMenu(e);
+      }
+    });
+  }
+
+  // 收起状态下：悬浮 footer-row 弹出快捷菜单
+  if (footerRow) {
+    var footerTimer = null;
+    footerRow.addEventListener('mouseenter', function() {
+      if (!isSidebarCollapsed()) return;
+      clearTimeout(footerTimer);
+      // 关闭其他弹出菜单
+      document.querySelectorAll('.app-nav-accordion.flyout-open').forEach(function(el) {
+        el.classList.remove('flyout-open');
+      });
+      quickMenu.classList.add('open');
+      updateThemeActiveState();
+    });
+    footerRow.addEventListener('mouseleave', function() {
+      if (!isSidebarCollapsed()) return;
+      footerTimer = setTimeout(function() {
+        quickMenu.classList.remove('open');
+        if (themeSubmenu) themeSubmenu.classList.remove('open');
+      }, 100);
+    });
+  }
 
   // 点击主题菜单项展开/收起子菜单
   if (themeToggle && themeSubmenu) {
