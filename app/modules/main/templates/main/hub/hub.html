@@ -15,25 +15,11 @@
     padding: 16px 16px 36px;
   }
 
-  /* 顶部区域：用户信息 + 数据 */
-  .hub-top-section {
+  /* 中间行：继续学习 + 快捷入口 并排 */
+  .hub-mid-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
-    align-items: start;
-  }
-
-  .hub-top-left {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .hub-top-right {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    height: 100%;
   }
 
   /* Hero Card */
@@ -135,6 +121,12 @@
     border: 1px solid var(--app-border);
     border-radius: var(--app-radius-xl);
     box-shadow: var(--app-shadow-soft);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hub-checkin-calendar-wrap {
+    flex: 1;
   }
 
   .hub-checkin-header {
@@ -403,6 +395,8 @@
     border: 1px solid color-mix(in srgb, var(--app-primary) 20%, var(--app-border));
     border-radius: var(--app-radius-xl);
     box-shadow: var(--app-shadow-soft);
+    display: flex;
+    flex-direction: column;
   }
 
   .hub-continue-header {
@@ -430,6 +424,7 @@
     font-weight: 700;
     color: var(--app-text);
     margin: 0 0 12px;
+    flex: 1;
   }
 
   .hub-continue-btn {
@@ -506,8 +501,8 @@
 
   /* Quick Actions */
   .hub-quick-actions {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    display: flex;
+    flex-direction: column;
     gap: 10px;
   }
 
@@ -523,6 +518,7 @@
     text-decoration: none;
     color: inherit;
     transition: all 160ms ease;
+    flex: 1;
     min-height: 0;
   }
 
@@ -744,7 +740,7 @@
 
   /* Responsive */
   @media (max-width: 860px) {
-    .hub-top-section {
+    .hub-mid-row {
       grid-template-columns: 1fr;
     }
     .hub-features-grid {
@@ -755,6 +751,12 @@
     }
     .hub-stats-row {
       grid-template-columns: 1fr;
+    }
+    .hub-quick-actions {
+      flex-direction: row;
+    }
+    .hub-action-card {
+      flex: 1;
     }
   }
 
@@ -767,7 +769,7 @@
       grid-template-columns: repeat(2, 1fr);
     }
     .hub-quick-actions {
-      grid-template-columns: 1fr;
+      flex-direction: column;
     }
     .hub-bento-value {
       font-size: 20px;
@@ -803,96 +805,89 @@
 {% block content %}
 <div class="hub-home" id="hubHome">
 {% if logged_in %}
-  <!-- 顶部区域：用户信息 + 数据概览 -->
-  <div class="hub-top-section hub-fade-in">
-    <div class="hub-top-left">
-      <!-- Hero Card: 用户信息 -->
-      <div class="hub-hero-card">
-        {% if avatar %}
-          <img class="hub-avatar" src="{{ avatar }}" alt="头像">
-        {% else %}
-          <div class="hub-avatar-placeholder">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="8" r="4"/>
-              <path d="M4 20c0-4 4-6 8-6s8 2 8 6"/>
-            </svg>
-          </div>
-        {% endif %}
-        <div class="hub-user-info">
-          <h1 class="hub-username">{{ username or '用户' }}</h1>
-          <div class="hub-checkin-status" id="hubCheckinStatus">加载中...</div>
-        </div>
-        <button class="hub-checkin-btn" id="hubCheckinBtn" type="button">签到</button>
+  <!-- Row 1: Hero Card 用户信息（全宽） -->
+  <div class="hub-hero-card hub-fade-in">
+    {% if avatar %}
+      <img class="hub-avatar" src="{{ avatar }}" alt="头像">
+    {% else %}
+      <div class="hub-avatar-placeholder">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 20c0-4 4-6 8-6s8 2 8 6"/>
+        </svg>
       </div>
-
-      <!-- Continue Card: 继续练习 -->
-      <div class="hub-continue-card" id="hubContinueCard">
-        <div class="hub-continue-header">
-          <span class="hub-continue-label">继续上次</span>
-          <span class="hub-continue-time" id="hubContinueTime"></span>
-        </div>
-        <h2 class="hub-continue-title" id="hubContinueTitle">加载中...</h2>
-        <a class="hub-continue-btn" href="/public/banks" id="hubContinueBtn">进入题库广场</a>
-      </div>
+    {% endif %}
+    <div class="hub-user-info">
+      <h1 class="hub-username">{{ username or '用户' }}</h1>
+      <div class="hub-checkin-status" id="hubCheckinStatus">加载中...</div>
     </div>
+    <button class="hub-checkin-btn" id="hubCheckinBtn" type="button">签到</button>
+  </div>
 
-    <div class="hub-top-right">
-      <!-- Bento Grid: 数据概览 -->
-      <div class="hub-bento-grid">
-        <div class="hub-bento-card">
-          <span class="hub-bento-label">题目数</span>
-          <span class="hub-bento-value">{{ question_total or 0 }}</span>
-          <span class="hub-bento-note">可访问题目</span>
-        </div>
-        <a class="hub-bento-card is-clickable" href="/review?kind=favorites">
-          <span class="hub-bento-label">收藏</span>
-          <span class="hub-bento-value">{{ favorites_count or 0 }}</span>
-          <span class="hub-bento-note">点击查看</span>
-        </a>
-        <a class="hub-bento-card is-clickable" href="/review?kind=mistakes">
-          <span class="hub-bento-label">错题</span>
-          <span class="hub-bento-value">{{ mistakes_count or 0 }}</span>
-          <span class="hub-bento-note">点击复盘</span>
-        </a>
-        <div class="hub-bento-card">
-          <span class="hub-bento-label">正确率</span>
-          <span class="hub-bento-value">{{ answers_7d_accuracy or 0 }}%</span>
-          <span class="hub-bento-note">近7天</span>
-        </div>
-      </div>
-
-      <!-- Quick Actions: 快捷入口 -->
-      <div class="hub-quick-actions">
-        <a class="hub-action-card" href="/public/banks">
-          <span class="hub-action-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M4 6.5c0-1.1.9-2 2-2h12c1.1 0 2 .9 2 2V19c0 .6-.4 1-1 1H7a3 3 0 0 1-3-3V6.5Z" stroke-linejoin="round"/>
-              <path d="M7 8h10M7 12h10M7 16h6" stroke-linecap="round"/>
-            </svg>
-          </span>
-          <span class="hub-action-text">
-            <span class="hub-action-title">题库广场</span>
-            <span class="hub-action-desc">浏览全部题库</span>
-          </span>
-        </a>
-        <a class="hub-action-card" href="/user/banks">
-          <span class="hub-action-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M4 7a2 2 0 0 1 2-2h10a3 3 0 0 1 3 3v11a1 1 0 0 1-1 1H7a3 3 0 0 1-3-3V7Z" stroke-linejoin="round"/>
-              <path d="M7 9h8M7 13h8M7 17h5" stroke-linecap="round"/>
-            </svg>
-          </span>
-          <span class="hub-action-text">
-            <span class="hub-action-title">个人题库</span>
-            <span class="hub-action-desc">我的专属题库</span>
-          </span>
-        </a>
-      </div>
+  <!-- Row 2: Bento Grid 数据概览（全宽 4 列） -->
+  <div class="hub-bento-grid hub-fade-in">
+    <div class="hub-bento-card">
+      <span class="hub-bento-label">题目数</span>
+      <span class="hub-bento-value">{{ question_total or 0 }}</span>
+      <span class="hub-bento-note">可访问题目</span>
+    </div>
+    <a class="hub-bento-card is-clickable" href="/review?kind=favorites">
+      <span class="hub-bento-label">收藏</span>
+      <span class="hub-bento-value">{{ favorites_count or 0 }}</span>
+      <span class="hub-bento-note">点击查看</span>
+    </a>
+    <a class="hub-bento-card is-clickable" href="/review?kind=mistakes">
+      <span class="hub-bento-label">错题</span>
+      <span class="hub-bento-value">{{ mistakes_count or 0 }}</span>
+      <span class="hub-bento-note">点击复盘</span>
+    </a>
+    <div class="hub-bento-card">
+      <span class="hub-bento-label">正确率</span>
+      <span class="hub-bento-value">{{ answers_7d_accuracy or 0 }}%</span>
+      <span class="hub-bento-note">近7天</span>
     </div>
   </div>
 
-  <!-- 统计区域：签到日历 + 答题趋势 -->
-  <div class="hub-stats-row hub-fade-in hub-fade-in-delay-1">
+  <!-- Row 3: 继续练习 + 快捷入口（并排） -->
+  <div class="hub-mid-row hub-fade-in hub-fade-in-delay-1">
+    <div class="hub-continue-card" id="hubContinueCard">
+      <div class="hub-continue-header">
+        <span class="hub-continue-label">继续上次</span>
+        <span class="hub-continue-time" id="hubContinueTime"></span>
+      </div>
+      <h2 class="hub-continue-title" id="hubContinueTitle">加载中...</h2>
+      <a class="hub-continue-btn" href="/public/banks" id="hubContinueBtn">进入题库广场</a>
+    </div>
+    <div class="hub-quick-actions">
+      <a class="hub-action-card" href="/public/banks">
+        <span class="hub-action-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 6.5c0-1.1.9-2 2-2h12c1.1 0 2 .9 2 2V19c0 .6-.4 1-1 1H7a3 3 0 0 1-3-3V6.5Z" stroke-linejoin="round"/>
+            <path d="M7 8h10M7 12h10M7 16h6" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span class="hub-action-text">
+          <span class="hub-action-title">题库广场</span>
+          <span class="hub-action-desc">浏览全部题库</span>
+        </span>
+      </a>
+      <a class="hub-action-card" href="/user/banks">
+        <span class="hub-action-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 7a2 2 0 0 1 2-2h10a3 3 0 0 1 3 3v11a1 1 0 0 1-1 1H7a3 3 0 0 1-3-3V7Z" stroke-linejoin="round"/>
+            <path d="M7 9h8M7 13h8M7 17h5" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span class="hub-action-text">
+          <span class="hub-action-title">个人题库</span>
+          <span class="hub-action-desc">我的专属题库</span>
+        </span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Row 4: 签到日历 + 答题趋势（并排） -->
+  <div class="hub-stats-row hub-fade-in hub-fade-in-delay-2">
     <!-- Checkin Calendar Card: 签到日历 -->
     <div class="hub-checkin-card" id="hubCheckinCalendarCard">
       <div class="hub-checkin-header">
@@ -905,14 +900,16 @@
         </span>
         <button class="hub-checkin-action" id="hubCalendarCheckinBtn" type="button">签到</button>
       </div>
-      <div class="hub-checkin-calendar" id="hubCheckinCalendar">
-        <span class="hub-checkin-weekday">日</span>
-        <span class="hub-checkin-weekday">一</span>
-        <span class="hub-checkin-weekday">二</span>
-        <span class="hub-checkin-weekday">三</span>
-        <span class="hub-checkin-weekday">四</span>
-        <span class="hub-checkin-weekday">五</span>
-        <span class="hub-checkin-weekday">六</span>
+      <div class="hub-checkin-calendar-wrap">
+        <div class="hub-checkin-calendar" id="hubCheckinCalendar">
+          <span class="hub-checkin-weekday">日</span>
+          <span class="hub-checkin-weekday">一</span>
+          <span class="hub-checkin-weekday">二</span>
+          <span class="hub-checkin-weekday">三</span>
+          <span class="hub-checkin-weekday">四</span>
+          <span class="hub-checkin-weekday">五</span>
+          <span class="hub-checkin-weekday">六</span>
+        </div>
       </div>
       <div class="hub-checkin-stats">
         <div class="hub-checkin-stat">
@@ -957,8 +954,8 @@
     </div>
   </div>
 
-  <!-- CTA 区块 -->
-  <div class="hub-cta-section hub-fade-in hub-fade-in-delay-2">
+  <!-- Row 5: CTA 区块 -->
+  <div class="hub-cta-section hub-fade-in hub-fade-in-delay-3">
     <div class="hub-cta-content">
       <h2>开始今天的学习</h2>
       <p>每天坚持刷题，期末轻松过关。选择题库，开始练习吧！</p>
