@@ -162,13 +162,13 @@
         <view class="quick-grid">
           <view class="quick-card glass-card" bindtap="onGoPublicBank">
             <view class="quick-icon-wrap">
-              <image class="quick-icon" src="/images/icons/list.svg" mode="aspectFit"></image>
+              <image class="quick-icon" src="/images/icons/book-open.svg" mode="aspectFit"></image>
             </view>
             <text class="quick-label">题库广场</text>
           </view>
           <view class="quick-card glass-card" bindtap="onGoMyBanks">
             <view class="quick-icon-wrap">
-              <image class="quick-icon" src="/images/icons/home.svg" mode="aspectFit"></image>
+              <image class="quick-icon" src="/images/icons/bar-chart.svg" mode="aspectFit"></image>
             </view>
             <text class="quick-label">个人题库</text>
           </view>

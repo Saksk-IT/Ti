@@ -54,14 +54,14 @@
           <view class="nav-group">
             <view class="nav-item {{activeKey==='public' ? 'active' : ''}}" bindtap="onNavTap" data-nav-type="redirectTo" data-url="/pages/public-bank-v2/public-bank-v2">
               <view class="nav-leftRow">
-                <image class="nav-icon" src="/images/icons/globe.svg" mode="aspectFit"></image>
+                <image class="nav-icon" src="/images/icons/book-open.svg" mode="aspectFit"></image>
                 <text class="nav-label">题库广场</text>
               </view>
               <text class="nav-chev">›</text>
             </view>
             <view class="nav-item {{activeKey==='banks' ? 'active' : ''}}" bindtap="onNavTap" data-nav-type="redirectTo" data-url="/pages/my-banks-v2/my-banks-v2">
               <view class="nav-leftRow">
-                <image class="nav-icon" src="/images/icons/folder.svg" mode="aspectFit"></image>
+                <image class="nav-icon" src="/images/icons/bar-chart.svg" mode="aspectFit"></image>
                 <text class="nav-label">个人题库</text>
               </view>
               <text class="nav-chev">›</text>
