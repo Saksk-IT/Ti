@@ -2,50 +2,48 @@
 
 本文件用于约束 AI 助手在此仓库内的工作方式，专注于工程规则与交付质量。请将标注为 **MUST/禁止** 的内容视为硬约束。
 
-## Project Overview
+## 项目概览
 
-- Primary languages: Python, HTML/Markdown, C# (WPF/.NET), TypeScript. When diagnosing issues, check the specific engine/module the user mentions rather than assuming the default/built-in component.
+- 主要语言：Python、HTML/Markdown、C#（WPF/.NET）、TypeScript。诊断问题时，应检查用户提及的具体引擎/模块，而非假设使用默认/内置组件。
 
-## Windows Development
+## Windows 开发
 
-- Always use `cmd /c` wrapper when configuring MCP servers on Windows
-- Be aware of MSYS bash path incompatibility with Python on Windows - use native Windows paths
-- PowerShell 5.1 is the default on most Windows systems - avoid PS 7+ syntax (e.g., ternary operators)
-- Use backtick-free PowerShell patterns; avoid backtick line continuation
-- Test for encoding issues with Chinese characters in build scripts
+- 在 Windows 上配置 MCP 服务器时，始终使用 `cmd /c` 包装器。
+- 注意 MSYS bash 路径与 Windows 上 Python 的不兼容问题——使用原生 Windows 路径。
+- PowerShell 5.1 是大多数 Windows 系统的默认版本——避免使用 PS 7+ 语法（如三元运算符、空合并运算符）。
+- 使用无反引号的 PowerShell 写法；避免反引号续行。
+- 在构建脚本中测试中文字符的编码问题。
 
-## Communication
+## 沟通
 
 用户使用英文和中文（中文）进行交流。请使用与用户相同的语言回复。当生成面向中国市场应用（微信小程序、WPF 应用）的用户可见字符串、标签或文档时，使用中文文本。
 
-## Code Editing Rules
+## 代码编辑规则
 
-在执行 Edit 操作前，必须先完整读取文件。禁止基于对文件内容的假设进行编辑——先用 Read 读取，再用 Edit 修改。
+在执行 Edit 操作前，必须先在当前上下文中完整读取文件。禁止基于对文件内容的假设进行编辑——先用 Read 读取，再用 Edit 修改。禁止编辑当前上下文中未读取过的文件。
 
-- Always fully read files before attempting Edit tool calls. Never edit a file that hasn't been read in the current context.
+## UI 开发
 
-## UI Development
+- 修复 UI bug（WPF/Electron）时，先请用户明确期望行为再实施。区分"显示最新结果"与"累积所有结果"模式。
+- 本项目目标平台为 WPF（.NET/C#）。禁止使用 UWP 专属 API 或属性（如 `CharacterSpacing`），使用前始终验证 API 在 WPF 中的可用性。
 
-- When fixing UI bugs (WPF/Electron), ask the user to clarify the exact expected behavior before implementing. Distinguish between 'show latest result' vs 'accumulate all results' patterns.
-- This project targets WPF (.NET/C#). Do NOT use UWP-only APIs or properties (e.g., CharacterSpacing). Always verify API availability against WPF before using.
+## 平台兼容性
 
-## Platform Compatibility
+编写 PowerShell 脚本时，以 PowerShell 5.1 语法为目标（不使用 PS 7+ 特性）。
 
-本项目使用 Python、HTML 和 C#（.NET/WPF）。处理 WPF/XAML 时，避免使用 UWP 专属属性（如 `CharacterSpacing`），始终验证 API 与 WPF 的兼容性。编写 PowerShell 脚本时，以 PowerShell 5.1 语法为目标（不使用 PS 7+ 特性，如三元运算符或空合并运算符）。
-
-## Debugging Guidelines
+## 调试指南
 
 诊断 bug 时，先请用户明确具体的复现条件，再提出修复方案。不要假设根因——先通过阅读相关代码路径和日志收集证据。
 
-## Build & Test
+## 构建与测试
 
 进行多文件变更后，必须在报告完成前运行项目构建命令和所有测试。对于 .NET/WPF 项目使用 `dotnet build`，对于 Python 项目使用已配置的测试运行器。
 
-## Security
+## 安全
 
-- When running security audits, check which issues are already fixed before attempting patches
-- Follow OWASP methodology for security scans
-- Always commit security fixes with clear descriptions of what was patched
+- 执行安全审计时，先检查哪些问题已修复，再尝试打补丁。
+- 安全扫描遵循 OWASP 方法论。
+- 安全修复提交时必须清晰描述修补内容。
 
 ## 0) 不可协商（MUST）
 
