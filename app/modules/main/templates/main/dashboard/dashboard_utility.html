@@ -1,0 +1,220 @@
+{% extends "main/shared/app_shell.html" %}
+{% block title %}Dashboard · UtilityHub{% endblock %}
+{% block page_title %}UtilityHub{% endblock %}
+
+{% block head_extra %}
+  <link rel="stylesheet" href="/static/css/dashboard_utility.css" />
+{% endblock %}
+
+{% block content %}
+<div class="du-layout">
+  <!-- Sidebar -->
+  <aside class="du-sidebar" aria-label="UtilityHub 导航">
+    <div class="du-sidebar-header">
+      <div class="du-sidebar-icon" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <div class="du-sidebar-brand">
+        <h2>UtilityHub</h2>
+        <p>Energy Management</p>
+      </div>
+    </div>
+
+    <nav class="du-sidebar-nav">
+      <div class="du-nav-label">Main</div>
+      <a class="du-nav-item active" href="#" data-section="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a>
+      <a class="du-nav-item" href="#" data-section="usage">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/><path d="M12 6v6l4 2"/></svg>
+        Usage
+      </a>
+      <a class="du-nav-item" href="#" data-section="billing">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        Billing
+      </a>
+      <a class="du-nav-item" href="#" data-section="reports">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Reports
+      </a>
+
+      <div class="du-nav-label">Settings</div>
+      <a class="du-nav-item" href="#" data-section="account">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Account
+      </a>
+      <a class="du-nav-item" href="#" data-section="support">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/></svg>
+        Support
+      </a>
+    </nav>
+
+    <div class="du-sidebar-footer">
+      <div class="du-sidebar-avatar" aria-hidden="true">W</div>
+      <div class="du-sidebar-user">
+        <div class="name">{{ username or 'Wang' }}</div>
+        <div class="email">wang@utility.com</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="du-main">
+    <!-- Page Header -->
+    <div class="du-page-header">
+      <div>
+        <h1>Dashboard</h1>
+        <p class="subtitle">Monitor your utility consumption and billing overview</p>
+      </div>
+      <div class="du-header-actions">
+        <div class="du-tabs" role="tablist">
+          <button class="du-tab active" role="tab" aria-selected="true" data-period="monthly">Monthly</button>
+          <button class="du-tab" role="tab" aria-selected="false" data-period="weekly">Weekly</button>
+        </div>
+        <button class="du-btn-outline" type="button" id="duExportBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export
+        </button>
+      </div>
+    </div>
+
+    <!-- Metrics Row -->
+    <div class="du-metrics" aria-label="用量指标">
+      <!-- Electricity -->
+      <div class="du-metric-card">
+        <div class="du-metric-header">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <span class="label">Electricity</span>
+        </div>
+        <div class="du-metric-body">
+          <div class="du-metric-value">342 kWh</div>
+          <div class="du-metric-change positive">+12.5% from last month</div>
+        </div>
+      </div>
+
+      <!-- Water -->
+      <div class="du-metric-card">
+        <div class="du-metric-header">
+          <svg class="icon" style="color: #3b82f6;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+          <span class="label">Water</span>
+        </div>
+        <div class="du-metric-body">
+          <div class="du-metric-value">18.4 m³</div>
+          <div class="du-metric-change positive">-3.2% from last month</div>
+        </div>
+      </div>
+
+      <!-- Gas -->
+      <div class="du-metric-card">
+        <div class="du-metric-header">
+          <svg class="icon" style="color: #f59e0b;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+          <span class="label">Gas</span>
+        </div>
+        <div class="du-metric-body">
+          <div class="du-metric-value">56.7 m³</div>
+          <div class="du-metric-change warning">+8.1% from last month</div>
+        </div>
+      </div>
+
+      <!-- Internet -->
+      <div class="du-metric-card">
+        <div class="du-metric-header">
+          <svg class="icon" style="color: #8b5cf6;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+          <span class="label">Internet</span>
+        </div>
+        <div class="du-metric-body">
+          <div class="du-metric-value">1.2 TB</div>
+          <div class="du-metric-change neutral">68% of plan used</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Usage History -->
+    <section class="du-history" aria-label="用量历史">
+      <div class="du-history-header">
+        <h2>Usage History</h2>
+        <button class="du-btn-ghost" type="button">View All</button>
+      </div>
+
+      <table class="du-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Service</th>
+            <th>Usage</th>
+            <th>Cost</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>2026-02-01</td>
+            <td class="service">Electricity</td>
+            <td>342 kWh</td>
+            <td>¥218.40</td>
+            <td><span class="du-badge paid">Paid</span></td>
+          </tr>
+          <tr>
+            <td>2026-02-01</td>
+            <td class="service">Water</td>
+            <td>18.4 m³</td>
+            <td>¥76.80</td>
+            <td><span class="du-badge paid">Paid</span></td>
+          </tr>
+          <tr>
+            <td>2026-02-01</td>
+            <td class="service">Gas</td>
+            <td>56.7 m³</td>
+            <td>¥189.50</td>
+            <td><span class="du-badge pending">Pending</span></td>
+          </tr>
+          <tr>
+            <td>2026-02-01</td>
+            <td class="service">Internet</td>
+            <td>1.2 TB</td>
+            <td>¥129.00</td>
+            <td><span class="du-badge paid">Paid</span></td>
+          </tr>
+          <tr>
+            <td>2026-01-01</td>
+            <td class="service">Electricity</td>
+            <td>304 kWh</td>
+            <td>¥194.10</td>
+            <td><span class="du-badge paid">Paid</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block body_end %}
+<script>
+(function () {
+  // Tab switching
+  var tabs = document.querySelectorAll('.du-tab');
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      tabs.forEach(function (t) {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+    });
+  });
+
+  // Nav item switching
+  var navItems = document.querySelectorAll('.du-nav-item');
+  navItems.forEach(function (item) {
+    item.addEventListener('click', function (e) {
+      e.preventDefault();
+      navItems.forEach(function (n) { n.classList.remove('active'); });
+      item.classList.add('active');
+    });
+  });
+})();
+</script>
+{% endblock %}
