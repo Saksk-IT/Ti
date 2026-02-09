@@ -2,13 +2,32 @@
 
 本文件用于约束 AI 助手在此仓库内的工作方式，专注于工程规则与交付质量。请将标注为 **MUST/禁止** 的内容视为硬约束。
 
+## Project Overview
+
+- Primary languages: Python, HTML/Markdown, C# (WPF/.NET), TypeScript. When diagnosing issues, check the specific engine/module the user mentions rather than assuming the default/built-in component.
+
+## Windows Development
+
+- Always use `cmd /c` wrapper when configuring MCP servers on Windows
+- Be aware of MSYS bash path incompatibility with Python on Windows - use native Windows paths
+- PowerShell 5.1 is the default on most Windows systems - avoid PS 7+ syntax (e.g., ternary operators)
+- Use backtick-free PowerShell patterns; avoid backtick line continuation
+- Test for encoding issues with Chinese characters in build scripts
+
 ## Communication
 
 用户使用英文和中文（中文）进行交流。请使用与用户相同的语言回复。当生成面向中国市场应用（微信小程序、WPF 应用）的用户可见字符串、标签或文档时，使用中文文本。
 
-## Code Editing
+## Code Editing Rules
 
 在执行 Edit 操作前，必须先完整读取文件。禁止基于对文件内容的假设进行编辑——先用 Read 读取，再用 Edit 修改。
+
+- Always fully read files before attempting Edit tool calls. Never edit a file that hasn't been read in the current context.
+
+## UI Development
+
+- When fixing UI bugs (WPF/Electron), ask the user to clarify the exact expected behavior before implementing. Distinguish between 'show latest result' vs 'accumulate all results' patterns.
+- This project targets WPF (.NET/C#). Do NOT use UWP-only APIs or properties (e.g., CharacterSpacing). Always verify API availability against WPF before using.
 
 ## Platform Compatibility
 
@@ -21,6 +40,12 @@
 ## Build & Test
 
 进行多文件变更后，必须在报告完成前运行项目构建命令和所有测试。对于 .NET/WPF 项目使用 `dotnet build`，对于 Python 项目使用已配置的测试运行器。
+
+## Security
+
+- When running security audits, check which issues are already fixed before attempting patches
+- Follow OWASP methodology for security scans
+- Always commit security fixes with clear descriptions of what was patched
 
 ## 0) 不可协商（MUST）
 
