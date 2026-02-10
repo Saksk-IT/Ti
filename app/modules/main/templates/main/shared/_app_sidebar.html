@@ -849,6 +849,25 @@
     });
   }
 
+  // 点击 userTrigger 切换快捷菜单（移动端触屏支持）
+  if (userTrigger) {
+    userTrigger.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var isOpen = quickMenu.classList.contains('open');
+      // 关闭其他弹出菜单
+      document.querySelectorAll('.app-nav-accordion.flyout-open').forEach(function(el) {
+        el.classList.remove('flyout-open');
+      });
+      if (isOpen) {
+        quickMenu.classList.remove('open');
+        if (themeSubmenu) themeSubmenu.classList.remove('open');
+      } else {
+        quickMenu.classList.add('open');
+        updateThemeActiveState();
+      }
+    });
+  }
+
   // 点击主题菜单项展开/收起子菜单
   if (themeToggle && themeSubmenu) {
     themeToggle.addEventListener('click', function(e) {
@@ -860,7 +879,7 @@
 
   // 点击外部关闭菜单
   document.addEventListener('click', function(e) {
-    if (!quickMenu.contains(e.target) && e.target !== userTrigger) {
+    if (!quickMenu.contains(e.target) && (!userTrigger || !userTrigger.contains(e.target))) {
       quickMenu.classList.remove('open');
       if (themeSubmenu) themeSubmenu.classList.remove('open');
     }
