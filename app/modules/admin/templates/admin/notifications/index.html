@@ -6,17 +6,17 @@
 <style>
     /* 使用基础模板的CSS变量，不再重复定义 */
 
-    .container { 
+    .container {
         background: rgba(255, 255, 255, 0.7);
         backdrop-filter: blur(30px) saturate(180%);
         -webkit-backdrop-filter: blur(30px) saturate(180%);
-        padding: 40px; 
-        border-radius: var(--radius-lg); 
+        padding: 40px;
+        border-radius: var(--radius-lg);
         box-shadow: var(--shadow-soft);
         border: 0.5px solid var(--border-color);
         animation: fadeIn 0.3s ease-in;
         max-width: 100%;
-        overflow-x: hidden;
+        overflow: visible;
     }
 
     @keyframes fadeIn {
@@ -300,8 +300,7 @@
 
     /* 表格样式优化 */
     .table-wrapper {
-        overflow-x: auto;
-        overflow-y: visible;
+        overflow: visible;
         border-radius: var(--radius-lg);
         border: 0.5px solid var(--border-color);
         margin-top: 24px;
@@ -929,10 +928,9 @@
         }
         .type-selector { grid-template-columns: 1fr; }
         .form-row { flex-direction: column; }
-        .table-wrapper { 
+        .table-wrapper {
             font-size: 13px;
-            overflow-x: auto;
-            overflow-y: visible;
+            overflow: visible;
         }
         th, td { padding: 10px 8px; }
         .actions { 
@@ -1912,7 +1910,7 @@
         event.stopPropagation();
         const menuId = `notificationsActionMenu_${notificationId}`;
         const menu = document.getElementById(menuId);
-        
+
         // 关闭所有已打开的操作菜单（包括通知栏和弹窗管理的，但不包括用户管理页面的）
         const allMenus = document.querySelectorAll('.action-menu.show');
         allMenus.forEach(m => {
@@ -1920,20 +1918,28 @@
             if (m.id && (m.id.startsWith('notificationsActionMenu_') || m.id.startsWith('popupsActionMenu_'))) {
                 if (m.id !== menuId) {
                     m.classList.remove('show');
+                    // 恢复所在行的 z-index
+                    const tr = m.closest('tr');
+                    if (tr) tr.style.zIndex = '';
                 }
             }
         });
-        
+
         // 切换当前菜单
         if (menu) {
             menu.classList.toggle('show');
+            // 提升所在行的 z-index，确保菜单不被后续行遮挡
+            const tr = menu.closest('tr');
+            if (tr) tr.style.zIndex = menu.classList.contains('show') ? '100' : '';
         }
     }
-    
+
     function closeNotificationsActionMenu(notificationId) {
         const menu = document.getElementById(`notificationsActionMenu_${notificationId}`);
         if (menu) {
             menu.classList.remove('show');
+            const tr = menu.closest('tr');
+            if (tr) tr.style.zIndex = '';
         }
     }
 
@@ -2333,27 +2339,32 @@
         event.stopPropagation();
         const menuId = `popupsActionMenu_${popupId}`;
         const menu = document.getElementById(menuId);
-        
-        // 关闭所有已打开的操作菜单（包括通知栏和弹窗管理的，但不包括用户管理页面的）
+
+        // 关闭所有已打开的操作菜单
         const allMenus = document.querySelectorAll('.action-menu.show');
         allMenus.forEach(m => {
-            // 只处理通知管理页面的菜单，不影响用户管理页面（actionMenu_开头）
             if (m.id && (m.id.startsWith('notificationsActionMenu_') || m.id.startsWith('popupsActionMenu_'))) {
                 if (m.id !== menuId) {
                     m.classList.remove('show');
+                    const tr = m.closest('tr');
+                    if (tr) tr.style.zIndex = '';
                 }
             }
         });
-        
+
         if (menu) {
             menu.classList.toggle('show');
+            const tr = menu.closest('tr');
+            if (tr) tr.style.zIndex = menu.classList.contains('show') ? '100' : '';
         }
     }
-    
+
     function closePopupsActionMenu(popupId) {
         const menu = document.getElementById(`popupsActionMenu_${popupId}`);
         if (menu) {
             menu.classList.remove('show');
+            const tr = menu.closest('tr');
+            if (tr) tr.style.zIndex = '';
         }
     }
 
@@ -2415,12 +2426,12 @@
     // 点击外部区域关闭所有操作菜单（仅限通知管理页面的菜单）
     document.addEventListener('click', function(event) {
         if (!event.target.closest('.action-menu-wrapper')) {
-            // 只关闭通知管理页面的菜单（通过ID前缀识别），不影响其他页面（如用户管理页面）
             const allMenus = document.querySelectorAll('.action-menu.show');
             allMenus.forEach(menu => {
-                // 只关闭通知管理和弹窗管理的菜单，不影响用户管理页面的菜单（actionMenu_开头）
                 if (menu.id && (menu.id.startsWith('notificationsActionMenu_') || menu.id.startsWith('popupsActionMenu_'))) {
                     menu.classList.remove('show');
+                    const tr = menu.closest('tr');
+                    if (tr) tr.style.zIndex = '';
                 }
             });
         }
