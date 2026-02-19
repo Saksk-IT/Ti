@@ -297,6 +297,6 @@ def hub():
 
 @main_pages_bp.route('/')
 def index():
-    """首页（题库广场）"""
-    return redirect('/public/banks')
+    """首页 → Hub"""
+    return redirect('/hub')
 
