@@ -281,6 +281,181 @@
       white-space: nowrap;
     }
 
+    /* 顶栏中间搜索框 */
+    .app-topbar-center {
+      flex: 1 1 auto;
+      display: flex;
+      justify-content: center;
+      min-width: 0;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+    .app-topbar-search {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      max-width: 360px;
+      height: 34px;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 1px solid var(--app-border);
+      background: var(--app-surface-2);
+      box-shadow: var(--app-shadow-soft);
+      transition: border-color 140ms ease, box-shadow 140ms ease;
+    }
+    .app-topbar-search:focus-within {
+      border-color: color-mix(in srgb, var(--app-primary) 40%, var(--app-border));
+      box-shadow: 0 0 0 3px var(--app-primary-soft);
+    }
+    .app-topbar-search input {
+      border: 0; outline: none; background: transparent;
+      color: var(--app-text); font-size: 13px;
+      min-width: 0; flex: 1 1 auto;
+    }
+    .app-topbar-search button {
+      border: 0; background: transparent; color: var(--app-muted);
+      cursor: pointer; padding: 0; display: inline-flex;
+      align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 8px; flex-shrink: 0;
+    }
+    .app-topbar-search button:hover { color: var(--app-text); }
+
+    /* 顶栏图标按钮（通知/论坛）带红点 */
+    .app-topbar-icon-wrap {
+      position: relative;
+      display: inline-flex;
+    }
+    .app-topbar-badge {
+      position: absolute;
+      top: -2px; right: -2px;
+      min-width: 8px; height: 8px;
+      border-radius: 999px;
+      background: #ef4444;
+      border: 2px solid var(--app-bg);
+      pointer-events: none;
+      display: none;
+    }
+    .app-topbar-badge.has-count {
+      min-width: 16px; height: 16px;
+      top: -4px; right: -6px;
+      font-size: 10px; font-weight: 800;
+      color: #fff; display: flex;
+      align-items: center; justify-content: center;
+      padding: 0 4px;
+    }
+    .app-topbar-badge.visible { display: flex; }
+
+    /* 悬浮预览弹窗 */
+    .app-topbar-popover {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      width: 320px;
+      max-height: 380px;
+      padding-top: 8px;
+      background: transparent;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-4px);
+      transition: opacity 160ms ease, transform 160ms ease, visibility 160ms ease;
+      z-index: 100;
+      pointer-events: none;
+      overflow: visible;
+      display: flex;
+      flex-direction: column;
+    }
+    .app-topbar-popover-inner {
+      background: var(--app-surface);
+      border: 1px solid var(--app-border);
+      border-radius: var(--app-radius-lg);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      max-height: 372px;
+    }
+    .app-topbar-icon-wrap:hover .app-topbar-popover,
+    .app-topbar-popover.pinned {
+      opacity: 1; visibility: visible;
+      transform: translateY(0); pointer-events: auto;
+    }
+    .app-topbar-popover-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 14px 8px; font-size: 13px; font-weight: 800;
+      border-bottom: 1px solid var(--app-border); flex-shrink: 0;
+    }
+    .app-topbar-popover-header a {
+      font-size: 12px; font-weight: 600; color: var(--app-muted);
+    }
+    .app-topbar-popover-header a:hover { color: var(--app-text); }
+    .app-topbar-popover-body {
+      flex: 1 1 auto; overflow-y: auto; padding: 6px;
+    }
+    .app-topbar-popover-empty {
+      padding: 28px 14px; text-align: center;
+      font-size: 13px; color: var(--app-muted);
+    }
+
+    /* 通知列表项 */
+    .app-notif-item {
+      display: flex; gap: 10px; padding: 10px;
+      border-radius: 10px; cursor: pointer;
+      transition: background 140ms ease;
+    }
+    .app-notif-item:hover { background: rgba(148,163,184,0.10); }
+    .app-notif-item.unread { background: var(--app-primary-soft); }
+    .app-notif-item.unread:hover { background: color-mix(in srgb, var(--app-primary-soft) 80%, rgba(148,163,184,0.10)); }
+    .app-notif-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--app-primary); flex-shrink: 0; margin-top: 5px;
+    }
+    .app-notif-item:not(.unread) .app-notif-dot { opacity: 0; }
+    .app-notif-body { min-width: 0; flex: 1 1 auto; }
+    .app-notif-title {
+      font-size: 13px; font-weight: 700;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .app-notif-meta {
+      font-size: 11px; color: var(--app-muted); margin-top: 2px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+
+    /* 聊天消息列表项 */
+    .app-chat-item {
+      display: flex; align-items: center; gap: 10px; padding: 10px;
+      border-radius: 10px; cursor: pointer;
+      transition: background 140ms ease;
+    }
+    .app-chat-item:hover { background: rgba(148,163,184,0.10); }
+    .app-chat-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--app-primary-soft); flex-shrink: 0;
+      object-fit: cover; border: 1px solid var(--app-border);
+    }
+    .app-chat-avatar-placeholder {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--app-primary-soft); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800; color: var(--app-primary);
+      border: 1px solid var(--app-border);
+    }
+    .app-chat-body { min-width: 0; flex: 1 1 auto; }
+    .app-chat-name {
+      font-size: 13px; font-weight: 700;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .app-chat-preview {
+      font-size: 12px; color: var(--app-muted); margin-top: 1px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .app-chat-unread {
+      min-width: 18px; height: 18px; border-radius: 999px;
+      background: #ef4444; color: #fff; font-size: 10px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 5px; flex-shrink: 0;
+    }
+
     .app-top-practice {
       height: 36px;
       border-radius: 999px;
@@ -481,6 +656,8 @@
       .app-top-practice { display: inline-flex; }
       .app-shell.sidebar-open .app-sidebar { transform: translateX(0); }
       .app-shell.sidebar-open + .app-overlay { opacity: 1; pointer-events: auto; }
+      .app-topbar-center { display: none; }
+      .app-topbar-popover { width: min(320px, calc(100vw - 28px)); right: -40px; }
     }
   </style>
 
@@ -508,9 +685,65 @@
           </div>
         </div>
 
+        <div class="app-topbar-center">
+          <form class="app-topbar-search" action="/search" method="get" role="search" aria-label="全局搜索">
+            <button type="submit" aria-label="搜索">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" style="width:16px;height:16px;">
+                <path d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" stroke="currentColor" stroke-width="2"/>
+                <path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <input type="text" name="keyword" placeholder="搜索题干/答案/解析" autocomplete="off" />
+          </form>
+        </div>
+
         <div class="app-topbar-actions">
           <a class="app-top-practice" id="appTopPractice" href="/" data-mode="start">开始练习</a>
           {% block topbar_actions %}{% endblock %}
+
+          {# 通知图标 #}
+          <div class="app-topbar-icon-wrap" id="notifIconWrap">
+            <button class="app-icon-btn" type="button" aria-label="通知">
+              <svg style="width:18px;height:18px;display:block;" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6 9a6 6 0 0 1 12 0v4l1.5 2.5H4.5L6 13V9Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M9.5 18a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <span class="app-topbar-badge" id="notifBadge"></span>
+            <div class="app-topbar-popover" id="notifPopover">
+              <div class="app-topbar-popover-inner">
+              <div class="app-topbar-popover-header">
+                <span>通知</span>
+                <a href="/notifications">查看全部</a>
+              </div>
+              <div class="app-topbar-popover-body" id="notifPopoverBody">
+                <div class="app-topbar-popover-empty">暂无通知</div>
+              </div>
+              </div>
+            </div>
+          </div>
+
+          {# 论坛/聊天图标 #}
+          <div class="app-topbar-icon-wrap" id="chatIconWrap">
+            <button class="app-icon-btn" type="button" aria-label="消息">
+              <svg style="width:18px;height:18px;display:block;" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M21 14a4 4 0 0 1-4 4H8l-4 3V6a4 4 0 0 1 4-4h9a4 4 0 0 1 4 4v8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M8 7.5h9M8 11.5h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <span class="app-topbar-badge" id="chatBadge"></span>
+            <div class="app-topbar-popover" id="chatPopover">
+              <div class="app-topbar-popover-inner">
+              <div class="app-topbar-popover-header">
+                <span>消息</span>
+                <a href="/forum">查看全部</a>
+              </div>
+              <div class="app-topbar-popover-body" id="chatPopoverBody">
+                <div class="app-topbar-popover-empty">暂无消息</div>
+              </div>
+              </div>
+            </div>
+          </div>
 
           <button class="app-icon-btn" type="button" id="appThemeToggle" aria-label="切换主题">
             <img src="/static/icons/theme-moon.svg" alt="" style="width:18px;height:18px;display:block;opacity:.9;" />
@@ -834,6 +1067,159 @@
         if (window.matchMedia && window.matchMedia('(max-width: 860px)').matches) closeSidebar();
       });
     })();
+  </script>
+
+  {# 顶栏通知/聊天悬浮弹窗逻辑 #}
+  <script>
+  (function() {
+    var notifBadge = document.getElementById('notifBadge');
+    var chatBadge = document.getElementById('chatBadge');
+    var notifBody = document.getElementById('notifPopoverBody');
+    var chatBody = document.getElementById('chatPopoverBody');
+    var notifWrap = document.getElementById('notifIconWrap');
+    var chatWrap = document.getElementById('chatIconWrap');
+
+    var notifLoaded = false;
+    var chatLoaded = false;
+
+    function escHtml(s) {
+      var d = document.createElement('div');
+      d.textContent = s || '';
+      return d.innerHTML;
+    }
+
+    function timeAgo(ts) {
+      if (!ts) return '';
+      var d = new Date(ts.replace(' ', 'T') + (ts.includes('+') || ts.includes('Z') ? '' : '+08:00'));
+      var diff = (Date.now() - d.getTime()) / 1000;
+      if (diff < 60) return '刚刚';
+      if (diff < 3600) return Math.floor(diff / 60) + '分钟前';
+      if (diff < 86400) return Math.floor(diff / 3600) + '小时前';
+      if (diff < 604800) return Math.floor(diff / 86400) + '天前';
+      return (d.getMonth() + 1) + '/' + d.getDate();
+    }
+
+    /* ---- 通知 ---- */
+    function updateNotifBadge(count) {
+      if (!notifBadge) return;
+      if (count > 0) {
+        notifBadge.textContent = count > 99 ? '99+' : count;
+        notifBadge.className = 'app-topbar-badge has-count visible';
+      } else {
+        notifBadge.textContent = '';
+        notifBadge.className = 'app-topbar-badge';
+      }
+    }
+
+    function fetchNotifCount() {
+      fetch('/api/notifications/unread_count', { credentials: 'include' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) { if (d.status === 'success') updateNotifBadge(d.count || 0); })
+        .catch(function() {});
+    }
+
+    function fetchNotifList() {
+      if (notifLoaded || !notifBody) return;
+      notifLoaded = true;
+      fetch('/api/notifications?limit=8', { credentials: 'include' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.status !== 'success' || !d.data || d.data.length === 0) {
+            notifBody.innerHTML = '<div class="app-topbar-popover-empty">暂无通知</div>';
+            return;
+          }
+          var html = '';
+          d.data.forEach(function(n) {
+            var cls = n.is_read ? '' : ' unread';
+            html += '<a class="app-notif-item' + cls + '" href="/notifications">'
+              + '<span class="app-notif-dot"></span>'
+              + '<div class="app-notif-body">'
+              + '<div class="app-notif-title">' + escHtml(n.title) + '</div>'
+              + '<div class="app-notif-meta">' + escHtml(n.content || '').substring(0, 60) + '</div>'
+              + '</div></a>';
+          });
+          notifBody.innerHTML = html;
+        })
+        .catch(function() { notifLoaded = false; });
+    }
+
+    /* ---- 聊天 ---- */
+    function updateChatBadge(count) {
+      if (!chatBadge) return;
+      if (count > 0) {
+        chatBadge.textContent = count > 99 ? '99+' : count;
+        chatBadge.className = 'app-topbar-badge has-count visible';
+      } else {
+        chatBadge.textContent = '';
+        chatBadge.className = 'app-topbar-badge';
+      }
+    }
+
+    function fetchChatCount() {
+      fetch('/api/chat/unread_count', { credentials: 'include' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) { if (d.status === 'success') updateChatBadge(d.count || 0); })
+        .catch(function() {});
+    }
+
+    function fetchChatList() {
+      if (chatLoaded || !chatBody) return;
+      chatLoaded = true;
+      fetch('/api/chat/conversations', { credentials: 'include' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.status !== 'success' || !d.data || d.data.length === 0) {
+            chatBody.innerHTML = '<div class="app-topbar-popover-empty">暂无消息</div>';
+            return;
+          }
+          // 只显示有消息的会话，最多8条
+          var convs = d.data.filter(function(c) { return c.last_message; }).slice(0, 8);
+          if (convs.length === 0) {
+            chatBody.innerHTML = '<div class="app-topbar-popover-empty">暂无消息</div>';
+            return;
+          }
+          var html = '';
+          convs.forEach(function(c) {
+            var name = escHtml(c.peer_remark || c.peer_username || c.title || '未知');
+            var initial = (c.peer_username || '?')[0].toUpperCase();
+            var avatar = c.peer_avatar
+              ? '<img class="app-chat-avatar" src="' + escHtml(c.peer_avatar) + '" alt="" />'
+              : '<div class="app-chat-avatar-placeholder">' + escHtml(initial) + '</div>';
+            var unread = (c.unread_count && c.unread_count > 0)
+              ? '<span class="app-chat-unread">' + (c.unread_count > 99 ? '99+' : c.unread_count) + '</span>'
+              : '';
+            html += '<a class="app-chat-item" href="/forum?conv=' + c.conversation_id + '">'
+              + avatar
+              + '<div class="app-chat-body">'
+              + '<div class="app-chat-name">' + name + '</div>'
+              + '<div class="app-chat-preview">' + escHtml(c.last_message || '') + '</div>'
+              + '</div>' + unread + '</a>';
+          });
+          chatBody.innerHTML = html;
+        })
+        .catch(function() { chatLoaded = false; });
+    }
+
+    /* ---- hover 触发加载 ---- */
+    if (notifWrap) {
+      notifWrap.addEventListener('mouseenter', function() { fetchNotifList(); });
+    }
+    if (chatWrap) {
+      chatWrap.addEventListener('mouseenter', function() { fetchChatList(); });
+    }
+
+    /* ---- 初始化：拉取未读数 ---- */
+    fetchNotifCount();
+    fetchChatCount();
+
+    /* ---- 定时刷新未读数（60秒） ---- */
+    setInterval(function() {
+      fetchNotifCount();
+      fetchChatCount();
+      notifLoaded = false;
+      chatLoaded = false;
+    }, 60000);
+  })();
   </script>
 
   {% block body_end %}{% endblock %}

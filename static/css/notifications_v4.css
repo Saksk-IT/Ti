@@ -183,16 +183,6 @@ html[data-theme="dark"]{
 .noti-searchInput { padding-left: 34px; }
 .noti-select { width: 100%; }
 
-.noti-hint {
-  margin-top: 10px;
-  padding: 10px 10px;
-  border-radius: 14px;
-  border: 1px solid var(--app-border);
-  background: color-mix(in srgb, var(--app-surface) 86%, transparent);
-  font-size: 12px;
-  color: var(--app-muted);
-  line-height: 1.55;
-}
 
 .noti-content { min-width: 0; display: grid; gap: 14px; }
 .noti-alert {
