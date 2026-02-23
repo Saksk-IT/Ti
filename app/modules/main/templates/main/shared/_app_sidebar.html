@@ -356,7 +356,7 @@
     opacity: 0.5;
   }
 
-  /* 主题子菜单 - 内联展开 */
+  /* 主题子菜单 - 悬浮弹出 */
   .app-theme-submenu {
     position: relative;
   }
@@ -366,15 +366,39 @@
   .app-theme-submenu.open .app-quick-menu-item .menu-arrow {
     transform: rotate(90deg);
   }
+  .app-theme-submenu.open > .app-quick-menu-item {
+    background: rgba(148, 163, 184, 0.10);
+  }
   .app-theme-panel {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 200ms ease;
-    margin: 0 -6px;
-    padding: 0 6px;
+    position: absolute;
+    left: calc(100% + 8px);
+    top: -6px;
+    min-width: 180px;
+    background: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+    padding: 6px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-6px);
+    transition: opacity 160ms ease, transform 160ms ease, visibility 160ms ease;
+    z-index: 210;
+    pointer-events: none;
   }
   .app-theme-submenu.open .app-theme-panel {
-    max-height: 300px;
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+  .app-theme-panel::before {
+    content: '';
+    position: absolute;
+    right: 100%;
+    top: 0;
+    width: 12px;
+    height: 100%;
   }
   .app-theme-section {
     padding: 6px 8px 4px;
@@ -802,7 +826,15 @@
     footerRow.addEventListener('mouseleave', function() {
       footerTimer = setTimeout(function() {
         quickMenu.classList.remove('open');
-        if (themeSubmenu) themeSubmenu.classList.remove('open');
+        if (themeSubmenu) {
+          themeSubmenu.classList.remove('open');
+          if (originalTheme !== null) {
+            root.setAttribute('data-theme', originalTheme);
+          }
+          if (originalStyle !== null) {
+            root.setAttribute('data-theme-style', originalStyle);
+          }
+        }
       }, 100);
     });
   }
@@ -818,7 +850,15 @@
       });
       if (isOpen) {
         quickMenu.classList.remove('open');
-        if (themeSubmenu) themeSubmenu.classList.remove('open');
+        if (themeSubmenu) {
+          themeSubmenu.classList.remove('open');
+          if (originalTheme !== null) {
+            root.setAttribute('data-theme', originalTheme);
+          }
+          if (originalStyle !== null) {
+            root.setAttribute('data-theme-style', originalStyle);
+          }
+        }
       } else {
         quickMenu.classList.add('open');
         updateThemeActiveState();
@@ -826,12 +866,24 @@
     });
   }
 
-  // 点击主题菜单项展开/收起子菜单
-  if (themeToggle && themeSubmenu) {
-    themeToggle.addEventListener('click', function(e) {
-      e.stopPropagation();
-      themeSubmenu.classList.toggle('open');
+  // 悬浮主题菜单项展开/收起子菜单
+  if (themeSubmenu) {
+    var themeSubTimer = null;
+    themeSubmenu.addEventListener('mouseenter', function() {
+      clearTimeout(themeSubTimer);
+      themeSubmenu.classList.add('open');
       updateThemeActiveState();
+    });
+    themeSubmenu.addEventListener('mouseleave', function() {
+      themeSubTimer = setTimeout(function() {
+        themeSubmenu.classList.remove('open');
+        if (originalTheme !== null) {
+          root.setAttribute('data-theme', originalTheme);
+        }
+        if (originalStyle !== null) {
+          root.setAttribute('data-theme-style', originalStyle);
+        }
+      }, 100);
     });
   }
 
@@ -839,7 +891,15 @@
   document.addEventListener('click', function(e) {
     if (!quickMenu.contains(e.target) && (!userTrigger || !userTrigger.contains(e.target))) {
       quickMenu.classList.remove('open');
-      if (themeSubmenu) themeSubmenu.classList.remove('open');
+      if (themeSubmenu) {
+        themeSubmenu.classList.remove('open');
+        if (originalTheme !== null) {
+          root.setAttribute('data-theme', originalTheme);
+        }
+        if (originalStyle !== null) {
+          root.setAttribute('data-theme-style', originalStyle);
+        }
+      }
     }
   });
 
