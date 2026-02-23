@@ -9,11 +9,15 @@
 
 本文件末尾通过 re-export 保持向后兼容。
 """
+import logging
 import sqlite3
 import threading
 import time
+from contextlib import contextmanager
 
 from flask import current_app, g
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -151,6 +155,29 @@ def close_db(error=None):
 
 
 # ---------------------------------------------------------------------------
+# 事务管理
+# ---------------------------------------------------------------------------
+@contextmanager
+def transaction(conn=None):
+    """事务上下文管理器，自动 commit/rollback。
+
+    用法::
+
+        with transaction() as conn:
+            conn.execute("INSERT INTO ...")
+            conn.execute("UPDATE ...")
+        # 正常退出自动 commit；异常自动 rollback 并重新抛出
+    """
+    c = conn or get_db()
+    try:
+        yield c
+        c.commit()
+    except Exception:
+        c.rollback()
+        raise
+
+
+# ---------------------------------------------------------------------------
 # IN 子句安全构建工具
 # ---------------------------------------------------------------------------
 _IN_BATCH_SIZE = 900  # SQLite 参数上限 ~999，留余量
@@ -193,9 +220,9 @@ def init_db():
         # 创建索引（放在迁移之后，避免重建表导致索引丢失）
         _create_indexes(conn)
         conn.commit()
-        print('[OK] 数据库初始化完成')
+        logger.info('数据库初始化完成')
     except Exception as e:
-        print(f'[ERROR] 数据库初始化失败: {str(e)}')
+        logger.error('数据库初始化失败: %s', e)
         conn.rollback()
     finally:
         conn.close()
@@ -205,5 +232,5 @@ __all__ = [
     # 核心连接
     'get_db', 'close_db', 'connect_db', 'init_db',
     'get_table_columns', 'invalidate_schema_cache',
-    'safe_in_clause',
+    'safe_in_clause', 'transaction',
 ]
