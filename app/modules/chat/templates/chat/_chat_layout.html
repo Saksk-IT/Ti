@@ -1,0 +1,66 @@
+{# chat/_chat_layout.html — 主布局：移动端抽屉 + 桌面侧栏 + 聊天窗口 + 输入区 #}
+
+  <div class="overlay" id="overlay" onclick="toggleDrawer(false)"></div>
+  <div class="drawer" id="drawer">
+    <div class="sidebar">
+      <div class="search">
+        <input id="userSearch" placeholder="搜索用户，回车发起讨论" onkeydown="onUserSearchKey(event)" />
+      </div>
+      <div class="conv-list" id="convListMobile"></div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="sidebar">
+      <div class="search">
+        <input id="userSearchDesk" placeholder="搜索用户，回车发起讨论" onkeydown="onUserSearchKey(event,true)" />
+      </div>
+      <div class="conv-list" id="convList"></div>
+    </div>
+
+    <div class="main">
+      <div class="chat-header">
+        <div style="display:flex; flex-direction:column; gap:4px;">
+          <div class="title" id="chatTitle">请选择一个话题</div>
+          <div class="subtle" id="chatHint"></div>
+        </div>
+        <button class="btn" id="btnRemark" onclick="openUserProfile(currentPeerUserId)" style="display:none;">资料</button>
+      </div>
+      <div class="messages" id="messages">
+        <div id="emptyState" style="display:none; padding:22px 10px; text-align:center; color:var(--sub);">
+          <div style="font-weight:700; color:var(--text); margin-bottom:6px;">开始一个话题</div>
+          <div>左侧选择话题，或在上方搜索用户回车发起讨论。</div>
+        </div>
+      </div>
+      <div class="composer">
+        <button class="btn-plus" id="btnPlus" type="button" title="更多" aria-label="更多" onclick="togglePlusMenu(event)">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 5v14"/>
+            <path d="M5 12h14"/>
+          </svg>
+        </button>
+
+        <div class="pill">
+          <input id="imgInput" type="file" accept="image/*" style="display:none" onchange="sendImageFile(this)" />
+
+          <textarea id="composer" placeholder="信息…" onkeydown="onComposerKey(event)"></textarea>
+
+          <button class="btn btn-icon" id="btnVoice" title="按住说话" aria-label="按住说话">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z"/>
+              <path d="M19 11a7 7 0 0 1-14 0"/>
+              <path d="M12 19v3"/>
+              <path d="M8 22h8"/>
+            </svg>
+          </button>
+
+          <button class="btn primary btn-send" id="btnSendText" onclick="sendMessage()" style="display:none;" title="发送" aria-label="发送">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 5v14"/>
+              <path d="m18 11-6-6-6 6"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>

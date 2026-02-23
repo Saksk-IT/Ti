@@ -301,17 +301,17 @@ html[data-theme="dark"] .dc-mini-btn {
 }
 
 /* ===== Responsive ===== */
-@media (max-width: 1100px) {
+@media (max-width: 1024px) {
   .dc-bento { grid-template-columns: repeat(8, minmax(0, 1fr)); }
   .dc-span-12, .dc-span-8, .dc-span-6, .dc-span-5 { grid-column: span 8; }
   .dc-span-4, .dc-span-3 { grid-column: span 4; }
 }
-@media (max-width: 860px) {
+@media (max-width: 768px) {
   .dc-hero-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dc-bento { grid-template-columns: 1fr; }
   .dc-span-12, .dc-span-8, .dc-span-6, .dc-span-5, .dc-span-4, .dc-span-3 { grid-column: 1 / -1; }
 }
-@media (max-width: 520px) {
+@media (max-width: 480px) {
   .dc-hero-kpis { grid-template-columns: 1fr; }
   .dc-chart.lg { height: 320px; }
   .dc-chart.dc-tall { height: 320px; }

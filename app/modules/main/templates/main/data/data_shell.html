@@ -3,6 +3,7 @@
 {% block page_title %}数据{% endblock %}
 
 {% block head_extra %}
+  <link rel="stylesheet" href="/static/css/_design-tokens.css" />
   <link rel="stylesheet" href="/static/css/data_center.css" />
   <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 {% endblock %}
@@ -10,7 +11,7 @@
 {% block content %}
   <div class="dc-shell">
     <header class="dc-hero" aria-label="数据中心">
-      <div class="dc-hero-left" style="min-width:0;">
+      <div class="dc-hero-left u-min-w-0">
         <h1>数据中心</h1>
         <p>公共题库 + 个人题库的学习数据总览与分析。</p>
       </div>

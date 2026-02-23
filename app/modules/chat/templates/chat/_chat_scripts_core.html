@@ -1,0 +1,252 @@
+{# chat/_chat_scripts_core.html — JS 核心：Chat/ChatState/Chat.utils/Chat.ui + 基础 UI 函数 #}
+<script>
+  const LOGGED_IN = {{ 'true' if logged_in else 'false' }};
+  const MY_ID = {{ user_id or 0 }};
+
+  // =====================================================
+  // Commit 1：前端模块化骨架（不改功能）
+  // =====================================================
+  const Chat = {};
+  const ChatState = {
+    currentConversationId: 0,
+    lastMessageId: 0,
+    pollTimer: null,
+  };
+
+  // =====================================================
+  // Commit 2：抽取 Chat.utils（工具函数，不改功能）
+  // =====================================================
+  Chat.utils = {
+    prefersReducedMotion(){
+      return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    },
+    escapeHtml(s){
+      const div = document.createElement('div');
+      div.textContent = s || '';
+      return div.innerHTML;
+    },
+    escapeAttr(s){
+      return String(s || '').replace(/'/g, '%27').replace(/\"/g, '%22');
+    },
+    setLoading(btn, state){
+      if (!btn) return;
+      btn.dataset.loading = state ? 'true' : 'false';
+      btn.disabled = !!state;
+    },
+    safeParseTime(s){
+      if (!s) return null;
+      if (s instanceof Date) return s;
+      const str = String(s).trim();
+      if (!str) return null;
+
+      // 1) SQLite UTC 时间：YYYY-MM-DD HH:mm:ss
+      const m = str.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/);
+      if (m) {
+        const y = Number(m[1]);
+        const mo = Number(m[2]) - 1;
+        const d = Number(m[3]);
+        const hh = Number(m[4]);
+        const mm = Number(m[5]);
+        const ss = Number(m[6] || '0');
+        const dt = new Date(y, mo, d, hh, mm, ss);
+        if (!isNaN(dt.getTime())) return dt;
+      }
+
+      // 2) ISO / RFC
+      let d1 = new Date(str);
+      if (!isNaN(d1.getTime())) return d1;
+
+      // 3) Safari 兼容
+      d1 = new Date(str.replace(/-/g,'/'));
+      if (!isNaN(d1.getTime())) return d1;
+
+      return null;
+    },
+    formatConvTimestamp(ts){
+      const date = Chat.utils.safeParseTime(ts);
+      if (!date) return '';
+
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+      if (targetDate.getTime() === today.getTime()) {
+        return String(date.getHours()).padStart(2, '0') + ':' + String(date.getMinutes()).padStart(2, '0');
+      } else if (targetDate.getTime() === yesterday.getTime()) {
+        return '昨天';
+      } else if (date.getFullYear() === now.getFullYear()) {
+        return String(date.getMonth() + 1) + '-' + String(date.getDate());
+      } else {
+        return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+      }
+    },
+    formatFullTime(d){
+      const y = d.getFullYear();
+      const mo = String(d.getMonth() + 1).padStart(2,'0');
+      const da = String(d.getDate()).padStart(2,'0');
+      const hh = String(d.getHours()).padStart(2,'0');
+      const mm = String(d.getMinutes()).padStart(2,'0');
+      const ss = String(d.getSeconds()).padStart(2,'0');
+      return `${y}-${mo}-${da} ${hh}:${mm}:${ss}`;
+    },
+    formatDividerTime(d){
+      const now = new Date();
+      const sameDay = d.toDateString() === now.toDateString();
+      const hh = String(d.getHours()).padStart(2,'0');
+      const mm = String(d.getMinutes()).padStart(2,'0');
+      if (sameDay) return `${hh}:${mm}`;
+      const mo = String(d.getMonth()+1).padStart(2,'0');
+      const da = String(d.getDate()).padStart(2,'0');
+      return `${mo}-${da} ${hh}:${mm}`;
+    }
+  };
+
+  // =====================================================
+  // Commit 3：抽取 Chat.ui（DOM 缓存 + Toast，不改功能）
+  // =====================================================
+  Chat.ui = {
+    dom: {
+      _cache: Object.create(null),
+      get(id){
+        if (!id) return null;
+        const cached = this._cache[id];
+        if (cached && document.contains(cached)) return cached;
+        const el = document.getElementById(id);
+        if (el) this._cache[id] = el;
+        return el;
+      },
+      clear(id){
+        if (!id) {
+          for (const k in this._cache) delete this._cache[k];
+          return;
+        }
+        delete this._cache[id];
+      }
+    },
+    toast: {
+      timer: null,
+      show(msg){
+        const t = Chat.ui.dom.get('toast');
+        if (!t) return;
+        t.textContent = msg;
+        t.style.display = 'block';
+        if (this.timer) clearTimeout(this.timer);
+        this.timer = setTimeout(()=>{ t.style.display='none'; }, Chat.utils.prefersReducedMotion() ? 1500 : 2200);
+      }
+    }
+  };
+
+  // =====================================================
+  // 基础函数（兼容层，转调到 Chat.utils / Chat.ui）
+  // =====================================================
+  function prefersReducedMotion(){ return Chat.utils.prefersReducedMotion(); }
+
+  function toggleTheme(){
+    document.body.classList.toggle('dark-mode');
+    localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+  }
+  (function initTheme(){
+    if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
+  })();
+
+  function isMobile(){ return window.innerWidth <= 900; }
+
+  function toggleDrawer(open){
+    const dr = Chat.ui.dom.get('drawer');
+    const ov = Chat.ui.dom.get('overlay');
+    if (!dr || !ov) return;
+    if (open) { dr.classList.add('open'); ov.classList.add('show'); }
+    else { dr.classList.remove('open'); ov.classList.remove('show'); }
+  }
+
+  function updateMobileListButton(){
+    const btn = Chat.ui.dom.get('btnMobileList');
+    if (!btn) return;
+    btn.style.display = isMobile() ? 'inline-flex' : 'none';
+  }
+  window.addEventListener('resize', updateMobileListButton);
+  updateMobileListButton();
+
+  // Toast（兼容层）
+  function showToast(msg){ return Chat.ui.toast.show(msg); }
+
+  // 语音"移出取消"浮层
+  function showVoiceHint(show, text){
+    const el = document.getElementById('voiceHint');
+    const tx = document.getElementById('voiceHintText');
+    if (!el) return;
+    if (typeof text === 'string' && tx) tx.textContent = text;
+    if (show) el.classList.add('show');
+    else el.classList.remove('show');
+  }
+
+  // 用户选择弹层（搜索匹配多个用户）
+  function openUserPickModal(users, kw, onPick){
+    const modal = document.getElementById('userPickModal');
+    const listEl = document.getElementById('userPickList');
+    if (!modal || !listEl) return;
+
+    const safeKw = (kw || '').trim();
+    const lowerKw = safeKw.toLowerCase();
+
+    const sorted = (users || []).slice().sort((a,b)=>{
+      const au = String(a.username || '');
+      const bu = String(b.username || '');
+      const aL = au.toLowerCase();
+      const bL = bu.toLowerCase();
+      const aEq = (lowerKw && aL === lowerKw) ? 1 : 0;
+      const bEq = (lowerKw && bL === lowerKw) ? 1 : 0;
+      if (aEq !== bEq) return bEq - aEq;
+      const aPre = (lowerKw && aL.startsWith(lowerKw)) ? 1 : 0;
+      const bPre = (lowerKw && bL.startsWith(lowerKw)) ? 1 : 0;
+      if (aPre !== bPre) return bPre - aPre;
+      return au.localeCompare(bu, 'zh');
+    });
+
+    listEl.innerHTML = '';
+    sorted.slice(0, 50).forEach(u=>{
+      const item = document.createElement('div');
+      item.className = 'conv-item';
+      item.style.border = 'var(--line) solid var(--border)';
+      item.style.background = 'transparent';
+
+      const name = u.username || '用户';
+      const avatarUrl = u.avatar || '';
+      const initial = (name || 'U').slice(0,1).toUpperCase();
+      const avatarHtml = avatarUrl
+        ? `<div class="avatar" style="width:40px;height:40px;background-image:url('${escapeAttr(avatarUrl)}')"></div>`
+        : `<div class="avatar" style="width:40px;height:40px;background: var(--primary); font-size:16px;">${escapeHtml(initial)}</div>`;
+
+      item.innerHTML = `
+        ${avatarHtml}
+        <div class="conv-text">
+          <div class="conv-title">${escapeHtml(name)}</div>
+          <div class="conv-sub">ID: ${escapeHtml(String(u.id || ''))}</div>
+        </div>
+      `;
+
+      item.onclick = ()=>{
+        try { if (typeof onPick === 'function') onPick(u); } catch(e) {}
+        modal.classList.remove('show');
+      };
+
+      listEl.appendChild(item);
+    });
+
+    modal.classList.add('show');
+  }
+
+  function closeUserPickModal(e){
+    if (e) e.stopPropagation();
+    const modal = document.getElementById('userPickModal');
+    if (!modal) return;
+    if (!e || (e.target && (e.target.id === 'userPickModal' || e.target.classList.contains('close')))) {
+      modal.classList.remove('show');
+      const listEl = document.getElementById('userPickList');
+      if (listEl) listEl.innerHTML = '';
+    }
+  }
+</script>

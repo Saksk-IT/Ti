@@ -1,0 +1,224 @@
+{# chat/_chat_scripts_profile.html — JS: 好友资料页弹层逻辑 #}
+<script>
+  // 好友资料页
+  let currentProfileUserId = 0;
+
+  function closeUserProfileModal(e){
+    if (e) e.stopPropagation();
+    const modal = document.getElementById('userProfileModal');
+    if (!modal) return;
+    if (!e || (e.target && e.target.id === 'userProfileModal')) {
+      modal.classList.remove('show');
+      currentProfileUserId = 0;
+      hideProfileMenu();
+      toggleRemarkEdit(false);
+    }
+  }
+
+  async function openUserProfile(userId){
+    if (!userId) return;
+    currentProfileUserId = userId;
+    const modal = document.getElementById('userProfileModal');
+    if (!modal) return;
+
+    modal.classList.add('show');
+
+    try {
+      const { res, js } = await Chat.api.getUserProfile(userId);
+      if (!res.ok || js.status !== 'success') {
+        alert(js.message || '加载资料失败');
+        closeUserProfileModal();
+        return;
+      }
+      const u = js.user || {};
+      const remark = (js.remark || '').trim();
+
+      const av = document.getElementById('upAvatar');
+      if (av) {
+        const url = u.avatar || '';
+        if (url) {
+          av.style.backgroundImage = `url('${String(url).replace(/'/g,'%27')}')`;
+          av.style.backgroundSize = 'cover';
+          av.style.backgroundPosition = 'center';
+          av.style.backgroundRepeat = 'no-repeat';
+          av.style.borderRadius = '16px';
+          av.textContent = '';
+        } else {
+          av.style.backgroundImage = '';
+          av.style.background = 'var(--primary)';
+          av.textContent = (u.username || 'U').slice(0,1).toUpperCase();
+        }
+      }
+
+      const title = document.getElementById('upTitle');
+      if (title) title.textContent = remark || u.username || '用户';
+      const navTitle = document.getElementById('upNavTitle');
+      if (navTitle) navTitle.textContent = remark || u.username || '好友资料';
+      const sub = document.getElementById('upSub');
+      if (sub) sub.textContent = `用户名：${u.username || '-'}  ·  ID：${u.id || '-'}`;
+
+      const inp = document.getElementById('upRemarkInput');
+      if (inp) inp.value = remark || '';
+
+      const elR = document.getElementById('upRemark');
+      if (elR) elR.textContent = remark || '未设置';
+      const elU = document.getElementById('upUsername');
+      if (elU) elU.textContent = u.username || '-';
+      const elC = document.getElementById('upContact');
+      if (elC) elC.textContent = u.contact || '-';
+      const elCo = document.getElementById('upCollege');
+      if (elCo) elCo.textContent = u.college || '-';
+
+      const isSelf = (u.id && Number(u.id) === Number(MY_ID));
+      const btnEdit = document.getElementById('upEditRemark');
+      if (btnEdit) btnEdit.style.display = isSelf ? 'none' : 'inline-flex';
+      const editWrap = document.getElementById('upRemarkEdit');
+      if (editWrap) editWrap.style.display = 'none';
+
+    } catch(e) {
+      alert('加载资料失败');
+      closeUserProfileModal();
+    }
+  }
+
+  function toggleRemarkEdit(open){
+    const wrap = document.getElementById('upRemarkEdit');
+    const inp = document.getElementById('upRemarkInput');
+    if (!wrap || !inp) return;
+
+    if (open) {
+      const curEl = document.getElementById('upRemark');
+      const curVal = (curEl && curEl.textContent && curEl.textContent !== '未设置') ? curEl.textContent : '';
+      inp.value = curVal;
+      wrap.style.display = 'block';
+      setTimeout(()=>{ try{ inp.focus(); inp.select(); }catch(e){} }, 0);
+    } else {
+      wrap.style.display = 'none';
+    }
+  }
+
+  function profileSendMessage(){
+    closeUserProfileModal();
+    try {
+      const ta = Chat.ui.dom.get('composer');
+      if (ta) ta.focus();
+    } catch(e) {}
+  }
+
+  function profileCallPlaceholder(){
+    showToast('音视频通话：暂未实现');
+  }
+
+  async function saveRemarkFromProfile(forceValue){
+    if (!currentProfileUserId) return;
+    if (Number(currentProfileUserId) === Number(MY_ID)) return;
+
+    const inp = document.getElementById('upRemarkInput');
+    const btn = document.getElementById('upRemarkSave');
+    const v = (typeof forceValue === 'string') ? String(forceValue).trim() : String((inp && inp.value) || '').trim();
+
+    if (v.length > 30) {
+      alert('备注过长（最多30字）');
+      return;
+    }
+
+    setLoading(btn, true);
+    try {
+      const { res: sRes, js: sJs } = await Chat.api.setUserRemark(currentProfileUserId, v);
+      if (!sRes.ok || sJs.status !== 'success') {
+        alert((sJs && sJs.message) ? sJs.message : (`设置备注失败（HTTP ${sRes.status}）`));
+        return;
+      }
+
+      toggleRemarkEdit(false);
+
+      await openUserProfile(currentProfileUserId);
+
+      await refreshConversations();
+      try {
+        const list = await fetchConversations();
+        const cur = (list || []).find(x => x.conversation_id === ChatState.currentConversationId);
+        if (cur) {
+          const name = (cur.c_type === 'direct' ? (cur.peer_remark || cur.peer_username || '私聊') : (cur.title || '会话'));
+          const t = document.getElementById('chatTitle');
+          if (t) t.textContent = name;
+        }
+      } catch(e) {}
+
+      showToast(v ? '备注已更新' : '备注已清除');
+    } finally {
+      setLoading(btn, false);
+    }
+  }
+
+  // 资料页右上角菜单
+  function toggleProfileMenu(e){
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    const menu = document.getElementById('profileMenu');
+    if (!menu) return;
+
+    const isOpen = menu.classList.contains('show');
+    if (isOpen) { menu.classList.remove('show'); return; }
+
+    const btn = e && e.currentTarget ? e.currentTarget : null;
+    if (btn) {
+      const r = btn.getBoundingClientRect();
+      const mw = 220;
+      const mh = 150;
+      let left = Math.max(12, Math.min(window.innerWidth - mw - 12, r.right - mw));
+      let top = r.bottom + 8;
+      if (top + mh > window.innerHeight - 12) top = Math.max(12, r.top - mh - 8);
+      menu.style.left = left + 'px';
+      menu.style.top = top + 'px';
+    }
+
+    menu.classList.add('show');
+  }
+
+  function hideProfileMenu(){
+    const menu = document.getElementById('profileMenu');
+    if (menu) menu.classList.remove('show');
+  }
+
+  async function profileMenuAction(act){
+    hideProfileMenu();
+    if (!currentProfileUserId) return;
+
+    if (act === 'edit_remark') {
+      toggleRemarkEdit(true);
+      return;
+    }
+    if (act === 'clear_remark') {
+      await saveRemarkFromProfile('');
+      return;
+    }
+    if (act === 'copy_username') {
+      try {
+        const el = document.getElementById('upUsername');
+        const txt = (el && el.textContent) ? el.textContent : '';
+        if (!txt) return;
+        await navigator.clipboard.writeText(txt);
+        showToast('已复制用户名');
+      } catch(e) {
+        showToast('复制失败');
+      }
+      return;
+    }
+    if (act === 'copy_id') {
+      try {
+        await navigator.clipboard.writeText(String(currentProfileUserId));
+        showToast('已复制 ID');
+      } catch(e) {
+        showToast('复制失败');
+      }
+      return;
+    }
+  }
+
+  document.addEventListener('click', (e)=>{
+    const menu = document.getElementById('profileMenu');
+    if (!menu || !menu.classList.contains('show')) return;
+    if (menu.contains(e.target)) return;
+    hideProfileMenu();
+  });
+</script>

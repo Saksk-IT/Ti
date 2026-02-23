@@ -1,0 +1,29 @@
+/* Web design tokens (phase: Exam + Chat + Data). */
+:root {
+  --app-bp-xs: 480px;
+  --app-bp-sm: 768px;
+  --app-bp-md: 1024px;
+  --app-bp-lg: 1400px;
+
+  --app-space-1: 4px;
+  --app-space-2: 8px;
+  --app-space-3: 12px;
+  --app-space-4: 16px;
+  --app-space-5: 20px;
+  --app-space-6: 24px;
+
+  --app-radius-pill: 999px;
+  --app-glass-weak: color-mix(in srgb, var(--app-surface) 78%, transparent);
+  --app-glass-strong: color-mix(in srgb, var(--app-surface) 88%, transparent);
+
+  --app-focus-ring: 0 0 0 3px var(--app-primary-soft), var(--app-shadow-soft);
+}
+
+html[data-theme="dark"] {
+  --app-glass-weak: color-mix(in srgb, var(--app-surface) 70%, transparent);
+  --app-glass-strong: color-mix(in srgb, var(--app-surface) 84%, transparent);
+}
+
+.u-min-w-0 {
+  min-width: 0;
+}

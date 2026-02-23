@@ -1,0 +1,192 @@
+{# chat/_chat_modals.html — 弹层/浮层组件（+ 菜单、好友资料、题目详情、图片预览、用户选择、语音提示、拖拽提示） #}
+
+  <div id="toast"></div>
+
+  <!-- + 菜单：图片/文件（后续可扩展拍照/位置等） -->
+  <div class="plus-menu" id="plusMenu">
+    <div class="item" onclick="onPlusPick('image')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14Z"/>
+        <path d="M8.5 10.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/>
+        <path d="M21 15l-5-5L5 21"/>
+      </svg>
+      <div class="t">图片</div>
+    </div>
+    <div class="item" onclick="onPlusPick('file')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <path d="M14 2v6h6"/>
+      </svg>
+      <div class="t">文件（未实现）</div>
+    </div>
+  </div>
+
+  <!-- 好友资料页（弹层） -->
+  <div class="img-modal" id="userProfileModal" onclick="closeUserProfileModal(event)">
+    <!-- 资料页更多菜单 -->
+    <div class="plus-menu" id="profileMenu" style="min-width: 220px;">
+      <div class="item" onclick="profileMenuAction('edit_remark')"><div class="t">设置备注</div></div>
+      <div class="item" onclick="profileMenuAction('clear_remark')"><div class="t">清除备注</div></div>
+      <div class="item" onclick="profileMenuAction('copy_username')"><div class="t">复制用户名</div></div>
+      <div class="item" onclick="profileMenuAction('copy_id')"><div class="t">复制 ID</div></div>
+    </div>
+    <div class="card" style="width:min(92vw,640px); max-height: 86vh; overflow:auto; background: var(--card2); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow);" onclick="event.stopPropagation()">
+      <!-- 顶部导航：返回 + 右上角更多 -->
+      <div style="position:sticky; top:0; z-index:5; display:flex; align-items:center; justify-content:space-between; padding: 12px 12px; background: var(--card2); border-bottom: 1px solid var(--border);">
+        <button class="btn" type="button" onclick="closeUserProfileModal()" aria-label="返回" title="返回" style="width:44px; height:36px; padding:0; border-radius: 12px; display:inline-flex; align-items:center; justify-content:center;">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+        </button>
+        <div id="upNavTitle" style="font-weight:800; font-size:15px;">好友资料</div>
+        <button class="btn" type="button" onclick="toggleProfileMenu(event)" aria-label="更多" title="更多" style="width:44px; height:36px; padding:0; border-radius: 12px; display:inline-flex; align-items:center; justify-content:center;">
+          <span style="font-size:20px; line-height:1;">···</span>
+        </button>
+      </div>
+
+      <!-- 顶部信息区 -->
+      <div style="padding: 14px 16px 12px; display:flex; gap:14px; align-items:center;">
+        <div id="upAvatar" class="avatar profile-avatar" style="width:72px;height:72px; border-radius: 16px; background: var(--other);"></div>
+        <div style="min-width:0; flex:1;">
+          <div id="upTitle" style="font-size:18px; font-weight:800; line-height:1.2;">用户</div>
+          <div id="upSub" style="margin-top:6px; color: var(--sub); font-size: 13px;"> </div>
+        </div>
+      </div>
+
+      <div style="padding: 6px 16px 16px;">
+        <div style="font-weight:800; margin: 6px 0 10px;">朋友资料</div>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <!-- 备注：内联编辑（不再 prompt） -->
+          <div style="padding: 12px 12px; border: 1px solid var(--border); border-radius: 14px; background: rgba(142,142,147,0.08);">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+              <div style="min-width:0;">
+                <div style="font-size:13px; color: var(--sub);">备注</div>
+                <div id="upRemark" style="font-size:15px; font-weight:700; margin-top:3px;">-</div>
+              </div>
+              <button class="btn" id="upEditRemark" onclick="toggleRemarkEdit(true)">修改</button>
+            </div>
+            <div id="upRemarkEdit" style="display:none; margin-top:10px;">
+              <input id="upRemarkInput" maxlength="30" placeholder="输入备注（最多30字）" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius: 12px; border: 1px solid var(--border); background: rgba(255,255,255,0.65); outline:none; color: var(--text);" />
+              <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:10px;">
+                <button class="btn" onclick="toggleRemarkEdit(false)">取消</button>
+                <button class="btn" onclick="saveRemarkFromProfile('')">清除</button>
+                <button class="btn primary" id="upRemarkSave" onclick="saveRemarkFromProfile()">保存</button>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; gap:16px; padding: 12px 12px; border: 1px solid var(--border); border-radius: 14px;">
+            <div style="min-width:0;">
+              <div style="font-size:13px; color: var(--sub);">用户名</div>
+              <div id="upUsername" style="font-size:15px; font-weight:700; margin-top:3px; word-break:break-all;">-</div>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; gap:16px; padding: 12px 12px; border: 1px solid var(--border); border-radius: 14px;">
+            <div style="min-width:0;">
+              <div style="font-size:13px; color: var(--sub);">联系方式</div>
+              <div id="upContact" style="font-size:15px; font-weight:700; margin-top:3px; word-break:break-all;">-</div>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; gap:16px; padding: 12px 12px; border: 1px solid var(--border); border-radius: 14px;">
+            <div style="min-width:0;">
+              <div style="font-size:13px; color: var(--sub);">学院</div>
+              <div id="upCollege" style="font-size:15px; font-weight:700; margin-top:3px; word-break:break-all;">-</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 朋友圈（占位预览） -->
+        <div style="margin-top: 14px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin: 2px 2px 10px;">
+            <div style="font-weight:800;">朋友圈</div>
+            <div style="color: var(--sub); font-size: 12px;">›</div>
+          </div>
+          <div style="display:flex; gap:10px; padding: 12px; border: 1px solid var(--border); border-radius: 14px; background: rgba(142,142,147,0.06);">
+            <div style="width:62px; height:62px; border-radius: 12px; background: rgba(142,142,147,0.18);"></div>
+            <div style="width:62px; height:62px; border-radius: 12px; background: rgba(142,142,147,0.18);"></div>
+            <div style="width:62px; height:62px; border-radius: 12px; background: rgba(142,142,147,0.18);"></div>
+            <div style="display:flex; align-items:center; color: var(--sub); font-size: 12px;">（占位）</div>
+          </div>
+        </div>
+
+        <!-- 底部操作：发消息 / 音视频通话（占位） -->
+        <div style="margin-top: 14px; display:flex; flex-direction:column; gap:10px;">
+          <button class="btn primary" onclick="profileSendMessage();" style="width:100%;">发消息</button>
+          <button class="btn" onclick="profileCallPlaceholder();" style="width:100%;">音视频通话（占位）</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 题目详情弹层 -->
+  <div class="img-modal" id="questionModal" onclick="closeQuestionModal(event)">
+    <button class="close" onclick="closeQuestionModal(event)">×</button>
+    <div class="card" style="width:min(92vw,760px); max-height: 86vh; overflow:auto; background: var(--card2); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow);" onclick="event.stopPropagation()">
+      <div style="padding: 14px 16px; border-bottom: 1px solid var(--border); display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+        <div style="min-width:0;">
+          <div id="qmTitle" style="font-weight:900; font-size:16px; line-height:1.2;">题目详情</div>
+          <div id="qmMeta" style="margin-top:6px; color:var(--sub); font-size:12px;"></div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <button class="btn" type="button" onclick="copyQuestionLink()">复制ID</button>
+          <button class="btn" type="button" onclick="closeQuestionModal()">关闭</button>
+        </div>
+      </div>
+      <div style="padding: 14px 16px 18px;">
+        <div id="qmContent" style="font-size:16px; line-height:1.7; white-space:pre-wrap; word-break:break-word;"></div>
+
+        <div id="qmOptionsWrap" style="margin-top: 14px; display:none;">
+          <div style="font-weight:800; margin-bottom:8px;">选项</div>
+          <div id="qmOptions" style="display:flex; flex-direction:column; gap:8px;"></div>
+        </div>
+
+        <div id="qmAnswerWrap" style="margin-top: 14px; display:none;">
+          <div style="font-weight:800; margin-bottom:8px;">答案</div>
+          <div id="qmAnswer" style="padding: 10px 12px; border-radius: 14px; background: rgba(52, 199, 89, 0.14); border: 1px solid rgba(52, 199, 89, 0.22); white-space:pre-wrap; word-break:break-word;"></div>
+        </div>
+
+        <div id="qmExplainWrap" style="margin-top: 14px; display:none;">
+          <div style="font-weight:800; margin-bottom:8px;">解析</div>
+          <div id="qmExplain" style="padding: 10px 12px; border-radius: 14px; background: rgba(10, 132, 255, 0.10); border: 1px solid rgba(10, 132, 255, 0.18); white-space:pre-wrap; word-break:break-word;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="img-modal" id="imgModal" onclick="closeImgModal(event)">
+    <button class="close" onclick="closeImgModal(event)">×</button>
+    <img id="imgModalImg" src="" alt="预览" />
+    <div class="hint">Esc 关闭 · 点击背景关闭</div>
+  </div>
+
+  <div class="drop-hint" id="dropHint">
+    <div class="card">松开鼠标即可发送图片</div>
+  </div>
+
+  <!-- 用户选择弹层：搜索匹配多个用户时使用 -->
+  <div class="img-modal" id="userPickModal" onclick="closeUserPickModal(event)">
+    <button class="close" onclick="closeUserPickModal(event)">×</button>
+    <div class="card" style="width:min(92vw,520px); max-height: 72vh; overflow:auto; background: var(--card2); border: 1px solid var(--border); border-radius: 16px; padding: 14px; box-shadow: var(--shadow);" onclick="event.stopPropagation()">
+      <div style="font-weight:700; margin: 4px 6px 10px;">选择要发起讨论的用户</div>
+      <div id="userPickList" style="display:flex; flex-direction:column; gap:8px;"></div>
+      <div style="margin-top:10px; color:var(--sub); font-size:12px; padding: 0 6px;">提示：回车搜索；点击用户即可创建/打开话题</div>
+    </div>
+  </div>
+
+  <div class="voice-hint" id="voiceHint">
+    <div class="card">
+      <div class="icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18"/>
+          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          <path d="M6 6l1 15a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-15"/>
+          <path d="M10 11v6"/>
+          <path d="M14 11v6"/>
+        </svg>
+      </div>
+      <div id="voiceHintText">松开手指取消发送</div>
+    </div>
+  </div>

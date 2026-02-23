@@ -1,0 +1,664 @@
+{# chat/_chat_scripts_input.html — JS: 发送消息、图片压缩/发送、语音录制、+ 菜单、初始化 #}
+<script>
+  async function sendMessage(){
+    const ta = Chat.ui.dom.get('composer');
+    const btn = Chat.ui.dom.get('btnSendText');
+    if (!ta) return;
+    const content = (ta.value || '').trim();
+    if (!content) return;
+    if (!ChatState.currentConversationId) { alert('请先选择或创建一个会话'); return; }
+
+    ta.value = '';
+    updateComposerActions();
+    setLoading(btn, true);
+    const { res, js } = await Chat.api.sendText({
+      conversationId: ChatState.currentConversationId,
+      content
+    });
+    setLoading(btn, false);
+
+    if (!res.ok || js.status !== 'success') {
+      const ok = confirm((js.message || '发送失败') + "\n\n是否重试？");
+      if (ok) {
+        ta.value = content;
+        sendMessage();
+      }
+      return;
+    }
+    await pollMessages(true);
+  }
+
+  // ===== 图片发送：发送前压缩 + 生成缩略图（减少流量） =====
+  const IMG_COMPRESS_MAIN_MAX_SIDE = 1600;
+  const IMG_COMPRESS_MAIN_QUALITY = 0.82;
+  const IMG_COMPRESS_THUMB_MAX_SIDE = 360;
+  const IMG_COMPRESS_THUMB_QUALITY = 0.70;
+
+  function isGifFile(f){
+    const n = (f && f.name) ? f.name.toLowerCase() : '';
+    const t = (f && f.type) ? f.type.toLowerCase() : '';
+    return t === 'image/gif' || n.endsWith('.gif');
+  }
+
+  function pickOutputMime(file){
+    return 'image/jpeg';
+  }
+
+  async function imageFileToBitmap(file){
+    if (window.createImageBitmap) {
+      try { return await createImageBitmap(file); } catch(e) {}
+    }
+    const url = URL.createObjectURL(file);
+    try {
+      const img = new Image();
+      img.decoding = 'async';
+      img.src = url;
+      await new Promise((resolve, reject)=>{ img.onload = resolve; img.onerror = reject; });
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth || img.width;
+      canvas.height = img.naturalHeight || img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      return canvas;
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  function getBitmapSize(bm){
+    return { w: bm.width || 0, h: bm.height || 0 };
+  }
+
+  async function bitmapToScaledBlob(bm, maxSide, mime, quality){
+    const { w, h } = getBitmapSize(bm);
+    if (!w || !h) throw new Error('图片解码失败');
+
+    let tw = w, th = h;
+    const maxDim = Math.max(w, h);
+    if (maxDim > maxSide) {
+      const scale = maxSide / maxDim;
+      tw = Math.max(1, Math.round(w * scale));
+      th = Math.max(1, Math.round(h * scale));
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = tw;
+    canvas.height = th;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(bm, 0, 0, tw, th);
+
+    const blob = await new Promise((resolve, reject)=>{
+      canvas.toBlob((b)=>{ if (b) resolve(b); else reject(new Error('toBlob失败')); }, mime, quality);
+    });
+
+    return { blob, width: tw, height: th };
+  }
+
+  async function compressForChatUpload(file){
+    if (isGifFile(file)) {
+      return { main: file, thumb: null, meta: { w: null, h: null, mime: file.type || 'image/gif' } };
+    }
+
+    const shouldSkipMain = file.size <= 200 * 1024;
+
+    const bm = await imageFileToBitmap(file);
+    const { w, h } = getBitmapSize(bm);
+    const mime = pickOutputMime(file);
+
+    let mainBlob = file;
+    let mainW = w, mainH = h;
+    if (!shouldSkipMain) {
+      const main = await bitmapToScaledBlob(bm, IMG_COMPRESS_MAIN_MAX_SIDE, mime, IMG_COMPRESS_MAIN_QUALITY);
+      mainBlob = main.blob;
+      mainW = main.width;
+      mainH = main.height;
+    }
+
+    const thumb = await bitmapToScaledBlob(bm, IMG_COMPRESS_THUMB_MAX_SIDE, mime, IMG_COMPRESS_THUMB_QUALITY);
+
+    const baseName = (file.name || 'image').replace(/\.[^.]+$/, '');
+    const mainFile = new File([mainBlob], baseName + '.jpg', { type: mime });
+    const thumbFile = new File([thumb.blob], baseName + '_thumb.jpg', { type: mime });
+
+    try { if (bm && typeof bm.close === 'function') bm.close(); } catch(e) {}
+
+    return {
+      main: mainFile,
+      thumb: thumbFile,
+      meta: { w: mainW, h: mainH, mime }
+    };
+  }
+
+  async function sendImageBlob(file, sourceLabel=''){
+    const btnImg = document.getElementById('btnPlus');
+    setLoading(btnImg, true);
+    try {
+      if (!ChatState.currentConversationId) { alert('请先选择或创建一个会话'); return; }
+
+      let prepared = null;
+      try {
+        prepared = await compressForChatUpload(file);
+      } catch(e) {
+        prepared = { main: file, thumb: null, meta: { w: null, h: null, mime: file.type || '' } };
+      }
+
+      const fd = new FormData();
+      fd.append('conversation_id', String(ChatState.currentConversationId));
+      fd.append('image', prepared.main);
+      if (prepared.thumb) fd.append('thumb', prepared.thumb);
+      if (prepared.meta && (prepared.meta.w || prepared.meta.h)) {
+        fd.append('width', String(prepared.meta.w || ''));
+        fd.append('height', String(prepared.meta.h || ''));
+      }
+
+      const { res, js } = await Chat.api.uploadImage(fd);
+      setLoading(btnImg, false);
+
+      if (!res.ok || js.status !== 'success') {
+        const msg = (js.message || '图片发送失败') + (sourceLabel ? `（来源：${sourceLabel}）` : '');
+        const ok = confirm(msg + "\n\n是否重试？");
+        if (ok) {
+          await sendImageBlob(file, sourceLabel);
+        }
+        return;
+      }
+      await pollMessages(true);
+    } catch(e) {
+      setLoading(btnImg, false);
+      const ok = confirm('图片发送失败\n\n是否重试？');
+      if (ok) await sendImageBlob(file, sourceLabel);
+    }
+  }
+
+  async function sendImageFile(input){
+    try {
+      if (!ChatState.currentConversationId) { alert('请先选择或创建一个会话'); input.value=''; return; }
+      const file = input.files && input.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { alert('图片不能超过 5MB'); input.value=''; return; }
+      await sendImageBlob(file, '文件选择');
+      input.value = '';
+    } catch(e) {
+      input.value = '';
+      alert('图片发送失败');
+    }
+  }
+
+  function updateComposerActions(){
+    const ta = Chat.ui.dom.get('composer');
+    const btnSend = document.getElementById('btnSendText');
+    const btnVoice = document.getElementById('btnVoice');
+    if (!ta || !btnSend || !btnVoice) return;
+    const hasText = !!String(ta.value || '').trim();
+
+    if (hasText) {
+      btnSend.style.display = 'inline-flex';
+      btnVoice.style.display = 'none';
+    } else {
+      btnSend.style.display = 'none';
+      btnVoice.style.display = 'inline-flex';
+    }
+
+    try {
+      btnSend.disabled = (!ChatState.currentConversationId) || (!hasText);
+    } catch(e) {}
+  }
+
+  function onComposerKey(e){
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
+  async function onUserSearchKey(e, desktop=false){
+    if (e.key !== 'Enter') return;
+    const inp = desktop ? Chat.ui.dom.get('userSearchDesk') : Chat.ui.dom.get('userSearch');
+    const kw = (inp.value || '').trim();
+    if (!kw) return;
+
+    const users = await Chat.api.searchUsers(kw);
+    if (!users.length) { alert('没有找到用户'); return; }
+
+    const exact = users.find(x => (x.username || '').toLowerCase() === kw.toLowerCase());
+
+    if (!exact && users.length > 1) {
+      openUserPickModal(users, kw, async (picked)=>{
+        const { res: cRes, js: cJs } = await Chat.api.createConversation(picked.id);
+        if (!cRes.ok || cJs.status !== 'success') { alert(cJs.message || '创建会话失败'); return; }
+        inp.value = '';
+        await refreshConversations();
+        await openConversation(cJs.conversation_id);
+      });
+      return;
+    }
+
+    const u = exact || users[0];
+    const { res: cRes, js: cJs } = await Chat.api.createConversation(u.id);
+    if (!cRes.ok || cJs.status !== 'success') { alert(cJs.message || '创建会话失败'); return; }
+    inp.value = '';
+    await refreshConversations();
+    await openConversation(cJs.conversation_id);
+  }
+
+  // 拖拽/粘贴发送图片
+  function showDropHint(show){
+    const el = document.getElementById('dropHint');
+    if (!el) return;
+    if (show) el.classList.add('show');
+    else el.classList.remove('show');
+  }
+
+  function extractImageFilesFromDataTransfer(dt){
+    const files = [];
+    if (!dt) return files;
+    if (dt.files && dt.files.length) {
+      for (const f of dt.files) {
+        if (f && f.type && f.type.startsWith('image/')) files.push(f);
+      }
+    }
+    return files;
+  }
+
+  document.addEventListener('dragenter', (e)=>{
+    if (!ChatState.currentConversationId) return;
+    const dt = e.dataTransfer;
+    if (!dt) return;
+    const hasImg = Array.from(dt.items || []).some(it => it.kind === 'file' && (it.type || '').startsWith('image/'));
+    if (hasImg) showDropHint(true);
+  });
+  document.addEventListener('dragover', (e)=>{
+    if (!ChatState.currentConversationId) return;
+    const dt = e.dataTransfer;
+    if (!dt) return;
+    const hasImg = Array.from(dt.items || []).some(it => it.kind === 'file' && (it.type || '').startsWith('image/'));
+    if (hasImg) {
+      e.preventDefault();
+      showDropHint(true);
+    }
+  });
+  document.addEventListener('dragleave', (e)=>{
+    showDropHint(false);
+  });
+  document.addEventListener('drop', async (e)=>{
+    showDropHint(false);
+    if (!ChatState.currentConversationId) return;
+    const files = extractImageFilesFromDataTransfer(e.dataTransfer);
+    if (!files.length) return;
+    e.preventDefault();
+    for (const f of files) {
+      if (f.size > 5 * 1024 * 1024) { showToast('有图片超过 5MB，已跳过'); continue; }
+      await sendImageBlob(f, '拖拽');
+    }
+  });
+
+  // 粘贴图片
+  document.addEventListener('paste', async (e)=>{
+    if (!ChatState.currentConversationId) return;
+    const items = (e.clipboardData && e.clipboardData.items) ? e.clipboardData.items : [];
+    const imgs = [];
+    for (const it of items) {
+      if (it.kind === 'file' && (it.type || '').startsWith('image/')) {
+        const f = it.getAsFile();
+        if (f) imgs.push(f);
+      }
+    }
+    if (!imgs.length) return;
+    e.preventDefault();
+    for (const f of imgs) {
+      if (f.size > 5 * 1024 * 1024) { showToast('粘贴图片超过 5MB，已跳过'); continue; }
+      await sendImageBlob(f, '粘贴');
+    }
+  });
+
+  // ===== 语音录制与发送（MediaRecorder） =====
+  let mediaRecorder = null;
+  let recordingChunks = [];
+  let recordingStartAt = 0;
+  let isRecording = false;
+  let shouldCancelVoice = false;
+  let voiceStartPointer = null;
+  const VOICE_CANCEL_UP_DISTANCE = 80;
+
+  function pickRecorderMime(){
+    const candidates = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/ogg;codecs=opus',
+      'audio/ogg',
+      'audio/wav'
+    ];
+    for (const c of candidates) {
+      try {
+        if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(c)) return c;
+      } catch(e) {}
+    }
+    return '';
+  }
+
+  function extFromMime(mime){
+    const m = (mime || '').toLowerCase();
+    if (m.includes('webm')) return 'webm';
+    if (m.includes('ogg')) return 'ogg';
+    if (m.includes('wav')) return 'wav';
+    if (m.includes('mp3')) return 'mp3';
+    if (m.includes('m4a') || m.includes('mp4')) return 'm4a';
+    return 'webm';
+  }
+
+  function updateVoiceBtn(){
+    const btn = Chat.ui.dom.get('btnVoice');
+    if (!btn) return;
+    if (isRecording) {
+      if (shouldCancelVoice) {
+        btn.style.color = 'rgba(255,59,48,0.95)';
+        btn.title = '松开取消';
+        btn.setAttribute('aria-label', '松开取消');
+      } else {
+        btn.style.color = 'var(--primary)';
+        btn.title = '松开发送';
+        btn.setAttribute('aria-label', '松开发送');
+      }
+    } else {
+      btn.style.color = '';
+      btn.title = '按住说话';
+      btn.setAttribute('aria-label', '按住说话');
+    }
+  }
+
+  async function startVoiceRecord(){
+    if (!ChatState.currentConversationId) { alert('请先选择或创建一个会话'); return; }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert('当前浏览器不支持录音');
+      return;
+    }
+
+    const btn = Chat.ui.dom.get('btnVoice');
+    setLoading(btn, true);
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = pickRecorderMime();
+      mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      recordingChunks = [];
+      recordingStartAt = Date.now();
+      isRecording = true;
+      shouldCancelVoice = false;
+      updateVoiceBtn();
+
+      mediaRecorder.ondataavailable = (e)=>{
+        if (e.data && e.data.size > 0) recordingChunks.push(e.data);
+      };
+      mediaRecorder.onstop = async ()=>{
+        try { stream.getTracks().forEach(t=>t.stop()); } catch(e) {}
+
+        const durationSec = Math.max(0, (Date.now() - recordingStartAt) / 1000);
+        const blob = new Blob(recordingChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+        recordingChunks = [];
+
+        isRecording = false;
+        updateVoiceBtn();
+
+        if (shouldCancelVoice) {
+          shouldCancelVoice = false;
+          showVoiceHint(false);
+          showToast('已取消发送');
+          return;
+        }
+
+        if (durationSec < 0.3 || blob.size < 300) {
+          showToast('录音时间太短');
+          return;
+        }
+        if (blob.size > 8 * 1024 * 1024) {
+          alert('语音文件过大（>8MB），请缩短录音时长');
+          return;
+        }
+
+        showVoiceHint(false);
+        await uploadVoiceBlob(blob, durationSec);
+      };
+
+      mediaRecorder.start();
+      showToast('开始录音…上滑取消，松开发送');
+    } catch(e) {
+      alert('无法开始录音：可能未授权麦克风');
+    } finally {
+      setLoading(btn, false);
+    }
+  }
+
+  async function stopVoiceRecord(){
+    if (!mediaRecorder) return;
+    try {
+      if (mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+    } catch(e) {}
+  }
+
+  function isInteractiveVoiceTarget(el){
+    if (!el) return false;
+    const btn = Chat.ui.dom.get('btnVoice');
+    if (!btn) return false;
+    return el === btn || btn.contains(el);
+  }
+
+  function bindHoldToTalk(){
+    const btn = Chat.ui.dom.get('btnVoice');
+    if (!btn) return;
+
+    btn.style.userSelect = 'none';
+    btn.style.webkitUserSelect = 'none';
+    btn.style.touchAction = 'none';
+
+    const onPress = async (e)=>{
+      if (!ChatState.currentConversationId) { alert('请先选择或创建一个会话'); return; }
+      e.preventDefault();
+      e.stopPropagation();
+      if (isRecording) return;
+      shouldCancelVoice = false;
+      voiceStartPointer = { x: e.clientX || 0, y: e.clientY || 0 };
+      showVoiceHint(true, '上滑取消，松开发送');
+      try { btn.setPointerCapture && btn.setPointerCapture(e.pointerId); } catch(err) {}
+      await startVoiceRecord();
+    };
+
+    const onRelease = async (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      if (!isRecording) return;
+      if (shouldCancelVoice) {
+        await stopVoiceRecord();
+        return;
+      }
+      await stopVoiceRecord();
+    };
+
+    btn.addEventListener('pointerdown', onPress);
+    btn.addEventListener('pointerup', onRelease);
+    btn.addEventListener('pointercancel', (e)=>{
+      shouldCancelVoice = true;
+      showVoiceHint(true, '松开手指取消发送');
+      onRelease(e);
+    });
+
+    btn.addEventListener('pointerup', ()=>{ voiceStartPointer = null; });
+    btn.addEventListener('pointercancel', ()=>{ voiceStartPointer = null; });
+
+    btn.addEventListener('pointermove', (e)=>{
+      if (!isRecording) return;
+      if (!voiceStartPointer) return;
+      const dy = (voiceStartPointer.y || 0) - (e.clientY || 0);
+      const nowCancel = dy >= VOICE_CANCEL_UP_DISTANCE;
+      if (nowCancel !== shouldCancelVoice) {
+        shouldCancelVoice = nowCancel;
+        updateVoiceBtn();
+        if (shouldCancelVoice) {
+          showVoiceHint(true, '松开手指取消发送');
+        } else {
+          showVoiceHint(true, '上滑取消，松开发送');
+        }
+      }
+    });
+
+    btn.addEventListener('contextmenu', (e)=>{ e.preventDefault(); });
+
+    btn.addEventListener('keydown', async (e)=>{
+      if (e.repeat) return;
+      if (e.key === ' ' || e.key === 'Enter') {
+        shouldCancelVoice = false;
+        await onPress(e);
+      }
+      if (e.key === 'Escape' && isRecording) {
+        shouldCancelVoice = true;
+        await onRelease(e);
+      }
+    });
+    btn.addEventListener('keyup', async (e)=>{
+      if (e.key === ' ' || e.key === 'Enter') {
+        await onRelease(e);
+      }
+    });
+  }
+
+  async function uploadVoiceBlob(blob, durationSec){
+    if (!ChatState.currentConversationId) return;
+
+    const btn = Chat.ui.dom.get('btnVoice');
+    setLoading(btn, true);
+    try {
+      const mime = blob.type || 'audio/webm';
+      const ext = extFromMime(mime);
+      const file = new File([blob], `voice_${Date.now()}.${ext}`, { type: mime });
+
+      const fd = new FormData();
+      fd.append('conversation_id', String(ChatState.currentConversationId));
+      fd.append('audio', file);
+      fd.append('duration', String(durationSec || ''));
+
+      const { res, js } = await Chat.api.uploadAudio(fd);
+
+      if (!res.ok || js.status !== 'success') {
+        const ok = confirm((js.message || '语音发送失败') + "\n\n是否重试？");
+        if (ok) await uploadVoiceBlob(blob, durationSec);
+        return;
+      }
+
+      await pollMessages(true);
+    } catch(e) {
+      const ok = confirm('语音发送失败\n\n是否重试？');
+      if (ok) await uploadVoiceBlob(blob, durationSec);
+    } finally {
+      setLoading(btn, false);
+    }
+  }
+
+  async function openRemarkPrompt(){
+    if (!currentPeerUserId) return;
+    try {
+      const { res, js } = await Chat.api.getUserRemark(currentPeerUserId);
+      if (!res.ok || js.status !== 'success') { alert(js.message || '读取备注失败'); return; }
+
+      const curVal = (js.remark || '').trim();
+      const next = prompt('设置备注（最多30字，留空表示清除）', curVal);
+      if (next === null) return;
+
+      const v = String(next || '').trim();
+      const { res: sRes, js: sJs } = await Chat.api.setUserRemark(currentPeerUserId, v);
+      if (!sRes.ok || sJs.status !== 'success') {
+        alert((sJs && sJs.message) ? sJs.message : (`设置备注失败（HTTP ${sRes.status}）`));
+        return;
+      }
+
+      await refreshConversations();
+      try {
+        const list = await fetchConversations();
+        const cur = (list || []).find(x => x.conversation_id === ChatState.currentConversationId);
+        if (cur) {
+          const name = (cur.c_type === 'direct' ? (cur.peer_remark || cur.peer_username || '私聊') : (cur.title || '会话'));
+          const t = document.getElementById('chatTitle');
+          if (t) t.textContent = name;
+        }
+      } catch(e) {}
+
+      showToast(v ? '备注已更新' : '备注已清除');
+    } catch(e) {
+      alert('备注操作失败');
+    }
+  }
+
+  function togglePlusMenu(e){
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    const menu = document.getElementById('plusMenu');
+    const btn = document.getElementById('btnPlus');
+    if (!menu || !btn) return;
+
+    const isOpen = menu.classList.contains('show');
+    if (isOpen) { menu.classList.remove('show'); return; }
+
+    const r = btn.getBoundingClientRect();
+    const mw = 200;
+    const mh = 110;
+    let left = Math.max(12, Math.min(window.innerWidth - mw - 12, r.left));
+    let top = r.top - mh - 10;
+    if (top < 12) top = r.bottom + 10;
+
+    menu.style.left = left + 'px';
+    menu.style.top = top + 'px';
+    menu.classList.add('show');
+  }
+
+  function hidePlusMenu(){
+    const menu = document.getElementById('plusMenu');
+    if (menu) menu.classList.remove('show');
+  }
+
+  function onPlusPick(kind){
+    hidePlusMenu();
+    if (kind === 'image') {
+      document.getElementById('imgInput').click();
+      return;
+    }
+    if (kind === 'file') {
+      alert('文件发送暂未实现（可继续扩展）');
+      return;
+    }
+  }
+
+  document.addEventListener('click', (e)=>{
+    const menu = document.getElementById('plusMenu');
+    const btn = document.getElementById('btnPlus');
+    if (!menu || !btn) return;
+    if (!menu.classList.contains('show')) return;
+    if (menu.contains(e.target) || btn.contains(e.target)) return;
+    hidePlusMenu();
+  });
+
+  async function init(){
+    if (!LOGGED_IN) { alert('请先登录'); location.href='/login'; return; }
+
+    const sp = new URLSearchParams(window.location.search || '');
+    const preOpenId = Number(sp.get('conversation_id') || 0);
+
+    await refreshConversations();
+    setEmptyStateVisible(true);
+
+    if (preOpenId > 0) {
+      await openConversation(preOpenId);
+    }
+
+    updateVoiceBtn();
+    bindHoldToTalk();
+
+    const ta = Chat.ui.dom.get('composer');
+    if (ta) {
+      ta.addEventListener('input', updateComposerActions);
+      ta.addEventListener('blur', updateComposerActions);
+      ta.addEventListener('focus', updateComposerActions);
+    }
+    updateComposerActions();
+  }
+
+  init();
+</script>

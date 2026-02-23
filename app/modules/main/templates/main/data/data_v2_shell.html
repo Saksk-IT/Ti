@@ -3,6 +3,7 @@
 {% block page_title %}数据{% endblock %}
 
 {% block head_extra %}
+  <link rel="stylesheet" href="/static/css/_design-tokens.css" />
   <link rel="stylesheet" href="/static/css/data_center.css" />
   <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 {% endblock %}
@@ -11,7 +12,7 @@
   <div class="app-container dc-shell">
     <header class="dc-hero" aria-label="数据中心概览">
       <div class="dc-hero-main">
-        <div class="dc-hero-title" style="min-width:0;">
+        <div class="dc-hero-title u-min-w-0">
           <h1>{{ (hero_title or '数据中心') }}</h1>
           <p>{{ (hero_subtitle or '公共题库 + 个人题库：从全局到复盘，再到标签体系的一致数据视角。') }}</p>
         </div>
