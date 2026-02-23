@@ -7,6 +7,7 @@ import smtplib
 import secrets
 import string
 import re
+import logging
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.header import Header
@@ -14,6 +15,8 @@ from email.utils import formataddr
 from typing import Optional, Dict, Any, Tuple
 from flask import current_app
 from app.core.utils.email_templates import render_template, get_email_subject
+
+logger = logging.getLogger(__name__)
 
 
 class EmailService:
@@ -268,13 +271,15 @@ class EmailService:
             code: 验证码
             template_type: 模板类型
         """
-        print('\n' + '=' * 60)
-        print('邮件服务（开发模式 - 控制台输出）')
-        print('=' * 60)
-        print(f'收件人: {to_email}')
-        print(f'类型: {template_type}')
-        print(f'验证码: {code}')
-        print('=' * 60 + '\n')
+        logger.info(
+            '\n' + '=' * 60 + '\n'
+            '邮件服务（开发模式 - 控制台输出）\n'
+            + '=' * 60 + '\n'
+            f'收件人: {to_email}\n'
+            f'类型: {template_type}\n'
+            f'验证码: {code}\n'
+            + '=' * 60
+        )
         current_app.logger.info(f'[开发模式] 验证码已输出到控制台: {to_email} -> {code}')
     
     @staticmethod
