@@ -9,10 +9,13 @@
   var fmtDateTime = h.fmtDateTime;
   var calcActiveDays = h.calcActiveDays;
   var calcRecentAnswered = h.calcRecentAnswered;
+  var clamp = h.clamp;
+  var daysSince = h.daysSince;
   var setText = h.setText;
   var setBar = h.setBar;
   var api = ns.api || {};
   var charts = ns.charts || {};
+  var renderEmpty = ns.renderEmpty;
   var resolveRoot = ns.resolveRoot;
   var isVisible = ns.isVisible;
   var readContextFromDom = ns.readContextFromDom;
