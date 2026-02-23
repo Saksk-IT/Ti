@@ -1,0 +1,462 @@
+    <script>
+        let editor;
+        let questionId = {{ question_id|default(0) }};
+        let questionData;
+        let allQuestions = [];
+        let currentQuestionIndex = -1;
+        let subjectId = null;
+
+        // 初始化Monaco Editor
+        require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs' } });
+        require(['vs/editor/editor.main'], function () {
+            editor = monaco.editor.create(document.getElementById('editor'), {
+                value: '',
+                language: 'python',
+                theme: document.body.classList.contains('dark-mode') ? 'vs-dark' : 'vs',
+                fontSize: 14,
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                wordWrap: 'on',
+                lineNumbers: 'on',
+                renderLineHighlight: 'all',
+                selectOnLineNumbers: true,
+                // 光标相关配置
+                cursorBlinking: 'blink',
+                cursorSmoothCaretAnimation: 'on',
+                cursorStyle: 'line',
+                cursorWidth: 2,
+                // 撤销/重做功能（默认启用，但明确配置）
+                readOnly: false,
+                // 其他编辑器功能
+                quickSuggestions: true,
+                suggestOnTriggerCharacters: true,
+                acceptSuggestionOnEnter: 'on',
+                tabCompletion: 'on',
+                wordBasedSuggestions: 'matchingDocuments',
+                // 自动保存历史记录（用于撤销/重做）
+                undoRedoService: undefined // 使用默认的撤销/重做服务
+            });
+
+            // 代码自动保存（防抖，避免频繁请求）
+            let saveTimeout;
+            window.isSaving = false; // 使用全局变量，以便在 saveCodeToDatabase 中访问
+            
+            editor.onDidChangeModelContent(() => {
+                const code = editor.getValue();
+                // 同时保存到 localStorage（作为备份）
+                localStorage.setItem(`coding_${questionId}`, code);
+                
+                // 防抖：1秒后保存到数据库
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => {
+                    saveCodeToDatabase(code);
+                }, 1000);
+            });
+            
+            // 编辑器初始化完成后，如果题目数据已加载，则加载代码草稿
+            if (questionData && questionData.code_template !== undefined) {
+                loadCodeDraft(questionData.code_template);
+            } else {
+                // 如果题目数据还未加载，等待加载完成后再加载代码
+                // 这个逻辑在 loadQuestion 中已经处理
+            }
+        });
+
+        // 加载所有题目列表（用于导航功能）
+        async function loadAllQuestions() {
+            try {
+                const res = await fetch('/coding/api/questions?per_page=1000');
+                const result = await res.json();
+                
+                if (result.status === 'success') {
+                    allQuestions = result.data.questions || [];
+                    
+                    // 找到当前题目在列表中的索引
+                    const index = allQuestions.findIndex(q => q.id === questionId);
+                    if (index !== -1) {
+                        currentQuestionIndex = index;
+                    }
+                    
+                    updateNavigationButtons();
+                }
+            } catch (error) {
+                console.error('加载题目列表失败:', error);
+            }
+        }
+
+        // 导航到指定题目
+        function navigateToQuestion(id) {
+            if (id === questionId) {
+                closeDrawer();
+                return;
+            }
+            closeDrawer();
+            window.location.href = `/coding/${id}`;
+        }
+
+        // 导航到上一题/下一题
+        function navigateQuestion(direction) {
+            if (currentQuestionIndex === -1 || allQuestions.length === 0) return;
+            
+            const newIndex = currentQuestionIndex + direction;
+            if (newIndex >= 0 && newIndex < allQuestions.length) {
+                navigateToQuestion(allQuestions[newIndex].id);
+            }
+        }
+
+        // 更新导航按钮状态
+        function updateNavigationButtons() {
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            
+            if (currentQuestionIndex <= 0) {
+                prevBtn.style.opacity = '0.5';
+                prevBtn.style.pointerEvents = 'none';
+            } else {
+                prevBtn.style.opacity = '1';
+                prevBtn.style.pointerEvents = 'auto';
+            }
+            
+            if (currentQuestionIndex >= allQuestions.length - 1) {
+                nextBtn.style.opacity = '0.5';
+                nextBtn.style.pointerEvents = 'none';
+            } else {
+                nextBtn.style.opacity = '1';
+                nextBtn.style.pointerEvents = 'auto';
+            }
+        }
+
+        // 加载题目详情
+        async function loadQuestion() {
+            try {
+                const res = await fetch(`/coding/api/questions/${questionId}`);
+                const result = await res.json();
+
+                if (result.status === 'success') {
+                    questionData = result.data;
+                    // 尝试获取subject_id，可能是subject_id或coding_subject_id
+                    subjectId = questionData.subject_id || questionData.coding_subject_id;
+                    
+                    // 更新返回按钮链接
+                    const backBtn = document.getElementById('back-btn');
+                    if (backBtn && subjectId) {
+                        backBtn.href = `/coding/subject/${subjectId}`;
+                        backBtn.title = `返回题目集`;
+                    }
+                    
+                    renderQuestion(questionData);
+                    
+                    // 加载代码草稿（优先从数据库加载，其次从 localStorage）
+                    // 使用 await 确保编辑器初始化完成后再加载
+                    await loadCodeDraft(questionData.code_template);
+                } else {
+                    document.getElementById('question-title').textContent = '题目不存在';
+                }
+            } catch (error) {
+                console.error('加载题目失败:', error);
+                document.getElementById('question-title').textContent = '加载失败';
+            }
+        }
+
+        // 渲染题目
+        function renderQuestion(data) {
+            document.getElementById('question-title').textContent = data.title || data.content || '无标题';
+            document.getElementById('question-score').textContent = data.score || '10';
+            document.getElementById('question-author').textContent = data.author || '未知';
+            document.getElementById('question-institution').textContent = data.institution || '未知';
+            
+            let html = '';
+            
+            // 题目描述（支持Markdown）
+            if (data.description) {
+                // 尝试渲染Markdown
+                let markdownRendered = false;
+                
+                // 检查marked.js是否可用
+                if (typeof marked !== 'undefined') {
+                    try {
+                        // marked.js v11使用marked.parse()
+                        const markdownHtml = marked.parse(data.description);
+                        html += `<div class="markdown-content">${markdownHtml}</div>`;
+                        markdownRendered = true;
+                    } catch (e) {
+                        console.error('Markdown解析失败:', e);
+                    }
+                }
+                
+                // 如果Markdown未渲染，使用纯文本
+                if (!markdownRendered) {
+                    html += `<p>${escapeHtml(data.description)}</p>`;
+                    
+                    // 延迟尝试渲染（等待marked.js加载）
+                    const descriptionText = data.description; // 保存描述文本
+                    setTimeout(() => {
+                        if (typeof marked !== 'undefined') {
+                            try {
+                                const markdownHtml = marked.parse(descriptionText);
+                                const descEl = document.getElementById('question-description');
+                                if (descEl) {
+                                    // 查找第一个p标签并替换
+                                    const firstP = descEl.querySelector('p');
+                                    if (firstP) {
+                                        firstP.outerHTML = `<div class="markdown-content">${markdownHtml}</div>`;
+                                    }
+                                }
+                            } catch (e) {
+                                console.error('延迟Markdown渲染失败:', e);
+                            }
+                        }
+                    }, 300);
+                }
+            }
+            
+            // 示例
+            if (data.examples && data.examples.length > 0) {
+                html += '<h3>输入输出样例</h3>';
+                data.examples.forEach((ex, idx) => {
+                    html += `
+                        <div class="example-box">
+                            <strong>样例 ${idx + 1}:</strong><br>
+                            <strong>输入:</strong> ${escapeHtml(ex.input || '')}<br>
+                            <strong>输出:</strong> ${escapeHtml(ex.output || '')}
+                            ${ex.explanation ? `<br><br><strong>说明:</strong> ${escapeHtml(ex.explanation)}` : ''}
+                        </div>
+                    `;
+                });
+            }
+
+            // 函数接口定义
+            if (data.function_interface || data.code_template) {
+                html += '<h3>函数接口定义</h3>';
+                html += '<div class="function-interface">';
+                if (data.function_interface) {
+                    html += escapeHtml(data.function_interface);
+                } else if (data.code_template) {
+                    html += escapeHtml(data.code_template.split('\n')[0] || '');
+                }
+                html += '</div>';
+            }
+
+            // 约束条件
+            if (data.constraints && data.constraints.length > 0) {
+                html += '<h3>约束条件</h3>';
+                html += '<ul class="constraints-list">';
+                data.constraints.forEach(c => {
+                    html += `<li>${escapeHtml(c)}</li>`;
+                });
+                html += '</ul>';
+            }
+
+            // 提示信息
+            if (data.hints && data.hints.length > 0) {
+                html += '<h3>提示</h3>';
+                html += '<ul class="constraints-list">';
+                data.hints.forEach(h => {
+                    html += `<li>${escapeHtml(h)}</li>`;
+                });
+                html += '</ul>';
+            }
+
+            document.getElementById('question-description').innerHTML = html;
+            
+            // 如果之前使用了纯文本，现在尝试重新渲染Markdown
+            if (data.description) {
+                setTimeout(() => {
+                    const descEl = document.getElementById('question-description');
+                    if (descEl) {
+                        const firstP = descEl.querySelector('p');
+                        if (firstP && typeof marked !== 'undefined' && marked && marked.parse) {
+                            try {
+                                const markdownHtml = marked.parse(data.description);
+                                firstP.outerHTML = `<div class="markdown-content">${markdownHtml}</div>`;
+                            } catch (e) {
+                                console.error('延迟Markdown渲染失败:', e);
+                            }
+                        }
+                    }
+                }, 100);
+            }
+        }
+
+        // 运行代码（测试用例）
+        async function runCode() {
+            if (!editor) return;
+            
+            const code = editor.getValue();
+            if (!code.trim()) {
+                alert('请输入代码');
+                return;
+            }
+
+            try {
+                const res = await fetch('/coding/api/execute', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        code: code,
+                        language: 'python'
+                    })
+                });
+
+                const result = await res.json();
+                
+                if (result.status === 'success') {
+                    const data = result.data;
+                        // 执行成功，结果已在Debug面板显示
+                        console.log('执行成功:', data);
+                    } else {
+                        console.error('执行失败:', result.message);
+                }
+            } catch (error) {
+                console.error('执行失败:', error.message);
+            }
+        }
+
+        // 提交代码
+        async function submitCode() {
+            if (!editor) return;
+            
+            const code = editor.getValue();
+            if (!code.trim()) {
+                alert('请输入代码');
+                return;
+            }
+
+            try {
+                const res = await fetch('/coding/api/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        question_id: questionId,
+                        code: code,
+                        language: 'python'
+                    })
+                });
+
+                const result = await res.json();
+                
+                if (result.status === 'success') {
+                    const data = result.data;
+                    
+                    // 显示提交结果弹窗
+                    showSubmissionModal({
+                        problem: questionData?.title || questionData?.content || 'N/A',
+                        user: '{{ current_user.username if current_user else "N/A" }}',
+                        compiler: 'Python',
+                        status: data.status || 'pending',
+                        score: Math.round(data.score || 0),
+                        total_score: data.total_score || 100,
+                        submitted_at: new Date().toISOString(),
+                        evaluated_at: new Date().toISOString(),
+                        memory_used: data.memory_used || 0,
+                        memory_limit: data.memory_limit || 131072,
+                        execution_time: data.execution_time || 0,
+                        time_limit: data.time_limit || 5000,
+                        code: code,
+                        compiler_output: data.error_message || data.compiler_output || '',
+                        passed_cases: data.passed_cases || 0,
+                        total_cases: data.total_cases || 0,
+                        test_results: data.test_results || []
+                    });
+                    
+                    // 刷新提交历史（如果抽屉是打开的）
+                    const submissionsDrawer = document.getElementById('submissions-drawer');
+                    if (submissionsDrawer && submissionsDrawer.classList.contains('active')) {
+                        loadSubmissionsDrawer();
+                    }
+                    
+                    // 如果通过，更新题目状态
+                    if (data.status === 'accepted') {
+                        console.log('题目已通过');
+                    }
+                } else {
+                    alert(`提交失败: ${result.message}`);
+                }
+            } catch (error) {
+                alert(`提交失败: ${error.message}`);
+            }
+        }
+
+        // 保存代码到数据库
+        async function saveCodeToDatabase(code) {
+            if (!questionId || window.isSaving) return;
+            
+            try {
+                window.isSaving = true;
+                const res = await fetch(`/coding/api/drafts/${questionId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        code: code,
+                        language: 'python'
+                    })
+                });
+                
+                if (res.ok) {
+                    const result = await res.json();
+                    if (result.status === 'success') {
+                        // 保存成功（静默保存，不显示提示）
+                        console.log('代码已自动保存');
+                    }
+                }
+            } catch (error) {
+                console.error('保存代码失败:', error);
+                // 保存失败不影响用户体验，静默处理
+            } finally {
+                window.isSaving = false;
+            }
+        }
+        
+        // 加载代码草稿
+        async function loadCodeDraft(defaultTemplate) {
+            // 等待编辑器初始化完成
+            if (!editor) {
+                // 如果编辑器还未初始化，等待一段时间后重试
+                setTimeout(() => loadCodeDraft(defaultTemplate), 100);
+                return;
+            }
+            
+            if (!questionId) return;
+            
+            try {
+                // 优先从数据库加载
+                const res = await fetch(`/coding/api/drafts/${questionId}`);
+                if (res.ok) {
+                    const result = await res.json();
+                    if (result.status === 'success' && result.data.code && result.data.code.trim()) {
+                        editor.setValue(result.data.code);
+                        // 设置焦点到编辑器
+                        editor.focus();
+                        return;
+                    }
+                }
+                
+                // 如果数据库没有，尝试从 localStorage 加载
+                const savedCode = localStorage.getItem(`coding_${questionId}`);
+                if (savedCode && savedCode.trim()) {
+                    editor.setValue(savedCode);
+                    // 设置焦点到编辑器
+                    editor.focus();
+                    return;
+                }
+                
+                // 如果都没有，使用默认模板
+                if (defaultTemplate) {
+                    editor.setValue(defaultTemplate);
+                    // 设置焦点到编辑器
+                    editor.focus();
+                }
+            } catch (error) {
+                console.error('加载代码草稿失败:', error);
+                // 失败时尝试从 localStorage 加载
+                const savedCode = localStorage.getItem(`coding_${questionId}`);
+                if (savedCode && savedCode.trim()) {
+                    editor.setValue(savedCode);
+                    editor.focus();
+                } else if (defaultTemplate) {
+                    editor.setValue(defaultTemplate);
+                    editor.focus();
+                }
+            }
+        }

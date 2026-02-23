@@ -1,0 +1,78 @@
+            <div class="editor-panel" id="editor-panel">
+            <div class="editor-header">
+                <div class="toolbar-left">
+                <select class="language-selector" id="language-selector">
+                    <option value="python">Python (python3)</option>
+                </select>
+                <div class="nav-buttons">
+                    <a href="#" class="nav-btn" id="prev-btn" onclick="navigateQuestion(-1); return false;">
+                        <span>‹</span> 上一题
+                    </a>
+                    <a href="#" class="nav-btn" id="next-btn" onclick="navigateQuestion(1); return false;">
+                        下一题 <span>›</span>
+                    </a>
+                </div>
+                </div>
+                <button class="debug-toggle-btn" id="debug-toggle">
+                    <span>🐛</span> Debug
+                </button>
+            </div>
+            <div class="editor-container">
+                <div id="editor"></div>
+            </div>
+            <!-- Debug窗口（可折叠） -->
+            <div class="debug-panel collapsed" id="debug-panel">
+                <!-- 收起时显示的栏 -->
+                <div class="debug-header-bar" id="debug-header-bar">
+                    <div class="debug-header-left">
+                        <div class="debug-header-tabs">
+                            <span class="debug-header-tab active" data-tab="testcase">测试用例</span>
+                            <span class="debug-header-tab" data-tab="compiler">编译器输出</span>
+                </div>
+                </div>
+                    <div class="debug-header-center">
+                        <button class="btn btn-primary btn-submit" onclick="event.stopPropagation(); submitCode();" style="padding: 6px 16px; font-size: var(--font-size-xs);">提交本题作答</button>
+            </div>
+                    <div class="debug-header-right">
+                        <svg class="debug-toggle-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 6l4 4 4-4"/>
+                        </svg>
+                    </div>
+                </div>
+                
+                <!-- 展开时显示的内容 -->
+                <div class="debug-panel-content">
+                    <!-- 测试用例标签页 -->
+                <div class="debug-content active" id="debug-testcase">
+                    <div class="testcase-input">
+                        <div class="line-numbers" id="testcase-line-numbers">
+                            <span>1</span>
+                        </div>
+                        <textarea 
+                            class="testcase-textarea" 
+                            id="testcase-input-textarea"
+                            placeholder="输入测试用例..."
+                        ></textarea>
+                    </div>
+                    <div class="debug-actions">
+                        <button class="debug-reset-btn" id="debug-reset-btn">重置测试用例</button>
+                        <button class="debug-run-btn" id="debug-run-btn">
+                            <span>▶</span> 运行测试
+                        </button>
+                    </div>
+                    <div class="debug-status">
+                        <span class="status-text" id="debug-status-text">等待测试...</span>
+                        <button class="view-last-case-btn" id="view-last-case-btn">查看上次用例</button>
+                    </div>
+                </div>
+                
+                <!-- 编译器输出标签页 -->
+                <div class="debug-content" id="debug-compiler" style="display: none;">
+                    <div class="compiler-output">
+                        <div id="compiler-line-numbers"></div>
+                        <pre class="compiler-text" id="compiler-text"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>

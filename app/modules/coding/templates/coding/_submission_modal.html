@@ -1,0 +1,94 @@
+    <!-- 提交结果弹窗遮罩层 -->
+    <div class="modal-backdrop" id="submission-modal-backdrop"></div>
+
+    <!-- 提交结果弹窗 -->
+    <div class="submission-modal" id="submission-modal">
+        <!-- 标题栏 -->
+        <div class="modal-header">
+            <h2 class="modal-title">提交结果</h2>
+            <button class="modal-close" id="submission-modal-close">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- 提交详情网格 -->
+        <div class="submission-details-grid">
+            <div class="detail-item">
+                <span class="detail-label">题目</span>
+                <span class="detail-value" id="submission-problem">-</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">用户</span>
+                <span class="detail-value" id="submission-user">-</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">编译器</span>
+                <span class="detail-value" id="submission-compiler">Python</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">状态</span>
+                <span class="detail-value status-badge" id="submission-modal-status">-</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">分数</span>
+                <span class="detail-value" id="submission-score">-</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">提交时间</span>
+                <span class="detail-value" id="submission-time">-</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">内存</span>
+                <span class="detail-value" id="submission-memory">-</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">用时</span>
+                <span class="detail-value" id="submission-duration">-</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">评测时间</span>
+                <span class="detail-value" id="submission-eval-time">-</span>
+            </div>
+        </div>
+        
+        <!-- 评测详情区域 -->
+        <div class="submission-section">
+            <div class="section-header">
+                <h3 class="section-title">评测详情</h3>
+            </div>
+            <div class="test-results-table-container">
+                <table class="test-results-table">
+                    <thead>
+                        <tr>
+                            <th>测试点</th>
+                            <th>提示</th>
+                            <th>内存(KB)</th>
+                            <th>用时(ms)</th>
+                            <th>结果</th>
+                            <th>得分</th>
+                        </tr>
+                    </thead>
+                    <tbody id="test-results-tbody">
+                        <!-- 测试用例结果将动态加载 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 编译器输出区域 -->
+        <div class="submission-section">
+            <div class="section-header">
+                <h3 class="section-title">编译器输出</h3>
+            </div>
+            <div class="compiler-output-display">
+                <pre class="compiler-error" id="compiler-output"></pre>
+            </div>
+        </div>
+        
+        <!-- 确认按钮 -->
+        <div class="modal-footer">
+            <button class="modal-confirm-btn" id="submission-modal-confirm">确认</button>
+        </div>
+    </div>
