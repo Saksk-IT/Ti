@@ -117,7 +117,7 @@ Page({
       if (bankId > 0) {
         safeNavigate(`/pages/bank-detail/bank-detail?id=${encodeURIComponent(String(bankId))}`, 'redirectTo');
       } else {
-        safeNavigate('/pages/my-banks/my-banks', 'switchTab');
+        safeNavigate('/pages/my-banks-v2/my-banks-v2', 'switchTab');
       }
     } catch (e: any) {
       const msg = (e && e.message) ? String(e.message) : '加入失败';
@@ -151,7 +151,7 @@ Page({
       if (bankId > 0) {
         safeNavigate(`/pages/bank-detail/bank-detail?id=${encodeURIComponent(String(bankId))}`, 'redirectTo');
       } else {
-        safeNavigate('/pages/my-banks/my-banks', 'switchTab');
+        safeNavigate('/pages/my-banks-v2/my-banks-v2', 'switchTab');
       }
     } catch (e: any) {
       const msg = (e && e.message) ? String(e.message) : '加入失败';

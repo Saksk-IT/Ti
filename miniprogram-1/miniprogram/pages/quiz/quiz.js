@@ -20,8 +20,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -63,182 +63,13 @@ var auth_1 = require("../../utils/auth");
 var quiz_source_1 = require("../../utils/quiz-source");
 var markdown_1 = require("../../utils/markdown");
 var theme_1 = require("../../utils/theme");
+var request_state_1 = require("../../behaviors/request-state");
+var set_data_batcher_1 = require("../../utils/set-data-batcher");
+var quiz_helpers_1 = require("./modules/quiz-helpers");
 // 数据源实例（页面级别）
 var quizSource = null;
-var AI_EXPLAIN_CACHE_KEY_PREFIX = 'saksk_ai_explain_v1_';
-function getAIExplainCacheKey(qid) {
-    return "".concat(AI_EXPLAIN_CACHE_KEY_PREFIX).concat(qid);
-}
-function readAIExplainCache(qid) {
-    if (!qid)
-        return '';
-    try {
-        var cached = wx.getStorageSync(getAIExplainCacheKey(qid));
-        if (!cached)
-            return '';
-        if (typeof cached === 'string')
-            return cached;
-        if (typeof cached === 'object' && typeof cached.explain === 'string')
-            return cached.explain;
-    }
-    catch (e) {
-        // ignore
-    }
-    return '';
-}
-function writeAIExplainCache(qid, explain) {
-    if (!qid)
-        return;
-    var text = (explain || '').toString().trim();
-    if (!text)
-        return;
-    try {
-        wx.setStorageSync(getAIExplainCacheKey(qid), { v: 1, explain: text, updatedAt: Date.now() });
-    }
-    catch (e) {
-        // ignore
-    }
-}
-function parseIdList(raw, maxLen) {
-    if (maxLen === void 0) { maxLen = 200; }
-    if (raw == null)
-        return [];
-    var s = String(raw || '').trim();
-    try {
-        if (/%[0-9A-Fa-f]{2}/.test(s)) {
-            s = decodeURIComponent(s);
-        }
-    }
-    catch (e) {
-        // 忽略解码失败
-    }
-    s = s.replace(/，/g, ',').trim();
-    if (!s)
-        return [];
-    var parts = s.split(',').map(function (x) { return String(x || '').trim(); }).filter(Boolean);
-    var out = [];
-    var seen = new Set();
-    for (var _i = 0, parts_1 = parts; _i < parts_1.length; _i++) {
-        var p = parts_1[_i];
-        if (out.length >= maxLen)
-            break;
-        var n = Number(p);
-        if (!Number.isFinite(n) || n <= 0)
-            continue;
-        var id = Math.floor(n);
-        if (seen.has(id))
-            continue;
-        seen.add(id);
-        out.push(id);
-    }
-    return out;
-}
-
-function safeFromCodePoint(n) {
-    if (!Number.isFinite(n) || n <= 0 || n > 0x10ffff)
-        return '';
-    try {
-        return String.fromCodePoint(n);
-    }
-    catch (e) {
-        return '';
-    }
-}
-
-function decodeHtmlEntities(input) {
-    var s = String(input || '');
-    if (!s)
-        return '';
-    if (!s.includes('&') && !s.includes('&#'))
-        return s;
-    return s
-        .replace(/&nbsp;/g, ' ')
-        .replace(/&emsp;/g, '  ')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&amp;/g, '&')
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
-        .replace(/&#x([0-9a-fA-F]+);/g, function (_, hex) { return safeFromCodePoint(parseInt(hex, 16)); })
-        .replace(/&#([0-9]+);/g, function (_, num) { return safeFromCodePoint(parseInt(num, 10)); });
-}
-
-function stripHtmlToText(input) {
-    var raw = String(input || '');
-    if (!raw)
-        return '';
-    var s0 = raw.replace(/\r\n/g, '\n');
-    var looksLikeHtml = /<\/?[a-z][\s>]/i.test(s0);
-    var out = s0;
-    if (looksLikeHtml) {
-        out = out
-            .replace(/<\s*(script|style)\b[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, '')
-            .replace(/<\s*br\s*\/?\s*>/gi, '\n')
-            .replace(/<\/\s*(p|div|pre|code|blockquote|h[1-6])\s*>/gi, '\n')
-            .replace(/<\/\s*li\s*>/gi, '\n')
-            .replace(/<\s*li\b[^>]*>/gi, '\n- ')
-            .replace(/<\s*img\b[^>]*>/gi, '')
-            .replace(/<[^>]+>/g, '');
-    }
-    out = decodeHtmlEntities(out);
-    out = out
-        .replace(/[ \t]+\n/g, '\n')
-        .replace(/\n{3,}/g, '\n\n')
-        .trim();
-    return out;
-}
-
-function uniqUrls(urls) {
-    var set = new Set();
-    var out = [];
-    (urls || []).forEach(function (u) {
-        var v = String(u || '').trim();
-        if (!v || set.has(v))
-            return;
-        set.add(v);
-        out.push(v);
-    });
-    return out;
-}
-
-function resolveInlineUrl(src) {
-    var raw = String(src || '').trim();
-    if (!raw)
-        return '';
-    if (raw.startsWith('data:') || raw.startsWith('blob:'))
-        return '';
-    if (/^https?:\/\//i.test(raw))
-        return raw;
-    if (raw.startsWith('//'))
-        return "https:".concat(raw);
-    return (0, api_1.resolveUploadUrl)(raw);
-}
-
-function extractInlineImageUrls(content) {
-    var raw = String(content || '');
-    if (!raw)
-        return [];
-    var out = [];
-    // HTML <img src="...">
-    var imgRe = /<\s*img\b[^>]*\bsrc\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s>]+))/gi;
-    var m = null;
-    while ((m = imgRe.exec(raw))) {
-        var src = decodeHtmlEntities((m[1] || m[2] || m[3] || '').trim());
-        var url = resolveInlineUrl(src);
-        if (url)
-            out.push(url);
-    }
-    // Markdown ![alt](url)
-    var mdRe = /!\[[^\]]*]\(([^)\s]+)(?:\s+[^)]*)?\)/g;
-    while ((m = mdRe.exec(raw))) {
-        var src = decodeHtmlEntities(String(m[1] || '').trim().replace(/^['"]|['"]$/g, ''));
-        var url = resolveInlineUrl(src);
-        if (url)
-            out.push(url);
-    }
-    return uniqUrls(out);
-}
 Page({
+    behaviors: [request_state_1.requestStateBehavior],
     data: {
         mode: 'quiz', // 模式：'quiz' | 'memo' | 'reinforce'
         // 数据源信息
@@ -279,7 +110,7 @@ Page({
             vibrationFeedback: false // 答题震动反馈
         },
         // 字体大小（仅影响答题页字体）
-        quizFontSize: 'md',
+        quizFontSize: 'md', // 'sm' | 'md' | 'lg'
         quizFontClass: 'quiz-font-md',
         themeStyleName: '默认',
         // 主题（深浅/风格）
@@ -319,7 +150,10 @@ Page({
             explanation: '',
             showOptions: false
         },
-        editSaving: false // 编辑保存中
+        editSaving: false, // 编辑保存中
+        // 滑屏切题
+        touchStartX: 0,
+        touchStartY: 0
     },
     // === 进度同步（与 Web 端 /api/progress 互通）===
     progressKey: '',
@@ -332,6 +166,22 @@ Page({
     practiceSettingsKey: 'quiz_practice_settings_v1',
     quizFontSizeKey: 'quiz_font_size_v1',
     sessionStartedAt: 0,
+    setDataBatcher: null,
+    ensureSetDataBatcher: function () {
+        if (this.setDataBatcher)
+            return;
+        this.setDataBatcher = (0, set_data_batcher_1.createSetDataBatcher)(this.setData.bind(this));
+    },
+    patchData: function (patch, callback, immediate) {
+        if (immediate === void 0) { immediate = false; }
+        this.ensureSetDataBatcher();
+        var fn = this.setDataBatcher;
+        if (typeof fn === 'function') {
+            fn(patch, callback, { immediate: immediate });
+            return;
+        }
+        this.setData(patch, callback);
+    },
     onShow: function () {
         try {
             wx.hideShareMenu();
@@ -352,7 +202,7 @@ Page({
     },
     onLoad: function (options) {
         var _this = this;
-        console.log('刷题页面 onLoad，参数:', options);
+        this.ensureSetDataBatcher();
         if (!(0, auth_1.checkLogin)()) {
             wx.redirectTo({ url: '/pages/login/login' });
             return;
@@ -363,23 +213,21 @@ Page({
         // 个人题库：题库创建者
         // 初始化主题（保证进入页面即命中 themeClass / themeStyleClass）
         try {
-            this.setData(Object.assign({ canEdit: false }, theme_1.themeManager.getPageData()));
+            this.patchData(Object.assign({ canEdit: false }, theme_1.themeManager.getPageData()), undefined, true);
             this.syncThemeStyleName();
         }
         catch (e) {
-            this.setData({ canEdit: false });
+            this.patchData({ canEdit: false }, undefined, true);
         }
         // 使用工厂函数创建数据源
         quizSource = (0, quiz_source_1.createSourceFromOptions)(options);
         if (!quizSource) {
-            console.error('数据源参数缺失（需要 subject 或 bank_id）');
             wx.showToast({ title: '参数缺失', icon: 'none' });
             setTimeout(function () {
                 _this.navigateBackToEntry();
             }, 1500);
             return;
         }
-        console.log('数据源类型:', quizSource.sourceType, '标识:', quizSource.sourceId);
         // 解析参数
         var modeRaw = String(options.mode || 'quiz').trim().toLowerCase();
         var mode = (modeRaw === 'memo' || modeRaw === 'reinforce') ? modeRaw : 'quiz';
@@ -391,7 +239,7 @@ Page({
         var startId = Number(options.start_id || 0);
         var rkRaw = String(options.rk || '').trim().toLowerCase();
         var reinforceKind = mode === 'reinforce' && (rkRaw === 'wrong' || rkRaw === 'similar') ? rkRaw : '';
-        var reinforceIds = mode === 'reinforce' ? parseIdList(options.ids || options.question_ids, 200) : [];
+        var reinforceIds = mode === 'reinforce' ? (0, quiz_helpers_1.parseIdList)(options.ids || options.question_ids, 200) : [];
         if (mode === 'reinforce' && !reinforceIds.length) {
             wx.showToast({ title: '缺少加强题目列表', icon: 'none' });
             setTimeout(function () {
@@ -404,14 +252,14 @@ Page({
             type = decodeURIComponent(type);
         }
         catch (e) {
-            console.warn('题型参数解码失败:', e);
+            // ignore decode error
         }
         // 标签可能会被 encodeURIComponent（如"重点"），需显式解码
         try {
             tag = decodeURIComponent(tag);
         }
         catch (e) {
-            console.warn('标签参数解码失败:', e);
+            // ignore decode error
         }
         this.setData({
             mode: mode,
@@ -500,7 +348,7 @@ Page({
         wx.navigateTo({
             url: '/pages/quiz-settlement/quiz-settlement',
             fail: function (e) {
-                console.warn('打开结算页失败，尝试 redirectTo:', e);
+                // ignore
                 wx.redirectTo({ url: '/pages/quiz-settlement/quiz-settlement' });
             }
         });
@@ -578,27 +426,18 @@ Page({
     },
     onCycleThemeStyle: function () {
         try {
-            theme_1.themeManager.cycleStyle();
+            var next = theme_1.themeManager.cycleStyle();
             this.syncThemeStyleName();
             wx.showToast({ title: "\u5DF2\u5207\u6362\u5230".concat(theme_1.themeManager.getStyleName(), "\u4E3B\u9898"), icon: 'none' });
+            return next;
         }
         catch (e) {
             // ignore
         }
     },
-    onThemeSwitchChange: function (e) {
-        var checked = !!(e && e.detail && e.detail.value);
-        try {
-            theme_1.themeManager.setMode(checked ? 'dark' : 'light');
-            this.setData(theme_1.themeManager.getPageData());
-        }
-        catch (err) {
-            // ignore
-        }
-    },
     onToggleTheme: function () {
         try {
-            theme_1.themeManager.toggle();
+            theme_1.themeManager.toggleDark();
             this.setData(theme_1.themeManager.getPageData());
         }
         catch (e) {
@@ -637,6 +476,7 @@ Page({
                     return;
                 var idx = Number(_this.data.currentIndex) || 0;
                 var qType = (cq.q_type || '').toString();
+                // 清理本地进度缓存（answers/status）
                 try {
                     if (_this.progressAnswerMap && typeof _this.progressAnswerMap === 'object') {
                         delete _this.progressAnswerMap[String(idx)];
@@ -646,8 +486,9 @@ Page({
                     }
                 }
                 catch (e) { }
+                // 清理题目列表状态（✓/✕）
                 try {
-                    var nextRecords = __assign({}, (_this.data.answerRecords || {}));
+                    var nextRecords = Object.assign({}, _this.data.answerRecords || {});
                     if (cq && typeof cq.id === 'number') {
                         delete nextRecords[cq.id];
                     }
@@ -674,6 +515,7 @@ Page({
                     _this.refreshDisplayOptions();
                     _this.updateSubmitState();
                 });
+                // 立即同步到云端（仅进度/答案缓存；不回滚服务器的答题统计）
                 _this.saveProgressIndex(true);
                 wx.showToast({ title: '已清除', icon: 'none' });
             }
@@ -682,27 +524,26 @@ Page({
     // 加载题目列表（使用数据源适配器）
     loadQuestions: function (type, source, shuffleQuestions, shuffleOptions, tag) {
         return __awaiter(this, void 0, void 0, function () {
-            var _a, mode, sourceType, sourceId, requestMode, reinforceIds, canEdit, userInfo, currentUserId, bankDetail, bankOwnerId, e_1, e_2, result, questions, total, questionsWithPreview, pKey, saved, savedPayload, hasHistory, nextPayload, restoredRecords, idx, startId_1, found, safeIndex, err_1, errorMsg;
+            var _a, mode, sourceType, sourceId, requestMode, reinforceIds, canEdit, userInfo, currentUserId, bankDetail, bankName, bankOwnerId, e_1, e_2, result, questions, total, questionsWithPreview, pKey, saved, savedPayload, hasHistory, nextPayload, restoredRecords, idx, startId_1, found, safeIndex, err_1, errorMsg;
             var _this = this;
-            var _b;
-            return __generator(this, function (_c) {
-                switch (_c.label) {
+            var _b, _c;
+            return __generator(this, function (_d) {
+                switch (_d.label) {
                     case 0:
                         if (!quizSource) {
-                            console.error('数据源未初始化');
                             this.setData({ loading: false });
                             return [2 /*return*/];
                         }
-                        _c.label = 1;
+                        _d.label = 1;
                     case 1:
-                        _c.trys.push([1, 12, , 13]);
+                        _d.trys.push([1, 12, , 13]);
                         _a = this.data, mode = _a.mode, sourceType = _a.sourceType, sourceId = _a.sourceId;
                         requestMode = mode === 'reinforce' ? 'quiz' : mode;
                         reinforceIds = mode === 'reinforce' ? (this.data.reinforceIds || []) : [];
                         canEdit = false;
-                        _c.label = 2;
+                        _d.label = 2;
                     case 2:
-                        _c.trys.push([2, 8, , 9]);
+                        _d.trys.push([2, 8, , 9]);
                         userInfo = wx.getStorageSync('userInfo') || {};
                         currentUserId = userInfo.id || userInfo.user_id;
                         if (!(sourceType === 'public')) return [3 /*break*/, 3];
@@ -710,24 +551,29 @@ Page({
                         canEdit = !!(userInfo.is_admin || userInfo.is_subject_admin);
                         return [3 /*break*/, 7];
                     case 3:
-                        if (!(sourceType === 'bank' && currentUserId)) return [3 /*break*/, 7];
-                        _c.label = 4;
+                        if (!(sourceType === 'bank')) return [3 /*break*/, 7];
+                        _d.label = 4;
                     case 4:
-                        _c.trys.push([4, 6, , 7]);
+                        _d.trys.push([4, 6, , 7]);
                         return [4 /*yield*/, api_1.api.getBankDetail(Number(sourceId))];
                     case 5:
-                        bankDetail = _c.sent();
-                        bankOwnerId = (bankDetail === null || bankDetail === void 0 ? void 0 : bankDetail.user_id) || ((_b = bankDetail === null || bankDetail === void 0 ? void 0 : bankDetail.data) === null || _b === void 0 ? void 0 : _b.user_id);
-                        canEdit = bankOwnerId && Number(bankOwnerId) === Number(currentUserId);
+                        bankDetail = _d.sent();
+                        bankName = (bankDetail === null || bankDetail === void 0 ? void 0 : bankDetail.name) || ((_b = bankDetail === null || bankDetail === void 0 ? void 0 : bankDetail.data) === null || _b === void 0 ? void 0 : _b.name);
+                        if (bankName && (!this.data.displayName || /^\d+$/.test(this.data.displayName))) {
+                            this.setData({ displayName: bankName });
+                        }
+                        // 检查是否是题库创建者
+                        if (currentUserId) {
+                            bankOwnerId = (bankDetail === null || bankDetail === void 0 ? void 0 : bankDetail.user_id) || ((_c = bankDetail === null || bankDetail === void 0 ? void 0 : bankDetail.data) === null || _c === void 0 ? void 0 : _c.user_id);
+                            canEdit = bankOwnerId && Number(bankOwnerId) === Number(currentUserId);
+                        }
                         return [3 /*break*/, 7];
                     case 6:
-                        e_1 = _c.sent();
-                        console.warn('获取题库详情失败:', e_1);
-                        canEdit = false;
+                        e_1 = _d.sent();
                         return [3 /*break*/, 7];
                     case 7: return [3 /*break*/, 9];
                     case 8:
-                        e_2 = _c.sent();
+                        e_2 = _d.sent();
                         return [3 /*break*/, 9];
                     case 9:
                         this.setData({ canEdit: canEdit });
@@ -742,13 +588,13 @@ Page({
                                 per_page: 1000 // 一次性加载所有题目
                             })];
                     case 10:
-                        result = _c.sent();
+                        result = _d.sent();
                         questions = result.questions || [];
                         total = result.total || questions.length;
                         // 统一 options 结构，避免不同历史数据格式导致前端无法渲染
                         questions = questions.map(function (q) {
                             var normalizedOptions = _this.normalizeOptions(q.options, q.q_type, q.answer);
-                            var imageUrls = uniqUrls((0, api_1.normalizeImageUrls)(q.image_path).concat(extractInlineImageUrls(q.content)));
+                            var imageUrls = (0, quiz_helpers_1.uniqUrls)(__spreadArray(__spreadArray([], (0, api_1.normalizeImageUrls)(q.image_path), true), (0, quiz_helpers_1.extractInlineImageUrls)(q.content), true));
                             var imagePath = imageUrls.length > 0 ? imageUrls[0] : '';
                             return Object.assign({}, q, { options: normalizedOptions, image_urls: imageUrls, image_path: imagePath });
                         });
@@ -762,7 +608,7 @@ Page({
                         this.progressKey = pKey;
                         return [4 /*yield*/, this.loadProgressState(pKey)];
                     case 11:
-                        saved = _c.sent();
+                        saved = _d.sent();
                         savedPayload = (saved && typeof saved === 'object') ? saved : null;
                         // 初始化进度缓存
                         this.progressStatusMap = (savedPayload && savedPayload.status && typeof savedPayload.status === 'object') ? savedPayload.status : {};
@@ -827,8 +673,7 @@ Page({
                         }
                         return [3 /*break*/, 13];
                     case 12:
-                        err_1 = _c.sent();
-                        console.error('加载题目失败:', err_1);
+                        err_1 = _d.sent();
                         errorMsg = (err_1 && err_1.message) || '加载失败';
                         if (errorMsg.includes('401') || errorMsg.includes('登录') || errorMsg.includes('过期')) {
                             wx.removeStorageSync('token');
@@ -904,9 +749,9 @@ Page({
         }
         else if (typeof savedAnswer === 'string') {
             if (qType === '填空题') {
-                var parts_2 = savedAnswer.split(';;').map(function (x) { return x.trim(); }).filter(function (x) { return x.length > 0; });
-                var filledCount = Math.max(blankCount, parts_2.length);
-                var filled = Array.from({ length: filledCount }, function (_, i) { return parts_2[i] || ''; });
+                var parts_1 = savedAnswer.split(';;').map(function (x) { return x.trim(); }).filter(function (x) { return x.length > 0; });
+                var filledCount = Math.max(blankCount, parts_1.length);
+                var filled = Array.from({ length: filledCount }, function (_, i) { return parts_1[i] || ''; });
                 blankCount = filledCount;
                 blankIndexes = Array.from({ length: filledCount }, function (_, i) { return i; });
                 nextBlankAnswers = filled.slice(0, filledCount);
@@ -1095,7 +940,7 @@ Page({
                             this.progressStatusMap = this.progressStatusMap || {};
                             this.progressStatusMap[String(this.data.currentIndex)] = isCorrect ? 'correct' : 'wrong';
                         }
-                        this.setData({
+                        this.patchData({
                             showAnswer: true,
                             isCorrect: isCorrect,
                             isJudgable: isJudgable,
@@ -1111,7 +956,7 @@ Page({
                                 answered: true,
                                 isCorrect: isCorrect
                             };
-                            this.setData({
+                            this.patchData({
                                 answerRecords: nextRecords
                             });
                         }
@@ -1122,7 +967,7 @@ Page({
                                     return q;
                                 return Object.assign({}, q, { is_mistake: isCorrect ? 0 : 1 });
                             });
-                            this.setData({ questions: questions });
+                            this.patchData({ questions: questions });
                         }
                         // 重要操作：立即同步进度到云端
                         this.saveProgressIndex(true);
@@ -1141,7 +986,7 @@ Page({
                     case 3: return [3 /*break*/, 5];
                     case 4:
                         err_2 = _b.sent();
-                        console.error('记录答题结果失败:', err_2);
+                        wx.showToast({ title: '记录结果失败，已忽略', icon: 'none' });
                         return [3 /*break*/, 5];
                     case 5:
                         // 震动反馈（提交后）
@@ -1195,17 +1040,17 @@ Page({
                         return [4 /*yield*/, quizSource.toggleFavorite(currentQuestion.id)];
                     case 2:
                         _b.sent();
-                        this.setData({ isFavorite: true });
+                        this.patchData({ isFavorite: true });
                         questions = this.data.questions.map(function (q) {
                             if (q.id === currentQuestion.id)
                                 return Object.assign({}, q, { is_fav: 1 });
                             return q;
                         });
-                        this.setData({ questions: questions });
+                        this.patchData({ questions: questions });
                         return [3 /*break*/, 4];
                     case 3:
                         err_3 = _b.sent();
-                        console.error('自动收藏失败:', err_3);
+                        wx.showToast({ title: '自动收藏失败', icon: 'none' });
                         return [3 /*break*/, 4];
                     case 4: return [2 /*return*/];
                 }
@@ -1216,14 +1061,14 @@ Page({
         var _this = this;
         var next = !this.data.showAIExplain;
         if (!next) {
-            this.setData({ showAIExplain: false, scrollIntoView: '' });
+            this.patchData({ showAIExplain: false, scrollIntoView: '' });
             return;
         }
-        this.setData({ showAIExplain: true, scrollIntoView: '' }, function () {
+        this.patchData({ showAIExplain: true, scrollIntoView: '' }, function () {
             _this.loadAIExplain(false);
             setTimeout(function () {
                 if (_this.data.showAIExplain) {
-                    _this.setData({ scrollIntoView: 'aiExplainCard' });
+                    _this.patchData({ scrollIntoView: 'aiExplainCard' });
                 }
             }, 60);
         });
@@ -1233,7 +1078,7 @@ Page({
     },
     loadAIExplain: function (force) {
         return __awaiter(this, void 0, void 0, function () {
-            var cq, qid, cached, options, res, text, cleaned, err_4;
+            var cq, qid, cached, options, res, text, cleaned, finalText, err_4;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -1245,16 +1090,22 @@ Page({
                             return [2 /*return*/];
                         }
                         if (!force && qid) {
-                            cached = readAIExplainCache(qid);
+                            cached = (0, quiz_helpers_1.readAIExplainCache)(qid);
                             if (cached) {
-                                this.setData({ aiLoading: false, aiExplainError: '', aiExplainText: cached, aiExplainRichText: (0, markdown_1.markdownToRichTextHtml)(cached), aiExplainQuestionId: qid });
+                                this.patchData({
+                                    aiLoading: false,
+                                    aiExplainError: '',
+                                    aiExplainText: cached,
+                                    aiExplainRichText: (0, markdown_1.markdownToRichTextHtml)(cached),
+                                    aiExplainQuestionId: qid
+                                });
                                 return [2 /*return*/];
                             }
                         }
                         options = Array.isArray(cq.options)
                             ? cq.options.map(function (x) { return ({ key: x.key, value: x.value }); })
                             : undefined;
-                        this.setData({ aiLoading: true, aiExplainError: '', aiExplainText: '', aiExplainRichText: '', aiExplainQuestionId: qid });
+                        this.patchData({ aiLoading: true, aiExplainError: '', aiExplainText: '', aiExplainRichText: '', aiExplainQuestionId: qid });
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 3, , 4]);
@@ -1269,14 +1120,18 @@ Page({
                         text = (res && res.explain) ? String(res.explain) : '';
                         cleaned = (text || '').toString().trim();
                         if (cleaned) {
-                            writeAIExplainCache(qid, cleaned);
+                            (0, quiz_helpers_1.writeAIExplainCache)(qid, cleaned);
                         }
-                        this.setData({ aiExplainText: cleaned || '暂无解析内容', aiExplainRichText: (0, markdown_1.markdownToRichTextHtml)(cleaned || '暂无解析内容'), aiLoading: false });
+                        finalText = cleaned || '暂无解析内容';
+                        this.patchData({
+                            aiExplainText: finalText,
+                            aiExplainRichText: (0, markdown_1.markdownToRichTextHtml)(finalText),
+                            aiLoading: false
+                        });
                         return [3 /*break*/, 4];
                     case 3:
                         err_4 = _a.sent();
-                        console.error('AI解析失败:', err_4);
-                        this.setData({ aiExplainError: (err_4 === null || err_4 === void 0 ? void 0 : err_4.message) || 'AI解析失败，请稍后重试', aiLoading: false });
+                        this.patchData({ aiExplainError: (err_4 === null || err_4 === void 0 ? void 0 : err_4.message) || 'AI解析失败，请稍后重试', aiLoading: false });
                         return [3 /*break*/, 4];
                     case 4: return [2 /*return*/];
                 }
@@ -1376,7 +1231,6 @@ Page({
                         return [3 /*break*/, 4];
                     case 3:
                         err_5 = _b.sent();
-                        console.error('切换收藏失败:', err_5);
                         wx.showToast({ title: err_5.message || '操作失败', icon: 'none' });
                         return [3 /*break*/, 4];
                     case 4: return [2 /*return*/];
@@ -1428,6 +1282,7 @@ Page({
         return shuffled;
     },
     onQuestionImageError: function (e) {
+        var _this = this;
         var idx = Number((e && e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.index) || -1);
         var q = this.data.currentQuestion;
         var urls = (q && q.image_urls) || [];
@@ -1454,15 +1309,15 @@ Page({
                 var nextUrls = urls.slice();
                 nextUrls[idx] = tempFilePath;
                 var nextQuestion = Object.assign({}, q, { image_urls: nextUrls });
-                var currentIndex = Number(self.data.currentIndex || 0);
-                var nextQuestions = Array.isArray(self.data.questions) ? self.data.questions.slice() : [];
+                var currentIndex = Number(_this.data.currentIndex || 0);
+                var nextQuestions = Array.isArray(_this.data.questions) ? _this.data.questions.slice() : [];
                 if (currentIndex >= 0 && currentIndex < nextQuestions.length) {
                     nextQuestions[currentIndex] = Object.assign({}, nextQuestions[currentIndex], { image_urls: nextUrls });
                 }
-                self.setData({ currentQuestion: nextQuestion, questions: nextQuestions });
+                _this.setData({ currentQuestion: nextQuestion, questions: nextQuestions });
             },
             fail: function (err) {
-                console.warn('downloadFile 题目图片失败:', url, err);
+                // ignore
             }
         });
     },
@@ -1541,7 +1396,6 @@ Page({
                         return [3 /*break*/, 8];
                     case 7:
                         err_6 = _b.sent();
-                        console.error('创建标签失败:', err_6);
                         wx.showToast({ title: err_6.message || '创建失败', icon: 'none' });
                         return [3 /*break*/, 8];
                     case 8: return [2 /*return*/];
@@ -1594,7 +1448,6 @@ Page({
                         return [3 /*break*/, 7];
                     case 6:
                         err_7 = _b.sent();
-                        console.error('设置标签失败:', err_7);
                         wx.showToast({ title: err_7.message || '设置失败', icon: 'none' });
                         return [3 /*break*/, 7];
                     case 7: return [2 /*return*/];
@@ -1634,7 +1487,6 @@ Page({
                         return [3 /*break*/, 6];
                     case 5:
                         err_8 = _b.sent();
-                        console.error('加载标签列表失败:', err_8);
                         return [3 /*break*/, 6];
                     case 6: return [2 /*return*/];
                 }
@@ -1675,7 +1527,6 @@ Page({
                         return [3 /*break*/, 7];
                     case 6:
                         err_9 = _b.sent();
-                        console.error('加载题目标签失败:', err_9);
                         this.setData({ currentQuestionTags: [] });
                         return [3 /*break*/, 7];
                     case 7: return [2 /*return*/];
@@ -1796,7 +1647,6 @@ Page({
                         return [3 /*break*/, 7];
                     case 6:
                         err_10 = _b.sent();
-                        console.error('保存题目失败:', err_10);
                         this.setData({ editSaving: false });
                         wx.showToast({ title: err_10.message || '保存失败', icon: 'none' });
                         return [3 /*break*/, 7];
@@ -1817,7 +1667,7 @@ Page({
                     optList = JSON.parse(s);
                 }
                 catch (e) {
-                    console.warn('options JSON 解析失败，将按纯文本处理:', e);
+                    // ignore parse error and fallback to plain text
                     optList = [s];
                 }
             }
@@ -1857,13 +1707,13 @@ Page({
                 var rawKey = item.key;
                 var rawValue = item.value;
                 var key = String(rawKey == null ? '' : rawKey).trim();
-                var value = stripHtmlToText(rawValue);
+                var value = (0, quiz_helpers_1.stripHtmlToText)(rawValue);
                 if (key || value) {
                     options.push({ key: key, value: value, answerValue: key || value });
                 }
                 continue;
             }
-            var s = stripHtmlToText(item);
+            var s = (0, quiz_helpers_1.stripHtmlToText)(item);
             if (!s) {
                 continue;
             }
@@ -1976,7 +1826,7 @@ Page({
         };
     },
     formatContentForDisplay: function (content) {
-        return stripHtmlToText(content);
+        return (0, quiz_helpers_1.stripHtmlToText)(content);
     },
     looksLikeCode: function (text) {
         var s = (text || '').toString();
@@ -2041,7 +1891,7 @@ Page({
         return "".concat(prefix, "_").concat(uid, "_").concat(mode, "_").concat(sourceId, "_").concat(type, "_").concat(dataScope).concat(tagPart, "_q").concat(shuffleQ, "_o").concat(shuffleO);
     },
     loadProgressState: function (key) {
-        return __awaiter(this, void 0, void 0, function () {
+        return __awaiter(this, void 0, Promise, function () {
             var local, remote, e_3, merged;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -2323,5 +2173,40 @@ Page({
             this.saveProgressTimer = null;
         }
         this.saveLastSession(true);
+    },
+    // === 滑屏切题 ===
+    onTouchStart: function (e) {
+        if (!e.touches || !e.touches.length)
+            return;
+        var touch = e.touches[0];
+        this.setData({
+            touchStartX: touch.clientX,
+            touchStartY: touch.clientY
+        });
+    },
+    onTouchEnd: function (e) {
+        if (!e.changedTouches || !e.changedTouches.length)
+            return;
+        var touch = e.changedTouches[0];
+        var _a = this.data, touchStartX = _a.touchStartX, touchStartY = _a.touchStartY, loading = _a.loading, currentQuestion = _a.currentQuestion;
+        // 未加载完成或无题目时不处理
+        if (loading || !currentQuestion)
+            return;
+        var deltaX = touch.clientX - touchStartX;
+        var deltaY = touch.clientY - touchStartY;
+        var absDeltaX = Math.abs(deltaX);
+        var absDeltaY = Math.abs(deltaY);
+        // 水平滑动距离 > 80px 且水平距离 > 垂直距离的 1.5 倍（避免误触）
+        var swipeThreshold = 80;
+        if (absDeltaX > swipeThreshold && absDeltaX > absDeltaY * 1.5) {
+            if (deltaX > 0) {
+                // 右滑 → 上一题
+                this.onPrevQuestion();
+            }
+            else {
+                // 左滑 → 下一题
+                this.onNextQuestion();
+            }
+        }
     }
 });

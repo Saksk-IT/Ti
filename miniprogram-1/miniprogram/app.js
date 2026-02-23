@@ -1,11 +1,24 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 // app.ts
 var theme_1 = require("./utils/theme");
+var font_1 = require("./utils/font");
 var user_settings_1 = require("./utils/user-settings");
-// 启动期尽早读取用户手动主题（避免 Page 首帧使用默认浅色导致白屏闪烁）
+// 启动期尽早读取用户手动主题和字体（避免 Page 首帧使用默认导致闪烁）
 try {
     theme_1.themeManager.bootstrap();
+    font_1.fontManager.bootstrap();
 }
 catch (e) { }
 var lastSettingsSyncAt = 0;
@@ -25,14 +38,19 @@ function preloadCriticalSubpackages() {
         return;
     subpackagePreloaded = true;
     try {
-        var loadSubpackage = wx.loadSubpackage;
-        if (typeof loadSubpackage !== 'function')
+        var loadSubpackage_1 = wx.loadSubpackage;
+        if (typeof loadSubpackage_1 !== 'function')
             return;
+        var targets_1 = ['packages/data', 'pages/index-v2', 'pages/subject-detail-v2'];
         setTimeout(function () {
-            try {
-                loadSubpackage({ name: 'packages/data', fail: function () { } });
-            }
-            catch (e) { }
+            targets_1.forEach(function (name, idx) {
+                setTimeout(function () {
+                    try {
+                        loadSubpackage_1({ name: name, fail: function () { } });
+                    }
+                    catch (e) { }
+                }, idx * 180);
+            });
         }, 200);
     }
     catch (e) { }
@@ -46,22 +64,12 @@ function patchPageThemeOnce() {
     if (typeof originalPage !== 'function')
         return;
     g.Page = function (options) {
-        // 注入主题数据，避免组件在首帧拿到 null/undefined（如 v2-drawer 的 themeStyle）
+        // 注入主题和字体数据，避免组件在首帧拿到 null/undefined（如 v2-drawer 的 themeStyle）
         try {
             var themeData = theme_1.themeManager.getPageData();
+            var fontData = font_1.fontManager.getPageData();
             var base = options && options.data && typeof options.data === 'object' ? options.data : {};
-            var merged = {};
-            for (var k in base) {
-                if (!Object.prototype.hasOwnProperty.call(base, k))
-                    continue;
-                merged[k] = base[k];
-            }
-            for (var k in themeData) {
-                if (!Object.prototype.hasOwnProperty.call(themeData, k))
-                    continue;
-                merged[k] = themeData[k];
-            }
-            options.data = merged;
+            options.data = __assign(__assign(__assign({}, base), themeData), fontData);
         }
         catch (e) {
             // 忽略异常
@@ -80,7 +88,7 @@ function patchPageThemeOnce() {
                 // 忽略 applySystemUI 失败
             }
             try {
-                this.setData(theme_1.themeManager.getPageData());
+                this.setData(__assign(__assign({}, theme_1.themeManager.getPageData()), font_1.fontManager.getPageData()));
             }
             catch (e) {
                 // 忽略 setData 失败
@@ -99,7 +107,7 @@ function patchPageThemeOnce() {
                 // 忽略 applySystemUI 失败
             }
             try {
-                this.setData(theme_1.themeManager.getPageData());
+                this.setData(__assign(__assign({}, theme_1.themeManager.getPageData()), font_1.fontManager.getPageData()));
             }
             catch (e) {
                 // 忽略 setData 失败
@@ -114,7 +122,8 @@ App({
     globalData: {
         isDarkMode: false,
         themeMode: 'system',
-        themeStyle: 'default'
+        themeStyle: 'dune',
+        fontStyle: 'modern'
     },
     onLaunch: function () {
         var _this = this;
@@ -123,6 +132,9 @@ App({
         this.globalData.isDarkMode = themeInfo.isDark;
         this.globalData.themeMode = themeInfo.mode;
         this.globalData.themeStyle = theme_1.themeManager.getStyle();
+        // 初始化字体系统
+        font_1.fontManager.init();
+        this.globalData.fontStyle = font_1.fontManager.getStyle();
         maybeSyncUserSettings();
         preloadCriticalSubpackages();
         // 监听主题变化，更新全局数据
@@ -130,6 +142,10 @@ App({
             _this.globalData.isDarkMode = isDark;
             _this.globalData.themeMode = theme_1.themeManager.getMode();
             _this.globalData.themeStyle = theme_1.themeManager.getStyle();
+        });
+        // 监听字体变化，更新全局数据
+        font_1.fontManager.onFontChange(function (style) {
+            _this.globalData.fontStyle = style;
         });
         // 路由变化时同步系统 UI（兜底覆盖非 safeNavigate 的跳转时机）
         try {
@@ -164,8 +180,7 @@ App({
         // 登录
         wx.login({
             success: function (res) {
-                console.log(res.code);
-                // 发送 res.code 到后台换取 openId, sessionKey, unionId
+                void res.code;
             },
         });
     },

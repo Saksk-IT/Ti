@@ -1,7 +1,6 @@
 {
   "pages": [
     "pages/hub-v2/hub-v2",
-    "pages/index/index",
     "pages/exams-select-v2/exams-select-v2",
     "pages/public-bank-v2/public-bank-v2",
     "pages/subject-data-global/subject-data-global",
@@ -26,7 +25,6 @@
     "pages/settings-about-v2/settings-about-v2",
     "pages/profile-view-v2/profile-view-v2",
     "pages/subjects/subjects",
-    "pages/my-banks/my-banks",
     "pages/mine/mine",
     "pages/login/login",
     "pages/dev-settings/dev-settings",
@@ -37,9 +35,7 @@
     "pages/question-list/question-list",
     "pages/practice/practice",
     "pages/practice-setup/practice-setup",
-    "pages/subject-detail/subject-detail",
     "pages/subject-stats/subject-stats",
-    "pages/search/search",
     "pages/bank-join/bank-join",
     "pages/exam-setup/exam-setup",
     "pages/exam-run/exam-run",
@@ -111,7 +107,7 @@
         "text": "科目"
       },
       {
-        "pagePath": "pages/my-banks/my-banks",
+        "pagePath": "pages/my-banks-v2/my-banks-v2",
         "iconPath": "images/tabbar/practice.png",
         "selectedIconPath": "images/tabbar/practice-active.png",
         "text": "题库"
@@ -123,6 +119,16 @@
         "text": "我的"
       }
     ]
+  },
+  "preloadRule": {
+    "pages/hub-v2/hub-v2": {
+      "network": "all",
+      "packages": [
+        "pages/index-v2",
+        "pages/subject-detail-v2",
+        "pages/bank-detail"
+      ]
+    }
   },
   "style": "v2",
   "darkmode": true,

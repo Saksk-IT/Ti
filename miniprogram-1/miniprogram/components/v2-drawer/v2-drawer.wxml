@@ -171,7 +171,7 @@
         <view class="nav-section" wx:if="{{false}}">
           <text class="nav-title">旧版</text>
           <view class="nav-group">
-            <view class="nav-item" bindtap="onNavTap" data-nav-type="redirectTo" data-url="/pages/index/index">
+            <view class="nav-item" bindtap="onNavTap" data-nav-type="redirectTo" data-url="/pages/index-v2/index-v2">
               <text class="nav-label">旧首页</text>
               <text class="nav-chev">›</text>
             </view>
@@ -179,7 +179,7 @@
               <text class="nav-label">旧科目</text>
               <text class="nav-chev">›</text>
             </view>
-            <view class="nav-item" bindtap="onNavTap" data-nav-type="switchTab" data-url="/pages/my-banks/my-banks">
+            <view class="nav-item" bindtap="onNavTap" data-nav-type="switchTab" data-url="/pages/my-banks-v2/my-banks-v2">
               <text class="nav-label">旧题库</text>
               <text class="nav-chev">›</text>
             </view>

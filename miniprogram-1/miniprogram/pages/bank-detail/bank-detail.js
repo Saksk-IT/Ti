@@ -20,8 +20,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -54,242 +54,11 @@ var config_1 = require("../../utils/config");
 var user_settings_1 = require("../../utils/user-settings");
 var quiz_source_1 = require("../../utils/quiz-source");
 var theme_1 = require("../../utils/theme");
-var web_1 = require("../../utils/web");
-var OPTION_TYPES = new Set(['选择题', '多选题']);
-var KEY_SHUFFLE_Q = 'shuffle_questions';
-var KEY_SHUFFLE_O = 'shuffle_options';
-var DEFAULT_DETAIL_TAB_ORDER = ['practice', 'reinforce', 'exam', 'search', 'stats', 'share', 'manage'];
-var VALID_DETAIL_TABS = new Set(DEFAULT_DETAIL_TAB_ORDER);
-var DETAIL_TAB_LABELS = {
-    practice: '练习',
-    reinforce: '加强',
-    exam: '考试',
-    search: '搜索',
-    stats: '数据',
-    share: '分享',
-    manage: '管理'
-};
-function normalizeDetailTabOrder(input, fallback) {
-    var base = Array.isArray(fallback) ? fallback : DEFAULT_DETAIL_TAB_ORDER;
-    var out = [];
-    var seen = new Set();
-    var push = function (k) {
-        var key = String(k || '').trim().toLowerCase();
-        if (!VALID_DETAIL_TABS.has(key))
-            return;
-        if (seen.has(key))
-            return;
-        seen.add(key);
-        out.push(key);
-    };
-    (Array.isArray(input) ? input : []).forEach(push);
-    base.forEach(push);
-    return out;
-}
-function buildDetailTabViews(order, canManage) {
-    if (canManage === void 0) { canManage = false; }
-    var list = Array.isArray(order) ? order : DEFAULT_DETAIL_TAB_ORDER;
-    var filtered = canManage ? list : list.filter(function (k) { return k !== 'manage'; });
-    return filtered.map(function (key) { return ({ key: key, label: DETAIL_TAB_LABELS[key] || key }); });
-}
-function getBankDetailTabOrderKey(bankId) {
-    var id = Number(bankId || 0);
-    if (!Number.isFinite(id) || id <= 0)
-        return '';
-    return "bank_".concat(Math.floor(id), "_detail_tab_order_v1");
-}
-function readBankDetailTabOrder(key, fallback) {
-    if (!key)
-        return normalizeDetailTabOrder(null, fallback);
-    try {
-        var raw = wx.getStorageSync(key);
-        if (Array.isArray(raw))
-            return normalizeDetailTabOrder(raw, fallback);
-        if (typeof raw === 'string') {
-            var s = raw.trim();
-            if (!s)
-                return normalizeDetailTabOrder(null, fallback);
-            try {
-                return normalizeDetailTabOrder(JSON.parse(s), fallback);
-            }
-            catch (e) {
-                return normalizeDetailTabOrder(null, fallback);
-            }
-        }
-        return normalizeDetailTabOrder(null, fallback);
-    }
-    catch (e) {
-        return normalizeDetailTabOrder(null, fallback);
-    }
-}
-function persistBankDetailTabOrder(key, order) {
-    if (!key)
-        return;
-    try {
-        wx.setStorageSync(key, Array.isArray(order) ? order : []);
-    }
-    catch (e) { }
-}
-function normalizeScope(input) {
-    var s = String(input || '').trim().toLowerCase();
-    if (s === 'favorites')
-        return 'favorites';
-    if (s === 'mistakes')
-        return 'mistakes';
-    return 'all';
-}
-function shouldCountForTab(tab) {
-    return tab === 'practice';
-}
-function normalizeTab(input) {
-    var s = String(input || '').trim().toLowerCase();
-    if (s === 'data')
-        return 'stats';
-    if (s === 'exam')
-        return 'exam';
-    if (s === 'search')
-        return 'search';
-    if (s === 'stats')
-        return 'stats';
-    if (s === 'reinforce' || s === 'strengthen' || s === 'enhance')
-        return 'reinforce';
-    if (s === 'favorites' || s === 'mistakes')
-        return 'practice';
-    if (s === 'share')
-        return 'share';
-    if (s === 'manage')
-        return 'manage';
-    return 'practice';
-}
-function normalizeReinforceSubTab(input) {
-    var s = String(input || '').trim().toLowerCase();
-    return s === 'similar' ? 'similar' : 'wrong';
-}
-function getStoredString(key, fallback) {
-    try {
-        var raw = wx.getStorageSync(key);
-        var s = String(raw || '').trim();
-        return s ? s : fallback;
-    }
-    catch (e) {
-        return fallback;
-    }
-}
-function setStoredString(key, value) {
-    try {
-        wx.setStorageSync(key, String(value || ''));
-    }
-    catch (e) { }
-}
-function normalizeTextLines(input) {
-    var text = String(input !== null && input !== void 0 ? input : '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-    var lines = text.split('\n').map(function (s) { return String(s !== null && s !== void 0 ? s : '').trimEnd(); });
-    while (lines.length && !lines[lines.length - 1])
-        lines.pop();
-    return lines;
-}
-function normalizeBankDetailOptions(rawOptions, qType) {
-    var qt = String(qType || '').trim();
-    if (rawOptions == null || rawOptions === '') {
-        if (qt === '判断题') {
-            return [
-                { key: '正确', value: '正确' },
-                { key: '错误', value: '错误' }
-            ];
-        }
-        return [];
-    }
-    var parsed = rawOptions;
-    if (typeof rawOptions === 'string') {
-        var s = rawOptions.trim();
-        if (s) {
-            try {
-                parsed = JSON.parse(s);
-            }
-            catch (e) {
-                parsed = rawOptions;
-            }
-        }
-    }
-    var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    var out = [];
-    if (Array.isArray(parsed)) {
-        parsed.forEach(function (opt, idx) {
-            var _a, _b, _c;
-            if (opt && typeof opt === 'object') {
-                var key = String((_b = (_a = opt.key) !== null && _a !== void 0 ? _a : letters[idx]) !== null && _b !== void 0 ? _b : '').trim();
-                var value = String((_c = opt.value) !== null && _c !== void 0 ? _c : '').trim();
-                if (key || value)
-                    out.push({ key: key || String(idx + 1), value: value });
-            }
-            else {
-                var value = String(opt !== null && opt !== void 0 ? opt : '').trim();
-                if (value)
-                    out.push({ key: letters[idx] || String(idx + 1), value: value });
-            }
-        });
-        return out;
-    }
-    if (parsed && typeof parsed === 'object') {
-        Object.keys(parsed).forEach(function (k) {
-            var _a;
-            var key = String(k !== null && k !== void 0 ? k : '').trim();
-            var value = String((_a = parsed[k]) !== null && _a !== void 0 ? _a : '').trim();
-            if (key || value)
-                out.push({ key: key, value: value });
-        });
-        return out;
-    }
-    return [];
-}
-function getStoredBool(key, fallback) {
-    if (fallback === void 0) { fallback = false; }
-    try {
-        var raw = wx.getStorageSync(key);
-        if (raw === true || raw === 1 || raw === '1')
-            return true;
-        if (raw === false || raw === 0 || raw === '0')
-            return false;
-        return fallback;
-    }
-    catch (e) {
-        return fallback;
-    }
-}
-function setStoredBool(key, value) {
-    try {
-        wx.setStorageSync(key, value ? '1' : '0');
-    }
-    catch (e) { }
-}
-function clampPct(v) {
-    if (!Number.isFinite(v))
-        return 0;
-    return Math.max(0, Math.min(100, v));
-}
-function parseBoolFlag(v, fallback) {
-    if (v === true || v === 1 || v === '1')
-        return true;
-    if (v === false || v === 0 || v === '0')
-        return false;
-    return fallback;
-}
-function appendFromMiniapp(url) {
-    var raw = String(url || '').trim();
-    if (!raw)
-        return '';
-    if (/([?&])from=/.test(raw))
-        return raw;
-    return "".concat(raw).concat(raw.includes('?') ? '&' : '?', "from=miniapp");
-}
-function buildExternalWebUrl(next) {
-    var origin = String((0, api_1.getApiOrigin)() || '').trim().replace(/\/$/, '');
-    var path = (0, web_1.normalizeWebNextPath)(next, '/hub');
-    if (!origin)
-        return path;
-    return appendFromMiniapp("".concat(origin).concat(path));
-}
+var request_state_1 = require("../../behaviors/request-state");
+var set_data_batcher_1 = require("../../utils/set-data-batcher");
+var bank_detail_helpers_1 = require("./modules/bank-detail-helpers");
 Page({
+    behaviors: [request_state_1.requestStateBehavior],
     data: {
         drawerOpen: false,
         loading: false,
@@ -297,7 +66,7 @@ Page({
         tab: 'practice',
         entry: '',
         tabOrderOpen: false,
-        detailTabs: buildDetailTabViews(DEFAULT_DETAIL_TAB_ORDER, false),
+        detailTabs: (0, bank_detail_helpers_1.buildDetailTabViews)(bank_detail_helpers_1.DEFAULT_DETAIL_TAB_ORDER, false),
         bankId: 0,
         bankName: '',
         bankDescription: '',
@@ -438,23 +207,40 @@ Page({
     qDetailReq: 0,
     tabExplicit: false,
     scopeForced: '',
+    setDataBatcher: null,
+    ensureSetDataBatcher: function () {
+        if (this.setDataBatcher)
+            return;
+        this.setDataBatcher = (0, set_data_batcher_1.createSetDataBatcher)(this.setData.bind(this));
+    },
+    patchData: function (patch, callback, immediate) {
+        if (immediate === void 0) { immediate = false; }
+        this.ensureSetDataBatcher();
+        var fn = this.setDataBatcher;
+        if (typeof fn === 'function') {
+            fn(patch, callback, { immediate: immediate });
+            return;
+        }
+        this.setData(patch, callback);
+    },
     onLoad: function (options) {
+        this.ensureSetDataBatcher();
         var bankId = Number((options === null || options === void 0 ? void 0 : options.id) || (options === null || options === void 0 ? void 0 : options.bank_id) || (options === null || options === void 0 ? void 0 : options.bankId) || 0);
         var rawTab = options === null || options === void 0 ? void 0 : options.tab;
-        var tab = normalizeTab(rawTab);
+        var tab = (0, bank_detail_helpers_1.normalizeTab)(rawTab);
         var entry = String((options === null || options === void 0 ? void 0 : options.entry) || '').trim().toLowerCase();
         var tabKey = String(rawTab || '').trim().toLowerCase();
         var scopeFromParams = (tabKey === 'favorites' || tabKey === 'mistakes')
-            ? normalizeScope(tabKey)
-            : (entry === 'favorites' || entry === 'mistakes') ? normalizeScope(entry) : 'all';
+            ? (0, bank_detail_helpers_1.normalizeScope)(tabKey)
+            : (entry === 'favorites' || entry === 'mistakes') ? (0, bank_detail_helpers_1.normalizeScope)(entry) : 'all';
         this.scopeForced = scopeFromParams !== 'all' ? scopeFromParams : '';
         this.tabExplicit = rawTab !== undefined && rawTab !== null && String(rawTab).trim() !== '';
-        this.setData({
+        this.patchData({
             bankId: Number.isFinite(bankId) ? bankId : 0,
             tab: tab,
             entry: entry,
             practiceScope: scopeFromParams
-        });
+        }, undefined, true);
     },
     onShow: function () {
         if (!(0, auth_1.checkLogin)()) {
@@ -462,7 +248,7 @@ Page({
             return;
         }
         try {
-            this.setData(theme_1.themeManager.getPageData());
+            this.patchData(theme_1.themeManager.getPageData(), undefined, true);
         }
         catch (e) { }
         try {
@@ -475,7 +261,7 @@ Page({
             return;
         }
         this.syncShuffleOptionsDisabled();
-        if (shouldCountForTab(this.data.tab)) {
+        if ((0, bank_detail_helpers_1.shouldCountForTab)(this.data.tab)) {
             this.scheduleStartCount();
         }
         if (this.data.tab === 'share' && this.data.canManageShare) {
@@ -494,11 +280,11 @@ Page({
         if (!Number.isFinite(bankId) || bankId <= 0)
             return;
         var key = "bank_".concat(bankId, "_return_tab");
-        var desired = getStoredString(key, '');
+        var desired = (0, bank_detail_helpers_1.getStoredString)(key, '');
         if (!desired)
             return;
-        setStoredString(key, '');
-        var tab = normalizeTab(desired);
+        (0, bank_detail_helpers_1.setStoredString)(key, '');
+        var tab = (0, bank_detail_helpers_1.normalizeTab)(desired);
         if (tab === this.data.tab)
             return;
         this.setData({ tab: tab });
@@ -509,7 +295,7 @@ Page({
         var next = raw === 'mistakes' || raw === 'favorites' ? raw : 'global';
         var bankId = Number(this.data.bankId || 0);
         if (bankId)
-            setStoredString("bank_".concat(bankId, "_stats_subtab"), next);
+            (0, bank_detail_helpers_1.setStoredString)("bank_".concat(bankId, "_stats_subtab"), next);
         this.setData({ tab: 'stats', statsSubTab: next, statsLoadedDays: 0, statsLoadedSubTab: next }, function () {
             _this.ensureStatsDetail(true);
         });
@@ -517,9 +303,9 @@ Page({
     bootstrap: function () {
         return __awaiter(this, void 0, void 0, function () {
             var bankId, keyType, keyTag, keyScope, keySearchType, keyStatsSubTab, keyReinforceSubTab, storedType, storedTag, storedScope, storedSearchType, storedStatsSubTab, storedReinforceSubTab, shuffleQuestions, shuffleOptions, entry, tab, practiceScope, forcedScope, statsSubTab, reinforceSubTab, _a, detailRes, countsRes, myStatsRes, tagsRes, bankData, countsData, myStatsData, tagsData, bankName, bankDescription, accessType, permission, canManageShare, bankIsPublic, bankAllowCopy, bankPublicDescription, tabOrderKey, tabOrder, detailTabs, typesRaw, types, qType, tagsRaw, tags, tag, searchType, totalCount, favCount, mistakeCount, e_1;
-            var _b, _c, _d, _e;
-            return __generator(this, function (_f) {
-                switch (_f.label) {
+            var _b, _c, _d, _f;
+            return __generator(this, function (_g) {
+                switch (_g.label) {
                     case 0:
                         bankId = Number(this.data.bankId || 0);
                         if (!Number.isFinite(bankId) || bankId <= 0) {
@@ -534,14 +320,14 @@ Page({
                         keySearchType = "bank_".concat(bankId, "_search_type");
                         keyStatsSubTab = "bank_".concat(bankId, "_stats_subtab");
                         keyReinforceSubTab = "bank_".concat(bankId, "_reinforce_subtab");
-                        storedType = getStoredString(keyType, 'all');
-                        storedTag = getStoredString(keyTag, 'all');
-                        storedScope = getStoredString(keyScope, 'all');
-                        storedSearchType = getStoredString(keySearchType, 'all');
-                        storedStatsSubTab = getStoredString(keyStatsSubTab, 'global');
-                        storedReinforceSubTab = getStoredString(keyReinforceSubTab, 'wrong');
-                        shuffleQuestions = getStoredBool(KEY_SHUFFLE_Q, false);
-                        shuffleOptions = getStoredBool(KEY_SHUFFLE_O, false);
+                        storedType = (0, bank_detail_helpers_1.getStoredString)(keyType, 'all');
+                        storedTag = (0, bank_detail_helpers_1.getStoredString)(keyTag, 'all');
+                        storedScope = (0, bank_detail_helpers_1.getStoredString)(keyScope, 'all');
+                        storedSearchType = (0, bank_detail_helpers_1.getStoredString)(keySearchType, 'all');
+                        storedStatsSubTab = (0, bank_detail_helpers_1.getStoredString)(keyStatsSubTab, 'global');
+                        storedReinforceSubTab = (0, bank_detail_helpers_1.getStoredString)(keyReinforceSubTab, 'wrong');
+                        shuffleQuestions = (0, bank_detail_helpers_1.getStoredBool)(bank_detail_helpers_1.KEY_SHUFFLE_Q, false);
+                        shuffleOptions = (0, bank_detail_helpers_1.getStoredBool)(bank_detail_helpers_1.KEY_SHUFFLE_O, false);
                         entry = String(this.data.entry || '').trim().toLowerCase();
                         tab = this.data.tab;
                         practiceScope = this.data.practiceScope || 'all';
@@ -565,14 +351,14 @@ Page({
                             practiceScope = forcedScope;
                         }
                         else {
-                            practiceScope = normalizeScope(storedScope);
+                            practiceScope = (0, bank_detail_helpers_1.normalizeScope)(storedScope);
                         }
                         statsSubTab = (storedStatsSubTab === 'mistakes' || storedStatsSubTab === 'favorites') ? storedStatsSubTab : 'global';
-                        reinforceSubTab = normalizeReinforceSubTab(storedReinforceSubTab);
+                        reinforceSubTab = (0, bank_detail_helpers_1.normalizeReinforceSubTab)(storedReinforceSubTab);
                         this.setData({ loading: true, startError: '' });
-                        _f.label = 1;
+                        _g.label = 1;
                     case 1:
-                        _f.trys.push([1, 3, 4, 5]);
+                        _g.trys.push([1, 3, 4, 5]);
                         return [4 /*yield*/, Promise.all([
                                 api_1.api.getBankDetail(bankId),
                                 api_1.api.getBankUserCounts(bankId, { source: 'all' }).catch(function () { return ({ data: { total: 0, favorites: 0, mistakes: 0 } }); }),
@@ -580,7 +366,7 @@ Page({
                                 api_1.api.getBankTags(bankId).catch(function () { return ({ data: { tags: [] } }); })
                             ])];
                     case 2:
-                        _a = _f.sent(), detailRes = _a[0], countsRes = _a[1], myStatsRes = _a[2], tagsRes = _a[3];
+                        _a = _g.sent(), detailRes = _a[0], countsRes = _a[1], myStatsRes = _a[2], tagsRes = _a[3];
                         bankData = (detailRes === null || detailRes === void 0 ? void 0 : detailRes.data) || detailRes || {};
                         countsData = (countsRes === null || countsRes === void 0 ? void 0 : countsRes.data) || countsRes || {};
                         myStatsData = (myStatsRes === null || myStatsRes === void 0 ? void 0 : myStatsRes.data) || myStatsRes || {};
@@ -592,12 +378,12 @@ Page({
                         canManageShare = accessType === 'owner' || permission === 'owner';
                         if (tab === 'manage' && !canManageShare)
                             tab = 'practice';
-                        bankIsPublic = parseBoolFlag(bankData === null || bankData === void 0 ? void 0 : bankData.is_public, false);
-                        bankAllowCopy = parseBoolFlag(bankData === null || bankData === void 0 ? void 0 : bankData.allow_copy, true);
+                        bankIsPublic = (0, bank_detail_helpers_1.parseBoolFlag)(bankData === null || bankData === void 0 ? void 0 : bankData.is_public, false);
+                        bankAllowCopy = (0, bank_detail_helpers_1.parseBoolFlag)(bankData === null || bankData === void 0 ? void 0 : bankData.allow_copy, true);
                         bankPublicDescription = String((bankData === null || bankData === void 0 ? void 0 : bankData.public_description) || '').trim();
-                        tabOrderKey = getBankDetailTabOrderKey(bankId);
-                        tabOrder = readBankDetailTabOrder(tabOrderKey, DEFAULT_DETAIL_TAB_ORDER);
-                        detailTabs = buildDetailTabViews(tabOrder, canManageShare);
+                        tabOrderKey = (0, bank_detail_helpers_1.getBankDetailTabOrderKey)(bankId);
+                        tabOrder = (0, bank_detail_helpers_1.readBankDetailTabOrder)(tabOrderKey, bank_detail_helpers_1.DEFAULT_DETAIL_TAB_ORDER);
+                        detailTabs = (0, bank_detail_helpers_1.buildDetailTabViews)(tabOrder, canManageShare);
                         typesRaw = Array.isArray(bankData === null || bankData === void 0 ? void 0 : bankData.available_types) ? bankData.available_types : [];
                         types = (typesRaw || [])
                             .filter(function (t) { return typeof t === 'string' && t.trim(); })
@@ -613,7 +399,7 @@ Page({
                             .filter(function (t) { return t.name; });
                         tag = storedTag === 'all' || tags.some(function (t) { return t.name === storedTag; }) ? storedTag : 'all';
                         searchType = storedSearchType === 'all' || types.includes(storedSearchType) ? storedSearchType : 'all';
-                        totalCount = Number((_e = (_d = countsData === null || countsData === void 0 ? void 0 : countsData.total) !== null && _d !== void 0 ? _d : bankData === null || bankData === void 0 ? void 0 : bankData.question_count) !== null && _e !== void 0 ? _e : 0) || 0;
+                        totalCount = Number((_f = (_d = countsData === null || countsData === void 0 ? void 0 : countsData.total) !== null && _d !== void 0 ? _d : bankData === null || bankData === void 0 ? void 0 : bankData.question_count) !== null && _f !== void 0 ? _f : 0) || 0;
                         favCount = Number((countsData === null || countsData === void 0 ? void 0 : countsData.favorites) || 0) || 0;
                         mistakeCount = Number((countsData === null || countsData === void 0 ? void 0 : countsData.mistakes) || 0) || 0;
                         this.setData({
@@ -672,14 +458,14 @@ Page({
                             shuffleQuestions: shuffleQuestions,
                             shuffleOptions: shuffleOptions
                         });
-                        setStoredString(keyType, qType);
-                        setStoredString(keyTag, tag);
-                        setStoredString(keyScope, practiceScope);
-                        setStoredString(keySearchType, searchType);
-                        setStoredString(keyStatsSubTab, statsSubTab);
-                        setStoredString(keyReinforceSubTab, reinforceSubTab);
+                        (0, bank_detail_helpers_1.setStoredString)(keyType, qType);
+                        (0, bank_detail_helpers_1.setStoredString)(keyTag, tag);
+                        (0, bank_detail_helpers_1.setStoredString)(keyScope, practiceScope);
+                        (0, bank_detail_helpers_1.setStoredString)(keySearchType, searchType);
+                        (0, bank_detail_helpers_1.setStoredString)(keyStatsSubTab, statsSubTab);
+                        (0, bank_detail_helpers_1.setStoredString)(keyReinforceSubTab, reinforceSubTab);
                         this.syncShuffleOptionsDisabled();
-                        if (shouldCountForTab(tab)) {
+                        if ((0, bank_detail_helpers_1.shouldCountForTab)(tab)) {
                             this.scheduleStartCount();
                         }
                         if (tab === 'share' && canManageShare) {
@@ -693,11 +479,11 @@ Page({
                         }
                         return [3 /*break*/, 5];
                     case 3:
-                        e_1 = _f.sent();
+                        e_1 = _g.sent();
                         wx.showToast({ title: (e_1 && e_1.message) || '加载失败', icon: 'none' });
                         return [3 /*break*/, 5];
                     case 4:
-                        this.setData({ loading: false });
+                        this.patchData({ loading: false }, undefined, true);
                         try {
                             wx.stopPullDownRefresh();
                         }
@@ -712,16 +498,16 @@ Page({
         this.bootstrap();
     },
     onHamburgerTap: function () {
-        this.setData({ drawerOpen: true });
+        this.patchData({ drawerOpen: true });
     },
     onDrawerClose: function () {
-        this.setData({ drawerOpen: false });
+        this.patchData({ drawerOpen: false });
     },
     onDrawerNavigate: function (e) {
         var _a, _b;
         var url = (_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.url;
         var navType = (_b = e === null || e === void 0 ? void 0 : e.detail) === null || _b === void 0 ? void 0 : _b.navType;
-        this.setData({ drawerOpen: false });
+        this.patchData({ drawerOpen: false });
         if (!url)
             return;
         (0, nav_1.safeNavigate)(url, navType);
@@ -735,8 +521,7 @@ Page({
                     case 0:
                         style = (((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.style) || 'default');
                         theme_1.themeManager.setStyle(style);
-                        this.setData(theme_1.themeManager.getPageData());
-                        this.setData({ drawerOpen: false });
+                        this.patchData(__assign(__assign({}, theme_1.themeManager.getPageData()), { drawerOpen: false }), undefined, true);
                         return [4 /*yield*/, (0, user_settings_1.syncUserSettingsToServer)()];
                     case 1:
                         _b.sent();
@@ -747,37 +532,37 @@ Page({
     },
     onCycleThemeModeTap: function () {
         var mode = theme_1.themeManager.cycleMode();
-        this.setData(__assign(__assign({}, theme_1.themeManager.getPageData()), { themeMode: mode }));
+        this.patchData(__assign(__assign({}, theme_1.themeManager.getPageData()), { themeMode: mode }));
     },
     initDetailTabOrder: function () {
         var bankId = Number(this.data.bankId || 0);
-        var key = getBankDetailTabOrderKey(bankId);
-        var order = readBankDetailTabOrder(key, DEFAULT_DETAIL_TAB_ORDER);
-        this.setData({ detailTabs: buildDetailTabViews(order, Boolean(this.data.canManageShare)) });
+        var key = (0, bank_detail_helpers_1.getBankDetailTabOrderKey)(bankId);
+        var order = (0, bank_detail_helpers_1.readBankDetailTabOrder)(key, bank_detail_helpers_1.DEFAULT_DETAIL_TAB_ORDER);
+        this.patchData({ detailTabs: (0, bank_detail_helpers_1.buildDetailTabViews)(order, Boolean(this.data.canManageShare)) });
     },
     applyDetailTabOrder: function (nextOrder) {
-        var normalized = normalizeDetailTabOrder(nextOrder, DEFAULT_DETAIL_TAB_ORDER);
+        var normalized = (0, bank_detail_helpers_1.normalizeDetailTabOrder)(nextOrder, bank_detail_helpers_1.DEFAULT_DETAIL_TAB_ORDER);
         var bankId = Number(this.data.bankId || 0);
-        var key = getBankDetailTabOrderKey(bankId);
-        persistBankDetailTabOrder(key, normalized);
-        this.setData({ detailTabs: buildDetailTabViews(normalized, Boolean(this.data.canManageShare)) });
+        var key = (0, bank_detail_helpers_1.getBankDetailTabOrderKey)(bankId);
+        (0, bank_detail_helpers_1.persistBankDetailTabOrder)(key, normalized);
+        this.patchData({ detailTabs: (0, bank_detail_helpers_1.buildDetailTabViews)(normalized, Boolean(this.data.canManageShare)) });
     },
     onOpenTabOrder: function () {
-        this.setData({ tabOrderOpen: true });
+        this.patchData({ tabOrderOpen: true });
     },
     onCloseTabOrder: function () {
-        this.setData({ tabOrderOpen: false });
+        this.patchData({ tabOrderOpen: false });
     },
     onTabOrderSheetTap: function () { },
     onMoveTabOrder: function (e) {
         var _a, _b, _c, _d;
         var act = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.act) || '').trim();
         var keyRaw = String(((_d = (_c = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _c === void 0 ? void 0 : _c.dataset) === null || _d === void 0 ? void 0 : _d.key) || '').trim().toLowerCase();
-        if (!VALID_DETAIL_TABS.has(keyRaw))
+        if (!bank_detail_helpers_1.VALID_DETAIL_TABS.has(keyRaw))
             return;
         var order = (this.data.detailTabs || [])
             .map(function (it) { return String((it === null || it === void 0 ? void 0 : it.key) || '').trim().toLowerCase(); })
-            .filter(function (k) { return VALID_DETAIL_TABS.has(k); });
+            .filter(function (k) { return bank_detail_helpers_1.VALID_DETAIL_TABS.has(k); });
         var idx = order.indexOf(keyRaw);
         if (idx < 0)
             return;
@@ -793,17 +578,17 @@ Page({
         this.applyDetailTabOrder(copy);
     },
     onResetTabOrder: function () {
-        this.applyDetailTabOrder(DEFAULT_DETAIL_TAB_ORDER.slice());
+        this.applyDetailTabOrder(bank_detail_helpers_1.DEFAULT_DETAIL_TAB_ORDER.slice());
     },
     onTabTap: function (e) {
         var _this = this;
         var _a, _b;
-        var tab = normalizeTab(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.tab) || 'practice');
+        var tab = (0, bank_detail_helpers_1.normalizeTab)(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.tab) || 'practice');
         if (tab === this.data.tab)
             return;
-        this.setData({ tab: tab, startError: '' }, function () {
+        this.patchData({ tab: tab, startError: '' }, function () {
             _this.syncShuffleOptionsDisabled();
-            if (shouldCountForTab(tab)) {
+            if ((0, bank_detail_helpers_1.shouldCountForTab)(tab)) {
                 _this.scheduleStartCount();
             }
             if (tab === 'share' && _this.data.canManageShare) {
@@ -841,8 +626,8 @@ Page({
     openWebLead: function (options) {
         var title = String((options === null || options === void 0 ? void 0 : options.title) || '请前往网页端').trim() || '请前往网页端';
         var content = String((options === null || options === void 0 ? void 0 : options.content) || '').trim();
-        var url = buildExternalWebUrl(options === null || options === void 0 ? void 0 : options.next);
-        this.setData({
+        var url = (0, bank_detail_helpers_1.buildExternalWebUrl)(options === null || options === void 0 ? void 0 : options.next);
+        this.patchData({
             webLeadOpen: true,
             webLeadTitle: title,
             webLeadContent: content,
@@ -850,7 +635,7 @@ Page({
         });
     },
     onWebLeadClose: function () {
-        this.setData({ webLeadOpen: false });
+        this.patchData({ webLeadOpen: false });
     },
     onWebLeadSheetTap: function () { },
     onWebLeadCopy: function () {
@@ -862,14 +647,14 @@ Page({
             data: url,
             success: function () {
                 wx.showToast({ title: '链接已复制', icon: 'success' });
-                _this.setData({ webLeadOpen: false });
+                _this.patchData({ webLeadOpen: false });
             },
             fail: function () { return wx.showToast({ title: '复制失败', icon: 'none' }); }
         });
     },
     onGoShareTab: function () {
         var _this = this;
-        this.setData({ tab: 'share', startError: '' }, function () {
+        this.patchData({ tab: 'share', startError: '' }, function () {
             if (_this.data.canManageShare) {
                 _this.loadUsageStats();
                 _this.ensureWechatShareToken(false);
@@ -914,8 +699,7 @@ Page({
                             return [2 /*return*/];
                         payload = {
                             is_public: nextPublic,
-                            public_description: String(this.data.bankPublicDescription || ''),
-                            allow_copy: Boolean(this.data.bankAllowCopy)
+                            public_description: String(this.data.bankPublicDescription || '')
                         };
                         this.setData({ bankPublicSaving: true, bankPublicError: '' });
                         _c.label = 2;
@@ -945,12 +729,12 @@ Page({
     onReinforceSubTabTap: function (e) {
         var _this = this;
         var _a, _b;
-        var next = normalizeReinforceSubTab(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.subtab) || 'wrong');
+        var next = (0, bank_detail_helpers_1.normalizeReinforceSubTab)(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.subtab) || 'wrong');
         if (next === this.data.reinforceSubTab)
             return;
         var bankId = Number(this.data.bankId || 0);
         if (bankId)
-            setStoredString("bank_".concat(bankId, "_reinforce_subtab"), next);
+            (0, bank_detail_helpers_1.setStoredString)("bank_".concat(bankId, "_reinforce_subtab"), next);
         this.setData({ reinforceSubTab: next }, function () {
             _this.ensureReinforce(false);
         });
@@ -1244,12 +1028,12 @@ Page({
     onScopeTap: function (e) {
         var _this = this;
         var _a, _b;
-        var next = normalizeScope(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.scope) || 'all');
+        var next = (0, bank_detail_helpers_1.normalizeScope)(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.scope) || 'all');
         if (next === this.data.practiceScope)
             return;
         var bankId = Number(this.data.bankId || 0);
         if (bankId)
-            setStoredString("bank_".concat(bankId, "_scope"), next);
+            (0, bank_detail_helpers_1.setStoredString)("bank_".concat(bankId, "_scope"), next);
         this.scopeForced = '';
         this.setData({ practiceScope: next, startError: '' }, function () {
             if (_this.data.tab === 'practice') {
@@ -1325,7 +1109,6 @@ Page({
                             return [3 /*break*/, 4];
                         case 3:
                             e_4 = _a.sent();
-                            console.error('清除云端进度失败:', e_4);
                             return [3 /*break*/, 4];
                         case 4:
                             try {
@@ -1357,7 +1140,7 @@ Page({
             return;
         var bankId = Number(this.data.bankId || 0);
         if (bankId)
-            setStoredString("bank_".concat(bankId, "_search_type"), v);
+            (0, bank_detail_helpers_1.setStoredString)("bank_".concat(bankId, "_search_type"), v);
         this.setData({ searchType: v }, function () {
             if (_this.data.searchSearched && String(_this.data.searchKeyword || '').trim()) {
                 _this.doBankSearch(true);
@@ -1480,7 +1263,7 @@ Page({
                         if (reqId !== this.qDetailReq)
                             return [2 /*return*/];
                         qType = String((q === null || q === void 0 ? void 0 : q.q_type) || '').trim();
-                        options = normalizeBankDetailOptions(q === null || q === void 0 ? void 0 : q.options, qType);
+                        options = (0, bank_detail_helpers_1.normalizeBankDetailOptions)(q === null || q === void 0 ? void 0 : q.options, qType);
                         metaParts = ["ID\uFF1A".concat(qid)];
                         if (qType)
                             metaParts.push(qType);
@@ -1490,9 +1273,9 @@ Page({
                             qDetailLoading: false,
                             qDetailError: '',
                             qDetailMeta: metaParts.join(' · '),
-                            qDetailContentLines: normalizeTextLines(q === null || q === void 0 ? void 0 : q.content),
-                            qDetailAnswerLines: normalizeTextLines(q === null || q === void 0 ? void 0 : q.answer),
-                            qDetailExplanationLines: normalizeTextLines(q === null || q === void 0 ? void 0 : q.explanation),
+                            qDetailContentLines: (0, bank_detail_helpers_1.normalizeTextLines)(q === null || q === void 0 ? void 0 : q.content),
+                            qDetailAnswerLines: (0, bank_detail_helpers_1.normalizeTextLines)(q === null || q === void 0 ? void 0 : q.answer),
+                            qDetailExplanationLines: (0, bank_detail_helpers_1.normalizeTextLines)(q === null || q === void 0 ? void 0 : q.explanation),
                             qDetailOptions: options
                         });
                         return [3 /*break*/, 4];
@@ -1535,9 +1318,9 @@ Page({
             return;
         var keyType = "bank_".concat(Number(this.data.bankId || 0), "_type");
         this.setData({ qType: next });
-        setStoredString(keyType, next);
+        (0, bank_detail_helpers_1.setStoredString)(keyType, next);
         this.syncShuffleOptionsDisabled();
-        if (shouldCountForTab(this.data.tab)) {
+        if ((0, bank_detail_helpers_1.shouldCountForTab)(this.data.tab)) {
             this.scheduleStartCount();
         }
     },
@@ -1551,8 +1334,8 @@ Page({
             return;
         var keyTag = "bank_".concat(Number(this.data.bankId || 0), "_tag");
         this.setData({ tag: val });
-        setStoredString(keyTag, val);
-        if (shouldCountForTab(this.data.tab)) {
+        (0, bank_detail_helpers_1.setStoredString)(keyTag, val);
+        if ((0, bank_detail_helpers_1.shouldCountForTab)(this.data.tab)) {
             this.scheduleStartCount();
         }
     },
@@ -1598,9 +1381,9 @@ Page({
                             nextTag = prevTag === name ? 'all' : prevTag;
                             keyTag = "bank_".concat(bankId, "_tag");
                             if (nextTag !== prevTag)
-                                setStoredString(keyTag, nextTag);
+                                (0, bank_detail_helpers_1.setStoredString)(keyTag, nextTag);
                             this.setData({ tags: tags, tag: nextTag }, function () {
-                                if (shouldCountForTab(_this.data.tab)) {
+                                if ((0, bank_detail_helpers_1.shouldCountForTab)(_this.data.tab)) {
                                     _this.scheduleStartCount();
                                 }
                             });
@@ -1623,20 +1406,20 @@ Page({
         });
     },
     syncShuffleOptionsDisabled: function () {
-        var disabled = this.data.qType !== 'all' && !OPTION_TYPES.has(String(this.data.qType || ''));
+        var disabled = this.data.qType !== 'all' && !bank_detail_helpers_1.OPTION_TYPES.has(String(this.data.qType || ''));
         if (disabled !== this.data.shuffleOptionsDisabled) {
             this.setData({ shuffleOptionsDisabled: disabled });
         }
         if (disabled && this.data.shuffleOptions) {
             this.setData({ shuffleOptions: false });
-            setStoredBool(KEY_SHUFFLE_O, false);
+            (0, bank_detail_helpers_1.setStoredBool)(bank_detail_helpers_1.KEY_SHUFFLE_O, false);
         }
     },
     onToggleShuffleQuestions: function () {
         var next = !this.data.shuffleQuestions;
         this.setData({ shuffleQuestions: next });
-        setStoredBool(KEY_SHUFFLE_Q, next);
-        if (shouldCountForTab(this.data.tab)) {
+        (0, bank_detail_helpers_1.setStoredBool)(bank_detail_helpers_1.KEY_SHUFFLE_Q, next);
+        if ((0, bank_detail_helpers_1.shouldCountForTab)(this.data.tab)) {
             this.scheduleStartCount();
         }
     },
@@ -1645,20 +1428,20 @@ Page({
             return;
         var next = !this.data.shuffleOptions;
         this.setData({ shuffleOptions: next });
-        setStoredBool(KEY_SHUFFLE_O, next);
-        if (shouldCountForTab(this.data.tab)) {
+        (0, bank_detail_helpers_1.setStoredBool)(bank_detail_helpers_1.KEY_SHUFFLE_O, next);
+        if ((0, bank_detail_helpers_1.shouldCountForTab)(this.data.tab)) {
             this.scheduleStartCount();
         }
     },
     scheduleStartCount: function () {
         var _this = this;
-        if (!shouldCountForTab(this.data.tab))
+        if (!(0, bank_detail_helpers_1.shouldCountForTab)(this.data.tab))
             return;
         if (this.startCountTimer) {
             clearTimeout(this.startCountTimer);
             this.startCountTimer = null;
         }
-        this.setData({ startCountText: '…', startDisabled: true, startError: '' });
+        this.patchData({ startCountText: '…', startDisabled: true, startError: '' });
         this.startCountTimer = setTimeout(function () { return _this.loadStartCount(); }, 260);
     },
     loadStartCount: function () {
@@ -1686,7 +1469,7 @@ Page({
                             return [2 /*return*/];
                         data = (res === null || res === void 0 ? void 0 : res.data) || res || {};
                         count = Number((data === null || data === void 0 ? void 0 : data.total) || 0) || 0;
-                        this.setData({
+                        this.patchData({
                             startCount: count,
                             startCountText: String(count),
                             startDisabled: count <= 0,
@@ -1697,7 +1480,7 @@ Page({
                         e_5 = _a.sent();
                         if (reqId !== this.startCountReq)
                             return [2 /*return*/];
-                        this.setData({
+                        this.patchData({
                             startCount: 0,
                             startCountText: '0',
                             startDisabled: true,
@@ -1843,8 +1626,8 @@ Page({
             return;
         var bankId = Number(this.data.bankId || 0);
         if (bankId)
-            setStoredString("bank_".concat(bankId, "_stats_subtab"), next);
-        this.setData({ statsSubTab: next, statsLoadedDays: 0, statsLoadedSubTab: next }, function () {
+            (0, bank_detail_helpers_1.setStoredString)("bank_".concat(bankId, "_stats_subtab"), next);
+        this.patchData({ statsSubTab: next, statsLoadedDays: 0, statsLoadedSubTab: next }, function () {
             if (_this.data.tab === 'stats') {
                 _this.ensureStatsDetail(true);
             }
@@ -1858,7 +1641,7 @@ Page({
             return;
         if (days === this.data.statsDays)
             return;
-        this.setData({ statsDays: days, statsLoadedDays: 0 }, function () {
+        this.patchData({ statsDays: days, statsLoadedDays: 0 }, function () {
             if (_this.data.tab === 'stats') {
                 _this.ensureStatsDetail(true);
             }
@@ -1940,8 +1723,8 @@ Page({
             var a = Number((it === null || it === void 0 ? void 0 : it.answered) || 0) || 0;
             var c = Number((it === null || it === void 0 ? void 0 : it.correct) || 0) || 0;
             var w = Number((it === null || it === void 0 ? void 0 : it.wrong) || 0) || Math.max(0, a - c);
-            var answeredPct = maxAnswered > 0 ? clampPct((a / maxAnswered) * 100) : 0;
-            var correctPctInAnswered = a > 0 ? clampPct((Math.min(a, c) / a) * 100) : 0;
+            var answeredPct = maxAnswered > 0 ? (0, bank_detail_helpers_1.clampPct)((a / maxAnswered) * 100) : 0;
+            var correctPctInAnswered = a > 0 ? (0, bank_detail_helpers_1.clampPct)((Math.min(a, c) / a) * 100) : 0;
             return { day: day, label: label, answered: a, correct: Math.min(a, c), wrong: w, answeredPct: answeredPct, correctPctInAnswered: correctPctInAnswered };
         });
         var rawByType = Array.isArray(data === null || data === void 0 ? void 0 : data.by_type) ? data.by_type : [];
@@ -2020,7 +1803,7 @@ Page({
                         if (!Number.isFinite(bankId) || bankId <= 0)
                             return [2 /*return*/];
                         reqId = ++this.statsReq;
-                        this.setData({ statsLoading: true, statsError: '', statsQuestions: [], favoritesTrend: {} });
+                        this.patchData({ statsLoading: true, statsError: '', statsQuestions: [], favoritesTrend: {} });
                         _b.label = 1;
                     case 1:
                         _b.trys.push([1, 3, , 4]);
@@ -2056,8 +1839,8 @@ Page({
                         statsQuestions = Array.isArray(qPayload === null || qPayload === void 0 ? void 0 : qPayload.questions) ? qPayload.questions : [];
                         favoritesTrend = favRes.ok ? (favRes.value || {}) : {};
                         view = this.buildStatsView(data || {});
-                        ringAccuracy = clampPct(view.overview.accuracy);
-                        ringCompletion = clampPct(view.overview.completion);
+                        ringAccuracy = (0, bank_detail_helpers_1.clampPct)(view.overview.accuracy);
+                        ringCompletion = (0, bank_detail_helpers_1.clampPct)(view.overview.completion);
                         heatCells = this.buildHeatCells(view.trend);
                         displayTypes = view.byType || [];
                         ringActive = 0;
@@ -2067,8 +1850,8 @@ Page({
                         mistakeRateText = '0%';
                         favMistakeRateText = '0%';
                         if (subtab === 'mistakes') {
-                            repeatRate = view.overview.total > 0 ? clampPct((view.overview.mistakeTimes / view.overview.total) * 100) : 0;
-                            mistakeRate = view.overview.answered > 0 ? clampPct((view.overview.wrong / view.overview.answered) * 100) : 0;
+                            repeatRate = view.overview.total > 0 ? (0, bank_detail_helpers_1.clampPct)((view.overview.mistakeTimes / view.overview.total) * 100) : 0;
+                            mistakeRate = view.overview.answered > 0 ? (0, bank_detail_helpers_1.clampPct)((view.overview.wrong / view.overview.answered) * 100) : 0;
                             ringRepeat = repeatRate;
                             repeatRateText = "".concat(repeatRate.toFixed(0), "%");
                             mistakeRateText = "".concat(mistakeRate.toFixed(0), "%");
@@ -2083,8 +1866,8 @@ Page({
                         else if (subtab === 'favorites') {
                             activeDays = view.trend.filter(function (it) { return it.answered > 0; }).length;
                             activeDaysRate = view.trend.length ? Math.round((activeDays / view.trend.length) * 100) : 0;
-                            ringActive = clampPct(activeDaysRate);
-                            favMistakeRate = view.overview.total > 0 ? clampPct((view.overview.mistakes / view.overview.total) * 100) : 0;
+                            ringActive = (0, bank_detail_helpers_1.clampPct)(activeDaysRate);
+                            favMistakeRate = view.overview.total > 0 ? (0, bank_detail_helpers_1.clampPct)((view.overview.mistakes / view.overview.total) * 100) : 0;
                             favMistakeRateText = "".concat(favMistakeRate.toFixed(0), "%");
                             displayTypes = (view.byType || [])
                                 .map(function (t) {
@@ -2097,10 +1880,10 @@ Page({
                         else {
                             activeDays = view.trend.filter(function (it) { return it.answered > 0; }).length;
                             activeDaysRate = view.trend.length ? Math.round((activeDays / view.trend.length) * 100) : 0;
-                            ringActive = clampPct(activeDaysRate);
+                            ringActive = (0, bank_detail_helpers_1.clampPct)(activeDaysRate);
                             displayTypes = view.byType || [];
                         }
-                        this.setData({
+                        this.patchData({
                             statsLoadedDays: days,
                             statsLoadedSubTab: subtab,
                             statsLoading: false,
@@ -2128,7 +1911,7 @@ Page({
                         err_6 = _b.sent();
                         if (reqId !== this.statsReq)
                             return [2 /*return*/];
-                        this.setData({
+                        this.patchData({
                             statsLoading: false,
                             statsError: (err_6 && err_6.message) ? String(err_6.message) : '统计加载失败',
                             statsQuestions: [],
@@ -2180,96 +1963,9 @@ Page({
             return token;
         return "".concat(base, "/bank/join?token=").concat(encodeURIComponent(String(token || '')));
     },
-    isExpiredIso: function (expiresAt) {
-        var s = String(expiresAt || '').trim();
-        if (!s)
-            return false;
-        try {
-            var d = new Date(s);
-            var ts = d.getTime();
-            if (!Number.isFinite(ts))
-                return true;
-            return ts < Date.now();
-        }
-        catch (e) {
-            return true;
-        }
-    },
-    pickShareTokenFromShares: function (shares) {
-        var list = Array.isArray(shares) ? shares : [];
-        for (var i = 0; i < list.length; i++) {
-            var s = list[i];
-            if (!s)
-                continue;
-            if (!s.is_active)
-                continue;
-            var token = s.share_token ? String(s.share_token).trim() : '';
-            if (!token)
-                continue;
-            if (s.expires_at && this.isExpiredIso(s.expires_at))
-                continue;
-            return token;
-        }
-        return '';
-    },
-    ensureWechatShareToken: function (force) {
-        if (force === void 0) { force = false; }
-        return __awaiter(this, void 0, void 0, function () {
-            var bankId, token, payload, created, err_7;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        bankId = Number(this.data.bankId || 0);
-                        if (!Number.isFinite(bankId) || bankId <= 0)
-                            return [2 /*return*/];
-                        if (!this.data.canManageShare)
-                            return [2 /*return*/];
-                        if (!force && this.data.wechatShareReady && String(this.data.wechatShareToken || '').trim())
-                            return [2 /*return*/];
-                        if (this.data.wechatSharePreparing)
-                            return [2 /*return*/];
-                        this.setData({ wechatSharePreparing: true, wechatShareReady: false });
-                        _a.label = 1;
-                    case 1:
-                        _a.trys.push([1, 6, 7, 8]);
-                        return [4 /*yield*/, this.loadShares()];
-                    case 2:
-                        _a.sent();
-                        token = String(this.data.wechatShareToken || '').trim();
-                        if (!!token) return [3 /*break*/, 5];
-                        payload = {
-                            type: 'link',
-                            permission: this.data.newShare.permission,
-                            expires_in: this.data.newShare.expiresIn ? this.data.newShare.expiresIn : null
-                        };
-                        if (this.data.newShare.maxUses)
-                            payload.max_uses = this.data.newShare.maxUses;
-                        return [4 /*yield*/, api_1.api.createBankShare(bankId, payload)];
-                    case 3:
-                        created = _a.sent();
-                        token = String((created === null || created === void 0 ? void 0 : created.share_token) || '').trim() || this.extractTokenFromShareLink(created === null || created === void 0 ? void 0 : created.share_link);
-                        if (!token) return [3 /*break*/, 5];
-                        this.setData({ wechatShareToken: token, wechatShareReady: true });
-                        return [4 /*yield*/, this.loadShares()];
-                    case 4:
-                        _a.sent();
-                        this.loadUsageStats();
-                        _a.label = 5;
-                    case 5: return [3 /*break*/, 8];
-                    case 6:
-                        err_7 = _a.sent();
-                        return [3 /*break*/, 8];
-                    case 7:
-                        this.setData({ wechatSharePreparing: false });
-                        return [7 /*endfinally*/];
-                    case 8: return [2 /*return*/];
-                }
-            });
-        });
-    },
     loadShares: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var bankId, res, data, raw, base_2, shares, err_7, msg;
+            var bankId, res, data, raw, base_2, shares, picked, err_7, msg;
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -2281,7 +1977,7 @@ Page({
                             return [2 /*return*/];
                         if (this.data.shareLoading)
                             return [2 /*return*/];
-                        this.setData({ shareLoading: true, shareError: '' });
+                        this.patchData({ shareLoading: true, shareError: '' });
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 3, , 4]);
@@ -2299,8 +1995,8 @@ Page({
                                 share_link: share_link
                             });
                         });
-                        var picked = this.pickShareTokenFromShares(shares);
-                        this.setData({
+                        picked = this.pickShareTokenFromShares(shares);
+                        this.patchData({
                             shares: shares,
                             shareLoading: false,
                             wechatShareToken: picked,
@@ -2310,7 +2006,7 @@ Page({
                     case 3:
                         err_7 = _a.sent();
                         msg = (err_7 && err_7.message) ? String(err_7.message) : '无权查看分享（仅创建者可管理）';
-                        this.setData({
+                        this.patchData({
                             shares: [],
                             shareLoading: false,
                             shareError: msg,
@@ -2319,6 +2015,95 @@ Page({
                         });
                         return [3 /*break*/, 4];
                     case 4: return [2 /*return*/];
+                }
+            });
+        });
+    },
+    isExpiredIso: function (expiresAt) {
+        var s = String(expiresAt || '').trim();
+        if (!s)
+            return false;
+        try {
+            var d = new Date(s);
+            var ts = d.getTime();
+            if (!Number.isFinite(ts))
+                return true;
+            return ts < Date.now();
+        }
+        catch (_a) {
+            return true;
+        }
+    },
+    pickShareTokenFromShares: function (shares) {
+        var list = Array.isArray(shares) ? shares : [];
+        for (var _i = 0, list_1 = list; _i < list_1.length; _i++) {
+            var s = list_1[_i];
+            if (!s)
+                continue;
+            if (!s.is_active)
+                continue;
+            var token = s.share_token ? String(s.share_token).trim() : '';
+            if (!token)
+                continue;
+            if (s.expires_at && this.isExpiredIso(s.expires_at))
+                continue;
+            return token;
+        }
+        return '';
+    },
+    ensureWechatShareToken: function () {
+        return __awaiter(this, arguments, void 0, function (force) {
+            var bankId, token, payload, created, e_6;
+            if (force === void 0) { force = false; }
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        bankId = Number(this.data.bankId || 0);
+                        if (!Number.isFinite(bankId) || bankId <= 0)
+                            return [2 /*return*/];
+                        if (!this.data.canManageShare)
+                            return [2 /*return*/];
+                        if (!force && this.data.wechatShareReady && String(this.data.wechatShareToken || '').trim())
+                            return [2 /*return*/];
+                        if (this.data.wechatSharePreparing)
+                            return [2 /*return*/];
+                        this.patchData({ wechatSharePreparing: true, wechatShareReady: false });
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, 7, 8, 9]);
+                        return [4 /*yield*/, this.loadShares()];
+                    case 2:
+                        _a.sent();
+                        token = String(this.data.wechatShareToken || '').trim();
+                        if (!!token) return [3 /*break*/, 4];
+                        payload = {
+                            type: 'link',
+                            permission: this.data.newShare.permission,
+                            expires_in: this.data.newShare.expiresIn ? this.data.newShare.expiresIn : null
+                        };
+                        if (this.data.newShare.maxUses)
+                            payload.max_uses = this.data.newShare.maxUses;
+                        return [4 /*yield*/, api_1.api.createBankShare(bankId, payload)];
+                    case 3:
+                        created = _a.sent();
+                        token = String((created === null || created === void 0 ? void 0 : created.share_token) || '').trim() || this.extractTokenFromShareLink(created === null || created === void 0 ? void 0 : created.share_link);
+                        _a.label = 4;
+                    case 4:
+                        if (!token) return [3 /*break*/, 6];
+                        this.patchData({ wechatShareToken: token, wechatShareReady: true });
+                        return [4 /*yield*/, this.loadShares()];
+                    case 5:
+                        _a.sent();
+                        this.loadUsageStats();
+                        _a.label = 6;
+                    case 6: return [3 /*break*/, 9];
+                    case 7:
+                        e_6 = _a.sent();
+                        return [3 /*break*/, 9];
+                    case 8:
+                        this.patchData({ wechatSharePreparing: false });
+                        return [7 /*endfinally*/];
+                    case 9: return [2 /*return*/];
                 }
             });
         });
@@ -2336,7 +2121,7 @@ Page({
                             return [2 /*return*/];
                         if (this.data.usageStatsLoading)
                             return [2 /*return*/];
-                        this.setData({ usageStatsLoading: true });
+                        this.patchData({ usageStatsLoading: true });
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 3, , 4]);
@@ -2354,11 +2139,11 @@ Page({
                             total_users: Number(data.total_users || 0),
                             total_users_excluding_owner: Number(data.total_users_excluding_owner || 0)
                         };
-                        this.setData({ usageStats: stats, usageStatsLoaded: true, usageStatsLoading: false });
+                        this.patchData({ usageStats: stats, usageStatsLoaded: true, usageStatsLoading: false });
                         return [3 /*break*/, 4];
                     case 3:
                         err_8 = _a.sent();
-                        this.setData({ usageStatsLoaded: false, usageStatsLoading: false });
+                        this.patchData({ usageStatsLoaded: false, usageStatsLoading: false });
                         return [3 /*break*/, 4];
                     case 4: return [2 /*return*/];
                 }
@@ -2376,7 +2161,7 @@ Page({
             try {
                 return decodeURIComponent(m[1]);
             }
-            catch (e) {
+            catch (_a) {
                 return m[1];
             }
         }
@@ -2399,9 +2184,11 @@ Page({
                         wx.showLoading({ title: '准备分享...' });
                         _b.label = 1;
                     case 1:
-                        _b.trys.push([1, 8, 9, 10]);
+                        _b.trys.push([1, 6, 7, 8]);
+                        // 优先复用现有链接分享，避免快速耗尽“最多10个分享”的限制
                         return [4 /*yield*/, this.loadShares()];
                     case 2:
+                        // 优先复用现有链接分享，避免快速耗尽“最多10个分享”的限制
                         _b.sent();
                         token = '';
                         shares = Array.isArray(this.data.shares) ? this.data.shares : [];
@@ -2411,12 +2198,12 @@ Page({
                                 continue;
                             if (!s.is_active)
                                 continue;
-                            if (!s.share_token)
-                                continue;
-                            token = String(s.share_token).trim();
-                            break;
+                            if (s.share_token) {
+                                token = String(s.share_token).trim();
+                                break;
+                            }
                         }
-                        if (!!token) return [3 /*break*/, 6];
+                        if (!!token) return [3 /*break*/, 5];
                         payload = {
                             type: 'link',
                             permission: this.data.newShare.permission,
@@ -2427,8 +2214,8 @@ Page({
                         return [4 /*yield*/, api_1.api.createBankShare(bankId, payload)];
                     case 3:
                         created = _b.sent();
-                        token = String((created && created.share_token) || '').trim() || this.extractTokenFromShareLink(created && created.share_link);
-                        if (!!token) return [3 /*break*/, 6];
+                        token = String((created === null || created === void 0 ? void 0 : created.share_token) || '').trim() || this.extractTokenFromShareLink(created === null || created === void 0 ? void 0 : created.share_link);
+                        if (!!token) return [3 /*break*/, 5];
                         return [4 /*yield*/, this.loadShares()];
                     case 4:
                         _b.sent();
@@ -2445,12 +2232,11 @@ Page({
                             break;
                         }
                         _b.label = 5;
-                    case 5: return [3 /*break*/, 6];
-                    case 6:
+                    case 5:
                         if (!token)
                             throw new Error('生成分享链接失败');
                         name = String(this.data.bankName || '').trim();
-                        title = name ? "邀请你加入题库：".concat(name) : '邀请你加入题库';
+                        title = name ? "\u9080\u8BF7\u4F60\u52A0\u5165\u9898\u5E93\uFF1A".concat(name) : '邀请你加入题库';
                         path = "/pages/bank-join/bank-join?token=".concat(encodeURIComponent(token));
                         if (typeof shareAppMessage === 'function') {
                             shareAppMessage({ title: title, path: path });
@@ -2465,25 +2251,21 @@ Page({
                                 showCancel: false
                             });
                         }
-                        return [3 /*break*/, 10];
-                    case 8:
+                        return [3 /*break*/, 8];
+                    case 6:
                         err_9 = _b.sent();
                         wx.showToast({ title: (err_9 && err_9.message) ? String(err_9.message) : '分享失败', icon: 'none' });
-                        return [3 /*break*/, 10];
-                    case 9:
+                        return [3 /*break*/, 8];
+                    case 7:
                         wx.hideLoading();
                         return [7 /*endfinally*/];
-                    case 10: return [2 /*return*/];
+                    case 8: return [2 /*return*/];
                 }
             });
         });
     },
-    onSharePermissionTap: function (e) {
-        var _a, _b;
-        var permission = (_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.permission;
-        if (permission !== 'read' && permission !== 'copy')
-            return;
-        this.setData({ 'newShare.permission': permission });
+    onSharePermissionTap: function (_e) {
+        this.setData({ 'newShare.permission': 'read' });
     },
     onShareExpiresTap: function (e) {
         var _a, _b;
@@ -2499,7 +2281,7 @@ Page({
     },
     onCreateShare: function (e) {
         return __awaiter(this, void 0, void 0, function () {
-            var bankId, type, shareType, payload, res, data, code, link, copied, err_8;
+            var bankId, type, shareType, payload, res, data, code, link, copied, err_10;
             var _a, _b;
             return __generator(this, function (_c) {
                 switch (_c.label) {
@@ -2539,8 +2321,8 @@ Page({
                         _c.sent();
                         return [3 /*break*/, 6];
                     case 4:
-                        err_8 = _c.sent();
-                        wx.showToast({ title: (err_8 && err_8.message) ? String(err_8.message) : '创建失败', icon: 'none' });
+                        err_10 = _c.sent();
+                        wx.showToast({ title: (err_10 && err_10.message) ? String(err_10.message) : '创建失败', icon: 'none' });
                         return [3 /*break*/, 6];
                     case 5:
                         wx.hideLoading();
@@ -2582,7 +2364,7 @@ Page({
             content: '撤销后，使用此分享加入的用户将无法继续访问。',
             confirmColor: '#FF3B30',
             success: function (res) { return __awaiter(_this, void 0, void 0, function () {
-                var err_9;
+                var err_11;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
@@ -2603,8 +2385,8 @@ Page({
                             this.ensureWechatShareToken(false);
                             return [3 /*break*/, 6];
                         case 4:
-                            err_9 = _a.sent();
-                            wx.showToast({ title: (err_9 && err_9.message) ? String(err_9.message) : '撤销失败', icon: 'none' });
+                            err_11 = _a.sent();
+                            wx.showToast({ title: (err_11 && err_11.message) ? String(err_11.message) : '撤销失败', icon: 'none' });
                             return [3 /*break*/, 6];
                         case 5:
                             wx.hideLoading();

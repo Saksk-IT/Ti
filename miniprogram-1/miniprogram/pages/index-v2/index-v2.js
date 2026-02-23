@@ -20,8 +20,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -61,189 +61,12 @@ var user_settings_1 = require("../../utils/user-settings");
 var auth_1 = require("../../utils/auth");
 var nav_1 = require("../../utils/nav");
 var theme_1 = require("../../utils/theme");
-var QUICK_PRESETS = [
-    { duration: 15, total: 20, label: '15 分钟 · 20 题' },
-    { duration: 30, total: 30, label: '30 分钟 · 30 题' },
-    { duration: 60, total: 50, label: '60 分钟 · 50 题' }
-];
-var SYSTEM_TEMPLATES = [
-    {
-        id: 'quick-15',
-        title: '速测 15 分钟',
-        total: 20,
-        duration: 15,
-        preferred: ['单选题', '判断题'],
-        tags: ['碎片时间', '基础回顾'],
-        note: '适合课后小测与快速复盘。'
-    },
-    {
-        id: 'standard-45',
-        title: '标准 45 分钟',
-        total: 40,
-        duration: 45,
-        preferred: ['单选题', '多选题', '判断题'],
-        tags: ['综合覆盖', '模拟节奏'],
-        note: '覆盖主流题型，节奏接近模拟考试。'
-    },
-    {
-        id: 'focus-60',
-        title: '专项 60 分钟',
-        total: 60,
-        duration: 60,
-        preferred: ['多选题', '综合题', '简答题'],
-        tags: ['强化', '高权重'],
-        note: '偏重综合与高分题型，适合冲刺阶段。'
-    }
-];
-var FALLBACK_PUBLIC_Q_TYPES = ['单选题', '多选题', '判断题', '填空题', '简答题', '综合题', '计算题'];
-var DEFAULT_PICKED_TYPES = ['单选题', '多选题', '判断题'];
+var request_state_1 = require("../../behaviors/request-state");
+var set_data_batcher_1 = require("../../utils/set-data-batcher");
+var index_v2_helpers_1 = require("./modules/index-v2-helpers");
 var examPresetApplied = false;
-var qTypesCache = new Map();
-function clampInt(v, fallback, minV, maxV) {
-    var n = Math.floor(Number(v));
-    if (!Number.isFinite(n))
-        return fallback;
-    return Math.max(minV, Math.min(maxV, n));
-}
-function clampFloat(v, fallback, minV, maxV) {
-    var n = Number(v);
-    if (!Number.isFinite(n))
-        return fallback;
-    return Math.max(minV, Math.min(maxV, n));
-}
-function formatNum(n) {
-    var v = Number(n);
-    if (!Number.isFinite(v))
-        return '0';
-    if (Math.abs(v - Math.round(v)) < 1e-6)
-        return String(Math.round(v));
-    return String(v.toFixed(2)).replace(/\.?0+$/, '');
-}
-function todayStamp() {
-    var now = new Date();
-    var y = String(now.getFullYear());
-    var m = String(now.getMonth() + 1).padStart(2, '0');
-    var d = String(now.getDate()).padStart(2, '0');
-    return "".concat(y, "-").concat(m, "-").concat(d);
-}
-function setDataAsync(ctx, patch) {
-    return new Promise(function (resolve) { return ctx.setData(patch, resolve); });
-}
-function uniqueBanks(list) {
-    var map = new Map();
-    (list || []).forEach(function (b) {
-        var id = Number(b && b.id);
-        if (!Number.isFinite(id) || id <= 0)
-            return;
-        var name = String(b.name || '').trim();
-        if (!name)
-            return;
-        var question_count = Number(b.question_count || 0) || 0;
-        map.set(id, { id: id, name: name, question_count: question_count });
-    });
-    return Array.from(map.values());
-}
-function buildSubjectOptions(subjects) {
-    var rest = (subjects || [])
-        .filter(function (s) { return typeof s === 'string' && s.trim(); })
-        .map(function (s) { return String(s).trim(); });
-    return __spreadArray([{ value: 'all', label: '全部科目' }], rest.map(function (s) { return ({ value: s, label: s }); }), true);
-}
-function buildBankOptions(banks) {
-    return (banks || []).map(function (b) { return ({
-        value: b.id,
-        label: b.question_count ? "".concat(b.name, "\uFF08").concat(b.question_count, "\u9898\uFF09") : b.name
-    }); });
-}
-function findOptionLabel(options, value, fallback) {
-    var hit = (options || []).find(function (o) { return o && o.value === value; });
-    return hit ? hit.label : fallback;
-}
-function normalizeTemplateConfig(raw) {
-    var _a, _b;
-    if (!raw || typeof raw !== 'object')
-        return null;
-    var source = String(raw.source || 'public').toLowerCase() === 'user_bank' ? 'user_bank' : 'public';
-    var subject = String(raw.subject || 'all').trim() || 'all';
-    var bank_id = raw.bank_id != null && raw.bank_id !== '' ? Number(raw.bank_id) : null;
-    var duration = clampInt(raw.duration, 60, 1, 1440);
-    var typesRaw = raw.types && typeof raw.types === 'object' ? raw.types : {};
-    var scoresRaw = raw.scores && typeof raw.scores === 'object' ? raw.scores : {};
-    var types = {};
-    var scores = {};
-    Object.keys(typesRaw || {}).forEach(function (k) {
-        var name = String(k || '').trim();
-        if (!name)
-            return;
-        var c = clampInt(typesRaw[k], 0, 0, 500);
-        if (c <= 0)
-            return;
-        types[name] = c;
-        scores[name] = clampFloat(scoresRaw[k], 1, 0, 1000);
-    });
-    var targetTotal = (_b = (_a = raw.targetTotal) !== null && _a !== void 0 ? _a : raw.total) !== null && _b !== void 0 ? _b : raw.target_total;
-    targetTotal = clampInt(targetTotal, 0, 0, 300);
-    if (!targetTotal) {
-        targetTotal = Object.values(types).reduce(function (sum, v) { return sum + (Number(v) || 0); }, 0);
-        targetTotal = clampInt(targetTotal, 0, 0, 300);
-    }
-    return {
-        source: source,
-        subject: subject,
-        bank_id: source === 'user_bank' ? (Number.isFinite(bank_id) ? bank_id : null) : null,
-        duration: duration,
-        targetTotal: targetTotal,
-        types: types,
-        scores: scores
-    };
-}
-function buildTemplateScopeLabel(cfg, bankLabel) {
-    if (cfg.source === 'user_bank')
-        return bankLabel ? "\u4E2A\u4EBA\u9898\u5E93 \u00B7 ".concat(bankLabel) : '个人题库';
-    return "\u516C\u5171\u9898\u5E93 \u00B7 ".concat(cfg.subject === 'all' ? '全部科目' : cfg.subject);
-}
-function distributeCounts(targetTotal, enabledTypes) {
-    var cfg = {};
-    var n = enabledTypes.length;
-    if (n <= 0)
-        return cfg;
-    var target = clampInt(targetTotal, 30, 1, 300);
-    var base = Math.floor(target / n);
-    var rem = target % n;
-    enabledTypes.forEach(function (t) {
-        var want = base + (rem > 0 ? 1 : 0);
-        if (rem > 0)
-            rem -= 1;
-        cfg[t.name] = Math.min(want, Math.max(0, t.available));
-    });
-    var assignedTotal = Object.values(cfg).reduce(function (s, v) { return s + (Number(v) || 0); }, 0);
-    var remaining = target - assignedTotal;
-    var safety = 5000;
-    while (remaining > 0 && safety-- > 0) {
-        var progressed = false;
-        for (var _i = 0, enabledTypes_1 = enabledTypes; _i < enabledTypes_1.length; _i++) {
-            var t = enabledTypes_1[_i];
-            if (remaining <= 0)
-                break;
-            var cap = Math.max(0, t.available) - (cfg[t.name] || 0);
-            if (cap > 0) {
-                cfg[t.name] = (cfg[t.name] || 0) + 1;
-                remaining -= 1;
-                progressed = true;
-            }
-        }
-        if (!progressed)
-            break;
-    }
-    assignedTotal = Object.values(cfg).reduce(function (s, v) { return s + (Number(v) || 0); }, 0);
-    if (assignedTotal <= 0) {
-        enabledTypes.forEach(function (t) {
-            cfg[t.name] = Math.min(1, Math.max(0, t.available));
-        });
-    }
-    return cfg;
-}
 Page({
+    behaviors: [request_state_1.requestStateBehavior],
     data: {
         tab: 'new',
         drawerOpen: false,
@@ -260,7 +83,7 @@ Page({
         examBankIndex: 0,
         examDuration: 60,
         examTargetTotal: 30,
-        quickPresets: QUICK_PRESETS,
+        quickPresets: index_v2_helpers_1.QUICK_PRESETS,
         examTypes: [],
         examLoading: false,
         examCreating: false,
@@ -279,7 +102,7 @@ Page({
         tplBankId: null,
         tplBankLabel: '请选择题库',
         tplBankIndex: 0,
-        systemTemplates: SYSTEM_TEMPLATES,
+        systemTemplates: index_v2_helpers_1.SYSTEM_TEMPLATES,
         userTemplateCards: [],
         userTemplateConfigById: {},
         userTemplatesLoaded: false,
@@ -332,7 +155,24 @@ Page({
         statsMsg: '',
         statsMsgKind: ''
     },
+    setDataBatcher: null,
+    ensureSetDataBatcher: function () {
+        if (this.setDataBatcher)
+            return;
+        this.setDataBatcher = (0, set_data_batcher_1.createSetDataBatcher)(this.setData.bind(this));
+    },
+    patchData: function (patch, callback, immediate) {
+        if (immediate === void 0) { immediate = false; }
+        this.ensureSetDataBatcher();
+        var fn = this.setDataBatcher;
+        if (typeof fn === 'function') {
+            fn(patch, callback, { immediate: immediate });
+            return;
+        }
+        this.setData(patch, callback);
+    },
     onLoad: function (options) {
+        this.ensureSetDataBatcher();
         var tab = options && options.tab ? String(options.tab) : '';
         var patch = {};
         if (tab === 'templates' || tab === 'new' || tab === 'records' || tab === 'data' || tab === 'settings') {
@@ -394,16 +234,16 @@ Page({
             if (Number.isFinite(recBankId) && recBankId > 0) {
                 patch.recordsBankId = recBankId;
             }
-            var recPage = clampInt(options === null || options === void 0 ? void 0 : options.page, 1, 1, 9999);
+            var recPage = (0, index_v2_helpers_1.clampInt)(options === null || options === void 0 ? void 0 : options.page, 1, 1, 9999);
             if (recPage > 1)
                 patch.recordsPage = recPage;
-            var recSize = clampInt(options === null || options === void 0 ? void 0 : options.size, 10, 5, 50);
+            var recSize = (0, index_v2_helpers_1.clampInt)(options === null || options === void 0 ? void 0 : options.size, 10, 5, 50);
             if (recSize === 10 || recSize === 20 || recSize === 50) {
                 patch.recordsSize = recSize;
             }
         }
         if (Object.keys(patch).length) {
-            this.setData(patch);
+            this.patchData(patch, undefined, true);
         }
     },
     onShow: function () {
@@ -412,7 +252,7 @@ Page({
             return;
         }
         try {
-            this.setData(theme_1.themeManager.getPageData());
+            this.patchData(theme_1.themeManager.getPageData(), undefined, true);
         }
         catch (e) { }
         if (!this.data.inited && !this.data.bootstrapping) {
@@ -425,7 +265,7 @@ Page({
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        this.setData({ bootstrapping: true });
+                        this.patchData({ bootstrapping: true });
                         _b.label = 1;
                     case 1:
                         _b.trys.push([1, 5, 6, 7]);
@@ -440,9 +280,9 @@ Page({
                         subjects = Array.isArray(subjectListRaw)
                             ? subjectListRaw.filter(function (x) { return typeof x === 'string' && x.trim(); }).map(function (s) { return String(s).trim(); })
                             : [];
-                        subjectOptions = buildSubjectOptions(subjects);
-                        banks = uniqueBanks(__spreadArray(__spreadArray([], (myBanksRes === null || myBanksRes === void 0 ? void 0 : myBanksRes.banks) || [], true), (sharedBanksRes === null || sharedBanksRes === void 0 ? void 0 : sharedBanksRes.banks) || [], true));
-                        bankOptions = buildBankOptions(banks);
+                        subjectOptions = (0, index_v2_helpers_1.buildSubjectOptions)(subjects);
+                        banks = (0, index_v2_helpers_1.uniqueBanks)(__spreadArray(__spreadArray([], (myBanksRes === null || myBanksRes === void 0 ? void 0 : myBanksRes.banks) || [], true), (sharedBanksRes === null || sharedBanksRes === void 0 ? void 0 : sharedBanksRes.banks) || [], true));
+                        bankOptions = (0, index_v2_helpers_1.buildBankOptions)(banks);
                         firstBankId = bankOptions.length ? bankOptions[0].value : null;
                         recordsBankOptions = __spreadArray([{ value: 0, label: '全部题库' }], bankOptions, true);
                         sizeList = [10, 20, 50];
@@ -461,7 +301,7 @@ Page({
                             desiredExamSubject_1 = 'all';
                         }
                         desiredExamSubjectIndex = Math.max(0, subjectOptions.findIndex(function (o) { return o.value === desiredExamSubject_1; }));
-                        desiredExamSubjectLabel = findOptionLabel(subjectOptions, desiredExamSubject_1, '全部科目');
+                        desiredExamSubjectLabel = (0, index_v2_helpers_1.findOptionLabel)(subjectOptions, desiredExamSubject_1, '全部科目');
                         desiredExamBankId_1 = firstBankId;
                         wantedBankId_1 = this.data.examBankId != null ? Number(this.data.examBankId) : null;
                         if (wantedBankId_1 != null && Number.isFinite(wantedBankId_1)) {
@@ -470,7 +310,7 @@ Page({
                                 desiredExamBankId_1 = wantedBankId_1;
                         }
                         desiredExamBankIndex = desiredExamBankId_1 != null ? Math.max(0, bankOptions.findIndex(function (o) { return o.value === desiredExamBankId_1; })) : 0;
-                        desiredExamBankLabel = desiredExamBankId_1 != null ? findOptionLabel(bankOptions, desiredExamBankId_1, firstBankLabel) : '请选择题库';
+                        desiredExamBankLabel = desiredExamBankId_1 != null ? (0, index_v2_helpers_1.findOptionLabel)(bankOptions, desiredExamBankId_1, firstBankLabel) : '请选择题库';
                         desiredTplSource = this.data.tplSource === 'user_bank' ? 'user_bank' : 'public';
                         desiredTplSubject_1 = String(this.data.tplSubject || 'all').trim() || 'all';
                         if (desiredTplSource === 'public') {
@@ -482,7 +322,7 @@ Page({
                             desiredTplSubject_1 = 'all';
                         }
                         desiredTplSubjectIndex = Math.max(0, subjectOptions.findIndex(function (o) { return o.value === desiredTplSubject_1; }));
-                        desiredTplSubjectLabel = findOptionLabel(subjectOptions, desiredTplSubject_1, '全部科目');
+                        desiredTplSubjectLabel = (0, index_v2_helpers_1.findOptionLabel)(subjectOptions, desiredTplSubject_1, '全部科目');
                         desiredTplBankId_1 = firstBankId;
                         wantedTplBankId_1 = this.data.tplBankId != null ? Number(this.data.tplBankId) : null;
                         if (wantedTplBankId_1 != null && Number.isFinite(wantedTplBankId_1)) {
@@ -491,8 +331,8 @@ Page({
                                 desiredTplBankId_1 = wantedTplBankId_1;
                         }
                         desiredTplBankIndex = desiredTplBankId_1 != null ? Math.max(0, bankOptions.findIndex(function (o) { return o.value === desiredTplBankId_1; })) : 0;
-                        desiredTplBankLabel = desiredTplBankId_1 != null ? findOptionLabel(bankOptions, desiredTplBankId_1, firstBankLabel) : firstBankLabel;
-                        return [4 /*yield*/, setDataAsync(this, {
+                        desiredTplBankLabel = desiredTplBankId_1 != null ? (0, index_v2_helpers_1.findOptionLabel)(bankOptions, desiredTplBankId_1, firstBankLabel) : firstBankLabel;
+                        return [4 /*yield*/, (0, index_v2_helpers_1.setDataAsync)(this, {
                                 inited: true,
                                 subjectOptions: subjectOptions,
                                 bankOptions: bankOptions,
@@ -533,7 +373,7 @@ Page({
                         wx.showToast({ title: (e_1 && e_1.message) || '初始化失败', icon: 'none' });
                         return [3 /*break*/, 7];
                     case 6:
-                        this.setData({ bootstrapping: false });
+                        this.patchData({ bootstrapping: false }, undefined, true);
                         return [7 /*endfinally*/];
                     case 7: return [2 /*return*/];
                 }
@@ -541,16 +381,16 @@ Page({
         });
     },
     onHamburgerTap: function () {
-        this.setData({ drawerOpen: true });
+        this.patchData({ drawerOpen: true });
     },
     onDrawerClose: function () {
-        this.setData({ drawerOpen: false });
+        this.patchData({ drawerOpen: false });
     },
     onDrawerNavigate: function (e) {
         var _a, _b;
         var url = (_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.url;
         var navType = (_b = e === null || e === void 0 ? void 0 : e.detail) === null || _b === void 0 ? void 0 : _b.navType;
-        this.setData({ drawerOpen: false });
+        this.patchData({ drawerOpen: false });
         if (!url)
             return;
         (0, nav_1.safeNavigate)(url, navType);
@@ -565,8 +405,7 @@ Page({
                     case 0:
                         style = (((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.style) || 'default');
                         theme_1.themeManager.setStyle(style);
-                        this.setData(theme_1.themeManager.getPageData());
-                        this.setData({ drawerOpen: false });
+                        this.patchData(__assign(__assign({}, theme_1.themeManager.getPageData()), { drawerOpen: false }), undefined, true);
                         return [4 /*yield*/, (0, user_settings_1.syncUserSettingsToServer)()];
                     case 1:
                         _b.sent();
@@ -577,14 +416,14 @@ Page({
     },
     onCycleThemeModeTap: function () {
         var mode = theme_1.themeManager.cycleMode();
-        this.setData(__assign(__assign({}, theme_1.themeManager.getPageData()), { themeMode: mode }));
+        this.patchData(__assign(__assign({}, theme_1.themeManager.getPageData()), { themeMode: mode }));
     },
     onGoNewTab: function () {
-        this.setData({ tab: 'new' });
+        this.patchData({ tab: 'new' });
     },
     onGoTemplatesTab: function () {
         var _this = this;
-        this.setData({ tab: 'templates' }, function () {
+        this.patchData({ tab: 'templates' }, function () {
             _this.loadUserTemplates();
         });
     },
@@ -594,7 +433,7 @@ Page({
         var tab = (_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.tab;
         if (!tab || tab === this.data.tab)
             return;
-        this.setData({ tab: tab }, function () {
+        this.patchData({ tab: tab }, function () {
             if (tab === 'templates')
                 _this.loadUserTemplates();
             if (tab === 'records')
@@ -606,7 +445,7 @@ Page({
     // === records（考试记录）===
     setRecordsMsg: function (text, kind) {
         if (kind === void 0) { kind = ''; }
-        this.setData({ recordsMsg: String(text || ''), recordsMsgKind: kind });
+        this.patchData({ recordsMsg: String(text || ''), recordsMsgKind: kind });
     },
     syncRecordsFilters: function () {
         var subjectOptions = this.data.subjectOptions || [];
@@ -639,8 +478,8 @@ Page({
         var total = Math.max(0, Number(this.data.recordsTotal || 0) || 0);
         var totalPages = Math.max(1, Math.ceil(total / Math.max(1, recordsSize)));
         var recordsTotalPages = totalPages;
-        var recordsPage = clampInt(this.data.recordsPage, 1, 1, totalPages);
-        this.setData({
+        var recordsPage = (0, index_v2_helpers_1.clampInt)(this.data.recordsPage, 1, 1, totalPages);
+        this.patchData({
             recordsSource: recordsSource,
             recordsSubject: recordsSubject,
             recordsSubjectIndex: subjectIdx,
@@ -663,7 +502,7 @@ Page({
             return;
         if (source === this.data.recordsSource)
             return;
-        this.setData({ recordsSource: source, recordsPage: 1 }, function () {
+        this.patchData({ recordsSource: source, recordsPage: 1 }, function () {
             _this.syncRecordsFilters();
             if (_this.data.tab === 'records')
                 _this.loadExamRecords(true);
@@ -682,7 +521,7 @@ Page({
         var opt = subjectOptions[safeIdx];
         if (!opt)
             return;
-        this.setData({
+        this.patchData({
             recordsSubjectIndex: safeIdx,
             recordsSubject: opt.value,
             recordsSubjectLabel: opt.label,
@@ -705,7 +544,7 @@ Page({
         var opt = bankOptions[safeIdx];
         if (!opt)
             return;
-        this.setData({
+        this.patchData({
             recordsBankIndex: safeIdx,
             recordsBankId: opt.value,
             recordsBankLabel: opt.label,
@@ -726,26 +565,26 @@ Page({
         var opt = options[safeIdx];
         if (!opt)
             return;
-        this.setData({ recordsSizeIndex: safeIdx, recordsSize: opt.value, recordsSizeLabel: opt.label, recordsPage: 1 }, function () { return _this.loadExamRecords(true); });
+        this.patchData({ recordsSizeIndex: safeIdx, recordsSize: opt.value, recordsSizeLabel: opt.label, recordsPage: 1 }, function () { return _this.loadExamRecords(true); });
     },
     onRecordsPrevPage: function () {
         var _this = this;
         if (this.data.recordsLoading)
             return;
-        var p = clampInt(this.data.recordsPage, 1, 1, 9999);
+        var p = (0, index_v2_helpers_1.clampInt)(this.data.recordsPage, 1, 1, 9999);
         if (p <= 1)
             return;
-        this.setData({ recordsPage: p - 1 }, function () { return _this.loadExamRecords(false); });
+        this.patchData({ recordsPage: p - 1 }, function () { return _this.loadExamRecords(false); });
     },
     onRecordsNextPage: function () {
         var _this = this;
         if (this.data.recordsLoading)
             return;
-        var p = clampInt(this.data.recordsPage, 1, 1, 9999);
-        var totalPages = clampInt(this.data.recordsTotalPages, 1, 1, 9999);
+        var p = (0, index_v2_helpers_1.clampInt)(this.data.recordsPage, 1, 1, 9999);
+        var totalPages = (0, index_v2_helpers_1.clampInt)(this.data.recordsTotalPages, 1, 1, 9999);
         if (p >= totalPages)
             return;
-        this.setData({ recordsPage: p + 1 }, function () { return _this.loadExamRecords(false); });
+        this.patchData({ recordsPage: p + 1 }, function () { return _this.loadExamRecords(false); });
     },
     loadExamRecords: function () {
         return __awaiter(this, arguments, void 0, function (resetPage) {
@@ -756,11 +595,11 @@ Page({
                     case 0:
                         if (this.data.recordsLoading)
                             return [2 /*return*/];
-                        page = resetPage ? 1 : clampInt(this.data.recordsPage, 1, 1, 9999);
-                        size = clampInt(this.data.recordsSize, 10, 5, 50);
+                        page = resetPage ? 1 : (0, index_v2_helpers_1.clampInt)(this.data.recordsPage, 1, 1, 9999);
+                        size = (0, index_v2_helpers_1.clampInt)(this.data.recordsSize, 10, 5, 50);
                         if (resetPage && this.data.recordsPage !== 1)
-                            this.setData({ recordsPage: 1 });
-                        this.setData({ recordsLoading: true });
+                            this.patchData({ recordsPage: 1 }, undefined, true);
+                        this.patchData({ recordsLoading: true });
                         this.setRecordsMsg('', '');
                         _a.label = 1;
                     case 1:
@@ -782,14 +621,14 @@ Page({
                         ongoing = Array.isArray(res === null || res === void 0 ? void 0 : res.ongoing) ? res.ongoing : [];
                         submitted = Array.isArray(res === null || res === void 0 ? void 0 : res.submitted) ? res.submitted : [];
                         total = Number((res === null || res === void 0 ? void 0 : res.total) || 0) || 0;
-                        page_1 = clampInt(res === null || res === void 0 ? void 0 : res.page, params.page, 1, 9999);
-                        size_1 = clampInt(res === null || res === void 0 ? void 0 : res.size, params.size, 5, 50);
+                        page_1 = (0, index_v2_helpers_1.clampInt)(res === null || res === void 0 ? void 0 : res.page, params.page, 1, 9999);
+                        size_1 = (0, index_v2_helpers_1.clampInt)(res === null || res === void 0 ? void 0 : res.size, params.size, 5, 50);
                         totalPages = Math.max(1, Math.ceil(total / Math.max(1, size_1)));
-                        this.setData({
+                        this.patchData({
                             recordsOngoing: ongoing,
                             recordsSubmitted: submitted,
                             recordsTotal: total,
-                            recordsPage: clampInt(page_1, 1, 1, totalPages),
+                            recordsPage: (0, index_v2_helpers_1.clampInt)(page_1, 1, 1, totalPages),
                             recordsSize: size_1,
                             recordsTotalPages: totalPages,
                             recordsLoading: false
@@ -798,7 +637,7 @@ Page({
                         return [3 /*break*/, 4];
                     case 3:
                         e_2 = _a.sent();
-                        this.setData({
+                        this.patchData({
                             recordsOngoing: [],
                             recordsSubmitted: [],
                             recordsTotal: 0,
@@ -888,7 +727,7 @@ Page({
     // === data（考试数据）===
     setStatsMsg: function (text, kind) {
         if (kind === void 0) { kind = ''; }
-        this.setData({ statsMsg: String(text || ''), statsMsgKind: kind });
+        this.patchData({ statsMsg: String(text || ''), statsMsgKind: kind });
     },
     loadExamStats: function () {
         return __awaiter(this, arguments, void 0, function (force) {
@@ -922,7 +761,7 @@ Page({
                         filterKey = JSON.stringify(params);
                         if (this.data.statsLoaded && !force && this.data.statsFilterKey === filterKey)
                             return [2 /*return*/];
-                        this.setData({ statsLoading: true });
+                        this.patchData({ statsLoading: true });
                         this.setStatsMsg('', '');
                         _a.label = 1;
                     case 1:
@@ -938,7 +777,7 @@ Page({
                                 .map(function (a) { return ({ title: String((a === null || a === void 0 ? void 0 : a.title) || '').trim(), content: String((a === null || a === void 0 ? void 0 : a.content) || '').trim() }); })
                                 .filter(function (a) { return a.title && a.content; })
                             : [];
-                        this.setData({
+                        this.patchData({
                             statsOverview: statsOverview,
                             recentExams: recentExams,
                             typeDist: typeDist,
@@ -951,7 +790,7 @@ Page({
                         return [3 /*break*/, 4];
                     case 3:
                         e_3 = _a.sent();
-                        this.setData({
+                        this.patchData({
                             statsOverview: {
                                 submitted_count: 0,
                                 avg_score: 0,
@@ -989,7 +828,7 @@ Page({
         };
     },
     getQTypesForScope: function (scope) {
-        return __awaiter(this, void 0, void 0, function () {
+        return __awaiter(this, void 0, Promise, function () {
             var key_1, res, arr, qTypes, e_4, key, info, arr, qTypes, e_5;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -998,8 +837,8 @@ Page({
                         if (!scope.bank_id)
                             return [2 /*return*/, []];
                         key_1 = "bank:".concat(scope.bank_id);
-                        if (qTypesCache.has(key_1))
-                            return [2 /*return*/, (qTypesCache.get(key_1) || []).slice()];
+                        if (index_v2_helpers_1.qTypesCache.has(key_1))
+                            return [2 /*return*/, (index_v2_helpers_1.qTypesCache.get(key_1) || []).slice()];
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 3, , 4]);
@@ -1008,19 +847,19 @@ Page({
                         res = _a.sent();
                         arr = Array.isArray(res === null || res === void 0 ? void 0 : res.available_types) ? res.available_types : [];
                         qTypes = arr.filter(function (x) { return typeof x === 'string' && x.trim(); }).map(function (s) { return String(s).trim(); });
-                        qTypesCache.set(key_1, qTypes);
+                        index_v2_helpers_1.qTypesCache.set(key_1, qTypes);
                         return [2 /*return*/, qTypes.slice()];
                     case 3:
                         e_4 = _a.sent();
-                        qTypesCache.set(key_1, []);
+                        index_v2_helpers_1.qTypesCache.set(key_1, []);
                         return [2 /*return*/, []];
                     case 4:
                         if (!scope.subject || scope.subject === 'all') {
-                            return [2 /*return*/, FALLBACK_PUBLIC_Q_TYPES.slice()];
+                            return [2 /*return*/, index_v2_helpers_1.FALLBACK_PUBLIC_Q_TYPES.slice()];
                         }
                         key = "subject:".concat(scope.subject);
-                        if (qTypesCache.has(key))
-                            return [2 /*return*/, (qTypesCache.get(key) || []).slice()];
+                        if (index_v2_helpers_1.qTypesCache.has(key))
+                            return [2 /*return*/, (index_v2_helpers_1.qTypesCache.get(key) || []).slice()];
                         _a.label = 5;
                     case 5:
                         _a.trys.push([5, 7, , 8]);
@@ -1029,11 +868,11 @@ Page({
                         info = _a.sent();
                         arr = Array.isArray(info === null || info === void 0 ? void 0 : info.available_types) ? info.available_types : [];
                         qTypes = arr.filter(function (x) { return typeof x === 'string' && x.trim(); }).map(function (s) { return String(s).trim(); });
-                        qTypesCache.set(key, qTypes);
+                        index_v2_helpers_1.qTypesCache.set(key, qTypes);
                         return [2 /*return*/, qTypes.slice()];
                     case 7:
                         e_5 = _a.sent();
-                        qTypesCache.set(key, []);
+                        index_v2_helpers_1.qTypesCache.set(key, []);
                         return [2 /*return*/, []];
                     case 8: return [2 /*return*/];
                 }
@@ -1049,7 +888,7 @@ Page({
                     case 0:
                         if (this.data.examLoading)
                             return [2 /*return*/];
-                        this.setData({ examLoading: true, examMsg: '', examMsgKind: '' });
+                        this.patchData({ examLoading: true, examMsg: '', examMsgKind: '' });
                         scope = this.getExamScope();
                         _a.label = 1;
                     case 1:
@@ -1058,7 +897,7 @@ Page({
                     case 2:
                         qTypes = (_a.sent()).filter(Boolean);
                         if (!qTypes.length) {
-                            this.setData({ examTypes: [], examLoading: false }, function () { return _this.refreshExamSummary(); });
+                            this.patchData({ examTypes: [], examLoading: false }, function () { return _this.refreshExamSummary(); });
                             return [2 /*return*/];
                         }
                         return [4 /*yield*/, Promise.all(qTypes.map(function (t) { return __awaiter(_this, void 0, void 0, function () {
@@ -1072,11 +911,11 @@ Page({
                                             return [4 /*yield*/, api_1.api.getBankUserCounts(bankId, { q_type: t, source: 'all' })];
                                         case 1:
                                             res_1 = _a.sent();
-                                            return [2 /*return*/, { name: t, available: clampInt(res_1 === null || res_1 === void 0 ? void 0 : res_1.total, 0, 0, 999999) }];
+                                            return [2 /*return*/, { name: t, available: (0, index_v2_helpers_1.clampInt)(res_1 === null || res_1 === void 0 ? void 0 : res_1.total, 0, 0, 999999) }];
                                         case 2: return [4 /*yield*/, api_1.api.getQuestionsCount({ subject: scope.subject || 'all', type: t })];
                                         case 3:
                                             res = _a.sent();
-                                            return [2 /*return*/, { name: t, available: clampInt(res === null || res === void 0 ? void 0 : res.count, 0, 0, 999999) }];
+                                            return [2 /*return*/, { name: t, available: (0, index_v2_helpers_1.clampInt)(res === null || res === void 0 ? void 0 : res.count, 0, 0, 999999) }];
                                         case 4:
                                             e_7 = _a.sent();
                                             return [2 /*return*/, { name: t, available: 0 }];
@@ -1093,8 +932,8 @@ Page({
                             .map(function (x) {
                             var prev = prevMap_1.get(x.name);
                             var enabled = prev ? !!prev.enabled : false;
-                            var score = prev ? clampFloat(prev.score, 1, 0, 1000) : 1;
-                            var count = enabled ? clampInt(prev === null || prev === void 0 ? void 0 : prev.count, 0, 0, x.available) : 0;
+                            var score = prev ? (0, index_v2_helpers_1.clampFloat)(prev.score, 1, 0, 1000) : 1;
+                            var count = enabled ? (0, index_v2_helpers_1.clampInt)(prev === null || prev === void 0 ? void 0 : prev.count, 0, 0, x.available) : 0;
                             return { name: x.name, enabled: enabled, available: x.available, count: count, score: score, subtotalText: '0' };
                         });
                         if (opts === null || opts === void 0 ? void 0 : opts.applyConfig) {
@@ -1103,19 +942,19 @@ Page({
                             rows = rows.map(function (r) {
                                 var want = cfg_1.types && cfg_1.types[r.name] != null ? Number(cfg_1.types[r.name]) : 0;
                                 var enabled = want > 0;
-                                var count = enabled ? clampInt(want, 0, 0, r.available) : 0;
+                                var count = enabled ? (0, index_v2_helpers_1.clampInt)(want, 0, 0, r.available) : 0;
                                 var scoreRaw = cfg_1.scores && cfg_1.scores[r.name] != null ? Number(cfg_1.scores[r.name]) : 1;
-                                var score = enabled ? clampFloat(scoreRaw, 1, 0, 1000) : 1;
+                                var score = enabled ? (0, index_v2_helpers_1.clampFloat)(scoreRaw, 1, 0, 1000) : 1;
                                 return __assign(__assign({}, r), { enabled: enabled, count: count, score: score });
                             });
                         }
                         rows = this.applyDefaultPresetIfEmpty(rows);
                         rows = this.recomputeTypeSubtotals(rows);
-                        this.setData({ examTypes: rows, examLoading: false }, function () { return _this.refreshExamSummary(); });
+                        this.patchData({ examTypes: rows, examLoading: false }, function () { return _this.refreshExamSummary(); });
                         return [3 /*break*/, 5];
                     case 4:
                         e_6 = _a.sent();
-                        this.setData({ examTypes: [], examLoading: false }, function () { return _this.refreshExamSummary(); });
+                        this.patchData({ examTypes: [], examLoading: false }, function () { return _this.refreshExamSummary(); });
                         return [3 /*break*/, 5];
                     case 5: return [2 /*return*/];
                 }
@@ -1125,7 +964,7 @@ Page({
     recomputeTypeSubtotals: function (rows) {
         return (rows || []).map(function (r) {
             var subtotal = r.enabled ? (Number(r.count) || 0) * (Number(r.score) || 0) : 0;
-            return __assign(__assign({}, r), { subtotalText: formatNum(subtotal) });
+            return __assign(__assign({}, r), { subtotalText: (0, index_v2_helpers_1.formatNum)(subtotal) });
         });
     },
     applyDefaultPresetIfEmpty: function (rows) {
@@ -1136,15 +975,15 @@ Page({
             return rows;
         examPresetApplied = true;
         var qTypes = rows.map(function (r) { return r.name; });
-        var picked = DEFAULT_PICKED_TYPES.filter(function (t) { return qTypes.includes(t); });
+        var picked = index_v2_helpers_1.DEFAULT_PICKED_TYPES.filter(function (t) { return qTypes.includes(t); });
         var fallbackPicked = picked.length ? picked : qTypes.slice(0, Math.min(3, qTypes.length));
         var enabledTypes = rows
             .filter(function (r) { return fallbackPicked.includes(r.name); })
             .map(function (r) { return ({ name: r.name, available: r.available }); });
-        var distributed = distributeCounts(this.data.examTargetTotal, enabledTypes);
+        var distributed = (0, index_v2_helpers_1.distributeCounts)(this.data.examTargetTotal, enabledTypes);
         return rows.map(function (r) {
             var enabled = fallbackPicked.includes(r.name);
-            var count = enabled ? clampInt(distributed[r.name] || 0, 0, 0, r.available) : 0;
+            var count = enabled ? (0, index_v2_helpers_1.clampInt)(distributed[r.name] || 0, 0, 0, r.available) : 0;
             return __assign(__assign({}, r), { enabled: enabled, count: count, score: 1 });
         });
     },
@@ -1158,8 +997,8 @@ Page({
         rows.forEach(function (r) {
             if (!r.enabled)
                 return;
-            var count = clampInt(r.count, 0, 0, 500);
-            var score = clampFloat(r.score, 1, 0, 1000);
+            var count = (0, index_v2_helpers_1.clampInt)(r.count, 0, 0, 500);
+            var score = (0, index_v2_helpers_1.clampFloat)(r.score, 1, 0, 1000);
             if (count <= 0)
                 return;
             types[r.name] = count;
@@ -1174,14 +1013,14 @@ Page({
             var _a;
             var count = types[name] || 0;
             var score = (_a = scores[name]) !== null && _a !== void 0 ? _a : 1;
-            return { name: name, meta: "".concat(count, " \u00D7 ").concat(formatNum(score)), subtotal: formatNum(count * score) };
+            return { name: name, meta: "".concat(count, " \u00D7 ").concat((0, index_v2_helpers_1.formatNum)(score)), subtotal: (0, index_v2_helpers_1.formatNum)(count * score) };
         });
         var startDisabled = assigned <= 0 || (scope.source === 'user_bank' && !scope.bank_id);
         this.setData({
             examSumScope: scopeLabel,
-            examSumDuration: "".concat(clampInt(this.data.examDuration, 60, 1, 1440), " \u5206\u949F"),
+            examSumDuration: "".concat((0, index_v2_helpers_1.clampInt)(this.data.examDuration, 60, 1, 1440), " \u5206\u949F"),
             examSumAssigned: "".concat(assigned, " \u9898"),
-            examSumScore: "".concat(formatNum(totalScore), " \u5206"),
+            examSumScore: "".concat((0, index_v2_helpers_1.formatNum)(totalScore), " \u5206"),
             examSumTypes: examSumTypes,
             examStartDisabled: startDisabled
         });
@@ -1208,7 +1047,7 @@ Page({
                                 next.examBankLabel = bankOptions[0].label;
                             }
                         }
-                        return [4 /*yield*/, setDataAsync(this, next)];
+                        return [4 /*yield*/, (0, index_v2_helpers_1.setDataAsync)(this, next)];
                     case 1:
                         _c.sent();
                         return [4 /*yield*/, this.reloadExamTypes()];
@@ -1232,7 +1071,7 @@ Page({
                         opt = subjectOptions[safeIdx];
                         if (!opt)
                             return [2 /*return*/];
-                        return [4 /*yield*/, setDataAsync(this, {
+                        return [4 /*yield*/, (0, index_v2_helpers_1.setDataAsync)(this, {
                                 examSubjectIndex: safeIdx,
                                 examSubject: opt.value,
                                 examSubjectLabel: opt.label,
@@ -1262,7 +1101,7 @@ Page({
                         opt = bankOptions[safeIdx];
                         if (!opt)
                             return [2 /*return*/];
-                        return [4 /*yield*/, setDataAsync(this, {
+                        return [4 /*yield*/, (0, index_v2_helpers_1.setDataAsync)(this, {
                                 examBankIndex: safeIdx,
                                 examBankId: opt.value,
                                 examBankLabel: opt.label,
@@ -1282,13 +1121,13 @@ Page({
     onExamDurationInput: function (e) {
         var _this = this;
         var _a;
-        var duration = clampInt((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value, 60, 1, 1440);
+        var duration = (0, index_v2_helpers_1.clampInt)((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value, 60, 1, 1440);
         this.setData({ examDuration: duration }, function () { return _this.refreshExamSummary(); });
     },
     onExamTargetTotalInput: function (e) {
         var _this = this;
         var _a;
-        var total = clampInt((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value, 30, 1, 300);
+        var total = (0, index_v2_helpers_1.clampInt)((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value, 30, 1, 300);
         this.setData({ examTargetTotal: total }, function () { return _this.refreshExamSummary(); });
     },
     // === 新建考试：题型与分值 ===
@@ -1318,7 +1157,7 @@ Page({
             var _a;
             if (r.name !== name)
                 return r;
-            var count = clampInt((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value, 0, 0, r.available);
+            var count = (0, index_v2_helpers_1.clampInt)((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value, 0, 0, r.available);
             return __assign(__assign({}, r), { count: count });
         });
         this.setData({ examTypes: this.recomputeTypeSubtotals(next), examMsg: '', examMsgKind: '' }, function () {
@@ -1335,7 +1174,7 @@ Page({
             var _a;
             if (r.name !== name)
                 return r;
-            var score = clampFloat((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value, 1, 0, 1000);
+            var score = (0, index_v2_helpers_1.clampFloat)((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value, 1, 0, 1000);
             return __assign(__assign({}, r), { score: score });
         });
         this.setData({ examTypes: this.recomputeTypeSubtotals(next), examMsg: '', examMsgKind: '' }, function () {
@@ -1345,8 +1184,8 @@ Page({
     onQuickPresetTap: function (e) {
         var _this = this;
         var _a, _b, _c, _d;
-        var duration = clampInt((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.duration, 60, 1, 1440);
-        var total = clampInt((_d = (_c = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _c === void 0 ? void 0 : _c.dataset) === null || _d === void 0 ? void 0 : _d.total, 30, 1, 300);
+        var duration = (0, index_v2_helpers_1.clampInt)((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.duration, 60, 1, 1440);
+        var total = (0, index_v2_helpers_1.clampInt)((_d = (_c = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _c === void 0 ? void 0 : _c.dataset) === null || _d === void 0 ? void 0 : _d.total, 30, 1, 300);
         this.setData({ examDuration: duration, examTargetTotal: total }, function () {
             _this.onAutoDistributeTap();
             _this.refreshExamSummary();
@@ -1359,11 +1198,11 @@ Page({
             this.setData({ examMsg: '请先勾选至少一种题型，再进行均分。', examMsgKind: 'error' }, function () { return _this.refreshExamSummary(); });
             return;
         }
-        var distributed = distributeCounts(this.data.examTargetTotal, enabledRows.map(function (r) { return ({ name: r.name, available: r.available }); }));
+        var distributed = (0, index_v2_helpers_1.distributeCounts)(this.data.examTargetTotal, enabledRows.map(function (r) { return ({ name: r.name, available: r.available }); }));
         var next = (this.data.examTypes || []).map(function (r) {
             if (!r.enabled)
                 return __assign(__assign({}, r), { count: 0 });
-            return __assign(__assign({}, r), { count: clampInt(distributed[r.name] || 0, 0, 0, r.available) });
+            return __assign(__assign({}, r), { count: (0, index_v2_helpers_1.clampInt)(distributed[r.name] || 0, 0, 0, r.available) });
         });
         this.setData({ examTypes: this.recomputeTypeSubtotals(next), examMsg: '', examMsgKind: '' }, function () {
             return _this.refreshExamSummary();
@@ -1380,8 +1219,8 @@ Page({
         var scope = this.getExamScope();
         if (scope.source === 'user_bank' && !scope.bank_id)
             return null;
-        var duration = clampInt(this.data.examDuration, 60, 1, 1440);
-        var targetTotal = clampInt(this.data.examTargetTotal, 30, 1, 300);
+        var duration = (0, index_v2_helpers_1.clampInt)(this.data.examDuration, 60, 1, 1440);
+        var targetTotal = (0, index_v2_helpers_1.clampInt)(this.data.examTargetTotal, 30, 1, 300);
         var types = {};
         var scores = {};
         var assigned = 0;
@@ -1389,8 +1228,8 @@ Page({
         (this.data.examTypes || []).forEach(function (r) {
             if (!r.enabled)
                 return;
-            var count = clampInt(r.count, 0, 0, 500);
-            var score = clampFloat(r.score, 1, 0, 1000);
+            var count = (0, index_v2_helpers_1.clampInt)(r.count, 0, 0, 500);
+            var score = (0, index_v2_helpers_1.clampFloat)(r.score, 1, 0, 1000);
             if (count <= 0)
                 return;
             types[r.name] = count;
@@ -1463,7 +1302,7 @@ Page({
             this.setData({ examMsg: '请先设置题型与题量。', examMsgKind: 'error' }, function () { return _this.refreshExamSummary(); });
             return;
         }
-        var title = "\u81EA\u5B9A\u4E49\u6A21\u677F ".concat(todayStamp());
+        var title = "\u81EA\u5B9A\u4E49\u6A21\u677F ".concat((0, index_v2_helpers_1.todayStamp)());
         this.setData({ saveModalOpen: true, saveTemplateTitle: title });
     },
     onCloseSaveModal: function () {
@@ -1598,11 +1437,11 @@ Page({
                         userTemplateConfigById_1 = {};
                         userTemplateCards_1 = [];
                         (Array.isArray(list) ? list : []).forEach(function (tpl) {
-                            var cfg = normalizeTemplateConfig((tpl === null || tpl === void 0 ? void 0 : tpl.config) || {});
+                            var cfg = (0, index_v2_helpers_1.normalizeTemplateConfig)((tpl === null || tpl === void 0 ? void 0 : tpl.config) || {});
                             if (!cfg)
                                 return;
-                            var bankLabel = cfg.bank_id ? findOptionLabel(bankOptions_1, cfg.bank_id, '') : '';
-                            var scopeLabel = buildTemplateScopeLabel(cfg, bankLabel);
+                            var bankLabel = cfg.bank_id ? (0, index_v2_helpers_1.findOptionLabel)(bankOptions_1, cfg.bank_id, '') : '';
+                            var scopeLabel = (0, index_v2_helpers_1.buildTemplateScopeLabel)(cfg, bankLabel);
                             userTemplateConfigById_1[String(tpl.id)] = __assign(__assign({}, cfg), { label: tpl.title || '自定义模板' });
                             userTemplateCards_1.push({
                                 id: tpl.id,
@@ -1668,17 +1507,17 @@ Page({
                             examSource: cfg.source,
                             examSubject: examSubject,
                             examSubjectIndex: examSubjectIndex,
-                            examSubjectLabel: findOptionLabel(subjectOptions, examSubject, '全部科目'),
+                            examSubjectLabel: (0, index_v2_helpers_1.findOptionLabel)(subjectOptions, examSubject, '全部科目'),
                             examBankId: examBankId,
                             examBankIndex: examBankIndex,
-                            examBankLabel: examBankId != null ? findOptionLabel(bankOptions, examBankId, '请选择题库') : '请选择题库',
-                            examDuration: clampInt(cfg.duration, 60, 1, 1440),
-                            examTargetTotal: clampInt(cfg.targetTotal, 30, 1, 300),
+                            examBankLabel: examBankId != null ? (0, index_v2_helpers_1.findOptionLabel)(bankOptions, examBankId, '请选择题库') : '请选择题库',
+                            examDuration: (0, index_v2_helpers_1.clampInt)(cfg.duration, 60, 1, 1440),
+                            examTargetTotal: (0, index_v2_helpers_1.clampInt)(cfg.targetTotal, 30, 1, 300),
                             examMsg: '',
                             examMsgKind: ''
                         };
                         examPresetApplied = true;
-                        return [4 /*yield*/, setDataAsync(this, patch)];
+                        return [4 /*yield*/, (0, index_v2_helpers_1.setDataAsync)(this, patch)];
                     case 1:
                         _a.sent();
                         return [4 /*yield*/, this.reloadExamTypes({ applyConfig: cfg })];
@@ -1736,7 +1575,7 @@ Page({
         });
     },
     buildSystemTemplateConfig: function (tpl) {
-        return __awaiter(this, void 0, void 0, function () {
+        return __awaiter(this, void 0, Promise, function () {
             var scope, qTypes, preferred, picked, selected, total, base, rem, types, scores;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -1750,7 +1589,7 @@ Page({
                         preferred = Array.isArray(tpl.preferred) ? tpl.preferred : [];
                         picked = preferred.filter(function (t) { return qTypes.includes(t); });
                         selected = picked.length ? picked : qTypes.slice(0, Math.min(3, qTypes.length));
-                        total = clampInt(tpl.total, 30, 1, 300);
+                        total = (0, index_v2_helpers_1.clampInt)(tpl.total, 30, 1, 300);
                         base = Math.floor(total / selected.length);
                         rem = total % selected.length;
                         types = {};
@@ -1766,7 +1605,7 @@ Page({
                                 source: scope.source,
                                 subject: scope.subject,
                                 bank_id: scope.bank_id,
-                                duration: clampInt(tpl.duration, 45, 1, 1440),
+                                duration: (0, index_v2_helpers_1.clampInt)(tpl.duration, 45, 1, 1440),
                                 targetTotal: total,
                                 types: types,
                                 scores: scores,

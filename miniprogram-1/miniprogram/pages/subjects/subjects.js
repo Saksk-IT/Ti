@@ -9,8 +9,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -44,13 +44,13 @@ Page({
         subjects: [],
         filteredSubjects: [],
         keyword: '',
-        loading: false
+        loading: false,
+        isLoggedIn: false
     },
     onShow: function () {
-        if (!(0, auth_1.checkLogin)()) {
-            wx.redirectTo({ url: '/pages/login/login' });
-            return;
-        }
+        var isLoggedIn = (0, auth_1.checkLogin)();
+        this.setData({ isLoggedIn: isLoggedIn });
+        // 无论是否登录都加载科目列表
         this.loadSubjects();
     },
     loadSubjects: function () {
@@ -109,7 +109,22 @@ Page({
         var subject = e.currentTarget.dataset.subject;
         if (!subject)
             return;
-        wx.navigateTo({ url: "/pages/subject-detail/subject-detail?subject=".concat(encodeURIComponent(subject)) });
+        // 未登录时提示登录
+        if (!this.data.isLoggedIn) {
+            wx.showModal({
+                title: '提示',
+                content: '登录后可进入科目详情',
+                confirmText: '去登录',
+                cancelText: '取消',
+                success: function (res) {
+                    if (res.confirm) {
+                        wx.navigateTo({ url: '/pages/login/login' });
+                    }
+                }
+            });
+            return;
+        }
+        wx.navigateTo({ url: "/pages/subject-detail-v2/subject-detail-v2?subject=".concat(encodeURIComponent(subject)) });
     },
     onPullDownRefresh: function () {
         this.loadSubjects().finally(function () { return wx.stopPullDownRefresh(); });

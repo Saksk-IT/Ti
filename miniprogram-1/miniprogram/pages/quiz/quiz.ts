@@ -1,191 +1,28 @@
 // quiz.ts - 刷题/背题页面
 // 支持公有题库（subject参数）和个人题库（bank_id参数）双数据源
-import { api, normalizeImageUrls, resolveUploadUrl } from '../../utils/api';
+import { api, normalizeImageUrls } from '../../utils/api';
 import { checkLogin } from '../../utils/auth';
 import { createSourceFromOptions, IQuizSource } from '../../utils/quiz-source';
 import { markdownToRichTextHtml } from '../../utils/markdown';
 import { themeManager } from '../../utils/theme';
+import { requestStateBehavior } from '../../behaviors/request-state';
+import { createSetDataBatcher } from '../../utils/set-data-batcher';
+import {
+  parseIdList,
+  uniqUrls,
+  readAIExplainCache,
+  writeAIExplainCache,
+  stripHtmlToText,
+  extractInlineImageUrls,
+  type OptionItem,
+  type DisplayOption,
+  type QuestionType
+} from './modules/quiz-helpers';
 
 // 数据源实例（页面级别）
 let quizSource: IQuizSource | null = null;
-
-const AI_EXPLAIN_CACHE_KEY_PREFIX = 'saksk_ai_explain_v1_';
-
-function getAIExplainCacheKey(qid: number): string {
-  return `${AI_EXPLAIN_CACHE_KEY_PREFIX}${qid}`;
-}
-
-function readAIExplainCache(qid: number): string {
-  if (!qid) return '';
-  try {
-    const cached: any = wx.getStorageSync(getAIExplainCacheKey(qid));
-    if (!cached) return '';
-    if (typeof cached === 'string') return cached;
-    if (typeof cached === 'object' && typeof cached.explain === 'string') return cached.explain;
-  } catch (e) {
-    // ignore
-  }
-  return '';
-}
-
-function writeAIExplainCache(qid: number, explain: string) {
-  if (!qid) return;
-  const text = (explain || '').toString().trim();
-  if (!text) return;
-  try {
-    wx.setStorageSync(getAIExplainCacheKey(qid), { v: 1, explain: text, updatedAt: Date.now() });
-  } catch (e) {
-    // ignore
-  }
-}
-
-type OptionItem = {
-  key: string;
-  value: string;
-  answerValue: string;
-};
-
-type DisplayOption = OptionItem & {
-  isSelected: boolean;
-  isCorrect: boolean;
-  isWrong: boolean;
-  className: string;
-};
-
-type QuestionType = '选择题' | '多选题' | '判断题' | '填空题' | '简答题' | '计算题' | string;
-
-function parseIdList(raw: any, maxLen: number = 200): number[] {
-  if (raw == null) return [];
-
-  let s = String(raw || '').trim();
-  try {
-    if (/%[0-9A-Fa-f]{2}/.test(s)) {
-      s = decodeURIComponent(s);
-    }
-  } catch (e) {
-    // 忽略解码失败
-  }
-  s = s.replace(/，/g, ',').trim();
-  if (!s) return [];
-
-  const parts = s.split(',').map((x) => String(x || '').trim()).filter(Boolean);
-  const out: number[] = [];
-  const seen = new Set<number>();
-
-  for (const p of parts) {
-    if (out.length >= maxLen) break;
-    const n = Number(p);
-    if (!Number.isFinite(n) || n <= 0) continue;
-    const id = Math.floor(n);
-    if (seen.has(id)) continue;
-    seen.add(id);
-    out.push(id);
-  }
-
-  return out;
-}
-
-function safeFromCodePoint(n: number): string {
-  if (!Number.isFinite(n) || n <= 0 || n > 0x10ffff) return '';
-  try {
-    return String.fromCodePoint(n);
-  } catch (e) {
-    return '';
-  }
-}
-
-function decodeHtmlEntities(input: any): string {
-  const s = String(input || '');
-  if (!s) return '';
-  if (!s.includes('&') && !s.includes('&#')) return s;
-
-  return s
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&emsp;/g, '  ')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => safeFromCodePoint(parseInt(hex, 16)))
-    .replace(/&#([0-9]+);/g, (_, num) => safeFromCodePoint(parseInt(num, 10)));
-}
-
-function stripHtmlToText(input: any): string {
-  const raw = String(input || '');
-  if (!raw) return '';
-
-  const s0 = raw.replace(/\r\n/g, '\n');
-  const looksLikeHtml = /<\/?[a-z][\s>]/i.test(s0);
-  let out = s0;
-
-  if (looksLikeHtml) {
-    out = out
-      .replace(/<\s*(script|style)\b[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, '')
-      .replace(/<\s*br\s*\/?\s*>/gi, '\n')
-      .replace(/<\/\s*(p|div|pre|code|blockquote|h[1-6])\s*>/gi, '\n')
-      .replace(/<\/\s*li\s*>/gi, '\n')
-      .replace(/<\s*li\b[^>]*>/gi, '\n- ')
-      .replace(/<\s*img\b[^>]*>/gi, '')
-      .replace(/<[^>]+>/g, '');
-  }
-
-  out = decodeHtmlEntities(out);
-  out = out
-    .replace(/[ \t]+\n/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-  return out;
-}
-
-function uniqUrls(urls: string[]): string[] {
-  const set = new Set<string>();
-  const out: string[] = [];
-  (urls || []).forEach((u) => {
-    const v = String(u || '').trim();
-    if (!v || set.has(v)) return;
-    set.add(v);
-    out.push(v);
-  });
-  return out;
-}
-
-function resolveInlineUrl(src: string): string {
-  const raw = String(src || '').trim();
-  if (!raw) return '';
-  if (raw.startsWith('data:') || raw.startsWith('blob:')) return '';
-  if (/^https?:\/\//i.test(raw)) return raw;
-  if (raw.startsWith('//')) return `https:${raw}`;
-  return resolveUploadUrl(raw);
-}
-
-function extractInlineImageUrls(content: any): string[] {
-  const raw = String(content || '');
-  if (!raw) return [];
-
-  const out: string[] = [];
-
-  // HTML <img src="...">
-  const imgRe = /<\s*img\b[^>]*\bsrc\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s>]+))/gi;
-  let m: RegExpExecArray | null = null;
-  while ((m = imgRe.exec(raw))) {
-    const src = decodeHtmlEntities((m[1] || m[2] || m[3] || '').trim());
-    const url = resolveInlineUrl(src);
-    if (url) out.push(url);
-  }
-
-  // Markdown ![alt](url)
-  const mdRe = /!\[[^\]]*]\(([^)\s]+)(?:\s+[^)]*)?\)/g;
-  while ((m = mdRe.exec(raw))) {
-    const src = decodeHtmlEntities(String(m[1] || '').trim().replace(/^['"]|['"]$/g, ''));
-    const url = resolveInlineUrl(src);
-    if (url) out.push(url);
-  }
-
-  return uniqUrls(out);
-}
-
 Page({
+  behaviors: [requestStateBehavior],
   data: {
     mode: 'quiz',              // 模式：'quiz' | 'memo' | 'reinforce'
     // 数据源信息
@@ -292,6 +129,22 @@ Page({
   practiceSettingsKey: 'quiz_practice_settings_v1' as any,
   quizFontSizeKey: 'quiz_font_size_v1' as any,
   sessionStartedAt: 0 as any,
+  setDataBatcher: null as null | ((patch: Record<string, any>, callback?: () => void, options?: { immediate?: boolean }) => void),
+
+  ensureSetDataBatcher() {
+    if ((this as any).setDataBatcher) return;
+    (this as any).setDataBatcher = createSetDataBatcher(this.setData.bind(this));
+  },
+
+  patchData(patch: Record<string, any>, callback?: () => void, immediate: boolean = false) {
+    this.ensureSetDataBatcher();
+    const fn = (this as any).setDataBatcher;
+    if (typeof fn === 'function') {
+      fn(patch, callback, { immediate });
+      return;
+    }
+    this.setData(patch, callback);
+  },
 
   onShow() {
     try {
@@ -314,7 +167,7 @@ Page({
   },
 
   onLoad(options: any) {
-    console.log('刷题页面 onLoad，参数:', options);
+    this.ensureSetDataBatcher();
 
     if (!checkLogin()) {
       wx.redirectTo({ url: '/pages/login/login' });
@@ -329,25 +182,22 @@ Page({
 
     // 初始化主题（保证进入页面即命中 themeClass / themeStyleClass）
     try {
-      this.setData(Object.assign({ canEdit: false }, themeManager.getPageData()));
+      this.patchData(Object.assign({ canEdit: false }, themeManager.getPageData()), undefined, true);
       this.syncThemeStyleName();
     } catch (e) {
-      this.setData({ canEdit: false });
+      this.patchData({ canEdit: false }, undefined, true);
     }
 
     // 使用工厂函数创建数据源
     quizSource = createSourceFromOptions(options);
 
     if (!quizSource) {
-      console.error('数据源参数缺失（需要 subject 或 bank_id）');
       wx.showToast({ title: '参数缺失', icon: 'none' });
       setTimeout(() => {
         this.navigateBackToEntry();
       }, 1500);
       return;
     }
-
-    console.log('数据源类型:', quizSource.sourceType, '标识:', quizSource.sourceId);
 
     // 解析参数
     const modeRaw = String(options.mode || 'quiz').trim().toLowerCase();
@@ -377,14 +227,14 @@ Page({
     try {
       type = decodeURIComponent(type);
     } catch (e) {
-      console.warn('题型参数解码失败:', e);
+      // ignore decode error
     }
 
     // 标签可能会被 encodeURIComponent（如"重点"），需显式解码
     try {
       tag = decodeURIComponent(tag);
     } catch (e) {
-      console.warn('标签参数解码失败:', e);
+      // ignore decode error
     }
 
     this.setData({
@@ -480,7 +330,7 @@ Page({
     wx.navigateTo({
       url: '/pages/quiz-settlement/quiz-settlement',
       fail: (e) => {
-        console.warn('打开结算页失败，尝试 redirectTo:', e);
+        // ignore
         wx.redirectTo({ url: '/pages/quiz-settlement/quiz-settlement' });
       }
     });
@@ -665,7 +515,7 @@ Page({
   // 加载题目列表（使用数据源适配器）
   async loadQuestions(type: string, source: string, shuffleQuestions: boolean, shuffleOptions: boolean, tag: string) {
     if (!quizSource) {
-      console.error('数据源未初始化');
+      
       this.setData({ loading: false });
       return;
     }
@@ -699,7 +549,7 @@ Page({
               canEdit = bankOwnerId && Number(bankOwnerId) === Number(currentUserId);
             }
           } catch (e) {
-            console.warn('获取题库详情失败:', e);
+            // ignore
           }
         }
       } catch (e) {
@@ -814,7 +664,7 @@ Page({
         }, 1500);
       }
     } catch (err: any) {
-      console.error('加载题目失败:', err);
+      
       const errorMsg = (err && err.message) || '加载失败';
       
       if (errorMsg.includes('401') || errorMsg.includes('登录') || errorMsg.includes('过期')) {
@@ -1088,7 +938,7 @@ Page({
       this.progressStatusMap[String(this.data.currentIndex)] = isCorrect ? 'correct' : 'wrong';
     }
 
-    this.setData({
+    this.patchData({
       showAnswer: true,
       isCorrect,
       isJudgable,
@@ -1105,7 +955,7 @@ Page({
         answered: true,
         isCorrect
       };
-      this.setData({
+      this.patchData({
         answerRecords: nextRecords
       });
     }
@@ -1116,7 +966,7 @@ Page({
         if (q.id !== currentQuestion.id) return q;
         return Object.assign({}, q, { is_mistake: isCorrect ? 0 : 1 });
       });
-      this.setData({ questions });
+      this.patchData({ questions });
     }
 
     // 重要操作：立即同步进度到云端
@@ -1132,7 +982,7 @@ Page({
         });
       }
     } catch (err: any) {
-      console.error('记录答题结果失败:', err);
+      wx.showToast({ title: '记录结果失败，已忽略', icon: 'none' });
     }
 
     // 震动反馈（提交后）
@@ -1172,29 +1022,29 @@ Page({
 
     try {
       await quizSource.toggleFavorite(currentQuestion.id);
-      this.setData({ isFavorite: true });
+      this.patchData({ isFavorite: true });
       const questions = this.data.questions.map((q: any) => {
         if (q.id === currentQuestion.id) return Object.assign({}, q, { is_fav: 1 });
         return q;
       });
-      this.setData({ questions });
+      this.patchData({ questions });
     } catch (err: any) {
-      console.error('自动收藏失败:', err);
+      wx.showToast({ title: '自动收藏失败', icon: 'none' });
     }
   },
 
   onToggleAIExplain() {
     const next = !this.data.showAIExplain;
     if (!next) {
-      this.setData({ showAIExplain: false, scrollIntoView: '' });
+      this.patchData({ showAIExplain: false, scrollIntoView: '' });
       return;
     }
 
-    this.setData({ showAIExplain: true, scrollIntoView: '' }, () => {
+    this.patchData({ showAIExplain: true, scrollIntoView: '' }, () => {
       this.loadAIExplain(false);
       setTimeout(() => {
         if (this.data.showAIExplain) {
-          this.setData({ scrollIntoView: 'aiExplainCard' });
+          this.patchData({ scrollIntoView: 'aiExplainCard' });
         }
       }, 60);
     });
@@ -1216,7 +1066,7 @@ Page({
     if (!force && qid) {
       const cached = readAIExplainCache(qid);
       if (cached) {
-        this.setData({
+        this.patchData({
           aiLoading: false,
           aiExplainError: '',
           aiExplainText: cached,
@@ -1231,7 +1081,7 @@ Page({
       ? cq.options.map((x: any) => ({ key: x.key, value: x.value }))
       : undefined;
 
-    this.setData({ aiLoading: true, aiExplainError: '', aiExplainText: '', aiExplainRichText: '', aiExplainQuestionId: qid });
+    this.patchData({ aiLoading: true, aiExplainError: '', aiExplainText: '', aiExplainRichText: '', aiExplainQuestionId: qid });
     try {
       const res: any = await api.aiExplain({
         question_id: qid || undefined,
@@ -1245,14 +1095,13 @@ Page({
         writeAIExplainCache(qid, cleaned);
       }
       const finalText = cleaned || '暂无解析内容';
-      this.setData({
+      this.patchData({
         aiExplainText: finalText,
         aiExplainRichText: markdownToRichTextHtml(finalText),
         aiLoading: false
       });
     } catch (err: any) {
-      console.error('AI解析失败:', err);
-      this.setData({ aiExplainError: err?.message || 'AI解析失败，请稍后重试', aiLoading: false });
+      this.patchData({ aiExplainError: err?.message || 'AI解析失败，请稍后重试', aiLoading: false });
     }
   },
 
@@ -1348,7 +1197,7 @@ Page({
         duration: 1500
       });
     } catch (err: any) {
-      console.error('切换收藏失败:', err);
+      
       wx.showToast({ title: err.message || '操作失败', icon: 'none' });
     }
   },
@@ -1437,7 +1286,7 @@ Page({
         this.setData({ currentQuestion: nextQuestion, questions: nextQuestions });
       },
       fail: (err) => {
-        console.warn('downloadFile 题目图片失败:', url, err);
+        // ignore
       }
     });
   },
@@ -1492,7 +1341,7 @@ Page({
       await this.loadAllTags();
       wx.showToast({ title: '创建成功', icon: 'none' });
     } catch (err: any) {
-      console.error('创建标签失败:', err);
+      
       wx.showToast({ title: err.message || '创建失败', icon: 'none' });
     }
   },
@@ -1537,7 +1386,7 @@ Page({
         allTags: updatedAllTags
       });
     } catch (err: any) {
-      console.error('设置标签失败:', err);
+      
       wx.showToast({ title: err.message || '设置失败', icon: 'none' });
     }
   },
@@ -1565,7 +1414,7 @@ Page({
 
       this.setData({ allTags });
     } catch (err: any) {
-      console.error('加载标签列表失败:', err);
+      
     }
   },
 
@@ -1597,7 +1446,7 @@ Page({
         allTags: updatedAllTags
       });
     } catch (err: any) {
-      console.error('加载题目标签失败:', err);
+      
       this.setData({ currentQuestionTags: [] });
     }
   },
@@ -1728,7 +1577,7 @@ Page({
 
       wx.showToast({ title: '保存成功', icon: 'success' });
     } catch (err: any) {
-      console.error('保存题目失败:', err);
+      
       this.setData({ editSaving: false });
       wx.showToast({ title: err.message || '保存失败', icon: 'none' });
     }
@@ -1745,7 +1594,7 @@ Page({
         try {
           optList = JSON.parse(s);
         } catch (e) {
-          console.warn('options JSON 解析失败，将按纯文本处理:', e);
+          // ignore parse error and fallback to plain text
           optList = [s];
         }
       }
@@ -2287,3 +2136,5 @@ Page({
     }
   }
 });
+
+

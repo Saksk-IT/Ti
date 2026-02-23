@@ -20,8 +20,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -53,186 +53,11 @@ var nav_1 = require("../../utils/nav");
 var user_settings_1 = require("../../utils/user-settings");
 var quiz_source_1 = require("../../utils/quiz-source");
 var theme_1 = require("../../utils/theme");
-var OPTION_TYPES = new Set(['选择题', '多选题']);
-var KEY_SHUFFLE_Q = 'shuffle_questions';
-var KEY_SHUFFLE_O = 'shuffle_options';
-var DEFAULT_DETAIL_TAB_ORDER = ['practice', 'reinforce', 'exam', 'search', 'stats', 'share'];
-var VALID_DETAIL_TABS = new Set(DEFAULT_DETAIL_TAB_ORDER);
-var DETAIL_TAB_LABELS = {
-    practice: '练习',
-    reinforce: '加强',
-    exam: '考试',
-    search: '搜索',
-    stats: '数据',
-    share: '分享'
-};
-function normalizeDetailTabOrder(input, fallback) {
-    var base = Array.isArray(fallback) ? fallback : DEFAULT_DETAIL_TAB_ORDER;
-    var out = [];
-    var seen = new Set();
-    var push = function (k) {
-        var key = String(k || '').trim().toLowerCase();
-        if (!VALID_DETAIL_TABS.has(key))
-            return;
-        if (seen.has(key))
-            return;
-        seen.add(key);
-        out.push(key);
-    };
-    (Array.isArray(input) ? input : []).forEach(push);
-    base.forEach(push);
-    return out;
-}
-function buildDetailTabViews(order) {
-    var list = Array.isArray(order) ? order : DEFAULT_DETAIL_TAB_ORDER;
-    return list.map(function (key) { return ({ key: key, label: DETAIL_TAB_LABELS[key] || key }); });
-}
-function getSubjectDetailTabOrderKey(subjectId, subjectName) {
-    var id = Number(subjectId || 0);
-    if (Number.isFinite(id) && id > 0)
-        return "subject_".concat(Math.floor(id), "_detail_tab_order_v1");
-    var name = String(subjectName || '').trim();
-    return name ? "subject_".concat(name, "_detail_tab_order_v1") : '';
-}
-function readSubjectDetailTabOrder(key, fallback) {
-    if (!key)
-        return normalizeDetailTabOrder(null, fallback);
-    try {
-        var raw = wx.getStorageSync(key);
-        if (Array.isArray(raw))
-            return normalizeDetailTabOrder(raw, fallback);
-        if (typeof raw === 'string') {
-            var s = raw.trim();
-            if (!s)
-                return normalizeDetailTabOrder(null, fallback);
-            try {
-                return normalizeDetailTabOrder(JSON.parse(s), fallback);
-            }
-            catch (e) {
-                return normalizeDetailTabOrder(null, fallback);
-            }
-        }
-        return normalizeDetailTabOrder(null, fallback);
-    }
-    catch (e) {
-        return normalizeDetailTabOrder(null, fallback);
-    }
-}
-function persistSubjectDetailTabOrder(key, order) {
-    if (!key)
-        return;
-    try {
-        wx.setStorageSync(key, Array.isArray(order) ? order : []);
-    }
-    catch (e) { }
-}
-function scopeFromEntry(entry) {
-    if (entry === 'favorites')
-        return 'favorites';
-    if (entry === 'mistakes')
-        return 'mistakes';
-    return 'all';
-}
-function shouldCountForTab(tab) {
-    return tab === 'practice';
-}
-function normalizeTab(input) {
-    var s = String(input || '').trim().toLowerCase();
-    if (s === 'data')
-        return 'stats';
-    if (s === 'exam')
-        return 'exam';
-    if (s === 'reinforce' || s === 'strengthen' || s === 'enhance')
-        return 'reinforce';
-    if (s === 'search')
-        return 'search';
-    if (s === 'stats')
-        return 'stats';
-    if (s === 'favorites' || s === 'mistakes')
-        return 'practice';
-    if (s === 'share')
-        return 'share';
-    return 'practice';
-}
-function normalizeReinforceSubTab(input) {
-    var s = String(input || '').trim().toLowerCase();
-    return s === 'similar' ? 'similar' : 'wrong';
-}
-function getStoredString(key, fallback) {
-    try {
-        var raw = wx.getStorageSync(key);
-        var s = String(raw || '').trim();
-        return s ? s : fallback;
-    }
-    catch (e) {
-        return fallback;
-    }
-}
-function setStoredString(key, value) {
-    try {
-        wx.setStorageSync(key, String(value || ''));
-    }
-    catch (e) { }
-}
-function normalizeTextLines(input) {
-    var text = String(input !== null && input !== void 0 ? input : '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-    var lines = text.split('\n').map(function (s) { return String(s !== null && s !== void 0 ? s : '').trimEnd(); });
-    while (lines.length && !lines[lines.length - 1])
-        lines.pop();
-    return lines;
-}
-function normalizeSubjectDetailOptions(rawOptions, qType) {
-    var qt = String(qType || '').trim();
-    var list = Array.isArray(rawOptions) ? rawOptions : [];
-    if (!list.length && qt === '判断题') {
-        return [
-            { key: '正确', value: '正确' },
-            { key: '错误', value: '错误' }
-        ];
-    }
-    var out = [];
-    list.forEach(function (opt, idx) {
-        var _a, _b;
-        if (opt && typeof opt === 'object') {
-            var key = String((_a = opt.key) !== null && _a !== void 0 ? _a : '').trim();
-            var value = String((_b = opt.value) !== null && _b !== void 0 ? _b : '').trim();
-            if (key || value)
-                out.push({ key: key || String(idx + 1), value: value });
-        }
-        else {
-            var value = String(opt !== null && opt !== void 0 ? opt : '').trim();
-            if (value)
-                out.push({ key: String(idx + 1), value: value });
-        }
-    });
-    return out;
-}
-function getStoredBool(key, fallback) {
-    if (fallback === void 0) { fallback = false; }
-    try {
-        var raw = wx.getStorageSync(key);
-        if (raw === true || raw === 1 || raw === '1')
-            return true;
-        if (raw === false || raw === 0 || raw === '0')
-            return false;
-        return fallback;
-    }
-    catch (e) {
-        return fallback;
-    }
-}
-function setStoredBool(key, value) {
-    try {
-        wx.setStorageSync(key, value ? '1' : '0');
-    }
-    catch (e) { }
-}
-function clampPct(v) {
-    if (!Number.isFinite(v))
-        return 0;
-    return Math.max(0, Math.min(100, v));
-}
+var request_state_1 = require("../../behaviors/request-state");
+var set_data_batcher_1 = require("../../utils/set-data-batcher");
+var subject_detail_helpers_1 = require("./modules/subject-detail-helpers");
 Page({
+    behaviors: [request_state_1.requestStateBehavior],
     data: {
         drawerOpen: false,
         loading: false,
@@ -240,7 +65,7 @@ Page({
         tab: 'practice',
         entry: '',
         tabOrderOpen: false,
-        detailTabs: buildDetailTabViews(DEFAULT_DETAIL_TAB_ORDER),
+        detailTabs: (0, subject_detail_helpers_1.buildDetailTabViews)(subject_detail_helpers_1.DEFAULT_DETAIL_TAB_ORDER),
         dataSubTab: 'global',
         subjectId: 0,
         subjectName: '',
@@ -348,8 +173,25 @@ Page({
     statsReq: 0,
     qDetailReq: 0,
     tabExplicit: false,
+    setDataBatcher: null,
+    ensureSetDataBatcher: function () {
+        if (this.setDataBatcher)
+            return;
+        this.setDataBatcher = (0, set_data_batcher_1.createSetDataBatcher)(this.setData.bind(this));
+    },
+    patchData: function (patch, callback, immediate) {
+        if (immediate === void 0) { immediate = false; }
+        this.ensureSetDataBatcher();
+        var fn = this.setDataBatcher;
+        if (typeof fn === 'function') {
+            fn(patch, callback, { immediate: immediate });
+            return;
+        }
+        this.setData(patch, callback);
+    },
     onLoad: function (options) {
         var _a, _b;
+        this.ensureSetDataBatcher();
         var sidRaw = (_b = (_a = options === null || options === void 0 ? void 0 : options.id) !== null && _a !== void 0 ? _a : options === null || options === void 0 ? void 0 : options.subject_id) !== null && _b !== void 0 ? _b : options === null || options === void 0 ? void 0 : options.subjectId;
         var subjectId = Number(sidRaw || 0);
         var subjectName = (options === null || options === void 0 ? void 0 : options.subject) ? String(options.subject) : '';
@@ -360,17 +202,17 @@ Page({
             catch (e) { }
         }
         var rawTab = options === null || options === void 0 ? void 0 : options.tab;
-        var tab = normalizeTab(rawTab);
+        var tab = (0, subject_detail_helpers_1.normalizeTab)(rawTab);
         var entry = String((options === null || options === void 0 ? void 0 : options.entry) || '').trim().toLowerCase();
-        var entryScope = scopeFromEntry(entry);
+        var entryScope = (0, subject_detail_helpers_1.scopeFromEntry)(entry);
         this.tabExplicit = rawTab !== undefined && rawTab !== null && String(rawTab).trim() !== '';
-        this.setData({
+        this.patchData({
             subjectId: Number.isFinite(subjectId) ? subjectId : 0,
             subjectName: subjectName,
             tab: tab,
             entry: entry,
             scope: entryScope
-        });
+        }, undefined, true);
     },
     onShow: function () {
         if (!(0, auth_1.checkLogin)()) {
@@ -378,7 +220,7 @@ Page({
             return;
         }
         try {
-            this.setData(theme_1.themeManager.getPageData());
+            this.patchData(theme_1.themeManager.getPageData(), undefined, true);
         }
         catch (e) { }
         try {
@@ -391,7 +233,7 @@ Page({
             return;
         }
         this.syncShuffleOptionsDisabled();
-        if (shouldCountForTab(this.data.tab)) {
+        if ((0, subject_detail_helpers_1.shouldCountForTab)(this.data.tab)) {
             this.scheduleStartCount();
         }
         if (this.data.tab === 'stats') {
@@ -402,16 +244,16 @@ Page({
         }
     },
     onHamburgerTap: function () {
-        this.setData({ drawerOpen: true });
+        this.patchData({ drawerOpen: true });
     },
     onDrawerClose: function () {
-        this.setData({ drawerOpen: false });
+        this.patchData({ drawerOpen: false });
     },
     onDrawerNavigate: function (e) {
         var _a, _b;
         var url = (_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.url;
         var navType = (_b = e === null || e === void 0 ? void 0 : e.detail) === null || _b === void 0 ? void 0 : _b.navType;
-        this.setData({ drawerOpen: false });
+        this.patchData({ drawerOpen: false });
         if (!url)
             return;
         (0, nav_1.safeNavigate)(url, navType);
@@ -425,8 +267,7 @@ Page({
                     case 0:
                         style = (((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.style) || 'default');
                         theme_1.themeManager.setStyle(style);
-                        this.setData(theme_1.themeManager.getPageData());
-                        this.setData({ drawerOpen: false });
+                        this.patchData(__assign(__assign({}, theme_1.themeManager.getPageData()), { drawerOpen: false }), undefined, true);
                         return [4 /*yield*/, (0, user_settings_1.syncUserSettingsToServer)()];
                     case 1:
                         _b.sent();
@@ -437,30 +278,30 @@ Page({
     },
     onCycleThemeModeTap: function () {
         var mode = theme_1.themeManager.cycleMode();
-        this.setData(__assign(__assign({}, theme_1.themeManager.getPageData()), { themeMode: mode }));
+        this.patchData(__assign(__assign({}, theme_1.themeManager.getPageData()), { themeMode: mode }));
     },
     applyDetailTabOrder: function (nextOrder) {
-        var normalized = normalizeDetailTabOrder(nextOrder, DEFAULT_DETAIL_TAB_ORDER);
-        var key = getSubjectDetailTabOrderKey(Number(this.data.subjectId || 0), String(this.data.subjectName || ''));
-        persistSubjectDetailTabOrder(key, normalized);
-        this.setData({ detailTabs: buildDetailTabViews(normalized) });
+        var normalized = (0, subject_detail_helpers_1.normalizeDetailTabOrder)(nextOrder, subject_detail_helpers_1.DEFAULT_DETAIL_TAB_ORDER);
+        var key = (0, subject_detail_helpers_1.getSubjectDetailTabOrderKey)(Number(this.data.subjectId || 0), String(this.data.subjectName || ''));
+        (0, subject_detail_helpers_1.persistSubjectDetailTabOrder)(key, normalized);
+        this.patchData({ detailTabs: (0, subject_detail_helpers_1.buildDetailTabViews)(normalized) });
     },
     onOpenTabOrder: function () {
-        this.setData({ tabOrderOpen: true });
+        this.patchData({ tabOrderOpen: true });
     },
     onCloseTabOrder: function () {
-        this.setData({ tabOrderOpen: false });
+        this.patchData({ tabOrderOpen: false });
     },
     onTabOrderSheetTap: function () { },
     onMoveTabOrder: function (e) {
         var _a, _b, _c, _d;
         var act = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.act) || '').trim();
         var keyRaw = String(((_d = (_c = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _c === void 0 ? void 0 : _c.dataset) === null || _d === void 0 ? void 0 : _d.key) || '').trim().toLowerCase();
-        if (!VALID_DETAIL_TABS.has(keyRaw))
+        if (!subject_detail_helpers_1.VALID_DETAIL_TABS.has(keyRaw))
             return;
         var order = (this.data.detailTabs || [])
             .map(function (it) { return String((it === null || it === void 0 ? void 0 : it.key) || '').trim().toLowerCase(); })
-            .filter(function (k) { return VALID_DETAIL_TABS.has(k); });
+            .filter(function (k) { return subject_detail_helpers_1.VALID_DETAIL_TABS.has(k); });
         var idx = order.indexOf(keyRaw);
         if (idx < 0)
             return;
@@ -476,7 +317,7 @@ Page({
         this.applyDetailTabOrder(copy);
     },
     onResetTabOrder: function () {
-        this.applyDetailTabOrder(DEFAULT_DETAIL_TAB_ORDER.slice());
+        this.applyDetailTabOrder(subject_detail_helpers_1.DEFAULT_DETAIL_TAB_ORDER.slice());
     },
     consumeReturnTab: function () {
         var subjectId = Number(this.data.subjectId || 0);
@@ -484,11 +325,11 @@ Page({
         var key = subjectId ? "subject_".concat(subjectId, "_return_tab") : subject ? "subject_".concat(subject, "_return_tab") : '';
         if (!key)
             return;
-        var desired = getStoredString(key, '');
+        var desired = (0, subject_detail_helpers_1.getStoredString)(key, '');
         if (!desired)
             return;
-        setStoredString(key, '');
-        var tab = normalizeTab(desired);
+        (0, subject_detail_helpers_1.setStoredString)(key, '');
+        var tab = (0, subject_detail_helpers_1.normalizeTab)(desired);
         if (tab === this.data.tab)
             return;
         this.setData({ tab: tab });
@@ -499,8 +340,8 @@ Page({
         var next = raw === 'mistakes' || raw === 'favorites' ? raw : 'global';
         var subjectId = Number(this.data.subjectId || 0);
         if (subjectId)
-            setStoredString("subject_".concat(subjectId, "_stats_subtab"), next);
-        this.setData({ tab: 'stats', dataSubTab: next, statsLoadedDays: 0, statsLoadedSubTab: next }, function () {
+            (0, subject_detail_helpers_1.setStoredString)("subject_".concat(subjectId, "_stats_subtab"), next);
+        this.patchData({ tab: 'stats', dataSubTab: next, statsLoadedDays: 0, statsLoadedSubTab: next }, function () {
             _this.ensureStatsDetail(true);
         });
     },
@@ -512,7 +353,7 @@ Page({
             return __generator(this, function (_d) {
                 switch (_d.label) {
                     case 0:
-                        this.setData({ loading: true, startError: '' });
+                        this.patchData({ loading: true, startError: '' });
                         _d.label = 1;
                     case 1:
                         _d.trys.push([1, 4, 5, 6]);
@@ -534,30 +375,30 @@ Page({
                         subjectName = String(subject.name || '').trim();
                         subjectIdFinal = Number(subject.id || 0);
                         totalCount = Number(subject.question_count || 0) || 0;
-                        tabOrderKey = getSubjectDetailTabOrderKey(subjectIdFinal, subjectName);
-                        tabOrder = readSubjectDetailTabOrder(tabOrderKey, DEFAULT_DETAIL_TAB_ORDER);
-                        detailTabs = buildDetailTabViews(tabOrder);
+                        tabOrderKey = (0, subject_detail_helpers_1.getSubjectDetailTabOrderKey)(subjectIdFinal, subjectName);
+                        tabOrder = (0, subject_detail_helpers_1.readSubjectDetailTabOrder)(tabOrderKey, subject_detail_helpers_1.DEFAULT_DETAIL_TAB_ORDER);
+                        detailTabs = (0, subject_detail_helpers_1.buildDetailTabViews)(tabOrder);
                         keyType = "subject_".concat(subjectIdFinal, "_type");
                         keyTag = "subject_".concat(subjectIdFinal, "_tag");
                         keySearchType = "subject_".concat(subjectIdFinal, "_search_type");
                         keyScope = "subject_".concat(subjectIdFinal, "_scope");
                         keyStatsSubTab = "subject_".concat(subjectIdFinal, "_stats_subtab");
                         keyReinforceSubTab = "subject_".concat(subjectIdFinal, "_reinforce_subtab");
-                        storedType = getStoredString(keyType, 'all');
-                        storedTag_1 = getStoredString(keyTag, 'all');
-                        storedSearchType = getStoredString(keySearchType, 'all');
-                        storedScope = getStoredString(keyScope, 'all');
-                        storedStatsSubTab = getStoredString(keyStatsSubTab, 'global');
-                        storedReinforceSubTab = getStoredString(keyReinforceSubTab, 'wrong');
-                        shuffleQuestions = getStoredBool(KEY_SHUFFLE_Q, false);
-                        shuffleOptions = getStoredBool(KEY_SHUFFLE_O, false);
+                        storedType = (0, subject_detail_helpers_1.getStoredString)(keyType, 'all');
+                        storedTag_1 = (0, subject_detail_helpers_1.getStoredString)(keyTag, 'all');
+                        storedSearchType = (0, subject_detail_helpers_1.getStoredString)(keySearchType, 'all');
+                        storedScope = (0, subject_detail_helpers_1.getStoredString)(keyScope, 'all');
+                        storedStatsSubTab = (0, subject_detail_helpers_1.getStoredString)(keyStatsSubTab, 'global');
+                        storedReinforceSubTab = (0, subject_detail_helpers_1.getStoredString)(keyReinforceSubTab, 'wrong');
+                        shuffleQuestions = (0, subject_detail_helpers_1.getStoredBool)(subject_detail_helpers_1.KEY_SHUFFLE_Q, false);
+                        shuffleOptions = (0, subject_detail_helpers_1.getStoredBool)(subject_detail_helpers_1.KEY_SHUFFLE_O, false);
                         entry = String(this.data.entry || '').trim().toLowerCase();
                         tab = this.data.tab;
                         if (!this.tabExplicit) {
                             if (entry === 'exam')
                                 tab = 'exam';
                         }
-                        entryScope = scopeFromEntry(entry);
+                        entryScope = (0, subject_detail_helpers_1.scopeFromEntry)(entry);
                         scope = entryScope !== 'all'
                             ? entryScope
                             : storedScope === 'favorites' || storedScope === 'mistakes'
@@ -590,7 +431,7 @@ Page({
                         tag = storedTag_1 === 'all' || tags.some(function (t) { return t.name === storedTag_1; }) ? storedTag_1 : 'all';
                         searchType = storedSearchType === 'all' || types.includes(storedSearchType) ? storedSearchType : 'all';
                         dataSubTab = (storedStatsSubTab === 'mistakes' || storedStatsSubTab === 'favorites') ? storedStatsSubTab : 'global';
-                        reinforceSubTab = normalizeReinforceSubTab(storedReinforceSubTab);
+                        reinforceSubTab = (0, subject_detail_helpers_1.normalizeReinforceSubTab)(storedReinforceSubTab);
                         this.setData({
                             inited: true,
                             subjectId: subjectIdFinal,
@@ -634,14 +475,14 @@ Page({
                             shuffleQuestions: shuffleQuestions,
                             shuffleOptions: shuffleOptions
                         });
-                        setStoredString(keyType, qType);
-                        setStoredString(keyTag, tag);
-                        setStoredString(keySearchType, searchType);
-                        setStoredString(keyScope, scope);
-                        setStoredString(keyStatsSubTab, dataSubTab);
-                        setStoredString(keyReinforceSubTab, reinforceSubTab);
+                        (0, subject_detail_helpers_1.setStoredString)(keyType, qType);
+                        (0, subject_detail_helpers_1.setStoredString)(keyTag, tag);
+                        (0, subject_detail_helpers_1.setStoredString)(keySearchType, searchType);
+                        (0, subject_detail_helpers_1.setStoredString)(keyScope, scope);
+                        (0, subject_detail_helpers_1.setStoredString)(keyStatsSubTab, dataSubTab);
+                        (0, subject_detail_helpers_1.setStoredString)(keyReinforceSubTab, reinforceSubTab);
                         this.syncShuffleOptionsDisabled();
-                        if (shouldCountForTab(tab)) {
+                        if ((0, subject_detail_helpers_1.shouldCountForTab)(tab)) {
                             this.scheduleStartCount();
                         }
                         if (tab === 'stats') {
@@ -656,7 +497,7 @@ Page({
                         wx.showToast({ title: (e_1 && e_1.message) || '初始化失败', icon: 'none' });
                         return [3 /*break*/, 6];
                     case 5:
-                        this.setData({ loading: false });
+                        this.patchData({ loading: false }, undefined, true);
                         return [7 /*endfinally*/];
                     case 6: return [2 /*return*/];
                 }
@@ -680,7 +521,7 @@ Page({
             return;
         var subjectId = Number(this.data.subjectId || 0);
         if (subjectId)
-            setStoredString("subject_".concat(subjectId, "_search_type"), v);
+            (0, subject_detail_helpers_1.setStoredString)("subject_".concat(subjectId, "_search_type"), v);
         this.setData({ searchType: v }, function () {
             if (_this.data.searchSearched && String(_this.data.searchKeyword || '').trim()) {
                 _this.doSubjectSearch(true);
@@ -801,7 +642,7 @@ Page({
                         if (reqId !== this.qDetailReq)
                             return [2 /*return*/];
                         qType = String((q === null || q === void 0 ? void 0 : q.q_type) || '').trim();
-                        options = normalizeSubjectDetailOptions(q === null || q === void 0 ? void 0 : q.options, qType);
+                        options = (0, subject_detail_helpers_1.normalizeSubjectDetailOptions)(q === null || q === void 0 ? void 0 : q.options, qType);
                         metaParts = ["ID\uFF1A".concat(qid)];
                         if (qType)
                             metaParts.push(qType);
@@ -813,9 +654,9 @@ Page({
                             qDetailLoading: false,
                             qDetailError: '',
                             qDetailMeta: metaParts.join(' · '),
-                            qDetailContentLines: normalizeTextLines(q === null || q === void 0 ? void 0 : q.content),
-                            qDetailAnswerLines: normalizeTextLines(q === null || q === void 0 ? void 0 : q.answer),
-                            qDetailExplanationLines: normalizeTextLines(q === null || q === void 0 ? void 0 : q.explanation),
+                            qDetailContentLines: (0, subject_detail_helpers_1.normalizeTextLines)(q === null || q === void 0 ? void 0 : q.content),
+                            qDetailAnswerLines: (0, subject_detail_helpers_1.normalizeTextLines)(q === null || q === void 0 ? void 0 : q.answer),
+                            qDetailExplanationLines: (0, subject_detail_helpers_1.normalizeTextLines)(q === null || q === void 0 ? void 0 : q.explanation),
                             qDetailOptions: options
                         });
                         return [3 /*break*/, 4];
@@ -852,12 +693,12 @@ Page({
     onTabTap: function (e) {
         var _this = this;
         var _a, _b;
-        var tab = normalizeTab(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.tab) || 'practice');
+        var tab = (0, subject_detail_helpers_1.normalizeTab)(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.tab) || 'practice');
         if (tab === this.data.tab)
             return;
-        this.setData({ tab: tab, startError: '' }, function () {
+        this.patchData({ tab: tab, startError: '' }, function () {
             _this.syncShuffleOptionsDisabled();
-            if (shouldCountForTab(tab)) {
+            if ((0, subject_detail_helpers_1.shouldCountForTab)(tab)) {
                 _this.scheduleStartCount();
             }
             if (tab === 'reinforce') {
@@ -871,12 +712,12 @@ Page({
     onReinforceSubTabTap: function (e) {
         var _this = this;
         var _a, _b;
-        var next = normalizeReinforceSubTab(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.subtab) || 'wrong');
+        var next = (0, subject_detail_helpers_1.normalizeReinforceSubTab)(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.subtab) || 'wrong');
         if (next === this.data.reinforceSubTab)
             return;
         var subjectId = Number(this.data.subjectId || 0);
         if (subjectId)
-            setStoredString("subject_".concat(subjectId, "_reinforce_subtab"), next);
+            (0, subject_detail_helpers_1.setStoredString)("subject_".concat(subjectId, "_reinforce_subtab"), next);
         this.setData({ reinforceSubTab: next }, function () {
             _this.ensureReinforce(false);
         });
@@ -1179,9 +1020,9 @@ Page({
         var scope = next === 'favorites' || next === 'mistakes' ? next : 'all';
         var subjectId = Number(this.data.subjectId || 0);
         if (subjectId)
-            setStoredString("subject_".concat(subjectId, "_scope"), scope);
+            (0, subject_detail_helpers_1.setStoredString)("subject_".concat(subjectId, "_scope"), scope);
         this.setData({ scope: scope }, function () {
-            if (shouldCountForTab(_this.data.tab)) {
+            if ((0, subject_detail_helpers_1.shouldCountForTab)(_this.data.tab)) {
                 _this.scheduleStartCount();
             }
         });
@@ -1254,7 +1095,6 @@ Page({
                             return [3 /*break*/, 4];
                         case 3:
                             e_4 = _a.sent();
-                            console.error('清除云端进度失败:', e_4);
                             return [3 /*break*/, 4];
                         case 4:
                             try {
@@ -1278,8 +1118,8 @@ Page({
             return;
         var subjectId = Number(this.data.subjectId || 0);
         if (subjectId)
-            setStoredString("subject_".concat(subjectId, "_stats_subtab"), subtab);
-        this.setData({ dataSubTab: subtab, statsLoadedDays: 0, statsLoadedSubTab: subtab }, function () {
+            (0, subject_detail_helpers_1.setStoredString)("subject_".concat(subjectId, "_stats_subtab"), subtab);
+        this.patchData({ dataSubTab: subtab, statsLoadedDays: 0, statsLoadedSubTab: subtab }, function () {
             if (_this.data.tab === 'stats') {
                 _this.ensureStatsDetail(true);
             }
@@ -1293,10 +1133,10 @@ Page({
             return;
         var subjectId = Number(this.data.subjectId || 0);
         if (subjectId)
-            setStoredString("subject_".concat(subjectId, "_type"), next);
-        this.setData({ qType: next }, function () {
+            (0, subject_detail_helpers_1.setStoredString)("subject_".concat(subjectId, "_type"), next);
+        this.patchData({ qType: next }, function () {
             _this.syncShuffleOptionsDisabled();
-            if (shouldCountForTab(_this.data.tab)) {
+            if ((0, subject_detail_helpers_1.shouldCountForTab)(_this.data.tab)) {
                 _this.scheduleStartCount();
             }
         });
@@ -1309,9 +1149,9 @@ Page({
             return;
         var subjectId = Number(this.data.subjectId || 0);
         if (subjectId)
-            setStoredString("subject_".concat(subjectId, "_tag"), next);
-        this.setData({ tag: next }, function () {
-            if (shouldCountForTab(_this.data.tab)) {
+            (0, subject_detail_helpers_1.setStoredString)("subject_".concat(subjectId, "_tag"), next);
+        this.patchData({ tag: next }, function () {
+            if ((0, subject_detail_helpers_1.shouldCountForTab)(_this.data.tab)) {
                 _this.scheduleStartCount();
             }
         });
@@ -1358,9 +1198,9 @@ Page({
                             prevTag = String(this.data.tag || 'all').trim() || 'all';
                             nextTag = prevTag === name ? 'all' : prevTag;
                             if (nextTag !== prevTag)
-                                setStoredString("subject_".concat(subjectId, "_tag"), nextTag);
+                                (0, subject_detail_helpers_1.setStoredString)("subject_".concat(subjectId, "_tag"), nextTag);
                             this.setData({ tags: tags, tag: nextTag }, function () {
-                                if (shouldCountForTab(_this.data.tab)) {
+                                if ((0, subject_detail_helpers_1.shouldCountForTab)(_this.data.tab)) {
                                     _this.scheduleStartCount();
                                 }
                             });
@@ -1384,36 +1224,36 @@ Page({
     },
     onToggleShuffleQuestions: function () {
         var next = !this.data.shuffleQuestions;
-        setStoredBool(KEY_SHUFFLE_Q, next);
-        this.setData({ shuffleQuestions: next });
+        (0, subject_detail_helpers_1.setStoredBool)(subject_detail_helpers_1.KEY_SHUFFLE_Q, next);
+        this.patchData({ shuffleQuestions: next });
     },
     onToggleShuffleOptions: function () {
         if (this.data.shuffleOptionsDisabled)
             return;
         var next = !this.data.shuffleOptions;
-        setStoredBool(KEY_SHUFFLE_O, next);
-        this.setData({ shuffleOptions: next });
+        (0, subject_detail_helpers_1.setStoredBool)(subject_detail_helpers_1.KEY_SHUFFLE_O, next);
+        this.patchData({ shuffleOptions: next });
     },
     syncShuffleOptionsDisabled: function () {
         var t = String(this.data.qType || 'all');
-        var allowed = t === 'all' || OPTION_TYPES.has(t);
+        var allowed = t === 'all' || subject_detail_helpers_1.OPTION_TYPES.has(t);
         var disabled = !allowed;
         if (disabled && this.data.shuffleOptions) {
-            setStoredBool(KEY_SHUFFLE_O, false);
-            this.setData({ shuffleOptions: false });
+            (0, subject_detail_helpers_1.setStoredBool)(subject_detail_helpers_1.KEY_SHUFFLE_O, false);
+            this.patchData({ shuffleOptions: false });
         }
-        this.setData({ shuffleOptionsDisabled: disabled });
+        this.patchData({ shuffleOptionsDisabled: disabled });
     },
     scheduleStartCount: function () {
         var _this = this;
-        if (!shouldCountForTab(this.data.tab))
+        if (!(0, subject_detail_helpers_1.shouldCountForTab)(this.data.tab))
             return;
         if (this.startCountTimer) {
             clearTimeout(this.startCountTimer);
             this.startCountTimer = null;
         }
         var reqId = ++this.startCountReq;
-        this.setData({ startCountText: '…', startDisabled: true, startError: '' });
+        this.patchData({ startCountText: '…', startDisabled: true, startError: '' });
         this.startCountTimer = setTimeout(function () { return _this.refreshStartCount(reqId); }, 220);
     },
     refreshStartCount: function (reqId) {
@@ -1441,7 +1281,7 @@ Page({
                         if (reqId !== this.startCountReq)
                             return [2 /*return*/];
                         count = Number((res === null || res === void 0 ? void 0 : res.count) || 0) || 0;
-                        this.setData({
+                        this.patchData({
                             startCount: count,
                             startCountText: String(count),
                             startDisabled: count <= 0,
@@ -1452,7 +1292,7 @@ Page({
                         e_5 = _a.sent();
                         if (reqId !== this.startCountReq)
                             return [2 /*return*/];
-                        this.setData({
+                        this.patchData({
                             startCount: 0,
                             startCountText: '0',
                             startDisabled: true,
@@ -1593,7 +1433,7 @@ Page({
             return;
         if (days === this.data.statsDays)
             return;
-        this.setData({ statsDays: days, statsLoadedDays: 0 }, function () {
+        this.patchData({ statsDays: days, statsLoadedDays: 0 }, function () {
             if (_this.data.tab === 'stats') {
                 _this.ensureStatsDetail(true);
             }
@@ -1675,8 +1515,8 @@ Page({
             var a = Number((it === null || it === void 0 ? void 0 : it.answered) || 0) || 0;
             var c = Number((it === null || it === void 0 ? void 0 : it.correct) || 0) || 0;
             var w = Number((it === null || it === void 0 ? void 0 : it.wrong) || 0) || Math.max(0, a - c);
-            var answeredPct = maxAnswered > 0 ? clampPct((a / maxAnswered) * 100) : 0;
-            var correctPctInAnswered = a > 0 ? clampPct((Math.min(a, c) / a) * 100) : 0;
+            var answeredPct = maxAnswered > 0 ? (0, subject_detail_helpers_1.clampPct)((a / maxAnswered) * 100) : 0;
+            var correctPctInAnswered = a > 0 ? (0, subject_detail_helpers_1.clampPct)((Math.min(a, c) / a) * 100) : 0;
             return { day: day, label: label, answered: a, correct: Math.min(a, c), wrong: w, answeredPct: answeredPct, correctPctInAnswered: correctPctInAnswered };
         });
         var rawByType = Array.isArray(data === null || data === void 0 ? void 0 : data.by_type) ? data.by_type : [];
@@ -1755,7 +1595,7 @@ Page({
                         if (!subject)
                             return [2 /*return*/];
                         reqId = ++this.statsReq;
-                        this.setData({ statsLoading: true, statsError: '', statsQuestions: [], favoritesTrend: {} });
+                        this.patchData({ statsLoading: true, statsError: '', statsQuestions: [], favoritesTrend: {} });
                         _b.label = 1;
                     case 1:
                         _b.trys.push([1, 3, , 4]);
@@ -1791,8 +1631,8 @@ Page({
                         statsQuestions = Array.isArray(qPayload === null || qPayload === void 0 ? void 0 : qPayload.questions) ? qPayload.questions : [];
                         favoritesTrend = favRes.ok ? (favRes.value || {}) : {};
                         view = this.buildStatsView(data || {});
-                        ringAccuracy = clampPct(view.overview.accuracy);
-                        ringCompletion = clampPct(view.overview.completion);
+                        ringAccuracy = (0, subject_detail_helpers_1.clampPct)(view.overview.accuracy);
+                        ringCompletion = (0, subject_detail_helpers_1.clampPct)(view.overview.completion);
                         heatCells = this.buildHeatCells(view.trend);
                         displayTypes = view.byType || [];
                         ringActive = 0;
@@ -1802,8 +1642,8 @@ Page({
                         mistakeRateText = '0%';
                         favMistakeRateText = '0%';
                         if (subtab === 'mistakes') {
-                            repeatRate = view.overview.total > 0 ? clampPct((view.overview.mistakeTimes / view.overview.total) * 100) : 0;
-                            mistakeRate = view.overview.answered > 0 ? clampPct((view.overview.wrong / view.overview.answered) * 100) : 0;
+                            repeatRate = view.overview.total > 0 ? (0, subject_detail_helpers_1.clampPct)((view.overview.mistakeTimes / view.overview.total) * 100) : 0;
+                            mistakeRate = view.overview.answered > 0 ? (0, subject_detail_helpers_1.clampPct)((view.overview.wrong / view.overview.answered) * 100) : 0;
                             ringRepeat = repeatRate;
                             repeatRateText = "".concat(repeatRate.toFixed(0), "%");
                             mistakeRateText = "".concat(mistakeRate.toFixed(0), "%");
@@ -1818,8 +1658,8 @@ Page({
                         else if (subtab === 'favorites') {
                             activeDays = view.trend.filter(function (it) { return it.answered > 0; }).length;
                             activeDaysRate = view.trend.length ? Math.round((activeDays / view.trend.length) * 100) : 0;
-                            ringActive = clampPct(activeDaysRate);
-                            favMistakeRate = view.overview.total > 0 ? clampPct((view.overview.mistakes / view.overview.total) * 100) : 0;
+                            ringActive = (0, subject_detail_helpers_1.clampPct)(activeDaysRate);
+                            favMistakeRate = view.overview.total > 0 ? (0, subject_detail_helpers_1.clampPct)((view.overview.mistakes / view.overview.total) * 100) : 0;
                             favMistakeRateText = "".concat(favMistakeRate.toFixed(0), "%");
                             displayTypes = (view.byType || [])
                                 .map(function (t) {
@@ -1832,10 +1672,10 @@ Page({
                         else {
                             activeDays = view.trend.filter(function (it) { return it.answered > 0; }).length;
                             activeDaysRate = view.trend.length ? Math.round((activeDays / view.trend.length) * 100) : 0;
-                            ringActive = clampPct(activeDaysRate);
+                            ringActive = (0, subject_detail_helpers_1.clampPct)(activeDaysRate);
                             displayTypes = view.byType || [];
                         }
-                        this.setData({
+                        this.patchData({
                             statsLoadedDays: days,
                             statsLoadedSubTab: subtab,
                             statsLoading: false,
@@ -1863,7 +1703,7 @@ Page({
                         err_5 = _b.sent();
                         if (reqId !== this.statsReq)
                             return [2 /*return*/];
-                        this.setData({
+                        this.patchData({
                             statsLoading: false,
                             statsError: (err_5 && err_5.message) ? String(err_5.message) : '统计加载失败',
                             statsQuestions: [],

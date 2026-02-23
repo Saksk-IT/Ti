@@ -74,11 +74,10 @@ Page({
       return;
     }
 
-    wx.navigateTo({ url: `/pages/subject-detail/subject-detail?subject=${encodeURIComponent(subject)}` });
+    wx.navigateTo({ url: `/pages/subject-detail-v2/subject-detail-v2?subject=${encodeURIComponent(subject)}` });
   },
 
   onPullDownRefresh() {
     this.loadSubjects().finally(() => wx.stopPullDownRefresh());
   }
 });
-

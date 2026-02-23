@@ -26,10 +26,15 @@ function preloadCriticalSubpackages(): void {
   try {
     const loadSubpackage = (wx as any).loadSubpackage;
     if (typeof loadSubpackage !== 'function') return;
+    const targets = ['packages/data', 'pages/index-v2', 'pages/subject-detail-v2'];
     setTimeout(() => {
-      try {
-        loadSubpackage({ name: 'packages/data', fail: () => {} });
-      } catch (e) {}
+      targets.forEach((name, idx) => {
+        setTimeout(() => {
+          try {
+            loadSubpackage({ name, fail: () => {} });
+          } catch (e) {}
+        }, idx * 180);
+      });
     }, 200);
   } catch (e) {}
 }
@@ -154,8 +159,7 @@ App<IAppOption>({
     // 登录
     wx.login({
       success: res => {
-        console.log(res.code);
-        // 发送 res.code 到后台换取 openId, sessionKey, unionId
+        void res.code;
       },
     });
   },

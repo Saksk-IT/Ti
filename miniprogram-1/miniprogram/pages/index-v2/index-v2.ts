@@ -3,261 +3,41 @@ import { syncUserSettingsToServer } from '../../utils/user-settings';
 import { checkLogin } from '../../utils/auth';
 import { safeNavigate } from '../../utils/nav';
 import { themeManager, ThemeMode, ThemeStyle } from '../../utils/theme';
-
-type TabKey = 'new' | 'templates' | 'records' | 'data' | 'settings';
-type ExamSource = 'public' | 'user_bank';
-
-type SystemTemplate = {
-  id: string;
-  title: string;
-  total: number;
-  duration: number;
-  preferred: string[];
-  tags: string[];
-  note: string;
-};
-
-const QUICK_PRESETS = [
-  { duration: 15, total: 20, label: '15 分钟 · 20 题' },
-  { duration: 30, total: 30, label: '30 分钟 · 30 题' },
-  { duration: 60, total: 50, label: '60 分钟 · 50 题' }
-];
-
-const SYSTEM_TEMPLATES: SystemTemplate[] = [
-  {
-    id: 'quick-15',
-    title: '速测 15 分钟',
-    total: 20,
-    duration: 15,
-    preferred: ['单选题', '判断题'],
-    tags: ['碎片时间', '基础回顾'],
-    note: '适合课后小测与快速复盘。'
-  },
-  {
-    id: 'standard-45',
-    title: '标准 45 分钟',
-    total: 40,
-    duration: 45,
-    preferred: ['单选题', '多选题', '判断题'],
-    tags: ['综合覆盖', '模拟节奏'],
-    note: '覆盖主流题型，节奏接近模拟考试。'
-  },
-  {
-    id: 'focus-60',
-    title: '专项 60 分钟',
-    total: 60,
-    duration: 60,
-    preferred: ['多选题', '综合题', '简答题'],
-    tags: ['强化', '高权重'],
-    note: '偏重综合与高分题型，适合冲刺阶段。'
-  }
-];
-
-const FALLBACK_PUBLIC_Q_TYPES = ['单选题', '多选题', '判断题', '填空题', '简答题', '综合题', '计算题'];
-const DEFAULT_PICKED_TYPES = ['单选题', '多选题', '判断题'];
-
-type Option<T> = { value: T; label: string };
-
-type BankMeta = {
-  id: number;
-  name: string;
-  question_count?: number;
-};
-
-type ExamTypeRow = {
-  name: string;
-  enabled: boolean;
-  available: number;
-  count: number;
-  score: number;
-  subtotalText: string;
-};
-
-type ExamScope = {
-  source: ExamSource;
-  subject: string;
-  bank_id: number | null;
-};
-
-type ExamConfig = {
-  source: ExamSource;
-  subject: string;
-  bank_id: number | null;
-  duration: number;
-  targetTotal: number;
-  types: Record<string, number>;
-  scores: Record<string, number>;
-  label?: string;
-};
-
-type UserTemplate = {
-  id: number;
-  title: string;
-  config: any;
-  created_at?: string;
-  updated_at?: string;
-};
-
-type UserTemplateCard = {
-  id: number;
-  title: string;
-  meta: string;
-  tags: string[];
-};
+import { requestStateBehavior } from '../../behaviors/request-state';
+import { createSetDataBatcher } from '../../utils/set-data-batcher';
+import {
+  QUICK_PRESETS,
+  SYSTEM_TEMPLATES,
+  FALLBACK_PUBLIC_Q_TYPES,
+  DEFAULT_PICKED_TYPES,
+  qTypesCache,
+  clampInt,
+  clampFloat,
+  formatNum,
+  todayStamp,
+  setDataAsync,
+  uniqueBanks,
+  buildSubjectOptions,
+  buildBankOptions,
+  findOptionLabel,
+  normalizeTemplateConfig,
+  buildTemplateScopeLabel,
+  distributeCounts,
+  type TabKey,
+  type ExamSource,
+  type SystemTemplate,
+  type Option,
+  type BankMeta,
+  type ExamTypeRow,
+  type ExamScope,
+  type ExamConfig,
+  type UserTemplate,
+  type UserTemplateCard
+} from './modules/index-v2-helpers';
 
 let examPresetApplied = false;
-const qTypesCache = new Map<string, string[]>();
-
-function clampInt(v: any, fallback: number, minV: number, maxV: number): number {
-  const n = Math.floor(Number(v));
-  if (!Number.isFinite(n)) return fallback;
-  return Math.max(minV, Math.min(maxV, n));
-}
-
-function clampFloat(v: any, fallback: number, minV: number, maxV: number): number {
-  const n = Number(v);
-  if (!Number.isFinite(n)) return fallback;
-  return Math.max(minV, Math.min(maxV, n));
-}
-
-function formatNum(n: any): string {
-  const v = Number(n);
-  if (!Number.isFinite(v)) return '0';
-  if (Math.abs(v - Math.round(v)) < 1e-6) return String(Math.round(v));
-  return String(v.toFixed(2)).replace(/\.?0+$/, '');
-}
-
-function todayStamp(): string {
-  const now = new Date();
-  const y = String(now.getFullYear());
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(now.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-function setDataAsync(ctx: any, patch: Record<string, any>): Promise<void> {
-  return new Promise((resolve) => ctx.setData(patch, resolve));
-}
-
-function uniqueBanks(list: any[]): BankMeta[] {
-  const map = new Map<number, BankMeta>();
-  (list || []).forEach((b: any) => {
-    const id = Number(b && b.id);
-    if (!Number.isFinite(id) || id <= 0) return;
-    const name = String(b.name || '').trim();
-    if (!name) return;
-    const question_count = Number(b.question_count || 0) || 0;
-    map.set(id, { id, name, question_count });
-  });
-  return Array.from(map.values());
-}
-
-function buildSubjectOptions(subjects: string[]): Option<string>[] {
-  const rest = (subjects || [])
-    .filter((s) => typeof s === 'string' && s.trim())
-    .map((s) => String(s).trim());
-  return [{ value: 'all', label: '全部科目' }, ...rest.map((s) => ({ value: s, label: s }))];
-}
-
-function buildBankOptions(banks: BankMeta[]): Option<number>[] {
-  return (banks || []).map((b) => ({
-    value: b.id,
-    label: b.question_count ? `${b.name}（${b.question_count}题）` : b.name
-  }));
-}
-
-function findOptionLabel<T>(options: Option<T>[], value: T, fallback: string): string {
-  const hit = (options || []).find((o) => o && o.value === value);
-  return hit ? hit.label : fallback;
-}
-
-function normalizeTemplateConfig(raw: any): ExamConfig | null {
-  if (!raw || typeof raw !== 'object') return null;
-  const source: ExamSource = String(raw.source || 'public').toLowerCase() === 'user_bank' ? 'user_bank' : 'public';
-  const subject = String(raw.subject || 'all').trim() || 'all';
-  const bank_id = raw.bank_id != null && raw.bank_id !== '' ? Number(raw.bank_id) : null;
-  const duration = clampInt(raw.duration, 60, 1, 1440);
-
-  const typesRaw = raw.types && typeof raw.types === 'object' ? raw.types : {};
-  const scoresRaw = raw.scores && typeof raw.scores === 'object' ? raw.scores : {};
-
-  const types: Record<string, number> = {};
-  const scores: Record<string, number> = {};
-
-  Object.keys(typesRaw || {}).forEach((k) => {
-    const name = String(k || '').trim();
-    if (!name) return;
-    const c = clampInt((typesRaw as any)[k], 0, 0, 500);
-    if (c <= 0) return;
-    types[name] = c;
-    scores[name] = clampFloat((scoresRaw as any)[k], 1, 0, 1000);
-  });
-
-  let targetTotal = raw.targetTotal ?? raw.total ?? raw.target_total;
-  targetTotal = clampInt(targetTotal, 0, 0, 300);
-  if (!targetTotal) {
-    targetTotal = Object.values(types).reduce((sum, v) => sum + (Number(v) || 0), 0);
-    targetTotal = clampInt(targetTotal, 0, 0, 300);
-  }
-
-  return {
-    source,
-    subject,
-    bank_id: source === 'user_bank' ? (Number.isFinite(bank_id as any) ? (bank_id as number) : null) : null,
-    duration,
-    targetTotal,
-    types,
-    scores
-  };
-}
-
-function buildTemplateScopeLabel(cfg: ExamConfig, bankLabel: string): string {
-  if (cfg.source === 'user_bank') return bankLabel ? `个人题库 · ${bankLabel}` : '个人题库';
-  return `公共题库 · ${cfg.subject === 'all' ? '全部科目' : cfg.subject}`;
-}
-
-function distributeCounts(targetTotal: number, enabledTypes: Array<{ name: string; available: number }>): Record<string, number> {
-  const cfg: Record<string, number> = {};
-  const n = enabledTypes.length;
-  if (n <= 0) return cfg;
-
-  const target = clampInt(targetTotal, 30, 1, 300);
-  const base = Math.floor(target / n);
-  let rem = target % n;
-
-  enabledTypes.forEach((t) => {
-    const want = base + (rem > 0 ? 1 : 0);
-    if (rem > 0) rem -= 1;
-    cfg[t.name] = Math.min(want, Math.max(0, t.available));
-  });
-
-  let assignedTotal = Object.values(cfg).reduce((s, v) => s + (Number(v) || 0), 0);
-  let remaining = target - assignedTotal;
-  let safety = 5000;
-  while (remaining > 0 && safety-- > 0) {
-    let progressed = false;
-    for (const t of enabledTypes) {
-      if (remaining <= 0) break;
-      const cap = Math.max(0, t.available) - (cfg[t.name] || 0);
-      if (cap > 0) {
-        cfg[t.name] = (cfg[t.name] || 0) + 1;
-        remaining -= 1;
-        progressed = true;
-      }
-    }
-    if (!progressed) break;
-  }
-
-  assignedTotal = Object.values(cfg).reduce((s, v) => s + (Number(v) || 0), 0);
-  if (assignedTotal <= 0) {
-    enabledTypes.forEach((t) => {
-      cfg[t.name] = Math.min(1, Math.max(0, t.available));
-    });
-  }
-  return cfg;
-}
-
 Page({
+  behaviors: [requestStateBehavior],
   data: {
     tab: 'new' as TabKey,
     drawerOpen: false,
@@ -357,8 +137,25 @@ Page({
     statsMsg: '',
     statsMsgKind: '' as '' | 'error'
   },
+  setDataBatcher: null as null | ((patch: Record<string, any>, callback?: () => void, options?: { immediate?: boolean }) => void),
+
+  ensureSetDataBatcher() {
+    if ((this as any).setDataBatcher) return;
+    (this as any).setDataBatcher = createSetDataBatcher(this.setData.bind(this));
+  },
+
+  patchData(patch: Record<string, any>, callback?: () => void, immediate: boolean = false) {
+    this.ensureSetDataBatcher();
+    const fn = (this as any).setDataBatcher;
+    if (typeof fn === 'function') {
+      fn(patch, callback, { immediate });
+      return;
+    }
+    this.setData(patch, callback);
+  },
 
   onLoad(options: any) {
+    this.ensureSetDataBatcher();
     const tab = options && options.tab ? String(options.tab) : '';
     const patch: any = {};
     if (tab === 'templates' || tab === 'new' || tab === 'records' || tab === 'data' || tab === 'settings') {
@@ -433,7 +230,7 @@ Page({
     }
 
     if (Object.keys(patch).length) {
-      this.setData(patch);
+      this.patchData(patch, undefined, true);
     }
   },
 
@@ -443,7 +240,7 @@ Page({
       return;
     }
     try {
-      this.setData(themeManager.getPageData() as any);
+      this.patchData(themeManager.getPageData() as any, undefined, true);
     } catch (e) {}
 
     if (!this.data.inited && !this.data.bootstrapping) {
@@ -452,7 +249,7 @@ Page({
   },
 
   async bootstrap() {
-    this.setData({ bootstrapping: true });
+    this.patchData({ bootstrapping: true });
     try {
       const [subjectsRes, myBanksRes, sharedBanksRes] = await Promise.all([
         api.getSubjects(),
@@ -552,22 +349,22 @@ Page({
     } catch (e: any) {
       wx.showToast({ title: (e && e.message) || '初始化失败', icon: 'none' });
     } finally {
-      this.setData({ bootstrapping: false });
+      this.patchData({ bootstrapping: false }, undefined, true);
     }
   },
 
   onHamburgerTap() {
-    this.setData({ drawerOpen: true });
+    this.patchData({ drawerOpen: true });
   },
 
   onDrawerClose() {
-    this.setData({ drawerOpen: false });
+    this.patchData({ drawerOpen: false });
   },
 
   onDrawerNavigate(e: any) {
     const url = e?.detail?.url;
     const navType = e?.detail?.navType;
-    this.setData({ drawerOpen: false });
+    this.patchData({ drawerOpen: false });
     if (!url) return;
     safeNavigate(url, navType);
   },
@@ -577,22 +374,24 @@ Page({
   async onDrawerSelectStyle(e: any) {
     const style = (e?.detail?.style || 'default') as ThemeStyle;
     themeManager.setStyle(style);
-    this.setData(themeManager.getPageData() as any);
-    this.setData({ drawerOpen: false });
+    this.patchData({
+      ...(themeManager.getPageData() as any),
+      drawerOpen: false
+    }, undefined, true);
     await syncUserSettingsToServer();
   },
 
   onCycleThemeModeTap() {
     const mode = themeManager.cycleMode() as ThemeMode;
-    this.setData({ ...(themeManager.getPageData() as any), themeMode: mode });
+    this.patchData({ ...(themeManager.getPageData() as any), themeMode: mode });
   },
 
   onGoNewTab() {
-    this.setData({ tab: 'new' });
+    this.patchData({ tab: 'new' });
   },
 
   onGoTemplatesTab() {
-    this.setData({ tab: 'templates' }, () => {
+    this.patchData({ tab: 'templates' }, () => {
       this.loadUserTemplates();
     });
   },
@@ -600,7 +399,7 @@ Page({
   onTabTap(e: any) {
     const tab = e?.currentTarget?.dataset?.tab;
     if (!tab || tab === this.data.tab) return;
-    this.setData({ tab }, () => {
+    this.patchData({ tab }, () => {
       if (tab === 'templates') this.loadUserTemplates();
       if (tab === 'records') this.loadExamRecords(true);
       if (tab === 'data') this.loadExamStats();
@@ -609,7 +408,7 @@ Page({
 
   // === records（考试记录）===
   setRecordsMsg(text: string, kind: '' | 'error' = '') {
-    this.setData({ recordsMsg: String(text || ''), recordsMsgKind: kind });
+    this.patchData({ recordsMsg: String(text || ''), recordsMsgKind: kind });
   },
 
   syncRecordsFilters() {
@@ -645,7 +444,7 @@ Page({
     const recordsTotalPages = totalPages;
     const recordsPage = clampInt(this.data.recordsPage, 1, 1, totalPages);
 
-    this.setData({
+    this.patchData({
       recordsSource,
       recordsSubject,
       recordsSubjectIndex: subjectIdx,
@@ -665,7 +464,7 @@ Page({
     const source = String(e?.currentTarget?.dataset?.source || '').trim().toLowerCase();
     if (source !== 'all' && source !== 'public' && source !== 'user_bank') return;
     if (source === this.data.recordsSource) return;
-    this.setData({ recordsSource: source, recordsPage: 1 }, () => {
+    this.patchData({ recordsSource: source, recordsPage: 1 }, () => {
       this.syncRecordsFilters();
       if (this.data.tab === 'records') this.loadExamRecords(true);
       if (this.data.tab === 'data') this.loadExamStats(true);
@@ -679,7 +478,7 @@ Page({
     const safeIdx = Number.isFinite(idx) ? Math.max(0, Math.min(subjectOptions.length - 1, idx)) : 0;
     const opt = subjectOptions[safeIdx];
     if (!opt) return;
-    this.setData(
+    this.patchData(
       {
         recordsSubjectIndex: safeIdx,
         recordsSubject: opt.value,
@@ -700,7 +499,7 @@ Page({
     const safeIdx = Number.isFinite(idx) ? Math.max(0, Math.min(bankOptions.length - 1, idx)) : 0;
     const opt = bankOptions[safeIdx];
     if (!opt) return;
-    this.setData(
+    this.patchData(
       {
         recordsBankIndex: safeIdx,
         recordsBankId: opt.value,
@@ -720,7 +519,7 @@ Page({
     const safeIdx = Number.isFinite(idx) ? Math.max(0, Math.min(options.length - 1, idx)) : 0;
     const opt = options[safeIdx];
     if (!opt) return;
-    this.setData(
+    this.patchData(
       { recordsSizeIndex: safeIdx, recordsSize: opt.value, recordsSizeLabel: opt.label, recordsPage: 1 },
       () => this.loadExamRecords(true)
     );
@@ -730,7 +529,7 @@ Page({
     if (this.data.recordsLoading) return;
     const p = clampInt(this.data.recordsPage, 1, 1, 9999);
     if (p <= 1) return;
-    this.setData({ recordsPage: p - 1 }, () => this.loadExamRecords(false));
+    this.patchData({ recordsPage: p - 1 }, () => this.loadExamRecords(false));
   },
 
   onRecordsNextPage() {
@@ -738,16 +537,16 @@ Page({
     const p = clampInt(this.data.recordsPage, 1, 1, 9999);
     const totalPages = clampInt(this.data.recordsTotalPages, 1, 1, 9999);
     if (p >= totalPages) return;
-    this.setData({ recordsPage: p + 1 }, () => this.loadExamRecords(false));
+    this.patchData({ recordsPage: p + 1 }, () => this.loadExamRecords(false));
   },
 
   async loadExamRecords(resetPage: boolean = false) {
     if (this.data.recordsLoading) return;
     const page = resetPage ? 1 : clampInt(this.data.recordsPage, 1, 1, 9999);
     const size = clampInt(this.data.recordsSize, 10, 5, 50);
-    if (resetPage && this.data.recordsPage !== 1) this.setData({ recordsPage: 1 });
+    if (resetPage && this.data.recordsPage !== 1) this.patchData({ recordsPage: 1 }, undefined, true);
 
-    this.setData({ recordsLoading: true });
+    this.patchData({ recordsLoading: true });
     this.setRecordsMsg('', '');
 
     try {
@@ -772,7 +571,7 @@ Page({
       const size = clampInt(res?.size, params.size, 5, 50);
       const totalPages = Math.max(1, Math.ceil(total / Math.max(1, size)));
 
-      this.setData({
+      this.patchData({
         recordsOngoing: ongoing,
         recordsSubmitted: submitted,
         recordsTotal: total,
@@ -783,7 +582,7 @@ Page({
       });
       this.syncRecordsFilters();
     } catch (e: any) {
-      this.setData({
+      this.patchData({
         recordsOngoing: [],
         recordsSubmitted: [],
         recordsTotal: 0,
@@ -851,7 +650,7 @@ Page({
 
   // === data（考试数据）===
   setStatsMsg(text: string, kind: '' | 'error' = '') {
-    this.setData({ statsMsg: String(text || ''), statsMsgKind: kind });
+    this.patchData({ statsMsg: String(text || ''), statsMsgKind: kind });
   },
 
   async loadExamStats(force: boolean = false) {
@@ -878,7 +677,7 @@ Page({
 
     const filterKey = JSON.stringify(params);
     if (this.data.statsLoaded && !force && this.data.statsFilterKey === filterKey) return;
-    this.setData({ statsLoading: true });
+    this.patchData({ statsLoading: true });
     this.setStatsMsg('', '');
 
     try {
@@ -892,7 +691,7 @@ Page({
             .filter((a: any) => a.title && a.content)
         : [];
 
-      this.setData({
+      this.patchData({
         statsOverview,
         recentExams,
         typeDist,
@@ -903,7 +702,7 @@ Page({
         statsLoading: false
       });
     } catch (e: any) {
-      this.setData({
+      this.patchData({
         statsOverview: {
           submitted_count: 0,
           avg_score: 0,
@@ -976,13 +775,13 @@ Page({
 
   async reloadExamTypes(opts?: { applyConfig?: ExamConfig }) {
     if (this.data.examLoading) return;
-    this.setData({ examLoading: true, examMsg: '', examMsgKind: '' });
+    this.patchData({ examLoading: true, examMsg: '', examMsgKind: '' });
 
     const scope = this.getExamScope();
     try {
       const qTypes = (await this.getQTypesForScope(scope)).filter(Boolean);
       if (!qTypes.length) {
-        this.setData({ examTypes: [], examLoading: false }, () => this.refreshExamSummary());
+        this.patchData({ examTypes: [], examLoading: false }, () => this.refreshExamSummary());
         return;
       }
 
@@ -1031,9 +830,9 @@ Page({
       rows = this.applyDefaultPresetIfEmpty(rows);
       rows = this.recomputeTypeSubtotals(rows);
 
-      this.setData({ examTypes: rows, examLoading: false }, () => this.refreshExamSummary());
+      this.patchData({ examTypes: rows, examLoading: false }, () => this.refreshExamSummary());
     } catch (e) {
-      this.setData({ examTypes: [], examLoading: false }, () => this.refreshExamSummary());
+      this.patchData({ examTypes: [], examLoading: false }, () => this.refreshExamSummary());
     }
   },
 
@@ -1639,3 +1438,4 @@ Page({
     });
   }
 });
+
