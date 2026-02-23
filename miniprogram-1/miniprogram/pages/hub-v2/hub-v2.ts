@@ -3,6 +3,7 @@ import { syncUserSettingsToServer } from '../../utils/user-settings';
 import { checkLogin } from '../../utils/auth';
 import { safeNavigate } from '../../utils/nav';
 import { themeManager, ThemeStyle, ThemeMode } from '../../utils/theme';
+import { decorateAvatarUrl } from '../../utils/avatar';
 
 interface CheckinData {
   checked_in_today: boolean;
@@ -251,9 +252,12 @@ Page({
 
       // 用户信息
       if (profile) {
+        const nextAvatar = profile.avatar ? decorateAvatarUrl(resolveUploadUrl(profile.avatar)) : '';
+        const self: any = this as any;
+        self.__userAvatarDlTried = false;
         this.setData({
           userName: profile.username || '用户',
-          userAvatar: profile.avatar ? resolveUploadUrl(profile.avatar) : '',
+          userAvatar: nextAvatar,
         });
       }
 
@@ -522,6 +526,33 @@ Page({
   // 头像点击 - 跳转个人资料
   onAvatarTap() {
     safeNavigate('/pages/profile-view-v2/profile-view-v2', 'navigateTo');
+  },
+
+  onUserAvatarError() {
+    const url = String((this.data as any).userAvatar || '').trim();
+    if (!url || !/^https?:\/\//i.test(url)) {
+      this.setData({ userAvatar: '' });
+      return;
+    }
+
+    const self: any = this as any;
+    if (self.__userAvatarDlTried) {
+      this.setData({ userAvatar: '' });
+      return;
+    }
+    self.__userAvatarDlTried = true;
+
+    wx.downloadFile({
+      url,
+      timeout: 15000,
+      success: (res) => {
+        const tempFilePath = String((res && (res as any).tempFilePath) || '').trim();
+        this.setData({ userAvatar: tempFilePath || '' });
+      },
+      fail: () => {
+        this.setData({ userAvatar: '' });
+      }
+    });
   },
 
   // 通知

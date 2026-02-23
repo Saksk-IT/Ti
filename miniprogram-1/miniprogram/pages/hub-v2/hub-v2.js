@@ -52,6 +52,7 @@ var user_settings_1 = require("../../utils/user-settings");
 var auth_1 = require("../../utils/auth");
 var nav_1 = require("../../utils/nav");
 var theme_1 = require("../../utils/theme");
+var avatar_1 = require("../../utils/avatar");
 function formatTimeAgo(dateStr) {
     if (!dateStr)
         return '';
@@ -201,9 +202,12 @@ Page({
                         _a = _b.sent(), profile = _a[0], checkinStatus = _a[1], lastPractice = _a[2], historyStats = _a[3];
                         // 用户信息
                         if (profile) {
+                            var nextAvatar = profile.avatar ? (0, avatar_1.decorateAvatarUrl)((0, api_1.resolveUploadUrl)(profile.avatar)) : '';
+                            var self_1 = this;
+                            self_1.__userAvatarDlTried = false;
                             this.setData({
                                 userName: profile.username || '用户',
-                                userAvatar: profile.avatar ? (0, api_1.resolveUploadUrl)(profile.avatar) : '',
+                                userAvatar: nextAvatar,
                             });
                         }
                         // 签到状态
@@ -378,6 +382,31 @@ Page({
     // 头像点击 - 跳转个人资料
     onAvatarTap: function () {
         (0, nav_1.safeNavigate)('/pages/profile-view-v2/profile-view-v2', 'navigateTo');
+    },
+    onUserAvatarError: function () {
+        var _this = this;
+        var url = String(this.data.userAvatar || '').trim();
+        if (!url || !/^https?:\/\//i.test(url)) {
+            this.setData({ userAvatar: '' });
+            return;
+        }
+        var self = this;
+        if (self.__userAvatarDlTried) {
+            this.setData({ userAvatar: '' });
+            return;
+        }
+        self.__userAvatarDlTried = true;
+        wx.downloadFile({
+            url: url,
+            timeout: 15000,
+            success: function (res) {
+                var tempFilePath = String((res && res.tempFilePath) || '').trim();
+                _this.setData({ userAvatar: tempFilePath || '' });
+            },
+            fail: function () {
+                _this.setData({ userAvatar: '' });
+            }
+        });
     },
     // 通知
     onGoNotifications: function () {

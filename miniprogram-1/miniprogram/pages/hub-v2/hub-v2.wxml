@@ -46,7 +46,7 @@
         <!-- 用户信息行 -->
         <view class="user-greeting">
           <view class="avatar-wrapper" bindtap="onAvatarTap">
-            <image class="user-avatar" src="{{userAvatar || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+            <image class="user-avatar" src="{{userAvatar || '/images/default-avatar.png'}}" mode="aspectFill" binderror="onUserAvatarError"></image>
             <view class="avatar-ring"></view>
           </view>
           <view class="greeting-text">
