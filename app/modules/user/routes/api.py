@@ -51,7 +51,7 @@ def calculate_streak_days(conn, user_id):
                 break
         
         return streak
-    except:
+    except Exception:
         return 0
 
 
@@ -763,9 +763,9 @@ def upload_avatar():
             if os.path.realpath(old_file).startswith(os.path.realpath(upload_folder)) and os.path.exists(old_file):
                 try:
                     os.remove(old_file)
-                except:
+                except Exception:
                     pass
-        
+
         # 保存新头像路径
         conn.execute(
             'UPDATE users SET avatar = ? WHERE id = ?',

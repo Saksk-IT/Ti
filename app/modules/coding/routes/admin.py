@@ -144,7 +144,7 @@ def api_create_subject():
             try:
                 db.execute("SELECT description FROM subjects LIMIT 1").fetchone()
                 has_description = True
-            except:
+            except Exception:
                 has_description = False
             
             # 使用 coding_subjects 表
@@ -211,7 +211,7 @@ def api_update_subject(subject_id: int):
             try:
                 db.execute("SELECT description FROM subjects LIMIT 1").fetchone()
                 has_description = True
-            except:
+            except Exception:
                 has_description = False
             
             if has_description:

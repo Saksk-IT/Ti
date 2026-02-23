@@ -118,7 +118,7 @@ def api_save_mail_config():
             if key == 'mail_port':
                 try:
                     value = str(int(value))
-                except:
+                except Exception:
                     value = '587'
             
             # 使用 INSERT OR REPLACE 更新配置

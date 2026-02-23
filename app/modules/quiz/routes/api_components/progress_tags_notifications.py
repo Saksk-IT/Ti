@@ -87,7 +87,7 @@ def progress_api():
                            VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)""",
                         (uid, key, data_json)
                     )
-                except:
+                except Exception:
                     # 如果created_at字段不存在,则不包含它
                     conn.execute(
                         """INSERT INTO user_progress (user_id, p_key, data, updated_at) 

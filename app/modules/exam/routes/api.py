@@ -190,7 +190,7 @@ def api_save_exam_draft():
     for a in answers:
         try:
             qid = int(a.get('question_id'))
-        except:
+        except Exception:
             continue
         ua = (a.get('user_answer') or '').strip()
         conn.execute(
