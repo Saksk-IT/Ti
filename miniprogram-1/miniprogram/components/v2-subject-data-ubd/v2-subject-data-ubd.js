@@ -11,7 +11,7 @@ var __assign = (this && this.__assign) || function () {
 };
 
 var themeManager = require('../../utils/theme').themeManager;
-var echarts = require('../ec-canvas/echarts');
+var echarts = require('../../pages/subject-detail-v2/components/ec-canvas/echarts');
 var ubdv2Echarts = require('../../utils/ubdv2-echarts');
 function clamp(value, min, max) {
     if (!Number.isFinite(value))

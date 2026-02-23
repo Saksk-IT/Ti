@@ -1,5 +1,7 @@
 import { themeManager } from '../../utils/theme';
-import * as echarts from '../ec-canvas/echarts';
+// 主包 components/ec-canvas/echarts 是占位 stub（会抛错），
+// 这里显式复用 subject-detail-v2 页面内的完整 ECharts 实现，避免数据页空白。
+import * as echarts from '../../pages/subject-detail-v2/components/ec-canvas/echarts';
 import * as ubdv2Echarts from '../../utils/ubdv2-echarts';
 
 type DataSubTab = 'global' | 'mistakes' | 'favorites';
