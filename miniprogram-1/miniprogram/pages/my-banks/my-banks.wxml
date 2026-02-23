@@ -68,7 +68,7 @@
                 <view class="bank-owner">来自: {{item.owner_nickname}}</view>
                 <view class="bank-meta">
                   <text class="meta-item">{{item.question_count || 0}} 道题</text>
-                  <text class="meta-item permission">{{item.permission === 'copy' ? '可复制' : '仅查看'}}</text>
+                  <text class="meta-item permission">仅查看</text>
                 </view>
               </view>
               <view class="bank-arrow">

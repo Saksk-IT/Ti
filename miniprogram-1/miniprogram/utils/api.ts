@@ -834,7 +834,7 @@ export const api = {
   getBankDetail: (bankId: number) => request(`/user/banks/api/${bankId}`, 'GET'),
 
   // 设置题库公开/私有
-  setBankPublic: (bankId: number, data: { is_public: boolean; public_description?: string; allow_copy?: boolean }) =>
+  setBankPublic: (bankId: number, data: { is_public: boolean; public_description?: string }) =>
     request(`/user/banks/api/${bankId}/public`, 'POST', data),
 
   // 获取题库题目列表

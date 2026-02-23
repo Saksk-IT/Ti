@@ -728,8 +728,7 @@
               </view>
 
               <view class="chips" aria-label="权限选择">
-                <view class="chip {{newShare.permission === 'read' ? 'active' : ''}}" bindtap="onSharePermissionTap" data-permission="read"><text>只读</text></view>
-                <view class="chip {{newShare.permission === 'copy' ? 'active' : ''}}" bindtap="onSharePermissionTap" data-permission="copy"><text>可复制</text></view>
+                <view class="chip active" bindtap="onSharePermissionTap" data-permission="read"><text>只读</text></view>
               </view>
 
               <view class="chips" aria-label="有效期选择">
@@ -774,7 +773,7 @@
                   <view class="share-main">
                     <view class="share-code-row">
                       <text class="share-code">{{item.share_code || '链接分享'}}</text>
-                      <text class="share-permission {{item.permission}}">{{item.permission === 'copy' ? '可复制' : '只读'}}</text>
+                      <text class="share-permission read">只读</text>
                     </view>
                     <view class="share-meta">
                       <text class="meta-text">使用 {{item.current_uses || 0}} 次</text>

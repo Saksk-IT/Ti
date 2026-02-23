@@ -88,11 +88,11 @@ def create_share(bank_id):
     user_id = current_user_id()
     data = request.get_json() or {}
     share_type = data.get('type', 'code')  # 'code' or 'link'
-    permission = data.get('permission', 'read')
+    permission = 'read'  # 复制功能已移除，统一为只读
     expires_in = data.get('expires_in')  # 有效天数
     max_uses = data.get('max_uses')
 
-    if permission not in ('read', 'copy'):
+    if permission not in ('read',):
         return jsonify({'code': 1, 'message': '无效的权限级别'}), 400
 
     conn = get_db()

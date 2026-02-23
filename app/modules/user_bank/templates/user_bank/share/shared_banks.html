@@ -173,7 +173,7 @@
             <div class="shared-card">
                 <div class="shared-header">
                     <h3 class="shared-name">${escapeHtml(bank.bank_name)}</h3>
-                    <span class="badge ${bank.permission === 'copy' ? 'badge-success' : 'badge-primary'}">${bank.permission === 'copy' ? '可复制' : '只读'}</span>
+                    <span class="badge badge-primary">只读</span>
                 </div>
                 <div class="shared-owner">
                     ${bank.owner_avatar ? `<img src="${bank.owner_avatar}" alt="">` : ''}

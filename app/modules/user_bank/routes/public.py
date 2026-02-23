@@ -77,7 +77,7 @@ def get_public_banks():
     if bank_type != 'system':
         user_query = '''
             SELECT b.id, b.name, b.public_description as description, COALESCE(b.question_count, 0) as question_count,
-                   b.public_use_count as use_count, b.allow_copy, b.public_at, b.created_at,
+                   b.public_use_count as use_count, 0 as allow_copy, b.public_at, b.created_at,
                    u.id as owner_id, u.username as owner_nickname, u.avatar as owner_avatar,
                    'user' as bank_type
             FROM user_question_banks b
@@ -108,7 +108,7 @@ def get_public_banks():
                        COALESCE(NULLIF(b.public_description, ''), b.description) as description,
                        COALESCE(b.question_count, 0) as question_count,
                        0 as use_count,
-                       CASE WHEN bs.permission = 'copy' THEN 1 ELSE 0 END as allow_copy,
+                       0 as allow_copy,
                        bsr.created_at as public_at,
                        b.created_at,
                        u.id as owner_id, u.username as owner_nickname, u.avatar as owner_avatar,
@@ -153,7 +153,7 @@ def get_public_banks():
                     f"""
                     SELECT s.id, s.name, s.description, s.created_at as public_at, s.created_at as created_at,
                            (SELECT COUNT(*) FROM questions q WHERE q.subject_id = s.id) as question_count,
-                           1 as allow_copy, 0 as use_count,
+                           0 as allow_copy, 0 as use_count,
                            NULL as owner_id, '系统管理员' as owner_nickname, NULL as owner_avatar,
                            'system' as bank_type
                     FROM subjects s
@@ -167,7 +167,7 @@ def get_public_banks():
                 """
                 SELECT s.id, s.name, s.description, s.created_at as public_at, s.created_at as created_at,
                        (SELECT COUNT(*) FROM questions q WHERE q.subject_id = s.id) as question_count,
-                       1 as allow_copy, 0 as use_count,
+                       0 as allow_copy, 0 as use_count,
                        NULL as owner_id, '系统管理员' as owner_nickname, NULL as owner_avatar,
                        'system' as bank_type
                 FROM subjects s
@@ -223,7 +223,7 @@ def get_public_bank_detail(bank_id):
         bank = conn.execute('''
             SELECT s.id, s.name, s.description,
                    (SELECT COUNT(*) FROM questions q WHERE q.subject_id = s.id) as question_count,
-                   1 as allow_copy, 0 as use_count,
+                   0 as allow_copy, 0 as use_count,
                    '系统管理员' as owner_nickname, NULL as owner_avatar,
                    'system' as bank_type
             FROM subjects s
@@ -236,7 +236,7 @@ def get_public_bank_detail(bank_id):
         # 查询用户公开题库
         bank = conn.execute('''
             SELECT b.id, b.name, b.public_description as description, b.question_count,
-                   b.public_use_count as use_count, b.allow_copy,
+                   b.public_use_count as use_count, 0 as allow_copy,
                    u.username as owner_nickname, u.avatar as owner_avatar,
                    'user' as bank_type
             FROM user_question_banks b

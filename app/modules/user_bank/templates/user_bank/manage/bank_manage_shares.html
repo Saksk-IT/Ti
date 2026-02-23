@@ -111,7 +111,6 @@
           <div class="ubm-label">权限级别</div>
           <select class="ubm-select" id="ubmSharePerm" title="权限级别">
             <option value="read">只读（仅可刷题）</option>
-            <option value="copy">可复制（可刷题并复制题目）</option>
           </select>
         </div>
         <div class="ubm-field">
@@ -264,7 +263,7 @@
 
           const meta = document.createElement('div');
           meta.className = 'ubm-share-meta';
-          const perm = s.permission === 'copy' ? '可复制' : '只读';
+          const perm = '只读';
           const used = `${s.current_uses || 0}${s.max_uses ? '/' + s.max_uses : ''}次`;
           const exp = s.expires_at ? formatDate(s.expires_at) : '永久';
           meta.textContent = `权限：${perm} · 使用：${used} · 过期：${exp} · 创建：${formatDate(s.created_at)}`;

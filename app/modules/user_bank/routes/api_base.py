@@ -69,8 +69,7 @@ def check_bank_access(user_id, bank_id):
 
     # 2. 公开题库：所有登录用户可访问
     if bank['is_public']:
-        permission = 'copy' if bank['allow_copy'] else 'read'
-        return (True, permission, 'public')
+        return (True, 'read', 'public')
 
     # 3. 分享授权：检查分享记录
     share_record = conn.execute('''

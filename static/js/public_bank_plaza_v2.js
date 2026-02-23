@@ -124,7 +124,7 @@
         var qcnt = toNum(b && b.question_count);
         var isSystem = b && b.bank_type === 'system';
         var typePill = isSystem ? '<span class="plz-pill system">系统</span>' : '<span class="plz-pill user">用户</span>';
-        var copyPill = b && b.allow_copy ? '<span class="plz-pill copy">可复制</span>' : '';
+        var copyPill = '';
         var owner = escapeHtml(((b && b.owner_nickname) || (isSystem ? '系统管理员' : '匿名')).toString());
         var created = fmtDate((b && (b.public_at || b.created_at)) || '');
         var uses = !isSystem ? toNum(b && b.use_count) : 0;

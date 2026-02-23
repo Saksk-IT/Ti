@@ -18,8 +18,7 @@
     }
 
     function selectSharePerm(btn){
-      const p = btn?.dataset?.sharePerm || 'read';
-      shareState.permission = (p === 'copy') ? 'copy' : 'read';
+      shareState.permission = 'read';
       setSegActive(btn);
     }
 
@@ -167,7 +166,7 @@
         const active = !!(s?.is_active === 1 || s?.is_active === true);
         const code = s?.share_code ? String(s.share_code) : '';
         const token = s?.share_token ? String(s.share_token) : '';
-        const permText = (s?.permission === 'copy') ? '可复制' : '只读';
+        const permText = '只读';
         const expText = s?.expires_at ? formatDate(s.expires_at) : '永久';
         const usesText = `${Number(s?.current_uses || 0)}${s?.max_uses ? '/' + Number(s.max_uses) : ''}`;
         const createdText = s?.created_at ? formatDate(s.created_at) : '—';

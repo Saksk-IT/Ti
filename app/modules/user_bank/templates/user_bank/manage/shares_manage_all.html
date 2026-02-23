@@ -23,7 +23,6 @@
         <select id="permSelect" class="form-input form-select" style="width: 130px;">
             <option value="">全部权限</option>
             <option value="read">只读</option>
-            <option value="copy">可复制</option>
         </select>
     </div>
 </div>
@@ -213,7 +212,6 @@
     }
 
     function formatPerm(p) {
-        if (p === 'copy') return '可复制';
         return '只读';
     }
 
@@ -321,9 +319,7 @@
             const statusBadge = isActive
                 ? '<span class="badge badge-success">有效</span>'
                 : '<span class="badge badge-secondary">已撤销</span>';
-            const permBadge = s.permission === 'copy'
-                ? '<span class="badge badge-primary">可复制</span>'
-                : '<span class="badge badge-secondary">只读</span>';
+            const permBadge = '<span class="badge badge-secondary">只读</span>';
 
             const shareType = s.share_code ? '分享码' : '链接';
             const shareValue = s.share_code || s.share_link || '';

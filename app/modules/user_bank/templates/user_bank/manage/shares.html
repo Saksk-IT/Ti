@@ -33,7 +33,6 @@
                 <label class="form-label">权限级别</label>
                 <select id="permission" class="form-input form-select" title="权限级别">
                     <option value="read">只读（仅可刷题）</option>
-                    <option value="copy">可复制（可刷题并复制题目）</option>
                 </select>
             </div>
             <div class="form-group">
@@ -248,7 +247,7 @@
                     </div>
                 </div>
                 <div class="share-meta">
-                    <span>权限: ${s.permission === 'copy' ? '可复制' : '只读'}</span>
+                    <span>权限: 只读</span>
                     <span>已使用: ${s.current_uses}${s.max_uses ? '/' + s.max_uses : ''} 次</span>
                     <span>过期: ${s.expires_at ? formatDate(s.expires_at) : '永久'}</span>
                     <span>创建于: ${formatDate(s.created_at)}</span>

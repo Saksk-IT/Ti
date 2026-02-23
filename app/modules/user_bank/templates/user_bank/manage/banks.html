@@ -928,12 +928,6 @@
                     <label>公开描述</label>
                     <textarea id="publicDescription" placeholder="公开展示的描述（可与私人描述不同）"></textarea>
                 </div>
-                <div class="form-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="allowCopy" checked>
-                        <span>允许其他用户复制题目</span>
-                    </label>
-                </div>
             </div>
         </div>
         <div class="modal-footer">
@@ -1170,7 +1164,6 @@
         const isPublic = bank.is_public === 1 || bank.is_public === true;
         document.getElementById('isPublic').checked = isPublic;
         document.getElementById('publicDescription').value = bank.public_description || '';
-        document.getElementById('allowCopy').checked = bank.allow_copy !== 0;
         document.getElementById('publicSettings').style.display = isPublic ? 'block' : 'none';
         document.getElementById('publicModal').classList.add('show');
         document.body.style.overflow = 'hidden';
@@ -1187,15 +1180,13 @@
 
         const isPublic = document.getElementById('isPublic').checked;
         const publicDescription = document.getElementById('publicDescription').value.trim();
-        const allowCopy = document.getElementById('allowCopy').checked;
 
         try {
             await api(`/user/banks/api/${publicBankId}/public`, {
                 method: 'POST',
                 body: JSON.stringify({
                     is_public: isPublic,
-                    public_description: publicDescription,
-                    allow_copy: allowCopy
+                    public_description: publicDescription
                 })
             });
 

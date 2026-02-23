@@ -42,10 +42,6 @@
                     <label class="form-label">公开描述</label>
                     <textarea id="public_description" class="form-input form-textarea" placeholder="公开展示的描述（可与私人描述不同）"></textarea>
                 </div>
-                <label class="checkbox-label">
-                    <input type="checkbox" id="allow_copy" checked>
-                    <span class="checkbox-text">允许其他用户复制题目</span>
-                </label>
             </div>
         </div>
         {% endif %}
@@ -167,7 +163,6 @@
             if (document.getElementById('is_public')) {
                 document.getElementById('is_public').checked = bank.is_public;
                 document.getElementById('public_description').value = bank.public_description || '';
-                document.getElementById('allow_copy').checked = bank.allow_copy !== 0;
                 togglePublicSettings();
             }
         } catch (e) {
@@ -215,8 +210,7 @@
                         method: 'POST',
                         body: JSON.stringify({
                             is_public: document.getElementById('is_public').checked,
-                            public_description: document.getElementById('public_description').value.trim(),
-                            allow_copy: document.getElementById('allow_copy').checked
+                            public_description: document.getElementById('public_description').value.trim()
                         })
                     });
                 }

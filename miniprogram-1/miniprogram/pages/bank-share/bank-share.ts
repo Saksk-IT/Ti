@@ -97,9 +97,8 @@ Page({
     }
   },
 
-  onPermissionTap(e: any) {
-    const permission = e.currentTarget.dataset.permission as 'read' | 'copy';
-    this.setData({ 'newShare.permission': permission });
+  onPermissionTap(_e: any) {
+    this.setData({ 'newShare.permission': 'read' });
   },
 
   onExpiresTap(e: any) {

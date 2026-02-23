@@ -240,7 +240,6 @@ def set_bank_public(bank_id):
     data = request.get_json() or {}
     is_public = data.get('is_public', False)
     public_description = (data.get('public_description') or '').strip()
-    allow_copy = data.get('allow_copy', True)
 
     conn = get_db()
 
@@ -255,10 +254,10 @@ def set_bank_public(bank_id):
     if is_public:
         conn.execute('''
             UPDATE user_question_banks
-            SET is_public = 1, public_description = ?, allow_copy = ?,
+            SET is_public = 1, public_description = ?,
                 public_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
-        ''', (public_description, 1 if allow_copy else 0, bank_id))
+        ''', (public_description, bank_id))
         message = '题库已公开'
     else:
         conn.execute('''

@@ -28,11 +28,11 @@
                 <text>仅查看</text>
               </view>
               <view
-                class="option-tag {{newShare.permission === 'copy' ? 'active' : ''}}"
+                class="option-tag"
                 bindtap="onPermissionTap"
-                data-permission="copy"
+                data-permission="read"
               >
-                <text>可复制</text>
+                <text>仅查看</text>
               </view>
             </view>
           </view>
@@ -88,7 +88,7 @@
               <view class="share-main">
                 <view class="share-code-row">
                   <text class="share-code">{{item.share_code || '链接分享'}}</text>
-                  <text class="share-permission {{item.permission}}">{{item.permission === 'copy' ? '可复制' : '仅查看'}}</text>
+                  <text class="share-permission read">仅查看</text>
                 </view>
                 <view class="share-meta">
                   <text class="meta-text">使用 {{item.current_uses || 0}} 次</text>

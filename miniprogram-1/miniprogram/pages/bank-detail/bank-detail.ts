@@ -1005,8 +1005,7 @@ Page({
 
     const payload: any = {
       is_public: nextPublic,
-      public_description: String(this.data.bankPublicDescription || ''),
-      allow_copy: Boolean(this.data.bankAllowCopy)
+      public_description: String(this.data.bankPublicDescription || '')
     };
 
     this.setData({ bankPublicSaving: true, bankPublicError: '' });
@@ -2338,10 +2337,8 @@ Page({
     }
   },
 
-  onSharePermissionTap(e: any) {
-    const permission = e?.currentTarget?.dataset?.permission as 'read' | 'copy';
-    if (permission !== 'read' && permission !== 'copy') return;
-    this.setData({ 'newShare.permission': permission });
+  onSharePermissionTap(_e: any) {
+    this.setData({ 'newShare.permission': 'read' });
   },
 
   onShareExpiresTap(e: any) {
