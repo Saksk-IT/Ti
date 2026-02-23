@@ -1,0 +1,704 @@
+# -*- coding: utf-8 -*-
+"""学习统计历史路由 — /history 接口
+
+从 core.py 拆分，提供学习统计（答题历史、连续天数、科目/题型/难度维度、薄弱点等）。
+"""
+
+from datetime import datetime, timedelta
+
+from flask import request, jsonify, current_app
+
+from app.core.utils.database import get_db
+from app.core.extensions import limiter
+from app.core.utils.decorators import auth_required, current_user_id
+from app.core.utils.redis_utils import redis_get_json, redis_set_json
+from app.core.utils.cache_utils import (
+    get_questions_version,
+    get_subjects_version,
+    get_user_quiz_version,
+    make_cache_key,
+)
+from app.core.utils.time_utils import today_bj
+
+from ..api_bp import quiz_api_bp
+
+
+def _column_exists(conn, table: str, column: str) -> bool:
+    try:
+        rows = conn.execute(f"PRAGMA table_info({table})").fetchall()
+        return any(r and r['name'] == column for r in rows)
+    except Exception:
+        return False
+
+
+@quiz_api_bp.route('/history', methods=['GET'])
+@auth_required  # 支持session和JWT
+@limiter.exempt
+def api_history_stats():
+    """学习统计（与 Web /history 同语义，供小程序 v2 页面使用）"""
+    from app.core.utils.subject_permissions import get_user_accessible_subjects
+    from app.core.utils.portable_question_format import portable_type_to_q_type
+
+    uid = current_user_id()
+    if not uid:
+        return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
+
+    cache_key = None
+    cache_ttl = 0
+    if bool(current_app.config.get('QUIZ_API_CACHE_ENABLED', True)):
+        try:
+            cache_ttl = int(current_app.config.get('QUIZ_CACHE_TTL_HISTORY_SECONDS', 30) or 30)
+        except Exception:
+            cache_ttl = 30
+        if cache_ttl > 0:
+            try:
+                cache_key = make_cache_key(
+                    'quiz:history',
+                    {
+                        'uid': int(uid),
+                        'uv': get_user_quiz_version(int(uid)),
+                        'qv': get_questions_version(),
+                        'sv': get_subjects_version(),
+                    },
+                )
+                cached = redis_get_json(cache_key)
+                if isinstance(cached, dict) and cached.get('status') == 'success' and 'data' in cached:
+                    return jsonify(cached)
+            except Exception:
+                cache_key = None
+
+    conn = get_db()
+
+    # 可访问科目（并过滤锁定）
+    subject_ids, subjects_meta = _load_subjects_meta(conn, uid)
+
+    # 公共题库总题数（按权限与锁定过滤）
+    total_questions = _count_total_questions(conn, subject_ids)
+
+    # 复用 join + 权限过滤（公共题库）
+    ua_from, ua_params_base = _build_ua_from(uid, subject_ids)
+
+    # 全局汇总（公共题库）
+    answered_count, correct_count, last_activity = _summary_stats(conn, ua_from, ua_params_base)
+
+    accuracy = round(correct_count * 100 / answered_count, 1) if answered_count > 0 else 0.0
+    completion = round(answered_count * 100 / total_questions, 1) if total_questions > 0 else 0.0
+
+    # 收藏/错题（公共题库）
+    favorites_count = _count_favorites(conn, uid, subject_ids)
+    mistakes_has_wrong_count = _column_exists(conn, 'mistakes', 'wrong_count')
+    mistakes_has_updated_at = _column_exists(conn, 'mistakes', 'updated_at')
+    mistakes_count, mistakes_times = _count_mistakes(conn, uid, subject_ids, mistakes_has_wrong_count)
+
+    # 连续学习天数
+    streak_days = _calc_streak(conn, ua_from, ua_params_base)
+
+    # 近期统计
+    answered_7d, correct_7d = _count_since(conn, ua_from, ua_params_base, 7, answered_count, correct_count)
+    answered_30d, correct_30d = _count_since(conn, ua_from, ua_params_base, 30, answered_count, correct_count)
+
+    # 趋势窗口
+    window_days = request.args.get('days', 30, type=int)
+    if window_days not in (7, 30, 90):
+        window_days = 30
+    daily, daily_max, window_answered, window_correct, window_accuracy = _build_daily_trend(
+        conn, ua_from, ua_params_base, window_days,
+    )
+
+    # 科目维度
+    subject_rows = _build_subject_rows(conn, uid, subject_ids, subjects_meta)
+
+    # 题型维度
+    type_rows = _build_type_rows(conn, ua_from, ua_params_base, portable_type_to_q_type)
+
+    # 难度维度
+    difficulty_rows = _build_difficulty_rows(conn, ua_from, ua_params_base)
+
+    # 薄弱点
+    weakness_rows = _build_weakness_rows(conn, uid, subject_ids, ua_from, ua_params_base, portable_type_to_q_type)
+
+    # 最近错题
+    recent_mistakes = _build_recent_mistakes(
+        conn, uid, subject_ids, mistakes_has_wrong_count, mistakes_has_updated_at, portable_type_to_q_type,
+    )
+
+    # 下一步建议
+    next_actions = []
+    try:
+        for w in (weakness_rows or [])[:3]:
+            next_actions.append({
+                'title': f"{w['subject']} · {w['q_type']}",
+                'meta': f"正确率 {w['accuracy']}%（已做 {w['answered']}）",
+                'subject': w['subject'],
+                'q_type': w['q_type'],
+            })
+    except Exception:
+        next_actions = []
+
+    payload = {
+        'status': 'success',
+        'data': {
+            'subjects_meta': subjects_meta,
+            'total_questions': total_questions,
+            'answered_count': answered_count,
+            'correct_count': correct_count,
+            'accuracy': accuracy,
+            'completion': completion,
+            'favorites_count': favorites_count,
+            'mistakes_count': mistakes_count,
+            'mistakes_times': mistakes_times,
+            'streak_days': streak_days,
+            'last_activity': last_activity,
+            'answered_7d': answered_7d,
+            'correct_7d': correct_7d,
+            'answered_30d': answered_30d,
+            'correct_30d': correct_30d,
+            'window_days': window_days,
+            'daily': daily,
+            'daily_max': daily_max or 1,
+            'window_answered': window_answered,
+            'window_correct': window_correct,
+            'window_accuracy': window_accuracy,
+            'subject_rows': subject_rows,
+            'type_rows': type_rows,
+            'difficulty_rows': difficulty_rows,
+            'weakness_rows': weakness_rows,
+            'recent_mistakes': recent_mistakes,
+            'next_actions': next_actions,
+        },
+    }
+
+    if cache_key and cache_ttl > 0 and bool(current_app.config.get('QUIZ_API_CACHE_ENABLED', True)):
+        try:
+            redis_set_json(cache_key, payload, ttl_seconds=cache_ttl)
+        except Exception:
+            pass
+
+    return jsonify(payload)
+
+
+# ---------------------------------------------------------------------------
+# 以下为 api_history_stats 的辅助函数
+# ---------------------------------------------------------------------------
+
+def _load_subjects_meta(conn, uid) -> tuple[list[int], list[dict]]:
+    """加载用户可访问的科目元数据"""
+    from app.core.utils.subject_permissions import get_user_accessible_subjects
+
+    subject_ids: list[int] = []
+    subjects_meta: list[dict] = []
+    try:
+        accessible_ids = get_user_accessible_subjects(uid) or []
+        if accessible_ids:
+            placeholders = ','.join(['?'] * len(accessible_ids))
+            rows = conn.execute(
+                f"""
+                SELECT id, name
+                FROM subjects
+                WHERE (is_locked=0 OR is_locked IS NULL)
+                  AND id IN ({placeholders})
+                ORDER BY id
+                """,
+                accessible_ids,
+            ).fetchall()
+            subjects_meta = [{'id': int(r['id']), 'name': r['name']} for r in (rows or []) if r and r['id'] is not None]
+            subject_ids = [int(r['id']) for r in (rows or []) if r and r['id'] is not None]
+    except Exception as e:
+        current_app.logger.warning(f"history subjects meta failed: {e}")
+        subject_ids = []
+        subjects_meta = []
+    return subject_ids, subjects_meta
+
+
+def _count_total_questions(conn, subject_ids: list[int]) -> int:
+    """公共题库总题数（按权限与锁定过滤）"""
+    try:
+        base_sql = """
+            SELECT COUNT(*)
+            FROM questions q
+            LEFT JOIN subjects s ON q.subject_id = s.id
+            WHERE (s.is_locked=0 OR s.is_locked IS NULL)
+        """
+        params: list = []
+        if subject_ids:
+            placeholders = ','.join(['?'] * len(subject_ids))
+            base_sql += f" AND q.subject_id IN ({placeholders})"
+            params.extend(subject_ids)
+        return int(conn.execute(base_sql, params).fetchone()[0] or 0)
+    except Exception as e:
+        current_app.logger.warning(f"history total_questions failed: {e}")
+        return 0
+
+
+def _build_ua_from(uid, subject_ids: list[int]) -> tuple[str, list]:
+    """构建 user_answers 的 FROM + WHERE 子句和参数"""
+    ua_from = """
+        FROM user_answers ua
+        JOIN questions q ON ua.question_id = q.id
+        LEFT JOIN subjects s ON q.subject_id = s.id
+        WHERE ua.user_id = ?
+          AND (s.is_locked=0 OR s.is_locked IS NULL)
+    """
+    ua_params_base = [uid]
+    if subject_ids:
+        placeholders = ','.join(['?'] * len(subject_ids))
+        ua_from += f" AND q.subject_id IN ({placeholders})"
+        ua_params_base.extend(subject_ids)
+    return ua_from, ua_params_base
+
+
+def _summary_stats(conn, ua_from: str, ua_params_base: list) -> tuple[int, int, str | None]:
+    """全局汇总：已答题数、正确数、最后活动时间"""
+    try:
+        row = conn.execute(
+            f"""
+            SELECT
+              COUNT(*) AS answered,
+              SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct,
+              MAX(ua.created_at) AS last_activity
+            {ua_from}
+            """,
+            ua_params_base,
+        ).fetchone()
+        answered = int(row['answered'] or 0) if row else 0
+        correct = int(row['correct'] or 0) if row else 0
+        last_act = (row['last_activity'] if row else None) or None
+        return answered, correct, last_act
+    except Exception as e:
+        current_app.logger.warning(f"history summary failed: {e}")
+        return 0, 0, None
+
+
+def _count_favorites(conn, uid, subject_ids: list[int]) -> int:
+    """收藏数（公共题库）"""
+    try:
+        fav_sql = """
+            SELECT COUNT(*)
+            FROM favorites f
+            JOIN questions q ON f.question_id = q.id
+            LEFT JOIN subjects s ON q.subject_id = s.id
+            WHERE f.user_id = ? AND (s.is_locked=0 OR s.is_locked IS NULL)
+        """
+        fav_params: list = [uid]
+        if subject_ids:
+            placeholders = ','.join(['?'] * len(subject_ids))
+            fav_sql += f" AND q.subject_id IN ({placeholders})"
+            fav_params.extend(subject_ids)
+        return int(conn.execute(fav_sql, fav_params).fetchone()[0] or 0)
+    except Exception as e:
+        current_app.logger.warning(f"history favorites_count failed: {e}")
+        return 0
+
+
+def _count_mistakes(conn, uid, subject_ids: list[int], has_wrong_count: bool) -> tuple[int, int]:
+    """错题数和累计错误次数（公共题库）"""
+    try:
+        mis_sql = """
+            SELECT
+              COUNT(*) AS cnt,
+              SUM(CASE WHEN m.wrong_count IS NULL THEN 1 ELSE m.wrong_count END) AS times
+            FROM mistakes m
+            JOIN questions q ON m.question_id = q.id
+            LEFT JOIN subjects s ON q.subject_id = s.id
+            WHERE m.user_id = ? AND (s.is_locked=0 OR s.is_locked IS NULL)
+        """
+        mis_params: list = [uid]
+        if subject_ids:
+            placeholders = ','.join(['?'] * len(subject_ids))
+            mis_sql += f" AND q.subject_id IN ({placeholders})"
+            mis_params.extend(subject_ids)
+        if not has_wrong_count:
+            mis_sql = mis_sql.replace("m.wrong_count", "NULL")
+        row = conn.execute(mis_sql, mis_params).fetchone()
+        cnt = int(row['cnt'] or 0) if row else 0
+        times = int(row['times'] or 0) if row else 0
+        if not has_wrong_count:
+            times = cnt
+        return cnt, times
+    except Exception as e:
+        current_app.logger.warning(f"history mistakes_count failed: {e}")
+        return 0, 0
+
+
+def _calc_streak(conn, ua_from: str, ua_params_base: list) -> int:
+    """连续学习天数（基于 user_answers 的 DATE(created_at)）"""
+    try:
+        rows = conn.execute(
+            f"SELECT DISTINCT DATE(ua.created_at) AS day {ua_from} ORDER BY day DESC LIMIT 120",
+            ua_params_base,
+        ).fetchall()
+        dates = []
+        for r in rows or []:
+            if r and r['day']:
+                try:
+                    dates.append(datetime.strptime(r['day'], '%Y-%m-%d').date())
+                except Exception:
+                    continue
+        today = today_bj()
+        if dates and dates[0] >= (today - timedelta(days=1)):
+            streak = 1
+            for i in range(1, len(dates)):
+                if dates[i - 1] - dates[i] == timedelta(days=1):
+                    streak += 1
+                else:
+                    break
+            return streak
+        return 0
+    except Exception as e:
+        current_app.logger.warning(f"history streak failed: {e}")
+        return 0
+
+
+def _count_since(
+    conn, ua_from: str, ua_params_base: list,
+    days: int, total_answered: int, total_correct: int,
+) -> tuple[int, int]:
+    """统计最近 N 天的答题数和正确数"""
+    if days <= 0:
+        return total_answered, total_correct
+    try:
+        row = conn.execute(
+            f"""
+            SELECT
+              COUNT(*) AS answered,
+              SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+            {ua_from}
+              AND ua.created_at >= datetime('now', '+8 hours', ?)
+            """,
+            ua_params_base + [f'-{days} days'],
+        ).fetchone()
+        return int(row['answered'] or 0), int(row['correct'] or 0)
+    except Exception:
+        return 0, 0
+
+
+def _build_daily_trend(
+    conn, ua_from: str, ua_params_base: list, window_days: int,
+) -> tuple[list[dict], int, int, int, float]:
+    """构建每日趋势数据"""
+    daily: list[dict] = []
+    daily_max = 0
+    window_answered = 0
+    window_correct = 0
+    window_accuracy = 0.0
+    try:
+        rows = conn.execute(
+            f"""
+            SELECT
+              DATE(ua.created_at) AS day,
+              COUNT(*) AS total,
+              SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+            {ua_from}
+              AND ua.created_at >= datetime('now', '+8 hours', ?)
+            GROUP BY DATE(ua.created_at)
+            ORDER BY day
+            """,
+            ua_params_base + [f'-{window_days} days'],
+        ).fetchall()
+        data_map = {
+            r['day']: {'total': int(r['total'] or 0), 'correct': int(r['correct'] or 0)}
+            for r in (rows or []) if r and r['day']
+        }
+
+        today = today_bj()
+        start = today - timedelta(days=window_days - 1)
+        for i in range(window_days):
+            d = start + timedelta(days=i)
+            key = d.strftime('%Y-%m-%d')
+            total = int((data_map.get(key) or {}).get('total', 0))
+            correct = int((data_map.get(key) or {}).get('correct', 0))
+            acc = round(correct * 100 / total, 1) if total > 0 else 0.0
+            daily_max = max(daily_max, total)
+            daily.append({'day': key, 'total': total, 'correct': correct, 'accuracy': acc})
+
+        window_answered = sum(int(x.get('total', 0) or 0) for x in daily)
+        window_correct = sum(int(x.get('correct', 0) or 0) for x in daily)
+        window_accuracy = round(window_correct * 100 / window_answered, 1) if window_answered > 0 else 0.0
+    except Exception as e:
+        current_app.logger.warning(f"history daily failed: {e}")
+
+    return daily, daily_max, window_answered, window_correct, window_accuracy
+
+
+def _build_subject_rows(conn, uid, subject_ids: list[int], subjects_meta: list[dict]) -> list[dict]:
+    """科目维度统计（公共题库）"""
+    subject_rows: list[dict] = []
+    try:
+        total_map: dict = {}
+        if subject_ids:
+            placeholders = ','.join(['?'] * len(subject_ids))
+            rows = conn.execute(
+                f"""
+                SELECT q.subject_id AS subject_id, COUNT(*) AS total
+                FROM questions q
+                LEFT JOIN subjects s ON q.subject_id = s.id
+                WHERE (s.is_locked=0 OR s.is_locked IS NULL)
+                  AND q.subject_id IN ({placeholders})
+                GROUP BY q.subject_id
+                """,
+                subject_ids,
+            ).fetchall()
+            total_map = {int(r['subject_id']): int(r['total'] or 0) for r in (rows or []) if r and r['subject_id'] is not None}
+
+        ans_map: dict = {}
+        if subject_ids:
+            placeholders = ','.join(['?'] * len(subject_ids))
+            rows = conn.execute(
+                f"""
+                SELECT q.subject_id AS subject_id,
+                       COUNT(*) AS answered,
+                       SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+                FROM user_answers ua
+                JOIN questions q ON ua.question_id = q.id
+                LEFT JOIN subjects s ON q.subject_id = s.id
+                WHERE ua.user_id = ?
+                  AND (s.is_locked=0 OR s.is_locked IS NULL)
+                  AND q.subject_id IN ({placeholders})
+                GROUP BY q.subject_id
+                """,
+                [uid] + subject_ids,
+            ).fetchall()
+            ans_map = {
+                int(r['subject_id']): {'answered': int(r['answered'] or 0), 'correct': int(r['correct'] or 0)}
+                for r in (rows or [])
+                if r and r['subject_id'] is not None
+            }
+
+        mis_map: dict = {}
+        fav_map: dict = {}
+        if subject_ids:
+            placeholders = ','.join(['?'] * len(subject_ids))
+            rows = conn.execute(
+                f"""
+                SELECT q.subject_id AS subject_id, COUNT(*) AS cnt
+                FROM mistakes m
+                JOIN questions q ON m.question_id = q.id
+                LEFT JOIN subjects s ON q.subject_id = s.id
+                WHERE m.user_id = ? AND (s.is_locked=0 OR s.is_locked IS NULL)
+                  AND q.subject_id IN ({placeholders})
+                GROUP BY q.subject_id
+                """,
+                [uid] + subject_ids,
+            ).fetchall()
+            mis_map = {int(r['subject_id']): int(r['cnt'] or 0) for r in (rows or []) if r and r['subject_id'] is not None}
+
+            rows = conn.execute(
+                f"""
+                SELECT q.subject_id AS subject_id, COUNT(*) AS cnt
+                FROM favorites f
+                JOIN questions q ON f.question_id = q.id
+                LEFT JOIN subjects s ON q.subject_id = s.id
+                WHERE f.user_id = ? AND (s.is_locked=0 OR s.is_locked IS NULL)
+                  AND q.subject_id IN ({placeholders})
+                GROUP BY q.subject_id
+                """,
+                [uid] + subject_ids,
+            ).fetchall()
+            fav_map = {int(r['subject_id']): int(r['cnt'] or 0) for r in (rows or []) if r and r['subject_id'] is not None}
+
+        for s in subjects_meta or []:
+            sid = int(s['id'])
+            total = int(total_map.get(sid, 0))
+            answered = int((ans_map.get(sid) or {}).get('answered', 0))
+            correct = int((ans_map.get(sid) or {}).get('correct', 0))
+            acc = round(correct * 100 / answered, 1) if answered > 0 else 0.0
+            comp = round(answered * 100 / total, 1) if total > 0 else 0.0
+            subject_rows.append({
+                'subject_id': sid,
+                'subject': s['name'],
+                'total': total,
+                'answered': answered,
+                'correct': correct,
+                'accuracy': acc,
+                'completion': comp,
+                'mistakes': int(mis_map.get(sid, 0)),
+                'favorites': int(fav_map.get(sid, 0)),
+            })
+    except Exception as e:
+        current_app.logger.warning(f"history subject rows failed: {e}")
+        subject_rows = []
+    return subject_rows
+
+
+def _build_type_rows(conn, ua_from: str, ua_params_base: list, portable_type_to_q_type) -> list[dict]:
+    """题型维度统计（公共题库）"""
+    type_rows: list[dict] = []
+    try:
+        rows = conn.execute(
+            f"""
+            SELECT
+              COALESCE(NULLIF(TRIM(q.type), ''), 'unknown') AS p_type,
+              COUNT(*) AS answered,
+              SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+            {ua_from}
+            GROUP BY COALESCE(NULLIF(TRIM(q.type), ''), 'unknown')
+            ORDER BY answered DESC
+            """,
+            ua_params_base,
+        ).fetchall()
+        for r in rows or []:
+            p_type = str((r['p_type'] or 'unknown'))
+            answered = int(r['answered'] or 0)
+            correct = int(r['correct'] or 0)
+            type_rows.append({
+                'q_type': ('未知' if p_type == 'unknown' else portable_type_to_q_type(p_type)),
+                'answered': answered,
+                'correct': correct,
+                'accuracy': round(correct * 100 / answered, 1) if answered > 0 else 0.0,
+            })
+    except Exception as e:
+        current_app.logger.warning(f"history type rows failed: {e}")
+    return type_rows
+
+
+def _build_difficulty_rows(conn, ua_from: str, ua_params_base: list) -> list[dict]:
+    """难度维度统计（公共题库）"""
+    difficulty_rows: list[dict] = []
+    try:
+        rows = conn.execute(
+            f"""
+            SELECT
+              COALESCE(q.difficulty, 1) AS difficulty,
+              COUNT(*) AS answered,
+              SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+            {ua_from}
+            GROUP BY q.difficulty
+            ORDER BY difficulty ASC
+            """,
+            ua_params_base,
+        ).fetchall()
+        for r in rows or []:
+            diff = int(r['difficulty'] or 1)
+            answered = int(r['answered'] or 0)
+            correct = int(r['correct'] or 0)
+            label = {1: '简单', 2: '中等', 3: '困难'}.get(diff, f'难度{diff}')
+            difficulty_rows.append({
+                'difficulty': diff,
+                'label': label,
+                'answered': answered,
+                'correct': correct,
+                'accuracy': round(correct * 100 / answered, 1) if answered > 0 else 0.0,
+            })
+    except Exception as e:
+        current_app.logger.warning(f"history difficulty rows failed: {e}")
+    return difficulty_rows
+
+
+def _build_weakness_rows(
+    conn, uid, subject_ids: list[int],
+    ua_from: str, ua_params_base: list,
+    portable_type_to_q_type,
+) -> list[dict]:
+    """薄弱点：科目 x 题型（公共题库）"""
+    weakness_rows: list[dict] = []
+    try:
+        rows = conn.execute(
+            f"""
+            SELECT
+              COALESCE(s.name, '未分类') AS subject,
+              COALESCE(NULLIF(TRIM(q.type), ''), 'unknown') AS p_type,
+              COUNT(*) AS answered,
+              SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+            {ua_from}
+            GROUP BY s.name, COALESCE(NULLIF(TRIM(q.type), ''), 'unknown')
+            HAVING answered >= 5
+            ORDER BY (correct * 1.0 / answered) ASC, answered DESC
+            LIMIT 8
+            """,
+            ua_params_base,
+        ).fetchall()
+
+        mis_rows = conn.execute(
+            f"""
+            SELECT
+              COALESCE(s.name, '未分类') AS subject,
+              COALESCE(NULLIF(TRIM(q.type), ''), 'unknown') AS p_type,
+              COUNT(*) AS mistakes
+            FROM mistakes m
+            JOIN questions q ON m.question_id = q.id
+            LEFT JOIN subjects s ON q.subject_id = s.id
+            WHERE m.user_id = ? AND (s.is_locked=0 OR s.is_locked IS NULL)
+            {('AND q.subject_id IN (' + ','.join(['?']*len(subject_ids)) + ')') if subject_ids else ''}
+            GROUP BY s.name, COALESCE(NULLIF(TRIM(q.type), ''), 'unknown')
+            """,
+            [uid] + (subject_ids if subject_ids else []),
+        ).fetchall()
+
+        mis_map: dict = {}
+        for r in mis_rows or []:
+            if not r:
+                continue
+            subject_name = r['subject'] or '未分类'
+            p_type = str((r['p_type'] or 'unknown'))
+            q_type_disp = '未知' if p_type == 'unknown' else portable_type_to_q_type(p_type)
+            mis_map[(subject_name, q_type_disp)] = int(r['mistakes'] or 0)
+
+        for r in rows or []:
+            p_type = str((r['p_type'] or 'unknown'))
+            q_type_disp = '未知' if p_type == 'unknown' else portable_type_to_q_type(p_type)
+            answered = int(r['answered'] or 0)
+            correct = int(r['correct'] or 0)
+            acc = round(correct * 100 / answered, 1) if answered > 0 else 0.0
+            key = (r['subject'] or '未分类', q_type_disp)
+            weakness_rows.append({
+                'subject': r['subject'] or '未分类',
+                'q_type': q_type_disp,
+                'answered': answered,
+                'correct': correct,
+                'accuracy': acc,
+                'mistakes': int(mis_map.get(key, 0)),
+            })
+    except Exception as e:
+        current_app.logger.warning(f"history weakness rows failed: {e}")
+    return weakness_rows
+
+
+def _build_recent_mistakes(
+    conn, uid, subject_ids: list[int],
+    has_wrong_count: bool, has_updated_at: bool,
+    portable_type_to_q_type,
+) -> list[dict]:
+    """最近错题（公共题库）"""
+    recent_mistakes: list[dict] = []
+    try:
+        order_by = "m.created_at DESC"
+        if has_wrong_count:
+            order_by = (
+                "m.wrong_count DESC, COALESCE(m.updated_at, m.created_at) DESC"
+                if has_updated_at
+                else "m.wrong_count DESC, m.created_at DESC"
+            )
+        sql = f"""
+            SELECT
+              COALESCE(s.name, '未分类') AS subject,
+              COALESCE(NULLIF(TRIM(q.type), ''), 'unknown') AS p_type,
+              q.id AS question_id,
+              q.content AS content,
+              q.difficulty AS difficulty,
+              m.created_at AS created_at
+              {', m.wrong_count AS wrong_count' if has_wrong_count else ''}
+            FROM mistakes m
+            JOIN questions q ON m.question_id = q.id
+            LEFT JOIN subjects s ON q.subject_id = s.id
+            WHERE m.user_id = ? AND (s.is_locked=0 OR s.is_locked IS NULL)
+            {('AND q.subject_id IN (' + ','.join(['?']*len(subject_ids)) + ')') if subject_ids else ''}
+            ORDER BY {order_by}
+            LIMIT 8
+        """
+        rows = conn.execute(sql, [uid] + (subject_ids if subject_ids else [])).fetchall()
+        for r in rows or []:
+            content = (r['content'] or '').strip().replace('\r', ' ').replace('\n', ' ')
+            snippet = content[:80] + ('…' if len(content) > 80 else '')
+            p_type = str((r['p_type'] or 'unknown'))
+            q_type_disp = '未知' if p_type == 'unknown' else portable_type_to_q_type(p_type)
+            recent_mistakes.append({
+                'subject': r['subject'] or '未分类',
+                'q_type': q_type_disp,
+                'question_id': int(r['question_id']),
+                'snippet': snippet,
+                'difficulty': int(r['difficulty'] or 1),
+                'wrong_count': int(r['wrong_count'] or 1) if has_wrong_count else None,
+            })
+    except Exception as e:
+        current_app.logger.warning(f"history recent mistakes failed: {e}")
+    return recent_mistakes
