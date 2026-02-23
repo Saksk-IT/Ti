@@ -13,17 +13,35 @@ build/
 *.egg
 .venv/
 venv/
+*.whl
+*.tar.gz
+pip-log.txt
+
+# Python 工具缓存
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.cover
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*.sublime-project
+*.sublime-workspace
 
 # OS
 .DS_Store
 Thumbs.db
+Desktop.ini
 nul
+*~
+*.bak
+*.tmp
 
 # 运行时数据
 var/
@@ -37,5 +55,21 @@ logs/
 # 上传文件
 uploads/
 
+# Node.js / 小程序
+node_modules/
+miniprogram_npm/
+*.js.map
+package-lock.json
+yarn.lock
+
 # Docker
 docker-compose.override.yml
+
+# Redis
+dump.rdb
+
+# 临时调试文件
+_route_check.py
+_route_error.txt
+_route_output.txt
+*.pid
