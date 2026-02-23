@@ -614,9 +614,10 @@
     </a>
   </div>
 
+  {% if _is_admin_any %}
   <div class="app-nav-section">
     <div class="app-nav-title">系统</div>
-    <a class="app-nav-item {{ 'active' if _path.startswith('/admin') else '' }}" href="{% if _is_admin_any %}/admin{% if is_subject_admin and not is_admin %}/subjects{% elif is_notification_admin and not is_admin %}/notifications{% endif %}{% else %}/user/banks{% endif %}" aria-label="管理" title="管理">
+    <a class="app-nav-item {{ 'active' if _path.startswith('/admin') else '' }}" href="/admin{% if is_subject_admin and not is_admin %}/subjects{% elif is_notification_admin and not is_admin %}/notifications{% endif %}" aria-label="管理" title="管理">
       <svg class="app-nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M10 7h10M10 12h10M10 17h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         <path d="M4 7h1M4 12h1M4 17h1" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
@@ -624,6 +625,7 @@
       <span class="app-nav-label">管理</span>
     </a>
   </div>
+  {% endif %}
 </nav>
 
 <div class="app-sidebar-footer">
