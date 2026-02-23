@@ -63,7 +63,7 @@ class EmailService:
                     # 尝试解析JSON值
                     try:
                         value = json.loads(value)
-                    except:
+                    except Exception:
                         # 如果不是JSON，尝试转换为布尔值或整数
                         if value.lower() in ['true', 'false', '1', '0']:
                             value = value.lower() in ['true', '1']
@@ -252,10 +252,10 @@ class EmailService:
             if server is not None:
                 try:
                     server.quit()
-                except:
+                except Exception:
                     try:
                         server.close()
-                    except:
+                    except Exception:
                         pass
     
     @staticmethod
