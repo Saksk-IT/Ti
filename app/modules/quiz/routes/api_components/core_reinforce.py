@@ -5,9 +5,12 @@
 """
 
 from flask import request, jsonify
+from sqlalchemy import text
 
-from app.core.utils.database import get_db
-from app.core.extensions import limiter
+from app.core.extensions import db, limiter
+from app.models.subject import Subject, Question
+from app.models.quiz import Mistake
+from app.models.user_bank import UserBankQuestion, UserBankMistake
 from app.modules.quiz.services.reinforcement_service import (
     find_similar_pairs_public,
     find_similar_pairs_user_bank,
@@ -31,37 +34,23 @@ def _preview_text(s: str, limit: int = 120) -> str:
     return s
 
 
-def _time_col(conn, table: str, preferred: tuple = ('updated_at', 'last_updated', 'created_at')) -> str:
-    """获取表中可用的时间列名"""
-    try:
-        cols = [r['name'] for r in conn.execute(f"PRAGMA table_info({table})").fetchall()]
-    except Exception:
-        cols = []
-    colset = set([c for c in cols if c])
-    for c in preferred:
-        if c in colset:
-            return c
-    return cols[0] if cols else 'id'
-
-
-def _build_meta_map_user_bank(conn, bank_id: int, ids: list[int]) -> dict:
+def _build_meta_map_user_bank(bank_id: int, ids: list[int]) -> dict:
     """为用户题库的题目 ID 列表构建 meta 信息映射"""
     if not ids:
         return {}
     meta_map: dict = {}
     try:
-        placeholders = ",".join(["?"] * len(ids))
-        qrows = conn.execute(
-            f"SELECT id, type, content FROM user_bank_questions WHERE bank_id = ? AND id IN ({placeholders})",
-            [int(bank_id)] + ids,
-        ).fetchall()
+        rows = UserBankQuestion.query.filter(
+            UserBankQuestion.bank_id == int(bank_id),
+            UserBankQuestion.id.in_(ids),
+        ).all()
         from app.core.utils.portable_question_format import portable_question_to_internal
-        for qr in qrows or []:
+        for qr in rows or []:
             try:
                 portable = {
-                    "id": qr["id"],
-                    "type": (qr["type"] or ""),
-                    "content": (qr["content"] or ""),
+                    "id": qr.id,
+                    "type": (qr.type or ""),
+                    "content": (qr.content or ""),
                     "options": [],
                     "answer": [],
                     "analysis": "",
@@ -69,9 +58,9 @@ def _build_meta_map_user_bank(conn, bank_id: int, ids: list[int]) -> dict:
                     "difficulty": 1,
                 }
                 internal, _errors = portable_question_to_internal(portable, scope="user_bank")
-                meta_map[int(qr['id'])] = {
+                meta_map[int(qr.id)] = {
                     'q_type': internal.get("q_type") or "",
-                    'content': internal.get("content") or (qr["content"] or ""),
+                    'content': internal.get("content") or (qr.content or ""),
                 }
             except Exception:
                 continue
@@ -80,24 +69,23 @@ def _build_meta_map_user_bank(conn, bank_id: int, ids: list[int]) -> dict:
     return meta_map
 
 
-def _build_meta_map_public(conn, subject_id: int, ids: list[int]) -> dict:
+def _build_meta_map_public(subject_id: int, ids: list[int]) -> dict:
     """为公共题库的题目 ID 列表构建 meta 信息映射"""
     if not ids:
         return {}
     meta_map: dict = {}
     try:
-        placeholders = ",".join(["?"] * len(ids))
-        qrows = conn.execute(
-            f"SELECT id, type, content FROM questions WHERE subject_id = ? AND id IN ({placeholders})",
-            [int(subject_id)] + ids,
-        ).fetchall()
+        rows = Question.query.filter(
+            Question.subject_id == int(subject_id),
+            Question.id.in_(ids),
+        ).all()
         from app.core.utils.portable_question_format import portable_question_to_internal
-        for qr in qrows or []:
+        for qr in rows or []:
             try:
                 portable = {
-                    "id": qr["id"],
-                    "type": (qr["type"] or ""),
-                    "content": (qr["content"] or ""),
+                    "id": qr.id,
+                    "type": (qr.type or ""),
+                    "content": (qr.content or ""),
                     "options": [],
                     "answer": [],
                     "analysis": "",
@@ -105,9 +93,9 @@ def _build_meta_map_public(conn, subject_id: int, ids: list[int]) -> dict:
                     "difficulty": 1,
                 }
                 internal, _errors = portable_question_to_internal(portable, scope="question_center")
-                meta_map[int(qr['id'])] = {
+                meta_map[int(qr.id)] = {
                     'q_type': internal.get("q_type") or "",
-                    'content': internal.get("content") or (qr["content"] or ""),
+                    'content': internal.get("content") or (qr.content or ""),
                 }
             except Exception:
                 continue
@@ -207,7 +195,7 @@ def api_reinforce():
     include_similar = 'similar' in include_set
 
     uid = _get_uid_from_request()
-    conn = get_db()
+    conn = db.session.connection()
 
     if source == 'user_bank':
         return _reinforce_user_bank(
@@ -242,39 +230,39 @@ def _reinforce_user_bank(
     if not has_access:
         return jsonify({'status': 'error', 'message': '无权访问该题库'}), 403
 
-    tcol = _time_col(conn, 'user_bank_mistakes', preferred=('updated_at', 'created_at'))
     try:
-        total_row = conn.execute(
-            "SELECT COUNT(1) AS cnt FROM user_bank_mistakes WHERE user_id = ? AND bank_id = ?",
-            (int(uid), int(bank_id)),
-        ).fetchone()
-        wrong_total = int(total_row['cnt'] or 0) if total_row else 0
+        wrong_total = UserBankMistake.query.filter_by(
+            user_id=int(uid), bank_id=int(bank_id)
+        ).count()
     except Exception:
         wrong_total = 0
 
     try:
-        rows = conn.execute(
-            f"""
-            SELECT question_id, COALESCE(wrong_count, 1) AS wrong_count, {tcol} AS t
-            FROM user_bank_mistakes
-            WHERE user_id = ? AND bank_id = ?
-            ORDER BY COALESCE(wrong_count, 1) DESC, {tcol} DESC
-            LIMIT ?
-            """,
-            (int(uid), int(bank_id), int(max(wrong_n, seed_n, wrong_list_n) or 0)),
-        ).fetchall()
+        limit_n = int(max(wrong_n, seed_n, wrong_list_n) or 0)
+        rows = db.session.query(
+            UserBankMistake.question_id,
+            db.func.coalesce(UserBankMistake.wrong_count, 1).label("wrong_count"),
+            UserBankMistake.updated_at.label("t"),
+        ).filter(
+            UserBankMistake.user_id == int(uid),
+            UserBankMistake.bank_id == int(bank_id),
+        ).order_by(
+            db.func.coalesce(UserBankMistake.wrong_count, 1).desc(),
+            UserBankMistake.updated_at.desc(),
+        ).limit(limit_n).all()
     except Exception:
         rows = []
 
-    wrong_ids = [int(r['question_id']) for r in (rows or []) if r and r['question_id'] is not None]
+    wrong_ids = [int(r.question_id) for r in (rows or []) if r and r.question_id is not None]
     wrong_recommend_ids = wrong_ids[:wrong_n] if wrong_n else []
 
     # 错题 top 列表
     wrong_top = []
     if include_wrong and wrong_list_n > 0 and rows:
-        top_ids = [int(r['question_id']) for r in list(rows[:wrong_list_n]) if r and r['question_id'] is not None]
-        meta_map = _build_meta_map_user_bank(conn, int(bank_id), top_ids)
-        wrong_top = _build_wrong_top(rows, meta_map, wrong_list_n)
+        top_ids = [int(r.question_id) for r in list(rows[:wrong_list_n]) if r and r.question_id is not None]
+        meta_map = _build_meta_map_user_bank(int(bank_id), top_ids)
+        row_dicts = [{'question_id': r.question_id, 'wrong_count': r.wrong_count} for r in rows]
+        wrong_top = _build_wrong_top(row_dicts, meta_map, wrong_list_n)
 
     # 相似题
     similar_mode = (request.args.get('similar_mode') or '').strip().lower()
@@ -342,7 +330,7 @@ def _compute_similar_user_bank(
             display_pairs = list(pairs_raw[:pairs_n]) if (pairs_n > 0 and pairs_raw) else []
             if display_pairs:
                 uniq_ids = _collect_pair_unique_ids(display_pairs)
-                meta_map = _build_meta_map_user_bank(conn, bank_id, uniq_ids)
+                meta_map = _build_meta_map_user_bank(bank_id, uniq_ids)
                 similar_pairs = _build_similar_pairs_display(display_pairs, meta_map)
         similar_mode_out = 'bank_dedupe'
 
@@ -364,10 +352,10 @@ def _reinforce_public(
     if not subject_id:
         return jsonify({'status': 'error', 'message': 'subject_id 参数错误'}), 400
 
-    subject_row = conn.execute(
-        "SELECT id, name FROM subjects WHERE id = ? AND (is_locked=0 OR is_locked IS NULL)",
-        (int(subject_id),),
-    ).fetchone()
+    subject_row = Subject.query.filter(
+        Subject.id == int(subject_id),
+        db.or_(Subject.is_locked == False, Subject.is_locked.is_(None)),
+    ).first()
     if not subject_row:
         return jsonify({'status': 'error', 'message': '科目不存在或已锁定'}), 404
 
@@ -382,7 +370,7 @@ def _reinforce_public(
             'data': {
                 'source': 'public',
                 'subject_id': int(subject_id),
-                'subject_name': subject_row['name'],
+                'subject_name': subject_row.name,
                 'logged_in': False,
                 'wrong_total': 0,
                 'wrong_recommend_ids': [],
@@ -395,47 +383,50 @@ def _reinforce_public(
             },
         })
 
-    tcol = _time_col(conn, 'mistakes', preferred=('updated_at', 'last_updated', 'created_at'))
     try:
-        total_row = conn.execute(
-            """
-            SELECT COUNT(1) AS cnt
-            FROM mistakes m
-            JOIN questions q ON q.id = m.question_id
-            JOIN subjects s ON s.id = q.subject_id
-            WHERE m.user_id = ? AND q.subject_id = ? AND (s.is_locked=0 OR s.is_locked IS NULL)
-            """,
-            (int(uid), int(subject_id)),
-        ).fetchone()
-        wrong_total = int(total_row['cnt'] or 0) if total_row else 0
+        wrong_total = db.session.query(Mistake).join(
+            Question, Question.id == Mistake.question_id
+        ).join(
+            Subject, Subject.id == Question.subject_id
+        ).filter(
+            Mistake.user_id == int(uid),
+            Question.subject_id == int(subject_id),
+            db.or_(Subject.is_locked == False, Subject.is_locked.is_(None)),
+        ).count()
     except Exception:
         wrong_total = 0
 
     try:
-        rows = conn.execute(
-            f"""
-            SELECT m.question_id, COALESCE(m.wrong_count, 1) AS wrong_count, m.{tcol} AS t
-            FROM mistakes m
-            JOIN questions q ON q.id = m.question_id
-            JOIN subjects s ON s.id = q.subject_id
-            WHERE m.user_id = ? AND q.subject_id = ? AND (s.is_locked=0 OR s.is_locked IS NULL)
-            ORDER BY COALESCE(m.wrong_count, 1) DESC, m.{tcol} DESC
-            LIMIT ?
-            """,
-            (int(uid), int(subject_id), int(max(wrong_n, seed_n, wrong_list_n) or 0)),
-        ).fetchall()
+        limit_n = int(max(wrong_n, seed_n, wrong_list_n) or 0)
+        rows = db.session.query(
+            Mistake.question_id,
+            db.func.coalesce(Mistake.wrong_count, 1).label("wrong_count"),
+            Mistake.updated_at.label("t"),
+        ).join(
+            Question, Question.id == Mistake.question_id
+        ).join(
+            Subject, Subject.id == Question.subject_id
+        ).filter(
+            Mistake.user_id == int(uid),
+            Question.subject_id == int(subject_id),
+            db.or_(Subject.is_locked == False, Subject.is_locked.is_(None)),
+        ).order_by(
+            db.func.coalesce(Mistake.wrong_count, 1).desc(),
+            Mistake.updated_at.desc(),
+        ).limit(limit_n).all()
     except Exception:
         rows = []
 
-    wrong_ids = [int(r['question_id']) for r in (rows or []) if r and r['question_id'] is not None]
+    wrong_ids = [int(r.question_id) for r in (rows or []) if r and r.question_id is not None]
     wrong_recommend_ids = wrong_ids[:wrong_n] if wrong_n else []
 
     # 错题 top 列表
     wrong_top = []
     if include_wrong and wrong_list_n > 0 and rows:
-        top_ids = [int(r['question_id']) for r in list(rows[:wrong_list_n]) if r and r['question_id'] is not None]
-        meta_map = _build_meta_map_public(conn, int(subject_id), top_ids)
-        wrong_top = _build_wrong_top(rows, meta_map, wrong_list_n)
+        top_ids = [int(r.question_id) for r in list(rows[:wrong_list_n]) if r and r.question_id is not None]
+        meta_map = _build_meta_map_public(int(subject_id), top_ids)
+        row_dicts = [{'question_id': r.question_id, 'wrong_count': r.wrong_count} for r in rows]
+        wrong_top = _build_wrong_top(row_dicts, meta_map, wrong_list_n)
 
     # 相似题
     similar_mode = (request.args.get('similar_mode') or '').strip().lower()
@@ -450,7 +441,7 @@ def _reinforce_public(
         'data': {
             'source': 'public',
             'subject_id': int(subject_id),
-            'subject_name': subject_row['name'],
+            'subject_name': subject_row.name,
             'logged_in': True,
             'wrong_total': wrong_total,
             'wrong_recommend_ids': wrong_recommend_ids,
@@ -504,7 +495,7 @@ def _compute_similar_public(
             display_pairs = list(pairs_raw[:pairs_n]) if (pairs_n > 0 and pairs_raw) else []
             if display_pairs:
                 uniq_ids = _collect_pair_unique_ids(display_pairs)
-                meta_map = _build_meta_map_public(conn, subject_id, uniq_ids)
+                meta_map = _build_meta_map_public(subject_id, uniq_ids)
                 similar_pairs = _build_similar_pairs_display(display_pairs, meta_map)
         similar_mode_out = 'subject_dedupe'
 
