@@ -292,8 +292,6 @@ def _register_before_request(app):
     """注册请求前钩子"""
     import uuid
     from flask import request, session, redirect, url_for, jsonify, g
-    from .core.utils.database import get_db, get_table_columns
-    
     @app.before_request
     def _assign_request_id():
         rid = request.headers.get('X-Request-ID') or request.headers.get('X-Request-Id')
@@ -393,86 +391,65 @@ def _register_before_request(app):
                 if session.get('remember'):
                     session.permanent = True
                 uid = session.get('user_id')
-                conn = get_db()
 
-                user_cols = get_table_columns('users', conn)
-                has_subject_admin_field = 'is_subject_admin' in user_cols
-                has_notification_admin_field = 'is_notification_admin' in user_cols
+                from app.models.user import User as UserModel
+                from app.core.extensions import db as _db
 
-                fields = ['is_locked', 'is_admin', 'session_version']
-                if has_subject_admin_field:
-                    fields.append('is_subject_admin')
-                if has_notification_admin_field:
-                    fields.append('is_notification_admin')
+                user = UserModel.query.get(uid)
 
-                query = f"SELECT {', '.join(fields)} FROM users WHERE id=?"
-                
-                row = conn.execute(query, (uid,)).fetchone()
-                
-                if not row or row['is_locked']:
+                if not user or user.is_locked:
                     session.clear()
                     if path.startswith('/api'):
                         return jsonify({'status':'unauthorized','message':'会话无效或已被锁定','request_id': getattr(g, 'request_id', None)}), 401
                     return redirect('/login')
-                
+
                 if session.get('session_version') is not None and \
-                   session.get('session_version') != row['session_version']:
+                   session.get('session_version') != (user.session_version or 0):
                     session.clear()
                     if path.startswith('/api'):
                         return jsonify({'status':'unauthorized','message':'会话已失效，请重新登录','request_id': getattr(g, 'request_id', None)}), 401
                     return redirect('/login')
-                
+
                 # 更新session中的权限信息（确保权限同步）
-                session['is_admin'] = bool(row['is_admin'])
-                session['is_subject_admin'] = bool(row['is_subject_admin']) if has_subject_admin_field and 'is_subject_admin' in row.keys() else False
-                session['is_notification_admin'] = bool(row['is_notification_admin']) if has_notification_admin_field and 'is_notification_admin' in row.keys() else False
-                
+                session['is_admin'] = bool(user.is_admin)
+                session['is_subject_admin'] = bool(user.is_subject_admin)
+                session['is_notification_admin'] = bool(user.is_notification_admin)
+
                 # 检查用户是否绑定邮箱（排除管理员和绑定邮箱相关的API）
                 if not session.get('is_admin'):
-                    # 检查邮箱绑定是否必需（从系统配置读取）
                     from app.modules.admin.services.system_config_service import SystemConfigService
                     email_bind_required = SystemConfigService.get_email_bind_required_config()
-                    
-                    # 如果配置为不需要绑定邮箱，则跳过限制检查
+
                     if email_bind_required:
-                        # 检查邮箱字段是否存在
-                        has_email_field = 'email' in user_cols
-                        
-                        if has_email_field:
-                            user_email = conn.execute('SELECT email FROM users WHERE id = ?', (uid,)).fetchone()
-                            email_bound = user_email and user_email[0] and user_email[0].strip()
-                            
-                            # 如果未绑定邮箱，限制功能访问（允许的路径）
-                            if not email_bound:
-                                # 允许访问的路径（绑定邮箱相关）
-                                allowed_paths = {
-                                    '/',  # 首页（用于显示弹窗）
-                                    '/terms',  # 服务协议页面
-                                    '/privacy',  # 隐私保护协议页面
-                                    '/api/email/send-bind-code',  # 发送绑定验证码
-                                    '/api/email/bind',  # 绑定邮箱
-                                    '/api/logout',  # 登出
-                                    '/logout',  # 登出页面
-                                    '/static',  # 静态资源
-                                }
-                                
-                                # 检查是否是允许的路径
-                                is_allowed = False
-                                for allowed_path in allowed_paths:
-                                    if path == allowed_path or path.startswith(allowed_path):
-                                        is_allowed = True
-                                        break
-                                
-                                if not is_allowed:
-                                    if path.startswith('/api'):
-                                        return jsonify({
-                                            'status': 'error',
-                                            'message': '请先绑定邮箱后才能使用此功能',
-                                            'code': 'EMAIL_NOT_BOUND'
-                                        }), 403
-                                    # 页面请求：重定向到首页（会显示绑定弹窗）
-                                    return redirect('/')
-                
+                        email_bound = user.email and user.email.strip()
+
+                        if not email_bound:
+                            allowed_paths = {
+                                '/',
+                                '/terms',
+                                '/privacy',
+                                '/api/email/send-bind-code',
+                                '/api/email/bind',
+                                '/api/logout',
+                                '/logout',
+                                '/static',
+                            }
+
+                            is_allowed = False
+                            for allowed_path in allowed_paths:
+                                if path == allowed_path or path.startswith(allowed_path):
+                                    is_allowed = True
+                                    break
+
+                            if not is_allowed:
+                                if path.startswith('/api'):
+                                    return jsonify({
+                                        'status': 'error',
+                                        'message': '请先绑定邮箱后才能使用此功能',
+                                        'code': 'EMAIL_NOT_BOUND'
+                                    }), 403
+                                return redirect('/')
+
                 # 更新用户最后活动时间（排除静态资源请求）
                 if not path.startswith('/static') and not path.endswith('.ico'):
                     try:
@@ -483,11 +460,9 @@ def _register_before_request(app):
                         interval = 0
 
                     if _should_update_last_active(int(uid), interval):
-                        conn.execute(
-                            'UPDATE users SET last_active = CURRENT_TIMESTAMP WHERE id = ?',
-                            (uid,)
-                        )
-                        conn.commit()
+                        from sqlalchemy import func as sa_func
+                        user.last_active = sa_func.now()
+                        _db.session.commit()
             except Exception as e:
                 # 记录错误但不中断请求
                 app.logger.warning(f"会话验证异常: {e}", exc_info=True)

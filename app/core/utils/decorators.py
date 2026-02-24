@@ -4,7 +4,6 @@
 """
 from functools import wraps
 from flask import session, redirect, url_for, jsonify, request, g
-from app.core.utils.database import get_db, get_table_columns
 from app.core.utils.user_state_cache import get_user_state, set_user_state
 
 
@@ -28,59 +27,33 @@ def _validate_jwt_user(payload):
             if cached_locked == 1:
                 return False, '账户已被锁定'
 
-            # 只在 session_version 相等时使用缓存快速通过；否则回退到 DB 以确保强制下线尽快生效。
             if token_sv == cached_sv:
                 if token_openid and cached_openid and token_openid != cached_openid:
                     return False, '微信已解绑或账号已变更，请重新登录'
                 return True, None
 
-        conn = get_db()
-
-        # 兼容老库：字段可能不存在，按表结构动态选择
-        user_cols = get_table_columns('users', conn)
-
-        has_openid = 'openid' in user_cols
-        has_locked = 'is_locked' in user_cols
-        has_sv = 'session_version' in user_cols
-
-        fields = ['id']
-        if has_locked:
-            fields.append('is_locked')
-        if has_sv:
-            fields.append('session_version')
-        if has_openid:
-            fields.append('openid')
-
-        row = conn.execute(
-            f"SELECT {', '.join(fields)} FROM users WHERE id = ?",
-            (uid,),
-        ).fetchone()
-        if not row:
+        from app.models.user import User
+        user = User.query.get(uid)
+        if not user:
             return False, '用户不存在或已被删除'
-        row = dict(row)
 
-        # 锁定
-        if has_locked and int(row.get('is_locked') or 0) == 1:
+        if user.is_locked:
             return False, '账户已被锁定'
 
-        # 会话版本不匹配（管理员强制下线、重置密码、解绑微信等会 bump）
-        if has_sv:
-            db_sv = int(row.get('session_version') or 0)
-            if token_sv != db_sv:
-                return False, '会话已失效，请重新登录'
+        db_sv = user.session_version or 0
+        if token_sv != db_sv:
+            return False, '会话已失效，请重新登录'
 
-        # token 带 openid 时，要求与 DB 一致（解绑微信会导致不一致）
-        if token_openid and has_openid:
-            db_openid = str(row.get('openid') or '').strip()
+        if token_openid:
+            db_openid = (user.openid or '').strip()
             if token_openid != db_openid:
                 return False, '微信已解绑或账号已变更，请重新登录'
 
-        # 写入缓存（短 TTL）
         try:
             set_user_state(uid, {
-                'session_version': int(row.get('session_version') or 0) if has_sv else 0,
-                'is_locked': int(row.get('is_locked') or 0) if has_locked else 0,
-                'openid': str(row.get('openid') or '').strip() if has_openid else '',
+                'session_version': user.session_version or 0,
+                'is_locked': 1 if user.is_locked else 0,
+                'openid': (user.openid or '').strip(),
             })
         except Exception:
             pass

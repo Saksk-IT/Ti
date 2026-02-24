@@ -48,27 +48,25 @@ class EmailService:
         Returns:
             SMTP配置字典
         """
-        from app.core.utils.database import get_db
+        from app.models.system import SystemConfig
 
         # 尝试从数据库读取配置
         try:
-            conn = get_db()
-            config_rows = conn.execute(
-                'SELECT config_key, config_value FROM system_config WHERE config_key LIKE "mail_%"'
-            ).fetchall()
+            config_rows = SystemConfig.query.filter(
+                SystemConfig.config_key.like('mail_%')
+            ).all()
 
             if config_rows:
                 db_config = {}
                 for row in config_rows:
-                    key = row['config_key'].replace('mail_', '').upper()
-                    value = row['config_value']
+                    key = row.config_key.replace('mail_', '').upper()
+                    value = row.config_value
                     if value.lower() in ['true', 'false', '1', '0']:
                         value = value.lower() in ['true', '1']
                     elif value.isdigit():
                         value = int(value)
                     db_config[key] = value
 
-                # 如果数据库中有配置，使用数据库配置
                 if db_config.get('SERVER'):
                     return {
                         'server': db_config.get('SERVER'),
@@ -382,21 +380,14 @@ class EmailService:
         console_output = False
         
         try:
-            from app.core.utils.database import get_db
-            conn = get_db()
-            enabled_row = conn.execute(
-                'SELECT config_value FROM system_config WHERE config_key = ?',
-                ('mail_enabled',)
-            ).fetchone()
+            from app.models.system import SystemConfig
+            enabled_row = SystemConfig.query.filter_by(config_key='mail_enabled').first()
             if enabled_row:
-                mail_enabled = enabled_row['config_value'].lower() in ['true', '1', 'yes', 'on']
-            
-            console_row = conn.execute(
-                'SELECT config_value FROM system_config WHERE config_key = ?',
-                ('mail_console_output',)
-            ).fetchone()
+                mail_enabled = enabled_row.config_value.lower() in ['true', '1', 'yes', 'on']
+
+            console_row = SystemConfig.query.filter_by(config_key='mail_console_output').first()
             if console_row:
-                console_output = console_row['config_value'].lower() in ['true', '1', 'yes', 'on']
+                console_output = console_row.config_value.lower() in ['true', '1', 'yes', 'on']
         except Exception:
             # 如果从数据库读取失败，使用环境变量配置
             mail_enabled = current_app.config.get('MAIL_ENABLED', True)
