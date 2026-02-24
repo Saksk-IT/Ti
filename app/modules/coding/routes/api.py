@@ -2,7 +2,11 @@
 """编程题API路由"""
 from flask import Blueprint, request, jsonify, session, current_app
 from typing import Dict, Any
+from sqlalchemy import func, case, distinct
+from app.core.extensions import db, limiter
 from app.core.utils.decorators import login_required
+from app.models.coding import CodingSubject, CodingQuestion, CodeSubmission, CodeDraft
+from app.models.user import User
 from app.modules.coding.services.code_executor import PythonExecutor
 from app.modules.coding.services.judge_service import JudgeService
 from app.modules.coding.services.question_service import QuestionService
@@ -11,7 +15,6 @@ from app.modules.coding.schemas.submission_schemas import (
     ExecuteCodeSchema,
     SubmitCodeSchema
 )
-from app.core.extensions import limiter
 
 coding_api_bp = Blueprint('coding_api', __name__)
 
@@ -23,29 +26,19 @@ coding_api_bp = Blueprint('coding_api', __name__)
 def api_get_subjects():
     """获取科目列表（用于筛选）"""
     try:
-        from app.core.utils.database import get_db
-        
-        db = get_db()
-        # 获取所有编程题科目（使用coding_subjects表）
-        # 使用LEFT JOIN确保即使没有题目的科目也会显示
-        rows = db.execute('''
-            SELECT DISTINCT cs.id, cs.name
-            FROM coding_subjects cs
-            LEFT JOIN coding_questions cq ON cs.id = cq.coding_subject_id
-            ORDER BY cs.id
-        ''').fetchall()
-        
+        rows = CodingSubject.query.order_by(CodingSubject.id).all()
+
         subjects = []
         for row in rows:
             try:
                 subjects.append({
-                    'id': int(row['id']),
-                    'name': str(row['name']) if row['name'] else ''
+                    'id': row.id,
+                    'name': row.name or ''
                 })
             except Exception as row_error:
-                current_app.logger.error(f"处理行数据失败: {row_error}, row: {dict(row)}")
+                current_app.logger.error(f"处理行数据失败: {row_error}")
                 continue
-        
+
         return jsonify({
             'status': 'success',
             'data': {
@@ -67,40 +60,44 @@ def api_get_subjects():
 def api_get_subjects_stats():
     """获取科目统计信息（用于首页展示）"""
     try:
-        from app.core.utils.database import get_db
-        
-        db = get_db()
         user_id = session.get('user_id')
-        
-        # 获取每个科目的统计信息（使用coding_subjects和coding_questions表）
-        # 使用LEFT JOIN确保即使没有题目的科目也会显示
-        rows = db.execute('''
-            SELECT 
-                cs.id,
-                cs.name,
-                COUNT(DISTINCT cq.id) as total_questions,
-                COUNT(DISTINCT CASE WHEN sub.status = 'accepted' THEN cq.id END) as solved_questions,
-                COUNT(DISTINCT sub.id) as total_submissions
-            FROM coding_subjects cs
-            LEFT JOIN coding_questions cq ON cs.id = cq.coding_subject_id
-            LEFT JOIN code_submissions sub ON cq.id = sub.question_id AND sub.user_id = ?
-            GROUP BY cs.id, cs.name
-            ORDER BY cs.id
-        ''', (user_id,)).fetchall()
-        
+
+        rows = (
+            db.session.query(
+                CodingSubject.id,
+                CodingSubject.name,
+                func.count(distinct(CodingQuestion.id)).label('total_questions'),
+                func.count(distinct(case(
+                    (CodeSubmission.status == 'accepted', CodingQuestion.id),
+                ))).label('solved_questions'),
+                func.count(distinct(CodeSubmission.id)).label('total_submissions'),
+            )
+            .outerjoin(CodingQuestion, CodingSubject.id == CodingQuestion.coding_subject_id)
+            .outerjoin(
+                CodeSubmission,
+                db.and_(
+                    CodingQuestion.id == CodeSubmission.question_id,
+                    CodeSubmission.user_id == user_id,
+                ),
+            )
+            .group_by(CodingSubject.id, CodingSubject.name)
+            .order_by(CodingSubject.id)
+            .all()
+        )
+
         subjects = []
         for row in rows:
-            total = row['total_questions'] or 0
-            solved = row['solved_questions'] or 0
+            total = row.total_questions or 0
+            solved = row.solved_questions or 0
             subjects.append({
-                'id': row['id'],
-                'name': row['name'],
+                'id': row.id,
+                'name': row.name,
                 'total_questions': total,
                 'solved_questions': solved,
-                'total_submissions': row['total_submissions'] or 0,
+                'total_submissions': row.total_submissions or 0,
                 'progress_rate': (solved / total * 100) if total > 0 else 0
             })
-        
+
         return jsonify({
             'status': 'success',
             'data': {
@@ -120,135 +117,157 @@ def api_get_subjects_stats():
 def api_get_subject_overview(subject_id: int):
     """获取题目集（科目）概述信息"""
     try:
-        from app.core.utils.database import get_db
-        
-        db = get_db()
         user_id = session.get('user_id')
-        
-        # 获取科目基本信息（使用coding_subjects表）
-        subject = db.execute(
-            'SELECT * FROM coding_subjects WHERE id = ?', (subject_id,)
-        ).fetchone()
-        
+
+        # 获取科目基本信息
+        subject = CodingSubject.query.get(subject_id)
         if not subject:
             return jsonify({
                 'status': 'error',
                 'message': '科目不存在'
             }), 404
-        
-        # 获取题目统计（使用coding_questions表）
-        question_stats = db.execute('''
-            SELECT 
-                COUNT(DISTINCT cq.id) as total_questions,
-                COUNT(DISTINCT CASE WHEN cs.status = 'accepted' THEN cq.id END) as solved_questions,
-                COUNT(DISTINCT cs.id) as total_submissions
-            FROM coding_questions cq
-            LEFT JOIN code_submissions cs ON cq.id = cs.question_id AND cs.user_id = ?
-            WHERE cq.coding_subject_id = ?
-        ''', (user_id, subject_id)).fetchone()
-        
-        # 获取各题型统计（包含已解决数量）
-        type_stats = db.execute('''
-            SELECT 
-                cq.difficulty,
-                COUNT(DISTINCT cq.id) as total_count,
-                COUNT(DISTINCT CASE WHEN cs.status = 'accepted' AND cs.user_id = ? THEN cs.question_id END) as solved_count
-            FROM coding_questions cq
-            LEFT JOIN code_submissions cs ON cq.id = cs.question_id
-            WHERE cq.coding_subject_id = ?
-            GROUP BY cq.difficulty
-        ''', (user_id, subject_id)).fetchall()
-        
-        # 计算用户分数和排名（使用coding_questions表）
-        user_score = db.execute('''
-            SELECT 
-                COUNT(DISTINCT cs.question_id) as solved_count,
-                SUM(CASE WHEN cs.status = 'accepted' THEN 1 ELSE 0 END) as accepted_count
-            FROM code_submissions cs
-            INNER JOIN coding_questions cq ON cs.question_id = cq.id
-            WHERE cs.user_id = ? AND cq.coding_subject_id = ?
-        ''', (user_id, subject_id)).fetchone()
-        
-        # 计算排名（基于已解决题目数）
-        rank_result = db.execute('''
-            SELECT COUNT(*) + 1 as rank
-            FROM (
-                SELECT user_id, COUNT(DISTINCT question_id) as solved
-                FROM code_submissions cs
-                INNER JOIN coding_questions cq ON cs.question_id = cq.id
-                WHERE cs.status = 'accepted' AND cq.coding_subject_id = ?
-                GROUP BY user_id
-                HAVING solved > (
-                    SELECT COUNT(DISTINCT question_id)
-                    FROM code_submissions cs2
-                    INNER JOIN coding_questions cq2 ON cs2.question_id = cq2.id
-                    WHERE cs2.user_id = ? AND cs2.status = 'accepted' 
-                    AND cq2.coding_subject_id = ?
-                )
+
+        # 获取题目统计
+        question_stats = (
+            db.session.query(
+                func.count(distinct(CodingQuestion.id)).label('total_questions'),
+                func.count(distinct(case(
+                    (CodeSubmission.status == 'accepted', CodingQuestion.id),
+                ))).label('solved_questions'),
+                func.count(distinct(CodeSubmission.id)).label('total_submissions'),
             )
-        ''', (subject_id, user_id, subject_id)).fetchone()
-        
+            .outerjoin(
+                CodeSubmission,
+                db.and_(
+                    CodingQuestion.id == CodeSubmission.question_id,
+                    CodeSubmission.user_id == user_id,
+                ),
+            )
+            .filter(CodingQuestion.coding_subject_id == subject_id)
+            .first()
+        )
+
+        # 获取各难度统计（包含已解决数量）
+        type_stats = (
+            db.session.query(
+                CodingQuestion.difficulty,
+                func.count(distinct(CodingQuestion.id)).label('total_count'),
+                func.count(distinct(case(
+                    (db.and_(CodeSubmission.status == 'accepted', CodeSubmission.user_id == user_id), CodeSubmission.question_id),
+                ))).label('solved_count'),
+            )
+            .outerjoin(CodeSubmission, CodingQuestion.id == CodeSubmission.question_id)
+            .filter(CodingQuestion.coding_subject_id == subject_id)
+            .group_by(CodingQuestion.difficulty)
+            .all()
+        )
+
+        # 计算用户分数
+        user_score = (
+            db.session.query(
+                func.count(distinct(CodeSubmission.question_id)).label('solved_count'),
+                func.sum(case(
+                    (CodeSubmission.status == 'accepted', 1),
+                    else_=0,
+                )).label('accepted_count'),
+            )
+            .join(CodingQuestion, CodeSubmission.question_id == CodingQuestion.id)
+            .filter(
+                CodeSubmission.user_id == user_id,
+                CodingQuestion.coding_subject_id == subject_id,
+            )
+            .first()
+        )
+
+        # 计算当前用户已解决题目数
+        my_solved = (
+            db.session.query(func.count(distinct(CodeSubmission.question_id)))
+            .join(CodingQuestion, CodeSubmission.question_id == CodingQuestion.id)
+            .filter(
+                CodeSubmission.user_id == user_id,
+                CodeSubmission.status == 'accepted',
+                CodingQuestion.coding_subject_id == subject_id,
+            )
+            .scalar()
+        ) or 0
+
+        # 计算排名（基于已解决题目数）
+        users_with_more = (
+            db.session.query(func.count())
+            .select_from(
+                db.session.query(CodeSubmission.user_id)
+                .join(CodingQuestion, CodeSubmission.question_id == CodingQuestion.id)
+                .filter(
+                    CodeSubmission.status == 'accepted',
+                    CodingQuestion.coding_subject_id == subject_id,
+                )
+                .group_by(CodeSubmission.user_id)
+                .having(func.count(distinct(CodeSubmission.question_id)) > my_solved)
+                .subquery()
+            )
+            .scalar()
+        ) or 0
+        rank = users_with_more + 1
+
         # 获取用户首次提交时间
-        first_submission = db.execute('''
-            SELECT MIN(cs.submitted_at) as first_submitted_at
-            FROM code_submissions cs
-            INNER JOIN coding_questions cq ON cs.question_id = cq.id
-            WHERE cs.user_id = ? AND cq.coding_subject_id = ?
-        ''', (user_id, subject_id)).fetchone()
-        
+        first_submitted_at = (
+            db.session.query(func.min(CodeSubmission.submitted_at))
+            .join(CodingQuestion, CodeSubmission.question_id == CodingQuestion.id)
+            .filter(
+                CodeSubmission.user_id == user_id,
+                CodingQuestion.coding_subject_id == subject_id,
+            )
+            .scalar()
+        )
+
         # 获取总参与人数
-        total_participants = db.execute('''
-            SELECT COUNT(DISTINCT cs.user_id) as count
-            FROM code_submissions cs
-            INNER JOIN coding_questions cq ON cs.question_id = cq.id
-            WHERE cq.coding_subject_id = ?
-        ''', (subject_id,)).fetchone()
-        
+        total_participants = (
+            db.session.query(func.count(distinct(CodeSubmission.user_id)))
+            .join(CodingQuestion, CodeSubmission.question_id == CodingQuestion.id)
+            .filter(CodingQuestion.coding_subject_id == subject_id)
+            .scalar()
+        ) or 0
+
         # 构建题型统计
         difficulty_stats = {}
         for stat in type_stats:
-            stat_dict = dict(stat) if stat else {}
-            difficulty = stat_dict.get('difficulty') or 'easy'
+            difficulty = stat.difficulty or 'easy'
             difficulty_stats[difficulty] = {
-                'total': stat_dict.get('total_count', 0) or 0,
-                'solved': stat_dict.get('solved_count', 0) or 0
+                'total': stat.total_count or 0,
+                'solved': stat.solved_count or 0
             }
-        
-        # 安全地获取字段值（sqlite3.Row对象不支持.get()方法）
-        subject_dict = dict(subject) if subject else {}
-        question_stats_dict = dict(question_stats) if question_stats else {}
-        user_score_dict = dict(user_score) if user_score else {}
-        rank_result_dict = dict(rank_result) if rank_result else {}
-        total_participants_dict = dict(total_participants) if total_participants else {}
-        first_submission_dict = dict(first_submission) if first_submission else {}
-        
+
+        total_q = (question_stats.total_questions or 0) if question_stats else 0
+        solved_q = (question_stats.solved_questions or 0) if question_stats else 0
+        total_sub = (question_stats.total_submissions or 0) if question_stats else 0
+
         overview = {
             'subject': {
-                'id': subject_dict.get('id', 0),
-                'name': subject_dict.get('name', ''),
-                'description': subject_dict.get('description', '')
+                'id': subject.id,
+                'name': subject.name or '',
+                'description': subject.description or ''
             },
             'question_stats': {
-                'total': question_stats_dict.get('total_questions', 0) or 0,
-                'solved': question_stats_dict.get('solved_questions', 0) or 0,
-                'total_submissions': question_stats_dict.get('total_submissions', 0) or 0,
+                'total': total_q,
+                'solved': solved_q,
+                'total_submissions': total_sub,
                 'difficulty_stats': difficulty_stats
             },
             'user_stats': {
-                'score': user_score_dict.get('solved_count', 0) or 0,
-                'solved_count': user_score_dict.get('accepted_count', 0) or 0,
-                'rank': rank_result_dict.get('rank', 0) or 0,
-                'total_participants': total_participants_dict.get('count', 0) or 0,
-                'first_submitted_at': first_submission_dict.get('first_submitted_at') if first_submission_dict.get('first_submitted_at') else None,
-                'progress_rate': (question_stats_dict.get('solved_questions', 0) / question_stats_dict.get('total_questions', 1) * 100) if question_stats_dict.get('total_questions', 0) > 0 else 0
+                'score': (user_score.solved_count or 0) if user_score else 0,
+                'solved_count': (user_score.accepted_count or 0) if user_score else 0,
+                'rank': rank,
+                'total_participants': total_participants,
+                'first_submitted_at': str(first_submitted_at) if first_submitted_at else None,
+                'progress_rate': (solved_q / total_q * 100) if total_q > 0 else 0
             },
             'status': {
-                'is_open': True,  # 默认开放，可以根据实际业务逻辑判断
-                'type': 'fixed',  # 固定时间类型
-                'set_type': 'normal'  # 普通题目集
+                'is_open': True,
+                'type': 'fixed',
+                'set_type': 'normal'
             }
         }
-        
+
         return jsonify({
             'status': 'success',
             'data': overview
@@ -272,7 +291,7 @@ def api_get_questions():
         keyword = request.args.get('keyword', '').strip()
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
-        
+
         user_id = session.get('user_id')
         result = QuestionService.get_questions(
             subject_id=subject_id,
@@ -283,7 +302,7 @@ def api_get_questions():
             per_page=per_page,
             user_id=user_id
         )
-        
+
         return jsonify({
             'status': 'success',
             'data': result
@@ -292,7 +311,6 @@ def api_get_questions():
         import traceback
         error_detail = traceback.format_exc()
         current_app.logger.error(f"获取题目列表失败: {e}\n{error_detail}", exc_info=True)
-        # 在开发环境下返回详细错误信息
         error_message = '获取题目列表失败'
         if current_app.config.get('DEBUG', False):
             error_message = f'获取题目列表失败: {str(e)}\n{error_detail}'
@@ -309,13 +327,13 @@ def api_get_question(question_id: int):
     try:
         user_id = session.get('user_id')
         question = QuestionService.get_question(question_id, user_id=user_id)
-        
+
         if not question:
             return jsonify({
                 'status': 'error',
                 'message': '题目不存在'
             }), 404
-        
+
         return jsonify({
             'status': 'success',
             'data': question
@@ -342,8 +360,7 @@ def api_execute():
                 'status': 'error',
                 'message': '请求数据不能为空'
             }), 400
-        
-        # 使用Pydantic验证
+
         try:
             schema = ExecuteCodeSchema.model_validate(data)
         except Exception as e:
@@ -351,8 +368,7 @@ def api_execute():
                 'status': 'error',
                 'message': f'数据验证失败: {str(e)}'
             }), 400
-        
-        # 执行代码
+
         executor = PythonExecutor(
             time_limit=schema.time_limit or 5,
             output_limit=10000
@@ -362,12 +378,12 @@ def api_execute():
             language=schema.language,
             input_data=schema.input
         )
-        
+
         return jsonify({
             'status': 'success',
             'data': result
         }), 200
-    
+
     except ValueError as e:
         return jsonify({
             'status': 'error',
@@ -393,8 +409,7 @@ def api_submit():
                 'status': 'error',
                 'message': '请求数据不能为空'
             }), 400
-        
-        # 使用Pydantic验证
+
         try:
             schema = SubmitCodeSchema.model_validate(data)
         except Exception as e:
@@ -402,23 +417,21 @@ def api_submit():
                 'status': 'error',
                 'message': f'数据验证失败: {str(e)}'
             }), 400
-        
+
         user_id = session.get('user_id')
         if not user_id:
             return jsonify({
                 'status': 'error',
                 'message': '请先登录'
             }), 401
-        
-        # 判题
+
         judge_service = JudgeService()
         judge_result = judge_service.judge(
             question_id=schema.question_id,
             code=schema.code,
             language=schema.language
         )
-        
-        # 创建提交记录
+
         submission = SubmissionService.create_submission(
             user_id=user_id,
             question_id=schema.question_id,
@@ -426,16 +439,14 @@ def api_submit():
             language=schema.language,
             judge_result=judge_result
         )
-        
-        # 获取题目信息以返回完整数据
-        from app.modules.coding.models.coding_question import CodingQuestion
-        question = CodingQuestion.get_by_id(schema.question_id)
-        
-        # 计算得分
+
+        from app.modules.coding.models.coding_question import CodingQuestion as CQ
+        question = CQ.get_by_id(schema.question_id)
+
         passed_cases = judge_result.get('passed_cases', 0)
         total_cases = judge_result.get('total_cases', 1)
         score = (passed_cases / total_cases * 100.0) if total_cases > 0 else 0.0
-        
+
         return jsonify({
             'status': 'success',
             'data': {
@@ -446,14 +457,14 @@ def api_submit():
                 'execution_time': judge_result.get('execution_time', 0),
                 'error_message': judge_result.get('error_message', ''),
                 'score': score,
-                'total_score': 100.0,  # 总分固定为100
-                'time_limit': question.get('time_limit', 5) * 1000 if question else 5000,  # 转换为毫秒
-                'memory_limit': question.get('memory_limit', 128) * 1024 if question else 131072,  # 转换为KB
-                'memory_used': 0,  # 当前不支持内存统计
-                'test_results': judge_result.get('test_results', [])  # 测试用例详细结果
+                'total_score': 100.0,
+                'time_limit': question.get('time_limit', 5) * 1000 if question else 5000,
+                'memory_limit': question.get('memory_limit', 128) * 1024 if question else 131072,
+                'memory_used': 0,
+                'test_results': judge_result.get('test_results', [])
             }
         }), 200
-    
+
     except ValueError as e:
         return jsonify({
             'status': 'error',
@@ -461,7 +472,6 @@ def api_submit():
         }), 400
     except Exception as e:
         current_app.logger.error(f"提交代码失败: {e}", exc_info=True)
-        # 返回更详细的错误信息（开发环境）
         error_message = '提交代码失败'
         if current_app.config.get('DEBUG', False):
             error_message = f'提交代码失败: {str(e)}'
@@ -469,6 +479,7 @@ def api_submit():
             'status': 'error',
             'message': error_message
         }), 500
+
 
 
 # ==================== 代码草稿API ====================
@@ -484,21 +495,17 @@ def api_get_draft(question_id: int):
                 'status': 'error',
                 'message': '请先登录'
             }), 401
-        
-        from app.core.utils.database import get_db
-        db = get_db()
-        
-        row = db.execute(
-            'SELECT code, language FROM code_drafts WHERE user_id = ? AND question_id = ?',
-            (user_id, question_id)
-        ).fetchone()
-        
-        if row:
+
+        draft = CodeDraft.query.filter_by(
+            user_id=user_id, question_id=question_id
+        ).first()
+
+        if draft:
             return jsonify({
                 'status': 'success',
                 'data': {
-                    'code': row['code'],
-                    'language': row['language'] or 'python'
+                    'code': draft.code,
+                    'language': draft.language or 'python'
                 }
             }), 200
         else:
@@ -529,32 +536,43 @@ def api_save_draft(question_id: int):
                 'status': 'error',
                 'message': '请先登录'
             }), 401
-        
+
         data = request.get_json()
         if not data:
             return jsonify({
                 'status': 'error',
                 'message': '请求数据不能为空'
             }), 400
-        
+
         code = data.get('code', '')
         language = data.get('language', 'python')
-        
-        from app.core.utils.database import get_db
-        db = get_db()
-        
-        # 使用 INSERT OR REPLACE 来更新或插入草稿
-        db.execute('''
-            INSERT OR REPLACE INTO code_drafts (user_id, question_id, code, language, updated_at)
-            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-        ''', (user_id, question_id, code, language))
-        db.commit()
-        
+
+        # PostgreSQL 兼容的 upsert 模式
+        draft = CodeDraft.query.filter_by(
+            user_id=user_id, question_id=question_id
+        ).first()
+
+        if draft:
+            draft.code = code
+            draft.language = language
+            draft.updated_at = db.func.now()
+        else:
+            draft = CodeDraft(
+                user_id=user_id,
+                question_id=question_id,
+                code=code,
+                language=language,
+            )
+            db.session.add(draft)
+
+        db.session.commit()
+
         return jsonify({
             'status': 'success',
             'message': '代码已保存'
         }), 200
     except Exception as e:
+        db.session.rollback()
         current_app.logger.error(f"保存代码草稿失败: {e}", exc_info=True)
         return jsonify({
             'status': 'error',
@@ -573,21 +591,18 @@ def api_delete_draft(question_id: int):
                 'status': 'error',
                 'message': '请先登录'
             }), 401
-        
-        from app.core.utils.database import get_db
-        db = get_db()
-        
-        db.execute(
-            'DELETE FROM code_drafts WHERE user_id = ? AND question_id = ?',
-            (user_id, question_id)
-        )
-        db.commit()
-        
+
+        CodeDraft.query.filter_by(
+            user_id=user_id, question_id=question_id
+        ).delete()
+        db.session.commit()
+
         return jsonify({
             'status': 'success',
             'message': '草稿已删除'
         }), 200
     except Exception as e:
+        db.session.rollback()
         current_app.logger.error(f"删除代码草稿失败: {e}", exc_info=True)
         return jsonify({
             'status': 'error',
@@ -607,7 +622,7 @@ def api_get_submissions():
         status = request.args.get('status')
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
-        
+
         result = SubmissionService.get_submissions(
             user_id=user_id,
             question_id=question_id,
@@ -615,7 +630,7 @@ def api_get_submissions():
             page=page,
             per_page=per_page
         )
-        
+
         return jsonify({
             'status': 'success',
             'data': result
@@ -635,13 +650,13 @@ def api_get_submission(submission_id: int):
     try:
         user_id = session.get('user_id')
         submission = SubmissionService.get_submission(submission_id, user_id=user_id)
-        
+
         if not submission:
             return jsonify({
                 'status': 'error',
                 'message': '提交记录不存在'
             }), 404
-        
+
         return jsonify({
             'status': 'success',
             'data': submission
@@ -667,9 +682,9 @@ def api_get_statistics():
                 'status': 'error',
                 'message': '请先登录'
             }), 401
-        
+
         stats = SubmissionService.get_user_statistics(user_id)
-        
+
         return jsonify({
             'status': 'success',
             'data': stats
@@ -687,92 +702,125 @@ def api_get_statistics():
 def api_get_question_rankings(question_id: int):
     """获取题目排名（按得分排序）"""
     try:
-        from app.core.utils.database import get_db
-        
-        db = get_db()
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
         offset = (page - 1) * per_page
-        
-        # 获取每个用户的最佳提交（按得分排序，使用score字段）
-        # 按首次通过时间排序（最快通过的在前）
-        rankings = db.execute('''
-            SELECT 
-                cs.user_id,
-                u.username,
-                MAX(cs.score) as best_score,
-                MAX(CASE WHEN cs.status = 'accepted' THEN cs.score ELSE 0 END) as accepted_score,
-                MIN(CASE WHEN cs.status = 'accepted' THEN cs.execution_time ELSE NULL END) as best_time,
-                MIN(CASE WHEN cs.status = 'accepted' THEN cs.submitted_at ELSE NULL END) as first_accepted_at,
-                COUNT(*) as total_submissions,
-                MAX(cs.submitted_at) as last_submitted_at
-            FROM code_submissions cs
-            INNER JOIN users u ON cs.user_id = u.id
-            WHERE cs.question_id = ?
-            GROUP BY cs.user_id, u.username
-            ORDER BY 
-                accepted_score DESC,
-                best_score DESC,
-                best_time ASC,
-                first_accepted_at ASC
-            LIMIT ? OFFSET ?
-        ''', (question_id, per_page, offset)).fetchall()
-        
+
+        accepted_score_col = func.max(case(
+            (CodeSubmission.status == 'accepted', CodeSubmission.score),
+            else_=0,
+        )).label('accepted_score')
+        best_score_col = func.max(CodeSubmission.score).label('best_score')
+        best_time_col = func.min(case(
+            (CodeSubmission.status == 'accepted', CodeSubmission.execution_time),
+        )).label('best_time')
+        first_accepted_col = func.min(case(
+            (CodeSubmission.status == 'accepted', CodeSubmission.submitted_at),
+        )).label('first_accepted_at')
+
+        rankings_q = (
+            db.session.query(
+                CodeSubmission.user_id,
+                User.username,
+                best_score_col,
+                accepted_score_col,
+                best_time_col,
+                first_accepted_col,
+                func.count().label('total_submissions'),
+                func.max(CodeSubmission.submitted_at).label('last_submitted_at'),
+            )
+            .join(User, CodeSubmission.user_id == User.id)
+            .filter(CodeSubmission.question_id == question_id)
+            .group_by(CodeSubmission.user_id, User.username)
+            .order_by(
+                accepted_score_col.desc(),
+                best_score_col.desc(),
+                best_time_col.asc(),
+                first_accepted_col.asc(),
+            )
+            .limit(per_page)
+            .offset(offset)
+            .all()
+        )
+
         # 获取总数
-        total = db.execute('''
-            SELECT COUNT(DISTINCT user_id) as count
-            FROM code_submissions
-            WHERE question_id = ?
-        ''', (question_id,)).fetchone()
-        
+        total = (
+            db.session.query(func.count(distinct(CodeSubmission.user_id)))
+            .filter(CodeSubmission.question_id == question_id)
+            .scalar()
+        ) or 0
+
         # 获取当前用户的排名
         current_user_id = session.get('user_id')
         user_rank = None
         if current_user_id:
-            user_best = db.execute('''
-                SELECT 
-                    MAX(cs.score) as best_score,
-                    MAX(CASE WHEN cs.status = 'accepted' THEN cs.score ELSE 0 END) as accepted_score,
-                    MIN(CASE WHEN cs.status = 'accepted' THEN cs.execution_time ELSE NULL END) as best_time
-                FROM code_submissions cs
-                WHERE cs.question_id = ? AND cs.user_id = ?
-            ''', (question_id, current_user_id)).fetchone()
-            
-            if user_best and user_best['accepted_score']:
-                rank_result = db.execute('''
-                    SELECT COUNT(*) + 1 as rank
-                    FROM (
-                        SELECT 
-                            cs.user_id,
-                            MAX(CASE WHEN cs.status = 'accepted' THEN cs.score ELSE 0 END) as accepted_score,
-                            MIN(CASE WHEN cs.status = 'accepted' THEN cs.execution_time ELSE NULL END) as best_time
-                        FROM code_submissions cs
-                        WHERE cs.question_id = ?
-                        GROUP BY cs.user_id
-                        HAVING accepted_score > ? OR (accepted_score = ? AND best_time < ?)
+            user_best = (
+                db.session.query(
+                    func.max(CodeSubmission.score).label('best_score'),
+                    func.max(case(
+                        (CodeSubmission.status == 'accepted', CodeSubmission.score),
+                        else_=0,
+                    )).label('accepted_score'),
+                    func.min(case(
+                        (CodeSubmission.status == 'accepted', CodeSubmission.execution_time),
+                    )).label('best_time'),
+                )
+                .filter(
+                    CodeSubmission.question_id == question_id,
+                    CodeSubmission.user_id == current_user_id,
+                )
+                .first()
+            )
+
+            if user_best and user_best.accepted_score:
+                user_acc = user_best.accepted_score
+                user_time = user_best.best_time or 999999
+
+                sub_q = (
+                    db.session.query(CodeSubmission.user_id)
+                    .filter(CodeSubmission.question_id == question_id)
+                    .group_by(CodeSubmission.user_id)
+                    .having(
+                        db.or_(
+                            func.max(case(
+                                (CodeSubmission.status == 'accepted', CodeSubmission.score),
+                                else_=0,
+                            )) > user_acc,
+                            db.and_(
+                                func.max(case(
+                                    (CodeSubmission.status == 'accepted', CodeSubmission.score),
+                                    else_=0,
+                                )) == user_acc,
+                                func.min(case(
+                                    (CodeSubmission.status == 'accepted', CodeSubmission.execution_time),
+                                )) < user_time,
+                            ),
+                        )
                     )
-                ''', (question_id, user_best['accepted_score'], user_best['accepted_score'], user_best['best_time'] or 999999)).fetchone()
-                user_rank = rank_result['rank'] if rank_result else None
-        
+                    .subquery()
+                )
+                rank_count = db.session.query(func.count()).select_from(sub_q).scalar() or 0
+                user_rank = rank_count + 1
+
         result = []
-        for idx, row in enumerate(rankings, start=offset + 1):
+        for idx, row in enumerate(rankings_q, start=offset + 1):
             result.append({
                 'rank': idx,
-                'user_id': row['user_id'],
-                'username': row['username'],
-                'best_score': round(row['best_score'], 2) if row['best_score'] else 0,
-                'accepted_score': round(row['accepted_score'], 2) if row['accepted_score'] else 0,
-                'best_time': round(row['best_time'], 3) if row['best_time'] else None,
-                'first_accepted_at': row['first_accepted_at'],
-                'total_submissions': row['total_submissions'],
-                'last_submitted_at': row['last_submitted_at']
+                'user_id': row.user_id,
+                'username': row.username,
+                'best_score': round(row.best_score, 2) if row.best_score else 0,
+                'accepted_score': round(row.accepted_score, 2) if row.accepted_score else 0,
+                'best_time': round(row.best_time, 3) if row.best_time else None,
+                'first_accepted_at': str(row.first_accepted_at) if row.first_accepted_at else None,
+                'total_submissions': row.total_submissions,
+                'last_submitted_at': str(row.last_submitted_at) if row.last_submitted_at else None,
             })
-        
+
         return jsonify({
             'status': 'success',
             'data': {
                 'rankings': result,
-                'total': total['count'] if total else 0,
+                'total': total,
                 'page': page,
                 'per_page': per_page,
                 'user_rank': user_rank
@@ -784,4 +832,3 @@ def api_get_question_rankings(question_id: int):
             'status': 'error',
             'message': '获取题目排名失败'
         }), 500
-
