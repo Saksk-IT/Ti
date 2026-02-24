@@ -2,8 +2,9 @@
 from urllib.parse import urlencode
 
 from flask import redirect, render_template, request, session
+from sqlalchemy import text
 
-from app.core.utils.database import get_db
+from app.core.extensions import db
 from app.core.utils.decorators import login_required
 
 from .bp import main_pages_bp
@@ -13,14 +14,13 @@ from .bp import main_pages_bp
 def subject_detail_page(subject_id: int):
     """科目详情页：练习设置 / 题库数据（含范围/题型/标签与统计）。"""
     uid = session.get('user_id')
-    conn = get_db()
 
-    subject = conn.execute(
-        "SELECT id, name, is_locked FROM subjects WHERE id = ?",
-        (subject_id,),
+    subject = db.session.execute(
+        text("SELECT id, name, is_locked FROM subjects WHERE id = :sid"),
+        {'sid': subject_id},
     ).fetchone()
 
-    if not subject or int(subject['is_locked'] or 0) == 1:
+    if not subject or int(subject._mapping['is_locked'] or 0) == 1:
         return "科目不存在或已锁定", 404
 
     # 已登录用户：校验科目权限
@@ -36,9 +36,9 @@ def subject_detail_page(subject_id: int):
 
         types = [
             portable_type_to_q_type((r[0] or ""))
-            for r in conn.execute(
-                "SELECT DISTINCT type FROM questions WHERE subject_id = ? ORDER BY type",
-                (subject_id,),
+            for r in db.session.execute(
+                text("SELECT DISTINCT type FROM questions WHERE subject_id = :sid ORDER BY type"),
+                {'sid': subject_id},
             ).fetchall()
             if r and r[0]
         ]
@@ -47,14 +47,14 @@ def subject_detail_page(subject_id: int):
         types = []
 
     # 科目题量
-    total_count = conn.execute(
-        """
-        SELECT COUNT(*)
-        FROM questions q
-        LEFT JOIN subjects s ON q.subject_id = s.id
-        WHERE q.subject_id = ? AND (s.is_locked=0 OR s.is_locked IS NULL)
-        """,
-        (subject_id,),
+    total_count = db.session.execute(
+        text(
+            "SELECT COUNT(*)"
+            " FROM questions q"
+            " LEFT JOIN subjects s ON q.subject_id = s.id"
+            " WHERE q.subject_id = :sid AND (s.is_locked=false OR s.is_locked IS NULL)"
+        ),
+        {'sid': subject_id},
     ).fetchone()[0]
 
     fav_count = 0
@@ -63,27 +63,27 @@ def subject_detail_page(subject_id: int):
     my_stats = None
     if uid:
         try:
-            fav_count = conn.execute(
-                """
-                SELECT COUNT(*)
-                FROM favorites f
-                JOIN questions q ON f.question_id = q.id
-                WHERE f.user_id = ? AND q.subject_id = ?
-                """,
-                (uid, subject_id),
+            fav_count = db.session.execute(
+                text(
+                    "SELECT COUNT(*)"
+                    " FROM favorites f"
+                    " JOIN questions q ON f.question_id = q.id"
+                    " WHERE f.user_id = :uid AND q.subject_id = :sid"
+                ),
+                {'uid': uid, 'sid': subject_id},
             ).fetchone()[0]
         except Exception:
             fav_count = 0
 
         try:
-            mistake_count = conn.execute(
-                """
-                SELECT COUNT(*)
-                FROM mistakes m
-                JOIN questions q ON m.question_id = q.id
-                WHERE m.user_id = ? AND q.subject_id = ?
-                """,
-                (uid, subject_id),
+            mistake_count = db.session.execute(
+                text(
+                    "SELECT COUNT(*)"
+                    " FROM mistakes m"
+                    " JOIN questions q ON m.question_id = q.id"
+                    " WHERE m.user_id = :uid AND q.subject_id = :sid"
+                ),
+                {'uid': uid, 'sid': subject_id},
             ).fetchone()[0]
         except Exception:
             mistake_count = 0
@@ -91,31 +91,30 @@ def subject_detail_page(subject_id: int):
         try:
             from app.modules.quiz.services.question_tags_service import list_user_tags
 
-            user_tags = list_user_tags(conn, uid, int(subject_id))
+            user_tags = list_user_tags(db.session.connection(), uid, int(subject_id))
         except Exception:
             user_tags = []
 
         try:
-            row = conn.execute(
-                """
-                WITH latest AS (
-                  SELECT question_id, MAX(id) AS last_id
-                  FROM user_answers
-                  WHERE user_id = ?
-                  GROUP BY question_id
-                )
-                SELECT
-                  COUNT(1) AS answered,
-                  SUM(CASE WHEN ua.is_correct=1 THEN 1 ELSE 0 END) AS correct
-                FROM latest
-                JOIN user_answers ua ON ua.id = latest.last_id
-                JOIN questions q ON q.id = latest.question_id
-                WHERE q.subject_id = ?
-                """,
-                (uid, int(subject_id)),
+            row = db.session.execute(
+                text(
+                    "WITH latest AS ("
+                    "  SELECT question_id, MAX(id) AS last_id"
+                    "  FROM user_answers"
+                    "  WHERE user_id = :uid"
+                    "  GROUP BY question_id"
+                    ") SELECT"
+                    "  COUNT(1) AS answered,"
+                    "  SUM(CASE WHEN ua.is_correct=true THEN 1 ELSE 0 END) AS correct"
+                    " FROM latest"
+                    " JOIN user_answers ua ON ua.id = latest.last_id"
+                    " JOIN questions q ON q.id = latest.question_id"
+                    " WHERE q.subject_id = :sid"
+                ),
+                {'uid': uid, 'sid': int(subject_id)},
             ).fetchone()
-            answered = int(row["answered"] or 0) if row else 0
-            correct = int(row["correct"] or 0) if row else 0
+            answered = int(row._mapping["answered"] or 0) if row else 0
+            correct = int(row._mapping["correct"] or 0) if row else 0
             my_stats = {
                 "total_answered": answered,
                 "correct_count": correct,
@@ -130,8 +129,8 @@ def subject_detail_page(subject_id: int):
 
     return render_template(
         'main/subject/subject_detail.html',
-        subject_id=int(subject['id']),
-        subject_name=subject['name'],
+        subject_id=int(subject._mapping['id']),
+        subject_name=subject._mapping['name'],
         types=types,
         total_count=total_count,
         fav_count=fav_count,
@@ -163,7 +162,6 @@ def subject_data_redirect_page(subject_id: int):
 def subject_data_page(subject_id: int, subtab: str):
     """公共题库数据子页（全局/错题/收藏）"""
     uid = session.get('user_id')
-    conn = get_db()
 
     tab = (subtab or '').strip().lower()
     if tab not in ('global', 'mistakes', 'favorites'):
@@ -173,12 +171,12 @@ def subject_data_page(subject_id: int, subtab: str):
     if window_days not in (7, 14, 30, 90):
         window_days = 30
 
-    subject = conn.execute(
-        "SELECT id, name, is_locked FROM subjects WHERE id = ?",
-        (int(subject_id),),
+    subject = db.session.execute(
+        text("SELECT id, name, is_locked FROM subjects WHERE id = :sid"),
+        {'sid': int(subject_id)},
     ).fetchone()
 
-    if not subject or int(subject['is_locked'] or 0) == 1:
+    if not subject or int(subject._mapping['is_locked'] or 0) == 1:
         return "科目不存在或已锁定", 404
 
     # 已登录用户：校验科目权限（数据页属于个人数据，不开放匿名访问）
@@ -187,48 +185,48 @@ def subject_data_page(subject_id: int, subtab: str):
     if not can_user_access_subject(int(uid), int(subject_id)):
         return "无权限访问该科目", 403
 
-    total_count = conn.execute(
-        """
-        SELECT COUNT(*)
-        FROM questions q
-        LEFT JOIN subjects s ON q.subject_id = s.id
-        WHERE q.subject_id = ? AND (s.is_locked=0 OR s.is_locked IS NULL)
-        """,
-        (int(subject_id),),
+    total_count = db.session.execute(
+        text(
+            "SELECT COUNT(*)"
+            " FROM questions q"
+            " LEFT JOIN subjects s ON q.subject_id = s.id"
+            " WHERE q.subject_id = :sid AND (s.is_locked=false OR s.is_locked IS NULL)"
+        ),
+        {'sid': int(subject_id)},
     ).fetchone()[0]
 
     fav_count = 0
     mistake_count = 0
     try:
-        fav_count = conn.execute(
-            """
-            SELECT COUNT(*)
-            FROM favorites f
-            JOIN questions q ON f.question_id = q.id
-            WHERE f.user_id = ? AND q.subject_id = ?
-            """,
-            (int(uid), int(subject_id)),
+        fav_count = db.session.execute(
+            text(
+                "SELECT COUNT(*)"
+                " FROM favorites f"
+                " JOIN questions q ON f.question_id = q.id"
+                " WHERE f.user_id = :uid AND q.subject_id = :sid"
+            ),
+            {'uid': int(uid), 'sid': int(subject_id)},
         ).fetchone()[0]
     except Exception:
         fav_count = 0
 
     try:
-        mistake_count = conn.execute(
-            """
-            SELECT COUNT(*)
-            FROM mistakes m
-            JOIN questions q ON m.question_id = q.id
-            WHERE m.user_id = ? AND q.subject_id = ?
-            """,
-            (int(uid), int(subject_id)),
+        mistake_count = db.session.execute(
+            text(
+                "SELECT COUNT(*)"
+                " FROM mistakes m"
+                " JOIN questions q ON m.question_id = q.id"
+                " WHERE m.user_id = :uid AND q.subject_id = :sid"
+            ),
+            {'uid': int(uid), 'sid': int(subject_id)},
         ).fetchone()[0]
     except Exception:
         mistake_count = 0
 
     return render_template(
         'main/subject/subject_data.html',
-        subject_id=int(subject['id']),
-        subject_name=subject['name'],
+        subject_id=int(subject._mapping['id']),
+        subject_name=subject._mapping['name'],
         total_count=total_count,
         fav_count=fav_count,
         mistake_count=mistake_count,
