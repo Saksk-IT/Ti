@@ -11,10 +11,10 @@
 
 from flask import request, jsonify
 
-from app.core.utils.database import get_db
-from app.core.extensions import limiter
+from app.core.extensions import db, limiter
 from app.core.utils.decorators import auth_required, current_user_id
 from app.core.utils.cache_utils import bump_user_quiz_version
+from app.models.quiz import Favorite, Mistake, UserAnswer
 
 from ..api_bp import quiz_api_bp
 
@@ -51,25 +51,20 @@ def toggle_favorite():
     except (TypeError, ValueError):
         return jsonify({'status': 'error', 'message': 'question_id 参数错误'}), 400
 
-    conn = get_db()
-    exists = conn.execute(
-        "SELECT id FROM favorites WHERE user_id = ? AND question_id = ?",
-        (uid, q_id)
-    ).fetchone()
+    exists = Favorite.query.filter_by(user_id=uid, question_id=q_id).first()
 
     if exists:
-        conn.execute("DELETE FROM favorites WHERE user_id = ? AND question_id = ?", (uid, q_id))
+        Favorite.query.filter_by(user_id=uid, question_id=q_id).delete()
         is_favorite = False
     else:
         try:
-            conn.execute("INSERT INTO favorites (user_id, question_id) VALUES (?, ?)", (uid, q_id))
+            db.session.add(Favorite(user_id=uid, question_id=q_id))
         except Exception:
-            # 兜底处理：题目不存在 / 外键约束失败 / 并发插入等
-            conn.rollback()
+            db.session.rollback()
             return jsonify({'status': 'error', 'message': '收藏失败：题目不存在或不可收藏'}), 400
         is_favorite = True
 
-    conn.commit()
+    db.session.commit()
     try:
         bump_user_quiz_version(int(uid))
     except Exception:
@@ -118,33 +113,25 @@ def record_result():
             }
         }), 403
 
-    conn = get_db()
     try:
         # 更新错题本（只记录错误题目）
         if not is_correct:
-            try:
-                conn.execute(
-                    """
-                    INSERT INTO mistakes (user_id, question_id, wrong_count, created_at, updated_at, last_updated)
-                    VALUES (?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                    ON CONFLICT(user_id, question_id) DO UPDATE SET
-                      wrong_count = wrong_count + 1,
-                      updated_at = CURRENT_TIMESTAMP,
-                      last_updated = CURRENT_TIMESTAMP
-                    """,
-                    (uid, q_id),
-                )
-            except Exception:
-                # 兼容旧库：缺少 created_at/updated_at/last_updated 字段
-                conn.execute(
-                    "INSERT INTO mistakes (user_id, question_id, wrong_count) VALUES (?, ?, 1) ON CONFLICT(user_id, question_id) DO UPDATE SET wrong_count = wrong_count + 1",
-                    (uid, q_id),
-                )
+            existing_mistake = Mistake.query.filter_by(user_id=uid, question_id=q_id).first()
+            if existing_mistake:
+                existing_mistake.wrong_count = (existing_mistake.wrong_count or 0) + 1
+                existing_mistake.updated_at = db.func.now()
+                existing_mistake.last_updated = db.func.now()
+            else:
+                db.session.add(Mistake(
+                    user_id=uid,
+                    question_id=q_id,
+                    wrong_count=1,
+                ))
             action = "added_mistake"
         else:
             if clear_mistake_on_correct:
                 # 答对了，从错题本中移除（默认行为）
-                conn.execute("DELETE FROM mistakes WHERE user_id = ? AND question_id = ?", (uid, q_id))
+                Mistake.query.filter_by(user_id=uid, question_id=q_id).delete()
                 action = "removed_mistake"
             else:
                 # 答对但不清除：保留在错题本
@@ -152,28 +139,24 @@ def record_result():
 
         # 记录答题历史（每次答题都记录，用于统计）
         # 先删除旧记录，再插入新记录，确保每个用户对每道题只保留最新的一条记录
-        conn.execute(
-            'DELETE FROM user_answers WHERE user_id = ? AND question_id = ?',
-            (uid, q_id)
-        )
-        conn.execute(
-            """INSERT INTO user_answers
-               (user_id, question_id, is_correct, created_at)
-               VALUES (?, ?, ?, CURRENT_TIMESTAMP)""",
-            (uid, q_id, 1 if is_correct else 0)
-        )
+        UserAnswer.query.filter_by(user_id=uid, question_id=q_id).delete()
+        db.session.add(UserAnswer(
+            user_id=uid,
+            question_id=q_id,
+            is_correct=1 if is_correct else 0,
+        ))
 
         # 增加刷题数（如果功能开启）
         increment_user_quiz_count(uid)
 
-        conn.commit()
+        db.session.commit()
         try:
             bump_user_quiz_version(int(uid))
         except Exception:
             pass
         return jsonify({"status": "success", "action": action})
     except Exception as e:
-        conn.rollback()
+        db.session.rollback()
         return jsonify({"status": "error", "msg": str(e)}), 500
 
 
