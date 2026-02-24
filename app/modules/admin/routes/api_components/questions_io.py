@@ -5,7 +5,6 @@ import datetime
 import io
 import json
 import os
-import sqlite3
 import zipfile
 
 import pandas as pd
@@ -24,8 +23,8 @@ from flask import (
 from werkzeug.security import generate_password_hash
 from werkzeug.utils import secure_filename
 
-from app.core.extensions import limiter
-from app.core.utils.database import get_db
+from app.core.extensions import db, limiter
+from sqlalchemy import text
 from app.core.utils.cache_utils import bump_questions_version, bump_subjects_version
 from app.core.utils.fill_blank_parser import parse_fill_blank
 from app.core.utils.validators import parse_int, validate_password
@@ -45,16 +44,6 @@ def import_questions_api():
     if not subject_id or not questions:
         return jsonify({'status': 'error', 'message': '缺少科目或题库数据'}), 400
     
-    conn = get_db()
-    try:
-        q_cols = [r['name'] for r in conn.execute("PRAGMA table_info(questions)").fetchall()]
-    except Exception:
-        q_cols = []
-    has_difficulty = 'difficulty' in q_cols
-    has_tags = 'tags' in q_cols
-    has_created_by = 'created_by' in q_cols
-    has_updated_at = 'updated_at' in q_cols
-
     from app.core.utils.options_parser import parse_options
     from app.core.utils.portable_question_format import portable_question_to_internal, tags_to_storage_str, internal_question_to_portable
 
@@ -130,40 +119,26 @@ def import_questions_api():
                 tags=tags_str,
             )
 
-            cols = ['subject_id', 'type', 'content', 'options', 'answer', 'analysis']
-            vals = [
-                subject_id,
-                portable.get('type') or 'essay',
-                portable.get('content') or '',
-                json.dumps(portable.get('options') or [], ensure_ascii=False),
-                json.dumps(portable.get('answer') if portable.get('answer') is not None else [], ensure_ascii=False),
-                portable.get('analysis') or '',
-            ]
-
-            if has_difficulty:
-                cols.append('difficulty')
-                vals.append(int(portable.get('difficulty') or 1))
-            if has_tags:
-                cols.append('tags')
-                vals.append(json.dumps(portable.get('tags') or [], ensure_ascii=False))
-            if has_created_by:
-                cols.append('created_by')
-                vals.append(session.get('user_id'))
-
-            # 可选：图片字段（旧导入可能带了）
-            if 'image_path' in q_cols:
-                cols.append('image_path')
-                vals.append(item.get('image_path'))
-
-            if has_updated_at:
-                sql = f"INSERT INTO questions ({', '.join(cols)}, updated_at) VALUES ({', '.join(['?'] * len(vals))}, CURRENT_TIMESTAMP)"
-            else:
-                sql = f"INSERT INTO questions ({', '.join(cols)}) VALUES ({', '.join(['?'] * len(vals))})"
-
-            conn.execute(sql, vals)
+            db.session.execute(
+                text('''INSERT INTO questions
+                    (subject_id, type, content, options, answer, analysis, difficulty, tags, image_path, created_by, updated_at)
+                    VALUES (:subject_id, :type, :content, :options, :answer, :analysis, :difficulty, :tags, :image_path, :created_by, CURRENT_TIMESTAMP)'''),
+                {
+                    'subject_id': subject_id,
+                    'type': portable.get('type') or 'essay',
+                    'content': portable.get('content') or '',
+                    'options': json.dumps(portable.get('options') or [], ensure_ascii=False),
+                    'answer': json.dumps(portable.get('answer') if portable.get('answer') is not None else [], ensure_ascii=False),
+                    'analysis': portable.get('analysis') or '',
+                    'difficulty': int(portable.get('difficulty') or 1),
+                    'tags': json.dumps(portable.get('tags') or [], ensure_ascii=False),
+                    'image_path': item.get('image_path'),
+                    'created_by': session.get('user_id'),
+                },
+            )
             imported += 1
 
-        conn.commit()
+        db.session.commit()
         try:
             bump_questions_version()
         except Exception:
@@ -171,7 +146,7 @@ def import_questions_api():
         return jsonify({'status': 'success', 'message': f'成功导入{imported}道题'})
     except Exception as e:
         try:
-            conn.rollback()
+            db.session.rollback()
         except Exception:
             pass
         return jsonify({'status': 'error', 'message': str(e)})
@@ -184,43 +159,22 @@ def export_questions_api():
     """导出题目"""
     subject_id = request.args.get('subject_id')
     
-    conn = get_db()
-    try:
-        q_cols = [r['name'] for r in conn.execute("PRAGMA table_info(questions)").fetchall()]
-    except Exception:
-        q_cols = []
-    has_difficulty = 'difficulty' in q_cols
-    has_tags = 'tags' in q_cols
-
-    select_cols = [
-        'q.id',
-        'q.subject_id',
-        's.name as subject_name',
-        'q.content',
-        'q.type',
-        'q.options',
-        'q.answer',
-        'q.analysis',
-    ]
-    if has_difficulty:
-        select_cols.append('q.difficulty')
-    if has_tags:
-        select_cols.append('q.tags')
-
     sql = '''
-        SELECT {cols}
+        SELECT q.id, q.subject_id, s.name as subject_name,
+               q.content, q.type, q.options, q.answer, q.analysis,
+               q.difficulty, q.tags
         FROM questions q
         LEFT JOIN subjects s ON q.subject_id = s.id
         WHERE 1=1
-    '''.format(cols=', '.join(select_cols))
-    params = []
-    
+    '''
+    conn_params = {}
+
     if subject_id:
-        sql += ' AND q.subject_id = ?'
-        params.append(subject_id)
-    
+        sql += ' AND q.subject_id = :subject_id'
+        conn_params['subject_id'] = subject_id
+
     sql += ' ORDER BY q.id'
-    rows = conn.execute(sql, params).fetchall()
+    rows = db.session.execute(text(sql), conn_params).fetchall()
     
     def _safe_load(raw, default):
         if raw is None:
@@ -237,19 +191,20 @@ def export_questions_api():
 
     items = []
     for r in rows:
+        rm = r._mapping
         item = {
-            'id': int(r['id']),
-            'type': (r['type'] or ''),
-            'content': (r['content'] or ''),
-            'options': _safe_load(r['options'], []),
-            'answer': _safe_load(r['answer'], []),
-            'analysis': (r['analysis'] or ''),
-            'tags': _safe_load(r['tags'], []) if has_tags else [],
-            'difficulty': int(r['difficulty'] or 1) if has_difficulty else 1,
+            'id': int(rm['id']),
+            'type': (rm['type'] or ''),
+            'content': (rm['content'] or ''),
+            'options': _safe_load(rm['options'], []),
+            'answer': _safe_load(rm['answer'], []),
+            'analysis': (rm['analysis'] or ''),
+            'tags': _safe_load(rm['tags'], []),
+            'difficulty': int(rm['difficulty'] or 1),
         }
         # 附带科目信息（导出全量备份时有用；导入可忽略）
-        item['subject_id'] = r['subject_id']
-        item['subject_name'] = r['subject_name'] or '默认科目'
+        item['subject_id'] = rm['subject_id']
+        item['subject_name'] = rm['subject_name'] or '默认科目'
         items.append(item)
 
     meta = {'scope': 'question_center'}
@@ -271,20 +226,18 @@ def import_questions_from_excel():
     if not file or not file.filename.endswith('.xlsx'):
         return jsonify({'status': 'error', 'message': '只允许上传 .xlsx 文件'}), 400
 
-    conn = get_db()
-    
     try:
         from app.core.utils.portable_question_format import internal_question_to_portable
 
         df = pd.read_excel(file, sheet_name='题目示例').fillna('')
-        
+
         required_columns = ['subject', 'q_type', 'content']
         missing_columns = [col for col in required_columns if col not in df.columns]
         if missing_columns:
             return jsonify({'status': 'error', 'message': f'Excel文件中缺少必需的列: {", ".join(missing_columns)}'}), 400
 
-        subjects = conn.execute('SELECT id, name FROM subjects').fetchall()
-        subject_map = {s['name']: s['id'] for s in subjects}
+        subjects = db.session.execute(text('SELECT id, name FROM subjects')).fetchall()
+        subject_map = {s._mapping['name']: s._mapping['id'] for s in subjects}
 
         imported_count = 0
         errors = []
@@ -305,10 +258,13 @@ def import_questions_from_excel():
                     continue
 
                 if subject_name not in subject_map:
-                    cursor = conn.execute('INSERT INTO subjects (name) VALUES (?)', (subject_name,))
-                    subject_id = cursor.lastrowid
+                    result = db.session.execute(
+                        text('INSERT INTO subjects (name) VALUES (:name) RETURNING id'),
+                        {'name': subject_name},
+                    )
+                    subject_id = result.fetchone()[0]
                     subject_map[subject_name] = subject_id
-                    conn.commit()
+                    db.session.commit()
                     try:
                         bump_subjects_version()
                     except Exception:
@@ -365,23 +321,23 @@ def import_questions_from_excel():
                     tags='',
                 )
 
-                conn.execute(
-                    '''
+                db.session.execute(
+                    text('''
                     INSERT INTO questions
                     (subject_id, type, content, options, answer, analysis, difficulty, tags, created_by, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                    ''',
-                    (
-                        subject_id,
-                        portable.get('type') or 'essay',
-                        portable.get('content') or '',
-                        json.dumps(portable.get('options') or [], ensure_ascii=False),
-                        json.dumps(portable.get('answer') if portable.get('answer') is not None else [], ensure_ascii=False),
-                        portable.get('analysis') or '',
-                        int(portable.get('difficulty') or 1),
-                        json.dumps(portable.get('tags') or [], ensure_ascii=False),
-                        session.get('user_id'),
-                    ),
+                    VALUES (:subject_id, :type, :content, :options, :answer, :analysis, :difficulty, :tags, :created_by, CURRENT_TIMESTAMP)
+                    '''),
+                    {
+                        'subject_id': subject_id,
+                        'type': portable.get('type') or 'essay',
+                        'content': portable.get('content') or '',
+                        'options': json.dumps(portable.get('options') or [], ensure_ascii=False),
+                        'answer': json.dumps(portable.get('answer') if portable.get('answer') is not None else [], ensure_ascii=False),
+                        'analysis': portable.get('analysis') or '',
+                        'difficulty': int(portable.get('difficulty') or 1),
+                        'tags': json.dumps(portable.get('tags') or [], ensure_ascii=False),
+                        'created_by': session.get('user_id'),
+                    },
                 )
                 
                 imported_count += 1
@@ -389,7 +345,7 @@ def import_questions_from_excel():
             except Exception as e:
                 errors.append(f'第 {index + 2} 行: 导入失败 - {str(e)}')
 
-        conn.commit()
+        db.session.commit()
         try:
             bump_questions_version()
         except Exception:
@@ -398,7 +354,7 @@ def import_questions_from_excel():
             bump_subjects_version()
         except Exception:
             pass
-        
+
         message = f'成功导入 {imported_count} 道题。'
         if errors:
             message += f' 遇到 {len(errors)} 个问题。'
@@ -430,9 +386,9 @@ def export_questions_to_excel():
     """导出题目为Excel文件（使用与导入相同的模板格式）"""
     subject_id = request.args.get('subject_id')
     q_type = request.args.get('type', 'all')
-    
-    conn = get_db()
-    
+
+    conn_params = {}
+
     # 构建查询SQL
     sql = '''
         SELECT q.*, s.name as subject_name
@@ -440,21 +396,20 @@ def export_questions_to_excel():
         LEFT JOIN subjects s ON q.subject_id = s.id
         WHERE 1=1
     '''
-    params = []
-    
+
     if subject_id:
-        sql += ' AND q.subject_id = ?'
-        params.append(subject_id)
-    
+        sql += ' AND q.subject_id = :subject_id'
+        conn_params['subject_id'] = subject_id
+
     if q_type and q_type != 'all':
         from app.core.utils.portable_question_format import any_type_to_portable_type
 
-        sql += ' AND q.type = ?'
-        params.append(any_type_to_portable_type(q_type))
-    
+        sql += ' AND q.type = :q_type'
+        conn_params['q_type'] = any_type_to_portable_type(q_type)
+
     sql += ' ORDER BY q.id'
-    rows = conn.execute(sql, params).fetchall()
-    
+    rows = db.session.execute(text(sql), conn_params).fetchall()
+
     if not rows:
         return jsonify({'status': 'error', 'message': '没有可导出的题目'}), 400
 
@@ -480,7 +435,7 @@ def export_questions_to_excel():
     seed = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
     for row in rows:
-        question = dict(row)
+        question = dict(row._mapping)
         portable = {
             'id': question.get('id'),
             'type': question.get('type') or '',
@@ -564,13 +519,13 @@ def export_questions_to_excel():
     # 生成文件名
     subject_name = "all_subjects"
     if subject_id:
-        subject_row = conn.execute('SELECT name FROM subjects WHERE id = ?', (subject_id,)).fetchone()
+        subject_row = db.session.execute(text('SELECT name FROM subjects WHERE id = :sid'), {'sid': subject_id}).fetchone()
         if subject_row:
-            subject_name = subject_row['name']
-    
+            subject_name = subject_row._mapping['name']
+
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"questions_export_{subject_name}_{timestamp}.xlsx"
-    
+
     return send_file(
         output,
         as_attachment=True,
@@ -594,9 +549,9 @@ def export_questions_to_word():
     
     subject_id = request.args.get('subject_id')
     q_type = request.args.get('type', 'all')
-    
-    conn = get_db()
-    
+
+    conn_params = {}
+
     # 构建查询SQL
     sql = '''
         SELECT q.*, s.name as subject_name
@@ -604,20 +559,19 @@ def export_questions_to_word():
         LEFT JOIN subjects s ON q.subject_id = s.id
         WHERE 1=1
     '''
-    params = []
-    
+
     if subject_id:
-        sql += ' AND q.subject_id = ?'
-        params.append(subject_id)
-    
+        sql += ' AND q.subject_id = :subject_id'
+        conn_params['subject_id'] = subject_id
+
     if q_type and q_type != 'all':
         from app.core.utils.portable_question_format import any_type_to_portable_type
 
-        sql += ' AND q.type = ?'
-        params.append(any_type_to_portable_type(q_type))
-    
+        sql += ' AND q.type = :q_type'
+        conn_params['q_type'] = any_type_to_portable_type(q_type)
+
     sql += ' ORDER BY q.id'
-    rows = conn.execute(sql, params).fetchall()
+    rows = db.session.execute(text(sql), conn_params).fetchall()
     
     if not rows:
         return jsonify({'status': 'error', 'message': '没有可导出的题目'}), 400
@@ -632,9 +586,9 @@ def export_questions_to_word():
     # 添加科目信息
     subject_name = "所有科目"
     if subject_id:
-        subject_row = conn.execute('SELECT name FROM subjects WHERE id = ?', (subject_id,)).fetchone()
+        subject_row = db.session.execute(text('SELECT name FROM subjects WHERE id = :sid'), {'sid': subject_id}).fetchone()
         if subject_row:
-            subject_name = subject_row['name']
+            subject_name = subject_row._mapping['name']
     
     info_para = doc.add_paragraph(f'科目：{subject_name}')
     if q_type and q_type != 'all':
@@ -662,7 +616,7 @@ def export_questions_to_word():
     
     # 遍历题目，添加到文档
     for idx, row in enumerate(rows, 1):
-        question = dict(row)
+        question = dict(row._mapping)
         portable = {
             'id': question.get('id'),
             'type': question.get('type') or '',
@@ -801,15 +755,16 @@ def export_questions_package():
     subject_id = request.args.get('subject_id')
     q_type = request.args.get('type')
     
-    conn = get_db()
     from app.core.utils.portable_question_format import any_type_to_portable_type
-    
+
+    conn_params = {}
+
     # 1. 获取科目名称
     subject_name = "all_subjects"
     if subject_id:
-        subject_row = conn.execute('SELECT name FROM subjects WHERE id = ?', (subject_id,)).fetchone()
+        subject_row = db.session.execute(text('SELECT name FROM subjects WHERE id = :sid'), {'sid': subject_id}).fetchone()
         if subject_row:
-            subject_name = subject_row['name']
+            subject_name = subject_row._mapping['name']
 
     def _normalize_image_paths(raw_val):
         if raw_val is None:
@@ -836,16 +791,15 @@ def export_questions_package():
         LEFT JOIN subjects s ON q.subject_id = s.id
         WHERE 1=1
     '''
-    params = []
     if subject_id:
-        sql += ' AND q.subject_id = ?'
-        params.append(subject_id)
+        sql += ' AND q.subject_id = :subject_id'
+        conn_params['subject_id'] = subject_id
     if q_type and q_type != 'all':
-        sql += ' AND q.type = ?'
-        params.append(any_type_to_portable_type(q_type))
+        sql += ' AND q.type = :q_type'
+        conn_params['q_type'] = any_type_to_portable_type(q_type)
 
     sql += ' ORDER BY q.id'
-    rows = conn.execute(sql, params).fetchall()
+    rows = db.session.execute(text(sql), conn_params).fetchall()
 
     # 3. 创建 ZIP 文件（统一 Portable Question Format）
     memory_file = io.BytesIO()
@@ -867,21 +821,22 @@ def export_questions_package():
 
     with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
         for r in rows:
+            rm = r._mapping
             item = {
-                'id': int(r['id']),
-                'type': (r['type'] or ''),
-                'content': (r['content'] or ''),
-                'options': _safe_load(r['options'], []),
-                'answer': _safe_load(r['answer'], []),
-                'analysis': (r['analysis'] or ''),
-                'tags': _safe_load(r['tags'], []),
-                'difficulty': int(r['difficulty'] or 1),
+                'id': int(rm['id']),
+                'type': (rm['type'] or ''),
+                'content': (rm['content'] or ''),
+                'options': _safe_load(rm['options'], []),
+                'answer': _safe_load(rm['answer'], []),
+                'analysis': (rm['analysis'] or ''),
+                'tags': _safe_load(rm['tags'], []),
+                'difficulty': int(rm['difficulty'] or 1),
             }
-            item['subject_id'] = r['subject_id']
-            item['subject_name'] = r['subject_name'] or '默认科目'
+            item['subject_id'] = rm['subject_id']
+            item['subject_name'] = rm['subject_name'] or '默认科目'
 
             images_in_zip = []
-            for img_rel in _normalize_image_paths(r['image_path']):
+            for img_rel in _normalize_image_paths(rm['image_path']):
                 img_rel = str(img_rel).replace('\\', '/').lstrip('/')
                 full_image_path = os.path.join(upload_folder, *img_rel.split('/'))
                 if not os.path.exists(full_image_path):
@@ -932,11 +887,9 @@ def import_questions_package():
     if file.filename == '' or not file.filename.endswith('.zip'):
         return jsonify({'status': 'error', 'message': '请上传有效的 .zip 文件'}), 400
 
-    conn = get_db()
-    
     # 获取现有的科目 name -> id 映射
-    subjects = conn.execute('SELECT id, name FROM subjects').fetchall()
-    subject_map = {s['name']: s['id'] for s in subjects}
+    subjects = db.session.execute(text('SELECT id, name FROM subjects')).fetchall()
+    subject_map = {s._mapping['name']: s._mapping['id'] for s in subjects}
 
     imported_count = 0
     errors = []
@@ -949,16 +902,6 @@ def import_questions_package():
             portable_question_to_internal,
             tags_to_storage_str,
         )
-
-        try:
-            q_cols = [r['name'] for r in conn.execute("PRAGMA table_info(questions)").fetchall()]
-        except Exception:
-            q_cols = []
-        has_difficulty = 'difficulty' in q_cols
-        has_tags = 'tags' in q_cols
-        has_image_path = 'image_path' in q_cols
-        has_created_by = 'created_by' in q_cols
-        has_updated_at = 'updated_at' in q_cols
 
         def _normalize_image_paths(raw_val):
             if raw_val is None:
@@ -1005,8 +948,11 @@ def import_questions_package():
                         continue
 
                     if subject_name not in subject_map:
-                        cursor = conn.execute('INSERT INTO subjects (name) VALUES (?)', (subject_name,))
-                        subject_id = cursor.lastrowid
+                        result = db.session.execute(
+                            text('INSERT INTO subjects (name) VALUES (:name) RETURNING id'),
+                            {'name': subject_name},
+                        )
+                        subject_id = result.fetchone()[0]
                         subject_map[subject_name] = subject_id
                     else:
                         subject_id = subject_map[subject_name]
@@ -1076,43 +1022,31 @@ def import_questions_package():
                         tags=tags_str,
                     )
 
-                    cols = ['subject_id', 'type', 'content', 'options', 'answer', 'analysis']
-                    vals = [
-                        subject_id,
-                        portable.get('type') or 'essay',
-                        portable.get('content') or '',
-                        json.dumps(portable.get('options') or [], ensure_ascii=False),
-                        json.dumps(
-                            portable.get('answer') if portable.get('answer') is not None else [],
-                            ensure_ascii=False,
-                        ),
-                        portable.get('analysis') or '',
-                    ]
-
-                    if has_difficulty:
-                        cols.append('difficulty')
-                        vals.append(int(portable.get('difficulty') or 1))
-                    if has_tags:
-                        cols.append('tags')
-                        vals.append(json.dumps(portable.get('tags') or [], ensure_ascii=False))
-                    if has_image_path:
-                        cols.append('image_path')
-                        vals.append(image_path_val)
-                    if has_created_by:
-                        cols.append('created_by')
-                        vals.append(session.get('user_id') or q.get('created_by'))
-
-                    if has_updated_at:
-                        sql = f"INSERT INTO questions ({', '.join(cols)}, updated_at) VALUES ({', '.join(['?'] * len(vals))}, CURRENT_TIMESTAMP)"
-                    else:
-                        sql = f"INSERT INTO questions ({', '.join(cols)}) VALUES ({', '.join(['?'] * len(vals))})"
-
-                    conn.execute(sql, vals)
+                    db.session.execute(
+                        text('''INSERT INTO questions
+                            (subject_id, type, content, options, answer, analysis, difficulty, tags, image_path, created_by, updated_at)
+                            VALUES (:subject_id, :type, :content, :options, :answer, :analysis, :difficulty, :tags, :image_path, :created_by, CURRENT_TIMESTAMP)'''),
+                        {
+                            'subject_id': subject_id,
+                            'type': portable.get('type') or 'essay',
+                            'content': portable.get('content') or '',
+                            'options': json.dumps(portable.get('options') or [], ensure_ascii=False),
+                            'answer': json.dumps(
+                                portable.get('answer') if portable.get('answer') is not None else [],
+                                ensure_ascii=False,
+                            ),
+                            'analysis': portable.get('analysis') or '',
+                            'difficulty': int(portable.get('difficulty') or 1),
+                            'tags': json.dumps(portable.get('tags') or [], ensure_ascii=False),
+                            'image_path': image_path_val,
+                            'created_by': session.get('user_id') or q.get('created_by'),
+                        },
+                    )
                     imported_count += 1
                 except Exception as e:
                     errors.append(f"导入题目ID {q.get('id', 'N/A')} 时出错: {str(e)}")
 
-        conn.commit()
+        db.session.commit()
         try:
             bump_questions_version()
         except Exception:
@@ -1125,7 +1059,7 @@ def import_questions_package():
         message = f'成功导入 {imported_count} 道题。'
         if errors:
             message += f' 遇到 {len(errors)} 个问题。'
-        
+
         return jsonify({
             'status': 'success' if not errors else 'warning',
             'message': message,
@@ -1136,5 +1070,5 @@ def import_questions_package():
     except zipfile.BadZipFile:
         return jsonify({'status': 'error', 'message': '文件不是一个有效的ZIP压缩包'}), 400
     except Exception as e:
-        conn.rollback() # 如果发生意外错误，回滚事务
+        db.session.rollback() # 如果发生意外错误，回滚事务
         return jsonify({'status': 'error', 'message': f'处理文件时发生未知错误: {str(e)}'}), 500

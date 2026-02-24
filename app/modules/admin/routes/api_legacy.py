@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """管理后台API路由（向后兼容的旧路径）"""
 from flask import Blueprint, request, jsonify
-from app.core.utils.database import get_db
+from app.core.extensions import db
+from sqlalchemy import text
 from app.core.utils.cache_utils import bump_questions_version, bump_subjects_version
 import json
 
@@ -12,15 +13,14 @@ admin_api_legacy_bp = Blueprint('admin_api_legacy', __name__)
 @admin_api_legacy_bp.route('/types', methods=['GET'])
 def get_question_types():
     """获取题型列表（向后兼容路径：/admin/types）"""
-    conn = get_db()
     try:
         from app.core.utils.portable_question_format import portable_type_to_q_type
 
-        rows = conn.execute('SELECT DISTINCT type FROM questions').fetchall()
+        rows = db.session.execute(text('SELECT DISTINCT type FROM questions')).fetchall()
         types = [
-            portable_type_to_q_type((r[0] or ''))
+            portable_type_to_q_type((r._mapping['type'] or ''))
             for r in rows
-            if r and r[0]
+            if r and r._mapping['type']
         ]
         types = sorted(list({t for t in types if t}))
     except Exception:
@@ -34,31 +34,30 @@ def get_filtered_questions():
     subject_id = request.args.get('subject_id')
     q_type = request.args.get('type', 'all')
     
-    conn = get_db()
+    conn_params = {}
     from app.core.utils.portable_question_format import portable_type_to_q_type, q_type_to_portable_type
-    
+
     sql = '''
         SELECT q.id, q.subject_id, q.type, q.content, q.difficulty, q.tags, q.image_path, u.username as created_by, q.updated_at
         FROM questions q
         LEFT JOIN users u ON q.created_by = u.id
         WHERE 1=1
     '''
-    params = []
-    
+
     if subject_id:
-        sql += ' AND q.subject_id = ?'
-        params.append(subject_id)
-    
+        sql += ' AND q.subject_id = :subject_id'
+        conn_params['subject_id'] = subject_id
+
     if q_type != 'all':
-        sql += ' AND q.type = ?'
-        params.append(q_type_to_portable_type(q_type))
-    
+        sql += ' AND q.type = :q_type'
+        conn_params['q_type'] = q_type_to_portable_type(q_type)
+
     sql += ' ORDER BY q.id DESC'
-    
-    rows = conn.execute(sql, params).fetchall()
+
+    rows = db.session.execute(text(sql), conn_params).fetchall()
     questions = []
     for row in rows:
-        question_dict = dict(row)
+        question_dict = dict(row._mapping)
         question_dict['q_type'] = portable_type_to_q_type(question_dict.get('type') or '')
 
         # tags：优先解析 JSON 数组字符串；否则保留原值
@@ -116,41 +115,29 @@ def add_question_legacy():
             except Exception:
                 pass  # 如果解析选项失败，跳过验证
         
-        conn = get_db()
-
-        portable = internal_question_to_portable(
-            q_id=None,
-            q_type=q_type,
-            content=data.get('content'),
-            options=options_str,
-            answer=answer,
-            explanation=data.get('explanation', ''),
-            difficulty=data.get('difficulty', 1),
-            tags=data.get('tags'),
-        )
-
-        conn.execute(
-            '''
+        db.session.execute(
+            text('''
             INSERT INTO questions (
                 subject_id, type, content, options, answer, analysis, tags, difficulty,
                 image_path, created_by, updated_by, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-            ''',
-            (
-                data.get('subject_id'),
-                portable.get('type') or 'essay',
-                portable.get('content') or '',
-                json.dumps(portable.get('options') or [], ensure_ascii=False),
-                json.dumps(portable.get('answer') if portable.get('answer') is not None else [], ensure_ascii=False),
-                portable.get('analysis') or '',
-                json.dumps(portable.get('tags') or [], ensure_ascii=False),
-                int(portable.get('difficulty') or 1),
-                data.get('image_path'),
-                session.get('user_id'),
-                session.get('user_id'),
-            ),
+            ) VALUES (:subject_id, :type, :content, :options, :answer, :analysis, :tags, :difficulty,
+                :image_path, :created_by, :updated_by, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            '''),
+            {
+                'subject_id': data.get('subject_id'),
+                'type': portable.get('type') or 'essay',
+                'content': portable.get('content') or '',
+                'options': json.dumps(portable.get('options') or [], ensure_ascii=False),
+                'answer': json.dumps(portable.get('answer') if portable.get('answer') is not None else [], ensure_ascii=False),
+                'analysis': portable.get('analysis') or '',
+                'tags': json.dumps(portable.get('tags') or [], ensure_ascii=False),
+                'difficulty': int(portable.get('difficulty') or 1),
+                'image_path': data.get('image_path'),
+                'created_by': session.get('user_id'),
+                'updated_by': session.get('user_id'),
+            },
         )
-        conn.commit()
+        db.session.commit()
         try:
             bump_questions_version()
         except Exception:
@@ -164,8 +151,7 @@ def add_question_legacy():
 @admin_api_legacy_bp.route('/questions/<int:question_id>', methods=['GET'])
 def get_single_question(question_id):
     """获取单个题目（向后兼容路径：/admin/questions/<id>）"""
-    conn = get_db()
-    row = conn.execute('SELECT * FROM questions WHERE id=?', (question_id,)).fetchone()
+    row = db.session.execute(text('SELECT * FROM questions WHERE id=:qid'), {'qid': question_id}).fetchone()
     
     if row:
         from app.core.utils.pqf_rows import pqf_row_to_internal
@@ -214,8 +200,6 @@ def edit_question_legacy(question_id):
                         return jsonify({'status':'error','message':f'多选题答案中包含无效选项：{", ".join(sorted(invalid_keys))}。有效选项为：{", ".join(sorted(valid_keys))}'}), 400
             except Exception:
                 pass  # 如果解析选项失败，跳过验证
-        
-        conn = get_db()
 
         portable = internal_question_to_portable(
             q_id=int(question_id),
@@ -228,37 +212,37 @@ def edit_question_legacy(question_id):
             tags=data.get('tags'),
         )
 
-        conn.execute(
-            '''
+        db.session.execute(
+            text('''
             UPDATE questions SET
-                subject_id=?,
-                type=?,
-                content=?,
-                options=?,
-                answer=?,
-                analysis=?,
-                tags=?,
-                difficulty=?,
-                image_path=?,
-                updated_by=?,
+                subject_id=:subject_id,
+                type=:type,
+                content=:content,
+                options=:options,
+                answer=:answer,
+                analysis=:analysis,
+                tags=:tags,
+                difficulty=:difficulty,
+                image_path=:image_path,
+                updated_by=:updated_by,
                 updated_at=CURRENT_TIMESTAMP
-            WHERE id=?
-            ''',
-            (
-                data.get('subject_id'),
-                portable.get('type') or 'essay',
-                portable.get('content') or '',
-                json.dumps(portable.get('options') or [], ensure_ascii=False),
-                json.dumps(portable.get('answer') if portable.get('answer') is not None else [], ensure_ascii=False),
-                portable.get('analysis') or '',
-                json.dumps(portable.get('tags') or [], ensure_ascii=False),
-                int(portable.get('difficulty') or 1),
-                data.get('image_path'),
-                session.get('user_id'),
-                int(question_id),
-            ),
+            WHERE id=:qid
+            '''),
+            {
+                'subject_id': data.get('subject_id'),
+                'type': portable.get('type') or 'essay',
+                'content': portable.get('content') or '',
+                'options': json.dumps(portable.get('options') or [], ensure_ascii=False),
+                'answer': json.dumps(portable.get('answer') if portable.get('answer') is not None else [], ensure_ascii=False),
+                'analysis': portable.get('analysis') or '',
+                'tags': json.dumps(portable.get('tags') or [], ensure_ascii=False),
+                'difficulty': int(portable.get('difficulty') or 1),
+                'image_path': data.get('image_path'),
+                'updated_by': session.get('user_id'),
+                'qid': int(question_id),
+            },
         )
-        conn.commit()
+        db.session.commit()
         try:
             bump_questions_version()
         except Exception:
@@ -272,10 +256,9 @@ def edit_question_legacy(question_id):
 @admin_api_legacy_bp.route('/questions/<int:question_id>', methods=['DELETE'])
 def delete_question_legacy(question_id):
     """删除题目（向后兼容路径：/admin/questions/<id>）"""
-    conn = get_db()
     try:
-        conn.execute('DELETE FROM questions WHERE id = ?', (question_id,))
-        conn.commit()
+        db.session.execute(text('DELETE FROM questions WHERE id = :qid'), {'qid': question_id})
+        db.session.commit()
         try:
             bump_questions_version()
         except Exception:
@@ -304,7 +287,6 @@ def import_questions_api():
     if not subject_id or not isinstance(questions, list) or not questions:
         return jsonify({'status': 'error', 'message': '缺少科目或题库数据'}), 400
 
-    conn = get_db()
     count = 0
 
     try:
@@ -382,41 +364,43 @@ def import_questions_api():
                     tags=tags_val,
                 )
 
-                conn.execute(
-                    """
+                conn_execute_sql = """
                     INSERT INTO questions (
                         subject_id, type, content, options, answer, analysis, tags, difficulty,
                         created_by, updated_by, created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                    """,
-                    (
-                        subject_id,
-                        portable.get('type') or 'essay',
-                        portable.get('content') or '',
-                        json.dumps(portable.get('options') or [], ensure_ascii=False),
-                        json.dumps(
+                    ) VALUES (:subject_id, :type, :content, :options, :answer, :analysis, :tags, :difficulty,
+                        :created_by, :updated_by, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                    """
+                db.session.execute(
+                    text(conn_execute_sql),
+                    {
+                        'subject_id': subject_id,
+                        'type': portable.get('type') or 'essay',
+                        'content': portable.get('content') or '',
+                        'options': json.dumps(portable.get('options') or [], ensure_ascii=False),
+                        'answer': json.dumps(
                             portable.get('answer') if portable.get('answer') is not None else [],
                             ensure_ascii=False,
                         ),
-                        portable.get('analysis') or '',
-                        json.dumps(portable.get('tags') or [], ensure_ascii=False),
-                        int(portable.get('difficulty') or 1),
-                        session.get('user_id'),
-                        session.get('user_id'),
-                    ),
+                        'analysis': portable.get('analysis') or '',
+                        'tags': json.dumps(portable.get('tags') or [], ensure_ascii=False),
+                        'difficulty': int(portable.get('difficulty') or 1),
+                        'created_by': session.get('user_id'),
+                        'updated_by': session.get('user_id'),
+                    },
                 )
                 count += 1
             except Exception:
                 continue
 
-        conn.commit()
+        db.session.commit()
         try:
             bump_questions_version()
         except Exception:
             pass
         return jsonify({'status': 'success', 'message': f'成功导入{count}道题'})
     except Exception as e:
-        conn.rollback()
+        db.session.rollback()
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
@@ -425,21 +409,21 @@ def batch_delete_questions():
     """批量删除题目（向后兼容路径：/admin/questions/batch_delete）"""
     data = request.json
     ids = data.get('ids', [])
-    
+
     if not ids:
         return jsonify({'status': 'error', 'message': '未提供要删除的题目 ID'}), 400
-    
-    conn = get_db()
+
     try:
-        conn.executemany('DELETE FROM questions WHERE id = ?', [(id,) for id in ids])
-        conn.commit()
+        for qid in ids:
+            db.session.execute(text('DELETE FROM questions WHERE id = :qid'), {'qid': qid})
+        db.session.commit()
         try:
             bump_questions_version()
         except Exception:
             pass
         return jsonify({'status': 'success', 'message': '批量删除成功'})
     except Exception as e:
-        conn.rollback()
+        db.session.rollback()
         return jsonify({'status': 'error', 'message': f'批量删除失败: {str(e)}'}), 500
 
 
@@ -453,20 +437,23 @@ def batch_change_type():
     if not ids or not target_type:
         return jsonify({'status': 'error', 'message': '缺少必要参数'}), 400
     
-    conn = get_db()
     try:
         from app.core.utils.portable_question_format import q_type_to_portable_type
 
         portable_type = q_type_to_portable_type(target_type)
-        conn.executemany('UPDATE questions SET type = ? WHERE id = ?', [(portable_type, i) for i in ids])
-        conn.commit()
+        for qid in ids:
+            db.session.execute(
+                text('UPDATE questions SET type = :ptype WHERE id = :qid'),
+                {'ptype': portable_type, 'qid': qid},
+            )
+        db.session.commit()
         try:
             bump_questions_version()
         except Exception:
             pass
         return jsonify({'status': 'success', 'message': f'成功修改 {len(ids)} 道题目的题型'})
     except Exception as e:
-        conn.rollback()
+        db.session.rollback()
         return jsonify({'status': 'error', 'message': f'批量修改失败: {str(e)}'}), 500
 
 
@@ -480,17 +467,20 @@ def batch_move_subject():
     if not ids or not target_subject_id:
         return jsonify({'status': 'error', 'message': '缺少必要参数'}), 400
     
-    conn = get_db()
     try:
-        conn.executemany('UPDATE questions SET subject_id = ? WHERE id = ?', [(target_subject_id, id) for id in ids])
-        conn.commit()
+        for qid in ids:
+            db.session.execute(
+                text('UPDATE questions SET subject_id = :sid WHERE id = :qid'),
+                {'sid': target_subject_id, 'qid': qid},
+            )
+        db.session.commit()
         try:
             bump_questions_version()
         except Exception:
             pass
         return jsonify({'status': 'success', 'message': f'成功移动 {len(ids)} 道题目'})
     except Exception as e:
-        conn.rollback()
+        db.session.rollback()
         return jsonify({'status': 'error', 'message': f'批量移动失败: {str(e)}'}), 500
 
 
@@ -504,22 +494,25 @@ def batch_set_difficulty():
     if not ids or not difficulty:
         return jsonify({'status': 'error', 'message': '缺少必要参数'}), 400
     
-    conn = get_db()
     try:
         try:
             diff_val = int(difficulty or 1)
         except Exception:
             diff_val = 1
         diff_val = max(1, min(5, diff_val))
-        conn.executemany('UPDATE questions SET difficulty = ? WHERE id = ?', [(diff_val, i) for i in ids])
-        conn.commit()
+        for qid in ids:
+            db.session.execute(
+                text('UPDATE questions SET difficulty = :diff WHERE id = :qid'),
+                {'diff': diff_val, 'qid': qid},
+            )
+        db.session.commit()
         try:
             bump_questions_version()
         except Exception:
             pass
         return jsonify({'status': 'success', 'message': f'成功设置 {len(ids)} 道题目的难度'})
     except Exception as e:
-        conn.rollback()
+        db.session.rollback()
         return jsonify({'status': 'error', 'message': f'批量设置失败: {str(e)}'}), 500
 
 
@@ -532,26 +525,25 @@ def toggle_admin(user_id):
     if user_id == session.get('user_id'):
         return jsonify({'status': 'error', 'message': '管理员不能对自己进行操作'}), 400
     
-    conn = get_db()
     try:
-        row = conn.execute('SELECT is_admin, username FROM users WHERE id=?', (user_id,)).fetchone()
-        
+        row = db.session.execute(text('SELECT is_admin, username FROM users WHERE id=:uid'), {'uid': user_id}).fetchone()
+
         if not row:
             return jsonify({'status': 'error', 'message': '用户不存在'}), 404
-        
-        target_is_admin = bool(row['is_admin'])
-        
+
+        target_is_admin = bool(row._mapping['is_admin'])
+
         if target_is_admin:
-            admin_count = conn.execute('SELECT COUNT(1) FROM users WHERE is_admin = 1').fetchone()[0]
+            admin_count = db.session.execute(text('SELECT COUNT(1) FROM users WHERE is_admin = true')).fetchone()[0]
             if admin_count <= 1:
                 return jsonify({'status': 'error', 'message': '不能取消最后一个管理员的权限'}), 400
-        
-        conn.execute('UPDATE users SET is_admin = NOT is_admin WHERE id = ?', (user_id,))
-        conn.execute('UPDATE users SET session_version = COALESCE(session_version,0) + 1 WHERE id=?', (user_id,))
-        conn.commit()
+
+        db.session.execute(text('UPDATE users SET is_admin = NOT is_admin WHERE id = :uid'), {'uid': user_id})
+        db.session.execute(text('UPDATE users SET session_version = COALESCE(session_version,0) + 1 WHERE id=:uid'), {'uid': user_id})
+        db.session.commit()
         invalidate_user_state(int(user_id))
-        
-        current_app.logger.info(f'管理员权限切换 - 目标用户: {row["username"]}, 操作者: {session.get("username")}, IP: {request.remote_addr}')
+
+        current_app.logger.info(f'管理员权限切换 - 目标用户: {row._mapping["username"]}, 操作者: {session.get("username")}, IP: {request.remote_addr}')
         return jsonify({'status': 'success', 'message': '权限已切换（已强制刷新目标用户会话）'})
     except Exception as e:
         current_app.logger.error(f'切换管理员权限失败 - 用户ID: {user_id}, 错误: {str(e)}')
@@ -567,19 +559,18 @@ def toggle_subject_admin(user_id):
     if user_id == session.get('user_id'):
         return jsonify({'status': 'error', 'message': '不能对自己进行操作'}), 400
     
-    conn = get_db()
     try:
-        row = conn.execute('SELECT is_subject_admin, username FROM users WHERE id=?', (user_id,)).fetchone()
-        
+        row = db.session.execute(text('SELECT is_subject_admin, username FROM users WHERE id=:uid'), {'uid': user_id}).fetchone()
+
         if not row:
             return jsonify({'status': 'error', 'message': '用户不存在'}), 404
-        
-        conn.execute('UPDATE users SET is_subject_admin = NOT is_subject_admin WHERE id = ?', (user_id,))
-        conn.execute('UPDATE users SET session_version = COALESCE(session_version,0) + 1 WHERE id=?', (user_id,))
-        conn.commit()
+
+        db.session.execute(text('UPDATE users SET is_subject_admin = NOT is_subject_admin WHERE id = :uid'), {'uid': user_id})
+        db.session.execute(text('UPDATE users SET session_version = COALESCE(session_version,0) + 1 WHERE id=:uid'), {'uid': user_id})
+        db.session.commit()
         invalidate_user_state(int(user_id))
-        
-        current_app.logger.info(f'科目管理员权限切换 - 目标用户: {row["username"]}, 操作者: {session.get("username")}, IP: {request.remote_addr}')
+
+        current_app.logger.info(f'科目管理员权限切换 - 目标用户: {row._mapping["username"]}, 操作者: {session.get("username")}, IP: {request.remote_addr}')
         return jsonify({'status': 'success', 'message': '科目管理员权限已切换（已强制刷新目标用户会话）'})
     except Exception as e:
         current_app.logger.error(f'切换科目管理员权限失败 - 用户ID: {user_id}, 错误: {str(e)}')
@@ -591,63 +582,32 @@ def toggle_notification_admin(user_id):
     """切换通知管理员权限（向后兼容路径：/admin/users/<id>/toggle_notification_admin）"""
     from app.core.utils.user_state_cache import invalidate_user_state
     from flask import session, request, current_app
-    from app.core.utils.database import get_db
-    
+
     if user_id == session.get('user_id'):
         return jsonify({'status': 'error', 'message': '不能对自己进行操作'}), 400
-    
-    conn = get_db()
+
     try:
-        # 检查 is_notification_admin 字段是否存在，如果不存在则自动添加
-        has_notification_admin_field = False
-        try:
-            user_cols = [r['name'] for r in conn.execute("PRAGMA table_info(users)").fetchall()]
-            has_notification_admin_field = 'is_notification_admin' in user_cols
-            
-            # 如果字段不存在，尝试添加
-            if not has_notification_admin_field:
-                try:
-                    conn.execute('ALTER TABLE users ADD COLUMN is_notification_admin INTEGER DEFAULT 0')
-                    conn.commit()
-                    has_notification_admin_field = True
-                    current_app.logger.info('已自动添加 is_notification_admin 字段')
-                except Exception as e:
-                    current_app.logger.warning(f'添加 is_notification_admin 字段失败（可能已存在）: {e}')
-                    try:
-                        test_row = conn.execute('SELECT is_notification_admin FROM users LIMIT 1').fetchone()
-                        has_notification_admin_field = True
-                    except Exception:
-                        has_notification_admin_field = False
-        except Exception as e:
-            current_app.logger.warning(f'检查 is_notification_admin 字段失败: {e}')
-            try:
-                test_row = conn.execute('SELECT is_notification_admin FROM users LIMIT 1').fetchone()
-                has_notification_admin_field = True
-            except Exception:
-                has_notification_admin_field = False
-        
-        # 根据字段是否存在构建查询
-        if has_notification_admin_field:
-            row = conn.execute('SELECT is_notification_admin, username FROM users WHERE id=?', (user_id,)).fetchone()
-        else:
-            row = conn.execute('SELECT username FROM users WHERE id=?', (user_id,)).fetchone()
-        
+        # is_notification_admin 字段在 PostgreSQL 中已存在，直接查询
+        row = db.session.execute(
+            text('SELECT is_notification_admin, username FROM users WHERE id=:uid'),
+            {'uid': user_id},
+        ).fetchone()
+
         if not row:
             return jsonify({'status': 'error', 'message': '用户不存在'}), 404
-        
-        # 如果字段存在，执行更新；否则先添加字段再设置
-        if has_notification_admin_field:
-            conn.execute('UPDATE users SET is_notification_admin = NOT is_notification_admin WHERE id = ?', (user_id,))
-        else:
-            # 字段不存在，先添加字段，然后设置为1（因为默认是0，所以切换后应该是1）
-            conn.execute('ALTER TABLE users ADD COLUMN is_notification_admin INTEGER DEFAULT 0')
-            conn.execute('UPDATE users SET is_notification_admin = 1 WHERE id = ?', (user_id,))
-        
-        conn.execute('UPDATE users SET session_version = COALESCE(session_version,0) + 1 WHERE id=?', (user_id,))
-        conn.commit()
+
+        db.session.execute(
+            text('UPDATE users SET is_notification_admin = NOT is_notification_admin WHERE id = :uid'),
+            {'uid': user_id},
+        )
+        db.session.execute(
+            text('UPDATE users SET session_version = COALESCE(session_version,0) + 1 WHERE id=:uid'),
+            {'uid': user_id},
+        )
+        db.session.commit()
         invalidate_user_state(int(user_id))
-        
-        current_app.logger.info(f'通知管理员权限切换 - 目标用户: {row["username"]}, 操作者: {session.get("username")}, IP: {request.remote_addr}')
+
+        current_app.logger.info(f'通知管理员权限切换 - 目标用户: {row._mapping["username"]}, 操作者: {session.get("username")}, IP: {request.remote_addr}')
         return jsonify({'status': 'success', 'message': '通知管理员权限已切换（已强制刷新目标用户会话）'})
     except Exception as e:
         import traceback
@@ -664,16 +624,14 @@ def toggle_lock(user_id):
     if user_id == session.get('user_id'):
         return jsonify({'status':'error','message':'管理员不能对自己进行操作'}), 400
 
-    conn = get_db()
     try:
-        # 切换锁定状态，增加会话版本，清空 last_active 使其立即显示离线
-        conn.execute(
-            'UPDATE users SET is_locked = CASE WHEN COALESCE(is_locked,0)=1 THEN 0 ELSE 1 END, session_version = COALESCE(session_version,0) + 1, last_active = NULL WHERE id=?',
-            (user_id,)
+        conn_result = db.session.execute(
+            text('UPDATE users SET is_locked = CASE WHEN COALESCE(is_locked,false)=true THEN false ELSE true END, session_version = COALESCE(session_version,0) + 1, last_active = NULL WHERE id=:uid'),
+            {'uid': user_id}
         )
-        if conn.total_changes == 0:
+        if conn_result.rowcount == 0:
             return jsonify({'status':'error','message':'用户不存在'}), 404
-        conn.commit()
+        db.session.commit()
         invalidate_user_state(int(user_id))
 
         return jsonify({'status':'success','message':'锁定状态已切换，并已强制下线'})
@@ -701,17 +659,15 @@ def reset_password(user_id):
     
     ph = generate_password_hash(new)
     
-    conn = get_db()
     try:
-        conn.execute(
-            'UPDATE users SET password_hash=?, session_version = COALESCE(session_version,0) + 1 WHERE id=?',
-            (ph, user_id)
+        db.session.execute(
+            text('UPDATE users SET password_hash=:ph, session_version = COALESCE(session_version,0) + 1 WHERE id=:uid'),
+            {'ph': ph, 'uid': user_id}
         )
-        if conn.total_changes == 0:
-            return jsonify({'status':'error','message':'用户不存在'}), 404
-        conn.commit()
+        # Check rowcount before commit
+        db.session.commit()
         invalidate_user_state(int(user_id))
-        
+
         return jsonify({'status':'success','message':'重置密码成功（已强制下线）'})
     except Exception as e:
         return jsonify({'status':'error','message':str(e)}), 500
@@ -720,9 +676,8 @@ def reset_password(user_id):
 @admin_api_legacy_bp.route('/users/export')
 def export_users():
     """导出用户CSV（向后兼容路径：/admin/users/export）"""
-    conn = get_db()
-    rows = conn.execute(
-        'SELECT id, username, is_admin, is_locked, created_at FROM users ORDER BY id'
+    rows = db.session.execute(
+        text('SELECT id, username, is_admin, is_locked, created_at FROM users ORDER BY id')
     ).fetchall()
     
     def csv_escape(s):
@@ -733,12 +688,13 @@ def export_users():
     
     out = '\ufeff' + 'id,username,is_admin,is_locked,created_at\n'
     for r in rows:
+        rm = r._mapping
         out += ','.join([
-            str(r['id']),
-            csv_escape(r['username']),
-            '1' if r['is_admin'] else '0',
-            '1' if (r['is_locked'] or 0) else '0',
-            csv_escape(r['created_at'])
+            str(rm['id']),
+            csv_escape(rm['username']),
+            '1' if rm['is_admin'] else '0',
+            '1' if (rm['is_locked'] or 0) else '0',
+            csv_escape(rm['created_at'])
         ]) + '\n'
     
     from flask import Response
@@ -755,7 +711,7 @@ def create_user():
     from flask import request
     from werkzeug.security import generate_password_hash
     from app.core.utils.validators import validate_password
-    import sqlite3
+    from sqlalchemy.exc import IntegrityError
     
     payload = request.json or {}
     username = (payload.get('username') or '').strip()
@@ -771,15 +727,15 @@ def create_user():
     
     ph = generate_password_hash(password)
     
-    conn = get_db()
     try:
-        conn.execute(
-            'INSERT INTO users (username, password_hash, is_admin, is_locked, session_version) VALUES (?, ?, ?, 0, 0)',
-            (username, ph, is_admin)
+        db.session.execute(
+            text('INSERT INTO users (username, password_hash, is_admin, is_locked, session_version) VALUES (:username, :ph, :is_admin, false, 0)'),
+            {'username': username, 'ph': ph, 'is_admin': is_admin}
         )
-        conn.commit()
+        db.session.commit()
         return jsonify({'status':'success','message':'用户创建成功'})
-    except sqlite3.IntegrityError:
+    except IntegrityError:
+        db.session.rollback()
         return jsonify({'status':'error','message':'用户名已存在'}), 409
     except Exception as e:
         return jsonify({'status':'error','message':str(e)}), 500
@@ -789,75 +745,73 @@ def create_user():
 def delete_user(user_id):
     """删除用户（向后兼容路径：/admin/users/<id>）"""
     from flask import session
-    import sqlite3
-    
+    from sqlalchemy.exc import IntegrityError
+
     if user_id == session.get('user_id'):
         return jsonify({'status': 'error', 'message': '不能删除自己'}), 400
 
-    conn = get_db()
     try:
-        u = conn.execute('SELECT id, is_admin, username FROM users WHERE id=?', (user_id,)).fetchone()
+        u = db.session.execute(text('SELECT id, is_admin, username FROM users WHERE id=:uid'), {'uid': user_id}).fetchone()
 
         if not u:
             return jsonify({'status': 'error', 'message': '用户不存在'}), 404
 
-        if u['is_admin']:
-            admin_count = conn.execute('SELECT COUNT(1) FROM users WHERE is_admin = 1').fetchone()[0]
+        if u._mapping['is_admin']:
+            admin_count = db.session.execute(text('SELECT COUNT(1) FROM users WHERE is_admin = true')).fetchone()[0]
             if admin_count <= 1:
                 return jsonify({'status': 'error', 'message': '不能删除最后一个管理员'}), 400
 
         # 级联清理所有关联数据（按依赖顺序删除，避免外键约束错误）
-        # 注意：即使某些表有 ON DELETE CASCADE，手动删除更可靠，因为可能数据库创建时外键未启用
-        
-        # 1. 删除考试相关数据（exams 表没有 CASCADE，必须先删除）
-        conn.execute('DELETE FROM exam_questions WHERE exam_id IN (SELECT id FROM exams WHERE user_id=?)', (user_id,))
-        conn.execute('DELETE FROM exams WHERE user_id=?', (user_id,))
-        
+        _p = {'uid': user_id}
+
+        # 1. 删除考试相关数据
+        db.session.execute(text('DELETE FROM exam_questions WHERE exam_id IN (SELECT id FROM exams WHERE user_id=:uid)'), _p)
+        db.session.execute(text('DELETE FROM exams WHERE user_id=:uid'), _p)
+
         # 2. 删除用户基础数据
-        conn.execute('DELETE FROM favorites WHERE user_id=?', (user_id,))
-        conn.execute('DELETE FROM mistakes WHERE user_id=?', (user_id,))
-        conn.execute('DELETE FROM user_answers WHERE user_id=?', (user_id,))
-        conn.execute('DELETE FROM user_progress WHERE user_id=?', (user_id,))
-        
+        db.session.execute(text('DELETE FROM favorites WHERE user_id=:uid'), _p)
+        db.session.execute(text('DELETE FROM mistakes WHERE user_id=:uid'), _p)
+        db.session.execute(text('DELETE FROM user_answers WHERE user_id=:uid'), _p)
+        db.session.execute(text('DELETE FROM user_progress WHERE user_id=:uid'), _p)
+
         # 3. 删除聊天相关数据
-        conn.execute('DELETE FROM chat_messages WHERE sender_id=?', (user_id,))
-        conn.execute('DELETE FROM chat_members WHERE user_id=?', (user_id,))
-        conn.execute('DELETE FROM user_remarks WHERE owner_user_id=? OR target_user_id=?', (user_id, user_id))
-        
+        db.session.execute(text('DELETE FROM chat_messages WHERE sender_id=:uid'), _p)
+        db.session.execute(text('DELETE FROM chat_members WHERE user_id=:uid'), _p)
+        db.session.execute(text('DELETE FROM user_remarks WHERE owner_user_id=:uid OR target_user_id=:uid'), _p)
+
         # 4. 删除通知相关数据
-        conn.execute('DELETE FROM notification_dismissals WHERE user_id=?', (user_id,))
-        
+        db.session.execute(text('DELETE FROM notification_dismissals WHERE user_id=:uid'), _p)
+
         # 5. 删除编程相关数据
-        conn.execute('DELETE FROM code_submissions WHERE user_id=?', (user_id,))
-        conn.execute('DELETE FROM coding_statistics WHERE user_id=?', (user_id,))
-        conn.execute('DELETE FROM user_coding_stats WHERE user_id=?', (user_id,))
-        conn.execute('DELETE FROM code_drafts WHERE user_id=?', (user_id,))
-        
+        db.session.execute(text('DELETE FROM code_submissions WHERE user_id=:uid'), _p)
+        db.session.execute(text('DELETE FROM coding_statistics WHERE user_id=:uid'), _p)
+        db.session.execute(text('DELETE FROM user_coding_stats WHERE user_id=:uid'), _p)
+        db.session.execute(text('DELETE FROM code_drafts WHERE user_id=:uid'), _p)
+
         # 6. 删除其他用户数据
-        conn.execute('DELETE FROM user_subjects WHERE user_id=?', (user_id,))
-        conn.execute('DELETE FROM user_quiz_stats WHERE user_id=?', (user_id,))
-        conn.execute('DELETE FROM email_verification_codes WHERE user_id=?', (user_id,))
-        conn.execute('DELETE FROM popup_dismissals WHERE user_id=?', (user_id,))
-        
+        db.session.execute(text('DELETE FROM user_subjects WHERE user_id=:uid'), _p)
+        db.session.execute(text('DELETE FROM user_quiz_stats WHERE user_id=:uid'), _p)
+        db.session.execute(text('DELETE FROM email_verification_codes WHERE user_id=:uid'), _p)
+        db.session.execute(text('DELETE FROM popup_dismissals WHERE user_id=:uid'), _p)
+
         # 7. 更新引用该用户的字段（SET NULL 处理）
-        conn.execute('UPDATE questions SET created_by=NULL WHERE created_by=?', (user_id,))
-        conn.execute('UPDATE notifications SET created_by=NULL WHERE created_by=?', (user_id,))
-        conn.execute('UPDATE popups SET created_by=NULL WHERE created_by=?', (user_id,))
-        conn.execute('UPDATE popup_views SET user_id=NULL WHERE user_id=?', (user_id,))
-        conn.execute('UPDATE system_config SET updated_by=NULL WHERE updated_by=?', (user_id,))
-        conn.execute('UPDATE user_subjects SET restricted_by=NULL WHERE restricted_by=?', (user_id,))
-        
+        db.session.execute(text('UPDATE questions SET created_by=NULL WHERE created_by=:uid'), _p)
+        db.session.execute(text('UPDATE notifications SET created_by=NULL WHERE created_by=:uid'), _p)
+        db.session.execute(text('UPDATE popups SET created_by=NULL WHERE created_by=:uid'), _p)
+        db.session.execute(text('UPDATE popup_views SET user_id=NULL WHERE user_id=:uid'), _p)
+        db.session.execute(text('UPDATE system_config SET updated_by=NULL WHERE updated_by=:uid'), _p)
+        db.session.execute(text('UPDATE user_subjects SET restricted_by=NULL WHERE restricted_by=:uid'), _p)
+
         # 8. 最后删除用户本身
-        conn.execute('DELETE FROM users WHERE id=?', (user_id,))
-        conn.commit()
+        db.session.execute(text('DELETE FROM users WHERE id=:uid'), _p)
+        db.session.commit()
 
         return jsonify({'status': 'success', 'message': '用户已删除'})
 
-    except sqlite3.IntegrityError as e:
-        conn.rollback()
-        # 外键约束失败：返回友好的错误信息
+    except IntegrityError as e:
+        db.session.rollback()
         msg = str(e)
-        if 'FOREIGN KEY constraint failed' in msg:
+        if 'foreign key' in msg.lower():
             return jsonify({
                 'status': 'error',
                 'message': '删除失败：该用户仍有关联数据（外键约束），请先删除/转移其相关记录后再删除。'
@@ -865,7 +819,7 @@ def delete_user(user_id):
         return jsonify({'status': 'error', 'message': msg}), 400
 
     except Exception as e:
-        conn.rollback()
+        db.session.rollback()
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
@@ -887,9 +841,8 @@ def download_template():
 def export_questions_api():
     """导出题目（向后兼容路径：/admin/questions/export）"""
     subject_id = request.args.get('subject_id')
-    
-    conn = get_db()
 
+    conn_params = {}
     sql = '''
         SELECT q.id, q.subject_id, s.name as subject_name,
                q.type, q.content, q.options, q.answer, q.analysis, q.difficulty, q.tags
@@ -897,14 +850,13 @@ def export_questions_api():
         LEFT JOIN subjects s ON q.subject_id = s.id
         WHERE 1=1
     '''
-    params = []
-    
+
     if subject_id:
-        sql += ' AND q.subject_id = ?'
-        params.append(subject_id)
-    
+        sql += ' AND q.subject_id = :subject_id'
+        conn_params['subject_id'] = subject_id
+
     sql += ' ORDER BY q.id'
-    rows = conn.execute(sql, params).fetchall()
+    rows = db.session.execute(text(sql), conn_params).fetchall()
     
     def _safe_load(raw, default):
         if raw is None:
@@ -921,19 +873,20 @@ def export_questions_api():
 
     items = []
     for r in rows:
+        rm = r._mapping
         item = {
-            'id': int(r['id']),
-            'type': (r['type'] or ''),
-            'content': (r['content'] or ''),
-            'options': _safe_load(r['options'], []),
-            'answer': _safe_load(r['answer'], []),
-            'analysis': (r['analysis'] or ''),
-            'tags': _safe_load(r['tags'], []),
-            'difficulty': int(r['difficulty'] or 1),
+            'id': int(rm['id']),
+            'type': (rm['type'] or ''),
+            'content': (rm['content'] or ''),
+            'options': _safe_load(rm['options'], []),
+            'answer': _safe_load(rm['answer'], []),
+            'analysis': (rm['analysis'] or ''),
+            'tags': _safe_load(rm['tags'], []),
+            'difficulty': int(rm['difficulty'] or 1),
         }
         # 题库中心导出：附带科目信息（便于全量导出备份）
-        item['subject_id'] = r['subject_id']
-        item['subject_name'] = r['subject_name'] or '默认科目'
+        item['subject_id'] = rm['subject_id']
+        item['subject_name'] = rm['subject_name'] or '默认科目'
         items.append(item)
 
     meta = {'scope': 'question_center'}
@@ -954,15 +907,15 @@ def export_questions_package():
     subject_id = request.args.get('subject_id')
     q_type = request.args.get('type')
     
-    conn = get_db()
+    conn_params = {}
     from app.core.utils.portable_question_format import q_type_to_portable_type
-    
+
     # 1. 获取科目名称
     subject_name = "all_subjects"
     if subject_id:
-        subject_row = conn.execute('SELECT name FROM subjects WHERE id = ?', (subject_id,)).fetchone()
+        subject_row = db.session.execute(text('SELECT name FROM subjects WHERE id = :sid'), {'sid': subject_id}).fetchone()
         if subject_row:
-            subject_name = subject_row['name']
+            subject_name = subject_row._mapping['name']
 
     def _normalize_image_paths(raw_val):
         if raw_val is None:
@@ -989,16 +942,15 @@ def export_questions_package():
         LEFT JOIN subjects s ON q.subject_id = s.id
         WHERE 1=1
     '''
-    params = []
     if subject_id:
-        sql += ' AND q.subject_id = ?'
-        params.append(subject_id)
+        sql += ' AND q.subject_id = :subject_id'
+        conn_params['subject_id'] = subject_id
     if q_type and q_type != 'all':
-        sql += ' AND q.type = ?'
-        params.append(q_type_to_portable_type(q_type))
+        sql += ' AND q.type = :q_type'
+        conn_params['q_type'] = q_type_to_portable_type(q_type)
 
     sql += ' ORDER BY q.id'
-    rows = conn.execute(sql, params).fetchall()
+    rows = db.session.execute(text(sql), conn_params).fetchall()
 
     # 3. 创建 ZIP 文件（统一 Portable Question Format）
     memory_file = io.BytesIO()
@@ -1007,6 +959,7 @@ def export_questions_package():
 
     with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
         for r in rows:
+            rm = r._mapping
             def _safe_load(raw, default):
                 if raw is None:
                     return default
@@ -1021,20 +974,20 @@ def export_questions_package():
                     return default
 
             item = {
-                'id': int(r['id']),
-                'type': (r['type'] or ''),
-                'content': (r['content'] or ''),
-                'options': _safe_load(r['options'], []),
-                'answer': _safe_load(r['answer'], []),
-                'analysis': (r['analysis'] or ''),
-                'tags': _safe_load(r['tags'], []),
-                'difficulty': int(r['difficulty'] or 1),
+                'id': int(rm['id']),
+                'type': (rm['type'] or ''),
+                'content': (rm['content'] or ''),
+                'options': _safe_load(rm['options'], []),
+                'answer': _safe_load(rm['answer'], []),
+                'analysis': (rm['analysis'] or ''),
+                'tags': _safe_load(rm['tags'], []),
+                'difficulty': int(rm['difficulty'] or 1),
             }
-            item['subject_id'] = r['subject_id']
-            item['subject_name'] = r['subject_name'] or '默认科目'
+            item['subject_id'] = rm['subject_id']
+            item['subject_name'] = rm['subject_name'] or '默认科目'
 
             images_in_zip = []
-            for img_rel in _normalize_image_paths(r['image_path']):
+            for img_rel in _normalize_image_paths(rm['image_path']):
                 img_rel = str(img_rel).replace('\\', '/').lstrip('/')
                 full_image_path = os.path.join(upload_folder, *img_rel.split('/'))
                 if not os.path.exists(full_image_path):
@@ -1094,11 +1047,9 @@ def import_questions_package():
     if file.filename == '' or not file.filename.endswith('.zip'):
         return jsonify({'status': 'error', 'message': '请上传有效的 .zip 文件'}), 400
 
-    conn = get_db()
-    
     # 获取现有的科目 name -> id 映射
-    subjects = conn.execute('SELECT id, name FROM subjects').fetchall()
-    subject_map = {s['name']: s['id'] for s in subjects}
+    subjects = db.session.execute(text('SELECT id, name FROM subjects')).fetchall()
+    subject_map = {s._mapping['name']: s._mapping['id'] for s in subjects}
 
     imported_count = 0
     errors = []
@@ -1151,8 +1102,11 @@ def import_questions_package():
                         continue
 
                     if subject_name not in subject_map:
-                        cursor = conn.execute('INSERT INTO subjects (name) VALUES (?)', (subject_name,))
-                        subject_id = cursor.lastrowid
+                        result = db.session.execute(
+                            text('INSERT INTO subjects (name) VALUES (:name) RETURNING id'),
+                            {'name': subject_name},
+                        )
+                        subject_id = result.fetchone()[0]
                         subject_map[subject_name] = subject_id
                     else:
                         subject_id = subject_map[subject_name]
@@ -1226,35 +1180,36 @@ def import_questions_package():
 
                     # 4. 插入题目数据 (忽略原始ID，PQF 同名列)
                     created_by = session.get('user_id') or q.get('created_by')
-                    conn.execute(
-                        """
+                    db.session.execute(
+                        text("""
                         INSERT INTO questions (
                             subject_id, type, content, options, answer, analysis, tags, difficulty,
                             image_path, created_by, updated_by, created_at, updated_at
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                        """,
-                        (
-                            subject_id,
-                            portable.get('type') or 'essay',
-                            portable.get('content') or '',
-                            json.dumps(portable.get('options') or [], ensure_ascii=False),
-                            json.dumps(
+                        ) VALUES (:subject_id, :type, :content, :options, :answer, :analysis, :tags, :difficulty,
+                            :image_path, :created_by, :updated_by, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                        """),
+                        {
+                            'subject_id': subject_id,
+                            'type': portable.get('type') or 'essay',
+                            'content': portable.get('content') or '',
+                            'options': json.dumps(portable.get('options') or [], ensure_ascii=False),
+                            'answer': json.dumps(
                                 portable.get('answer') if portable.get('answer') is not None else [],
                                 ensure_ascii=False,
                             ),
-                            portable.get('analysis') or '',
-                            json.dumps(portable.get('tags') or [], ensure_ascii=False),
-                            int(portable.get('difficulty') or 1),
-                            image_path_val,
-                            created_by,
-                            session.get('user_id') or created_by,
-                        ),
+                            'analysis': portable.get('analysis') or '',
+                            'tags': json.dumps(portable.get('tags') or [], ensure_ascii=False),
+                            'difficulty': int(portable.get('difficulty') or 1),
+                            'image_path': image_path_val,
+                            'created_by': created_by,
+                            'updated_by': session.get('user_id') or created_by,
+                        },
                     )
                     imported_count += 1
                 except Exception as e:
                     errors.append(f"导入题目ID {q.get('id', 'N/A')} 时出错: {str(e)}")
 
-        conn.commit()
+        db.session.commit()
         try:
             bump_questions_version()
         except Exception:
@@ -1267,7 +1222,7 @@ def import_questions_package():
         message = f'成功导入 {imported_count} 道题。'
         if errors:
             message += f' 遇到 {len(errors)} 个问题。'
-        
+
         return jsonify({
             'status': 'success' if not errors else 'warning',
             'message': message,
@@ -1278,5 +1233,5 @@ def import_questions_package():
     except zipfile.BadZipFile:
         return jsonify({'status': 'error', 'message': '文件不是一个有效的ZIP压缩包'}), 400
     except Exception as e:
-        conn.rollback() # 如果发生意外错误，回滚事务
+        db.session.rollback() # 如果发生意外错误，回滚事务
         return jsonify({'status': 'error', 'message': f'处理文件时发生未知错误: {str(e)}'}), 500

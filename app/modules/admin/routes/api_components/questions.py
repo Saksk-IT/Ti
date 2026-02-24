@@ -5,7 +5,6 @@ import datetime
 import io
 import json
 import os
-import sqlite3
 import zipfile
 
 import pandas as pd
@@ -24,8 +23,8 @@ from flask import (
 from werkzeug.security import generate_password_hash
 from werkzeug.utils import secure_filename
 
-from app.core.extensions import limiter
-from app.core.utils.database import get_db
+from app.core.extensions import db, limiter
+from sqlalchemy import text
 from app.core.utils.cache_utils import bump_questions_version
 from app.core.utils.fill_blank_parser import parse_fill_blank
 from app.core.utils.validators import parse_int, validate_password
@@ -40,12 +39,11 @@ def get_question_types():
     """获取题型列表"""
     from app.core.utils.portable_question_format import portable_type_to_q_type
 
-    conn = get_db()
-    rows = conn.execute('SELECT DISTINCT type AS p_type FROM questions').fetchall()
+    rows = db.session.execute(text('SELECT DISTINCT type AS p_type FROM questions')).fetchall()
     out = []
     for r in rows or []:
         try:
-            pt = (r['p_type'] if r and r['p_type'] is not None else '').strip()
+            pt = (r._mapping['p_type'] if r and r._mapping['p_type'] is not None else '').strip()
         except Exception:
             pt = ''
         if not pt:
@@ -64,30 +62,29 @@ def get_filtered_questions():
     subject_id = request.args.get('subject_id')
     q_type = request.args.get('type', 'all')
     
-    conn = get_db()
-    
+    conn_params = {}
+
     sql = '''
         SELECT q.id, q.subject_id, q.type, q.content, q.difficulty, q.tags, q.image_path, u.username as created_by, q.updated_at
         FROM questions q
         LEFT JOIN users u ON q.created_by = u.id
         WHERE 1=1
     '''
-    params = []
-    
+
     if subject_id:
-        sql += ' AND q.subject_id = ?'
-        params.append(subject_id)
-    
+        sql += ' AND q.subject_id = :subject_id'
+        conn_params['subject_id'] = subject_id
+
     if q_type != 'all':
-        sql += ' AND q.type = ?'
-        params.append(any_type_to_portable_type(q_type))
-    
+        sql += ' AND q.type = :q_type'
+        conn_params['q_type'] = any_type_to_portable_type(q_type)
+
     sql += ' ORDER BY q.id DESC'
-    
-    rows = conn.execute(sql, params).fetchall()
+
+    rows = db.session.execute(text(sql), conn_params).fetchall()
     questions = []
     for row in rows:
-        question_dict = dict(row)
+        question_dict = dict(row._mapping)
         # PQF -> 兼容字段（q_type/content 填空 __）
         try:
             portable = {
@@ -134,11 +131,10 @@ def get_single_question(question_id):
     """获取单个题目"""
     from app.core.utils.portable_question_format import portable_question_to_internal, tags_to_storage_str
 
-    conn = get_db()
-    row = conn.execute('SELECT * FROM questions WHERE id=?', (question_id,)).fetchone()
-    
+    row = db.session.execute(text('SELECT * FROM questions WHERE id=:qid'), {'qid': question_id}).fetchone()
+
     if row:
-        question_dict = dict(row)
+        question_dict = dict(row._mapping)
 
         # PQF -> 兼容字段（q_type/答案字符串/解析/填空 __）
         try:
@@ -223,28 +219,28 @@ def add_question():
             tags=data.get('tags'),
         )
 
-        conn = get_db()
-        cursor = conn.execute(
-            '''
+        result = db.session.execute(
+            text('''
             INSERT INTO questions
             (subject_id, type, content, options, answer, analysis, difficulty, tags, image_path, created_by, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ''',
-            (
-                data.get('subject_id'),
-                portable.get('type') or 'essay',
-                portable.get('content') or '',
-                json.dumps(portable.get('options') or [], ensure_ascii=False),
-                json.dumps(portable.get('answer') if portable.get('answer') is not None else [], ensure_ascii=False),
-                portable.get('analysis') or '',
-                int(portable.get('difficulty') or 1),
-                json.dumps(portable.get('tags') or [], ensure_ascii=False),
-                data.get('image_path'),
-                uid,
-            ),
+            VALUES (:subject_id, :type, :content, :options, :answer, :analysis, :difficulty, :tags, :image_path, :created_by, CURRENT_TIMESTAMP)
+            RETURNING id
+            '''),
+            {
+                'subject_id': data.get('subject_id'),
+                'type': portable.get('type') or 'essay',
+                'content': portable.get('content') or '',
+                'options': json.dumps(portable.get('options') or [], ensure_ascii=False),
+                'answer': json.dumps(portable.get('answer') if portable.get('answer') is not None else [], ensure_ascii=False),
+                'analysis': portable.get('analysis') or '',
+                'difficulty': int(portable.get('difficulty') or 1),
+                'tags': json.dumps(portable.get('tags') or [], ensure_ascii=False),
+                'image_path': data.get('image_path'),
+                'created_by': uid,
+            },
         )
-        new_id = cursor.lastrowid
-        conn.commit()
+        new_id = result.fetchone()[0]
+        db.session.commit()
         try:
             bump_questions_version()
         except Exception:
@@ -298,36 +294,35 @@ def edit_question(question_id):
             tags=data.get('tags'),
         )
 
-        conn = get_db()
-        conn.execute(
-            '''
+        db.session.execute(
+            text('''
             UPDATE questions SET
-                subject_id=?,
-                type=?,
-                content=?,
-                options=?,
-                answer=?,
-                analysis=?,
-                difficulty=?,
-                tags=?,
-                image_path=?,
+                subject_id=:subject_id,
+                type=:type,
+                content=:content,
+                options=:options,
+                answer=:answer,
+                analysis=:analysis,
+                difficulty=:difficulty,
+                tags=:tags,
+                image_path=:image_path,
                 updated_at=CURRENT_TIMESTAMP
-            WHERE id=?
-            ''',
-            (
-                data.get('subject_id'),
-                portable.get('type') or 'essay',
-                portable.get('content') or '',
-                json.dumps(portable.get('options') or [], ensure_ascii=False),
-                json.dumps(portable.get('answer') if portable.get('answer') is not None else [], ensure_ascii=False),
-                portable.get('analysis') or '',
-                int(portable.get('difficulty') or 1),
-                json.dumps(portable.get('tags') or [], ensure_ascii=False),
-                data.get('image_path'),
-                int(question_id),
-            ),
+            WHERE id=:qid
+            '''),
+            {
+                'subject_id': data.get('subject_id'),
+                'type': portable.get('type') or 'essay',
+                'content': portable.get('content') or '',
+                'options': json.dumps(portable.get('options') or [], ensure_ascii=False),
+                'answer': json.dumps(portable.get('answer') if portable.get('answer') is not None else [], ensure_ascii=False),
+                'analysis': portable.get('analysis') or '',
+                'difficulty': int(portable.get('difficulty') or 1),
+                'tags': json.dumps(portable.get('tags') or [], ensure_ascii=False),
+                'image_path': data.get('image_path'),
+                'qid': int(question_id),
+            },
         )
-        conn.commit()
+        db.session.commit()
         try:
             bump_questions_version()
         except Exception:
@@ -343,9 +338,8 @@ def edit_question(question_id):
 @subject_admin_required
 def delete_question(question_id):
     """删除题目"""
-    conn = get_db()
-    conn.execute('DELETE FROM questions WHERE id = ?', (question_id,))
-    conn.commit()
+    db.session.execute(text('DELETE FROM questions WHERE id = :qid'), {'qid': question_id})
+    db.session.commit()
     try:
         bump_questions_version()
     except Exception:
@@ -365,10 +359,10 @@ def batch_delete_questions():
     if not ids:
         return jsonify({'status': 'error', 'message': '未提供要删除的题目 ID'}), 400
     
-    conn = get_db()
     try:
-        conn.executemany('DELETE FROM questions WHERE id = ?', [(id,) for id in ids])
-        conn.commit()
+        for qid in ids:
+            db.session.execute(text('DELETE FROM questions WHERE id = :qid'), {'qid': qid})
+        db.session.commit()
         try:
             bump_questions_version()
         except Exception:
@@ -390,7 +384,6 @@ def batch_change_type():
     if not ids or not target_type:
         return jsonify({'status': 'error', 'message': '参数不完整'}), 400
 
-    conn = get_db()
     try:
         from app.core.utils.portable_question_format import (
             PORTABLE_TYPES,
@@ -405,42 +398,44 @@ def batch_change_type():
             return jsonify({'status': 'error', 'message': '无效的目标题型'}), 400
 
         # 逐题重算 PQF（确保答案/填空占位符等与新题型语义一致）
-        placeholders = ','.join(['?'] * len(ids))
-        rows = conn.execute(
-            f'''
+        placeholders = ','.join([f':id_{i}' for i in range(len(ids))])
+        id_params = {f'id_{i}': qid for i, qid in enumerate(ids)}
+        rows = db.session.execute(
+            text(f'''
             SELECT id, type, content, options, answer, analysis, tags, difficulty
             FROM questions
             WHERE id IN ({placeholders})
-            ''',
-            ids,
+            '''),
+            id_params,
         ).fetchall()
 
         updates = []
         for r in rows or []:
+            rm = r._mapping
             try:
-                qid = int(r['id'])
+                qid = int(rm['id'])
             except Exception:
                 continue
 
             try:
                 p = {
                     'id': qid,
-                    'type': r['type'] or '',
-                    'content': r['content'] or '',
-                    'options': json.loads(r['options'] or '[]'),
-                    'answer': json.loads(r['answer'] or '[]'),
-                    'analysis': r['analysis'] or '',
-                    'tags': json.loads(r['tags'] or '[]'),
-                    'difficulty': int(r['difficulty'] or 1),
+                    'type': rm['type'] or '',
+                    'content': rm['content'] or '',
+                    'options': json.loads(rm['options'] or '[]'),
+                    'answer': json.loads(rm['answer'] or '[]'),
+                    'analysis': rm['analysis'] or '',
+                    'tags': json.loads(rm['tags'] or '[]'),
+                    'difficulty': int(rm['difficulty'] or 1),
                 }
             except Exception:
                 p = {
                     'id': qid,
-                    'type': r['type'] or '',
-                    'content': r['content'] or '',
+                    'type': rm['type'] or '',
+                    'content': rm['content'] or '',
                     'options': [],
                     'answer': [],
-                    'analysis': r['analysis'] or '',
+                    'analysis': rm['analysis'] or '',
                     'tags': [],
                     'difficulty': 1,
                 }
@@ -472,22 +467,32 @@ def batch_change_type():
             )
 
         if updates:
-            conn.executemany(
-                '''
-                UPDATE questions
-                SET type=?,
-                    content=?,
-                    options=?,
-                    answer=?,
-                    analysis=?,
-                    tags=?,
-                    difficulty=?,
-                    updated_at=CURRENT_TIMESTAMP
-                WHERE id=?
-                ''',
-                updates,
-            )
-        conn.commit()
+            for u in updates:
+                db.session.execute(
+                    text('''
+                    UPDATE questions
+                    SET type=:type,
+                        content=:content,
+                        options=:options,
+                        answer=:answer,
+                        analysis=:analysis,
+                        tags=:tags,
+                        difficulty=:difficulty,
+                        updated_at=CURRENT_TIMESTAMP
+                    WHERE id=:qid
+                    '''),
+                    {
+                        'type': u[0],
+                        'content': u[1],
+                        'options': u[2],
+                        'answer': u[3],
+                        'analysis': u[4],
+                        'tags': u[5],
+                        'difficulty': u[6],
+                        'qid': u[7],
+                    },
+                )
+        db.session.commit()
         try:
             bump_questions_version()
         except Exception:
@@ -509,11 +514,13 @@ def batch_move_subject():
     if not ids or not target_subject_id:
         return jsonify({'status': 'error', 'message': '参数不完整'}), 400
     
-    conn = get_db()
     try:
-        conn.executemany('UPDATE questions SET subject_id = ? WHERE id = ?', 
-                        [(target_subject_id, id) for id in ids])
-        conn.commit()
+        for qid in ids:
+            db.session.execute(
+                text('UPDATE questions SET subject_id = :sid WHERE id = :qid'),
+                {'sid': target_subject_id, 'qid': qid},
+            )
+        db.session.commit()
         try:
             bump_questions_version()
         except Exception:
@@ -535,13 +542,13 @@ def batch_set_difficulty():
     if not ids or difficulty is None:
         return jsonify({'status': 'error', 'message': '参数不完整'}), 400
     
-    conn = get_db()
     try:
-        conn.executemany(
-            'UPDATE questions SET difficulty = ?, updated_at=CURRENT_TIMESTAMP WHERE id = ?',
-            [(difficulty, int(qid)) for qid in ids],
-        )
-        conn.commit()
+        for qid in ids:
+            db.session.execute(
+                text('UPDATE questions SET difficulty = :diff, updated_at=CURRENT_TIMESTAMP WHERE id = :qid'),
+                {'diff': difficulty, 'qid': int(qid)},
+            )
+        db.session.commit()
         try:
             bump_questions_version()
         except Exception:
@@ -564,17 +571,16 @@ def batch_tags():
     if not ids or not action:
         return jsonify({'status': 'error', 'message': '参数不完整'}), 400
     
-    conn = get_db()
     try:
         new_tags_set = set(t.strip() for t in str(tags or '').split(',') if t and t.strip())
 
         for qid in ids:
-            row = conn.execute('SELECT id, tags FROM questions WHERE id = ?', (int(qid),)).fetchone()
+            row = db.session.execute(text('SELECT id, tags FROM questions WHERE id = :qid'), {'qid': int(qid)}).fetchone()
             if not row:
                 continue
 
             try:
-                current_list = json.loads(row['tags'] or '[]')
+                current_list = json.loads(row._mapping['tags'] or '[]')
                 if not isinstance(current_list, list):
                     current_list = []
             except Exception:
@@ -589,12 +595,12 @@ def batch_tags():
                 current_set = set(new_tags_set)
 
             cleaned = sorted(current_set)
-            conn.execute(
-                'UPDATE questions SET tags = ?, updated_at=CURRENT_TIMESTAMP WHERE id = ?',
-                (json.dumps(cleaned, ensure_ascii=False), int(row['id'])),
+            db.session.execute(
+                text('UPDATE questions SET tags = :tags, updated_at=CURRENT_TIMESTAMP WHERE id = :qid'),
+                {'tags': json.dumps(cleaned, ensure_ascii=False), 'qid': int(row._mapping['id'])},
             )
-        
-        conn.commit()
+
+        db.session.commit()
         try:
             bump_questions_version()
         except Exception:
@@ -619,8 +625,7 @@ def start_duplicate_check():
     
     try:
         # 验证科目是否存在
-        conn = get_db()
-        subject = conn.execute('SELECT id FROM subjects WHERE id = ?', (subject_id,)).fetchone()
+        subject = db.session.execute(text('SELECT id FROM subjects WHERE id = :sid'), {'sid': subject_id}).fetchone()
         if not subject:
             return jsonify({'status': 'error', 'message': '科目不存在'}), 404
         
@@ -677,12 +682,11 @@ def get_duplicate_check_results():
                 duplicates = latest_record.get('duplicates', [])
                 
                 # 获取科目信息
-                conn = get_db()
-                subject = conn.execute(
-                    'SELECT id, name FROM subjects WHERE id = ?',
-                    (subject_id,)
+                subject = db.session.execute(
+                    text('SELECT id, name FROM subjects WHERE id = :sid'),
+                    {'sid': subject_id}
                 ).fetchone()
-                subject_name = dict(subject).get('name', '') if subject else ''
+                subject_name = dict(subject._mapping).get('name', '') if subject else ''
                 
                 # 应用相似度筛选
                 if min_similarity is not None or max_similarity is not None:
