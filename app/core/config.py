@@ -108,13 +108,13 @@ class Config:
     JWT_USER_STATE_CACHE_TTL_SECONDS = int(os.environ.get('JWT_USER_STATE_CACHE_TTL_SECONDS', '20') or 20)
 
     # 邮件服务配置
-    MAIL_SERVER = os.environ.get('MAIL_SERVER') or 'smtp.example.com'
+    MAIL_SERVER = os.environ.get('MAIL_SERVER') or None
     MAIL_PORT = int(os.environ.get('MAIL_PORT') or 587)
     MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', 'on', '1']
     MAIL_USE_SSL = os.environ.get('MAIL_USE_SSL', 'false').lower() in ['true', 'on', '1']
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
-    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER') or 'noreply@example.com'
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER') or None
     MAIL_DEFAULT_SENDER_NAME = os.environ.get('MAIL_DEFAULT_SENDER_NAME') or '系统通知'
     
     # 邮件服务开关（开发环境可以关闭真实邮件发送）

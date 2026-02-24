@@ -49,31 +49,25 @@ class EmailService:
             SMTP配置字典
         """
         from app.core.utils.database import get_db
-        import json
-        
+
         # 尝试从数据库读取配置
         try:
             conn = get_db()
             config_rows = conn.execute(
                 'SELECT config_key, config_value FROM system_config WHERE config_key LIKE "mail_%"'
             ).fetchall()
-            
+
             if config_rows:
                 db_config = {}
                 for row in config_rows:
                     key = row['config_key'].replace('mail_', '').upper()
                     value = row['config_value']
-                    # 尝试解析JSON值
-                    try:
-                        value = json.loads(value)
-                    except Exception:
-                        # 如果不是JSON，尝试转换为布尔值或整数
-                        if value.lower() in ['true', 'false', '1', '0']:
-                            value = value.lower() in ['true', '1']
-                        elif value.isdigit():
-                            value = int(value)
+                    if value.lower() in ['true', 'false', '1', '0']:
+                        value = value.lower() in ['true', '1']
+                    elif value.isdigit():
+                        value = int(value)
                     db_config[key] = value
-                
+
                 # 如果数据库中有配置，使用数据库配置
                 if db_config.get('SERVER'):
                     return {
@@ -260,7 +254,87 @@ class EmailService:
                         server.close()
                     except Exception:
                         pass
-    
+
+    @staticmethod
+    def _send_email_smtp_with_config(
+        to_email: str, subject: str, body_html: str, config: Dict[str, Any]
+    ) -> bool:
+        """
+        使用指定配置发送邮件（不读取数据库/环境变量，用于测试接口）
+
+        Args:
+            to_email: 收件人邮箱
+            subject: 邮件主题
+            body_html: 邮件正文（HTML格式）
+            config: SMTP 配置字典，包含 server/port/use_tls/use_ssl/username/password/sender/sender_name
+
+        Returns:
+            是否发送成功
+        """
+        missing_fields = []
+        if not config.get('server'):
+            missing_fields.append('server')
+        if not config.get('username'):
+            missing_fields.append('username')
+        if not config.get('password'):
+            missing_fields.append('password')
+
+        if missing_fields:
+            current_app.logger.error(
+                f'邮件服务配置不完整，缺少字段: {", ".join(missing_fields)}, to_email={to_email}'
+            )
+            return False
+
+        sender_email = config.get('sender') or config['username']
+        if not sender_email:
+            current_app.logger.error('发件人邮箱未配置')
+            return False
+
+        server = None
+        try:
+            msg = MIMEMultipart('alternative')
+            from_header = formataddr((config.get('sender_name', '系统通知'), sender_email))
+            msg['From'] = from_header
+            msg['To'] = to_email
+            msg['Subject'] = Header(subject, 'utf-8')
+            msg.attach(MIMEText(body_html, 'html', 'utf-8'))
+
+            timeout = 30
+            if config.get('use_ssl'):
+                server = smtplib.SMTP_SSL(config['server'], config['port'], timeout=timeout)
+            else:
+                server = smtplib.SMTP(config['server'], config['port'], timeout=timeout)
+
+            server.timeout = 60
+            if config.get('use_tls') and not config.get('use_ssl'):
+                server.starttls()
+
+            server.login(config['username'], config['password'])
+            server.send_message(msg)
+            server.quit()
+            server = None
+
+            current_app.logger.info(f'测试邮件发送成功: {to_email}')
+            return True
+        except smtplib.SMTPAuthenticationError as e:
+            current_app.logger.error(f'SMTP认证失败: {e}, to_email={to_email}')
+            return False
+        except (smtplib.SMTPException, ConnectionError, OSError) as e:
+            current_app.logger.error(f'SMTP连接错误: {e}, to_email={to_email}')
+            return False
+        except Exception as e:
+            current_app.logger.error(f'邮件发送失败: {e}, to_email={to_email}', exc_info=True)
+            return False
+        finally:
+            if server is not None:
+                try:
+                    server.quit()
+                except Exception:
+                    try:
+                        server.close()
+                    except Exception:
+                        pass
+
     @staticmethod
     def _console_output_code(to_email: str, code: str, template_type: str) -> None:
         """
