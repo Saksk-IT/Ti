@@ -39,8 +39,6 @@ def api_search_questions():
     from app.core.utils.subject_permissions import get_user_accessible_subjects
     from app.modules.quiz.services.question_tags_service import get_question_ids_by_tag
     from app.core.utils.portable_question_format import any_type_to_portable_type, portable_type_to_q_type
-    from app.core.utils.database import get_db
-
     keyword = (request.args.get("keyword", "") or "").strip()
     subject = (request.args.get("subject", "all") or "all").strip()
     q_type = (request.args.get("q_type") or request.args.get("type") or "all").strip()
@@ -100,8 +98,7 @@ def api_search_questions():
 
     # 标签筛选：标签为用户私有（存储于 user_progress）
     if tag and str(tag).lower() != "all":
-        conn = get_db()
-        tag_ids = get_question_ids_by_tag(conn, uid, tag)
+        tag_ids = get_question_ids_by_tag(db.session.connection(), uid, tag)
         if not tag_ids:
             return jsonify({
                 "status": "success",

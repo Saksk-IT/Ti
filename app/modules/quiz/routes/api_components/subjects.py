@@ -4,8 +4,8 @@
 from datetime import datetime, timedelta
 
 from flask import request, jsonify, current_app
-from app.core.utils.database import get_db, safe_in_clause
-from app.core.extensions import limiter
+from sqlalchemy import text
+from app.core.extensions import db, limiter
 from app.core.utils.decorators import auth_required, current_user_id
 from app.core.utils.redis_utils import redis_get_json, redis_set_json
 from app.core.utils.cache_utils import (
@@ -18,6 +18,17 @@ from app.core.utils.time_utils import today_bj
 
 from ..api_bp import quiz_api_bp
 from ..api_shared import _get_uid_from_request, _resolve_study_scope, _check_question_scope
+
+
+def _build_named_in(col: str, values: list, prefix: str = 'in') -> tuple[str, dict]:
+    """Build a named-parameter IN clause for text() queries."""
+    if not values:
+        return f"{col} IN (NULL)", {}
+    params = {f"{prefix}_{i}": v for i, v in enumerate(values)}
+    placeholders = ', '.join(f':{k}' for k in params)
+    return f"{col} IN ({placeholders})", params
+
+
 
 @quiz_api_bp.route('/subjects', methods=['GET'])
 @auth_required  # 支持session和JWT
@@ -61,7 +72,6 @@ def api_subjects():
                 except Exception:
                     cache_key = None
 
-        conn = get_db()
         
         if user_id:
             # 获取用户可访问的科目
@@ -69,13 +79,13 @@ def api_subjects():
             if not accessible_subject_ids:
                 return _ret({'status': 'success', 'subjects': []})
             
-            placeholders = ','.join(['?'] * len(accessible_subject_ids))
-            rows = conn.execute(
-                f'''SELECT DISTINCT s.name 
+            in_clause, in_params = _build_named_in('s.id', accessible_subject_ids, 'sid')
+            rows = db.session.execute(
+                text(f'''SELECT DISTINCT s.name 
                     FROM subjects s 
-                    WHERE s.id IN ({placeholders}) AND (s.is_locked=0 OR s.is_locked IS NULL)
-                    ORDER BY s.id''',
-                accessible_subject_ids
+                    WHERE {in_clause} AND (s.is_locked=false OR s.is_locked IS NULL)
+                    ORDER BY s.id'''),
+                in_params
             ).fetchall()
         else:
             # 未登录用户：返回空列表
@@ -132,51 +142,51 @@ def api_subjects_meta():
                 except Exception:
                     cache_key = None
 
-        conn = get_db()
         accessible_subject_ids = get_user_accessible_subjects(uid)
         if not accessible_subject_ids:
             return _ret({'status': 'success', 'data': {'subjects': [], 'quiz_count': 0}})
 
-        placeholders = ','.join(['?'] * len(accessible_subject_ids))
-        subject_rows = conn.execute(
-            f"""
+        in_clause, in_params = _build_named_in('id', accessible_subject_ids, 'sid')
+        subject_rows = db.session.execute(
+            text(f"""
             SELECT id, name
             FROM subjects
-            WHERE id IN ({placeholders})
-              AND (is_locked=0 OR is_locked IS NULL)
+            WHERE {in_clause}
+              AND (is_locked=false OR is_locked IS NULL)
             ORDER BY id
-            """,
-            accessible_subject_ids,
+            """),
+            in_params,
         ).fetchall()
 
-        count_rows = conn.execute(
-            f"""
+        in_clause_q, in_params_q = _build_named_in('q.subject_id', accessible_subject_ids, 'sid')
+        count_rows = db.session.execute(
+            text(f"""
             SELECT q.subject_id as subject_id, COUNT(*) as cnt
             FROM questions q
             LEFT JOIN subjects s ON q.subject_id = s.id
-            WHERE q.subject_id IN ({placeholders})
-              AND (s.is_locked=0 OR s.is_locked IS NULL)
+            WHERE {in_clause_q}
+              AND (s.is_locked=false OR s.is_locked IS NULL)
             GROUP BY q.subject_id
-            """,
-            accessible_subject_ids,
+            """),
+            in_params_q,
         ).fetchall()
 
         counts = {}
         for r in (count_rows or []):
             try:
-                sid = r['subject_id']
+                sid = r._mapping['subject_id']
                 if sid is None:
                     continue
-                counts[int(sid)] = int(r['cnt'] or 0)
+                counts[int(sid)] = int(r._mapping['cnt'] or 0)
             except Exception:
                 continue
 
         subjects = []
         for r in (subject_rows or []):
-            if not r or r['id'] is None:
+            if not r or r._mapping['id'] is None:
                 continue
-            sid = int(r['id'])
-            name = r['name'] or ''
+            sid = int(r._mapping['id'])
+            name = r._mapping['name'] or ''
             if not name:
                 continue
             subjects.append({'id': sid, 'name': name, 'question_count': int(counts.get(sid, 0))})
@@ -222,18 +232,17 @@ def api_subject_info(subject):
                 except Exception:
                     cache_key = None
 
-        conn = get_db()
         
         # 获取科目信息
-        subject_row = conn.execute(
-            'SELECT id, name FROM subjects WHERE name = ? AND (is_locked=0 OR is_locked IS NULL)',
-            (subject,)
+        subject_row = db.session.execute(
+            text('SELECT id, name FROM subjects WHERE name = :name AND (is_locked=false OR is_locked IS NULL)'),
+            {'name': subject}
         ).fetchone()
         
         if not subject_row:
             return jsonify({'status': 'error', 'message': '科目不存在'}), 404
         
-        subject_id = subject_row['id']
+        subject_id = subject_row._mapping['id']
         
         # 检查用户权限
         if user_id:
@@ -242,22 +251,22 @@ def api_subject_info(subject):
                 return jsonify({'status': 'error', 'message': '无权限访问该科目'}), 403
         
         # 获取题目总数
-        total_count = conn.execute(
-            'SELECT COUNT(*) FROM questions WHERE subject_id = ?',
-            (subject_id,)
+        total_count = db.session.execute(
+            text('SELECT COUNT(*) FROM questions WHERE subject_id = :sid'),
+            {'sid': subject_id}
         ).fetchone()[0]
 
         # 获取该科目实际拥有的题型（用于小程序动态渲染）
         from app.core.utils.portable_question_format import portable_type_to_q_type
 
-        type_rows = conn.execute(
-            "SELECT DISTINCT type AS p_type FROM questions WHERE subject_id = ? AND type IS NOT NULL AND TRIM(type) != '' ORDER BY type",
-            (subject_id,)
+        type_rows = db.session.execute(
+            text("SELECT DISTINCT type AS p_type FROM questions WHERE subject_id = :sid AND type IS NOT NULL AND TRIM(type) != '' ORDER BY type"),
+            {"sid": subject_id}
         ).fetchall()
         available_types = [
-            portable_type_to_q_type(r['p_type'])
+            portable_type_to_q_type(r._mapping['p_type'])
             for r in type_rows
-            if r and r['p_type']
+            if r and r._mapping['p_type']
         ]
         
         # 获取作者信息（暂时设为空，后续可以从其他表获取）
@@ -274,30 +283,30 @@ def api_subject_info(subject):
         
         if user_id:
             # 已做题数（从user_answers表统计）
-            done_count = conn.execute(
-                'SELECT COUNT(DISTINCT question_id) FROM user_answers ua JOIN questions q ON ua.question_id = q.id WHERE ua.user_id = ? AND q.subject_id = ?',
-                (user_id, subject_id)
+            done_count = db.session.execute(
+                text('SELECT COUNT(DISTINCT question_id) FROM user_answers ua JOIN questions q ON ua.question_id = q.id WHERE ua.user_id = :uid AND q.subject_id = :sid'),
+                {'uid': user_id, 'sid': subject_id}
             ).fetchone()[0]
             
             # 错题数
-            wrong_count = conn.execute(
-                'SELECT COUNT(*) FROM mistakes m JOIN questions q ON m.question_id = q.id WHERE m.user_id = ? AND q.subject_id = ?',
-                (user_id, subject_id)
+            wrong_count = db.session.execute(
+                text('SELECT COUNT(*) FROM mistakes m JOIN questions q ON m.question_id = q.id WHERE m.user_id = :uid AND q.subject_id = :sid'),
+                {'uid': user_id, 'sid': subject_id}
             ).fetchone()[0]
             
             # 收藏数
-            favorite_count = conn.execute(
-                'SELECT COUNT(*) FROM favorites f JOIN questions q ON f.question_id = q.id WHERE f.user_id = ? AND q.subject_id = ?',
-                (user_id, subject_id)
+            favorite_count = db.session.execute(
+                text('SELECT COUNT(*) FROM favorites f JOIN questions q ON f.question_id = q.id WHERE f.user_id = :uid AND q.subject_id = :sid'),
+                {'uid': user_id, 'sid': subject_id}
             ).fetchone()[0]
             
             # 最后活动时间（从user_answers表获取最新的created_at）
-            last_activity_row = conn.execute(
-                'SELECT MAX(ua.created_at) as last_activity FROM user_answers ua JOIN questions q ON ua.question_id = q.id WHERE ua.user_id = ? AND q.subject_id = ?',
-                (user_id, subject_id)
+            last_activity_row = db.session.execute(
+                text('SELECT MAX(ua.created_at) as last_activity FROM user_answers ua JOIN questions q ON ua.question_id = q.id WHERE ua.user_id = :uid AND q.subject_id = :sid'),
+                {'uid': user_id, 'sid': subject_id}
             ).fetchone()
             
-            last_activity = last_activity_row['last_activity'] if last_activity_row and last_activity_row['last_activity'] else None
+            last_activity = last_activity_row._mapping['last_activity'] if last_activity_row and last_activity_row._mapping['last_activity'] else None
             
             user_stats = {
                 'done_count': done_count,
@@ -400,24 +409,17 @@ def api_subject_stats_detail(subject):
             except Exception:
                 cache_key = None
 
-    conn = get_db()
 
-    def _column_exists(table: str, column: str) -> bool:
-        try:
-            rows = conn.execute(f"PRAGMA table_info({table})").fetchall()
-            return any(r and r['name'] == column for r in rows)
-        except Exception:
-            return False
 
     # 科目 + 权限
-    subject_row = conn.execute(
-        'SELECT id, name FROM subjects WHERE name = ? AND (is_locked=0 OR is_locked IS NULL)',
-        (subject,),
+    subject_row = db.session.execute(
+        text('SELECT id, name FROM subjects WHERE name = :name AND (is_locked=false OR is_locked IS NULL)'),
+        {'name': subject},
     ).fetchone()
     if not subject_row:
         return jsonify({'status': 'error', 'message': '科目不存在'}), 404
 
-    subject_id = int(subject_row['id'])
+    subject_id = int(subject_row._mapping['id'])
     accessible_subject_ids = get_user_accessible_subjects(uid) or []
     if subject_id not in accessible_subject_ids:
         return jsonify({'status': 'error', 'message': '无权限访问该科目'}), 403
@@ -427,12 +429,12 @@ def api_subject_stats_detail(subject):
     tag_cond = ''
     tag_params: list = []
     if tag:
-        tag_ids = get_question_ids_by_tag(conn, uid, tag)
+        tag_ids = get_question_ids_by_tag(db.session.connection(), uid, tag)
         if not tag_ids:
             return _ret({
                 'status': 'success',
                 'data': {
-                    'subject': subject_row['name'] or subject,
+                    'subject': subject_row._mapping['name'] or subject,
                     'subject_id': subject_id,
                     'total_count': 0,
                     'answered': 0,
@@ -454,68 +456,69 @@ def api_subject_stats_detail(subject):
             })
 
         tag_ids = sorted({int(x) for x in tag_ids})
-        tag_cond, tag_params = safe_in_clause('q.id', tag_ids, '', [])
+        tag_in_sql, tag_params = _build_named_in('q.id', tag_ids, 'tag')
+        tag_cond = ' AND ' + tag_in_sql
 
     # 基于题目集合做统计：subject + (source/tag/q_type) 组合筛选
     base_from = """
     FROM questions q
-    LEFT JOIN favorites f ON f.question_id = q.id AND f.user_id = ?
-    LEFT JOIN mistakes m ON m.question_id = q.id AND m.user_id = ?
-    WHERE q.subject_id = ?
+    LEFT JOIN favorites f ON f.question_id = q.id AND f.user_id = :b_uid1
+    LEFT JOIN mistakes m ON m.question_id = q.id AND m.user_id = :b_uid2
+    WHERE q.subject_id = :b_sid
     """
-    base_params: list = [uid, uid, subject_id]
+    base_params: dict = {'b_uid1': uid, 'b_uid2': uid, 'b_sid': subject_id}
     if q_type_filter:
-        base_from += " AND q.type = ?"
-        base_params.append(portable_type_filter)
+        base_from += " AND q.type = :b_qtype"
+        base_params['b_qtype'] = portable_type_filter
     if tag_cond:
         base_from += tag_cond
-        base_params.extend(tag_params)
+        base_params.update(tag_params)
     if source == 'favorites':
         base_from += " AND f.id IS NOT NULL"
     elif source == 'mistakes':
         base_from += " AND m.id IS NOT NULL"
 
-    total_count = int(conn.execute("SELECT COUNT(1) " + base_from, base_params).fetchone()[0] or 0)
+    total_count = int(db.session.execute(text("SELECT COUNT(1) " + base_from), base_params).fetchone()[0] or 0)
 
     # 已做/正确/最后活动
-    row = conn.execute(
-        """
+    row = db.session.execute(
+        text("""
         SELECT
           COUNT(*) AS answered,
-          SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct,
+          SUM(CASE WHEN ua.is_correct = true THEN 1 ELSE 0 END) AS correct,
           MAX(ua.created_at) AS last_activity
         FROM user_answers ua
         JOIN questions q ON ua.question_id = q.id
-        LEFT JOIN favorites f ON f.question_id = q.id AND f.user_id = ?
-        LEFT JOIN mistakes m ON m.question_id = q.id AND m.user_id = ?
-        WHERE ua.user_id = ? AND q.subject_id = ?
+        LEFT JOIN favorites f ON f.question_id = q.id AND f.user_id = :q_uid1
+        LEFT JOIN mistakes m ON m.question_id = q.id AND m.user_id = :q_uid2
+        WHERE ua.user_id = :q_uid3 AND q.subject_id = :q_sid
         """
-        + (" AND q.type = ?" if q_type_filter else "")
+        + (" AND q.type = :q_qtype" if q_type_filter else "")
         + tag_cond
         + (" AND f.id IS NOT NULL" if source == "favorites" else "")
-        + (" AND m.id IS NOT NULL" if source == "mistakes" else ""),
-        ([uid, uid, uid, subject_id] + ([portable_type_filter] if q_type_filter else []) + tag_params),
+        + (" AND m.id IS NOT NULL" if source == "mistakes" else "")),
+        ({'q_uid1': uid, 'q_uid2': uid, 'q_uid3': uid, 'q_sid': subject_id} | ({'q_qtype': portable_type_filter} if q_type_filter else {}) | tag_params),
     ).fetchone()
 
-    answered = int(row['answered'] or 0) if row else 0
-    correct = int(row['correct'] or 0) if row else 0
+    answered = int(row._mapping['answered'] or 0) if row else 0
+    correct = int(row._mapping['correct'] or 0) if row else 0
     wrong = max(0, answered - correct)
-    last_activity = (row['last_activity'] if row else None) or None
+    last_activity = (row._mapping['last_activity'] if row else None) or None
 
-    favorites = int(conn.execute("SELECT COUNT(1) " + base_from + " AND f.id IS NOT NULL", base_params).fetchone()[0] or 0)
+    favorites = int(db.session.execute(text("SELECT COUNT(1) " + base_from + " AND f.id IS NOT NULL"), base_params).fetchone()[0] or 0)
 
-    mistakes_has_wrong_count = _column_exists('mistakes', 'wrong_count')
+    mistakes_has_wrong_count = True
     try:
         if mistakes_has_wrong_count:
-            m_row = conn.execute(
-                "SELECT COUNT(1) AS cnt, SUM(COALESCE(m.wrong_count, 1)) AS times " + base_from + " AND m.id IS NOT NULL",
+            m_row = db.session.execute(
+                text("SELECT COUNT(1) AS cnt, SUM(COALESCE(m.wrong_count, 1)) AS times " + base_from + " AND m.id IS NOT NULL"),
                 base_params,
             ).fetchone()
-            mistakes = int(m_row['cnt'] or 0) if m_row else 0
-            mistakes_times = int(m_row['times'] or 0) if m_row else 0
+            mistakes = int(m_row._mapping['cnt'] or 0) if m_row else 0
+            mistakes_times = int(m_row._mapping['times'] or 0) if m_row else 0
         else:
             mistakes = int(
-                conn.execute("SELECT COUNT(1) " + base_from + " AND m.id IS NOT NULL", base_params).fetchone()[0] or 0
+                db.session.execute(text("SELECT COUNT(1) " + base_from + " AND m.id IS NOT NULL"), base_params).fetchone()[0] or 0
             )
             mistakes_times = mistakes
     except Exception:
@@ -528,32 +531,32 @@ def api_subject_stats_detail(subject):
     # streak（注：基于 user_answers 的最新记录，属于“近似活跃”）
     streak_days = 0
     try:
-        rows = conn.execute(
-            """
+        rows = db.session.execute(
+            text("""
             SELECT DISTINCT DATE(ua.created_at) AS day
             FROM user_answers ua
             JOIN questions q ON ua.question_id = q.id
-            LEFT JOIN favorites f ON f.question_id = q.id AND f.user_id = ?
-            LEFT JOIN mistakes m ON m.question_id = q.id AND m.user_id = ?
-            WHERE ua.user_id = ? AND q.subject_id = ?
+            LEFT JOIN favorites f ON f.question_id = q.id AND f.user_id = :q_uid1
+            LEFT JOIN mistakes m ON m.question_id = q.id AND m.user_id = :q_uid2
+            WHERE ua.user_id = :q_uid3 AND q.subject_id = :q_sid
             """
-            + (" AND q.type = ?" if q_type_filter else "")
+            + (" AND q.type = :q_qtype" if q_type_filter else "")
             + tag_cond
             + (" AND f.id IS NOT NULL" if source == "favorites" else "")
             + (" AND m.id IS NOT NULL" if source == "mistakes" else "")
             + """
             ORDER BY day DESC
             LIMIT 120
-            """,
-            ([uid, uid, uid, subject_id] + ([portable_type_filter] if q_type_filter else []) + tag_params),
+            """),
+            ({'q_uid1': uid, 'q_uid2': uid, 'q_uid3': uid, 'q_sid': subject_id} | ({'q_qtype': portable_type_filter} if q_type_filter else {}) | tag_params),
         ).fetchall()
 
         dates = []
         for r in rows or []:
-            if not r or not r['day']:
+            if not r or not r._mapping['day']:
                 continue
             try:
-                dates.append(datetime.strptime(r['day'], '%Y-%m-%d').date())
+                dates.append(datetime.strptime(r._mapping['day'], '%Y-%m-%d').date())
             except Exception:
                 continue
 
@@ -572,37 +575,37 @@ def api_subject_stats_detail(subject):
     trend = []
     try:
         days_back = max(1, window_days) - 1
-        rows = conn.execute(
-            """
+        rows = db.session.execute(
+            text("""
             SELECT
               DATE(ua.created_at) AS day,
               COUNT(*) AS answered,
-              SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+              SUM(CASE WHEN ua.is_correct = true THEN 1 ELSE 0 END) AS correct
             FROM user_answers ua
             JOIN questions q ON ua.question_id = q.id
-            LEFT JOIN favorites f ON f.question_id = q.id AND f.user_id = ?
-            LEFT JOIN mistakes m ON m.question_id = q.id AND m.user_id = ?
-            WHERE ua.user_id = ? AND q.subject_id = ?
-              AND ua.created_at >= datetime('now', '+8 hours', ?)
+            LEFT JOIN favorites f ON f.question_id = q.id AND f.user_id = :q_uid1
+            LEFT JOIN mistakes m ON m.question_id = q.id AND m.user_id = :q_uid2
+            WHERE ua.user_id = :q_uid3 AND q.subject_id = :q_sid
+              AND ua.created_at >= :cutoff_date
             """
-            + (" AND q.type = ?" if q_type_filter else "")
+            + (" AND q.type = :q_qtype" if q_type_filter else "")
             + tag_cond
             + (" AND f.id IS NOT NULL" if source == "favorites" else "")
             + (" AND m.id IS NOT NULL" if source == "mistakes" else "")
             + """
             GROUP BY day
             ORDER BY day ASC
-            """,
-            ([uid, uid, uid, subject_id, f'-{days_back} days'] + ([portable_type_filter] if q_type_filter else []) + tag_params),
+            """),
+            ({'q_uid1': uid, 'q_uid2': uid, 'q_uid3': uid, 'q_sid': subject_id, 'cutoff_date': (today_bj() - timedelta(days=max(1, window_days) - 1)).strftime('%Y-%m-%d 00:00:00')} | ({'q_qtype': portable_type_filter} if q_type_filter else {}) | tag_params),
         ).fetchall()
 
         by_day = {}
         for r in rows or []:
-            if not r or not r['day']:
+            if not r or not r._mapping['day']:
                 continue
-            by_day[str(r['day'])] = {
-                'answered': int(r['answered'] or 0),
-                'correct': int(r['correct'] or 0),
+            by_day[str(r._mapping['day'])] = {
+                'answered': int(r._mapping['answered'] or 0),
+                'correct': int(r._mapping['correct'] or 0),
             }
 
         start_day = today_bj() - timedelta(days=days_back)
@@ -618,60 +621,60 @@ def api_subject_stats_detail(subject):
     # by_type：总题/已做/正确率/覆盖率 + 收藏/错题
     by_type = []
     try:
-        total_rows = conn.execute(
-            """
+        total_rows = db.session.execute(
+            text("""
             SELECT COALESCE(NULLIF(TRIM(q.type), ''), 'unknown') AS p_type, COUNT(*) AS total
             """
             + base_from
             + """
             GROUP BY COALESCE(NULLIF(TRIM(q.type), ''), 'unknown')
             ORDER BY total DESC
-            """,
+            """),
             base_params,
         ).fetchall()
-        total_map = {str(r['p_type']): int(r['total'] or 0) for r in (total_rows or []) if r}
+        total_map = {str(r._mapping['p_type']): int(r._mapping['total'] or 0) for r in (total_rows or []) if r}
 
-        answered_rows = conn.execute(
-            """
+        answered_rows = db.session.execute(
+            text("""
             SELECT COALESCE(NULLIF(TRIM(q.type), ''), 'unknown') AS p_type,
                    COUNT(*) AS answered,
-                   SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+                   SUM(CASE WHEN ua.is_correct = true THEN 1 ELSE 0 END) AS correct
             FROM user_answers ua
             JOIN questions q ON ua.question_id = q.id
-            LEFT JOIN favorites f ON f.question_id = q.id AND f.user_id = ?
-            LEFT JOIN mistakes m ON m.question_id = q.id AND m.user_id = ?
-            WHERE ua.user_id = ? AND q.subject_id = ?
+            LEFT JOIN favorites f ON f.question_id = q.id AND f.user_id = :q_uid1
+            LEFT JOIN mistakes m ON m.question_id = q.id AND m.user_id = :q_uid2
+            WHERE ua.user_id = :q_uid3 AND q.subject_id = :q_sid
             """
-            + (" AND q.type = ?" if q_type_filter else "")
+            + (" AND q.type = :q_qtype" if q_type_filter else "")
             + tag_cond
             + (" AND f.id IS NOT NULL" if source == "favorites" else "")
             + (" AND m.id IS NOT NULL" if source == "mistakes" else "")
             + """
             GROUP BY COALESCE(NULLIF(TRIM(q.type), ''), 'unknown')
-            """,
-            ([uid, uid, uid, subject_id] + ([portable_type_filter] if q_type_filter else []) + tag_params),
+            """),
+            ({'q_uid1': uid, 'q_uid2': uid, 'q_uid3': uid, 'q_sid': subject_id} | ({'q_qtype': portable_type_filter} if q_type_filter else {}) | tag_params),
         ).fetchall()
         answered_map = {
-            str(r['p_type']): {'answered': int(r['answered'] or 0), 'correct': int(r['correct'] or 0)}
+            str(r._mapping['p_type']): {'answered': int(r._mapping['answered'] or 0), 'correct': int(r._mapping['correct'] or 0)}
             for r in (answered_rows or [])
             if r
         }
 
-        fav_rows = conn.execute(
-            "SELECT COALESCE(NULLIF(TRIM(q.type), ''), 'unknown') AS p_type, COUNT(*) AS cnt "
+        fav_rows = db.session.execute(
+            text("SELECT COALESCE(NULLIF(TRIM(q.type), ''), 'unknown') AS p_type, COUNT(*) AS cnt "
             + base_from
-            + " AND f.id IS NOT NULL GROUP BY COALESCE(NULLIF(TRIM(q.type), ''), 'unknown')",
+            + " AND f.id IS NOT NULL GROUP BY COALESCE(NULLIF(TRIM(q.type), ''), 'unknown')"),
             base_params,
         ).fetchall()
-        fav_map = {str(r['p_type']): int(r['cnt'] or 0) for r in (fav_rows or []) if r}
+        fav_map = {str(r._mapping['p_type']): int(r._mapping['cnt'] or 0) for r in (fav_rows or []) if r}
 
-        mis_rows = conn.execute(
-            "SELECT COALESCE(NULLIF(TRIM(q.type), ''), 'unknown') AS p_type, COUNT(*) AS cnt "
+        mis_rows = db.session.execute(
+            text("SELECT COALESCE(NULLIF(TRIM(q.type), ''), 'unknown') AS p_type, COUNT(*) AS cnt "
             + base_from
-            + " AND m.id IS NOT NULL GROUP BY COALESCE(NULLIF(TRIM(q.type), ''), 'unknown')",
+            + " AND m.id IS NOT NULL GROUP BY COALESCE(NULLIF(TRIM(q.type), ''), 'unknown')"),
             base_params,
         ).fetchall()
-        mis_map = {str(r['p_type']): int(r['cnt'] or 0) for r in (mis_rows or []) if r}
+        mis_map = {str(r._mapping['p_type']): int(r._mapping['cnt'] or 0) for r in (mis_rows or []) if r}
 
         keys = set(total_map.keys()) | set(answered_map.keys()) | set(fav_map.keys()) | set(mis_map.keys())
         for k in keys:
@@ -698,37 +701,37 @@ def api_subject_stats_detail(subject):
 
     # by_difficulty（可选）
     by_difficulty = []
-    if _column_exists('questions', 'difficulty'):
+    if True:
         try:
-            total_rows = conn.execute(
-                "SELECT COALESCE(q.difficulty, 1) AS difficulty, COUNT(*) AS total " + base_from + " GROUP BY difficulty ORDER BY difficulty ASC",
+            total_rows = db.session.execute(
+                text("SELECT COALESCE(q.difficulty, 1) AS difficulty, COUNT(*) AS total " + base_from + " GROUP BY difficulty ORDER BY difficulty ASC"),
                 base_params,
             ).fetchall()
-            total_map = {int(r['difficulty'] or 1): int(r['total'] or 0) for r in (total_rows or []) if r}
+            total_map = {int(r._mapping['difficulty'] or 1): int(r._mapping['total'] or 0) for r in (total_rows or []) if r}
 
-            ans_rows = conn.execute(
-                """
+            ans_rows = db.session.execute(
+                text("""
                 SELECT COALESCE(q.difficulty, 1) AS difficulty,
                        COUNT(*) AS answered,
-                       SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+                       SUM(CASE WHEN ua.is_correct = true THEN 1 ELSE 0 END) AS correct
                 FROM user_answers ua
                 JOIN questions q ON ua.question_id = q.id
-                LEFT JOIN favorites f ON f.question_id = q.id AND f.user_id = ?
-                LEFT JOIN mistakes m ON m.question_id = q.id AND m.user_id = ?
-                WHERE ua.user_id = ? AND q.subject_id = ?
+                LEFT JOIN favorites f ON f.question_id = q.id AND f.user_id = :q_uid1
+                LEFT JOIN mistakes m ON m.question_id = q.id AND m.user_id = :q_uid2
+                WHERE ua.user_id = :q_uid3 AND q.subject_id = :q_sid
                 """
-                + (" AND q.type = ?" if q_type_filter else "")
+                + (" AND q.type = :q_qtype" if q_type_filter else "")
                 + tag_cond
                 + (" AND f.id IS NOT NULL" if source == "favorites" else "")
                 + (" AND m.id IS NOT NULL" if source == "mistakes" else "")
                 + """
                 GROUP BY q.difficulty
                 ORDER BY difficulty ASC
-                """,
-                ([uid, uid, uid, subject_id] + ([portable_type_filter] if q_type_filter else []) + tag_params),
+                """),
+                ({'q_uid1': uid, 'q_uid2': uid, 'q_uid3': uid, 'q_sid': subject_id} | ({'q_qtype': portable_type_filter} if q_type_filter else {}) | tag_params),
             ).fetchall()
             ans_map = {
-                int(r['difficulty'] or 1): {'answered': int(r['answered'] or 0), 'correct': int(r['correct'] or 0)}
+                int(r._mapping['difficulty'] or 1): {'answered': int(r._mapping['answered'] or 0), 'correct': int(r._mapping['correct'] or 0)}
                 for r in (ans_rows or [])
                 if r
             }
@@ -780,7 +783,7 @@ def api_subject_stats_detail(subject):
     return _ret({
         'status': 'success',
         'data': {
-            'subject': subject_row['name'] or subject,
+            'subject': subject_row._mapping['name'] or subject,
             'subject_id': subject_id,
             'total_count': total_count,
             'answered': answered,
@@ -802,18 +805,18 @@ def api_subject_stats_detail(subject):
     })
 
 
-def _api_subject_guard(conn, uid: int, subject: str):
+def _api_subject_guard(uid: int, subject: str):
     """复用 subject 校验 + 权限校验（供 subject 统计/列表类接口使用）。"""
     from app.core.utils.subject_permissions import get_user_accessible_subjects
 
-    subject_row = conn.execute(
-        'SELECT id, name FROM subjects WHERE name = ? AND (is_locked=0 OR is_locked IS NULL)',
-        (subject,),
+    subject_row = db.session.execute(
+        text('SELECT id, name FROM subjects WHERE name = :name AND (is_locked=false OR is_locked IS NULL)'),
+        {'name': subject},
     ).fetchone()
     if not subject_row:
         return None, None, (jsonify({'status': 'error', 'message': '科目不存在'}), 404)
 
-    subject_id = int(subject_row['id'])
+    subject_id = int(subject_row._mapping['id'])
     accessible_subject_ids = get_user_accessible_subjects(uid) or []
     if subject_id not in accessible_subject_ids:
         return None, None, (jsonify({'status': 'error', 'message': '无权限访问该科目'}), 403)
@@ -833,8 +836,7 @@ def api_subject_questions(subject):
     if not uid:
         return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
 
-    conn = get_db()
-    subject_row, subject_id, err = _api_subject_guard(conn, int(uid), subject)
+    subject_row, subject_id, err = _api_subject_guard(int(uid), subject)
     if err:
         return err
 
@@ -852,12 +854,12 @@ def api_subject_questions(subject):
     tag_cond = ''
     tag_params: list = []
     if tag:
-        tag_ids = get_question_ids_by_tag(conn, int(uid), tag)
+        tag_ids = get_question_ids_by_tag(db.session.connection(), int(uid), tag)
         if not tag_ids:
             return jsonify({
                 'status': 'success',
                 'data': {
-                    'subject': subject_row['name'] or subject,
+                    'subject': subject_row._mapping['name'] or subject,
                     'subject_id': subject_id,
                     'questions': [],
                     'total': 0,
@@ -867,36 +869,31 @@ def api_subject_questions(subject):
             })
 
         tag_ids = sorted({int(x) for x in tag_ids})
-        tag_cond, tag_params = safe_in_clause('q.id', tag_ids, '', [])
+        tag_in_sql, tag_params = _build_named_in('q.id', tag_ids, 'tag')
+        tag_cond = ' AND ' + tag_in_sql
 
-    def _column_exists(table: str, column: str) -> bool:
-        try:
-            rows = conn.execute(f"PRAGMA table_info({table})").fetchall()
-            return any(r and r['name'] == column for r in rows)
-        except Exception:
-            return False
 
     # joins / order / select extras
     joins = ''
-    join_params = []
+    join_params = {}
     order_by = 'q.id DESC'
     select_extras = []
 
     if source == 'favorites':
-        joins += ' JOIN favorites f ON q.id = f.question_id AND f.user_id = ?'
-        join_params.append(int(uid))
+        joins += ' JOIN favorites f ON q.id = f.question_id AND f.user_id = :j_uid'
+        join_params['j_uid'] = int(uid)
         order_by = 'f.created_at DESC, q.id DESC'
         select_extras.append('f.created_at AS favorite_created_at')
     elif source == 'mistakes':
-        joins += ' JOIN mistakes m ON q.id = m.question_id AND m.user_id = ?'
-        join_params.append(int(uid))
+        joins += ' JOIN mistakes m ON q.id = m.question_id AND m.user_id = :j_uid'
+        join_params['j_uid'] = int(uid)
 
         m_cols = []
-        if _column_exists('mistakes', 'updated_at'):
+        if True:
             m_cols.append('m.updated_at')
-        if _column_exists('mistakes', 'last_updated'):
+        if True:
             m_cols.append('m.last_updated')
-        if _column_exists('mistakes', 'created_at'):
+        if True:
             m_cols.append('m.created_at')
         if not m_cols:
             m_cols = ['NULL']
@@ -904,24 +901,24 @@ def api_subject_questions(subject):
 
         select_extras.extend([
             'm.wrong_count AS mistake_wrong_count',
-            ('m.created_at' if _column_exists('mistakes', 'created_at') else m_time_expr) + ' AS mistake_created_at',
+            ('m.created_at' if True else m_time_expr) + ' AS mistake_created_at',
             m_time_expr + ' AS mistake_updated_at',
         ])
         order_by = f'm.wrong_count DESC, {m_time_expr} DESC, q.id DESC'
     else:
         source = 'all'
 
-    where = ' WHERE q.subject_id = ?'
-    where_params = [int(subject_id)]
+    where = ' WHERE q.subject_id = :w_sid'
+    where_params = {'w_sid': int(subject_id)}
     if q_type:
-        where += ' AND q.type = ?'
-        where_params.append(portable_type_filter)
+        where += ' AND q.type = :w_qtype'
+        where_params['w_qtype'] = portable_type_filter
     if tag_cond:
         where += tag_cond
-        where_params.extend(tag_params)
+        where_params.update(tag_params)
 
     count_sql = f'SELECT COUNT(*) as cnt FROM questions q{joins}{where}'
-    total = conn.execute(count_sql, join_params + where_params).fetchone()['cnt']
+    total = db.session.execute(text(count_sql), {**join_params, **where_params}).fetchone()._mapping['cnt']
 
     if page < 1:
         page = 1
@@ -937,16 +934,16 @@ def api_subject_questions(subject):
             JOIN (
                 SELECT question_id, MAX(created_at) AS max_created_at
                 FROM user_answers
-                WHERE user_id = ?
+                WHERE user_id = :a_uid
                 GROUP BY question_id
             ) t
               ON t.question_id = ua1.question_id AND t.max_created_at = ua1.created_at
-            WHERE ua1.user_id = ?
+            WHERE ua1.user_id = :a_uid2
         ) a ON a.question_id = q.id
     """
 
     query_joins = joins + answer_join
-    query_params = join_params + [int(uid), int(uid)]
+    query_params = {**join_params, 'a_uid': int(uid), 'a_uid2': int(uid)}
     select_extras.extend([
         'a.last_is_correct AS last_is_correct',
         'a.last_answered_at AS last_answered_at',
@@ -956,25 +953,25 @@ def api_subject_questions(subject):
     if select_extras:
         select_sql += ', ' + ', '.join(select_extras)
 
-    query_sql = f'SELECT {select_sql} FROM questions q{query_joins}{where} ORDER BY {order_by} LIMIT ? OFFSET ?'
-    rows = conn.execute(query_sql, query_params + where_params + [per_page, offset]).fetchall()
+    query_sql = f'SELECT {select_sql} FROM questions q{query_joins}{where} ORDER BY {order_by} LIMIT :lim OFFSET :off'
+    rows = db.session.execute(text(query_sql), {**query_params, **where_params, 'lim': per_page, 'off': offset}).fetchall()
 
-    q_ids = [int(r['id']) for r in rows] if rows else []
+    q_ids = [int(r._mapping['id']) for r in rows] if rows else []
     fav_set = set()
     mis_set = set()
     if q_ids:
-        placeholders = ','.join('?' * len(q_ids))
-        fav_rows = conn.execute(
-            f'SELECT question_id FROM favorites WHERE user_id = ? AND question_id IN ({placeholders})',
-            [int(uid)] + q_ids,
+        qid_clause, qid_params = _build_named_in('question_id', q_ids, 'qid')
+        fav_rows = db.session.execute(
+            text(f'SELECT question_id FROM favorites WHERE user_id = :fq_uid AND {qid_clause}'),
+            {'fq_uid': int(uid), **qid_params},
         ).fetchall()
-        fav_set = {int(r['question_id']) for r in (fav_rows or []) if r and r['question_id'] is not None}
+        fav_set = {int(r._mapping['question_id']) for r in (fav_rows or []) if r and r._mapping['question_id'] is not None}
 
-        mis_rows = conn.execute(
-            f'SELECT question_id FROM mistakes WHERE user_id = ? AND question_id IN ({placeholders})',
-            [int(uid)] + q_ids,
+        mis_rows = db.session.execute(
+            text(f'SELECT question_id FROM mistakes WHERE user_id = :mq_uid AND {qid_clause}'),
+            {'mq_uid': int(uid), **qid_params},
         ).fetchall()
-        mis_set = {int(r['question_id']) for r in (mis_rows or []) if r and r['question_id'] is not None}
+        mis_set = {int(r._mapping['question_id']) for r in (mis_rows or []) if r and r._mapping['question_id'] is not None}
 
     def _preview(content: str) -> str:
         try:
@@ -986,7 +983,7 @@ def api_subject_questions(subject):
 
     questions = []
     for r in rows or []:
-        q = dict(r)
+        q = dict(r._mapping)
         qid = int(q.get('id') or 0)
         q['is_fav'] = 1 if qid in fav_set else 0
         q['is_mistake'] = 1 if qid in mis_set else 0
@@ -1016,7 +1013,7 @@ def api_subject_questions(subject):
     return jsonify({
         'status': 'success',
         'data': {
-            'subject': subject_row['name'] or subject,
+            'subject': subject_row._mapping['name'] or subject,
             'subject_id': subject_id,
             'source': source,
             'questions': questions,
@@ -1041,46 +1038,45 @@ def api_subject_favorites_trend(subject):
         window_days = 30
     days_back = max(1, int(window_days)) - 1
 
-    conn = get_db()
-    subject_row, subject_id, err = _api_subject_guard(conn, int(uid), subject)
+    subject_row, subject_id, err = _api_subject_guard(int(uid), subject)
     if err:
         return err
 
     try:
         total = int(
-            conn.execute(
-                """
+            db.session.execute(
+                text("""
                 SELECT COUNT(1) AS cnt
                 FROM favorites f
                 JOIN questions q ON q.id = f.question_id
-                WHERE f.user_id = ? AND q.subject_id = ?
-                """,
-                (int(uid), int(subject_id)),
-            ).fetchone()['cnt']
+                WHERE f.user_id = :ft_uid AND q.subject_id = :ft_sid
+                """),
+                {'ft_uid': int(uid), 'ft_sid': int(subject_id)},
+            ).fetchone()._mapping['cnt']
             or 0
         )
     except Exception:
         total = 0
 
-    rows = conn.execute(
-        """
+    rows = db.session.execute(
+        text("""
         SELECT DATE(f.created_at) AS day, COUNT(*) AS added
         FROM favorites f
         JOIN questions q ON q.id = f.question_id
-        WHERE f.user_id = ? AND q.subject_id = ?
-          AND f.created_at >= datetime('now', '+8 hours', ?)
+        WHERE f.user_id = :ft_uid AND q.subject_id = :ft_sid
+          AND f.created_at >= :cutoff_date
         GROUP BY day
         ORDER BY day ASC
-        """,
-        (int(uid), int(subject_id), f'-{days_back} days'),
+        """),
+        {'ft_uid': int(uid), 'ft_sid': int(subject_id), 'cutoff_date': (today_bj() - timedelta(days=days_back)).strftime('%Y-%m-%d 00:00:00')},
     ).fetchall()
 
     by_day = {}
     for r in rows or []:
-        day = (r['day'] if r else None) or None
+        day = (r._mapping['day'] if r else None) or None
         if not day:
             continue
-        by_day[str(day)] = int((r['added'] if r else 0) or 0)
+        by_day[str(day)] = int((r._mapping['added'] if r else 0) or 0)
 
     start_day = today_bj() - timedelta(days=days_back)
     trend = []
@@ -1094,7 +1090,7 @@ def api_subject_favorites_trend(subject):
     return jsonify({
         'status': 'success',
         'data': {
-            'subject': subject_row['name'] or subject,
+            'subject': subject_row._mapping['name'] or subject,
             'subject_id': int(subject_id),
             'days': int(window_days),
             'favorites_total': total,

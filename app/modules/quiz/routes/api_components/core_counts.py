@@ -38,8 +38,6 @@ def api_questions_count():
     from app.core.utils.subject_permissions import get_user_accessible_subjects
     from app.modules.quiz.services.question_tags_service import get_question_ids_by_tag
     from app.core.utils.portable_question_format import any_type_to_portable_type
-    from app.core.utils.database import get_db
-
     subject = request.args.get("subject", "all")
     q_type = request.args.get("type", "all")
     mode = request.args.get("mode", "").lower()
@@ -134,8 +132,7 @@ def api_questions_count():
     if tag and str(tag).lower() != "all":
         if not uid:
             return _ret({"status": "success", "count": 0})
-        conn = get_db()
-        tag_ids = get_question_ids_by_tag(conn, uid, tag)
+        tag_ids = get_question_ids_by_tag(db.session.connection(), uid, tag)
         if not tag_ids:
             return _ret({"status": "success", "count": 0})
 
@@ -163,7 +160,6 @@ def api_questions_count():
 def api_user_counts():
     """获取用户的收藏和错题数量"""
     from app.core.utils.portable_question_format import any_type_to_portable_type
-    from app.core.utils.database import get_db
 
     subject = request.args.get("subject", "all")
     q_type = request.args.get("type", "all")
@@ -245,8 +241,7 @@ def api_user_counts():
     if tag and str(tag).lower() != "all":
         from app.modules.quiz.services.question_tags_service import get_question_ids_by_tag
 
-        conn = get_db()
-        tag_ids = get_question_ids_by_tag(conn, uid, tag)
+        tag_ids = get_question_ids_by_tag(db.session.connection(), uid, tag)
         if not tag_ids:
             return _ret({"status": "success", "favorites": 0, "mistakes": 0})
 
