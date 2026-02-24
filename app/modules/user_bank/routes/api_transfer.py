@@ -5,8 +5,9 @@
 import json
 
 from flask import request, jsonify, current_app
+from sqlalchemy import text
 
-from app.core.utils.database import get_db
+from app.core.extensions import db
 from app.core.utils.decorators import auth_required, current_user_id
 from app.core.utils.portable_question_format import (
     internal_question_to_portable,
@@ -14,6 +15,14 @@ from app.core.utils.portable_question_format import (
 )
 
 from .api_base import user_bank_api_bp, check_bank_access
+
+
+def _build_named_in(col: str, values: list, prefix: str = 'in') -> tuple[str, dict]:
+    if not values:
+        return f"{col} IN (NULL)", {}
+    params = {f"{prefix}_{i}": v for i, v in enumerate(values)}
+    placeholders = ', '.join(f':{k}' for k in params)
+    return f"{col} IN ({placeholders})", params
 
 
 @user_bank_api_bp.route('/<int:bank_id>/questions/import', methods=['POST'])
@@ -29,23 +38,22 @@ def import_questions(bank_id):
     if source not in ('mistakes', 'favorites'):
         return jsonify({'code': 1, 'message': '无效的来源'}), 400
 
-    conn = get_db()
-
-    bank = conn.execute(
-        'SELECT id, question_count FROM user_question_banks WHERE id = ? AND user_id = ? AND status = 1',
-        (bank_id, user_id)
+    bank = db.session.execute(
+        text('SELECT id, question_count FROM user_question_banks WHERE id = :bank_id AND user_id = :uid AND status = 1'),
+        {'bank_id': bank_id, 'uid': user_id}
     ).fetchone()
 
     if not bank:
         return jsonify({'code': 1, 'message': '题库不存在或无权操作'}), 404
 
     # 构建查询
+    params: dict = {'uid': user_id}
     if source == 'mistakes':
         query = '''
             SELECT q.id, q.type, q.content, q.options, q.answer, q.analysis, q.difficulty, q.image_path
             FROM questions q
             JOIN mistakes m ON q.id = m.question_id
-            WHERE m.user_id = ?
+            WHERE m.user_id = :uid
         '''
         source_type = 'mistake'
     else:
@@ -53,58 +61,52 @@ def import_questions(bank_id):
             SELECT q.id, q.type, q.content, q.options, q.answer, q.analysis, q.difficulty, q.image_path
             FROM questions q
             JOIN favorites f ON q.id = f.question_id
-            WHERE f.user_id = ?
+            WHERE f.user_id = :uid
         '''
         source_type = 'favorite'
 
-    params = [user_id]
-
     if subject_id:
-        query += ' AND q.subject_id = ?'
-        params.append(subject_id)
+        query += ' AND q.subject_id = :subject_id'
+        params['subject_id'] = subject_id
 
     if question_ids:
-        placeholders = ','.join(['?'] * len(question_ids))
-        query += f' AND q.id IN ({placeholders})'
-        params.extend(question_ids)
+        in_clause, in_params = _build_named_in('q.id', question_ids, 'qid')
+        query += f' AND {in_clause}'
+        params.update(in_params)
 
-    questions = conn.execute(query, params).fetchall()
+    questions = db.session.execute(text(query), params).fetchall()
 
     if not questions:
         return jsonify({'code': 1, 'message': '未找到可导入的题目'}), 404
 
     imported_count = 0
     for q in questions:
-        conn.execute(
-            '''
+        m = q._mapping
+        db.session.execute(
+            text('''
             INSERT INTO user_bank_questions
             (bank_id, user_id, type, content, options, answer, analysis, tags, difficulty, image_path,
              source_type, source_question_id, sort_order)
-            VALUES (?, ?, ?, ?, ?, ?, ?, '[]', ?, ?, ?, ?,
-                    (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM user_bank_questions WHERE bank_id = ?))
-            ''',
-            (
-                bank_id,
-                user_id,
-                q['type'] or 'essay',
-                q['content'] or '',
-                q['options'] or '[]',
-                q['answer'] or '[]',
-                q['analysis'] or '',
-                int(q['difficulty'] or 1),
-                q['image_path'],
-                source_type,
-                q['id'],
-                bank_id,
-            ),
+            VALUES (:bank_id, :uid, :qtype, :content, :options, :answer, :analysis, '[]', :difficulty, :image_path,
+                    :source_type, :source_qid,
+                    (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM user_bank_questions WHERE bank_id = :bank_id2))
+            '''),
+            {
+                'bank_id': bank_id, 'uid': user_id,
+                'qtype': m['type'] or 'essay', 'content': m['content'] or '',
+                'options': m['options'] or '[]', 'answer': m['answer'] or '[]',
+                'analysis': m['analysis'] or '', 'difficulty': int(m['difficulty'] or 1),
+                'image_path': m['image_path'], 'source_type': source_type,
+                'source_qid': m['id'], 'bank_id2': bank_id,
+            },
         )
         imported_count += 1
 
-    conn.execute(
-        'UPDATE user_question_banks SET question_count = question_count + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        (imported_count, bank_id)
+    db.session.execute(
+        text('UPDATE user_question_banks SET question_count = question_count + :cnt, updated_at = CURRENT_TIMESTAMP WHERE id = :bank_id'),
+        {'cnt': imported_count, 'bank_id': bank_id}
     )
-    conn.commit()
+    db.session.commit()
 
     return jsonify({'code': 0, 'message': f'成功导入{imported_count}道题目'})
 
@@ -120,11 +122,9 @@ def import_questions_json(bank_id):
     if not questions or not isinstance(questions, list):
         return jsonify({'code': 1, 'message': '请提供有效的题目数据'}), 400
 
-    conn = get_db()
-
-    bank = conn.execute(
-        'SELECT id, question_count FROM user_question_banks WHERE id = ? AND user_id = ? AND status = 1',
-        (bank_id, user_id)
+    bank = db.session.execute(
+        text('SELECT id, question_count FROM user_question_banks WHERE id = :bank_id AND user_id = :uid AND status = 1'),
+        {'bank_id': bank_id, 'uid': user_id}
     ).fetchone()
 
     if not bank:
@@ -154,7 +154,7 @@ def import_questions_json(bank_id):
             difficulty = internal.get('difficulty') or 1
             tags = internal.get('tags') or []
         else:
-            # 兼容旧格式（题型/题干/选项/答案/解析/难度）
+            # 兼容旧格式
             q_type = (q.get('题型') or q.get('q_type') or '').strip()
             content = q.get('题干') or q.get('content') or ''
             answer = q.get('答案') or q.get('answer') or ''
@@ -162,12 +162,10 @@ def import_questions_json(bank_id):
             difficulty = q.get('难度') or q.get('difficulty') or 1
             tags = q.get('标签') or q.get('tags') or []
 
-            # 保留题干/答案/解析的缩进与换行；仅用于校验时做 strip 判断。
             content = str(content or '').replace('\r\n', '\n').replace('\r', '\n')
             answer = str(answer or '').replace('\r\n', '\n').replace('\r', '\n')
             explanation = str(explanation or '').replace('\r\n', '\n').replace('\r', '\n')
 
-            # 处理选项
             options = q.get('选项') or q.get('options') or []
             if isinstance(options, str):
                 try:
@@ -189,39 +187,34 @@ def import_questions_json(bank_id):
 
         try:
             portable = internal_question_to_portable(
-                q_id=None,
-                q_type=q_type,
-                content=content,
-                options=options or [],
-                answer=answer,
-                explanation=explanation,
-                difficulty=difficulty,
-                tags=tags,
+                q_id=None, q_type=q_type, content=content,
+                options=options or [], answer=answer,
+                explanation=explanation, difficulty=difficulty, tags=tags,
             )
 
-            cursor = conn.execute(
-                '''
+            cursor = db.session.execute(
+                text('''
                 INSERT INTO user_bank_questions
                 (bank_id, user_id, type, content, options, answer, analysis, tags, difficulty, source_type, sort_order)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'custom',
-                        (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM user_bank_questions WHERE bank_id = ?))
-                ''',
-                (
-                    bank_id,
-                    user_id,
-                    portable.get('type') or 'essay',
-                    portable.get('content') or '',
-                    json.dumps(portable.get('options') or [], ensure_ascii=False),
-                    json.dumps(portable.get('answer') if portable.get('answer') is not None else [], ensure_ascii=False),
-                    portable.get('analysis') or '',
-                    json.dumps(portable.get('tags') or [], ensure_ascii=False),
-                    int(portable.get('difficulty') or 1),
-                    bank_id,
-                ),
+                VALUES (:bank_id, :uid, :qtype, :content, :options, :answer, :analysis, :tags, :difficulty, 'custom',
+                        (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM user_bank_questions WHERE bank_id = :bank_id2))
+                RETURNING id
+                '''),
+                {
+                    'bank_id': bank_id, 'uid': user_id,
+                    'qtype': portable.get('type') or 'essay',
+                    'content': portable.get('content') or '',
+                    'options': json.dumps(portable.get('options') or [], ensure_ascii=False),
+                    'answer': json.dumps(portable.get('answer') if portable.get('answer') is not None else [], ensure_ascii=False),
+                    'analysis': portable.get('analysis') or '',
+                    'tags': json.dumps(portable.get('tags') or [], ensure_ascii=False),
+                    'difficulty': int(portable.get('difficulty') or 1),
+                    'bank_id2': bank_id,
+                },
             )
             imported_count += 1
             try:
-                new_qid = int(cursor.lastrowid)
+                new_qid = int(cursor.fetchone()._mapping['id'])
             except Exception:
                 new_qid = None
             if new_qid and tags:
@@ -231,18 +224,19 @@ def import_questions_json(bank_id):
 
     # 更新题目数量
     if imported_count > 0:
-        conn.execute(
-            'UPDATE user_question_banks SET question_count = question_count + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-            (imported_count, bank_id)
+        db.session.execute(
+            text('UPDATE user_question_banks SET question_count = question_count + :cnt, updated_at = CURRENT_TIMESTAMP WHERE id = :bank_id'),
+            {'cnt': imported_count, 'bank_id': bank_id}
         )
-        conn.commit()
+        db.session.commit()
 
-        # 同步标签（存储于 user_progress 的 bank_x_tags）
+        # 同步标签
         if tag_pairs:
             try:
                 from .api_tags import _load_bank_tag_store, _save_bank_tag_store
 
-                store = _load_bank_tag_store(conn, bank_id, user_id)
+                raw_conn = db.session.connection()
+                store = _load_bank_tag_store(raw_conn, bank_id, user_id)
                 all_tags = store.get('tags', []) or []
                 q_tags = store.get('question_tags', {}) or {}
 
@@ -257,7 +251,7 @@ def import_questions_json(bank_id):
 
                 store['tags'] = all_tags
                 store['question_tags'] = q_tags
-                _save_bank_tag_store(conn, bank_id, user_id, store)
+                _save_bank_tag_store(raw_conn, bank_id, user_id, store)
             except Exception:
                 pass
 
@@ -276,11 +270,10 @@ def import_questions_json(bank_id):
 def extract_questions_word_docx(bank_id: int):
     """从 Word(.docx) 提取原始文本（供前端解析/预览使用）。"""
     user_id = current_user_id()
-    conn = get_db()
 
-    bank = conn.execute(
-        'SELECT id FROM user_question_banks WHERE id = ? AND user_id = ? AND status = 1',
-        (bank_id, user_id),
+    bank = db.session.execute(
+        text('SELECT id FROM user_question_banks WHERE id = :bank_id AND user_id = :uid AND status = 1'),
+        {'bank_id': bank_id, 'uid': user_id},
     ).fetchone()
     if not bank:
         return jsonify({'code': 1, 'message': '题库不存在或无权操作'}), 404
@@ -297,12 +290,12 @@ def extract_questions_word_docx(bank_id: int):
         from app.core.utils.docx_text_extractor import extract_docx_text
 
         raw = file.read()
-        text = extract_docx_text(raw)
+        extracted_text = extract_docx_text(raw)
         return jsonify({
             'code': 0,
             'data': {
                 'filename': filename,
-                'text': text,
+                'text': extracted_text,
             }
         })
     except Exception as e:
@@ -336,7 +329,6 @@ def _parse_question_ids_from_request_args():
     if not ids:
         return []
 
-    # 去重但保留顺序
     seen = set()
     result = []
     for i in ids:
@@ -361,11 +353,9 @@ def export_questions_json(bank_id):
     if not has_access:
         return jsonify({'code': 403, 'message': '无权访问此题库'}), 403
 
-    conn = get_db()
-
-    bank = conn.execute(
-        'SELECT name FROM user_question_banks WHERE id = ?',
-        (bank_id,),
+    bank = db.session.execute(
+        text('SELECT name FROM user_question_banks WHERE id = :bank_id'),
+        {'bank_id': bank_id},
     ).fetchone()
 
     if not bank:
@@ -374,25 +364,25 @@ def export_questions_json(bank_id):
     selected_ids = _parse_question_ids_from_request_args()
 
     if selected_ids:
-        placeholders = ','.join(['?'] * len(selected_ids))
-        questions = conn.execute(
-            f'''
+        in_clause, in_params = _build_named_in('id', selected_ids, 'sid')
+        questions = db.session.execute(
+            text(f'''
             SELECT id, type, content, options, answer, analysis, difficulty, image_path, source_type, created_at, updated_at
             FROM user_bank_questions
-            WHERE bank_id = ? AND id IN ({placeholders})
+            WHERE bank_id = :bank_id AND {in_clause}
             ORDER BY sort_order ASC, id ASC
-            ''',
-            [bank_id, *selected_ids],
+            '''),
+            {'bank_id': bank_id, **in_params},
         ).fetchall()
     else:
-        questions = conn.execute(
-            '''
+        questions = db.session.execute(
+            text('''
             SELECT id, type, content, options, answer, analysis, difficulty, image_path, source_type, created_at, updated_at
             FROM user_bank_questions
-            WHERE bank_id = ?
+            WHERE bank_id = :bank_id
             ORDER BY sort_order ASC, id ASC
-            ''',
-            (bank_id,),
+            '''),
+            {'bank_id': bank_id},
         ).fetchall()
 
     if not questions:
@@ -403,7 +393,8 @@ def export_questions_json(bank_id):
     try:
         from .api_tags import _load_bank_tag_store
 
-        store = _load_bank_tag_store(conn, bank_id, user_id)
+        raw_conn = db.session.connection()
+        store = _load_bank_tag_store(raw_conn, bank_id, user_id)
         question_tags = store.get('question_tags', {}) or {}
     except Exception:
         question_tags = {}
@@ -423,31 +414,26 @@ def export_questions_json(bank_id):
 
     items = []
     for q in questions:
-        qid = int(q['id'])
+        m = q._mapping
+        qid = int(m['id'])
         tags = question_tags.get(str(qid), [])
-        items.append(
-            {
-                'id': qid,
-                'type': q['type'] or '',
-                'content': q['content'] or '',
-                'options': _safe_load(q['options'], []),
-                'answer': _safe_load(q['answer'], []),
-                'analysis': q['analysis'] or '',
-                'tags': tags if isinstance(tags, list) else [],
-                'difficulty': int(q['difficulty'] or 1),
-            }
-        )
+        items.append({
+            'id': qid,
+            'type': m['type'] or '',
+            'content': m['content'] or '',
+            'options': _safe_load(m['options'], []),
+            'answer': _safe_load(m['answer'], []),
+            'analysis': m['analysis'] or '',
+            'tags': tags if isinstance(tags, list) else [],
+            'difficulty': int(m['difficulty'] or 1),
+        })
 
-    # 文件导出遵循 PQF 标准：顶层仅包含 questions（其余信息可忽略或由调用方自行记录）
-    export_payload = {
-        'questions': items,
-    }
-    # API 返回可附带 meta（不影响导入端按 questions 解析）
+    export_payload = {'questions': items}
     export_payload_with_meta = {
         'meta': {
             'scope': 'user_bank',
             'bank_id': int(bank_id),
-            'bank_name': bank['name'],
+            'bank_name': bank._mapping['name'],
         },
         'questions': items,
     }
@@ -457,7 +443,7 @@ def export_questions_json(bank_id):
         return jsonify({'code': 0, 'data': export_payload_with_meta})
 
     buf = io.BytesIO(json.dumps(export_payload, ensure_ascii=False, indent=2).encode('utf-8'))
-    filename = f"{bank['name']}_题库导出.json"
+    filename = f"{bank._mapping['name']}_题库导出.json"
     return send_file(
         buf,
         mimetype='application/json',
@@ -480,12 +466,9 @@ def export_questions_excel(bank_id):
     if not has_access:
         return jsonify({'code': 403, 'message': '无权访问此题库'}), 403
 
-    conn = get_db()
-
-    # 获取题库信息
-    bank = conn.execute(
-        'SELECT name FROM user_question_banks WHERE id = ?',
-        (bank_id,)
+    bank = db.session.execute(
+        text('SELECT name FROM user_question_banks WHERE id = :bank_id'),
+        {'bank_id': bank_id}
     ).fetchone()
 
     if not bank:
@@ -493,25 +476,24 @@ def export_questions_excel(bank_id):
 
     selected_ids = _parse_question_ids_from_request_args()
 
-    # 获取题目
     if selected_ids:
-        placeholders = ','.join(['?'] * len(selected_ids))
-        questions = conn.execute(
-            f'''
+        in_clause, in_params = _build_named_in('id', selected_ids, 'sid')
+        questions = db.session.execute(
+            text(f'''
             SELECT type, content, options, answer, analysis, difficulty
             FROM user_bank_questions
-            WHERE bank_id = ? AND id IN ({placeholders})
+            WHERE bank_id = :bank_id AND {in_clause}
             ORDER BY sort_order ASC, id ASC
-            ''',
-            [bank_id, *selected_ids],
+            '''),
+            {'bank_id': bank_id, **in_params},
         ).fetchall()
     else:
-        questions = conn.execute('''
+        questions = db.session.execute(text('''
             SELECT type, content, options, answer, analysis, difficulty
             FROM user_bank_questions
-            WHERE bank_id = ?
+            WHERE bank_id = :bank_id
             ORDER BY sort_order ASC, id ASC
-        ''', (bank_id,)).fetchall()
+        '''), {'bank_id': bank_id}).fetchall()
 
     if not questions:
         return jsonify({'code': 1, 'message': '题库中没有题目'}), 400
@@ -519,11 +501,11 @@ def export_questions_excel(bank_id):
     from app.core.utils.pqf_rows import pqf_row_to_internal
     seed = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-    # 准备数据（列名遵循 instance/question_import_template.xlsx）
     export_data = []
     max_options = 0
     max_blanks = 0
 
+    bank_name = bank._mapping['name']
     for q in questions:
         internal = pqf_row_to_internal(q, scope='user_bank')
         q_type_val = internal.get('q_type') or ''
@@ -541,14 +523,13 @@ def export_questions_excel(bank_id):
         max_blanks = max(max_blanks, len(blank_answers))
 
         row = {
-            'subject': bank['name'] or '',
+            'subject': bank_name or '',
             'q_type': q_type_val,
             'content': content,
             'answer': answer_text if q_type_val != '填空题' else '',
             'explanation': explanation,
         }
 
-        # 选项列：移除可能的 "A. " 前缀，与模板一致
         for i, opt in enumerate(options):
             opt_text = str(opt or '')
             prefix = f"{seed[i]}. " if i < len(seed) else f"{i+1}. "
@@ -582,7 +563,7 @@ def export_questions_excel(bank_id):
 
     output.seek(0)
 
-    filename = f"{bank['name']}_题目导出.xlsx"
+    filename = f"{bank_name}_题目导出.xlsx"
     return send_file(
         output,
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -599,11 +580,10 @@ def import_questions_excel(bank_id):
     import json
 
     user_id = current_user_id()
-    conn = get_db()
 
-    bank = conn.execute(
-        'SELECT id, question_count FROM user_question_banks WHERE id = ? AND user_id = ? AND status = 1',
-        (bank_id, user_id)
+    bank = db.session.execute(
+        text('SELECT id, question_count FROM user_question_banks WHERE id = :bank_id AND user_id = :uid AND status = 1'),
+        {'bank_id': bank_id, 'uid': user_id}
     ).fetchone()
 
     if not bank:
@@ -617,13 +597,11 @@ def import_questions_excel(bank_id):
         return jsonify({'code': 1, 'message': '请上传.xlsx格式的文件'}), 400
 
     try:
-        # 优先读取模板同名 sheet（不存在则回退到默认第一张）
         try:
             df = pd.read_excel(file, sheet_name='题目示例').fillna('')
         except Exception:
             df = pd.read_excel(file).fillna('')
 
-        # 检查必需列
         required_cols = ['q_type', 'content']
         missing = [col for col in required_cols if col not in df.columns]
         if missing:
@@ -631,7 +609,6 @@ def import_questions_excel(bank_id):
 
         import re
 
-        # 获取选项/填空列（同时兼容 option_A/option_1 与 blank_1...）
         option_cols_raw = [col for col in df.columns if str(col).startswith('option_')]
         blank_cols_raw = [col for col in df.columns if str(col).startswith('blank_')]
 
@@ -670,7 +647,6 @@ def import_questions_excel(bank_id):
                 errors.append(f'第{idx+2}行: 题型或题干为空')
                 continue
 
-            # 处理选项
             options = []
             if q_type in ('选择题', '多选题'):
                 for col in option_cols:
@@ -684,7 +660,6 @@ def import_questions_excel(bank_id):
                     errors.append(f'第{idx+2}行: 选择题/多选题的 answer 不能为空')
                     continue
 
-            # 填空题：优先使用 blank_* 列；无 blank_* 时回退到 answer（兼容旧格式）
             if q_type == '填空题':
                 blanks = []
                 for col in blank_cols:
@@ -698,58 +673,49 @@ def import_questions_excel(bank_id):
                     continue
 
             if q_type not in ('填空题',) and not answer:
-                # 判断题/简答题同样需要答案（与模板说明一致）
                 errors.append(f'第{idx+2}行: answer 不能为空')
                 continue
 
             options_str = json.dumps(options, ensure_ascii=False) if options else None
 
             portable = internal_question_to_portable(
-                q_id=None,
-                q_type=q_type,
-                content=content,
-                options=options_str or '[]',
-                answer=answer,
-                explanation=explanation,
-                difficulty=difficulty,
-                tags=[],
+                q_id=None, q_type=q_type, content=content,
+                options=options_str or '[]', answer=answer,
+                explanation=explanation, difficulty=difficulty, tags=[],
             )
 
-            # 插入题目（PQF 同名列）
-            conn.execute(
-                '''
+            db.session.execute(
+                text('''
                 INSERT INTO user_bank_questions
                 (bank_id, user_id, type, content, options, answer, analysis, tags, difficulty, source_type, sort_order)
-                VALUES (?, ?, ?, ?, ?, ?, ?, '[]', ?, 'custom',
-                        (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM user_bank_questions WHERE bank_id = ?))
-                ''',
-                (
-                    bank_id,
-                    user_id,
-                    portable.get('type') or 'essay',
-                    portable.get('content') or '',
-                    json.dumps(portable.get('options') or [], ensure_ascii=False),
-                    json.dumps(portable.get('answer') if portable.get('answer') is not None else [], ensure_ascii=False),
-                    portable.get('analysis') or '',
-                    int(portable.get('difficulty') or 1),
-                    bank_id,
-                ),
+                VALUES (:bank_id, :uid, :qtype, :content, :options, :answer, :analysis, '[]', :difficulty, 'custom',
+                        (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM user_bank_questions WHERE bank_id = :bank_id2))
+                '''),
+                {
+                    'bank_id': bank_id, 'uid': user_id,
+                    'qtype': portable.get('type') or 'essay',
+                    'content': portable.get('content') or '',
+                    'options': json.dumps(portable.get('options') or [], ensure_ascii=False),
+                    'answer': json.dumps(portable.get('answer') if portable.get('answer') is not None else [], ensure_ascii=False),
+                    'analysis': portable.get('analysis') or '',
+                    'difficulty': int(portable.get('difficulty') or 1),
+                    'bank_id2': bank_id,
+                },
             )
             imported_count += 1
 
-        # 更新题目数量
         if imported_count > 0:
-            conn.execute(
-                'UPDATE user_question_banks SET question_count = question_count + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-                (imported_count, bank_id)
+            db.session.execute(
+                text('UPDATE user_question_banks SET question_count = question_count + :cnt, updated_at = CURRENT_TIMESTAMP WHERE id = :bank_id'),
+                {'cnt': imported_count, 'bank_id': bank_id}
             )
-            conn.commit()
+            db.session.commit()
 
         return jsonify({
             'code': 0,
             'data': {
                 'imported': imported_count,
-                'errors': errors[:10]  # 最多返回10条错误
+                'errors': errors[:10]
             },
             'message': f'成功导入{imported_count}道题目' + (f'，{len(errors)}条错误' if errors else '')
         })
@@ -774,11 +740,9 @@ def export_questions_package(bank_id):
     if not has_access:
         return jsonify({'code': 403, 'message': '无权访问此题库'}), 403
 
-    conn = get_db()
-
-    bank = conn.execute(
-        'SELECT name FROM user_question_banks WHERE id = ?',
-        (bank_id,)
+    bank = db.session.execute(
+        text('SELECT name FROM user_question_banks WHERE id = :bank_id'),
+        {'bank_id': bank_id}
     ).fetchone()
 
     if not bank:
@@ -786,76 +750,76 @@ def export_questions_package(bank_id):
 
     selected_ids = _parse_question_ids_from_request_args()
     if selected_ids:
-        placeholders = ','.join(['?'] * len(selected_ids))
-        questions = conn.execute(
-            f'''
+        in_clause, in_params = _build_named_in('id', selected_ids, 'sid')
+        questions = db.session.execute(
+            text(f'''
             SELECT id, type, content, options, answer, analysis, difficulty, image_path
             FROM user_bank_questions
-            WHERE bank_id = ? AND id IN ({placeholders})
+            WHERE bank_id = :bank_id AND {in_clause}
             ORDER BY sort_order ASC, id ASC
-            ''',
-            [bank_id, *selected_ids],
+            '''),
+            {'bank_id': bank_id, **in_params},
         ).fetchall()
     else:
-        questions = conn.execute('''
+        questions = db.session.execute(text('''
             SELECT id, type, content, options, answer, analysis, difficulty, image_path
             FROM user_bank_questions
-            WHERE bank_id = ?
+            WHERE bank_id = :bank_id
             ORDER BY sort_order ASC, id ASC
-        ''', (bank_id,)).fetchall()
+        '''), {'bank_id': bank_id}).fetchall()
 
     if not questions:
         return jsonify({'code': 1, 'message': '题库中没有题目'}), 400
 
-    # 标签（按当前用户维度）
     question_tags = {}
     try:
         from .api_tags import _load_bank_tag_store
 
-        store = _load_bank_tag_store(conn, bank_id, user_id)
+        raw_conn = db.session.connection()
+        store = _load_bank_tag_store(raw_conn, bank_id, user_id)
         question_tags = store.get('question_tags', {}) or {}
     except Exception:
         question_tags = {}
 
-    # 创建ZIP
     zip_buffer = io.BytesIO()
     upload_folder = current_app.config.get('UPLOAD_FOLDER', os.path.join(current_app.root_path, '..', 'uploads'))
+    bank_name = bank._mapping['name']
+
+    def _safe_load(raw, default):
+        if raw is None:
+            return default
+        if isinstance(raw, (list, dict, bool, int, float)):
+            return raw
+        s = str(raw).strip()
+        if not s:
+            return default
+        try:
+            return json.loads(s)
+        except Exception:
+            return default
 
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
         questions_data = []
         image_count = 0
 
-        def _safe_load(raw, default):
-            if raw is None:
-                return default
-            if isinstance(raw, (list, dict, bool, int, float)):
-                return raw
-            s = str(raw).strip()
-            if not s:
-                return default
-            try:
-                return json.loads(s)
-            except Exception:
-                return default
-
         for q in questions:
-            qid = int(q['id'])
+            m = q._mapping
+            qid = int(m['id'])
             tags = question_tags.get(str(qid), [])
             q_data = {
                 'id': qid,
-                'type': q['type'] or '',
-                'content': q['content'] or '',
-                'options': _safe_load(q['options'], []),
-                'answer': _safe_load(q['answer'], []),
-                'analysis': q['analysis'] or '',
+                'type': m['type'] or '',
+                'content': m['content'] or '',
+                'options': _safe_load(m['options'], []),
+                'answer': _safe_load(m['answer'], []),
+                'analysis': m['analysis'] or '',
                 'tags': tags if isinstance(tags, list) else [],
-                'difficulty': int(q['difficulty'] or 1),
+                'difficulty': int(m['difficulty'] or 1),
             }
 
-            # 处理图片
-            if q['image_path']:
-                image_filename = os.path.basename(q['image_path'])
-                full_path = os.path.join(upload_folder, q['image_path'].lstrip('/uploads/'))
+            if m['image_path']:
+                image_filename = os.path.basename(m['image_path'])
+                full_path = os.path.join(upload_folder, m['image_path'].lstrip('/uploads/'))
 
                 if os.path.exists(full_path):
                     new_image_name = f"images/{image_count}_{image_filename}"
@@ -869,12 +833,11 @@ def export_questions_package(bank_id):
 
             questions_data.append(q_data)
 
-        # 写入data.json
         payload = {
             'meta': {
                 'scope': 'user_bank_package',
                 'bank_id': int(bank_id),
-                'bank_name': bank['name'],
+                'bank_name': bank_name,
             },
             'questions': questions_data,
         }
@@ -882,7 +845,7 @@ def export_questions_package(bank_id):
 
     zip_buffer.seek(0)
 
-    filename = f"{bank['name']}_题库包.zip"
+    filename = f"{bank_name}_题库包.zip"
     return send_file(
         zip_buffer,
         mimetype='application/zip',
@@ -901,11 +864,10 @@ def import_questions_package(bank_id):
     import uuid
 
     user_id = current_user_id()
-    conn = get_db()
 
-    bank = conn.execute(
-        'SELECT id, question_count FROM user_question_banks WHERE id = ? AND user_id = ? AND status = 1',
-        (bank_id, user_id)
+    bank = db.session.execute(
+        text('SELECT id, question_count FROM user_question_banks WHERE id = :bank_id AND user_id = :uid AND status = 1'),
+        {'bank_id': bank_id, 'uid': user_id}
     ).fetchone()
 
     if not bank:
@@ -936,14 +898,13 @@ def import_questions_package(bank_id):
 
             imported_count = 0
             errors = []
-            tag_pairs = []  # [(new_question_id, tags_list)]
+            tag_pairs = []
 
             for idx, q in enumerate(questions_data):
                 if not isinstance(q, dict):
                     errors.append(f'第{idx+1}题: 题目格式应为对象')
                     continue
 
-                # 新统一格式
                 if 'type' in q or (isinstance(q.get('answer'), list) and 'content' in q):
                     internal, conv_errors = portable_question_to_internal(q, scope='user_bank')
                     if conv_errors:
@@ -959,7 +920,6 @@ def import_questions_package(bank_id):
                     tags = internal.get('tags') or []
                     images = q.get('images') or []
                 else:
-                    # 兼容旧包格式
                     q_type = str(q.get('q_type', '')).strip()
                     content = str(q.get('content', '')).strip()
                     answer = q.get('answer', '')
@@ -974,14 +934,9 @@ def import_questions_package(bank_id):
                     continue
 
                 portable = internal_question_to_portable(
-                    q_id=None,
-                    q_type=q_type,
-                    content=content,
-                    options=options or [],
-                    answer=answer,
-                    explanation=explanation,
-                    difficulty=difficulty,
-                    tags=tags or [],
+                    q_id=None, q_type=q_type, content=content,
+                    options=options or [], answer=answer,
+                    explanation=explanation, difficulty=difficulty, tags=tags or [],
                 )
 
                 options_str = json.dumps(portable.get('options') or [], ensure_ascii=False)
@@ -991,12 +946,10 @@ def import_questions_package(bank_id):
                 )
                 tags_str = json.dumps(portable.get('tags') or [], ensure_ascii=False)
 
-                # 处理图片
                 image_path = None
                 if images and isinstance(images, list) and images[0]:
                     src_image = str(images[0])
                     if src_image in zf.namelist():
-                        # 保存图片
                         img_data = zf.read(src_image)
                         ext = os.path.splitext(src_image)[1]
                         new_filename = f"user_bank_{bank_id}_{uuid.uuid4().hex}{ext}"
@@ -1008,46 +961,44 @@ def import_questions_package(bank_id):
 
                         image_path = f"/uploads/questions/{new_filename}"
 
-                # 插入题目
-                cursor = conn.execute('''
+                cursor = db.session.execute(text('''
                     INSERT INTO user_bank_questions
                     (bank_id, user_id, type, content, options, answer, analysis, tags, difficulty, image_path, source_type, sort_order)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'custom',
-                            (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM user_bank_questions WHERE bank_id = ?))
-                ''', (
-                    bank_id,
-                    user_id,
-                    portable.get('type') or 'essay',
-                    portable.get('content') or '',
-                    options_str,
-                    answer_str,
-                    portable.get('analysis') or '',
-                    tags_str,
-                    int(portable.get('difficulty') or 1),
-                    image_path,
-                    bank_id,
-                ))
+                    VALUES (:bank_id, :uid, :qtype, :content, :options, :answer, :analysis, :tags, :difficulty, :image_path, 'custom',
+                            (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM user_bank_questions WHERE bank_id = :bank_id2))
+                    RETURNING id
+                '''), {
+                    'bank_id': bank_id, 'uid': user_id,
+                    'qtype': portable.get('type') or 'essay',
+                    'content': portable.get('content') or '',
+                    'options': options_str, 'answer': answer_str,
+                    'analysis': portable.get('analysis') or '',
+                    'tags': tags_str,
+                    'difficulty': int(portable.get('difficulty') or 1),
+                    'image_path': image_path,
+                    'bank_id2': bank_id,
+                })
                 imported_count += 1
                 try:
-                    new_qid = int(cursor.lastrowid)
+                    new_qid = int(cursor.fetchone()._mapping['id'])
                 except Exception:
                     new_qid = None
                 if new_qid and (portable.get('tags') or []):
                     tag_pairs.append((new_qid, portable.get('tags') or []))
 
-            # 更新题目数量
             if imported_count > 0:
-                conn.execute(
-                    'UPDATE user_question_banks SET question_count = question_count + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-                    (imported_count, bank_id)
+                db.session.execute(
+                    text('UPDATE user_question_banks SET question_count = question_count + :cnt, updated_at = CURRENT_TIMESTAMP WHERE id = :bank_id'),
+                    {'cnt': imported_count, 'bank_id': bank_id}
                 )
-                conn.commit()
+                db.session.commit()
 
                 if tag_pairs:
                     try:
                         from .api_tags import _load_bank_tag_store, _save_bank_tag_store
 
-                        store = _load_bank_tag_store(conn, bank_id, user_id)
+                        raw_conn = db.session.connection()
+                        store = _load_bank_tag_store(raw_conn, bank_id, user_id)
                         all_tags = store.get('tags', []) or []
                         q_tags = store.get('question_tags', {}) or {}
 
@@ -1062,7 +1013,7 @@ def import_questions_package(bank_id):
 
                         store['tags'] = all_tags
                         store['question_tags'] = q_tags
-                        _save_bank_tag_store(conn, bank_id, user_id, store)
+                        _save_bank_tag_store(raw_conn, bank_id, user_id, store)
                     except Exception:
                         pass
 
