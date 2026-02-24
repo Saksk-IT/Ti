@@ -13,8 +13,9 @@ import string
 from datetime import datetime
 
 from flask import Blueprint
+from sqlalchemy import text
 
-from app.core.utils.database import get_db
+from app.core.extensions import db
 from app.core.utils.time_utils import now_bj
 
 
@@ -54,36 +55,36 @@ def check_bank_access(user_id, bank_id):
     检查用户是否有权访问题库
     返回: (has_access: bool, permission: str, access_type: str)
     """
-    conn = get_db()
-    bank = conn.execute(
-        'SELECT * FROM user_question_banks WHERE id = ?',
-        (bank_id,)
+    bank = db.session.execute(
+        text('SELECT * FROM user_question_banks WHERE id = :bank_id'),
+        {'bank_id': bank_id}
     ).fetchone()
 
-    if not bank or bank['status'] == 0:
+    if not bank or bank._mapping['status'] == 0:
         return (False, None, None)
 
     # 1. 创建者：完全权限
-    if bank['user_id'] == user_id:
+    if bank._mapping['user_id'] == user_id:
         return (True, 'owner', 'owner')
 
     # 2. 公开题库：所有登录用户可访问
-    if bank['is_public']:
+    if bank._mapping['is_public']:
         return (True, 'read', 'public')
 
     # 3. 分享授权：检查分享记录
-    share_record = conn.execute('''
+    share_record = db.session.execute(text('''
         SELECT bsr.*, bs.permission, bs.is_active, bs.expires_at
         FROM bank_share_records bsr
         JOIN bank_shares bs ON bsr.share_id = bs.id
-        WHERE bsr.user_id = ? AND bsr.bank_id = ? AND bsr.status = 1
-    ''', (user_id, bank_id)).fetchone()
+        WHERE bsr.user_id = :user_id AND bsr.bank_id = :bank_id AND bsr.status = 1
+    '''), {'user_id': user_id, 'bank_id': bank_id}).fetchone()
 
     if share_record:
-        share_active = share_record['is_active']
-        expires_at = share_record['expires_at']
-        if share_active and (not expires_at or datetime.fromisoformat(expires_at) > now_bj()):
-            return (True, share_record['permission'], 'shared')
+        m = share_record._mapping
+        share_active = m['is_active']
+        expires_at = m['expires_at']
+        if share_active and (not expires_at or datetime.fromisoformat(str(expires_at)) > now_bj()):
+            return (True, m['permission'], 'shared')
 
     # 4. 未授权
     return (False, None, None)
@@ -93,9 +94,8 @@ def get_bank_category_name(category_id, user_id):
     """获取分类名称"""
     if not category_id:
         return None
-    conn = get_db()
-    cat = conn.execute(
-        'SELECT name FROM user_bank_categories WHERE id = ? AND user_id = ?',
-        (category_id, user_id)
+    cat = db.session.execute(
+        text('SELECT name FROM user_bank_categories WHERE id = :cat_id AND user_id = :user_id'),
+        {'cat_id': category_id, 'user_id': user_id}
     ).fetchone()
-    return cat['name'] if cat else None
+    return cat._mapping['name'] if cat else None

@@ -5,8 +5,9 @@
 import json
 
 from flask import request, jsonify
+from sqlalchemy import text
 
-from app.core.utils.database import get_db
+from app.core.extensions import db
 from app.core.utils.decorators import auth_required, current_user_id
 from app.core.utils.portable_question_format import normalize_tags
 from app.core.utils.user_question_tags import (
@@ -39,17 +40,18 @@ def _clean_tag_list(raw) -> list:
     return out
 
 
-def _load_bank_tag_store_from_user_progress(conn, bank_id: int, user_id: int) -> dict:
+
+def _load_bank_tag_store_from_user_progress(bank_id: int, user_id: int) -> dict:
     """旧版存储：user_progress.bank_{id}_tags"""
     key = _get_bank_tag_store_key(bank_id)
-    row = conn.execute(
-        "SELECT data FROM user_progress WHERE user_id = ? AND p_key = ?",
-        (int(user_id), str(key)),
+    row = db.session.execute(
+        text("SELECT data FROM user_progress WHERE user_id = :user_id AND p_key = :p_key"),
+        {'user_id': int(user_id), 'p_key': str(key)},
     ).fetchone()
 
-    if row and row["data"]:
+    if row and row._mapping["data"]:
         try:
-            raw = json.loads(row["data"])
+            raw = json.loads(row._mapping["data"])
             if isinstance(raw, dict):
                 return raw
         except Exception:
@@ -112,7 +114,7 @@ def _load_bank_tag_store(conn, bank_id: int, user_id: int) -> dict:
         return _load_bank_tag_store_from_uqti(conn, bank_id, user_id)
 
     # fallback：读取旧格式，并尽力迁移到新表
-    old = _load_bank_tag_store_from_user_progress(conn, bank_id, user_id)
+    old = _load_bank_tag_store_from_user_progress(bank_id, user_id)
     try:
         tags = _clean_tag_list(old.get("tags") if isinstance(old.get("tags"), list) else [])
         q_tags = old.get("question_tags") if isinstance(old.get("question_tags"), dict) else {}
@@ -142,7 +144,7 @@ def _save_bank_tag_store(conn, bank_id: int, user_id: int, store: dict):
             merged_tags.extend(_clean_tag_list(_tags))
     merged_tags = _clean_tag_list(merged_tags)
 
-    # tag 定义（question_id=0）：保留“0 使用次数”的 tag
+    # tag 定义（question_id=0）：保留"0 使用次数"的 tag
     if merged_tags:
         conn.executemany(
             """
@@ -178,7 +180,7 @@ def _save_bank_tag_store(conn, bank_id: int, user_id: int, store: dict):
             rows,
         )
 
-    conn.commit()
+    db.session.commit()
 
 
 @user_bank_api_bp.route('/<int:bank_id>/tags', methods=['GET', 'POST', 'DELETE'])
@@ -190,7 +192,7 @@ def bank_tags_api(bank_id: int):
     POST: 创建新标签
     """
     user_id = current_user_id()
-    conn = get_db()
+    conn = db.session.connection()
 
     # 检查题库访问权限（含公开/分享）
     has_access, _permission, _access_type = check_bank_access(user_id, bank_id)
@@ -260,9 +262,9 @@ def bank_tags_api(bank_id: int):
                 scope_id=int(bank_id),
                 tag=tag,
             )
-            conn.commit()
+            db.session.commit()
         except Exception as e:
-            conn.rollback()
+            db.session.rollback()
             return jsonify({'status': 'error', 'message': str(e)}), 500
 
         # 返回最新标签列表（含使用次数）
@@ -289,7 +291,7 @@ def bank_question_tags_api(bank_id: int, question_id: int):
     POST: 设置题目的标签
     """
     user_id = current_user_id()
-    conn = get_db()
+    conn = db.session.connection()
 
     # 检查题库访问权限（含公开/分享）
     has_access, _permission, _access_type = check_bank_access(user_id, bank_id)
@@ -297,9 +299,9 @@ def bank_question_tags_api(bank_id: int, question_id: int):
         return jsonify({'status': 'error', 'message': '题库不存在或无权访问'}), 404
 
     # 检查题目是否存在
-    question = conn.execute(
-        'SELECT id FROM user_bank_questions WHERE id = ? AND bank_id = ?',
-        (question_id, bank_id)
+    question = db.session.execute(
+        text('SELECT id FROM user_bank_questions WHERE id = :qid AND bank_id = :bank_id'),
+        {'qid': question_id, 'bank_id': bank_id}
     ).fetchone()
 
     if not question:
