@@ -3,7 +3,8 @@ import json
 
 from flask import render_template, request, session
 
-from app.core.utils.database import get_db
+from app.core.extensions import db
+from sqlalchemy import text
 
 from .bp import main_pages_bp
 
@@ -18,7 +19,6 @@ def search_page():
     per_page = 20  # 每页显示数量
 
     uid = session.get('user_id') or -1
-    conn = get_db()
 
     # 获取所有科目和题型用于筛选下拉框（添加权限过滤）
     from app.core.utils.subject_permissions import get_user_accessible_subjects
@@ -30,12 +30,13 @@ def search_page():
         if user_id:
             accessible_subject_ids = get_user_accessible_subjects(user_id)
             if accessible_subject_ids:
-                placeholders = ','.join(['?'] * len(accessible_subject_ids))
+                placeholders = ','.join([f':sid_{i}' for i in range(len(accessible_subject_ids))])
+                sid_params = {f'sid_{i}': sid for i, sid in enumerate(accessible_subject_ids)}
                 subjects = [
                     row[0]
-                    for row in conn.execute(
-                        f"SELECT name FROM subjects WHERE id IN ({placeholders}) AND (is_locked=0 OR is_locked IS NULL)",
-                        accessible_subject_ids,
+                    for row in db.session.execute(
+                        text(f"SELECT name FROM subjects WHERE id IN ({placeholders}) AND (is_locked=0 OR is_locked IS NULL)"),
+                        sid_params,
                     ).fetchall()
                 ]
             else:
@@ -43,7 +44,7 @@ def search_page():
         else:
             subjects = []  # 未登录用户返回空列表
 
-        rows = conn.execute("SELECT DISTINCT type FROM questions").fetchall()
+        rows = db.session.execute(text("SELECT DISTINCT type FROM questions")).fetchall()
         q_types = [
             portable_type_to_q_type((r[0] or ''))
             for r in rows
@@ -72,28 +73,29 @@ def search_page():
             username=session.get('username'),
         )
 
-    # 构建搜索SQL
+    # 构建搜索SQL（使用命名参数）
     sql_base = """
         SELECT q.*, s.name as subject,
                CASE WHEN f.id IS NOT NULL THEN 1 ELSE 0 END as is_fav,
                CASE WHEN m.id IS NOT NULL THEN 1 ELSE 0 END as is_mistake
         FROM questions q
         LEFT JOIN subjects s ON q.subject_id = s.id
-        LEFT JOIN favorites f ON q.id = f.question_id AND f.user_id = ?
-        LEFT JOIN mistakes m ON q.id = m.question_id AND m.user_id = ?
-        WHERE (q.content LIKE ? OR q.analysis LIKE ? OR q.options LIKE ? OR q.answer LIKE ?)
+        LEFT JOIN favorites f ON q.id = f.question_id AND f.user_id = :uid
+        LEFT JOIN mistakes m ON q.id = m.question_id AND m.user_id = :uid
+        WHERE (q.content LIKE :search_term OR q.analysis LIKE :search_term OR q.options LIKE :search_term OR q.answer LIKE :search_term)
         AND (s.is_locked=0 OR s.is_locked IS NULL)
     """
 
     search_term = f'%{keyword}%'
-    params = [uid, uid, search_term, search_term, search_term, search_term]
+    params = {'uid': uid, 'search_term': search_term}
 
     # 添加权限过滤：只搜索用户可访问的科目
     if user_id:
         if accessible_subject_ids:
-            placeholders = ','.join(['?'] * len(accessible_subject_ids))
+            placeholders = ','.join([f':asid_{i}' for i in range(len(accessible_subject_ids))])
+            for i, sid in enumerate(accessible_subject_ids):
+                params[f'asid_{i}'] = sid
             sql_base += f" AND q.subject_id IN ({placeholders})"
-            params.extend(accessible_subject_ids)
         else:
             # 如果没有可访问的科目，返回空结果
             sql_base += " AND 1=0"
@@ -103,17 +105,17 @@ def search_page():
 
     # 添加科目筛选
     if subject_filter:
-        sql_base += " AND s.name = ?"
-        params.append(subject_filter)
+        sql_base += " AND s.name = :subject_filter"
+        params['subject_filter'] = subject_filter
 
     # 添加题型筛选
     if type_filter:
-        sql_base += " AND q.type = ?"
-        params.append(q_type_to_portable_type(type_filter))
+        sql_base += " AND q.type = :type_filter"
+        params['type_filter'] = q_type_to_portable_type(type_filter)
 
     # 先获取总数
-    count_sql = f"SELECT COUNT(*) FROM ({sql_base})"
-    total_count = conn.execute(count_sql, params).fetchone()[0]
+    count_sql = f"SELECT COUNT(*) FROM ({sql_base}) AS sub"
+    total_count = db.session.execute(text(count_sql), params).fetchone()[0]
     total_pages = (total_count + per_page - 1) // per_page if total_count > 0 else 0
 
     # 确保页码有效
@@ -123,10 +125,11 @@ def search_page():
         page = total_pages
 
     # 添加排序和分页
-    sql = sql_base + " ORDER BY q.id DESC LIMIT ? OFFSET ?"
-    params.extend([per_page, (page - 1) * per_page])
+    sql = sql_base + " ORDER BY q.id DESC LIMIT :limit OFFSET :offset"
+    params['limit'] = per_page
+    params['offset'] = (page - 1) * per_page
 
-    rows = conn.execute(sql, params).fetchall()
+    rows = db.session.execute(text(sql), params).fetchall()
 
     questions = []
     for row in rows:

@@ -10,7 +10,8 @@
 
 from flask import render_template, request, session
 
-from app.core.utils.database import get_db
+from app.core.extensions import db
+from sqlalchemy import text
 from app.core.utils.decorators import login_required
 
 from .bp import main_pages_bp
@@ -31,11 +32,10 @@ from .review_center_helpers import (  # noqa: F401
 def favorites_detail_page():
     """收藏：先选题库（公共题库 / 个人题库），再进入题库详情页。"""
     uid = session.get('user_id')
-    conn = get_db()
 
     from app.core.utils.bank_select import load_bank_select_payload
 
-    payload = load_bank_select_payload(conn, uid)
+    payload = load_bank_select_payload(db.session, uid)
 
     return render_template(
         'main/bank/bank_select_entry.html',
@@ -60,7 +60,6 @@ def favorites_detail_page():
 def review_entry_page():
     """复盘：错题 / 收藏 / 标签统一入口，先选题库再进入对应中心。"""
     uid = session.get('user_id')
-    conn = get_db()
 
     kind = (request.args.get('kind') or 'mistakes').strip().lower()
     if kind not in ('mistakes', 'favorites', 'tags'):
@@ -70,7 +69,7 @@ def review_entry_page():
 
     from app.core.utils.bank_select import load_bank_select_payload
 
-    payload = load_bank_select_payload(conn, uid)
+    payload = load_bank_select_payload(db.session, uid)
 
     return render_template(
         'main/bank/bank_select_entry.html',
@@ -97,11 +96,10 @@ def review_entry_page():
 def mistakes_detail_page():
     """错题：先选题库（公共题库 / 个人题库），再进入题库详情页。"""
     uid = session.get('user_id')
-    conn = get_db()
 
     from app.core.utils.bank_select import load_bank_select_payload
 
-    payload = load_bank_select_payload(conn, uid)
+    payload = load_bank_select_payload(db.session, uid)
 
     return render_template(
         'main/bank/bank_select_entry.html',
@@ -126,11 +124,10 @@ def mistakes_detail_page():
 def tags_select_page():
     """标签：先选题库（公共题库 / 个人题库），再进入标签中心页。"""
     uid = session.get('user_id')
-    conn = get_db()
 
     from app.core.utils.bank_select import load_bank_select_payload
 
-    payload = load_bank_select_payload(conn, uid)
+    payload = load_bank_select_payload(db.session, uid)
 
     return render_template(
         'main/bank/bank_select_entry.html',

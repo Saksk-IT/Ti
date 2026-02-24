@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 from flask import current_app, redirect, render_template, session
 
-from app.core.utils.database import get_db
+from app.core.extensions import db
 from app.core.utils.decorators import login_required
+from sqlalchemy import text
 
 from .bp import main_pages_bp
 
@@ -92,31 +93,30 @@ def settings_theme_page():
 @main_pages_bp.route('/settings/about')
 def settings_about_page():
     """设置 - 关于"""
-    conn = get_db()
     admin = None
     try:
-        admin = conn.execute(
-            """
+        admin = db.session.execute(
+            text("""
             SELECT id, username, email, contact
             FROM users
-            WHERE is_admin = 1
+            WHERE is_admin = :true_val
             ORDER BY (last_active IS NULL) ASC, last_active DESC, id ASC
             LIMIT 1
-            """
+            """),
+            {'true_val': True},
         ).fetchone()
     except Exception as e:
         current_app.logger.warning(f"settings about admin query failed: {e}")
         admin = None
 
     admin_available = bool(admin)
-    admin_username = admin['username'] if admin and 'username' in admin.keys() else ''
+    admin_username = admin._mapping['username'] if admin else ''
     admin_email = ''
     admin_wechat = ''
     if admin:
-        if 'email' in admin.keys():
-            admin_email = (admin['email'] or '').strip()
-        if 'contact' in admin.keys():
-            admin_wechat = (admin['contact'] or '').strip()
+        mapping = admin._mapping
+        admin_email = (mapping.get('email') or '').strip()
+        admin_wechat = (mapping.get('contact') or '').strip()
 
     chat_disabled_reason = ''
     if session.get('is_admin'):
@@ -132,4 +132,3 @@ def settings_about_page():
         admin_wechat=admin_wechat,
         chat_disabled_reason=chat_disabled_reason,
     )
-

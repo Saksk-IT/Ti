@@ -3,8 +3,6 @@ import os
 
 from flask import abort, current_app, redirect, render_template, send_from_directory, session
 
-from app.core.utils.database import get_db
-
 from .bp import main_pages_bp
 
 
