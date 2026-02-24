@@ -53,6 +53,9 @@ function summarizeUserAvatar(userInfo) {
     var full = (0, avatar_1.decorateAvatarUrl)((0, api_endpoints_1.resolveUploadUrl)(raw));
     return full || '/images/default-avatar.png';
 }
+function resolveCanShowAdmin(userInfo) {
+    return !!((userInfo === null || userInfo === void 0 ? void 0 : userInfo.is_admin) || (userInfo === null || userInfo === void 0 ? void 0 : userInfo.is_subject_admin) || (userInfo === null || userInfo === void 0 ? void 0 : userInfo.is_notification_admin));
+}
 Component({
     properties: {
         open: {
@@ -77,6 +80,7 @@ Component({
         unreadNotiText: '',
         userName: '未登录',
         userAvatar: '/images/default-avatar.png',
+        canShowAdmin: false,
         actionMenuOpen: false,
         themeMenuOpen: false,
         fontMenuOpen: false,
@@ -138,13 +142,15 @@ Component({
                 var userInfo = wx.getStorageSync('userInfo') || {};
                 this.setData({
                     userName: summarizeUserName(userInfo),
-                    userAvatar: summarizeUserAvatar(userInfo)
+                    userAvatar: summarizeUserAvatar(userInfo),
+                    canShowAdmin: resolveCanShowAdmin(userInfo)
                 });
             }
             catch (e) {
                 this.setData({
                     userName: '未登录',
-                    userAvatar: '/images/default-avatar.png'
+                    userAvatar: '/images/default-avatar.png',
+                    canShowAdmin: false
                 });
             }
         },
