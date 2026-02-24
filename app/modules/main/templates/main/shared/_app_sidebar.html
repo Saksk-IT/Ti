@@ -3,15 +3,26 @@
 {% set _avatar_initial = (username or 'U')[:1] | upper %}
 
 <style>
+  .app-sidebar-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .app-sidebar-head .app-brand {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
   .app-brand {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 6px 8px;
-    border: 0;
-    background: transparent;
-    box-shadow: none;
-    margin-bottom: 2px;
+    padding: 10px 10px;
+    border-radius: 12px;
+    border: 1px solid var(--app-border);
+    background: var(--app-surface-2);
+    box-shadow: var(--app-shadow-soft);
+    margin-bottom: 0;
   }
   .app-brand-dot {
     width: 10px;
@@ -479,10 +490,12 @@
   }
 </style>
 
-<a class="app-brand" href="/hub" aria-label="返回首页" title="返回首页">
-  <span class="app-brand-dot" aria-hidden="true"></span>
-  <span class="app-brand-text">SAK</span>
-</a>
+<div class="app-sidebar-head">
+  <a class="app-brand" href="/hub" aria-label="返回首页" title="返回首页">
+    <span class="app-brand-dot" aria-hidden="true"></span>
+    <span class="app-brand-text">SAK</span>
+  </a>
+</div>
 
 <nav class="app-nav" aria-label="主导航">
   <div class="app-nav-section">
