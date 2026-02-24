@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """认证API路由"""
-import sqlite3
 from flask import Blueprint, request, jsonify, session, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.core.extensions import limiter
-from app.core.utils.database import get_db
+from app.core.extensions import db
+from app.models.user import User as UserModel
+from sqlalchemy.exc import IntegrityError
 from app.core.utils.validators import validate_password
 from app.core.utils.decorators import jwt_required, auth_required, current_user_id
 from app.core.models.user import User
@@ -52,32 +53,6 @@ def api_login():
         current_app.logger.warning(f'登录失败: 缺少用户名或密码 - IP: {request.remote_addr}')
         return jsonify({'status': 'error', 'message': '用户名和密码不能为空'}), 400
     
-    conn = get_db()
-    
-    # 检查 is_subject_admin 和 is_notification_admin 字段是否存在
-    try:
-        user_cols = [r['name'] for r in conn.execute("PRAGMA table_info(users)").fetchall()]
-        has_subject_admin_field = 'is_subject_admin' in user_cols
-        has_notification_admin_field = 'is_notification_admin' in user_cols
-        # 如果字段不存在，尝试添加
-        if not has_subject_admin_field:
-            try:
-                conn.execute('ALTER TABLE users ADD COLUMN is_subject_admin INTEGER DEFAULT 0')
-                conn.commit()
-                has_subject_admin_field = True
-            except Exception:
-                pass
-        if not has_notification_admin_field:
-            try:
-                conn.execute('ALTER TABLE users ADD COLUMN is_notification_admin INTEGER DEFAULT 0')
-                conn.commit()
-                has_notification_admin_field = True
-            except Exception:
-                pass
-    except Exception:
-        has_subject_admin_field = False
-        has_notification_admin_field = False
-    
     # 使用User模型的verify_password方法（支持邮箱和用户名）
     user = User.verify_password(identifier, password)
     
@@ -95,8 +70,8 @@ def api_login():
     session['user_id'] = user['id']
     session['username'] = user['username']
     session['is_admin'] = bool(user.get('is_admin', 0))
-    session['is_subject_admin'] = bool(user.get('is_subject_admin', 0)) if has_subject_admin_field else False
-    session['is_notification_admin'] = bool(user.get('is_notification_admin', 0)) if has_notification_admin_field else False
+    session['is_subject_admin'] = bool(user.get('is_subject_admin', 0))
+    session['is_notification_admin'] = bool(user.get('is_notification_admin', 0))
     session['session_version'] = user.get('session_version') or 0
     session['remember'] = bool(remember)
     
@@ -125,9 +100,10 @@ def api_logout():
     # 清空 last_active，使用户立即显示为离线
     if user_id:
         try:
-            conn = get_db()
-            conn.execute('UPDATE users SET last_active = NULL WHERE id = ?', (user_id,))
-            conn.commit()
+            user_obj = db.session.get(UserModel, int(user_id))
+            if user_obj:
+                user_obj.last_active = None
+                db.session.commit()
         except Exception as e:
             current_app.logger.error(f'登出时清空 last_active 失败: {e}')
 
@@ -265,23 +241,12 @@ def api_email_login():
         return jsonify({'status': 'error', 'message': error_msg}), 400
     
     # 创建会话
-    conn = get_db()
-    
-    # 检查 is_subject_admin 和 is_notification_admin 字段是否存在
-    try:
-        user_cols = [r['name'] for r in conn.execute("PRAGMA table_info(users)").fetchall()]
-        has_subject_admin_field = 'is_subject_admin' in user_cols
-        has_notification_admin_field = 'is_notification_admin' in user_cols
-    except Exception:
-        has_subject_admin_field = False
-        has_notification_admin_field = False
-    
     session.permanent = False  # 验证码登录默认不保持登录
     session['user_id'] = user['id']
     session['username'] = user['username']
     session['is_admin'] = bool(user.get('is_admin', 0))
-    session['is_subject_admin'] = bool(user.get('is_subject_admin', 0)) if has_subject_admin_field else False
-    session['is_notification_admin'] = bool(user.get('is_notification_admin', 0)) if has_notification_admin_field else False
+    session['is_subject_admin'] = bool(user.get('is_subject_admin', 0))
+    session['is_notification_admin'] = bool(user.get('is_notification_admin', 0))
     session['session_version'] = user.get('session_version') or 0
     session['remember'] = False
     
@@ -402,11 +367,15 @@ def api_wechat_login():
             }), 400
         
         # 先查找是否已绑定（users.openid）
-        conn = get_db()
-        row = conn.execute('SELECT * FROM users WHERE openid = ?', (openid,)).fetchone()
-        if row:
-            user = dict(row)
-            user['is_new_user'] = False
+        user_row = db.session.query(UserModel).filter(UserModel.openid == openid).first()
+        if user_row:
+            user = {
+                'id': user_row.id, 'username': user_row.username, 'avatar': user_row.avatar,
+                'is_admin': user_row.is_admin, 'is_locked': user_row.is_locked,
+                'session_version': user_row.session_version, 'is_subject_admin': user_row.is_subject_admin,
+                'is_notification_admin': user_row.is_notification_admin,
+                'openid': user_row.openid, 'is_new_user': False,
+            }
         else:
             # 未绑定：根据 allow_create 决定返回“需绑定/创建”还是直接自动创建
             if not getattr(schema, 'allow_create', True):
@@ -551,9 +520,10 @@ def api_wechat_bind_send_code():
     user = User.get_by_email(email) if hasattr(User, 'get_by_email') else None
     if not user:
         # 兼容 User 模型未实现 get_by_email：直接查库
-        conn = get_db()
-        row = conn.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
-        user = dict(row) if row else None
+        user_row = db.session.query(UserModel).filter(UserModel.email == email).first()
+        user = {
+            'id': user_row.id, 'username': user_row.username, 'email': user_row.email,
+        } if user_row else None
     if not user:
         return jsonify({'status': 'error', 'message': '该邮箱未注册，无法绑定'}), 400
 
@@ -582,8 +552,7 @@ def api_wechat_bind_existing_user():
             return jsonify({'status': 'error', 'message': '临时票据无效'}), 401
 
         # 防止 openid 被重复绑定
-        conn = get_db()
-        existing = conn.execute('SELECT id FROM users WHERE openid = ?', (openid,)).fetchone()
+        existing = db.session.query(UserModel).filter(UserModel.openid == openid).first()
         if existing:
             return jsonify({'status': 'error', 'message': '该微信已绑定其他账号'}), 409
 
@@ -603,8 +572,8 @@ def api_wechat_bind_existing_user():
                 return jsonify({'status': 'error', 'message': '缺少邮箱或验证码'}), 400
 
             # 仅允许绑定已有账号，不自动注册
-            row = conn.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
-            if not row:
+            email_user = db.session.query(UserModel).filter(UserModel.email == email).first()
+            if not email_user:
                 return jsonify({'status': 'error', 'message': '该邮箱未注册，无法绑定'}), 400
 
             ok, err, user_data = EmailAuthService.verify_login_code(email, code)
@@ -617,13 +586,16 @@ def api_wechat_bind_existing_user():
 
         # 绑定 openid 到该用户
         try:
-            conn.execute('UPDATE users SET openid = ? WHERE id = ?', (openid, int(target_user['id'])))
-            conn.commit()
-        except sqlite3.IntegrityError:
-            conn.rollback()
+            target_obj = db.session.get(UserModel, int(target_user['id']))
+            if not target_obj:
+                return jsonify({'status': 'error', 'message': '用户不存在'}), 404
+            target_obj.openid = openid
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
             return jsonify({'status': 'error', 'message': '该微信已绑定其他账号'}), 409
         except Exception as e:
-            conn.rollback()
+            db.session.rollback()
             current_app.logger.error(f'绑定微信失败: {e}', exc_info=True)
             return jsonify({'status': 'error', 'message': '绑定失败，请稍后重试'}), 500
 
@@ -916,42 +888,40 @@ def api_wechat_unbind():
     uid = int(current_user_id() or 0)
     if not uid:
         return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
-    conn = get_db()
     try:
-        row = conn.execute(
-            'SELECT openid, session_version, email FROM users WHERE id = ?',
-            (int(uid),)
-        ).fetchone()
-        if not row:
+        user_obj = db.session.get(UserModel, int(uid))
+        if not user_obj:
             return jsonify({'status': 'error', 'message': '用户不存在'}), 404
 
         # 检查是否已绑定邮箱，防止账号悬空
-        user_email = (row['email'] or '').strip() if 'email' in row.keys() else ''
+        user_email = (user_obj.email or '').strip()
         if not user_email:
             return jsonify({'status': 'error', 'message': '请先绑定邮箱后再解绑微信，否则账号将无法登录'}), 400
 
-        old_openid = (row['openid'] or '').strip() if 'openid' in row.keys() else ''
-        old_sv = int(row['session_version'] or 0) if 'session_version' in row.keys() else 0
+        old_openid = (user_obj.openid or '').strip()
+        old_sv = int(user_obj.session_version or 0)
         affected_user_ids = [int(uid)]
         if old_openid:
             try:
-                rows = conn.execute('SELECT id FROM users WHERE openid = ?', (old_openid,)).fetchall()
-                affected_user_ids.extend([int(r['id']) for r in rows if r and ('id' in r.keys()) and r['id'] is not None])
+                dup_rows = db.session.query(UserModel.id).filter(UserModel.openid == old_openid).all()
+                affected_user_ids.extend([int(r.id) for r in dup_rows if r.id is not None])
             except Exception:
                 pass
 
         # 解绑当前用户，并提升会话版本（强制小程序 JWT 失效），但保持 Web 端当前 session 可用
-        conn.execute(
-            'UPDATE users SET openid = NULL, session_version = COALESCE(session_version,0) + 1, last_active = NULL WHERE id = ?',
-            (int(uid),)
-        )
+        user_obj.openid = None
+        user_obj.session_version = (user_obj.session_version or 0) + 1
+        user_obj.last_active = None
+
         # 兼容历史数据可能存在 openid 重复：一并清理，确保该微信可再次绑定/登录
         if old_openid:
-            conn.execute(
-                'UPDATE users SET openid = NULL, session_version = COALESCE(session_version,0) + 1, last_active = NULL WHERE openid = ?',
-                (old_openid,)
-            )
-        conn.commit()
+            dup_users = db.session.query(UserModel).filter(UserModel.openid == old_openid).all()
+            for dup in dup_users:
+                dup.openid = None
+                dup.session_version = (dup.session_version or 0) + 1
+                dup.last_active = None
+
+        db.session.commit()
         for _uid in set(affected_user_ids):
             invalidate_user_state(int(_uid))
         # Web 端保持当前 session 可继续使用；小程序 JWT 端不写 session（避免产生无意义 cookie）
@@ -962,7 +932,7 @@ def api_wechat_unbind():
             pass
         return jsonify({'status': 'success', 'message': '解绑成功'}), 200
     except Exception as e:
-        conn.rollback()
+        db.session.rollback()
         current_app.logger.error(f'解绑微信失败: {e}', exc_info=True)
         return jsonify({'status': 'error', 'message': '解绑失败'}), 500
 
@@ -1089,23 +1059,16 @@ def api_mini_wechat_bind():
     if not uid:
         return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
 
-    conn = get_db()
     try:
-        # 兼容部分旧库可能缺少 is_subject_admin 字段
-        try:
-            user_cols = [r['name'] for r in conn.execute("PRAGMA table_info(users)").fetchall()]
-        except Exception:
-            user_cols = []
-        select_fields = ['id', 'username', 'avatar', 'is_locked', 'session_version', 'openid', 'is_admin']
-        if 'is_subject_admin' in user_cols:
-            select_fields.append('is_subject_admin')
-        row = conn.execute(
-            f'SELECT {", ".join(select_fields)} FROM users WHERE id = ?',
-            (uid,)
-        ).fetchone()
-        if not row:
+        user_obj = db.session.get(UserModel, int(uid))
+        if not user_obj:
             return jsonify({'status': 'error', 'message': '用户不存在'}), 404
-        user = dict(row)
+        user = {
+            'id': user_obj.id, 'username': user_obj.username, 'avatar': user_obj.avatar,
+            'is_locked': user_obj.is_locked, 'session_version': user_obj.session_version,
+            'openid': user_obj.openid, 'is_admin': user_obj.is_admin,
+            'is_subject_admin': user_obj.is_subject_admin,
+        }
 
         if int(user.get('is_locked') or 0) == 1:
             return jsonify({'status': 'error', 'message': '账户已被锁定，请联系管理员'}), 403
@@ -1133,15 +1096,15 @@ def api_mini_wechat_bind():
             }), 200
 
         # 防止 openid 被重复绑定
-        existing = conn.execute('SELECT id FROM users WHERE openid = ? LIMIT 1', (openid,)).fetchone()
-        if existing and int(existing['id']) != uid:
+        existing = db.session.query(UserModel).filter(UserModel.openid == openid).first()
+        if existing and int(existing.id) != uid:
             return jsonify({'status': 'error', 'message': '该微信已绑定其他账号'}), 409
 
         try:
-            conn.execute('UPDATE users SET openid = ? WHERE id = ?', (openid, uid))
-            conn.commit()
-        except sqlite3.IntegrityError:
-            conn.rollback()
+            user_obj.openid = openid
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
             return jsonify({'status': 'error', 'message': '该微信已绑定其他账号'}), 409
 
         # 绑定完成后返回包含 openid 的新 JWT（便于后续强制下线校验）
@@ -1162,6 +1125,6 @@ def api_mini_wechat_bind():
             }
         }), 200
     except Exception as e:
-        conn.rollback()
+        db.session.rollback()
         current_app.logger.error(f'小程序绑定微信失败: {e}', exc_info=True)
         return jsonify({'status': 'error', 'message': '绑定失败，请稍后重试'}), 500
