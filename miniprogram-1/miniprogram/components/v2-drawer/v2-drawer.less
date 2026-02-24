@@ -49,8 +49,7 @@
 .drawer-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10rpx;
+  justify-content: flex-start;
 }
 
 .drawer-scroll {
@@ -63,8 +62,7 @@
   align-items: center;
   gap: 14rpx;
   padding: 0 16rpx;
-  flex: 1 1 auto;
-  min-width: 0;
+  width: 100%;
   height: 80rpx;
   border-radius: 22rpx;
   border: 1rpx solid var(--app-border);
@@ -88,36 +86,6 @@
 
 .brand:active {
   opacity: 0.92;
-}
-
-.close-btn {
-  width: 80rpx;
-  height: 80rpx;
-  border-radius: 22rpx;
-  border: 1rpx solid var(--app-border);
-  background: var(--app-surface-solid);
-  box-shadow: var(--app-shadow-soft);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-}
-
-.close-btn:active {
-  opacity: 0.92;
-  transform: scale(0.99);
-}
-
-.close-icon {
-  width: 34rpx;
-  height: 34rpx;
-  opacity: 0.84;
-  filter: brightness(0);
-}
-
-.theme-dark .close-icon {
-  filter: brightness(0) invert(1);
-  opacity: 0.88;
 }
 
 .section {

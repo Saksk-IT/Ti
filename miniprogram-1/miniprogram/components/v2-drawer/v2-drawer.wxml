@@ -15,9 +15,6 @@
         <view class="brand-dot"></view>
         <text class="brand-text">SAK</text>
       </view>
-      <view class="close-btn" bindtap="onClose" aria-role="button" aria-label="收起侧边栏">
-        <image class="close-icon" src="/images/icons/arrow-left.svg" mode="aspectFit"></image>
-      </view>
     </view>
 
     <scroll-view class="drawer-scroll" scroll-y bounces="{{false}}">
