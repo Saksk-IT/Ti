@@ -3,7 +3,7 @@
 SQLAlchemy ORM 模型包。
 
 所有模型从此处统一导出，供 Flask-Migrate 自动发现。
-旧代码仍可使用 get_db() 访问原始连接；新代码推荐使用 db.session + ORM 模型。
+统一使用 db.session + ORM 模型进行数据库操作。
 """
 from app.core.extensions import db
 
