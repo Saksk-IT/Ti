@@ -19,7 +19,6 @@ except ImportError:
 
 from .core.config import config
 from .core.extensions import init_extensions
-from .core.utils.database import close_db, init_db
 from markupsafe import Markup, escape as _escape
 
 
@@ -85,9 +84,6 @@ def create_app(config_name=None):
     # 配置日志
     _setup_logging(app)
     
-    # 注册数据库关闭函数
-    app.teardown_appcontext(close_db)
-    
     # 注册蓝图
     _register_blueprints(app)
 
@@ -106,10 +102,8 @@ def create_app(config_name=None):
     # 注册错误处理器
     _register_error_handlers(app)
     
-    # 初始化数据库
+    # 初始化 ORM 模型（确保 Flask-Migrate 能发现所有表定义）
     with app.app_context():
-        init_db()
-        # 导入 ORM 模型，确保 Flask-Migrate 能发现所有表定义
         from app import models as _models  # noqa: F401
     
     # 启动后台任务
