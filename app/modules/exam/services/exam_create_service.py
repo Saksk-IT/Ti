@@ -3,8 +3,9 @@ from __future__ import annotations
 
 from app.core.errors import BadRequestError, ForbiddenError, NotFoundError
 from app.core.models.exam import Exam
-from app.core.utils.database import get_db
 from app.core.utils.subject_permissions import can_user_access_subject
+from app.models.subject import Subject
+from app.models.user_bank import UserQuestionBank
 from app.modules.exam.schemas.create import CreateExamSchema
 
 
@@ -29,27 +30,19 @@ class ExamCreateService:
             if not has_access:
                 raise ForbiddenError(message='题库不存在或无权限')
 
-            conn = get_db()
-            bank = conn.execute(
-                "SELECT id, name FROM user_question_banks WHERE id=? AND status=1",
-                (bank_id_int,),
-            ).fetchone()
+            bank = UserQuestionBank.query.filter_by(id=bank_id_int, status=1).first()
             if not bank:
                 raise NotFoundError(message='题库不存在或无权限')
 
-            # 兼容 exams.subject 字段：用于列表展示（公共/个人统一一个“范围”列）
-            subject = bank['name'] or f'题库#{bank_id_int}'
+            # 兼容 exams.subject 字段：用于列表展示（公共/个人统一一个”范围”列）
+            subject = bank.name or f'题库#{bank_id_int}'
 
         # 如果指定了科目，检查用户是否有权限访问该科目
         if source != 'user_bank' and subject != 'all':
-            conn = get_db()
-            subject_row = conn.execute(
-                'SELECT id FROM subjects WHERE name = ?',
-                (subject,),
-            ).fetchone()
+            subject_row = Subject.query.filter_by(name=subject).first()
 
             if subject_row:
-                subject_id = subject_row['id']
+                subject_id = subject_row.id
                 if not can_user_access_subject(uid, subject_id):
                     raise ForbiddenError(message='您没有权限访问该科目')
 
