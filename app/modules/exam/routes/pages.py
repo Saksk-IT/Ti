@@ -6,7 +6,6 @@ from flask import Blueprint, render_template, request, session, redirect, url_fo
 from sqlalchemy import func, case, literal_column
 
 from app.core.extensions import db
-from app.core.utils.database import get_db
 from app.core.utils.validators import parse_int
 from app.models.exam import Exam, ExamQuestion
 from app.models.subject import Subject, Question
@@ -130,10 +129,9 @@ def page_exams_select():
     if not uid:
         return redirect(url_for('auth.login_page'))
 
-    # bank_select.py 尚未迁移，保留 raw conn
-    conn = get_db()
     from app.core.utils.bank_select import load_bank_select_payload
 
+    conn = db.session.connection()
     payload = load_bank_select_payload(conn, uid)
 
     return render_template(
@@ -260,10 +258,10 @@ def page_exams():
     if subject != 'all' and subject not in subjects:
         subject = 'all'
 
-    # ── 个人题库列表（bank_select.py 尚未迁移，保留 raw conn）──
+    # ── 个人题库列表 ──
     from app.core.utils.bank_select import load_user_bank_cards
 
-    conn = get_db()
+    conn = db.session.connection()
     banks_meta = load_user_bank_cards(conn, uid)
 
     # ── 个人题库题型映射 ──

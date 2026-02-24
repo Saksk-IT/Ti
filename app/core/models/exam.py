@@ -4,7 +4,8 @@
 """
 import json
 from datetime import datetime
-from ..utils.database import get_db
+from app.core.extensions import db
+from sqlalchemy import text
 
 
 class Exam:
@@ -75,8 +76,6 @@ class Exam:
         - types_config: {题型: 题数}
         - scores_config: {题型: 分值}
         """
-        conn = get_db()
-
         subject = Exam._normalize_subject(subject)
         source = Exam._normalize_source(source)
         duration = Exam._safe_int(duration, default=60, min_v=1, max_v=24 * 60)
@@ -101,15 +100,15 @@ class Exam:
 
         config_json = json.dumps(config_payload, ensure_ascii=False)
 
-        cur = conn.execute(
-            'INSERT INTO exams (user_id, subject, duration_minutes, config_json, status) VALUES (?, ?, ?, ?, ?)',
-            (user_id, subject, duration, config_json, 'ongoing')
+        result = db.session.execute(
+            text('INSERT INTO exams (user_id, subject, duration_minutes, config_json, status) VALUES (:user_id, :subject, :duration, :config_json, :status) RETURNING id'),
+            {'user_id': user_id, 'subject': subject, 'duration': duration, 'config_json': config_json, 'status': 'ongoing'}
         )
-        exam_id = cur.lastrowid
+        exam_id = result.scalar()
 
         order_index = 0
-        sub_sql = " AND s.name = ?" if subject != 'all' else ""
-        sub_param = [subject] if subject != 'all' else []
+        sub_sql = " AND s.name = :subject_name" if subject != 'all' else ""
+        sub_params_extra = {'subject_name': subject} if subject != 'all' else {}
 
         from app.core.utils.portable_question_format import any_type_to_portable_type
 
@@ -120,70 +119,73 @@ class Exam:
             portable_type = any_type_to_portable_type(q_type)
 
             if source == 'user_bank':
-                sql = (
+                sql = text(
                     "SELECT q.* FROM user_bank_questions q "
-                    "WHERE q.bank_id = ? AND q.type = ? "
-                    "ORDER BY RANDOM() LIMIT ?"
+                    "WHERE q.bank_id = :bank_id AND q.type = :ptype "
+                    "ORDER BY RANDOM() LIMIT :cnt"
                 )
-                params = [config_payload.get('bank_id'), portable_type, cnt]
-                rows = conn.execute(sql, params).fetchall()
+                params = {'bank_id': config_payload.get('bank_id'), 'ptype': portable_type, 'cnt': cnt}
+                rows = db.session.execute(sql, params).fetchall()
             else:
-                sql = (
+                sql = text(
                     "SELECT q.* FROM questions q "
                     "LEFT JOIN subjects s ON q.subject_id = s.id "
-                    f"WHERE q.type = ?{sub_sql} "
-                    "ORDER BY RANDOM() LIMIT ?"
+                    f"WHERE q.type = :ptype{sub_sql} "
+                    "ORDER BY RANDOM() LIMIT :cnt"
                 )
-                params = [portable_type] + sub_param + [cnt]
-                rows = conn.execute(sql, params).fetchall()
+                params = {'ptype': portable_type, 'cnt': cnt, **sub_params_extra}
+                rows = db.session.execute(sql, params).fetchall()
 
             for row in rows:
                 score_val = Exam._safe_float(scores_config.get(q_type, 1), default=1.0, min_v=0.0, max_v=1000.0)
-                conn.execute(
-                    'INSERT INTO exam_questions (exam_id, question_id, order_index, score_val) VALUES (?, ?, ?, ?)',
-                    (exam_id, row['id'], order_index, score_val)
+                db.session.execute(
+                    text('INSERT INTO exam_questions (exam_id, question_id, order_index, score_val) VALUES (:exam_id, :question_id, :order_index, :score_val)'),
+                    {'exam_id': exam_id, 'question_id': row._mapping['id'], 'order_index': order_index, 'score_val': score_val}
                 )
                 order_index += 1
 
-        conn.commit()
+        db.session.commit()
         return exam_id
 
     @staticmethod
     def get_by_id(exam_id, user_id=None):
         """获取考试与题目（含用户作答与判分字段）"""
-        conn = get_db()
-        exam = conn.execute('SELECT * FROM exams WHERE id=?', (exam_id,)).fetchone()
+        exam_row = db.session.execute(
+            text('SELECT * FROM exams WHERE id=:exam_id'), {'exam_id': exam_id}
+        ).fetchone()
 
-        if not exam:
+        if not exam_row:
             return None
+
+        exam = dict(exam_row._mapping)
 
         if user_id and exam['user_id'] != user_id:
             return None
 
-        cfg = Exam._parse_config_json(exam['config_json'] if exam else None)
+        cfg = Exam._parse_config_json(exam.get('config_json'))
         source = Exam._normalize_source(cfg.get('source'))
 
         if source == 'user_bank':
-            rows = conn.execute(
-                """
+            rows = db.session.execute(
+                text("""
                 SELECT q.*, eq.score_val, eq.order_index, eq.user_answer, eq.is_correct
                 FROM exam_questions eq
                 JOIN user_bank_questions q ON q.id = eq.question_id
-                WHERE eq.exam_id=?
+                WHERE eq.exam_id=:exam_id
                 ORDER BY eq.order_index
-                """,
-                (exam_id,),
+                """),
+                {'exam_id': exam_id},
             ).fetchall()
         else:
-            rows = conn.execute(
-                """
+            rows = db.session.execute(
+                text("""
                 SELECT q.*, eq.score_val, eq.order_index, eq.user_answer, eq.is_correct
                 FROM exam_questions eq
                 JOIN questions q ON q.id = eq.question_id
-                WHERE eq.exam_id=?
+                WHERE eq.exam_id=:exam_id
                 ORDER BY eq.order_index
-                """,
-                (exam_id,),
+                """),
+                {'exam_id': exam_id},
             ).fetchall()
 
         from app.core.utils.portable_question_format import portable_question_to_internal
@@ -191,7 +193,7 @@ class Exam:
         scope = "user_bank" if source == "user_bank" else "question_center"
         out = []
         for r in rows or []:
-            d = dict(r)
+            d = dict(r._mapping)
             portable = {
                 "id": d.get("id"),
                 "type": d.get("type") or "",
@@ -210,7 +212,7 @@ class Exam:
             d["explanation"] = internal.get("explanation") or ""
             out.append(d)
 
-        return {'exam': dict(exam), 'questions': out}
+        return {'exam': exam, 'questions': out}
 
     @staticmethod
     def _grade_answer(q_type, user_ans, std_ans):
@@ -283,13 +285,16 @@ class Exam:
     @staticmethod
     def submit(exam_id, user_id, answers):
         """提交考试：写入每题作答与 is_correct，并更新 exams.total_score/status"""
-        conn = get_db()
-
-        exam = conn.execute('SELECT * FROM exams WHERE id=?', (exam_id,)).fetchone()
-        if not exam or exam['user_id'] != user_id or exam['status'] == 'submitted':
+        exam_row = db.session.execute(
+            text('SELECT * FROM exams WHERE id=:exam_id'), {'exam_id': exam_id}
+        ).fetchone()
+        if not exam_row:
+            return None
+        exam = dict(exam_row._mapping)
+        if exam['user_id'] != user_id or exam['status'] == 'submitted':
             return None
 
-        cfg = Exam._parse_config_json(exam['config_json'] if exam else None)
+        cfg = Exam._parse_config_json(exam.get('config_json'))
         source = Exam._normalize_source(cfg.get('source'))
 
         ans_map = {}
@@ -303,68 +308,65 @@ class Exam:
         from app.core.utils.portable_question_format import portable_question_to_internal
 
         if source == 'user_bank':
-            rows = conn.execute(
-                """
+            rows = db.session.execute(
+                text("""
                 SELECT eq.id as eq_id, eq.question_id, eq.score_val,
                        q.type, q.content, q.options, q.answer, q.analysis, q.tags, q.difficulty
                 FROM exam_questions eq
                 JOIN user_bank_questions q ON q.id = eq.question_id
-                WHERE eq.exam_id=?
-                """,
-                (exam_id,),
+                WHERE eq.exam_id=:exam_id
+                """),
+                {'exam_id': exam_id},
             ).fetchall()
             scope = "user_bank"
         else:
-            rows = conn.execute(
-                """
+            rows = db.session.execute(
+                text("""
                 SELECT eq.id as eq_id, eq.question_id, eq.score_val,
                        q.type, q.content, q.options, q.answer, q.analysis, q.tags, q.difficulty
                 FROM exam_questions eq
                 JOIN questions q ON q.id = eq.question_id
-                WHERE eq.exam_id=?
-                """,
-                (exam_id,),
+                WHERE eq.exam_id=:exam_id
+                """),
+                {'exam_id': exam_id},
             ).fetchall()
             scope = "question_center"
 
         total = len(rows)
         correct = 0
         total_score = 0.0
-        updates = []
 
         for r in rows:
-            qid = r['question_id']
+            rm = r._mapping
+            qid = rm['question_id']
             user_ans = ans_map.get(qid, '')
             portable = {
                 "id": qid,
-                "type": r["type"] or "",
-                "content": r["content"] or "",
-                "options": Exam._safe_json_load(r["options"], []),
-                "answer": Exam._safe_json_load(r["answer"], []),
-                "analysis": r["analysis"] or "",
-                "tags": Exam._safe_json_load(r["tags"], []),
-                "difficulty": r["difficulty"] if r["difficulty"] is not None else 1,
+                "type": rm["type"] or "",
+                "content": rm["content"] or "",
+                "options": Exam._safe_json_load(rm["options"], []),
+                "answer": Exam._safe_json_load(rm["answer"], []),
+                "analysis": rm["analysis"] or "",
+                "tags": Exam._safe_json_load(rm["tags"], []),
+                "difficulty": rm["difficulty"] if rm["difficulty"] is not None else 1,
             }
             internal, _errors = portable_question_to_internal(portable, scope=scope)
             is_correct = Exam._grade_answer(internal.get("q_type"), user_ans, internal.get("answer"))
 
-            updates.append((user_ans, is_correct, r['eq_id']))
+            db.session.execute(
+                text('UPDATE exam_questions SET user_answer=:user_answer, is_correct=:is_correct, answered_at=CURRENT_TIMESTAMP WHERE id=:eq_id'),
+                {'user_answer': user_ans, 'is_correct': is_correct, 'eq_id': rm['eq_id']}
+            )
 
             if is_correct:
                 correct += 1
-                total_score += float(r['score_val'] or 0)
+                total_score += float(rm['score_val'] or 0)
 
-        if updates:
-            conn.executemany(
-                'UPDATE exam_questions SET user_answer=?, is_correct=?, answered_at=CURRENT_TIMESTAMP WHERE id=?',
-                updates
-            )
-
-        conn.execute(
-            'UPDATE exams SET total_score=?, status="submitted", submitted_at=CURRENT_TIMESTAMP WHERE id=?',
-            (total_score, exam_id)
+        db.session.execute(
+            text("UPDATE exams SET total_score=:total_score, status='submitted', submitted_at=CURRENT_TIMESTAMP WHERE id=:exam_id"),
+            {'total_score': total_score, 'exam_id': exam_id}
         )
-        conn.commit()
+        db.session.commit()
 
         return {'total': total, 'correct': correct, 'total_score': total_score}
 

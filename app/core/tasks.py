@@ -8,7 +8,8 @@ import time
 from datetime import datetime, timedelta
 from typing import Optional
 from flask import Flask, current_app
-from app.core.utils.database import connect_db
+from app.core.extensions import db
+from sqlalchemy import text
 from app.core.utils.time_utils import now_bj
 
 
@@ -82,24 +83,20 @@ class BackgroundTaskManager:
     def _cleanup_expired_codes(self) -> None:
         """清理过期的验证码"""
         try:
-            # 在后台线程中创建新的数据库连接
-            conn = connect_db()
-            
             now = now_bj()
-            
+
             # 删除所有过期的验证码
-            result = conn.execute(
-                '''DELETE FROM email_verification_codes
-                   WHERE expires_at < ?''',
-                (now,)
+            result = db.session.execute(
+                text('DELETE FROM email_verification_codes WHERE expires_at < :now'),
+                {'now': now}
             )
             deleted_count = result.rowcount
-            conn.commit()
-            conn.close()
-            
+            db.session.commit()
+
             if deleted_count > 0:
                 current_app.logger.info(f'清理过期验证码: 删除了 {deleted_count} 条记录')
         except Exception as e:
+            db.session.rollback()
             current_app.logger.error(f'清理过期验证码失败: {str(e)}', exc_info=True)
 
 
