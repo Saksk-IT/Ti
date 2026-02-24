@@ -3,7 +3,9 @@
 import json
 
 from flask import Blueprint, render_template, redirect, url_for, request, session
-from app.core.utils.database import get_db
+from sqlalchemy import text
+
+from app.core.extensions import db
 from app.core.utils.decorators import login_required
 
 user_bank_pages_bp = Blueprint('user_bank_pages', __name__)
@@ -49,14 +51,13 @@ def bank_detail(bank_id):
     if not has_access or access_type != 'owner':
         return "题库不存在或无权限访问", 404
 
-    conn = get_db()
-    bank = conn.execute(
-        """
+    bank = db.session.execute(
+        text("""
         SELECT id, name, is_public, question_count, share_count
         FROM user_question_banks
-        WHERE id = ? AND status = 1
-        """,
-        (int(bank_id),),
+        WHERE id = :bid AND status = 1
+        """),
+        {'bid': int(bank_id)},
     ).fetchone()
     if not bank:
         return "题库不存在或无权限访问", 404
@@ -64,26 +65,26 @@ def bank_detail(bank_id):
     from app.core.utils.portable_question_format import portable_type_to_q_type
 
     types = [
-        portable_type_to_q_type((r['p_type'] or ''), essay_q_type='简答题')
-        for r in conn.execute(
-            """
+        portable_type_to_q_type((r._mapping['p_type'] or ''), essay_q_type='简答题')
+        for r in db.session.execute(
+            text("""
             SELECT DISTINCT type as p_type
             FROM user_bank_questions
-            WHERE bank_id = ? AND type IS NOT NULL AND TRIM(type) != ''
+            WHERE bank_id = :bid AND type IS NOT NULL AND TRIM(type) != ''
             ORDER BY type
-            """,
-            (int(bank_id),),
+            """),
+            {'bid': int(bank_id)},
         ).fetchall()
-        if r and r['p_type']
+        if r and r._mapping['p_type']
     ]
 
     return render_template(
         'user_bank/manage/bank_manage_questions.html',
-        bank_id=int(bank['id']),
-        bank_name=bank['name'],
-        is_public=bool(bank['is_public']),
-        question_count=int(bank['question_count'] or 0),
-        share_count=int(bank['share_count'] or 0),
+        bank_id=int(bank._mapping['id']),
+        bank_name=bank._mapping['name'],
+        is_public=bool(bank._mapping['is_public']),
+        question_count=int(bank._mapping['question_count'] or 0),
+        share_count=int(bank._mapping['share_count'] or 0),
         types=types,
     )
 
@@ -93,7 +94,6 @@ def bank_detail(bank_id):
 def bank_practice(bank_id: int):
     """题库练习详情页：练习设置 / 题库数据（含范围/题型/标签与统计）。"""
     uid = session.get('user_id')
-    conn = get_db()
 
     from app.modules.user_bank.routes.api import check_bank_access, _load_bank_tag_store
 
@@ -101,13 +101,13 @@ def bank_practice(bank_id: int):
     if not has_access:
         return "题库不存在或无权限访问", 404
 
-    bank = conn.execute(
-        """
+    bank = db.session.execute(
+        text("""
         SELECT id, name, description, question_count, status
         FROM user_question_banks
-        WHERE id = ? AND status = 1
-        """,
-        (int(bank_id),),
+        WHERE id = :bid AND status = 1
+        """),
+        {'bid': int(bank_id)},
     ).fetchone()
 
     if not bank:
@@ -116,26 +116,26 @@ def bank_practice(bank_id: int):
     from app.core.utils.portable_question_format import portable_type_to_q_type
 
     types = [
-        portable_type_to_q_type((r['p_type'] or ''), essay_q_type='简答题')
-        for r in conn.execute(
-            """
+        portable_type_to_q_type((r._mapping['p_type'] or ''), essay_q_type='简答题')
+        for r in db.session.execute(
+            text("""
             SELECT DISTINCT type as p_type
             FROM user_bank_questions
-            WHERE bank_id = ? AND type IS NOT NULL AND TRIM(type) != ''
+            WHERE bank_id = :bid AND type IS NOT NULL AND TRIM(type) != ''
             ORDER BY type
-            """,
-            (int(bank_id),),
+            """),
+            {'bid': int(bank_id)},
         ).fetchall()
-        if r and r['p_type']
+        if r and r._mapping['p_type']
     ]
 
     # 题库题量：优先用缓存字段；异常时回退实时统计
-    total_count = int(bank['question_count'] or 0)
+    total_count = int(bank._mapping['question_count'] or 0)
     if total_count <= 0:
         try:
-            total_count = conn.execute(
-                "SELECT COUNT(*) FROM user_bank_questions WHERE bank_id = ?",
-                (int(bank_id),),
+            total_count = db.session.execute(
+                text("SELECT COUNT(*) FROM user_bank_questions WHERE bank_id = :bid"),
+                {'bid': int(bank_id)},
             ).fetchone()[0]
         except Exception:
             total_count = 0
@@ -143,17 +143,17 @@ def bank_practice(bank_id: int):
     fav_count = 0
     mistake_count = 0
     try:
-        fav_count = conn.execute(
-            "SELECT COUNT(*) FROM user_bank_favorites WHERE user_id = ? AND bank_id = ?",
-            (uid, int(bank_id)),
+        fav_count = db.session.execute(
+            text("SELECT COUNT(*) FROM user_bank_favorites WHERE user_id = :uid AND bank_id = :bid"),
+            {'uid': uid, 'bid': int(bank_id)},
         ).fetchone()[0]
     except Exception:
         fav_count = 0
 
     try:
-        mistake_count = conn.execute(
-            "SELECT COUNT(*) FROM user_bank_mistakes WHERE user_id = ? AND bank_id = ?",
-            (uid, int(bank_id)),
+        mistake_count = db.session.execute(
+            text("SELECT COUNT(*) FROM user_bank_mistakes WHERE user_id = :uid AND bank_id = :bid"),
+            {'uid': uid, 'bid': int(bank_id)},
         ).fetchone()[0]
     except Exception:
         mistake_count = 0
@@ -161,6 +161,7 @@ def bank_practice(bank_id: int):
     # 题库标签（来自 user_progress bank_<id>_tags）
     tags_list = []
     try:
+        conn = db.session.connection()
         store = _load_bank_tag_store(conn, int(bank_id), int(uid))
         tag_counts = {t: 0 for t in (store.get('tags') or []) if isinstance(t, str) and t.strip()}
         question_tags = store.get('question_tags', {}) or {}
@@ -180,18 +181,18 @@ def bank_practice(bank_id: int):
         'accuracy': 0.0,
     }
     try:
-        row = conn.execute(
-            """
+        row = db.session.execute(
+            text("""
             SELECT
               COUNT(1) as answered,
-              SUM(CASE WHEN is_correct=1 THEN 1 ELSE 0 END) as correct
+              SUM(CASE WHEN is_correct=true THEN 1 ELSE 0 END) as correct
             FROM user_bank_answers
-            WHERE user_id = ? AND bank_id = ?
-            """,
-            (int(uid), int(bank_id)),
+            WHERE user_id = :uid AND bank_id = :bid
+            """),
+            {'uid': int(uid), 'bid': int(bank_id)},
         ).fetchone()
-        answered = int(row['answered'] or 0) if row else 0
-        correct = int(row['correct'] or 0) if row else 0
+        answered = int(row._mapping['answered'] or 0) if row else 0
+        correct = int(row._mapping['correct'] or 0) if row else 0
         my_stats = {
             'total_answered': answered,
             'correct_count': correct,
@@ -206,9 +207,9 @@ def bank_practice(bank_id: int):
 
     return render_template(
         'user_bank/bank/bank_practice.html',
-        bank_id=int(bank['id']),
-        bank_name=bank['name'],
-        bank_description=bank['description'] or '',
+        bank_id=int(bank._mapping['id']),
+        bank_name=bank._mapping['name'],
+        bank_description=bank._mapping['description'] or '',
         total_count=total_count,
         fav_count=fav_count,
         mistake_count=mistake_count,
@@ -229,7 +230,7 @@ def bank_practice(bank_id: int):
 @user_bank_pages_bp.route('/<int:bank_id>/data')
 @login_required
 def bank_data_redirect(bank_id: int):
-    """题库数据页（默认跳转到“全局”）。"""
+    """题库数据页（默认跳转到"全局"）。"""
     try:
         params = request.args.to_dict(flat=True) if request.args else {}
     except Exception:
@@ -242,7 +243,6 @@ def bank_data_redirect(bank_id: int):
 def bank_data(bank_id: int, subtab: str):
     """题库数据页：全局/错题/收藏（三个独立跳转页面）。"""
     uid = session.get('user_id')
-    conn = get_db()
 
     from app.modules.user_bank.routes.api import check_bank_access
 
@@ -258,25 +258,25 @@ def bank_data(bank_id: int, subtab: str):
     if window_days not in (7, 14, 30, 90):
         window_days = 90 if safe_tab == 'global' else 30
 
-    bank = conn.execute(
-        """
+    bank = db.session.execute(
+        text("""
         SELECT id, name, description, question_count, status
         FROM user_question_banks
-        WHERE id = ? AND status = 1
-        """,
-        (int(bank_id),),
+        WHERE id = :bid AND status = 1
+        """),
+        {'bid': int(bank_id)},
     ).fetchone()
 
     if not bank:
         return "题库不存在或无权限访问", 404
 
     # 题库题量：优先用缓存字段；异常时回退实时统计
-    total_count = int(bank['question_count'] or 0)
+    total_count = int(bank._mapping['question_count'] or 0)
     if total_count <= 0:
         try:
-            total_count = conn.execute(
-                "SELECT COUNT(*) FROM user_bank_questions WHERE bank_id = ?",
-                (int(bank_id),),
+            total_count = db.session.execute(
+                text("SELECT COUNT(*) FROM user_bank_questions WHERE bank_id = :bid"),
+                {'bid': int(bank_id)},
             ).fetchone()[0]
         except Exception:
             total_count = 0
@@ -284,17 +284,17 @@ def bank_data(bank_id: int, subtab: str):
     fav_count = 0
     mistake_count = 0
     try:
-        fav_count = conn.execute(
-            "SELECT COUNT(*) FROM user_bank_favorites WHERE user_id = ? AND bank_id = ?",
-            (uid, int(bank_id)),
+        fav_count = db.session.execute(
+            text("SELECT COUNT(*) FROM user_bank_favorites WHERE user_id = :uid AND bank_id = :bid"),
+            {'uid': uid, 'bid': int(bank_id)},
         ).fetchone()[0]
     except Exception:
         fav_count = 0
 
     try:
-        mistake_count = conn.execute(
-            "SELECT COUNT(*) FROM user_bank_mistakes WHERE user_id = ? AND bank_id = ?",
-            (uid, int(bank_id)),
+        mistake_count = db.session.execute(
+            text("SELECT COUNT(*) FROM user_bank_mistakes WHERE user_id = :uid AND bank_id = :bid"),
+            {'uid': uid, 'bid': int(bank_id)},
         ).fetchone()[0]
     except Exception:
         mistake_count = 0
@@ -305,9 +305,9 @@ def bank_data(bank_id: int, subtab: str):
             'mistakes': 'user_bank/bank/bank_data_mistakes_v2.html',
             'favorites': 'user_bank/bank/bank_data_favorites_v2.html',
         }.get(safe_tab, 'user_bank/bank/bank_data_global_v2.html'),
-        bank_id=int(bank['id']),
-        bank_name=bank['name'],
-        bank_description=bank['description'] or '',
+        bank_id=int(bank._mapping['id']),
+        bank_name=bank._mapping['name'],
+        bank_description=bank._mapping['description'] or '',
         total_count=total_count,
         fav_count=fav_count,
         mistake_count=mistake_count,
@@ -329,31 +329,30 @@ def bank_data(bank_id: int, subtab: str):
 def bank_manage(bank_id: int):
     """题库管理（名片页）：仅创建者可访问。"""
     uid = session.get('user_id')
-    conn = get_db()
 
-    bank = conn.execute(
-        """
+    bank = db.session.execute(
+        text("""
         SELECT id, user_id, name, description, public_description, is_public, allow_copy,
                question_count, share_count
         FROM user_question_banks
-        WHERE id = ? AND status = 1
-        """,
-        (int(bank_id),),
+        WHERE id = :bid AND status = 1
+        """),
+        {'bid': int(bank_id)},
     ).fetchone()
 
-    if not bank or int(bank['user_id'] or 0) != int(uid or 0):
+    if not bank or int(bank._mapping['user_id'] or 0) != int(uid or 0):
         return "题库不存在或无权限访问", 404
 
     return render_template(
         'user_bank/manage/bank_manage.html',
-        bank_id=int(bank['id']),
-        bank_name=bank['name'],
-        bank_description=bank['description'] or '',
-        public_description=bank['public_description'] or '',
-        is_public=bool(bank['is_public']),
-        allow_copy=bool(bank['allow_copy']),
-        question_count=int(bank['question_count'] or 0),
-        share_count=int(bank['share_count'] or 0),
+        bank_id=int(bank._mapping['id']),
+        bank_name=bank._mapping['name'],
+        bank_description=bank._mapping['description'] or '',
+        public_description=bank._mapping['public_description'] or '',
+        is_public=bool(bank._mapping['is_public']),
+        allow_copy=bool(bank._mapping['allow_copy']),
+        question_count=int(bank._mapping['question_count'] or 0),
+        share_count=int(bank._mapping['share_count'] or 0),
     )
 
 
@@ -373,10 +372,9 @@ def bank_search(bank_id: int):
     if not has_access:
         return "题库不存在或无权限访问", 404
 
-    conn = get_db()
-    bank = conn.execute(
-        "SELECT id, name, status FROM user_question_banks WHERE id = ? AND status = 1",
-        (int(bank_id),),
+    bank = db.session.execute(
+        text("SELECT id, name, status FROM user_question_banks WHERE id = :bid AND status = 1"),
+        {'bid': int(bank_id)},
     ).fetchone()
     if not bank:
         return "题库不存在或无权限访问", 404
@@ -384,25 +382,25 @@ def bank_search(bank_id: int):
     from app.core.utils.portable_question_format import portable_type_to_q_type
 
     available_types = [
-        portable_type_to_q_type((r['p_type'] or ''), essay_q_type='简答题')
-        for r in conn.execute(
-            """
+        portable_type_to_q_type((r._mapping['p_type'] or ''), essay_q_type='简答题')
+        for r in db.session.execute(
+            text("""
             SELECT DISTINCT type as p_type
             FROM user_bank_questions
-            WHERE bank_id = ? AND type IS NOT NULL AND TRIM(type) != ''
+            WHERE bank_id = :bid AND type IS NOT NULL AND TRIM(type) != ''
             ORDER BY type
-            """,
-            (int(bank_id),),
+            """),
+            {'bid': int(bank_id)},
         ).fetchall()
-        if r and r['p_type']
+        if r and r._mapping['p_type']
     ]
 
     # 无关键词：展示空搜索页
     if not keyword:
         return render_template(
             'user_bank/bank/bank_search.html',
-            bank_id=int(bank['id']),
-            bank_name=bank['name'],
+            bank_id=int(bank._mapping['id']),
+            bank_name=bank._mapping['name'],
             keyword='',
             type_filter=type_filter or 'all',
             available_types=available_types,
@@ -529,33 +527,33 @@ def bank_search(bank_id: int):
     sql = """
         SELECT id, type, content, options, answer, analysis, image_path, updated_at
         FROM user_bank_questions
-        WHERE bank_id = ?
+        WHERE bank_id = :bid
           AND (
-            content LIKE ? OR analysis LIKE ? OR options LIKE ? OR answer LIKE ?
+            content LIKE :st1 OR analysis LIKE :st2 OR options LIKE :st3 OR answer LIKE :st4
           )
     """
-    params = [int(bank_id), search_term, search_term, search_term, search_term]
+    params: dict = {'bid': int(bank_id), 'st1': search_term, 'st2': search_term, 'st3': search_term, 'st4': search_term}
 
     if type_filter and type_filter != 'all':
         from app.core.utils.portable_question_format import any_type_to_portable_type
 
-        sql += " AND type = ?"
-        params.append(any_type_to_portable_type(type_filter))
+        sql += " AND type = :tf"
+        params['tf'] = any_type_to_portable_type(type_filter)
 
     sql += " ORDER BY updated_at DESC, id DESC"
 
     # 分页
-    total = conn.execute(
-        f"SELECT COUNT(1) FROM ({sql}) as t",
+    total = db.session.execute(
+        text(f"SELECT COUNT(1) FROM ({sql}) as t"),
         params,
     ).fetchone()[0]
     total_pages = (total + per_page - 1) // per_page if total else 0
     page = max(1, min(page, max(total_pages, 1)))
     offset = (page - 1) * per_page
 
-    rows = conn.execute(
-        sql + " LIMIT ? OFFSET ?",
-        params + [per_page, offset],
+    rows = db.session.execute(
+        text(sql + " LIMIT :lim OFFSET :off"),
+        {**params, 'lim': per_page, 'off': offset},
     ).fetchall()
 
     from app.core.utils.pqf_rows import pqf_row_to_internal
@@ -583,8 +581,8 @@ def bank_search(bank_id: int):
 
     return render_template(
         'user_bank/bank/bank_search.html',
-        bank_id=int(bank['id']),
-        bank_name=bank['name'],
+        bank_id=int(bank._mapping['id']),
+        bank_name=bank._mapping['name'],
         keyword=keyword,
         type_filter=type_filter or 'all',
         available_types=available_types,
@@ -607,6 +605,19 @@ def bank_add():
     return redirect('/user/banks?create=1')
 
 
+def _fetch_bank_for_owner(bank_id: int, uid) -> dict | None:
+    """获取题库基本信息（仅创建者可访问的页面复用）。"""
+    row = db.session.execute(
+        text("""
+        SELECT id, name, is_public, question_count, share_count
+        FROM user_question_banks
+        WHERE id = :bid AND status = 1
+        """),
+        {'bid': int(bank_id)},
+    ).fetchone()
+    return dict(row._mapping) if row else None
+
+
 @user_bank_pages_bp.route('/<int:bank_id>/edit')
 @login_required
 def bank_edit(bank_id):
@@ -618,16 +629,7 @@ def bank_edit(bank_id):
     if not has_access or access_type != 'owner':
         return "题库不存在或无权限访问", 404
 
-    conn = get_db()
-    bank = conn.execute(
-        """
-        SELECT id, name, is_public, question_count, share_count
-        FROM user_question_banks
-        WHERE id = ? AND status = 1
-        """,
-        (int(bank_id),),
-    ).fetchone()
-
+    bank = _fetch_bank_for_owner(bank_id, uid)
     if not bank:
         return "题库不存在或无权限访问", 404
 
@@ -652,15 +654,7 @@ def questions_import_word(bank_id: int):
     if not has_access or access_type != 'owner':
         return "题库不存在或无权限访问", 404
 
-    conn = get_db()
-    bank = conn.execute(
-        """
-        SELECT id, name, is_public, question_count, share_count
-        FROM user_question_banks
-        WHERE id = ? AND status = 1
-        """,
-        (int(bank_id),),
-    ).fetchone()
+    bank = _fetch_bank_for_owner(bank_id, uid)
     if not bank:
         return "题库不存在或无权限访问", 404
 
@@ -685,15 +679,7 @@ def question_add(bank_id):
     if not has_access or access_type != 'owner':
         return "题库不存在或无权限访问", 404
 
-    conn = get_db()
-    bank = conn.execute(
-        """
-        SELECT id, name, is_public, question_count, share_count
-        FROM user_question_banks
-        WHERE id = ? AND status = 1
-        """,
-        (int(bank_id),),
-    ).fetchone()
+    bank = _fetch_bank_for_owner(bank_id, uid)
     if not bank:
         return "题库不存在或无权限访问", 404
 
@@ -720,15 +706,7 @@ def question_edit(bank_id, question_id):
     if not has_access or access_type != 'owner':
         return "题库不存在或无权限访问", 404
 
-    conn = get_db()
-    bank = conn.execute(
-        """
-        SELECT id, name, is_public, question_count, share_count
-        FROM user_question_banks
-        WHERE id = ? AND status = 1
-        """,
-        (int(bank_id),),
-    ).fetchone()
+    bank = _fetch_bank_for_owner(bank_id, uid)
     if not bank:
         return "题库不存在或无权限访问", 404
 
@@ -755,15 +733,7 @@ def shares_manage(bank_id):
     if not has_access or access_type != 'owner':
         return "题库不存在或无权限访问", 404
 
-    conn = get_db()
-    bank = conn.execute(
-        """
-        SELECT id, name, is_public, question_count, share_count
-        FROM user_question_banks
-        WHERE id = ? AND status = 1
-        """,
-        (int(bank_id),),
-    ).fetchone()
+    bank = _fetch_bank_for_owner(bank_id, uid)
     if not bank:
         return "题库不存在或无权限访问", 404
 

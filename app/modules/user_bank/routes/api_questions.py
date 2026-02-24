@@ -5,12 +5,46 @@
 import json
 
 from flask import request, jsonify
+from sqlalchemy import text
 
-from app.core.utils.database import get_db, safe_in_clause
+from app.core.extensions import db
 from app.core.utils.decorators import auth_required, current_user_id
 
 from .api_base import user_bank_api_bp, check_bank_access
 from .api_tags import _load_bank_tag_store
+
+
+def _build_named_in(col: str, values: list, prefix: str = 'in') -> tuple[str, dict]:
+    """构建命名参数 IN 子句，返回 (sql_fragment, params_dict)"""
+    if not values:
+        return f"{col} IN (NULL)", {}
+    params = {f"{prefix}_{i}": v for i, v in enumerate(values)}
+    placeholders = ', '.join(f':{k}' for k in params)
+    return f"{col} IN ({placeholders})", params
+
+
+def _table_exists(table: str) -> bool:
+    try:
+        row = db.session.execute(
+            text("SELECT 1 FROM information_schema.tables WHERE table_name = :tbl LIMIT 1"),
+            {'tbl': table},
+        ).fetchone()
+        return row is not None
+    except Exception:
+        return False
+
+
+def _column_exists(table: str, column: str) -> bool:
+    if not _table_exists(table):
+        return False
+    try:
+        row = db.session.execute(
+            text("SELECT 1 FROM information_schema.columns WHERE table_name = :tbl AND column_name = :col LIMIT 1"),
+            {'tbl': table, 'col': column},
+        ).fetchone()
+        return row is not None
+    except Exception:
+        return False
 
 
 @user_bank_api_bp.route('/<int:bank_id>/questions', methods=['GET'])
@@ -34,30 +68,10 @@ def get_bank_questions(bank_id):
     source = (request.args.get('source') or 'all').strip().lower()  # all/favorites/mistakes
     tag = (request.args.get('tag') or '').strip()
 
-    conn = get_db()
-
-    def _table_exists(table: str) -> bool:
-        try:
-            row = conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-                (table,),
-            ).fetchone()
-            return bool(row and (row['name'] or '').lower() == table.lower())
-        except Exception:
-            return False
-
-    def _column_exists(table: str, column: str) -> bool:
-        if not _table_exists(table):
-            return False
-        try:
-            rows = conn.execute(f"PRAGMA table_info({table})").fetchall()
-            return any(r and r['name'] == column for r in rows)
-        except Exception:
-            return False
-
     tag_question_ids = None
     if tag and tag != 'all':
         try:
+            conn = db.session.connection()
             store = _load_bank_tag_store(conn, bank_id, user_id)
             question_tags = store.get('question_tags', {}) or {}
             tag_question_ids = []
@@ -86,7 +100,7 @@ def get_bank_questions(bank_id):
             })
 
     joins = ''
-    join_params = []
+    join_params: dict = {}
     order_by = 'q.id ASC'
     if _column_exists('user_bank_questions', 'sort_order'):
         order_by = 'q.sort_order ASC, q.id ASC'
@@ -109,21 +123,19 @@ def get_bank_questions(bank_id):
         fav_has_user = _column_exists('user_bank_favorites', 'user_id')
         fav_has_bank = _column_exists('user_bank_favorites', 'bank_id')
         fav_has_created = _column_exists('user_bank_favorites', 'created_at')
-        fav_ts_col = 'created_at' if fav_has_created else ('id' if _column_exists('user_bank_favorites', 'id') else 'rowid')
+        fav_ts_col = 'created_at' if fav_has_created else ('id' if _column_exists('user_bank_favorites', 'id') else 'ctid')
 
         fav_filters = []
-        fav_params = []
         if fav_has_user:
-            fav_filters.append('user_id = ?')
-            fav_params.append(int(user_id))
+            fav_filters.append('user_id = :fav_uid')
+            join_params['fav_uid'] = int(user_id)
         if fav_has_bank:
-            fav_filters.append('bank_id = ?')
-            fav_params.append(int(bank_id))
+            fav_filters.append('bank_id = :fav_bid')
+            join_params['fav_bid'] = int(bank_id)
         fav_where = ('WHERE ' + ' AND '.join(fav_filters)) if fav_filters else ''
 
         # 用聚合子查询保证每题唯一，兼容 favorites 表缺少 user_id/bank_id 的情况
         joins += f' JOIN (SELECT question_id, MAX({fav_ts_col}) AS _ts FROM user_bank_favorites {fav_where} GROUP BY question_id) f ON q.id = f.question_id'
-        join_params.extend(fav_params)
         order_by = 'f._ts DESC, q.id DESC'
         select_extras.append('f._ts AS favorite_created_at' if fav_has_created else 'NULL AS favorite_created_at')
     elif source == 'mistakes':
@@ -149,22 +161,21 @@ def get_bank_questions(bank_id):
         mis_has_id = _column_exists('user_bank_mistakes', 'id')
 
         mis_filters = []
-        mis_params = []
         if mis_has_user:
-            mis_filters.append('user_id = ?')
-            mis_params.append(int(user_id))
+            mis_filters.append('user_id = :mis_uid')
+            join_params['mis_uid'] = int(user_id)
         if mis_has_bank:
-            mis_filters.append('bank_id = ?')
-            mis_params.append(int(bank_id))
+            mis_filters.append('bank_id = :mis_bid')
+            join_params['mis_bid'] = int(bank_id)
         mis_where = ('WHERE ' + ' AND '.join(mis_filters)) if mis_filters else ''
 
-        # 显示字段：尽量选日期字段；排序字段兜底用 id/rowid
+        # 显示字段：尽量选日期字段；排序字段兜底用 id/ctid
         mis_updated_expr = 'MAX(updated_at) AS updated_at' if mis_has_updated else (
             'MAX(last_updated) AS updated_at' if mis_has_last_updated else (
                 'MAX(created_at) AS updated_at' if mis_has_created else 'NULL AS updated_at'
             )
         )
-        mis_sort_col = 'updated_at' if mis_has_updated else ('last_updated' if mis_has_last_updated else ('created_at' if mis_has_created else ('id' if mis_has_id else 'rowid')))
+        mis_sort_col = 'updated_at' if mis_has_updated else ('last_updated' if mis_has_last_updated else ('created_at' if mis_has_created else ('id' if mis_has_id else 'ctid')))
         mis_sort_expr = f'MAX({mis_sort_col}) AS _ts'
         mis_created_expr = 'MIN(created_at) AS created_at' if mis_has_created else 'NULL AS created_at'
         mis_wrong_expr = 'MAX(COALESCE(wrong_count, 1)) AS wrong_count' if mis_has_wrong else 'COUNT(1) AS wrong_count'
@@ -175,7 +186,6 @@ def get_bank_questions(bank_id):
             f'FROM user_bank_mistakes {mis_where} GROUP BY question_id'
             ') m ON q.id = m.question_id'
         )
-        join_params.extend(mis_params)
         order_by = 'm.wrong_count DESC, m._ts DESC, q.id DESC'
         select_extras.extend([
             'm.wrong_count AS mistake_wrong_count',
@@ -185,38 +195,44 @@ def get_bank_questions(bank_id):
     else:
         source = 'all'
 
-    where = ' WHERE q.bank_id = ?'
-    where_params = [int(bank_id)]
+    where = ' WHERE q.bank_id = :w_bid'
+    where_params: dict = {'w_bid': int(bank_id)}
 
     if q_type:
         from app.core.utils.portable_question_format import any_type_to_portable_type
 
-        where += ' AND q.type = ?'
-        where_params.append(any_type_to_portable_type(q_type))
+        where += ' AND q.type = :w_qtype'
+        where_params['w_qtype'] = any_type_to_portable_type(q_type)
 
     if keyword:
         term = f'%{keyword}%'
-        where += ' AND (q.content LIKE ? OR q.analysis LIKE ? OR q.options LIKE ? OR q.answer LIKE ?)'
-        where_params.extend([term, term, term, term])
+        where += ' AND (q.content LIKE :w_kw1 OR q.analysis LIKE :w_kw2 OR q.options LIKE :w_kw3 OR q.answer LIKE :w_kw4)'
+        where_params['w_kw1'] = term
+        where_params['w_kw2'] = term
+        where_params['w_kw3'] = term
+        where_params['w_kw4'] = term
 
     if tag_question_ids is not None:
         tag_question_ids = sorted(set(tag_question_ids))
-        where, where_params = safe_in_clause('q.id', tag_question_ids, where, where_params)
+        in_fragment, in_params = _build_named_in('q.id', tag_question_ids, 'tag')
+        where += f' AND {in_fragment}'
+        where_params.update(in_params)
 
     count_sql = f'SELECT COUNT(*) as cnt FROM user_bank_questions q{joins}{where}'
-    total = conn.execute(count_sql, join_params + where_params).fetchone()['cnt']
+    total = db.session.execute(text(count_sql), {**join_params, **where_params}).fetchone()._mapping['cnt']
 
     if page < 1:
         page = 1
     offset = (page - 1) * per_page
 
     # 为列表补齐最后一次答题状态（便于数据面板/复盘中心呈现）
+    query_params: dict = dict(join_params)
     if _table_exists('user_bank_answers') and _column_exists('user_bank_answers', 'question_id') and _column_exists('user_bank_answers', 'user_id'):
-        join_sql = ' LEFT JOIN user_bank_answers a ON a.question_id = q.id AND a.user_id = ?'
-        query_params = join_params + [int(user_id)]
+        join_sql = ' LEFT JOIN user_bank_answers a ON a.question_id = q.id AND a.user_id = :ans_uid'
+        query_params['ans_uid'] = int(user_id)
         if _column_exists('user_bank_answers', 'bank_id'):
-            join_sql += ' AND a.bank_id = ?'
-            query_params.append(int(bank_id))
+            join_sql += ' AND a.bank_id = :ans_bid'
+            query_params['ans_bid'] = int(bank_id)
         query_joins = joins + join_sql
 
         select_extras.extend([
@@ -226,7 +242,6 @@ def get_bank_questions(bank_id):
         ])
     else:
         query_joins = joins
-        query_params = join_params
         select_extras.extend([
             'NULL AS last_is_correct',
             'NULL AS last_answered_at',
@@ -237,54 +252,57 @@ def get_bank_questions(bank_id):
     if select_extras:
         select_sql += ', ' + ', '.join(select_extras)
 
-    query_sql = f'SELECT {select_sql} FROM user_bank_questions q{query_joins}{where} ORDER BY {order_by} LIMIT ? OFFSET ?'
-    rows = conn.execute(query_sql, query_params + where_params + [per_page, offset]).fetchall()
+    query_sql = f'SELECT {select_sql} FROM user_bank_questions q{query_joins}{where} ORDER BY {order_by} LIMIT :q_lim OFFSET :q_off'
+    rows = db.session.execute(text(query_sql), {**query_params, **where_params, 'q_lim': per_page, 'q_off': offset}).fetchall()
 
     # 为列表补齐收藏/错题标记 + 预览字段（便于复盘中心/搜索复用）
-    q_ids = [int(r['id']) for r in rows] if rows else []
-    fav_set = set()
-    mis_set = set()
+    q_ids = [int(r._mapping['id']) for r in rows] if rows else []
+    fav_set: set = set()
+    mis_set: set = set()
     if q_ids:
-        placeholders = ','.join('?' * len(q_ids))
         if _table_exists('user_bank_favorites') and _column_exists('user_bank_favorites', 'question_id'):
-            fav_where = []
-            fav_params = []
+            fav_where_parts = []
+            fav_p: dict = {}
             if _column_exists('user_bank_favorites', 'user_id'):
-                fav_where.append('user_id = ?')
-                fav_params.append(int(user_id))
+                fav_where_parts.append('user_id = :fset_uid')
+                fav_p['fset_uid'] = int(user_id)
             if _column_exists('user_bank_favorites', 'bank_id'):
-                fav_where.append('bank_id = ?')
-                fav_params.append(int(bank_id))
-            fav_where.append(f'question_id IN ({placeholders})')
-            fav_rows = conn.execute(
-                'SELECT question_id FROM user_bank_favorites WHERE ' + ' AND '.join(fav_where),
-                fav_params + q_ids,
+                fav_where_parts.append('bank_id = :fset_bid')
+                fav_p['fset_bid'] = int(bank_id)
+            in_frag, in_p = _build_named_in('question_id', q_ids, 'fqid')
+            fav_where_parts.append(in_frag)
+            fav_p.update(in_p)
+            fav_rows = db.session.execute(
+                text('SELECT question_id FROM user_bank_favorites WHERE ' + ' AND '.join(fav_where_parts)),
+                fav_p,
             ).fetchall()
-            fav_set = {int(r['question_id']) for r in (fav_rows or []) if r and r['question_id'] is not None}
+            fav_set = {int(r._mapping['question_id']) for r in (fav_rows or []) if r and r._mapping['question_id'] is not None}
 
         if _table_exists('user_bank_mistakes') and _column_exists('user_bank_mistakes', 'question_id'):
-            mis_where = []
-            mis_params = []
+            mis_where_parts = []
+            mis_p: dict = {}
             if _column_exists('user_bank_mistakes', 'user_id'):
-                mis_where.append('user_id = ?')
-                mis_params.append(int(user_id))
+                mis_where_parts.append('user_id = :mset_uid')
+                mis_p['mset_uid'] = int(user_id)
             if _column_exists('user_bank_mistakes', 'bank_id'):
-                mis_where.append('bank_id = ?')
-                mis_params.append(int(bank_id))
-            mis_where.append(f'question_id IN ({placeholders})')
-            mis_rows = conn.execute(
-                'SELECT question_id FROM user_bank_mistakes WHERE ' + ' AND '.join(mis_where),
-                mis_params + q_ids,
+                mis_where_parts.append('bank_id = :mset_bid')
+                mis_p['mset_bid'] = int(bank_id)
+            in_frag, in_p = _build_named_in('question_id', q_ids, 'mqid')
+            mis_where_parts.append(in_frag)
+            mis_p.update(in_p)
+            mis_rows = db.session.execute(
+                text('SELECT question_id FROM user_bank_mistakes WHERE ' + ' AND '.join(mis_where_parts)),
+                mis_p,
             ).fetchall()
-            mis_set = {int(r['question_id']) for r in (mis_rows or []) if r and r['question_id'] is not None}
+            mis_set = {int(r._mapping['question_id']) for r in (mis_rows or []) if r and r._mapping['question_id'] is not None}
 
     def _preview(content: str) -> str:
         try:
             import re as _re
-            text = _re.sub(r'<[^>]+>', '', content or '').replace('\n', ' ').strip()
+            text_str = _re.sub(r'<[^>]+>', '', content or '').replace('\n', ' ').strip()
         except Exception:
-            text = (content or '').replace('\n', ' ').strip()
-        return text[:80] + '...' if len(text) > 80 else text
+            text_str = (content or '').replace('\n', ' ').strip()
+        return text_str[:80] + '...' if len(text_str) > 80 else text_str
 
     from app.core.utils.pqf_rows import pqf_row_to_internal
 
@@ -332,7 +350,6 @@ def add_question(bank_id):
                 return '正确'
             if v in ('错', '错误', 'false', 'f', '0', 'no', 'n', '否', 'b'):
                 return '错误'
-            # 兜底：保留原值（避免误伤非标准存量数据）
             return s.strip()
 
         if qt == '填空题':
@@ -342,13 +359,12 @@ def add_question(bank_id):
         return s.strip()
 
     user_id = current_user_id()
-    conn = get_db()
     from app.core.utils.portable_question_sync import build_portable_columns
 
     # 检查权限
-    bank = conn.execute(
-        'SELECT id, question_count FROM user_question_banks WHERE id = ? AND user_id = ? AND status = 1',
-        (bank_id, user_id)
+    bank = db.session.execute(
+        text('SELECT id, question_count FROM user_question_banks WHERE id = :bid AND user_id = :uid AND status = 1'),
+        {'bid': bank_id, 'uid': user_id}
     ).fetchone()
 
     if not bank:
@@ -378,38 +394,40 @@ def add_question(bank_id):
         tags=None,
     )
 
-    cursor = conn.execute(
-        '''
+    result = db.session.execute(
+        text('''
         INSERT INTO user_bank_questions
         (bank_id, user_id, type, content, options, answer, analysis, tags, difficulty, source_type, sort_order)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'custom',
-                (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM user_bank_questions WHERE bank_id = ?))
-        ''',
-        (
-            bank_id,
-            user_id,
-            pqf['type'] or 'essay',
-            pqf['content'] or '',
-            pqf['options'] or '[]',
-            pqf['answer'] or '[]',
-            pqf['analysis'] or '',
-            pqf['tags'] or '[]',
-            int(pqf.get('difficulty') or 1),
-            bank_id,
-        ),
+        VALUES (:bid, :uid, :typ, :content, :options, :answer, :analysis, :tags, :difficulty, 'custom',
+                (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM user_bank_questions WHERE bank_id = :bid2))
+        RETURNING id
+        '''),
+        {
+            'bid': bank_id,
+            'uid': user_id,
+            'typ': pqf['type'] or 'essay',
+            'content': pqf['content'] or '',
+            'options': pqf['options'] or '[]',
+            'answer': pqf['answer'] or '[]',
+            'analysis': pqf['analysis'] or '',
+            'tags': pqf['tags'] or '[]',
+            'difficulty': int(pqf.get('difficulty') or 1),
+            'bid2': bank_id,
+        },
     )
+    new_id = result.fetchone()[0]
 
     # 更新题目数量
-    conn.execute(
-        'UPDATE user_question_banks SET question_count = question_count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        (bank_id,)
+    db.session.execute(
+        text('UPDATE user_question_banks SET question_count = question_count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :bid'),
+        {'bid': bank_id}
     )
-    conn.commit()
+    db.session.commit()
 
     return jsonify({
         'code': 0,
         'data': {
-            'id': cursor.lastrowid
+            'id': new_id
         },
         'message': '添加成功'
     })
@@ -429,10 +447,9 @@ def get_question_detail(bank_id, question_id):
     if not has_access:
         return jsonify({'code': 403, 'message': '无权访问此题库'}), 403
 
-    conn = get_db()
-    row = conn.execute(
-        'SELECT * FROM user_bank_questions WHERE id = ? AND bank_id = ?',
-        (question_id, bank_id),
+    row = db.session.execute(
+        text('SELECT * FROM user_bank_questions WHERE id = :qid AND bank_id = :bid'),
+        {'qid': question_id, 'bid': bank_id},
     ).fetchone()
 
     if not row:
@@ -472,28 +489,27 @@ def update_question(bank_id, question_id):
         return s.strip()
 
     user_id = current_user_id()
-    conn = get_db()
 
     # 检查题库权限
-    bank = conn.execute(
-        'SELECT id FROM user_question_banks WHERE id = ? AND user_id = ? AND status = 1',
-        (bank_id, user_id)
+    bank = db.session.execute(
+        text('SELECT id FROM user_question_banks WHERE id = :bid AND user_id = :uid AND status = 1'),
+        {'bid': bank_id, 'uid': user_id}
     ).fetchone()
 
     if not bank:
         return jsonify({'code': 1, 'message': '题库不存在或无权操作'}), 404
 
     # 检查题目
-    question = conn.execute(
-        'SELECT id, source_type, type, content, options, answer, analysis, difficulty FROM user_bank_questions WHERE id = ? AND bank_id = ?',
-        (question_id, bank_id)
+    question = db.session.execute(
+        text('SELECT id, source_type, type, content, options, answer, analysis, difficulty FROM user_bank_questions WHERE id = :qid AND bank_id = :bid'),
+        {'qid': question_id, 'bid': bank_id}
     ).fetchone()
 
     if not question:
         return jsonify({'code': 1, 'message': '题目不存在'}), 404
 
     # 非自建题目禁止编辑
-    if question['source_type'] != 'custom':
+    if question._mapping['source_type'] != 'custom':
         return jsonify({'code': 1, 'message': '非自建题目不能编辑，请删除后重新添加'}), 400
 
     data = request.get_json() or {}
@@ -529,32 +545,32 @@ def update_question(bank_id, question_id):
         tags=None,
     )
 
-    conn.execute(
-        '''
+    db.session.execute(
+        text('''
         UPDATE user_bank_questions
-        SET type = ?,
-            content = ?,
-            options = ?,
-            answer = ?,
-            analysis = ?,
-            tags = ?,
-            difficulty = ?,
+        SET type = :typ,
+            content = :content,
+            options = :options,
+            answer = :answer,
+            analysis = :analysis,
+            tags = :tags,
+            difficulty = :difficulty,
             updated_at = CURRENT_TIMESTAMP
-        WHERE id = ? AND bank_id = ?
-        ''',
-        (
-            pqf['type'] or 'essay',
-            pqf['content'] or '',
-            pqf['options'] or '[]',
-            pqf['answer'] or '[]',
-            pqf['analysis'] or '',
-            pqf['tags'] or '[]',
-            int(pqf.get('difficulty') or 1),
-            int(question_id),
-            int(bank_id),
-        ),
+        WHERE id = :qid AND bank_id = :bid
+        '''),
+        {
+            'typ': pqf['type'] or 'essay',
+            'content': pqf['content'] or '',
+            'options': pqf['options'] or '[]',
+            'answer': pqf['answer'] or '[]',
+            'analysis': pqf['analysis'] or '',
+            'tags': pqf['tags'] or '[]',
+            'difficulty': int(pqf.get('difficulty') or 1),
+            'qid': int(question_id),
+            'bid': int(bank_id),
+        },
     )
-    conn.commit()
+    db.session.commit()
 
     return jsonify({'code': 0, 'message': '更新成功'})
 
@@ -564,30 +580,29 @@ def update_question(bank_id, question_id):
 def delete_question(bank_id, question_id):
     """删除题目"""
     user_id = current_user_id()
-    conn = get_db()
 
-    bank = conn.execute(
-        'SELECT id FROM user_question_banks WHERE id = ? AND user_id = ? AND status = 1',
-        (bank_id, user_id)
+    bank = db.session.execute(
+        text('SELECT id FROM user_question_banks WHERE id = :bid AND user_id = :uid AND status = 1'),
+        {'bid': bank_id, 'uid': user_id}
     ).fetchone()
 
     if not bank:
         return jsonify({'code': 1, 'message': '题库不存在或无权操作'}), 404
 
-    question = conn.execute(
-        'SELECT id FROM user_bank_questions WHERE id = ? AND bank_id = ?',
-        (question_id, bank_id)
+    question = db.session.execute(
+        text('SELECT id FROM user_bank_questions WHERE id = :qid AND bank_id = :bid'),
+        {'qid': question_id, 'bid': bank_id}
     ).fetchone()
 
     if not question:
         return jsonify({'code': 1, 'message': '题目不存在'}), 404
 
-    conn.execute('DELETE FROM user_bank_questions WHERE id = ?', (question_id,))
-    conn.execute(
-        'UPDATE user_question_banks SET question_count = question_count - 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        (bank_id,)
+    db.session.execute(text('DELETE FROM user_bank_questions WHERE id = :qid'), {'qid': question_id})
+    db.session.execute(
+        text('UPDATE user_question_banks SET question_count = question_count - 1, updated_at = CURRENT_TIMESTAMP WHERE id = :bid'),
+        {'bid': bank_id}
     )
-    conn.commit()
+    db.session.commit()
 
     return jsonify({'code': 0, 'message': '删除成功'})
 
@@ -603,33 +618,31 @@ def batch_delete_questions(bank_id):
     if not question_ids:
         return jsonify({'code': 1, 'message': '请选择要删除的题目'}), 400
 
-    conn = get_db()
-
-    bank = conn.execute(
-        'SELECT id FROM user_question_banks WHERE id = ? AND user_id = ? AND status = 1',
-        (bank_id, user_id)
+    bank = db.session.execute(
+        text('SELECT id FROM user_question_banks WHERE id = :bid AND user_id = :uid AND status = 1'),
+        {'bid': bank_id, 'uid': user_id}
     ).fetchone()
 
     if not bank:
         return jsonify({'code': 1, 'message': '题库不存在或无权操作'}), 404
 
-    placeholders = ','.join(['?'] * len(question_ids))
-    conn.execute(
-        f'DELETE FROM user_bank_questions WHERE id IN ({placeholders}) AND bank_id = ?',
-        question_ids + [bank_id]
+    in_frag, in_p = _build_named_in('id', question_ids, 'del')
+    db.session.execute(
+        text(f'DELETE FROM user_bank_questions WHERE {in_frag} AND bank_id = :bid'),
+        {**in_p, 'bid': bank_id}
     )
 
     # 重新计算题目数量
-    count = conn.execute(
-        'SELECT COUNT(*) as cnt FROM user_bank_questions WHERE bank_id = ?',
-        (bank_id,)
-    ).fetchone()['cnt']
+    count = db.session.execute(
+        text('SELECT COUNT(*) as cnt FROM user_bank_questions WHERE bank_id = :bid'),
+        {'bid': bank_id}
+    ).fetchone()._mapping['cnt']
 
-    conn.execute(
-        'UPDATE user_question_banks SET question_count = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        (count, bank_id)
+    db.session.execute(
+        text('UPDATE user_question_banks SET question_count = :cnt, updated_at = CURRENT_TIMESTAMP WHERE id = :bid'),
+        {'cnt': count, 'bid': bank_id}
     )
-    conn.commit()
+    db.session.commit()
 
     return jsonify({'code': 0, 'message': f'成功删除{len(question_ids)}道题目'})
 
@@ -655,7 +668,7 @@ def batch_update_questions(bank_id):
         return jsonify({'code': 1, 'message': '请选择要操作的题目'}), 400
 
     # 去重但保留顺序
-    seen = set()
+    seen: set = set()
     ids = [x for x in ids if not (x in seen or seen.add(x))]
 
     q_type = data.get('q_type', None)
@@ -664,29 +677,27 @@ def batch_update_questions(bank_id):
     if q_type is None and difficulty is None:
         return jsonify({'code': 1, 'message': '没有可更新的字段'}), 400
 
-    conn = get_db()
-
-    bank = conn.execute(
-        'SELECT id FROM user_question_banks WHERE id = ? AND user_id = ? AND status = 1',
-        (bank_id, user_id)
+    bank = db.session.execute(
+        text('SELECT id FROM user_question_banks WHERE id = :bid AND user_id = :uid AND status = 1'),
+        {'bid': bank_id, 'uid': user_id}
     ).fetchone()
 
     if not bank:
         return jsonify({'code': 1, 'message': '题库不存在或无权操作'}), 404
 
-    placeholders = ','.join(['?'] * len(ids))
-    rows = conn.execute(
-        f'SELECT id, source_type FROM user_bank_questions WHERE bank_id = ? AND id IN ({placeholders})',
-        [bank_id, *ids],
+    in_frag, in_p = _build_named_in('id', ids, 'buid')
+    rows = db.session.execute(
+        text(f'SELECT id, source_type FROM user_bank_questions WHERE bank_id = :bid AND {in_frag}'),
+        {'bid': bank_id, **in_p},
     ).fetchall()
 
     editable_ids = []
     for r in rows or []:
         try:
-            if r['source_type'] == 'custom':
-                editable_ids.append(int(r['id']))
+            if r._mapping['source_type'] == 'custom':
+                editable_ids.append(int(r._mapping['id']))
         except Exception:
-            editable_ids.append(int(r['id']))
+            editable_ids.append(int(r._mapping['id']))
 
     editable_ids = [x for x in editable_ids if x in set(ids)]
     if not editable_ids:
@@ -700,16 +711,16 @@ def batch_update_questions(bank_id):
             diff = 1
         diff = max(1, min(5, diff))
 
-        placeholders2 = ','.join(['?'] * len(editable_ids))
-        conn.execute(
-            f'''
+        in_frag2, in_p2 = _build_named_in('id', editable_ids, 'edid')
+        db.session.execute(
+            text(f'''
             UPDATE user_bank_questions
-            SET difficulty = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE bank_id = ? AND id IN ({placeholders2})
-            ''',
-            [diff, bank_id, *editable_ids],
+            SET difficulty = :diff, updated_at = CURRENT_TIMESTAMP
+            WHERE bank_id = :bid AND {in_frag2}
+            '''),
+            {'diff': diff, 'bid': bank_id, **in_p2},
         )
-        conn.commit()
+        db.session.commit()
     else:
         # 改题型（可能同时改难度）：逐题重算 PQF，避免 type/content/answer 不一致
         from app.core.utils.pqf_rows import pqf_row_to_internal
@@ -729,14 +740,14 @@ def batch_update_questions(bank_id):
                 diff = 1
             diff = max(1, min(5, diff))
 
-        placeholders2 = ','.join(['?'] * len(editable_ids))
-        rows = conn.execute(
-            f'''
+        in_frag2, in_p2 = _build_named_in('id', editable_ids, 'edid')
+        rows = db.session.execute(
+            text(f'''
             SELECT id, type, content, options, answer, analysis, difficulty
             FROM user_bank_questions
-            WHERE bank_id = ? AND id IN ({placeholders2})
-            ''',
-            [bank_id, *editable_ids],
+            WHERE bank_id = :bid AND {in_frag2}
+            '''),
+            {'bid': bank_id, **in_p2},
         ).fetchall()
 
         for r in rows or []:
@@ -753,33 +764,33 @@ def batch_update_questions(bank_id):
                 difficulty=next_diff,
                 tags=None,
             )
-            conn.execute(
-                '''
+            db.session.execute(
+                text('''
                 UPDATE user_bank_questions
-                SET type = ?,
-                    content = ?,
-                    options = ?,
-                    answer = ?,
-                    analysis = ?,
-                    tags = ?,
-                    difficulty = ?,
+                SET type = :typ,
+                    content = :content,
+                    options = :options,
+                    answer = :answer,
+                    analysis = :analysis,
+                    tags = :tags,
+                    difficulty = :difficulty,
                     updated_at = CURRENT_TIMESTAMP
-                WHERE bank_id = ? AND id = ?
-                ''',
-                (
-                    pqf['type'] or 'essay',
-                    pqf['content'] or '',
-                    pqf['options'] or '[]',
-                    pqf['answer'] or '[]',
-                    pqf['analysis'] or '',
-                    pqf['tags'] or '[]',
-                    int(pqf.get('difficulty') or 1),
-                    int(bank_id),
-                    int(cur.get('id') or 0),
-                ),
+                WHERE bank_id = :bid AND id = :qid
+                '''),
+                {
+                    'typ': pqf['type'] or 'essay',
+                    'content': pqf['content'] or '',
+                    'options': pqf['options'] or '[]',
+                    'answer': pqf['answer'] or '[]',
+                    'analysis': pqf['analysis'] or '',
+                    'tags': pqf['tags'] or '[]',
+                    'difficulty': int(pqf.get('difficulty') or 1),
+                    'bid': int(bank_id),
+                    'qid': int(cur.get('id') or 0),
+                },
             )
 
-        conn.commit()
+        db.session.commit()
 
     skipped = len(ids) - len(editable_ids)
     msg = f'已更新{len(editable_ids)}道题目' + (f'，已跳过{skipped}道非自建题目' if skipped > 0 else '')

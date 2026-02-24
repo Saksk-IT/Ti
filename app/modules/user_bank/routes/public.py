@@ -3,11 +3,13 @@
 from typing import Optional
 
 from flask import Blueprint, render_template, request, jsonify, session
-from app.core.utils.database import get_db
+from sqlalchemy import text
+
+from app.core.extensions import db
 from app.core.utils.decorators import auth_required, current_user_id
 from app.core.utils.jwt_utils import decode_jwt_token
 from app.core.utils.decorators import _validate_jwt_user
-from app.core.utils.time_utils import SQLITE_BJ_NOW_EXPR
+from app.core.utils.time_utils import now_bj
 
 public_bank_bp = Blueprint('public_bank', __name__)
 
@@ -70,7 +72,6 @@ def get_public_banks():
     keyword = request.args.get('keyword', '').strip()
     bank_type = request.args.get('type', '')  # all, user, system
 
-    conn = get_db()
     all_banks = []
 
     # 1. 获取用户公开题库
@@ -82,28 +83,28 @@ def get_public_banks():
                    'user' as bank_type
             FROM user_question_banks b
             JOIN users u ON b.user_id = u.id
-            WHERE b.is_public = 1 AND b.status = 1
+            WHERE b.is_public = true AND b.status = 1
         '''
-        user_params = []
+        user_params: dict = {}
 
         if keyword:
-            user_query += ' AND (b.name LIKE ? OR b.public_description LIKE ?)'
-            user_params.extend([f'%{keyword}%', f'%{keyword}%'])
+            user_query += ' AND (b.name LIKE :kw1 OR b.public_description LIKE :kw2)'
+            user_params['kw1'] = f'%{keyword}%'
+            user_params['kw2'] = f'%{keyword}%'
 
-        user_rows = conn.execute(user_query, user_params).fetchall()
+        user_rows = db.session.execute(text(user_query), user_params).fetchall()
         public_user_banks = []
         for b in (user_rows or []):
-            d = dict(b)
+            d = dict(b._mapping)
             d['is_shared'] = 0
             public_user_banks.append(d)
         all_banks.extend(public_user_banks)
-
-        # 1.1 鏀跺埌鐨勫垎浜搴撲篃灞曠ず鍦ㄣ€岄搴撳箍鍦恒€嶏細
-        # - 绫诲瀷浠?「鐢ㄦ埛」褰掔被
-        # - 鍗￠潰鏄剧ず「鐢ㄦ埛鍒嗕韩」鏍囩
-        # - 浠呭褰撳墠鐧诲綍鐢ㄦ埛鍙锛堟棤 token/session 鏃朵笉杩斿洖锛?
+        # 1.1 收到的分享题库也展示在「题库广场」：
+        # - 类型仍按「用户」归类
+        # - 卡面显示「用户分享」标签
+        # - 仅对当前登录用户可见（无 token/session 时不返回）
         if uid:
-            shared_query = f'''
+            shared_query = '''
                 SELECT b.id, b.name,
                        COALESCE(NULLIF(b.public_description, ''), b.description) as description,
                        COALESCE(b.question_count, 0) as question_count,
@@ -118,24 +119,26 @@ def get_public_banks():
                 JOIN bank_shares bs ON bsr.share_id = bs.id
                 JOIN user_question_banks b ON bsr.bank_id = b.id
                 JOIN users u ON b.user_id = u.id
-                WHERE bsr.user_id = ?
+                WHERE bsr.user_id = :uid
                   AND bsr.status = 1
                   AND b.status = 1
-                  AND bs.is_active = 1
-                  AND (bs.expires_at IS NULL OR replace(bs.expires_at, 'T', ' ') > {SQLITE_BJ_NOW_EXPR})
+                  AND bs.is_active = true
+                  AND (bs.expires_at IS NULL OR replace(bs.expires_at::text, 'T', ' ') > :now_bj)
             '''
-            shared_params = [int(uid)]
+            shared_params: dict = {'uid': int(uid), 'now_bj': str(now_bj())}
             if keyword:
-                shared_query += ' AND (b.name LIKE ? OR b.public_description LIKE ? OR b.description LIKE ?)'
-                shared_params.extend([f'%{keyword}%', f'%{keyword}%', f'%{keyword}%'])
-            shared_rows = conn.execute(shared_query, shared_params).fetchall()
-            all_banks.extend([dict(b) for b in (shared_rows or [])])
+                shared_query += ' AND (b.name LIKE :skw1 OR b.public_description LIKE :skw2 OR b.description LIKE :skw3)'
+                shared_params['skw1'] = f'%{keyword}%'
+                shared_params['skw2'] = f'%{keyword}%'
+                shared_params['skw3'] = f'%{keyword}%'
+            shared_rows = db.session.execute(text(shared_query), shared_params).fetchall()
+            all_banks.extend([dict(b._mapping) for b in (shared_rows or [])])
 
     # 2. 获取管理员公共题库（subjects表）
     if bank_type != 'user':
         from app.core.utils.subject_permissions import get_user_accessible_subjects
 
-        system_params = []
+        system_params: dict = {}
         subject_ids = []
         if uid:
             try:
@@ -144,38 +147,37 @@ def get_public_banks():
                 subject_ids = []
             if not subject_ids:
                 system_banks = []
-                # 仍允许后续逻辑继续处理 user_banks
                 system_rows = []
             else:
-                placeholders = ",".join(["?"] * len(subject_ids))
-                system_params.extend(subject_ids)
-                system_rows = conn.execute(
-                    f"""
+                in_clause, in_params = _build_named_in('sid', subject_ids)
+                system_params.update(in_params)
+                system_rows = db.session.execute(
+                    text(f"""
                     SELECT s.id, s.name, s.description, s.created_at as public_at, s.created_at as created_at,
                            (SELECT COUNT(*) FROM questions q WHERE q.subject_id = s.id) as question_count,
                            0 as allow_copy, 0 as use_count,
                            NULL as owner_id, '系统管理员' as owner_nickname, NULL as owner_avatar,
                            'system' as bank_type
                     FROM subjects s
-                    WHERE s.id IN ({placeholders})
-                      AND (s.is_locked=0 OR s.is_locked IS NULL)
-                    """,
+                    WHERE s.id IN ({in_clause})
+                      AND (s.is_locked = false OR s.is_locked IS NULL)
+                    """),
                     system_params,
                 ).fetchall()
         else:
-            system_rows = conn.execute(
-                """
+            system_rows = db.session.execute(
+                text("""
                 SELECT s.id, s.name, s.description, s.created_at as public_at, s.created_at as created_at,
                        (SELECT COUNT(*) FROM questions q WHERE q.subject_id = s.id) as question_count,
                        0 as allow_copy, 0 as use_count,
                        NULL as owner_id, '系统管理员' as owner_nickname, NULL as owner_avatar,
                        'system' as bank_type
                 FROM subjects s
-                WHERE (s.is_locked=0 OR s.is_locked IS NULL)
-                """
+                WHERE (s.is_locked = false OR s.is_locked IS NULL)
+                """)
             ).fetchall()
 
-        system_banks = [dict(b) for b in (system_rows or [])]
+        system_banks = [dict(b._mapping) for b in (system_rows or [])]
 
         if keyword and system_banks:
             kw = keyword.lower()
@@ -216,40 +218,39 @@ def get_public_banks():
 def get_public_bank_detail(bank_id):
     """获取公开题库详情"""
     bank_type = request.args.get('type', 'user')  # user or system
-    conn = get_db()
 
     if bank_type == 'system':
         # 查询系统公共题库（subjects表）
-        bank = conn.execute('''
+        bank = db.session.execute(text('''
             SELECT s.id, s.name, s.description,
                    (SELECT COUNT(*) FROM questions q WHERE q.subject_id = s.id) as question_count,
                    0 as allow_copy, 0 as use_count,
                    '系统管理员' as owner_nickname, NULL as owner_avatar,
                    'system' as bank_type
             FROM subjects s
-            WHERE s.id = ?
-        ''', (bank_id,)).fetchone()
+            WHERE s.id = :bid
+        '''), {'bid': bank_id}).fetchone()
 
         if not bank:
             return jsonify({'code': 1, 'message': '题库不存在'}), 404
     else:
         # 查询用户公开题库
-        bank = conn.execute('''
+        bank = db.session.execute(text('''
             SELECT b.id, b.name, b.public_description as description, b.question_count,
                    b.public_use_count as use_count, 0 as allow_copy,
                    u.username as owner_nickname, u.avatar as owner_avatar,
                    'user' as bank_type
             FROM user_question_banks b
             JOIN users u ON b.user_id = u.id
-            WHERE b.id = ? AND b.is_public = 1 AND b.status = 1
-        ''', (bank_id,)).fetchone()
+            WHERE b.id = :bid AND b.is_public = true AND b.status = 1
+        '''), {'bid': bank_id}).fetchone()
 
         if not bank:
             return jsonify({'code': 1, 'message': '题库不存在或未公开'}), 404
 
     return jsonify({
         'code': 0,
-        'data': dict(bank)
+        'data': dict(bank._mapping)
     })
 
 
@@ -258,32 +259,31 @@ def get_public_bank_detail(bank_id):
 def join_public_bank(bank_id):
     """加入公开题库刷题"""
     user_id = current_user_id()
-    conn = get_db()
 
-    bank = conn.execute(
-        'SELECT id FROM user_question_banks WHERE id = ? AND is_public = 1 AND status = 1',
-        (bank_id,)
+    bank = db.session.execute(
+        text('SELECT id FROM user_question_banks WHERE id = :bid AND is_public = true AND status = 1'),
+        {'bid': bank_id}
     ).fetchone()
 
     if not bank:
         return jsonify({'code': 1, 'message': '题库不存在或未公开'}), 404
 
     # 记录使用
-    existing = conn.execute(
-        'SELECT id FROM public_bank_users WHERE bank_id = ? AND user_id = ?',
-        (bank_id, user_id)
+    existing = db.session.execute(
+        text('SELECT id FROM public_bank_users WHERE bank_id = :bid AND user_id = :uid'),
+        {'bid': bank_id, 'uid': user_id}
     ).fetchone()
 
     if not existing:
-        conn.execute('''
+        db.session.execute(text('''
             INSERT INTO public_bank_users (bank_id, user_id, last_access_at, access_count)
-            VALUES (?, ?, CURRENT_TIMESTAMP, 1)
-        ''', (bank_id, user_id))
-        conn.execute(
-            'UPDATE user_question_banks SET public_use_count = public_use_count + 1 WHERE id = ?',
-            (bank_id,)
+            VALUES (:bid, :uid, CURRENT_TIMESTAMP, 1)
+        '''), {'bid': bank_id, 'uid': user_id})
+        db.session.execute(
+            text('UPDATE user_question_banks SET public_use_count = public_use_count + 1 WHERE id = :bid'),
+            {'bid': bank_id}
         )
-        conn.commit()
+        db.session.commit()
 
     return jsonify({'code': 0, 'message': '已加入'})
 
@@ -293,3 +293,16 @@ def join_bank_page():
     """分享链接跳转页面"""
     token = request.args.get('token', '')
     return render_template('user_bank/share/join.html', token=token)
+
+
+def _build_named_in(prefix: str, values: list) -> tuple[str, dict]:
+    """构建命名参数 IN 子句，返回 (placeholder_str, params_dict)"""
+    if not values:
+        return 'NULL', {}
+    params = {}
+    names = []
+    for i, v in enumerate(values):
+        key = f"{prefix}_{i}"
+        params[key] = v
+        names.append(f":{key}")
+    return ", ".join(names), params

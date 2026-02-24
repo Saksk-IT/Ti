@@ -3,8 +3,9 @@
 """用户题库：题库管理 API"""
 
 from flask import request, jsonify
+from sqlalchemy import text
 
-from app.core.utils.database import get_db
+from app.core.extensions import db
 from app.core.utils.decorators import auth_required, current_user_id
 
 from .api_base import user_bank_api_bp, check_bank_access
@@ -18,32 +19,30 @@ def get_banks():
     category_id = request.args.get('category_id', type=int)
     is_public = request.args.get('is_public', type=int)
 
-    conn = get_db()
-
     query = '''
         SELECT b.*, c.name as category_name
         FROM user_question_banks b
         LEFT JOIN user_bank_categories c ON b.category_id = c.id
-        WHERE b.user_id = ? AND b.status = 1
+        WHERE b.user_id = :user_id AND b.status = 1
     '''
-    params = [user_id]
+    params: dict = {'user_id': user_id}
 
     if category_id is not None:
-        query += ' AND b.category_id = ?'
-        params.append(category_id)
+        query += ' AND b.category_id = :category_id'
+        params['category_id'] = category_id
 
     if is_public is not None:
-        query += ' AND b.is_public = ?'
-        params.append(is_public)
+        query += ' AND b.is_public = :is_public'
+        params['is_public'] = is_public
 
     query += ' ORDER BY b.updated_at DESC'
 
-    banks = conn.execute(query, params).fetchall()
+    banks = db.session.execute(text(query), params).fetchall()
 
     return jsonify({
         'code': 0,
         'data': {
-            'banks': [dict(b) for b in banks],
+            'banks': [dict(b._mapping) for b in banks],
             'total': len(banks)
         }
     })
@@ -59,31 +58,30 @@ def get_bank_detail(bank_id):
     if not has_access:
         return jsonify({'code': 403, 'message': '无权访问此题库'}), 403
 
-    conn = get_db()
-    bank = conn.execute('''
+    bank = db.session.execute(text('''
         SELECT b.*, c.name as category_name, u.username as owner_username
         FROM user_question_banks b
         LEFT JOIN user_bank_categories c ON b.category_id = c.id
         LEFT JOIN users u ON b.user_id = u.id
-        WHERE b.id = ?
-    ''', (bank_id,)).fetchone()
+        WHERE b.id = :bank_id
+    '''), {'bank_id': bank_id}).fetchone()
 
-    result = dict(bank)
+    result = dict(bank._mapping)
     result['permission'] = permission
     result['access_type'] = access_type
 
     # 获取题库中的题型列表
-    types_result = conn.execute('''
+    types_result = db.session.execute(text('''
         SELECT DISTINCT type as p_type FROM user_bank_questions
-        WHERE bank_id = ? AND type IS NOT NULL AND TRIM(type) != ''
+        WHERE bank_id = :bank_id AND type IS NOT NULL AND TRIM(type) != ''
         ORDER BY type
-    ''', (bank_id,)).fetchall()
+    '''), {'bank_id': bank_id}).fetchall()
     from app.core.utils.portable_question_format import portable_type_to_q_type
 
     result['available_types'] = [
-        portable_type_to_q_type((t['p_type'] or ''), essay_q_type='简答题')
+        portable_type_to_q_type((t._mapping['p_type'] or ''), essay_q_type='简答题')
         for t in (types_result or [])
-        if t and t['p_type']
+        if t and t._mapping['p_type']
     ]
 
     return jsonify({
@@ -109,37 +107,37 @@ def create_bank():
     if description and len(description) > 200:
         return jsonify({'code': 1, 'message': '描述不能超过200个字符'}), 400
 
-    conn = get_db()
-
     # 检查题库数量限制
-    count = conn.execute(
-        'SELECT COUNT(*) as cnt FROM user_question_banks WHERE user_id = ? AND status = 1',
-        (user_id,)
-    ).fetchone()['cnt']
+    count = db.session.execute(
+        text('SELECT COUNT(*) as cnt FROM user_question_banks WHERE user_id = :uid AND status = 1'),
+        {'uid': user_id}
+    ).fetchone()._mapping['cnt']
 
     if count >= 20:
         return jsonify({'code': 1, 'message': '最多只能创建20个题库'}), 400
 
     # 检查分类是否存在
     if category_id:
-        cat = conn.execute(
-            'SELECT id FROM user_bank_categories WHERE id = ? AND user_id = ?',
-            (category_id, user_id)
+        cat = db.session.execute(
+            text('SELECT id FROM user_bank_categories WHERE id = :cid AND user_id = :uid'),
+            {'cid': category_id, 'uid': user_id}
         ).fetchone()
         if not cat:
             return jsonify({'code': 1, 'message': '分类不存在'}), 400
 
-    cursor = conn.execute(
-        '''INSERT INTO user_question_banks (user_id, category_id, name, description)
-           VALUES (?, ?, ?, ?)''',
-        (user_id, category_id, name, description)
+    result = db.session.execute(
+        text('''INSERT INTO user_question_banks (user_id, category_id, name, description)
+           VALUES (:user_id, :category_id, :name, :description)
+           RETURNING id'''),
+        {'user_id': user_id, 'category_id': category_id, 'name': name, 'description': description}
     )
-    conn.commit()
+    new_id = result.fetchone()[0]
+    db.session.commit()
 
     return jsonify({
         'code': 0,
         'data': {
-            'id': cursor.lastrowid,
+            'id': new_id,
             'name': name
         }
     })
@@ -152,57 +150,55 @@ def update_bank(bank_id):
     user_id = current_user_id()
     data = request.get_json() or {}
 
-    conn = get_db()
-
     # 检查权限
-    bank = conn.execute(
-        'SELECT id FROM user_question_banks WHERE id = ? AND user_id = ? AND status = 1',
-        (bank_id, user_id)
+    bank = db.session.execute(
+        text('SELECT id FROM user_question_banks WHERE id = :bid AND user_id = :uid AND status = 1'),
+        {'bid': bank_id, 'uid': user_id}
     ).fetchone()
 
     if not bank:
         return jsonify({'code': 1, 'message': '题库不存在或无权操作'}), 404
 
     updates = []
-    params = []
+    params: dict = {}
 
     if 'name' in data:
         name = (data['name'] or '').strip()
         if not name or len(name) < 2 or len(name) > 50:
             return jsonify({'code': 1, 'message': '题库名称需要2-50个字符'}), 400
-        updates.append('name = ?')
-        params.append(name)
+        updates.append('name = :name')
+        params['name'] = name
 
     if 'description' in data:
         description = (data['description'] or '').strip()
         if description and len(description) > 200:
             return jsonify({'code': 1, 'message': '描述不能超过200个字符'}), 400
-        updates.append('description = ?')
-        params.append(description)
+        updates.append('description = :description')
+        params['description'] = description
 
     if 'category_id' in data:
         category_id = data['category_id']
         if category_id:
-            cat = conn.execute(
-                'SELECT id FROM user_bank_categories WHERE id = ? AND user_id = ?',
-                (category_id, user_id)
+            cat = db.session.execute(
+                text('SELECT id FROM user_bank_categories WHERE id = :cid AND user_id = :uid'),
+                {'cid': category_id, 'uid': user_id}
             ).fetchone()
             if not cat:
                 return jsonify({'code': 1, 'message': '分类不存在'}), 400
-        updates.append('category_id = ?')
-        params.append(category_id)
+        updates.append('category_id = :category_id')
+        params['category_id'] = category_id
 
     if not updates:
         return jsonify({'code': 1, 'message': '没有要更新的内容'}), 400
 
     updates.append('updated_at = CURRENT_TIMESTAMP')
-    params.append(bank_id)
+    params['bid'] = bank_id
 
-    conn.execute(
-        f'UPDATE user_question_banks SET {", ".join(updates)} WHERE id = ?',
+    db.session.execute(
+        text(f'UPDATE user_question_banks SET {", ".join(updates)} WHERE id = :bid'),
         params
     )
-    conn.commit()
+    db.session.commit()
 
     return jsonify({'code': 0, 'message': '更新成功'})
 
@@ -212,22 +208,21 @@ def update_bank(bank_id):
 def delete_bank(bank_id):
     """删除题库"""
     user_id = current_user_id()
-    conn = get_db()
 
-    bank = conn.execute(
-        'SELECT id FROM user_question_banks WHERE id = ? AND user_id = ? AND status = 1',
-        (bank_id, user_id)
+    bank = db.session.execute(
+        text('SELECT id FROM user_question_banks WHERE id = :bid AND user_id = :uid AND status = 1'),
+        {'bid': bank_id, 'uid': user_id}
     ).fetchone()
 
     if not bank:
         return jsonify({'code': 1, 'message': '题库不存在或无权操作'}), 404
 
     # 软删除
-    conn.execute(
-        'UPDATE user_question_banks SET status = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        (bank_id,)
+    db.session.execute(
+        text('UPDATE user_question_banks SET status = 0, updated_at = CURRENT_TIMESTAMP WHERE id = :bid'),
+        {'bid': bank_id}
     )
-    conn.commit()
+    db.session.commit()
 
     return jsonify({'code': 0, 'message': '删除成功'})
 
@@ -241,32 +236,30 @@ def set_bank_public(bank_id):
     is_public = data.get('is_public', False)
     public_description = (data.get('public_description') or '').strip()
 
-    conn = get_db()
-
-    bank = conn.execute(
-        'SELECT id FROM user_question_banks WHERE id = ? AND user_id = ? AND status = 1',
-        (bank_id, user_id)
+    bank = db.session.execute(
+        text('SELECT id FROM user_question_banks WHERE id = :bid AND user_id = :uid AND status = 1'),
+        {'bid': bank_id, 'uid': user_id}
     ).fetchone()
 
     if not bank:
         return jsonify({'code': 1, 'message': '题库不存在或无权操作'}), 404
 
     if is_public:
-        conn.execute('''
+        db.session.execute(text('''
             UPDATE user_question_banks
-            SET is_public = 1, public_description = ?,
+            SET is_public = true, public_description = :pdesc,
                 public_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        ''', (public_description, bank_id))
+            WHERE id = :bid
+        '''), {'pdesc': public_description, 'bid': bank_id})
         message = '题库已公开'
     else:
-        conn.execute('''
+        db.session.execute(text('''
             UPDATE user_question_banks
-            SET is_public = 0, public_at = NULL, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        ''', (bank_id,))
+            SET is_public = false, public_at = NULL, updated_at = CURRENT_TIMESTAMP
+            WHERE id = :bid
+        '''), {'bid': bank_id})
         message = '题库已设为私密'
 
-    conn.commit()
+    db.session.commit()
 
     return jsonify({'code': 0, 'message': message})
