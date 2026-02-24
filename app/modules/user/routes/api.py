@@ -2,7 +2,11 @@
 """用户API路由"""
 from flask import Blueprint, request, jsonify, session, current_app, send_from_directory
 from werkzeug.security import check_password_hash, generate_password_hash
-from app.core.utils.database import get_db
+from app.core.extensions import db
+from app.models.user import User as UserModel
+from app.models.quiz import Favorite, Mistake, UserAnswer, UserProgress, UserCheckin
+from app.models.subject import Subject, Question
+from app.models.exam import Exam
 from app.core.utils.decorators import auth_required, current_user_id
 from app.core.utils.time_utils import now_bj, today_bj
 from datetime import datetime, timedelta
@@ -20,23 +24,20 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def calculate_streak_days(conn, user_id):
+def calculate_streak_days(user_id):
     """计算连续学习天数"""
     try:
-        # 获取最近的答题日期
-        rows = conn.execute(
-            '''SELECT DISTINCT DATE(created_at) as date
-               FROM user_answers
-               WHERE user_id = ?
-               ORDER BY date DESC
-               LIMIT 100''',
-            (user_id,)
-        ).fetchall()
-        
+        rows = (
+            db.session.query(db.func.distinct(db.func.date(UserAnswer.created_at)).label('date'))
+            .filter(UserAnswer.user_id == user_id)
+            .order_by(db.text('date DESC'))
+            .limit(100)
+            .all()
+        )
         if not rows:
             return 0
         
-        dates = [datetime.strptime(r['date'], '%Y-%m-%d').date() for r in rows]
+        dates = [datetime.strptime(str(r.date), '%Y-%m-%d').date() for r in rows]
         today = today_bj()
         
         # 如果最近一次答题不是今天或昨天，连续天数为0
@@ -55,22 +56,21 @@ def calculate_streak_days(conn, user_id):
         return 0
 
 
-def calculate_checkin_streak_days(conn, user_id):
+def calculate_checkin_streak_days(user_id):
     """计算连续签到天数（截至最近一次签到，最近一次需为今天或昨天，否则为0）"""
     try:
-        rows = conn.execute(
-            '''SELECT DISTINCT checkin_date as date
-               FROM user_checkins
-               WHERE user_id = ?
-               ORDER BY date DESC
-               LIMIT 100''',
-            (user_id,)
-        ).fetchall()
+        rows = (
+            db.session.query(db.func.distinct(UserCheckin.checkin_date).label('date'))
+            .filter(UserCheckin.user_id == user_id)
+            .order_by(db.text('date DESC'))
+            .limit(100)
+            .all()
+        )
 
         if not rows:
             return 0
 
-        dates = [datetime.strptime(str(r['date']), '%Y-%m-%d').date() for r in rows if r and r['date']]
+        dates = [datetime.strptime(str(r.date), '%Y-%m-%d').date() for r in rows if r and r.date]
         if not dates:
             return 0
 
@@ -96,7 +96,6 @@ def calculate_checkin_streak_days(conn, user_id):
 def user_checkin_status():
     """获取今日签到状态"""
     uid = int(current_user_id() or 0)
-    conn = get_db()
 
     today = today_bj()
     today_s = today.isoformat()
@@ -109,28 +108,28 @@ def user_checkin_status():
         month_end = today.replace(month=today.month + 1, day=1).isoformat()
 
     try:
-        row_today = conn.execute(
-            'SELECT id, created_at FROM user_checkins WHERE user_id = ? AND checkin_date = ? LIMIT 1',
-            (uid, today_s),
-        ).fetchone()
+        row_today = (
+            db.session.query(UserCheckin.id, UserCheckin.created_at)
+            .filter(UserCheckin.user_id == uid, UserCheckin.checkin_date == today_s)
+            .first()
+        )
 
         checked_in_today = row_today is not None
-        checked_in_at = (row_today['created_at'] if row_today else None)
+        checked_in_at = (row_today.created_at if row_today else None)
 
-        total_days = conn.execute(
-            'SELECT COUNT(*) FROM user_checkins WHERE user_id = ?',
-            (uid,),
-        ).fetchone()[0]
-        total_days = int(total_days or 0)
+        total_days = db.session.query(db.func.count(UserCheckin.id)).filter(UserCheckin.user_id == uid).scalar() or 0
+        total_days = int(total_days)
 
-        streak_days = int(calculate_checkin_streak_days(conn, uid) or 0)
+        streak_days = int(calculate_checkin_streak_days(uid) or 0)
 
         # 获取本月已签到日期列表
-        month_rows = conn.execute(
-            'SELECT checkin_date FROM user_checkins WHERE user_id = ? AND checkin_date >= ? AND checkin_date < ? ORDER BY checkin_date',
-            (uid, month_start, month_end),
-        ).fetchall()
-        checked_dates = [str(r['checkin_date']) for r in (month_rows or [])]
+        month_rows = (
+            db.session.query(UserCheckin.checkin_date)
+            .filter(UserCheckin.user_id == uid, UserCheckin.checkin_date >= month_start, UserCheckin.checkin_date < month_end)
+            .order_by(UserCheckin.checkin_date)
+            .all()
+        )
+        checked_dates = [str(r.checkin_date) for r in (month_rows or [])]
 
         return jsonify({
             'status': 'success',
@@ -153,7 +152,6 @@ def user_checkin_status():
 def user_checkin():
     """执行今日签到（幂等）"""
     uid = int(current_user_id() or 0)
-    conn = get_db()
 
     today = today_bj()
     today_s = today.isoformat()
@@ -167,34 +165,39 @@ def user_checkin():
         month_end = today.replace(month=today.month + 1, day=1).isoformat()
 
     try:
-        cur = conn.execute(
-            'INSERT OR IGNORE INTO user_checkins (user_id, checkin_date, created_at) VALUES (?, ?, ?)',
-            (uid, today_s, now_s),
+        # Check if already checked in today
+        existing = (
+            db.session.query(UserCheckin)
+            .filter(UserCheckin.user_id == uid, UserCheckin.checkin_date == today_s)
+            .first()
         )
-        conn.commit()
+        just_checked_in = False
+        if not existing:
+            new_checkin = UserCheckin(user_id=uid, checkin_date=today_s, created_at=now_s)
+            db.session.add(new_checkin)
+            db.session.commit()
+            just_checked_in = True
 
-        just_checked_in = bool(getattr(cur, 'rowcount', 0) == 1)
+        row_today = (
+            db.session.query(UserCheckin.created_at)
+            .filter(UserCheckin.user_id == uid, UserCheckin.checkin_date == today_s)
+            .first()
+        )
+        checked_in_at = (row_today.created_at if row_today else now_s)
 
-        row_today = conn.execute(
-            'SELECT created_at FROM user_checkins WHERE user_id = ? AND checkin_date = ? LIMIT 1',
-            (uid, today_s),
-        ).fetchone()
-        checked_in_at = (row_today['created_at'] if row_today else now_s)
+        total_days = db.session.query(db.func.count(UserCheckin.id)).filter(UserCheckin.user_id == uid).scalar() or 0
+        total_days = int(total_days)
 
-        total_days = conn.execute(
-            'SELECT COUNT(*) FROM user_checkins WHERE user_id = ?',
-            (uid,),
-        ).fetchone()[0]
-        total_days = int(total_days or 0)
-
-        streak_days = int(calculate_checkin_streak_days(conn, uid) or 0)
+        streak_days = int(calculate_checkin_streak_days(uid) or 0)
 
         # 获取本月已签到日期列表
-        month_rows = conn.execute(
-            'SELECT checkin_date FROM user_checkins WHERE user_id = ? AND checkin_date >= ? AND checkin_date < ? ORDER BY checkin_date',
-            (uid, month_start, month_end),
-        ).fetchall()
-        checked_dates = [str(r['checkin_date']) for r in (month_rows or [])]
+        month_rows = (
+            db.session.query(UserCheckin.checkin_date)
+            .filter(UserCheckin.user_id == uid, UserCheckin.checkin_date >= month_start, UserCheckin.checkin_date < month_end)
+            .order_by(UserCheckin.checkin_date)
+            .all()
+        )
+        checked_dates = [str(r.checkin_date) for r in (month_rows or [])]
 
         return jsonify({
             'status': 'success',
@@ -210,7 +213,7 @@ def user_checkin():
         })
     except Exception as e:
         try:
-            conn.rollback()
+            db.session.rollback()
         except Exception:
             pass
         current_app.logger.error(f'[checkin] checkin failed: {e}')
@@ -224,54 +227,43 @@ def user_stats():
         return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
     
     uid = session.get('user_id')
-    conn = get_db()
     
     try:
         # 获取用户基本信息
-        user = conn.execute(
-            'SELECT id, username, email, created_at FROM users WHERE id = ?',
-            (uid,)
-        ).fetchone()
+        user = db.session.query(
+            UserModel.id, UserModel.username, UserModel.email, UserModel.created_at
+        ).filter(UserModel.id == uid).first()
         
         # 统计数据
-        total_questions = conn.execute('SELECT COUNT(*) FROM questions').fetchone()[0]
+        total_questions = db.session.query(db.func.count(Question.id)).scalar() or 0
         
-        favorites_count = conn.execute(
-            'SELECT COUNT(*) FROM favorites WHERE user_id = ?',
-            (uid,)
-        ).fetchone()[0]
+        favorites_count = db.session.query(db.func.count(Favorite.id)).filter(Favorite.user_id == uid).scalar() or 0
         
-        mistakes_count = conn.execute(
-            'SELECT COUNT(*) FROM mistakes WHERE user_id = ?',
-            (uid,)
-        ).fetchone()[0]
+        mistakes_count = db.session.query(db.func.count(Mistake.id)).filter(Mistake.user_id == uid).scalar() or 0
         
         # 答题统计
-        answered_count = conn.execute(
-            'SELECT COUNT(DISTINCT question_id) FROM user_answers WHERE user_id = ?',
-            (uid,)
-        ).fetchone()[0]
+        answered_count = db.session.query(db.func.count(db.func.distinct(UserAnswer.question_id))).filter(UserAnswer.user_id == uid).scalar() or 0
         
-        correct_count = conn.execute(
-            'SELECT COUNT(DISTINCT question_id) FROM user_answers WHERE user_id = ? AND is_correct = 1',
-            (uid,)
-        ).fetchone()[0]
+        correct_count = db.session.query(db.func.count(db.func.distinct(UserAnswer.question_id))).filter(UserAnswer.user_id == uid, UserAnswer.is_correct == True).scalar() or 0
         
         # 考试统计
-        exam_count = conn.execute(
-            'SELECT COUNT(*) FROM exams WHERE user_id = ?',
-            (uid,)
-        ).fetchone()[0]
+        exam_count = db.session.query(db.func.count(Exam.id)).filter(Exam.user_id == uid).scalar() or 0
         
-        finished_exam_count = conn.execute(
-            'SELECT COUNT(*) FROM exams WHERE user_id = ? AND status = "finished"',
-            (uid,)
-        ).fetchone()[0]
+        finished_exam_count = db.session.query(db.func.count(Exam.id)).filter(Exam.user_id == uid, Exam.status == 'finished').scalar() or 0
+        
+        user_dict = None
+        if user:
+            user_dict = {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'created_at': user.created_at,
+            }
         
         return jsonify({
             'status': 'success',
             'data': {
-                'user': dict(user) if user else None,
+                'user': user_dict,
                 'total_questions': total_questions,
                 'favorites_count': favorites_count,
                 'mistakes_count': mistakes_count,
@@ -319,11 +311,9 @@ def check_username():
     if len(username) > 20:
         return jsonify({'status': 'error', 'message': '用户名最多20个字符'}), 400
 
-    conn = get_db()
-    existing = conn.execute(
-        'SELECT id FROM users WHERE username = ? AND id != ?',
-        (username, uid)
-    ).fetchone()
+    existing = db.session.query(UserModel.id).filter(
+        UserModel.username == username, UserModel.id != uid
+    ).first()
 
     if existing:
         return jsonify({'status': 'error', 'available': False, 'message': '该用户名已被使用'})
@@ -344,7 +334,6 @@ def update_profile():
     signature = data.get('signature')
     username = data.get('username')
 
-    conn = get_db()
 
     try:
         # 用户名校验
@@ -358,10 +347,9 @@ def update_profile():
             if len(username_clean) > 20:
                 return jsonify({'status': 'error', 'message': '用户名最多20个字符'}), 400
             # 检查唯一性
-            existing = conn.execute(
-                'SELECT id FROM users WHERE username = ? AND id != ?',
-                (username_clean, uid)
-            ).fetchone()
+            existing = db.session.query(UserModel.id).filter(
+                UserModel.username == username_clean, UserModel.id != uid
+            ).first()
             if existing:
                 return jsonify({'status': 'error', 'message': '该用户名已被使用，请换一个'}), 400
 
@@ -374,73 +362,62 @@ def update_profile():
             if len(signature_clean) > 80:
                 return jsonify({'status': 'error', 'message': '签名最多80个字符'}), 400
 
-        # 构建更新SQL
-        updates = []
-        params = []
+        # 构建更新字段
+        user_obj = db.session.get(UserModel, uid)
+        if not user_obj:
+            return jsonify({'status': 'error', 'message': '用户不存在'}), 404
 
+        has_updates = False
         if username_clean is not None:
-            updates.append('username = ?')
-            params.append(username_clean)
+            user_obj.username = username_clean
+            has_updates = True
         if avatar is not None:
-            updates.append('avatar = ?')
-            params.append(avatar)
+            user_obj.avatar = avatar
+            has_updates = True
         if contact is not None:
-            updates.append('contact = ?')
-            params.append(contact)
+            user_obj.contact = contact
+            has_updates = True
         if college is not None:
-            updates.append('college = ?')
-            params.append(college)
+            user_obj.college = college
+            has_updates = True
 
-        if not updates and signature_clean is None:
+        if not has_updates and signature_clean is None:
             return jsonify({'status': 'error', 'message': '没有需要更新的内容'}), 400
-        
-        if updates:
-            params.append(uid)
-            sql = f"UPDATE users SET {', '.join(updates)} WHERE id = ?"
-            conn.execute(sql, params)
 
         if signature_clean is not None:
             import json
             key = 'user_profile_extra_v1'
-            existing = conn.execute(
-                'SELECT id, data FROM user_progress WHERE user_id = ? AND p_key = ?',
-                (uid, key),
-            ).fetchone()
+            progress_row = (
+                db.session.query(UserProgress)
+                .filter(UserProgress.user_id == uid, UserProgress.p_key == key)
+                .first()
+            )
 
-            if existing:
+            if progress_row:
                 try:
-                    extra = json.loads(existing['data'] or '{}')
+                    extra = json.loads(progress_row.data or '{}')
                 except Exception:
                     extra = {}
                 if not isinstance(extra, dict):
                     extra = {}
                 extra['signature'] = signature_clean
-                data_json = json.dumps(extra, ensure_ascii=False)
-                conn.execute(
-                    'UPDATE user_progress SET data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-                    (data_json, existing['id']),
-                )
+                progress_row.data = json.dumps(extra, ensure_ascii=False)
+                progress_row.updated_at = now_bj().strftime('%Y-%m-%d %H:%M:%S')
             else:
                 data_json = json.dumps({'signature': signature_clean}, ensure_ascii=False)
-                try:
-                    conn.execute(
-                        """INSERT INTO user_progress (user_id, p_key, data, updated_at, created_at)
-                           VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)""",
-                        (uid, key, data_json),
-                    )
-                except Exception:
-                    conn.execute(
-                        """INSERT INTO user_progress (user_id, p_key, data, updated_at)
-                           VALUES (?, ?, ?, CURRENT_TIMESTAMP)""",
-                        (uid, key, data_json),
-                    )
+                now_s = now_bj().strftime('%Y-%m-%d %H:%M:%S')
+                new_progress = UserProgress(
+                    user_id=uid, p_key=key, data=data_json,
+                    updated_at=now_s, created_at=now_s,
+                )
+                db.session.add(new_progress)
 
-        conn.commit()
+        db.session.commit()
         
         return jsonify({'status': 'success', 'message': '更新成功'})
     except Exception as e:
         try:
-            conn.rollback()
+            db.session.rollback()
         except Exception:
             pass
         current_app.logger.error('更新失败: %s', e, exc_info=True)
@@ -452,70 +429,57 @@ def update_profile():
 def api_profile():
     """获取用户个人资料"""
     uid = int(current_user_id() or 0)
-    conn = get_db()
     
     try:
-        user_cols = [r['name'] for r in conn.execute("PRAGMA table_info(users)").fetchall()]
-        has_openid = 'openid' in user_cols
         # 获取用户基本信息
-        if has_openid:
-            user_row = conn.execute(
-                'SELECT id, username, created_at, is_admin, avatar, contact, college, email, email_verified, openid FROM users WHERE id = ?',
-                (uid,)
-            ).fetchone()
-        else:
-            user_row = conn.execute(
-                'SELECT id, username, created_at, is_admin, avatar, contact, college, email, email_verified FROM users WHERE id = ?',
-                (uid,)
-            ).fetchone()
+        user_obj = db.session.get(UserModel, uid)
         
-        if not user_row:
+        if not user_obj:
             return jsonify({'status': 'error', 'message': '用户不存在'}), 404
         
-        # 将Row对象转换为字典
-        user = dict(user_row)
+        user = {
+            'id': user_obj.id,
+            'username': user_obj.username,
+            'created_at': user_obj.created_at,
+            'is_admin': user_obj.is_admin,
+            'avatar': user_obj.avatar,
+            'contact': user_obj.contact,
+            'college': user_obj.college,
+            'email': user_obj.email,
+            'email_verified': user_obj.email_verified,
+            'openid': user_obj.openid,
+        }
         
         # 检查用户是否设置了密码
-        from app.core.models.user import User
-        has_password_set = User.has_password_set(uid)
+        from app.core.models.user import User as LegacyUser
+        has_password_set = LegacyUser.has_password_set(uid)
         
         # 统计数据
-        favorites_count = conn.execute(
-            'SELECT COUNT(*) FROM favorites WHERE user_id = ?',
-            (uid,)
-        ).fetchone()[0]
+        favorites_count = db.session.query(db.func.count(Favorite.id)).filter(Favorite.user_id == uid).scalar() or 0
         
-        mistakes_count = conn.execute(
-            'SELECT COUNT(*) FROM mistakes WHERE user_id = ?',
-            (uid,)
-        ).fetchone()[0]
+        mistakes_count = db.session.query(db.func.count(Mistake.id)).filter(Mistake.user_id == uid).scalar() or 0
         
         # 答题统计
-        total_answered = conn.execute(
-            'SELECT COUNT(*) FROM user_answers WHERE user_id = ?',
-            (uid,)
-        ).fetchone()[0]
+        total_answered = db.session.query(db.func.count(UserAnswer.id)).filter(UserAnswer.user_id == uid).scalar() or 0
         
-        correct_answered = conn.execute(
-            'SELECT COUNT(*) FROM user_answers WHERE user_id = ? AND is_correct = 1',
-            (uid,)
-        ).fetchone()[0]
+        correct_answered = db.session.query(db.func.count(UserAnswer.id)).filter(UserAnswer.user_id == uid, UserAnswer.is_correct == True).scalar() or 0
         
         accuracy = round(correct_answered / total_answered * 100, 1) if total_answered > 0 else 0
         
         # 计算连续学习天数
-        streak_days = calculate_streak_days(conn, uid)
+        streak_days = calculate_streak_days(uid)
 
         # 用户扩展资料（不改DB结构：存储在 user_progress）
         signature = ''
         try:
             import json
-            extra_row = conn.execute(
-                'SELECT data FROM user_progress WHERE user_id = ? AND p_key = ?',
-                (uid, 'user_profile_extra_v1'),
-            ).fetchone()
-            if extra_row and extra_row['data']:
-                extra = json.loads(extra_row['data'])
+            extra_row = (
+                db.session.query(UserProgress.data)
+                .filter(UserProgress.user_id == uid, UserProgress.p_key == 'user_profile_extra_v1')
+                .first()
+            )
+            if extra_row and extra_row.data:
+                extra = json.loads(extra_row.data)
                 if isinstance(extra, dict) and isinstance(extra.get('signature'), str):
                     signature = extra.get('signature', '').strip()
         except Exception:
@@ -531,7 +495,7 @@ def api_profile():
                 'signature': signature,
                 'email': user.get('email'),
                 'email_verified': bool(user.get('email_verified', 0)),
-                'wechat_bound': bool(user.get('openid')) if has_openid else False,
+                'wechat_bound': bool(user.get('openid')),
                 'created_at': user['created_at'][:10] if user['created_at'] else '-',
                 'is_admin': bool(user['is_admin']),
                 'has_password_set': has_password_set,
@@ -571,26 +535,21 @@ def change_password():
     if not has_letter or not has_digit:
         return jsonify({'status': 'error', 'message': '密码必须包含字母和数字'}), 400
     
-    conn = get_db()
-    
     try:
         # 检查用户是否存在
-        user = conn.execute(
-            'SELECT password_hash FROM users WHERE id = ?',
-            (uid,)
-        ).fetchone()
+        user_obj = db.session.get(UserModel, uid)
         
-        if not user:
+        if not user_obj:
             return jsonify({'status': 'error', 'message': '用户不存在'}), 404
         
-        # 检查用户是否设置了密码
-        from app.core.models.user import User
-        has_password = User.has_password_set(uid)
+        # 检查用户是否设置了密码（使用 LegacyUser 的复杂迁移逻辑）
+        from app.core.models.user import User as LegacyUser
+        has_password = LegacyUser.has_password_set(uid)
         
         # 如果是设置密码（用户还没有设置密码），不需要验证当前密码
         if is_set_password or not has_password:
             # 设置密码
-            User.update_password(uid, new_password, set_password=True)
+            LegacyUser.update_password(uid, new_password, set_password=True)
             return jsonify({'status': 'success', 'message': '密码设置成功'})
         else:
             # 修改密码，需要验证当前密码
@@ -598,11 +557,11 @@ def change_password():
                 return jsonify({'status': 'error', 'message': '请填写当前密码'}), 400
             
             # 验证当前密码
-            if not check_password_hash(user['password_hash'], current_password):
+            if not check_password_hash(user_obj.password_hash, current_password):
                 return jsonify({'status': 'error', 'message': '当前密码错误'}), 400
             
             # 更新密码
-            User.update_password(uid, new_password, set_password=False)
+            LegacyUser.update_password(uid, new_password, set_password=False)
             return jsonify({'status': 'success', 'message': '密码修改成功'})
     except Exception as e:
         current_app.logger.error('操作失败: %s', e, exc_info=True)
@@ -617,24 +576,23 @@ def stats_daily():
     
     uid = session.get('user_id')
     days = request.args.get('days', 30, type=int)
-    conn = get_db()
     
     try:
-        # 获取最近N天的答题记录（以北京时间为日期边界）
-        # created_at 存储 UTC，需将北京日期边界转回 UTC 来做 WHERE 过滤
-        rows = conn.execute(
-            '''SELECT DATE(created_at, '+8 hours') as date,
-                      COUNT(*) as total,
-                      SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) as correct
-               FROM user_answers
-               WHERE user_id = ?
-                 AND created_at >= datetime(DATE('now', '+8 hours', ?), '-8 hours')
-               GROUP BY DATE(created_at, '+8 hours')
-               ORDER BY date''',
-            (uid, f'-{days} days')
-        ).fetchall()
+        start_date = (today_bj() - timedelta(days=days)).isoformat()
+        rows = (
+            db.session.query(
+                db.func.date(UserAnswer.created_at).label('date'),
+                db.func.count().label('total'),
+                db.func.sum(db.case((UserAnswer.is_correct == True, 1), else_=0)).label('correct'),
+            )
+            .filter(UserAnswer.user_id == uid)
+            .filter(UserAnswer.created_at >= start_date)
+            .group_by(db.func.date(UserAnswer.created_at))
+            .order_by(db.text('date'))
+            .all()
+        )
         
-        data = [{'date': r['date'], 'total': r['total'], 'correct': r['correct']} for r in rows]
+        data = [{'date': str(r.date), 'total': r.total, 'correct': r.correct} for r in rows]
         
         return jsonify({'status': 'success', 'data': data})
     except Exception as e:
@@ -649,23 +607,23 @@ def stats_by_subject():
         return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
     
     uid = session.get('user_id')
-    conn = get_db()
     
     try:
-        rows = conn.execute(
-            '''SELECT s.name as subject,
-                      COUNT(*) as total,
-                      SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) as correct
-               FROM user_answers ua
-               JOIN questions q ON ua.question_id = q.id
-               LEFT JOIN subjects s ON q.subject_id = s.id
-               WHERE ua.user_id = ?
-               GROUP BY s.name
-               ORDER BY total DESC''',
-            (uid,)
-        ).fetchall()
+        rows = (
+            db.session.query(
+                Subject.name.label('subject'),
+                db.func.count().label('total'),
+                db.func.sum(db.case((UserAnswer.is_correct == True, 1), else_=0)).label('correct'),
+            )
+            .join(Question, UserAnswer.question_id == Question.id)
+            .outerjoin(Subject, Question.subject_id == Subject.id)
+            .filter(UserAnswer.user_id == uid)
+            .group_by(Subject.name)
+            .order_by(db.text('total DESC'))
+            .all()
+        )
         
-        data = [{'subject': r['subject'] or '未分类', 'total': r['total'], 'correct': r['correct']} for r in rows]
+        data = [{'subject': r.subject or '未分类', 'total': r.total, 'correct': r.correct} for r in rows]
         
         return jsonify({'status': 'success', 'data': data})
     except Exception as e:
@@ -680,28 +638,28 @@ def stats_by_type():
         return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
     
     uid = session.get('user_id')
-    conn = get_db()
     
     try:
-        rows = conn.execute(
-            '''SELECT q.type as p_type,
-                      COUNT(*) as total,
-                      SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) as correct
-               FROM user_answers ua
-               JOIN questions q ON ua.question_id = q.id
-               WHERE ua.user_id = ?
-               GROUP BY q.type
-               ORDER BY total DESC''',
-            (uid,)
-        ).fetchall()
+        rows = (
+            db.session.query(
+                Question.type.label('p_type'),
+                db.func.count().label('total'),
+                db.func.sum(db.case((UserAnswer.is_correct == True, 1), else_=0)).label('correct'),
+            )
+            .join(Question, UserAnswer.question_id == Question.id)
+            .filter(UserAnswer.user_id == uid)
+            .group_by(Question.type)
+            .order_by(db.text('total DESC'))
+            .all()
+        )
 
         from app.core.utils.portable_question_format import portable_type_to_q_type
 
         data = [
             {
-                'q_type': (portable_type_to_q_type(r['p_type']) if r and r['p_type'] else '未知'),
-                'total': r['total'],
-                'correct': r['correct']
+                'q_type': (portable_type_to_q_type(r.p_type) if r and r.p_type else '未知'),
+                'total': r.total,
+                'correct': r.correct
             }
             for r in rows
         ]
@@ -748,16 +706,12 @@ def upload_avatar():
         
         # 更新数据库
         avatar_url = f'/uploads/avatars/{filename}'
-        conn = get_db()
         
         # 删除旧头像文件（如果存在）
-        old_avatar = conn.execute(
-            'SELECT avatar FROM users WHERE id = ?',
-            (uid,)
-        ).fetchone()
+        user_obj = db.session.get(UserModel, uid)
         
-        if old_avatar and old_avatar['avatar']:
-            old_path = old_avatar['avatar'].replace('/uploads/', '')
+        if user_obj and user_obj.avatar:
+            old_path = user_obj.avatar.replace('/uploads/', '')
             old_file = os.path.join(upload_folder, old_path)
             # 路径遍历防护：确保文件在 upload_folder 内
             if os.path.realpath(old_file).startswith(os.path.realpath(upload_folder)) and os.path.exists(old_file):
@@ -767,11 +721,9 @@ def upload_avatar():
                     pass
 
         # 保存新头像路径
-        conn.execute(
-            'UPDATE users SET avatar = ? WHERE id = ?',
-            (avatar_url, uid)
-        )
-        conn.commit()
+        if user_obj:
+            user_obj.avatar = avatar_url
+            db.session.commit()
         
         return jsonify({
             'status': 'success',
@@ -799,27 +751,23 @@ def uploaded_file(filename):
 def user_last_practice():
     """获取用户最近一次练习记录，用于「继续练习」功能"""
     uid = int(current_user_id() or 0)
-    conn = get_db()
 
     try:
         # 获取最近一次答题记录（公共题库）
-        row = conn.execute(
-            '''
-            SELECT
-              ua.question_id,
-              ua.created_at,
-              q.subject_id,
-              COALESCE(s.name, '未分类') AS subject_name
-            FROM user_answers ua
-            JOIN questions q ON ua.question_id = q.id
-            LEFT JOIN subjects s ON q.subject_id = s.id
-            WHERE ua.user_id = ?
-              AND (s.is_locked = 0 OR s.is_locked IS NULL)
-            ORDER BY ua.created_at DESC
-            LIMIT 1
-            ''',
-            (uid,),
-        ).fetchone()
+        row = (
+            db.session.query(
+                UserAnswer.question_id,
+                UserAnswer.created_at,
+                Question.subject_id,
+                db.func.coalesce(Subject.name, '未分类').label('subject_name'),
+            )
+            .join(Question, UserAnswer.question_id == Question.id)
+            .outerjoin(Subject, Question.subject_id == Subject.id)
+            .filter(UserAnswer.user_id == uid)
+            .filter(db.or_(Subject.is_locked == 0, Subject.is_locked.is_(None)))
+            .order_by(UserAnswer.created_at.desc())
+            .first()
+        )
 
         if not row:
             return jsonify({
@@ -834,10 +782,10 @@ def user_last_practice():
                 }
             })
 
-        subject_id = int(row['subject_id'] or 0)
-        subject_name = row['subject_name'] or '未分类'
-        question_id = int(row['question_id'] or 0)
-        last_at = row['created_at']
+        subject_id = int(row.subject_id or 0)
+        subject_name = row.subject_name or '未分类'
+        question_id = int(row.question_id or 0)
+        last_at = row.created_at
 
         # 构建小程序跳转路径
         path = f'/pages/quiz/quiz?subject={subject_id}' if subject_id else '/pages/public-bank-v2/public-bank-v2'
@@ -863,40 +811,36 @@ def user_last_practice():
 def api_settings_about():
     """设置 - 关于：提供管理员联系方式等信息（与 Web /settings/about 语义对齐）"""
     uid = int(current_user_id() or 0)
-    conn = get_db()
 
     # 当前用户是否为管理员（JWT 模式下 session 可能为空，因此查询 DB）
     is_admin_user = False
     try:
-        row = conn.execute('SELECT is_admin FROM users WHERE id = ? LIMIT 1', (uid,)).fetchone()
-        if row and ('is_admin' in row.keys()):
-            is_admin_user = bool(row['is_admin'])
+        user_obj = db.session.get(UserModel, uid)
+        if user_obj:
+            is_admin_user = bool(user_obj.is_admin)
     except Exception:
         is_admin_user = bool(session.get('is_admin'))
 
     admin = None
     try:
-        # 优先使用带 last_active 的排序（若列不存在会抛异常）
-        admin = conn.execute(
-            """
-            SELECT id, username, email, contact
-            FROM users
-            WHERE is_admin = 1
-            ORDER BY (last_active IS NULL) ASC, last_active DESC, id ASC
-            LIMIT 1
-            """
-        ).fetchone()
+        admin = (
+            db.session.query(UserModel.id, UserModel.username, UserModel.email, UserModel.contact)
+            .filter(UserModel.is_admin == True)
+            .order_by(
+                db.case((UserModel.last_active.is_(None), 1), else_=0),
+                UserModel.last_active.desc(),
+                UserModel.id.asc(),
+            )
+            .first()
+        )
     except Exception:
         try:
-            admin = conn.execute(
-                """
-                SELECT id, username, email, contact
-                FROM users
-                WHERE is_admin = 1
-                ORDER BY id ASC
-                LIMIT 1
-                """
-            ).fetchone()
+            admin = (
+                db.session.query(UserModel.id, UserModel.username, UserModel.email, UserModel.contact)
+                .filter(UserModel.is_admin == True)
+                .order_by(UserModel.id.asc())
+                .first()
+            )
         except Exception:
             admin = None
 
@@ -906,15 +850,15 @@ def api_settings_about():
     admin_wechat = ''
     if admin:
         try:
-            admin_username = (admin['username'] or '').strip()
+            admin_username = (admin.username or '').strip()
         except Exception:
             admin_username = ''
         try:
-            admin_email = (admin['email'] or '').strip()
+            admin_email = (admin.email or '').strip()
         except Exception:
             admin_email = ''
         try:
-            admin_wechat = (admin['contact'] or '').strip()
+            admin_wechat = (admin.contact or '').strip()
         except Exception:
             admin_wechat = ''
 
