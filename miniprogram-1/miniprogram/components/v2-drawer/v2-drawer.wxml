@@ -15,8 +15,8 @@
         <view class="brand-dot"></view>
         <text class="brand-text">SAK</text>
       </view>
-      <view class="close-btn" bindtap="onClose" aria-role="button" aria-label="关闭侧边栏">
-        <text class="close-x">×</text>
+      <view class="close-btn" bindtap="onClose" aria-role="button" aria-label="收起侧边栏">
+        <image class="close-icon" src="/images/icons/arrow-left.svg" mode="aspectFit"></image>
       </view>
     </view>
 
@@ -315,14 +315,15 @@
     </view>
 
     <view class="profile-card {{activeKey==='profile' ? 'active' : ''}}" bindtap="onMoreTap" aria-role="button" aria-label="打开快捷菜单">
+      <image class="profile-avatar" src="{{userAvatar || '/images/default-avatar.png'}}" mode="aspectFill" binderror="onProfileAvatarError"></image>
       <view class="profile-left">
         <text class="profile-name">{{userName}}</text>
         <text class="profile-sub">打开快捷菜单</text>
       </view>
-      <view class="profile-right">
-        <view class="profile-arrowBtn" catchtap="onClose" aria-role="button" aria-label="收起侧边栏">
-          <image class="profile-action-icon" src="/images/icons/arrow-left.svg" mode="aspectFit"></image>
-        </view>
+      <view class="profile-dots" aria-hidden="true">
+        <view class="dot"></view>
+        <view class="dot"></view>
+        <view class="dot"></view>
       </view>
     </view>
   </view>

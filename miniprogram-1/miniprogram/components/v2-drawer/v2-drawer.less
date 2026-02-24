@@ -49,7 +49,8 @@
 .drawer-head {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
+  gap: 10rpx;
 }
 
 .drawer-scroll {
@@ -62,7 +63,8 @@
   align-items: center;
   gap: 14rpx;
   padding: 0 16rpx;
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   height: 80rpx;
   border-radius: 22rpx;
   border: 1rpx solid var(--app-border);
@@ -89,7 +91,16 @@
 }
 
 .close-btn {
-  display: none;
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 22rpx;
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface-solid);
+  box-shadow: var(--app-shadow-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
 }
 
 .close-btn:active {
@@ -97,10 +108,16 @@
   transform: scale(0.99);
 }
 
-.close-x {
-  font-size: 44rpx;
-  line-height: 1;
-  color: var(--app-text);
+.close-icon {
+  width: 34rpx;
+  height: 34rpx;
+  opacity: 0.84;
+  filter: brightness(0);
+}
+
+.theme-dark .close-icon {
+  filter: brightness(0) invert(1);
+  opacity: 0.88;
 }
 
 .section {
@@ -322,11 +339,21 @@
   border-color: var(--app-border);
 }
 
+.profile-avatar {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 999px;
+  flex: 0 0 auto;
+  border: 1rpx solid color-mix(in srgb, var(--app-primary) 28%, var(--app-border));
+  background: var(--app-surface);
+}
+
 .profile-left {
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 6rpx;
+  flex: 1 1 auto;
 }
 
 .profile-name {
@@ -340,39 +367,25 @@
   color: var(--app-text-secondary);
 }
 
-.profile-right {
-  flex: 0 0 auto;
-}
-
-.profile-arrowBtn {
-  width: 60rpx;
-  height: 60rpx;
-  border-radius: 18rpx;
-  border: 1rpx solid var(--app-border);
-  background: var(--app-surface);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.profile-arrowBtn:active {
-  opacity: 0.92;
-  transform: scale(0.99);
-}
-
 .profile-card:active {
   opacity: 0.92;
 }
 
-.profile-action-icon {
-  width: 30rpx;
-  height: 30rpx;
-  opacity: 0.82;
-  filter: brightness(0);
+.profile-dots {
+  width: 18rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4rpx;
+  flex: 0 0 auto;
 }
 
-.theme-dark .profile-action-icon {
-  filter: brightness(0) invert(1);
+.profile-dots .dot {
+  width: 4rpx;
+  height: 4rpx;
+  border-radius: 999px;
+  background: var(--app-text-secondary);
   opacity: 0.86;
 }
 

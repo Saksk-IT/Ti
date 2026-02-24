@@ -3,11 +3,19 @@ import { logout } from '../../utils/auth';
 import { ThemeStyle, themeManager } from '../../utils/theme';
 import { FontStyle, fontManager, FONT_STYLE_CONFIG } from '../../utils/font';
 import { syncUserSettingsToServer } from '../../utils/user-settings';
+import { resolveUploadUrl } from '../../utils/api-endpoints';
+import { decorateAvatarUrl } from '../../utils/avatar';
 
 function summarizeUserName(userInfo: any): string {
   const raw = userInfo?.username || userInfo?.name || userInfo?.nickname || userInfo?.email;
   const name = (raw == null) ? '' : String(raw).trim();
   return name || '未登录';
+}
+
+function summarizeUserAvatar(userInfo: any): string {
+  const raw = userInfo?.avatar || userInfo?.avatar_url || userInfo?.avatarUrl;
+  const full = decorateAvatarUrl(resolveUploadUrl(raw));
+  return full || '/images/default-avatar.png';
 }
 
 Component({
@@ -33,6 +41,7 @@ Component({
     unreadNotiCount: 0,
     unreadNotiText: '',
     userName: '未登录',
+    userAvatar: '/images/default-avatar.png',
     actionMenuOpen: false,
     themeMenuOpen: false,
     fontMenuOpen: false,
@@ -88,10 +97,19 @@ Component({
     refreshUserName() {
       try {
         const userInfo = wx.getStorageSync('userInfo') || {};
-        this.setData({ userName: summarizeUserName(userInfo) });
+        this.setData({
+          userName: summarizeUserName(userInfo),
+          userAvatar: summarizeUserAvatar(userInfo)
+        });
       } catch (e) {
-        this.setData({ userName: '未登录' });
+        this.setData({
+          userName: '未登录',
+          userAvatar: '/images/default-avatar.png'
+        });
       }
+    },
+    onProfileAvatarError() {
+      this.setData({ userAvatar: '/images/default-avatar.png' });
     },
     async refreshUnreadCount(force = false) {
       const token = wx.getStorageSync('token') || '';

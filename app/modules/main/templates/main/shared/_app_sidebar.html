@@ -1,7 +1,18 @@
 {% set _path = request.path or '' %}
 {% set _is_admin_any = (is_admin or is_subject_admin or is_notification_admin) %}
+{% set _avatar_initial = (username or 'U')[:1] | upper %}
 
 <style>
+  .app-sidebar-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .app-sidebar-head .app-brand {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
   .app-brand {
     display: flex;
     align-items: center;
@@ -11,7 +22,7 @@
     border: 1px solid var(--app-border);
     background: var(--app-surface-2);
     box-shadow: var(--app-shadow-soft);
-    margin-bottom: 10px;
+    margin-bottom: 0;
   }
   .app-brand-dot {
     width: 10px;
@@ -136,12 +147,21 @@
     width: 40px !important;
     max-width: 40px !important;
     height: 40px !important;
+    border-radius: 12px !important;
+  }
+  html.sidebar-collapsed .app-sidebar .app-nav-accordion .app-nav-accordion-trigger,
+  .sidebar-collapsed .app-sidebar .app-nav-accordion .app-nav-accordion-trigger {
     background: transparent !important;
     border-color: transparent !important;
   }
+  html.sidebar-collapsed .app-sidebar .app-nav-accordion .app-nav-accordion-trigger.active,
+  .sidebar-collapsed .app-sidebar .app-nav-accordion .app-nav-accordion-trigger.active {
+    background: var(--app-primary-soft) !important;
+    border-color: color-mix(in srgb, var(--app-primary) 35%, var(--app-border)) !important;
+  }
   html.sidebar-collapsed .app-sidebar .app-nav-accordion .app-nav-accordion-trigger:hover,
   .sidebar-collapsed .app-sidebar .app-nav-accordion .app-nav-accordion-trigger:hover {
-    background: rgba(148, 163, 184, 0.10) !important;
+    background: rgba(148, 163, 184, 0.14) !important;
   }
   html.sidebar-collapsed .app-sidebar .app-nav-accordion .app-nav-accordion-trigger.active .app-nav-icon,
   .sidebar-collapsed .app-sidebar .app-nav-accordion .app-nav-accordion-trigger.active .app-nav-icon {
@@ -236,33 +256,65 @@
     flex: 0 0 auto;
     margin-top: auto;
     padding-top: 10px;
+    position: relative;
   }
-  .app-footer-row {
+  .app-user {
+    min-width: 0;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 8px;
+    gap: 10px;
     padding: 10px;
     border-radius: 14px;
     border: 1px solid var(--app-border);
     background: var(--app-surface-2);
     box-shadow: var(--app-shadow-soft);
-    position: relative;
+    transition: background 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+    cursor: pointer;
   }
-  .app-user {
+  .app-user:hover {
+    background: rgba(148, 163, 184, 0.10);
+    border-color: color-mix(in srgb, var(--app-primary) 24%, var(--app-border));
+  }
+  .app-user:focus { outline: none; box-shadow: 0 0 0 3px var(--app-primary-soft); }
+  .app-user-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    background: var(--app-primary-soft);
+    color: var(--app-text);
+    font-size: 13px;
+    font-weight: 900;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    background-size: cover;
+    background-position: center;
+  }
+  .app-user-text {
     min-width: 0;
     display: grid;
     gap: 2px;
     flex: 1 1 auto;
-    padding: 6px 8px;
-    border-radius: 12px;
-    transition: background 140ms ease, box-shadow 140ms ease;
-    cursor: pointer;
   }
-  .app-user:hover { background: rgba(148, 163, 184, 0.10); }
-  .app-user:focus { outline: none; box-shadow: 0 0 0 3px var(--app-primary-soft); }
   .app-user .name { font-weight: 900; font-size: 13px; letter-spacing: -0.2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .app-user .sub { font-size: 11px; color: var(--app-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .app-user-dots {
+    width: 12px;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    flex: 0 0 auto;
+  }
+  .app-user-dots i {
+    width: 3px;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--app-muted);
+    opacity: 0.86;
+  }
   .app-mini-btn {
     height: 34px;
     width: 34px;
@@ -457,10 +509,17 @@
   }
 </style>
 
-<a class="app-brand" href="/hub" aria-label="返回首页" title="返回首页">
-  <span class="app-brand-dot" aria-hidden="true"></span>
-  <span class="app-brand-text">SAK</span>
-</a>
+<div class="app-sidebar-head">
+  <a class="app-brand" href="/hub" aria-label="返回首页" title="返回首页">
+    <span class="app-brand-dot" aria-hidden="true"></span>
+    <span class="app-brand-text">SAK</span>
+  </a>
+  <button class="app-mini-btn" type="button" id="appSidebarCollapse" aria-label="折叠侧边栏" title="折叠侧边栏">
+    <svg class="app-nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+</div>
 
 <nav class="app-nav" aria-label="主导航">
   <div class="app-nav-section">
@@ -653,117 +712,118 @@
 </nav>
 
 <div class="app-sidebar-footer">
-  <div class="app-footer-row">
-    <!-- 快捷菜单弹出层 -->
-    <div class="app-quick-menu" id="appQuickMenu">
-      <a class="app-quick-menu-item" href="/profile">
+  <!-- 快捷菜单弹出层 -->
+  <div class="app-quick-menu" id="appQuickMenu">
+    <a class="app-quick-menu-item" href="/profile">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M15 3h6v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M10 14 21 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>个人资料</span>
+    </a>
+    <div class="app-theme-submenu">
+      <div class="app-quick-menu-item">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M15 3h6v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M10 14 21 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
-        <span>个人资料</span>
-      </a>
-      <div class="app-theme-submenu">
-        <div class="app-quick-menu-item">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/>
-            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-          <span>主题</span>
-          <svg class="menu-arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <div class="app-theme-panel" id="appThemePanel">
-          <div class="app-theme-section">
-            <div class="app-theme-section-title">外观</div>
-            <div class="app-theme-options">
-              <button class="app-theme-option" data-theme-mode="light">
-                <span class="app-theme-dot dot-light"></span>
-                <span>浅色</span>
-              </button>
-              <button class="app-theme-option" data-theme-mode="dark">
-                <span class="app-theme-dot dot-dark"></span>
-                <span>深色</span>
-              </button>
-            </div>
-          </div>
-          <div class="app-theme-divider"></div>
-          <div class="app-theme-section">
-            <div class="app-theme-section-title">风格</div>
-            <div class="app-theme-options">
-              <button class="app-theme-option" data-theme-style="default">
-                <span class="app-theme-dot dot-default"></span>
-                <span>默认</span>
-              </button>
-              <button class="app-theme-option" data-theme-style="mist">
-                <span class="app-theme-dot dot-mist"></span>
-                <span>薄雾</span>
-              </button>
-              <button class="app-theme-option" data-theme-style="dune">
-                <span class="app-theme-dot dot-dune"></span>
-                <span>沙丘</span>
-              </button>
-              <button class="app-theme-option" data-theme-style="pine">
-                <span class="app-theme-dot dot-pine"></span>
-                <span>松林</span>
-              </button>
-              <button class="app-theme-option" data-theme-style="celadon">
-                <span class="app-theme-dot dot-celadon"></span>
-                <span>青瓷</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="app-quick-menu-item disabled" title="敬请期待">
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M4 7V4h16v3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M9 20h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M12 4v16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span>字体</span>
+        <span>主题</span>
         <svg class="menu-arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
-      <a class="app-quick-menu-item" href="/settings">
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="currentColor" stroke-width="2"/>
-          <path d="M19.4 13a7.9 7.9 0 0 0 0-2l2-1.5-2-3.5-2.4.6a8 8 0 0 0-1.7-1L15 2h-6l-.3 3.6a8 8 0 0 0-1.7 1L4.6 6 2.6 9.5l2 1.5a7.9 7.9 0 0 0 0 2l-2 1.5 2 3.5 2.4-.6a8 8 0 0 0 1.7 1L9 22h6l.3-3.6a8 8 0 0 0 1.7-1l2.4.6 2-3.5-2-1.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-        </svg>
-        <span>设置</span>
-      </a>
-      {% if logged_in %}
-      <button class="app-quick-menu-item danger" type="button" id="appLogoutBtn">
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M16 17l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span>退出登录</span>
-      </button>
-      {% endif %}
-    </div>
-
-    {% if logged_in %}
-      <div class="app-user" id="appUserTrigger" role="button" tabindex="0" aria-label="打开快捷菜单" title="打开快捷菜单">
-        <div class="name">{{ username }}</div>
-        <div class="sub">打开快捷菜单</div>
+      <div class="app-theme-panel" id="appThemePanel">
+        <div class="app-theme-section">
+          <div class="app-theme-section-title">外观</div>
+          <div class="app-theme-options">
+            <button class="app-theme-option" data-theme-mode="light">
+              <span class="app-theme-dot dot-light"></span>
+              <span>浅色</span>
+            </button>
+            <button class="app-theme-option" data-theme-mode="dark">
+              <span class="app-theme-dot dot-dark"></span>
+              <span>深色</span>
+            </button>
+          </div>
+        </div>
+        <div class="app-theme-divider"></div>
+        <div class="app-theme-section">
+          <div class="app-theme-section-title">风格</div>
+          <div class="app-theme-options">
+            <button class="app-theme-option" data-theme-style="default">
+              <span class="app-theme-dot dot-default"></span>
+              <span>默认</span>
+            </button>
+            <button class="app-theme-option" data-theme-style="mist">
+              <span class="app-theme-dot dot-mist"></span>
+              <span>薄雾</span>
+            </button>
+            <button class="app-theme-option" data-theme-style="dune">
+              <span class="app-theme-dot dot-dune"></span>
+              <span>沙丘</span>
+            </button>
+            <button class="app-theme-option" data-theme-style="pine">
+              <span class="app-theme-dot dot-pine"></span>
+              <span>松林</span>
+            </button>
+            <button class="app-theme-option" data-theme-style="celadon">
+              <span class="app-theme-dot dot-celadon"></span>
+              <span>青瓷</span>
+            </button>
+          </div>
+        </div>
       </div>
-    {% else %}
-      <a class="app-user" href="/login" aria-label="前往登录" title="前往登录">
-        <div class="name">未登录</div>
-        <div class="sub">前往登录</div>
-      </a>
-    {% endif %}
-    <button class="app-mini-btn" type="button" id="appSidebarCollapse" aria-label="折叠侧边栏" title="折叠侧边栏">
-      <svg class="app-nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </div>
+    <div class="app-quick-menu-item disabled" title="敬请期待">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M4 7V4h16v3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M9 20h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M12 4v16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
+      <span>字体</span>
+      <svg class="menu-arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <a class="app-quick-menu-item" href="/settings">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="currentColor" stroke-width="2"/>
+        <path d="M19.4 13a7.9 7.9 0 0 0 0-2l2-1.5-2-3.5-2.4.6a8 8 0 0 0-1.7-1L15 2h-6l-.3 3.6a8 8 0 0 0-1.7 1L4.6 6 2.6 9.5l2 1.5a7.9 7.9 0 0 0 0 2l-2 1.5 2 3.5 2.4-.6a8 8 0 0 0 1.7 1L9 22h6l.3-3.6a8 8 0 0 0 1.7-1l2.4.6 2-3.5-2-1.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+      </svg>
+      <span>设置</span>
+    </a>
+    {% if logged_in %}
+    <button class="app-quick-menu-item danger" type="button" id="appLogoutBtn">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M16 17l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>退出登录</span>
     </button>
+    {% endif %}
   </div>
+
+  {% if logged_in %}
+    <div class="app-user" id="appUserTrigger" role="button" tabindex="0" aria-label="打开快捷菜单" title="打开快捷菜单">
+      <span class="app-user-avatar" id="appUserAvatar" data-initial="{{ _avatar_initial }}">{{ _avatar_initial }}</span>
+      <span class="app-user-text">
+        <span class="name">{{ username }}</span>
+        <span class="sub">打开快捷菜单</span>
+      </span>
+      <span class="app-user-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+    </div>
+  {% else %}
+    <a class="app-user" href="/login" aria-label="前往登录" title="前往登录">
+      <span class="app-user-avatar">{{ _avatar_initial }}</span>
+      <span class="app-user-text">
+        <span class="name">未登录</span>
+        <span class="sub">前往登录</span>
+      </span>
+      <span class="app-user-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+    </a>
+  {% endif %}
 </div>
 
 <script>
@@ -771,10 +831,37 @@
   var userTrigger = document.getElementById('appUserTrigger');
   var quickMenu = document.getElementById('appQuickMenu');
   var logoutBtn = document.getElementById('appLogoutBtn');
+  var userAvatar = document.getElementById('appUserAvatar');
   var themePanel = document.getElementById('appThemePanel');
   var themeSubmenu = themePanel ? themePanel.closest('.app-theme-submenu') : null;
   var themeToggle = themeSubmenu ? themeSubmenu.querySelector('.app-quick-menu-item') : null;
   var root = document.documentElement;
+
+  function applyUserAvatar(url) {
+    if (!userAvatar) return;
+    var initial = (userAvatar.dataset && userAvatar.dataset.initial) || 'U';
+    var src = String(url || '').trim();
+    if (!src) {
+      userAvatar.style.backgroundImage = '';
+      userAvatar.textContent = initial;
+      return;
+    }
+    userAvatar.style.backgroundImage = 'url("' + src.replace(/"/g, '\\"') + '")';
+    userAvatar.textContent = '';
+  }
+
+  if (userAvatar) {
+    applyUserAvatar('');
+    fetch('/api/profile', { credentials: 'same-origin' })
+      .then(function(res) { return res.ok ? res.json() : null; })
+      .then(function(json) {
+        var avatar = json && json.status === 'success' && json.data ? json.data.avatar : '';
+        applyUserAvatar(avatar);
+      })
+      .catch(function() {
+        applyUserAvatar('');
+      });
+  }
 
   // 判断侧边栏是否收起
   function isSidebarCollapsed() {
@@ -809,9 +896,9 @@
 
   if (!quickMenu) return;
 
-  var footerRow = quickMenu.closest('.app-footer-row');
+  var footerRow = quickMenu.closest('.app-sidebar-footer');
 
-  // 悬浮 footer-row 弹出快捷菜单（展开和收起统一）
+  // 悬浮底部资料区弹出快捷菜单（展开和收起统一）
   if (footerRow) {
     var footerTimer = null;
     footerRow.addEventListener('mouseenter', function() {

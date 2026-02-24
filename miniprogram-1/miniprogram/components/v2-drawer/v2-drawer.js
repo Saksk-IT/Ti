@@ -41,10 +41,17 @@ var auth_1 = require("../../utils/auth");
 var theme_1 = require("../../utils/theme");
 var font_1 = require("../../utils/font");
 var user_settings_1 = require("../../utils/user-settings");
+var api_endpoints_1 = require("../../utils/api-endpoints");
+var avatar_1 = require("../../utils/avatar");
 function summarizeUserName(userInfo) {
     var raw = (userInfo === null || userInfo === void 0 ? void 0 : userInfo.username) || (userInfo === null || userInfo === void 0 ? void 0 : userInfo.name) || (userInfo === null || userInfo === void 0 ? void 0 : userInfo.nickname) || (userInfo === null || userInfo === void 0 ? void 0 : userInfo.email);
     var name = (raw == null) ? '' : String(raw).trim();
     return name || '未登录';
+}
+function summarizeUserAvatar(userInfo) {
+    var raw = (userInfo === null || userInfo === void 0 ? void 0 : userInfo.avatar) || (userInfo === null || userInfo === void 0 ? void 0 : userInfo.avatar_url) || (userInfo === null || userInfo === void 0 ? void 0 : userInfo.avatarUrl);
+    var full = (0, avatar_1.decorateAvatarUrl)((0, api_endpoints_1.resolveUploadUrl)(raw));
+    return full || '/images/default-avatar.png';
 }
 Component({
     properties: {
@@ -69,6 +76,7 @@ Component({
         unreadNotiCount: 0,
         unreadNotiText: '',
         userName: '未登录',
+        userAvatar: '/images/default-avatar.png',
         actionMenuOpen: false,
         themeMenuOpen: false,
         fontMenuOpen: false,
@@ -128,11 +136,20 @@ Component({
         refreshUserName: function () {
             try {
                 var userInfo = wx.getStorageSync('userInfo') || {};
-                this.setData({ userName: summarizeUserName(userInfo) });
+                this.setData({
+                    userName: summarizeUserName(userInfo),
+                    userAvatar: summarizeUserAvatar(userInfo)
+                });
             }
             catch (e) {
-                this.setData({ userName: '未登录' });
+                this.setData({
+                    userName: '未登录',
+                    userAvatar: '/images/default-avatar.png'
+                });
             }
+        },
+        onProfileAvatarError: function () {
+            this.setData({ userAvatar: '/images/default-avatar.png' });
         },
         refreshUnreadCount: function () {
             return __awaiter(this, arguments, void 0, function (force) {

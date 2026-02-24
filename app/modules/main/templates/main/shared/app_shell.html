@@ -45,7 +45,7 @@
       --app-radius-md: 12px;
       --app-radius-sm: 10px;
       --app-sidebar-w: 200px;
-      --app-sidebar-w-collapsed: 76px;
+      --app-sidebar-w-collapsed: 64px;
       --app-topbar-h: 56px;
       --app-theme-icon-filter: none;
       --app-font-body: "Atkinson Hyperlegible", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
@@ -601,14 +601,13 @@
       }
     }
 
-    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar { width: var(--app-sidebar-w-collapsed); padding: 10px; overflow: visible; }
+    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar { width: var(--app-sidebar-w-collapsed); padding: 8px 10px; overflow: visible; }
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-nav-label,
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-nav-title,
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-cta-title,
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-cta-meta,
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-search,
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-cta-secondary,
-    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-user,
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-brand-text { display: none; }
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-brand { justify-content: center; padding: 8px; }
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-brand-dot {
@@ -629,15 +628,45 @@
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-cta-primary:active { transform: none; }
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-cta-primary .app-btn-text { display: none; }
 
-    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-nav-item { justify-content: center; padding: 0; }
+    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-nav-item {
+      justify-content: center;
+      padding: 0;
+      width: 40px;
+      height: 40px;
+      margin-inline: auto;
+      border-radius: 12px;
+    }
+    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-nav-item.active {
+      background: var(--app-primary-soft);
+      border-color: color-mix(in srgb, var(--app-primary) 35%, var(--app-border));
+    }
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-nav-section { justify-items: center; }
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-nav-accordion { width: 40px; justify-self: center; }
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-nav-accordion .app-nav-accordion-trigger,
-    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-nav-accordion .app-nav-accordion-trigger.active { justify-content: center; padding: 0; width: 40px; height: 40px; background: transparent !important; border-color: transparent !important; }
-    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-nav-accordion .app-nav-accordion-trigger:hover { background: rgba(148, 163, 184, 0.10) !important; }
+    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-nav-accordion .app-nav-accordion-trigger.active { justify-content: center; padding: 0; width: 40px; height: 40px; border-radius: 12px; }
+    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-nav-accordion .app-nav-accordion-trigger { background: transparent !important; border-color: transparent !important; }
+    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-nav-accordion .app-nav-accordion-trigger.active {
+      background: var(--app-primary-soft) !important;
+      border-color: color-mix(in srgb, var(--app-primary) 35%, var(--app-border)) !important;
+    }
+    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-nav-accordion .app-nav-accordion-trigger:hover { background: rgba(148, 163, 184, 0.14) !important; }
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-nav-accordion .app-nav-accordion-trigger.active .app-nav-icon { color: var(--app-primary); }
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-nav-accordion .nav-arrow { display: none; }
-    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-footer-row { justify-content: center; }
+    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-sidebar-footer { display: flex; justify-content: center; padding-top: 8px; }
+    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-user {
+      width: 42px;
+      height: 42px;
+      padding: 0;
+      border-radius: 999px;
+      justify-content: center;
+      gap: 0;
+      border-color: color-mix(in srgb, var(--app-primary) 35%, var(--app-border));
+      background: var(--app-surface);
+      box-shadow: var(--app-shadow-soft);
+    }
+    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-user-text,
+    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-user-dots { display: none; }
+    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-user-avatar { width: 34px; height: 34px; }
     .app-shell .app-sidebar #appSidebarCollapse .app-nav-icon { transition: transform 160ms ease; }
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar #appSidebarCollapse .app-nav-icon { transform: rotate(180deg); }
 
