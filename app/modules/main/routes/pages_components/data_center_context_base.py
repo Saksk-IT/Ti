@@ -2,16 +2,26 @@
 from datetime import datetime, timedelta
 
 from flask import current_app
+from sqlalchemy import text
 
-from app.core.utils.database import get_db
+from app.core.extensions import db
 from app.core.utils.time_utils import today_bj
 
 from .common import _get_accessible_subject_rows
 
+
+def _build_named_in(col: str, values: list, prefix: str = 'in') -> tuple[str, dict]:
+    """Build a named-parameter IN clause for SQLAlchemy text() queries."""
+    if not values:
+        return f"{col} IN (NULL)", {}
+    params = {f"{prefix}_{i}": v for i, v in enumerate(values)}
+    placeholders = ', '.join(f':{k}' for k in params)
+    return f"{col} IN ({placeholders})", params
+
+
 def compute_data_center_context_base(uid: int, window_days: int):
-    """数据中心：计算基础上下文（返回 conn, subject_ids, base_ctx）。"""
+    """数据中心：计算基础上下文（返回 subject_ids, base_ctx）。"""
     uid = int(uid or 0)
-    conn = get_db()
     from app.core.utils.portable_question_format import portable_type_to_q_type
 
     def _pt_to_qt(pt: str) -> str:
@@ -20,14 +30,7 @@ def compute_data_center_context_base(uid: int, window_days: int):
             return '未知'
         return portable_type_to_q_type(pt) or '未知'
 
-    def _column_exists(table: str, column: str) -> bool:
-        try:
-            rows = conn.execute(f"PRAGMA table_info({table})").fetchall()
-            return any(r and r['name'] == column for r in rows)
-        except Exception:
-            return False
-
-    subjects_meta = _get_accessible_subject_rows(conn, uid)
+    subjects_meta = _get_accessible_subject_rows(uid=uid)
     subject_ids = [
         int(s['id'])
         for s in (subjects_meta or [])
@@ -41,49 +44,49 @@ def compute_data_center_context_base(uid: int, window_days: int):
             SELECT COUNT(*)
             FROM questions q
             LEFT JOIN subjects s ON q.subject_id = s.id
-            WHERE (s.is_locked=0 OR s.is_locked IS NULL)
+            WHERE (s.is_locked=false OR s.is_locked IS NULL)
         """
-        params = []
+        params: dict = {}
         if subject_ids:
-            placeholders = ','.join(['?'] * len(subject_ids))
-            base_sql += f" AND q.subject_id IN ({placeholders})"
-            params.extend(subject_ids)
-        total_questions = conn.execute(base_sql, params).fetchone()[0]
+            in_clause, in_params = _build_named_in('q.subject_id', subject_ids, 'tq')
+            base_sql += f" AND {in_clause}"
+            params.update(in_params)
+        total_questions = db.session.execute(text(base_sql), params).fetchone()[0]
     except Exception:
         total_questions = 0
 
     # 复用 join + 权限过滤（公共题库）
+    ua_params_base: dict = {'ua_uid': uid}
     ua_from = """
         FROM user_answers ua
         JOIN questions q ON ua.question_id = q.id
         LEFT JOIN subjects s ON q.subject_id = s.id
-        WHERE ua.user_id = ?
-          AND (s.is_locked=0 OR s.is_locked IS NULL)
+        WHERE ua.user_id = :ua_uid
+          AND (s.is_locked=false OR s.is_locked IS NULL)
     """
-    ua_params_base = [uid]
     if subject_ids:
-        placeholders = ','.join(['?'] * len(subject_ids))
-        ua_from += f" AND q.subject_id IN ({placeholders})"
-        ua_params_base.extend(subject_ids)
+        in_clause, in_params = _build_named_in('q.subject_id', subject_ids, 'sid')
+        ua_from += f" AND {in_clause}"
+        ua_params_base.update(in_params)
 
     # 全局汇总（公共题库）
     answered_count = 0
     correct_count = 0
     last_activity = None
     try:
-        row = conn.execute(
-            f"""
+        row = db.session.execute(
+            text(f"""
             SELECT
               COUNT(*) AS answered,
-              SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct,
+              SUM(CASE WHEN ua.is_correct = true THEN 1 ELSE 0 END) AS correct,
               MAX(ua.created_at) AS last_activity
             {ua_from}
-            """,
+            """),
             ua_params_base,
         ).fetchone()
-        answered_count = int(row['answered'] or 0) if row else 0
-        correct_count = int(row['correct'] or 0) if row else 0
-        last_activity = (row['last_activity'] if row else None) or None
+        answered_count = int(row._mapping['answered'] or 0) if row else 0
+        correct_count = int(row._mapping['correct'] or 0) if row else 0
+        last_activity = (row._mapping['last_activity'] if row else None) or None
     except Exception:
         answered_count = 0
         correct_count = 0
@@ -95,26 +98,24 @@ def compute_data_center_context_base(uid: int, window_days: int):
     # 收藏/错题（公共题库）
     favorites_count = 0
     mistakes_count = 0
-    mistakes_times = 0  # 若存在 wrong_count 则为累计次数，否则退化为 mistakes_count
+    mistakes_times = 0
     try:
         fav_sql = """
             SELECT COUNT(*)
             FROM favorites f
             JOIN questions q ON f.question_id = q.id
             LEFT JOIN subjects s ON q.subject_id = s.id
-            WHERE f.user_id = ? AND (s.is_locked=0 OR s.is_locked IS NULL)
+            WHERE f.user_id = :fav_uid AND (s.is_locked=false OR s.is_locked IS NULL)
         """
-        fav_params = [uid]
+        fav_params: dict = {'fav_uid': uid}
         if subject_ids:
-            placeholders = ','.join(['?'] * len(subject_ids))
-            fav_sql += f" AND q.subject_id IN ({placeholders})"
-            fav_params.extend(subject_ids)
-        favorites_count = conn.execute(fav_sql, fav_params).fetchone()[0]
+            in_clause, in_params = _build_named_in('q.subject_id', subject_ids, 'fav')
+            fav_sql += f" AND {in_clause}"
+            fav_params.update(in_params)
+        favorites_count = db.session.execute(text(fav_sql), fav_params).fetchone()[0]
     except Exception:
         favorites_count = 0
 
-    mistakes_has_wrong_count = _column_exists('mistakes', 'wrong_count')
-    mistakes_has_updated_at = _column_exists('mistakes', 'updated_at')
     try:
         mis_sql = """
             SELECT
@@ -123,20 +124,16 @@ def compute_data_center_context_base(uid: int, window_days: int):
             FROM mistakes m
             JOIN questions q ON m.question_id = q.id
             LEFT JOIN subjects s ON q.subject_id = s.id
-            WHERE m.user_id = ? AND (s.is_locked=0 OR s.is_locked IS NULL)
+            WHERE m.user_id = :mis_uid AND (s.is_locked=false OR s.is_locked IS NULL)
         """
-        mis_params = [uid]
+        mis_params: dict = {'mis_uid': uid}
         if subject_ids:
-            placeholders = ','.join(['?'] * len(subject_ids))
-            mis_sql += f" AND q.subject_id IN ({placeholders})"
-            mis_params.extend(subject_ids)
-        if not mistakes_has_wrong_count:
-            mis_sql = mis_sql.replace("m.wrong_count", "NULL")
-        row = conn.execute(mis_sql, mis_params).fetchone()
-        mistakes_count = int(row['cnt'] or 0) if row else 0
-        mistakes_times = int(row['times'] or 0) if row else 0
-        if not mistakes_has_wrong_count:
-            mistakes_times = mistakes_count
+            in_clause, in_params = _build_named_in('q.subject_id', subject_ids, 'mis')
+            mis_sql += f" AND {in_clause}"
+            mis_params.update(in_params)
+        row = db.session.execute(text(mis_sql), mis_params).fetchone()
+        mistakes_count = int(row._mapping['cnt'] or 0) if row else 0
+        mistakes_times = int(row._mapping['times'] or 0) if row else 0
     except Exception:
         mistakes_count = 0
         mistakes_times = 0
@@ -145,15 +142,19 @@ def compute_data_center_context_base(uid: int, window_days: int):
     streak_days = 0
     public_streak_dates = []
     try:
-        rows = conn.execute(
-            f"SELECT DISTINCT DATE(ua.created_at) AS day {ua_from} ORDER BY day DESC LIMIT 120",
+        rows = db.session.execute(
+            text(f"SELECT DISTINCT DATE(ua.created_at) AS day {ua_from} ORDER BY day DESC LIMIT 120"),
             ua_params_base,
         ).fetchall()
         dates = []
         for r in rows or []:
-            if r and r['day']:
+            d = r._mapping['day']
+            if d:
                 try:
-                    dates.append(datetime.strptime(r['day'], '%Y-%m-%d').date())
+                    if isinstance(d, str):
+                        dates.append(datetime.strptime(d, '%Y-%m-%d').date())
+                    else:
+                        dates.append(d)
                 except Exception:
                     continue
         public_streak_dates = dates
@@ -173,17 +174,20 @@ def compute_data_center_context_base(uid: int, window_days: int):
         if days <= 0:
             return answered_count, correct_count
         try:
-            row = conn.execute(
-                f"""
+            cutoff = (today_bj() - timedelta(days=days)).strftime('%Y-%m-%d 00:00:00')
+            p = dict(ua_params_base)
+            p['cutoff'] = cutoff
+            row = db.session.execute(
+                text(f"""
                 SELECT
                   COUNT(*) AS answered,
-                  SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+                  SUM(CASE WHEN ua.is_correct = true THEN 1 ELSE 0 END) AS correct
                 {ua_from}
-                  AND ua.created_at >= datetime('now', '+8 hours', ?)
-                """,
-                ua_params_base + [f'-{days} days'],
+                  AND ua.created_at >= :cutoff
+                """),
+                p,
             ).fetchone()
-            return int(row['answered'] or 0), int(row['correct'] or 0)
+            return int(row._mapping['answered'] or 0), int(row._mapping['correct'] or 0)
         except Exception:
             return 0, 0
 
@@ -204,20 +208,28 @@ def compute_data_center_context_base(uid: int, window_days: int):
     window_correct = 0
     window_accuracy = 0.0
     try:
-        rows = conn.execute(
-            f"""
+        cutoff = (today_bj() - timedelta(days=window_days)).strftime('%Y-%m-%d 00:00:00')
+        p = dict(ua_params_base)
+        p['w_cutoff'] = cutoff
+        rows = db.session.execute(
+            text(f"""
             SELECT
               DATE(ua.created_at) AS day,
               COUNT(*) AS total,
-              SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+              SUM(CASE WHEN ua.is_correct = true THEN 1 ELSE 0 END) AS correct
             {ua_from}
-              AND ua.created_at >= datetime('now', '+8 hours', ?)
+              AND ua.created_at >= :w_cutoff
             GROUP BY DATE(ua.created_at)
             ORDER BY day
-            """,
-            ua_params_base + [f'-{window_days} days'],
+            """),
+            p,
         ).fetchall()
-        data_map = {r['day']: {'total': int(r['total'] or 0), 'correct': int(r['correct'] or 0)} for r in (rows or []) if r and r['day']}
+        data_map = {}
+        for r in (rows or []):
+            d = r._mapping['day']
+            if d:
+                key = str(d) if not isinstance(d, str) else d
+                data_map[key] = {'total': int(r._mapping['total'] or 0), 'correct': int(r._mapping['correct'] or 0)}
 
         today = today_bj()
         start = today - timedelta(days=window_days - 1)
@@ -247,77 +259,84 @@ def compute_data_center_context_base(uid: int, window_days: int):
         # 总题数（每科目）
         total_map = {}
         if subject_ids:
-            placeholders = ','.join(['?'] * len(subject_ids))
-            rows = conn.execute(
-                f"""
+            in_clause, in_params = _build_named_in('q.subject_id', subject_ids, 'st')
+            rows = db.session.execute(
+                text(f"""
                 SELECT q.subject_id AS subject_id, COUNT(*) AS total
                 FROM questions q
                 LEFT JOIN subjects s ON q.subject_id = s.id
-                WHERE (s.is_locked=0 OR s.is_locked IS NULL)
-                  AND q.subject_id IN ({placeholders})
+                WHERE (s.is_locked=false OR s.is_locked IS NULL)
+                  AND {in_clause}
                 GROUP BY q.subject_id
-                """,
-                subject_ids,
+                """),
+                in_params,
             ).fetchall()
-            total_map = {int(r['subject_id']): int(r['total'] or 0) for r in (rows or []) if r and r['subject_id'] is not None}
+            total_map = {int(r._mapping['subject_id']): int(r._mapping['total'] or 0) for r in (rows or []) if r and r._mapping['subject_id'] is not None}
 
         # 已做/正确（每科目）
         ans_map = {}
         if subject_ids:
-            placeholders = ','.join(['?'] * len(subject_ids))
-            rows = conn.execute(
-                f"""
+            in_clause, in_params = _build_named_in('q.subject_id', subject_ids, 'sa')
+            p = {'sa_uid': uid}
+            p.update(in_params)
+            rows = db.session.execute(
+                text(f"""
                 SELECT q.subject_id AS subject_id,
                        COUNT(*) AS answered,
-                       SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+                       SUM(CASE WHEN ua.is_correct = true THEN 1 ELSE 0 END) AS correct
                 FROM user_answers ua
                 JOIN questions q ON ua.question_id = q.id
                 LEFT JOIN subjects s ON q.subject_id = s.id
-                WHERE ua.user_id = ?
-                  AND (s.is_locked=0 OR s.is_locked IS NULL)
-                  AND q.subject_id IN ({placeholders})
+                WHERE ua.user_id = :sa_uid
+                  AND (s.is_locked=false OR s.is_locked IS NULL)
+                  AND {in_clause}
                 GROUP BY q.subject_id
-                """,
-                [uid] + subject_ids,
+                """),
+                p,
             ).fetchall()
             ans_map = {
-                int(r['subject_id']): {'answered': int(r['answered'] or 0), 'correct': int(r['correct'] or 0)}
+                int(r._mapping['subject_id']): {'answered': int(r._mapping['answered'] or 0), 'correct': int(r._mapping['correct'] or 0)}
                 for r in (rows or [])
-                if r and r['subject_id'] is not None
+                if r and r._mapping['subject_id'] is not None
             }
 
         # 错题/收藏（每科目）
         mis_map = {}
         fav_map = {}
         if subject_ids:
-            placeholders = ','.join(['?'] * len(subject_ids))
-            rows = conn.execute(
-                f"""
+            in_clause, in_params = _build_named_in('q.subject_id', subject_ids, 'sm')
+            p = {'sm_uid': uid}
+            p.update(in_params)
+            rows = db.session.execute(
+                text(f"""
                 SELECT q.subject_id AS subject_id, COUNT(*) AS cnt
                 FROM mistakes m
                 JOIN questions q ON m.question_id = q.id
                 LEFT JOIN subjects s ON q.subject_id = s.id
-                WHERE m.user_id = ? AND (s.is_locked=0 OR s.is_locked IS NULL)
-                  AND q.subject_id IN ({placeholders})
+                WHERE m.user_id = :sm_uid AND (s.is_locked=false OR s.is_locked IS NULL)
+                  AND {in_clause}
                 GROUP BY q.subject_id
-                """,
-                [uid] + subject_ids,
+                """),
+                p,
             ).fetchall()
-            mis_map = {int(r['subject_id']): int(r['cnt'] or 0) for r in (rows or []) if r and r['subject_id'] is not None}
+            mis_map = {int(r._mapping['subject_id']): int(r._mapping['cnt'] or 0) for r in (rows or []) if r and r._mapping['subject_id'] is not None}
 
-            rows = conn.execute(
-                f"""
+            in_clause, in_params = _build_named_in('q.subject_id', subject_ids, 'sf')
+            p = {'sf_uid': uid}
+            p.update(in_params)
+            rows = db.session.execute(
+                text(f"""
                 SELECT q.subject_id AS subject_id, COUNT(*) AS cnt
                 FROM favorites f
                 JOIN questions q ON f.question_id = q.id
                 LEFT JOIN subjects s ON q.subject_id = s.id
-                WHERE f.user_id = ? AND (s.is_locked=0 OR s.is_locked IS NULL)
-                  AND q.subject_id IN ({placeholders})
+                WHERE f.user_id = :sf_uid AND (s.is_locked=false OR s.is_locked IS NULL)
+                  AND {in_clause}
                 GROUP BY q.subject_id
-                """,
-                [uid] + subject_ids,
+                """),
+                p,
             ).fetchall()
-            fav_map = {int(r['subject_id']): int(r['cnt'] or 0) for r in (rows or []) if r and r['subject_id'] is not None}
+            fav_map = {int(r._mapping['subject_id']): int(r._mapping['cnt'] or 0) for r in (rows or []) if r and r._mapping['subject_id'] is not None}
 
         for s in subjects_meta or []:
             sid = int(s['id'])
@@ -344,23 +363,23 @@ def compute_data_center_context_base(uid: int, window_days: int):
     # 题型维度（公共题库）
     type_rows = []
     try:
-        rows = conn.execute(
-            f"""
+        rows = db.session.execute(
+            text(f"""
             SELECT
               COALESCE(q.type, 'unknown') AS p_type,
               COUNT(*) AS answered,
-              SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+              SUM(CASE WHEN ua.is_correct = true THEN 1 ELSE 0 END) AS correct
             {ua_from}
             GROUP BY q.type
             ORDER BY answered DESC
-            """,
+            """),
             ua_params_base,
         ).fetchall()
         for r in rows or []:
-            answered = int(r['answered'] or 0)
-            correct = int(r['correct'] or 0)
+            answered = int(r._mapping['answered'] or 0)
+            correct = int(r._mapping['correct'] or 0)
             type_rows.append({
-                'q_type': _pt_to_qt(r['p_type']),
+                'q_type': _pt_to_qt(r._mapping['p_type']),
                 'answered': answered,
                 'correct': correct,
                 'accuracy': round(correct * 100 / answered, 1) if answered > 0 else 0.0,
@@ -372,22 +391,22 @@ def compute_data_center_context_base(uid: int, window_days: int):
     # 难度维度（公共题库）
     difficulty_rows = []
     try:
-        rows = conn.execute(
-            f"""
+        rows = db.session.execute(
+            text(f"""
             SELECT
               COALESCE(q.difficulty, 1) AS difficulty,
               COUNT(*) AS answered,
-              SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+              SUM(CASE WHEN ua.is_correct = true THEN 1 ELSE 0 END) AS correct
             {ua_from}
             GROUP BY q.difficulty
             ORDER BY difficulty ASC
-            """,
+            """),
             ua_params_base,
         ).fetchall()
         for r in rows or []:
-            diff = int(r['difficulty'] or 1)
-            answered = int(r['answered'] or 0)
-            correct = int(r['correct'] or 0)
+            diff = int(r._mapping['difficulty'] or 1)
+            answered = int(r._mapping['answered'] or 0)
+            correct = int(r._mapping['correct'] or 0)
             label = {1: '简单', 2: '中等', 3: '困难'}.get(diff, f'难度{diff}')
             difficulty_rows.append({
                 'difficulty': diff,
@@ -403,25 +422,31 @@ def compute_data_center_context_base(uid: int, window_days: int):
     # 薄弱点：科目 × 题型（公共题库）
     weakness_rows = []
     try:
-        rows = conn.execute(
-            f"""
+        rows = db.session.execute(
+            text(f"""
             SELECT
               COALESCE(s.name, '未分类') AS subject,
               COALESCE(q.type, 'unknown') AS p_type,
               COUNT(*) AS answered,
-              SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+              SUM(CASE WHEN ua.is_correct = true THEN 1 ELSE 0 END) AS correct
             {ua_from}
             GROUP BY s.name, q.type
-            HAVING answered >= 5
-            ORDER BY (correct * 1.0 / answered) ASC, answered DESC
+            HAVING COUNT(*) >= 5
+            ORDER BY (SUM(CASE WHEN ua.is_correct = true THEN 1 ELSE 0 END) * 1.0 / COUNT(*)) ASC, COUNT(*) DESC
             LIMIT 8
-            """,
+            """),
             ua_params_base,
         ).fetchall()
 
         # 错题分布（用于提示强弱）
-        mis_rows = conn.execute(
-            f"""
+        mis_in_clause = ''
+        mis_wk_params: dict = {'wk_uid': uid}
+        if subject_ids:
+            in_clause, in_params = _build_named_in('q.subject_id', subject_ids, 'wk')
+            mis_in_clause = f'AND {in_clause}'
+            mis_wk_params.update(in_params)
+        mis_rows = db.session.execute(
+            text(f"""
             SELECT
               COALESCE(s.name, '未分类') AS subject,
               COALESCE(q.type, 'unknown') AS p_type,
@@ -429,31 +454,31 @@ def compute_data_center_context_base(uid: int, window_days: int):
             FROM mistakes m
             JOIN questions q ON m.question_id = q.id
             LEFT JOIN subjects s ON q.subject_id = s.id
-            WHERE m.user_id = ? AND (s.is_locked=0 OR s.is_locked IS NULL)
-            {('AND q.subject_id IN (' + ','.join(['?']*len(subject_ids)) + ')') if subject_ids else ''}
+            WHERE m.user_id = :wk_uid AND (s.is_locked=false OR s.is_locked IS NULL)
+            {mis_in_clause}
             GROUP BY s.name, q.type
-            """,
-            [uid] + (subject_ids if subject_ids else []),
+            """),
+            mis_wk_params,
         ).fetchall()
-        mis_map = {
-            (r['subject'] or '未分类', _pt_to_qt(r['p_type'])): int(r['mistakes'] or 0)
+        mis_map_wk = {
+            (r._mapping['subject'] or '未分类', _pt_to_qt(r._mapping['p_type'])): int(r._mapping['mistakes'] or 0)
             for r in (mis_rows or [])
             if r
         }
 
         for r in rows or []:
-            answered = int(r['answered'] or 0)
-            correct = int(r['correct'] or 0)
+            answered = int(r._mapping['answered'] or 0)
+            correct = int(r._mapping['correct'] or 0)
             acc = round(correct * 100 / answered, 1) if answered > 0 else 0.0
-            qtype_disp = _pt_to_qt(r['p_type'])
-            key = (r['subject'] or '未分类', qtype_disp)
+            qtype_disp = _pt_to_qt(r._mapping['p_type'])
+            key = (r._mapping['subject'] or '未分类', qtype_disp)
             weakness_rows.append({
-                'subject': r['subject'] or '未分类',
+                'subject': r._mapping['subject'] or '未分类',
                 'q_type': qtype_disp,
                 'answered': answered,
                 'correct': correct,
                 'accuracy': acc,
-                'mistakes': int(mis_map.get(key, 0)),
+                'mistakes': int(mis_map_wk.get(key, 0)),
             })
     except Exception as e:
         current_app.logger.warning(f"history weakness stats failed: {e}")
@@ -462,10 +487,14 @@ def compute_data_center_context_base(uid: int, window_days: int):
     # 最近错题（公共题库）
     recent_mistakes = []
     try:
-        order_by = "m.created_at DESC"
-        if mistakes_has_wrong_count:
-            # 优先看错得多的题，其次最近更新
-            order_by = "m.wrong_count DESC, COALESCE(m.updated_at, m.created_at) DESC" if mistakes_has_updated_at else "m.wrong_count DESC, m.created_at DESC"
+        # ORM models define wrong_count and updated_at, so they always exist
+        order_by = "m.wrong_count DESC, COALESCE(m.updated_at, m.created_at) DESC"
+        rm_in_clause = ''
+        rm_params: dict = {'rm_uid': uid}
+        if subject_ids:
+            in_clause, in_params = _build_named_in('q.subject_id', subject_ids, 'rm')
+            rm_in_clause = f'AND {in_clause}'
+            rm_params.update(in_params)
         sql = f"""
             SELECT
               COALESCE(s.name, '未分类') AS subject,
@@ -473,33 +502,33 @@ def compute_data_center_context_base(uid: int, window_days: int):
               q.id AS question_id,
               q.content AS content,
               q.difficulty AS difficulty,
-              m.created_at AS created_at
-              {', m.wrong_count AS wrong_count' if mistakes_has_wrong_count else ''}
+              m.created_at AS created_at,
+              m.wrong_count AS wrong_count
             FROM mistakes m
             JOIN questions q ON m.question_id = q.id
             LEFT JOIN subjects s ON q.subject_id = s.id
-            WHERE m.user_id = ? AND (s.is_locked=0 OR s.is_locked IS NULL)
-            {('AND q.subject_id IN (' + ','.join(['?']*len(subject_ids)) + ')') if subject_ids else ''}
+            WHERE m.user_id = :rm_uid AND (s.is_locked=false OR s.is_locked IS NULL)
+            {rm_in_clause}
             ORDER BY {order_by}
             LIMIT 8
         """
-        rows = conn.execute(sql, [uid] + (subject_ids if subject_ids else [])).fetchall()
+        rows = db.session.execute(text(sql), rm_params).fetchall()
         for r in rows or []:
-            content = (r['content'] or '').strip().replace('\r', ' ').replace('\n', ' ')
+            content = (r._mapping['content'] or '').strip().replace('\r', ' ').replace('\n', ' ')
             snippet = content[:80] + ('…' if len(content) > 80 else '')
             recent_mistakes.append({
-                'subject': r['subject'] or '未分类',
-                'q_type': _pt_to_qt(r['p_type']),
-                'question_id': int(r['question_id']),
+                'subject': r._mapping['subject'] or '未分类',
+                'q_type': _pt_to_qt(r._mapping['p_type']),
+                'question_id': int(r._mapping['question_id']),
                 'snippet': snippet,
-                'difficulty': int(r['difficulty'] or 1),
-                'wrong_count': int(r['wrong_count'] or 1) if mistakes_has_wrong_count else None,
+                'difficulty': int(r._mapping['difficulty'] or 1),
+                'wrong_count': int(r._mapping['wrong_count'] or 1),
             })
     except Exception as e:
         current_app.logger.warning(f"history recent mistakes failed: {e}")
         recent_mistakes = []
 
-    # 用于 UI 的“下一步建议”
+    # 用于 UI 的"下一步建议"
     next_actions = []
     try:
         for w in (weakness_rows or [])[:3]:
@@ -532,8 +561,8 @@ def compute_data_center_context_base(uid: int, window_days: int):
     bank_total_banks = 0
 
     try:
-        banks = conn.execute(
-            """
+        banks = db.session.execute(
+            text("""
             SELECT
               b.id AS id,
               b.name AS name,
@@ -541,58 +570,60 @@ def compute_data_center_context_base(uid: int, window_days: int):
               COALESCE(c.name, '未分类') AS category_name
             FROM user_question_banks b
             LEFT JOIN user_bank_categories c ON b.category_id = c.id
-            WHERE b.user_id = ? AND b.status = 1
+            WHERE b.user_id = :bk_uid AND b.status = 1
             ORDER BY b.updated_at DESC, b.id DESC
-            """,
-            (int(uid),),
+            """),
+            {'bk_uid': int(uid)},
         ).fetchall()
-        banks = [dict(b) for b in (banks or []) if b and b['id'] is not None]
+        banks = [dict(b._mapping) for b in (banks or []) if b and b._mapping['id'] is not None]
         bank_total_banks = len(banks)
         bank_ids = [int(b['id']) for b in banks]
 
         if bank_ids:
-            placeholders = ','.join(['?'] * len(bank_ids))
+            bk_in_clause, bk_in_params = _build_named_in('bank_id', bank_ids, 'bk')
 
             # 题库题量（每题库）
             total_map = {}
             try:
-                rows = conn.execute(
-                    f"""
+                rows = db.session.execute(
+                    text(f"""
                     SELECT bank_id, COUNT(*) AS total
                     FROM user_bank_questions
-                    WHERE bank_id IN ({placeholders})
+                    WHERE {bk_in_clause}
                     GROUP BY bank_id
-                    """,
-                    bank_ids,
+                    """),
+                    bk_in_params,
                 ).fetchall()
-                total_map = {int(r['bank_id']): int(r['total'] or 0) for r in (rows or []) if r and r['bank_id'] is not None}
+                total_map = {int(r._mapping['bank_id']): int(r._mapping['total'] or 0) for r in (rows or []) if r and r._mapping['bank_id'] is not None}
             except Exception:
                 total_map = {}
 
             # 已做/正确/最近活跃（每题库）
             ans_map = {}
             try:
-                rows = conn.execute(
-                    f"""
+                p = {'ba_uid': int(uid)}
+                p.update(bk_in_params)
+                rows = db.session.execute(
+                    text(f"""
                     SELECT bank_id,
                            COUNT(*) AS answered,
-                           SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) AS correct,
+                           SUM(CASE WHEN is_correct = true THEN 1 ELSE 0 END) AS correct,
                            MAX(created_at) AS last_activity
                     FROM user_bank_answers
-                    WHERE user_id = ?
-                      AND bank_id IN ({placeholders})
+                    WHERE user_id = :ba_uid
+                      AND {bk_in_clause}
                     GROUP BY bank_id
-                    """,
-                    [int(uid)] + bank_ids,
+                    """),
+                    p,
                 ).fetchall()
                 ans_map = {
-                    int(r['bank_id']): {
-                        'answered': int(r['answered'] or 0),
-                        'correct': int(r['correct'] or 0),
-                        'last_activity': (r['last_activity'] or None),
+                    int(r._mapping['bank_id']): {
+                        'answered': int(r._mapping['answered'] or 0),
+                        'correct': int(r._mapping['correct'] or 0),
+                        'last_activity': (r._mapping['last_activity'] or None),
                     }
                     for r in (rows or [])
-                    if r and r['bank_id'] is not None
+                    if r and r._mapping['bank_id'] is not None
                 }
             except Exception:
                 ans_map = {}
@@ -600,39 +631,43 @@ def compute_data_center_context_base(uid: int, window_days: int):
             # 收藏（每题库）
             fav_map = {}
             try:
-                rows = conn.execute(
-                    f"""
+                p = {'bf_uid': int(uid)}
+                p.update(bk_in_params)
+                rows = db.session.execute(
+                    text(f"""
                     SELECT bank_id, COUNT(*) AS cnt
                     FROM user_bank_favorites
-                    WHERE user_id = ?
-                      AND bank_id IN ({placeholders})
+                    WHERE user_id = :bf_uid
+                      AND {bk_in_clause}
                     GROUP BY bank_id
-                    """,
-                    [int(uid)] + bank_ids,
+                    """),
+                    p,
                 ).fetchall()
-                fav_map = {int(r['bank_id']): int(r['cnt'] or 0) for r in (rows or []) if r and r['bank_id'] is not None}
+                fav_map = {int(r._mapping['bank_id']): int(r._mapping['cnt'] or 0) for r in (rows or []) if r and r._mapping['bank_id'] is not None}
             except Exception:
                 fav_map = {}
 
             # 错题（每题库）
             mis_map = {}
             try:
-                rows = conn.execute(
-                    f"""
+                p = {'bm_uid': int(uid)}
+                p.update(bk_in_params)
+                rows = db.session.execute(
+                    text(f"""
                     SELECT bank_id,
                            COUNT(*) AS cnt,
                            SUM(COALESCE(wrong_count, 1)) AS times
                     FROM user_bank_mistakes
-                    WHERE user_id = ?
-                      AND bank_id IN ({placeholders})
+                    WHERE user_id = :bm_uid
+                      AND {bk_in_clause}
                     GROUP BY bank_id
-                    """,
-                    [int(uid)] + bank_ids,
+                    """),
+                    p,
                 ).fetchall()
                 mis_map = {
-                    int(r['bank_id']): {'cnt': int(r['cnt'] or 0), 'times': int(r['times'] or 0)}
+                    int(r._mapping['bank_id']): {'cnt': int(r._mapping['cnt'] or 0), 'times': int(r._mapping['times'] or 0)}
                     for r in (rows or [])
-                    if r and r['bank_id'] is not None
+                    if r and r._mapping['bank_id'] is not None
                 }
             except Exception:
                 mis_map = {}
@@ -689,22 +724,28 @@ def compute_data_center_context_base(uid: int, window_days: int):
 
             # streak（个人题库）
             try:
-                rows = conn.execute(
-                    f"""
+                p = {'bs_uid': int(uid)}
+                p.update(bk_in_params)
+                rows = db.session.execute(
+                    text(f"""
                     SELECT DISTINCT DATE(created_at) AS day
                     FROM user_bank_answers
-                    WHERE user_id = ?
-                      AND bank_id IN ({placeholders})
+                    WHERE user_id = :bs_uid
+                      AND {bk_in_clause}
                     ORDER BY day DESC
                     LIMIT 120
-                    """,
-                    [int(uid)] + bank_ids,
+                    """),
+                    p,
                 ).fetchall()
                 dates = []
                 for r in rows or []:
-                    if r and r['day']:
+                    d = r._mapping['day']
+                    if d:
                         try:
-                            dates.append(datetime.strptime(r['day'], '%Y-%m-%d').date())
+                            if isinstance(d, str):
+                                dates.append(datetime.strptime(d, '%Y-%m-%d').date())
+                            else:
+                                dates.append(d)
                         except Exception:
                             continue
                 bank_streak_dates = dates
@@ -722,22 +763,30 @@ def compute_data_center_context_base(uid: int, window_days: int):
 
             # 趋势（个人题库）
             try:
-                rows = conn.execute(
-                    f"""
+                cutoff = (today_bj() - timedelta(days=window_days)).strftime('%Y-%m-%d 00:00:00')
+                p = {'bd_uid': int(uid), 'bd_cutoff': cutoff}
+                p.update(bk_in_params)
+                rows = db.session.execute(
+                    text(f"""
                     SELECT
                       DATE(created_at) AS day,
                       COUNT(*) AS total,
-                      SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) AS correct
+                      SUM(CASE WHEN is_correct = true THEN 1 ELSE 0 END) AS correct
                     FROM user_bank_answers
-                    WHERE user_id = ?
-                      AND bank_id IN ({placeholders})
-                      AND created_at >= datetime('now', '+8 hours', ?)
+                    WHERE user_id = :bd_uid
+                      AND {bk_in_clause}
+                      AND created_at >= :bd_cutoff
                     GROUP BY DATE(created_at)
                     ORDER BY day
-                    """,
-                    [int(uid)] + bank_ids + [f'-{window_days} days'],
+                    """),
+                    p,
                 ).fetchall()
-                data_map = {r['day']: {'total': int(r['total'] or 0), 'correct': int(r['correct'] or 0)} for r in (rows or []) if r and r['day']}
+                data_map = {}
+                for r in (rows or []):
+                    d = r._mapping['day']
+                    if d:
+                        key = str(d) if not isinstance(d, str) else d
+                        data_map[key] = {'total': int(r._mapping['total'] or 0), 'correct': int(r._mapping['correct'] or 0)}
 
                 today = today_bj()
                 start = today - timedelta(days=window_days - 1)
@@ -809,11 +858,11 @@ def compute_data_center_context_base(uid: int, window_days: int):
     all_daily_max = 0
     try:
         pub_map = {str(r.get('day')): r for r in (daily or []) if r and r.get('day')}
-        bank_map = {str(r.get('day')): r for r in (bank_daily or []) if r and r.get('day')}
-        keys = sorted(set(pub_map.keys()) | set(bank_map.keys()))
+        bank_map_d = {str(r.get('day')): r for r in (bank_daily or []) if r and r.get('day')}
+        keys = sorted(set(pub_map.keys()) | set(bank_map_d.keys()))
         for k in keys:
             p = pub_map.get(k) or {}
-            b = bank_map.get(k) or {}
+            b = bank_map_d.get(k) or {}
             total_n = int(p.get('total') or 0) + int(b.get('total') or 0)
             correct_n = int(p.get('correct') or 0) + int(b.get('correct') or 0)
             acc_n = round(correct_n * 100 / total_n, 1) if total_n > 0 else 0.0
@@ -836,22 +885,22 @@ def compute_data_center_context_base(uid: int, window_days: int):
         'last_activity': all_last_activity,
     }
 
-    # 预置建议：用于“未配置密钥/不点AI也能用”的体验兜底
+    # 预置建议：用于"未配置密钥/不点AI也能用"的体验兜底
     ai_seed_tips = []
     try:
         if all_total_questions <= 0:
             ai_seed_tips = [{'title': '暂无数据', 'content': '你还没有可统计的题库或答题记录，先去练习几题再回来看看。'}]
         else:
             if all_answered_count < 10:
-                ai_seed_tips.append({'title': '先把“启动成本”打穿', 'content': '建议今天先连续做 20 题，先建立手感，再谈策略。'})
+                ai_seed_tips.append({'title': '先把"启动成本"打穿', 'content': '建议今天先连续做 20 题，先建立手感，再谈策略。'})
             if all_completion < 35:
-                ai_seed_tips.append({'title': '提高覆盖率', 'content': '覆盖率偏低，优先把“未做题”补齐；每天固定 10~15 分钟更容易坚持。'})
+                ai_seed_tips.append({'title': '提高覆盖率', 'content': '覆盖率偏低，优先把"未做题"补齐；每天固定 10~15 分钟更容易坚持。'})
             if all_accuracy < 65 and all_answered_count >= 10:
-                ai_seed_tips.append({'title': '先错题闭环，再追速度', 'content': '正确率偏低时，先刷“错题”并总结错因，再回到全题库练习。'})
+                ai_seed_tips.append({'title': '先错题闭环，再追速度', 'content': '正确率偏低时，先刷"错题"并总结错因，再回到全题库练习。'})
             if all_mistakes_times >= 20:
-                ai_seed_tips.append({'title': '错题要复盘到“可复现”', 'content': '错题次数偏多，建议把高频错题做一次归因：概念不清/审题/计算/方法选择。'})
+                ai_seed_tips.append({'title': '错题要复盘到"可复现"', 'content': '错题次数偏多，建议把高频错题做一次归因：概念不清/审题/计算/方法选择。'})
             if all_streak_days <= 1:
-                ai_seed_tips.append({'title': '建立可持续节奏', 'content': '建议设一个“最小计划”：每天 10 题或 8 分钟，先保证不断更。'})
+                ai_seed_tips.append({'title': '建立可持续节奏', 'content': '建议设一个"最小计划"：每天 10 题或 8 分钟，先保证不断更。'})
             if next_actions:
                 ai_seed_tips.append({'title': '优先攻克薄弱点', 'content': f"先从「{next_actions[0]['title']}」开始，刷错题 + 重练 1 轮，最快见效。"})
     except Exception:
@@ -905,9 +954,9 @@ def compute_data_center_context_base(uid: int, window_days: int):
         bank_category_rows = []
 
     # ===== 额外：活跃热力图（周×小时）与按小时分布（公共+个人）=====
-    def _wk_idx(sql_w: int) -> int:
-        # SQLite %w: 0=周日,1=周一,...6=周六  -> 0=周一,...6=周日
-        w = int(sql_w or 0)
+    def _wk_idx(pg_dow: int) -> int:
+        # PostgreSQL EXTRACT(DOW): 0=周日,1=周一,...6=周六 -> 0=周一,...6=周日
+        w = int(pg_dow or 0)
         return 6 if w == 0 else max(0, min(6, w - 1))
 
     hourly = {'max': 0, 'public': [], 'banks': [], 'all': []}
@@ -916,48 +965,51 @@ def compute_data_center_context_base(uid: int, window_days: int):
         pub_hour = {}
         bank_hour = {}
 
-        rows = conn.execute(
-            f"""
-            SELECT strftime('%H', ua.created_at) AS h,
+        cutoff = (today_bj() - timedelta(days=window_days)).strftime('%Y-%m-%d 00:00:00')
+        hp = dict(ua_params_base)
+        hp['h_cutoff'] = cutoff
+        rows = db.session.execute(
+            text(f"""
+            SELECT EXTRACT(HOUR FROM ua.created_at)::int AS h,
                    COUNT(*) AS total,
-                   SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+                   SUM(CASE WHEN ua.is_correct = true THEN 1 ELSE 0 END) AS correct
             {ua_from}
-              AND ua.created_at >= datetime('now', '+8 hours', ?)
+              AND ua.created_at >= :h_cutoff
             GROUP BY h
-            """,
-            ua_params_base + [f'-{window_days} days'],
+            """),
+            hp,
         ).fetchall()
         for r in rows or []:
-            if not r or r.get('h') is None:
+            if not r or r._mapping.get('h') is None:
                 continue
-            h = int(str(r['h']))
-            pub_hour[h] = {'total': int(r['total'] or 0), 'correct': int(r['correct'] or 0)}
+            h = int(r._mapping['h'])
+            pub_hour[h] = {'total': int(r._mapping['total'] or 0), 'correct': int(r._mapping['correct'] or 0)}
 
-        rows = conn.execute(
-            """
-            SELECT strftime('%H', created_at) AS h,
+        rows = db.session.execute(
+            text("""
+            SELECT EXTRACT(HOUR FROM created_at)::int AS h,
                    COUNT(*) AS total,
-                   SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) AS correct
+                   SUM(CASE WHEN is_correct = true THEN 1 ELSE 0 END) AS correct
             FROM user_bank_answers
-            WHERE user_id = ?
-              AND created_at >= datetime('now', '+8 hours', ?)
+            WHERE user_id = :hb_uid
+              AND created_at >= :hb_cutoff
             GROUP BY h
-            """,
-            [int(uid), f'-{window_days} days'],
+            """),
+            {'hb_uid': int(uid), 'hb_cutoff': cutoff},
         ).fetchall()
         for r in rows or []:
-            if not r or r.get('h') is None:
+            if not r or r._mapping.get('h') is None:
                 continue
-            h = int(str(r['h']))
-            bank_hour[h] = {'total': int(r['total'] or 0), 'correct': int(r['correct'] or 0)}
+            h = int(r._mapping['h'])
+            bank_hour[h] = {'total': int(r._mapping['total'] or 0), 'correct': int(r._mapping['correct'] or 0)}
 
         for h in range(24):
-            p = pub_hour.get(h) or {}
-            b = bank_hour.get(h) or {}
-            pt = int(p.get('total') or 0)
-            pc = int(p.get('correct') or 0)
-            bt = int(b.get('total') or 0)
-            bc = int(b.get('correct') or 0)
+            p_item = pub_hour.get(h) or {}
+            b_item = bank_hour.get(h) or {}
+            pt = int(p_item.get('total') or 0)
+            pc = int(p_item.get('correct') or 0)
+            bt = int(b_item.get('total') or 0)
+            bc = int(b_item.get('correct') or 0)
             at = pt + bt
             ac = pc + bc
             hourly['public'].append({'hour': h, 'total': pt, 'correct': pc, 'accuracy': round(pc * 100 / pt, 1) if pt > 0 else 0.0})
@@ -967,42 +1019,44 @@ def compute_data_center_context_base(uid: int, window_days: int):
 
         pub_hm = {}
         bank_hm = {}
-        rows = conn.execute(
-            f"""
-            SELECT strftime('%w', ua.created_at) AS wd,
-                   strftime('%H', ua.created_at) AS h,
+        hm_p = dict(ua_params_base)
+        hm_p['hm_cutoff'] = cutoff
+        rows = db.session.execute(
+            text(f"""
+            SELECT EXTRACT(DOW FROM ua.created_at)::int AS wd,
+                   EXTRACT(HOUR FROM ua.created_at)::int AS h,
                    COUNT(*) AS total
             {ua_from}
-              AND ua.created_at >= datetime('now', '+8 hours', ?)
+              AND ua.created_at >= :hm_cutoff
             GROUP BY wd, h
-            """,
-            ua_params_base + [f'-{window_days} days'],
+            """),
+            hm_p,
         ).fetchall()
         for r in rows or []:
             if not r:
                 continue
-            wd = _wk_idx(int(r['wd'] or 0))
-            h = int(str(r['h'] or 0))
-            pub_hm[(wd, h)] = int(r['total'] or 0)
+            wd = _wk_idx(int(r._mapping['wd'] or 0))
+            h = int(r._mapping['h'] or 0)
+            pub_hm[(wd, h)] = int(r._mapping['total'] or 0)
 
-        rows = conn.execute(
-            """
-            SELECT strftime('%w', created_at) AS wd,
-                   strftime('%H', created_at) AS h,
+        rows = db.session.execute(
+            text("""
+            SELECT EXTRACT(DOW FROM created_at)::int AS wd,
+                   EXTRACT(HOUR FROM created_at)::int AS h,
                    COUNT(*) AS total
             FROM user_bank_answers
-            WHERE user_id = ?
-              AND created_at >= datetime('now', '+8 hours', ?)
+            WHERE user_id = :hmb_uid
+              AND created_at >= :hmb_cutoff
             GROUP BY wd, h
-            """,
-            [int(uid), f'-{window_days} days'],
+            """),
+            {'hmb_uid': int(uid), 'hmb_cutoff': cutoff},
         ).fetchall()
         for r in rows or []:
             if not r:
                 continue
-            wd = _wk_idx(int(r['wd'] or 0))
-            h = int(str(r['h'] or 0))
-            bank_hm[(wd, h)] = int(r['total'] or 0)
+            wd = _wk_idx(int(r._mapping['wd'] or 0))
+            h = int(r._mapping['h'] or 0)
+            bank_hm[(wd, h)] = int(r._mapping['total'] or 0)
 
         for wd in range(7):
             for h in range(24):
@@ -1039,7 +1093,6 @@ def compute_data_center_context_base(uid: int, window_days: int):
         {'name': '错题治理', 'value': _clamp100(100.0 - mistakes_rate)},
         {'name': '收藏密度', 'value': _clamp100(fav_rate * 2.0)},
     ]
-
 
     base_ctx = {
         'all_summary': all_summary,
@@ -1083,4 +1136,4 @@ def compute_data_center_context_base(uid: int, window_days: int):
         'mistakes_rate': mistakes_rate,
     }
 
-    return conn, subject_ids, base_ctx
+    return subject_ids, base_ctx

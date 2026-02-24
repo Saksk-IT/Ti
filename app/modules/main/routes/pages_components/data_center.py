@@ -3,20 +3,21 @@ import json
 from datetime import datetime, timedelta
 
 from flask import current_app, jsonify, redirect, render_template, request, session
+from sqlalchemy import text
 
-from app.core.extensions import limiter
-from app.core.utils.database import get_db
+from app.core.extensions import db, limiter
 from app.core.utils.decorators import auth_required, current_user_id
 from app.core.utils.time_utils import today_bj
 
 from .bp import main_pages_bp
 from .common import _get_accessible_subject_rows
-from .data_center_context_base import compute_data_center_context_base
+from .data_center_context_base import compute_data_center_context_base, _build_named_in
 from .data_center_context_extra import compute_data_center_context_extra
 
 
 def _compute_data_center_context(uid: int, window_days: int) -> dict:
-    conn, subject_ids, base_ctx = compute_data_center_context_base(uid, window_days)
+    subject_ids, base_ctx = compute_data_center_context_base(uid, window_days)
+    conn = db.session.connection()
     return compute_data_center_context_extra(conn, uid, window_days, subject_ids, base_ctx)
 
 
@@ -202,7 +203,7 @@ def api_data_tags():
     if window_days not in (7, 30, 90):
         window_days = 30
 
-    conn = get_db()
+    conn = db.session.connection()
     from app.modules.main.services.data_tags_service import compute_data_tags_context
 
     ctx = compute_data_tags_context(conn, int(uid), int(window_days))
@@ -231,8 +232,6 @@ def api_data_ai_advice():
     if not prompt:
         prompt = '请基于我的学习数据，给出今天最重要的 5 条建议，并按优先级排序。'
 
-    conn = get_db()
-
     def _pct(a: int, b: int) -> float:
         try:
             a = int(a or 0)
@@ -247,15 +246,8 @@ def api_data_ai_advice():
         except Exception:
             return 0
 
-    def _column_exists(table: str, column: str) -> bool:
-        try:
-            rows = conn.execute(f"PRAGMA table_info({table})").fetchall()
-            return any(r and r['name'] == column for r in rows)
-        except Exception:
-            return False
-
     # ===== 公共题库汇总（按科目权限过滤）=====
-    subjects_meta = _get_accessible_subject_rows(conn, uid)
+    subjects_meta = _get_accessible_subject_rows(uid=uid)
     subject_ids = [int(s['id']) for s in (subjects_meta or []) if s and s.get('id') is not None]
     subject_name_map = {int(s['id']): (s.get('name') or '') for s in (subjects_meta or []) if s and s.get('id') is not None}
 
@@ -274,44 +266,44 @@ def api_data_ai_advice():
             SELECT COUNT(*)
             FROM questions q
             LEFT JOIN subjects s ON q.subject_id = s.id
-            WHERE (s.is_locked=0 OR s.is_locked IS NULL)
+            WHERE (s.is_locked=false OR s.is_locked IS NULL)
         """
-        params = []
+        params: dict = {}
         if subject_ids:
-            placeholders = ','.join(['?'] * len(subject_ids))
-            base_sql += f" AND q.subject_id IN ({placeholders})"
-            params.extend(subject_ids)
-        total_questions_public = _safe_int(conn.execute(base_sql, params).fetchone()[0])
+            in_clause, in_params = _build_named_in('q.subject_id', subject_ids, 'tq')
+            base_sql += f" AND {in_clause}"
+            params.update(in_params)
+        total_questions_public = _safe_int(db.session.execute(text(base_sql), params).fetchone()[0])
     except Exception:
         total_questions_public = 0
 
+    ua_params_base: dict = {'ua_uid': int(uid)}
     ua_from = """
         FROM user_answers ua
         JOIN questions q ON ua.question_id = q.id
         LEFT JOIN subjects s ON q.subject_id = s.id
-        WHERE ua.user_id = ?
-          AND (s.is_locked=0 OR s.is_locked IS NULL)
+        WHERE ua.user_id = :ua_uid
+          AND (s.is_locked=false OR s.is_locked IS NULL)
     """
-    ua_params_base = [int(uid)]
     if subject_ids:
-        placeholders = ','.join(['?'] * len(subject_ids))
-        ua_from += f" AND q.subject_id IN ({placeholders})"
-        ua_params_base.extend(subject_ids)
+        in_clause, in_params = _build_named_in('q.subject_id', subject_ids, 'sid')
+        ua_from += f" AND {in_clause}"
+        ua_params_base.update(in_params)
 
     try:
-        row = conn.execute(
-            f"""
+        row = db.session.execute(
+            text(f"""
             SELECT
               COUNT(*) AS answered,
-              SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct,
+              SUM(CASE WHEN ua.is_correct = true THEN 1 ELSE 0 END) AS correct,
               MAX(ua.created_at) AS last_activity
             {ua_from}
-            """,
+            """),
             ua_params_base,
         ).fetchone()
-        answered_public = _safe_int(row['answered'] if row else 0)
-        correct_public = _safe_int(row['correct'] if row else 0)
-        last_public = (row['last_activity'] if row else None) or None
+        answered_public = _safe_int(row._mapping['answered'] if row else 0)
+        correct_public = _safe_int(row._mapping['correct'] if row else 0)
+        last_public = (row._mapping['last_activity'] if row else None) or None
     except Exception:
         answered_public = 0
         correct_public = 0
@@ -323,18 +315,17 @@ def api_data_ai_advice():
             FROM favorites f
             JOIN questions q ON f.question_id = q.id
             LEFT JOIN subjects s ON q.subject_id = s.id
-            WHERE f.user_id = ? AND (s.is_locked=0 OR s.is_locked IS NULL)
+            WHERE f.user_id = :fav_uid AND (s.is_locked=false OR s.is_locked IS NULL)
         """
-        fav_params = [int(uid)]
+        fav_params: dict = {'fav_uid': int(uid)}
         if subject_ids:
-            placeholders = ','.join(['?'] * len(subject_ids))
-            fav_sql += f" AND q.subject_id IN ({placeholders})"
-            fav_params.extend(subject_ids)
-        favorites_public = _safe_int(conn.execute(fav_sql, fav_params).fetchone()[0])
+            in_clause, in_params = _build_named_in('q.subject_id', subject_ids, 'fav')
+            fav_sql += f" AND {in_clause}"
+            fav_params.update(in_params)
+        favorites_public = _safe_int(db.session.execute(text(fav_sql), fav_params).fetchone()[0])
     except Exception:
         favorites_public = 0
 
-    mistakes_has_wrong = _column_exists('mistakes', 'wrong_count')
     try:
         mis_sql = """
             SELECT
@@ -343,34 +334,34 @@ def api_data_ai_advice():
             FROM mistakes m
             JOIN questions q ON m.question_id = q.id
             LEFT JOIN subjects s ON q.subject_id = s.id
-            WHERE m.user_id = ? AND (s.is_locked=0 OR s.is_locked IS NULL)
+            WHERE m.user_id = :mis_uid AND (s.is_locked=false OR s.is_locked IS NULL)
         """
-        mis_params = [int(uid)]
+        mis_params: dict = {'mis_uid': int(uid)}
         if subject_ids:
-            placeholders = ','.join(['?'] * len(subject_ids))
-            mis_sql += f" AND q.subject_id IN ({placeholders})"
-            mis_params.extend(subject_ids)
-        if not mistakes_has_wrong:
-            mis_sql = mis_sql.replace("m.wrong_count", "NULL")
-        row = conn.execute(mis_sql, mis_params).fetchone()
-        mistakes_public = _safe_int(row['cnt'] if row else 0)
-        mistakes_times_public = _safe_int(row['times'] if row else 0)
-        if not mistakes_has_wrong:
-            mistakes_times_public = mistakes_public
+            in_clause, in_params = _build_named_in('q.subject_id', subject_ids, 'mis')
+            mis_sql += f" AND {in_clause}"
+            mis_params.update(in_params)
+        row = db.session.execute(text(mis_sql), mis_params).fetchone()
+        mistakes_public = _safe_int(row._mapping['cnt'] if row else 0)
+        mistakes_times_public = _safe_int(row._mapping['times'] if row else 0)
     except Exception:
         mistakes_public = 0
         mistakes_times_public = 0
 
     try:
-        rows = conn.execute(
-            f"SELECT DISTINCT DATE(ua.created_at) AS day {ua_from} ORDER BY day DESC LIMIT 120",
+        rows = db.session.execute(
+            text(f"SELECT DISTINCT DATE(ua.created_at) AS day {ua_from} ORDER BY day DESC LIMIT 120"),
             ua_params_base,
         ).fetchall()
         dates = []
         for r in rows or []:
-            if r and r['day']:
+            d = r._mapping['day']
+            if d:
                 try:
-                    dates.append(datetime.strptime(r['day'], '%Y-%m-%d').date())
+                    if isinstance(d, str):
+                        dates.append(datetime.strptime(d, '%Y-%m-%d').date())
+                    else:
+                        dates.append(d)
                 except Exception:
                     continue
         public_streak_dates = dates
@@ -389,22 +380,22 @@ def api_data_ai_advice():
     # 公共薄弱科目（按正确率从低到高，至少做过5题）
     weak_subjects = []
     try:
-        rows = conn.execute(
-            f"""
+        rows = db.session.execute(
+            text(f"""
             SELECT q.subject_id AS subject_id,
                    COUNT(*) AS answered,
-                   SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+                   SUM(CASE WHEN ua.is_correct = true THEN 1 ELSE 0 END) AS correct
             {ua_from}
             GROUP BY q.subject_id
-            """,
+            """),
             ua_params_base,
         ).fetchall()
         for r in rows or []:
-            sid = r['subject_id']
+            sid = r._mapping['subject_id']
             if sid is None:
                 continue
-            answered = _safe_int(r['answered'])
-            correct = _safe_int(r['correct'])
+            answered = _safe_int(r._mapping['answered'])
+            correct = _safe_int(r._mapping['correct'])
             if answered < 5:
                 continue
             acc = _pct(correct, answered)
@@ -432,81 +423,93 @@ def api_data_ai_advice():
     weak_banks = []
 
     try:
-        banks = conn.execute(
-            """
+        banks = db.session.execute(
+            text("""
             SELECT id, name
             FROM user_question_banks
-            WHERE user_id = ? AND status = 1
+            WHERE user_id = :bk_uid AND status = 1
             ORDER BY updated_at DESC, id DESC
-            """,
-            (int(uid),),
+            """),
+            {'bk_uid': int(uid)},
         ).fetchall()
-        banks = [dict(b) for b in (banks or []) if b and b.get('id') is not None]
+        banks = [dict(b._mapping) for b in (banks or []) if b and b._mapping.get('id') is not None]
         bank_total = len(banks)
         bank_ids = [int(b['id']) for b in banks]
         bank_name_map = {int(b['id']): (b.get('name') or '') for b in banks}
 
         if bank_ids:
-            placeholders = ','.join(['?'] * len(bank_ids))
+            bk_in_clause, bk_in_params = _build_named_in('bank_id', bank_ids, 'bk')
 
             try:
-                row = conn.execute(
-                    f"SELECT COUNT(*) AS answered, SUM(CASE WHEN is_correct=1 THEN 1 ELSE 0 END) AS correct, MAX(created_at) AS last_activity FROM user_bank_answers WHERE user_id=? AND bank_id IN ({placeholders})",
-                    [int(uid)] + bank_ids,
+                p = {'ba_uid': int(uid)}
+                p.update(bk_in_params)
+                row = db.session.execute(
+                    text(f"SELECT COUNT(*) AS answered, SUM(CASE WHEN is_correct=true THEN 1 ELSE 0 END) AS correct, MAX(created_at) AS last_activity FROM user_bank_answers WHERE user_id=:ba_uid AND {bk_in_clause}"),
+                    p,
                 ).fetchone()
-                bank_answered = _safe_int(row['answered'] if row else 0)
-                bank_correct = _safe_int(row['correct'] if row else 0)
-                bank_last = (row['last_activity'] if row else None) or None
+                bank_answered = _safe_int(row._mapping['answered'] if row else 0)
+                bank_correct = _safe_int(row._mapping['correct'] if row else 0)
+                bank_last = (row._mapping['last_activity'] if row else None) or None
             except Exception:
                 bank_answered = 0
                 bank_correct = 0
                 bank_last = None
 
             try:
-                row = conn.execute(
-                    f"SELECT COUNT(*) AS cnt FROM user_bank_favorites WHERE user_id=? AND bank_id IN ({placeholders})",
-                    [int(uid)] + bank_ids,
+                p = {'bf_uid': int(uid)}
+                p.update(bk_in_params)
+                row = db.session.execute(
+                    text(f"SELECT COUNT(*) AS cnt FROM user_bank_favorites WHERE user_id=:bf_uid AND {bk_in_clause}"),
+                    p,
                 ).fetchone()
-                bank_favorites = _safe_int(row['cnt'] if row else 0)
+                bank_favorites = _safe_int(row._mapping['cnt'] if row else 0)
             except Exception:
                 bank_favorites = 0
 
             try:
-                row = conn.execute(
-                    f"SELECT COUNT(*) AS cnt, SUM(COALESCE(wrong_count,1)) AS times FROM user_bank_mistakes WHERE user_id=? AND bank_id IN ({placeholders})",
-                    [int(uid)] + bank_ids,
+                p = {'bm_uid': int(uid)}
+                p.update(bk_in_params)
+                row = db.session.execute(
+                    text(f"SELECT COUNT(*) AS cnt, SUM(COALESCE(wrong_count,1)) AS times FROM user_bank_mistakes WHERE user_id=:bm_uid AND {bk_in_clause}"),
+                    p,
                 ).fetchone()
-                bank_mistakes = _safe_int(row['cnt'] if row else 0)
-                bank_mistakes_times = _safe_int(row['times'] if row else 0)
+                bank_mistakes = _safe_int(row._mapping['cnt'] if row else 0)
+                bank_mistakes_times = _safe_int(row._mapping['times'] if row else 0)
             except Exception:
                 bank_mistakes = 0
                 bank_mistakes_times = 0
 
             try:
-                row = conn.execute(
-                    f"SELECT COUNT(*) AS cnt FROM user_bank_questions WHERE bank_id IN ({placeholders})",
-                    bank_ids,
+                row = db.session.execute(
+                    text(f"SELECT COUNT(*) AS cnt FROM user_bank_questions WHERE {bk_in_clause}"),
+                    bk_in_params,
                 ).fetchone()
-                bank_total_questions = _safe_int(row['cnt'] if row else 0)
+                bank_total_questions = _safe_int(row._mapping['cnt'] if row else 0)
             except Exception:
                 bank_total_questions = 0
 
             try:
-                rows = conn.execute(
-                    f"""
+                p = {'bs_uid': int(uid)}
+                p.update(bk_in_params)
+                rows = db.session.execute(
+                    text(f"""
                     SELECT DISTINCT DATE(created_at) AS day
                     FROM user_bank_answers
-                    WHERE user_id = ? AND bank_id IN ({placeholders})
+                    WHERE user_id = :bs_uid AND {bk_in_clause}
                     ORDER BY day DESC
                     LIMIT 120
-                    """,
-                    [int(uid)] + bank_ids,
+                    """),
+                    p,
                 ).fetchall()
                 dates = []
                 for r in rows or []:
-                    if r and r['day']:
+                    d = r._mapping['day']
+                    if d:
                         try:
-                            dates.append(datetime.strptime(r['day'], '%Y-%m-%d').date())
+                            if isinstance(d, str):
+                                dates.append(datetime.strptime(d, '%Y-%m-%d').date())
+                            else:
+                                dates.append(d)
                         except Exception:
                             continue
                 bank_streak_dates = dates
@@ -523,23 +526,25 @@ def api_data_ai_advice():
                 bank_streak_dates = []
 
             try:
-                rows = conn.execute(
-                    f"""
+                p = {'wb_uid': int(uid)}
+                p.update(bk_in_params)
+                rows = db.session.execute(
+                    text(f"""
                     SELECT bank_id,
                            COUNT(*) AS answered,
-                           SUM(CASE WHEN is_correct=1 THEN 1 ELSE 0 END) AS correct
+                           SUM(CASE WHEN is_correct=true THEN 1 ELSE 0 END) AS correct
                     FROM user_bank_answers
-                    WHERE user_id = ? AND bank_id IN ({placeholders})
+                    WHERE user_id = :wb_uid AND {bk_in_clause}
                     GROUP BY bank_id
-                    """,
-                    [int(uid)] + bank_ids,
+                    """),
+                    p,
                 ).fetchall()
                 for r in rows or []:
-                    bid = r['bank_id']
+                    bid = r._mapping['bank_id']
                     if bid is None:
                         continue
-                    a = _safe_int(r['answered'])
-                    c = _safe_int(r['correct'])
+                    a = _safe_int(r._mapping['answered'])
+                    c = _safe_int(r._mapping['correct'])
                     if a < 5:
                         continue
                     weak_banks.append({
