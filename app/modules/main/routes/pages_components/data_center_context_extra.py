@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from flask import current_app
 
+from sqlalchemy import text
+
+from app.core.extensions import db
 from app.core.utils.time_utils import today_bj
 
 def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_ids: list, base_ctx: dict) -> dict:
@@ -61,11 +64,7 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
     mistakes_rate = base_ctx.get('mistakes_rate', 0.0)
 
     def _column_exists(table: str, column: str) -> bool:
-        try:
-            rows = conn.execute(f"PRAGMA table_info({table})").fetchall()
-            return any(r and r['name'] == column for r in rows)
-        except Exception:
-            return False
+        return True
 
     mistakes_has_wrong_count = _column_exists('mistakes', 'wrong_count')
 
@@ -89,6 +88,9 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
             return int(x or 0)
         except Exception:
             return default
+
+    def _window_start(window_days: int) -> str:
+        return (datetime.now(timezone.utc) + timedelta(hours=8) - timedelta(days=int(window_days))).strftime('%Y-%m-%d %H:%M:%S')
 
     bank_ids_active = []
     try:
@@ -148,95 +150,95 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
 
         # 公共：错题新增
         try:
-            params = [int(uid), f'-{window_days} days']
+            params = {'uid': int(uid), 'win_start': _window_start(window_days)}
             sql = """
                 SELECT date(m.created_at) AS day, COUNT(*) AS cnt
                 FROM mistakes m
                 JOIN questions q ON m.question_id = q.id
                 LEFT JOIN subjects s ON q.subject_id = s.id
-                WHERE m.user_id = ?
-                  AND (s.is_locked=0 OR s.is_locked IS NULL)
-                  AND m.created_at >= datetime('now', '+8 hours', ?)
+                WHERE m.user_id = :uid
+                  AND (s.is_locked=false OR s.is_locked IS NULL)
+                  AND m.created_at >= :win_start
             """
             if subject_ids:
-                placeholders = ','.join(['?'] * len(subject_ids))
-                sql += f" AND q.subject_id IN ({placeholders})"
-                params.extend(subject_ids)
+                sid_params = {f"sid_{i}": v for i, v in enumerate(subject_ids)}
+                sql += f" AND q.subject_id IN ({','.join(f':sid_{i}' for i in range(len(subject_ids)))})"
+                params.update(sid_params)
             sql += " GROUP BY day ORDER BY day"
-            rows = conn.execute(sql, params).fetchall()
+            rows = db.session.execute(text(sql), params).fetchall()
             for r in rows or []:
-                d = (r['day'] or '')
+                d = (r._mapping['day'] or '')
                 if d:
-                    pub_mis[str(d)] = _safe_int(r['cnt'])
+                    pub_mis[str(d)] = _safe_int(r._mapping['cnt'])
         except Exception:
             pub_mis = {}
 
         # 公共：收藏新增
         try:
-            params = [int(uid), f'-{window_days} days']
+            params = {'uid': int(uid), 'win_start': _window_start(window_days)}
             sql = """
                 SELECT date(f.created_at) AS day, COUNT(*) AS cnt
                 FROM favorites f
                 JOIN questions q ON f.question_id = q.id
                 LEFT JOIN subjects s ON q.subject_id = s.id
-                WHERE f.user_id = ?
-                  AND (s.is_locked=0 OR s.is_locked IS NULL)
-                  AND f.created_at >= datetime('now', '+8 hours', ?)
+                WHERE f.user_id = :uid
+                  AND (s.is_locked=false OR s.is_locked IS NULL)
+                  AND f.created_at >= :win_start
             """
             if subject_ids:
-                placeholders = ','.join(['?'] * len(subject_ids))
-                sql += f" AND q.subject_id IN ({placeholders})"
-                params.extend(subject_ids)
+                sid_params = {f"sid_{i}": v for i, v in enumerate(subject_ids)}
+                sql += f" AND q.subject_id IN ({','.join(f':sid_{i}' for i in range(len(subject_ids)))})"
+                params.update(sid_params)
             sql += " GROUP BY day ORDER BY day"
-            rows = conn.execute(sql, params).fetchall()
+            rows = db.session.execute(text(sql), params).fetchall()
             for r in rows or []:
-                d = (r['day'] or '')
+                d = (r._mapping['day'] or '')
                 if d:
-                    pub_fav[str(d)] = _safe_int(r['cnt'])
+                    pub_fav[str(d)] = _safe_int(r._mapping['cnt'])
         except Exception:
             pub_fav = {}
 
         # 个人题库：错题新增
         try:
-            params = [int(uid), f'-{window_days} days']
+            params = {'uid': int(uid), 'win_start': _window_start(window_days)}
             sql = """
                 SELECT date(created_at) AS day, COUNT(*) AS cnt
                 FROM user_bank_mistakes
-                WHERE user_id = ?
-                  AND created_at >= datetime('now', '+8 hours', ?)
+                WHERE user_id = :uid
+                  AND created_at >= :win_start
             """
             if bank_ids_active:
-                placeholders = ','.join(['?'] * len(bank_ids_active))
-                sql += f" AND bank_id IN ({placeholders})"
-                params.extend(bank_ids_active)
+                bid_params = {f"bid_{i}": v for i, v in enumerate(bank_ids_active)}
+                sql += f" AND bank_id IN ({','.join(f':bid_{i}' for i in range(len(bank_ids_active)))})"
+                params.update(bid_params)
             sql += " GROUP BY day ORDER BY day"
-            rows = conn.execute(sql, params).fetchall()
+            rows = db.session.execute(text(sql), params).fetchall()
             for r in rows or []:
-                d = (r['day'] or '')
+                d = (r._mapping['day'] or '')
                 if d:
-                    bank_mis[str(d)] = _safe_int(r['cnt'])
+                    bank_mis[str(d)] = _safe_int(r._mapping['cnt'])
         except Exception:
             bank_mis = {}
 
         # 个人题库：收藏新增
         try:
-            params = [int(uid), f'-{window_days} days']
+            params = {'uid': int(uid), 'win_start': _window_start(window_days)}
             sql = """
                 SELECT date(created_at) AS day, COUNT(*) AS cnt
                 FROM user_bank_favorites
-                WHERE user_id = ?
-                  AND created_at >= datetime('now', '+8 hours', ?)
+                WHERE user_id = :uid
+                  AND created_at >= :win_start
             """
             if bank_ids_active:
-                placeholders = ','.join(['?'] * len(bank_ids_active))
-                sql += f" AND bank_id IN ({placeholders})"
-                params.extend(bank_ids_active)
+                bid_params = {f"bid_{i}": v for i, v in enumerate(bank_ids_active)}
+                sql += f" AND bank_id IN ({','.join(f':bid_{i}' for i in range(len(bank_ids_active)))})"
+                params.update(bid_params)
             sql += " GROUP BY day ORDER BY day"
-            rows = conn.execute(sql, params).fetchall()
+            rows = db.session.execute(text(sql), params).fetchall()
             for r in rows or []:
-                d = (r['day'] or '')
+                d = (r._mapping['day'] or '')
                 if d:
-                    bank_fav[str(d)] = _safe_int(r['cnt'])
+                    bank_fav[str(d)] = _safe_int(r._mapping['cnt'])
         except Exception:
             bank_fav = {}
 
@@ -263,7 +265,7 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
         pub_mis_type = {}
         pub_mis_type_times = {}
         try:
-            params = [int(uid)]
+            params = {'uid': int(uid)}
             sql = """
                 SELECT COALESCE(q.type, 'unknown') AS p_type,
                        COUNT(*) AS cnt,
@@ -271,22 +273,22 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
                 FROM mistakes m
                 JOIN questions q ON m.question_id = q.id
                 LEFT JOIN subjects s ON q.subject_id = s.id
-                WHERE m.user_id = ?
-                  AND (s.is_locked=0 OR s.is_locked IS NULL)
+                WHERE m.user_id = :uid
+                  AND (s.is_locked=false OR s.is_locked IS NULL)
             """
             if subject_ids:
-                placeholders = ','.join(['?'] * len(subject_ids))
-                sql += f" AND q.subject_id IN ({placeholders})"
-                params.extend(subject_ids)
+                sid_params = {f"sid_{i}": v for i, v in enumerate(subject_ids)}
+                sql += f" AND q.subject_id IN ({','.join(f':sid_{i}' for i in range(len(subject_ids)))})"
+                params.update(sid_params)
             if not mistakes_has_wrong_count:
                 sql = sql.replace("m.wrong_count", "NULL")
             sql += " GROUP BY p_type ORDER BY cnt DESC"
-            rows = conn.execute(sql, params).fetchall()
+            rows = db.session.execute(text(sql), params).fetchall()
             for r in rows or []:
-                k = _pt_to_qt(r['p_type'])
-                pub_mis_type[str(k)] = _safe_int(r['cnt'])
+                k = _pt_to_qt(r._mapping['p_type'])
+                pub_mis_type[str(k)] = _safe_int(r._mapping['cnt'])
                 pub_mis_type_times[str(k)] = (
-                    _safe_int(r['times']) if mistakes_has_wrong_count else _safe_int(r['cnt'])
+                    _safe_int(r._mapping['times']) if mistakes_has_wrong_count else _safe_int(r._mapping['cnt'])
                 )
         except Exception:
             pub_mis_type = {}
@@ -296,27 +298,27 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
         bank_mis_type = {}
         bank_mis_type_times = {}
         try:
-            params = [int(uid)]
+            params = {'uid': int(uid)}
             sql = """
                 SELECT COALESCE(q.type, 'unknown') AS p_type,
                        COUNT(*) AS cnt,
                        SUM(COALESCE(m.wrong_count, 1)) AS times
                 FROM user_bank_mistakes m
                 JOIN user_bank_questions q ON m.question_id = q.id
-                WHERE m.user_id = ?
+                WHERE m.user_id = :uid
             """
             if bank_ids_active:
-                placeholders = ','.join(['?'] * len(bank_ids_active))
-                sql += f" AND m.bank_id IN ({placeholders})"
-                params.extend(bank_ids_active)
+                bid_params = {f"bid_{i}": v for i, v in enumerate(bank_ids_active)}
+                sql += f" AND m.bank_id IN ({','.join(f':bid_{i}' for i in range(len(bank_ids_active)))})"
+                params.update(bid_params)
             if not ubm_has_wrong_count:
                 sql = sql.replace("m.wrong_count", "NULL")
             sql += " GROUP BY p_type ORDER BY cnt DESC"
-            rows = conn.execute(sql, params).fetchall()
+            rows = db.session.execute(text(sql), params).fetchall()
             for r in rows or []:
-                k = _pt_to_qt(r['p_type'])
-                bank_mis_type[str(k)] = _safe_int(r['cnt'])
-                bank_mis_type_times[str(k)] = _safe_int(r['times']) if ubm_has_wrong_count else _safe_int(r['cnt'])
+                k = _pt_to_qt(r._mapping['p_type'])
+                bank_mis_type[str(k)] = _safe_int(r._mapping['cnt'])
+                bank_mis_type_times[str(k)] = _safe_int(r._mapping['times']) if ubm_has_wrong_count else _safe_int(r._mapping['cnt'])
         except Exception:
             bank_mis_type = {}
             bank_mis_type_times = {}
@@ -324,48 +326,48 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
         # 公共收藏：按题型
         pub_fav_type = {}
         try:
-            params = [int(uid)]
+            params = {'uid': int(uid)}
             sql = """
                 SELECT COALESCE(q.type, 'unknown') AS p_type,
                        COUNT(*) AS cnt
                 FROM favorites f
                 JOIN questions q ON f.question_id = q.id
                 LEFT JOIN subjects s ON q.subject_id = s.id
-                WHERE f.user_id = ?
-                  AND (s.is_locked=0 OR s.is_locked IS NULL)
+                WHERE f.user_id = :uid
+                  AND (s.is_locked=false OR s.is_locked IS NULL)
             """
             if subject_ids:
-                placeholders = ','.join(['?'] * len(subject_ids))
-                sql += f" AND q.subject_id IN ({placeholders})"
-                params.extend(subject_ids)
+                sid_params = {f"sid_{i}": v for i, v in enumerate(subject_ids)}
+                sql += f" AND q.subject_id IN ({','.join(f':sid_{i}' for i in range(len(subject_ids)))})"
+                params.update(sid_params)
             sql += " GROUP BY p_type ORDER BY cnt DESC"
-            rows = conn.execute(sql, params).fetchall()
+            rows = db.session.execute(text(sql), params).fetchall()
             for r in rows or []:
-                k = _pt_to_qt(r['p_type'])
-                pub_fav_type[str(k)] = _safe_int(r['cnt'])
+                k = _pt_to_qt(r._mapping['p_type'])
+                pub_fav_type[str(k)] = _safe_int(r._mapping['cnt'])
         except Exception:
             pub_fav_type = {}
 
         # 个人题库收藏：按题型
         bank_fav_type = {}
         try:
-            params = [int(uid)]
+            params = {'uid': int(uid)}
             sql = """
                 SELECT COALESCE(q.type, 'unknown') AS p_type,
                        COUNT(*) AS cnt
                 FROM user_bank_favorites f
                 JOIN user_bank_questions q ON f.question_id = q.id
-                WHERE f.user_id = ?
+                WHERE f.user_id = :uid
             """
             if bank_ids_active:
-                placeholders = ','.join(['?'] * len(bank_ids_active))
-                sql += f" AND f.bank_id IN ({placeholders})"
-                params.extend(bank_ids_active)
+                bid_params = {f"bid_{i}": v for i, v in enumerate(bank_ids_active)}
+                sql += f" AND f.bank_id IN ({','.join(f':bid_{i}' for i in range(len(bank_ids_active)))})"
+                params.update(bid_params)
             sql += " GROUP BY p_type ORDER BY cnt DESC"
-            rows = conn.execute(sql, params).fetchall()
+            rows = db.session.execute(text(sql), params).fetchall()
             for r in rows or []:
-                k = _pt_to_qt(r['p_type'])
-                bank_fav_type[str(k)] = _safe_int(r['cnt'])
+                k = _pt_to_qt(r._mapping['p_type'])
+                bank_fav_type[str(k)] = _safe_int(r._mapping['cnt'])
         except Exception:
             bank_fav_type = {}
 
@@ -373,7 +375,7 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
         pub_mis_diff = {}
         pub_mis_diff_times = {}
         try:
-            params = [int(uid)]
+            params = {'uid': int(uid)}
             sql = """
                 SELECT COALESCE(q.difficulty, 1) AS difficulty,
                        COUNT(*) AS cnt,
@@ -381,21 +383,21 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
                 FROM mistakes m
                 JOIN questions q ON m.question_id = q.id
                 LEFT JOIN subjects s ON q.subject_id = s.id
-                WHERE m.user_id = ?
-                  AND (s.is_locked=0 OR s.is_locked IS NULL)
+                WHERE m.user_id = :uid
+                  AND (s.is_locked=false OR s.is_locked IS NULL)
             """
             if subject_ids:
-                placeholders = ','.join(['?'] * len(subject_ids))
-                sql += f" AND q.subject_id IN ({placeholders})"
-                params.extend(subject_ids)
+                sid_params = {f"sid_{i}": v for i, v in enumerate(subject_ids)}
+                sql += f" AND q.subject_id IN ({','.join(f':sid_{i}' for i in range(len(subject_ids)))})"
+                params.update(sid_params)
             if not mistakes_has_wrong_count:
                 sql = sql.replace("m.wrong_count", "NULL")
             sql += " GROUP BY difficulty ORDER BY difficulty ASC"
-            rows = conn.execute(sql, params).fetchall()
+            rows = db.session.execute(text(sql), params).fetchall()
             for r in rows or []:
-                k = _safe_int(r['difficulty'], 1)
-                pub_mis_diff[k] = _safe_int(r['cnt'])
-                pub_mis_diff_times[k] = _safe_int(r['times']) if mistakes_has_wrong_count else _safe_int(r['cnt'])
+                k = _safe_int(r._mapping['difficulty'], 1)
+                pub_mis_diff[k] = _safe_int(r._mapping['cnt'])
+                pub_mis_diff_times[k] = _safe_int(r._mapping['times']) if mistakes_has_wrong_count else _safe_int(r._mapping['cnt'])
         except Exception:
             pub_mis_diff = {}
             pub_mis_diff_times = {}
@@ -404,27 +406,27 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
         bank_mis_diff = {}
         bank_mis_diff_times = {}
         try:
-            params = [int(uid)]
+            params = {'uid': int(uid)}
             sql = """
                 SELECT COALESCE(q.difficulty, 1) AS difficulty,
                        COUNT(*) AS cnt,
                        SUM(COALESCE(m.wrong_count, 1)) AS times
                 FROM user_bank_mistakes m
                 JOIN user_bank_questions q ON m.question_id = q.id
-                WHERE m.user_id = ?
+                WHERE m.user_id = :uid
             """
             if bank_ids_active:
-                placeholders = ','.join(['?'] * len(bank_ids_active))
-                sql += f" AND m.bank_id IN ({placeholders})"
-                params.extend(bank_ids_active)
+                bid_params = {f"bid_{i}": v for i, v in enumerate(bank_ids_active)}
+                sql += f" AND m.bank_id IN ({','.join(f':bid_{i}' for i in range(len(bank_ids_active)))})"
+                params.update(bid_params)
             if not ubm_has_wrong_count:
                 sql = sql.replace("m.wrong_count", "NULL")
             sql += " GROUP BY difficulty ORDER BY difficulty ASC"
-            rows = conn.execute(sql, params).fetchall()
+            rows = db.session.execute(text(sql), params).fetchall()
             for r in rows or []:
-                k = _safe_int(r['difficulty'], 1)
-                bank_mis_diff[k] = _safe_int(r['cnt'])
-                bank_mis_diff_times[k] = _safe_int(r['times']) if ubm_has_wrong_count else _safe_int(r['cnt'])
+                k = _safe_int(r._mapping['difficulty'], 1)
+                bank_mis_diff[k] = _safe_int(r._mapping['cnt'])
+                bank_mis_diff_times[k] = _safe_int(r._mapping['times']) if ubm_has_wrong_count else _safe_int(r._mapping['cnt'])
         except Exception:
             bank_mis_diff = {}
             bank_mis_diff_times = {}
@@ -432,48 +434,48 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
         # 公共收藏：按难度
         pub_fav_diff = {}
         try:
-            params = [int(uid)]
+            params = {'uid': int(uid)}
             sql = """
                 SELECT COALESCE(q.difficulty, 1) AS difficulty,
                        COUNT(*) AS cnt
                 FROM favorites f
                 JOIN questions q ON f.question_id = q.id
                 LEFT JOIN subjects s ON q.subject_id = s.id
-                WHERE f.user_id = ?
-                  AND (s.is_locked=0 OR s.is_locked IS NULL)
+                WHERE f.user_id = :uid
+                  AND (s.is_locked=false OR s.is_locked IS NULL)
             """
             if subject_ids:
-                placeholders = ','.join(['?'] * len(subject_ids))
-                sql += f" AND q.subject_id IN ({placeholders})"
-                params.extend(subject_ids)
+                sid_params = {f"sid_{i}": v for i, v in enumerate(subject_ids)}
+                sql += f" AND q.subject_id IN ({','.join(f':sid_{i}' for i in range(len(subject_ids)))})"
+                params.update(sid_params)
             sql += " GROUP BY difficulty ORDER BY difficulty ASC"
-            rows = conn.execute(sql, params).fetchall()
+            rows = db.session.execute(text(sql), params).fetchall()
             for r in rows or []:
-                k = _safe_int(r['difficulty'], 1)
-                pub_fav_diff[k] = _safe_int(r['cnt'])
+                k = _safe_int(r._mapping['difficulty'], 1)
+                pub_fav_diff[k] = _safe_int(r._mapping['cnt'])
         except Exception:
             pub_fav_diff = {}
 
         # 个人题库收藏：按难度
         bank_fav_diff = {}
         try:
-            params = [int(uid)]
+            params = {'uid': int(uid)}
             sql = """
                 SELECT COALESCE(q.difficulty, 1) AS difficulty,
                        COUNT(*) AS cnt
                 FROM user_bank_favorites f
                 JOIN user_bank_questions q ON f.question_id = q.id
-                WHERE f.user_id = ?
+                WHERE f.user_id = :uid
             """
             if bank_ids_active:
-                placeholders = ','.join(['?'] * len(bank_ids_active))
-                sql += f" AND f.bank_id IN ({placeholders})"
-                params.extend(bank_ids_active)
+                bid_params = {f"bid_{i}": v for i, v in enumerate(bank_ids_active)}
+                sql += f" AND f.bank_id IN ({','.join(f':bid_{i}' for i in range(len(bank_ids_active)))})"
+                params.update(bid_params)
             sql += " GROUP BY difficulty ORDER BY difficulty ASC"
-            rows = conn.execute(sql, params).fetchall()
+            rows = db.session.execute(text(sql), params).fetchall()
             for r in rows or []:
-                k = _safe_int(r['difficulty'], 1)
-                bank_fav_diff[k] = _safe_int(r['cnt'])
+                k = _safe_int(r._mapping['difficulty'], 1)
+                bank_fav_diff[k] = _safe_int(r._mapping['cnt'])
         except Exception:
             bank_fav_diff = {}
 
@@ -543,7 +545,7 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
     try:
         pub_mis_subject = []
         try:
-            params = [int(uid)]
+            params = {'uid': int(uid)}
             sql = """
                 SELECT COALESCE(s.name, '未分类') AS name,
                        COUNT(*) AS cnt,
@@ -551,42 +553,42 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
                 FROM mistakes m
                 JOIN questions q ON m.question_id = q.id
                 LEFT JOIN subjects s ON q.subject_id = s.id
-                WHERE m.user_id = ?
-                  AND (s.is_locked=0 OR s.is_locked IS NULL)
+                WHERE m.user_id = :uid
+                  AND (s.is_locked=false OR s.is_locked IS NULL)
             """
             if subject_ids:
-                placeholders = ','.join(['?'] * len(subject_ids))
-                sql += f" AND q.subject_id IN ({placeholders})"
-                params.extend(subject_ids)
+                sid_params = {f"sid_{i}": v for i, v in enumerate(subject_ids)}
+                sql += f" AND q.subject_id IN ({','.join(f':sid_{i}' for i in range(len(subject_ids)))})"
+                params.update(sid_params)
             if not mistakes_has_wrong_count:
                 sql = sql.replace("m.wrong_count", "NULL")
             sql += " GROUP BY name ORDER BY times DESC, cnt DESC LIMIT 10"
-            rows = conn.execute(sql, params).fetchall()
+            rows = db.session.execute(text(sql), params).fetchall()
             for r in rows or []:
-                pub_mis_subject.append({'name': r['name'] or '未分类', 'count': _safe_int(r['cnt']), 'times': _safe_int(r['times'])})
+                pub_mis_subject.append({'name': r._mapping['name'] or '未分类', 'count': _safe_int(r._mapping['cnt']), 'times': _safe_int(r._mapping['times'])})
         except Exception:
             pub_mis_subject = []
 
         pub_fav_subject = []
         try:
-            params = [int(uid)]
+            params = {'uid': int(uid)}
             sql = """
                 SELECT COALESCE(s.name, '未分类') AS name,
                        COUNT(*) AS cnt
                 FROM favorites f
                 JOIN questions q ON f.question_id = q.id
                 LEFT JOIN subjects s ON q.subject_id = s.id
-                WHERE f.user_id = ?
-                  AND (s.is_locked=0 OR s.is_locked IS NULL)
+                WHERE f.user_id = :uid
+                  AND (s.is_locked=false OR s.is_locked IS NULL)
             """
             if subject_ids:
-                placeholders = ','.join(['?'] * len(subject_ids))
-                sql += f" AND q.subject_id IN ({placeholders})"
-                params.extend(subject_ids)
+                sid_params = {f"sid_{i}": v for i, v in enumerate(subject_ids)}
+                sql += f" AND q.subject_id IN ({','.join(f':sid_{i}' for i in range(len(subject_ids)))})"
+                params.update(sid_params)
             sql += " GROUP BY name ORDER BY cnt DESC LIMIT 10"
-            rows = conn.execute(sql, params).fetchall()
+            rows = db.session.execute(text(sql), params).fetchall()
             for r in rows or []:
-                pub_fav_subject.append({'name': r['name'] or '未分类', 'count': _safe_int(r['cnt'])})
+                pub_fav_subject.append({'name': r._mapping['name'] or '未分类', 'count': _safe_int(r._mapping['cnt'])})
         except Exception:
             pub_fav_subject = []
 
@@ -616,12 +618,12 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
 
         mistakes_top_items = []
         for r in pub_mis_subject:
-            mistakes_top_items.append({'name': r['name'], 'source': 'public', 'count': int(r.get('count') or 0), 'times': int(r.get('times') or 0)})
+            mistakes_top_items.append({'name': r._mapping['name'], 'source': 'public', 'count': int(r.get('count') or 0), 'times': int(r.get('times') or 0)})
         for r in (bank_mis_rank or [])[:12]:
             if int(r.get('times') or 0) <= 0 and int(r.get('count') or 0) <= 0:
                 continue
             mistakes_top_items.append({
-                'name': r['name'],
+                'name': r._mapping['name'],
                 'source': 'banks',
                 'count': int(r.get('count') or 0),
                 'times': int(r.get('times') or 0),
@@ -632,12 +634,12 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
 
         favorites_top_items = []
         for r in pub_fav_subject:
-            favorites_top_items.append({'name': r['name'], 'source': 'public', 'count': int(r.get('count') or 0)})
+            favorites_top_items.append({'name': r._mapping['name'], 'source': 'public', 'count': int(r.get('count') or 0)})
         for r in (bank_fav_rank or [])[:12]:
             if int(r.get('count') or 0) <= 0:
                 continue
             favorites_top_items.append({
-                'name': r['name'],
+                'name': r._mapping['name'],
                 'source': 'banks',
                 'count': int(r.get('count') or 0),
                 'bank_id': int(r.get('bank_id') or 0),
@@ -660,7 +662,7 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
                 if ubm_has_wrong_count:
                     order_by = "m.wrong_count DESC, COALESCE(m.updated_at, m.created_at) DESC" if ubm_has_updated_at else "m.wrong_count DESC, m.created_at DESC"
 
-                placeholders = ','.join(['?'] * len(bank_ids_active))
+                bid_in = ','.join(f':bid_{i}' for i in range(len(bank_ids_active)))
                 sql = f"""
                      SELECT
                        b.id AS bank_id,
@@ -674,32 +676,34 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
                     FROM user_bank_mistakes m
                     JOIN user_bank_questions q ON m.question_id = q.id
                     JOIN user_question_banks b ON m.bank_id = b.id
-                    WHERE m.user_id = ?
-                      AND b.id IN ({placeholders})
+                    WHERE m.user_id = :uid
+                      AND b.id IN ({bid_in})
                       AND b.status = 1
                     ORDER BY {order_by}
                     LIMIT 8
                 """
-                rows = conn.execute(sql, [int(uid)] + bank_ids_active).fetchall()
+                bid_params = {f'bid_{i}': v for i, v in enumerate(bank_ids_active)}
+                bid_params['uid'] = int(uid)
+                rows = db.session.execute(text(sql), bid_params).fetchall()
                 recent_mistakes_bank = []
                 for r in rows or []:
-                     content = (r['content'] or '').strip().replace('\r', ' ').replace('\n', ' ')
+                     content = (r._mapping['content'] or '').strip().replace('\r', ' ').replace('\n', ' ')
                      snippet = content[:80] + ('...' if len(content) > 80 else '')
                      recent_mistakes_bank.append({
-                         'bank_id': int(r['bank_id'] or 0),
-                         'bank_name': r['bank_name'] or '',
-                        'q_type': _pt_to_qt(r['p_type']),
-                         'question_id': int(r['question_id'] or 0),
+                         'bank_id': int(r._mapping['bank_id'] or 0),
+                         'bank_name': r._mapping['bank_name'] or '',
+                        'q_type': _pt_to_qt(r._mapping['p_type']),
+                         'question_id': int(r._mapping['question_id'] or 0),
                          'snippet': snippet,
-                         'difficulty': int(r['difficulty'] or 1),
-                         'wrong_count': int(r['wrong_count'] or 1) if ubm_has_wrong_count else None,
+                         'difficulty': int(r._mapping['difficulty'] or 1),
+                         'wrong_count': int(r._mapping['wrong_count'] or 1) if ubm_has_wrong_count else None,
                      })
             except Exception:
                 recent_mistakes_bank = []
 
             # 收藏：按最新收藏
             try:
-                placeholders = ','.join(['?'] * len(bank_ids_active))
+                bid_in = ','.join(f':bid_{i}' for i in range(len(bank_ids_active)))
                 sql = f"""
                      SELECT
                        b.id AS bank_id,
@@ -712,24 +716,26 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
                     FROM user_bank_favorites f
                     JOIN user_bank_questions q ON f.question_id = q.id
                     JOIN user_question_banks b ON f.bank_id = b.id
-                    WHERE f.user_id = ?
-                      AND b.id IN ({placeholders})
+                    WHERE f.user_id = :uid
+                      AND b.id IN ({bid_in})
                       AND b.status = 1
                     ORDER BY f.created_at DESC
                     LIMIT 8
                 """
-                rows = conn.execute(sql, [int(uid)] + bank_ids_active).fetchall()
+                bid_params = {f'bid_{i}': v for i, v in enumerate(bank_ids_active)}
+                bid_params['uid'] = int(uid)
+                rows = db.session.execute(text(sql), bid_params).fetchall()
                 recent_favorites_bank = []
                 for r in rows or []:
-                     content = (r['content'] or '').strip().replace('\r', ' ').replace('\n', ' ')
+                     content = (r._mapping['content'] or '').strip().replace('\r', ' ').replace('\n', ' ')
                      snippet = content[:80] + ('...' if len(content) > 80 else '')
                      recent_favorites_bank.append({
-                         'bank_id': int(r['bank_id'] or 0),
-                         'bank_name': r['bank_name'] or '',
-                        'q_type': _pt_to_qt(r['p_type']),
-                         'question_id': int(r['question_id'] or 0),
+                         'bank_id': int(r._mapping['bank_id'] or 0),
+                         'bank_name': r._mapping['bank_name'] or '',
+                        'q_type': _pt_to_qt(r._mapping['p_type']),
+                         'question_id': int(r._mapping['question_id'] or 0),
                          'snippet': snippet,
-                         'difficulty': int(r['difficulty'] or 1),
+                         'difficulty': int(r._mapping['difficulty'] or 1),
                      })
             except Exception:
                 recent_favorites_bank = []
@@ -751,25 +757,25 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
             FROM favorites f
             JOIN questions q ON f.question_id = q.id
             LEFT JOIN subjects s ON q.subject_id = s.id
-            WHERE f.user_id = ? AND (s.is_locked=0 OR s.is_locked IS NULL)
+            WHERE f.user_id = :uid AND (s.is_locked=false OR s.is_locked IS NULL)
         """
-        fav_params = [int(uid)]
+        fav_params = {'uid': int(uid)}
         if subject_ids:
-            placeholders = ','.join(['?'] * len(subject_ids))
-            fav_sql += f" AND q.subject_id IN ({placeholders})"
-            fav_params.extend(subject_ids)
+            sid_params = {f"sid_{i}": v for i, v in enumerate(subject_ids)}
+            fav_sql += f" AND q.subject_id IN ({','.join(f':sid_{i}' for i in range(len(subject_ids)))})"
+            fav_params.update(sid_params)
         fav_sql += " ORDER BY f.created_at DESC LIMIT 8"
-        rows = conn.execute(fav_sql, fav_params).fetchall()
+        rows = db.session.execute(text(fav_sql), fav_params).fetchall()
         recent_favorites_public = []
         for r in rows or []:
-            content = (r['content'] or '').strip().replace('\r', ' ').replace('\n', ' ')
+            content = (r._mapping['content'] or '').strip().replace('\r', ' ').replace('\n', ' ')
             snippet = content[:80] + ('...' if len(content) > 80 else '')
             recent_favorites_public.append({
-                'subject': r['subject'] or '未分类',
-                'q_type': _pt_to_qt(r['p_type']),
-                'question_id': int(r['question_id'] or 0),
+                'subject': r._mapping['subject'] or '未分类',
+                'q_type': _pt_to_qt(r._mapping['p_type']),
+                'question_id': int(r._mapping['question_id'] or 0),
                 'snippet': snippet,
-                'difficulty': int(r['difficulty'] or 1),
+                'difficulty': int(r._mapping['difficulty'] or 1),
             })
     except Exception:
         recent_favorites_public = []
@@ -778,7 +784,7 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
     try:
         from app.modules.quiz.services import question_tags_service as _qts
 
-        store = _qts.load_store(conn, int(uid))
+        store = _qts.load_store(db.session, int(uid))
         bindings = store.get('bindings') if isinstance(store.get('bindings'), dict) else {}
 
         qid_to_tags = {}
@@ -808,23 +814,23 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
         pub_qids = []
         if raw_qids:
             for chunk in _chunks(raw_qids):
-                placeholders = ','.join(['?'] * len(chunk))
+                chunk_params = {f"qid_{i}": v for i, v in enumerate(chunk)}
                 sql = f"""
                     SELECT q.id AS id
                     FROM questions q
                     LEFT JOIN subjects s ON q.subject_id = s.id
-                    WHERE q.id IN ({placeholders})
-                      AND (s.is_locked=0 OR s.is_locked IS NULL)
+                    WHERE q.id IN ({','.join(f':qid_{i}' for i in range(len(chunk)))})
+                      AND (s.is_locked=false OR s.is_locked IS NULL)
                 """
-                params = list(chunk)
+                params = dict(chunk_params)
                 if subject_ids:
-                    placeholders2 = ','.join(['?'] * len(subject_ids))
-                    sql += f" AND q.subject_id IN ({placeholders2})"
-                    params.extend(subject_ids)
-                rows = conn.execute(sql, params).fetchall()
+                    sid_params = {f"sid_{i}": v for i, v in enumerate(subject_ids)}
+                    sql += f" AND q.subject_id IN ({','.join(f':sid_{i}' for i in range(len(subject_ids)))})"
+                    params.update(sid_params)
+                rows = db.session.execute(text(sql), params).fetchall()
                 for r in rows or []:
-                    if r and r['id'] is not None:
-                        pub_qids.append(int(r['id']))
+                    if r and r._mapping['id'] is not None:
+                        pub_qids.append(int(r._mapping['id']))
 
         pub_qids = sorted(set(pub_qids))
         pub_qid_set = set(pub_qids)
@@ -836,40 +842,42 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
 
         if pub_qids:
             for chunk in _chunks(pub_qids):
-                placeholders = ','.join(['?'] * len(chunk))
+                chunk_params = {f"p_{i}": v for i, v in enumerate(chunk)}
+                chunk_params["uid"] = int(uid)
+                chunk_in = ",".join(f":p_{i}" for i in range(len(chunk)))
 
-                rows = conn.execute(
-                    f"SELECT question_id AS qid, is_correct AS is_correct FROM user_answers WHERE user_id=? AND question_id IN ({placeholders})",
-                    [int(uid)] + list(chunk),
+                rows = db.session.execute(
+                    text(f"SELECT question_id AS qid, is_correct AS is_correct FROM user_answers WHERE user_id=:uid AND question_id IN ({chunk_in})"),
+                    chunk_params,
                 ).fetchall()
                 for r in rows or []:
-                    if r and r['qid'] is not None:
-                        ua_map[int(r['qid'])] = 1 if int(r['is_correct'] or 0) == 1 else 0
+                    if r and r._mapping["qid"] is not None:
+                        ua_map[int(r._mapping["qid"])] = 1 if int(r._mapping["is_correct"] or 0) == 1 else 0
 
-                rows = conn.execute(
-                    f"SELECT question_id AS qid FROM favorites WHERE user_id=? AND question_id IN ({placeholders})",
-                    [int(uid)] + list(chunk),
+                rows = db.session.execute(
+                    text(f"SELECT question_id AS qid FROM favorites WHERE user_id=:uid AND question_id IN ({chunk_in})"),
+                    chunk_params,
                 ).fetchall()
                 for r in rows or []:
-                    if r and r['qid'] is not None:
-                        fav_set.add(int(r['qid']))
+                    if r and r._mapping["qid"] is not None:
+                        fav_set.add(int(r._mapping["qid"]))
 
                 if mistakes_has_wrong_count:
-                    rows = conn.execute(
-                        f"SELECT question_id AS qid, wrong_count AS wrong_count FROM mistakes WHERE user_id=? AND question_id IN ({placeholders})",
-                        [int(uid)] + list(chunk),
+                    rows = db.session.execute(
+                            text(f"SELECT question_id AS qid, wrong_count AS wrong_count FROM mistakes WHERE user_id=:uid AND question_id IN ({chunk_in})"),
+                            chunk_params,
                     ).fetchall()
                     for r in rows or []:
-                        if r and r['qid'] is not None:
-                            mis_times[int(r['qid'])] = _safe_int(r['wrong_count'], 1)
+                            if r and r._mapping["qid"] is not None:
+                                mis_times[int(r._mapping["qid"])] = _safe_int(r._mapping["wrong_count"], 1)
                 else:
-                    rows = conn.execute(
-                        f"SELECT question_id AS qid FROM mistakes WHERE user_id=? AND question_id IN ({placeholders})",
-                        [int(uid)] + list(chunk),
+                    rows = db.session.execute(
+                            text(f"SELECT question_id AS qid FROM mistakes WHERE user_id=:uid AND question_id IN ({chunk_in})"),
+                            chunk_params,
                     ).fetchall()
                     for r in rows or []:
-                        if r and r['qid'] is not None:
-                            mis_times[int(r['qid'])] = 1
+                            if r and r._mapping["qid"] is not None:
+                                mis_times[int(r._mapping["qid"])] = 1
 
         # 聚合标签
         pub_stats = {}
@@ -928,7 +936,7 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
 
             for bid in bank_ids_active:
                 try:
-                    store2 = _load_bank_store(conn, int(bid), int(uid)) or {}
+                    store2 = _load_bank_store(db.session, int(bid), int(uid)) or {}
                 except Exception:
                     store2 = {}
                 qtags = store2.get('question_tags') if isinstance(store2.get('question_tags'), dict) else {}
@@ -955,13 +963,16 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
         bank_qids = []
         if bank_raw_qids and bank_ids_active:
             for chunk in _chunks(bank_raw_qids):
-                placeholders = ','.join(['?'] * len(chunk))
-                placeholders2 = ','.join(['?'] * len(bank_ids_active))
-                sql = f"SELECT id FROM user_bank_questions WHERE id IN ({placeholders}) AND bank_id IN ({placeholders2})"
-                rows = conn.execute(sql, list(chunk) + list(bank_ids_active)).fetchall()
+                chunk_params = {f"p_{i}": v for i, v in enumerate(chunk)}
+                bid_params = {f"bid_{i}": v for i, v in enumerate(bank_ids_active)}
+                chunk_params.update(bid_params)
+                chunk_in = ",".join(f":p_{i}" for i in range(len(chunk)))
+                bid_in = ",".join(f":bid_{i}" for i in range(len(bank_ids_active)))
+                sql = f"SELECT id FROM user_bank_questions WHERE id IN ({chunk_in}) AND bank_id IN ({bid_in})"
+                rows = db.session.execute(text(sql), chunk_params).fetchall()
                 for r in rows or []:
-                    if r and r['id'] is not None:
-                        bank_qids.append(int(r['id']))
+                    if r and r._mapping['id'] is not None:
+                        bank_qids.append(int(r._mapping['id']))
 
         bank_qids = sorted(set(bank_qids))
         bank_qid_set = set(bank_qids)
@@ -972,39 +983,42 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
 
         if bank_qids:
             for chunk in _chunks(bank_qids):
-                placeholders = ','.join(['?'] * len(chunk))
-                rows = conn.execute(
-                    f"SELECT question_id AS qid, is_correct AS is_correct FROM user_bank_answers WHERE user_id=? AND question_id IN ({placeholders})",
-                    [int(uid)] + list(chunk),
+                chunk_params = {f"p_{i}": v for i, v in enumerate(chunk)}
+                chunk_params["uid"] = int(uid)
+                chunk_in = ",".join(f":p_{i}" for i in range(len(chunk)))
+
+                rows = db.session.execute(
+                    text(f"SELECT question_id AS qid, is_correct AS is_correct FROM user_bank_answers WHERE user_id=:uid AND question_id IN ({chunk_in})"),
+                    chunk_params,
                 ).fetchall()
                 for r in rows or []:
-                    if r and r['qid'] is not None:
-                        ub_ans_map[int(r['qid'])] = 1 if int(r['is_correct'] or 0) == 1 else 0
+                    if r and r._mapping["qid"] is not None:
+                        ub_ans_map[int(r._mapping["qid"])] = 1 if int(r._mapping["is_correct"] or 0) == 1 else 0
 
-                rows = conn.execute(
-                    f"SELECT question_id AS qid FROM user_bank_favorites WHERE user_id=? AND question_id IN ({placeholders})",
-                    [int(uid)] + list(chunk),
+                rows = db.session.execute(
+                    text(f"SELECT question_id AS qid FROM user_bank_favorites WHERE user_id=:uid AND question_id IN ({chunk_in})"),
+                    chunk_params,
                 ).fetchall()
                 for r in rows or []:
-                    if r and r['qid'] is not None:
-                        ub_fav_set.add(int(r['qid']))
+                    if r and r._mapping["qid"] is not None:
+                        ub_fav_set.add(int(r._mapping["qid"]))
 
-                if _column_exists('user_bank_mistakes', 'wrong_count'):
-                    rows = conn.execute(
-                        f"SELECT question_id AS qid, wrong_count AS wrong_count FROM user_bank_mistakes WHERE user_id=? AND question_id IN ({placeholders})",
-                        [int(uid)] + list(chunk),
+                if _column_exists("user_bank_mistakes", "wrong_count"):
+                    rows = db.session.execute(
+                            text(f"SELECT question_id AS qid, wrong_count AS wrong_count FROM user_bank_mistakes WHERE user_id=:uid AND question_id IN ({chunk_in})"),
+                            chunk_params,
                     ).fetchall()
                     for r in rows or []:
-                        if r and r['qid'] is not None:
-                            ub_mis_times[int(r['qid'])] = _safe_int(r['wrong_count'], 1)
+                            if r and r._mapping["qid"] is not None:
+                                ub_mis_times[int(r._mapping["qid"])] = _safe_int(r._mapping["wrong_count"], 1)
                 else:
-                    rows = conn.execute(
-                        f"SELECT question_id AS qid FROM user_bank_mistakes WHERE user_id=? AND question_id IN ({placeholders})",
-                        [int(uid)] + list(chunk),
+                    rows = db.session.execute(
+                            text(f"SELECT question_id AS qid FROM user_bank_mistakes WHERE user_id=:uid AND question_id IN ({chunk_in})"),
+                            chunk_params,
                     ).fetchall()
                     for r in rows or []:
-                        if r and r['qid'] is not None:
-                            ub_mis_times[int(r['qid'])] = 1
+                            if r and r._mapping["qid"] is not None:
+                                ub_mis_times[int(r._mapping["qid"])] = 1
 
         bank_stats = {}
         banks_tagged_questions = 0
