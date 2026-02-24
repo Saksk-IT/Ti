@@ -3,8 +3,12 @@
 from datetime import datetime, timedelta
 
 from flask import request, jsonify, session, g, current_app
-from app.core.utils.database import get_db
-from app.core.extensions import limiter
+from app.core.extensions import db, limiter
+from sqlalchemy import text
+from app.models.quiz import Favorite, Mistake
+from app.models.user import User
+from app.models.study import StudyLearning, StudyReview
+from app.models.user_bank import UserBankMistake
 from app.core.utils.decorators import jwt_required, auth_required, current_user_id
 from app.core.utils.redis_utils import redis_get_json, redis_set_json
 from app.core.utils.cache_utils import (
@@ -82,38 +86,39 @@ def api_get_questions():
         # 兼容：小程序用 source=all/favorites/mistakes；旧逻辑也允许 mode=favorites/mistakes
         custom_ids = _parse_id_list(request.args.get('ids') or request.args.get('question_ids'))
         if custom_ids:
-            conn = get_db()
             from app.core.utils.subject_permissions import get_user_restricted_subjects
 
             restricted_subject_ids = set(get_user_restricted_subjects(int(user_id))) if user_id else set()
 
-            placeholders = ",".join(["?"] * len(custom_ids))
-            rows = conn.execute(
-                f"""
+            # 构建命名参数占位符
+            id_params = {f"id_{i}": cid for i, cid in enumerate(custom_ids)}
+            id_placeholders = ", ".join(f":id_{i}" for i in range(len(custom_ids)))
+            rows = db.session.execute(
+                text(f"""
                 SELECT q.*, s.name as subject, s.is_locked as subject_is_locked,
                        CASE WHEN f.id IS NOT NULL THEN 1 ELSE 0 END as is_fav,
                        CASE WHEN m.id IS NOT NULL THEN 1 ELSE 0 END as is_mistake
                 FROM questions q
                 LEFT JOIN subjects s ON q.subject_id = s.id
-                LEFT JOIN favorites f ON q.id = f.question_id AND f.user_id = ?
-                LEFT JOIN mistakes m ON q.id = m.question_id AND m.user_id = ?
-                WHERE q.id IN ({placeholders})
-                """,
-                [int(user_id), int(user_id)] + list(custom_ids),
+                LEFT JOIN favorites f ON q.id = f.question_id AND f.user_id = :uid
+                LEFT JOIN mistakes m ON q.id = m.question_id AND m.user_id = :uid
+                WHERE q.id IN ({id_placeholders})
+                """),
+                {"uid": int(user_id), **id_params},
             ).fetchall()
 
-            q_map = {int(r['id']): r for r in (rows or []) if r and r['id'] is not None}
+            q_map = {int(r._mapping['id']): r for r in (rows or []) if r and r._mapping['id'] is not None}
             ordered_rows = [q_map[i] for i in custom_ids if i in q_map]
 
             questions = []
             for row in ordered_rows:
                 try:
-                    if row['subject_is_locked'] is not None and int(row['subject_is_locked']) == 1:
+                    if row._mapping['subject_is_locked'] is not None and int(row._mapping['subject_is_locked']) == 1:
                         continue
                 except Exception:
                     pass
 
-                q = Question._row_to_internal(row, scope="question_center")
+                q = Question._row_to_internal(row._mapping, scope="question_center")
                 sid = q.get('subject_id')
                 if sid and sid in restricted_subject_ids:
                     continue
@@ -132,7 +137,7 @@ def api_get_questions():
         # 标签筛选（用户私有）
         if tag and str(tag).lower() != 'all':
             from app.modules.quiz.services.question_tags_service import get_question_ids_by_tag
-            conn = get_db()
+            conn = db.session.connection()
             tag_ids = get_question_ids_by_tag(conn, user_id, tag)
             if not tag_ids:
                 questions = []
@@ -264,16 +269,9 @@ def api_get_question_detail(question_id):
                 'message': '无权限访问该题目'
             }), 403
         
-        # 获取收藏和错题状态
-        conn = get_db()
-        fav_row = conn.execute(
-            'SELECT id FROM favorites WHERE user_id = ? AND question_id = ?',
-            (user_id, question_id)
-        ).fetchone()
-        mistake_row = conn.execute(
-            'SELECT id FROM mistakes WHERE user_id = ? AND question_id = ?',
-            (user_id, question_id)
-        ).fetchone()
+        # 获取收藏和错题状态（ORM）
+        fav_row = Favorite.query.filter_by(user_id=user_id, question_id=question_id).first()
+        mistake_row = Mistake.query.filter_by(user_id=user_id, question_id=question_id).first()
         
         q_type_val = question.get('q_type', '')
         options = parse_options(question.get('options'))
@@ -343,7 +341,6 @@ def api_get_question_detail(question_id):
             'message': f'获取题目详情失败: {str(e)}'
         }), 500
 
-
 @quiz_api_bp.route('/questions/<int:question_id>', methods=['PUT'])
 @auth_required  # 支持 session 和 JWT
 @limiter.exempt
@@ -370,24 +367,11 @@ def api_update_question(question_id: int):
     if explanation is not None and not isinstance(explanation, str):
         return jsonify({'status': 'error', 'message': 'explanation 必须为字符串'}), 400
 
-    conn = get_db()
-
-    # 权限：管理员/科目管理员
-    try:
-        user_cols = [r['name'] for r in conn.execute("PRAGMA table_info(users)").fetchall()]
-    except Exception:
-        user_cols = []
-    role_fields = ['is_admin']
-    if 'is_subject_admin' in user_cols:
-        role_fields.append('is_subject_admin')
-    role_row = conn.execute(
-        f"SELECT {', '.join(role_fields)} FROM users WHERE id = ?",
-        (int(uid),)
-    ).fetchone()
-    if not role_row:
+    # 权限：管理员/科目管理员（ORM）
+    user_obj = User.query.get(int(uid))
+    if not user_obj:
         return jsonify({'status': 'error', 'message': '用户不存在'}), 404
-    role_row = dict(role_row)
-    can_edit = bool(role_row.get('is_admin')) or bool(role_row.get('is_subject_admin'))
+    can_edit = bool(user_obj.is_admin) or bool(getattr(user_obj, 'is_subject_admin', False))
     if not can_edit:
         return jsonify({'status': 'forbidden', 'message': '需要管理员或科目管理员权限'}), 403
 
@@ -447,19 +431,20 @@ def api_update_question(question_id: int):
         diff_val = 1
         tags_val = None
         try:
-            extra = conn.execute(
-                'SELECT difficulty, tags FROM questions WHERE id = ?',
-                (int(question_id),),
+            extra = db.session.execute(
+                text('SELECT difficulty, tags FROM questions WHERE id = :qid'),
+                {"qid": int(question_id)},
             ).fetchone()
             if extra is not None:
                 try:
-                    diff_val = int(extra['difficulty'] or 1)
+                    diff_val = int(extra._mapping['difficulty'] or 1)
                 except Exception:
                     diff_val = 1
-                tags_val = extra['tags']
+                tags_val = extra._mapping['tags']
         except Exception:
             pass
 
+        conn = db.session.connection()
         try_sync_questions_portable_columns(
             conn,
             question_id=int(question_id),
@@ -471,38 +456,32 @@ def api_update_question(question_id: int):
             difficulty=diff_val,
             tags=tags_val,
         )
-        conn.commit()
+        db.session.commit()
         try:
             bump_questions_version()
         except Exception:
             pass
     except Exception as e:
-        conn.rollback()
+        db.session.rollback()
         return jsonify({'status': 'error', 'message': f'保存失败: {str(e)}'}), 500
 
     # 返回更新后的题目（沿用小程序详情接口格式）
     try:
-        row = conn.execute(
-            '''
+        row = db.session.execute(
+            text('''
             SELECT q.*, s.name as subject
             FROM questions q
             LEFT JOIN subjects s ON q.subject_id = s.id
-            WHERE q.id = ?
-            ''',
-            (int(question_id),)
+            WHERE q.id = :qid
+            '''),
+            {"qid": int(question_id)},
         ).fetchone()
         if not row:
             return jsonify({'status': 'error', 'message': '题目不存在'}), 404
-        q = dict(row)
+        q = dict(row._mapping)
 
-        fav_row = conn.execute(
-            'SELECT id FROM favorites WHERE user_id = ? AND question_id = ?',
-            (int(uid), int(question_id))
-        ).fetchone()
-        mistake_row = conn.execute(
-            'SELECT id FROM mistakes WHERE user_id = ? AND question_id = ?',
-            (int(uid), int(question_id))
-        ).fetchone()
+        fav_row = Favorite.query.filter_by(user_id=int(uid), question_id=int(question_id)).first()
+        mistake_row = Mistake.query.filter_by(user_id=int(uid), question_id=int(question_id)).first()
 
         # DB 已为 PQF 列：把 type/content/options/answer/analysis 转成旧字段（q_type/答案字符串/填空 __）
         from app.core.utils.portable_question_format import portable_question_to_internal
@@ -568,7 +547,7 @@ def study_learn_record():
     if is_correct is None:
         return jsonify({'status': 'error', 'message': 'is_correct 参数错误'}), 400
 
-    conn = get_db()
+    conn = db.session.connection()
     scope_id, err = _resolve_study_scope(conn, source, subject, bank_id, uid)
     if err:
         return jsonify({'status': 'error', 'message': err}), 403
@@ -579,17 +558,14 @@ def study_learn_record():
     now = now_bj()
     now_str = dt_to_str(now)
 
-    row = conn.execute(
-        """SELECT streak, is_learned, correct_count, wrong_count
-           FROM study_learning
-           WHERE user_id = ? AND source = ? AND scope_id = ? AND question_id = ?""",
-        (uid, source, scope_id, q_id),
-    ).fetchone()
+    sl_row = StudyLearning.query.filter_by(
+        user_id=uid, source=source, scope_id=scope_id, question_id=q_id
+    ).first()
 
-    prev_streak = int(row['streak']) if row and row['streak'] is not None else 0
-    prev_learned = int(row['is_learned']) if row and row['is_learned'] is not None else 0
-    prev_correct = int(row['correct_count']) if row and row['correct_count'] is not None else 0
-    prev_wrong = int(row['wrong_count']) if row and row['wrong_count'] is not None else 0
+    prev_streak = int(sl_row.streak) if sl_row and sl_row.streak is not None else 0
+    prev_learned = int(sl_row.is_learned) if sl_row and sl_row.is_learned is not None else 0
+    prev_correct = int(sl_row.correct_count) if sl_row and sl_row.correct_count is not None else 0
+    prev_wrong = int(sl_row.wrong_count) if sl_row and sl_row.wrong_count is not None else 0
 
     is_correct = bool(is_correct)
     new_streak = (prev_streak + 1) if is_correct else 0
@@ -598,84 +574,64 @@ def study_learn_record():
     new_wrong = prev_wrong + (0 if is_correct else 1)
     last_result = 'correct' if is_correct else 'wrong'
 
-    if row:
-        conn.execute(
-            """UPDATE study_learning
-               SET streak = ?, is_learned = ?, correct_count = ?, wrong_count = ?,
-                   last_result = ?, last_answered_at = ?, updated_at = ?
-               WHERE user_id = ? AND source = ? AND scope_id = ? AND question_id = ?""",
-            (new_streak, new_learned, new_correct, new_wrong, last_result, now_str, now_str, uid, source, scope_id, q_id),
-        )
+    if sl_row:
+        sl_row.streak = new_streak
+        sl_row.is_learned = bool(new_learned)
+        sl_row.correct_count = new_correct
+        sl_row.wrong_count = new_wrong
+        sl_row.last_result = last_result
+        sl_row.last_answered_at = now
+        sl_row.updated_at = now
     else:
-        conn.execute(
-            """INSERT INTO study_learning
-               (user_id, source, scope_id, question_id, streak, is_learned, correct_count, wrong_count, last_result, last_answered_at, created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (uid, source, scope_id, q_id, new_streak, new_learned, new_correct, new_wrong, last_result, now_str, now_str, now_str),
+        sl_row = StudyLearning(
+            user_id=uid, source=source, scope_id=scope_id, question_id=q_id,
+            streak=new_streak, is_learned=bool(new_learned),
+            correct_count=new_correct, wrong_count=new_wrong,
+            last_result=last_result, last_answered_at=now,
+            created_at=now, updated_at=now,
         )
+        db.session.add(sl_row)
 
     # 同步维护错题本（仅记录错误）
     if not is_correct:
-        try:
-            if source == 'user_bank':
-                conn.execute(
-                    """INSERT INTO user_bank_mistakes (user_id, bank_id, question_id, wrong_count, created_at, updated_at)
-                       VALUES (?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                       ON CONFLICT(user_id, question_id) DO UPDATE SET
-                         wrong_count = wrong_count + 1,
-                         updated_at = CURRENT_TIMESTAMP""",
-                    (uid, scope_id, q_id),
-                )
+        if source == 'user_bank':
+            ubm = UserBankMistake.query.filter_by(user_id=uid, question_id=q_id).first()
+            if ubm:
+                ubm.wrong_count = (ubm.wrong_count or 0) + 1
             else:
-                conn.execute(
-                    """INSERT INTO mistakes (user_id, question_id, wrong_count, created_at, updated_at, last_updated)
-                       VALUES (?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                       ON CONFLICT(user_id, question_id) DO UPDATE SET
-                         wrong_count = wrong_count + 1,
-                         updated_at = CURRENT_TIMESTAMP,
-                         last_updated = CURRENT_TIMESTAMP""",
-                    (uid, q_id),
-                )
-        except Exception:
-            if source == 'user_bank':
-                conn.execute(
-                    "INSERT INTO user_bank_mistakes (user_id, bank_id, question_id, wrong_count) VALUES (?, ?, ?, 1) ON CONFLICT(user_id, question_id) DO UPDATE SET wrong_count = wrong_count + 1",
-                    (uid, scope_id, q_id),
-                )
+                db.session.add(UserBankMistake(
+                    user_id=uid, bank_id=scope_id, question_id=q_id, wrong_count=1,
+                ))
+        else:
+            m = Mistake.query.filter_by(user_id=uid, question_id=q_id).first()
+            if m:
+                m.wrong_count = (m.wrong_count or 0) + 1
             else:
-                conn.execute(
-                    "INSERT INTO mistakes (user_id, question_id, wrong_count) VALUES (?, ?, 1) ON CONFLICT(user_id, question_id) DO UPDATE SET wrong_count = wrong_count + 1",
-                    (uid, q_id),
-                )
+                db.session.add(Mistake(
+                    user_id=uid, question_id=q_id, wrong_count=1,
+                ))
 
     next_due_str = None
     if new_learned and not prev_learned:
         due_at = next_4am(now)
         next_due_str = dt_to_str(due_at)
-        review_row = conn.execute(
-            """SELECT id, is_mastered, next_due_at, review_level
-               FROM study_review
-               WHERE user_id = ? AND source = ? AND scope_id = ? AND question_id = ?""",
-            (uid, source, scope_id, q_id),
-        ).fetchone()
+        review_row = StudyReview.query.filter_by(
+            user_id=uid, source=source, scope_id=scope_id, question_id=q_id
+        ).first()
         if review_row:
-            conn.execute(
-                """UPDATE study_review
-                   SET is_mastered = 0,
-                       next_due_at = COALESCE(next_due_at, ?),
-                       updated_at = ?
-                   WHERE user_id = ? AND source = ? AND scope_id = ? AND question_id = ?""",
-                (next_due_str, now_str, uid, source, scope_id, q_id),
-            )
+            review_row.is_mastered = False
+            if review_row.next_due_at is None:
+                review_row.next_due_at = due_at
+            review_row.updated_at = now
         else:
-            conn.execute(
-                """INSERT INTO study_review
-                   (user_id, source, scope_id, question_id, review_level, next_due_at, last_review_at, last_rating, lapse_count, is_mastered, created_at, updated_at)
-                   VALUES (?, ?, ?, ?, 0, ?, NULL, NULL, 0, 0, ?, ?)""",
-                (uid, source, scope_id, q_id, next_due_str, now_str, now_str),
-            )
+            db.session.add(StudyReview(
+                user_id=uid, source=source, scope_id=scope_id, question_id=q_id,
+                review_level=0, next_due_at=due_at, last_review_at=None,
+                last_rating=None, lapse_count=0, is_mastered=False,
+                created_at=now, updated_at=now,
+            ))
 
-    conn.commit()
+    db.session.commit()
     try:
         bump_user_quiz_version(int(uid))
     except Exception:
@@ -700,22 +656,20 @@ def study_review_summary():
     subject = request.args.get('subject')
     bank_id = request.args.get('bank_id')
 
-    conn = get_db()
+    conn = db.session.connection()
     scope_id, err = _resolve_study_scope(conn, source, subject, bank_id, uid)
     if err:
         return jsonify({'status': 'error', 'message': err}), 403
 
     now_str = dt_to_str(now_bj())
-    row = conn.execute(
-        """SELECT COUNT(1) AS cnt
-           FROM study_review
-           WHERE user_id = ? AND source = ? AND scope_id = ?
-             AND is_mastered = 0
-             AND next_due_at IS NOT NULL
-             AND next_due_at <= ?""",
-        (uid, source, scope_id, now_str),
-    ).fetchone()
-    due_count = int(row['cnt']) if row else 0
+    due_count = StudyReview.query.filter(
+        StudyReview.user_id == uid,
+        StudyReview.source == source,
+        StudyReview.scope_id == scope_id,
+        StudyReview.is_mastered == False,
+        StudyReview.next_due_at.isnot(None),
+        StudyReview.next_due_at <= now_str,
+    ).count()
     return jsonify({'status': 'success', 'data': {'due_count': due_count}})
 
 
@@ -740,7 +694,7 @@ def study_review_record():
     except (TypeError, ValueError):
         return jsonify({'status': 'error', 'message': 'question_id 参数错误'}), 400
 
-    conn = get_db()
+    conn = db.session.connection()
     scope_id, err = _resolve_study_scope(conn, source, subject, bank_id, uid)
     if err:
         return jsonify({'status': 'error', 'message': err}), 403
@@ -748,15 +702,12 @@ def study_review_record():
     if not _check_question_scope(conn, source, scope_id, q_id):
         return jsonify({'status': 'error', 'message': '题目不存在或不属于当前范围'}), 400
 
-    row = conn.execute(
-        """SELECT review_level, lapse_count
-           FROM study_review
-           WHERE user_id = ? AND source = ? AND scope_id = ? AND question_id = ?""",
-        (uid, source, scope_id, q_id),
-    ).fetchone()
+    sr_row = StudyReview.query.filter_by(
+        user_id=uid, source=source, scope_id=scope_id, question_id=q_id
+    ).first()
 
-    prev_level = int(row['review_level']) if row and row['review_level'] is not None else 0
-    prev_lapse = int(row['lapse_count']) if row and row['lapse_count'] is not None else 0
+    prev_level = int(sr_row.review_level) if sr_row and sr_row.review_level is not None else 0
+    prev_lapse = int(sr_row.lapse_count) if sr_row and sr_row.lapse_count is not None else 0
 
     if rating == 'known':
         new_level = clamp_level(prev_level + 1)
@@ -772,23 +723,23 @@ def study_review_record():
     now_str = dt_to_str(now)
     next_due_str = dt_to_str(calc_next_due(new_level, now))
 
-    if row:
-        conn.execute(
-            """UPDATE study_review
-               SET review_level = ?, next_due_at = ?, last_review_at = ?, last_rating = ?,
-                   lapse_count = ?, is_mastered = 0, updated_at = ?
-               WHERE user_id = ? AND source = ? AND scope_id = ? AND question_id = ?""",
-            (new_level, next_due_str, now_str, rating, lapse, now_str, uid, source, scope_id, q_id),
-        )
+    if sr_row:
+        sr_row.review_level = new_level
+        sr_row.next_due_at = calc_next_due(new_level, now)
+        sr_row.last_review_at = now
+        sr_row.last_rating = rating
+        sr_row.lapse_count = lapse
+        sr_row.is_mastered = False
+        sr_row.updated_at = now
     else:
-        conn.execute(
-            """INSERT INTO study_review
-               (user_id, source, scope_id, question_id, review_level, next_due_at, last_review_at, last_rating, lapse_count, is_mastered, created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)""",
-            (uid, source, scope_id, q_id, new_level, next_due_str, now_str, rating, lapse, now_str, now_str),
-        )
+        db.session.add(StudyReview(
+            user_id=uid, source=source, scope_id=scope_id, question_id=q_id,
+            review_level=new_level, next_due_at=calc_next_due(new_level, now),
+            last_review_at=now, last_rating=rating, lapse_count=lapse,
+            is_mastered=False, created_at=now, updated_at=now,
+        ))
 
-    conn.commit()
+    db.session.commit()
     return jsonify({'status': 'success', 'data': {'review_level': new_level, 'next_due_at': next_due_str}})
 
 
@@ -810,7 +761,7 @@ def study_review_master():
     except (TypeError, ValueError):
         return jsonify({'status': 'error', 'message': 'question_id 参数错误'}), 400
 
-    conn = get_db()
+    conn = db.session.connection()
     scope_id, err = _resolve_study_scope(conn, source, subject, bank_id, uid)
     if err:
         return jsonify({'status': 'error', 'message': err}), 403
@@ -821,28 +772,24 @@ def study_review_master():
     now = now_bj()
     now_str = dt_to_str(now)
     mastered = 1 if bool(is_mastered) else 0
-    next_due_str = None if mastered else dt_to_str(next_4am(now))
 
-    row = conn.execute(
-        """SELECT id FROM study_review
-           WHERE user_id = ? AND source = ? AND scope_id = ? AND question_id = ?""",
-        (uid, source, scope_id, q_id),
-    ).fetchone()
+    sr_row = StudyReview.query.filter_by(
+        user_id=uid, source=source, scope_id=scope_id, question_id=q_id
+    ).first()
 
-    if row:
-        conn.execute(
-            """UPDATE study_review
-               SET is_mastered = ?, next_due_at = ?, updated_at = ?
-               WHERE user_id = ? AND source = ? AND scope_id = ? AND question_id = ?""",
-            (mastered, next_due_str, now_str, uid, source, scope_id, q_id),
-        )
+    next_due_dt = None if mastered else next_4am(now)
+
+    if sr_row:
+        sr_row.is_mastered = bool(mastered)
+        sr_row.next_due_at = next_due_dt
+        sr_row.updated_at = now
     else:
-        conn.execute(
-            """INSERT INTO study_review
-               (user_id, source, scope_id, question_id, review_level, next_due_at, last_review_at, last_rating, lapse_count, is_mastered, created_at, updated_at)
-               VALUES (?, ?, ?, ?, 0, ?, NULL, NULL, 0, ?, ?, ?)""",
-            (uid, source, scope_id, q_id, next_due_str, mastered, now_str, now_str),
-        )
+        db.session.add(StudyReview(
+            user_id=uid, source=source, scope_id=scope_id, question_id=q_id,
+            review_level=0, next_due_at=next_due_dt, last_review_at=None,
+            last_rating=None, lapse_count=0, is_mastered=bool(mastered),
+            created_at=now, updated_at=now,
+        ))
 
-    conn.commit()
+    db.session.commit()
     return jsonify({'status': 'success', 'data': {'is_mastered': mastered}})
