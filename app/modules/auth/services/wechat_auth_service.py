@@ -7,33 +7,24 @@ import requests
 import json
 from typing import Dict, Any, Optional
 from flask import current_app
-from app.core.utils.database import get_db
-from app.core.models.user import User
+
+from app.core.extensions import db
+from app.models.user import User
 
 
 class WechatAuthService:
     """微信认证服务"""
-    
+
     @staticmethod
     def verify_code(code: str) -> Dict[str, Any]:
-        """
-        验证微信code，返回openid和session_key
-        
-        Args:
-            code: 微信登录code
-        
-        Returns:
-            包含openid和session_key的字典，如果失败返回错误信息
-        """
-        # 从配置或环境变量获取微信小程序配置
+        """验证微信code，返回openid和session_key"""
         appid = current_app.config.get('WECHAT_APPID') or current_app.config.get('WX_APPID')
         secret = current_app.config.get('WECHAT_SECRET') or current_app.config.get('WX_SECRET')
-        
+
         if not appid or not secret:
             current_app.logger.error('微信小程序配置缺失：WECHAT_APPID 或 WECHAT_SECRET')
             return {'error': '微信小程序配置缺失'}
-        
-        # 调用微信API
+
         url = 'https://api.weixin.qq.com/sns/jscode2session'
         params = {
             'appid': appid,
@@ -41,21 +32,19 @@ class WechatAuthService:
             'js_code': code,
             'grant_type': 'authorization_code'
         }
-        
+
         try:
             response = requests.get(url, params=params, timeout=10)
             data = response.json()
-            
-            # 检查是否有错误
+
             if 'errcode' in data:
                 current_app.logger.warning(f'微信登录失败: {data.get("errmsg", "未知错误")}, errcode: {data.get("errcode")}')
                 return {'error': data.get('errmsg', '微信登录失败')}
-            
-            # 返回openid和session_key
+
             return {
                 'openid': data.get('openid'),
                 'session_key': data.get('session_key'),
-                'unionid': data.get('unionid')  # 可选，需要开放平台
+                'unionid': data.get('unionid')
             }
         except requests.RequestException as e:
             current_app.logger.error(f'微信API请求失败: {str(e)}')
@@ -63,99 +52,80 @@ class WechatAuthService:
         except Exception as e:
             current_app.logger.error(f'微信登录异常: {str(e)}')
             return {'error': '微信登录失败'}
-    
+
     @staticmethod
     def get_or_create_user(openid: str, user_info: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """
-        根据openid获取或创建用户
-        
-        Args:
-            openid: 微信openid
-            user_info: 微信用户信息（可选，包含nickName、avatarUrl等）
-        
-        Returns:
-            用户信息字典，包含is_new_user字段表示是否为新用户
-        """
+        """根据openid获取或创建用户"""
         if not openid:
             raise ValueError('openid不能为空')
-        
-        conn = get_db()
-        
-        # 先查找是否已存在该openid的用户
-        row = conn.execute(
-            'SELECT * FROM users WHERE openid = ?', (openid,)
-        ).fetchone()
-        
-        if row:
-            # 用户已存在，更新用户信息（如果需要）
-            user = dict(row)
+
+        user = User.query.filter_by(openid=openid).first()
+
+        if user:
             is_new_user = False
-            
-            # 如果提供了用户信息，可以更新头像和昵称（可选）
+
             if user_info:
-                updates = []
-                params = []
-                
-                # 更新头像（如果提供）
-                if user_info.get('avatarUrl') and not user.get('avatar'):
-                    updates.append('avatar = ?')
-                    params.append(user_info.get('avatarUrl'))
-                
-                # 更新用户名（如果为空或默认用户名）
-                if user_info.get('nickName') and (not user.get('username') or user.get('username', '').startswith('微信用户_')):
-                    # 检查用户名是否已被占用
-                    existing = conn.execute(
-                        'SELECT id FROM users WHERE username = ? AND id != ?',
-                        (user_info.get('nickName'), user['id'])
-                    ).fetchone()
+                changed = False
+                if user_info.get('avatarUrl') and not user.avatar:
+                    user.avatar = user_info.get('avatarUrl')
+                    changed = True
+
+                if user_info.get('nickName') and (not user.username or user.username.startswith('微信用户_')):
+                    existing = User.query.filter(
+                        User.username == user_info.get('nickName'),
+                        User.id != user.id
+                    ).first()
                     if not existing:
-                        updates.append('username = ?')
-                        params.append(user_info.get('nickName'))
-                
-                if updates:
-                    params.append(user['id'])
-                    sql = f"UPDATE users SET {', '.join(updates)} WHERE id = ?"
-                    conn.execute(sql, params)
-                    conn.commit()
-                    # 重新获取用户信息
-                    row = conn.execute('SELECT * FROM users WHERE id = ?', (user['id'],)).fetchone()
-                    user = dict(row)
-            
-            user['is_new_user'] = False
-            return user
+                        user.username = user_info.get('nickName')
+                        changed = True
+
+                if changed:
+                    db.session.commit()
+
+            result = {
+                'id': user.id, 'username': user.username, 'is_admin': user.is_admin,
+                'is_locked': user.is_locked, 'session_version': user.session_version,
+                'avatar': user.avatar, 'contact': user.contact, 'college': user.college,
+                'email': user.email, 'email_verified': user.email_verified,
+                'openid': user.openid, 'has_password_set': user.has_password_set,
+                'is_subject_admin': user.is_subject_admin,
+                'is_notification_admin': user.is_notification_admin,
+                'created_at': user.created_at, 'is_new_user': False,
+            }
+            return result
         else:
-            # 新用户，创建账户
             username = user_info.get('nickName') if user_info and user_info.get('nickName') else f'微信用户_{openid[-6:]}'
-            
-            # 检查用户名是否已被占用
-            existing = conn.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone()
+
+            existing = User.query.filter_by(username=username).first()
             if existing:
-                # 如果用户名被占用，添加后缀
                 counter = 1
                 while True:
                     new_username = f'{username}_{counter}'
-                    existing = conn.execute('SELECT id FROM users WHERE username = ?', (new_username,)).fetchone()
-                    if not existing:
+                    if not User.query.filter_by(username=new_username).first():
                         username = new_username
                         break
                     counter += 1
-            
-            # 创建新用户
+
             avatar = user_info.get('avatarUrl') if user_info else None
-            
-            # 新用户不需要password_hash（微信登录不需要密码）
-            conn.execute(
-                '''INSERT INTO users (username, openid, avatar, password_hash, has_password_set)
-                   VALUES (?, ?, ?, ?, ?)''',
-                (username, openid, avatar, '', 0)
+
+            new_user = User(
+                username=username, openid=openid, avatar=avatar,
+                password_hash='', has_password_set=False,
             )
-            conn.commit()
-            
-            # 获取新创建的用户
-            row = conn.execute('SELECT * FROM users WHERE openid = ?', (openid,)).fetchone()
-            user = dict(row)
-            user['is_new_user'] = True
-            
+            db.session.add(new_user)
+            db.session.commit()
+
             current_app.logger.info(f'新用户注册: {username} (openid: {openid})')
-            return user
+
+            result = {
+                'id': new_user.id, 'username': new_user.username, 'is_admin': new_user.is_admin,
+                'is_locked': new_user.is_locked, 'session_version': new_user.session_version,
+                'avatar': new_user.avatar, 'contact': new_user.contact, 'college': new_user.college,
+                'email': new_user.email, 'email_verified': new_user.email_verified,
+                'openid': new_user.openid, 'has_password_set': new_user.has_password_set,
+                'is_subject_admin': new_user.is_subject_admin,
+                'is_notification_admin': new_user.is_notification_admin,
+                'created_at': new_user.created_at, 'is_new_user': True,
+            }
+            return result
 

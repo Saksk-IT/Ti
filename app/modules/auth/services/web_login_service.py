@@ -9,15 +9,15 @@ from __future__ import annotations
 import json
 import os
 import secrets
-import sqlite3
 import time
 from dataclasses import dataclass
 from typing import Any, Optional
 
 from flask import current_app
 
-from app.core.models.user import User
-from app.core.utils.database import get_db
+from app.core.extensions import db
+from app.models.user import User
+from app.models.quiz import UserProgress
 from .wechat_minicode_service import WechatMiniCodeService
 
 
@@ -43,14 +43,14 @@ def _json_loads(raw: str) -> Any:
     return json.loads(raw) if raw else None
 
 
-def _get_kv_owner_user_id(conn) -> Optional[int]:
+def _get_kv_owner_user_id() -> Optional[int]:
     preferred = int(current_app.config.get("KV_OWNER_USER_ID") or 1)
-    row = conn.execute("SELECT id FROM users WHERE id=?", (preferred,)).fetchone()
-    if row:
+    user = User.query.get(preferred)
+    if user:
         return preferred
-    row = conn.execute("SELECT id FROM users ORDER BY id ASC LIMIT 1").fetchone()
-    if row:
-        return int(row["id"])
+    first = User.query.order_by(User.id.asc()).first()
+    if first:
+        return first.id
     return None
 
 
@@ -60,59 +60,41 @@ class ProgressKV:
 
     @staticmethod
     def create() -> "ProgressKV":
-        conn = get_db()
-        owner = _get_kv_owner_user_id(conn)
+        owner = _get_kv_owner_user_id()
         if not owner:
             raise RuntimeError("系统未初始化用户数据（users 为空），无法创建扫码登录会话")
         return ProgressKV(owner_user_id=owner)
 
     def get(self, key: str) -> Optional[dict]:
-        conn = get_db()
-        row = conn.execute(
-            "SELECT data FROM user_progress WHERE user_id=? AND p_key=?",
-            (self.owner_user_id, key),
-        ).fetchone()
+        row = UserProgress.query.filter_by(
+            user_id=self.owner_user_id, p_key=key
+        ).first()
         if not row:
             return None
         try:
-            return _json_loads(row["data"])
+            return _json_loads(row.data)
         except Exception:
             return None
 
     def set(self, key: str, value: dict) -> None:
-        conn = get_db()
         data_json = _json_dumps(value)
-        try:
-            conn.execute(
-                """
-                INSERT INTO user_progress (user_id, p_key, data, updated_at, created_at)
-                VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                ON CONFLICT(user_id, p_key) DO UPDATE SET
-                  data = excluded.data,
-                  updated_at = CURRENT_TIMESTAMP
-                """,
-                (self.owner_user_id, key, data_json),
+        row = UserProgress.query.filter_by(
+            user_id=self.owner_user_id, p_key=key
+        ).first()
+        if row:
+            row.data = data_json
+        else:
+            row = UserProgress(
+                user_id=self.owner_user_id, p_key=key, data=data_json
             )
-        except Exception:
-            conn.execute(
-                """
-                INSERT INTO user_progress (user_id, p_key, data, updated_at)
-                VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-                ON CONFLICT(user_id, p_key) DO UPDATE SET
-                  data = excluded.data,
-                  updated_at = CURRENT_TIMESTAMP
-                """,
-                (self.owner_user_id, key, data_json),
-            )
-        conn.commit()
+            db.session.add(row)
+        db.session.commit()
 
     def delete(self, key: str) -> None:
-        conn = get_db()
-        conn.execute(
-            "DELETE FROM user_progress WHERE user_id=? AND p_key=?",
-            (self.owner_user_id, key),
-        )
-        conn.commit()
+        UserProgress.query.filter_by(
+            user_id=self.owner_user_id, p_key=key
+        ).delete()
+        db.session.commit()
 
 
 class WebLoginService:
@@ -294,13 +276,13 @@ class WebWechatBindService:
         sid = secrets.token_hex(8)  # 16 chars
         nonce = secrets.token_hex(4)  # 8 chars
         now = _now_ms()
-        user = User.get_by_id(int(web_user_id))
+        conn_user = User.query.get(int(web_user_id))
         data = {
             "sid": sid,
             "nonce": nonce,
             "state": "pending",
             "web_user_id": int(web_user_id),
-            "web_username": user.get("username") if user else None,
+            "web_username": conn_user.username if conn_user else None,
             "created_at": now,
             "expires_at": _ms_from_now(WEB_WECHAT_BIND_SESSION_EXPIRE_SECONDS),
             "confirmed_at": None,
@@ -342,21 +324,20 @@ class WebWechatBindService:
         if not web_user_id:
             raise RuntimeError("会话数据异常")
 
-        conn = get_db()
-        # 检查 openid 是否已绑定其他用户
-        row = conn.execute("SELECT id FROM users WHERE openid = ? LIMIT 1", (openid,)).fetchone()
-        if row and int(row["id"]) != web_user_id:
+        existing = User.query.filter(User.openid == openid).first()
+        if existing and existing.id != web_user_id:
             raise RuntimeError("该微信已绑定其他账号")
 
         # 绑定 openid 到当前 web 用户
         try:
-            conn.execute("UPDATE users SET openid = ? WHERE id = ?", (openid, web_user_id))
-            conn.commit()
-        except sqlite3.IntegrityError:
-            conn.rollback()
-            raise RuntimeError("该微信已绑定其他账号")
+            target_user = User.query.get(web_user_id)
+            if target_user:
+                target_user.openid = openid
+                db.session.commit()
+            else:
+                raise RuntimeError("用户不存在")
         except Exception:
-            conn.rollback()
+            db.session.rollback()
             raise
 
         data["state"] = "bound"
@@ -464,20 +445,21 @@ class WechatTempTokenService:
 
 
 def set_web_session(user_id: int) -> dict:
-    """
-    扫码 exchange 时写入 Web session（保持与 /api/login 一致的字段）
-    """
+    """扫码 exchange 时写入 Web session（保持与 /api/login 一致的字段）"""
     from flask import session
-    user = User.get_by_id(user_id)
+    user = User.query.get(user_id)
     if not user:
         raise FileNotFoundError("用户不存在")
 
     session.permanent = True
-    session["user_id"] = user["id"]
-    session["username"] = user.get("username")
-    session["is_admin"] = bool(user.get("is_admin", 0))
-    session["is_subject_admin"] = bool(user.get("is_subject_admin", 0))
-    session["is_notification_admin"] = bool(user.get("is_notification_admin", 0))
-    session["session_version"] = user.get("session_version") or 0
+    session["user_id"] = user.id
+    session["username"] = user.username
+    session["is_admin"] = bool(user.is_admin)
+    session["is_subject_admin"] = bool(user.is_subject_admin)
+    session["is_notification_admin"] = bool(user.is_notification_admin)
+    session["session_version"] = user.session_version or 0
     session["remember"] = True
-    return user
+    return {
+        'id': user.id, 'username': user.username, 'is_admin': user.is_admin,
+        'session_version': user.session_version,
+    }
