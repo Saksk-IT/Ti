@@ -200,7 +200,7 @@
       </view>
     </scroll-view>
 
-    <!-- 底部快捷菜单（个人资料 / 主题 / 字体 / 退出登录） -->
+    <!-- 底部快捷菜单（个人资料 / 主题 / 字体 / 设置 / 退出登录） -->
     <view class="quick-menu-layer" wx:if="{{actionMenuOpen || themeMenuOpen || fontMenuOpen}}">
       <view class="quick-menu-mask" catchtap="onQuickMenuMaskTap"></view>
 
@@ -218,6 +218,10 @@
           <image class="quick-icon" src="/images/icons/type.svg" mode="aspectFit"></image>
           <text class="quick-text">字体</text>
           <text class="quick-chev">›</text>
+        </view>
+        <view class="quick-item" bindtap="onQuickNavTap" data-nav-type="redirectTo" data-url="/pages/settings-center-v2/settings-center-v2" aria-role="button" aria-label="设置">
+          <image class="quick-icon" src="/images/icons/settings.svg" mode="aspectFit"></image>
+          <text class="quick-text">设置</text>
         </view>
         <view class="quick-item danger" bindtap="onLogoutTap" aria-role="button" aria-label="退出登录">
           <image class="quick-icon" src="/images/icons/logout.svg" mode="aspectFit"></image>
