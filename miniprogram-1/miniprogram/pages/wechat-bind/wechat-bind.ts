@@ -1,22 +1,7 @@
 import { api } from '../../utils/api';
-import { safeNavigate } from '../../utils/nav';
+import { safeNavigate, consumePendingMiniRedirect } from '../../utils/nav';
 
 const HOME_URL = '/pages/hub-v2/hub-v2';
-
-const PENDING_MINI_REDIRECT_KEY = 'pendingMiniRedirect';
-
-function consumePendingMiniRedirect(): string {
-  try {
-    const raw = wx.getStorageSync(PENDING_MINI_REDIRECT_KEY);
-    const url = String(raw || '').trim();
-    if (!url) return '';
-    wx.removeStorageSync(PENDING_MINI_REDIRECT_KEY);
-    if (!url.startsWith('/')) return '';
-    return url;
-  } catch (e) {
-    return '';
-  }
-}
 
 function navigateAfterBind(): void {
   const next = consumePendingMiniRedirect();

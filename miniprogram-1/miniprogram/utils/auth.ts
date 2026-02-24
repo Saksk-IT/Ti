@@ -8,10 +8,8 @@ export function wechatLogin(): Promise<'success' | 'need_bind'> {
         if (res.code) {
           // 直接使用 code 登录，不强制获取用户信息
           // 首次未绑定时：由后端返回 need_bind，让用户选择创建/绑定
-          console.log('开始调用登录API，code:', res.code);
               api.wechatLogin(res.code, undefined, false)
                 .then((data: any) => {
-              console.log('登录API返回数据:', data);
               if (data && data.need_bind && data.wechat_temp_token) {
                 wx.setStorageSync('wechatTempToken', data.wechat_temp_token);
                 resolve('need_bind');
@@ -24,7 +22,6 @@ export function wechatLogin(): Promise<'success' | 'need_bind'> {
               }
               wx.setStorageSync('token', data.token);
               if (data.user_info) wx.setStorageSync('userInfo', data.user_info);
-              console.log('登录成功，token已保存');
               resolve('success');
                 })
             .catch((err) => {

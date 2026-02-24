@@ -136,7 +136,7 @@ function getDevPort(): number {
   return Math.floor(n);
 }
 
-function getWxPlatform(): string {
+export function getWxPlatform(): string {
   try {
     const info = (wx as any).getDeviceInfo ? (wx as any).getDeviceInfo() : null;
     const p = info && (info as any).platform;

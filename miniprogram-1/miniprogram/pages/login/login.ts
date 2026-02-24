@@ -2,25 +2,9 @@
 import { wechatLogin } from '../../utils/auth';
 import { api } from '../../utils/api';
 import { config } from '../../utils/config';
-import { safeNavigate } from '../../utils/nav';
+import { safeNavigate, consumePendingMiniRedirect } from '../../utils/nav';
 
 const HOME_URL = '/pages/hub-v2/hub-v2';
-
-const PENDING_MINI_REDIRECT_KEY = 'pendingMiniRedirect';
-
-function consumePendingMiniRedirect(): string {
-  try {
-    const raw = wx.getStorageSync(PENDING_MINI_REDIRECT_KEY);
-    const url = String(raw || '').trim();
-    if (!url) return '';
-    wx.removeStorageSync(PENDING_MINI_REDIRECT_KEY);
-    // 基本校验：防止误写入导致跳转异常
-    if (!url.startsWith('/')) return '';
-    return url;
-  } catch (e) {
-    return '';
-  }
-}
 
 function navigateAfterLogin(): void {
   const next = consumePendingMiniRedirect();

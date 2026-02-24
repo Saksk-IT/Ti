@@ -167,4 +167,10 @@ App<IAppOption>({
     themeManager.applySystemUI();
     maybeSyncUserSettings();
   },
+  onError(err: string) {
+    console.error('[App.onError]', err);
+  },
+  onUnhandledRejection(event: WechatMiniprogram.OnUnhandledRejectionListenerResult) {
+    console.error('[App.onUnhandledRejection]', event.reason);
+  },
 });

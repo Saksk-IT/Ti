@@ -191,3 +191,19 @@ export function safeNavigate(url: string, navType?: any): void {
   } catch (e) {}
   scheduleStart();
 }
+
+const PENDING_MINI_REDIRECT_KEY = 'pendingMiniRedirect';
+
+/** 消费并返回待跳转的小程序页面路径（一次性读取后清除） */
+export function consumePendingMiniRedirect(): string {
+  try {
+    const raw = wx.getStorageSync(PENDING_MINI_REDIRECT_KEY);
+    const url = String(raw || '').trim();
+    if (!url) return '';
+    wx.removeStorageSync(PENDING_MINI_REDIRECT_KEY);
+    if (!url.startsWith('/')) return '';
+    return url;
+  } catch (e) {
+    return '';
+  }
+}

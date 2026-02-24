@@ -7,6 +7,18 @@
 
 import { api } from './api';
 
+// Fisher-Yates 洗牌算法（均匀分布）
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = array.slice();
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = shuffled[i];
+    shuffled[i] = shuffled[j];
+    shuffled[j] = tmp;
+  }
+  return shuffled;
+}
+
 // ============================================
 // 类型定义
 // ============================================
@@ -399,7 +411,7 @@ export class BankQuizSource implements IQuizSource {
 
     // 如果需要打乱题目
     if (params?.shuffle_questions && Array.isArray(questions)) {
-      questions = [...questions].sort(() => Math.random() - 0.5);
+      questions = shuffleArray(questions);
     }
 
     // 如果需要打乱选项（仅选择题/多选题）
@@ -417,7 +429,7 @@ export class BankQuizSource implements IQuizSource {
             }
           }
           if (Array.isArray(opts) && opts.length > 0) {
-            const shuffled = [...opts].sort(() => Math.random() - 0.5);
+            const shuffled = shuffleArray(opts);
             return { ...q, options: shuffled };
           }
         }

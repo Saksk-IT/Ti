@@ -115,7 +115,15 @@ Page({
 
     // 滑屏切题
     touchStartX: 0,
-    touchStartY: 0
+    touchStartY: 0,
+
+    // 分页懒加载
+    paginationEnabled: false,       // 是否启用分页
+    paginationPage: 1,              // 当前已加载页码
+    paginationPerPage: 50,          // 每页题数
+    paginationTotal: 0,             // 服务端总题数
+    paginationHasMore: false,       // 是否还有更多题目
+    paginationLoading: false        // 是否正在加载更多
   },
 
   // === 进度同步（与 Web 端 /api/progress 互通）===
@@ -558,6 +566,9 @@ Page({
       this.setData({ canEdit });
 
       // 使用数据源适配器获取题目
+      // 分页策略：打乱/reinforce 模式需要完整集合，其余按需分页
+      const needFullLoad = shuffleQuestions || (reinforceIds && reinforceIds.length > 0);
+      const perPage = needFullLoad ? 1000 : this.data.paginationPerPage;
       const result = await quizSource.getQuestions({
         mode: requestMode,
         source: source,
@@ -566,7 +577,8 @@ Page({
         shuffle_questions: shuffleQuestions,
         shuffle_options: shuffleOptions,
         ids: (reinforceIds && reinforceIds.length) ? reinforceIds : undefined,
-        per_page: 1000  // 一次性加载所有题目
+        page: needFullLoad ? undefined : 1,
+        per_page: perPage
       });
 
       let questions = result.questions || [];
@@ -634,7 +646,12 @@ Page({
 
       // 基于已保存的状态，恢复题目列表正确/错误标记
       const restoredRecords = this.buildAnswerRecordsFromStatus(questionsWithPreview, this.progressStatusMap);
-      
+
+      // 分页状态
+      const paginationEnabled = !needFullLoad;
+      const loadedCount = questionsWithPreview.length;
+      const paginationHasMore = paginationEnabled && loadedCount < total;
+
       this.setData({
         questions: questionsWithPreview,
         loading: false,
@@ -642,7 +659,12 @@ Page({
         progress: {
           current: 1,
           total: total
-        }
+        },
+        paginationEnabled,
+        paginationPage: 1,
+        paginationTotal: total,
+        paginationHasMore,
+        paginationLoading: false
       });
       
       // 加载第一题
@@ -679,11 +701,73 @@ Page({
     }
   },
 
+  // 分页懒加载：加载下一批题目
+  async loadMoreQuestions() {
+    if (!quizSource || !this.data.paginationEnabled || !this.data.paginationHasMore || this.data.paginationLoading) {
+      return;
+    }
+
+    const nextPage = this.data.paginationPage + 1;
+    this.setData({ paginationLoading: true });
+
+    try {
+      const { mode, source, qType, tag, shuffleOptions } = this.data;
+      const requestMode = mode === 'reinforce' ? 'quiz' : mode;
+
+      const result = await quizSource.getQuestions({
+        mode: requestMode,
+        source: source,
+        type: qType !== 'all' ? qType : undefined,
+        tag: tag && tag !== 'all' ? tag : undefined,
+        shuffle_questions: false,
+        shuffle_options: !!shuffleOptions,
+        page: nextPage,
+        per_page: this.data.paginationPerPage
+      });
+
+      const newQuestions = (result.questions || []).map((q: any) => {
+        const normalizedOptions = this.normalizeOptions(q.options, q.q_type, q.answer);
+        const imageUrls = uniqUrls([
+          ...normalizeImageUrls(q.image_path),
+          ...extractInlineImageUrls(q.content)
+        ]);
+        const imagePath = imageUrls.length > 0 ? imageUrls[0] : '';
+        const content = q.content || '';
+        const textContent = content.replace(/<[^>]+>/g, '');
+        const preview = textContent.length > 40 ? textContent.substring(0, 40) + '...' : textContent;
+        return Object.assign({}, q, { options: normalizedOptions, image_urls: imageUrls, image_path: imagePath, contentPreview: preview });
+      });
+
+      if (newQuestions.length > 0) {
+        const merged = this.data.questions.concat(newQuestions);
+        const total = result.total || this.data.paginationTotal;
+        const hasMore = merged.length < total;
+
+        this.setData({
+          questions: merged,
+          paginationPage: nextPage,
+          paginationTotal: total,
+          paginationHasMore: hasMore,
+          paginationLoading: false
+        });
+      } else {
+        this.setData({ paginationHasMore: false, paginationLoading: false });
+      }
+    } catch (err) {
+      this.setData({ paginationLoading: false });
+    }
+  },
+
   // 加载指定题目
   loadQuestion(index: number) {
     const { questions } = this.data;
     if (index < 0 || index >= questions.length) {
       return;
+    }
+
+    // 分页预加载：距离已加载末尾 10 题时触发
+    if (this.data.paginationEnabled && this.data.paginationHasMore && index >= questions.length - 10) {
+      this.loadMoreQuestions();
     }
     
     const question = questions[index];
@@ -1212,9 +1296,21 @@ Page({
 
   // 下一题
   onNextQuestion() {
-    const { currentIndex, questions } = this.data;
+    const { currentIndex, questions, paginationEnabled, paginationHasMore } = this.data;
     if (currentIndex < questions.length - 1) {
       this.loadQuestion(currentIndex + 1);
+    } else if (paginationEnabled && paginationHasMore) {
+      // 分页模式：还有更多题目，加载后跳转
+      wx.showLoading({ title: '加载中', mask: false });
+      this.loadMoreQuestions().then(() => {
+        wx.hideLoading();
+        const updated = this.data.questions;
+        if (currentIndex + 1 < updated.length) {
+          this.loadQuestion(currentIndex + 1);
+        } else {
+          this.openQuizSettlement();
+        }
+      });
     } else {
       // 最后一题：进入结算页（替代答题结束弹窗）
       this.openQuizSettlement();

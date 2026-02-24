@@ -165,7 +165,7 @@ function applyTabBarStyle(style: ThemeStyle): void {
   try {
     wx.setTabBarStyle({
       color: isDark ? '#8E8E93' : '#7A7E83',
-      selectedColor: '#007AFF',
+      selectedColor: getCtaColorHex(style),
       backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
       borderStyle: isDark ? 'white' : 'black',
       fail: () => {}
