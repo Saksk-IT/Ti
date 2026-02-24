@@ -1,34 +1,18 @@
 # -*- coding: utf-8 -*-
 """Admin API routes - coding question management."""
 
-import datetime
-import io
 import json
-import os
-import sqlite3
-import zipfile
 
-import pandas as pd
 from flask import (
-    Blueprint,
     current_app,
     jsonify,
-    redirect,
-    render_template,
     request,
-    send_file,
-    send_from_directory,
     session,
-    url_for,
 )
-from werkzeug.security import generate_password_hash
-from werkzeug.utils import secure_filename
 
-from app.core.extensions import limiter
-from app.core.utils.database import get_db
+from app.core.extensions import db
+from sqlalchemy import text
 from app.core.utils.cache_utils import bump_questions_version
-from app.core.utils.fill_blank_parser import parse_fill_blank
-from app.core.utils.validators import parse_int, validate_password
 
 from ..api_bp import admin_api_bp
 from app.core.utils.decorators import admin_required
@@ -39,11 +23,9 @@ from app.core.utils.decorators import admin_required
 def api_get_coding_questions():
     """获取编程题列表"""
     try:
-        conn = get_db()
-
         # 查询所有编程题（coding_questions 表）
-        rows = conn.execute(
-            '''
+        rows = db.session.execute(
+            text('''
             SELECT
                 cq.id,
                 cq.coding_subject_id as subject_id,
@@ -62,12 +44,12 @@ def api_get_coding_questions():
             FROM coding_questions cq
             LEFT JOIN coding_subjects cs ON cq.coding_subject_id = cs.id
             ORDER BY cq.id DESC
-            '''
+            ''')
         ).fetchall()
 
         questions = []
         for row in (rows or []):
-            q = dict(row)
+            q = dict(row._mapping)
             # 兼容旧字段名：content/explanation/tags
             q['content'] = q.get('title') or q.get('description') or ''
             q['explanation'] = q.get('description') or ''
@@ -119,8 +101,6 @@ def api_create_coding_question():
                 'message': '请先登录'
             }), 401
         
-        conn = get_db()
-
         raw_diff = data.get('difficulty') or 'medium'
         diff_map = {'简单': 'easy', '中等': 'medium', '困难': 'hard'}
         difficulty = diff_map.get(str(raw_diff), str(raw_diff))
@@ -149,48 +129,46 @@ def api_create_coding_question():
             memory_limit = 128
         is_enabled = 1 if bool(data.get('is_enabled', True)) else 0
 
-        cursor = conn.execute(
-            '''
+        result = db.session.execute(
+            text('''
             INSERT INTO coding_questions (
                 coding_subject_id, title, q_type, description, difficulty,
                 code_template, programming_language, time_limit, memory_limit,
                 test_cases_json, is_enabled
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''',
-            (
-                int(subject_id),
-                title,
-                q_type,
-                description,
-                difficulty,
-                data.get('code_template', ''),
-                data.get('programming_language', 'python'),
-                time_limit,
-                memory_limit,
-                test_cases_json,
-                is_enabled,
-            ),
+            ) VALUES (:subject_id, :title, :q_type, :description, :difficulty,
+                      :code_template, :programming_language, :time_limit, :memory_limit,
+                      :test_cases_json, :is_enabled)
+            RETURNING id
+            '''),
+            {
+                'subject_id': int(subject_id),
+                'title': title,
+                'q_type': q_type,
+                'description': description,
+                'difficulty': difficulty,
+                'code_template': data.get('code_template', ''),
+                'programming_language': data.get('programming_language', 'python'),
+                'time_limit': time_limit,
+                'memory_limit': memory_limit,
+                'test_cases_json': test_cases_json,
+                'is_enabled': bool(data.get('is_enabled', True)),
+            },
         )
-        conn.commit()
+        new_id = result.scalar()
+        db.session.commit()
         try:
             bump_questions_version()
         except Exception:
             pass
-        
+
         return jsonify({
             'status': 'success',
             'message': '编程题创建成功',
-            'data': {'id': cursor.lastrowid}
+            'data': {'id': new_id}
         }), 201
-        
-    except sqlite3.IntegrityError as e:
-        conn.rollback()
-        return jsonify({
-            'status': 'error',
-            'message': '数据已存在或违反约束'
-        }), 400
+
     except Exception as e:
-        conn.rollback()
+        db.session.rollback()
         current_app.logger.error(f"创建编程题失败: {e}", exc_info=True)
         return jsonify({
             'status': 'error',
@@ -218,16 +196,14 @@ def api_update_coding_question(question_id):
                 'message': '请先登录'
             }), 401
         
-        conn = get_db()
-
-        row = conn.execute(
-            'SELECT * FROM coding_questions WHERE id = ?',
-            (int(question_id),),
+        row = db.session.execute(
+            text('SELECT * FROM coding_questions WHERE id = :qid'),
+            {'qid': int(question_id)},
         ).fetchone()
         if not row:
             return jsonify({'status': 'error', 'message': '题目不存在'}), 404
 
-        cur = dict(row)
+        cur = dict(row._mapping)
 
         subject_id = data.get('coding_subject_id') or data.get('subject_id') or cur.get('coding_subject_id')
         title = data.get('title') if 'title' in data else (data.get('content') if 'content' in data else cur.get('title'))
@@ -271,50 +247,50 @@ def api_update_coding_question(question_id):
         is_enabled = data.get('is_enabled') if 'is_enabled' in data else cur.get('is_enabled', 1)
         is_enabled = 1 if bool(is_enabled) else 0
 
-        conn.execute(
-            '''
+        db.session.execute(
+            text('''
             UPDATE coding_questions SET
-                coding_subject_id = ?,
-                title = ?,
-                q_type = ?,
-                description = ?,
-                difficulty = ?,
-                programming_language = ?,
-                code_template = ?,
-                time_limit = ?,
-                memory_limit = ?,
-                test_cases_json = ?,
-                is_enabled = ?
-            WHERE id = ?
-            ''',
-            (
-                int(subject_id) if subject_id is not None and str(subject_id).strip() else None,
-                title,
-                q_type,
-                description,
-                difficulty,
-                str(programming_language or 'python'),
-                str(code_template or ''),
-                time_limit,
-                memory_limit,
-                test_cases_json,
-                is_enabled,
-                int(question_id),
-            ),
+                coding_subject_id = :subject_id,
+                title = :title,
+                q_type = :q_type,
+                description = :description,
+                difficulty = :difficulty,
+                programming_language = :programming_language,
+                code_template = :code_template,
+                time_limit = :time_limit,
+                memory_limit = :memory_limit,
+                test_cases_json = :test_cases_json,
+                is_enabled = :is_enabled
+            WHERE id = :qid
+            '''),
+            {
+                'subject_id': int(subject_id) if subject_id is not None and str(subject_id).strip() else None,
+                'title': title,
+                'q_type': q_type,
+                'description': description,
+                'difficulty': difficulty,
+                'programming_language': str(programming_language or 'python'),
+                'code_template': str(code_template or ''),
+                'time_limit': time_limit,
+                'memory_limit': memory_limit,
+                'test_cases_json': test_cases_json,
+                'is_enabled': bool(is_enabled),
+                'qid': int(question_id),
+            },
         )
-        conn.commit()
+        db.session.commit()
         try:
             bump_questions_version()
         except Exception:
             pass
-        
+
         return jsonify({
             'status': 'success',
             'message': '编程题更新成功'
         })
-        
+
     except Exception as e:
-        conn.rollback()
+        db.session.rollback()
         current_app.logger.error(f"更新编程题失败: {e}", exc_info=True)
         return jsonify({
             'status': 'error',
@@ -335,30 +311,28 @@ def api_delete_coding_question(question_id):
                 'message': '请先登录'
             }), 401
         
-        conn = get_db()
-
-        row = conn.execute(
-            'SELECT id FROM coding_questions WHERE id = ?',
-            (int(question_id),),
+        row = db.session.execute(
+            text('SELECT id FROM coding_questions WHERE id = :qid'),
+            {'qid': int(question_id)},
         ).fetchone()
         if not row:
             return jsonify({'status': 'error', 'message': '题目不存在'}), 404
 
         # 删除编程题
-        conn.execute('DELETE FROM coding_questions WHERE id = ?', (int(question_id),))
-        conn.commit()
+        db.session.execute(text('DELETE FROM coding_questions WHERE id = :qid'), {'qid': int(question_id)})
+        db.session.commit()
         try:
             bump_questions_version()
         except Exception:
             pass
-        
+
         return jsonify({
             'status': 'success',
             'message': '编程题删除成功'
         })
-        
+
     except Exception as e:
-        conn.rollback()
+        db.session.rollback()
         current_app.logger.error(f"删除编程题失败: {e}", exc_info=True)
         return jsonify({
             'status': 'error',

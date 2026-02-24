@@ -1,33 +1,13 @@
 # -*- coding: utf-8 -*-
 """Admin API routes - subject permissions/restrictions."""
 
-import datetime
-import io
-import json
-import os
-import sqlite3
-import zipfile
-
-import pandas as pd
 from flask import (
-    Blueprint,
-    current_app,
     jsonify,
-    redirect,
-    render_template,
     request,
-    send_file,
-    send_from_directory,
     session,
-    url_for,
 )
-from werkzeug.security import generate_password_hash
-from werkzeug.utils import secure_filename
 
-from app.core.extensions import limiter
-from app.core.utils.database import get_db
-from app.core.utils.fill_blank_parser import parse_fill_blank
-from app.core.utils.validators import parse_int, validate_password
+from app.core.utils.validators import parse_int
 
 from ..api_bp import admin_api_bp
 from app.core.utils.decorators import admin_required

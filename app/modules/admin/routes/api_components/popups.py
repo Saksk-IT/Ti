@@ -1,33 +1,15 @@
 # -*- coding: utf-8 -*-
 """Admin API routes - popups."""
 
-import datetime
-import io
-import json
-import os
-import sqlite3
-import zipfile
-
-import pandas as pd
 from flask import (
-    Blueprint,
     current_app,
     jsonify,
-    redirect,
-    render_template,
     request,
-    send_file,
-    send_from_directory,
     session,
-    url_for,
 )
-from werkzeug.security import generate_password_hash
-from werkzeug.utils import secure_filename
 
-from app.core.extensions import limiter
-from app.core.utils.database import get_db
-from app.core.utils.fill_blank_parser import parse_fill_blank
-from app.core.utils.validators import parse_int, validate_password
+from app.core.extensions import db
+from sqlalchemy import text
 
 from ..api_bp import admin_api_bp
 from app.core.utils.decorators import notification_admin_required
@@ -37,19 +19,18 @@ from app.core.utils.decorators import notification_admin_required
 @notification_admin_required
 def admin_api_popups_list():
     """获取所有弹窗列表"""
-    conn = get_db()
-    rows = conn.execute('''
+    rows = db.session.execute(text('''
         SELECT p.id, p.title, p.content, p.popup_type, p.priority, p.is_active,
                p.start_at, p.end_at, p.created_at, p.updated_at,
                u.username as created_by_name
         FROM popups p
         LEFT JOIN users u ON p.created_by = u.id
         ORDER BY p.priority DESC, p.created_at DESC
-    ''').fetchall()
+    ''')).fetchall()
 
     return jsonify({
         'status': 'success',
-        'popups': [dict(row) for row in rows]
+        'popups': [dict(row._mapping) for row in rows]
     })
 
 
@@ -72,22 +53,22 @@ def admin_api_popups_create():
         # 使用Pydantic验证
         schema = PopupCreateSchema(**data)
         
-        conn = get_db()
-        cursor = conn.execute('''
+        result = db.session.execute(text('''
             INSERT INTO popups (title, content, popup_type, priority, is_active, start_at, end_at, created_by)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            schema.title,
-            schema.content,
-            schema.popup_type,
-            schema.priority,
-            1 if schema.is_active else 0,
-            schema.start_at.isoformat() if schema.start_at else None,
-            schema.end_at.isoformat() if schema.end_at else None,
-            session.get('user_id')
-        ))
-        new_id = cursor.lastrowid
-        conn.commit()
+            VALUES (:title, :content, :popup_type, :priority, :is_active, :start_at, :end_at, :created_by)
+            RETURNING id
+        '''), {
+            'title': schema.title,
+            'content': schema.content,
+            'popup_type': schema.popup_type,
+            'priority': schema.priority,
+            'is_active': schema.is_active,
+            'start_at': schema.start_at.isoformat() if schema.start_at else None,
+            'end_at': schema.end_at.isoformat() if schema.end_at else None,
+            'created_by': session.get('user_id')
+        })
+        new_id = result.scalar()
+        db.session.commit()
 
         return jsonify({'status': 'success', 'message': '弹窗创建成功', 'id': new_id})
     except Exception as e:
@@ -101,20 +82,19 @@ def admin_api_popups_create():
 @notification_admin_required
 def admin_api_popups_get(pid):
     """获取单个弹窗"""
-    conn = get_db()
-    row = conn.execute('''
+    row = db.session.execute(text('''
         SELECT p.id, p.title, p.content, p.popup_type, p.priority, p.is_active,
                p.start_at, p.end_at, p.created_at, p.updated_at, p.created_by,
                u.username as created_by_name
         FROM popups p
         LEFT JOIN users u ON p.created_by = u.id
-        WHERE p.id = ?
-    ''', (pid,)).fetchone()
+        WHERE p.id = :pid
+    '''), {'pid': pid}).fetchone()
 
     if not row:
         return jsonify({'status': 'error', 'message': '弹窗不存在'}), 404
 
-    return jsonify({'status': 'success', 'popup': dict(row)})
+    return jsonify({'status': 'success', 'popup': dict(row._mapping)})
 
 
 
@@ -134,47 +114,45 @@ def admin_api_popups_update(pid):
         data = request.json or {}
         schema = PopupUpdateSchema(**data)
         
-        conn = get_db()
-        
         # 构建更新字段
         updates = []
-        values = []
-        
+        params = {}
+
         if schema.title is not None:
-            updates.append('title = ?')
-            values.append(schema.title)
+            updates.append('title = :title')
+            params['title'] = schema.title
         if schema.content is not None:
-            updates.append('content = ?')
-            values.append(schema.content)
+            updates.append('content = :content')
+            params['content'] = schema.content
         if schema.popup_type is not None:
-            updates.append('popup_type = ?')
-            values.append(schema.popup_type)
+            updates.append('popup_type = :popup_type')
+            params['popup_type'] = schema.popup_type
         if schema.is_active is not None:
-            updates.append('is_active = ?')
-            values.append(1 if schema.is_active else 0)
+            updates.append('is_active = :is_active')
+            params['is_active'] = schema.is_active
         if schema.priority is not None:
-            updates.append('priority = ?')
-            values.append(schema.priority)
+            updates.append('priority = :priority')
+            params['priority'] = schema.priority
         if schema.start_at is not None:
-            updates.append('start_at = ?')
-            values.append(schema.start_at.isoformat() if schema.start_at else None)
+            updates.append('start_at = :start_at')
+            params['start_at'] = schema.start_at.isoformat() if schema.start_at else None
         if schema.end_at is not None:
-            updates.append('end_at = ?')
-            values.append(schema.end_at.isoformat() if schema.end_at else None)
-        
+            updates.append('end_at = :end_at')
+            params['end_at'] = schema.end_at.isoformat() if schema.end_at else None
+
         if not updates:
             return jsonify({'status': 'error', 'message': '没有要更新的字段'}), 400
-        
+
         updates.append('updated_at = CURRENT_TIMESTAMP')
-        values.append(pid)
-        
-        sql = f'UPDATE popups SET {", ".join(updates)} WHERE id = ?'
-        conn.execute(sql, values)
-        
-        if conn.total_changes == 0:
+        params['pid'] = pid
+
+        sql = f'UPDATE popups SET {", ".join(updates)} WHERE id = :pid'
+        result = db.session.execute(text(sql), params)
+
+        if result.rowcount == 0:
             return jsonify({'status': 'error', 'message': '弹窗不存在'}), 404
 
-        conn.commit()
+        db.session.commit()
         return jsonify({'status': 'success', 'message': '弹窗更新成功'})
     except Exception as e:
         import traceback
@@ -193,19 +171,19 @@ def admin_api_popups_delete(pid):
     if not (is_admin_user or is_notification_admin_user):
         return jsonify({'status': 'error', 'message': '权限不足'}), 403
     
-    conn = get_db()
     try:
         # 先删除关联的记录
-        conn.execute('DELETE FROM popup_views WHERE popup_id = ?', (pid,))
-        conn.execute('DELETE FROM popup_dismissals WHERE popup_id = ?', (pid,))
-        conn.execute('DELETE FROM popups WHERE id = ?', (pid,))
+        db.session.execute(text('DELETE FROM popup_views WHERE popup_id = :pid'), {'pid': pid})
+        db.session.execute(text('DELETE FROM popup_dismissals WHERE popup_id = :pid'), {'pid': pid})
+        result = db.session.execute(text('DELETE FROM popups WHERE id = :pid'), {'pid': pid})
 
-        if conn.total_changes == 0:
+        if result.rowcount == 0:
             return jsonify({'status': 'error', 'message': '弹窗不存在'}), 404
 
-        conn.commit()
+        db.session.commit()
         return jsonify({'status': 'success', 'message': '弹窗删除成功'})
     except Exception as e:
+        db.session.rollback()
         import traceback
         current_app.logger.error(f'删除弹窗失败: {str(e)}\n{traceback.format_exc()}')
         return jsonify({'status': 'error', 'message': str(e)}), 500
