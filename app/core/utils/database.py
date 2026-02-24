@@ -2,6 +2,14 @@
 """
 数据库核心模块：连接管理、初始化入口。
 
+== 新旧共存说明 ==
+本项目正在从 raw SQLite → SQLAlchemy ORM 渐进迁移：
+- 旧代码：继续使用 get_db() 获取 sqlite3.Connection，执行手写 SQL。
+- 新代码：推荐使用 app.core.extensions.db.session + app.models 中的 ORM 模型。
+- 当 DATABASE_URL 指向 PostgreSQL 时，ORM 代码自动适配；
+  旧 get_db() 仍仅连接 SQLite（仅用于开发/过渡期）。
+- 迁移完成后，本文件中的 SQLite 相关代码将被移除。
+
 拆分说明：
 - 表创建 → db_tables.py
 - 迁移函数 → migrations.py

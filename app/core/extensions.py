@@ -7,6 +7,8 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_cors import CORS
 from flask_wtf.csrf import CSRFProtect
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
 # 初始化限流器（不绑定app）
 limiter = Limiter(
@@ -16,6 +18,12 @@ limiter = Limiter(
 # CSRF 保护（不绑定app）
 csrf = CSRFProtect()
 
+# SQLAlchemy ORM（不绑定app）
+db = SQLAlchemy()
+
+# Alembic 数据库迁移（不绑定app）
+migrate = Migrate()
+
 
 def init_extensions(app):
     """初始化所有扩展"""
@@ -23,6 +31,12 @@ def init_extensions(app):
 
     # CSRF 保护：保护 Web 表单，API 端点在蓝图注册后统一豁免
     csrf.init_app(app)
+
+    # SQLAlchemy ORM
+    db.init_app(app)
+
+    # Alembic 迁移（绑定 db 实例）
+    migrate.init_app(app, db)
 
     # CORS 配置：生产环境仅允许指定域名，开发环境允许所有来源
     cors_origins = ["https://servicewechat.com"]

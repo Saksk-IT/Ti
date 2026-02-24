@@ -109,6 +109,8 @@ def create_app(config_name=None):
     # 初始化数据库
     with app.app_context():
         init_db()
+        # 导入 ORM 模型，确保 Flask-Migrate 能发现所有表定义
+        import app.models  # noqa: F401
     
     # 启动后台任务
     _start_background_tasks(app)

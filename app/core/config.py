@@ -29,6 +29,12 @@ class Config:
     # 数据库文件位于项目根目录的instance文件夹（app文件夹外）
     DATABASE_PATH = os.path.join(DATA_DIR, 'instance', 'submissions.db')
 
+    # SQLAlchemy 配置（支持 SQLite 和 PostgreSQL）
+    # 优先读取 DATABASE_URL 环境变量；未设置时回退到 SQLite
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or f"sqlite:///{os.path.join(DATA_DIR, 'instance', 'submissions.db')}"
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {}  # 子类可覆盖
+
     SQLITE_TIMEOUT = float(os.environ.get('SQLITE_TIMEOUT', '15') or 15)
     SQLITE_BUSY_TIMEOUT_MS = int(os.environ.get('SQLITE_BUSY_TIMEOUT_MS', '5000') or 5000)
     SQLITE_JOURNAL_MODE = os.environ.get('SQLITE_JOURNAL_MODE', 'WAL')
@@ -144,9 +150,17 @@ class ProductionConfig(Config):
     DEBUG = False
     TESTING = False
 
+    # 生产环境 PostgreSQL 连接池配置
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_size': int(os.environ.get('DB_POOL_SIZE', '10') or 10),
+        'max_overflow': int(os.environ.get('DB_MAX_OVERFLOW', '20') or 20),
+        'pool_recycle': int(os.environ.get('DB_POOL_RECYCLE', '300') or 300),
+        'pool_pre_ping': True,
+    }
+
     # 生产环境默认启用 ProxyFix（常见部署：Nginx -> gunicorn(127.0.0.1)）
     PROXY_FIX_ENABLED = os.environ.get('PROXY_FIX_ENABLED', 'true').lower() in ['true', 'on', '1']
-    
+
     # 生产环境必须设置密钥（不允许使用默认值）
     SECRET_KEY = os.environ.get('SECRET_KEY')
     if not SECRET_KEY:
@@ -178,9 +192,10 @@ class TestingConfig(Config):
     """测试环境配置"""
     DEBUG = True
     TESTING = True
-    
+
     # 测试数据库
     DATABASE_PATH = os.path.join(Config.DATA_DIR, 'instance', 'test.db')
+    SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(Config.DATA_DIR, 'instance', 'test.db')}"
 
 
 # 配置字典
