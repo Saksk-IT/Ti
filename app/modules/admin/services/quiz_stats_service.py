@@ -3,7 +3,9 @@
 刷题统计管理服务
 """
 from typing import Dict, Any, List, Optional
-from app.core.utils.database import get_db
+
+from app.models.user import User
+from app.models.quiz import UserQuizStats
 from app.core.utils.subject_permissions import (
     get_user_quiz_count,
     get_quiz_limit_count,
@@ -13,52 +15,33 @@ from app.core.utils.subject_permissions import (
 
 class QuizStatsService:
     """刷题统计管理服务类"""
-    
+
     @staticmethod
     def get_user_quiz_stats(user_id: int) -> Dict[str, Any]:
-        """
-        获取用户刷题统计
-        
-        Args:
-            user_id: 用户ID
-            
-        Returns:
-            用户刷题统计字典
-        """
-        conn = get_db()
-        
-        # 获取用户信息
-        user = conn.execute(
-            'SELECT id, username, is_admin FROM users WHERE id = ?',
-            (user_id,)
-        ).fetchone()
-        
+        """获取用户刷题统计"""
+        user = User.query.get(user_id)
         if not user:
             raise ValueError(f"用户 {user_id} 不存在")
-        
-        # 获取刷题统计
-        stats = conn.execute(
-            'SELECT total_answered, last_reset_at, updated_at FROM user_quiz_stats WHERE user_id = ?',
-            (user_id,)
-        ).fetchone()
-        
-        current_count = stats['total_answered'] if stats else 0
+
+        stats = UserQuizStats.query.filter_by(user_id=user_id).first()
+
+        current_count = stats.total_answered if stats else 0
         limit_count = get_quiz_limit_count()
         is_enabled = is_quiz_limit_enabled()
-        
+
         return {
             'user': {
-                'id': user['id'],
-                'username': user['username'],
-                'is_admin': bool(user['is_admin'])
+                'id': user.id,
+                'username': user.username,
+                'is_admin': bool(user.is_admin)
             },
             'stats': {
                 'total_answered': current_count,
                 'limit_count': limit_count,
                 'remaining': max(0, limit_count - current_count) if is_enabled else None,
                 'is_limit_enabled': is_enabled,
-                'last_reset_at': stats['last_reset_at'] if stats else None,
-                'updated_at': stats['updated_at'] if stats else None
+                'last_reset_at': stats.last_reset_at if stats else None,
+                'updated_at': stats.updated_at if stats else None
             }
         }
     

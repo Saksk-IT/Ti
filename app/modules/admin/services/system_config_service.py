@@ -6,7 +6,9 @@ import os
 import threading
 import time
 from typing import Dict, Any, List, Optional
-from app.core.utils.database import get_db
+
+from app.core.extensions import db
+from app.models.system import SystemConfig
 
 
 _CACHE_TTL_SECONDS = int(os.environ.get('SYSTEM_CONFIG_CACHE_TTL_SECONDS', '15') or 15)
@@ -53,51 +55,50 @@ class SystemConfigService:
     
     @staticmethod
     def get_all_configs() -> List[Dict[str, Any]]:
-        """
-        获取所有系统配置
-        
-        Returns:
-            配置列表
-        """
+        """获取所有系统配置"""
         cached = _cache_get('__all__')
         if cached is not _MISSING and isinstance(cached, list):
             return [dict(x) for x in cached]
 
-        conn = get_db()
-        rows = conn.execute(
-            'SELECT * FROM system_config ORDER BY config_key'
-        ).fetchall()
-        
-        result = [dict(row) for row in rows]
+        rows = SystemConfig.query.order_by(SystemConfig.config_key).all()
+        result = [
+            {
+                'id': r.id,
+                'config_key': r.config_key,
+                'config_value': r.config_value,
+                'description': r.description,
+                'updated_at': r.updated_at,
+                'updated_by': r.updated_by,
+            }
+            for r in rows
+        ]
         _cache_set('__all__', result)
         return result
-    
+
     @staticmethod
     def get_config(config_key: str) -> Optional[Dict[str, Any]]:
-        """
-        获取指定配置
-        
-        Args:
-            config_key: 配置键
-            
-        Returns:
-            配置字典，如果不存在返回None
-        """
+        """获取指定配置"""
         ck = f'key:{config_key}'
         cached = _cache_get(ck)
         if cached is not _MISSING:
             return dict(cached) if isinstance(cached, dict) else None
 
-        conn = get_db()
-        row = conn.execute(
-            'SELECT * FROM system_config WHERE config_key = ?',
-            (config_key,)
-        ).fetchone()
-        
-        result = dict(row) if row else None
+        row = SystemConfig.query.filter_by(config_key=config_key).first()
+        if not row:
+            _cache_set(ck, None)
+            return None
+
+        result = {
+            'id': row.id,
+            'config_key': row.config_key,
+            'config_value': row.config_value,
+            'description': row.description,
+            'updated_at': row.updated_at,
+            'updated_by': row.updated_by,
+        }
         _cache_set(ck, result)
         return result
-    
+
     @staticmethod
     def update_config(
         config_key: str,
@@ -105,54 +106,26 @@ class SystemConfigService:
         description: Optional[str] = None,
         admin_id: Optional[int] = None
     ) -> Dict[str, Any]:
-        """
-        更新系统配置
-        
-        Args:
-            config_key: 配置键
-            config_value: 配置值
-            description: 配置说明（可选）
-            admin_id: 操作的管理员ID（可选）
-            
-        Returns:
-            更新后的配置字典
-        """
-        conn = get_db()
-        
-        # 检查配置是否存在
-        existing = conn.execute(
-            'SELECT id FROM system_config WHERE config_key = ?',
-            (config_key,)
-        ).fetchone()
-        
+        """更新系统配置"""
+        existing = SystemConfig.query.filter_by(config_key=config_key).first()
+
         if existing:
-            # 更新现有配置
+            existing.config_value = config_value
             if description:
-                conn.execute(
-                    '''UPDATE system_config 
-                       SET config_value = ?, description = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
-                       WHERE config_key = ?''',
-                    (config_value, description, admin_id, config_key)
-                )
-            else:
-                conn.execute(
-                    '''UPDATE system_config 
-                       SET config_value = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
-                       WHERE config_key = ?''',
-                    (config_value, admin_id, config_key)
-                )
+                existing.description = description
+            existing.updated_by = admin_id
         else:
-            # 创建新配置
-            conn.execute(
-                '''INSERT INTO system_config 
-                   (config_key, config_value, description, updated_by)
-                   VALUES (?, ?, ?, ?)''',
-                (config_key, config_value, description or '', admin_id)
+            existing = SystemConfig(
+                config_key=config_key,
+                config_value=config_value,
+                description=description or '',
+                updated_by=admin_id,
             )
-        
-        conn.commit()
+            db.session.add(existing)
+
+        db.session.commit()
         _cache_clear()
-        
+
         return SystemConfigService.get_config(config_key)
     
     @staticmethod

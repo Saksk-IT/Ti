@@ -7,7 +7,10 @@ from typing import Dict, List, Tuple, Any, Optional
 import difflib
 import re
 import json
-from app.core.utils.database import get_db
+
+from app.core.extensions import db
+from app.models.subject import Subject, Question as QuestionModel
+from app.models.system import DuplicateCheckRecord
 
 
 class DuplicateCheckService:
@@ -67,43 +70,23 @@ class DuplicateCheckService:
     
     @staticmethod
     def check_duplicates(subject_id: int, similarity_threshold: float = 0.8) -> List[Dict[str, Any]]:
-        """
-        检查指定科目中的重复题目
-        
-        Args:
-            subject_id: 科目ID
-            similarity_threshold: 相似度阈值（默认0.8，即80%相似）
-            
-        Returns:
-            重复题目对列表，每个元素包含：
-            {
-                'question1': {...},  # 题目1的完整信息
-                'question2': {...},  # 题目2的完整信息
-                'similarity': 0.95,  # 相似度
-                'similarity_percent': 95  # 相似度百分比
-            }
-        """
-        db = get_db()
-        
-        # 获取该科目下的所有题目
-        questions = db.execute(
-            '''
-            SELECT id, subject_id, type, content, options, answer, analysis, tags,
-                   difficulty, created_at, updated_at
-            FROM questions
-            WHERE subject_id = ?
-            ORDER BY id
-            ''',
-            (subject_id,)
-        ).fetchall()
-        
+        """检查指定科目中的重复题目"""
+        questions = QuestionModel.query.filter_by(subject_id=subject_id).order_by(QuestionModel.id).all()
+
         if len(questions) < 2:
             return []
-        
-        # 转换为字典列表（PQF -> 兼容字段 q_type/explanation/答案字符串/选项列表）
+
         from app.core.utils.pqf_rows import pqf_row_to_internal
 
-        question_list = [pqf_row_to_internal(q, scope="question_center") for q in (questions or [])]
+        question_list = []
+        for q in questions:
+            row_dict = {
+                'id': q.id, 'subject_id': q.subject_id, 'type': q.type,
+                'content': q.content, 'options': q.options, 'answer': q.answer,
+                'analysis': q.analysis, 'tags': q.tags, 'difficulty': q.difficulty,
+                'created_at': q.created_at, 'updated_at': q.updated_at,
+            }
+            question_list.append(pqf_row_to_internal(row_dict, scope="question_center"))
         
         # 计算所有题目对的相似度
         duplicates = []
@@ -150,30 +133,9 @@ class DuplicateCheckService:
         min_similarity: Optional[float] = None,
         max_similarity: Optional[float] = None
     ) -> Dict[str, Any]:
-        """
-        获取查重结果（支持相似度筛选）
-        
-        Args:
-            subject_id: 科目ID
-            min_similarity: 最小相似度（0-1之间，可选）
-            max_similarity: 最大相似度（0-1之间，可选）
-            
-        Returns:
-            {
-                'total_pairs': int,  # 总重复对数
-                'duplicates': List[Dict],  # 重复题目对列表
-                'subject_id': int,
-                'subject_name': str
-            }
-        """
-        db = get_db()
-        
-        # 获取科目信息
-        subject = db.execute(
-            'SELECT id, name FROM subjects WHERE id = ?',
-            (subject_id,)
-        ).fetchone()
-        
+        """获取查重结果（支持相似度筛选）"""
+        subject = Subject.query.get(subject_id)
+
         if not subject:
             return {
                 'total_pairs': 0,
@@ -181,8 +143,8 @@ class DuplicateCheckService:
                 'subject_id': subject_id,
                 'subject_name': None
             }
-        
-        subject_name = dict(subject).get('name', '')
+
+        subject_name = subject.name
         
         # 执行查重
         duplicates = DuplicateCheckService.check_duplicates(subject_id)
@@ -213,74 +175,48 @@ class DuplicateCheckService:
         similarity_threshold: float = 0.8,
         created_by: Optional[int] = None
     ) -> int:
-        """
-        保存查重记录到数据库
-        
-        Args:
-            subject_id: 科目ID
-            duplicates: 重复题目对列表
-            similarity_threshold: 相似度阈值
-            created_by: 创建者用户ID（可选）
-            
-        Returns:
-            保存的记录ID
-        """
-        db = get_db()
-        
-        # 将重复对列表转换为JSON字符串
+        """保存查重记录到数据库"""
         duplicates_json = json.dumps(duplicates, ensure_ascii=False, default=str)
-        
-        cursor = db.execute(
-            '''
-            INSERT INTO duplicate_check_records 
-            (subject_id, total_pairs, duplicates_json, similarity_threshold, created_by)
-            VALUES (?, ?, ?, ?, ?)
-            ''',
-            (subject_id, len(duplicates), duplicates_json, similarity_threshold, created_by)
+
+        record = DuplicateCheckRecord(
+            subject_id=subject_id,
+            total_pairs=len(duplicates),
+            duplicates_json=duplicates_json,
+            similarity_threshold=similarity_threshold,
+            created_by=created_by,
         )
-        db.commit()
-        
-        return cursor.lastrowid
-    
+        db.session.add(record)
+        db.session.commit()
+
+        return record.id
+
     @staticmethod
     def get_latest_duplicate_check_record(subject_id: int) -> Optional[Dict[str, Any]]:
-        """
-        获取指定科目的最新查重记录
-        
-        Args:
-            subject_id: 科目ID
-            
-        Returns:
-            查重记录字典，如果不存在则返回None
-        """
-        db = get_db()
-        
-        record = db.execute(
-            '''
-            SELECT id, subject_id, total_pairs, duplicates_json, similarity_threshold,
-                   created_by, created_at
-            FROM duplicate_check_records
-            WHERE subject_id = ?
-            ORDER BY created_at DESC
-            LIMIT 1
-            ''',
-            (subject_id,)
-        ).fetchone()
-        
+        """获取指定科目的最新查重记录"""
+        record = (
+            DuplicateCheckRecord.query
+            .filter_by(subject_id=subject_id)
+            .order_by(DuplicateCheckRecord.created_at.desc())
+            .first()
+        )
+
         if not record:
             return None
-        
-        record_dict = dict(record)
-        
-        # 解析JSON数据
+
+        record_dict = {
+            'id': record.id,
+            'subject_id': record.subject_id,
+            'total_pairs': record.total_pairs,
+            'similarity_threshold': record.similarity_threshold,
+            'created_by': record.created_by,
+            'created_at': record.created_at,
+        }
+
         try:
-            record_dict['duplicates'] = json.loads(record_dict.get('duplicates_json', '[]'))
+            record_dict['duplicates'] = json.loads(record.duplicates_json or '[]')
         except (json.JSONDecodeError, TypeError):
             record_dict['duplicates'] = []
-        
-        # 移除JSON字符串字段（已解析）
-        record_dict.pop('duplicates_json', None)
-        
+
         return record_dict
     
     @staticmethod
@@ -304,13 +240,8 @@ class DuplicateCheckService:
         duplicates = DuplicateCheckService.check_duplicates(subject_id, similarity_threshold)
         
         # 获取科目信息
-        db = get_db()
-        subject = db.execute(
-            'SELECT id, name FROM subjects WHERE id = ?',
-            (subject_id,)
-        ).fetchone()
-        
-        subject_name = dict(subject).get('name', '') if subject else ''
+        subject = Subject.query.get(subject_id)
+        subject_name = subject.name if subject else ''
         
         # 保存查重记录
         record_id = DuplicateCheckService.save_duplicate_check_record(

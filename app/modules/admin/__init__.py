@@ -23,7 +23,6 @@ def _check_admin_permission():
         jwt_header = request.headers.get('Authorization') or ''
         if jwt_header.startswith('Bearer '):
             from app.core.utils.jwt_utils import decode_jwt_token
-            from app.core.utils.database import get_db
             token = jwt_header[7:]
             payload = decode_jwt_token(token)
             if payload:
@@ -32,15 +31,12 @@ def _check_admin_permission():
             # 从数据库查询该用户的管理员权限
             if user_id:
                 try:
-                    conn = get_db()
-                    row = conn.execute(
-                        'SELECT is_admin, is_subject_admin, is_notification_admin FROM users WHERE id = ?',
-                        (user_id,)
-                    ).fetchone()
-                    if row:
-                        is_admin = bool(row['is_admin'])
-                        is_subject_admin = bool(row['is_subject_admin']) if 'is_subject_admin' in row.keys() else False
-                        is_notification_admin = bool(row['is_notification_admin']) if 'is_notification_admin' in row.keys() else False
+                    from app.models.user import User as UserModel
+                    u = UserModel.query.get(int(user_id))
+                    if u:
+                        is_admin = bool(u.is_admin)
+                        is_subject_admin = bool(u.is_subject_admin)
+                        is_notification_admin = bool(u.is_notification_admin)
                 except Exception:
                     pass
 
