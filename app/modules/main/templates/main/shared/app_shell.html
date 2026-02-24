@@ -504,6 +504,7 @@
     #appThemeToggle img { filter: var(--app-theme-icon-filter); }
 
     .app-hamburger { display: none; }
+    .app-sidebar-collapse-top { display: inline-flex; }
 
     .app-main {
       flex: 1 1 auto;
@@ -666,8 +667,8 @@
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-user-text,
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-user-dots { display: none; }
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-user-avatar { width: 34px; height: 34px; }
-    .app-shell .app-sidebar #appSidebarCollapse .app-nav-icon { transition: transform 160ms ease; }
-    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar #appSidebarCollapse .app-nav-icon { transform: rotate(180deg); }
+    #appSidebarCollapse .app-icon { transition: transform 160ms ease; }
+    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) #appSidebarCollapse .app-icon { transform: rotate(180deg); }
 
     @media (max-width: 860px) {
       .app-sidebar {
@@ -684,6 +685,7 @@
         border-right: 1px solid var(--app-border);
       }
       .app-hamburger { display: inline-flex; }
+      .app-sidebar-collapse-top { display: none; }
       .app-top-practice { display: inline-flex; }
       .app-shell.sidebar-open .app-sidebar { transform: translateX(0); }
       .app-shell.sidebar-open + .app-overlay { opacity: 1; pointer-events: auto; }
@@ -708,6 +710,11 @@
           <button class="app-icon-btn app-hamburger" type="button" id="appHamburger" aria-label="打开侧边栏" aria-controls="appSidebar" aria-expanded="false">
             <svg class="app-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <button class="app-icon-btn app-sidebar-collapse-top" type="button" id="appSidebarCollapse" aria-label="折叠侧边栏" title="折叠侧边栏">
+            <svg class="app-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </button>
 
@@ -806,6 +813,7 @@
       var sidebar = document.getElementById('appSidebar');
       var overlay = document.getElementById('appOverlay');
       var hamburger = document.getElementById('appHamburger');
+      var collapseBtn = document.getElementById('appSidebarCollapse');
       var themeToggle = document.getElementById('appThemeToggle');
 
       function getTheme() {
@@ -873,6 +881,10 @@
         try { localStorage.setItem('sidebar_collapsed', collapsed ? '1' : '0'); } catch (e) {}
         root.classList.toggle('sidebar-collapsed', !!collapsed);
         shell.classList.toggle('sidebar-collapsed', !!collapsed);
+        if (collapseBtn) {
+          collapseBtn.setAttribute('aria-label', collapsed ? '展开侧边栏' : '折叠侧边栏');
+          collapseBtn.setAttribute('title', collapsed ? '展开侧边栏' : '折叠侧边栏');
+        }
         // 收起侧边栏时自动关闭所有手风琴
         if (collapsed) {
           document.querySelectorAll('.app-nav-accordion.open').forEach(function(acc) {
@@ -1085,7 +1097,7 @@
       });
 
       // collapse toggle
-      document.getElementById('appSidebarCollapse')?.addEventListener('click', function () {
+      collapseBtn?.addEventListener('click', function () {
         setCollapsed(!shell.classList.contains('sidebar-collapsed'));
       });
 
