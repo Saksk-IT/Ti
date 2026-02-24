@@ -1,165 +1,126 @@
 # -*- coding: utf-8 -*-
-"""弹窗业务逻辑服务"""
+"""弹窗业务逻辑服务（ORM 版本）"""
+import logging
 from typing import List, Optional, Dict, Any
-from datetime import datetime
-from app.core.utils.database import get_db
-from app.core.utils.time_utils import SQLITE_BJ_NOW_EXPR
-from app.modules.popups.schemas import PopupResponseSchema, PopupStatsSchema
+
+from app.core.extensions import db
+from app.core.utils.time_utils import now_bj
+from app.models.popup import Popup, PopupDismissal, PopupView
+
+logger = logging.getLogger(__name__)
 
 
 class PopupService:
     """弹窗服务类"""
-    
-    @staticmethod
-    def _now_expr() -> str:
-        """SQLite 当前时间表达式"""
-        return SQLITE_BJ_NOW_EXPR
-    
+
     @staticmethod
     def get_active_popups_for_user(user_id: int, limit: int = 10) -> List[Dict[str, Any]]:
-        """
-        获取用户应显示的活跃弹窗列表（支持轮播/队列）
-        
-        Args:
-            user_id: 用户ID
-            limit: 返回的最大数量（用于轮播）
-        
-        Returns:
-            弹窗列表，按优先级降序排列
-        """
-        conn = get_db()
-        
-        # 查询活跃的弹窗，排除用户已关闭的
-        rows = conn.execute(
-            f"""
-            SELECT
-                p.id, p.title, p.content, p.popup_type, p.priority,
-                p.start_at, p.end_at, p.created_at
-            FROM popups p
-            LEFT JOIN popup_dismissals d
-                ON d.popup_id = p.id AND d.user_id = ?
-            WHERE p.is_active = 1
-                AND d.id IS NULL
-                AND (p.start_at IS NULL OR datetime(p.start_at) <= datetime({PopupService._now_expr()}))
-                AND (p.end_at IS NULL OR datetime(p.end_at) >= datetime({PopupService._now_expr()}))
-            ORDER BY p.priority DESC, p.created_at DESC, p.id DESC
-            LIMIT ?
-            """,
-            (user_id, limit)
-        ).fetchall()
-        
-        return [dict(row) for row in rows]
-    
+        """获取用户应显示的活跃弹窗列表（支持轮播/队列）"""
+        now = now_bj()
+
+        # 子查询：该用户已关闭的弹窗 ID
+        dismissed_ids = (
+            db.session.query(PopupDismissal.popup_id)
+            .filter(PopupDismissal.user_id == user_id)
+            .subquery()
+        )
+
+        rows = (
+            db.session.query(Popup)
+            .filter(
+                Popup.is_active == True,  # noqa: E712
+                Popup.id.notin_(db.session.query(dismissed_ids.c.popup_id)),
+                db.or_(Popup.start_at.is_(None), Popup.start_at <= now),
+                db.or_(Popup.end_at.is_(None), Popup.end_at >= now),
+            )
+            .order_by(Popup.priority.desc(), Popup.created_at.desc(), Popup.id.desc())
+            .limit(limit)
+            .all()
+        )
+
+        return [
+            {
+                'id': p.id,
+                'title': p.title,
+                'content': p.content,
+                'popup_type': p.popup_type,
+                'priority': p.priority,
+                'start_at': p.start_at.isoformat() if p.start_at else None,
+                'end_at': p.end_at.isoformat() if p.end_at else None,
+                'created_at': p.created_at.isoformat() if p.created_at else None,
+            }
+            for p in rows
+        ]
     @staticmethod
     def record_popup_view(popup_id: int, user_id: Optional[int] = None) -> None:
-        """
-        记录弹窗显示次数（用于统计）
-        
-        Args:
-            popup_id: 弹窗ID
-            user_id: 用户ID（可选，匿名用户为None）
-        """
-        conn = get_db()
+        """记录弹窗显示次数（用于统计）"""
         try:
-            conn.execute(
-                'INSERT INTO popup_views (popup_id, user_id) VALUES (?, ?)',
-                (popup_id, user_id)
-            )
-            conn.commit()
+            view = PopupView(popup_id=popup_id, user_id=user_id)
+            db.session.add(view)
+            db.session.commit()
         except Exception as e:
-            conn.rollback()
-            # 记录错误但不影响主流程
-            import traceback
-            from flask import current_app
-            current_app.logger.error(f'记录弹窗显示失败: {str(e)}\n{traceback.format_exc()}')
-    
+            db.session.rollback()
+            logger.error('记录弹窗显示失败: %s', e, exc_info=True)
+
     @staticmethod
     def dismiss_popup(popup_id: int, user_id: int) -> bool:
-        """
-        关闭弹窗（记录到popup_dismissals，用户将不再看到该弹窗）
-        
-        Args:
-            popup_id: 弹窗ID
-            user_id: 用户ID
-        
-        Returns:
-            是否成功
-        """
-        conn = get_db()
+        """关闭弹窗（记录到 popup_dismissals，用户将不再看到该弹窗）"""
         try:
-            # 使用 INSERT OR IGNORE 避免重复插入
-            conn.execute(
-                'INSERT OR IGNORE INTO popup_dismissals (user_id, popup_id) VALUES (?, ?)',
-                (user_id, popup_id)
+            existing = (
+                db.session.query(PopupDismissal)
+                .filter_by(user_id=user_id, popup_id=popup_id)
+                .first()
             )
-            conn.commit()
+            if not existing:
+                dismissal = PopupDismissal(user_id=user_id, popup_id=popup_id)
+                db.session.add(dismissal)
+                db.session.commit()
             return True
         except Exception as e:
-            conn.rollback()
-            import traceback
-            from flask import current_app
-            current_app.logger.error(f'关闭弹窗失败: {str(e)}\n{traceback.format_exc()}')
+            db.session.rollback()
+            logger.error('关闭弹窗失败: %s', e, exc_info=True)
             return False
-    
+
     @staticmethod
     def get_popup_stats(popup_id: int) -> Optional[Dict[str, Any]]:
-        """
-        获取弹窗统计信息
-        
-        Args:
-            popup_id: 弹窗ID
-        
-        Returns:
-            统计信息字典，包含总显示次数、总关闭次数、关闭率
-        """
-        conn = get_db()
-        
-        # 检查弹窗是否存在
-        popup = conn.execute('SELECT id FROM popups WHERE id = ?', (popup_id,)).fetchone()
+        """获取弹窗统计信息"""
+        popup = db.session.get(Popup, popup_id)
         if not popup:
             return None
-        
-        # 统计显示次数
-        view_count = conn.execute(
-            'SELECT COUNT(*) FROM popup_views WHERE popup_id = ?',
-            (popup_id,)
-        ).fetchone()[0]
-        
-        # 统计关闭次数
-        dismissal_count = conn.execute(
-            'SELECT COUNT(*) FROM popup_dismissals WHERE popup_id = ?',
-            (popup_id,)
-        ).fetchone()[0]
-        
-        # 计算关闭率
+
+        view_count = (
+            db.session.query(db.func.count(PopupView.id))
+            .filter(PopupView.popup_id == popup_id)
+            .scalar()
+        ) or 0
+
+        dismissal_count = (
+            db.session.query(db.func.count(PopupDismissal.id))
+            .filter(PopupDismissal.popup_id == popup_id)
+            .scalar()
+        ) or 0
+
         dismissal_rate = dismissal_count / view_count if view_count > 0 else 0.0
-        
+
         return {
             'popup_id': popup_id,
             'total_views': view_count,
             'total_dismissals': dismissal_count,
-            'dismissal_rate': round(dismissal_rate, 4)
+            'dismissal_rate': round(dismissal_rate, 4),
         }
-    
+
     @staticmethod
     def get_all_popups_stats() -> List[Dict[str, Any]]:
-        """
-        获取所有弹窗的统计信息
-        
-        Returns:
-            统计信息列表
-        """
-        conn = get_db()
-        
-        # 获取所有弹窗
-        popups = conn.execute('SELECT id FROM popups ORDER BY id DESC').fetchall()
-        
+        """获取所有弹窗的统计信息"""
+        popups = (
+            db.session.query(Popup.id)
+            .order_by(Popup.id.desc())
+            .all()
+        )
+
         stats_list = []
-        for popup in popups:
-            stats = PopupService.get_popup_stats(popup['id'])
+        for (pid,) in popups:
+            stats = PopupService.get_popup_stats(pid)
             if stats:
                 stats_list.append(stats)
-        
         return stats_list
-
-

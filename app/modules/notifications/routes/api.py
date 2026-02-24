@@ -1,34 +1,25 @@
 # -*- coding: utf-8 -*-
-"""用户侧通知 API
-
-说明：
-- 数据来源：notifications 表（由管理端维护）
-- 已读/关闭维度：notification_dismissals（每个用户对每条通知）
+"""用户侧通知 API（ORM 版本）
 
 接口：
-- GET  /api/notifications               列表（默认返回未关闭的通知；可通过 ?include_dismissed=1 包含已关闭）
-- GET  /api/notifications/<id>          详情（同上）
-- POST /api/notifications/<id>/read     标记已读（写入 notification_dismissals）
-- POST /api/notifications/<id>/dismiss  关闭通知（写入 notification_dismissals；与旧首页行为一致）
-- GET  /api/notifications/unread_count  未读数（用于角标，可选）
-
-注意：
-- 由于历史上已有 /api/notifications 的旧实现（在 api.py），已迁移为 /api/notifications_legacy。
+- GET  /api/notifications               列表
+- GET  /api/notifications/<id>          详情
+- POST /api/notifications/<id>/read     标记已读
+- POST /api/notifications/<id>/dismiss  关闭通知
+- GET  /api/notifications/unread_count  未读数
 """
+import logging
 
-from flask import Blueprint, jsonify, session, request, current_app
-from app.core.utils.database import get_db
+from flask import Blueprint, jsonify, session, request
+from app.core.extensions import db, limiter
 from app.core.utils.decorators import auth_required, current_user_id, _validate_jwt_user
 from app.core.utils.jwt_utils import decode_jwt_token
-from app.core.extensions import limiter
-from app.core.utils.time_utils import SQLITE_BJ_NOW_EXPR
+from app.core.utils.time_utils import now_bj
+from app.models.notification import Notification, NotificationDismissal
+
+logger = logging.getLogger(__name__)
 
 notifications_api_bp = Blueprint('notifications_api', __name__)
-
-
-def _now_expr() -> str:
-    # SQLite 当前时间（UTC）
-    return SQLITE_BJ_NOW_EXPR
 
 
 def _bool_arg(val) -> bool:
@@ -67,209 +58,181 @@ def _optional_auth_user_id():
         except Exception:
             return None, None
     return None, None
+def _active_filter():
+    """返回通知活跃状态的通用过滤条件列表。"""
+    now = now_bj()
+    return [
+        Notification.is_active == True,  # noqa: E712
+        db.or_(Notification.start_at.is_(None), Notification.start_at <= now),
+        db.or_(Notification.end_at.is_(None), Notification.end_at >= now),
+    ]
+
+
+def _notification_to_dict(n, is_read: bool = False) -> dict:
+    return {
+        'id': n.id,
+        'title': n.title,
+        'content': n.content,
+        'n_type': n.n_type,
+        'priority': n.priority,
+        'start_at': n.start_at.isoformat() if n.start_at else None,
+        'end_at': n.end_at.isoformat() if n.end_at else None,
+        'created_at': n.created_at.isoformat() if n.created_at else None,
+        'is_read': 1 if is_read else 0,
+    }
 
 
 @notifications_api_bp.route('/notifications')
 @limiter.exempt
 def api_notifications_list():
-    # 允许未登录用户访问（用于主页显示通知）
     uid, auth_err = _optional_auth_user_id()
     if auth_err:
         return jsonify({'status': 'unauthorized', 'message': auth_err}), 401
-    is_logged_in = uid is not None
-    
-    limit = int(request.args.get('limit') or 50)
-    limit = max(1, min(limit, 200))
+
+    limit = max(1, min(int(request.args.get('limit') or 50), 200))
     include_dismissed = _bool_arg(request.args.get('include_dismissed'))
+    now = now_bj()
 
-    conn = get_db()
-
-    # 调试：帮助定位"用了哪个数据库/当前登录是谁/返回条数为何为0"
-    try:
-        current_app.logger.info(
-            f"[notifications.list] uid={uid} db={current_app.config.get('DATABASE_PATH')}"
-            f" session_user={session.get('username')} include_dismissed={include_dismissed} is_logged_in={is_logged_in}"
+    if uid is not None:
+        # 已登录：LEFT JOIN dismissals 判断已读
+        dismissed_sub = (
+            db.session.query(NotificationDismissal.notification_id)
+            .filter(NotificationDismissal.user_id == uid)
+            .subquery()
         )
-    except Exception:
-        pass
 
-    # 说明：notification_dismissals 同时承担"已读/已关闭"的记录。
-    # - 首页需要：默认不展示已关闭（否则刷新会再次出现）
-    # - 历史页需要：展示全部（所以历史页调用 include_dismissed=1）
-    # - 未登录用户：不查询已读状态，显示所有活跃通知（都标记为未读）
-    if is_logged_in:
-        where_dismiss = "" if include_dismissed else " AND d.id IS NULL "
-        query = f"""
-        SELECT
-          n.id, n.title, n.content, n.n_type, n.priority,
-          n.start_at, n.end_at, n.created_at,
-          CASE WHEN d.id IS NULL THEN 0 ELSE 1 END AS is_read
-        FROM notifications n
-        LEFT JOIN notification_dismissals d
-          ON d.notification_id = n.id AND d.user_id = ?
-        WHERE n.is_active = 1
-          {where_dismiss}
-          AND (n.start_at IS NULL OR datetime(n.start_at) <= datetime({_now_expr()}))
-          AND (n.end_at   IS NULL OR datetime(n.end_at)   >= datetime({_now_expr()}))
-        ORDER BY n.priority DESC, n.created_at DESC, n.id DESC
-        LIMIT ?
-        """
-        rows = conn.execute(query, (uid, limit)).fetchall()
+        query = (
+            db.session.query(
+                Notification,
+                dismissed_sub.c.notification_id.isnot(None).label('is_read'),
+            )
+            .outerjoin(dismissed_sub, Notification.id == dismissed_sub.c.notification_id)
+            .filter(*_active_filter())
+        )
+
+        if not include_dismissed:
+            query = query.filter(dismissed_sub.c.notification_id.is_(None))
+
+        rows = (
+            query
+            .order_by(Notification.priority.desc(), Notification.created_at.desc(), Notification.id.desc())
+            .limit(limit)
+            .all()
+        )
+        data = [_notification_to_dict(n, bool(is_read)) for n, is_read in rows]
     else:
-        # 未登录用户：返回所有活跃通知，不查询已读状态（都标记为未读）
-        query = f"""
-        SELECT
-          n.id, n.title, n.content, n.n_type, n.priority,
-          n.start_at, n.end_at, n.created_at,
-          0 AS is_read
-        FROM notifications n
-        WHERE n.is_active = 1
-          AND (n.start_at IS NULL OR datetime(n.start_at) <= datetime({_now_expr()}))
-          AND (n.end_at   IS NULL OR datetime(n.end_at)   >= datetime({_now_expr()}))
-        ORDER BY n.priority DESC, n.created_at DESC, n.id DESC
-        LIMIT ?
-        """
-        rows = conn.execute(query, (limit,)).fetchall()
+        # 未登录：全部标记为未读
+        rows = (
+            db.session.query(Notification)
+            .filter(*_active_filter())
+            .order_by(Notification.priority.desc(), Notification.created_at.desc(), Notification.id.desc())
+            .limit(limit)
+            .all()
+        )
+        data = [_notification_to_dict(n, False) for n in rows]
 
-    return jsonify({'status': 'success', 'data': [dict(r) for r in rows]})
-
-
+    return jsonify({'status': 'success', 'data': data})
 @notifications_api_bp.route('/notifications/<int:nid>')
 @limiter.exempt
-@auth_required  # 支持 session 和 JWT（小程序）
+@auth_required
 def api_notifications_detail(nid: int):
     uid = int(current_user_id() or 0)
     include_dismissed = _bool_arg(request.args.get('include_dismissed'))
-    conn = get_db()
 
-    where_dismiss = "" if include_dismissed else " AND d.id IS NULL "
+    dismissed_sub = (
+        db.session.query(NotificationDismissal.notification_id)
+        .filter(NotificationDismissal.user_id == uid)
+        .subquery()
+    )
 
-    row = conn.execute(
-        f"""
-        SELECT
-          n.id, n.title, n.content, n.n_type, n.priority,
-          n.start_at, n.end_at, n.created_at,
-          CASE WHEN d.id IS NULL THEN 0 ELSE 1 END AS is_read
-        FROM notifications n
-        LEFT JOIN notification_dismissals d
-          ON d.notification_id = n.id AND d.user_id = ?
-        WHERE n.id = ?
-          AND n.is_active = 1
-          {where_dismiss}
-          AND (n.start_at IS NULL OR datetime(n.start_at) <= datetime({_now_expr()}))
-          AND (n.end_at   IS NULL OR datetime(n.end_at)   >= datetime({_now_expr()}))
-        LIMIT 1
-        """,
-        (uid, int(nid))
-    ).fetchone()
+    query = (
+        db.session.query(
+            Notification,
+            dismissed_sub.c.notification_id.isnot(None).label('is_read'),
+        )
+        .outerjoin(dismissed_sub, Notification.id == dismissed_sub.c.notification_id)
+        .filter(Notification.id == nid, *_active_filter())
+    )
 
-    if not row:
+    if not include_dismissed:
+        query = query.filter(dismissed_sub.c.notification_id.is_(None))
+
+    result = query.first()
+    if not result:
         return jsonify({'status': 'error', 'message': '通知不存在或已失效'}), 404
 
-    return jsonify({'status': 'success', 'data': dict(row)})
+    n, is_read = result
+    return jsonify({'status': 'success', 'data': _notification_to_dict(n, bool(is_read))})
+
+
+def _upsert_dismissal(uid: int, nid: int):
+    """插入或更新 dismissal 记录。"""
+    existing = (
+        db.session.query(NotificationDismissal)
+        .filter_by(user_id=uid, notification_id=nid)
+        .first()
+    )
+    if existing:
+        existing.dismissed_at = now_bj()
+    else:
+        db.session.add(NotificationDismissal(user_id=uid, notification_id=nid))
+    db.session.commit()
 
 
 @notifications_api_bp.route('/notifications/<int:nid>/read', methods=['POST'])
 @limiter.exempt
-@auth_required  # 支持 session 和 JWT（小程序）
+@auth_required
 def api_notifications_mark_read(nid: int):
     uid = int(current_user_id() or 0)
-    conn = get_db()
 
-    # 先确认通知存在且可见（避免写垃圾数据）
-    n = conn.execute(
-        f"""
-        SELECT id
-        FROM notifications
-        WHERE id = ?
-          AND is_active = 1
-          AND (start_at IS NULL OR datetime(start_at) <= datetime({_now_expr()}))
-          AND (end_at   IS NULL OR datetime(end_at)   >= datetime({_now_expr()}))
-        """,
-        (int(nid),)
-    ).fetchone()
-
+    n = db.session.query(Notification).filter(Notification.id == nid, *_active_filter()).first()
     if not n:
         return jsonify({'status': 'error', 'message': '通知不存在或已失效'}), 404
 
     try:
-        conn.execute(
-            """
-            INSERT INTO notification_dismissals (user_id, notification_id)
-            VALUES (?, ?)
-            ON CONFLICT(user_id, notification_id)
-            DO UPDATE SET dismissed_at=CURRENT_TIMESTAMP
-            """,
-            (uid, int(nid))
-        )
-        conn.commit()
+        _upsert_dismissal(uid, nid)
         return jsonify({'status': 'success'})
     except Exception as e:
+        db.session.rollback()
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
 @notifications_api_bp.route('/notifications/<int:nid>/dismiss', methods=['POST'])
 @limiter.exempt
-@auth_required  # 支持 session 和 JWT（小程序）
+@auth_required
 def api_notifications_dismiss(nid: int):
     """关闭通知（刷新不再出现）"""
-    # 关闭也要求登录
     uid = int(current_user_id() or 0)
-    conn = get_db()
 
-    # 同样先确认通知存在且可见
-    n = conn.execute(
-        f"""
-        SELECT id
-        FROM notifications
-        WHERE id = ?
-          AND is_active = 1
-          AND (start_at IS NULL OR datetime(start_at) <= datetime({_now_expr()}))
-          AND (end_at   IS NULL OR datetime(end_at)   >= datetime({_now_expr()}))
-        """,
-        (int(nid),)
-    ).fetchone()
-
+    n = db.session.query(Notification).filter(Notification.id == nid, *_active_filter()).first()
     if not n:
         return jsonify({'status': 'error', 'message': '通知不存在或已失效'}), 404
 
     try:
-        conn.execute(
-            """
-            INSERT INTO notification_dismissals (user_id, notification_id)
-            VALUES (?, ?)
-            ON CONFLICT(user_id, notification_id)
-            DO UPDATE SET dismissed_at=CURRENT_TIMESTAMP
-            """,
-            (uid, int(nid))
-        )
-        conn.commit()
+        _upsert_dismissal(uid, nid)
         return jsonify({'status': 'success'})
     except Exception as e:
+        db.session.rollback()
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
 @notifications_api_bp.route('/notifications/unread_count')
 @limiter.exempt
-@auth_required  # 支持 session 和 JWT（小程序）
+@auth_required
 def api_notifications_unread_count():
     uid = int(current_user_id() or 0)
-    conn = get_db()
 
-    # 未读：没有 dismissal 记录（当前实现 dismissal 也代表已读）
-    row = conn.execute(
-        f"""
-        SELECT COUNT(1) AS cnt
-        FROM notifications n
-        LEFT JOIN notification_dismissals d
-          ON d.notification_id = n.id AND d.user_id = ?
-        WHERE n.is_active = 1
-          AND (n.start_at IS NULL OR datetime(n.start_at) <= datetime({_now_expr()}))
-          AND (n.end_at   IS NULL OR datetime(n.end_at)   >= datetime({_now_expr()}))
-          AND d.id IS NULL
-        """,
-        (uid,)
-    ).fetchone()
+    dismissed_ids = (
+        db.session.query(NotificationDismissal.notification_id)
+        .filter(NotificationDismissal.user_id == uid)
+        .subquery()
+    )
 
-    return jsonify({'status': 'success', 'count': int(row['cnt'] or 0)})
+    count = (
+        db.session.query(db.func.count(Notification.id))
+        .filter(*_active_filter())
+        .filter(Notification.id.notin_(db.session.query(dismissed_ids.c.notification_id)))
+        .scalar()
+    ) or 0
 
+    return jsonify({'status': 'success', 'count': count})
