@@ -20,7 +20,9 @@ async function loadPostDetail() {
     const faved = p.favorited ? ' active' : '';
     document.getElementById('actionsBar').innerHTML = `
       <button class="forum-action-btn${liked}" id="likeBtn" onclick="toggleLike()">&#10084; <span id="likeCount">${p.like_count||0}</span></button>
-      <button class="forum-action-btn${faved}" id="favBtn" onclick="toggleFav()">&#9733; <span id="favCount">${p.favorite_count||0}</span></button>`;
+      <button class="forum-action-btn${faved}" id="favBtn" onclick="toggleFav()">&#9733; <span id="favCount">${p.favorite_count||0}</span></button>
+      <button class="forum-action-btn" onclick="openForwardModal()">&#8618; 转发</button>
+      <button class="forum-action-btn" onclick="openReportModal('post',${POST_ID})">&#9888; 举报</button>`;
   } catch(e) { console.error(e); }
 }
 

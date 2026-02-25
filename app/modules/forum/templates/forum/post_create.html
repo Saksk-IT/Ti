@@ -31,6 +31,25 @@
       </label>
     </div>
   </div>
+  <div class="forum-form-group">
+    <label style="display:flex;align-items:center;gap:8px;">
+      <input type="checkbox" id="pollToggle" onchange="togglePollBuilder()" style="width:auto;">
+      添加投票
+    </label>
+    <div id="pollBuilder" style="display:none;margin-top:12px;">
+      <input type="text" id="pollQuestion" placeholder="投票问题" style="margin-bottom:8px;">
+      <div id="pollOptions">
+        <input type="text" class="poll-opt" placeholder="选项 1" style="margin-bottom:6px;">
+        <input type="text" class="poll-opt" placeholder="选项 2" style="margin-bottom:6px;">
+      </div>
+      <div style="display:flex;gap:12px;margin-top:8px;align-items:center;">
+        <button type="button" class="forum-cancel-btn" onclick="addPollOption()" style="padding:6px 14px;font-size:13px;">+ 添加选项</button>
+        <label style="font-size:13px;display:flex;align-items:center;gap:4px;">
+          <input type="checkbox" id="pollMultiple" style="width:auto;"> 允许多选
+        </label>
+      </div>
+    </div>
+  </div>
   <div class="forum-form-actions">
     <button class="forum-submit-btn" onclick="submitPost()">{{ '保存' if editing else '发布' }}</button>
     <button class="forum-cancel-btn" onclick="history.back()">取消</button>

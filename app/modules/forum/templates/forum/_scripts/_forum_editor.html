@@ -52,6 +52,30 @@ function renderImagePreviews() {
 
 function removeImage(idx) { uploadedImages.splice(idx, 1); renderImagePreviews(); }
 
+function togglePollBuilder() {
+  const show = document.getElementById('pollToggle').checked;
+  document.getElementById('pollBuilder').style.display = show ? 'block' : 'none';
+}
+
+function addPollOption() {
+  const container = document.getElementById('pollOptions');
+  const count = container.querySelectorAll('.poll-opt').length + 1;
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'poll-opt';
+  input.placeholder = `选项 ${count}`;
+  input.style.marginBottom = '6px';
+  container.appendChild(input);
+}
+
+function buildPollData() {
+  if (!document.getElementById('pollToggle').checked) return null;
+  const question = document.getElementById('pollQuestion').value.trim();
+  const opts = Array.from(document.querySelectorAll('.poll-opt')).map(i => i.value.trim()).filter(Boolean);
+  if (!question || opts.length < 2) return null;
+  return {question, options: opts, multiple: document.getElementById('pollMultiple').checked};
+}
+
 async function submitPost() {
   const title = document.getElementById('postTitle').value.trim();
   const boardId = document.getElementById('boardSelect').value;
@@ -59,7 +83,12 @@ async function submitPost() {
   if (!title) { alert('请输入标题'); return; }
   if (!boardId) { alert('请选择版块'); return; }
 
-  const body = {title, board_id: parseInt(boardId), content, images: uploadedImages};
+  const poll = buildPollData();
+  if (document.getElementById('pollToggle').checked && !poll) {
+    alert('投票需要填写问题和至少2个选项'); return;
+  }
+
+  const body = {title, board_id: parseInt(boardId), content, images: uploadedImages, poll};
   const url = EDITING ? FORUM_API + '/posts/' + EDIT_POST_ID : FORUM_API + '/posts';
   const method = EDITING ? 'PUT' : 'POST';
 

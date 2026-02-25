@@ -44,6 +44,8 @@ def api_create_comment(post_id: int):
             content=content, parent_id=parent_id,
             reply_to_user_id=reply_to_user_id,
         )
+        if 'error' in comment:
+            return jsonify({'status': 'error', 'message': comment['error']}), 403
         return jsonify({'status': 'success', 'data': comment})
     except Exception as e:
         current_app.logger.error(f"发表评论失败: {e}", exc_info=True)

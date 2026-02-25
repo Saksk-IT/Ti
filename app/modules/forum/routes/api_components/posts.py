@@ -65,7 +65,10 @@ def api_create_post():
             author_id=current_user_id(), board_id=board_id,
             title=title, content=content,
             images=images, question_refs=question_refs,
+            poll=data.get('poll'),
         )
+        if 'error' in post:
+            return jsonify({'status': 'error', 'message': post['error']}), 403
         return jsonify({'status': 'success', 'data': post})
     except Exception as e:
         current_app.logger.error(f"创建帖子失败: {e}", exc_info=True)

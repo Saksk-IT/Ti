@@ -1,0 +1,119 @@
+<script>
+// Phase 2: 表情回应、投票、举报、转发
+const EMOJI_LIST = ['👍','❤️','😂','🎉','🤔','👀','🔥','💯'];
+let reportTarget = {type:'', id:0};
+
+// ── 表情回应 ──
+async function loadReactions() {
+  try {
+    const r = await fetch(`/api/forum/reactions?target_type=post&target_id=${POST_ID}`).then(r=>r.json());
+    if (r.status !== 'success') return;
+    renderReactions(r.data.reactions, r.data.user_emojis);
+  } catch(e) { console.error(e); }
+}
+
+function renderReactions(reactions, userEmojis) {
+  const bar = document.getElementById('reactionsBar');
+  const chips = reactions.map(r => {
+    const active = userEmojis.includes(r.emoji) ? ' active' : '';
+    return `<button class="reaction-chip${active}" onclick="toggleReaction('post',${POST_ID},'${r.emoji}')" title="${r.usernames.join(', ')}">${r.emoji} ${r.count}</button>`;
+  }).join('');
+  const addBtn = `<button class="reaction-add-btn" onclick="showEmojiPicker(event)">+</button>`;
+  bar.innerHTML = chips + addBtn;
+}
+
+function showEmojiPicker(e) {
+  let picker = document.getElementById('emojiPicker');
+  if (picker) { picker.remove(); return; }
+  picker = document.createElement('div');
+  picker.id = 'emojiPicker';
+  picker.className = 'emoji-picker';
+  picker.innerHTML = EMOJI_LIST.map(em => `<button onclick="toggleReaction('post',${POST_ID},'${em}')">${em}</button>`).join('');
+  e.target.parentElement.appendChild(picker);
+  setTimeout(() => document.addEventListener('click', closeEmojiPicker, {once:true}), 10);
+}
+
+function closeEmojiPicker() {
+  const p = document.getElementById('emojiPicker');
+  if (p) p.remove();
+}
+
+async function toggleReaction(type, id, emoji) {
+  try {
+    closeEmojiPicker();
+    await fetch('/api/forum/reactions', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_type:type,target_id:id,emoji})});
+    loadReactions();
+  } catch(e) {}
+}
+
+// ── 投票 ──
+async function loadPoll() {
+  try {
+    const r = await fetch(`/api/forum/posts/${POST_ID}/poll`).then(r=>r.json());
+    if (r.status !== 'success') { document.getElementById('pollSection').style.display='none'; return; }
+    renderPoll(r.data);
+  } catch(e) {}
+}
+function renderPoll(data) {
+  const section = document.getElementById('pollSection');
+  section.style.display = 'block';
+  const total = data.total_votes || 0;
+  const opts = data.options.map(o => {
+    const pct = total > 0 ? Math.round(o.count / total * 100) : 0;
+    const voted = data.user_votes.includes(o.index) ? ' voted' : '';
+    return `<div class="poll-option${voted}" onclick="castVote(${o.index})">
+      <div class="poll-bar" style="width:${pct}%"></div>
+      <span class="poll-text">${o.text}</span>
+      <span class="poll-pct">${pct}% (${o.count})</span>
+    </div>`;
+  }).join('');
+  section.innerHTML = `<div class="forum-poll">
+    <div class="poll-question">${data.question}${data.multiple?' <span style="font-size:12px;color:var(--app-muted)">(多选)</span>':''}</div>
+    ${opts}
+    <div class="poll-total">${total} 人参与投票</div>
+  </div>`;
+}
+
+async function castVote(idx) {
+  try {
+    const r = await fetch(`/api/forum/posts/${POST_ID}/poll/vote`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({option_index:idx})}).then(r=>r.json());
+    if (r.status === 'success') renderPoll(r.data);
+    else alert(r.message||'投票失败');
+  } catch(e) {}
+}
+
+// ── 举报 ──
+function openReportModal(type, id) {
+  reportTarget = {type, id};
+  document.getElementById('reportModal').style.display = 'flex';
+}
+function closeReportModal() { document.getElementById('reportModal').style.display = 'none'; }
+
+async function submitReport() {
+  const reason = document.getElementById('reportReason').value;
+  const detail = document.getElementById('reportDetail').value.trim();
+  try {
+    const r = await fetch('/api/forum/report', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_type:reportTarget.type,target_id:reportTarget.id,reason,detail})}).then(r=>r.json());
+    if (r.status === 'success') { alert('举报已提交'); closeReportModal(); }
+    else alert(r.message||'举报失败');
+  } catch(e) { alert('举报失败'); }
+}
+
+// ── 转发 ──
+function openForwardModal() { document.getElementById('forwardModal').style.display = 'flex'; }
+function closeForwardModal() { document.getElementById('forwardModal').style.display = 'none'; }
+
+async function submitForward() {
+  const receiver_id = parseInt(document.getElementById('forwardReceiver').value);
+  if (!receiver_id) { alert('请输入接收者用户ID'); return; }
+  try {
+    const r = await fetch('/api/forum/forward', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({post_id:POST_ID,receiver_id})}).then(r=>r.json());
+    if (r.status === 'success') { alert('转发成功'); closeForwardModal(); }
+    else alert(r.message||'转发失败');
+  } catch(e) { alert('转发失败'); }
+}
+
+// 初始化 Phase 2 功能
+loadReactions();
+loadPoll();
+</script>

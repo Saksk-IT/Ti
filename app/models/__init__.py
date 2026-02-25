@@ -24,7 +24,10 @@ from .user_bank import (
     UserBankMistake, PublicBankUser, UserBankFavorite,
 )
 from .study import StudyLearning, StudyReview
-from .forum import ForumBoard, ForumPost, ForumComment, ForumLike, ForumFavorite
+from .forum import (
+    ForumBoard, ForumPost, ForumComment, ForumLike, ForumFavorite,
+    ForumReaction, ForumPollVote, ForumReport, ForumMention, ForumUserBan,
+)
 from .system import (
     SystemConfig, UserSubject, UserQuestionTagItem,
     DuplicateCheckRecord, ReinforceSimilarCache, SchemaMigration,
@@ -57,6 +60,7 @@ __all__ = [
     'StudyLearning', 'StudyReview',
     # forum
     'ForumBoard', 'ForumPost', 'ForumComment', 'ForumLike', 'ForumFavorite',
+    'ForumReaction', 'ForumPollVote', 'ForumReport', 'ForumMention', 'ForumUserBan',
     # system
     'SystemConfig', 'UserSubject', 'UserQuestionTagItem',
     'DuplicateCheckRecord', 'ReinforceSimilarCache', 'SchemaMigration',

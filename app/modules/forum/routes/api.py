@@ -9,3 +9,8 @@ from .api_components import posts  # noqa: F401,E402
 from .api_components import comments  # noqa: F401,E402
 from .api_components import interactions  # noqa: F401,E402
 from .api_components import uploads  # noqa: F401,E402
+from .api_components import reactions  # noqa: F401,E402
+from .api_components import polls  # noqa: F401,E402
+from .api_components import reports  # noqa: F401,E402
+from .api_components import mentions  # noqa: F401,E402
+from .api_components import forward  # noqa: F401,E402

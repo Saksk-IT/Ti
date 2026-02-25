@@ -6,6 +6,7 @@ from sqlalchemy import text
 
 from app.core.extensions import db
 from ..services.content_sanitizer import sanitize_html
+from ..services import mention_service, ban_service
 
 
 def get_comments(post_id: int, page: int = 1, per_page: int = 30,
@@ -63,6 +64,9 @@ def create_comment(post_id: int, author_id: int, content: str,
                    parent_id: Optional[int] = None,
                    reply_to_user_id: Optional[int] = None) -> dict:
     """发表评论"""
+    if ban_service.is_banned(author_id):
+        return {'error': '您已被禁言，无法评论'}
+
     safe_content = sanitize_html(content)
     params: dict = {
         'pid': post_id, 'uid': author_id, 'content': safe_content,
@@ -91,7 +95,12 @@ def create_comment(post_id: int, author_id: int, content: str,
     row = db.session.execute(text(
         'SELECT * FROM forum_comments WHERE post_id = :pid AND author_id = :uid ORDER BY id DESC LIMIT 1'
     ), {'pid': post_id, 'uid': author_id}).fetchone()
-    return dict(row._mapping)
+    comment = dict(row._mapping)
+
+    # 解析 @提及
+    mention_service.create_mentions('comment', comment['id'], author_id, safe_content)
+
+    return comment
 
 
 def delete_comment(comment_id: int, user_id: int, is_admin: bool = False) -> bool:

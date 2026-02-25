@@ -10,7 +10,9 @@
 {% block content %}
 <div class="forum-container forum-detail-container">
   <div id="postContent" class="forum-post-content"></div>
+  <div id="pollSection" style="display:none"></div>
   <div class="forum-actions-bar" id="actionsBar"></div>
+  <div id="reactionsBar" class="forum-reactions-bar"></div>
   <div class="forum-comments-section">
     <h3 class="forum-section-title">评论</h3>
     <div id="commentsList"></div>
@@ -19,8 +21,46 @@
     </div>
   </div>
   <div class="forum-comment-input" id="commentInput">
-    <textarea id="commentText" placeholder="写下你的评论..." rows="3"></textarea>
+    <textarea id="commentText" placeholder="写下你的评论... 使用 @用户名 提及他人" rows="3"></textarea>
     <button class="forum-submit-btn" onclick="submitComment()">发表</button>
+  </div>
+</div>
+<!-- 举报弹窗 -->
+<div id="reportModal" class="forum-modal" style="display:none">
+  <div class="forum-modal-content">
+    <h3 style="margin:0 0 16px;font-size:16px;font-weight:600;">举报内容</h3>
+    <div class="forum-form-group">
+      <label>举报原因</label>
+      <select id="reportReason" style="width:100%;padding:10px 14px;border:0.5px solid var(--app-border);border-radius:10px;font-size:14px;background:var(--app-surface);color:var(--app-text);">
+        <option value="spam">垃圾信息</option>
+        <option value="abuse">辱骂攻击</option>
+        <option value="inappropriate">不当内容</option>
+        <option value="plagiarism">抄袭</option>
+        <option value="other">其他</option>
+      </select>
+    </div>
+    <div class="forum-form-group">
+      <label>补充说明（可选）</label>
+      <textarea id="reportDetail" rows="3" style="width:100%;padding:10px 14px;border:0.5px solid var(--app-border);border-radius:10px;font-size:14px;background:var(--app-surface);color:var(--app-text);resize:none;box-sizing:border-box;"></textarea>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:flex-end">
+      <button class="forum-cancel-btn" onclick="closeReportModal()">取消</button>
+      <button class="forum-submit-btn" onclick="submitReport()">提交举报</button>
+    </div>
+  </div>
+</div>
+<!-- 转发弹窗 -->
+<div id="forwardModal" class="forum-modal" style="display:none">
+  <div class="forum-modal-content">
+    <h3 style="margin:0 0 16px;font-size:16px;font-weight:600;">转发到私聊</h3>
+    <div class="forum-form-group">
+      <label>接收者用户ID</label>
+      <input id="forwardReceiver" type="number" style="width:100%;padding:10px 14px;border:0.5px solid var(--app-border);border-radius:10px;font-size:14px;background:var(--app-surface);color:var(--app-text);box-sizing:border-box;">
+    </div>
+    <div style="display:flex;gap:12px;justify-content:flex-end">
+      <button class="forum-cancel-btn" onclick="closeForwardModal()">取消</button>
+      <button class="forum-submit-btn" onclick="submitForward()">转发</button>
+    </div>
   </div>
 </div>
 {% endblock %}
@@ -29,4 +69,5 @@
 <script>const POST_ID = {{ post_id }};</script>
 {% include "forum/_scripts/_forum_comments.html" %}
 {% include "forum/_scripts/_forum_interactions.html" %}
+{% include "forum/_scripts/_forum_phase2.html" %}
 {% endblock %}

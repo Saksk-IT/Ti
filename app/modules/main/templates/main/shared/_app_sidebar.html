@@ -105,6 +105,7 @@
     opacity: 0.95;
   }
   .app-nav-label { font-size: 13px; font-weight: 850; letter-spacing: -0.1px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .app-nav-badge { margin-left: auto; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--app-primary); color: var(--app-primary-contrast); font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
   /* 导航悬浮菜单 */
   .app-nav-accordion {
@@ -671,6 +672,7 @@
         <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
       </svg>
       <span class="app-nav-label">社区</span>
+      <span id="forumUnreadBadge" class="app-nav-badge" style="display:none"></span>
     </a>
 
     <a class="app-nav-item {{ 'active' if _path.startswith('/coding') else '' }}" href="/coding/home" aria-label="编程" title="编程">
@@ -696,6 +698,19 @@
   </div>
   {% endif %}
 </nav>
+
+<script>
+(function(){
+  const badge = document.getElementById('forumUnreadBadge');
+  if (!badge) return;
+  fetch('/api/forum/unread').then(r=>r.json()).then(r=>{
+    if (r.status==='success' && r.data.unread_count > 0) {
+      badge.textContent = r.data.unread_count > 99 ? '99+' : r.data.unread_count;
+      badge.style.display = 'flex';
+    }
+  }).catch(()=>{});
+})();
+</script>
 
 <!-- 快捷菜单弹出层 -->
 <div class="app-quick-menu" id="appQuickMenu">

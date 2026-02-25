@@ -38,6 +38,7 @@ class ForumPost(db.Model):
     content_format = db.Column(db.String(10), default='html')
     images = db.Column(db.JSON, default=list)
     question_refs = db.Column(db.JSON, default=list)
+    poll = db.Column(db.JSON, nullable=True)  # {"question":"...", "options":["A","B"], "multiple": false}
 
     is_pinned = db.Column(db.Boolean, default=False, server_default=text('false'))
     is_featured = db.Column(db.Boolean, default=False, server_default=text('false'))
@@ -110,4 +111,81 @@ class ForumFavorite(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey('forum_posts.id', ondelete='CASCADE'), nullable=False)
+    created_at = db.Column(db.DateTime, default=func.now(), server_default=func.now())
+
+
+class ForumReaction(db.Model):
+    """表情回应"""
+    __tablename__ = 'forum_reactions'
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'target_type', 'target_id', 'emoji', name='uq_forum_reaction'),
+        {'extend_existing': True},
+    )
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    target_type = db.Column(db.String(10), nullable=False)  # 'post' | 'comment'
+    target_id = db.Column(db.Integer, nullable=False)
+    emoji = db.Column(db.String(20), nullable=False)
+    created_at = db.Column(db.DateTime, default=func.now(), server_default=func.now())
+
+
+class ForumPollVote(db.Model):
+    """投票"""
+    __tablename__ = 'forum_poll_votes'
+    __table_args__ = (
+        db.UniqueConstraint('post_id', 'user_id', 'option_index', name='uq_forum_poll_vote'),
+        {'extend_existing': True},
+    )
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('forum_posts.id', ondelete='CASCADE'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    option_index = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, default=func.now(), server_default=func.now())
+
+
+class ForumReport(db.Model):
+    """举报"""
+    __tablename__ = 'forum_reports'
+    __table_args__ = {'extend_existing': True}
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    reporter_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    target_type = db.Column(db.String(10), nullable=False)  # 'post' | 'comment'
+    target_id = db.Column(db.Integer, nullable=False)
+    reason = db.Column(db.String(50), nullable=False)
+    detail = db.Column(db.Text, default='')
+    status = db.Column(db.String(20), nullable=False, default='pending', server_default=text("'pending'"))
+    handled_by = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    handled_at = db.Column(db.DateTime, nullable=True)
+    handle_note = db.Column(db.Text, default='')
+    created_at = db.Column(db.DateTime, default=func.now(), server_default=func.now())
+
+
+class ForumMention(db.Model):
+    """@提及"""
+    __tablename__ = 'forum_mentions'
+    __table_args__ = {'extend_existing': True}
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    source_type = db.Column(db.String(10), nullable=False)  # 'post' | 'comment'
+    source_id = db.Column(db.Integer, nullable=False)
+    mentioned_user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    mentioner_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    is_read = db.Column(db.Boolean, default=False, server_default=text('false'))
+    created_at = db.Column(db.DateTime, default=func.now(), server_default=func.now())
+
+
+class ForumUserBan(db.Model):
+    """用户封禁"""
+    __tablename__ = 'forum_user_bans'
+    __table_args__ = {'extend_existing': True}
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    banned_by = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    reason = db.Column(db.Text, nullable=False, default='')
+    expires_at = db.Column(db.DateTime, nullable=True)
+    is_active = db.Column(db.Boolean, default=True, server_default=text('true'))
     created_at = db.Column(db.DateTime, default=func.now(), server_default=func.now())

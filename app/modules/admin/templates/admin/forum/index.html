@@ -6,6 +6,7 @@
     .stat-card { background: var(--card-bg); border: 0.5px solid var(--border-color); border-radius: var(--radius-md); padding: 24px; }
     .stat-card .label { font-size: 13px; color: var(--text-sub); margin-bottom: 8px; }
     .stat-card .value { font-size: 28px; font-weight: 600; }
+    .stat-card .value.warn { color: var(--warning); }
     .tabs { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 0.5px solid var(--border-color); padding-bottom: 0; }
     .tabs button { padding: 10px 20px; border: none; background: none; color: var(--text-sub); cursor: pointer; font-size: 14px; font-weight: 500; border-bottom: 2px solid transparent; border-radius: 0; min-height: auto; }
     .tabs button:hover { color: var(--text-color); background: none; transform: none; box-shadow: none; }
@@ -41,6 +42,8 @@
 <div class="tabs">
     <button class="active" onclick="switchTab('posts')">帖子管理</button>
     <button onclick="switchTab('boards')">版块管理</button>
+    <button onclick="switchTab('reports')">举报管理</button>
+    <button onclick="switchTab('bans')">封禁管理</button>
 </div>
 <!-- 帖子管理 -->
 <div id="tab-posts" class="tab-panel active">
@@ -59,6 +62,26 @@
     <div id="boardForm" style="display:none"></div>
     <div id="boardsTable"></div>
 </div>
+<!-- 举报管理 -->
+<div id="tab-reports" class="tab-panel">
+    <div class="toolbar">
+        <select id="reportStatus" onchange="loadReports()" style="padding:8px 14px;border:0.5px solid var(--border-color);border-radius:var(--radius-sm);background:var(--card-bg);color:var(--text-color);font-size:14px;">
+            <option value="pending">待处理</option>
+            <option value="resolved">已处理</option>
+            <option value="dismissed">已驳回</option>
+            <option value="all">全部</option>
+        </select>
+    </div>
+    <div id="reportsTable"></div>
+</div>
+<!-- 封禁管理 -->
+<div id="tab-bans" class="tab-panel">
+    <div class="toolbar">
+        <button class="btn btn-sm btn-primary" onclick="toggleBanForm()">封禁用户</button>
+    </div>
+    <div id="banForm" style="display:none"></div>
+    <div id="bansTable"></div>
+</div>
 {% endblock %}
 {% block scripts %}
 <script>
@@ -74,6 +97,8 @@ function switchTab(name) {
     document.getElementById('tab-' + name).classList.add('active');
     event.target.classList.add('active');
     if (name === 'boards') loadBoards();
+    if (name === 'reports') loadReports();
+    if (name === 'bans') loadBans();
 }
 
 async function loadStats() {
@@ -82,8 +107,9 @@ async function loadStats() {
     const d = r.data;
     document.getElementById('statsContainer').innerHTML = [
         {l:'帖子总数',v:d.post_count},{l:'评论总数',v:d.comment_count},
-        {l:'今日新帖',v:d.today_posts},{l:'活跃版块',v:d.board_count}
-    ].map(s => `<div class="stat-card"><div class="label">${s.l}</div><div class="value">${s.v}</div></div>`).join('');
+        {l:'今日新帖',v:d.today_posts},{l:'活跃版块',v:d.board_count},
+        {l:'待处理举报',v:d.pending_reports,w:d.pending_reports>0}
+    ].map(s => `<div class="stat-card"><div class="label">${s.l}</div><div class="value${s.w?' warn':''}">${s.v}</div></div>`).join('');
 }
 
 async function loadPosts() {
@@ -146,6 +172,69 @@ async function syncBoards() { const r = await apiPost('/forum/boards/sync',{}); 
 
 function esc(s) { const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
 function fmtDate(s) { if(!s)return'-'; const d=new Date(s); return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
+
+const REASON_MAP = {spam:'垃圾信息',abuse:'辱骂攻击',inappropriate:'不当内容',plagiarism:'抄袭',other:'其他'};
+
+async function loadReports() {
+    const status = document.getElementById('reportStatus').value;
+    const r = await api(`/forum/reports?status=${status}&per_page=30`);
+    if (r.status !== 'success') { document.getElementById('reportsTable').innerHTML = '<div class="empty">加载失败</div>'; return; }
+    const {reports, total} = r.data;
+    if (!reports.length) { document.getElementById('reportsTable').innerHTML = '<div class="empty">暂无举报</div>'; return; }
+    const rows = reports.map(rp => `<tr>
+        <td>${rp.id}</td><td>${esc(rp.reporter_name)}</td>
+        <td>${rp.target_type==='post'?'帖子':'评论'} #${rp.target_id}</td>
+        <td>${REASON_MAP[rp.reason]||rp.reason}</td><td>${esc(rp.detail)||'-'}</td>
+        <td><span class="badge ${rp.status==='pending'?'badge-pin':rp.status==='resolved'?'badge-feat':'badge-custom'}">${rp.status==='pending'?'待处理':rp.status==='resolved'?'已处理':'已驳回'}</span></td>
+        <td>${fmtDate(rp.created_at)}</td>
+        <td class="actions">${rp.status==='pending'?`
+            <button class="btn-xs btn-danger" onclick="handleReport(${rp.id},'delete_content')">删除内容</button>
+            <button class="btn-xs btn-secondary" onclick="handleReport(${rp.id},'dismiss')">驳回</button>`:'<span style="color:var(--text-sub)">'+(rp.handler_name||'-')+'</span>'}</td>
+    </tr>`).join('');
+    document.getElementById('reportsTable').innerHTML = `<table><thead><tr><th>ID</th><th>举报人</th><th>目标</th><th>原因</th><th>详情</th><th>状态</th><th>时间</th><th>操作</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+async function handleReport(id, action) {
+    const note = action==='dismiss' ? (prompt('驳回备注（可选）')||'') : '';
+    await apiPost(`/forum/reports/${id}/handle`, {action, note});
+    loadReports(); loadStats();
+}
+
+async function loadBans() {
+    const r = await api('/forum/bans?per_page=30');
+    if (r.status !== 'success') { document.getElementById('bansTable').innerHTML = '<div class="empty">加载失败</div>'; return; }
+    const {bans} = r.data;
+    if (!bans.length) { document.getElementById('bansTable').innerHTML = '<div class="empty">暂无封禁记录</div>'; return; }
+    const rows = bans.map(b => `<tr>
+        <td>${b.id}</td><td>${esc(b.user_name)}</td><td>${esc(b.banned_by_name||'-')}</td>
+        <td>${esc(b.reason)}</td><td>${b.expires_at?fmtDate(b.expires_at):'永久'}</td>
+        <td>${b.is_active?'<span class="badge badge-pin">生效中</span>':'<span class="badge badge-custom">已解除</span>'}</td>
+        <td>${fmtDate(b.created_at)}</td>
+        <td class="actions">${b.is_active?`<button class="btn-xs btn-secondary" onclick="unbanUser(${b.user_id})">解封</button>`:''}</td>
+    </tr>`).join('');
+    document.getElementById('bansTable').innerHTML = `<table><thead><tr><th>ID</th><th>用户</th><th>操作人</th><th>原因</th><th>到期</th><th>状态</th><th>时间</th><th>操作</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function toggleBanForm() {
+    const el = document.getElementById('banForm');
+    if (el.style.display === 'none') {
+        el.style.display = 'block';
+        el.innerHTML = `<div class="board-form"><div><label>用户ID</label><input id="ban_uid" type="number"></div><div><label>到期时间（留空=永久）</label><input id="ban_expires" type="datetime-local"></div><div class="full"><label>封禁原因</label><input id="ban_reason"></div><div style="display:flex;align-items:end"><button class="btn btn-sm btn-danger" onclick="banUser()">封禁</button></div></div>`;
+    } else { el.style.display = 'none'; }
+}
+
+async function banUser() {
+    const user_id = parseInt(document.getElementById('ban_uid').value);
+    const reason = document.getElementById('ban_reason').value.trim();
+    if (!user_id || !reason) { alert('用户ID和原因不能为空'); return; }
+    const expires = document.getElementById('ban_expires').value || null;
+    const r = await apiPost('/forum/bans', {user_id, reason, expires_at: expires});
+    if (r.status !== 'success') { alert(r.message||'封禁失败'); return; }
+    document.getElementById('banForm').style.display = 'none';
+    loadBans();
+}
+
+async function unbanUser(uid) { if(!confirm('确定解封？'))return; await apiDel(`/forum/bans/${uid}`); loadBans(); }
 
 loadStats(); loadPosts();
 </script>

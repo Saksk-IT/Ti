@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 """帖子业务逻辑"""
+import json
 from typing import Optional
 
 from sqlalchemy import text
 
 from app.core.extensions import db
 from ..services.content_sanitizer import sanitize_html
+from ..services import mention_service, ban_service
 
 
 def get_posts(
@@ -114,27 +116,38 @@ def get_post_detail(post_id: int, user_id: int | None = None) -> dict | None:
 
 
 def create_post(author_id: int, board_id: int, title: str, content: str,
-                images: list | None = None, question_refs: list | None = None) -> dict:
+                images: list | None = None, question_refs: list | None = None,
+                poll: dict | None = None) -> dict:
     """创建帖子"""
-    import json
+    if ban_service.is_banned(author_id):
+        return {'error': '您已被禁言，无法发帖'}
+
     safe_content = sanitize_html(content)
     images_json = json.dumps(images or [])
     refs_json = json.dumps(question_refs or [])
+    poll_json = json.dumps(poll) if poll else None
 
     db.session.execute(text('''
         INSERT INTO forum_posts
-            (board_id, author_id, title, content, images, question_refs)
-        VALUES (:bid, :uid, :title, :content, :images::jsonb, :refs::jsonb)
+            (board_id, author_id, title, content, images, question_refs, poll)
+        VALUES (:bid, :uid, :title, :content, CAST(:images AS jsonb), CAST(:refs AS jsonb),
+                CASE WHEN :poll IS NOT NULL THEN CAST(:poll AS jsonb) ELSE NULL END)
     '''), {
         'bid': board_id, 'uid': author_id, 'title': title,
         'content': safe_content, 'images': images_json, 'refs': refs_json,
+        'poll': poll_json,
     })
     db.session.commit()
 
     row = db.session.execute(text(
         'SELECT * FROM forum_posts WHERE author_id = :uid ORDER BY id DESC LIMIT 1'
     ), {'uid': author_id}).fetchone()
-    return dict(row._mapping)
+    post = dict(row._mapping)
+
+    # 解析 @提及
+    mention_service.create_mentions('post', post['id'], author_id, safe_content)
+
+    return post
 
 
 def update_post(post_id: int, author_id: int, **fields) -> bool:
@@ -145,7 +158,7 @@ def update_post(post_id: int, author_id: int, **fields) -> bool:
     if not row or row._mapping['author_id'] != author_id:
         return False
 
-    allowed = {'title', 'content', 'images', 'question_refs'}
+    allowed = {'title', 'content', 'images', 'question_refs', 'poll'}
     updates = {k: v for k, v in fields.items() if k in allowed}
     if not updates:
         return False
@@ -153,16 +166,18 @@ def update_post(post_id: int, author_id: int, **fields) -> bool:
     if 'content' in updates:
         updates['content'] = sanitize_html(updates['content'])
     if 'images' in updates:
-        import json
         updates['images'] = json.dumps(updates['images'])
     if 'question_refs' in updates:
-        import json
         updates['question_refs'] = json.dumps(updates['question_refs'])
+    if 'poll' in updates:
+        updates['poll'] = json.dumps(updates['poll']) if updates['poll'] else None
 
     set_parts = []
     for k in updates:
         if k in ('images', 'question_refs'):
-            set_parts.append(f'{k} = :{k}::jsonb')
+            set_parts.append(f'{k} = CAST(:{k} AS jsonb)')
+        elif k == 'poll':
+            set_parts.append(f'{k} = CASE WHEN :{k} IS NOT NULL THEN CAST(:{k} AS jsonb) ELSE NULL END')
         else:
             set_parts.append(f'{k} = :{k}')
     set_clause = ', '.join(set_parts)
