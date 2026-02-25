@@ -12,17 +12,19 @@ from app.core.extensions import db, limiter
 from app.core.services.export import ExportRequest, ExportResult, fetch_export_questions
 from app.core.services.export.word_exporter import generate_word
 from app.core.services.export.pdf_exporter import generate_pdf
+from app.core.utils.decorators import auth_required, current_user_id
 
 logger = logging.getLogger(__name__)
 
 main_api_bp = Blueprint("main_api", __name__, url_prefix="/api/subjects")
 
 
-@main_api_bp.route("/<int:subject_id>/export", methods=["POST"])
+@main_api_bp.route("/<int:subject_id>/export", methods=["GET", "POST"])
+@auth_required
 @limiter.limit("3/minute")
 def export_subject_questions(subject_id: int):
     """导出公共科目题目为 Word 或 PDF。"""
-    uid = session.get("user_id")
+    uid = current_user_id()
 
     # 查询科目
     row = db.session.execute(
@@ -34,22 +36,29 @@ def export_subject_questions(subject_id: int):
 
     subject_name = row._mapping["name"]
 
-    # 解析请求体
-    data = request.get_json(silent=True) or {}
-    fmt = data.get("format", "word")
+    # 解析参数：GET 从 query string，POST 从 JSON body
+    if request.method == "GET":
+        fmt = request.args.get("format", "word")
+        scope = request.args.get("scope", "all")
+        q_type = request.args.get("q_type", "all") or "all"
+        tag = request.args.get("tag", "all") or "all"
+        include_answer = request.args.get("include_answer", "true").lower() != "false"
+    else:
+        data = request.get_json(silent=True) or {}
+        fmt = data.get("format", "word")
+        scope = data.get("scope", "all")
+        q_type = data.get("q_type", "all") or "all"
+        tag = data.get("tag", "all") or "all"
+        include_answer = bool(data.get("include_answer", True))
+
     if fmt not in ("word", "pdf"):
         return jsonify({"status": "error", "message": "format 仅支持 word / pdf"}), 400
 
-    scope = data.get("scope", "all")
     if scope not in ("all", "favorites", "mistakes"):
         scope = "all"
 
     if scope in ("favorites", "mistakes") and not uid:
         return jsonify({"status": "error", "message": "收藏/错题范围需要登录"}), 401
-
-    q_type = data.get("q_type", "all") or "all"
-    tag = data.get("tag", "all") or "all"
-    include_answer = bool(data.get("include_answer", True))
 
     req = ExportRequest(
         subject_id=subject_id,

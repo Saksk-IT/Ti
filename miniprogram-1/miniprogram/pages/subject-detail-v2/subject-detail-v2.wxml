@@ -400,6 +400,86 @@
             />
         </view>
 
+        <view wx:elif="{{tab === 'export'}}">
+          <view class="card" aria-label="导出设置">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">导出</text>
+                <text class="card-sub">选择范围和格式，导出为 Word 文档。</text>
+              </view>
+            </view>
+
+            <view class="stats scope-stats" aria-label="导出范围">
+              <view class="stat scope-stat {{exportScope==='all' ? 'active' : ''}}" bindtap="onExportScopeTap" data-scope="all">
+                <text class="k">全题库</text>
+                <text class="v">{{totalCount}}</text>
+              </view>
+              <view class="stat scope-stat {{exportScope==='favorites' ? 'active' : ''}}" bindtap="onExportScopeTap" data-scope="favorites">
+                <text class="k">收藏</text>
+                <text class="v">{{favCount}}</text>
+              </view>
+              <view class="stat scope-stat {{exportScope==='mistakes' ? 'active' : ''}}" bindtap="onExportScopeTap" data-scope="mistakes">
+                <text class="k">错题</text>
+                <text class="v">{{mistakeCount}}</text>
+              </view>
+            </view>
+
+            <view class="start-meta start-meta-hero">
+              <view class="start-meta-row">
+                <view class="start-count {{exportCountText==='…' ? 'loading' : ''}}">
+                  <text>当前筛选</text>
+                  <text class="num">{{exportCountText}}</text>
+                  <text>题</text>
+                </view>
+                <view class="start-pills" aria-label="已选筛选">
+                  <view class="meta-pill" wx:if="{{exportType !== 'all'}}"><text>{{exportType}}</text></view>
+                  <view class="meta-pill" wx:if="{{exportTag !== 'all'}}"><text>{{exportTag}}</text></view>
+                </view>
+              </view>
+              <view class="start-error" wx:if="{{exportError}}"><text>{{exportError}}</text></view>
+            </view>
+
+            <view class="adv-section" aria-label="导出题型">
+              <text class="adv-label">题型</text>
+              <view class="chips chips-scroll">
+                <view class="chip {{exportType==='all' ? 'active' : ''}}" bindtap="onExportTypeTap" data-type="all"><text>全部题型</text></view>
+                <view class="chip {{exportType===item ? 'active' : ''}}" wx:for="{{types}}" wx:key="*this" bindtap="onExportTypeTap" data-type="{{item}}">
+                  <text>{{item}}</text>
+                </view>
+              </view>
+            </view>
+
+            <view class="adv-section" aria-label="导出标签">
+              <text class="adv-label">标签</text>
+              <view class="chips chips-scroll">
+                <view class="chip {{exportTag==='all' ? 'active' : ''}}" bindtap="onExportTagTap" data-tag="all"><text>全部标签</text></view>
+                <view class="chip {{exportTag===item.name ? 'active' : ''}}" wx:for="{{tags}}" wx:key="name" bindtap="onExportTagTap" data-tag="{{item.name}}">
+                  <text>{{item.name}}</text>
+                </view>
+              </view>
+            </view>
+
+            <view class="adv-section" aria-label="答案模式">
+              <text class="adv-label">答案</text>
+              <view class="chips">
+                <view class="chip {{exportAnswer==='yes' ? 'active' : ''}}" bindtap="onExportAnswerTap" data-answer="yes"><text>包含答案和解析</text></view>
+                <view class="chip {{exportAnswer==='no' ? 'active' : ''}}" bindtap="onExportAnswerTap" data-answer="no"><text>仅题目</text></view>
+              </view>
+            </view>
+
+            <view class="actions actions-hero">
+              <view class="btn btn-primary {{(exportDisabled || exportBusy) ? 'disabled' : ''}}" bindtap="onExportWord">
+                <text>{{exportBusy ? '正在导出…' : '导出 Word'}}</text>
+              </view>
+            </view>
+
+            <view class="export-progress" wx:if="{{exportBusy && exportProgress > 0}}">
+              <view class="export-progress-bar" style="width: {{exportProgress}}%"></view>
+              <text class="export-progress-text">{{exportProgress}}%</text>
+            </view>
+          </view>
+        </view>
+
         <view wx:else>
           <view class="card" aria-label="分享">
             <view class="card-head">

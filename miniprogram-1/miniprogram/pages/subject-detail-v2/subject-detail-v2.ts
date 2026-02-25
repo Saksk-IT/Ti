@@ -48,6 +48,7 @@ import {
   type ReinforceWrongState,
   type ReinforceSimilarState
 } from './modules/subject-detail-helpers';
+
 Page({
   behaviors: [requestStateBehavior],
   data: {
@@ -103,6 +104,18 @@ Page({
     startCountText: '—',
     startDisabled: true,
     startError: '',
+
+    // 导出模块
+    exportScope: 'all' as Scope,
+    exportType: 'all',
+    exportTag: 'all',
+    exportAnswer: 'yes',
+    exportCountText: '—',
+    exportCount: 0,
+    exportDisabled: true,
+    exportBusy: false,
+    exportProgress: 0,
+    exportError: '',
 
     // 统计详情（对齐 Web 题库详情-统计子页面）
     statsDays: 14,
@@ -171,8 +184,10 @@ Page({
     displayTypes: [] as TypeBreakdownView[]
   },
 
-  startCountTimer: null as any,
+  startCountTimer: null as ReturnType<typeof setTimeout> | null,
   startCountReq: 0,
+  exportCountTimer: null as ReturnType<typeof setTimeout> | null,
+  exportCountReq: 0,
   statsReq: 0,
   qDetailReq: 0,
   tabExplicit: false as boolean,
@@ -223,7 +238,7 @@ Page({
       return;
     }
     try {
-      this.patchData(themeManager.getPageData() as any, undefined, true);
+      this.patchData(themeManager.getPageData(), undefined, true);
     } catch (e) {}
     try {
       wx.showShareMenu({ withShareTicket: true });
@@ -237,7 +252,11 @@ Page({
     }
     this.syncShuffleOptionsDisabled();
     if (shouldCountForTab(this.data.tab)) {
-      this.scheduleStartCount();
+      if (this.data.tab === 'export') {
+        this.scheduleExportCount();
+      } else {
+        this.scheduleStartCount();
+      }
     }
     if (this.data.tab === 'stats') {
       this.ensureStatsDetail();
@@ -267,7 +286,7 @@ Page({
     const style = (e?.detail?.style || 'default') as ThemeStyle;
     themeManager.setStyle(style);
     this.patchData({
-      ...(themeManager.getPageData() as any),
+      ...(themeManager.getPageData()),
       drawerOpen: false
     }, undefined, true);
     await syncUserSettingsToServer();
@@ -275,7 +294,7 @@ Page({
 
   onCycleThemeModeTap() {
     const mode = themeManager.cycleMode() as ThemeMode;
-    this.patchData({ ...(themeManager.getPageData() as any), themeMode: mode });
+    this.patchData({ ...(themeManager.getPageData()), themeMode: mode });
   },
 
   applyDetailTabOrder(nextOrder: DetailTab[]) {
@@ -302,7 +321,7 @@ Page({
 
     const order: DetailTab[] = (this.data.detailTabs || [])
       .map((it: any) => String(it?.key || '').trim().toLowerCase())
-      .filter((k: any) => VALID_DETAIL_TABS.has(k as DetailTab)) as any;
+      .filter((k: string) => VALID_DETAIL_TABS.has(k as DetailTab)) as DetailTab[];
     const idx = order.indexOf(keyRaw as DetailTab);
     if (idx < 0) return;
 
@@ -348,7 +367,8 @@ Page({
     this.patchData({ loading: true, startError: '' });
     try {
       const meta = await api.getSubjectsMeta();
-      const subjects: SubjectMeta[] = Array.isArray((meta as any)?.subjects) ? (meta as any).subjects : [];
+      const metaObj = (meta && typeof meta === 'object' ? meta : {}) as Record<string, unknown>;
+      const subjects: SubjectMeta[] = Array.isArray(metaObj.subjects) ? metaObj.subjects as SubjectMeta[] : [];
 
       const subjectId = Number(this.data.subjectId || 0);
       let subject = subjectId ? subjects.find((s) => Number(s?.id) === subjectId) : null;
@@ -402,23 +422,27 @@ Page({
 
       const [info, counts, tagsRes] = await Promise.all([
         api.getSubjectInfo(subjectName),
-        api.getUserCounts({ subject: subjectName, type: 'all', tag: 'all' }).catch(() => ({ favorites: 0, mistakes: 0 } as any)),
-        api.getTags({ subject: subjectName }).catch(() => ({ tags: [] } as any))
+        api.getUserCounts({ subject: subjectName, type: 'all', tag: 'all' }).catch(() => ({ favorites: 0, mistakes: 0 })),
+        api.getTags({ subject: subjectName }).catch(() => ({ tags: [] }))
       ]);
 
-      const availableTypes = Array.isArray((info as any)?.available_types)
-        ? (info as any).available_types
-        : Array.isArray((info as any)?.data?.available_types)
-          ? (info as any).data.available_types
+      const infoObj = (info && typeof info === 'object' ? info : {}) as Record<string, unknown>;
+      const infoData = (infoObj.data && typeof infoObj.data === 'object' ? infoObj.data : {}) as Record<string, unknown>;
+      const availableTypes = Array.isArray(infoObj.available_types)
+        ? infoObj.available_types
+        : Array.isArray(infoData.available_types)
+          ? infoData.available_types
           : [];
       const types = (availableTypes || [])
         .filter((t: any) => typeof t === 'string' && t.trim())
         .map((t: any) => String(t).trim());
 
-      const tagsRaw = Array.isArray((tagsRes as any)?.tags)
-        ? (tagsRes as any).tags
-        : Array.isArray((tagsRes as any)?.data?.tags)
-          ? (tagsRes as any).data.tags
+      const tagsObj = (tagsRes && typeof tagsRes === 'object' ? tagsRes : {}) as Record<string, unknown>;
+      const tagsDataObj = (tagsObj.data && typeof tagsObj.data === 'object' ? tagsObj.data : {}) as Record<string, unknown>;
+      const tagsRaw = Array.isArray(tagsObj.tags)
+        ? tagsObj.tags
+        : Array.isArray(tagsDataObj.tags)
+          ? tagsDataObj.tags
           : [];
       const tags: TagItem[] = (tagsRaw || [])
         .map((t: any) => ({ name: String(t?.name || '').trim(), count: t?.count }))
@@ -436,8 +460,8 @@ Page({
         subjectName,
         totalCount,
         detailTabs,
-        favCount: Number((counts as any)?.favorites || 0) || 0,
-        mistakeCount: Number((counts as any)?.mistakes || 0) || 0,
+        favCount: Number((counts as Record<string, unknown>)?.favorites || 0) || 0,
+        mistakeCount: Number((counts as Record<string, unknown>)?.mistakes || 0) || 0,
         tab,
         dataSubTab,
         reinforceSubTab,
@@ -483,7 +507,11 @@ Page({
 
       this.syncShuffleOptionsDisabled();
       if (shouldCountForTab(tab)) {
-        this.scheduleStartCount();
+        if (tab === 'export') {
+          this.scheduleExportCount();
+        } else {
+          this.scheduleStartCount();
+        }
       }
       if (tab === 'stats') {
         this.setData({ statsLoadedDays: 0, statsLoadedSubTab: dataSubTab }, () => this.ensureStatsDetail());
@@ -547,7 +575,7 @@ Page({
       searchSearched: true,
       searchError: '',
       ...(reset ? { searchResults: [], searchTotal: 0, searchPage: 1 } : {})
-    } as any);
+    });
 
     try {
       const res: any = await api.searchQuestions({
@@ -556,7 +584,7 @@ Page({
         type: this.data.searchType && this.data.searchType !== 'all' ? this.data.searchType : undefined,
         page,
         per_page: perPage
-      } as any);
+      });
 
       const list: SearchItem[] = Array.isArray(res?.questions) ? res.questions : [];
       const total = Number(res?.total || 0) || 0;
@@ -613,7 +641,7 @@ Page({
       qDetailAnswerLines: [],
       qDetailExplanationLines: [],
       qDetailOptions: []
-    } as any);
+    });
 
     try {
       const q: any = await api.getQuestionDetail(qid);
@@ -635,18 +663,18 @@ Page({
         qDetailAnswerLines: normalizeTextLines(q?.answer),
         qDetailExplanationLines: normalizeTextLines(q?.explanation),
         qDetailOptions: options
-      } as any);
+      });
     } catch (err: any) {
       if (reqId !== (this as any).qDetailReq) return;
       this.setData({
         qDetailLoading: false,
         qDetailError: (err && err.message) ? String(err.message) : '加载失败'
-      } as any);
+      });
     }
   },
 
   onQDetailClose() {
-    this.setData({ qDetailOpen: false } as any);
+    this.setData({ qDetailOpen: false });
   },
 
   onQDetailSheetTap() {
@@ -668,7 +696,11 @@ Page({
     this.patchData({ tab, startError: '' }, () => {
       this.syncShuffleOptionsDisabled();
       if (shouldCountForTab(tab)) {
-        this.scheduleStartCount();
+        if (tab === 'export') {
+          this.scheduleExportCount();
+        } else {
+          this.scheduleStartCount();
+        }
       }
       if (tab === 'reinforce') {
         this.ensureReinforce(false);
@@ -783,7 +815,7 @@ Page({
 
     this.setData({
       reinforceWrong: Object.assign({}, this.data.reinforceWrong, { loading: true, error: '' })
-    } as any);
+    });
 
     try {
       const data: any = await api.getQuizReinforce({
@@ -791,7 +823,7 @@ Page({
         subject_id: subjectId,
         include: 'wrong',
         wrong_list_n: 30
-      } as any);
+      });
 
       const wrongTotal = Number(data?.wrong_total || 0) || 0;
       const recommendIds = Array.isArray(data?.wrong_recommend_ids)
@@ -826,7 +858,7 @@ Page({
           recommendIds,
           top
         }
-      } as any);
+      });
     } catch (e: any) {
       this.setData({
         reinforceWrong: Object.assign({}, this.data.reinforceWrong, {
@@ -836,7 +868,7 @@ Page({
           desc: '加载失败，点此重试',
           listMeta: '加载失败'
         })
-      } as any);
+      });
     }
   },
 
@@ -847,7 +879,7 @@ Page({
 
     this.setData({
       reinforceSimilar: Object.assign({}, this.data.reinforceSimilar, { loading: true, error: '' })
-    } as any);
+    });
 
     try {
       const data: any = await api.getQuizReinforce({
@@ -855,7 +887,7 @@ Page({
         subject_id: subjectId,
         include: 'similar',
         pairs_n: 30
-      } as any);
+      });
 
       const wrongTotal = Number(data?.wrong_total || 0) || 0;
       const seedIds = Array.isArray(data?.similar_seed_ids)
@@ -900,7 +932,7 @@ Page({
         if (similarOnlyIds.length) {
           startIds = similarOnlyIds.slice();
           const pairsText = pairsCount > 0 ? `${pairsCount} 组` : '';
-          desc = `已在本题库检测到${pairsText ? (' ' + pairsText) : ''}相似题（题干相似优先，选项相似兜底），训练共 ${similarOnlyIds.length} 道。`;
+          desc = `检测到${pairsText ? (' ' + pairsText) : ''}相似题（题干、选项相似），共 ${similarOnlyIds.length} 道`;
         } else {
           desc = wrongTotal > 0 ? '暂无明显相似题（题干/选项相似），可先做错题加强。' : '暂无明显相似题（题干/选项相似）。';
         }
@@ -934,7 +966,7 @@ Page({
           startIds,
           pairs
         }
-      } as any);
+      });
     } catch (e: any) {
       this.setData({
         reinforceSimilar: Object.assign({}, this.data.reinforceSimilar, {
@@ -944,7 +976,7 @@ Page({
           desc: '加载失败，点此重试',
           listMeta: '加载失败'
         })
-      } as any);
+      });
     }
   },
 
@@ -1100,7 +1132,7 @@ Page({
           const nextTag = prevTag === name ? 'all' : prevTag;
           if (nextTag !== prevTag) setStoredString(`subject_${subjectId}_tag`, nextTag);
 
-          this.setData({ tags, tag: nextTag } as any, () => {
+          this.setData({ tags, tag: nextTag }, () => {
             if (shouldCountForTab(this.data.tab)) {
               this.scheduleStartCount();
             }
@@ -1140,7 +1172,7 @@ Page({
   },
 
   scheduleStartCount() {
-    if (!shouldCountForTab(this.data.tab)) return;
+    if (this.data.tab !== 'practice') return;
     if (this.startCountTimer) {
       clearTimeout(this.startCountTimer);
       this.startCountTimer = null;
@@ -1472,7 +1504,7 @@ Page({
         settle(favTrendPromise)
       ]);
       if (reqId !== (this as any).statsReq) return;
-      if (!statsRes.ok) throw (statsRes as any).reason;
+      if (!statsRes.ok) throw (statsRes as { ok: false; reason: unknown }).reason;
 
       const data: any = statsRes.value;
       const qPayload: any = qRes.ok ? qRes.value : null;
@@ -1573,6 +1605,141 @@ Page({
     const subject = String(this.data.subjectName || '').trim();
     if (!subject) return;
     wx.setClipboardData({ data: subject });
+  },
+
+  // ===== 导出模块 =====
+  onExportScopeTap(e: any) {
+    const next = String(e?.currentTarget?.dataset?.scope || 'all').trim() || 'all';
+    if (next === this.data.exportScope) return;
+    const scope = next === 'favorites' || next === 'mistakes' ? next : 'all';
+    this.patchData({ exportScope: scope }, () => this.scheduleExportCount());
+  },
+
+  onExportTypeTap(e: any) {
+    const next = String(e?.currentTarget?.dataset?.type || 'all').trim() || 'all';
+    if (next === this.data.exportType) return;
+    const types = Array.isArray(this.data.types) ? this.data.types : [];
+    const v = next === 'all' || types.includes(next) ? next : 'all';
+    this.patchData({ exportType: v }, () => this.scheduleExportCount());
+  },
+
+  onExportTagTap(e: any) {
+    const next = String(e?.currentTarget?.dataset?.tag || 'all').trim() || 'all';
+    if (next === this.data.exportTag) return;
+    this.patchData({ exportTag: next }, () => this.scheduleExportCount());
+  },
+
+  onExportAnswerTap(e: any) {
+    const next = String(e?.currentTarget?.dataset?.answer || 'yes').trim();
+    if (next === this.data.exportAnswer) return;
+    this.patchData({ exportAnswer: next === 'no' ? 'no' : 'yes' });
+  },
+
+  scheduleExportCount() {
+    if (this.exportCountTimer) {
+      clearTimeout(this.exportCountTimer);
+      this.exportCountTimer = null;
+    }
+    const reqId = ++this.exportCountReq;
+    this.patchData({ exportCountText: '…', exportDisabled: true, exportError: '' });
+    this.exportCountTimer = setTimeout(() => this.refreshExportCount(reqId), 220);
+  },
+
+  async refreshExportCount(reqId: number) {
+    if (reqId !== this.exportCountReq) return;
+    const subject = String(this.data.subjectName || '').trim();
+    if (!subject) return;
+
+    try {
+      const params: any = { subject, type: 'all', source: this.data.exportScope || 'all' };
+      if (this.data.exportType && this.data.exportType !== 'all') params.type = this.data.exportType;
+      if (this.data.exportTag && this.data.exportTag !== 'all') params.tag = this.data.exportTag;
+
+      const res: any = await api.getQuestionsCount(params);
+      if (reqId !== this.exportCountReq) return;
+      const count = Number(res?.count || 0) || 0;
+      this.patchData({
+        exportCount: count,
+        exportCountText: String(count),
+        exportDisabled: count <= 0,
+        exportError: ''
+      });
+    } catch (e: any) {
+      if (reqId !== this.exportCountReq) return;
+      this.patchData({
+        exportCount: 0,
+        exportCountText: '0',
+        exportDisabled: true,
+        exportError: (e && e.message) ? String(e.message) : '获取题量失败'
+      });
+    }
+  },
+  async onExportWord() {
+    if (this.data.exportDisabled || this.data.exportBusy) return;
+    if (this.data.exportCount <= 0) {
+      wx.showToast({ title: '当前筛选无题目', icon: 'none' });
+      return;
+    }
+
+    const subjectId = Number(this.data.subjectId || 0);
+    if (!subjectId) return;
+
+    this.patchData({ exportBusy: true, exportProgress: 0, exportError: '' });
+
+    try {
+      const { getApiBaseUrl } = require('../../utils/url-utils');
+      const baseUrl = getApiBaseUrl();
+      const token = wx.getStorageSync('token') || '';
+
+      const params: string[] = ['format=word'];
+      params.push(`scope=${encodeURIComponent(this.data.exportScope || 'all')}`);
+      if (this.data.exportType && this.data.exportType !== 'all') {
+        params.push(`q_type=${encodeURIComponent(this.data.exportType)}`);
+      }
+      if (this.data.exportTag && this.data.exportTag !== 'all') {
+        params.push(`tag=${encodeURIComponent(this.data.exportTag)}`);
+      }
+      params.push(`include_answer=${this.data.exportAnswer === 'no' ? 'false' : 'true'}`);
+
+      const url = `${baseUrl}/subjects/${subjectId}/export?${params.join('&')}`;
+
+      const downloadTask = wx.downloadFile({
+        url,
+        header: { 'Authorization': token ? `Bearer ${token}` : '' },
+        success: (res) => {
+          if (res.statusCode === 200 && res.tempFilePath) {
+            wx.openDocument({
+              filePath: res.tempFilePath,
+              fileType: 'docx',
+              showMenu: true,
+              fail: (err) => {
+                this.patchData({ exportError: '打开文档失败，请重试' });
+                wx.showToast({ title: '打开文档失败', icon: 'none' });
+              }
+            });
+          } else {
+            this.patchData({ exportError: '导出失败，请稍后重试' });
+            wx.showToast({ title: '导出失败', icon: 'none' });
+          }
+        },
+        fail: (err) => {
+          this.patchData({ exportError: '下载失败，请检查网络' });
+          wx.showToast({ title: '下载失败', icon: 'none' });
+        },
+        complete: () => {
+          this.patchData({ exportBusy: false });
+        }
+      });
+
+      downloadTask.onProgressUpdate((res) => {
+        this.patchData({ exportProgress: res.progress || 0 });
+      });
+    } catch (e: any) {
+      this.patchData({
+        exportBusy: false,
+        exportError: (e && e.message) ? String(e.message) : '导出失败'
+      });
+    }
   },
 
   onShareAppMessage() {

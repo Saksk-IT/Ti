@@ -1680,6 +1680,32 @@ page {
   line-height: 1.6;
 }
 
+// 导出进度条
+.export-progress {
+  margin: 16rpx 0 8rpx;
+  height: 32rpx;
+  background: var(--app-bg-2, #f0f0f0);
+  border-radius: 16rpx;
+  overflow: hidden;
+  position: relative;
+}
+.export-progress-bar {
+  height: 100%;
+  background: var(--app-primary, #2b6cb0);
+  border-radius: 16rpx;
+  transition: width 0.3s ease;
+}
+.export-progress-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 20rpx;
+  line-height: 32rpx;
+  color: var(--app-text-2, #666);
+}
+
 .footer {
   margin-top: 18rpx;
   padding-bottom: env(safe-area-inset-bottom);

@@ -1,5 +1,5 @@
 export type Scope = 'all' | 'favorites' | 'mistakes';
-export type DetailTab = 'practice' | 'reinforce' | 'exam' | 'search' | 'stats' | 'share';
+export type DetailTab = 'practice' | 'reinforce' | 'exam' | 'search' | 'stats' | 'export' | 'share';
 export type DataSubTab = 'global' | 'mistakes' | 'favorites';
 export type SubjectMeta = { id: number; name: string; question_count: number };
 export type TagItem = { name: string; count?: number };
@@ -129,7 +129,7 @@ export type ReinforceSimilarState = {
 
 export type DetailTabView = { key: DetailTab; label: string };
 
-export const DEFAULT_DETAIL_TAB_ORDER: DetailTab[] = ['practice', 'reinforce', 'exam', 'search', 'stats', 'share'];
+export const DEFAULT_DETAIL_TAB_ORDER: DetailTab[] = ['practice', 'reinforce', 'exam', 'search', 'stats', 'export', 'share'];
 export const VALID_DETAIL_TABS = new Set(DEFAULT_DETAIL_TAB_ORDER);
 export const DETAIL_TAB_LABELS: Record<DetailTab, string> = {
   practice: '练习',
@@ -137,6 +137,7 @@ export const DETAIL_TAB_LABELS: Record<DetailTab, string> = {
   exam: '考试',
   search: '搜索',
   stats: '数据',
+  export: '导出',
   share: '分享'
 };
 
@@ -204,7 +205,7 @@ export function scopeFromEntry(entry: string): Scope {
 }
 
 export function shouldCountForTab(tab: DetailTab): boolean {
-  return tab === 'practice';
+  return tab === 'practice' || tab === 'export';
 }
 
 export function normalizeTab(input: any): DetailTab {
@@ -215,6 +216,7 @@ export function normalizeTab(input: any): DetailTab {
   if (s === 'search') return 'search';
   if (s === 'stats') return 'stats';
   if (s === 'favorites' || s === 'mistakes') return 'practice';
+  if (s === 'export') return 'export';
   if (s === 'share') return 'share';
   return 'practice';
 }
@@ -259,8 +261,8 @@ export function normalizeSubjectDetailOptions(rawOptions: any, qType: string): D
   const out: DetailOption[] = [];
   list.forEach((opt, idx) => {
     if (opt && typeof opt === 'object') {
-      const key = String((opt as any).key ?? '').trim();
-      const value = String((opt as any).value ?? '').trim();
+      const key = String((opt as Record<string, unknown>).key ?? '').trim();
+      const value = String((opt as Record<string, unknown>).value ?? '').trim();
       if (key || value) out.push({ key: key || String(idx + 1), value });
     } else {
       const value = String(opt ?? '').trim();
