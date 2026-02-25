@@ -4,9 +4,17 @@ from __future__ import annotations
 
 import datetime
 import logging
+import os
+import sys
 from io import BytesIO
 from pathlib import Path
 from typing import Any
+
+# Windows: 注册 MSYS2 DLL 目录，WeasyPrint 的 cffi 需要找到 GTK 库
+if sys.platform == "win32":
+    _msys2_bin = Path(r"C:\msys64\ucrt64\bin")
+    if _msys2_bin.is_dir():
+        os.add_dll_directory(str(_msys2_bin))
 
 from jinja2 import Environment, FileSystemLoader
 from pygments import highlight
