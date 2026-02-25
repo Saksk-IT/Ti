@@ -8,6 +8,13 @@ from io import BytesIO
 from typing import Literal
 
 _SCOPE_LABELS = {"all": "全部", "favorites": "收藏", "mistakes": "错题"}
+_QTYPE_LABELS = {
+    "single_choice": "选择题",
+    "multi_choice": "多选题",
+    "boolean": "判断题",
+    "fill": "填空题",
+    "essay": "简答题",
+}
 
 
 @dataclass(frozen=True)
@@ -38,7 +45,8 @@ def build_filename(req: ExportRequest, ext: str) -> str:
         parts.append(scope_label)
 
     if req.q_type and req.q_type != "all":
-        parts.append(req.q_type)
+        type_label = _QTYPE_LABELS.get(req.q_type, req.q_type)
+        parts.append(type_label)
 
     if req.tag and req.tag != "all":
         parts.append(req.tag)

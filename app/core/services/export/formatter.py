@@ -48,6 +48,26 @@ def split_content(raw: str) -> list[ContentSegment]:
 
 _INLINE_CODE_RE = re.compile(r"`([^`]+)`")
 
+_CIRCLED_NUMBERS = ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩"]
+
+
+def format_fill_blanks(content: str) -> str:
+    """将填空题题干中的 __ 占位符转换为带编号的可读空位。
+
+    例: '中国的首都是__，面积约__万' → '中国的首都是 ______① ，面积约 ______② 万'
+    """
+    if "__" not in content:
+        return content
+    parts = content.split("__")
+    if len(parts) <= 1:
+        return content
+    result = [parts[0]]
+    for i, part in enumerate(parts[1:]):
+        num = _CIRCLED_NUMBERS[i] if i < len(_CIRCLED_NUMBERS) else f"({i + 1})"
+        result.append(f" ______{num} ")
+        result.append(part)
+    return "".join(result)
+
 
 def _split_inline_code(text: str) -> list[ContentSegment]:
     """拆分行内代码。"""

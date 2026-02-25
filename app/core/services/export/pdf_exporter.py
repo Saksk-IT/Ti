@@ -24,7 +24,7 @@ from pygments.lexers import get_lexer_by_name, TextLexer
 from app.core.utils.portable_question_format import normalize_portable_type
 
 from .base import ExportRequest, ExportResult, build_filename
-from .formatter import split_content
+from .formatter import split_content, format_fill_blanks
 
 logger = logging.getLogger(__name__)
 
@@ -120,6 +120,9 @@ def _render_question(q: dict[str, Any], num: int, p_type: str, include_answer: b
     options = q.get("options") or []
     answer_raw = q.get("answer")
     analysis = str(q.get("analysis") or "")
+
+    if p_type == "fill":
+        content = format_fill_blanks(content)
 
     content_html = _segments_to_html(split_content(content))
 

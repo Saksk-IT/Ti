@@ -18,7 +18,7 @@ from app.core.utils.portable_question_format import (
 )
 
 from .base import ExportRequest, ExportResult, build_filename
-from .formatter import ContentSegment, split_content
+from .formatter import ContentSegment, split_content, format_fill_blanks
 
 # 颜色常量
 _CLR_TITLE = RGBColor(0x1A, 0x1A, 0x2E)       # 近黑
@@ -149,6 +149,9 @@ def _add_question(
     options = q.get("options") or []
     answer_raw = q.get("answer")
     analysis = str(q.get("analysis") or "")
+
+    if p_type == "fill":
+        content = format_fill_blanks(content)
 
     # 题号 + 题干
     p = doc.add_paragraph()
