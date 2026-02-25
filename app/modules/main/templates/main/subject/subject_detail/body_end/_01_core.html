@@ -37,6 +37,7 @@
       search: '搜索',
       stats: '数据',
       share: '分享',
+      export: '导出',
     };
     const OPTION_TYPES = new Set(['选择题', '多选题']);
     let startCountTimer = null;
@@ -389,7 +390,7 @@
       });
     }
 
-    const VALID_DETAIL_TABS = new Set(['practice','reinforce','exam','search','stats','share']);
+    const VALID_DETAIL_TABS = new Set(['practice','reinforce','exam','search','stats','share','export']);
     function normalizeDetailTab(t){
       const s = String(t || '').trim().toLowerCase();
       if (s === 'data' || s === 'stats') return 'stats';

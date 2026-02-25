@@ -1,0 +1,64 @@
+        <div id="pageTabExport" data-tab-panel="export" hidden>
+    <section class="card" aria-label="导出范围">
+      <h2>范围</h2>
+      <div class="sub">选择要导出的题目范围。</div>
+      <div class="chips" data-chip-group="export-scope">
+        <button type="button" class="chip active" data-chip-kind="export-scope" data-val="all" onclick="selectExportChip('scope', this)">全题库</button>
+        <button type="button" class="chip" data-chip-kind="export-scope" data-val="favorites" onclick="selectExportChip('scope', this)">收藏</button>
+        <button type="button" class="chip" data-chip-kind="export-scope" data-val="mistakes" onclick="selectExportChip('scope', this)">错题</button>
+      </div>
+    </section>
+
+    <section class="card" aria-label="题型选择">
+      <h2>题型</h2>
+      <div class="sub">筛选要导出的题型。</div>
+      <div class="chips" data-chip-group="export-type">
+        <button type="button" class="chip active" data-chip-kind="export-type" data-val="all" onclick="selectExportChip('type', this)">全部题型</button>
+        {% for t in types %}
+          <button type="button" class="chip" data-chip-kind="export-type" data-val="{{ t }}" onclick="selectExportChip('type', this)">{{ t }}</button>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="card" aria-label="标签选择">
+      <h2>标签</h2>
+      {% if logged_in %}
+        <div class="sub">按标签筛选导出范围。</div>
+        <div class="chips" data-chip-group="export-tag">
+          <button type="button" class="chip active" data-chip-kind="export-tag" data-val="all" onclick="selectExportChip('tag', this)">全部标签</button>
+          {% for tg in user_tags %}
+            <button type="button" class="chip" data-chip-kind="export-tag" data-val="{{ tg.name|e }}" onclick="selectExportChip('tag', this)">{{ tg.name }}</button>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="sub">登录后可使用标签筛选。</div>
+      {% endif %}
+    </section>
+
+    <section class="card" aria-label="答案模式">
+      <h2>答案模式</h2>
+      <div class="sub">选择导出文件是否包含答案和解析。</div>
+      <div class="chips" data-chip-group="export-answer">
+        <button type="button" class="chip active" data-chip-kind="export-answer" data-val="yes" onclick="selectExportChip('answer', this)">包含答案和解析</button>
+        <button type="button" class="chip" data-chip-kind="export-answer" data-val="no" onclick="selectExportChip('answer', this)">仅题目</button>
+      </div>
+    </section>
+
+    <section class="card" aria-label="导出">
+      <div class="card-head">
+        <h2>导出</h2>
+        <div class="start-meta">
+          <div class="start-count loading" id="exportCountPill">
+            <span>当前可导出</span>
+            <span class="num" id="exportCount">—</span>
+            <span>题</span>
+          </div>
+        </div>
+      </div>
+      <div class="sub">单次最多导出 500 题。</div>
+      <div class="actions">
+        <button class="btn primary" type="button" id="btnExportWord" onclick="doExport('word')">导出 Word</button>
+        <button class="btn" type="button" id="btnExportPdf" onclick="doExport('pdf')">导出 PDF</button>
+      </div>
+    </section>
+    </div>

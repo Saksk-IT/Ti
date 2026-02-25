@@ -32,6 +32,7 @@ numpy==2.0.2
 openpyxl==3.1.5  # Excel 文件处理
 et_xmlfile==2.0.0  # openpyxl 依赖
 python-docx==0.8.11  # Word 文件处理
+weasyprint>=61.0  # PDF 生成（HTML→PDF）
 
 # ============================================================================
 # 日期时间处理

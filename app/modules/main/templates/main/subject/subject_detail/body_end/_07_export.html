@@ -1,0 +1,141 @@
+    // ── 导出 Tab 逻辑 ──
+    const exportState = { scope: 'all', type: 'all', tag: 'all', answer: 'yes' };
+    let exportCountTimer = null;
+    let exportCountReq = 0;
+    let exportBusy = false;
+
+    function selectExportChip(kind, btn) {
+      if (!btn) return;
+      const v = btn.dataset.val || 'all';
+      if (kind === 'scope') {
+        if ((v === 'favorites' || v === 'mistakes') && !LOGGED_IN) {
+          alert('收藏/错题范围需要先登录');
+          window.location.href = '/login';
+          return;
+        }
+        exportState.scope = v;
+      } else if (kind === 'type') {
+        exportState.type = v;
+      } else if (kind === 'tag') {
+        exportState.tag = v;
+      } else if (kind === 'answer') {
+        exportState.answer = v;
+      }
+      syncExportChipsUI();
+      queueExportCount();
+    }
+
+    function syncExportChipsUI() {
+      document.querySelectorAll('[data-chip-kind="export-scope"][data-val]').forEach(function(btn) {
+        btn.classList.toggle('active', (btn.dataset.val || 'all') === exportState.scope);
+      });
+      document.querySelectorAll('[data-chip-kind="export-type"][data-val]').forEach(function(btn) {
+        btn.classList.toggle('active', (btn.dataset.val || 'all') === exportState.type);
+      });
+      document.querySelectorAll('[data-chip-kind="export-tag"][data-val]').forEach(function(btn) {
+        btn.classList.toggle('active', (btn.dataset.val || 'all') === exportState.tag);
+      });
+      document.querySelectorAll('[data-chip-kind="export-answer"][data-val]').forEach(function(btn) {
+        btn.classList.toggle('active', (btn.dataset.val || 'yes') === exportState.answer);
+      });
+    }
+
+    function setExportCount(value, loading) {
+      var el = document.getElementById('exportCount');
+      if (el) el.textContent = String(value != null ? value : '—');
+      var pill = document.getElementById('exportCountPill');
+      if (pill) pill.classList.toggle('loading', !!loading);
+    }
+
+    function queueExportCount() {
+      if (exportCountTimer) clearTimeout(exportCountTimer);
+      exportCountTimer = setTimeout(fetchExportCount, 200);
+    }
+
+    async function fetchExportCount() {
+      var reqId = ++exportCountReq;
+      if ((exportState.scope === 'favorites' || exportState.scope === 'mistakes') && !LOGGED_IN) {
+        setExportCount('—', false);
+        return;
+      }
+      var params = new URLSearchParams({ subject: SUBJECT_NAME });
+      if (exportState.scope === 'favorites' || exportState.scope === 'mistakes') params.set('source', exportState.scope);
+      if (exportState.tag && exportState.tag !== 'all') params.set('tag', exportState.tag);
+      if (exportState.type && exportState.type !== 'all') params.set('type', exportState.type);
+      setExportCount('...', true);
+      try {
+        var res = await fetch('/api/questions/count?' + params.toString(), { credentials: 'same-origin' });
+        if (!res.ok) throw new Error('count failed');
+        var data = await res.json();
+        if (reqId !== exportCountReq) return;
+        var count = Number(data && data.count) || 0;
+        setExportCount(Math.min(count, 500), false);
+      } catch (e) {
+        if (reqId !== exportCountReq) return;
+        setExportCount('-', false);
+      }
+    }
+
+    async function doExport(fmt) {
+      if (exportBusy) return;
+      var countEl = document.getElementById('exportCount');
+      var countVal = countEl ? parseInt(countEl.textContent, 10) : 0;
+      if (!countVal || countVal <= 0) {
+        alert('当前筛选条件下没有可导出的题目');
+        return;
+      }
+      exportBusy = true;
+      var wordBtn = document.getElementById('btnExportWord');
+      var pdfBtn = document.getElementById('btnExportPdf');
+      if (wordBtn) wordBtn.disabled = true;
+      if (pdfBtn) pdfBtn.disabled = true;
+
+      try {
+        var body = {
+          format: fmt,
+          scope: exportState.scope,
+          q_type: exportState.type,
+          tag: exportState.tag,
+          include_answer: exportState.answer === 'yes',
+        };
+        var res = await fetch('/api/subjects/' + SUBJECT_ID + '/export', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          var err = await res.json().catch(function() { return {}; });
+          alert((err && err.message) || '导出失败，请稍后重试');
+          return;
+        }
+        var blob = await res.blob();
+        var cd = res.headers.get('Content-Disposition') || '';
+        var match = cd.match(/filename\*?=(?:UTF-8''|"?)([^";]+)/i);
+        var filename = match ? decodeURIComponent(match[1]) : (SUBJECT_NAME + '.' + (fmt === 'pdf' ? 'pdf' : 'docx'));
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function() { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+      } catch (e) {
+        alert('导出失败，请检查网络');
+      } finally {
+        exportBusy = false;
+        if (wordBtn) wordBtn.disabled = false;
+        if (pdfBtn) pdfBtn.disabled = false;
+      }
+    }
+
+    // 导出 tab 激活时刷新计数
+    (function() {
+      var origSetDetailTab = setDetailTab;
+      setDetailTab = function(tab, persist) {
+        origSetDetailTab(tab, persist);
+        if (pageTab === 'export') {
+          syncExportChipsUI();
+          queueExportCount();
+        }
+      };
+    })();
