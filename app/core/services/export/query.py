@@ -15,7 +15,7 @@ from .base import ExportRequest
 
 logger = logging.getLogger(__name__)
 
-MAX_EXPORT_QUESTIONS = 500
+MAX_EXPORT_QUESTIONS = None  # 不限制导出数量
 
 
 def _safe_load(raw: Any, default: Any) -> Any:
@@ -62,7 +62,6 @@ def fetch_export_questions(req: ExportRequest) -> list[dict[str, Any]]:
         params["q_type"] = portable_type
 
     sql_parts.append("ORDER BY q.id")
-    sql_parts.append(f"LIMIT {MAX_EXPORT_QUESTIONS}")
 
     sql = " ".join(sql_parts)
     rows = db.session.execute(text(sql), params).fetchall()

@@ -69,7 +69,7 @@
         var data = await res.json();
         if (reqId !== exportCountReq) return;
         var count = Number(data && data.count) || 0;
-        setExportCount(Math.min(count, 500), false);
+        setExportCount(count, false);
       } catch (e) {
         if (reqId !== exportCountReq) return;
         setExportCount('-', false);
