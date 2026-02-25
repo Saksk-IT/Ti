@@ -812,7 +812,7 @@
       const nextUrl = (cfg.source === 'user_bank' && cfg.bank_id)
         ? `/quiz?mode=exam&exam_id=${js.exam_id}&bank_id=${cfg.bank_id}`
         : `/quiz?mode=exam&exam_id=${js.exam_id}`;
-      window.location.href = nextUrl;
+      window.open(nextUrl, '_blank');
     } catch (e) {
       setMsg(root, '创建考试失败，请检查网络或稍后重试。', 'error');
     } finally {
