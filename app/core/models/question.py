@@ -66,14 +66,13 @@ class Question:
         return None
     
     @staticmethod
-    def get_list(subject='all', q_type='all', mode='quiz', user_id=None):
-        """获取题目列表（添加权限过滤）"""
+    def get_list_legacy(subject='all', q_type='all', mode='quiz', user_id=None):
+        """获取题目列表（旧版，全表扫描 + Python 层过滤，保留兼容）"""
         from app.core.utils.subject_permissions import get_user_restricted_subjects
         from app.core.utils.portable_question_format import q_type_to_portable_type
 
         uid = user_id or -1
 
-        # 权限过滤（黑名单模式）：一次性取出被限制的 subject_id，避免每题一次 DB 查询（N+1）。
         restricted_subject_ids = set(get_user_restricted_subjects(int(user_id))) if user_id else set()
 
         sql = """
@@ -88,18 +87,15 @@ class Question:
         """
         params = {'uid': uid}
 
-        # 科目筛选
         if subject != 'all':
             sql += " AND s.name = :subject"
             params['subject'] = subject
 
-        # 题型筛选
         if q_type != 'all':
             portable_type = q_type_to_portable_type(q_type)
             sql += " AND q.type = :qtype"
             params['qtype'] = portable_type
 
-        # 模式筛选
         if mode == 'favorites':
             sql += " AND f.id IS NOT NULL"
         elif mode == 'mistakes':
@@ -112,14 +108,107 @@ class Question:
         questions = []
         for row in rows:
             q = Question._row_to_internal(row, scope="question_center")
-
-            # 权限检查：如果用户被限制访问该科目，跳过
             sid = q.get('subject_id')
             if sid and sid in restricted_subject_ids:
                 continue
             questions.append(q)
 
         return questions
+
+    @staticmethod
+    def get_list(
+        subject='all',
+        q_type='all',
+        mode='quiz',
+        user_id=None,
+        page: int = 1,
+        per_page: int = 20,
+        tag_ids: list | None = None,
+        accessible_subject_ids: list | None = None,
+    ) -> tuple[list, int]:
+        """获取题目列表（SQL 层分页 + 权限/标签下推）
+
+        Returns:
+            (questions, total) 元组
+        """
+        from app.core.utils.portable_question_format import q_type_to_portable_type
+
+        uid = user_id or -1
+
+        base_from = """
+            FROM questions q
+            LEFT JOIN subjects s ON q.subject_id = s.id
+            LEFT JOIN favorites f ON q.id = f.question_id AND f.user_id = :uid
+            LEFT JOIN mistakes m ON q.id = m.question_id AND m.user_id = :uid
+            WHERE 1=1
+        """
+        params: dict = {'uid': uid}
+
+        # 科目筛选
+        if subject != 'all':
+            base_from += " AND s.name = :subject"
+            params['subject'] = subject
+
+        # 题型筛选
+        if q_type != 'all':
+            portable_type = q_type_to_portable_type(q_type)
+            base_from += " AND q.type = :qtype"
+            params['qtype'] = portable_type
+
+        # 模式筛选
+        if mode == 'favorites':
+            base_from += " AND f.id IS NOT NULL"
+        elif mode == 'mistakes':
+            base_from += " AND m.id IS NOT NULL"
+
+        # 权限过滤下推 SQL
+        if accessible_subject_ids is not None:
+            if not accessible_subject_ids:
+                return [], 0
+            ph = ','.join(f':_asid_{i}' for i in range(len(accessible_subject_ids)))
+            base_from += f" AND q.subject_id IN ({ph})"
+            for i, sid in enumerate(accessible_subject_ids):
+                params[f'_asid_{i}'] = sid
+
+        # 标签筛选下推 SQL
+        if tag_ids is not None:
+            if not tag_ids:
+                return [], 0
+            ph = ','.join(f':_tid_{i}' for i in range(len(tag_ids)))
+            base_from += f" AND q.id IN ({ph})"
+            for i, tid in enumerate(tag_ids):
+                params[f'_tid_{i}'] = tid
+
+        # COUNT 查询
+        count_sql = "SELECT COUNT(1) " + base_from
+        total = db.session.execute(text(count_sql), params).scalar() or 0
+
+        if total == 0:
+            return [], 0
+
+        # 分页
+        if page < 1:
+            page = 1
+        offset = (page - 1) * per_page
+
+        select_sql = (
+            "SELECT q.*, s.name as subject,"
+            " CASE WHEN f.id IS NOT NULL THEN 1 ELSE 0 END as is_fav,"
+            " CASE WHEN m.id IS NOT NULL THEN 1 ELSE 0 END as is_mistake "
+            + base_from
+            + " ORDER BY q.id LIMIT :_limit OFFSET :_offset"
+        )
+        params['_limit'] = per_page
+        params['_offset'] = offset
+
+        rows = db.session.execute(text(select_sql), params).fetchall()
+
+        questions = []
+        for row in rows:
+            q = Question._row_to_internal(row, scope="question_center")
+            questions.append(q)
+
+        return questions, total
     
     @staticmethod
     def get_count(subject='all', q_type='all', mode='quiz', user_id=None):
@@ -196,16 +285,16 @@ class Question:
     
     @staticmethod
     def get_types():
-        “””获取所有题型”””
+        """获取所有题型"""
         from app.core.utils.portable_question_format import portable_type_to_q_type
 
         rows = db.session.execute(text('SELECT DISTINCT type FROM questions')).fetchall()
         out = []
         for r in rows or []:
-            t = (r._mapping['type'] if r else “”) or “”
+            t = (r._mapping['type'] if r else "") or ""
             if not t:
                 continue
-            # 题库中心：essay 默认展示为”简答题”
+            # 题库中心：essay 默认展示为"简答题"
             out.append(portable_type_to_q_type(t))
         # 去重排序，保持稳定
         return sorted(list(set(out)))

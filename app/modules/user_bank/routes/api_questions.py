@@ -23,28 +23,42 @@ def _build_named_in(col: str, values: list, prefix: str = 'in') -> tuple[str, di
     return f"{col} IN ({placeholders})", params
 
 
+_SCHEMA_CACHE: dict[str, bool] = {}
+
+
 def _table_exists(table: str) -> bool:
+    key = f"table:{table}"
+    if key in _SCHEMA_CACHE:
+        return _SCHEMA_CACHE[key]
     try:
         row = db.session.execute(
             text("SELECT 1 FROM information_schema.tables WHERE table_name = :tbl LIMIT 1"),
             {'tbl': table},
         ).fetchone()
-        return row is not None
+        result = row is not None
     except Exception:
-        return False
+        result = False
+    _SCHEMA_CACHE[key] = result
+    return result
 
 
 def _column_exists(table: str, column: str) -> bool:
+    key = f"col:{table}.{column}"
+    if key in _SCHEMA_CACHE:
+        return _SCHEMA_CACHE[key]
     if not _table_exists(table):
+        _SCHEMA_CACHE[key] = False
         return False
     try:
         row = db.session.execute(
             text("SELECT 1 FROM information_schema.columns WHERE table_name = :tbl AND column_name = :col LIMIT 1"),
             {'tbl': table, 'col': column},
         ).fetchone()
-        return row is not None
+        result = row is not None
     except Exception:
-        return False
+        result = False
+    _SCHEMA_CACHE[key] = result
+    return result
 
 
 @user_bank_api_bp.route('/<int:bank_id>/questions', methods=['GET'])

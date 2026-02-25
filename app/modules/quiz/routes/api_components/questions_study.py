@@ -127,28 +127,48 @@ def api_get_questions():
             query_mode = mode
             if mode not in ('favorites', 'mistakes') and source in ('favorites', 'mistakes'):
                 query_mode = source
-            questions = Question.get_list(
+
+            # 提前查出 tag_ids（标签筛选下推 SQL）
+            tag_ids_set = None
+            if tag and str(tag).lower() != 'all':
+                from app.modules.quiz.services.question_tags_service import get_question_ids_by_tag
+                conn = db.session.connection()
+                tag_ids_set = get_question_ids_by_tag(conn, user_id, tag)
+                if not tag_ids_set:
+                    return jsonify({
+                        'status': 'success',
+                        'data': {
+                            'questions': [],
+                            'total': 0,
+                            'page': page,
+                            'per_page': per_page,
+                        }
+                    }), 200
+
+            # 权限过滤下推 SQL
+            from app.core.utils.subject_permissions import get_user_accessible_subjects
+            accessible_ids = get_user_accessible_subjects(int(user_id)) if user_id else None
+
+            questions, total = Question.get_list(
                 subject=subject,
                 q_type=q_type,
                 mode=query_mode,
-                user_id=user_id
+                user_id=user_id,
+                page=page,
+                per_page=per_page,
+                tag_ids=list(tag_ids_set) if tag_ids_set else None,
+                accessible_subject_ids=accessible_ids,
             )
+            # SQL 层已完成标签过滤和分页，无需 Python 层切片
 
-        # 标签筛选（用户私有）
-        if tag and str(tag).lower() != 'all':
-            from app.modules.quiz.services.question_tags_service import get_question_ids_by_tag
-            conn = db.session.connection()
-            tag_ids = get_question_ids_by_tag(conn, user_id, tag)
-            if not tag_ids:
-                questions = []
-            else:
-                questions = [q for q in questions if int(q.get('id') or 0) in tag_ids]
-        
-        # 分页处理
-        total = len(questions)
-        start = (page - 1) * per_page
-        end = start + per_page
-        paginated_questions = questions[start:end]
+        # 分页处理（仅 custom_ids 分支需要；SQL 分页分支已在上面完成）
+        if custom_ids:
+            total = len(questions)
+            start = (page - 1) * per_page
+            end = start + per_page
+            paginated_questions = questions[start:end]
+        else:
+            paginated_questions = questions
         
         # 格式化题目数据（转换为小程序需要的格式）
         formatted_questions = []
@@ -375,7 +395,7 @@ def api_update_question(question_id: int):
     if not can_edit:
         return jsonify({'status': 'forbidden', 'message': '需要管理员或科目管理员权限'}), 403
 
-    # 读取旧题目（用于默认值/不存在校验；DB 已为 PQF 列，这里取“兼容字段”）
+    # 读取旧题目（用于默认值/不存在校验；DB 已为 PQF 列，这里取"兼容字段"）
     old = Question.get_by_id(int(question_id))
     if not old:
         return jsonify({'status': 'error', 'message': '题目不存在'}), 404
