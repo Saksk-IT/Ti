@@ -139,11 +139,16 @@ def _render_question(q: dict[str, Any], num: int, p_type: str, include_answer: b
         if analysis:
             analysis_html = _segments_to_html(split_content(analysis))
 
+    # 答案中的换行也转为 <br>
+    from markupsafe import escape
+    answer_html = str(escape(answer_str)).replace("\n", "<br>") if answer_str else ""
+
     return {
         "num": num,
         "content_html": content_html,
         "options": options_html,
         "answer": answer_str,
+        "answer_html": answer_html,
         "analysis_html": analysis_html,
     }
 
