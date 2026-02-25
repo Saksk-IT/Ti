@@ -83,12 +83,14 @@ def export_subject_questions(subject_id: int):
     response = send_file(
         result.buffer,
         as_attachment=True,
-        download_name=result.filename,
+        download_name="export." + ("pdf" if fmt == "pdf" else "docx"),
         mimetype=result.content_type,
     )
     # 手动设置 RFC 5987 编码的 Content-Disposition，确保中文文件名正常显示
+    # filename 用 ASCII 回退名，filename* 用 UTF-8 编码的中文名
+    ascii_fallback = "export." + ("pdf" if fmt == "pdf" else "docx")
     encoded = quote(result.filename, safe="")
     response.headers["Content-Disposition"] = (
-        f"attachment; filename=\"{result.filename}\"; filename*=UTF-8''{encoded}"
+        f"attachment; filename=\"{ascii_fallback}\"; filename*=UTF-8''{encoded}"
     )
     return response
