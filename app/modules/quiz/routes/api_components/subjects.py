@@ -427,7 +427,7 @@ def api_subject_stats_detail(subject):
     # window_days/source/q_type_filter/tag 已在函数开头解析（用于缓存 key 与业务逻辑一致）
 
     tag_cond = ''
-    tag_params: list = []
+    tag_params: dict = {}
     if tag:
         tag_ids = get_question_ids_by_tag(db.session.connection(), uid, tag)
         if not tag_ids:
@@ -857,7 +857,7 @@ def api_subject_questions(subject):
         tag = ''
 
     tag_cond = ''
-    tag_params: list = []
+    tag_params: dict = {}
     if tag:
         tag_ids = get_question_ids_by_tag(db.session.connection(), int(uid), tag)
         if not tag_ids:
