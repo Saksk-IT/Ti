@@ -101,18 +101,18 @@ def api_questions_count():
             return _ret({"status": "success", "count": 0})
         base_sql = ("FROM questions q LEFT JOIN subjects s ON q.subject_id = s.id "
                      "JOIN favorites f ON f.question_id = q.id AND f.user_id = :uid "
-                     "WHERE (s.is_locked=0 OR s.is_locked IS NULL)")
+                     "WHERE (s.is_locked=false OR s.is_locked IS NULL)")
         params["uid"] = uid
     elif target == "mistakes":
         if not uid:
             return _ret({"status": "success", "count": 0})
         base_sql = ("FROM questions q LEFT JOIN subjects s ON q.subject_id = s.id "
                      "JOIN mistakes m ON m.question_id = q.id AND m.user_id = :uid "
-                     "WHERE (s.is_locked=0 OR s.is_locked IS NULL)")
+                     "WHERE (s.is_locked=false OR s.is_locked IS NULL)")
         params["uid"] = uid
     else:
         base_sql = ("FROM questions q LEFT JOIN subjects s ON q.subject_id = s.id "
-                     "WHERE (s.is_locked=0 OR s.is_locked IS NULL)")
+                     "WHERE (s.is_locked=false OR s.is_locked IS NULL)")
 
     # 添加权限过滤
     if accessible_subject_ids is not None:

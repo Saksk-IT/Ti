@@ -6,6 +6,10 @@
 
 from typing import Any, Dict, List, Optional
 
+from sqlalchemy import text
+
+from app.core.extensions import db
+
 
 def load_public_subject_cards(conn, uid: Optional[int]) -> List[Dict[str, Any]]:
     """加载公共题库（科目）卡片：id/name/question_count。"""
@@ -24,29 +28,23 @@ def load_public_subject_cards(conn, uid: Optional[int]) -> List[Dict[str, Any]]:
             if not accessible_subject_ids:
                 return []
 
-            placeholders = ",".join(["?"] * len(accessible_subject_ids))
-            rows = conn.execute(
-                f"""
-                SELECT id, name
-                FROM subjects
-                WHERE id IN ({placeholders})
-                  AND (is_locked=0 OR is_locked IS NULL)
-                ORDER BY id
-                """,
-                accessible_subject_ids,
+            placeholders = ",".join([f":id_{i}" for i in range(len(accessible_subject_ids))])
+            params = {f"id_{i}": sid for i, sid in enumerate(accessible_subject_ids)}
+            rows = db.session.execute(
+                text(
+                    f"SELECT id, name FROM subjects"
+                    f" WHERE id IN ({placeholders})"
+                    f" AND (is_locked=false OR is_locked IS NULL)"
+                    f" ORDER BY id"
+                ),
+                params,
             ).fetchall()
-            subject_rows = [dict(r) for r in (rows or []) if r]
+            subject_rows = [dict(r._mapping) for r in (rows or []) if r]
         else:
-            rows = conn.execute(
-                """
-                SELECT id, name
-                FROM subjects
-                WHERE (is_locked=0 OR is_locked IS NULL)
-                ORDER BY id
-                """
+            rows = db.session.execute(
+                text("SELECT id, name FROM subjects WHERE (is_locked=false OR is_locked IS NULL) ORDER BY id")
             ).fetchall()
-            subject_rows = [dict(r) for r in (rows or []) if r]
-
+            subject_rows = [dict(r._mapping) for r in (rows or []) if r]
         subject_ids = [
             int(r["id"])
             for r in (subject_rows or [])
@@ -59,22 +57,23 @@ def load_public_subject_cards(conn, uid: Optional[int]) -> List[Dict[str, Any]]:
     subject_counts: Dict[int, int] = {}
     if subject_ids:
         try:
-            placeholders = ",".join(["?"] * len(subject_ids))
-            rows = conn.execute(
-                f"""
-                SELECT q.subject_id as subject_id, COUNT(*) as cnt
-                FROM questions q
-                LEFT JOIN subjects s ON q.subject_id = s.id
-                WHERE q.subject_id IN ({placeholders})
-                  AND (s.is_locked=0 OR s.is_locked IS NULL)
-                GROUP BY q.subject_id
-                """,
-                subject_ids,
+            placeholders = ",".join([f":sid_{i}" for i in range(len(subject_ids))])
+            params = {f"sid_{i}": sid for i, sid in enumerate(subject_ids)}
+            rows = db.session.execute(
+                text(
+                    f"SELECT q.subject_id as subject_id, COUNT(*) as cnt"
+                    f" FROM questions q"
+                    f" LEFT JOIN subjects s ON q.subject_id = s.id"
+                    f" WHERE q.subject_id IN ({placeholders})"
+                    f" AND (s.is_locked=false OR s.is_locked IS NULL)"
+                    f" GROUP BY q.subject_id"
+                ),
+                params,
             ).fetchall()
             subject_counts = {
-                int(r["subject_id"]): int(r["cnt"] or 0)
+                int(r._mapping["subject_id"]): int(r._mapping["cnt"] or 0)
                 for r in (rows or [])
-                if r and r["subject_id"] is not None
+                if r and r._mapping["subject_id"] is not None
             }
         except Exception:
             subject_counts = {}
@@ -95,7 +94,7 @@ def load_public_subject_cards(conn, uid: Optional[int]) -> List[Dict[str, Any]]:
             }
         )
     return cards
-
+# __CONTINUE_HERE__
 
 def load_user_bank_cards(conn, uid: Optional[int]) -> List[Dict[str, Any]]:
     """加载个人题库卡片（包含我创建与收到分享）：id/name/question_count/is_shared/owner/permission。"""
@@ -106,30 +105,30 @@ def load_user_bank_cards(conn, uid: Optional[int]) -> List[Dict[str, Any]]:
     seen: set[int] = set()
 
     try:
-        rows = conn.execute(
-            """
-            SELECT id, name, COALESCE(question_count, 0) as question_count
-            FROM user_question_banks
-            WHERE user_id = ? AND status = 1
-            ORDER BY updated_at DESC, id DESC
-            """,
-            (int(uid),),
+        rows = db.session.execute(
+            text(
+                "SELECT id, name, COALESCE(question_count, 0) as question_count"
+                " FROM user_question_banks"
+                " WHERE user_id = :uid AND status = 1"
+                " ORDER BY updated_at DESC, id DESC"
+            ),
+            {"uid": int(uid)},
         ).fetchall()
         for r in rows or []:
             if not r:
                 continue
-            r = dict(r)
-            if r.get("id") is None:
+            d = dict(r._mapping)
+            if d.get("id") is None:
                 continue
-            bid = int(r["id"])
+            bid = int(d["id"])
             if bid <= 0 or bid in seen:
                 continue
             seen.add(bid)
             cards.append(
                 {
                     "id": bid,
-                    "name": r.get("name") or "",
-                    "question_count": int(r.get("question_count") or 0),
+                    "name": d.get("name") or "",
+                    "question_count": int(d.get("question_count") or 0),
                     "is_shared": False,
                     "owner_nickname": None,
                     "permission": "owner",
@@ -139,67 +138,69 @@ def load_user_bank_cards(conn, uid: Optional[int]) -> List[Dict[str, Any]]:
         pass
 
     try:
-        rows = conn.execute(
-            """
-            SELECT b.id as bank_id,
-                   b.name as bank_name,
-                   COALESCE(b.question_count, 0) as question_count,
-                   bs.permission as permission,
-                   u.username as owner_nickname
-            FROM bank_share_records bsr
-            JOIN bank_shares bs ON bsr.share_id = bs.id
-            JOIN user_question_banks b ON bsr.bank_id = b.id
-            JOIN users u ON b.user_id = u.id
-            WHERE bsr.user_id = ?
-              AND bsr.status = 1
-              AND b.status = 1
-              AND bs.is_active = 1
-            ORDER BY bsr.last_access_at DESC, bsr.access_count DESC, bsr.id DESC
-            """,
-            (int(uid),),
+        rows = db.session.execute(
+            text(
+                "SELECT b.id as bank_id,"
+                "       b.name as bank_name,"
+                "       COALESCE(b.question_count, 0) as question_count,"
+                "       bs.permission as permission,"
+                "       u.username as owner_nickname"
+                " FROM bank_share_records bsr"
+                " JOIN bank_shares bs ON bsr.share_id = bs.id"
+                " JOIN user_question_banks b ON bsr.bank_id = b.id"
+                " JOIN users u ON b.user_id = u.id"
+                " WHERE bsr.user_id = :uid"
+                "   AND bsr.status = 1"
+                "   AND b.status = 1"
+                "   AND bs.is_active = true"
+                " ORDER BY bsr.last_access_at DESC, bsr.access_count DESC, bsr.id DESC"
+            ),
+            {"uid": int(uid)},
         ).fetchall()
         for r in rows or []:
             if not r:
                 continue
-            r = dict(r)
-            if r.get("bank_id") is None:
+            d = dict(r._mapping)
+            if d.get("bank_id") is None:
                 continue
-            bid = int(r["bank_id"])
+            bid = int(d["bank_id"])
             if bid <= 0 or bid in seen:
                 continue
             seen.add(bid)
             cards.append(
                 {
                     "id": bid,
-                    "name": r.get("bank_name") or "",
-                    "question_count": int(r.get("question_count") or 0),
+                    "name": d.get("bank_name") or "",
+                    "question_count": int(d.get("question_count") or 0),
                     "is_shared": True,
-                    "owner_nickname": r.get("owner_nickname") or "",
-                    "permission": (r.get("permission") or "").strip(),
+                    "owner_nickname": d.get("owner_nickname") or "",
+                    "permission": (d.get("permission") or "").strip(),
                 }
             )
     except Exception:
         pass
+# __CONTINUE_HERE2__
 
-    # 兜底：用 user_bank_questions 重新统计题目数量，避免 question_count 维护不一致导致入口页展示错误
+    # 兜底：用 user_bank_questions 重新统计题目数量
     try:
         bank_ids = [int(c.get("id") or 0) for c in (cards or []) if c and c.get("id") is not None]
         bank_ids = [bid for bid in bank_ids if bid > 0]
         if bank_ids:
-            placeholders = ",".join(["?"] * len(bank_ids))
-            rows = conn.execute(
-                f"""
-                SELECT bank_id, COUNT(1) as cnt
-                FROM user_bank_questions
-                WHERE bank_id IN ({placeholders})
-                GROUP BY bank_id
-                """,
-                bank_ids,
+            placeholders = ",".join([f":bid_{i}" for i in range(len(bank_ids))])
+            params = {f"bid_{i}": bid for i, bid in enumerate(bank_ids)}
+            rows = db.session.execute(
+                text(
+                    f"SELECT bank_id, COUNT(1) as cnt"
+                    f" FROM user_bank_questions"
+                    f" WHERE bank_id IN ({placeholders})"
+                    f" GROUP BY bank_id"
+                ),
+                params,
             ).fetchall()
             cnt_map = {
-                int(r["bank_id"]): int(r["cnt"] or 0)
+                int(r._mapping["bank_id"]): int(r._mapping["cnt"] or 0)
                 for r in (rows or [])
-                if r and r["bank_id"] is not None
+                if r and r._mapping["bank_id"] is not None
             }
             for c in cards or []:
                 try:

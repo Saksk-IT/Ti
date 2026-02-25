@@ -356,7 +356,7 @@ def api_subject_stats_detail(subject):
     if window_days not in (7, 14, 30, 90):
         window_days = 14
 
-    # 可选筛选：用于“错题/收藏/标签中心”的数据子页面（不传则按全题库统计）
+    # 可选筛选：用于"错题/收藏/标签中心"的数据子页面（不传则按全题库统计）
     source = (request.args.get('source') or '').strip().lower()
     if source not in ('favorites', 'mistakes'):
         source = 'all'
@@ -528,7 +528,7 @@ def api_subject_stats_detail(subject):
     accuracy = round(correct * 100 / answered, 1) if answered > 0 else 0.0
     completion = round(answered * 100 / total_count, 1) if total_count > 0 else 0.0
 
-    # streak（注：基于 user_answers 的最新记录，属于“近似活跃”）
+    # streak（注：基于 user_answers 的最新记录，属于"近似活跃"）
     streak_days = 0
     try:
         rows = db.session.execute(
@@ -556,7 +556,12 @@ def api_subject_stats_detail(subject):
             if not r or not r._mapping['day']:
                 continue
             try:
-                dates.append(datetime.strptime(r._mapping['day'], '%Y-%m-%d').date())
+                raw_day = r._mapping['day']
+                if isinstance(raw_day, str):
+                    dates.append(datetime.strptime(raw_day, '%Y-%m-%d').date())
+                else:
+                    # PostgreSQL DATE() 直接返回 date 对象
+                    dates.append(raw_day if not isinstance(raw_day, datetime) else raw_day.date())
             except Exception:
                 continue
 
@@ -764,13 +769,13 @@ def api_subject_stats_detail(subject):
             advice = [{'title': '暂无题目', 'content': '该题库目前没有可练习的题目。'}]
         else:
             if answered < 10:
-                advice.append({'title': '先建立手感', 'content': '建议先从“练习-全题库”开始，连续做 20~30 题快速熟悉题型与知识点。'})
+                advice.append({'title': '先建立手感', 'content': '建议先从"练习-全题库"开始，连续做 20~30 题快速熟悉题型与知识点。'})
             if completion < 35:
-                advice.append({'title': '提高完成度', 'content': '当前覆盖率偏低，建议每天固定一段时间刷题，优先把“未做”题补齐。'})
+                advice.append({'title': '提高完成度', 'content': '当前覆盖率偏低，建议每天固定一段时间刷题，优先把"未做"题补齐。'})
             if accuracy < 65 and answered >= 10:
-                advice.append({'title': '聚焦薄弱点', 'content': '正确率偏低，建议先做“错题”复盘，再回到练习巩固。'})
+                advice.append({'title': '聚焦薄弱点', 'content': '正确率偏低，建议先做"错题"复盘，再回到练习巩固。'})
             if mistakes_times >= 20:
-                advice.append({'title': '错题要闭环', 'content': '错题次数较多，建议用“背题”模式强化记忆，并在错因处做一次总结。'})
+                advice.append({'title': '错题要闭环', 'content': '错题次数较多，建议用"背题"模式强化记忆，并在错因处做一次总结。'})
 
             weak = [r for r in (by_type or []) if int(r.get('answered') or 0) >= 5]
             weak.sort(key=lambda x: (float(x.get('accuracy') or 0.0), -int(x.get('answered') or 0)))

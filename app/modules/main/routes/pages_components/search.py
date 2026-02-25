@@ -35,7 +35,7 @@ def search_page():
                 subjects = [
                     row[0]
                     for row in db.session.execute(
-                        text(f"SELECT name FROM subjects WHERE id IN ({placeholders}) AND (is_locked=0 OR is_locked IS NULL)"),
+                        text(f"SELECT name FROM subjects WHERE id IN ({placeholders}) AND (is_locked=false OR is_locked IS NULL)"),
                         sid_params,
                     ).fetchall()
                 ]
@@ -83,7 +83,7 @@ def search_page():
         LEFT JOIN favorites f ON q.id = f.question_id AND f.user_id = :uid
         LEFT JOIN mistakes m ON q.id = m.question_id AND m.user_id = :uid
         WHERE (q.content LIKE :search_term OR q.analysis LIKE :search_term OR q.options LIKE :search_term OR q.answer LIKE :search_term)
-        AND (s.is_locked=0 OR s.is_locked IS NULL)
+        AND (s.is_locked=false OR s.is_locked IS NULL)
     """
 
     search_term = f'%{keyword}%'

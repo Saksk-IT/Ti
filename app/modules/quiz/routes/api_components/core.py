@@ -143,7 +143,7 @@ def record_result():
         db.session.add(UserAnswer(
             user_id=uid,
             question_id=q_id,
-            is_correct=1 if is_correct else 0,
+            is_correct=bool(is_correct),
         ))
 
         # 增加刷题数（如果功能开启）

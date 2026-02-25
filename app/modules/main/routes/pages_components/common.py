@@ -19,13 +19,13 @@ def _get_accessible_subject_rows(conn=None, uid=None):
         params = {f"id_{i}": sid for i, sid in enumerate(accessible_subject_ids)}
         rows = db.session.execute(
             text(
-                f"SELECT id, name FROM subjects WHERE id IN ({placeholders}) AND (is_locked=0 OR is_locked IS NULL) ORDER BY id"
+                f"SELECT id, name FROM subjects WHERE id IN ({placeholders}) AND (is_locked=false OR is_locked IS NULL) ORDER BY id"
             ),
             params,
         ).fetchall()
         return [dict(r._mapping) for r in rows]
 
     rows = db.session.execute(
-        text("SELECT id, name FROM subjects WHERE (is_locked=0 OR is_locked IS NULL) ORDER BY id")
+        text("SELECT id, name FROM subjects WHERE (is_locked=false OR is_locked IS NULL) ORDER BY id")
     ).fetchall()
     return [dict(r._mapping) for r in rows]

@@ -73,7 +73,7 @@ def api_search_questions():
         LEFT JOIN subjects s ON q.subject_id = s.id
         LEFT JOIN favorites f ON q.id = f.question_id AND f.user_id = :uid
         LEFT JOIN mistakes m ON q.id = m.question_id AND m.user_id = :uid
-        WHERE (s.is_locked=0 OR s.is_locked IS NULL)
+        WHERE (s.is_locked=false OR s.is_locked IS NULL)
           AND (q.content LIKE :search_term OR q.analysis LIKE :search_term
                OR q.options LIKE :search_term OR q.answer LIKE :search_term)
     """

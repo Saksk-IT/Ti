@@ -198,7 +198,7 @@ def _load_subjects_meta(uid) -> tuple[list[int], list[dict]]:
                 text(f"""
                 SELECT id, name
                 FROM subjects
-                WHERE (is_locked=0 OR is_locked IS NULL)
+                WHERE (is_locked=false OR is_locked IS NULL)
                   AND id IN ({in_str})
                 ORDER BY id
                 """),
@@ -220,7 +220,7 @@ def _count_total_questions(subject_ids: list[int]) -> int:
             SELECT COUNT(*)
             FROM questions q
             LEFT JOIN subjects s ON q.subject_id = s.id
-            WHERE (s.is_locked=0 OR s.is_locked IS NULL)
+            WHERE (s.is_locked=false OR s.is_locked IS NULL)
         """
         params: dict = {}
         if subject_ids:
@@ -240,7 +240,7 @@ def _build_ua_from(uid, subject_ids: list[int]) -> tuple[str, dict]:
         JOIN questions q ON ua.question_id = q.id
         LEFT JOIN subjects s ON q.subject_id = s.id
         WHERE ua.user_id = :uid
-          AND (s.is_locked=0 OR s.is_locked IS NULL)
+          AND (s.is_locked=false OR s.is_locked IS NULL)
     """
     ua_params_base: dict = {"uid": uid}
     if subject_ids:
@@ -257,7 +257,7 @@ def _summary_stats(ua_from: str, ua_params_base: dict) -> tuple[int, int, str | 
             text(f"""
             SELECT
               COUNT(*) AS answered,
-              SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct,
+              SUM(CASE WHEN ua.is_correct = true THEN 1 ELSE 0 END) AS correct,
               MAX(ua.created_at) AS last_activity
             {ua_from}
             """),
@@ -280,7 +280,7 @@ def _count_favorites(uid, subject_ids: list[int]) -> int:
             FROM favorites f
             JOIN questions q ON f.question_id = q.id
             LEFT JOIN subjects s ON q.subject_id = s.id
-            WHERE f.user_id = :uid AND (s.is_locked=0 OR s.is_locked IS NULL)
+            WHERE f.user_id = :uid AND (s.is_locked=false OR s.is_locked IS NULL)
         """
         fav_params: dict = {"uid": uid}
         if subject_ids:
@@ -303,7 +303,7 @@ def _count_mistakes(uid, subject_ids: list[int]) -> tuple[int, int]:
             FROM mistakes m
             JOIN questions q ON m.question_id = q.id
             LEFT JOIN subjects s ON q.subject_id = s.id
-            WHERE m.user_id = :uid AND (s.is_locked=0 OR s.is_locked IS NULL)
+            WHERE m.user_id = :uid AND (s.is_locked=false OR s.is_locked IS NULL)
         """
         mis_params: dict = {"uid": uid}
         if subject_ids:
@@ -369,7 +369,7 @@ def _count_since(
             text(f"""
             SELECT
               COUNT(*) AS answered,
-              SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+              SUM(CASE WHEN ua.is_correct = true THEN 1 ELSE 0 END) AS correct
             {ua_from}
               AND ua.created_at >= :cutoff
             """),
@@ -399,7 +399,7 @@ def _build_daily_trend(
             SELECT
               DATE(ua.created_at) AS day,
               COUNT(*) AS total,
-              SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+              SUM(CASE WHEN ua.is_correct = true THEN 1 ELSE 0 END) AS correct
             {ua_from}
               AND ua.created_at >= :cutoff
             GROUP BY DATE(ua.created_at)
@@ -446,7 +446,7 @@ def _build_subject_rows(uid, subject_ids: list[int], subjects_meta: list[dict]) 
                 SELECT q.subject_id AS subject_id, COUNT(*) AS total
                 FROM questions q
                 LEFT JOIN subjects s ON q.subject_id = s.id
-                WHERE (s.is_locked=0 OR s.is_locked IS NULL)
+                WHERE (s.is_locked=false OR s.is_locked IS NULL)
                   AND q.subject_id IN ({in_str})
                 GROUP BY q.subject_id
                 """),
@@ -462,12 +462,12 @@ def _build_subject_rows(uid, subject_ids: list[int], subjects_meta: list[dict]) 
                 text(f"""
                 SELECT q.subject_id AS subject_id,
                        COUNT(*) AS answered,
-                       SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+                       SUM(CASE WHEN ua.is_correct = true THEN 1 ELSE 0 END) AS correct
                 FROM user_answers ua
                 JOIN questions q ON ua.question_id = q.id
                 LEFT JOIN subjects s ON q.subject_id = s.id
                 WHERE ua.user_id = :uid
-                  AND (s.is_locked=0 OR s.is_locked IS NULL)
+                  AND (s.is_locked=false OR s.is_locked IS NULL)
                   AND q.subject_id IN ({in_str})
                 GROUP BY q.subject_id
                 """),
@@ -490,7 +490,7 @@ def _build_subject_rows(uid, subject_ids: list[int], subjects_meta: list[dict]) 
                 FROM mistakes m
                 JOIN questions q ON m.question_id = q.id
                 LEFT JOIN subjects s ON q.subject_id = s.id
-                WHERE m.user_id = :uid AND (s.is_locked=0 OR s.is_locked IS NULL)
+                WHERE m.user_id = :uid AND (s.is_locked=false OR s.is_locked IS NULL)
                   AND q.subject_id IN ({in_str})
                 GROUP BY q.subject_id
                 """),
@@ -506,7 +506,7 @@ def _build_subject_rows(uid, subject_ids: list[int], subjects_meta: list[dict]) 
                 FROM favorites f
                 JOIN questions q ON f.question_id = q.id
                 LEFT JOIN subjects s ON q.subject_id = s.id
-                WHERE f.user_id = :uid AND (s.is_locked=0 OR s.is_locked IS NULL)
+                WHERE f.user_id = :uid AND (s.is_locked=false OR s.is_locked IS NULL)
                   AND q.subject_id IN ({in_str2})
                 GROUP BY q.subject_id
                 """),
@@ -548,7 +548,7 @@ def _build_type_rows(ua_from: str, ua_params_base: dict, portable_type_to_q_type
             SELECT
               COALESCE(NULLIF(TRIM(q.type), ''), 'unknown') AS p_type,
               COUNT(*) AS answered,
-              SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+              SUM(CASE WHEN ua.is_correct = true THEN 1 ELSE 0 END) AS correct
             {ua_from}
             GROUP BY COALESCE(NULLIF(TRIM(q.type), ''), 'unknown')
             ORDER BY answered DESC
@@ -579,7 +579,7 @@ def _build_difficulty_rows(ua_from: str, ua_params_base: dict) -> list[dict]:
             SELECT
               COALESCE(q.difficulty, 1) AS difficulty,
               COUNT(*) AS answered,
-              SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+              SUM(CASE WHEN ua.is_correct = true THEN 1 ELSE 0 END) AS correct
             {ua_from}
             GROUP BY q.difficulty
             ORDER BY difficulty ASC
@@ -617,11 +617,11 @@ def _build_weakness_rows(
               COALESCE(s.name, '未分类') AS subject,
               COALESCE(NULLIF(TRIM(q.type), ''), 'unknown') AS p_type,
               COUNT(*) AS answered,
-              SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+              SUM(CASE WHEN ua.is_correct = true THEN 1 ELSE 0 END) AS correct
             {ua_from}
             GROUP BY s.name, COALESCE(NULLIF(TRIM(q.type), ''), 'unknown')
             HAVING COUNT(*) >= 5
-            ORDER BY (SUM(CASE WHEN ua.is_correct = 1 THEN 1 ELSE 0 END) * 1.0 / COUNT(*)) ASC, COUNT(*) DESC
+            ORDER BY (SUM(CASE WHEN ua.is_correct = true THEN 1 ELSE 0 END) * 1.0 / COUNT(*)) ASC, COUNT(*) DESC
             LIMIT 8
             """),
             ua_params_base,
@@ -643,7 +643,7 @@ def _build_weakness_rows(
             FROM mistakes m
             JOIN questions q ON m.question_id = q.id
             LEFT JOIN subjects s ON q.subject_id = s.id
-            WHERE m.user_id = :uid AND (s.is_locked=0 OR s.is_locked IS NULL)
+            WHERE m.user_id = :uid AND (s.is_locked=false OR s.is_locked IS NULL)
             {mis_sid_clause}
             GROUP BY s.name, COALESCE(NULLIF(TRIM(q.type), ''), 'unknown')
             """),
@@ -708,7 +708,7 @@ def _build_recent_mistakes(
             FROM mistakes m
             JOIN questions q ON m.question_id = q.id
             LEFT JOIN subjects s ON q.subject_id = s.id
-            WHERE m.user_id = :uid AND (s.is_locked=0 OR s.is_locked IS NULL)
+            WHERE m.user_id = :uid AND (s.is_locked=false OR s.is_locked IS NULL)
             {sid_clause}
             ORDER BY {order_by}
             LIMIT 8

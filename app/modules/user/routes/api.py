@@ -496,7 +496,7 @@ def api_profile():
                 'email': user.get('email'),
                 'email_verified': bool(user.get('email_verified', 0)),
                 'wechat_bound': bool(user.get('openid')),
-                'created_at': user['created_at'][:10] if user['created_at'] else '-',
+                'created_at': user['created_at'].strftime('%Y-%m-%d') if user['created_at'] else '-',
                 'is_admin': bool(user['is_admin']),
                 'has_password_set': has_password_set,
                 'streak_days': streak_days,

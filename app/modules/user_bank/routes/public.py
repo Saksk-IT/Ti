@@ -190,13 +190,15 @@ def get_public_banks():
 
         all_banks.extend(system_banks)
 
-    # 排序
+    # 排序（public_at 是 datetime 对象，fallback 用 datetime.min 避免类型混合比较）
+    from datetime import datetime as _dt
+    _epoch = _dt.min
     if sort == 'popular':
-        all_banks.sort(key=lambda x: (x.get('use_count') or 0, x.get('public_at') or ''), reverse=True)
+        all_banks.sort(key=lambda x: (x.get('use_count') or 0, x.get('public_at') or _epoch), reverse=True)
     elif sort == 'questions':
-        all_banks.sort(key=lambda x: (x.get('question_count') or 0, x.get('public_at') or ''), reverse=True)
+        all_banks.sort(key=lambda x: (x.get('question_count') or 0, x.get('public_at') or _epoch), reverse=True)
     else:  # newest
-        all_banks.sort(key=lambda x: x.get('public_at') or '', reverse=True)
+        all_banks.sort(key=lambda x: x.get('public_at') or _epoch, reverse=True)
 
     # 分页
     total = len(all_banks)

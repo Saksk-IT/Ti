@@ -307,8 +307,8 @@ def get_my_stats(bank_id):
     stats = db.session.execute(text('''
         SELECT
             COUNT(*) as total_answered,
-            SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) as correct_count,
-            SUM(CASE WHEN is_correct = 0 THEN 1 ELSE 0 END) as wrong_count
+            SUM(CASE WHEN is_correct = true THEN 1 ELSE 0 END) as correct_count,
+            SUM(CASE WHEN is_correct = false THEN 1 ELSE 0 END) as wrong_count
         FROM user_bank_answers
         WHERE user_id = :uid AND bank_id = :bank_id
     '''), {'uid': user_id, 'bank_id': bank_id}).fetchone()
@@ -424,7 +424,7 @@ def get_bank_stats_detail(bank_id):
         text(f"""
         SELECT
           COUNT(*) AS answered,
-          SUM(CASE WHEN a.is_correct = 1 THEN 1 ELSE 0 END) AS correct,
+          SUM(CASE WHEN a.is_correct = true THEN 1 ELSE 0 END) AS correct,
           MAX(a.created_at) AS last_activity
         FROM user_bank_answers a
         JOIN user_bank_questions q ON a.question_id = q.id
@@ -520,7 +520,7 @@ def get_bank_stats_detail(bank_id):
             SELECT
               DATE(a.created_at) AS day,
               COUNT(*) AS answered,
-              SUM(CASE WHEN a.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+              SUM(CASE WHEN a.is_correct = true THEN 1 ELSE 0 END) AS correct
             FROM user_bank_answers a
             JOIN user_bank_questions q ON a.question_id = q.id
             {fav_join}
@@ -573,7 +573,7 @@ def get_bank_stats_detail(bank_id):
             text(f"""
             SELECT COALESCE(NULLIF(TRIM(q.type), ''), 'essay') AS type,
                    COUNT(*) AS answered,
-                   SUM(CASE WHEN a.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+                   SUM(CASE WHEN a.is_correct = true THEN 1 ELSE 0 END) AS correct
             FROM user_bank_answers a
             JOIN user_bank_questions q ON a.question_id = q.id
             {fav_join}
@@ -640,7 +640,7 @@ def get_bank_stats_detail(bank_id):
             text(f"""
             SELECT COALESCE(q.difficulty, 1) AS difficulty,
                    COUNT(*) AS answered,
-                   SUM(CASE WHEN a.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+                   SUM(CASE WHEN a.is_correct = true THEN 1 ELSE 0 END) AS correct
             FROM user_bank_answers a
             JOIN user_bank_questions q ON a.question_id = q.id
             {fav_join}

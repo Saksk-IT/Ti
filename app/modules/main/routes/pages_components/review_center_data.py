@@ -70,7 +70,7 @@ def load_type_distribution(
             LEFT JOIN subjects s ON q.subject_id = s.id
             LEFT JOIN favorites f ON f.question_id = q.id AND f.user_id = :uid
             LEFT JOIN mistakes m ON m.question_id = q.id AND m.user_id = :uid2
-            WHERE (s.is_locked=0 OR s.is_locked IS NULL)
+            WHERE (s.is_locked=false OR s.is_locked IS NULL)
               AND q.subject_id = :subject_id
         """
         params: dict = {"uid": int(uid), "uid2": int(uid), "subject_id": int(subject_id)}
