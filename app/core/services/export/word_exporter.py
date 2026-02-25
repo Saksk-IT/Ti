@@ -159,7 +159,6 @@ def _add_hyperlink(paragraph, url: str, text: str, color: RGBColor, size: Pt) ->
     rPr.append(rFonts)
 
     new_run.append(rPr)
-    new_run.text = text
     t = paragraph._element.makeelement(qn("w:t"), {})
     t.text = text
     new_run.append(t)
