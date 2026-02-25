@@ -1,80 +1,83 @@
-# Docker 部署完整指南（本项目：Flask + Gunicorn + Redis + RQ Worker）
+# Ti 项目 — Docker Compose 部署完整指南
 
-> 本文面向“能直接照做上线”的部署流程，默认你使用 **Docker Compose** 部署本项目后端，并可选配 **Nginx + HTTPS** 供小程序生产环境访问。  
-> 你可以把本文当作“从 0 到可用”的操作手册。
+> Flask + Gunicorn + PostgreSQL + Redis + RQ Worker
+> 全量 SQLAlchemy ORM，PostgreSQL 为唯一数据库后端。
 
 ---
 
-## 1. 架构与端口（先搞清楚你在跑什么）
+## 目录
 
-本项目后端由 3 个服务组成：
+1. [架构概览](#1-架构概览)
+2. [服务器准备](#2-服务器准备)
+3. [放置项目代码](#3-放置项目代码)
+4. [生产环境配置](#4-生产环境配置)
+5. [构建与启动](#5-构建与启动)
+6. [数据库初始化与迁移](#6-数据库初始化与迁移)
+7. [Nginx + HTTPS](#7-nginx--https)
+8. [小程序侧配置](#8-小程序侧配置)
+9. [运维常用命令](#9-运维常用命令)
+10. [备份与恢复](#10-备份与恢复)
+11. [常见故障排查](#11-常见故障排查)
+12. [安全提醒](#12-安全提醒)
 
-- `web`：Flask + Gunicorn（对外提供 Web 页面与 API）
-- `worker`：RQ Worker（处理异步队列任务，例如 AI 解析）
-- `redis`：队列/缓存/限流共享存储
+---
 
-默认访问形态：
+## 1. 架构概览
+
+本项目后端由 4 个服务组成：
+
+| 服务 | 镜像 | 说明 |
+|------|------|------|
+| `web` | saksk-ti:latest | Flask + Gunicorn（Web 页面与 API） |
+| `worker` | saksk-ti:latest | RQ Worker（异步任务，如 AI 解析） |
+| `postgres` | postgres:16-alpine | PostgreSQL 数据库 |
+| `redis` | redis:7-alpine | 队列/缓存/限流共享存储 |
+
+访问形态：
 
 - Web 页面：`https://<域名>/...`
 - API：`https://<域名>/api/...`
-- 上传文件：`https://<域名>/uploads/...`
-- 健康检查：`GET /api/ping`（用于验证网络与反代是否正确）
+- 健康检查：`GET /api/ping`
 
-> 本项目容器内 Gunicorn 监听 `8000`（见 `docker/Dockerfile`），因此后端对外端口围绕 `8000` 做反代即可。
+> 容器内 Gunicorn 监听 `8000`，通过 Nginx 反代对外提供 HTTPS 服务。
 
----
+### 数据持久化
 
-## 2. 数据持久化（非常关键）
-
-项目运行数据建议统一落在一个目录里（例如 `/opt/saksk-ti/var`），并映射到容器内的 `/data`：
-
-- SQLite 数据库：`/data/instance/submissions.db`
-- 上传文件目录：`/data/uploads/`
-- 日志目录：`/data/logs/`
-
-你仓库里 `compose.yml` 已使用：
-
-- `./var:/data`（把仓库同级 `var/` 当作运行数据目录）
-- `redis_data:/data`（Redis 持久化卷）
-
-生产建议：
-
-- 服务器使用 `/opt/saksk-ti/var` 作为实际存储目录
-- 将仓库放在 `/opt/saksk-ti`，让 `./var` 就等于 `/opt/saksk-ti/var`（最省心）
+| 数据 | 容器内路径 | 宿主机存储 |
+|------|-----------|-----------|
+| PostgreSQL 数据 | `/var/lib/postgresql/data` | Docker volume `postgres_data` |
+| 上传文件 | `/data/uploads/` | `./var/uploads/` |
+| 日志 | `/data/logs/` | `./var/logs/` |
+| Redis 数据 | `/data` | Docker volume `redis_data` |
 
 ---
 
-## 3. 服务器准备（通用清单）
+## 2. 服务器准备
 
-### 3.1 目录
+### 2.1 目录
 
 ```bash
 sudo mkdir -p /opt/saksk-ti
-sudo mkdir -p /opt/saksk-ti/var/{instance,logs,uploads}
+sudo mkdir -p /opt/saksk-ti/var/{logs,uploads}
 sudo chown -R $USER:$USER /opt/saksk-ti
 ```
 
-### 3.2 安装 Docker 与 Compose
+### 2.2 安装 Docker 与 Compose
 
-请按你服务器发行版的官方安装说明安装 Docker 与 Compose 插件，安装完成后确认：
+按服务器发行版的官方说明安装，安装后确认：
 
 ```bash
 docker version
 docker compose version
 ```
 
-> 如果你在国内/网络受限环境，建议先配置镜像加速器（见 3.2.1），否则可能在拉取 `redis:7-alpine` 等基础镜像时遇到 `registry-1.docker.io ... i/o timeout`。
+#### 国内镜像加速（可选）
 
-#### 3.2.1（可选）配置 Docker 镜像加速器（解决 docker.io 超时）
-
-常见报错长这样：
-`failed to resolve reference "docker.io/library/redis:7-alpine" ... dial tcp ...:443: i/o timeout`
-
-推荐优先使用云厂商提供的 Docker Hub 镜像加速器（阿里云 ECS：控制台 → 容器镜像服务 → 镜像工具 → 镜像加速器），把加速器地址写入 Docker 配置即可：
+如果拉取 `postgres:16-alpine`、`redis:7-alpine` 超时：
 
 ```bash
 sudo mkdir -p /etc/docker
-sudo tee /etc/docker/daemon.json >/dev/null <<'JSON'
+sudo tee /etc/docker/daemon.json >/dev/null <<JSON
 {
   "registry-mirrors": [
     "https://<你的加速器地址>"
@@ -83,315 +86,264 @@ sudo tee /etc/docker/daemon.json >/dev/null <<'JSON'
 JSON
 sudo systemctl daemon-reload
 sudo systemctl restart docker
-
-docker info | grep -A10 "Registry Mirrors"
 ```
 
-验证（能拉下来就说明 OK）：
+> 阿里云 ECS 用户：控制台 -> 容器镜像服务 -> 镜像工具 -> 镜像加速器。
 
-```bash
-docker pull redis:7-alpine
-```
-
-另外一种选择是使用第三方镜像仓库/加速服务（例如：毫秒镜像 1ms.run）：
-
-- 镜像地址：`https://docker.1ms.run`
-- （推荐）一键全局配置（Linux，来自 1ms.run 首页示例）：
-  ```bash
-  sudo bash -c "$(curl -sSL https://n3.ink/helper)"
-  ```
-  > 说明：这是运行第三方脚本/工具的方式，会下载并执行 `1ms-helper`，请自行评估安全性与稳定性；不放心可先 `curl -sSL https://n3.ink/helper` 查看脚本内容。
-- 直接使用（临时，不改配置）：
-  ```bash
-  docker pull docker.1ms.run/redis:7-alpine
-  ```
-- （可选）登录（VIP 通道）：
-  ```bash
-  docker login docker.1ms.run
-  ```
-  > 注意：按 1ms.run 文档说明，单独 `docker login` 仅对带 `docker.1ms.run/` 前缀的拉取生效；若希望 `docker pull redis:7-alpine` 这类“不带前缀”的命令也加速，请使用其“一键全局配置/一键登录”的方式。
-
-### 3.3 防火墙（只开 80/443）
-
-如果你用 UFW：
+### 2.3 防火墙
 
 ```bash
 sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
 sudo ufw enable
-sudo ufw status
 ```
 
-> 不建议对公网开放 `8000`。正确做法是：`8000` 仅绑定本机回环地址 `127.0.0.1`，公网只经由 Nginx 的 `443` 访问。
+> 不要对公网开放 `8000` 和 `5432`。`8000` 仅绑定 `127.0.0.1`，公网经由 Nginx 443 访问。
 
 ---
 
-## 4. 放置项目代码（两种方式）
+## 3. 放置项目代码
 
-### 方式 A：git（如果你允许使用）
+### 方式 A：git clone
+
 ```bash
 cd /opt/saksk-ti
-git clone <你的仓库地址> .
+git clone <仓库地址> .
 ```
 
-### 方式 B：上传压缩包/目录（不使用 git）
-- 将项目文件上传并解压到 `/opt/saksk-ti`
-- 建议按下面清单准备上传内容（**这是“后端 Docker 部署”维度的清单**）
+### 方式 B：上传压缩包
 
-#### 必须上传（后端能跑起来的最小集合）
+本地打包：
 
-- `compose.yml`
-- `docker/Dockerfile`
-- `requirements.txt`
-- `run.py`
-- `app/`（包含所有后端代码与 `templates/`）
-- `static/`（Web 静态资源）
-- `.dockerignore`（强烈建议上传：能显著减少构建上下文，避免把 `var/`、`miniprogram-1/` 等打进镜像）
-
-#### 可选上传（不影响后端运行，但建议保留在同目录便于维护）
-
-- `docs/`（部署/说明文档）
-- `miniprogram-1/`（小程序工程：**不需要部署到服务器**，但你想统一管理也可上传备份）
-- `docker/` 下除 `Dockerfile` 外如有新增脚本，也一并上传
-
-#### 可选上传（迁移你本地已有数据：想“延续现有用户/题库/记录”才需要）
-
-> 如果你希望服务器上线后“数据从零开始”，这一段全部可以不上传，只需在服务器创建空目录即可。
-
-- `var/instance/submissions.db`（核心数据库）
-- `var/uploads/`（所有上传的图片/头像/音视频等）
-- `var/instance/question_import_template.xlsx`（导入模板，可选）
-- `var/backup/`（历史备份，可选）
-
-#### 不要上传（或不要放进镜像/仓库）
-
-- `.env` / `.env.*`（包含密钥：生产请用服务器上的 `.env.production`）
-- `.venv/`、`__pycache__/`、`.git/`（不需要）
-- 根目录的 `instance/`、`logs/`、`uploads/`（你本机是 Junction 指向 `var/`；服务器直接用 `/opt/saksk-ti/var/*` 即可）
-
-#### 推荐的打包方式（本地一次性生成上传包）
-
-在本地项目根目录执行（示例）：
 ```bash
-tar -czf saksk-ti.tar.gz \
-  compose.yml docker/Dockerfile requirements.txt run.py .dockerignore \
-  app static docs miniprogram-1
+tar -czf saksk-ti.tar.gz   compose.prod.yml docker/Dockerfile requirements.txt run.py .dockerignore   app static docs migrations
 ```
 
-如果你要迁移数据，再额外把 `var/instance/submissions.db` 与 `var/uploads/` 单独打包上传（避免误把数据打进镜像构建上下文）。
+上传并解压：
+
+```bash
+rsync -avP saksk-ti.tar.gz user@server:/opt/saksk-ti/
+ssh user@server "cd /opt/saksk-ti && tar -xzf saksk-ti.tar.gz"
+```
+
+#### 服务器最小文件清单
+
+```
+/opt/saksk-ti/
+├── compose.prod.yml         # 生产 compose 配置
+├── docker/Dockerfile        # 镜像构建文件
+├── requirements.txt         # Python 依赖
+├── run.py                   # 应用入口
+├── .dockerignore            # 构建排除
+├── .env.production          # 环境变量（不入库）
+├── app/                     # 后端代码
+├── static/                  # 静态资源
+├── migrations/              # Alembic 迁移脚本
+└── var/                     # 运行时数据
+    ├── uploads/
+    └── logs/
+```
+
+> `miniprogram-1/` 是小程序工程，不需要部署到服务器。
 
 ---
 
-## 5. 生产环境“正确姿势”：用覆盖文件剥离密钥 + 收紧端口
+## 4. 生产环境配置
 
-### 5.1 为什么要做这一步？
-
-你的仓库 `compose.yml` 里包含固定值/密钥（例如 `SECRET_KEY: change-me`）。生产环境如果直接用它：
-
-- 有**密钥泄露**风险（尤其是微信/第三方 key）
-- 容易**误用默认密钥**导致会话安全问题
-- 端口 `8000` 可能直接暴露公网
-
-因此推荐：**仓库文件不动**，在服务器新增两份“不入库”的文件来覆盖它：
-
-1) `/opt/saksk-ti/.env.production`：只放真实密钥与生产参数  
-2) `/opt/saksk-ti/compose.prod.yml`：只放生产差异（端口收紧、覆盖固定值、restart 策略等）
-
-### 5.2 创建 `/opt/saksk-ti/.env.production`
-
-文件内容（复制后只需替换标注项）：
+### 4.1 创建 .env.production
 
 ```bash
-# /opt/saksk-ti/.env.production
+cat > /opt/saksk-ti/.env.production << 'ENVEOF'
 FLASK_ENV=production
 
-# 必须：用于 session/jwt/签名等（请替换为强随机）
-SECRET_KEY=BOTCI44xaEomGdflIqX53OOycd8ng3x300-C-HJJADQ
+# 密钥（必须替换为强随机字符串）
+# 生成方式: python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+SECRET_KEY=替换为强随机字符串
 
-# 微信小程序（必填：从微信公众平台获取）
-WECHAT_APPID=wxfc4c270f007773ab
-WECHAT_SECRET=714b6315c5e27cb2689c3c1d5bd54e2d
+# PostgreSQL（compose 内部服务，通常不需要修改）
+POSTGRES_USER=studyuser
+POSTGRES_PASSWORD=替换为强密码
+POSTGRES_DB=ti_db
 
-# 如启用 AI 解析（可选，不用可留空）
+# 连接池（可选调优）
+# DB_POOL_SIZE=10
+# DB_MAX_OVERFLOW=20
+# DB_POOL_RECYCLE=300
+
+# 微信小程序
+WECHAT_APPID=你的AppID
+WECHAT_SECRET=你的AppSecret
+
+# AI 解析（可选）
 DASHSCOPE_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
-DASHSCOPE_API_KEY=sk-9305b010e9be495b8407611f14394fd5
+DASHSCOPE_API_KEY=你的DashScope密钥
 
-# Nginx 反代场景建议开启（获取真实 https/host/ip）
+# Nginx 反代
 PROXY_FIX_ENABLED=true
-
-# HTTPS 部署建议开启（让 session cookie 只在 https 下发送）
 SESSION_COOKIE_SECURE=true
+ENVEOF
 ```
 
-生成 `SECRET_KEY` 的命令：
-```bash
-python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+> `DATABASE_URL` 不需要在 `.env.production` 中设置——`compose.prod.yml` 会自动从 `POSTGRES_USER`/`POSTGRES_PASSWORD`/`POSTGRES_DB` 拼接。
+
+### 4.2 compose.prod.yml 说明
+
+`compose.prod.yml` 已包含完整的 4 服务定义：
+
+- `web`：依赖 postgres（healthcheck 通过后启动）和 redis
+- `worker`：同上
+- `postgres`：postgres:16-alpine，数据持久化到 `postgres_data` volume
+- `redis`：redis:7-alpine，AOF 持久化到 `redis_data` volume
+
+`DATABASE_URL` 在 compose 中自动拼接为：
+
 ```
-
-### 5.3 创建 `/opt/saksk-ti/compose.prod.yml`
-
-作用：覆盖仓库 `compose.yml` 的固定值，并把端口只绑定到本机。
-
-```yaml
-# /opt/saksk-ti/compose.prod.yml
-services:
-  web:
-    restart: unless-stopped
-    # 注意：多文件 compose 合并时，ports 列表默认是“追加”而不是“替换”。
-    # 由于仓库的 compose.yml 里 web 已包含 `ports: ["8000:8000"]`，
-    # 这里必须用 !override 强制覆盖，否则会同时发布两个 8000 端口并报错：
-    # `failed to bind host port 127.0.0.1:8000/tcp: address already in use`
-    ports: !override
-      - "127.0.0.1:8000:8000"
-    environment:
-      # 覆盖仓库里的固定值（用 .env.production 注入）
-      SECRET_KEY: ${SECRET_KEY}
-      WECHAT_APPID: ${WECHAT_APPID}
-      WECHAT_SECRET: ${WECHAT_SECRET}
-      DASHSCOPE_BASE_URL: ${DASHSCOPE_BASE_URL}
-      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY}
-      PROXY_FIX_ENABLED: ${PROXY_FIX_ENABLED}
-      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE}
-
-  worker:
-    restart: unless-stopped
-    environment:
-      SECRET_KEY: ${SECRET_KEY}
-      WECHAT_APPID: ${WECHAT_APPID}
-      WECHAT_SECRET: ${WECHAT_SECRET}
-      DASHSCOPE_BASE_URL: ${DASHSCOPE_BASE_URL}
-      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY}
-      PROXY_FIX_ENABLED: ${PROXY_FIX_ENABLED}
-      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE}
-
-  redis:
-    restart: unless-stopped
+postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
 ```
-
-> 为什么这里要写 `${SECRET_KEY}`？  
-> 因为启动时我们用 `docker compose --env-file .env.production ...`，Compose 会读取 `.env.production` 里的值，把 `${SECRET_KEY}` 替换成真实密钥，再传给容器。  
-> 同时由于这个文件不进仓库，就不会把密钥写死在代码库里。
 
 ---
 
-## 6. 启动与验证（Docker 侧）
+## 5. 构建与启动
 
-### 6.1 构建并启动
+### 5.1 方式 A：服务器构建（推荐首次部署）
 
 ```bash
 cd /opt/saksk-ti
-docker compose --env-file .env.production -f compose.yml -f compose.prod.yml up -d --build
-docker compose --env-file .env.production -f compose.yml -f compose.prod.yml ps
+
+# 构建镜像并启动
+docker compose --env-file .env.production -f compose.prod.yml build
+docker compose --env-file .env.production -f compose.prod.yml up -d
+
+# 查看状态
+docker compose --env-file .env.production -f compose.prod.yml ps
 ```
 
-### 6.2 先做“本机连通”验证（不依赖 Nginx）
+### 5.2 方式 B：本地构建上传镜像
+
+本地构建（PowerShell）：
+
+```powershell
+cd E:\Project\Ti
+
+# 清理旧镜像
+docker rmi saksk-ti:latest 2>$null; $null
+docker builder prune -a -f
+
+# 构建
+docker build --no-cache -t saksk-ti:latest -f docker/Dockerfile .
+
+# 导出
+docker save saksk-ti:latest -o saksk-ti-latest.tar
+gzip saksk-ti-latest.tar
+```
+
+上传到服务器：
 
 ```bash
+rsync -avP saksk-ti-latest.tar.gz user@server:/opt/saksk-ti/
+```
+
+服务器加载：
+
+```bash
+cd /opt/saksk-ti
+gunzip saksk-ti-latest.tar.gz
+docker load -i saksk-ti-latest.tar
+
+docker compose --env-file .env.production -f compose.prod.yml up -d --force-recreate
+rm saksk-ti-latest.tar
+```
+
+### 5.3 验证启动
+
+```bash
+# 检查所有服务状态
+docker compose --env-file .env.production -f compose.prod.yml ps
+
+# 本机连通测试
 curl -sS http://127.0.0.1:8000/api/ping
-```
+# 期望: {"status":"success","data":{"pong":true}}
 
-期望输出类似：
-```json
-{"status":"success","data":{"pong":true}}
-```
-
-### 6.3 查看日志
-
-```bash
-docker compose --env-file .env.production -f compose.yml -f compose.prod.yml logs -f web
-docker compose --env-file .env.production -f compose.yml -f compose.prod.yml logs -f worker
+# 查看日志
+docker compose --env-file .env.production -f compose.prod.yml logs -f web
 ```
 
 ---
 
-## 7. Nginx + HTTPS（小程序生产环境必须）
+## 6. 数据库初始化与迁移
 
-微信小程序生产环境要求 HTTPS 域名且需配置“服务器域名/业务域名（web-view）”。  
-因此推荐 Nginx 终止 TLS，并反代到 `127.0.0.1:8000`。
+### 6.1 首次部署（空数据库）
 
-### 7.1 安装 Nginx 与证书工具（示例：Ubuntu）
+PostgreSQL 容器启动后会自动创建数据库。需要运行 Alembic 迁移建表：
+
+```bash
+cd /opt/saksk-ti
+DC="docker compose --env-file .env.production -f compose.prod.yml"
+
+# 运行迁移（在 web 容器内执行）
+$DC exec web flask db upgrade
+
+# 验证表已创建
+$DC exec postgres psql -U studyuser -d ti_db -c "\dt"
+```
+
+### 6.2 从 SQLite 迁移数据（可选）
+
+如果需要从旧的 SQLite 数据库迁移数据，参考 `docs/PostgreSQL切换教程.md`。
+
+### 6.3 后续模型变更
+
+```bash
+# 生成迁移脚本
+$DC exec web flask db migrate -m "描述变更内容"
+
+# 检查生成的迁移文件后执行
+$DC exec web flask db upgrade
+```
+
+---
+
+## 7. Nginx + HTTPS
+
+微信小程序生产环境要求 HTTPS。推荐 Nginx 终止 TLS，反代到 `127.0.0.1:8000`。
+
+### 7.1 安装
 
 ```bash
 sudo apt-get update
 sudo apt-get install -y nginx certbot python3-certbot-nginx
 ```
 
-> 注意：如果你在证书还没签发前就把 `ssl_certificate /etc/letsencrypt/live/<域名>/fullchain.pem` 写进 Nginx 配置并启用，
-> `nginx -t` 会因为证书文件不存在而失败，进而导致 `certbot --nginx` 也无法运行（你会看到 `cannot load certificate ... No such file or directory`）。
-> 推荐先按下面的 “7.1.1 webroot 方式” 把证书签出来，签发成功后再用 7.2 的 HTTPS 站点配置。
+### 7.2 签发证书
 
-#### 7.1.1（推荐）webroot 方式签发证书（不依赖 Nginx 插件改配置）
-
-1) 先准备 ACME webroot 目录：
 ```bash
+# 准备 ACME 目录
 sudo mkdir -p /var/www/certbot
-```
 
-2) 临时只启用 80 站点（用于 Let’s Encrypt 校验；证书签发成功后再切换到 7.2 配置）：
-```nginx
-# /etc/nginx/sites-available/saksk.top.conf
+# 临时 80 站点（用于 Let's Encrypt 校验）
+sudo tee /etc/nginx/sites-available/saksk.top.conf >/dev/null << 'NGINX'
 server {
     listen 80;
     server_name saksk.top;
-
-    location /.well-known/acme-challenge/ {
-        root /var/www/certbot;
-    }
-
-    location / {
-        return 200 "ok";
-    }
+    location /.well-known/acme-challenge/ { root /var/www/certbot; }
+    location / { return 200 "ok"; }
 }
-```
+NGINX
 
-启用并启动 Nginx：
-```bash
-sudo ln -sf /etc/nginx/sites-available/saksk.top.conf /etc/nginx/sites-enabled/saksk.top.conf
-sudo nginx -t
-sudo systemctl enable --now nginx
-```
+sudo ln -sf /etc/nginx/sites-available/saksk.top.conf /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo nginx -t && sudo systemctl enable --now nginx
 
-3) 签发证书（以 `saksk.top` 为例）：
-```bash
+# 签发证书
 sudo certbot certonly --webroot -w /var/www/certbot -d saksk.top
 ```
 
-如果报错 `unauthorized` / 404（CA 访问 `http://<域名>/.well-known/acme-challenge/...` 返回 404），按顺序排查：
+### 7.3 站点配置
 
-1) 先确认 80 端口到底是谁在监听（常见是装了宝塔/面板后自带 Nginx/OpenResty，占用 80/443，导致 `systemctl nginx` 启动失败）：
-```bash
-sudo ss -ltnp | egrep ':80|:443'
-sudo systemctl status nginx --no-pager -l
-```
-
-2) 验证 “challenge 文件是否真的能被当前站点访问到”（必须返回 `ok`）：
-```bash
-sudo mkdir -p /var/www/certbot/.well-known/acme-challenge
-echo ok | sudo tee /var/www/certbot/.well-known/acme-challenge/_ping >/dev/null
-curl -sS -H 'Host: saksk.top' http://127.0.0.1/.well-known/acme-challenge/_ping
-```
-
-3) 确认公网 DNS 解析到本机公网 IP，且安全组/防火墙放行 80：
-```bash
-nslookup saksk.top
-```
-
-> 如果签发失败，优先检查：域名 DNS 是否指向本机公网 IP、以及云安全组/防火墙是否放行 80/443。
-
-#### 7.1.2（可选）使用 Nginx 插件自动配置
-
-如果你希望 Certbot 直接改写 Nginx 配置，也可以用：
-```bash
-sudo certbot --nginx -d saksk.top
-```
-
-### 7.2 推荐的站点配置（示例：`saksk.top`）
-
-文件：`/etc/nginx/sites-available/saksk.top.conf`
-
-> 仅在证书已签发后使用（确保 `/etc/letsencrypt/live/saksk.top/fullchain.pem` 与 `privkey.pem` 已存在），否则 `nginx -t` 会失败。
+证书签发成功后，替换为完整配置：
 
 ```nginx
+# /etc/nginx/sites-available/saksk.top.conf
 server {
     listen 80;
     server_name saksk.top;
@@ -405,246 +357,268 @@ server {
     ssl_certificate     /etc/letsencrypt/live/saksk.top/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/saksk.top/privkey.pem;
 
-    # 防止上传触发 413（后端允许 16MB，这里给到 20MB）
     client_max_body_size 20m;
 
-    # uploads 建议 Nginx 直出
+    # 静态文件直出
     location /uploads/ {
         alias /opt/saksk-ti/var/uploads/;
         add_header Cache-Control "public, max-age=604800";
         try_files $uri =404;
     }
 
-    # static 可选直出（项目有 /static）
     location /static/ {
         alias /opt/saksk-ti/static/;
         add_header Cache-Control "public, max-age=604800";
         try_files $uri =404;
     }
 
-    # Web 页面 + /api 全部反代到后端
+    # 反代到后端
     location / {
         proxy_pass http://127.0.0.1:8000;
         proxy_http_version 1.1;
-
         proxy_set_header Host              $host;
         proxy_set_header X-Real-IP         $remote_addr;
         proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto https;
-
         proxy_buffering off;
         proxy_read_timeout 300;
     }
 }
 ```
 
-启用与重载：
 ```bash
-sudo ln -sf /etc/nginx/sites-available/saksk.top.conf /etc/nginx/sites-enabled/saksk.top.conf
-sudo nginx -t
-sudo systemctl reload nginx
-```
+sudo nginx -t && sudo systemctl reload nginx
 
-> 如果 `nginx -t` 报：`open() "/etc/nginx/sites-enabled/default" failed`  
-> 说明你的 `/etc/nginx/nginx.conf` 在 `include /etc/nginx/sites-enabled/default;`（但该文件不存在）。  
-> 处理方式二选一：  
-> 1) 把该 include 改成 `include /etc/nginx/sites-enabled/*;`（推荐）  
-> 2) 重新创建默认站点软链：`sudo ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default`
->  
-> 如果提示：`nginx.service is not active, cannot reload.`  
-> 说明 Nginx 还没启动过（或启动失败），请用：`sudo systemctl enable --now nginx` 或 `sudo systemctl restart nginx`
-
-> 如果访问域名仍显示 `Welcome to nginx!`（默认页），或 reload 时看到：`conflicting server name "saksk.top" on 0.0.0.0:80/443, ignored`，按顺序排查：
-> 1) 先看当前启用了哪些站点（通常需要禁用默认站点）：`sudo ls -l /etc/nginx/sites-enabled`  
->    - 如存在 `default` 且你不需要它：`sudo rm -f /etc/nginx/sites-enabled/default`
-> 2) 确认是否有重复的 `server_name saksk.top`（来自别的配置文件，或同一配置被重复 include）：
->    - `sudo grep -RIn --include='*.conf' "server_name\\s\\+.*saksk\\.top" /etc/nginx`
->    - `sudo nginx -T 2>&1 | grep -n "/etc/nginx/sites-available/saksk.top.conf"`（如果同一路径出现多次，说明被重复加载）
-> 3) 不走 DNS，直接验证命中 Host（可快速判断 Nginx 是否选中了正确的 server 块）：
->    - `curl -I -H "Host: saksk.top" http://127.0.0.1/`（期望 `301` 跳转到 https）  
->    - `curl -kI -H "Host: saksk.top" https://127.0.0.1/api/ping`（期望 `200`）
-> 4) 最后再 `sudo nginx -t && sudo systemctl reload nginx`
-
-最终验证（公网）：
-```bash
+# 验证
 curl -sS https://saksk.top/api/ping
 ```
 
+### 7.4 证书自动续期
+
+```bash
+# 测试续期
+sudo certbot renew --dry-run
+# certbot 安装时已自动配置 systemd timer
+```
+
 ---
 
-## 8. 小程序侧配置（同域名 / 不灰度）
+## 8. 小程序侧配置
 
-### 8.1 小程序生产 API 地址
+### 8.1 API 地址
 
-文件：`miniprogram-1/miniprogram/utils/config.ts`
+`miniprogram-1/miniprogram/utils/config.ts` 中设置：
 
-将：
 ```ts
-const PROD_API_BASE_URL = 'https://your-actual-domain.com/api';
-```
-改为：
-```ts
-const PROD_API_BASE_URL = 'https://saksk.top/api';
+const PROD_API_BASE_URL = "https://saksk.top/api";
 ```
 
-> 你选择“不灰度”，因此体验版/正式版都连同一个生产域名即可。
+### 8.2 微信后台域名白名单
 
-### 8.2 微信公众平台后台域名白名单
+微信公众平台 -> 小程序 -> 开发管理 -> 开发设置：
 
-微信公众平台 -> 小程序 -> 开发 -> 开发管理 -> 开发设置：
-
-1) **服务器域名**
 - request 合法域名：`https://saksk.top`
 - uploadFile 合法域名：`https://saksk.top`
 - downloadFile 合法域名：`https://saksk.top`
-
-2) **业务域名（web-view）**
-- `https://saksk.top`
+- 业务域名（web-view）：`https://saksk.top`
 
 ---
 
-## 9. 运维常用命令（上线后你最常用的）
+## 9. 运维常用命令
 
-### 9.1 更新代码并重建
+以下命令均在 `/opt/saksk-ti` 目录下执行。为简洁，用 `DC` 代替公共前缀：
 
-（git 场景）
 ```bash
-cd /opt/saksk-ti
+DC="docker compose --env-file .env.production -f compose.prod.yml"
+```
+
+### 服务管理
+
+```bash
+$DC ps                          # 查看状态
+$DC logs -f web                 # 实时日志
+$DC logs --tail=200 web         # 最近 200 行
+$DC restart web worker          # 重启 web 和 worker
+$DC down                        # 停止并删除容器
+$DC up -d                       # 启动
+```
+
+### 更新部署
+
+```bash
+# git 方式
 git pull
-docker compose --env-file .env.production -f compose.yml -f compose.prod.yml up -d --build
+$DC build web worker
+$DC up -d --force-recreate web worker
+
+# 本地镜像方式
+docker load -i saksk-ti-latest.tar
+$DC up -d --force-recreate web worker
 ```
 
-### 9.2 重启/停止
+### 数据库操作
+
+```bash
+# 进入 psql
+$DC exec postgres psql -U studyuser -d ti_db
+
+# 常用查询
+$DC exec postgres psql -U studyuser -d ti_db -c "SELECT count(*) FROM users;"
+$DC exec postgres psql -U studyuser -d ti_db -c "\dt"
+$DC exec postgres psql -U studyuser -d ti_db -c "\d users"
+
+# 运行迁移
+$DC exec web flask db upgrade
+```
+
+### 磁盘清理
+
+```bash
+docker system df                # 查看占用
+docker image prune -f           # 清理悬空镜像
+docker system prune -f          # 清理未使用资源
+docker builder prune -a -f      # 清理构建缓存
+```
+
+### 快捷别名（可选）
+
+添加到 `~/.bashrc`：
+
+```bash
+alias saksk-ps="docker compose --env-file .env.production -f /opt/saksk-ti/compose.prod.yml ps"
+alias saksk-logs="docker compose --env-file .env.production -f /opt/saksk-ti/compose.prod.yml logs -f"
+alias saksk-restart="docker compose --env-file .env.production -f /opt/saksk-ti/compose.prod.yml restart"
+alias saksk-up="docker compose --env-file .env.production -f /opt/saksk-ti/compose.prod.yml up -d"
+alias saksk-down="docker compose --env-file .env.production -f /opt/saksk-ti/compose.prod.yml down"
+```
+
+---
+
+## 10. 备份与恢复
+
+### 10.1 备份
 
 ```bash
 cd /opt/saksk-ti
-docker compose --env-file .env.production -f compose.yml -f compose.prod.yml restart web worker
-docker compose --env-file .env.production -f compose.yml -f compose.prod.yml down
+DC="docker compose --env-file .env.production -f compose.prod.yml"
+
+# PostgreSQL 数据库备份
+$DC exec -T postgres pg_dump -U studyuser -d ti_db > backup-$(date +%%F).sql
+
+# 上传文件备份
+tar -czf uploads-backup-$(date +%%F).tar.gz var/uploads/
+
+# 完整备份（数据库 + 上传文件）
+$DC exec -T postgres pg_dump -U studyuser -d ti_db | gzip > var/backup-db-$(date +%%F).sql.gz
+tar -czf backup-full-$(date +%%F).tar.gz var/backup-db-*.sql.gz var/uploads/
 ```
 
-### 9.3 查看资源与磁盘
+### 10.2 恢复
 
 ```bash
-docker stats
-docker system df
-du -sh /opt/saksk-ti/var
+# 恢复数据库
+$DC exec -T postgres psql -U studyuser -d ti_db < backup-2026-02-25.sql
+
+# 恢复上传文件
+tar -xzf uploads-backup-2026-02-25.tar.gz
+```
+
+### 10.3 定期备份（cron）
+
+```bash
+crontab -e
+```
+
+添加：
+
+```cron
+# 每天凌晨 3 点备份 PostgreSQL
+0 3 * * * cd /opt/saksk-ti && docker compose --env-file .env.production -f compose.prod.yml exec -T postgres pg_dump -U studyuser -d ti_db | gzip > /opt/saksk-ti/var/backup-$(date +\%%F).sql.gz
+
+# 保留最近 30 天备份
+0 4 * * * find /opt/saksk-ti/var/backup-*.sql.gz -mtime +30 -delete
 ```
 
 ---
 
-## 10. 备份与恢复（SQLite + uploads）
-
-### 10.1 推荐备份内容
-
-- `/opt/saksk-ti/var/instance/submissions.db`（核心数据）
-- `/opt/saksk-ti/var/uploads/`（图片/头像/音视频等）
-
-### 10.2 手动备份（示例）
-
-```bash
-sudo tar -czf /opt/saksk-ti/backup-$(date +%F).tar.gz -C /opt/saksk-ti var/instance var/uploads
-```
-
-> SQLite 在 WAL 模式下备份建议尽量在低峰执行；需要更严格一致性可临时停服务再打包：`docker compose ... down` -> 备份 -> `up -d`。
-
----
-
-## 11. 常见故障排查（按概率排序）
+## 11. 常见故障排查
 
 ### 11.1 502/504（Nginx 反代失败）
 
-按顺序：
-1) `curl http://127.0.0.1:8000/api/ping` 是否通  
-2) `docker compose ... ps` 查看 `web` 是否在跑  
-3) `docker compose ... logs -f web` 看 Gunicorn 是否启动失败  
-4) `nginx -t` 与 `systemctl status nginx` 看反代是否生效
-
-### 11.2 413（上传太大）
-
-- Nginx 配 `client_max_body_size`（本文第 7.2 节已包含）
-- 后端限制为 16MB（如需更大再单独调整）
-
-### 11.3 小程序提示域名不合法 / web-view 打不开
-
-- 检查微信后台是否已配置：
-  - 服务器域名：request/upload/download
-  - 业务域名：web-view
-- 必须 HTTPS 且证书链完整
-
-### 11.4 拉取镜像失败（docker.io 超时 / i/o timeout）
-
-典型报错：
-- `failed to resolve reference "docker.io/library/redis:7-alpine" ... dial tcp ...:443: i/o timeout`
-
-排查/解决：
-1) 先确认服务器能出网：`curl -I https://registry-1.docker.io/v2/`（返回 `401 Unauthorized` 也算正常）  
-2) 国内/网络受限：按 3.2.1 配置镜像加速器，然后 `docker pull redis:7-alpine`  
-3) 仍失败：检查 DNS/代理/iptables/运营商出网策略；必要时为 Docker 配置系统代理
-
-### 11.5 启动失败：`127.0.0.1:8000` 端口被占用（address already in use）
-
-典型报错：
-- `failed to bind host port 127.0.0.1:8000/tcp: address already in use`
-
-常见原因有两类：
-1) **ports 合并导致重复发布**：`compose.yml` 已有 `8000:8000`，`compose.prod.yml` 又加 `127.0.0.1:8000:8000`（未使用 `!override`）  
-2) **宿主机端口确实被占用**：有其他进程/容器已占用 8000
-
-解决思路：先排除“重复发布”，再排查真正的端口占用；或直接把本机映射端口换成别的（例如 8001）。
-
-0) 先检查是否“重复发布”（推荐）：
-
 ```bash
-cd /opt/saksk-ti
-docker compose --env-file .env.production -f compose.yml -f compose.prod.yml config | sed -n '/^[[:space:]]*web:/,/^[[:space:]]*worker:/p' | grep -n 'published: "8000"'
+curl http://127.0.0.1:8000/api/ping    # 后端是否通
+$DC ps                                  # web 是否在跑
+$DC logs -f web                         # Gunicorn 日志
+sudo nginx -t                           # Nginx 配置
 ```
 
-如果看到两条 `published: "8000"`，请按本文 5.3 把 `compose.prod.yml` 的 `ports` 改为 `ports: !override` 后再启动。
+### 11.2 web 启动失败：数据库连接拒绝
 
-1) 先找出是谁占用了 8000：
+```bash
+# 检查 postgres 是否健康
+$DC ps postgres
+$DC logs postgres
+
+# 手动测试连接
+$DC exec postgres psql -U studyuser -d ti_db -c "SELECT 1;"
+```
+
+常见原因：
+- postgres 容器未启动或 healthcheck 未通过
+- `.env.production` 中 `POSTGRES_PASSWORD` 与已有数据卷中的密码不一致（首次创建后密码写入 volume，后续修改 env 不会生效）
+
+解决密码不一致：
+
+```bash
+# 方式 1：删除 volume 重建（会丢失数据，仅首次部署可用）
+$DC down -v
+$DC up -d
+
+# 方式 2：进入容器修改密码
+$DC exec postgres psql -U studyuser -c "ALTER USER studyuser PASSWORD '新密码';"
+```
+
+### 11.3 413（上传太大）
+
+Nginx 配置 `client_max_body_size 20m;`（第 7.3 节已包含）。
+
+### 11.4 小程序提示域名不合法
+
+- 检查微信后台域名白名单（第 8.2 节）
+- 确认 HTTPS 证书链完整
+
+### 11.5 拉取镜像超时
+
+参考第 2.2 节配置镜像加速器。
+
+### 11.6 端口 8000 被占用
 
 ```bash
 sudo ss -ltnp | grep ':8000'
 ```
 
-2) 如果是某个 Docker 容器占用：
+如果是其他容器占用，停止后重启；或修改 `compose.prod.yml` 端口映射为 `127.0.0.1:8001:8000`，同步修改 Nginx upstream。
+
+### 11.7 Alembic 迁移报错
 
 ```bash
-docker ps --format 'table {{.Names}}\t{{.Ports}}' | grep '8000->'
+# 查看当前迁移版本
+$DC exec web flask db current
+
+# 标记为最新（跳过迁移）
+$DC exec web flask db stamp head
+
+# 回滚一个版本
+$DC exec web flask db downgrade -1
 ```
-
-> 说明：只有出现类似 `127.0.0.1:8000->8000/tcp` 才代表占用了宿主机 8000 端口；单独的 `8000/tcp` 通常只是镜像 `EXPOSE 8000` 的展示，不占用宿主机端口。
-
-停止对应容器后再重启本项目（示例）：
-
-```bash
-cd /opt/saksk-ti
-docker compose --env-file .env.production -f compose.yml -f compose.prod.yml down
-docker compose --env-file .env.production -f compose.yml -f compose.prod.yml up -d --build
-```
-
-3) 如果你不方便释放 8000：把 `compose.prod.yml` 里的端口映射改成 `127.0.0.1:8001:8000`，并把 Nginx upstream（或本机 `curl`）同步改到 `8001`。
-
-### 11.6 访问 `saksk.top` 显示 “Welcome to nginx!” / 未命中项目
-
-现象：浏览器打开 `https://saksk.top` 显示 Nginx 默认欢迎页，项目页面未展示。
-
-按顺序排查：
-1) 先确认后端本机通：`curl -sS http://127.0.0.1:8000/api/ping`
-2) 看当前启用了哪些站点（通常需要禁用默认站点）：`sudo ls -l /etc/nginx/sites-enabled`
-   - 如存在 `default` 且你不需要它：`sudo rm -f /etc/nginx/sites-enabled/default`
-3) 如果 reload 时报 `conflicting server name ... ignored`，说明存在重复的 `server_name saksk.top`（来自别的配置文件，或同一配置被重复 include）：
-   - `sudo grep -RIn --include='*.conf' "server_name\\s\\+.*saksk\\.top" /etc/nginx`
-   - `sudo nginx -T 2>&1 | grep -n "/etc/nginx/sites-available/saksk.top.conf"`（同一路径出现多次=重复加载）
-4) 不走 DNS 直接验证命中 Host（可快速定位 Nginx 是否选中了正确的 server 块）：
-   - `curl -I -H "Host: saksk.top" http://127.0.0.1/`
-   - `curl -kI -H "Host: saksk.top" https://127.0.0.1/api/ping`
-5) 修好后：`sudo nginx -t && sudo systemctl reload nginx`
 
 ---
 
-## 12. 安全提醒（务必做）
+## 12. 安全提醒
 
-- 如果仓库/历史里出现过微信密钥、第三方 key：请立即去对应平台**重置/轮换**。
-- 对公网只开放 `80/443`，不要让 `8000` 暴露。
-- `SECRET_KEY` 必须是强随机且只存在服务器环境里。
+- `SECRET_KEY` 必须是强随机字符串，只存在服务器 `.env.production` 中
+- `POSTGRES_PASSWORD` 使用强密码，不要用默认值
+- 仓库/历史中出现过的密钥，立即去对应平台重置
+- 对公网只开放 `80/443`，不暴露 `8000` 和 `5432`
+- `.env.production` 不入库（已在 `.gitignore` 中排除）
+- 定期备份数据库和上传文件

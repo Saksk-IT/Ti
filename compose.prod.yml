@@ -11,6 +11,7 @@ services:
       FLASK_ENV: production
       DATA_DIR: /data
       SECRET_KEY: ${SECRET_KEY}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-studyuser}:${POSTGRES_PASSWORD:-studypass}@postgres:5432/${POSTGRES_DB:-ti_db}
       REDIS_URL: redis://redis:6379/0
       RATELIMIT_STORAGE_URI: redis://redis:6379/0
       RQ_QUEUE_NAME: saksk
@@ -20,10 +21,16 @@ services:
       WECHAT_SECRET: ${WECHAT_SECRET}
       DASHSCOPE_BASE_URL: ${DASHSCOPE_BASE_URL}
       DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-10}
+      DB_MAX_OVERFLOW: ${DB_MAX_OVERFLOW:-20}
+      DB_POOL_RECYCLE: ${DB_POOL_RECYCLE:-300}
     volumes:
       - ./var:/data
     depends_on:
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
   worker:
     image: saksk-ti:latest
@@ -33,6 +40,7 @@ services:
       FLASK_ENV: production
       DATA_DIR: /data
       SECRET_KEY: ${SECRET_KEY}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-studyuser}:${POSTGRES_PASSWORD:-studypass}@postgres:5432/${POSTGRES_DB:-ti_db}
       REDIS_URL: redis://redis:6379/0
       RQ_QUEUE_NAME: saksk
       WECHAT_APPID: ${WECHAT_APPID}
@@ -42,7 +50,25 @@ services:
     volumes:
       - ./var:/data
     depends_on:
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-studyuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-studypass}
+      POSTGRES_DB: ${POSTGRES_DB:-ti_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-studyuser} -d ${POSTGRES_DB:-ti_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
@@ -52,4 +78,5 @@ services:
       - redis_data:/data
 
 volumes:
+  postgres_data:
   redis_data:

@@ -88,7 +88,7 @@ docker compose -f compose.dev.yml exec web flask routes
 docker compose -f compose.dev.yml exec web python -c "print('hello')"
 
 # 查看容器内数据库
-docker compose -f compose.dev.yml exec web ls -la /data/instance/
+docker compose -f compose.dev.yml exec postgres psql -U studyuser -d ti_db -c "\dt"
 ```
 
 ### 5. 导出镜像
