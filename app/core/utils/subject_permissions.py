@@ -12,18 +12,52 @@ from app.models.quiz import UserQuizStats
 
 
 def is_admin(user_id: int) -> bool:
-    """检查用户是否是管理员"""
+    """检查用户是否是管理员（请求级缓存）"""
+    try:
+        from flask import g
+        cache_attr = f'_is_admin_{user_id}'
+        cached = getattr(g, cache_attr, None)
+        if cached is not None:
+            return cached
+    except RuntimeError:
+        pass  # 无 Flask 请求上下文
+
     user = User.query.get(user_id)
-    return bool(user and user.is_admin)
+    result = bool(user and user.is_admin)
+
+    try:
+        from flask import g
+        setattr(g, cache_attr, result)
+    except (RuntimeError, Exception):
+        pass
+
+    return result
 
 
 def get_user_restricted_subjects(user_id: int) -> List[int]:
-    """获取用户被限制的科目ID列表（黑名单）"""
-    if is_admin(user_id):
-        return []
+    """获取用户被限制的科目ID列表（请求级缓存）"""
+    try:
+        from flask import g
+        cache_attr = f'_restricted_subjects_{user_id}'
+        cached = getattr(g, cache_attr, None)
+        if cached is not None:
+            return cached
+    except RuntimeError:
+        pass
 
-    rows = UserSubject.query.filter_by(user_id=user_id).all()
-    return [r.subject_id for r in rows]
+    if is_admin(user_id):
+        result = []
+    else:
+        rows = UserSubject.query.filter_by(user_id=user_id).all()
+        result = [r.subject_id for r in rows]
+
+    try:
+        from flask import g
+        setattr(g, cache_attr, result)
+    except (RuntimeError, Exception):
+        pass
+
+    return result
 
 
 def can_user_access_subject(user_id: int, subject_id: int) -> bool:
@@ -38,14 +72,31 @@ def can_user_access_subject(user_id: int, subject_id: int) -> bool:
 
 
 def get_user_accessible_subjects(user_id: int) -> List[int]:
-    """获取用户可访问的科目ID列表（黑名单模式）"""
+    """获取用户可访问的科目ID列表（请求级缓存）"""
+    try:
+        from flask import g
+        cache_attr = f'_accessible_subjects_{user_id}'
+        cached = getattr(g, cache_attr, None)
+        if cached is not None:
+            return cached
+    except RuntimeError:
+        pass
+
     if is_admin(user_id):
         rows = db.session.query(Subject.id).all()
-        return [r.id for r in rows]
+        result = [r.id for r in rows]
+    else:
+        all_ids = [r.id for r in db.session.query(Subject.id).all()]
+        restricted_ids = set(get_user_restricted_subjects(user_id))
+        result = [sid for sid in all_ids if sid not in restricted_ids]
 
-    all_ids = [r.id for r in db.session.query(Subject.id).all()]
-    restricted_ids = set(get_user_restricted_subjects(user_id))
-    return [sid for sid in all_ids if sid not in restricted_ids]
+    try:
+        from flask import g
+        setattr(g, cache_attr, result)
+    except (RuntimeError, Exception):
+        pass
+
+    return result
 
 
 def filter_subjects_by_permission(user_id: Optional[int], subject_ids: List[int]) -> List[int]:

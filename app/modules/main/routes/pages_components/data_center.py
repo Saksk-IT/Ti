@@ -16,9 +16,36 @@ from .data_center_context_extra import compute_data_center_context_extra
 
 
 def _compute_data_center_context(uid: int, window_days: int) -> dict:
+    from app.core.utils.cache_utils import make_cache_key, get_user_quiz_version
+    from app.core.utils.redis_utils import redis_get_json, redis_set_json
+
+    # 尝试从缓存读取
+    cache_key = None
+    try:
+        cache_key = make_cache_key('data_center', {
+            'uid': int(uid),
+            'days': int(window_days),
+            'ver': get_user_quiz_version(int(uid)),
+        })
+        cached = redis_get_json(cache_key)
+        if isinstance(cached, dict) and cached:
+            return cached
+    except Exception:
+        cache_key = None
+
+    # 缓存未命中，执行原始计算
     subject_ids, base_ctx = compute_data_center_context_base(uid, window_days)
     conn = db.session.connection()
-    return compute_data_center_context_extra(conn, uid, window_days, subject_ids, base_ctx)
+    result = compute_data_center_context_extra(conn, uid, window_days, subject_ids, base_ctx)
+
+    # 写入缓存（TTL 120 秒）
+    if cache_key:
+        try:
+            redis_set_json(cache_key, result, ttl_seconds=120)
+        except Exception:
+            pass
+
+    return result
 
 
 @main_pages_bp.route('/data')
@@ -116,7 +143,7 @@ def history_page():
         ]
     elif active_tab == 'tags':
         hero_title = '数据中心 · 标签'
-        hero_subtitle = '标签让题目资产结构化：复盘与专项训练更容易“复用”。'
+        hero_subtitle = '标签让题目资产结构化：复盘与专项训练更容易"复用"。'
         kpi = ctx.get('tags_kpis') or {}
         hero_kpis = [
             {'k': '标签总数', 'v': int(kpi.get('all_tag_count') or 0)},
@@ -232,406 +259,58 @@ def api_data_ai_advice():
     if not prompt:
         prompt = '请基于我的学习数据，给出今天最重要的 5 条建议，并按优先级排序。'
 
-    def _pct(a: int, b: int) -> float:
-        try:
-            a = int(a or 0)
-            b = int(b or 0)
-            return round(a * 100.0 / b, 1) if b > 0 else 0.0
-        except Exception:
-            return 0.0
+    # ===== 复用 _compute_data_center_context 缓存 =====
+    ctx = _compute_data_center_context(int(uid), days)
 
-    def _safe_int(x) -> int:
-        try:
-            return int(x or 0)
-        except Exception:
-            return 0
-
-    # ===== 公共题库汇总（按科目权限过滤）=====
-    subjects_meta = _get_accessible_subject_rows(uid=uid)
-    subject_ids = [int(s['id']) for s in (subjects_meta or []) if s and s.get('id') is not None]
-    subject_name_map = {int(s['id']): (s.get('name') or '') for s in (subjects_meta or []) if s and s.get('id') is not None}
-
-    total_questions_public = 0
-    answered_public = 0
-    correct_public = 0
-    last_public = None
-    favorites_public = 0
-    mistakes_public = 0
-    mistakes_times_public = 0
-    streak_public = 0
-    public_streak_dates = []
-
-    try:
-        base_sql = """
-            SELECT COUNT(*)
-            FROM questions q
-            LEFT JOIN subjects s ON q.subject_id = s.id
-            WHERE (s.is_locked=false OR s.is_locked IS NULL)
-        """
-        params: dict = {}
-        if subject_ids:
-            in_clause, in_params = _build_named_in('q.subject_id', subject_ids, 'tq')
-            base_sql += f" AND {in_clause}"
-            params.update(in_params)
-        total_questions_public = _safe_int(db.session.execute(text(base_sql), params).fetchone()[0])
-    except Exception:
-        total_questions_public = 0
-
-    ua_params_base: dict = {'ua_uid': int(uid)}
-    ua_from = """
-        FROM user_answers ua
-        JOIN questions q ON ua.question_id = q.id
-        LEFT JOIN subjects s ON q.subject_id = s.id
-        WHERE ua.user_id = :ua_uid
-          AND (s.is_locked=false OR s.is_locked IS NULL)
-    """
-    if subject_ids:
-        in_clause, in_params = _build_named_in('q.subject_id', subject_ids, 'sid')
-        ua_from += f" AND {in_clause}"
-        ua_params_base.update(in_params)
-
-    try:
-        row = db.session.execute(
-            text(f"""
-            SELECT
-              COUNT(*) AS answered,
-              SUM(CASE WHEN ua.is_correct = true THEN 1 ELSE 0 END) AS correct,
-              MAX(ua.created_at) AS last_activity
-            {ua_from}
-            """),
-            ua_params_base,
-        ).fetchone()
-        answered_public = _safe_int(row._mapping['answered'] if row else 0)
-        correct_public = _safe_int(row._mapping['correct'] if row else 0)
-        last_public = (row._mapping['last_activity'] if row else None) or None
-    except Exception:
-        answered_public = 0
-        correct_public = 0
-        last_public = None
-
-    try:
-        fav_sql = """
-            SELECT COUNT(*)
-            FROM favorites f
-            JOIN questions q ON f.question_id = q.id
-            LEFT JOIN subjects s ON q.subject_id = s.id
-            WHERE f.user_id = :fav_uid AND (s.is_locked=false OR s.is_locked IS NULL)
-        """
-        fav_params: dict = {'fav_uid': int(uid)}
-        if subject_ids:
-            in_clause, in_params = _build_named_in('q.subject_id', subject_ids, 'fav')
-            fav_sql += f" AND {in_clause}"
-            fav_params.update(in_params)
-        favorites_public = _safe_int(db.session.execute(text(fav_sql), fav_params).fetchone()[0])
-    except Exception:
-        favorites_public = 0
-
-    try:
-        mis_sql = """
-            SELECT
-              COUNT(*) AS cnt,
-              SUM(CASE WHEN m.wrong_count IS NULL THEN 1 ELSE m.wrong_count END) AS times
-            FROM mistakes m
-            JOIN questions q ON m.question_id = q.id
-            LEFT JOIN subjects s ON q.subject_id = s.id
-            WHERE m.user_id = :mis_uid AND (s.is_locked=false OR s.is_locked IS NULL)
-        """
-        mis_params: dict = {'mis_uid': int(uid)}
-        if subject_ids:
-            in_clause, in_params = _build_named_in('q.subject_id', subject_ids, 'mis')
-            mis_sql += f" AND {in_clause}"
-            mis_params.update(in_params)
-        row = db.session.execute(text(mis_sql), mis_params).fetchone()
-        mistakes_public = _safe_int(row._mapping['cnt'] if row else 0)
-        mistakes_times_public = _safe_int(row._mapping['times'] if row else 0)
-    except Exception:
-        mistakes_public = 0
-        mistakes_times_public = 0
-
-    try:
-        rows = db.session.execute(
-            text(f"SELECT DISTINCT DATE(ua.created_at) AS day {ua_from} ORDER BY day DESC LIMIT 120"),
-            ua_params_base,
-        ).fetchall()
-        dates = []
-        for r in rows or []:
-            d = r._mapping['day']
-            if d:
-                try:
-                    if isinstance(d, str):
-                        dates.append(datetime.strptime(d, '%Y-%m-%d').date())
-                    else:
-                        dates.append(d)
-                except Exception:
-                    continue
-        public_streak_dates = dates
-        today = today_bj()
-        if dates and dates[0] >= (today - timedelta(days=1)):
-            streak_public = 1
-            for i in range(1, len(dates)):
-                if dates[i - 1] - dates[i] == timedelta(days=1):
-                    streak_public += 1
-                else:
-                    break
-    except Exception:
-        streak_public = 0
-        public_streak_dates = []
-
-    # 公共薄弱科目（按正确率从低到高，至少做过5题）
-    weak_subjects = []
-    try:
-        rows = db.session.execute(
-            text(f"""
-            SELECT q.subject_id AS subject_id,
-                   COUNT(*) AS answered,
-                   SUM(CASE WHEN ua.is_correct = true THEN 1 ELSE 0 END) AS correct
-            {ua_from}
-            GROUP BY q.subject_id
-            """),
-            ua_params_base,
-        ).fetchall()
-        for r in rows or []:
-            sid = r._mapping['subject_id']
-            if sid is None:
-                continue
-            answered = _safe_int(r._mapping['answered'])
-            correct = _safe_int(r._mapping['correct'])
-            if answered < 5:
-                continue
-            acc = _pct(correct, answered)
-            weak_subjects.append({
-                'name': subject_name_map.get(int(sid)) or f'科目{sid}',
-                'answered': answered,
-                'accuracy': acc,
-            })
-        weak_subjects.sort(key=lambda x: (float(x.get('accuracy') or 0.0), -int(x.get('answered') or 0)))
-        weak_subjects = weak_subjects[:3]
-    except Exception:
-        weak_subjects = []
-
-    # ===== 个人题库（我创建的）=====
-    bank_total = 0
-    bank_total_questions = 0
-    bank_answered = 0
-    bank_correct = 0
-    bank_favorites = 0
-    bank_mistakes = 0
-    bank_mistakes_times = 0
-    bank_last = None
-    bank_streak = 0
-    bank_streak_dates = []
-    weak_banks = []
-
-    try:
-        banks = db.session.execute(
-            text("""
-            SELECT id, name
-            FROM user_question_banks
-            WHERE user_id = :bk_uid AND status = 1
-            ORDER BY updated_at DESC, id DESC
-            """),
-            {'bk_uid': int(uid)},
-        ).fetchall()
-        banks = [dict(b._mapping) for b in (banks or []) if b and b._mapping.get('id') is not None]
-        bank_total = len(banks)
-        bank_ids = [int(b['id']) for b in banks]
-        bank_name_map = {int(b['id']): (b.get('name') or '') for b in banks}
-
-        if bank_ids:
-            bk_in_clause, bk_in_params = _build_named_in('bank_id', bank_ids, 'bk')
-
-            try:
-                p = {'ba_uid': int(uid)}
-                p.update(bk_in_params)
-                row = db.session.execute(
-                    text(f"SELECT COUNT(*) AS answered, SUM(CASE WHEN is_correct=true THEN 1 ELSE 0 END) AS correct, MAX(created_at) AS last_activity FROM user_bank_answers WHERE user_id=:ba_uid AND {bk_in_clause}"),
-                    p,
-                ).fetchone()
-                bank_answered = _safe_int(row._mapping['answered'] if row else 0)
-                bank_correct = _safe_int(row._mapping['correct'] if row else 0)
-                bank_last = (row._mapping['last_activity'] if row else None) or None
-            except Exception:
-                bank_answered = 0
-                bank_correct = 0
-                bank_last = None
-
-            try:
-                p = {'bf_uid': int(uid)}
-                p.update(bk_in_params)
-                row = db.session.execute(
-                    text(f"SELECT COUNT(*) AS cnt FROM user_bank_favorites WHERE user_id=:bf_uid AND {bk_in_clause}"),
-                    p,
-                ).fetchone()
-                bank_favorites = _safe_int(row._mapping['cnt'] if row else 0)
-            except Exception:
-                bank_favorites = 0
-
-            try:
-                p = {'bm_uid': int(uid)}
-                p.update(bk_in_params)
-                row = db.session.execute(
-                    text(f"SELECT COUNT(*) AS cnt, SUM(COALESCE(wrong_count,1)) AS times FROM user_bank_mistakes WHERE user_id=:bm_uid AND {bk_in_clause}"),
-                    p,
-                ).fetchone()
-                bank_mistakes = _safe_int(row._mapping['cnt'] if row else 0)
-                bank_mistakes_times = _safe_int(row._mapping['times'] if row else 0)
-            except Exception:
-                bank_mistakes = 0
-                bank_mistakes_times = 0
-
-            try:
-                row = db.session.execute(
-                    text(f"SELECT COUNT(*) AS cnt FROM user_bank_questions WHERE {bk_in_clause}"),
-                    bk_in_params,
-                ).fetchone()
-                bank_total_questions = _safe_int(row._mapping['cnt'] if row else 0)
-            except Exception:
-                bank_total_questions = 0
-
-            try:
-                p = {'bs_uid': int(uid)}
-                p.update(bk_in_params)
-                rows = db.session.execute(
-                    text(f"""
-                    SELECT DISTINCT DATE(created_at) AS day
-                    FROM user_bank_answers
-                    WHERE user_id = :bs_uid AND {bk_in_clause}
-                    ORDER BY day DESC
-                    LIMIT 120
-                    """),
-                    p,
-                ).fetchall()
-                dates = []
-                for r in rows or []:
-                    d = r._mapping['day']
-                    if d:
-                        try:
-                            if isinstance(d, str):
-                                dates.append(datetime.strptime(d, '%Y-%m-%d').date())
-                            else:
-                                dates.append(d)
-                        except Exception:
-                            continue
-                bank_streak_dates = dates
-                today = today_bj()
-                if dates and dates[0] >= (today - timedelta(days=1)):
-                    bank_streak = 1
-                    for i in range(1, len(dates)):
-                        if dates[i - 1] - dates[i] == timedelta(days=1):
-                            bank_streak += 1
-                        else:
-                            break
-            except Exception:
-                bank_streak = 0
-                bank_streak_dates = []
-
-            try:
-                p = {'wb_uid': int(uid)}
-                p.update(bk_in_params)
-                rows = db.session.execute(
-                    text(f"""
-                    SELECT bank_id,
-                           COUNT(*) AS answered,
-                           SUM(CASE WHEN is_correct=true THEN 1 ELSE 0 END) AS correct
-                    FROM user_bank_answers
-                    WHERE user_id = :wb_uid AND {bk_in_clause}
-                    GROUP BY bank_id
-                    """),
-                    p,
-                ).fetchall()
-                for r in rows or []:
-                    bid = r._mapping['bank_id']
-                    if bid is None:
-                        continue
-                    a = _safe_int(r._mapping['answered'])
-                    c = _safe_int(r._mapping['correct'])
-                    if a < 5:
-                        continue
-                    weak_banks.append({
-                        'name': (bank_name_map.get(int(bid)) or f'题库{bid}').strip(),
-                        'answered': a,
-                        'accuracy': _pct(c, a),
-                    })
-                weak_banks.sort(key=lambda x: (float(x.get('accuracy') or 0.0), -int(x.get('answered') or 0)))
-                weak_banks = weak_banks[:3]
-            except Exception:
-                weak_banks = []
-    except Exception:
-        bank_total = 0
-
-    # ===== 全局（公共 + 个人）=====
-    total_questions_all = _safe_int(total_questions_public) + _safe_int(bank_total_questions)
-    answered_all = _safe_int(answered_public) + _safe_int(bank_answered)
-    correct_all = _safe_int(correct_public) + _safe_int(bank_correct)
-    favorites_all = _safe_int(favorites_public) + _safe_int(bank_favorites)
-    mistakes_all = _safe_int(mistakes_public) + _safe_int(bank_mistakes)
-    mistakes_times_all = _safe_int(mistakes_times_public) + _safe_int(bank_mistakes_times)
-    accuracy_all = _pct(correct_all, answered_all)
-    completion_all = _pct(answered_all, total_questions_all)
-
-    last_all = None
-    try:
-        candidates = [x for x in [last_public, bank_last] if x]
-        last_all = max(candidates) if candidates else None
-    except Exception:
-        last_all = None
-
-    streak_all = 0
-    try:
-        merged_dates = sorted(set(public_streak_dates or []) | set(bank_streak_dates or []), reverse=True)
-        today = today_bj()
-        if merged_dates and merged_dates[0] >= (today - timedelta(days=1)):
-            streak_all = 1
-            for i in range(1, len(merged_dates)):
-                if merged_dates[i - 1] - merged_dates[i] == timedelta(days=1):
-                    streak_all += 1
-                else:
-                    break
-    except Exception:
-        streak_all = max(int(streak_public or 0), int(bank_streak or 0))
+    all_summary = ctx.get('all_summary') or {}
+    public_summary = ctx.get('public_summary') or {}
+    bank_summary = ctx.get('bank_summary') or {}
 
     summary = {
         'window_days': int(days),
         'all': {
-            'total_questions': total_questions_all,
-            'answered': answered_all,
-            'correct': correct_all,
-            'accuracy': accuracy_all,
-            'completion': completion_all,
-            'favorites': favorites_all,
-            'mistakes': mistakes_all,
-            'mistakes_times': mistakes_times_all,
-            'streak_days': int(streak_all),
-            'last_activity': last_all,
+            'total_questions': int(all_summary.get('total_questions') or 0),
+            'answered': int(all_summary.get('answered') or 0),
+            'correct': int(all_summary.get('correct') or 0),
+            'accuracy': float(all_summary.get('accuracy') or 0),
+            'completion': float(all_summary.get('completion') or 0),
+            'favorites': int(all_summary.get('favorites') or 0),
+            'mistakes': int(all_summary.get('mistakes') or 0),
+            'mistakes_times': int(all_summary.get('mistakes_times') or 0),
+            'streak_days': int(all_summary.get('streak_days') or 0),
+            'last_activity': all_summary.get('last_activity'),
         },
         'public': {
-            'total_questions': int(total_questions_public),
-            'answered': int(answered_public),
-            'correct': int(correct_public),
-            'accuracy': _pct(correct_public, answered_public),
-            'completion': _pct(answered_public, total_questions_public),
-            'favorites': int(favorites_public),
-            'mistakes': int(mistakes_public),
-            'mistakes_times': int(mistakes_times_public),
-            'streak_days': int(streak_public),
-            'last_activity': last_public,
-            'weak_subjects': weak_subjects,
+            'total_questions': int(public_summary.get('total_questions') or ctx.get('total_questions') or 0),
+            'answered': int(public_summary.get('answered') or ctx.get('answered_count') or 0),
+            'correct': int(public_summary.get('correct') or ctx.get('correct_count') or 0),
+            'accuracy': float(public_summary.get('accuracy') or ctx.get('accuracy') or 0),
+            'completion': float(public_summary.get('completion') or ctx.get('completion') or 0),
+            'favorites': int(public_summary.get('favorites') or ctx.get('favorites_count') or 0),
+            'mistakes': int(public_summary.get('mistakes') or ctx.get('mistakes_count') or 0),
+            'mistakes_times': int(public_summary.get('mistakes_times') or ctx.get('mistakes_times') or 0),
+            'streak_days': int(public_summary.get('streak_days') or ctx.get('streak_days') or 0),
+            'last_activity': public_summary.get('last_activity') or ctx.get('last_activity'),
+            'weak_subjects': public_summary.get('weak_subjects') or ctx.get('weakness_rows') or [],
         },
         'banks': {
-            'bank_total': int(bank_total),
-            'total_questions': int(bank_total_questions),
-            'answered': int(bank_answered),
-            'correct': int(bank_correct),
-            'accuracy': _pct(bank_correct, bank_answered),
-            'completion': _pct(bank_answered, bank_total_questions),
-            'favorites': int(bank_favorites),
-            'mistakes': int(bank_mistakes),
-            'mistakes_times': int(bank_mistakes_times),
-            'streak_days': int(bank_streak),
-            'last_activity': bank_last,
-            'weak_banks': weak_banks,
+            'bank_total': int(bank_summary.get('bank_total') or 0),
+            'total_questions': int(bank_summary.get('total_questions') or 0),
+            'answered': int(bank_summary.get('answered') or 0),
+            'correct': int(bank_summary.get('correct') or 0),
+            'accuracy': float(bank_summary.get('accuracy') or 0),
+            'completion': float(bank_summary.get('completion') or 0),
+            'favorites': int(bank_summary.get('favorites') or 0),
+            'mistakes': int(bank_summary.get('mistakes') or 0),
+            'mistakes_times': int(bank_summary.get('mistakes_times') or 0),
+            'streak_days': int(bank_summary.get('streak_days') or 0),
+            'last_activity': bank_summary.get('last_activity'),
+            'weak_banks': bank_summary.get('weak_banks') or [],
         },
     }
+    weak_subjects = summary['public'].get('weak_subjects') or []
+    weak_banks = summary['banks'].get('weak_banks') or []
+
 
     def _build_placeholder_reply() -> str:
         lines = []
@@ -652,7 +331,7 @@ def api_data_ai_advice():
         if summary['all']['answered'] < 10:
             lines.append('1) 先连续做 20 题建立手感（不要断档）。')
         if summary['all']['completion'] < 35:
-            lines.append('2) 优先补“未做题”，把覆盖率先拉到 35%+。')
+            lines.append('2) 优先补"未做题"，把覆盖率先拉到 35%+。')
         if summary['all']['accuracy'] < 65 and summary['all']['answered'] >= 10:
             lines.append('3) 先刷错题并归因（概念/审题/计算/方法），再回到全题库。')
         if weak_subjects:
@@ -660,7 +339,7 @@ def api_data_ai_advice():
         if weak_banks:
             lines.append(f"5) 个人题库优先练：{weak_banks[0]['name']}（按题型拆分练）。")
         if summary['all']['streak_days'] <= 1:
-            lines.append('补充：设一个“最小计划”（每天 10 题或 8 分钟），先把连续天数做起来。')
+            lines.append('补充：设一个"最小计划"（每天 10 题或 8 分钟），先把连续天数做起来。')
         return '\n'.join(lines).strip()
 
     api_key = (current_app.config.get('DASHSCOPE_API_KEY') or '').strip()
