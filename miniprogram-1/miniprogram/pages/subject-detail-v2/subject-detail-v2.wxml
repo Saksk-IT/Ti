@@ -471,6 +471,9 @@
               <view class="btn btn-primary {{(exportDisabled || exportBusy) ? 'disabled' : ''}}" bindtap="onExportWord">
                 <text>{{exportBusy ? '正在导出…' : '导出 Word'}}</text>
               </view>
+              <view class="btn {{(exportDisabled || exportBusy) ? 'disabled' : ''}}" bindtap="onExportPdf">
+                <text>{{exportBusy ? '正在导出…' : '导出 PDF'}}</text>
+              </view>
             </view>
 
             <view class="export-progress" wx:if="{{exportBusy && exportProgress > 0}}">

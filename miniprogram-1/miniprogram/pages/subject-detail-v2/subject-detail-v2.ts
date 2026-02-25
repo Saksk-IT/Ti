@@ -1675,6 +1675,14 @@ Page({
     }
   },
   async onExportWord() {
+    this.doExport('word');
+  },
+
+  onExportPdf() {
+    this.doExport('pdf');
+  },
+
+  async doExport(format: 'word' | 'pdf') {
     if (this.data.exportDisabled || this.data.exportBusy) return;
     if (this.data.exportCount <= 0) {
       wx.showToast({ title: '当前筛选无题目', icon: 'none' });
@@ -1684,6 +1692,7 @@ Page({
     const subjectId = Number(this.data.subjectId || 0);
     if (!subjectId) return;
 
+    const fileType = format === 'pdf' ? 'pdf' : 'docx';
     this.patchData({ exportBusy: true, exportProgress: 0, exportError: '' });
 
     try {
@@ -1691,7 +1700,7 @@ Page({
       const baseUrl = getApiBaseUrl();
       const token = wx.getStorageSync('token') || '';
 
-      const params: string[] = ['format=word'];
+      const params: string[] = [`format=${format}`];
       params.push(`scope=${encodeURIComponent(this.data.exportScope || 'all')}`);
       if (this.data.exportType && this.data.exportType !== 'all') {
         params.push(`q_type=${encodeURIComponent(this.data.exportType)}`);
@@ -1710,9 +1719,9 @@ Page({
           if (res.statusCode === 200 && res.tempFilePath) {
             wx.openDocument({
               filePath: res.tempFilePath,
-              fileType: 'docx',
+              fileType,
               showMenu: true,
-              fail: (err) => {
+              fail: () => {
                 this.patchData({ exportError: '打开文档失败，请重试' });
                 wx.showToast({ title: '打开文档失败', icon: 'none' });
               }
@@ -1722,7 +1731,7 @@ Page({
             wx.showToast({ title: '导出失败', icon: 'none' });
           }
         },
-        fail: (err) => {
+        fail: () => {
           this.patchData({ exportError: '下载失败，请检查网络' });
           wx.showToast({ title: '下载失败', icon: 'none' });
         },
