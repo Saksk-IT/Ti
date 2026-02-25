@@ -2,6 +2,7 @@
 const API = '/api/forum';
 let currentBoard = (typeof FIXED_BOARD_ID !== 'undefined') ? FIXED_BOARD_ID : '';
 let currentSort = 'latest';
+let currentFeatured = false;
 let currentPage = 1;
 let totalPages = 1;
 let allPosts = [];
@@ -13,54 +14,94 @@ function fmtTime(s) { if (!s) return ''; const d = new Date(s); const now = new 
   if (diff < 604800) return Math.floor(diff/86400) + '天前';
   return `${d.getMonth()+1}/${d.getDate()}`; }
 
-function renderPostCard(p) {
-  const badges = (p.is_pinned ? '<span class="forum-badge forum-badge-pin">置顶</span>' : '') +
-                 (p.is_featured ? '<span class="forum-badge forum-badge-feat">精华</span>' : '') +
-                 (p.is_locked ? '<span class="forum-badge forum-badge-lock">锁定</span>' : '');
-  const imgs = (p.images && p.images.length) ? `<div class="forum-post-images">${p.images.slice(0,3).map(u=>`<img src="${esc(u)}" alt="" loading="lazy">`).join('')}</div>` : '';
-  const initial = (p.author_name || 'U')[0].toUpperCase();
-  const avatar = p.author_avatar ? `<img class="forum-avatar" src="${esc(p.author_avatar)}" alt="">` : `<div class="forum-avatar" style="display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:var(--app-primary-soft);color:var(--app-text)">${initial}</div>`;
-  const refCount = (p.question_refs && p.question_refs.length) ? `<span title="引用题目">&#128203; ${p.question_refs.length}</span>` : '';
-  return `<div class="forum-post-card" onclick="location.href='/community/post/${p.id}'">
-    <div class="forum-post-header">${avatar}<div class="forum-post-meta"><span class="author">${esc(p.author_name)}</span> · ${fmtTime(p.created_at)}<span class="forum-board-tag">${esc(p.board_name)}</span></div></div>
-    <div class="forum-post-title">${badges}${esc(p.title)}</div>
-    <div class="forum-post-preview">${esc(p.content_preview)}</div>${imgs}
-    <div class="forum-post-stats"><span>&#128172; ${p.comment_count||0}</span><span>&#10084; ${p.like_count||0}</span><span>&#128065; ${p.view_count||0}</span>${refCount}</div>
-  </div>`;
-}
-
-async function loadBoards() {
-  const bar = document.getElementById('boardsBar');
-  if (!bar) return;
-  try {
-    const r = await fetch(API + '/boards').then(r => r.json());
-    if (r.status !== 'success') return;
-    const chips = r.data.boards.map(b =>
-      `<button class="board-chip${currentBoard == b.id ? ' active' : ''}" data-board-id="${b.id}" onclick="selectBoard(this,'${b.id}')">${esc(b.name)}</button>`
-    ).join('');
-    bar.innerHTML = `<button class="board-chip${!currentBoard ? ' active' : ''}" data-board-id="" onclick="selectBoard(this,'')">全部</button>` + chips;
-  } catch(e) { console.error(e); }
-}
-
-function selectBoard(el, boardId) {
-  currentBoard = boardId; currentPage = 1;
-  document.querySelectorAll('.board-chip').forEach(b => b.classList.remove('active'));
+/* ===== Tab 切换 ===== */
+function setTab(el, tab) {
+  if (tab === 'featured') {
+    currentSort = 'latest';
+    currentFeatured = true;
+  } else {
+    currentSort = tab;
+    currentFeatured = false;
+  }
+  currentPage = 1;
+  document.querySelectorAll('.forum-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   loadPosts();
 }
 
+/* 兼容旧的 setSort（board.html 仍用） */
 function setSort(el, sort) {
-  currentSort = sort; currentPage = 1;
+  currentSort = sort; currentFeatured = false; currentPage = 1;
   document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   loadPosts();
 }
 
+/* ===== 朋友圈风格帖子卡片 ===== */
+function renderPostCard(p) {
+  const badges = (p.is_pinned ? '<span class="forum-badge forum-badge-pin">置顶</span>' : '') +
+                 (p.is_featured ? '<span class="forum-badge forum-badge-feat">精华</span>' : '') +
+                 (p.is_locked ? '<span class="forum-badge forum-badge-lock">锁定</span>' : '');
+  const initial = (p.author_name || 'U')[0].toUpperCase();
+  const avatar = p.author_avatar
+    ? `<img class="forum-avatar" src="${esc(p.author_avatar)}" alt="">`
+    : `<div class="forum-avatar" style="display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:var(--app-primary-soft);color:var(--app-text)">${initial}</div>`;
+
+  /* 图片网格 — 根据数量自适应 */
+  let imgs = '';
+  if (p.images && p.images.length) {
+    const count = p.images.length;
+    const cls = count === 1 ? 'img-grid-1' : count === 2 ? 'img-grid-2' : 'img-grid-3';
+    imgs = `<div class="forum-post-img-grid ${cls}">${p.images.slice(0,9).map(u =>
+      `<img src="${esc(u)}" alt="" loading="lazy">`
+    ).join('')}</div>`;
+  }
+
+  /* 题目引用 */
+  const refCount = (p.question_refs && p.question_refs.length)
+    ? `<span title="引用题目">&#128203; ${p.question_refs.length}</span>` : '';
+
+  /* 内容预览 — 保留换行，超高折叠 */
+  const contentId = 'pc-' + p.id;
+  const preview = esc(p.content_preview || '');
+
+  return `<div class="forum-post-card" onclick="location.href='/community/post/${p.id}'" data-post-id="${p.id}">
+    <div class="forum-post-header">${avatar}<div class="forum-post-meta"><span class="author">${esc(p.author_name)}</span> · ${fmtTime(p.created_at)}<span class="forum-board-tag">${esc(p.board_name)}</span></div></div>
+    <div class="forum-post-title">${badges}${esc(p.title)}</div>
+    <div class="forum-post-body-wrap" id="${contentId}"><div class="forum-post-body-inner">${preview}</div></div>
+    ${imgs}
+    <div class="forum-post-stats"><span>&#128172; ${p.comment_count||0}</span><span>&#10084; ${p.like_count||0}</span><span>&#128065; ${p.view_count||0}</span>${refCount}</div>
+  </div>`;
+}
+
+/* 渲染后检测内容高度，添加折叠 */
+function applyContentCollapse() {
+  document.querySelectorAll('.forum-post-body-wrap').forEach(wrap => {
+    if (wrap.dataset.collapsed) return;
+    wrap.dataset.collapsed = '1';
+    const inner = wrap.querySelector('.forum-post-body-inner');
+    if (!inner) return;
+    if (inner.scrollHeight > 300) {
+      wrap.classList.add('collapsed');
+      const btn = document.createElement('button');
+      btn.className = 'forum-expand-btn';
+      btn.textContent = '展开全文';
+      btn.onclick = function(e) {
+        e.stopPropagation();
+        location.href = '/community/post/' + wrap.closest('.forum-post-card').dataset.postId;
+      };
+      wrap.appendChild(btn);
+    }
+  });
+}
+
+/* ===== 加载帖子 ===== */
 async function loadPosts() {
   const isFav = typeof IS_FAVORITES_PAGE !== 'undefined' && IS_FAVORITES_PAGE;
   let url = isFav ? API + '/my/favorites' : API + '/posts';
   const params = new URLSearchParams({page: currentPage, per_page: 20, sort: currentSort});
   if (currentBoard) params.set('board_id', currentBoard);
+  if (currentFeatured) params.set('featured', '1');
   url += '?' + params.toString();
 
   try {
@@ -79,12 +120,15 @@ async function loadPosts() {
     empty.style.display = 'none';
     list.innerHTML = allPosts.map(renderPostCard).join('');
     more.style.display = currentPage < totalPages ? 'block' : 'none';
+
+    // 应用内容折叠
+    requestAnimationFrame(applyContentCollapse);
   } catch(e) { console.error(e); }
 }
 
 function loadMore() { currentPage++; loadPosts(); }
 
-// 版块详情页 header
+/* ===== 版块详情页 header（board.html 用） ===== */
 async function loadBoardHeader() {
   if (typeof FIXED_BOARD_ID === 'undefined') return;
   try {
@@ -95,6 +139,26 @@ async function loadBoardHeader() {
     const el = document.getElementById('boardHeader');
     if (el) el.innerHTML = `<h2>${esc(b.name)}</h2><p>${esc(b.description)}</p>`;
   } catch(e) {}
+}
+
+/* ===== 兼容旧版块导航（board.html 用） ===== */
+function selectBoard(el, boardId) {
+  currentBoard = boardId; currentPage = 1;
+  document.querySelectorAll('.board-chip').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  loadPosts();
+}
+async function loadBoards() {
+  const bar = document.getElementById('boardsBar');
+  if (!bar) return;
+  try {
+    const r = await fetch(API + '/boards').then(r => r.json());
+    if (r.status !== 'success') return;
+    const chips = r.data.boards.map(b =>
+      `<button class="board-chip${currentBoard == b.id ? ' active' : ''}" data-board-id="${b.id}" onclick="selectBoard(this,'${b.id}')">${esc(b.name)}</button>`
+    ).join('');
+    bar.innerHTML = `<button class="board-chip${!currentBoard ? ' active' : ''}" data-board-id="" onclick="selectBoard(this,'')">全部</button>` + chips;
+  } catch(e) { console.error(e); }
 }
 
 // 初始化

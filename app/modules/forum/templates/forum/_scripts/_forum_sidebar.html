@@ -1,0 +1,100 @@
+<script>
+/* ===== 侧边栏数据加载 + 抽屉逻辑 ===== */
+const SIDEBAR_API = '/api/forum';
+
+async function loadSidebarBoards() {
+  try {
+    const r = await fetch(SIDEBAR_API + '/boards').then(r => r.json());
+    if (r.status !== 'success') return;
+    const boards = r.data.boards;
+    const list = document.getElementById('sidebarBoards');
+    if (!list) return;
+    const items = boards.map(b =>
+      `<li class="sidebar-board-item${currentBoard == b.id ? ' active' : ''}" data-board-id="${b.id}" onclick="sidebarSelectBoard(this,'${b.id}')">${esc(b.name)}<span class="sidebar-board-count">${b.post_count || ''}</span></li>`
+    ).join('');
+    list.innerHTML = `<li class="sidebar-board-item${!currentBoard ? ' active' : ''}" data-board-id="" onclick="sidebarSelectBoard(this,'')">全部</li>` + items;
+
+    // 热门标签 = 版块名
+    const tagsEl = document.getElementById('sidebarTags');
+    if (tagsEl) {
+      tagsEl.innerHTML = boards.map(b =>
+        `<span class="sidebar-tag" onclick="sidebarSelectBoard(null,'${b.id}')">${esc(b.name)}</span>`
+      ).join('');
+    }
+
+    // 统计 - 版块数
+    const statBoards = document.getElementById('statBoards');
+    if (statBoards) statBoards.textContent = boards.length;
+
+    // 同步到抽屉
+    syncSidebarToDrawer();
+  } catch(e) { console.error('sidebar boards:', e); }
+}
+
+async function loadSidebarHotPosts() {
+  try {
+    const r = await fetch(SIDEBAR_API + '/posts?sort=hot&per_page=5').then(r => r.json());
+    if (r.status !== 'success') return;
+    const el = document.getElementById('sidebarHotPosts');
+    if (!el) return;
+    if (!r.data.posts.length) { el.innerHTML = '<div style="font-size:13px;color:var(--app-muted)">暂无</div>'; return; }
+    el.innerHTML = r.data.posts.map(p =>
+      `<div class="sidebar-hot-item" onclick="location.href='/community/post/${p.id}'"><div class="hot-title">${esc(p.title)}</div><div class="hot-stats">&#10084; ${p.like_count||0} · &#128172; ${p.comment_count||0}</div></div>`
+    ).join('');
+
+    // 统计 - 帖子总数
+    const statPosts = document.getElementById('statPosts');
+    if (statPosts) statPosts.textContent = r.data.total || '-';
+
+    syncSidebarToDrawer();
+  } catch(e) { console.error('sidebar hot:', e); }
+}
+
+function sidebarSelectBoard(el, boardId) {
+  currentBoard = boardId;
+  currentPage = 1;
+  // 更新侧边栏高亮
+  document.querySelectorAll('.sidebar-board-item').forEach(i => i.classList.remove('active'));
+  if (el) el.classList.add('active');
+  // 同步同 boardId 的所有 item（桌面+抽屉）
+  document.querySelectorAll(`.sidebar-board-item[data-board-id="${boardId}"]`).forEach(i => i.classList.add('active'));
+  // 更新当前版块 chip
+  updateActiveBoardChip();
+  loadPosts();
+  closeDrawer();
+}
+
+function updateActiveBoardChip() {
+  const container = document.getElementById('activeBoardChip');
+  if (!container) return;
+  if (!currentBoard) { container.innerHTML = ''; return; }
+  const item = document.querySelector(`.sidebar-board-item[data-board-id="${currentBoard}"]`);
+  const name = item ? item.childNodes[0].textContent.trim() : '';
+  if (name) {
+    container.innerHTML = `<div class="forum-active-board-chip">${esc(name)}<button class="chip-close" onclick="sidebarSelectBoard(null,'')">&times;</button></div>`;
+  } else {
+    container.innerHTML = '';
+  }
+}
+
+/* ===== 抽屉 ===== */
+function openDrawer() {
+  document.getElementById('forumDrawerOverlay')?.classList.add('open');
+  document.getElementById('forumDrawer')?.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeDrawer() {
+  document.getElementById('forumDrawerOverlay')?.classList.remove('open');
+  document.getElementById('forumDrawer')?.classList.remove('open');
+  document.body.style.overflow = '';
+}
+function syncSidebarToDrawer() {
+  const src = document.getElementById('sidebarContent');
+  const dst = document.getElementById('drawerContent');
+  if (src && dst) dst.innerHTML = src.innerHTML;
+}
+
+// 初始化侧边栏
+loadSidebarBoards();
+loadSidebarHotPosts();
+</script>

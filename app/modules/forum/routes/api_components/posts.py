@@ -15,7 +15,7 @@ def api_get_posts():
         board_id = request.args.get('board_id', type=int)
         sort = request.args.get('sort', 'latest')
         keyword = request.args.get('keyword', '').strip()
-        featured = request.args.get('featured', '').lower() == 'true'
+        featured = request.args.get('featured', '').lower() in ('true', '1')
         page = request.args.get('page', 1, type=int)
         per_page = min(request.args.get('per_page', 20, type=int), 50)
 

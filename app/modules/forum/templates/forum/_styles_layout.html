@@ -1,0 +1,69 @@
+<style>
+/* ===== 双栏布局 ===== */
+.forum-layout { max-width: 1120px; margin: 0 auto; padding: 0 16px; display: flex; gap: 24px; }
+.forum-sidebar { width: 260px; flex-shrink: 0; position: sticky; top: 72px; max-height: calc(100vh - 88px); overflow-y: auto; }
+.forum-main { flex: 1; min-width: 0; }
+
+/* ===== Tab 导航 ===== */
+.forum-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--app-border); margin-bottom: 16px; position: relative; }
+.forum-tab { padding: 10px 20px; border: none; background: none; color: var(--app-muted); font-size: 14px; font-weight: 500; cursor: pointer; position: relative; transition: color .2s; min-height: auto; white-space: nowrap; }
+.forum-tab:hover { color: var(--app-text); }
+.forum-tab.active { color: var(--app-primary); font-weight: 600; }
+.forum-tab.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%); width: 24px; height: 2px; background: var(--app-primary); border-radius: 1px; }
+
+/* ===== 顶部工具栏（移动端汉堡 + 发帖） ===== */
+.forum-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.forum-topbar .forum-new-btn { padding: 8px 20px; background: var(--app-primary); color: var(--app-primary-contrast); border-radius: 10px; font-size: 14px; font-weight: 500; text-decoration: none; transition: opacity .2s; min-height: auto; display: inline-flex; align-items: center; }
+.forum-topbar .forum-new-btn:hover { opacity: .85; }
+.forum-drawer-toggle { display: none; width: 36px; height: 36px; border: 0.5px solid var(--app-border); border-radius: 8px; background: var(--app-surface); color: var(--app-text); font-size: 18px; cursor: pointer; align-items: center; justify-content: center; min-height: auto; padding: 0; }
+
+/* ===== 当前版块 chip ===== */
+.forum-active-board-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 16px; background: var(--app-primary-soft); color: var(--app-primary); font-size: 13px; font-weight: 500; margin-bottom: 12px; }
+.forum-active-board-chip .chip-close { background: none; border: none; color: var(--app-primary); cursor: pointer; font-size: 16px; padding: 0 0 0 4px; min-height: auto; line-height: 1; }
+
+/* ===== 侧边栏卡片 ===== */
+.sidebar-card { background: var(--app-surface); border: 0.5px solid var(--app-border); border-radius: var(--app-radius-md); padding: 16px; margin-bottom: 16px; }
+.sidebar-card-title { font-size: 13px; font-weight: 600; color: var(--app-text); margin-bottom: 12px; text-transform: uppercase; letter-spacing: .5px; }
+.sidebar-board-list { list-style: none; padding: 0; margin: 0; }
+.sidebar-board-item { padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 14px; color: var(--app-text); transition: background .15s; display: flex; align-items: center; justify-content: space-between; }
+.sidebar-board-item:hover { background: var(--app-primary-soft); }
+.sidebar-board-item.active { background: var(--app-primary-soft); color: var(--app-primary); font-weight: 500; }
+.sidebar-board-count { font-size: 12px; color: var(--app-muted); }
+/* 热门标签 */
+.sidebar-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.sidebar-tag { padding: 4px 10px; border-radius: 12px; background: var(--app-surface-2, var(--app-primary-soft)); color: var(--app-muted); font-size: 12px; cursor: pointer; transition: all .15s; border: 0.5px solid var(--app-border); }
+.sidebar-tag:hover { border-color: var(--app-primary); color: var(--app-primary); }
+/* 热门帖子 */
+.sidebar-hot-item { padding: 8px 0; border-bottom: 0.5px solid var(--app-border); cursor: pointer; }
+.sidebar-hot-item:last-child { border-bottom: none; }
+.sidebar-hot-item:hover .hot-title { color: var(--app-primary); }
+.hot-title { font-size: 13px; color: var(--app-text); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; transition: color .15s; }
+.hot-stats { font-size: 12px; color: var(--app-muted); margin-top: 4px; }
+/* 社区统计 */
+.sidebar-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.stat-item { text-align: center; padding: 8px; border-radius: 8px; background: var(--app-surface-2, var(--app-primary-soft)); }
+.stat-value { font-size: 18px; font-weight: 700; color: var(--app-text); }
+.stat-label { font-size: 11px; color: var(--app-muted); margin-top: 2px; }
+
+/* ===== 抽屉（移动端） ===== */
+.forum-drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 90; opacity: 0; pointer-events: none; transition: opacity .25s; }
+.forum-drawer-overlay.open { opacity: 1; pointer-events: auto; }
+.forum-drawer { position: fixed; top: 0; right: -300px; width: 280px; height: 100%; background: var(--app-surface); z-index: 91; transition: right .25s ease; overflow-y: auto; padding: 16px; box-shadow: -2px 0 12px rgba(0,0,0,.1); }
+.forum-drawer.open { right: 0; }
+.forum-drawer-close { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+.forum-drawer-close button { background: none; border: none; font-size: 22px; color: var(--app-muted); cursor: pointer; padding: 4px; min-height: auto; }
+
+/* ===== 响应式 ===== */
+@media (max-width: 1079px) {
+  .forum-sidebar { display: none; }
+  .forum-drawer-toggle { display: flex; }
+  .forum-layout { padding: 0 12px; }
+}
+@media (min-width: 1080px) {
+  .forum-drawer-overlay, .forum-drawer { display: none !important; }
+}
+@media (max-width: 640px) {
+  .forum-tab { padding: 10px 14px; font-size: 13px; }
+  .forum-topbar .forum-new-btn { padding: 7px 14px; font-size: 13px; }
+}
+</style>

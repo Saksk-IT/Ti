@@ -59,7 +59,7 @@ def get_posts(
 
     rows = db.session.execute(text(f'''
         SELECT p.id, p.board_id, p.author_id, p.title,
-               LEFT(p.content, 200) AS content_preview,
+               LEFT(p.content, 800) AS content_preview,
                p.images, p.question_refs,
                p.is_pinned, p.is_featured, p.is_locked,
                p.comment_count, p.like_count, p.favorite_count, p.view_count,

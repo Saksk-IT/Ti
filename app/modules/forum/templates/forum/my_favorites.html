@@ -4,20 +4,41 @@
 {% block page_title %}我的收藏{% endblock %}
 
 {% block head_extra %}
+{% include "forum/_styles_layout.html" %}
 {% include "forum/_styles.html" %}
 {% endblock %}
 
 {% block content %}
-<div class="forum-container">
-  <div class="forum-posts" id="postsList"></div>
-  <div class="forum-load-more" id="loadMore" style="display:none">
-    <button class="btn-load-more" onclick="loadMore()">加载更多</button>
+<!-- 抽屉遮罩 + 抽屉（移动端） -->
+<div class="forum-drawer-overlay" id="forumDrawerOverlay" onclick="closeDrawer()"></div>
+<div class="forum-drawer" id="forumDrawer">
+  <div class="forum-drawer-close"><button onclick="closeDrawer()">&times;</button></div>
+  <div id="drawerContent"></div>
+</div>
+
+<div class="forum-layout">
+  <!-- 左侧边栏（桌面端） -->
+  <aside class="forum-sidebar">
+    {% include "forum/_partials/_forum_sidebar.html" %}
+  </aside>
+
+  <!-- 主内容区 -->
+  <div class="forum-main">
+    <div class="forum-topbar">
+      <button class="forum-drawer-toggle" onclick="openDrawer()" title="侧边栏">&#9776;</button>
+      <span style="font-size:16px;font-weight:600;color:var(--app-text)">我的收藏</span>
+    </div>
+    <div class="forum-posts" id="postsList"></div>
+    <div class="forum-load-more" id="loadMore" style="display:none">
+      <button class="btn-load-more" onclick="loadMore()">加载更多</button>
+    </div>
+    <div class="forum-empty" id="emptyState" style="display:none">还没有收藏的帖子</div>
   </div>
-  <div class="forum-empty" id="emptyState" style="display:none">还没有收藏的帖子</div>
 </div>
 {% endblock %}
 
 {% block body_end %}
 <script>const IS_FAVORITES_PAGE = true;</script>
 {% include "forum/_scripts/_forum_core.html" %}
+{% include "forum/_scripts/_forum_sidebar.html" %}
 {% endblock %}

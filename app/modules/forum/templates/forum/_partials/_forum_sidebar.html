@@ -1,0 +1,31 @@
+<!-- 侧边栏内容（桌面端直接渲染，移动端复制到抽屉） -->
+<div class="sidebar-content" id="sidebarContent">
+  <!-- 版块列表 -->
+  <div class="sidebar-card">
+    <div class="sidebar-card-title">版块</div>
+    <ul class="sidebar-board-list" id="sidebarBoards">
+      <li class="sidebar-board-item active" data-board-id="" onclick="sidebarSelectBoard(this,'')">全部</li>
+    </ul>
+  </div>
+
+  <!-- 热门标签 -->
+  <div class="sidebar-card">
+    <div class="sidebar-card-title">热门标签</div>
+    <div class="sidebar-tags" id="sidebarTags"></div>
+  </div>
+
+  <!-- 热门帖子 -->
+  <div class="sidebar-card">
+    <div class="sidebar-card-title">热门帖子</div>
+    <div id="sidebarHotPosts"></div>
+  </div>
+
+  <!-- 社区统计 -->
+  <div class="sidebar-card">
+    <div class="sidebar-card-title">社区统计</div>
+    <div class="sidebar-stats" id="sidebarStats">
+      <div class="stat-item"><div class="stat-value" id="statPosts">-</div><div class="stat-label">帖子</div></div>
+      <div class="stat-item"><div class="stat-value" id="statBoards">-</div><div class="stat-label">版块</div></div>
+    </div>
+  </div>
+</div>

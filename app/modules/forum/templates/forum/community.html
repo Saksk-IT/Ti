@@ -4,37 +4,56 @@
 {% block page_title %}社区{% endblock %}
 
 {% block head_extra %}
+{% include "forum/_styles_layout.html" %}
 {% include "forum/_styles.html" %}
 {% endblock %}
 
 {% block content %}
-<div class="forum-container">
-  <!-- 版块导航 -->
-  <div class="forum-boards-bar" id="boardsBar">
-    <button class="board-chip active" data-board-id="" onclick="selectBoard(this, '')">全部</button>
-  </div>
+<!-- 抽屉遮罩 + 抽屉（移动端） -->
+<div class="forum-drawer-overlay" id="forumDrawerOverlay" onclick="closeDrawer()"></div>
+<div class="forum-drawer" id="forumDrawer">
+  <div class="forum-drawer-close"><button onclick="closeDrawer()">&times;</button></div>
+  <div id="drawerContent"></div>
+</div>
 
-  <!-- 排序 -->
-  <div class="forum-toolbar">
-    <div class="forum-sort">
-      <button class="sort-btn active" data-sort="latest" onclick="setSort(this,'latest')">最新</button>
-      <button class="sort-btn" data-sort="hot" onclick="setSort(this,'hot')">最热</button>
-      <button class="sort-btn" data-sort="active" onclick="setSort(this,'active')">活跃</button>
+<div class="forum-layout">
+  <!-- 左侧边栏（桌面端） -->
+  <aside class="forum-sidebar">
+    {% include "forum/_partials/_forum_sidebar.html" %}
+  </aside>
+
+  <!-- 主内容区 -->
+  <div class="forum-main">
+    <!-- 顶部工具栏 -->
+    <div class="forum-topbar">
+      <button class="forum-drawer-toggle" onclick="openDrawer()" title="侧边栏">&#9776;</button>
+      <a href="/community/new" class="forum-new-btn">&#43; 发帖</a>
     </div>
-    <a href="/community/new" class="forum-new-btn">发帖</a>
-  </div>
 
-  <!-- 帖子列表 -->
-  <div class="forum-posts" id="postsList"></div>
+    <!-- Tab 导航 -->
+    <div class="forum-tabs" id="forumTabs">
+      <button class="forum-tab active" data-sort="latest" onclick="setTab(this,'latest')">最新</button>
+      <button class="forum-tab" data-sort="hot" onclick="setTab(this,'hot')">热门</button>
+      <button class="forum-tab" data-sort="featured" onclick="setTab(this,'featured')">精华</button>
+      <button class="forum-tab" data-sort="active" onclick="setTab(this,'active')">活跃</button>
+    </div>
 
-  <!-- 加载更多 -->
-  <div class="forum-load-more" id="loadMore" style="display:none">
-    <button class="btn-load-more" onclick="loadMore()">加载更多</button>
+    <!-- 当前版块 chip -->
+    <div id="activeBoardChip"></div>
+
+    <!-- 帖子列表 -->
+    <div class="forum-posts" id="postsList"></div>
+
+    <!-- 加载更多 -->
+    <div class="forum-load-more" id="loadMore" style="display:none">
+      <button class="btn-load-more" onclick="loadMore()">加载更多</button>
+    </div>
+    <div class="forum-empty" id="emptyState" style="display:none">还没有帖子，来发第一帖吧</div>
   </div>
-  <div class="forum-empty" id="emptyState" style="display:none">还没有帖子，来发第一帖吧</div>
 </div>
 {% endblock %}
 
 {% block body_end %}
 {% include "forum/_scripts/_forum_core.html" %}
+{% include "forum/_scripts/_forum_sidebar.html" %}
 {% endblock %}
