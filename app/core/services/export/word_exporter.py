@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime
 from io import BytesIO
+from pathlib import Path
 from typing import Any
 
 from docx import Document
@@ -42,6 +43,11 @@ _TYPE_LABELS = {
 }
 _CN_NUMBERS = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"]
 
+_ASSETS_DIR = Path(__file__).parent / "assets"
+_QR_IMAGE = _ASSETS_DIR / "miniprogram_qr.jpg"
+_CLR_PROMO = RGBColor(0x66, 0x66, 0x66)
+_CLR_PROMO_URL = RGBColor(0x2B, 0x6C, 0xB0)
+
 
 def generate_word(req: ExportRequest, questions: list[dict[str, Any]]) -> ExportResult:
     """生成 Word 文档并返回 ExportResult。"""
@@ -56,6 +62,9 @@ def generate_word(req: ExportRequest, questions: list[dict[str, Any]]) -> Export
 
     # 文档标题
     _add_title(doc, req.subject_name)
+
+    # 来源推广
+    _add_promo(doc)
 
     # 按题型分组
     grouped = _group_by_type(questions)
@@ -115,6 +124,67 @@ def _add_title(doc: Document, subject_name: str) -> None:
     run2.font.color.rgb = _CLR_ANALYSIS
     run2.font.name = "微软雅黑"
     run2.element.rPr.rFonts.set(qn("w:eastAsia"), "微软雅黑")
+
+
+def _add_promo(doc: Document) -> None:
+    """在标题下方添加来源推广区域：左侧文字 + 右侧小程序码。"""
+    table = doc.add_table(rows=1, cols=2)
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    table.autofit = True
+
+    # 左侧文字
+    left_cell = table.cell(0, 0)
+    left_cell.width = Cm(12)
+    lp = left_cell.paragraphs[0]
+    lp.paragraph_format.space_before = Pt(4)
+    lp.paragraph_format.space_after = Pt(2)
+
+    r1 = lp.add_run("题目来源：")
+    r1.font.size = Pt(9)
+    r1.font.color.rgb = _CLR_PROMO
+    r1.font.name = "微软雅黑"
+    r1.element.rPr.rFonts.set(qn("w:eastAsia"), "微软雅黑")
+
+    r2 = lp.add_run("saksk.top")
+    r2.font.size = Pt(9)
+    r2.font.bold = True
+    r2.font.color.rgb = _CLR_PROMO_URL
+    r2.font.name = "微软雅黑"
+    r2.element.rPr.rFonts.set(qn("w:eastAsia"), "微软雅黑")
+
+    r3 = lp.add_run(" — 大学生刷题备考平台")
+    r3.font.size = Pt(9)
+    r3.font.color.rgb = _CLR_PROMO
+    r3.font.name = "微软雅黑"
+    r3.element.rPr.rFonts.set(qn("w:eastAsia"), "微软雅黑")
+
+    lp2 = left_cell.add_paragraph()
+    lp2.paragraph_format.space_before = Pt(0)
+    r4 = lp2.add_run("扫码打开小程序，随时随地刷题、模考、查漏补缺")
+    r4.font.size = Pt(8)
+    r4.font.color.rgb = _CLR_PROMO
+    r4.font.name = "微软雅黑"
+    r4.element.rPr.rFonts.set(qn("w:eastAsia"), "微软雅黑")
+
+    # 右侧小程序码
+    right_cell = table.cell(0, 1)
+    right_cell.width = Cm(3)
+    rp = right_cell.paragraphs[0]
+    rp.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    if _QR_IMAGE.is_file():
+        rp.add_run().add_picture(str(_QR_IMAGE), width=Cm(2.2))
+
+    # 去掉表格边框
+    for cell in [left_cell, right_cell]:
+        tc_pr = cell._element.get_or_add_tcPr()
+        tc_borders = tc_pr.makeelement(qn("w:tcBorders"), {})
+        for side in ("top", "left", "bottom", "right"):
+            border = tc_borders.makeelement(qn(f"w:{side}"), {
+                qn("w:val"): "none", qn("w:sz"): "0",
+                qn("w:space"): "0", qn("w:color"): "auto",
+            })
+            tc_borders.append(border)
+        tc_pr.append(tc_borders)
 
 
 def _add_group_heading(doc: Document, text: str) -> None:

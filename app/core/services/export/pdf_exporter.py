@@ -2,6 +2,7 @@
 """PDF 导出生成器（WeasyPrint + Jinja2 + Pygments）"""
 from __future__ import annotations
 
+import base64
 import datetime
 import logging
 import os
@@ -29,6 +30,8 @@ from .formatter import split_content, format_fill_blanks
 logger = logging.getLogger(__name__)
 
 _TEMPLATE_DIR = Path(__file__).parent / "templates"
+_ASSETS_DIR = Path(__file__).parent / "assets"
+_QR_IMAGE = _ASSETS_DIR / "miniprogram_qr.jpg"
 
 _TYPE_ORDER = ["single_choice", "multi_choice", "boolean", "fill", "essay"]
 _TYPE_LABELS = {
@@ -74,12 +77,19 @@ def generate_pdf(req: ExportRequest, questions: list[dict[str, Any]]) -> ExportR
     pygments_css = HtmlFormatter(style="friendly").get_style_defs(".highlight")
     date_str = datetime.datetime.now().strftime("%Y年%m月%d日")
 
+    # 小程序码 base64
+    qr_data_uri = ""
+    if _QR_IMAGE.is_file():
+        b64 = base64.b64encode(_QR_IMAGE.read_bytes()).decode()
+        qr_data_uri = f"data:image/jpeg;base64,{b64}"
+
     html_str = template.render(
         subject_name=req.subject_name,
         date_str=date_str,
         groups=groups,
         total_count=len(questions),
         pygments_css=pygments_css,
+        qr_data_uri=qr_data_uri,
     )
 
     buf = BytesIO()

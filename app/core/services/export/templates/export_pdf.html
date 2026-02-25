@@ -106,12 +106,36 @@
     border-radius: 0 4px 4px 0;
   }
   .highlight pre { margin: 0; white-space: pre-wrap; word-wrap: break-word; }
+  .promo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding: 8px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    background: #fafafa;
+  }
+  .promo-text { font-size: 9pt; color: #666; line-height: 1.6; }
+  .promo-url { font-weight: bold; color: #2b6cb0; }
+  .promo-sub { font-size: 8pt; color: #888; margin-top: 2px; }
+  .promo-qr { width: 60px; height: 60px; margin-left: 12px; flex-shrink: 0; }
   {{ pygments_css }}
 </style>
 </head>
 <body>
   <div class="doc-title">{{ subject_name }}</div>
   <div class="doc-date">导出日期：{{ date_str }}　共 {{ total_count }} 题</div>
+
+  {% if qr_data_uri %}
+  <div class="promo">
+    <div>
+      <div class="promo-text">题目来源：<span class="promo-url">saksk.top</span> — 大学生刷题备考平台</div>
+      <div class="promo-sub">扫码打开小程序，随时随地刷题、模考、查漏补缺</div>
+    </div>
+    <img class="promo-qr" src="{{ qr_data_uri }}" alt="小程序码">
+  </div>
+  {% endif %}
 
   {% for group in groups %}
   <div class="group-heading">{{ group.heading }}</div>
