@@ -193,6 +193,15 @@ def _render_question(q: dict[str, Any], num: int, p_type: str, include_answer: b
     }
 
 
+def _preserve_leading_spaces(line: str) -> str:
+    """将行首连续空格转为 &nbsp;，防止 HTML 折叠缩进。"""
+    stripped = line.lstrip(" ")
+    n = len(line) - len(stripped)
+    if n == 0:
+        return line
+    return "&nbsp;" * n + stripped
+
+
 def _segments_to_html(segments: list) -> str:
     parts: list[str] = []
     for seg in segments:
@@ -203,8 +212,10 @@ def _segments_to_html(segments: list) -> str:
             parts.append(f'<code class="inline-code">{escape(seg.text)}</code>')
         else:
             from markupsafe import escape
-            text = str(escape(seg.text)).replace("\n", "<br>")
-            parts.append(text)
+            escaped = str(escape(seg.text))
+            lines = escaped.split("\n")
+            lines = [_preserve_leading_spaces(line) for line in lines]
+            parts.append("<br>".join(lines))
     return "".join(parts)
 
 
