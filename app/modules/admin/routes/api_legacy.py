@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """管理后台API路由（向后兼容的旧路径）"""
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from app.core.extensions import db
 from sqlalchemy import text
 from app.core.utils.cache_utils import bump_questions_version, bump_subjects_version
@@ -11,6 +11,17 @@ import json
 
 # 创建一个额外的蓝图用于向后兼容
 admin_api_legacy_bp = Blueprint('admin_api_legacy', __name__)
+
+
+@admin_api_legacy_bp.before_request
+def _log_legacy_usage():
+    """记录所有仍在被调用的 legacy 端点，便于追踪迁移进度。"""
+    current_app.logger.warning(
+        'Legacy API 调用: %s %s (来源: %s)',
+        request.method,
+        request.path,
+        request.referrer or 'unknown',
+    )
 
 
 @admin_api_legacy_bp.route('/types', methods=['GET'])

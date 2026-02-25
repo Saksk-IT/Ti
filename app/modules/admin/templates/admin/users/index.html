@@ -473,7 +473,7 @@
       </div>
       <button class="btn-outline" onclick="loadUsers(curPage)" title="刷新在线状态">刷新</button>
       <button class="btn-primary" onclick="openCreate()">新建用户</button>
-      <a class="btn-outline" href="/admin/users/export" target="_blank">导出CSV</a>
+      <a class="btn-outline" href="/admin/api/users/export" target="_blank">导出CSV</a>
     </div>
   </div>
 
@@ -781,7 +781,7 @@
   async function toggleAdmin(id){
     if (!confirm('确定要切换该用户的管理员权限吗？')) return;
     try {
-      const res = await fetch(`/admin/users/${id}/toggle_admin`, { method:'POST' });
+      const res = await fetch(`/admin/api/users/${id}/toggle_admin`, { method:'POST' });
       const js = await res.json(); 
       showMessage(js.message||'操作完成', js.status==='success'); 
       if(js.status==='success') loadUsers(curPage);
@@ -793,7 +793,7 @@
   async function toggleSubjectAdmin(id){
     if (!confirm('确定要切换该用户的科目管理员权限吗？')) return;
     try {
-      const res = await fetch(`/admin/users/${id}/toggle_subject_admin`, { method:'POST' });
+      const res = await fetch(`/admin/api/users/${id}/toggle_subject_admin`, { method:'POST' });
       const js = await res.json(); 
       showMessage(js.message||'操作完成', js.status==='success'); 
       if(js.status==='success') loadUsers(curPage);
@@ -805,7 +805,7 @@
   async function toggleNotificationAdmin(id){
     if (!confirm('确定要切换该用户的通知管理员权限吗？')) return;
     try {
-      const res = await fetch(`/admin/users/${id}/toggle_notification_admin`, { method:'POST' });
+      const res = await fetch(`/admin/api/users/${id}/toggle_notification_admin`, { method:'POST' });
       const js = await res.json(); 
       showMessage(js.message||'操作完成', js.status==='success'); 
       if(js.status==='success') loadUsers(curPage);
@@ -817,7 +817,7 @@
   async function toggleLock(id){
     if (!confirm('确定要切换该用户的锁定状态吗？')) return;
     try {
-      const res = await fetch(`/admin/users/${id}/toggle_lock`, { method:'POST' });
+      const res = await fetch(`/admin/api/users/${id}/toggle_lock`, { method:'POST' });
       const js = await res.json(); 
       showMessage(js.message||'操作完成', js.status==='success'); 
       if(js.status==='success') loadUsers(curPage);
@@ -851,7 +851,7 @@
     }
     
     try {
-      const res = await fetch('/admin/users/create', { 
+      const res = await fetch('/admin/api/users/create', {
         method:'POST', 
         headers:{'Content-Type':'application/json'}, 
         body: JSON.stringify({ username:name, password:pwd, is_admin: isAdmin?1:0 }) 
@@ -896,7 +896,7 @@
     }
     
     try {
-      const res = await fetch(`/admin/users/${resetUserId}/reset_password`, { 
+      const res = await fetch(`/admin/api/users/${resetUserId}/reset_password`, {
         method:'POST', 
         headers:{'Content-Type':'application/json'}, 
         body: JSON.stringify({ new_password: pwd }) 
@@ -915,7 +915,7 @@
   async function forceLogout(id){
     if (!confirm('确定要强制该用户下线吗？')) return;
     try {
-      const res = await fetch(`/admin/users/${id}/force_logout`, { method:'POST' });
+      const res = await fetch(`/admin/api/users/${id}/force_logout`, { method:'POST' });
       const js = await res.json(); 
       showMessage(js.message||'操作完成', js.status==='success');
       if(js.status==='success') loadUsers(curPage);
@@ -973,7 +973,7 @@
     if(!confirm('⚠️ 确定删除该用户？\n\n该操作将：\n• 删除用户账号\n• 清除所有相关数据\n• 此操作不可恢复！')) return;
     
     try {
-      const res = await fetch(`/admin/users/${id}`, { method:'DELETE' });
+      const res = await fetch(`/admin/api/users/${id}`, { method:'DELETE' });
       const js = await res.json(); 
       showMessage(js.message||'已处理', js.status==='success'); 
       if(js.status==='success') loadUsers(curPage);

@@ -694,7 +694,7 @@
     btn.setAttribute('data-loading', 'true');
     
     try {
-      const res = await fetch(`/admin/users/${UID}/toggle_admin`, { method: 'POST' });
+      const res = await fetch(`/admin/api/users/${UID}/toggle_admin`, { method: 'POST' });
       const js = await res.json();
       
       if (js.status === 'success') {
@@ -724,7 +724,7 @@
     btn.setAttribute('data-loading', 'true');
     
     try {
-      const res = await fetch(`/admin/users/${UID}/toggle_lock`, { method: 'POST' });
+      const res = await fetch(`/admin/api/users/${UID}/toggle_lock`, { method: 'POST' });
       const js = await res.json();
       
       if (js.status === 'success') {
@@ -773,7 +773,7 @@
     btn.setAttribute('data-loading', 'true');
     
     try {
-      const res = await fetch(`/admin/users/${UID}/reset_password`, {
+      const res = await fetch(`/admin/api/users/${UID}/reset_password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ new_password: pwd })
@@ -803,7 +803,7 @@
     btn.setAttribute('data-loading', 'true');
     
     try {
-      const res = await fetch(`/admin/users/${UID}/force_logout`, { method: 'POST' });
+      const res = await fetch(`/admin/api/users/${UID}/force_logout`, { method: 'POST' });
       const js = await res.json();
       
       if (js.status === 'success') {
