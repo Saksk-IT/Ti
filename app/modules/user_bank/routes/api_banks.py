@@ -7,6 +7,7 @@ from sqlalchemy import text
 
 from app.core.extensions import db
 from app.core.utils.decorators import auth_required, current_user_id
+from app.core.utils.api_response import success_response, error_response
 
 from .api_base import user_bank_api_bp, check_bank_access
 
@@ -39,12 +40,9 @@ def get_banks():
 
     banks = db.session.execute(text(query), params).fetchall()
 
-    return jsonify({
-        'code': 0,
-        'data': {
-            'banks': [dict(b._mapping) for b in banks],
-            'total': len(banks)
-        }
+    return success_response(data={
+        'banks': [dict(b._mapping) for b in banks],
+        'total': len(banks)
     })
 
 
@@ -56,7 +54,7 @@ def get_bank_detail(bank_id):
     has_access, permission, access_type = check_bank_access(user_id, bank_id)
 
     if not has_access:
-        return jsonify({'code': 403, 'message': '无权访问此题库'}), 403
+        return error_response('无权访问此题库', 403, code=403)
 
     bank = db.session.execute(text('''
         SELECT b.*, c.name as category_name, u.username as owner_username
@@ -84,10 +82,7 @@ def get_bank_detail(bank_id):
         if t and t._mapping['p_type']
     ]
 
-    return jsonify({
-        'code': 0,
-        'data': result
-    })
+    return success_response(data=result)
 
 
 @user_bank_api_bp.route('', methods=['POST'])
@@ -101,11 +96,11 @@ def create_bank():
     category_id = data.get('category_id')
 
     if not name:
-        return jsonify({'code': 1, 'message': '题库名称不能为空'}), 400
+        return error_response('题库名称不能为空')
     if len(name) < 2 or len(name) > 50:
-        return jsonify({'code': 1, 'message': '题库名称需要2-50个字符'}), 400
+        return error_response('题库名称需要2-50个字符')
     if description and len(description) > 200:
-        return jsonify({'code': 1, 'message': '描述不能超过200个字符'}), 400
+        return error_response('描述不能超过200个字符')
 
     # 检查题库数量限制
     count = db.session.execute(
@@ -114,7 +109,7 @@ def create_bank():
     ).fetchone()._mapping['cnt']
 
     if count >= 20:
-        return jsonify({'code': 1, 'message': '最多只能创建20个题库'}), 400
+        return error_response('最多只能创建20个题库')
 
     # 检查分类是否存在
     if category_id:
@@ -123,7 +118,7 @@ def create_bank():
             {'cid': category_id, 'uid': user_id}
         ).fetchone()
         if not cat:
-            return jsonify({'code': 1, 'message': '分类不存在'}), 400
+            return error_response('分类不存在')
 
     result = db.session.execute(
         text('''INSERT INTO user_question_banks (user_id, category_id, name, description)
@@ -134,12 +129,9 @@ def create_bank():
     new_id = result.fetchone()[0]
     db.session.commit()
 
-    return jsonify({
-        'code': 0,
-        'data': {
-            'id': new_id,
-            'name': name
-        }
+    return success_response(data={
+        'id': new_id,
+        'name': name
     })
 
 
@@ -157,7 +149,7 @@ def update_bank(bank_id):
     ).fetchone()
 
     if not bank:
-        return jsonify({'code': 1, 'message': '题库不存在或无权操作'}), 404
+        return error_response('题库不存在或无权操作', 404)
 
     updates = []
     params: dict = {}
@@ -165,14 +157,14 @@ def update_bank(bank_id):
     if 'name' in data:
         name = (data['name'] or '').strip()
         if not name or len(name) < 2 or len(name) > 50:
-            return jsonify({'code': 1, 'message': '题库名称需要2-50个字符'}), 400
+            return error_response('题库名称需要2-50个字符')
         updates.append('name = :name')
         params['name'] = name
 
     if 'description' in data:
         description = (data['description'] or '').strip()
         if description and len(description) > 200:
-            return jsonify({'code': 1, 'message': '描述不能超过200个字符'}), 400
+            return error_response('描述不能超过200个字符')
         updates.append('description = :description')
         params['description'] = description
 
@@ -184,12 +176,12 @@ def update_bank(bank_id):
                 {'cid': category_id, 'uid': user_id}
             ).fetchone()
             if not cat:
-                return jsonify({'code': 1, 'message': '分类不存在'}), 400
+                return error_response('分类不存在')
         updates.append('category_id = :category_id')
         params['category_id'] = category_id
 
     if not updates:
-        return jsonify({'code': 1, 'message': '没有要更新的内容'}), 400
+        return error_response('没有要更新的内容')
 
     updates.append('updated_at = CURRENT_TIMESTAMP')
     params['bid'] = bank_id
@@ -200,7 +192,7 @@ def update_bank(bank_id):
     )
     db.session.commit()
 
-    return jsonify({'code': 0, 'message': '更新成功'})
+    return success_response(message='更新成功')
 
 
 @user_bank_api_bp.route('/<int:bank_id>', methods=['DELETE'])
@@ -215,7 +207,7 @@ def delete_bank(bank_id):
     ).fetchone()
 
     if not bank:
-        return jsonify({'code': 1, 'message': '题库不存在或无权操作'}), 404
+        return error_response('题库不存在或无权操作', 404)
 
     # 软删除
     db.session.execute(
@@ -224,7 +216,7 @@ def delete_bank(bank_id):
     )
     db.session.commit()
 
-    return jsonify({'code': 0, 'message': '删除成功'})
+    return success_response(message='删除成功')
 
 
 @user_bank_api_bp.route('/<int:bank_id>/public', methods=['POST'])
@@ -242,7 +234,7 @@ def set_bank_public(bank_id):
     ).fetchone()
 
     if not bank:
-        return jsonify({'code': 1, 'message': '题库不存在或无权操作'}), 404
+        return error_response('题库不存在或无权操作', 404)
 
     if is_public:
         db.session.execute(text('''
@@ -262,4 +254,4 @@ def set_bank_public(bank_id):
 
     db.session.commit()
 
-    return jsonify({'code': 0, 'message': message})
+    return success_response(message=message)

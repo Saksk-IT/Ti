@@ -117,7 +117,8 @@ def history_page():
         hero_subtitle = '错题是最有杠杆的提升入口：高频先闭环，薄弱再专项。'
         try:
             recent_new = sum(int(x.get('all') or 0) for x in (ctx.get('mistakes_daily') or []))
-        except Exception:
+        except Exception as e:
+            current_app.logger.warning(f'计算近期错题新增数失败: {e}')
             recent_new = 0
         hero_kpis = [
             {'k': '错题数', 'v': (ctx.get('all_summary') or {}).get('mistakes', 0)},
@@ -130,7 +131,8 @@ def history_page():
         hero_subtitle = '收藏是高价值题库：复习、背题、冲刺都能复用。'
         try:
             recent_new = sum(int(x.get('all') or 0) for x in (ctx.get('favorites_daily') or []))
-        except Exception:
+        except Exception as e:
+            current_app.logger.warning(f'计算近期收藏新增数失败: {e}')
             recent_new = 0
         answered_all = int((ctx.get('all_summary') or {}).get('answered') or 0)
         fav_all = int((ctx.get('all_summary') or {}).get('favorites') or 0)
@@ -251,7 +253,8 @@ def api_data_ai_advice():
     days = payload.get('days', 30)
     try:
         days = int(days)
-    except Exception:
+    except Exception as e:
+        current_app.logger.warning(f'解析 days 参数失败: {e}')
         days = 30
     if days not in (7, 30, 90):
         days = 30

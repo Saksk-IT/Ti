@@ -8,6 +8,7 @@ from sqlalchemy import text
 from app.core.extensions import db
 from app.core.utils.decorators import auth_required, current_user_id
 from app.core.utils.time_utils import today_bj, now_bj
+from app.core.utils.api_response import success_response, error_response
 
 from .api_base import user_bank_api_bp, check_bank_access
 
@@ -21,7 +22,7 @@ def get_bank_favorites_trend(bank_id: int):
     user_id = current_user_id()
     has_access, _permission, _access_type = check_bank_access(user_id, bank_id)
     if not has_access:
-        return jsonify({'code': 403, 'message': '无权访问此题库'}), 403
+        return error_response('无权访问此题库', 403, code=403)
 
     window_days = request.args.get('days', 30, type=int)
     if window_days not in (7, 14, 30, 90):
@@ -71,15 +72,12 @@ def get_bank_favorites_trend(bank_id: int):
         total_added += added
         trend.append({'day': d, 'added': added})
 
-    return jsonify({
-        'code': 0,
-        'data': {
-            'bank_id': int(bank_id),
-            'days': int(window_days),
-            'favorites_total': total,
-            'total_added': total_added,
-            'trend': trend,
-        }
+    return success_response(data={
+        'bank_id': int(bank_id),
+        'days': int(window_days),
+        'favorites_total': total,
+        'total_added': total_added,
+        'trend': trend,
     })
 
 
@@ -91,7 +89,7 @@ def toggle_favorite(bank_id, question_id):
     has_access, permission, access_type = check_bank_access(user_id, bank_id)
 
     if not has_access:
-        return jsonify({'code': 403, 'message': '无权访问此题库'}), 403
+        return error_response('无权访问此题库', 403, code=403)
 
     # 检查题目是否存在
     question = db.session.execute(
@@ -100,7 +98,7 @@ def toggle_favorite(bank_id, question_id):
     ).fetchone()
 
     if not question:
-        return jsonify({'code': 1, 'message': '题目不存在'}), 404
+        return error_response('题目不存在', 404)
 
     # 检查是否已收藏
     existing = db.session.execute(
@@ -115,11 +113,7 @@ def toggle_favorite(bank_id, question_id):
             {'user_id': user_id, 'qid': question_id}
         )
         db.session.commit()
-        return jsonify({
-            'code': 0,
-            'message': '已取消收藏',
-            'is_favorite': False
-        })
+        return success_response(message='已取消收藏', is_favorite=False)
     else:
         # 添加收藏
         db.session.execute(
@@ -128,8 +122,4 @@ def toggle_favorite(bank_id, question_id):
             {'user_id': user_id, 'bank_id': bank_id, 'qid': question_id}
         )
         db.session.commit()
-        return jsonify({
-            'code': 0,
-            'message': '已收藏',
-            'is_favorite': True
-        })
+        return success_response(message='已收藏', is_favorite=True)

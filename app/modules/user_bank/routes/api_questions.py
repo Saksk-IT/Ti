@@ -9,6 +9,7 @@ from sqlalchemy import text
 
 from app.core.extensions import db
 from app.core.utils.decorators import auth_required, current_user_id
+from app.core.utils.api_response import success_response, error_response
 
 from .api_base import user_bank_api_bp, check_bank_access
 from .api_tags import _load_bank_tag_store
@@ -69,11 +70,11 @@ def get_bank_questions(bank_id):
     try:
         user_id = int(user_id)
     except Exception:
-        return jsonify({'code': 401, 'message': '请先登录'}), 401
+        return error_response('请先登录', 401, code=401)
     has_access, permission, access_type = check_bank_access(user_id, bank_id)
 
     if not has_access:
-        return jsonify({'code': 403, 'message': '无权访问此题库'}), 403
+        return error_response('无权访问此题库', 403, code=403)
 
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
@@ -101,16 +102,13 @@ def get_bank_questions(bank_id):
             tag_question_ids = []
 
         if not tag_question_ids:
-            return jsonify({
-                'code': 0,
-                'data': {
-                    'questions': [],
-                    'total': 0,
-                    'page': page,
-                    'per_page': per_page,
-                    'permission': permission,
-                    'access_type': access_type
-                }
+            return success_response(data={
+                'questions': [],
+                'total': 0,
+                'page': page,
+                'per_page': per_page,
+                'permission': permission,
+                'access_type': access_type
             })
 
     joins = ''
@@ -122,16 +120,13 @@ def get_bank_questions(bank_id):
 
     if source == 'favorites':
         if not _table_exists('user_bank_favorites') or not _column_exists('user_bank_favorites', 'question_id'):
-            return jsonify({
-                'code': 0,
-                'data': {
-                    'questions': [],
-                    'total': 0,
-                    'page': page,
-                    'per_page': per_page,
-                    'permission': permission,
-                    'access_type': access_type
-                }
+            return success_response(data={
+                'questions': [],
+                'total': 0,
+                'page': page,
+                'per_page': per_page,
+                'permission': permission,
+                'access_type': access_type
             })
 
         fav_has_user = _column_exists('user_bank_favorites', 'user_id')
@@ -154,16 +149,13 @@ def get_bank_questions(bank_id):
         select_extras.append('f._ts AS favorite_created_at' if fav_has_created else 'NULL AS favorite_created_at')
     elif source == 'mistakes':
         if not _table_exists('user_bank_mistakes') or not _column_exists('user_bank_mistakes', 'question_id'):
-            return jsonify({
-                'code': 0,
-                'data': {
-                    'questions': [],
-                    'total': 0,
-                    'page': page,
-                    'per_page': per_page,
-                    'permission': permission,
-                    'access_type': access_type
-                }
+            return success_response(data={
+                'questions': [],
+                'total': 0,
+                'page': page,
+                'per_page': per_page,
+                'permission': permission,
+                'access_type': access_type
             })
 
         mis_has_user = _column_exists('user_bank_mistakes', 'user_id')
@@ -329,16 +321,13 @@ def get_bank_questions(bank_id):
         q['content_preview'] = _preview(str(q.get('content') or ''))
         questions.append(q)
 
-    return jsonify({
-        'code': 0,
-        'data': {
-            'questions': questions,
-            'total': total,
-            'page': page,
-            'per_page': per_page,
-            'permission': permission,
-            'access_type': access_type
-        }
+    return success_response(data={
+        'questions': questions,
+        'total': total,
+        'page': page,
+        'per_page': per_page,
+        'permission': permission,
+        'access_type': access_type
     })
 
 
@@ -382,7 +371,7 @@ def add_question(bank_id):
     ).fetchone()
 
     if not bank:
-        return jsonify({'code': 1, 'message': '题库不存在或无权操作'}), 404
+        return error_response('题库不存在或无权操作', 404)
 
     data = request.get_json() or {}
     content = (data.get('content') or '').strip()
@@ -393,9 +382,9 @@ def add_question(bank_id):
     difficulty = data.get('difficulty', 1)
 
     if not content:
-        return jsonify({'code': 1, 'message': '题干不能为空'}), 400
+        return error_response('题干不能为空')
     if not q_type:
-        return jsonify({'code': 1, 'message': '题型不能为空'}), 400
+        return error_response('题型不能为空')
 
     pqf = build_portable_columns(
         q_id=None,
@@ -438,13 +427,7 @@ def add_question(bank_id):
     )
     db.session.commit()
 
-    return jsonify({
-        'code': 0,
-        'data': {
-            'id': new_id
-        },
-        'message': '添加成功'
-    })
+    return success_response(data={'id': new_id}, message='添加成功')
 
 
 @user_bank_api_bp.route('/<int:bank_id>/questions/<int:question_id>', methods=['GET'])
@@ -455,11 +438,11 @@ def get_question_detail(bank_id, question_id):
     try:
         user_id = int(user_id)
     except Exception:
-        return jsonify({'code': 401, 'message': '请先登录'}), 401
+        return error_response('请先登录', 401, code=401)
 
     has_access, _permission, _access_type = check_bank_access(user_id, bank_id)
     if not has_access:
-        return jsonify({'code': 403, 'message': '无权访问此题库'}), 403
+        return error_response('无权访问此题库', 403, code=403)
 
     row = db.session.execute(
         text('SELECT * FROM user_bank_questions WHERE id = :qid AND bank_id = :bid'),
@@ -467,11 +450,11 @@ def get_question_detail(bank_id, question_id):
     ).fetchone()
 
     if not row:
-        return jsonify({'code': 1, 'message': '题目不存在'}), 404
+        return error_response('题目不存在', 404)
 
     from app.core.utils.pqf_rows import pqf_row_to_internal
 
-    return jsonify({'code': 0, 'data': pqf_row_to_internal(row, scope='user_bank')})
+    return success_response(data=pqf_row_to_internal(row, scope='user_bank'))
 
 
 @user_bank_api_bp.route('/<int:bank_id>/questions/<int:question_id>', methods=['PUT'])
@@ -511,7 +494,7 @@ def update_question(bank_id, question_id):
     ).fetchone()
 
     if not bank:
-        return jsonify({'code': 1, 'message': '题库不存在或无权操作'}), 404
+        return error_response('题库不存在或无权操作', 404)
 
     # 检查题目
     question = db.session.execute(
@@ -520,11 +503,11 @@ def update_question(bank_id, question_id):
     ).fetchone()
 
     if not question:
-        return jsonify({'code': 1, 'message': '题目不存在'}), 404
+        return error_response('题目不存在', 404)
 
     # 非自建题目禁止编辑
     if question._mapping['source_type'] != 'custom':
-        return jsonify({'code': 1, 'message': '非自建题目不能编辑，请删除后重新添加'}), 400
+        return error_response('非自建题目不能编辑，请删除后重新添加')
 
     data = request.get_json() or {}
     from app.core.utils.pqf_rows import pqf_row_to_internal
@@ -540,9 +523,9 @@ def update_question(bank_id, question_id):
     next_difficulty = data.get('difficulty') if 'difficulty' in data else (current.get('difficulty') or 1)
 
     if not next_content:
-        return jsonify({'code': 1, 'message': '题干不能为空'}), 400
+        return error_response('题干不能为空')
     if not next_q_type:
-        return jsonify({'code': 1, 'message': '题型不能为空'}), 400
+        return error_response('题型不能为空')
 
     next_answer = _normalize_answer_for_storage(next_q_type, next_answer_raw)
     if next_options is None:
@@ -586,7 +569,7 @@ def update_question(bank_id, question_id):
     )
     db.session.commit()
 
-    return jsonify({'code': 0, 'message': '更新成功'})
+    return success_response(message='更新成功')
 
 
 @user_bank_api_bp.route('/<int:bank_id>/questions/<int:question_id>', methods=['DELETE'])
@@ -601,7 +584,7 @@ def delete_question(bank_id, question_id):
     ).fetchone()
 
     if not bank:
-        return jsonify({'code': 1, 'message': '题库不存在或无权操作'}), 404
+        return error_response('题库不存在或无权操作', 404)
 
     question = db.session.execute(
         text('SELECT id FROM user_bank_questions WHERE id = :qid AND bank_id = :bid'),
@@ -609,7 +592,7 @@ def delete_question(bank_id, question_id):
     ).fetchone()
 
     if not question:
-        return jsonify({'code': 1, 'message': '题目不存在'}), 404
+        return error_response('题目不存在', 404)
 
     db.session.execute(text('DELETE FROM user_bank_questions WHERE id = :qid'), {'qid': question_id})
     db.session.execute(
@@ -618,7 +601,7 @@ def delete_question(bank_id, question_id):
     )
     db.session.commit()
 
-    return jsonify({'code': 0, 'message': '删除成功'})
+    return success_response(message='删除成功')
 
 
 @user_bank_api_bp.route('/<int:bank_id>/questions/batch_delete', methods=['POST'])
@@ -630,7 +613,7 @@ def batch_delete_questions(bank_id):
     question_ids = data.get('question_ids', [])
 
     if not question_ids:
-        return jsonify({'code': 1, 'message': '请选择要删除的题目'}), 400
+        return error_response('请选择要删除的题目')
 
     bank = db.session.execute(
         text('SELECT id FROM user_question_banks WHERE id = :bid AND user_id = :uid AND status = 1'),
@@ -638,7 +621,7 @@ def batch_delete_questions(bank_id):
     ).fetchone()
 
     if not bank:
-        return jsonify({'code': 1, 'message': '题库不存在或无权操作'}), 404
+        return error_response('题库不存在或无权操作', 404)
 
     in_frag, in_p = _build_named_in('id', question_ids, 'del')
     db.session.execute(
@@ -658,7 +641,7 @@ def batch_delete_questions(bank_id):
     )
     db.session.commit()
 
-    return jsonify({'code': 0, 'message': f'成功删除{len(question_ids)}道题目'})
+    return success_response(message=f'成功删除{len(question_ids)}道题目')
 
 
 @user_bank_api_bp.route('/<int:bank_id>/questions/batch_update', methods=['POST'])
@@ -670,7 +653,7 @@ def batch_update_questions(bank_id):
     question_ids = data.get('question_ids', [])
 
     if not question_ids or not isinstance(question_ids, list):
-        return jsonify({'code': 1, 'message': '请选择要操作的题目'}), 400
+        return error_response('请选择要操作的题目')
 
     ids = []
     for v in question_ids:
@@ -679,7 +662,7 @@ def batch_update_questions(bank_id):
         except Exception:
             continue
     if not ids:
-        return jsonify({'code': 1, 'message': '请选择要操作的题目'}), 400
+        return error_response('请选择要操作的题目')
 
     # 去重但保留顺序
     seen: set = set()
@@ -689,7 +672,7 @@ def batch_update_questions(bank_id):
     difficulty = data.get('difficulty', None)
 
     if q_type is None and difficulty is None:
-        return jsonify({'code': 1, 'message': '没有可更新的字段'}), 400
+        return error_response('没有可更新的字段')
 
     bank = db.session.execute(
         text('SELECT id FROM user_question_banks WHERE id = :bid AND user_id = :uid AND status = 1'),
@@ -697,7 +680,7 @@ def batch_update_questions(bank_id):
     ).fetchone()
 
     if not bank:
-        return jsonify({'code': 1, 'message': '题库不存在或无权操作'}), 404
+        return error_response('题库不存在或无权操作', 404)
 
     in_frag, in_p = _build_named_in('id', ids, 'buid')
     rows = db.session.execute(
@@ -715,7 +698,7 @@ def batch_update_questions(bank_id):
 
     editable_ids = [x for x in editable_ids if x in set(ids)]
     if not editable_ids:
-        return jsonify({'code': 1, 'message': '选中的题目均不可编辑（仅自建题目允许修改）'}), 400
+        return error_response('选中的题目均不可编辑（仅自建题目允许修改）')
 
     # 仅改难度：可走批量 SQL
     if q_type is None and difficulty is not None:
@@ -744,7 +727,7 @@ def batch_update_questions(bank_id):
         if q_type is not None:
             qt = str(q_type or '').strip()
             if not qt:
-                return jsonify({'code': 1, 'message': '题型不能为空'}), 400
+                return error_response('题型不能为空')
 
         diff = None
         if difficulty is not None:
@@ -808,15 +791,14 @@ def batch_update_questions(bank_id):
 
     skipped = len(ids) - len(editable_ids)
     msg = f'已更新{len(editable_ids)}道题目' + (f'，已跳过{skipped}道非自建题目' if skipped > 0 else '')
-    return jsonify({
-        'code': 0,
-        'data': {'updated': len(editable_ids), 'skipped': skipped},
-        'message': msg,
-    })
+    return success_response(
+        data={'updated': len(editable_ids), 'skipped': skipped},
+        message=msg,
+    )
 
 
 @user_bank_api_bp.route('/<int:bank_id>/questions/copy', methods=['POST'])
 @auth_required
 def copy_questions(bank_id):
     """复制题目功能已移除"""
-    return jsonify({'code': 1, 'message': '题目复制功能已停用'}), 410
+    return error_response('题目复制功能已停用', 410)

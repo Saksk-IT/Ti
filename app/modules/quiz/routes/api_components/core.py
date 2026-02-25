@@ -9,7 +9,7 @@
 本文件保留收藏与答题记录路由，并 re-export 所有被外部引用的符号以确保向后兼容。
 """
 
-from flask import request, jsonify
+from flask import request, jsonify, current_app
 
 from app.core.extensions import db, limiter
 from app.core.utils.decorators import auth_required, current_user_id
@@ -59,7 +59,8 @@ def toggle_favorite():
     else:
         try:
             db.session.add(Favorite(user_id=uid, question_id=q_id))
-        except Exception:
+        except Exception as e:
+            current_app.logger.warning(f'收藏失败 user_id={uid} question_id={q_id}: {e}')
             db.session.rollback()
             return jsonify({'status': 'error', 'message': '收藏失败：题目不存在或不可收藏'}), 400
         is_favorite = True
@@ -157,6 +158,7 @@ def record_result():
         return jsonify({"status": "success", "action": action})
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f'记录答题结果失败 user_id={uid} question_id={q_id}: {e}', exc_info=True)
         return jsonify({"status": "error", "msg": str(e)}), 500
 
 

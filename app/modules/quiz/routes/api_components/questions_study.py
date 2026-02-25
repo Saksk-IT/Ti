@@ -115,7 +115,8 @@ def api_get_questions():
                 try:
                     if row._mapping['subject_is_locked'] is not None and int(row._mapping['subject_is_locked']) == 1:
                         continue
-                except Exception:
+                except Exception as e:
+                    current_app.logger.warning(f'检查科目锁定状态失败 question_id={row._mapping.get("id")}: {e}')
                     pass
 
                 q = Question._row_to_internal(row._mapping, scope="question_center")
@@ -458,14 +459,13 @@ def api_update_question(question_id: int):
             if extra is not None:
                 try:
                     diff_val = int(extra._mapping['difficulty'] or 1)
-                except Exception:
+                except Exception as e:
+                    current_app.logger.warning(f'解析题目难度失败 question_id={question_id}: {e}')
                     diff_val = 1
                 tags_val = extra._mapping['tags']
-        except Exception:
+        except Exception as e:
+            current_app.logger.warning(f'查询题目扩展信息失败 question_id={question_id}: {e}')
             pass
-
-        conn = db.session.connection()
-        try_sync_questions_portable_columns(
             conn,
             question_id=int(question_id),
             q_type=next_q_type,

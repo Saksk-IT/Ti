@@ -7,6 +7,7 @@ from sqlalchemy import text
 
 from app.core.extensions import db
 from app.core.utils.decorators import auth_required, current_user_id
+from app.core.utils.api_response import success_response, error_response
 
 from .api_base import user_bank_api_bp
 
@@ -25,11 +26,8 @@ def get_categories():
         ORDER BY c.sort_order ASC, c.id ASC
     '''), {'user_id': user_id}).fetchall()
 
-    return jsonify({
-        'code': 0,
-        'data': {
-            'categories': [dict(c._mapping) for c in categories]
-        }
+    return success_response(data={
+        'categories': [dict(c._mapping) for c in categories]
     })
 
 
@@ -43,9 +41,9 @@ def create_category():
     description = (data.get('description') or '').strip()
 
     if not name:
-        return jsonify({'code': 1, 'message': '分类名称不能为空'}), 400
+        return error_response('分类名称不能为空')
     if len(name) > 50:
-        return jsonify({'code': 1, 'message': '分类名称不能超过50个字符'}), 400
+        return error_response('分类名称不能超过50个字符')
 
     # 检查分类数量限制
     count = db.session.execute(
@@ -54,7 +52,7 @@ def create_category():
     ).fetchone()._mapping['cnt']
 
     if count >= 10:
-        return jsonify({'code': 1, 'message': '最多只能创建10个分类'}), 400
+        return error_response('最多只能创建10个分类')
 
     # 检查重复
     existing = db.session.execute(
@@ -63,7 +61,7 @@ def create_category():
     ).fetchone()
 
     if existing:
-        return jsonify({'code': 1, 'message': '分类名称已存在'}), 400
+        return error_response('分类名称已存在')
 
     result = db.session.execute(
         text('''INSERT INTO user_bank_categories (user_id, name, description, sort_order)
@@ -73,12 +71,9 @@ def create_category():
     )
     db.session.commit()
 
-    return jsonify({
-        'code': 0,
-        'data': {
-            'id': result.lastrowid,
-            'name': name
-        }
+    return success_response(data={
+        'id': result.lastrowid,
+        'name': name
     })
 
 
@@ -92,7 +87,7 @@ def update_category(category_id):
     description = (data.get('description') or '').strip()
 
     if not name:
-        return jsonify({'code': 1, 'message': '分类名称不能为空'}), 400
+        return error_response('分类名称不能为空')
 
     # 检查分类是否存在且属于当前用户
     cat = db.session.execute(
@@ -101,7 +96,7 @@ def update_category(category_id):
     ).fetchone()
 
     if not cat:
-        return jsonify({'code': 1, 'message': '分类不存在'}), 404
+        return error_response('分类不存在', 404)
 
     # 检查重复
     existing = db.session.execute(
@@ -110,7 +105,7 @@ def update_category(category_id):
     ).fetchone()
 
     if existing:
-        return jsonify({'code': 1, 'message': '分类名称已存在'}), 400
+        return error_response('分类名称已存在')
 
     db.session.execute(
         text('''UPDATE user_bank_categories SET name = :name, description = :description, updated_at = CURRENT_TIMESTAMP
@@ -119,7 +114,7 @@ def update_category(category_id):
     )
     db.session.commit()
 
-    return jsonify({'code': 0, 'message': '更新成功'})
+    return success_response(message='更新成功')
 
 
 @user_bank_api_bp.route('/categories/<int:category_id>', methods=['DELETE'])
@@ -135,7 +130,7 @@ def delete_category(category_id):
     ).fetchone()
 
     if not cat:
-        return jsonify({'code': 1, 'message': '分类不存在'}), 404
+        return error_response('分类不存在', 404)
 
     # 检查是否有题库使用此分类
     bank_count = db.session.execute(
@@ -144,7 +139,7 @@ def delete_category(category_id):
     ).fetchone()._mapping['cnt']
 
     if bank_count > 0:
-        return jsonify({'code': 1, 'message': f'该分类下还有{bank_count}个题库，请先移除'}), 400
+        return error_response(f'该分类下还有{bank_count}个题库，请先移除')
 
     db.session.execute(
         text('DELETE FROM user_bank_categories WHERE id = :cat_id'),
@@ -152,4 +147,4 @@ def delete_category(category_id):
     )
     db.session.commit()
 
-    return jsonify({'code': 0, 'message': '删除成功'})
+    return success_response(message='删除成功')
