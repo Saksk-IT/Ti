@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from urllib.parse import quote
 
 from flask import Blueprint, jsonify, request, send_file, session
 from sqlalchemy import text
@@ -79,9 +80,15 @@ def export_subject_questions(subject_id: int):
         logger.error("导出失败: %s", e, exc_info=True)
         return jsonify({"status": "error", "message": "导出生成失败，请稍后重试"}), 500
 
-    return send_file(
+    response = send_file(
         result.buffer,
         as_attachment=True,
         download_name=result.filename,
         mimetype=result.content_type,
     )
+    # 手动设置 RFC 5987 编码的 Content-Disposition，确保中文文件名正常显示
+    encoded = quote(result.filename, safe="")
+    response.headers["Content-Disposition"] = (
+        f"attachment; filename=\"{result.filename}\"; filename*=UTF-8''{encoded}"
+    )
+    return response
