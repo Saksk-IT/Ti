@@ -1679,6 +1679,19 @@ Page({
   },
 
   onExportPdf() {
+    const count = this.data.exportCount || 0;
+    if (count > 100) {
+      wx.showModal({
+        title: '提示',
+        content: `当前筛选 ${count} 题，PDF 生成较慢，可能需要等待较长时间。建议题量较大时优先使用 Word 导出。`,
+        confirmText: '继续导出',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) this.doExport('pdf');
+        }
+      });
+      return;
+    }
     this.doExport('pdf');
   },
 
