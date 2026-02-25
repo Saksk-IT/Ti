@@ -9,6 +9,7 @@ from typing import Any
 from sqlalchemy import text
 
 from app.core.extensions import db
+from app.core.utils.json_helpers import safe_load as _safe_load
 from app.core.utils.portable_question_format import any_type_to_portable_type
 
 from .base import ExportRequest
@@ -32,20 +33,6 @@ def _parse_image_paths(raw: Any) -> list[str]:
         except Exception:
             return []
     return [s]
-
-
-def _safe_load(raw: Any, default: Any) -> Any:
-    if raw is None:
-        return default
-    if isinstance(raw, (list, dict, bool, int, float)):
-        return raw
-    s = str(raw).strip()
-    if not s:
-        return default
-    try:
-        return json.loads(s)
-    except Exception:
-        return default
 
 
 def fetch_export_questions(req: ExportRequest) -> list[dict[str, Any]]:

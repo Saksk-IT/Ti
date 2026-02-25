@@ -4,6 +4,9 @@ from flask import Blueprint, request, jsonify
 from app.core.extensions import db
 from sqlalchemy import text
 from app.core.utils.cache_utils import bump_questions_version, bump_subjects_version
+from app.core.utils.json_helpers import safe_load as _safe_load
+from app.core.utils.image_helpers import normalize_image_paths as _normalize_image_paths
+from app.core.utils.csv_helpers import csv_escape
 import json
 
 # 创建一个额外的蓝图用于向后兼容
@@ -680,12 +683,6 @@ def export_users():
         text('SELECT id, username, is_admin, is_locked, created_at FROM users ORDER BY id')
     ).fetchall()
     
-    def csv_escape(s):
-        s = '' if s is None else str(s)
-        if any(c in s for c in [',','"','\n','\r']):
-            s = '"' + s.replace('"','""') + '"'
-        return s
-    
     out = '\ufeff' + 'id,username,is_admin,is_locked,created_at\n'
     for r in rows:
         rm = r._mapping
@@ -857,19 +854,6 @@ def export_questions_api():
 
     sql += ' ORDER BY q.id'
     rows = db.session.execute(text(sql), conn_params).fetchall()
-    
-    def _safe_load(raw, default):
-        if raw is None:
-            return default
-        if isinstance(raw, (list, dict, bool, int, float)):
-            return raw
-        s = str(raw).strip()
-        if not s:
-            return default
-        try:
-            return json.loads(s)
-        except Exception:
-            return default
 
     items = []
     for r in rows:
@@ -917,22 +901,6 @@ def export_questions_package():
         if subject_row:
             subject_name = subject_row._mapping['name']
 
-    def _normalize_image_paths(raw_val):
-        if raw_val is None:
-            return []
-        if isinstance(raw_val, list):
-            return [str(x).strip() for x in raw_val if str(x).strip()]
-        s = str(raw_val or '').strip()
-        if not s or s in ('[]', '[ ]'):
-            return []
-        try:
-            parsed = json.loads(s)
-            if isinstance(parsed, list):
-                return [str(x).strip() for x in parsed if str(x).strip()]
-        except Exception:
-            pass
-        return [s]
-
     # 2. 查询题目数据
     sql = '''
         SELECT q.id, q.subject_id, s.name as subject_name,
@@ -960,19 +928,6 @@ def export_questions_package():
     with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
         for r in rows:
             rm = r._mapping
-            def _safe_load(raw, default):
-                if raw is None:
-                    return default
-                if isinstance(raw, (list, dict, bool, int, float)):
-                    return raw
-                s = str(raw).strip()
-                if not s:
-                    return default
-                try:
-                    return json.loads(s)
-                except Exception:
-                    return default
-
             item = {
                 'id': int(rm['id']),
                 'type': (rm['type'] or ''),
@@ -1056,22 +1011,6 @@ def import_questions_package():
     upload_folder = current_app.config.get('UPLOAD_FOLDER', os.path.join(current_app.root_path, '..', 'uploads'))
 
     try:
-
-        def _normalize_image_paths(raw_val):
-            if raw_val is None:
-                return []
-            if isinstance(raw_val, list):
-                return [str(x).strip() for x in raw_val if str(x).strip()]
-            s = str(raw_val or '').strip()
-            if not s or s in ('[]', '[ ]'):
-                return []
-            try:
-                parsed = json.loads(s)
-                if isinstance(parsed, list):
-                    return [str(x).strip() for x in parsed if str(x).strip()]
-            except Exception:
-                pass
-            return [s]
 
         with zipfile.ZipFile(file, 'r') as zf:
             if 'data.json' not in zf.namelist():

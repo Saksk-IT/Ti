@@ -27,6 +27,8 @@ from app.core.extensions import db, limiter
 from sqlalchemy import text
 from app.core.utils.cache_utils import bump_questions_version, bump_subjects_version
 from app.core.utils.fill_blank_parser import parse_fill_blank
+from app.core.utils.json_helpers import safe_load as _safe_load, safe_json_load as _safe_json_load
+from app.core.utils.image_helpers import normalize_image_paths as _normalize_image_paths
 from app.core.utils.validators import parse_int, validate_password
 
 from ..api_bp import admin_api_bp
@@ -175,19 +177,6 @@ def export_questions_api():
 
     sql += ' ORDER BY q.id'
     rows = db.session.execute(text(sql), conn_params).fetchall()
-    
-    def _safe_load(raw, default):
-        if raw is None:
-            return default
-        if isinstance(raw, (list, dict, bool, int, float)):
-            return raw
-        s = str(raw).strip()
-        if not s:
-            return default
-        try:
-            return json.loads(s)
-        except Exception:
-            return default
 
     items = []
     for r in rows:
@@ -415,19 +404,6 @@ def export_questions_to_excel():
 
     from app.core.utils.portable_question_format import portable_question_to_internal
 
-    def _safe_load(raw, default):
-        if raw is None:
-            return default
-        if isinstance(raw, (list, dict, bool, int, float)):
-            return raw
-        s = str(raw).strip()
-        if not s:
-            return default
-        try:
-            return json.loads(s)
-        except Exception:
-            return default
-
     # 准备数据
     export_data = []
     max_options = 0
@@ -601,19 +577,6 @@ def export_questions_to_word():
 
     from app.core.utils.portable_question_format import portable_question_to_internal
 
-    def _safe_load(raw, default):
-        if raw is None:
-            return default
-        if isinstance(raw, (list, dict, bool, int, float)):
-            return raw
-        s = str(raw).strip()
-        if not s:
-            return default
-        try:
-            return json.loads(s)
-        except Exception:
-            return default
-    
     # 遍历题目，添加到文档
     for idx, row in enumerate(rows, 1):
         question = dict(row._mapping)
@@ -766,22 +729,6 @@ def export_questions_package():
         if subject_row:
             subject_name = subject_row._mapping['name']
 
-    def _normalize_image_paths(raw_val):
-        if raw_val is None:
-            return []
-        if isinstance(raw_val, list):
-            return [str(x).strip() for x in raw_val if str(x).strip()]
-        s = str(raw_val or '').strip()
-        if not s or s in ('[]', '[ ]'):
-            return []
-        try:
-            parsed = json.loads(s)
-            if isinstance(parsed, list):
-                return [str(x).strip() for x in parsed if str(x).strip()]
-        except Exception:
-            pass
-        return [s]
-
     # 2. 查询题目数据
     sql = '''
         SELECT q.id, q.subject_id, s.name as subject_name,
@@ -805,19 +752,6 @@ def export_questions_package():
     memory_file = io.BytesIO()
     upload_folder = current_app.config.get('UPLOAD_FOLDER', os.path.join(current_app.root_path, '..', 'uploads'))
     questions_data = []
-
-    def _safe_load(raw, default):
-        if raw is None:
-            return default
-        if isinstance(raw, (list, dict, bool, int, float)):
-            return raw
-        s = str(raw).strip()
-        if not s:
-            return default
-        try:
-            return json.loads(s)
-        except Exception:
-            return default
 
     with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
         for r in rows:
@@ -902,22 +836,6 @@ def import_questions_package():
             portable_question_to_internal,
             tags_to_storage_str,
         )
-
-        def _normalize_image_paths(raw_val):
-            if raw_val is None:
-                return []
-            if isinstance(raw_val, list):
-                return [str(x).strip() for x in raw_val if str(x).strip()]
-            s = str(raw_val or '').strip()
-            if not s or s in ('[]', '[ ]'):
-                return []
-            try:
-                parsed = json.loads(s)
-                if isinstance(parsed, list):
-                    return [str(x).strip() for x in parsed if str(x).strip()]
-            except Exception:
-                pass
-            return [s]
 
         with zipfile.ZipFile(file, 'r') as zf:
             if 'data.json' not in zf.namelist():

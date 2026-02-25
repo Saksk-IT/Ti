@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """刷题页面路由"""
 import json
+from app.core.utils.json_helpers import safe_json_load as _safe_json_load
 import math
 import random
 import re
@@ -147,20 +148,6 @@ def _normalize_answer(q):
                 q['answer'] = '错误'
     except Exception:
         pass
-
-
-def _safe_json_load(raw, default):
-    if raw is None:
-        return default
-    if isinstance(raw, (list, dict, bool, int, float)):
-        return raw
-    s = str(raw).strip()
-    if not s:
-        return default
-    try:
-        return json.loads(s)
-    except Exception:
-        return default
 
 
 def _apply_pqf_legacy_fields(q: dict, *, scope: str) -> None:

@@ -2,27 +2,13 @@
 """
 题目模型
 """
-import json
 from app.core.extensions import db
+from app.core.utils.json_helpers import safe_json_load
 from sqlalchemy import text
 
 
 class Question:
     """题目模型"""
-
-    @staticmethod
-    def _safe_json_load(raw, default):
-        if raw is None:
-            return default
-        if isinstance(raw, (list, dict, bool, int, float)):
-            return raw
-        s = str(raw).strip()
-        if not s:
-            return default
-        try:
-            return json.loads(s)
-        except Exception:
-            return default
 
     @staticmethod
     def _row_to_internal(row, *, scope: str):
@@ -34,10 +20,10 @@ class Question:
             "id": r.get("id"),
             "type": r.get("type") or "",
             "content": r.get("content") or "",
-            "options": Question._safe_json_load(r.get("options"), []),
-            "answer": Question._safe_json_load(r.get("answer"), []),
+            "options": safe_json_load(r.get("options"), []),
+            "answer": safe_json_load(r.get("answer"), []),
             "analysis": r.get("analysis") or "",
-            "tags": Question._safe_json_load(r.get("tags"), []),
+            "tags": safe_json_load(r.get("tags"), []),
             "difficulty": r.get("difficulty") if r.get("difficulty") is not None else 1,
         }
         internal, _errors = portable_question_to_internal(portable, scope=scope)

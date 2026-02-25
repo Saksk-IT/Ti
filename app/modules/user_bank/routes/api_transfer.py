@@ -9,6 +9,7 @@ from sqlalchemy import text
 
 from app.core.extensions import db
 from app.core.utils.decorators import auth_required, current_user_id
+from app.core.utils.json_helpers import safe_load as _safe_load
 from app.core.utils.portable_question_format import (
     internal_question_to_portable,
     portable_question_to_internal,
@@ -399,19 +400,6 @@ def export_questions_json(bank_id):
     except Exception:
         question_tags = {}
 
-    def _safe_load(raw, default):
-        if raw is None:
-            return default
-        if isinstance(raw, (list, dict, bool, int, float)):
-            return raw
-        s = str(raw).strip()
-        if not s:
-            return default
-        try:
-            return json.loads(s)
-        except Exception:
-            return default
-
     items = []
     for q in questions:
         m = q._mapping
@@ -784,19 +772,6 @@ def export_questions_package(bank_id):
     zip_buffer = io.BytesIO()
     upload_folder = current_app.config.get('UPLOAD_FOLDER', os.path.join(current_app.root_path, '..', 'uploads'))
     bank_name = bank._mapping['name']
-
-    def _safe_load(raw, default):
-        if raw is None:
-            return default
-        if isinstance(raw, (list, dict, bool, int, float)):
-            return raw
-        s = str(raw).strip()
-        if not s:
-            return default
-        try:
-            return json.loads(s)
-        except Exception:
-            return default
 
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
         questions_data = []

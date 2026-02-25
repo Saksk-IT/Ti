@@ -5,6 +5,7 @@
 import json
 from datetime import datetime
 from app.core.extensions import db
+from app.core.utils.json_helpers import safe_json_load
 from sqlalchemy import text
 
 
@@ -39,20 +40,6 @@ class Exam:
         if max_v is not None:
             fv = min(max_v, fv)
         return fv
-
-    @staticmethod
-    def _safe_json_load(raw, default):
-        if raw is None:
-            return default
-        if isinstance(raw, (list, dict, bool, int, float)):
-            return raw
-        s = str(raw).strip()
-        if not s:
-            return default
-        try:
-            return json.loads(s)
-        except Exception:
-            return default
 
     @staticmethod
     def _parse_config_json(config_json: str) -> dict:
@@ -198,10 +185,10 @@ class Exam:
                 "id": d.get("id"),
                 "type": d.get("type") or "",
                 "content": d.get("content") or "",
-                "options": Exam._safe_json_load(d.get("options"), []),
-                "answer": Exam._safe_json_load(d.get("answer"), []),
+                "options": safe_json_load(d.get("options"), []),
+                "answer": safe_json_load(d.get("answer"), []),
                 "analysis": d.get("analysis") or "",
-                "tags": Exam._safe_json_load(d.get("tags"), []),
+                "tags": safe_json_load(d.get("tags"), []),
                 "difficulty": d.get("difficulty") if d.get("difficulty") is not None else 1,
             }
             internal, _errors = portable_question_to_internal(portable, scope=scope)
@@ -274,12 +261,12 @@ class Exam:
                     return 0
                 return 1 if all(match_one(ua_list[i], std_blanks[i]) for i in range(len(std_blanks))) else 0
 
-            # 非 JSON：按“第一空”处理（兼容历史单输入实现）
+            # 非 JSON：按"第一空"处理（兼容历史单输入实现）
             if len(std_blanks) > 1:
                 return 1 if match_one(user_ans, std_blanks[0]) else 0
             return 1 if match_one(user_ans, std_blanks[0]) else 0
 
-        # 其它题型（简答等）：当前策略为“只要有作答就算对”
+        # 其它题型（简答等）：当前策略为"只要有作答就算对"
         return 1 if user_ans != '' else 0
 
     @staticmethod
@@ -344,10 +331,10 @@ class Exam:
                 "id": qid,
                 "type": rm["type"] or "",
                 "content": rm["content"] or "",
-                "options": Exam._safe_json_load(rm["options"], []),
-                "answer": Exam._safe_json_load(rm["answer"], []),
+                "options": safe_json_load(rm["options"], []),
+                "answer": safe_json_load(rm["answer"], []),
                 "analysis": rm["analysis"] or "",
-                "tags": Exam._safe_json_load(rm["tags"], []),
+                "tags": safe_json_load(rm["tags"], []),
                 "difficulty": rm["difficulty"] if rm["difficulty"] is not None else 1,
             }
             internal, _errors = portable_question_to_internal(portable, scope=scope)

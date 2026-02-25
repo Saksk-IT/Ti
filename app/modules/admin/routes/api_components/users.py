@@ -27,6 +27,7 @@ from werkzeug.utils import secure_filename
 
 from app.core.extensions import db, limiter
 from app.core.utils.fill_blank_parser import parse_fill_blank
+from app.core.utils.csv_helpers import csv_escape
 from app.core.utils.validators import parse_int, validate_password
 
 from ..api_bp import admin_api_bp
@@ -472,10 +473,10 @@ def delete_user(user_id):
         if 'foreign key' in msg.lower() or 'FOREIGN KEY' in msg:
             details = _ref_counts(user_id)
             if details:
-                detail_str = '、'.join([f”{x['table']}({x['count']})” for x in details])
+                detail_str = '、'.join([f"{x['table']}({x['count']})" for x in details])
                 return jsonify({
                     'status': 'error',
-                    'message': f”删除失败：该用户仍有关联数据，请先处理后再删除。关联项：{detail_str}”,
+                    'message': f"删除失败：该用户仍有关联数据，请先处理后再删除。关联项：{detail_str}",
                     'details': details
                 }), 400
             return jsonify({
@@ -619,12 +620,6 @@ def admin_export_users():
     rows = db.session.execute(
         text('SELECT id, username, is_admin, is_locked, created_at FROM users ORDER BY id')
     ).fetchall()
-
-    def csv_escape(s):
-        s = '' if s is None else str(s)
-        if any(c in s for c in [',','"','\n','\r']):
-            s = '"' + s.replace('"','""') + '"'
-        return s
 
     out = '\ufeff' + 'id,username,is_admin,is_locked,created_at\n'
     for r in rows:

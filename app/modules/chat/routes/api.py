@@ -13,6 +13,7 @@
 from flask import Blueprint, request, jsonify, session, current_app
 from werkzeug.utils import secure_filename
 from app.core.extensions import db, limiter
+from app.core.utils.json_helpers import safe_load as _safe_load
 from app.core.utils.options_parser import parse_options
 from app.core.utils.time_utils import now_bj
 from app.models.chat import ChatConversation, ChatMember, ChatMessage, UserRemark
@@ -878,19 +879,6 @@ def chat_send_question():
     from app.core.utils.portable_question_format import portable_question_to_internal
     import json as _json
 
-    def _safe_load(raw, default):
-        if raw is None:
-            return default
-        if isinstance(raw, (list, dict, bool, int, float)):
-            return raw
-        s = str(raw).strip()
-        if not s:
-            return default
-        try:
-            return _json.loads(s)
-        except Exception:
-            return default
-
     portable = {
         "id": q.id,
         "type": q.type or "",
@@ -971,19 +959,6 @@ def chat_get_question_detail(question_id: int):
 
     from app.core.utils.portable_question_format import portable_question_to_internal
     import json as _json
-
-    def _safe_load(raw, default):
-        if raw is None:
-            return default
-        if isinstance(raw, (list, dict, bool, int, float)):
-            return raw
-        s = str(raw).strip()
-        if not s:
-            return default
-        try:
-            return _json.loads(s)
-        except Exception:
-            return default
 
     portable = {
         "id": q.id,
