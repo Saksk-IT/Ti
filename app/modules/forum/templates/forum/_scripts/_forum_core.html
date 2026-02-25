@@ -15,14 +15,17 @@ function fmtTime(s) { if (!s) return ''; const d = new Date(s); const now = new 
 
 function renderPostCard(p) {
   const badges = (p.is_pinned ? '<span class="forum-badge forum-badge-pin">置顶</span>' : '') +
-                 (p.is_featured ? '<span class="forum-badge forum-badge-feat">精华</span>' : '');
+                 (p.is_featured ? '<span class="forum-badge forum-badge-feat">精华</span>' : '') +
+                 (p.is_locked ? '<span class="forum-badge forum-badge-lock">锁定</span>' : '');
   const imgs = (p.images && p.images.length) ? `<div class="forum-post-images">${p.images.slice(0,3).map(u=>`<img src="${esc(u)}" alt="" loading="lazy">`).join('')}</div>` : '';
-  const avatar = p.author_avatar ? `<img class="forum-avatar" src="${esc(p.author_avatar)}" alt="">` : '<div class="forum-avatar"></div>';
+  const initial = (p.author_name || 'U')[0].toUpperCase();
+  const avatar = p.author_avatar ? `<img class="forum-avatar" src="${esc(p.author_avatar)}" alt="">` : `<div class="forum-avatar" style="display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:var(--app-primary-soft);color:var(--app-text)">${initial}</div>`;
+  const refCount = (p.question_refs && p.question_refs.length) ? `<span title="引用题目">&#128203; ${p.question_refs.length}</span>` : '';
   return `<div class="forum-post-card" onclick="location.href='/community/post/${p.id}'">
     <div class="forum-post-header">${avatar}<div class="forum-post-meta"><span class="author">${esc(p.author_name)}</span> · ${fmtTime(p.created_at)}<span class="forum-board-tag">${esc(p.board_name)}</span></div></div>
     <div class="forum-post-title">${badges}${esc(p.title)}</div>
     <div class="forum-post-preview">${esc(p.content_preview)}</div>${imgs}
-    <div class="forum-post-stats"><span>&#128172; ${p.comment_count||0}</span><span>&#10084; ${p.like_count||0}</span><span>&#128065; ${p.view_count||0}</span></div>
+    <div class="forum-post-stats"><span>&#128172; ${p.comment_count||0}</span><span>&#10084; ${p.like_count||0}</span><span>&#128065; ${p.view_count||0}</span>${refCount}</div>
   </div>`;
 }
 

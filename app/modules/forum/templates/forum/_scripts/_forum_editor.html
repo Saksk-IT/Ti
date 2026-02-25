@@ -30,6 +30,15 @@ function insertLink() {
   const url = prompt('输入链接地址:');
   if (url) document.execCommand('createLink', false, url);
 }
+function insertCodeBlock() {
+  const code = prompt('输入代码:');
+  if (code) {
+    document.execCommand('insertHTML', false, '<pre style="background:var(--app-surface-2);border:0.5px solid var(--app-border);border-radius:8px;padding:12px;font-family:monospace;font-size:13px;overflow-x:auto;margin:8px 0">' + code.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre><p><br></p>');
+  }
+}
+function insertBlockquote() {
+  document.execCommand('formatBlock', false, 'blockquote');
+}
 
 async function uploadImages(files) {
   for (const file of files) {

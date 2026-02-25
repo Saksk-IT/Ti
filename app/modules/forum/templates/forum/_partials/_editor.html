@@ -1,8 +1,18 @@
 <div id="editorContent" class="forum-editor" contenteditable="true" placeholder="写下你的想法..."></div>
 <div class="forum-editor-toolbar">
+  <select onchange="if(this.value){document.execCommand('formatBlock',false,this.value);this.value='';}" title="标题" style="height:32px;border:0.5px solid var(--app-border);border-radius:6px;background:var(--app-surface);color:var(--app-text);font-size:13px;padding:0 6px;cursor:pointer;">
+    <option value="">标题</option>
+    <option value="h2">H2</option>
+    <option value="h3">H3</option>
+    <option value="h4">H4</option>
+    <option value="p">正文</option>
+  </select>
   <button type="button" onclick="execCmd('bold')" title="加粗"><b>B</b></button>
   <button type="button" onclick="execCmd('italic')" title="斜体"><i>I</i></button>
   <button type="button" onclick="execCmd('insertUnorderedList')" title="列表">&#8226;</button>
   <button type="button" onclick="execCmd('insertOrderedList')" title="有序列表">1.</button>
   <button type="button" onclick="insertLink()" title="链接">&#128279;</button>
+  <button type="button" onclick="insertCodeBlock()" title="代码块">&lt;/&gt;</button>
+  <button type="button" onclick="execCmd('strikeThrough')" title="删除线"><s>S</s></button>
+  <button type="button" onclick="insertBlockquote()" title="引用">&#10077;</button>
 </div>

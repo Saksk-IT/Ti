@@ -127,3 +127,32 @@ def api_my_favorites():
     except Exception as e:
         current_app.logger.error(f"获取收藏列表失败: {e}", exc_info=True)
         return jsonify({'status': 'error', 'message': '获取收藏列表失败'}), 500
+
+
+@forum_api_bp.route('/users/search', methods=['GET'])
+@auth_required
+def api_search_users():
+    """搜索用户（用于转发、@提及等）"""
+    try:
+        q = request.args.get('q', '').strip()
+        limit = min(request.args.get('limit', 10, type=int), 20)
+        if not q:
+            return jsonify({'status': 'success', 'data': []})
+
+        uid = current_user_id()
+        rows = db.session.execute(text('''
+            SELECT id, username, avatar
+            FROM users
+            WHERE id != :uid AND username ILIKE :q
+            ORDER BY username
+            LIMIT :lim
+        '''), {'uid': uid, 'q': f'%{q}%', 'lim': limit}).fetchall()
+
+        return jsonify({'status': 'success', 'data': [
+            {'id': r._mapping['id'], 'username': r._mapping['username'],
+             'avatar': r._mapping['avatar']}
+            for r in rows
+        ]})
+    except Exception as e:
+        current_app.logger.error(f"搜索用户失败: {e}", exc_info=True)
+        return jsonify({'status': 'error', 'message': '搜索失败'}), 500

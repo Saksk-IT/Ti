@@ -54,8 +54,14 @@
   <div class="forum-modal-content">
     <h3 style="margin:0 0 16px;font-size:16px;font-weight:600;">转发到私聊</h3>
     <div class="forum-form-group">
-      <label>接收者用户ID</label>
-      <input id="forwardReceiver" type="number" style="width:100%;padding:10px 14px;border:0.5px solid var(--app-border);border-radius:10px;font-size:14px;background:var(--app-surface);color:var(--app-text);box-sizing:border-box;">
+      <label>搜索用户</label>
+      <input id="forwardSearch" type="text" placeholder="输入用户名搜索..." autocomplete="off" style="width:100%;padding:10px 14px;border:0.5px solid var(--app-border);border-radius:10px;font-size:14px;background:var(--app-surface);color:var(--app-text);box-sizing:border-box;">
+      <div id="forwardResults" style="max-height:200px;overflow-y:auto;margin-top:8px;"></div>
+      <input id="forwardReceiver" type="hidden">
+      <div id="forwardSelected" style="margin-top:8px;display:none;padding:8px 12px;border-radius:8px;background:var(--app-primary-soft);font-size:13px;font-weight:500;display:none;align-items:center;gap:8px;">
+        <span id="forwardSelectedName"></span>
+        <button type="button" onclick="clearForwardSelection()" style="margin-left:auto;background:none;border:none;color:var(--app-muted);cursor:pointer;font-size:16px;padding:0;min-height:auto;">&times;</button>
+      </div>
     </div>
     <div style="display:flex;gap:12px;justify-content:flex-end">
       <button class="forum-cancel-btn" onclick="closeForwardModal()">取消</button>

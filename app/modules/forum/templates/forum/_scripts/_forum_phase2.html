@@ -100,12 +100,60 @@ async function submitReport() {
 }
 
 // ── 转发 ──
-function openForwardModal() { document.getElementById('forwardModal').style.display = 'flex'; }
+let _forwardSearchTimer = null;
+function openForwardModal() {
+  document.getElementById('forwardModal').style.display = 'flex';
+  document.getElementById('forwardSearch').value = '';
+  document.getElementById('forwardReceiver').value = '';
+  document.getElementById('forwardResults').innerHTML = '';
+  document.getElementById('forwardSelected').style.display = 'none';
+  setTimeout(() => document.getElementById('forwardSearch').focus(), 100);
+}
 function closeForwardModal() { document.getElementById('forwardModal').style.display = 'none'; }
+
+function clearForwardSelection() {
+  document.getElementById('forwardReceiver').value = '';
+  document.getElementById('forwardSelected').style.display = 'none';
+  document.getElementById('forwardSearch').style.display = '';
+  document.getElementById('forwardResults').innerHTML = '';
+  document.getElementById('forwardSearch').value = '';
+}
+
+// 搜索用户（防抖）
+document.getElementById('forwardSearch').addEventListener('input', function() {
+  clearTimeout(_forwardSearchTimer);
+  const q = this.value.trim();
+  if (q.length < 1) { document.getElementById('forwardResults').innerHTML = ''; return; }
+  _forwardSearchTimer = setTimeout(() => searchForwardUsers(q), 300);
+});
+
+async function searchForwardUsers(q) {
+  try {
+    const r = await fetch('/api/forum/users/search?q=' + encodeURIComponent(q) + '&limit=10').then(r => r.json());
+    const container = document.getElementById('forwardResults');
+    if (r.status !== 'success' || !r.data || !r.data.length) {
+      container.innerHTML = '<div style="padding:8px 12px;font-size:13px;color:var(--app-muted)">未找到用户</div>';
+      return;
+    }
+    container.innerHTML = r.data.map(u => {
+      const av = u.avatar ? `<img src="${u.avatar}" style="width:28px;height:28px;border-radius:50%;object-fit:cover">` : `<div style="width:28px;height:28px;border-radius:50%;background:var(--app-primary-soft);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">${(u.username||'U')[0].toUpperCase()}</div>`;
+      return `<div class="forum-forward-user" onclick="selectForwardUser(${u.id},'${u.username.replace(/'/g,"\\'")}')" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;cursor:pointer;transition:background .14s">${av}<span style="font-size:13px;font-weight:500">${u.username}</span></div>`;
+    }).join('');
+  } catch(e) { console.error(e); }
+}
+
+function selectForwardUser(id, name) {
+  document.getElementById('forwardReceiver').value = id;
+  document.getElementById('forwardSearch').style.display = 'none';
+  document.getElementById('forwardResults').innerHTML = '';
+  const sel = document.getElementById('forwardSelected');
+  document.getElementById('forwardSelectedName').textContent = '发送给: ' + name;
+  sel.style.display = 'flex';
+}
 
 async function submitForward() {
   const receiver_id = parseInt(document.getElementById('forwardReceiver').value);
-  if (!receiver_id) { alert('请输入接收者用户ID'); return; }
+  if (!receiver_id) { alert('请选择接收者'); return; }
   try {
     const r = await fetch('/api/forum/forward', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({post_id:POST_ID,receiver_id})}).then(r=>r.json());
     if (r.status === 'success') { alert('转发成功'); closeForwardModal(); }

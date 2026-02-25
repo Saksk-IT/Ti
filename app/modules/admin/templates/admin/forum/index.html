@@ -124,8 +124,9 @@ async function loadPosts() {
         <td>${p.comment_count}</td><td>${p.like_count}</td><td>${p.view_count}</td>
         <td>${fmtDate(p.created_at)}</td>
         <td class="actions">
-            <button class="btn-xs btn-secondary" onclick="togglePost(${p.id},'is_pinned')">置顶</button>
-            <button class="btn-xs btn-secondary" onclick="togglePost(${p.id},'is_featured')">精华</button>
+            <button class="btn-xs btn-secondary" onclick="togglePost(${p.id},'is_pinned')">${p.is_pinned?'取消置顶':'置顶'}</button>
+            <button class="btn-xs btn-secondary" onclick="togglePost(${p.id},'is_featured')">${p.is_featured?'取消精华':'精华'}</button>
+            <button class="btn-xs btn-secondary" onclick="togglePost(${p.id},'is_locked')">${p.is_locked?'解锁':'锁定'}</button>
             <button class="btn-xs btn-danger" onclick="delPost(${p.id})">删除</button>
         </td></tr>`).join('');
     const totalPages = Math.ceil(total / per_page);
