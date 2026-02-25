@@ -33,6 +33,15 @@ _TEMPLATE_DIR = Path(__file__).parent / "templates"
 _ASSETS_DIR = Path(__file__).parent / "assets"
 _QR_IMAGE = _ASSETS_DIR / "miniprogram_qr.jpg"
 
+
+def _get_upload_dir() -> Path:
+    """获取上传文件目录。"""
+    try:
+        from flask import current_app
+        return Path(current_app.config["UPLOAD_FOLDER"])
+    except Exception:
+        return Path(__file__).parents[4] / "var" / "uploads"
+
 _TYPE_ORDER = ["single_choice", "multi_choice", "boolean", "fill", "essay"]
 _TYPE_LABELS = {
     "single_choice": "选择题",
@@ -156,6 +165,23 @@ def _render_question(q: dict[str, Any], num: int, p_type: str, include_answer: b
     from markupsafe import escape
     answer_html = str(escape(answer_str)).replace("\n", "<br>") if answer_str else ""
 
+    # 题目图片转 base64
+    image_data_uris: list[str] = []
+    image_paths = q.get("image_paths") or []
+    if image_paths:
+        upload_dir = _get_upload_dir()
+        for rel_path in image_paths:
+            img_file = upload_dir / rel_path
+            if not img_file.is_file():
+                continue
+            try:
+                suffix = img_file.suffix.lower()
+                mime = "image/png" if suffix == ".png" else "image/jpeg"
+                b64 = base64.b64encode(img_file.read_bytes()).decode()
+                image_data_uris.append(f"data:{mime};base64,{b64}")
+            except Exception:
+                pass
+
     return {
         "num": num,
         "content_html": content_html,
@@ -163,6 +189,7 @@ def _render_question(q: dict[str, Any], num: int, p_type: str, include_answer: b
         "answer": answer_str,
         "answer_html": answer_html,
         "analysis_html": analysis_html,
+        "images": image_data_uris,
     }
 
 

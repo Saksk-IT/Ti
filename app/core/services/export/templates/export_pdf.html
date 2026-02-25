@@ -52,6 +52,8 @@
     color: #222;
   }
   .q-content { margin: 4px 0; }
+  .q-images { margin: 6px 0 6px 0.5em; }
+  .q-image { max-width: 90%; max-height: 300px; margin: 4px 0; border-radius: 4px; }
   .options {
     margin: 6px 0 6px 1.2em;
     list-style: none;
@@ -143,6 +145,13 @@
   {% for q in group.questions %}
   <div class="question">
     <div class="q-content"><span class="q-num">{{ q.num }}. </span>{{ q.content_html | safe }}</div>
+    {% if q.images %}
+    <div class="q-images">
+      {% for img_uri in q.images %}
+      <img class="q-image" src="{{ img_uri }}" alt="题目图片">
+      {% endfor %}
+    </div>
+    {% endif %}
     {% if q.options %}
     <ul class="options">
       {% for opt in q.options %}

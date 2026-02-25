@@ -49,6 +49,15 @@ _CLR_PROMO = RGBColor(0x66, 0x66, 0x66)
 _CLR_PROMO_URL = RGBColor(0x2B, 0x6C, 0xB0)
 
 
+def _get_upload_dir() -> Path:
+    """获取上传文件目录。"""
+    try:
+        from flask import current_app
+        return Path(current_app.config["UPLOAD_FOLDER"])
+    except Exception:
+        return Path(__file__).parents[4] / "var" / "uploads"
+
+
 def generate_word(req: ExportRequest, questions: list[dict[str, Any]]) -> ExportResult:
     """生成 Word 文档并返回 ExportResult。"""
     doc = Document()
@@ -244,6 +253,25 @@ def _add_separator(doc: Document) -> None:
     run.font.color.rgb = RGBColor(0xCC, 0xCC, 0xCC)
 
 
+def _add_question_images(doc: Document, image_paths: list[str]) -> None:
+    """在题干后插入题目图片。"""
+    upload_dir = _get_upload_dir()
+    for rel_path in image_paths:
+        img_file = upload_dir / rel_path
+        if not img_file.is_file():
+            continue
+        p = doc.add_paragraph()
+        p.paragraph_format.space_before = Pt(4)
+        p.paragraph_format.space_after = Pt(4)
+        p.paragraph_format.left_indent = Cm(0.5)
+        try:
+            p.add_run().add_picture(str(img_file), width=Cm(12))
+        except Exception:
+            r = p.add_run("[图片加载失败]")
+            r.font.size = Pt(9)
+            r.font.color.rgb = _CLR_ANALYSIS
+
+
 def _add_question(
     doc: Document,
     q: dict[str, Any],
@@ -272,6 +300,11 @@ def _add_question(
     # 题干内容（含代码块检测）
     segments = split_content(content)
     _render_segments_to_paragraph(doc, p, segments)
+
+    # 题目图片
+    image_paths = q.get("image_paths") or []
+    if image_paths:
+        _add_question_images(doc, image_paths)
 
     # 选项
     if options and isinstance(options, list):

@@ -18,6 +18,22 @@ logger = logging.getLogger(__name__)
 MAX_EXPORT_QUESTIONS = None  # 不限制导出数量
 
 
+def _parse_image_paths(raw: Any) -> list[str]:
+    """将 image_path 字段解析为相对路径列表。"""
+    if not raw:
+        return []
+    s = str(raw).strip()
+    if not s or s == "[]":
+        return []
+    if s.startswith("["):
+        try:
+            paths = json.loads(s)
+            return [p for p in paths if p and isinstance(p, str)]
+        except Exception:
+            return []
+    return [s]
+
+
 def _safe_load(raw: Any, default: Any) -> Any:
     if raw is None:
         return default
@@ -94,6 +110,7 @@ def fetch_export_questions(req: ExportRequest) -> list[dict[str, Any]]:
             "analysis": q.get("analysis") or q.get("explanation") or "",
             "tags": _safe_load(q.get("tags"), []),
             "difficulty": int(q.get("difficulty") or 1),
+            "image_paths": _parse_image_paths(q.get("image_path")),
         })
 
     return questions
