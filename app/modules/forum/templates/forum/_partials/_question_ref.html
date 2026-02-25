@@ -1,0 +1,4 @@
+<div class="forum-question-ref" style="background:var(--app-primary-soft);border-radius:var(--app-radius-sm);padding:12px;margin:8px 0;border:0.5px solid var(--app-border);">
+  <div style="font-size:12px;color:var(--app-muted);margin-bottom:4px;">引用题目</div>
+  <div style="font-size:14px;color:var(--app-text);">{{ question.content[:100] }}{% if question.content|length > 100 %}...{% endif %}</div>
+</div>

@@ -1,0 +1,152 @@
+{% extends "admin/admin_base.html" %}
+{% block title %}论坛管理 - 后台管理{% endblock %}
+{% block head %}
+<style>
+    .forum-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .stat-card { background: var(--card-bg); border: 0.5px solid var(--border-color); border-radius: var(--radius-md); padding: 24px; }
+    .stat-card .label { font-size: 13px; color: var(--text-sub); margin-bottom: 8px; }
+    .stat-card .value { font-size: 28px; font-weight: 600; }
+    .tabs { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 0.5px solid var(--border-color); padding-bottom: 0; }
+    .tabs button { padding: 10px 20px; border: none; background: none; color: var(--text-sub); cursor: pointer; font-size: 14px; font-weight: 500; border-bottom: 2px solid transparent; border-radius: 0; min-height: auto; }
+    .tabs button:hover { color: var(--text-color); background: none; transform: none; box-shadow: none; }
+    .tabs button.active { color: var(--primary); border-bottom-color: var(--primary); background: none; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .toolbar { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; flex-wrap: wrap; }
+    .toolbar input[type="text"] { padding: 8px 14px; border: 0.5px solid var(--border-color); border-radius: var(--radius-sm); background: var(--card-bg); color: var(--text-color); font-size: 14px; min-width: 240px; }
+    table { width: 100%; border-collapse: collapse; background: var(--card-bg); border-radius: var(--radius-md); overflow: hidden; border: 0.5px solid var(--border-color); }
+    th, td { padding: 12px 16px; text-align: left; font-size: 14px; border-bottom: 0.5px solid var(--border-color); }
+    th { font-weight: 600; color: var(--text-sub); font-size: 13px; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 500; }
+    .badge-pin { background: rgba(255, 149, 0, 0.12); color: var(--warning); }
+    .badge-feat { background: rgba(52, 199, 89, 0.12); color: var(--success); }
+    .badge-lock { background: rgba(255, 59, 48, 0.12); color: var(--danger); }
+    .badge-subject { background: var(--primary-light); color: var(--primary); }
+    .badge-custom { background: rgba(142,142,147,0.12); color: var(--text-sub); }
+    .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .actions button { padding: 4px 10px; min-height: 28px; font-size: 12px; }
+    .pagination { display: flex; gap: 8px; justify-content: center; margin-top: 20px; align-items: center; }
+    .pagination button { padding: 6px 14px; min-height: 32px; font-size: 13px; }
+    .empty { text-align: center; padding: 48px; color: var(--text-sub); }
+    /* 版块表单 */
+    .board-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; padding: 20px; background: var(--card-bg); border: 0.5px solid var(--border-color); border-radius: var(--radius-md); }
+    .board-form label { font-size: 13px; color: var(--text-sub); margin-bottom: 4px; display: block; }
+    .board-form input, .board-form textarea { width: 100%; padding: 8px 12px; border: 0.5px solid var(--border-color); border-radius: var(--radius-sm); background: var(--card-bg-solid); color: var(--text-color); font-size: 14px; box-sizing: border-box; }
+    .board-form .full { grid-column: 1 / -1; }
+</style>
+{% endblock %}
+{% block content %}
+<h2 style="margin:0 0 24px;font-size:22px;font-weight:600;">论坛管理</h2>
+<div class="forum-stats" id="statsContainer"></div>
+<div class="tabs">
+    <button class="active" onclick="switchTab('posts')">帖子管理</button>
+    <button onclick="switchTab('boards')">版块管理</button>
+</div>
+<!-- 帖子管理 -->
+<div id="tab-posts" class="tab-panel active">
+    <div class="toolbar">
+        <input type="text" id="postKeyword" placeholder="搜索标题或作者..." onkeydown="if(event.key==='Enter')loadPosts()">
+        <button class="btn btn-sm btn-secondary" onclick="loadPosts()">搜索</button>
+    </div>
+    <div id="postsTable"></div>
+</div>
+<!-- 版块管理 -->
+<div id="tab-boards" class="tab-panel">
+    <div class="toolbar">
+        <button class="btn btn-sm btn-primary" onclick="toggleBoardForm()">新增版块</button>
+        <button class="btn btn-sm btn-secondary" onclick="syncBoards()">同步科目版块</button>
+    </div>
+    <div id="boardForm" style="display:none"></div>
+    <div id="boardsTable"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+let postPage = 1;
+const api = path => fetch('/admin/api' + path).then(r => r.json());
+const apiPost = (path, body) => fetch('/admin/api' + path, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json());
+const apiPut = (path, body) => fetch('/admin/api' + path, {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json());
+const apiDel = path => fetch('/admin/api' + path, {method:'DELETE'}).then(r=>r.json());
+
+function switchTab(name) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    event.target.classList.add('active');
+    if (name === 'boards') loadBoards();
+}
+
+async function loadStats() {
+    const r = await api('/forum/stats');
+    if (r.status !== 'success') return;
+    const d = r.data;
+    document.getElementById('statsContainer').innerHTML = [
+        {l:'帖子总数',v:d.post_count},{l:'评论总数',v:d.comment_count},
+        {l:'今日新帖',v:d.today_posts},{l:'活跃版块',v:d.board_count}
+    ].map(s => `<div class="stat-card"><div class="label">${s.l}</div><div class="value">${s.v}</div></div>`).join('');
+}
+
+async function loadPosts() {
+    const kw = document.getElementById('postKeyword').value.trim();
+    const r = await api(`/forum/posts?page=${postPage}&per_page=20&keyword=${encodeURIComponent(kw)}`);
+    if (r.status !== 'success') { document.getElementById('postsTable').innerHTML = '<div class="empty">加载失败</div>'; return; }
+    const {posts, total, page, per_page} = r.data;
+    if (!posts.length) { document.getElementById('postsTable').innerHTML = '<div class="empty">暂无帖子</div>'; return; }
+    const rows = posts.map(p => `<tr>
+        <td>${p.id}</td><td>${esc(p.title)} ${p.is_pinned?'<span class="badge badge-pin">置顶</span>':''} ${p.is_featured?'<span class="badge badge-feat">精华</span>':''} ${p.is_locked?'<span class="badge badge-lock">锁定</span>':''}</td>
+        <td>${esc(p.author_name)}</td><td>${esc(p.board_name)}</td>
+        <td>${p.comment_count}</td><td>${p.like_count}</td><td>${p.view_count}</td>
+        <td>${fmtDate(p.created_at)}</td>
+        <td class="actions">
+            <button class="btn-xs btn-secondary" onclick="togglePost(${p.id},'is_pinned')">置顶</button>
+            <button class="btn-xs btn-secondary" onclick="togglePost(${p.id},'is_featured')">精华</button>
+            <button class="btn-xs btn-danger" onclick="delPost(${p.id})">删除</button>
+        </td></tr>`).join('');
+    const totalPages = Math.ceil(total / per_page);
+    document.getElementById('postsTable').innerHTML = `<table><thead><tr><th>ID</th><th>标题</th><th>作者</th><th>版块</th><th>评论</th><th>点赞</th><th>浏览</th><th>时间</th><th>操作</th></tr></thead><tbody>${rows}</tbody></table>
+        <div class="pagination">${page>1?`<button class="btn-sm btn-secondary" onclick="postPage--;loadPosts()">上一页</button>`:''}<span>第${page}/${totalPages}页</span>${page<totalPages?`<button class="btn-sm btn-secondary" onclick="postPage++;loadPosts()">下一页</button>`:''}</div>`;
+}
+
+async function togglePost(id, field) { await apiPost(`/forum/posts/${id}/toggle`, {field}); loadPosts(); loadStats(); }
+async function delPost(id) { if(!confirm('确定删除？'))return; await apiDel(`/forum/posts/${id}`); loadPosts(); loadStats(); }
+
+async function loadBoards() {
+    const r = await api('/forum/boards');
+    if (r.status !== 'success') return;
+    const boards = r.data.boards;
+    if (!boards.length) { document.getElementById('boardsTable').innerHTML = '<div class="empty">暂无版块</div>'; return; }
+    const rows = boards.map(b => `<tr>
+        <td>${b.id}</td><td>${esc(b.name)}</td><td>${esc(b.slug)}</td>
+        <td><span class="badge ${b.board_type==='subject'?'badge-subject':'badge-custom'}">${b.board_type==='subject'?'科目':'自定义'}</span></td>
+        <td>${b.post_count||0}</td><td>${b.is_active?'是':'否'}</td><td>${b.sort_order}</td>
+        <td class="actions">${b.board_type==='custom'?`<button class="btn-xs btn-danger" onclick="delBoard(${b.id})">删除</button>`:''}</td>
+    </tr>`).join('');
+    document.getElementById('boardsTable').innerHTML = `<table><thead><tr><th>ID</th><th>名称</th><th>标识</th><th>类型</th><th>帖子数</th><th>启用</th><th>排序</th><th>操作</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function toggleBoardForm() {
+    const el = document.getElementById('boardForm');
+    if (el.style.display === 'none') {
+        el.style.display = 'block';
+        el.innerHTML = `<div class="board-form"><div><label>名称</label><input id="bf_name"></div><div><label>标识(slug)</label><input id="bf_slug"></div><div class="full"><label>描述</label><input id="bf_desc"></div><div><label>排序</label><input id="bf_sort" type="number" value="0"></div><div style="display:flex;align-items:end"><button class="btn btn-sm btn-primary" onclick="createBoard()">创建</button></div></div>`;
+    } else { el.style.display = 'none'; }
+}
+
+async function createBoard() {
+    const name = document.getElementById('bf_name').value.trim();
+    const slug = document.getElementById('bf_slug').value.trim();
+    if (!name || !slug) { alert('名称和标识不能为空'); return; }
+    await apiPost('/forum/boards', {name, slug, description: document.getElementById('bf_desc').value, sort_order: parseInt(document.getElementById('bf_sort').value)||0});
+    document.getElementById('boardForm').style.display = 'none';
+    loadBoards(); loadStats();
+}
+
+async function delBoard(id) { if(!confirm('确定删除？'))return; await apiDel(`/forum/boards/${id}`); loadBoards(); }
+async function syncBoards() { const r = await apiPost('/forum/boards/sync',{}); alert(r.message||'完成'); loadBoards(); }
+
+function esc(s) { const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+function fmtDate(s) { if(!s)return'-'; const d=new Date(s); return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
+
+loadStats(); loadPosts();
+</script>
+{% endblock %}

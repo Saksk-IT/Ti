@@ -1,0 +1,40 @@
+{% extends "main/shared/app_shell.html" %}
+
+{% block title %}SAK · 社区{% endblock %}
+{% block page_title %}社区{% endblock %}
+
+{% block head_extra %}
+{% include "forum/_styles.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="forum-container">
+  <!-- 版块导航 -->
+  <div class="forum-boards-bar" id="boardsBar">
+    <button class="board-chip active" data-board-id="" onclick="selectBoard(this, '')">全部</button>
+  </div>
+
+  <!-- 排序 -->
+  <div class="forum-toolbar">
+    <div class="forum-sort">
+      <button class="sort-btn active" data-sort="latest" onclick="setSort(this,'latest')">最新</button>
+      <button class="sort-btn" data-sort="hot" onclick="setSort(this,'hot')">最热</button>
+      <button class="sort-btn" data-sort="active" onclick="setSort(this,'active')">活跃</button>
+    </div>
+    <a href="/community/new" class="forum-new-btn">发帖</a>
+  </div>
+
+  <!-- 帖子列表 -->
+  <div class="forum-posts" id="postsList"></div>
+
+  <!-- 加载更多 -->
+  <div class="forum-load-more" id="loadMore" style="display:none">
+    <button class="btn-load-more" onclick="loadMore()">加载更多</button>
+  </div>
+  <div class="forum-empty" id="emptyState" style="display:none">还没有帖子，来发第一帖吧</div>
+</div>
+{% endblock %}
+
+{% block body_end %}
+{% include "forum/_scripts/_forum_core.html" %}
+{% endblock %}

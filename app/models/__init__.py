@@ -24,6 +24,7 @@ from .user_bank import (
     UserBankMistake, PublicBankUser, UserBankFavorite,
 )
 from .study import StudyLearning, StudyReview
+from .forum import ForumBoard, ForumPost, ForumComment, ForumLike, ForumFavorite
 from .system import (
     SystemConfig, UserSubject, UserQuestionTagItem,
     DuplicateCheckRecord, ReinforceSimilarCache, SchemaMigration,
@@ -54,6 +55,8 @@ __all__ = [
     'UserBankMistake', 'PublicBankUser', 'UserBankFavorite',
     # study
     'StudyLearning', 'StudyReview',
+    # forum
+    'ForumBoard', 'ForumPost', 'ForumComment', 'ForumLike', 'ForumFavorite',
     # system
     'SystemConfig', 'UserSubject', 'UserQuestionTagItem',
     'DuplicateCheckRecord', 'ReinforceSimilarCache', 'SchemaMigration',

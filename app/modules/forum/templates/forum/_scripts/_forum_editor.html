@@ -1,0 +1,76 @@
+<script>
+const FORUM_API = '/api/forum';
+let uploadedImages = [];
+
+async function loadBoardOptions() {
+  try {
+    const r = await fetch(FORUM_API + '/boards').then(r => r.json());
+    if (r.status !== 'success') return;
+    const sel = document.getElementById('boardSelect');
+    sel.innerHTML = '<option value="">选择版块</option>' +
+      r.data.boards.map(b => `<option value="${b.id}" ${INIT_BOARD_ID == b.id ? 'selected' : ''}>${b.name}</option>`).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function loadPostForEdit() {
+  if (!EDITING || !EDIT_POST_ID) return;
+  try {
+    const r = await fetch(FORUM_API + '/posts/' + EDIT_POST_ID).then(r => r.json());
+    if (r.status !== 'success') return;
+    const p = r.data;
+    document.getElementById('postTitle').value = p.title || '';
+    document.getElementById('editorContent').innerHTML = p.content || '';
+    document.getElementById('boardSelect').value = p.board_id;
+    if (p.images && p.images.length) { uploadedImages = p.images; renderImagePreviews(); }
+  } catch(e) { console.error(e); }
+}
+
+function execCmd(cmd) { document.execCommand(cmd, false, null); }
+function insertLink() {
+  const url = prompt('输入链接地址:');
+  if (url) document.execCommand('createLink', false, url);
+}
+
+async function uploadImages(files) {
+  for (const file of files) {
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const r = await fetch(FORUM_API + '/upload/image', {method: 'POST', body: fd}).then(r => r.json());
+      if (r.status === 'success') { uploadedImages.push(r.data.url); renderImagePreviews(); }
+      else alert(r.message || '上传失败');
+    } catch(e) { alert('上传失败'); }
+  }
+}
+
+function renderImagePreviews() {
+  const el = document.getElementById('imagePreview');
+  el.innerHTML = uploadedImages.map((url, i) =>
+    `<div class="img-item"><img src="${url}" alt=""><button class="img-remove" onclick="removeImage(${i})">×</button></div>`
+  ).join('');
+}
+
+function removeImage(idx) { uploadedImages.splice(idx, 1); renderImagePreviews(); }
+
+async function submitPost() {
+  const title = document.getElementById('postTitle').value.trim();
+  const boardId = document.getElementById('boardSelect').value;
+  const content = document.getElementById('editorContent').innerHTML.trim();
+  if (!title) { alert('请输入标题'); return; }
+  if (!boardId) { alert('请选择版块'); return; }
+
+  const body = {title, board_id: parseInt(boardId), content, images: uploadedImages};
+  const url = EDITING ? FORUM_API + '/posts/' + EDIT_POST_ID : FORUM_API + '/posts';
+  const method = EDITING ? 'PUT' : 'POST';
+
+  try {
+    const r = await fetch(url, {method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)}).then(r => r.json());
+    if (r.status === 'success') {
+      const pid = EDITING ? EDIT_POST_ID : (r.data && r.data.id);
+      location.href = pid ? '/community/post/' + pid : '/community';
+    } else { alert(r.message || '操作失败'); }
+  } catch(e) { alert('操作失败'); }
+}
+
+loadBoardOptions(); loadPostForEdit();
+</script>

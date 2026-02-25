@@ -1,0 +1,32 @@
+{% extends "main/shared/app_shell.html" %}
+
+{% block title %}SAK · 帖子{% endblock %}
+{% block page_title %}帖子详情{% endblock %}
+
+{% block head_extra %}
+{% include "forum/_styles.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="forum-container forum-detail-container">
+  <div id="postContent" class="forum-post-content"></div>
+  <div class="forum-actions-bar" id="actionsBar"></div>
+  <div class="forum-comments-section">
+    <h3 class="forum-section-title">评论</h3>
+    <div id="commentsList"></div>
+    <div class="forum-load-more" id="commentsLoadMore" style="display:none">
+      <button class="btn-load-more" onclick="loadMoreComments()">加载更多评论</button>
+    </div>
+  </div>
+  <div class="forum-comment-input" id="commentInput">
+    <textarea id="commentText" placeholder="写下你的评论..." rows="3"></textarea>
+    <button class="forum-submit-btn" onclick="submitComment()">发表</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block body_end %}
+<script>const POST_ID = {{ post_id }};</script>
+{% include "forum/_scripts/_forum_comments.html" %}
+{% include "forum/_scripts/_forum_interactions.html" %}
+{% endblock %}

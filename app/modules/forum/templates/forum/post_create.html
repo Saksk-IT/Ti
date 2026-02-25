@@ -1,0 +1,48 @@
+{% extends "main/shared/app_shell.html" %}
+
+{% block title %}SAK · {{ '编辑帖子' if editing else '发帖' }}{% endblock %}
+{% block page_title %}{{ '编辑帖子' if editing else '发帖' }}{% endblock %}
+
+{% block head_extra %}
+{% include "forum/_styles.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="forum-container forum-editor-container">
+  <div class="forum-form-group">
+    <label>版块</label>
+    <select id="boardSelect"></select>
+  </div>
+  <div class="forum-form-group">
+    <label>标题</label>
+    <input type="text" id="postTitle" maxlength="200" placeholder="请输入标题">
+  </div>
+  <div class="forum-form-group">
+    <label>内容</label>
+    {% include "forum/_partials/_editor.html" %}
+  </div>
+  <div class="forum-form-group">
+    <label>图片</label>
+    <div class="forum-image-upload">
+      <div id="imagePreview" class="forum-image-grid"></div>
+      <label class="forum-upload-btn">
+        <input type="file" accept="image/*" multiple onchange="uploadImages(this.files)" style="display:none">
+        + 添加图片
+      </label>
+    </div>
+  </div>
+  <div class="forum-form-actions">
+    <button class="forum-submit-btn" onclick="submitPost()">{{ '保存' if editing else '发布' }}</button>
+    <button class="forum-cancel-btn" onclick="history.back()">取消</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block body_end %}
+<script>
+const EDITING = {{ 'true' if editing else 'false' }};
+const EDIT_POST_ID = {{ post_id if editing else 'null' }};
+const INIT_BOARD_ID = {{ board_id or 'null' }};
+</script>
+{% include "forum/_scripts/_forum_editor.html" %}
+{% endblock %}

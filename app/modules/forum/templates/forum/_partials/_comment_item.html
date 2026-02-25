@@ -1,0 +1,16 @@
+<div class="forum-comment" id="comment-{{ comment.id }}">
+  <div class="comment-header">
+    {% if comment.author_avatar %}
+    <img class="forum-avatar" src="{{ comment.author_avatar }}" alt="">
+    {% else %}
+    <div class="forum-avatar"></div>
+    {% endif %}
+    <span style="font-weight:500">{{ comment.author_name }}</span>
+    <span style="font-size:12px;color:var(--app-muted);margin-left:auto">{{ comment.created_at }}</span>
+  </div>
+  <div class="comment-body">{{ comment.content }}</div>
+  <div class="comment-footer">
+    <button onclick="setReply({{ comment.id }},{{ comment.author_id }},'{{ comment.author_name }}')">回复</button>
+    <button>&#10084; {{ comment.like_count or 0 }}</button>
+  </div>
+</div>

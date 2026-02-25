@@ -1,0 +1,52 @@
+<script>
+// 帖子详情页：加载帖子 + 互动按钮
+async function loadPostDetail() {
+  try {
+    const r = await fetch(`/api/forum/posts/${POST_ID}`).then(r => r.json());
+    if (r.status !== 'success') { document.getElementById('postContent').innerHTML = '<div class="forum-empty">帖子不存在</div>'; return; }
+    const p = r.data;
+    const avatar = p.author_avatar ? `<img class="forum-avatar" src="${p.author_avatar}" alt="">` : '<div class="forum-avatar"></div>';
+    const badges = (p.is_pinned ? '<span class="forum-badge forum-badge-pin">置顶</span>' : '') +
+                   (p.is_featured ? '<span class="forum-badge forum-badge-feat">精华</span>' : '');
+    const imgs = (p.images && p.images.length) ? p.images.map(u => `<img src="${u}" alt="" style="max-width:100%;border-radius:8px;margin:8px 0">`).join('') : '';
+
+    document.getElementById('postContent').innerHTML = `
+      <div class="forum-post-header">${avatar}<div class="forum-post-meta"><span class="author">${p.author_name}</span> · ${new Date(p.created_at).toLocaleString('zh-CN')}<span class="forum-board-tag">${p.board_name}</span></div></div>
+      <div class="post-title">${badges}${p.title}</div>
+      <div class="post-body">${p.content}${imgs}</div>
+      <div class="forum-post-stats" style="margin-top:16px"><span>&#128065; ${p.view_count||0} 浏览</span></div>`;
+
+    const liked = p.liked ? ' active' : '';
+    const faved = p.favorited ? ' active' : '';
+    document.getElementById('actionsBar').innerHTML = `
+      <button class="forum-action-btn${liked}" id="likeBtn" onclick="toggleLike()">&#10084; <span id="likeCount">${p.like_count||0}</span></button>
+      <button class="forum-action-btn${faved}" id="favBtn" onclick="toggleFav()">&#9733; <span id="favCount">${p.favorite_count||0}</span></button>`;
+  } catch(e) { console.error(e); }
+}
+
+async function toggleLike() {
+  try {
+    const r = await fetch('/api/forum/like', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_type:'post',target_id:POST_ID})}).then(r=>r.json());
+    if (r.status === 'success') {
+      const btn = document.getElementById('likeBtn');
+      btn.classList.toggle('active', r.data.liked);
+      const cnt = document.getElementById('likeCount');
+      cnt.textContent = parseInt(cnt.textContent) + (r.data.liked ? 1 : -1);
+    }
+  } catch(e) {}
+}
+
+async function toggleFav() {
+  try {
+    const r = await fetch('/api/forum/favorite', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({post_id:POST_ID})}).then(r=>r.json());
+    if (r.status === 'success') {
+      const btn = document.getElementById('favBtn');
+      btn.classList.toggle('active', r.data.favorited);
+      const cnt = document.getElementById('favCount');
+      cnt.textContent = parseInt(cnt.textContent) + (r.data.favorited ? 1 : -1);
+    }
+  } catch(e) {}
+}
+
+loadPostDetail();
+</script>

@@ -203,3 +203,9 @@ def admin_limit_settings_page():
 def admin_permissions_page():
     """权限管理页面"""
     return render_template('admin/permissions/index.html')
+
+
+@admin_pages_bp.route('/forum')
+def admin_forum_page():
+    """论坛管理页面"""
+    return render_template('admin/forum/index.html')

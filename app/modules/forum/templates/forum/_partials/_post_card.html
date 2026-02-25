@@ -1,0 +1,24 @@
+<div class="forum-post-card" onclick="location.href='/community/post/{{ post.id }}'">
+  <div class="forum-post-header">
+    {% if post.author_avatar %}
+    <img class="forum-avatar" src="{{ post.author_avatar }}" alt="">
+    {% else %}
+    <div class="forum-avatar"></div>
+    {% endif %}
+    <div class="forum-post-meta">
+      <span class="author">{{ post.author_name }}</span> · {{ post.created_at }}
+      <span class="forum-board-tag">{{ post.board_name }}</span>
+    </div>
+  </div>
+  <div class="forum-post-title">
+    {% if post.is_pinned %}<span class="forum-badge forum-badge-pin">置顶</span>{% endif %}
+    {% if post.is_featured %}<span class="forum-badge forum-badge-feat">精华</span>{% endif %}
+    {{ post.title }}
+  </div>
+  <div class="forum-post-preview">{{ post.content_preview }}</div>
+  <div class="forum-post-stats">
+    <span>&#128172; {{ post.comment_count or 0 }}</span>
+    <span>&#10084; {{ post.like_count or 0 }}</span>
+    <span>&#128065; {{ post.view_count or 0 }}</span>
+  </div>
+</div>

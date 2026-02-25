@@ -1,0 +1,99 @@
+<script>
+const API = '/api/forum';
+let currentBoard = (typeof FIXED_BOARD_ID !== 'undefined') ? FIXED_BOARD_ID : '';
+let currentSort = 'latest';
+let currentPage = 1;
+let totalPages = 1;
+let allPosts = [];
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+function fmtTime(s) { if (!s) return ''; const d = new Date(s); const now = new Date(); const diff = (now - d) / 1000;
+  if (diff < 60) return '刚刚'; if (diff < 3600) return Math.floor(diff/60) + '分钟前';
+  if (diff < 86400) return Math.floor(diff/3600) + '小时前';
+  if (diff < 604800) return Math.floor(diff/86400) + '天前';
+  return `${d.getMonth()+1}/${d.getDate()}`; }
+
+function renderPostCard(p) {
+  const badges = (p.is_pinned ? '<span class="forum-badge forum-badge-pin">置顶</span>' : '') +
+                 (p.is_featured ? '<span class="forum-badge forum-badge-feat">精华</span>' : '');
+  const imgs = (p.images && p.images.length) ? `<div class="forum-post-images">${p.images.slice(0,3).map(u=>`<img src="${esc(u)}" alt="" loading="lazy">`).join('')}</div>` : '';
+  const avatar = p.author_avatar ? `<img class="forum-avatar" src="${esc(p.author_avatar)}" alt="">` : '<div class="forum-avatar"></div>';
+  return `<div class="forum-post-card" onclick="location.href='/community/post/${p.id}'">
+    <div class="forum-post-header">${avatar}<div class="forum-post-meta"><span class="author">${esc(p.author_name)}</span> · ${fmtTime(p.created_at)}<span class="forum-board-tag">${esc(p.board_name)}</span></div></div>
+    <div class="forum-post-title">${badges}${esc(p.title)}</div>
+    <div class="forum-post-preview">${esc(p.content_preview)}</div>${imgs}
+    <div class="forum-post-stats"><span>&#128172; ${p.comment_count||0}</span><span>&#10084; ${p.like_count||0}</span><span>&#128065; ${p.view_count||0}</span></div>
+  </div>`;
+}
+
+async function loadBoards() {
+  const bar = document.getElementById('boardsBar');
+  if (!bar) return;
+  try {
+    const r = await fetch(API + '/boards').then(r => r.json());
+    if (r.status !== 'success') return;
+    const chips = r.data.boards.map(b =>
+      `<button class="board-chip${currentBoard == b.id ? ' active' : ''}" data-board-id="${b.id}" onclick="selectBoard(this,'${b.id}')">${esc(b.name)}</button>`
+    ).join('');
+    bar.innerHTML = `<button class="board-chip${!currentBoard ? ' active' : ''}" data-board-id="" onclick="selectBoard(this,'')">全部</button>` + chips;
+  } catch(e) { console.error(e); }
+}
+
+function selectBoard(el, boardId) {
+  currentBoard = boardId; currentPage = 1;
+  document.querySelectorAll('.board-chip').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  loadPosts();
+}
+
+function setSort(el, sort) {
+  currentSort = sort; currentPage = 1;
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  loadPosts();
+}
+
+async function loadPosts() {
+  const isFav = typeof IS_FAVORITES_PAGE !== 'undefined' && IS_FAVORITES_PAGE;
+  let url = isFav ? API + '/my/favorites' : API + '/posts';
+  const params = new URLSearchParams({page: currentPage, per_page: 20, sort: currentSort});
+  if (currentBoard) params.set('board_id', currentBoard);
+  url += '?' + params.toString();
+
+  try {
+    const r = await fetch(url).then(r => r.json());
+    if (r.status !== 'success') return;
+    const data = r.data;
+    totalPages = Math.ceil(data.total / data.per_page);
+    const list = document.getElementById('postsList');
+    const empty = document.getElementById('emptyState');
+    const more = document.getElementById('loadMore');
+
+    if (currentPage === 1) allPosts = [];
+    allPosts = allPosts.concat(data.posts);
+
+    if (!allPosts.length) { list.innerHTML = ''; empty.style.display = 'block'; more.style.display = 'none'; return; }
+    empty.style.display = 'none';
+    list.innerHTML = allPosts.map(renderPostCard).join('');
+    more.style.display = currentPage < totalPages ? 'block' : 'none';
+  } catch(e) { console.error(e); }
+}
+
+function loadMore() { currentPage++; loadPosts(); }
+
+// 版块详情页 header
+async function loadBoardHeader() {
+  if (typeof FIXED_BOARD_ID === 'undefined') return;
+  try {
+    const r = await fetch(API + '/boards').then(r => r.json());
+    if (r.status !== 'success') return;
+    const b = r.data.boards.find(x => x.id == FIXED_BOARD_ID);
+    if (!b) return;
+    const el = document.getElementById('boardHeader');
+    if (el) el.innerHTML = `<h2>${esc(b.name)}</h2><p>${esc(b.description)}</p>`;
+  } catch(e) {}
+}
+
+// 初始化
+loadBoards(); loadPosts(); loadBoardHeader();
+</script>

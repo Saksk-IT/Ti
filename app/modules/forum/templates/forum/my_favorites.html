@@ -1,0 +1,23 @@
+{% extends "main/shared/app_shell.html" %}
+
+{% block title %}SAK · 我的收藏{% endblock %}
+{% block page_title %}我的收藏{% endblock %}
+
+{% block head_extra %}
+{% include "forum/_styles.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="forum-container">
+  <div class="forum-posts" id="postsList"></div>
+  <div class="forum-load-more" id="loadMore" style="display:none">
+    <button class="btn-load-more" onclick="loadMore()">加载更多</button>
+  </div>
+  <div class="forum-empty" id="emptyState" style="display:none">还没有收藏的帖子</div>
+</div>
+{% endblock %}
+
+{% block body_end %}
+<script>const IS_FAVORITES_PAGE = true;</script>
+{% include "forum/_scripts/_forum_core.html" %}
+{% endblock %}
