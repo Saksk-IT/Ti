@@ -3,6 +3,7 @@ import { checkLogin } from '../../utils/auth';
 import { safeNavigate } from '../../utils/nav';
 import { syncUserSettingsToServer } from '../../utils/user-settings';
 import { createQuizSource } from '../../utils/quiz-source';
+import { getApiBaseUrl } from '../../utils/url-utils';
 import { themeManager, ThemeMode, ThemeStyle } from '../../utils/theme';
 import { requestStateBehavior } from '../../behaviors/request-state';
 import { createSetDataBatcher } from '../../utils/set-data-batcher';
@@ -1709,7 +1710,6 @@ Page({
     this.patchData({ exportBusy: true, exportProgress: 0, exportError: '' });
 
     try {
-      const { getApiBaseUrl } = require('../../utils/url-utils');
       const baseUrl = getApiBaseUrl();
       const token = wx.getStorageSync('token') || '';
 

@@ -405,7 +405,7 @@
             <view class="card-head">
               <view class="card-head-left">
                 <text class="card-title">导出</text>
-                <text class="card-sub">选择范围和格式，导出为 Word 文档。</text>
+                <text class="card-sub">选择范围和格式，导出为 Word 或 PDF 文档。</text>
               </view>
             </view>
 
@@ -439,31 +439,33 @@
               <view class="start-error" wx:if="{{exportError}}"><text>{{exportError}}</text></view>
             </view>
 
-            <view class="adv-section" aria-label="导出题型">
-              <text class="adv-label">题型</text>
-              <view class="chips chips-scroll">
-                <view class="chip {{exportType==='all' ? 'active' : ''}}" bindtap="onExportTypeTap" data-type="all"><text>全部题型</text></view>
-                <view class="chip {{exportType===item ? 'active' : ''}}" wx:for="{{types}}" wx:key="*this" bindtap="onExportTypeTap" data-type="{{item}}">
-                  <text>{{item}}</text>
+            <view class="export-settings">
+              <view class="adv-section" aria-label="导出题型">
+                <text class="adv-label">题型</text>
+                <view class="chips chips-scroll">
+                  <view class="chip {{exportType==='all' ? 'active' : ''}}" bindtap="onExportTypeTap" data-type="all"><text>全部题型</text></view>
+                  <view class="chip {{exportType===item ? 'active' : ''}}" wx:for="{{types}}" wx:key="*this" bindtap="onExportTypeTap" data-type="{{item}}">
+                    <text>{{item}}</text>
+                  </view>
                 </view>
               </view>
-            </view>
 
-            <view class="adv-section" aria-label="导出标签">
-              <text class="adv-label">标签</text>
-              <view class="chips chips-scroll">
-                <view class="chip {{exportTag==='all' ? 'active' : ''}}" bindtap="onExportTagTap" data-tag="all"><text>全部标签</text></view>
-                <view class="chip {{exportTag===item.name ? 'active' : ''}}" wx:for="{{tags}}" wx:key="name" bindtap="onExportTagTap" data-tag="{{item.name}}">
-                  <text>{{item.name}}</text>
+              <view class="adv-section" aria-label="导出标签">
+                <text class="adv-label">标签</text>
+                <view class="chips chips-scroll">
+                  <view class="chip {{exportTag==='all' ? 'active' : ''}}" bindtap="onExportTagTap" data-tag="all"><text>全部标签</text></view>
+                  <view class="chip {{exportTag===item.name ? 'active' : ''}}" wx:for="{{tags}}" wx:key="name" bindtap="onExportTagTap" data-tag="{{item.name}}">
+                    <text>{{item.name}}</text>
+                  </view>
                 </view>
               </view>
-            </view>
 
-            <view class="adv-section" aria-label="答案模式">
-              <text class="adv-label">答案</text>
-              <view class="chips">
-                <view class="chip {{exportAnswer==='yes' ? 'active' : ''}}" bindtap="onExportAnswerTap" data-answer="yes"><text>包含答案和解析</text></view>
-                <view class="chip {{exportAnswer==='no' ? 'active' : ''}}" bindtap="onExportAnswerTap" data-answer="no"><text>仅题目</text></view>
+              <view class="adv-section" aria-label="答案模式">
+                <text class="adv-label">答案</text>
+                <view class="chips">
+                  <view class="chip {{exportAnswer==='yes' ? 'active' : ''}}" bindtap="onExportAnswerTap" data-answer="yes"><text>含答案和解析</text></view>
+                  <view class="chip {{exportAnswer==='no' ? 'active' : ''}}" bindtap="onExportAnswerTap" data-answer="no"><text>仅题目</text></view>
+                </view>
               </view>
             </view>
 
