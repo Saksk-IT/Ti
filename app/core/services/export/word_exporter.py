@@ -17,7 +17,7 @@ from app.core.utils.portable_question_format import (
     normalize_portable_type,
 )
 
-from .base import ExportRequest, ExportResult
+from .base import ExportRequest, ExportResult, build_filename
 from .formatter import ContentSegment, split_content
 
 # 颜色常量
@@ -78,8 +78,7 @@ def generate_word(req: ExportRequest, questions: list[dict[str, Any]]) -> Export
     doc.save(buf)
     buf.seek(0)
 
-    date_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"{req.subject_name}_导出_{date_str}.docx"
+    filename = build_filename(req, "docx")
 
     return ExportResult(
         buffer=buf,
@@ -209,13 +208,13 @@ def _add_question(
         ep.paragraph_format.space_before = Pt(2)
         elabel = ep.add_run("解析：")
         elabel.font.size = Pt(10)
-        elabel.font.italic = True
+        elabel.font.bold = True
         elabel.font.color.rgb = _CLR_ANALYSIS
         elabel.font.name = "微软雅黑"
         elabel.element.rPr.rFonts.set(qn("w:eastAsia"), "微软雅黑")
 
         analysis_segs = split_content(analysis)
-        _render_segments_to_paragraph(doc, ep, analysis_segs, font_size=Pt(10), italic=True, color=_CLR_ANALYSIS)
+        _render_segments_to_paragraph(doc, ep, analysis_segs, font_size=Pt(10), color=_CLR_ANALYSIS)
 
 
 def _render_segments_to_paragraph(

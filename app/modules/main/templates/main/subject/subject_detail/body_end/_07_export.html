@@ -87,8 +87,11 @@
       exportBusy = true;
       var wordBtn = document.getElementById('btnExportWord');
       var pdfBtn = document.getElementById('btnExportPdf');
+      var activeBtn = fmt === 'pdf' ? pdfBtn : wordBtn;
+      var activeBtnText = activeBtn ? activeBtn.textContent : '';
       if (wordBtn) wordBtn.disabled = true;
       if (pdfBtn) pdfBtn.disabled = true;
+      if (activeBtn) activeBtn.textContent = '正在生成…';
 
       try {
         var body = {
@@ -123,8 +126,8 @@
         alert('导出失败，请检查网络');
       } finally {
         exportBusy = false;
-        if (wordBtn) wordBtn.disabled = false;
-        if (pdfBtn) pdfBtn.disabled = false;
+        if (wordBtn) { wordBtn.disabled = false; wordBtn.textContent = '导出 Word'; }
+        if (pdfBtn) { pdfBtn.disabled = false; pdfBtn.textContent = '导出 PDF'; }
       }
     }
 

@@ -23,7 +23,7 @@ from pygments.lexers import get_lexer_by_name, TextLexer
 
 from app.core.utils.portable_question_format import normalize_portable_type
 
-from .base import ExportRequest, ExportResult
+from .base import ExportRequest, ExportResult, build_filename
 from .formatter import split_content
 
 logger = logging.getLogger(__name__)
@@ -86,8 +86,7 @@ def generate_pdf(req: ExportRequest, questions: list[dict[str, Any]]) -> ExportR
     HTML(string=html_str).write_pdf(buf)
     buf.seek(0)
 
-    ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"{req.subject_name}_导出_{ts}.pdf"
+    filename = build_filename(req, "pdf")
 
     return ExportResult(
         buffer=buf,

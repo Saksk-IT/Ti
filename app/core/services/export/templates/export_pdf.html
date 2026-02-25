@@ -63,8 +63,12 @@
     margin: 2px 0;
   }
   .answer {
-    margin-top: 6px;
+    margin-top: 8px;
+    padding: 6px 10px;
     font-size: 10pt;
+    background: #f0faf5;
+    border-left: 3px solid #1b8c5a;
+    border-radius: 0 4px 4px 0;
   }
   .answer-label {
     font-weight: bold;
@@ -72,14 +76,17 @@
   }
   .answer-text { color: #1b8c5a; }
   .analysis {
-    margin-top: 4px;
+    margin-top: 6px;
+    padding: 6px 10px;
     font-size: 10pt;
-    color: #777;
-    font-style: italic;
+    color: #555;
+    background: #f8f8f8;
+    border-left: 3px solid #bbb;
+    border-radius: 0 4px 4px 0;
+    line-height: 1.7;
   }
   .analysis-label {
     font-weight: bold;
-    font-style: italic;
     color: #777;
   }
   .inline-code {
@@ -122,10 +129,10 @@
     </ul>
     {% endif %}
     {% if q.answer %}
-    <div class="answer"><span class="answer-label">答案：</span><span class="answer-text">{{ q.answer }}</span></div>
+    <div class="answer"><span class="answer-label">答案：</span><br><span class="answer-text">{{ q.answer }}</span></div>
     {% endif %}
     {% if q.analysis_html %}
-    <div class="analysis"><span class="analysis-label">解析：</span>{{ q.analysis_html | safe }}</div>
+    <div class="analysis"><span class="analysis-label">解析：</span><br>{{ q.analysis_html | safe }}</div>
     {% endif %}
   </div>
   {% endfor %}
