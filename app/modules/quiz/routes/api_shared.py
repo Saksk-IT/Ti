@@ -27,27 +27,23 @@ def _get_uid_from_request():
 
 
 def _resolve_study_scope(conn, source: str, subject: Optional[str], bank_id: Optional[int], uid: int):
-    """èŽ·å– Study å¯¹åº”çš„ scope_idï¼Œå¹¶æ£€æŸ¥æƒé™"""
+    """èŽ·å– Study å¯¹åº"çš„ scope_idï¼Œå¹¶æ£€æŸ¥æƒé™"""
     source = (source or 'public').strip().lower()
     if source == 'user_bank':
         if not bank_id:
             return None, 'bank_id 参数错误'
-            return None, 'bank_id å‚æ•°é”™è¯¯'
         from app.modules.user_bank.routes.api import check_bank_access
         has_access, _permission, _access_type = check_bank_access(uid, int(bank_id))
         if not has_access:
             return None, '无权访问该题库'
-            return None, 'æ— æƒè®¿é—®è¯¥é¢˜åº“'
         return int(bank_id), None
 
     subject = (subject or '').strip()
     if not subject:
         return None, 'subject 参数错误'
-        return None, 'subject å‚æ•°é”™è¯¯'
     row = conn.execute("SELECT id FROM subjects WHERE name = ?", (subject,)).fetchone()
     if not row:
         return None, 'subject 不存在'
-        return None, 'subject ä¸å­˜åœ¨'
     return int(row['id']), None
 
 

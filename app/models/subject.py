@@ -9,7 +9,7 @@ class Subject(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.Text, unique=True, nullable=False)
     description = db.Column(db.Text)
-    is_locked = db.Column(db.Boolean, default=False, server_default=db.text('0'))
+    is_locked = db.Column(db.Boolean, default=False, server_default=db.text("0"))
     created_at = db.Column(db.DateTime, default=db.func.now(), server_default=func.now())
 
     questions = db.relationship('Question', back_populates='subject', lazy='dynamic')

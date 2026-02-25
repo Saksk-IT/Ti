@@ -6,6 +6,7 @@ Revises: a1b2c3d4e5f6
 Create Date: 2026-02-26 00:00:00.000000
 """
 from alembic import op
+from sqlalchemy.exc import OperationalError, ProgrammingError
 
 # revision identifiers, used by Alembic.
 revision = 'b1c2d3e4f5a6'
@@ -36,13 +37,13 @@ def upgrade():
     for name, table, columns in _INDEXES:
         try:
             op.create_index(name, table, columns)
-        except Exception:
-            pass
+        except (OperationalError, ProgrammingError):
+            pass  # 索引可能已存在
 
 
 def downgrade():
     for name, table, _columns in reversed(_INDEXES):
         try:
             op.drop_index(name, table_name=table)
-        except Exception:
-            pass
+        except (OperationalError, ProgrammingError):
+            pass  # 索引可能不存在

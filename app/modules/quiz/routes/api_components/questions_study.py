@@ -465,7 +465,9 @@ def api_update_question(question_id: int):
                 tags_val = extra._mapping['tags']
         except Exception as e:
             current_app.logger.warning(f'查询题目扩展信息失败 question_id={question_id}: {e}')
-            pass
+
+        conn = db.session.connection()
+        try_sync_questions_portable_columns(
             conn,
             question_id=int(question_id),
             q_type=next_q_type,

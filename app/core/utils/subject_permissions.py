@@ -28,7 +28,7 @@ def is_admin(user_id: int) -> bool:
     try:
         from flask import g
         setattr(g, cache_attr, result)
-    except (RuntimeError, Exception):
+    except Exception:
         pass
 
     return result
@@ -54,7 +54,7 @@ def get_user_restricted_subjects(user_id: int) -> List[int]:
     try:
         from flask import g
         setattr(g, cache_attr, result)
-    except (RuntimeError, Exception):
+    except Exception:
         pass
 
     return result
@@ -93,7 +93,7 @@ def get_user_accessible_subjects(user_id: int) -> List[int]:
     try:
         from flask import g
         setattr(g, cache_attr, result)
-    except (RuntimeError, Exception):
+    except Exception:
         pass
 
     return result
