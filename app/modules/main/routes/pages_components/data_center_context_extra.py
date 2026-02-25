@@ -618,12 +618,12 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
 
         mistakes_top_items = []
         for r in pub_mis_subject:
-            mistakes_top_items.append({'name': r._mapping['name'], 'source': 'public', 'count': int(r.get('count') or 0), 'times': int(r.get('times') or 0)})
+            mistakes_top_items.append({'name': r['name'], 'source': 'public', 'count': int(r.get('count') or 0), 'times': int(r.get('times') or 0)})
         for r in (bank_mis_rank or [])[:12]:
             if int(r.get('times') or 0) <= 0 and int(r.get('count') or 0) <= 0:
                 continue
             mistakes_top_items.append({
-                'name': r._mapping['name'],
+                'name': r['name'],
                 'source': 'banks',
                 'count': int(r.get('count') or 0),
                 'times': int(r.get('times') or 0),
@@ -634,12 +634,12 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
 
         favorites_top_items = []
         for r in pub_fav_subject:
-            favorites_top_items.append({'name': r._mapping['name'], 'source': 'public', 'count': int(r.get('count') or 0)})
+            favorites_top_items.append({'name': r['name'], 'source': 'public', 'count': int(r.get('count') or 0)})
         for r in (bank_fav_rank or [])[:12]:
             if int(r.get('count') or 0) <= 0:
                 continue
             favorites_top_items.append({
-                'name': r._mapping['name'],
+                'name': r['name'],
                 'source': 'banks',
                 'count': int(r.get('count') or 0),
                 'bank_id': int(r.get('bank_id') or 0),
@@ -651,7 +651,7 @@ def compute_data_center_context_extra(conn, uid: int, window_days: int, subject_
         mistakes_top_items = []
         favorites_top_items = []
 
-    # ---------- 列表：个人题库错题/收藏（用于页面“最新/高频”展示） ----------
+    # ---------- 列表：个人题库错题/收藏（用于页面"最新/高频"展示） ----------
     try:
         if bank_ids_active:
             # 错题：按错题次数/最近更新

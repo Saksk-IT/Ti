@@ -3,6 +3,8 @@ import json
 import re
 from typing import Any, Dict, List, Optional, Set, Tuple
 
+from sqlalchemy import text
+
 from app.core.utils.user_question_tags import (
     SCOPE_QUESTION_CENTER,
     delete_user_tag as _uq_delete_user_tag,
@@ -37,8 +39,8 @@ def _empty_store() -> Dict[str, Any]:
 def _load_store_from_user_progress(conn, user_id: int) -> Dict[str, Any]:
     """旧实现：从 user_progress 读取标签 store（用于向新表迁移）。"""
     row = conn.execute(
-        "SELECT data FROM user_progress WHERE user_id=? AND p_key=?",
-        (user_id, TAG_STORE_KEY),
+        text("SELECT data FROM user_progress WHERE user_id = :user_id AND p_key = :p_key"),
+        {"user_id": user_id, "p_key": TAG_STORE_KEY},
     ).fetchone()
     if not row:
         return _empty_store()
@@ -73,8 +75,8 @@ def _has_any_new_tags(conn, user_id: int) -> bool:
     try:
         ensure_tag_tables(conn)
         row = conn.execute(
-            "SELECT 1 FROM user_question_tag_items WHERE user_id = ? AND scope = ? LIMIT 1",
-            (int(user_id), str(SCOPE_QUESTION_CENTER)),
+            text("SELECT 1 FROM user_question_tag_items WHERE user_id = :user_id AND scope = :scope LIMIT 1"),
+            {"user_id": int(user_id), "scope": str(SCOPE_QUESTION_CENTER)},
         ).fetchone()
         return row is not None
     except Exception:
@@ -84,8 +86,8 @@ def _has_any_new_tags(conn, user_id: int) -> bool:
 def _resolve_subject_id_from_question(conn, question_id: int) -> int:
     """从 questions 表解析该题所属 subject_id（失败返回 0）。"""
     try:
-        row = conn.execute("SELECT subject_id FROM questions WHERE id = ?", (int(question_id),)).fetchone()
-        sid = int(row["subject_id"] or 0) if row else 0
+        row = conn.execute(text("SELECT subject_id FROM questions WHERE id = :qid"), {"qid": int(question_id)}).fetchone()
+        sid = int(row._mapping["subject_id"] or 0) if row else 0
         return sid if sid > 0 else 0
     except Exception:
         return 0
@@ -103,7 +105,7 @@ def _ensure_migrated(conn, user_id: int) -> None:
     if not tags and not bindings:
         return
 
-    # 说明：user_progress.tags（未绑定 tag）无法可靠归属到某个 subject，避免“全局污染”，这里不强行迁移。
+    # 说明：user_progress.tags（未绑定 tag）无法可靠归属到某个 subject，避免"全局污染"，这里不强行迁移。
     ensure_tag_tables(conn)
     if isinstance(bindings, dict):
         for qid_raw, tag_list in bindings.items():
@@ -134,7 +136,7 @@ def _ensure_migrated(conn, user_id: int) -> None:
 def load_store(conn, user_id: int) -> Dict[str, Any]:
     """新实现：从 user_question_tag_items 读取，并保持旧 store 结构（tags + bindings）。
 
-    说明：公共题库标签已升级为“用户 × subject_id”隔离；此函数返回跨 subject 的合并视图（兼容旧调用方）。
+    说明：公共题库标签已升级为"用户 × subject_id"隔离；此函数返回跨 subject 的合并视图（兼容旧调用方）。
     """
     _ensure_migrated(conn, user_id)
     ensure_tag_tables(conn)
@@ -143,8 +145,8 @@ def load_store(conn, user_id: int) -> Dict[str, Any]:
     use_scope0 = False
     try:
         row = conn.execute(
-            "SELECT 1 FROM user_question_tag_items WHERE user_id=? AND scope=? AND scope_id<>0 LIMIT 1",
-            (int(user_id), str(SCOPE_QUESTION_CENTER)),
+            text("SELECT 1 FROM user_question_tag_items WHERE user_id = :user_id AND scope = :scope AND scope_id <> 0 LIMIT 1"),
+            {"user_id": int(user_id), "scope": str(SCOPE_QUESTION_CENTER)},
         ).fetchone()
         use_scope0 = row is None
     except Exception:
@@ -157,46 +159,46 @@ def load_store(conn, user_id: int) -> Dict[str, Any]:
     else:
         try:
             rows2 = conn.execute(
-                """
+                text("""
                 SELECT tag, SUM(CASE WHEN question_id>0 THEN 1 ELSE 0 END) AS cnt
                 FROM user_question_tag_items
-                WHERE user_id=? AND scope=? AND scope_id<>0
+                WHERE user_id = :user_id AND scope = :scope AND scope_id <> 0
                 GROUP BY tag
                 ORDER BY cnt DESC, tag ASC
-                """,
-                (int(user_id), str(SCOPE_QUESTION_CENTER)),
+                """),
+                {"user_id": int(user_id), "scope": str(SCOPE_QUESTION_CENTER)},
             ).fetchall()
-            tags = [str(r["tag"] or "").strip() for r in (rows2 or []) if r and str(r["tag"] or "").strip()]
+            tags = [str(r._mapping["tag"] or "").strip() for r in (rows2 or []) if r and str(r._mapping["tag"] or "").strip()]
         except Exception:
             tags = []
 
     bindings: Dict[str, List[str]] = {}
     if use_scope0:
         rows = conn.execute(
-            """
+            text("""
             SELECT question_id, tag
             FROM user_question_tag_items
-            WHERE user_id = ? AND scope = ? AND scope_id = ? AND question_id > 0
+            WHERE user_id = :user_id AND scope = :scope AND scope_id = :scope_id AND question_id > 0
             ORDER BY question_id ASC, tag ASC
-            """,
-            (int(user_id), str(SCOPE_QUESTION_CENTER), 0),
+            """),
+            {"user_id": int(user_id), "scope": str(SCOPE_QUESTION_CENTER), "scope_id": 0},
         ).fetchall()
     else:
         rows = conn.execute(
-            """
+            text("""
             SELECT question_id, tag
             FROM user_question_tag_items
-            WHERE user_id = ? AND scope = ? AND scope_id<>0 AND question_id > 0
+            WHERE user_id = :user_id AND scope = :scope AND scope_id <> 0 AND question_id > 0
             ORDER BY question_id ASC, tag ASC
-            """,
-            (int(user_id), str(SCOPE_QUESTION_CENTER)),
+            """),
+            {"user_id": int(user_id), "scope": str(SCOPE_QUESTION_CENTER)},
         ).fetchall()
     for r in rows or []:
         try:
-            qid = int(r["question_id"])
+            qid = int(r._mapping["question_id"])
         except Exception:
             continue
-        t = str(r["tag"] or "").strip()
+        t = str(r._mapping["tag"] or "").strip()
         if not t or t.lower() == "all":
             continue
         bindings.setdefault(str(qid), [])
@@ -212,8 +214,8 @@ def save_store(conn, user_id: int, store: Dict[str, Any]) -> None:
 
     # 全量覆盖：先清空该用户公共题库 tags（含占位行），再按 store 重建
     conn.execute(
-        "DELETE FROM user_question_tag_items WHERE user_id = ? AND scope = ? AND scope_id = ?",
-        (int(user_id), str(SCOPE_QUESTION_CENTER), 0),
+        text("DELETE FROM user_question_tag_items WHERE user_id = :user_id AND scope = :scope AND scope_id = :scope_id"),
+        {"user_id": int(user_id), "scope": str(SCOPE_QUESTION_CENTER), "scope_id": 0},
     )
 
     tags = store.get("tags") if isinstance(store.get("tags"), list) else []
@@ -242,7 +244,7 @@ def save_store(conn, user_id: int, store: Dict[str, Any]) -> None:
 def list_user_tags(conn, user_id: int, subject_id: Optional[int] = None) -> List[Dict[str, Any]]:
     """列出用户标签（公共题库）。
 
-    - subject_id 指定时：仅返回该 subject（题库/科目）下的标签（实现“用户 × 题库”隔离）。
+    - subject_id 指定时：仅返回该 subject（题库/科目）下的标签（实现"用户 × 题库"隔离）。
     - subject_id 为空：返回跨 subject 的合并视图（兼容旧调用方）。
     """
     _ensure_migrated(conn, user_id)
@@ -259,21 +261,21 @@ def list_user_tags(conn, user_id: int, subject_id: Optional[int] = None) -> List
     # 合并视图：优先 subject 维度（scope_id<>0）；否则回退旧结构 scope_id=0
     try:
         row = conn.execute(
-            "SELECT 1 FROM user_question_tag_items WHERE user_id=? AND scope=? AND scope_id<>0 LIMIT 1",
-            (int(user_id), str(SCOPE_QUESTION_CENTER)),
+            text("SELECT 1 FROM user_question_tag_items WHERE user_id = :user_id AND scope = :scope AND scope_id <> 0 LIMIT 1"),
+            {"user_id": int(user_id), "scope": str(SCOPE_QUESTION_CENTER)},
         ).fetchone()
         if row is not None:
             rows = conn.execute(
-                """
+                text("""
                 SELECT tag, SUM(CASE WHEN question_id>0 THEN 1 ELSE 0 END) AS cnt
                 FROM user_question_tag_items
-                WHERE user_id=? AND scope=? AND scope_id<>0
+                WHERE user_id = :user_id AND scope = :scope AND scope_id <> 0
                 GROUP BY tag
                 ORDER BY cnt DESC, tag ASC
-                """,
-                (int(user_id), str(SCOPE_QUESTION_CENTER)),
+                """),
+                {"user_id": int(user_id), "scope": str(SCOPE_QUESTION_CENTER)},
             ).fetchall()
-            return [{"name": str(r["tag"]), "count": int(r["cnt"])} for r in (rows or []) if r and r["tag"] is not None]
+            return [{"name": str(r._mapping["tag"]), "count": int(r._mapping["cnt"])} for r in (rows or []) if r and r._mapping["tag"] is not None]
     except Exception:
         pass
 
@@ -441,16 +443,16 @@ def get_question_ids_by_tag(conn, user_id: int, tag_name: Any) -> Set[int]:
     try:
         ensure_tag_tables(conn)
         rows = conn.execute(
-            """
+            text("""
             SELECT DISTINCT question_id
             FROM user_question_tag_items
-            WHERE user_id=? AND scope=? AND scope_id<>0 AND tag=? AND question_id>0
-            """,
-            (int(user_id), str(SCOPE_QUESTION_CENTER), str(tag)),
+            WHERE user_id = :user_id AND scope = :scope AND scope_id <> 0 AND tag = :tag AND question_id > 0
+            """),
+            {"user_id": int(user_id), "scope": str(SCOPE_QUESTION_CENTER), "tag": str(tag)},
         ).fetchall()
         for r in rows or []:
             try:
-                out.add(int(r["question_id"]))
+                out.add(int(r._mapping["question_id"]))
             except Exception:
                 continue
     except Exception:

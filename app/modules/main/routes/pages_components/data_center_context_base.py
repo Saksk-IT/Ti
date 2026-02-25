@@ -700,7 +700,7 @@ def compute_data_center_context_base(uid: int, window_days: int):
                     'favorites': fav_n,
                     'mistakes': mis_n,
                     'mistakes_times': mis_times_n,
-                    'last_activity': last_n,
+                    'last_activity': str(last_n)[:16] if last_n else None,
                 })
 
             bank_total_questions = int(sum(int(r.get('total') or 0) for r in bank_rows))
@@ -816,7 +816,7 @@ def compute_data_center_context_base(uid: int, window_days: int):
         'mistakes': int(bank_mistakes_count),
         'mistakes_times': int(bank_mistakes_times),
         'streak_days': int(bank_streak_days),
-        'last_activity': bank_last_activity,
+        'last_activity': str(bank_last_activity)[:16] if bank_last_activity else None,
     }
 
     # ============================
@@ -882,7 +882,7 @@ def compute_data_center_context_base(uid: int, window_days: int):
         'mistakes': int(all_mistakes_count),
         'mistakes_times': int(all_mistakes_times),
         'streak_days': int(all_streak_days),
-        'last_activity': all_last_activity,
+        'last_activity': str(all_last_activity)[:16] if all_last_activity else None,
     }
 
     # 预置建议：用于"未配置密钥/不点AI也能用"的体验兜底
@@ -1105,7 +1105,7 @@ def compute_data_center_context_base(uid: int, window_days: int):
         'mistakes_count': mistakes_count,
         'mistakes_times': mistakes_times,
         'streak_days': streak_days,
-        'last_activity': last_activity,
+        'last_activity': str(last_activity)[:16] if last_activity else None,
         'bank_summary': bank_summary,
         'bank_rows': bank_rows,
         'bank_category_rows': bank_category_rows,

@@ -3,12 +3,14 @@
 
 设计目标：
 - 同一题目在不同用户下可有不同 tags（系统题库/个人题库/共享题库均适用）。
-- tags 采用“规范化明细表”存储：一行一个 tag，便于按 tag 过滤与统计。
+- tags 采用"规范化明细表"存储：一行一个 tag，便于按 tag 过滤与统计。
 """
 
 from __future__ import annotations
 
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+
+from sqlalchemy import text
 
 from app.core.utils.portable_question_format import normalize_tags
 
@@ -42,25 +44,25 @@ def _clean_tag_list(tags: Any, *, max_len: int = 20) -> List[str]:
 
 def ensure_tag_tables(conn) -> None:
     conn.execute(
-        """
+        text("""
         CREATE TABLE IF NOT EXISTS user_question_tag_items (
             user_id INTEGER NOT NULL,
             scope TEXT NOT NULL,
             scope_id INTEGER NOT NULL DEFAULT 0,
             question_id INTEGER NOT NULL,
             tag TEXT NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (user_id, scope, scope_id, question_id, tag),
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )
-        """
+        """)
     )
     conn.execute(
-        "CREATE INDEX IF NOT EXISTS idx_uqti_user_scope_scopeid_tag ON user_question_tag_items(user_id, scope, scope_id, tag)"
+        text("CREATE INDEX IF NOT EXISTS idx_uqti_user_scope_scopeid_tag ON user_question_tag_items(user_id, scope, scope_id, tag)")
     )
     conn.execute(
-        "CREATE INDEX IF NOT EXISTS idx_uqti_user_scope_scopeid_qid ON user_question_tag_items(user_id, scope, scope_id, question_id)"
+        text("CREATE INDEX IF NOT EXISTS idx_uqti_user_scope_scopeid_qid ON user_question_tag_items(user_id, scope, scope_id, question_id)")
     )
 
 
@@ -79,28 +81,30 @@ def set_question_tags(
     sid = _normalize_scope_id(scope_id)
 
     conn.execute(
-        """
+        text("""
         DELETE FROM user_question_tag_items
-        WHERE user_id = ? AND scope = ? AND scope_id = ? AND question_id = ?
-        """,
-        (int(user_id), str(scope), int(sid), int(question_id)),
+        WHERE user_id = :user_id AND scope = :scope AND scope_id = :scope_id AND question_id = :question_id
+        """),
+        {"user_id": int(user_id), "scope": str(scope), "scope_id": int(sid), "question_id": int(question_id)},
     )
 
     if cleaned:
-        conn.executemany(
-            """
-            INSERT OR IGNORE INTO user_question_tag_items (user_id, scope, scope_id, question_id, tag)
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            [(int(user_id), str(scope), int(sid), int(question_id), t) for t in cleaned],
-        )
+        for t in cleaned:
+            conn.execute(
+                text("""
+                INSERT INTO user_question_tag_items (user_id, scope, scope_id, question_id, tag)
+                VALUES (:user_id, :scope, :scope_id, :question_id, :tag)
+                ON CONFLICT DO NOTHING
+                """),
+                {"user_id": int(user_id), "scope": str(scope), "scope_id": int(sid), "question_id": int(question_id), "tag": t},
+            )
         conn.execute(
-            """
+            text("""
             UPDATE user_question_tag_items
             SET updated_at = CURRENT_TIMESTAMP
-            WHERE user_id = ? AND scope = ? AND scope_id = ? AND question_id = ?
-            """,
-            (int(user_id), str(scope), int(sid), int(question_id)),
+            WHERE user_id = :user_id AND scope = :scope AND scope_id = :scope_id AND question_id = :question_id
+            """),
+            {"user_id": int(user_id), "scope": str(scope), "scope_id": int(sid), "question_id": int(question_id)},
         )
     return cleaned
 
@@ -116,15 +120,15 @@ def get_question_tags(
     ensure_tag_tables(conn)
     sid = _normalize_scope_id(scope_id)
     rows = conn.execute(
-        """
+        text("""
         SELECT tag
         FROM user_question_tag_items
-        WHERE user_id = ? AND scope = ? AND scope_id = ? AND question_id = ?
+        WHERE user_id = :user_id AND scope = :scope AND scope_id = :scope_id AND question_id = :question_id
         ORDER BY tag ASC
-        """,
-        (int(user_id), str(scope), int(sid), int(question_id)),
+        """),
+        {"user_id": int(user_id), "scope": str(scope), "scope_id": int(sid), "question_id": int(question_id)},
     ).fetchall()
-    return [str(r["tag"]) for r in rows or [] if r and r["tag"] is not None]
+    return [str(r._mapping["tag"]) for r in rows or [] if r and r._mapping["tag"] is not None]
 
 
 def get_questions_tags_map(
@@ -146,24 +150,30 @@ def get_questions_tags_map(
     if not ids:
         return {}
 
-    placeholders = ",".join(["?"] * len(ids))
+    params = {"user_id": int(user_id), "scope": str(scope), "scope_id": int(sid)}
+    id_placeholders = []
+    for i, qid in enumerate(ids):
+        key = f"qid_{i}"
+        params[key] = qid
+        id_placeholders.append(f":{key}")
+    in_clause = ",".join(id_placeholders)
     rows = conn.execute(
-        f"""
+        text(f"""
         SELECT question_id, tag
         FROM user_question_tag_items
-        WHERE user_id = ? AND scope = ? AND scope_id = ? AND question_id IN ({placeholders})
+        WHERE user_id = :user_id AND scope = :scope AND scope_id = :scope_id AND question_id IN ({in_clause})
         ORDER BY question_id ASC, tag ASC
-        """,
-        [int(user_id), str(scope), int(sid), *ids],
+        """),
+        params,
     ).fetchall()
 
     out: Dict[int, List[str]] = {}
     for r in rows or []:
         try:
-            qid = int(r["question_id"])
+            qid = int(r._mapping["question_id"])
         except Exception:
             continue
-        t = str(r["tag"] or "").strip()
+        t = str(r._mapping["tag"] or "").strip()
         if not t:
             continue
         out.setdefault(qid, []).append(t)
@@ -180,16 +190,16 @@ def list_tags_with_counts(
     ensure_tag_tables(conn)
     sid = _normalize_scope_id(scope_id)
     rows = conn.execute(
-        """
+        text("""
         SELECT tag, SUM(CASE WHEN question_id > 0 THEN 1 ELSE 0 END) as cnt
         FROM user_question_tag_items
-        WHERE user_id = ? AND scope = ? AND scope_id = ?
+        WHERE user_id = :user_id AND scope = :scope AND scope_id = :scope_id
         GROUP BY tag
         ORDER BY cnt DESC, tag ASC
-        """,
-        (int(user_id), str(scope), int(sid)),
+        """),
+        {"user_id": int(user_id), "scope": str(scope), "scope_id": int(sid)},
     ).fetchall()
-    return [{"name": str(r["tag"]), "count": int(r["cnt"])} for r in rows or [] if r and r["tag"] is not None]
+    return [{"name": str(r._mapping["tag"]), "count": int(r._mapping["cnt"])} for r in rows or [] if r and r._mapping["tag"] is not None]
 
 
 def get_question_ids_by_tag(
@@ -207,19 +217,19 @@ def get_question_ids_by_tag(
     if not t:
         return []
     rows = conn.execute(
-        """
+        text("""
         SELECT DISTINCT question_id
         FROM user_question_tag_items
-        WHERE user_id = ? AND scope = ? AND scope_id = ? AND tag = ?
+        WHERE user_id = :user_id AND scope = :scope AND scope_id = :scope_id AND tag = :tag
           AND question_id > 0
         ORDER BY question_id ASC
-        """,
-        (int(user_id), str(scope), int(sid), t),
+        """),
+        {"user_id": int(user_id), "scope": str(scope), "scope_id": int(sid), "tag": t},
     ).fetchall()
     out = []
     for r in rows or []:
         try:
-            out.append(int(r["question_id"]))
+            out.append(int(r._mapping["question_id"]))
         except Exception:
             continue
     return out
@@ -233,7 +243,7 @@ def ensure_user_tag_exists(
     scope_id: Optional[int],
     tag: Any,
 ) -> str:
-    """确保某个 tag 在当前 scope 下“已存在”，允许 0 绑定（通过写入 question_id=0 的占位行）。"""
+    """确保某个 tag 在当前 scope 下"已存在"，允许 0 绑定（通过写入 question_id=0 的占位行）。"""
     ensure_tag_tables(conn)
     sid = _normalize_scope_id(scope_id)
     cleaned = _clean_tag_list([tag])
@@ -243,11 +253,12 @@ def ensure_user_tag_exists(
     if t.lower() == "all":
         return ""
     conn.execute(
-        """
-        INSERT OR IGNORE INTO user_question_tag_items (user_id, scope, scope_id, question_id, tag)
-        VALUES (?, ?, ?, ?, ?)
-        """,
-        (int(user_id), str(scope), int(sid), int(TAG_DEF_QUESTION_ID), t),
+        text("""
+        INSERT INTO user_question_tag_items (user_id, scope, scope_id, question_id, tag)
+        VALUES (:user_id, :scope, :scope_id, :question_id, :tag)
+        ON CONFLICT DO NOTHING
+        """),
+        {"user_id": int(user_id), "scope": str(scope), "scope_id": int(sid), "question_id": int(TAG_DEF_QUESTION_ID), "tag": t},
     )
     return t
 
@@ -268,10 +279,10 @@ def delete_user_tag(
         return ""
     t = cleaned[0]
     conn.execute(
-        """
+        text("""
         DELETE FROM user_question_tag_items
-        WHERE user_id = ? AND scope = ? AND scope_id = ? AND tag = ?
-        """,
-        (int(user_id), str(scope), int(sid), t),
+        WHERE user_id = :user_id AND scope = :scope AND scope_id = :scope_id AND tag = :tag
+        """),
+        {"user_id": int(user_id), "scope": str(scope), "scope_id": int(sid), "tag": t},
     )
     return t
