@@ -51,11 +51,27 @@ _INLINE_CODE_RE = re.compile(r"`([^`]+)`")
 _CIRCLED_NUMBERS = ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩"]
 
 
-def format_fill_blanks(content: str) -> str:
-    """将填空题题干中的 __ 占位符转换为带编号的可读空位。
+_BLANK_PQF_RE = re.compile(r"\{(\d+)\}")
 
-    例: '中国的首都是__，面积约__万' → '中国的首都是 ______① ，面积约 ______② 万'
+
+def format_fill_blanks(content: str) -> str:
+    """将填空题题干中的占位符转换为带编号的可读空位。
+
+    支持两种格式：
+    - PQF 格式: {0}, {1}, {2}...
+    - 内部格式: __ (双下划线)
+
+    例: '首都是{0}，面积约{1}万' → '首都是 ______① ，面积约 ______② 万'
     """
+    # 优先处理 PQF 格式 {0}, {1}...
+    if _BLANK_PQF_RE.search(content):
+        def _replace_pqf(m: re.Match) -> str:
+            idx = int(m.group(1))
+            num = _CIRCLED_NUMBERS[idx] if idx < len(_CIRCLED_NUMBERS) else f"({idx + 1})"
+            return f" ______{num} "
+        return _BLANK_PQF_RE.sub(_replace_pqf, content)
+
+    # 兼容内部格式 __
     if "__" not in content:
         return content
     parts = content.split("__")

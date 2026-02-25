@@ -114,8 +114,9 @@
         }
         var blob = await res.blob();
         var cd = res.headers.get('Content-Disposition') || '';
-        var match = cd.match(/filename\*?=(?:UTF-8''|"?)([^";]+)/i);
-        var filename = match ? decodeURIComponent(match[1]) : (SUBJECT_NAME + '.' + (fmt === 'pdf' ? 'pdf' : 'docx'));
+        var match = cd.match(/filename\*=UTF-8''([^;]+)/i);
+        if (!match) match = cd.match(/filename="?([^";]+)"?/i);
+        var filename = match ? decodeURIComponent(match[1].trim()) : (SUBJECT_NAME + '.' + (fmt === 'pdf' ? 'pdf' : 'docx'));
         var a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = filename;
