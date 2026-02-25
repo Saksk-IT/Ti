@@ -126,6 +126,48 @@ def _add_title(doc: Document, subject_name: str) -> None:
     run2.element.rPr.rFonts.set(qn("w:eastAsia"), "微软雅黑")
 
 
+def _add_hyperlink(paragraph, url: str, text: str, color: RGBColor, size: Pt) -> None:
+    """在段落中插入可点击的超链接。"""
+    from docx.opc.constants import RELATIONSHIP_TYPE as RT
+
+    part = paragraph.part
+    r_id = part.relate_to(url, RT.HYPERLINK, is_external=True)
+
+    hyperlink = paragraph._element.makeelement(qn("w:hyperlink"), {
+        qn("r:id"): r_id,
+    })
+
+    new_run = paragraph._element.makeelement(qn("w:r"), {})
+    rPr = paragraph._element.makeelement(qn("w:rPr"), {})
+
+    r_style = paragraph._element.makeelement(qn("w:rStyle"), {qn("w:val"): "Hyperlink"})
+    rPr.append(r_style)
+
+    c = paragraph._element.makeelement(qn("w:color"), {qn("w:val"): str(color)})
+    rPr.append(c)
+
+    sz = paragraph._element.makeelement(qn("w:sz"), {qn("w:val"): str(int(size.pt * 2))})
+    rPr.append(sz)
+
+    b = paragraph._element.makeelement(qn("w:b"), {})
+    rPr.append(b)
+
+    rFonts = paragraph._element.makeelement(qn("w:rFonts"), {
+        qn("w:ascii"): "微软雅黑",
+        qn("w:eastAsia"): "微软雅黑",
+    })
+    rPr.append(rFonts)
+
+    new_run.append(rPr)
+    new_run.text = text
+    t = paragraph._element.makeelement(qn("w:t"), {})
+    t.text = text
+    new_run.append(t)
+
+    hyperlink.append(new_run)
+    paragraph._element.append(hyperlink)
+
+
 def _add_promo(doc: Document) -> None:
     """在标题下方添加来源推广区域：左侧文字 + 右侧小程序码。"""
     table = doc.add_table(rows=1, cols=2)
@@ -145,12 +187,7 @@ def _add_promo(doc: Document) -> None:
     r1.font.name = "微软雅黑"
     r1.element.rPr.rFonts.set(qn("w:eastAsia"), "微软雅黑")
 
-    r2 = lp.add_run("saksk.top")
-    r2.font.size = Pt(9)
-    r2.font.bold = True
-    r2.font.color.rgb = _CLR_PROMO_URL
-    r2.font.name = "微软雅黑"
-    r2.element.rPr.rFonts.set(qn("w:eastAsia"), "微软雅黑")
+    _add_hyperlink(lp, "https://saksk.top", "saksk.top", _CLR_PROMO_URL, Pt(9))
 
     r3 = lp.add_run(" — 大学生刷题备考平台")
     r3.font.size = Pt(9)

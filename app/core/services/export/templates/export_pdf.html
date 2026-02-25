@@ -117,7 +117,8 @@
     background: #fafafa;
   }
   .promo-text { font-size: 9pt; color: #666; line-height: 1.6; }
-  .promo-url { font-weight: bold; color: #2b6cb0; }
+  .promo-url { font-weight: bold; color: #2b6cb0; text-decoration: none; }
+  .promo-url:hover { text-decoration: underline; }
   .promo-sub { font-size: 8pt; color: #888; margin-top: 2px; }
   .promo-qr { width: 60px; height: 60px; margin-left: 12px; flex-shrink: 0; }
   {{ pygments_css }}
@@ -130,7 +131,7 @@
   {% if qr_data_uri %}
   <div class="promo">
     <div>
-      <div class="promo-text">题目来源：<span class="promo-url">saksk.top</span> — 大学生刷题备考平台</div>
+      <div class="promo-text">题目来源：<a class="promo-url" href="https://saksk.top">saksk.top</a> — 大学生刷题备考平台</div>
       <div class="promo-sub">扫码打开小程序，随时随地刷题、模考、查漏补缺</div>
     </div>
     <img class="promo-qr" src="{{ qr_data_uri }}" alt="小程序码">
