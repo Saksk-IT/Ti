@@ -426,7 +426,7 @@
                     <div class="qid">#{{ q.id }}</div>
                   </div>
                   <div class="actions" onclick="event.stopPropagation()">
-                    <a class="link primary" href="/quiz?bank_id={{ bank_id }}&mode=quiz&type={{ q.q_type|urlencode }}">刷该题型</a>
+                    <a class="link primary" href="/quiz?bank_id={{ bank_id }}&mode=quiz&type={{ q.q_type|urlencode }}" target="_blank">刷该题型</a>
                     <a class="link" href="/user/banks/{{ bank_id }}/questions/{{ q.id }}/edit">编辑该题</a>
                   </div>
                 </div>

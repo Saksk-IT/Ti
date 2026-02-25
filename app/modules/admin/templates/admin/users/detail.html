@@ -588,7 +588,7 @@
           <td>{{ e.submitted_at }}</td>
           <td>
             <a class="btn-outline" href="/exams/{{ e.id }}" style="font-size:12px; padding:6px 12px;">查看成绩</a>
-            <a class="btn-outline" href="/quiz?mode=exam&exam_id={{ e.id }}" style="font-size:12px; padding:6px 12px;">回顾题目</a>
+            <a class="btn-outline" href="/quiz?mode=exam&exam_id={{ e.id }}" style="font-size:12px; padding:6px 12px;" target="_blank">回顾题目</a>
           </td>
         </tr>
         {% endfor %}

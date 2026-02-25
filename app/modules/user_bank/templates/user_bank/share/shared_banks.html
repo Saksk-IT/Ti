@@ -185,7 +185,7 @@
                     <span>访问 ${bank.access_count || 0} 次</span>
                 </div>
                 <div class="shared-actions">
-                    <a href="/quiz?bank_id=${bank.bank_id}" class="btn btn-primary btn-sm">开始刷题</a>
+                    <a href="/quiz?bank_id=${bank.bank_id}" class="btn btn-primary btn-sm" target="_blank">开始刷题</a>
                     <a href="/user/banks/${bank.bank_id}" class="btn btn-secondary btn-sm">查看题目</a>
                     <button type="button" class="btn btn-delete btn-sm" onclick="removeShared(${bank.bank_id}, '${escapeHtml(bank.bank_name).replace(/'/g, "\\'")}')">移除</button>
                 </div>

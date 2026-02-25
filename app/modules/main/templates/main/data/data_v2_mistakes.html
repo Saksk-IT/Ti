@@ -103,7 +103,7 @@
                 </div>
                 <div class="dc-item-actions">
                   {% if it.source == 'banks' and it.bank_id %}
-                    <a class="dc-mini-btn primary" href="/user/banks/{{ it.bank_id }}/quiz?mode=wrong">刷错题</a>
+                    <a class="dc-mini-btn primary" href="/user/banks/{{ it.bank_id }}/quiz?mode=wrong" target="_blank">刷错题</a>
                   {% else %}
                     <a class="dc-mini-btn" href="/mistakes">去中心下钻</a>
                   {% endif %}
@@ -150,7 +150,7 @@
                       <div class="dc-item-meta">{{ m.snippet }}</div>
                     </div>
                     <div class="dc-item-actions">
-                      <a class="dc-mini-btn primary" href="/quiz?mode=quiz&source=mistakes&subject={{ m.subject|urlencode }}&type={{ m.q_type|urlencode }}">刷同类错题</a>
+                      <a class="dc-mini-btn primary" href="/quiz?mode=quiz&source=mistakes&subject={{ m.subject|urlencode }}&type={{ m.q_type|urlencode }}" target="_blank">刷同类错题</a>
                     </div>
                   </div>
                 </div>
@@ -181,7 +181,7 @@
                       {% endif %}
                     </div>
                     <div class="dc-item-actions">
-                      <a class="dc-mini-btn primary" href="/user/banks/{{ m.bank_id }}/quiz?mode=wrong">刷错题</a>
+                      <a class="dc-mini-btn primary" href="/user/banks/{{ m.bank_id }}/quiz?mode=wrong" target="_blank">刷错题</a>
                     </div>
                   </div>
                 </div>

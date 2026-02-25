@@ -226,7 +226,7 @@ function finishQuiz() {
         };
 
         localStorage.setItem('quiz_settlement_payload_v1', JSON.stringify(payload));
-        window.location.href = '/quiz/settlement';
+        window.open('/quiz/settlement', '_blank');
         return;
     } catch (e) {
         console.warn('[结算页] 打开失败，回退到弹窗:', e);
@@ -320,13 +320,13 @@ function startReinforceWithIds(ids) {
         params.delete('group_size');
         params.delete('review_extra');
         params.delete('exam_id');
-        window.location.href = '/quiz?' + params.toString();
+        window.open('/quiz?' + params.toString(), '_blank');
     } catch (e) {
         const base = '/quiz?mode=reinforce&rk=wrong&ids=' + encodeURIComponent(ids.join(','));
         if (IS_USER_BANK && BANK_ID) {
-            window.location.href = base + '&bank_id=' + encodeURIComponent(String(BANK_ID));
+            window.open(base + '&bank_id=' + encodeURIComponent(String(BANK_ID)), '_blank');
         } else {
-            window.location.href = base;
+            window.open(base, '_blank');
         }
     }
 }
@@ -366,7 +366,7 @@ async function submitExam(force = false) {
         if (mode === 'exam' && typeof EXAM_ID !== 'undefined' && EXAM_ID && typeof sendExamAnswers === 'function') {
             const js = await sendExamAnswers();
             if (js && js.status === 'success') {
-                window.location.href = `/exams/${encodeURIComponent(String(EXAM_ID))}/settlement`;
+                window.open(`/exams/${encodeURIComponent(String(EXAM_ID))}/settlement`, '_blank');
                 return;
             }
         }

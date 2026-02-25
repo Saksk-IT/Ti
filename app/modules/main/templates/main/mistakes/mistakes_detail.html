@@ -182,8 +182,8 @@
                   </div>
                 </div>
                 <div class="ui18-actions">
-                  <a class="ui18-mini-btn primary" href="/quiz?subject={{ row.subject|urlencode }}&type=all&mode=quiz&source=mistakes">刷错题</a>
-                  <a class="ui18-mini-btn" href="/quiz?subject={{ row.subject|urlencode }}&type=all&mode=memo&source=mistakes">背错题</a>
+                  <a class="ui18-mini-btn primary" href="/quiz?subject={{ row.subject|urlencode }}&type=all&mode=quiz&source=mistakes" target="_blank">刷错题</a>
+                  <a class="ui18-mini-btn" href="/quiz?subject={{ row.subject|urlencode }}&type=all&mode=memo&source=mistakes" target="_blank">背错题</a>
                 </div>
               </div>
             {% endfor %}
@@ -209,8 +209,8 @@
                   </div>
                 </div>
                 <div class="ui18-actions">
-                  <a class="ui18-mini-btn primary" href="/quiz?subject=all&type={{ row.q_type|urlencode }}&mode=quiz&source=mistakes">刷错题</a>
-                  <a class="ui18-mini-btn" href="/quiz?subject=all&type={{ row.q_type|urlencode }}&mode=memo&source=mistakes">背错题</a>
+                  <a class="ui18-mini-btn primary" href="/quiz?subject=all&type={{ row.q_type|urlencode }}&mode=quiz&source=mistakes" target="_blank">刷错题</a>
+                  <a class="ui18-mini-btn" href="/quiz?subject=all&type={{ row.q_type|urlencode }}&mode=memo&source=mistakes" target="_blank">背错题</a>
                 </div>
               </div>
             {% endfor %}
@@ -448,7 +448,7 @@
         shuffle_options: (state.shuffleO && allowShuffleO) ? '1' : '0'
       });
       if (state.tag && state.tag !== 'all') params.set('tag', state.tag);
-      window.location.href = '/quiz?' + params.toString();
+      window.open('/quiz?' + params.toString(), '_blank');
     }
 
     function escapeHtml(s){

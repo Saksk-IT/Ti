@@ -176,8 +176,8 @@
                   <div class="dc-item-meta muted">{{ a.metrics }}</div>
                 </div>
                 <div class="dc-item-actions">
-                  <a class="dc-mini-btn primary" href="/quiz?mode=quiz&source=mistakes&subject={{ a.subject|urlencode }}&type={{ a.q_type|urlencode }}">刷错题</a>
-                  <a class="dc-mini-btn" href="/quiz?mode=quiz&source=all&subject={{ a.subject|urlencode }}&type={{ a.q_type|urlencode }}">重练</a>
+                  <a class="dc-mini-btn primary" href="/quiz?mode=quiz&source=mistakes&subject={{ a.subject|urlencode }}&type={{ a.q_type|urlencode }}" target="_blank">刷错题</a>
+                  <a class="dc-mini-btn" href="/quiz?mode=quiz&source=all&subject={{ a.subject|urlencode }}&type={{ a.q_type|urlencode }}" target="_blank">重练</a>
                 </div>
               </div>
             </div>
@@ -203,7 +203,7 @@
                   <div class="dc-item-meta">正确率 {{ w.accuracy }}% · 已做 {{ w.answered }} · 错题 {{ w.mistakes }}</div>
                 </div>
                 <div class="dc-item-actions">
-                  <a class="dc-mini-btn primary" href="/quiz?mode=quiz&source=mistakes&subject={{ w.subject|urlencode }}&type={{ w.q_type|urlencode }}">刷错题</a>
+                  <a class="dc-mini-btn primary" href="/quiz?mode=quiz&source=mistakes&subject={{ w.subject|urlencode }}&type={{ w.q_type|urlencode }}" target="_blank">刷错题</a>
                 </div>
               </div>
               <div class="dc-bars" aria-hidden="true">
@@ -246,7 +246,7 @@
                       <div class="dc-item-meta">{{ m.snippet }}</div>
                     </div>
                     <div class="dc-item-actions">
-                      <a class="dc-mini-btn primary" href="/quiz?mode=quiz&source=mistakes&subject={{ m.subject|urlencode }}&type={{ m.q_type|urlencode }}">刷同类错题</a>
+                      <a class="dc-mini-btn primary" href="/quiz?mode=quiz&source=mistakes&subject={{ m.subject|urlencode }}&type={{ m.q_type|urlencode }}" target="_blank">刷同类错题</a>
                     </div>
                   </div>
                 </div>
@@ -277,7 +277,7 @@
                       <div class="dc-item-meta">{{ f.snippet }}</div>
                     </div>
                     <div class="dc-item-actions">
-                      <a class="dc-mini-btn" href="/quiz?mode=quiz&subject={{ f.subject|urlencode }}&type={{ f.q_type|urlencode }}">去练习</a>
+                      <a class="dc-mini-btn" href="/quiz?mode=quiz&subject={{ f.subject|urlencode }}&type={{ f.q_type|urlencode }}" target="_blank">去练习</a>
                     </div>
                   </div>
                 </div>

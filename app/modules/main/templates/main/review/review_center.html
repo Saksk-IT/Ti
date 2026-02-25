@@ -593,8 +593,8 @@
               </div>
             </div>
             <div class="actions">
-              <a class="btn primary" href="{{ quiz_url }}">开始刷题</a>
-              <a class="btn" href="{{ memo_url }}">开始背题</a>
+              <a class="btn primary" href="{{ quiz_url }}" target="_blank">开始刷题</a>
+              <a class="btn" href="{{ memo_url }}" target="_blank">开始背题</a>
             </div>
             <div class="links">
               <a class="link" href="{{ reset_url }}">重置筛选</a>
@@ -884,7 +884,7 @@
                   <div class="rc-dist-title">{{ it.title }}</div>
                   <div class="rc-dist-meta">{{ it.q_type }} · {{ it.meta }}</div>
                 </div>
-                <a class="app-btn app-btn-secondary" href="{{ it.practice_url }}">练习</a>
+                <a class="app-btn app-btn-secondary" href="{{ it.practice_url }}" target="_blank">练习</a>
               </div>
             {% endfor %}
           {% else %}
@@ -978,7 +978,7 @@
                 <div class="rc-dist-meta">{{ row.count }} 题</div>
                 <div class="rc-bar"><span style="width: {{ row.pct }}%"></span></div>
               </div>
-              <a class="app-btn app-btn-secondary" href="{{ row.practice_url }}">去练习</a>
+              <a class="app-btn app-btn-secondary" href="{{ row.practice_url }}" target="_blank">去练习</a>
             </div>
           {% endfor %}
         {% else %}

@@ -797,7 +797,7 @@
       });
       if (state.scope === 'favorites' || state.scope === 'mistakes') params.set('source', state.scope);
       if (state.tag && state.tag !== 'all') params.set('tag', state.tag);
-      window.location.href = '/quiz?' + params.toString();
+      window.open('/quiz?' + params.toString(), '_blank');
     }
 
     function openReviewCenter(kind){
@@ -813,7 +813,7 @@
         shuffle_questions: state.shuffleQ ? '1' : '0',
         shuffle_options: (state.shuffleO && allowShuffleO) ? '1' : '0',
       });
-      window.location.href = `/${safeKind}/center?` + params.toString();
+      window.open(`/${safeKind}/center?` + params.toString(), '_blank');
     }
 
     async function startExam(){
@@ -868,7 +868,7 @@
           alert((js && js.message) ? js.message : '创建考试失败，请稍后再试');
           return;
         }
-        window.location.href = `/quiz?mode=exam&exam_id=${js.exam_id}`;
+        window.open(`/quiz?mode=exam&exam_id=${js.exam_id}`, '_blank');
       } catch (e) {
         alert('创建考试失败，请检查网络或稍后重试');
       }

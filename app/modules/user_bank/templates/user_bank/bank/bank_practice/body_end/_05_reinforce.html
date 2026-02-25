@@ -100,7 +100,7 @@
           btn.textContent = '练这题';
           btn.onclick = () => {
             const url = buildReinforceUrl([qid], 'wrong');
-            if (url) window.location.href = url;
+            if (url) window.open(url, '_blank');
           };
 
           right.appendChild(badge);
@@ -167,7 +167,7 @@
           btn.textContent = '练这一组';
           btn.onclick = () => {
             const url = buildReinforceUrl([a, b], 'similar');
-            if (url) window.location.href = url;
+            if (url) window.open(url, '_blank');
           };
 
           right.appendChild(badge);
@@ -248,12 +248,12 @@
                 wrongBtn.disabled = !(Array.isArray(wrongIds) && wrongIds.length);
                 wrongBtn.onclick = () => {
                   const url = buildReinforceUrl(wrongIds, 'wrong');
-                  if (url) window.location.href = url;
+                  if (url) window.open(url, '_blank');
                 };
               }
               if (wrongAllBtn) {
                 wrongAllBtn.disabled = false;
-                wrongAllBtn.onclick = () => { window.location.href = `/quiz?bank_id=${BANK_ID}&source=mistakes`; };
+                wrongAllBtn.onclick = () => { window.open(`/quiz?bank_id=${BANK_ID}&source=mistakes`, '_blank'); };
               }
               if (wrongListMeta) wrongListMeta.textContent = `展示 ${wrongTop.length} 题 · 共错题 ${wrongTotal} 题`;
             } else {
@@ -283,12 +283,12 @@
               if (similarOnlyIds.length) {
                 const extra = similarOnlyIds.length;
                 const pairsText = similarPairsCount > 0 ? `${similarPairsCount} 组` : '';
-                simDesc.textContent = `已在本题库检测到${pairsText ? (' ' + pairsText) : ''}相似题（题干相似优先，选项相似兜底），训练共 ${extra} 道。`;
+                simDesc.textContent = `检测到${pairsText ? (' ' + pairsText) : ''}相似题（题干\选项相似），共 ${extra} 组`;
                 if (simBtn) {
                   simBtn.disabled = false;
                   simBtn.onclick = () => {
                     const url = buildReinforceUrl(similarOnlyIds, 'similar');
-                    if (url) window.location.href = url;
+                    if (url) window.open(url, '_blank');
                   };
                 }
               } else {
@@ -303,7 +303,7 @@
                   simBtn.disabled = false;
                   simBtn.onclick = () => {
                     const url = buildReinforceUrl(similarOnlyIds, 'similar');
-                    if (url) window.location.href = url;
+                    if (url) window.open(url, '_blank');
                   };
                 }
               } else {
@@ -313,7 +313,7 @@
                     simBtn.disabled = false;
                     simBtn.onclick = () => {
                       const url = buildReinforceUrl(seedIds, 'similar');
-                      if (url) window.location.href = url;
+                      if (url) window.open(url, '_blank');
                     };
                   }
                 } else {

@@ -610,7 +610,7 @@
         const nextUrl = (cfg.source === 'user_bank' && cfg.bank_id)
           ? `/quiz?mode=exam&exam_id=${js.exam_id}&bank_id=${cfg.bank_id}`
           : `/quiz?mode=exam&exam_id=${js.exam_id}`;
-        window.location.href = nextUrl;
+        window.open(nextUrl, '_blank');
       } catch (e) {
         setTemplateMsg('创建考试失败，请检查网络或稍后重试。', 'error');
       } finally {
@@ -661,7 +661,7 @@
         const nextUrl = (cfg.source === 'user_bank' && cfg.bank_id)
           ? `/quiz?mode=exam&exam_id=${js.exam_id}&bank_id=${cfg.bank_id}`
           : `/quiz?mode=exam&exam_id=${js.exam_id}`;
-        window.location.href = nextUrl;
+        window.open(nextUrl, '_blank');
       } catch (e) {
         setExamMsg('创建考试失败，请检查网络或稍后重试。', 'error');
       } finally {
@@ -1317,7 +1317,7 @@
                   </div>
                 </div>
                 <div class="exam-actions">
-                  <a class="exam-btn exam-btn-primary" href="/quiz?mode=exam&exam_id={{ e.id }}{% if e.source == 'user_bank' and e.bank_id %}&bank_id={{ e.bank_id }}{% endif %}">继续</a>
+                  <a class="exam-btn exam-btn-primary" href="/quiz?mode=exam&exam_id={{ e.id }}{% if e.source == 'user_bank' and e.bank_id %}&bank_id={{ e.bank_id }}{% endif %}" target="_blank">继续</a>
                   <button class="exam-btn exam-btn-danger" type="button" onclick="delExam({{ e.id }})">删除</button>
                 </div>
               </div>
@@ -1356,7 +1356,7 @@
                 </div>
                 <div class="exam-actions">
                   <a class="exam-btn" href="/exams/{{ e.id }}">详情</a>
-                  <a class="exam-btn" href="/quiz?mode=exam&exam_id={{ e.id }}{% if e.source == 'user_bank' and e.bank_id %}&bank_id={{ e.bank_id }}{% endif %}">回顾</a>
+                  <a class="exam-btn" href="/quiz?mode=exam&exam_id={{ e.id }}{% if e.source == 'user_bank' and e.bank_id %}&bank_id={{ e.bank_id }}{% endif %}" target="_blank">回顾</a>
                   <button class="exam-btn" type="button" onclick="toMistakes({{ e.id }})">加入错题本</button>
                   <button class="exam-btn exam-btn-danger" type="button" onclick="delExam({{ e.id }})">删除</button>
                 </div>
@@ -1499,7 +1499,7 @@
               </div>
               <div class="exam-actions">
                 <a class="exam-btn" href="/exams/{{ e.id }}">详情</a>
-                <a class="exam-btn" href="/quiz?mode=exam&exam_id={{ e.id }}{% if e.source == 'user_bank' and e.bank_id %}&bank_id={{ e.bank_id }}{% endif %}">回顾</a>
+                <a class="exam-btn" href="/quiz?mode=exam&exam_id={{ e.id }}{% if e.source == 'user_bank' and e.bank_id %}&bank_id={{ e.bank_id }}{% endif %}" target="_blank">回顾</a>
               </div>
             </div>
           {% else %}

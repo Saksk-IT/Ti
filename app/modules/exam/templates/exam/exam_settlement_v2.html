@@ -89,7 +89,7 @@
         </div>
 
         <div class="actions">
-          <a class="btnx btnx-primary" href="/quiz?mode=exam&exam_id={{ exam.id }}{% if exam_source == 'user_bank' and exam_bank_id %}&bank_id={{ exam_bank_id }}{% endif %}">回顾题目</a>
+          <a class="btnx btnx-primary" href="/quiz?mode=exam&exam_id={{ exam.id }}{% if exam_source == 'user_bank' and exam_bank_id %}&bank_id={{ exam_bank_id }}{% endif %}" target="_blank">回顾题目</a>
           <button class="btnx btnx-cta" type="button" onclick="toMistakes({{ exam.id }})">错题加入错题本</button>
           <a class="btnx" href="/mistakes">错题强化</a>
           <a class="btnx" href="/exams">继续考试</a>

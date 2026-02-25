@@ -65,7 +65,7 @@
               </div>
               <div class="dc-item-actions">
                 {% if it.source == 'banks' and it.bank_id %}
-                  <a class="dc-mini-btn primary" href="/user/banks/{{ it.bank_id }}/quiz?mode=favorites">刷收藏</a>
+                  <a class="dc-mini-btn primary" href="/user/banks/{{ it.bank_id }}/quiz?mode=favorites" target="_blank">刷收藏</a>
                 {% else %}
                   <a class="dc-mini-btn" href="/favorites">去中心下钻</a>
                 {% endif %}
@@ -130,7 +130,7 @@
                     <div class="dc-item-meta">{{ f.snippet }}</div>
                   </div>
                   <div class="dc-item-actions">
-                    <a class="dc-mini-btn primary" href="/user/banks/{{ f.bank_id }}/quiz?mode=favorites">刷收藏</a>
+                    <a class="dc-mini-btn primary" href="/user/banks/{{ f.bank_id }}/quiz?mode=favorites" target="_blank">刷收藏</a>
                   </div>
                 </div>
               </div>

@@ -170,7 +170,7 @@
               <p>按题库查看完成度与正确率，并可直接开始练习。</p>
             </div>
             <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
-              <a class="dc-mini-btn" href="/quiz?mode=quiz&source=mistakes">刷公共错题</a>
+              <a class="dc-mini-btn" href="/quiz?mode=quiz&source=mistakes" target="_blank">刷公共错题</a>
               <a class="dc-mini-btn" href="/user/banks/">我的题库</a>
             </div>
           </div>
@@ -189,7 +189,7 @@
                         </div>
                         <div class="dc-item-actions">
                           <a class="dc-mini-btn" href="/subjects/{{ s.subject_id }}">详情</a>
-                          <a class="dc-mini-btn primary" href="/quiz?subject={{ s.subject|urlencode }}&type=all&mode=quiz&source=mistakes">错题</a>
+                          <a class="dc-mini-btn primary" href="/quiz?subject={{ s.subject|urlencode }}&type=all&mode=quiz&source=mistakes" target="_blank">错题</a>
                         </div>
                       </div>
                       <div class="dc-bars" aria-hidden="true">
@@ -217,7 +217,7 @@
                         </div>
                         <div class="dc-item-actions">
                           <a class="dc-mini-btn" href="/user/banks/{{ b.bank_id }}/practice">详情</a>
-                          <a class="dc-mini-btn primary" href="/quiz?bank_id={{ b.bank_id }}&mode=quiz&source=mistakes">错题</a>
+                          <a class="dc-mini-btn primary" href="/quiz?bank_id={{ b.bank_id }}&mode=quiz&source=mistakes" target="_blank">错题</a>
                         </div>
                       </div>
                       <div class="dc-bars" aria-hidden="true">
