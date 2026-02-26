@@ -706,7 +706,7 @@
   const badge = document.getElementById('chatUnreadBadge');
   if (!badge) return;
   Promise.all([
-    fetch('/api/chat/chat/unread_count').then(r=>r.json()).catch(()=>({status:'error'})),
+    fetch('/api/chat/unread_count').then(r=>r.json()).catch(()=>({status:'error'})),
     fetch('/api/forum/unread').then(r=>r.json()).catch(()=>({status:'error'}))
   ]).then(([chatRes, mentionRes])=>{
     let total = 0;
