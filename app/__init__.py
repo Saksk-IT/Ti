@@ -297,6 +297,43 @@ def _register_before_request(app):
             rid = uuid.uuid4().hex
         g.request_id = rid
 
+    # S4: API 写操作 CSRF 防护
+    _CSRF_EXEMPT_ENDPOINTS = frozenset({
+        '/api/login',
+        '/api/wechat/login',
+        '/api/wechat/create',
+        '/api/wechat/bind',
+        '/api/wechat/bind/send_code',
+        '/api/wechat/bind_confirm',
+        '/api/mini/login',
+        '/api/mini/email/send-login-code',
+        '/api/mini/email/login',
+        '/api/email/send-login-code',
+        '/api/email/login',
+        '/api/forgot-password/send-code',
+        '/api/forgot-password/reset',
+    })
+
+    @app.before_request
+    def _check_api_write_csrf():
+        """拦截无 XHR 标记的 API 写请求（防 CSRF）"""
+        if request.method not in ('POST', 'PUT', 'DELETE', 'PATCH'):
+            return
+        path = request.path or ''
+        if not path.startswith('/api'):
+            return
+        # 放行：小程序 JWT 请求
+        auth = request.headers.get('Authorization') or ''
+        if auth.startswith('Bearer '):
+            return
+        # 放行：XHR 请求（前端 fetch monkey-patch 自动注入）
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return
+        # 放行：豁免端点（登录/注册等）
+        if path in _CSRF_EXEMPT_ENDPOINTS:
+            return
+        return jsonify({'status': 'error', 'message': '请求被拒绝（缺少安全标头）'}), 403
+
     @app.before_request
     def _force_https():
         """生产环境 HTTPS 强制重定向（Flask 层备用）。"""

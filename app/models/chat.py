@@ -60,6 +60,7 @@ class ChatMessage(db.Model):
     )
     content = db.Column(db.Text, nullable=False)
     content_type = db.Column(db.Text, default="text", server_default="text")
+    is_revoked = db.Column(db.Boolean, default=False, server_default=db.text("0"))
     created_at = db.Column(db.DateTime, default=db.func.now(), server_default=func.now())
 
     def __repr__(self) -> str:

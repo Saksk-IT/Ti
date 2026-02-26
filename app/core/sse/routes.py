@@ -6,7 +6,7 @@ import queue
 
 from flask import Blueprint, Response, session, stream_with_context, jsonify
 
-from .event_bus import subscribe, unsubscribe, SSEEvent
+from .event_bus import subscribe, unsubscribe, get_connection_count, SSEEvent
 
 sse_bp = Blueprint('sse', __name__)
 
@@ -29,6 +29,10 @@ def sse_stream():
         return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
 
     uid = int(user_id)
+
+    # S3: 限制每用户最大 SSE 连接数
+    if get_connection_count(uid) >= 3:
+        return jsonify({'status': 'error', 'message': '连接数超限，请关闭其他标签页'}), 429
 
     def generate():
         q = subscribe(uid)

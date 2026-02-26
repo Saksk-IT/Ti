@@ -3,10 +3,12 @@
 from flask import jsonify, request, session
 
 from .api import chat_api_bp
+from app.core.extensions import limiter
 from app.modules.forum.services import interaction_service
 
 
 @chat_api_bp.route('/chat/interactions')
+@limiter.limit("60/minute")
 def api_interactions():
     """互动通知列表"""
     if not session.get('user_id'):
@@ -20,6 +22,7 @@ def api_interactions():
 
 
 @chat_api_bp.route('/chat/interactions/read', methods=['POST'])
+@limiter.limit("30/minute")
 def api_interactions_read():
     """标记互动通知已读"""
     if not session.get('user_id'):
@@ -39,6 +42,7 @@ def api_interactions_read():
 
 
 @chat_api_bp.route('/chat/interactions/unread_count')
+@limiter.limit("120/minute")
 def api_interactions_unread_count():
     """未读互动通知数"""
     if not session.get('user_id'):

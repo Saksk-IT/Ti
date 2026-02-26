@@ -16,6 +16,7 @@ from app.core.extensions import db, limiter
 from app.core.utils.json_helpers import safe_load as _safe_load
 from app.core.utils.options_parser import parse_options
 from app.core.utils.time_utils import now_bj
+from app.core.utils.sql_utils import escape_like
 from app.core.utils.cache_utils import (
     get_chat_version, bump_chat_version, make_cache_key,
 )
@@ -29,6 +30,7 @@ import uuid
 import json
 import subprocess
 import shutil
+from datetime import datetime, timedelta
 
 chat_api_bp = Blueprint('chat_api', __name__)
 
@@ -171,6 +173,15 @@ def _insert_message_and_update(
     except Exception:
         pass  # SSE 推送失败不影响消息发送
 
+    # D7: Redis 未读计数 +1（非发送者）
+    try:
+        from app.core.utils.unread_counter import incr_unread
+        for uid in member_ids:
+            if uid != sender_id:
+                incr_unread(uid, conversation_id)
+    except Exception:
+        pass
+
     return mid
 
 
@@ -189,13 +200,13 @@ def chat_users():
     ).filter(User.id != uid)
 
     if q:
-        query = query.filter(User.username.ilike(f"%{q}%"))
+        query = query.filter(User.username.ilike(f"%{escape_like(q)}%", escape="\\"))
 
     # 排序优化：精确命中优先，其次前缀命中；再按活跃度与用户名
     if q:
         query = query.order_by(
             (func.lower(User.username) == func.lower(q)).desc(),
-            (func.lower(User.username).like(func.lower(f"{q}%"))).desc(),
+            (func.lower(User.username).like(func.lower(f"{escape_like(q)}%"), escape="\\")).desc(),
             case((User.last_active.is_(None), 1), else_=0).asc(),
             User.last_active.desc(),
             User.username.asc(),
@@ -231,7 +242,11 @@ def chat_conversations():
 
     # Redis 缓存：版本号 + TTL 5s
     ver = get_chat_version(uid)
-    cache_key = make_cache_key("chat:convs", {"uid": uid, "ver": ver})
+    limit = int(request.args.get('limit') or 50)
+    limit = max(1, min(limit, 100))
+    offset = int(request.args.get('offset') or 0)
+    offset = max(0, offset)
+    cache_key = make_cache_key("chat:convs", {"uid": uid, "ver": ver, "limit": limit, "offset": offset})
     cached = redis_get_json(cache_key)
     if cached is not None:
         return jsonify({'status': 'success', 'data': cached})
@@ -278,6 +293,7 @@ def chat_conversations():
             UserRemark.remark.label('peer_remark'),
             lm.content_type.label('last_message_type'),
             lm.content.label('last_message'),
+            lm.is_revoked.label('last_message_revoked'),
             unread_sq.label('unread_count'),
         )
         # 当前用户必须是成员（内连接）
@@ -295,7 +311,10 @@ def chat_conversations():
         .order_by(ChatConversation.updated_at.desc(), ChatConversation.id.desc())
     )
 
-    rows = query.all()
+    # D6: 分页
+    total_rows = query.count()
+    rows = query.limit(limit).offset(offset).all()
+    has_more = (offset + limit) < total_rows
 
     data = []
     for r in rows:
@@ -312,7 +331,11 @@ def chat_conversations():
             'last_message': r.last_message,
             'unread_count': r.unread_count or 0,
         }
-        if d.get('last_message_type') == 'image':
+        # D2: 撤回消息在会话列表显示 [已撤回]
+        if r.last_message_revoked:
+            d['last_message'] = '[已撤回]'
+            d['last_message_type'] = 'revoked'
+        elif d.get('last_message_type') == 'image':
             d['last_message'] = '[图片]'
         elif d.get('last_message_type') == 'audio':
             d['last_message'] = '[语音]'
@@ -327,7 +350,7 @@ def chat_conversations():
     # 写入 Redis 缓存（TTL 5s）
     redis_set_json(cache_key, data, ttl_seconds=5)
 
-    return jsonify({'status': 'success', 'data': data})
+    return jsonify({'status': 'success', 'data': data, 'has_more': has_more})
 
 
 
@@ -362,7 +385,7 @@ def chat_conversation_users():
 
     if q:
         query = query.filter(
-            (pu.username.ilike(f"%{q}%")) | (UserRemark.remark.ilike(f"%{q}%"))
+            (pu.username.ilike(f"%{escape_like(q)}%", escape="\\")) | (UserRemark.remark.ilike(f"%{escape_like(q)}%", escape="\\"))
         )
 
     query = query.distinct().order_by(ChatConversation.updated_at.desc(), pu.username.asc()).limit(50)
@@ -593,6 +616,7 @@ def chat_messages():
             User.avatar.label('sender_avatar'),
             ChatMessage.content,
             ChatMessage.content_type,
+            ChatMessage.is_revoked,
             ChatMessage.created_at,
         )
         .outerjoin(User, User.id == ChatMessage.sender_id)
@@ -645,6 +669,12 @@ def chat_messages():
         if member and (member.last_read_message_id or 0) < latest_msg.max_id:
             member.last_read_message_id = latest_msg.max_id
             db.session.commit()
+            # D7: 已读推进后重置 Redis 未读计数
+            try:
+                from app.core.utils.unread_counter import reset_unread
+                reset_unread(uid, conversation_id)
+            except Exception:
+                pass
 
     data = [
         {
@@ -653,8 +683,9 @@ def chat_messages():
             'sender_id': r.sender_id,
             'sender_username': r.sender_username,
             'sender_avatar': r.sender_avatar,
-            'content': r.content,
-            'content_type': r.content_type,
+            'content': '' if r.is_revoked else r.content,
+            'content_type': 'revoked' if r.is_revoked else r.content_type,
+            'is_revoked': bool(r.is_revoked),
             'created_at': r.created_at.isoformat() if r.created_at else None,
         }
         for r in rows
@@ -1073,7 +1104,16 @@ def chat_unread_count():
 
     uid = session.get('user_id')
 
-    # 说明：历史上可能存在重复的 direct 私聊会话（尤其 direct_pair_key 为空的遗留数据）。
+    # D7: 优先从 Redis 缓存获取未读计数
+    try:
+        from app.core.utils.unread_counter import get_total_unread
+        cached = get_total_unread(uid)
+        if cached is not None:
+            return jsonify({'status': 'success', 'count': int(cached)})
+    except Exception:
+        pass
+
+    # 降级：原有查库逻辑 说明：历史上可能存在重复的 direct 私聊会话（尤其 direct_pair_key 为空的遗留数据）。
     # 前端会话列表会按 peer_user_id 去重显示"最新的一条"，但首页角标如果直接对所有会话求和，
     # 就会把这些隐藏的旧会话也算进去，造成角标长期不归零。
     #
@@ -1140,51 +1180,60 @@ def chat_badge_counts():
 
     uid = session.get('user_id')
 
-    # 聊天未读（复用 chat_unread_count 的逻辑）
-    gkey = func.coalesce(
-        ChatConversation.direct_pair_key,
-        db.cast(ChatConversation.id, db.Text),
-    ).label('gkey')
+    # D7: 优先从 Redis 缓存获取聊天未读
+    chat_unread = None
+    try:
+        from app.core.utils.unread_counter import get_total_unread
+        chat_unread = get_total_unread(uid)
+    except Exception:
+        pass
 
-    my_convs = (
-        db.session.query(
-            ChatConversation.id.label('conversation_id'),
-            ChatConversation.c_type,
-            ChatConversation.updated_at,
-            gkey,
+    # 降级：原有查库逻辑
+    if chat_unread is None:
+        gkey = func.coalesce(
+            ChatConversation.direct_pair_key,
+            db.cast(ChatConversation.id, db.Text),
+        ).label('gkey')
+
+        my_convs = (
+            db.session.query(
+                ChatConversation.id.label('conversation_id'),
+                ChatConversation.c_type,
+                ChatConversation.updated_at,
+                gkey,
+            )
+            .join(ChatMember, (ChatMember.conversation_id == ChatConversation.id) & (ChatMember.user_id == uid))
+            .subquery('my_convs_badge')
         )
-        .join(ChatMember, (ChatMember.conversation_id == ChatConversation.id) & (ChatMember.user_id == uid))
-        .subquery('my_convs_badge')
-    )
 
-    ranked = (
-        db.session.query(
-            my_convs.c.conversation_id,
-            func.row_number().over(
-                partition_by=my_convs.c.gkey,
-                order_by=[my_convs.c.updated_at.desc(), my_convs.c.conversation_id.desc()],
-            ).label('rn'),
+        ranked = (
+            db.session.query(
+                my_convs.c.conversation_id,
+                func.row_number().over(
+                    partition_by=my_convs.c.gkey,
+                    order_by=[my_convs.c.updated_at.desc(), my_convs.c.conversation_id.desc()],
+                ).label('rn'),
+            )
+            .subquery('ranked_badge')
         )
-        .subquery('ranked_badge')
-    )
 
-    latest_conv_ids = (
-        db.session.query(ranked.c.conversation_id)
-        .filter(ranked.c.rn == 1)
-        .subquery('latest_conv_ids_badge')
-    )
-
-    cm2 = db.aliased(ChatMember, name='cm2_badge')
-    chat_unread = (
-        db.session.query(func.coalesce(func.count(ChatMessage.id), 0))
-        .join(latest_conv_ids, ChatMessage.conversation_id == latest_conv_ids.c.conversation_id)
-        .join(cm2, (cm2.conversation_id == ChatMessage.conversation_id) & (cm2.user_id == uid))
-        .filter(
-            ChatMessage.id > func.coalesce(cm2.last_read_message_id, 0),
-            ChatMessage.sender_id != uid,
+        latest_conv_ids = (
+            db.session.query(ranked.c.conversation_id)
+            .filter(ranked.c.rn == 1)
+            .subquery('latest_conv_ids_badge')
         )
-        .scalar()
-    ) or 0
+
+        cm2 = db.aliased(ChatMember, name='cm2_badge')
+        chat_unread = (
+            db.session.query(func.coalesce(func.count(ChatMessage.id), 0))
+            .join(latest_conv_ids, ChatMessage.conversation_id == latest_conv_ids.c.conversation_id)
+            .join(cm2, (cm2.conversation_id == ChatMessage.conversation_id) & (cm2.user_id == uid))
+            .filter(
+                ChatMessage.id > func.coalesce(cm2.last_read_message_id, 0),
+                ChatMessage.sender_id != uid,
+            )
+            .scalar()
+        ) or 0
 
     # 论坛互动未读
     interact_unread = db.session.execute(text(
@@ -1197,5 +1246,104 @@ def chat_badge_counts():
         'interact_unread': int(interact_unread),
         'total': total,
     }})
+
+
+# ── D2: 消息撤回 ──────────────────────────────────────────────
+@chat_api_bp.route('/api/chat/messages/revoke', methods=['POST'])
+@limiter.limit("30/minute")
+def chat_revoke_message():
+    uid = session.get('user_id')
+    if not uid:
+        return jsonify({'status': 'error', 'message': '请先登录'}), 401
+
+    data = request.get_json(silent=True) or {}
+    message_id = data.get('message_id')
+    if not message_id:
+        return jsonify({'status': 'error', 'message': '缺少 message_id'}), 400
+
+    msg = db.session.get(ChatMessage, int(message_id))
+    if not msg:
+        return jsonify({'status': 'error', 'message': '消息不存在'}), 404
+    if msg.sender_id != uid:
+        return jsonify({'status': 'error', 'message': '只能撤回自己的消息'}), 403
+    if msg.is_revoked:
+        return jsonify({'status': 'error', 'message': '消息已撤回'}), 400
+
+    elapsed = now_bj() - msg.created_at
+    if elapsed > timedelta(minutes=2):
+        return jsonify({'status': 'error', 'message': '超过 2 分钟无法撤回'}), 400
+
+    msg.is_revoked = True
+    db.session.commit()
+
+    # SSE 推送撤回事件给会话所有成员
+    try:
+        from app.core.sse.event_bus import publish
+        members = db.session.query(ChatMember.user_id).filter_by(
+            conversation_id=msg.conversation_id
+        ).all()
+        member_ids = [m.user_id for m in members]
+        publish('chat_message_revoked', member_ids, {
+            'conversation_id': msg.conversation_id,
+            'message_id': msg.id,
+            'sender_id': uid,
+        })
+    except Exception:
+        pass
+
+    return jsonify({'status': 'success'})
+
+
+# ── D5: 会话内消息搜索 ────────────────────────────────────────
+@chat_api_bp.route('/api/chat/messages/search', methods=['GET'])
+@limiter.limit("60/minute")
+def chat_search_messages():
+    uid = session.get('user_id')
+    if not uid:
+        return jsonify({'status': 'error', 'message': '请先登录'}), 401
+
+    conversation_id = request.args.get('conversation_id', type=int)
+    q = (request.args.get('q') or '').strip()
+    limit = min(request.args.get('limit', 20, type=int), 50)
+
+    if not conversation_id or not q:
+        return jsonify({'status': 'error', 'message': '缺少参数'}), 400
+
+    if not _is_member(conversation_id, uid):
+        return jsonify({'status': 'error', 'message': '无权访问该会话'}), 403
+
+    escaped_q = escape_like(q)
+    rows = (
+        db.session.query(
+            ChatMessage.id,
+            ChatMessage.sender_id,
+            ChatMessage.content,
+            ChatMessage.content_type,
+            ChatMessage.created_at,
+        )
+        .filter(
+            ChatMessage.conversation_id == conversation_id,
+            ChatMessage.is_revoked == False,
+            ChatMessage.content.ilike(f"%{escaped_q}%", escape="\\"),
+        )
+        .order_by(ChatMessage.id.desc())
+        .limit(limit)
+        .all()
+    )
+
+    results = [
+        {
+            'id': r.id,
+            'sender_id': r.sender_id,
+            'content': r.content,
+            'content_type': r.content_type,
+            'created_at': str(r.created_at) if r.created_at else None,
+        }
+        for r in rows
+    ]
+
+    return jsonify({'status': 'success', 'data': results})
+
+
 # api_follow 已迁移至 forum 模块 (forum/routes/api_follow.py)
 from . import api_interactions  # noqa: F401,E402

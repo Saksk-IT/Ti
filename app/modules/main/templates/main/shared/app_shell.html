@@ -26,6 +26,21 @@
     })();
   </script>
 
+  <script>
+    /* S4: CSRF — 自动为 fetch 请求注入 X-Requested-With 头 */
+    (function(){
+      var _origFetch = window.fetch;
+      window.fetch = function(url, opts) {
+        opts = opts || {};
+        opts.headers = new Headers(opts.headers || {});
+        if (!opts.headers.has('X-Requested-With')) {
+          opts.headers.set('X-Requested-With', 'XMLHttpRequest');
+        }
+        return _origFetch.call(window, url, opts);
+      };
+    })();
+  </script>
+
   <style>
     :root {
       --app-bg: #f6f7f8;

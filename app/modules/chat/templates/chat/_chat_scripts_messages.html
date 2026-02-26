@@ -189,11 +189,11 @@
       return js;
     },
 
-    async fetchConversations(){
-      const res = await fetch('/api/chat/conversations');
+    async fetchConversations({limit=50, offset=0}={}){
+      const res = await fetch(`/api/chat/conversations?limit=${limit}&offset=${offset}`);
       const js = await this._json(res);
-      if (!res.ok || js.status !== 'success') return [];
-      return js.data || [];
+      if (!res.ok || js.status !== 'success') return {list: [], has_more: false};
+      return {list: js.data || [], has_more: !!js.has_more};
     },
 
     async fetchMessages({conversationId, afterId=0, beforeId=0, limit=80}){
@@ -278,10 +278,38 @@
       const js = await this._json(res);
       return { res, js };
     },
+
+    async revokeMessage(messageId){
+      const res = await fetch('/api/chat/messages/revoke', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ message_id: Number(messageId) })
+      });
+      const js = await this._json(res);
+      return { res, js };
+    },
+
+    async searchMessages({conversationId, q, limit=20}){
+      const cid = Number(conversationId || 0);
+      const kw = String(q || '').trim();
+      const lim = Number(limit || 20);
+      const res = await fetch(`/api/chat/messages/search?conversation_id=${cid}&q=${encodeURIComponent(kw)}&limit=${lim}`);
+      const js = await this._json(res);
+      return { res, js };
+    },
   };
 
+  // D6: 会话列表分页状态
+  var _convOffset = 0;
+  var _convLimit = 50;
+  var _convHasMore = false;
+  var _convLoading = false;
+
   async function fetchConversations(){
-    return Chat.api.fetchConversations();
+    var result = await Chat.api.fetchConversations({limit: _convLimit, offset: 0});
+    _convOffset = result.list.length;
+    _convHasMore = result.has_more;
+    return result.list;
   }
 
   function chatConvSkeletonItem() {
@@ -365,6 +393,60 @@
     const list = await fetchConversations();
     renderConversations(list);
     _convFirstLoad = false;
+    _setupConvScroll();
+  }
+
+  // D6: 加载更多会话
+  async function _loadMoreConversations() {
+    if (_convLoading || !_convHasMore) return;
+    _convLoading = true;
+    var result = await Chat.api.fetchConversations({limit: _convLimit, offset: _convOffset});
+    _convOffset += result.list.length;
+    _convHasMore = result.has_more;
+    _convLoading = false;
+    if (result.list.length) _appendConversations(result.list);
+  }
+
+  function _appendConversations(list) {
+    var el = document.getElementById('convList');
+    var elM = document.getElementById('convListMobile');
+    var html = (list||[]).map(function(c) {
+      var active = (c.conversation_id === ChatState.currentConversationId) ? 'active' : '';
+      var displayName = (c.c_type === 'direct' ? (c.peer_remark || c.peer_username || '私聊') : (c.title || '会话'));
+      var avatarUrl = c.peer_avatar || '';
+      var sub = c.last_message || '';
+      var timeText = (c.last_message_at || c.updated_at || c.last_time || '').toString();
+      var badge = (c.unread_count && c.unread_count > 0) ? '<span class="badge">' + (c.unread_count > 99 ? '99+' : c.unread_count) + '</span>' : '';
+      var timeHtml = timeText ? '<span class="conv-time">' + escapeHtml(formatConvTimestamp(timeText)) + '</span>' : '';
+      var initial = (displayName || 'U').slice(0,1).toUpperCase();
+      var avatarHtml = avatarUrl
+        ? '<div class="avatar" style="background-image:url(\'' + escapeAttr(avatarUrl) + '\')"></div>'
+        : '<div class="avatar" style="background: var(--primary);">' + escapeHtml(initial) + '</div>';
+      return '<div class="conv-item ' + active + '" onclick="openConversation(' + c.conversation_id + ')">' +
+        '<div onclick="event.stopPropagation(); openUserProfile(' + (c.peer_user_id || 0) + ');" style="display:flex;">' + avatarHtml + '</div>' +
+        '<div class="conv-text"><div class="conv-title">' + escapeHtml(displayName) + '</div><div class="conv-sub">' + escapeHtml(sub) + '</div></div>' +
+        '<div class="conv-right">' + timeHtml + badge + '</div></div>';
+    }).join('');
+    if (el) el.insertAdjacentHTML('beforeend', html);
+    if (elM) elM.insertAdjacentHTML('beforeend', html);
+  }
+
+  var _convScrollBound = false;
+  function _setupConvScroll() {
+    if (_convScrollBound) return;
+    _convScrollBound = true;
+    ['convList','convListMobile'].forEach(function(id) {
+      var container = document.getElementById(id);
+      if (!container) return;
+      // 找到可滚动的父容器
+      var scrollEl = container.closest('.conv-list') || container.parentElement;
+      if (!scrollEl) return;
+      scrollEl.addEventListener('scroll', function() {
+        if (scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 60) {
+          _loadMoreConversations();
+        }
+      });
+    });
   }
 
   function setEmptyStateVisible(show){
@@ -404,6 +486,8 @@
         currentPeerUserId = (cur.c_type === 'direct' ? (cur.peer_user_id || 0) : 0);
         const btnR = document.getElementById('btnRemark');
         if (btnR) btnR.style.display = (currentPeerUserId ? 'inline-flex' : 'none');
+        const btnS = document.getElementById('btnSearchMsg');
+        if (btnS) btnS.style.display = 'inline-flex';
       } else {
         document.getElementById('chatTitle').textContent = `会话 #${conversationId}`;
       }
@@ -411,6 +495,8 @@
       document.getElementById('chatTitle').textContent = `会话 #${conversationId}`;
       const btnR = document.getElementById('btnRemark');
       if (btnR) btnR.style.display = 'none';
+      const btnS = document.getElementById('btnSearchMsg');
+      if (btnS) btnS.style.display = 'inline-flex';
     }
     document.getElementById('chatHint').textContent = '';
 
@@ -437,6 +523,21 @@
         } catch(err) {}
       };
       window._sseSource.addEventListener('chat_message', ChatState._sseMessageHandler);
+
+      // D2: 撤回事件监听
+      if (ChatState._sseRevokeHandler) {
+        try { window._sseSource.removeEventListener('chat_message_revoked', ChatState._sseRevokeHandler); } catch(e) {}
+      }
+      ChatState._sseRevokeHandler = function(e) {
+        try {
+          var data = JSON.parse(e.data);
+          if (data.conversation_id === ChatState.currentConversationId) {
+            _applyRevokeToDOM(data.message_id);
+          }
+          throttledRefreshConversations();
+        } catch(err) {}
+      };
+      window._sseSource.addEventListener('chat_message_revoked', ChatState._sseRevokeHandler);
     } else {
       // SSE 不可用，降级回 2 秒轮询
       ChatState.pollTimer = setInterval(()=>pollMessages(false), 2000);
@@ -447,6 +548,143 @@
   function isAudioMsg(m){ return (m && m.content_type === 'audio'); }
   function isQuestionMsg(m){ return (m && m.content_type === 'question'); }
   function isForwardMsg(m){ return (m && m.content_type === 'forward'); }
+
+  // ── D2: 撤回菜单 + SSE 监听 ──────────────────────────────
+  var _revokeMenuEl = null;
+  function _closeRevokeMenu() {
+    if (_revokeMenuEl && _revokeMenuEl.parentNode) {
+      _revokeMenuEl.parentNode.removeChild(_revokeMenuEl);
+    }
+    _revokeMenuEl = null;
+  }
+
+  function _bindRevokeMenu(bubble, messageId) {
+    var longPressTimer = null;
+    bubble.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+      _showRevokeMenu(e.pageX, e.pageY, messageId);
+    });
+    bubble.addEventListener('touchstart', function(e) {
+      longPressTimer = setTimeout(function() {
+        var t = e.touches[0];
+        _showRevokeMenu(t.pageX, t.pageY, messageId);
+      }, 600);
+    }, {passive: true});
+    bubble.addEventListener('touchend', function() { clearTimeout(longPressTimer); });
+    bubble.addEventListener('touchmove', function() { clearTimeout(longPressTimer); });
+  }
+
+  function _showRevokeMenu(x, y, messageId) {
+    _closeRevokeMenu();
+    var menu = document.createElement('div');
+    menu.className = 'revoke-ctx-menu';
+    menu.style.cssText = 'position:fixed;z-index:9999;background:var(--card,#fff);border:1px solid var(--border,#e0e0e0);border-radius:8px;padding:6px 0;box-shadow:0 4px 16px rgba(0,0,0,.12);min-width:80px;';
+    var btn = document.createElement('div');
+    btn.textContent = '撤回';
+    btn.style.cssText = 'padding:8px 18px;font-size:14px;color:var(--danger,#e53935);cursor:pointer;';
+    btn.onmouseenter = function(){ btn.style.background='var(--hover,#f5f5f5)'; };
+    btn.onmouseleave = function(){ btn.style.background=''; };
+    btn.onclick = async function() {
+      _closeRevokeMenu();
+      var {res, js} = await Chat.api.revokeMessage(messageId);
+      if (js.status === 'success') {
+        _applyRevokeToDOM(messageId);
+      } else {
+        alert(js.message || '撤回失败');
+      }
+    };
+    menu.appendChild(btn);
+
+    document.body.appendChild(menu);
+    // 定位：确保不超出视口
+    var rect = menu.getBoundingClientRect();
+    var left = Math.min(x, window.innerWidth - rect.width - 8);
+    var top = Math.min(y, window.innerHeight - rect.height - 8);
+    menu.style.left = Math.max(0, left) + 'px';
+    menu.style.top = Math.max(0, top) + 'px';
+    _revokeMenuEl = menu;
+
+    setTimeout(function() {
+      document.addEventListener('click', _closeRevokeMenu, {once: true});
+      document.addEventListener('touchstart', _closeRevokeMenu, {once: true});
+    }, 50);
+  }
+
+  function _applyRevokeToDOM(messageId) {
+    var row = document.querySelector('[data-msg-id="' + messageId + '"]');
+    if (!row) return;
+    var bubble = row.querySelector('.bubble');
+    if (!bubble) return;
+    var isMe = row.classList.contains('me');
+    bubble.className = 'bubble revoked-bubble';
+    bubble.innerHTML = '';
+    bubble.textContent = isMe ? '你撤回了一条消息' : '对方撤回了一条消息';
+    bubble.style.cssText = 'background:transparent;color:var(--sub);font-size:12px;text-align:center;padding:4px 8px;font-style:italic;';
+  }
+
+  // SSE: 监听撤回事件（在 openConversation 中绑定）
+  ChatState._sseRevokeHandler = null;
+
+  // ── D5: 会话内消息搜索 ─────────────────────────────────────
+  function toggleMsgSearch() {
+    var bar = document.getElementById('msgSearchBar');
+    if (!bar) return;
+    var visible = bar.style.display !== 'none';
+    bar.style.display = visible ? 'none' : '';
+    if (!visible) {
+      var inp = document.getElementById('msgSearchInput');
+      if (inp) { inp.value = ''; inp.focus(); }
+      var res = document.getElementById('msgSearchResults');
+      if (res) { res.style.display = 'none'; res.innerHTML = ''; }
+    }
+  }
+  function closeMsgSearch() {
+    var bar = document.getElementById('msgSearchBar');
+    if (bar) bar.style.display = 'none';
+    // 清除高亮
+    document.querySelectorAll('.msg-search-highlight').forEach(function(el) {
+      el.classList.remove('msg-search-highlight');
+    });
+  }
+  async function doMsgSearch() {
+    var inp = document.getElementById('msgSearchInput');
+    var q = (inp && inp.value || '').trim();
+    if (!q || !ChatState.currentConversationId) return;
+    var resEl = document.getElementById('msgSearchResults');
+    if (!resEl) return;
+    resEl.style.display = '';
+    resEl.innerHTML = '<div style="padding:8px;color:var(--sub);font-size:12px;">搜索中…</div>';
+    var {res, js} = await Chat.api.searchMessages({conversationId: ChatState.currentConversationId, q: q});
+    if (js.status !== 'success' || !js.data || !js.data.length) {
+      resEl.innerHTML = '<div style="padding:8px;color:var(--sub);font-size:12px;">无匹配结果</div>';
+      return;
+    }
+    resEl.innerHTML = '';
+    js.data.forEach(function(item) {
+      var row = document.createElement('div');
+      row.style.cssText = 'padding:8px 10px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);';
+      row.onmouseenter = function(){ row.style.background='var(--hover,#f5f5f5)'; };
+      row.onmouseleave = function(){ row.style.background=''; };
+      var preview = String(item.content || '').slice(0, 60);
+      row.textContent = preview;
+      row.addEventListener('click', function() {
+        scrollToMessage(item.id, q);
+      });
+      resEl.appendChild(row);
+    });
+  }
+  function scrollToMessage(msgId, highlightText) {
+    // 清除旧高亮
+    document.querySelectorAll('.msg-search-highlight').forEach(function(el) {
+      el.classList.remove('msg-search-highlight');
+    });
+    var target = document.querySelector('[data-msg-id="' + msgId + '"]');
+    if (target) {
+      target.scrollIntoView({behavior:'smooth', block:'center'});
+      target.classList.add('msg-search-highlight');
+      setTimeout(function(){ target.classList.remove('msg-search-highlight'); }, 3000);
+    }
+  }
 
   function parseForwardContent(content){
     if (!content) return null;
@@ -623,6 +861,7 @@
       const row = document.createElement('div');
       row.className = 'msg-row ' + (isMe ? 'me' : '') + (compact ? ' compact' : '');
       row.setAttribute('data-sender', String(m.sender_id || ''));
+      row.setAttribute('data-msg-id', String(m.id || ''));
       const ts = safeParseTime(m && m.created_at);
       if (ts) row.setAttribute('data-ts', ts.toISOString());
 
@@ -634,7 +873,11 @@
       const bubble = document.createElement('div');
       bubble.className = 'bubble';
 
-      if (isImageMsg(m)) {
+      if (m.is_revoked || m.content_type === 'revoked') {
+        bubble.className = 'bubble revoked-bubble';
+        bubble.textContent = isMe ? '你撤回了一条消息' : (m.sender_username || '对方') + '撤回了一条消息';
+        bubble.style.cssText = 'background:transparent;color:var(--sub);font-size:12px;text-align:center;padding:4px 8px;font-style:italic;';
+      } else if (isImageMsg(m)) {
         bubble.classList.add('image-bubble');
         const info = parseImageContent(m.content);
         const showUrl = info.thumb || info.url;
@@ -850,6 +1093,15 @@
       wrap.appendChild(bubble);
       wrap.appendChild(meta);
 
+      // D2: 自己的消息、2分钟内、未撤回 → 长按/右键可撤回
+      if (isMe && !m.is_revoked && m.content_type !== 'revoked') {
+        const createdTs = safeParseTime(m.created_at);
+        const canRevoke = createdTs && (Date.now() - createdTs.getTime() < 2 * 60 * 1000);
+        if (canRevoke) {
+          _bindRevokeMenu(bubble, m.id);
+        }
+      }
+
       row.appendChild(avatar);
       row.appendChild(wrap);
       box.appendChild(row);
@@ -889,6 +1141,7 @@
       const row = document.createElement('div');
       row.className = 'msg-row ' + (isMe ? 'me' : '');
       row.setAttribute('data-sender', String(m.sender_id || ''));
+      row.setAttribute('data-msg-id', String(m.id || ''));
       const ts = safeParseTime(m && m.created_at);
       if (ts) row.setAttribute('data-ts', ts.toISOString());
 
@@ -898,7 +1151,11 @@
       const bubble = document.createElement('div');
       bubble.className = 'bubble';
 
-      if (isImageMsg(m)) {
+      if (m.is_revoked || m.content_type === 'revoked') {
+        bubble.className = 'bubble revoked-bubble';
+        bubble.textContent = isMe ? '你撤回了一条消息' : (m.sender_username || '对方') + '撤回了一条消息';
+        bubble.style.cssText = 'background:transparent;color:var(--sub);font-size:12px;text-align:center;padding:4px 8px;font-style:italic;';
+      } else if (isImageMsg(m)) {
         bubble.classList.add('image-bubble');
         const info = parseImageContent(m.content);
         const showUrl = info.thumb || info.url;

@@ -46,7 +46,20 @@
           <div class="title" id="chatTitle">请选择一个话题</div>
           <div class="subtle" id="chatHint"></div>
         </div>
-        <button class="btn" id="btnRemark" onclick="openUserProfile(currentPeerUserId)" style="display:none;">资料</button>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button class="btn btn-icon" id="btnSearchMsg" onclick="toggleMsgSearch()" style="display:none;" title="搜索消息" aria-label="搜索消息">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          </button>
+          <button class="btn" id="btnRemark" onclick="openUserProfile(currentPeerUserId)" style="display:none;">资料</button>
+        </div>
+      </div>
+      <div id="msgSearchBar" style="display:none;padding:6px 12px;border-bottom:1px solid var(--border);background:var(--card,#fff);">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input id="msgSearchInput" type="text" placeholder="搜索当前会话消息…" onkeydown="if(event.key==='Enter'){event.preventDefault();doMsgSearch();}" style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--bg);color:var(--text);outline:none;" />
+          <button class="btn" onclick="doMsgSearch()" style="padding:4px 12px;font-size:13px;">搜索</button>
+          <button class="btn" onclick="closeMsgSearch()" style="padding:4px 8px;font-size:13px;color:var(--sub);">取消</button>
+        </div>
+        <div id="msgSearchResults" style="display:none;max-height:200px;overflow-y:auto;margin-top:6px;"></div>
       </div>
       <div class="messages" id="messages">
         <div id="emptyState" style="display:none; padding:22px 10px; text-align:center; color:var(--sub);">

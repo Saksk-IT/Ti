@@ -18,6 +18,9 @@ def serve_upload(filename):
     # 路径遍历防护：拒绝包含 .. 的路径
     if '..' in filename or filename.startswith('/'):
         abort(400)
+    # S1: 聊天文件访问鉴权
+    from app.core.utils.chat_file_auth import check_chat_file_access
+    check_chat_file_access(filename)
     directory = current_app.config.get('UPLOAD_FOLDER') or os.path.join(current_app.root_path, '..', 'uploads')
     resp = send_from_directory(directory, filename, conditional=True)
     resp.headers.setdefault('Accept-Ranges', 'bytes')

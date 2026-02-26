@@ -427,3 +427,14 @@
             width: 0;
             height: 0;
         }
+
+    /* D2: 撤回消息样式 */
+    .revoked-bubble { background: transparent !important; box-shadow: none !important; }
+    .msg-row.me .revoked-bubble { background: transparent !important; }
+
+    /* D5: 搜索高亮 */
+    .msg-search-highlight { animation: msg-highlight-fade 3s ease; }
+    @keyframes msg-highlight-fade {
+      0%, 30% { background: rgba(52,199,89,0.15); }
+      100% { background: transparent; }
+    }
