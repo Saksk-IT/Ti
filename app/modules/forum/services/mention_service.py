@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """@提及服务"""
+import logging
 import re
 from typing import Optional
 
@@ -7,6 +8,8 @@ from sqlalchemy import text
 
 from app.core.extensions import db
 from . import interaction_service
+
+logger = logging.getLogger(__name__)
 
 
 def extract_mentions(content: str) -> list[str]:
@@ -57,8 +60,11 @@ def create_mentions(source_type: str, source_id: int, mentioner_id: int,
                 target_type=source_type, target_id=source_id,
                 post_id=post_id, content_preview=content[:100],
             )
-        except Exception:
-            pass
+        except Exception as _e:
+            logger.warning(
+                "mention 互动通知写入失败 source=%s/%s: %s",
+                source_type, source_id, _e,
+            )
 
     if created:
         db.session.commit()

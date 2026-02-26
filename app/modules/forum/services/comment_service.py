@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """评论业务逻辑"""
+import logging
 from typing import Optional
 
 from sqlalchemy import text
@@ -7,6 +8,8 @@ from sqlalchemy import text
 from app.core.extensions import db
 from ..services.content_sanitizer import sanitize_html
 from ..services import mention_service, ban_service, interaction_service
+
+logger = logging.getLogger(__name__)
 
 
 def get_comments(post_id: int, page: int = 1, per_page: int = 30,
@@ -123,8 +126,11 @@ def create_comment(post_id: int, author_id: int, content: str,
                     target_type='post', target_id=post_id,
                     post_id=post_id, content_preview=preview,
                 )
-    except Exception:
-        pass
+    except Exception as _e:
+        logger.warning(
+            "评论互动通知写入失败 post=%s comment=%s: %s",
+            post_id, comment.get('id'), _e,
+        )
 
     return comment
 

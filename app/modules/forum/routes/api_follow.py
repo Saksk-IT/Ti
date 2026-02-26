@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
-"""关注 API — 挂载到 chat_api_bp"""
-from flask import jsonify, request, session, current_app
+"""关注 API — 独立蓝图，url_prefix=/api（由 forum 模块注册）"""
+from flask import Blueprint, jsonify, request, session, current_app
 
-from .api import chat_api_bp
 from app.modules.forum.services import follow_service
 from app.modules.forum.services import interaction_service
 
+forum_user_api_bp = Blueprint('forum_user_api', __name__)
 
-@chat_api_bp.route('/user/follow', methods=['POST'])
+
+@forum_user_api_bp.route('/user/follow', methods=['POST'])
 def api_follow_user():
     """关注用户"""
     if not session.get('user_id'):
@@ -15,7 +16,10 @@ def api_follow_user():
 
     uid = int(session['user_id'])
     data = request.get_json(silent=True) or {}
-    target_id = int(data.get('target_id') or 0)
+    try:
+        target_id = int(data.get('target_id') or 0)
+    except (TypeError, ValueError):
+        return jsonify({'status': 'error', 'message': '参数错误'}), 400
 
     if target_id <= 0:
         return jsonify({'status': 'error', 'message': '参数错误'}), 400
@@ -38,7 +42,7 @@ def api_follow_user():
     return jsonify({'status': 'success', 'data': status})
 
 
-@chat_api_bp.route('/user/unfollow', methods=['POST'])
+@forum_user_api_bp.route('/user/unfollow', methods=['POST'])
 def api_unfollow_user():
     """取消关注"""
     if not session.get('user_id'):
@@ -46,7 +50,10 @@ def api_unfollow_user():
 
     uid = int(session['user_id'])
     data = request.get_json(silent=True) or {}
-    target_id = int(data.get('target_id') or 0)
+    try:
+        target_id = int(data.get('target_id') or 0)
+    except (TypeError, ValueError):
+        return jsonify({'status': 'error', 'message': '参数错误'}), 400
 
     if target_id <= 0:
         return jsonify({'status': 'error', 'message': '参数错误'}), 400
@@ -56,7 +63,7 @@ def api_unfollow_user():
     return jsonify({'status': 'success', 'data': status})
 
 
-@chat_api_bp.route('/user/<int:user_id>/follow_status')
+@forum_user_api_bp.route('/user/<int:user_id>/follow_status')
 def api_follow_status(user_id: int):
     """获取关注状态"""
     if not session.get('user_id'):
@@ -67,7 +74,7 @@ def api_follow_status(user_id: int):
     return jsonify({'status': 'success', 'data': status})
 
 
-@chat_api_bp.route('/user/<int:user_id>/followers')
+@forum_user_api_bp.route('/user/<int:user_id>/followers')
 def api_followers(user_id: int):
     """粉丝列表"""
     if not session.get('user_id'):
@@ -79,7 +86,7 @@ def api_followers(user_id: int):
     return jsonify({'status': 'success', 'data': data})
 
 
-@chat_api_bp.route('/user/<int:user_id>/following')
+@forum_user_api_bp.route('/user/<int:user_id>/following')
 def api_following(user_id: int):
     """关注列表"""
     if not session.get('user_id'):

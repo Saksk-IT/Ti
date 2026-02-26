@@ -144,12 +144,18 @@ var MentionAutocomplete = (function(){
   function _positionPanel() {
     if (!_target || !_panel) return;
     var rect = _target.getBoundingClientRect();
-    _panel.style.left = rect.left + 'px';
-    _panel.style.top = (rect.top - _panel.offsetHeight - 4) + 'px';
-    // 如果上方空间不够，放下方
-    if (parseInt(_panel.style.top) < 0) {
-      _panel.style.top = (rect.bottom + 4) + 'px';
+    var scrollY = window.scrollY || window.pageYOffset || 0;
+    var scrollX = window.scrollX || window.pageXOffset || 0;
+    var panelH = _panel.offsetHeight || 240;
+
+    _panel.style.left = (rect.left + scrollX) + 'px';
+    // 优先放上方
+    var top = rect.top + scrollY - panelH - 4;
+    if (rect.top < panelH + 8) {
+      // 上方空间不够，放下方
+      top = rect.bottom + scrollY + 4;
     }
+    _panel.style.top = top + 'px';
   }
 
   function _onKeydown(e) {

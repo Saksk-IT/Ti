@@ -1073,5 +1073,5 @@ def chat_unread_count():
 
 
 # 注册子路由模块
-from . import api_follow  # noqa: F401,E402
+# api_follow 已迁移至 forum 模块 (forum/routes/api_follow.py)
 from . import api_interactions  # noqa: F401,E402

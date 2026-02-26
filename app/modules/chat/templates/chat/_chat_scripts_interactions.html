@@ -80,6 +80,8 @@
 var _interactPage = 1;
 var _interactLoading = false;
 var _interactPollTimer = null;
+var _interactTotal = 0;
+var _interactHasMore = false;
 
 var ACTION_DESC = {
   'like_post': '赞了你的帖子',
@@ -124,6 +126,7 @@ function switchChatTab(tab) {
 
 function loadInteractions(page) {
   if (_interactLoading) return;
+  if (page > 1 && !_interactHasMore) return;
   _interactLoading = true;
   fetch('/api/chat/interactions?page=' + page + '&per_page=30')
     .then(function(r){ return r.json(); })
@@ -132,13 +135,40 @@ function loadInteractions(page) {
       if (js.status !== 'success') return;
       var data = js.data || {};
       var items = data.notifications || [];
+      _interactTotal = data.total || 0;
+      _interactPage = page;
+      _interactHasMore = (page * 30) < _interactTotal;
       var listEl = document.getElementById('interactList');
       var listElM = document.getElementById('interactListMobile');
-      var html = items.length ? items.map(renderInteractionItem).join('') : '<div class="interact-empty">暂无互动消息</div>';
-      if (listEl) listEl.innerHTML = html;
-      if (listElM) listElM.innerHTML = html;
+      if (page === 1) {
+        var html = items.length ? items.map(renderInteractionItem).join('') : '<div class="interact-empty">暂无互动消息</div>';
+        if (listEl) listEl.innerHTML = html;
+        if (listElM) listElM.innerHTML = html;
+        _bindInteractScroll();
+      } else {
+        var moreHtml = items.map(renderInteractionItem).join('');
+        if (listEl) listEl.insertAdjacentHTML('beforeend', moreHtml);
+        if (listElM) listElM.insertAdjacentHTML('beforeend', moreHtml);
+      }
     })
     .catch(function(){ _interactLoading = false; });
+}
+
+function _bindInteractScroll() {
+  var panels = [
+    document.getElementById('interactPanel'),
+    document.getElementById('interactPanelMobile')
+  ];
+  panels.forEach(function(panel) {
+    if (!panel || panel._scrollBound) return;
+    panel._scrollBound = true;
+    panel.addEventListener('scroll', function() {
+      if (_interactLoading || !_interactHasMore) return;
+      if (panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 60) {
+        loadInteractions(_interactPage + 1);
+      }
+    });
+  });
 }
 
 function renderInteractionItem(item) {
