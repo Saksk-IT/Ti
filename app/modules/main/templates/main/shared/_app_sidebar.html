@@ -662,17 +662,17 @@
         <path d="M8 7.5h9M8 11.5h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
       </svg>
       <span class="app-nav-label">聊天</span>
+      <span id="chatUnreadBadge" class="app-nav-badge" style="display:none"></span>
     </a>
 
     <a class="app-nav-item {{ 'active' if _path.startswith('/forum') else '' }}" href="/forum" aria-label="论坛" title="论坛">
       <svg class="app-nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="2"/>
+        <path d="M3 9h18" stroke="currentColor" stroke-width="2"/>
+        <path d="M9 9v12" stroke="currentColor" stroke-width="2"/>
+        <path d="M7 6h2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
       </svg>
       <span class="app-nav-label">论坛</span>
-      <span id="forumUnreadBadge" class="app-nav-badge" style="display:none"></span>
     </a>
 
     <a class="app-nav-item {{ 'active' if _path.startswith('/coding') else '' }}" href="/coding/home" aria-label="编程" title="编程">
@@ -701,14 +701,20 @@
 
 <script>
 (function(){
-  const badge = document.getElementById('forumUnreadBadge');
+  const badge = document.getElementById('chatUnreadBadge');
   if (!badge) return;
-  fetch('/api/forum/unread').then(r=>r.json()).then(r=>{
-    if (r.status==='success' && r.data.unread_count > 0) {
-      badge.textContent = r.data.unread_count > 99 ? '99+' : r.data.unread_count;
+  Promise.all([
+    fetch('/api/chat/chat/unread_count').then(r=>r.json()).catch(()=>({status:'error'})),
+    fetch('/api/forum/unread').then(r=>r.json()).catch(()=>({status:'error'}))
+  ]).then(([chatRes, mentionRes])=>{
+    let total = 0;
+    if (chatRes.status==='success') total += (chatRes.count || 0);
+    if (mentionRes.status==='success' && mentionRes.data) total += (mentionRes.data.unread_count || 0);
+    if (total > 0) {
+      badge.textContent = total > 99 ? '99+' : total;
       badge.style.display = 'flex';
     }
-  }).catch(()=>{});
+  });
 })();
 </script>
 
