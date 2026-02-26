@@ -23,7 +23,8 @@ from ..api_bp import quiz_api_bp
 
 logger = logging.getLogger(__name__)
 
-_SUBJECTIVE_TYPES = frozenset(['简答题', '计算题', '论述题', '问答题'])
+# DB 存储的是 portable type（英文），前端通过 portable_type_to_q_type 转中文显示
+_SUBJECTIVE_TYPES = frozenset(['essay'])
 _VALID_GRADING_MODES = frozenset(['auto_full', 'ai', 'manual'])
 
 
