@@ -23,6 +23,10 @@
 
     modal.classList.add('show');
 
+    // 设置查看主页链接
+    const viewProfileLink = document.getElementById('upViewProfileLink');
+    if (viewProfileLink) viewProfileLink.href = '/user/' + userId;
+
     try {
       const { res, js } = await Chat.api.getUserProfile(userId);
       if (!res.ok || js.status !== 'success') {

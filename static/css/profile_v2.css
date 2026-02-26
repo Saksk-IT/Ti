@@ -15,6 +15,15 @@
   box-shadow: var(--app-shadow-soft);
   position: relative;
 }
+.upf-back-btn {
+  position: absolute; top: 14px; left: 14px; z-index: 5;
+  width: 32px; height: 32px; border-radius: 999px; border: none;
+  background: color-mix(in srgb, var(--app-surface) 80%, transparent);
+  backdrop-filter: blur(8px);
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--app-text); transition: background 140ms ease;
+}
+.upf-back-btn:hover { background: color-mix(in srgb, var(--app-muted) 18%, var(--app-surface)); }
 .upf-hero-inner {
   display: flex; align-items: center; gap: 16px; min-width: 0;
 }

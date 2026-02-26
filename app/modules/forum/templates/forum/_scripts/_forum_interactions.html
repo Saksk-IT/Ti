@@ -62,7 +62,7 @@ async function loadPostDetail() {
     if (r.status !== 'success') { document.getElementById('postContent').innerHTML = '<div class="forum-empty">帖子不存在</div>'; return; }
     const p = r.data;
     _postData = p;
-    const avatar = p.author_avatar ? `<img class="forum-avatar" src="${p.author_avatar}" alt="">` : '<div class="forum-avatar"></div>';
+    const avatar = p.author_avatar ? `<a href="/user/${p.author_id}" class="forum-avatar-link"><img class="forum-avatar" src="${p.author_avatar}" alt=""></a>` : `<a href="/user/${p.author_id}" class="forum-avatar-link"><div class="forum-avatar"></div></a>`;
     const badges = (p.is_pinned ? '<span class="forum-badge forum-badge-pin">置顶</span>' : '') +
                    (p.is_featured ? '<span class="forum-badge forum-badge-feat">精华</span>' : '') +
                    (p.is_locked ? '<span class="forum-badge forum-badge-lock">已锁定</span>' : '');
@@ -79,7 +79,7 @@ async function loadPostDetail() {
     }
 
     document.getElementById('postContent').innerHTML = `
-      <div class="forum-post-header">${avatar}<div class="forum-post-meta"><span class="author">${p.author_name}</span>${followHtml} · ${new Date(p.created_at).toLocaleString('zh-CN')}<span class="forum-board-tag">${p.board_name}</span></div></div>
+      <div class="forum-post-header">${avatar}<div class="forum-post-meta"><a href="/user/${p.author_id}" class="author forum-user-link">${p.author_name}</a>${followHtml} · ${new Date(p.created_at).toLocaleString('zh-CN')}<span class="forum-board-tag">${p.board_name}</span></div></div>
       <div class="post-title">${badges}${p.title}</div>
       <div class="post-body">${p.content}${imgs}</div>
       ${qrefs}
