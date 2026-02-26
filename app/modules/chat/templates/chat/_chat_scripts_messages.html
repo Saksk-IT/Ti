@@ -646,6 +646,42 @@
       el.classList.remove('msg-search-highlight');
     });
   }
+  // D5: 消息类型图标/标签
+  function _msgTypeLabel(contentType) {
+    var map = {
+      'text':     {icon: '💬', label: '文本'},
+      'image':    {icon: '🖼', label: '图片'},
+      'audio':    {icon: '🎙', label: '语音'},
+      'question': {icon: '📝', label: '题目'},
+      'forward':  {icon: '↗️', label: '转发'},
+    };
+    return map[contentType] || map['text'];
+  }
+
+  function _searchPreview(item) {
+    var ct = item.content_type || 'text';
+    var raw = String(item.content || '');
+    if (ct === 'question') {
+      var info = parseQuestionContent(raw);
+      if (info) {
+        var title = info.content || info.title || '';
+        return title.length > 50 ? title.slice(0, 50) + '…' : (title || '[题目]');
+      }
+      return '[题目]';
+    }
+    if (ct === 'image') return '[图片消息]';
+    if (ct === 'audio') {
+      var aInfo = parseAudioContent(raw);
+      var dur = aInfo && aInfo.duration;
+      return dur ? '[语音 ' + Math.max(1, Math.round(dur)) + 's]' : '[语音消息]';
+    }
+    if (ct === 'forward') {
+      var fwd = parseForwardContent(raw);
+      return fwd && fwd.title ? '[转发] ' + fwd.title : '[转发帖子]';
+    }
+    return raw.length > 60 ? raw.slice(0, 60) + '…' : raw;
+  }
+
   async function doMsgSearch() {
     var inp = document.getElementById('msgSearchInput');
     var q = (inp && inp.value || '').trim();
@@ -661,12 +697,47 @@
     }
     resEl.innerHTML = '';
     js.data.forEach(function(item) {
+      var typeInfo = _msgTypeLabel(item.content_type);
+      var preview = _searchPreview(item);
+      var timeStr = '';
+      var ts = safeParseTime(item.created_at);
+      if (ts) timeStr = formatFullTime(ts);
+
       var row = document.createElement('div');
-      row.style.cssText = 'padding:8px 10px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);';
+      row.style.cssText = 'padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:8px;';
       row.onmouseenter = function(){ row.style.background='var(--hover,#f5f5f5)'; };
       row.onmouseleave = function(){ row.style.background=''; };
-      var preview = String(item.content || '').slice(0, 60);
-      row.textContent = preview;
+
+      // 类型图标
+      var iconEl = document.createElement('span');
+      iconEl.style.cssText = 'flex-shrink:0;font-size:14px;line-height:20px;';
+      iconEl.textContent = typeInfo.icon;
+
+      // 内容区
+      var body = document.createElement('div');
+      body.style.cssText = 'flex:1;min-width:0;';
+
+      var line1 = document.createElement('div');
+      line1.style.cssText = 'font-size:13px;color:var(--text);line-height:20px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+      line1.textContent = preview;
+
+      var line2 = document.createElement('div');
+      line2.style.cssText = 'font-size:11px;color:var(--sub);margin-top:2px;display:flex;align-items:center;gap:6px;';
+      var tag = document.createElement('span');
+      tag.style.cssText = 'padding:1px 5px;border-radius:4px;background:rgba(142,142,147,0.1);font-size:10px;';
+      tag.textContent = typeInfo.label;
+      line2.appendChild(tag);
+      if (timeStr) {
+        var timeEl = document.createElement('span');
+        timeEl.textContent = timeStr;
+        line2.appendChild(timeEl);
+      }
+
+      body.appendChild(line1);
+      body.appendChild(line2);
+      row.appendChild(iconEl);
+      row.appendChild(body);
+
       row.addEventListener('click', function() {
         scrollToMessage(item.id, q);
       });
