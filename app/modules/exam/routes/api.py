@@ -16,6 +16,7 @@ from app.core.utils.time_utils import now_bj
 from app.models.exam import Exam as ExamModel, ExamQuestion, ExamTemplate
 from app.models.subject import Subject, Question
 from app.models.quiz import Mistake
+from app.models.user import User
 from app.models.user_bank import UserBankQuestion, UserBankMistake
 
 exam_api_bp = Blueprint('exam_api', __name__)
@@ -790,3 +791,75 @@ def api_exams_stats():
             },
         }
     )
+
+
+@exam_api_bp.route('/exams/<int:exam_id>/grade', methods=['POST'])
+@auth_required
+def api_exam_manual_grade(exam_id):
+    """人工评分端点 — 管理员对 pending_review 考试的主观题评分"""
+    uid = current_user_id()
+    if not uid:
+        return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
+
+    # 管理员权限校验
+    user_obj = User.query.get(int(uid))
+    if not user_obj or not bool(user_obj.is_admin):
+        return jsonify({'status': 'forbidden', 'message': '需要管理员权限'}), 403
+
+    exam = db.session.get(ExamModel, exam_id)
+    if not exam:
+        return jsonify({'status': 'error', 'message': '考试不存在'}), 404
+
+    if exam.status not in ('pending_review', 'submitted'):
+        return jsonify({'status': 'error', 'message': '该考试状态不支持评分'}), 400
+
+    data = request.get_json(silent=True) or {}
+    grades = data.get('grades') or []
+    if not grades or not isinstance(grades, list):
+        return jsonify({'status': 'error', 'message': '缺少 grades 参数'}), 400
+
+    updated = 0
+    score_delta = 0.0
+    for g in grades:
+        try:
+            qid = int(g.get('question_id'))
+            is_correct = int(g.get('is_correct'))
+        except (TypeError, ValueError):
+            continue
+
+        eq = db.session.query(ExamQuestion).filter_by(
+            exam_id=exam_id, question_id=qid
+        ).first()
+        if not eq:
+            continue
+
+        eq.is_correct = is_correct
+        if is_correct:
+            score_delta += float(eq.score_val or 0)
+        updated += 1
+
+    # 更新总分
+    if score_delta > 0:
+        exam.total_score = (exam.total_score or 0) + score_delta
+
+    # 检查是否还有待评题目
+    pending = db.session.query(ExamQuestion).filter(
+        ExamQuestion.exam_id == exam_id,
+        ExamQuestion.is_correct.is_(None),
+    ).count()
+
+    if pending == 0 and exam.status == 'pending_review':
+        exam.status = 'submitted'
+
+    db.session.commit()
+
+    return jsonify({
+        'status': 'success',
+        'data': {
+            'updated': updated,
+            'score_delta': score_delta,
+            'total_score': exam.total_score,
+            'pending_remaining': pending,
+            'exam_status': exam.status,
+        }
+    })

@@ -364,7 +364,7 @@ def api_get_question_detail(question_id):
 
 @quiz_api_bp.route('/questions/<int:question_id>', methods=['PUT'])
 @auth_required  # 支持 session 和 JWT
-@limiter.exempt
+@limiter.limit("10/minute")
 def api_update_question(question_id: int):
     """编辑题目（管理员/科目管理员：答题页内弹窗编辑）"""
     uid = current_user_id()
@@ -550,7 +550,7 @@ def api_update_question(question_id: int):
 
 @quiz_api_bp.route('/study/learn/record', methods=['POST'])
 @auth_required
-@limiter.exempt
+@limiter.limit("60/minute")
 def study_learn_record():
     # 学习模式：记录答题结果
     data = request.get_json(silent=True) or {}
@@ -697,7 +697,7 @@ def study_review_summary():
 
 @quiz_api_bp.route('/study/review/record', methods=['POST'])
 @auth_required
-@limiter.exempt
+@limiter.limit("60/minute")
 def study_review_record():
     # 复习模式：记录评分（known/fuzzy/unknown）
     data = request.get_json(silent=True) or {}
@@ -767,7 +767,7 @@ def study_review_record():
 
 @quiz_api_bp.route('/study/review/master', methods=['POST'])
 @auth_required
-@limiter.exempt
+@limiter.limit("30/minute")
 def study_review_master():
     # 标记掌握/取消掌握
     data = request.get_json(silent=True) or {}

@@ -15,6 +15,13 @@ class CreateExamSchema(BaseModel):
     types: Dict[str, int] = Field(default_factory=dict)
     scores: Dict[str, float] = Field(default_factory=dict)
     bank_id: Optional[int] = Field(default=None, description='source=user_bank 时必填')
+    grading_mode: str = Field(default='auto_full', description='auto_full | ai | manual')
+
+    @field_validator('grading_mode', mode='before')
+    @classmethod
+    def _normalize_grading_mode(cls, v: Any) -> str:
+        s = str(v or 'auto_full').strip().lower()
+        return s if s in ('auto_full', 'ai', 'manual') else 'auto_full'
 
     @field_validator('source', mode='before')
     @classmethod

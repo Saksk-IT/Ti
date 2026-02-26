@@ -4,7 +4,7 @@ import json
 import logging
 from typing import Optional
 
-from flask import request, jsonify, session
+from flask import request, jsonify
 from sqlalchemy import or_
 
 from app.core.extensions import db, limiter
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 @quiz_api_bp.route('/progress', methods=['GET', 'POST', 'DELETE'])
 @auth_required
-@limiter.exempt
+@limiter.limit("30/minute")
 def progress_api():
     """用户答题进度同步API"""
     uid = current_user_id()
@@ -84,7 +84,7 @@ def progress_api():
 
 @quiz_api_bp.route('/tags', methods=['GET', 'POST', 'DELETE'])
 @auth_required
-@limiter.exempt
+@limiter.limit("20/minute")
 def tags_api():
     """用户题目标签（公共题库：按"用户 × 科目(subject_id)"隔离）。"""
     uid = current_user_id()
@@ -205,7 +205,7 @@ def tags_api():
 
 @quiz_api_bp.route('/questions/<int:question_id>/tags', methods=['GET', 'POST'])
 @auth_required
-@limiter.exempt
+@limiter.limit("20/minute")
 def question_tags_api(question_id: int):
     """题目标签管理（对当前用户生效）"""
     uid = current_user_id()
@@ -262,10 +262,11 @@ def question_tags_api(question_id: int):
 
 
 @quiz_api_bp.route('/notifications_legacy', methods=['GET'])
-@limiter.exempt
+@auth_required
+@limiter.limit("60/minute")
 def get_notifications_legacy():
     """[兼容] 获取当前用户可见的通知列表（旧接口）"""
-    uid = session.get('user_id')
+    uid = current_user_id()
     now = now_bj()
 
     base_query = Notification.query.filter(
@@ -274,22 +275,17 @@ def get_notifications_legacy():
         or_(Notification.end_at.is_(None), Notification.end_at >= now),
     )
 
-    if uid:
-        dismissed_ids = db.session.query(
-            NotificationDismissal.notification_id
-        ).filter(
-            NotificationDismissal.user_id == uid
-        ).subquery()
+    dismissed_ids = db.session.query(
+        NotificationDismissal.notification_id
+    ).filter(
+        NotificationDismissal.user_id == uid
+    ).subquery()
 
-        rows = base_query.filter(
-            ~Notification.id.in_(db.session.query(dismissed_ids))
-        ).order_by(
-            Notification.priority.desc(), Notification.created_at.desc()
-        ).all()
-    else:
-        rows = base_query.order_by(
-            Notification.priority.desc(), Notification.created_at.desc()
-        ).all()
+    rows = base_query.filter(
+        ~Notification.id.in_(db.session.query(dismissed_ids))
+    ).order_by(
+        Notification.priority.desc(), Notification.created_at.desc()
+    ).all()
 
     return jsonify({
         'status': 'success',
@@ -307,12 +303,11 @@ def get_notifications_legacy():
 
 
 @quiz_api_bp.route('/notifications_legacy/<int:nid>/dismiss', methods=['POST'])
-@limiter.exempt
+@auth_required
+@limiter.limit("30/minute")
 def dismiss_notification_legacy(nid):
     """[兼容] 关闭/隐藏指定通知（旧接口）"""
-    uid = session.get('user_id')
-    if not uid:
-        return jsonify({'status': 'error', 'message': '请先登录'}), 401
+    uid = current_user_id()
 
     try:
         existing = NotificationDismissal.query.filter_by(

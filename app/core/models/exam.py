@@ -55,7 +55,7 @@ class Exam:
         return s if s in ('public', 'user_bank') else 'public'
 
     @staticmethod
-    def create(user_id, subject, duration, types_config, scores_config, source: str = 'public', bank_id=None):
+    def create(user_id, subject, duration, types_config, scores_config, source: str = 'public', bank_id=None, grading_mode: str = 'auto_full'):
         """创建考试：写入 exams + exam_questions，并返回 exam_id
 
         规则：
@@ -75,6 +75,7 @@ class Exam:
             'types': types_config,
             'scores': scores_config,
             'source': source,
+            'grading_mode': grading_mode,
         }
         if source == 'user_bank':
             try:
@@ -284,6 +285,21 @@ class Exam:
         cfg = Exam._parse_config_json(exam.get('config_json'))
         source = Exam._normalize_source(cfg.get('source'))
 
+        # 检查考试是否超时（宽限 60 秒）
+        started_at_raw = exam.get('started_at') or exam.get('created_at')
+        duration_min = int(cfg.get('duration') or exam.get('duration_minutes') or 0)
+        if started_at_raw and duration_min > 0:
+            from datetime import timedelta
+            if isinstance(started_at_raw, str):
+                try:
+                    started_at_raw = datetime.fromisoformat(started_at_raw)
+                except (ValueError, TypeError):
+                    started_at_raw = None
+            if started_at_raw:
+                deadline = started_at_raw + timedelta(minutes=duration_min, seconds=60)
+                if datetime.utcnow() > deadline:
+                    return {'error': 'exam_expired', 'message': '考试已超时，无法提交'}
+
         ans_map = {}
         for a in (answers or []):
             try:
@@ -322,6 +338,10 @@ class Exam:
         total = len(rows)
         correct = 0
         total_score = 0.0
+        pending_count = 0
+        grading_mode = (cfg.get('grading_mode') or 'auto_full').strip().lower()
+        if grading_mode not in ('auto_full', 'ai', 'manual'):
+            grading_mode = 'auto_full'
 
         for r in rows:
             rm = r._mapping
@@ -338,22 +358,46 @@ class Exam:
                 "difficulty": rm["difficulty"] if rm["difficulty"] is not None else 1,
             }
             internal, _errors = portable_question_to_internal(portable, scope=scope)
-            is_correct = Exam._grade_answer(internal.get("q_type"), user_ans, internal.get("answer"))
+
+            q_type_val = internal.get("q_type") or ""
+            is_essay = q_type_val not in ('选择题', '判断题', '多选题', '填空题')
+
+            if is_essay and grading_mode == 'manual':
+                is_correct = None  # 待人工评分
+            elif is_essay and grading_mode == 'ai':
+                from app.modules.exam.services.ai_grading_service import grade_essay_answer
+                ai_result = grade_essay_answer(
+                    question_content=internal.get("content") or "",
+                    standard_answer=internal.get("answer") or "",
+                    user_answer=user_ans,
+                )
+                is_correct = ai_result if ai_result is not None else (1 if user_ans != '' else 0)
+            else:
+                is_correct = Exam._grade_answer(q_type_val, user_ans, internal.get("answer"))
 
             db.session.execute(
                 text('UPDATE exam_questions SET user_answer=:user_answer, is_correct=:is_correct, answered_at=CURRENT_TIMESTAMP WHERE id=:eq_id'),
                 {'user_answer': user_ans, 'is_correct': is_correct, 'eq_id': rm['eq_id']}
             )
 
-            if is_correct:
+            if is_correct is None:
+                pending_count += 1
+            elif is_correct:
                 correct += 1
                 total_score += float(rm['score_val'] or 0)
 
+        status = 'pending_review' if pending_count > 0 else 'submitted'
         db.session.execute(
-            text("UPDATE exams SET total_score=:total_score, status='submitted', submitted_at=CURRENT_TIMESTAMP WHERE id=:exam_id"),
-            {'total_score': total_score, 'exam_id': exam_id}
+            text("UPDATE exams SET total_score=:total_score, status=:status, submitted_at=CURRENT_TIMESTAMP WHERE id=:exam_id"),
+            {'total_score': total_score, 'status': status, 'exam_id': exam_id}
         )
         db.session.commit()
 
-        return {'total': total, 'correct': correct, 'total_score': total_score}
+        return {
+            'total': total,
+            'correct': correct,
+            'total_score': total_score,
+            'pending_count': pending_count,
+            'status': status,
+        }
 

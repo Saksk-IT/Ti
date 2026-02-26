@@ -14,5 +14,7 @@ class ExamSubmitService:
         result = Exam.submit(int(payload.exam_id), uid, answers)
         if not result:
             raise BadRequestError(message='考试不存在/无权限/已提交')
+        if isinstance(result, dict) and result.get('error') == 'exam_expired':
+            raise BadRequestError(message=result.get('message', '考试已超时'))
         return {'exam_id': int(payload.exam_id), **result}
 

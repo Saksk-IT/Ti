@@ -9,7 +9,7 @@ from typing import Optional
 from flask import request, jsonify, current_app
 from sqlalchemy import text
 
-from app.core.extensions import db
+from app.core.extensions import db, limiter
 from app.core.utils.decorators import auth_required, current_user_id
 from app.core.utils.time_utils import now_bj
 
@@ -344,6 +344,7 @@ def remove_share_record(bank_id, share_id, target_user_id):
 
 @user_bank_api_bp.route('/join/preview', methods=['GET'])
 @auth_required
+@limiter.limit("20/minute")
 def preview_join_bank():
     """预览通过分享码/链接加入题库（不写入记录）"""
     user_id = current_user_id()
@@ -422,6 +423,7 @@ def preview_join_bank():
 
 @user_bank_api_bp.route('/join', methods=['POST'])
 @auth_required
+@limiter.limit("10/minute")
 def join_bank():
     """通过分享码/链接加入题库"""
     user_id = current_user_id()

@@ -8,6 +8,7 @@ from flask import request, jsonify
 from sqlalchemy import text
 
 from app.core.extensions import db, limiter
+from app.core.utils.decorators import auth_required, current_user_id
 from app.models.subject import Subject, Question
 from app.models.quiz import Mistake
 from app.models.user_bank import UserBankQuestion, UserBankMistake
@@ -19,7 +20,6 @@ from app.modules.quiz.services.reinforcement_service import (
 )
 
 from ..api_bp import quiz_api_bp
-from ..api_shared import _get_uid_from_request
 
 
 def _preview_text(s: str, limit: int = 120) -> str:
@@ -174,7 +174,8 @@ def _parse_int_param(name: str, default: int, lo: int, hi: int) -> int:
 
 
 @quiz_api_bp.route('/reinforce', methods=['GET'])
-@limiter.exempt
+@auth_required
+@limiter.limit("20/minute")
 def api_reinforce():
     source = (request.args.get('source') or 'public').strip().lower()
     bank_id = request.args.get('bank_id', type=int)
@@ -194,7 +195,7 @@ def api_reinforce():
     include_wrong = 'wrong' in include_set
     include_similar = 'similar' in include_set
 
-    uid = _get_uid_from_request()
+    uid = current_user_id()
     conn = db.session.connection()
 
     if source == 'user_bank':
@@ -219,8 +220,6 @@ def _reinforce_user_bank(
     include_wrong, include_similar,
 ):
     """强化训练 — 用户题库分支"""
-    if not uid:
-        return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
     if not bank_id:
         return jsonify({'status': 'error', 'message': 'bank_id 参数错误'}), 400
 
@@ -359,29 +358,9 @@ def _reinforce_public(
     if not subject_row:
         return jsonify({'status': 'error', 'message': '科目不存在或已锁定'}), 404
 
-    if uid:
-        from app.core.utils.subject_permissions import can_user_access_subject
-        if not can_user_access_subject(int(uid), int(subject_id)):
-            return jsonify({'status': 'error', 'message': '无权访问该科目'}), 403
-
-    if not uid:
-        return jsonify({
-            'status': 'success',
-            'data': {
-                'source': 'public',
-                'subject_id': int(subject_id),
-                'subject_name': subject_row.name,
-                'logged_in': False,
-                'wrong_total': 0,
-                'wrong_recommend_ids': [],
-                'wrong_top': [],
-                'similar_mode': '',
-                'similar_pairs_count': 0,
-                'similar_seed_ids': [],
-                'similar_training_ids': [],
-                'similar_pairs': [],
-            },
-        })
+    from app.core.utils.subject_permissions import can_user_access_subject
+    if not can_user_access_subject(int(uid), int(subject_id)):
+        return jsonify({'status': 'error', 'message': '无权访问该科目'}), 403
 
     try:
         wrong_total = db.session.query(Mistake).join(

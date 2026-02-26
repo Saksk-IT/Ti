@@ -15,6 +15,9 @@ from app.core.extensions import db, limiter
 from app.core.utils.decorators import auth_required, current_user_id
 from app.core.utils.cache_utils import bump_user_quiz_version
 from app.models.quiz import Favorite, Mistake, UserAnswer
+from app.models.subject import Question
+from app.core.utils.subject_permissions import can_user_access_subject
+from app.core.services.quiz_data_service import QuizDataService
 
 from ..api_bp import quiz_api_bp
 
@@ -39,7 +42,7 @@ from .core_history import api_history_stats  # noqa: F401
 
 @quiz_api_bp.route('/favorite', methods=['POST'])
 @auth_required  # 支持session和JWT
-@limiter.exempt  # 收藏接口不限流
+@limiter.limit("30/minute")
 def toggle_favorite():
     """切换收藏状态"""
     data = request.get_json(silent=True) or {}
@@ -51,19 +54,21 @@ def toggle_favorite():
     except (TypeError, ValueError):
         return jsonify({'status': 'error', 'message': 'question_id 参数错误'}), 400
 
-    exists = Favorite.query.filter_by(user_id=uid, question_id=q_id).first()
+    # 权限校验：题目存在性 + 科目访问权限
+    question = Question.query.get(q_id)
+    if not question:
+        return jsonify({'status': 'error', 'message': '题目不存在'}), 404
+    if question.subject_id and not can_user_access_subject(int(uid), int(question.subject_id)):
+        return jsonify({'status': 'error', 'message': '无权访问该题目'}), 403
 
-    if exists:
-        Favorite.query.filter_by(user_id=uid, question_id=q_id).delete()
-        is_favorite = False
-    else:
-        try:
-            db.session.add(Favorite(user_id=uid, question_id=q_id))
-        except Exception as e:
-            current_app.logger.warning(f'收藏失败 user_id={uid} question_id={q_id}: {e}')
-            db.session.rollback()
-            return jsonify({'status': 'error', 'message': '收藏失败：题目不存在或不可收藏'}), 400
-        is_favorite = True
+    try:
+        is_favorite = QuizDataService.toggle_favorite(
+            user_id=uid, question_id=q_id, source='public',
+        )
+    except Exception as e:
+        current_app.logger.warning(f'收藏失败 user_id={uid} question_id={q_id}: {e}')
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': '收藏失败：题目不存在或不可收藏'}), 400
 
     db.session.commit()
     try:
@@ -79,7 +84,7 @@ def toggle_favorite():
 
 @quiz_api_bp.route('/record_result', methods=['POST'])
 @auth_required  # 支持session和JWT
-@limiter.exempt  # 答题记录接口不限流
+@limiter.limit("60/minute")
 def record_result():
     """记录做题结果（添加刷题限制检查）"""
     from app.core.utils.subject_permissions import (
@@ -97,6 +102,17 @@ def record_result():
 
     if not q_id or is_correct is None:
         return jsonify({'status': 'error', 'message': '参数不完整'}), 400
+
+    # 权限校验：题目存在性 + 科目访问权限
+    try:
+        q_id_int = int(q_id)
+    except (TypeError, ValueError):
+        return jsonify({'status': 'error', 'message': 'question_id 参数错误'}), 400
+    question = Question.query.get(q_id_int)
+    if not question:
+        return jsonify({'status': 'error', 'message': '题目不存在'}), 404
+    if question.subject_id and not can_user_access_subject(int(uid), int(question.subject_id)):
+        return jsonify({'status': 'error', 'message': '无权访问该题目'}), 403
 
     # 兼容 clear_mistake_on_correct 可能为 string/int/bool；默认 True（保持旧行为）
     clear_mistake_on_correct = _parse_bool(clear_mistake_on_correct, default=True)
@@ -117,35 +133,19 @@ def record_result():
     try:
         # 更新错题本（只记录错误题目）
         if not is_correct:
-            existing_mistake = Mistake.query.filter_by(user_id=uid, question_id=q_id).first()
-            if existing_mistake:
-                existing_mistake.wrong_count = (existing_mistake.wrong_count or 0) + 1
-                existing_mistake.updated_at = db.func.now()
-                existing_mistake.last_updated = db.func.now()
-            else:
-                db.session.add(Mistake(
-                    user_id=uid,
-                    question_id=q_id,
-                    wrong_count=1,
-                ))
+            QuizDataService.record_mistake(user_id=uid, question_id=q_id, source='public')
             action = "added_mistake"
         else:
             if clear_mistake_on_correct:
                 # 答对了，从错题本中移除（默认行为）
-                Mistake.query.filter_by(user_id=uid, question_id=q_id).delete()
+                QuizDataService.remove_mistake(user_id=uid, question_id=q_id, source='public')
                 action = "removed_mistake"
             else:
                 # 答对但不清除：保留在错题本
                 action = "kept_mistake"
 
         # 记录答题历史（每次答题都记录，用于统计）
-        # 先删除旧记录，再插入新记录，确保每个用户对每道题只保留最新的一条记录
-        UserAnswer.query.filter_by(user_id=uid, question_id=q_id).delete()
-        db.session.add(UserAnswer(
-            user_id=uid,
-            question_id=q_id,
-            is_correct=bool(is_correct),
-        ))
+        QuizDataService.record_answer(user_id=uid, question_id=q_id, is_correct=bool(is_correct), source='public')
 
         # 增加刷题数（如果功能开启）
         increment_user_quiz_count(uid)

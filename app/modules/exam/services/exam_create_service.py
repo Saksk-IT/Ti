@@ -55,6 +55,7 @@ class ExamCreateService:
                 scores_cfg,
                 source=source,
                 bank_id=bank_id_int,
+                grading_mode=payload.grading_mode,
             )
         except ValueError:
             raise BadRequestError(message='创建考试失败：参数不合法')
