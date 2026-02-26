@@ -656,7 +656,7 @@
       <span class="app-nav-label">资源</span>
     </a>
 
-    <a class="app-nav-item {{ 'active' if _path.startswith('/forum') or _path.startswith('/chat') else '' }}" href="/forum" aria-label="聊天" title="聊天">
+    <a class="app-nav-item {{ 'active' if _path.startswith('/chat') else '' }}" href="/chat" aria-label="聊天" title="聊天">
       <svg class="app-nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M21 14a4 4 0 0 1-4 4H8l-4 3V6a4 4 0 0 1 4-4h9a4 4 0 0 1 4 4v8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
         <path d="M8 7.5h9M8 11.5h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -664,14 +664,14 @@
       <span class="app-nav-label">聊天</span>
     </a>
 
-    <a class="app-nav-item {{ 'active' if _path.startswith('/community') else '' }}" href="/community" aria-label="社区" title="社区">
+    <a class="app-nav-item {{ 'active' if _path.startswith('/forum') else '' }}" href="/forum" aria-label="论坛" title="论坛">
       <svg class="app-nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
         <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
       </svg>
-      <span class="app-nav-label">社区</span>
+      <span class="app-nav-label">论坛</span>
       <span id="forumUnreadBadge" class="app-nav-badge" style="display:none"></span>
     </a>
 

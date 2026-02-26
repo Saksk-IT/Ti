@@ -39,7 +39,7 @@ async function loadSidebarHotPosts() {
     if (!el) return;
     if (!r.data.posts.length) { el.innerHTML = '<div style="font-size:13px;color:var(--app-muted)">暂无</div>'; return; }
     el.innerHTML = r.data.posts.map(p =>
-      `<div class="sidebar-hot-item" onclick="location.href='/community/post/${p.id}'"><div class="hot-title">${esc(p.title)}</div><div class="hot-stats">&#10084; ${p.like_count||0} · &#128172; ${p.comment_count||0}</div></div>`
+      `<div class="sidebar-hot-item" onclick="location.href='/forum/post/${p.id}'"><div class="hot-title">${esc(p.title)}</div><div class="hot-stats">&#10084; ${p.like_count||0} · &#128172; ${p.comment_count||0}</div></div>`
     ).join('');
 
     // 统计 - 帖子总数

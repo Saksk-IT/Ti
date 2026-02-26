@@ -105,7 +105,7 @@ async function submitPost() {
     const r = await fetch(url, {method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)}).then(r => r.json());
     if (r.status === 'success') {
       const pid = EDITING ? EDIT_POST_ID : (r.data && r.data.id);
-      location.href = pid ? '/community/post/' + pid : '/community';
+      location.href = pid ? '/forum/post/' + pid : '/forum';
     } else { alert(r.message || '操作失败'); }
   } catch(e) { alert('操作失败'); }
 }

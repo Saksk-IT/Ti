@@ -774,7 +774,7 @@
               <div class="app-topbar-popover-inner">
               <div class="app-topbar-popover-header">
                 <span>消息</span>
-                <a href="/forum">查看全部</a>
+                <a href="/chat">查看全部</a>
               </div>
               <div class="app-topbar-popover-body" id="chatPopoverBody">
                 <div class="app-topbar-popover-empty">暂无消息</div>
@@ -1229,7 +1229,7 @@
             var unread = (c.unread_count && c.unread_count > 0)
               ? '<span class="app-chat-unread">' + (c.unread_count > 99 ? '99+' : c.unread_count) + '</span>'
               : '';
-            html += '<a class="app-chat-item" href="/forum?conv=' + c.conversation_id + '">'
+            html += '<a class="app-chat-item" href="/chat?conv=' + c.conversation_id + '">'
               + avatar
               + '<div class="app-chat-body">'
               + '<div class="app-chat-name">' + name + '</div>'

@@ -40,7 +40,7 @@ def forward_post_to_chat(post_id: int, sender_id: int, receiver_id: int) -> dict
             ), {'cid': conv_id, 'uid': uid})
 
     # 发送转发消息
-    content = f'[转发帖子] {title}\n/community/post/{post_id}'
+    content = f'[转发帖子] {title}\n/forum/post/{post_id}'
     db.session.execute(text('''
         INSERT INTO chat_messages (conversation_id, sender_id, content, content_type)
         VALUES (:cid, :sid, :content, 'forward')
