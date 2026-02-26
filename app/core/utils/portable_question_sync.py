@@ -4,7 +4,7 @@
 说明（2026-01 起）：
 - 数据库已切换为 PQF 同名列：type/content/options/answer/analysis/tags/difficulty
 - 历史调用点可能仍传入旧字段（q_type/explanation/答案字符串等）
-- 本模块负责把“旧入参”转换为 PQF 并写回新列，尽量降低改造面
+- 本模块负责把"旧入参"转换为 PQF 并写回新列，尽量降低改造面
 """
 
 from __future__ import annotations

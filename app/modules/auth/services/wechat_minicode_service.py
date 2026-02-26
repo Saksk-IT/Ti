@@ -75,7 +75,7 @@ class WechatMiniCodeService:
             env_version = "release"
         check_path = current_app.config.get("WECHAT_MINICODE_CHECK_PATH")
         if check_path is None:
-            # 开发/体验版常见“代码未提审导致 page 不存在”，默认不校验避免 41030
+            # 开发/体验版常见"代码未提审导致 page 不存在"，默认不校验避免 41030
             check_path = False if env_version in ("develop", "trial") else True
         payload = {
             "scene": scene,

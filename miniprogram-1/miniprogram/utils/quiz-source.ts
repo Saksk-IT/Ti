@@ -194,9 +194,9 @@ export class PublicQuizSource implements IQuizSource {
     });
 
     return {
-      total: (totalRes as any).count || 0,
-      favorites: (userRes as any).favorites || 0,
-      mistakes: (userRes as any).mistakes || 0
+      total: (totalRes as Record<string, unknown>).count as number || 0,
+      favorites: (userRes as Record<string, unknown>).favorites as number || 0,
+      mistakes: (userRes as Record<string, unknown>).mistakes as number || 0
     };
   }
 
@@ -418,7 +418,7 @@ export class BankQuizSource implements IQuizSource {
     if (params?.shuffle_options && Array.isArray(questions)) {
       const optionTypes = new Set(['选择题', '多选题']);
       questions = questions.map((q: Question) => {
-        if (!optionTypes.has((q as any).q_type || '')) return q;
+        if (!optionTypes.has((q as Record<string, unknown>).q_type as string || '')) return q;
         if (q.options) {
           let opts = q.options;
           if (typeof opts === 'string') {

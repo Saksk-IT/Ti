@@ -21,10 +21,10 @@ Page({
     loading: false,
     submitted: false,
 
-    exam: null as any,
-    questions: [] as any[],
+    exam: null as Record<string, unknown> | null,
+    questions: [] as Record<string, unknown>[],
     currentIndex: 0,
-    currentQuestion: null as any,
+    currentQuestion: null as Record<string, unknown> | null,
 
     selectedAnswer: '',
     selectedAnswers: [] as string[],
@@ -45,8 +45,8 @@ Page({
     touchStartY: 0
   },
 
-  draftTimer: null as any,
-  tickTimer: null as any,
+  draftTimer: null as ReturnType<typeof setTimeout> | null,
+  tickTimer: null as ReturnType<typeof setInterval> | null,
 
   goSettlement(opts?: { usedSecHint?: number; autoSubmitted?: boolean; replace?: boolean }) {
     const examId = Number(this.data.examId || 0);
@@ -143,7 +143,7 @@ Page({
     try {
       const res: any = await api.getExam(this.data.examId);
       const exam = res.exam || {};
-      let questions = (res.questions || []) as any[];
+      let questions = (res.questions || []) as Record<string, unknown>[];
 
       // 预览内容
       questions = questions.map((q: any) => {
@@ -618,8 +618,8 @@ Page({
     const options: OptionItem[] = [];
     for (const item of optList) {
       if (item && typeof item === 'object') {
-        const rawKey = (item as any).key;
-        const rawValue = (item as any).value;
+        const rawKey = (item as Record<string, unknown>).key;
+        const rawValue = (item as Record<string, unknown>).value;
         const key = String(rawKey == null ? '' : rawKey).trim();
         const value = String(rawValue == null ? '' : rawValue).trim();
         if (key || value) {
@@ -717,7 +717,7 @@ Page({
     const url = String(urls[idx] || '').trim();
     if (!url || !/^https?:\/\//i.test(url)) return;
 
-    const self: any = this as any;
+    const self = this;
     self.__imgDlTried = self.__imgDlTried || {};
     const key = `${q && q.id ? q.id : 'q'}_${idx}_${url}`;
     if (self.__imgDlTried[key]) return;
@@ -727,7 +727,7 @@ Page({
       url,
       timeout: 15000,
       success: (res) => {
-        const tempFilePath = String((res && (res as any).tempFilePath) || '').trim();
+        const tempFilePath = String((res && res.tempFilePath) || '').trim();
         if (!tempFilePath) return;
 
         const nextUrls = urls.slice();

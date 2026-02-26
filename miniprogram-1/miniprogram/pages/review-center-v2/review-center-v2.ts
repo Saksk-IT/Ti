@@ -238,7 +238,7 @@ Page({
     perPage: 20,
     total: 0,
     hasMore: false,
-    questions: [] as any[],
+    questions: [] as Record<string, unknown>[],
 
     // 数据
     dataLoading: false,
@@ -267,6 +267,10 @@ Page({
     tagStatsExpanded: false,
     advice: [] as AdviceItem[]
   },
+
+  _startCountToken: 0 as number,
+  _dataToken: 0 as number,
+  _searchToken: 0 as number,
 
   onLoad(options: any) {
     const kind = normalizeKind(options?.kind || options?.entry || options?.mode);
@@ -310,7 +314,7 @@ Page({
     }
 
     try {
-      this.setData(themeManager.getPageData() as any);
+      this.setData(themeManager.getPageData());
     } catch (e) {}
 
     if (!this.data.inited && !this.data.loading) {
@@ -353,14 +357,14 @@ Page({
 
       const [info, tagsRes] = await Promise.all([
         sourceType === 'public'
-          ? api.getSubjectInfo(subject).catch(() => ({} as any))
-          : api.getBankDetail(bankId).catch(() => ({} as any)),
+          ? api.getSubjectInfo(subject).catch((): Record<string, unknown> => ({}))
+          : api.getBankDetail(bankId).catch((): Record<string, unknown> => ({})),
         sourceType === 'public'
-          ? api.getTags({ subject }).catch(() => ({ tags: [] } as any))
-          : api.getBankTags(bankId).catch(() => ({ tags: [] } as any))
+          ? api.getTags({ subject }).catch(() => ({ tags: [] as TagRow[] }))
+          : api.getBankTags(bankId).catch(() => ({ tags: [] as TagRow[] }))
       ]);
 
-      const infoData: any = (info as any)?.data || info || {};
+      const infoData: Record<string, unknown> = ((info as Record<string, unknown>)?.data as Record<string, unknown>) || (info as Record<string, unknown>) || {};
       const scopeName =
         sourceType === 'public'
           ? String(infoData?.name || subject)
@@ -372,7 +376,7 @@ Page({
         .map((t: any) => String(t).trim());
       const typeOptions = buildOptions(types);
 
-      const tagsData: any = (tagsRes as any)?.data || tagsRes || {};
+      const tagsData: Record<string, unknown> = ((tagsRes as Record<string, unknown>)?.data as Record<string, unknown>) || (tagsRes as Record<string, unknown>) || {};
       const tagsList = normalizeTags(tagsData?.tags || []);
       const tagOptions: Array<Option<string>> = [
         { value: 'all', label: '全部标签' },
@@ -441,10 +445,9 @@ Page({
       return;
     }
 
-    const ctx = this as any;
-    ctx._startCountToken = (ctx._startCountToken || 0) + 1;
-    ctx._dataToken = (ctx._dataToken || 0) + 1;
-    ctx._searchToken = (ctx._searchToken || 0) + 1;
+    this._startCountToken = (this._startCountToken || 0) + 1;
+    this._dataToken = (this._dataToken || 0) + 1;
+    this._searchToken = (this._searchToken || 0) + 1;
 
     const titles = defaultTitles(nextKind);
     const practiceMeta = getPracticeMeta(nextKind);
@@ -541,9 +544,8 @@ Page({
   },
 
   async refreshStartCount() {
-    const ctx = this as any;
-    ctx._startCountToken = (ctx._startCountToken || 0) + 1;
-    const token = ctx._startCountToken;
+    this._startCountToken = (this._startCountToken || 0) + 1;
+    const token = this._startCountToken;
 
     const kind: ReviewKind = this.data.kind;
     const sourceType: SourceType = this.data.sourceType;
@@ -565,7 +567,7 @@ Page({
         if (source !== 'all') params.source = source;
 
         const res: any = await api.getQuestionsCount(params);
-        count = Number((res as any)?.count || 0) || 0;
+        count = Number(res?.count || 0) || 0;
       } else {
         const params: any = {};
         if (qType && qType !== 'all') params.q_type = qType;
@@ -573,14 +575,14 @@ Page({
         params.source = source;
         if (tag && tag !== 'all') params.tag = tag;
         const res: any = await api.getBankUserCounts(bankId, params);
-        count = Number((res as any)?.total || 0) || 0;
+        count = Number(res?.total || 0) || 0;
       }
 
       const startDisabled = count <= 0;
-      if (token !== ctx._startCountToken) return;
+      if (token !== this._startCountToken) return;
       this.setData({ startCount: count, startCountText: formatCountText(count), startDisabled });
     } catch (e: any) {
-      if (token !== ctx._startCountToken) return;
+      if (token !== this._startCountToken) return;
       this.setData({
         startCount: 0,
         startCountText: '0',
@@ -668,7 +670,7 @@ Page({
 
   onAdviceActionTap(e: any) {
     const idx = Number(e?.currentTarget?.dataset?.idx ?? -1);
-    const list: AdviceItem[] = Array.isArray(this.data.advice) ? (this.data.advice as any) : [];
+    const list: AdviceItem[] = Array.isArray(this.data.advice) ? this.data.advice : [];
     if (!Number.isFinite(idx) || idx < 0 || idx >= list.length) return;
     const action = list[idx]?.action;
     if (!action) return;
@@ -745,9 +747,8 @@ Page({
   },
 
   async refreshDataStats() {
-    const ctx = this as any;
-    ctx._dataToken = (ctx._dataToken || 0) + 1;
-    const token = ctx._dataToken;
+    this._dataToken = (this._dataToken || 0) + 1;
+    const token = this._dataToken;
 
     this.setData({ dataLoading: true });
     try {
@@ -834,7 +835,7 @@ Page({
       const tagStatsAll = this.buildTagStats();
       const tagStats = this.data.tagStatsExpanded ? tagStatsAll : tagStatsAll.slice(0, 12);
 
-      if (token !== ctx._dataToken) return;
+      if (token !== this._dataToken) return;
       this.setData({
         dataHint: '',
         dataDays: days,
@@ -862,7 +863,7 @@ Page({
     } catch (e) {
       const tagStatsAll = this.buildTagStats();
       const tagStats = this.data.tagStatsExpanded ? tagStatsAll : tagStatsAll.slice(0, 12);
-      if (token !== ctx._dataToken) return;
+      if (token !== this._dataToken) return;
       this.setData({
         dataHint: '',
         dataTotal: 0,
@@ -885,7 +886,7 @@ Page({
         advice: []
       });
     } finally {
-      if (token === ctx._dataToken) {
+      if (token === this._dataToken) {
         this.setData({ dataLoading: false });
       }
     }
@@ -910,9 +911,8 @@ Page({
   },
 
   async fetchSearchPage(page: number, append = false) {
-    const ctx = this as any;
-    ctx._searchToken = (ctx._searchToken || 0) + 1;
-    const token = ctx._searchToken;
+    this._searchToken = (this._searchToken || 0) + 1;
+    const token = this._searchToken;
 
     try {
       const kind: ReviewKind = this.data.kind;
@@ -932,13 +932,13 @@ Page({
         if (qType && qType !== 'all') params.q_type = qType;
         if (source !== 'all') params.source = source;
         if (tag && tag !== 'all') params.tag = tag;
-        data = await (api as any).searchQuestions(params);
+        data = await api.searchQuestions(params);
       } else {
         const params: any = { keyword, page, per_page };
         if (qType && qType !== 'all') params.q_type = qType;
         if (source !== 'all') params.source = source;
         if (tag && tag !== 'all') params.tag = tag;
-        data = await (api as any).searchBankQuestions(bankId, params);
+        data = await api.searchBankQuestions(bankId, params);
       }
 
       const questions = (data && (data.questions || data.data?.questions)) ? (data.questions || data.data?.questions) : [];
@@ -946,14 +946,14 @@ Page({
 
       const nextList = append ? (this.data.questions || []).concat(questions) : questions;
       const hasMore = nextList.length < total;
-      if (token !== ctx._searchToken) return;
+      if (token !== this._searchToken) return;
       this.setData({ page, questions: nextList, total, hasMore });
     } catch (e: any) {
-      if (token !== ctx._searchToken) return;
+      if (token !== this._searchToken) return;
       wx.showToast({ title: (e && e.message) || '搜索失败', icon: 'none' });
       this.setData({ total: 0, hasMore: false });
     } finally {
-      if (token === ctx._searchToken) {
+      if (token === this._searchToken) {
         this.setData({ searchLoading: false });
       }
     }
@@ -965,9 +965,9 @@ Page({
 
     if (key === 'shuffleOptions' && this.data.shuffleOptionsDisabled) return;
 
-    const current = (this.data as any)[key];
+    const current = (this.data as Record<string, unknown>)[key];
     const next = !current;
-    this.setData({ [key]: next } as any, () => this.refreshComputed());
+    this.setData({ [key]: next } as Record<string, unknown>, () => this.refreshComputed());
   },
 
   onHamburgerTap() {
@@ -989,13 +989,13 @@ Page({
   async onDrawerSelectStyle(e: any) {
     const style = (e?.detail?.style || 'default') as ThemeStyle;
     themeManager.setStyle(style);
-    this.setData(themeManager.getPageData() as any);
+    this.setData(themeManager.getPageData());
     this.setData({ drawerOpen: false });
     await syncUserSettingsToServer();
   },
 
   onCycleThemeModeTap() {
     const mode = themeManager.cycleMode() as ThemeMode;
-    this.setData({ ...(themeManager.getPageData() as any), themeMode: mode });
+    this.setData({ ...(themeManager.getPageData()), themeMode: mode });
   }
 });

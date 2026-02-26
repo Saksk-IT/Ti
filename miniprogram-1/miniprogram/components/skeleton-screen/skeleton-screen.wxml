@@ -1,0 +1,15 @@
+<view class="skeleton skeleton-{{layout}}">
+  <view class="skeleton-tabs" wx:if="{{showTabs}}">
+    <view class="skeleton-tab" wx:for="{{[1,2,3,4]}}" wx:key="*this"></view>
+  </view>
+
+  <view class="skeleton-cards">
+    <view class="skeleton-card" wx:for="{{cardList}}" wx:key="*this">
+      <view class="skeleton-card-title shimmer"></view>
+      <view class="skeleton-card-sub shimmer"></view>
+      <view class="skeleton-rows">
+        <view class="skeleton-row shimmer" wx:for="{{rowList}}" wx:for-item="r" wx:key="*this" style="width: {{r}}%"></view>
+      </view>
+    </view>
+  </view>
+</view>

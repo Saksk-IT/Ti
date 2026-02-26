@@ -44,7 +44,7 @@ def pqf_row_to_internal(
       - "question_center"
       - "user_bank"
     override_tags:
-      - 若提供，则覆盖 PQF 行中的 tags（用于“按用户维度标签”）
+      - 若提供，则覆盖 PQF 行中的 tags（用于"按用户维度标签"）
     """
     r = dict(row or {})
     portable = {

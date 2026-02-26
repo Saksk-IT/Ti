@@ -6,6 +6,7 @@ import { buildLastPracticeUrl } from '../../utils/last-practice';
 import { themeManager, ThemeStyle } from '../../utils/theme';
 import { fontManager, FontStyle, FONT_STYLE_CONFIG } from '../../utils/font';
 import { bumpAvatarRev, decorateAvatarUrl } from '../../utils/avatar';
+import { typedSetData } from '../../utils/typed-set-data';
 
 type SettingsNavKey = 'account' | 'practice' | 'theme' | 'about';
 type AccountSubKey = 'profile' | 'security' | 'bindings';
@@ -61,14 +62,28 @@ function validateEmail(email: string): { ok: boolean; msg?: string; value?: stri
 }
 
 function summarizeUsername(): string {
-  const userInfo = wx.getStorageSync('userInfo') || {};
-  const name = String((userInfo as any)?.username || (userInfo as any)?.name || (userInfo as any)?.email || '').trim();
+  const userInfo = (wx.getStorageSync('userInfo') || {}) as Record<string, string>;
+  const name = String(userInfo.username || userInfo.name || userInfo.email || '').trim();
   return name || '已登录';
 }
 
 function bumpScrollTop(n: number): number {
   const v = Number(n || 0) || 0;
   return v === 0 ? 1 : 0;
+}
+
+type _PrivState = {
+  originalProfile?: { college: string; contact: string; signature: string };
+  avatarDlTried?: boolean;
+  countdownTimer?: ReturnType<typeof setTimeout> | null;
+  aboutLastLoadedAt?: number;
+  accountLastLoadedAt?: number;
+};
+const _ps = new WeakMap<object, _PrivState>();
+function _p(ctx: object): _PrivState {
+  let s = _ps.get(ctx);
+  if (!s) { s = {}; _ps.set(ctx, s); }
+  return s;
 }
 
 Page({
@@ -192,12 +207,12 @@ Page({
       if (accTab === 'bindings') patch.bindingsMounted = true;
     }
 
-    this.setData(patch);
+    typedSetData(this,patch);
 
     try {
       const edit = String(options?.edit || '');
       if (edit === '1' && navKey === 'account' && accTab === 'profile') {
-        this.setData({ 'profile.editing': true } as any);
+        typedSetData(this,{ 'profile.editing': true });
       }
     } catch (e) {}
   },
@@ -209,8 +224,8 @@ Page({
     }
 
     try {
-      this.setData(themeManager.getPageData() as any);
-      this.setData(fontManager.getPageData() as any);
+      typedSetData(this,themeManager.getPageData());
+      typedSetData(this,fontManager.getPageData());
     } catch (e) {}
 
     this.ensureTabLoaded(false);
@@ -235,27 +250,27 @@ Page({
     if (navKey === 'account') return this.loadAccountSummary(force);
     if (navKey === 'about') return this.loadAboutInfo(force);
 
-    if (navKey === 'theme' && !(this.data as any).themeMounted) this.setData({ themeMounted: true } as any);
-    if (navKey === 'practice' && !(this.data as any).practiceMounted) this.setData({ practiceMounted: true } as any);
+    if (navKey === 'theme' && !this.data.themeMounted) typedSetData(this,{ themeMounted: true });
+    if (navKey === 'practice' && !this.data.practiceMounted) typedSetData(this,{ practiceMounted: true });
     return Promise.resolve();
   },
 
   resetScroll() {
-    this.setData({ scrollTop: bumpScrollTop((this.data as any).scrollTop) } as any);
+    typedSetData(this,{ scrollTop: bumpScrollTop(this.data.scrollTop) });
   },
 
   onHamburgerTap() {
-    this.setData({ drawerOpen: true } as any);
+    typedSetData(this,{ drawerOpen: true });
   },
 
   onDrawerClose() {
-    this.setData({ drawerOpen: false } as any);
+    typedSetData(this,{ drawerOpen: false });
   },
 
   onDrawerNavigate(e: any) {
     const url = e?.detail?.url;
     const navType = e?.detail?.navType;
-    this.setData({ drawerOpen: false } as any);
+    typedSetData(this,{ drawerOpen: false });
     if (!url) return;
     safeNavigate(url, navType);
   },
@@ -263,14 +278,14 @@ Page({
   async onDrawerSelectStyle(e: any) {
     const style = (e?.detail?.style || 'default') as ThemeStyle;
     themeManager.setStyle(style);
-    this.setData(themeManager.getPageData() as any);
-    this.setData({ drawerOpen: false } as any);
+    typedSetData(this,themeManager.getPageData());
+    typedSetData(this,{ drawerOpen: false });
     await syncUserSettingsToServer();
   },
 
   onToggleDarkTap() {
     themeManager.toggleDark();
-    this.setData(themeManager.getPageData() as any);
+    typedSetData(this,themeManager.getPageData());
   },
 
   onContinueLast() {
@@ -297,7 +312,7 @@ Page({
       if (acc === 'bindings') patch.bindingsMounted = true;
     }
 
-    this.setData(patch);
+    typedSetData(this,patch);
     this.resetScroll();
     this.ensureTabLoaded(false);
   },
@@ -305,7 +320,7 @@ Page({
   onAccountSubTap(e: any) {
     const key = normalizeAccTab(e?.currentTarget?.dataset?.key);
     if (!key) return;
-    if (this.data.navKey !== 'account') this.setData({ navKey: 'account' } as any);
+    if (this.data.navKey !== 'account') typedSetData(this,{ navKey: 'account' });
     if (key === this.data.accTab) return;
 
     const patch: any = { accTab: key };
@@ -313,21 +328,20 @@ Page({
     if (key === 'security') patch.securityMounted = true;
     if (key === 'bindings') patch.bindingsMounted = true;
 
-    this.setData(patch);
+    typedSetData(this,patch);
     this.resetScroll();
     this.loadAccountSummary(false);
   },
 
   // ========== 账号：资料 ==========
   onEdit() {
-    this.setData({ 'profile.editing': true, 'profile.msg': '', 'profile.errorMsg': '' } as any);
+    typedSetData(this,{ 'profile.editing': true, 'profile.msg': '', 'profile.errorMsg': '' });
   },
 
   onCancel() {
-    const self: any = this as any;
-    const original = self.__originalProfile || {};
+    const original = _p(this).originalProfile || {};
     const signature = String(original.signature || '');
-    this.setData({
+    typedSetData(this,{
       'profile.editing': false,
       'profile.msg': '',
       'profile.errorMsg': '',
@@ -335,46 +349,46 @@ Page({
       'profile.contact': String(original.contact || ''),
       'profile.signature': signature,
       'profile.signatureCount': signature.length
-    } as any);
+    });
   },
 
   onCollegeInput(e: any) {
     const v = clampLen(e?.detail?.value, 40);
-    this.setData({ 'profile.college': v } as any);
+    typedSetData(this,{ 'profile.college': v });
   },
 
   onContactInput(e: any) {
     const v = clampLen(e?.detail?.value, 60);
-    this.setData({ 'profile.contact': v } as any);
+    typedSetData(this,{ 'profile.contact': v });
   },
 
   onSignatureInput(e: any) {
     const v = clampLen(e?.detail?.value, 80);
-    this.setData({ 'profile.signature': v, 'profile.signatureCount': v.length } as any);
+    typedSetData(this,{ 'profile.signature': v, 'profile.signatureCount': v.length });
   },
 
   async onSave() {
-    const saving = !!(this.data as any).profile?.saving;
+    const saving = !!this.data.profile?.saving;
     if (saving) return;
 
-    this.setData({ 'profile.saving': true, 'profile.msg': '', 'profile.errorMsg': '' } as any);
+    typedSetData(this,{ 'profile.saving': true, 'profile.msg': '', 'profile.errorMsg': '' });
     try {
       await api.updateProfile({
-        college: String((this.data as any).profile?.college || '').trim(),
-        contact: String((this.data as any).profile?.contact || '').trim(),
-        signature: String((this.data as any).profile?.signature || '').trim()
+        college: String(this.data.profile?.college || '').trim(),
+        contact: String(this.data.profile?.contact || '').trim(),
+        signature: String(this.data.profile?.signature || '').trim()
       });
-      this.setData({ 'profile.editing': false, 'profile.msg': '已保存' } as any);
+      typedSetData(this,{ 'profile.editing': false, 'profile.msg': '已保存' });
       await this.loadAccountSummary(true);
     } catch (e: any) {
-      this.setData({ 'profile.errorMsg': e?.message || '保存失败，请稍后重试' } as any);
+      typedSetData(this,{ 'profile.errorMsg': e?.message || '保存失败，请稍后重试' });
     } finally {
-      this.setData({ 'profile.saving': false } as any);
+      typedSetData(this,{ 'profile.saving': false });
     }
   },
 
   async onAvatarTap() {
-    const p: any = (this.data as any).profile || {};
+    const p: any = this.data.profile || {};
     if (p.loading || p.saving) return;
 
     const currentUrl = String(p.avatarUrl || '').trim();
@@ -382,7 +396,7 @@ Page({
       const idx = await new Promise<number>((resolve) => {
         wx.showActionSheet({
           itemList: ['预览头像', '更换头像'],
-          success: (res) => resolve(Number((res as any)?.tapIndex)),
+          success: (res) => resolve(Number(res.tapIndex)),
           fail: () => resolve(-1)
         });
       });
@@ -394,13 +408,12 @@ Page({
     }
 
     const filePath = await new Promise<string>((resolve) => {
-      const pick = (wx as any).chooseMedia ? 'chooseMedia' : 'chooseImage';
-      if (pick === 'chooseMedia') {
-        (wx as any).chooseMedia({
+      if (wx.chooseMedia) {
+        wx.chooseMedia({
           count: 1,
           mediaType: ['image'],
           sourceType: ['album', 'camera'],
-          success: (res: any) => resolve(String(res?.tempFiles?.[0]?.tempFilePath || '')),
+          success: (res) => resolve(String(res?.tempFiles?.[0]?.tempFilePath || '')),
           fail: () => resolve('')
         });
         return;
@@ -410,20 +423,20 @@ Page({
         count: 1,
         sizeType: ['compressed'],
         sourceType: ['album', 'camera'],
-        success: (res) => resolve(String((res as any)?.tempFilePaths?.[0] || '')),
+        success: (res) => resolve(String(res.tempFilePaths?.[0] || '')),
         fail: () => resolve('')
       });
     });
 
     if (!filePath) return;
 
-    this.setData({ 'profile.msg': '', 'profile.errorMsg': '' } as any);
+    typedSetData(this,{ 'profile.msg': '', 'profile.errorMsg': '' });
     wx.showLoading({ title: '上传中…', mask: true });
     try {
       const res: any = await api.uploadProfileAvatar(filePath);
       bumpAvatarRev();
       const url = decorateAvatarUrl(resolveUploadUrl(res?.avatar_url));
-      this.setData({ 'profile.avatarUrl': url, 'profile.msg': '头像已更新' } as any);
+      typedSetData(this,{ 'profile.avatarUrl': url, 'profile.msg': '头像已更新' });
       await this.loadAccountSummary(true);
     } catch (e: any) {
       wx.showToast({ title: e?.message || '上传失败', icon: 'none' });
@@ -433,28 +446,28 @@ Page({
   },
 
   onAvatarError() {
-    const url = String((this.data as any).profile?.avatarUrl || '').trim();
+    const url = String(this.data.profile?.avatarUrl || '').trim();
     if (!url || !/^https?:\/\//i.test(url)) {
-      this.setData({ 'profile.avatarUrl': '' } as any);
+      typedSetData(this,{ 'profile.avatarUrl': '' });
       return;
     }
 
-    const self: any = this as any;
-    if (self.__avatarDlTried) {
-      this.setData({ 'profile.avatarUrl': '' } as any);
+    const priv = _p(this);
+    if (priv.avatarDlTried) {
+      typedSetData(this,{ 'profile.avatarUrl': '' });
       return;
     }
-    self.__avatarDlTried = true;
+    priv.avatarDlTried = true;
 
     wx.downloadFile({
       url,
       timeout: 15000,
       success: (res) => {
-        const tempFilePath = String((res && (res as any).tempFilePath) || '').trim();
-        this.setData({ 'profile.avatarUrl': tempFilePath || '' } as any);
+        const tempFilePath = String((res && res.tempFilePath) || '').trim();
+        typedSetData(this,{ 'profile.avatarUrl': tempFilePath || '' });
       },
       fail: () => {
-        this.setData({ 'profile.avatarUrl': '' } as any);
+        typedSetData(this,{ 'profile.avatarUrl': '' });
       }
     });
   },
@@ -462,40 +475,40 @@ Page({
   // ========== 账号：安全 ==========
   onToggleShow(e: any) {
     const target = String(e?.currentTarget?.dataset?.target || '');
-    const sec: any = (this.data as any).security || {};
-    if (target === 'current') this.setData({ 'security.showCurrent': !sec.showCurrent } as any);
-    if (target === 'new') this.setData({ 'security.showNew': !sec.showNew } as any);
-    if (target === 'confirm') this.setData({ 'security.showConfirm': !sec.showConfirm } as any);
+    const sec: any = this.data.security || {};
+    if (target === 'current') typedSetData(this,{ 'security.showCurrent': !sec.showCurrent });
+    if (target === 'new') typedSetData(this,{ 'security.showNew': !sec.showNew });
+    if (target === 'confirm') typedSetData(this,{ 'security.showConfirm': !sec.showConfirm });
   },
 
   onCurrentInput(e: any) {
-    this.setData({ 'security.currentPassword': String(e?.detail?.value || '') } as any);
+    typedSetData(this,{ 'security.currentPassword': String(e?.detail?.value || '') });
   },
 
   onNewInput(e: any) {
-    this.setData({ 'security.newPassword': String(e?.detail?.value || '') } as any);
+    typedSetData(this,{ 'security.newPassword': String(e?.detail?.value || '') });
   },
 
   onConfirmInput(e: any) {
-    this.setData({ 'security.confirmPassword': String(e?.detail?.value || '') } as any);
+    typedSetData(this,{ 'security.confirmPassword': String(e?.detail?.value || '') });
   },
 
   onReset() {
-    const submitting = !!(this.data as any).security?.submitting;
+    const submitting = !!this.data.security?.submitting;
     if (submitting) return;
-    this.setData({
+    typedSetData(this,{
       'security.msg': '',
       'security.errorMsg': '',
       'security.currentPassword': '',
       'security.newPassword': '',
       'security.confirmPassword': ''
-    } as any);
+    });
   },
 
   async onSubmit() {
-    const sec: any = (this.data as any).security || {};
+    const sec: any = this.data.security || {};
     if (sec.submitting) return;
-    this.setData({ 'security.submitting': true, 'security.msg': '', 'security.errorMsg': '' } as any);
+    typedSetData(this,{ 'security.submitting': true, 'security.msg': '', 'security.errorMsg': '' });
     try {
       const isSetPassword = !sec.hasPasswordSet;
       const cur = String(sec.currentPassword || '');
@@ -512,16 +525,16 @@ Page({
         current_password: cur,
         new_password: nw,
         is_set_password: isSetPassword
-      });
+      }) as { message?: string };
 
       if (isSetPassword) {
-        wx.showToast({ title: (res as any)?.message || '密码设置成功', icon: 'none' });
-        this.setData({
+        wx.showToast({ title: res.message || '密码设置成功', icon: 'none' });
+        typedSetData(this,{
           'security.currentPassword': '',
           'security.newPassword': '',
           'security.confirmPassword': '',
-          'security.msg': (res as any)?.message || '密码设置成功'
-        } as any);
+          'security.msg': res.message || '密码设置成功'
+        });
         await this.loadAccountSummary(true);
         return;
       }
@@ -538,135 +551,135 @@ Page({
       logout();
       wx.redirectTo({ url: '/pages/login/login' });
     } catch (e: any) {
-      this.setData({ 'security.errorMsg': e?.message || '操作失败，请稍后重试' } as any);
+      typedSetData(this,{ 'security.errorMsg': e?.message || '操作失败，请稍后重试' });
     } finally {
-      this.setData({ 'security.submitting': false } as any);
+      typedSetData(this,{ 'security.submitting': false });
     }
   },
 
   // ========== 账号：绑定 ==========
   onEmailActionTap() {
-    if ((this.data as any).bindings?.loading) return;
-    this.setData({ 'bindings.msg': '', 'bindings.errorMsg': '', 'bindings.emailFormOpen': true } as any);
+    if (this.data.bindings?.loading) return;
+    typedSetData(this,{ 'bindings.msg': '', 'bindings.errorMsg': '', 'bindings.emailFormOpen': true });
   },
 
   onCloseEmailFormTap() {
-    if ((this.data as any).bindings?.bindingEmail) return;
+    if (this.data.bindings?.bindingEmail) return;
     this.clearCountdown();
-    this.setData({ 'bindings.emailFormOpen': false, 'bindings.bindEmail': '', 'bindings.bindCode': '' } as any);
+    typedSetData(this,{ 'bindings.emailFormOpen': false, 'bindings.bindEmail': '', 'bindings.bindCode': '' });
   },
 
   onBindEmailInput(e: any) {
-    this.setData({ 'bindings.bindEmail': String(e?.detail?.value || '') } as any);
+    typedSetData(this,{ 'bindings.bindEmail': String(e?.detail?.value || '') });
   },
 
   onBindCodeInput(e: any) {
-    this.setData({ 'bindings.bindCode': String(e?.detail?.value || '') } as any);
+    typedSetData(this,{ 'bindings.bindCode': String(e?.detail?.value || '') });
   },
 
   getSendCodeText(): string {
-    const b: any = (this.data as any).bindings || {};
+    const b: any = this.data.bindings || {};
     if (b.sendingCode) return '发送中…';
     if (b.countdown > 0) return `重发(${b.countdown}s)`;
     return '发送验证码';
   },
 
   refreshSendCodeUi() {
-    const b: any = (this.data as any).bindings || {};
-    this.setData({
+    const b: any = this.data.bindings || {};
+    typedSetData(this,{
       'bindings.sendCodeText': this.getSendCodeText(),
       'bindings.sendCodeDisabled': !!b.sendingCode || Number(b.countdown || 0) > 0
-    } as any);
+    });
   },
 
   clearCountdown() {
-    const self: any = this as any;
-    if (self.__countdownTimer) {
-      clearTimeout(self.__countdownTimer);
-      self.__countdownTimer = null;
+    const priv = _p(this);
+    if (priv.countdownTimer) {
+      clearTimeout(priv.countdownTimer);
+      priv.countdownTimer = null;
     }
-    this.setData({ 'bindings.countdown': 0, 'bindings.sendingCode': false } as any);
+    typedSetData(this,{ 'bindings.countdown': 0, 'bindings.sendingCode': false });
     this.refreshSendCodeUi();
   },
 
   tickCountdown() {
-    const self: any = this as any;
-    const next = Math.max(0, Number((this.data as any).bindings?.countdown || 0) - 1);
-    this.setData({ 'bindings.countdown': next } as any);
+    const priv = _p(this);
+    const next = Math.max(0, Number(this.data.bindings?.countdown || 0) - 1);
+    typedSetData(this,{ 'bindings.countdown': next });
     this.refreshSendCodeUi();
     if (next <= 0) {
-      self.__countdownTimer = null;
+      priv.countdownTimer = null;
       return;
     }
-    self.__countdownTimer = setTimeout(() => this.tickCountdown(), 1000);
+    priv.countdownTimer = setTimeout(() => this.tickCountdown(), 1000);
   },
 
   async onSendCodeTap() {
-    const b: any = (this.data as any).bindings || {};
+    const b: any = this.data.bindings || {};
     if (b.sendingCode || b.countdown > 0) return;
 
     const v = validateEmail(b.bindEmail);
     if (!v.ok) {
-      this.setData({ 'bindings.errorMsg': v.msg || '邮箱格式不正确' } as any);
+      typedSetData(this,{ 'bindings.errorMsg': v.msg || '邮箱格式不正确' });
       return;
     }
 
-    this.setData({ 'bindings.sendingCode': true, 'bindings.msg': '', 'bindings.errorMsg': '' } as any);
+    typedSetData(this,{ 'bindings.sendingCode': true, 'bindings.msg': '', 'bindings.errorMsg': '' });
     this.refreshSendCodeUi();
     try {
       const res: any = await api.sendEmailBindCode(v.value as string);
       const tip = String(res?.message || '验证码已发送');
       wx.showToast({ title: tip, icon: 'none' });
-      this.setData({ 'bindings.msg': tip, 'bindings.countdown': 60 } as any);
+      typedSetData(this,{ 'bindings.msg': tip, 'bindings.countdown': 60 });
       this.refreshSendCodeUi();
       this.tickCountdown();
     } catch (e: any) {
-      this.setData({ 'bindings.errorMsg': e?.message || '发送失败，请稍后重试' } as any);
+      typedSetData(this,{ 'bindings.errorMsg': e?.message || '发送失败，请稍后重试' });
       this.clearCountdown();
     } finally {
-      this.setData({ 'bindings.sendingCode': false } as any);
+      typedSetData(this,{ 'bindings.sendingCode': false });
       this.refreshSendCodeUi();
     }
   },
 
   async onBindEmailTap() {
-    const b: any = (this.data as any).bindings || {};
+    const b: any = this.data.bindings || {};
     if (b.bindingEmail) return;
 
     const v = validateEmail(b.bindEmail);
     if (!v.ok) {
-      this.setData({ 'bindings.errorMsg': v.msg || '邮箱格式不正确' } as any);
+      typedSetData(this,{ 'bindings.errorMsg': v.msg || '邮箱格式不正确' });
       return;
     }
 
     const code = String(b.bindCode || '').trim();
     if (!code || code.length !== 6) {
-      this.setData({ 'bindings.errorMsg': '请输入 6 位验证码' } as any);
+      typedSetData(this,{ 'bindings.errorMsg': '请输入 6 位验证码' });
       return;
     }
 
-    this.setData({ 'bindings.bindingEmail': true, 'bindings.msg': '', 'bindings.errorMsg': '' } as any);
+    typedSetData(this,{ 'bindings.bindingEmail': true, 'bindings.msg': '', 'bindings.errorMsg': '' });
     try {
       await api.bindEmail(v.value as string, code);
       wx.showToast({ title: '邮箱绑定成功', icon: 'none' });
       this.clearCountdown();
-      this.setData({ 'bindings.emailFormOpen': false, 'bindings.bindEmail': '', 'bindings.bindCode': '', 'bindings.msg': '邮箱绑定成功' } as any);
+      typedSetData(this,{ 'bindings.emailFormOpen': false, 'bindings.bindEmail': '', 'bindings.bindCode': '', 'bindings.msg': '邮箱绑定成功' });
       await this.loadAccountSummary(true);
     } catch (e: any) {
-      this.setData({ 'bindings.errorMsg': e?.message || '绑定失败，请稍后重试' } as any);
+      typedSetData(this,{ 'bindings.errorMsg': e?.message || '绑定失败，请稍后重试' });
     } finally {
-      this.setData({ 'bindings.bindingEmail': false } as any);
+      typedSetData(this,{ 'bindings.bindingEmail': false });
     }
   },
 
   async onWechatBindTap() {
-    const b: any = (this.data as any).bindings || {};
+    const b: any = this.data.bindings || {};
     if (b.bindingWechat) return;
-    this.setData({ 'bindings.bindingWechat': true, 'bindings.msg': '', 'bindings.errorMsg': '' } as any);
+    typedSetData(this,{ 'bindings.bindingWechat': true, 'bindings.msg': '', 'bindings.errorMsg': '' });
     try {
       const code = await new Promise<string>((resolve) => {
         wx.login({
-          success: (res) => resolve(String((res as any)?.code || '')),
+          success: (res) => resolve(String(res.code || '')),
           fail: () => resolve('')
         });
       });
@@ -677,17 +690,17 @@ Page({
       if (res && res.user_info) wx.setStorageSync('userInfo', res.user_info);
 
       wx.showToast({ title: '绑定成功', icon: 'none' });
-      this.setData({ 'bindings.msg': '绑定成功' } as any);
+      typedSetData(this,{ 'bindings.msg': '绑定成功' });
       await this.loadAccountSummary(true);
     } catch (e: any) {
-      this.setData({ 'bindings.errorMsg': e?.message || '绑定失败，请稍后重试' } as any);
+      typedSetData(this,{ 'bindings.errorMsg': e?.message || '绑定失败，请稍后重试' });
     } finally {
-      this.setData({ 'bindings.bindingWechat': false } as any);
+      typedSetData(this,{ 'bindings.bindingWechat': false });
     }
   },
 
   async onWechatUnbindTap() {
-    const b: any = (this.data as any).bindings || {};
+    const b: any = this.data.bindings || {};
     if (b.unbindingWechat) return;
 
     const ok = await new Promise<boolean>((resolve) => {
@@ -696,13 +709,13 @@ Page({
         content: '解绑后将无法使用微信一键登录。为保证安全，需要重新登录。',
         confirmText: '解绑',
         cancelText: '取消',
-        success: (res) => resolve(!!(res as any)?.confirm),
+        success: (res) => resolve(!!res.confirm),
         fail: () => resolve(false)
       });
     });
     if (!ok) return;
 
-    this.setData({ 'bindings.unbindingWechat': true, 'bindings.msg': '', 'bindings.errorMsg': '' } as any);
+    typedSetData(this,{ 'bindings.unbindingWechat': true, 'bindings.msg': '', 'bindings.errorMsg': '' });
     try {
       await api.wechatUnbind();
       await new Promise<void>((resolve) => {
@@ -717,9 +730,9 @@ Page({
       logout();
       wx.redirectTo({ url: '/pages/login/login' });
     } catch (e: any) {
-      this.setData({ 'bindings.errorMsg': e?.message || '解绑失败，请稍后重试' } as any);
+      typedSetData(this,{ 'bindings.errorMsg': e?.message || '解绑失败，请稍后重试' });
     } finally {
-      this.setData({ 'bindings.unbindingWechat': false } as any);
+      typedSetData(this,{ 'bindings.unbindingWechat': false });
     }
   },
 
@@ -727,42 +740,42 @@ Page({
   async onStyleTap(e: any) {
     const style = String(e?.currentTarget?.dataset?.style || 'default') as ThemeStyle;
     themeManager.setStyle(style);
-    this.setData(themeManager.getPageData() as any);
+    typedSetData(this,themeManager.getPageData());
     await syncUserSettingsToServer();
-    this.setData({ 'theme.msg': '已应用并尝试同步到云端' } as any);
+    typedSetData(this,{ 'theme.msg': '已应用并尝试同步到云端' });
   },
 
   // ========== 字体 ==========
   onFontStyleTap(e: any) {
     const style = String(e?.currentTarget?.dataset?.style || 'system') as FontStyle;
     fontManager.setStyle(style);
-    this.setData(fontManager.getPageData() as any);
+    typedSetData(this,fontManager.getPageData());
     const config = FONT_STYLE_CONFIG[style];
-    this.setData({ 'font.msg': `已切换到「${config.name}」字体` } as any);
+    typedSetData(this,{ 'font.msg': `已切换到「${config.name}」字体` });
   },
 
   // ========== 关于 ==========
   onAboutTabTap(e: any) {
     const tab = String(e?.currentTarget?.dataset?.tab || '').toLowerCase() as AboutTab;
     const next: AboutTab = tab === 'legal' ? 'legal' : 'app';
-    if (next === (this.data as any).aboutTab) return;
-    this.setData({ aboutTab: next } as any);
+    if (next === this.data.aboutTab) return;
+    typedSetData(this,{ aboutTab: next });
     this.resetScroll();
   },
 
   onToggleContact() {
-    const open = !!(this.data as any).about?.contactOpen;
-    this.setData({ 'about.contactOpen': !open } as any);
+    const open = !!this.data.about?.contactOpen;
+    typedSetData(this,{ 'about.contactOpen': !open });
   },
 
   onGoProfile() {
-    this.setData({ navKey: 'account', accTab: 'profile', profileMounted: true } as any);
+    typedSetData(this,{ navKey: 'account', accTab: 'profile', profileMounted: true });
     this.resetScroll();
     this.loadAccountSummary(false);
   },
 
   onContactChat() {
-    const a: any = (this.data as any).about || {};
+    const a: any = this.data.about || {};
     if (a.chatDisabled) {
       wx.showToast({ title: a.chatDisabledReason || '暂不可用', icon: 'none' });
       return;
@@ -789,27 +802,27 @@ Page({
   },
 
   async loadAboutInfo(force = false) {
-    const self: any = this as any;
+    const priv = _p(this);
     const now = Date.now();
-    const lastAt = Number(self.__aboutLastLoadedAt || 0) || 0;
+    const lastAt = Number(priv.aboutLastLoadedAt || 0) || 0;
     if (!force && lastAt && now - lastAt < 8000) {
-      this.setData({ 'about.currentUsername': summarizeUsername() } as any);
+      typedSetData(this,{ 'about.currentUsername': summarizeUsername() });
       return;
     }
-    self.__aboutLastLoadedAt = now;
+    priv.aboutLastLoadedAt = now;
 
-    this.setData({ 'about.errorMsg': '', 'about.currentUsername': summarizeUsername() } as any);
+    typedSetData(this,{ 'about.errorMsg': '', 'about.currentUsername': summarizeUsername() });
     try {
       const res: any = await api.getSettingsAbout();
-      this.setData({
+      typedSetData(this,{
         'about.adminUsername': String(res?.admin_username || ''),
         'about.adminEmail': String(res?.admin_email || ''),
         'about.adminWechat': String(res?.admin_wechat || ''),
         'about.chatDisabled': !!res?.chat_disabled,
         'about.chatDisabledReason': String(res?.chat_disabled_reason || '')
-      } as any);
+      });
     } catch (e: any) {
-      this.setData({ 'about.errorMsg': e?.message || '加载失败，请稍后重试' } as any);
+      typedSetData(this,{ 'about.errorMsg': e?.message || '加载失败，请稍后重试' });
     }
   },
 
@@ -838,26 +851,26 @@ Page({
   },
 
   async loadAccountSummary(force = false) {
-    const self: any = this as any;
+    const priv = _p(this);
     const now = Date.now();
-    const lastAt = Number(self.__accountLastLoadedAt || 0) || 0;
+    const lastAt = Number(priv.accountLastLoadedAt || 0) || 0;
     if (!force && lastAt && now - lastAt < 8000) return;
-    self.__accountLastLoadedAt = now;
+    priv.accountLastLoadedAt = now;
 
-    if (!(this.data as any).profileMounted) this.setData({ profileMounted: true } as any);
+    if (!this.data.profileMounted) typedSetData(this,{ profileMounted: true });
     if (this.data.navKey === 'account') {
-      if (this.data.accTab === 'security' && !(this.data as any).securityMounted) this.setData({ securityMounted: true } as any);
-      if (this.data.accTab === 'bindings' && !(this.data as any).bindingsMounted) this.setData({ bindingsMounted: true } as any);
+      if (this.data.accTab === 'security' && !this.data.securityMounted) typedSetData(this,{ securityMounted: true });
+      if (this.data.accTab === 'bindings' && !this.data.bindingsMounted) typedSetData(this,{ bindingsMounted: true });
     }
 
-    this.setData({
+    typedSetData(this,{
       'profile.loading': true,
       'security.loading': true,
       'bindings.loading': true,
       'profile.errorMsg': '',
       'security.errorMsg': '',
       'bindings.errorMsg': ''
-    } as any);
+    });
     try {
       const p: any = await api.getProfile();
 
@@ -878,9 +891,9 @@ Page({
       const passwordBadge = hasPasswordSet ? '已设置' : '未设置';
       const wechatBadge = wechatBound ? '已绑定' : '未绑定';
 
-      this.setData({
+      typedSetData(this,{
         profile: {
-          ...(this.data as any).profile,
+          ...this.data.profile,
           username,
           avatarUrl: avatar || '/images/default-avatar.png',
           avatarInitial: (username || 'U').charAt(0).toUpperCase(),
@@ -895,24 +908,24 @@ Page({
           passwordBadge,
           wechatBadge
         },
-        security: { ...(this.data as any).security, ...this.buildSecurityMode(hasPasswordSet) },
-        bindings: { ...(this.data as any).bindings, ...this.buildBindingsProfile(p) }
-      } as any);
+        security: { ...this.data.security, ...this.buildSecurityMode(hasPasswordSet) },
+        bindings: { ...this.data.bindings, ...this.buildBindingsProfile(p) }
+      });
 
-      self.__originalProfile = { college, contact, signature };
+      priv.originalProfile = { college, contact, signature };
       this.refreshSendCodeUi();
     } catch (e: any) {
       const err = e?.message || '加载失败，请稍后重试';
-      this.setData({
+      typedSetData(this,{
         'profile.errorMsg': err,
         'security.errorMsg': err,
         'bindings.errorMsg': err,
-        security: { ...(this.data as any).security, ...this.buildSecurityMode(false) },
-        bindings: { ...(this.data as any).bindings, ...this.buildBindingsProfile({}) }
-      } as any);
+        security: { ...this.data.security, ...this.buildSecurityMode(false) },
+        bindings: { ...this.data.bindings, ...this.buildBindingsProfile({}) }
+      });
       this.refreshSendCodeUi();
     } finally {
-      this.setData({ 'profile.loading': false, 'security.loading': false, 'bindings.loading': false } as any);
+      typedSetData(this,{ 'profile.loading': false, 'security.loading': false, 'bindings.loading': false });
     }
   }
 });

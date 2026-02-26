@@ -1,0 +1,47 @@
+<!-- Edit/Add Drawer -->
+<div id="drawer" class="drawer">
+    <div class="drawer-header">
+        <span id="drawer-title">新增题目</span>
+        <button class="drawer-close" onclick="closeDrawer()">×</button>
+    </div>
+    <div class="drawer-body">
+        <input type="hidden" id="editingId">
+        <div class="form-group"><label>题型</label><select id="qType"></select></div>
+        <div class="form-group"><label>难度 (1-5)</label><input type="number" id="qDifficulty" min="1" max="5" value="1"></div>
+        <div class="form-group"><label>标签 (逗号分隔)</label><input type="text" id="qTags" placeholder="例如: 计算机网络, TCP/IP"></div>
+        <div class="form-group"><label>题干</label><textarea id="qContent" rows="5" oninput="updatePreview()"></textarea></div>
+        <div class="form-group" id="optionsGroup">
+            <label>选项</label>
+            <div id="optionsContainer" style="display: flex; flex-direction: column; gap: 12px;">
+                <!-- 选项列表将动态生成在这里 -->
+            </div>
+            <button type="button" class="btn-secondary" onclick="addOption()" style="margin-top: 12px; width: 100%;">
+                + 添加选项
+            </button>
+        </div>
+                <div class="form-group">
+            <label>答案</label>
+            <div id="answer-container">
+                <!-- 答案输入控件将动态生成在这里 -->
+            </div>
+        </div>
+        <div class="form-group"><label>解析</label><textarea id="qExplanation" rows="3"></textarea></div>
+        <div class="form-group">
+            <label>题目图片</label>
+            <input type="file" id="qImageFile" accept="image/*" onchange="uploadImage()" multiple>
+            <input type="hidden" id="qImagePaths">
+            <div id="imagePreviewContainer" style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 10px;">
+                <!-- Image previews will be generated here -->
+            </div>
+        </div>
+        <div class="preview-box">
+            <h4>预览</h4>
+            <div id="previewContent" class="q-content"></div>
+            <div id="previewOptions" class="options"></div>
+        </div>
+    </div>
+    <div class="drawer-footer">
+        <button class="btn-secondary" onclick="closeDrawer()">取消</button>
+        <button class="btn-primary" onclick="saveQuestion()">保存</button>
+    </div>
+</div>

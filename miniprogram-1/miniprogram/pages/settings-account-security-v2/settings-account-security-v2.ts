@@ -62,7 +62,7 @@ Page({
       return;
     }
     try {
-      this.setData(themeManager.getPageData() as any);
+      this.setData(themeManager.getPageData());
     } catch (e) {}
 
     if (!this.data.loading) this.loadProfile(false);
@@ -97,14 +97,14 @@ Page({
   async onDrawerSelectStyle(e: any) {
     const style = (e?.detail?.style || 'default') as ThemeStyle;
     themeManager.setStyle(style);
-    this.setData(themeManager.getPageData() as any);
+    this.setData(themeManager.getPageData());
     this.setData({ drawerOpen: false });
     await syncUserSettingsToServer();
   },
 
   onCycleThemeModeTap() {
     const mode = themeManager.cycleMode() as ThemeMode;
-    this.setData({ ...(themeManager.getPageData() as any), themeMode: mode });
+    this.setData({ ...(themeManager.getPageData()), themeMode: mode });
   },
 
   onContinueLast() {
@@ -221,7 +221,7 @@ Page({
   async loadProfile(force = false) {
     if (this.data.loading) return;
 
-    const self: any = this as any;
+    const self = this;
     const now = Date.now();
     const lastAt = Number(self.__lastLoadedAt || 0) || 0;
     if (!force && now - lastAt < 8000) return;

@@ -84,7 +84,7 @@ Page({
       return;
     }
     try {
-      this.setData(themeManager.getPageData() as any);
+      this.setData(themeManager.getPageData());
     } catch (e) {}
 
     if (!this.data.loading) this.loadProfile(false);
@@ -109,7 +109,7 @@ Page({
   async onDrawerSelectStyle(e: any) {
     const style = (e?.detail?.style || 'default') as ThemeStyle;
     themeManager.setStyle(style);
-    this.setData(themeManager.getPageData() as any);
+    this.setData(themeManager.getPageData());
     this.setData({ drawerOpen: false });
     await syncUserSettingsToServer();
   },
@@ -126,7 +126,7 @@ Page({
 
   onCycleThemeModeTap() {
     const mode = themeManager.cycleMode() as ThemeMode;
-    this.setData({ ...(themeManager.getPageData() as any), themeMode: mode });
+    this.setData({ ...(themeManager.getPageData()), themeMode: mode });
   },
 
   onContinueLast() {
@@ -159,7 +159,7 @@ Page({
   },
 
   onCancel() {
-    const self: any = this as any;
+    const self = this;
     const original = self.__originalProfile || {};
     this.setData({
       editing: false,
@@ -355,13 +355,13 @@ Page({
   },
 
   onAvatarError() {
-    const url = String((this.data as any).avatarUrl || '').trim();
+    const url = String(this.data.avatarUrl || '').trim();
     if (!url || !/^https?:\/\//i.test(url)) {
       this.setData({ avatarUrl: '' });
       return;
     }
 
-    const self: any = this as any;
+    const self = this;
     if (self.__avatarDlTried) {
       this.setData({ avatarUrl: '' });
       return;
@@ -372,7 +372,7 @@ Page({
       url,
       timeout: 15000,
       success: (res) => {
-        const tempFilePath = String((res && (res as any).tempFilePath) || '').trim();
+        const tempFilePath = String((res && res.tempFilePath) || '').trim();
         this.setData({ avatarUrl: tempFilePath || '' });
       },
       fail: () => {
@@ -384,7 +384,7 @@ Page({
   async loadProfile(force = false) {
     if (this.data.loading) return;
 
-    const self: any = this as any;
+    const self = this;
     const now = Date.now();
     const lastAt = Number(self.__lastLoadedAt || 0) || 0;
     if (!force && now - lastAt < 8000) return;

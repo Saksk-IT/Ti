@@ -70,7 +70,7 @@ Page({
     }
 
     try {
-      this.setData(themeManager.getPageData() as any);
+      this.setData(themeManager.getPageData());
     } catch (e) {}
 
     const userInfo = wx.getStorageSync('userInfo') || {};
@@ -103,27 +103,27 @@ Page({
   async onDrawerSelectStyle(e: any) {
     const style = (e?.detail?.style || 'default') as ThemeStyle;
     themeManager.setStyle(style);
-    this.setData(themeManager.getPageData() as any);
+    this.setData(themeManager.getPageData());
     this.setData({ drawerOpen: false });
     await syncUserSettingsToServer();
   },
 
   onCycleThemeModeTap() {
     const mode = themeManager.cycleMode() as ThemeMode;
-    this.setData({ ...(themeManager.getPageData() as any), themeMode: mode });
+    this.setData({ ...(themeManager.getPageData()), themeMode: mode });
   },
 
   onModeTap(e: any) {
     const mode = String(e?.currentTarget?.dataset?.mode || 'system') as ThemeMode;
     if (mode !== 'light' && mode !== 'dark' && mode !== 'system') return;
     themeManager.setMode(mode);
-    this.setData(themeManager.getPageData() as any);
+    this.setData(themeManager.getPageData());
   },
 
   async onStyleTap(e: any) {
     const style = String(e?.currentTarget?.dataset?.style || 'default') as ThemeStyle;
     themeManager.setStyle(style);
-    this.setData(themeManager.getPageData() as any);
+    this.setData(themeManager.getPageData());
     await syncUserSettingsToServer();
   },
 
@@ -133,7 +133,7 @@ Page({
     if (!key) return;
 
     const next: PracticeSettings = Object.assign({}, this.data.practiceSettings);
-    (next as any)[key] = value;
+    (next as Record<string, boolean>)[key] = value;
     this.setData({ practiceSettings: next });
     writePracticeSettings(next);
   },

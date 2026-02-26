@@ -36,7 +36,7 @@ def api_create_comment(post_id: int):
         if len(content) > 2000:
             return jsonify({'status': 'error', 'message': '评论不能超过2000字'}), 400
 
-        parent_id = data.get('parent_id', type=int) if isinstance(data.get('parent_id'), int) else data.get('parent_id')
+        parent_id = data.get('parent_id')
         reply_to_user_id = data.get('reply_to_user_id')
 
         comment = comment_service.create_comment(

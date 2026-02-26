@@ -60,11 +60,11 @@ Page({
 
     // 主题（深浅/风格）
     isDarkMode: false,
-    themeMode: 'system' as any,
-    themeClass: '' as any,
-    themeStyle: 'default' as any,
-    themeStyleClass: '' as any,
-    themeCtaColor: '#007AFF' as any,
+    themeMode: 'system' as string,
+    themeClass: '' as string,
+    themeStyle: 'default' as string,
+    themeStyleClass: '' as string,
+    themeCtaColor: '#007AFF' as string,
 
     modeText: '',
     sourceText: '',
@@ -104,7 +104,7 @@ Page({
     try {
       const raw = wx.getStorageSync('quiz_settlement_payload_v1');
       if (raw && typeof raw === 'object') {
-        payload = raw as any;
+        payload = raw as SettlementPayload;
       }
     } catch (e) {}
 

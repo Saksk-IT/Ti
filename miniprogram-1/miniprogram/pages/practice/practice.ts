@@ -23,7 +23,7 @@ Page({
     canShuffleOptions: true,
     
     loading: false,              // 加载状态
-    debounceTimer: null as any   // 防抖定时器
+    debounceTimer: null as ReturnType<typeof setTimeout> | null   // 防抖定时器
   },
 
   onLoad(options: any) {

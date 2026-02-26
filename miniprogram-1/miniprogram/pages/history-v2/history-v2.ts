@@ -51,12 +51,12 @@ function buildHistoryPatch(res: any) {
   }));
 
   const topMixRaw = buildTopMix(res?.subject_rows || [], res?.bank_rows || [], 8);
-  const topMax = Math.max(1, ...topMixRaw.map((it) => toInt((it as any).answered)));
+  const topMax = Math.max(1, ...topMixRaw.map((it) => toInt((it as Record<string, unknown>).answered)));
   const topMix: TopMixItem[] = topMixRaw.map((it) => ({
     name: it.name,
-    answered: toInt((it as any).answered),
-    accuracy: pct1((it as any).accuracy),
-    barPct: pct1((toInt((it as any).answered) * 100) / topMax)
+    answered: toInt((it as Record<string, unknown>).answered),
+    accuracy: pct1((it as Record<string, unknown>).accuracy),
+    barPct: pct1((toInt((it as Record<string, unknown>).answered) * 100) / topMax)
   }));
 
   const nextActions = Array.isArray(res?.next_actions) ? (res.next_actions as NextAction[]) : [];
@@ -143,14 +143,14 @@ Page({
     const patch: any = {};
     let hydrated = false;
     try {
-      Object.assign(patch, themeManager.getPageData() as any);
+      Object.assign(patch, themeManager.getPageData());
     } catch (e) {}
     if (!this.data.inited) {
       try {
         const cached = getCachedDataCenter(this.data.days);
         if (cached) {
           Object.assign(patch, buildHistoryPatch(cached), { errorMsg: '' });
-          const self: any = this as any;
+          const self = this;
           self.__lastLoadedAt = Date.now();
           hydrated = true;
         }
@@ -190,14 +190,14 @@ Page({
   async onDrawerSelectStyle(e: any) {
     const style = (e?.detail?.style || 'default') as ThemeStyle;
     themeManager.setStyle(style);
-    this.setData(themeManager.getPageData() as any);
+    this.setData(themeManager.getPageData());
     this.setData({ drawerOpen: false });
     await syncUserSettingsToServer();
   },
 
   onCycleThemeModeTap() {
     const mode = themeManager.cycleMode() as ThemeMode;
-    this.setData({ ...(themeManager.getPageData() as any), themeMode: mode });
+    this.setData({ ...(themeManager.getPageData()), themeMode: mode });
   },
 
   onDaysTap(e: any) {
@@ -243,7 +243,7 @@ Page({
 
   async loadStats(force = false) {
     if (this.data.loading) return;
-    const self: any = this as any;
+    const self = this;
     const now = Date.now();
     const lastAt = Number(self.__lastLoadedAt || 0) || 0;
     if (!force && now - lastAt < 10000) return;

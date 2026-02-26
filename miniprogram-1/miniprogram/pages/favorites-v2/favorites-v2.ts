@@ -91,7 +91,7 @@ Page({
     }
 
     try {
-      this.setData(themeManager.getPageData() as any);
+      this.setData(themeManager.getPageData());
     } catch (e) {}
 
     if (!this.data.inited && !this.data.loading) {
@@ -107,18 +107,21 @@ Page({
     this.setData({ loading: true });
     try {
       const [meta, myBanksRes, sharedBanksRes] = await Promise.all([
-        api.getSubjectsMeta().catch(() => ({ subjects: [], quiz_count: 0 } as any)),
-        api.getMyBanks().catch(() => ({ banks: [] } as any)),
-        api.getSharedBanks().catch(() => ({ banks: [] } as any))
+        api.getSubjectsMeta().catch(() => ({ subjects: [], quiz_count: 0 })),
+        api.getMyBanks().catch(() => ({ banks: [] })),
+        api.getSharedBanks().catch(() => ({ banks: [] }))
       ]);
 
-      const subjectsRaw = Array.isArray((meta as any)?.subjects) ? (meta as any).subjects : [];
-      const subjects: SubjectMeta[] = subjectsRaw.map(normalizeSubject).filter(Boolean) as any;
+      const metaObj = (meta && typeof meta === 'object' ? meta : {}) as Record<string, unknown>;
+      const subjectsRaw = Array.isArray(metaObj.subjects) ? metaObj.subjects : [];
+      const subjects: SubjectMeta[] = subjectsRaw.map(normalizeSubject).filter(Boolean) as SubjectMeta[];
       subjects.sort((a, b) => a.id - b.id);
 
       const map = new Map<number, BankCard>();
-      const myBanksRaw = Array.isArray((myBanksRes as any)?.banks) ? (myBanksRes as any).banks : [];
-      const sharedBanksRaw = Array.isArray((sharedBanksRes as any)?.banks) ? (sharedBanksRes as any).banks : [];
+      const myBanksObj = (myBanksRes && typeof myBanksRes === 'object' ? myBanksRes : {}) as Record<string, unknown>;
+      const sharedBanksObj = (sharedBanksRes && typeof sharedBanksRes === 'object' ? sharedBanksRes : {}) as Record<string, unknown>;
+      const myBanksRaw = Array.isArray(myBanksObj.banks) ? myBanksObj.banks : [];
+      const sharedBanksRaw = Array.isArray(sharedBanksObj.banks) ? sharedBanksObj.banks : [];
 
       for (const b of myBanksRaw) {
         const item = normalizeBank(b);
@@ -243,13 +246,13 @@ Page({
   async onDrawerSelectStyle(e: any) {
     const style = (e?.detail?.style || 'default') as ThemeStyle;
     themeManager.setStyle(style);
-    this.setData(themeManager.getPageData() as any);
+    this.setData(themeManager.getPageData());
     this.setData({ drawerOpen: false });
     await syncUserSettingsToServer();
   },
 
   onCycleThemeModeTap() {
     const mode = themeManager.cycleMode() as ThemeMode;
-    this.setData({ ...(themeManager.getPageData() as any), themeMode: mode });
+    this.setData({ ...(themeManager.getPageData()), themeMode: mode });
   }
 });

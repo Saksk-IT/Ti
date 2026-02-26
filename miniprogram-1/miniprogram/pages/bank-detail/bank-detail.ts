@@ -52,6 +52,21 @@ import {
   type ShareItem,
   type BankUsageStats
 } from './modules/bank-detail-helpers';
+
+type _PrivState = {
+  setDataBatcher?: (patch: Record<string, unknown>, cb?: () => void) => void;
+  scopeForced?: string;
+  tabExplicit?: boolean;
+  qDetailReq?: number;
+  statsReq?: number;
+};
+const _ps = new WeakMap<object, _PrivState>();
+function _p(ctx: object): _PrivState {
+  let s = _ps.get(ctx);
+  if (!s) { s = {}; _ps.set(ctx, s); }
+  return s;
+}
+
 Page({
   behaviors: [requestStateBehavior],
   data: {
@@ -211,7 +226,7 @@ Page({
     }
   },
 
-  startCountTimer: null as any,
+  startCountTimer: null as ReturnType<typeof setTimeout> | null,
   startCountReq: 0,
   statsReq: 0,
   qDetailReq: 0,
@@ -220,13 +235,13 @@ Page({
   setDataBatcher: null as null | ((patch: Record<string, any>, callback?: () => void, options?: { immediate?: boolean }) => void),
 
   ensureSetDataBatcher() {
-    if ((this as any).setDataBatcher) return;
-    (this as any).setDataBatcher = createSetDataBatcher(this.setData.bind(this));
+    if (_p(this).setDataBatcher) return;
+    _p(this).setDataBatcher = createSetDataBatcher(this.setData.bind(this));
   },
 
   patchData(patch: Record<string, any>, callback?: () => void, immediate: boolean = false) {
     this.ensureSetDataBatcher();
-    const fn = (this as any).setDataBatcher;
+    const fn = _p(this).setDataBatcher;
     if (typeof fn === 'function') {
       fn(patch, callback, { immediate });
       return;
@@ -244,8 +259,8 @@ Page({
     const scopeFromParams = (tabKey === 'favorites' || tabKey === 'mistakes')
       ? normalizeScope(tabKey)
       : (entry === 'favorites' || entry === 'mistakes') ? normalizeScope(entry) : 'all';
-    (this as any).scopeForced = scopeFromParams !== 'all' ? scopeFromParams : '';
-    (this as any).tabExplicit = rawTab !== undefined && rawTab !== null && String(rawTab).trim() !== '';
+    _p(this).scopeForced = scopeFromParams !== 'all' ? scopeFromParams : '';
+    _p(this).tabExplicit = rawTab !== undefined && rawTab !== null && String(rawTab).trim() !== '';
     this.patchData({
       bankId: Number.isFinite(bankId) ? bankId : 0,
       tab,
@@ -261,7 +276,7 @@ Page({
     }
 
     try {
-      this.patchData(themeManager.getPageData() as any, undefined, true);
+      this.patchData(themeManager.getPageData(), undefined, true);
     } catch (e) {}
     try {
       wx.showShareMenu({ withShareTicket: true });
@@ -341,21 +356,21 @@ Page({
     const entry = String(this.data.entry || '').trim().toLowerCase();
     let tab: DetailTab = this.data.tab;
     let practiceScope: Scope = this.data.practiceScope || 'all';
-    if (!(this as any).tabExplicit) {
+    if (!_p(this).tabExplicit) {
       if (entry === 'favorites') {
         tab = 'practice';
         practiceScope = 'favorites';
-        (this as any).scopeForced = 'favorites';
+        _p(this).scopeForced = 'favorites';
       } else if (entry === 'mistakes') {
         tab = 'practice';
         practiceScope = 'mistakes';
-        (this as any).scopeForced = 'mistakes';
+        _p(this).scopeForced = 'mistakes';
       } else if (entry === 'exam') {
         tab = 'exam';
       }
     }
 
-    const forcedScope = (this as any).scopeForced as any;
+    const forcedScope = _p(this).scopeForced || '';
     if (forcedScope === 'favorites' || forcedScope === 'mistakes') {
       practiceScope = forcedScope;
     } else {
@@ -369,15 +384,16 @@ Page({
     try {
       const [detailRes, countsRes, myStatsRes, tagsRes] = await Promise.all([
         api.getBankDetail(bankId),
-        api.getBankUserCounts(bankId, { source: 'all' }).catch(() => ({ data: { total: 0, favorites: 0, mistakes: 0 } } as any)),
-        api.getBankMyStats(bankId).catch(() => ({ data: { total_answered: 0, correct_count: 0, wrong_count: 0, accuracy: 0 } } as any)),
-        api.getBankTags(bankId).catch(() => ({ data: { tags: [] } } as any))
+        api.getBankUserCounts(bankId, { source: 'all' }).catch(() => ({ data: { total: 0, favorites: 0, mistakes: 0 } })),
+        api.getBankMyStats(bankId).catch(() => ({ data: { total_answered: 0, correct_count: 0, wrong_count: 0, accuracy: 0 } })),
+        api.getBankTags(bankId).catch(() => ({ data: { tags: [] } }))
       ]);
 
-      const bankData = (detailRes as any)?.data || detailRes || {};
-      const countsData = (countsRes as any)?.data || countsRes || {};
-      const myStatsData = (myStatsRes as any)?.data || myStatsRes || {};
-      const tagsData = (tagsRes as any)?.data || (tagsRes as any)?.data?.data || (tagsRes as any)?.data || tagsRes || {};
+      const bankData = ((detailRes as Record<string, unknown>)?.data || detailRes || {}) as Record<string, unknown>;
+      const countsData = ((countsRes as Record<string, unknown>)?.data || countsRes || {}) as Record<string, unknown>;
+      const myStatsData = ((myStatsRes as Record<string, unknown>)?.data || myStatsRes || {}) as Record<string, unknown>;
+      const tagsResObj = (tagsRes && typeof tagsRes === 'object' ? tagsRes : {}) as Record<string, unknown>;
+      const tagsData = ((tagsResObj.data && typeof tagsResObj.data === 'object' ? tagsResObj.data : tagsResObj) || {}) as Record<string, unknown>;
 
       const bankName = String(bankData?.name || '').trim();
       const bankDescription = String(bankData?.description || '').trim();
@@ -402,10 +418,11 @@ Page({
 
       const qType = storedType === 'all' || types.includes(storedType) ? storedType : 'all';
 
-      const tagsRaw = Array.isArray((tagsData as any)?.tags)
-        ? (tagsData as any).tags
-        : Array.isArray((tagsData as any)?.data?.tags)
-          ? (tagsData as any).data.tags
+      const tagsDataInner = (tagsData.data && typeof tagsData.data === 'object' ? tagsData.data : {}) as Record<string, unknown>;
+      const tagsRaw = Array.isArray(tagsData.tags)
+        ? tagsData.tags
+        : Array.isArray(tagsDataInner.tags)
+          ? tagsDataInner.tags
           : [];
       const tags: TagItem[] = (tagsRaw || [])
         .map((t: any) => ({ name: String(t?.name || '').trim(), count: t?.count }))
@@ -528,7 +545,7 @@ Page({
     const style = (e?.detail?.style || 'default') as ThemeStyle;
     themeManager.setStyle(style);
     this.patchData({
-      ...(themeManager.getPageData() as any),
+      ...(themeManager.getPageData()),
       drawerOpen: false
     }, undefined, true);
     await syncUserSettingsToServer();
@@ -536,7 +553,7 @@ Page({
 
   onCycleThemeModeTap() {
     const mode = themeManager.cycleMode() as ThemeMode;
-    this.patchData({ ...(themeManager.getPageData() as any), themeMode: mode });
+    this.patchData({ ...(themeManager.getPageData()), themeMode: mode });
   },
 
   initDetailTabOrder() {
@@ -571,7 +588,7 @@ Page({
 
     const order: DetailTab[] = (this.data.detailTabs || [])
       .map((it: any) => String(it?.key || '').trim().toLowerCase())
-      .filter((k: any) => VALID_DETAIL_TABS.has(k as DetailTab)) as any;
+      .filter((k: string) => VALID_DETAIL_TABS.has(k as DetailTab)) as DetailTab[];
     const idx = order.indexOf(keyRaw as DetailTab);
     if (idx < 0) return;
 
@@ -820,7 +837,7 @@ Page({
 
     this.setData({
       reinforceWrong: Object.assign({}, this.data.reinforceWrong, { loading: true, error: '' })
-    } as any);
+    });
 
     try {
       const data: any = await api.getQuizReinforce({
@@ -828,7 +845,7 @@ Page({
         bank_id: bankId,
         include: 'wrong',
         wrong_list_n: 30
-      } as any);
+      });
 
       const wrongTotal = Number(data?.wrong_total || 0) || 0;
       const recommendIds = Array.isArray(data?.wrong_recommend_ids)
@@ -863,7 +880,7 @@ Page({
           recommendIds,
           top
         }
-      } as any);
+      });
     } catch (e: any) {
       this.setData({
         reinforceWrong: Object.assign({}, this.data.reinforceWrong, {
@@ -873,7 +890,7 @@ Page({
           desc: '加载失败，请下拉刷新重试',
           listMeta: '加载失败'
         })
-      } as any);
+      });
     }
   },
 
@@ -884,7 +901,7 @@ Page({
 
     this.setData({
       reinforceSimilar: Object.assign({}, this.data.reinforceSimilar, { loading: true, error: '' })
-    } as any);
+    });
 
     try {
       const data: any = await api.getQuizReinforce({
@@ -892,7 +909,7 @@ Page({
         bank_id: bankId,
         include: 'similar',
         pairs_n: 30
-      } as any);
+      });
 
       const wrongTotal = Number(data?.wrong_total || 0) || 0;
       const seedIds = Array.isArray(data?.similar_seed_ids)
@@ -937,7 +954,7 @@ Page({
         if (similarOnlyIds.length) {
           startIds = similarOnlyIds.slice();
           const pairsText = pairsCount > 0 ? `${pairsCount} 组` : '';
-          desc = `已在本题库检测到${pairsText ? (' ' + pairsText) : ''}相似题（题干相似优先，选项相似兜底），训练共 ${similarOnlyIds.length} 道。`;
+          desc = `检测到${pairsText ? (' ' + pairsText) : ''}相似题（题干、选项相似），共 ${similarOnlyIds.length} 道。`;
         } else {
           desc = wrongTotal > 0 ? '暂未检测到明显相似题（题干/选项相似），可先做错题加强。' : '暂未检测到明显相似题（题干/选项相似）。';
         }
@@ -971,7 +988,7 @@ Page({
           startIds,
           pairs
         }
-      } as any);
+      });
     } catch (e: any) {
       this.setData({
         reinforceSimilar: Object.assign({}, this.data.reinforceSimilar, {
@@ -981,7 +998,7 @@ Page({
           desc: '加载失败，请下拉刷新重试',
           listMeta: '加载失败'
         })
-      } as any);
+      });
     }
   },
 
@@ -990,7 +1007,7 @@ Page({
     if (next === this.data.practiceScope) return;
     const bankId = Number(this.data.bankId || 0);
     if (bankId) setStoredString(`bank_${bankId}_scope`, next);
-    (this as any).scopeForced = '';
+    _p(this).scopeForced = '';
     this.setData({ practiceScope: next, startError: '' }, () => {
       if (this.data.tab === 'practice') {
         this.scheduleStartCount();
@@ -1117,7 +1134,7 @@ Page({
       searchSearched: true,
       searchError: '',
       ...(reset ? { searchResults: [], searchTotal: 0, searchPage: 1 } : {})
-    } as any);
+    });
 
     try {
       const res: any = await api.getBankQuestions(bankId, {
@@ -1125,7 +1142,7 @@ Page({
         q_type: this.data.searchType && this.data.searchType !== 'all' ? this.data.searchType : undefined,
         page,
         per_page: perPage
-      } as any);
+      });
 
       const list: SearchItem[] = Array.isArray(res?.questions) ? res.questions : [];
       const total = Number(res?.total || 0) || 0;
@@ -1173,7 +1190,7 @@ Page({
     const qid = Number(questionId || 0);
     if (!Number.isFinite(qid) || qid <= 0) return;
 
-    const reqId = ++(this as any).qDetailReq;
+    const reqId = ++_p(this).qDetailReq;
     this.setData({
       qDetailOpen: true,
       qDetailLoading: true,
@@ -1184,11 +1201,11 @@ Page({
       qDetailAnswerLines: [],
       qDetailExplanationLines: [],
       qDetailOptions: []
-    } as any);
+    });
 
     try {
       const q: any = await api.getBankQuestionDetail(bankId, qid);
-      if (reqId !== (this as any).qDetailReq) return;
+      if (reqId !== _p(this).qDetailReq) return;
 
       const qType = String(q?.q_type || '').trim();
       const options = normalizeBankDetailOptions(q?.options, qType);
@@ -1205,18 +1222,18 @@ Page({
         qDetailAnswerLines: normalizeTextLines(q?.answer),
         qDetailExplanationLines: normalizeTextLines(q?.explanation),
         qDetailOptions: options
-      } as any);
+      });
     } catch (err: any) {
-      if (reqId !== (this as any).qDetailReq) return;
+      if (reqId !== _p(this).qDetailReq) return;
       this.setData({
         qDetailLoading: false,
         qDetailError: (err && err.message) ? String(err.message) : '加载失败'
-      } as any);
+      });
     }
   },
 
   onQDetailClose() {
-    this.setData({ qDetailOpen: false } as any);
+    this.setData({ qDetailOpen: false });
   },
 
   onQDetailSheetTap() {
@@ -1291,7 +1308,7 @@ Page({
           const keyTag = `bank_${bankId}_tag`;
           if (nextTag !== prevTag) setStoredString(keyTag, nextTag);
 
-          this.setData({ tags, tag: nextTag } as any, () => {
+          this.setData({ tags, tag: nextTag }, () => {
             if (shouldCountForTab(this.data.tab)) {
               this.scheduleStartCount();
             }
@@ -1656,7 +1673,7 @@ Page({
   async loadStatsDetail(days: number, subtab: StatsSubTab) {
     const bankId = Number(this.data.bankId || 0);
     if (!Number.isFinite(bankId) || bankId <= 0) return;
-    const reqId = ++(this as any).statsReq;
+    const reqId = ++_p(this).statsReq;
     this.patchData({ statsLoading: true, statsError: '', statsQuestions: [], favoritesTrend: {} });
 
     try {
@@ -1686,8 +1703,8 @@ Page({
         settle(questionsPromise),
         settle(favTrendPromise)
       ]);
-      if (reqId !== (this as any).statsReq) return;
-      if (!statsRes.ok) throw (statsRes as any).reason;
+      if (reqId !== _p(this).statsReq) return;
+      if (!statsRes.ok) throw (statsRes as { ok: false; reason: unknown }).reason;
 
       const data: any = statsRes.value;
       const qPayload: any = qRes.ok ? qRes.value : null;
@@ -1768,7 +1785,7 @@ Page({
         displayTypes
       });
     } catch (err: any) {
-      if (reqId !== (this as any).statsReq) return;
+      if (reqId !== _p(this).statsReq) return;
       this.patchData({
         statsLoading: false,
         statsError: (err && err.message) ? String(err.message) : '统计加载失败',
@@ -1804,7 +1821,7 @@ Page({
 
   getShareBaseUrl(): string {
     try {
-      const apiUrl = String((config as any).getApiUrl ? (config as any).getApiUrl() : (config as any).apiBaseUrl || '').trim();
+      const apiUrl = String(config.apiBaseUrl || '').trim();
       return apiUrl.replace(/\/api\/?$/i, '');
     } catch {
       return '';
@@ -1969,7 +1986,7 @@ Page({
       return;
     }
 
-    const shareAppMessage = (wx as any).shareAppMessage;
+    const shareAppMessage = (wx as WechatMiniprogram.Wx & Record<string, unknown>).shareAppMessage as ((...args: unknown[]) => void) | undefined;
     wx.showLoading({ title: '准备分享...' });
     try {
       // 优先复用现有链接分享，避免快速耗尽“最多10个分享”的限制

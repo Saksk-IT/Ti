@@ -124,17 +124,17 @@ Page({
         const ua = String(q?.user_answer || '').trim();
         if (ua) answered += 1;
 
-        const ic = (q as any)?.is_correct;
+        const ic = q?.is_correct;
         if (ic === 1 || ic === true) correct += 1;
         else if (ic === 0 || ic === false) wrong += 1;
       });
 
       const unanswered = Math.max(0, total - answered);
       const accuracy = total ? Math.round((correct * 1000) / total) / 10 : 0;
-      const totalScore = Number((exam as any)?.total_score || 0) || 0;
+      const totalScore = Number(exam?.total_score || 0) || 0;
 
-      const startedAt = String((exam as any)?.started_at || '').trim();
-      const submittedAt = String((exam as any)?.submitted_at || '').trim();
+      const startedAt = String(exam?.started_at || '').trim();
+      const submittedAt = String(exam?.submitted_at || '').trim();
 
       let usedSec: number | null = this.data.usedSecHint;
       if (!usedSec) {
@@ -142,8 +142,8 @@ Page({
       }
       const timeUsedText = usedSec != null ? formatSeconds(usedSec) : '--';
 
-      const statusText = String((exam as any)?.status || '').trim() === 'submitted' ? '已交卷' : '进行中';
-      const durationMinutes = Number((exam as any)?.duration_minutes || 0) || 0;
+      const statusText = String(exam?.status || '').trim() === 'submitted' ? '已交卷' : '进行中';
+      const durationMinutes = Number(exam?.duration_minutes || 0) || 0;
       const subChips: string[] = [];
       if (durationMinutes > 0) subChips.push(`${durationMinutes} 分钟`);
       if (total > 0) subChips.push(`${total} 题`);
@@ -185,7 +185,7 @@ Page({
 
     const pages = getCurrentPages();
     const prev = pages && pages.length > 1 ? pages[pages.length - 2] : null;
-    if (prev && (prev as any).route === 'pages/exam-run/exam-run') {
+    if (prev && prev.route === 'pages/exam-run/exam-run') {
       wx.navigateBack({ delta: 1 });
       return;
     }
@@ -223,8 +223,8 @@ Page({
   },
 
   onShareAppMessage() {
-    const exam = this.data.exam || ({} as any);
-    const scope = String((exam as any)?.subject || '').trim() || '考试';
+    const exam = this.data.exam || ({} as ExamInfo);
+    const scope = String(exam?.subject || '').trim() || '考试';
     const score = this.data.totalScore;
     const accuracy = this.data.accuracy;
     const title = `我完成了「${scope}」考试：得分 ${score}，正确率 ${accuracy}%`;

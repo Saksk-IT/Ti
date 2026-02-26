@@ -64,12 +64,12 @@ Component({
         const off = themeManager.onThemeChange(() => {
           this.refreshThemeData();
         });
-        const self: any = this as any;
+        const self = this;
         self.__offThemeChange = off;
       } catch (e) {}
     },
     detached() {
-      const self: any = this as any;
+      const self = this;
       try {
         if (typeof self.__offThemeChange === 'function') self.__offThemeChange();
       } catch (e) {}
@@ -83,13 +83,13 @@ Component({
     },
     stopTap() {},
     closeQuickMenus() {
-      if (!(this.data as any).actionMenuOpen && !(this.data as any).themeMenuOpen && !(this.data as any).fontMenuOpen) return;
+      if (!this.data.actionMenuOpen && !this.data.themeMenuOpen && !this.data.fontMenuOpen) return;
       this.setData({ actionMenuOpen: false, themeMenuOpen: false, fontMenuOpen: false });
     },
     refreshThemeData() {
       try {
-        const p: any = themeManager.getPageData() as any;
-        const f: any = fontManager.getPageData() as any;
+        const p: any = themeManager.getPageData();
+        const f = fontManager.getPageData() as Record<string, unknown>;
         this.setData({
           themeStyle: p?.themeStyle || themeManager.getStyle(),
           fontStyle: f?.fontStyle || fontManager.getStyle(),
@@ -125,7 +125,7 @@ Component({
         return;
       }
 
-      const self: any = this as any;
+      const self = this;
       const now = Date.now();
       const lastAt = Number(self.__unreadFetchedAt || 0) || 0;
       if (!force && now - lastAt < 15000) return;
@@ -146,7 +146,7 @@ Component({
       this.triggerEvent('navigate', { url, navType });
     },
     onMoreTap() {
-      const opened = !!(this.data as any).actionMenuOpen;
+      const opened = !!this.data.actionMenuOpen;
       this.setData({ actionMenuOpen: !opened, themeMenuOpen: false });
       if (!opened) this.refreshThemeData();
     },
@@ -208,7 +208,7 @@ Component({
       this.setData({ searchKeyword: v });
     },
     onSearchSubmit() {
-      const kw = String((this.data as any).searchKeyword || '').trim();
+      const kw = String(this.data.searchKeyword || '').trim();
       if (!kw) {
         this.triggerEvent('navigate', { url: '/pages/search-v2/search-v2', navType: 'navigateTo' });
         return;

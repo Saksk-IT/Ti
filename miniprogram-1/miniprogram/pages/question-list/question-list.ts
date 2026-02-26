@@ -3,7 +3,7 @@ import { api } from '../../utils/api';
 
 Page({
   data: {
-    questions: [] as any[],
+    questions: [] as Record<string, unknown>[],
     subject: 'all',
     loading: false,
     page: 1,

@@ -4,7 +4,7 @@
 
 说明：
 - 业务时间基准统一为北京时间（Asia/Shanghai），但不依赖系统 tzdata（Docker/Windows 均可用）。
-- 为兼容 SQLite/旧数据的常见存储格式，本模块默认提供“无 tzinfo 的北京时间”用于写库与比较。
+- 为兼容 SQLite/旧数据的常见存储格式，本模块默认提供"无 tzinfo 的北京时间"用于写库与比较。
 """
 
 from __future__ import annotations

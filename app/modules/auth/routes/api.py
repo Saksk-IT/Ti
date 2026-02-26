@@ -377,7 +377,7 @@ def api_wechat_login():
                 'openid': user_row.openid, 'is_new_user': False,
             }
         else:
-            # 未绑定：根据 allow_create 决定返回“需绑定/创建”还是直接自动创建
+            # 未绑定：根据 allow_create 决定返回"需绑定/创建"还是直接自动创建
             if not getattr(schema, 'allow_create', True):
                 temp = WechatTempTokenService.issue(openid, schema.user_info)
                 return jsonify({
@@ -516,7 +516,7 @@ def api_wechat_bind_send_code():
     if not temp:
         return jsonify({'status': 'error', 'message': '临时票据无效或已过期'}), 401
 
-    # 仅允许“绑定已有账号”，不自动注册
+    # 仅允许"绑定已有账号"，不自动注册
     user = User.get_by_email(email) if hasattr(User, 'get_by_email') else None
     if not user:
         # 兼容 User 模型未实现 get_by_email：直接查库

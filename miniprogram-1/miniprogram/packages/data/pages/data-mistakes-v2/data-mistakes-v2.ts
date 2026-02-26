@@ -138,7 +138,7 @@ const CHART_IDS: string[] = ['dcMistakeTrendChart', 'dcMistakeTopChart', 'dcMist
 
 Page({
   data: {
-    ...(themeManager.getPageData() as any),
+    ...(themeManager.getPageData()),
     drawerOpen: false,
     loading: false,
     inited: false,
@@ -150,7 +150,7 @@ Page({
     days: 30 as 7 | 30 | 90,
     window_days: 30,
 
-    all_summary: {} as any,
+    all_summary: {} as Record<string, unknown>,
     health_score: 0,
     mistakes_new: 0,
 
@@ -171,7 +171,7 @@ Page({
   },
 
   onReady() {
-    const self: any = this as any;
+    const self = this;
     self.__pageReady = true;
     this.initViewportLazy();
     if (self.__pendingRender) {
@@ -181,7 +181,7 @@ Page({
   },
 
   initViewportLazy() {
-    const self: any = this as any;
+    const self = this;
     if (this.data.lazyStage >= 2) return;
     if (self.__lazyObserver) return;
 
@@ -223,7 +223,7 @@ Page({
     const patch: any = {};
     let hydrated = false;
     try {
-      Object.assign(patch, themeManager.getPageData() as any);
+      Object.assign(patch, themeManager.getPageData());
     } catch (e) {}
 
     if (!this.data.inited) {
@@ -231,7 +231,7 @@ Page({
         const cached = getCachedDataCenter(this.data.days);
         if (cached) {
           const built = buildMistakesViewModel(cached, this.data.days);
-          const self: any = this as any;
+          const self = this;
           self.__dcPayload = built.payload;
           self.__lastLoadedAt = Date.now();
           Object.assign(patch, built.data);
@@ -268,7 +268,7 @@ Page({
   },
 
   onUnload() {
-    const self: any = this as any;
+    const self = this;
     try {
       self.__lazyObserver && typeof self.__lazyObserver.disconnect === 'function' && self.__lazyObserver.disconnect();
     } catch (e) {}
@@ -311,14 +311,14 @@ Page({
   async onDrawerSelectStyle(e: any) {
     const style = (e?.detail?.style || 'default') as ThemeStyle;
     themeManager.setStyle(style);
-    this.setData(themeManager.getPageData() as any);
+    this.setData(themeManager.getPageData());
     this.setData({ drawerOpen: false });
     await syncUserSettingsToServer();
   },
 
   onCycleThemeModeTap() {
     const mode = themeManager.cycleMode() as ThemeMode;
-    this.setData({ ...(themeManager.getPageData() as any), themeMode: mode });
+    this.setData({ ...(themeManager.getPageData()), themeMode: mode });
   },
 
   onDaysTap(e: any) {
@@ -332,7 +332,7 @@ Page({
   onTabTap(e: any) {
     const raw = String(e?.currentTarget?.dataset?.tab || '').trim().toLowerCase();
     const tab: DataTabKey =
-      raw === 'global' || raw === 'banks' || raw === 'favorites' || raw === 'tags' ? (raw as any) : 'mistakes';
+      raw === 'global' || raw === 'banks' || raw === 'favorites' || raw === 'tags' ? (raw as DataTabKey) : 'mistakes';
     const days = this.data.days;
     const base = resolveDataTabUrl(tab);
     safeNavigate(`${base}?days=${encodeURIComponent(String(days))}`, 'redirectTo');
@@ -366,7 +366,7 @@ Page({
   },
 
   renderCharts(forceInit = false, isDarkOverride?: boolean) {
-    const self: any = this as any;
+    const self = this;
     const payload = self.__dcPayload;
     if (!payload) return;
 
@@ -415,7 +415,7 @@ Page({
 
   async loadStats(force = false) {
     if (this.data.loading) return;
-    const self: any = this as any;
+    const self = this;
     const now = Date.now();
     const lastAt = Number(self.__lastLoadedAt || 0) || 0;
     if (!force && now - lastAt < 8000) return;

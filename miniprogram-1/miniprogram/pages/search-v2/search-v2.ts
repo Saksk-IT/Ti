@@ -58,7 +58,7 @@ Page({
     keyword: '',
     preselectSubject: '',
     preselectType: '',
-    questions: [] as any[],
+    questions: [] as Record<string, unknown>[],
     page: 1,
     per_page: 20,
     total: 0,
@@ -80,8 +80,8 @@ Page({
     detailQuestionId: 0,
     detailSubjectFromList: '',
     detailQTypeFromList: '',
-    detailQuestion: null as any,
-    detailOptions: [] as any[],
+    detailQuestion: null as Record<string, unknown> | null,
+    detailOptions: [] as Record<string, unknown>[],
     detailImages: [] as string[]
   },
 
@@ -114,7 +114,7 @@ Page({
       return;
     }
     try {
-      this.setData(themeManager.getPageData() as any);
+      this.setData(themeManager.getPageData());
     } catch (e) {}
 
     if (!this.data.subjectOptions.length) {
@@ -213,14 +213,14 @@ Page({
   async onDrawerSelectStyle(e: any) {
     const style = (e?.detail?.style || 'default') as ThemeStyle;
     themeManager.setStyle(style);
-    this.setData(themeManager.getPageData() as any);
+    this.setData(themeManager.getPageData());
     this.setData({ drawerOpen: false });
     await syncUserSettingsToServer();
   },
 
   onCycleThemeModeTap() {
     const mode = themeManager.cycleMode() as ThemeMode;
-    this.setData({ ...(themeManager.getPageData() as any), themeMode: mode });
+    this.setData({ ...(themeManager.getPageData()), themeMode: mode });
   },
 
   onKeywordInput(e: any) {

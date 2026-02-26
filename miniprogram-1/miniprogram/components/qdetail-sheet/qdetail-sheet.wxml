@@ -1,0 +1,63 @@
+<view class="qdetail-overlay" wx:if="{{open}}" catchtap="onClose">
+  <view class="qdetail-sheet" catchtap="onSheetTap" aria-label="题目详情">
+    <view class="qdetail-head">
+      <view class="qdetail-head-left">
+        <text class="qdetail-title">题目详情</text>
+        <text class="qdetail-sub">{{meta}}</text>
+      </view>
+      <view class="qdetail-x" catchtap="onClose" aria-role="button" aria-label="关闭">
+        <text>×</text>
+      </view>
+    </view>
+
+    <view class="qdetail-body">
+      <view class="qdetail-state" wx:if="{{loading}}"><text>加载中...</text></view>
+      <view class="qdetail-state error" wx:elif="{{error}}"><text>{{error}}</text></view>
+
+      <view wx:else>
+        <view class="qdetail-block">
+          <text class="qdetail-label">题干</text>
+          <view class="qdetail-lines">
+            <view class="qdetail-line" wx:for="{{contentLines}}" wx:key="index">
+              <text user-select="true">{{item}}</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="qdetail-block" wx:if="{{options.length > 0}}">
+          <text class="qdetail-label">选项</text>
+          <view class="qdetail-options">
+            <view class="qdetail-opt" wx:for="{{options}}" wx:key="index">
+              <view class="qdetail-opt-key"><text>{{item.key}}</text></view>
+              <view class="qdetail-opt-val"><text user-select="true">{{item.value}}</text></view>
+            </view>
+          </view>
+        </view>
+
+        <view class="qdetail-block">
+          <text class="qdetail-label">答案</text>
+          <view class="qdetail-lines">
+            <view class="qdetail-line" wx:for="{{answerLines}}" wx:key="index">
+              <text user-select="true">{{item}}</text>
+            </view>
+            <view class="qdetail-line" wx:if="{{answerLines.length === 0}}"><text>（无）</text></view>
+          </view>
+        </view>
+
+        <view class="qdetail-block" wx:if="{{explanationLines.length > 0}}">
+          <text class="qdetail-label">解析</text>
+          <view class="qdetail-lines">
+            <view class="qdetail-line" wx:for="{{explanationLines}}" wx:key="index">
+              <text user-select="true">{{item}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="qdetail-actions">
+      <view class="btn btn-primary" catchtap="onGoQuiz"><text>去刷这题</text></view>
+      <view class="btn" catchtap="onClose"><text>关闭</text></view>
+    </view>
+  </view>
+</view>

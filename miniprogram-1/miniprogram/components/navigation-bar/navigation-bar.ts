@@ -9,33 +9,31 @@ function buildLayout(compact: boolean): NavBarLayoutData {
   let rectLeft = 0;
   try {
     const rect = wx.getMenuButtonBoundingClientRect();
-    rectLeft = Number((rect as any)?.left) || 0;
+    rectLeft = Number(rect?.left) || 0;
   } catch (e) {}
 
   // wx.getSystemInfo 已废弃：优先使用 getDeviceInfo/getWindowInfo
   let platform = '';
   try {
-    const di = (wx as any).getDeviceInfo ? (wx as any).getDeviceInfo() : null;
-    if (di && (di as any).platform) platform = String((di as any).platform);
+    const di = wx.getDeviceInfo();
+    if (di?.platform) platform = String(di.platform);
   } catch (e) {}
 
   let windowWidth = 0;
   let safeAreaTop = 0;
   try {
-    const wi = (wx as any).getWindowInfo ? (wx as any).getWindowInfo() : null;
-    const ww = wi && (wi as any).windowWidth;
-    const st = wi && (wi as any).safeArea && (wi as any).safeArea.top;
-    windowWidth = Number(ww);
-    safeAreaTop = Number(st);
+    const wi = wx.getWindowInfo();
+    windowWidth = Number(wi?.windowWidth);
+    safeAreaTop = Number(wi?.safeArea?.top);
   } catch (e) {}
 
   // 兼容旧基础库：兜底使用 getSystemInfoSync（旧版不算废弃）
   if (!Number.isFinite(windowWidth) || windowWidth <= 0) {
     try {
       const si = wx.getSystemInfoSync();
-      windowWidth = Number((si as any).windowWidth);
-      safeAreaTop = Number((si as any).safeArea && (si as any).safeArea.top);
-      if (!platform) platform = String((si as any).platform || '');
+      windowWidth = Number(si.windowWidth);
+      safeAreaTop = Number(si.safeArea?.top);
+      if (!platform) platform = String(si.platform || '');
     } catch (e) {}
   }
 

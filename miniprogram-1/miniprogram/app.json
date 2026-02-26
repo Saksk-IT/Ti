@@ -81,6 +81,11 @@
       "pages": ["bank-detail"]
     }
   ],
+  "usingComponents": {
+    "nav-left-buttons": "components/nav-left-buttons/nav-left-buttons",
+    "skeleton-screen": "components/skeleton-screen/skeleton-screen",
+    "empty-state": "components/empty-state/empty-state"
+  },
   "window": {
     "navigationStyle": "custom",
     "backgroundColor": "@backgroundColor",

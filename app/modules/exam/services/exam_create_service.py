@@ -34,7 +34,7 @@ class ExamCreateService:
             if not bank:
                 raise NotFoundError(message='题库不存在或无权限')
 
-            # 兼容 exams.subject 字段：用于列表展示（公共/个人统一一个”范围”列）
+            # 兼容 exams.subject 字段：用于列表展示（公共/个人统一一个"范围"列）
             subject = bank.name or f'题库#{bank_id_int}'
 
         # 如果指定了科目，检查用户是否有权限访问该科目

@@ -8,7 +8,12 @@
       "Bash(if:*)",
       "Bash(copy :)",
       "Bash(git commit:*)",
-      "Bash(npx skills:*)"
+      "Bash(npx skills:*)",
+      "WebFetch(domain:docs.claude.com)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "WebFetch(domain:dotclaude.com)",
+      "Bash(claude --version:*)",
+      "Bash(git add:*)"
     ],
     "defaultMode": "bypassPermissions"
   },
@@ -21,8 +26,7 @@
             "type": "command",
             "command": "node -e \"const fs=require('fs');let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{const i=JSON.parse(d);const p=i.tool_input?.file_path;if(p&&fs.existsSync(p)){const c=fs.readFileSync(p,'utf8');const lines=c.split('\\n');const matches=[];lines.forEach((l,idx)=>{if(/^\\s*print\\s*\\(/.test(l)&&!/#\\s*noqa/.test(l)&&!/logging|logger|debug/.test(l))matches.push((idx+1)+': '+l.trim())});if(matches.length){console.error('[Hook] WARNING: print() found in '+p);matches.slice(0,5).forEach(m=>console.error(m));console.error('[Hook] Consider using logging module instead')}}console.log(d)})\""
           }
-        ],
-        "description": "Warn about print() statements in Python files (use logging instead)"
+        ]
       },
       {
         "matcher": "tool == \"Edit\" && tool_input.file_path matches \"\\\\.py$\"",
@@ -31,8 +35,7 @@
             "type": "command",
             "command": "node -e \"const fs=require('fs');let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{const i=JSON.parse(d);const p=i.tool_input?.file_path;if(p&&fs.existsSync(p)){const c=fs.readFileSync(p,'utf8');const patterns=[/['\\\"]sk-[a-zA-Z0-9]{20,}/,/['\\\"]password\\s*=\\s*['\\\"][^'\\\"]+['\\\"]/,/['\\\"]secret\\s*=\\s*['\\\"][^'\\\"]+['\\\"]/];for(const pat of patterns){if(pat.test(c)){console.error('[Hook] SECURITY: Possible hardcoded secret in '+p);console.error('[Hook] Use environment variables instead');break}}}console.log(d)})\""
           }
-        ],
-        "description": "Detect hardcoded secrets in Python files"
+        ]
       }
     ],
     "PreToolUse": [
@@ -43,8 +46,7 @@
             "type": "command",
             "command": "node -e \"if(!process.env.TMUX){console.error('[Hook] Consider running Flask dev server in tmux for log access');console.error('[Hook] tmux new -s flask  |  tmux attach -t flask')}\""
           }
-        ],
-        "description": "Remind to use tmux for Flask dev server"
+        ]
       },
       {
         "matcher": "tool == \"Bash\" && tool_input.command matches \"(pytest|python -m pytest)\"",
@@ -53,9 +55,9 @@
             "type": "command",
             "command": "node -e \"if(!process.env.TMUX){console.error('[Hook] Consider running pytest in tmux for session persistence');console.error('[Hook] tmux new -s test  |  tmux attach -t test')}\""
           }
-        ],
-        "description": "Remind to use tmux for pytest"
+        ]
       }
     ]
-  }
+  },
+  "prefersReducedMotion": false
 }

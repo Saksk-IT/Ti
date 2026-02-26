@@ -185,7 +185,7 @@ function buildCalendarCells(trend: TrendView[], statsDays: number): CalendarCell
   const list = Array.isArray(trend) ? trend : [];
   if (!list.length) return [];
 
-  const maxAnswered = list.reduce((m, it) => Math.max(m, toNum((it as any)?.answered)), 0) || 0;
+  const maxAnswered = list.reduce((m, it) => Math.max(m, toNum(it.answered)), 0) || 0;
   const padStart = weekdayFromIsoDate(list[0].day);
   const cells: CalendarCell[] = [];
 
@@ -194,8 +194,8 @@ function buildCalendarCells(trend: TrendView[], statsDays: number): CalendarCell
   }
 
   for (const it of list) {
-    const day = String((it as any)?.day || '');
-    const answered = toNum((it as any)?.answered);
+    const day = String(it.day || '');
+    const answered = toNum(it.answered);
     const pct = maxAnswered > 0 ? answered / maxAnswered : 0;
     const level = pct >= 0.75 ? 3 : pct >= 0.5 ? 2 : pct > 0 ? 1 : 0;
     const dayText = /^\d{4}-\d{2}-\d{2}/.test(day) ? day.slice(8, 10) : '';
@@ -216,23 +216,23 @@ function buildCalendarCells(trend: TrendView[], statsDays: number): CalendarCell
 }
 
 function calcActiveDays(trend: TrendView[]): number {
-  return (trend || []).filter((d) => toNum((d as any)?.answered) > 0).length;
+  return (trend || []).filter((d) => toNum(d.answered) > 0).length;
 }
 
 function calcRecentAnswered(trend: TrendView[], days: number): number {
   const list = Array.isArray(trend) ? trend : [];
   if (!list.length) return 0;
   const slice = list.slice(Math.max(0, list.length - Math.max(1, Math.floor(days))));
-  return slice.reduce((sum, it) => sum + toNum((it as any)?.answered), 0);
+  return slice.reduce((sum, it) => sum + toNum(it.answered), 0);
 }
 
 function buildHeadline(subtab: DataSubTab, overview: StatsOverviewView, trend: TrendView[], statsDays: number): string {
   const activeDays = calcActiveDays(trend);
-  const accuracy = toNum((overview as any)?.accuracy);
-  const completion = toNum((overview as any)?.completion);
-  const total = toNum((overview as any)?.total);
-  const answered = toNum((overview as any)?.answered);
-  const mistakesTimes = toNum((overview as any)?.mistakeTimes);
+  const accuracy = toNum(overview.accuracy);
+  const completion = toNum(overview.completion);
+  const total = toNum(overview.total);
+  const answered = toNum(overview.answered);
+  const mistakesTimes = toNum(overview.mistakeTimes);
 
   if (subtab === 'mistakes') {
     return `错题池 ${fmtCount(total)} 题 · 错题次数 ${fmtCount(mistakesTimes)} · 近${statsDays}天活跃${fmtCount(activeDays)}天`;
@@ -251,16 +251,16 @@ function computeKpis(
   statsDays: number,
   extras?: { bankTotal?: number; questions?: StatsQuestionItem[]; favoritesTrend?: FavoritesTrend }
 ): KpiItem[] {
-  const total = toNum((overview as any)?.total);
-  const answered = toNum((overview as any)?.answered);
-  const correct = toNum((overview as any)?.correct);
-  const wrong = toNum((overview as any)?.wrong);
-  const favorites = toNum((overview as any)?.favorites);
-  const mistakes = toNum((overview as any)?.mistakes);
-  const mistakeTimes = toNum((overview as any)?.mistakeTimes);
-  const accuracy = toNum((overview as any)?.accuracy);
-  const completion = toNum((overview as any)?.completion);
-  const streakDays = toNum((overview as any)?.streakDays);
+  const total = toNum(overview.total);
+  const answered = toNum(overview.answered);
+  const correct = toNum(overview.correct);
+  const wrong = toNum(overview.wrong);
+  const favorites = toNum(overview.favorites);
+  const mistakes = toNum(overview.mistakes);
+  const mistakeTimes = toNum(overview.mistakeTimes);
+  const accuracy = toNum(overview.accuracy);
+  const completion = toNum(overview.completion);
+  const streakDays = toNum(overview.streakDays);
 
   const recentAnswered = calcRecentAnswered(trend, Math.min(7, Math.max(1, Math.floor(statsDays || 7))));
   const mistakeRate = answered > 0 ? (wrong * 100) / answered : 0;
@@ -273,9 +273,9 @@ function computeKpis(
     let highRisk = 0;
     let aging = 0;
     (extras?.questions || []).forEach((q) => {
-      const wc = toNum((q as any)?.mistake_wrong_count) || 1;
+      const wc = toNum(q.mistake_wrong_count) || 1;
       if (wc >= 3) highRisk += 1;
-      const ds = daysSince((q as any)?.mistake_updated_at || (q as any)?.mistake_created_at);
+      const ds = daysSince(q.mistake_updated_at || q.mistake_created_at);
       if (ds != null && ds >= 14) aging += 1;
     });
 
@@ -317,10 +317,10 @@ function computeKpis(
 }
 
 function computeGauge(subtab: DataSubTab, overview: StatsOverviewView, trend: TrendView[], statsDays: number) {
-  const accuracy = toNum((overview as any)?.accuracy);
-  const completion = toNum((overview as any)?.completion);
-  const answered = toNum((overview as any)?.answered);
-  const wrong = toNum((overview as any)?.wrong);
+  const accuracy = toNum(overview.accuracy);
+  const completion = toNum(overview.completion);
+  const answered = toNum(overview.answered);
+  const wrong = toNum(overview.wrong);
   const activeDays = calcActiveDays(trend);
   const recentAnswered = calcRecentAnswered(trend, Math.min(7, Math.max(1, Math.floor(statsDays || 7))));
 
@@ -348,20 +348,20 @@ function computeTypeChartRows(byType: TypeBreakdownView[]): TypeChartRow[] {
 
   const top = list
     .slice()
-    .sort((a, b) => toNum((b as any)?.answered) - toNum((a as any)?.answered))
+    .sort((a, b) => toNum(b.answered) - toNum(a.answered))
     .slice(0, 8);
-  const maxAnswered = top.reduce((m, it) => Math.max(m, toNum((it as any)?.answered)), 0) || 0;
+  const maxAnswered = top.reduce((m, it) => Math.max(m, toNum(it.answered)), 0) || 0;
 
   return top.map((it) => {
-    const correct = toNum((it as any)?.correct);
-    const wrong = toNum((it as any)?.wrong);
+    const correct = toNum(it.correct);
+    const wrong = toNum(it.wrong);
     const correctWidth = maxAnswered > 0 ? clamp((correct / maxAnswered) * 100, 0, 100) : 0;
     const wrongWidth = maxAnswered > 0 ? clamp((wrong / maxAnswered) * 100, 0, 100) : 0;
     return {
-      q_type: String((it as any)?.q_type || '未知'),
+      q_type: String(it.q_type || '未知'),
       correctWidth,
       wrongWidth,
-      completionText: String((it as any)?.completionText || '0.0%')
+      completionText: String(it.completionText || '0.0%')
     };
   });
 }
@@ -383,16 +383,16 @@ function buildMistakeMatrixDots(items: StatsQuestionItem[]): MistakeMatrixDot[] 
   if (!list.length) return [];
 
   const sample = list.slice(0, 80);
-  const maxWrong = sample.reduce((m, it) => Math.max(m, Math.max(1, toNum((it as any)?.mistake_wrong_count) || 1)), 1);
+  const maxWrong = sample.reduce((m, it) => Math.max(m, Math.max(1, toNum(it.mistake_wrong_count) || 1)), 1);
   const capWrong = clamp(maxWrong, 3, 8);
   const capDays = 30;
 
   const out: MistakeMatrixDot[] = [];
   sample.forEach((it) => {
-    const id = Math.floor(toNum((it as any)?.id));
+    const id = Math.floor(toNum(it.id));
     if (!id) return;
-    const wc = Math.max(1, toNum((it as any)?.mistake_wrong_count) || 1);
-    const ds = daysSince((it as any)?.mistake_updated_at || (it as any)?.mistake_created_at);
+    const wc = Math.max(1, toNum(it.mistake_wrong_count) || 1);
+    const ds = daysSince(it.mistake_updated_at || it.mistake_created_at);
     if (ds == null) return;
 
     const x = capWrong > 1 ? clamp(((Math.min(wc, capWrong) - 1) / (capWrong - 1)) * 100, 0, 100) : 0;
@@ -411,16 +411,16 @@ function buildTopMistakes(items: StatsQuestionItem[]): TopItemView[] {
 
   const sorted = list
     .slice()
-    .sort((a, b) => (toNum((b as any)?.mistake_wrong_count) || 1) - (toNum((a as any)?.mistake_wrong_count) || 1))
+    .sort((a, b) => (toNum(b.mistake_wrong_count) || 1) - (toNum(a.mistake_wrong_count) || 1))
     .slice(0, 8);
-  const max = sorted.reduce((m, it) => Math.max(m, toNum((it as any)?.mistake_wrong_count) || 1), 1) || 1;
+  const max = sorted.reduce((m, it) => Math.max(m, toNum(it.mistake_wrong_count) || 1), 1) || 1;
 
   return sorted.map((it) => {
-    const id = Math.floor(toNum((it as any)?.id));
-    const wc = Math.max(1, toNum((it as any)?.mistake_wrong_count) || 1);
-    const title = String((it as any)?.content_preview || '').trim() || `题目 #${id}`;
-    const qt = String((it as any)?.q_type || '').trim() || '—';
-    const lw = fmtMD((it as any)?.mistake_updated_at || (it as any)?.mistake_created_at);
+    const id = Math.floor(toNum(it.id));
+    const wc = Math.max(1, toNum(it.mistake_wrong_count) || 1);
+    const title = String(it.content_preview || '').trim() || `题目 #${id}`;
+    const qt = String(it.q_type || '').trim() || '—';
+    const lw = fmtMD(it.mistake_updated_at || it.mistake_created_at);
     const meta = `${qt} · 最近错题 ${lw}`;
     const bar = clamp((wc / max) * 100, 0, 100);
     return { id, title, meta, count: wc, bar };
@@ -428,7 +428,7 @@ function buildTopMistakes(items: StatsQuestionItem[]): TopItemView[] {
 }
 
 function buildAddedBars(favTrend: FavoritesTrend): AddedBarView[] {
-  const raw = Array.isArray((favTrend as any)?.trend) ? ((favTrend as any).trend as any[]) : [];
+  const raw = Array.isArray(favTrend?.trend) ? favTrend.trend : [];
   const list = raw
     .map((it) => ({
       day: String(it?.day || ''),
@@ -450,14 +450,14 @@ function buildAddedBars(favTrend: FavoritesTrend): AddedBarView[] {
 function buildMistakeRows(items: StatsQuestionItem[], limit = 50): ListRowView[] {
   const list = Array.isArray(items) ? items.slice(0, Math.max(0, limit)) : [];
   return list.map((q) => {
-    const id = Math.floor(toNum((q as any)?.id));
-    const content = String((q as any)?.content_preview || '').trim() || `题目 #${id}`;
-    const q_type = String((q as any)?.q_type || '').trim() || '—';
-    const difficultyText = normalizeDifficultyText((q as any)?.difficulty);
-    const wc = Math.max(1, toNum((q as any)?.mistake_wrong_count) || 1);
-    const lastWrong = fmtMDHM((q as any)?.mistake_updated_at || (q as any)?.mistake_created_at);
-    const lastAnswer = fmtMDHM((q as any)?.last_answered_at);
-    const res = normalizeResult((q as any)?.last_is_correct);
+    const id = Math.floor(toNum(q.id));
+    const content = String(q.content_preview || '').trim() || `题目 #${id}`;
+    const q_type = String(q.q_type || '').trim() || '—';
+    const difficultyText = normalizeDifficultyText(q.difficulty);
+    const wc = Math.max(1, toNum(q.mistake_wrong_count) || 1);
+    const lastWrong = fmtMDHM(q.mistake_updated_at || q.mistake_created_at);
+    const lastAnswer = fmtMDHM(q.last_answered_at);
+    const res = normalizeResult(q.last_is_correct);
     return {
       id,
       content,
@@ -475,13 +475,13 @@ function buildMistakeRows(items: StatsQuestionItem[], limit = 50): ListRowView[]
 function buildFavoriteRows(items: StatsQuestionItem[], limit = 50): ListRowView[] {
   const list = Array.isArray(items) ? items.slice(0, Math.max(0, limit)) : [];
   return list.map((q) => {
-    const id = Math.floor(toNum((q as any)?.id));
-    const content = String((q as any)?.content_preview || '').trim() || `题目 #${id}`;
-    const q_type = String((q as any)?.q_type || '').trim() || '—';
-    const difficultyText = normalizeDifficultyText((q as any)?.difficulty);
-    const favAt = fmtMDHM((q as any)?.favorite_created_at);
-    const lastAnswer = fmtMDHM((q as any)?.last_answered_at);
-    const res = normalizeResult((q as any)?.last_is_correct);
+    const id = Math.floor(toNum(q.id));
+    const content = String(q.content_preview || '').trim() || `题目 #${id}`;
+    const q_type = String(q.q_type || '').trim() || '—';
+    const difficultyText = normalizeDifficultyText(q.difficulty);
+    const favAt = fmtMDHM(q.favorite_created_at);
+    const lastAnswer = fmtMDHM(q.last_answered_at);
+    const res = normalizeResult(q.last_is_correct);
     return {
       id,
       content,
@@ -500,18 +500,18 @@ function buildTypeDistRows(byType: TypeBreakdownView[]): TypeDistRowView[] {
   const list = Array.isArray(byType) ? byType.slice() : [];
   if (!list.length) return [];
 
-  const sum = list.reduce((m, it) => m + Math.max(0, toNum((it as any)?.total)), 0) || 0;
+  const sum = list.reduce((m, it) => m + Math.max(0, toNum(it.total)), 0) || 0;
   const rows = list
     .slice()
-    .sort((a, b) => toNum((b as any)?.total) - toNum((a as any)?.total))
+    .sort((a, b) => toNum(b.total) - toNum(a.total))
     .slice(0, 12);
 
   return rows.map((it) => {
-    const total = Math.max(0, toNum((it as any)?.total));
-    const answered = Math.max(0, toNum((it as any)?.answered));
-    const accText = String((it as any)?.accuracyText || '');
+    const total = Math.max(0, toNum(it.total));
+    const answered = Math.max(0, toNum(it.answered));
+    const accText = String(it.accuracyText || '');
     const bar = sum > 0 ? clamp((total / sum) * 100, 0, 100) : 0;
-    const q_type = String((it as any)?.q_type || '未知');
+    const q_type = String(it.q_type || '未知');
     const meta = `共 ${fmtCount(total)} 题 · 已做 ${fmtCount(answered)} · 正确率 ${accText || '—'}`;
     return { q_type, total, bar, meta };
   });
@@ -520,22 +520,22 @@ function buildTypeDistRows(byType: TypeBreakdownView[]): TypeDistRowView[] {
 function buildCompatByTypeStats(byType: TypeBreakdownView[]): any[] {
   const list = Array.isArray(byType) ? byType.slice() : [];
   return list.map((it) => {
-    const total = Math.max(0, toNum((it as any)?.total));
-    const answered = Math.max(0, toNum((it as any)?.answered));
-    const correctRaw = Math.max(0, toNum((it as any)?.correct));
+    const total = Math.max(0, toNum(it.total));
+    const answered = Math.max(0, toNum(it.answered));
+    const correctRaw = Math.max(0, toNum(it.correct));
     const correct = Math.min(answered, correctRaw);
-    const wrongRaw = toNum((it as any)?.wrong);
+    const wrongRaw = toNum(it.wrong);
     const wrong = Math.max(0, Number.isFinite(wrongRaw) && wrongRaw > 0 ? wrongRaw : answered - correct);
     const accuracy = answered > 0 ? clamp((correct * 100) / answered, 0, 100) : 0;
     const completion = total > 0 ? clamp((answered * 100) / total, 0, 100) : 0;
     return {
-      q_type: String((it as any)?.q_type || '未知'),
+      q_type: String(it.q_type || '未知'),
       total,
       answered,
       correct,
       wrong,
-      favorites: Math.max(0, toNum((it as any)?.favorites)),
-      mistakes: Math.max(0, toNum((it as any)?.mistakes)),
+      favorites: Math.max(0, toNum(it.favorites)),
+      mistakes: Math.max(0, toNum(it.mistakes)),
       accuracy,
       completion
     };
@@ -545,12 +545,12 @@ function buildCompatByTypeStats(byType: TypeBreakdownView[]): any[] {
 function buildCompatByDifficultyStats(byDifficulty: DifficultyBreakdownView[]): any[] {
   const list = Array.isArray(byDifficulty) ? byDifficulty.slice() : [];
   return list.map((it) => {
-    const label = String((it as any)?.label || (it as any)?.difficulty || '—');
-    const total = Math.max(0, toNum((it as any)?.total));
-    const answered = Math.max(0, toNum((it as any)?.answered));
-    const correctRaw = Math.max(0, toNum((it as any)?.correct));
+    const label = String(it.label || it.difficulty || '—');
+    const total = Math.max(0, toNum(it.total));
+    const answered = Math.max(0, toNum(it.answered));
+    const correctRaw = Math.max(0, toNum(it.correct));
     const correct = Math.min(answered, correctRaw);
-    const wrongRaw = toNum((it as any)?.wrong);
+    const wrongRaw = toNum(it.wrong);
     const wrong = Math.max(0, Number.isFinite(wrongRaw) && wrongRaw > 0 ? wrongRaw : answered - correct);
     const accuracy = answered > 0 ? clamp((correct * 100) / answered, 0, 100) : 0;
     const completion = total > 0 ? clamp((answered * 100) / total, 0, 100) : 0;
@@ -564,24 +564,24 @@ function buildCompatStatsPayload(
   byType: TypeBreakdownView[],
   byDifficulty: DifficultyBreakdownView[]
 ) {
-  const total = Math.max(0, toNum((overview as any)?.total));
-  const answered = Math.max(0, toNum((overview as any)?.answered));
-  const correctRaw = Math.max(0, toNum((overview as any)?.correct));
+  const total = Math.max(0, toNum(overview.total));
+  const answered = Math.max(0, toNum(overview.answered));
+  const correctRaw = Math.max(0, toNum(overview.correct));
   const correct = Math.min(answered, correctRaw);
-  const wrongRaw = toNum((overview as any)?.wrong);
+  const wrongRaw = toNum(overview.wrong);
   const wrong = Math.max(0, Number.isFinite(wrongRaw) && wrongRaw > 0 ? wrongRaw : answered - correct);
   return {
     total_count: total,
     answered,
     correct,
     wrong,
-    favorites: Math.max(0, toNum((overview as any)?.favorites)),
-    mistakes: Math.max(0, toNum((overview as any)?.mistakes)),
-    mistakes_times: Math.max(0, toNum((overview as any)?.mistakeTimes)),
-    accuracy: clamp(toNum((overview as any)?.accuracy), 0, 100),
-    completion: clamp(toNum((overview as any)?.completion), 0, 100),
-    streak_days: Math.max(0, toNum((overview as any)?.streakDays)),
-    last_activity: String((overview as any)?.lastText || ''),
+    favorites: Math.max(0, toNum(overview.favorites)),
+    mistakes: Math.max(0, toNum(overview.mistakes)),
+    mistakes_times: Math.max(0, toNum(overview.mistakeTimes)),
+    accuracy: clamp(toNum(overview.accuracy), 0, 100),
+    completion: clamp(toNum(overview.completion), 0, 100),
+    streak_days: Math.max(0, toNum(overview.streakDays)),
+    last_activity: String(overview.lastText || ''),
     trend: Array.isArray(trend) ? trend : [],
     by_type: buildCompatByTypeStats(byType),
     by_difficulty: buildCompatByDifficultyStats(byDifficulty),
@@ -710,18 +710,18 @@ Component({
       if (loading) {
         headlineText = '加载中…';
         updatedAtText = '—';
-        kpiItems = computeKpis(subtab, {} as any, [], days, { bankTotal, questions, favoritesTrend: favTrend }).map((it) =>
+        kpiItems = computeKpis(subtab, {} as StatsOverviewView, [], days, { bankTotal, questions, favoritesTrend: favTrend }).map((it) =>
           Object.assign({}, it, { value: '—', meta: '—' })
         );
       } else if (err) {
         headlineText = '数据加载失败，请稍后重试。';
         updatedAtText = '—';
-        kpiItems = computeKpis(subtab, {} as any, [], days, { bankTotal, questions, favoritesTrend: favTrend }).map((it) =>
+        kpiItems = computeKpis(subtab, {} as StatsOverviewView, [], days, { bankTotal, questions, favoritesTrend: favTrend }).map((it) =>
           Object.assign({}, it, { value: '—', meta: '—' })
         );
       } else {
         headlineText = buildHeadline(subtab, overview, trend, days);
-        updatedAtText = `最近活跃：${String((overview as any)?.lastText || '—')}`;
+        updatedAtText = `最近活跃：${String(overview.lastText || '—')}`;
         kpiItems = computeKpis(subtab, overview, trend, days, { bankTotal, questions, favoritesTrend: favTrend });
 
         if (subtab === 'global') {
@@ -769,7 +769,7 @@ Component({
   },
   lifetimes: {
     ready(this: any) {
-      const self: any = this as any;
+      const self = this;
       self.__charts = {};
       self.__renderTimer = null;
       self.__pendingForceInit = false;
@@ -784,7 +784,7 @@ Component({
       this.scheduleRenderCharts(true);
     },
     detached(this: any) {
-      const self: any = this as any;
+      const self = this;
       try {
         this.disposeCharts();
       } catch (e) {}
@@ -812,7 +812,7 @@ Component({
       this.triggerEvent('quickstart', { subtab });
     },
     disposeCharts(this: any) {
-      const self: any = this as any;
+      const self = this;
       const charts = (self.__charts || {}) as Record<string, any>;
       Object.keys(charts).forEach((k) => {
         try {
@@ -822,7 +822,7 @@ Component({
       self.__charts = {};
     },
     scheduleRenderCharts(this: any, forceInit = false, isDarkOverride?: boolean) {
-      const self: any = this as any;
+      const self = this;
       if (forceInit) self.__pendingForceInit = true;
       if (typeof isDarkOverride === 'boolean') self.__pendingIsDark = isDarkOverride;
       if (self.__renderTimer) return;
@@ -863,7 +863,7 @@ Component({
       };
 
       const activeIds = resolveActiveChartIds(subtab, hasDifficulty);
-      const self: any = this as any;
+      const self = this;
       const charts = (self.__charts || (self.__charts = {})) as Record<string, any>;
 
       Object.keys(charts).forEach((id) => {

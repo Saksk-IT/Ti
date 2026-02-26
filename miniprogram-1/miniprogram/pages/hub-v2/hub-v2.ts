@@ -161,7 +161,7 @@ Page({
     // 昵称检查状态
     usernameStatus: '' as '' | 'checking' | 'ok' | 'error',
     usernameStatusText: '',
-    usernameCheckTimer: null as any,
+    usernameCheckTimer: null as ReturnType<typeof setTimeout> | null,
     // 密码设置
     setupPassword: '',
     setupPasswordConfirm: '',
@@ -172,7 +172,7 @@ Page({
   onLoad() {
     // 初始化主题
     try {
-      this.setData(themeManager.getPageData() as any);
+      this.setData(themeManager.getPageData());
     } catch (e) {}
     
     // 设置问候语
@@ -195,7 +195,7 @@ Page({
 
     // 更新主题
     try {
-      this.setData(themeManager.getPageData() as any);
+      this.setData(themeManager.getPageData());
     } catch (e) {}
 
     // 更新问候语（可能跨时段）
@@ -253,7 +253,7 @@ Page({
       // 用户信息
       if (profile) {
         const nextAvatar = profile.avatar ? decorateAvatarUrl(resolveUploadUrl(profile.avatar)) : '';
-        const self: any = this as any;
+        const self = this;
         self.__userAvatarDlTried = false;
         this.setData({
           userName: profile.username || '用户',
@@ -297,7 +297,7 @@ Page({
 
       // 学习统计 + 薄弱环节
       if (historyStats) {
-        const data = historyStats as any;
+        const data = historyStats as Record<string, unknown>;
         this.setData({
           stats: {
             answered: data.answered_count || 0,
@@ -421,7 +421,7 @@ Page({
       const raw = wx.getStorageSync('last_practice_session');
       if (!raw || typeof raw !== 'object') return null;
 
-      const session = raw as any;
+      const session = raw as Record<string, unknown>;
       const sourceType = session.source_type || '';
       const sourceId = session.source_id || session.subject || session.bank_id;
 
@@ -483,7 +483,7 @@ Page({
   async onDrawerSelectStyle(e: any) {
     const style = (e?.detail?.style || 'default') as ThemeStyle;
     themeManager.setStyle(style);
-    this.setData(themeManager.getPageData() as any);
+    this.setData(themeManager.getPageData());
     this.setData({ drawerOpen: false });
     await syncUserSettingsToServer();
   },
@@ -491,7 +491,7 @@ Page({
   // 主题切换
   onCycleThemeModeTap() {
     const mode = themeManager.cycleMode() as ThemeMode;
-    this.setData({ ...(themeManager.getPageData() as any), themeMode: mode });
+    this.setData({ ...(themeManager.getPageData()), themeMode: mode });
   },
 
   // 快捷入口
@@ -529,13 +529,13 @@ Page({
   },
 
   onUserAvatarError() {
-    const url = String((this.data as any).userAvatar || '').trim();
+    const url = String(this.data.userAvatar || '').trim();
     if (!url || !/^https?:\/\//i.test(url)) {
       this.setData({ userAvatar: '' });
       return;
     }
 
-    const self: any = this as any;
+    const self = this;
     if (self.__userAvatarDlTried) {
       this.setData({ userAvatar: '' });
       return;
@@ -546,7 +546,7 @@ Page({
       url,
       timeout: 15000,
       success: (res) => {
-        const tempFilePath = String((res && (res as any).tempFilePath) || '').trim();
+        const tempFilePath = String((res && res.tempFilePath) || '').trim();
         this.setData({ userAvatar: tempFilePath || '' });
       },
       fail: () => {

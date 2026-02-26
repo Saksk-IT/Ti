@@ -1,14 +1,22 @@
 # -*- coding: utf-8 -*-
 """考试API路由"""
 import json
+from datetime import timedelta
+
 from flask import Blueprint, request, jsonify, session
-from app.core.utils.database import get_db
+
+from app.core.extensions import db
 from app.core.utils.decorators import auth_required, current_user_id
-from app.core.models.exam import Exam
+from app.core.models.exam import Exam as LegacyExam
 from app.core.utils.cache_utils import bump_user_quiz_version
 from app.core.utils.options_parser import parse_options
 from app.core.utils.validators import parse_int
 from app.core.errors import BadRequestError
+from app.core.utils.time_utils import now_bj
+from app.models.exam import Exam as ExamModel, ExamQuestion, ExamTemplate
+from app.models.subject import Subject, Question
+from app.models.quiz import Mistake
+from app.models.user_bank import UserBankQuestion, UserBankMistake
 
 exam_api_bp = Blueprint('exam_api', __name__)
 
@@ -44,6 +52,21 @@ def _enrich_exam_row(row: dict, stats_map: dict) -> dict:
     row['accuracy'] = acc
     row.pop('config_json', None)
     return row
+
+
+def _exam_to_dict(exam: ExamModel) -> dict:
+    """ORM ExamModel -> dict (compatible with _enrich_exam_row)."""
+    return {
+        'id': exam.id,
+        'user_id': exam.user_id,
+        'subject': exam.subject,
+        'duration_minutes': exam.duration_minutes,
+        'config_json': exam.config_json,
+        'total_score': exam.total_score,
+        'status': exam.status,
+        'started_at': exam.started_at.isoformat() if exam.started_at else None,
+        'submitted_at': exam.submitted_at.isoformat() if exam.submitted_at else None,
+    }
 
 
 @exam_api_bp.route('/exams/create', methods=['POST'])
@@ -105,19 +128,18 @@ def api_exam_detail_or_delete(exam_id):
         return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
 
     if request.method == 'DELETE':
-        conn = get_db()
-        ex = conn.execute('SELECT user_id FROM exams WHERE id=?', (exam_id,)).fetchone()
+        exam = db.session.get(ExamModel, exam_id)
 
-        if not ex or ex['user_id'] != uid:
+        if not exam or exam.user_id != uid:
             return jsonify({'status': 'error', 'message': '考试不存在或无权限'}), 403
 
-        conn.execute('DELETE FROM exams WHERE id=?', (exam_id,))
-        conn.commit()
+        db.session.delete(exam)
+        db.session.commit()
 
         return jsonify({'status': 'success'})
 
     # GET：返回考试详情（含题目）
-    data = Exam.get_by_id(exam_id, uid)
+    data = LegacyExam.get_by_id(exam_id, uid)
     if not data:
         return jsonify({'status': 'error', 'message': '考试不存在或无权限'}), 404
 
@@ -178,27 +200,25 @@ def api_save_exam_draft():
     if not exam_id:
         return jsonify({'status':'error','message':'缺少 exam_id'}), 400
     
-    conn = get_db()
-    exam = conn.execute('SELECT user_id, status FROM exams WHERE id=?', (exam_id,)).fetchone()
-    
-    if not exam or exam['user_id'] != uid:
+    exam = db.session.get(ExamModel, exam_id)
+
+    if not exam or exam.user_id != uid:
         return jsonify({'status':'error','message':'考试不存在或无权限'}), 403
-    
-    if exam['status'] == 'submitted':
+
+    if exam.status == 'submitted':
         return jsonify({'status':'error','message':'考试已提交，不可保存草稿'}), 400
-    
+
     for a in answers:
         try:
             qid = int(a.get('question_id'))
         except Exception:
             continue
         ua = (a.get('user_answer') or '').strip()
-        conn.execute(
-            'UPDATE exam_questions SET user_answer=? WHERE exam_id=? AND question_id=?',
-            (ua, exam_id, qid)
-        )
-    
-    conn.commit()
+        eq = db.session.query(ExamQuestion).filter_by(exam_id=exam_id, question_id=qid).first()
+        if eq:
+            eq.user_answer = ua
+
+    db.session.commit()
     return jsonify({'status':'success'})
 
 
@@ -210,22 +230,15 @@ def api_exam_to_mistakes(exam_id):
     if not uid:
         return jsonify({'status':'unauthorized','message':'请先登录'}), 401
     
-    conn = get_db()
-    exam = conn.execute('SELECT * FROM exams WHERE id=?', (exam_id,)).fetchone()
-    
-    if not exam or exam['user_id'] != uid:
+    exam = db.session.get(ExamModel, exam_id)
+
+    if not exam or exam.user_id != uid:
         return jsonify({'status':'error','message':'考试不存在或无权限'}), 403
-    
-    if exam['status'] != 'submitted':
+
+    if exam.status != 'submitted':
         return jsonify({'status':'error','message':'请在提交考试后再加入错题本'}), 400
 
-    cfg = {}
-    try:
-        cfg = json.loads(exam['config_json'] or '{}')
-        if not isinstance(cfg, dict):
-            cfg = {}
-    except Exception:
-        cfg = {}
+    cfg = _parse_exam_config(exam.config_json)
 
     source = (cfg.get('source') or 'public').strip().lower()
     if source not in ('public', 'user_bank'):
@@ -239,52 +252,44 @@ def api_exam_to_mistakes(exam_id):
             bank_id_val = 0
         if not bank_id_val:
             return jsonify({'status': 'error', 'message': '该考试缺少题库信息，无法加入错题本'}), 400
-    
-    wrongs = conn.execute(
-        'SELECT question_id FROM exam_questions WHERE exam_id=? AND (is_correct IS NULL OR is_correct=0)',
-        (exam_id,)
-    ).fetchall()
-    
+
+    wrongs = (
+        db.session.query(ExamQuestion)
+        .filter(
+            ExamQuestion.exam_id == exam_id,
+            db.or_(ExamQuestion.is_correct.is_(None), ExamQuestion.is_correct == 0),
+        )
+        .all()
+    )
+
+    ts = now_bj()
     count = 0
-    for r in wrongs:
-        qid = r['question_id']
+    for eq in wrongs:
+        qid = eq.question_id
         if source == 'user_bank':
-            conn.execute(
-                """
-                INSERT INTO user_bank_mistakes (user_id, bank_id, question_id, wrong_count)
-                VALUES (?, ?, ?, 1)
-                ON CONFLICT(user_id, question_id) DO UPDATE SET
-                  wrong_count = wrong_count + 1,
-                  bank_id = excluded.bank_id,
-                  updated_at = CURRENT_TIMESTAMP
-                """,
-                (uid, int(bank_id_val), qid),
-            )
+            existing = db.session.query(UserBankMistake).filter_by(user_id=uid, question_id=qid).first()
+            if existing:
+                existing.wrong_count = (existing.wrong_count or 0) + 1
+                existing.bank_id = int(bank_id_val)
+                existing.updated_at = ts
+            else:
+                db.session.add(UserBankMistake(
+                    user_id=uid, bank_id=int(bank_id_val), question_id=qid, wrong_count=1,
+                ))
         else:
-            try:
-                conn.execute(
-                    """
-                    INSERT INTO mistakes (user_id, question_id, wrong_count, created_at, updated_at, last_updated)
-                    VALUES (?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                    ON CONFLICT(user_id, question_id) DO UPDATE SET
-                      wrong_count = wrong_count + 1,
-                      updated_at = CURRENT_TIMESTAMP,
-                      last_updated = CURRENT_TIMESTAMP
-                    """,
-                    (uid, qid),
-                )
-            except Exception:
-                conn.execute(
-                    """
-                    INSERT INTO mistakes (user_id, question_id, wrong_count)
-                    VALUES (?, ?, 1)
-                    ON CONFLICT(user_id, question_id) DO UPDATE SET wrong_count = wrong_count + 1
-                    """,
-                    (uid, qid),
-                )
+            existing = db.session.query(Mistake).filter_by(user_id=uid, question_id=qid).first()
+            if existing:
+                existing.wrong_count = (existing.wrong_count or 0) + 1
+                existing.updated_at = ts
+                existing.last_updated = ts
+            else:
+                db.session.add(Mistake(
+                    user_id=uid, question_id=qid, wrong_count=1,
+                    created_at=ts, updated_at=ts, last_updated=ts,
+                ))
         count += 1
-    
-    conn.commit()
+
+    db.session.commit()
     try:
         bump_user_quiz_version(int(uid))
     except Exception:
@@ -300,7 +305,6 @@ def api_exam_templates():
     if not uid:
         return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
 
-    conn = get_db()
     if request.method == 'GET':
         filter_source = (request.args.get('source') or 'all').strip().lower()
         if filter_source not in ('all', 'public', 'user_bank'):
@@ -314,25 +318,16 @@ def api_exam_templates():
         if filter_bank_id <= 0:
             filter_bank_id = None
 
-        rows = conn.execute(
-            """
-            SELECT id, title, config_json, created_at, updated_at
-            FROM exam_templates
-            WHERE user_id=?
-            ORDER BY updated_at DESC, id DESC
-            """,
-            (uid,),
-        ).fetchall()
+        rows = (
+            db.session.query(ExamTemplate)
+            .filter_by(user_id=uid)
+            .order_by(ExamTemplate.updated_at.desc(), ExamTemplate.id.desc())
+            .all()
+        )
 
         templates = []
         for r in rows:
-            cfg = {}
-            try:
-                cfg = json.loads(r['config_json'] or '{}')
-                if not isinstance(cfg, dict):
-                    cfg = {}
-            except Exception:
-                cfg = {}
+            cfg = _parse_exam_config(r.config_json)
 
             cfg_source = str(cfg.get('source') or 'public').strip().lower()
             if cfg_source not in ('public', 'user_bank'):
@@ -345,7 +340,7 @@ def api_exam_templates():
             if filter_source != 'all' and cfg_source != filter_source:
                 continue
             if filter_source == 'public' and filter_subject:
-                # 允许“通用模板”：subject=all
+                # 允许"通用模板"：subject=all
                 if cfg_subject not in (filter_subject, 'all'):
                     continue
             if filter_source == 'user_bank' and filter_bank_id:
@@ -353,11 +348,11 @@ def api_exam_templates():
                     continue
 
             templates.append({
-                'id': r['id'],
-                'title': r['title'] or '未命名模板',
+                'id': r.id,
+                'title': r.title or '未命名模板',
                 'config': cfg,
-                'created_at': r['created_at'],
-                'updated_at': r['updated_at'],
+                'created_at': r.created_at.isoformat() if r.created_at else None,
+                'updated_at': r.updated_at.isoformat() if r.updated_at else None,
             })
 
         return jsonify({'status': 'success', 'data': templates})
@@ -371,12 +366,15 @@ def api_exam_templates():
     if not isinstance(config, dict):
         return jsonify({'status': 'error', 'message': '模板内容不合法'}), 400
 
-    conn.execute(
-        'INSERT INTO exam_templates (user_id, title, config_json) VALUES (?, ?, ?)',
-        (uid, title, json.dumps(config, ensure_ascii=False)),
+    t = ExamTemplate(
+        user_id=uid,
+        title=title,
+        config_json=json.dumps(config, ensure_ascii=False),
     )
-    template_id = conn.execute('SELECT last_insert_rowid()').fetchone()[0]
-    conn.commit()
+    db.session.add(t)
+    db.session.flush()
+    template_id = t.id
+    db.session.commit()
 
     return jsonify({'status': 'success', 'id': template_id})
 
@@ -389,17 +387,13 @@ def api_exam_template_delete(template_id):
     if not uid:
         return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
 
-    conn = get_db()
-    row = conn.execute(
-        'SELECT user_id FROM exam_templates WHERE id=?',
-        (template_id,),
-    ).fetchone()
+    t = db.session.get(ExamTemplate, template_id)
 
-    if not row or row['user_id'] != uid:
+    if not t or t.user_id != uid:
         return jsonify({'status': 'error', 'message': '模板不存在或无权限'}), 403
 
-    conn.execute('DELETE FROM exam_templates WHERE id=?', (template_id,))
-    conn.commit()
+    db.session.delete(t)
+    db.session.commit()
     return jsonify({'status': 'success'})
 
 
@@ -424,8 +418,6 @@ def api_exams_records():
     if bank_id <= 0:
         bank_id = None
 
-    conn = get_db()
-
     # 科目白名单（按权限+锁定过滤）：用于校验 subject 参数
     from app.core.utils.subject_permissions import get_user_accessible_subjects
 
@@ -436,18 +428,16 @@ def api_exams_records():
         accessible_subject_ids = []
 
     if accessible_subject_ids:
-        placeholders = ','.join(['?'] * len(accessible_subject_ids))
-        rows = conn.execute(
-            f"""
-            SELECT id, name
-            FROM subjects
-            WHERE id IN ({placeholders})
-              AND (is_locked=0 OR is_locked IS NULL)
-            ORDER BY id
-            """,
-            accessible_subject_ids,
-        ).fetchall()
-        subjects = [str(r['name']).strip() for r in (rows or []) if r and r['name']]
+        subj_rows = (
+            db.session.query(Subject)
+            .filter(
+                Subject.id.in_(accessible_subject_ids),
+                db.or_(Subject.is_locked == 0, Subject.is_locked.is_(None)),
+            )
+            .order_by(Subject.id)
+            .all()
+        )
+        subjects = [str(s.name).strip() for s in subj_rows if s and s.name]
 
     # Web 行为：个人题库时隐藏/禁用科目筛选
     if filter_source == 'user_bank':
@@ -460,78 +450,66 @@ def api_exams_records():
     if filter_source == 'public':
         bank_id = None
 
-    ongoing_params = [uid]
-    ongoing_where = 'WHERE user_id=? AND status="ongoing"'
+    def _build_source_filters(base_filters: list, fs: str, bk_id: int | None, subj: str) -> list:
+        """Append source/subject/bank_id filters to base_filters list."""
+        if fs == 'user_bank':
+            base_filters.append(ExamModel.config_json.like('%"source": "user_bank"%'))
+        elif fs == 'public':
+            base_filters.append(
+                db.or_(ExamModel.config_json.is_(None), ~ExamModel.config_json.like('%"source": "user_bank"%'))
+            )
+        if subj != 'all':
+            base_filters.append(ExamModel.subject == subj)
+        if bk_id:
+            base_filters.append(db.or_(
+                ExamModel.config_json.like(f'%"bank_id": {int(bk_id)},%'),
+                ExamModel.config_json.like(f'%"bank_id": {int(bk_id)}' + '}%'),
+            ))
+        return base_filters
 
-    if filter_source == 'user_bank':
-        ongoing_where += ' AND config_json LIKE ?'
-        ongoing_params.append('%"source": "user_bank"%')
-    elif filter_source == 'public':
-        ongoing_where += ' AND (config_json IS NULL OR config_json NOT LIKE ?)'
-        ongoing_params.append('%"source": "user_bank"%')
+    # ongoing exams
+    ongoing_filters = [ExamModel.user_id == uid, ExamModel.status == 'ongoing']
+    _build_source_filters(ongoing_filters, filter_source, bank_id, subject)
+    ongoing = (
+        db.session.query(ExamModel)
+        .filter(*ongoing_filters)
+        .order_by(ExamModel.started_at.desc())
+        .all()
+    )
 
-    if subject != 'all':
-        ongoing_where += ' AND subject = ?'
-        ongoing_params.append(subject)
-
-    if bank_id:
-        ongoing_where += ' AND (config_json LIKE ? OR config_json LIKE ?)'
-        ongoing_params.append(f'%"bank_id": {int(bank_id)},%')
-        ongoing_params.append('%"bank_id": ' + str(int(bank_id)) + '}%')
-
-    ongoing = conn.execute(
-        f'SELECT * FROM exams {ongoing_where} ORDER BY started_at DESC',
-        ongoing_params,
-    ).fetchall()
-
-    where = 'WHERE user_id=? AND status="submitted"'
-    params = [uid]
-
-    if filter_source == 'user_bank':
-        where += ' AND config_json LIKE ?'
-        params.append('%"source": "user_bank"%')
-    elif filter_source == 'public':
-        where += ' AND (config_json IS NULL OR config_json NOT LIKE ?)'
-        params.append('%"source": "user_bank"%')
-
-    if subject != 'all':
-        where += ' AND subject = ?'
-        params.append(subject)
-
-    if bank_id:
-        where += ' AND (config_json LIKE ? OR config_json LIKE ?)'
-        params.append(f'%"bank_id": {int(bank_id)},%')
-        params.append('%"bank_id": ' + str(int(bank_id)) + '}%')
-
-    total = int(conn.execute(f'SELECT COUNT(1) FROM exams {where}', params).fetchone()[0] or 0)
+    # submitted exams (paginated)
+    sub_filters = [ExamModel.user_id == uid, ExamModel.status == 'submitted']
+    _build_source_filters(sub_filters, filter_source, bank_id, subject)
+    total = db.session.query(db.func.count(ExamModel.id)).filter(*sub_filters).scalar() or 0
     offset = (page - 1) * size
-    submitted = conn.execute(
-        f'SELECT * FROM exams {where} ORDER BY submitted_at DESC LIMIT ? OFFSET ?',
-        params + [size, offset],
-    ).fetchall()
+    submitted = (
+        db.session.query(ExamModel)
+        .filter(*sub_filters)
+        .order_by(ExamModel.submitted_at.desc())
+        .limit(size)
+        .offset(offset)
+        .all()
+    )
 
     # exam_questions 统计：total/correct/accuracy
     stats_map: dict[int, dict[str, int]] = {}
-    stat_exam_ids = [int(r['id']) for r in ongoing] + [int(r['id']) for r in submitted]
+    stat_exam_ids = [e.id for e in ongoing] + [e.id for e in submitted]
     if stat_exam_ids:
-        placeholders = ','.join(['?'] * len(stat_exam_ids))
-        rows = conn.execute(
-            f"""
-            SELECT exam_id,
-                   COUNT(1) as total,
-                   SUM(CASE WHEN is_correct=1 THEN 1 ELSE 0 END) as correct
-            FROM exam_questions
-            WHERE exam_id IN ({placeholders})
-            GROUP BY exam_id
-            """,
-            stat_exam_ids,
-        ).fetchall()
-        for r in rows:
-            ex_id = int(r['exam_id'])
-            stats_map[ex_id] = {'total': int(r['total'] or 0), 'correct': int(r['correct'] or 0)}
+        stat_rows = (
+            db.session.query(
+                ExamQuestion.exam_id,
+                db.func.count(ExamQuestion.id).label('total'),
+                db.func.sum(db.case((ExamQuestion.is_correct == 1, 1), else_=0)).label('correct'),
+            )
+            .filter(ExamQuestion.exam_id.in_(stat_exam_ids))
+            .group_by(ExamQuestion.exam_id)
+            .all()
+        )
+        for r in stat_rows:
+            stats_map[int(r.exam_id)] = {'total': int(r.total or 0), 'correct': int(r.correct or 0)}
 
-    ongoing_payload = [_enrich_exam_row(dict(r), stats_map) for r in ongoing]
-    submitted_payload = [_enrich_exam_row(dict(r), stats_map) for r in submitted]
+    ongoing_payload = [_enrich_exam_row(_exam_to_dict(e), stats_map) for e in ongoing]
+    submitted_payload = [_enrich_exam_row(_exam_to_dict(e), stats_map) for e in submitted]
 
     return jsonify(
         {
@@ -557,9 +535,7 @@ def api_exams_stats():
         return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
     uid = int(uid)
 
-    conn = get_db()
-
-    # 可选筛选：与 /exams/records 对齐（便于小程序按“所选题库/科目”查看数据）
+    # 可选筛选：与 /exams/records 对齐（便于小程序按"所选题库/科目"查看数据）
     filter_source = (request.args.get('source') or 'all').strip().lower()
     if filter_source not in ('all', 'public', 'user_bank'):
         filter_source = 'all'
@@ -582,18 +558,16 @@ def api_exams_stats():
         accessible_subject_ids = []
 
     if accessible_subject_ids:
-        placeholders = ','.join(['?'] * len(accessible_subject_ids))
-        rows = conn.execute(
-            f"""
-            SELECT id, name
-            FROM subjects
-            WHERE id IN ({placeholders})
-              AND (is_locked=0 OR is_locked IS NULL)
-            ORDER BY id
-            """,
-            accessible_subject_ids,
-        ).fetchall()
-        subjects = [str(r['name']).strip() for r in (rows or []) if r and r['name']]
+        subj_rows = (
+            db.session.query(Subject)
+            .filter(
+                Subject.id.in_(accessible_subject_ids),
+                db.or_(Subject.is_locked == 0, Subject.is_locked.is_(None)),
+            )
+            .order_by(Subject.id)
+            .all()
+        )
+        subjects = [str(s.name).strip() for s in subj_rows if s and s.name]
 
     # 个人题库时隐藏/禁用科目筛选
     if filter_source == 'user_bank':
@@ -606,24 +580,24 @@ def api_exams_stats():
     if filter_source == 'public':
         bank_id = None
 
-    where = 'WHERE e.user_id=? AND e.status="submitted"'
-    params: list = [uid]
+    # -- ORM filter chain (replaces raw SQL WHERE builder) --
+    base_filters = [ExamModel.user_id == uid, ExamModel.status == 'submitted']
 
     if filter_source == 'user_bank':
-        where += ' AND e.config_json LIKE ?'
-        params.append('%"source": "user_bank"%')
+        base_filters.append(ExamModel.config_json.like('%"source": "user_bank"%'))
     elif filter_source == 'public':
-        where += ' AND (e.config_json IS NULL OR e.config_json NOT LIKE ?)'
-        params.append('%"source": "user_bank"%')
+        base_filters.append(
+            db.or_(ExamModel.config_json.is_(None), ~ExamModel.config_json.like('%"source": "user_bank"%'))
+        )
 
     if subject != 'all':
-        where += ' AND e.subject = ?'
-        params.append(subject)
+        base_filters.append(ExamModel.subject == subject)
 
     if bank_id:
-        where += ' AND (e.config_json LIKE ? OR e.config_json LIKE ?)'
-        params.append(f'%"bank_id": {int(bank_id)},%')
-        params.append('%"bank_id": ' + str(int(bank_id)) + '}%')
+        base_filters.append(db.or_(
+            ExamModel.config_json.like(f'%"bank_id": {int(bank_id)},%'),
+            ExamModel.config_json.like(f'%"bank_id": {int(bank_id)}' + '}%'),
+        ))
 
     stats_overview = {
         'submitted_count': 0,
@@ -636,61 +610,76 @@ def api_exams_stats():
     type_dist: list[dict] = []
     advice: list[dict] = []
 
-    stats_overview['submitted_count'] = int(conn.execute(f'SELECT COUNT(1) FROM exams e {where}', params).fetchone()[0] or 0)
-
-    avg_score = conn.execute(f'SELECT AVG(e.total_score) FROM exams e {where}', params).fetchone()[0]
-    stats_overview['avg_score'] = round(float(avg_score or 0), 2)
-
-    avg_acc = conn.execute(
-        f"""
-        SELECT AVG(acc) FROM (
-          SELECT e.id as id,
-                 CASE WHEN COUNT(eq.id)=0 THEN 0
-                      ELSE (SUM(CASE WHEN eq.is_correct=1 THEN 1 ELSE 0 END) * 100.0 / COUNT(eq.id))
-                 END as acc
-          FROM exams e
-          LEFT JOIN exam_questions eq ON eq.exam_id = e.id
-          {where}
-          GROUP BY e.id
-        ) t
-        """,
-        params,
-    ).fetchone()[0]
-    stats_overview['avg_accuracy'] = round(float(avg_acc or 0), 1)
-
-    stats_overview['last7_count'] = int(
-        conn.execute(
-            f'SELECT COUNT(1) FROM exams e {where} AND e.submitted_at >= datetime("now", "-7 day")',
-            params,
-        ).fetchone()[0]
-        or 0
+    # submitted_count
+    stats_overview['submitted_count'] = (
+        db.session.query(db.func.count(ExamModel.id))
+        .filter(*base_filters)
+        .scalar() or 0
     )
 
-    recent_rows = conn.execute(
-        f'SELECT * FROM exams e {where} ORDER BY e.submitted_at DESC LIMIT 7',
-        params,
-    ).fetchall()
-    recent_exams = [dict(r) for r in recent_rows]
+    # avg_score
+    avg_score = (
+        db.session.query(db.func.avg(ExamModel.total_score))
+        .filter(*base_filters)
+        .scalar()
+    )
+    stats_overview['avg_score'] = round(float(avg_score or 0), 2)
+
+    # avg_accuracy (subquery: per-exam accuracy, then AVG)
+    eq_sub = (
+        db.session.query(
+            ExamModel.id.label('eid'),
+            db.case(
+                (db.func.count(ExamQuestion.id) == 0, 0),
+                else_=(
+                    db.func.sum(db.case((ExamQuestion.is_correct == 1, 1), else_=0))
+                    * 100.0
+                    / db.func.count(ExamQuestion.id)
+                ),
+            ).label('acc'),
+        )
+        .outerjoin(ExamQuestion, ExamQuestion.exam_id == ExamModel.id)
+        .filter(*base_filters)
+        .group_by(ExamModel.id)
+        .subquery()
+    )
+    avg_acc = db.session.query(db.func.avg(eq_sub.c.acc)).scalar()
+    stats_overview['avg_accuracy'] = round(float(avg_acc or 0), 1)
+
+    # last7_count
+    cutoff_7d = now_bj() - timedelta(days=7)
+    stats_overview['last7_count'] = (
+        db.session.query(db.func.count(ExamModel.id))
+        .filter(*base_filters, ExamModel.submitted_at >= cutoff_7d)
+        .scalar() or 0
+    )
+
+    # recent exams (last 7 submitted)
+    recent_models = (
+        db.session.query(ExamModel)
+        .filter(*base_filters)
+        .order_by(ExamModel.submitted_at.desc())
+        .limit(7)
+        .all()
+    )
+    recent_exams = [_exam_to_dict(e) for e in recent_models]
 
     # 近期考试统计（准确率 + bank_id/source）
     stats_map: dict[int, dict[str, int]] = {}
-    recent_ids = [int(r['id']) for r in recent_exams if r and r.get('id') is not None]
+    recent_ids = [int(e['id']) for e in recent_exams if e and e.get('id') is not None]
     if recent_ids:
-        placeholders = ','.join(['?'] * len(recent_ids))
-        rows = conn.execute(
-            f"""
-            SELECT exam_id,
-                   COUNT(1) as total,
-                   SUM(CASE WHEN is_correct=1 THEN 1 ELSE 0 END) as correct
-            FROM exam_questions
-            WHERE exam_id IN ({placeholders})
-            GROUP BY exam_id
-            """,
-            recent_ids,
-        ).fetchall()
-        for r in rows:
-            ex_id = int(r['exam_id'])
-            stats_map[ex_id] = {'total': int(r['total'] or 0), 'correct': int(r['correct'] or 0)}
+        stat_rows = (
+            db.session.query(
+                ExamQuestion.exam_id,
+                db.func.count(ExamQuestion.id).label('total'),
+                db.func.sum(db.case((ExamQuestion.is_correct == 1, 1), else_=0)).label('correct'),
+            )
+            .filter(ExamQuestion.exam_id.in_(recent_ids))
+            .group_by(ExamQuestion.exam_id)
+            .all()
+        )
+        for r in stat_rows:
+            stats_map[int(r.exam_id)] = {'total': int(r.total or 0), 'correct': int(r.correct or 0)}
 
         recent_exams = [_enrich_exam_row(e, stats_map) for e in recent_exams]
         if recent_exams:
@@ -700,59 +689,60 @@ def api_exams_stats():
             )
 
     # 题型分布：最近 30 天（可按 source/subject/bank_id 筛选）
+    cutoff_30d = now_bj() - timedelta(days=30)
     merged: dict[str, int] = {}
 
     if filter_source in ('all', 'public'):
-        pub_where = where
-        pub_params = list(params)
+        pub_filters = list(base_filters)
         if filter_source == 'all':
-            pub_where += ' AND (e.config_json IS NULL OR e.config_json NOT LIKE ?)'
-            pub_params.append('%"source": "user_bank"%')
-
-        rows = conn.execute(
-            f"""
-            SELECT q.type as p_type, COUNT(1) as cnt
-            FROM exams e
-            JOIN exam_questions eq ON eq.exam_id = e.id
-            JOIN questions q ON q.id = eq.question_id
-            {pub_where}
-              AND e.submitted_at >= datetime("now", "-30 day")
-              AND q.type IS NOT NULL AND TRIM(q.type) != ''
-            GROUP BY q.type
-            """,
-            pub_params,
-        ).fetchall()
-        for r in rows or []:
-            pt = (r['p_type'] or '').strip()
-            if not pt:
-                continue
-            merged[pt] = merged.get(pt, 0) + int(r['cnt'] or 0)
+            pub_filters.append(
+                db.or_(ExamModel.config_json.is_(None), ~ExamModel.config_json.like('%"source": "user_bank"%'))
+            )
+        pub_rows = (
+            db.session.query(
+                Question.type.label('p_type'),
+                db.func.count(ExamQuestion.id).label('cnt'),
+            )
+            .join(ExamQuestion, ExamQuestion.exam_id == ExamModel.id)
+            .join(Question, Question.id == ExamQuestion.question_id)
+            .filter(
+                *pub_filters,
+                ExamModel.submitted_at >= cutoff_30d,
+                Question.type.isnot(None),
+                db.func.trim(Question.type) != '',
+            )
+            .group_by(Question.type)
+            .all()
+        )
+        for r in pub_rows:
+            pt = (r.p_type or '').strip()
+            if pt:
+                merged[pt] = merged.get(pt, 0) + int(r.cnt or 0)
 
     if filter_source in ('all', 'user_bank'):
-        bank_where = where
-        bank_params = list(params)
+        bank_filters = list(base_filters)
         if filter_source == 'all':
-            bank_where += ' AND e.config_json LIKE ?'
-            bank_params.append('%"source": "user_bank"%')
-
-        rows = conn.execute(
-            f"""
-            SELECT q.type as p_type, COUNT(1) as cnt
-            FROM exams e
-            JOIN exam_questions eq ON eq.exam_id = e.id
-            JOIN user_bank_questions q ON q.id = eq.question_id
-            {bank_where}
-              AND e.submitted_at >= datetime("now", "-30 day")
-              AND q.type IS NOT NULL AND TRIM(q.type) != ''
-            GROUP BY q.type
-            """,
-            bank_params,
-        ).fetchall()
-        for r in rows or []:
-            pt = (r['p_type'] or '').strip()
-            if not pt:
-                continue
-            merged[pt] = merged.get(pt, 0) + int(r['cnt'] or 0)
+            bank_filters.append(ExamModel.config_json.like('%"source": "user_bank"%'))
+        bank_rows = (
+            db.session.query(
+                UserBankQuestion.type.label('p_type'),
+                db.func.count(ExamQuestion.id).label('cnt'),
+            )
+            .join(ExamQuestion, ExamQuestion.exam_id == ExamModel.id)
+            .join(UserBankQuestion, UserBankQuestion.id == ExamQuestion.question_id)
+            .filter(
+                *bank_filters,
+                ExamModel.submitted_at >= cutoff_30d,
+                UserBankQuestion.type.isnot(None),
+                db.func.trim(UserBankQuestion.type) != '',
+            )
+            .group_by(UserBankQuestion.type)
+            .all()
+        )
+        for r in bank_rows:
+            pt = (r.p_type or '').strip()
+            if pt:
+                merged[pt] = merged.get(pt, 0) + int(r.cnt or 0)
 
     if merged:
         max_cnt = max(merged.values()) if merged else 0

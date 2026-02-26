@@ -1,0 +1,31 @@
+<view class="card" wx:if="{{showTypes}}" aria-label="{{typeLabel || '题型选择'}}">
+  <view class="card-head">
+    <view class="card-head-left">
+      <text class="card-title">题型</text>
+      <text class="card-sub" wx:if="{{typeSub}}">{{typeSub}}</text>
+    </view>
+  </view>
+  <view class="chips" aria-label="题型列表">
+    <view class="chip {{selectedType==='all' ? 'active' : ''}}" bindtap="onTypeTap" data-type="all"><text>全部题型</text></view>
+    <view class="chip {{selectedType===item ? 'active' : ''}}" wx:for="{{types}}" wx:key="*this" bindtap="onTypeTap" data-type="{{item}}">
+      <text>{{item}}</text>
+    </view>
+  </view>
+</view>
+
+<view class="card" wx:if="{{showTags}}" aria-label="{{tagLabel || '标签选择'}}">
+  <view class="card-head">
+    <view class="card-head-left">
+      <text class="card-title">标签</text>
+      <text class="card-sub" wx:if="{{tagSub}}">{{tagSub}}</text>
+    </view>
+  </view>
+  <view class="chips" aria-label="标签列表">
+    <view class="chip {{selectedTag==='all' ? 'active' : ''}}" bindtap="onTagTap" data-tag="all"><text>全部标签</text></view>
+    <view class="chip chip-with-close {{selectedTag===item.name ? 'active' : ''}}" wx:for="{{tags}}" wx:key="name" bindtap="onTagTap" data-tag="{{item.name}}">
+      <text>{{item.name}}</text>
+      <text class="chip-count" wx:if="{{item.count != null}}">{{item.count}}</text>
+      <view class="chip-close" catchtap="onTagDelete" data-tag="{{item.name}}" aria-role="button" aria-label="删除标签">×</view>
+    </view>
+  </view>
+</view>

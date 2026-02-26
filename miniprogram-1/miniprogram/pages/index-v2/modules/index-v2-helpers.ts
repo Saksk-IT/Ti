@@ -181,10 +181,10 @@ export function normalizeTemplateConfig(raw: any): ExamConfig | null {
   Object.keys(typesRaw || {}).forEach((k) => {
     const name = String(k || '').trim();
     if (!name) return;
-    const c = clampInt((typesRaw as any)[k], 0, 0, 500);
+    const c = clampInt((typesRaw as Record<string, unknown>)[k], 0, 0, 500);
     if (c <= 0) return;
     types[name] = c;
-    scores[name] = clampFloat((scoresRaw as any)[k], 1, 0, 1000);
+    scores[name] = clampFloat((scoresRaw as Record<string, unknown>)[k], 1, 0, 1000);
   });
 
   let targetTotal = raw.targetTotal ?? raw.total ?? raw.target_total;
@@ -197,7 +197,7 @@ export function normalizeTemplateConfig(raw: any): ExamConfig | null {
   return {
     source,
     subject,
-    bank_id: source === 'user_bank' ? (Number.isFinite(bank_id as any) ? (bank_id as number) : null) : null,
+    bank_id: source === 'user_bank' ? (Number.isFinite(bank_id as number) ? (bank_id as number) : null) : null,
     duration,
     targetTotal,
     types,

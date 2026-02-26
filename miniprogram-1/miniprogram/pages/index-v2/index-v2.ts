@@ -113,8 +113,8 @@ Page({
     recordsPage: 1,
     recordsTotal: 0,
     recordsTotalPages: 1,
-    recordsOngoing: [] as any[],
-    recordsSubmitted: [] as any[],
+    recordsOngoing: [] as Record<string, unknown>[],
+    recordsSubmitted: [] as Record<string, unknown>[],
     recordsLoading: false,
     recordsMsg: '',
     recordsMsgKind: '' as '' | 'error',
@@ -129,8 +129,8 @@ Page({
       last7_count: 0,
       last7_avg_accuracy: 0
     },
-    recentExams: [] as any[],
-    typeDist: [] as any[],
+    recentExams: [] as Record<string, unknown>[],
+    typeDist: [] as Record<string, unknown>[],
     statsFilterKey: '',
     statsScopeText: '',
     statsAdvice: [] as Array<{ title: string; content: string }>,
@@ -240,7 +240,7 @@ Page({
       return;
     }
     try {
-      this.patchData(themeManager.getPageData() as any, undefined, true);
+      this.patchData(themeManager.getPageData(), undefined, true);
     } catch (e) {}
 
     if (!this.data.inited && !this.data.bootstrapping) {
@@ -257,13 +257,13 @@ Page({
         api.getSharedBanks().catch(() => ({ banks: [] }))
       ]);
 
-      const subjectListRaw = (subjectsRes as any)?.subjects || [];
+      const subjectListRaw = (subjectsRes as Record<string, unknown>)?.subjects || [];
       const subjects = Array.isArray(subjectListRaw)
         ? subjectListRaw.filter((x: any) => typeof x === 'string' && x.trim()).map((s: any) => String(s).trim())
         : [];
       const subjectOptions = buildSubjectOptions(subjects);
 
-      const banks = uniqueBanks([...(myBanksRes as any)?.banks || [], ...(sharedBanksRes as any)?.banks || []]);
+      const banks = uniqueBanks([...(myBanksRes as Record<string, unknown>)?.banks as unknown[] || [], ...(sharedBanksRes as Record<string, unknown>)?.banks as unknown[] || []]);
       const bankOptions = buildBankOptions(banks);
       const firstBankId = bankOptions.length ? bankOptions[0].value : null;
       const recordsBankOptions: Option<number>[] = [{ value: 0, label: '全部题库' }, ...bankOptions];
@@ -375,7 +375,7 @@ Page({
     const style = (e?.detail?.style || 'default') as ThemeStyle;
     themeManager.setStyle(style);
     this.patchData({
-      ...(themeManager.getPageData() as any),
+      ...(themeManager.getPageData()),
       drawerOpen: false
     }, undefined, true);
     await syncUserSettingsToServer();
@@ -383,7 +383,7 @@ Page({
 
   onCycleThemeModeTap() {
     const mode = themeManager.cycleMode() as ThemeMode;
-    this.patchData({ ...(themeManager.getPageData() as any), themeMode: mode });
+    this.patchData({ ...(themeManager.getPageData()), themeMode: mode });
   },
 
   onGoNewTab() {

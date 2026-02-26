@@ -20,7 +20,7 @@
   "meta": { ... }               # 可选
 }
 
-注意：该模块只做“导入/导出转换”，不改变数据库表结构。
+注意：该模块只做"导入/导出转换"，不改变数据库表结构。
 """
 
 from __future__ import annotations
@@ -304,7 +304,7 @@ def portable_question_to_internal(
     """把统一 JSON 题目对象转换为内部可入库字段。
 
     scope:
-      - "user_bank": user_bank_questions（选项存纯文本；判断题存“正确/错误”）
+      - "user_bank": user_bank_questions（选项存纯文本；判断题存"正确/错误"）
       - "question_center": questions（选项更推荐存带前缀的列表，便于全站兼容 parse_options）
     """
     errors: List[str] = []

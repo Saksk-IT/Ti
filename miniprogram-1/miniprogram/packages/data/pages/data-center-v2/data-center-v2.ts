@@ -141,7 +141,7 @@ const CHART_IDS_BY_TAB: Record<DataTabKey, string[]> = {
 
 function normalizeTab(raw: any): DataTabKey {
   const v = String(raw || '').trim().toLowerCase();
-  if (v === 'banks' || v === 'mistakes' || v === 'favorites' || v === 'tags') return v as any;
+  if (v === 'banks' || v === 'mistakes' || v === 'favorites' || v === 'tags') return v as DataTabKey;
   return 'global';
 }
 
@@ -164,12 +164,12 @@ function lastActivity16(input: any): string {
 function pickAllSummaryLite(summary: any) {
   const s = summary && typeof summary === 'object' ? summary : {};
   return {
-    answered: toInt((s as any).answered),
-    accuracy: pct1((s as any).accuracy),
-    completion: pct1((s as any).completion),
-    mistakes: toInt((s as any).mistakes),
-    mistakes_times: toInt((s as any).mistakes_times),
-    favorites: toInt((s as any).favorites)
+    answered: toInt(s.answered),
+    accuracy: pct1(s.accuracy),
+    completion: pct1(s.completion),
+    mistakes: toInt(s.mistakes),
+    mistakes_times: toInt(s.mistakes_times),
+    favorites: toInt(s.favorites)
   };
 }
 
@@ -519,7 +519,9 @@ function buildCompatPayloadSafe(res: any, tab: DataTabKey) {
   }
 }
 
-function buildTabVm(tab: DataTabKey, res: any, days: number) {
+type TabVmResult = { payload: Record<string, unknown>; data: Record<string, unknown>; fallbackData?: Record<string, unknown> };
+
+function buildTabVm(tab: DataTabKey, res: any, days: number): TabVmResult {
   if (tab === 'global') {
     const payload = buildCompatPayloadSafe(res, 'global');
     const vm = buildGlobalViewModel(res, days);
@@ -533,7 +535,7 @@ function buildTabVm(tab: DataTabKey, res: any, days: number) {
 
 Page({
   data: {
-    ...(themeManager.getPageData() as any),
+    ...(themeManager.getPageData()),
     drawerOpen: false,
     loading: false,
     inited: false,
@@ -552,16 +554,16 @@ Page({
 
     last_activity_16: '—',
 
-    all_summary: pickAllSummaryLite({}) as any,
+    all_summary: pickAllSummaryLite({}),
     health_score: 0,
 
     global_insights: [] as InsightItem[],
     next_actions: [] as NextActionItem[],
     weakness_rows: [] as WeaknessRow[],
-    recent_mistakes: [] as any[],
-    recent_favorites_public: [] as any[],
+    recent_mistakes: [] as RecentPublicItem[],
+    recent_favorites_public: [] as RecentPublicItem[],
 
-    bank_summary: {} as any,
+    bank_summary: {} as Record<string, unknown>,
     total_questions: 0,
     answered_count: 0,
     accuracy: 0,
@@ -600,7 +602,7 @@ Page({
   },
 
   onReady() {
-    const self: any = this as any;
+    const self = this;
     self.__pageReady = true;
     this.initViewportLazy();
     if (self.__pendingRender) {
@@ -610,7 +612,7 @@ Page({
   },
 
   initViewportLazy() {
-    const self: any = this as any;
+    const self = this;
     if (this.data.lazyStage >= 2) return;
     if (self.__lazyObserver) return;
 
@@ -652,14 +654,14 @@ Page({
       return;
     }
 
-    const self: any = this as any;
+    const self = this;
     const tab: DataTabKey = normalizeTab(this.data.tab);
     const days = this.data.days;
 
     const patch: any = {};
     let hydrated = false;
     try {
-      Object.assign(patch, themeManager.getPageData() as any);
+      Object.assign(patch, themeManager.getPageData());
     } catch (e) {}
 
     const meta = TAB_META[tab] || TAB_META.global;
@@ -681,7 +683,7 @@ Page({
           self.__dcPayloadByTab = {};
           self.__lastLoadedAt = Date.now();
 
-          const built = buildTabVm(tab, cached, days) as any;
+          const built = buildTabVm(tab, cached, days);
           (self.__vmCache || (self.__vmCache = {}))[tab] = built;
           (self.__dcPayloadByTab || (self.__dcPayloadByTab = {}))[tab] = built.payload;
           Object.assign(patch, built.data);
@@ -718,7 +720,7 @@ Page({
   },
 
   onUnload() {
-    const self: any = this as any;
+    const self = this;
     try {
       self.__lazyObserver && typeof self.__lazyObserver.disconnect === 'function' && self.__lazyObserver.disconnect();
     } catch (e) {}
@@ -761,21 +763,21 @@ Page({
   async onDrawerSelectStyle(e: any) {
     const style = (e?.detail?.style || 'default') as ThemeStyle;
     themeManager.setStyle(style);
-    this.setData(themeManager.getPageData() as any);
+    this.setData(themeManager.getPageData());
     this.setData({ drawerOpen: false });
     await syncUserSettingsToServer();
   },
 
   onCycleThemeModeTap() {
     const mode = themeManager.cycleMode() as ThemeMode;
-    this.setData({ ...(themeManager.getPageData() as any), themeMode: mode });
+    this.setData({ ...(themeManager.getPageData()), themeMode: mode });
   },
 
   onDaysTap(e: any) {
     const days = normalizeDays(e?.currentTarget?.dataset?.days);
     if (days === this.data.days) return;
 
-    const self: any = this as any;
+    const self = this;
     self.__dcRes = null;
     self.__dcResDays = 0;
     self.__vmCache = {};
@@ -795,22 +797,22 @@ Page({
   },
 
   ensureTabVm(tab: DataTabKey) {
-    const self: any = this as any;
+    const self = this;
     const res = self.__dcRes;
     if (!res) return null;
     const days = this.data.days;
 
-    const cache = (self.__vmCache || (self.__vmCache = {})) as any;
+    const cache = (self.__vmCache || (self.__vmCache = {})) as Record<string, TabVmResult>;
     if (cache[tab]) return cache[tab];
 
-    const built = buildTabVm(tab, res, days) as any;
+    const built = buildTabVm(tab, res, days);
     cache[tab] = built;
     (self.__dcPayloadByTab || (self.__dcPayloadByTab = {}))[tab] = built.payload;
     return built;
   },
 
   disposeChartsAndObserver() {
-    const self: any = this as any;
+    const self = this;
     try {
       self.__lazyObserver && typeof self.__lazyObserver.disconnect === 'function' && self.__lazyObserver.disconnect();
     } catch (e) {}
@@ -826,7 +828,7 @@ Page({
   },
 
   switchTab(nextTab: DataTabKey) {
-    const self: any = this as any;
+    const self = this;
     const current = normalizeTab(this.data.tab);
     const tab = normalizeTab(nextTab);
     if (tab === current) return;
@@ -862,7 +864,7 @@ Page({
   },
 
   renderCharts(forceInit = false, isDarkOverride?: boolean) {
-    const self: any = this as any;
+    const self = this;
     const tab: DataTabKey = normalizeTab(this.data.tab);
     const payload = (self.__dcPayloadByTab || {})[tab];
     if (!payload) return;
@@ -904,7 +906,7 @@ Page({
           chart = echarts.init(canvas, null, { width, height, devicePixelRatio: dpr });
         } catch (err) {
           console.error('[data-center-v2] echarts.init failed:', id, err);
-          return undefined as any;
+          return undefined as unknown;
         }
         canvas.setChart(chart);
         charts[id] = chart;
@@ -919,7 +921,7 @@ Page({
 
   async loadStats(force = false) {
     if (this.data.loading) return;
-    const self: any = this as any;
+    const self = this;
     const now = Date.now();
     const lastAt = Number(self.__lastLoadedAt || 0) || 0;
     if (!force && now - lastAt < 8000) return;
@@ -944,7 +946,7 @@ Page({
       self.__dcPayloadByTab = {};
 
       stage = 'buildViewModel';
-      const built = buildTabVm(tab, res, days) as any;
+      const built = buildTabVm(tab, res, days);
       (self.__vmCache || (self.__vmCache = {}))[tab] = built;
       (self.__dcPayloadByTab || (self.__dcPayloadByTab = {}))[tab] = built.payload;
 

@@ -30,7 +30,7 @@ Page({
       return;
     }
     try {
-      this.setData(themeManager.getPageData() as any);
+      this.setData(themeManager.getPageData());
     } catch (e) {}
   },
 
@@ -53,14 +53,14 @@ Page({
   async onDrawerSelectStyle(e: any) {
     const style = String(e?.detail?.style || 'default') as ThemeStyle;
     themeManager.setStyle(style);
-    this.setData(themeManager.getPageData() as any);
+    this.setData(themeManager.getPageData());
     this.setData({ drawerOpen: false, msg: '已应用并尝试同步到云端' });
     await syncUserSettingsToServer();
   },
 
   onCycleThemeModeTap() {
     const mode = themeManager.cycleMode() as ThemeMode;
-    this.setData({ ...(themeManager.getPageData() as any), themeMode: mode });
+    this.setData({ ...(themeManager.getPageData()), themeMode: mode });
   },
 
   onContinueLast() {
@@ -76,7 +76,7 @@ Page({
     const mode = String(e?.currentTarget?.dataset?.mode || 'system') as ThemeMode;
     if (mode !== 'light' && mode !== 'dark' && mode !== 'system') return;
     themeManager.setMode(mode);
-    this.setData(themeManager.getPageData() as any);
+    this.setData(themeManager.getPageData());
     const label = mode === 'light' ? '浅色' : mode === 'dark' ? '深色' : '跟随系统';
     this.setData({ msg: `已切换到「${label}」` });
   },
@@ -84,7 +84,7 @@ Page({
   async onStyleTap(e: any) {
     const style = String(e?.currentTarget?.dataset?.style || 'default') as ThemeStyle;
     themeManager.setStyle(style);
-    this.setData(themeManager.getPageData() as any);
+    this.setData(themeManager.getPageData());
     await syncUserSettingsToServer();
     this.setData({ msg: '已应用并尝试同步到云端' });
   },

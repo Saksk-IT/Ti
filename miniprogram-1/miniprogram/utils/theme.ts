@@ -199,9 +199,9 @@ function notifyThemeChange(): void {
   // 获取所有页面并尝试更新
   const pages = getCurrentPages();
   pages.forEach(page => {
-    if (page && typeof (page as any).onThemeChange === 'function') {
+    if (page && typeof (page as Record<string, unknown>).onThemeChange === 'function') {
       try {
-        (page as any).onThemeChange(isDark);
+        ((page as Record<string, unknown>).onThemeChange as (isDark: boolean) => void)(isDark);
       } catch (e) {
         console.error('页面主题变更处理失败:', e);
       }
@@ -303,7 +303,7 @@ export const themeManager = {
    * 在浅色风格之间循环（不包括深色）
    */
   cycleStyle(): ThemeStyle {
-    const idx = LIGHT_STYLE_LIST.indexOf(currentThemeStyle as any);
+    const idx = LIGHT_STYLE_LIST.indexOf(currentThemeStyle);
     const next = LIGHT_STYLE_LIST[(idx + 1) % LIGHT_STYLE_LIST.length];
     this.setStyle(next);
     return next;

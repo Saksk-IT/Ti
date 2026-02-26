@@ -25,10 +25,10 @@ Page({
       return;
     }
     try {
-      this.setData(themeManager.getPageData() as any);
+      this.setData(themeManager.getPageData());
     } catch (e) {}
 
-    const self: any = this as any;
+    const self = this;
     if (!self.__webCreateHintShown) {
       self.__webCreateHintShown = true;
       wx.showToast({ title: '提示：网页端支持更完整的题库导入与管理', icon: 'none' });
@@ -45,7 +45,7 @@ Page({
 
   onCycleThemeModeTap() {
     const mode = themeManager.cycleMode() as ThemeMode;
-    this.setData({ ...(themeManager.getPageData() as any), themeMode: mode });
+    this.setData({ ...(themeManager.getPageData()), themeMode: mode });
   },
 
   onCancel() {

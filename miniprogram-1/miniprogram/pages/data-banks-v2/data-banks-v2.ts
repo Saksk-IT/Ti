@@ -106,7 +106,7 @@ Page({
 
     categoryRows: [] as CategoryRow[],
     bankTopRows: [] as BankRow[],
-    bankRows: [] as any[]
+    bankRows: [] as Record<string, unknown>[]
   },
 
   onLoad(options: any) {
@@ -123,14 +123,14 @@ Page({
     const patch: any = {};
     let hydrated = false;
     try {
-      Object.assign(patch, themeManager.getPageData() as any);
+      Object.assign(patch, themeManager.getPageData());
     } catch (e) {}
     if (!this.data.inited) {
       try {
         const cached = getCachedDataCenter(this.data.days);
         if (cached) {
           Object.assign(patch, buildBanksPatch(cached), { errorMsg: '' });
-          const self: any = this as any;
+          const self = this;
           self.__lastLoadedAt = Date.now();
           hydrated = true;
         }
@@ -170,14 +170,14 @@ Page({
   async onDrawerSelectStyle(e: any) {
     const style = (e?.detail?.style || 'default') as ThemeStyle;
     themeManager.setStyle(style);
-    this.setData(themeManager.getPageData() as any);
+    this.setData(themeManager.getPageData());
     this.setData({ drawerOpen: false });
     await syncUserSettingsToServer();
   },
 
   onCycleThemeModeTap() {
     const mode = themeManager.cycleMode() as ThemeMode;
-    this.setData({ ...(themeManager.getPageData() as any), themeMode: mode });
+    this.setData({ ...(themeManager.getPageData()), themeMode: mode });
   },
 
   onDaysTap(e: any) {
@@ -215,7 +215,7 @@ Page({
 
   async loadStats(force = false) {
     if (this.data.loading) return;
-    const self: any = this as any;
+    const self = this;
     const now = Date.now();
     const lastAt = Number(self.__lastLoadedAt || 0) || 0;
     if (!force && now - lastAt < 10000) return;

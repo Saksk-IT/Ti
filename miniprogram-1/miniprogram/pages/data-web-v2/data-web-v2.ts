@@ -63,7 +63,7 @@ Page({
     }
 
     try {
-      this.setData(themeManager.getPageData() as any);
+      this.setData(themeManager.getPageData());
     } catch (e) {}
 
     this.loadWebDataCenter();
@@ -78,7 +78,7 @@ Page({
   async loadWebDataCenter(force = false) {
     if (this.data.loading) return;
 
-    const self: any = this as any;
+    const self = this;
     const now = Date.now();
     const lastAt = Number(self.__lastLoadedAt || 0) || 0;
     if (!force && now - lastAt < 8000 && this.data.src) return;

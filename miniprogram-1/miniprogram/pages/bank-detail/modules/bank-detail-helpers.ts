@@ -304,8 +304,8 @@ export function normalizeBankDetailOptions(rawOptions: any, qType: string): Deta
   if (Array.isArray(parsed)) {
     parsed.forEach((opt, idx) => {
       if (opt && typeof opt === 'object') {
-        const key = String((opt as any).key ?? letters[idx] ?? '').trim();
-        const value = String((opt as any).value ?? '').trim();
+        const key = String((opt as Record<string, unknown>).key ?? letters[idx] ?? '').trim();
+        const value = String((opt as Record<string, unknown>).value ?? '').trim();
         if (key || value) out.push({ key: key || String(idx + 1), value });
       } else {
         const value = String(opt ?? '').trim();
@@ -318,7 +318,7 @@ export function normalizeBankDetailOptions(rawOptions: any, qType: string): Deta
   if (parsed && typeof parsed === 'object') {
     Object.keys(parsed).forEach((k) => {
       const key = String(k ?? '').trim();
-      const value = String((parsed as any)[k] ?? '').trim();
+      const value = String((parsed as Record<string, unknown>)[k] ?? '').trim();
       if (key || value) out.push({ key, value });
     });
     return out;

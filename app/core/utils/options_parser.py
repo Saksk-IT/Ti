@@ -82,7 +82,7 @@ def parse_options(raw_options: Any) -> List[Dict[str, str]]:
                 options_payload.append({'key': parts[0].strip()[:1].upper(), 'value': parts[1].strip()})
                 continue
 
-        # 兜底：仅在“看起来像前缀”的情况下把首字符当 key。
+        # 兜底：仅在"看起来像前缀"的情况下把首字符当 key。
         # 说明：历史上存在 ["A内容"] 这种格式；但如果是 ["GET"] 这类纯文本，不能误把 G 当成 key。
         first = s[:1].upper()
         second = s[1:2]

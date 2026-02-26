@@ -5,7 +5,7 @@ import { decorateAvatarUrl } from '../../utils/avatar';
 
 Page({
   data: {
-    userInfo: null as any,
+    userInfo: null as Record<string, unknown> | null,
     stats: {
       favorites: 0,
       mistakes: 0

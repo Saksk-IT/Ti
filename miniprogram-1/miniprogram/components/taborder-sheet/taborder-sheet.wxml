@@ -1,0 +1,49 @@
+<view class="taborder-overlay" wx:if="{{open}}" catchtap="onClose">
+  <view class="taborder-sheet" catchtap="onSheetTap" aria-label="自定义排序">
+    <view class="taborder-head">
+      <view class="taborder-head-left">
+        <text class="taborder-title">自定义排序</text>
+        <text class="taborder-sub">调整基础栏顺序，会自动保存。</text>
+      </view>
+      <view class="taborder-x" catchtap="onClose" aria-role="button" aria-label="关闭">
+        <text>×</text>
+      </view>
+    </view>
+
+    <view class="taborder-body">
+      <view class="taborder-item" wx:for="{{tabs}}" wx:key="key">
+        <view class="taborder-left">
+          <view class="taborder-handle" aria-hidden="true"><text>⋮⋮</text></view>
+          <text class="taborder-label">{{item.label}}</text>
+        </view>
+        <view class="taborder-actions">
+          <view
+            class="taborder-mini {{index === 0 ? 'disabled' : ''}}"
+            bindtap="onMove"
+            data-key="{{item.key}}"
+            data-act="up"
+            aria-role="button"
+            aria-label="上移"
+          >
+            <text>↑</text>
+          </view>
+          <view
+            class="taborder-mini {{index === tabs.length - 1 ? 'disabled' : ''}}"
+            bindtap="onMove"
+            data-key="{{item.key}}"
+            data-act="down"
+            aria-role="button"
+            aria-label="下移"
+          >
+            <text>↓</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="taborder-foot">
+      <view class="btn" bindtap="onReset"><text>重置</text></view>
+      <view class="btn btn-primary" bindtap="onClose"><text>完成</text></view>
+    </view>
+  </view>
+</view>

@@ -260,9 +260,9 @@ function notifyFontChange(): void {
   // 获取所有页面并尝试更新
   const pages = getCurrentPages();
   pages.forEach(page => {
-    if (page && typeof (page as any).onFontChange === 'function') {
+    if (page && typeof (page as Record<string, unknown>).onFontChange === 'function') {
       try {
-        (page as any).onFontChange(style);
+        ((page as Record<string, unknown>).onFontChange as (style: string) => void)(style);
       } catch (e) {
         console.error('页面字体变更处理失败:', e);
       }

@@ -1,0 +1,63 @@
+<!-- 抽屉遮罩 -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+
+<!-- Batch Modals -->
+<div id="modalMove" class="drawer" style="right:auto; left:50%; transform: translateX(-50%); width: 420px; height:auto; top: 15%; display:none;">
+  <div class="drawer-header">批量移动到科目</div>
+  <div class="drawer-body">
+    <div class="form-group"><label>目标科目</label><select id="moveTarget"></select></div>
+    <div class="form-group"><small>将把已勾选的题目移动到所选科目。</small></div>
+  </div>
+  <div class="drawer-footer">
+    <button class="btn-secondary" onclick="closeModal('modalMove')">取消</button>
+    <button class="btn-primary" onclick="doBatchMove()">确定</button>
+  </div>
+</div>
+
+<div id="modalTypeChange" class="drawer" style="right:auto; left:50%; transform: translateX(-50%); width: 420px; height:auto; top: 15%; display:none;">
+  <div class="drawer-header">批量修改题型</div>
+  <div class="drawer-body">
+    <div class="form-group"><label>目标题型</label><select id="typeChangeTarget"></select></div>
+    <div class="form-group"><small>将把已勾选的题目修改为所选题型。</small></div>
+  </div>
+  <div class="drawer-footer">
+    <button class="btn-secondary" onclick="closeModal('modalTypeChange')">取消</button>
+    <button class="btn-primary" onclick="doBatchTypeChange()">确定</button>
+  </div>
+</div>
+
+<div id="modalDifficulty" class="drawer" style="right:auto; left:50%; transform: translateX(-50%); width: 420px; height:auto; top: 20%; display:none;">
+  <div class="drawer-header">批量设置难度</div>
+  <div class="drawer-body">
+    <div class="form-group"><label>难度 (1-5)</label><input type="number" id="diffValue" min="1" max="5" value="1"></div>
+  </div>
+  <div class="drawer-footer">
+    <button class="btn-secondary" onclick="closeModal('modalDifficulty')">取消</button>
+    <button class="btn-primary" onclick="doBatchDifficulty()">确定</button>
+  </div>
+</div>
+
+<div id="modalTags" class="drawer" style="right:auto; left:50%; transform: translateX(-50%); width: 420px; height:auto; top: 20%; display:none;">
+  <div class="drawer-header" id="tagsTitle">批量标签</div>
+  <div class="drawer-body">
+    <div class="form-group"><label>标签（逗号分隔）</label><input type="text" id="tagsInput" placeholder="例如：网络, 路由"></div>
+  </div>
+  <div class="drawer-footer">
+    <button class="btn-secondary" onclick="closeModal('modalTags')">取消</button>
+    <button class="btn-primary" onclick="doBatchTags()">确定</button>
+  </div>
+</div>
+
+<div id="modalImport" class="drawer" style="right:auto; left:50%; transform: translateX(-50%); width: 620px; height: 70%; top: 10%; display:none;">
+  <div class="drawer-header">导入题库（预览）</div>
+  <div class="drawer-body">
+    <div class="form-group"><label>粘贴JSON</label><textarea id="importText" rows="8" placeholder='{"questions":[{"id":1001,"type":"single_choice","content":"TCP 属于哪一层？","options":["应用层","传输层","网络层","数据链路层"],"answer":[1],"analysis":"TCP 是传输层协议。","tags":["网络","协议"],"difficulty":2}]}'></textarea></div>
+    <div class="form-group"><label>或 选择JSON文件</label><input type="file" id="importFile" accept="application/json"></div>
+    <div class="form-group"><button class="btn-outline" onclick="renderImportPreview()">预览</button></div>
+    <div class="form-group"><div id="importPreview" style="max-height:220px; overflow:auto; background:#f8f9fa; padding:10px; border-radius:6px; border:1px solid var(--border-color);"></div></div>
+  </div>
+  <div class="drawer-footer">
+    <button class="btn-secondary" onclick="closeModal('modalImport')">取消</button>
+    <button class="btn-primary" onclick="confirmImport()">确认导入</button>
+  </div>
+</div>

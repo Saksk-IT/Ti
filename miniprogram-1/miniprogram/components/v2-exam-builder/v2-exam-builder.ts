@@ -116,8 +116,8 @@ function normalizeTemplateConfig(raw: any): ExamConfig | null {
   const bank_id = raw.bank_id != null && raw.bank_id !== '' ? Number(raw.bank_id) : null;
   const duration = clampInt(raw.duration, 60, 1, 1440);
 
-  const typesRaw = raw.types && typeof raw.types === 'object' ? raw.types : {};
-  const scoresRaw = raw.scores && typeof raw.scores === 'object' ? raw.scores : {};
+  const typesRaw: Record<string, unknown> = raw.types && typeof raw.types === 'object' ? raw.types : {};
+  const scoresRaw: Record<string, unknown> = raw.scores && typeof raw.scores === 'object' ? raw.scores : {};
 
   const types: Record<string, number> = {};
   const scores: Record<string, number> = {};
@@ -125,10 +125,10 @@ function normalizeTemplateConfig(raw: any): ExamConfig | null {
   Object.keys(typesRaw || {}).forEach((k) => {
     const name = String(k || '').trim();
     if (!name) return;
-    const c = clampInt((typesRaw as any)[k], 0, 0, 500);
+    const c = clampInt(typesRaw[k], 0, 0, 500);
     if (c <= 0) return;
     types[name] = c;
-    scores[name] = clampFloat((scoresRaw as any)[k], 1, 0, 1000);
+    scores[name] = clampFloat(scoresRaw[k], 1, 0, 1000);
   });
 
   let targetTotal = raw.targetTotal ?? raw.total ?? raw.target_total;
@@ -141,7 +141,7 @@ function normalizeTemplateConfig(raw: any): ExamConfig | null {
   return {
     source,
     subject,
-    bank_id: source === 'user_bank' ? (Number.isFinite(bank_id as any) ? (bank_id as number) : null) : null,
+    bank_id: source === 'user_bank' ? (Number.isFinite(Number(bank_id)) ? (bank_id as number) : null) : null,
     duration,
     targetTotal,
     types,
@@ -159,6 +159,18 @@ function isSameScope(cfg: ExamConfig, source: ExamSource, subject: string, bankI
   if (source === 'user_bank') return cfg.source === 'user_bank' && Number(cfg.bank_id || 0) === bankId;
   const s = subject || 'all';
   return cfg.source === 'public' && String(cfg.subject || 'all') === s;
+}
+
+type _PrivState = {
+  tplCfgById?: Record<string, ExamConfig>;
+  tplMetaById?: Record<string, string>;
+  lastTplLoadAt?: number;
+};
+const _ps = new WeakMap<object, _PrivState>();
+function _p(ctx: object): _PrivState {
+  let s = _ps.get(ctx);
+  if (!s) { s = {}; _ps.set(ctx, s); }
+  return s;
 }
 
 Component({
@@ -238,26 +250,26 @@ Component({
 
   methods: {
     normalizeSource(): ExamSource {
-      const raw = String((this.properties as any).source || '').trim().toLowerCase();
+      const raw = String(this.data.source || '').trim().toLowerCase();
       return raw === 'user_bank' ? 'user_bank' : 'public';
     },
 
     buildScopeText(): string {
       const source = this.normalizeSource();
       if (source === 'user_bank') {
-        const bankId = Number((this.properties as any).bankId || 0) || 0;
-        const bankName = String((this.properties as any).bankName || '').trim() || (bankId > 0 ? `题库#${bankId}` : '未选择题库');
+        const bankId = Number(this.data.bankId || 0) || 0;
+        const bankName = String(this.data.bankName || '').trim() || (bankId > 0 ? `题库#${bankId}` : '未选择题库');
         return `个人题库 · ${bankName}`;
       }
-      const subject = String((this.properties as any).subject || '').trim() || '全部科目';
+      const subject = String(this.data.subject || '').trim() || '全部科目';
       return `公共题库 · ${subject}`;
     },
 
     async bootstrap() {
       const scopeText = this.buildScopeText();
       const source = this.normalizeSource();
-      const subject = String((this.properties as any).subject || '').trim();
-      const bankId = Number((this.properties as any).bankId || 0) || 0;
+      const subject = String(this.data.subject || '').trim();
+      const bankId = Number(this.data.bankId || 0) || 0;
 
       let emptyText = '暂无题型数据';
       if (source === 'user_bank' && bankId <= 0) emptyText = '请先选择一个题库';
@@ -280,9 +292,9 @@ Component({
           templateMsgKind: ''
         },
         () => {
-          (this as any).__tplCfgById = {};
-          (this as any).__tplMetaById = {};
-          (this as any).__lastTplLoadAt = 0;
+          _p(this).tplCfgById = {};
+          _p(this).tplMetaById = {};
+          _p(this).lastTplLoadAt = 0;
           this.reloadExamTypes();
           this.loadUserTemplates(true);
         }
@@ -295,8 +307,8 @@ Component({
 
     onGoExamCenterTemplates() {
       const source = this.normalizeSource();
-      const subject = String((this.properties as any).subject || '').trim() || 'all';
-      const bankId = Number((this.properties as any).bankId || 0) || 0;
+      const subject = String(this.data.subject || '').trim() || 'all';
+      const bankId = Number(this.data.bankId || 0) || 0;
 
       const qs: string[] = ['tab=templates', `source=${source}`];
       if (source === 'public') qs.push(`subject=${encodeURIComponent(subject)}`);
@@ -306,14 +318,14 @@ Component({
     },
 
     async loadUserTemplates(force: boolean = false) {
-      const rawSubject = String((this.properties as any).subject || '').trim();
+      const rawSubject = String(this.data.subject || '').trim();
       const source = this.normalizeSource();
       const subject = rawSubject || 'all';
-      const bankId = Number((this.properties as any).bankId || 0) || 0;
+      const bankId = Number(this.data.bankId || 0) || 0;
 
       if (source === 'public' && !rawSubject) {
-        (this as any).__tplCfgById = {};
-        (this as any).__tplMetaById = {};
+        _p(this).tplCfgById = {};
+        _p(this).tplMetaById = {};
         this.setData({
           templatesLoading: false,
           templateOptions: [{ id: 0, label: '不使用模板' }],
@@ -325,8 +337,8 @@ Component({
       }
 
       if (source === 'user_bank' && bankId <= 0) {
-        (this as any).__tplCfgById = {};
-        (this as any).__tplMetaById = {};
+        _p(this).tplCfgById = {};
+        _p(this).tplMetaById = {};
         this.setData({
           templatesLoading: false,
           templateOptions: [{ id: 0, label: '不使用模板' }],
@@ -338,7 +350,7 @@ Component({
       }
 
       const now = Date.now();
-      const lastAt = Number((this as any).__lastTplLoadAt || 0) || 0;
+      const lastAt = Number(_p(this).lastTplLoadAt || 0) || 0;
       if (!force && now - lastAt < 5000 && (this.data.templateOptions || []).length > 1) return;
       if (this.data.templatesLoading) return;
 
@@ -364,9 +376,9 @@ Component({
           options.push({ id, label: title });
         });
 
-        (this as any).__tplCfgById = cfgById;
-        (this as any).__tplMetaById = metaById;
-        (this as any).__lastTplLoadAt = now;
+        _p(this).tplCfgById = cfgById;
+        _p(this).tplMetaById = metaById;
+        _p(this).lastTplLoadAt = now;
 
         const currentId = Number((this.data.templateOptions || [])[this.data.templateIndex]?.id || 0);
         let templateIndex = 0;
@@ -386,9 +398,9 @@ Component({
           templatesLoading: false
         });
       } catch (e: any) {
-        (this as any).__tplCfgById = {};
-        (this as any).__tplMetaById = {};
-        (this as any).__lastTplLoadAt = now;
+        _p(this).tplCfgById = {};
+        _p(this).tplMetaById = {};
+        _p(this).lastTplLoadAt = now;
 
         this.setData({
           templatesLoading: false,
@@ -403,11 +415,11 @@ Component({
 
     onTemplatePickerChange(e: any) {
       const idx = Number(e?.detail?.value);
-      const options: TemplateOption[] = (this.data.templateOptions || []) as any;
+      const options: TemplateOption[] = (this.data.templateOptions || []) as TemplateOption[];
       const safeIdx = Number.isFinite(idx) ? Math.max(0, Math.min(options.length - 1, idx)) : 0;
       const opt = options[safeIdx] || { id: 0, label: '不使用模板' };
 
-      const metaById = ((this as any).__tplMetaById || {}) as Record<string, string>;
+      const metaById = (_p(this).tplMetaById || {}) as Record<string, string>;
       const meta = opt.id > 0 ? String(metaById[String(opt.id)] || '') : '';
 
       this.setData({
@@ -423,7 +435,7 @@ Component({
         return;
       }
 
-      const cfgById = ((this as any).__tplCfgById || {}) as Record<string, ExamConfig>;
+      const cfgById = (_p(this).tplCfgById || {}) as Record<string, ExamConfig>;
       const cfg = cfgById[String(opt.id)];
       if (!cfg) {
         this.setTemplateMsg('模板不可用，请稍后刷新', 'error');
@@ -444,21 +456,21 @@ Component({
 
     async getQTypesForScope(): Promise<string[]> {
       const source = this.normalizeSource();
-      const subject = String((this.properties as any).subject || '').trim();
-      const bankId = Number((this.properties as any).bankId || 0) || 0;
+      const subject = String(this.data.subject || '').trim();
+      const bankId = Number(this.data.bankId || 0) || 0;
 
       try {
         if (source === 'user_bank') {
           if (bankId <= 0) return [];
           const info: any = await api.getBankDetail(bankId);
-          const infoData: any = (info as any)?.data || info || {};
+          const infoData = ((info as Record<string, unknown>)?.data || info || {}) as Record<string, unknown>;
           const arr = Array.isArray(infoData?.available_types) ? infoData.available_types : [];
           return (arr || []).filter((x: any) => typeof x === 'string' && String(x).trim()).map((s: any) => String(s).trim());
         }
 
         if (!subject || subject === 'all') return FALLBACK_PUBLIC_Q_TYPES.slice();
         const info: any = await api.getSubjectInfo(subject);
-        const infoData: any = (info as any)?.data || info || {};
+        const infoData = ((info as Record<string, unknown>)?.data || info || {}) as Record<string, unknown>;
         const arr = Array.isArray(infoData?.available_types) ? infoData.available_types : [];
         return (arr || []).filter((x: any) => typeof x === 'string' && String(x).trim()).map((s: any) => String(s).trim());
       } catch {
@@ -496,8 +508,8 @@ Component({
 
     refreshExamSummary() {
       const source = this.normalizeSource();
-      const subject = String((this.properties as any).subject || '').trim();
-      const bankId = Number((this.properties as any).bankId || 0) || 0;
+      const subject = String(this.data.subject || '').trim();
+      const bankId = Number(this.data.bankId || 0) || 0;
       const scopeText = this.buildScopeText();
 
       const rows = this.data.examTypes || [];
@@ -545,8 +557,8 @@ Component({
       this.setData({ examLoading: true, examMsg: '', examMsgKind: '' });
 
       const source = this.normalizeSource();
-      const subject = String((this.properties as any).subject || '').trim();
-      const bankId = Number((this.properties as any).bankId || 0) || 0;
+      const subject = String(this.data.subject || '').trim();
+      const bankId = Number(this.data.bankId || 0) || 0;
 
       if (source === 'public' && !subject) {
         this.setData({ examTypes: [], examLoading: false }, () => this.refreshExamSummary());
@@ -589,9 +601,9 @@ Component({
             if (applyConfig) {
               const cfgTypes = applyConfig.types || {};
               const cfgScores = applyConfig.scores || {};
-              const cfgCount = clampInt((cfgTypes as any)[x.name], 0, 0, x.available);
+              const cfgCount = clampInt(cfgTypes[x.name], 0, 0, x.available);
               const enabled = cfgCount > 0;
-              const score = enabled ? clampFloat((cfgScores as any)[x.name], 1, 0, 1000) : 1;
+              const score = enabled ? clampFloat(cfgScores[x.name], 1, 0, 1000) : 1;
               return { name: x.name, enabled, available: x.available, count: enabled ? cfgCount : 0, score, subtotalText: '0' };
             }
 
@@ -714,8 +726,8 @@ Component({
 
     collectTemplateConfig(): (ExamConfig & { types: Record<string, number>; scores: Record<string, number> }) | null {
       const source = this.normalizeSource();
-      const subjectRaw = String((this.properties as any).subject || '').trim();
-      const bankId = Number((this.properties as any).bankId || 0) || 0;
+      const subjectRaw = String(this.data.subject || '').trim();
+      const bankId = Number(this.data.bankId || 0) || 0;
 
       if (source === 'public' && !subjectRaw) return null;
       if (source === 'user_bank' && bankId <= 0) return null;
@@ -743,7 +755,7 @@ Component({
         types,
         scores
       };
-      return cfg as any;
+      return cfg as ExamConfig;
     },
 
     async onConfirmSaveTemplate() {
@@ -782,8 +794,8 @@ Component({
 
     collectExamPayload(): { source: ExamSource; subject: string; bank_id: number | null; duration: number; types: Record<string, number>; scores: Record<string, number> } | null {
       const source = this.normalizeSource();
-      const subject = String((this.properties as any).subject || '').trim();
-      const bankId = Number((this.properties as any).bankId || 0) || 0;
+      const subject = String(this.data.subject || '').trim();
+      const bankId = Number(this.data.bankId || 0) || 0;
 
       if (source === 'public' && !subject) return null;
       if (source === 'user_bank' && bankId <= 0) return null;
@@ -803,7 +815,7 @@ Component({
 
       return {
         source,
-        subject: source === 'user_bank' ? (String((this.properties as any).bankName || '').trim() || 'all') : subject,
+        subject: source === 'user_bank' ? (String(this.data.bankName || '').trim() || 'all') : subject,
         bank_id: source === 'user_bank' ? bankId : null,
         duration,
         types,

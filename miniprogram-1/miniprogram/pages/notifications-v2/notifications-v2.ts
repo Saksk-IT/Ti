@@ -193,7 +193,7 @@ Page({
     }
 
     try {
-      this.setData(themeManager.getPageData() as any);
+      this.setData(themeManager.getPageData());
     } catch (e) {}
 
     this.fetchList(false);
@@ -218,14 +218,14 @@ Page({
   async onDrawerSelectStyle(e: any) {
     const style = (e?.detail?.style || 'default') as ThemeStyle;
     themeManager.setStyle(style);
-    this.setData(themeManager.getPageData() as any);
+    this.setData(themeManager.getPageData());
     this.setData({ drawerOpen: false });
     await syncUserSettingsToServer();
   },
 
   onCycleThemeModeTap() {
     const mode = themeManager.cycleMode() as ThemeMode;
-    this.setData({ ...(themeManager.getPageData() as any), themeMode: mode });
+    this.setData({ ...(themeManager.getPageData()), themeMode: mode });
   },
 
   onTabTap(e: any) {
@@ -258,7 +258,7 @@ Page({
   onToggleReadExpand(e: any) {
     const id = toInt(e?.currentTarget?.dataset?.id);
     if (!id) return;
-    const self: any = this as any;
+    const self = this;
     if (!self.__expandedReadIds) self.__expandedReadIds = new Set<number>();
     const s: Set<number> = self.__expandedReadIds as Set<number>;
     if (s.has(id)) s.delete(id);
@@ -336,7 +336,7 @@ Page({
 
     const readFilteredCount = readFiltered.length;
 
-    const self: any = this as any;
+    const self = this;
     if (!self.__expandedReadIds) self.__expandedReadIds = new Set<number>();
     const expanded: Set<number> = self.__expandedReadIds as Set<number>;
 
@@ -377,7 +377,7 @@ Page({
   async fetchList(force = false) {
     if (this.data.loading) return;
 
-    const self: any = this as any;
+    const self = this;
     const now = Date.now();
     const lastAt = Number(self.__lastLoadedAt || 0) || 0;
     const isFirstLoad = !this.data.inited;
@@ -391,14 +391,14 @@ Page({
       const rawList = Array.isArray(res) ? res : [];
       const list: NotiVM[] = rawList
         .map((n) => {
-          const id = toInt((n as any)?.id);
+          const id = toInt(n?.id);
           if (!id) return null;
-          const title = ((n as any)?.title || '通知').toString();
-          const content = ((n as any)?.content || '').toString();
-          const typeKey = normalizeType((n as any)?.n_type);
-          const priority = toInt((n as any)?.priority);
-          const createdAt = ((n as any)?.created_at || '').toString();
-          const isRead = !!(n as any)?.is_read;
+          const title = (n?.title || '通知').toString();
+          const content = (n?.content || '').toString();
+          const typeKey = normalizeType(n?.n_type);
+          const priority = toInt(n?.priority);
+          const createdAt = (n?.created_at || '').toString();
+          const isRead = !!n?.is_read;
           return {
             id,
             title,
@@ -419,7 +419,7 @@ Page({
       let tab = this.data.tab;
       const preset = (self.__presetTab || '') as string;
       if (isFirstLoad) {
-        if (preset === 'read' || preset === 'unread') tab = preset as any;
+        if (preset === 'read' || preset === 'unread') tab = preset;
         else tab = list.some((n) => !n.isRead) ? 'unread' : 'read';
       }
 

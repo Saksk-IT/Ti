@@ -665,16 +665,16 @@ def compute_extra_stats(uid: int, window_days: int, subject_ids: list,
     except Exception:
         recent_favorites_public = []
 
-return {
-    'mistakes_daily': mistakes_daily,
-    'favorites_daily': favorites_daily,
-    'mistakes_by_type': mistakes_by_type,
-    'mistakes_by_difficulty': mistakes_by_difficulty,
-    'favorites_by_type': favorites_by_type,
-    'favorites_by_difficulty': favorites_by_difficulty,
-    'mistakes_top_items': mistakes_top_items,
-    'favorites_top_items': favorites_top_items,
-    'recent_mistakes_bank': recent_mistakes_bank,
-    'recent_favorites_bank': recent_favorites_bank,
-    'recent_favorites_public': recent_favorites_public,
-}
+    return {
+        'mistakes_daily': mistakes_daily,
+        'favorites_daily': favorites_daily,
+        'mistakes_by_type': mistakes_by_type,
+        'mistakes_by_difficulty': mistakes_by_difficulty,
+        'favorites_by_type': favorites_by_type,
+        'favorites_by_difficulty': favorites_by_difficulty,
+        'mistakes_top_items': mistakes_top_items,
+        'favorites_top_items': favorites_top_items,
+        'recent_mistakes_bank': recent_mistakes_bank,
+        'recent_favorites_bank': recent_favorites_bank,
+        'recent_favorites_public': recent_favorites_public,
+    }

@@ -79,7 +79,7 @@ def api_ai_explain():
     model = (current_app.config.get('DASHSCOPE_MODEL') or '').strip()
     timeout = int(current_app.config.get('DASHSCOPE_TIMEOUT') or 25)
 
-    # 未配置密钥：保留旧行为，返回“占位解析”，同时提示如何配置
+    # 未配置密钥：保留旧行为，返回"占位解析"，同时提示如何配置
     if not api_key:
         tip = '（未配置 DASHSCOPE_API_KEY，当前为模板解析；配置后将自动使用百炼模型）'
         lines = [tip, '', '建议解题思路：', '1) 先圈出关键词与限定条件。', '2) 把题干转为可验证的结论/公式/步骤。', '3) 对选择题：用排除法 + 代入验证。', '4) 对填空/简答题：列步骤，逐步推导，最后回代检查。']

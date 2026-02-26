@@ -116,7 +116,7 @@ function setQuizLayoutTheme(theme: any): void {
 
 function getQuizHotkeys(): Record<string, any> {
   const v = readStorageJson(QUIZ_HOTKEYS_KEY);
-  if (v && typeof v === 'object' && !Array.isArray(v)) return v as any;
+  if (v && typeof v === 'object' && !Array.isArray(v)) return v as Record<string, unknown>;
   return {};
 }
 

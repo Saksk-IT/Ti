@@ -37,9 +37,9 @@ Page({
     reinforceKind: '' as '' | 'wrong' | 'similar', // 加强：rk=wrong/similar（仅 mode=reinforce 生效，用于进度隔离）
     reinforceIds: [] as number[],                 // 加强：ids=1,2,3（指定题目列表）
     startId: 0,                // 从搜索等入口指定起始题目ID
-    questions: [] as any[],    // 题目列表
+    questions: [] as Record<string, unknown>[],    // 题目列表
     currentIndex: 0,           // 当前题目索引
-    currentQuestion: null as any,  // 当前题目对象
+    currentQuestion: null as Record<string, unknown> | null,  // 当前题目对象
     selectedAnswer: '',        // 选中的答案（刷题模式 - 单选题/判断题/填空题）
     selectedAnswers: [] as string[], // 多选题答案数组
     showAnswer: false,         // 是否显示答案（刷题模式）
@@ -65,17 +65,17 @@ Page({
     },
 
     // 字体大小（仅影响答题页字体）
-    quizFontSize: 'md' as any,    // 'sm' | 'md' | 'lg'
-    quizFontClass: 'quiz-font-md' as any,
-    themeStyleName: '默认' as any,
+    quizFontSize: 'md' as 'sm' | 'md' | 'lg',
+    quizFontClass: 'quiz-font-md',
+    themeStyleName: '默认',
 
     // 主题（深浅/风格）
     isDarkMode: false,
-    themeMode: 'system' as any,
-    themeClass: '' as any,
-    themeStyle: 'default' as any,
-    themeStyleClass: '' as any,
-    themeCtaColor: '#007AFF' as any,
+    themeMode: 'system' as string,
+    themeClass: '',
+    themeStyle: 'default' as string,
+    themeStyleClass: '',
+    themeCtaColor: '#007AFF',
 
     // AI 解析
     showAIExplain: false,
@@ -127,26 +127,26 @@ Page({
   },
 
   // === 进度同步（与 Web 端 /api/progress 互通）===
-  progressKey: '' as any,
-  progressStatusMap: {} as any,
-  progressAnswerMap: {} as any,
-  progressOrder: null as any,
-  saveProgressTimer: null as any,
-  syncPending: false as any,
-  lastSavedPayload: null as any,
-  practiceSettingsKey: 'quiz_practice_settings_v1' as any,
-  quizFontSizeKey: 'quiz_font_size_v1' as any,
-  sessionStartedAt: 0 as any,
+  progressKey: '' as string,
+  progressStatusMap: {} as Record<string, string>,
+  progressAnswerMap: {} as Record<string, unknown>,
+  progressOrder: null as number[] | null,
+  saveProgressTimer: null as ReturnType<typeof setTimeout> | null,
+  syncPending: false as boolean,
+  lastSavedPayload: null as Record<string, unknown> | null,
+  practiceSettingsKey: 'quiz_practice_settings_v1' as string,
+  quizFontSizeKey: 'quiz_font_size_v1' as string,
+  sessionStartedAt: 0 as number,
   setDataBatcher: null as null | ((patch: Record<string, any>, callback?: () => void, options?: { immediate?: boolean }) => void),
 
   ensureSetDataBatcher() {
-    if ((this as any).setDataBatcher) return;
-    (this as any).setDataBatcher = createSetDataBatcher(this.setData.bind(this));
+    if (this.setDataBatcher) return;
+    this.setDataBatcher = createSetDataBatcher(this.setData.bind(this));
   },
 
   patchData(patch: Record<string, any>, callback?: () => void, immediate: boolean = false) {
     this.ensureSetDataBatcher();
-    const fn = (this as any).setDataBatcher;
+    const fn = this.setDataBatcher;
     if (typeof fn === 'function') {
       fn(patch, callback, { immediate });
       return;
@@ -220,7 +220,7 @@ Page({
 
     const rkRaw = String(options.rk || '').trim().toLowerCase();
     const reinforceKind: '' | 'wrong' | 'similar' =
-      mode === 'reinforce' && (rkRaw === 'wrong' || rkRaw === 'similar') ? (rkRaw as any) : '';
+      mode === 'reinforce' && (rkRaw === 'wrong' || rkRaw === 'similar') ? (rkRaw as '' | 'wrong' | 'similar') : '';
     const reinforceIds = mode === 'reinforce' ? parseIdList(options.ids || options.question_ids, 200) : [];
 
     if (mode === 'reinforce' && !reinforceIds.length) {
@@ -371,7 +371,7 @@ Page({
 
   normalizeQuizFontSize(raw: any): 'sm' | 'md' | 'lg' {
     const v = String(raw || '').trim().toLowerCase();
-    return (v === 'sm' || v === 'md' || v === 'lg') ? (v as any) : 'md';
+    return (v === 'sm' || v === 'md' || v === 'lg') ? (v as 'sm' | 'md' | 'lg') : 'md';
   },
 
   initQuizFontSize() {
@@ -451,7 +451,7 @@ Page({
     if (!key) return;
 
     const next = Object.assign({}, this.data.practiceSettings);
-    (next as any)[key] = value;
+    (next as Record<string, boolean>)[key] = value;
     this.setData({ practiceSettings: next }, () => this.savePracticeSettings());
   },
 
@@ -1356,7 +1356,7 @@ Page({
     const url = String(urls[idx] || '').trim();
     if (!url || !/^https?:\/\//i.test(url)) return;
 
-    const self: any = this as any;
+    const self = this;
     self.__imgDlTried = self.__imgDlTried || {};
     const key = `${q && q.id ? q.id : 'q'}_${idx}_${url}`;
     if (self.__imgDlTried[key]) return;
@@ -1366,7 +1366,7 @@ Page({
       url,
       timeout: 15000,
       success: (res) => {
-        const tempFilePath = String((res && (res as any).tempFilePath) || '').trim();
+        const tempFilePath = String((res && res.tempFilePath) || '').trim();
         if (!tempFilePath) return;
 
         const nextUrls = urls.slice();
@@ -1729,8 +1729,8 @@ Page({
     const options: OptionItem[] = [];
     for (const item of optList) {
       if (item && typeof item === 'object') {
-        const rawKey = (item as any).key;
-        const rawValue = (item as any).value;
+        const rawKey = (item as Record<string, unknown>).key;
+        const rawValue = (item as Record<string, unknown>).value;
         const key = String(rawKey == null ? '' : rawKey).trim();
         const value = stripHtmlToText(rawValue);
         if (key || value) {

@@ -55,11 +55,11 @@ function buildExportObject(tab: DataTabKey, days: number, payload: any) {
 }
 
 function pickAllSummaryLite(summary: any) {
-  const s = summary && typeof summary === 'object' ? summary : {};
+  const s = summary && typeof summary === 'object' ? summary : {} as Record<string, unknown>;
   return {
-    answered: toInt((s as any).answered),
-    accuracy: pct1((s as any).accuracy),
-    completion: pct1((s as any).completion)
+    answered: toInt(s.answered),
+    accuracy: pct1(s.accuracy),
+    completion: pct1(s.completion)
   };
 }
 
@@ -170,7 +170,7 @@ const CHART_IDS: string[] = [
 
 Page({
   data: {
-    ...(themeManager.getPageData() as any),
+    ...(themeManager.getPageData()),
     drawerOpen: false,
     loading: false,
     inited: false,
@@ -184,7 +184,7 @@ Page({
 
     last_activity_16: '—',
 
-    all_summary: {} as any,
+    all_summary: {} as Record<string, unknown>,
     health_score: 0,
 
     global_insights: [] as InsightItem[],
@@ -207,7 +207,7 @@ Page({
   },
 
   onReady() {
-    const self: any = this as any;
+    const self = this;
     self.__pageReady = true;
     this.initViewportLazy();
     if (self.__pendingRender) {
@@ -217,7 +217,7 @@ Page({
   },
 
   initViewportLazy() {
-    const self: any = this as any;
+    const self = this;
     if (this.data.lazyStage >= 2) return;
     if (self.__lazyObserver) return;
 
@@ -259,14 +259,14 @@ Page({
     const patch: any = {};
     let hydrated = false;
     try {
-      Object.assign(patch, themeManager.getPageData() as any);
+      Object.assign(patch, themeManager.getPageData());
     } catch (e) {}
 
     if (!this.data.inited) {
       try {
         const cached = getCachedDataCenter(this.data.days);
         if (cached) {
-          const self: any = this as any;
+          const self = this;
           self.__lastLoadedAt = Date.now();
           try {
             self.__dcPayload = buildDataCenterCompatPayload(cached, 'global');
@@ -312,7 +312,7 @@ Page({
   },
 
   onUnload() {
-    const self: any = this as any;
+    const self = this;
     try {
       self.__lazyObserver && typeof self.__lazyObserver.disconnect === 'function' && self.__lazyObserver.disconnect();
     } catch (e) {}
@@ -355,14 +355,14 @@ Page({
   async onDrawerSelectStyle(e: any) {
     const style = (e?.detail?.style || 'default') as ThemeStyle;
     themeManager.setStyle(style);
-    this.setData(themeManager.getPageData() as any);
+    this.setData(themeManager.getPageData());
     this.setData({ drawerOpen: false });
     await syncUserSettingsToServer();
   },
 
   onCycleThemeModeTap() {
     const mode = themeManager.cycleMode() as ThemeMode;
-    this.setData({ ...(themeManager.getPageData() as any), themeMode: mode });
+    this.setData({ ...(themeManager.getPageData()), themeMode: mode });
   },
 
   onDaysTap(e: any) {
@@ -376,7 +376,7 @@ Page({
   onTabTap(e: any) {
     const raw = String(e?.currentTarget?.dataset?.tab || '').trim().toLowerCase();
     const tab: DataTabKey =
-      raw === 'banks' || raw === 'mistakes' || raw === 'favorites' || raw === 'tags' ? (raw as any) : 'global';
+      raw === 'banks' || raw === 'mistakes' || raw === 'favorites' || raw === 'tags' ? (raw as DataTabKey) : 'global';
     const days = this.data.days;
     const base = resolveDataTabUrl(tab);
     safeNavigate(`${base}?days=${encodeURIComponent(String(days))}`, 'redirectTo');
@@ -410,7 +410,7 @@ Page({
   },
 
   renderCharts(forceInit = false, isDarkOverride?: boolean) {
-    const self: any = this as any;
+    const self = this;
     const payload = self.__dcPayload;
     if (!payload) return;
 
@@ -451,7 +451,7 @@ Page({
           chart = echarts.init(canvas, null, { width, height, devicePixelRatio: dpr });
         } catch (err) {
           console.error('[data-global-v2] echarts.init failed:', id, err);
-          return undefined as any;
+          return undefined as unknown;
         }
         canvas.setChart(chart);
         charts[id] = chart;
@@ -466,7 +466,7 @@ Page({
 
   async loadStats(force = false) {
     if (this.data.loading) return;
-    const self: any = this as any;
+    const self = this;
     const now = Date.now();
     const lastAt = Number(self.__lastLoadedAt || 0) || 0;
     if (!force && now - lastAt < 8000) return;

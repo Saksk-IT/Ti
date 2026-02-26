@@ -4,7 +4,7 @@
 
 用途：
 - 读接口短 TTL 缓存（将响应 JSON 存入 Redis）
-- “版本号失效”策略：写接口只需 bump 版本号，读接口 key 自动变化
+- "版本号失效"策略：写接口只需 bump 版本号，读接口 key 自动变化
 """
 
 from __future__ import annotations

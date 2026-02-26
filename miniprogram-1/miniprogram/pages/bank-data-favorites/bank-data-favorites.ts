@@ -140,7 +140,7 @@ Page({
       return;
     }
     try {
-      this.setData(themeManager.getPageData() as any);
+      this.setData(themeManager.getPageData());
     } catch (e) {}
 
     if (!this.data.inited && !this.data.loading) {
@@ -150,7 +150,7 @@ Page({
 
   onCycleThemeModeTap() {
     const mode = themeManager.cycleMode() as ThemeMode;
-    this.setData({ ...(themeManager.getPageData() as any), themeMode: mode });
+    this.setData({ ...(themeManager.getPageData()), themeMode: mode });
   },
 
   onDetailTabTap(e: any) {
@@ -168,7 +168,7 @@ Page({
     if (!Number.isFinite(bankId) || bankId <= 0) return;
 
     const pages = getCurrentPages();
-    const prev = pages.length >= 2 ? (pages[pages.length - 2] as any) : null;
+    const prev = pages.length >= 2 ? (pages[pages.length - 2] as Record<string, unknown>) : null;
     const prevRoute = prev?.route;
     const prevId = Number(prev?.data?.bankId || 0);
 
@@ -236,7 +236,7 @@ Page({
       throw new Error('缺少题库信息');
     }
     const res = await api.getBankDetail(bankId);
-    const bankData = (res as any)?.data || res || {};
+    const bankData = (res as Record<string, unknown>)?.data || res || {};
     const name = String(bankData?.name || '').trim();
     const description = String(bankData?.description || '').trim();
     this.setData({ bankName: name || `题库${bankId}`, bankDescription: description });

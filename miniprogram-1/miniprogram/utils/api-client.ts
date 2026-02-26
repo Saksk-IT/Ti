@@ -54,7 +54,7 @@ function maybeShowDevHostHint(apiBaseUrl: string, message: string): void {
 function shouldUseSummaryLog(data: any): boolean {
   if (!data || typeof data !== 'object') return false;
   if (!Object.prototype.hasOwnProperty.call(data, 'data')) return false;
-  const payload = (data as any).data;
+  const payload = data.data;
   if (Array.isArray(payload)) return payload.length > 50;
   if (payload && typeof payload === 'object') return Object.keys(payload).length > 30;
   return false;
@@ -63,12 +63,12 @@ function shouldUseSummaryLog(data: any): boolean {
 function buildResponseLogSummary(data: any): any {
   if (!data || typeof data !== 'object') return data;
   const out: any = {};
-  if (Object.prototype.hasOwnProperty.call(data, 'status')) out.status = (data as any).status;
-  if (Object.prototype.hasOwnProperty.call(data, 'code')) out.code = (data as any).code;
-  if (Object.prototype.hasOwnProperty.call(data, 'request_id')) out.request_id = (data as any).request_id;
-  if (Object.prototype.hasOwnProperty.call(data, 'message')) out.message = (data as any).message;
+  if (Object.prototype.hasOwnProperty.call(data, 'status')) out.status = data.status;
+  if (Object.prototype.hasOwnProperty.call(data, 'code')) out.code = data.code;
+  if (Object.prototype.hasOwnProperty.call(data, 'request_id')) out.request_id = data.request_id;
+  if (Object.prototype.hasOwnProperty.call(data, 'message')) out.message = data.message;
   if (Object.prototype.hasOwnProperty.call(data, 'data')) {
-    const payload = (data as any).data;
+    const payload = data.data;
     if (Array.isArray(payload)) out.data = `Array(${payload.length})`;
     else if (payload && typeof payload === 'object') out.data = `Object(keys=${Object.keys(payload).length})`;
     else out.data = payload;
@@ -184,10 +184,10 @@ export function request<T = any>(
 
 export function unwrapApiEnvelopeMaybe(input: any): any {
   if (!input || typeof input !== 'object') return input;
-  const hasStatus = typeof (input as any).status === 'string';
+  const hasStatus = typeof input.status === 'string';
   const hasCode = Object.prototype.hasOwnProperty.call(input, 'code');
   if ((hasStatus || hasCode) && Object.prototype.hasOwnProperty.call(input, 'data')) {
-    return (input as any).data;
+    return input.data;
   }
   return input;
 }
@@ -204,7 +204,7 @@ function shallowCloneObject(input: any): any {
 
 export function normalizeDataCenterContext(input: any): any {
   const maybeUnwrapped = unwrapApiEnvelopeMaybe(input);
-  const ctx = maybeUnwrapped && typeof maybeUnwrapped === 'object' ? (maybeUnwrapped as any) : {};
+  const ctx = maybeUnwrapped && typeof maybeUnwrapped === 'object' ? maybeUnwrapped : {};
   const out: any = shallowCloneObject(ctx);
 
   const nested = unwrapApiEnvelopeMaybe(out);

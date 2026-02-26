@@ -1,4 +1,5 @@
 /// <reference path="./types/index.d.ts" />
+/// <reference path="./wx-extensions.d.ts" />
 
 interface IAppOption {
   globalData: {

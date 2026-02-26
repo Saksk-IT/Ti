@@ -32,7 +32,7 @@ Page({
     canShuffleOptions: true,
     
     loading: false,              // 加载状态
-    debounceTimer: null as any   // 防抖定时器
+    debounceTimer: null as ReturnType<typeof setTimeout> | null
   },
 
   getSettingsStorageKey(): string {
@@ -151,14 +151,14 @@ Page({
 
       if (this.data.sourceType === 'bank' && this.data.bankId) {
         const res: any = await api.getBankDetail(this.data.bankId);
-        info = (res && (res as any).data) ? (res as any).data : (res || {});
+        info = ((res as Record<string, unknown>)?.data || res || {}) as Record<string, unknown>;
         const name = info.name || `题库${this.data.bankId}`;
         if (name && name !== this.data.subject) {
           this.setData({ subject: name });
         }
       } else {
         const res: any = await api.getSubjectInfo(this.data.subject);
-        info = (res && (res as any).data) ? (res as any).data : (res || {});
+        info = ((res as Record<string, unknown>)?.data || res || {}) as Record<string, unknown>;
       }
 
       const types = Array.isArray(info.available_types) ? info.available_types : [];
@@ -293,7 +293,7 @@ Page({
         if (selectedTag && selectedTag !== 'all') params.tag = selectedTag;
 
         const res: any = await api.getBankUserCounts(bankId, params);
-        const data = (res && (res as any).data) ? (res as any).data : (res || {});
+        const data = ((res as Record<string, unknown>)?.data || res || {}) as Record<string, unknown>;
 
         this.setData({
           stats: {

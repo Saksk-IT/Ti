@@ -1,0 +1,148 @@
+{% block content %}
+<div class="container">
+    <!-- 页面标题 -->
+    <div class="page-header">
+        <div class="page-title">
+            <span>题目管理</span>
+            <span class="subject-badge" id="subjectName">{{ subject.name if subject else '科目' }}</span>
+        </div>
+        <button class="btn-secondary" onclick="window.location.href='/admin/subjects'">← 返回科目列表</button>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="stats-row">
+        <div class="stat-card total">
+            <div class="stat-card-label">总题目数</div>
+            <div class="stat-card-value" id="statTotal">0</div>
+        </div>
+        <div class="stat-card choice">
+            <div class="stat-card-label">选择题</div>
+            <div class="stat-card-value" id="statChoice">0</div>
+        </div>
+        <div class="stat-card blank">
+            <div class="stat-card-label">填空题</div>
+            <div class="stat-card-value" id="statBlank">0</div>
+        </div>
+        <div class="stat-card judge">
+            <div class="stat-card-label">判断题</div>
+            <div class="stat-card-value" id="statJudge">0</div>
+        </div>
+    </div>
+
+    <!-- 工具栏 -->
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <div class="dropdown">
+                <button class="btn-primary" onclick="toggleDropdown('add-menu')">新增题目</button>
+                <div id="add-menu" class="dropdown-menu add-menu">
+                    <button class="dropdown-item" onclick="openDrawer(); toggleDropdown('add-menu');">
+                        <span class="item-icon">➕</span>
+                        <span class="item-content">
+                            <span class="item-text">新增题目</span>
+                            <span class="item-desc">手动创建新题目</span>
+                        </span>
+                    </button>
+                    <button class="dropdown-item" onclick="openImportModal(); toggleDropdown('add-menu');">
+                        <span class="item-icon">📥</span>
+                        <span class="item-content">
+                            <span class="item-text">导入题库</span>
+                            <span class="item-desc">从JSON文件或文本导入</span>
+                        </span>
+                    </button>
+                    <button class="dropdown-item" onclick="document.getElementById('importPackageFile').click(); toggleDropdown('add-menu');">
+                        <span class="item-icon">📦</span>
+                        <span class="item-content">
+                            <span class="item-text">导入题目包</span>
+                            <span class="item-desc">从ZIP压缩包导入</span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button class="btn-primary" onclick="toggleDropdown('export-menu')">导出本科目</button>
+                <div id="export-menu" class="dropdown-menu add-menu">
+                    <button class="dropdown-item" onclick="exportSubject(); toggleDropdown('export-menu');">
+                       
+                        <span class="item-content">
+                            <span class="item-text">导出json</span>
+                          
+                        </span>
+                    </button>
+                    <button class="dropdown-item" onclick="exportToExcel(); toggleDropdown('export-menu');">
+                      
+                        <span class="item-content">
+                            <span class="item-text">导出Excel</span>
+                            
+                        </span>
+                    </button>
+                    <button class="dropdown-item" onclick="exportToWord(); toggleDropdown('export-menu');">
+                      
+                        <span class="item-content">
+                            <span class="item-text">导出Word</span>
+                            
+                        </span>
+                    </button>
+                    <button class="dropdown-item" onclick="exportPackage(); toggleDropdown('export-menu');">
+                      
+                        <span class="item-content">
+                            <span class="item-text">导出题目包</span>
+                           
+                        </span>
+                    </button>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button class="btn-outline" onclick="toggleDropdown('batch-menu')">批量操作</button>
+                <div id="batch-menu" class="dropdown-menu">
+                    <button class="btn" onclick="openBatchMove()">移动科目</button>
+                    <button class="btn" onclick="openBatchTypeChange()">修改题型</button>
+                    <button class="btn" onclick="openBatchDifficulty()">设置难度</button>
+                    <button class="btn" onclick="openBatchTags()">修改标签</button>
+                </div>
+            </div>
+            <button class="btn-secondary" onclick="startDuplicateCheck()">查重去重</button>
+        </div>
+        <div class="toolbar-right">
+            <button class="btn-danger" id="batchDeleteBtn" onclick="batchDeleteQuestions()">批量删除</button>
+            <input type="file" id="importPackageFile" style="display: none;" accept=".zip" onchange="uploadPackage()">
+            <select id="typeFilter" onchange="loadQuestions()">
+                <option value="all">全部题型</option>
+            </select>
+            <div class="dropdown">
+                <button class="btn-outline" onclick="toggleDropdown('col-menu')">显示列</button>
+                <div id="col-menu" class="dropdown-menu"></div>
+            </div>
+            <div class="search-box">
+                <span class="search-icon"></span>
+                <input type="text" id="searchInput" placeholder="搜索题干内容..." oninput="searchQuestions()">
+            </div>
+        </div>
+    </div>
+
+    <!-- 表格 -->
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:50px;"><input type="checkbox" id="selectAll"></th>
+                    <th data-col="id" style="width:80px;">序号</th>
+                    <th data-col="q_type" style="width:100px;">题型</th>
+                    <th data-col="content" class="col-content">题干</th>
+                    <th data-col="difficulty" style="width:100px;">难度</th>
+                    <th data-col="tags" style="width:150px;">标签</th>
+                    <th data-col="created_by" style="width:100px;">创建者</th>
+                    <th data-col="updated_at" style="width:160px;">更新时间</th>
+                    <th data-col="actions" style="width:180px;">操作</th>
+                </tr>
+            </thead>
+            <tbody id="questionTableBody">
+                <tr>
+                    <td colspan="9" class="loading-row">
+                        <span class="loading-spinner"></span>
+                        <span>加载中...</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

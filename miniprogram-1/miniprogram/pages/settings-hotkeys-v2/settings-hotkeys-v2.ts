@@ -67,7 +67,7 @@ function readHotkeys(): Record<string, string> {
     if (!js || typeof js !== 'object' || Array.isArray(js)) return { ...DEFAULT_QUIZ_HOTKEYS };
     const out: Record<string, string> = { ...DEFAULT_QUIZ_HOTKEYS };
     Object.keys(DEFAULT_QUIZ_HOTKEYS).forEach((k) => {
-      if (typeof (js as any)[k] !== 'undefined') out[k] = String((js as any)[k] || '').trim();
+      if (typeof (js as Record<string, unknown>)[k] !== 'undefined') out[k] = String((js as Record<string, unknown>)[k] || '').trim();
     });
     return out;
   } catch (e) {
@@ -125,7 +125,7 @@ Page({
       return;
     }
     try {
-      this.setData(themeManager.getPageData() as any);
+      this.setData(themeManager.getPageData());
     } catch (e) {}
     this.refreshRows();
   },
@@ -153,14 +153,14 @@ Page({
   async onDrawerSelectStyle(e: any) {
     const style = (e?.detail?.style || 'default') as ThemeStyle;
     themeManager.setStyle(style);
-    this.setData(themeManager.getPageData() as any);
+    this.setData(themeManager.getPageData());
     this.setData({ drawerOpen: false });
     await syncUserSettingsToServer();
   },
 
   onCycleThemeModeTap() {
     const mode = themeManager.cycleMode() as ThemeMode;
-    this.setData({ ...(themeManager.getPageData() as any), themeMode: mode });
+    this.setData({ ...(themeManager.getPageData()), themeMode: mode });
   },
 
   onContinueLast() {
