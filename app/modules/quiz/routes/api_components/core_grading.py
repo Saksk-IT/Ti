@@ -95,7 +95,7 @@ def api_grade_subjective():
         return jsonify({'status': 'error', 'message': '无权访问该题目'}), 403
 
     # 题型校验（仅主观题走此接口）
-    q_type = str(getattr(question, 'q_type', '') or '')
+    q_type = str(getattr(question, 'type', '') or '')
     if q_type not in _SUBJECTIVE_TYPES:
         return jsonify({'status': 'error', 'message': '该题型不支持此判分接口'}), 400
 
