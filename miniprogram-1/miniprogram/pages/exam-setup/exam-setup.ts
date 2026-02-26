@@ -20,7 +20,14 @@ Page({
     computedScoreText: '0',
     loading: false,
     creating: false,
-    warnText: ''
+    warnText: '',
+    gradingMode: 'auto_full',
+    hasSubjectiveType: false,
+    gradingModeOptions: [
+      { value: 'auto_full', label: '有作答即满分', desc: '主观题只要有作答就给满分' },
+      { value: 'ai', label: 'AI 智能判分', desc: 'AI 自动评判主观题答案' },
+      { value: 'manual', label: '人工判分', desc: '提交后由管理员人工评分' },
+    ]
   },
 
   onLoad(options: any) {
@@ -178,6 +185,13 @@ Page({
     }
 
     this.setData({ computedTotal: total, computedScoreText: scoreText, warnText });
+
+    // 检测是否包含主观题
+    const subjectiveNames = ['简答题', '计算题', '论述题', '问答题'];
+    const hasSubjective = types.some((t) => t.enabled && t.count > 0 && subjectiveNames.indexOf(t.name) !== -1);
+    if (hasSubjective !== this.data.hasSubjectiveType) {
+      this.setData({ hasSubjectiveType: hasSubjective });
+    }
   },
 
   formatScore(v: number): string {
@@ -186,6 +200,11 @@ Page({
       return String(Math.round(n));
     }
     return n.toFixed(1).replace(/\.0$/, '');
+  },
+
+  onGradingModeChange(e: any) {
+    const value = e.currentTarget.dataset.value || 'auto_full';
+    this.setData({ gradingMode: value });
   },
 
   stopPropagation() {},
@@ -223,7 +242,8 @@ Page({
         subject: this.data.subject,
         duration,
         types: typesConfig,
-        scores: scoresConfig
+        scores: scoresConfig,
+        grading_mode: this.data.gradingMode
       });
 
       const examId = Number(res.exam_id);

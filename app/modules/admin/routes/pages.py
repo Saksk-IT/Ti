@@ -199,6 +199,14 @@ def admin_limit_settings_page():
     return render_template('admin/settings/limits.html')
 
 
+@admin_pages_bp.route('/settings/ai')
+def admin_ai_settings_page():
+    """AI 配置页面"""
+    from app.modules.admin.services.system_config_service import SystemConfigService
+    cfg = SystemConfigService.get_dashscope_config_masked()
+    return render_template('admin/settings/ai.html', ai_config=cfg)
+
+
 @admin_pages_bp.route('/permissions')
 def admin_permissions_page():
     """权限管理页面"""

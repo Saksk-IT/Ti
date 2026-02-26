@@ -210,3 +210,70 @@ page {
   color: var(--app-text-secondary);
   font-size: 28rpx;
 }
+
+/* 判分模式 */
+.grading-mode-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  padding-bottom: 12rpx;
+}
+
+.grading-mode-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16rpx;
+  padding: 20rpx 16rpx;
+  border-radius: 16rpx;
+  border: 2rpx solid var(--app-divider);
+  background: var(--app-fill-solid);
+  transition: border-color 0.2s;
+}
+
+.grading-mode-item.active {
+  border-color: var(--app-cta);
+  background: var(--app-cta-soft, rgba(0, 122, 255, 0.06));
+}
+
+.grading-mode-radio {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  border: 3rpx solid var(--app-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 4rpx;
+}
+
+.grading-mode-radio.checked {
+  border-color: var(--app-cta);
+}
+
+.grading-mode-dot {
+  width: 18rpx;
+  height: 18rpx;
+  border-radius: 50%;
+  background: var(--app-cta);
+}
+
+.grading-mode-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  flex: 1;
+  min-width: 0;
+}
+
+.grading-mode-label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--app-text);
+}
+
+.grading-mode-desc {
+  font-size: 24rpx;
+  color: var(--app-text-secondary);
+  line-height: 1.4;
+}

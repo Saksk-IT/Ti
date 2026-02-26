@@ -21,14 +21,20 @@ async function checkAnswer(isManualClick) {
         return;
     }
 
-    // 对齐小程序：主观题不自动判对错，只记录“已提交”（不写错题本/做题对错）
+    // 主观题判分模式
     const isSubjective = isSubjectiveType(type);
     const isJudgable = isJudgableType(type) && !isSubjective;
     let isCorrect = null;
     if (isJudgable) {
         isCorrect = judgeQuestion(currentQ, type, answer);
     }
-    
+
+    // 主观题：根据用户选择的判分模式处理
+    if (isSubjective) {
+        await _checkAnswerSubjective(currentQ, type, qId);
+        return;
+    }
+
     // 登录用户：在显示答案前先检查刷题限制
     if (LOGGED_IN && isJudgable) {
         try {
@@ -54,58 +60,43 @@ async function checkAnswer(isManualClick) {
             const ok = data && (data.status === 'success' || data.code === 0);
 
             if (!ok) {
-                // 处理刷题限制错误（公共题库）
                 if (data && data.code === 'QUIZ_LIMIT_REACHED') {
                     showToast(data.message || '已达到刷题限制');
-                    // 达到限制，不显示答案，直接返回
                     return;
                 }
                 showToast((data && data.message) || '保存失败');
-                // 其他错误也阻止显示答案
                 return;
             }
-            // 成功：继续显示答案
         } catch (error) {
             console.error('保存答题记录失败:', error);
             showToast('网络错误，请重试');
-            // 网络错误也阻止显示答案
             return;
         }
     }
 
     // 渲染答案/解析（小程序风格：题目下方/右侧区域）
     renderAnswerExplainFromQuestion(currentQ);
-    
+
     const btnNext = document.getElementById('btn-next');
     if (btnNext) btnNext.style.display = 'block';
-    
+
     // 显示反馈
     if (isJudgable) {
         styleFeedback(currentQ, type, answer, isCorrect);
-    } else {
-        // 主观题：侧边栏用“已提交”样式（不判对错）
-        const idx = currentQ.getAttribute('data-index');
-        const li = document.getElementById(`list-item-${idx}`);
-        if (li) {
-            li.classList.remove('done-correct', 'done-wrong');
-            li.classList.add('answered');
-        }
     }
-    
+
     disableInputs(currentQ);
     updateBottomSubmitState(currentQ);
     updateSubjectiveSubmitState(currentQ);
     updateFillBlankSubmitState(currentQ);
     updateMultiSubmitState(currentQ);
     if (!LOGGED_IN && isJudgable) {
-        // 未登录不写入错题本，只在本地保留效果
         showToast('未登录：错题不会保存到服务器');
     }
 
-    saveState(true); // 答题后立即同步到服务器
+    saveState(true);
 
     // ===== 做错自动收藏（对齐小程序） =====
-    // 触发时机：判题并渲染反馈完成之后。
     try {
         if (isJudgable && isCorrect === false && isFabAutoFavoriteOnWrongEnabled()) {
             if (LOGGED_IN) {
@@ -118,15 +109,10 @@ async function checkAnswer(isManualClick) {
     } catch (e) {}
 
     // ===== 答对自动下一题（悬浮球 ✓✓） =====
-    // 仅在刷题/背题等非考试模式生效（本函数开头已拦截 exam）。
-    // 触发时机：判题并渲染反馈完成之后。
     try {
         if (isJudgable && isCorrect === true && isFabAutoNextEnabled()) {
-            // 最后一题不自动切，避免闪动
             if (currentIndex < totalQuestions - 1) {
-                // 给用户一个很短的反馈停留时间
                 setTimeout(() => {
-                    // 若用户在等待期间已手动切题/改变索引，则不强行覆盖
                     if (questions[currentIndex] === currentQ) {
                         nextQuestion();
                     }
@@ -134,6 +120,168 @@ async function checkAnswer(isManualClick) {
             }
         }
     } catch (e) {}
+}
+
+// ===== 主观题判分（三模式） =====
+async function _checkAnswerSubjective(currentQ, type, qId) {
+    const gradingMode = (typeof getQuizGradingMode === 'function') ? getQuizGradingMode() : 'auto_full';
+    const userAnswer = _getSubjectiveUserAnswer(currentQ);
+
+    if (gradingMode === 'manual') {
+        // 手动/自评模式：展示参考答案 + 自评按钮
+        renderAnswerExplainFromQuestion(currentQ, 'pending');
+        disableInputs(currentQ);
+        _showSubjectiveSelfEval(currentQ, qId);
+        updateBottomSubmitState(currentQ);
+        updateSubjectiveSubmitState(currentQ);
+        saveState(true);
+        return;
+    }
+
+    // auto_full / ai 模式：调用后端判分接口
+    if (LOGGED_IN) {
+        try {
+            const res = await fetch('/api/grade_subjective', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    question_id: qId,
+                    user_answer: userAnswer,
+                    grading_mode: gradingMode
+                })
+            });
+            const data = await res.json();
+            if (data && data.status === 'success' && data.data) {
+                const isCorrect = data.data.is_correct;
+                renderAnswerExplainFromQuestion(currentQ, isCorrect);
+                _applySubjectiveFeedback(currentQ, isCorrect);
+                disableInputs(currentQ);
+                updateBottomSubmitState(currentQ);
+                updateSubjectiveSubmitState(currentQ);
+                const btnNext = document.getElementById('btn-next');
+                if (btnNext) btnNext.style.display = 'block';
+                saveState(true);
+
+                // 做错自动收藏
+                try {
+                    if (isCorrect === false && isFabAutoFavoriteOnWrongEnabled()) {
+                        const favBtn = currentQ.querySelector('.fav-btn');
+                        if (favBtn && !favBtn.classList.contains('active')) favBtn.click();
+                    }
+                } catch(e) {}
+                // 答对自动下一题
+                try {
+                    if (isCorrect === true && isFabAutoNextEnabled() && currentIndex < totalQuestions - 1) {
+                        const savedQ = currentQ;
+                        setTimeout(() => { if (questions[currentIndex] === savedQ) nextQuestion(); }, 350);
+                    }
+                } catch(e) {}
+                return;
+            }
+            showToast((data && data.message) || '判分失败');
+        } catch (e) {
+            console.error('主观题判分请求失败:', e);
+            showToast('网络错误，请重试');
+        }
+        return;
+    }
+
+    // 未登录：降级为展示答案（不判分）
+    renderAnswerExplainFromQuestion(currentQ);
+    disableInputs(currentQ);
+    _applySubjectiveFeedback(currentQ, null);
+    updateBottomSubmitState(currentQ);
+    updateSubjectiveSubmitState(currentQ);
+    const btnNext = document.getElementById('btn-next');
+    if (btnNext) btnNext.style.display = 'block';
+    saveState(true);
+    showToast('未登录：无法判分，仅展示参考答案');
+}
+
+function _getSubjectiveUserAnswer(qEl) {
+    const ta = getActiveSubjectiveTextarea(qEl);
+    if (ta) return (ta.value || '').trim();
+    const root = getActiveQuestionLayoutRoot(qEl) || qEl;
+    const inp = root.querySelector('input[type=”text”], .main-input');
+    return inp ? (inp.value || '').trim() : '';
+}
+
+function _applySubjectiveFeedback(qEl, isCorrect) {
+    const idx = qEl.getAttribute('data-index');
+    const li = document.getElementById(`list-item-${idx}`);
+    if (li) {
+        li.classList.remove('done-correct', 'done-wrong', 'answered');
+        if (isCorrect === true) li.classList.add('done-correct');
+        else if (isCorrect === false) li.classList.add('done-wrong');
+        else li.classList.add('answered');
+    }
+}
+
+// ===== 主观题自评 UI =====
+function _showSubjectiveSelfEval(qEl, qId) {
+    // 移除已有的自评卡片
+    const existing = qEl.querySelector('.subjective-self-eval');
+    if (existing) existing.remove();
+
+    const card = document.createElement('div');
+    card.className = 'subjective-self-eval';
+    card.innerHTML = `
+        <div class=”self-eval-title”>请对照参考答案自评</div>
+        <div class=”self-eval-btns”>
+            <button type=”button” class=”self-eval-btn correct” data-result=”correct”>答对了</button>
+            <button type=”button” class=”self-eval-btn wrong” data-result=”wrong”>答错了</button>
+        </div>
+    `;
+    // 插入到答案解析区域之前或题目末尾
+    const dock = qEl.querySelector('.answer-explain-dock, .answer-dock-card');
+    if (dock) dock.parentNode.insertBefore(card, dock);
+    else qEl.appendChild(card);
+
+    card.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.self-eval-btn');
+        if (!btn) return;
+        const result = btn.dataset.result;
+        const isCorrect = result === 'correct';
+
+        // 禁用按钮防重复
+        card.querySelectorAll('.self-eval-btn').forEach(b => b.disabled = true);
+        card.querySelector('.self-eval-title').textContent = isCorrect ? '已记录：答对' : '已记录：答错';
+
+        // 调用后端记录结果
+        if (LOGGED_IN) {
+            try {
+                await fetch('/api/record_result', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        question_id: qId,
+                        is_correct: isCorrect,
+                        clear_mistake_on_correct: getClearMistakeOnCorrectForRequest()
+                    })
+                });
+            } catch(e) {}
+        }
+
+        _applySubjectiveFeedback(qEl, isCorrect);
+        const btnNext = document.getElementById('btn-next');
+        if (btnNext) btnNext.style.display = 'block';
+        saveState(true);
+
+        // 做错自动收藏
+        try {
+            if (!isCorrect && isFabAutoFavoriteOnWrongEnabled() && LOGGED_IN) {
+                const favBtn = qEl.querySelector('.fav-btn');
+                if (favBtn && !favBtn.classList.contains('active')) favBtn.click();
+            }
+        } catch(e) {}
+        // 答对自动下一题
+        try {
+            if (isCorrect && isFabAutoNextEnabled() && currentIndex < totalQuestions - 1) {
+                const savedQ = qEl;
+                setTimeout(() => { if (questions[currentIndex] === savedQ) nextQuestion(); }, 500);
+            }
+        } catch(e) {}
+    });
 }
 
 function finishQuiz() {

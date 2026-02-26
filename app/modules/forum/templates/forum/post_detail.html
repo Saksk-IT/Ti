@@ -21,36 +21,34 @@
     <!-- 左栏：帖子内容 -->
     <div class="forum-detail-left">
       <div id="postContent" class="forum-post-content">
-        <!-- 骨架屏：帖子内容（匹配 loadPostDetail 渲染结构） -->
+        <!-- 骨架屏：帖子内容 -->
         <div class="forum-detail-skel">
-          <!-- forum-post-header: avatar 32x32 + meta 13px -->
-          <div class="forum-post-header">
-            <div class="forum-skeleton-avatar"></div>
-            <div class="forum-post-meta" style="flex:1">
-              <div class="forum-skeleton-row" style="width:40%;height:13px"></div>
-            </div>
+          <!-- header: h=32, avatar 32x32, gap 10px, mb 10px -->
+          <div class="forum-post-header" style="margin-bottom:10px">
+            <div class="forum-skeleton-avatar" style="width:32px;height:32px"></div>
+            <div class="forum-skeleton-row" style="width:180px;height:13px"></div>
           </div>
-          <!-- post-title: 20px/600 weight, margin-bottom 12px -->
-          <div class="forum-skeleton-row" style="width:55%;height:20px;margin-bottom:12px"></div>
-          <!-- post-body: 15px, line-height 1.7 ≈ 25px per line -->
-          <div class="forum-skeleton-row" style="width:100%;height:15px;margin-bottom:10px"></div>
-          <div class="forum-skeleton-row" style="width:100%;height:15px;margin-bottom:10px"></div>
-          <div class="forum-skeleton-row" style="width:95%;height:15px;margin-bottom:10px"></div>
-          <div class="forum-skeleton-row" style="width:100%;height:15px;margin-bottom:10px"></div>
-          <div class="forum-skeleton-row" style="width:80%;height:15px;margin-bottom:10px"></div>
+          <!-- title: h=25, font 20px, mb 12px -->
+          <div class="forum-skeleton-row" style="width:55%;height:20px;margin-bottom:12px;border-radius:6px"></div>
+          <!-- body: 6 lines, each line-height 25.5px, font 15px -->
+          <div class="forum-skeleton-row" style="width:100%;height:15px;margin-bottom:10.5px"></div>
+          <div class="forum-skeleton-row" style="width:100%;height:15px;margin-bottom:10.5px"></div>
+          <div class="forum-skeleton-row" style="width:95%;height:15px;margin-bottom:10.5px"></div>
+          <div class="forum-skeleton-row" style="width:100%;height:15px;margin-bottom:10.5px"></div>
+          <div class="forum-skeleton-row" style="width:85%;height:15px;margin-bottom:10.5px"></div>
           <div class="forum-skeleton-row" style="width:60%;height:15px"></div>
-          <!-- forum-post-stats: margin-top 16px, 13px -->
-          <div class="forum-skeleton-row" style="width:20%;height:13px;margin-top:16px"></div>
+          <!-- stats: h=18, font 13px, mt 16px -->
+          <div class="forum-skeleton-row" style="width:100px;height:13px;margin-top:16px"></div>
         </div>
       </div>
       <div id="pollSection" style="display:none"></div>
       <div class="forum-actions-bar" id="actionsBar">
-        <!-- 骨架屏：操作栏（4 个 forum-action-btn, padding 8px 16px, font 14px） -->
+        <!-- 骨架屏：操作栏 h=36, gap=12, 4 btns: 64+64+83+83 -->
         <div class="forum-detail-skel" style="display:flex;gap:12px">
-          <div class="forum-skeleton-row" style="width:68px;height:35px;border-radius:10px"></div>
-          <div class="forum-skeleton-row" style="width:68px;height:35px;border-radius:10px"></div>
-          <div class="forum-skeleton-row" style="width:68px;height:35px;border-radius:10px"></div>
-          <div class="forum-skeleton-row" style="width:68px;height:35px;border-radius:10px"></div>
+          <div class="forum-skeleton-row" style="width:64px;height:36px;border-radius:10px"></div>
+          <div class="forum-skeleton-row" style="width:64px;height:36px;border-radius:10px"></div>
+          <div class="forum-skeleton-row" style="width:83px;height:36px;border-radius:10px"></div>
+          <div class="forum-skeleton-row" style="width:83px;height:36px;border-radius:10px"></div>
         </div>
       </div>
       <div id="reactionsBar" class="forum-reactions-bar"></div>
@@ -60,21 +58,21 @@
       <div class="forum-comments-section">
         <h3 class="forum-section-title">评论</h3>
         <div id="commentsList">
-          <!-- 骨架屏：评论列表（匹配 .forum-comment: padding 16px, border, bg, radius） -->
+          <!-- 骨架屏：评论 padding=16, border-radius=10, mb=10, header h=32 mb=8, body h=22, footer h=22 mt=8 -->
           <div class="forum-detail-skel forum-comment">
-            <div class="comment-header"><div class="forum-skeleton-avatar"></div><div class="forum-skeleton-row" style="width:25%;height:14px"></div></div>
-            <div class="comment-body"><div class="forum-skeleton-row" style="width:90%;height:14px;margin-bottom:6px"></div><div class="forum-skeleton-row" style="width:65%;height:14px"></div></div>
-            <div class="comment-footer" style="gap:16px"><div class="forum-skeleton-row" style="width:36px;height:13px"></div><div class="forum-skeleton-row" style="width:36px;height:13px"></div><div class="forum-skeleton-row" style="width:20px;height:13px"></div></div>
+            <div class="comment-header" style="height:32px;margin-bottom:8px"><div class="forum-skeleton-avatar" style="width:32px;height:32px"></div><div class="forum-skeleton-row" style="width:80px;height:14px"></div></div>
+            <div style="margin-bottom:8px"><div class="forum-skeleton-row" style="width:90%;height:14px;margin-bottom:6px"></div><div class="forum-skeleton-row" style="width:65%;height:14px"></div></div>
+            <div class="comment-footer" style="height:22px;margin-top:8px"><div class="forum-skeleton-row" style="width:32px;height:13px"></div><div class="forum-skeleton-row" style="width:40px;height:13px"></div><div class="forum-skeleton-row" style="width:18px;height:13px"></div></div>
           </div>
           <div class="forum-detail-skel forum-comment">
-            <div class="comment-header"><div class="forum-skeleton-avatar"></div><div class="forum-skeleton-row" style="width:30%;height:14px"></div></div>
-            <div class="comment-body"><div class="forum-skeleton-row" style="width:80%;height:14px"></div></div>
-            <div class="comment-footer" style="gap:16px"><div class="forum-skeleton-row" style="width:36px;height:13px"></div><div class="forum-skeleton-row" style="width:36px;height:13px"></div><div class="forum-skeleton-row" style="width:20px;height:13px"></div></div>
+            <div class="comment-header" style="height:32px;margin-bottom:8px"><div class="forum-skeleton-avatar" style="width:32px;height:32px"></div><div class="forum-skeleton-row" style="width:60px;height:14px"></div></div>
+            <div style="margin-bottom:8px"><div class="forum-skeleton-row" style="width:80%;height:14px"></div></div>
+            <div class="comment-footer" style="height:22px;margin-top:8px"><div class="forum-skeleton-row" style="width:32px;height:13px"></div><div class="forum-skeleton-row" style="width:40px;height:13px"></div><div class="forum-skeleton-row" style="width:18px;height:13px"></div></div>
           </div>
           <div class="forum-detail-skel forum-comment">
-            <div class="comment-header"><div class="forum-skeleton-avatar"></div><div class="forum-skeleton-row" style="width:20%;height:14px"></div></div>
-            <div class="comment-body"><div class="forum-skeleton-row" style="width:95%;height:14px;margin-bottom:6px"></div><div class="forum-skeleton-row" style="width:50%;height:14px"></div></div>
-            <div class="comment-footer" style="gap:16px"><div class="forum-skeleton-row" style="width:36px;height:13px"></div><div class="forum-skeleton-row" style="width:36px;height:13px"></div><div class="forum-skeleton-row" style="width:20px;height:13px"></div></div>
+            <div class="comment-header" style="height:32px;margin-bottom:8px"><div class="forum-skeleton-avatar" style="width:32px;height:32px"></div><div class="forum-skeleton-row" style="width:70px;height:14px"></div></div>
+            <div style="margin-bottom:8px"><div class="forum-skeleton-row" style="width:95%;height:14px;margin-bottom:6px"></div><div class="forum-skeleton-row" style="width:50%;height:14px"></div></div>
+            <div class="comment-footer" style="height:22px;margin-top:8px"><div class="forum-skeleton-row" style="width:32px;height:13px"></div><div class="forum-skeleton-row" style="width:40px;height:13px"></div><div class="forum-skeleton-row" style="width:18px;height:13px"></div></div>
           </div>
         </div>
         <div class="forum-load-more" id="commentsLoadMore" style="display:none">

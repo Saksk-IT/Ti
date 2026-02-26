@@ -43,6 +43,9 @@ def get_or_update_system_config(config_key: str):
         try:
             config = SystemConfigService.get_config(config_key)
             if config:
+                # API Key 脱敏
+                if config_key == 'dashscope_api_key' and config.get('config_value'):
+                    config = {**config, 'config_value': SystemConfigService.mask_api_key(config['config_value'])}
                 return jsonify({
                     'status': 'success',
                     'data': config
@@ -62,7 +65,7 @@ def get_or_update_system_config(config_key: str):
                 'status': 'error',
                 'message': f'获取配置失败: {str(e)}'
             }), 500
-    
+
     # PUT 方法（更新配置）
     try:
         data = request.get_json()
@@ -71,7 +74,7 @@ def get_or_update_system_config(config_key: str):
                 'status': 'error',
                 'message': '请求数据不能为空'
             }), 400
-        
+
         try:
             schema = SystemConfigUpdateSchema.model_validate(data)
         except Exception as e:
@@ -79,7 +82,15 @@ def get_or_update_system_config(config_key: str):
                 'status': 'error',
                 'message': f'数据验证失败: {str(e)}'
             }), 400
-        
+
+        # API Key 脱敏值跳过覆盖（含 **** 表示未修改）
+        if config_key == 'dashscope_api_key' and '****' in (schema.config_value or ''):
+            return jsonify({
+                'status': 'success',
+                'message': '配置未变更（API Key 未修改）',
+                'data': {'config_key': config_key}
+            })
+
         admin_id = session.get('user_id')
         config = SystemConfigService.update_config(
             config_key,
@@ -87,47 +98,7 @@ def get_or_update_system_config(config_key: str):
             schema.description,
             admin_id
         )
-        
-        return jsonify({
-            'status': 'success',
-            'message': '配置更新成功',
-            'data': config
-        })
-    except ValueError as e:
-        return jsonify({
-            'status': 'error',
-            'message': str(e)
-        }), 400
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': f'更新配置失败: {str(e)}'
-        }), 500
-    """更新系统配置"""
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({
-                'status': 'error',
-                'message': '请求数据不能为空'
-            }), 400
-        
-        try:
-            schema = SystemConfigUpdateSchema.model_validate(data)
-        except Exception as e:
-            return jsonify({
-                'status': 'error',
-                'message': f'数据验证失败: {str(e)}'
-            }), 400
-        
-        admin_id = session.get('user_id')
-        config = SystemConfigService.update_config(
-            config_key,
-            schema.config_value,
-            schema.description,
-            admin_id
-        )
-        
+
         return jsonify({
             'status': 'success',
             'message': '配置更新成功',

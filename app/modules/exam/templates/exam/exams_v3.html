@@ -191,6 +191,25 @@
       return Array.isArray(arr) ? arr.slice() : [];
     }
 
+    const SUBJECTIVE_TYPES = ['简答题', '计算题', '论述题', '问答题'];
+
+    function getGradingMode() {
+      const el = document.querySelector('input[name="grading_mode"]:checked');
+      return el ? el.value : 'auto_full';
+    }
+
+    function updateGradingModeVisibility() {
+      const section = document.getElementById('gradingModeSection');
+      if (!section) return;
+      let hasSubjective = false;
+      document.querySelectorAll('#exam_types .exam-types-row[data-qtype]').forEach(function(row) {
+        const qtype = row.dataset.qtype || '';
+        const enabled = !!row.querySelector('.exam-type-enable')?.checked;
+        if (enabled && SUBJECTIVE_TYPES.indexOf(qtype) !== -1) hasSubjective = true;
+      });
+      section.style.display = hasSubjective ? '' : 'none';
+    }
+
     function collectExamConfig() {
       const scope = getCurrentScope();
       const targetTotal = parseIntSafe(document.getElementById('exam_total')?.value, 30, 1, 300);
@@ -214,10 +233,11 @@
         totalScore += count * score;
       });
 
-      return { ...scope, targetTotal, duration, types, scores, assigned, totalScore };
+      return { ...scope, targetTotal, duration, types, scores, assigned, totalScore, grading_mode: getGradingMode() };
     }
 
     function updateExamSummary() {
+      updateGradingModeVisibility();
       const cfg = collectExamConfig();
       let scopeText = '公共题库 · ' + (cfg.subject === 'all' ? '全部科目' : cfg.subject);
       if (cfg.source === 'user_bank') {
@@ -597,6 +617,7 @@
             duration: cfg.duration,
             types: cfg.types,
             scores: cfg.scores,
+            grading_mode: cfg.grading_mode,
           }),
         });
         const js = await resp.json().catch(() => ({}));
@@ -649,6 +670,7 @@
             duration: cfg.duration,
             types: cfg.types,
             scores: cfg.scores,
+            grading_mode: cfg.grading_mode,
           }),
         });
         const js = await resp.json().catch(() => ({}));
@@ -1183,6 +1205,33 @@
           <div class="exam-section">
             <div class="exam-section-title">题型与分值</div>
             <div class="exam-types-box" id="exam_types"></div>
+          </div>
+
+          <div class="exam-section" id="gradingModeSection" style="display:none;">
+            <div class="exam-section-title">主观题判分模式</div>
+            <div class="exam-grading-mode-group">
+              <label class="exam-radio-card">
+                <input type="radio" name="grading_mode" value="auto_full" checked>
+                <span class="radio-card-body">
+                  <span class="radio-card-title">有作答即满分</span>
+                  <span class="radio-card-desc">主观题只要有作答就给满分，适合自测练习</span>
+                </span>
+              </label>
+              <label class="exam-radio-card">
+                <input type="radio" name="grading_mode" value="ai">
+                <span class="radio-card-body">
+                  <span class="radio-card-title">AI 智能判分</span>
+                  <span class="radio-card-desc">AI 自动评判主观题答案，意思相近即算正确</span>
+                </span>
+              </label>
+              <label class="exam-radio-card">
+                <input type="radio" name="grading_mode" value="manual">
+                <span class="radio-card-body">
+                  <span class="radio-card-title">人工判分</span>
+                  <span class="radio-card-desc">主观题提交后由管理员人工评分</span>
+                </span>
+              </label>
+            </div>
           </div>
 
           <div class="exam-inline-actions">

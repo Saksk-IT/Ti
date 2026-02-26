@@ -57,6 +57,37 @@
         </div>
       </div>
 
+      {# 主观题判分模式（仅刷题模式显示） #}
+      <div class="feature-grading-section" id="featureGradingSection" style="display:none;">
+        <div class="feature-title" style="margin-bottom:8px;">主观题判分模式</div>
+        <div class="feature-grading-modes" id="featureGradingModes">
+          <label class="feature-grading-opt" data-value="auto_full">
+            <input type="radio" name="featureGradingMode" value="auto_full">
+            <span class="feature-grading-radio"></span>
+            <span class="feature-grading-info">
+              <span class="feature-grading-label">有答即对</span>
+              <span class="feature-grading-desc">填写即判对，快速刷题</span>
+            </span>
+          </label>
+          <label class="feature-grading-opt" data-value="ai">
+            <input type="radio" name="featureGradingMode" value="ai">
+            <span class="feature-grading-radio"></span>
+            <span class="feature-grading-info">
+              <span class="feature-grading-label">AI 判分</span>
+              <span class="feature-grading-desc">AI 智能评判，需后台配置</span>
+            </span>
+          </label>
+          <label class="feature-grading-opt" data-value="manual">
+            <input type="radio" name="featureGradingMode" value="manual">
+            <span class="feature-grading-radio"></span>
+            <span class="feature-grading-info">
+              <span class="feature-grading-label">自评模式</span>
+              <span class="feature-grading-desc">查看参考答案后自行评判</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
       <div class="feature-actions">
         <button class="feature-action-btn" type="button" onclick="clearCurrentQuestionProgress(); closeFeatureModal();">清除本题进度</button>
         <button class="feature-action-btn secondary" type="button" onclick="goToShortcutSettings()">更多设置</button>

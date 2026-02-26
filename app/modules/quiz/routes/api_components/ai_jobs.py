@@ -99,8 +99,11 @@ def api_ai_explain_async():
     if not payload.get('content') and not payload.get('question_id'):
         return jsonify({'status': 'error', 'message': '缺少题目信息'}), 400
 
-    model = (current_app.config.get('DASHSCOPE_MODEL') or '').strip() or 'qwen-plus'
-    timeout = int(current_app.config.get('DASHSCOPE_TIMEOUT') or 25)
+    from app.modules.admin.services.system_config_service import SystemConfigService
+    _ds_cfg = SystemConfigService.get_dashscope_config()
+
+    model = _ds_cfg['model']
+    timeout = _ds_cfg['timeout']
     cache_ttl = int(current_app.config.get('AI_EXPLAIN_CACHE_TTL_SECONDS') or (30 * 24 * 60 * 60))
 
     result_key, job_key = _cache_keys(payload, model)
@@ -118,13 +121,13 @@ def api_ai_explain_async():
     # 3) 尝试入队（RQ + Redis）。若不可用则降级为同步模式
     queue = get_queue()
     if queue is None:
-        api_key = (current_app.config.get('DASHSCOPE_API_KEY') or '').strip()
+        api_key = _ds_cfg['api_key']
         if not api_key:
             return jsonify({'status': 'success', 'data': {**_placeholder_explain(), 'cached': False}})
 
         from app.modules.quiz.services.ai_explain_service import generate_ai_explain
 
-        base_url = (current_app.config.get('DASHSCOPE_BASE_URL') or '').strip()
+        base_url = _ds_cfg['base_url']
         try:
             explain = generate_ai_explain(
                 api_key=api_key,

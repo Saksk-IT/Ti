@@ -92,6 +92,28 @@
           </view>
         </view>
 
+        <!-- 主观题判分模式 -->
+        <view class="card" wx:if="{{hasSubjectiveType}}">
+          <view class="section-title">主观题判分模式</view>
+          <view class="grading-mode-list">
+            <view
+              class="grading-mode-item {{gradingMode === item.value ? 'active' : ''}}"
+              wx:for="{{gradingModeOptions}}"
+              wx:key="value"
+              bindtap="onGradingModeChange"
+              data-value="{{item.value}}"
+            >
+              <view class="grading-mode-radio {{gradingMode === item.value ? 'checked' : ''}}">
+                <view class="grading-mode-dot" wx:if="{{gradingMode === item.value}}"></view>
+              </view>
+              <view class="grading-mode-text">
+                <text class="grading-mode-label">{{item.label}}</text>
+                <text class="grading-mode-desc">{{item.desc}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
         <view class="loading" wx:if="{{loading}}">
           <text>加载中...</text>
         </view>

@@ -176,13 +176,22 @@
               <view class="answer-ai-btn" bindtap="onToggleAIExplain" hover-class="answer-ai-btn-hover">AI</view>
             </view>
           </view>
-          <view class="correct-answer {{(currentQuestion.q_type === '简答题') ? 'multiline' : ''}}">
+          <view class="correct-answer {{(currentQuestion.q_type === '简答题' || currentQuestion.q_type === '计算题' || currentQuestion.q_type === '论述题' || currentQuestion.q_type === '问答题') ? 'multiline' : ''}}">
             <text class="answer-label">正确答案：</text>
             <text class="answer-value">{{currentQuestion.displayAnswer || currentQuestion.answer}}</text>
           </view>
-          <view class="user-answer {{(currentQuestion.q_type === '简答题') ? 'multiline' : ''}}" wx:if="{{!isJudgable || !isCorrect}}">
+          <view class="user-answer {{(currentQuestion.q_type === '简答题' || currentQuestion.q_type === '计算题' || currentQuestion.q_type === '论述题' || currentQuestion.q_type === '问答题') ? 'multiline' : ''}}" wx:if="{{!isJudgable || !isCorrect}}">
             <text class="answer-label">你的答案：</text>
             <text class="answer-value wrong">{{userAnswerText}}</text>
+          </view>
+        </view>
+
+        <!-- 主观题自评卡片（manual 模式：展示答案后让用户自评） -->
+        <view wx:if="{{showSelfEval && showAnswer}}" class="self-eval-card">
+          <text class="self-eval-title">请对照参考答案自评</text>
+          <view class="self-eval-btns">
+            <button class="self-eval-btn correct" bindtap="onSelfEvalResult" data-result="correct">答对了</button>
+            <button class="self-eval-btn wrong" bindtap="onSelfEvalResult" data-result="wrong">答错了</button>
           </view>
         </view>
 
@@ -317,6 +326,28 @@
           <text class="setting-desc">提交后轻微震动</text>
         </view>
         <switch checked="{{practiceSettings.vibrationFeedback}}" bindchange="onSettingSwitchChange" data-key="vibrationFeedback" color="{{themeCtaColor}}" />
+      </view>
+
+      <!-- 主观题判分模式（仅含主观题时显示） -->
+      <view class="grading-section" wx:if="{{hasSubjectiveType && mode !== 'memo'}}">
+        <view class="setting-title" style="margin-bottom:12rpx;">主观题判分模式</view>
+        <view class="grading-modes">
+          <view
+            wx:for="{{gradingModeOptions}}"
+            wx:key="value"
+            class="grading-opt {{gradingMode === item.value ? 'active' : ''}}"
+            bindtap="onGradingModeChange"
+            data-value="{{item.value}}"
+          >
+            <view class="grading-radio {{gradingMode === item.value ? 'checked' : ''}}">
+              <view wx:if="{{gradingMode === item.value}}" class="grading-radio-dot"></view>
+            </view>
+            <view class="grading-info">
+              <text class="grading-label">{{item.label}}</text>
+              <text class="grading-desc">{{item.desc}}</text>
+            </view>
+          </view>
+        </view>
       </view>
 
       <button class="setting-action-btn danger" bindtap="onClearCurrentAnswerRecord">清除本题答题记录</button>

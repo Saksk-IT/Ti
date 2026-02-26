@@ -148,7 +148,7 @@ class SystemConfigService:
     def get_email_bind_required_config() -> bool:
         """
         获取邮箱绑定是否必需的配置
-        
+
         Returns:
             如果邮箱绑定必需返回True，否则返回False（默认True，保持向后兼容）
         """
@@ -157,6 +157,54 @@ class SystemConfigService:
             return config['config_value'] == '1'
         # 默认返回True，保持向后兼容（原有行为）
         return True
+
+    # ── DashScope AI 配置 ──────────────────────────────────
+
+    _DASHSCOPE_KEYS = (
+        'dashscope_api_key',
+        'dashscope_base_url',
+        'dashscope_model',
+        'dashscope_timeout',
+    )
+
+    @staticmethod
+    def mask_api_key(key: str) -> str:
+        """API Key 脱敏：保留前 3 位 + 后 3 位，中间用 **** 替代"""
+        if not key or len(key) <= 8:
+            return '****' if key else ''
+        return f"{key[:3]}****{key[-3:]}"
+
+    @staticmethod
+    def get_dashscope_config() -> Dict[str, Any]:
+        """获取 DashScope 配置，DB 优先、.env fallback。
+
+        Returns:
+            {api_key, base_url, model, timeout} — 均为实际可用值
+        """
+        from flask import current_app
+
+        def _val(db_key: str, app_key: str, default: str = '') -> str:
+            row = SystemConfigService.get_config(db_key)
+            if row and row.get('config_value'):
+                return row['config_value']
+            return str(current_app.config.get(app_key) or default)
+
+        return {
+            'api_key':  _val('dashscope_api_key',  'DASHSCOPE_API_KEY'),
+            'base_url': _val('dashscope_base_url', 'DASHSCOPE_BASE_URL',
+                             'https://dashscope.aliyuncs.com/compatible-mode/v1'),
+            'model':    _val('dashscope_model',    'DASHSCOPE_MODEL', 'qwen-plus'),
+            'timeout':  int(_val('dashscope_timeout', 'DASHSCOPE_TIMEOUT', '25') or 25),
+        }
+
+    @staticmethod
+    def get_dashscope_config_masked() -> Dict[str, Any]:
+        """同 get_dashscope_config，但 api_key 脱敏（用于前端展示）"""
+        cfg = SystemConfigService.get_dashscope_config()
+        return {
+            **cfg,
+            'api_key': SystemConfigService.mask_api_key(cfg['api_key']),
+        }
 
 
 

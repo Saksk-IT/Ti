@@ -16,6 +16,7 @@ def init_quiz_module(app: Flask):
         api_ai_explain,
         api_ai_explain_async,
         api_job_status,
+        api_grade_subjective,
     )
     
     # 获取模块目录，用于设置模板路径
@@ -34,7 +35,7 @@ def init_quiz_module(app: Flask):
     # 注意：别名路由不属于 quiz_api_bp 蓝图，需单独豁免 CSRF
     from app.core.extensions import csrf
     alias_post_views = [toggle_favorite, record_result, progress_api,
-                        api_ai_explain, api_ai_explain_async]
+                        api_ai_explain, api_ai_explain_async, api_grade_subjective]
     for view_func in alias_post_views:
         csrf.exempt(view_func)
 
@@ -46,6 +47,7 @@ def init_quiz_module(app: Flask):
     app.add_url_rule('/api/ai/explain', endpoint='api_ai_explain', view_func=api_ai_explain, methods=['POST'])
     app.add_url_rule('/api/ai/explain_async', endpoint='api_ai_explain_async', view_func=api_ai_explain_async, methods=['POST'])
     app.add_url_rule('/api/jobs/<job_id>', endpoint='api_job_status', view_func=api_job_status, methods=['GET'])
+    app.add_url_rule('/api/grade_subjective', endpoint='api_grade_subjective', view_func=api_grade_subjective, methods=['POST'])
     
     # 注册主蓝图（用于页面路由）
     app.register_blueprint(quiz_bp)

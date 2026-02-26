@@ -498,6 +498,121 @@
             transform: translateY(0.5px);
         }
 
+        /* 设置弹窗：主观题判分模式 */
+        body.quiz-layout-card .feature-grading-section{
+            padding-top: 4px;
+        }
+        body.quiz-layout-card .feature-grading-modes{
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        body.quiz-layout-card .feature-grading-opt{
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1.5px solid var(--mini-divider);
+            background: var(--mini-surface-2);
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        body.quiz-layout-card .feature-grading-opt:has(input:checked){
+            border-color: var(--mini-blue);
+            background: color-mix(in srgb, var(--mini-blue) 6%, var(--mini-surface-2));
+        }
+        body.quiz-layout-card .feature-grading-opt input{
+            display: none;
+        }
+        body.quiz-layout-card .feature-grading-radio{
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid var(--mini-text-sub);
+            flex-shrink: 0;
+            margin-top: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: border-color 0.2s;
+        }
+        body.quiz-layout-card .feature-grading-opt:has(input:checked) .feature-grading-radio{
+            border-color: var(--mini-blue);
+        }
+        body.quiz-layout-card .feature-grading-opt:has(input:checked) .feature-grading-radio::after{
+            content: '';
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--mini-blue);
+        }
+        body.quiz-layout-card .feature-grading-info{
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+        }
+        body.quiz-layout-card .feature-grading-label{
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--mini-text);
+        }
+        body.quiz-layout-card .feature-grading-desc{
+            font-size: 12px;
+            color: var(--mini-text-sub);
+            line-height: 1.3;
+        }
+
+        /* 主观题自评卡片 */
+        body.quiz-layout-card .subjective-self-eval{
+            background: var(--mini-card-bg);
+            border: 1px solid var(--mini-divider);
+            border-radius: var(--mini-radius-lg);
+            padding: 16px;
+            margin-top: var(--mini-gap, 10px);
+        }
+        body.quiz-layout-card .self-eval-title{
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--mini-text);
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        body.quiz-layout-card .self-eval-btns{
+            display: flex;
+            gap: 12px;
+        }
+        body.quiz-layout-card .self-eval-btn{
+            flex: 1;
+            height: 44px;
+            border-radius: 999px;
+            border: 1.5px solid var(--mini-border);
+            background: var(--mini-surface-2);
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        body.quiz-layout-card .self-eval-btn.correct{
+            color: #34c759;
+            border-color: color-mix(in srgb, #34c759 40%, transparent);
+        }
+        body.quiz-layout-card .self-eval-btn.correct:hover{
+            background: color-mix(in srgb, #34c759 10%, var(--mini-surface-2));
+        }
+        body.quiz-layout-card .self-eval-btn.wrong{
+            color: #ff3b30;
+            border-color: color-mix(in srgb, #ff3b30 40%, transparent);
+        }
+        body.quiz-layout-card .self-eval-btn.wrong:hover{
+            background: color-mix(in srgb, #ff3b30 10%, var(--mini-surface-2));
+        }
+        body.quiz-layout-card .self-eval-btn:disabled{
+            opacity: 0.5;
+            cursor: default;
+        }
+
         /* 题干卡片（题型 + 右上角操作 + 题干） */
         body.quiz-layout-card .question-stem-card{
             background: var(--mini-card-bg) !important;
@@ -1255,3 +1370,60 @@
         body.dark-mode .study-btn.success{ color: #34d399; border-color: color-mix(in srgb, #34d399 30%, transparent); }
         body.dark-mode .study-btn.warn{ color: #fbbf24; border-color: color-mix(in srgb, #fbbf24 30%, transparent); }
         body.dark-mode .study-btn.danger{ color: #f87171; border-color: color-mix(in srgb, #f87171 30%, transparent); }
+
+        /* 判分模式：基础样式（传统布局 fallback） */
+        .feature-grading-section{ padding-top: 4px; }
+        .feature-grading-modes{ display: flex; flex-direction: column; gap: 8px; }
+        .feature-grading-opt{
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 10px 12px; border-radius: 10px;
+            border: 1.5px solid var(--border-color, #e5e5ea);
+            background: var(--bg-secondary, #f5f5f5);
+            cursor: pointer; transition: border-color 0.2s;
+        }
+        .feature-grading-opt:has(input:checked){
+            border-color: var(--accent-color, #007AFF);
+            background: color-mix(in srgb, var(--accent-color, #007AFF) 6%, var(--bg-secondary, #f5f5f5));
+        }
+        .feature-grading-opt input{ display: none; }
+        .feature-grading-radio{
+            width: 18px; height: 18px; border-radius: 50%;
+            border: 2px solid var(--text-sub, #8e8e93);
+            flex-shrink: 0; margin-top: 1px;
+            display: flex; align-items: center; justify-content: center;
+            transition: border-color 0.2s;
+        }
+        .feature-grading-opt:has(input:checked) .feature-grading-radio{
+            border-color: var(--accent-color, #007AFF);
+        }
+        .feature-grading-opt:has(input:checked) .feature-grading-radio::after{
+            content: ''; width: 9px; height: 9px; border-radius: 50%;
+            background: var(--accent-color, #007AFF);
+        }
+        .feature-grading-info{ display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+        .feature-grading-label{ font-size: 14px; font-weight: 700; color: var(--text-color, #1c1c1e); }
+        .feature-grading-desc{ font-size: 12px; color: var(--text-sub, #8e8e93); line-height: 1.3; }
+
+        /* 主观题自评卡片（传统布局 fallback） */
+        .subjective-self-eval{
+            background: var(--bg-secondary, #f5f5f5);
+            border: 1px solid var(--border-color, #e5e5ea);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 10px;
+        }
+        .self-eval-title{
+            font-size: 14px; font-weight: 700;
+            color: var(--text-color, #1c1c1e);
+            margin-bottom: 12px; text-align: center;
+        }
+        .self-eval-btns{ display: flex; gap: 12px; }
+        .self-eval-btn{
+            flex: 1; height: 44px; border-radius: 999px;
+            border: 1.5px solid var(--border-color, #e5e5ea);
+            background: var(--bg-secondary, #f5f5f5);
+            font-size: 15px; font-weight: 700; cursor: pointer;
+        }
+        .self-eval-btn.correct{ color: #34c759; border-color: color-mix(in srgb, #34c759 40%, transparent); }
+        .self-eval-btn.wrong{ color: #ff3b30; border-color: color-mix(in srgb, #ff3b30 40%, transparent); }
+        .self-eval-btn:disabled{ opacity: 0.5; cursor: default; }

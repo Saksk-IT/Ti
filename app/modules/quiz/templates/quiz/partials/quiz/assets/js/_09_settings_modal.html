@@ -1,3 +1,51 @@
+// ===== 主观题判分模式（localStorage） =====
+const _GRADING_MODE_KEY = 'quiz_grading_mode_v1';
+const _VALID_GRADING_MODES = ['auto_full', 'ai', 'manual'];
+
+function getQuizGradingMode() {
+    try {
+        const v = localStorage.getItem(_GRADING_MODE_KEY);
+        return (_VALID_GRADING_MODES.includes(v)) ? v : 'auto_full';
+    } catch(e) { return 'auto_full'; }
+}
+
+function setQuizGradingMode(mode) {
+    const v = (_VALID_GRADING_MODES.includes(mode)) ? mode : 'auto_full';
+    try { localStorage.setItem(_GRADING_MODE_KEY, v); } catch(e) {}
+    return v;
+}
+
+function syncFeatureGradingUI() {
+    const section = document.getElementById('featureGradingSection');
+    if (!section) return;
+    // 仅刷题模式（非考试）显示
+    const isQuizMode = (typeof mode !== 'undefined' && mode !== 'exam');
+    // 检查当前题集是否包含主观题
+    let hasSubjective = false;
+    try {
+        if (typeof questions !== 'undefined' && questions.length) {
+            hasSubjective = Array.from(questions).some(q => {
+                const t = q.getAttribute('data-type') || '';
+                return (typeof isSubjectiveType === 'function') ? isSubjectiveType(t) : false;
+            });
+        }
+    } catch(e) {}
+    section.style.display = (isQuizMode && hasSubjective) ? '' : 'none';
+    if (!isQuizMode || !hasSubjective) return;
+    const current = getQuizGradingMode();
+    section.querySelectorAll('input[name="featureGradingMode"]').forEach(inp => {
+        inp.checked = (inp.value === current);
+    });
+}
+
+function onFeatureGradingModeChange(e) {
+    const val = e.target.value;
+    if (!val) return;
+    const saved = setQuizGradingMode(val);
+    const labels = { auto_full: '有答即对', ai: 'AI 判分', manual: '自评模式' };
+    showToast('已切换：' + (labels[saved] || saved));
+}
+
 // ===== 设置弹窗（替代悬浮球菜单） =====
 function openFeatureModal(){
     const ov = document.getElementById('featureOverlay');
@@ -13,6 +61,7 @@ function openFeatureModal(){
     } catch(e) {}
     try { syncFeatureThemeStyleUI(); } catch(e) {}
     try { syncFeatureFontSizeUI(); } catch(e) {}
+    try { syncFeatureGradingUI(); } catch(e) {}
 }
 
 function closeFeatureModal(e){
@@ -451,6 +500,14 @@ function handleSwipe(startX, startY, endX, endY) {
         }
     }
 }
+
+// 绑定判分模式 radio change 事件
+try {
+    const _gradingContainer = document.getElementById('featureGradingModes');
+    if (_gradingContainer) {
+        _gradingContainer.addEventListener('change', onFeatureGradingModeChange);
+    }
+} catch(e) {}
 
 init().catch((e) => {
     console.error('[init] 初始化失败:', e);

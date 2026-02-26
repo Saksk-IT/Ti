@@ -63,6 +63,14 @@ Page({
       autoFavoriteOnWrong: false, // 做错自动收藏
       vibrationFeedback: false    // 答题震动反馈
     },
+    gradingMode: 'auto_full' as string,  // 主观题判分模式
+    hasSubjectiveType: false,             // 当前题集是否含主观题
+    showSelfEval: false,                  // 是否显示自评按钮
+    gradingModeOptions: [
+      { value: 'auto_full', label: '有答即对', desc: '填写即判对，快速刷题' },
+      { value: 'ai', label: 'AI 判分', desc: 'AI 智能评判，需后台配置' },
+      { value: 'manual', label: '自评模式', desc: '查看参考答案后自行评判' }
+    ],
 
     // 字体大小（仅影响答题页字体）
     quizFontSize: 'md' as 'sm' | 'md' | 'lg',
@@ -135,6 +143,7 @@ Page({
   syncPending: false as boolean,
   lastSavedPayload: null as Record<string, unknown> | null,
   practiceSettingsKey: 'quiz_practice_settings_v1' as string,
+  gradingModeKey: 'quiz_grading_mode_v1' as string,
   quizFontSizeKey: 'quiz_font_size_v1' as string,
   sessionStartedAt: 0 as number,
   setDataBatcher: null as null | ((patch: Record<string, any>, callback?: () => void, options?: { immediate?: boolean }) => void),
@@ -262,6 +271,7 @@ Page({
     });
 
     this.initPracticeSettings();
+    this.initGradingMode();
     this.initQuizFontSize();
     this.syncThemeStyleName();
 
@@ -367,6 +377,37 @@ Page({
     } catch (e) {
       // 忽略本地存储异常
     }
+  },
+
+  initGradingMode() {
+    try {
+      const raw = wx.getStorageSync(this.gradingModeKey);
+      const valid = ['auto_full', 'ai', 'manual'];
+      const mode = valid.includes(raw) ? raw : 'auto_full';
+      this.setData({ gradingMode: mode });
+    } catch (e) {
+      // ignore
+    }
+  },
+
+  saveGradingMode(mode: string) {
+    const valid = ['auto_full', 'ai', 'manual'];
+    const v = valid.includes(mode) ? mode : 'auto_full';
+    try { wx.setStorageSync(this.gradingModeKey, v); } catch (e) {}
+    this.setData({ gradingMode: v });
+  },
+
+  onGradingModeChange(e: any) {
+    const value = e.currentTarget?.dataset?.value || 'auto_full';
+    this.saveGradingMode(value);
+    const labels: Record<string, string> = { auto_full: '有答即对', ai: 'AI 判分', manual: '自评模式' };
+    wx.showToast({ title: '已切换：' + (labels[value] || value), icon: 'none' });
+  },
+
+  checkHasSubjectiveType() {
+    const subjectiveTypes = new Set(['简答题', '计算题', '论述题', '问答题']);
+    const has = (this.data.questions || []).some((q: any) => subjectiveTypes.has(q.q_type || ''));
+    this.setData({ hasSubjectiveType: has });
   },
 
   normalizeQuizFontSize(raw: any): 'sm' | 'md' | 'lg' {
@@ -666,7 +707,9 @@ Page({
         paginationHasMore,
         paginationLoading: false
       });
-      
+
+      this.checkHasSubjectiveType();
+
       // 加载第一题
       if (questionsWithPreview.length > 0) {
         let idx = savedPayload && typeof savedPayload.index === 'number' ? savedPayload.index : 0;
@@ -1013,7 +1056,16 @@ Page({
     
     // 验证答案
     const correctAnswer = currentQuestion.answer || '';
-    const isCorrect = isJudgable ? this.checkAnswer(userAnswer, correctAnswer, qType) : false;
+    const isSubjective = !isJudgable;
+
+    // 主观题：根据判分模式分流处理
+    if (isSubjective) {
+      this.setProgressAnswerForIndex(this.data.currentIndex, qType);
+      await this._submitSubjectiveAnswer(currentQuestion, userAnswer, userAnswerText, qType);
+      return;
+    }
+
+    const isCorrect = this.checkAnswer(userAnswer, correctAnswer, qType);
     
     // 更新进度缓存（answers/status/order/index）
     this.setProgressAnswerForIndex(this.data.currentIndex, qType);
@@ -1114,6 +1166,178 @@ Page({
       this.patchData({ questions });
     } catch (err: any) {
       wx.showToast({ title: '自动收藏失败', icon: 'none' });
+    }
+  },
+
+  // ===== 主观题判分（三模式） =====
+  async _submitSubjectiveAnswer(currentQuestion: any, userAnswer: string, userAnswerText: string, qType: string) {
+    const gradingMode = this.data.gradingMode || 'auto_full';
+
+    if (gradingMode === 'manual') {
+      // 自评模式：展示答案 + 自评按钮
+      this.patchData({
+        showAnswer: true,
+        isCorrect: false,
+        isJudgable: false,
+        userAnswerText,
+        showSelfEval: true
+      }, () => {
+        this.refreshDisplayOptions();
+        this.updateSubmitState();
+      });
+      this.saveProgressIndex(true);
+      return;
+    }
+
+    // auto_full / ai 模式：调用后端判分
+    try {
+      const app = getApp();
+      const baseUrl = (app && app.globalData && app.globalData.baseUrl) || '';
+      const res = await new Promise<any>((resolve, reject) => {
+        wx.request({
+          url: `${baseUrl}/api/quiz/grade_subjective`,
+          method: 'POST',
+          header: {
+            'Content-Type': 'application/json',
+            'Cookie': (app && app.globalData && app.globalData.cookie) || ''
+          },
+          data: {
+            question_id: currentQuestion.id,
+            user_answer: userAnswer,
+            grading_mode: gradingMode
+          },
+          success: (r: any) => resolve(r.data),
+          fail: reject
+        });
+      });
+
+      if (res && res.status === 'success' && res.data) {
+        const isCorrect = !!res.data.is_correct;
+        this.progressStatusMap = this.progressStatusMap || {};
+        this.progressStatusMap[String(this.data.currentIndex)] = isCorrect ? 'correct' : 'wrong';
+
+        this.patchData({
+          showAnswer: true,
+          isCorrect,
+          isJudgable: true,
+          userAnswerText,
+          showSelfEval: false
+        }, () => {
+          this.refreshDisplayOptions();
+          this.updateSubmitState();
+        });
+
+        // 记录到 answerRecords
+        const nextRecords: any = Object.assign({}, this.data.answerRecords);
+        nextRecords[currentQuestion.id] = { answered: true, isCorrect };
+        this.patchData({ answerRecords: nextRecords });
+
+        // 更新错题标记
+        const questions = this.data.questions.map((q: any) => {
+          if (q.id !== currentQuestion.id) return q;
+          return Object.assign({}, q, { is_mistake: isCorrect ? 0 : 1 });
+        });
+        this.patchData({ questions });
+
+        this.saveProgressIndex(true);
+
+        // 震动反馈
+        if (this.data.practiceSettings.vibrationFeedback) {
+          try { wx.vibrateShort({ type: isCorrect ? 'medium' : 'heavy' } as any); } catch (e) {}
+        }
+        // 做错自动收藏
+        if (!isCorrect && this.data.practiceSettings.autoFavoriteOnWrong) {
+          await this.autoFavoriteIfNeeded();
+        }
+        // 答对自动切题
+        if (isCorrect && this.data.practiceSettings.autoNextOnCorrect) {
+          const savedId = currentQuestion.id;
+          setTimeout(() => {
+            if (this.data.showAnswer && this.data.currentQuestion && this.data.currentQuestion.id === savedId) {
+              this.onNextQuestion();
+            }
+          }, 650);
+        }
+        return;
+      }
+      wx.showToast({ title: (res && res.message) || '判分失败', icon: 'none' });
+    } catch (e) {
+      wx.showToast({ title: '网络错误，请重试', icon: 'none' });
+    }
+
+    // 失败降级：仅展示答案
+    this.patchData({
+      showAnswer: true,
+      isCorrect: false,
+      isJudgable: false,
+      userAnswerText,
+      showSelfEval: false
+    }, () => {
+      this.refreshDisplayOptions();
+      this.updateSubmitState();
+    });
+    this.saveProgressIndex(true);
+  },
+
+  // 自评按钮点击
+  onSelfEvalResult(e: any) {
+    const result = e.currentTarget?.dataset?.result;
+    const isCorrect = result === 'correct';
+    const { currentQuestion } = this.data;
+    if (!currentQuestion) return;
+
+    this.progressStatusMap = this.progressStatusMap || {};
+    this.progressStatusMap[String(this.data.currentIndex)] = isCorrect ? 'correct' : 'wrong';
+
+    this.patchData({
+      isCorrect,
+      isJudgable: true,
+      showSelfEval: false
+    }, () => {
+      this.refreshDisplayOptions();
+    });
+
+    // 记录到 answerRecords
+    const nextRecords: any = Object.assign({}, this.data.answerRecords);
+    nextRecords[currentQuestion.id] = { answered: true, isCorrect };
+    this.patchData({ answerRecords: nextRecords });
+
+    // 更新错题标记
+    const questions = this.data.questions.map((q: any) => {
+      if (q.id !== currentQuestion.id) return q;
+      return Object.assign({}, q, { is_mistake: isCorrect ? 0 : 1 });
+    });
+    this.patchData({ questions });
+
+    this.saveProgressIndex(true);
+
+    // 调用后端记录结果
+    try {
+      if (quizSource) {
+        quizSource.recordResult({
+          questionId: currentQuestion.id,
+          userAnswer: this.data.userAnswerText || '',
+          isCorrect
+        });
+      }
+    } catch (e) {}
+
+    // 震动反馈
+    if (this.data.practiceSettings.vibrationFeedback) {
+      try { wx.vibrateShort({ type: isCorrect ? 'medium' : 'heavy' } as any); } catch (e) {}
+    }
+    // 做错自动收藏
+    if (!isCorrect && this.data.practiceSettings.autoFavoriteOnWrong) {
+      this.autoFavoriteIfNeeded();
+    }
+    // 答对自动切题
+    if (isCorrect && this.data.practiceSettings.autoNextOnCorrect) {
+      const savedId = currentQuestion.id;
+      setTimeout(() => {
+        if (this.data.showAnswer && this.data.currentQuestion && this.data.currentQuestion.id === savedId) {
+          this.onNextQuestion();
+        }
+      }, 650);
     }
   },
 

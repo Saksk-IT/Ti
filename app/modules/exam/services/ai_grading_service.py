@@ -13,14 +13,18 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 
+def _get_dashscope_cfg() -> dict:
+    """获取 DashScope 配置（DB 优先、.env fallback）"""
+    from app.modules.admin.services.system_config_service import SystemConfigService
+    return SystemConfigService.get_dashscope_config()
+
+
 def _get_client():
     """延迟获取 DashScope 客户端（避免循环导入 + 读取运行时配置）"""
-    from flask import current_app
     from app.modules.quiz.services.dashscope_client import DashScopeClient
 
-    api_key = current_app.config.get('DASHSCOPE_API_KEY', '')
-    base_url = current_app.config.get('DASHSCOPE_BASE_URL', '')
-    return DashScopeClient(api_key=api_key, base_url=base_url)
+    cfg = _get_dashscope_cfg()
+    return DashScopeClient(api_key=cfg['api_key'], base_url=cfg['base_url'])
 
 
 def grade_essay_answer(
@@ -50,19 +54,18 @@ def grade_essay_answer(
     )
 
     try:
-        from flask import current_app
         client = _get_client()
-        model = current_app.config.get('DASHSCOPE_MODEL', 'qwen-turbo')
+        cfg = _get_dashscope_cfg()
 
         response_text = client.chat_completions(
-            model=model,
+            model=cfg['model'],
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
             temperature=0.1,
             max_tokens=50,
-            timeout=15,
+            timeout=min(cfg['timeout'], 15),
         )
 
         # 解析 JSON 响应

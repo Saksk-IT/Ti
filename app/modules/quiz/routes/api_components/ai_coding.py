@@ -74,10 +74,12 @@ def api_ai_explain():
     if not payload.get('content') and not payload.get('question_id'):
         return jsonify({'status': 'error', 'message': '缺少题目信息'}), 400
 
-    api_key = (current_app.config.get('DASHSCOPE_API_KEY') or '').strip()
-    base_url = (current_app.config.get('DASHSCOPE_BASE_URL') or '').strip()
-    model = (current_app.config.get('DASHSCOPE_MODEL') or '').strip()
-    timeout = int(current_app.config.get('DASHSCOPE_TIMEOUT') or 25)
+    from app.modules.admin.services.system_config_service import SystemConfigService
+    _ds_cfg = SystemConfigService.get_dashscope_config()
+    api_key = _ds_cfg['api_key']
+    base_url = _ds_cfg['base_url']
+    model = _ds_cfg['model']
+    timeout = _ds_cfg['timeout']
 
     # 未配置密钥：保留旧行为，返回"占位解析"，同时提示如何配置
     if not api_key:
