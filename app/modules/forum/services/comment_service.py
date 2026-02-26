@@ -13,8 +13,12 @@ logger = logging.getLogger(__name__)
 
 
 def get_comments(post_id: int, page: int = 1, per_page: int = 30,
-                 user_id: Optional[int] = None) -> dict:
-    """获取帖子的评论列表（含楼中楼）"""
+                 user_id: Optional[int] = None,
+                 sort: str = 'time') -> dict:
+    """获取帖子的评论列表（含楼中楼）
+
+    sort: 'time'（默认按时间升序）| 'hot'（按热度降序：like_count*2 + reply_count）
+    """
     params: dict = {'pid': post_id, 'limit': per_page, 'offset': (page - 1) * per_page}
 
     liked_sql = ''
@@ -26,6 +30,10 @@ def get_comments(post_id: int, page: int = 1, per_page: int = 30,
         'SELECT COUNT(*) FROM forum_comments WHERE post_id = :pid AND parent_id IS NULL AND is_deleted = false'
     ), {'pid': post_id}).scalar()
 
+    order_clause = 'c.created_at ASC'
+    if sort == 'hot':
+        order_clause = '(c.like_count * 2 + c.reply_count) DESC, c.created_at DESC'
+
     # 一级评论
     rows = db.session.execute(text(f'''
         SELECT c.*, u.username AS author_name, u.avatar AS author_avatar
@@ -33,7 +41,7 @@ def get_comments(post_id: int, page: int = 1, per_page: int = 30,
         FROM forum_comments c
         JOIN users u ON u.id = c.author_id
         WHERE c.post_id = :pid AND c.parent_id IS NULL AND c.is_deleted = false
-        ORDER BY c.created_at ASC
+        ORDER BY {order_clause}
         LIMIT :limit OFFSET :offset
     '''), params).fetchall()
 

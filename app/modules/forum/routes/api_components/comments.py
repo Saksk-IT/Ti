@@ -14,9 +14,12 @@ def api_get_comments(post_id: int):
     try:
         page = request.args.get('page', 1, type=int)
         per_page = min(request.args.get('per_page', 30, type=int), 50)
+        sort = request.args.get('sort', 'time')
+        if sort not in ('time', 'hot'):
+            sort = 'time'
         result = comment_service.get_comments(
             post_id, page=page, per_page=per_page,
-            user_id=current_user_id(),
+            user_id=current_user_id(), sort=sort,
         )
         return jsonify({'status': 'success', 'data': result})
     except Exception as e:

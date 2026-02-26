@@ -1,6 +1,7 @@
 <script>
 let commentPage = 1;
 let commentTotal = 0;
+let commentSort = 'time'; // 'time' | 'hot'
 let replyTarget = null; // {parent_id, reply_to_user_id, reply_to_name}
 
 function escH(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
@@ -60,7 +61,7 @@ function toggleReplies(commentId, btn) {
 
 async function loadComments(append) {
   try {
-    const r = await fetch(`/api/forum/posts/${POST_ID}/comments?page=${commentPage}&per_page=30`).then(r => r.json());
+    const r = await fetch(`/api/forum/posts/${POST_ID}/comments?page=${commentPage}&per_page=30&sort=${commentSort}`).then(r => r.json());
     if (r.status !== 'success') return;
     commentTotal = r.data.total;
     const list = document.getElementById('commentsList');
@@ -69,7 +70,30 @@ async function loadComments(append) {
     const more = document.getElementById('commentsLoadMore');
     const totalP = Math.ceil(commentTotal / 30);
     more.style.display = commentPage < totalP ? 'block' : 'none';
+    _ensureSortBar();
   } catch(e) { console.error(e); }
+}
+
+function _ensureSortBar() {
+  if (document.getElementById('commentSortBar')) return;
+  const title = document.querySelector('.forum-section-title');
+  if (!title) return;
+  const bar = document.createElement('div');
+  bar.id = 'commentSortBar';
+  bar.style.cssText = 'display:inline-flex;gap:4px;margin-left:12px;vertical-align:middle;';
+  bar.innerHTML = '<button class="comment-sort-btn' + (commentSort === 'time' ? ' active' : '') + '" data-sort="time">最新</button>'
+    + '<button class="comment-sort-btn' + (commentSort === 'hot' ? ' active' : '') + '" data-sort="hot">最热</button>';
+  title.appendChild(bar);
+  bar.addEventListener('click', function(e) {
+    var btn = e.target.closest('.comment-sort-btn');
+    if (!btn || btn.dataset.sort === commentSort) return;
+    commentSort = btn.dataset.sort;
+    bar.querySelectorAll('.comment-sort-btn').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.sort === commentSort);
+    });
+    commentPage = 1;
+    loadComments(false);
+  });
 }
 
 function loadMoreComments() { commentPage++; loadComments(true); }
