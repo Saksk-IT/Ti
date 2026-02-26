@@ -82,3 +82,28 @@
 
 - **PostToolUse**: 编辑 `.py` 文件后检测 `print()` 语句并警告；检测硬编码密钥
 - **PreToolUse**: Flask 开发服务器和 pytest 运行前提醒使用 tmux
+
+## 8) 骨架屏（Skeleton Loading）规范
+
+### 已知坑点
+
+- **flex 容器必须设 `width: 100%`**：若父容器使用 `max-width` + `flex`，骨架阶段内容少会导致容器宽度远小于数据加载后的宽度，产生跳动。修复方式：`width: 100%; box-sizing: border-box;`。
+- **骨架必须复用真实组件的 CSS 类**：不要用 `border:none; background:transparent; padding:0` 覆盖真实样式。直接使用 `.forum-comment`、`.comment-header`、`.comment-footer` 等原始类，保证 padding/border/border-radius 一致。
+- **骨架行高要匹配实际 font-size / line-height**：例如 `post-title` 是 20px，`post-body` 行高 25.5px（15px × 1.7），`comment-body` 行高 22.4px（14px × 1.6）。
+
+### 验证方法（CDP 远程调试）
+
+当骨架屏尺寸不确定时，使用 Chrome DevTools Protocol 实测：
+
+1. 启动 Chrome：`chrome.exe --remote-debugging-port=9222 --user-data-dir="C:/tmp/chrome-debug"`
+2. 用 `Network.setBlockedURLs` 阻断 API 请求，使骨架保持可见
+3. 用 `Runtime.evaluate` 获取 `offsetWidth` / `offsetHeight` 与加载后对比
+4. 确保骨架阶段与数据加载后的容器宽度一致（高度差异可接受）
+
+### 项目中已有骨架样式
+
+复用 `_styles.html` 中的基础类：
+- `.forum-skeleton-row`：矩形占位条（shimmer 动画）
+- `.forum-skeleton-avatar`：圆形头像占位（shimmer 动画）
+- `.forum-detail-skel`：详情页骨架容器（pulse 动画）
+- `@keyframes skeleton-shimmer`：横向光泽滑动
