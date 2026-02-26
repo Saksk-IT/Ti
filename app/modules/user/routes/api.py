@@ -940,15 +940,15 @@ def api_user_profile(uid: int):
 
     # 获赞总数 = 所有帖子 like_count 之和
     total_likes = db.session.execute(sa_text(
-        'SELECT COALESCE(SUM(like_count),0) FROM forum_posts WHERE author_id=:uid AND is_deleted=0'
+        'SELECT COALESCE(SUM(like_count),0) FROM forum_posts WHERE author_id=:uid AND is_deleted=false'
     ), {'uid': uid}).scalar() or 0
 
     # 作品数 = 公开题库 + 帖子
     banks_count = db.session.execute(sa_text(
-        'SELECT COUNT(*) FROM user_question_banks WHERE user_id=:uid AND is_public=1 AND status=1'
+        'SELECT COUNT(*) FROM user_question_banks WHERE user_id=:uid AND is_public=true AND status=1'
     ), {'uid': uid}).scalar() or 0
     posts_count = db.session.execute(sa_text(
-        'SELECT COUNT(*) FROM forum_posts WHERE author_id=:uid AND is_deleted=0'
+        'SELECT COUNT(*) FROM forum_posts WHERE author_id=:uid AND is_deleted=false'
     ), {'uid': uid}).scalar() or 0
     works_count = banks_count + posts_count
 
@@ -1016,14 +1016,14 @@ def api_user_works(uid: int):
 
     if item_type in ('all', 'bank'):
         bank_total = db.session.execute(sa_text(
-            'SELECT COUNT(*) FROM user_question_banks WHERE user_id=:uid AND is_public=1 AND status=1'
+            'SELECT COUNT(*) FROM user_question_banks WHERE user_id=:uid AND is_public=true AND status=1'
         ), {'uid': uid}).scalar() or 0
     else:
         bank_total = 0
 
     if item_type in ('all', 'post'):
         post_total = db.session.execute(sa_text(
-            'SELECT COUNT(*) FROM forum_posts WHERE author_id=:uid AND is_deleted=0'
+            'SELECT COUNT(*) FROM forum_posts WHERE author_id=:uid AND is_deleted=false'
         ), {'uid': uid}).scalar() or 0
     else:
         post_total = 0
@@ -1034,7 +1034,7 @@ def api_user_works(uid: int):
             SELECT id, name, description, cover_image, question_count, public_use_count, created_at,
                    'bank' AS item_type
             FROM user_question_banks
-            WHERE user_id=:uid AND is_public=1 AND status=1
+            WHERE user_id=:uid AND is_public=true AND status=1
             ORDER BY created_at DESC
             LIMIT :lim OFFSET :off
         '''), {'uid': uid, 'lim': per_page, 'off': offset}).fetchall()
@@ -1054,7 +1054,7 @@ def api_user_works(uid: int):
             SELECT id, title, content, images, like_count, comment_count, created_at,
                    'post' AS item_type
             FROM forum_posts
-            WHERE author_id=:uid AND is_deleted=0
+            WHERE author_id=:uid AND is_deleted=false
             ORDER BY created_at DESC
             LIMIT :lim OFFSET :off
         '''), {'uid': uid, 'lim': per_page, 'off': offset}).fetchall()
@@ -1089,7 +1089,7 @@ def api_user_works(uid: int):
                        public_use_count AS stat2, '使用' AS stat2_label,
                        created_at, 'bank' AS item_type
                 FROM user_question_banks
-                WHERE user_id=:uid AND is_public=1 AND status=1
+                WHERE user_id=:uid AND is_public=true AND status=1
                 UNION ALL
                 SELECT id, title AS name, SUBSTR(content,1,80) AS description,
                        NULL AS cover_image,
@@ -1097,7 +1097,7 @@ def api_user_works(uid: int):
                        comment_count AS stat2, '评论' AS stat2_label,
                        created_at, 'post' AS item_type
                 FROM forum_posts
-                WHERE author_id=:uid AND is_deleted=0
+                WHERE author_id=:uid AND is_deleted=false
             ) combined
             ORDER BY created_at DESC
             LIMIT :lim OFFSET :off
@@ -1147,14 +1147,14 @@ def api_user_favorites(uid: int):
 
     total = db.session.execute(sa_text(
         'SELECT COUNT(*) FROM forum_favorites ff JOIN forum_posts fp ON fp.id=ff.post_id '
-        'WHERE ff.user_id=:uid AND fp.is_deleted=0'
+        'WHERE ff.user_id=:uid AND fp.is_deleted=false'
     ), {'uid': uid}).scalar() or 0
 
     rows = db.session.execute(sa_text('''
         SELECT fp.id, fp.title, fp.content, fp.images, fp.like_count, fp.comment_count, ff.created_at
         FROM forum_favorites ff
         JOIN forum_posts fp ON fp.id = ff.post_id
-        WHERE ff.user_id = :uid AND fp.is_deleted = 0
+        WHERE ff.user_id = :uid AND fp.is_deleted = false
         ORDER BY ff.created_at DESC
         LIMIT :lim OFFSET :off
     '''), {'uid': uid, 'lim': per_page, 'off': offset}).fetchall()
@@ -1214,14 +1214,14 @@ def api_user_likes(uid: int):
 
     total = db.session.execute(sa_text(
         "SELECT COUNT(*) FROM forum_likes fl JOIN forum_posts fp ON fp.id=fl.target_id "
-        "WHERE fl.user_id=:uid AND fl.target_type='post' AND fp.is_deleted=0"
+        "WHERE fl.user_id=:uid AND fl.target_type='post' AND fp.is_deleted=false"
     ), {'uid': uid}).scalar() or 0
 
     rows = db.session.execute(sa_text('''
         SELECT fp.id, fp.title, fp.content, fp.images, fp.like_count, fp.comment_count, fl.created_at
         FROM forum_likes fl
         JOIN forum_posts fp ON fp.id = fl.target_id
-        WHERE fl.user_id = :uid AND fl.target_type = 'post' AND fp.is_deleted = 0
+        WHERE fl.user_id = :uid AND fl.target_type = 'post' AND fp.is_deleted = false
         ORDER BY fl.created_at DESC
         LIMIT :lim OFFSET :off
     '''), {'uid': uid, 'lim': per_page, 'off': offset}).fetchall()
