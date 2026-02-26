@@ -30,6 +30,21 @@
   })();
 </script>
 
+<script>
+  /* S4: CSRF — 自动为 fetch 请求注入 X-Requested-With 头 */
+  (function(){
+    var _origFetch = window.fetch;
+    window.fetch = function(url, opts) {
+      opts = opts || {};
+      opts.headers = new Headers(opts.headers || {});
+      if (!opts.headers.has('X-Requested-With')) {
+        opts.headers.set('X-Requested-With', 'XMLHttpRequest');
+      }
+      return _origFetch.call(window, url, opts);
+    };
+  })();
+</script>
+
 {#
   说明：为降低回归风险，第一阶段仍保留内联 CSS。
   后续可将此块整体迁移至 static/quiz.css。
