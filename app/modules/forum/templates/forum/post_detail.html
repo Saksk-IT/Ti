@@ -8,21 +8,36 @@
 {% endblock %}
 
 {% block content %}
-<div class="forum-container forum-detail-container">
-  <div id="postContent" class="forum-post-content"></div>
-  <div id="pollSection" style="display:none"></div>
-  <div class="forum-actions-bar" id="actionsBar"></div>
-  <div id="reactionsBar" class="forum-reactions-bar"></div>
-  <div class="forum-comments-section">
-    <h3 class="forum-section-title">评论</h3>
-    <div id="commentsList"></div>
-    <div class="forum-load-more" id="commentsLoadMore" style="display:none">
-      <button class="btn-load-more" onclick="loadMoreComments()">加载更多评论</button>
-    </div>
+<div class="forum-detail-layout">
+  <!-- 返回按钮 -->
+  <div class="forum-detail-back">
+    <a href="javascript:void(0)" onclick="window.history.length>1?history.back():location.href='/forum'" class="forum-back-link">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      返回
+    </a>
   </div>
-  <div class="forum-comment-input" id="commentInput">
-    <textarea id="commentText" placeholder="写下你的评论... 使用 @用户名 提及他人" rows="3"></textarea>
-    <button class="forum-submit-btn" onclick="submitComment()">发表</button>
+  <div class="forum-detail-columns">
+    <!-- 左栏：帖子内容 -->
+    <div class="forum-detail-left">
+      <div id="postContent" class="forum-post-content"></div>
+      <div id="pollSection" style="display:none"></div>
+      <div class="forum-actions-bar" id="actionsBar"></div>
+      <div id="reactionsBar" class="forum-reactions-bar"></div>
+    </div>
+    <!-- 右栏：评论区 -->
+    <div class="forum-detail-right">
+      <div class="forum-comments-section">
+        <h3 class="forum-section-title">评论</h3>
+        <div id="commentsList"></div>
+        <div class="forum-load-more" id="commentsLoadMore" style="display:none">
+          <button class="btn-load-more" onclick="loadMoreComments()">加载更多评论</button>
+        </div>
+      </div>
+      <div class="forum-comment-input" id="commentInput">
+        <textarea id="commentText" placeholder="写下你的评论... 使用 @用户名 提及他人" rows="3"></textarea>
+        <button class="forum-submit-btn" onclick="submitComment()">发表</button>
+      </div>
+    </div>
   </div>
 </div>
 <!-- 举报弹窗 -->

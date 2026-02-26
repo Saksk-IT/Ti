@@ -46,8 +46,23 @@
 .forum-badge { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 11px; font-weight: 500; margin-right: 6px; }
 .forum-badge-pin { background: rgba(255,149,0,.12); color: #ff9500; }
 .forum-badge-feat { background: rgba(52,199,89,.12); color: #34c759; }
-/* 帖子详情 */
-.forum-detail-container { padding-top: 8px; }
+/* 帖子详情 — 双栏布局 */
+.forum-detail-layout { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+.forum-detail-back { padding: 8px 0 12px; }
+.forum-back-link { display: inline-flex; align-items: center; gap: 4px; color: var(--app-muted); font-size: 14px; font-weight: 500; text-decoration: none; transition: color .2s; padding: 4px 8px; border-radius: 8px; }
+.forum-back-link:hover { color: var(--app-primary); background: var(--app-primary-soft); }
+.forum-detail-columns { display: flex; gap: 24px; align-items: flex-start; }
+.forum-detail-left { flex: 1; min-width: 0; }
+.forum-detail-right { width: 380px; flex-shrink: 0; position: sticky; top: 72px; max-height: calc(100vh - 88px); display: flex; flex-direction: column; }
+.forum-detail-right .forum-comments-section { flex: 1; overflow-y: auto; padding-right: 4px; }
+.forum-detail-right .forum-comments-section::-webkit-scrollbar { width: 4px; }
+.forum-detail-right .forum-comments-section::-webkit-scrollbar-thumb { background: var(--app-border); border-radius: 2px; }
+.forum-detail-right .forum-comment-input { position: sticky; bottom: 0; background: var(--app-surface); border-top: 0.5px solid var(--app-border); padding: 12px 0; display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0; }
+@media (max-width: 900px) {
+  .forum-detail-columns { flex-direction: column; }
+  .forum-detail-right { width: 100%; position: static; max-height: none; }
+  .forum-detail-right .forum-comments-section { overflow-y: visible; }
+}
 .forum-post-content { background: var(--app-surface); border: 0.5px solid var(--app-border); border-radius: var(--app-radius-md); padding: 24px; margin-bottom: 16px; }
 .forum-post-content .post-title { font-size: 20px; font-weight: 600; margin-bottom: 12px; }
 .forum-post-content .post-body { font-size: 15px; line-height: 1.7; color: var(--app-text); }
@@ -149,6 +164,7 @@
 .forum-board-header p { font-size: 14px; color: var(--app-muted); margin: 0; }
 @media (max-width: 640px) {
   .forum-container { padding: 0 12px; }
+  .forum-detail-layout { padding: 0 12px; }
   .forum-post-card { padding: 16px; }
   .forum-post-content { padding: 16px; }
   .forum-post-images img { width: 60px; height: 60px; }
