@@ -1,0 +1,151 @@
+{% extends "main/shared/app_shell.html" %}
+{% block title %}个人主页{% endblock %}
+{% block page_title %}个人主页{% endblock %}
+
+{% block head_extra %}
+  <link rel="stylesheet" href="/static/css/profile_v2.css">
+{% endblock %}
+
+{% block content %}
+<div class="app-container">
+  <div class="upf-shell" id="upfShell">
+
+    <!-- Skeleton -->
+    <div id="upfSkeleton">
+      <section class="upf-hero upf-skel-hero">
+        <div class="upf-skel-hero-inner">
+          <div class="upf-skel-block upf-skel-circle upf-skel-avatar"></div>
+          <div class="upf-skel-info">
+            <div class="upf-skel-block upf-skel-line w60"></div>
+            <div class="upf-skel-block upf-skel-line w80"></div>
+            <div class="upf-skel-block upf-skel-line w40"></div>
+          </div>
+        </div>
+        <div class="upf-skel-stats">
+          <div class="upf-skel-block upf-skel-stat"></div>
+          <div class="upf-skel-block upf-skel-stat"></div>
+          <div class="upf-skel-block upf-skel-stat"></div>
+        </div>
+      </section>
+      <div style="display:flex;gap:8px;padding:10px 4px">
+        <div class="upf-skel-block upf-skel-tab"></div>
+        <div class="upf-skel-block upf-skel-tab"></div>
+        <div class="upf-skel-block upf-skel-tab"></div>
+      </div>
+      <div class="upf-skel-grid">
+        <div class="upf-skel-block upf-skel-card"></div>
+        <div class="upf-skel-block upf-skel-card"></div>
+        <div class="upf-skel-block upf-skel-card"></div>
+      </div>
+    </div>
+
+    <!-- Real content (hidden until loaded) -->
+    <div id="upfContent" style="display:none">
+
+      <!-- Hero -->
+      <section class="upf-hero" id="upfHero">
+        {% if is_self %}
+        <button class="upf-privacy-gear" id="upfPrivacyGear" title="隐私设置" aria-label="隐私设置">&#9881;</button>
+        <div class="upf-privacy-panel" id="upfPrivacyPanel">
+          <div class="upf-privacy-panel-title">隐私设置</div>
+          <div class="upf-privacy-row">
+            <span class="upf-privacy-label">收藏公开</span>
+            <label class="upf-toggle"><input type="checkbox" id="upfPrivFav" checked><span class="upf-toggle-track"></span><span class="upf-toggle-thumb"></span></label>
+          </div>
+          <div class="upf-privacy-row">
+            <span class="upf-privacy-label">喜欢公开</span>
+            <label class="upf-toggle"><input type="checkbox" id="upfPrivLike" checked><span class="upf-toggle-track"></span><span class="upf-toggle-thumb"></span></label>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="upf-hero-inner">
+          <div class="upf-avatar" id="upfAvatar">
+            <span class="upf-avatar-text" id="upfAvatarText">U</span>
+          </div>
+          <div class="upf-info">
+            <div class="upf-name" id="upfName">-</div>
+            <div class="upf-signature" id="upfSignature"></div>
+            <div class="upf-college" id="upfCollege"></div>
+          </div>
+          <div class="upf-actions" id="upfActions">
+            {% if is_self %}
+            <a class="upf-btn upf-btn-primary" href="/settings/account/profile">编辑资料</a>
+            {% else %}
+            <button class="upf-btn upf-follow-btn" id="upfFollowBtn" data-state="none">+ 关注</button>
+            <a class="upf-btn" id="upfMsgBtn" href="#">发消息</a>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="upf-stats">
+          <div class="upf-stat clickable" id="upfStatFollowing" data-type="following">
+            <div class="upf-stat-value" id="upfFollowingCount">0</div>
+            <div class="upf-stat-label">关注</div>
+          </div>
+          <div class="upf-stat clickable" id="upfStatFollowers" data-type="followers">
+            <div class="upf-stat-value" id="upfFollowerCount">0</div>
+            <div class="upf-stat-label">粉丝</div>
+          </div>
+          <div class="upf-stat">
+            <div class="upf-stat-value" id="upfLikesReceived">0</div>
+            <div class="upf-stat-label">获赞</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tabs -->
+      <nav class="upf-tabs" id="upfTabs">
+        <button class="upf-tab active" data-tab="works">作品</button>
+        <button class="upf-tab" data-tab="favorites" id="upfTabFav">收藏</button>
+        <button class="upf-tab" data-tab="likes" id="upfTabLike">喜欢</button>
+      </nav>
+
+      <!-- Works panel -->
+      <div class="upf-panel active" id="upfPanelWorks" data-tab="works">
+        <div class="upf-filter" id="upfFilter">
+          <button class="upf-filter-btn active" data-filter="all">全部</button>
+          <button class="upf-filter-btn" data-filter="bank">题库</button>
+          <button class="upf-filter-btn" data-filter="post">帖子</button>
+        </div>
+        <div class="upf-grid" id="upfGridWorks"></div>
+        <div class="upf-load-more" id="upfLoadMoreWorks"></div>
+      </div>
+
+      <!-- Favorites panel -->
+      <div class="upf-panel" id="upfPanelFavorites" data-tab="favorites">
+        <div class="upf-grid" id="upfGridFavorites"></div>
+        <div class="upf-load-more" id="upfLoadMoreFavorites"></div>
+      </div>
+
+      <!-- Likes panel -->
+      <div class="upf-panel" id="upfPanelLikes" data-tab="likes">
+        <div class="upf-grid" id="upfGridLikes"></div>
+        <div class="upf-load-more" id="upfLoadMoreLikes"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Follow list modal -->
+<div class="upf-modal-overlay" id="upfModalOverlay">
+  <div class="upf-modal">
+    <div class="upf-modal-header">
+      <span class="upf-modal-title" id="upfModalTitle">关注列表</span>
+      <button class="upf-modal-close" id="upfModalClose" aria-label="关闭">&times;</button>
+    </div>
+    <div class="upf-modal-list" id="upfModalList"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block body_end %}
+<script>
+  window.__UPF__ = {
+    isSelf: {{ 'true' if is_self else 'false' }},
+    targetUserId: {{ target_user_id }},
+  };
+</script>
+<script src="/static/js/profile_v2.js"></script>
+{% endblock %}

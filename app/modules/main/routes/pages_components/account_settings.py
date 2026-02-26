@@ -11,16 +11,38 @@ from .bp import main_pages_bp
 @main_pages_bp.route('/profile')
 @login_required
 def profile_page():
-    """个人资料展示页"""
+    """个人主页（V2 抖音风格）"""
     uid = session.get('user_id')
     return render_template(
-        'main/profile/profile_display.html',
+        'main/profile/profile_v2.html',
         logged_in=True,
         username=session.get('username'),
         is_admin=session.get('is_admin', False),
         is_subject_admin=session.get('is_subject_admin', False),
         is_notification_admin=session.get('is_notification_admin', False),
         user_id=uid or 0,
+        is_self=True,
+        target_user_id=uid or 0,
+    )
+
+
+@main_pages_bp.route('/user/<int:uid>')
+@login_required
+def user_profile_page(uid: int):
+    """他人主页（访问自己则重定向到 /profile）"""
+    me_id = session.get('user_id')
+    if me_id and int(me_id) == uid:
+        return redirect('/profile')
+    return render_template(
+        'main/profile/profile_v2.html',
+        logged_in=True,
+        username=session.get('username'),
+        is_admin=session.get('is_admin', False),
+        is_subject_admin=session.get('is_subject_admin', False),
+        is_notification_admin=session.get('is_notification_admin', False),
+        user_id=me_id or 0,
+        is_self=False,
+        target_user_id=uid,
     )
 
 

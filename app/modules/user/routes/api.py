@@ -742,6 +742,9 @@ def uploaded_file(filename):
     if '..' in filename or filename.startswith('/'):
         from flask import abort
         abort(400)
+    # S1: 聊天文件访问鉴权
+    from app.core.utils.chat_file_auth import check_chat_file_access
+    check_chat_file_access(filename)
     upload_folder = current_app.config['UPLOAD_FOLDER']
     return send_from_directory(upload_folder, filename)
 
@@ -880,3 +883,443 @@ def api_settings_about():
             'chat_disabled_reason': chat_disabled_reason,
         }
     })
+
+
+# ─────────────────────────────────────────────────────────────
+# Profile V2 — 抖音风格个人主页 API
+# ─────────────────────────────────────────────────────────────
+
+def _get_user_extra(user_id: int) -> dict:
+    """读取 user_profile_extra_v1 JSON"""
+    import json as _json
+    row = (
+        db.session.query(UserProgress.data)
+        .filter(UserProgress.user_id == user_id, UserProgress.p_key == 'user_profile_extra_v1')
+        .first()
+    )
+    if row and row.data:
+        try:
+            extra = _json.loads(row.data)
+            if isinstance(extra, dict):
+                return extra
+        except Exception:
+            pass
+    return {}
+
+
+def _format_count(n: int) -> str:
+    """格式化数字：>=10000 显示为 x.xw"""
+    if n >= 10000:
+        return f'{n / 10000:.1f}w'
+    return str(n)
+
+
+@user_api_bp.route('/user/<int:uid>/profile')
+def api_user_profile(uid: int):
+    """公开主页数据"""
+    from sqlalchemy import text as sa_text
+    from app.modules.forum.services.follow_service import get_follow_status, get_follow_counts
+
+    target = db.session.get(UserModel, uid)
+    if not target:
+        return jsonify({'status': 'error', 'message': '用户不存在'}), 404
+
+    # 当前登录用户
+    me_id = int(current_user_id() or session.get('user_id') or 0)
+    is_self = (me_id == uid) if me_id else False
+
+    # 关注状态
+    follow_info = get_follow_status(me_id, uid) if me_id and not is_self else {
+        'i_follow': False, 'follows_me': False, 'mutual': False,
+        'follower_count': 0, 'following_count': 0,
+    }
+    if is_self:
+        counts = get_follow_counts(uid)
+        follow_info['follower_count'] = counts['follower_count']
+        follow_info['following_count'] = counts['following_count']
+
+    # 获赞总数 = 所有帖子 like_count 之和
+    total_likes = db.session.execute(sa_text(
+        'SELECT COALESCE(SUM(like_count),0) FROM forum_posts WHERE author_id=:uid AND is_deleted=0'
+    ), {'uid': uid}).scalar() or 0
+
+    # 作品数 = 公开题库 + 帖子
+    banks_count = db.session.execute(sa_text(
+        'SELECT COUNT(*) FROM user_question_banks WHERE user_id=:uid AND is_public=1 AND status=1'
+    ), {'uid': uid}).scalar() or 0
+    posts_count = db.session.execute(sa_text(
+        'SELECT COUNT(*) FROM forum_posts WHERE author_id=:uid AND is_deleted=0'
+    ), {'uid': uid}).scalar() or 0
+    works_count = banks_count + posts_count
+
+    # 收藏数 / 喜欢数
+    favorites_count = db.session.execute(sa_text(
+        'SELECT COUNT(*) FROM forum_favorites WHERE user_id=:uid'
+    ), {'uid': uid}).scalar() or 0
+    likes_count = db.session.execute(sa_text(
+        "SELECT COUNT(*) FROM forum_likes WHERE user_id=:uid AND target_type='post'"
+    ), {'uid': uid}).scalar() or 0
+
+    # 隐私设置
+    extra = _get_user_extra(uid)
+    signature = extra.get('signature', '')
+    privacy_favorites = extra.get('privacy_favorites', 'public')
+    privacy_likes = extra.get('privacy_likes', 'public')
+
+    # 非本人 + 私密 → count 返回 null
+    resp_favorites_count = favorites_count if (is_self or privacy_favorites == 'public') else None
+    resp_likes_count = likes_count if (is_self or privacy_likes == 'public') else None
+
+    return jsonify({
+        'status': 'success',
+        'data': {
+            'id': target.id,
+            'username': target.username,
+            'avatar': target.avatar,
+            'signature': signature,
+            'college': target.college or '',
+            'created_at': target.created_at.strftime('%Y-%m-%d') if target.created_at else '',
+            'following_count': follow_info['following_count'],
+            'follower_count': follow_info['follower_count'],
+            'total_likes_received': total_likes,
+            'is_self': is_self,
+            'i_follow': follow_info['i_follow'],
+            'follows_me': follow_info['follows_me'],
+            'mutual': follow_info['mutual'],
+            'privacy': {
+                'favorites': privacy_favorites,
+                'likes': privacy_likes,
+            },
+            'works_count': works_count,
+            'favorites_count': resp_favorites_count,
+            'likes_count': resp_likes_count,
+        }
+    })
+
+
+@user_api_bp.route('/user/<int:uid>/works')
+def api_user_works(uid: int):
+    """作品列表（公开题库 + 帖子），支持 ?type=all|bank|post 筛选"""
+    from sqlalchemy import text as sa_text
+
+    target = db.session.get(UserModel, uid)
+    if not target:
+        return jsonify({'status': 'error', 'message': '用户不存在'}), 404
+
+    page = request.args.get('page', 1, type=int)
+    per_page = min(request.args.get('per_page', 12, type=int), 50)
+    item_type = request.args.get('type', 'all')  # all | bank | post
+    offset = (page - 1) * per_page
+
+    items = []
+    total = 0
+
+    if item_type in ('all', 'bank'):
+        bank_total = db.session.execute(sa_text(
+            'SELECT COUNT(*) FROM user_question_banks WHERE user_id=:uid AND is_public=1 AND status=1'
+        ), {'uid': uid}).scalar() or 0
+    else:
+        bank_total = 0
+
+    if item_type in ('all', 'post'):
+        post_total = db.session.execute(sa_text(
+            'SELECT COUNT(*) FROM forum_posts WHERE author_id=:uid AND is_deleted=0'
+        ), {'uid': uid}).scalar() or 0
+    else:
+        post_total = 0
+
+    if item_type == 'bank':
+        total = bank_total
+        rows = db.session.execute(sa_text('''
+            SELECT id, name, description, cover_image, question_count, public_use_count, created_at,
+                   'bank' AS item_type
+            FROM user_question_banks
+            WHERE user_id=:uid AND is_public=1 AND status=1
+            ORDER BY created_at DESC
+            LIMIT :lim OFFSET :off
+        '''), {'uid': uid, 'lim': per_page, 'off': offset}).fetchall()
+        for r in rows:
+            m = r._mapping
+            items.append({
+                'id': m['id'], 'item_type': 'bank',
+                'name': m['name'], 'description': m['description'] or '',
+                'cover_image': m['cover_image'] or '',
+                'stat1': m['question_count'] or 0, 'stat1_label': '题',
+                'stat2': m['public_use_count'] or 0, 'stat2_label': '使用',
+                'created_at': str(m['created_at'] or ''),
+            })
+    elif item_type == 'post':
+        total = post_total
+        rows = db.session.execute(sa_text('''
+            SELECT id, title, content, images, like_count, comment_count, created_at,
+                   'post' AS item_type
+            FROM forum_posts
+            WHERE author_id=:uid AND is_deleted=0
+            ORDER BY created_at DESC
+            LIMIT :lim OFFSET :off
+        '''), {'uid': uid, 'lim': per_page, 'off': offset}).fetchall()
+        for r in rows:
+            m = r._mapping
+            content_str = m['content'] or ''
+            preview = content_str[:80] if content_str else ''
+            cover = ''
+            if m['images']:
+                import json as _json
+                try:
+                    img_list = _json.loads(m['images']) if isinstance(m['images'], str) else m['images']
+                    if isinstance(img_list, list) and img_list:
+                        cover = img_list[0] if isinstance(img_list[0], str) else ''
+                except Exception:
+                    pass
+            items.append({
+                'id': m['id'], 'item_type': 'post',
+                'name': m['title'] or '', 'description': preview,
+                'cover_image': cover,
+                'stat1': m['like_count'] or 0, 'stat1_label': '赞',
+                'stat2': m['comment_count'] or 0, 'stat2_label': '评论',
+                'created_at': str(m['created_at'] or ''),
+            })
+    else:
+        # all: UNION 查询
+        total = bank_total + post_total
+        rows = db.session.execute(sa_text('''
+            SELECT * FROM (
+                SELECT id, name, description, cover_image,
+                       question_count AS stat1, '题' AS stat1_label,
+                       public_use_count AS stat2, '使用' AS stat2_label,
+                       created_at, 'bank' AS item_type
+                FROM user_question_banks
+                WHERE user_id=:uid AND is_public=1 AND status=1
+                UNION ALL
+                SELECT id, title AS name, SUBSTR(content,1,80) AS description,
+                       NULL AS cover_image,
+                       like_count AS stat1, '赞' AS stat1_label,
+                       comment_count AS stat2, '评论' AS stat2_label,
+                       created_at, 'post' AS item_type
+                FROM forum_posts
+                WHERE author_id=:uid AND is_deleted=0
+            ) combined
+            ORDER BY created_at DESC
+            LIMIT :lim OFFSET :off
+        '''), {'uid': uid, 'lim': per_page, 'off': offset}).fetchall()
+        for r in rows:
+            m = r._mapping
+            items.append({
+                'id': m['id'], 'item_type': m['item_type'],
+                'name': m['name'] or '', 'description': m['description'] or '',
+                'cover_image': m['cover_image'] or '',
+                'stat1': m['stat1'] or 0, 'stat1_label': m['stat1_label'],
+                'stat2': m['stat2'] or 0, 'stat2_label': m['stat2_label'],
+                'created_at': str(m['created_at'] or ''),
+            })
+
+    has_more = (page * per_page) < total
+    return jsonify({
+        'status': 'success',
+        'data': {
+            'items': items, 'total': total,
+            'page': page, 'per_page': per_page, 'has_more': has_more,
+        }
+    })
+
+
+@user_api_bp.route('/user/<int:uid>/favorites')
+def api_user_favorites(uid: int):
+    """收藏帖子列表（隐私检查）"""
+    from sqlalchemy import text as sa_text
+
+    target = db.session.get(UserModel, uid)
+    if not target:
+        return jsonify({'status': 'error', 'message': '用户不存在'}), 404
+
+    me_id = int(current_user_id() or session.get('user_id') or 0)
+    is_self = (me_id == uid) if me_id else False
+
+    # 隐私检查
+    if not is_self:
+        extra = _get_user_extra(uid)
+        if extra.get('privacy_favorites', 'public') == 'private':
+            return jsonify({'status': 'error', 'code': 'PRIVATE', 'message': '该用户已将收藏设为私密'})
+
+    page = request.args.get('page', 1, type=int)
+    per_page = min(request.args.get('per_page', 12, type=int), 50)
+    offset = (page - 1) * per_page
+
+    total = db.session.execute(sa_text(
+        'SELECT COUNT(*) FROM forum_favorites ff JOIN forum_posts fp ON fp.id=ff.post_id '
+        'WHERE ff.user_id=:uid AND fp.is_deleted=0'
+    ), {'uid': uid}).scalar() or 0
+
+    rows = db.session.execute(sa_text('''
+        SELECT fp.id, fp.title, fp.content, fp.images, fp.like_count, fp.comment_count, ff.created_at
+        FROM forum_favorites ff
+        JOIN forum_posts fp ON fp.id = ff.post_id
+        WHERE ff.user_id = :uid AND fp.is_deleted = 0
+        ORDER BY ff.created_at DESC
+        LIMIT :lim OFFSET :off
+    '''), {'uid': uid, 'lim': per_page, 'off': offset}).fetchall()
+
+    items = []
+    for r in rows:
+        m = r._mapping
+        preview = (m['content'] or '')[:80]
+        cover = ''
+        if m['images']:
+            import json as _json
+            try:
+                img_list = _json.loads(m['images']) if isinstance(m['images'], str) else m['images']
+                if isinstance(img_list, list) and img_list:
+                    cover = img_list[0] if isinstance(img_list[0], str) else ''
+            except Exception:
+                pass
+        items.append({
+            'id': m['id'], 'item_type': 'post',
+            'name': m['title'] or '', 'description': preview,
+            'cover_image': cover,
+            'stat1': m['like_count'] or 0, 'stat1_label': '赞',
+            'stat2': m['comment_count'] or 0, 'stat2_label': '评论',
+            'created_at': str(m['created_at'] or ''),
+        })
+
+    has_more = (page * per_page) < total
+    return jsonify({
+        'status': 'success',
+        'data': {
+            'items': items, 'total': total,
+            'page': page, 'per_page': per_page, 'has_more': has_more,
+        }
+    })
+
+
+@user_api_bp.route('/user/<int:uid>/likes')
+def api_user_likes(uid: int):
+    """喜欢帖子列表（隐私检查）"""
+    from sqlalchemy import text as sa_text
+
+    target = db.session.get(UserModel, uid)
+    if not target:
+        return jsonify({'status': 'error', 'message': '用户不存在'}), 404
+
+    me_id = int(current_user_id() or session.get('user_id') or 0)
+    is_self = (me_id == uid) if me_id else False
+
+    if not is_self:
+        extra = _get_user_extra(uid)
+        if extra.get('privacy_likes', 'public') == 'private':
+            return jsonify({'status': 'error', 'code': 'PRIVATE', 'message': '该用户已将喜欢设为私密'})
+
+    page = request.args.get('page', 1, type=int)
+    per_page = min(request.args.get('per_page', 12, type=int), 50)
+    offset = (page - 1) * per_page
+
+    total = db.session.execute(sa_text(
+        "SELECT COUNT(*) FROM forum_likes fl JOIN forum_posts fp ON fp.id=fl.target_id "
+        "WHERE fl.user_id=:uid AND fl.target_type='post' AND fp.is_deleted=0"
+    ), {'uid': uid}).scalar() or 0
+
+    rows = db.session.execute(sa_text('''
+        SELECT fp.id, fp.title, fp.content, fp.images, fp.like_count, fp.comment_count, fl.created_at
+        FROM forum_likes fl
+        JOIN forum_posts fp ON fp.id = fl.target_id
+        WHERE fl.user_id = :uid AND fl.target_type = 'post' AND fp.is_deleted = 0
+        ORDER BY fl.created_at DESC
+        LIMIT :lim OFFSET :off
+    '''), {'uid': uid, 'lim': per_page, 'off': offset}).fetchall()
+
+    items = []
+    for r in rows:
+        m = r._mapping
+        preview = (m['content'] or '')[:80]
+        cover = ''
+        if m['images']:
+            import json as _json
+            try:
+                img_list = _json.loads(m['images']) if isinstance(m['images'], str) else m['images']
+                if isinstance(img_list, list) and img_list:
+                    cover = img_list[0] if isinstance(img_list[0], str) else ''
+            except Exception:
+                pass
+        items.append({
+            'id': m['id'], 'item_type': 'post',
+            'name': m['title'] or '', 'description': preview,
+            'cover_image': cover,
+            'stat1': m['like_count'] or 0, 'stat1_label': '赞',
+            'stat2': m['comment_count'] or 0, 'stat2_label': '评论',
+            'created_at': str(m['created_at'] or ''),
+        })
+
+    has_more = (page * per_page) < total
+    return jsonify({
+        'status': 'success',
+        'data': {
+            'items': items, 'total': total,
+            'page': page, 'per_page': per_page, 'has_more': has_more,
+        }
+    })
+
+
+@user_api_bp.route('/profile/privacy', methods=['POST'])
+@auth_required
+def api_update_privacy():
+    """更新隐私设置（仅自己）"""
+    import json as _json
+
+    uid = int(current_user_id() or 0)
+    data = request.json or {}
+
+    privacy_favorites = data.get('privacy_favorites')
+    privacy_likes = data.get('privacy_likes')
+
+    valid_values = ('public', 'private')
+    if privacy_favorites and privacy_favorites not in valid_values:
+        return jsonify({'status': 'error', 'message': '无效的隐私设置值'}), 400
+    if privacy_likes and privacy_likes not in valid_values:
+        return jsonify({'status': 'error', 'message': '无效的隐私设置值'}), 400
+
+    if not privacy_favorites and not privacy_likes:
+        return jsonify({'status': 'error', 'message': '没有需要更新的内容'}), 400
+
+    try:
+        key = 'user_profile_extra_v1'
+        progress_row = (
+            db.session.query(UserProgress)
+            .filter(UserProgress.user_id == uid, UserProgress.p_key == key)
+            .first()
+        )
+
+        if progress_row:
+            try:
+                extra = _json.loads(progress_row.data or '{}')
+            except Exception:
+                extra = {}
+            if not isinstance(extra, dict):
+                extra = {}
+            if privacy_favorites:
+                extra['privacy_favorites'] = privacy_favorites
+            if privacy_likes:
+                extra['privacy_likes'] = privacy_likes
+            progress_row.data = _json.dumps(extra, ensure_ascii=False)
+            progress_row.updated_at = now_bj().strftime('%Y-%m-%d %H:%M:%S')
+        else:
+            extra = {}
+            if privacy_favorites:
+                extra['privacy_favorites'] = privacy_favorites
+            if privacy_likes:
+                extra['privacy_likes'] = privacy_likes
+            now_s = now_bj().strftime('%Y-%m-%d %H:%M:%S')
+            new_progress = UserProgress(
+                user_id=uid, p_key=key,
+                data=_json.dumps(extra, ensure_ascii=False),
+                updated_at=now_s, created_at=now_s,
+            )
+            db.session.add(new_progress)
+
+        db.session.commit()
+        return jsonify({'status': 'success', 'message': '隐私设置已更新'})
+    except Exception as e:
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
+        current_app.logger.error('隐私设置更新失败: %s', e, exc_info=True)
+        return jsonify({'status': 'error', 'message': '更新失败，请稍后重试'}), 500
