@@ -309,6 +309,13 @@
     backdrop-filter: blur(6px);
   }
 
+  /* 骨架屏 */
+  .pb-skel-row { height: 12px; border-radius: 6px; background: var(--app-border); position: relative; overflow: hidden; }
+  .pb-skel-row::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 0%, var(--app-surface-2) 50%, transparent 100%); animation: pb-shimmer 1.4s ease infinite; }
+  @keyframes pb-shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+  .pb-list.fade-in { animation: pb-fade-in 280ms ease both; }
+  @keyframes pb-fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
   @media (max-width: 980px) {
     .pb-list { grid-template-columns: 1fr; }
     .pb-sort { width: 100%; }
@@ -415,6 +422,19 @@
       return url;
     }
 
+    function pbSkeletonCard() {
+      return '<div class="pb-card" style="pointer-events:none">' +
+        '<div class="pb-top"><div class="pb-skel-row" style="width:50%;height:14px"></div><div class="pb-skel-row" style="width:48px;height:22px;border-radius:999px"></div></div>' +
+        '<div class="pb-skel-row" style="width:35%;height:10px;margin-top:4px"></div>' +
+        '<div style="margin-top:8px"><div class="pb-skel-row" style="width:90%;margin-bottom:6px"></div><div class="pb-skel-row" style="width:60%"></div></div>' +
+        '<div class="pb-meta" style="margin-top:8px"><div class="pb-skel-row" style="width:50px;height:22px;border-radius:999px"></div><div class="pb-skel-row" style="width:80px;height:22px;border-radius:999px"></div></div>' +
+        '</div>';
+    }
+    function showPbSkeletons() {
+      listEl.className = 'pb-list';
+      listEl.innerHTML = Array.from({length: 6}, pbSkeletonCard).join('');
+    }
+
     async function load() {
       if (!listEl) return;
       var seq = ++loadSeq;
@@ -440,8 +460,7 @@
           }, 160);
         } catch (e) {}
       } else {
-        listEl.className = 'pb-loading';
-        listEl.textContent = '正在加载...';
+        showPbSkeletons();
       }
 
       try {
@@ -492,7 +511,7 @@
         return;
       }
 
-      listEl.className = 'pb-list';
+      listEl.className = 'pb-list fade-in';
       listEl.innerHTML = banks.map(function (b) {
         var name = escapeHtml(b.name || '未命名题库');
         var desc = (b.description || '').toString().trim();

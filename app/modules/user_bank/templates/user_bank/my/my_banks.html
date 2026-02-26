@@ -237,6 +237,13 @@
     .mb-list { grid-template-columns: 1fr; }
   }
 
+  /* 骨架屏 */
+  .mb-skel-row { height: 12px; border-radius: 6px; background: var(--app-border); position: relative; overflow: hidden; }
+  .mb-skel-row::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 0%, var(--app-surface-2) 50%, transparent 100%); animation: mb-shimmer 1.4s ease infinite; }
+  @keyframes mb-shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+  .mb-list.fade-in { animation: mb-fade-in 280ms ease both; }
+  @keyframes mb-fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
   .mb-inline-link {
     border: 0;
     background: transparent;
@@ -652,7 +659,7 @@
         return;
       }
 
-      listEl.className = 'mb-list';
+      listEl.className = 'mb-list fade-in';
       listEl.innerHTML = items.map(function (b) {
         var name = escapeHtml(b.name || '未命名题库');
         var desc = (b.description || '').toString().trim();
@@ -696,9 +703,23 @@
       render();
     }
 
+    function mbSkeletonCard() {
+      return '<div class="mb-card" style="pointer-events:none">' +
+        '<div class="mb-main">' +
+          '<div class="mb-skel-row" style="width:50%;height:14px"></div>' +
+          '<div class="mb-tags" style="margin-top:8px"><div class="mb-skel-row" style="width:40px;height:22px;border-radius:999px"></div><div class="mb-skel-row" style="width:50px;height:22px;border-radius:999px"></div></div>' +
+          '<div class="mb-skel-row" style="width:60%;margin-top:8px"></div>' +
+        '</div>' +
+        '<div class="mb-actions"><div class="mb-skel-row" style="height:34px;border-radius:999px"></div><div class="mb-skel-row" style="height:34px;border-radius:999px"></div></div>' +
+        '</div>';
+    }
+    function showMbSkeletons() {
+      listEl.className = 'mb-list';
+      listEl.innerHTML = Array.from({length: 4}, mbSkeletonCard).join('');
+    }
+
     async function load() {
-      listEl.className = 'mb-loading';
-      listEl.textContent = '正在加载...';
+      showMbSkeletons();
 
       try {
         var res = await fetch('/user/banks/api/list', { credentials: 'same-origin' });
