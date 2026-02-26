@@ -565,6 +565,24 @@ function renderAnswerExplainFromQuestion(qEl, resultState = null) {
                 <span class="answer-label">你的答案：</span>
                 <div class="answer-value wrong">${escapeHtmlWithBreaks(userAnswerText || '')}</div>
               </div>` : ``}
+              ${(() => {
+                const aiScore = qEl.getAttribute('data-ai-score');
+                const aiFeedback = qEl.getAttribute('data-ai-feedback');
+                if (aiScore == null && !aiFeedback) return '';
+                const scoreNum = parseInt(aiScore, 10);
+                const hasScore = !isNaN(scoreNum);
+                const barColor = hasScore ? (scoreNum >= 60 ? 'var(--mini-green)' : 'var(--mini-red)') : 'var(--mini-blue)';
+                return `<div class="ai-grading-detail">
+                  ${hasScore ? `<div class="ai-score-row">
+                    <span class="ai-score-label">AI 评分</span>
+                    <span class="ai-score-value" style="color:${barColor}">${scoreNum}<small>/100</small></span>
+                  </div>
+                  <div class="ai-score-bar-track">
+                    <div class="ai-score-bar-fill" style="width:${scoreNum}%;background:${barColor}"></div>
+                  </div>` : ''}
+                  ${aiFeedback ? `<div class="ai-feedback-text">${escapeHtmlWithBreaks(aiFeedback)}</div>` : ''}
+                </div>`;
+              })()}
             </div>
         `;
         answerHost.style.display = 'block';

@@ -924,6 +924,53 @@
             box-shadow: var(--mini-shadow);
         }
 
+        /* AI 判分详情（score bar + feedback） */
+        body.quiz-layout-card .ai-grading-detail{
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--mini-divider);
+        }
+        body.quiz-layout-card .ai-score-row{
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+        body.quiz-layout-card .ai-score-label{
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--mini-text-sub);
+        }
+        body.quiz-layout-card .ai-score-value{
+            font-size: 22px;
+            font-weight: 800;
+            line-height: 1;
+        }
+        body.quiz-layout-card .ai-score-value small{
+            font-size: 13px;
+            font-weight: 600;
+            opacity: 0.6;
+        }
+        body.quiz-layout-card .ai-score-bar-track{
+            height: 6px;
+            border-radius: 3px;
+            background: var(--mini-surface-2);
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        body.quiz-layout-card .ai-score-bar-fill{
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.4s ease;
+        }
+        body.quiz-layout-card .ai-feedback-text{
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--mini-text);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
         /* AI 解析卡片（点击底部 AI 按钮后出现） */
         body.quiz-layout-card .ai-explain-card{
             background: var(--mini-card-bg);

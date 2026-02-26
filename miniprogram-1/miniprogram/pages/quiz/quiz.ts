@@ -94,6 +94,10 @@ Page({
     aiExplainError: '',
     aiExplainQuestionId: 0,
 
+    // AI 判分详情（主观题）
+    aiGradingScore: null as number | null,
+    aiGradingFeedback: '' as string,
+
     // 进度信息
     progress: {
       current: 0,              // 当前题号
@@ -916,6 +920,8 @@ Page({
       aiExplainRichText: '',
       aiExplainError: '',
       aiExplainQuestionId: question.id || 0,
+      aiGradingScore: null,
+      aiGradingFeedback: '',
       progress: {
         current: index + 1,
         total: this.data.progress.total
@@ -1213,6 +1219,8 @@ Page({
 
       if (res && res.status === 'success' && res.data) {
         const isCorrect = !!res.data.is_correct;
+        const aiScore = (res.data.score != null) ? Number(res.data.score) : null;
+        const aiFeedback = res.data.feedback ? String(res.data.feedback) : '';
         this.progressStatusMap = this.progressStatusMap || {};
         this.progressStatusMap[String(this.data.currentIndex)] = isCorrect ? 'correct' : 'wrong';
 
@@ -1221,7 +1229,9 @@ Page({
           isCorrect,
           isJudgable: true,
           userAnswerText,
-          showSelfEval: false
+          showSelfEval: false,
+          aiGradingScore: aiScore,
+          aiGradingFeedback: aiFeedback
         }, () => {
           this.refreshDisplayOptions();
           this.updateSubmitState();

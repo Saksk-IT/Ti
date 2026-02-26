@@ -153,6 +153,9 @@ async function _checkAnswerSubjective(currentQ, type, qId) {
             const data = await res.json();
             if (data && data.status === 'success' && data.data) {
                 const isCorrect = data.data.is_correct;
+                // 存储 AI 判分详情（score / feedback）到 DOM，供渲染函数读取
+                if (data.data.score != null) currentQ.setAttribute('data-ai-score', String(data.data.score));
+                if (data.data.feedback) currentQ.setAttribute('data-ai-feedback', data.data.feedback);
                 renderAnswerExplainFromQuestion(currentQ, isCorrect);
                 _applySubjectiveFeedback(currentQ, isCorrect);
                 disableInputs(currentQ);

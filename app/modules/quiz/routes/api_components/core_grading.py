@@ -43,7 +43,12 @@ def _grade_ai(
         from app.modules.exam.services.ai_grading_service import grade_essay_answer
         result = grade_essay_answer(question_content, standard_answer, user_answer)
         if result is not None:
-            return {'is_correct': bool(result), 'grading': 'ai'}
+            return {
+                'is_correct': result.is_correct,
+                'grading': 'ai',
+                'score': result.score,
+                'feedback': result.feedback,
+            }
         # AI 返回 None → 降级
         logger.info("AI 判分返回 None，降级为 auto_full")
     except Exception as e:
@@ -137,6 +142,8 @@ def api_grade_subjective():
             'is_correct': is_correct,
             'grading': result.get('grading', grading_mode),
             'pending': result.get('pending', False),
+            'score': result.get('score'),
+            'feedback': result.get('feedback'),
             'standard_answer': standard_answer if grading_mode == 'manual' else None,
         },
     })

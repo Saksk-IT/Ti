@@ -184,6 +184,17 @@
             <text class="answer-label">你的答案：</text>
             <text class="answer-value wrong">{{userAnswerText}}</text>
           </view>
+          <!-- AI 判分详情（score + feedback） -->
+          <view wx:if="{{aiGradingScore != null || aiGradingFeedback}}" class="ai-grading-detail">
+            <view wx:if="{{aiGradingScore != null}}" class="ai-score-row">
+              <text class="ai-score-label">AI 评分</text>
+              <text class="ai-score-value {{aiGradingScore >= 60 ? 'score-pass' : 'score-fail'}}">{{aiGradingScore}}<text class="ai-score-unit">/100</text></text>
+            </view>
+            <view wx:if="{{aiGradingScore != null}}" class="ai-score-bar-track">
+              <view class="ai-score-bar-fill {{aiGradingScore >= 60 ? 'bar-pass' : 'bar-fail'}}" style="width:{{aiGradingScore}}%"></view>
+            </view>
+            <text wx:if="{{aiGradingFeedback}}" class="ai-feedback-text">{{aiGradingFeedback}}</text>
+          </view>
         </view>
 
         <!-- 主观题自评卡片（manual 模式：展示答案后让用户自评） -->
