@@ -420,7 +420,27 @@
     if (isMobile()) toggleDrawer(false);
 
     if (ChatState.pollTimer) clearInterval(ChatState.pollTimer);
-    ChatState.pollTimer = setInterval(()=>pollMessages(false), 2000);
+
+    // SSE 事件驱动：收到 chat_message 时触发 pollMessages
+    if (window._sseSource) {
+      // 移除旧监听器
+      if (ChatState._sseMessageHandler) {
+        try { window._sseSource.removeEventListener('chat_message', ChatState._sseMessageHandler); } catch(e) {}
+      }
+      ChatState._sseMessageHandler = function(e) {
+        try {
+          var data = JSON.parse(e.data);
+          if (data.conversation_id === ChatState.currentConversationId) {
+            pollMessages(false);
+          }
+          throttledRefreshConversations();
+        } catch(err) {}
+      };
+      window._sseSource.addEventListener('chat_message', ChatState._sseMessageHandler);
+    } else {
+      // SSE 不可用，降级回 2 秒轮询
+      ChatState.pollTimer = setInterval(()=>pollMessages(false), 2000);
+    }
   }
 
   function isImageMsg(m){ return (m && m.content_type === 'image'); }

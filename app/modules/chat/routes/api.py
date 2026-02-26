@@ -7,7 +7,7 @@
 
 说明：
 - 采用 SQLAlchemy ORM 持久化（chat_conversations/chat_members/chat_messages）
-- 采用轮询方式实时刷新（不引入 WebSocket，保持现有项目依赖简单）
+- 采用 SSE 实时推送 + 轮询降级（不引入 WebSocket，保持现有项目依赖简单）
 """
 
 from flask import Blueprint, request, jsonify, session, current_app
@@ -154,8 +154,22 @@ def _insert_message_and_update(
     members = db.session.query(ChatMember.user_id).filter_by(
         conversation_id=conversation_id
     ).all()
-    for m in members:
-        bump_chat_version(m.user_id)
+    member_ids = [m.user_id for m in members]
+    for uid in member_ids:
+        bump_chat_version(uid)
+
+    # --- SSE 推送 ---
+    try:
+        from app.core.sse.event_bus import publish
+        publish('chat_message', member_ids, {
+            'conversation_id': conversation_id,
+            'message_id': mid,
+        })
+        other_ids = [uid for uid in member_ids if uid != sender_id]
+        if other_ids:
+            publish('chat_unread', other_ids, {})
+    except Exception:
+        pass  # SSE 推送失败不影响消息发送
 
     return mid
 

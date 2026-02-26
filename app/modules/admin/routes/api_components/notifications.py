@@ -68,6 +68,13 @@ def admin_api_notifications_create():
         new_id = result.scalar()
         db.session.commit()
 
+        # --- SSE 广播：通知所有在线用户刷新未读数 ---
+        try:
+            from app.core.sse.event_bus import publish
+            publish('notif_unread', None, {})
+        except Exception:
+            pass
+
         return jsonify({'status': 'success', 'message': '通知创建成功', 'id': new_id})
     except Exception as e:
         db.session.rollback()
@@ -127,6 +134,14 @@ def admin_api_notifications_update(nid):
             return jsonify({'status': 'error', 'message': '通知不存在'}), 404
 
         db.session.commit()
+
+        # --- SSE 广播：通知所有在线用户刷新未读数 ---
+        try:
+            from app.core.sse.event_bus import publish
+            publish('notif_unread', None, {})
+        except Exception:
+            pass
+
         return jsonify({'status': 'success', 'message': '通知更新成功'})
     except Exception as e:
         db.session.rollback()
@@ -168,6 +183,13 @@ def admin_api_notifications_toggle(nid):
             return jsonify({'status': 'error', 'message': '通知不存在'}), 404
 
         db.session.commit()
+
+        # --- SSE 广播：通知所有在线用户刷新未读数 ---
+        try:
+            from app.core.sse.event_bus import publish
+            publish('notif_unread', None, {})
+        except Exception:
+            pass
 
         row = db.session.execute(
             text('SELECT is_active FROM notifications WHERE id = :nid'), {'nid': nid}

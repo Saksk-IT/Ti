@@ -35,5 +35,9 @@ def register_all_modules(app: Flask):
     _init_module('app.modules.forum', 'init_forum_module', 'forum')
     _init_module('app.modules.admin', 'init_admin_module', 'admin')
 
+    # SSE 流端点
+    from app.core.sse.routes import sse_bp
+    app.register_blueprint(sse_bp, url_prefix='/api')
+
     app.logger.info('模块注册完成')
 

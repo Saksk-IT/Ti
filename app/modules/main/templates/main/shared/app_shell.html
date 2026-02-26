@@ -1253,13 +1253,92 @@
     fetchNotifCount();
     fetchChatCount();
 
-    /* ---- 定时刷新未读数（60秒） ---- */
-    setInterval(function() {
-      fetchNotifCount();
-      fetchChatCount();
-      notifLoaded = false;
-      chatLoaded = false;
-    }, 60000);
+    /* ---- SSE 实时推送 ---- */
+    var _sseSource = null;
+    var _sseRetryTimer = null;
+    var _sseRetryDelay = 1000;
+    var _sseFallbackTimer = null;
+    var _sseFallbackCount = 0;
+
+    function connectSSE() {
+      if (_sseSource) {
+        try { _sseSource.close(); } catch(e) {}
+      }
+      _sseSource = new EventSource('/api/sse/stream');
+
+      _sseSource.addEventListener('connected', function() {
+        _sseRetryDelay = 1000;
+        _sseFallbackCount = 0;
+        if (_sseFallbackTimer) { clearInterval(_sseFallbackTimer); _sseFallbackTimer = null; }
+        fetchNotifCount();
+        fetchChatCount();
+        notifLoaded = false;
+        chatLoaded = false;
+      });
+
+      _sseSource.addEventListener('chat_unread', function() {
+        fetchChatCount();
+        chatLoaded = false;
+      });
+
+      _sseSource.addEventListener('chat_message', function() {
+        fetchChatCount();
+        chatLoaded = false;
+      });
+
+      _sseSource.addEventListener('notif_unread', function() {
+        fetchNotifCount();
+        notifLoaded = false;
+      });
+
+      _sseSource.addEventListener('interact_unread', function() {
+        fetchChatCount();
+        chatLoaded = false;
+      });
+
+      _sseSource.onerror = function() {
+        try { _sseSource.close(); } catch(e) {}
+        _sseSource = null;
+        _sseFallbackCount++;
+        if (_sseFallbackCount >= 3 && !_sseFallbackTimer) {
+          _sseFallbackTimer = setInterval(function() {
+            fetchNotifCount();
+            fetchChatCount();
+            notifLoaded = false;
+            chatLoaded = false;
+          }, 60000);
+        }
+        if (_sseRetryTimer) clearTimeout(_sseRetryTimer);
+        _sseRetryTimer = setTimeout(function() {
+          connectSSE();
+        }, _sseRetryDelay);
+        _sseRetryDelay = Math.min(_sseRetryDelay * 2, 30000);
+      };
+    }
+
+    // 暴露到 window 供聊天页使用
+    window._sseSource = null;
+    function _syncSseToWindow() { window._sseSource = _sseSource; }
+
+    {% if logged_in %}
+    connectSSE();
+    _syncSseToWindow();
+    {% endif %}
+
+    // 页面可见性变化时重连
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible') {
+        {% if logged_in %}
+        if (!_sseSource) {
+          connectSSE();
+        }
+        _syncSseToWindow();
+        {% endif %}
+      }
+    });
+
+    // 监听 SSE 连接变化，同步到 window
+    var _sseSyncInterval = setInterval(_syncSseToWindow, 2000);
   })();
   </script>
 

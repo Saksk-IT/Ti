@@ -245,9 +245,17 @@ function _pollInteractUnread() {
     .catch(function(){});
 }
 
-// 启动轮询
+// 启动：首次拉取 + SSE 事件驱动
 _pollInteractUnread();
-_interactPollTimer = setInterval(_pollInteractUnread, 30000);
+
+if (window._sseSource) {
+  window._sseSource.addEventListener('interact_unread', function() {
+    _pollInteractUnread();
+  });
+} else {
+  // SSE 不可用，降级回 30 秒轮询
+  _interactPollTimer = setInterval(_pollInteractUnread, 30000);
+}
 
 function _iEsc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 function _iEscAttr(s) { return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }

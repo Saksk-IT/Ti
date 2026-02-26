@@ -46,6 +46,14 @@ def create_notification(
             'preview': (content_preview or '')[:200],
         })
         db.session.commit()
+
+        # --- SSE 推送 ---
+        try:
+            from app.core.sse.event_bus import publish
+            publish('interact_unread', [user_id], {})
+        except Exception:
+            pass
+
         return True
     except Exception as e:
         db.session.rollback()
