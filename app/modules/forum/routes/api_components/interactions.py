@@ -139,7 +139,7 @@ def api_my_favorites():
         ), {'uid': uid}).scalar()
 
         rows = db.session.execute(text('''
-            SELECT p.id, p.title, LEFT(p.content, 2000) AS content_raw,
+            SELECT p.id, p.title, LEFT(p.content, 800) AS content_raw,
                    p.images, p.comment_count, p.like_count, p.view_count,
                    p.created_at, u.username AS author_name, u.avatar AS author_avatar,
                    b.name AS board_name, f.created_at AS favorited_at

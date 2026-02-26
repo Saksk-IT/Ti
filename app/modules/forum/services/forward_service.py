@@ -12,7 +12,7 @@ def forward_post_to_chat(post_id: int, sender_id: int, receiver_id: int) -> dict
     """将帖子转发到私聊"""
     # 获取帖子信息
     post = db.session.execute(text(
-        'SELECT id, title, LEFT(content, 2000) AS content_raw, images '
+        'SELECT id, title, LEFT(content, 800) AS content_raw, images '
         'FROM forum_posts WHERE id=:pid AND is_deleted=false'
     ), {'pid': post_id}).fetchone()
     if not post:
