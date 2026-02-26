@@ -18,11 +18,11 @@
     <div class="noti-stats" aria-label="通知概览">
       <div class="noti-stat unread">
         <div class="noti-statLabel">未读</div>
-        <div class="noti-statValue" id="statUnread">—</div>
+        <div class="noti-statValue" id="statUnread"><span class="noti-skel-inline" style="width:28px;height:22px"></span></div>
       </div>
       <div class="noti-stat">
         <div class="noti-statLabel">已读</div>
-        <div class="noti-statValue" id="statRead">—</div>
+        <div class="noti-statValue" id="statRead"><span class="noti-skel-inline" style="width:28px;height:22px"></span></div>
       </div>
     </div>
   </section>
@@ -43,11 +43,11 @@
         <div class="noti-tabs" role="tablist" aria-label="未读与已读">
           <button class="noti-tab active" id="tabUnread" role="tab" aria-selected="true" aria-controls="panelUnread" type="button" data-tab="unread">
             <span>未读</span>
-            <span class="noti-pill unread" id="pillUnread">—</span>
+            <span class="noti-pill unread" id="pillUnread"><span class="noti-skel-inline" style="width:16px;height:12px"></span></span>
           </button>
           <button class="noti-tab" id="tabRead" role="tab" aria-selected="false" aria-controls="panelRead" type="button" data-tab="read">
             <span>已读</span>
-            <span class="noti-pill" id="pillRead">—</span>
+            <span class="noti-pill" id="pillRead"><span class="noti-skel-inline" style="width:16px;height:12px"></span></span>
           </button>
         </div>
 
@@ -98,10 +98,12 @@
       <div class="noti-panel" id="panelUnread" role="tabpanel" aria-labelledby="tabUnread">
         <div class="noti-panelHd">
           <h2 class="noti-h2">未读通知</h2>
-          <div class="noti-panelSub" id="unreadSub">—</div>
+          <div class="noti-panelSub" id="unreadSub"><span class="noti-skel-inline" style="width:48px;height:12px"></span></div>
         </div>
         <div class="noti-list" id="unreadList">
-          <div class="noti-empty">正在加载通知…</div>
+          <div class="noti-card" style="pointer-events:none"><div class="noti-cardTop"><div style="min-width:0;flex:1"><div class="noti-skel-row" style="width:45%;height:14px"></div><div class="noti-meta" style="margin-top:8px"><div class="noti-skel-row" style="width:48px;height:22px;border-radius:999px"></div><div class="noti-skel-row" style="width:80px;height:10px"></div></div></div></div><div style="margin-top:10px"><div class="noti-skel-row" style="width:90%;margin-bottom:6px"></div><div class="noti-skel-row" style="width:65%"></div></div><div class="noti-cardActions" style="margin-top:12px"><div class="noti-skel-row" style="width:72px;height:36px;border-radius:12px"></div></div></div>
+          <div class="noti-card" style="pointer-events:none"><div class="noti-cardTop"><div style="min-width:0;flex:1"><div class="noti-skel-row" style="width:60%;height:14px"></div><div class="noti-meta" style="margin-top:8px"><div class="noti-skel-row" style="width:48px;height:22px;border-radius:999px"></div><div class="noti-skel-row" style="width:80px;height:10px"></div></div></div></div><div style="margin-top:10px"><div class="noti-skel-row" style="width:75%;margin-bottom:6px"></div><div class="noti-skel-row" style="width:50%"></div></div><div class="noti-cardActions" style="margin-top:12px"><div class="noti-skel-row" style="width:72px;height:36px;border-radius:12px"></div></div></div>
+          <div class="noti-card" style="pointer-events:none"><div class="noti-cardTop"><div style="min-width:0;flex:1"><div class="noti-skel-row" style="width:35%;height:14px"></div><div class="noti-meta" style="margin-top:8px"><div class="noti-skel-row" style="width:48px;height:22px;border-radius:999px"></div><div class="noti-skel-row" style="width:80px;height:10px"></div></div></div></div><div style="margin-top:10px"><div class="noti-skel-row" style="width:85%;margin-bottom:6px"></div><div class="noti-skel-row" style="width:55%"></div></div><div class="noti-cardActions" style="margin-top:12px"><div class="noti-skel-row" style="width:72px;height:36px;border-radius:12px"></div></div></div>
         </div>
         <div class="noti-pager" id="unreadPager" style="display:none;"></div>
       </div>
@@ -109,10 +111,12 @@
       <div class="noti-panel" id="panelRead" role="tabpanel" aria-labelledby="tabRead" hidden>
         <div class="noti-panelHd">
           <h2 class="noti-h2">已读通知</h2>
-          <div class="noti-panelSub" id="readSub">—</div>
+          <div class="noti-panelSub" id="readSub"><span class="noti-skel-inline" style="width:48px;height:12px"></span></div>
         </div>
         <div class="noti-list" id="readList">
-          <div class="noti-empty">正在加载通知…</div>
+          <details class="noti-details" style="pointer-events:none"><summary><div class="noti-sumTop"><div class="noti-skel-row" style="width:40%;height:13px"></div><div class="noti-meta"><div class="noti-skel-row" style="width:48px;height:22px;border-radius:999px"></div><div class="noti-skel-row" style="width:80px;height:10px"></div></div></div><div style="margin-top:6px"><div class="noti-skel-row" style="width:75%"></div></div></summary></details>
+          <details class="noti-details" style="pointer-events:none"><summary><div class="noti-sumTop"><div class="noti-skel-row" style="width:55%;height:13px"></div><div class="noti-meta"><div class="noti-skel-row" style="width:48px;height:22px;border-radius:999px"></div><div class="noti-skel-row" style="width:80px;height:10px"></div></div></div><div style="margin-top:6px"><div class="noti-skel-row" style="width:60%"></div></div></summary></details>
+          <details class="noti-details" style="pointer-events:none"><summary><div class="noti-sumTop"><div class="noti-skel-row" style="width:30%;height:13px"></div><div class="noti-meta"><div class="noti-skel-row" style="width:48px;height:22px;border-radius:999px"></div><div class="noti-skel-row" style="width:80px;height:10px"></div></div></div><div style="margin-top:6px"><div class="noti-skel-row" style="width:80%"></div></div></summary></details>
         </div>
         <div class="noti-pager" id="readPager" style="display:none;"></div>
       </div>

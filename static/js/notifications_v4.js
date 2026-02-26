@@ -3,7 +3,7 @@
   const PAGE_SIZES = [10, 20, 50];
 
   let listData = [];
-  let isLoading = false;
+  let isLoading = true;
   let _notiFreshLoad = false;
 
   const state = {
@@ -23,6 +23,15 @@
       '<div style="margin-top:10px"><div class="noti-skel-row" style="width:90%;margin-bottom:6px"></div><div class="noti-skel-row" style="width:65%"></div></div>' +
       '<div class="noti-cardActions" style="margin-top:12px"><div class="noti-skel-row" style="width:72px;height:36px;border-radius:12px"></div></div>' +
       '</div>';
+  }
+
+  function notiSkeletonRead() {
+    return '<details class="noti-details" style="pointer-events:none">' +
+      '<summary>' +
+        '<div class="noti-sumTop"><div class="noti-skel-row" style="width:40%;height:13px"></div><div class="noti-meta"><div class="noti-skel-row" style="width:48px;height:22px;border-radius:999px"></div><div class="noti-skel-row" style="width:80px;height:10px"></div></div></div>' +
+        '<div style="margin-top:6px"><div class="noti-skel-row" style="width:75%"></div></div>' +
+      '</summary>' +
+    '</details>';
   }
 
   function esc(s) {
@@ -211,9 +220,8 @@
     const listEl = qs(tab === 'read' ? 'readList' : 'unreadList');
     const subEl = qs(tab === 'read' ? 'readSub' : 'unreadSub');
 
-    if (subEl) {
-      if (isLoading) subEl.textContent = '加载中…';
-      else if (allCount === 0) subEl.textContent = '暂无';
+    if (subEl && !isLoading) {
+      if (allCount === 0) subEl.textContent = '暂无';
       else if ((state.search || '').trim())
         subEl.textContent = `匹配 ${paged.total}/${allCount} 条 · 第 ${paged.page}/${paged.totalPages} 页`;
       else subEl.textContent = `共 ${allCount} 条 · 第 ${paged.page}/${paged.totalPages} 页`;
@@ -222,7 +230,7 @@
     if (!listEl) return;
     if (isLoading) {
       listEl.className = 'noti-list';
-      listEl.innerHTML = Array.from({length: 3}, notiSkeletonCard).join('');
+      listEl.innerHTML = Array.from({length: 3}, tab === 'read' ? notiSkeletonRead : notiSkeletonCard).join('');
       renderPager(tab);
       return;
     }
@@ -255,10 +263,12 @@
     const unread = getTabAllItems('unread').length;
     const read = getTabAllItems('read').length;
 
-    qs('statUnread') && (qs('statUnread').textContent = String(unread));
-    qs('statRead') && (qs('statRead').textContent = String(read));
-    qs('pillUnread') && (qs('pillUnread').textContent = String(unread));
-    qs('pillRead') && (qs('pillRead').textContent = String(read));
+    if (!isLoading) {
+      qs('statUnread') && (qs('statUnread').textContent = String(unread));
+      qs('statRead') && (qs('statRead').textContent = String(read));
+      qs('pillUnread') && (qs('pillUnread').textContent = String(unread));
+      qs('pillRead') && (qs('pillRead').textContent = String(read));
+    }
 
     const markAll = qs('btnMarkAllRead');
     if (markAll) {
