@@ -137,6 +137,9 @@
 .forum-skeleton-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--app-border); position: relative; overflow: hidden; flex-shrink: 0; }
 .forum-skeleton-avatar::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 0%, var(--app-surface-2) 50%, transparent 100%); animation: skeleton-shimmer 1.4s ease infinite; }
 @keyframes skeleton-shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+/* 帖子详情骨架屏 */
+.forum-detail-skel { animation: skeleton-pulse 1.4s ease infinite alternate; }
+@keyframes skeleton-pulse { from { opacity: 1; } to { opacity: .6; } }
 /* 帖子列表淡入 */
 .forum-posts.fade-in { animation: forum-fade-in 280ms ease both; }
 @keyframes forum-fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }

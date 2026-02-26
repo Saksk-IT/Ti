@@ -20,16 +20,51 @@
   <div class="forum-detail-columns">
     <!-- 左栏：帖子内容 -->
     <div class="forum-detail-left">
-      <div id="postContent" class="forum-post-content"></div>
+      <div id="postContent" class="forum-post-content">
+        <!-- 骨架屏：帖子内容 -->
+        <div class="forum-detail-skel">
+          <div class="forum-post-header"><div class="forum-skeleton-avatar"></div><div style="flex:1"><div class="forum-skeleton-row" style="width:30%;height:14px;margin-bottom:6px"></div><div class="forum-skeleton-row" style="width:20%;height:10px"></div></div></div>
+          <div class="forum-skeleton-row" style="width:60%;height:18px;margin:16px 0 12px"></div>
+          <div class="forum-skeleton-row" style="width:100%;margin-bottom:10px"></div>
+          <div class="forum-skeleton-row" style="width:100%;margin-bottom:10px"></div>
+          <div class="forum-skeleton-row" style="width:90%;margin-bottom:10px"></div>
+          <div class="forum-skeleton-row" style="width:75%;margin-bottom:10px"></div>
+          <div class="forum-skeleton-row" style="width:40%"></div>
+        </div>
+      </div>
       <div id="pollSection" style="display:none"></div>
-      <div class="forum-actions-bar" id="actionsBar"></div>
+      <div class="forum-actions-bar" id="actionsBar">
+        <!-- 骨架屏：操作栏 -->
+        <div class="forum-detail-skel" style="display:flex;gap:12px">
+          <div class="forum-skeleton-row" style="width:72px;height:36px;border-radius:10px"></div>
+          <div class="forum-skeleton-row" style="width:72px;height:36px;border-radius:10px"></div>
+          <div class="forum-skeleton-row" style="width:72px;height:36px;border-radius:10px"></div>
+        </div>
+      </div>
       <div id="reactionsBar" class="forum-reactions-bar"></div>
     </div>
     <!-- 右栏：评论区 -->
     <div class="forum-detail-right">
       <div class="forum-comments-section">
         <h3 class="forum-section-title">评论</h3>
-        <div id="commentsList"></div>
+        <div id="commentsList">
+          <!-- 骨架屏：评论列表 -->
+          <div class="forum-detail-skel forum-comment" style="border:none;background:transparent;padding:0;margin-bottom:10px">
+            <div class="comment-header"><div class="forum-skeleton-avatar"></div><div class="forum-skeleton-row" style="width:25%;height:13px"></div></div>
+            <div class="forum-skeleton-row" style="width:85%;margin:8px 0 6px"></div>
+            <div class="forum-skeleton-row" style="width:60%"></div>
+          </div>
+          <div class="forum-detail-skel forum-comment" style="border:none;background:transparent;padding:0;margin-bottom:10px">
+            <div class="comment-header"><div class="forum-skeleton-avatar"></div><div class="forum-skeleton-row" style="width:30%;height:13px"></div></div>
+            <div class="forum-skeleton-row" style="width:70%;margin:8px 0 6px"></div>
+            <div class="forum-skeleton-row" style="width:50%"></div>
+          </div>
+          <div class="forum-detail-skel forum-comment" style="border:none;background:transparent;padding:0">
+            <div class="comment-header"><div class="forum-skeleton-avatar"></div><div class="forum-skeleton-row" style="width:20%;height:13px"></div></div>
+            <div class="forum-skeleton-row" style="width:90%;margin:8px 0 6px"></div>
+            <div class="forum-skeleton-row" style="width:45%"></div>
+          </div>
+        </div>
         <div class="forum-load-more" id="commentsLoadMore" style="display:none">
           <button class="btn-load-more" onclick="loadMoreComments()">加载更多评论</button>
         </div>
