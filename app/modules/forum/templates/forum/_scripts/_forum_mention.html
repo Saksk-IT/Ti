@@ -64,12 +64,12 @@ var MentionAutocomplete = (function(){
 
   function _onInput() {
     clearTimeout(_debounceTimer);
-    _debounceTimer = setTimeout(_checkMention, 250);
+    _debounceTimer = setTimeout(_checkMention, 150);
   }
 
   function _checkMention() {
     var info = _getCursorContext();
-    if (!info || !info.query) { _hide(); return; }
+    if (!info) { _hide(); return; }
     _queryStart = info.start;
     _fetchUsers(info.query);
   }
@@ -87,7 +87,7 @@ var MentionAutocomplete = (function(){
       var atIdx = before.lastIndexOf('@');
       if (atIdx < 0) return null;
       var query = before.substring(atIdx + 1);
-      if (query.length === 0 || query.length > 20 || /\s/.test(query)) return null;
+      if (query.length > 20 || /\s/.test(query)) return null;
       return { start: atIdx, query: query };
     } else {
       var el = _target;
@@ -98,7 +98,7 @@ var MentionAutocomplete = (function(){
       var atIdx2 = before2.lastIndexOf('@');
       if (atIdx2 < 0) return null;
       var q = before2.substring(atIdx2 + 1);
-      if (q.length === 0 || q.length > 20 || /\s/.test(q)) return null;
+      if (q.length > 20 || /\s/.test(q)) return null;
       return { start: atIdx2, query: q };
     }
   }

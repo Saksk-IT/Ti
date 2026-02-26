@@ -170,21 +170,71 @@ def api_my_favorites():
 @forum_api_bp.route('/users/search', methods=['GET'])
 @auth_required
 def api_search_users():
-    """搜索用户（用于转发、@提及等）"""
+    """搜索用户（用于转发、@提及等）
+    q 为空时返回推荐用户：常 @ 的 > 私信联系人 > 关注的用户
+    """
     try:
         q = request.args.get('q', '').strip()
         limit = min(request.args.get('limit', 10, type=int), 20)
-        if not q:
-            return jsonify({'status': 'success', 'data': []})
-
         uid = current_user_id()
-        rows = db.session.execute(text('''
-            SELECT id, username, avatar
-            FROM users
-            WHERE id != :uid AND username ILIKE :q
-            ORDER BY username
-            LIMIT :lim
-        '''), {'uid': uid, 'q': f'%{q}%', 'lim': limit}).fetchall()
+
+        if q:
+            # 有关键字：搜索匹配用户，但优先排序推荐用户
+            rows = db.session.execute(text('''
+                SELECT u.id, u.username, u.avatar,
+                    (SELECT COUNT(*) FROM forum_mentions fm
+                     WHERE fm.mentioner_id = :uid AND fm.mentioned_user_id = u.id) AS mention_cnt,
+                    CASE WHEN EXISTS (
+                        SELECT 1 FROM chat_members cm1
+                        JOIN chat_members cm2 ON cm1.conversation_id = cm2.conversation_id
+                        WHERE cm1.user_id = :uid AND cm2.user_id = u.id
+                    ) THEN 1 ELSE 0 END AS is_contact,
+                    CASE WHEN EXISTS (
+                        SELECT 1 FROM user_follows uf
+                        WHERE uf.follower_id = :uid AND uf.following_id = u.id
+                    ) THEN 1 ELSE 0 END AS is_following
+                FROM users u
+                WHERE u.id != :uid AND u.username ILIKE :q
+                ORDER BY mention_cnt DESC, is_contact DESC, is_following DESC, u.username
+                LIMIT :lim
+            '''), {'uid': uid, 'q': f'%{q}%', 'lim': limit}).fetchall()
+        else:
+            # 无关键字：返回推荐用户（常 @ > 私信联系人 > 关注）
+            rows = db.session.execute(text('''
+                WITH mention_users AS (
+                    SELECT mentioned_user_id AS uid, COUNT(*) AS cnt
+                    FROM forum_mentions
+                    WHERE mentioner_id = :uid
+                    GROUP BY mentioned_user_id
+                ),
+                contact_users AS (
+                    SELECT DISTINCT cm2.user_id AS uid
+                    FROM chat_members cm1
+                    JOIN chat_members cm2 ON cm1.conversation_id = cm2.conversation_id
+                    WHERE cm1.user_id = :uid AND cm2.user_id != :uid
+                ),
+                follow_users AS (
+                    SELECT following_id AS uid
+                    FROM user_follows
+                    WHERE follower_id = :uid
+                ),
+                candidates AS (
+                    SELECT uid FROM mention_users
+                    UNION SELECT uid FROM contact_users
+                    UNION SELECT uid FROM follow_users
+                )
+                SELECT u.id, u.username, u.avatar,
+                    COALESCE(mu.cnt, 0) AS mention_cnt,
+                    CASE WHEN cu.uid IS NOT NULL THEN 1 ELSE 0 END AS is_contact,
+                    CASE WHEN fu.uid IS NOT NULL THEN 1 ELSE 0 END AS is_following
+                FROM candidates c
+                JOIN users u ON u.id = c.uid
+                LEFT JOIN mention_users mu ON mu.uid = u.id
+                LEFT JOIN contact_users cu ON cu.uid = u.id
+                LEFT JOIN follow_users fu ON fu.uid = u.id
+                ORDER BY mention_cnt DESC, is_contact DESC, is_following DESC, u.username
+                LIMIT :lim
+            '''), {'uid': uid, 'lim': limit}).fetchall()
 
         return jsonify({'status': 'success', 'data': [
             {'id': r._mapping['id'], 'username': r._mapping['username'],
@@ -192,5 +242,6 @@ def api_search_users():
             for r in rows
         ]})
     except Exception as e:
+        db.session.rollback()
         current_app.logger.error(f"搜索用户失败: {e}", exc_info=True)
         return jsonify({'status': 'error', 'message': '搜索失败'}), 500
