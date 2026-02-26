@@ -284,6 +284,25 @@
     return Chat.api.fetchConversations();
   }
 
+  function chatConvSkeletonItem() {
+    return '<div class="conv-item" style="pointer-events:none">' +
+      '<div class="chat-skel-avatar"></div>' +
+      '<div class="conv-text" style="flex:1;min-width:0">' +
+        '<div class="chat-skel-row" style="width:55%;height:13px;margin-bottom:6px"></div>' +
+        '<div class="chat-skel-row" style="width:80%;height:10px"></div>' +
+      '</div>' +
+      '<div class="conv-right"><div class="chat-skel-row" style="width:36px;height:10px"></div></div>' +
+    '</div>';
+  }
+
+  function showConvSkeletons() {
+    var html = Array.from({length: 5}, chatConvSkeletonItem).join('');
+    var el = document.getElementById('convList');
+    var elM = document.getElementById('convListMobile');
+    if (el) el.innerHTML = html;
+    if (elM) elM.innerHTML = html;
+  }
+
   function renderConversations(list){
     const el = document.getElementById('convList');
     const elM = document.getElementById('convListMobile');
@@ -330,16 +349,22 @@
         </div>
       `;
     }).join('');
-    if (el) el.innerHTML = html || `<div style="padding:12px; color:var(--sub);">暂无会话。可在上方搜索用户并回车创建。</div>`;
-    if (elM) elM.innerHTML = el ? el.innerHTML : html;
+    if (el) { el.innerHTML = html || '<div style="padding:12px; color:var(--sub);">暂无会话。可在上方搜索用户并回车创建。</div>'; el.classList.remove('fade-in'); void el.offsetWidth; el.classList.add('fade-in'); }
+    if (elM) { elM.innerHTML = el ? el.innerHTML : html; elM.classList.remove('fade-in'); void elM.offsetWidth; elM.classList.add('fade-in'); }
   }
 
   function escapeHtml(s){ return Chat.utils.escapeHtml(s); }
   function escapeAttr(s){ return Chat.utils.escapeAttr(s); }
 
+  let _convFirstLoad = true;
+
   async function refreshConversations(){
+    if (_convFirstLoad) {
+      showConvSkeletons();
+    }
     const list = await fetchConversations();
     renderConversations(list);
+    _convFirstLoad = false;
   }
 
   function setEmptyStateVisible(show){

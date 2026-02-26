@@ -408,6 +408,15 @@
     }
     .voice-hint .icon{ width: 60px; height: 60px; display:flex; align-items:center; justify-content:center; }
     .voice-hint .icon svg{ width: 32px; height: 32px; }
+
+    /* 骨架屏 */
+    .chat-skel-row { height: 12px; border-radius: 6px; background: var(--border); position: relative; overflow: hidden; }
+    .chat-skel-row::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 0%, var(--card) 50%, transparent 100%); animation: chat-shimmer 1.4s ease infinite; }
+    .chat-skel-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--border); position: relative; overflow: hidden; flex-shrink: 0; }
+    .chat-skel-avatar::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 0%, var(--card) 50%, transparent 100%); animation: chat-shimmer 1.4s ease infinite; }
+    @keyframes chat-shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+    .conv-list.fade-in { animation: chat-fade-in 280ms ease both; }
+    @keyframes chat-fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
   
         /* ??????? */
         * {

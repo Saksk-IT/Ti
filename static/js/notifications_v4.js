@@ -4,6 +4,7 @@
 
   let listData = [];
   let isLoading = false;
+  let _notiFreshLoad = false;
 
   const state = {
     tab: 'unread',
@@ -14,6 +15,14 @@
 
   function qs(id) {
     return document.getElementById(id);
+  }
+
+  function notiSkeletonCard() {
+    return '<div class="noti-card" style="pointer-events:none">' +
+      '<div class="noti-cardTop"><div style="min-width:0;flex:1"><div class="noti-skel-row" style="width:45%;height:14px"></div><div class="noti-meta" style="margin-top:8px"><div class="noti-skel-row" style="width:48px;height:22px;border-radius:999px"></div><div class="noti-skel-row" style="width:80px;height:10px"></div></div></div></div>' +
+      '<div style="margin-top:10px"><div class="noti-skel-row" style="width:90%;margin-bottom:6px"></div><div class="noti-skel-row" style="width:65%"></div></div>' +
+      '<div class="noti-cardActions" style="margin-top:12px"><div class="noti-skel-row" style="width:72px;height:36px;border-radius:12px"></div></div>' +
+      '</div>';
   }
 
   function esc(s) {
@@ -212,7 +221,8 @@
 
     if (!listEl) return;
     if (isLoading) {
-      listEl.innerHTML = `<div class="noti-empty">正在加载通知…</div>`;
+      listEl.className = 'noti-list';
+      listEl.innerHTML = Array.from({length: 3}, notiSkeletonCard).join('');
       renderPager(tab);
       return;
     }
@@ -235,6 +245,9 @@
     listEl.innerHTML = paged.items
       .map((n) => (tab === 'read' ? buildReadDetails(n) : buildUnreadCard(n)))
       .join('');
+    if (_notiFreshLoad) {
+      listEl.className = 'noti-list fade-in';
+    }
     renderPager(tab);
   }
 
@@ -279,6 +292,7 @@
     renderCounts();
     renderTab('unread');
     renderTab('read');
+    _notiFreshLoad = false;
 
     const clearBtn = qs('btnClearSearch');
     if (clearBtn) clearBtn.style.display = (state.search || '').trim() ? 'inline-flex' : 'none';
@@ -287,6 +301,7 @@
   async function fetchList(opts) {
     hideAlert();
     isLoading = true;
+    _notiFreshLoad = true;
     render();
     try {
       const res = await fetch('/api/notifications?include_dismissed=1&limit=200', {

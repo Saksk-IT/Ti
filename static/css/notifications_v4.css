@@ -305,6 +305,13 @@ details.noti-details[open] > summary { background: color-mix(in srgb, var(--app-
 }
 .noti-pageInfo { font-size: 12px; font-weight: 900; color: var(--app-muted); font-variant-numeric: tabular-nums; text-align: center; }
 
+/* 骨架屏 */
+.noti-skel-row { height: 12px; border-radius: 6px; background: var(--app-border); position: relative; overflow: hidden; }
+.noti-skel-row::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 0%, var(--app-surface-2) 50%, transparent 100%); animation: noti-shimmer 1.4s ease infinite; }
+@keyframes noti-shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+.noti-list.fade-in { animation: noti-fade-in 280ms ease both; }
+@keyframes noti-fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
 @media (prefers-reduced-motion: reduce) {
   * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
