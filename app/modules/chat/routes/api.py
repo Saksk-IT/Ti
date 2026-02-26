@@ -288,6 +288,8 @@ def chat_conversations():
             d['last_message'] = '[文件]'
         elif d.get('last_message_type') == 'question':
             d['last_message'] = '[题目]'
+        elif d.get('last_message_type') == 'forward':
+            d['last_message'] = '[转发帖子]'
         data.append(d)
 
     return jsonify({'status': 'success', 'data': data})
@@ -1068,3 +1070,8 @@ def chat_unread_count():
     )
 
     return jsonify({'status': 'success', 'count': int(total_unread or 0)})
+
+
+# 注册子路由模块
+from . import api_follow  # noqa: F401,E402
+from . import api_interactions  # noqa: F401,E402

@@ -6,7 +6,18 @@
       <div class="search">
         <input id="userSearch" placeholder="搜索用户，回车发起讨论" onkeydown="onUserSearchKey(event)" />
       </div>
-      <div class="conv-list" id="convListMobile"></div>
+      <div class="chat-sidebar-tabs">
+        <button class="chat-tab active" data-tab="conv" onclick="switchChatTab('conv')">消息</button>
+        <button class="chat-tab" data-tab="interact" onclick="switchChatTab('interact')">
+          互动 <span class="tab-badge" id="interactBadgeMobile" style="display:none">0</span>
+        </button>
+      </div>
+      <div id="convPanelMobile">
+        <div class="conv-list" id="convListMobile"></div>
+      </div>
+      <div id="interactPanelMobile" style="display:none">
+        <div class="conv-list" id="interactListMobile"></div>
+      </div>
     </div>
   </div>
 
@@ -15,7 +26,18 @@
       <div class="search">
         <input id="userSearchDesk" placeholder="搜索用户，回车发起讨论" onkeydown="onUserSearchKey(event,true)" />
       </div>
-      <div class="conv-list" id="convList"></div>
+      <div class="chat-sidebar-tabs">
+        <button class="chat-tab active" data-tab="conv" onclick="switchChatTab('conv')">消息</button>
+        <button class="chat-tab" data-tab="interact" onclick="switchChatTab('interact')">
+          互动 <span class="tab-badge" id="interactBadge" style="display:none">0</span>
+        </button>
+      </div>
+      <div id="convPanel">
+        <div class="conv-list" id="convList"></div>
+      </div>
+      <div id="interactPanel" style="display:none">
+        <div class="conv-list" id="interactList"></div>
+      </div>
     </div>
 
     <div class="main">

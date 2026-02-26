@@ -75,6 +75,44 @@
       const editWrap = document.getElementById('upRemarkEdit');
       if (editWrap) editWrap.style.display = 'none';
 
+      // 关注状态
+      const followBtn = document.getElementById('upFollowBtn');
+      const followCounts = document.getElementById('upFollowCounts');
+      if (isSelf) {
+        if (followBtn) followBtn.style.display = 'none';
+      } else if (followBtn) {
+        followBtn.style.display = 'inline-flex';
+        followBtn.textContent = '关注';
+        followBtn.classList.remove('primary');
+        try {
+          const fRes = await fetch('/api/user/' + userId + '/follow_status');
+          const fJs = await fRes.json();
+          if (fJs.status === 'success' && fJs.data) {
+            _updateProfileFollowBtn(fJs.data);
+            if (followCounts) {
+              followCounts.style.display = 'block';
+              var fc = document.getElementById('upFollowerCount');
+              var gc = document.getElementById('upFollowingCount');
+              if (fc) fc.textContent = String(fJs.data.follower_count || 0);
+              if (gc) gc.textContent = String(fJs.data.following_count || 0);
+            }
+          }
+        } catch(e) {}
+      }
+      if (isSelf && followCounts) {
+        try {
+          const fRes2 = await fetch('/api/user/' + userId + '/follow_status');
+          const fJs2 = await fRes2.json();
+          if (fJs2.status === 'success' && fJs2.data) {
+            followCounts.style.display = 'block';
+            var fc2 = document.getElementById('upFollowerCount');
+            var gc2 = document.getElementById('upFollowingCount');
+            if (fc2) fc2.textContent = String(fJs2.data.follower_count || 0);
+            if (gc2) gc2.textContent = String(fJs2.data.following_count || 0);
+          }
+        } catch(e) {}
+      }
+
     } catch(e) {
       alert('加载资料失败');
       closeUserProfileModal();
@@ -221,4 +259,56 @@
     if (menu.contains(e.target)) return;
     hideProfileMenu();
   });
+
+  function _updateProfileFollowBtn(status) {
+    var btn = document.getElementById('upFollowBtn');
+    if (!btn) return;
+    if (status.mutual) {
+      btn.textContent = '互相关注';
+      btn.classList.remove('primary');
+      btn.style.background = 'transparent';
+      btn.style.color = 'var(--sub)';
+      btn.style.border = '1px solid var(--border)';
+    } else if (status.i_follow) {
+      btn.textContent = '已关注';
+      btn.classList.remove('primary');
+      btn.style.background = 'transparent';
+      btn.style.color = 'var(--sub)';
+      btn.style.border = '1px solid var(--border)';
+    } else {
+      btn.textContent = '关注';
+      btn.classList.add('primary');
+      btn.style.background = '';
+      btn.style.color = '';
+      btn.style.border = '';
+    }
+    btn._followStatus = status;
+  }
+
+  async function toggleProfileFollow() {
+    if (!currentProfileUserId || Number(currentProfileUserId) === Number(MY_ID)) return;
+    var btn = document.getElementById('upFollowBtn');
+    if (!btn) return;
+    var status = btn._followStatus || {};
+    var isFollowing = !!status.i_follow;
+    var url = isFollowing ? '/api/user/unfollow' : '/api/user/follow';
+
+    btn.disabled = true;
+    try {
+      var r = await fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({target_id: currentProfileUserId})
+      });
+      var js = await r.json();
+      if (js.status === 'success' && js.data) {
+        _updateProfileFollowBtn(js.data);
+        var fc = document.getElementById('upFollowerCount');
+        var gc = document.getElementById('upFollowingCount');
+        if (fc) fc.textContent = String(js.data.follower_count || 0);
+        if (gc) gc.textContent = String(js.data.following_count || 0);
+      }
+    } catch(e) {}
+    btn.disabled = false;
+  }
 </script>

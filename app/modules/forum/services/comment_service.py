@@ -6,7 +6,7 @@ from sqlalchemy import text
 
 from app.core.extensions import db
 from ..services.content_sanitizer import sanitize_html
-from ..services import mention_service, ban_service
+from ..services import mention_service, ban_service, interaction_service
 
 
 def get_comments(post_id: int, page: int = 1, per_page: int = 30,
@@ -99,6 +99,32 @@ def create_comment(post_id: int, author_id: int, content: str,
 
     # 解析 @提及
     mention_service.create_mentions('comment', comment['id'], author_id, safe_content)
+
+    # 触发互动通知
+    try:
+        preview = safe_content[:100] if safe_content else ''
+        if parent_id and reply_to_user_id:
+            # 楼中楼回复 → 通知被回复者
+            interaction_service.create_notification(
+                user_id=reply_to_user_id, actor_id=author_id,
+                action_type=interaction_service.ACTION_REPLY,
+                target_type='comment', target_id=parent_id,
+                post_id=post_id, content_preview=preview,
+            )
+        else:
+            # 一级评论 → 通知帖子作者
+            post_row = db.session.execute(text(
+                'SELECT author_id FROM forum_posts WHERE id=:pid'
+            ), {'pid': post_id}).fetchone()
+            if post_row:
+                interaction_service.create_notification(
+                    user_id=post_row._mapping['author_id'], actor_id=author_id,
+                    action_type=interaction_service.ACTION_COMMENT,
+                    target_type='post', target_id=post_id,
+                    post_id=post_id, content_preview=preview,
+                )
+    except Exception:
+        pass
 
     return comment
 

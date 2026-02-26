@@ -7,6 +7,8 @@ from sqlalchemy import text
 from ..api import forum_api_bp
 from app.core.extensions import db
 from app.core.utils.decorators import auth_required, current_user_id
+from app.modules.forum.services.content_sanitizer import strip_html_tags
+from app.modules.forum.services import interaction_service
 
 
 @forum_api_bp.route('/like', methods=['POST'])
@@ -46,6 +48,36 @@ def api_toggle_like():
                 f'UPDATE {table} SET like_count = like_count + 1 WHERE id=:tid'
             ), {'tid': target_id})
             db.session.commit()
+
+            # 触发互动通知
+            try:
+                if target_type == 'post':
+                    row_author = db.session.execute(text(
+                        'SELECT author_id, title FROM forum_posts WHERE id=:tid'
+                    ), {'tid': target_id}).fetchone()
+                    if row_author:
+                        interaction_service.create_notification(
+                            user_id=row_author._mapping['author_id'], actor_id=uid,
+                            action_type=interaction_service.ACTION_LIKE_POST,
+                            target_type='post', target_id=target_id,
+                            post_id=target_id,
+                            content_preview=row_author._mapping.get('title', ''),
+                        )
+                elif target_type == 'comment':
+                    row_author = db.session.execute(text(
+                        'SELECT author_id, post_id, LEFT(content, 100) AS preview FROM forum_comments WHERE id=:tid'
+                    ), {'tid': target_id}).fetchone()
+                    if row_author:
+                        interaction_service.create_notification(
+                            user_id=row_author._mapping['author_id'], actor_id=uid,
+                            action_type=interaction_service.ACTION_LIKE_COMMENT,
+                            target_type='comment', target_id=target_id,
+                            post_id=row_author._mapping.get('post_id'),
+                            content_preview=strip_html_tags(row_author._mapping.get('preview', ''), 100),
+                        )
+            except Exception:
+                pass
+
             return jsonify({'status': 'success', 'data': {'liked': True}})
     except Exception as e:
         db.session.rollback()
@@ -107,7 +139,7 @@ def api_my_favorites():
         ), {'uid': uid}).scalar()
 
         rows = db.session.execute(text('''
-            SELECT p.id, p.title, LEFT(p.content, 200) AS content_preview,
+            SELECT p.id, p.title, LEFT(p.content, 2000) AS content_raw,
                    p.images, p.comment_count, p.like_count, p.view_count,
                    p.created_at, u.username AS author_name, u.avatar AS author_avatar,
                    b.name AS board_name, f.created_at AS favorited_at
@@ -120,8 +152,14 @@ def api_my_favorites():
             LIMIT :limit OFFSET :offset
         '''), {'uid': uid, 'limit': per_page, 'offset': offset}).fetchall()
 
+        posts = []
+        for r in rows:
+            d = dict(r._mapping)
+            d['content_preview'] = strip_html_tags(d.pop('content_raw', ''), 200)
+            posts.append(d)
+
         return jsonify({'status': 'success', 'data': {
-            'posts': [dict(r._mapping) for r in rows],
+            'posts': posts,
             'total': total, 'page': page, 'per_page': per_page,
         }})
     except Exception as e:

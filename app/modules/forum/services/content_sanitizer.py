@@ -62,3 +62,35 @@ def sanitize_html(html: str) -> str:
         return f'<{tag}{attrs_out}{sc}>'
 
     return _TAG_RE.sub(_replace_tag, result)
+
+
+# 用于生成纯文本预览的正则
+_BLOCK_TAG_RE = re.compile(r'<(?:br|p|div|li|h[1-4])[^>]*/?>|</(?:p|div|li|h[1-4])>', re.IGNORECASE)
+_ALL_TAG_RE = re.compile(r'<[^>]+>')
+_MULTI_SPACE_RE = re.compile(r'[ \t]+')
+_MULTI_NL_RE = re.compile(r'\n{3,}')
+
+
+def strip_html_tags(html_str: str, max_length: int = 200) -> str:
+    """将 HTML 转为纯文本预览（去除所有标签，解码实体，截断）"""
+    import html as _html
+
+    if not html_str:
+        return ''
+
+    result = _SCRIPT_RE.sub('', html_str)
+    result = _STYLE_TAG_RE.sub('', result)
+    # 块级标签替换为空格
+    result = _BLOCK_TAG_RE.sub(' ', result)
+    # 去除所有剩余标签
+    result = _ALL_TAG_RE.sub('', result)
+    # 解码 HTML 实体
+    result = _html.unescape(result)
+    # 合并空白
+    result = _MULTI_SPACE_RE.sub(' ', result)
+    result = _MULTI_NL_RE.sub('\n', result)
+    result = result.strip()
+
+    if len(result) > max_length:
+        result = result[:max_length] + '…'
+    return result

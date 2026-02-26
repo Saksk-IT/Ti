@@ -6,7 +6,7 @@ from typing import Optional
 from sqlalchemy import text
 
 from app.core.extensions import db
-from ..services.content_sanitizer import sanitize_html
+from ..services.content_sanitizer import sanitize_html, strip_html_tags
 from ..services import mention_service, ban_service
 
 
@@ -59,7 +59,7 @@ def get_posts(
 
     rows = db.session.execute(text(f'''
         SELECT p.id, p.board_id, p.author_id, p.title,
-               LEFT(p.content, 800) AS content_preview,
+               LEFT(p.content, 2000) AS content_raw,
                p.images, p.question_refs,
                p.is_pinned, p.is_featured, p.is_locked,
                p.comment_count, p.like_count, p.favorite_count, p.view_count,
@@ -75,8 +75,14 @@ def get_posts(
         LIMIT :limit OFFSET :offset
     '''), params).fetchall()
 
+    posts = []
+    for r in rows:
+        d = dict(r._mapping)
+        d['content_preview'] = strip_html_tags(d.pop('content_raw', ''), 200)
+        posts.append(d)
+
     return {
-        'posts': [dict(r._mapping) for r in rows],
+        'posts': posts,
         'total': total,
         'page': page,
         'per_page': per_page,

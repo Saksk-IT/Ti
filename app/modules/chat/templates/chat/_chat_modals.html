@@ -48,8 +48,14 @@
       <div style="padding: 14px 16px 12px; display:flex; gap:14px; align-items:center;">
         <div id="upAvatar" class="avatar profile-avatar" style="width:72px;height:72px; border-radius: 16px; background: var(--other);"></div>
         <div style="min-width:0; flex:1;">
-          <div id="upTitle" style="font-size:18px; font-weight:800; line-height:1.2;">用户</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div id="upTitle" style="font-size:18px; font-weight:800; line-height:1.2;">用户</div>
+            <button class="btn" id="upFollowBtn" onclick="toggleProfileFollow()" style="display:none; padding:3px 14px; border-radius:14px; font-size:12px; font-weight:600; min-height:auto;">关注</button>
+          </div>
           <div id="upSub" style="margin-top:6px; color: var(--sub); font-size: 13px;"> </div>
+          <div id="upFollowCounts" style="margin-top:4px; color: var(--sub); font-size: 12px; display:none;">
+            <span id="upFollowerCount">0</span> 粉丝 · <span id="upFollowingCount">0</span> 关注
+          </div>
         </div>
       </div>
 

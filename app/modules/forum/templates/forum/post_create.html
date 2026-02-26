@@ -63,5 +63,11 @@ const EDITING = {{ 'true' if editing else 'false' }};
 const EDIT_POST_ID = {{ post_id if editing else 'null' }};
 const INIT_BOARD_ID = {{ board_id or 'null' }};
 </script>
+{% include "forum/_scripts/_forum_mention.html" %}
 {% include "forum/_scripts/_forum_editor.html" %}
+<script>
+  // 富文本编辑器中启用 @提及
+  var _editorEl = document.getElementById('editorContent');
+  if (_editorEl) MentionAutocomplete.init(_editorEl, {richEditor: true});
+</script>
 {% endblock %}

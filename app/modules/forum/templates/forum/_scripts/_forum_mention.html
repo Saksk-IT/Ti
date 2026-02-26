@@ -1,0 +1,233 @@
+{# forum/_scripts/_forum_mention.html — @提及自动补全组件 #}
+<style>
+.mention-panel {
+  position: absolute;
+  z-index: 1000;
+  background: var(--app-surface, #fff);
+  border: 1px solid var(--app-border, #e0e0e0);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  max-height: 240px;
+  overflow-y: auto;
+  min-width: 200px;
+  display: none;
+}
+.mention-panel.show { display: block; }
+.mention-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background .15s;
+}
+.mention-item:first-child { border-radius: 12px 12px 0 0; }
+.mention-item:last-child { border-radius: 0 0 12px 12px; }
+.mention-item:hover, .mention-item.active {
+  background: var(--app-primary-soft, rgba(0,122,255,0.08));
+}
+.mention-item .mention-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--app-primary-soft, #e0e0e0);
+  object-fit: cover; flex-shrink: 0;
+}
+.mention-item .mention-name {
+  font-weight: 500;
+  color: var(--app-text, #333);
+}
+</style>
+<script>
+var MentionAutocomplete = (function(){
+  var _debounceTimer = null;
+  var _panel = null;
+  var _items = [];
+  var _activeIdx = -1;
+  var _target = null;
+  var _richEditor = false;
+  var _queryStart = -1;
+
+  function init(el, opts) {
+    if (!el) return;
+    _target = el;
+    _richEditor = !!(opts && opts.richEditor);
+
+    // 创建面板
+    _panel = document.createElement('div');
+    _panel.className = 'mention-panel';
+    document.body.appendChild(_panel);
+
+    el.addEventListener('input', _onInput);
+    el.addEventListener('keydown', _onKeydown);
+    el.addEventListener('blur', function(){ setTimeout(_hide, 200); });
+  }
+
+  function _onInput() {
+    clearTimeout(_debounceTimer);
+    _debounceTimer = setTimeout(_checkMention, 250);
+  }
+
+  function _checkMention() {
+    var info = _getCursorContext();
+    if (!info || !info.query) { _hide(); return; }
+    _queryStart = info.start;
+    _fetchUsers(info.query);
+  }
+
+  function _getCursorContext() {
+    if (_richEditor) {
+      var sel = window.getSelection();
+      if (!sel || !sel.rangeCount) return null;
+      var range = sel.getRangeAt(0);
+      var node = range.startContainer;
+      if (node.nodeType !== 3) return null;
+      var text = node.textContent || '';
+      var pos = range.startOffset;
+      var before = text.substring(0, pos);
+      var atIdx = before.lastIndexOf('@');
+      if (atIdx < 0) return null;
+      var query = before.substring(atIdx + 1);
+      if (query.length === 0 || query.length > 20 || /\s/.test(query)) return null;
+      return { start: atIdx, query: query };
+    } else {
+      var el = _target;
+      var pos2 = el.selectionStart;
+      if (pos2 == null) return null;
+      var val = el.value || '';
+      var before2 = val.substring(0, pos2);
+      var atIdx2 = before2.lastIndexOf('@');
+      if (atIdx2 < 0) return null;
+      var q = before2.substring(atIdx2 + 1);
+      if (q.length === 0 || q.length > 20 || /\s/.test(q)) return null;
+      return { start: atIdx2, query: q };
+    }
+  }
+
+  function _fetchUsers(query) {
+    fetch('/api/forum/users/search?q=' + encodeURIComponent(query) + '&limit=8')
+      .then(function(r){ return r.json(); })
+      .then(function(js){
+        if (js.status !== 'success') { _hide(); return; }
+        var data = js.data || [];
+        if (!data.length) { _hide(); return; }
+        _items = data;
+        _activeIdx = 0;
+        _render();
+      })
+      .catch(function(){ _hide(); });
+  }
+
+  function _render() {
+    if (!_panel || !_items.length) { _hide(); return; }
+    var html = _items.map(function(u, i){
+      var cls = (i === _activeIdx) ? 'mention-item active' : 'mention-item';
+      var avatarHtml = u.avatar
+        ? '<img class="mention-avatar" src="' + _escAttr(u.avatar) + '" alt="">'
+        : '<div class="mention-avatar" style="display:flex;align-items:center;justify-content:center;background:var(--app-primary);color:#fff;font-size:12px;font-weight:600;">' + _esc((u.username||'U').charAt(0).toUpperCase()) + '</div>';
+      return '<div class="' + cls + '" data-idx="' + i + '">' + avatarHtml + '<span class="mention-name">' + _esc(u.username) + '</span></div>';
+    }).join('');
+    _panel.innerHTML = html;
+    _panel.classList.add('show');
+    _positionPanel();
+
+    // 点击事件
+    var items = _panel.querySelectorAll('.mention-item');
+    for (var j = 0; j < items.length; j++) {
+      items[j].addEventListener('mousedown', function(e){
+        e.preventDefault();
+        var idx = parseInt(this.getAttribute('data-idx'));
+        _select(idx);
+      });
+    }
+  }
+
+  function _positionPanel() {
+    if (!_target || !_panel) return;
+    var rect = _target.getBoundingClientRect();
+    _panel.style.left = rect.left + 'px';
+    _panel.style.top = (rect.top - _panel.offsetHeight - 4) + 'px';
+    // 如果上方空间不够，放下方
+    if (parseInt(_panel.style.top) < 0) {
+      _panel.style.top = (rect.bottom + 4) + 'px';
+    }
+  }
+
+  function _onKeydown(e) {
+    if (!_panel || !_panel.classList.contains('show')) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      _activeIdx = Math.min(_activeIdx + 1, _items.length - 1);
+      _render();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      _activeIdx = Math.max(_activeIdx - 1, 0);
+      _render();
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      if (_activeIdx >= 0 && _activeIdx < _items.length) {
+        e.preventDefault();
+        _select(_activeIdx);
+      }
+    } else if (e.key === 'Escape') {
+      _hide();
+    }
+  }
+
+  function _select(idx) {
+    if (idx < 0 || idx >= _items.length) return;
+    var username = _items[idx].username;
+    if (_richEditor) {
+      _insertRich(username);
+    } else {
+      _insertPlain(username);
+    }
+    _hide();
+  }
+
+  function _insertPlain(username) {
+    var el = _target;
+    var val = el.value || '';
+    var pos = el.selectionStart;
+    var before = val.substring(0, _queryStart);
+    var after = val.substring(pos);
+    var insert = '@' + username + ' ';
+    el.value = before + insert + after;
+    var newPos = before.length + insert.length;
+    el.setSelectionRange(newPos, newPos);
+    el.focus();
+    // 触发 input 事件
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  function _insertRich(username) {
+    var sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return;
+    var range = sel.getRangeAt(0);
+    var node = range.startContainer;
+    if (node.nodeType !== 3) return;
+    var text = node.textContent || '';
+    var pos = range.startOffset;
+    var before = text.substring(0, _queryStart);
+    var after = text.substring(pos);
+    var insert = '@' + username + ' ';
+    node.textContent = before + insert + after;
+    // 设置光标
+    var newRange = document.createRange();
+    newRange.setStart(node, before.length + insert.length);
+    newRange.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+    _target.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  function _hide() {
+    if (_panel) _panel.classList.remove('show');
+    _items = [];
+    _activeIdx = -1;
+  }
+
+  function _esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+  function _escAttr(s) { return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  return { init: init };
+})();
+</script>

@@ -73,7 +73,11 @@
 
 {% block body_end %}
 <script>const POST_ID = {{ post_id }};</script>
+{% include "forum/_scripts/_forum_mention.html" %}
 {% include "forum/_scripts/_forum_comments.html" %}
 {% include "forum/_scripts/_forum_interactions.html" %}
 {% include "forum/_scripts/_forum_phase2.html" %}
+<script>
+  MentionAutocomplete.init(document.getElementById('commentText'), {richEditor: false});
+</script>
 {% endblock %}

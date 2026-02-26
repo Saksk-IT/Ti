@@ -1,0 +1,209 @@
+{# chat/_chat_scripts_interactions.html — 互动 Tab JS #}
+<style>
+.chat-sidebar-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  padding: 0 8px;
+}
+.chat-tab {
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  background: none;
+  color: var(--sub);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  position: relative;
+  transition: color .2s;
+  min-height: auto;
+}
+.chat-tab:hover { color: var(--text); }
+.chat-tab.active {
+  color: var(--primary);
+  font-weight: 700;
+}
+.chat-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 20%; right: 20%;
+  height: 2px;
+  background: var(--primary);
+  border-radius: 1px;
+}
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: #ff3b30;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+.interact-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: background .15s;
+  border-bottom: 1px solid var(--border);
+}
+.interact-item:hover { background: rgba(142,142,147,0.06); }
+.interact-item.unread { background: rgba(10,132,255,0.04); }
+.interact-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--primary); flex-shrink: 0;
+  object-fit: cover;
+}
+.interact-body { min-width: 0; flex: 1; }
+.interact-action { font-size: 14px; line-height: 1.4; }
+.interact-action .actor { font-weight: 600; color: var(--text); }
+.interact-action .desc { color: var(--sub); }
+.interact-preview {
+  font-size: 12px; color: var(--sub); margin-top: 3px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.interact-time { font-size: 11px; color: var(--sub); margin-top: 3px; }
+.interact-empty {
+  padding: 32px 16px; text-align: center; color: var(--sub); font-size: 14px;
+}
+</style>
+<script>
+var _interactPage = 1;
+var _interactLoading = false;
+var _interactPollTimer = null;
+
+var ACTION_DESC = {
+  'like_post': '赞了你的帖子',
+  'like_comment': '赞了你的评论',
+  'comment': '评论了你的帖子',
+  'reply': '回复了你的评论',
+  'mention': '提到了你',
+  'follow': '关注了你'
+};
+
+function switchChatTab(tab) {
+  // 更新所有 tab 按钮状态
+  document.querySelectorAll('.chat-tab').forEach(function(btn){
+    btn.classList.toggle('active', btn.getAttribute('data-tab') === tab);
+  });
+
+  var convP = document.getElementById('convPanel');
+  var intP = document.getElementById('interactPanel');
+  var convPM = document.getElementById('convPanelMobile');
+  var intPM = document.getElementById('interactPanelMobile');
+
+  if (tab === 'interact') {
+    if (convP) convP.style.display = 'none';
+    if (intP) intP.style.display = 'block';
+    if (convPM) convPM.style.display = 'none';
+    if (intPM) intPM.style.display = 'block';
+    _interactPage = 1;
+    loadInteractions(1);
+    // 自动标记全部已读
+    fetch('/api/chat/interactions/read', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({})
+    }).then(function(){ _updateInteractBadge(0); }).catch(function(){});
+  } else {
+    if (convP) convP.style.display = 'block';
+    if (intP) intP.style.display = 'none';
+    if (convPM) convPM.style.display = 'block';
+    if (intPM) intPM.style.display = 'none';
+  }
+}
+
+function loadInteractions(page) {
+  if (_interactLoading) return;
+  _interactLoading = true;
+  fetch('/api/chat/interactions?page=' + page + '&per_page=30')
+    .then(function(r){ return r.json(); })
+    .then(function(js){
+      _interactLoading = false;
+      if (js.status !== 'success') return;
+      var data = js.data || {};
+      var items = data.notifications || [];
+      var listEl = document.getElementById('interactList');
+      var listElM = document.getElementById('interactListMobile');
+      var html = items.length ? items.map(renderInteractionItem).join('') : '<div class="interact-empty">暂无互动消息</div>';
+      if (listEl) listEl.innerHTML = html;
+      if (listElM) listElM.innerHTML = html;
+    })
+    .catch(function(){ _interactLoading = false; });
+}
+
+function renderInteractionItem(item) {
+  var desc = ACTION_DESC[item.action_type] || '与你互动';
+  var avatarHtml = item.actor_avatar
+    ? '<img class="interact-avatar" src="' + _iEscAttr(item.actor_avatar) + '" alt="">'
+    : '<div class="interact-avatar" style="display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:600;">' + _iEsc((item.actor_name||'U').charAt(0).toUpperCase()) + '</div>';
+  var previewHtml = item.content_preview ? '<div class="interact-preview">' + _iEsc(item.content_preview) + '</div>' : '';
+  var timeStr = item.created_at ? _iFormatTime(item.created_at) : '';
+  var cls = item.is_read ? 'interact-item' : 'interact-item unread';
+  var onclick = '';
+  if (item.action_type === 'follow') {
+    onclick = 'onclick="if(typeof openUserProfile===\'function\')openUserProfile(' + (item.actor_id||0) + ')"';
+  } else if (item.post_id) {
+    onclick = 'onclick="window.open(\'/forum/post/' + item.post_id + '\',\'_blank\')"';
+  }
+  return '<div class="' + cls + '" ' + onclick + '>'
+    + avatarHtml
+    + '<div class="interact-body">'
+    + '<div class="interact-action"><span class="actor">' + _iEsc(item.actor_name||'用户') + '</span> <span class="desc">' + desc + '</span></div>'
+    + previewHtml
+    + '<div class="interact-time">' + _iEsc(timeStr) + '</div>'
+    + '</div></div>';
+}
+
+function _updateInteractBadge(count) {
+  var badges = document.querySelectorAll('#interactBadge, #interactBadgeMobile');
+  badges.forEach(function(b){
+    if (count > 0) {
+      b.textContent = count > 99 ? '99+' : String(count);
+      b.style.display = 'inline-flex';
+    } else {
+      b.style.display = 'none';
+    }
+  });
+}
+
+function _pollInteractUnread() {
+  fetch('/api/chat/interactions/unread_count')
+    .then(function(r){ return r.json(); })
+    .then(function(js){
+      if (js.status === 'success' && js.data) {
+        _updateInteractBadge(js.data.count || 0);
+      }
+    })
+    .catch(function(){});
+}
+
+// 启动轮询
+_pollInteractUnread();
+_interactPollTimer = setInterval(_pollInteractUnread, 30000);
+
+function _iEsc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function _iEscAttr(s) { return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function _iFormatTime(ts) {
+  try {
+    var d = new Date(ts);
+    if (isNaN(d.getTime())) return ts;
+    var now = new Date();
+    var diff = now.getTime() - d.getTime();
+    if (diff < 60000) return '刚刚';
+    if (diff < 3600000) return Math.floor(diff/60000) + '分钟前';
+    if (diff < 86400000) return Math.floor(diff/3600000) + '小时前';
+    if (diff < 604800000) return Math.floor(diff/86400000) + '天前';
+    return d.toLocaleDateString('zh-CN');
+  } catch(e) { return ts; }
+}
+</script>

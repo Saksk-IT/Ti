@@ -56,6 +56,11 @@
 .forum-action-btn { display: flex; align-items: center; gap: 6px; padding: 8px 16px; border: 0.5px solid var(--app-border); border-radius: 10px; background: var(--app-surface); color: var(--app-muted); font-size: 14px; cursor: pointer; transition: all .2s; min-height: auto; }
 .forum-action-btn:hover { border-color: var(--app-primary); color: var(--app-primary); transform: none; box-shadow: none; }
 .forum-action-btn.active { background: var(--app-primary-soft); color: var(--app-primary); border-color: var(--app-primary); }
+/* 关注按钮 */
+.forum-follow-btn { display: inline-flex; align-items: center; padding: 3px 12px; border: 1px solid var(--app-primary); border-radius: 14px; background: var(--app-primary); color: var(--app-primary-contrast, #fff); font-size: 12px; font-weight: 600; cursor: pointer; transition: all .2s; min-height: auto; margin-left: 8px; vertical-align: middle; }
+.forum-follow-btn:hover { opacity: .85; }
+.forum-follow-btn.active { background: transparent; color: var(--app-muted); border-color: var(--app-border); }
+.forum-follow-btn.active:hover { color: var(--app-text); border-color: var(--app-text); }
 /* 评论 */
 .forum-section-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
 .forum-comment { background: var(--app-surface); border: 0.5px solid var(--app-border); border-radius: var(--app-radius-sm); padding: 16px; margin-bottom: 10px; }

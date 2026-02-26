@@ -6,6 +6,7 @@ from typing import Optional
 from sqlalchemy import text
 
 from app.core.extensions import db
+from . import interaction_service
 
 
 def extract_mentions(content: str) -> list[str]:
@@ -38,6 +39,26 @@ def create_mentions(source_type: str, source_id: int, mentioner_id: int,
             ON CONFLICT DO NOTHING
         '''), {'st': source_type, 'sid': source_id, 'muid': uid, 'mid': mentioner_id})
         created += 1
+
+        # 同步写入互动通知
+        try:
+            post_id = None
+            if source_type == 'post':
+                post_id = source_id
+            elif source_type == 'comment':
+                pr = db.session.execute(text(
+                    'SELECT post_id FROM forum_comments WHERE id=:cid'
+                ), {'cid': source_id}).fetchone()
+                if pr:
+                    post_id = pr._mapping['post_id']
+            interaction_service.create_notification(
+                user_id=uid, actor_id=mentioner_id,
+                action_type=interaction_service.ACTION_MENTION,
+                target_type=source_type, target_id=source_id,
+                post_id=post_id, content_preview=content[:100],
+            )
+        except Exception:
+            pass
 
     if created:
         db.session.commit()
