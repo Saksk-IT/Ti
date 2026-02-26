@@ -13,7 +13,7 @@ function renderReply(r, parentId) {
   const ra = r.author_avatar
     ? `<a href="/user/${r.author_id}" class="forum-avatar-link"><img class="forum-avatar" src="${escH(r.author_avatar)}" alt="" style="width:24px;height:24px"></a>`
     : `<a href="/user/${r.author_id}" class="forum-avatar-link"><div class="forum-avatar" style="width:24px;height:24px"></div></a>`;
-  const replyTo = r.reply_to_name ? `<span class="forum-reply-to">@${escH(r.reply_to_name)}</span> ` : '';
+  const replyTo = r.reply_to_name ? `<a href="/user/${r.reply_to_user_id}" class="forum-reply-to">@${escH(r.reply_to_name)}</a> ` : '';
   return `<div class="forum-comment"><div class="comment-header">${ra}<a href="/user/${r.author_id}" class="forum-user-link" style="font-size:13px;font-weight:500">${escH(r.author_name)}</a><span style="font-size:12px;color:var(--app-muted);margin-left:auto">${fmtT(r.created_at)}</span></div>
     <div class="comment-body">${replyTo}${escH(r.content)}</div>
     <div class="comment-footer"><button onclick="setReply(${parentId},${r.author_id},'${escH(r.author_name)}')">回复</button><button onclick="likeComment(${r.id})">&#10084; ${r.like_count||0}</button><button onclick="openReportModal('comment',${r.id})">&#9888;</button></div></div>`;
