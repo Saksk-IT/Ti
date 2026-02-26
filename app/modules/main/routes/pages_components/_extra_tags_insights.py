@@ -444,11 +444,11 @@ def compute_extra_tags_insights(uid: int, window_days: int, subject_ids: list,
     except Exception:
         global_insights = []
 
-return {
-    'tags_public': tags_public,
-    'tags_banks': tags_banks,
-    'tags_all': tags_all,
-    'tags_graph': tags_graph,
-    'tags_kpis': tags_kpis,
-    'global_insights': global_insights,
-}
+    return {
+        'tags_public': tags_public,
+        'tags_banks': tags_banks,
+        'tags_all': tags_all,
+        'tags_graph': tags_graph,
+        'tags_kpis': tags_kpis,
+        'global_insights': global_insights,
+    }
