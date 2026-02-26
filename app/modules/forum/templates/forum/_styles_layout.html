@@ -2,6 +2,10 @@
 /* ===== 论坛页面：主区域不滚动，各区域独立滚动 ===== */
 .app-main.forum-no-scroll { overflow: hidden; flex: 1; display: flex; flex-direction: column; }
 .app-main.forum-no-scroll + .app-footer { display: none; }
+.app-main.forum-no-scroll ~ .app-footer { display: none; }
+/* 确保高度链条完整：app-shell → app-body → app-main 都不溢出 */
+.forum-no-scroll-shell { height: 100vh; overflow: hidden; }
+.forum-no-scroll-shell > .app-body { overflow: hidden; flex: 1; min-height: 0; }
 /* ===== 双栏布局 ===== */
 .forum-layout { max-width: 1120px; margin: 0 auto; padding: 0 16px; display: flex; gap: 24px; flex: 1; min-height: 0; overflow: hidden; }
 .forum-sidebar { width: 260px; flex-shrink: 0; overflow-y: auto; }

@@ -88,7 +88,7 @@
 {% endblock %}
 
 {% block body_end %}
-<script>document.getElementById('main').classList.add('forum-no-scroll');</script>
+<script>document.getElementById('main').classList.add('forum-no-scroll');document.getElementById('appShell').classList.add('forum-no-scroll-shell');</script>
 <script>const POST_ID = {{ post_id }};</script>
 {% include "forum/_scripts/_forum_mention.html" %}
 {% include "forum/_scripts/_forum_comments.html" %}
