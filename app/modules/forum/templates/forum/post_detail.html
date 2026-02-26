@@ -96,5 +96,12 @@
 {% include "forum/_scripts/_forum_phase2.html" %}
 <script>
   MentionAutocomplete.init(document.getElementById('commentText'), {richEditor: false});
+  // 并行加载所有数据（替代各模块串行自动调用）
+  Promise.all([
+    loadPostDetail(),
+    loadComments(false),
+    loadReactions(),
+    loadPoll()
+  ]).catch(function(e){ console.error('parallel load error', e); });
 </script>
 {% endblock %}

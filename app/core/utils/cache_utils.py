@@ -83,3 +83,27 @@ def get_user_quiz_version(user_id: int) -> int:
 def bump_user_quiz_version(user_id: int) -> Optional[int]:
     return bump_version(f"quiz:u:{int(user_id)}", amount=1)
 
+
+# === 聊天模块版本号封装 ===
+
+
+def get_chat_version(user_id: int) -> int:
+    """获取用户的聊天会话列表缓存版本号"""
+    return get_version(f"chat:conv:{int(user_id)}", default=1)
+
+
+def bump_chat_version(user_id: int) -> Optional[int]:
+    """递增用户的聊天会话列表缓存版本号"""
+    return bump_version(f"chat:conv:{int(user_id)}", amount=1)
+
+
+# === 论坛版块列表版本号封装 ===
+
+
+def get_forum_boards_version() -> int:
+    return get_version("forum:boards", default=1)
+
+
+def bump_forum_boards_version() -> Optional[int]:
+    return bump_version("forum:boards", amount=1)
+

@@ -39,15 +39,23 @@ def is_following(follower_id: int, following_id: int) -> bool:
 
 
 def get_follow_status(user_id: int, target_id: int) -> dict:
-    """获取关注状态 + 计数"""
-    i_follow = is_following(user_id, target_id)
-    follows_me = is_following(target_id, user_id)
-    counts = get_follow_counts(target_id)
+    """获取关注状态 + 计数（单条 SQL 合并 4 个子查询）"""
+    row = db.session.execute(text('''
+        SELECT
+            EXISTS(SELECT 1 FROM user_follows WHERE follower_id=:uid AND following_id=:tid) AS i_follow,
+            EXISTS(SELECT 1 FROM user_follows WHERE follower_id=:tid AND following_id=:uid) AS follows_me,
+            (SELECT COUNT(*) FROM user_follows WHERE following_id=:tid) AS follower_count,
+            (SELECT COUNT(*) FROM user_follows WHERE follower_id=:tid) AS following_count
+    '''), {'uid': user_id, 'tid': target_id}).fetchone()
+    m = row._mapping
+    i_follow = bool(m['i_follow'])
+    follows_me = bool(m['follows_me'])
     return {
         'i_follow': i_follow,
         'follows_me': follows_me,
         'mutual': i_follow and follows_me,
-        **counts,
+        'follower_count': m['follower_count'] or 0,
+        'following_count': m['following_count'] or 0,
     }
 
 

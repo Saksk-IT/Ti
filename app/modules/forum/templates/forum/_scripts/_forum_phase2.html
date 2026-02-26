@@ -161,7 +161,5 @@ async function submitForward() {
   } catch(e) { alert('转发失败'); }
 }
 
-// 初始化 Phase 2 功能
-loadReactions();
-loadPoll();
+// loadReactions / loadPoll 由 post_detail.html 的 Promise.all 统一调用
 </script>

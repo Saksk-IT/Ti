@@ -6,6 +6,10 @@ from typing import Optional
 from sqlalchemy import text
 
 from app.core.extensions import db
+from app.core.utils.cache_utils import (
+    get_forum_boards_version, bump_forum_boards_version, make_cache_key,
+)
+from app.core.utils.redis_utils import redis_get_json, redis_set_json
 
 
 def _slugify(name: str) -> str:
@@ -52,7 +56,13 @@ def sync_subject_boards() -> int:
 
 
 def get_boards(include_inactive: bool = False) -> list[dict]:
-    """获取版块列表（含帖子数）"""
+    """获取版块列表（含帖子数）— Redis 缓存 300s"""
+    ver = get_forum_boards_version()
+    cache_key = make_cache_key("forum:boards", {"inc": include_inactive, "ver": ver})
+    cached = redis_get_json(cache_key)
+    if cached is not None:
+        return cached
+
     where = '' if include_inactive else 'WHERE b.is_active = true'
     rows = db.session.execute(text(f'''
         SELECT b.*,
@@ -66,7 +76,10 @@ def get_boards(include_inactive: bool = False) -> list[dict]:
         {where}
         ORDER BY b.sort_order, b.id
     ''')).fetchall()
-    return [dict(r._mapping) for r in rows]
+    result = [dict(r._mapping) for r in rows]
+
+    redis_set_json(cache_key, result, ttl_seconds=300)
+    return result
 
 
 def get_board_by_id(board_id: int) -> Optional[dict]:
@@ -86,6 +99,7 @@ def create_board(name: str, slug: str, description: str, icon: str,
         'icon': icon, 'sort': sort_order, 'uid': created_by,
     })
     db.session.commit()
+    bump_forum_boards_version()
     row = db.session.execute(text(
         'SELECT * FROM forum_boards WHERE slug = :slug'
     ), {'slug': slug}).fetchone()
@@ -103,6 +117,7 @@ def update_board(board_id: int, **fields) -> bool:
         f'UPDATE forum_boards SET {set_clause}, updated_at = NOW() WHERE id = :bid'
     ), updates)
     db.session.commit()
+    bump_forum_boards_version()
     return True
 
 
@@ -115,4 +130,5 @@ def delete_board(board_id: int) -> bool:
         return False
     db.session.execute(text('DELETE FROM forum_boards WHERE id = :bid'), {'bid': board_id})
     db.session.commit()
+    bump_forum_boards_version()
     return True

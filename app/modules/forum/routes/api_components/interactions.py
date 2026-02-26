@@ -38,7 +38,12 @@ def api_toggle_like():
                 f'UPDATE {table} SET like_count = GREATEST(like_count - 1, 0) WHERE id=:tid'
             ), {'tid': target_id})
             db.session.commit()
-            return jsonify({'status': 'success', 'data': {'liked': False}})
+            # 查询最新计数
+            cnt_row = db.session.execute(text(
+                f'SELECT like_count FROM {table} WHERE id=:tid'
+            ), {'tid': target_id}).fetchone()
+            like_count = cnt_row._mapping['like_count'] if cnt_row else 0
+            return jsonify({'status': 'success', 'data': {'liked': False, 'like_count': like_count}})
         else:
             db.session.execute(text(
                 'INSERT INTO forum_likes (user_id, target_type, target_id) VALUES (:uid, :tt, :tid)'
@@ -78,7 +83,12 @@ def api_toggle_like():
             except Exception:
                 pass
 
-            return jsonify({'status': 'success', 'data': {'liked': True}})
+            # 查询最新计数
+            cnt_row = db.session.execute(text(
+                f'SELECT like_count FROM {table} WHERE id=:tid'
+            ), {'tid': target_id}).fetchone()
+            like_count = cnt_row._mapping['like_count'] if cnt_row else 0
+            return jsonify({'status': 'success', 'data': {'liked': True, 'like_count': like_count}})
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"点赞操作失败: {e}", exc_info=True)

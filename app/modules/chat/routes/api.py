@@ -16,6 +16,10 @@ from app.core.extensions import db, limiter
 from app.core.utils.json_helpers import safe_load as _safe_load
 from app.core.utils.options_parser import parse_options
 from app.core.utils.time_utils import now_bj
+from app.core.utils.cache_utils import (
+    get_chat_version, bump_chat_version, make_cache_key,
+)
+from app.core.utils.redis_utils import redis_get_json, redis_set_json
 from app.models.chat import ChatConversation, ChatMember, ChatMessage, UserRemark
 from app.models.user import User
 from app.models.subject import Question, Subject
@@ -145,12 +149,19 @@ def _insert_message_and_update(
         member.last_read_message_id = mid
 
     db.session.commit()
+
+    # bump 所有会话成员的聊天缓存版本号
+    members = db.session.query(ChatMember.user_id).filter_by(
+        conversation_id=conversation_id
+    ).all()
+    for m in members:
+        bump_chat_version(m.user_id)
+
     return mid
 
 
-
 @chat_api_bp.route('/chat/users')
-@limiter.exempt
+@limiter.limit("120/minute")
 def chat_users():
     """用于创建聊天时的用户列表（简单按活跃/用户名排序）"""
     if not session.get('user_id'):
@@ -197,12 +208,19 @@ def chat_users():
 
 
 @chat_api_bp.route('/chat/conversations')
-@limiter.exempt
+@limiter.limit("120/minute")
 def chat_conversations():
     if not session.get('user_id'):
         return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
 
     uid = session.get('user_id')
+
+    # Redis 缓存：版本号 + TTL 5s
+    ver = get_chat_version(uid)
+    cache_key = make_cache_key("chat:convs", {"uid": uid, "ver": ver})
+    cached = redis_get_json(cache_key)
+    if cached is not None:
+        return jsonify({'status': 'success', 'data': cached})
 
     # 别名：当前用户的成员行（用于 last_read）
     cm = db.aliased(ChatMember, name='cm')
@@ -292,12 +310,15 @@ def chat_conversations():
             d['last_message'] = '[转发帖子]'
         data.append(d)
 
+    # 写入 Redis 缓存（TTL 5s）
+    redis_set_json(cache_key, data, ttl_seconds=5)
+
     return jsonify({'status': 'success', 'data': data})
 
 
 
 @chat_api_bp.route('/chat/conversation_users')
-@limiter.exempt
+@limiter.limit("120/minute")
 def chat_conversation_users():
     """获取已有会话的用户列表（仅返回direct会话中的对方用户），用于题目转发等功能"""
     if not session.get('user_id'):
@@ -347,7 +368,7 @@ def chat_conversation_users():
 
 
 @chat_api_bp.route('/chat/conversations/create', methods=['POST'])
-@limiter.exempt
+@limiter.limit("30/minute")
 def chat_create_conversation():
     """创建或复用 1v1 会话（从根源避免重复 direct 会话）"""
     if not session.get('user_id'):
@@ -400,7 +421,7 @@ def chat_create_conversation():
 
 
 @chat_api_bp.route('/chat/user_remark', methods=['GET', 'POST'])
-@limiter.exempt
+@limiter.limit("60/minute")
 def chat_user_remark():
     """读取/设置对某个用户的备注（仅自己可见）
 
@@ -469,7 +490,7 @@ def chat_user_remark():
 
 
 @chat_api_bp.route('/chat/user_profile')
-@limiter.exempt
+@limiter.limit("120/minute")
 def chat_user_profile():
     """聊天页查看对方资料（类似微信好友资料）
 
@@ -517,7 +538,7 @@ def chat_user_profile():
 
 
 @chat_api_bp.route('/chat/messages')
-@limiter.exempt
+@limiter.limit("120/minute")
 def chat_messages():
     """拉取会话消息（增量）并推进已读。
 
@@ -593,7 +614,7 @@ def chat_messages():
 
 
 @chat_api_bp.route('/chat/messages/send', methods=['POST'])
-@limiter.exempt
+@limiter.limit("30/minute")
 def chat_send_message():
     if not session.get('user_id'):
         return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
@@ -619,7 +640,7 @@ def chat_send_message():
 
 
 @chat_api_bp.route('/chat/messages/upload_image', methods=['POST'])
-@limiter.exempt
+@limiter.limit("10/minute")
 def chat_upload_image():
     """上传聊天图片并作为一条图片消息写入会话
 
@@ -706,7 +727,7 @@ def chat_upload_image():
 
 
 @chat_api_bp.route('/chat/messages/upload_audio', methods=['POST'])
-@limiter.exempt
+@limiter.limit("10/minute")
 def chat_upload_audio():
     """上传聊天语音并作为一条语音消息写入会话
 
@@ -838,7 +859,7 @@ def chat_upload_audio():
 
 
 @chat_api_bp.route('/chat/messages/send_question', methods=['POST'])
-@limiter.exempt
+@limiter.limit("30/minute")
 def chat_send_question():
     if not session.get('user_id'):
         return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
@@ -933,7 +954,7 @@ def chat_send_question():
 
 
 @chat_api_bp.route('/chat/question/<int:question_id>')
-@limiter.exempt
+@limiter.limit("120/minute")
 def chat_get_question_detail(question_id: int):
     """获取题目完整信息（用于历史题目卡片弹层补全）"""
     if not session.get('user_id'):
@@ -1006,7 +1027,7 @@ def chat_get_question_detail(question_id: int):
 
 
 @chat_api_bp.route('/chat/unread_count')
-@limiter.exempt
+@limiter.limit("120/minute")
 def chat_unread_count():
     """首页角标等（可选）"""
     if not session.get('user_id'):
@@ -1072,6 +1093,71 @@ def chat_unread_count():
     return jsonify({'status': 'success', 'count': int(total_unread or 0)})
 
 
-# 注册子路由模块
+@chat_api_bp.route('/chat/badge_counts')
+@limiter.limit("120/minute")
+def chat_badge_counts():
+    """合并端点：一次返回聊天未读 + 论坛互动未读（替代前端两次请求）"""
+    if not session.get('user_id'):
+        return jsonify({'status': 'success', 'data': {'chat_unread': 0, 'interact_unread': 0, 'total': 0}})
+
+    uid = session.get('user_id')
+
+    # 聊天未读（复用 chat_unread_count 的逻辑）
+    gkey = func.coalesce(
+        ChatConversation.direct_pair_key,
+        db.cast(ChatConversation.id, db.Text),
+    ).label('gkey')
+
+    my_convs = (
+        db.session.query(
+            ChatConversation.id.label('conversation_id'),
+            ChatConversation.c_type,
+            ChatConversation.updated_at,
+            gkey,
+        )
+        .join(ChatMember, (ChatMember.conversation_id == ChatConversation.id) & (ChatMember.user_id == uid))
+        .subquery('my_convs_badge')
+    )
+
+    ranked = (
+        db.session.query(
+            my_convs.c.conversation_id,
+            func.row_number().over(
+                partition_by=my_convs.c.gkey,
+                order_by=[my_convs.c.updated_at.desc(), my_convs.c.conversation_id.desc()],
+            ).label('rn'),
+        )
+        .subquery('ranked_badge')
+    )
+
+    latest_conv_ids = (
+        db.session.query(ranked.c.conversation_id)
+        .filter(ranked.c.rn == 1)
+        .subquery('latest_conv_ids_badge')
+    )
+
+    cm2 = db.aliased(ChatMember, name='cm2_badge')
+    chat_unread = (
+        db.session.query(func.coalesce(func.count(ChatMessage.id), 0))
+        .join(latest_conv_ids, ChatMessage.conversation_id == latest_conv_ids.c.conversation_id)
+        .join(cm2, (cm2.conversation_id == ChatMessage.conversation_id) & (cm2.user_id == uid))
+        .filter(
+            ChatMessage.id > func.coalesce(cm2.last_read_message_id, 0),
+            ChatMessage.sender_id != uid,
+        )
+        .scalar()
+    ) or 0
+
+    # 论坛互动未读
+    interact_unread = db.session.execute(text(
+        "SELECT COUNT(*) FROM forum_notifications WHERE user_id = :uid AND is_read = false"
+    ), {'uid': uid}).scalar() or 0
+
+    total = int(chat_unread) + int(interact_unread)
+    return jsonify({'status': 'success', 'data': {
+        'chat_unread': int(chat_unread),
+        'interact_unread': int(interact_unread),
+        'total': total,
+    }})
 # api_follow 已迁移至 forum 模块 (forum/routes/api_follow.py)
 from . import api_interactions  # noqa: F401,E402

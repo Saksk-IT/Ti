@@ -219,20 +219,19 @@ function _updateInteractBadge(count) {
 function _updateSidebarChatBadge() {
   var badge = document.getElementById('chatUnreadBadge');
   if (!badge) return;
-  Promise.all([
-    fetch('/api/chat/chat/unread_count').then(function(r){ return r.json(); }).catch(function(){ return {status:'error'}; }),
-    fetch('/api/forum/unread').then(function(r){ return r.json(); }).catch(function(){ return {status:'error'}; })
-  ]).then(function(results){
-    var total = 0;
-    if (results[0].status==='success') total += (results[0].count || 0);
-    if (results[1].status==='success' && results[1].data) total += (results[1].data.unread_count || 0);
-    if (total > 0) {
-      badge.textContent = total > 99 ? '99+' : total;
-      badge.style.display = 'flex';
-    } else {
-      badge.style.display = 'none';
-    }
-  });
+  fetch('/api/chat/chat/badge_counts')
+    .then(function(r){ return r.json(); })
+    .then(function(js){
+      if (js.status !== 'success' || !js.data) return;
+      var total = js.data.total || 0;
+      if (total > 0) {
+        badge.textContent = total > 99 ? '99+' : total;
+        badge.style.display = 'flex';
+      } else {
+        badge.style.display = 'none';
+      }
+    })
+    .catch(function(){});
 }
 
 function _pollInteractUnread() {

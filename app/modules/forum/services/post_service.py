@@ -8,6 +8,7 @@ from sqlalchemy import text
 from app.core.extensions import db
 from ..services.content_sanitizer import sanitize_html, strip_html_tags
 from ..services import mention_service, ban_service
+from app.core.utils.cache_utils import bump_forum_boards_version
 
 
 def get_posts(
@@ -142,21 +143,24 @@ def create_post(author_id: int, board_id: int, title: str, content: str,
     refs_json = json.dumps(question_refs or [])
     poll_json = json.dumps(poll) if poll else None
 
-    db.session.execute(text('''
+    result = db.session.execute(text('''
         INSERT INTO forum_posts
             (board_id, author_id, title, content, images, question_refs, poll)
         VALUES (:bid, :uid, :title, :content, CAST(:images AS jsonb), CAST(:refs AS jsonb),
                 CASE WHEN :poll IS NOT NULL THEN CAST(:poll AS jsonb) ELSE NULL END)
+        RETURNING id
     '''), {
         'bid': board_id, 'uid': author_id, 'title': title,
         'content': safe_content, 'images': images_json, 'refs': refs_json,
         'poll': poll_json,
     })
+    new_id = result.fetchone()._mapping['id']
     db.session.commit()
+    bump_forum_boards_version()
 
     row = db.session.execute(text(
-        'SELECT * FROM forum_posts WHERE author_id = :uid ORDER BY id DESC LIMIT 1'
-    ), {'uid': author_id}).fetchone()
+        'SELECT * FROM forum_posts WHERE id = :pid'
+    ), {'pid': new_id}).fetchone()
     post = dict(row._mapping)
 
     # 解析 @提及

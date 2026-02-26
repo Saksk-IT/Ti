@@ -120,10 +120,32 @@ async function submitComment() {
 
 async function likeComment(cid) {
   try {
-    await fetch('/api/forum/like', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_type:'comment',target_id:cid})});
-    commentPage = 1; loadComments(false);
+    const res = await fetch('/api/forum/like', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_type:'comment',target_id:cid})});
+    const js = await res.json();
+    if (js.status === 'success' && js.data) {
+      // 局部 DOM 更新：找到对应评论的点赞按钮并更新
+      const commentEl = document.getElementById('comment-' + cid);
+      if (commentEl) {
+        // 一级评论的点赞按钮
+        const btns = commentEl.querySelectorAll(':scope > .comment-footer > button');
+        for (const btn of btns) {
+          if (btn.textContent.includes('\u2764')) {
+            btn.innerHTML = '&#10084; ' + (js.data.like_count || 0);
+            break;
+          }
+        }
+      }
+      // 也可能是楼中楼回复（没有 id），遍历所有点赞按钮
+      if (!commentEl) {
+        document.querySelectorAll('.comment-footer button').forEach(function(btn) {
+          if (btn.getAttribute('onclick') === 'likeComment(' + cid + ')') {
+            btn.innerHTML = '&#10084; ' + (js.data.like_count || 0);
+          }
+        });
+      }
+    }
   } catch(e) {}
 }
 
-loadComments(false);
+// loadComments 由 post_detail.html 的 Promise.all 统一调用
 </script>

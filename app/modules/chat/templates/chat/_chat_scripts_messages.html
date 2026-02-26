@@ -799,6 +799,15 @@
     if (shouldStick) box.scrollTop = box.scrollHeight;
   }
 
+  // 会话列表刷新节流：最多 10 秒一次
+  let _lastConvRefresh = 0;
+  function throttledRefreshConversations() {
+    const now = Date.now();
+    if (now - _lastConvRefresh < 10000) return;
+    _lastConvRefresh = now;
+    refreshConversations();
+  }
+
   async function pollMessages(force){
     if (!ChatState.currentConversationId) return;
     const { res, js } = await Chat.api.fetchMessages({
@@ -810,7 +819,7 @@
     const msgs = js.data || [];
     if (msgs.length) {
       appendMessages(msgs);
-      refreshConversations();
+      throttledRefreshConversations();
       try {
         const now = new Date();
         const hh = String(now.getHours()).padStart(2,'0');
@@ -820,6 +829,7 @@
       } catch(e) {}
     } else if (force) {
       refreshConversations();
+      _lastConvRefresh = Date.now();
     }
   }
 
