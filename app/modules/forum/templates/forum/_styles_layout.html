@@ -8,10 +8,10 @@
 .forum-no-scroll-shell > .app-body { overflow: hidden; flex: 1; min-height: 0; }
 /* ===== 双栏布局 ===== */
 .forum-layout { max-width: 1120px; margin: 0 auto; padding: 0 16px; display: flex; gap: 24px; flex: 1; min-height: 0; overflow: hidden; }
-.forum-sidebar { width: 260px; flex-shrink: 0; overflow-y: auto; }
+.forum-sidebar { width: 260px; flex-shrink: 0; overflow-y: auto; scrollbar-gutter: stable; }
 .forum-sidebar::-webkit-scrollbar { width: 4px; }
 .forum-sidebar::-webkit-scrollbar-thumb { background: var(--app-border); border-radius: 2px; }
-.forum-main { flex: 1; min-width: 0; overflow-y: auto; }
+.forum-main { flex: 1; min-width: 0; overflow-y: auto; scrollbar-gutter: stable; }
 .forum-main::-webkit-scrollbar { width: 4px; }
 .forum-main::-webkit-scrollbar-thumb { background: var(--app-border); border-radius: 2px; }
 

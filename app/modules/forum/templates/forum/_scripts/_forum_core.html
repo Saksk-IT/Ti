@@ -16,13 +16,8 @@ function fmtTime(s) { if (!s) return ''; const d = new Date(s); const now = new 
 
 /* ===== Tab 切换 ===== */
 function setTab(el, tab) {
-  if (tab === 'featured') {
-    currentSort = 'latest';
-    currentFeatured = true;
-  } else {
-    currentSort = tab;
-    currentFeatured = false;
-  }
+  currentSort = tab;
+  currentFeatured = false;
   currentPage = 1;
   document.querySelectorAll('.forum-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');

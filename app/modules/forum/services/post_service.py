@@ -42,6 +42,7 @@ def get_posts(
             ' / POWER(GREATEST(EXTRACT(EPOCH FROM (NOW() - p.created_at)) / 3600, 1), 0.5)'
             ' DESC, p.created_at DESC'
         ),
+        'featured': 'p.is_featured DESC, p.created_at DESC',
         'active': 'COALESCE(p.last_comment_at, p.created_at) DESC',
     }
     order = order_map.get(sort, order_map['latest'])
