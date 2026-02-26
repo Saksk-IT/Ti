@@ -36,7 +36,12 @@ def get_posts(
 
     order_map = {
         'latest': 'p.created_at DESC',
-        'hot': 'p.like_count + p.comment_count DESC, p.created_at DESC',
+        'hot': (
+            '(p.like_count * 2 + p.comment_count * 3 + p.view_count * 0.1'
+            ' + p.favorite_count * 2)'
+            ' / POWER(GREATEST(EXTRACT(EPOCH FROM (NOW() - p.created_at)) / 3600, 1), 0.5)'
+            ' DESC, p.created_at DESC'
+        ),
         'active': 'COALESCE(p.last_comment_at, p.created_at) DESC',
     }
     order = order_map.get(sort, order_map['latest'])
