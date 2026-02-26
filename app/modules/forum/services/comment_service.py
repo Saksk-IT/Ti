@@ -6,7 +6,7 @@ from typing import Optional
 from sqlalchemy import text
 
 from app.core.extensions import db
-from ..services.content_sanitizer import sanitize_html
+from ..services.content_sanitizer import sanitize_html, strip_html_tags
 from ..services import mention_service, ban_service, interaction_service
 
 logger = logging.getLogger(__name__)
@@ -105,24 +105,62 @@ def create_comment(post_id: int, author_id: int, content: str,
 
     # 触发互动通知
     try:
-        preview = safe_content[:100] if safe_content else ''
+        preview = strip_html_tags(safe_content, 100) if safe_content else ''
+        notified_uids: set[int] = set()
+
         if parent_id and reply_to_user_id:
             # 楼中楼回复 → 通知被回复者
-            interaction_service.create_notification(
-                user_id=reply_to_user_id, actor_id=author_id,
-                action_type=interaction_service.ACTION_REPLY,
-                target_type='comment', target_id=parent_id,
-                post_id=post_id, content_preview=preview,
-            )
-        else:
-            # 一级评论 → 通知帖子作者
-            post_row = db.session.execute(text(
-                'SELECT author_id FROM forum_posts WHERE id=:pid'
-            ), {'pid': post_id}).fetchone()
-            if post_row:
+            if reply_to_user_id != author_id:
                 interaction_service.create_notification(
-                    user_id=post_row._mapping['author_id'], actor_id=author_id,
-                    action_type=interaction_service.ACTION_COMMENT,
+                    user_id=reply_to_user_id, actor_id=author_id,
+                    action_type=interaction_service.ACTION_REPLY,
+                    target_type='comment', target_id=parent_id,
+                    post_id=post_id, content_preview=preview,
+                )
+                notified_uids.add(reply_to_user_id)
+
+            # 同时通知父评论作者（如果不同于被回复者且不是自己）
+            parent_row = db.session.execute(text(
+                'SELECT author_id FROM forum_comments WHERE id=:cid'
+            ), {'cid': parent_id}).fetchone()
+            if parent_row:
+                parent_author = parent_row._mapping['author_id']
+                if parent_author != author_id and parent_author not in notified_uids:
+                    interaction_service.create_notification(
+                        user_id=parent_author, actor_id=author_id,
+                        action_type=interaction_service.ACTION_REPLY,
+                        target_type='comment', target_id=parent_id,
+                        post_id=post_id, content_preview=preview,
+                    )
+                    notified_uids.add(parent_author)
+
+        elif parent_id:
+            # 有 parent_id 但无 reply_to_user_id → 通知父评论作者
+            parent_row = db.session.execute(text(
+                'SELECT author_id FROM forum_comments WHERE id=:cid'
+            ), {'cid': parent_id}).fetchone()
+            if parent_row:
+                parent_author = parent_row._mapping['author_id']
+                if parent_author != author_id:
+                    interaction_service.create_notification(
+                        user_id=parent_author, actor_id=author_id,
+                        action_type=interaction_service.ACTION_REPLY,
+                        target_type='comment', target_id=parent_id,
+                        post_id=post_id, content_preview=preview,
+                    )
+                    notified_uids.add(parent_author)
+
+        # 一级评论或楼中楼 → 都通知帖子作者（避免重复）
+        post_row = db.session.execute(text(
+            'SELECT author_id FROM forum_posts WHERE id=:pid'
+        ), {'pid': post_id}).fetchone()
+        if post_row:
+            post_author = post_row._mapping['author_id']
+            if post_author != author_id and post_author not in notified_uids:
+                action = interaction_service.ACTION_COMMENT if not parent_id else interaction_service.ACTION_REPLY
+                interaction_service.create_notification(
+                    user_id=post_author, actor_id=author_id,
+                    action_type=action,
                     target_type='post', target_id=post_id,
                     post_id=post_id, content_preview=preview,
                 )
