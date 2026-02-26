@@ -54,6 +54,7 @@
 {% endblock %}
 
 {% block body_end %}
+<script>document.getElementById('main').classList.add('forum-no-scroll');</script>
 {% include "forum/_scripts/_forum_core.html" %}
 {% include "forum/_scripts/_forum_sidebar.html" %}
 {% endblock %}

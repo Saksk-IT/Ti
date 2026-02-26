@@ -4,6 +4,7 @@
 {% block page_title %}帖子详情{% endblock %}
 
 {% block head_extra %}
+{% include "forum/_styles_layout.html" %}
 {% include "forum/_styles.html" %}
 {% endblock %}
 
@@ -87,6 +88,7 @@
 {% endblock %}
 
 {% block body_end %}
+<script>document.getElementById('main').classList.add('forum-no-scroll');</script>
 <script>const POST_ID = {{ post_id }};</script>
 {% include "forum/_scripts/_forum_mention.html" %}
 {% include "forum/_scripts/_forum_comments.html" %}

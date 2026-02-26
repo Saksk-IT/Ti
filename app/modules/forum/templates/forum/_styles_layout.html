@@ -1,8 +1,15 @@
 <style>
+/* ===== 论坛页面：主区域不滚动，各区域独立滚动 ===== */
+.app-main.forum-no-scroll { overflow: hidden; flex: 1; display: flex; flex-direction: column; }
+.app-main.forum-no-scroll + .app-footer { display: none; }
 /* ===== 双栏布局 ===== */
-.forum-layout { max-width: 1120px; margin: 0 auto; padding: 0 16px; display: flex; gap: 24px; }
-.forum-sidebar { width: 260px; flex-shrink: 0; position: sticky; top: 72px; max-height: calc(100vh - 88px); overflow-y: auto; }
-.forum-main { flex: 1; min-width: 0; }
+.forum-layout { max-width: 1120px; margin: 0 auto; padding: 0 16px; display: flex; gap: 24px; flex: 1; min-height: 0; overflow: hidden; }
+.forum-sidebar { width: 260px; flex-shrink: 0; overflow-y: auto; }
+.forum-sidebar::-webkit-scrollbar { width: 4px; }
+.forum-sidebar::-webkit-scrollbar-thumb { background: var(--app-border); border-radius: 2px; }
+.forum-main { flex: 1; min-width: 0; overflow-y: auto; }
+.forum-main::-webkit-scrollbar { width: 4px; }
+.forum-main::-webkit-scrollbar-thumb { background: var(--app-border); border-radius: 2px; }
 
 /* ===== Tab 导航 ===== */
 .forum-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--app-border); margin-bottom: 16px; position: relative; }
