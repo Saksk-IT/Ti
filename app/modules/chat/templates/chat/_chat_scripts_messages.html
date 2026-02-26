@@ -196,11 +196,16 @@
       return js.data || [];
     },
 
-    async fetchMessages({conversationId, afterId=0, limit=80}){
+    async fetchMessages({conversationId, afterId=0, beforeId=0, limit=80}){
       const cid = Number(conversationId || 0);
-      const aid = Number(afterId || 0);
       const lim = Number(limit || 80);
-      const res = await fetch(`/api/chat/messages?conversation_id=${cid}&after_id=${aid}&limit=${lim}`);
+      let url = `/api/chat/messages?conversation_id=${cid}&limit=${lim}`;
+      if (Number(beforeId || 0) > 0) {
+        url += `&before_id=${Number(beforeId)}`;
+      } else {
+        url += `&after_id=${Number(afterId || 0)}`;
+      }
+      const res = await fetch(url);
       const js = await this._json(res);
       return { res, js };
     },
@@ -344,6 +349,9 @@
   }
 
   let currentPeerUserId = 0;
+  let _earliestMessageId = 0;   // 当前会话已加载的最早消息 ID
+  let _hasMoreHistory = true;    // 是否还有更早的历史消息
+  let _loadingHistory = false;   // 防止并发加载历史
 
   async function openConversation(conversationId){
     try { stopCurrentAudio(); } catch(e) {}
@@ -351,6 +359,9 @@
     ChatState.currentConversationId = conversationId;
     currentPeerUserId = 0;
     ChatState.lastMessageId = 0;
+    _earliestMessageId = 0;
+    _hasMoreHistory = true;
+    _loadingHistory = false;
     const msgBox = Chat.ui.dom.get('messages');
     if (msgBox) {
       msgBox.innerHTML = '';
@@ -538,6 +549,9 @@
 
     msgs.forEach(m => {
       ChatState.lastMessageId = Math.max(ChatState.lastMessageId, m.id);
+      if (_earliestMessageId === 0 || m.id < _earliestMessageId) {
+        _earliestMessageId = m.id;
+      }
       const isMe = (m.sender_id === MY_ID);
 
       maybeInsertTimeDivider(box, m);
@@ -799,6 +813,137 @@
     if (shouldStick) box.scrollTop = box.scrollHeight;
   }
 
+  function prependMessages(msgs){
+    const box = Chat.ui.dom.get('messages');
+    if (!box || !msgs || !msgs.length) return;
+    setEmptyStateVisible(false);
+
+    // 记录当前滚动位置，插入后恢复（避免跳动）
+    const prevScrollHeight = box.scrollHeight;
+    const prevScrollTop = box.scrollTop;
+
+    // 找到第一个 msg-row 作为插入锚点
+    let anchor = null;
+    for (let i = 0; i < box.children.length; i++) {
+      if (box.children[i].classList.contains('msg-row') || box.children[i].classList.contains('time-divider')) {
+        anchor = box.children[i];
+        break;
+      }
+    }
+
+    // 构建临时容器，按时间正序处理
+    const frag = document.createDocumentFragment();
+    msgs.forEach(m => {
+      if (_earliestMessageId === 0 || m.id < _earliestMessageId) {
+        _earliestMessageId = m.id;
+      }
+      ChatState.lastMessageId = Math.max(ChatState.lastMessageId, m.id);
+      const isMe = (m.sender_id === MY_ID);
+
+      // 时间分隔线（简化：每条都检查与下一条的间隔）
+      const row = document.createElement('div');
+      row.className = 'msg-row ' + (isMe ? 'me' : '');
+      row.setAttribute('data-sender', String(m.sender_id || ''));
+      const ts = safeParseTime(m && m.created_at);
+      if (ts) row.setAttribute('data-ts', ts.toISOString());
+
+      const avatar = renderAvatarDiv(m.sender_avatar || '', m.sender_username || '', m.sender_id);
+      const wrap = document.createElement('div');
+      wrap.className = 'msg-wrap';
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+
+      if (isImageMsg(m)) {
+        bubble.classList.add('image-bubble');
+        const info = parseImageContent(m.content);
+        const showUrl = info.thumb || info.url;
+        const fullUrl = info.url || showUrl;
+        const img = document.createElement('img');
+        img.src = showUrl;
+        img.className = 'chat-img';
+        img.loading = 'lazy';
+        img.onclick = () => openImgModal(fullUrl);
+        bubble.appendChild(img);
+      } else if (isQuestionMsg(m)) {
+        const info = parseQuestionContent(m.content) || {};
+        bubble.style.background = 'var(--other)';
+        bubble.style.border = '1px solid var(--border)';
+        bubble.style.color = 'var(--text)';
+        bubble.style.cursor = info.id ? 'pointer' : 'default';
+        bubble.textContent = `[题目] ${(info.content || '').slice(0, 60)}`;
+        if (info.id) bubble.addEventListener('click', () => openQuestionModal(info));
+      } else if (isAudioMsg(m)) {
+        const info = parseAudioContent(m.content);
+        const dur = info.duration;
+        bubble.textContent = dur ? `[语音 ${Math.max(1, Math.round(dur))}s]` : '[语音]';
+      } else if (isForwardMsg(m)) {
+        const fwd = parseForwardContent(m.content);
+        bubble.textContent = fwd && fwd.title ? `[转发] ${fwd.title}` : '[转发帖子]';
+        if (fwd && fwd.post_id) {
+          bubble.style.cursor = 'pointer';
+          bubble.addEventListener('click', () => window.open('/forum/post/' + fwd.post_id, '_blank'));
+        }
+      } else {
+        bubble.textContent = m.content || '';
+      }
+
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      const created = safeParseTime(m.created_at);
+      const metaTime = created ? formatFullTime(created) : (m.created_at || '');
+      meta.textContent = (isMe ? '' : (m.sender_username || '用户') + ' · ') + metaTime;
+
+      wrap.appendChild(bubble);
+      wrap.appendChild(meta);
+      row.appendChild(avatar);
+      row.appendChild(wrap);
+      frag.appendChild(row);
+    });
+
+    // 在锚点前插入时间分隔线和消息
+    if (anchor) {
+      // 插入顶部分隔线
+      const firstNewTs = safeParseTime(msgs[0] && msgs[0].created_at);
+      if (firstNewTs) {
+        const div = document.createElement('div');
+        div.className = 'time-divider';
+        div.innerHTML = `<span>${escapeHtml(formatDividerTime(firstNewTs))}</span>`;
+        box.insertBefore(div, anchor);
+      }
+      box.insertBefore(frag, anchor);
+    } else {
+      box.appendChild(frag);
+    }
+
+    // 恢复滚动位置（保持用户视角不变）
+    const newScrollHeight = box.scrollHeight;
+    box.scrollTop = prevScrollTop + (newScrollHeight - prevScrollHeight);
+  }
+
+  async function loadOlderMessages(){
+    if (_loadingHistory || !_hasMoreHistory || !ChatState.currentConversationId) return;
+    if (_earliestMessageId <= 0) return;
+
+    _loadingHistory = true;
+    try {
+      const { res, js } = await Chat.api.fetchMessages({
+        conversationId: ChatState.currentConversationId,
+        beforeId: _earliestMessageId,
+        limit: 30,
+      });
+      if (!res.ok || js.status !== 'success') return;
+      const msgs = js.data || [];
+      if (js.has_more === false) _hasMoreHistory = false;
+      if (!msgs.length) {
+        _hasMoreHistory = false;
+        return;
+      }
+      prependMessages(msgs);
+    } finally {
+      _loadingHistory = false;
+    }
+  }
+
   // 会话列表刷新节流：最多 10 秒一次
   let _lastConvRefresh = 0;
   function throttledRefreshConversations() {
@@ -836,4 +981,18 @@
   function setLoading(btn, state){
     return Chat.utils.setLoading(btn, state);
   }
+
+  // 滚动到顶部加载历史消息
+  (function(){
+    const box = document.getElementById('messages');
+    if (!box) return;
+    let _scrollDebounce = null;
+    box.addEventListener('scroll', function(){
+      if (_scrollDebounce) return;
+      if (box.scrollTop < 80 && _hasMoreHistory && !_loadingHistory && ChatState.currentConversationId) {
+        _scrollDebounce = setTimeout(()=>{ _scrollDebounce = null; }, 300);
+        loadOlderMessages();
+      }
+    });
+  })();
 </script>

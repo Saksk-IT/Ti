@@ -28,8 +28,16 @@ def get_posts(
         conditions.append('p.board_id = :board_id')
         params['board_id'] = board_id
     if keyword:
-        conditions.append("(p.title ILIKE :kw OR p.content ILIKE :kw)")
-        params['kw'] = f'%{keyword}%'
+        # PostgreSQL: 使用 GIN 全文索引；SQLite: 降级 LIKE
+        dialect = db.engine.dialect.name
+        if dialect == 'postgresql':
+            conditions.append(
+                "p.search_vector @@ plainto_tsquery('simple', :kw)"
+            )
+            params['kw'] = keyword
+        else:
+            conditions.append("(p.title LIKE :kw OR p.content LIKE :kw)")
+            params['kw'] = f'%{keyword}%'
     if featured_only:
         conditions.append('p.is_featured = true')
 

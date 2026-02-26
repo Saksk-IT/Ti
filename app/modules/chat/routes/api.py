@@ -540,13 +540,19 @@ def chat_user_profile():
 @chat_api_bp.route('/chat/messages')
 @limiter.limit("120/minute")
 def chat_messages():
-    """拉取会话消息（增量）并推进已读。
+    """拉取会话消息（增量 / 向前翻页）并推进已读。
+
+    参数：
+      - conversation_id (必须)
+      - after_id   向后增量拉取（轮询用，默认模式）
+      - before_id  向前翻页拉取历史消息（滚动到顶部时使用）
+      - limit      每次返回条数（默认50，最大200）
+
+    当 before_id > 0 时进入"向前翻页"模式：
+      返回 id < before_id 的最近 limit 条（按 id DESC 取再反转为 ASC）
+      响应额外包含 has_more 字段指示是否还有更早消息
 
     关键点：已读推进应当以"当前会话的最新消息 id"为准，而不是仅推进到本次返回的最后一条。
-
-    否则会出现：
-    - 其他轮询/页面（如首页 /api/chat/unread_count）仍显示未读
-    - 当 after_id 很大或 limit 较小导致返回为空时，已读永远无法推进
     """
     if not session.get('user_id'):
         return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
@@ -554,6 +560,7 @@ def chat_messages():
     uid = session.get('user_id')
     conversation_id = int(request.args.get('conversation_id') or 0)
     after_id = int(request.args.get('after_id') or 0)
+    before_id = int(request.args.get('before_id') or 0)
     limit = int(request.args.get('limit') or 50)
     limit = max(1, min(limit, 200))
 
@@ -563,7 +570,7 @@ def chat_messages():
     if not _is_member(conversation_id, uid):
         return jsonify({'status': 'forbidden', 'message': '无权访问该会话'}), 403
 
-    rows = (
+    base_query = (
         db.session.query(
             ChatMessage.id,
             ChatMessage.conversation_id,
@@ -575,14 +582,42 @@ def chat_messages():
             ChatMessage.created_at,
         )
         .outerjoin(User, User.id == ChatMessage.sender_id)
-        .filter(
-            ChatMessage.conversation_id == conversation_id,
-            ChatMessage.id > after_id,
-        )
-        .order_by(ChatMessage.id.asc())
-        .limit(limit)
-        .all()
+        .filter(ChatMessage.conversation_id == conversation_id)
     )
+
+    has_more = None
+    if before_id > 0:
+        # 向前翻页：取 id < before_id 的最近 limit 条
+        rows = (
+            base_query
+            .filter(ChatMessage.id < before_id)
+            .order_by(ChatMessage.id.desc())
+            .limit(limit)
+            .all()
+        )
+        rows = list(reversed(rows))  # 反转为时间正序
+        # 判断是否还有更早消息
+        if rows:
+            earliest_id = rows[0].id
+            has_more = db.session.query(
+                db.session.query(ChatMessage.id)
+                .filter(
+                    ChatMessage.conversation_id == conversation_id,
+                    ChatMessage.id < earliest_id,
+                )
+                .exists()
+            ).scalar()
+        else:
+            has_more = False
+    else:
+        # 默认：向后增量拉取
+        rows = (
+            base_query
+            .filter(ChatMessage.id > after_id)
+            .order_by(ChatMessage.id.asc())
+            .limit(limit)
+            .all()
+        )
 
     # 更新已读到当前会话的最新消息ID（无论是否有新消息）
     latest_msg = db.session.query(
@@ -610,7 +645,10 @@ def chat_messages():
         }
         for r in rows
     ]
-    return jsonify({'status': 'success', 'data': data})
+    result = {'status': 'success', 'data': data}
+    if has_more is not None:
+        result['has_more'] = has_more
+    return jsonify(result)
 
 
 @chat_api_bp.route('/chat/messages/send', methods=['POST'])
@@ -736,9 +774,8 @@ def chat_upload_audio():
       - audio (file)  建议 webm/ogg/wav/mp3/m4a
       - duration 可选（秒）
 
-    返回：
-      - url: 语音URL
-      - duration: 秒
+    流程：先保存原始文件并立即写入消息返回，转码异步执行（RQ 队列），
+    无 Redis/RQ 时降级同步转码。
     """
     if not session.get('user_id'):
         return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
@@ -777,83 +814,70 @@ def chat_upload_audio():
     ext = f.filename.rsplit('.', 1)[1].lower()
     base = secure_filename(f"chat_{conversation_id}_{uid}_{uuid.uuid4().hex[:10]}")
 
-    # 1) 先保存原始文件
+    # 1) 保存原始文件
     raw_name = f"{base}.{ext}"
     raw_abs = os.path.join(chat_dir, raw_name)
     f.save(raw_abs)
     raw_url = f"/uploads/chat/{raw_name}"
 
-    # 2) 尝试转码为 m4a（AAC），以获得 iOS/安卓最佳兼容；失败则回退转 mp3
-    m4a_name = f"{base}.m4a"
-    m4a_abs = os.path.join(chat_dir, m4a_name)
-    m4a_url = f"/uploads/chat/{m4a_name}"
-
-    mp3_name = f"{base}.mp3"
-    mp3_abs = os.path.join(chat_dir, mp3_name)
-    mp3_url = f"/uploads/chat/{mp3_name}"
-
-    m4a_ok = False
-    mp3_ok = False
-    transcode_err = ''
-
-    # 先转 m4a
-    try:
-        ok, err = _transcode_to_m4a(raw_abs, m4a_abs)
-        m4a_ok = bool(ok)
-        transcode_err = err or ''
-    except Exception as e:
-        m4a_ok = False
-        transcode_err = str(e)
-
-    if not m4a_ok:
-        # 清理可能的残留
-        try:
-            if os.path.exists(m4a_abs):
-                os.remove(m4a_abs)
-        except Exception:
-            pass
-
-        # 回退转 mp3
-        try:
-            ok2, err2 = _transcode_to_mp3(raw_abs, mp3_abs)
-            mp3_ok = bool(ok2)
-            transcode_err = err2 or transcode_err
-        except Exception as e:
-            mp3_ok = False
-            transcode_err = str(e)
-
-        if not mp3_ok:
-            try:
-                if os.path.exists(mp3_abs):
-                    os.remove(mp3_abs)
-            except Exception:
-                pass
-
-        current_app.logger.warning(
-            f"audio transcode failed(m4a) fallback(mp3)={'ok' if mp3_ok else 'failed'}: conv={conversation_id} uid={uid} raw={raw_name} err={transcode_err}"
-        )
-
-    # content：存 raw + m4a/mp3（如有），前端播放优先：m4a > mp3 > raw
-    best_url = m4a_url if m4a_ok else (mp3_url if mp3_ok else raw_url)
+    # 2) 先用 raw 写入消息，立即返回（低延迟）
     content_obj = {
-        'url': best_url,
+        'url': raw_url,
         'url_raw': raw_url,
-        'url_m4a': (m4a_url if m4a_ok else None),
-        'url_mp3': (mp3_url if mp3_ok else None),
+        'url_m4a': None,
+        'url_mp3': None,
         'duration': duration if duration > 0 else None,
     }
     content_str = json.dumps(content_obj, ensure_ascii=False)
-
     mid = _insert_message_and_update(conversation_id, uid, content_str, 'audio')
+
+    # 3) 异步转码：尝试 RQ 队列，失败降级同步
+    transcoded = False
+    try:
+        from app.core.utils.redis_utils import get_redis_connection
+        conn = get_redis_connection()
+        if conn is not None:
+            from rq import Queue
+            q = Queue(connection=conn)
+            q.enqueue(
+                'app.modules.chat.tasks.transcode_audio_task',
+                message_id=mid,
+                raw_abs=raw_abs,
+                chat_dir=chat_dir,
+                base=base,
+                duration=duration,
+                raw_url=raw_url,
+            )
+            transcoded = True  # 已入队
+    except Exception:
+        pass
+
+    if not transcoded:
+        # 降级同步转码
+        try:
+            from app.modules.chat.tasks import transcode_audio_task
+            transcode_audio_task(
+                message_id=mid,
+                raw_abs=raw_abs,
+                chat_dir=chat_dir,
+                base=base,
+                duration=duration,
+                raw_url=raw_url,
+            )
+        except Exception as e:
+            current_app.logger.warning(
+                f"audio sync transcode failed: conv={conversation_id} uid={uid} err={e}"
+            )
+
     return jsonify({
         'status': 'success',
         'message_id': mid,
-        'url': content_obj.get('url'),
-        'url_raw': content_obj.get('url_raw'),
-        'url_m4a': content_obj.get('url_m4a'),
-        'url_mp3': content_obj.get('url_mp3'),
+        'url': raw_url,
+        'url_raw': raw_url,
+        'url_m4a': None,
+        'url_mp3': None,
         'duration': duration,
-        'transcoded': bool(content_obj.get('url_m4a') or content_obj.get('url_mp3')),
+        'transcoded': transcoded,
     })
 
 
