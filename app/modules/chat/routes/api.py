@@ -1249,7 +1249,7 @@ def chat_badge_counts():
 
 
 # ── D2: 消息撤回 ──────────────────────────────────────────────
-@chat_api_bp.route('/api/chat/messages/revoke', methods=['POST'])
+@chat_api_bp.route('/chat/messages/revoke', methods=['POST'])
 @limiter.limit("30/minute")
 def chat_revoke_message():
     uid = session.get('user_id')
@@ -1295,7 +1295,7 @@ def chat_revoke_message():
 
 
 # ── D5: 会话内消息搜索 ────────────────────────────────────────
-@chat_api_bp.route('/api/chat/messages/search', methods=['GET'])
+@chat_api_bp.route('/chat/messages/search', methods=['GET'])
 @limiter.limit("60/minute")
 def chat_search_messages():
     uid = session.get('user_id')
