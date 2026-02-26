@@ -46,6 +46,9 @@ def get_posts(
     }
     order = order_map.get(sort, order_map['latest'])
 
+    # 只有最新排序才强制置顶帖优先，热门/活跃按各自算法排
+    pin_prefix = 'p.is_pinned DESC, ' if sort in ('latest',) else ''
+
     total = db.session.execute(text(
         f'SELECT COUNT(*) FROM forum_posts p WHERE {where}'
     ), params).scalar()
@@ -76,7 +79,7 @@ def get_posts(
         JOIN users u ON u.id = p.author_id
         JOIN forum_boards b ON b.id = p.board_id
         WHERE {where}
-        ORDER BY p.is_pinned DESC, {order}
+        ORDER BY {pin_prefix}{order}
         LIMIT :limit OFFSET :offset
     '''), params).fetchall()
 
