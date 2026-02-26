@@ -13,7 +13,7 @@
 .forum-new-btn { padding: 8px 20px; background: var(--app-primary); color: var(--app-primary-contrast); border-radius: 10px; font-size: 14px; font-weight: 500; text-decoration: none; transition: opacity .2s; min-height: auto; display: inline-flex; align-items: center; }
 .forum-new-btn:hover { opacity: .85; transform: none; box-shadow: none; }
 /* 帖子卡片 */
-.forum-post-card { background: var(--app-surface); border: 0.5px solid var(--app-border); border-radius: var(--app-radius-md); padding: 20px; margin-bottom: 12px; cursor: pointer; transition: box-shadow .2s; }
+.forum-post-card { background: var(--app-surface); border: 0.5px solid var(--app-border); border-radius: var(--app-radius-md); padding: 20px; margin-bottom: 12px; cursor: pointer; transition: box-shadow .2s; overflow: hidden; min-width: 0; }
 .forum-post-card:hover { box-shadow: var(--app-shadow-soft); }
 .forum-post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
 .forum-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--app-primary-soft); object-fit: cover; flex-shrink: 0; }
@@ -24,7 +24,8 @@
 .forum-post-preview { font-size: 14px; color: var(--app-muted); line-height: 1.5; margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 /* 朋友圈风格内容区 */
 .forum-post-body-wrap { position: relative; margin-bottom: 10px; }
-.forum-post-body-inner { font-size: 14px; color: var(--app-text); line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+.forum-post-body-inner { font-size: 14px; color: var(--app-text); line-height: 1.6; white-space: pre-wrap; word-break: break-word; overflow: hidden; }
+.forum-post-body-inner img { max-width: 100%; height: auto; border-radius: 6px; }
 .forum-post-body-wrap.collapsed { max-height: 300px; overflow: hidden; }
 .forum-post-body-wrap.collapsed::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 60px; background: linear-gradient(transparent, var(--app-surface)); pointer-events: none; }
 .forum-expand-btn { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); z-index: 1; padding: 4px 16px; border: 0.5px solid var(--app-border); border-radius: 14px; background: var(--app-surface); color: var(--app-primary); font-size: 13px; font-weight: 500; cursor: pointer; min-height: auto; transition: all .15s; }
