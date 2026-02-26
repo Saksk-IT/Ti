@@ -14,6 +14,20 @@ function fmtTime(s) { if (!s) return ''; const d = new Date(s); const now = new 
   if (diff < 604800) return Math.floor(diff/86400) + '天前';
   return `${d.getMonth()+1}/${d.getDate()}`; }
 
+/* ===== 骨架屏 ===== */
+function skeletonCard() {
+  return `<div class="forum-skeleton-card">
+    <div class="forum-skeleton-header"><div class="forum-skeleton-avatar"></div><div style="flex:1"><div class="forum-skeleton-row" style="width:30%;margin-bottom:0"></div></div></div>
+    <div class="forum-skeleton-title"></div>
+    <div class="forum-skeleton-row forum-skeleton-line" style="width:90%"></div>
+    <div class="forum-skeleton-row forum-skeleton-line" style="width:75%"></div>
+    <div class="forum-skeleton-row forum-skeleton-line" style="width:40%"></div>
+  </div>`;
+}
+function showSkeletons(container, count) {
+  container.innerHTML = Array.from({length: count}, skeletonCard).join('');
+}
+
 /* ===== Tab 切换 ===== */
 function setTab(el, tab) {
   currentSort = tab;
@@ -99,14 +113,21 @@ async function loadPosts() {
   if (currentFeatured) params.set('featured', '1');
   url += '?' + params.toString();
 
+  const list = document.getElementById('postsList');
+  const empty = document.getElementById('emptyState');
+  const more = document.getElementById('loadMore');
+
+  // 首页加载时显示骨架屏
+  if (currentPage === 1) {
+    showSkeletons(list, 5);
+    list.classList.remove('fade-in');
+  }
+
   try {
     const r = await fetch(url).then(r => r.json());
     if (r.status !== 'success') return;
     const data = r.data;
     totalPages = Math.ceil(data.total / data.per_page);
-    const list = document.getElementById('postsList');
-    const empty = document.getElementById('emptyState');
-    const more = document.getElementById('loadMore');
 
     if (currentPage === 1) allPosts = [];
     allPosts = allPosts.concat(data.posts);
@@ -115,6 +136,11 @@ async function loadPosts() {
     empty.style.display = 'none';
     list.innerHTML = allPosts.map(renderPostCard).join('');
     more.style.display = currentPage < totalPages ? 'block' : 'none';
+
+    // 淡入动画
+    list.classList.remove('fade-in');
+    void list.offsetWidth; // 强制 reflow 重置动画
+    list.classList.add('fade-in');
 
     // 应用内容折叠
     requestAnimationFrame(applyContentCollapse);
