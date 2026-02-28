@@ -107,6 +107,11 @@ def send_sms_verify_code(phone: str, config: Dict[str, Any]) -> SendSmsResult:
                 '========================================',
                 phone, verify_code,
             )
+        else:
+            logger.info(
+                '短信发送成功: phone=%s, biz_id=%s, request_id=%s',
+                phone, biz_id, body.request_id,
+            )
 
         return SendSmsResult(
             success=True,
@@ -143,6 +148,7 @@ def check_sms_verify_code(phone: str, code: str, config: Dict[str, Any]) -> Chec
 
     try:
         client = _build_client(config)
+        logger.info('校验短信验证码: phone=%s, code=%s', phone, code)
         req = CheckSmsVerifyCodeRequest(
             phone_number=phone,
             verify_code=code,
