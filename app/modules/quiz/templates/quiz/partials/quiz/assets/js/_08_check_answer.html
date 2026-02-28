@@ -205,7 +205,7 @@ function _getSubjectiveUserAnswer(qEl) {
     const ta = getActiveSubjectiveTextarea(qEl);
     if (ta) return (ta.value || '').trim();
     const root = getActiveQuestionLayoutRoot(qEl) || qEl;
-    const inp = root.querySelector('input[type=”text”], .main-input');
+    const inp = root.querySelector('input[type="text"], .main-input');
     return inp ? (inp.value || '').trim() : '';
 }
 
@@ -229,22 +229,33 @@ function _showSubjectiveSelfEval(qEl, qId) {
     const card = document.createElement('div');
     card.className = 'subjective-self-eval';
     card.innerHTML = `
-        <div class=”self-eval-title”>请对照参考答案自评</div>
-        <div class=”self-eval-btns”>
-            <button type=”button” class=”self-eval-btn correct” data-result=”correct”>
-                <svg class=”self-eval-icon” viewBox=”0 0 24 24” fill=”none” stroke=”currentColor” stroke-width=”2.5” stroke-linecap=”round” stroke-linejoin=”round”><polyline points=”20 6 9 17 4 12”></polyline></svg>
+        <div class="self-eval-title">请对照参考答案自评</div>
+        <div class="self-eval-btns">
+            <button type="button" class="self-eval-btn correct" data-result="correct">
+                <svg class="self-eval-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 答对了
             </button>
-            <button type=”button” class=”self-eval-btn wrong” data-result=”wrong”>
-                <svg class=”self-eval-icon” viewBox=”0 0 24 24” fill=”none” stroke=”currentColor” stroke-width=”2.5” stroke-linecap=”round” stroke-linejoin=”round”><line x1=”18” y1=”6” x2=”6” y2=”18”></line><line x1=”6” y1=”6” x2=”18” y2=”18”></line></svg>
+            <button type="button" class="self-eval-btn wrong" data-result="wrong">
+                <svg class="self-eval-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 答错了
             </button>
         </div>
     `;
-    // 插入到答案解析区域之前或题目末尾
+    // 插入到答案解析区域之后（卡片布局优先插入右侧面板）
     const dock = qEl.querySelector('.answer-explain-dock, .answer-dock-card');
-    if (dock) dock.parentNode.insertBefore(card, dock);
-    else qEl.appendChild(card);
+    if (dock) {
+        dock.parentNode.insertBefore(card, dock);
+    } else {
+        const rightPanel = qEl.querySelector('.subjective-right')
+                        || qEl.querySelector('.answer-explain-inline')?.parentElement;
+        if (rightPanel) {
+            const anchor = rightPanel.querySelector('.answer-explain-inline');
+            if (anchor && anchor.nextSibling) rightPanel.insertBefore(card, anchor.nextSibling);
+            else rightPanel.appendChild(card);
+        } else {
+            qEl.appendChild(card);
+        }
+    }
 
     card.addEventListener('click', async (e) => {
         const btn = e.target.closest('.self-eval-btn');
@@ -264,7 +275,7 @@ function _showSubjectiveSelfEval(qEl, qId) {
         card.querySelector('.self-eval-title').textContent = isCorrect ? '✓ 已记录：答对' : '✕ 已记录：答错';
         card.querySelector('.self-eval-title').classList.add(isCorrect ? 'eval-done-correct' : 'eval-done-wrong');
 
-        // 更新答案结果卡片 header（从”待核对”变为”回答正确/错误”）
+        // 更新答案结果卡片 header（从"待核对"变为"回答正确/错误"）
         renderAnswerExplainFromQuestion(qEl, isCorrect);
 
         // 调用后端记录结果
@@ -853,7 +864,7 @@ document.addEventListener('visibilitychange', function() {
 });
 
 function refreshAnsweredMarkersFromInputs(){
-    // 用当前输入内容重建“已答”标记（考试模式侧边栏）
+    // 用当前输入内容重建"已答"标记（考试模式侧边栏）
     try {
         questions.forEach((q, idx) => {
             const it = document.getElementById(`list-item-${idx}`);
@@ -914,7 +925,7 @@ function loadState() {
                         // 2. 恢复高亮效果
                         styleFeedback(q, type, answer, isCorrect);
 
-                        // 3. 已作答题：需要能在回顾时展示“答案/解析”
+                        // 3. 已作答题：需要能在回顾时展示"答案/解析"
                         // 注意：此处只是恢复状态，具体显示在 showQuestion / checkAnswer 时渲染到独立卡片
                         disableInputs(q);
                     }
@@ -947,7 +958,7 @@ function loadState() {
             if (data.index) currentIndex = data.index;
         }
 
-        // 考试模式也需要根据恢复的输入来重建“已答”标记
+        // 考试模式也需要根据恢复的输入来重建"已答"标记
         if (mode === 'exam') {
             refreshAnsweredMarkersFromInputs();
         }
