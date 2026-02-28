@@ -7,6 +7,7 @@ def init_auth_module(app: Flask):
     """初始化认证模块"""
     from .routes.pages import auth_pages_bp
     from .routes.api import auth_api_bp
+    from .routes.sms_api import sms_api_bp
     
     # 获取模块目录，用于设置模板路径
     module_dir = os.path.dirname(os.path.abspath(__file__))
@@ -18,7 +19,8 @@ def init_auth_module(app: Flask):
     # 注册子蓝图
     auth_bp.register_blueprint(auth_pages_bp)
     auth_bp.register_blueprint(auth_api_bp, url_prefix='/api')
-    
+    auth_bp.register_blueprint(sms_api_bp, url_prefix='/api/sms')
+
     # 注册主蓝图
     app.register_blueprint(auth_bp)
 

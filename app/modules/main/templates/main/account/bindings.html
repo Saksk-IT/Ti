@@ -458,7 +458,7 @@
         resetPhoneCountdown();
         if (sendPhoneCodeBtn) { sendPhoneCodeBtn.disabled = true; sendPhoneCodeBtn.textContent = '发送中…'; }
         try {
-          const res = await fetch('/auth/api/sms/send-bind-code', {
+          const res = await fetch('/api/sms/send-bind-code', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
@@ -488,7 +488,7 @@
         if (!code || code.length < 4 || code.length > 6) { showPhoneMessage('请输入验证码'); return; }
         if (submitPhoneBindBtn) { submitPhoneBindBtn.disabled = true; submitPhoneBindBtn.textContent = '绑定中…'; }
         try {
-          const res = await fetch('/auth/api/sms/bind', {
+          const res = await fetch('/api/sms/bind', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
