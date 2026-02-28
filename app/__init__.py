@@ -198,43 +198,49 @@ def _ensure_directories(app):
 
 
 def _setup_logging(app):
-    """配置日志系统"""
+    """配置日志系统
+
+    优化点：
+    - Filter 挂载到 root logger，所有 getLogger(__name__) 的模块日志均生效
+    - RotatingFileHandler 指定 encoding='utf-8'，解决 Windows 中文乱码
+    - SensitiveDataFilter dict args 处理 bug 修复
+    - 日志格式添加 %(name)s 区分模块来源
+    - 开发环境也配置统一格式的 StreamHandler
+    """
     import re
 
-    # 敏感信息脱敏模式
     _SENSITIVE_PATTERNS = [
         (re.compile(r'(SECRET_KEY|WECHAT_SECRET|DASHSCOPE_API_KEY|MAIL_PASSWORD|password|token|secret)[=:]\s*["\']?([^\s"\']{4})[^\s"\']*', re.IGNORECASE), r'\1=\2****'),
         (re.compile(r'(sk-)[a-zA-Z0-9]{4}[a-zA-Z0-9]+', re.IGNORECASE), r'\1****'),
     ]
 
+    def _sanitize_str(s: str) -> str:
+        for pattern, replacement in _SENSITIVE_PATTERNS:
+            s = pattern.sub(replacement, s)
+        return s
+
     class SensitiveDataFilter(logging.Filter):
         """日志脱敏过滤器：自动遮蔽密钥、密码等敏感信息"""
         def filter(self, record: logging.LogRecord) -> bool:
             if isinstance(record.msg, str):
-                for pattern, replacement in _SENSITIVE_PATTERNS:
-                    record.msg = pattern.sub(replacement, record.msg)
+                record.msg = _sanitize_str(record.msg)
             if record.args:
                 if isinstance(record.args, dict):
                     record.args = {
-                        k: pattern.sub(replacement, str(v)) if isinstance(v, str) else v
+                        k: _sanitize_str(str(v)) if isinstance(v, str) else v
                         for k, v in record.args.items()
-                        for pattern, replacement in _SENSITIVE_PATTERNS
                     }
                 elif isinstance(record.args, tuple):
-                    new_args = []
-                    for a in record.args:
-                        if isinstance(a, str):
-                            for pattern, replacement in _SENSITIVE_PATTERNS:
-                                a = pattern.sub(replacement, a)
-                        new_args.append(a)
-                    record.args = tuple(new_args)
+                    record.args = tuple(
+                        _sanitize_str(a) if isinstance(a, str) else a
+                        for a in record.args
+                    )
             return True
 
     class RequestIdFilter(logging.Filter):
         def filter(self, record: logging.LogRecord) -> bool:
             try:
                 from flask import has_request_context, g
-
                 if has_request_context():
                     record.request_id = getattr(g, 'request_id', '-') or '-'
                 else:
@@ -243,40 +249,60 @@ def _setup_logging(app):
                 record.request_id = '-'
             return True
 
-    # 给日志记录补充 request_id 字段（formatter 使用时更利于排障）
+    # P0-1: Filter 挂载到每个 Handler 上（而非 logger 上）
+    # Python logging 机制：logger 上的 Filter 只对直接调用该 logger 的日志生效，
+    # 不对通过传播链到达的日志生效。挂到 Handler 上才能拦截所有模块的日志。
+    root_logger = logging.getLogger()
     request_id_filter = RequestIdFilter()
     sensitive_filter = SensitiveDataFilter()
-    try:
-        app.logger.addFilter(request_id_filter)
-        app.logger.addFilter(sensitive_filter)
-    except Exception:
-        pass
+
+    # 统一日志格式（P2-6: 添加 %(name)s 区分模块）
+    _LOG_FMT = '%(asctime)s %(levelname)s %(name)s [%(request_id)s]: %(message)s [in %(pathname)s:%(lineno)d]'
+    formatter = logging.Formatter(_LOG_FMT)
+
+    log_level = app.config.get('LOG_LEVEL', logging.INFO)
+    if app.config.get('DEBUG') or app.debug:
+        log_level = logging.DEBUG
+
+    def _attach_filters(handler: logging.Handler) -> None:
+        handler.addFilter(request_id_filter)
+        handler.addFilter(sensitive_filter)
 
     if not app.debug and not app.testing:
+        # P0-2: encoding='utf-8' 解决 Windows 中文乱码
         file_handler = RotatingFileHandler(
             os.path.join(app.config['LOG_DIR'], 'app.log'),
             maxBytes=app.config['LOG_MAX_BYTES'],
-            backupCount=app.config['LOG_BACKUP_COUNT']
+            backupCount=app.config['LOG_BACKUP_COUNT'],
+            encoding='utf-8',
         )
-        # 根据环境设置日志级别
-        log_level = app.config.get('LOG_LEVEL', logging.INFO)
-        if app.config.get('DEBUG'):
-            log_level = logging.DEBUG
-        
-        file_handler.setFormatter(logging.Formatter(
-            '%(asctime)s %(levelname)s [%(request_id)s]: %(message)s [in %(pathname)s:%(lineno)d]'
-        ))
-        try:
-            file_handler.addFilter(request_id_filter)
-        except Exception:
-            pass
+        file_handler.setFormatter(formatter)
         file_handler.setLevel(log_level)
-        app.logger.addHandler(file_handler)
-        app.logger.setLevel(log_level)
-        
-        # 生产环境日志提示
-        if not app.config.get('DEBUG'):
-            app.logger.info(f'生产环境已启动，日志级别: {logging.getLevelName(log_level)}')
+        _attach_filters(file_handler)
+        root_logger.addHandler(file_handler)
+    else:
+        # P2-7: 开发环境也使用统一格式的 StreamHandler
+        stream_handler = logging.StreamHandler()
+        stream_handler.setFormatter(formatter)
+        stream_handler.setLevel(log_level)
+        _attach_filters(stream_handler)
+        # 避免重复添加（Flask 自带 StreamHandler）
+        if not any(isinstance(h, logging.StreamHandler) for h in root_logger.handlers):
+            root_logger.addHandler(stream_handler)
+        # 给已有的 handler 也挂上 Filter
+        for h in root_logger.handlers:
+            if not any(isinstance(f, RequestIdFilter) for f in h.filters):
+                _attach_filters(h)
+
+    root_logger.setLevel(log_level)
+    app.logger.setLevel(log_level)
+
+    # 移除 Flask 自带的 handler，避免开发环境日志重复输出
+    # app.logger 的日志会传播到 root logger，由 root 的 handler 统一输出
+    app.logger.handlers.clear()
+
+    if not app.debug and not app.testing:
+        app.logger.info('生产环境已启动，日志级别: %s', logging.getLevelName(log_level))
 
 
 def _register_blueprints(app):
@@ -394,10 +420,14 @@ def _register_before_request(app):
         url = request.url.replace('http://', 'https://', 1)
         return redirect(url, code=301)
 
+    # P1-3: 访问日志专用 logger（非静态资源）
+    _access_logger = logging.getLogger('access')
+    _STATIC_PREFIXES = ('/static/', '/favicon.ico', '/robots.txt')
+
     @app.after_request
     def _inject_request_id_header(response):
-        # 慢请求日志（>1s 记录 WARNING）
         req_start = getattr(g, 'request_start', None)
+        duration = 0.0
         if req_start is not None:
             duration = time.monotonic() - req_start
             if duration > 1.0:
@@ -406,6 +436,16 @@ def _register_before_request(app):
                     request.method, request.path, duration,
                     getattr(g, 'request_id', '-'),
                 )
+
+        # 访问日志：排除静态资源
+        path = request.path or ''
+        if not path.startswith(_STATIC_PREFIXES):
+            user = session.get('username', '-')
+            _access_logger.info(
+                '%s %s %s %.3fs user=%s ip=%s',
+                request.method, path, response.status_code,
+                duration, user, request.remote_addr,
+            )
 
         rid = getattr(g, 'request_id', None)
         if rid:

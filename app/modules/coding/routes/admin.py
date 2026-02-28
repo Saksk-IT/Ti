@@ -107,9 +107,7 @@ def api_get_subjects():
             }
         }), 200
     except Exception as e:
-        import traceback
-        error_detail = traceback.format_exc()
-        current_app.logger.error("获取题目集列表失败: %s" % e, exc_info=True)
+        current_app.logger.error('获取题目集列表失败', exc_info=True)
         return jsonify({
             'status': 'error',
             'message': '获取题目集列表失败: ' + str(e)

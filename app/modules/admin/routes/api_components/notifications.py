@@ -78,8 +78,7 @@ def admin_api_notifications_create():
         return jsonify({'status': 'success', 'message': '通知创建成功', 'id': new_id})
     except Exception as e:
         db.session.rollback()
-        import traceback
-        current_app.logger.error(f'创建通知失败: {str(e)}\n{traceback.format_exc()}')
+        current_app.logger.error('创建通知失败', exc_info=True)
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 

@@ -280,8 +280,7 @@ def toggle_notification_admin_status(user_id):
         current_app.logger.info(f'通知管理员权限切换 - 目标用户: {row._mapping["username"]}, 操作者: {session.get("username")}, IP: {request.remote_addr}')
         return jsonify({'status': 'success', 'message': '通知管理员权限已切换（已强制刷新目标用户会话）'})
     except Exception as e:
-        import traceback
-        current_app.logger.error(f'切换通知管理员权限失败 - 用户ID: {user_id}, 错误: {str(e)}\n{traceback.format_exc()}')
+        current_app.logger.error('切换通知管理员权限失败 - 用户ID: %s', user_id, exc_info=True)
         return jsonify({'status': 'error', 'message': f'操作失败: {str(e)}'}), 500
 
 
@@ -358,8 +357,7 @@ def batch_set_permissions():
             'affected_count': len(user_ids)
         })
     except Exception as e:
-        import traceback
-        current_app.logger.error(f'批量设置权限失败: {str(e)}\n{traceback.format_exc()}')
+        current_app.logger.error('批量设置权限失败', exc_info=True)
         return jsonify({'status': 'error', 'message': f'操作失败: {str(e)}'}), 500
 
 

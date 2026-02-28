@@ -46,9 +46,7 @@ def api_get_subjects():
             }
         }), 200
     except Exception as e:
-        import traceback
-        error_detail = traceback.format_exc()
-        current_app.logger.error(f"获取科目列表失败: {e}\n{error_detail}")
+        current_app.logger.error('获取科目列表失败', exc_info=True)
         return jsonify({
             'status': 'error',
             'message': f'获取科目列表失败: {str(e)}'
@@ -308,12 +306,10 @@ def api_get_questions():
             'data': result
         }), 200
     except Exception as e:
-        import traceback
-        error_detail = traceback.format_exc()
-        current_app.logger.error(f"获取题目列表失败: {e}\n{error_detail}", exc_info=True)
+        current_app.logger.error('获取题目列表失败', exc_info=True)
         error_message = '获取题目列表失败'
         if current_app.config.get('DEBUG', False):
-            error_message = f'获取题目列表失败: {str(e)}\n{error_detail}'
+            error_message = f'获取题目列表失败: {str(e)}'
         return jsonify({
             'status': 'error',
             'message': error_message

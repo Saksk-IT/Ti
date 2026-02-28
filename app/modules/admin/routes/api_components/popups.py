@@ -72,8 +72,7 @@ def admin_api_popups_create():
 
         return jsonify({'status': 'success', 'message': '弹窗创建成功', 'id': new_id})
     except Exception as e:
-        import traceback
-        current_app.logger.error(f'创建弹窗失败: {str(e)}\n{traceback.format_exc()}')
+        current_app.logger.error('创建弹窗失败', exc_info=True)
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
@@ -155,8 +154,7 @@ def admin_api_popups_update(pid):
         db.session.commit()
         return jsonify({'status': 'success', 'message': '弹窗更新成功'})
     except Exception as e:
-        import traceback
-        current_app.logger.error(f'更新弹窗失败: {str(e)}\n{traceback.format_exc()}')
+        current_app.logger.error('更新弹窗失败', exc_info=True)
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
@@ -184,8 +182,7 @@ def admin_api_popups_delete(pid):
         return jsonify({'status': 'success', 'message': '弹窗删除成功'})
     except Exception as e:
         db.session.rollback()
-        import traceback
-        current_app.logger.error(f'删除弹窗失败: {str(e)}\n{traceback.format_exc()}')
+        current_app.logger.error('删除弹窗失败', exc_info=True)
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
@@ -209,8 +206,7 @@ def admin_api_popups_stats():
             'stats': stats_list
         })
     except Exception as e:
-        import traceback
-        current_app.logger.error(f'获取弹窗统计失败: {str(e)}\n{traceback.format_exc()}')
+        current_app.logger.error('获取弹窗统计失败', exc_info=True)
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
@@ -237,8 +233,7 @@ def admin_api_popup_stats(pid):
             'stats': stats
         })
     except Exception as e:
-        import traceback
-        current_app.logger.error(f'获取弹窗统计失败: {str(e)}\n{traceback.format_exc()}')
+        current_app.logger.error('获取弹窗统计失败', exc_info=True)
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
