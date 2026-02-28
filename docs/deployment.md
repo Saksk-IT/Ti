@@ -399,9 +399,83 @@ tar czf backups/uploads-$(date +%Y%m%d).tar.gz var/uploads/
 
 ## 12. HTTPS 配置
 
-### 方案 A：云厂商负载均衡器（推荐）
+### 方案 A：阿里云 ALB 负载均衡器（推荐）
 
-在 SLB / CLB 层终止 SSL，compose 保持 80 端口，最简单。
+SSL 在 ALB 层终止，服务器只跑 HTTP 80，compose.prod.yml 不用改。
+
+```
+用户 ──443/HTTPS──▶ 阿里云 ALB ──80/HTTP──▶ ECS (Docker)
+                    (SSL 终止)              (compose 不变)
+```
+
+#### A1. 申请 SSL 证书
+
+1. 进入 [阿里云数字证书管理](https://yundun.console.aliyun.com/?p=cas)
+2. 免费证书 → 创建证书 → 填写你的域名
+3. 按提示做 DNS 验证（添加一条 CNAME 或 TXT 记录）
+4. 等待签发（通常几分钟）
+
+#### A2. 创建 ALB 实例
+
+1. 进入 [应用型负载均衡 ALB 控制台](https://slb.console.aliyun.com/alb)
+2. 创建实例：
+   - 网络类型：公网
+   - 地域/可用区：和你的 ECS 一致
+   - 规格：基础版（日活 1000 足够）
+
+#### A3. 配置监听
+
+**HTTPS 监听（443）：**
+
+1. 添加监听 → 协议 HTTPS → 端口 443
+2. SSL 证书：选择 A1 步骤申请的证书
+3. 后端服务器组：
+   - 添加你的 ECS 实例
+   - 后端端口填 `80`（Nginx 监听的端口）
+   - 协议：HTTP
+4. 健康检查：
+   - 路径：`/api/ping`
+   - 预期状态码：200
+
+**HTTP 监听（80）— 自动跳转 HTTPS：**
+
+1. 添加监听 → 协议 HTTP → 端口 80
+2. 默认动作：重定向到 HTTPS 443
+
+#### A4. DNS 解析
+
+1. 进入 [云解析 DNS](https://dns.console.aliyun.com)
+2. 添加记录：
+   - 类型：A（指向 ALB 公网 IP）或 CNAME（指向 ALB 域名）
+   - 主机记录：你的域名前缀（如 `www` 或 `@`）
+
+#### A5. ECS 安全组
+
+- 入方向放行 80 端口，来源限制为 ALB 所在 VPC 网段
+- 关闭公网直接访问 80（所有流量走 ALB）
+
+#### A6. 调整 .env.production
+
+```ini
+SESSION_COOKIE_SECURE=true
+```
+
+#### A7. 验证
+
+```bash
+# HTTPS 访问
+curl https://你的域名/api/ping
+# {"status":"success","data":{"pong":true}}
+
+# HTTP 自动跳转
+curl -I http://你的域名/
+# HTTP/1.1 301 → Location: https://你的域名/
+```
+
+#### 费用参考
+
+- 免费 SSL 证书：0 元（每年续签）
+- ALB 基础版：约 15-30 元/月（按量计费更便宜）
 
 ### 方案 B：Nginx 直接 SSL
 
