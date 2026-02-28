@@ -31,14 +31,14 @@ class SmsAuthService:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _sms_config() -> Dict[str, Any]:
+    def _sms_config(template_code: Optional[str] = None) -> Dict[str, Any]:
         """从 Flask config 构建传给 SDK / RQ 的配置字典。"""
         cfg = current_app.config
         return {
             'access_key_id': cfg.get('ALIYUN_ACCESS_KEY_ID') or '',
             'access_key_secret': cfg.get('ALIYUN_ACCESS_KEY_SECRET') or '',
             'sign_name': cfg.get('ALIYUN_SMS_SIGN_NAME') or '',
-            'template_code': cfg.get('ALIYUN_SMS_TEMPLATE_CODE') or '',
+            'template_code': template_code or cfg.get('ALIYUN_SMS_TEMPLATE_CODE') or '',
             'code_length': cfg.get('ALIYUN_SMS_CODE_LENGTH', 6),
             'valid_time': cfg.get('ALIYUN_SMS_VALID_TIME', 300),
             'interval': cfg.get('ALIYUN_SMS_INTERVAL', 60),
@@ -213,7 +213,9 @@ class SmsAuthService:
         if err:
             return False, err
 
-        config = SmsAuthService._sms_config()
+        config = SmsAuthService._sms_config(
+            template_code=current_app.config.get('ALIYUN_SMS_TEMPLATE_CODE_RESET'),
+        )
         ok, msg = SmsAuthService._do_send(phone, config)
         if not ok:
             return False, msg
@@ -265,7 +267,9 @@ class SmsAuthService:
         if err:
             return False, err
 
-        config = SmsAuthService._sms_config()
+        config = SmsAuthService._sms_config(
+            template_code=current_app.config.get('ALIYUN_SMS_TEMPLATE_CODE_BIND'),
+        )
         ok, msg = SmsAuthService._do_send(phone, config)
         if not ok:
             return False, msg

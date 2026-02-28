@@ -71,6 +71,7 @@ def send_sms_verify_code(phone: str, config: Dict[str, Any]) -> SendSmsResult:
     console_output = config.get('console_output', False)
     code_length = int(config.get('code_length', 6) or 6)
     valid_time = int(config.get('valid_time', 300) or 300)
+    valid_min = max(valid_time // 60, 1)
 
     try:
         client = _build_client(config)
@@ -78,7 +79,7 @@ def send_sms_verify_code(phone: str, config: Dict[str, Any]) -> SendSmsResult:
             phone_number=phone,
             sign_name=config.get('sign_name', ''),
             template_code=config.get('template_code', ''),
-            template_param='{"code":"##code##"}',
+            template_param=f'{{"code":"##code##","min":"{valid_min}"}}',
             code_length=code_length,
             valid_time=valid_time,
             interval=int(config.get('interval', 60) or 60),
