@@ -158,6 +158,9 @@ class DevelopmentConfig(Config):
     # 开发环境短信验证码输出到控制台
     SMS_CONSOLE_OUTPUT = os.environ.get('SMS_CONSOLE_OUTPUT', 'true').lower() in ['true', 'on', '1']
 
+    # 开发环境禁用 RQ（Windows 不支持 fork/SIGALRM），强制同步降级
+    RQ_DISABLED = True
+
 
 class ProductionConfig(Config):
     """生产环境配置"""

@@ -21,6 +21,10 @@ def get_queue(name: Optional[str] = None):
     except Exception:
         return None
 
+    # 开发环境可通过 RQ_DISABLED=True 强制同步降级（Windows 不支持 fork/SIGALRM）
+    if current_app.config.get('RQ_DISABLED', False):
+        return None
+
     try:
         from rq import Queue  # type: ignore
     except Exception:
