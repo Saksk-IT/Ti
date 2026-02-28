@@ -286,13 +286,15 @@ def _setup_logging(app):
         stream_handler.setFormatter(formatter)
         stream_handler.setLevel(log_level)
         _attach_filters(stream_handler)
-        # 避免重复添加（Flask 自带 StreamHandler）
-        if not any(isinstance(h, logging.StreamHandler) for h in root_logger.handlers):
+        # 精确匹配 StreamHandler（排除 FileHandler 等子类），避免误判
+        if not any(type(h) is logging.StreamHandler for h in root_logger.handlers):
             root_logger.addHandler(stream_handler)
-        # 给已有的 handler 也挂上 Filter
+        # 给已有的 handler 也挂上 Filter 和统一格式
         for h in root_logger.handlers:
             if not any(isinstance(f, RequestIdFilter) for f in h.filters):
                 _attach_filters(h)
+            if not h.formatter or 'request_id' not in (h.formatter._fmt or ''):
+                h.setFormatter(formatter)
 
     root_logger.setLevel(log_level)
     app.logger.setLevel(log_level)
@@ -441,10 +443,11 @@ def _register_before_request(app):
         path = request.path or ''
         if not path.startswith(_STATIC_PREFIXES):
             user = session.get('username', '-')
+            dur_str = f'{duration:.3f}s' if req_start is not None else '-'
             _access_logger.info(
-                '%s %s %s %.3fs user=%s ip=%s',
+                '%s %s %s %s user=%s ip=%s',
                 request.method, path, response.status_code,
-                duration, user, request.remote_addr,
+                dur_str, user, request.remote_addr,
             )
 
         rid = getattr(g, 'request_id', None)
