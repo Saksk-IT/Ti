@@ -159,7 +159,6 @@ def check_sms_verify_code(phone: str, code: str, config: Dict[str, Any]) -> Chec
         if body.code != 'OK':
             return CheckSmsResult(
                 success=False,
-                request_id=body.request_id or '',
                 error_code=body.code or '',
                 error_message=body.message or '',
             )
@@ -169,7 +168,6 @@ def check_sms_verify_code(phone: str, code: str, config: Dict[str, Any]) -> Chec
 
         return CheckSmsResult(
             success=(verify_result == 'PASS'),
-            request_id=body.request_id or '',
             verify_result=verify_result,
         )
     except ValueError:
