@@ -495,6 +495,8 @@ def api_profile():
                 'signature': signature,
                 'email': user.get('email'),
                 'email_verified': bool(user.get('email_verified', 0)),
+                'phone': user.get('phone') or '',
+                'phone_verified': bool(user.get('phone_verified', 0)),
                 'wechat_bound': bool(user.get('openid')),
                 'created_at': user['created_at'].strftime('%Y-%m-%d') if user['created_at'] else '-',
                 'is_admin': bool(user['is_admin']),
