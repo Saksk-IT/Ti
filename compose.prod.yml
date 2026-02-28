@@ -36,8 +36,8 @@ services:
       DASHSCOPE_BASE_URL: ${DASHSCOPE_BASE_URL}
       DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY}
       SENTRY_DSN: ${SENTRY_DSN:-}
-      DB_POOL_SIZE: ${DB_POOL_SIZE:-5}
-      DB_MAX_OVERFLOW: ${DB_MAX_OVERFLOW:-10}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-3}
+      DB_MAX_OVERFLOW: ${DB_MAX_OVERFLOW:-5}
       DB_POOL_RECYCLE: ${DB_POOL_RECYCLE:-300}
     volumes:
       - ./var:/data
@@ -83,6 +83,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-studyuser}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-studypass}
       POSTGRES_DB: ${POSTGRES_DB:-ti_db}
+    command: ["postgres", "-c", "shared_buffers=128MB", "-c", "work_mem=4MB", "-c", "max_connections=50"]
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -94,7 +95,7 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "64mb", "--maxmemory-policy", "allkeys-lru"]
     volumes:
       - redis_data:/data
 

@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """Gunicorn 生产环境配置
 
-4 workers × 4 threads = 16 并发槽位（gthread 模式）
-环境变量可覆盖默认值：GUNICORN_WORKERS, GUNICORN_THREADS
+默认 2 workers × 4 threads = 8 并发槽位（gthread 模式）
+适配 2核2G 服务器，环境变量可覆盖：GUNICORN_WORKERS, GUNICORN_THREADS
 """
 import os
 
 # Worker 配置
-workers = int(os.environ.get("GUNICORN_WORKERS", 4))
+workers = int(os.environ.get("GUNICORN_WORKERS", 2))
 threads = int(os.environ.get("GUNICORN_THREADS", 4))
 worker_class = "gthread"
 

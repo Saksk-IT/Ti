@@ -54,20 +54,32 @@
 | web | saksk-ti:latest | Flask 应用（gunicorn 4w×4t = 16 并发槽位） |
 | worker | saksk-ti:latest | RQ 异步任务（AI 判题、查重等耗时操作） |
 | postgres | postgres:16-alpine | 主数据库 |
-| redis | redis:7-alpine | 缓存 + 限流 + SSE Pub/Sub + RQ 队列（128MB 上限） |
+| redis | redis:7-alpine | 缓存 + 限流 + SSE Pub/Sub + RQ 队列（64MB 上限） |
 
 ---
 
 ## 2. 服务器要求
 
-| 项目 | 最低配置 | 推荐配置（日活 1000） |
-|------|---------|---------------------|
+| 项目 | 最低配置（2核2G） | 扩容配置（4核4G） |
+|------|------------------|------------------|
 | CPU | 2 核 | 4 核 |
 | 内存 | 2 GB | 4 GB |
 | 磁盘 | 20 GB SSD | 40 GB SSD |
 | 系统 | Ubuntu 22.04+ / Debian 12+ | 同左 |
 | Docker | 24.0+ | 同左 |
 | Docker Compose | v2.20+ | 同左 |
+
+### 2核2G 内存分配
+
+```
+总内存 2048MB
+├── PostgreSQL    ~400MB（shared_buffers 128MB + 工作内存）
+├── Redis           64MB（maxmemory）
+├── Web (2w×4t)   ~600MB（gunicorn 2 workers）
+├── Worker (RQ)   ~200MB
+├── Nginx          ~30MB
+└── 系统预留      ~750MB
+```
 
 ---
 
@@ -298,11 +310,22 @@ DB 连接数 = WORKERS × (DB_POOL_SIZE + DB_MAX_OVERFLOW)
 
 ### 9.2 按服务器规格推荐
 
-| 服务器 | WORKERS | THREADS | DB_POOL_SIZE | DB_MAX_OVERFLOW | 并发 | DB连接 |
-|--------|---------|---------|-------------|-----------------|------|--------|
-| 2核 2G | 2 | 4 | 5 | 10 | 8 | 30 |
-| 4核 4G | 4 | 4 | 5 | 10 | 16 | 60 |
-| 8核 8G | 8 | 4 | 3 | 7 | 32 | 80 |
+| 服务器 | WORKERS | THREADS | DB_POOL_SIZE | DB_MAX_OVERFLOW | Redis 内存 | PG shared_buffers | 并发 | DB连接 |
+|--------|---------|---------|-------------|-----------------|-----------|-------------------|------|--------|
+| 2核 2G（默认） | 2 | 4 | 3 | 5 | 64MB | 128MB | 8 | 16 |
+| 4核 4G | 4 | 4 | 5 | 10 | 128MB | 256MB | 16 | 60 |
+| 8核 8G | 8 | 4 | 3 | 7 | 256MB | 512MB | 32 | 80 |
+
+当前默认配置已针对 2核2G 优化。如需扩容，在 `.env.production` 中覆盖：
+
+```ini
+# 4核4G 示例
+GUNICORN_WORKERS=4
+DB_POOL_SIZE=5
+DB_MAX_OVERFLOW=10
+```
+
+Redis 和 PostgreSQL 参数需修改 `compose.prod.yml` 中对应的 command。
 
 ### 9.3 SSE 连接参数
 

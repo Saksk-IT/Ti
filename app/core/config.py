@@ -151,10 +151,10 @@ class ProductionConfig(Config):
     TESTING = False
 
     # 生产环境 PostgreSQL 连接池配置
-    # 4 workers × (5 + 10) = 60 连接，安全在 PostgreSQL 默认 max_connections=100 以内
+    # 2 workers × (3 + 5) = 16 连接，安全在 PostgreSQL 默认 max_connections=100 以内
     SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_size': int(os.environ.get('DB_POOL_SIZE', '5') or 5),
-        'max_overflow': int(os.environ.get('DB_MAX_OVERFLOW', '10') or 10),
+        'pool_size': int(os.environ.get('DB_POOL_SIZE', '3') or 3),
+        'max_overflow': int(os.environ.get('DB_MAX_OVERFLOW', '5') or 5),
         'pool_recycle': int(os.environ.get('DB_POOL_RECYCLE', '300') or 300),
         'pool_pre_ping': True,
     }
