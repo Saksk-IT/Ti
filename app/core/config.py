@@ -151,15 +151,19 @@ class ProductionConfig(Config):
     TESTING = False
 
     # 生产环境 PostgreSQL 连接池配置
+    # 4 workers × (5 + 10) = 60 连接，安全在 PostgreSQL 默认 max_connections=100 以内
     SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_size': int(os.environ.get('DB_POOL_SIZE', '10') or 10),
-        'max_overflow': int(os.environ.get('DB_MAX_OVERFLOW', '20') or 20),
+        'pool_size': int(os.environ.get('DB_POOL_SIZE', '5') or 5),
+        'max_overflow': int(os.environ.get('DB_MAX_OVERFLOW', '10') or 10),
         'pool_recycle': int(os.environ.get('DB_POOL_RECYCLE', '300') or 300),
         'pool_pre_ping': True,
     }
 
     # 生产环境默认启用 ProxyFix（常见部署：Nginx -> gunicorn(127.0.0.1)）
     PROXY_FIX_ENABLED = os.environ.get('PROXY_FIX_ENABLED', 'true').lower() in ['true', 'on', '1']
+
+    # 生产环境 Nginx 接管 Gzip，Flask 层默认关闭
+    ENABLE_GZIP = os.environ.get('ENABLE_GZIP', 'false').lower() in ['true', 'on', '1']
 
     # 生产环境必须设置密钥（不允许使用默认值）
     SECRET_KEY = os.environ.get('SECRET_KEY')
@@ -168,6 +172,23 @@ class ProductionConfig(Config):
             'SECRET_KEY 未设置！生产环境必须设置 SECRET_KEY 环境变量。'
             '生成方式: python -c "import secrets; print(secrets.token_urlsafe(32))"'
         )
+
+    # 生产环境必须配置 Redis（多 worker 共享缓存/限流/队列）
+    REDIS_URL = os.environ.get('REDIS_URL')
+    if not REDIS_URL:
+        raise RuntimeError(
+            'REDIS_URL 未设置！生产环境必须设置 REDIS_URL 环境变量。'
+            '示例: redis://redis:6379/0'
+        )
+
+    # 强制限流存储使用 Redis（多 worker 共享计数）
+    RATELIMIT_STORAGE_URI = REDIS_URL
+    RATELIMIT_STORAGE_URL = REDIS_URL
+
+    # 科目/统计缓存 TTL 调优（科目数据极少变化）
+    QUIZ_CACHE_TTL_SUBJECTS_SECONDS = int(os.environ.get('QUIZ_CACHE_TTL_SUBJECTS_SECONDS', '300') or 300)
+    QUIZ_CACHE_TTL_SUBJECTS_META_SECONDS = int(os.environ.get('QUIZ_CACHE_TTL_SUBJECTS_META_SECONDS', '300') or 300)
+    QUIZ_CACHE_TTL_COUNTS_SECONDS = int(os.environ.get('QUIZ_CACHE_TTL_COUNTS_SECONDS', '120') or 120)
     
     # 生产环境禁用控制台输出验证码
     MAIL_CONSOLE_OUTPUT = False

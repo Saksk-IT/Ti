@@ -1,0 +1,30 @@
+# -*- coding: utf-8 -*-
+"""Gunicorn 生产环境配置
+
+4 workers × 4 threads = 16 并发槽位（gthread 模式）
+环境变量可覆盖默认值：GUNICORN_WORKERS, GUNICORN_THREADS
+"""
+import os
+
+# Worker 配置
+workers = int(os.environ.get("GUNICORN_WORKERS", 4))
+threads = int(os.environ.get("GUNICORN_THREADS", 4))
+worker_class = "gthread"
+
+# 超时（AI 慢请求可能需要 25s+）
+timeout = 60
+
+# 预加载应用（共享内存，加速 fork）
+preload_app = True
+
+# Worker 自动重启（防内存泄漏）
+max_requests = 1000
+max_requests_jitter = 50
+
+# 绑定地址
+bind = os.environ.get("GUNICORN_BIND", "0.0.0.0:8000")
+
+# 日志
+accesslog = "-"
+errorlog = "-"
+loglevel = os.environ.get("GUNICORN_LOG_LEVEL", "info")

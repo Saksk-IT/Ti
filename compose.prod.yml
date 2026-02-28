@@ -2,11 +2,24 @@
 # 使用方式: docker compose --env-file .env.production -f compose.prod.yml up -d
 
 services:
+  nginx:
+    image: nginx:1.25-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./static:/app/static:ro
+      - ./var/uploads:/app/var/uploads:ro
+    depends_on:
+      web:
+        condition: service_healthy
+
   web:
     image: saksk-ti:latest
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:8000:8000"
+    expose:
+      - "8000"
     environment:
       FLASK_ENV: production
       DATA_DIR: /data
@@ -16,16 +29,24 @@ services:
       RATELIMIT_STORAGE_URI: redis://redis:6379/0
       RQ_QUEUE_NAME: saksk
       PROXY_FIX_ENABLED: ${PROXY_FIX_ENABLED:-true}
+      ENABLE_GZIP: "false"
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-true}
       WECHAT_APPID: ${WECHAT_APPID}
       WECHAT_SECRET: ${WECHAT_SECRET}
       DASHSCOPE_BASE_URL: ${DASHSCOPE_BASE_URL}
       DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY}
-      DB_POOL_SIZE: ${DB_POOL_SIZE:-10}
-      DB_MAX_OVERFLOW: ${DB_MAX_OVERFLOW:-20}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-5}
+      DB_MAX_OVERFLOW: ${DB_MAX_OVERFLOW:-10}
       DB_POOL_RECYCLE: ${DB_POOL_RECYCLE:-300}
     volumes:
       - ./var:/data
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/ping')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     depends_on:
       postgres:
         condition: service_healthy
@@ -73,7 +94,7 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    command: ["redis-server", "--appendonly", "yes"]
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
     volumes:
       - redis_data:/data
 

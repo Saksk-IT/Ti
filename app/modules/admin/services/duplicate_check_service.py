@@ -106,7 +106,15 @@ class DuplicateCheckService:
                 if pair_key in checked_pairs:
                     continue
                 checked_pairs.add(pair_key)
-                
+
+                # 长度比剪枝：长度差异 > 50% 直接跳过（避免无效 SequenceMatcher 计算）
+                text1 = DuplicateCheckService.normalize_text(q1.get('content', '') or '')
+                text2 = DuplicateCheckService.normalize_text(q2.get('content', '') or '')
+                if text1 and text2:
+                    len1, len2 = len(text1), len(text2)
+                    if max(len1, len2) > 2 * min(len1, len2):
+                        continue
+
                 # 计算题目内容的相似度
                 similarity = DuplicateCheckService.calculate_similarity(
                     q1.get('content', '') or '',

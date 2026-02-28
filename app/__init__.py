@@ -60,6 +60,9 @@ def create_app(config_name=None):
     # 加载配置
     app.config.from_object(config[config_name])
 
+    # Sentry 错误监控（生产环境，需设置 SENTRY_DSN 环境变量）
+    _setup_sentry(app)
+
     # 响应压缩（减少 HTML/CSS/JS/JSON 体积，提升移动端加载体验）
     _setup_response_compression(app)
 
@@ -152,6 +155,31 @@ def _setup_proxy_fix(app: Flask) -> None:
         app.logger.info('ProxyFix 已启用 (x_for=%s x_proto=%s x_host=%s x_prefix=%s)', x_for, x_proto, x_host, x_prefix)
     except Exception as e:
         app.logger.warning('ProxyFix 启用失败：%s', e)
+
+
+def _setup_sentry(app: Flask) -> None:
+    """初始化 Sentry 错误监控（需设置 SENTRY_DSN 环境变量）。"""
+    if app.debug or app.testing:
+        return
+
+    dsn = os.environ.get('SENTRY_DSN', '').strip()
+    if not dsn:
+        return
+
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.flask import FlaskIntegration
+
+        sentry_sdk.init(
+            dsn=dsn,
+            integrations=[FlaskIntegration()],
+            traces_sample_rate=float(os.environ.get('SENTRY_TRACES_SAMPLE_RATE', '0.1')),
+            environment=os.environ.get('FLASK_ENV', 'production'),
+            send_default_pii=False,
+        )
+        app.logger.info('Sentry 已启用')
+    except Exception as e:
+        app.logger.warning('Sentry 初始化失败：%s', e)
 
 
 def _ensure_directories(app):
@@ -269,7 +297,7 @@ def _csrf_exempt_api_blueprints(app):
 def _register_context_processors(app):
     """注册上下文处理器"""
     from flask import session
-    
+
     @app.context_processor
     def inject_user():
         return {
@@ -280,6 +308,25 @@ def _register_context_processors(app):
             'is_subject_admin': bool(session.get('is_subject_admin')),
             'is_notification_admin': bool(session.get('is_notification_admin')),
         }
+
+    @app.context_processor
+    def inject_asset_url():
+        """提供 asset_url() 函数，基于文件 mtime 生成 ?v= 参数实现缓存破坏"""
+        _asset_versions: dict[str, str] = {}
+
+        def asset_url(filename: str) -> str:
+            if filename in _asset_versions:
+                return f"/static/{filename}?v={_asset_versions[filename]}"
+            filepath = os.path.join(app.static_folder or '', filename)
+            try:
+                mtime = int(os.path.getmtime(filepath))
+                version = hex(mtime)[2:]
+            except OSError:
+                version = '0'
+            _asset_versions[filename] = version
+            return f"/static/{filename}?v={version}"
+
+        return {'asset_url': asset_url}
 
 
 def _register_before_request(app):
@@ -296,6 +343,7 @@ def _register_before_request(app):
         else:
             rid = uuid.uuid4().hex
         g.request_id = rid
+        g.request_start = time.monotonic()
 
     # S4: API 写操作 CSRF 防护
     _CSRF_EXEMPT_ENDPOINTS = frozenset({
@@ -348,6 +396,17 @@ def _register_before_request(app):
 
     @app.after_request
     def _inject_request_id_header(response):
+        # 慢请求日志（>1s 记录 WARNING）
+        req_start = getattr(g, 'request_start', None)
+        if req_start is not None:
+            duration = time.monotonic() - req_start
+            if duration > 1.0:
+                app.logger.warning(
+                    'SLOW REQUEST: %s %s %.2fs [%s]',
+                    request.method, request.path, duration,
+                    getattr(g, 'request_id', '-'),
+                )
+
         rid = getattr(g, 'request_id', None)
         if rid:
             response.headers.setdefault('X-Request-ID', rid)
@@ -407,15 +466,17 @@ def _register_before_request(app):
     @app.before_request
     def enforce_login():
         path = request.path or ''
-        
+
+        # 快速跳过：静态资源 / favicon / 健康检查无需任何 DB 查询
+        if path.startswith('/static') or path.endswith('.ico') or path == '/api/ping':
+            return
+
         # 检查JWT token（小程序）
         jwt_token = request.headers.get('Authorization') or request.headers.get('authorization')
         has_jwt_token = False
         if jwt_token and jwt_token.startswith('Bearer '):
-            # 如果有JWT token，跳过session检查，让@auth_required装饰器处理
-            # 但需要先检查路径是否在白名单中（JWT token也需要通过@auth_required验证）
             has_jwt_token = True
-        
+
         # 已登录的会话校验（仅Web端，小程序使用JWT token）
         if session.get('user_id') and not has_jwt_token:
             try:
@@ -425,26 +486,62 @@ def _register_before_request(app):
 
                 from app.models.user import User as UserModel
                 from app.core.extensions import db as _db
+                from app.core.utils.user_state_cache import get_user_state, set_user_state
 
-                user = UserModel.query.get(uid)
+                # 优先从缓存读取用户状态（减少每次请求的 DB 查询）
+                cached_state = get_user_state(int(uid))
+                if cached_state is not None:
+                    is_locked = cached_state.get('is_locked', False)
+                    cached_sv = cached_state.get('session_version', 0)
 
-                if not user or user.is_locked:
-                    session.clear()
-                    if path.startswith('/api'):
-                        return jsonify({'status':'unauthorized','message':'会话无效或已被锁定','request_id': getattr(g, 'request_id', None)}), 401
-                    return redirect('/login')
+                    if is_locked:
+                        session.clear()
+                        if path.startswith('/api'):
+                            return jsonify({'status':'unauthorized','message':'会话无效或已被锁定','request_id': getattr(g, 'request_id', None)}), 401
+                        return redirect('/login')
 
-                if session.get('session_version') is not None and \
-                   session.get('session_version') != (user.session_version or 0):
-                    session.clear()
-                    if path.startswith('/api'):
-                        return jsonify({'status':'unauthorized','message':'会话已失效，请重新登录','request_id': getattr(g, 'request_id', None)}), 401
-                    return redirect('/login')
+                    if session.get('session_version') is not None and \
+                       session.get('session_version') != cached_sv:
+                        session.clear()
+                        if path.startswith('/api'):
+                            return jsonify({'status':'unauthorized','message':'会话已失效，请重新登录','request_id': getattr(g, 'request_id', None)}), 401
+                        return redirect('/login')
 
-                # 更新session中的权限信息（确保权限同步）
-                session['is_admin'] = bool(user.is_admin)
-                session['is_subject_admin'] = bool(user.is_subject_admin)
-                session['is_notification_admin'] = bool(user.is_notification_admin)
+                    # 从缓存同步权限
+                    session['is_admin'] = bool(cached_state.get('is_admin', False))
+                    session['is_subject_admin'] = bool(cached_state.get('is_subject_admin', False))
+                    session['is_notification_admin'] = bool(cached_state.get('is_notification_admin', False))
+                    user = None  # 标记：已从缓存获取，按需再查 DB
+                else:
+                    # 缓存未命中，查 DB
+                    user = UserModel.query.get(uid)
+
+                    if not user or user.is_locked:
+                        session.clear()
+                        if path.startswith('/api'):
+                            return jsonify({'status':'unauthorized','message':'会话无效或已被锁定','request_id': getattr(g, 'request_id', None)}), 401
+                        return redirect('/login')
+
+                    if session.get('session_version') is not None and \
+                       session.get('session_version') != (user.session_version or 0):
+                        session.clear()
+                        if path.startswith('/api'):
+                            return jsonify({'status':'unauthorized','message':'会话已失效，请重新登录','request_id': getattr(g, 'request_id', None)}), 401
+                        return redirect('/login')
+
+                    session['is_admin'] = bool(user.is_admin)
+                    session['is_subject_admin'] = bool(user.is_subject_admin)
+                    session['is_notification_admin'] = bool(user.is_notification_admin)
+
+                    # 写入缓存供后续请求复用
+                    set_user_state(int(uid), {
+                        'is_locked': bool(user.is_locked),
+                        'session_version': user.session_version or 0,
+                        'is_admin': bool(user.is_admin),
+                        'is_subject_admin': bool(user.is_subject_admin),
+                        'is_notification_admin': bool(user.is_notification_admin),
+                        'email': user.email or '',
+                    })
 
                 # 检查用户是否绑定邮箱（排除管理员和绑定邮箱相关的API）
                 if not session.get('is_admin'):
@@ -452,7 +549,14 @@ def _register_before_request(app):
                     email_bind_required = SystemConfigService.get_email_bind_required_config()
 
                     if email_bind_required:
-                        email_bound = user.email and user.email.strip()
+                        # 从缓存或 DB 对象获取 email
+                        if cached_state is not None:
+                            email_val = cached_state.get('email', '')
+                        elif user is not None:
+                            email_val = user.email or ''
+                        else:
+                            email_val = ''
+                        email_bound = email_val and email_val.strip()
 
                         if not email_bound:
                             allowed_paths = {
@@ -481,17 +585,19 @@ def _register_before_request(app):
                                     }), 403
                                 return redirect('/')
 
-                # 更新用户最后活动时间（排除静态资源请求）
-                if not path.startswith('/static') and not path.endswith('.ico'):
-                    try:
-                        interval = int(app.config.get('LAST_ACTIVE_UPDATE_INTERVAL_SECONDS', 60) or 60)
-                    except Exception:
-                        interval = 60
-                    if interval < 0:
-                        interval = 0
+                # 更新用户最后活动时间（静态资源已在开头 return）
+                try:
+                    interval = int(app.config.get('LAST_ACTIVE_UPDATE_INTERVAL_SECONDS', 60) or 60)
+                except Exception:
+                    interval = 60
+                if interval < 0:
+                    interval = 0
 
-                    if _should_update_last_active(int(uid), interval):
-                        from sqlalchemy import func as sa_func
+                if _should_update_last_active(int(uid), interval):
+                    from sqlalchemy import func as sa_func
+                    if user is None:
+                        user = UserModel.query.get(uid)
+                    if user:
                         user.last_active = sa_func.now()
                         _db.session.commit()
             except Exception as e:
@@ -701,11 +807,39 @@ def _register_before_request(app):
 
 def _register_health_endpoints(app: Flask) -> None:
     """注册简单健康检查接口（用于小程序真机连通性测试）。"""
-    from flask import jsonify
+    from flask import jsonify, request as _req
 
     @app.get('/api/ping')
     def api_ping():
-        return jsonify({'status': 'success', 'data': {'pong': True}})
+        if _req.args.get('deep') != '1':
+            return jsonify({'status': 'success', 'data': {'pong': True}})
+
+        # 深度检查：DB + Redis 连通性
+        checks: dict = {'pong': True, 'db': False, 'redis': False}
+
+        # DB
+        try:
+            from app.core.extensions import db as _db
+            _db.session.execute(_db.text('SELECT 1'))
+            checks['db'] = True
+        except Exception as e:
+            checks['db_error'] = str(e)
+
+        # Redis
+        try:
+            from app.core.utils.redis_utils import get_redis_connection
+            r = get_redis_connection()
+            if r is not None:
+                r.ping()
+                checks['redis'] = True
+            else:
+                checks['redis_error'] = 'not configured'
+        except Exception as e:
+            checks['redis_error'] = str(e)
+
+        all_ok = checks['db'] and checks['redis']
+        status_code = 200 if all_ok else 503
+        return jsonify({'status': 'success' if all_ok else 'degraded', 'data': checks}), status_code
 
 
 def _register_error_handlers(app):

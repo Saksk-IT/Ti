@@ -21,6 +21,9 @@ logger = logging.getLogger(__name__)
 
 CHANNEL = "sse:events"
 MAX_CONNECTIONS_PER_USER = 3
+MAX_TOTAL_CONNECTIONS = 200
+MAX_CONNECTION_DURATION_SECONDS = 600  # 10 分钟
+HEARTBEAT_INTERVAL_SECONDS = 15
 
 
 @dataclass(frozen=True)
@@ -60,6 +63,12 @@ def get_connection_count(user_id: int) -> int:
     """获取某用户当前的 SSE 连接数"""
     with _lock:
         return len(_subscribers.get(user_id, []))
+
+
+def get_total_connection_count() -> int:
+    """获取当前进程内所有 SSE 连接总数"""
+    with _lock:
+        return sum(len(qs) for qs in _subscribers.values())
 
 
 # ── 本进程分发 ──────────────────────────────────────────

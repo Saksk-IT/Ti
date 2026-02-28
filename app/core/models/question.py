@@ -53,7 +53,17 @@ class Question:
     
     @staticmethod
     def get_list_legacy(subject='all', q_type='all', mode='quiz', user_id=None):
-        """获取题目列表（旧版，全表扫描 + Python 层过滤，保留兼容）"""
+        """获取题目列表（旧版，全表扫描 + Python 层过滤，保留兼容）
+
+        .. deprecated::
+            使用 :meth:`get_list` 替代，该方法将在下个版本删除。
+        """
+        import warnings
+        warnings.warn(
+            "get_list_legacy() 已废弃，请使用 get_list() 替代",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         from app.core.utils.subject_permissions import get_user_restricted_subjects
         from app.core.utils.portable_question_format import q_type_to_portable_type
 
