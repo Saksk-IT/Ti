@@ -95,3 +95,87 @@ class WechatLoginSchema(BaseModel):
     code: str = Field(..., description="微信登录code")
     user_info: Optional[Dict[str, Any]] = Field(None, description="微信用户信息（可选）")
     allow_create: bool = Field(default=True, description="未绑定时是否允许自动创建账号")
+
+
+# ============================================================================
+# 手机号相关 Schema
+# ============================================================================
+
+def _validate_phone(v: str) -> str:
+    """校验中国大陆手机号（11 位数字，1 开头）"""
+    v = v.strip()
+    if not v.isdigit() or len(v) != 11 or not v.startswith('1'):
+        raise ValueError('请输入正确的手机号')
+    return v
+
+
+class SendPhoneCodeSchema(BaseModel):
+    """发送手机验证码Schema"""
+    phone: str = Field(..., min_length=11, max_length=11, description="手机号")
+
+    @field_validator('phone')
+    @classmethod
+    def validate_phone(cls, v: str) -> str:
+        return _validate_phone(v)
+
+
+class PhoneLoginSchema(BaseModel):
+    """手机验证码登录Schema"""
+    phone: str = Field(..., min_length=11, max_length=11, description="手机号")
+    code: str = Field(..., min_length=4, max_length=8, description="验证码")
+
+    @field_validator('phone')
+    @classmethod
+    def validate_phone(cls, v: str) -> str:
+        return _validate_phone(v)
+
+    @field_validator('code')
+    @classmethod
+    def validate_code(cls, v: str) -> str:
+        if not v.isdigit():
+            raise ValueError('验证码必须是纯数字')
+        return v
+
+
+class BindPhoneSchema(BaseModel):
+    """绑定手机号Schema"""
+    phone: str = Field(..., min_length=11, max_length=11, description="手机号")
+    code: str = Field(..., min_length=4, max_length=8, description="验证码")
+
+    @field_validator('phone')
+    @classmethod
+    def validate_phone(cls, v: str) -> str:
+        return _validate_phone(v)
+
+    @field_validator('code')
+    @classmethod
+    def validate_code(cls, v: str) -> str:
+        if not v.isdigit():
+            raise ValueError('验证码必须是纯数字')
+        return v
+
+
+class PhoneResetPasswordSchema(BaseModel):
+    """手机号重置密码Schema"""
+    phone: str = Field(..., min_length=11, max_length=11, description="手机号")
+    code: str = Field(..., min_length=4, max_length=8, description="验证码")
+    new_password: str = Field(..., min_length=8, description="新密码")
+
+    @field_validator('phone')
+    @classmethod
+    def validate_phone(cls, v: str) -> str:
+        return _validate_phone(v)
+
+    @field_validator('code')
+    @classmethod
+    def validate_code(cls, v: str) -> str:
+        if not v.isdigit():
+            raise ValueError('验证码必须是纯数字')
+        return v
+
+    @field_validator('new_password')
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError('密码长度至少8位')
+        return v

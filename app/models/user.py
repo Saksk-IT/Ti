@@ -23,6 +23,9 @@ class User(db.Model):
     email = db.Column(db.Text)
     email_verified = db.Column(db.Boolean, default=False, server_default=db.text("0"))
     email_verified_at = db.Column(db.DateTime)
+    phone = db.Column(db.String(20), unique=True, index=True)
+    phone_verified = db.Column(db.Boolean, default=False, server_default=db.text("0"))
+    phone_verified_at = db.Column(db.DateTime)
     has_password_set = db.Column(db.Boolean, default=False, server_default=db.text("0"))
     openid = db.Column(db.Text)
 

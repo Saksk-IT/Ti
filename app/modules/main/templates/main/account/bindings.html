@@ -2,7 +2,7 @@
 {% block account_title %}账号绑定{% endblock %}
 {% block account_page_title %}账号绑定{% endblock %}
 {% block account_header_title %}账号绑定{% endblock %}
-{% block account_header_sub %}管理邮箱与微信绑定状态。{% endblock %}
+{% block account_header_sub %}管理邮箱、手机与微信绑定状态。{% endblock %}
 
 {% block account_head_extra %}
   <style>
@@ -146,6 +146,47 @@
       </div>
     </section>
 
+    <section class="acc-card" aria-labelledby="phoneBindTitle">
+      <div class="bind-row">
+        <div class="bind-meta">
+          <h2 class="acc-card-title" id="phoneBindTitle">手机</h2>
+          <div class="bind-desc" id="phoneDesc">加载中…</div>
+        </div>
+        <div class="bind-actions">
+          <span class="bind-chip" id="phoneStatusChip">-</span>
+          <button type="button" class="acc-btn acc-btn-secondary" id="phoneActionBtn">绑定</button>
+        </div>
+      </div>
+
+      <div class="bind-form" id="phoneBindForm">
+        <div class="bind-form-grid">
+          <div class="acc-field span-2">
+            <div class="acc-label">手机号</div>
+            <input class="acc-input" id="bindPhoneInput" type="tel" maxlength="11" inputmode="numeric" autocomplete="tel" placeholder="请输入手机号" />
+          </div>
+
+          <div class="acc-field">
+            <div class="acc-label">验证码</div>
+            <input class="acc-input" id="bindPhoneCodeInput" inputmode="numeric" maxlength="6" placeholder="验证码" />
+          </div>
+
+          <div class="acc-field">
+            <div class="acc-label">操作</div>
+            <div class="acc-input-row">
+              <button type="button" class="acc-mini" id="sendPhoneCodeBtn">发送验证码</button>
+              <button type="button" class="acc-mini" id="submitPhoneBindBtn">确认绑定</button>
+            </div>
+          </div>
+
+          <div class="acc-field span-2" style="display:flex; justify-content:flex-end; gap:10px;">
+            <button type="button" class="acc-btn" id="cancelPhoneBindBtn">取消</button>
+          </div>
+        </div>
+
+        <div class="acc-msg" id="phoneMsg" role="status" aria-live="polite"></div>
+      </div>
+    </section>
+
     <section class="acc-card" aria-labelledby="wechatBindTitle">
       <div class="bind-row">
         <div class="bind-meta">
@@ -194,6 +235,17 @@
       const submitBindBtn = document.getElementById('submitBindBtn');
       const cancelBindBtn = document.getElementById('cancelBindBtn');
 
+      const phoneDesc = document.getElementById('phoneDesc');
+      const phoneChip = document.getElementById('phoneStatusChip');
+      const phoneActionBtn = document.getElementById('phoneActionBtn');
+      const phoneForm = document.getElementById('phoneBindForm');
+      const phoneMsg = document.getElementById('phoneMsg');
+      const bindPhoneInput = document.getElementById('bindPhoneInput');
+      const bindPhoneCodeInput = document.getElementById('bindPhoneCodeInput');
+      const sendPhoneCodeBtn = document.getElementById('sendPhoneCodeBtn');
+      const submitPhoneBindBtn = document.getElementById('submitPhoneBindBtn');
+      const cancelPhoneBindBtn = document.getElementById('cancelPhoneBindBtn');
+
       const wechatDesc = document.getElementById('wechatDesc');
       const wechatChip = document.getElementById('wechatStatusChip');
       const wechatBindBtn = document.getElementById('wechatBindBtn');
@@ -209,6 +261,9 @@
       let profileCache = null;
       let countdownTimer = null;
       let countdownSeconds = 0;
+
+      let phoneCountdownTimer = null;
+      let phoneCountdownSeconds = 0;
 
       let wechatBindSid = null;
       let wechatBindTimer = null;
@@ -250,6 +305,49 @@
         }
       }
 
+      function showPhoneMessage(text){
+        if (!phoneMsg) return;
+        const t = (text || '').trim();
+        if (!t) { phoneMsg.style.display = 'none'; phoneMsg.textContent = ''; return; }
+        phoneMsg.textContent = t;
+        phoneMsg.style.display = 'block';
+      }
+
+      function setPhoneFormVisible(visible){
+        if (!phoneForm) return;
+        phoneForm.style.display = visible ? 'block' : 'none';
+        if (!visible) showPhoneMessage('');
+      }
+
+      function updatePhoneCountdown(){
+        if (!sendPhoneCodeBtn) return;
+        if (phoneCountdownSeconds <= 0) {
+          sendPhoneCodeBtn.disabled = false;
+          sendPhoneCodeBtn.textContent = '发送验证码';
+          return;
+        }
+        sendPhoneCodeBtn.disabled = true;
+        sendPhoneCodeBtn.textContent = `重新发送(${phoneCountdownSeconds}s)`;
+        phoneCountdownSeconds -= 1;
+        phoneCountdownTimer = setTimeout(updatePhoneCountdown, 1000);
+      }
+
+      function resetPhoneCountdown(){
+        if (phoneCountdownTimer) { clearTimeout(phoneCountdownTimer); phoneCountdownTimer = null; }
+        phoneCountdownSeconds = 0;
+        if (sendPhoneCodeBtn) {
+          sendPhoneCodeBtn.disabled = false;
+          sendPhoneCodeBtn.textContent = '发送验证码';
+        }
+      }
+
+      function validatePhone(phone){
+        const v = (phone || '').trim();
+        if (!v) return { ok:false, msg:'请输入手机号' };
+        if (!/^1[3-9]\d{9}$/.test(v)) return { ok:false, msg:'手机号格式不正确' };
+        return { ok:true, value:v };
+      }
+
       function applyProfile(d){
         profileCache = d || {};
 
@@ -258,6 +356,12 @@
         if (emailChip) emailChip.textContent = email ? (verified ? '已绑定' : '已绑定(未验证)') : '未绑定';
         if (emailDesc) emailDesc.textContent = email ? `当前邮箱：${email}${verified ? '' : '（未验证）'}` : '绑定邮箱用于接收验证码与找回账号。';
         if (emailActionBtn) emailActionBtn.textContent = email ? '更换' : '绑定';
+
+        const phone = (profileCache && typeof profileCache.phone === 'string') ? profileCache.phone : '';
+        const phoneVerified = !!(profileCache && profileCache.phone_verified);
+        if (phoneChip) phoneChip.textContent = phone ? (phoneVerified ? '已绑定' : '已绑定(未验证)') : '未绑定';
+        if (phoneDesc) phoneDesc.textContent = phone ? `当前手机：${phone}${phoneVerified ? '' : '（未验证）'}` : '绑定手机号用于接收验证码与找回账号。';
+        if (phoneActionBtn) phoneActionBtn.textContent = phone ? '更换' : '绑定';
 
         const wechatBound = !!(profileCache && profileCache.wechat_bound);
         if (wechatChip) wechatChip.textContent = wechatBound ? '已绑定' : '未绑定';
@@ -344,6 +448,66 @@
           showEmailMessage((e && e.message) ? e.message : '绑定失败，请稍后重试');
         } finally {
           if (submitBindBtn) { submitBindBtn.disabled = false; submitBindBtn.textContent = '确认绑定'; }
+        }
+      }
+
+      async function sendPhoneBindCode(){
+        showPhoneMessage('');
+        const v = validatePhone(bindPhoneInput ? bindPhoneInput.value : '');
+        if (!v.ok) { showPhoneMessage(v.msg); return; }
+        resetPhoneCountdown();
+        if (sendPhoneCodeBtn) { sendPhoneCodeBtn.disabled = true; sendPhoneCodeBtn.textContent = '发送中…'; }
+        try {
+          const res = await fetch('/auth/api/sms/send-bind-code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ phone: v.value })
+          });
+          const js = await res.json().catch(()=> ({}));
+          if (!res.ok || !js || js.status !== 'success') throw new Error(js && js.message ? js.message : '发送失败');
+          showPhoneMessage(js.message || '验证码已发送');
+          phoneCountdownSeconds = 60;
+          updatePhoneCountdown();
+        } catch (e) {
+          showPhoneMessage((e && e.message) ? e.message : '发送失败，请稍后重试');
+          resetPhoneCountdown();
+        } finally {
+          if (phoneCountdownSeconds <= 0 && sendPhoneCodeBtn) {
+            sendPhoneCodeBtn.disabled = false;
+            sendPhoneCodeBtn.textContent = '发送验证码';
+          }
+        }
+      }
+
+      async function bindPhone(){
+        showPhoneMessage('');
+        const v = validatePhone(bindPhoneInput ? bindPhoneInput.value : '');
+        if (!v.ok) { showPhoneMessage(v.msg); return; }
+        const code = (bindPhoneCodeInput && typeof bindPhoneCodeInput.value === 'string') ? bindPhoneCodeInput.value.trim() : '';
+        if (!code || code.length < 4 || code.length > 6) { showPhoneMessage('请输入验证码'); return; }
+        if (submitPhoneBindBtn) { submitPhoneBindBtn.disabled = true; submitPhoneBindBtn.textContent = '绑定中…'; }
+        try {
+          const res = await fetch('/auth/api/sms/bind', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ phone: v.value, code })
+          });
+          const js = await res.json().catch(()=> ({}));
+          if (!res.ok || !js || js.status !== 'success') throw new Error(js && js.message ? js.message : '绑定失败');
+          showPhoneMessage(js.message || '手机号绑定成功');
+          setTimeout(async () => {
+            setPhoneFormVisible(false);
+            if (bindPhoneInput) bindPhoneInput.value = '';
+            if (bindPhoneCodeInput) bindPhoneCodeInput.value = '';
+            resetPhoneCountdown();
+            await loadProfile();
+          }, 900);
+        } catch (e) {
+          showPhoneMessage((e && e.message) ? e.message : '绑定失败，请稍后重试');
+        } finally {
+          if (submitPhoneBindBtn) { submitPhoneBindBtn.disabled = false; submitPhoneBindBtn.textContent = '确认绑定'; }
         }
       }
 
@@ -473,6 +637,19 @@
       });
       sendCodeBtn && sendCodeBtn.addEventListener('click', sendBindCode);
       submitBindBtn && submitBindBtn.addEventListener('click', bindEmail);
+
+      phoneActionBtn && phoneActionBtn.addEventListener('click', function(){
+        setPhoneFormVisible(true);
+        bindPhoneInput && bindPhoneInput.focus();
+      });
+      cancelPhoneBindBtn && cancelPhoneBindBtn.addEventListener('click', function(){
+        setPhoneFormVisible(false);
+        if (bindPhoneInput) bindPhoneInput.value = '';
+        if (bindPhoneCodeInput) bindPhoneCodeInput.value = '';
+        resetPhoneCountdown();
+      });
+      sendPhoneCodeBtn && sendPhoneCodeBtn.addEventListener('click', sendPhoneBindCode);
+      submitPhoneBindBtn && submitPhoneBindBtn.addEventListener('click', bindPhone);
 
       wechatBindBtn && wechatBindBtn.addEventListener('click', openWechatModal);
       wechatUnbindBtn && wechatUnbindBtn.addEventListener('click', unbindWechat);

@@ -126,6 +126,17 @@ class Config:
     WECHAT_APPID = os.environ.get('WECHAT_APPID') or os.environ.get('WX_APPID')
     WECHAT_SECRET = os.environ.get('WECHAT_SECRET') or os.environ.get('WX_SECRET')
 
+    # 阿里云号码认证服务（DYPNS）
+    ALIYUN_ACCESS_KEY_ID = os.environ.get('ALIYUN_ACCESS_KEY_ID')
+    ALIYUN_ACCESS_KEY_SECRET = os.environ.get('ALIYUN_ACCESS_KEY_SECRET')
+    ALIYUN_SMS_SIGN_NAME = os.environ.get('ALIYUN_SMS_SIGN_NAME', '')
+    ALIYUN_SMS_TEMPLATE_CODE = os.environ.get('ALIYUN_SMS_TEMPLATE_CODE', '')
+    ALIYUN_SMS_CODE_LENGTH = int(os.environ.get('ALIYUN_SMS_CODE_LENGTH', '6') or 6)
+    ALIYUN_SMS_VALID_TIME = int(os.environ.get('ALIYUN_SMS_VALID_TIME', '300') or 300)
+    ALIYUN_SMS_INTERVAL = int(os.environ.get('ALIYUN_SMS_INTERVAL', '60') or 60)
+    SMS_ENABLED = os.environ.get('SMS_ENABLED', 'true').lower() in ['true', 'on', '1']
+    SMS_CONSOLE_OUTPUT = os.environ.get('SMS_CONSOLE_OUTPUT', 'false').lower() in ['true', 'on', '1']
+
     # === 阿里云百炼（DashScope OpenAI 兼容接口）===
     # 文档：https://help.aliyun.com/zh/model-studio/first-api-call-to-qwen
     DASHSCOPE_API_KEY = os.environ.get('DASHSCOPE_API_KEY')
@@ -143,6 +154,9 @@ class DevelopmentConfig(Config):
     
     # 开发环境默认使用控制台输出
     MAIL_CONSOLE_OUTPUT = os.environ.get('MAIL_CONSOLE_OUTPUT', 'true').lower() in ['true', 'on', '1']
+
+    # 开发环境短信验证码输出到控制台
+    SMS_CONSOLE_OUTPUT = os.environ.get('SMS_CONSOLE_OUTPUT', 'true').lower() in ['true', 'on', '1']
 
 
 class ProductionConfig(Config):
@@ -192,6 +206,7 @@ class ProductionConfig(Config):
     
     # 生产环境禁用控制台输出验证码
     MAIL_CONSOLE_OUTPUT = False
+    SMS_CONSOLE_OUTPUT = False
     
     # 生产环境安全配置
     # 会话Cookie安全设置（HTTPS环境下启用）

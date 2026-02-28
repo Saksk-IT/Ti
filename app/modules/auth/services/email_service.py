@@ -347,6 +347,7 @@ class EmailAuthService:
                 'is_locked': user.is_locked, 'session_version': user.session_version,
                 'avatar': user.avatar, 'contact': user.contact, 'college': user.college,
                 'email': user.email, 'email_verified': user.email_verified,
+                'phone': user.phone, 'phone_verified': user.phone_verified,
                 'openid': user.openid, 'has_password_set': user.has_password_set,
                 'is_subject_admin': user.is_subject_admin,
                 'is_notification_admin': user.is_notification_admin,
