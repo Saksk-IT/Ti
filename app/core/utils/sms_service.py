@@ -169,6 +169,15 @@ def check_sms_verify_code(phone: str, code: str, config: Dict[str, Any]) -> Chec
     except ValueError:
         raise
     except Exception as exc:
+        # isv.ValidateFail 是验证码错误/过期的正常业务响应，SDK 以异常抛出
+        exc_str = str(exc)
+        if 'isv.ValidateFail' in exc_str:
+            logger.info('短信验证码校验未通过: phone=%s', phone)
+            return CheckSmsResult(
+                success=False,
+                error_code='isv.ValidateFail',
+                error_message='验证码错误或已过期',
+            )
         logger.error('短信校验异常: phone=%s, error=%s', phone, exc, exc_info=True)
         return CheckSmsResult(
             success=False,
