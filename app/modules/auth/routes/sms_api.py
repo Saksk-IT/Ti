@@ -47,7 +47,7 @@ def phone_login():
         return jsonify({'status': 'error', 'message': msg}), 400
 
     # 设置 session
-    set_web_session(user_info)
+    set_web_session(user_info['id'])
 
     # 生成 JWT
     token = generate_jwt_token(user_info['id'], user_info.get('session_version', 0))
