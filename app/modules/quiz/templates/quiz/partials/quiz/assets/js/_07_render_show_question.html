@@ -121,7 +121,20 @@ function showQuestion(index) {
             } else {
                 const hasResult = isQuestionAlreadyChecked(currentQ);
                 if (hasResult) {
-                    renderAnswerExplainFromQuestion(currentQ);
+                    // 主观题 pending（手动判分已提交未自评）：传 'pending' + 确保自评卡片存在
+                    const isSubj = isSubjectiveType(type);
+                    const li = listItems[index];
+                    const isPending = isSubj && li
+                        && !li.classList.contains('done-correct')
+                        && !li.classList.contains('done-wrong');
+                    if (isPending) {
+                        renderAnswerExplainFromQuestion(currentQ, 'pending');
+                        if (!currentQ.querySelector('.subjective-self-eval')) {
+                            _showSubjectiveSelfEval(currentQ, currentQ.getAttribute('data-id'));
+                        }
+                    } else {
+                        renderAnswerExplainFromQuestion(currentQ);
+                    }
                 }
             }
 

@@ -774,6 +774,10 @@ function saveState(immediate = false) {
         const q = document.getElementById(`q-${index}`);
         if (q) {
             const type = q.getAttribute('data-type');
+            // 主观题手动判分：已提交未自评 → 保存 'pending'
+            if (!statusMap[index] && q.classList.contains('checked-mode') && isSubjectiveType(type)) {
+                statusMap[index] = 'pending';
+            }
             if (type === '选择题' || type === '判断题' || type === '多选题') {
                 const checked = Array.from(q.querySelectorAll('input:checked')).map(i => i.value);
                 answerMap[index] = checked;
@@ -928,6 +932,18 @@ function loadState() {
                         // 3. 已作答题：需要能在回顾时展示"答案/解析"
                         // 注意：此处只是恢复状态，具体显示在 showQuestion / checkAnswer 时渲染到独立卡片
                         disableInputs(q);
+                    }
+                    // 主观题手动判分 pending：恢复答案 + 禁用输入 + 重建自评卡片
+                    if (q && status === 'pending') {
+                        const type = q.getAttribute('data-type');
+                        if (data.answers && data.answers[idx] != null) {
+                            const ta = getActiveSubjectiveTextarea(q);
+                            if (ta) ta.value = data.answers[idx];
+                        }
+                        renderAnswerExplainFromQuestion(q, 'pending');
+                        disableInputs(q);
+                        _showSubjectiveSelfEval(q, q.getAttribute('data-id'));
+                        if (item) item.classList.add('answered');
                     }
                 }
             }
