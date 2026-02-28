@@ -64,18 +64,8 @@ class EmailAuthService:
         if user_recent_count >= 5:
             return False, '发送验证码次数过多，请稍后再试'
 
-        # 生成并发送验证码
+        # 先存后发：先保存验证码到数据库，再异步发送邮件
         code = EmailService.generate_verification_code()
-        success, sent_code = EmailService.send_verification_code(
-            to_email=email,
-            code_type='bind',
-            code=code
-        )
-
-        if not success:
-            return False, '邮件发送失败，请稍后再试'
-
-        # 保存验证码到数据库
         try:
             expires_at = now_bj() + timedelta(minutes=EmailAuthService.CODE_EXPIRE_MINUTES)
             record = EmailVerificationCode(
@@ -84,14 +74,28 @@ class EmailAuthService:
             )
             db.session.add(record)
             db.session.commit()
-
-            current_app.logger.info(f'绑定邮箱验证码已发送: user_id={user_id}, email={email}')
-            return True, None
-
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(f'保存验证码失败: {str(e)}', exc_info=True)
             return False, '系统错误，请稍后再试'
+
+        success, sent_code = EmailService.send_verification_code(
+            to_email=email,
+            code_type='bind',
+            code=code
+        )
+
+        if not success:
+            # 异步发送失败（同步降级也失败），删除刚存的记录
+            try:
+                db.session.delete(record)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+            return False, '邮件发送失败，请稍后再试'
+
+        current_app.logger.info(f'绑定邮箱验证码已发送: user_id={user_id}, email={email}')
+        return True, None
     
     @staticmethod
     def bind_email(user_id: int, email: str, code: str) -> Tuple[bool, Optional[str], Optional[Dict[str, Any]]]:
@@ -207,18 +211,8 @@ class EmailAuthService:
         if recent_count > 0:
             return False, '发送验证码过于频繁，请稍后再试'
 
-        # 生成并发送验证码
+        # 先存后发：先保存验证码到数据库，再异步发送邮件
         code = EmailService.generate_verification_code()
-        success, sent_code = EmailService.send_verification_code(
-            to_email=email,
-            code_type='login',
-            code=code
-        )
-
-        if not success:
-            return False, '邮件发送失败，请稍后再试'
-
-        # 保存验证码到数据库（user_id可以为None，表示用于自动注册）
         try:
             expires_at = now_bj() + timedelta(minutes=EmailAuthService.CODE_EXPIRE_MINUTES)
             record = EmailVerificationCode(
@@ -227,17 +221,31 @@ class EmailAuthService:
             )
             db.session.add(record)
             db.session.commit()
-
-            if user:
-                current_app.logger.info(f'登录验证码已发送: email={email}, user_id={user_id}')
-            else:
-                current_app.logger.info(f'注册验证码已发送: email={email} (新用户)')
-            return True, None
-
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(f'保存验证码失败: {str(e)}', exc_info=True)
             return False, '系统错误，请稍后再试'
+
+        success, sent_code = EmailService.send_verification_code(
+            to_email=email,
+            code_type='login',
+            code=code
+        )
+
+        if not success:
+            # 异步发送失败（同步降级也失败），删除刚存的记录
+            try:
+                db.session.delete(record)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+            return False, '邮件发送失败，请稍后再试'
+
+        if user:
+            current_app.logger.info(f'登录验证码已发送: email={email}, user_id={user_id}')
+        else:
+            current_app.logger.info(f'注册验证码已发送: email={email} (新用户)')
+        return True, None
     
     @staticmethod
     def verify_login_code(email: str, code: str) -> Tuple[bool, Optional[str], Optional[Dict[str, Any]]]:
@@ -396,18 +404,8 @@ class EmailAuthService:
         if user_recent_count >= 5:
             return False, '发送验证码次数过多，请稍后再试'
 
-        # 生成并发送验证码
+        # 先存后发：先保存验证码到数据库，再异步发送邮件
         code = EmailService.generate_verification_code()
-        success, sent_code = EmailService.send_verification_code(
-            to_email=email,
-            code_type='reset_password',
-            code=code
-        )
-
-        if not success:
-            return False, '邮件发送失败，请稍后再试'
-
-        # 保存验证码到数据库
         try:
             expires_at = now_bj() + timedelta(minutes=EmailAuthService.CODE_EXPIRE_MINUTES)
             record = EmailVerificationCode(
@@ -416,14 +414,28 @@ class EmailAuthService:
             )
             db.session.add(record)
             db.session.commit()
-
-            current_app.logger.info(f'重置密码验证码已发送: email={email}, user_id={user_id}')
-            return True, None
-
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(f'保存验证码失败: {str(e)}', exc_info=True)
             return False, '系统错误，请稍后再试'
+
+        success, sent_code = EmailService.send_verification_code(
+            to_email=email,
+            code_type='reset_password',
+            code=code
+        )
+
+        if not success:
+            # 异步发送失败（同步降级也失败），删除刚存的记录
+            try:
+                db.session.delete(record)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+            return False, '邮件发送失败，请稍后再试'
+
+        current_app.logger.info(f'重置密码验证码已发送: email={email}, user_id={user_id}')
+        return True, None
     
     @staticmethod
     def reset_password(email: str, code: str, new_password: str) -> Tuple[bool, Optional[str]]:

@@ -62,6 +62,14 @@ export const api = {
   // 小程序：已登录用户绑定微信（密码/邮箱登录后引导绑定）
   miniWechatBind: (code: string) =>
     request('/mini/wechat/bind', 'POST', { code }),
+
+  // 小程序：忘记密码 — 发送验证码
+  miniSendForgotPasswordCode: (email: string) =>
+    request('/mini/forgot-password/send-code', 'POST', { email }),
+
+  // 小程序：忘记密码 — 重置密码
+  miniResetPassword: (email: string, code: string, new_password: string) =>
+    request('/mini/forgot-password/reset', 'POST', { email, code, new_password }),
   
   // 获取科目列表
   getSubjects: () => request('/quiz/subjects', 'GET'),

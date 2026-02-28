@@ -8,10 +8,6 @@ import secrets
 import string
 import re
 import logging
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.header import Header
-from email.utils import formataddr
 from typing import Optional, Dict, Any, Tuple
 from flask import current_app
 from app.core.utils.email_templates import render_template, get_email_subject
@@ -21,20 +17,42 @@ logger = logging.getLogger(__name__)
 
 class EmailService:
     """邮件服务类"""
-    
+
     @staticmethod
-    def generate_verification_code(length: int = 6) -> str:
+    def _get_code_length() -> int:
+        """
+        从 system_config 表读取验证码长度配置
+
+        Returns:
+            验证码长度（4-8，默认6）
+        """
+        try:
+            from app.models.system import SystemConfig
+            row = SystemConfig.query.filter_by(
+                config_key='mail_verification_code_length'
+            ).first()
+            if row:
+                val = int(row.config_value)
+                if 4 <= val <= 8:
+                    return val
+        except Exception as exc:
+            logger.warning('读取验证码长度配置失败，使用默认值: %s', exc)
+        return 6
+
+    @staticmethod
+    def generate_verification_code(length: int | None = None) -> str:
         """
         生成验证码
-        
+
         Args:
-            length: 验证码长度，默认6位
-            
+            length: 验证码长度，为 None 时从配置读取（默认6位）
+
         Returns:
             验证码字符串（纯数字）
         """
+        if length is None:
+            length = EmailService._get_code_length()
         # 使用安全的随机数生成器
-        # 验证码使用纯数字
         digits = string.digits
         code = ''.join(secrets.choice(digits) for _ in range(length))
         return code
@@ -125,133 +143,38 @@ class EmailService:
     @staticmethod
     def _send_email_smtp(to_email: str, subject: str, body_html: str) -> bool:
         """
-        通过SMTP发送邮件
-        
+        通过SMTP发送邮件（同步，Flask context 下使用）
+
         Args:
             to_email: 收件人邮箱
             subject: 邮件主题
             body_html: 邮件正文（HTML格式）
-            
+
         Returns:
             是否发送成功
         """
         config = EmailService._get_smtp_config()
-        
-        # 详细检查配置
-        missing_fields = []
-        if not config['server']:
-            missing_fields.append('server')
-        if not config['username']:
-            missing_fields.append('username')
-        if not config['password']:
-            missing_fields.append('password')
-        
-        if missing_fields:
-            current_app.logger.error(f'邮件服务配置不完整，缺少字段: {", ".join(missing_fields)}, to_email={to_email}')
-            return False
-        
-        current_app.logger.debug(f'SMTP配置检查通过: server={config["server"]}, port={config["port"]}, username={config["username"]}, sender={config["sender"]}')
-        
-        # QQ邮箱要求From地址必须与SMTP登录用户名一致
-        # 如果MAIL_DEFAULT_SENDER未设置，使用MAIL_USERNAME作为发件人
-        sender_email = config['sender'] or config['username']
-        if not sender_email:
-            current_app.logger.error('发件人邮箱未配置')
-            return False
-        
-        server = None
         try:
-            # 创建邮件消息
-            msg = MIMEMultipart('alternative')
-            # 使用 formataddr 正确格式化 From 头，符合 RFC5322 标准
-            # formataddr 会自动处理非 ASCII 字符的编码（RFC2047）
-            from_header = formataddr((config['sender_name'], sender_email))
-            msg['From'] = from_header
-            msg['To'] = to_email
-            msg['Subject'] = Header(subject, 'utf-8')
-            
-            # 记录From头用于调试
-            current_app.logger.debug(f'邮件From头: {from_header}')
-            
-            # 添加HTML内容
-            html_part = MIMEText(body_html, 'html', 'utf-8')
-            msg.attach(html_part)
-            
-            # 连接SMTP服务器并发送
-            # 设置连接超时（30秒）和读取超时（60秒）
-            timeout = 30
-            current_app.logger.debug(f'连接SMTP服务器: {config["server"]}:{config["port"]}, timeout={timeout}')
-            
-            if config['use_ssl']:
-                server = smtplib.SMTP_SSL(config['server'], config['port'], timeout=timeout)
-            else:
-                server = smtplib.SMTP(config['server'], config['port'], timeout=timeout)
-            
-            # 启用调试模式（仅在DEBUG级别时）
-            if current_app.logger.level <= 10:  # DEBUG level
-                server.set_debuglevel(1)
-            
-            # 设置读取超时
-            server.timeout = 60
-            
-            # 如果使用TLS，启动TLS加密
-            if config['use_tls'] and not config['use_ssl']:
-                current_app.logger.debug('启动TLS加密')
-                server.starttls()
-            
-            # 登录SMTP服务器
-            current_app.logger.debug(f'尝试登录SMTP服务器: username={config["username"]}')
-            server.login(config['username'], config['password'])
-            current_app.logger.debug('SMTP登录成功')
-            
-            # 发送邮件
-            current_app.logger.debug(f'发送邮件到: {to_email}')
-            server.send_message(msg)
-            current_app.logger.debug('邮件发送命令执行成功')
-            
-            # 正确关闭连接
-            server.quit()
-            server = None
-            
+            from app.tasks.email_tasks import smtp_send_pure
+            smtp_send_pure(to_email, subject, body_html, config)
             current_app.logger.info(f'邮件发送成功: {to_email}')
             return True
-            
+        except ValueError as e:
+            current_app.logger.error(f'邮件配置错误: {e}, to_email={to_email}')
+            return False
         except smtplib.SMTPAuthenticationError as e:
-            error_msg = f'SMTP认证失败: {str(e)}'
-            current_app.logger.error(f'{error_msg}, to_email={to_email}, username={config["username"]}')
-            if hasattr(e, 'smtp_code'):
-                current_app.logger.error(f'SMTP错误代码: {e.smtp_code}')
-            if hasattr(e, 'smtp_error'):
-                current_app.logger.error(f'SMTP错误信息: {e.smtp_error}')
+            current_app.logger.error(f'SMTP认证失败: {e}, to_email={to_email}, username={config.get("username")}')
             return False
         except (smtplib.SMTPException, ConnectionError, OSError) as e:
-            error_msg = f'SMTP连接错误: {str(e)}'
             error_type = type(e).__name__
-            current_app.logger.error(f'{error_msg} ({error_type}), to_email={to_email}, server={config["server"]}:{config["port"]}')
-            # 记录更详细的错误信息
-            if hasattr(e, 'smtp_code'):
-                current_app.logger.error(f'SMTP错误代码: {e.smtp_code}')
-            if hasattr(e, 'smtp_error'):
-                current_app.logger.error(f'SMTP错误信息: {e.smtp_error}')
-            # 提供可能的解决方案提示
+            current_app.logger.error(f'SMTP连接错误: {e} ({error_type}), to_email={to_email}, server={config.get("server")}:{config.get("port")}')
             if 'Connection unexpectedly closed' in str(e) or 'Connection closed' in str(e):
                 current_app.logger.error('可能的原因: 1) 授权码错误或已过期 2) SMTP服务未开启 3) 163邮箱需要验证码登录 4) 网络连接问题')
             return False
         except Exception as e:
-            error_msg = f'邮件发送失败: {str(e)}'
             error_type = type(e).__name__
-            current_app.logger.error(f'{error_msg} ({error_type}), to_email={to_email}', exc_info=True)
+            current_app.logger.error(f'邮件发送失败: {e} ({error_type}), to_email={to_email}', exc_info=True)
             return False
-        finally:
-            # 确保连接被正确关闭
-            if server is not None:
-                try:
-                    server.quit()
-                except Exception:
-                    try:
-                        server.close()
-                    except Exception:
-                        pass
 
     @staticmethod
     def _send_email_smtp_with_config(
@@ -269,51 +192,14 @@ class EmailService:
         Returns:
             是否发送成功
         """
-        missing_fields = []
-        if not config.get('server'):
-            missing_fields.append('server')
-        if not config.get('username'):
-            missing_fields.append('username')
-        if not config.get('password'):
-            missing_fields.append('password')
-
-        if missing_fields:
-            current_app.logger.error(
-                f'邮件服务配置不完整，缺少字段: {", ".join(missing_fields)}, to_email={to_email}'
-            )
-            return False
-
-        sender_email = config.get('sender') or config['username']
-        if not sender_email:
-            current_app.logger.error('发件人邮箱未配置')
-            return False
-
-        server = None
         try:
-            msg = MIMEMultipart('alternative')
-            from_header = formataddr((config.get('sender_name', '系统通知'), sender_email))
-            msg['From'] = from_header
-            msg['To'] = to_email
-            msg['Subject'] = Header(subject, 'utf-8')
-            msg.attach(MIMEText(body_html, 'html', 'utf-8'))
-
-            timeout = 30
-            if config.get('use_ssl'):
-                server = smtplib.SMTP_SSL(config['server'], config['port'], timeout=timeout)
-            else:
-                server = smtplib.SMTP(config['server'], config['port'], timeout=timeout)
-
-            server.timeout = 60
-            if config.get('use_tls') and not config.get('use_ssl'):
-                server.starttls()
-
-            server.login(config['username'], config['password'])
-            server.send_message(msg)
-            server.quit()
-            server = None
-
+            from app.tasks.email_tasks import smtp_send_pure
+            smtp_send_pure(to_email, subject, body_html, config)
             current_app.logger.info(f'测试邮件发送成功: {to_email}')
             return True
+        except ValueError as e:
+            current_app.logger.error(f'邮件配置错误: {e}, to_email={to_email}')
+            return False
         except smtplib.SMTPAuthenticationError as e:
             current_app.logger.error(f'SMTP认证失败: {e}, to_email={to_email}')
             return False
@@ -323,15 +209,6 @@ class EmailService:
         except Exception as e:
             current_app.logger.error(f'邮件发送失败: {e}, to_email={to_email}', exc_info=True)
             return False
-        finally:
-            if server is not None:
-                try:
-                    server.quit()
-                except Exception:
-                    try:
-                        server.close()
-                    except Exception:
-                        pass
 
     @staticmethod
     def _console_output_code(to_email: str, code: str, template_type: str) -> None:
@@ -424,11 +301,42 @@ class EmailService:
             current_app.logger.error(f'邮件模板渲染失败: {str(e)}', exc_info=True)
             return False, None
         
-        # 发送邮件
+        # 尝试 RQ 异步发送，不可用时降级为同步
+        try:
+            from app.core.utils.rq_utils import get_queue
+            queue = get_queue('email')
+        except Exception:
+            queue = None
+
+        if queue is not None:
+            try:
+                from rq import Retry  # type: ignore
+                smtp_config = EmailService._get_smtp_config()
+                queue.enqueue(
+                    'app.tasks.email_tasks.send_email_task',
+                    to_email=to_email,
+                    subject=subject,
+                    body_html=body_html,
+                    config=smtp_config,
+                    retry=Retry(max=3, interval=[30, 60, 120]),
+                    job_timeout=120,
+                    ttl=600,
+                    on_failure='app.tasks.email_tasks.on_email_task_failure',
+                )
+                current_app.logger.info(
+                    f'验证码邮件已入队(异步): {to_email}, code_type={code_type}'
+                )
+                return True, code
+            except Exception as e:
+                current_app.logger.warning(
+                    f'RQ 入队失败，降级为同步发送: {e}'
+                )
+
+        # 降级：同步发送
         success = EmailService._send_email_smtp(to_email, subject, body_html)
-        
+
         if success:
-            current_app.logger.info(f'验证码邮件发送成功: {to_email}, code_type={code_type}')
+            current_app.logger.info(f'验证码邮件发送成功(同步): {to_email}, code_type={code_type}')
             return True, code
         else:
             current_app.logger.error(f'验证码邮件发送失败: {to_email}, code_type={code_type}')

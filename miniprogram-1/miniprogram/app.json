@@ -32,6 +32,7 @@
     "pages/web-login/web-login",
     "pages/web-bind/web-bind",
     "pages/web-frontend/web-frontend",
+    "pages/forgot-password/forgot-password",
     "pages/question-list/question-list",
     "pages/practice/practice",
     "pages/practice-setup/practice-setup",

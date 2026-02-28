@@ -210,6 +210,10 @@ Page({
     this.setData({ password: e.detail.value || '' });
   },
 
+  onForgotPasswordTap() {
+    wx.navigateTo({ url: '/pages/forgot-password/forgot-password' });
+  },
+
   onEmailInput(e: any) {
     this.setData({ email: e.detail.value || '' });
   },

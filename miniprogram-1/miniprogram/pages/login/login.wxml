@@ -45,6 +45,7 @@
             <button class="btn btn-primary {{loading ? 'disabled' : ''}}" bindtap="onPasswordLoginTap" disabled="{{loading}}" loading="{{loading}}">
               <text>登录</text>
             </button>
+            <view class="hint" bindtap="onForgotPasswordTap">忘记密码？</view>
           </view>
 
           <!-- 邮箱登录 -->
@@ -57,7 +58,7 @@
               <view class="field">
                 <text class="label">验证码</text>
                 <view class="input-row">
-                  <input class="input" placeholder="6 位验证码" placeholder-class="placeholder" maxlength="6" value="{{code}}" bindinput="onCodeInput" />
+                  <input class="input" placeholder="验证码" placeholder-class="placeholder" maxlength="8" value="{{code}}" bindinput="onCodeInput" />
                   <view class="code-btn {{(codeSending || loading) ? 'disabled' : ''}}" bindtap="onSendCodeTap">
                     <text>{{codeSending ? countdown + 's' : '发送'}}</text>
                   </view>

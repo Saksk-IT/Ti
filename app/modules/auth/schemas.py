@@ -15,14 +15,14 @@ class SendBindCodeSchema(BaseModel):
 class BindEmailSchema(BaseModel):
     """绑定邮箱Schema"""
     email: EmailStr = Field(..., description="邮箱地址")
-    code: str = Field(..., min_length=6, max_length=6, description="验证码")
-    
+    code: str = Field(..., min_length=4, max_length=8, description="验证码")
+
     @field_validator('code')
     @classmethod
     def validate_code(cls, v: str) -> str:
         """验证验证码格式"""
         if not v.isdigit():
-            raise ValueError('验证码必须是6位数字')
+            raise ValueError('验证码必须是纯数字')
         return v
 
 
@@ -34,14 +34,14 @@ class SendLoginCodeSchema(BaseModel):
 class EmailLoginSchema(BaseModel):
     """邮箱验证码登录Schema"""
     email: EmailStr = Field(..., description="邮箱地址")
-    code: str = Field(..., min_length=6, max_length=6, description="验证码")
-    
+    code: str = Field(..., min_length=4, max_length=8, description="验证码")
+
     @field_validator('code')
     @classmethod
     def validate_code(cls, v: str) -> str:
         """验证验证码格式"""
         if not v.isdigit():
-            raise ValueError('验证码必须是6位数字')
+            raise ValueError('验证码必须是纯数字')
         return v
 
 
@@ -70,15 +70,15 @@ class SendForgotPasswordCodeSchema(BaseModel):
 class ResetPasswordSchema(BaseModel):
     """重置密码Schema"""
     email: EmailStr = Field(..., description="邮箱地址")
-    code: str = Field(..., min_length=6, max_length=6, description="验证码")
+    code: str = Field(..., min_length=4, max_length=8, description="验证码")
     new_password: str = Field(..., min_length=8, description="新密码")
-    
+
     @field_validator('code')
     @classmethod
     def validate_code(cls, v: str) -> str:
         """验证验证码格式"""
         if not v.isdigit():
-            raise ValueError('验证码必须是6位数字')
+            raise ValueError('验证码必须是纯数字')
         return v
     
     @field_validator('new_password')

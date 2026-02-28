@@ -1035,6 +1035,68 @@ def api_mini_email_login():
         return jsonify({'status': 'error', 'message': '登录失败，请稍后重试'}), 500
 
 
+@auth_api_bp.route('/mini/forgot-password/send-code', methods=['POST'])
+@limiter.limit("1 per minute;5 per hour")
+def api_mini_send_forgot_password_code():
+    """小程序：发送忘记密码验证码（不写session，与Web端共享验证码数据）"""
+    data = request.json or {}
+    try:
+        schema = SendForgotPasswordCodeSchema.model_validate(data)
+    except Exception as e:
+        current_app.logger.warning(
+            f'小程序发送忘记密码验证码失败: 数据验证失败 - {e}, IP: {request.remote_addr}'
+        )
+        return jsonify({'status': 'error', 'message': '请求数据格式不正确'}), 400
+
+    try:
+        success, error_msg = EmailAuthService.send_reset_password_code(schema.email)
+        if not success:
+            return jsonify({
+                'status': 'error',
+                'message': error_msg or '发送验证码失败，请稍后再试'
+            }), 400
+
+        return jsonify({
+            'status': 'success',
+            'message': '验证码已发送，请查收邮件'
+        }), 200
+    except Exception as e:
+        current_app.logger.error(f'小程序发送忘记密码验证码异常: {e}', exc_info=True)
+        return jsonify({'status': 'error', 'message': '发送失败，请稍后重试'}), 500
+
+
+@auth_api_bp.route('/mini/forgot-password/reset', methods=['POST'])
+@limiter.limit("10 per minute")
+def api_mini_reset_password():
+    """小程序：重置密码（不写session，与Web端共享验证码数据）"""
+    data = request.json or {}
+    try:
+        schema = ResetPasswordSchema.model_validate(data)
+    except Exception as e:
+        current_app.logger.warning(
+            f'小程序重置密码失败: 数据验证失败 - {e}, IP: {request.remote_addr}'
+        )
+        return jsonify({'status': 'error', 'message': '请求数据格式不正确'}), 400
+
+    try:
+        success, error_msg = EmailAuthService.reset_password(
+            schema.email, schema.code, schema.new_password
+        )
+        if not success:
+            current_app.logger.warning(
+                f'小程序重置密码失败: {error_msg} - 邮箱: {schema.email}, IP: {request.remote_addr}'
+            )
+            return jsonify({'status': 'error', 'message': '验证码错误或已过期'}), 400
+
+        current_app.logger.info(
+            f'小程序密码重置成功 - 邮箱: {schema.email}, IP: {request.remote_addr}'
+        )
+        return jsonify({'status': 'success', 'message': '密码重置成功'}), 200
+    except Exception as e:
+        current_app.logger.error(f'小程序重置密码异常: {e}', exc_info=True)
+        return jsonify({'status': 'error', 'message': '重置失败，请稍后重试'}), 500
+
+
 @auth_api_bp.route('/mini/wechat/bind', methods=['POST'])
 @jwt_required
 @limiter.limit("60 per minute")
