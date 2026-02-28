@@ -388,6 +388,12 @@ def _register_before_request(app):
         '/api/email/login',
         '/api/forgot-password/send-code',
         '/api/forgot-password/reset',
+        '/api/sms/send-login-code',
+        '/api/sms/login',
+        '/api/sms/send-bind-code',
+        '/api/sms/bind',
+        '/api/sms/forgot-password/send-code',
+        '/api/sms/forgot-password/reset',
     })
 
     @app.before_request
