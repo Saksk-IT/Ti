@@ -413,6 +413,14 @@ def update_profile():
                 db.session.add(new_progress)
 
         db.session.commit()
+
+        # Web 端：昵称更新后同步会话，确保首页/侧边栏即时显示自定义昵称
+        if username_clean is not None:
+            try:
+                if int(session.get('user_id') or 0) == int(uid):
+                    session['username'] = username_clean
+            except Exception:
+                pass
         
         return jsonify({'status': 'success', 'message': '更新成功'})
     except Exception as e:
