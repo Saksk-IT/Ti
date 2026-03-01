@@ -1289,6 +1289,32 @@
       }, 1000);
     }
 
+    function handlePhoneProfileSetupReminder(user, fallbackRedirect) {
+      const u = user && typeof user === 'object' ? user : {};
+      const username = typeof u.username === 'string' ? u.username.trim() : '';
+      const avatar = typeof u.avatar === 'string' ? u.avatar.trim() : '';
+      const hasPasswordSet = !!u.has_password_set;
+
+      const needsName = !username || /^手机用户_/.test(username);
+      const needsAvatar = !avatar;
+      const needsPassword = !hasPasswordSet;
+
+      const missingItems = [];
+      if (needsName) missingItems.push('名称');
+      if (needsAvatar) missingItems.push('头像');
+      if (needsPassword) missingItems.push('密码');
+
+      if (!missingItems.length) return false;
+
+      const primaryTarget = needsName || needsAvatar
+        ? '/settings/account/profile'
+        : '/settings/account/security';
+      const message = `检测到账号还未完善${missingItems.join('、')}。\n建议立即设置，保障账号安全并方便识别。\n\n点击“确定”立即前往，点击“取消”稍后再说。`;
+      const goNow = window.confirm(message);
+      location.href = goNow ? primaryTarget : (fallbackRedirect || '/');
+      return true;
+    }
+
     async function doPhoneLogin(btn) {
       setErr('', 'phone');
       const phone = val('phone');
@@ -1321,7 +1347,11 @@
           sessionStorage.setItem('needs_password_set', 'true');
           sessionStorage.removeItem('password_set_modal_shown');
         }
-        location.href = data.redirect || redirectUrl || '/';
+        const finalRedirect = data.redirect || redirectUrl || '/';
+        if (handlePhoneProfileSetupReminder(data.user, finalRedirect)) {
+          return;
+        }
+        location.href = finalRedirect;
       } catch (e) {
         setErr('网络错误，请稍后重试', 'phone');
       } finally {
