@@ -498,6 +498,7 @@ class EmailAuthService:
 
             # 更新密码
             user.password_hash = generate_password_hash(new_password)
+            user.has_password_set = True
 
             # 递增 session_version，强制所有旧 JWT / session 失效
             user.session_version = (user.session_version or 0) + 1

@@ -524,7 +524,7 @@ def change_password():
     data = request.json or {}
     current_password = data.get('current_password', '')
     new_password = data.get('new_password', '')
-    is_set_password = data.get('is_set_password', False)  # 是否为设置密码
+    is_set_password = bool(data.get('is_set_password', False))  # 前端传参，仅用于兼容
 
     if not new_password:
         return jsonify({'status': 'error', 'message': '请填写新密码'}), 400
@@ -549,24 +549,32 @@ def change_password():
         # 检查用户是否设置了密码（使用 LegacyUser 的复杂迁移逻辑）
         from app.core.models.user import User as LegacyUser
         has_password = LegacyUser.has_password_set(uid)
-        
-        # 如果是设置密码（用户还没有设置密码），不需要验证当前密码
-        if is_set_password or not has_password:
+
+        # 以后端真实状态为准，不信任前端传入 is_set_password，防止绕过当前密码校验
+        needs_set_password = not has_password
+        if is_set_password != needs_set_password:
+            current_app.logger.info(
+                'password mode mismatch: uid=%s client_is_set=%s server_needs_set=%s',
+                uid, is_set_password, needs_set_password
+            )
+
+        # 用户未设置过密码：无需校验当前密码，直接设置
+        if needs_set_password:
             # 设置密码
             LegacyUser.update_password(uid, new_password, set_password=True)
             return jsonify({'status': 'success', 'message': '密码设置成功'})
-        else:
-            # 修改密码，需要验证当前密码
-            if not current_password:
-                return jsonify({'status': 'error', 'message': '请填写当前密码'}), 400
-            
-            # 验证当前密码
-            if not check_password_hash(user_obj.password_hash, current_password):
-                return jsonify({'status': 'error', 'message': '当前密码错误'}), 400
-            
-            # 更新密码
-            LegacyUser.update_password(uid, new_password, set_password=False)
-            return jsonify({'status': 'success', 'message': '密码修改成功'})
+
+        # 用户已设置过密码：必须校验当前密码
+        if not current_password:
+            return jsonify({'status': 'error', 'message': '请填写当前密码'}), 400
+
+        # 验证当前密码
+        if not check_password_hash(user_obj.password_hash, current_password):
+            return jsonify({'status': 'error', 'message': '当前密码错误'}), 400
+
+        # 更新密码
+        LegacyUser.update_password(uid, new_password, set_password=False)
+        return jsonify({'status': 'success', 'message': '密码修改成功'})
     except Exception as e:
         current_app.logger.error('操作失败: %s', e, exc_info=True)
         return jsonify({'status': 'error', 'message': '操作失败，请稍后重试'}), 500

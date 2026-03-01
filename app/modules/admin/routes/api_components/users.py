@@ -541,7 +541,7 @@ def admin_reset_password(user_id):
 
     try:
         result = db.session.execute(
-            text('UPDATE users SET password_hash=:ph, session_version = COALESCE(session_version,0) + 1 WHERE id=:uid'),
+            text('UPDATE users SET password_hash=:ph, has_password_set=true, session_version = COALESCE(session_version,0) + 1 WHERE id=:uid'),
             {'ph': ph, 'uid': user_id}
         )
         if result.rowcount == 0:

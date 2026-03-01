@@ -86,7 +86,34 @@ class User:
         if not check_password_hash(user['password_hash'], password):
             return None
 
+        # 用户已通过密码认证，修正历史数据中可能残留的 has_password_set=false/null 状态
+        if user.get('has_password_set') not in (True, 1):
+            if User._mark_has_password_set(int(user['id'])):
+                user['has_password_set'] = True
+
         return user
+
+    @staticmethod
+    def _mark_has_password_set(user_id: int) -> bool:
+        """将 has_password_set 标记为 true（仅在需要时更新）。"""
+        try:
+            db.session.execute(
+                text('''
+                    UPDATE users
+                    SET has_password_set = true
+                    WHERE id = :user_id
+                      AND (has_password_set IS NULL OR has_password_set = false)
+                '''),
+                {'user_id': user_id}
+            )
+            db.session.commit()
+            return True
+        except Exception:
+            try:
+                db.session.rollback()
+            except Exception:
+                pass
+            return False
     
     @staticmethod
     def update_password(user_id, new_password, set_password=False):
@@ -108,7 +135,7 @@ class User:
             )
         else:
             db.session.execute(
-                text('UPDATE users SET password_hash = :password_hash WHERE id = :user_id'),
+                text('UPDATE users SET password_hash = :password_hash, has_password_set = true WHERE id = :user_id'),
                 {'password_hash': password_hash, 'user_id': user_id}
             )
         db.session.commit()
@@ -126,13 +153,18 @@ class User:
         """
         try:
             row = db.session.execute(
-                text('SELECT has_password_set, password_hash, email FROM users WHERE id = :user_id'),
+                text('SELECT has_password_set, password_hash, email, phone, openid FROM users WHERE id = :user_id'),
                 {'user_id': user_id}
             ).fetchone()
             if not row:
                 return False
 
             rm = row._mapping
+            has_password_hash = bool(str(rm.get('password_hash') or '').strip())
+            has_external_binding = any(
+                bool(str(rm.get(k) or '').strip())
+                for k in ('email', 'phone', 'openid')
+            )
 
             # 如果has_password_set为true，肯定已设置密码
             if rm['has_password_set'] is True or rm['has_password_set'] == 1:
@@ -140,28 +172,17 @@ class User:
 
             # 如果has_password_set为false/0，需要判断：
             if rm['has_password_set'] is False or rm['has_password_set'] == 0:
-                # 有邮箱且has_password_set=false，说明是邮箱验证码注册的新用户，未设置密码
-                if rm['email'] and str(rm['email']).strip():
+                # 邮箱/手机/微信登录创建的新账号默认 has_password_set=false，视为未设置密码
+                if has_external_binding:
                     return False
-                # 没有邮箱，说明是老用户（通过用户名注册），即使has_password_set=false也认为已设置密码
-                if rm['password_hash']:
-                    return True
-                return False
+                # 无外部绑定的历史账号：若存在密码哈希，按已设置密码处理
+                return has_password_hash
 
-            # has_password_set为NULL的情况（字段刚添加，老用户）
+            # has_password_set为NULL：仅做推断，不在读取路径中写库
             if rm['has_password_set'] is None:
-                if rm['password_hash']:
-                    # 自动更新字段，避免下次再判断
-                    try:
-                        db.session.execute(
-                            text('UPDATE users SET has_password_set = true WHERE id = :user_id'),
-                            {'user_id': user_id}
-                        )
-                        db.session.commit()
-                    except Exception:
-                        pass
-                    return True
-                return False
+                if not has_password_hash:
+                    return False
+                return True
 
             return False
         except Exception as e:
