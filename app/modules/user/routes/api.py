@@ -12,31 +12,29 @@ from app.core.utils.time_utils import now_bj, today_bj
 from datetime import datetime, timedelta
 import os
 import uuid
-import re
 
 user_api_bp = Blueprint('user_api', __name__)
 
 
 # 允许的图片扩展名
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-USERNAME_ALNUM_RE = re.compile(r'^[A-Za-z0-9]+$')
 
 def allowed_file(filename):
     """检查文件扩展名是否允许"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def validate_alnum_username(username: str):
-    """校验用户名：2-20 位，仅允许字母和数字"""
+def validate_profile_nickname(username: str):
+    """校验昵称：2-20 位，禁止控制字符"""
     v = (username or '').strip()
     if not v:
-        return False, '用户名不能为空'
+        return False, '昵称不能为空'
     if len(v) < 2:
-        return False, '用户名至少2个字符'
+        return False, '昵称至少2个字符'
     if len(v) > 20:
-        return False, '用户名最多20个字符'
-    if not USERNAME_ALNUM_RE.fullmatch(v):
-        return False, '用户名仅支持字母和数字'
+        return False, '昵称最多20个字符'
+    if any((ord(ch) < 32 or ord(ch) == 127) for ch in v):
+        return False, '昵称包含非法字符'
     return True, ''
 
 
@@ -313,12 +311,12 @@ def update_user():
 @user_api_bp.route('/profile/check-username', methods=['POST'])
 @auth_required
 def check_username():
-    """检查用户名是否可用"""
+    """检查昵称是否可用"""
     uid = int(current_user_id() or 0)
     data = request.json or {}
     username = data.get('username', '').strip()
 
-    ok, err = validate_alnum_username(username)
+    ok, err = validate_profile_nickname(username)
     if not ok:
         return jsonify({'status': 'error', 'message': err}), 400
 
@@ -327,9 +325,9 @@ def check_username():
     ).first()
 
     if existing:
-        return jsonify({'status': 'error', 'available': False, 'message': '该用户名已被使用'})
+        return jsonify({'status': 'error', 'available': False, 'message': '该昵称已被使用'})
 
-    return jsonify({'status': 'success', 'available': True, 'message': '用户名可用'})
+    return jsonify({'status': 'success', 'available': True, 'message': '昵称可用'})
 
 
 @user_api_bp.route('/profile/update', methods=['POST'])
@@ -351,9 +349,9 @@ def update_profile():
         username_clean = None
         if username is not None:
             if not isinstance(username, str):
-                return jsonify({'status': 'error', 'message': '用户名格式不正确'}), 400
+                return jsonify({'status': 'error', 'message': '昵称格式不正确'}), 400
             username_clean = username.strip()
-            ok, err = validate_alnum_username(username_clean)
+            ok, err = validate_profile_nickname(username_clean)
             if not ok:
                 return jsonify({'status': 'error', 'message': err}), 400
             # 检查唯一性
@@ -361,7 +359,7 @@ def update_profile():
                 UserModel.username == username_clean, UserModel.id != uid
             ).first()
             if existing:
-                return jsonify({'status': 'error', 'message': '该用户名已被使用，请换一个'}), 400
+                return jsonify({'status': 'error', 'message': '该昵称已被使用，请换一个'}), 400
 
         # 签名（不改DB结构，存到 user_progress）
         signature_clean = None

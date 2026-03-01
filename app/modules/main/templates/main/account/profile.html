@@ -263,8 +263,8 @@
     <div class="profile-grid">
       <div class="acc-field">
         <div class="acc-label">昵称</div>
-        <input class="acc-input" id="nicknameInput" readonly />
-        <div class="acc-help">昵称由系统账号标识决定，当前不支持在此页面修改。</div>
+        <input class="acc-input" id="nicknameInput" readonly maxlength="20" />
+        <div class="acc-help">支持修改昵称（2-20 字符），保存后立即生效。</div>
       </div>
 
       <div class="acc-field">
@@ -408,6 +408,7 @@
         if (saveBtn) saveBtn.style.display = editing ? 'inline-flex' : 'none';
         if (cancelBtn) cancelBtn.style.display = editing ? 'inline-flex' : 'none';
 
+        if (nicknameInput) nicknameInput.readOnly = !editing;
         if (collegeInput) collegeInput.readOnly = !editing;
         if (contactInput) contactInput.readOnly = !editing;
         if (signatureInput) signatureInput.readOnly = !editing;
@@ -470,7 +471,7 @@
         const hasPasswordSet = !!(d && d.has_password_set);
         const wechatBound = !!(d && d.wechat_bound);
 
-        original = { contact, college, signature };
+        original = { username, contact, college, signature };
 
         if (usernameDisplay) usernameDisplay.textContent = username;
         if (roleDisplay) roleDisplay.textContent = isAdmin ? '管理员' : '普通用户';
@@ -514,11 +515,30 @@
         saveBtn.disabled = true;
         saveBtn.textContent = '保存中…';
 
+        const nickname = (nicknameInput && typeof nicknameInput.value === 'string') ? nicknameInput.value.trim() : '';
+        const originalNickname = (original && typeof original.username === 'string') ? original.username : '';
+        const nicknameChanged = nickname !== originalNickname;
+
         const payload = {
           contact: (contactInput && typeof contactInput.value === 'string') ? contactInput.value.trim() : '',
           college: (collegeInput && typeof collegeInput.value === 'string') ? collegeInput.value.trim() : '',
           signature: (signatureInput && typeof signatureInput.value === 'string') ? signatureInput.value.trim() : '',
         };
+        if (nicknameChanged) {
+          if (!nickname) {
+            showMsg('昵称不能为空');
+            saveBtn.disabled = false;
+            saveBtn.textContent = '保存';
+            return;
+          }
+          if (nickname.length < 2 || nickname.length > 20) {
+            showMsg('昵称长度需为 2-20 个字符');
+            saveBtn.disabled = false;
+            saveBtn.textContent = '保存';
+            return;
+          }
+          payload.username = nickname;
+        }
 
         try {
           const res = await fetch('/api/profile/update', {
@@ -564,6 +584,7 @@
       });
 
       cancelBtn && cancelBtn.addEventListener('click', function(){
+        if (nicknameInput) nicknameInput.value = original.username || '';
         if (contactInput) contactInput.value = original.contact || '';
         if (collegeInput) collegeInput.value = original.college || '';
         if (signatureInput) signatureInput.value = original.signature || '';
