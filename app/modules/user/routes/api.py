@@ -12,16 +12,32 @@ from app.core.utils.time_utils import now_bj, today_bj
 from datetime import datetime, timedelta
 import os
 import uuid
+import re
 
 user_api_bp = Blueprint('user_api', __name__)
 
 
 # 允许的图片扩展名
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+USERNAME_ALNUM_RE = re.compile(r'^[A-Za-z0-9]+$')
 
 def allowed_file(filename):
     """检查文件扩展名是否允许"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def validate_alnum_username(username: str):
+    """校验用户名：2-20 位，仅允许字母和数字"""
+    v = (username or '').strip()
+    if not v:
+        return False, '用户名不能为空'
+    if len(v) < 2:
+        return False, '用户名至少2个字符'
+    if len(v) > 20:
+        return False, '用户名最多20个字符'
+    if not USERNAME_ALNUM_RE.fullmatch(v):
+        return False, '用户名仅支持字母和数字'
+    return True, ''
 
 
 def calculate_streak_days(user_id):
@@ -302,14 +318,9 @@ def check_username():
     data = request.json or {}
     username = data.get('username', '').strip()
 
-    if not username:
-        return jsonify({'status': 'error', 'message': '用户名不能为空'}), 400
-
-    if len(username) < 2:
-        return jsonify({'status': 'error', 'message': '用户名至少2个字符'}), 400
-
-    if len(username) > 20:
-        return jsonify({'status': 'error', 'message': '用户名最多20个字符'}), 400
+    ok, err = validate_alnum_username(username)
+    if not ok:
+        return jsonify({'status': 'error', 'message': err}), 400
 
     existing = db.session.query(UserModel.id).filter(
         UserModel.username == username, UserModel.id != uid
@@ -342,10 +353,9 @@ def update_profile():
             if not isinstance(username, str):
                 return jsonify({'status': 'error', 'message': '用户名格式不正确'}), 400
             username_clean = username.strip()
-            if len(username_clean) < 2:
-                return jsonify({'status': 'error', 'message': '用户名至少2个字符'}), 400
-            if len(username_clean) > 20:
-                return jsonify({'status': 'error', 'message': '用户名最多20个字符'}), 400
+            ok, err = validate_alnum_username(username_clean)
+            if not ok:
+                return jsonify({'status': 'error', 'message': err}), 400
             # 检查唯一性
             existing = db.session.query(UserModel.id).filter(
                 UserModel.username == username_clean, UserModel.id != uid

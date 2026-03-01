@@ -46,8 +46,8 @@ class EmailLoginSchema(BaseModel):
 
 
 class LoginSchema(BaseModel):
-    """登录Schema（支持用户名或邮箱）"""
-    username: str = Field(..., description="用户名或邮箱")
+    """登录Schema（仅支持邮箱或手机号）"""
+    username: str = Field(..., description="邮箱或手机号")
     password: str = Field(..., min_length=1, description="密码")
     remember: bool = Field(default=False, description="保持登录")
     redirect: Optional[str] = Field(default=None, description="登录后重定向地址")

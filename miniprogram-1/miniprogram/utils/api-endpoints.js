@@ -463,9 +463,9 @@ exports.api = {
     webWechatBindConfirm: function (sid, nonce, code) {
         return request('/wechat/bind_confirm', 'POST', { sid: sid, nonce: nonce, code: code });
     },
-    // === 小程序：账号登录（JWT） ===
-    miniPasswordLogin: function (username, password) {
-        return request('/mini/login', 'POST', { username: username, password: password });
+    // === 小程序：邮箱/手机号 + 密码登录（JWT） ===
+    miniPasswordLogin: function (account, password) {
+        return request('/mini/login', 'POST', { account: account, password: password });
     },
     miniSendEmailLoginCode: function (email) {
         return request('/mini/email/send-login-code', 'POST', { email: email });

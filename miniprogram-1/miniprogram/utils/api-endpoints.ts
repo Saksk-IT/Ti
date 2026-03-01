@@ -49,9 +49,9 @@ export const api = {
   webWechatBindConfirm: (sid: string, nonce: string, code: string) =>
     request('/wechat/bind_confirm', 'POST', { sid, nonce, code }),
 
-  // === 小程序：账号登录（JWT） ===
-  miniPasswordLogin: (username: string, password: string) =>
-    request('/mini/login', 'POST', { username, password }),
+  // === 小程序：邮箱/手机号 + 密码登录（JWT） ===
+  miniPasswordLogin: (account: string, password: string) =>
+    request('/mini/login', 'POST', { account, password }),
 
   miniSendEmailLoginCode: (email: string) =>
     request('/mini/email/send-login-code', 'POST', { email }),

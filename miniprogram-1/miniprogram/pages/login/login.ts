@@ -226,8 +226,14 @@ Page({
     if (this.data.loading) return;
     const username = (this.data.username || '').trim();
     const password = this.data.password || '';
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username);
+    const isPhone = /^1[3-9]\d{9}$/.test(username);
     if (!username || !password) {
-      wx.showToast({ title: '请输入账号和密码', icon: 'none' });
+      wx.showToast({ title: '请输入邮箱/手机号和密码', icon: 'none' });
+      return;
+    }
+    if (!isEmail && !isPhone) {
+      wx.showToast({ title: '仅支持邮箱或手机号登录', icon: 'none' });
       return;
     }
 

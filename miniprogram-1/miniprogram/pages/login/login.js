@@ -300,7 +300,7 @@ Page({
     },
     onPasswordLoginTap: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var username, password, data, pending_2, e_2;
+            var username, password, isEmail, isPhone, data, pending_2, e_2;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -308,8 +308,14 @@ Page({
                             return [2 /*return*/];
                         username = (this.data.username || '').trim();
                         password = this.data.password || '';
+                        isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username);
+                        isPhone = /^1[3-9]\d{9}$/.test(username);
                         if (!username || !password) {
-                            wx.showToast({ title: '请输入账号和密码', icon: 'none' });
+                            wx.showToast({ title: '请输入邮箱/手机号和密码', icon: 'none' });
+                            return [2 /*return*/];
+                        }
+                        if (!isEmail && !isPhone) {
+                            wx.showToast({ title: '仅支持邮箱或手机号登录', icon: 'none' });
                             return [2 /*return*/];
                         }
                         this.setData({ loading: true });

@@ -758,18 +758,18 @@
           </div>
 
           <div class="login-tabs">
-            <button class="login-tab active" onclick="switchLoginMode('password')" type="button">账号</button>
-            <button class="login-tab" onclick="switchLoginMode('code')" type="button">邮箱</button>
-            <button class="login-tab" onclick="switchLoginMode('phone')" type="button">手机</button>
-            <button class="login-tab" onclick="switchLoginMode('qr')" type="button">微信</button>
+            <button class="login-tab active" data-mode="password" onclick="switchLoginMode('password')" type="button">密码</button>
+            <button class="login-tab" data-mode="code" onclick="switchLoginMode('code')" type="button">邮箱</button>
+            <button class="login-tab" data-mode="phone" onclick="switchLoginMode('phone')" type="button">手机</button>
+            <button class="login-tab" data-mode="qr" onclick="switchLoginMode('qr')" type="button">微信</button>
           </div>
 
           <div class="login-forms-container">
             <div id="password-form" class="login-form active">
               <div class="field">
-                <label>用户名 / 邮箱 / 手机号</label>
-                <input id="username" placeholder="支持用户名、邮箱或手机号" autocomplete="username" />
-                <div class="hint-text">可使用用户名、已绑定邮箱或手机号登录</div>
+                <label>邮箱 / 手机号</label>
+                <input id="username" placeholder="请输入已绑定邮箱或手机号" autocomplete="username" />
+                <div class="hint-text">仅支持邮箱或手机号 + 密码登录</div>
               </div>
               <div class="field">
                 <label>密码</label>
@@ -988,9 +988,9 @@
     function switchLoginMode(mode) {
       // 更新标签状态
       document.querySelectorAll('.login-tab').forEach(tab => {
-        tab.classList.remove('active');
+        const isActive = tab.dataset && tab.dataset.mode === mode;
+        tab.classList.toggle('active', isActive);
       });
-      event.target.classList.add('active');
 
       // 切换表单显示
       document.getElementById('password-form').classList.toggle('active', mode === 'password');
@@ -1112,6 +1112,8 @@
       setErr('', 'password');
       const username = val('username');
       const password = val('password');
+      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username);
+      const isPhone = /^1[3-9]\d{9}$/.test(username);
       
       // 检查是否同意协议
       const agreeTerms = document.getElementById('agreeTerms');
@@ -1121,7 +1123,11 @@
       }
       
       if(!username || !password) {
-        setErr('请输入账号（用户名/邮箱/手机号）和密码', 'password');
+        setErr('请输入邮箱/手机号和密码', 'password');
+        return;
+      }
+      if (!isEmail && !isPhone) {
+        setErr('仅支持邮箱或手机号登录', 'password');
         return;
       }
       
@@ -1597,9 +1603,9 @@
         setErr('密码重置成功，请使用新密码登录', 'forgot');
         setTimeout(() => {
           closeForgotPasswordModal();
-          switchLoginMode('password');
+          switchLoginMode('code');
           if (forgotMode === 'email') {
-            document.getElementById('username').value = document.getElementById('forgot-email').value.trim();
+            document.getElementById('email').value = document.getElementById('forgot-email').value.trim();
           }
         }, 1500);
       } catch (e) {

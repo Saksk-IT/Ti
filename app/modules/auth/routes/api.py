@@ -2,6 +2,7 @@
 """认证API路由"""
 from flask import Blueprint, request, jsonify, session, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
+import re
 from app.core.extensions import limiter
 from app.core.extensions import db
 from app.models.user import User as UserModel
@@ -30,12 +31,20 @@ from app.modules.auth.services.web_login_service import (
 from app.core.utils.jwt_utils import generate_jwt_token
 
 auth_api_bp = Blueprint('auth_api', __name__)
+PHONE_LOGIN_RE = re.compile(r'^1[3-9]\d{9}$')
+
+
+def is_email_or_phone_identifier(identifier: str) -> bool:
+    v = (identifier or '').strip()
+    if not v:
+        return False
+    return ('@' in v) or bool(PHONE_LOGIN_RE.fullmatch(v))
 
 
 @auth_api_bp.route('/login', methods=['POST'])
 @limiter.limit("5 per minute")
 def api_login():
-    """登录API（支持用户名、邮箱或手机号登录）"""
+    """登录API（仅支持邮箱或手机号 + 密码）"""
     data = request.json or {}
     
     # 使用Pydantic验证
@@ -50,14 +59,17 @@ def api_login():
     remember = login_data.remember
     
     if not identifier or not password:
-        current_app.logger.warning(f'登录失败: 缺少用户名或密码 - IP: {request.remote_addr}')
+        current_app.logger.warning(f'登录失败: 缺少账号或密码 - IP: {request.remote_addr}')
         return jsonify({'status': 'error', 'message': '账号和密码不能为空'}), 400
+
+    if not is_email_or_phone_identifier(identifier):
+        return jsonify({'status': 'error', 'message': '暂不支持用户名登录，请使用邮箱或手机号'}), 400
     
-    # 使用User模型的verify_password方法（支持用户名、邮箱和手机号）
+    # 使用User模型的verify_password方法（此处已限制为邮箱或手机号）
     user = User.verify_password(identifier, password)
     
     if not user:
-        current_app.logger.warning(f'登录失败: 用户名或密码错误 - 用户: {identifier}, IP: {request.remote_addr}')
+        current_app.logger.warning(f'登录失败: 账号或密码错误 - 账号: {identifier}, IP: {request.remote_addr}')
         return jsonify({'status': 'error', 'message': '账号或密码错误'}), 400
     
     if user.get('is_locked'):
@@ -945,12 +957,14 @@ def api_wechat_unbind():
 @auth_api_bp.route('/mini/login', methods=['POST'])
 @limiter.limit("60 per minute")
 def api_mini_password_login():
-    """小程序：账号/邮箱 + 密码 登录（返回JWT，不写session）"""
+    """小程序：邮箱/手机号 + 密码 登录（返回JWT，不写session）"""
     data = request.json or {}
     identifier = (data.get('username') or data.get('account') or '').strip()
     password = data.get('password') or ''
     if not identifier or not password:
         return jsonify({'status': 'error', 'message': '账号和密码不能为空'}), 400
+    if not is_email_or_phone_identifier(identifier):
+        return jsonify({'status': 'error', 'message': '暂不支持用户名登录，请使用邮箱或手机号'}), 400
 
     try:
         user = User.verify_password(identifier, password)
