@@ -1201,10 +1201,10 @@
         
         if(data.status === 'success') {
           // 开始倒计时
-          codeCountdown = 60;
+          codeCountdown = 20;
           startCodeCountdown();
           setErr('验证码已发送，请查收邮件', 'code');
-          document.getElementById('code-hint').textContent = '验证码已发送，请查收邮件（60秒后可重新发送）。未注册邮箱将自动创建账户';
+          document.getElementById('code-hint').textContent = '验证码已发送，请查收邮件（20秒后可重新发送）。未注册邮箱将自动创建账户';
         } else {
           setErr(data.message || '发送验证码失败', 'code');
         }
@@ -1261,10 +1261,10 @@
         });
         const data = await res.json();
         if (data.status === 'success') {
-          phoneCodeCountdown = 60;
+          phoneCodeCountdown = 20;
           startPhoneCodeCountdown();
           setErr('验证码已发送，请查收短信', 'phone');
-          document.getElementById('phone-code-hint').textContent = '验证码已发送，请查收短信（60秒后可重新发送）';
+          document.getElementById('phone-code-hint').textContent = '验证码已发送，请查收短信（20秒后可重新发送）';
         } else {
           setErr(data.message || '发送验证码失败', 'phone');
         }

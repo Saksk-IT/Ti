@@ -201,7 +201,7 @@ def api_bind_email():
 
 
 @auth_api_bp.route('/email/send-login-code', methods=['POST'])
-@limiter.limit("1 per minute;10 per hour")  # 同一邮箱1分钟1次，同一IP1小时10次
+@limiter.limit("3 per minute;10 per hour")  # 同一邮箱1分钟3次，同一IP1小时10次
 def api_send_login_code():
     """发送登录验证码API"""
     data = request.json or {}
@@ -997,7 +997,7 @@ def api_mini_password_login():
 
 
 @auth_api_bp.route('/mini/email/send-login-code', methods=['POST'])
-@limiter.limit("1 per minute;10 per hour")
+@limiter.limit("3 per minute;10 per hour")
 def api_mini_send_login_code():
     """小程序：发送邮箱登录验证码（支持自动注册）"""
     data = request.json or {}

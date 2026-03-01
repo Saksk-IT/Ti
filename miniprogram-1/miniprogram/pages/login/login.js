@@ -90,7 +90,7 @@ Page({
         email: '',
         code: '',
         codeSending: false,
-        countdown: 60,
+        countdown: 20,
         showDevTools: false,
         apiUrl: ''
     },
@@ -388,12 +388,12 @@ Page({
     },
     startCountdown: function () {
         var _this = this;
-        this.setData({ codeSending: true, countdown: 60 });
+        this.setData({ codeSending: true, countdown: 20 });
         var timer = setInterval(function () {
             var next = (_this.data.countdown || 0) - 1;
             if (next <= 0) {
                 clearInterval(timer);
-                _this.setData({ codeSending: false, countdown: 60 });
+                _this.setData({ codeSending: false, countdown: 20 });
                 return;
             }
             _this.setData({ countdown: next });

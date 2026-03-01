@@ -42,7 +42,7 @@ Page({
     email: '',
     code: '',
     codeSending: false,
-    countdown: 60,
+    countdown: 20,
     showDevTools: false,
     apiUrl: ''
   },
@@ -279,12 +279,12 @@ Page({
   },
 
   startCountdown() {
-    this.setData({ codeSending: true, countdown: 60 });
+    this.setData({ codeSending: true, countdown: 20 });
     const timer = setInterval(() => {
       const next = (this.data.countdown || 0) - 1;
       if (next <= 0) {
         clearInterval(timer);
-        this.setData({ codeSending: false, countdown: 60 });
+        this.setData({ codeSending: false, countdown: 20 });
         return;
       }
       this.setData({ countdown: next });
