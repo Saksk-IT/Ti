@@ -803,7 +803,7 @@
   .hub-setup-overlay {
     position: fixed;
     inset: 0;
-    z-index: 80;
+    z-index: 1200;
     display: none;
     align-items: center;
     justify-content: center;
@@ -814,6 +814,12 @@
 
   .hub-setup-overlay.show {
     display: flex;
+  }
+
+  html.hub-setup-open #appSidebar,
+  html.hub-setup-open .app-topbar {
+    pointer-events: none !important;
+    user-select: none;
   }
 
   .hub-setup-modal {
@@ -1747,6 +1753,11 @@
   var setupProfileCache = null;
   var setupPhoneCountdownTimer = null;
   var setupPhoneCountdownLeft = 0;
+  var setupRoot = document.documentElement;
+
+  if (setupOverlay && setupOverlay.parentElement !== document.body) {
+    document.body.appendChild(setupOverlay);
+  }
 
   function escHtml(s) {
     var div = document.createElement('div');
@@ -1898,12 +1909,14 @@
 
   function openSetupModal() {
     if (!setupOverlay) return;
+    setupRoot && setupRoot.classList.add('hub-setup-open');
     setupOverlay.hidden = false;
     setupOverlay.classList.add('show');
   }
 
   function closeSetupModal() {
     if (!setupOverlay) return;
+    setupRoot && setupRoot.classList.remove('hub-setup-open');
     setupOverlay.classList.remove('show');
     setupOverlay.hidden = true;
   }
