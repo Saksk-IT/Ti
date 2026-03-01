@@ -1896,8 +1896,27 @@
     }, 1000);
   }
 
-  async function loadSetupProfile() {
-    var res = await fetch('/api/profile', { credentials: 'include' });
+  function applySetupProfilePatch(patch) {
+    setupProfileCache = Object.assign({}, setupProfileCache || {}, patch || {});
+    renderSetup(setupProfileCache);
+    syncHubHeroProfile(setupProfileCache);
+  }
+
+  async function loadSetupProfile(opts) {
+    var options = opts || {};
+    var url = '/api/profile';
+    if (options.noCache) {
+      url += (url.indexOf('?') >= 0 ? '&' : '?') + '_=' + Date.now();
+    }
+    var fetchOpts = { credentials: 'include' };
+    if (options.noCache) {
+      fetchOpts.cache = 'no-store';
+      fetchOpts.headers = {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      };
+    }
+    var res = await fetch(url, fetchOpts);
     var js = await res.json().catch(function() { return {}; });
     if (!res.ok || !js || js.status !== 'success' || !js.data) {
       throw new Error((js && js.message) || '资料加载失败');
@@ -1971,7 +1990,8 @@
       });
       var js = await res.json().catch(function() { return {}; });
       if (!res.ok || !js || js.status !== 'success') throw new Error((js && js.message) || '保存失败');
-      await loadSetupProfile();
+      applySetupProfilePatch({ username: v });
+      await loadSetupProfile({ noCache: true }).catch(function() { return null; });
       showSetupMessage('名称已更新', false);
     } catch (e) {
       showSetupMessage(e && e.message ? e.message : '名称更新失败', true);
@@ -1994,8 +2014,12 @@
       });
       var js = await res.json().catch(function() { return {}; });
       if (!res.ok || !js || js.status !== 'success') throw new Error((js && js.message) || '上传失败');
+      var avatarUrl = String((js && (js.avatar_url || (js.data && js.data.avatar_url))) || '').trim();
+      if (avatarUrl) {
+        applySetupProfilePatch({ avatar: avatarUrl });
+      }
       if (setupAvatarInput) setupAvatarInput.value = '';
-      await loadSetupProfile();
+      await loadSetupProfile({ noCache: true }).catch(function() { return null; });
       showSetupMessage('头像已更新', false);
     } catch (e) {
       showSetupMessage(e && e.message ? e.message : '头像上传失败', true);
