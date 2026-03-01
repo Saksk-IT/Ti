@@ -16,24 +16,6 @@
 - 允许：修改后端（Flask）代码、添加新的小程序页面、添加新的后端端点、为可维护性做必要重构。
 - 保持兼容性：小程序和网页必须共享相同的数据与语义（包括但不限于：收藏 / 错误 / 用户答案 / 用户进度 / 考试）。
 
-## 2.1 执行顺序（给 AI 的固定模板）
-
-1. 用 1～2 句话复述目标 + 关键约束（端：小程序/Web；是否涉及 UI；是否要新增接口）。
-2. 选择并声明将使用的 skills / MCP（如不需要也要声明"无"）。
-3. 需要补充信息时，先用第 5 节的"选项式澄清问题"问 2～4 个问题再实施。
-4. 修改代码尽量小步、可回滚；优先遵循现有模式与命名。
-5. 交付前做最小验证（能跑就跑；不能跑就说明原因与手动验证步骤）。
-
-## 2.2 任务开始检查清单（MUST）
-
-每次收到新任务时，AI 必须在内部完成以下检查（无需输出给用户）：
-
-1. [ ] 扫描用户消息中的关键词，匹配 2.5 节触发条件
-2. [ ] 若匹配到触发条件，自动加载对应 skill 或调用 MCP
-3. [ ] 若涉及框架/库用法不确定，主动调用 Context7 查询
-4. [ ] 若涉及前端页面调试，主动使用 chrome-devtools 获取页面状态
-5. [ ] 若无匹配，声明"本次使用：工具（...）；MCP（无）；skills（无）"
-
 ## 3) 前端设计要求（MUST）
 
 - 所有 Web 页面必须适配移动端（响应式布局、触控友好）。
@@ -63,110 +45,110 @@
 
 - 题库详情页存在两个入口：（题库广场 → 题库详情页）与（个人题库 → 题库详情页）。
   
-  # Agent Orchestration
+  # Agent 编排
 
-## Available Agents
+## 可用 Agents
 
-Located in `~/.claude/agents/`:
+位于 `~/.claude/agents/`：
 
-| Agent | Purpose | When to Use |
-|-------|---------|-------------|
-| planner | Implementation planning | Complex features, refactoring |
-| architect | System design | Architectural decisions |
-| tdd-guide | Test-driven development | New features, bug fixes |
-| code-reviewer | Code review | After writing code |
-| security-reviewer | Security analysis | Before commits |
-| build-error-resolver | Fix build errors | When build fails |
-| e2e-runner | E2E testing | Critical user flows |
-| refactor-cleaner | Dead code cleanup | Code maintenance |
-| doc-updater | Documentation | Updating docs |
+| Agent | 用途 | 何时使用 |
+|-------|------|----------|
+| planner | 实施规划 | 复杂功能、重构 |
+| architect | 系统设计 | 架构决策 |
+| tdd-guide | 测试驱动开发 | 新功能、缺陷修复 |
+| code-reviewer | 代码审查 | 编写/修改代码后 |
+| security-reviewer | 安全分析 | 提交前 |
+| build-error-resolver | 修复构建错误 | 构建失败时 |
+| e2e-runner | E2E 测试 | 关键用户流程 |
+| refactor-cleaner | 无效代码清理 | 代码维护 |
+| doc-updater | 文档维护 | 更新文档 |
 
-## Immediate Agent Usage
+## 立即使用 Agent 的场景
 
-No user prompt needed:
-1. Complex feature requests - Use **planner** agent
-2. Code just written/modified - Use **code-reviewer** agent
-3. Bug fix or new feature - Use **tdd-guide** agent
-4. Architectural decision - Use **architect** agent
+无需用户额外提示：
+1. 复杂功能需求：使用 **planner** agent
+2. 刚写完/改完代码：使用 **code-reviewer** agent
+3. 修复缺陷或新增功能：使用 **tdd-guide** agent
+4. 架构决策：使用 **architect** agent
 
-## Parallel Task Execution
+## 并行任务执行
 
-ALWAYS use parallel Task execution for independent operations:
+对于彼此独立的操作，始终使用并行 Task 执行：
 
 ```markdown
-# GOOD: Parallel execution
-Launch 3 agents in parallel:
-1. Agent 1: Security analysis of auth module
-2. Agent 2: Performance review of cache system
-3. Agent 3: Type checking of utilities
+# 好：并行执行
+并行启动 3 个 agents：
+1. Agent 1：认证模块安全分析
+2. Agent 2：缓存系统性能评审
+3. Agent 3：工具函数类型检查
 
-# BAD: Sequential when unnecessary
-First agent 1, then agent 2, then agent 3
+# 差：不必要的串行
+先做 agent 1，再做 agent 2，再做 agent 3
 ```
 
-## Multi-Perspective Analysis
+## 多视角分析
 
-For complex problems, use split role sub-agents:
-- Factual reviewer
-- Senior engineer
-- Security expert
-- Consistency reviewer
-- Redundancy checker
+对于复杂问题，使用分角色子 agents：
+- 事实审阅者
+- 高级工程师
+- 安全专家
+- 一致性审查者
+- 冗余检查者
 
 
-# Coding Style
+# 编码风格
 
-## Immutability (CRITICAL)
+## 不可变性（CRITICAL）
 
-ALWAYS create new objects, NEVER mutate existing ones:
+始终创建新对象，绝不原地修改现有对象：
 
 ```
-// Pseudocode
-WRONG:  modify(original, field, value) → changes original in-place
-CORRECT: update(original, field, value) → returns new copy with change
+// 伪代码
+错误：modify(original, field, value) → 直接在原对象上修改
+正确：update(original, field, value) → 返回包含改动的新副本
 ```
 
-Rationale: Immutable data prevents hidden side effects, makes debugging easier, and enables safe concurrency.
+原因：不可变数据可避免隐式副作用，提升调试效率，并支持安全并发。
 
-## File Organization
+## 文件组织
 
-MANY SMALL FILES > FEW LARGE FILES:
-- High cohesion, low coupling
-- 200-400 lines typical, 800 max
-- Extract utilities from large modules
-- Organize by feature/domain, not by type
+许多小文件 > 少量大文件：
+- 高内聚、低耦合
+- 常规 200-400 行，最多 800 行
+- 从大模块中提取工具函数
+- 按功能/领域组织，而不是按类型组织
 
-## Error Handling
+## 错误处理
 
-ALWAYS handle errors comprehensively:
-- Handle errors explicitly at every level
-- Provide user-friendly error messages in UI-facing code
-- Log detailed error context on the server side
-- Never silently swallow errors
+始终做全面错误处理：
+- 在每一层显式处理错误
+- 面向 UI 的代码提供用户友好的错误提示
+- 服务端记录详细错误上下文
+- 绝不静默吞掉错误
 
-## Input Validation
+## 输入校验
 
-ALWAYS validate at system boundaries:
-- Validate all user input before processing
-- Use schema-based validation where available
-- Fail fast with clear error messages
-- Never trust external data (API responses, user input, file content)
+始终在系统边界做校验：
+- 处理前校验所有用户输入
+- 能用 schema 校验就优先使用
+- 快速失败并给出清晰错误信息
+- 永远不要信任外部数据（API 响应、用户输入、文件内容）
 
-## Code Quality Checklist
+## 代码质量检查清单
 
-Before marking work complete:
-- [ ] Code is readable and well-named
-- [ ] Functions are small (<50 lines)
-- [ ] Files are focused (<800 lines)
-- [ ] No deep nesting (>4 levels)
-- [ ] Proper error handling
-- [ ] No hardcoded values (use constants or config)
-- [ ] No mutation (immutable patterns used)
+在标记完成前检查：
+- [ ] 代码可读、命名清晰
+- [ ] 函数足够小（<50 行）
+- [ ] 文件职责聚焦（<800 行）
+- [ ] 无深层嵌套（>4 层）
+- [ ] 错误处理完善
+- [ ] 无硬编码值（使用常量或配置）
+- [ ] 无可变修改（采用不可变模式）
 
 
-# Git Workflow
+# Git 工作流
 
-## Commit Message Format
+## 提交信息格式
 
 ```
 <type>: <description>
@@ -174,222 +156,187 @@ Before marking work complete:
 <optional body>
 ```
 
-Types: feat, fix, refactor, docs, test, chore, perf, ci
+类型：feat、fix、refactor、docs、test、chore、perf、ci
 
-Note: Attribution disabled globally via ~/.claude/settings.json.
+说明：归属信息已在 `~/.claude/settings.json` 全局禁用。
 
-## Pull Request Workflow
+## Pull Request 工作流
 
-When creating PRs:
-1. Analyze full commit history (not just latest commit)
-2. Use `git diff [base-branch]...HEAD` to see all changes
-3. Draft comprehensive PR summary
-4. Include test plan with TODOs
-5. Push with `-u` flag if new branch
+创建 PR 时：
+1. 分析完整提交历史（不只看最近一次提交）
+2. 使用 `git diff [base-branch]...HEAD` 查看全部改动
+3. 撰写完整 PR 摘要
+4. 包含测试计划与 TODO
+5. 若为新分支，使用 `-u` 参数推送
 
-## Feature Implementation Workflow
+## 功能实施工作流
 
-1. **Plan First**
-   - Use **planner** agent to create implementation plan
-   - Identify dependencies and risks
-   - Break down into phases
+1. **先做规划**
+   - 使用 **planner** agent 制定实施计划
+   - 识别依赖与风险
+   - 拆分为多个阶段
 
-2. **TDD Approach**
-   - Use **tdd-guide** agent
-   - Write tests first (RED)
-   - Implement to pass tests (GREEN)
-   - Refactor (IMPROVE)
-   - Verify 80%+ coverage
+2. **TDD 流程**
+   - 使用 **tdd-guide** agent
+   - 先写测试（RED）
+   - 实现代码使其通过（GREEN）
+   - 重构（IMPROVE）
+   - 验证覆盖率达到 80%+
 
-3. **Code Review**
-   - Use **code-reviewer** agent immediately after writing code
-   - Address CRITICAL and HIGH issues
-   - Fix MEDIUM issues when possible
+3. **代码审查**
+   - 写完代码后立即使用 **code-reviewer** agent
+   - 优先处理 CRITICAL 与 HIGH 问题
+   - MEDIUM 问题尽量修复
 
-4. **Commit & Push**
-   - Detailed commit messages
-   - Follow conventional commits format
-
-
-# Hooks System
-
-## Hook Types
-
-- **PreToolUse**: Before tool execution (validation, parameter modification)
-- **PostToolUse**: After tool execution (auto-format, checks)
-- **Stop**: When session ends (final verification)
-
-## Auto-Accept Permissions
-
-Use with caution:
-- Enable for trusted, well-defined plans
-- Disable for exploratory work
-- Never use dangerously-skip-permissions flag
-- Configure `allowedTools` in `~/.claude.json` instead
-
-## TodoWrite Best Practices
-
-Use TodoWrite tool to:
-- Track progress on multi-step tasks
-- Verify understanding of instructions
-- Enable real-time steering
-- Show granular implementation steps
-
-Todo list reveals:
-- Out of order steps
-- Missing items
-- Extra unnecessary items
-- Wrong granularity
-- Misinterpreted requirements
+4. **提交与推送**
+   - 编写详细提交信息
+   - 遵循约定式提交格式
 
 
-# Common Patterns
+# Hooks 系统
 
-## Skeleton Projects
+## Hook 类型
 
-When implementing new functionality:
-1. Search for battle-tested skeleton projects
-2. Use parallel agents to evaluate options:
-   - Security assessment
-   - Extensibility analysis
-   - Relevance scoring
-   - Implementation planning
-3. Clone best match as foundation
-4. Iterate within proven structure
+- **PreToolUse**：工具执行前（校验、参数调整）
+- **PostToolUse**：工具执行后（自动格式化、检查）
+- **Stop**：会话结束时（最终验证）
 
-## Design Patterns
+## 自动接受权限
 
-### Repository Pattern
+请谨慎使用：
+- 仅对可信且边界明确的计划启用
+- 探索性工作应禁用
+- 严禁使用 `dangerously-skip-permissions` 标志
+- 请在 `~/.claude.json` 中配置 `allowedTools`
 
-Encapsulate data access behind a consistent interface:
-- Define standard operations: findAll, findById, create, update, delete
-- Concrete implementations handle storage details (database, API, file, etc.)
-- Business logic depends on the abstract interface, not the storage mechanism
-- Enables easy swapping of data sources and simplifies testing with mocks
+## TodoWrite 最佳实践
 
-### API Response Format
+使用 TodoWrite 工具用于：
+- 跟踪多步骤任务进度
+- 校验对指令的理解
+- 支持实时调整方向
+- 展示细粒度实施步骤
 
-Use a consistent envelope for all API responses:
-- Include a success/status indicator
-- Include the data payload (nullable on error)
-- Include an error message field (nullable on success)
-- Include metadata for paginated responses (total, page, limit)
-
-
-# Performance Optimization
-
-## Model Selection Strategy
-
-**Haiku 4.5** (90% of Sonnet capability, 3x cost savings):
-- Lightweight agents with frequent invocation
-- Pair programming and code generation
-- Worker agents in multi-agent systems
-
-**Sonnet 4.5** (Best coding model):
-- Main development work
-- Orchestrating multi-agent workflows
-- Complex coding tasks
-
-**Opus 4.5** (Deepest reasoning):
-- Complex architectural decisions
-- Maximum reasoning requirements
-- Research and analysis tasks
-
-## Context Window Management
-
-Avoid last 20% of context window for:
-- Large-scale refactoring
-- Feature implementation spanning multiple files
-- Debugging complex interactions
-
-Lower context sensitivity tasks:
-- Single-file edits
-- Independent utility creation
-- Documentation updates
-- Simple bug fixes
-
-## Extended Thinking + Plan Mode
-
-Extended thinking is enabled by default, reserving up to 31,999 tokens for internal reasoning.
-
-Control extended thinking via:
-- **Toggle**: Option+T (macOS) / Alt+T (Windows/Linux)
-- **Config**: Set `alwaysThinkingEnabled` in `~/.claude/settings.json`
-- **Budget cap**: `export MAX_THINKING_TOKENS=10000`
-- **Verbose mode**: Ctrl+O to see thinking output
-
-For complex tasks requiring deep reasoning:
-1. Ensure extended thinking is enabled (on by default)
-2. Enable **Plan Mode** for structured approach
-3. Use multiple critique rounds for thorough analysis
-4. Use split role sub-agents for diverse perspectives
-
-## Build Troubleshooting
-
-If build fails:
-1. Use **build-error-resolver** agent
-2. Analyze error messages
-3. Fix incrementally
-4. Verify after each fix
+Todo 列表可以暴露：
+- 步骤顺序错误
+- 遗漏事项
+- 不必要的额外事项
+- 粒度不合理
+- 需求理解偏差
 
 
-# Security Guidelines
+# 常见模式
 
-## Mandatory Security Checks
+## 骨架项目
 
-Before ANY commit:
-- [ ] No hardcoded secrets (API keys, passwords, tokens)
-- [ ] All user inputs validated
-- [ ] SQL injection prevention (parameterized queries)
-- [ ] XSS prevention (sanitized HTML)
-- [ ] CSRF protection enabled
-- [ ] Authentication/authorization verified
-- [ ] Rate limiting on all endpoints
-- [ ] Error messages don't leak sensitive data
+实现新功能时：
+1. 先搜索经过验证的骨架项目
+2. 使用并行 agents 评估方案：
+   - 安全性评估
+   - 可扩展性分析
+   - 相关性评分
+   - 实施规划
+3. 克隆最匹配的方案作为基础
+4. 在成熟结构内迭代
 
-## Secret Management
+## 设计模式
 
-- NEVER hardcode secrets in source code
-- ALWAYS use environment variables or a secret manager
-- Validate that required secrets are present at startup
-- Rotate any secrets that may have been exposed
+### Repository 模式
 
-## Security Response Protocol
+通过统一接口封装数据访问：
+- 定义标准操作：findAll、findById、create、update、delete
+- 具体实现处理存储细节（数据库、API、文件等）
+- 业务逻辑依赖抽象接口，而不是具体存储机制
+- 便于替换数据源，也更易通过 mock 测试
 
-If security issue found:
-1. STOP immediately
-2. Use **security-reviewer** agent
-3. Fix CRITICAL issues before continuing
-4. Rotate any exposed secrets
-5. Review entire codebase for similar issues
+### API 响应格式
+
+所有 API 响应统一使用一致的信封结构：
+- 包含 success/status 标识
+- 包含数据负载（出错时可为 null）
+- 包含错误信息字段（成功时可为 null）
+- 分页响应包含元数据（total、page、limit）
 
 
-# Testing Requirements
+# 性能优化
 
-## Minimum Test Coverage: 80%
+## 模型选择策略
 
-Test Types (ALL required):
-1. **Unit Tests** - Individual functions, utilities, components
-2. **Integration Tests** - API endpoints, database operations
-3. **E2E Tests** - Critical user flows (framework chosen per language)
+全部使用gpt-5.3-xhigh。
 
-## Test-Driven Development
+**gpt-5.3-xhigh**
+- 轻量级且高频调用的 agents
+- 结对编程与代码生成
+- 多 agent 系统中的工作代理
+- 主体开发工作
+- 多 agent 工作流编排
+- 复杂编码任务
+- 复杂架构决策
+- 最高推理需求场景
+- 研究与分析任务
 
-MANDATORY workflow:
-1. Write test first (RED)
-2. Run test - it should FAIL
-3. Write minimal implementation (GREEN)
-4. Run test - it should PASS
-5. Refactor (IMPROVE)
-6. Verify coverage (80%+)
+## 上下文窗口管理
 
-## Troubleshooting Test Failures
+以下任务避免使用上下文窗口最后 20%：
+- 大规模重构
+- 跨多个文件的功能开发
+- 复杂交互调试
 
-1. Use **tdd-guide** agent
-2. Check test isolation
-3. Verify mocks are correct
-4. Fix implementation, not tests (unless tests are wrong)
+对上下文敏感度较低的任务：
+- 单文件修改
+- 独立工具函数创建
+- 文档更新
+- 简单缺陷修复
 
-## Agent Support
 
-- **tdd-guide** - Use PROACTIVELY for new features, enforces write-tests-first
+
+# 安全规范
+
+## 强制安全检查
+
+在任何一次提交前：
+- [ ] 不存在硬编码密钥（API Key、密码、令牌）
+- [ ] 所有用户输入均已校验
+- [ ] 防止 SQL 注入（参数化查询）
+- [ ] 防止 XSS（HTML 已净化）
+- [ ] 已启用 CSRF 防护
+- [ ] 鉴权/授权逻辑已验证
+- [ ] 所有端点都有限流
+- [ ] 错误信息不泄露敏感数据
+
+## 密钥管理
+
+- 严禁在源码中硬编码密钥
+- 必须使用环境变量或密钥管理服务
+- 启动时校验必需密钥是否存在
+- 若密钥可能泄露，立即轮换
+
+## 安全响应流程
+
+若发现安全问题：
+1. 立即停止
+2. 使用 **security-reviewer** agent
+3. 先修复 CRITICAL 问题再继续
+4. 轮换已暴露的密钥
+5. 全仓排查同类问题
+
+
+# 测试要求
+
+## 最低测试覆盖率：80%
+
+测试类型（全部必需）：
+1. **单元测试** - 针对函数、工具、组件
+2. **集成测试** - 针对 API 端点、数据库操作
+3. **E2E 测试** - 关键用户流程（框架按语言选型）
+
+## 测试驱动开发（TDD）
+
+强制流程：
+1. 先写测试（RED）
+2. 运行测试，必须先 FAIL
+3. 编写最小实现（GREEN）
+4. 再次运行测试，必须 PASS
+5. 重构（IMPROVE）
+6. 验证覆盖率（80%+）
+

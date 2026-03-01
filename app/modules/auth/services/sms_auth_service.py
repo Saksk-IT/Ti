@@ -259,6 +259,12 @@ class SmsAuthService:
         if not current_app.config.get('SMS_ENABLED', True):
             return False, '短信功能未启用'
 
+        user = User.query.get(user_id)
+        if not user:
+            return False, '用户不存在'
+        if user.phone and str(user.phone).strip() == phone:
+            return False, '新手机号不能与当前绑定手机号一致'
+
         existing = User.query.filter(User.phone == phone, User.id != user_id).first()
         if existing:
             return False, '该手机号已被其他用户绑定'
@@ -281,6 +287,12 @@ class SmsAuthService:
     @staticmethod
     def bind_phone(phone: str, code: str, user_id: int) -> Tuple[bool, Optional[str], Optional[Dict[str, Any]]]:
         """绑定手机号。"""
+        user = User.query.get(user_id)
+        if not user:
+            return False, '用户不存在', None
+        if user.phone and str(user.phone).strip() == phone:
+            return False, '新手机号不能与当前绑定手机号一致', None
+
         existing = User.query.filter(User.phone == phone, User.id != user_id).first()
         if existing:
             return False, '该手机号已被其他用户绑定', None
@@ -292,10 +304,6 @@ class SmsAuthService:
             return False, '验证码错误或已过期', None
 
         try:
-            user = User.query.get(user_id)
-            if not user:
-                return False, '用户不存在', None
-
             # 二次检查占用
             other = User.query.filter(User.phone == phone, User.id != user_id).first()
             if other:
