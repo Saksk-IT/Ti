@@ -1367,61 +1367,151 @@
     var _sseRetryDelay = 1000;
     var _sseFallbackTimer = null;
     var _sseFallbackCount = 0;
+    var _sseConnecting = false;
+    var _sseCooldownUntil = 0;
 
-    function connectSSE() {
+    function _toPositiveInt(value, fallbackValue) {
+      var n = parseInt(value, 10);
+      if (!Number.isFinite(n) || n <= 0) return fallbackValue;
+      return n;
+    }
+
+    function _closeSSE() {
       if (_sseSource) {
         try { _sseSource.close(); } catch(e) {}
-      }
-      _sseSource = new EventSource('/api/sse/stream');
-
-      _sseSource.addEventListener('connected', function() {
-        _sseRetryDelay = 1000;
-        _sseFallbackCount = 0;
-        if (_sseFallbackTimer) { clearInterval(_sseFallbackTimer); _sseFallbackTimer = null; }
-        fetchNotifCount();
-        fetchChatCount();
-        notifLoaded = false;
-        chatLoaded = false;
-      });
-
-      _sseSource.addEventListener('chat_unread', function() {
-        fetchChatCount();
-        chatLoaded = false;
-      });
-
-      _sseSource.addEventListener('chat_message', function() {
-        fetchChatCount();
-        chatLoaded = false;
-      });
-
-      _sseSource.addEventListener('notif_unread', function() {
-        fetchNotifCount();
-        notifLoaded = false;
-      });
-
-      _sseSource.addEventListener('interact_unread', function() {
-        fetchChatCount();
-        chatLoaded = false;
-      });
-
-      _sseSource.onerror = function() {
-        try { _sseSource.close(); } catch(e) {}
         _sseSource = null;
-        _sseFallbackCount++;
-        if (_sseFallbackCount >= 3 && !_sseFallbackTimer) {
-          _sseFallbackTimer = setInterval(function() {
-            fetchNotifCount();
-            fetchChatCount();
-            notifLoaded = false;
-            chatLoaded = false;
-          }, 60000);
+      }
+    }
+
+    function _startSseFallbackPolling() {
+      if (_sseFallbackTimer) return;
+      _sseFallbackTimer = setInterval(function() {
+        fetchNotifCount();
+        fetchChatCount();
+        notifLoaded = false;
+        chatLoaded = false;
+      }, 60000);
+    }
+
+    function _scheduleSseReconnect(delayMs) {
+      var safeDelay = Math.max(1000, delayMs || 1000);
+      if (_sseRetryTimer) clearTimeout(_sseRetryTimer);
+      _sseRetryTimer = setTimeout(function() {
+        if (document.visibilityState !== 'visible') return;
+        connectSSE();
+      }, safeDelay);
+    }
+
+    function _handleSseDisconnected(retryAfterSeconds) {
+      _closeSSE();
+      _sseConnecting = false;
+      _sseFallbackCount++;
+      if (_sseFallbackCount >= 3) {
+        _startSseFallbackPolling();
+      }
+
+      var baseDelay = retryAfterSeconds
+        ? _toPositiveInt(retryAfterSeconds, Math.ceil(_sseRetryDelay / 1000)) * 1000
+        : _sseRetryDelay;
+      _scheduleSseReconnect(baseDelay);
+      _sseRetryDelay = Math.min(Math.max(_sseRetryDelay * 2, baseDelay), 30000);
+    }
+
+    function _probeSsePreflight() {
+      return fetch('/api/sse/preflight', {
+        credentials: 'include',
+        cache: 'no-store',
+        headers: { 'Accept': 'application/json' }
+      })
+        .then(function(resp) {
+          return resp.json()
+            .catch(function() { return {}; })
+            .then(function(data) {
+              return { ok: resp.ok, status: resp.status, data: data || {} };
+            });
+        })
+        .catch(function() {
+          return { ok: false, status: 0, data: {} };
+        });
+    }
+
+    function connectSSE() {
+      if (_sseSource || _sseConnecting) {
+        return;
+      }
+      if (document.visibilityState !== 'visible') {
+        return;
+      }
+      if (Date.now() < _sseCooldownUntil) {
+        _scheduleSseReconnect(_sseCooldownUntil - Date.now());
+        return;
+      }
+      _sseConnecting = true;
+
+      _probeSsePreflight().then(function(result) {
+        if (!result.ok) {
+          var retryAfter = _toPositiveInt(
+            result.data && result.data.retry_after,
+            Math.ceil(_sseRetryDelay / 1000)
+          );
+          if (result.status === 429 || result.status === 503) {
+            _sseCooldownUntil = Date.now() + retryAfter * 1000;
+          }
+          _handleSseDisconnected(retryAfter);
+          return;
         }
-        if (_sseRetryTimer) clearTimeout(_sseRetryTimer);
-        _sseRetryTimer = setTimeout(function() {
-          connectSSE();
-        }, _sseRetryDelay);
-        _sseRetryDelay = Math.min(_sseRetryDelay * 2, 30000);
-      };
+        if (document.visibilityState !== 'visible') {
+          _sseConnecting = false;
+          return;
+        }
+
+        var source = null;
+        try {
+          source = new EventSource('/api/sse/stream');
+        } catch (e) {
+          _handleSseDisconnected();
+          return;
+        }
+        _sseSource = source;
+        _sseConnecting = false;
+
+        source.addEventListener('connected', function() {
+          _sseRetryDelay = 1000;
+          _sseFallbackCount = 0;
+          _sseCooldownUntil = 0;
+          if (_sseFallbackTimer) { clearInterval(_sseFallbackTimer); _sseFallbackTimer = null; }
+          fetchNotifCount();
+          fetchChatCount();
+          notifLoaded = false;
+          chatLoaded = false;
+        });
+
+        source.addEventListener('chat_unread', function() {
+          fetchChatCount();
+          chatLoaded = false;
+        });
+
+        source.addEventListener('chat_message', function() {
+          fetchChatCount();
+          chatLoaded = false;
+        });
+
+        source.addEventListener('notif_unread', function() {
+          fetchNotifCount();
+          notifLoaded = false;
+        });
+
+        source.addEventListener('interact_unread', function() {
+          fetchChatCount();
+          chatLoaded = false;
+        });
+
+        source.onerror = function() {
+          _handleSseDisconnected();
+        };
+      }).catch(function() {
+        _handleSseDisconnected();
+      });
     }
 
     // 暴露到 window 供聊天页使用
@@ -1442,7 +1532,14 @@
         }
         _syncSseToWindow();
         {% endif %}
+      } else {
+        _closeSSE();
       }
+    });
+
+    window.addEventListener('beforeunload', function() {
+      if (_sseRetryTimer) clearTimeout(_sseRetryTimer);
+      _closeSSE();
     });
 
     // 监听 SSE 连接变化，同步到 window

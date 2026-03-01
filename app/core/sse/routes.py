@@ -22,6 +22,69 @@ def _format_sse(event: str, data: str) -> str:
     return f"event: {event}\ndata: {data}\n\n"
 
 
+def _retry_after_seconds() -> int:
+    """获取 SSE 拒绝重试间隔（秒）"""
+    return max(1, int(current_app.config.get('SSE_RETRY_AFTER_SECONDS', 30) or 30))
+
+
+def _build_rejected_response(status_code: int, message: str, reason: str):
+    """构造拒绝连接响应（包含 Retry-After）"""
+    retry_after = _retry_after_seconds()
+    resp = jsonify({
+        'status': 'error',
+        'message': message,
+        'reason': reason,
+        'retry_after': retry_after,
+    })
+    resp.status_code = status_code
+    resp.headers['Retry-After'] = str(retry_after)
+    resp.headers['Cache-Control'] = 'no-store'
+    return resp
+
+
+def _validate_sse_capacity(uid: int):
+    """校验 SSE 连接容量；通过返回 None，不通过返回 response"""
+    # 全局连接数上限
+    max_total = current_app.config.get('SSE_MAX_TOTAL_CONNECTIONS', MAX_TOTAL_CONNECTIONS)
+    if get_total_connection_count() >= max_total:
+        return _build_rejected_response(
+            status_code=503,
+            message='服务器连接数已满，请稍后重试',
+            reason='total_connection_limit',
+        )
+
+    # 每用户最大连接数
+    if get_connection_count(uid) >= 3:
+        return _build_rejected_response(
+            status_code=429,
+            message='连接数超限，请关闭其他标签页',
+            reason='per_user_connection_limit',
+        )
+
+    return None
+
+
+@sse_bp.route('/sse/preflight')
+def sse_preflight():
+    """SSE 连接前预检，用于客户端决定是否立即重连"""
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
+
+    uid = int(user_id)
+    rejected = _validate_sse_capacity(uid)
+    if rejected is not None:
+        return rejected
+
+    resp = jsonify({
+        'status': 'success',
+        'can_connect': True,
+        'retry_after': 0,
+    })
+    resp.headers['Cache-Control'] = 'no-store'
+    return resp
+
+
 @sse_bp.route('/sse/stream')
 def sse_stream():
     """SSE 长连接端点
@@ -38,14 +101,9 @@ def sse_stream():
 
     uid = int(user_id)
 
-    # 全局连接数上限
-    max_total = current_app.config.get('SSE_MAX_TOTAL_CONNECTIONS', MAX_TOTAL_CONNECTIONS)
-    if get_total_connection_count() >= max_total:
-        return jsonify({'status': 'error', 'message': '服务器连接数已满，请稍后重试'}), 503
-
-    # 每用户最大连接数
-    if get_connection_count(uid) >= 3:
-        return jsonify({'status': 'error', 'message': '连接数超限，请关闭其他标签页'}), 429
+    rejected = _validate_sse_capacity(uid)
+    if rejected is not None:
+        return rejected
 
     max_duration = current_app.config.get('SSE_MAX_CONNECTION_DURATION_SECONDS', MAX_CONNECTION_DURATION_SECONDS)
     heartbeat_interval = current_app.config.get('SSE_HEARTBEAT_INTERVAL_SECONDS', HEARTBEAT_INTERVAL_SECONDS)

@@ -72,6 +72,9 @@ class Config:
 
     # Web 会话活跃时间写入节流（避免每次请求都写 SQLite）
     LAST_ACTIVE_UPDATE_INTERVAL_SECONDS = int(os.environ.get('LAST_ACTIVE_UPDATE_INTERVAL_SECONDS', '60') or 60)
+
+    # SSE 被拒绝后的建议重试间隔（秒）
+    SSE_RETRY_AFTER_SECONDS = int(os.environ.get('SSE_RETRY_AFTER_SECONDS', '30') or 30)
     
     # 限流配置
     # 生产环境建议使用 Redis: 'redis://localhost:6379/0'
