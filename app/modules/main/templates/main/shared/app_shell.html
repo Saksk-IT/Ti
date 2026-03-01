@@ -603,6 +603,12 @@
       z-index: 60;
     }
 
+    html.app-shell-modal-open #appSidebar,
+    html.app-shell-modal-open .app-topbar {
+      pointer-events: none !important;
+      user-select: none;
+    }
+
     @media (min-width: 861px) {
       .app-shell { padding-left: var(--app-sidebar-w); }
       .app-sidebar {
@@ -830,6 +836,92 @@
       var hamburger = document.getElementById('appHamburger');
       var collapseBtn = document.getElementById('appSidebarCollapse');
       var themeToggle = document.getElementById('appThemeToggle');
+      var modalRootClass = 'app-shell-modal-open';
+      var modalSelector = [
+        '.modal-overlay',
+        '.acc-modal-overlay',
+        '.upf-modal-overlay',
+        '.mb-modal-overlay',
+        '.ubg-overlay',
+        '.ubm-modal-overlay',
+        '.qb-modal-overlay',
+        '.hub-setup-overlay',
+        '.img-modal',
+        '.app-confirm-overlay'
+      ].join(',');
+
+      function getModalNodes() {
+        try {
+          return Array.prototype.slice.call(document.querySelectorAll(modalSelector));
+        } catch (e) {
+          return [];
+        }
+      }
+
+      function isVisibleModal(el) {
+        if (!el || !document.contains(el)) return false;
+        if (el.id === 'appOverlay' || el.classList.contains('app-overlay')) return false;
+        if (el.hidden) return false;
+        var ariaHidden = el.getAttribute('aria-hidden');
+        if (ariaHidden === 'true') return false;
+        var cs = null;
+        try { cs = window.getComputedStyle(el); } catch (e) { cs = null; }
+        if (!cs) return false;
+        if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+        var opacity = parseFloat(cs.opacity || '1');
+        if (opacity <= 0.01 && !el.classList.contains('show') && !el.classList.contains('active')) return false;
+        return true;
+      }
+
+      function hoistModalNodesToBody() {
+        getModalNodes().forEach(function (el) {
+          if (!el || !el.parentNode || el.parentNode === document.body) return;
+          if (el.id === 'appOverlay' || el.classList.contains('app-overlay')) return;
+          document.body.appendChild(el);
+        });
+      }
+
+      function syncModalOpenState() {
+        var open = getModalNodes().some(isVisibleModal);
+        root.classList.toggle(modalRootClass, open);
+      }
+
+      function setupGlobalModalLayerGuard() {
+        hoistModalNodesToBody();
+        syncModalOpenState();
+
+        var queued = false;
+        function queueSync() {
+          if (queued) return;
+          queued = true;
+          window.requestAnimationFrame(function () {
+            queued = false;
+            hoistModalNodesToBody();
+            syncModalOpenState();
+          });
+        }
+
+        try {
+          var target = document.body || document.documentElement;
+          if (window.MutationObserver && target) {
+            var observer = new MutationObserver(function () { queueSync(); });
+            observer.observe(target, {
+              subtree: true,
+              childList: true,
+              attributes: true,
+              attributeFilter: ['class', 'style', 'hidden', 'aria-hidden']
+            });
+          }
+        } catch (e) {}
+
+        window.addEventListener('resize', queueSync);
+        window.addEventListener('orientationchange', queueSync);
+
+        try {
+          window.__sakApp = window.__sakApp || {};
+          window.__sakApp.syncModalLayer = queueSync;
+        } catch (e) {}
+      }
 
       function getTheme() {
         try {
@@ -1071,6 +1163,7 @@
       applyThemeStyle(getThemeStyle());
       setCollapsed(getCollapsed());
       setupPracticeCTA();
+      setupGlobalModalLayerGuard();
 
       // follow system when no explicit theme set
       try {
