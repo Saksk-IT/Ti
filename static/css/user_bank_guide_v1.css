@@ -16,6 +16,12 @@
 }
 .ubg-overlay.show { display: flex; }
 
+html.user-banks-guide-open #appSidebar,
+html.user-banks-guide-open .app-topbar {
+  pointer-events: none !important;
+  user-select: none;
+}
+
 @media (min-width: 720px) {
   .ubg-overlay { align-items: center; }
 }
@@ -297,4 +303,3 @@
   .ubg-tab { flex: 0 0 auto; text-align: center; }
   .ubg-grid { grid-template-columns: minmax(0, 1fr); }
 }
-

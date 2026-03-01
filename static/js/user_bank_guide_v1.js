@@ -24,6 +24,11 @@
   function initGuide() {
     const overlay = $('#ubGuideOverlay');
     if (!overlay) return;
+    const root = document.documentElement;
+
+    if (overlay.parentNode !== document.body) {
+      document.body.appendChild(overlay);
+    }
 
     const modal = $('.ubg-modal', overlay);
     const tabs = $all('[data-ubg-tab]', overlay);
@@ -52,12 +57,14 @@
     function showOverlay() {
       overlay.classList.add('show');
       overlay.setAttribute('aria-hidden', 'false');
+      root.classList.add('user-banks-guide-open');
       document.body.style.overflow = 'hidden';
     }
 
     function hideOverlay() {
       overlay.classList.remove('show');
       overlay.setAttribute('aria-hidden', 'true');
+      root.classList.remove('user-banks-guide-open');
       document.body.style.overflow = '';
       safeFocus(lastFocus);
     }

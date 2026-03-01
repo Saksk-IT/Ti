@@ -269,11 +269,17 @@
     justify-content: center;
     padding: 14px 14px calc(14px + env(safe-area-inset-bottom));
     background: rgba(2, 6, 23, 0.48);
-    z-index: 1000;
+    z-index: 1300;
   }
   .mb-modal-overlay.show { display: flex; }
   @media (min-width: 560px) {
     .mb-modal-overlay { align-items: center; }
+  }
+
+  html.user-banks-modal-open #appSidebar,
+  html.user-banks-modal-open .app-topbar {
+    pointer-events: none !important;
+    user-select: none;
   }
 
   .mb-modal-card {
@@ -527,6 +533,10 @@
     var currentFilter = 'all';
     var banks = [];
 
+    if (createModal && createModal.parentNode !== document.body) {
+      document.body.appendChild(createModal);
+    }
+
     function escapeHtml(text) {
       var div = document.createElement('div');
       div.textContent = text || '';
@@ -586,6 +596,7 @@
       modalOpen = true;
       createModal.classList.add('show');
       createModal.setAttribute('aria-hidden', 'false');
+      document.documentElement.classList.add('user-banks-modal-open');
       setCreateError('');
       toggleCreatePublicSettings();
       stripCreateParam();
@@ -598,6 +609,7 @@
       modalOpen = false;
       createModal.classList.remove('show');
       createModal.setAttribute('aria-hidden', 'true');
+      document.documentElement.classList.remove('user-banks-modal-open');
       setCreateError('');
       try { document.body.style.overflow = ''; } catch (e) {}
     }
