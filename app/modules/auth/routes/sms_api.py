@@ -17,7 +17,7 @@ sms_api_bp = Blueprint('sms_api', __name__)
 
 
 @sms_api_bp.route('/send-login-code', methods=['POST'])
-@limiter.limit("3 per minute;10 per hour")
+@limiter.limit("1 per minute;10 per hour")
 def send_login_code():
     """发送登录/注册验证码"""
     data = request.json or {}
