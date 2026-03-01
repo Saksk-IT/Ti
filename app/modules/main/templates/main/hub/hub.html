@@ -799,6 +799,225 @@
   .hub-fade-in-delay-1 { animation-delay: 0.1s; animation-fill-mode: backwards; }
   .hub-fade-in-delay-2 { animation-delay: 0.2s; animation-fill-mode: backwards; }
   .hub-fade-in-delay-3 { animation-delay: 0.3s; animation-fill-mode: backwards; }
+
+  .hub-setup-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(15, 23, 42, 0.42);
+    backdrop-filter: blur(2px);
+  }
+
+  .hub-setup-overlay.show {
+    display: flex;
+  }
+
+  .hub-setup-modal {
+    width: min(920px, 100%);
+    max-height: min(90vh, 760px);
+    overflow: auto;
+    background: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: 16px;
+    box-shadow: var(--app-shadow);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .hub-setup-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .hub-setup-title {
+    margin: 0;
+    font-size: 20px;
+    color: var(--app-text);
+  }
+
+  .hub-setup-sub {
+    margin: 0;
+    font-size: 13px;
+    color: var(--app-muted);
+    line-height: 1.6;
+  }
+
+  .hub-setup-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .hub-setup-card {
+    border: 1px solid var(--app-border);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: color-mix(in srgb, var(--app-surface) 92%, transparent);
+  }
+
+  .hub-setup-card-title {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--app-text);
+  }
+
+  .hub-setup-chip {
+    font-size: 12px;
+    line-height: 1;
+    padding: 5px 9px;
+    border-radius: 999px;
+    border: 1px solid var(--app-border);
+    color: var(--app-muted);
+    background: var(--app-surface-2);
+  }
+
+  .hub-setup-chip.ok {
+    color: #047857;
+    border-color: color-mix(in srgb, #047857 35%, var(--app-border));
+    background: color-mix(in srgb, #10b981 15%, var(--app-surface));
+  }
+
+  .hub-setup-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .hub-setup-field label {
+    font-size: 12px;
+    color: var(--app-muted);
+  }
+
+  .hub-setup-input {
+    width: 100%;
+    height: 40px;
+    border: 1px solid var(--app-border);
+    border-radius: 10px;
+    padding: 0 12px;
+    background: var(--app-surface-2);
+    color: var(--app-text);
+    outline: none;
+  }
+
+  .hub-setup-input:focus {
+    border-color: color-mix(in srgb, var(--app-primary) 45%, var(--app-border));
+    box-shadow: 0 0 0 3px var(--app-primary-soft);
+  }
+
+  .hub-setup-inline {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .hub-setup-inline .hub-setup-input {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .hub-setup-btn {
+    height: 36px;
+    border: 1px solid var(--app-border);
+    border-radius: 10px;
+    background: var(--app-surface-2);
+    color: var(--app-text);
+    padding: 0 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .hub-setup-btn:hover {
+    border-color: color-mix(in srgb, var(--app-primary) 45%, var(--app-border));
+  }
+
+  .hub-setup-btn.primary {
+    border-color: transparent;
+    background: var(--app-primary);
+    color: var(--app-primary-contrast);
+  }
+
+  .hub-setup-btn:disabled {
+    opacity: 0.62;
+    cursor: not-allowed;
+  }
+
+  .hub-setup-avatar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .hub-setup-avatar-preview {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 1px solid var(--app-border);
+    background: var(--app-primary-soft);
+    overflow: hidden;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--app-muted);
+    font-weight: 700;
+  }
+
+  .hub-setup-avatar-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .hub-setup-note {
+    margin: 0;
+    font-size: 12px;
+    color: var(--app-muted);
+    line-height: 1.5;
+  }
+
+  .hub-setup-msg {
+    min-height: 20px;
+    margin: 0;
+    font-size: 13px;
+    color: var(--app-muted);
+  }
+
+  .hub-setup-msg.err {
+    color: #dc2626;
+  }
+
+  .hub-setup-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  @media (max-width: 760px) {
+    .hub-setup-grid {
+      grid-template-columns: 1fr;
+    }
+    .hub-setup-modal {
+      padding: 14px;
+    }
+  }
 </style>
 {% endblock %}
 
@@ -1070,6 +1289,95 @@
   </div>
 {% endif %}
 </div>
+
+{% if logged_in %}
+<div class="hub-setup-overlay" id="hubSetupOverlay" hidden>
+  <div class="hub-setup-modal" role="dialog" aria-modal="true" aria-labelledby="hubSetupTitle">
+    <div class="hub-setup-head">
+      <h2 class="hub-setup-title" id="hubSetupTitle">完善账号信息</h2>
+      <button type="button" class="hub-setup-btn" id="hubSetupSkipTop">稍后完善</button>
+    </div>
+    <p class="hub-setup-sub" id="hubSetupSubText">建议完成名称、头像、密码等关键信息，后续登录和账号找回会更顺畅。</p>
+
+    <div class="hub-setup-grid">
+      <section class="hub-setup-card" aria-label="名称设置">
+        <h3 class="hub-setup-card-title">
+          <span>名称</span>
+          <span class="hub-setup-chip" id="hubSetupNameChip">待完善</span>
+        </h3>
+        <div class="hub-setup-field">
+          <label for="hubSetupUsername">用户名称</label>
+          <input class="hub-setup-input" id="hubSetupUsername" maxlength="20" placeholder="2-20 个字符" />
+        </div>
+        <div class="hub-setup-inline">
+          <button type="button" class="hub-setup-btn primary" id="hubSetupSaveNameBtn">保存名称</button>
+        </div>
+      </section>
+
+      <section class="hub-setup-card" aria-label="头像设置">
+        <h3 class="hub-setup-card-title">
+          <span>头像</span>
+          <span class="hub-setup-chip" id="hubSetupAvatarChip">待完善</span>
+        </h3>
+        <div class="hub-setup-avatar-wrap">
+          <div class="hub-setup-avatar-preview" id="hubSetupAvatarPreview">U</div>
+          <div class="hub-setup-field" style="flex:1 1 auto;">
+            <label for="hubSetupAvatarInput">上传头像</label>
+            <input id="hubSetupAvatarInput" type="file" accept="image/*" />
+          </div>
+        </div>
+        <div class="hub-setup-inline">
+          <button type="button" class="hub-setup-btn primary" id="hubSetupUploadAvatarBtn">上传头像</button>
+        </div>
+      </section>
+
+      <section class="hub-setup-card" aria-label="手机号绑定">
+        <h3 class="hub-setup-card-title">
+          <span>手机号</span>
+          <span class="hub-setup-chip" id="hubSetupPhoneChip">待完善</span>
+        </h3>
+        <p class="hub-setup-note" id="hubSetupPhoneCurrent">当前手机号：未绑定</p>
+        <div class="hub-setup-field">
+          <label for="hubSetupPhoneInput">手机号</label>
+          <input class="hub-setup-input" id="hubSetupPhoneInput" maxlength="11" inputmode="numeric" placeholder="请输入手机号" />
+        </div>
+        <div class="hub-setup-inline">
+          <input class="hub-setup-input" id="hubSetupPhoneCodeInput" maxlength="6" inputmode="numeric" placeholder="验证码" />
+          <button type="button" class="hub-setup-btn" id="hubSetupSendPhoneCodeBtn">发送验证码</button>
+        </div>
+        <div class="hub-setup-inline">
+          <button type="button" class="hub-setup-btn primary" id="hubSetupBindPhoneBtn">绑定手机号</button>
+        </div>
+      </section>
+
+      <section class="hub-setup-card" aria-label="密码设置">
+        <h3 class="hub-setup-card-title">
+          <span>密码</span>
+          <span class="hub-setup-chip" id="hubSetupPasswordChip">待完善</span>
+        </h3>
+        <div class="hub-setup-field">
+          <label for="hubSetupPasswordInput">新密码</label>
+          <input class="hub-setup-input" id="hubSetupPasswordInput" type="password" maxlength="64" autocomplete="new-password" placeholder="至少 8 位，需包含字母和数字" />
+        </div>
+        <div class="hub-setup-field">
+          <label for="hubSetupPasswordConfirmInput">确认密码</label>
+          <input class="hub-setup-input" id="hubSetupPasswordConfirmInput" type="password" maxlength="64" autocomplete="new-password" placeholder="请再次输入新密码" />
+        </div>
+        <div class="hub-setup-inline">
+          <button type="button" class="hub-setup-btn primary" id="hubSetupSetPasswordBtn">设置密码</button>
+        </div>
+      </section>
+    </div>
+
+    <p class="hub-setup-msg" id="hubSetupMsg" aria-live="polite"></p>
+
+    <div class="hub-setup-foot">
+      <button type="button" class="hub-setup-btn" id="hubSetupSkipBtn">稍后完善</button>
+      <button type="button" class="hub-setup-btn primary" id="hubSetupDoneBtn">完成并关闭</button>
+    </div>
+  </div>
+</div>
+{% endif %}
 
 <script>
 (function() {
@@ -1406,6 +1714,366 @@
       }
     } catch (e) {}
   })();
+
+  // 登录后资料完善弹窗（手机号/邮箱验证码登录后在首页触发）
+  var setupOverlay = document.getElementById('hubSetupOverlay');
+  var setupSubText = document.getElementById('hubSetupSubText');
+  var setupMsg = document.getElementById('hubSetupMsg');
+  var setupSkipBtn = document.getElementById('hubSetupSkipBtn');
+  var setupSkipTop = document.getElementById('hubSetupSkipTop');
+  var setupDoneBtn = document.getElementById('hubSetupDoneBtn');
+
+  var setupNameChip = document.getElementById('hubSetupNameChip');
+  var setupAvatarChip = document.getElementById('hubSetupAvatarChip');
+  var setupPhoneChip = document.getElementById('hubSetupPhoneChip');
+  var setupPasswordChip = document.getElementById('hubSetupPasswordChip');
+
+  var setupUsernameInput = document.getElementById('hubSetupUsername');
+  var setupSaveNameBtn = document.getElementById('hubSetupSaveNameBtn');
+  var setupAvatarPreview = document.getElementById('hubSetupAvatarPreview');
+  var setupAvatarInput = document.getElementById('hubSetupAvatarInput');
+  var setupUploadAvatarBtn = document.getElementById('hubSetupUploadAvatarBtn');
+
+  var setupPhoneCurrent = document.getElementById('hubSetupPhoneCurrent');
+  var setupPhoneInput = document.getElementById('hubSetupPhoneInput');
+  var setupPhoneCodeInput = document.getElementById('hubSetupPhoneCodeInput');
+  var setupSendPhoneCodeBtn = document.getElementById('hubSetupSendPhoneCodeBtn');
+  var setupBindPhoneBtn = document.getElementById('hubSetupBindPhoneBtn');
+
+  var setupPasswordInput = document.getElementById('hubSetupPasswordInput');
+  var setupPasswordConfirmInput = document.getElementById('hubSetupPasswordConfirmInput');
+  var setupSetPasswordBtn = document.getElementById('hubSetupSetPasswordBtn');
+
+  var setupProfileCache = null;
+  var setupPhoneCountdownTimer = null;
+  var setupPhoneCountdownLeft = 0;
+
+  function escHtml(s) {
+    var div = document.createElement('div');
+    div.textContent = String(s || '');
+    return div.innerHTML;
+  }
+
+  function isGenericName(name) {
+    var n = String(name || '').trim();
+    return !n || /^手机用户_/.test(n) || /^微信用户_/.test(n);
+  }
+
+  function maskPhone(phone) {
+    var p = String(phone || '').trim();
+    if (!/^1[3-9]\d{9}$/.test(p)) return p;
+    return p.slice(0, 3) + '****' + p.slice(7);
+  }
+
+  function showSetupMessage(text, isError) {
+    if (!setupMsg) return;
+    var t = String(text || '').trim();
+    setupMsg.textContent = t;
+    setupMsg.classList.toggle('err', !!isError && !!t);
+  }
+
+  function setSetupChip(el, ok) {
+    if (!el) return;
+    el.textContent = ok ? '已完成' : '待完善';
+    el.classList.toggle('ok', !!ok);
+  }
+
+  function syncHubHeroProfile(profile) {
+    var p = profile || {};
+    var nameEl = document.querySelector('.hub-username');
+    if (nameEl && p.username) {
+      nameEl.textContent = p.username;
+    }
+
+    var heroCard = document.querySelector('.hub-hero-card');
+    if (!heroCard || !p.avatar) return;
+    var currentImg = heroCard.querySelector('.hub-avatar');
+    if (currentImg) {
+      currentImg.src = p.avatar;
+      return;
+    }
+    var placeholder = heroCard.querySelector('.hub-avatar-placeholder');
+    if (!placeholder) return;
+    var img = document.createElement('img');
+    img.className = 'hub-avatar';
+    img.src = p.avatar;
+    img.alt = '头像';
+    placeholder.parentNode && placeholder.parentNode.replaceChild(img, placeholder);
+  }
+
+  function renderSetupAvatar(profile) {
+    if (!setupAvatarPreview) return;
+    var username = String(profile && profile.username || 'U').trim() || 'U';
+    var avatar = String(profile && profile.avatar || '').trim();
+    if (avatar) {
+      setupAvatarPreview.innerHTML = '<img src="' + escHtml(avatar) + '" alt="头像预览" />';
+      return;
+    }
+    setupAvatarPreview.textContent = username.charAt(0).toUpperCase();
+  }
+
+  function renderSetup(profile) {
+    setupProfileCache = profile || {};
+
+    var username = String(setupProfileCache.username || '').trim();
+    var phone = String(setupProfileCache.phone || '').trim();
+    var hasName = !isGenericName(username);
+    var hasAvatar = !!String(setupProfileCache.avatar || '').trim();
+    var hasPassword = !!setupProfileCache.has_password_set;
+    var hasPhone = !!phone;
+
+    setSetupChip(setupNameChip, hasName);
+    setSetupChip(setupAvatarChip, hasAvatar);
+    setSetupChip(setupPasswordChip, hasPassword);
+    setSetupChip(setupPhoneChip, hasPhone);
+
+    if (setupUsernameInput && document.activeElement !== setupUsernameInput) {
+      setupUsernameInput.value = username;
+    }
+    if (setupPhoneInput && document.activeElement !== setupPhoneInput && !setupPhoneInput.value) {
+      setupPhoneInput.value = phone;
+    }
+    if (setupPhoneCurrent) {
+      setupPhoneCurrent.textContent = hasPhone ? ('当前手机号：' + maskPhone(phone)) : '当前手机号：未绑定';
+    }
+    renderSetupAvatar(setupProfileCache);
+
+    var missing = [];
+    if (!hasName) missing.push('名称');
+    if (!hasAvatar) missing.push('头像');
+    if (!hasPassword) missing.push('密码');
+    if (setupSubText) {
+      setupSubText.textContent = missing.length
+        ? ('当前仍待完善：' + missing.join('、') + '。你可以直接在此窗口完成设置。')
+        : '核心信息已完善。若需补充手机号，可直接在此绑定。';
+    }
+  }
+
+  function validatePhone(phone) {
+    var v = String(phone || '').trim();
+    if (!v) return { ok: false, msg: '请输入手机号' };
+    if (!/^1[3-9]\d{9}$/.test(v)) return { ok: false, msg: '手机号格式不正确' };
+    return { ok: true, value: v };
+  }
+
+  function updatePhoneCodeButton() {
+    if (!setupSendPhoneCodeBtn) return;
+    if (setupPhoneCountdownLeft > 0) {
+      setupSendPhoneCodeBtn.disabled = true;
+      setupSendPhoneCodeBtn.textContent = '重新发送(' + setupPhoneCountdownLeft + 's)';
+      return;
+    }
+    setupSendPhoneCodeBtn.disabled = false;
+    setupSendPhoneCodeBtn.textContent = '发送验证码';
+  }
+
+  function startPhoneCodeCountdown(seconds) {
+    if (setupPhoneCountdownTimer) {
+      clearInterval(setupPhoneCountdownTimer);
+      setupPhoneCountdownTimer = null;
+    }
+    setupPhoneCountdownLeft = Math.max(0, Number(seconds) || 0);
+    updatePhoneCodeButton();
+    if (setupPhoneCountdownLeft <= 0) return;
+    setupPhoneCountdownTimer = setInterval(function() {
+      setupPhoneCountdownLeft = Math.max(0, setupPhoneCountdownLeft - 1);
+      updatePhoneCodeButton();
+      if (setupPhoneCountdownLeft <= 0 && setupPhoneCountdownTimer) {
+        clearInterval(setupPhoneCountdownTimer);
+        setupPhoneCountdownTimer = null;
+      }
+    }, 1000);
+  }
+
+  async function loadSetupProfile() {
+    var res = await fetch('/api/profile', { credentials: 'include' });
+    var js = await res.json().catch(function() { return {}; });
+    if (!res.ok || !js || js.status !== 'success' || !js.data) {
+      throw new Error((js && js.message) || '资料加载失败');
+    }
+    renderSetup(js.data);
+    syncHubHeroProfile(js.data);
+    return js.data;
+  }
+
+  function openSetupModal() {
+    if (!setupOverlay) return;
+    setupOverlay.hidden = false;
+    setupOverlay.classList.add('show');
+  }
+
+  function closeSetupModal() {
+    if (!setupOverlay) return;
+    setupOverlay.classList.remove('show');
+    setupOverlay.hidden = true;
+  }
+
+  async function initPostLoginSetupPrompt() {
+    if (!setupOverlay) return;
+    var raw = '';
+    try { raw = sessionStorage.getItem('post_login_profile_setup_prompt_v2') || ''; } catch (e) {}
+    if (!raw) return;
+
+    var payload = null;
+    try { payload = JSON.parse(raw); } catch (e) { payload = null; }
+    try { sessionStorage.removeItem('post_login_profile_setup_prompt_v2'); } catch (e) {}
+    if (!payload || !payload.source) return;
+
+    var ts = Number(payload.ts) || 0;
+    if (ts > 0 && (Date.now() - ts) > 24 * 60 * 60 * 1000) return;
+
+    try {
+      var profile = await loadSetupProfile();
+      var hasName = !isGenericName(profile.username);
+      var hasAvatar = !!String(profile.avatar || '').trim();
+      var hasPassword = !!profile.has_password_set;
+      if (hasName && hasAvatar && hasPassword) return;
+      openSetupModal();
+      showSetupMessage('你可以在这里一次性完成名称、头像、手机号和密码设置。', false);
+    } catch (e) {
+      showSetupMessage(e && e.message ? e.message : '资料加载失败', true);
+    }
+  }
+
+  setupSkipBtn && setupSkipBtn.addEventListener('click', closeSetupModal);
+  setupSkipTop && setupSkipTop.addEventListener('click', closeSetupModal);
+  setupDoneBtn && setupDoneBtn.addEventListener('click', closeSetupModal);
+
+  setupOverlay && setupOverlay.addEventListener('click', function(ev) {
+    if (ev.target === setupOverlay) closeSetupModal();
+  });
+
+  setupSaveNameBtn && setupSaveNameBtn.addEventListener('click', async function() {
+    var v = String(setupUsernameInput && setupUsernameInput.value || '').trim();
+    if (!v) { showSetupMessage('名称不能为空', true); return; }
+    if (v.length < 2) { showSetupMessage('名称至少 2 个字符', true); return; }
+    if (v.length > 20) { showSetupMessage('名称最多 20 个字符', true); return; }
+    setupSaveNameBtn.disabled = true;
+    try {
+      var res = await fetch('/api/profile/update', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: v })
+      });
+      var js = await res.json().catch(function() { return {}; });
+      if (!res.ok || !js || js.status !== 'success') throw new Error((js && js.message) || '保存失败');
+      await loadSetupProfile();
+      showSetupMessage('名称已更新', false);
+    } catch (e) {
+      showSetupMessage(e && e.message ? e.message : '名称更新失败', true);
+    } finally {
+      setupSaveNameBtn.disabled = false;
+    }
+  });
+
+  setupUploadAvatarBtn && setupUploadAvatarBtn.addEventListener('click', async function() {
+    var file = setupAvatarInput && setupAvatarInput.files && setupAvatarInput.files[0];
+    if (!file) { showSetupMessage('请先选择头像文件', true); return; }
+    setupUploadAvatarBtn.disabled = true;
+    try {
+      var fd = new FormData();
+      fd.append('avatar', file);
+      var res = await fetch('/api/profile/avatar', {
+        method: 'POST',
+        credentials: 'include',
+        body: fd
+      });
+      var js = await res.json().catch(function() { return {}; });
+      if (!res.ok || !js || js.status !== 'success') throw new Error((js && js.message) || '上传失败');
+      if (setupAvatarInput) setupAvatarInput.value = '';
+      await loadSetupProfile();
+      showSetupMessage('头像已更新', false);
+    } catch (e) {
+      showSetupMessage(e && e.message ? e.message : '头像上传失败', true);
+    } finally {
+      setupUploadAvatarBtn.disabled = false;
+    }
+  });
+
+  setupSendPhoneCodeBtn && setupSendPhoneCodeBtn.addEventListener('click', async function() {
+    if (setupPhoneCountdownLeft > 0) return;
+    var phoneVal = validatePhone(setupPhoneInput && setupPhoneInput.value);
+    if (!phoneVal.ok) { showSetupMessage(phoneVal.msg, true); return; }
+    setupSendPhoneCodeBtn.disabled = true;
+    try {
+      var res = await fetch('/api/sms/send-bind-code', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: phoneVal.value })
+      });
+      var js = await res.json().catch(function() { return {}; });
+      if (!res.ok || !js || js.status !== 'success') throw new Error((js && js.message) || '发送失败');
+      startPhoneCodeCountdown(60);
+      showSetupMessage('验证码已发送', false);
+    } catch (e) {
+      showSetupMessage(e && e.message ? e.message : '发送验证码失败', true);
+      startPhoneCodeCountdown(0);
+    } finally {
+      updatePhoneCodeButton();
+    }
+  });
+
+  setupBindPhoneBtn && setupBindPhoneBtn.addEventListener('click', async function() {
+    var phoneVal = validatePhone(setupPhoneInput && setupPhoneInput.value);
+    if (!phoneVal.ok) { showSetupMessage(phoneVal.msg, true); return; }
+    var code = String(setupPhoneCodeInput && setupPhoneCodeInput.value || '').trim();
+    if (!/^\d{6}$/.test(code)) { showSetupMessage('请输入 6 位验证码', true); return; }
+    setupBindPhoneBtn.disabled = true;
+    try {
+      var res = await fetch('/api/sms/bind', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: phoneVal.value, code: code })
+      });
+      var js = await res.json().catch(function() { return {}; });
+      if (!res.ok || !js || js.status !== 'success') throw new Error((js && js.message) || '绑定失败');
+      if (setupPhoneCodeInput) setupPhoneCodeInput.value = '';
+      await loadSetupProfile();
+      showSetupMessage(js.message || '手机号绑定成功', false);
+    } catch (e) {
+      showSetupMessage(e && e.message ? e.message : '手机号绑定失败', true);
+    } finally {
+      setupBindPhoneBtn.disabled = false;
+    }
+  });
+
+  setupSetPasswordBtn && setupSetPasswordBtn.addEventListener('click', async function() {
+    var pwd = String(setupPasswordInput && setupPasswordInput.value || '').trim();
+    var confirmPwd = String(setupPasswordConfirmInput && setupPasswordConfirmInput.value || '').trim();
+    if (!pwd) { showSetupMessage('请输入新密码', true); return; }
+    if (pwd.length < 8) { showSetupMessage('密码至少 8 位', true); return; }
+    if (!/[A-Za-z]/.test(pwd) || !/\d/.test(pwd)) { showSetupMessage('密码必须包含字母和数字', true); return; }
+    if (pwd !== confirmPwd) { showSetupMessage('两次输入的密码不一致', true); return; }
+    setupSetPasswordBtn.disabled = true;
+    try {
+      var res = await fetch('/api/profile/password', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          current_password: '',
+          new_password: pwd,
+          is_set_password: true
+        })
+      });
+      var js = await res.json().catch(function() { return {}; });
+      if (!res.ok || !js || js.status !== 'success') throw new Error((js && js.message) || '设置失败');
+      if (setupPasswordInput) setupPasswordInput.value = '';
+      if (setupPasswordConfirmInput) setupPasswordConfirmInput.value = '';
+      await loadSetupProfile();
+      showSetupMessage(js.message || '密码设置成功', false);
+    } catch (e) {
+      showSetupMessage(e && e.message ? e.message : '密码设置失败', true);
+    } finally {
+      setupSetPasswordBtn.disabled = false;
+    }
+  });
+
+  updatePhoneCodeButton();
+  initPostLoginSetupPrompt();
   {% endif %}
 })();
 </script>

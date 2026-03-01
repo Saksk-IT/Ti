@@ -1289,7 +1289,7 @@
       }, 1000);
     }
 
-    function handleProfileSetupReminder(user, fallbackRedirect) {
+    function queueProfileSetupPrompt(user, source) {
       const u = user && typeof user === 'object' ? user : {};
       const username = typeof u.username === 'string' ? u.username.trim() : '';
       const avatar = typeof u.avatar === 'string' ? u.avatar.trim() : '';
@@ -1299,20 +1299,23 @@
       const needsAvatar = !avatar;
       const needsPassword = !hasPasswordSet;
 
-      const missingItems = [];
-      if (needsName) missingItems.push('名称');
-      if (needsAvatar) missingItems.push('头像');
-      if (needsPassword) missingItems.push('密码');
+      if (!(needsName || needsAvatar || needsPassword)) {
+        try { sessionStorage.removeItem('post_login_profile_setup_prompt_v2'); } catch (e) {}
+        return;
+      }
 
-      if (!missingItems.length) return false;
-
-      const primaryTarget = needsName || needsAvatar
-        ? '/settings/account/profile'
-        : '/settings/account/security';
-      const message = `检测到账号还未完善${missingItems.join('、')}。\n建议立即设置，保障账号安全并方便识别。\n\n点击“确定”立即前往，点击“取消”稍后再说。`;
-      const goNow = window.confirm(message);
-      location.href = goNow ? primaryTarget : (fallbackRedirect || '/');
-      return true;
+      const payload = {
+        source: source || 'unknown',
+        ts: Date.now(),
+        missing: {
+          name: needsName,
+          avatar: needsAvatar,
+          password: needsPassword
+        }
+      };
+      try {
+        sessionStorage.setItem('post_login_profile_setup_prompt_v2', JSON.stringify(payload));
+      } catch (e) {}
     }
 
     async function doPhoneLogin(btn) {
@@ -1348,9 +1351,7 @@
           sessionStorage.removeItem('password_set_modal_shown');
         }
         const finalRedirect = data.redirect || redirectUrl || '/';
-        if (handleProfileSetupReminder(data.user, finalRedirect)) {
-          return;
-        }
+        queueProfileSetupPrompt(data.user, 'phone');
         location.href = finalRedirect;
       } catch (e) {
         setErr('网络错误，请稍后重试', 'phone');
@@ -1661,9 +1662,7 @@
         }
         
         const finalRedirect = data.redirect || redirectUrl || '/';
-        if (handleProfileSetupReminder(data.user, finalRedirect)) {
-          return;
-        }
+        queueProfileSetupPrompt(data.user, 'email');
         // 登录成功后跳转
         location.href = finalRedirect;
       } catch(error) {
