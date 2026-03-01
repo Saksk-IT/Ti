@@ -1289,7 +1289,7 @@
       }, 1000);
     }
 
-    function handlePhoneProfileSetupReminder(user, fallbackRedirect) {
+    function handleProfileSetupReminder(user, fallbackRedirect) {
       const u = user && typeof user === 'object' ? user : {};
       const username = typeof u.username === 'string' ? u.username.trim() : '';
       const avatar = typeof u.avatar === 'string' ? u.avatar.trim() : '';
@@ -1348,7 +1348,7 @@
           sessionStorage.removeItem('password_set_modal_shown');
         }
         const finalRedirect = data.redirect || redirectUrl || '/';
-        if (handlePhoneProfileSetupReminder(data.user, finalRedirect)) {
+        if (handleProfileSetupReminder(data.user, finalRedirect)) {
           return;
         }
         location.href = finalRedirect;
@@ -1660,8 +1660,12 @@
           sessionStorage.removeItem('password_set_modal_shown'); // 清除已显示标记，确保显示弹窗
         }
         
+        const finalRedirect = data.redirect || redirectUrl || '/';
+        if (handleProfileSetupReminder(data.user, finalRedirect)) {
+          return;
+        }
         // 登录成功后跳转
-        location.href = data.redirect || redirectUrl || '/';
+        location.href = finalRedirect;
       } catch(error) {
         setErr('网络错误，请稍后重试', 'code');
       } finally {

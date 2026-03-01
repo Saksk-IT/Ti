@@ -261,7 +261,12 @@ def api_email_login():
     return jsonify({
         'status': 'success',
         'redirect': redirect_url,
-        'needs_password_set': needs_password_set
+        'needs_password_set': needs_password_set,
+        'user': {
+            'username': user.get('username'),
+            'avatar': user.get('avatar'),
+            'has_password_set': bool(user.get('has_password_set')),
+        }
     }), 200
 
 
