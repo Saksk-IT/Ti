@@ -259,6 +259,7 @@ Page({
           userName: profile.username || '用户',
           userAvatar: nextAvatar,
         });
+        this.maybePromptPasswordSetup(profile);
       }
 
       // 签到状态
@@ -571,9 +572,23 @@ Page({
     if (isNewUser && this.data.isLoggedIn) {
       // 延迟显示弹窗，等页面加载完成
       setTimeout(() => {
+        if (!this.data.isLoggedIn || this.data.showProfileSetupModal) return;
         this.setData({ showProfileSetupModal: true, setupStep: 'profile' });
       }, 500);
     }
+  },
+
+  // 登录后自动检测：未设置密码则弹出设置密码弹窗
+  maybePromptPasswordSetup(profile: any) {
+    if (!this.data.isLoggedIn || !profile) return;
+    const hasPasswordSet = !!profile.has_password_set;
+    if (hasPasswordSet) return;
+    this.setData({
+      showProfileSetupModal: true,
+      setupStep: 'password',
+      setupPassword: '',
+      setupPasswordConfirm: ''
+    });
   },
 
   // 选择头像回调
@@ -771,7 +786,15 @@ Page({
       });
 
       wx.showToast({ title: '密码设置成功', icon: 'success' });
-      this.setData({ showProfileSetupModal: false });
+      const cachedUserInfo = wx.getStorageSync('userInfo') || {};
+      wx.setStorageSync('userInfo', { ...cachedUserInfo, has_password_set: true });
+      this.setData({
+        showProfileSetupModal: false,
+        setupStep: 'profile',
+        setupPassword: '',
+        setupPasswordConfirm: '',
+        showPassword: false
+      });
       wx.removeStorageSync('isNewUser');
     } catch (e: any) {
       wx.showToast({ title: e?.message || '设置失败', icon: 'none' });
