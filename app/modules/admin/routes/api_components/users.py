@@ -45,7 +45,7 @@ def _build_named_in(col: str, values: list, prefix: str = 'in') -> tuple[str, di
 
 @admin_api_bp.route('/users')
 @admin_required
-@limiter.exempt
+@limiter.limit("30 per minute;300 per hour")
 def admin_api_users():
     """用户列表API"""
     try:

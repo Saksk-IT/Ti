@@ -670,7 +670,7 @@ def study_learn_record():
 
 @quiz_api_bp.route('/study/review/summary')
 @auth_required
-@limiter.exempt
+@limiter.limit("30 per minute;300 per hour")
 def study_review_summary():
     # 复习模式：查询到期题目数量
     uid = current_user_id()

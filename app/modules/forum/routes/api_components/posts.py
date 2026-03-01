@@ -3,12 +3,14 @@
 from flask import jsonify, request, current_app
 
 from ..api import forum_api_bp
+from app.core.extensions import limiter
 from app.core.utils.decorators import auth_required, current_user_id
 from app.modules.forum.services import post_service
 
 
 @forum_api_bp.route('/posts', methods=['GET'])
 @auth_required
+@limiter.limit("60 per minute;600 per hour")
 def api_get_posts():
     """帖子列表"""
     try:
@@ -32,6 +34,7 @@ def api_get_posts():
 
 @forum_api_bp.route('/posts/<int:post_id>', methods=['GET'])
 @auth_required
+@limiter.limit("120 per minute;1200 per hour")
 def api_get_post(post_id: int):
     """帖子详情"""
     try:
@@ -46,6 +49,7 @@ def api_get_post(post_id: int):
 
 @forum_api_bp.route('/posts', methods=['POST'])
 @auth_required
+@limiter.limit("20 per minute;200 per day")
 def api_create_post():
     """创建帖子"""
     try:
@@ -77,6 +81,7 @@ def api_create_post():
 
 @forum_api_bp.route('/posts/<int:post_id>', methods=['PUT'])
 @auth_required
+@limiter.limit("30 per minute;300 per day")
 def api_update_post(post_id: int):
     """编辑帖子"""
     try:
@@ -92,6 +97,7 @@ def api_update_post(post_id: int):
 
 @forum_api_bp.route('/posts/<int:post_id>', methods=['DELETE'])
 @auth_required
+@limiter.limit("20 per minute;200 per day")
 def api_delete_post(post_id: int):
     """删除帖子"""
     try:

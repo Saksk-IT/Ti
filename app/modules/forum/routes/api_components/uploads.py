@@ -6,6 +6,7 @@ import uuid
 from flask import jsonify, request, current_app
 
 from ..api import forum_api_bp
+from app.core.extensions import limiter
 from app.core.utils.decorators import auth_required
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
@@ -18,6 +19,7 @@ def _allowed_file(filename: str) -> bool:
 
 @forum_api_bp.route('/upload/image', methods=['POST'])
 @auth_required
+@limiter.limit("10 per minute;200 per day")
 def api_upload_image():
     """上传论坛图片"""
     try:

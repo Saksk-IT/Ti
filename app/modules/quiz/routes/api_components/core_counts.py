@@ -32,7 +32,7 @@ def _build_named_in(prefix: str, values: list) -> tuple[str, dict]:
 
 
 @quiz_api_bp.route("/questions/count")
-@limiter.exempt  # 题目数量查询不限流
+@limiter.limit("60 per minute;600 per hour")
 def api_questions_count():
     """获取题目数量（添加权限过滤）"""
     from app.core.utils.subject_permissions import get_user_accessible_subjects
@@ -156,7 +156,7 @@ def api_questions_count():
 
 
 @quiz_api_bp.route("/questions/user_counts")
-@limiter.exempt  # 用户计数查询不限流
+@limiter.limit("60 per minute;600 per hour")
 def api_user_counts():
     """获取用户的收藏和错题数量"""
     from app.core.utils.portable_question_format import any_type_to_portable_type

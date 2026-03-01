@@ -36,7 +36,7 @@ def _build_named_in(prefix: str, values: list) -> tuple[str, dict]:
 
 @quiz_api_bp.route("/history", methods=["GET"])
 @auth_required  # 支持session和JWT
-@limiter.exempt
+@limiter.limit("20 per minute;200 per hour")
 def api_history_stats():
     """学习统计（与 Web /history 同语义，供小程序 v2 页面使用）"""
     from app.core.utils.subject_permissions import get_user_accessible_subjects

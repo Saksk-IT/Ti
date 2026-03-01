@@ -4,15 +4,15 @@ Flask扩展初始化
 """
 import os
 from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from flask_cors import CORS
 from flask_wtf.csrf import CSRFProtect
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from app.core.utils.rate_limit import user_or_ip_rate_key
 
 # 初始化限流器（不绑定app）
 limiter = Limiter(
-    key_func=get_remote_address
+    key_func=user_or_ip_rate_key
 )
 
 # CSRF 保护（不绑定app）

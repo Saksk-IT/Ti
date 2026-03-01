@@ -5,7 +5,7 @@ from flask import jsonify, request, current_app
 from sqlalchemy import text
 
 from ..api import forum_api_bp
-from app.core.extensions import db
+from app.core.extensions import db, limiter
 from app.core.utils.decorators import auth_required, current_user_id
 from app.modules.forum.services.content_sanitizer import strip_html_tags
 from app.modules.forum.services import interaction_service
@@ -13,6 +13,7 @@ from app.modules.forum.services import interaction_service
 
 @forum_api_bp.route('/like', methods=['POST'])
 @auth_required
+@limiter.limit("60 per minute;1000 per day")
 def api_toggle_like():
     """点赞 / 取消点赞"""
     try:
@@ -97,6 +98,7 @@ def api_toggle_like():
 
 @forum_api_bp.route('/favorite', methods=['POST'])
 @auth_required
+@limiter.limit("30 per minute;500 per day")
 def api_toggle_favorite():
     """收藏 / 取消收藏"""
     try:
@@ -136,6 +138,7 @@ def api_toggle_favorite():
 
 @forum_api_bp.route('/my/favorites', methods=['GET'])
 @auth_required
+@limiter.limit("60 per minute;600 per hour")
 def api_my_favorites():
     """我的收藏列表"""
     try:
@@ -179,6 +182,7 @@ def api_my_favorites():
 
 @forum_api_bp.route('/users/search', methods=['GET'])
 @auth_required
+@limiter.limit("60 per minute;600 per hour")
 def api_search_users():
     """搜索用户（用于转发、@提及等）
     q 为空时返回推荐用户：常 @ 的 > 私信联系人 > 关注的用户

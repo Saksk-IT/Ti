@@ -204,7 +204,7 @@ def history_page():
 
 @main_pages_bp.route('/api/data/center', methods=['GET'])
 @auth_required  # 支持 session / JWT
-@limiter.exempt
+@limiter.limit("20 per minute;200 per hour")
 def api_data_center():
     """数据中心聚合数据（供小程序与 Web 子页复用）。"""
     uid = current_user_id()
@@ -221,7 +221,7 @@ def api_data_center():
 
 @main_pages_bp.route('/api/data/tags', methods=['GET'])
 @auth_required  # 支持 session / JWT
-@limiter.exempt
+@limiter.limit("20 per minute;200 per hour")
 def api_data_tags():
     """数据中心：标签聚合统计（供小程序与 Web 复用）。"""
     uid = current_user_id()

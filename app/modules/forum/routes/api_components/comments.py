@@ -3,12 +3,14 @@
 from flask import jsonify, request, current_app, session
 
 from ..api import forum_api_bp
+from app.core.extensions import limiter
 from app.core.utils.decorators import auth_required, current_user_id
 from app.modules.forum.services import comment_service
 
 
 @forum_api_bp.route('/posts/<int:post_id>/comments', methods=['GET'])
 @auth_required
+@limiter.limit("120 per minute;1200 per hour")
 def api_get_comments(post_id: int):
     """获取评论列表"""
     try:
@@ -29,6 +31,7 @@ def api_get_comments(post_id: int):
 
 @forum_api_bp.route('/posts/<int:post_id>/comments', methods=['POST'])
 @auth_required
+@limiter.limit("30 per minute;300 per day")
 def api_create_comment(post_id: int):
     """发表评论"""
     try:
@@ -57,6 +60,7 @@ def api_create_comment(post_id: int):
 
 @forum_api_bp.route('/comments/<int:comment_id>', methods=['DELETE'])
 @auth_required
+@limiter.limit("30 per minute;300 per day")
 def api_delete_comment(comment_id: int):
     """删除评论"""
     try:

@@ -3,6 +3,7 @@
 from flask import jsonify, request, current_app
 
 from ..api import forum_api_bp
+from app.core.extensions import limiter
 from app.core.utils.decorators import auth_required, current_user_id
 from ...services import report_service
 
@@ -12,6 +13,7 @@ VALID_REASONS = ('spam', 'abuse', 'inappropriate', 'plagiarism', 'other')
 
 @forum_api_bp.route('/report', methods=['POST'])
 @auth_required
+@limiter.limit("20 per minute;100 per day")
 def api_create_report():
     """举报内容"""
     try:

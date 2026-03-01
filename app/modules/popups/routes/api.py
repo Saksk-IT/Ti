@@ -7,21 +7,23 @@
 - POST /api/popups/<id>/view           记录弹窗显示（用于统计）
 """
 
-from flask import Blueprint, jsonify, session, request, current_app
+from flask import Blueprint, jsonify, request, current_app
 from app.core.extensions import limiter
+from app.core.utils.decorators import auth_required, current_user_id
 from app.modules.popups.services.popup_service import PopupService
 
 popups_api_bp = Blueprint('popups_api', __name__)
 
 
 @popups_api_bp.route('/popups/active')
-@limiter.exempt
+@auth_required
+@limiter.limit("30 per minute;300 per hour")
 def api_popups_active():
     """获取当前用户应显示的活跃弹窗列表"""
-    if not session.get('user_id'):
+    user_id = int(current_user_id() or 0)
+    if not user_id:
         return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
-    
-    user_id = int(session.get('user_id'))
+
     limit = int(request.args.get('limit', 10))
     limit = max(1, min(limit, 50))  # 限制在1-50之间
     
@@ -41,13 +43,13 @@ def api_popups_active():
 
 
 @popups_api_bp.route('/popups/<int:popup_id>/dismiss', methods=['POST'])
-@limiter.exempt
+@auth_required
+@limiter.limit("20 per minute;200 per hour")
 def api_popup_dismiss(popup_id: int):
     """关闭弹窗（不再提示）"""
-    if not session.get('user_id'):
+    user_id = int(current_user_id() or 0)
+    if not user_id:
         return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
-    
-    user_id = int(session.get('user_id'))
     
     try:
         success = PopupService.dismiss_popup(popup_id, user_id)
@@ -70,13 +72,14 @@ def api_popup_dismiss(popup_id: int):
 
 
 @popups_api_bp.route('/popups/<int:popup_id>/view', methods=['POST'])
-@limiter.exempt
+@auth_required
+@limiter.limit("20 per minute;200 per hour")
 def api_popup_view(popup_id: int):
     """记录弹窗显示（用于统计）"""
-    user_id = None
-    if session.get('user_id'):
-        user_id = int(session.get('user_id'))
-    
+    user_id = int(current_user_id() or 0)
+    if not user_id:
+        return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
+
     try:
         PopupService.record_popup_view(popup_id, user_id)
         return jsonify({

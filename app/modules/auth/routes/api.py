@@ -32,6 +32,7 @@ from app.core.utils.jwt_utils import generate_jwt_token
 
 auth_api_bp = Blueprint('auth_api', __name__)
 PHONE_LOGIN_RE = re.compile(r'^1[3-9]\d{9}$')
+_SID_RE = re.compile(r'^[0-9a-f]{16}$')
 
 
 def is_email_or_phone_identifier(identifier: str) -> bool:
@@ -39,6 +40,15 @@ def is_email_or_phone_identifier(identifier: str) -> bool:
     if not v:
         return False
     return ('@' in v) or bool(PHONE_LOGIN_RE.fullmatch(v))
+
+
+def _sid_poll_rate_key() -> str:
+    """扫码轮询限流键：sid + remote_ip。"""
+    sid = ((request.view_args or {}).get('sid') or '').strip().lower()
+    ip = (request.remote_addr or 'unknown').strip()
+    if _SID_RE.fullmatch(sid):
+        return f"sid:{sid}:ip:{ip}"
+    return f"ip:{ip}"
 
 
 @auth_api_bp.route('/login', methods=['POST'])
@@ -667,9 +677,12 @@ def api_web_login_qrcode():
 
 
 @auth_api_bp.route('/web_login/sessions/<sid>', methods=['GET'])
-@limiter.exempt
+@limiter.limit("90 per minute;1000 per hour", key_func=_sid_poll_rate_key)
 def api_web_login_session_status(sid: str):
     """Web：轮询扫码登录会话状态"""
+    if not _SID_RE.fullmatch((sid or '').strip().lower()):
+        return jsonify({"status": "error", "message": "sid格式无效"}), 400
+
     try:
         sess = WebLoginService.get_session(sid)
         if not sess:
@@ -836,9 +849,12 @@ def api_wechat_bind_qrcode():
 
 
 @auth_api_bp.route('/wechat/bind_sessions/<sid>', methods=['GET'])
-@limiter.exempt
+@limiter.limit("90 per minute;1000 per hour", key_func=_sid_poll_rate_key)
 def api_wechat_bind_session_status(sid: str):
     """Web：轮询绑定微信会话状态（需session登录且只能查询自己的sid）"""
+    if not _SID_RE.fullmatch((sid or '').strip().lower()):
+        return jsonify({'status': 'error', 'message': 'sid格式无效'}), 400
+
     uid = session.get('user_id')
     if not uid:
         return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401

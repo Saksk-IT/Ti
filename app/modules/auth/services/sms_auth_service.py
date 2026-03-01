@@ -3,7 +3,7 @@
 手机号认证业务逻辑服务
 
 验证码由阿里云 DYPNS 托管生成和校验，本地无需存储验证码。
-频率限制通过 Redis 实现（降级时跳过限制）。
+频率限制通过 Redis 实现（Redis 不可用时 fail-closed）。
 """
 from __future__ import annotations
 
@@ -16,7 +16,12 @@ from flask import current_app
 from werkzeug.security import generate_password_hash
 
 from app.core.extensions import db
-from app.core.utils.redis_utils import redis_get_text, redis_incr, redis_set_text
+from app.core.utils.redis_utils import (
+    get_redis_connection,
+    redis_get_text,
+    redis_incr,
+    redis_set_text,
+)
 from app.core.utils.time_utils import now_bj
 from app.models.user import User
 
@@ -48,6 +53,16 @@ class SmsAuthService:
     @staticmethod
     def _check_rate_limit(phone: str) -> Optional[str]:
         """频率检查：1 分钟 1 次 + 1 小时 5 次。返回错误消息或 None。"""
+        conn = get_redis_connection()
+        if conn is None:
+            logger.error("短信限流检查失败: Redis 不可用")
+            return '系统繁忙，请稍后再试'
+        try:
+            conn.ping()
+        except Exception:
+            logger.error("短信限流检查失败: Redis ping 失败", exc_info=True)
+            return '系统繁忙，请稍后再试'
+
         # 1 分钟限制
         rate_key = f'sms:rate:{phone}'
         if redis_get_text(rate_key):
@@ -56,26 +71,37 @@ class SmsAuthService:
         # 1 小时限制
         hour_key = f'sms:rate_hour:{phone}'
         hour_count = redis_get_text(hour_key)
-        if hour_count and int(hour_count) >= 5:
+        try:
+            over_limit = bool(hour_count) and int(hour_count) >= 5
+        except Exception:
+            logger.warning("短信限流计数解析失败: phone=%s hour_count=%s", phone, hour_count)
+            over_limit = True
+        if over_limit:
             return '发送验证码次数过多，请稍后再试'
 
         return None
 
     @staticmethod
-    def _mark_rate_limit(phone: str) -> None:
+    def _mark_rate_limit(phone: str) -> bool:
         """标记已发送，更新频率计数。"""
-        redis_set_text(f'sms:rate:{phone}', '1', ttl_seconds=60)
+        minute_ok = redis_set_text(f'sms:rate:{phone}', '1', ttl_seconds=60)
         hour_key = f'sms:rate_hour:{phone}'
         val = redis_incr(hour_key)
+        if val is None:
+            return False
+
+        ttl_ok = True
         if val == 1:
             # 首次，设置 TTL
-            from app.core.utils.redis_utils import get_redis_connection
             conn = get_redis_connection()
             if conn:
                 try:
                     conn.expire(hour_key, 3600)
                 except Exception:
-                    pass
+                    ttl_ok = False
+            else:
+                ttl_ok = False
+        return bool(minute_ok) and ttl_ok
 
     @staticmethod
     def _do_send(phone: str, config: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
@@ -125,7 +151,9 @@ class SmsAuthService:
         if not ok:
             return False, msg
 
-        SmsAuthService._mark_rate_limit(phone)
+        if not SmsAuthService._mark_rate_limit(phone):
+            logger.error("短信限流标记失败: phone=%s", phone)
+            return False, '系统繁忙，请稍后再试'
         logger.info('登录验证码已发送: phone=%s', phone)
         return True, None
 
@@ -220,7 +248,9 @@ class SmsAuthService:
         if not ok:
             return False, msg
 
-        SmsAuthService._mark_rate_limit(phone)
+        if not SmsAuthService._mark_rate_limit(phone):
+            logger.error("短信限流标记失败: phone=%s", phone)
+            return False, '系统繁忙，请稍后再试'
         logger.info('重置密码验证码已发送: phone=%s', phone)
         return True, None
 
@@ -280,7 +310,9 @@ class SmsAuthService:
         if not ok:
             return False, msg
 
-        SmsAuthService._mark_rate_limit(phone)
+        if not SmsAuthService._mark_rate_limit(phone):
+            logger.error("短信限流标记失败: phone=%s user_id=%s", phone, user_id)
+            return False, '系统繁忙，请稍后再试'
         logger.info('绑定手机验证码已发送: phone=%s, user_id=%s', phone, user_id)
         return True, None
 

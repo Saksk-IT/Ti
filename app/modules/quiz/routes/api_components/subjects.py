@@ -32,7 +32,7 @@ def _build_named_in(col: str, values: list, prefix: str = 'in') -> tuple[str, di
 
 @quiz_api_bp.route('/subjects', methods=['GET'])
 @auth_required  # 支持session和JWT
-@limiter.exempt
+@limiter.limit("60 per minute;600 per hour")
 def api_subjects():
     """获取科目列表（添加权限过滤）"""
     from app.core.utils.subject_permissions import get_user_accessible_subjects
@@ -99,7 +99,7 @@ def api_subjects():
 
 @quiz_api_bp.route('/subjects/meta', methods=['GET'])
 @auth_required  # 支持 session 和 JWT
-@limiter.exempt
+@limiter.limit("60 per minute;600 per hour")
 def api_subjects_meta():
     """获取科目元信息（id/name/题量），用于跨端对齐 Web「公共题库」页面。"""
     from app.core.utils.subject_permissions import get_user_accessible_subjects
@@ -199,7 +199,7 @@ def api_subjects_meta():
 
 @quiz_api_bp.route('/subjects/<subject>/info', methods=['GET'])
 @auth_required  # 支持session和JWT
-@limiter.exempt
+@limiter.limit("30 per minute;300 per hour")
 def api_subject_info(subject):
     """获取科目详情信息"""
     from app.core.utils.subject_permissions import get_user_accessible_subjects
@@ -340,7 +340,7 @@ def api_subject_info(subject):
 
 @quiz_api_bp.route('/subjects/<subject>/stats', methods=['GET'])
 @auth_required  # 支持session和JWT
-@limiter.exempt
+@limiter.limit("20 per minute;200 per hour")
 def api_subject_stats_detail(subject):
     """科目统计详情（用于题库详情页-统计子页面）"""
     from datetime import datetime, timedelta
@@ -831,7 +831,7 @@ def _api_subject_guard(uid: int, subject: str):
 
 @quiz_api_bp.route('/subjects/<subject>/questions', methods=['GET'])
 @auth_required  # 支持session和JWT
-@limiter.exempt
+@limiter.limit("30 per minute;300 per hour")
 def api_subject_questions(subject):
     """科目题目列表（用于统计页：错题/收藏列表与图表）。"""
     from app.modules.quiz.services.question_tags_service import get_question_ids_by_tag
@@ -846,7 +846,7 @@ def api_subject_questions(subject):
         return err
 
     page = request.args.get('page', 1, type=int)
-    per_page = min(request.args.get('per_page', 20, type=int), 1000)
+    per_page = min(max(request.args.get('per_page', 20, type=int), 1), 100)
     source = (request.args.get('source') or 'all').strip().lower()  # all/favorites/mistakes
     q_type = (request.args.get('q_type') or request.args.get('type') or '').strip()
     if q_type.lower() == 'all':
@@ -1031,7 +1031,7 @@ def api_subject_questions(subject):
 
 @quiz_api_bp.route('/subjects/<subject>/favorites/trend', methods=['GET'])
 @auth_required  # 支持session和JWT
-@limiter.exempt
+@limiter.limit("20 per minute;200 per hour")
 def api_subject_favorites_trend(subject):
     """科目收藏趋势：按收藏创建时间聚合（用于收藏数据面板）。"""
     uid = current_user_id()

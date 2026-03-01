@@ -2,6 +2,7 @@
 """关注 API — 独立蓝图，url_prefix=/api（由 forum 模块注册）"""
 from flask import Blueprint, jsonify, request, session, current_app
 
+from app.core.extensions import limiter
 from app.modules.forum.services import follow_service
 from app.modules.forum.services import interaction_service
 
@@ -9,6 +10,7 @@ forum_user_api_bp = Blueprint('forum_user_api', __name__)
 
 
 @forum_user_api_bp.route('/user/follow', methods=['POST'])
+@limiter.limit("30 per minute;300 per day")
 def api_follow_user():
     """关注用户"""
     if not session.get('user_id'):
@@ -43,6 +45,7 @@ def api_follow_user():
 
 
 @forum_user_api_bp.route('/user/unfollow', methods=['POST'])
+@limiter.limit("30 per minute;300 per day")
 def api_unfollow_user():
     """取消关注"""
     if not session.get('user_id'):
@@ -64,6 +67,7 @@ def api_unfollow_user():
 
 
 @forum_user_api_bp.route('/user/<int:user_id>/follow_status')
+@limiter.limit("60 per minute;600 per hour")
 def api_follow_status(user_id: int):
     """获取关注状态"""
     if not session.get('user_id'):
@@ -75,6 +79,7 @@ def api_follow_status(user_id: int):
 
 
 @forum_user_api_bp.route('/user/<int:user_id>/followers')
+@limiter.limit("60 per minute;600 per hour")
 def api_followers(user_id: int):
     """粉丝列表"""
     if not session.get('user_id'):
@@ -87,6 +92,7 @@ def api_followers(user_id: int):
 
 
 @forum_user_api_bp.route('/user/<int:user_id>/following')
+@limiter.limit("60 per minute;600 per hour")
 def api_following(user_id: int):
     """关注列表"""
     if not session.get('user_id'):

@@ -60,6 +60,12 @@ def create_app(config_name=None):
     # 加载配置
     app.config.from_object(config[config_name])
 
+    # 生产/预发布等非调试环境禁止内存限流存储，避免多实例计数失效
+    if not app.config.get('DEBUG') and not app.config.get('TESTING'):
+        storage_uri = str(app.config.get('RATELIMIT_STORAGE_URI') or '').strip().lower()
+        if storage_uri.startswith('memory://'):
+            raise RuntimeError('RATELIMIT_STORAGE_URI 不能为 memory://，请改为 Redis 存储。')
+
     # Sentry 错误监控（生产环境，需设置 SENTRY_DSN 环境变量）
     _setup_sentry(app)
 
@@ -361,6 +367,34 @@ def _register_before_request(app):
     """注册请求前钩子"""
     import uuid
     from flask import request, session, redirect, url_for, jsonify, g
+
+    def _valid_jwt_payload_from_header():
+        token = request.headers.get('Authorization') or request.headers.get('authorization') or ''
+        raw = str(token).strip()
+        if not raw:
+            return None
+        if raw.startswith('Bearer '):
+            raw = raw[7:].strip()
+        if not raw:
+            return None
+        try:
+            from app.core.utils.jwt_utils import decode_jwt_token
+            payload = decode_jwt_token(raw)
+            if payload and payload.get('user_id'):
+                return payload
+        except Exception:
+            return None
+        return None
+
+    def _has_valid_jwt_header() -> bool:
+        cache_key = '_valid_jwt_header_cache'
+        cached = getattr(g, cache_key, None)
+        if cached is not None:
+            return bool(cached)
+        payload = _valid_jwt_payload_from_header()
+        ok = bool(payload)
+        setattr(g, cache_key, ok)
+        return ok
     @app.before_request
     def _assign_request_id():
         rid = request.headers.get('X-Request-ID') or request.headers.get('X-Request-Id')
@@ -404,9 +438,8 @@ def _register_before_request(app):
         path = request.path or ''
         if not path.startswith('/api'):
             return
-        # 放行：小程序 JWT 请求
-        auth = request.headers.get('Authorization') or ''
-        if auth.startswith('Bearer '):
+        # 放行：小程序有效 JWT 请求
+        if _has_valid_jwt_header():
             return
         # 放行：XHR 请求（前端 fetch monkey-patch 自动注入）
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -521,10 +554,7 @@ def _register_before_request(app):
             return
 
         # 检查JWT token（小程序）
-        jwt_token = request.headers.get('Authorization') or request.headers.get('authorization')
-        has_jwt_token = False
-        if jwt_token and jwt_token.startswith('Bearer '):
-            has_jwt_token = True
+        has_jwt_token = _has_valid_jwt_header()
 
         # 已登录的会话校验（仅Web端，小程序使用JWT token）
         if session.get('user_id') and not has_jwt_token:
@@ -844,15 +874,13 @@ def _register_before_request(app):
         for api_path in login_required_apis:
             if path.startswith(api_path):
                 # 如果有JWT token，让@auth_required装饰器处理
-                jwt_token = request.headers.get('Authorization') or request.headers.get('authorization')
-                if jwt_token and jwt_token.startswith('Bearer '):
+                if has_jwt_token:
                     return  # 跳过检查，让装饰器处理
                 return jsonify({'status': 'unauthorized', 'message': '请先登录后使用此功能', 'request_id': getattr(g, 'request_id', None)}), 401
         
         if path.startswith('/api'):
             # 如果有JWT token，让@auth_required装饰器处理
-            jwt_token = request.headers.get('Authorization') or request.headers.get('authorization')
-            if jwt_token and jwt_token.startswith('Bearer '):
+            if has_jwt_token:
                 return  # 跳过检查，让装饰器处理
             return jsonify({'status': 'unauthorized', 'message': '请先登录', 'request_id': getattr(g, 'request_id', None)}), 401
         return redirect('/login')

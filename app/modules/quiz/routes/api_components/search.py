@@ -21,9 +21,15 @@ def _build_named_in(prefix: str, values: list) -> tuple[str, dict]:
     return ", ".join(names), params
 
 
+def _escape_like_keyword(keyword: str) -> str:
+    """转义 LIKE 通配符，避免被 %/_ 放大扫描范围。"""
+    s = str(keyword or "")
+    return s.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
 @quiz_api_bp.route("/search", methods=["GET"])
 @auth_required  # 支持session和JWT
-@limiter.exempt
+@limiter.limit("30 per minute;300 per hour")
 def api_search_questions():
     """题目搜索（JSON，用于小程序）
 
@@ -64,7 +70,8 @@ def api_search_questions():
             "data": {"questions": [], "total": 0, "page": page, "per_page": per_page}
         })
 
-    search_term = f"%{keyword}%"
+    safe_keyword = _escape_like_keyword(keyword)
+    search_term = f"%{safe_keyword}%"
     sql_base = """
         SELECT q.id, q.content, q.type, s.name as subject,
                CASE WHEN f.id IS NOT NULL THEN 1 ELSE 0 END as is_fav,
@@ -74,8 +81,12 @@ def api_search_questions():
         LEFT JOIN favorites f ON q.id = f.question_id AND f.user_id = :uid
         LEFT JOIN mistakes m ON q.id = m.question_id AND m.user_id = :uid
         WHERE (s.is_locked=false OR s.is_locked IS NULL)
-          AND (q.content LIKE :search_term OR q.analysis LIKE :search_term
-               OR q.options LIKE :search_term OR q.answer LIKE :search_term)
+          AND (
+               q.content LIKE :search_term ESCAPE '\\'
+               OR q.analysis LIKE :search_term ESCAPE '\\'
+               OR q.options LIKE :search_term ESCAPE '\\'
+               OR q.answer LIKE :search_term ESCAPE '\\'
+          )
     """
     params: dict = {"uid": uid, "search_term": search_term}
 

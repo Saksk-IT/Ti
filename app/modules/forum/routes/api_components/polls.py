@@ -3,12 +3,14 @@
 from flask import jsonify, request, current_app
 
 from ..api import forum_api_bp
+from app.core.extensions import limiter
 from app.core.utils.decorators import auth_required, current_user_id
 from ...services import poll_service
 
 
 @forum_api_bp.route('/posts/<int:post_id>/poll', methods=['GET'])
 @auth_required
+@limiter.limit("60 per minute;600 per hour")
 def api_get_poll(post_id: int):
     """获取投票数据"""
     try:
@@ -24,6 +26,7 @@ def api_get_poll(post_id: int):
 
 @forum_api_bp.route('/posts/<int:post_id>/poll/vote', methods=['POST'])
 @auth_required
+@limiter.limit("20 per minute;200 per day")
 def api_cast_vote(post_id: int):
     """投票"""
     try:

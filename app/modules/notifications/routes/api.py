@@ -83,7 +83,7 @@ def _notification_to_dict(n, is_read: bool = False) -> dict:
 
 
 @notifications_api_bp.route('/notifications')
-@limiter.exempt
+@limiter.limit("60 per minute;600 per hour")
 def api_notifications_list():
     uid, auth_err = _optional_auth_user_id()
     if auth_err:
@@ -133,7 +133,7 @@ def api_notifications_list():
 
     return jsonify({'status': 'success', 'data': data})
 @notifications_api_bp.route('/notifications/<int:nid>')
-@limiter.exempt
+@limiter.limit("60 per minute;600 per hour")
 @auth_required
 def api_notifications_detail(nid: int):
     uid = int(current_user_id() or 0)
@@ -180,7 +180,7 @@ def _upsert_dismissal(uid: int, nid: int):
 
 
 @notifications_api_bp.route('/notifications/<int:nid>/read', methods=['POST'])
-@limiter.exempt
+@limiter.limit("30 per minute;300 per hour")
 @auth_required
 def api_notifications_mark_read(nid: int):
     uid = int(current_user_id() or 0)
@@ -198,7 +198,7 @@ def api_notifications_mark_read(nid: int):
 
 
 @notifications_api_bp.route('/notifications/<int:nid>/dismiss', methods=['POST'])
-@limiter.exempt
+@limiter.limit("30 per minute;300 per hour")
 @auth_required
 def api_notifications_dismiss(nid: int):
     """关闭通知（刷新不再出现）"""
@@ -217,7 +217,7 @@ def api_notifications_dismiss(nid: int):
 
 
 @notifications_api_bp.route('/notifications/unread_count')
-@limiter.exempt
+@limiter.limit("60 per minute;600 per hour")
 @auth_required
 def api_notifications_unread_count():
     uid = int(current_user_id() or 0)
