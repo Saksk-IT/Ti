@@ -447,6 +447,8 @@ def api_profile():
             'college': user_obj.college,
             'email': user_obj.email,
             'email_verified': user_obj.email_verified,
+            'phone': user_obj.phone,
+            'phone_verified': user_obj.phone_verified,
             'openid': user_obj.openid,
         }
         
