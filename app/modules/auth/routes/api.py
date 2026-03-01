@@ -35,7 +35,7 @@ auth_api_bp = Blueprint('auth_api', __name__)
 @auth_api_bp.route('/login', methods=['POST'])
 @limiter.limit("5 per minute")
 def api_login():
-    """登录API（支持用户名或邮箱登录）"""
+    """登录API（支持用户名、邮箱或手机号登录）"""
     data = request.json or {}
     
     # 使用Pydantic验证
@@ -51,14 +51,14 @@ def api_login():
     
     if not identifier or not password:
         current_app.logger.warning(f'登录失败: 缺少用户名或密码 - IP: {request.remote_addr}')
-        return jsonify({'status': 'error', 'message': '用户名和密码不能为空'}), 400
+        return jsonify({'status': 'error', 'message': '账号和密码不能为空'}), 400
     
-    # 使用User模型的verify_password方法（支持邮箱和用户名）
+    # 使用User模型的verify_password方法（支持用户名、邮箱和手机号）
     user = User.verify_password(identifier, password)
     
     if not user:
         current_app.logger.warning(f'登录失败: 用户名或密码错误 - 用户: {identifier}, IP: {request.remote_addr}')
-        return jsonify({'status': 'error', 'message': '用户名或密码错误'}), 400
+        return jsonify({'status': 'error', 'message': '账号或密码错误'}), 400
     
     if user.get('is_locked'):
         current_app.logger.warning(f'登录失败: 账户已锁定 - 用户: {identifier}, IP: {request.remote_addr}')

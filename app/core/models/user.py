@@ -3,6 +3,7 @@
 用户模型
 """
 from typing import Optional
+import re
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.core.extensions import db
 from sqlalchemy import text
@@ -47,10 +48,10 @@ class User:
     @staticmethod
     def verify_password(identifier: str, password: str) -> Optional[dict]:
         """
-        验证密码（支持用户名或邮箱）
+        验证密码（支持用户名、邮箱或手机号）
 
         Args:
-            identifier: 用户名或邮箱
+            identifier: 用户名、邮箱或手机号
             password: 密码
 
         Returns:
@@ -59,11 +60,18 @@ class User:
         if not identifier or not password:
             return None
 
-        # 判断是邮箱还是用户名（简单判断：包含@符号）
+        identifier = identifier.strip()
+
+        # 判断是邮箱、手机号还是用户名
         if '@' in identifier:
             # 使用邮箱查询
             row = db.session.execute(
                 text('SELECT * FROM users WHERE email = :email'), {'email': identifier}
+            ).fetchone()
+        elif re.fullmatch(r'1[3-9]\d{9}', identifier):
+            # 使用手机号查询
+            row = db.session.execute(
+                text('SELECT * FROM users WHERE phone = :phone'), {'phone': identifier}
             ).fetchone()
         else:
             # 使用用户名查询
