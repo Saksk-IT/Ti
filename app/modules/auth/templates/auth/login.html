@@ -1047,7 +1047,10 @@
         setQrImage(null);
         const res = await fetch('/api/web_login/qrcode', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
           body: JSON.stringify({})
         });
         const payload = await res.json();
@@ -1092,7 +1095,10 @@
           stopQrLogin();
           const ex = await fetch('/api/web_login/exchange', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
             body: JSON.stringify({ token: payload.data.token })
           });
           const exData = await ex.json();
