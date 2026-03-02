@@ -284,17 +284,19 @@
     }
 
     .more-login-corner {
-      position: absolute;
-      right: 0;
-      bottom: 58px;
-      z-index: 3;
       display: flex;
       justify-content: flex-end;
+      margin-left: auto;
+      flex-shrink: 0;
     }
 
     .terms-field {
       margin-top: 6px;
       margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
     }
 
     .terms-inline {
@@ -303,14 +305,17 @@
       letter-spacing: 0;
       display: flex;
       align-items: center;
+      flex-wrap: nowrap;
       gap: 8px;
       cursor: pointer;
       user-select: none;
+      min-width: 0;
     }
 
     .terms-inline-text {
       font-size: 12px;
       color: var(--text-sub);
+      display: inline-block;
       white-space: nowrap;
       line-height: 1.2;
     }
@@ -939,7 +944,7 @@
                   <span style="font-size: 14px; color: var(--text-sub);">记住密码 / 保持登录</span>
                 </label>
               </div>
-              <div class="field terms-field">
+              <div class="field terms-field" id="terms-field-password">
                 <label class="terms-inline">
                   <input id="agreeTerms" type="checkbox" required />
                   <span class="terms-inline-text">
@@ -965,7 +970,7 @@
               </div>
               <div class="hint-text" id="code-hint">验证码将发送到您的邮箱，有效期10分钟。未注册邮箱将自动创建账户</div>
             </div>
-            <div class="field terms-field">
+            <div class="field terms-field" id="terms-field-code">
               <label class="terms-inline">
                 <input id="agreeTermsCode" type="checkbox" required />
                 <span class="terms-inline-text">
@@ -991,7 +996,7 @@
               </div>
               <div class="hint-text" id="phone-code-hint">验证码将发送到您的手机，有效期5分钟</div>
             </div>
-            <div class="field terms-field">
+            <div class="field terms-field" id="terms-field-phone">
               <label class="terms-inline">
                 <input id="agreeTermsPhone" type="checkbox" required />
                 <span class="terms-inline-text">
@@ -1163,6 +1168,30 @@
       trigger.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
     }
 
+    function mountMoreLoginButton(mode) {
+      const moreCorner = document.getElementById('more-login-corner');
+      if (!moreCorner) return;
+      const fieldMap = {
+        password: 'terms-field-password',
+        code: 'terms-field-code',
+        phone: 'terms-field-phone',
+      };
+      const targetId = fieldMap[mode];
+      if (!targetId) {
+        moreCorner.style.display = 'none';
+        return;
+      }
+      const target = document.getElementById(targetId);
+      if (!target) {
+        moreCorner.style.display = 'none';
+        return;
+      }
+      if (moreCorner.parentElement !== target) {
+        target.appendChild(moreCorner);
+      }
+      moreCorner.style.display = 'flex';
+    }
+
     // 切换登录方式
     function switchLoginMode(mode) {
       const inMoreMenu = mode === 'password' || mode === 'code';
@@ -1189,10 +1218,7 @@
       document.getElementById('code-form').classList.toggle('active', mode === 'code');
       document.getElementById('phone-form').classList.toggle('active', mode === 'phone');
       document.getElementById('qr-form').classList.toggle('active', mode === 'qr');
-      const moreCorner = document.getElementById('more-login-corner');
-      if (moreCorner) {
-        moreCorner.style.display = mode === 'qr' ? 'none' : 'flex';
-      }
+      mountMoreLoginButton(mode);
 
       // 清空错误信息
       setErr('', 'password');
