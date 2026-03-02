@@ -82,7 +82,7 @@ def upgrade():
     if not _column_exists(conn, 'users', 'phone_verified'):
         op.add_column('users', sa.Column(
             'phone_verified', sa.Boolean(),
-            nullable=True, server_default=sa.text('0'),
+            nullable=True, server_default=sa.text('false'),
         ))
 
     # phone_verified_at 列
