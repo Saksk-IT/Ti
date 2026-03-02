@@ -146,14 +146,15 @@
 
     .login-tabs {
       display: flex;
+      align-items: center;
       gap: 8px;
       padding: 6px;
       border-radius: 12px;
       background: var(--bg-soft);
+      position: relative;
     }
 
     .login-tab {
-      flex: 1;
       padding: 10px 12px;
       text-align: center;
       border-radius: 10px;
@@ -166,11 +167,118 @@
       transition: all 0.2s ease;
     }
 
+    .login-tab-main {
+      flex: 1;
+      min-width: 0;
+    }
+
     .login-tab.active {
       background: #ffffff;
       color: var(--primary-strong);
       border-color: var(--border);
       box-shadow: 0 6px 12px rgba(15, 23, 42, 0.08);
+    }
+
+    .more-login-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .more-login-trigger {
+      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .more-login-trigger::after {
+      content: '▾';
+      font-size: 12px;
+      line-height: 1;
+      opacity: 0.7;
+      transition: transform 0.2s ease;
+    }
+
+    .more-login-wrap.open .more-login-trigger::after {
+      transform: rotate(180deg);
+    }
+
+    .more-login-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      right: 0;
+      z-index: 8;
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      padding: 6px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      box-shadow: 0 14px 28px rgba(15, 23, 42, 0.12);
+    }
+
+    .more-login-wrap.open .more-login-menu {
+      display: flex;
+    }
+
+    .more-login-item {
+      width: 100%;
+      padding: 9px 10px;
+      border: 1px solid transparent;
+      border-radius: 9px;
+      background: transparent;
+      color: var(--text-sub);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease;
+    }
+
+    .more-login-item:hover {
+      background: var(--bg-soft);
+      color: var(--text);
+    }
+
+    .more-login-item.active {
+      background: var(--primary-soft);
+      color: var(--primary-strong);
+      border-color: rgba(37, 99, 235, 0.24);
+    }
+
+    .wechat-login-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 11px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .wechat-login-btn:hover {
+      border-color: rgba(22, 163, 74, 0.35);
+      box-shadow: 0 8px 16px rgba(15, 23, 42, 0.08);
+    }
+
+    .wechat-login-btn.active {
+      border-color: rgba(22, 163, 74, 0.45);
+      background: rgba(22, 163, 74, 0.12);
+      box-shadow: 0 8px 16px rgba(15, 23, 42, 0.1);
+    }
+
+    .wechat-login-btn svg {
+      width: 22px;
+      height: 22px;
+      fill: #16a34a;
     }
 
     .login-forms-container {
@@ -713,6 +821,17 @@
         white-space: nowrap;
       }
 
+      .more-login-menu {
+        left: auto;
+        right: 0;
+        min-width: 140px;
+      }
+
+      .wechat-login-btn {
+        width: 40px;
+        height: 40px;
+      }
+
       .code-field {
         flex-direction: column;
       }
@@ -758,14 +877,32 @@
           </div>
 
           <div class="login-tabs">
-            <button class="login-tab active" data-mode="password" onclick="switchLoginMode('password')" type="button">密码</button>
-            <button class="login-tab" data-mode="code" onclick="switchLoginMode('code')" type="button">邮箱</button>
-            <button class="login-tab" data-mode="phone" onclick="switchLoginMode('phone')" type="button">手机</button>
-            <button class="login-tab" data-mode="qr" onclick="switchLoginMode('qr')" type="button">微信</button>
+            <button class="login-tab login-tab-main active" data-mode="phone" onclick="switchLoginMode('phone')" type="button">手机登录</button>
+            <div class="more-login-wrap" id="more-login-wrap">
+              <button
+                class="login-tab login-tab-main more-login-trigger"
+                id="more-login-trigger"
+                data-mode="more"
+                onclick="toggleMoreLoginMenu()"
+                aria-expanded="false"
+                aria-controls="more-login-menu"
+                type="button"
+              >更多登录</button>
+              <div class="more-login-menu" id="more-login-menu">
+                <button class="more-login-item" data-mode="password" onclick="switchLoginMode('password')" type="button">密码登录</button>
+                <button class="more-login-item" data-mode="code" onclick="switchLoginMode('code')" type="button">邮箱登录</button>
+              </div>
+            </div>
+            <button class="wechat-login-btn" id="wechat-login-btn" onclick="switchLoginMode('qr')" type="button" title="微信扫码登录" aria-label="微信扫码登录">
+              <svg viewBox="0 0 64 64" aria-hidden="true">
+                <path d="M24 12c-10.5 0-19 6.8-19 15.2 0 4.8 2.8 9.1 7.2 11.9L10 47l9-4.5c1.6.3 3.3.4 5 .4 10.5 0 19-6.8 19-15.2S34.5 12 24 12zm-6 14a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zm12 0a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z"></path>
+                <path d="M43.2 27.8c8.7.8 15.8 6.8 15.8 14.2 0 4.1-2.2 7.9-5.9 10.6l1.9 6.9-7.1-3.6c-1.2.2-2.4.3-3.7.3-8.9 0-16.2-5.8-16.2-13 0-7 6.9-12.7 15.2-13.4zM37 40a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm11 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"></path>
+              </svg>
+            </button>
           </div>
 
           <div class="login-forms-container">
-            <div id="password-form" class="login-form active">
+            <div id="password-form" class="login-form">
               <div class="field">
                 <label>邮箱 / 手机号</label>
                 <input id="username" placeholder="请输入已绑定邮箱或手机号" autocomplete="username" />
@@ -828,7 +965,7 @@
             <button class="btn" onclick="doEmailLogin(this)" type="button">登录</button>
           </div>
 
-          <div id="phone-form" class="login-form">
+          <div id="phone-form" class="login-form active">
             <div class="field">
               <label>手机号</label>
               <input id="phone" type="tel" placeholder="请输入手机号" maxlength="11" autocomplete="tel" />
@@ -984,13 +1121,42 @@
       return el ? el.value.trim() : ''; 
     }
 
+    function closeMoreLoginMenu() {
+      const wrap = document.getElementById('more-login-wrap');
+      const trigger = document.getElementById('more-login-trigger');
+      if (wrap) wrap.classList.remove('open');
+      if (trigger) trigger.setAttribute('aria-expanded', 'false');
+    }
+
+    function toggleMoreLoginMenu() {
+      const wrap = document.getElementById('more-login-wrap');
+      const trigger = document.getElementById('more-login-trigger');
+      if (!wrap || !trigger) return;
+      const shouldOpen = !wrap.classList.contains('open');
+      wrap.classList.toggle('open', shouldOpen);
+      trigger.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+    }
+
     // 切换登录方式
     function switchLoginMode(mode) {
-      // 更新标签状态
-      document.querySelectorAll('.login-tab').forEach(tab => {
-        const isActive = tab.dataset && tab.dataset.mode === mode;
-        tab.classList.toggle('active', isActive);
+      const inMoreMenu = mode === 'password' || mode === 'code';
+
+      // 更新入口激活态
+      document.querySelectorAll('.login-tab[data-mode="phone"]').forEach(tab => {
+        tab.classList.toggle('active', mode === 'phone');
       });
+      const moreTrigger = document.getElementById('more-login-trigger');
+      if (moreTrigger) {
+        moreTrigger.classList.toggle('active', inMoreMenu);
+      }
+      document.querySelectorAll('.more-login-item').forEach(item => {
+        const isActive = item.dataset && item.dataset.mode === mode;
+        item.classList.toggle('active', isActive);
+      });
+      const wechatBtn = document.getElementById('wechat-login-btn');
+      if (wechatBtn) {
+        wechatBtn.classList.toggle('active', mode === 'qr');
+      }
 
       // 切换表单显示
       document.getElementById('password-form').classList.toggle('active', mode === 'password');
@@ -1003,6 +1169,7 @@
       setErr('', 'code');
       setErr('', 'phone');
 
+      closeMoreLoginMenu();
       if (mode === 'qr') {
         startQrLogin();
       } else {
@@ -1687,6 +1854,21 @@
     
     // 回车键登录
     document.addEventListener('DOMContentLoaded', function() {
+      switchLoginMode('phone');
+
+      document.addEventListener('click', function(e) {
+        const wrap = document.getElementById('more-login-wrap');
+        if (!wrap) return;
+        if (!wrap.contains(e.target)) {
+          closeMoreLoginMenu();
+        }
+      });
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          closeMoreLoginMenu();
+        }
+      });
+
       // 密码登录表单回车
       const passwordForm = document.getElementById('password-form');
       if(passwordForm) {
