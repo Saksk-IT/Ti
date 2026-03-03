@@ -520,7 +520,18 @@ function renderAnswerExplainFromQuestion(qEl, resultState = null) {
         try { state = judgeQuestion(qEl, type, correctRaw); } catch(e) { state = null; }
     }
     if (state === null && isSubjective && mode !== 'memo') {
-        state = (mode === 'exam' && EXAM_SUBMITTED) ? 'pending' : 'submitted';
+        // 主观题：优先从题目列表状态恢复对错（自评/有答即对）
+        let restored = null;
+        if (mode !== 'exam') {
+            const idx = qEl.getAttribute('data-index');
+            const li = document.getElementById(`list-item-${idx}`);
+            if (li) {
+                if (li.classList.contains('done-correct')) restored = true;
+                else if (li.classList.contains('done-wrong')) restored = false;
+                else if (li.classList.contains('answered')) restored = 'pending';
+            }
+        }
+        state = (restored !== null) ? restored : ((mode === 'exam' && EXAM_SUBMITTED) ? 'pending' : 'submitted');
     }
 
     if (mode === 'memo') {
@@ -545,6 +556,7 @@ function renderAnswerExplainFromQuestion(qEl, resultState = null) {
         const iconCheck = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>';
         const iconWrong = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
         const iconInfo = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
+        const hasJudgeResult = judgable || state === true || state === false;
         let headerClass = 'submitted';
         let icon = iconInfo;
         let headerText = '已提交';
@@ -552,14 +564,15 @@ function renderAnswerExplainFromQuestion(qEl, resultState = null) {
             headerClass = 'submitted';
             icon = iconInfo;
             headerText = '待核对';
-        } else if (judgable) {
+        } else if (hasJudgeResult) {
             const isCorrect = (state === true);
             headerClass = isCorrect ? 'correct' : 'wrong';
             icon = isCorrect ? iconCheck : iconWrong;
             headerText = isCorrect ? '回答正确' : '回答错误';
         }
 
-        const showUserAnswer = (!judgable) || (state === false) || (state === 'pending');
+        const showUserAnswer = (!hasJudgeResult) || (state === false) || (state === 'pending');
+        const userAnswerClass = (state === false) ? 'wrong' : '';
         answerHost.innerHTML = `
             <div class="answer-result-card">
               <div class="answer-card-toprow">
@@ -576,7 +589,7 @@ function renderAnswerExplainFromQuestion(qEl, resultState = null) {
               ${showUserAnswer ? `
               <div class="user-answer ${isShortAnswer ? 'short-answer-block' : ''}">
                 <span class="answer-label">你的答案：</span>
-                <div class="answer-value wrong">${escapeHtmlWithBreaks(userAnswerText || '')}</div>
+                <div class="answer-value ${userAnswerClass}">${escapeHtmlWithBreaks(userAnswerText || '')}</div>
               </div>` : ``}
               ${(() => {
                 const aiScore = qEl.getAttribute('data-ai-score');
