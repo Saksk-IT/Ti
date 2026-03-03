@@ -37,6 +37,7 @@
   const msgBtnEl       = $('upfMsgBtn');
   const tabFavEl       = $('upfTabFav');
   const tabLikeEl      = $('upfTabLike');
+  const filterEl       = $('upfFilter');
   const privGearEl     = $('upfPrivacyGear');
   const privPanelEl    = $('upfPrivacyPanel');
   const privFavEl      = $('upfPrivFav');
@@ -171,8 +172,14 @@
     document.querySelectorAll('.upf-panel').forEach(function (el) {
       el.classList.toggle('active', el.getAttribute('data-tab') === tab);
     });
+    updateFilterVisibility();
     var st = tabState[tab];
     if (!st.loaded) loadTabContent(tab);
+  }
+
+  function updateFilterVisibility() {
+    if (!filterEl) return;
+    filterEl.classList.toggle('upf-filter-hidden', activeTab !== 'works');
   }
 
   /* ── Works sub-filter ── */
@@ -436,6 +443,7 @@
     setupObserver('works');
     setupObserver('favorites');
     setupObserver('likes');
+    updateFilterVisibility();
 
     // Load profile
     loadProfile();

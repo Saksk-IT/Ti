@@ -44,40 +44,44 @@
 
       <!-- Hero -->
       <section class="upf-hero" id="upfHero">
-        <button class="upf-back-btn" id="upfBackBtn" onclick="history.back()" title="返回" aria-label="返回">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-        {% if is_self %}
-        <button class="upf-privacy-gear" id="upfPrivacyGear" title="隐私设置" aria-label="隐私设置">&#9881;</button>
-        <div class="upf-privacy-panel" id="upfPrivacyPanel">
-          <div class="upf-privacy-panel-title">隐私设置</div>
-          <div class="upf-privacy-row">
-            <span class="upf-privacy-label">收藏公开</span>
-            <label class="upf-toggle"><input type="checkbox" id="upfPrivFav" checked><span class="upf-toggle-track"></span><span class="upf-toggle-thumb"></span></label>
-          </div>
-          <div class="upf-privacy-row">
-            <span class="upf-privacy-label">喜欢公开</span>
-            <label class="upf-toggle"><input type="checkbox" id="upfPrivLike" checked><span class="upf-toggle-track"></span><span class="upf-toggle-thumb"></span></label>
-          </div>
+        <div class="upf-hero-toolbar">
+          <button class="upf-back-btn" id="upfBackBtn" onclick="history.back()" title="返回" aria-label="返回">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
         </div>
-        {% endif %}
 
         <div class="upf-hero-inner">
           <div class="upf-avatar" id="upfAvatar">
             <span class="upf-avatar-text" id="upfAvatarText">U</span>
           </div>
           <div class="upf-info">
-            <div class="upf-name" id="upfName">-</div>
+            <div class="upf-info-head">
+              <div class="upf-name" id="upfName">-</div>
+              <div class="upf-actions" id="upfActions">
+                {% if is_self %}
+                <a class="upf-btn upf-btn-primary" href="/settings/account/profile">编辑资料</a>
+                {% else %}
+                <button class="upf-btn upf-follow-btn" id="upfFollowBtn" data-state="none">+ 关注</button>
+                <a class="upf-btn" id="upfMsgBtn" href="#">发消息</a>
+                {% endif %}
+              </div>
+              {% if is_self %}
+              <button class="upf-privacy-gear" id="upfPrivacyGear" title="隐私设置" aria-label="隐私设置">&#9881;</button>
+              <div class="upf-privacy-panel" id="upfPrivacyPanel">
+                <div class="upf-privacy-panel-title">隐私设置</div>
+                <div class="upf-privacy-row">
+                  <span class="upf-privacy-label">收藏公开</span>
+                  <label class="upf-toggle"><input type="checkbox" id="upfPrivFav" checked><span class="upf-toggle-track"></span><span class="upf-toggle-thumb"></span></label>
+                </div>
+                <div class="upf-privacy-row">
+                  <span class="upf-privacy-label">喜欢公开</span>
+                  <label class="upf-toggle"><input type="checkbox" id="upfPrivLike" checked><span class="upf-toggle-track"></span><span class="upf-toggle-thumb"></span></label>
+                </div>
+              </div>
+              {% endif %}
+            </div>
             <div class="upf-signature" id="upfSignature"></div>
             <div class="upf-college" id="upfCollege"></div>
-          </div>
-          <div class="upf-actions" id="upfActions">
-            {% if is_self %}
-            <a class="upf-btn upf-btn-primary" href="/settings/account/profile">编辑资料</a>
-            {% else %}
-            <button class="upf-btn upf-follow-btn" id="upfFollowBtn" data-state="none">+ 关注</button>
-            <a class="upf-btn" id="upfMsgBtn" href="#">发消息</a>
-            {% endif %}
           </div>
         </div>
 
@@ -99,18 +103,20 @@
 
       <!-- Tabs -->
       <nav class="upf-tabs" id="upfTabs">
-        <button class="upf-tab active" data-tab="works">作品</button>
-        <button class="upf-tab" data-tab="favorites" id="upfTabFav">收藏</button>
-        <button class="upf-tab" data-tab="likes" id="upfTabLike">喜欢</button>
-      </nav>
-
-      <!-- Works panel -->
-      <div class="upf-panel active" id="upfPanelWorks" data-tab="works">
-        <div class="upf-filter" id="upfFilter">
+        <div class="upf-tabs-main">
+          <button class="upf-tab active" data-tab="works">作品</button>
+          <button class="upf-tab" data-tab="favorites" id="upfTabFav">收藏</button>
+          <button class="upf-tab" data-tab="likes" id="upfTabLike">喜欢</button>
+        </div>
+        <div class="upf-filter upf-filter-inline" id="upfFilter">
           <button class="upf-filter-btn active" data-filter="all">全部</button>
           <button class="upf-filter-btn" data-filter="bank">题库</button>
           <button class="upf-filter-btn" data-filter="post">帖子</button>
         </div>
+      </nav>
+
+      <!-- Works panel -->
+      <div class="upf-panel active" id="upfPanelWorks" data-tab="works">
         <div class="upf-grid" id="upfGridWorks"></div>
         <div class="upf-load-more" id="upfLoadMoreWorks"></div>
       </div>

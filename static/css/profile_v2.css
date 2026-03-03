@@ -2,7 +2,7 @@
 /* 命名空间: upf- (user-profile) */
 
 /* ── Shell ── */
-.upf-shell { max-width: 980px; margin: 0 auto; display: grid; gap: 14px; min-width: 0; }
+.upf-shell { max-width: 980px; margin: 0 auto; display: grid; gap: 20px; min-width: 0; }
 
 /* ── Hero ── */
 .upf-hero {
@@ -14,9 +14,16 @@
     linear-gradient(135deg, color-mix(in srgb, var(--app-surface) 92%, var(--app-bg)), var(--app-surface));
   box-shadow: var(--app-shadow-soft);
   position: relative;
+  display: grid;
+  gap: 16px;
+}
+.upf-hero-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
 }
 .upf-back-btn {
-  position: absolute; top: 14px; left: 14px; z-index: 5;
+  position: static;
   width: 32px; height: 32px; border-radius: 999px; border: none;
   background: color-mix(in srgb, var(--app-surface) 80%, transparent);
   backdrop-filter: blur(8px);
@@ -25,7 +32,7 @@
 }
 .upf-back-btn:hover { background: color-mix(in srgb, var(--app-muted) 18%, var(--app-surface)); }
 .upf-hero-inner {
-  display: flex; align-items: center; gap: 16px; min-width: 0;
+  display: flex; align-items: center; gap: 20px; min-width: 0;
 }
 
 /* ── Avatar ── */
@@ -44,8 +51,24 @@
 }
 
 /* ── Info ── */
-.upf-info { flex: 1 1 auto; min-width: 0; display: grid; gap: 4px; }
-.upf-name { font-size: 20px; font-weight: 950; letter-spacing: -0.3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.upf-info { flex: 1 1 auto; min-width: 0; display: grid; gap: 6px; }
+.upf-info-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  position: relative;
+}
+.upf-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 20px;
+  font-weight: 950;
+  letter-spacing: -0.3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .upf-signature {
   font-size: 13px; line-height: 1.55; letter-spacing: -0.1px;
   color: color-mix(in srgb, var(--app-text) 72%, transparent);
@@ -93,9 +116,10 @@
 
 /* ── Privacy gear ── */
 .upf-privacy-gear {
-  position: absolute; top: 14px; right: 14px;
+  position: static;
   width: 34px; height: 34px; border-radius: 999px;
   border: 1px solid var(--app-border); background: color-mix(in srgb, var(--app-surface) 80%, transparent);
+  flex: 0 0 auto;
   display: inline-flex; align-items: center; justify-content: center;
   cursor: pointer; transition: transform 140ms ease;
   font-size: 16px; color: var(--app-muted);
@@ -104,7 +128,7 @@
 
 /* ── Privacy panel ── */
 .upf-privacy-panel {
-  position: absolute; top: 52px; right: 14px; z-index: 50;
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 50;
   min-width: 240px; padding: 14px;
   border-radius: var(--app-radius-lg); border: 1px solid var(--app-border);
   background: var(--app-surface); box-shadow: var(--app-shadow);
@@ -136,12 +160,18 @@
 /* ── Tabs ── */
 .upf-tabs {
   position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--app-topbar-h, 48px));
-  z-index: 20; padding: 0 4px;
+  z-index: 20; padding: 0 8px;
   border-radius: var(--app-radius-lg); border: 1px solid var(--app-border);
   background: color-mix(in srgb, var(--app-surface) 85%, transparent);
   backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
   box-shadow: var(--app-shadow-soft);
-  display: flex; align-items: center; gap: 0; overflow-x: auto;
+  display: flex; align-items: center; gap: 10px; overflow-x: auto;
+}
+.upf-tabs-main {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
 }
 .upf-tab {
   flex: 0 0 auto; height: 44px; padding: 0 16px;
@@ -162,6 +192,16 @@
 
 /* ── Filter (sub-filter for works tab) ── */
 .upf-filter { display: flex; gap: 6px; padding: 2px 0; }
+.upf-filter-inline {
+  margin-left: auto;
+  flex: 0 0 auto;
+  transition: opacity 140ms ease, visibility 140ms ease;
+}
+.upf-filter-inline.upf-filter-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
 .upf-filter-btn {
   height: 30px; padding: 0 12px; border-radius: 999px;
   border: 1px solid var(--app-border); background: var(--app-surface);
@@ -324,16 +364,19 @@
   .upf-skel-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 640px) {
-  .upf-hero-inner { flex-direction: column; text-align: center; }
-  .upf-avatar { width: 80px; height: 80px; }
-  .upf-info { align-items: center; }
-  .upf-actions { width: 100%; justify-content: center; }
+  .upf-hero-inner { align-items: flex-start; gap: 12px; }
+  .upf-avatar { width: 76px; height: 76px; }
+  .upf-info-head { gap: 8px; }
+  .upf-name { font-size: 18px; }
+  .upf-actions { gap: 6px; }
+  .upf-btn { height: 34px; padding: 0 10px; font-size: 12px; }
+  .upf-privacy-gear { width: 32px; height: 32px; }
   .upf-stats { justify-content: center; }
   .upf-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .upf-grid { grid-template-columns: repeat(2, 1fr); }
   .upf-skel-grid { grid-template-columns: repeat(2, 1fr); }
-  .upf-skel-hero-inner { flex-direction: column; align-items: center; }
-  .upf-skel-info { align-items: center; }
+  .upf-skel-hero-inner { align-items: center; }
+  .upf-skel-info { align-items: flex-start; }
   .upf-skel-stats { justify-content: center; }
-  .upf-privacy-panel { right: 4px; left: 4px; min-width: auto; }
+  .upf-privacy-panel { right: 0; min-width: 220px; }
 }
