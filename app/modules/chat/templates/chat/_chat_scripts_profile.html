@@ -263,10 +263,6 @@
     } catch(e) {}
   }
 
-  function profileCallPlaceholder(){
-    showToast('音视频通话：暂未实现');
-  }
-
   async function saveRemarkFromProfile(forceValue){
     if (!currentProfileUserId) return;
     if (Number(currentProfileUserId) === Number(MY_ID)) return;
