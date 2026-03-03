@@ -18,7 +18,7 @@
   align-items: flex-start;
   justify-content: flex-start;
 }
-.upf-shell { max-width: none; margin: 0; display: grid; gap: 34px; min-width: 0; }
+.upf-shell { max-width: none; margin: 0; display: grid; gap: 26px; min-width: 0; }
 
 /* ── Hero ── */
 .upf-hero {
@@ -32,6 +32,7 @@
   position: relative;
   display: grid;
   gap: 20px;
+  margin-bottom: 16px;
 }
 .upf-back-btn {
   position: static;
@@ -177,6 +178,7 @@
   backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
   box-shadow: var(--app-shadow-soft);
   display: flex; align-items: center; gap: 10px; overflow-x: auto;
+  margin-bottom: 18px;
 }
 .upf-tabs-main {
   display: flex;
@@ -228,7 +230,7 @@
 
 /* ── Tab panels ── */
 .upf-panel { display: none; min-width: 0; }
-.upf-panel.active { display: block; margin-top: 18px; }
+.upf-panel.active { display: block; margin-top: 0; }
 
 /* ── Grid ── */
 .upf-grid {
@@ -373,7 +375,7 @@
 @media (max-width: 980px) {
   .upf-layout { grid-template-columns: 1fr; gap: 12px; }
   .upf-layout-back { position: static; top: auto; }
-  .upf-shell { gap: 28px; }
+  .upf-shell { gap: 22px; }
   .upf-grid { grid-template-columns: repeat(2, 1fr); }
   .upf-skel-grid { grid-template-columns: repeat(2, 1fr); }
 }
