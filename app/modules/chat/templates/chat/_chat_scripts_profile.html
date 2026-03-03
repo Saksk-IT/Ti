@@ -175,7 +175,7 @@
       const navTitle = document.getElementById('upNavTitle');
       if (navTitle) navTitle.textContent = remark || u.username || '好友资料';
       const sub = document.getElementById('upSub');
-      if (sub) sub.textContent = `用户名：${u.username || '-'}  ·  ID：${u.id || '-'}`;
+      if (sub) sub.textContent = `用户名：${u.username || '-'}`;
 
       const inp = document.getElementById('upRemarkInput');
       if (inp) inp.value = remark || '';
@@ -357,15 +357,6 @@
         if (!txt) return;
         await navigator.clipboard.writeText(txt);
         showToast('已复制用户名');
-      } catch(e) {
-        showToast('复制失败');
-      }
-      return;
-    }
-    if (act === 'copy_id') {
-      try {
-        await navigator.clipboard.writeText(String(currentProfileUserId));
-        showToast('已复制 ID');
       } catch(e) {
         showToast('复制失败');
       }
