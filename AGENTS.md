@@ -9,7 +9,7 @@
   1) `【（必须填写本次实际使用的模型名称）】`
   2) `亲爱的 Wang`
 - 结尾做简单本轮总结。
-- 本轮任务完成后：在做完最小验证后，自动提交本次相关改动（只包含本次任务；提交信息需能概括改动。
+- 本轮任务完成后：在做完最小验证后，自动提交和同步本次相关改动（只包含本次任务；提交信息需能概括改动。
 
 ## 1) 范围与兼容性（MUST）
 
@@ -159,6 +159,25 @@
 类型：feat、fix、refactor、docs、test、chore、perf、ci
 
 说明：归属信息已在 `~/.claude/settings.json` 全局禁用。
+
+## 双机器同步规范（MUST）
+
+适用场景：同一开发者在 Mac / Windows 间切换开发。
+
+1. 开发前先同步远端：
+   - `git fetch <remote>`
+   - `git pull --rebase <remote> <branch>`
+2. 每次提交后必须立即同步到远端（不可省略）：
+   - `git push -u <remote> <branch>`（首次）
+   - `git push <remote> <branch>`（后续）
+3. 若 push 被拒绝（non-fast-forward），必须先集成远端再重试：
+   - `git fetch <remote> <branch>`
+   - `git rebase <remote>/<branch>`（或 `git pull --rebase`）
+   - 解决冲突后 `git rebase --continue`
+   - 再执行 `git push <remote> <branch>`
+4. 切换机器前必须满足：
+   - `git status` 干净，或已将 WIP 提交并推送到远端分支。
+5. 禁止仅本地提交不推送后直接换机开发，避免双端历史分叉。
 
 ## Pull Request 工作流
 
@@ -339,4 +358,3 @@ Todo 列表可以暴露：
 4. 再次运行测试，必须 PASS
 5. 重构（IMPROVE）
 6. 验证覆盖率（80%+）
-
