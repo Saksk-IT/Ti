@@ -2,6 +2,121 @@
 <script>
   // 好友资料页
   let currentProfileUserId = 0;
+  const PROFILE_WORKS_PAGE_SIZE = 6;
+
+  function setProfileWorksLoading(){
+    const grid = document.getElementById('upWorksGrid');
+    if (!grid) return;
+    grid.innerHTML = [
+      '<div class="up-dynamic-skel"></div>',
+      '<div class="up-dynamic-skel"></div>',
+      '<div class="up-dynamic-skel"></div>',
+    ].join('');
+  }
+
+  function setProfileWorksEmpty(text){
+    const grid = document.getElementById('upWorksGrid');
+    if (!grid) return;
+    const t = String(text || '暂无动态');
+    grid.innerHTML = `<div class="up-dynamic-empty">${t}</div>`;
+  }
+
+  function profileWorkUrl(item){
+    const id = Number(item && item.id || 0);
+    if (!id) return '#';
+    return item && item.item_type === 'bank'
+      ? ('/bank/' + id + '/detail')
+      : ('/forum/post/' + id);
+  }
+
+  function createProfileWorkCard(item){
+    const card = document.createElement('a');
+    card.className = 'up-dynamic-item';
+    card.href = profileWorkUrl(item);
+    card.target = '_blank';
+    card.rel = 'noopener noreferrer';
+
+    const cover = document.createElement('div');
+    cover.className = 'up-dynamic-cover';
+
+    const coverImage = String((item && item.cover_image) || '').trim();
+    if (coverImage) {
+      const img = document.createElement('img');
+      img.src = coverImage;
+      img.alt = '';
+      img.loading = 'lazy';
+      img.referrerPolicy = 'no-referrer';
+      cover.appendChild(img);
+    } else {
+      cover.textContent = (item && item.item_type === 'bank') ? '📚' : '📝';
+    }
+
+    const badge = document.createElement('span');
+    badge.className = 'up-dynamic-badge';
+    badge.textContent = (item && item.item_type === 'bank') ? '题库' : '帖子';
+    cover.appendChild(badge);
+
+    const meta = document.createElement('div');
+    meta.className = 'up-dynamic-meta';
+
+    const title = document.createElement('div');
+    title.className = 'up-dynamic-title';
+    title.textContent = String((item && item.name) || '未命名内容');
+
+    const sub = document.createElement('div');
+    sub.className = 'up-dynamic-sub';
+    const stat1 = Number(item && item.stat1 || 0);
+    const stat1Label = String((item && item.stat1_label) || '');
+    const stat2 = Number(item && item.stat2 || 0);
+    const stat2Label = String((item && item.stat2_label) || '');
+    sub.textContent = `${stat1}${stat1Label} · ${stat2}${stat2Label}`;
+
+    meta.appendChild(title);
+    meta.appendChild(sub);
+    card.appendChild(cover);
+    card.appendChild(meta);
+    return card;
+  }
+
+  async function loadProfileWorks(userId){
+    const uid = Number(userId || 0);
+    if (!uid) return;
+
+    const more = document.getElementById('upDynamicMore');
+    if (more) more.href = '/user/' + uid;
+
+    setProfileWorksLoading();
+    try {
+      const res = await fetch(
+        `/api/user/${encodeURIComponent(uid)}/works?page=1&per_page=${PROFILE_WORKS_PAGE_SIZE}&type=all`,
+        { credentials: 'include' }
+      );
+      const js = await res.json().catch(() => ({}));
+      if (Number(currentProfileUserId) !== uid) return;
+
+      if (!res.ok || js.status !== 'success' || !js.data) {
+        setProfileWorksEmpty('动态加载失败');
+        return;
+      }
+
+      const items = Array.isArray(js.data.items) ? js.data.items : [];
+      const grid = document.getElementById('upWorksGrid');
+      if (!grid) return;
+
+      if (!items.length) {
+        setProfileWorksEmpty('暂无动态');
+        return;
+      }
+
+      grid.innerHTML = '';
+      items.slice(0, PROFILE_WORKS_PAGE_SIZE).forEach(function (item) {
+        grid.appendChild(createProfileWorkCard(item));
+      });
+    } catch (e) {
+      if (Number(currentProfileUserId) !== uid) return;
+      setProfileWorksEmpty('动态加载失败');
+    }
+  }
 
   function closeUserProfileModal(e){
     if (e) e.stopPropagation();
@@ -26,6 +141,7 @@
     // 设置查看主页链接
     const viewProfileLink = document.getElementById('upViewProfileLink');
     if (viewProfileLink) viewProfileLink.href = '/user/' + userId;
+    loadProfileWorks(userId);
 
     try {
       const { res, js } = await Chat.api.getUserProfile(userId);

@@ -141,6 +141,99 @@
       background-position: center !important;
       background-repeat: no-repeat !important;
     }
+    .up-dynamic-grid{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap:10px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(142,142,147,0.06);
+    }
+    .up-dynamic-item{
+      display:flex;
+      flex-direction:column;
+      min-width:0;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--card2);
+      text-decoration:none;
+      color: var(--text);
+      overflow:hidden;
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .up-dynamic-item:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+    }
+    .up-dynamic-cover{
+      position:relative;
+      height:72px;
+      background: rgba(142,142,147,0.14);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:24px;
+    }
+    .up-dynamic-cover img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .up-dynamic-badge{
+      position:absolute;
+      top:6px;
+      left:6px;
+      height:18px;
+      line-height:18px;
+      padding:0 6px;
+      border-radius:999px;
+      font-size:10px;
+      font-weight:700;
+      color: var(--text);
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.78);
+      backdrop-filter: blur(4px);
+    }
+    body.dark-mode .up-dynamic-badge{
+      background: rgba(28,28,30,0.78);
+    }
+    .up-dynamic-meta{
+      padding: 8px 8px 10px;
+      display:grid;
+      gap:4px;
+      min-width:0;
+    }
+    .up-dynamic-title{
+      font-size:12px;
+      font-weight:700;
+      line-height:1.35;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .up-dynamic-sub{
+      font-size:11px;
+      color: var(--sub);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .up-dynamic-empty{
+      grid-column: 1 / -1;
+      color: var(--sub);
+      font-size:12px;
+      text-align:center;
+      padding: 14px 8px;
+      border-radius: 10px;
+      background: rgba(142,142,147,0.08);
+    }
+    .up-dynamic-skel{
+      border-radius: 10px;
+      background: rgba(142,142,147,0.15);
+      height: 94px;
+    }
     .conv-item{ padding: var(--space-2); border-radius: var(--radius-lg); cursor:pointer; display:flex; gap: var(--space-2); align-items:center;
       border: var(--line) solid transparent;
       background: transparent;
