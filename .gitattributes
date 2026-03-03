@@ -1,0 +1,32 @@
+* text=auto eol=lf
+
+# Windows shell scripts should keep CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Unix shell scripts must stay LF.
+*.sh text eol=lf
+
+# Common source and config files use LF to avoid cross-platform diffs.
+*.py text eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+*.wxml text eol=lf
+*.wxss text eol=lf
+*.less text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Binary files should never be line-normalized.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.zip binary
+*.pdf binary
