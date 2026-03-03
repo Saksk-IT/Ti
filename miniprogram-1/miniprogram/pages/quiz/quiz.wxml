@@ -140,7 +140,7 @@
               bindtap="onSubmitAnswer"
               disabled="{{submitDisabled}}"
             >
-              提交答案
+              {{subjectiveSubmitting ? '正在提交' : '提交答案'}}
             </button>
           </view>
         </view>

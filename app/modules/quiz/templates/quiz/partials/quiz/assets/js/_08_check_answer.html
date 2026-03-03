@@ -126,6 +126,7 @@ async function checkAnswer(isManualClick) {
 async function _checkAnswerSubjective(currentQ, type, qId) {
     const gradingMode = (typeof getQuizGradingMode === 'function') ? getQuizGradingMode() : 'auto_full';
     const userAnswer = _getSubjectiveUserAnswer(currentQ);
+    const lockSubmitDuringRequest = gradingMode === 'ai';
 
     if (gradingMode === 'manual') {
         // 手动/自评模式：展示参考答案 + 自评按钮
@@ -140,6 +141,9 @@ async function _checkAnswerSubjective(currentQ, type, qId) {
 
     // auto_full / ai 模式：调用后端判分接口
     if (LOGGED_IN) {
+        if (lockSubmitDuringRequest && typeof setSubjectiveAiSubmittingState === 'function') {
+            setSubjectiveAiSubmittingState(currentQ, true);
+        }
         try {
             const res = await fetch('/api/grade_subjective', {
                 method: 'POST',
@@ -185,6 +189,10 @@ async function _checkAnswerSubjective(currentQ, type, qId) {
         } catch (e) {
             console.error('主观题判分请求失败:', e);
             showToast('网络错误，请重试');
+        } finally {
+            if (lockSubmitDuringRequest && typeof setSubjectiveAiSubmittingState === 'function') {
+                setSubjectiveAiSubmittingState(currentQ, false);
+            }
         }
         return;
     }
@@ -1128,4 +1136,3 @@ function toggleTheme() {
     const next = current === 'dark' ? 'light' : 'dark';
     setTheme(next);
 }
-

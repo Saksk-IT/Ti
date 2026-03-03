@@ -186,10 +186,23 @@ function updateSubjectiveSubmitState(qEl){
     if (!isSubjectiveType(type)) return;
     const btn = qEl.querySelector('.subjective-submit-btn');
     if (!btn) return;
-    const disabled = !hasAnswered(qEl, type);
-    // 为避免“按钮失效”问题，这里只做视觉禁用（仍允许点击，由 checkAnswer 做兜底校验）
-    btn.disabled = false;
-    btn.classList.toggle('disabled', disabled);
+    const disabledByEmpty = !hasAnswered(qEl, type);
+    const submitting = qEl.getAttribute('data-subjective-ai-submitting') === '1';
+    const checked = isQuestionAlreadyChecked(qEl);
+    const hardDisabled = submitting || checked;
+
+    btn.disabled = hardDisabled;
+    btn.classList.toggle('disabled', hardDisabled || disabledByEmpty);
+    if (btn.getAttribute('data-action') === 'submitSubjective') {
+        btn.textContent = submitting ? '正在提交' : '提交答案';
+    }
+}
+
+function setSubjectiveAiSubmittingState(qEl, submitting){
+    if (!qEl) return;
+    if (submitting) qEl.setAttribute('data-subjective-ai-submitting', '1');
+    else qEl.removeAttribute('data-subjective-ai-submitting');
+    updateSubjectiveSubmitState(qEl);
 }
 
 function updateFillBlankSubmitState(qEl){

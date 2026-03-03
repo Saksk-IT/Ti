@@ -54,6 +54,7 @@ Page({
     blankCount: 0,
     showSubmitButton: false,
     submitDisabled: true,
+    subjectiveSubmitting: false,
     userAnswerText: '',
 
     // 刷题设置
@@ -501,6 +502,10 @@ Page({
   },
 
   onClearCurrentAnswerRecord() {
+    if (this.data.subjectiveSubmitting) {
+      wx.showToast({ title: '正在提交，请稍候', icon: 'none' });
+      return;
+    }
     const cq = this.data.currentQuestion;
     if (!cq) return;
 
@@ -542,6 +547,7 @@ Page({
           showAnswer: false,
           isCorrect: false,
           userAnswerText: '',
+          subjectiveSubmitting: false,
           selectedAnswer: '',
           selectedAnswers: [],
           blankAnswers: nextBlankAnswers,
@@ -922,6 +928,7 @@ Page({
       aiExplainQuestionId: question.id || 0,
       aiGradingScore: null,
       aiGradingFeedback: '',
+      subjectiveSubmitting: false,
       progress: {
         current: index + 1,
         total: this.data.progress.total
@@ -1066,8 +1073,27 @@ Page({
 
     // 主观题：根据判分模式分流处理
     if (isSubjective) {
+      const gradingMode = this.data.gradingMode || 'auto_full';
+      const lockSubmitDuringRequest = gradingMode === 'ai';
+      if (lockSubmitDuringRequest && this.data.subjectiveSubmitting) {
+        return;
+      }
+      const submitIndex = this.data.currentIndex;
       this.setProgressAnswerForIndex(this.data.currentIndex, qType);
-      await this._submitSubjectiveAnswer(currentQuestion, userAnswer, userAnswerText, qType);
+      if (lockSubmitDuringRequest) {
+        this.patchData({ subjectiveSubmitting: true }, () => {
+          this.updateSubmitState();
+        });
+      }
+      try {
+        await this._submitSubjectiveAnswer(currentQuestion, userAnswer, userAnswerText, qType, submitIndex);
+      } finally {
+        if (lockSubmitDuringRequest) {
+          this.patchData({ subjectiveSubmitting: false }, () => {
+            this.updateSubmitState();
+          });
+        }
+      }
       return;
     }
 
@@ -1176,8 +1202,12 @@ Page({
   },
 
   // ===== 主观题判分（三模式） =====
-  async _submitSubjectiveAnswer(currentQuestion: any, userAnswer: string, userAnswerText: string, qType: string) {
+  async _submitSubjectiveAnswer(currentQuestion: any, userAnswer: string, userAnswerText: string, qType: string, submitIndex: number) {
     const gradingMode = this.data.gradingMode || 'auto_full';
+    const isCurrentQuestionActive = () => {
+      const cq: any = this.data.currentQuestion;
+      return !!(cq && cq.id === currentQuestion.id);
+    };
 
     if (gradingMode === 'manual') {
       // 自评模式：展示答案 + 自评按钮
@@ -1222,20 +1252,22 @@ Page({
         const aiScore = (res.data.score != null) ? Number(res.data.score) : null;
         const aiFeedback = res.data.feedback ? String(res.data.feedback) : '';
         this.progressStatusMap = this.progressStatusMap || {};
-        this.progressStatusMap[String(this.data.currentIndex)] = isCorrect ? 'correct' : 'wrong';
+        this.progressStatusMap[String(submitIndex)] = isCorrect ? 'correct' : 'wrong';
 
-        this.patchData({
-          showAnswer: true,
-          isCorrect,
-          isJudgable: true,
-          userAnswerText,
-          showSelfEval: false,
-          aiGradingScore: aiScore,
-          aiGradingFeedback: aiFeedback
-        }, () => {
-          this.refreshDisplayOptions();
-          this.updateSubmitState();
-        });
+        if (isCurrentQuestionActive()) {
+          this.patchData({
+            showAnswer: true,
+            isCorrect,
+            isJudgable: true,
+            userAnswerText,
+            showSelfEval: false,
+            aiGradingScore: aiScore,
+            aiGradingFeedback: aiFeedback
+          }, () => {
+            this.refreshDisplayOptions();
+            this.updateSubmitState();
+          });
+        }
 
         // 记录到 answerRecords
         const nextRecords: any = Object.assign({}, this.data.answerRecords);
@@ -1252,15 +1284,15 @@ Page({
         this.saveProgressIndex(true);
 
         // 震动反馈
-        if (this.data.practiceSettings.vibrationFeedback) {
+        if (isCurrentQuestionActive() && this.data.practiceSettings.vibrationFeedback) {
           try { wx.vibrateShort({ type: isCorrect ? 'medium' : 'heavy' } as any); } catch (e) {}
         }
         // 做错自动收藏
-        if (!isCorrect && this.data.practiceSettings.autoFavoriteOnWrong) {
+        if (isCurrentQuestionActive() && !isCorrect && this.data.practiceSettings.autoFavoriteOnWrong) {
           await this.autoFavoriteIfNeeded();
         }
         // 答对自动切题
-        if (isCorrect && this.data.practiceSettings.autoNextOnCorrect) {
+        if (isCurrentQuestionActive() && isCorrect && this.data.practiceSettings.autoNextOnCorrect) {
           const savedId = currentQuestion.id;
           setTimeout(() => {
             if (this.data.showAnswer && this.data.currentQuestion && this.data.currentQuestion.id === savedId) {
@@ -1276,16 +1308,18 @@ Page({
     }
 
     // 失败降级：仅展示答案
-    this.patchData({
-      showAnswer: true,
-      isCorrect: false,
-      isJudgable: false,
-      userAnswerText,
-      showSelfEval: false
-    }, () => {
-      this.refreshDisplayOptions();
-      this.updateSubmitState();
-    });
+    if (isCurrentQuestionActive()) {
+      this.patchData({
+        showAnswer: true,
+        isCorrect: false,
+        isJudgable: false,
+        userAnswerText,
+        showSelfEval: false
+      }, () => {
+        this.refreshDisplayOptions();
+        this.updateSubmitState();
+      });
+    }
     this.saveProgressIndex(true);
   },
 
@@ -1522,6 +1556,9 @@ Page({
 
   // 上一题
   onPrevQuestion() {
+    if (this.data.subjectiveSubmitting) {
+      return;
+    }
     const { currentIndex } = this.data;
     if (currentIndex > 0) {
       this.loadQuestion(currentIndex - 1);
@@ -1530,6 +1567,9 @@ Page({
 
   // 下一题
   onNextQuestion() {
+    if (this.data.subjectiveSubmitting) {
+      return;
+    }
     const { currentIndex, questions, paginationEnabled, paginationHasMore } = this.data;
     if (currentIndex < questions.length - 1) {
       this.loadQuestion(currentIndex + 1);
@@ -1553,6 +1593,9 @@ Page({
 
   // 打开题目列表抽屉
   onOpenQuestionList() {
+    if (this.data.subjectiveSubmitting) {
+      return;
+    }
     this.setData({ showQuestionList: true });
   },
 
@@ -1563,6 +1606,10 @@ Page({
 
   // 点击题目列表项
   onQuestionListItemTap(e: any) {
+    if (this.data.subjectiveSubmitting) {
+      wx.showToast({ title: '正在提交，请稍候', icon: 'none' });
+      return;
+    }
     const index = e.currentTarget.dataset.index;
     this.loadQuestion(index);
     this.onCloseQuestionList();
@@ -2062,7 +2109,7 @@ Page({
   },
 
   updateSubmitState() {
-    const { currentQuestion, mode, showAnswer, selectedAnswers, selectedAnswer, blankAnswers } = this.data;
+    const { currentQuestion, mode, showAnswer, selectedAnswers, selectedAnswer, blankAnswers, subjectiveSubmitting } = this.data;
     if (!currentQuestion || (mode !== 'quiz' && mode !== 'reinforce') || showAnswer) {
       this.setData({ showSubmitButton: false, submitDisabled: true });
       return;
@@ -2078,7 +2125,7 @@ Page({
     } else if (qType === '填空题') {
       disabled = !blankAnswers.length || blankAnswers.some((x) => !(x || '').trim());
     } else if (qType === '简答题' || qType === '问答题' || qType === '计算题') {
-      disabled = !(selectedAnswer || '').trim();
+      disabled = subjectiveSubmitting || !(selectedAnswer || '').trim();
     } else {
       disabled = true;
     }
@@ -2466,5 +2513,3 @@ Page({
     }
   }
 });
-
-
