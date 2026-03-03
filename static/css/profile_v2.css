@@ -2,7 +2,23 @@
 /* 命名空间: upf- (user-profile) */
 
 /* ── Shell ── */
-.upf-shell { max-width: 980px; margin: 0 auto; display: grid; gap: 20px; min-width: 0; }
+.upf-layout {
+  max-width: 1040px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.upf-layout-back {
+  position: sticky;
+  top: calc(env(safe-area-inset-top, 0px) + var(--app-topbar-h, 48px) + 8px);
+  z-index: 24;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+.upf-shell { max-width: none; margin: 0; display: grid; gap: 26px; min-width: 0; }
 
 /* ── Hero ── */
 .upf-hero {
@@ -15,16 +31,11 @@
   box-shadow: var(--app-shadow-soft);
   position: relative;
   display: grid;
-  gap: 16px;
-}
-.upf-hero-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
+  gap: 20px;
 }
 .upf-back-btn {
   position: static;
-  width: 32px; height: 32px; border-radius: 999px; border: none;
+  width: 32px; height: 32px; border-radius: 999px; border: 1px solid var(--app-border);
   background: color-mix(in srgb, var(--app-surface) 80%, transparent);
   backdrop-filter: blur(8px);
   display: inline-flex; align-items: center; justify-content: center;
@@ -217,7 +228,7 @@
 
 /* ── Tab panels ── */
 .upf-panel { display: none; min-width: 0; }
-.upf-panel.active { display: block; }
+.upf-panel.active { display: block; margin-top: 12px; }
 
 /* ── Grid ── */
 .upf-grid {
@@ -360,6 +371,9 @@
 
 /* ── Responsive ── */
 @media (max-width: 980px) {
+  .upf-layout { grid-template-columns: 1fr; gap: 12px; }
+  .upf-layout-back { position: static; top: auto; }
+  .upf-shell { gap: 22px; }
   .upf-grid { grid-template-columns: repeat(2, 1fr); }
   .upf-skel-grid { grid-template-columns: repeat(2, 1fr); }
 }
