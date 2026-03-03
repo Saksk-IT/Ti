@@ -4,9 +4,12 @@
 services:
   web:
     image: saksk-ti:dev
+    pull_policy: never
     build:
       context: .
       dockerfile: docker/Dockerfile
+      args:
+        PYTHON_BASE_IMAGE: ${PYTHON_BASE_IMAGE:-docker.m.daocloud.io/library/python:3.11-slim}
     ports:
       - "8000:8000"
     environment:
@@ -38,6 +41,12 @@ services:
 
   worker:
     image: saksk-ti:dev
+    pull_policy: never
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        PYTHON_BASE_IMAGE: ${PYTHON_BASE_IMAGE:-docker.m.daocloud.io/library/python:3.11-slim}
     command: sh -c "rq worker -u $$REDIS_URL $$RQ_QUEUE_NAME"
     environment:
       FLASK_ENV: development
