@@ -93,15 +93,9 @@ python run.py
 ### Docker 开发环境
 
 ```bash
-docker compose -f compose.dev.yml up
+docker compose --env-file .env -f compose.dev.yml up
 # Web: http://localhost:8000
 # 包含: Flask + PostgreSQL 16 + Redis 7 + RQ Worker
-```
-
-如所在网络无法直连 Docker Hub，可通过 `PYTHON_BASE_IMAGE` 覆盖基础镜像（默认开发编排已使用 `docker.m.daocloud.io/library/python:3.11-slim`）：
-
-```bash
-PYTHON_BASE_IMAGE=docker.m.daocloud.io/library/python:3.11-slim docker compose -f compose.dev.yml up --build
 ```
 
 ### 生产部署
