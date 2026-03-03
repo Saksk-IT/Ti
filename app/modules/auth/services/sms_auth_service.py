@@ -126,7 +126,11 @@ class SmsAuthService:
 
         # 同步降级
         from app.core.utils.sms_service import send_sms_verify_code
-        result = send_sms_verify_code(phone, config)
+        try:
+            result = send_sms_verify_code(phone, config)
+        except ValueError as exc:
+            logger.error('短信发送配置缺失: phone=%s, error=%s', phone, exc)
+            return False, '短信服务未配置，请联系管理员'
         if not result.success:
             logger.error('短信同步发送失败: phone=%s, err=%s', phone, result.error_message)
             return False, '短信发送失败，请稍后再试'
