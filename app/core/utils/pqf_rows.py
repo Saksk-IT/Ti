@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping as MappingABC
 from typing import Any, Dict, Mapping, Optional
 
 from app.core.utils.portable_question_format import portable_question_to_internal
@@ -32,8 +33,26 @@ def safe_json_load(raw: Any, default: Any):
         return default
 
 
+def _row_to_dict(row: Any) -> Dict[str, Any]:
+    """将查询行安全转换为 dict，兼容 SQLAlchemy Row。"""
+    if row is None:
+        return {}
+
+    # 标准映射类型（dict / RowMapping 等）
+    if isinstance(row, MappingABC):
+        return dict(row)
+
+    # SQLAlchemy Row（2.x）优先使用 _mapping
+    mapping = getattr(row, "_mapping", None)
+    if isinstance(mapping, MappingABC):
+        return dict(mapping)
+
+    # 保底兼容旧行为（部分可迭代对象）
+    return dict(row)
+
+
 def pqf_row_to_internal(
-    row: Mapping[str, Any],
+    row: Mapping[str, Any] | Any,
     *,
     scope: str,
     override_tags: Optional[Any] = None,
@@ -46,7 +65,7 @@ def pqf_row_to_internal(
     override_tags:
       - 若提供，则覆盖 PQF 行中的 tags（用于"按用户维度标签"）
     """
-    r = dict(row or {})
+    r = _row_to_dict(row)
     portable = {
         "id": r.get("id"),
         "type": r.get("type") or "",
@@ -85,4 +104,3 @@ def pqf_row_to_internal(
     r["tags"] = portable.get("tags") or []
 
     return r
-
