@@ -168,6 +168,13 @@ def update_bank(bank_id):
         updates.append('description = :description')
         params['description'] = description
 
+    if 'public_description' in data:
+        public_description = (data['public_description'] or '').strip()
+        if public_description and len(public_description) > 200:
+            return error_response('公开描述不能超过200个字符')
+        updates.append('public_description = :public_description')
+        params['public_description'] = public_description
+
     if 'category_id' in data:
         category_id = data['category_id']
         if category_id:
