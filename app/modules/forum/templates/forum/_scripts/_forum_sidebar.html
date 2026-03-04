@@ -1,13 +1,24 @@
 <script>
 /* ===== 侧边栏数据加载 + 抽屉逻辑 ===== */
 const SIDEBAR_API = '/api/forum';
+const SIDEBAR_ROOT_SELECTOR = '#sidebarContent';
+
+function getDesktopSidebarRoot() {
+  return document.querySelector(SIDEBAR_ROOT_SELECTOR);
+}
+
+function getDesktopSidebarEl(id) {
+  const root = getDesktopSidebarRoot();
+  if (!root) return null;
+  return root.querySelector(`#${id}`);
+}
 
 async function loadSidebarBoards() {
   try {
     const r = await fetch(SIDEBAR_API + '/boards').then(r => r.json());
     if (r.status !== 'success') return;
     const boards = r.data.boards;
-    const list = document.getElementById('sidebarBoards');
+    const list = getDesktopSidebarEl('sidebarBoards');
     if (!list) return;
     const items = boards.map(b =>
       `<li class="sidebar-board-item${currentBoard == b.id ? ' active' : ''}" data-board-id="${b.id}" onclick="sidebarSelectBoard(this,'${b.id}')">${esc(b.name)}<span class="sidebar-board-count">${b.post_count || ''}</span></li>`
@@ -15,7 +26,7 @@ async function loadSidebarBoards() {
     list.innerHTML = `<li class="sidebar-board-item${!currentBoard ? ' active' : ''}" data-board-id="" onclick="sidebarSelectBoard(this,'')">全部</li>` + items;
 
     // 热门标签 = 版块名
-    const tagsEl = document.getElementById('sidebarTags');
+    const tagsEl = getDesktopSidebarEl('sidebarTags');
     if (tagsEl) {
       tagsEl.innerHTML = boards.map(b =>
         `<span class="sidebar-tag" onclick="sidebarSelectBoard(null,'${b.id}')">${esc(b.name)}</span>`
@@ -23,7 +34,7 @@ async function loadSidebarBoards() {
     }
 
     // 统计 - 版块数
-    const statBoards = document.getElementById('statBoards');
+    const statBoards = getDesktopSidebarEl('statBoards');
     if (statBoards) statBoards.textContent = boards.length;
 
     // 同步到抽屉
@@ -35,7 +46,7 @@ async function loadSidebarHotPosts() {
   try {
     const r = await fetch(SIDEBAR_API + '/posts?sort=hot&per_page=5').then(r => r.json());
     if (r.status !== 'success') return;
-    const el = document.getElementById('sidebarHotPosts');
+    const el = getDesktopSidebarEl('sidebarHotPosts');
     if (!el) return;
     if (!r.data.posts.length) { el.innerHTML = '<div style="font-size:13px;color:var(--app-muted)">暂无</div>'; return; }
     el.innerHTML = r.data.posts.map(p =>
@@ -43,7 +54,7 @@ async function loadSidebarHotPosts() {
     ).join('');
 
     // 统计 - 帖子总数
-    const statPosts = document.getElementById('statPosts');
+    const statPosts = getDesktopSidebarEl('statPosts');
     if (statPosts) statPosts.textContent = r.data.total || '-';
 
     syncSidebarToDrawer();
@@ -68,7 +79,10 @@ function updateActiveBoardChip() {
   const container = document.getElementById('activeBoardChip');
   if (!container) return;
   if (!currentBoard) { container.innerHTML = ''; return; }
-  const item = document.querySelector(`.sidebar-board-item[data-board-id="${currentBoard}"]`);
+  const root = getDesktopSidebarRoot();
+  const item = root
+    ? root.querySelector(`.sidebar-board-item[data-board-id="${currentBoard}"]`)
+    : document.querySelector(`.sidebar-board-item[data-board-id="${currentBoard}"]`);
   const name = item ? item.childNodes[0].textContent.trim() : '';
   if (name) {
     container.innerHTML = `<div class="forum-active-board-chip">${esc(name)}<button class="chip-close" onclick="sidebarSelectBoard(null,'')">&times;</button></div>`;
@@ -91,7 +105,10 @@ function closeDrawer() {
 function syncSidebarToDrawer() {
   const src = document.getElementById('sidebarContent');
   const dst = document.getElementById('drawerContent');
-  if (src && dst) dst.innerHTML = src.innerHTML;
+  if (!(src && dst)) return;
+  dst.innerHTML = src.innerHTML;
+  // 抽屉是侧边栏副本，移除副本中的 id，避免和桌面端重复导致 getElementById 命中不稳定
+  dst.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
 }
 
 // 初始化侧边栏
