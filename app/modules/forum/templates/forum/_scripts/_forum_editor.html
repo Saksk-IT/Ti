@@ -3,11 +3,41 @@ const FORUM_API = '/api/forum';
 const MAX_TAGS = 8;
 const MAX_TAG_LENGTH = 20;
 const SUMMARY_MAX = 300;
+const SETTINGS_OPEN_CLASS = 'is-settings-open';
 
 let editorInstance = null;
 let uploadedImages = [];
 let coverImage = '';
 let selectedTags = [];
+
+function setEditorSettingsOpen(open) {
+  const workspace = document.getElementById('forumEditorWorkspace');
+  const panel = document.getElementById('editorSettingsPanel');
+  const toggleBtn = document.getElementById('editorSettingsToggleBtn');
+  if (!workspace || !panel) return;
+  const next = !!open;
+  workspace.classList.toggle(SETTINGS_OPEN_CLASS, next);
+  panel.setAttribute('aria-hidden', next ? 'false' : 'true');
+  if (toggleBtn) {
+    toggleBtn.textContent = next ? '收起设置' : '文章设置';
+  }
+}
+
+function toggleEditorSettings() {
+  const workspace = document.getElementById('forumEditorWorkspace');
+  if (!workspace) return;
+  setEditorSettingsOpen(!workspace.classList.contains(SETTINGS_OPEN_CLASS));
+}
+
+function closeEditorSettings() {
+  setEditorSettingsOpen(false);
+}
+
+function bindSettingsDismiss() {
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeEditorSettings();
+  });
+}
 
 function escapeHtml(value) {
   const div = document.createElement('div');
@@ -44,7 +74,7 @@ function initEditor() {
   const initialMode = getStoredEditorMode();
   editorInstance = new toastui.Editor({
     el: document.getElementById('articleEditor'),
-    height: '520px',
+    height: '100%',
     initialEditType: initialMode,
     previewStyle: 'vertical',
     hideModeSwitch: true,
@@ -79,6 +109,7 @@ async function loadBoardOptions() {
     const r = await fetch(FORUM_API + '/boards').then(r => r.json());
     if (r.status !== 'success') return;
     const sel = document.getElementById('boardSelect');
+    if (!sel) return;
     sel.innerHTML = '<option value="">选择版块</option>' +
       r.data.boards.map(b => `<option value="${b.id}" ${INIT_BOARD_ID == b.id ? 'selected' : ''}>${escapeHtml(b.name)}</option>`).join('');
   } catch(e) {
@@ -88,6 +119,7 @@ async function loadBoardOptions() {
 
 function renderImagePreviews() {
   const el = document.getElementById('imagePreview');
+  if (!el) return;
   el.innerHTML = uploadedImages.map((url, i) =>
     `<div class="img-item">
       <img src="${escapeHtml(url)}" alt="">
@@ -162,6 +194,7 @@ function removeCoverImage() {
 
 function renderTagChips() {
   const el = document.getElementById('tagsChips');
+  if (!el) return;
   el.innerHTML = selectedTags.map((tag, idx) =>
     `<span class="forum-tag-chip">${escapeHtml(tag)}<button type="button" onclick="removeTag(${idx})">×</button></span>`
   ).join('');
@@ -216,12 +249,15 @@ function bindSummaryCounter() {
 }
 
 function togglePollBuilder() {
-  const show = document.getElementById('pollToggle').checked;
-  document.getElementById('pollBuilder').style.display = show ? 'block' : 'none';
+  const pollToggle = document.getElementById('pollToggle');
+  const pollBuilder = document.getElementById('pollBuilder');
+  if (!pollToggle || !pollBuilder) return;
+  pollBuilder.style.display = pollToggle.checked ? 'block' : 'none';
 }
 
 function addPollOption() {
   const container = document.getElementById('pollOptions');
+  if (!container) return;
   const count = container.querySelectorAll('.poll-opt').length + 1;
   const input = document.createElement('input');
   input.type = 'text';
@@ -234,11 +270,15 @@ function addPollOption() {
 function fillPollBuilder(poll) {
   if (!poll || !poll.question || !Array.isArray(poll.options) || poll.options.length < 2) return;
   const toggle = document.getElementById('pollToggle');
+  if (!toggle) return;
   toggle.checked = true;
   togglePollBuilder();
-  document.getElementById('pollQuestion').value = poll.question || '';
-  document.getElementById('pollMultiple').checked = !!poll.multiple;
+  const pollQuestion = document.getElementById('pollQuestion');
+  const pollMultiple = document.getElementById('pollMultiple');
+  if (pollQuestion) pollQuestion.value = poll.question || '';
+  if (pollMultiple) pollMultiple.checked = !!poll.multiple;
   const container = document.getElementById('pollOptions');
+  if (!container) return;
   container.innerHTML = '';
   poll.options.forEach((opt, idx) => {
     const input = document.createElement('input');
@@ -252,13 +292,16 @@ function fillPollBuilder(poll) {
 }
 
 function buildPollData() {
-  if (!document.getElementById('pollToggle').checked) return null;
-  const question = document.getElementById('pollQuestion').value.trim();
+  const pollToggle = document.getElementById('pollToggle');
+  const pollQuestion = document.getElementById('pollQuestion');
+  const pollMultiple = document.getElementById('pollMultiple');
+  if (!pollToggle || !pollQuestion || !pollMultiple || !pollToggle.checked) return null;
+  const question = pollQuestion.value.trim();
   const opts = Array.from(document.querySelectorAll('.poll-opt'))
     .map(i => i.value.trim())
     .filter(Boolean);
   if (!question || opts.length < 2) return null;
-  return {question, options: opts, multiple: document.getElementById('pollMultiple').checked};
+  return {question, options: opts, multiple: pollMultiple.checked};
 }
 
 async function loadPostForEdit() {
@@ -302,8 +345,8 @@ async function submitPost() {
   const title = document.getElementById('postTitle').value.trim();
   const boardId = document.getElementById('boardSelect').value;
   const summary = document.getElementById('summaryInput').value.trim().slice(0, SUMMARY_MAX);
-  if (!title) { alert('请输入标题'); return; }
-  if (!boardId) { alert('请选择版块'); return; }
+  if (!title) { setEditorSettingsOpen(true); alert('请输入标题'); return; }
+  if (!boardId) { setEditorSettingsOpen(true); alert('请选择版块'); return; }
   if (!editorInstance) { alert('编辑器未初始化'); return; }
 
   const editorPayload = getEditorPayload();
@@ -317,6 +360,7 @@ async function submitPost() {
 
   const poll = buildPollData();
   if (document.getElementById('pollToggle').checked && !poll) {
+    setEditorSettingsOpen(true);
     alert('投票需要填写问题和至少2个选项');
     return;
   }
@@ -356,10 +400,12 @@ async function submitPost() {
 
 (async function initPostEditorPage() {
   initEditor();
+  bindSettingsDismiss();
   bindTagsInput();
   bindSummaryCounter();
   renderCoverPreview();
   renderImagePreviews();
+  closeEditorSettings();
   await loadBoardOptions();
   await loadPostForEdit();
 })();

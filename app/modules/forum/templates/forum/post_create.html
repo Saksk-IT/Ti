@@ -1,22 +1,189 @@
 {% extends "main/shared/app_shell.html" %}
 
+{% block body_class %}forum-editor-fullscreen-shell{% endblock %}
 {% block title %}SAK · {{ '编辑文章' if editing else '写文章' }}{% endblock %}
 {% block page_title %}{{ '编辑文章' if editing else '写文章' }}{% endblock %}
 
 {% block head_extra %}
 {% include "forum/_styles.html" %}
 <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css">
+<style>
+body.forum-editor-fullscreen-shell .app-skip-link,
+body.forum-editor-fullscreen-shell .app-sidebar,
+body.forum-editor-fullscreen-shell .app-topbar,
+body.forum-editor-fullscreen-shell .app-footer,
+body.forum-editor-fullscreen-shell .app-overlay {
+  display: none !important;
+}
+body.forum-editor-fullscreen-shell .app-shell {
+  min-height: 100vh;
+  padding-left: 0 !important;
+}
+body.forum-editor-fullscreen-shell .app-body,
+body.forum-editor-fullscreen-shell .app-main {
+  min-height: 100vh;
+}
+body.forum-editor-fullscreen-shell .app-main {
+  padding: 0 !important;
+}
+.forum-editor-workspace {
+  position: relative;
+  height: 100vh;
+  min-height: 100vh;
+  background: var(--app-bg);
+}
+.forum-editor-main {
+  height: 100%;
+  padding: 12px;
+}
+.forum-editor-surface {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--app-surface);
+  border: 0.5px solid var(--app-border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.forum-editor-surface .forum-editor-title-row {
+  margin: 0;
+  padding: 10px 12px;
+  border-bottom: 0.5px solid var(--app-border);
+}
+.forum-editor-surface .forum-toast-editor {
+  border: 0;
+  border-radius: 0;
+  flex: 1;
+  min-height: 0;
+}
+.forum-editor-surface .forum-toast-editor .toastui-editor-defaultUI {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.forum-editor-surface .forum-toast-editor .toastui-editor-main {
+  flex: 1;
+  min-height: 0;
+}
+.forum-editor-top-actions {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 10px);
+  right: 12px;
+  z-index: 40;
+  display: inline-flex;
+  gap: 8px;
+}
+.forum-editor-top-actions .forum-submit-btn,
+.forum-editor-top-actions .forum-cancel-btn {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.forum-editor-settings-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.26);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+  z-index: 34;
+}
+.forum-editor-settings-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(420px, 100vw);
+  height: 100vh;
+  background: var(--app-surface);
+  border-left: 0.5px solid var(--app-border);
+  box-shadow: var(--app-shadow);
+  transform: translateX(100%);
+  transition: transform 180ms ease;
+  z-index: 35;
+  display: flex;
+  flex-direction: column;
+}
+.forum-editor-settings-head {
+  padding: calc(env(safe-area-inset-top) + 14px) 16px 12px;
+  border-bottom: 0.5px solid var(--app-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.forum-editor-settings-head h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 650;
+}
+.forum-editor-settings-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
+}
+.forum-editor-workspace.is-settings-open .forum-editor-settings-mask {
+  opacity: 1;
+  pointer-events: auto;
+}
+.forum-editor-workspace.is-settings-open .forum-editor-settings-panel {
+  transform: translateX(0);
+}
+#pollBuilder .poll-opt,
+#pollBuilder #pollQuestion {
+  margin-bottom: 8px;
+}
+@media (max-width: 640px) {
+  .forum-editor-main {
+    padding: 0;
+  }
+  .forum-editor-surface {
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+  .forum-editor-top-actions {
+    right: 8px;
+    top: calc(env(safe-area-inset-top) + 8px);
+    gap: 6px;
+  }
+  .forum-editor-top-actions .forum-submit-btn,
+  .forum-editor-top-actions .forum-cancel-btn {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="forum-container forum-article-editor-page">
-  <div class="forum-article-editor-head">
-    <h2>{{ '编辑文章' if editing else '新建文章' }}</h2>
-    <p>支持富文本与 Markdown 双模式编辑，实时保存结构化元数据。</p>
+<div id="forumEditorWorkspace" class="forum-editor-workspace">
+  <div class="forum-editor-top-actions">
+    <button type="button" id="editorSettingsToggleBtn" class="forum-cancel-btn" onclick="toggleEditorSettings()">文章设置</button>
+    <button type="button" class="forum-submit-btn" onclick="submitPost()">{{ '保存' if editing else '发布' }}</button>
   </div>
 
-  <div class="forum-article-form-grid">
-    <section class="forum-article-main">
+  <div class="forum-editor-main">
+    <section class="forum-editor-surface">
+      <div class="forum-editor-title-row">
+        <div class="forum-editor-mode-switch" role="tablist" aria-label="编辑模式">
+          <button type="button" id="modeRichBtn" class="is-active" onclick="switchEditorMode('wysiwyg')">富文本</button>
+          <button type="button" id="modeMdBtn" onclick="switchEditorMode('markdown')">Markdown</button>
+        </div>
+      </div>
+      <div id="articleEditor" class="forum-toast-editor"></div>
+    </section>
+  </div>
+
+  <div id="editorSettingsMask" class="forum-editor-settings-mask" onclick="closeEditorSettings()"></div>
+
+  <aside id="editorSettingsPanel" class="forum-editor-settings-panel" aria-hidden="true">
+    <div class="forum-editor-settings-head">
+      <h2>文章设置</h2>
+      <button type="button" class="forum-cancel-btn" onclick="closeEditorSettings()">关闭</button>
+    </div>
+    <div class="forum-editor-settings-body">
       <div class="forum-form-group">
         <label for="boardSelect">版块</label>
         <select id="boardSelect"></select>
@@ -27,50 +194,6 @@
         <input type="text" id="postTitle" maxlength="200" placeholder="请输入标题（最多 200 字）">
       </div>
 
-      <div class="forum-form-group">
-        <div class="forum-editor-title-row">
-          <label>正文</label>
-          <div class="forum-editor-mode-switch" role="tablist" aria-label="编辑模式">
-            <button type="button" id="modeRichBtn" class="is-active" onclick="switchEditorMode('wysiwyg')">富文本</button>
-            <button type="button" id="modeMdBtn" onclick="switchEditorMode('markdown')">Markdown</button>
-          </div>
-        </div>
-        <div id="articleEditor" class="forum-toast-editor"></div>
-      </div>
-
-      <div class="forum-form-group">
-        <label>正文配图（可选）</label>
-        <div class="forum-image-upload">
-          <div id="imagePreview" class="forum-image-grid"></div>
-          <label class="forum-upload-btn">
-            <input type="file" accept="image/*" multiple onchange="uploadBodyImages(this.files)" style="display:none">
-            + 添加配图
-          </label>
-        </div>
-      </div>
-
-      <div class="forum-form-group">
-        <label style="display:flex;align-items:center;gap:8px;">
-          <input type="checkbox" id="pollToggle" onchange="togglePollBuilder()" style="width:auto;">
-          添加投票（可选）
-        </label>
-        <div id="pollBuilder" style="display:none;margin-top:12px;">
-          <input type="text" id="pollQuestion" placeholder="投票问题" style="margin-bottom:8px;">
-          <div id="pollOptions">
-            <input type="text" class="poll-opt" placeholder="选项 1" style="margin-bottom:6px;">
-            <input type="text" class="poll-opt" placeholder="选项 2" style="margin-bottom:6px;">
-          </div>
-          <div style="display:flex;gap:12px;margin-top:8px;align-items:center;">
-            <button type="button" class="forum-cancel-btn" onclick="addPollOption()" style="padding:6px 14px;font-size:13px;">+ 添加选项</button>
-            <label style="font-size:13px;display:flex;align-items:center;gap:4px;">
-              <input type="checkbox" id="pollMultiple" style="width:auto;"> 允许多选
-            </label>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <aside class="forum-article-side">
       <div class="forum-form-group">
         <label>文章封面</label>
         <div class="forum-cover-box" id="coverPreviewBox">
@@ -96,13 +219,39 @@
         <div class="forum-tag-hint">最多 8 个，每个最多 20 字</div>
         <div id="tagsChips" class="forum-tags-chips"></div>
       </div>
-    </aside>
-  </div>
 
-  <div class="forum-form-actions">
-    <button class="forum-submit-btn" onclick="submitPost()">{{ '保存' if editing else '发布' }}</button>
-    <button class="forum-cancel-btn" onclick="history.back()">取消</button>
-  </div>
+      <div class="forum-form-group">
+        <label>正文配图（可选）</label>
+        <div class="forum-image-upload">
+          <div id="imagePreview" class="forum-image-grid"></div>
+          <label class="forum-upload-btn">
+            <input type="file" accept="image/*" multiple onchange="uploadBodyImages(this.files)" style="display:none">
+            + 添加配图
+          </label>
+        </div>
+      </div>
+
+      <div class="forum-form-group">
+        <label style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="pollToggle" onchange="togglePollBuilder()" style="width:auto;">
+          添加投票（可选）
+        </label>
+        <div id="pollBuilder" style="display:none;margin-top:12px;">
+          <input type="text" id="pollQuestion" placeholder="投票问题">
+          <div id="pollOptions">
+            <input type="text" class="poll-opt" placeholder="选项 1">
+            <input type="text" class="poll-opt" placeholder="选项 2">
+          </div>
+          <div style="display:flex;gap:12px;margin-top:8px;align-items:center;">
+            <button type="button" class="forum-cancel-btn" onclick="addPollOption()" style="padding:6px 14px;font-size:13px;">+ 添加选项</button>
+            <label style="font-size:13px;display:flex;align-items:center;gap:4px;">
+              <input type="checkbox" id="pollMultiple" style="width:auto;"> 允许多选
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
 </div>
 {% endblock %}
 
