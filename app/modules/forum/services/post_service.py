@@ -112,14 +112,16 @@ def get_posts(
     """获取帖子列表（分页）"""
     conditions = ['p.is_deleted = false']
     params: dict = {}
+    dialect = db.engine.dialect.name
+    is_pg = dialect == 'postgresql'
+    is_sqlite = dialect == 'sqlite'
 
     if board_id:
         conditions.append('p.board_id = :board_id')
         params['board_id'] = board_id
     if keyword:
         # PostgreSQL: 使用 GIN 全文索引；SQLite: 降级 LIKE
-        dialect = db.engine.dialect.name
-        if dialect == 'postgresql':
+        if is_pg:
             conditions.append(
                 "p.search_vector @@ plainto_tsquery('simple', :kw)"
             )
@@ -132,14 +134,36 @@ def get_posts(
 
     where = ' AND '.join(conditions)
 
-    order_map = {
-        'latest': 'p.created_at DESC',
-        'hot': (
+    if is_pg:
+        hot_order = (
             '(p.like_count * 2 + p.comment_count * 3 + p.view_count * 0.1'
             ' + p.favorite_count * 2)'
             ' / POWER(GREATEST(EXTRACT(EPOCH FROM (NOW() - p.created_at)) / 3600, 1), 0.5)'
             ' DESC, p.created_at DESC'
-        ),
+        )
+        content_raw_expr = 'LEFT(p.content, 800)'
+    elif is_sqlite:
+        # SQLite 不支持 NOW/EXTRACT/LEFT，使用兼容表达式。
+        hot_order = (
+            '(p.like_count * 2 + p.comment_count * 3 + p.view_count * 0.1'
+            ' + p.favorite_count * 2)'
+            " / CASE WHEN ((strftime('%s','now') - strftime('%s', p.created_at)) / 3600.0) > 1"
+            " THEN ((strftime('%s','now') - strftime('%s', p.created_at)) / 3600.0)"
+            ' ELSE 1 END'
+            ' DESC, p.created_at DESC'
+        )
+        content_raw_expr = 'SUBSTR(p.content, 1, 800)'
+    else:
+        hot_order = (
+            '(p.like_count * 2 + p.comment_count * 3 + p.view_count * 0.1'
+            ' + p.favorite_count * 2)'
+            ' DESC, p.created_at DESC'
+        )
+        content_raw_expr = 'SUBSTRING(p.content, 1, 800)'
+
+    order_map = {
+        'latest': 'p.created_at DESC',
+        'hot': hot_order,
         'featured': 'p.is_featured DESC, p.created_at DESC',
         'active': 'COALESCE(p.last_comment_at, p.created_at) DESC',
     }
@@ -166,7 +190,7 @@ def get_posts(
 
     rows = db.session.execute(text(f'''
         SELECT p.id, p.board_id, p.author_id, p.title,
-               LEFT(p.content, 800) AS content_raw,
+               {content_raw_expr} AS content_raw,
                p.images, p.question_refs, p.cover_image, p.tags, p.summary,
                p.content_format,
                p.is_pinned, p.is_featured, p.is_locked,
