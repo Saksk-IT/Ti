@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """帖子业务逻辑"""
+from functools import lru_cache
 import json
 from typing import Optional
 
-from sqlalchemy import text
+from sqlalchemy import inspect, text
 
 from app.core.extensions import db
 from ..services.content_sanitizer import sanitize_html, strip_html_tags
@@ -100,6 +101,24 @@ def _json_read_list(value) -> list:
     return parsed if isinstance(parsed, list) else []
 
 
+@lru_cache(maxsize=1)
+def _forum_posts_columns() -> set[str]:
+    """读取 forum_posts 表结构，兼容旧库字段缺失场景。"""
+    try:
+        inspector = inspect(db.engine)
+        return {
+            str(col.get('name'))
+            for col in inspector.get_columns('forum_posts')
+            if col.get('name')
+        }
+    except Exception:
+        return set()
+
+
+def _has_forum_posts_column(column_name: str) -> bool:
+    return column_name in _forum_posts_columns()
+
+
 def get_posts(
     board_id: Optional[int] = None,
     sort: str = 'latest',
@@ -115,6 +134,10 @@ def get_posts(
     dialect = db.engine.dialect.name
     is_pg = dialect == 'postgresql'
     is_sqlite = dialect == 'sqlite'
+    has_cover_image = _has_forum_posts_column('cover_image')
+    has_tags = _has_forum_posts_column('tags')
+    has_summary = _has_forum_posts_column('summary')
+    has_content_format = _has_forum_posts_column('content_format')
 
     if board_id:
         conditions.append('p.board_id = :board_id')
@@ -161,6 +184,14 @@ def get_posts(
         )
         content_raw_expr = 'SUBSTRING(p.content, 1, 800)'
 
+    cover_image_select = 'p.cover_image AS cover_image' if has_cover_image else 'NULL AS cover_image'
+    tags_select = 'p.tags AS tags' if has_tags else "'[]' AS tags"
+    summary_select = 'p.summary AS summary' if has_summary else "'' AS summary"
+    content_format_select = (
+        'p.content_format AS content_format'
+        if has_content_format else "'html' AS content_format"
+    )
+
     order_map = {
         'latest': 'p.created_at DESC',
         'hot': hot_order,
@@ -191,8 +222,8 @@ def get_posts(
     rows = db.session.execute(text(f'''
         SELECT p.id, p.board_id, p.author_id, p.title,
                {content_raw_expr} AS content_raw,
-               p.images, p.question_refs, p.cover_image, p.tags, p.summary,
-               p.content_format,
+               p.images, p.question_refs, {cover_image_select}, {tags_select}, {summary_select},
+               {content_format_select},
                p.is_pinned, p.is_featured, p.is_locked,
                p.comment_count, p.like_count, p.favorite_count, p.view_count,
                p.created_at, p.updated_at, p.last_comment_at,
@@ -284,6 +315,7 @@ def create_post(author_id: int, board_id: int, title: str, content: str,
     refs_json = _to_json_str(question_refs or [])
     tags_json = _to_json_str(normalized_tags)
     poll_json = _to_json_str(poll) if poll else None
+    post_columns = _forum_posts_columns()
     is_pg = _is_postgresql()
     images_expr = 'CAST(:images AS jsonb)' if is_pg else ':images'
     refs_expr = 'CAST(:refs AS jsonb)' if is_pg else ':refs'
@@ -292,23 +324,50 @@ def create_post(author_id: int, board_id: int, title: str, content: str,
         'CASE WHEN :poll IS NOT NULL THEN CAST(:poll AS jsonb) ELSE NULL END'
         if is_pg else ':poll'
     )
-    insert_sql = f'''
-        INSERT INTO forum_posts
-            (board_id, author_id, title, content, content_format, markdown_source,
-             cover_image, tags, summary, images, question_refs, poll)
-        VALUES (:bid, :uid, :title, :content, :content_format, :markdown_source,
-                :cover_image, {tags_expr}, :summary, {images_expr}, {refs_expr}, {poll_expr})
-        RETURNING id
-    '''
+    insert_columns = ['board_id', 'author_id', 'title', 'content']
+    insert_values = [':bid', ':uid', ':title', ':content']
+    insert_params: dict[str, object] = {
+        'bid': board_id, 'uid': author_id, 'title': title, 'content': safe_content,
+    }
 
-    result = db.session.execute(text(insert_sql), {
-        'bid': board_id, 'uid': author_id, 'title': title,
-        'content': safe_content, 'content_format': normalized_format,
-        'markdown_source': normalized_markdown, 'cover_image': normalized_cover,
-        'tags': tags_json, 'summary': normalized_summary,
-        'images': images_json, 'refs': refs_json,
-        'poll': poll_json,
-    })
+    if 'content_format' in post_columns:
+        insert_columns.append('content_format')
+        insert_values.append(':content_format')
+        insert_params['content_format'] = normalized_format
+    if 'markdown_source' in post_columns:
+        insert_columns.append('markdown_source')
+        insert_values.append(':markdown_source')
+        insert_params['markdown_source'] = normalized_markdown
+    if 'cover_image' in post_columns:
+        insert_columns.append('cover_image')
+        insert_values.append(':cover_image')
+        insert_params['cover_image'] = normalized_cover
+    if 'tags' in post_columns:
+        insert_columns.append('tags')
+        insert_values.append(tags_expr)
+        insert_params['tags'] = tags_json
+    if 'summary' in post_columns:
+        insert_columns.append('summary')
+        insert_values.append(':summary')
+        insert_params['summary'] = normalized_summary
+    if 'images' in post_columns:
+        insert_columns.append('images')
+        insert_values.append(images_expr)
+        insert_params['images'] = images_json
+    if 'question_refs' in post_columns:
+        insert_columns.append('question_refs')
+        insert_values.append(refs_expr)
+        insert_params['refs'] = refs_json
+    if 'poll' in post_columns:
+        insert_columns.append('poll')
+        insert_values.append(poll_expr)
+        insert_params['poll'] = poll_json
+
+    insert_sql = (
+        f"INSERT INTO forum_posts ({', '.join(insert_columns)}) "
+        f"VALUES ({', '.join(insert_values)}) RETURNING id"
+    )
+    result = db.session.execute(text(insert_sql), insert_params)
     new_id = result.fetchone()._mapping['id']
     db.session.commit()
     bump_forum_boards_version()
@@ -327,8 +386,17 @@ def create_post(author_id: int, board_id: int, title: str, content: str,
 
 def update_post(post_id: int, author_id: int, **fields) -> bool:
     """编辑帖子（仅作者）"""
+    post_columns = _forum_posts_columns()
+    format_select = (
+        'content_format AS content_format'
+        if 'content_format' in post_columns else "'html' AS content_format"
+    )
+    markdown_select = (
+        'markdown_source AS markdown_source'
+        if 'markdown_source' in post_columns else 'NULL AS markdown_source'
+    )
     row = db.session.execute(text(
-        'SELECT author_id, content, content_format, markdown_source '
+        f'SELECT author_id, content, {format_select}, {markdown_select} '
         'FROM forum_posts WHERE id = :pid AND is_deleted = false'
     ), {'pid': post_id}).fetchone()
     if not row or row._mapping['author_id'] != author_id:
@@ -338,10 +406,13 @@ def update_post(post_id: int, author_id: int, **fields) -> bool:
     old_format = str(row._mapping.get('content_format') or 'html')
     old_markdown = row._mapping.get('markdown_source')
 
-    allowed = {
-        'title', 'content', 'images', 'question_refs', 'poll',
-        'content_format', 'markdown_source', 'cover_image', 'tags', 'summary',
-    }
+    allowed = {'title', 'content'}
+    for optional_field in (
+        'images', 'question_refs', 'poll', 'content_format',
+        'markdown_source', 'cover_image', 'tags', 'summary',
+    ):
+        if optional_field in post_columns:
+            allowed.add(optional_field)
     updates = {k: v for k, v in fields.items() if k in allowed}
     if not updates:
         return False
@@ -356,8 +427,10 @@ def update_post(post_id: int, author_id: int, **fields) -> bool:
             markdown_source=updates.get('markdown_source', old_markdown),
         )
         updates['content'] = safe_content
-        updates['content_format'] = normalized_format
-        updates['markdown_source'] = normalized_markdown
+        if 'content_format' in post_columns:
+            updates['content_format'] = normalized_format
+        if 'markdown_source' in post_columns:
+            updates['markdown_source'] = normalized_markdown
 
     if 'images' in updates:
         updates['images'] = _to_json_str(updates['images'] or [])
