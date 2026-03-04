@@ -119,6 +119,11 @@ def _has_forum_posts_column(column_name: str) -> bool:
     return column_name in _forum_posts_columns()
 
 
+def supports_post_hidden() -> bool:
+    """当前库是否支持帖子隐藏字段。"""
+    return _has_forum_posts_column('is_hidden')
+
+
 def get_posts(
     board_id: Optional[int] = None,
     sort: str = 'latest',
@@ -138,6 +143,7 @@ def get_posts(
     has_tags = _has_forum_posts_column('tags')
     has_summary = _has_forum_posts_column('summary')
     has_content_format = _has_forum_posts_column('content_format')
+    has_is_hidden = _has_forum_posts_column('is_hidden')
 
     if board_id:
         conditions.append('p.board_id = :board_id')
@@ -154,6 +160,12 @@ def get_posts(
             params['kw'] = f'%{keyword}%'
     if featured_only:
         conditions.append('p.is_featured = true')
+    if has_is_hidden:
+        if user_id:
+            conditions.append('(COALESCE(p.is_hidden, false) = false OR p.author_id = :viewer_id)')
+            params['viewer_id'] = user_id
+        else:
+            conditions.append('COALESCE(p.is_hidden, false) = false')
 
     where = ' AND '.join(conditions)
 
@@ -191,6 +203,10 @@ def get_posts(
         'p.content_format AS content_format'
         if has_content_format else "'html' AS content_format"
     )
+    hidden_select = (
+        'COALESCE(p.is_hidden, false) AS is_hidden'
+        if has_is_hidden else 'false AS is_hidden'
+    )
 
     order_map = {
         'latest': 'p.created_at DESC',
@@ -225,6 +241,7 @@ def get_posts(
                p.images, p.question_refs, {cover_image_select}, {tags_select}, {summary_select},
                {content_format_select},
                p.is_pinned, p.is_featured, p.is_locked,
+               {hidden_select},
                p.comment_count, p.like_count, p.favorite_count, p.view_count,
                p.created_at, p.updated_at, p.last_comment_at,
                u.username AS author_name, u.avatar AS author_avatar,
@@ -246,6 +263,7 @@ def get_posts(
         d['tags'] = _json_read_list(d.get('tags'))
         d['images'] = _json_read_list(d.get('images'))
         d['question_refs'] = _json_read_list(d.get('question_refs'))
+        d['is_hidden'] = bool(d.get('is_hidden'))
         d['content_preview'] = summary or strip_html_tags(content_raw, DEFAULT_PREVIEW_LENGTH)
         posts.append(d)
 
@@ -257,15 +275,28 @@ def get_posts(
     }
 
 
-def get_post_detail(post_id: int, user_id: int | None = None) -> dict | None:
+def get_post_detail(
+    post_id: int,
+    user_id: int | None = None,
+    is_admin: bool = False,
+) -> dict | None:
     """获取帖子详情"""
     params: dict = {'pid': post_id}
     liked_sql = ''
     faved_sql = ''
+    conditions = ['p.id = :pid', 'p.is_deleted = false']
+    has_is_hidden = supports_post_hidden()
     if user_id:
         params['uid'] = user_id
         liked_sql = ", EXISTS(SELECT 1 FROM forum_likes WHERE user_id=:uid AND target_type='post' AND target_id=p.id) AS liked"
         faved_sql = ", EXISTS(SELECT 1 FROM forum_favorites WHERE user_id=:uid AND post_id=p.id) AS favorited"
+    if has_is_hidden and not is_admin:
+        if user_id:
+            params['viewer_uid'] = user_id
+            conditions.append('(COALESCE(p.is_hidden, false) = false OR p.author_id = :viewer_uid)')
+        else:
+            conditions.append('COALESCE(p.is_hidden, false) = false')
+    where = ' AND '.join(conditions)
 
     row = db.session.execute(text(f'''
         SELECT p.*, u.username AS author_name, u.avatar AS author_avatar,
@@ -274,7 +305,7 @@ def get_post_detail(post_id: int, user_id: int | None = None) -> dict | None:
         FROM forum_posts p
         JOIN users u ON u.id = p.author_id
         JOIN forum_boards b ON b.id = p.board_id
-        WHERE p.id = :pid AND p.is_deleted = false
+        WHERE {where}
     '''), params).fetchone()
 
     if not row:
@@ -290,6 +321,7 @@ def get_post_detail(post_id: int, user_id: int | None = None) -> dict | None:
     data['tags'] = _json_read_list(data.get('tags'))
     data['images'] = _json_read_list(data.get('images'))
     data['question_refs'] = _json_read_list(data.get('question_refs'))
+    data['is_hidden'] = bool(data.get('is_hidden')) if has_is_hidden else False
     return data
 
 
@@ -490,3 +522,30 @@ def delete_post(post_id: int, user_id: int, is_admin: bool = False) -> bool:
     '''), {'pid': post_id, 'uid': user_id})
     db.session.commit()
     return True
+
+
+def set_post_hidden(
+    post_id: int,
+    user_id: int,
+    hidden: bool,
+    is_admin: bool = False,
+) -> tuple[bool, str | None]:
+    """设置帖子隐藏状态（作者或管理员）"""
+    if not supports_post_hidden():
+        return False, 'unsupported'
+
+    row = db.session.execute(text(
+        'SELECT author_id FROM forum_posts WHERE id = :pid AND is_deleted = false'
+    ), {'pid': post_id}).fetchone()
+    if not row:
+        return False, 'not_found'
+    if row._mapping['author_id'] != user_id and not is_admin:
+        return False, 'forbidden'
+
+    db.session.execute(text('''
+        UPDATE forum_posts
+        SET is_hidden = :hidden, updated_at = NOW()
+        WHERE id = :pid
+    '''), {'pid': post_id, 'hidden': bool(hidden)})
+    db.session.commit()
+    return True, None

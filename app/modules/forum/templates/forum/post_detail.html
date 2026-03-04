@@ -135,6 +135,7 @@
 {% block body_end %}
 <script>document.getElementById('main').classList.add('forum-no-scroll');document.getElementById('appShell').classList.add('forum-no-scroll-shell');</script>
 <script>const POST_ID = {{ post_id }};</script>
+<script>const FORUM_CURRENT_USER_ID = {{ user_id or 0 }};</script>
 {% include "forum/_scripts/_forum_mention.html" %}
 {% include "forum/_scripts/_forum_comments.html" %}
 {% include "forum/_scripts/_forum_interactions.html" %}

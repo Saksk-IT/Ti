@@ -47,6 +47,7 @@ class ForumPost(db.Model):
     is_pinned = db.Column(db.Boolean, default=False, server_default=text('false'))
     is_featured = db.Column(db.Boolean, default=False, server_default=text('false'))
     is_locked = db.Column(db.Boolean, default=False, server_default=text('false'))
+    is_hidden = db.Column(db.Boolean, default=False, server_default=text('false'))
     is_deleted = db.Column(db.Boolean, default=False, server_default=text('false'))
     deleted_by = db.Column(db.Integer, nullable=True)
     deleted_at = db.Column(db.DateTime, nullable=True)

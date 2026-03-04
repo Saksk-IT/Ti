@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """帖子 CRUD API"""
-from flask import jsonify, request, current_app
+from flask import jsonify, request, current_app, session
 
 from ..api import forum_api_bp
 from app.core.extensions import limiter
@@ -72,7 +72,11 @@ def api_get_posts():
 def api_get_post(post_id: int):
     """帖子详情"""
     try:
-        post = post_service.get_post_detail(post_id, user_id=current_user_id())
+        post = post_service.get_post_detail(
+            post_id,
+            user_id=current_user_id(),
+            is_admin=bool(session.get('is_admin')),
+        )
         if not post:
             return jsonify({'status': 'error', 'message': '帖子不存在'}), 404
         return jsonify({'status': 'success', 'data': post})
@@ -153,7 +157,6 @@ def api_update_post(post_id: int):
 def api_delete_post(post_id: int):
     """删除帖子"""
     try:
-        from flask import session
         is_admin = bool(session.get('is_admin'))
         ok = post_service.delete_post(post_id, user_id=current_user_id(), is_admin=is_admin)
         if not ok:
@@ -162,3 +165,45 @@ def api_delete_post(post_id: int):
     except Exception as e:
         current_app.logger.error(f"删除帖子失败: {e}", exc_info=True)
         return jsonify({'status': 'error', 'message': '删除帖子失败'}), 500
+
+
+@forum_api_bp.route('/posts/<int:post_id>/hidden', methods=['POST'])
+@auth_required
+@limiter.limit("30 per minute;300 per day")
+def api_set_post_hidden(post_id: int):
+    """设置帖子隐藏状态（作者/管理员）"""
+    try:
+        data = request.get_json(silent=True) or {}
+        raw_hidden = data.get('hidden')
+        if isinstance(raw_hidden, bool):
+            hidden = raw_hidden
+        elif isinstance(raw_hidden, (int, float)) and raw_hidden in (0, 1):
+            hidden = bool(raw_hidden)
+        elif isinstance(raw_hidden, str):
+            normalized = raw_hidden.strip().lower()
+            if normalized in ('true', '1', 'yes', 'on'):
+                hidden = True
+            elif normalized in ('false', '0', 'no', 'off'):
+                hidden = False
+            else:
+                return jsonify({'status': 'error', 'message': '参数 hidden 非法'}), 400
+        else:
+            return jsonify({'status': 'error', 'message': '参数 hidden 必填'}), 400
+
+        ok, reason = post_service.set_post_hidden(
+            post_id=post_id,
+            user_id=current_user_id(),
+            hidden=hidden,
+            is_admin=bool(session.get('is_admin')),
+        )
+        if not ok:
+            if reason == 'unsupported':
+                return jsonify({'status': 'error', 'message': '当前版本不支持隐藏帖子'}), 400
+            if reason == 'not_found':
+                return jsonify({'status': 'error', 'message': '帖子不存在'}), 404
+            return jsonify({'status': 'error', 'message': '无权操作该帖子'}), 403
+
+        return jsonify({'status': 'success', 'data': {'post_id': post_id, 'is_hidden': hidden}})
+    except Exception as e:
+        current_app.logger.error(f"设置帖子隐藏状态失败: {e}", exc_info=True)
+        return jsonify({'status': 'error', 'message': '设置帖子隐藏状态失败'}), 500

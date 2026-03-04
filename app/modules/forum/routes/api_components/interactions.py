@@ -8,7 +8,7 @@ from ..api import forum_api_bp
 from app.core.extensions import db, limiter
 from app.core.utils.decorators import auth_required, current_user_id
 from app.modules.forum.services.content_sanitizer import strip_html_tags
-from app.modules.forum.services import interaction_service
+from app.modules.forum.services import interaction_service, post_service
 
 
 @forum_api_bp.route('/like', methods=['POST'])
@@ -146,14 +146,22 @@ def api_my_favorites():
         page = request.args.get('page', 1, type=int)
         per_page = min(request.args.get('per_page', 20, type=int), 50)
         offset = (page - 1) * per_page
+        has_hidden = post_service.supports_post_hidden()
+        hidden_select = 'COALESCE(p.is_hidden, false) AS is_hidden,' if has_hidden else 'false AS is_hidden,'
+        hidden_where = ' AND (COALESCE(p.is_hidden, false) = false OR p.author_id = :uid)' if has_hidden else ''
 
-        total = db.session.execute(text(
-            'SELECT COUNT(*) FROM forum_favorites WHERE user_id=:uid'
-        ), {'uid': uid}).scalar()
+        total = db.session.execute(text('''
+            SELECT COUNT(*)
+            FROM forum_favorites f
+            JOIN forum_posts p ON p.id = f.post_id AND p.is_deleted = false
+            WHERE f.user_id = :uid
+            ''' + hidden_where + '''
+        '''), {'uid': uid}).scalar()
 
         rows = db.session.execute(text('''
-            SELECT p.id, p.title, LEFT(p.content, 800) AS content_raw,
+            SELECT p.id, p.author_id, p.title, LEFT(p.content, 800) AS content_raw,
                    p.images, p.cover_image, p.tags, p.summary, p.content_format,
+                   ''' + hidden_select + '''
                    p.comment_count, p.like_count, p.view_count,
                    p.created_at, u.username AS author_name, u.avatar AS author_avatar,
                    b.name AS board_name, f.created_at AS favorited_at
@@ -162,6 +170,7 @@ def api_my_favorites():
             JOIN users u ON u.id = p.author_id
             JOIN forum_boards b ON b.id = p.board_id
             WHERE f.user_id = :uid
+            ''' + hidden_where + '''
             ORDER BY f.created_at DESC
             LIMIT :limit OFFSET :offset
         '''), {'uid': uid, 'limit': per_page, 'offset': offset}).fetchall()
@@ -179,6 +188,7 @@ def api_my_favorites():
             if not isinstance(d.get('tags'), list):
                 d['tags'] = []
             summary = str(d.get('summary') or '').strip()
+            d['is_hidden'] = bool(d.get('is_hidden'))
             d['content_preview'] = summary or strip_html_tags(content_raw, 200)
             posts.append(d)
 

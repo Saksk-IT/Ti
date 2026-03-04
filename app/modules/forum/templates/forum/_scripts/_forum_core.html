@@ -1,11 +1,13 @@
 <script>
 const API = '/api/forum';
+const CURRENT_USER_ID = Number({{ user_id or 0 }});
 let currentBoard = (typeof FIXED_BOARD_ID !== 'undefined') ? FIXED_BOARD_ID : '';
 let currentSort = 'latest';
 let currentFeatured = false;
 let currentPage = 1;
 let totalPages = 1;
 let allPosts = [];
+let _postMenuOpenedFor = null;
 
 function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
 function fmtTime(s) { if (!s) return ''; const d = new Date(s); const now = new Date(); const diff = (now - d) / 1000;
@@ -13,6 +15,69 @@ function fmtTime(s) { if (!s) return ''; const d = new Date(s); const now = new 
   if (diff < 86400) return Math.floor(diff/3600) + '小时前';
   if (diff < 604800) return Math.floor(diff/86400) + '天前';
   return `${d.getMonth()+1}/${d.getDate()}`; }
+
+function isPostOwner(post) {
+  return !!CURRENT_USER_ID && Number(post && post.author_id) === CURRENT_USER_ID;
+}
+
+function closeAllPostMenus() {
+  document.querySelectorAll('.forum-post-owner-actions.open').forEach(el => el.classList.remove('open'));
+  _postMenuOpenedFor = null;
+}
+
+function togglePostOwnerMenu(event, postId) {
+  event.stopPropagation();
+  const host = document.querySelector(`.forum-post-owner-actions[data-post-owner-menu="${postId}"]`);
+  if (!host) return;
+  const shouldOpen = !host.classList.contains('open');
+  closeAllPostMenus();
+  if (shouldOpen) {
+    host.classList.add('open');
+    _postMenuOpenedFor = postId;
+  }
+}
+
+function goEditPost(event, postId) {
+  event.stopPropagation();
+  location.href = `/forum/post/${postId}/edit`;
+}
+
+async function togglePostHidden(event, postId, nextHidden) {
+  event.stopPropagation();
+  closeAllPostMenus();
+  try {
+    const r = await fetch(`${API}/posts/${postId}/hidden`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({hidden: !!nextHidden}),
+    }).then(res => res.json());
+    if (r.status !== 'success') {
+      alert(r.message || '操作失败');
+      return;
+    }
+    currentPage = 1;
+    loadPosts();
+  } catch (e) {
+    alert('操作失败');
+  }
+}
+
+async function deletePostByAuthor(event, postId) {
+  event.stopPropagation();
+  closeAllPostMenus();
+  if (!confirm('确认删除这篇帖子？删除后不可恢复。')) return;
+  try {
+    const r = await fetch(`${API}/posts/${postId}`, {method: 'DELETE'}).then(res => res.json());
+    if (r.status !== 'success') {
+      alert(r.message || '删除失败');
+      return;
+    }
+    currentPage = 1;
+    loadPosts();
+  } catch (e) {
+    alert('删除失败');
+  }
+}
 
 /* ===== 骨架屏 ===== */
 function skeletonCard() {
@@ -49,11 +114,22 @@ function setSort(el, sort) {
 function renderPostCard(p) {
   const badges = (p.is_pinned ? '<span class="forum-badge forum-badge-pin">置顶</span>' : '') +
                  (p.is_featured ? '<span class="forum-badge forum-badge-feat">精华</span>' : '') +
-                 (p.is_locked ? '<span class="forum-badge forum-badge-lock">锁定</span>' : '');
+                 (p.is_locked ? '<span class="forum-badge forum-badge-lock">锁定</span>' : '') +
+                 (p.is_hidden ? '<span class="forum-badge forum-badge-hidden">已隐藏</span>' : '');
   const initial = (p.author_name || 'U')[0].toUpperCase();
   const avatar = p.author_avatar
     ? `<img class="forum-avatar" src="${esc(p.author_avatar)}" alt="">`
     : `<div class="forum-avatar" style="display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:var(--app-primary-soft);color:var(--app-text)">${initial}</div>`;
+  const ownerMenu = isPostOwner(p) ? `<div class="forum-post-owner-actions${_postMenuOpenedFor === p.id ? ' open' : ''}" data-post-owner-menu="${p.id}" onclick="event.stopPropagation()">
+      <button type="button" class="forum-post-owner-toggle" title="帖子管理" aria-label="帖子管理" onclick="togglePostOwnerMenu(event, ${p.id})">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></svg>
+      </button>
+      <div class="forum-post-owner-menu">
+        <button type="button" onclick="goEditPost(event, ${p.id})">编辑</button>
+        <button type="button" onclick="togglePostHidden(event, ${p.id}, ${p.is_hidden ? 'false' : 'true'})">${p.is_hidden ? '取消隐藏' : '隐藏'}</button>
+        <button type="button" class="danger" onclick="deletePostByAuthor(event, ${p.id})">删除</button>
+      </div>
+    </div>` : '';
 
   /* 图片网格 — 根据数量自适应 */
   let imgs = '';
@@ -80,7 +156,7 @@ function renderPostCard(p) {
     : '';
 
   return `<div class="forum-post-card" onclick="location.href='/forum/post/${p.id}'" data-post-id="${p.id}">
-    <div class="forum-post-header"><a href="/user/${p.author_id}" onclick="event.stopPropagation()" class="forum-avatar-link">${avatar}</a><div class="forum-post-meta"><a href="/user/${p.author_id}" onclick="event.stopPropagation()" class="author forum-user-link">${esc(p.author_name)}</a> · ${fmtTime(p.created_at)}<span class="forum-board-tag">${esc(p.board_name)}</span></div></div>
+    <div class="forum-post-header"><div class="forum-post-head-main"><a href="/user/${p.author_id}" onclick="event.stopPropagation()" class="forum-avatar-link">${avatar}</a><div class="forum-post-meta"><a href="/user/${p.author_id}" onclick="event.stopPropagation()" class="author forum-user-link">${esc(p.author_name)}</a> · ${fmtTime(p.created_at)}<span class="forum-board-tag">${esc(p.board_name)}</span></div></div>${ownerMenu}</div>
     <div class="forum-post-title">${badges}${esc(p.title)}</div>
     ${cover}
     <div class="forum-post-body-wrap" id="${contentId}"><div class="forum-post-body-inner">${preview}</div></div>
@@ -113,6 +189,7 @@ function applyContentCollapse() {
 
 /* ===== 加载帖子 ===== */
 async function loadPosts() {
+  closeAllPostMenus();
   const isFav = typeof IS_FAVORITES_PAGE !== 'undefined' && IS_FAVORITES_PAGE;
   let url = isFav ? API + '/my/favorites' : API + '/posts';
   const params = new URLSearchParams({page: currentPage, per_page: 20, sort: currentSort});
@@ -190,5 +267,6 @@ async function loadBoards() {
 }
 
 // 初始化
+document.addEventListener('click', closeAllPostMenus);
 loadBoards(); loadPosts(); loadBoardHeader();
 </script>
