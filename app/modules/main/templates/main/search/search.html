@@ -625,6 +625,22 @@
       flex-wrap: wrap;
     }
 
+    .forum-author-link {
+      color: var(--app-text);
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 140ms ease;
+    }
+
+    .forum-author-link:hover {
+      color: var(--app-primary);
+      text-decoration: underline;
+    }
+
+    .forum-post-date {
+      color: var(--app-muted);
+    }
+
     .forum-result-stats {
       display: flex;
       align-items: center;
@@ -998,8 +1014,8 @@
                   <div class="forum-result-preview" data-preview="{{ post.content_preview or '' }}">{{ post.content_preview or '' }}</div>
                   <div class="forum-result-footer">
                     <div class="forum-result-meta">
-                      <span>{{ post.author_name }}</span>
-                      <span>{{ post.created_at }}</span>
+                      <a href="/user/{{ post.author_id }}" onclick="event.stopPropagation()" class="forum-author-link">{{ post.author_name }}</a>
+                      <span class="forum-post-date">{{ post.created_at }}</span>
                     </div>
                   </div>
                 </div>
@@ -1195,6 +1211,19 @@
     function openForumPost(postId) {
       window.location.href = '/forum/post/' + postId;
     }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      return `${month}月${day}日`;
+    }
+
+    document.querySelectorAll('.forum-post-date').forEach(el => {
+      const originalDate = el.textContent.trim();
+      el.textContent = formatDate(originalDate);
+    });
 
     applyHighlights();
   </script>
