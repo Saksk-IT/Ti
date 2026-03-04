@@ -1,31 +1,24 @@
 <div class="forum-post-card" onclick="location.href='/forum/post/{{ post.id }}'">
-  <div class="forum-post-main">
-    <div class="forum-post-header">
-      {% if post.author_avatar %}
-      <img class="forum-avatar" src="{{ post.author_avatar }}" alt="">
-      {% else %}
-      <div class="forum-avatar"></div>
-      {% endif %}
-      <div class="forum-post-meta">
-        <span class="author">{{ post.author_name }}</span> · {{ post.created_at }}
-        <span class="forum-board-tag">{{ post.board_name }}</span>
-      </div>
-    </div>
-    <div class="forum-post-title">
-      {% if post.is_pinned %}<span class="forum-badge forum-badge-pin">置顶</span>{% endif %}
-      {% if post.is_featured %}<span class="forum-badge forum-badge-feat">精华</span>{% endif %}
-      {{ post.title }}
-    </div>
-    <div class="forum-post-preview">{{ post.content_preview }}</div>
-    <div class="forum-post-stats">
-      <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg> {{ post.comment_count or 0 }}</span>
-      <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg> {{ post.like_count or 0 }}</span>
-      <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg> {{ post.view_count or 0 }}</span>
+  <div class="forum-post-header">
+    {% if post.author_avatar %}
+    <img class="forum-avatar" src="{{ post.author_avatar }}" alt="">
+    {% else %}
+    <div class="forum-avatar"></div>
+    {% endif %}
+    <div class="forum-post-meta">
+      <span class="author">{{ post.author_name }}</span> · {{ post.created_at }}
+      <span class="forum-board-tag">{{ post.board_name }}</span>
     </div>
   </div>
-  {% if post.cover_image %}
-  <div class="forum-post-cover-thumb">
-    <img src="{{ post.cover_image }}" alt="封面">
+  <div class="forum-post-title">
+    {% if post.is_pinned %}<span class="forum-badge forum-badge-pin">置顶</span>{% endif %}
+    {% if post.is_featured %}<span class="forum-badge forum-badge-feat">精华</span>{% endif %}
+    {{ post.title }}
   </div>
-  {% endif %}
+  <div class="forum-post-preview">{{ post.content_preview }}</div>
+  <div class="forum-post-stats">
+    <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg> {{ post.comment_count or 0 }}</span>
+    <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg> {{ post.like_count or 0 }}</span>
+    <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg> {{ post.view_count or 0 }}</span>
+  </div>
 </div>
