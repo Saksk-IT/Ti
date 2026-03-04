@@ -251,21 +251,20 @@
   function renderCard(item) {
     var card = document.createElement('div');
     var isBank = item.item_type === 'bank';
-    var hasCover = !!item.cover_image;
+    // 题库端当前不支持封面，统一按无封面紧凑卡渲染
+    var hasCover = !isBank && !!item.cover_image;
     card.className = 'upf-card ' + (isBank ? 'upf-card-bank' : 'upf-card-post') + (hasCover ? '' : ' upf-card-no-cover');
     card.setAttribute('role', 'article');
 
     var coverHtml = '';
     if (hasCover) {
       coverHtml = '<div class="upf-card-cover"><img src="' + escHtml(item.cover_image) + '" alt="" loading="lazy"></div>';
-    } else if (isBank) {
-      var icon = '&#128218;';
-      coverHtml = '<div class="upf-card-cover"><div class="upf-card-cover-placeholder">' + icon + '</div></div>';
     }
 
     var badgeLabel = isBank ? '题库' : '帖子';
-    var badgeHtml = (hasCover || isBank) ? '<span class="upf-card-badge">' + badgeLabel + '</span>' : '';
-    var inlineBadgeHtml = (!hasCover && !isBank) ? '<span class="upf-card-badge upf-card-badge-inline">' + badgeLabel + '</span>' : '';
+    var badgeHtml = hasCover ? '<span class="upf-card-badge">' + badgeLabel + '</span>' : '';
+    var inlineBadgeClass = isBank ? ' upf-card-badge-bank' : '';
+    var inlineBadgeHtml = !hasCover ? '<span class="upf-card-badge upf-card-badge-inline' + inlineBadgeClass + '">' + badgeLabel + '</span>' : '';
     var descText = escHtml(item.description || '');
     var descHtml = descText ? '<div class="upf-card-desc">' + descText + '</div>' : '';
     var dateText = item.created_at ? escHtml(String(item.created_at).slice(0, 10)) : '';

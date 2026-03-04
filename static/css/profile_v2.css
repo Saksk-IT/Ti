@@ -272,6 +272,10 @@
   background: color-mix(in srgb, var(--app-primary) 8%, var(--app-surface));
   border-color: color-mix(in srgb, var(--app-primary) 26%, var(--app-border));
 }
+.upf-card-badge-bank {
+  background: color-mix(in srgb, var(--app-primary) 10%, var(--app-surface));
+  border-color: color-mix(in srgb, var(--app-primary) 30%, var(--app-border));
+}
 .upf-card-body { padding: 10px 12px 12px; flex: 1 1 auto; min-height: 0; }
 .upf-card-title {
   font-size: 13px; font-weight: 850; letter-spacing: -0.1px;
@@ -284,6 +288,22 @@
 }
 .upf-card-meta {
   margin-top: 6px; display: flex; flex-wrap: wrap; gap: 10px; font-size: 11px; color: var(--app-muted);
+}
+
+/* 题库无图卡：固定使用紧凑信息卡 */
+.upf-card-bank.upf-card-no-cover .upf-card-body {
+  padding: 12px;
+}
+.upf-card-bank.upf-card-no-cover .upf-card-title {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.45;
+}
+.upf-card-bank.upf-card-no-cover .upf-card-desc {
+  margin-top: 2px;
+  -webkit-line-clamp: 2;
 }
 
 /* 帖子无图卡：改为紧凑文本卡，避免大面积留白 */
