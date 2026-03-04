@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
-import json
 
-from flask import render_template, request, session
+from flask import current_app, render_template, request, session
 
 from app.core.extensions import db
 from sqlalchemy import text
 
 from .bp import main_pages_bp
+
+SEARCH_TABS = {"all", "questions", "forum"}
+QUESTION_PER_PAGE = 20
+FORUM_PER_PAGE = 10
 
 
 @main_pages_bp.route('/search')
@@ -15,16 +18,32 @@ def search_page():
     keyword = request.args.get('keyword', '').strip()
     subject_filter = request.args.get('subject', '').strip()
     type_filter = request.args.get('type', '').strip()
-    page = request.args.get('page', 1, type=int)
-    per_page = 20  # 每页显示数量
+    active_tab = (request.args.get('tab', 'all') or 'all').strip().lower()
+    if active_tab not in SEARCH_TABS:
+        active_tab = 'all'
+
+    legacy_page = request.args.get('page', type=int)
+    raw_question_page = request.args.get('question_page', type=int)
+    raw_forum_page = request.args.get('forum_page', type=int)
+    question_page = raw_question_page or 1
+    forum_page = raw_forum_page or 1
+    if legacy_page and legacy_page > 0:
+        if active_tab == 'forum' and raw_forum_page is None:
+            forum_page = legacy_page
+        elif active_tab == 'questions' and raw_question_page is None:
+            question_page = legacy_page
+        elif active_tab == 'all' and raw_question_page is None:
+            question_page = legacy_page
 
     uid = session.get('user_id') or -1
+    user_id = session.get('user_id')
+    question_page = max(question_page, 1)
+    forum_page = max(forum_page, 1)
 
     # 获取所有科目和题型用于筛选下拉框（添加权限过滤）
     from app.core.utils.subject_permissions import get_user_accessible_subjects
     from app.core.utils.portable_question_format import portable_type_to_q_type, q_type_to_portable_type
 
-    user_id = session.get('user_id')
     accessible_subject_ids = []
     try:
         if user_id:
@@ -62,12 +81,19 @@ def search_page():
             'main/search/search.html',
             keyword='',
             questions=[],
+            forum_posts=[],
             subjects=subjects,
             q_types=q_types,
             subject=subject_filter,
             q_type=type_filter,
-            page=1,
-            total_pages=0,
+            active_tab=active_tab,
+            question_page=1,
+            forum_page=1,
+            question_total=0,
+            question_total_pages=0,
+            forum_total=0,
+            forum_total_pages=0,
+            all_total=0,
             search_history=[],
             logged_in=bool(session.get('user_id')),
             username=session.get('username'),
@@ -115,19 +141,20 @@ def search_page():
 
     # 先获取总数
     count_sql = f"SELECT COUNT(*) FROM ({sql_base}) AS sub"
-    total_count = db.session.execute(text(count_sql), params).fetchone()[0]
-    total_pages = (total_count + per_page - 1) // per_page if total_count > 0 else 0
+    question_total = db.session.execute(text(count_sql), params).fetchone()[0]
+    question_total_pages = (
+        (question_total + QUESTION_PER_PAGE - 1) // QUESTION_PER_PAGE
+        if question_total > 0 else 0
+    )
 
     # 确保页码有效
-    if page < 1:
-        page = 1
-    if total_pages > 0 and page > total_pages:
-        page = total_pages
+    if question_total_pages > 0 and question_page > question_total_pages:
+        question_page = question_total_pages
 
     # 添加排序和分页
     sql = sql_base + " ORDER BY q.id DESC LIMIT :limit OFFSET :offset"
-    params['limit'] = per_page
-    params['offset'] = (page - 1) * per_page
+    params['limit'] = QUESTION_PER_PAGE
+    params['offset'] = (question_page - 1) * QUESTION_PER_PAGE
 
     rows = db.session.execute(text(sql), params).fetchall()
 
@@ -162,16 +189,60 @@ def search_page():
             q['options'] = []
         questions.append(q)
 
+    forum_posts = []
+    forum_total = 0
+    forum_total_pages = 0
+    if user_id:
+        try:
+            from app.modules.forum.services import post_service
+
+            forum_result = post_service.get_posts(
+                sort='hot',
+                keyword=keyword,
+                page=forum_page,
+                per_page=FORUM_PER_PAGE,
+                user_id=user_id,
+            )
+            forum_posts = list(forum_result.get('posts') or [])
+            forum_total = int(forum_result.get('total') or 0)
+            forum_per_page = int(forum_result.get('per_page') or FORUM_PER_PAGE) or FORUM_PER_PAGE
+            forum_total_pages = (forum_total + forum_per_page - 1) // forum_per_page if forum_total > 0 else 0
+
+            if forum_total_pages > 0 and forum_page > forum_total_pages:
+                forum_page = forum_total_pages
+                forum_result = post_service.get_posts(
+                    sort='hot',
+                    keyword=keyword,
+                    page=forum_page,
+                    per_page=FORUM_PER_PAGE,
+                    user_id=user_id,
+                )
+                forum_posts = list(forum_result.get('posts') or [])
+        except Exception:
+            current_app.logger.error('全局搜索读取论坛结果失败', exc_info=True)
+            forum_posts = []
+            forum_total = 0
+            forum_total_pages = 0
+
+    all_total = question_total + forum_total
+
     return render_template(
         'main/search/search.html',
         keyword=keyword,
         questions=questions,
+        forum_posts=forum_posts,
         subjects=subjects,
         q_types=q_types,
         subject=subject_filter,
         q_type=type_filter,
-        page=page,
-        total_pages=total_pages,
+        active_tab=active_tab,
+        question_page=question_page,
+        forum_page=forum_page,
+        question_total=question_total,
+        question_total_pages=question_total_pages,
+        forum_total=forum_total,
+        forum_total_pages=forum_total_pages,
+        all_total=all_total,
         search_history=[],
         logged_in=bool(session.get('user_id')),
         username=session.get('username'),

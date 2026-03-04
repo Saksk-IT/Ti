@@ -260,6 +260,69 @@
       color: var(--app-muted);
     }
 
+    .search-tabs {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .search-tab {
+      border: 1px solid var(--app-border);
+      background: var(--app-surface);
+      color: var(--app-muted);
+      font-size: 12px;
+      font-weight: 900;
+      border-radius: 999px;
+      height: 34px;
+      padding: 0 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
+    }
+
+    .search-tab:hover {
+      color: var(--app-text);
+      border-color: color-mix(in srgb, var(--app-primary) 35%, var(--app-border));
+    }
+
+    .search-tab.active {
+      color: var(--app-text);
+      border-color: color-mix(in srgb, var(--app-primary) 40%, var(--app-border));
+      background: var(--app-primary-soft);
+    }
+
+    .search-tab-count {
+      font-size: 11px;
+      color: inherit;
+      opacity: .85;
+    }
+
+    .search-section {
+      display: grid;
+      gap: 12px;
+    }
+
+    .search-section-title {
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--app-muted);
+      letter-spacing: 0.2px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .search-section-title .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--app-primary) 70%, var(--app-border));
+      display: inline-block;
+    }
+
     .results-list {
       display: grid;
       gap: 12px;
@@ -432,6 +495,91 @@
       border-left: 3px solid var(--app-primary);
     }
 
+    .forum-results-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .forum-result-card {
+      border: 1px solid var(--app-border);
+      border-radius: var(--app-radius-lg);
+      background: var(--app-surface);
+      padding: 14px;
+      box-shadow: var(--app-shadow-soft);
+      display: grid;
+      gap: 10px;
+      cursor: pointer;
+      transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+    }
+
+    .forum-result-card:hover {
+      border-color: color-mix(in srgb, var(--app-primary) 35%, var(--app-border));
+      box-shadow: var(--app-shadow);
+      transform: translateY(-1px);
+    }
+
+    .forum-result-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .forum-result-title {
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--app-text);
+      line-height: 1.45;
+    }
+
+    .forum-result-badges {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .forum-badge {
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--app-border);
+      font-size: 11px;
+      font-weight: 900;
+      color: var(--app-muted);
+      background: var(--app-surface-2);
+      white-space: nowrap;
+    }
+
+    .forum-badge.pin {
+      color: #dc2626;
+      border-color: color-mix(in srgb, #dc2626 35%, var(--app-border));
+      background: color-mix(in srgb, #dc2626 10%, var(--app-surface));
+    }
+
+    .forum-badge.featured {
+      color: #ca8a04;
+      border-color: color-mix(in srgb, #ca8a04 35%, var(--app-border));
+      background: color-mix(in srgb, #ca8a04 10%, var(--app-surface));
+    }
+
+    .forum-result-preview {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--app-muted);
+      word-break: break-word;
+    }
+
+    .forum-result-meta,
+    .forum-result-stats {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--app-muted);
+    }
+
     .highlight {
       background: color-mix(in srgb, #fbbf24 35%, transparent);
       color: inherit;
@@ -549,6 +697,11 @@
         flex-direction: column;
         align-items: flex-start;
       }
+
+      .forum-result-head {
+        flex-direction: column;
+        align-items: flex-start;
+      }
     }
 
     @media (max-width: 640px) {
@@ -573,9 +726,9 @@
       <div class="search-hero-head">
         <div>
           <div class="search-title">全局搜索</div>
-          <div class="search-sub">搜索题干、答案与解析，支持关键词与模糊匹配。</div>
+          <div class="search-sub">搜索题目（题干、答案、解析）与论坛帖子（标题、正文），支持关键词与模糊匹配。</div>
         </div>
-        <div class="search-hero-side">支持：题干 / 答案 / 解析</div>
+        <div class="search-hero-side">支持：题目 + 论坛帖子</div>
       </div>
 
       <form class="search-form" onsubmit="doSearch(event)">
@@ -586,7 +739,7 @@
               <path d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" stroke="currentColor" stroke-width="2"/>
               <path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
-            <input type="text" class="search-input" id="searchInput" value="{{ keyword }}" placeholder="搜索题干、答案、解析关键词" autocomplete="off" />
+            <input type="text" class="search-input" id="searchInput" value="{{ keyword }}" placeholder="搜索题目或论坛帖子关键词" autocomplete="off" />
           </div>
         </div>
         <button type="submit" class="search-btn">
@@ -639,7 +792,7 @@
             </svg>
             <span>{{ keyword }}</span>
           </span>
-          <span class="search-count">找到 {{ questions|length }} 个结果</span>
+          <span class="search-count">共 {{ all_total }} 条结果（题目 {{ question_total }} / 论坛 {{ forum_total }}）</span>
         </div>
         <div class="search-summary-right">
           {% if subject %}
@@ -650,85 +803,170 @@
           {% endif %}
         </div>
       </div>
+
+      <div class="search-tabs" role="tablist" aria-label="搜索结果分类">
+        <button class="search-tab {{ 'active' if active_tab == 'all' else '' }}" type="button" onclick="switchTab('all')">
+          <span>全部</span>
+          <span class="search-tab-count">{{ all_total }}</span>
+        </button>
+        <button class="search-tab {{ 'active' if active_tab == 'questions' else '' }}" type="button" onclick="switchTab('questions')">
+          <span>题目</span>
+          <span class="search-tab-count">{{ question_total }}</span>
+        </button>
+        <button class="search-tab {{ 'active' if active_tab == 'forum' else '' }}" type="button" onclick="switchTab('forum')">
+          <span>论坛</span>
+          <span class="search-tab-count">{{ forum_total }}</span>
+        </button>
+      </div>
     {% endif %}
 
-    {% if questions|length > 0 %}
-      <div class="results-list" id="resultsList">
-        {% for q in questions %}
-          <div class="result-card" onclick="toggleExpand(this)" aria-expanded="false">
-            <div class="result-head">
-              <div class="result-tags">
-                <span class="result-tag">{{ q.subject }}</span>
-                <span class="result-tag">{{ q.q_type }}</span>
-              </div>
-              <div class="result-actions" onclick="event.stopPropagation()">
-                <button class="result-fav {{ 'active' if q.is_fav else '' }}" type="button" onclick="toggleFav(this, {{ q.id }})" title="{{ '取消收藏' if q.is_fav else '收藏' }}" aria-label="收藏">
-                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M12 17.3 6.3 20.6l1.2-6.6L2.6 9.8l6.7-.9L12 3l2.7 5.9 6.7.9-4.9 4.2 1.2 6.6L12 17.3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+    {% set show_questions = active_tab in ['all', 'questions'] %}
+    {% set show_forum = active_tab in ['all', 'forum'] %}
+    {% set has_any_result = false %}
+    {% if active_tab == 'all' %}
+      {% set has_any_result = all_total > 0 %}
+    {% elif active_tab == 'questions' %}
+      {% set has_any_result = question_total > 0 %}
+    {% else %}
+      {% set has_any_result = forum_total > 0 %}
+    {% endif %}
+
+    {% if has_any_result %}
+      {% if show_questions and question_total > 0 %}
+        <section class="search-section">
+          {% if active_tab == 'all' %}
+            <div class="search-section-title"><span class="dot"></span><span>题目结果</span></div>
+          {% endif %}
+          <div class="results-list" id="resultsList">
+            {% for q in questions %}
+              <div class="result-card" onclick="toggleExpand(this)" aria-expanded="false">
+                <div class="result-head">
+                  <div class="result-tags">
+                    <span class="result-tag">{{ q.subject }}</span>
+                    <span class="result-tag">{{ q.q_type }}</span>
+                  </div>
+                  <div class="result-actions" onclick="event.stopPropagation()">
+                    <button class="result-fav {{ 'active' if q.is_fav else '' }}" type="button" onclick="toggleFav(this, {{ q.id }})" title="{{ '取消收藏' if q.is_fav else '收藏' }}" aria-label="收藏">
+                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 17.3 6.3 20.6l1.2-6.6L2.6 9.8l6.7-.9L12 3l2.7 5.9 6.7.9-4.9 4.2 1.2 6.6L12 17.3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="result-content" data-content="{{ q.content }}">
+                  {{ q.content|nl2br }}
+                </div>
+
+                {% if q.image_path %}
+                  <div class="result-media">
+                    <img src="{{ url_for('main.main_pages.serve_upload', filename=q.image_path) }}" alt="题目图片">
+                  </div>
+                {% endif %}
+
+                <div class="result-footer">
+                  <span>点击展开答案与解析</span>
+                  <svg class="result-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
-                </button>
-              </div>
-            </div>
-
-            <div class="result-content" data-content="{{ q.content }}">
-              {{ q.content|nl2br }}
-            </div>
-
-            {% if q.image_path %}
-              <div class="result-media">
-                <img src="{{ url_for('main.main_pages.serve_upload', filename=q.image_path) }}" alt="题目图片">
-              </div>
-            {% endif %}
-
-            <div class="result-footer">
-              <span>点击展开答案与解析</span>
-              <svg class="result-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-
-            <div class="result-detail">
-              {% if q.options and (q.q_type == '选择题' or q.q_type == '多选题') %}
-                <div class="result-options">
-                  <div class="result-label">选项</div>
-                  <ul>
-                    {% for option in q.options %}
-                      <li class="{{ 'correct-answer' if option.key in q.answer else '' }}"><strong>{{ option.key }}:</strong> {{ option.value }}</li>
-                    {% endfor %}
-                  </ul>
                 </div>
-              {% endif %}
 
-              <div class="result-answer">
-                <div class="result-label">答案</div>
-                <div class="result-answer-body">{{ q.full_answer|nl2br }}</div>
-              </div>
+                <div class="result-detail">
+                  {% if q.options and (q.q_type == '选择题' or q.q_type == '多选题') %}
+                    <div class="result-options">
+                      <div class="result-label">选项</div>
+                      <ul>
+                        {% for option in q.options %}
+                          <li class="{{ 'correct-answer' if option.key in q.answer else '' }}"><strong>{{ option.key }}:</strong> {{ option.value }}</li>
+                        {% endfor %}
+                      </ul>
+                    </div>
+                  {% endif %}
 
-              {% if q.explanation %}
-                <div class="result-explanation">
-                  <div class="result-label">解析</div>
-                  <div class="result-explanation-body" data-explanation="{{ q.explanation }}">{{ q.explanation|nl2br }}</div>
+                  <div class="result-answer">
+                    <div class="result-label">答案</div>
+                    <div class="result-answer-body">{{ q.full_answer|nl2br }}</div>
+                  </div>
+
+                  {% if q.explanation %}
+                    <div class="result-explanation">
+                      <div class="result-label">解析</div>
+                      <div class="result-explanation-body" data-explanation="{{ q.explanation }}">{{ q.explanation|nl2br }}</div>
+                    </div>
+                  {% endif %}
                 </div>
-              {% endif %}
-            </div>
+              </div>
+            {% endfor %}
           </div>
-        {% endfor %}
-      </div>
 
-      {% if total_pages > 1 %}
-        <div class="pagination">
-          <button class="page-btn" onclick="goPage({{ page - 1 }})" {{ 'disabled' if page <= 1 else '' }}>&larr; 上一页</button>
-          {% for p in range(1, total_pages + 1) %}
-            {% if p == page %}
-              <button class="page-btn active">{{ p }}</button>
-            {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
-              <button class="page-btn" onclick="goPage({{ p }})">{{ p }}</button>
-            {% elif p == page - 3 or p == page + 3 %}
-              <span style="color: var(--app-muted);">...</span>
-            {% endif %}
-          {% endfor %}
-          <button class="page-btn" onclick="goPage({{ page + 1 }})" {{ 'disabled' if page >= total_pages else '' }}>下一页 &rarr;</button>
-        </div>
+          {% if question_total_pages > 1 %}
+            <div class="pagination">
+              <button class="page-btn" onclick="goQuestionPage({{ question_page - 1 }})" {{ 'disabled' if question_page <= 1 else '' }}>&larr; 上一页</button>
+              {% for p in range(1, question_total_pages + 1) %}
+                {% if p == question_page %}
+                  <button class="page-btn active">{{ p }}</button>
+                {% elif p == 1 or p == question_total_pages or (p >= question_page - 2 and p <= question_page + 2) %}
+                  <button class="page-btn" onclick="goQuestionPage({{ p }})">{{ p }}</button>
+                {% elif p == question_page - 3 or p == question_page + 3 %}
+                  <span style="color: var(--app-muted);">...</span>
+                {% endif %}
+              {% endfor %}
+              <button class="page-btn" onclick="goQuestionPage({{ question_page + 1 }})" {{ 'disabled' if question_page >= question_total_pages else '' }}>下一页 &rarr;</button>
+            </div>
+          {% endif %}
+        </section>
+      {% endif %}
+
+      {% if show_forum and forum_total > 0 %}
+        <section class="search-section">
+          {% if active_tab == 'all' %}
+            <div class="search-section-title"><span class="dot"></span><span>论坛结果</span></div>
+          {% endif %}
+          <div class="forum-results-list" id="forumResultsList">
+            {% for post in forum_posts %}
+              <div class="forum-result-card" onclick="openForumPost({{ post.id }})">
+                <div class="forum-result-head">
+                  <div class="forum-result-title">{{ post.title }}</div>
+                  <div class="forum-result-badges">
+                    {% if post.is_pinned %}
+                      <span class="forum-badge pin">置顶</span>
+                    {% endif %}
+                    {% if post.is_featured %}
+                      <span class="forum-badge featured">精华</span>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="forum-result-preview" data-preview="{{ post.content_preview or '' }}">{{ post.content_preview or '' }}</div>
+                <div class="forum-result-meta">
+                  <span>作者：{{ post.author_name }}</span>
+                  <span>版块：{{ post.board_name }}</span>
+                  <span>时间：{{ post.created_at }}</span>
+                </div>
+                <div class="forum-result-stats">
+                  <span>评论 {{ post.comment_count or 0 }}</span>
+                  <span>点赞 {{ post.like_count or 0 }}</span>
+                  <span>浏览 {{ post.view_count or 0 }}</span>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+
+          {% if forum_total_pages > 1 %}
+            <div class="pagination">
+              <button class="page-btn" onclick="goForumPage({{ forum_page - 1 }})" {{ 'disabled' if forum_page <= 1 else '' }}>&larr; 上一页</button>
+              {% for p in range(1, forum_total_pages + 1) %}
+                {% if p == forum_page %}
+                  <button class="page-btn active">{{ p }}</button>
+                {% elif p == 1 or p == forum_total_pages or (p >= forum_page - 2 and p <= forum_page + 2) %}
+                  <button class="page-btn" onclick="goForumPage({{ p }})">{{ p }}</button>
+                {% elif p == forum_page - 3 or p == forum_page + 3 %}
+                  <span style="color: var(--app-muted);">...</span>
+                {% endif %}
+              {% endfor %}
+              <button class="page-btn" onclick="goForumPage({{ forum_page + 1 }})" {{ 'disabled' if forum_page >= forum_total_pages else '' }}>下一页 &rarr;</button>
+            </div>
+          {% endif %}
+        </section>
       {% endif %}
     {% else %}
       <div class="empty-state">
@@ -741,7 +979,13 @@
         <h2 class="empty-title">暂无相关结果</h2>
         <p class="empty-desc">
           {% if keyword %}
-            没有找到与“{{ keyword }}”相关的题目
+            {% if active_tab == 'questions' %}
+              没有找到与“{{ keyword }}”相关的题目
+            {% elif active_tab == 'forum' %}
+              没有找到与“{{ keyword }}”相关的论坛帖子
+            {% else %}
+              没有找到与“{{ keyword }}”相关的内容
+            {% endif %}
           {% else %}
             请输入关键词进行搜索
           {% endif %}
@@ -761,6 +1005,7 @@
   <script>
     const LOGGED_IN = {{ 'true' if logged_in else 'false' }};
     const KEYWORD = {{ keyword|tojson }};
+    const ACTIVE_TAB = {{ active_tab|tojson }};
 
     function toggleAdvanced(el) {
       const options = document.getElementById('advancedOptions');
@@ -794,6 +1039,8 @@
       let url = '/search?keyword=' + encodeURIComponent(keyword);
       if (subject) url += '&subject=' + encodeURIComponent(subject);
       if (type) url += '&type=' + encodeURIComponent(type);
+      url += '&tab=' + encodeURIComponent(ACTIVE_TAB || 'all');
+      url += '&question_page=1&forum_page=1';
 
       window.location.href = url;
     }
@@ -803,9 +1050,30 @@
       doSearch();
     }
 
-    function goPage(p) {
+    function switchTab(tab) {
       const url = new URL(window.location.href);
-      url.searchParams.set('page', p);
+      url.searchParams.set('tab', tab);
+      if (!url.searchParams.get('question_page')) {
+        url.searchParams.set('question_page', '1');
+      }
+      if (!url.searchParams.get('forum_page')) {
+        url.searchParams.set('forum_page', '1');
+      }
+      url.searchParams.delete('page');
+      window.location.href = url.toString();
+    }
+
+    function goQuestionPage(p) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('question_page', String(Math.max(1, p)));
+      url.searchParams.delete('page');
+      window.location.href = url.toString();
+    }
+
+    function goForumPage(p) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('forum_page', String(Math.max(1, p)));
+      url.searchParams.delete('page');
       window.location.href = url.toString();
     }
 
@@ -827,6 +1095,12 @@
 
       document.querySelectorAll('.result-explanation-body').forEach(el => {
         const original = el.dataset.explanation || el.textContent;
+        const highlighted = highlightText(original, KEYWORD).replace(/\n/g, '<br>');
+        el.innerHTML = highlighted;
+      });
+
+      document.querySelectorAll('.forum-result-preview').forEach(el => {
+        const original = el.dataset.preview || el.textContent;
         const highlighted = highlightText(original, KEYWORD).replace(/\n/g, '<br>');
         el.innerHTML = highlighted;
       });
@@ -855,6 +1129,10 @@
     function toggleExpand(card) {
       const expanded = card.classList.toggle('expanded');
       card.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    }
+
+    function openForumPost(postId) {
+      window.location.href = '/forum/post/' + postId;
     }
 
     applyHighlights();
