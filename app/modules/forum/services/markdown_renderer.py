@@ -5,7 +5,13 @@ from markdown_it import MarkdownIt
 from .content_sanitizer import sanitize_html
 
 
-_MD = MarkdownIt("commonmark", {"html": False, "breaks": True})
+def _build_markdown_renderer() -> MarkdownIt:
+    """构建论坛 Markdown 渲染器。"""
+    # 以 CommonMark 为基础，并显式开启表格语法（GFM 常用能力）。
+    return MarkdownIt("commonmark", {"html": False, "breaks": True}).enable("table")
+
+
+_MD = _build_markdown_renderer()
 
 
 def render_markdown_to_safe_html(markdown_source: str) -> str:

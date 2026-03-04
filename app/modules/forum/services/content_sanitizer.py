@@ -9,6 +9,8 @@ _ALLOWED_TAGS: dict[str, set[str]] = {
     'u': set(), 's': set(), 'blockquote': set(), 'code': set(), 'pre': set(),
     'ul': set(), 'ol': set(), 'li': set(),
     'h1': set(), 'h2': set(), 'h3': set(), 'h4': set(),
+    'table': set(), 'thead': set(), 'tbody': set(), 'tr': set(),
+    'th': {'align'}, 'td': {'align'},
     'a': {'href', 'title', 'target', 'rel'},
     'img': {'src', 'alt', 'width', 'height'},
     'span': {'class'},
@@ -65,7 +67,11 @@ def sanitize_html(html: str) -> str:
 
 
 # 用于生成纯文本预览的正则
-_BLOCK_TAG_RE = re.compile(r'<(?:br|p|div|li|h[1-4])[^>]*/?>|</(?:p|div|li|h[1-4])>', re.IGNORECASE)
+_BLOCK_TAG_RE = re.compile(
+    r'<(?:br|p|div|li|h[1-4]|table|thead|tbody|tr|th|td)[^>]*/?>'
+    r'|</(?:p|div|li|h[1-4]|table|thead|tbody|tr|th|td)>',
+    re.IGNORECASE,
+)
 _ALL_TAG_RE = re.compile(r'<[^>]+>')
 _MULTI_SPACE_RE = re.compile(r'[ \t]+')
 _MULTI_NL_RE = re.compile(r'\n{3,}')
