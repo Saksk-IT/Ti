@@ -1,6 +1,78 @@
 <script>
 const FORUM_API = '/api/forum';
+const MAX_TAGS = 8;
+const MAX_TAG_LENGTH = 20;
+const SUMMARY_MAX = 300;
+
+let editorInstance = null;
 let uploadedImages = [];
+let coverImage = '';
+let selectedTags = [];
+
+function escapeHtml(value) {
+  const div = document.createElement('div');
+  div.textContent = value || '';
+  return div.innerHTML;
+}
+
+function getStoredEditorMode() {
+  try {
+    const mode = localStorage.getItem('forum_editor_mode_v1');
+    return mode === 'markdown' ? 'markdown' : 'wysiwyg';
+  } catch(e) {
+    return 'wysiwyg';
+  }
+}
+
+function setStoredEditorMode(mode) {
+  try { localStorage.setItem('forum_editor_mode_v1', mode); } catch(e) {}
+}
+
+function setModeButtonState(mode) {
+  const richBtn = document.getElementById('modeRichBtn');
+  const mdBtn = document.getElementById('modeMdBtn');
+  if (!richBtn || !mdBtn) return;
+  richBtn.classList.toggle('is-active', mode === 'wysiwyg');
+  mdBtn.classList.toggle('is-active', mode === 'markdown');
+}
+
+function initEditor() {
+  if (!window.toastui || !toastui.Editor) {
+    alert('编辑器资源加载失败，请刷新页面重试');
+    return;
+  }
+  const initialMode = getStoredEditorMode();
+  editorInstance = new toastui.Editor({
+    el: document.getElementById('articleEditor'),
+    height: '520px',
+    initialEditType: initialMode,
+    previewStyle: 'vertical',
+    hideModeSwitch: true,
+    usageStatistics: false,
+    placeholder: '写下你的想法...',
+  });
+  setModeButtonState(initialMode);
+}
+
+function switchEditorMode(mode) {
+  if (!editorInstance || (mode !== 'wysiwyg' && mode !== 'markdown')) return;
+  editorInstance.changeMode(mode, true);
+  setModeButtonState(mode);
+  setStoredEditorMode(mode);
+}
+
+function getEditorPayload() {
+  if (!editorInstance) return {content: '', content_format: 'html', markdown_source: null};
+  const isMarkdown = typeof editorInstance.isMarkdownMode === 'function'
+    ? editorInstance.isMarkdownMode()
+    : false;
+  const html = (editorInstance.getHTML() || '').trim();
+  if (isMarkdown) {
+    const markdown = (editorInstance.getMarkdown() || '').trim();
+    return {content: html, content_format: 'markdown', markdown_source: markdown};
+  }
+  return {content: html, content_format: 'html', markdown_source: null};
+}
 
 async function loadBoardOptions() {
   try {
@@ -8,58 +80,140 @@ async function loadBoardOptions() {
     if (r.status !== 'success') return;
     const sel = document.getElementById('boardSelect');
     sel.innerHTML = '<option value="">选择版块</option>' +
-      r.data.boards.map(b => `<option value="${b.id}" ${INIT_BOARD_ID == b.id ? 'selected' : ''}>${b.name}</option>`).join('');
-  } catch(e) { console.error(e); }
-}
-
-async function loadPostForEdit() {
-  if (!EDITING || !EDIT_POST_ID) return;
-  try {
-    const r = await fetch(FORUM_API + '/posts/' + EDIT_POST_ID).then(r => r.json());
-    if (r.status !== 'success') return;
-    const p = r.data;
-    document.getElementById('postTitle').value = p.title || '';
-    document.getElementById('editorContent').innerHTML = p.content || '';
-    document.getElementById('boardSelect').value = p.board_id;
-    if (p.images && p.images.length) { uploadedImages = p.images; renderImagePreviews(); }
-  } catch(e) { console.error(e); }
-}
-
-function execCmd(cmd) { document.execCommand(cmd, false, null); }
-function insertLink() {
-  const url = prompt('输入链接地址:');
-  if (url) document.execCommand('createLink', false, url);
-}
-function insertCodeBlock() {
-  const code = prompt('输入代码:');
-  if (code) {
-    document.execCommand('insertHTML', false, '<pre style="background:var(--app-surface-2);border:0.5px solid var(--app-border);border-radius:8px;padding:12px;font-family:monospace;font-size:13px;overflow-x:auto;margin:8px 0">' + code.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre><p><br></p>');
-  }
-}
-function insertBlockquote() {
-  document.execCommand('formatBlock', false, 'blockquote');
-}
-
-async function uploadImages(files) {
-  for (const file of files) {
-    const fd = new FormData();
-    fd.append('file', file);
-    try {
-      const r = await fetch(FORUM_API + '/upload/image', {method: 'POST', body: fd}).then(r => r.json());
-      if (r.status === 'success') { uploadedImages.push(r.data.url); renderImagePreviews(); }
-      else alert(r.message || '上传失败');
-    } catch(e) { alert('上传失败'); }
+      r.data.boards.map(b => `<option value="${b.id}" ${INIT_BOARD_ID == b.id ? 'selected' : ''}>${escapeHtml(b.name)}</option>`).join('');
+  } catch(e) {
+    console.error(e);
   }
 }
 
 function renderImagePreviews() {
   const el = document.getElementById('imagePreview');
   el.innerHTML = uploadedImages.map((url, i) =>
-    `<div class="img-item"><img src="${url}" alt=""><button class="img-remove" onclick="removeImage(${i})">×</button></div>`
+    `<div class="img-item">
+      <img src="${escapeHtml(url)}" alt="">
+      <button class="img-remove" onclick="removeBodyImage(${i})">×</button>
+    </div>`
   ).join('');
 }
 
-function removeImage(idx) { uploadedImages.splice(idx, 1); renderImagePreviews(); }
+function removeBodyImage(idx) {
+  uploadedImages = uploadedImages.filter((_, i) => i !== idx);
+  renderImagePreviews();
+}
+
+async function uploadBodyImages(files) {
+  for (const file of (files || [])) {
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const r = await fetch(FORUM_API + '/upload/image', {method: 'POST', body: fd}).then(r => r.json());
+      if (r.status === 'success') {
+        uploadedImages = [...uploadedImages, r.data.url];
+        renderImagePreviews();
+      } else {
+        alert(r.message || '上传失败');
+      }
+    } catch(e) {
+      alert('上传失败');
+    }
+  }
+}
+
+function renderCoverPreview() {
+  const emptyHint = document.getElementById('coverEmptyHint');
+  const previewImg = document.getElementById('coverPreviewImg');
+  const removeBtn = document.getElementById('coverRemoveBtn');
+  if (!emptyHint || !previewImg || !removeBtn) return;
+
+  if (coverImage) {
+    emptyHint.style.display = 'none';
+    previewImg.style.display = 'block';
+    previewImg.src = coverImage;
+    removeBtn.style.display = 'inline-flex';
+  } else {
+    emptyHint.style.display = 'block';
+    previewImg.style.display = 'none';
+    previewImg.removeAttribute('src');
+    removeBtn.style.display = 'none';
+  }
+}
+
+async function uploadCoverImage(files) {
+  if (!files || !files.length) return;
+  const fd = new FormData();
+  fd.append('file', files[0]);
+  try {
+    const r = await fetch(FORUM_API + '/upload/image', {method: 'POST', body: fd}).then(r => r.json());
+    if (r.status === 'success') {
+      coverImage = r.data.url || '';
+      renderCoverPreview();
+    } else {
+      alert(r.message || '封面上传失败');
+    }
+  } catch(e) {
+    alert('封面上传失败');
+  }
+}
+
+function removeCoverImage() {
+  coverImage = '';
+  renderCoverPreview();
+}
+
+function renderTagChips() {
+  const el = document.getElementById('tagsChips');
+  el.innerHTML = selectedTags.map((tag, idx) =>
+    `<span class="forum-tag-chip">${escapeHtml(tag)}<button type="button" onclick="removeTag(${idx})">×</button></span>`
+  ).join('');
+}
+
+function addTag(rawTag) {
+  const value = String(rawTag || '').trim();
+  if (!value) return;
+  if (value.length > MAX_TAG_LENGTH) {
+    alert(`标签长度不能超过 ${MAX_TAG_LENGTH} 字`);
+    return;
+  }
+  if (selectedTags.includes(value)) return;
+  if (selectedTags.length >= MAX_TAGS) {
+    alert(`标签最多 ${MAX_TAGS} 个`);
+    return;
+  }
+  selectedTags = [...selectedTags, value];
+  renderTagChips();
+}
+
+function removeTag(index) {
+  selectedTags = selectedTags.filter((_, idx) => idx !== index);
+  renderTagChips();
+}
+
+function bindTagsInput() {
+  const input = document.getElementById('tagsInput');
+  if (!input) return;
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const val = input.value.replace(/,+$/g, '');
+      addTag(val);
+      input.value = '';
+    }
+  });
+  input.addEventListener('blur', function() {
+    const val = input.value.replace(/,+$/g, '');
+    if (val) addTag(val);
+    input.value = '';
+  });
+}
+
+function bindSummaryCounter() {
+  const input = document.getElementById('summaryInput');
+  const counter = document.getElementById('summaryCount');
+  if (!input || !counter) return;
+  const sync = () => { counter.textContent = String((input.value || '').length); };
+  input.addEventListener('input', sync);
+  sync();
+}
 
 function togglePollBuilder() {
   const show = document.getElementById('pollToggle').checked;
@@ -77,38 +231,136 @@ function addPollOption() {
   container.appendChild(input);
 }
 
+function fillPollBuilder(poll) {
+  if (!poll || !poll.question || !Array.isArray(poll.options) || poll.options.length < 2) return;
+  const toggle = document.getElementById('pollToggle');
+  toggle.checked = true;
+  togglePollBuilder();
+  document.getElementById('pollQuestion').value = poll.question || '';
+  document.getElementById('pollMultiple').checked = !!poll.multiple;
+  const container = document.getElementById('pollOptions');
+  container.innerHTML = '';
+  poll.options.forEach((opt, idx) => {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'poll-opt';
+    input.placeholder = `选项 ${idx + 1}`;
+    input.style.marginBottom = '6px';
+    input.value = opt || '';
+    container.appendChild(input);
+  });
+}
+
 function buildPollData() {
   if (!document.getElementById('pollToggle').checked) return null;
   const question = document.getElementById('pollQuestion').value.trim();
-  const opts = Array.from(document.querySelectorAll('.poll-opt')).map(i => i.value.trim()).filter(Boolean);
+  const opts = Array.from(document.querySelectorAll('.poll-opt'))
+    .map(i => i.value.trim())
+    .filter(Boolean);
   if (!question || opts.length < 2) return null;
   return {question, options: opts, multiple: document.getElementById('pollMultiple').checked};
+}
+
+async function loadPostForEdit() {
+  if (!EDITING || !EDIT_POST_ID) return;
+  try {
+    const r = await fetch(FORUM_API + '/posts/' + EDIT_POST_ID).then(r => r.json());
+    if (r.status !== 'success') return;
+    const p = r.data || {};
+    document.getElementById('postTitle').value = p.title || '';
+    document.getElementById('boardSelect').value = p.board_id || '';
+    document.getElementById('summaryInput').value = p.summary || '';
+    if (Array.isArray(p.tags)) {
+      selectedTags = p.tags.map(t => String(t || '').trim()).filter(Boolean).slice(0, MAX_TAGS);
+      renderTagChips();
+    }
+    if (p.cover_image) {
+      coverImage = String(p.cover_image);
+      renderCoverPreview();
+    }
+    if (Array.isArray(p.images) && p.images.length) {
+      uploadedImages = [...p.images];
+      renderImagePreviews();
+    }
+    fillPollBuilder(p.poll);
+
+    if (editorInstance) {
+      if (p.content_format === 'markdown' && p.markdown_source) {
+        editorInstance.setMarkdown(p.markdown_source);
+        switchEditorMode('markdown');
+      } else {
+        editorInstance.setHTML(p.content || '');
+        switchEditorMode('wysiwyg');
+      }
+    }
+  } catch(e) {
+    console.error(e);
+  }
 }
 
 async function submitPost() {
   const title = document.getElementById('postTitle').value.trim();
   const boardId = document.getElementById('boardSelect').value;
-  const content = document.getElementById('editorContent').innerHTML.trim();
+  const summary = document.getElementById('summaryInput').value.trim().slice(0, SUMMARY_MAX);
   if (!title) { alert('请输入标题'); return; }
   if (!boardId) { alert('请选择版块'); return; }
+  if (!editorInstance) { alert('编辑器未初始化'); return; }
+
+  const editorPayload = getEditorPayload();
+  const hasContent = editorPayload.content_format === 'markdown'
+    ? !!(editorPayload.markdown_source || '').trim()
+    : !!(editorPayload.content || '').replace(/<[^>]*>/g, '').trim();
+  if (!hasContent) {
+    alert('正文不能为空');
+    return;
+  }
 
   const poll = buildPollData();
   if (document.getElementById('pollToggle').checked && !poll) {
-    alert('投票需要填写问题和至少2个选项'); return;
+    alert('投票需要填写问题和至少2个选项');
+    return;
   }
 
-  const body = {title, board_id: parseInt(boardId), content, images: uploadedImages, poll};
+  const body = {
+    title,
+    board_id: parseInt(boardId, 10),
+    content: editorPayload.content,
+    content_format: editorPayload.content_format,
+    markdown_source: editorPayload.markdown_source,
+    cover_image: coverImage || null,
+    tags: selectedTags.slice(),
+    summary,
+    images: uploadedImages.slice(),
+    poll,
+  };
+
   const url = EDITING ? FORUM_API + '/posts/' + EDIT_POST_ID : FORUM_API + '/posts';
   const method = EDITING ? 'PUT' : 'POST';
 
   try {
-    const r = await fetch(url, {method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)}).then(r => r.json());
+    const r = await fetch(url, {
+      method,
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body),
+    }).then(r => r.json());
     if (r.status === 'success') {
       const pid = EDITING ? EDIT_POST_ID : (r.data && r.data.id);
       location.href = pid ? '/forum/post/' + pid : '/forum';
-    } else { alert(r.message || '操作失败'); }
-  } catch(e) { alert('操作失败'); }
+    } else {
+      alert(r.message || '操作失败');
+    }
+  } catch(e) {
+    alert('操作失败');
+  }
 }
 
-loadBoardOptions(); loadPostForEdit();
+(async function initPostEditorPage() {
+  initEditor();
+  bindTagsInput();
+  bindSummaryCounter();
+  renderCoverPreview();
+  renderImagePreviews();
+  await loadBoardOptions();
+  await loadPostForEdit();
+})();
 </script>

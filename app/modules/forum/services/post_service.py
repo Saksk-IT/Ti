@@ -7,8 +7,97 @@ from sqlalchemy import text
 
 from app.core.extensions import db
 from ..services.content_sanitizer import sanitize_html, strip_html_tags
+from ..services.markdown_renderer import render_markdown_to_safe_html
 from ..services import mention_service, ban_service
 from app.core.utils.cache_utils import bump_forum_boards_version
+
+MAX_TAGS = 8
+MAX_TAG_LENGTH = 20
+MAX_SUMMARY_LENGTH = 300
+DEFAULT_PREVIEW_LENGTH = 200
+SUPPORTED_CONTENT_FORMATS = {'html', 'markdown'}
+
+
+def _is_postgresql() -> bool:
+    return db.engine.dialect.name == 'postgresql'
+
+
+def _to_json_str(value) -> str:
+    return json.dumps(value, ensure_ascii=False)
+
+
+def _safe_tags(tags) -> list[str]:
+    if not isinstance(tags, list):
+        return []
+    seen: set[str] = set()
+    normalized: list[str] = []
+    for raw_tag in tags:
+        tag = str(raw_tag or '').strip()
+        if not tag:
+            continue
+        tag = tag[:MAX_TAG_LENGTH]
+        if tag in seen:
+            continue
+        seen.add(tag)
+        normalized.append(tag)
+        if len(normalized) >= MAX_TAGS:
+            break
+    return normalized
+
+
+def _safe_cover_image(cover_image: str | None) -> str | None:
+    if cover_image is None:
+        return None
+    cover = str(cover_image).strip()
+    if not cover:
+        return None
+    if cover.startswith('/uploads/forum/') or cover.startswith('https://') or cover.startswith('http://'):
+        return cover
+    return None
+
+
+def _safe_summary(summary: str | None, html_content: str) -> str:
+    raw = (summary or '').strip()
+    if raw:
+        return raw[:MAX_SUMMARY_LENGTH]
+    return strip_html_tags(html_content, 160)
+
+
+def _normalize_post_content(
+    content: str,
+    content_format: str | None = None,
+    markdown_source: str | None = None,
+) -> tuple[str, str, str | None]:
+    fmt = (content_format or 'html').strip().lower()
+    if fmt not in SUPPORTED_CONTENT_FORMATS:
+        fmt = 'html'
+
+    if fmt == 'markdown':
+        md_source = (markdown_source if markdown_source is not None else content or '').strip()
+        rendered_html = render_markdown_to_safe_html(md_source)
+        return rendered_html, 'markdown', md_source
+
+    safe_html = sanitize_html(content or '')
+    return safe_html, 'html', None
+
+
+def _json_read(value, default):
+    if value is None:
+        return default
+    if isinstance(value, (list, dict)):
+        return value
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+            return parsed if parsed is not None else default
+        except Exception:
+            return default
+    return default
+
+
+def _json_read_list(value) -> list:
+    parsed = _json_read(value, [])
+    return parsed if isinstance(parsed, list) else []
 
 
 def get_posts(
@@ -78,7 +167,8 @@ def get_posts(
     rows = db.session.execute(text(f'''
         SELECT p.id, p.board_id, p.author_id, p.title,
                LEFT(p.content, 800) AS content_raw,
-               p.images, p.question_refs,
+               p.images, p.question_refs, p.cover_image, p.tags, p.summary,
+               p.content_format,
                p.is_pinned, p.is_featured, p.is_locked,
                p.comment_count, p.like_count, p.favorite_count, p.view_count,
                p.created_at, p.updated_at, p.last_comment_at,
@@ -96,7 +186,12 @@ def get_posts(
     posts = []
     for r in rows:
         d = dict(r._mapping)
-        d['content_preview'] = strip_html_tags(d.pop('content_raw', ''), 200)
+        summary = str(d.get('summary') or '').strip()
+        content_raw = d.pop('content_raw', '')
+        d['tags'] = _json_read_list(d.get('tags'))
+        d['images'] = _json_read_list(d.get('images'))
+        d['question_refs'] = _json_read_list(d.get('question_refs'))
+        d['content_preview'] = summary or strip_html_tags(content_raw, DEFAULT_PREVIEW_LENGTH)
         posts.append(d)
 
     return {
@@ -136,30 +231,58 @@ def get_post_detail(post_id: int, user_id: int | None = None) -> dict | None:
     ), {'pid': post_id})
     db.session.commit()
 
-    return dict(row._mapping)
+    data = dict(row._mapping)
+    data['tags'] = _json_read_list(data.get('tags'))
+    data['images'] = _json_read_list(data.get('images'))
+    data['question_refs'] = _json_read_list(data.get('question_refs'))
+    return data
 
 
 def create_post(author_id: int, board_id: int, title: str, content: str,
                 images: list | None = None, question_refs: list | None = None,
-                poll: dict | None = None) -> dict:
+                poll: dict | None = None, content_format: str | None = None,
+                markdown_source: str | None = None, cover_image: str | None = None,
+                tags: list | None = None, summary: str | None = None) -> dict:
     """创建帖子"""
     if ban_service.is_banned(author_id):
         return {'error': '您已被禁言，无法发帖'}
 
-    safe_content = sanitize_html(content)
-    images_json = json.dumps(images or [])
-    refs_json = json.dumps(question_refs or [])
-    poll_json = json.dumps(poll) if poll else None
+    safe_content, normalized_format, normalized_markdown = _normalize_post_content(
+        content=content,
+        content_format=content_format,
+        markdown_source=markdown_source,
+    )
+    normalized_tags = _safe_tags(tags or [])
+    normalized_cover = _safe_cover_image(cover_image)
+    normalized_summary = _safe_summary(summary, safe_content)
 
-    result = db.session.execute(text('''
+    images_json = _to_json_str(images or [])
+    refs_json = _to_json_str(question_refs or [])
+    tags_json = _to_json_str(normalized_tags)
+    poll_json = _to_json_str(poll) if poll else None
+    is_pg = _is_postgresql()
+    images_expr = 'CAST(:images AS jsonb)' if is_pg else ':images'
+    refs_expr = 'CAST(:refs AS jsonb)' if is_pg else ':refs'
+    tags_expr = 'CAST(:tags AS jsonb)' if is_pg else ':tags'
+    poll_expr = (
+        'CASE WHEN :poll IS NOT NULL THEN CAST(:poll AS jsonb) ELSE NULL END'
+        if is_pg else ':poll'
+    )
+    insert_sql = f'''
         INSERT INTO forum_posts
-            (board_id, author_id, title, content, images, question_refs, poll)
-        VALUES (:bid, :uid, :title, :content, CAST(:images AS jsonb), CAST(:refs AS jsonb),
-                CASE WHEN :poll IS NOT NULL THEN CAST(:poll AS jsonb) ELSE NULL END)
+            (board_id, author_id, title, content, content_format, markdown_source,
+             cover_image, tags, summary, images, question_refs, poll)
+        VALUES (:bid, :uid, :title, :content, :content_format, :markdown_source,
+                :cover_image, {tags_expr}, :summary, {images_expr}, {refs_expr}, {poll_expr})
         RETURNING id
-    '''), {
+    '''
+
+    result = db.session.execute(text(insert_sql), {
         'bid': board_id, 'uid': author_id, 'title': title,
-        'content': safe_content, 'images': images_json, 'refs': refs_json,
+        'content': safe_content, 'content_format': normalized_format,
+        'markdown_source': normalized_markdown, 'cover_image': normalized_cover,
+        'tags': tags_json, 'summary': normalized_summary,
+        'images': images_json, 'refs': refs_json,
         'poll': poll_json,
     })
     new_id = result.fetchone()._mapping['id']
@@ -172,7 +295,8 @@ def create_post(author_id: int, board_id: int, title: str, content: str,
     post = dict(row._mapping)
 
     # 解析 @提及
-    mention_service.create_mentions('post', post['id'], author_id, safe_content)
+    mention_base = normalized_markdown if normalized_format == 'markdown' else safe_content
+    mention_service.create_mentions('post', post['id'], author_id, mention_base)
 
     return post
 
@@ -180,31 +304,67 @@ def create_post(author_id: int, board_id: int, title: str, content: str,
 def update_post(post_id: int, author_id: int, **fields) -> bool:
     """编辑帖子（仅作者）"""
     row = db.session.execute(text(
-        'SELECT author_id FROM forum_posts WHERE id = :pid AND is_deleted = false'
+        'SELECT author_id, content, content_format, markdown_source '
+        'FROM forum_posts WHERE id = :pid AND is_deleted = false'
     ), {'pid': post_id}).fetchone()
     if not row or row._mapping['author_id'] != author_id:
         return False
 
-    allowed = {'title', 'content', 'images', 'question_refs', 'poll'}
+    old_content = str(row._mapping.get('content') or '')
+    old_format = str(row._mapping.get('content_format') or 'html')
+    old_markdown = row._mapping.get('markdown_source')
+
+    allowed = {
+        'title', 'content', 'images', 'question_refs', 'poll',
+        'content_format', 'markdown_source', 'cover_image', 'tags', 'summary',
+    }
     updates = {k: v for k, v in fields.items() if k in allowed}
     if not updates:
         return False
 
-    if 'content' in updates:
-        updates['content'] = sanitize_html(updates['content'])
-    if 'images' in updates:
-        updates['images'] = json.dumps(updates['images'])
-    if 'question_refs' in updates:
-        updates['question_refs'] = json.dumps(updates['question_refs'])
-    if 'poll' in updates:
-        updates['poll'] = json.dumps(updates['poll']) if updates['poll'] else None
+    content_updated = (
+        'content' in updates or 'content_format' in updates or 'markdown_source' in updates
+    )
+    if content_updated:
+        safe_content, normalized_format, normalized_markdown = _normalize_post_content(
+            content=str(updates.get('content', old_content) or ''),
+            content_format=updates.get('content_format', old_format),
+            markdown_source=updates.get('markdown_source', old_markdown),
+        )
+        updates['content'] = safe_content
+        updates['content_format'] = normalized_format
+        updates['markdown_source'] = normalized_markdown
 
+    if 'images' in updates:
+        updates['images'] = _to_json_str(updates['images'] or [])
+    if 'question_refs' in updates:
+        updates['question_refs'] = _to_json_str(updates['question_refs'] or [])
+    if 'poll' in updates:
+        updates['poll'] = _to_json_str(updates['poll']) if updates['poll'] else None
+    if 'cover_image' in updates:
+        updates['cover_image'] = _safe_cover_image(updates.get('cover_image'))
+    if 'tags' in updates:
+        updates['tags'] = _to_json_str(_safe_tags(updates.get('tags') or []))
+    if 'summary' in updates:
+        summary_source = str(updates.get('content', old_content) or '')
+        updates['summary'] = _safe_summary(updates.get('summary'), summary_source)
+    elif content_updated and 'content' in updates:
+        # 内容有更新但前端未传摘要时，不自动覆盖既有摘要。
+        pass
+
+    is_pg = _is_postgresql()
     set_parts = []
     for k in updates:
-        if k in ('images', 'question_refs'):
-            set_parts.append(f'{k} = CAST(:{k} AS jsonb)')
+        if k in ('images', 'question_refs', 'tags'):
+            if is_pg:
+                set_parts.append(f'{k} = CAST(:{k} AS jsonb)')
+            else:
+                set_parts.append(f'{k} = :{k}')
         elif k == 'poll':
-            set_parts.append(f'{k} = CASE WHEN :{k} IS NOT NULL THEN CAST(:{k} AS jsonb) ELSE NULL END')
+            if is_pg:
+                set_parts.append(f'{k} = CASE WHEN :{k} IS NOT NULL THEN CAST(:{k} AS jsonb) ELSE NULL END')
+            else:
+                set_parts.append(f'{k} = :{k}')
         else:
             set_parts.append(f'{k} = :{k}')
     set_clause = ', '.join(set_parts)

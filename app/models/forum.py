@@ -36,6 +36,10 @@ class ForumPost(db.Model):
     title = db.Column(db.String(200), nullable=False)
     content = db.Column(db.Text, nullable=False, default='')
     content_format = db.Column(db.String(10), default='html')
+    markdown_source = db.Column(db.Text, nullable=True)
+    cover_image = db.Column(db.Text, nullable=True)
+    tags = db.Column(db.JSON, default=list)
+    summary = db.Column(db.Text, nullable=True)
     images = db.Column(db.JSON, default=list)
     question_refs = db.Column(db.JSON, default=list)
     poll = db.Column(db.JSON, nullable=True)  # {"question":"...", "options":["A","B"], "multiple": false}

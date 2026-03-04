@@ -1,55 +1,104 @@
 {% extends "main/shared/app_shell.html" %}
 
-{% block title %}SAK · {{ '编辑帖子' if editing else '发帖' }}{% endblock %}
-{% block page_title %}{{ '编辑帖子' if editing else '发帖' }}{% endblock %}
+{% block title %}SAK · {{ '编辑文章' if editing else '写文章' }}{% endblock %}
+{% block page_title %}{{ '编辑文章' if editing else '写文章' }}{% endblock %}
 
 {% block head_extra %}
 {% include "forum/_styles.html" %}
+<link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css">
 {% endblock %}
 
 {% block content %}
-<div class="forum-container forum-editor-container">
-  <div class="forum-form-group">
-    <label>版块</label>
-    <select id="boardSelect"></select>
+<div class="forum-container forum-article-editor-page">
+  <div class="forum-article-editor-head">
+    <h2>{{ '编辑文章' if editing else '新建文章' }}</h2>
+    <p>支持富文本与 Markdown 双模式编辑，实时保存结构化元数据。</p>
   </div>
-  <div class="forum-form-group">
-    <label>标题</label>
-    <input type="text" id="postTitle" maxlength="200" placeholder="请输入标题">
-  </div>
-  <div class="forum-form-group">
-    <label>内容</label>
-    {% include "forum/_partials/_editor.html" %}
-  </div>
-  <div class="forum-form-group">
-    <label>图片</label>
-    <div class="forum-image-upload">
-      <div id="imagePreview" class="forum-image-grid"></div>
-      <label class="forum-upload-btn">
-        <input type="file" accept="image/*" multiple onchange="uploadImages(this.files)" style="display:none">
-        + 添加图片
-      </label>
-    </div>
-  </div>
-  <div class="forum-form-group">
-    <label style="display:flex;align-items:center;gap:8px;">
-      <input type="checkbox" id="pollToggle" onchange="togglePollBuilder()" style="width:auto;">
-      添加投票
-    </label>
-    <div id="pollBuilder" style="display:none;margin-top:12px;">
-      <input type="text" id="pollQuestion" placeholder="投票问题" style="margin-bottom:8px;">
-      <div id="pollOptions">
-        <input type="text" class="poll-opt" placeholder="选项 1" style="margin-bottom:6px;">
-        <input type="text" class="poll-opt" placeholder="选项 2" style="margin-bottom:6px;">
+
+  <div class="forum-article-form-grid">
+    <section class="forum-article-main">
+      <div class="forum-form-group">
+        <label for="boardSelect">版块</label>
+        <select id="boardSelect"></select>
       </div>
-      <div style="display:flex;gap:12px;margin-top:8px;align-items:center;">
-        <button type="button" class="forum-cancel-btn" onclick="addPollOption()" style="padding:6px 14px;font-size:13px;">+ 添加选项</button>
-        <label style="font-size:13px;display:flex;align-items:center;gap:4px;">
-          <input type="checkbox" id="pollMultiple" style="width:auto;"> 允许多选
+
+      <div class="forum-form-group">
+        <label for="postTitle">标题</label>
+        <input type="text" id="postTitle" maxlength="200" placeholder="请输入标题（最多 200 字）">
+      </div>
+
+      <div class="forum-form-group">
+        <div class="forum-editor-title-row">
+          <label>正文</label>
+          <div class="forum-editor-mode-switch" role="tablist" aria-label="编辑模式">
+            <button type="button" id="modeRichBtn" class="is-active" onclick="switchEditorMode('wysiwyg')">富文本</button>
+            <button type="button" id="modeMdBtn" onclick="switchEditorMode('markdown')">Markdown</button>
+          </div>
+        </div>
+        <div id="articleEditor" class="forum-toast-editor"></div>
+      </div>
+
+      <div class="forum-form-group">
+        <label>正文配图（可选）</label>
+        <div class="forum-image-upload">
+          <div id="imagePreview" class="forum-image-grid"></div>
+          <label class="forum-upload-btn">
+            <input type="file" accept="image/*" multiple onchange="uploadBodyImages(this.files)" style="display:none">
+            + 添加配图
+          </label>
+        </div>
+      </div>
+
+      <div class="forum-form-group">
+        <label style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="pollToggle" onchange="togglePollBuilder()" style="width:auto;">
+          添加投票（可选）
+        </label>
+        <div id="pollBuilder" style="display:none;margin-top:12px;">
+          <input type="text" id="pollQuestion" placeholder="投票问题" style="margin-bottom:8px;">
+          <div id="pollOptions">
+            <input type="text" class="poll-opt" placeholder="选项 1" style="margin-bottom:6px;">
+            <input type="text" class="poll-opt" placeholder="选项 2" style="margin-bottom:6px;">
+          </div>
+          <div style="display:flex;gap:12px;margin-top:8px;align-items:center;">
+            <button type="button" class="forum-cancel-btn" onclick="addPollOption()" style="padding:6px 14px;font-size:13px;">+ 添加选项</button>
+            <label style="font-size:13px;display:flex;align-items:center;gap:4px;">
+              <input type="checkbox" id="pollMultiple" style="width:auto;"> 允许多选
+            </label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="forum-article-side">
+      <div class="forum-form-group">
+        <label>文章封面</label>
+        <div class="forum-cover-box" id="coverPreviewBox">
+          <div class="forum-cover-empty" id="coverEmptyHint">未设置封面</div>
+          <img id="coverPreviewImg" alt="封面预览" style="display:none;">
+          <button type="button" id="coverRemoveBtn" class="forum-cover-remove" style="display:none;" onclick="removeCoverImage()">移除</button>
+        </div>
+        <label class="forum-upload-btn" style="margin-top:8px;">
+          <input type="file" accept="image/*" onchange="uploadCoverImage(this.files)" style="display:none">
+          上传封面
         </label>
       </div>
-    </div>
+
+      <div class="forum-form-group">
+        <label for="summaryInput">摘要</label>
+        <textarea id="summaryInput" rows="4" maxlength="300" placeholder="可手动填写；留空时自动提取正文摘要"></textarea>
+        <div class="forum-summary-count"><span id="summaryCount">0</span>/300</div>
+      </div>
+
+      <div class="forum-form-group">
+        <label for="tagsInput">标签</label>
+        <input id="tagsInput" type="text" placeholder="输入标签后按回车或逗号">
+        <div class="forum-tag-hint">最多 8 个，每个最多 20 字</div>
+        <div id="tagsChips" class="forum-tags-chips"></div>
+      </div>
+    </aside>
   </div>
+
   <div class="forum-form-actions">
     <button class="forum-submit-btn" onclick="submitPost()">{{ '保存' if editing else '发布' }}</button>
     <button class="forum-cancel-btn" onclick="history.back()">取消</button>
@@ -58,16 +107,11 @@
 {% endblock %}
 
 {% block body_end %}
+<script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
 <script>
 const EDITING = {{ 'true' if editing else 'false' }};
 const EDIT_POST_ID = {{ post_id if editing else 'null' }};
 const INIT_BOARD_ID = {{ board_id or 'null' }};
 </script>
-{% include "forum/_scripts/_forum_mention.html" %}
 {% include "forum/_scripts/_forum_editor.html" %}
-<script>
-  // 富文本编辑器中启用 @提及
-  var _editorEl = document.getElementById('editorContent');
-  if (_editorEl) MentionAutocomplete.init(_editorEl, {richEditor: true});
-</script>
 {% endblock %}

@@ -153,7 +153,8 @@ def api_my_favorites():
 
         rows = db.session.execute(text('''
             SELECT p.id, p.title, LEFT(p.content, 800) AS content_raw,
-                   p.images, p.comment_count, p.like_count, p.view_count,
+                   p.images, p.cover_image, p.tags, p.summary, p.content_format,
+                   p.comment_count, p.like_count, p.view_count,
                    p.created_at, u.username AS author_name, u.avatar AS author_avatar,
                    b.name AS board_name, f.created_at AS favorited_at
             FROM forum_favorites f
@@ -168,7 +169,17 @@ def api_my_favorites():
         posts = []
         for r in rows:
             d = dict(r._mapping)
-            d['content_preview'] = strip_html_tags(d.pop('content_raw', ''), 200)
+            content_raw = d.pop('content_raw', '')
+            try:
+                if isinstance(d.get('tags'), str):
+                    import json as _json
+                    d['tags'] = _json.loads(d['tags'] or '[]')
+            except Exception:
+                d['tags'] = []
+            if not isinstance(d.get('tags'), list):
+                d['tags'] = []
+            summary = str(d.get('summary') or '').strip()
+            d['content_preview'] = summary or strip_html_tags(content_raw, 200)
             posts.append(d)
 
         return jsonify({'status': 'success', 'data': {

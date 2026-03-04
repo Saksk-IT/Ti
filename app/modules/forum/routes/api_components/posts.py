@@ -7,6 +7,40 @@ from app.core.extensions import limiter
 from app.core.utils.decorators import auth_required, current_user_id
 from app.modules.forum.services import post_service
 
+MAX_TAGS = 8
+MAX_TAG_LENGTH = 20
+MAX_SUMMARY_LENGTH = 300
+SUPPORTED_CONTENT_FORMATS = {'html', 'markdown'}
+
+
+def _validate_meta_payload(data: dict) -> tuple[bool, str]:
+    content_format = (data.get('content_format') or 'html').strip().lower()
+    if content_format not in SUPPORTED_CONTENT_FORMATS:
+        return False, '不支持的内容格式'
+
+    if content_format == 'markdown' and not str(data.get('markdown_source') or '').strip():
+        return False, 'Markdown 模式下内容不能为空'
+
+    tags = data.get('tags')
+    if tags is not None:
+        if not isinstance(tags, list):
+            return False, '标签格式错误'
+        if len(tags) > MAX_TAGS:
+            return False, f'标签最多 {MAX_TAGS} 个'
+        for item in tags:
+            if len(str(item or '').strip()) > MAX_TAG_LENGTH:
+                return False, f'标签长度不能超过 {MAX_TAG_LENGTH} 字'
+
+    summary = data.get('summary')
+    if summary is not None and len(str(summary).strip()) > MAX_SUMMARY_LENGTH:
+        return False, f'摘要不能超过 {MAX_SUMMARY_LENGTH} 字'
+
+    cover_image = data.get('cover_image')
+    if cover_image is not None and len(str(cover_image).strip()) > 1024:
+        return False, '封面地址过长'
+
+    return True, ''
+
 
 @forum_api_bp.route('/posts', methods=['GET'])
 @auth_required
@@ -64,12 +98,20 @@ def api_create_post():
             return jsonify({'status': 'error', 'message': '标题和版块不能为空'}), 400
         if len(title) > 200:
             return jsonify({'status': 'error', 'message': '标题不能超过200字'}), 400
+        valid, message = _validate_meta_payload(data)
+        if not valid:
+            return jsonify({'status': 'error', 'message': message}), 400
 
         post = post_service.create_post(
             author_id=current_user_id(), board_id=board_id,
             title=title, content=content,
             images=images, question_refs=question_refs,
             poll=data.get('poll'),
+            content_format=data.get('content_format'),
+            markdown_source=data.get('markdown_source'),
+            cover_image=data.get('cover_image'),
+            tags=data.get('tags'),
+            summary=data.get('summary'),
         )
         if 'error' in post:
             return jsonify({'status': 'error', 'message': post['error']}), 403
@@ -86,6 +128,16 @@ def api_update_post(post_id: int):
     """编辑帖子"""
     try:
         data = request.get_json(silent=True) or {}
+        if 'title' in data:
+            title = str(data.get('title') or '').strip()
+            if not title:
+                return jsonify({'status': 'error', 'message': '标题不能为空'}), 400
+            if len(title) > 200:
+                return jsonify({'status': 'error', 'message': '标题不能超过200字'}), 400
+        valid, message = _validate_meta_payload(data)
+        if not valid:
+            return jsonify({'status': 'error', 'message': message}), 400
+
         ok = post_service.update_post(post_id, author_id=current_user_id(), **data)
         if not ok:
             return jsonify({'status': 'error', 'message': '无权编辑或帖子不存在'}), 403

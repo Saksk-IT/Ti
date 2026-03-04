@@ -3,6 +3,12 @@
 var _postData = null; // 缓存帖子数据供其他模块使用
 var _followLoading = false;
 
+function _esc(value) {
+  var div = document.createElement('div');
+  div.textContent = value || '';
+  return div.innerHTML;
+}
+
 function renderQuestionRefs(refs) {
   if (!refs || !refs.length) return '';
   return '<div class="forum-question-refs">' + refs.map(function(ref) {
@@ -67,6 +73,11 @@ async function loadPostDetail() {
                    (p.is_featured ? '<span class="forum-badge forum-badge-feat">精华</span>' : '') +
                    (p.is_locked ? '<span class="forum-badge forum-badge-lock">已锁定</span>' : '');
     const imgs = (p.images && p.images.length) ? p.images.map(u => `<img src="${u}" alt="" style="max-width:100%;border-radius:8px;margin:8px 0">`).join('') : '';
+    const cover = p.cover_image ? `<div class="forum-post-cover"><img src="${_esc(p.cover_image)}" alt=""></div>` : '';
+    const tagsHtml = (Array.isArray(p.tags) && p.tags.length)
+      ? `<div class="forum-post-tags">${p.tags.map(tag => `<span class="forum-post-tag">#${_esc(String(tag))}</span>`).join('')}</div>`
+      : '';
+    const summaryHtml = p.summary ? `<div class="forum-post-preview">${_esc(p.summary)}</div>` : '';
     const qrefs = renderQuestionRefs(p.question_refs);
 
     // 关注按钮（非自己的帖子时显示）
@@ -79,8 +90,11 @@ async function loadPostDetail() {
     }
 
     document.getElementById('postContent').innerHTML = `
-      <div class="forum-post-header">${avatar}<div class="forum-post-meta"><a href="/user/${p.author_id}" class="author forum-user-link">${p.author_name}</a>${followHtml} · ${new Date(p.created_at).toLocaleString('zh-CN')}<span class="forum-board-tag">${p.board_name}</span></div></div>
-      <div class="post-title">${badges}${p.title}</div>
+      <div class="forum-post-header">${avatar}<div class="forum-post-meta"><a href="/user/${p.author_id}" class="author forum-user-link">${_esc(p.author_name)}</a>${followHtml} · ${new Date(p.created_at).toLocaleString('zh-CN')}<span class="forum-board-tag">${_esc(p.board_name)}</span></div></div>
+      <div class="post-title">${badges}${_esc(p.title)}</div>
+      ${summaryHtml}
+      ${cover}
+      ${tagsHtml}
       <div class="post-body">${p.content}${imgs}</div>
       ${qrefs}
       <div class="forum-post-stats" style="margin-top:16px"><span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg> ${p.view_count||0} 浏览</span></div>`;
