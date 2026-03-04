@@ -1214,10 +1214,8 @@
 
     function formatDate(dateStr) {
       if (!dateStr) return '';
-      const date = new Date(dateStr);
-      const month = date.getMonth() + 1;
-      const day = date.getDate();
-      return `${month}月${day}日`;
+      // 提取日期部分（YYYY-MM-DD），去掉时分秒
+      return dateStr.split(' ')[0];
     }
 
     document.querySelectorAll('.forum-post-date').forEach(el => {
