@@ -82,6 +82,20 @@ def _normalize_post_content(
     return safe_html, 'html', None
 
 
+def _rehydrate_markdown_content(post_data: dict) -> dict:
+    """读取时为 Markdown 帖子按 markdown_source 重新渲染，兼容历史错误渲染数据。"""
+    data = dict(post_data or {})
+    fmt = str(data.get('content_format') or 'html').strip().lower()
+    md_source = str(data.get('markdown_source') or '').strip()
+    if fmt != 'markdown' or not md_source:
+        return data
+    rendered_html = render_markdown_to_safe_html(md_source)
+    # 渲染失败时保留库内原始 content，避免返回空正文。
+    if rendered_html:
+        data['content'] = rendered_html
+    return data
+
+
 def _json_read(value, default):
     if value is None:
         return default
@@ -330,7 +344,7 @@ def get_post_detail(
     ), {'pid': post_id})
     db.session.commit()
 
-    data = dict(row._mapping)
+    data = _rehydrate_markdown_content(dict(row._mapping))
     data['tags'] = _json_read_list(data.get('tags'))
     data['images'] = _json_read_list(data.get('images'))
     data['question_refs'] = _json_read_list(data.get('question_refs'))
