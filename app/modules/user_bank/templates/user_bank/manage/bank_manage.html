@@ -29,7 +29,7 @@
 
   <section class="ubm-card" aria-label="描述">
     <h2>描述</h2>
-    <div class="ubm-sub">公开状态的切换请在“设置 → 题库属性”中进行。</div>
+    <div class="ubm-sub">可在本页直接修改私人描述；公开状态的切换请在“设置 → 题库属性”中进行。</div>
 
     <div class="ubm-field">
       <div class="ubm-label">题库名称</div>
@@ -37,8 +37,15 @@
     </div>
 
     <div class="ubm-field">
-      <div class="ubm-label">私人描述</div>
-      <div style="white-space: pre-wrap; line-height: 1.6;">{{ bank_description or '—' }}</div>
+      <label class="ubm-label" for="ubmPrivateDesc">私人描述</label>
+      <textarea id="ubmPrivateDesc"
+                class="ubm-input ubm-textarea"
+                maxlength="200"
+                placeholder="请输入私人描述（最多 200 字）">{{ bank_description or '' }}</textarea>
+      <div class="ubm-sub" id="ubmPrivateDescHint">0 / 200</div>
+      <div class="ubm-actions" style="margin-top: 4px;">
+        <button class="ubm-btn ubm-btn-primary" type="button" id="ubmSavePrivateDescBtn">保存私人描述</button>
+      </div>
     </div>
 
     <div class="ubm-field">
@@ -48,3 +55,66 @@
   </section>
 {% endblock %}
 
+{% block manage_scripts %}
+  <script>
+    (function () {
+      const root = document.querySelector('[data-ubm-bank-id]');
+      const bankId = root ? String(root.dataset.ubmBankId || '').trim() : '';
+      const descEl = document.getElementById('ubmPrivateDesc');
+      const hintEl = document.getElementById('ubmPrivateDescHint');
+      const saveBtn = document.getElementById('ubmSavePrivateDescBtn');
+      let savedDesc = {{ (bank_description or '')|tojson }};
+
+      function setHint(text, kind) {
+        if (!hintEl) return;
+        hintEl.textContent = String(text || '');
+        hintEl.style.color = (kind === 'error')
+          ? 'color-mix(in srgb, #ef4444 70%, var(--app-text))'
+          : 'var(--app-muted)';
+      }
+
+      function renderLengthHint() {
+        if (!descEl) return;
+        const len = String(descEl.value || '').trim().length;
+        setHint(`${len} / 200`, len > 200 ? 'error' : '');
+      }
+
+      async function savePrivateDesc() {
+        if (!bankId || !descEl) return;
+        const nextDesc = String(descEl.value || '').trim();
+        if (nextDesc.length > 200) {
+          setHint('私人描述不能超过 200 字', 'error');
+          window.ubmToast('私人描述不能超过 200 字', 'error');
+          return;
+        }
+        if (nextDesc === String(savedDesc || '').trim()) {
+          setHint('描述未变化', '');
+          window.ubmToast('描述未变化', 'info');
+          return;
+        }
+
+        try {
+          if (saveBtn) saveBtn.disabled = true;
+          setHint('正在保存…', '');
+          await window.ubmApi(`/user/banks/api/${encodeURIComponent(bankId)}`, {
+            method: 'PUT',
+            body: JSON.stringify({ description: nextDesc }),
+          });
+          savedDesc = nextDesc;
+          renderLengthHint();
+          window.ubmToast('私人描述已保存', 'success');
+        } catch (e) {
+          const msg = e && e.message ? e.message : '保存失败';
+          setHint(msg, 'error');
+          window.ubmToast(msg, 'error');
+        } finally {
+          if (saveBtn) saveBtn.disabled = false;
+        }
+      }
+
+      descEl?.addEventListener('input', renderLengthHint);
+      saveBtn?.addEventListener('click', savePrivateDesc);
+      renderLengthHint();
+    })();
+  </script>
+{% endblock %}
