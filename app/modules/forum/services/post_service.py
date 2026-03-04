@@ -119,9 +119,22 @@ def _has_forum_posts_column(column_name: str) -> bool:
     return column_name in _forum_posts_columns()
 
 
+def _refresh_forum_posts_columns() -> set[str]:
+    """刷新 forum_posts 字段缓存（用于迁移后热更新场景）。"""
+    _forum_posts_columns.cache_clear()
+    return _forum_posts_columns()
+
+
+def _has_forum_posts_column_with_refresh(column_name: str) -> bool:
+    """优先读缓存，未命中时刷新一次再判断。"""
+    if _has_forum_posts_column(column_name):
+        return True
+    return column_name in _refresh_forum_posts_columns()
+
+
 def supports_post_hidden() -> bool:
     """当前库是否支持帖子隐藏字段。"""
-    return _has_forum_posts_column('is_hidden')
+    return _has_forum_posts_column_with_refresh('is_hidden')
 
 
 def get_posts(
@@ -143,7 +156,7 @@ def get_posts(
     has_tags = _has_forum_posts_column('tags')
     has_summary = _has_forum_posts_column('summary')
     has_content_format = _has_forum_posts_column('content_format')
-    has_is_hidden = _has_forum_posts_column('is_hidden')
+    has_is_hidden = _has_forum_posts_column_with_refresh('is_hidden')
 
     if board_id:
         conditions.append('p.board_id = :board_id')
