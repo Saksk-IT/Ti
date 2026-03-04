@@ -280,7 +280,7 @@
 
     card.addEventListener('click', function () {
       if (isBank) {
-        window.location.href = '/bank/' + item.id + '/detail';
+        window.location.href = '/user/banks/' + item.id + '/practice';
       } else {
         window.location.href = '/forum/post/' + item.id;
       }
