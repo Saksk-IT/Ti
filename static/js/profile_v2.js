@@ -250,29 +250,37 @@
   /* ── Render card ── */
   function renderCard(item) {
     var card = document.createElement('div');
-    card.className = 'upf-card';
+    var isBank = item.item_type === 'bank';
+    var hasCover = !!item.cover_image;
+    card.className = 'upf-card ' + (isBank ? 'upf-card-bank' : 'upf-card-post') + (hasCover ? '' : ' upf-card-no-cover');
     card.setAttribute('role', 'article');
 
     var coverHtml = '';
-    if (item.cover_image) {
+    if (hasCover) {
       coverHtml = '<div class="upf-card-cover"><img src="' + escHtml(item.cover_image) + '" alt="" loading="lazy"></div>';
-    } else {
-      var icon = item.item_type === 'bank' ? '&#128218;' : '&#128196;';
+    } else if (isBank) {
+      var icon = '&#128218;';
       coverHtml = '<div class="upf-card-cover"><div class="upf-card-cover-placeholder">' + icon + '</div></div>';
     }
 
-    var badgeLabel = item.item_type === 'bank' ? '题库' : '帖子';
-    var badgeHtml = '<span class="upf-card-badge">' + badgeLabel + '</span>';
+    var badgeLabel = isBank ? '题库' : '帖子';
+    var badgeHtml = (hasCover || isBank) ? '<span class="upf-card-badge">' + badgeLabel + '</span>' : '';
+    var inlineBadgeHtml = (!hasCover && !isBank) ? '<span class="upf-card-badge upf-card-badge-inline">' + badgeLabel + '</span>' : '';
+    var descText = escHtml(item.description || '');
+    var descHtml = descText ? '<div class="upf-card-desc">' + descText + '</div>' : '';
+    var dateText = item.created_at ? escHtml(String(item.created_at).slice(0, 10)) : '';
+    var dateHtml = dateText ? ('<span>' + dateText + '</span>') : '';
 
     card.innerHTML = coverHtml + badgeHtml +
       '<div class="upf-card-body">' +
+        inlineBadgeHtml +
         '<div class="upf-card-title">' + escHtml(item.name || '无标题') + '</div>' +
-        '<div class="upf-card-desc">' + escHtml(item.description || '') + '</div>' +
-        '<div class="upf-card-meta"><span>' + (item.stat1 || 0) + ' ' + escHtml(item.stat1_label || '') + '</span><span>' + (item.stat2 || 0) + ' ' + escHtml(item.stat2_label || '') + '</span></div>' +
+        descHtml +
+        '<div class="upf-card-meta"><span>' + (item.stat1 || 0) + ' ' + escHtml(item.stat1_label || '') + '</span><span>' + (item.stat2 || 0) + ' ' + escHtml(item.stat2_label || '') + '</span>' + dateHtml + '</div>' +
       '</div>';
 
     card.addEventListener('click', function () {
-      if (item.item_type === 'bank') {
+      if (isBank) {
         window.location.href = '/bank/' + item.id + '/detail';
       } else {
         window.location.href = '/forum/post/' + item.id;

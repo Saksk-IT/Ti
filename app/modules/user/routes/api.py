@@ -10,7 +10,10 @@ from app.models.exam import Exam
 from app.core.utils.decorators import auth_required, current_user_id
 from app.core.utils.time_utils import now_bj, today_bj
 from datetime import datetime, timedelta
+from html import unescape
+import json
 import os
+import re
 import uuid
 
 user_api_bp = Blueprint('user_api', __name__)
@@ -18,10 +21,47 @@ user_api_bp = Blueprint('user_api', __name__)
 
 # 允许的图片扩展名
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+_HTML_TAG_RE = re.compile(r'<[^>]+>')
+_WHITESPACE_RE = re.compile(r'\s+')
 
 def allowed_file(filename):
     """检查文件扩展名是否允许"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def _strip_html_text(raw: str) -> str:
+    """将富文本内容转换为可读纯文本，避免把 HTML 标签展示到卡片摘要。"""
+    text = unescape(str(raw or ''))
+    text = _HTML_TAG_RE.sub(' ', text)
+    return _WHITESPACE_RE.sub(' ', text).strip()
+
+
+def _post_preview(raw: str, limit: int = 80) -> str:
+    text = _strip_html_text(raw)
+    return text[:limit] if text else ''
+
+
+def _extract_first_image(images) -> str:
+    """兼容字符串 JSON / 列表 / 对象列表，提取帖子首图 URL。"""
+    if not images:
+        return ''
+    try:
+        parsed = images if isinstance(images, list) else json.loads(images)
+    except Exception:
+        parsed = images if isinstance(images, list) else None
+
+    if isinstance(parsed, list):
+        for item in parsed:
+            if isinstance(item, str) and item.strip():
+                return item.strip()
+            if isinstance(item, dict):
+                for key in ('url', 'src', 'image', 'path'):
+                    value = item.get(key)
+                    if isinstance(value, str) and value.strip():
+                        return value.strip()
+    if isinstance(parsed, str) and parsed.strip():
+        return parsed.strip()
+    return ''
 
 
 def validate_profile_nickname(username: str):
@@ -1088,17 +1128,8 @@ def api_user_works(uid: int):
         '''), {'uid': uid, 'lim': per_page, 'off': offset}).fetchall()
         for r in rows:
             m = r._mapping
-            content_str = m['content'] or ''
-            preview = content_str[:80] if content_str else ''
-            cover = ''
-            if m['images']:
-                import json as _json
-                try:
-                    img_list = _json.loads(m['images']) if isinstance(m['images'], str) else m['images']
-                    if isinstance(img_list, list) and img_list:
-                        cover = img_list[0] if isinstance(img_list[0], str) else ''
-                except Exception:
-                    pass
+            preview = _post_preview(m['content'], 80)
+            cover = _extract_first_image(m['images'])
             items.append({
                 'id': m['id'], 'item_type': 'post',
                 'name': m['title'] or '', 'description': preview,
@@ -1115,15 +1146,15 @@ def api_user_works(uid: int):
                 SELECT id, name, description, cover_image,
                        question_count AS stat1, '题' AS stat1_label,
                        public_use_count AS stat2, '使用' AS stat2_label,
-                       created_at, 'bank' AS item_type
+                       created_at, 'bank' AS item_type, NULL AS images
                 FROM user_question_banks
                 WHERE user_id=:uid AND is_public=true AND status=1
                 UNION ALL
-                SELECT id, title AS name, SUBSTR(content,1,80) AS description,
+                SELECT id, title AS name, content AS description,
                        NULL AS cover_image,
                        like_count AS stat1, '赞' AS stat1_label,
                        comment_count AS stat2, '评论' AS stat2_label,
-                       created_at, 'post' AS item_type
+                       created_at, 'post' AS item_type, images
                 FROM forum_posts
                 WHERE author_id=:uid AND is_deleted=false
             ) combined
@@ -1132,10 +1163,16 @@ def api_user_works(uid: int):
         '''), {'uid': uid, 'lim': per_page, 'off': offset}).fetchall()
         for r in rows:
             m = r._mapping
+            card_type = m['item_type']
+            is_post = card_type == 'post'
+            cover = m['cover_image'] or ''
+            if is_post and not cover:
+                cover = _extract_first_image(m['images'])
             items.append({
-                'id': m['id'], 'item_type': m['item_type'],
-                'name': m['name'] or '', 'description': m['description'] or '',
-                'cover_image': m['cover_image'] or '',
+                'id': m['id'], 'item_type': card_type,
+                'name': m['name'] or '',
+                'description': _post_preview(m['description'], 80) if is_post else (m['description'] or ''),
+                'cover_image': cover,
                 'stat1': m['stat1'] or 0, 'stat1_label': m['stat1_label'],
                 'stat2': m['stat2'] or 0, 'stat2_label': m['stat2_label'],
                 'created_at': str(m['created_at'] or ''),
@@ -1190,16 +1227,8 @@ def api_user_favorites(uid: int):
     items = []
     for r in rows:
         m = r._mapping
-        preview = (m['content'] or '')[:80]
-        cover = ''
-        if m['images']:
-            import json as _json
-            try:
-                img_list = _json.loads(m['images']) if isinstance(m['images'], str) else m['images']
-                if isinstance(img_list, list) and img_list:
-                    cover = img_list[0] if isinstance(img_list[0], str) else ''
-            except Exception:
-                pass
+        preview = _post_preview(m['content'], 80)
+        cover = _extract_first_image(m['images'])
         items.append({
             'id': m['id'], 'item_type': 'post',
             'name': m['title'] or '', 'description': preview,
@@ -1257,16 +1286,8 @@ def api_user_likes(uid: int):
     items = []
     for r in rows:
         m = r._mapping
-        preview = (m['content'] or '')[:80]
-        cover = ''
-        if m['images']:
-            import json as _json
-            try:
-                img_list = _json.loads(m['images']) if isinstance(m['images'], str) else m['images']
-                if isinstance(img_list, list) and img_list:
-                    cover = img_list[0] if isinstance(img_list[0], str) else ''
-            except Exception:
-                pass
+        preview = _post_preview(m['content'], 80)
+        cover = _extract_first_image(m['images'])
         items.append({
             'id': m['id'], 'item_type': 'post',
             'name': m['title'] or '', 'description': preview,
