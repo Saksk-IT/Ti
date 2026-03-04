@@ -13,9 +13,12 @@
 .forum-new-btn { padding: 8px 20px; background: var(--app-primary); color: var(--app-primary-contrast); border-radius: 10px; font-size: 14px; font-weight: 500; text-decoration: none; transition: opacity .2s; min-height: auto; display: inline-flex; align-items: center; }
 .forum-new-btn:hover { opacity: .85; transform: none; box-shadow: none; }
 /* 帖子卡片 */
-.forum-post-card { background: var(--app-surface); border: 0.5px solid var(--app-border); border-radius: var(--app-radius-md); padding: 20px; margin-bottom: 12px; cursor: pointer; transition: box-shadow .2s; overflow: hidden; min-width: 0; min-height: 180px; }
+.forum-post-card { background: var(--app-surface); border: 0.5px solid var(--app-border); border-radius: var(--app-radius-md); padding: 20px; margin-bottom: 12px; cursor: pointer; transition: box-shadow .2s; overflow: hidden; min-width: 0; height: 150px; display: flex; gap: 12px; box-sizing: border-box; }
 .forum-post-card:hover { box-shadow: var(--app-shadow-soft); }
-.forum-post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.forum-post-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.forum-post-cover-thumb { flex-shrink: 0; width: 120px; height: 90px; border-radius: 8px; overflow: hidden; border: 0.5px solid var(--app-border); align-self: center; }
+.forum-post-cover-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.forum-post-header { display: flex; align-items: center; gap: 10px; }
 .forum-post-head-main { min-width: 0; flex: 1; display: flex; align-items: center; gap: 10px; }
 .forum-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--app-primary-soft); object-fit: cover; flex-shrink: 0; }
 .forum-post-meta { font-size: 13px; color: var(--app-muted); }
@@ -33,10 +36,10 @@
 .forum-post-owner-menu button.danger { color: #dc2626; }
 .forum-post-owner-menu button.danger:hover { background: rgba(220, 38, 38, 0.12); }
 .forum-board-tag { font-size: 11px; padding: 2px 8px; border-radius: 6px; background: var(--app-primary-soft); color: var(--app-primary); margin-left: 8px; }
-.forum-post-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; color: var(--app-text); line-height: 1.4; }
-.forum-post-preview { font-size: 14px; color: var(--app-muted); line-height: 1.5; margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.forum-post-title { font-size: 16px; font-weight: 600; color: var(--app-text); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
+.forum-post-preview { font-size: 14px; color: var(--app-muted); line-height: 1.5; flex: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
 /* 朋友圈风格内容区 */
-.forum-post-body-wrap { position: relative; margin-bottom: 10px; }
+.forum-post-body-wrap { position: relative; margin-bottom: 10px; display: none; }
 .forum-post-body-inner { font-size: 14px; color: var(--app-text); line-height: 1.6; white-space: pre-wrap; word-break: break-word; overflow: hidden; }
 .forum-post-body-inner img { max-width: 100%; height: auto; border-radius: 6px; }
 .forum-post-body-wrap.collapsed { max-height: 300px; overflow: hidden; }
@@ -44,7 +47,7 @@
 .forum-expand-btn { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); z-index: 1; padding: 4px 16px; border: 0.5px solid var(--app-border); border-radius: 14px; background: var(--app-surface); color: var(--app-primary); font-size: 13px; font-weight: 500; cursor: pointer; min-height: auto; transition: all .15s; }
 .forum-expand-btn:hover { background: var(--app-primary-soft); }
 /* 图片网格 — 朋友圈风格 */
-.forum-post-img-grid { display: grid; gap: 4px; margin-bottom: 10px; border-radius: 8px; overflow: hidden; }
+.forum-post-img-grid { display: none; gap: 4px; margin-bottom: 10px; border-radius: 8px; overflow: hidden; }
 .forum-post-img-grid img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .forum-post-img-grid.img-grid-1 { grid-template-columns: 1fr; }
 .forum-post-img-grid.img-grid-1 img { aspect-ratio: 16/9; max-height: 300px; }
@@ -53,7 +56,7 @@
 .forum-post-img-grid.img-grid-3 { grid-template-columns: repeat(3, 1fr); }
 .forum-post-img-grid.img-grid-3 img { aspect-ratio: 1; }
 /* 旧图片样式保留兼容 */
-.forum-post-images { display: flex; gap: 8px; margin-bottom: 10px; overflow: hidden; }
+.forum-post-images { display: none; gap: 8px; margin-bottom: 10px; overflow: hidden; }
 .forum-post-images img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 0.5px solid var(--app-border); }
 .forum-post-stats { display: flex; gap: 16px; font-size: 13px; color: var(--app-muted); }
 .forum-post-stats span { display: flex; align-items: center; gap: 4px; }
@@ -172,7 +175,7 @@
 .forum-post-tags { margin: 8px 0 10px; display: flex; flex-wrap: wrap; gap: 6px; }
 .forum-post-tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; border: 0.5px solid var(--app-border); color: var(--app-muted); font-size: 12px; background: var(--app-surface); }
 /* 骨架屏 */
-.forum-skeleton-card { min-height: 180px; }
+.forum-skeleton-card { height: 150px; }
 .forum-skeleton-row { height: 12px; border-radius: 6px; background: var(--app-border); position: relative; overflow: hidden; }
 .forum-skeleton-row::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 0%, var(--app-surface-2) 50%, transparent 100%); animation: skeleton-shimmer 1.4s ease infinite; }
 .forum-skeleton-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--app-border); position: relative; overflow: hidden; flex-shrink: 0; }
@@ -235,7 +238,8 @@
 @media (max-width: 640px) {
   .forum-container { padding: 0 12px; }
   .forum-detail-layout { padding: 0 12px; }
-  .forum-post-card { padding: 16px; }
+  .forum-post-card { padding: 16px; height: auto; min-height: 150px; }
+  .forum-post-cover-thumb { width: 100px; height: 75px; }
   .forum-post-content { padding: 16px; }
   .forum-post-images img { width: 60px; height: 60px; }
   .forum-replies { margin-left: 20px; }
