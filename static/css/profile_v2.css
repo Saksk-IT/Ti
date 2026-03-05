@@ -252,7 +252,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) 132px;
   grid-template-rows: auto auto 1fr auto;
-  gap: 6px 12px;
+  gap: 4px 12px;
   height: 146px;
   min-height: 146px;
   padding: 10px;
@@ -294,7 +294,7 @@
   grid-column: 2 / 3;
   grid-row: 2 / 4;
   width: 120px;
-  height: 96px;
+  height: 90px;
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid var(--app-border);
@@ -328,26 +328,24 @@
   color: var(--app-muted);
   overflow: hidden;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   text-overflow: ellipsis;
 }
 .upf-card-post .upf-card-desc {
   -webkit-line-clamp: 2;
-  min-height: calc(1.5em * 2);
 }
 .upf-card-bank .upf-card-desc {
   -webkit-line-clamp: 2;
-  min-height: calc(1.5em * 2);
 }
 .upf-card-meta {
   grid-column: 1 / 2;
   grid-row: 4 / 5;
   display: flex;
-  gap: 16px;
+  gap: 12px;
   align-self: end;
   margin: 0;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--app-muted);
 }
 .upf-card-meta > span {
@@ -543,8 +541,8 @@
   .upf-layout { grid-template-columns: 1fr; gap: 12px; }
   .upf-layout-back { position: static; top: auto; }
   .upf-shell { gap: 22px; }
-  .upf-card { grid-template-columns: minmax(0, 1fr) 112px; height: 146px; min-height: 146px; }
-  .upf-card-cover { width: 112px; height: 90px; }
+  .upf-card { grid-template-columns: minmax(0, 1fr) 112px; height: 146px; min-height: 146px; gap: 4px 10px; }
+  .upf-card-cover { width: 112px; height: 84px; }
 }
 @media (max-width: 640px) {
   .upf-hero-inner { align-items: flex-start; gap: 12px; }
@@ -556,12 +554,12 @@
   .upf-privacy-gear { width: 32px; height: 32px; }
   .upf-stats { justify-content: center; }
   .upf-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .upf-card { grid-template-columns: minmax(0, 1fr) 98px; height: 146px; min-height: 146px; padding: 10px; gap: 6px 10px; }
+  .upf-card { grid-template-columns: minmax(0, 1fr) 98px; height: 146px; min-height: 146px; padding: 10px; gap: 4px 10px; }
   .upf-card-title { font-size: 15px; }
   .upf-card-desc { font-size: 12px; -webkit-line-clamp: 2; }
-  .upf-card-meta { gap: 10px; font-size: 12px; }
+  .upf-card-meta { gap: 8px; font-size: 11px; }
   .upf-card-time { font-size: 11px; }
-  .upf-card-cover { width: 98px; height: 78px; }
+  .upf-card-cover { width: 98px; height: 74px; }
   .upf-card-owner-actions { top: 6px; right: 6px; }
   .upf-card-owner-toggle { width: 22px; height: 22px; font-size: 16px; }
   .upf-skel-hero-inner { align-items: center; }
