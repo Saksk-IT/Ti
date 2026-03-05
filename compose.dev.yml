@@ -57,6 +57,19 @@ services:
       - ./run.py:/app/run.py
       - ./var:/data
     command: ["flask", "run", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
     depends_on:
       postgres:
         condition: service_healthy
@@ -104,6 +117,19 @@ services:
     volumes:
       - ./app:/app/app
       - ./var:/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
     depends_on:
       - web
       - redis
@@ -114,6 +140,7 @@ services:
       POSTGRES_USER: studyuser
       POSTGRES_PASSWORD: studypass
       POSTGRES_DB: ti_db
+    command: ["postgres", "-c", "shared_buffers=128MB", "-c", "work_mem=4MB", "-c", "max_connections=50"]
     ports:
       - "5432:5432"
     volumes:
@@ -124,9 +151,64 @@ services:
       timeout: 3s
       retries: 3
       start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
 
   redis:
     image: redis:7-alpine
-    command: ["redis-server", "--appendonly", "yes"]
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "64mb", "--maxmemory-policy", "allkeys-lru"]
     volumes:
       - ./var/redis:/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+        reservations:
+          cpus: '0.25'
+          memory: 64M
+
+  backup:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: studyuser
+      POSTGRES_PASSWORD: studypass
+      POSTGRES_DB: ti_db
+      BACKUP_INTERVAL: ${BACKUP_INTERVAL:-86400}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
+    volumes:
+      - ./backups:/backups
+      - ./scripts/backup-cron.sh:/backup-cron.sh:ro
+    command: sh -c "chmod +x /backup-cron.sh && /backup-cron.sh"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
