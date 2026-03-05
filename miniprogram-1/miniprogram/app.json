@@ -46,8 +46,7 @@
     "pages/bank-data-mistakes/bank-data-mistakes",
     "pages/bank-data-favorites/bank-data-favorites",
     "pages/bank-share/bank-share",
-    "pages/bank-exam-setup/bank-exam-setup",
-    "pages/logs/logs"
+    "pages/bank-exam-setup/bank-exam-setup"
   ],
   "subPackages": [
     {
