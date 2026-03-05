@@ -358,7 +358,12 @@
   white-space: nowrap;
 }
 .upf-card-no-cover {
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.upf-card-no-cover .upf-card-head,
+.upf-card-no-cover .upf-card-title,
+.upf-card-no-cover .upf-card-desc {
+  grid-column: 1 / 3;
 }
 .upf-card-no-cover .upf-card-title {
   -webkit-line-clamp: 2;
@@ -367,9 +372,9 @@
   -webkit-line-clamp: 3;
 }
 .upf-card-no-cover .upf-card-time {
-  grid-column: 1 / 2;
-  justify-self: start;
-  text-align: left;
+  grid-column: 2 / 3;
+  justify-self: end;
+  text-align: right;
 }
 .upf-card-owner-actions {
   position: absolute;

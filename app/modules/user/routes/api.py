@@ -1119,7 +1119,7 @@ def api_user_works(uid: int):
     elif item_type == 'post':
         total = post_total
         rows = db.session.execute(sa_text('''
-            SELECT id, title, content, images, like_count, comment_count, created_at,
+            SELECT id, title, content, images, cover_image, like_count, comment_count, created_at,
                    'post' AS item_type
             FROM forum_posts
             WHERE author_id=:uid AND is_deleted=false
@@ -1129,7 +1129,7 @@ def api_user_works(uid: int):
         for r in rows:
             m = r._mapping
             preview = _post_preview(m['content'], 80)
-            cover = _extract_first_image(m['images'])
+            cover = m['cover_image'] or _extract_first_image(m['images'])
             items.append({
                 'id': m['id'], 'item_type': 'post',
                 'name': m['title'] or '', 'description': preview,
@@ -1151,7 +1151,7 @@ def api_user_works(uid: int):
                 WHERE user_id=:uid AND is_public=true AND status=1
                 UNION ALL
                 SELECT id, title AS name, content AS description,
-                       NULL AS cover_image,
+                       cover_image AS cover_image,
                        like_count AS stat1, '赞' AS stat1_label,
                        comment_count AS stat2, '评论' AS stat2_label,
                        created_at, 'post' AS item_type, images
@@ -1216,7 +1216,7 @@ def api_user_favorites(uid: int):
     ), {'uid': uid}).scalar() or 0
 
     rows = db.session.execute(sa_text('''
-        SELECT fp.id, fp.title, fp.content, fp.images, fp.like_count, fp.comment_count, ff.created_at
+        SELECT fp.id, fp.title, fp.content, fp.images, fp.cover_image, fp.like_count, fp.comment_count, ff.created_at
         FROM forum_favorites ff
         JOIN forum_posts fp ON fp.id = ff.post_id
         WHERE ff.user_id = :uid AND fp.is_deleted = false
@@ -1228,7 +1228,7 @@ def api_user_favorites(uid: int):
     for r in rows:
         m = r._mapping
         preview = _post_preview(m['content'], 80)
-        cover = _extract_first_image(m['images'])
+        cover = m['cover_image'] or _extract_first_image(m['images'])
         items.append({
             'id': m['id'], 'item_type': 'post',
             'name': m['title'] or '', 'description': preview,
@@ -1275,7 +1275,7 @@ def api_user_likes(uid: int):
     ), {'uid': uid}).scalar() or 0
 
     rows = db.session.execute(sa_text('''
-        SELECT fp.id, fp.title, fp.content, fp.images, fp.like_count, fp.comment_count, fl.created_at
+        SELECT fp.id, fp.title, fp.content, fp.images, fp.cover_image, fp.like_count, fp.comment_count, fl.created_at
         FROM forum_likes fl
         JOIN forum_posts fp ON fp.id = fl.target_id
         WHERE fl.user_id = :uid AND fl.target_type = 'post' AND fp.is_deleted = false
@@ -1287,7 +1287,7 @@ def api_user_likes(uid: int):
     for r in rows:
         m = r._mapping
         preview = _post_preview(m['content'], 80)
-        cover = _extract_first_image(m['images'])
+        cover = m['cover_image'] or _extract_first_image(m['images'])
         items.append({
             'id': m['id'], 'item_type': 'post',
             'name': m['title'] or '', 'description': preview,
