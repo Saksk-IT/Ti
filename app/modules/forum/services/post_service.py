@@ -2,6 +2,7 @@
 """帖子业务逻辑"""
 from functools import lru_cache
 import json
+import re
 from typing import Optional
 
 from sqlalchemy import inspect, text
@@ -17,6 +18,8 @@ MAX_TAG_LENGTH = 20
 MAX_SUMMARY_LENGTH = 300
 DEFAULT_PREVIEW_LENGTH = 200
 SUPPORTED_CONTENT_FORMATS = {'html', 'markdown'}
+UNTITLED_POST = '无标题'
+MARKDOWN_TITLE_RE = re.compile(r'^\s{0,3}#{1,6}\s+(.+?)\s*#*\s*$')
 
 
 def _is_postgresql() -> bool:
@@ -62,6 +65,32 @@ def _safe_summary(summary: str | None, html_content: str) -> str:
     if raw:
         return raw[:MAX_SUMMARY_LENGTH]
     return strip_html_tags(html_content, 160)
+
+
+def _normalize_post_title(
+    title: str | None,
+    html_content: str = '',
+    markdown_source: str | None = None,
+) -> str:
+    normalized = str(title or '').strip()
+    if normalized:
+        return normalized[:200]
+
+    md_source = str(markdown_source or '').strip()
+    if md_source:
+        for line in md_source.splitlines():
+            match = MARKDOWN_TITLE_RE.match(line)
+            if not match:
+                continue
+            heading = str(match.group(1) or '').strip()
+            if heading:
+                return heading[:200]
+
+    fallback = strip_html_tags(html_content or '', 80).strip()
+    if fallback:
+        return fallback[:200]
+
+    return UNTITLED_POST
 
 
 def _normalize_post_content(
@@ -287,6 +316,7 @@ def get_posts(
         d = dict(r._mapping)
         summary = str(d.get('summary') or '').strip()
         content_raw = d.pop('content_raw', '')
+        d['title'] = _normalize_post_title(d.get('title'), html_content=str(content_raw or ''))
         d['tags'] = _json_read_list(d.get('tags'))
         d['images'] = _json_read_list(d.get('images'))
         d['question_refs'] = _json_read_list(d.get('question_refs'))
@@ -345,6 +375,11 @@ def get_post_detail(
     db.session.commit()
 
     data = _rehydrate_markdown_content(dict(row._mapping))
+    data['title'] = _normalize_post_title(
+        title=data.get('title'),
+        html_content=str(data.get('content') or ''),
+        markdown_source=data.get('markdown_source'),
+    )
     data['tags'] = _json_read_list(data.get('tags'))
     data['images'] = _json_read_list(data.get('images'))
     data['question_refs'] = _json_read_list(data.get('question_refs'))
@@ -475,6 +510,11 @@ def update_post(post_id: int, author_id: int, **fields) -> bool:
     updates = {k: v for k, v in fields.items() if k in allowed}
     if not updates:
         return False
+    if 'title' in updates:
+        normalized_title = str(updates.get('title') or '').strip()
+        if not normalized_title:
+            return False
+        updates['title'] = normalized_title
 
     content_updated = (
         'content' in updates or 'content_format' in updates or 'markdown_source' in updates

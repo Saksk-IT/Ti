@@ -138,6 +138,7 @@ def api_update_post(post_id: int):
                 return jsonify({'status': 'error', 'message': '标题不能为空'}), 400
             if len(title) > 200:
                 return jsonify({'status': 'error', 'message': '标题不能超过200字'}), 400
+            data['title'] = title
         valid, message = _validate_meta_payload(data)
         if not valid:
             return jsonify({'status': 'error', 'message': message}), 400

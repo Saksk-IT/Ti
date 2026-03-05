@@ -9,6 +9,11 @@ function _esc(value) {
   return div.innerHTML;
 }
 
+function _normalizePostTitle(value) {
+  var title = String(value == null ? '' : value).trim();
+  return title || '无标题';
+}
+
 function renderQuestionRefs(refs) {
   if (!refs || !refs.length) return '';
   return '<div class="forum-question-refs">' + refs.map(function(ref) {
@@ -103,7 +108,7 @@ async function loadPostDetail() {
 
     document.getElementById('postContent').innerHTML = `
       <div class="forum-post-header">${avatar}<div class="forum-post-meta"><a href="/user/${p.author_id}" class="author forum-user-link">${_esc(p.author_name)}</a>${followHtml} · ${new Date(p.created_at).toLocaleString('zh-CN')}<span class="forum-board-tag">${_esc(p.board_name)}</span></div></div>
-      <div class="post-title">${badges}${_esc(p.title)}</div>
+      <div class="post-title">${badges}${_esc(_normalizePostTitle(p.title))}</div>
       ${summaryHtml}
       ${cover}
       ${tagsHtml}

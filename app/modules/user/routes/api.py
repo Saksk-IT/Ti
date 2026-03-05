@@ -23,6 +23,7 @@ user_api_bp = Blueprint('user_api', __name__)
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 _HTML_TAG_RE = re.compile(r'<[^>]+>')
 _WHITESPACE_RE = re.compile(r'\s+')
+PROFILE_CARD_POST_PREVIEW_LIMIT = 140
 
 def allowed_file(filename):
     """检查文件扩展名是否允许"""
@@ -36,7 +37,7 @@ def _strip_html_text(raw: str) -> str:
     return _WHITESPACE_RE.sub(' ', text).strip()
 
 
-def _post_preview(raw: str, limit: int = 80) -> str:
+def _post_preview(raw: str, limit: int = PROFILE_CARD_POST_PREVIEW_LIMIT) -> str:
     text = _strip_html_text(raw)
     return text[:limit] if text else ''
 
@@ -1128,7 +1129,7 @@ def api_user_works(uid: int):
         '''), {'uid': uid, 'lim': per_page, 'off': offset}).fetchall()
         for r in rows:
             m = r._mapping
-            preview = _post_preview(m['content'], 80)
+            preview = _post_preview(m['content'], PROFILE_CARD_POST_PREVIEW_LIMIT)
             cover = m['cover_image'] or _extract_first_image(m['images'])
             items.append({
                 'id': m['id'], 'item_type': 'post',
@@ -1171,7 +1172,7 @@ def api_user_works(uid: int):
             items.append({
                 'id': m['id'], 'item_type': card_type,
                 'name': m['name'] or '',
-                'description': _post_preview(m['description'], 80) if is_post else (m['description'] or ''),
+                'description': _post_preview(m['description'], PROFILE_CARD_POST_PREVIEW_LIMIT) if is_post else (m['description'] or ''),
                 'cover_image': cover,
                 'stat1': m['stat1'] or 0, 'stat1_label': m['stat1_label'],
                 'stat2': m['stat2'] or 0, 'stat2_label': m['stat2_label'],
@@ -1227,7 +1228,7 @@ def api_user_favorites(uid: int):
     items = []
     for r in rows:
         m = r._mapping
-        preview = _post_preview(m['content'], 80)
+        preview = _post_preview(m['content'], PROFILE_CARD_POST_PREVIEW_LIMIT)
         cover = m['cover_image'] or _extract_first_image(m['images'])
         items.append({
             'id': m['id'], 'item_type': 'post',
@@ -1286,7 +1287,7 @@ def api_user_likes(uid: int):
     items = []
     for r in rows:
         m = r._mapping
-        preview = _post_preview(m['content'], 80)
+        preview = _post_preview(m['content'], PROFILE_CARD_POST_PREVIEW_LIMIT)
         cover = m['cover_image'] or _extract_first_image(m['images'])
         items.append({
             'id': m['id'], 'item_type': 'post',

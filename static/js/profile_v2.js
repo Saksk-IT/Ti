@@ -72,6 +72,24 @@
     return y + '-' + m + '-' + day;
   }
 
+  function normalizeCardDesc(raw, isBank) {
+    var text = String(raw || '').replace(/\s+/g, ' ').trim();
+    if (!text) return isBank ? '暂无题库简介' : '暂无内容预览';
+    if (isBank) return text;
+    // 帖子摘要做轻量清洗，避免 Markdown 符号噪声影响可读性
+    return text
+      .replace(/@+\s*TOC/ig, ' ')
+      .replace(/[`#>*_~[\](){}|\\]/g, ' ')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+  }
+
+  function normalizeCardTitle(raw, isBank) {
+    var text = String(raw || '').replace(/\s+/g, ' ').trim();
+    if (!text) return isBank ? '未命名题库' : '无标题';
+    return text;
+  }
+
   function closeAllCardMenus() {
     document.querySelectorAll('.upf-card-owner-actions.open').forEach(function (el) {
       el.classList.remove('open');
@@ -319,9 +337,8 @@
     var manageConfig = getManageConfig(item);
     var typeLabel = isBank ? '题库' : '帖子';
     var typeClass = isBank ? ' upf-card-type-bank' : ' upf-card-type-post';
-    var titleText = escHtml(item.name || '无标题');
-    var rawDesc = String(item.description || '').trim();
-    var descText = escHtml(rawDesc || (isBank ? '暂无题库简介' : '暂无内容预览'));
+    var titleText = escHtml(normalizeCardTitle(item.name, isBank));
+    var descText = escHtml(normalizeCardDesc(item.description, isBank));
     var stat1Label = String(item.stat1_label || '').trim();
     var stat2Label = String(item.stat2_label || '').trim();
     var stat1Text = escHtml(String(item.stat1 || 0) + (stat1Label ? ' ' + stat1Label : ''));

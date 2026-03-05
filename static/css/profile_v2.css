@@ -253,8 +253,9 @@
   grid-template-columns: minmax(0, 1fr) 132px;
   grid-template-rows: auto auto 1fr auto;
   gap: 6px 12px;
-  min-height: 166px;
-  padding: 14px;
+  height: 146px;
+  min-height: 146px;
+  padding: 10px;
   box-sizing: border-box;
   transition: transform 140ms ease, box-shadow 140ms ease;
 }
@@ -266,9 +267,6 @@
   align-items: center;
   min-width: 0;
   padding-right: 36px;
-}
-.upf-card-has-cover .upf-card-head {
-  padding-right: 72px;
 }
 .upf-card-type {
   display: inline-flex;
@@ -294,9 +292,9 @@
 }
 .upf-card-cover {
   grid-column: 2 / 3;
-  grid-row: 1 / 4;
+  grid-row: 2 / 4;
   width: 120px;
-  height: 90px;
+  height: 96px;
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid var(--app-border);
@@ -312,6 +310,8 @@
   font-size: 16px;
   font-weight: 600;
   line-height: 1.4;
+  min-height: 1.4em;
+  align-self: start;
   letter-spacing: -0.1px;
   overflow: hidden;
   display: -webkit-box;
@@ -331,6 +331,14 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   text-overflow: ellipsis;
+}
+.upf-card-post .upf-card-desc {
+  -webkit-line-clamp: 2;
+  min-height: calc(1.5em * 2);
+}
+.upf-card-bank .upf-card-desc {
+  -webkit-line-clamp: 2;
+  min-height: calc(1.5em * 2);
 }
 .upf-card-meta {
   grid-column: 1 / 2;
@@ -366,7 +374,7 @@
   grid-column: 1 / 3;
 }
 .upf-card-no-cover .upf-card-title {
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
 }
 .upf-card-no-cover .upf-card-desc {
   -webkit-line-clamp: 3;
@@ -378,30 +386,27 @@
 }
 .upf-card-owner-actions {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 8px;
+  right: 8px;
   z-index: 2;
 }
-.upf-card-has-cover .upf-card-owner-actions {
-  right: 158px;
-}
 .upf-card-owner-toggle {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  border: 1px solid var(--app-border);
-  background: var(--app-surface);
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
   color: var(--app-muted);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   cursor: pointer;
+  font-size: 18px;
 }
 .upf-card-owner-toggle:hover {
-  color: var(--app-primary);
-  border-color: color-mix(in srgb, var(--app-primary) 55%, var(--app-border));
-  background: color-mix(in srgb, var(--app-primary) 8%, var(--app-surface));
+  color: var(--app-text);
+  background: color-mix(in srgb, var(--app-bg) 60%, transparent);
 }
 .upf-card-owner-menu {
   position: absolute;
@@ -531,16 +536,15 @@
 .upf-skel-tabs { display: flex; gap: 8px; padding: 10px 4px; }
 .upf-skel-tab { width: 60px; height: 28px; border-radius: 999px; }
 .upf-skel-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
-.upf-skel-card { border-radius: var(--app-radius-md); height: 166px; }
+.upf-skel-card { border-radius: var(--app-radius-md); height: 146px; }
 
 /* ── Responsive ── */
 @media (max-width: 980px) {
   .upf-layout { grid-template-columns: 1fr; gap: 12px; }
   .upf-layout-back { position: static; top: auto; }
   .upf-shell { gap: 22px; }
-  .upf-card { grid-template-columns: minmax(0, 1fr) 112px; min-height: 160px; }
-  .upf-card-cover { width: 112px; height: 84px; }
-  .upf-card-has-cover .upf-card-owner-actions { right: 138px; }
+  .upf-card { grid-template-columns: minmax(0, 1fr) 112px; height: 146px; min-height: 146px; }
+  .upf-card-cover { width: 112px; height: 90px; }
 }
 @media (max-width: 640px) {
   .upf-hero-inner { align-items: flex-start; gap: 12px; }
@@ -552,15 +556,14 @@
   .upf-privacy-gear { width: 32px; height: 32px; }
   .upf-stats { justify-content: center; }
   .upf-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .upf-card { grid-template-columns: minmax(0, 1fr) 98px; min-height: 152px; padding: 12px; gap: 6px 10px; }
+  .upf-card { grid-template-columns: minmax(0, 1fr) 98px; height: 146px; min-height: 146px; padding: 10px; gap: 6px 10px; }
   .upf-card-title { font-size: 15px; }
   .upf-card-desc { font-size: 12px; -webkit-line-clamp: 2; }
   .upf-card-meta { gap: 10px; font-size: 12px; }
   .upf-card-time { font-size: 11px; }
-  .upf-card-cover { width: 98px; height: 74px; }
-  .upf-card-owner-actions { top: 8px; right: 8px; }
-  .upf-card-has-cover .upf-card-owner-actions { right: 120px; }
-  .upf-card-owner-toggle { width: 26px; height: 26px; }
+  .upf-card-cover { width: 98px; height: 78px; }
+  .upf-card-owner-actions { top: 6px; right: 6px; }
+  .upf-card-owner-toggle { width: 22px; height: 22px; font-size: 16px; }
   .upf-skel-hero-inner { align-items: center; }
   .upf-skel-info { align-items: flex-start; }
   .upf-skel-stats { justify-content: center; }
