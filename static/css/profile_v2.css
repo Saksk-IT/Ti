@@ -251,7 +251,7 @@
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 120px;
-  grid-template-rows: 22px 22px 62px 20px;
+  grid-template-rows: 22px 20px 64px 20px;
   gap: 0 12px;
   height: 146px;
   min-height: 146px;
@@ -292,9 +292,9 @@
 }
 .upf-card-cover {
   grid-column: 2 / 3;
-  grid-row: 2 / 4;
+  grid-row: 1 / 4;
   width: 120px;
-  height: 90px;
+  height: 106px;
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid var(--app-border);
