@@ -50,11 +50,11 @@ services:
       SMS_ENABLED: ${SMS_ENABLED:-true}
       SMS_CONSOLE_OUTPUT: ${SMS_CONSOLE_OUTPUT:-false}
     volumes:
-      - ./app:/app/app:ro
-      - ./static:/app/static:ro
-      - ./templates:/app/templates:ro
-      - ./migrations:/app/migrations:ro
-      - ./run.py:/app/run.py:ro
+      - ./app:/app/app
+      - ./static:/app/static
+      - ./templates:/app/templates
+      - ./migrations:/app/migrations
+      - ./run.py:/app/run.py
       - ./var:/data
     command: ["flask", "run", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     depends_on:
@@ -102,7 +102,7 @@ services:
       SMS_ENABLED: ${SMS_ENABLED:-true}
       SMS_CONSOLE_OUTPUT: ${SMS_CONSOLE_OUTPUT:-false}
     volumes:
-      - ./app:/app/app:ro
+      - ./app:/app/app
       - ./var:/data
     depends_on:
       - web
@@ -117,19 +117,16 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./var/postgres:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U studyuser -d ti_db"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
 
   redis:
     image: redis:7-alpine
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
-      - redis_data:/data
-
-volumes:
-  postgres_data:
-  redis_data:
+      - ./var/redis:/data
