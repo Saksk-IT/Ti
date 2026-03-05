@@ -1,6 +1,6 @@
-<div class="forum-post-card" onclick="location.href='/forum/post/{{ post.id }}'">
+<a href="/forum/post/{{ post.id }}" target="_blank" rel="noopener noreferrer" class="forum-post-card">
   <div class="forum-post-header">
-    <a href="/user/{{ post.author_id }}" onclick="event.stopPropagation()" class="forum-avatar-link">
+    <a href="/user/{{ post.author_id }}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="forum-avatar-link">
       {% if post.author_avatar %}
       <img class="forum-avatar" src="{{ post.author_avatar }}" alt="">
       {% else %}
@@ -8,7 +8,7 @@
       {% endif %}
     </a>
     <div class="forum-post-meta">
-      <a href="/user/{{ post.author_id }}" onclick="event.stopPropagation()" class="forum-user-link">{{ post.author_name }}</a>
+      <a href="/user/{{ post.author_id }}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="forum-user-link">{{ post.author_name }}</a>
       <span class="forum-board-tag">{{ post.board_name }}</span>
     </div>
   </div>
@@ -34,4 +34,4 @@
     <img src="{{ post.cover_image }}" alt="封面">
   </div>
   {% endif %}
-</div>
+</a>
