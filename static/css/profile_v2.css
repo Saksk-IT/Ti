@@ -267,6 +267,9 @@
   min-width: 0;
   padding-right: 36px;
 }
+.upf-card-has-cover .upf-card-head {
+  padding-right: 72px;
+}
 .upf-card-type {
   display: inline-flex;
   align-items: center;
@@ -302,17 +305,6 @@
   background: color-mix(in srgb, var(--app-primary) 4%, var(--app-bg));
 }
 .upf-card-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.upf-card-cover-placeholder {
-  width: 100%;
-  height: 100%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--app-muted);
-  background: linear-gradient(135deg, color-mix(in srgb, var(--app-primary) 8%, var(--app-bg)), var(--app-bg));
-}
 .upf-card-title {
   grid-column: 1 / 2;
   grid-row: 2 / 3;
@@ -365,14 +357,28 @@
   color: var(--app-muted);
   white-space: nowrap;
 }
-.upf-card-cover-empty {
-  border-style: dashed;
+.upf-card-no-cover {
+  grid-template-columns: minmax(0, 1fr);
+}
+.upf-card-no-cover .upf-card-title {
+  -webkit-line-clamp: 2;
+}
+.upf-card-no-cover .upf-card-desc {
+  -webkit-line-clamp: 3;
+}
+.upf-card-no-cover .upf-card-time {
+  grid-column: 1 / 2;
+  justify-self: start;
+  text-align: left;
 }
 .upf-card-owner-actions {
   position: absolute;
   top: 10px;
   right: 10px;
   z-index: 2;
+}
+.upf-card-has-cover .upf-card-owner-actions {
+  right: 158px;
 }
 .upf-card-owner-toggle {
   width: 28px;
@@ -529,6 +535,7 @@
   .upf-shell { gap: 22px; }
   .upf-card { grid-template-columns: minmax(0, 1fr) 112px; min-height: 160px; }
   .upf-card-cover { width: 112px; height: 84px; }
+  .upf-card-has-cover .upf-card-owner-actions { right: 138px; }
 }
 @media (max-width: 640px) {
   .upf-hero-inner { align-items: flex-start; gap: 12px; }
@@ -547,6 +554,7 @@
   .upf-card-time { font-size: 11px; }
   .upf-card-cover { width: 98px; height: 74px; }
   .upf-card-owner-actions { top: 8px; right: 8px; }
+  .upf-card-has-cover .upf-card-owner-actions { right: 120px; }
   .upf-card-owner-toggle { width: 26px; height: 26px; }
   .upf-skel-hero-inner { align-items: center; }
   .upf-skel-info { align-items: flex-start; }

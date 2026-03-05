@@ -313,7 +313,8 @@
   function renderCard(item) {
     var card = document.createElement('div');
     var isBank = item.item_type === 'bank';
-    var hasCover = !!item.cover_image;
+    var coverUrl = String(item.cover_image || '').trim();
+    var hasCover = !isBank && !!coverUrl;
     var showActions = canManageItem(item);
     var manageConfig = getManageConfig(item);
     var typeLabel = isBank ? '题库' : '帖子';
@@ -328,7 +329,7 @@
     var dateText = escHtml(fmtDateYmd(item.created_at) || '--');
     var stat1Icon = isBank ? ICON_QUESTIONS : ICON_HEART;
     var stat2Icon = isBank ? ICON_USAGE : ICON_COMMENT;
-    card.className = 'upf-card ' + (isBank ? 'upf-card-bank' : 'upf-card-post') + (hasCover ? '' : ' upf-card-no-cover');
+    card.className = 'upf-card ' + (isBank ? 'upf-card-bank' : 'upf-card-post') + (hasCover ? ' upf-card-has-cover' : ' upf-card-no-cover');
     card.setAttribute('role', 'article');
 
     var actionHtml = '';
@@ -344,9 +345,9 @@
       '</div>';
     }
 
-    var coverInner = hasCover
-      ? '<img src="' + escHtml(item.cover_image) + '" alt="" loading="lazy">'
-      : '<div class="upf-card-cover-placeholder">' + typeLabel + '</div>';
+    var coverHtml = hasCover
+      ? ('<div class="upf-card-cover"><img src="' + escHtml(coverUrl) + '" alt="" loading="lazy"></div>')
+      : '';
 
     card.innerHTML = actionHtml +
       '<div class="upf-card-head"><span class="upf-card-type' + typeClass + '">' + typeLabel + '</span></div>' +
@@ -357,7 +358,7 @@
         '<span>' + stat2Icon + '<span>' + stat2Text + '</span></span>' +
       '</div>' +
       '<div class="upf-card-time">' + dateText + '</div>' +
-      '<div class="upf-card-cover' + (hasCover ? '' : ' upf-card-cover-empty') + '">' + coverInner + '</div>';
+      coverHtml;
 
     card.addEventListener('click', function () {
       if (isBank) {
