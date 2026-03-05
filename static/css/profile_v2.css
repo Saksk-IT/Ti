@@ -251,7 +251,7 @@
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 132px;
-  grid-template-rows: auto auto 1fr auto;
+  grid-template-rows: 22px 22px 1fr 20px;
   gap: 4px 12px;
   height: 146px;
   min-height: 146px;
@@ -343,10 +343,11 @@
   grid-row: 4 / 5;
   display: flex;
   gap: 12px;
-  align-self: end;
+  align-items: center;
   margin: 0;
   font-size: 12px;
   color: var(--app-muted);
+  height: 20px;
 }
 .upf-card-meta > span {
   display: inline-flex;
@@ -356,12 +357,14 @@
 .upf-card-time {
   grid-column: 2 / 3;
   grid-row: 4 / 5;
-  align-self: end;
+  display: flex;
+  align-items: center;
   justify-self: end;
   text-align: right;
   font-size: 12px;
   color: var(--app-muted);
   white-space: nowrap;
+  height: 20px;
 }
 .upf-card-no-cover {
   grid-template-columns: minmax(0, 1fr) auto;
