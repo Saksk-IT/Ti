@@ -1,8 +1,10 @@
 # Ti 题库系统 — 生产环境部署指南
 
-> 适用版本：高并发优化后（2026-02）
+> 适用版本：2026-03（安全加固版）
+> 操作系统：Ubuntu 24.04 LTS
 > 架构：Nginx + gunicorn (4w×4t) + Flask + PostgreSQL + Redis
 > 部署方式：Docker Compose 一键部署
+> 数据持久化：宿主机 bind mount（防止数据丢失）
 
 ---
 
@@ -20,6 +22,7 @@
 10. [故障排查](#10-故障排查)
 11. [备份与恢复](#11-备份与恢复)
 12. [HTTPS 配置](#12-https-配置)
+13. [安全加固说明](#13-安全加固说明)
 
 ---
 
@@ -60,14 +63,33 @@
 
 ## 2. 服务器要求
 
-| 项目 | 最低配置（2核2G） | 扩容配置（4核4G） |
+| 项目 | 最低配置（2核2G） | 推荐配置（4核4G） |
 |------|------------------|------------------|
 | CPU | 2 核 | 4 核 |
 | 内存 | 2 GB | 4 GB |
 | 磁盘 | 20 GB SSD | 40 GB SSD |
-| 系统 | Ubuntu 22.04+ / Debian 12+ | 同左 |
-| Docker | 24.0+ | 同左 |
-| Docker Compose | v2.20+ | 同左 |
+| 系统 | **Ubuntu 24.04 LTS** | 同左 |
+| Docker | 26.0+ | 同左 |
+| Docker Compose | v2.24+ | 同左 |
+
+### Ubuntu 24.04 特性
+
+- 内核版本：6.8+
+- 默认 Python：3.12
+- 默认 Docker：通过 apt 安装即可
+- 长期支持：至 2029 年 4 月
+
+### 资源限制（已配置）
+
+所有服务已配置资源限制，防止单个服务占用过多资源：
+
+| 服务 | CPU 限制 | 内存限制 | CPU 预留 | 内存预留 |
+|------|----------|----------|----------|----------|
+| nginx | 0.5 核 | 128M | 0.25 核 | 64M |
+| web | 2.0 核 | 1G | 0.5 核 | 512M |
+| worker | 1.0 核 | 512M | 0.25 核 | 256M |
+| postgres | 2.0 核 | 512M | 0.5 核 | 256M |
+| redis | 0.5 核 | 128M | 0.25 核 | 64M |
 
 ### 2核2G 内存分配
 
@@ -85,18 +107,33 @@
 
 ## 3. 准备工作
 
-### 3.1 安装 Docker
+### 3.1 安装 Docker（Ubuntu 24.04）
 
 ```bash
-# Ubuntu / Debian
-curl -fsSL https://get.docker.com | sh
+# 更新系统
+sudo apt update && sudo apt upgrade -y
+
+# 安装 Docker（官方脚本）
+curl -fsSL https://get.docker.com | sudo sh
+
+# 将当前用户加入 docker 组
 sudo usermod -aG docker $USER
+
 # 重新登录使 docker 组生效
+exit
+# 重新 SSH 登录
+
+# 验证安装
+docker --version
+docker compose version
 ```
 
 ### 3.2 克隆项目
 
 ```bash
+# 克隆到 /opt/ti 目录
+sudo mkdir -p /opt/ti
+sudo chown $USER:$USER /opt/ti
 git clone <你的仓库地址> /opt/ti
 cd /opt/ti
 ```
@@ -104,8 +141,15 @@ cd /opt/ti
 ### 3.3 创建数据目录
 
 ```bash
-mkdir -p var/uploads/avatars var/uploads/question_images var/logs
+# 创建所有必要的数据目录
+mkdir -p var/postgres var/redis var/uploads/avatars var/uploads/question_images var/logs var/instance backups
+
+# 设置权限
+chmod 700 var/postgres var/redis
+chmod 755 var/uploads var/logs backups
 ```
+
+**重要：** 所有生产数据存储在 `./var/` 目录，使用 bind mount 方式挂载，确保数据安全。
 
 ---
 
@@ -390,7 +434,55 @@ curl http://localhost/api/ping?deep=1
 
 ## 11. 备份与恢复
 
-### 数据库备份
+### 11.1 自动备份脚本（推荐）
+
+项目已提供完整的备份恢复脚本：
+
+```bash
+# 执行备份
+./scripts/backup.sh
+
+# 备份内容：
+# - 数据库完整备份（pg_dump）
+# - Redis 数据备份
+# - 上传文件备份
+# - 配置文件备份
+# - 自动压缩为 .tar.gz
+# - 自动清理 7 天前的旧备份
+
+# 备份文件保存在 ./backups/ 目录
+ls -lh backups/
+```
+
+### 11.2 恢复数据
+
+```bash
+# 从备份恢复
+./scripts/restore.sh backup_20260305_230000.tar.gz
+
+# 恢复过程：
+# 1. 停止 web 和 worker 服务
+# 2. 恢复数据库
+# 3. 恢复 Redis 数据
+# 4. 恢复上传文件
+# 5. 重启服务
+```
+
+### 11.3 定时备份（推荐）
+
+添加到 crontab：
+
+```bash
+# 编辑 crontab
+crontab -e
+
+# 添加以下行（每天凌晨 2 点自动备份）
+0 2 * * * cd /opt/ti && ./scripts/backup.sh >> ./var/logs/backup.log 2>&1
+```
+
+### 11.4 手动备份（备选方案）
+
+#### 数据库备份
 
 ```bash
 # 备份
@@ -404,18 +496,43 @@ docker compose -f compose.prod.yml exec postgres \
   pg_restore -U studyuser -d ti_db --clean --if-exists /tmp/backup.dump
 ```
 
-### 上传文件备份
+#### 上传文件备份
 
 ```bash
 tar czf backups/uploads-$(date +%Y%m%d).tar.gz var/uploads/
 ```
 
-### 定时备份（crontab）
+### 11.5 数据持久化说明
+
+所有生产数据存储在宿主机 `./var/` 目录：
+
+```
+./var/
+├── postgres/      # PostgreSQL 数据库文件（bind mount）
+├── redis/         # Redis 持久化数据（bind mount）
+├── uploads/       # 用户上传文件
+├── instance/      # Flask 实例数据
+└── logs/          # 应用日志
+```
+
+**重要：**
+- 使用 bind mount 而非 Docker volume，防止 `docker system prune` 导致数据丢失
+- 定期备份 `./var/` 目录
+- 备份文件异地存储（如阿里云 OSS）
+
+### 11.6 异地备份（推荐）
 
 ```bash
-# 每天凌晨 3 点备份数据库
-0 3 * * * cd /opt/ti && docker compose -f compose.prod.yml exec -T postgres \
-  pg_dump -U studyuser -d ti_db --format=custom > backups/db-$(date +\%Y\%m\%d).dump
+# 安装阿里云 OSS 工具
+wget http://gosspublic.alicdn.com/ossutil/1.7.15/ossutil64
+chmod +x ossutil64
+sudo mv ossutil64 /usr/local/bin/ossutil
+
+# 配置 OSS
+ossutil config
+
+# 上传备份到 OSS
+ossutil cp backups/backup_*.tar.gz oss://your-bucket/ti-backups/
 ```
 
 ---
@@ -514,3 +631,179 @@ apt install certbot
 certbot certonly --standalone -d your-domain.com
 # 将证书目录挂载到 nginx 容器
 ```
+
+---
+
+## 13. 安全加固说明
+
+### 13.1 数据持久化改进
+
+**问题：** 旧版本使用 Docker 匿名 volume，执行 `docker system prune --volumes` 会导致生产数据永久丢失。
+
+**解决：** 2026-03 版本已改为 bind mount：
+
+```yaml
+# 旧配置（危险）
+volumes:
+  - postgres_data:/var/lib/postgresql/data  # 匿名 volume
+
+# 新配置（安全）
+volumes:
+  - ./var/postgres:/var/lib/postgresql/data  # bind mount
+```
+
+**验证：**
+```bash
+# 检查数据目录
+ls -la var/postgres/
+ls -la var/redis/
+
+# 数据文件应该在宿主机可见
+```
+
+### 13.2 资源限制
+
+所有服务已配置资源限制，防止单个服务占用过多资源导致系统崩溃。
+
+**查看资源使用：**
+```bash
+docker stats
+```
+
+### 13.3 日志管理
+
+所有服务配置了日志轮转：
+- 单个日志文件最大 10MB
+- 保留最近 3 个日志文件
+- 自动清理旧日志
+
+**查看日志配置：**
+```bash
+docker inspect <容器ID> | grep -A 5 LogConfig
+```
+
+### 13.4 健康检查优化
+
+- postgres 健康检查间隔从 5s 改为 10s
+- 添加启动宽限期 10s，避免启动阶段误判
+- 减少重试次数，快速失败而不是长时间阻塞
+
+### 13.5 安全检查清单
+
+部署前检查：
+
+- [ ] `.env.production` 中的 `SECRET_KEY` 已修改为随机字符串
+- [ ] `POSTGRES_PASSWORD` 已修改为强密码
+- [ ] 所有敏感信息未提交到 Git
+- [ ] 防火墙已配置（只开放必要端口）
+- [ ] SSH 密钥登录已启用，密码登录已禁用
+- [ ] 定时备份已配置
+- [ ] 备份文件已异地存储
+- [ ] 监控告警已配置（可选）
+
+### 13.6 防火墙配置（Ubuntu 24.04）
+
+```bash
+# 启用 UFW
+sudo ufw enable
+
+# 允许 SSH
+sudo ufw allow 22/tcp
+
+# 允许 HTTP/HTTPS
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+
+# 查看状态
+sudo ufw status
+```
+
+### 13.7 定期维护
+
+**每周：**
+- 检查磁盘空间：`df -h`
+- 检查备份是否正常：`ls -lh backups/`
+- 查看错误日志：`docker compose -f compose.prod.yml logs --tail=100 | grep ERROR`
+
+**每月：**
+- 更新系统：`sudo apt update && sudo apt upgrade -y`
+- 清理 Docker 缓存：`docker system prune -a`（不会删除数据）
+- 检查资源使用：`docker stats`
+
+**每季度：**
+- 测试备份恢复流程
+- 更新 Docker 镜像
+- 审查安全日志
+
+---
+
+## 附录：快速命令参考
+
+### 服务管理
+
+```bash
+# 启动所有服务
+docker compose --env-file .env.production -f compose.prod.yml up -d
+
+# 停止所有服务
+docker compose -f compose.prod.yml down
+
+# 重启单个服务
+docker compose -f compose.prod.yml restart web
+
+# 查看服务状态
+docker compose -f compose.prod.yml ps
+
+# 查看日志
+docker compose -f compose.prod.yml logs -f web
+```
+
+### 数据库操作
+
+```bash
+# 进入数据库
+docker compose -f compose.prod.yml exec postgres psql -U studyuser -d ti_db
+
+# 执行迁移
+docker compose -f compose.prod.yml exec web flask db upgrade
+
+# 查看连接数
+docker compose -f compose.prod.yml exec postgres \
+  psql -U studyuser -d ti_db -c "SELECT count(*) FROM pg_stat_activity;"
+```
+
+### 备份恢复
+
+```bash
+# 备份
+./scripts/backup.sh
+
+# 恢复
+./scripts/restore.sh backup_20260305_230000.tar.gz
+
+# 查看备份
+ls -lh backups/
+```
+
+### 监控
+
+```bash
+# 资源使用
+docker stats
+
+# 磁盘空间
+df -h
+du -sh var/*
+
+# 系统负载
+top
+htop
+```
+
+---
+
+## 技术支持
+
+- 项目文档：`docs/PRODUCTION.md`
+- 问题反馈：GitHub Issues
+- 紧急联系：查看项目 README
