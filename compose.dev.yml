@@ -194,6 +194,7 @@ services:
       BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
     volumes:
       - ./backups:/backups
+      - ./var:/data:ro
       - ./scripts/backup-cron.sh:/backup-cron.sh
     command: sh -c "/backup-cron.sh"
     depends_on:

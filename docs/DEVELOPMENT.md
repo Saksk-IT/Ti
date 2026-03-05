@@ -2,7 +2,15 @@
 
 ## 自动备份功能
 
-开发环境已配置数据库自动备份服务。
+开发环境已配置完整数据自动备份服务。
+
+### 备份内容
+
+- ✅ **数据库**：完整的 PostgreSQL 数据库
+- ✅ **上传文件**：用户头像、题目图片等所有上传文件
+- ✅ **实例数据**：Flask 实例配置和数据
+- ✅ **日志文件**：最近 7 天的应用日志
+- ✅ **备份清单**：详细的备份内容清单
 
 ### 配置参数
 
@@ -18,11 +26,24 @@ BACKUP_RETENTION_DAYS=7
 
 ### 备份行为
 
-- **首次启动立即备份**：容器启动后立即执行一次备份
+- **首次启动立即备份**：容器启动后立即执行一次完整备份
 - **定时自动备份**：按照 `BACKUP_INTERVAL` 间隔自动备份
 - **自动清理旧备份**：保留最近 `BACKUP_RETENTION_DAYS` 天的备份
-- **备份文件格式**：`db_backup_YYYYMMDD_HHMMSS.sql.gz`
+- **备份文件格式**：`backup_YYYYMMDD_HHMMSS.tar.gz`
 - **备份位置**：`./backups/` 目录
+
+### 备份文件结构
+
+```
+backup_20260306_120000.tar.gz
+├── database.sql              # 数据库备份
+├── uploads/                  # 上传文件
+│   ├── avatars/             # 用户头像
+│   └── question_images/     # 题目图片
+├── instance/                 # 实例数据
+├── logs/                     # 日志文件（最近7天）
+└── MANIFEST.txt             # 备份清单
+```
 
 ### 查看备份
 
@@ -32,6 +53,12 @@ ls -lh backups/
 
 # 查看备份服务日志
 docker compose -f compose.dev.yml logs -f backup
+
+# 查看备份内容清单
+tar -tzf backups/backup_20260306_120000.tar.gz
+
+# 查看备份清单文件
+tar -xzf backups/backup_20260306_120000.tar.gz backup_20260306_120000/MANIFEST.txt -O
 ```
 
 ### 手动触发备份
@@ -45,11 +72,30 @@ docker compose -f compose.dev.yml restart backup
 
 ```bash
 # 解压备份文件
-gunzip backups/db_backup_20260305_230000.sql.gz
+tar -xzf backups/backup_20260306_120000.tar.gz
 
-# 恢复到数据库
+# 停止服务
+docker compose -f compose.dev.yml stop web worker
+
+# 恢复数据库
 docker compose -f compose.dev.yml exec -T postgres \
-  psql -U studyuser -d ti_db < backups/db_backup_20260305_230000.sql
+  psql -U studyuser -d ti_db -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+docker compose -f compose.dev.yml exec -T postgres \
+  psql -U studyuser -d ti_db < backup_20260306_120000/database.sql
+
+# 恢复上传文件
+rm -rf var/uploads/*
+cp -r backup_20260306_120000/uploads/* var/uploads/
+
+# 恢复实例数据
+rm -rf var/instance/*
+cp -r backup_20260306_120000/instance/* var/instance/
+
+# 重启服务
+docker compose -f compose.dev.yml start web worker
+
+# 清理临时文件
+rm -rf backup_20260306_120000
 ```
 
 ## 资源限制
