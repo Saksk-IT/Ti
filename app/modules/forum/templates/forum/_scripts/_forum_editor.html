@@ -389,7 +389,11 @@ async function submitPost() {
     }).then(r => r.json());
     if (r.status === 'success') {
       const pid = EDITING ? EDIT_POST_ID : (r.data && r.data.id);
-      location.href = pid ? '/forum/post/' + pid : '/forum';
+      if (window.opener) {
+        window.close();
+      } else {
+        location.href = pid ? '/forum/post/' + pid : '/forum';
+      }
     } else {
       alert(r.message || '操作失败');
     }

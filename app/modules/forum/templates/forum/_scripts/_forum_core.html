@@ -46,7 +46,7 @@ function togglePostOwnerMenu(event, postId) {
 
 function goEditPost(event, postId) {
   event.stopPropagation();
-  location.href = `/forum/post/${postId}/edit`;
+  window.open(`/forum/post/${postId}/edit`, '_blank');
 }
 
 async function togglePostHidden(event, postId, nextHidden) {

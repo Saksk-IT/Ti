@@ -181,7 +181,7 @@ async function toggleFav() {
 
 function goEditCurrentPost() {
   if (!_postData) return;
-  location.href = `/forum/post/${_postData.id}/edit`;
+  window.open(`/forum/post/${_postData.id}/edit`, '_blank');
 }
 
 async function toggleCurrentPostHidden() {
