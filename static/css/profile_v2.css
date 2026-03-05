@@ -250,9 +250,9 @@
   cursor: pointer;
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 132px;
-  grid-template-rows: 22px 22px 1fr 20px;
-  gap: 4px 12px;
+  grid-template-columns: minmax(0, 1fr) 120px;
+  grid-template-rows: 22px 22px 62px 20px;
+  gap: 0 12px;
   height: 146px;
   min-height: 146px;
   padding: 10px;
@@ -266,7 +266,7 @@
   display: flex;
   align-items: center;
   min-width: 0;
-  padding-right: 36px;
+  padding-right: 32px;
 }
 .upf-card-type {
   display: inline-flex;
@@ -307,11 +307,10 @@
   grid-column: 1 / 2;
   grid-row: 2 / 3;
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  line-height: 1.4;
-  min-height: 1.4em;
-  align-self: start;
+  line-height: 1.47;
+  align-self: center;
   letter-spacing: -0.1px;
   overflow: hidden;
   display: -webkit-box;
@@ -324,19 +323,20 @@
   grid-row: 3 / 4;
   margin: 0;
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.54;
   color: var(--app-muted);
   overflow: hidden;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   text-overflow: ellipsis;
+  align-self: start;
 }
 .upf-card-post .upf-card-desc {
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
 }
 .upf-card-bank .upf-card-desc {
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
 }
 .upf-card-meta {
   grid-column: 1 / 2;
