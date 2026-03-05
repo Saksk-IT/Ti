@@ -194,8 +194,8 @@ services:
       BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
     volumes:
       - ./backups:/backups
-      - ./scripts/backup-cron.sh:/backup-cron.sh:ro
-    command: sh -c "chmod +x /backup-cron.sh && /backup-cron.sh"
+      - ./scripts/backup-cron.sh:/backup-cron.sh
+    command: sh -c "/backup-cron.sh"
     depends_on:
       postgres:
         condition: service_healthy
