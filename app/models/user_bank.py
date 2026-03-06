@@ -42,6 +42,10 @@ class UserQuestionBank(db.Model):
     share_count = db.Column(db.Integer, default=0, server_default=db.text("0"))
     public_use_count = db.Column(db.Integer, default=0, server_default=db.text("0"))
     status = db.Column(db.Integer, default=1, server_default=db.text("1"))
+    plaza_board_id = db.Column(db.Integer, db.ForeignKey("plaza_boards.id", ondelete="SET NULL"))
+    is_plaza_featured = db.Column(db.Boolean, default=False, server_default=db.text("false"))
+    plaza_featured_weight = db.Column(db.Integer, default=0, server_default=db.text("0"))
+    plaza_featured_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=func.now(), server_default=func.now())
     updated_at = db.Column(db.DateTime, default=func.now(), server_default=func.now(), onupdate=func.now())
 

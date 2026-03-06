@@ -1,0 +1,80 @@
+{% extends "main/shared/app_shell.html" %}
+
+{% block title %}加入题库{% endblock %}
+{% block page_title %}加入题库{% endblock %}
+
+{% block head_extra %}
+  <link rel="stylesheet" href="/static/css/public_bank_forum.css" />
+{% endblock %}
+
+{% block content %}
+  <div class="pbf-page pbf-page-joined" id="publicBankJoinedPage">
+    <header class="pbf-hero app-card">
+      <div class="pbf-hero-main">
+        <div>
+          <p class="pbf-eyebrow">Joined Banks</p>
+          <h1>加入题库</h1>
+          <p class="pbf-subtitle">集中查看你从题库广场加入，或通过分享加入的题库，方便后续快速回访与继续练习。</p>
+        </div>
+        <div class="pbf-hero-actions">
+          <a class="pbf-hero-link" href="/public/banks">返回题库广场</a>
+          <a class="pbf-hero-link active" href="/public/banks/joined">加入题库</a>
+        </div>
+      </div>
+      <div class="pbf-kpis" aria-label="加入题库概览">
+        <div class="pbf-kpi"><span>全部</span><strong id="joinedCountAll">-</strong></div>
+        <div class="pbf-kpi"><span>公开加入</span><strong id="joinedCountPublic">-</strong></div>
+        <div class="pbf-kpi"><span>分享加入</span><strong id="joinedCountShared">-</strong></div>
+        <div class="pbf-kpi"><span>当前页</span><strong id="joinedCurrentPage">-</strong></div>
+      </div>
+    </header>
+
+    <div class="pbf-layout pbf-layout-narrow">
+      <aside class="pbf-sidebar app-card">
+        <section class="pbf-side-section">
+          <div class="pbf-side-head">
+            <h2>加入来源</h2>
+          </div>
+          <div class="pbf-side-links" id="joinedScopeLinks">
+            <button type="button" data-scope="all" class="pbf-side-link is-button active">全部题库</button>
+            <button type="button" data-scope="public" class="pbf-side-link is-button">公开加入</button>
+            <button type="button" data-scope="shared" class="pbf-side-link is-button">分享加入</button>
+          </div>
+        </section>
+
+        <section class="pbf-side-section">
+          <div class="pbf-side-head"><h2>使用提示</h2></div>
+          <div class="pbf-note-list">
+            <p>公开加入适合从题库广场继续检索与回访。</p>
+            <p>分享加入适合协作、内部分发和私域授权题库。</p>
+            <p>如果同一题库同时具备两种关系，会自动合并成一张卡片。</p>
+          </div>
+        </section>
+      </aside>
+
+      <main class="pbf-main">
+        <section class="pbf-toolbar app-card">
+          <div class="pbf-search-wrap">
+            <input id="joinedKeyword" class="app-input pbf-search" type="search" placeholder="搜索已加入题库" autocomplete="off" />
+            <button id="joinedClearKeyword" class="pbf-clear-btn" type="button">清空</button>
+          </div>
+          <div class="pbf-active-filters" id="joinedActiveFilters"></div>
+        </section>
+
+        <section class="pbf-list-section">
+          <div id="joinedFeedback" class="pbf-feedback" hidden></div>
+          <div id="joinedList" class="pbf-card-list" aria-live="polite"></div>
+          <div id="joinedPagination" class="pbf-pagination"></div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    window.__PUBLIC_BANK_JOINED__ = {{ {
+      'logged_in': logged_in,
+      'user_id': user_id,
+    }|tojson }};
+  </script>
+  <script src="/static/js/public_bank_joined.js"></script>
+{% endblock %}

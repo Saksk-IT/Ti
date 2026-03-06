@@ -10,6 +10,10 @@ class Subject(db.Model):
     name = db.Column(db.Text, unique=True, nullable=False)
     description = db.Column(db.Text)
     is_locked = db.Column(db.Boolean, default=False, server_default=db.text("0"))
+    plaza_board_id = db.Column(db.Integer, db.ForeignKey('plaza_boards.id', ondelete='SET NULL'))
+    is_plaza_featured = db.Column(db.Boolean, default=False, server_default=db.text("false"))
+    plaza_featured_weight = db.Column(db.Integer, default=0, server_default=db.text('0'))
+    plaza_featured_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=db.func.now(), server_default=func.now())
 
     questions = db.relationship('Question', back_populates='subject', lazy='dynamic')

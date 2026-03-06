@@ -18,6 +18,7 @@ from .coding import (
 from .chat import ChatConversation, ChatMember, ChatMessage, UserRemark
 from .notification import Notification, NotificationDismissal
 from .popup import Popup, PopupDismissal, PopupView
+from .plaza import PlazaBoard, PublicBankPlazaMetric
 from .user_bank import (
     UserBankCategory, UserQuestionBank, UserBankQuestion,
     BankShare, BankShareRecord, UserBankAnswer,
@@ -52,6 +53,8 @@ __all__ = [
     'Notification', 'NotificationDismissal',
     # popup
     'Popup', 'PopupDismissal', 'PopupView',
+    # plaza
+    'PlazaBoard', 'PublicBankPlazaMetric',
     # user_bank
     'UserBankCategory', 'UserQuestionBank', 'UserBankQuestion',
     'BankShare', 'BankShareRecord', 'UserBankAnswer',
