@@ -13,6 +13,21 @@ function _normalizePostTitle(value) {
   return title || '无标题';
 }
 
+function _plainText(html) {
+  var div = document.createElement('div');
+  div.innerHTML = html || '';
+  return (div.textContent || div.innerText || '').replace(/\s+/g, ' ').trim();
+}
+
+function _shouldRenderSummary(summary, htmlContent) {
+  var normalizedSummary = String(summary || '').replace(/\s+/g, ' ').trim();
+  if (!normalizedSummary) return false;
+  var contentText = _plainText(htmlContent);
+  if (!contentText) return true;
+  var contentLead = contentText.slice(0, Math.max(normalizedSummary.length + 24, 120));
+  return !(contentLead.includes(normalizedSummary) || normalizedSummary.includes(contentLead.slice(0, normalizedSummary.length)));
+}
+
 function renderQuestionRefs(refs) {
   if (!refs || !refs.length) return '';
   return '<div class="forum-question-refs">' + refs.map(function(ref) {
@@ -123,7 +138,7 @@ async function loadPostDetail() {
       (post.is_locked ? '<span class="forum-badge forum-badge-lock">已锁定</span>' : '') +
       (post.is_hidden ? '<span class="forum-badge forum-badge-hidden">已隐藏</span>' : '');
 
-    var summaryHtml = post.summary
+    var summaryHtml = (post.summary && _shouldRenderSummary(post.summary, post.content))
       ? '<div class="forum-reader-summary">' + _esc(post.summary) + '</div>'
       : '';
 
@@ -157,18 +172,21 @@ async function loadPostDetail() {
       '<span>' + new Date(post.created_at).toLocaleString('zh-CN') + '</span>'
     ];
 
+    var badgeStrip = badges ? '<div class="forum-reader-flag-strip">' + badges + '</div>' : '';
+
     document.getElementById('postContent').innerHTML = [
+      badgeStrip,
+      '<div class="post-title">' + _esc(_normalizePostTitle(post.title)) + '</div>',
       '<div class="forum-reader-meta-strip">',
       metaBits.join(''),
       '</div>',
-      buildPostStats(post),
-      '<div class="post-title">' + badges + _esc(_normalizePostTitle(post.title)) + '</div>',
       summaryHtml,
-      cover,
       tagsHtml,
+      cover,
       '<div class="post-body">' + (post.content || '') + '</div>',
       galleryHtml,
-      questionRefs
+      questionRefs,
+      buildPostStats(post)
     ].join('');
 
     var likedClass = post.liked ? ' active' : '';

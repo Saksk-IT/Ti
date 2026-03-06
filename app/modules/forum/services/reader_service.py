@@ -243,8 +243,20 @@ def get_reader_sidebar(
     '''), hot_params).fetchall()
 
     author_posts = _merge_unique_rows(author_posts_rows, excluded_ids={post_id}, limit=limit)
-    related_posts = _merge_unique_rows(related_rows_all, excluded_ids={post_id}, limit=limit)
-    hot_posts = _merge_unique_rows(hot_rows, excluded_ids={post_id}, limit=limit)
+    author_post_ids = {int(item['id']) for item in author_posts}
+
+    related_posts = _merge_unique_rows(
+        related_rows_all,
+        excluded_ids={post_id, *author_post_ids},
+        limit=limit,
+    )
+    related_post_ids = {int(item['id']) for item in related_posts}
+
+    hot_posts = _merge_unique_rows(
+        hot_rows,
+        excluded_ids={post_id, *author_post_ids, *related_post_ids},
+        limit=limit,
+    )
 
     return {
         'author': author,

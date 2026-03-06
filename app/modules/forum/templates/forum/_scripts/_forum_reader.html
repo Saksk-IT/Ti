@@ -1,6 +1,8 @@
 <script>
 var _readerCommentCount = null;
 var _readerTocObserver = null;
+var _readerTocEntries = [];
+var _readerTocActiveId = '';
 
 function getForumReaderPage() {
   return document.getElementById('forumReaderPage');
@@ -153,9 +155,16 @@ function _formatReaderCount(value) {
   return String(number);
 }
 
-function renderReaderPostList(posts, emptyText) {
+function renderReaderEmptyState(message, actionLabel, actionHref) {
+  var actionHtml = actionLabel && actionHref
+    ? '<a class="forum-reader-side-post" href="' + actionHref + '"><div class="forum-reader-side-post-title">' + _readerEsc(actionLabel) + '</div></a>'
+    : '';
+  return '<div class="forum-reader-empty">' + _readerEsc(message || '暂无内容') + '</div>' + actionHtml;
+}
+
+function renderReaderPostList(posts, emptyText, actionLabel, actionHref) {
   if (!Array.isArray(posts) || !posts.length) {
-    return '<div class="forum-reader-empty">' + _readerEsc(emptyText || '暂无内容') + '</div>';
+    return renderReaderEmptyState(emptyText, actionLabel, actionHref);
   }
 
   return posts.map(function(post) {
@@ -234,14 +243,20 @@ async function loadReaderSidebar(post) {
     if (authorCard) {
       authorCard.innerHTML = renderReaderAuthor(data.author);
     }
+    var authorPostItems = Array.isArray(data.author_posts) ? data.author_posts.slice(0, 3) : [];
+    var relatedPostItems = Array.isArray(data.related_posts) ? data.related_posts.slice(0, 2) : [];
+    var hotPostItems = Array.isArray(data.hot_posts) ? data.hot_posts.slice(0, 2) : [];
+    var authorProfileUrl = data.author && data.author.id ? '/user/' + data.author.id : '/forum';
+    var boardUrl = post.board_id ? '/forum/board/' + post.board_id : '/forum';
+
     if (authorPosts) {
-      authorPosts.innerHTML = renderReaderPostList(data.author_posts, '作者还没有其他帖子');
+      authorPosts.innerHTML = renderReaderPostList(authorPostItems, '作者还没有其他帖子', '查看作者主页', authorProfileUrl);
     }
     if (relatedPosts) {
-      relatedPosts.innerHTML = renderReaderPostList(data.related_posts, '暂时没有更相关的帖子');
+      relatedPosts.innerHTML = renderReaderPostList(relatedPostItems, '暂时没有更相关的帖子', '查看同版块更多', boardUrl);
     }
     if (hotPosts) {
-      hotPosts.innerHTML = renderReaderPostList(data.hot_posts, '当前没有热门帖子');
+      hotPosts.innerHTML = renderReaderPostList(hotPostItems, '当前没有热门帖子', '返回论坛', '/forum');
     }
   } catch (error) {
     console.error(error);
@@ -251,6 +266,50 @@ async function loadReaderSidebar(post) {
 function _setReaderTocMeta(text) {
   var meta = document.getElementById('readerTocMeta');
   if (meta) meta.textContent = text;
+}
+
+function _setReaderTocHint(text) {
+  var hint = document.getElementById('readerTocHint');
+  if (!hint) return;
+  hint.textContent = text || '';
+  hint.style.display = text ? 'block' : 'none';
+}
+
+function _renderReaderTocPreview() {
+  var list = document.getElementById('readerTocList');
+  if (!list) return;
+  if (!_readerTocEntries.length) {
+    list.innerHTML = '<div class="forum-reader-empty">正文暂无可导航标题</div>';
+    _setReaderTocHint('');
+    return;
+  }
+
+  var maxVisible = 9;
+  var activeIndex = _readerTocEntries.findIndex(function(item) { return item.id === _readerTocActiveId; });
+  if (activeIndex < 0) activeIndex = 0;
+
+  var start = 0;
+  if (_readerTocEntries.length > maxVisible) {
+    start = Math.max(0, Math.min(activeIndex - 3, _readerTocEntries.length - maxVisible));
+  }
+  var end = Math.min(_readerTocEntries.length, start + maxVisible);
+  var visibleEntries = _readerTocEntries.slice(start, end);
+  var parts = [];
+
+  if (start > 0) {
+    parts.push('<div class="forum-reader-toc-hint">前面还有 ' + start + ' 节</div>');
+  }
+
+  parts.push(visibleEntries.map(function(item) {
+    return '<button type="button" class="forum-reader-toc-item ' + item.levelClass + (item.id === _readerTocActiveId ? ' active' : '') + '" data-target="' + item.id + '" onclick="scrollToReaderHeading(\'' + item.id + '\')">' + _readerEsc(item.label) + '</button>';
+  }).join(''));
+
+  if (end < _readerTocEntries.length) {
+    parts.push('<div class="forum-reader-toc-hint">后面还有 ' + (_readerTocEntries.length - end) + ' 节</div>');
+  }
+
+  list.innerHTML = parts.join('');
+  _setReaderTocHint(_readerTocEntries.length > maxVisible ? '目录已收敛展示，滚动正文会自动跟随。' : '');
 }
 
 function getReaderScrollContainer() {
@@ -277,9 +336,8 @@ function scrollToReaderHeading(id) {
 }
 
 function _setActiveReaderToc(id) {
-  document.querySelectorAll('.forum-reader-toc-item').forEach(function(button) {
-    button.classList.toggle('active', button.dataset.target === id);
-  });
+  _readerTocActiveId = id || '';
+  _renderReaderTocPreview();
 }
 
 function buildReaderToc() {
@@ -298,17 +356,24 @@ function buildReaderToc() {
   }
 
   if (!headings.length) {
-    list.innerHTML = '<div class="forum-reader-empty">正文暂无可导航标题</div>';
+    _readerTocEntries = [];
+    _readerTocActiveId = '';
+    _renderReaderTocPreview();
     _setReaderTocMeta('无目录');
     return;
   }
 
-  list.innerHTML = headings.map(function(node, index) {
+  _readerTocEntries = headings.map(function(node, index) {
     var targetId = node.id || ('reader-heading-' + (index + 1));
     node.id = targetId;
-    var levelClass = 'level-' + node.tagName.toLowerCase();
-    return '<button type="button" class="forum-reader-toc-item ' + levelClass + '" data-target="' + targetId + '" onclick="scrollToReaderHeading(\'' + targetId + '\')">' + _readerEsc((node.textContent || '').trim() || ('章节 ' + (index + 1))) + '</button>';
-  }).join('');
+    return {
+      id: targetId,
+      levelClass: 'level-' + node.tagName.toLowerCase(),
+      label: (node.textContent || '').trim() || ('章节 ' + (index + 1))
+    };
+  });
+  _readerTocActiveId = _readerTocEntries[0].id;
+  _renderReaderTocPreview();
   _setReaderTocMeta(headings.length + ' 节');
 
   var observerRoot = (isReaderDesktopScrollMode() && getReaderScrollContainer()) ? getReaderScrollContainer() : null;
