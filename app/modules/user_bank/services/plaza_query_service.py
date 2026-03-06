@@ -14,6 +14,7 @@ from .plaza_metrics_service import ensure_plaza_metrics
 
 VALID_TABS = {'latest', 'hot', 'active', 'featured', 'questions'}
 VALID_SCOPES = {'all', 'public', 'shared'}
+VALID_MY_SCOPES = {'all', 'created', 'public', 'shared'}
 
 
 def list_public_banks(
@@ -264,6 +265,64 @@ def list_joined_banks(
     }
 
 
+def list_my_bank_collections(
+    *,
+    user_id: int,
+    scope: str = 'all',
+    keyword: str = '',
+    page: int = 1,
+    per_page: int = 12,
+) -> dict[str, Any]:
+    ensure_plaza_metrics()
+    current_scope = _normalize_my_scope(scope)
+    current_keyword = _normalize_keyword(keyword)
+    current_page = max(int(page or 1), 1)
+    page_size = max(1, min(int(per_page or 12), 50))
+
+    created_items = _list_created_bank_items(int(user_id), current_keyword)
+    joined_items = _list_joined_bank_collection_items(int(user_id), current_keyword)
+    counts = {
+        'created': _count_created_banks(int(user_id)),
+        **_get_joined_relation_counts(int(user_id)),
+    }
+    counts['all'] = int(counts.get('created') or 0) + int(counts.get('all') or 0)
+
+    if current_scope == 'created':
+        merged = created_items
+    elif current_scope == 'public':
+        merged = [item for item in joined_items if item.get('relation') in {'public', 'both'}]
+    elif current_scope == 'shared':
+        merged = [item for item in joined_items if item.get('relation') in {'shared', 'both'}]
+    else:
+        merged = created_items + joined_items
+
+    merged.sort(
+        key=lambda item: (
+            1 if item.get('kind') == 'created' else 0,
+            item.get('_sort_at') or '',
+            int(item.get('id') or 0),
+        ),
+        reverse=True,
+    )
+    total = len(merged)
+    start = (current_page - 1) * page_size
+    end = start + page_size
+    items = []
+    for item in merged[start:end]:
+        d = dict(item)
+        d.pop('_sort_at', None)
+        items.append(d)
+
+    return {
+        'items': items,
+        'total': int(total),
+        'page': current_page,
+        'per_page': page_size,
+        'scope': current_scope,
+        'counts': counts,
+    }
+
+
 def get_public_bank_detail(*, bank_id: int, bank_type: str = 'user') -> dict[str, Any] | None:
     ensure_plaza_metrics()
     source_type = 'system' if str(bank_type).strip() == 'system' else 'user_public'
@@ -344,6 +403,159 @@ def build_legacy_bank_list(
         'total': data['total'],
         'page': data['page'],
     }
+
+
+def _count_created_banks(user_id: int) -> int:
+    row = db.session.execute(
+        text(
+            """
+            SELECT COUNT(*) AS total
+            FROM user_question_banks
+            WHERE user_id = :uid AND status = 1
+            """
+        ),
+        {'uid': int(user_id)},
+    ).mappings().first() or {}
+    return int(row.get('total') or 0)
+
+
+
+def _list_created_bank_items(user_id: int, keyword: str = '') -> list[dict[str, Any]]:
+    params: dict[str, Any] = {'uid': int(user_id)}
+    filters = ['b.user_id = :uid', 'b.status = 1']
+    keyword_params = _keyword_search_params(keyword)
+    if keyword_params:
+        params.update(keyword_params)
+        filters.append(
+            "("             "LOWER(b.name) LIKE :keyword OR "             "LOWER(COALESCE(b.description, '')) LIKE :keyword OR "             "LOWER(COALESCE(b.public_description, '')) LIKE :keyword OR "             "LOWER(COALESCE(c.name, '')) LIKE :keyword"             ")"
+        )
+    where_sql = ' WHERE ' + ' AND '.join(filters)
+    rows = db.session.execute(
+        text(
+            f"""
+            SELECT
+                b.id,
+                b.name,
+                COALESCE(NULLIF(b.description, ''), NULLIF(b.public_description, ''), '') AS description,
+                b.question_count,
+                b.is_public,
+                b.public_use_count,
+                b.share_count,
+                b.updated_at,
+                b.created_at,
+                c.name AS category_name,
+                COALESCE(m.answer_users_7d, 0) AS answer_users_7d,
+                COALESCE(m.join_count_total, 0) AS participants_total,
+                COALESCE(m.last_activity_at, b.updated_at, b.created_at) AS last_activity_at,
+                COALESCE(m.is_featured, false) AS is_featured,
+                pb.name AS board_name
+            FROM user_question_banks b
+            LEFT JOIN user_bank_categories c ON c.id = b.category_id
+            LEFT JOIN public_bank_plaza_metrics m
+              ON m.source_type = 'user_public' AND m.source_id = b.id
+            LEFT JOIN plaza_boards pb ON pb.id = b.plaza_board_id
+            {where_sql}
+            ORDER BY COALESCE(b.updated_at, b.created_at) DESC, b.id DESC
+            """
+        ),
+        params,
+    ).mappings().all()
+    return [_serialize_created_bank_item(row) for row in rows]
+
+
+
+def _list_joined_bank_collection_items(user_id: int, keyword: str = '') -> list[dict[str, Any]]:
+    params: dict[str, Any] = {'uid': int(user_id), 'now_bj': now_bj()}
+    filters = [
+        'b.status = 1',
+        '(joined.has_public = 1 OR joined.has_shared = 1)',
+    ]
+    keyword_params = _keyword_search_params(keyword)
+    if keyword_params:
+        params.update(keyword_params)
+        filters.append(
+            "("             "LOWER(b.name) LIKE :keyword OR "             "LOWER(COALESCE(NULLIF(b.public_description, ''), b.description, '')) LIKE :keyword OR "             "LOWER(COALESCE(u.username, '')) LIKE :keyword"             ")"
+        )
+    where_sql = ' WHERE ' + ' AND '.join(filters)
+    rows = db.session.execute(
+        text(
+            f"""
+            {_joined_cte_sql()}
+            SELECT
+                b.id AS bank_id,
+                b.name,
+                COALESCE(NULLIF(b.public_description, ''), b.description, '') AS description,
+                b.cover_image,
+                b.question_count,
+                COALESCE(u.username, '匿名用户') AS owner_label,
+                b.plaza_board_id,
+                pb.slug AS board_slug,
+                pb.name AS board_name,
+                joined.last_joined_at,
+                joined.has_public,
+                joined.has_shared,
+                m.last_activity_at,
+                m.join_count_total,
+                m.answer_users_7d,
+                m.is_featured
+            FROM joined
+            JOIN user_question_banks b ON b.id = joined.bank_id
+            JOIN users u ON u.id = b.user_id
+            LEFT JOIN plaza_boards pb ON pb.id = b.plaza_board_id
+            LEFT JOIN public_bank_plaza_metrics m
+              ON m.source_type = 'user_public' AND m.source_id = b.id
+            {where_sql}
+            ORDER BY joined.last_joined_at DESC, b.id DESC
+            """
+        ),
+        params,
+    ).mappings().all()
+    return [_serialize_joined_bank_collection_item(row) for row in rows]
+
+
+
+def _serialize_created_bank_item(row: dict[str, Any]) -> dict[str, Any]:
+    bank_id = int(row.get('id') or 0)
+    updated_at = row.get('updated_at') or row.get('created_at') or row.get('last_activity_at')
+    is_public = bool(row.get('is_public'))
+    return {
+        'id': bank_id,
+        'kind': 'created',
+        'relation': 'created',
+        'name': str(row.get('name') or '').strip(),
+        'description': str(row.get('description') or '').strip(),
+        'owner_label': '我创建的题库',
+        'question_count': int(row.get('question_count') or 0),
+        'participants_total': int(row.get('participants_total') or 0),
+        'answer_users_7d': int(row.get('answer_users_7d') or 0),
+        'is_featured': bool(row.get('is_featured')),
+        'visibility_label': '公开' if is_public else '私密',
+        'board': {
+            'name': str(row.get('category_name') or row.get('board_name') or '未分类'),
+        },
+        'detail_url': f'/user/banks/{bank_id}/practice',
+        'question_manage_url': f'/user/banks/{bank_id}',
+        'manage_url': f'/user/banks/{bank_id}/manage',
+        'updated_at': _datetime_text(updated_at),
+        'last_activity_at': _datetime_text(row.get('last_activity_at') or updated_at),
+        '_sort_at': _datetime_text(updated_at) or '',
+    }
+
+
+
+def _serialize_joined_bank_collection_item(row: dict[str, Any]) -> dict[str, Any]:
+    data = _serialize_joined_item(row)
+    relation = str(data.get('relation') or 'public')
+    data['kind'] = 'joined'
+    data['source_label'] = '公开 + 分享加入' if relation == 'both' else '分享加入' if relation == 'shared' else '公开加入'
+    data['_sort_at'] = data.get('last_joined_at') or data.get('last_activity_at') or ''
+    return data
+
+
+
+def _normalize_my_scope(scope: str) -> str:
+    current = str(scope or 'all').strip().lower()
+    return current if current in VALID_MY_SCOPES else 'all'
 
 
 def _build_metric_filters(*, board_id: int | None = None, keyword: str = '', source_type: str | None = None) -> tuple[list[str], dict[str, Any]]:

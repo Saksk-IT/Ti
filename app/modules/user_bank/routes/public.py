@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from flask import Blueprint, render_template, request, session
+from flask import Blueprint, render_template, request, session, redirect
 from sqlalchemy import text
 
 from app.core.extensions import db
@@ -40,8 +40,8 @@ def bank_plaza():
 @public_bank_bp.route('/public/banks/joined')
 @login_required
 def joined_bank_plaza():
-    """加入题库页面。"""
-    return render_template('user_bank/public/joined.html', **_page_context())
+    """旧加入题库页：统一重定向到“我的题库”。"""
+    return redirect('/user/banks')
 
 
 @public_bank_bp.route('/api/public/banks/summary', methods=['GET'])

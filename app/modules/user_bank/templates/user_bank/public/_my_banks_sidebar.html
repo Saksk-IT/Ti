@@ -1,0 +1,30 @@
+<div class="sidebar-content" id="sidebarContent">
+  <div class="sidebar-card">
+    <div class="sidebar-card-title">题库来源</div>
+    <ul class="sidebar-board-list" id="myBankSidebarScopes">
+      <li class="sidebar-board-item active" data-scope="all" onclick="selectMyBankScope(this,'all')">全部</li>
+      <li class="sidebar-board-item" data-scope="created" onclick="selectMyBankScope(this,'created')">我创建的题库</li>
+      <li class="sidebar-board-item" data-scope="public" onclick="selectMyBankScope(this,'public')">公开加入</li>
+      <li class="sidebar-board-item" data-scope="shared" onclick="selectMyBankScope(this,'shared')">分享加入</li>
+    </ul>
+  </div>
+
+  <div class="sidebar-card">
+    <div class="sidebar-card-title">题库统计</div>
+    <div class="sidebar-stats" id="myBankSidebarStats">
+      <div class="stat-item"><div class="stat-value" id="myBankStatAll">-</div><div class="stat-label">全部</div></div>
+      <div class="stat-item"><div class="stat-value" id="myBankStatCreated">-</div><div class="stat-label">我创建的</div></div>
+      <div class="stat-item"><div class="stat-value" id="myBankStatPublic">-</div><div class="stat-label">公开加入</div></div>
+      <div class="stat-item"><div class="stat-value" id="myBankStatShared">-</div><div class="stat-label">分享加入</div></div>
+    </div>
+  </div>
+
+  <div class="sidebar-card">
+    <div class="sidebar-card-title">使用提示</div>
+    <div class="plaza-sidebar-tips">
+      <p>“我创建的题库”适合日常整理、管理和继续完善题目。</p>
+      <p>“公开加入 / 分享加入”适合回访来自题库广场或协作分享的题库。</p>
+      <p>创建题库后可直接进入练习、题目管理和题库管理。</p>
+    </div>
+  </div>
+</div>

@@ -10,6 +10,22 @@ from app.core.utils.decorators import auth_required, current_user_id
 from app.core.utils.api_response import success_response, error_response
 
 from .api_base import user_bank_api_bp, check_bank_access
+from app.modules.user_bank.services.plaza_query_service import list_my_bank_collections
+
+
+@user_bank_api_bp.route('/overview', methods=['GET'])
+@auth_required
+def get_my_bank_overview():
+    """获取我的题库融合视图（我创建的题库 + 已加入题库）"""
+    user_id = int(current_user_id() or 0)
+    data = list_my_bank_collections(
+        user_id=user_id,
+        scope=request.args.get('scope', 'all'),
+        keyword=request.args.get('keyword', ''),
+        page=request.args.get('page', 1, type=int),
+        per_page=request.args.get('per_page', 10, type=int),
+    )
+    return success_response(data=data)
 
 
 @user_bank_api_bp.route('/list', methods=['GET'])

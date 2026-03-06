@@ -374,3 +374,248 @@
     justify-self: start;
   }
 }
+
+.my-bank-card {
+  height: auto;
+  min-height: 0;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: 28px auto 1fr auto auto;
+  gap: 8px 12px;
+}
+
+.my-bank-card .forum-post-header,
+.my-bank-card .forum-post-title,
+.my-bank-card .forum-post-preview,
+.my-bank-card .forum-post-stats,
+.my-bank-card .plaza-bank-time,
+.my-bank-card .my-bank-card-actions {
+  grid-column: 1 / -1;
+}
+
+.my-bank-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.my-bank-card-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 0.5px solid var(--app-border);
+  background: var(--app-surface);
+  color: var(--app-text);
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.my-bank-card-link:hover {
+  border-color: var(--app-primary);
+  color: var(--app-primary);
+}
+
+.my-bank-card-link.primary {
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+}
+
+.my-bank-modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 120;
+}
+
+.my-bank-modal-overlay.show {
+  display: flex;
+}
+
+.my-bank-modal-card {
+  width: min(560px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  border-radius: 16px;
+  border: 0.5px solid var(--app-border);
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow-soft);
+  padding: 18px;
+}
+
+.my-bank-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.my-bank-modal-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--app-text);
+}
+
+.my-bank-modal-sub {
+  margin: 6px 0 0;
+  color: var(--app-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.my-bank-icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 0.5px solid var(--app-border);
+  background: var(--app-surface-2);
+  color: var(--app-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.my-bank-icon-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.my-bank-modal-body {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.my-bank-field {
+  display: grid;
+  gap: 8px;
+}
+
+.my-bank-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--app-text);
+}
+
+.my-bank-input,
+.my-bank-textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.my-bank-textarea {
+  min-height: 92px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+.my-bank-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 0.5px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface-2);
+}
+
+.my-bank-check input {
+  margin-top: 2px;
+}
+
+.my-bank-check strong {
+  display: block;
+  font-size: 13px;
+  color: var(--app-text);
+}
+
+.my-bank-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--app-muted);
+  line-height: 1.6;
+}
+
+.my-bank-public-extra {
+  display: grid;
+  gap: 12px;
+}
+.my-bank-public-extra[hidden] {
+  display: none !important;
+}
+
+
+.my-bank-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+.my-bank-submit-btn {
+  border: none;
+  cursor: pointer;
+}
+
+.my-bank-modal-error {
+  display: none;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.my-bank-modal-error.show {
+  display: block;
+}
+
+.my-bank-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  transform: translateX(-50%) translateY(12px);
+  opacity: 0;
+  pointer-events: none;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--app-text) 86%, transparent);
+  color: var(--app-bg);
+  font-size: 13px;
+  font-weight: 700;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 130;
+}
+
+.my-bank-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+@media (max-width: 640px) {
+  .my-bank-modal-card {
+    padding: 16px;
+  }
+
+  .my-bank-card-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .my-bank-card-link {
+    width: 100%;
+  }
+}
