@@ -417,14 +417,6 @@
 }
 
 
-.my-bank-card-tools {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  align-items: center;
-  padding: 0 4px;
-}
-
 .my-bank-card-link {
   display: inline-flex;
   align-items: center;
@@ -639,12 +631,6 @@
   .my-bank-card-shell .forum-post-owner-actions {
     top: 6px;
     right: 6px;
-  }
-
-  .my-bank-card-tools {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 0;
   }
 
   .my-bank-card-link {
