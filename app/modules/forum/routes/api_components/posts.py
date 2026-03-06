@@ -5,7 +5,7 @@ from flask import jsonify, request, current_app, session
 from ..api import forum_api_bp
 from app.core.extensions import limiter
 from app.core.utils.decorators import auth_required, current_user_id
-from app.modules.forum.services import post_service
+from app.modules.forum.services import post_service, reader_service
 
 MAX_TAGS = 8
 MAX_TAG_LENGTH = 20
@@ -83,6 +83,26 @@ def api_get_post(post_id: int):
     except Exception as e:
         current_app.logger.error(f"获取帖子详情失败: {e}", exc_info=True)
         return jsonify({'status': 'error', 'message': '获取帖子详情失败'}), 500
+
+
+@forum_api_bp.route('/posts/<int:post_id>/sidebar', methods=['GET'])
+@auth_required
+@limiter.limit("120 per minute;1200 per hour")
+def api_get_post_sidebar(post_id: int):
+    """帖子阅读页侧栏数据"""
+    try:
+        result = reader_service.get_reader_sidebar(
+            post_id,
+            viewer_id=current_user_id(),
+            is_admin=bool(session.get('is_admin')),
+            limit=min(request.args.get('limit', 4, type=int), 6),
+        )
+        if not result:
+            return jsonify({'status': 'error', 'message': '帖子不存在'}), 404
+        return jsonify({'status': 'success', 'data': result})
+    except Exception as e:
+        current_app.logger.error(f"获取帖子侧栏数据失败: {e}", exc_info=True)
+        return jsonify({'status': 'error', 'message': '获取帖子侧栏数据失败'}), 500
 
 
 @forum_api_bp.route('/posts', methods=['POST'])

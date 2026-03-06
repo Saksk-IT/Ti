@@ -1,8 +1,15 @@
 <script>
 var _readerCommentCount = null;
+var _readerTocObserver = null;
 
 function getForumReaderPage() {
   return document.getElementById('forumReaderPage');
+}
+
+function _readerEsc(value) {
+  var div = document.createElement('div');
+  div.textContent = value || '';
+  return div.innerHTML;
 }
 
 function openCommentsDrawer() {
@@ -130,6 +137,177 @@ function updateReaderCommentCount(count) {
     return;
   }
   syncReaderActionState({comment_count: _readerCommentCount});
+}
+
+function _formatReaderTime(value) {
+  try {
+    return new Date(value).toLocaleDateString('zh-CN');
+  } catch (error) {
+    return value || '';
+  }
+}
+
+function _formatReaderCount(value) {
+  var number = Number(value || 0);
+  if (number >= 10000) return (number / 10000).toFixed(1) + 'w';
+  return String(number);
+}
+
+function renderReaderPostList(posts, emptyText) {
+  if (!Array.isArray(posts) || !posts.length) {
+    return '<div class="forum-reader-empty">' + _readerEsc(emptyText || '暂无内容') + '</div>';
+  }
+
+  return posts.map(function(post) {
+    return '<a class="forum-reader-side-post" href="/forum/post/' + post.id + '">' +
+      '<div class="forum-reader-side-post-title">' + _readerEsc(post.title) + '</div>' +
+      '<div class="forum-reader-side-post-meta">' +
+        '<span>' + _readerEsc(post.board_name || '论坛') + '</span>' +
+        '<span>' + _formatReaderTime(post.created_at) + '</span>' +
+        '<span>赞 ' + _formatReaderCount(post.like_count) + '</span>' +
+        '<span>评 ' + _formatReaderCount(post.comment_count) + '</span>' +
+      '</div>' +
+    '</a>';
+  }).join('');
+}
+
+function renderReaderAuthor(author) {
+  if (!author) {
+    return '<div class="forum-reader-empty">作者信息暂不可用</div>';
+  }
+
+  var currentUserId = typeof getCurrentForumUserId === 'function' ? getCurrentForumUserId() : 0;
+  var avatar = author.avatar
+    ? '<img class="forum-reader-author-avatar" src="' + _readerEsc(author.avatar) + '" alt="">'
+    : '<div class="forum-reader-author-avatar"></div>';
+  var followButton = '';
+  if (author.id && author.id !== currentUserId) {
+    followButton = '<button class="forum-follow-btn' + (author.i_follow ? ' active' : '') + '" id="followAuthorBtn" onclick="toggleFollowAuthor()">' + _followBtnText(author) + '</button>';
+  }
+
+  return '<div class="forum-reader-author-head">' +
+      '<a href="/user/' + author.id + '" class="forum-avatar-link">' + avatar + '</a>' +
+      '<div class="forum-reader-author-main">' +
+        '<div class="forum-reader-author-name-row">' +
+          '<a href="/user/' + author.id + '" class="forum-reader-author-name forum-user-link">' + _readerEsc(author.username || '用户') + '</a>' +
+          followButton +
+        '</div>' +
+        '<div class="forum-reader-author-meta">加入于 ' + _formatReaderTime(author.created_at) + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="forum-reader-author-signature">' + _readerEsc(author.signature || author.college || '这个作者还没有留下简介。') + '</div>' +
+    '<div class="forum-reader-author-stats">' +
+      '<div class="forum-reader-author-stat"><strong data-author-followers>' + _formatReaderCount(author.follower_count) + '</strong><span>粉丝</span></div>' +
+      '<div class="forum-reader-author-stat"><strong data-author-following>' + _formatReaderCount(author.following_count) + '</strong><span>关注</span></div>' +
+      '<div class="forum-reader-author-stat"><strong data-author-posts>' + _formatReaderCount(author.post_count) + '</strong><span>帖子</span></div>' +
+    '</div>';
+}
+
+function syncReaderAuthorState(status) {
+  if (!status) return;
+  var button = document.getElementById('followAuthorBtn');
+  if (button) {
+    button.textContent = _followBtnText(status);
+    button.classList.toggle('active', !!status.i_follow);
+  }
+  document.querySelectorAll('[data-author-followers]').forEach(function(node) {
+    node.textContent = _formatReaderCount(status.follower_count);
+  });
+  document.querySelectorAll('[data-author-following]').forEach(function(node) {
+    node.textContent = _formatReaderCount(status.following_count);
+  });
+}
+
+async function loadReaderSidebar(post) {
+  if (!post || !post.id) return;
+  try {
+    var response = await fetch('/api/forum/posts/' + post.id + '/sidebar?limit=4');
+    var payload = await response.json();
+    if (payload.status !== 'success') return;
+
+    var data = payload.data || {};
+    var authorCard = document.getElementById('readerAuthorCard');
+    var authorPosts = document.getElementById('readerAuthorPosts');
+    var relatedPosts = document.getElementById('readerRelatedPosts');
+    var hotPosts = document.getElementById('readerHotPosts');
+
+    if (authorCard) {
+      authorCard.innerHTML = renderReaderAuthor(data.author);
+    }
+    if (authorPosts) {
+      authorPosts.innerHTML = renderReaderPostList(data.author_posts, '作者还没有其他帖子');
+    }
+    if (relatedPosts) {
+      relatedPosts.innerHTML = renderReaderPostList(data.related_posts, '暂时没有更相关的帖子');
+    }
+    if (hotPosts) {
+      hotPosts.innerHTML = renderReaderPostList(data.hot_posts, '当前没有热门帖子');
+    }
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+function _setReaderTocMeta(text) {
+  var meta = document.getElementById('readerTocMeta');
+  if (meta) meta.textContent = text;
+}
+
+function scrollToReaderHeading(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  var topbar = document.querySelector('.forum-reader-topbar');
+  var offset = (topbar ? topbar.offsetHeight : 0) + 18;
+  var top = el.getBoundingClientRect().top + window.scrollY - offset;
+  window.scrollTo({top: top, behavior: 'smooth'});
+}
+
+function _setActiveReaderToc(id) {
+  document.querySelectorAll('.forum-reader-toc-item').forEach(function(button) {
+    button.classList.toggle('active', button.dataset.target === id);
+  });
+}
+
+function buildReaderToc() {
+  var body = document.querySelector('#postContent .post-body');
+  var list = document.getElementById('readerTocList');
+  if (!body || !list) return;
+
+  var headings = Array.prototype.slice.call(body.querySelectorAll('h2, h3, h4'));
+  if (!headings.length) {
+    headings = Array.prototype.slice.call(body.querySelectorAll('h1, h2, h3'));
+  }
+
+  if (_readerTocObserver) {
+    _readerTocObserver.disconnect();
+    _readerTocObserver = null;
+  }
+
+  if (!headings.length) {
+    list.innerHTML = '<div class="forum-reader-empty">正文暂无可导航标题</div>';
+    _setReaderTocMeta('无目录');
+    return;
+  }
+
+  list.innerHTML = headings.map(function(node, index) {
+    var targetId = node.id || ('reader-heading-' + (index + 1));
+    node.id = targetId;
+    var levelClass = 'level-' + node.tagName.toLowerCase();
+    return '<button type="button" class="forum-reader-toc-item ' + levelClass + '" data-target="' + targetId + '" onclick="scrollToReaderHeading(\'' + targetId + '\')">' + _readerEsc((node.textContent || '').trim() || ('章节 ' + (index + 1))) + '</button>';
+  }).join('');
+  _setReaderTocMeta(headings.length + ' 节');
+
+  _readerTocObserver = new IntersectionObserver(function(entries) {
+    var visible = entries.filter(function(entry) { return entry.isIntersecting; });
+    if (!visible.length) return;
+    visible.sort(function(a, b) { return a.boundingClientRect.top - b.boundingClientRect.top; });
+    _setActiveReaderToc(visible[0].target.id);
+  }, {rootMargin: '-120px 0px -60% 0px', threshold: [0, 1]});
+
+  headings.forEach(function(node) {
+    _readerTocObserver.observe(node);
+  });
+  _setActiveReaderToc(headings[0].id);
 }
 
 document.addEventListener('keydown', function(event) {

@@ -93,9 +93,8 @@ async function toggleFollowAuthor() {
     });
     var payload = await response.json();
 
-    if (payload.status === 'success' && payload.data && btn) {
-      btn.textContent = _followBtnText(payload.data);
-      btn.classList.toggle('active', !!payload.data.i_follow);
+    if (payload.status === 'success' && payload.data) {
+      syncReaderAuthorState(payload.data);
     }
   } catch (error) {
     console.error(error);
@@ -118,11 +117,6 @@ async function loadPostDetail() {
 
     var post = payload.data;
     _postData = Object.assign({}, post);
-
-    var currentUserId = getCurrentForumUserId();
-    var avatar = post.author_avatar
-      ? '<a href="/user/' + post.author_id + '" class="forum-avatar-link"><img class="forum-avatar" src="' + _esc(post.author_avatar) + '" alt=""></a>'
-      : '<a href="/user/' + post.author_id + '" class="forum-avatar-link"><div class="forum-avatar"></div></a>';
 
     var badges = (post.is_pinned ? '<span class="forum-badge forum-badge-pin">置顶</span>' : '') +
       (post.is_featured ? '<span class="forum-badge forum-badge-feat">精华</span>' : '') +
@@ -157,25 +151,15 @@ async function loadPostDetail() {
     }
 
     var questionRefs = renderQuestionRefs(post.question_refs);
-    var followHtml = '';
-
-    if (post.author_id && post.author_id !== currentUserId) {
-      followHtml = '<button class="forum-follow-btn" id="followAuthorBtn" onclick="toggleFollowAuthor()">关注</button>';
-    }
+    var metaBits = [
+      '<span class="forum-board-tag">' + _esc(post.board_name || '论坛') + '</span>',
+      '<span class="forum-reader-meta-dot"></span>',
+      '<span>' + new Date(post.created_at).toLocaleString('zh-CN') + '</span>'
+    ];
 
     document.getElementById('postContent').innerHTML = [
-      '<div class="forum-reader-post-header">',
-        avatar,
-        '<div class="forum-reader-post-head-main">',
-          '<div class="forum-reader-author-row">',
-            '<a href="/user/' + post.author_id + '" class="author forum-user-link">' + _esc(post.author_name) + '</a>',
-            followHtml,
-          '</div>',
-          '<div class="forum-reader-post-meta">',
-            '<span class="forum-reader-post-meta-item">' + new Date(post.created_at).toLocaleString('zh-CN') + '</span>',
-            '<span class="forum-reader-post-meta-item"><span class="forum-board-tag">' + _esc(post.board_name) + '</span></span>',
-          '</div>',
-        '</div>',
+      '<div class="forum-reader-meta-strip">',
+      metaBits.join(''),
       '</div>',
       buildPostStats(post),
       '<div class="post-title">' + badges + _esc(_normalizePostTitle(post.title)) + '</div>',
@@ -215,22 +199,8 @@ async function loadPostDetail() {
 
     syncReaderMeta(_postData);
     syncReaderActionState(_postData);
-
-    if (post.author_id && post.author_id !== currentUserId) {
-      try {
-        var followResponse = await fetch('/api/user/' + post.author_id + '/follow_status');
-        var followPayload = await followResponse.json();
-        if (followPayload.status === 'success' && followPayload.data) {
-          var followButton = document.getElementById('followAuthorBtn');
-          if (followButton) {
-            followButton.textContent = _followBtnText(followPayload.data);
-            followButton.classList.toggle('active', !!followPayload.data.i_follow);
-          }
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    }
+    buildReaderToc();
+    loadReaderSidebar(_postData);
   } catch (error) {
     console.error(error);
   }
