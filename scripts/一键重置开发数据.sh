@@ -4,8 +4,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 COMPOSE_FILE="${COMPOSE_FILE:-compose.dev.yml}"
 SERVICE_NAME="${SERVICE_NAME:-web}"
-TARGET_PATH="/app/scripts/reset_dev_data.py"
-SOURCE_PATH="$ROOT_DIR/scripts/reset_dev_data.py"
+TARGET_PATH="/app/scripts/严格初始化开发数据.py"
+SOURCE_PATH="$ROOT_DIR/scripts/严格初始化开发数据.py"
 
 cd "$ROOT_DIR"
 
@@ -33,4 +33,4 @@ echo "==> 在容器内执行开发数据初始化"
 docker exec "$CONTAINER_ID" python "$TARGET_PATH"
 
 echo "==> 完成"
-echo "可重复执行命令: ./scripts/dev_reset_data.sh"
+echo "可重复执行命令: ./scripts/一键重置开发数据.sh"

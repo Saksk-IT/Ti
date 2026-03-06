@@ -19,10 +19,10 @@
 
 使用方式示例：
 - 本地直接运行（默认 SQLite 或本机指定 DATABASE_URL）：
-    python scripts/reset_dev_data.py
+    python scripts/严格初始化开发数据.py
 
 - Docker 开发环境（PostgreSQL）：
-    docker compose -f compose.dev.yml exec web python scripts/reset_dev_data.py
+    docker compose -f compose.dev.yml exec web python scripts/严格初始化开发数据.py
 """
 
 from __future__ import annotations
@@ -74,7 +74,7 @@ def _ensure_dev_or_test_env(app) -> None:
     debug_flag = bool(app.config.get("DEBUG")) or bool(getattr(app, "debug", False))
     testing_flag = bool(app.config.get("TESTING"))
     if not debug_flag and not testing_flag:
-        raise RuntimeError("安全保护：仅允许在开发/测试环境运行 reset_dev_data 脚本。")
+        raise RuntimeError("安全保护：仅允许在开发/测试环境运行 严格初始化开发数据脚本。")
 
 
 def _pick_existing_image_url(upload_root: str) -> str:
