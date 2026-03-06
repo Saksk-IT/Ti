@@ -29,9 +29,11 @@
     </div>
 
     <div class="plaza-searchbar">
-      <input id="plazaKeyword" class="plaza-search-input" type="search" placeholder="搜索题库名称或简介" autocomplete="off" />
+      <input id="plazaKeyword" class="plaza-search-input" type="search" placeholder="搜索题库名称、简介或创建者" autocomplete="off" />
       <button type="button" class="plaza-search-clear" id="plazaClearKeyword">清空</button>
     </div>
+    <div class="plaza-search-meta" id="plazaSearchMeta"></div>
+    <div class="plaza-search-recent" id="plazaSearchRecent" hidden></div>
 
     <div class="forum-tabs" id="forumTabs">
       <button class="forum-tab active" data-tab="latest" onclick="setTab(this, 'latest')">最新</button>

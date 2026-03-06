@@ -28,13 +28,15 @@ def list_public_banks(
 ) -> dict[str, Any]:
     ensure_plaza_metrics()
     current_tab = _normalize_tab(tab)
+    current_keyword = _normalize_keyword(keyword)
     current_page = max(int(page or 1), 1)
     page_size = max(1, min(int(per_page or 12), 50))
-    filters, params = _build_metric_filters(board_id=board_id, keyword=keyword, source_type=source_type)
+    filters, params = _build_metric_filters(board_id=board_id, keyword=current_keyword, source_type=source_type)
     if current_tab == 'featured':
         filters.append('COALESCE(m.is_featured, false) = true')
 
     where_sql = _join_filters(filters)
+    search_enabled = bool(current_keyword)
     total = db.session.execute(
         text(f'SELECT COUNT(*) AS total FROM public_bank_plaza_metrics m {where_sql}'),
         params,
@@ -66,12 +68,13 @@ def list_public_banks(
             m.hot_score,
             m.active_score,
             m.recommended_score,
+            {_keyword_rank_sql(search_enabled)} AS search_rank,
             b.slug AS board_slug,
             b.name AS board_name
         FROM public_bank_plaza_metrics m
         LEFT JOIN plaza_boards b ON b.id = m.plaza_board_id
         {where_sql}
-        ORDER BY {_order_sql(current_tab)}
+        ORDER BY {_search_order_sql(current_tab, search_enabled)}
         LIMIT :limit OFFSET :offset
         """
     )
@@ -88,7 +91,7 @@ def list_public_banks(
         'page': current_page,
         'per_page': page_size,
         'tab': current_tab,
-        'keyword': keyword.strip(),
+        'keyword': current_keyword,
         'board_id': int(board_id) if board_id else None,
         'available_tabs': ['latest', 'hot', 'active', 'featured'],
     }
@@ -349,10 +352,12 @@ def _build_metric_filters(*, board_id: int | None = None, keyword: str = '', sou
     if board_id:
         filters.append('m.plaza_board_id = :board_id')
         params['board_id'] = int(board_id)
-    keyword_like = _keyword_like(keyword)
-    if keyword_like:
-        params['keyword'] = keyword_like
-        filters.append('(LOWER(m.name) LIKE :keyword OR LOWER(COALESCE(m.description, \'\')) LIKE :keyword)')
+    keyword_params = _keyword_search_params(keyword)
+    if keyword_params:
+        params.update(keyword_params)
+        filters.append(
+            "("             "LOWER(m.name) LIKE :keyword OR "             "LOWER(COALESCE(m.description, '')) LIKE :keyword OR "             "LOWER(COALESCE(m.owner_label, '')) LIKE :keyword"             ")"
+        )
     if source_type in {'system', 'user_public'}:
         filters.append('m.source_type = :source_type')
         params['source_type'] = source_type
@@ -578,9 +583,19 @@ def _normalize_scope(scope: str) -> str:
     return current if current in VALID_SCOPES else 'all'
 
 
-def _keyword_like(keyword: str) -> str:
-    current = str(keyword or '').strip().lower()
-    return f'%{current}%' if current else ''
+def _normalize_keyword(keyword: str) -> str:
+    return ' '.join(str(keyword or '').strip().lower().split())
+
+
+def _keyword_search_params(keyword: str) -> dict[str, str]:
+    current = _normalize_keyword(keyword)
+    if not current:
+        return {}
+    return {
+        'keyword': f'%{current}%',
+        'keyword_exact': current,
+        'keyword_prefix': f'{current}%'
+    }
 
 
 def _join_filters(filters: list[str]) -> str:
@@ -597,6 +612,21 @@ def _order_sql(tab: str) -> str:
     if tab == 'questions':
         return 'm.question_count_total DESC, m.published_at DESC, m.source_id DESC'
     return 'm.published_at DESC, m.source_id DESC'
+
+
+def _keyword_rank_sql(search_enabled: bool) -> str:
+    if not search_enabled:
+        return '0'
+    return (
+        "("         "CASE "         "WHEN LOWER(m.name) = :keyword_exact THEN 120 "         "WHEN LOWER(m.name) LIKE :keyword_prefix THEN 90 "         "WHEN LOWER(m.name) LIKE :keyword THEN 70 "         "ELSE 0 END + "         "CASE "         "WHEN LOWER(COALESCE(m.description, '')) LIKE :keyword_prefix THEN 35 "         "WHEN LOWER(COALESCE(m.description, '')) LIKE :keyword THEN 20 "         "ELSE 0 END + "         "CASE WHEN LOWER(COALESCE(m.owner_label, '')) LIKE :keyword THEN 10 ELSE 0 END"         ")"
+    )
+
+
+def _search_order_sql(tab: str, search_enabled: bool) -> str:
+    base = _order_sql(tab)
+    if not search_enabled:
+        return base
+    return f'search_rank DESC, {base}'
 
 
 def _build_named_in(prefix: str, values: list[int]) -> tuple[str, dict[str, int]]:
