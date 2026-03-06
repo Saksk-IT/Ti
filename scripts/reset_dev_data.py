@@ -29,10 +29,15 @@ from __future__ import annotations
 
 import os
 import sys
+import json
+import math
+import struct
+import wave
 from datetime import datetime, timedelta
 from typing import Dict, List, Sequence, Tuple
 
 from werkzeug.security import generate_password_hash
+from flask import current_app
 
 
 def _add_project_root_to_path() -> None:
@@ -68,6 +73,63 @@ def _ensure_dev_or_test_env(app) -> None:
     testing_flag = bool(app.config.get("TESTING"))
     if not debug_flag and not testing_flag:
         raise RuntimeError("安全保护：仅允许在开发/测试环境运行 reset_dev_data 脚本。")
+
+
+def _pick_existing_image_url(upload_root: str) -> str:
+    """从现有上传目录中挑选一张图片，返回可直接被前端访问的 URL。"""
+
+    candidate_dirs = [
+        os.path.join(upload_root, "forum"),
+        os.path.join(upload_root, "question_images"),
+        os.path.join(upload_root, "avatars"),
+    ]
+    allowed_exts = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
+
+    for directory in candidate_dirs:
+        if not os.path.isdir(directory):
+            continue
+        for name in sorted(os.listdir(directory)):
+            _, ext = os.path.splitext(name)
+            if ext.lower() not in allowed_exts:
+                continue
+            relative_dir = os.path.basename(directory)
+            return f"/uploads/{relative_dir}/{name}"
+
+    return "/uploads/avatars/default-avatar.png"
+
+
+def _ensure_seed_audio_url(upload_root: str) -> str:
+    """生成一个可复用的短语音文件，返回其 URL。
+
+    使用标准库生成一个约 1.2 秒的 wav 音频，避免依赖 ffmpeg。
+    """
+
+    chat_dir = os.path.join(upload_root, "chat")
+    os.makedirs(chat_dir, exist_ok=True)
+
+    filename = "seed_voice_demo.wav"
+    abs_path = os.path.join(chat_dir, filename)
+    if os.path.exists(abs_path):
+        return f"/uploads/chat/{filename}"
+
+    sample_rate = 16000
+    duration_seconds = 1.2
+    frequency = 660.0
+    amplitude = 12000
+    frame_count = int(sample_rate * duration_seconds)
+
+    with wave.open(abs_path, "wb") as wav_file:
+        wav_file.setnchannels(1)
+        wav_file.setsampwidth(2)
+        wav_file.setframerate(sample_rate)
+
+        frames = bytearray()
+        for index in range(frame_count):
+            value = int(amplitude * math.sin(2.0 * math.pi * frequency * index / sample_rate))
+            frames.extend(struct.pack("<h", value))
+        wav_file.writeframes(frames)
+
+    return f"/uploads/chat/{filename}"
 
 
 def _clear_user_related_data() -> Dict[str, int]:
@@ -329,6 +391,8 @@ def _seed_personal_banks(users: Dict[str, m.User], questions: List[m.Question]) 
 
     owner_keys = ["teacher", "student_a", "student_b"]
     owners = [users[k] for k in owner_keys if k in users]
+    now = datetime.utcnow()
+    public_banks: List[Tuple[m.User, m.UserQuestionBank]] = []
 
     for owner in owners:
         category = m.UserBankCategory(
@@ -344,8 +408,10 @@ def _seed_personal_banks(users: Dict[str, m.User], questions: List[m.Question]) 
             category_id=category.id,
             name=f"{owner.username} 的专项训练",
             description="用于本地开发调试的示例题库",
-            is_public=False,
+            is_public=True,
+            public_description=f"{owner.username} 公开分享的开发示例题库",
             allow_copy=True,
+            public_at=now,
             status=1,
         )
         db.session.add(bank)
@@ -381,6 +447,25 @@ def _seed_personal_banks(users: Dict[str, m.User], questions: List[m.Question]) 
             db.session.add(q)
 
         bank.question_count = 2
+        bank.public_use_count = 0
+        bank.share_count = 0
+        db.session.add(bank)
+        public_banks.append((owner, bank))
+
+    # 给公开个人题库补充一些“其他用户访问”的痕迹，便于前端验证公开状态与使用人数
+    for owner, bank in public_banks:
+        for other_user in owners:
+            if other_user.id == owner.id:
+                continue
+            db.session.add(
+                m.PublicBankUser(
+                    bank_id=bank.id,
+                    user_id=other_user.id,
+                    last_access_at=now,
+                    access_count=1,
+                )
+            )
+            bank.public_use_count = int(bank.public_use_count or 0) + 1
         db.session.add(bank)
 
     db.session.flush()
@@ -516,7 +601,7 @@ def _seed_forum(users: Dict[str, m.User], subjects: List[m.Subject]) -> None:
     db.session.flush()
 
 
-def _seed_private_chats(users: Dict[str, m.User]) -> None:
+def _seed_private_chats(users: Dict[str, m.User], questions: List[m.Question]) -> None:
     """创建用户之间的私聊会话与消息记录。"""
 
     teacher = users.get("teacher")
@@ -527,9 +612,27 @@ def _seed_private_chats(users: Dict[str, m.User]) -> None:
         return
 
     now = datetime.utcnow()
+    upload_root = current_app.config.get("UPLOAD_FOLDER")
+    image_url = _pick_existing_image_url(upload_root)
+    audio_url = _ensure_seed_audio_url(upload_root)
+
+    question_payload = None
+    if questions:
+        seed_question = questions[0]
+        question_payload = {
+            "id": seed_question.id,
+            "content": seed_question.content,
+            "type": seed_question.type,
+            "subject": "开发环境示例题",
+            "options": [],
+            "answer": seed_question.answer or "",
+            "explanation": seed_question.analysis or "",
+            "image_path": seed_question.image_path or image_url,
+            "has_full_data": True,
+        }
 
     # teacher 与 student_a 之间的私聊
-    pair_key_a = f"direct:{min(teacher.id, student_a.id)}-{max(teacher.id, student_a.id)}"
+    pair_key_a = f"{min(teacher.id, student_a.id)}:{max(teacher.id, student_a.id)}"
     conv_a = m.ChatConversation(
         c_type="direct",
         title="师生私聊（示例）",
@@ -562,12 +665,33 @@ def _seed_private_chats(users: Dict[str, m.User]) -> None:
             content_type="text",
             created_at=now - timedelta(minutes=8),
         ),
+        m.ChatMessage(
+            conversation_id=conv_a.id,
+            sender_id=teacher.id,
+            content=json.dumps(question_payload or {}, ensure_ascii=False),
+            content_type="question",
+            created_at=now - timedelta(minutes=7),
+        ),
+        m.ChatMessage(
+            conversation_id=conv_a.id,
+            sender_id=student_a.id,
+            content=json.dumps({"url": image_url, "thumb": image_url, "w": 720, "h": 720}, ensure_ascii=False),
+            content_type="image",
+            created_at=now - timedelta(minutes=6),
+        ),
+        m.ChatMessage(
+            conversation_id=conv_a.id,
+            sender_id=teacher.id,
+            content=json.dumps({"url": audio_url, "url_raw": audio_url, "url_m4a": None, "url_mp3": None, "duration": 1.2}, ensure_ascii=False),
+            content_type="audio",
+            created_at=now - timedelta(minutes=5),
+        ),
     ]
     for msg in messages_a:
         db.session.add(msg)
 
     # student_a 与 student_b 的同学私聊
-    pair_key_b = f"direct:{min(student_a.id, student_b.id)}-{max(student_a.id, student_b.id)}"
+    pair_key_b = f"{min(student_a.id, student_b.id)}:{max(student_a.id, student_b.id)}"
     conv_b = m.ChatConversation(
         c_type="direct",
         title="同学私聊（示例）",
@@ -590,13 +714,22 @@ def _seed_private_chats(users: Dict[str, m.User]) -> None:
             conversation_id=conv_b.id,
             sender_id=student_a.id,
             content="今晚一起刷计算机网络那套题吗？",
+            content_type="text",
             created_at=now - timedelta(minutes=5),
         ),
         m.ChatMessage(
             conversation_id=conv_b.id,
             sender_id=student_b.id,
             content="好啊，我刚好也在看 HTTP 部分。",
+            content_type="text",
             created_at=now - timedelta(minutes=3),
+        ),
+        m.ChatMessage(
+            conversation_id=conv_b.id,
+            sender_id=student_a.id,
+            content=json.dumps({"url": image_url, "thumb": image_url, "w": 720, "h": 720}, ensure_ascii=False),
+            content_type="image",
+            created_at=now - timedelta(minutes=2),
         ),
     ]
     for msg in messages_b:
@@ -905,7 +1038,7 @@ def _run_reset_and_seed() -> Dict[str, object]:
 
     _seed_personal_banks(users, questions)
     _seed_forum(users, subjects)
-    _seed_private_chats(users)
+    _seed_private_chats(users, questions)
     _seed_quiz_activity(users, questions)
     _seed_exams(users, questions)
     _seed_notifications(users)
