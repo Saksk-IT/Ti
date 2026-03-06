@@ -382,7 +382,7 @@
   top: 4px;
   right: 4px;
   flex-shrink: 0;
-  z-index: 2;
+  z-index: 30;
 }
 .upf-card-owner-toggle {
   width: 20px;
@@ -420,6 +420,12 @@
 }
 .upf-card-owner-actions.open .upf-card-owner-menu {
   display: flex;
+}
+@media (hover: hover) and (pointer: fine) {
+  .upf-card-owner-actions:hover .upf-card-owner-menu,
+  .upf-card-owner-actions:focus-within .upf-card-owner-menu {
+    display: flex;
+  }
 }
 .upf-card-owner-menu button {
   border: none;
