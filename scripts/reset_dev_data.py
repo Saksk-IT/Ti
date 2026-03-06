@@ -38,6 +38,7 @@ from typing import Dict, List, Sequence, Tuple
 
 from werkzeug.security import generate_password_hash
 from flask import current_app
+from sqlalchemy import inspect
 
 
 def _add_project_root_to_path() -> None:
@@ -60,6 +61,7 @@ from app.models.follow import (  # noqa: E402
     InteractionNotification,
     UserFollow,
 )
+from app.models.forum import ForumUpload  # noqa: E402
 
 
 def _ensure_dev_or_test_env(app) -> None:
@@ -133,15 +135,24 @@ def _ensure_seed_audio_url(upload_root: str) -> str:
 
 
 def _clear_user_related_data() -> Dict[str, int]:
-    """清除所有用户相关业务表数据（不删除公共题库与系统配置）。
+    """严格清除除系统题库/题目外的所有业务数据。
+
+    保留内容：
+    - subjects（系统题库分类）
+    - questions（系统题目）
+    - schema_migrations（迁移元数据）
 
     返回一个字典，记录每个表删除的行数，便于最终统计输出。
     """
 
     deleted_counts: Dict[str, int] = {}
+    inspector = inspect(db.engine)
 
     def _bulk_delete(model) -> int:
         table = getattr(model, "__tablename__", model.__name__)
+        if not inspector.has_table(table):
+            deleted_counts[table] = 0
+            return 0
         q = model.query
         # 使用 bulk delete，避免逐条加载 ORM 实例
         rows = q.delete(synchronize_session=False)
@@ -162,9 +173,11 @@ def _clear_user_related_data() -> Dict[str, int]:
     _bulk_delete(m.ForumPollVote)
     _bulk_delete(m.ForumReport)
     _bulk_delete(m.ForumMention)
+    _bulk_delete(ForumUpload)
     _bulk_delete(m.ForumComment)
     _bulk_delete(m.ForumPost)
-    # 版块 ForumBoard 视为系统配置，不在此脚本中清空
+    _bulk_delete(m.ForumUserBan)
+    _bulk_delete(m.ForumBoard)
 
     # --- 关注与互动通知 ---
     _bulk_delete(InteractionNotification)
@@ -198,6 +211,8 @@ def _clear_user_related_data() -> Dict[str, int]:
     _bulk_delete(m.CodingStatistics)
     _bulk_delete(m.CodeSubmission)
     _bulk_delete(m.UserCodingStats)
+    _bulk_delete(m.CodingQuestion)
+    _bulk_delete(m.CodingSubject)
 
     # --- 考试相关 ---
     _bulk_delete(m.ExamQuestion)
@@ -212,6 +227,7 @@ def _clear_user_related_data() -> Dict[str, int]:
     _bulk_delete(m.Popup)
 
     # --- 用户在系统辅助表中的数据 ---
+    _bulk_delete(m.SystemConfig)
     _bulk_delete(m.UserQuestionTagItem)
     _bulk_delete(m.UserSubject)
 
