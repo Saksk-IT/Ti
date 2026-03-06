@@ -389,68 +389,91 @@ def _seed_personal_banks(users: Dict[str, m.User], questions: List[m.Question]) 
 
     from json import dumps
 
-    owner_keys = ["teacher", "student_a", "student_b"]
+    owner_keys = [
+        "admin",
+        "subject_admin",
+        "notification_admin",
+        "teacher",
+        "student_a",
+        "student_b",
+        "locked_user",
+    ]
     owners = [users[k] for k in owner_keys if k in users]
     now = datetime.utcnow()
     public_banks: List[Tuple[m.User, m.UserQuestionBank]] = []
 
+    bank_specs = {
+        "admin": [
+            ("系统巡检题库", "超级管理员维护的系统巡检与应急题库"),
+            ("论坛运营题库", "超级管理员整理的论坛运营与审核题库"),
+            ("综合联调题库", "超级管理员用于联调各端功能的综合题库"),
+        ],
+        "subject_admin": [("科目管理题库", "科目管理员公开分享的科目管理题库")],
+        "notification_admin": [("通知运营题库", "通知管理员公开分享的通知运营题库")],
+        "teacher": [("teacher 的专项训练", "teacher 公开分享的开发示例题库")],
+        "student_a": [("student_a 的专项训练", "student_a 公开分享的开发示例题库")],
+        "student_b": [("student_b 的专项训练", "student_b 公开分享的开发示例题库")],
+        "locked_user": [("locked_user 的留档题库", "锁定用户的留档公开题库")],
+    }
+
     for owner in owners:
-        category = m.UserBankCategory(
-            user_id=owner.id,
-            name="个人错题本",
-            description=f"{owner.username} 在开发环境的个人错题本",
-        )
-        db.session.add(category)
-        db.session.flush()
-
-        bank = m.UserQuestionBank(
-            user_id=owner.id,
-            category_id=category.id,
-            name=f"{owner.username} 的专项训练",
-            description="用于本地开发调试的示例题库",
-            is_public=True,
-            public_description=f"{owner.username} 公开分享的开发示例题库",
-            allow_copy=True,
-            public_at=now,
-            status=1,
-        )
-        db.session.add(bank)
-        db.session.flush()
-
-        # 每个个人题库插入两道自定义题
-        samples = [
-            (
-                "单选题示例：Python 中用于创建列表的是？",
-                ["{}", "[]", "()", "<>"],
-                [1],
-            ),
-            (
-                "多选题示例：下列哪些属于关系型数据库？",
-                ["MySQL", "MongoDB", "PostgreSQL", "Redis"],
-                [0, 2],
-            ),
-        ]
-
-        for content, opts, ans_idx in samples:
-            q = m.UserBankQuestion(
-                bank_id=bank.id,
+        specs = bank_specs.get(owner.username) or [(f"{owner.username} 的专项训练", f"{owner.username} 公开分享的开发示例题库")]
+        for bank_index, (bank_name, public_desc) in enumerate(specs, start=1):
+            category = m.UserBankCategory(
                 user_id=owner.id,
-                type="single" if len(ans_idx) == 1 else "multi",
-                content=content,
-                options=dumps(list(opts), ensure_ascii=False),
-                answer=dumps([str(i) for i in ans_idx], ensure_ascii=False),
-                analysis="个人题库示例题，用于本地开发。",
-                tags=dumps(["示例", "个人题库"], ensure_ascii=False),
-                difficulty=1,
-                source_type="custom",
+                name="个人错题本" if len(specs) == 1 else f"个人错题本{bank_index}",
+                description=f"{owner.username} 在开发环境的个人错题本分类 {bank_index}",
             )
-            db.session.add(q)
+            db.session.add(category)
+            db.session.flush()
 
-        bank.question_count = 2
-        bank.public_use_count = 0
-        bank.share_count = 0
-        db.session.add(bank)
-        public_banks.append((owner, bank))
+            bank = m.UserQuestionBank(
+                user_id=owner.id,
+                category_id=category.id,
+                name=bank_name,
+                description="用于本地开发调试的示例题库",
+                is_public=True,
+                public_description=public_desc,
+                allow_copy=True,
+                public_at=now,
+                status=1,
+            )
+            db.session.add(bank)
+            db.session.flush()
+
+            samples = [
+                (
+                    f"单选题示例{bank_index}：{owner.username} 题库中用于创建列表的是？",
+                    ["{}", "[]", "()", "<>"],
+                    [1],
+                ),
+                (
+                    f"多选题示例{bank_index}：下列哪些属于 {owner.username} 题库中的关系型数据库？",
+                    ["MySQL", "MongoDB", "PostgreSQL", "Redis"],
+                    [0, 2],
+                ),
+            ]
+
+            for content, opts, ans_idx in samples:
+                q = m.UserBankQuestion(
+                    bank_id=bank.id,
+                    user_id=owner.id,
+                    type="single" if len(ans_idx) == 1 else "multi",
+                    content=content,
+                    options=dumps(list(opts), ensure_ascii=False),
+                    answer=dumps([str(i) for i in ans_idx], ensure_ascii=False),
+                    analysis="个人题库示例题，用于本地开发。",
+                    tags=dumps(["示例", "个人题库", owner.username], ensure_ascii=False),
+                    difficulty=1,
+                    source_type="custom",
+                )
+                db.session.add(q)
+
+            bank.question_count = 2
+            bank.public_use_count = 0
+            bank.share_count = 0
+            db.session.add(bank)
+            public_banks.append((owner, bank))
 
     # 给公开个人题库补充一些“其他用户访问”的痕迹，便于前端验证公开状态与使用人数
     for owner, bank in public_banks:
@@ -604,11 +627,12 @@ def _seed_forum(users: Dict[str, m.User], subjects: List[m.Subject]) -> None:
 def _seed_private_chats(users: Dict[str, m.User], questions: List[m.Question]) -> None:
     """创建用户之间的私聊会话与消息记录。"""
 
+    admin = users.get("admin")
     teacher = users.get("teacher")
     student_a = users.get("student_a")
     student_b = users.get("student_b")
 
-    if not teacher or not student_a or not student_b:
+    if not admin or not teacher or not student_a or not student_b:
         return
 
     now = datetime.utcnow()
@@ -631,57 +655,55 @@ def _seed_private_chats(users: Dict[str, m.User], questions: List[m.Question]) -
             "has_full_data": True,
         }
 
-    # teacher 与 student_a 之间的私聊
-    pair_key_a = f"{min(teacher.id, student_a.id)}:{max(teacher.id, student_a.id)}"
-    conv_a = m.ChatConversation(
-        c_type="direct",
-        title="师生私聊（示例）",
-        direct_pair_key=pair_key_a,
-        created_at=now,
-        updated_at=now,
-    )
-    db.session.add(conv_a)
-    db.session.flush()
+    def _create_direct_conversation(left_user: m.User, right_user: m.User, title: str) -> m.ChatConversation:
+        pair_key = f"{min(left_user.id, right_user.id)}:{max(left_user.id, right_user.id)}"
+        conv = m.ChatConversation(
+            c_type="direct",
+            title=title,
+            direct_pair_key=pair_key,
+            created_at=now,
+            updated_at=now,
+        )
+        db.session.add(conv)
+        db.session.flush()
+        db.session.add(m.ChatMember(conversation_id=conv.id, user_id=left_user.id, role="owner"))
+        db.session.add(m.ChatMember(conversation_id=conv.id, user_id=right_user.id, role="member"))
+        return conv
 
-    members_a = [
-        m.ChatMember(conversation_id=conv_a.id, user_id=teacher.id, role="owner"),
-        m.ChatMember(conversation_id=conv_a.id, user_id=student_a.id, role="member"),
-    ]
-    for mbr in members_a:
-        db.session.add(mbr)
-
+    # 超级管理员与 teacher 的私聊（补齐全类型消息）
+    conv_a = _create_direct_conversation(admin, teacher, "超级管理员与教师")
     messages_a = [
         m.ChatMessage(
             conversation_id=conv_a.id,
-            sender_id=teacher.id,
-            content="最近刷题进度怎么样？有遇到卡住的知识点吗？",
+            sender_id=admin.id,
+            content="我刚把开发环境数据重置好了，你那边帮我看看题库和论坛联调是否正常。",
             content_type="text",
             created_at=now - timedelta(minutes=10),
         ),
         m.ChatMessage(
             conversation_id=conv_a.id,
-            sender_id=student_a.id,
-            content="主要是动态规划有点吃力，计划这周集中练习。",
+            sender_id=teacher.id,
+            content="收到，我先从题库详情和考试流程开始回归。",
             content_type="text",
             created_at=now - timedelta(minutes=8),
         ),
         m.ChatMessage(
             conversation_id=conv_a.id,
-            sender_id=teacher.id,
+            sender_id=admin.id,
             content=json.dumps(question_payload or {}, ensure_ascii=False),
             content_type="question",
             created_at=now - timedelta(minutes=7),
         ),
         m.ChatMessage(
             conversation_id=conv_a.id,
-            sender_id=student_a.id,
+            sender_id=teacher.id,
             content=json.dumps({"url": image_url, "thumb": image_url, "w": 720, "h": 720}, ensure_ascii=False),
             content_type="image",
             created_at=now - timedelta(minutes=6),
         ),
         m.ChatMessage(
             conversation_id=conv_a.id,
-            sender_id=teacher.id,
+            sender_id=admin.id,
             content=json.dumps({"url": audio_url, "url_raw": audio_url, "url_m4a": None, "url_mp3": None, "duration": 1.2}, ensure_ascii=False),
             content_type="audio",
             created_at=now - timedelta(minutes=5),
@@ -690,37 +712,20 @@ def _seed_private_chats(users: Dict[str, m.User], questions: List[m.Question]) -
     for msg in messages_a:
         db.session.add(msg)
 
-    # student_a 与 student_b 的同学私聊
-    pair_key_b = f"{min(student_a.id, student_b.id)}:{max(student_a.id, student_b.id)}"
-    conv_b = m.ChatConversation(
-        c_type="direct",
-        title="同学私聊（示例）",
-        direct_pair_key=pair_key_b,
-        created_at=now,
-        updated_at=now,
-    )
-    db.session.add(conv_b)
-    db.session.flush()
-
-    members_b = [
-        m.ChatMember(conversation_id=conv_b.id, user_id=student_a.id, role="owner"),
-        m.ChatMember(conversation_id=conv_b.id, user_id=student_b.id, role="member"),
-    ]
-    for mbr in members_b:
-        db.session.add(mbr)
-
+    # 超级管理员与 student_a 的私聊
+    conv_b = _create_direct_conversation(admin, student_a, "超级管理员与 student_a")
     messages_b = [
         m.ChatMessage(
             conversation_id=conv_b.id,
-            sender_id=student_a.id,
-            content="今晚一起刷计算机网络那套题吗？",
+            sender_id=admin.id,
+            content="你重点帮我看看公共题库答题、错题和收藏状态有没有同步。",
             content_type="text",
             created_at=now - timedelta(minutes=5),
         ),
         m.ChatMessage(
             conversation_id=conv_b.id,
-            sender_id=student_b.id,
-            content="好啊，我刚好也在看 HTTP 部分。",
+            sender_id=student_a.id,
+            content="好的，我先测公共题库，再顺手看下个人题库公开页。",
             content_type="text",
             created_at=now - timedelta(minutes=3),
         ),
@@ -735,12 +740,76 @@ def _seed_private_chats(users: Dict[str, m.User], questions: List[m.Question]) -
     for msg in messages_b:
         db.session.add(msg)
 
+    # 其他所有用户都与超级管理员建立私聊，保证主账号登录时能看到充分关联数据
+    other_usernames = ["subject_admin", "notification_admin", "student_b", "locked_user"]
+    for index, name in enumerate(other_usernames, start=1):
+        peer = users.get(name)
+        if peer is None:
+            continue
+        conv = _create_direct_conversation(admin, peer, f"超级管理员与 {name}")
+        db.session.add(
+            m.ChatMessage(
+                conversation_id=conv.id,
+                sender_id=admin.id,
+                content=f"这里是与 {name} 的开发环境示例私聊，用于验证会话列表与消息加载。",
+                content_type="text",
+                created_at=now - timedelta(minutes=2 + index),
+            )
+        )
+        if name == "subject_admin":
+            db.session.add(
+                m.ChatMessage(
+                    conversation_id=conv.id,
+                    sender_id=peer.id,
+                    content=json.dumps(question_payload or {}, ensure_ascii=False),
+                    content_type="question",
+                    created_at=now - timedelta(minutes=1 + index),
+                )
+            )
+        elif name == "notification_admin":
+            db.session.add(
+                m.ChatMessage(
+                    conversation_id=conv.id,
+                    sender_id=peer.id,
+                    content=json.dumps({"url": image_url, "thumb": image_url, "w": 720, "h": 720}, ensure_ascii=False),
+                    content_type="image",
+                    created_at=now - timedelta(minutes=1 + index),
+                )
+            )
+        elif name == "student_b":
+            db.session.add(
+                m.ChatMessage(
+                    conversation_id=conv.id,
+                    sender_id=peer.id,
+                    content=json.dumps({"url": audio_url, "url_raw": audio_url, "url_m4a": None, "url_mp3": None, "duration": 1.2}, ensure_ascii=False),
+                    content_type="audio",
+                    created_at=now - timedelta(minutes=1 + index),
+                )
+            )
+        else:
+            db.session.add(
+                m.ChatMessage(
+                    conversation_id=conv.id,
+                    sender_id=peer.id,
+                    content="当前账号已被锁定，保留该会话用于验证锁定用户展示。",
+                    content_type="text",
+                    created_at=now - timedelta(minutes=1 + index),
+                )
+            )
+
     # 备注关系示例
     db.session.add(
         m.UserRemark(
-            owner_user_id=student_a.id,
-            target_user_id=student_b.id,
-            remark="同班同学，主要一起刷算法题。",
+            owner_user_id=admin.id,
+            target_user_id=teacher.id,
+            remark="负责协助超级管理员验证题库和考试流程。",
+        )
+    )
+    db.session.add(
+        m.UserRemark(
+            owner_user_id=admin.id,
+            target_user_id=student_a.id,
+            remark="负责回归公共题库、错题与收藏联动。",
         )
     )
 
