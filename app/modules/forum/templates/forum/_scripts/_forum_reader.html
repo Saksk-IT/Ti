@@ -185,12 +185,7 @@ function syncReaderActionState(post) {
   });
 
   var summary = _readerCommentSummary(commentCount);
-  var entryMeta = document.getElementById('readerCommentEntryMeta');
   var drawerSummary = document.getElementById('commentsDrawerSummary');
-
-  if (entryMeta) {
-    entryMeta.textContent = summary;
-  }
 
   if (drawerSummary) {
     drawerSummary.textContent = summary;
