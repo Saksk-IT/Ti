@@ -124,22 +124,9 @@
 
 ## 双机器同步规范（MUST）
 
-适用场景：同一开发者在 Mac / Windows 间切换开发。
-
-1. 开发前先同步远端：
-   - `git fetch <remote>`
-   - `git pull --rebase <remote> <branch>`
-2. 每次提交后必须立即同步到远端（不可省略）：
+适用场景：同一开发者在 Mac / Windows 间切换开发，每次提交后必须立即同步到远端（不可省略）：
    - `git push -u <remote> <branch>`（首次）
    - `git push <remote> <branch>`（后续）
-3. 若 push 被拒绝（non-fast-forward），必须先集成远端再重试：
-   - `git fetch <remote> <branch>`
-   - `git rebase <remote>/<branch>`（或 `git pull --rebase`）
-   - 解决冲突后 `git rebase --continue`
-   - 再执行 `git push <remote> <branch>`
-4. 切换机器前必须满足：
-   - `git status` 干净，或已将 WIP 提交并推送到远端分支。
-5. 禁止仅本地提交不推送后直接换机开发，避免双端历史分叉。
 
 ## Pull Request 工作流
 

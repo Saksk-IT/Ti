@@ -4,6 +4,12 @@
 - 保持兼容性：小程序和网页必须共享相同的数据与语义（包括但不限于：收藏 / 错误 / 用户答案 / 用户进度 / 考试）。
 - 本项目现在处于开发阶段，在本机运行的方式是 Docker 开发模式，一切调试与开发都要基于 Docker。
 
+## 双机器同步规范（MUST）
+
+适用场景：同一开发者在 Mac / Windows 间切换开发，每次提交后必须立即同步到远端（不可省略）：
+   - `git push -u <remote> <branch>`（首次）
+   - `git push <remote> <branch>`（后续）
+
 ## 2.1 执行顺序（给 AI 的固定模板）
 
 1. 用 1～2 句话复述目标 + 关键约束（端：小程序/Web；是否涉及 UI；是否要新增接口）。
@@ -109,41 +115,3 @@
 - `.forum-skeleton-avatar`：圆形头像占位（shimmer 动画）
 - `.forum-detail-skel`：详情页骨架容器（pulse 动画）
 - `@keyframes skeleton-shimmer`：横向光泽滑动
-
-## 9) Docker 开发环境（MUST）
-
-### 本地运行模式
-本项目在本机使用 **Docker Dev 模式** 运行，所有操作需在容器内执行。
-
-### 数据库迁移
-```bash
-# 进入容器
-docker-compose exec app bash
-
-# 运行迁移
-FLASK_APP=app flask db upgrade
-
-# 回滚迁移
-FLASK_APP=app flask db downgrade -1
-```
-
-### 应用重启
-```bash
-# 重启容器
-docker-compose restart app
-
-# 查看日志
-docker-compose logs -f app
-```
-
-### 常用命令
-```bash
-# 进入容器 shell
-docker-compose exec app bash
-
-# 查看容器状态
-docker-compose ps
-
-# 重建容器（代码变更后）
-docker-compose up -d --build
-```
