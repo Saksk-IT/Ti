@@ -815,14 +815,14 @@
 </div>
 
 {% if logged_in %}
-  <div class="app-user" id="appUserTrigger" role="button" tabindex="0" aria-label="打开快捷菜单" title="打开快捷菜单">
+  <a class="app-user" id="appUserTrigger" href="/profile" aria-label="前往个人资料" title="前往个人资料">
     <span class="app-user-avatar" id="appUserAvatar" data-initial="{{ _avatar_initial }}">{{ _avatar_initial }}</span>
     <span class="app-user-text">
       <span class="name">{{ username }}</span>
-      <span class="sub">打开快捷菜单</span>
+      <span class="sub">前往个人资料</span>
     </span>
     <span class="app-user-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-  </div>
+  </a>
 {% else %}
   <a class="app-user" href="/login" aria-label="前往登录" title="前往登录">
     <span class="app-user-avatar">{{ _avatar_initial }}</span>
@@ -951,33 +951,6 @@
           }
         }
       }, 100);
-    });
-  }
-
-  // 点击 userTrigger 切换快捷菜单（移动端触屏支持）
-  if (userTrigger) {
-    userTrigger.addEventListener('click', function(e) {
-      e.stopPropagation();
-      var isOpen = quickMenu.classList.contains('open');
-      // 关闭其他弹出菜单
-      document.querySelectorAll('.app-nav-accordion.flyout-open').forEach(function(el) {
-        el.classList.remove('flyout-open');
-      });
-      if (isOpen) {
-        quickMenu.classList.remove('open');
-        if (themeSubmenu) {
-          themeSubmenu.classList.remove('open');
-          if (originalTheme !== null) {
-            root.setAttribute('data-theme', originalTheme);
-          }
-          if (originalStyle !== null) {
-            root.setAttribute('data-theme-style', originalStyle);
-          }
-        }
-      } else {
-        quickMenu.classList.add('open');
-        updateThemeActiveState();
-      }
     });
   }
 
