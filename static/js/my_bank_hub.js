@@ -212,6 +212,13 @@
         badges.push('<span class="plaza-badge joined">' + esc(item.source_label || '已加入') + '</span>');
       }
       if (item.is_featured) badges.push('<span class="forum-badge forum-badge-feat">精华</span>');
+      var hasCover = !!item.cover_image;
+      var coverHtml = hasCover
+        ? '<div class="forum-post-cover-thumb"><img src="' + esc(item.cover_image) + '" alt=""></div>'
+        : '<div class="plaza-bank-cover-fallback">' + esc((item.board && item.board.name) || item.source_label || item.visibility_label || '我的题库') + '</div>';
+      var ownerText = item.kind === 'created' ? '我创建的题库' : esc(item.owner_label || '匿名用户');
+      var boardText = esc((item.board && item.board.name) || '未分类');
+      var timeText = esc(item.updated_at || item.last_joined_at || item.last_activity_at || '-');
 
       var actions = ['<a class="my-bank-card-link primary" href="' + esc(item.detail_url) + '">继续练习</a>'];
       if (item.kind === 'created') {
@@ -221,25 +228,24 @@
         actions.push('<button type="button" class="my-bank-card-link" data-leave-source-type="' + esc(item.source_type || 'user') + '" data-leave-id="' + esc(item.id) + '">退出题库</button>');
       }
 
-      var ownerText = item.kind === 'created' ? '我创建的题库' : esc(item.owner_label || '匿名用户');
-      var boardText = esc((item.board && item.board.name) || '未分类');
-      var timeText = esc(item.updated_at || item.last_joined_at || item.last_activity_at || '-');
-
-      return '<article class="forum-post-card plaza-bank-card my-bank-card">' +
-        '<div class="forum-post-header">' +
-          '<div class="forum-avatar"></div>' +
-          '<div class="forum-post-meta"><span class="forum-user-link">' + ownerText + '</span><span class="forum-board-tag">' + boardText + '</span></div>' +
-        '</div>' +
-        '<div class="forum-post-title">' + badges.join('') + '<span class="plaza-bank-title-text">' + esc(item.name) + '</span></div>' +
-        '<div class="forum-post-preview">' + esc(item.description || '暂无题库简介') + '</div>' +
-        '<div class="forum-post-stats">' +
-          '<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5h16M7 16V8m5 8V4m5 12v-6"/></svg>' + fmtCount(item.question_count) + ' 题</span>' +
-          '<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' + fmtCount(item.participants_total) + ' 参与</span>' +
-          '<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>' + fmtCount(item.answer_users_7d) + ' 活跃</span>' +
-        '</div>' +
-        '<div class="plaza-bank-time">' + timeText + '</div>' +
-        '<div class="my-bank-card-actions">' + actions.join('') + '</div>' +
-      '</article>';
+      return '<div class="my-bank-card-shell">' +
+        '<a class="forum-post-card plaza-bank-card' + (hasCover ? '' : ' no-cover') + '" href="' + esc(item.detail_url) + '">' +
+          '<div class="forum-post-header">' +
+            '<div class="forum-avatar"></div>' +
+            '<div class="forum-post-meta"><span class="forum-user-link">' + ownerText + '</span><span class="forum-board-tag">' + boardText + '</span></div>' +
+          '</div>' +
+          '<div class="forum-post-title">' + badges.join('') + '<span class="plaza-bank-title-text">' + esc(item.name) + '</span></div>' +
+          '<div class="forum-post-preview">' + esc(item.description || '暂无题库简介') + '</div>' +
+          '<div class="forum-post-stats">' +
+            '<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5h16M7 16V8m5 8V4m5 12v-6"/></svg>' + fmtCount(item.question_count) + ' 题</span>' +
+            '<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' + fmtCount(item.participants_total) + ' 参与</span>' +
+            '<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>' + fmtCount(item.answer_users_7d) + ' 活跃</span>' +
+          '</div>' +
+          '<div class="plaza-bank-time">' + timeText + '</div>' +
+          coverHtml +
+        '</a>' +
+        '<div class="my-bank-card-tools">' + actions.join('') + '</div>' +
+      '</div>';
     }).join('');
     listEl.insertAdjacentHTML('beforeend', html);
   }

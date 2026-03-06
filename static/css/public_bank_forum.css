@@ -375,28 +375,22 @@
   }
 }
 
-.my-bank-card {
-  height: auto;
-  min-height: 0;
-  grid-template-columns: auto minmax(0, 1fr);
-  grid-template-rows: 28px auto 1fr auto auto;
-  gap: 8px 12px;
+.my-bank-card-shell {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
-.my-bank-card .forum-post-header,
-.my-bank-card .forum-post-title,
-.my-bank-card .forum-post-preview,
-.my-bank-card .forum-post-stats,
-.my-bank-card .plaza-bank-time,
-.my-bank-card .my-bank-card-actions {
-  grid-column: 1 / -1;
+.my-bank-card-shell .forum-post-card {
+  margin-bottom: 0;
 }
 
-.my-bank-card-actions {
+.my-bank-card-tools {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
+  padding: 0 4px;
 }
 
 .my-bank-card-link {
@@ -610,9 +604,10 @@
     padding: 16px;
   }
 
-  .my-bank-card-actions {
+  .my-bank-card-tools {
     flex-direction: column;
     align-items: stretch;
+    padding: 0;
   }
 
   .my-bank-card-link {
