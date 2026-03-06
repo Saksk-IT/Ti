@@ -63,6 +63,7 @@ class ForumPost(db.Model):
 
     board = db.relationship('ForumBoard', back_populates='posts')
     comments = db.relationship('ForumComment', back_populates='post', lazy='dynamic')
+    uploads = db.relationship('ForumUpload', back_populates='post', lazy='dynamic')
 
 
 class ForumComment(db.Model):
@@ -194,3 +195,19 @@ class ForumUserBan(db.Model):
     expires_at = db.Column(db.DateTime, nullable=True)
     is_active = db.Column(db.Boolean, default=True, server_default=text('true'))
     created_at = db.Column(db.DateTime, default=func.now(), server_default=func.now())
+
+
+class ForumUpload(db.Model):
+    """论坛上传文件追踪"""
+    __tablename__ = 'forum_uploads'
+    __table_args__ = {'extend_existing': True}
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    filename = db.Column(db.String(255), nullable=False)
+    filepath = db.Column(db.Text, nullable=False)
+    uploader_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('forum_posts.id', ondelete='CASCADE'), nullable=True)
+    is_attached = db.Column(db.Boolean, default=False, server_default=text('false'))
+    uploaded_at = db.Column(db.DateTime, default=func.now(), server_default=func.now())
+
+    post = db.relationship('ForumPost', back_populates='uploads')

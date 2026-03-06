@@ -49,6 +49,7 @@
 ## 6) 额外业务上下文（MUST）
 
 - 题库详情页存在两个入口：（题库广场 → 题库详情页）与（个人题库 → 题库详情页）。
+- **本地开发环境**：使用 Docker Dev 模式运行，数据库迁移和应用重启需在容器内执行。
 
 ## 7) ECC 插件可用命令参考
 
@@ -107,3 +108,41 @@
 - `.forum-skeleton-avatar`：圆形头像占位（shimmer 动画）
 - `.forum-detail-skel`：详情页骨架容器（pulse 动画）
 - `@keyframes skeleton-shimmer`：横向光泽滑动
+
+## 9) Docker 开发环境（MUST）
+
+### 本地运行模式
+本项目在本机使用 **Docker Dev 模式** 运行，所有操作需在容器内执行。
+
+### 数据库迁移
+```bash
+# 进入容器
+docker-compose exec app bash
+
+# 运行迁移
+FLASK_APP=app flask db upgrade
+
+# 回滚迁移
+FLASK_APP=app flask db downgrade -1
+```
+
+### 应用重启
+```bash
+# 重启容器
+docker-compose restart app
+
+# 查看日志
+docker-compose logs -f app
+```
+
+### 常用命令
+```bash
+# 进入容器 shell
+docker-compose exec app bash
+
+# 查看容器状态
+docker-compose ps
+
+# 重建容器（代码变更后）
+docker-compose up -d --build
+```

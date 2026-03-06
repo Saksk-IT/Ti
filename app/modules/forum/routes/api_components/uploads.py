@@ -7,7 +7,8 @@ from flask import jsonify, request, current_app
 
 from ..api import forum_api_bp
 from app.core.extensions import limiter
-from app.core.utils.decorators import auth_required
+from app.core.utils.decorators import auth_required, current_user_id
+from app.modules.forum.services import upload_service
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
@@ -46,6 +47,10 @@ def api_upload_image():
         os.makedirs(upload_dir, exist_ok=True)
         filepath = os.path.join(upload_dir, filename)
         file.save(filepath)
+
+        # 追踪上传记录
+        user_id = current_user_id()
+        upload_service.track_upload(filename, f'forum/{filename}', user_id)
 
         url = f'/uploads/forum/{filename}'
         return jsonify({'status': 'success', 'data': {'url': url, 'filename': filename}})

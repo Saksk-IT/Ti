@@ -11,6 +11,7 @@ from app.core.extensions import db
 from ..services.content_sanitizer import sanitize_html, strip_html_tags
 from ..services.markdown_renderer import render_markdown_to_safe_html
 from ..services import mention_service, ban_service
+from ..services import upload_service
 from app.core.utils.cache_utils import bump_forum_boards_version
 
 MAX_TAGS = 8
@@ -475,30 +476,36 @@ def create_post(author_id: int, board_id: int, title: str, content: str,
     mention_base = normalized_markdown if normalized_format == 'markdown' else safe_content
     mention_service.create_mentions('post', post['id'], author_id, mention_base)
 
+    # 关联上传的图片到帖子
+    all_images = []
+    if normalized_cover:
+        all_images.append(normalized_cover)
+    all_images.extend(images or [])
+    upload_service.attach_uploads_to_post(new_id, all_images)
+
     return post
 
 
 def update_post(post_id: int, author_id: int, **fields) -> bool:
     """编辑帖子（仅作者）"""
     post_columns = _forum_posts_columns()
-    format_select = (
-        'content_format AS content_format'
-        if 'content_format' in post_columns else "'html' AS content_format"
-    )
-    markdown_select = (
-        'markdown_source AS markdown_source'
-        if 'markdown_source' in post_columns else 'NULL AS markdown_source'
-    )
-    row = db.session.execute(text(
-        f'SELECT author_id, content, {format_select}, {markdown_select} '
-        'FROM forum_posts WHERE id = :pid AND is_deleted = false'
+
+    # 查询旧的图片数据（用于清理）
+    old_data_row = db.session.execute(text(
+        'SELECT author_id, content, cover_image, images, '
+        'content_format, markdown_source FROM forum_posts WHERE id = :pid AND is_deleted = false'
     ), {'pid': post_id}).fetchone()
-    if not row or row._mapping['author_id'] != author_id:
+    if not old_data_row:
+        return False
+    if old_data_row._mapping['author_id'] != author_id:
         return False
 
-    old_content = str(row._mapping.get('content') or '')
-    old_format = str(row._mapping.get('content_format') or 'html')
-    old_markdown = row._mapping.get('markdown_source')
+    old_cover = old_data_row._mapping.get('cover_image')
+    old_images_raw = old_data_row._mapping.get('images')
+    old_images = _json_read_list(old_images_raw)
+    old_content = str(old_data_row._mapping.get('content') or '')
+    old_format = str(old_data_row._mapping.get('content_format') or 'html')
+    old_markdown = old_data_row._mapping.get('markdown_source')
 
     allowed = {'title', 'content'}
     for optional_field in (
@@ -569,6 +576,20 @@ def update_post(post_id: int, author_id: int, **fields) -> bool:
         f'UPDATE forum_posts SET {set_clause}, updated_at = NOW() WHERE id = :pid'
     ), updates)
     db.session.commit()
+
+    # 清理不再使用的图片
+    if 'cover_image' in updates or 'images' in updates:
+        new_cover = updates.get('cover_image', old_cover)
+        new_images_json = updates.get('images')
+        new_images = _json_read_list(new_images_json) if new_images_json else old_images
+
+        deleted_files = upload_service.cleanup_post_images(
+            post_id, old_cover, old_images, new_cover, new_images
+        )
+        if deleted_files:
+            from flask import current_app
+            current_app.logger.info(f"帖子 {post_id} 编辑清理图片: {deleted_files}")
+
     return True
 
 
@@ -588,6 +609,13 @@ def delete_post(post_id: int, user_id: int, is_admin: bool = False) -> bool:
         WHERE id = :pid
     '''), {'pid': post_id, 'uid': user_id})
     db.session.commit()
+
+    # 删除帖子的所有图片
+    deleted_files = upload_service.delete_post_images(post_id)
+    if deleted_files:
+        from flask import current_app
+        current_app.logger.info(f"帖子 {post_id} 删除清理图片: {deleted_files}")
+
     return True
 
 

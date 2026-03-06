@@ -59,13 +59,16 @@ class BackgroundTaskManager:
         """运行后台任务"""
         if not self.app:
             return
-        
+
         with self.app.app_context():
             while self.running:
                 try:
                     # 清理过期验证码（每小时执行一次）
                     self._cleanup_expired_codes()
-                    
+
+                    # 清理孤儿上传文件（每小时执行一次）
+                    self._cleanup_orphan_uploads()
+
                     # 等待1小时
                     for _ in range(3600):  # 3600秒 = 1小时
                         if not self.running:
@@ -98,6 +101,19 @@ class BackgroundTaskManager:
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(f'清理过期验证码失败: {str(e)}', exc_info=True)
+
+    def _cleanup_orphan_uploads(self) -> None:
+        """清理孤儿上传文件（24小时未关联到帖子）"""
+        try:
+            from app.modules.forum.services import upload_service
+            deleted_count, deleted_files = upload_service.cleanup_orphan_uploads(hours=24)
+
+            if deleted_count > 0:
+                current_app.logger.info(
+                    f'清理孤儿上传文件: 删除了 {deleted_count} 个文件 - {deleted_files}'
+                )
+        except Exception as e:
+            current_app.logger.error(f'清理孤儿上传文件失败: {str(e)}', exc_info=True)
 
 
 # 全局任务管理器实例
