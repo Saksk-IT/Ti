@@ -1,155 +1,236 @@
 <script>
-const _ic = {
-  heart: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>',
-  flag: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>',
-};
-let commentPage = 1;
-let commentTotal = 0;
-let commentSort = 'time'; // 'time' | 'hot'
-let replyTarget = null; // {parent_id, reply_to_user_id, reply_to_name}
+var commentPage = 1;
+var commentTotal = 0;
+var replyTarget = null;
+var commentSort = 'time';
 
-function escH(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
-function fmtT(s) { if (!s) return ''; const d = new Date(s); const diff = (Date.now() - d) / 1000;
-  if (diff < 60) return '刚刚'; if (diff < 3600) return Math.floor(diff/60) + '分钟前';
-  if (diff < 86400) return Math.floor(diff/3600) + '小时前'; return `${d.getMonth()+1}/${d.getDate()}`; }
-
-function renderReply(r, parentId) {
-  const ra = r.author_avatar
-    ? `<a href="/user/${r.author_id}" class="forum-avatar-link"><img class="forum-avatar" src="${escH(r.author_avatar)}" alt="" style="width:24px;height:24px"></a>`
-    : `<a href="/user/${r.author_id}" class="forum-avatar-link"><div class="forum-avatar" style="width:24px;height:24px"></div></a>`;
-  const replyTo = r.reply_to_name ? `<a href="/user/${r.reply_to_user_id}" class="forum-reply-to">@${escH(r.reply_to_name)}</a> ` : '';
-  return `<div class="forum-comment"><div class="comment-header">${ra}<a href="/user/${r.author_id}" class="forum-user-link" style="font-size:13px;font-weight:500">${escH(r.author_name)}</a><span style="font-size:12px;color:var(--app-muted);margin-left:auto">${fmtT(r.created_at)}</span></div>
-    <div class="comment-body">${replyTo}${escH(r.content)}</div>
-    <div class="comment-footer"><button onclick="setReply(${parentId},${r.author_id},'${escH(r.author_name)}')">回复</button><button onclick="likeComment(${r.id})">${_ic.heart} ${r.like_count||0}</button><button onclick="openReportModal('comment',${r.id})">${_ic.flag}</button></div></div>`;
+function escH(value) {
+  var div = document.createElement('div');
+  div.textContent = value || '';
+  return div.innerHTML;
 }
 
-function renderComment(c) {
-  const avatar = c.author_avatar ? `<a href="/user/${c.author_id}" class="forum-avatar-link"><img class="forum-avatar" src="${escH(c.author_avatar)}" alt=""></a>` : `<a href="/user/${c.author_id}" class="forum-avatar-link"><div class="forum-avatar"></div></a>`;
+function escJ(value) {
+  return String(value || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\r?\n/g, ' ')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
 
-  let repliesHtml = '';
-  if (c.replies && c.replies.length) {
-    // 按 like_count 降序排序
-    const sorted = [...c.replies].sort((a, b) => (b.like_count || 0) - (a.like_count || 0));
-    const visible = sorted.slice(0, 2);
-    const hidden = sorted.slice(2);
+function fmtT(value) {
+  try {
+    return new Date(value).toLocaleString('zh-CN');
+  } catch (error) {
+    return value || '';
+  }
+}
 
-    let visibleHtml = visible.map(r => renderReply(r, c.id)).join('');
-    let hiddenHtml = '';
+var _ic = {
+  heart: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>',
+  flag: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>'
+};
 
-    if (hidden.length) {
-      const collapseId = 'replies-' + c.id;
-      hiddenHtml = `<div class="forum-replies-collapsed" id="${collapseId}">${hidden.map(r => renderReply(r, c.id)).join('')}</div>`;
-      hiddenHtml += `<button class="forum-replies-toggle" onclick="toggleReplies(${c.id}, this)" data-count="${hidden.length}">展开全部 ${c.replies.length} 条回复</button>`;
+function renderReply(reply, parentId) {
+  var avatar = reply.author_avatar
+    ? '<a href="/user/' + reply.author_id + '" class="forum-avatar-link"><img class="forum-avatar" src="' + escH(reply.author_avatar) + '" alt=""></a>'
+    : '<a href="/user/' + reply.author_id + '" class="forum-avatar-link"><div class="forum-avatar"></div></a>';
+
+  return '<div class="forum-comment">' +
+    '<div class="comment-header">' + avatar + '<a href="/user/' + reply.author_id + '" class="forum-user-link" style="font-weight:500">' + escH(reply.author_name) + '</a>' +
+      '<span style="font-size:12px;color:var(--app-muted);margin-left:auto">' + fmtT(reply.created_at) + '</span></div>' +
+    '<div class="comment-body">' + escH(reply.content) + '</div>' +
+    '<div class="comment-footer"><button onclick="setReply(' + parentId + ',' + reply.author_id + ',\'' + escJ(reply.author_name) + '\')">回复</button><button onclick="likeComment(' + reply.id + ')">' + _ic.heart + ' ' + (reply.like_count || 0) + '</button><button onclick="openReportModal(\'comment\',' + reply.id + ')">' + _ic.flag + '</button></div>' +
+  '</div>';
+}
+
+function renderComment(comment) {
+  var avatar = comment.author_avatar
+    ? '<a href="/user/' + comment.author_id + '" class="forum-avatar-link"><img class="forum-avatar" src="' + escH(comment.author_avatar) + '" alt=""></a>'
+    : '<a href="/user/' + comment.author_id + '" class="forum-avatar-link"><div class="forum-avatar"></div></a>';
+
+  var repliesHtml = '';
+  if (comment.replies && comment.replies.length) {
+    var sortedReplies = comment.replies.slice().sort(function(a, b) {
+      return Number(b.like_count || 0) - Number(a.like_count || 0);
+    });
+    var visibleReplies = sortedReplies.slice(0, 2);
+    var hiddenReplies = sortedReplies.slice(2);
+    var visibleHtml = visibleReplies.map(function(reply) {
+      return renderReply(reply, comment.id);
+    }).join('');
+    var hiddenHtml = '';
+
+    if (hiddenReplies.length) {
+      var collapseId = 'replies-' + comment.id;
+      hiddenHtml = '<div class="forum-replies-collapsed" id="' + collapseId + '">' + hiddenReplies.map(function(reply) {
+        return renderReply(reply, comment.id);
+      }).join('') + '</div>';
+      hiddenHtml += '<button class="forum-replies-toggle" onclick="toggleReplies(' + comment.id + ', this)" data-count="' + hiddenReplies.length + '">展开全部 ' + comment.replies.length + ' 条回复</button>';
     }
 
-    repliesHtml = `<div class="forum-replies">${visibleHtml}${hiddenHtml}</div>`;
+    repliesHtml = '<div class="forum-replies">' + visibleHtml + hiddenHtml + '</div>';
   }
 
-  return `<div class="forum-comment" id="comment-${c.id}"><div class="comment-header">${avatar}<a href="/user/${c.author_id}" class="forum-user-link" style="font-weight:500">${escH(c.author_name)}</a><span style="font-size:12px;color:var(--app-muted);margin-left:auto">${fmtT(c.created_at)}</span></div>
-    <div class="comment-body">${escH(c.content)}</div>
-    <div class="comment-footer"><button onclick="setReply(${c.id},${c.author_id},'${escH(c.author_name)}')">回复</button><button onclick="likeComment(${c.id})">${_ic.heart} ${c.like_count||0}</button><button onclick="openReportModal('comment',${c.id})">${_ic.flag}</button></div>${repliesHtml}</div>`;
+  return '<div class="forum-comment" id="comment-' + comment.id + '">' +
+    '<div class="comment-header">' + avatar + '<a href="/user/' + comment.author_id + '" class="forum-user-link" style="font-weight:500">' + escH(comment.author_name) + '</a>' +
+      '<span style="font-size:12px;color:var(--app-muted);margin-left:auto">' + fmtT(comment.created_at) + '</span></div>' +
+    '<div class="comment-body">' + escH(comment.content) + '</div>' +
+    '<div class="comment-footer"><button onclick="setReply(' + comment.id + ',' + comment.author_id + ',\'' + escJ(comment.author_name) + '\')">回复</button><button onclick="likeComment(' + comment.id + ')">' + _ic.heart + ' ' + (comment.like_count || 0) + '</button><button onclick="openReportModal(\'comment\',' + comment.id + ')">' + _ic.flag + '</button></div>' +
+    repliesHtml +
+  '</div>';
 }
 
-/* 展开/收起回复 */
 function toggleReplies(commentId, btn) {
-  const el = document.getElementById('replies-' + commentId);
-  if (!el) return;
-  const expanded = el.classList.toggle('expanded');
+  var collapse = document.getElementById('replies-' + commentId);
+  if (!collapse) return;
+  var expanded = collapse.classList.toggle('expanded');
   if (expanded) {
     btn.textContent = '收起回复';
-  } else {
-    const total = parseInt(btn.dataset.count) + 2;
-    btn.textContent = '展开全部 ' + total + ' 条回复';
+    return;
   }
+  var total = Number(btn.dataset.count || 0) + 2;
+  btn.textContent = '展开全部 ' + total + ' 条回复';
 }
 
 async function loadComments(append) {
   try {
-    const r = await fetch(`/api/forum/posts/${POST_ID}/comments?page=${commentPage}&per_page=30&sort=${commentSort}`).then(r => r.json());
-    if (r.status !== 'success') return;
-    commentTotal = r.data.total;
-    const list = document.getElementById('commentsList');
-    const html = r.data.comments.map(renderComment).join('');
-    if (append) list.innerHTML += html; else list.innerHTML = html;
-    const more = document.getElementById('commentsLoadMore');
-    const totalP = Math.ceil(commentTotal / 30);
-    more.style.display = commentPage < totalP ? 'block' : 'none';
+    var response = await fetch('/api/forum/posts/' + POST_ID + '/comments?page=' + commentPage + '&per_page=30&sort=' + commentSort);
+    var payload = await response.json();
+    if (payload.status !== 'success') return;
+
+    commentTotal = Number(payload.data.total || 0);
+    updateReaderCommentCount(commentTotal);
+
+    var list = document.getElementById('commentsList');
+    var html = payload.data.comments.map(renderComment).join('');
+    if (!html && !append) {
+      list.innerHTML = '<div class="forum-empty">还没有评论，来抢沙发。</div>';
+    } else {
+      list.innerHTML = append ? (list.innerHTML + html) : html;
+    }
+
+    var loadMore = document.getElementById('commentsLoadMore');
+    var totalPages = Math.ceil(commentTotal / 30);
+    loadMore.style.display = commentPage < totalPages ? 'block' : 'none';
     _ensureSortBar();
-  } catch(e) { console.error(e); }
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 function _ensureSortBar() {
   if (document.getElementById('commentSortBar')) return;
-  const title = document.querySelector('.forum-section-title');
+
+  var panel = document.getElementById('commentsDrawer');
+  if (!panel) return;
+
+  var title = panel.querySelector('.forum-section-title');
   if (!title) return;
-  const bar = document.createElement('div');
+
+  var bar = document.createElement('div');
   bar.id = 'commentSortBar';
   bar.style.cssText = 'display:inline-flex;gap:4px;margin-left:12px;vertical-align:middle;';
-  bar.innerHTML = '<button class="comment-sort-btn' + (commentSort === 'time' ? ' active' : '') + '" data-sort="time">最新</button>'
-    + '<button class="comment-sort-btn' + (commentSort === 'hot' ? ' active' : '') + '" data-sort="hot">最热</button>';
+  bar.innerHTML = '<button class="comment-sort-btn' + (commentSort === 'time' ? ' active' : '') + '" data-sort="time">最新</button>' +
+    '<button class="comment-sort-btn' + (commentSort === 'hot' ? ' active' : '') + '" data-sort="hot">最热</button>';
   title.appendChild(bar);
-  bar.addEventListener('click', function(e) {
-    var btn = e.target.closest('.comment-sort-btn');
+
+  bar.addEventListener('click', function(event) {
+    var btn = event.target.closest('.comment-sort-btn');
     if (!btn || btn.dataset.sort === commentSort) return;
     commentSort = btn.dataset.sort;
-    bar.querySelectorAll('.comment-sort-btn').forEach(function(b) {
-      b.classList.toggle('active', b.dataset.sort === commentSort);
+    bar.querySelectorAll('.comment-sort-btn').forEach(function(item) {
+      item.classList.toggle('active', item.dataset.sort === commentSort);
     });
     commentPage = 1;
     loadComments(false);
   });
 }
 
-function loadMoreComments() { commentPage++; loadComments(true); }
+function loadMoreComments() {
+  commentPage += 1;
+  loadComments(true);
+}
 
 function setReply(parentId, userId, userName) {
   replyTarget = {parent_id: parentId, reply_to_user_id: userId, reply_to_name: userName};
-  const ta = document.getElementById('commentText');
-  ta.placeholder = `回复 @${userName}...`;
-  ta.focus();
+  openCommentsDrawer();
+  var textarea = document.getElementById('commentText');
+  if (!textarea) return;
+  textarea.placeholder = '回复 @' + userName + '...';
+  textarea.focus();
 }
 
 async function submitComment() {
-  const ta = document.getElementById('commentText');
-  const content = ta.value.trim();
+  var textarea = document.getElementById('commentText');
+  if (!textarea) return;
+  var content = textarea.value.trim();
   if (!content) return;
-  const body = {content};
-  if (replyTarget) { body.parent_id = replyTarget.parent_id; body.reply_to_user_id = replyTarget.reply_to_user_id; }
+
+  var body = {content: content};
+  if (replyTarget) {
+    body.parent_id = replyTarget.parent_id;
+    body.reply_to_user_id = replyTarget.reply_to_user_id;
+  }
+
   try {
-    const r = await fetch(`/api/forum/posts/${POST_ID}/comments`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json());
-    if (r.status === 'success') { ta.value = ''; ta.placeholder = '写下你的评论...'; replyTarget = null; commentPage = 1; loadComments(false); }
-    else alert(r.message || '发表失败');
-  } catch(e) { alert('发表失败'); }
+    var response = await fetch('/api/forum/posts/' + POST_ID + '/comments', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+    var payload = await response.json();
+
+    if (payload.status === 'success') {
+      textarea.value = '';
+      textarea.placeholder = '写下你的评论... 使用 @用户名 提及他人';
+      replyTarget = null;
+      commentPage = 1;
+      openCommentsDrawer();
+      loadComments(false);
+      return;
+    }
+
+    alert(payload.message || '发表失败');
+  } catch (error) {
+    alert('发表失败');
+  }
 }
 
-async function likeComment(cid) {
+async function likeComment(commentId) {
   try {
-    const res = await fetch('/api/forum/like', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_type:'comment',target_id:cid})});
-    const js = await res.json();
-    if (js.status === 'success' && js.data) {
-      // 局部 DOM 更新：找到对应评论的点赞按钮并更新
-      const commentEl = document.getElementById('comment-' + cid);
+    var response = await fetch('/api/forum/like', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({target_type: 'comment', target_id: commentId})
+    });
+    var payload = await response.json();
+
+    if (payload.status === 'success' && payload.data) {
+      var commentEl = document.getElementById('comment-' + commentId);
       if (commentEl) {
-        // 一级评论的点赞按钮
-        const btns = commentEl.querySelectorAll(':scope > .comment-footer > button');
-        for (const btn of btns) {
-          if (btn.getAttribute('onclick') === 'likeComment(' + cid + ')') {
-            btn.innerHTML = _ic.heart + ' ' + (js.data.like_count || 0);
+        var buttons = commentEl.querySelectorAll(':scope > .comment-footer > button');
+        for (var index = 0; index < buttons.length; index += 1) {
+          if (buttons[index].getAttribute('onclick') === 'likeComment(' + commentId + ')') {
+            buttons[index].innerHTML = _ic.heart + ' ' + (payload.data.like_count || 0);
             break;
           }
         }
       }
-      // 也可能是楼中楼回复（没有 id），遍历所有点赞按钮
+
       if (!commentEl) {
-        document.querySelectorAll('.comment-footer button').forEach(function(btn) {
-          if (btn.getAttribute('onclick') === 'likeComment(' + cid + ')') {
-            btn.innerHTML = _ic.heart + ' ' + (js.data.like_count || 0);
+        document.querySelectorAll('.comment-footer button').forEach(function(button) {
+          if (button.getAttribute('onclick') === 'likeComment(' + commentId + ')') {
+            button.innerHTML = _ic.heart + ' ' + (payload.data.like_count || 0);
           }
         });
       }
     }
-  } catch(e) {}
+  } catch (error) {
+    console.error(error);
+  }
 }
-
-// loadComments 由 post_detail.html 的 Promise.all 统一调用
 </script>

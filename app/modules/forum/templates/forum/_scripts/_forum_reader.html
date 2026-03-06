@@ -1,0 +1,140 @@
+<script>
+var _readerCommentCount = null;
+
+function getForumReaderPage() {
+  return document.getElementById('forumReaderPage');
+}
+
+function openCommentsDrawer() {
+  var page = getForumReaderPage();
+  var drawer = document.getElementById('commentsDrawer');
+  if (!page || !drawer) return;
+  page.classList.add('is-comments-open');
+  drawer.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('forum-reader-comments-open');
+}
+
+function closeCommentsDrawer() {
+  var page = getForumReaderPage();
+  var drawer = document.getElementById('commentsDrawer');
+  if (!page || !drawer) return;
+  page.classList.remove('is-comments-open');
+  drawer.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('forum-reader-comments-open');
+}
+
+function focusCommentInput() {
+  openCommentsDrawer();
+  window.setTimeout(function() {
+    var textarea = document.getElementById('commentText');
+    if (!textarea) return;
+    textarea.focus();
+    var length = textarea.value.length;
+    textarea.setSelectionRange(length, length);
+  }, 180);
+}
+
+function _readerStateText(post) {
+  if (!post) return '';
+  var labels = [];
+  if (post.is_pinned) labels.push('置顶');
+  if (post.is_featured) labels.push('精华');
+  if (post.is_locked) labels.push('已锁定');
+  if (post.is_hidden) labels.push('已隐藏');
+  return labels.join(' · ');
+}
+
+function _readerCommentSummary(count) {
+  if (!count) return '还没有评论，来抢沙发';
+  if (count === 1) return '1 条评论，打开抽屉查看';
+  return count + ' 条评论，打开抽屉继续讨论';
+}
+
+function syncReaderMeta(post) {
+  if (!post) return;
+  var boardLabel = document.getElementById('readerBoardLabel');
+  var stateChip = document.getElementById('readerPostState');
+  var pageTitle = String(post.title == null ? '' : post.title).trim() || '帖子';
+
+  if (boardLabel) {
+    boardLabel.textContent = post.board_name || '论坛';
+  }
+
+  if (stateChip) {
+    var stateText = _readerStateText(post);
+    stateChip.hidden = !stateText;
+    stateChip.textContent = stateText;
+  }
+
+  document.title = 'SAK · ' + pageTitle;
+}
+
+function syncReaderActionState(post) {
+  var safePost = post || {};
+  var likeCount = Number(safePost.like_count || 0);
+  var favoriteCount = Number(safePost.favorite_count || 0);
+  var commentCount = _readerCommentCount == null
+    ? Number(safePost.comment_count || 0)
+    : Number(_readerCommentCount || 0);
+
+  document.querySelectorAll('[data-post-like-count]').forEach(function(node) {
+    node.textContent = likeCount;
+  });
+
+  document.querySelectorAll('[data-post-fav-count]').forEach(function(node) {
+    node.textContent = favoriteCount;
+  });
+
+  document.querySelectorAll('[data-post-comment-count]').forEach(function(node) {
+    node.textContent = commentCount;
+  });
+
+  document.querySelectorAll('[data-reader-stat="comments"]').forEach(function(node) {
+    node.textContent = commentCount;
+  });
+
+  document.querySelectorAll('[data-reader-stat="likes"]').forEach(function(node) {
+    node.textContent = likeCount;
+  });
+
+  document.querySelectorAll('[data-reader-stat="favorites"]').forEach(function(node) {
+    node.textContent = favoriteCount;
+  });
+
+  document.querySelectorAll('[data-post-like-toggle]').forEach(function(node) {
+    node.classList.toggle('active', !!safePost.liked);
+  });
+
+  document.querySelectorAll('[data-post-fav-toggle]').forEach(function(node) {
+    node.classList.toggle('active', !!safePost.favorited);
+  });
+
+  var summary = _readerCommentSummary(commentCount);
+  var entryMeta = document.getElementById('readerCommentEntryMeta');
+  var drawerSummary = document.getElementById('commentsDrawerSummary');
+
+  if (entryMeta) {
+    entryMeta.textContent = summary;
+  }
+
+  if (drawerSummary) {
+    drawerSummary.textContent = summary;
+  }
+}
+
+function updateReaderCommentCount(count) {
+  _readerCommentCount = Number(count || 0);
+  if (typeof _postData !== 'undefined' && _postData) {
+    _postData = Object.assign({}, _postData, {comment_count: _readerCommentCount});
+    syncReaderActionState(_postData);
+    return;
+  }
+  syncReaderActionState({comment_count: _readerCommentCount});
+}
+
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') {
+    closeCommentsDrawer();
+  }
+});
+</script>

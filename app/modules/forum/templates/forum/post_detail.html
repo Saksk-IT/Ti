@@ -1,153 +1,211 @@
 {% extends "main/shared/app_shell.html" %}
 
+{% block body_class %}forum-reader-shell{% endblock %}
 {% block title %}SAK · 帖子{% endblock %}
-{% block page_title %}帖子详情{% endblock %}
+{% block page_title %}帖子阅读{% endblock %}
 
 {% block head_extra %}
-{% include "forum/_styles_layout.html" %}
 {% include "forum/_styles.html" %}
+{% include "forum/_styles_reader.html" %}
 {% endblock %}
 
 {% block content %}
-<div class="forum-detail-layout">
-  <!-- 返回按钮 -->
-  <div class="forum-detail-back">
-    <a href="javascript:void(0)" onclick="window.history.length>1?history.back():location.href='/forum'" class="forum-back-link">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      返回
-    </a>
-  </div>
-  <div class="forum-detail-columns">
-    <!-- 左栏：帖子内容 -->
-    <div class="forum-detail-left">
-      <div id="postContent" class="forum-post-content">
-        <!-- 骨架屏：帖子内容 -->
+<div id="forumReaderPage" class="forum-reader-page">
+  <header class="forum-reader-topbar">
+    <div class="forum-reader-topbar-left">
+      <button type="button" class="forum-reader-back-btn" onclick="window.history.length>1?history.back():location.href='/forum'" aria-label="返回论坛">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="forum-reader-context">
+        <span class="forum-reader-context-label">论坛帖子</span>
+        <div class="forum-reader-context-main">
+          <span id="readerBoardLabel" class="forum-reader-board">加载中...</span>
+          <span id="readerPostState" class="forum-reader-state-chip" hidden></span>
+        </div>
+      </div>
+    </div>
+    <div class="forum-reader-topbar-right">
+      <button type="button" class="forum-reader-top-btn" onclick="openCommentsDrawer()">
+        评论
+        <span data-post-comment-count>0</span>
+      </button>
+      <button type="button" class="forum-reader-top-btn" onclick="openForwardModal()">转发</button>
+    </div>
+  </header>
+
+  <main class="forum-reader-main">
+    <section class="forum-reader-article">
+      <article id="postContent" class="forum-post-content">
         <div class="forum-detail-skel">
-          <!-- header: h=32, avatar 32x32, gap 10px, mb 10px -->
-          <div class="forum-post-header" style="margin-bottom:10px">
-            <div class="forum-skeleton-avatar" style="width:32px;height:32px"></div>
-            <div class="forum-skeleton-row" style="width:180px;height:13px"></div>
+          <div class="forum-reader-post-header">
+            <div class="forum-skeleton-avatar" style="width:44px;height:44px"></div>
+            <div class="forum-reader-post-head-main">
+              <div class="forum-skeleton-row" style="width:120px;height:14px;margin-bottom:10px"></div>
+              <div class="forum-skeleton-row" style="width:220px;height:12px"></div>
+            </div>
           </div>
-          <!-- title: h=25, font 20px, mb 12px -->
-          <div class="forum-skeleton-row" style="width:55%;height:20px;margin-bottom:12px;border-radius:6px"></div>
-          <!-- body: 6 lines, each line-height 25.5px, font 15px -->
-          <div class="forum-skeleton-row" style="width:100%;height:15px;margin-bottom:10.5px"></div>
-          <div class="forum-skeleton-row" style="width:100%;height:15px;margin-bottom:10.5px"></div>
-          <div class="forum-skeleton-row" style="width:95%;height:15px;margin-bottom:10.5px"></div>
-          <div class="forum-skeleton-row" style="width:100%;height:15px;margin-bottom:10.5px"></div>
-          <div class="forum-skeleton-row" style="width:85%;height:15px;margin-bottom:10.5px"></div>
-          <div class="forum-skeleton-row" style="width:60%;height:15px"></div>
-          <!-- stats: h=18, font 13px, mt 16px -->
-          <div class="forum-skeleton-row" style="width:100px;height:13px;margin-top:16px"></div>
+          <div class="forum-skeleton-row" style="width:38%;height:14px;margin-bottom:16px"></div>
+          <div class="forum-skeleton-row" style="width:72%;height:28px;margin-bottom:10px;border-radius:8px"></div>
+          <div class="forum-skeleton-row" style="width:96%;height:16px;margin-bottom:12px"></div>
+          <div class="forum-skeleton-row" style="width:100%;height:280px;margin-bottom:18px;border-radius:18px"></div>
+          <div class="forum-skeleton-row" style="width:100%;height:16px;margin-bottom:12px"></div>
+          <div class="forum-skeleton-row" style="width:88%;height:16px;margin-bottom:12px"></div>
+          <div class="forum-skeleton-row" style="width:94%;height:16px;margin-bottom:12px"></div>
+          <div class="forum-skeleton-row" style="width:60%;height:16px"></div>
         </div>
-      </div>
+      </article>
+
       <div id="pollSection" style="display:none"></div>
-      <div class="forum-actions-bar" id="actionsBar">
-        <!-- 骨架屏：操作栏 h=36, gap=12, 4 btns: 64+64+83+83 -->
-        <div class="forum-detail-skel" style="display:flex;gap:12px">
-          <div class="forum-skeleton-row" style="width:64px;height:36px;border-radius:10px"></div>
-          <div class="forum-skeleton-row" style="width:64px;height:36px;border-radius:10px"></div>
-          <div class="forum-skeleton-row" style="width:83px;height:36px;border-radius:10px"></div>
-          <div class="forum-skeleton-row" style="width:83px;height:36px;border-radius:10px"></div>
-        </div>
-      </div>
+
       <div id="reactionsBar" class="forum-reactions-bar"></div>
-    </div>
-    <!-- 右栏：评论区 -->
-    <div class="forum-detail-right">
-      <div class="forum-comments-section">
-        <h3 class="forum-section-title">评论</h3>
-        <div id="commentsList">
-          <!-- 骨架屏：评论 padding=16, border-radius=10, mb=10, header h=32 mb=8, body h=22, footer h=22 mt=8 -->
-          <div class="forum-detail-skel forum-comment">
-            <div class="comment-header" style="height:32px;margin-bottom:8px"><div class="forum-skeleton-avatar" style="width:32px;height:32px"></div><div class="forum-skeleton-row" style="width:80px;height:14px"></div></div>
-            <div style="margin-bottom:8px"><div class="forum-skeleton-row" style="width:90%;height:14px;margin-bottom:6px"></div><div class="forum-skeleton-row" style="width:65%;height:14px"></div></div>
-            <div class="comment-footer" style="height:22px;margin-top:8px"><div class="forum-skeleton-row" style="width:32px;height:13px"></div><div class="forum-skeleton-row" style="width:40px;height:13px"></div><div class="forum-skeleton-row" style="width:18px;height:13px"></div></div>
-          </div>
-          <div class="forum-detail-skel forum-comment">
-            <div class="comment-header" style="height:32px;margin-bottom:8px"><div class="forum-skeleton-avatar" style="width:32px;height:32px"></div><div class="forum-skeleton-row" style="width:60px;height:14px"></div></div>
-            <div style="margin-bottom:8px"><div class="forum-skeleton-row" style="width:80%;height:14px"></div></div>
-            <div class="comment-footer" style="height:22px;margin-top:8px"><div class="forum-skeleton-row" style="width:32px;height:13px"></div><div class="forum-skeleton-row" style="width:40px;height:13px"></div><div class="forum-skeleton-row" style="width:18px;height:13px"></div></div>
-          </div>
-          <div class="forum-detail-skel forum-comment">
-            <div class="comment-header" style="height:32px;margin-bottom:8px"><div class="forum-skeleton-avatar" style="width:32px;height:32px"></div><div class="forum-skeleton-row" style="width:70px;height:14px"></div></div>
-            <div style="margin-bottom:8px"><div class="forum-skeleton-row" style="width:95%;height:14px;margin-bottom:6px"></div><div class="forum-skeleton-row" style="width:50%;height:14px"></div></div>
-            <div class="comment-footer" style="height:22px;margin-top:8px"><div class="forum-skeleton-row" style="width:32px;height:13px"></div><div class="forum-skeleton-row" style="width:40px;height:13px"></div><div class="forum-skeleton-row" style="width:18px;height:13px"></div></div>
-          </div>
-        </div>
-        <div class="forum-load-more" id="commentsLoadMore" style="display:none">
-          <button class="btn-load-more" onclick="loadMoreComments()">加载更多评论</button>
+
+      <div class="forum-actions-bar forum-reader-actions" id="actionsBar">
+        <div class="forum-detail-skel" style="display:flex;gap:12px;flex-wrap:wrap">
+          <div class="forum-skeleton-row" style="width:88px;height:40px;border-radius:999px"></div>
+          <div class="forum-skeleton-row" style="width:88px;height:40px;border-radius:999px"></div>
+          <div class="forum-skeleton-row" style="width:88px;height:40px;border-radius:999px"></div>
+          <div class="forum-skeleton-row" style="width:88px;height:40px;border-radius:999px"></div>
         </div>
       </div>
-      <div class="forum-comment-input" id="commentInput">
-        <textarea id="commentText" placeholder="写下你的评论... 使用 @用户名 提及他人" rows="3"></textarea>
-        <button class="forum-submit-btn" onclick="submitComment()">发表</button>
+
+      <button type="button" id="readerCommentEntryBtn" class="forum-reader-comments-entry" onclick="openCommentsDrawer()">
+        <span class="forum-reader-comments-entry-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          评论区
+        </span>
+        <span id="readerCommentEntryMeta" class="forum-reader-comments-entry-meta">打开评论抽屉参与讨论</span>
+      </button>
+    </section>
+  </main>
+
+  <div class="forum-reader-bottom-bar">
+    <button type="button" class="forum-reader-bottom-btn" data-post-like-toggle onclick="toggleLike()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+      <span data-post-like-count>0</span>
+    </button>
+    <button type="button" class="forum-reader-bottom-btn" data-post-fav-toggle onclick="toggleFav()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <span data-post-fav-count>0</span>
+    </button>
+    <button type="button" class="forum-reader-bottom-btn" onclick="openCommentsDrawer()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+      <span data-post-comment-count>0</span>
+    </button>
+    <button type="button" class="forum-reader-bottom-btn" onclick="openForwardModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 17 20 12 15 7"/><path d="M4 18v-2a4 4 0 0 1 4-4h12"/></svg>
+      <span>转发</span>
+    </button>
+  </div>
+
+  <div id="commentsDrawerOverlay" class="forum-reader-comments-overlay" onclick="closeCommentsDrawer()"></div>
+  <aside id="commentsDrawer" class="forum-reader-comments-drawer" aria-hidden="true">
+    <div class="forum-reader-comments-head">
+      <div class="forum-reader-comments-title">
+        <h3>评论</h3>
+        <p id="commentsDrawerSummary">打开评论抽屉参与讨论</p>
+      </div>
+      <div class="forum-reader-comments-head-actions">
+        <button type="button" class="forum-reader-comments-compose" onclick="focusCommentInput()" aria-label="写评论">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" class="forum-reader-comments-close" onclick="closeCommentsDrawer()" aria-label="关闭评论">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="m18 6-12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="m6 6 12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="forum-reader-comments-body">
+      <div class="forum-reader-comments-panel">
+        <div class="forum-comments-section">
+          <h3 class="forum-section-title">全部评论</h3>
+          <div id="commentsList">
+            <div class="forum-detail-skel forum-comment">
+              <div class="comment-header" style="height:32px;margin-bottom:8px"><div class="forum-skeleton-avatar" style="width:32px;height:32px"></div><div class="forum-skeleton-row" style="width:96px;height:14px"></div></div>
+              <div style="margin-bottom:8px"><div class="forum-skeleton-row" style="width:90%;height:14px;margin-bottom:6px"></div><div class="forum-skeleton-row" style="width:65%;height:14px"></div></div>
+              <div class="comment-footer" style="height:22px;margin-top:8px"><div class="forum-skeleton-row" style="width:32px;height:13px"></div><div class="forum-skeleton-row" style="width:40px;height:13px"></div><div class="forum-skeleton-row" style="width:18px;height:13px"></div></div>
+            </div>
+            <div class="forum-detail-skel forum-comment">
+              <div class="comment-header" style="height:32px;margin-bottom:8px"><div class="forum-skeleton-avatar" style="width:32px;height:32px"></div><div class="forum-skeleton-row" style="width:80px;height:14px"></div></div>
+              <div style="margin-bottom:8px"><div class="forum-skeleton-row" style="width:84%;height:14px"></div></div>
+              <div class="comment-footer" style="height:22px;margin-top:8px"><div class="forum-skeleton-row" style="width:32px;height:13px"></div><div class="forum-skeleton-row" style="width:40px;height:13px"></div><div class="forum-skeleton-row" style="width:18px;height:13px"></div></div>
+            </div>
+          </div>
+          <div class="forum-load-more" id="commentsLoadMore" style="display:none">
+            <button class="btn-load-more" onclick="loadMoreComments()">加载更多评论</button>
+          </div>
+        </div>
+        <div class="forum-comment-input" id="commentInput">
+          <textarea id="commentText" placeholder="写下你的评论... 使用 @用户名 提及他人" rows="3"></textarea>
+          <button class="forum-submit-btn" onclick="submitComment()">发表</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div id="reportModal" class="forum-modal" style="display:none">
+    <div class="forum-modal-content">
+      <h3 style="margin:0 0 16px;font-size:16px;font-weight:600;">举报内容</h3>
+      <div class="forum-form-group">
+        <label>举报原因</label>
+        <select id="reportReason" style="width:100%;padding:10px 14px;border:0.5px solid var(--app-border);border-radius:10px;font-size:14px;background:var(--app-surface);color:var(--app-text);">
+          <option value="spam">垃圾信息</option>
+          <option value="abuse">辱骂攻击</option>
+          <option value="inappropriate">不当内容</option>
+          <option value="plagiarism">抄袭</option>
+          <option value="other">其他</option>
+        </select>
+      </div>
+      <div class="forum-form-group">
+        <label>补充说明（可选）</label>
+        <textarea id="reportDetail" rows="3" style="width:100%;padding:10px 14px;border:0.5px solid var(--app-border);border-radius:10px;font-size:14px;background:var(--app-surface);color:var(--app-text);resize:none;box-sizing:border-box;"></textarea>
+      </div>
+      <div style="display:flex;gap:12px;justify-content:flex-end">
+        <button class="forum-cancel-btn" onclick="closeReportModal()">取消</button>
+        <button class="forum-submit-btn" onclick="submitReport()">提交举报</button>
       </div>
     </div>
   </div>
-</div>
-<!-- 举报弹窗 -->
-<div id="reportModal" class="forum-modal" style="display:none">
-  <div class="forum-modal-content">
-    <h3 style="margin:0 0 16px;font-size:16px;font-weight:600;">举报内容</h3>
-    <div class="forum-form-group">
-      <label>举报原因</label>
-      <select id="reportReason" style="width:100%;padding:10px 14px;border:0.5px solid var(--app-border);border-radius:10px;font-size:14px;background:var(--app-surface);color:var(--app-text);">
-        <option value="spam">垃圾信息</option>
-        <option value="abuse">辱骂攻击</option>
-        <option value="inappropriate">不当内容</option>
-        <option value="plagiarism">抄袭</option>
-        <option value="other">其他</option>
-      </select>
-    </div>
-    <div class="forum-form-group">
-      <label>补充说明（可选）</label>
-      <textarea id="reportDetail" rows="3" style="width:100%;padding:10px 14px;border:0.5px solid var(--app-border);border-radius:10px;font-size:14px;background:var(--app-surface);color:var(--app-text);resize:none;box-sizing:border-box;"></textarea>
-    </div>
-    <div style="display:flex;gap:12px;justify-content:flex-end">
-      <button class="forum-cancel-btn" onclick="closeReportModal()">取消</button>
-      <button class="forum-submit-btn" onclick="submitReport()">提交举报</button>
-    </div>
-  </div>
-</div>
-<!-- 转发弹窗 -->
-<div id="forwardModal" class="forum-modal" style="display:none">
-  <div class="forum-modal-content">
-    <h3 style="margin:0 0 16px;font-size:16px;font-weight:600;">转发到私聊</h3>
-    <div class="forum-form-group">
-      <label>搜索用户</label>
-      <input id="forwardSearch" type="text" placeholder="输入用户名搜索..." autocomplete="off" style="width:100%;padding:10px 14px;border:0.5px solid var(--app-border);border-radius:10px;font-size:14px;background:var(--app-surface);color:var(--app-text);box-sizing:border-box;">
-      <div id="forwardResults" style="max-height:200px;overflow-y:auto;margin-top:8px;"></div>
-      <input id="forwardReceiver" type="hidden">
-      <div id="forwardSelected" style="margin-top:8px;display:none;padding:8px 12px;border-radius:8px;background:var(--app-primary-soft);font-size:13px;font-weight:500;display:none;align-items:center;gap:8px;">
-        <span id="forwardSelectedName"></span>
-        <button type="button" onclick="clearForwardSelection()" style="margin-left:auto;background:none;border:none;color:var(--app-muted);cursor:pointer;font-size:16px;padding:0;min-height:auto;">&times;</button>
+
+  <div id="forwardModal" class="forum-modal" style="display:none">
+    <div class="forum-modal-content">
+      <h3 style="margin:0 0 16px;font-size:16px;font-weight:600;">转发到私聊</h3>
+      <div class="forum-form-group">
+        <label>搜索用户</label>
+        <input id="forwardSearch" type="text" placeholder="输入用户名搜索..." autocomplete="off" style="width:100%;padding:10px 14px;border:0.5px solid var(--app-border);border-radius:10px;font-size:14px;background:var(--app-surface);color:var(--app-text);box-sizing:border-box;">
+        <div id="forwardResults" style="max-height:200px;overflow-y:auto;margin-top:8px;"></div>
+        <input id="forwardReceiver" type="hidden">
+        <div id="forwardSelected" style="margin-top:8px;display:none;padding:8px 12px;border-radius:8px;background:var(--app-primary-soft);font-size:13px;font-weight:500;display:none;align-items:center;gap:8px;">
+          <span id="forwardSelectedName"></span>
+          <button type="button" onclick="clearForwardSelection()" style="margin-left:auto;background:none;border:none;color:var(--app-muted);cursor:pointer;font-size:16px;padding:0;min-height:auto;">&times;</button>
+        </div>
       </div>
-    </div>
-    <div style="display:flex;gap:12px;justify-content:flex-end">
-      <button class="forum-cancel-btn" onclick="closeForwardModal()">取消</button>
-      <button class="forum-submit-btn" onclick="submitForward()">转发</button>
+      <div style="display:flex;gap:12px;justify-content:flex-end">
+        <button class="forum-cancel-btn" onclick="closeForwardModal()">取消</button>
+        <button class="forum-submit-btn" onclick="submitForward()">转发</button>
+      </div>
     </div>
   </div>
 </div>
 {% endblock %}
 
 {% block body_end %}
-<script>document.getElementById('main').classList.add('forum-no-scroll');document.getElementById('appShell').classList.add('forum-no-scroll-shell');</script>
 <script>const POST_ID = {{ post_id }};</script>
 <script>const FORUM_CURRENT_USER_ID = {{ user_id or 0 }};</script>
+<script>const FORUM_CAN_MODERATE = {{ 'true' if session.get('is_admin') else 'false' }};</script>
+{% include "forum/_scripts/_forum_reader.html" %}
 {% include "forum/_scripts/_forum_mention.html" %}
 {% include "forum/_scripts/_forum_comments.html" %}
 {% include "forum/_scripts/_forum_interactions.html" %}
 {% include "forum/_scripts/_forum_phase2.html" %}
 <script>
   MentionAutocomplete.init(document.getElementById('commentText'), {richEditor: false});
-  // 并行加载所有数据（替代各模块串行自动调用）
   Promise.all([
     loadPostDetail(),
     loadComments(false),
     loadReactions(),
     loadPoll()
-  ]).catch(function(e){ console.error('parallel load error', e); });
+  ]).catch(function(error) {
+    console.error('reader parallel load error', error);
+  });
 </script>
 {% endblock %}
