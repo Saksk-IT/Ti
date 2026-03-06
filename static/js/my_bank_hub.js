@@ -238,9 +238,14 @@
         actions.push('<button type="button" class="my-bank-card-link" data-leave-source-type="' + esc(item.source_type || 'user') + '" data-leave-id="' + esc(item.id) + '">退出题库</button>');
       }
 
+      var cardOpen = item.kind === 'created'
+        ? '<div class="forum-post-card plaza-bank-card my-bank-created-card' + (hasCover ? '' : ' no-cover') + '" role="link" tabindex="0" data-href="' + esc(item.detail_url) + '">'
+        : '<a class="forum-post-card plaza-bank-card' + (hasCover ? '' : ' no-cover') + '" href="' + esc(item.detail_url) + '">';
+      var cardClose = item.kind === 'created' ? '</div>' : '</a>';
+
       return '<div class="my-bank-card-shell">' +
-        toolHtml +
-        '<a class="forum-post-card plaza-bank-card' + (hasCover ? '' : ' no-cover') + '" href="' + esc(item.detail_url) + '">' +
+        cardOpen +
+          toolHtml +
           '<div class="forum-post-header">' +
             '<div class="forum-avatar"></div>' +
             '<div class="forum-post-meta"><span class="forum-user-link">' + ownerText + '</span><span class="forum-board-tag">' + boardText + '</span></div>' +
@@ -254,7 +259,7 @@
           '</div>' +
           '<div class="plaza-bank-time">' + timeText + '</div>' +
           coverHtml +
-        '</a>' +
+        cardClose +
         (actions.length ? '<div class="my-bank-card-tools">' + actions.join('') + '</div>' : '') +
       '</div>';
     }).join('');
@@ -424,6 +429,13 @@
   }
 
   document.addEventListener('click', function (event) {
+    var createdCard = event.target && event.target.closest ? event.target.closest('.my-bank-created-card[data-href]') : null;
+    if (createdCard && !(event.target && event.target.closest && event.target.closest('[data-owner-actions]'))) {
+      var href = createdCard.getAttribute('data-href');
+      if (href) window.location.href = href;
+      return;
+    }
+
     var toggleBtn = event.target && event.target.closest ? event.target.closest('[data-owner-toggle]') : null;
     if (toggleBtn) {
       var ownerRoot = toggleBtn.closest('[data-owner-actions]');
@@ -457,6 +469,16 @@
       showToast((error && error.message) || '退出失败');
       leaveBtn.disabled = false;
     });
+  });
+
+  document.addEventListener('keydown', function (event) {
+    var createdCard = event.target && event.target.closest ? event.target.closest('.my-bank-created-card[data-href]') : null;
+    if (!createdCard) return;
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      var href = createdCard.getAttribute('data-href');
+      if (href) window.location.href = href;
+    }
   });
 
   restoreStateFromUrl();

@@ -386,6 +386,10 @@
   margin-bottom: 0;
 }
 
+.my-bank-created-card {
+  cursor: pointer;
+}
+
 .my-bank-card-shell .forum-post-owner-actions {
   top: 4px;
   right: 4px;
