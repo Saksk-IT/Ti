@@ -2,7 +2,7 @@
 var commentPage = 1;
 var commentTotal = 0;
 var replyTarget = null;
-var commentSort = 'time';
+var commentSort = 'hot';
 
 function escH(value) {
   var div = document.createElement('div');
@@ -134,20 +134,8 @@ function _ensureSortBar() {
   var bar = document.createElement('div');
   bar.id = 'commentSortBar';
   bar.style.cssText = 'display:inline-flex;gap:4px;margin-left:12px;vertical-align:middle;';
-  bar.innerHTML = '<button class="comment-sort-btn' + (commentSort === 'time' ? ' active' : '') + '" data-sort="time">最新</button>' +
-    '<button class="comment-sort-btn' + (commentSort === 'hot' ? ' active' : '') + '" data-sort="hot">最热</button>';
+  bar.innerHTML = '<span class="comment-sort-btn active" aria-label="评论按最热排序">最热</span>';
   title.appendChild(bar);
-
-  bar.addEventListener('click', function(event) {
-    var btn = event.target.closest('.comment-sort-btn');
-    if (!btn || btn.dataset.sort === commentSort) return;
-    commentSort = btn.dataset.sort;
-    bar.querySelectorAll('.comment-sort-btn').forEach(function(item) {
-      item.classList.toggle('active', item.dataset.sort === commentSort);
-    });
-    commentPage = 1;
-    loadComments(false);
-  });
 }
 
 function loadMoreComments() {
