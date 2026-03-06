@@ -183,6 +183,8 @@ def _seed_users() -> Dict[str, m.User]:
         "last_active": now,
         "email_verified": True,
         "email_verified_at": now,
+        "phone_verified": True,
+        "phone_verified_at": now,
         "has_password_set": True,
     }
 
@@ -195,6 +197,7 @@ def _seed_users() -> Dict[str, m.User]:
         _build_user(
             "admin",
             email="admin@example.dev",
+            phone="13900000001",
             is_admin=True,
             is_subject_admin=True,
             is_notification_admin=True,
@@ -202,30 +205,36 @@ def _seed_users() -> Dict[str, m.User]:
         _build_user(
             "subject_admin",
             email="subject_admin@example.dev",
+            phone="13900000002",
             is_subject_admin=True,
             is_notification_admin=False,
         ),
         _build_user(
             "notification_admin",
             email="notification_admin@example.dev",
+            phone="13900000003",
             is_subject_admin=False,
             is_notification_admin=True,
         ),
         _build_user(
             "teacher",
             email="teacher@example.dev",
+            phone="13900000004",
         ),
         _build_user(
             "student_a",
             email="student_a@example.dev",
+            phone="13900000005",
         ),
         _build_user(
             "student_b",
             email="student_b@example.dev",
+            phone="13900000006",
         ),
         _build_user(
             "locked_user",
             email="locked_user@example.dev",
+            phone="13900000007",
             is_locked=True,
         ),
     ]
@@ -392,10 +401,11 @@ def _seed_forum(users: Dict[str, m.User], subjects: List[m.Subject]) -> None:
 
     boards: List[m.ForumBoard] = []
 
-    # 科目关联版块
+    # 科目关联版块：若已存在相同 slug，则复用
     if ds_subject is not None:
-        boards.append(
-            m.ForumBoard(
+        existing_ds_board = m.ForumBoard.query.filter_by(slug="ds-board").first()
+        if existing_ds_board is None:
+            existing_ds_board = m.ForumBoard(
                 name="数据结构讨论区",
                 slug="ds-board",
                 description="围绕数据结构刷题、考试的日常讨论。",
@@ -403,28 +413,28 @@ def _seed_forum(users: Dict[str, m.User], subjects: List[m.Subject]) -> None:
                 subject_id=ds_subject.id,
                 created_by=admin.id,
             )
-        )
+            db.session.add(existing_ds_board)
+            db.session.flush()
+        boards.append(existing_ds_board)
 
-    # 自定义版块
-    boards.append(
-        m.ForumBoard(
+    # 自定义版块：同样尝试复用
+    existing_study_board = m.ForumBoard.query.filter_by(slug="study-share").first()
+    if existing_study_board is None:
+        existing_study_board = m.ForumBoard(
             name="学习心得",
             slug="study-share",
             description="分享刷题心得与备考经验。",
             board_type="custom",
             created_by=admin.id,
         )
-    )
-
-    for board in boards:
-        db.session.add(board)
-
-    db.session.flush()
+        db.session.add(existing_study_board)
+        db.session.flush()
+    boards.append(existing_study_board)
 
     if not boards:
         return
 
-    study_board = boards[-1]
+    study_board = existing_study_board
 
     # 管理员置顶贴
     post_announcement = m.ForumPost(
