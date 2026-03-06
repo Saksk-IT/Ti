@@ -29,7 +29,24 @@
         评论
         <span data-post-comment-count>0</span>
       </button>
-      <button type="button" class="forum-reader-top-btn" onclick="openForwardModal()">转发</button>
+      <button type="button" class="forum-reader-top-btn" data-reader-top-action="forward" onclick="openForwardModal()">转发</button>
+      <div class="forum-reader-more" id="readerMoreHost" hidden>
+        <button
+          type="button"
+          class="forum-reader-top-btn forum-reader-top-icon-btn"
+          id="readerMoreBtn"
+          aria-label="更多操作"
+          aria-haspopup="menu"
+          aria-expanded="false"
+          onclick="toggleReaderMoreMenu(event)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <circle cx="5" cy="12" r="1.7" fill="currentColor"/>
+            <circle cx="12" cy="12" r="1.7" fill="currentColor"/>
+            <circle cx="19" cy="12" r="1.7" fill="currentColor"/>
+          </svg>
+        </button>
+        <div id="readerMoreMenu" class="forum-reader-more-menu" role="menu" hidden></div>
+      </div>
     </div>
   </header>
 
@@ -65,16 +82,6 @@
         <div id="pollSection" style="display:none"></div>
 
         <div id="reactionsBar" class="forum-reactions-bar"></div>
-
-        <div class="forum-actions-bar forum-reader-actions" id="actionsBar">
-          <div class="forum-detail-skel" style="display:flex;gap:12px;flex-wrap:wrap">
-            <div class="forum-skeleton-row" style="width:88px;height:40px;border-radius:999px"></div>
-            <div class="forum-skeleton-row" style="width:88px;height:40px;border-radius:999px"></div>
-            <div class="forum-skeleton-row" style="width:88px;height:40px;border-radius:999px"></div>
-            <div class="forum-skeleton-row" style="width:88px;height:40px;border-radius:999px"></div>
-          </div>
-        </div>
-
         <button type="button" id="readerCommentEntryBtn" class="forum-reader-comments-entry" onclick="openCommentsDrawer()">
           <span class="forum-reader-comments-entry-title">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>

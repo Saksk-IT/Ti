@@ -58,6 +58,38 @@ function canManagePost(post) {
   return Number(post.author_id || 0) === getCurrentForumUserId() || !!FORUM_CAN_MODERATE;
 }
 
+function buildReaderMoreMenu(post) {
+  var items = [
+    '<button type="button" role="menuitem" onclick="closeReaderMoreMenu(); openReportModal(\'post\',' + POST_ID + ')">' +
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>' +
+      '<span>举报</span>' +
+    '</button>'
+  ];
+
+  if (canManagePost(post)) {
+    items.push(
+      '<button type="button" role="menuitem" onclick="closeReaderMoreMenu(); goEditCurrentPost()">' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg>' +
+        '<span>编辑</span>' +
+      '</button>'
+    );
+    items.push(
+      '<button type="button" role="menuitem" onclick="closeReaderMoreMenu(); toggleCurrentPostHidden()">' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20C7 20 2.73 16.89 1 12c.8-2.28 2.23-4.23 4.1-5.66"/><path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c5 0 9.27 3.11 11 8a11.05 11.05 0 0 1-4.08 5.65"/><path d="M1 1l22 22"/></svg>' +
+        '<span>' + (post && post.is_hidden ? '取消隐藏' : '隐藏') + '</span>' +
+      '</button>'
+    );
+    items.push(
+      '<button type="button" class="danger" role="menuitem" onclick="closeReaderMoreMenu(); deleteCurrentPost()">' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>' +
+        '<span>删除</span>' +
+      '</button>'
+    );
+  }
+
+  return items.join('');
+}
+
 function buildPostStats(post) {
   var stats = [
     {
@@ -189,24 +221,15 @@ async function loadPostDetail() {
       buildPostStats(post)
     ].join('');
 
-    var likedClass = post.liked ? ' active' : '';
-    var favoritedClass = post.favorited ? ' active' : '';
-    var ownerActions = canManagePost(post)
-      ? '<div class="forum-author-actions">' +
-          '<button class="forum-action-btn" onclick="goEditCurrentPost()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg> 编辑</button>' +
-          '<button class="forum-action-btn" onclick="toggleCurrentPostHidden()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20C7 20 2.73 16.89 1 12c.8-2.28 2.23-4.23 4.1-5.66"/><path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c5 0 9.27 3.11 11 8a11.05 11.05 0 0 1-4.08 5.65"/><path d="M1 1l22 22"/></svg> ' + (post.is_hidden ? '取消隐藏' : '隐藏') + '</button>' +
-          '<button class="forum-action-btn danger" onclick="deleteCurrentPost()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg> 删除</button>' +
-        '</div>'
-      : '';
-
-    document.getElementById('actionsBar').innerHTML = [
-      '<button class="forum-action-btn' + likedClass + '" id="likeBtn" data-post-like-toggle onclick="toggleLike()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg> 点赞 <span data-post-like-count>' + (post.like_count || 0) + '</span></button>',
-      '<button class="forum-action-btn' + favoritedClass + '" id="favBtn" data-post-fav-toggle onclick="toggleFav()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 收藏 <span data-post-fav-count>' + (post.favorite_count || 0) + '</span></button>',
-      '<button class="forum-action-btn" onclick="openCommentsDrawer()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg> 评论 <span data-post-comment-count>' + (post.comment_count || 0) + '</span></button>',
-      '<button class="forum-action-btn" onclick="openForwardModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 17 20 12 15 7"/><path d="M4 18v-2a4 4 0 0 1 4-4h12"/></svg> 转发</button>',
-      '<button class="forum-action-btn" onclick="openReportModal(\'post\',' + POST_ID + ')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg> 举报</button>',
-      ownerActions
-    ].join('');
+    var moreHost = getReaderMoreHost();
+    var moreMenu = document.getElementById('readerMoreMenu');
+    if (moreHost) {
+      moreHost.hidden = false;
+    }
+    if (moreMenu) {
+      moreMenu.innerHTML = buildReaderMoreMenu(post);
+    }
+    closeReaderMoreMenu();
 
     if (post.is_locked) {
       var commentInput = document.getElementById('commentInput');

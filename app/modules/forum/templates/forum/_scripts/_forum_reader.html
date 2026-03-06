@@ -8,6 +8,37 @@ function getForumReaderPage() {
   return document.getElementById('forumReaderPage');
 }
 
+function getReaderMoreHost() {
+  return document.getElementById('readerMoreHost');
+}
+
+function closeReaderMoreMenu() {
+  var host = getReaderMoreHost();
+  var menu = document.getElementById('readerMoreMenu');
+  var button = document.getElementById('readerMoreBtn');
+
+  if (host) host.classList.remove('is-open');
+  if (menu) menu.hidden = true;
+  if (button) button.setAttribute('aria-expanded', 'false');
+}
+
+function toggleReaderMoreMenu(event) {
+  if (event) event.stopPropagation();
+
+  var host = getReaderMoreHost();
+  var menu = document.getElementById('readerMoreMenu');
+  var button = document.getElementById('readerMoreBtn');
+  if (!host || !menu || !button) return;
+
+  var shouldOpen = menu.hidden;
+  closeReaderMoreMenu();
+  if (!shouldOpen) return;
+
+  host.classList.add('is-open');
+  menu.hidden = false;
+  button.setAttribute('aria-expanded', 'true');
+}
+
 function _readerEsc(value) {
   var div = document.createElement('div');
   div.textContent = value || '';
@@ -179,6 +210,16 @@ function renderReaderPostList(posts, emptyText, actionLabel, actionHref) {
     '</a>';
   }).join('');
 }
+
+document.addEventListener('click', function(event) {
+  var host = getReaderMoreHost();
+  if (!host || host.contains(event.target)) return;
+  closeReaderMoreMenu();
+});
+
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') closeReaderMoreMenu();
+});
 
 function renderReaderAuthor(author) {
   if (!author) {
