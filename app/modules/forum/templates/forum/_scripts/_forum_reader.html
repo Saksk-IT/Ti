@@ -45,13 +45,48 @@ function _readerEsc(value) {
   return div.innerHTML;
 }
 
+function isReaderMobileTocMode() {
+  return window.matchMedia('(max-width: 900px)').matches;
+}
+
+function syncReaderBodyLock() {
+  var page = getForumReaderPage();
+  var shouldLock = !!(page && (page.classList.contains('is-comments-open') || page.classList.contains('is-toc-open')));
+  document.body.classList.toggle('forum-reader-comments-open', shouldLock);
+}
+
+function openTocDrawer() {
+  var page = getForumReaderPage();
+  if (!page || !isReaderMobileTocMode()) return;
+  closeCommentsDrawer();
+  page.classList.add('is-toc-open');
+  syncReaderBodyLock();
+}
+
+function closeTocDrawer() {
+  var page = getForumReaderPage();
+  if (!page) return;
+  page.classList.remove('is-toc-open');
+  syncReaderBodyLock();
+}
+
+function syncReaderResponsiveState() {
+  var page = getForumReaderPage();
+  if (!page) return;
+  if (!isReaderMobileTocMode()) {
+    page.classList.remove('is-toc-open');
+  }
+  syncReaderBodyLock();
+}
+
 function openCommentsDrawer() {
   var page = getForumReaderPage();
   var drawer = document.getElementById('commentsDrawer');
   if (!page || !drawer) return;
+  closeTocDrawer();
   page.classList.add('is-comments-open');
   drawer.setAttribute('aria-hidden', 'false');
-  document.body.classList.add('forum-reader-comments-open');
+  syncReaderBodyLock();
 }
 
 function closeCommentsDrawer() {
@@ -60,7 +95,7 @@ function closeCommentsDrawer() {
   if (!page || !drawer) return;
   page.classList.remove('is-comments-open');
   drawer.setAttribute('aria-hidden', 'true');
-  document.body.classList.remove('forum-reader-comments-open');
+  syncReaderBodyLock();
 }
 
 function focusCommentInput() {
@@ -325,7 +360,7 @@ function _renderReaderTocPreview() {
     return;
   }
 
-  var maxVisible = 9;
+  var maxVisible = isReaderMobileTocMode() ? _readerTocEntries.length : 9;
   var activeIndex = _readerTocEntries.findIndex(function(item) { return item.id === _readerTocActiveId; });
   if (activeIndex < 0) activeIndex = 0;
 
@@ -374,6 +409,7 @@ function scrollToReaderHeading(id) {
   var offset = (topbar ? topbar.offsetHeight : 0) + 18;
   var windowTop = el.getBoundingClientRect().top + window.scrollY - offset;
   window.scrollTo({top: windowTop, behavior: 'smooth'});
+  closeTocDrawer();
 }
 
 function _setActiveReaderToc(id) {
@@ -437,7 +473,11 @@ function buildReaderToc() {
 
 document.addEventListener('keydown', function(event) {
   if (event.key === 'Escape') {
+    closeTocDrawer();
     closeCommentsDrawer();
   }
 });
+
+window.addEventListener('resize', syncReaderResponsiveState);
+syncReaderResponsiveState();
 </script>
