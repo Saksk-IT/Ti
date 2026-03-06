@@ -3,8 +3,6 @@ var _readerCommentCount = null;
 var _readerTocObserver = null;
 var _readerTocEntries = [];
 var _readerTocActiveId = '';
-var _readerTopbarPostTitle = '';
-var _readerScrollTrackingBound = false;
 
 function getForumReaderPage() {
   return document.getElementById('forumReaderPage');
@@ -31,9 +29,7 @@ function closeCommentsDrawer() {
   if (!page || !drawer) return;
   page.classList.remove('is-comments-open');
   drawer.setAttribute('aria-hidden', 'true');
-  if (!page.classList.contains('is-mobile-panel-open')) {
-    document.body.classList.remove('forum-reader-comments-open');
-  }
+  document.body.classList.remove('forum-reader-comments-open');
 }
 
 function focusCommentInput() {
@@ -79,9 +75,6 @@ function syncReaderMeta(post) {
     stateChip.textContent = stateText;
   }
 
-  _readerTopbarPostTitle = pageTitle;
-  var topbarTitle = document.getElementById('readerTopbarTitle');
-  if (topbarTitle) topbarTitle.textContent = pageTitle;
   document.title = 'SAK · ' + pageTitle;
 }
 
@@ -198,7 +191,7 @@ function renderReaderAuthor(author) {
     : '<div class="forum-reader-author-avatar"></div>';
   var followButton = '';
   if (author.id && author.id !== currentUserId) {
-    followButton = '<button class="forum-follow-btn' + (author.i_follow ? ' active' : '') + '" data-follow-author="1" onclick="toggleFollowAuthor()">' + _followBtnText(author) + '</button>';
+    followButton = '<button class="forum-follow-btn' + (author.i_follow ? ' active' : '') + '" id="followAuthorBtn" onclick="toggleFollowAuthor()">' + _followBtnText(author) + '</button>';
   }
 
   return '<div class="forum-reader-author-head">' +
@@ -221,10 +214,11 @@ function renderReaderAuthor(author) {
 
 function syncReaderAuthorState(status) {
   if (!status) return;
-  document.querySelectorAll('[data-follow-author]').forEach(function(button) {
+  var button = document.getElementById('followAuthorBtn');
+  if (button) {
     button.textContent = _followBtnText(status);
     button.classList.toggle('active', !!status.i_follow);
-  });
+  }
   document.querySelectorAll('[data-author-followers]').forEach(function(node) {
     node.textContent = _formatReaderCount(status.follower_count);
   });
@@ -249,10 +243,6 @@ async function loadReaderSidebar(post) {
     if (authorCard) {
       authorCard.innerHTML = renderReaderAuthor(data.author);
     }
-    var infoAuthor = document.getElementById('readerInfoAuthor');
-    if (infoAuthor) {
-      infoAuthor.innerHTML = renderReaderAuthor(data.author);
-    }
     var authorPostItems = Array.isArray(data.author_posts) ? data.author_posts.slice(0, 3) : [];
     var relatedPostItems = Array.isArray(data.related_posts) ? data.related_posts.slice(0, 2) : [];
     var hotPostItems = Array.isArray(data.hot_posts) ? data.hot_posts.slice(0, 2) : [];
@@ -262,23 +252,11 @@ async function loadReaderSidebar(post) {
     if (authorPosts) {
       authorPosts.innerHTML = renderReaderPostList(authorPostItems, '作者还没有其他帖子', '查看作者主页', authorProfileUrl);
     }
-    var infoAuthorPosts = document.getElementById('readerInfoAuthorPosts');
-    if (infoAuthorPosts) {
-      infoAuthorPosts.innerHTML = renderReaderPostList(authorPostItems, '作者还没有其他帖子', '查看作者主页', authorProfileUrl);
-    }
     if (relatedPosts) {
       relatedPosts.innerHTML = renderReaderPostList(relatedPostItems, '暂时没有更相关的帖子', '查看同版块更多', boardUrl);
     }
-    var infoRelatedPosts = document.getElementById('readerInfoRelatedPosts');
-    if (infoRelatedPosts) {
-      infoRelatedPosts.innerHTML = renderReaderPostList(relatedPostItems, '暂时没有更相关的帖子', '查看同版块更多', boardUrl);
-    }
     if (hotPosts) {
       hotPosts.innerHTML = renderReaderPostList(hotPostItems, '当前没有热门帖子', '返回论坛', '/forum');
-    }
-    var infoHotPosts = document.getElementById('readerInfoHotPosts');
-    if (infoHotPosts) {
-      infoHotPosts.innerHTML = renderReaderPostList(hotPostItems, '当前没有热门帖子', '返回论坛', '/forum');
     }
   } catch (error) {
     console.error(error);
@@ -342,79 +320,6 @@ function isReaderDesktopScrollMode() {
   return window.matchMedia('(min-width: 901px)').matches;
 }
 
-function openReaderMobilePanel(kind) {
-  var page = getForumReaderPage();
-  if (!page) return;
-  page.classList.add('is-mobile-panel-open');
-  page.classList.toggle('is-mobile-panel-toc-open', kind === 'toc');
-  page.classList.toggle('is-mobile-panel-info-open', kind === 'info');
-  var tocSheet = document.getElementById('readerTocSheet');
-  var infoSheet = document.getElementById('readerInfoSheet');
-  if (tocSheet) tocSheet.setAttribute('aria-hidden', kind === 'toc' ? 'false' : 'true');
-  if (infoSheet) infoSheet.setAttribute('aria-hidden', kind === 'info' ? 'false' : 'true');
-  document.body.classList.add('forum-reader-comments-open');
-}
-
-function closeReaderMobilePanels() {
-  var page = getForumReaderPage();
-  if (!page) return;
-  page.classList.remove('is-mobile-panel-open', 'is-mobile-panel-toc-open', 'is-mobile-panel-info-open');
-  var tocSheet = document.getElementById('readerTocSheet');
-  var infoSheet = document.getElementById('readerInfoSheet');
-  if (tocSheet) tocSheet.setAttribute('aria-hidden', 'true');
-  if (infoSheet) infoSheet.setAttribute('aria-hidden', 'true');
-  if (!page.classList.contains('is-comments-open')) {
-    document.body.classList.remove('forum-reader-comments-open');
-  }
-}
-
-function _getTocLabelById(id) {
-  var match = _readerTocEntries.find(function(item) { return item.id === id; });
-  return match ? match.label : '';
-}
-
-function updateReaderProgressState() {
-  var progressBar = document.getElementById('readerProgressBar');
-  var topbarTitle = document.getElementById('readerTopbarTitle');
-  var progress = 0;
-
-  if (isReaderDesktopScrollMode()) {
-    var container = getReaderScrollContainer();
-    if (container) {
-      var maxScroll = Math.max(container.scrollHeight - container.clientHeight, 1);
-      progress = Math.min(Math.max(container.scrollTop / maxScroll, 0), 1);
-    }
-  } else {
-    var article = getReaderScrollContainer();
-    if (article) {
-      var rect = article.getBoundingClientRect();
-      var total = Math.max(article.offsetHeight - window.innerHeight * 0.72, 1);
-      var passed = Math.min(Math.max(-rect.top, 0), total);
-      progress = Math.min(Math.max(passed / total, 0), 1);
-    }
-  }
-
-  if (progressBar) {
-    progressBar.style.transform = 'scaleX(' + progress.toFixed(4) + ')';
-  }
-
-  if (topbarTitle) {
-    var tocLabel = _getTocLabelById(_readerTocActiveId);
-    topbarTitle.textContent = tocLabel || _readerTopbarPostTitle || '加载中...';
-  }
-}
-
-function bindReaderScrollTracking() {
-  if (_readerScrollTrackingBound) return;
-  _readerScrollTrackingBound = true;
-  var container = getReaderScrollContainer();
-  if (container) {
-    container.addEventListener('scroll', updateReaderProgressState, {passive: true});
-  }
-  window.addEventListener('scroll', updateReaderProgressState, {passive: true});
-  window.addEventListener('resize', updateReaderProgressState);
-}
-
 function scrollToReaderHeading(id) {
   var el = document.getElementById(id);
   if (!el) return;
@@ -433,18 +338,6 @@ function scrollToReaderHeading(id) {
 function _setActiveReaderToc(id) {
   _readerTocActiveId = id || '';
   _renderReaderTocPreview();
-  var mobileList = document.getElementById('readerTocMobileList');
-  if (mobileList) {
-    mobileList.innerHTML = _readerTocEntries.map(function(item) {
-      return '<button type="button" class="forum-reader-toc-item ' + item.levelClass + (item.id === _readerTocActiveId ? ' active' : '') + '" data-target="' + item.id + '" onclick="scrollToReaderHeading(\'' + item.id + '\');closeReaderMobilePanels()">' + _readerEsc(item.label) + '</button>';
-    }).join('');
-  }
-  var mobileHint = document.getElementById('readerTocMobileHint');
-  if (mobileHint) {
-    mobileHint.textContent = '点击目录可直接跳到对应章节';
-    mobileHint.style.display = _readerTocEntries.length ? 'block' : 'none';
-  }
-  updateReaderProgressState();
 }
 
 function buildReaderToc() {
@@ -504,7 +397,6 @@ function buildReaderToc() {
 document.addEventListener('keydown', function(event) {
   if (event.key === 'Escape') {
     closeCommentsDrawer();
-    closeReaderMobilePanels();
   }
 });
 </script>

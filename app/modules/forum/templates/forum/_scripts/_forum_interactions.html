@@ -95,9 +95,8 @@ async function toggleFollowAuthor() {
   if (_followLoading || !_postData) return;
 
   _followLoading = true;
-  var buttons = Array.prototype.slice.call(document.querySelectorAll('[data-follow-author]'));
-  var btn = buttons.length ? buttons[0] : null;
-  buttons.forEach(function(button) { button.disabled = true; });
+  var btn = document.getElementById('followAuthorBtn');
+  if (btn) btn.disabled = true;
 
   try {
     var isFollowing = btn && btn.classList.contains('active');
@@ -117,7 +116,7 @@ async function toggleFollowAuthor() {
   }
 
   _followLoading = false;
-  buttons.forEach(function(button) { button.disabled = false; });
+  if (btn) btn.disabled = false;
 }
 
 async function loadPostDetail() {
@@ -219,8 +218,6 @@ async function loadPostDetail() {
     syncReaderMeta(_postData);
     syncReaderActionState(_postData);
     buildReaderToc();
-    bindReaderScrollTracking();
-    updateReaderProgressState();
     loadReaderSidebar(_postData);
   } catch (error) {
     console.error(error);
