@@ -187,7 +187,8 @@ def _seed_users() -> Dict[str, m.User]:
     }
 
     def _build_user(username: str, **extra) -> m.User:
-        merged = {**base_kwargs, **extra}
+        # 显式写入 username 字段，避免出现空用户名导致的约束错误
+        merged = {"username": username, **base_kwargs, **extra}
         return m.User(**merged)
 
     users: List[m.User] = [
@@ -238,19 +239,20 @@ def _seed_users() -> Dict[str, m.User]:
 
 
 def _seed_subjects_and_questions(admin_user: m.User) -> Tuple[List[m.Subject], List[m.Question]]:
-    """初始化若干公共科目与基础题目，供公共题库和考试使用。"""
+    """初始化若干公共科目与基础题目，供公共题库和考试使用。
+
+    为了兼容已经存在的开发/测试数据库：
+    - 不新建 Subject 记录，只复用当前库中已有科目；
+    - 仅在这些科目下插入少量示例题目，避免主键/唯一约束冲突。
+    """
 
     from json import dumps
 
-    subjects: List[m.Subject] = [
-        m.Subject(name="数据结构", description="经典数据结构与算法基础"),
-        m.Subject(name="计算机网络", description="计算机网络基础与应用"),
-    ]
-
-    for subject in subjects:
-        db.session.add(subject)
-
-    db.session.flush()
+    # 复用已有科目：最多取前两个科目作为示例科目
+    subjects: List[m.Subject] = list(m.Subject.query.order_by(m.Subject.id).limit(2))
+    if not subjects:
+        # 极端情况下数据库里没有任何科目，则跳过题目种子数据
+        return [], []
 
     questions: List[m.Question] = []
 
@@ -289,8 +291,8 @@ def _seed_subjects_and_questions(admin_user: m.User) -> Tuple[List[m.Subject], L
         ["BST", "中序遍历"],
     )
 
-    # 计算机网络示例题
-    net = subjects[1]
+    # 计算机网络示例题（若不存在第二个科目，则复用第一个）
+    net = subjects[1] if len(subjects) > 1 else subjects[0]
     _add_question(
         net,
         "HTTP 状态码 404 的含义是？",
