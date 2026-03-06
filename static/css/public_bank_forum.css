@@ -386,76 +386,32 @@
   margin-bottom: 0;
 }
 
-
-.my-bank-card-owner-actions {
-  position: absolute;
-  top: 8px;
-  right: 8px;
+.my-bank-card-shell .forum-post-owner-actions {
+  top: 4px;
+  right: 4px;
   z-index: 10;
 }
 
-.my-bank-card-owner-toggle {
-  width: 28px;
-  height: 28px;
-  border-radius: 10px;
-  border: 0.5px solid color-mix(in srgb, var(--app-border) 82%, transparent);
-  background: color-mix(in srgb, var(--app-surface) 84%, transparent);
-  backdrop-filter: blur(6px);
-  color: var(--app-text);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  cursor: pointer;
-  min-height: auto;
-  box-shadow: var(--app-shadow-soft);
-}
-
-.my-bank-card-owner-toggle svg {
-  width: 16px;
-  height: 16px;
-}
-
-.my-bank-card-owner-toggle:hover {
-  border-color: var(--app-primary);
-  color: var(--app-primary);
-}
-
-.my-bank-card-owner-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
+.my-bank-card-shell .forum-post-owner-menu {
   min-width: 118px;
-  display: none;
-  flex-direction: column;
-  gap: 4px;
-  padding: 8px;
-  border-radius: 12px;
-  border: 0.5px solid var(--app-border);
-  background: var(--app-surface);
-  box-shadow: var(--app-shadow-soft);
 }
 
-.my-bank-card-owner-actions.open .my-bank-card-owner-menu {
-  display: flex;
-}
-
-.my-bank-card-owner-link {
+.my-bank-card-shell .forum-post-owner-menu a {
   display: inline-flex;
   align-items: center;
   min-height: 32px;
-  padding: 0 10px;
+  padding: 6px 8px;
   border-radius: 8px;
   color: var(--app-text);
   font-size: 13px;
-  font-weight: 500;
   text-decoration: none;
 }
 
-.my-bank-card-owner-link:hover {
+.my-bank-card-shell .forum-post-owner-menu a:hover {
   background: var(--app-primary-soft);
   color: var(--app-primary);
 }
+
 
 .my-bank-card-tools {
   display: flex;
@@ -676,7 +632,7 @@
     padding: 16px;
   }
 
-  .my-bank-card-owner-actions {
+  .my-bank-card-shell .forum-post-owner-actions {
     top: 6px;
     right: 6px;
   }

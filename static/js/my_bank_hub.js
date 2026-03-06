@@ -223,14 +223,14 @@
       var toolHtml = '';
       var actions = [];
       if (item.kind === 'created') {
-        toolHtml = '<div class="my-bank-card-owner-actions" data-owner-actions>' +
-          '<button type="button" class="my-bank-card-owner-toggle" aria-label="更多操作" data-owner-toggle>' +
-            '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="5" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="19" r="1.8" fill="currentColor"/></svg>' +
+        toolHtml = '<div class="forum-post-owner-actions" data-owner-actions>' +
+          '<button type="button" class="forum-post-owner-toggle" aria-label="更多操作" data-owner-toggle>' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></svg>' +
           '</button>' +
-          '<div class="my-bank-card-owner-menu">' +
-            '<a class="my-bank-card-owner-link" href="' + esc(item.detail_url) + '">继续练习</a>' +
-            '<a class="my-bank-card-owner-link" href="' + esc(item.question_manage_url) + '">题目管理</a>' +
-            '<a class="my-bank-card-owner-link" href="' + esc(item.edit_url || item.manage_url) + '">信息编辑</a>' +
+          '<div class="forum-post-owner-menu">' +
+            '<a class="forum-post-owner-link" href="' + esc(item.detail_url) + '">继续练习</a>' +
+            '<a class="forum-post-owner-link" href="' + esc(item.question_manage_url) + '">题目管理</a>' +
+            '<a class="forum-post-owner-link" href="' + esc(item.edit_url || item.manage_url) + '">信息编辑</a>' +
           '</div>' +
         '</div>';
       } else {
