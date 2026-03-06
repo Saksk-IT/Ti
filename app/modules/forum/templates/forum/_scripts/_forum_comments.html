@@ -116,26 +116,9 @@ async function loadComments(append) {
     var loadMore = document.getElementById('commentsLoadMore');
     var totalPages = Math.ceil(commentTotal / 30);
     loadMore.style.display = commentPage < totalPages ? 'block' : 'none';
-    _ensureSortBar();
   } catch (error) {
     console.error(error);
   }
-}
-
-function _ensureSortBar() {
-  if (document.getElementById('commentSortBar')) return;
-
-  var panel = document.getElementById('commentsDrawer');
-  if (!panel) return;
-
-  var title = panel.querySelector('.forum-section-title');
-  if (!title) return;
-
-  var bar = document.createElement('div');
-  bar.id = 'commentSortBar';
-  bar.style.cssText = 'display:inline-flex;gap:4px;margin-left:12px;vertical-align:middle;';
-  bar.innerHTML = '<span class="comment-sort-btn active" aria-label="评论按最热排序">最热</span>';
-  title.appendChild(bar);
 }
 
 function loadMoreComments() {
