@@ -253,13 +253,27 @@ function _setReaderTocMeta(text) {
   if (meta) meta.textContent = text;
 }
 
+function getReaderScrollContainer() {
+  return document.getElementById('readerContentColumn');
+}
+
+function isReaderDesktopScrollMode() {
+  return window.matchMedia('(min-width: 901px)').matches;
+}
+
 function scrollToReaderHeading(id) {
   var el = document.getElementById(id);
   if (!el) return;
+  var container = getReaderScrollContainer();
+  if (isReaderDesktopScrollMode() && container) {
+    var top = el.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop - 18;
+    container.scrollTo({top: top, behavior: 'smooth'});
+    return;
+  }
   var topbar = document.querySelector('.forum-reader-topbar');
   var offset = (topbar ? topbar.offsetHeight : 0) + 18;
-  var top = el.getBoundingClientRect().top + window.scrollY - offset;
-  window.scrollTo({top: top, behavior: 'smooth'});
+  var windowTop = el.getBoundingClientRect().top + window.scrollY - offset;
+  window.scrollTo({top: windowTop, behavior: 'smooth'});
 }
 
 function _setActiveReaderToc(id) {
@@ -297,12 +311,17 @@ function buildReaderToc() {
   }).join('');
   _setReaderTocMeta(headings.length + ' 节');
 
+  var observerRoot = (isReaderDesktopScrollMode() && getReaderScrollContainer()) ? getReaderScrollContainer() : null;
   _readerTocObserver = new IntersectionObserver(function(entries) {
     var visible = entries.filter(function(entry) { return entry.isIntersecting; });
     if (!visible.length) return;
     visible.sort(function(a, b) { return a.boundingClientRect.top - b.boundingClientRect.top; });
     _setActiveReaderToc(visible[0].target.id);
-  }, {rootMargin: '-120px 0px -60% 0px', threshold: [0, 1]});
+  }, {
+    root: observerRoot,
+    rootMargin: observerRoot ? '-18px 0px -72% 0px' : '-120px 0px -60% 0px',
+    threshold: [0, 1]
+  });
 
   headings.forEach(function(node) {
     _readerTocObserver.observe(node);
