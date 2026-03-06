@@ -1,4 +1,4 @@
-<a href="/forum/post/{{ post.id }}" target="_blank" rel="noopener noreferrer" class="forum-post-card">
+<div class="forum-post-card" role="link" tabindex="0" onclick="window.open('/forum/post/{{ post.id }}', '_blank', 'noopener')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();window.open('/forum/post/{{ post.id }}', '_blank', 'noopener')}">
   <div class="forum-post-header">
     <a href="/user/{{ post.author_id }}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="forum-avatar-link">
       {% if post.author_avatar %}
@@ -34,4 +34,4 @@
     <img src="{{ post.cover_image }}" alt="封面">
   </div>
   {% endif %}
-</a>
+</div>
