@@ -4,108 +4,67 @@
 {% block page_title %}题库广场{% endblock %}
 
 {% block head_extra %}
-  <link rel="stylesheet" href="/static/css/public_bank_forum.css" />
+{% include "forum/_styles_layout.html" %}
+{% include "forum/_styles.html" %}
+<link rel="stylesheet" href="/static/css/public_bank_forum.css" />
 {% endblock %}
 
 {% block content %}
-  <div class="pbf-page" id="publicBankPlazaPage">
-    <header class="pbf-hero app-card">
-      <div class="pbf-hero-main">
-        <div>
-          <p class="pbf-eyebrow">Public Bank Plaza</p>
-          <h1>题库广场</h1>
-          <p class="pbf-subtitle">按论坛式发现流重做：先看板块，再看榜单与活跃题库，最后快速进入详情页练习。</p>
-        </div>
-        <div class="pbf-hero-actions">
-          <a class="pbf-hero-link active" href="/public/banks">发现广场</a>
-          {% if logged_in %}
-            <a class="pbf-hero-link" href="/public/banks/joined">加入题库</a>
-          {% else %}
-            <a class="pbf-hero-link" href="/login">登录后查看已加入</a>
-          {% endif %}
-          <button class="pbf-drawer-btn" id="plazaDrawerBtn" type="button">筛选面板</button>
-        </div>
-      </div>
-      <div class="pbf-kpis" aria-label="广场概览">
-        <div class="pbf-kpi"><span>总题库</span><strong id="plazaKpiBanks">-</strong></div>
-        <div class="pbf-kpi"><span>总题量</span><strong id="plazaKpiQuestions">-</strong></div>
-        <div class="pbf-kpi"><span>近 7 天新增</span><strong id="plazaKpiNew">-</strong></div>
-        <div class="pbf-kpi"><span>近 7 天活跃用户</span><strong id="plazaKpiActive">-</strong></div>
-      </div>
-    </header>
+<div class="forum-drawer-overlay" id="forumDrawerOverlay" onclick="closeDrawer()"></div>
+<div class="forum-drawer" id="forumDrawer">
+  <div class="forum-drawer-close"><button onclick="closeDrawer()">&times;</button></div>
+  <div id="drawerContent"></div>
+</div>
 
-    <div class="pbf-layout">
-      <aside class="pbf-sidebar app-card" id="plazaSidebar">
-        <section class="pbf-side-section">
-          <div class="pbf-side-head">
-            <h2>快捷入口</h2>
-          </div>
-          <div class="pbf-side-links">
-            <a class="pbf-side-link active" href="/public/banks">发现公开题库</a>
-            {% if logged_in %}
-              <a class="pbf-side-link" href="/public/banks/joined">查看加入题库</a>
-            {% else %}
-              <a class="pbf-side-link" href="/login">登录后管理加入题库</a>
-            {% endif %}
-          </div>
-        </section>
+<div class="forum-layout plaza-layout" id="publicBankPlazaPage">
+  <aside class="forum-sidebar plaza-sidebar">
+    {% include "user_bank/public/_plaza_sidebar.html" %}
+  </aside>
 
-        <section class="pbf-side-section">
-          <div class="pbf-side-head">
-            <h2>板块</h2>
-            <span id="plazaBoardSummary">全部</span>
-          </div>
-          <div class="pbf-board-list" id="plazaBoards"></div>
-        </section>
-
-        <section class="pbf-side-section">
-          <div class="pbf-side-head">
-            <h2>热门题库</h2>
-            <span>Top 5</span>
-          </div>
-          <div class="pbf-hot-list" id="plazaHotList"></div>
-        </section>
-
-        <section class="pbf-side-section">
-          <div class="pbf-side-head">
-            <h2>题库统计</h2>
-          </div>
-          <div class="pbf-stats-grid" id="plazaSummary"></div>
-        </section>
-      </aside>
-
-      <main class="pbf-main">
-        <section class="pbf-toolbar app-card">
-          <div class="pbf-search-wrap">
-            <input id="plazaKeyword" class="app-input pbf-search" type="search" placeholder="搜索题库名称或描述" autocomplete="off" />
-            <button id="plazaClearKeyword" class="pbf-clear-btn" type="button" aria-label="清空搜索">清空</button>
-          </div>
-          <div class="pbf-active-filters" id="plazaActiveFilters"></div>
-        </section>
-
-        <nav class="pbf-tabs app-card" id="plazaTabs" aria-label="题库排序视图">
-          <button type="button" data-tab="latest" class="active">最新</button>
-          <button type="button" data-tab="hot">热门</button>
-          <button type="button" data-tab="active">活跃</button>
-          <button type="button" data-tab="featured">精华</button>
-        </nav>
-
-        <section class="pbf-list-section">
-          <div id="plazaListFeedback" class="pbf-feedback" hidden></div>
-          <div id="plazaList" class="pbf-card-list" aria-live="polite"></div>
-          <div id="plazaPagination" class="pbf-pagination"></div>
-        </section>
-      </main>
+  <div class="forum-main plaza-main">
+    <div class="forum-topbar plaza-topbar">
+      <button class="forum-drawer-toggle" onclick="openDrawer()" title="侧边栏">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+      </button>
+      {% if logged_in %}
+        <a href="/public/banks/joined" class="forum-new-btn">加入题库</a>
+      {% else %}
+        <a href="/login" class="forum-new-btn">登录后查看加入题库</a>
+      {% endif %}
     </div>
 
-    <button class="pbf-overlay" id="plazaOverlay" type="button" aria-label="关闭筛选面板"></button>
-  </div>
+    <div class="plaza-searchbar">
+      <input id="plazaKeyword" class="plaza-search-input" type="search" placeholder="搜索题库名称或简介" autocomplete="off" />
+      <button type="button" class="plaza-search-clear" id="plazaClearKeyword">清空</button>
+    </div>
 
-  <script>
-    window.__PUBLIC_BANK_PLAZA__ = {{ {
-      'logged_in': logged_in,
-      'user_id': user_id,
-    }|tojson }};
-  </script>
-  <script src="/static/js/public_bank_plaza.js"></script>
+    <div class="forum-tabs" id="forumTabs">
+      <button class="forum-tab active" data-tab="latest" onclick="setTab(this, 'latest')">最新</button>
+      <button class="forum-tab" data-tab="hot" onclick="setTab(this, 'hot')">热门</button>
+      <button class="forum-tab" data-tab="active" onclick="setTab(this, 'active')">活跃</button>
+      <button class="forum-tab" data-tab="featured" onclick="setTab(this, 'featured')">精华</button>
+    </div>
+
+    <div id="activeBoardChip"></div>
+
+    <div class="forum-posts plaza-posts" id="postsList"></div>
+
+    <div class="forum-load-more" id="loadMore" style="display:none">
+      <button class="btn-load-more" onclick="loadMore()">加载更多</button>
+    </div>
+    <div class="forum-empty" id="emptyState" style="display:none">当前条件下还没有题库</div>
+  </div>
+</div>
+{% endblock %}
+
+{% block body_end %}
+<script>
+  document.getElementById('main').classList.add('forum-no-scroll');
+  document.getElementById('appShell').classList.add('forum-no-scroll-shell');
+  window.__PUBLIC_BANK_PLAZA__ = {{ {
+    'logged_in': logged_in,
+    'user_id': user_id,
+  }|tojson }};
+</script>
+<script src="/static/js/public_bank_plaza.js"></script>
 {% endblock %}

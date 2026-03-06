@@ -1,0 +1,29 @@
+<div class="sidebar-content" id="sidebarContent">
+  <div class="sidebar-card">
+    <div class="sidebar-card-title">加入来源</div>
+    <ul class="sidebar-board-list" id="joinedSidebarScopes">
+      <li class="sidebar-board-item active" data-scope="all" onclick="selectJoinedScope(this,'all')">全部</li>
+      <li class="sidebar-board-item" data-scope="public" onclick="selectJoinedScope(this,'public')">公开加入</li>
+      <li class="sidebar-board-item" data-scope="shared" onclick="selectJoinedScope(this,'shared')">分享加入</li>
+    </ul>
+  </div>
+
+  <div class="sidebar-card">
+    <div class="sidebar-card-title">题库统计</div>
+    <div class="sidebar-stats" id="joinedSidebarStats">
+      <div class="stat-item"><div class="stat-value" id="joinedStatAll">-</div><div class="stat-label">全部</div></div>
+      <div class="stat-item"><div class="stat-value" id="joinedStatPublic">-</div><div class="stat-label">公开加入</div></div>
+      <div class="stat-item"><div class="stat-value" id="joinedStatShared">-</div><div class="stat-label">分享加入</div></div>
+      <div class="stat-item"><div class="stat-value" id="joinedStatPage">-</div><div class="stat-label">当前页</div></div>
+    </div>
+  </div>
+
+  <div class="sidebar-card">
+    <div class="sidebar-card-title">使用提示</div>
+    <div class="plaza-sidebar-tips">
+      <p>公开加入适合从题库广场继续检索与回访。</p>
+      <p>分享加入适合协作、分发和私域授权题库。</p>
+      <p>同一题库如果同时存在两种关系，会自动合并展示。</p>
+    </div>
+  </div>
+</div>
