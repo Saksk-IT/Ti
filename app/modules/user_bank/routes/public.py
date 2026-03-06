@@ -37,6 +37,18 @@ def bank_plaza():
     return render_template('user_bank/public/plaza.html', **_page_context())
 
 
+@public_bank_bp.route('/public/banks/card/<source_type>/<int:bank_id>')
+def public_bank_card_page(source_type: str, bank_id: int):
+    """公开题库名片详情页。"""
+    safe_source_type = 'system' if str(source_type).strip() == 'system' else 'user'
+    return render_template(
+        'user_bank/public/bank_card_detail.html',
+        source_type=safe_source_type,
+        bank_id=int(bank_id),
+        **_page_context(),
+    )
+
+
 @public_bank_bp.route('/public/banks/joined')
 @login_required
 def joined_bank_plaza():
@@ -114,21 +126,53 @@ def get_public_bank_detail_route(bank_id: int):
     bank = get_public_bank_detail(
         bank_id=bank_id,
         bank_type=request.args.get('type', 'user'),
+        user_id=_optional_user_id(),
     )
     if not bank:
         return error_response('题库不存在或未公开', status_code=404)
     return success_response(bank)
 
 
+@public_bank_bp.route('/api/public/banks/card/<source_type>/<int:bank_id>', methods=['GET'])
+def get_public_bank_card_detail(source_type: str, bank_id: int):
+    bank = get_public_bank_detail(
+        bank_id=bank_id,
+        bank_type='system' if str(source_type).strip() == 'system' else 'user',
+        user_id=_optional_user_id(),
+    )
+    if not bank:
+        return error_response('题库不存在或未公开', status_code=404)
+    return success_response(bank)
+
+
+@public_bank_bp.route('/api/public/banks/<source_type>/<int:bank_id>/join', methods=['POST', 'DELETE'])
+@auth_required
+def join_or_leave_public_bank(source_type: str, bank_id: int):
+    safe_source_type = 'system' if str(source_type).strip() == 'system' else 'user'
+    user_id = int(current_user_id() or 0)
+    if request.method == 'POST':
+        if safe_source_type == 'system':
+            return _join_public_system_subject(bank_id, user_id)
+        return _join_public_user_bank(bank_id, user_id)
+    if safe_source_type == 'system':
+        return _leave_public_system_subject(bank_id, user_id)
+    return _leave_public_user_bank(bank_id, user_id)
+
+
 @public_bank_bp.route('/api/public/banks/<int:bank_id>/join', methods=['POST'])
 @auth_required
 def join_public_bank(bank_id: int):
-    """加入公开题库并刷新使用统计。"""
+    """兼容旧接口：默认按用户公开题库加入。"""
     user_id = int(current_user_id() or 0)
+    return _join_public_user_bank(bank_id, user_id)
+
+
+
+def _join_public_user_bank(bank_id: int, user_id: int):
     bank = db.session.execute(
         text(
             """
-            SELECT id, user_id
+            SELECT id, user_id, COALESCE(join_mode, 'free') AS join_mode
             FROM user_question_banks
             WHERE id = :bank_id AND is_public = true AND status = 1
             """
@@ -141,6 +185,10 @@ def join_public_bank(bank_id: int):
     if int(bank.get('user_id') or 0) == user_id:
         return success_response({'joined': False, 'self_owned': True}, message='这是你自己的公开题库')
 
+    join_mode = str(bank.get('join_mode') or 'free').strip().lower()
+    if join_mode != 'free':
+        return error_response('该题库当前不是“免费加入”模式，请按名片页提示完成后续操作', status_code=403)
+
     existing = db.session.execute(
         text(
             """
@@ -149,7 +197,7 @@ def join_public_bank(bank_id: int):
             WHERE bank_id = :bank_id AND user_id = :user_id
             """
         ),
-        {'bank_id': int(bank_id), 'user_id': user_id},
+        {'bank_id': int(bank_id), 'user_id': int(user_id)},
     ).mappings().first()
 
     if existing:
@@ -172,7 +220,7 @@ def join_public_bank(bank_id: int):
                 VALUES (:bank_id, :user_id, CURRENT_TIMESTAMP, 1)
                 """
             ),
-            {'bank_id': int(bank_id), 'user_id': user_id},
+            {'bank_id': int(bank_id), 'user_id': int(user_id)},
         )
         db.session.execute(
             text(
@@ -190,7 +238,102 @@ def join_public_bank(bank_id: int):
         ensure_plaza_metrics(force=True)
     except Exception:
         pass
-    return success_response({'joined': True}, message='已加入题库')
+    return success_response({'joined': True, 'source_type': 'user'}, message='已加入题库')
+
+
+
+def _join_public_system_subject(subject_id: int, user_id: int):
+    subject = db.session.execute(
+        text(
+            """
+            SELECT id
+            FROM subjects
+            WHERE id = :subject_id AND (is_locked = false OR is_locked IS NULL)
+            """
+        ),
+        {'subject_id': int(subject_id)},
+    ).mappings().first()
+    if not subject:
+        return error_response('题库不存在或已关闭', status_code=404)
+
+    existing = db.session.execute(
+        text(
+            """
+            SELECT id
+            FROM public_subject_users
+            WHERE subject_id = :subject_id AND user_id = :user_id
+            """
+        ),
+        {'subject_id': int(subject_id), 'user_id': int(user_id)},
+    ).mappings().first()
+
+    if existing:
+        db.session.execute(
+            text(
+                """
+                UPDATE public_subject_users
+                SET last_access_at = CURRENT_TIMESTAMP,
+                    access_count = COALESCE(access_count, 0) + 1
+                WHERE id = :record_id
+                """
+            ),
+            {'record_id': int(existing['id'])},
+        )
+    else:
+        db.session.execute(
+            text(
+                """
+                INSERT INTO public_subject_users (subject_id, user_id, last_access_at, access_count)
+                VALUES (:subject_id, :user_id, CURRENT_TIMESTAMP, 1)
+                """
+            ),
+            {'subject_id': int(subject_id), 'user_id': int(user_id)},
+        )
+
+    db.session.commit()
+    try:
+        ensure_plaza_metrics(force=True)
+    except Exception:
+        pass
+    return success_response({'joined': True, 'source_type': 'system'}, message='已加入题库')
+
+
+
+def _leave_public_user_bank(bank_id: int, user_id: int):
+    db.session.execute(
+        text('DELETE FROM public_bank_users WHERE bank_id = :bank_id AND user_id = :user_id'),
+        {'bank_id': int(bank_id), 'user_id': int(user_id)},
+    )
+    db.session.execute(
+        text(
+            """
+            UPDATE bank_share_records
+            SET status = 0
+            WHERE bank_id = :bank_id AND user_id = :user_id AND status = 1
+            """
+        ),
+        {'bank_id': int(bank_id), 'user_id': int(user_id)},
+    )
+    db.session.commit()
+    try:
+        ensure_plaza_metrics(force=True)
+    except Exception:
+        pass
+    return success_response({'left': True, 'source_type': 'user'}, message='已退出题库')
+
+
+
+def _leave_public_system_subject(subject_id: int, user_id: int):
+    db.session.execute(
+        text('DELETE FROM public_subject_users WHERE subject_id = :subject_id AND user_id = :user_id'),
+        {'subject_id': int(subject_id), 'user_id': int(user_id)},
+    )
+    db.session.commit()
+    try:
+        ensure_plaza_metrics(force=True)
+    except Exception:
+        pass
+    return success_response({'left': True, 'source_type': 'system'}, message='已退出题库')
 
 
 @public_bank_bp.route('/bank/join')

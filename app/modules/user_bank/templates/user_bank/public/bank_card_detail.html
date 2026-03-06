@@ -1,0 +1,59 @@
+{% extends "main/shared/app_shell.html" %}
+
+{% block title %}题库名片{% endblock %}
+{% block page_title %}题库名片{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/css/public_bank_forum.css" />
+{% endblock %}
+
+{% block content %}
+<div class="app-container">
+  <div class="bank-card-shell" id="publicBankCardPage">
+    <section class="app-card bank-card-hero" id="bankCardHero">
+      <div class="bank-card-cover" id="bankCardCover">题库名片</div>
+      <div class="bank-card-main">
+        <div class="bank-card-badges" id="bankCardBadges"></div>
+        <h1 id="bankCardTitle">加载中...</h1>
+        <p class="bank-card-sub" id="bankCardDesc">正在加载题库信息...</p>
+        <div class="bank-card-meta" id="bankCardMeta"></div>
+      </div>
+    </section>
+
+    <section class="bank-card-layout">
+      <div class="bank-card-content">
+        <section class="app-card bank-card-panel">
+          <h2>题库介绍</h2>
+          <div class="bank-card-rich" id="bankCardRich">-</div>
+        </section>
+
+        <section class="app-card bank-card-panel">
+          <h2>加入方式</h2>
+          <div class="bank-card-join-mode" id="bankCardJoinMode">-</div>
+          <p class="bank-card-join-note" id="bankCardJoinNote">-</p>
+          <div class="bank-card-actions" id="bankCardActions"></div>
+        </section>
+      </div>
+
+      <aside class="bank-card-side">
+        <section class="app-card bank-card-panel">
+          <h2>题库信息</h2>
+          <div class="bank-card-info-list" id="bankCardInfoList"></div>
+        </section>
+      </aside>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block body_end %}
+<script>
+  window.__PUBLIC_BANK_CARD__ = {{ {
+    'logged_in': logged_in,
+    'user_id': user_id,
+    'source_type': source_type,
+    'bank_id': bank_id,
+  }|tojson }};
+</script>
+<script src="/static/js/public_bank_card_detail.js"></script>
+{% endblock %}

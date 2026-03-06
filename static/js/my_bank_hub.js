@@ -101,11 +101,22 @@
     });
   }
 
+  function deleteJson(url) {
+    return fetch(url, { method: 'DELETE', credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } }).then(function (response) {
+      return response.json().catch(function () { return {}; }).then(function (json) {
+        if (!response.ok || !json || json.code !== 0) {
+          throw new Error((json && json.message) || ('请求失败(' + response.status + ')'));
+        }
+        return json;
+      });
+    });
+  }
+
   function postJson(url, payload) {
     return fetch(url, {
       method: 'POST',
       credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
       body: JSON.stringify(payload || {})
     }).then(function (response) {
       return response.json().catch(function () { return {}; }).then(function (json) {
@@ -205,7 +216,9 @@
       var actions = ['<a class="my-bank-card-link primary" href="' + esc(item.detail_url) + '">继续练习</a>'];
       if (item.kind === 'created') {
         actions.push('<a class="my-bank-card-link" href="' + esc(item.question_manage_url) + '">题目管理</a>');
-        actions.push('<a class="my-bank-card-link" href="' + esc(item.manage_url) + '">题库管理</a>');
+        actions.push('<a class="my-bank-card-link" href="' + esc(item.edit_url || item.manage_url) + '">信息编辑</a>');
+      } else {
+        actions.push('<button type="button" class="my-bank-card-link" data-leave-source-type="' + esc(item.source_type || 'user') + '" data-leave-id="' + esc(item.id) + '">退出题库</button>');
       }
 
       var ownerText = item.kind === 'created' ? '我创建的题库' : esc(item.owner_label || '匿名用户');
@@ -323,7 +336,6 @@
   var closeCreateBtn = document.getElementById('closeCreateBank');
   var createCancelBtn = document.getElementById('createBankCancel');
 
-  if (openCreateBtn) openCreateBtn.addEventListener('click', openCreateModal);
   if (closeCreateBtn) closeCreateBtn.addEventListener('click', closeCreateModal);
   if (createCancelBtn) createCancelBtn.addEventListener('click', closeCreateModal);
   if (createIsPublicEl) createIsPublicEl.addEventListener('change', toggleCreatePublicSettings);
@@ -394,12 +406,27 @@
     });
   }
 
+  document.addEventListener('click', function (event) {
+    var leaveBtn = event.target && event.target.closest ? event.target.closest('[data-leave-source-type][data-leave-id]') : null;
+    if (!leaveBtn) return;
+    var sourceType = String(leaveBtn.getAttribute('data-leave-source-type') || 'user');
+    var bankId = String(leaveBtn.getAttribute('data-leave-id') || '');
+    if (!bankId) return;
+    var ok = window.confirm('确定要退出该题库吗？退出后会从“我的题库”中移除。');
+    if (!ok) return;
+    leaveBtn.disabled = true;
+    deleteJson('/api/public/banks/' + encodeURIComponent(sourceType) + '/' + encodeURIComponent(bankId) + '/join').then(function () {
+      showToast('已退出题库');
+      load(true);
+    }).catch(function (error) {
+      showToast((error && error.message) || '退出失败');
+      leaveBtn.disabled = false;
+    });
+  });
+
   restoreStateFromUrl();
   Array.prototype.slice.call(document.querySelectorAll('#myBankTabs .forum-tab')).forEach(function (node) {
     node.classList.toggle('active', node.getAttribute('data-scope') === state.scope);
   });
-  if (window.location.search.indexOf('create=1') >= 0 || window.location.search.indexOf('create_bank=1') >= 0) {
-    openCreateModal();
-  }
   load(true);
 })();

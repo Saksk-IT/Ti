@@ -80,12 +80,17 @@ def list_public_banks(
         """
     )
     rows = db.session.execute(query, params).mappings().all()
-    relation_map = _get_public_relation_map(
-        user_id,
-        [int(row['source_id']) for row in rows if row.get('source_type') == 'user_public'],
-    )
+    system_ids = [int(row['source_id']) for row in rows if row.get('source_type') == 'system']
+    user_bank_ids = [int(row['source_id']) for row in rows if row.get('source_type') == 'user_public']
+    relation_map = _get_public_relation_map(user_id, user_bank_ids)
+    system_joined_ids = _get_system_joined_ids(user_id, system_ids)
 
-    items = [_serialize_metric_item(row, relation_map.get(int(row['source_id']))) for row in rows]
+    items = []
+    for row in rows:
+        source_type_value = str(row.get('source_type') or 'user_public')
+        source_id_value = int(row.get('source_id') or 0)
+        relation = 'public' if source_type_value == 'system' and source_id_value in system_joined_ids else relation_map.get(source_id_value)
+        items.append(_serialize_metric_item(row, relation))
     return {
         'items': items,
         'total': int(total),
@@ -281,20 +286,24 @@ def list_my_bank_collections(
 
     created_items = _list_created_bank_items(int(user_id), current_keyword)
     joined_items = _list_joined_bank_collection_items(int(user_id), current_keyword)
+    system_joined_items = _list_joined_subject_collection_items(int(user_id), current_keyword)
+    joined_counts = _get_joined_relation_counts(int(user_id))
+    system_joined_count = _count_system_joined_banks(int(user_id))
     counts = {
         'created': _count_created_banks(int(user_id)),
-        **_get_joined_relation_counts(int(user_id)),
+        'public': int(joined_counts.get('public') or 0) + int(system_joined_count or 0),
+        'shared': int(joined_counts.get('shared') or 0),
     }
-    counts['all'] = int(counts.get('created') or 0) + int(counts.get('all') or 0)
+    counts['all'] = int(counts.get('created') or 0) + int(counts.get('public') or 0) + int(counts.get('shared') or 0)
 
     if current_scope == 'created':
         merged = created_items
     elif current_scope == 'public':
-        merged = [item for item in joined_items if item.get('relation') in {'public', 'both'}]
+        merged = system_joined_items + [item for item in joined_items if item.get('relation') in {'public', 'both'}]
     elif current_scope == 'shared':
         merged = [item for item in joined_items if item.get('relation') in {'shared', 'both'}]
     else:
-        merged = created_items + joined_items
+        merged = created_items + system_joined_items + joined_items
 
     merged.sort(
         key=lambda item: (
@@ -323,35 +332,114 @@ def list_my_bank_collections(
     }
 
 
-def get_public_bank_detail(*, bank_id: int, bank_type: str = 'user') -> dict[str, Any] | None:
+def get_public_bank_detail(*, bank_id: int, bank_type: str = 'user', user_id: int | None = None) -> dict[str, Any] | None:
     ensure_plaza_metrics()
     source_type = 'system' if str(bank_type).strip() == 'system' else 'user_public'
+    if source_type == 'system':
+        row = db.session.execute(
+            text(
+                """
+                SELECT
+                    m.source_type,
+                    m.source_id,
+                    m.name,
+                    COALESCE(s.description, m.description, '') AS description,
+                    m.cover_image,
+                    '系统题库' AS owner_label,
+                    m.question_count_total,
+                    m.plaza_board_id,
+                    m.is_featured,
+                    m.featured_weight,
+                    COALESCE(s.created_at, m.published_at) AS published_at,
+                    m.last_activity_at,
+                    m.join_count_total,
+                    m.join_users_7d,
+                    m.join_users_30d,
+                    m.answer_count_7d,
+                    m.answer_count_30d,
+                    m.answer_users_7d,
+                    m.answer_users_30d,
+                    m.hot_score,
+                    m.active_score,
+                    m.recommended_score,
+                    pb.slug AS board_slug,
+                    pb.name AS board_name
+                FROM public_bank_plaza_metrics m
+                JOIN subjects s ON s.id = m.source_id
+                LEFT JOIN plaza_boards pb ON pb.id = m.plaza_board_id
+                WHERE m.source_type = 'system' AND m.source_id = :source_id
+                """
+            ),
+            {'source_id': int(bank_id)},
+        ).mappings().first()
+        if not row:
+            return None
+        relation = 'public' if int(bank_id) in _get_system_joined_ids(user_id, [int(bank_id)]) else None
+        item = _serialize_metric_item(row, relation=relation)
+        item.update({
+            'bank_type': 'system',
+            'join_mode': 'free',
+            'join_note': '系统题库当前支持免费加入。',
+            'allow_copy': False,
+        })
+        return item
+
     row = db.session.execute(
         text(
             """
             SELECT
-                source_type,
-                source_id,
-                name,
-                description,
-                cover_image,
-                owner_label,
-                question_count_total,
-                published_at,
-                last_activity_at,
-                join_count_total,
-                answer_users_7d,
-                is_featured
-            FROM public_bank_plaza_metrics
-            WHERE source_type = :source_type AND source_id = :source_id
+                m.source_type,
+                m.source_id,
+                b.name,
+                COALESCE(NULLIF(b.public_description, ''), b.description, m.description, '') AS description,
+                b.cover_image,
+                COALESCE(u.username, '匿名用户') AS owner_label,
+                COALESCE(m.question_count_total, b.question_count, 0) AS question_count_total,
+                b.plaza_board_id,
+                COALESCE(m.is_featured, b.is_plaza_featured, false) AS is_featured,
+                COALESCE(m.featured_weight, b.plaza_featured_weight, 0) AS featured_weight,
+                COALESCE(m.published_at, b.public_at, b.created_at) AS published_at,
+                COALESCE(m.last_activity_at, b.updated_at, b.created_at) AS last_activity_at,
+                COALESCE(m.join_count_total, b.public_use_count, 0) AS join_count_total,
+                COALESCE(m.join_users_7d, 0) AS join_users_7d,
+                COALESCE(m.join_users_30d, 0) AS join_users_30d,
+                COALESCE(m.answer_count_7d, 0) AS answer_count_7d,
+                COALESCE(m.answer_count_30d, 0) AS answer_count_30d,
+                COALESCE(m.answer_users_7d, 0) AS answer_users_7d,
+                COALESCE(m.answer_users_30d, 0) AS answer_users_30d,
+                COALESCE(m.hot_score, 0) AS hot_score,
+                COALESCE(m.active_score, 0) AS active_score,
+                COALESCE(m.recommended_score, 0) AS recommended_score,
+                pb.slug AS board_slug,
+                pb.name AS board_name,
+                COALESCE(b.join_mode, 'free') AS join_mode,
+                COALESCE(b.join_note, '') AS join_note,
+                COALESCE(b.allow_copy, true) AS allow_copy,
+                COALESCE(b.share_count, 0) AS share_count,
+                b.user_id AS author_id
+            FROM user_question_banks b
+            JOIN users u ON u.id = b.user_id
+            LEFT JOIN public_bank_plaza_metrics m
+              ON m.source_type = 'user_public' AND m.source_id = b.id
+            LEFT JOIN plaza_boards pb ON pb.id = b.plaza_board_id
+            WHERE b.id = :source_id AND b.status = 1 AND b.is_public = true
             """
         ),
-        {'source_type': source_type, 'source_id': int(bank_id)},
+        {'source_id': int(bank_id)},
     ).mappings().first()
     if not row:
         return None
-    item = _serialize_metric_item(row, relation=None)
-    item['bank_type'] = 'system' if source_type == 'system' else 'user'
+    relation = _get_public_relation_map(user_id, [int(bank_id)]).get(int(bank_id))
+    item = _serialize_metric_item(row, relation=relation)
+    item.update({
+        'bank_type': 'user',
+        'join_mode': str(row.get('join_mode') or 'free'),
+        'join_note': str(row.get('join_note') or '').strip(),
+        'allow_copy': bool(row.get('allow_copy')),
+        'share_count': int(row.get('share_count') or 0),
+        'author_id': int(row.get('author_id') or 0),
+        'is_owner': int(row.get('author_id') or 0) == int(user_id or 0),
+    })
     return item
 
 
@@ -464,6 +552,64 @@ def _list_created_bank_items(user_id: int, keyword: str = '') -> list[dict[str, 
 
 
 
+def _count_system_joined_banks(user_id: int) -> int:
+    row = db.session.execute(
+        text(
+            """
+            SELECT COUNT(*) AS total
+            FROM public_subject_users
+            WHERE user_id = :uid
+            """
+        ),
+        {'uid': int(user_id)},
+    ).mappings().first() or {}
+    return int(row.get('total') or 0)
+
+
+
+def _list_joined_subject_collection_items(user_id: int, keyword: str = '') -> list[dict[str, Any]]:
+    params: dict[str, Any] = {'uid': int(user_id)}
+    filters = ['psu.user_id = :uid']
+    keyword_params = _keyword_search_params(keyword)
+    if keyword_params:
+        params.update(keyword_params)
+        filters.append(
+            "("             "LOWER(s.name) LIKE :keyword OR "             "LOWER(COALESCE(s.description, '')) LIKE :keyword"             ")"
+        )
+    where_sql = ' WHERE ' + ' AND '.join(filters)
+    rows = db.session.execute(
+        text(
+            f"""
+            SELECT
+                s.id AS subject_id,
+                s.name,
+                COALESCE(s.description, '') AS description,
+                psu.last_access_at,
+                psu.created_at,
+                psu.access_count,
+                COALESCE(m.question_count_total, 0) AS question_count,
+                COALESCE(m.join_count_total, 0) AS participants_total,
+                COALESCE(m.answer_users_7d, 0) AS answer_users_7d,
+                COALESCE(m.last_activity_at, s.created_at) AS last_activity_at,
+                COALESCE(m.is_featured, false) AS is_featured,
+                pb.name AS board_name,
+                pb.slug AS board_slug,
+                s.plaza_board_id
+            FROM public_subject_users psu
+            JOIN subjects s ON s.id = psu.subject_id
+            LEFT JOIN public_bank_plaza_metrics m
+              ON m.source_type = 'system' AND m.source_id = s.id
+            LEFT JOIN plaza_boards pb ON pb.id = s.plaza_board_id
+            {where_sql}
+            ORDER BY COALESCE(psu.last_access_at, psu.created_at) DESC, s.id DESC
+            """
+        ),
+        params,
+    ).mappings().all()
+    return [_serialize_system_joined_item(row) for row in rows]
+
+
+
 def _list_joined_bank_collection_items(user_id: int, keyword: str = '') -> list[dict[str, Any]]:
     params: dict[str, Any] = {'uid': int(user_id), 'now_bj': now_bj()}
     filters = [
@@ -536,6 +682,7 @@ def _serialize_created_bank_item(row: dict[str, Any]) -> dict[str, Any]:
         'detail_url': f'/user/banks/{bank_id}/practice',
         'question_manage_url': f'/user/banks/{bank_id}',
         'manage_url': f'/user/banks/{bank_id}/manage',
+        'edit_url': f'/user/banks/{bank_id}/edit',
         'updated_at': _datetime_text(updated_at),
         'last_activity_at': _datetime_text(row.get('last_activity_at') or updated_at),
         '_sort_at': _datetime_text(updated_at) or '',
@@ -718,7 +865,8 @@ def _joined_cte_sql() -> str:
 def _serialize_metric_item(row: dict[str, Any], relation: str | None) -> dict[str, Any]:
     source_type = str(row.get('source_type') or 'user_public')
     source_id = int(row.get('source_id') or 0)
-    detail_url = f'/subjects/{source_id}' if source_type == 'system' else f'/user/banks/{source_id}/practice'
+    detail_url = f'/public/banks/card/{"system" if source_type == "system" else "user"}/{source_id}'
+    practice_url = f'/subjects/{source_id}' if source_type == 'system' else f'/user/banks/{source_id}/practice'
     return {
         'id': source_id,
         'source_type': source_type,
@@ -744,6 +892,7 @@ def _serialize_metric_item(row: dict[str, Any], relation: str | None) -> dict[st
             'name': row.get('board_name') or '未分板块',
         },
         'detail_url': detail_url,
+        'practice_url': practice_url,
         'source_label': '系统题库' if source_type == 'system' else '用户公开',
         'relation': {
             'joined_via': relation or 'none',
@@ -772,8 +921,60 @@ def _serialize_joined_item(row: dict[str, Any]) -> dict[str, Any]:
             'name': row.get('board_name') or '未分板块',
         },
         'detail_url': f"/user/banks/{int(row.get('bank_id') or 0)}/practice",
+        'card_url': f"/public/banks/card/user/{int(row.get('bank_id') or 0)}",
+        'source_type': 'user',
         'relation': relation,
     }
+
+
+def _serialize_system_joined_item(row: dict[str, Any]) -> dict[str, Any]:
+    subject_id = int(row.get('subject_id') or 0)
+    return {
+        'id': subject_id,
+        'kind': 'joined',
+        'source_type': 'system',
+        'relation': 'public',
+        'source_label': '公开加入',
+        'name': str(row.get('name') or '').strip(),
+        'description': str(row.get('description') or '').strip(),
+        'cover_image': None,
+        'owner_label': '系统题库',
+        'question_count': int(row.get('question_count') or 0),
+        'participants_total': int(row.get('participants_total') or 0),
+        'answer_users_7d': int(row.get('answer_users_7d') or 0),
+        'last_joined_at': _datetime_text(row.get('last_access_at') or row.get('created_at')),
+        'last_activity_at': _datetime_text(row.get('last_activity_at')),
+        'is_featured': bool(row.get('is_featured')),
+        'board': {
+            'id': int(row['plaza_board_id']) if row.get('plaza_board_id') else None,
+            'slug': row.get('board_slug') or None,
+            'name': row.get('board_name') or '未分板块',
+        },
+        'detail_url': f'/subjects/{subject_id}',
+        'card_url': f'/public/banks/card/system/{subject_id}',
+        '_sort_at': _datetime_text(row.get('last_access_at') or row.get('created_at') or row.get('last_activity_at')) or '',
+    }
+
+
+
+def _get_system_joined_ids(user_id: int | None, subject_ids: list[int]) -> set[int]:
+    if not user_id or not subject_ids:
+        return set()
+    in_clause, in_params = _build_named_in('subject_id', [int(v) for v in subject_ids if int(v) > 0])
+    if in_clause == 'NULL':
+        return set()
+    rows = db.session.execute(
+        text(
+            f"""
+            SELECT subject_id
+            FROM public_subject_users
+            WHERE user_id = :uid AND subject_id IN ({in_clause})
+            """
+        ),
+        {'uid': int(user_id), **in_params},
+    ).mappings().all()
+    return {int(row['subject_id']) for row in rows}
+
 
 
 def _datetime_text(value: Any) -> str | None:

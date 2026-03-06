@@ -91,16 +91,22 @@ def _build_system_rows(cutoff_7, cutoff_30) -> list[dict[str, Any]]:
         ) qs ON qs.subject_id = s.id
         LEFT JOIN (
             SELECT
-                q.subject_id AS subject_id,
-                MAX(ua.created_at) AS last_activity_at,
-                COUNT(DISTINCT ua.user_id) AS participant_count_total,
-                COUNT(DISTINCT CASE WHEN ua.created_at >= :cutoff_7 THEN ua.user_id END) AS answer_users_7d,
-                COUNT(DISTINCT CASE WHEN ua.created_at >= :cutoff_30 THEN ua.user_id END) AS answer_users_30d,
-                COUNT(CASE WHEN ua.created_at >= :cutoff_7 THEN 1 END) AS answer_count_7d,
-                COUNT(CASE WHEN ua.created_at >= :cutoff_30 THEN 1 END) AS answer_count_30d
-            FROM questions q
-            LEFT JOIN user_answers ua ON ua.question_id = q.id
-            GROUP BY q.subject_id
+                ev.subject_id AS subject_id,
+                MAX(ev.event_at) AS last_activity_at,
+                COUNT(DISTINCT ev.user_id) AS participant_count_total,
+                COUNT(DISTINCT CASE WHEN ev.is_answer = 1 AND ev.event_at >= :cutoff_7 THEN ev.user_id END) AS answer_users_7d,
+                COUNT(DISTINCT CASE WHEN ev.is_answer = 1 AND ev.event_at >= :cutoff_30 THEN ev.user_id END) AS answer_users_30d,
+                COUNT(CASE WHEN ev.is_answer = 1 AND ev.event_at >= :cutoff_7 THEN 1 END) AS answer_count_7d,
+                COUNT(CASE WHEN ev.is_answer = 1 AND ev.event_at >= :cutoff_30 THEN 1 END) AS answer_count_30d
+            FROM (
+                SELECT q.subject_id AS subject_id, ua.user_id AS user_id, ua.created_at AS event_at, 1 AS is_answer
+                FROM questions q
+                JOIN user_answers ua ON ua.question_id = q.id
+                UNION ALL
+                SELECT psu.subject_id AS subject_id, psu.user_id AS user_id, COALESCE(psu.last_access_at, psu.created_at) AS event_at, 0 AS is_answer
+                FROM public_subject_users psu
+            ) ev
+            GROUP BY ev.subject_id
         ) usage ON usage.subject_id = s.id
         WHERE COALESCE(s.is_locked, false) = false
         """

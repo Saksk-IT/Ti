@@ -46,6 +46,8 @@ class UserQuestionBank(db.Model):
     is_plaza_featured = db.Column(db.Boolean, default=False, server_default=db.text("false"))
     plaza_featured_weight = db.Column(db.Integer, default=0, server_default=db.text("0"))
     plaza_featured_at = db.Column(db.DateTime)
+    join_mode = db.Column(db.Text, default='free', server_default=db.text("'free'"))
+    join_note = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=func.now(), server_default=func.now())
     updated_at = db.Column(db.DateTime, default=func.now(), server_default=func.now(), onupdate=func.now())
 

@@ -601,8 +601,18 @@ def bank_search(bank_id: int):
 @user_bank_pages_bp.route('/add')
 @login_required
 def bank_add():
-    """（已下线）旧的创建题库页面：重定向到列表页弹窗创建。"""
-    return redirect('/user/banks?create=1')
+    """题库创建向导页。"""
+    return render_template(
+        'user_bank/manage/bank_profile_wizard.html',
+        mode='add',
+        bank_id=None,
+        logged_in=True,
+        username=session.get('username'),
+        is_admin=session.get('is_admin', False),
+        is_subject_admin=session.get('is_subject_admin', False),
+        is_notification_admin=session.get('is_notification_admin', False),
+        user_id=session.get('user_id') or 0,
+    )
 
 
 def _fetch_bank_for_owner(bank_id: int, uid) -> dict | None:
@@ -621,7 +631,7 @@ def _fetch_bank_for_owner(bank_id: int, uid) -> dict | None:
 @user_bank_pages_bp.route('/<int:bank_id>/edit')
 @login_required
 def bank_edit(bank_id):
-    """题库设置页面（仅保留题库属性：公开/私有）。"""
+    """题库信息编辑向导页。"""
     uid = session.get('user_id')
     from app.modules.user_bank.routes.api import check_bank_access
 
@@ -634,12 +644,15 @@ def bank_edit(bank_id):
         return "题库不存在或无权限访问", 404
 
     return render_template(
-        'user_bank/manage/bank_manage_settings.html',
+        'user_bank/manage/bank_profile_wizard.html',
+        mode='edit',
         bank_id=int(bank['id']),
-        bank_name=bank['name'],
-        is_public=bool(bank['is_public']),
-        question_count=int(bank['question_count'] or 0),
-        share_count=int(bank['share_count'] or 0),
+        logged_in=True,
+        username=session.get('username'),
+        is_admin=session.get('is_admin', False),
+        is_subject_admin=session.get('is_subject_admin', False),
+        is_notification_admin=session.get('is_notification_admin', False),
+        user_id=session.get('user_id') or 0,
     )
 
 

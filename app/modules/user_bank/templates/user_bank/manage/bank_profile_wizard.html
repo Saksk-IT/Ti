@@ -1,0 +1,102 @@
+{% extends "main/shared/app_shell.html" %}
+
+{% block title %}{{ '创建题库' if mode == 'add' else '编辑题库信息' }}{% endblock %}
+{% block page_title %}{{ '创建题库' if mode == 'add' else '编辑题库信息' }}{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/css/public_bank_forum.css" />
+{% endblock %}
+
+{% block content %}
+<div class="app-container">
+  <div class="wizard-shell" id="bankWizardPage">
+    <section class="app-card wizard-hero">
+      <p class="wizard-eyebrow">Bank Profile Wizard</p>
+      <h1>{{ '创建你的题库名片' if mode == 'add' else '编辑题库名片与加入设置' }}</h1>
+      <p class="wizard-sub">按 3 个步骤补全题库信息：基础资料、对外展示、加入方式。填写的信息会展示在题库广场卡片和名片详情页。</p>
+    </section>
+
+    <section class="app-card wizard-steps" aria-label="步骤导航">
+      <button type="button" class="wizard-step active" data-step="1">1 基础信息</button>
+      <button type="button" class="wizard-step" data-step="2">2 对外展示</button>
+      <button type="button" class="wizard-step" data-step="3">3 加入设置</button>
+    </section>
+
+    <form id="bankWizardForm" class="wizard-form app-card">
+      <section class="wizard-panel active" data-panel="1">
+        <div class="wizard-grid">
+          <div class="wizard-field">
+            <label for="wizardName">题库名称 *</label>
+            <input id="wizardName" class="plaza-search-input wizard-input" type="text" minlength="2" maxlength="50" required placeholder="例如：离散数学期末专项" />
+          </div>
+          <div class="wizard-field">
+            <label for="wizardDescription">私人描述</label>
+            <textarea id="wizardDescription" class="plaza-search-input wizard-textarea" maxlength="200" placeholder="用于你自己管理题库的描述（最多 200 字）"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <section class="wizard-panel" data-panel="2">
+        <div class="wizard-grid">
+          <label class="my-bank-check" for="wizardIsPublic">
+            <input id="wizardIsPublic" type="checkbox" />
+            <span>
+              <strong>题库广场可见</strong>
+              <span class="my-bank-hint">开启后题库会出现在题库广场；关闭后只保留在“我的题库”。</span>
+            </span>
+          </label>
+          <div class="wizard-field">
+            <label for="wizardPublicDescription">公开简介</label>
+            <textarea id="wizardPublicDescription" class="plaza-search-input wizard-textarea" maxlength="200" placeholder="展示在题库广场卡片和名片页上的简介"></textarea>
+          </div>
+          <div class="wizard-field">
+            <label for="wizardCoverImage">封面图地址</label>
+            <input id="wizardCoverImage" class="plaza-search-input wizard-input" type="url" maxlength="500" placeholder="https://...（可选）" />
+          </div>
+        </div>
+      </section>
+
+      <section class="wizard-panel" data-panel="3">
+        <div class="wizard-grid">
+          <div class="wizard-field">
+            <label>加入方式</label>
+            <div class="wizard-choice-grid" id="wizardJoinModes">
+              <button type="button" class="wizard-choice active" data-join-mode="free">免费加入</button>
+              <button type="button" class="wizard-choice" data-join-mode="member">会员加入</button>
+              <button type="button" class="wizard-choice" data-join-mode="paid">付费加入</button>
+              <button type="button" class="wizard-choice" data-join-mode="approval">申请加入</button>
+            </div>
+            <div class="wizard-hint">当前只有“免费加入”会直接完成加入；其他方式会展示预留提示，便于你后续接入会员/付费/审批机制。</div>
+          </div>
+          <div class="wizard-field">
+            <label for="wizardJoinNote">加入说明</label>
+            <textarea id="wizardJoinNote" class="plaza-search-input wizard-textarea" maxlength="200" placeholder="例如：适合刷期末重点；后续会开放会员加入。"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <div class="wizard-footer">
+        <div class="wizard-footer-left">
+          <a href="/user/banks" class="plaza-search-link">返回我的题库</a>
+        </div>
+        <div class="wizard-footer-right">
+          <button type="button" class="plaza-search-link" id="wizardPrevBtn">上一步</button>
+          <button type="button" class="plaza-search-link" id="wizardNextBtn">下一步</button>
+          <button type="submit" class="forum-new-btn" id="wizardSubmitBtn">{{ '创建题库' if mode == 'add' else '保存修改' }}</button>
+        </div>
+      </div>
+      <div class="wizard-feedback" id="wizardFeedback"></div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block body_end %}
+<script>
+  window.__BANK_WIZARD__ = {{ {
+    'mode': mode,
+    'bank_id': bank_id,
+  }|tojson }};
+</script>
+<script src="/static/js/bank_profile_wizard.js"></script>
+{% endblock %}

@@ -324,7 +324,7 @@ def _csrf_exempt_api_blueprints(app):
     """豁免所有 API 蓝图的 CSRF 检查（API 使用 JWT 认证，不依赖 cookie）"""
     from .core.extensions import csrf
     for name, bp in app.blueprints.items():
-        if 'api' in name or name == 'sse':
+        if 'api' in name or name in {'sse', 'public_bank'}:
             csrf.exempt(bp)
 
 

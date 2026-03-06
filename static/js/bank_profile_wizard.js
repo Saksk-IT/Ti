@@ -1,0 +1,202 @@
+(function () {
+  var boot = window.__BANK_WIZARD__ || {};
+  var state = {
+    step: 1,
+    joinMode: 'free'
+  };
+  var nameEl = document.getElementById('wizardName');
+  var descEl = document.getElementById('wizardDescription');
+  var isPublicEl = document.getElementById('wizardIsPublic');
+  var publicDescEl = document.getElementById('wizardPublicDescription');
+  var coverImageEl = document.getElementById('wizardCoverImage');
+  var joinNoteEl = document.getElementById('wizardJoinNote');
+  var feedbackEl = document.getElementById('wizardFeedback');
+  var submitBtn = document.getElementById('wizardSubmitBtn');
+  var panels = Array.prototype.slice.call(document.querySelectorAll('.wizard-panel'));
+  var steps = Array.prototype.slice.call(document.querySelectorAll('.wizard-step'));
+  var joinModeButtons = Array.prototype.slice.call(document.querySelectorAll('[data-join-mode]'));
+
+  function esc(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function setFeedback(message, isError) {
+    if (!feedbackEl) return;
+    feedbackEl.textContent = message || '';
+    feedbackEl.style.color = isError ? '#ef4444' : '';
+  }
+
+  function renderStep() {
+    panels.forEach(function (panel) {
+      panel.classList.toggle('active', Number(panel.getAttribute('data-panel')) === state.step);
+    });
+    steps.forEach(function (stepEl) {
+      stepEl.classList.toggle('active', Number(stepEl.getAttribute('data-step')) === state.step);
+    });
+    document.getElementById('wizardPrevBtn').style.display = state.step === 1 ? 'none' : 'inline-flex';
+    document.getElementById('wizardNextBtn').style.display = state.step === 3 ? 'none' : 'inline-flex';
+    submitBtn.style.display = state.step === 3 ? 'inline-flex' : 'none';
+  }
+
+  function validateStep(step) {
+    if (step === 1) {
+      var name = String(nameEl && nameEl.value || '').trim();
+      if (!name || name.length < 2 || name.length > 50) {
+        setFeedback('题库名称需要 2-50 个字符', true);
+        return false;
+      }
+      if (String(descEl && descEl.value || '').trim().length > 200) {
+        setFeedback('私人描述不能超过 200 个字符', true);
+        return false;
+      }
+    }
+    if (step === 2) {
+      if (String(publicDescEl && publicDescEl.value || '').trim().length > 200) {
+        setFeedback('公开简介不能超过 200 个字符', true);
+        return false;
+      }
+      if (String(coverImageEl && coverImageEl.value || '').trim().length > 500) {
+        setFeedback('封面图地址不能超过 500 个字符', true);
+        return false;
+      }
+    }
+    if (step === 3) {
+      if (String(joinNoteEl && joinNoteEl.value || '').trim().length > 200) {
+        setFeedback('加入说明不能超过 200 个字符', true);
+        return false;
+      }
+    }
+    setFeedback('');
+    return true;
+  }
+
+  function fetchJson(url, options) {
+    return fetch(url, options || { credentials: 'same-origin' }).then(function (response) {
+      return response.json().catch(function () { return {}; }).then(function (json) {
+        if (!response.ok || !json || json.code !== 0) {
+          throw new Error((json && json.message) || '请求失败');
+        }
+        return json;
+      });
+    });
+  }
+
+  function updateJoinMode(mode) {
+    state.joinMode = mode || 'free';
+    joinModeButtons.forEach(function (button) {
+      button.classList.toggle('active', button.getAttribute('data-join-mode') === state.joinMode);
+    });
+  }
+
+  function hydrate(bank) {
+    if (!bank) return;
+    if (nameEl) nameEl.value = bank.name || '';
+    if (descEl) descEl.value = bank.description || '';
+    if (publicDescEl) publicDescEl.value = bank.public_description || '';
+    if (coverImageEl) coverImageEl.value = bank.cover_image || '';
+    if (joinNoteEl) joinNoteEl.value = bank.join_note || '';
+    if (isPublicEl) isPublicEl.checked = !!bank.is_public;
+    updateJoinMode(bank.join_mode || 'free');
+  }
+
+  function loadBank() {
+    if (boot.mode !== 'edit' || !boot.bank_id) return Promise.resolve();
+    return fetchJson('/user/banks/api/' + encodeURIComponent(String(boot.bank_id)), { credentials: 'same-origin' }).then(function (json) {
+      hydrate(json.data || {});
+    });
+  }
+
+  function submit() {
+    if (!validateStep(1) || !validateStep(2) || !validateStep(3)) return;
+    var payload = {
+      name: String(nameEl && nameEl.value || '').trim(),
+      description: String(descEl && descEl.value || '').trim(),
+      public_description: String(publicDescEl && publicDescEl.value || '').trim(),
+      cover_image: String(coverImageEl && coverImageEl.value || '').trim(),
+      join_mode: state.joinMode,
+      join_note: String(joinNoteEl && joinNoteEl.value || '').trim(),
+      is_public: !!(isPublicEl && isPublicEl.checked)
+    };
+    submitBtn.disabled = true;
+    submitBtn.textContent = boot.mode === 'add' ? '创建中...' : '保存中...';
+    setFeedback('正在保存题库信息...');
+
+    var promise;
+    if (boot.mode === 'add') {
+      promise = fetchJson('/user/banks/api', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        body: JSON.stringify(payload)
+      }).then(function (json) {
+        return json.data && json.data.id;
+      });
+    } else {
+      promise = fetchJson('/user/banks/api/' + encodeURIComponent(String(boot.bank_id)), {
+        method: 'PUT',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        body: JSON.stringify(payload)
+      }).then(function () {
+        return boot.bank_id;
+      });
+    }
+
+    promise.then(function (bankId) {
+      return fetchJson('/user/banks/api/' + encodeURIComponent(String(bankId)) + '/public', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        body: JSON.stringify({
+          is_public: payload.is_public,
+          public_description: payload.public_description
+        })
+      }).then(function () {
+        return bankId;
+      });
+    }).then(function () {
+      window.location.href = '/user/banks?scope=created';
+    }).catch(function (error) {
+      setFeedback((error && error.message) || '保存失败', true);
+    }).finally(function () {
+      submitBtn.disabled = false;
+      submitBtn.textContent = boot.mode === 'add' ? '创建题库' : '保存修改';
+    });
+  }
+
+  document.getElementById('wizardPrevBtn').addEventListener('click', function () {
+    if (state.step > 1) state.step -= 1;
+    renderStep();
+  });
+  document.getElementById('wizardNextBtn').addEventListener('click', function () {
+    if (!validateStep(state.step)) return;
+    if (state.step < 3) state.step += 1;
+    renderStep();
+  });
+  document.getElementById('bankWizardForm').addEventListener('submit', function (event) {
+    event.preventDefault();
+    submit();
+  });
+  joinModeButtons.forEach(function (button) {
+    button.addEventListener('click', function () {
+      updateJoinMode(button.getAttribute('data-join-mode') || 'free');
+    });
+  });
+  steps.forEach(function (button) {
+    button.addEventListener('click', function () {
+      var next = Number(button.getAttribute('data-step') || 1);
+      if (next > state.step && !validateStep(state.step)) return;
+      state.step = next;
+      renderStep();
+    });
+  });
+
+  renderStep();
+  updateJoinMode('free');
+  loadBank();
+})();

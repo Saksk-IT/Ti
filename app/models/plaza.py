@@ -61,3 +61,22 @@ class PublicBankPlazaMetric(db.Model):
 
     def __repr__(self) -> str:
         return f'<PublicBankPlazaMetric {self.source_type}:{self.source_id}>'
+
+
+
+class PublicSubjectUser(db.Model):
+    __tablename__ = 'public_subject_users'
+    __table_args__ = (
+        db.UniqueConstraint('subject_id', 'user_id'),
+        {'extend_existing': True},
+    )
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id', ondelete='CASCADE'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    last_access_at = db.Column(db.DateTime)
+    access_count = db.Column(db.Integer, default=0, server_default=db.text('0'))
+    created_at = db.Column(db.DateTime, default=func.now(), server_default=func.now())
+
+    def __repr__(self) -> str:
+        return f'<PublicSubjectUser {self.id} subject={self.subject_id} user={self.user_id}>'

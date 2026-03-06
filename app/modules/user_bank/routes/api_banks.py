@@ -109,6 +109,11 @@ def create_bank():
     data = request.get_json() or {}
     name = (data.get('name') or '').strip()
     description = (data.get('description') or '').strip()
+    public_description = (data.get('public_description') or '').strip()
+    cover_image = (data.get('cover_image') or '').strip()
+    join_mode = (data.get('join_mode') or 'free').strip().lower()
+    join_note = (data.get('join_note') or '').strip()
+    is_public = bool(data.get('is_public'))
     category_id = data.get('category_id')
 
     if not name:
@@ -117,6 +122,14 @@ def create_bank():
         return error_response('题库名称需要2-50个字符')
     if description and len(description) > 200:
         return error_response('描述不能超过200个字符')
+    if public_description and len(public_description) > 200:
+        return error_response('公开描述不能超过200个字符')
+    if cover_image and len(cover_image) > 500:
+        return error_response('封面地址不能超过500个字符')
+    if join_note and len(join_note) > 200:
+        return error_response('加入说明不能超过200个字符')
+    if join_mode not in {'free', 'member', 'paid', 'approval'}:
+        return error_response('加入方式不合法')
 
     # 检查题库数量限制
     count = db.session.execute(
@@ -137,17 +150,37 @@ def create_bank():
             return error_response('分类不存在')
 
     result = db.session.execute(
-        text('''INSERT INTO user_question_banks (user_id, category_id, name, description)
-           VALUES (:user_id, :category_id, :name, :description)
-           RETURNING id'''),
-        {'user_id': user_id, 'category_id': category_id, 'name': name, 'description': description}
+        text('''
+           INSERT INTO user_question_banks (
+             user_id, category_id, name, description, public_description, cover_image,
+             is_public, public_at, join_mode, join_note
+           )
+           VALUES (
+             :user_id, :category_id, :name, :description, :public_description, :cover_image,
+             :is_public, CASE WHEN :is_public THEN CURRENT_TIMESTAMP ELSE NULL END, :join_mode, :join_note
+           )
+           RETURNING id
+        '''),
+        {
+          'user_id': user_id,
+          'category_id': category_id,
+          'name': name,
+          'description': description,
+          'public_description': public_description,
+          'cover_image': cover_image or None,
+          'is_public': is_public,
+          'join_mode': join_mode,
+          'join_note': join_note or None,
+        }
     )
     new_id = result.fetchone()[0]
     db.session.commit()
 
     return success_response(data={
         'id': new_id,
-        'name': name
+        'name': name,
+        'is_public': is_public,
+        'join_mode': join_mode
     })
 
 
@@ -190,6 +223,27 @@ def update_bank(bank_id):
             return error_response('公开描述不能超过200个字符')
         updates.append('public_description = :public_description')
         params['public_description'] = public_description
+
+    if 'cover_image' in data:
+        cover_image = (data['cover_image'] or '').strip()
+        if cover_image and len(cover_image) > 500:
+            return error_response('封面地址不能超过500个字符')
+        updates.append('cover_image = :cover_image')
+        params['cover_image'] = cover_image or None
+
+    if 'join_mode' in data:
+        join_mode = (data['join_mode'] or 'free').strip().lower()
+        if join_mode not in {'free', 'member', 'paid', 'approval'}:
+            return error_response('加入方式不合法')
+        updates.append('join_mode = :join_mode')
+        params['join_mode'] = join_mode
+
+    if 'join_note' in data:
+        join_note = (data['join_note'] or '').strip()
+        if join_note and len(join_note) > 200:
+            return error_response('加入说明不能超过200个字符')
+        updates.append('join_note = :join_note')
+        params['join_note'] = join_note or None
 
     if 'category_id' in data:
         category_id = data['category_id']
