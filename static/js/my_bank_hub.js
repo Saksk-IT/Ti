@@ -220,15 +220,26 @@
       var boardText = esc((item.board && item.board.name) || '未分类');
       var timeText = esc(item.updated_at || item.last_joined_at || item.last_activity_at || '-');
 
-      var actions = ['<a class="my-bank-card-link primary" href="' + esc(item.detail_url) + '">继续练习</a>'];
+      var toolHtml = '';
+      var actions = [];
       if (item.kind === 'created') {
-        actions.push('<a class="my-bank-card-link" href="' + esc(item.question_manage_url) + '">题目管理</a>');
-        actions.push('<a class="my-bank-card-link" href="' + esc(item.edit_url || item.manage_url) + '">信息编辑</a>');
+        toolHtml = '<div class="my-bank-card-owner-actions" data-owner-actions>' +
+          '<button type="button" class="my-bank-card-owner-toggle" aria-label="更多操作" data-owner-toggle>' +
+            '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="5" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="19" r="1.8" fill="currentColor"/></svg>' +
+          '</button>' +
+          '<div class="my-bank-card-owner-menu">' +
+            '<a class="my-bank-card-owner-link" href="' + esc(item.detail_url) + '">继续练习</a>' +
+            '<a class="my-bank-card-owner-link" href="' + esc(item.question_manage_url) + '">题目管理</a>' +
+            '<a class="my-bank-card-owner-link" href="' + esc(item.edit_url || item.manage_url) + '">信息编辑</a>' +
+          '</div>' +
+        '</div>';
       } else {
+        actions.push('<a class="my-bank-card-link primary" href="' + esc(item.detail_url) + '">继续练习</a>');
         actions.push('<button type="button" class="my-bank-card-link" data-leave-source-type="' + esc(item.source_type || 'user') + '" data-leave-id="' + esc(item.id) + '">退出题库</button>');
       }
 
       return '<div class="my-bank-card-shell">' +
+        toolHtml +
         '<a class="forum-post-card plaza-bank-card' + (hasCover ? '' : ' no-cover') + '" href="' + esc(item.detail_url) + '">' +
           '<div class="forum-post-header">' +
             '<div class="forum-avatar"></div>' +
@@ -244,7 +255,7 @@
           '<div class="plaza-bank-time">' + timeText + '</div>' +
           coverHtml +
         '</a>' +
-        '<div class="my-bank-card-tools">' + actions.join('') + '</div>' +
+        (actions.length ? '<div class="my-bank-card-tools">' + actions.join('') + '</div>' : '') +
       '</div>';
     }).join('');
     listEl.insertAdjacentHTML('beforeend', html);
@@ -413,6 +424,24 @@
   }
 
   document.addEventListener('click', function (event) {
+    var toggleBtn = event.target && event.target.closest ? event.target.closest('[data-owner-toggle]') : null;
+    if (toggleBtn) {
+      var ownerRoot = toggleBtn.closest('[data-owner-actions]');
+      Array.prototype.slice.call(document.querySelectorAll('[data-owner-actions].open')).forEach(function (node) {
+        if (node !== ownerRoot) node.classList.remove('open');
+      });
+      if (ownerRoot) ownerRoot.classList.toggle('open');
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    if (!(event.target && event.target.closest && event.target.closest('[data-owner-actions]'))) {
+      Array.prototype.slice.call(document.querySelectorAll('[data-owner-actions].open')).forEach(function (node) {
+        node.classList.remove('open');
+      });
+    }
+
     var leaveBtn = event.target && event.target.closest ? event.target.closest('[data-leave-source-type][data-leave-id]') : null;
     if (!leaveBtn) return;
     var sourceType = String(leaveBtn.getAttribute('data-leave-source-type') || 'user');
