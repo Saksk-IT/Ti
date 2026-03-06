@@ -44,12 +44,20 @@
 ### 2.4 微信小程序事实源
 
 - 小程序页面/分包/主题入口：`miniprogram-1/miniprogram/app.json`
-- 小程序全局启动逻辑：`miniprogram-1/miniprogram/app.js`
+- 小程序全局启动源码：`miniprogram-1/miniprogram/app.ts`
+- 小程序全局启动编译产物：`miniprogram-1/miniprogram/app.js`
 - 小程序 TypeScript 配置：`miniprogram-1/tsconfig.json`
 - 小程序 API 配置说明：`miniprogram-1/README_API_CONFIG.md`
 - 小程序 API 地址与模式切换：`miniprogram-1/miniprogram/utils/config.ts`
 - 小程序 HTTP 客户端：`miniprogram-1/miniprogram/utils/api-client.ts`
 - 小程序 API 封装：`miniprogram-1/miniprogram/utils/api-endpoints.ts`
+
+### 2.5 敏感信息事实源（默认不要主动读取原值）
+
+- 运行时配置：`.env`
+- 配置模板：`.env.example`
+- 小程序微信配置说明：`miniprogram-1/README_WECHAT_CONFIG.md`
+- 运行日志与输出目录：`var/`、`logs/`（若存在）
 
 ## 3. 技术栈与架构判断
 
@@ -180,6 +188,26 @@ docker compose --env-file .env -f compose.dev.yml up
 但本仓库不是所有模块都只用这两个文件；多个模块还会继续拆到 `api_components/` 或 `pages_components/`。
 因此 AI 不应假设“一个模块只有一个 pages.py / api.py 文件”。
 
+### 6.3 兼容路由别名（很重要）
+
+- `quiz` 模块除了 `/api/quiz/*`，还兼容一组历史路径，例如：
+  - `/api/favorite`
+  - `/api/record_result`
+  - `/api/progress`
+  - `/api/questions/count`
+  - `/api/questions/user_counts`
+  - `/api/ai/explain`
+  - `/api/ai/explain_async`
+  - `/api/jobs/<job_id>`
+  - `/api/grade_subjective`
+- `user_bank` 模块除了 Web 侧 `/user/banks/...`，还额外挂载了小程序兼容路径 `/api/user/banks/api/*`。
+
+因此改接口前，先确认：
+
+- 当前调用方用的是主路径还是兼容路径
+- 兼容路径是否仍被 Web 或小程序使用
+- 新增接口是否需要同时补兼容入口
+
 ## 7. Web 前端事实
 
 ### 7.1 Web 技术形态
@@ -221,7 +249,7 @@ docker compose --env-file .env -f compose.dev.yml up
 
 ### 8.2 小程序主题与字体
 
-`miniprogram-1/miniprogram/app.js` 在全局启动时初始化：
+`miniprogram-1/miniprogram/app.ts`（以及对应编译产物 `app.js`）在全局启动时初始化：
 
 - `themeManager`
 - `fontManager`
@@ -254,6 +282,13 @@ docker compose --env-file .env -f compose.dev.yml up
 - `custom`：开发/测试自定义地址
 
 不要再发明新的“自动探测本机 IP”“自动拼 localhost”的配置体系。
+
+并且要注意一个高频联调坑：
+
+- 小程序 `config.ts` 里的开发默认端口是 `5000`
+- Docker 开发编排对外暴露的 Web 端口是 `8000`
+
+所以如果当前联调基于 Docker，本地小程序应切到 `custom` 模式并显式指向 `8000`，而不是直接沿用 `5000`。
 
 ### 8.5 Web 容器页事实
 
@@ -348,7 +383,7 @@ Web 与小程序必须共享相同的数据语义，至少包括：
 - `/api/ping`
 - `/api/ping?deep=1`
 
-定义位置在 `app/__init__.py`。
+定义位置在 `app/__init__.py`。其中 `deep=1` 会进一步探测数据库与 Redis 可用性，适合联调排障时使用。
 
 ## 11. 认证与安全事实
 
@@ -435,3 +470,10 @@ Web 与小程序必须共享相同的数据语义，至少包括：
 ## 15. 一句话记忆版
 
 这是一个 **Flask 单仓库全栈题库系统**：Web 是 **Jinja SSR**，小程序是 **微信原生 TS**，两端共用后端与数据语义，开发默认走 **Docker + PostgreSQL + Redis**，做改动前先分清 **公共题库 vs 个人题库**、**Web vs 小程序**、**Session vs JWT**。
+
+## 16. 敏感信息边界（默认遵守）
+
+- 默认不要主动读取 `.env`、日志文件、生产配置文件中的原始值。
+- 即使为了排障读取，也只总结“配置项名称 / 是否存在 / 影响范围 / 修改入口”，不要回显密钥、令牌、连接串、验证码、签名 URL。
+- `miniprogram-1/README_WECHAT_CONFIG.md` 不能当成普通 README 直接摘抄；它属于高风险配置说明文档。
+- 提交说明、PR 摘要、文档和对话回复中，都不要复制任何真实敏感值。
