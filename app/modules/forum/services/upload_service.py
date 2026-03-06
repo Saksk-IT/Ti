@@ -1,11 +1,136 @@
 # -*- coding: utf-8 -*-
 """论坛图片上传服务"""
+import json
 import os
+import posixpath
 from typing import Optional
+
 from flask import current_app
-from sqlalchemy import text
+from sqlalchemy import inspect, text
+
 from app.core.extensions import db
 from app.models.forum import ForumUpload
+
+_TRACKING_TABLE_NAME = ForumUpload.__tablename__
+_MISSING_TABLE_WARNING_KEY = 'forum_upload_tracking_missing_table_warned'
+
+
+def _read_json_list(value) -> list[str]:
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    if isinstance(value, tuple):
+        return [str(item).strip() for item in value if str(item).strip()]
+    if isinstance(value, str):
+        raw = value.strip()
+        if not raw:
+            return []
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError:
+            return []
+        if isinstance(parsed, list):
+            return [str(item).strip() for item in parsed if str(item).strip()]
+    return []
+
+
+def _extract_forum_filenames(image_urls) -> list[str]:
+    filenames: list[str] = []
+    for url in image_urls or []:
+        normalized = str(url or '').strip()
+        if normalized.startswith('/uploads/forum/'):
+            filename = _normalize_forum_filename(normalized.replace('/uploads/forum/', '', 1).strip())
+            if filename:
+                filenames.append(filename)
+    return list(dict.fromkeys(filenames))
+
+
+def _normalize_forum_filename(value: str) -> str | None:
+    normalized = str(value or '').strip().replace('\\', '/')
+    if not normalized:
+        return None
+    if '/' in normalized:
+        return None
+    if normalized != posixpath.basename(normalized):
+        return None
+    if normalized in {'.', '..'}:
+        return None
+    return normalized
+
+
+def _normalize_forum_relative_path(value: str) -> str | None:
+    normalized = str(value or '').strip().replace('\\', '/')
+    if not normalized:
+        return None
+    compact = posixpath.normpath(normalized).lstrip('/')
+    if not compact.startswith('forum/'):
+        return None
+    suffix = compact[len('forum/'):]
+    if not _normalize_forum_filename(suffix):
+        return None
+    return f'forum/{suffix}'
+
+
+def _delete_files_by_relative_path(relative_paths: list[str]) -> list[str]:
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    deleted_files: list[str] = []
+    normalized_paths = []
+    for relative_path in relative_paths:
+        safe_path = _normalize_forum_relative_path(relative_path)
+        if safe_path:
+            normalized_paths.append(safe_path)
+    for filepath in dict.fromkeys(normalized_paths):
+        full_path = os.path.join(upload_folder, filepath)
+        if not os.path.exists(full_path):
+            continue
+        try:
+            os.remove(full_path)
+            deleted_files.append(filepath)
+        except Exception as exc:
+            current_app.logger.error(f"删除图片失败 {filepath}: {exc}")
+    return deleted_files
+
+
+def _delete_files_by_filename(filenames: list[str]) -> list[str]:
+    return _delete_files_by_relative_path([f'forum/{filename}' for filename in filenames])
+
+
+def _warn_tracking_table_missing(operation: str) -> None:
+    warned = current_app.extensions.setdefault(_MISSING_TABLE_WARNING_KEY, False)
+    if warned:
+        return
+    current_app.extensions[_MISSING_TABLE_WARNING_KEY] = True
+    current_app.logger.warning(
+        'forum_uploads 表不存在，论坛上传追踪已降级（operation=%s）；建议尽快执行数据库迁移。',
+        operation,
+    )
+
+
+def _has_tracking_table(operation: str) -> bool:
+    try:
+        exists = inspect(db.engine).has_table(_TRACKING_TABLE_NAME)
+    except Exception as exc:
+        current_app.logger.error(f'检查论坛上传追踪表失败: {exc}', exc_info=True)
+        return False
+    if not exists:
+        _warn_tracking_table_missing(operation)
+    return exists
+
+
+def _get_post_image_filenames(post_id: int) -> list[str]:
+    row = db.session.execute(text("""
+        SELECT cover_image, images
+        FROM forum_posts
+        WHERE id = :post_id
+    """), {'post_id': post_id}).fetchone()
+    if not row:
+        return []
+
+    cover_image = row._mapping.get('cover_image')
+    image_urls = []
+    if cover_image:
+        image_urls.append(str(cover_image))
+    image_urls.extend(_read_json_list(row._mapping.get('images')))
+    return _extract_forum_filenames(image_urls)
 
 
 def track_upload(filename: str, filepath: str, uploader_id: int) -> int:
@@ -20,18 +145,18 @@ def track_upload(filename: str, filepath: str, uploader_id: int) -> int:
     Returns:
         upload_id: 上传记录ID
     """
-    result = db.session.execute(text("""
-        INSERT INTO forum_uploads (filename, filepath, uploader_id, is_attached, uploaded_at)
-        VALUES (:filename, :filepath, :uploader_id, false, NOW())
-        RETURNING id
-    """), {
-        'filename': filename,
-        'filepath': filepath,
-        'uploader_id': uploader_id,
-    })
-    upload_id = result.fetchone()[0]
+    if not _has_tracking_table('track_upload'):
+        return 0
+
+    record = ForumUpload(
+        filename=filename,
+        filepath=filepath,
+        uploader_id=uploader_id,
+        is_attached=False,
+    )
+    db.session.add(record)
     db.session.commit()
-    return upload_id
+    return int(record.id or 0)
 
 
 def attach_uploads_to_post(post_id: int, image_urls: list[str]) -> None:
@@ -45,12 +170,10 @@ def attach_uploads_to_post(post_id: int, image_urls: list[str]) -> None:
     if not image_urls:
         return
 
-    # 提取文件名
-    filenames = []
-    for url in image_urls:
-        if url.startswith('/uploads/forum/'):
-            filename = url.replace('/uploads/forum/', '')
-            filenames.append(filename)
+    if not _has_tracking_table('attach_uploads_to_post'):
+        return
+
+    filenames = _extract_forum_filenames(image_urls)
 
     if not filenames:
         return
@@ -76,6 +199,9 @@ def detach_uploads_from_post(post_id: int) -> None:
     Args:
         post_id: 帖子ID
     """
+    if not _has_tracking_table('detach_uploads_from_post'):
+        return
+
     db.session.execute(text("""
         UPDATE forum_uploads
         SET is_attached = false, post_id = NULL
@@ -94,6 +220,9 @@ def cleanup_orphan_uploads(hours: int = 24) -> tuple[int, list[str]]:
     Returns:
         (deleted_count, deleted_files): 删除的记录数和文件列表
     """
+    if not _has_tracking_table('cleanup_orphan_uploads'):
+        return 0, []
+
     dialect = db.engine.dialect.name
 
     # PostgreSQL 和 SQLite 的时间计算语法不同
@@ -116,24 +245,16 @@ def cleanup_orphan_uploads(hours: int = 24) -> tuple[int, list[str]]:
     if not rows:
         return 0, []
 
-    upload_folder = current_app.config['UPLOAD_FOLDER']
     deleted_files = []
     deleted_ids = []
 
     for row in rows:
         upload_id = row[0]
-        filename = row[1]
         filepath = row[2]
 
-        # 删除物理文件
-        full_path = os.path.join(upload_folder, filepath)
-        if os.path.exists(full_path):
-            try:
-                os.remove(full_path)
-                deleted_files.append(filepath)
-            except Exception as e:
-                current_app.logger.error(f"删除孤儿文件失败 {filepath}: {e}")
-                continue
+        safe_path = _normalize_forum_relative_path(filepath)
+        if safe_path:
+            deleted_files.extend(_delete_files_by_relative_path([safe_path]))
 
         deleted_ids.append(upload_id)
 
@@ -181,40 +302,24 @@ def cleanup_post_images(post_id: int, old_cover: Optional[str], old_images: list
     if not removed_urls:
         return []
 
-    # 提取文件名
-    removed_filenames = []
-    for url in removed_urls:
-        if url.startswith('/uploads/forum/'):
-            filename = url.replace('/uploads/forum/', '')
-            removed_filenames.append(filename)
+    removed_filenames = _extract_forum_filenames(removed_urls)
 
     if not removed_filenames:
         return []
 
-    upload_folder = current_app.config['UPLOAD_FOLDER']
-    deleted_files = []
+    deleted_files = _delete_files_by_filename(removed_filenames)
+
+    if not _has_tracking_table('cleanup_post_images'):
+        return deleted_files
 
     for filename in removed_filenames:
-        filepath = f'forum/{filename}'
-        full_path = os.path.join(upload_folder, filepath)
-
-        # 删除物理文件
-        if os.path.exists(full_path):
-            try:
-                os.remove(full_path)
-                deleted_files.append(filepath)
-            except Exception as e:
-                current_app.logger.error(f"删除图片失败 {filepath}: {e}")
-                continue
-
-        # 删除数据库记录
         try:
             db.session.execute(text("""
                 DELETE FROM forum_uploads
                 WHERE filename = :filename AND post_id = :post_id
             """), {'filename': filename, 'post_id': post_id})
-        except Exception as e:
-            current_app.logger.error(f"删除上传记录失败 {filename}: {e}")
+        except Exception as exc:
+            current_app.logger.error(f"删除上传记录失败 {filename}: {exc}")
 
     db.session.commit()
     return deleted_files
@@ -230,7 +335,9 @@ def delete_post_images(post_id: int) -> list[str]:
     Returns:
         deleted_files: 删除的文件路径列表
     """
-    # 查询帖子的所有图片
+    if not _has_tracking_table('delete_post_images'):
+        return _delete_files_by_filename(_get_post_image_filenames(post_id))
+
     rows = db.session.execute(text("""
         SELECT filename, filepath FROM forum_uploads WHERE post_id = :post_id
     """), {'post_id': post_id}).fetchall()
@@ -238,23 +345,8 @@ def delete_post_images(post_id: int) -> list[str]:
     if not rows:
         return []
 
-    upload_folder = current_app.config['UPLOAD_FOLDER']
-    deleted_files = []
+    deleted_files = _delete_files_by_relative_path([row[1] for row in rows])
 
-    for row in rows:
-        filename = row[0]
-        filepath = row[1]
-        full_path = os.path.join(upload_folder, filepath)
-
-        # 删除物理文件
-        if os.path.exists(full_path):
-            try:
-                os.remove(full_path)
-                deleted_files.append(filepath)
-            except Exception as e:
-                current_app.logger.error(f"删除帖子图片失败 {filepath}: {e}")
-
-    # 删除数据库记录（CASCADE会自动删除）
     db.session.execute(text("""
         DELETE FROM forum_uploads WHERE post_id = :post_id
     """), {'post_id': post_id})
