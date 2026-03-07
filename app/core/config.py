@@ -241,6 +241,17 @@ class TestingConfig(Config):
     DATABASE_PATH = os.path.join(Config.DATA_DIR, 'instance', 'test.db')
     SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(Config.DATA_DIR, 'instance', 'test.db')}"
 
+    # 测试环境使用内存限流（无需 Redis）
+    RATELIMIT_STORAGE_URI = 'memory://'
+    RATELIMIT_STORAGE_URL = 'memory://'
+
+    # 测试环境禁用 RQ 任务队列（同步降级）
+    RQ_DISABLED = True
+
+    # 测试环境禁用外部服务
+    MAIL_ENABLED = False
+    SMS_ENABLED = False
+
 
 # 配置字典
 config = {
