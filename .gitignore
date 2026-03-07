@@ -65,6 +65,9 @@ yarn.lock
 # Docker
 docker-compose.override.yml
 
+# 备份调度状态
+backups/.last_backup_slot
+
 # Redis
 dump.rdb
 

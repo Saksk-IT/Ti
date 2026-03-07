@@ -187,10 +187,14 @@ services:
   backup:
     image: postgres:16-alpine
     environment:
+      TZ: ${BACKUP_TZ:-Asia/Shanghai}
       POSTGRES_USER: studyuser
       POSTGRES_PASSWORD: studypass
       POSTGRES_DB: ti_db
-      BACKUP_INTERVAL: ${BACKUP_INTERVAL:-86400}
+      BACKUP_TZ: ${BACKUP_TZ:-Asia/Shanghai}
+      BACKUP_ANCHOR_TIME: ${BACKUP_ANCHOR_TIME:-04:00}
+      BACKUP_INTERVAL: ${BACKUP_INTERVAL:-43200}
+      BACKUP_CHECK_INTERVAL: ${BACKUP_CHECK_INTERVAL:-60}
       BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
     volumes:
       - ./backups:/backups

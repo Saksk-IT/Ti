@@ -4,11 +4,15 @@
 
 set -e
 
+BACKUP_TZ=${BACKUP_TZ:-Asia/Shanghai}
+export TZ="${BACKUP_TZ}"
+
 BACKUP_DIR="./backups"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_NAME="backup_${TIMESTAMP}"
 
 echo "=== 开始完整备份 ==="
+echo "备份时区: ${BACKUP_TZ}"
 echo "备份时间: $(date)"
 echo "备份目录: ${BACKUP_DIR}/${BACKUP_NAME}"
 
