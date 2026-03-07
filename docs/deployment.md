@@ -434,25 +434,28 @@ curl http://localhost/api/ping?deep=1
 
 ## 11. 备份与恢复
 
-### 11.1 自动备份脚本（推荐）
+### 11.1 自动备份服务（推荐）
 
-项目已提供完整的备份恢复脚本：
+生产环境的 `compose.prod.yml` 已内置 `backup` 服务，默认按北京时间每天 `04:00` / `16:00` 自动备份到 `./backups/`：
 
 ```bash
-# 执行备份
-./scripts/backup.sh
+# 启动生产服务（会同时启动 backup 服务）
+docker compose --env-file .env.production -f compose.prod.yml up -d
 
-# 备份内容：
-# - 数据库完整备份（pg_dump）
-# - Redis 数据备份
-# - 上传文件备份
-# - 配置文件备份
-# - 自动压缩为 .tar.gz
-# - 自动清理 7 天前的旧备份
+# 查看自动备份日志
+docker compose --env-file .env.production -f compose.prod.yml logs -f backup
 
-# 备份文件保存在 ./backups/ 目录
+# 查看备份文件
 ls -lh backups/
 ```
+
+默认备份内容：
+- 数据库完整备份（pg_dump）
+- Redis 持久化目录
+- 上传文件
+- 实例数据
+- 最近 7 天日志
+- `.env.production` 与 `compose.prod.yml`
 
 ### 11.2 恢复数据
 
@@ -468,16 +471,12 @@ ls -lh backups/
 # 5. 重启服务
 ```
 
-### 11.3 定时备份（推荐）
+### 11.3 手动立即备份
 
-添加到 crontab：
+如需不等自动窗口，仍可手动执行一次完整备份：
 
 ```bash
-# 编辑 crontab
-crontab -e
-
-# 添加以下行（每天凌晨 2 点自动备份）
-0 2 * * * cd /opt/ti && ./scripts/backup.sh >> ./var/logs/backup.log 2>&1
+./scripts/backup.sh
 ```
 
 ### 11.4 手动备份（备选方案）

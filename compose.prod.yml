@@ -210,3 +210,46 @@ services:
         reservations:
           cpus: '0.25'
           memory: 64M
+
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      TZ: ${BACKUP_TZ:-Asia/Shanghai}
+      POSTGRES_USER: ${POSTGRES_USER:-studyuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-studypass}
+      POSTGRES_DB: ${POSTGRES_DB:-ti_db}
+      BACKUP_TZ: ${BACKUP_TZ:-Asia/Shanghai}
+      BACKUP_ANCHOR_TIME: ${BACKUP_ANCHOR_TIME:-04:00}
+      BACKUP_INTERVAL: ${BACKUP_INTERVAL:-43200}
+      BACKUP_CHECK_INTERVAL: ${BACKUP_CHECK_INTERVAL:-60}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
+      BACKUP_INCLUDE_REDIS: "true"
+      BACKUP_INCLUDE_CONFIG: "true"
+      BACKUP_ENV_FILE_PATH: /run/backup-config/.env.production
+      BACKUP_COMPOSE_FILE_PATH: /run/backup-config/compose.prod.yml
+    volumes:
+      - ./backups:/backups
+      - ./var:/data:ro
+      - ./scripts/backup-cron.sh:/backup-cron.sh:ro
+      - ./compose.prod.yml:/run/backup-config/compose.prod.yml:ro
+      - ./.env.production:/run/backup-config/.env.production:ro
+    command: sh -c "/backup-cron.sh"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M

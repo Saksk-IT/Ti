@@ -104,6 +104,7 @@ docker compose --env-file .env -f compose.dev.yml up
 # 准备 .env.production（参考 .env.example 中的生产配置部分）
 docker compose --env-file .env.production -f compose.prod.yml up -d
 # Gunicorn 绑定 127.0.0.1:8000，需配合 Nginx 反代
+# 同时会启动 backup 服务，默认按北京时间每天 04:00 / 16:00 自动备份到 ./backups
 ```
 ## 环境变量
 

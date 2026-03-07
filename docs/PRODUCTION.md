@@ -19,15 +19,17 @@
 
 ### 自动备份
 
-使用提供的备份脚本：
+生产编排内置 `backup` 服务，默认按北京时间每天 `04:00` / `16:00` 自动备份到 `./backups/`：
 
 ```bash
-# 执行备份
-./scripts/backup.sh
+# 启动生产服务（会同时启动 backup 服务）
+docker compose --env-file .env.production -f compose.prod.yml up -d
 
-# 备份文件保存在 ./backups/ 目录
-# 自动保留最近 7 天的备份
+# 查看自动备份日志
+docker compose --env-file .env.production -f compose.prod.yml logs -f backup
 ```
+
+默认保留最近 7 天的备份，可通过 `.env.production` 中的 `BACKUP_*` 变量调整。
 
 ### 恢复数据
 
@@ -36,13 +38,12 @@
 ./scripts/restore.sh backup_20260305_230000.tar.gz
 ```
 
-### 定时备份（推荐）
+### 手动备份（按需）
 
-添加到 crontab：
+如需立即生成一次完整备份，仍可手动执行：
 
 ```bash
-# 每天凌晨 2 点自动备份
-0 2 * * * cd /path/to/Ti-main && ./scripts/backup.sh >> ./var/logs/backup.log 2>&1
+./scripts/backup.sh
 ```
 
 ## 资源限制
@@ -56,6 +57,7 @@
 | worker | 1.0 核 | 512M | 0.25 核 | 256M |
 | postgres | 2.0 核 | 512M | 0.5 核 | 256M |
 | redis | 0.5 核 | 128M | 0.25 核 | 64M |
+| backup | 0.25 核 | 128M | 0.1 核 | 64M |
 
 ## 日志管理
 
@@ -95,7 +97,7 @@ vim .env.production  # 修改生产配置
 # 3. 构建镜像
 docker build -t saksk-ti:latest -f docker/Dockerfile .
 
-# 4. 启动服务
+# 4. 启动服务（会同时启动 backup 自动备份服务）
 docker compose --env-file .env.production -f compose.prod.yml up -d
 
 # 5. 初始化数据库

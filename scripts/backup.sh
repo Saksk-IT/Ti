@@ -67,7 +67,8 @@ echo "✓ 配置文件备份完成"
 # 7. 创建备份清单
 echo "正在创建备份清单..."
 cat > "${BACKUP_DIR}/${BACKUP_NAME}/MANIFEST.txt" <<EOF
-备份时间: $(date '+%Y-%m-%d %H:%M:%S')
+备份时间: $(date '+%Y-%m-%d %H:%M:%S %Z')
+备份时区: ${BACKUP_TZ}
 备份内容:
 - 数据库: ti_db
 - Redis 数据: $(du -sh ${BACKUP_DIR}/${BACKUP_NAME}/redis 2>/dev/null | cut -f1 || echo "无")

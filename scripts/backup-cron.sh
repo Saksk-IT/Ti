@@ -9,6 +9,10 @@
 # - BACKUP_INTERVAL: 备份间隔（秒），默认 43200（12小时）
 # - BACKUP_CHECK_INTERVAL: 调度轮询间隔（秒），默认 60
 # - BACKUP_RETENTION_DAYS: 保留天数，默认 7 天
+# - BACKUP_INCLUDE_REDIS: 是否备份 Redis 持久化目录（true/false）
+# - BACKUP_INCLUDE_CONFIG: 是否备份部署配置文件（true/false）
+# - BACKUP_ENV_FILE_PATH: 需要打包的环境变量文件路径（可选）
+# - BACKUP_COMPOSE_FILE_PATH: 需要打包的 compose 文件路径（可选）
 
 set -e
 
@@ -20,6 +24,10 @@ BACKUP_ANCHOR_TIME=${BACKUP_ANCHOR_TIME:-04:00}
 BACKUP_INTERVAL=${BACKUP_INTERVAL:-43200}
 BACKUP_CHECK_INTERVAL=${BACKUP_CHECK_INTERVAL:-60}
 BACKUP_RETENTION_DAYS=${BACKUP_RETENTION_DAYS:-7}
+BACKUP_INCLUDE_REDIS=${BACKUP_INCLUDE_REDIS:-false}
+BACKUP_INCLUDE_CONFIG=${BACKUP_INCLUDE_CONFIG:-false}
+BACKUP_ENV_FILE_PATH=${BACKUP_ENV_FILE_PATH:-}
+BACKUP_COMPOSE_FILE_PATH=${BACKUP_COMPOSE_FILE_PATH:-}
 LAST_SLOT_FILE="${BACKUP_DIR}/.last_backup_slot"
 
 export TZ="${BACKUP_TZ}"
@@ -35,6 +43,17 @@ validate_number() {
             ;;
         *)
             return 0
+            ;;
+    esac
+}
+
+is_enabled() {
+    case "$1" in
+        1|true|TRUE|yes|YES|on|ON)
+            return 0
+            ;;
+        *)
+            return 1
             ;;
     esac
 }
@@ -109,11 +128,25 @@ get_due_slot_epoch() {
     printf '%s\n' "$((now_epoch - delta_since_latest_slot))"
 }
 
+copy_config_file() {
+    source_path="$1"
+    target_dir="$2"
+
+    if [ -z "${source_path}" ] || [ ! -f "${source_path}" ]; then
+        return 1
+    fi
+
+    cp "${source_path}" "${target_dir}/$(basename "${source_path}")"
+    return 0
+}
+
 # 备份函数
 do_backup() {
     TIMESTAMP=$(date +%Y%m%d_%H%M%S)
     BACKUP_NAME="backup_${TIMESTAMP}"
     BACKUP_PATH="${BACKUP_DIR}/${BACKUP_NAME}"
+    REDIS_SIZE="未启用"
+    CONFIG_SUMMARY="未启用"
 
     log "开始完整备份..."
 
@@ -136,7 +169,20 @@ do_backup() {
         return 1
     fi
 
-    # 2. 备份上传文件
+    # 2. 备份 Redis 持久化目录（可选）
+    if is_enabled "${BACKUP_INCLUDE_REDIS}"; then
+        if [ -d "${DATA_DIR}/redis" ]; then
+            log "备份 Redis 持久化数据..."
+            cp -r "${DATA_DIR}/redis" "${BACKUP_PATH}/redis"
+            REDIS_SIZE=$(du -sh "${BACKUP_PATH}/redis" 2>/dev/null | cut -f1 || echo "无")
+            echo "  ✓ Redis 持久化数据备份完成"
+        else
+            REDIS_SIZE="无"
+            echo "  ⚠ Redis 数据目录不存在，跳过"
+        fi
+    fi
+
+    # 3. 备份上传文件
     if [ -d "${DATA_DIR}/uploads" ]; then
         log "备份上传文件..."
         cp -r "${DATA_DIR}/uploads" "${BACKUP_PATH}/uploads"
@@ -145,7 +191,7 @@ do_backup() {
         echo "  ⚠ 上传目录不存在，跳过"
     fi
 
-    # 3. 备份实例数据
+    # 4. 备份实例数据
     if [ -d "${DATA_DIR}/instance" ]; then
         log "备份实例数据..."
         cp -r "${DATA_DIR}/instance" "${BACKUP_PATH}/instance"
@@ -154,7 +200,7 @@ do_backup() {
         echo "  ⚠ 实例目录不存在，跳过"
     fi
 
-    # 4. 备份日志（最近7天）
+    # 5. 备份日志（最近7天）
     if [ -d "${DATA_DIR}/logs" ]; then
         log "备份日志文件..."
         mkdir -p "${BACKUP_PATH}/logs"
@@ -164,22 +210,54 @@ do_backup() {
         echo "  ⚠ 日志目录不存在，跳过"
     fi
 
-    # 5. 创建备份清单
+    # 6. 备份部署配置（可选）
+    if is_enabled "${BACKUP_INCLUDE_CONFIG}"; then
+        log "备份部署配置..."
+        mkdir -p "${BACKUP_PATH}/config"
+        CONFIG_SUMMARY=""
+
+        if copy_config_file "${BACKUP_ENV_FILE_PATH}" "${BACKUP_PATH}/config"; then
+            CONFIG_SUMMARY="$(basename "${BACKUP_ENV_FILE_PATH}")"
+        else
+            echo "  ⚠ 环境配置文件不存在，跳过"
+        fi
+
+        if copy_config_file "${BACKUP_COMPOSE_FILE_PATH}" "${BACKUP_PATH}/config"; then
+            if [ -n "${CONFIG_SUMMARY}" ]; then
+                CONFIG_SUMMARY="${CONFIG_SUMMARY}, $(basename "${BACKUP_COMPOSE_FILE_PATH}")"
+            else
+                CONFIG_SUMMARY="$(basename "${BACKUP_COMPOSE_FILE_PATH}")"
+            fi
+        else
+            echo "  ⚠ Compose 配置文件不存在，跳过"
+        fi
+
+        if [ -n "${CONFIG_SUMMARY}" ]; then
+            echo "  ✓ 部署配置备份完成"
+        else
+            CONFIG_SUMMARY="无"
+            rmdir "${BACKUP_PATH}/config" 2>/dev/null || true
+        fi
+    fi
+
+    # 7. 创建备份清单
     log "创建备份清单..."
     cat > "${BACKUP_PATH}/MANIFEST.txt" <<MANIFEST
 备份时间: $(date '+%Y-%m-%d %H:%M:%S %Z')
 备份时区: ${BACKUP_TZ}
 备份内容:
 - 数据库: ${POSTGRES_DB}
+- Redis 数据: ${REDIS_SIZE}
 - 上传文件: $(du -sh ${BACKUP_PATH}/uploads 2>/dev/null | cut -f1 || echo "无")
 - 实例数据: $(du -sh ${BACKUP_PATH}/instance 2>/dev/null | cut -f1 || echo "无")
 - 日志文件: $(du -sh ${BACKUP_PATH}/logs 2>/dev/null | cut -f1 || echo "无")
+- 配置文件: ${CONFIG_SUMMARY}
 
 文件列表:
 $(find ${BACKUP_PATH} -type f | sed "s|${BACKUP_PATH}/||" | sort)
 MANIFEST
 
-    # 6. 压缩备份
+    # 8. 压缩备份
     log "压缩备份..."
     cd "${BACKUP_DIR}"
     tar -czf "${BACKUP_NAME}.tar.gz" "${BACKUP_NAME}"
@@ -188,11 +266,11 @@ MANIFEST
     BACKUP_SIZE=$(du -h "${BACKUP_NAME}.tar.gz" | cut -f1)
     log "备份完成: ${BACKUP_NAME}.tar.gz (${BACKUP_SIZE})"
 
-    # 7. 清理旧备份
+    # 9. 清理旧备份
     find "${BACKUP_DIR}" -name "backup_*.tar.gz" -mtime +${BACKUP_RETENTION_DAYS} -delete
     log "已清理 ${BACKUP_RETENTION_DAYS} 天前的旧备份"
 
-    # 8. 显示当前备份列表
+    # 10. 显示当前备份列表
     echo "当前备份文件:"
     ls -lh "${BACKUP_DIR}"/backup_*.tar.gz 2>/dev/null | awk '{print "  " $9 " (" $5 ")"}' || echo "  无备份文件"
 }
@@ -221,6 +299,8 @@ echo "备份锚点时间: ${BACKUP_ANCHOR_TIME}"
 echo "备份间隔: ${BACKUP_INTERVAL} 秒"
 echo "调度轮询间隔: ${BACKUP_CHECK_INTERVAL} 秒"
 echo "保留天数: ${BACKUP_RETENTION_DAYS} 天"
+echo "包含 Redis 持久化目录: ${BACKUP_INCLUDE_REDIS}"
+echo "包含部署配置文件: ${BACKUP_INCLUDE_CONFIG}"
 echo "备份目录: ${BACKUP_DIR}"
 echo "数据目录: ${DATA_DIR}"
 
