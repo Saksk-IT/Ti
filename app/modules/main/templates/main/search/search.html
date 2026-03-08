@@ -657,6 +657,173 @@
       font-weight: 700;
     }
 
+    .bank-results-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .bank-result-card {
+      border: 1px solid var(--app-border);
+      border-radius: var(--app-radius-lg);
+      background: var(--app-surface);
+      padding: 14px;
+      box-shadow: var(--app-shadow-soft);
+      display: flex;
+      gap: 14px;
+      cursor: pointer;
+      transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+      align-items: stretch;
+    }
+
+    .bank-result-card:hover {
+      border-color: color-mix(in srgb, var(--app-primary) 35%, var(--app-border));
+      box-shadow: var(--app-shadow);
+      transform: translateY(-1px);
+    }
+
+    .bank-result-cover {
+      flex-shrink: 0;
+      width: 72px;
+      height: 72px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--app-border);
+      align-self: center;
+    }
+
+    .bank-result-cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .bank-cover-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: color-mix(in srgb, var(--app-primary) 8%, var(--app-surface-2));
+    }
+
+    .bank-cover-placeholder svg {
+      width: 32px;
+      height: 32px;
+      color: color-mix(in srgb, var(--app-primary) 50%, var(--app-muted));
+    }
+
+    .bank-result-main {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .bank-result-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .bank-result-name {
+      font-size: 15px;
+      font-weight: 900;
+      color: var(--app-text);
+      line-height: 1.45;
+    }
+
+    .bank-result-badges {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .bank-badge {
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--app-border);
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .bank-badge.system {
+      color: color-mix(in srgb, var(--app-primary) 80%, var(--app-text));
+      border-color: color-mix(in srgb, var(--app-primary) 35%, var(--app-border));
+      background: color-mix(in srgb, var(--app-primary) 10%, var(--app-surface));
+    }
+
+    .bank-badge.user {
+      color: color-mix(in srgb, #8b5cf6 80%, var(--app-text));
+      border-color: color-mix(in srgb, #8b5cf6 35%, var(--app-border));
+      background: color-mix(in srgb, #8b5cf6 10%, var(--app-surface));
+    }
+
+    .bank-badge.featured {
+      color: #ca8a04;
+      border-color: color-mix(in srgb, #ca8a04 35%, var(--app-border));
+      background: color-mix(in srgb, #ca8a04 10%, var(--app-surface));
+    }
+
+    .bank-badge.board {
+      color: var(--app-muted);
+      background: var(--app-surface-2);
+    }
+
+    .bank-result-desc {
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--app-muted);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .bank-result-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: auto;
+    }
+
+    .bank-result-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--app-muted);
+    }
+
+    .bank-meta-item {
+      white-space: nowrap;
+    }
+
+    .bank-result-arrow {
+      width: 18px;
+      height: 18px;
+      color: var(--app-muted);
+      flex-shrink: 0;
+      transition: transform 160ms ease;
+    }
+
+    .bank-result-card:hover .bank-result-arrow {
+      transform: translateX(2px);
+      color: var(--app-text);
+    }
+
+    @media (max-width: 640px) {
+      .bank-result-cover {
+        width: 56px;
+        height: 56px;
+      }
+    }
+
     .empty-state {
       text-align: center;
       padding: 32px 20px;
@@ -805,7 +972,7 @@
               <path d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" stroke="currentColor" stroke-width="2"/>
               <path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
-            <input type="text" class="search-input" id="searchInput" value="{{ keyword }}" placeholder="搜索题目或论坛帖子关键词" autocomplete="off" />
+            <input type="text" class="search-input" id="searchInput" value="{{ keyword }}" placeholder="搜索题目、题库或论坛帖子" autocomplete="off" />
           </div>
         </div>
         <button type="submit" class="search-btn">
@@ -857,7 +1024,7 @@
             </svg>
             <span>{{ keyword }}</span>
           </span>
-          <span class="search-count">共 {{ all_total }} 条结果（题目 {{ question_total }} / 论坛 {{ forum_total }}）</span>
+          <span class="search-count">共 {{ all_total }} 条结果（题目 {{ question_total }} / 题库 {{ bank_total }} / 论坛 {{ forum_total }}）</span>
         </div>
         <div class="search-summary-right">
           {% if subject %}
@@ -878,6 +1045,10 @@
           <span>题目</span>
           <span class="search-tab-count">{{ question_total }}</span>
         </button>
+        <button class="search-tab {{ 'active' if active_tab == 'banks' else '' }}" type="button" onclick="switchTab('banks')">
+          <span>题库</span>
+          <span class="search-tab-count">{{ bank_total }}</span>
+        </button>
         <button class="search-tab {{ 'active' if active_tab == 'forum' else '' }}" type="button" onclick="switchTab('forum')">
           <span>论坛</span>
           <span class="search-tab-count">{{ forum_total }}</span>
@@ -886,12 +1057,15 @@
     {% endif %}
 
     {% set show_questions = active_tab in ['all', 'questions'] %}
+    {% set show_banks = active_tab in ['all', 'banks'] %}
     {% set show_forum = active_tab in ['all', 'forum'] %}
     {% set has_any_result = false %}
     {% if active_tab == 'all' %}
       {% set has_any_result = all_total > 0 %}
     {% elif active_tab == 'questions' %}
       {% set has_any_result = question_total > 0 %}
+    {% elif active_tab == 'banks' %}
+      {% set has_any_result = bank_total > 0 %}
     {% else %}
       {% set has_any_result = forum_total > 0 %}
     {% endif %}
@@ -982,6 +1156,78 @@
         </section>
       {% endif %}
 
+      {% if show_banks and bank_total > 0 %}
+        <section class="search-section">
+          {% if active_tab == 'all' %}
+            <div class="search-section-title"><span class="dot"></span><span>题库结果</span></div>
+          {% endif %}
+          <div class="bank-results-list" id="bankResultsList">
+            {% for bank in bank_items %}
+              <div class="bank-result-card" onclick="openBank('{{ bank.source_type }}', {{ bank.id }})">
+                {% if bank.cover_image %}
+                  <div class="bank-result-cover">
+                    <img src="{{ bank.cover_image }}" alt="封面">
+                  </div>
+                {% else %}
+                  <div class="bank-result-cover bank-cover-placeholder">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                {% endif %}
+                <div class="bank-result-main">
+                  <div class="bank-result-head">
+                    <div class="bank-result-name" data-bank-name="{{ bank.name }}">{{ bank.name }}</div>
+                    <div class="bank-result-badges">
+                      <span class="bank-badge {{ 'system' if bank.source_type == 'system' else 'user' }}">{{ bank.source_label }}</span>
+                      {% if bank.is_featured %}
+                        <span class="bank-badge featured">精选</span>
+                      {% endif %}
+                      {% if bank.board and bank.board.name %}
+                        <span class="bank-badge board">{{ bank.board.name }}</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                  {% if bank.description %}
+                    <div class="bank-result-desc" data-bank-desc="{{ bank.description }}">{{ bank.description }}</div>
+                  {% endif %}
+                  <div class="bank-result-footer">
+                    <div class="bank-result-meta">
+                      {% if bank.owner_label %}
+                        <span class="bank-meta-item">{{ bank.owner_label }}</span>
+                      {% endif %}
+                      <span class="bank-meta-item">{{ bank.question_count }} 题</span>
+                      {% if bank.participants_total > 0 %}
+                        <span class="bank-meta-item">{{ bank.participants_total }} 人参与</span>
+                      {% endif %}
+                    </div>
+                    <svg class="bank-result-arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+
+          {% if bank_total_pages > 1 %}
+            <div class="pagination">
+              <button class="page-btn" onclick="goBankPage({{ bank_page - 1 }})" {{ 'disabled' if bank_page <= 1 else '' }}>&larr; 上一页</button>
+              {% for p in range(1, bank_total_pages + 1) %}
+                {% if p == bank_page %}
+                  <button class="page-btn active">{{ p }}</button>
+                {% elif p == 1 or p == bank_total_pages or (p >= bank_page - 2 and p <= bank_page + 2) %}
+                  <button class="page-btn" onclick="goBankPage({{ p }})">{{ p }}</button>
+                {% elif p == bank_page - 3 or p == bank_page + 3 %}
+                  <span style="color: var(--app-muted);">...</span>
+                {% endif %}
+              {% endfor %}
+              <button class="page-btn" onclick="goBankPage({{ bank_page + 1 }})" {{ 'disabled' if bank_page >= bank_total_pages else '' }}>下一页 &rarr;</button>
+            </div>
+          {% endif %}
+        </section>
+      {% endif %}
+
       {% if show_forum and forum_total > 0 %}
         <section class="search-section">
           {% if active_tab == 'all' %}
@@ -1048,11 +1294,13 @@
         <p class="empty-desc">
           {% if keyword %}
             {% if active_tab == 'questions' %}
-              没有找到与“{{ keyword }}”相关的题目
+              没有找到与”{{ keyword }}”相关的题目
+            {% elif active_tab == 'banks' %}
+              没有找到与”{{ keyword }}”相关的题库
             {% elif active_tab == 'forum' %}
-              没有找到与“{{ keyword }}”相关的论坛帖子
+              没有找到与”{{ keyword }}”相关的论坛帖子
             {% else %}
-              没有找到与“{{ keyword }}”相关的内容
+              没有找到与”{{ keyword }}”相关的内容
             {% endif %}
           {% else %}
             请输入关键词进行搜索
@@ -1108,7 +1356,7 @@
       if (subject) url += '&subject=' + encodeURIComponent(subject);
       if (type) url += '&type=' + encodeURIComponent(type);
       url += '&tab=' + encodeURIComponent(ACTIVE_TAB || 'all');
-      url += '&question_page=1&forum_page=1';
+      url += '&question_page=1&bank_page=1&forum_page=1';
 
       window.location.href = url;
     }
@@ -1123,6 +1371,9 @@
       url.searchParams.set('tab', tab);
       if (!url.searchParams.get('question_page')) {
         url.searchParams.set('question_page', '1');
+      }
+      if (!url.searchParams.get('bank_page')) {
+        url.searchParams.set('bank_page', '1');
       }
       if (!url.searchParams.get('forum_page')) {
         url.searchParams.set('forum_page', '1');
@@ -1143,6 +1394,21 @@
       url.searchParams.set('forum_page', String(Math.max(1, p)));
       url.searchParams.delete('page');
       window.location.href = url.toString();
+    }
+
+    function goBankPage(p) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('bank_page', String(Math.max(1, p)));
+      url.searchParams.delete('page');
+      window.location.href = url.toString();
+    }
+
+    function openBank(sourceType, bankId) {
+      if (sourceType === 'system') {
+        window.location.href = '/subjects/' + bankId;
+      } else {
+        window.location.href = '/public/banks/card/user/' + bankId;
+      }
     }
 
     function highlightText(text, keyword) {
@@ -1171,6 +1437,16 @@
         const original = el.dataset.preview || el.textContent;
         const highlighted = highlightText(original, KEYWORD).replace(/\n/g, '<br>');
         el.innerHTML = highlighted;
+      });
+
+      document.querySelectorAll('.bank-result-name').forEach(el => {
+        const original = el.dataset.bankName || el.textContent;
+        el.innerHTML = highlightText(original, KEYWORD);
+      });
+
+      document.querySelectorAll('.bank-result-desc').forEach(el => {
+        const original = el.dataset.bankDesc || el.textContent;
+        el.innerHTML = highlightText(original, KEYWORD);
       });
     }
 

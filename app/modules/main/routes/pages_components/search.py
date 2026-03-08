@@ -7,8 +7,9 @@ from sqlalchemy import text
 
 from .bp import main_pages_bp
 
-SEARCH_TABS = {"all", "questions", "forum"}
+SEARCH_TABS = {"all", "questions", "banks", "forum"}
 QUESTION_PER_PAGE = 20
+BANK_PER_PAGE = 12
 FORUM_PER_PAGE = 10
 
 
@@ -24,20 +25,25 @@ def search_page():
 
     legacy_page = request.args.get('page', type=int)
     raw_question_page = request.args.get('question_page', type=int)
+    raw_bank_page = request.args.get('bank_page', type=int)
     raw_forum_page = request.args.get('forum_page', type=int)
     question_page = raw_question_page or 1
+    bank_page = raw_bank_page or 1
     forum_page = raw_forum_page or 1
     if legacy_page and legacy_page > 0:
         if active_tab == 'forum' and raw_forum_page is None:
             forum_page = legacy_page
         elif active_tab == 'questions' and raw_question_page is None:
             question_page = legacy_page
+        elif active_tab == 'banks' and raw_bank_page is None:
+            bank_page = legacy_page
         elif active_tab == 'all' and raw_question_page is None:
             question_page = legacy_page
 
     uid = session.get('user_id') or -1
     user_id = session.get('user_id')
     question_page = max(question_page, 1)
+    bank_page = max(bank_page, 1)
     forum_page = max(forum_page, 1)
 
     # 获取所有科目和题型用于筛选下拉框（添加权限过滤）
@@ -81,6 +87,7 @@ def search_page():
             'main/search/search.html',
             keyword='',
             questions=[],
+            bank_items=[],
             forum_posts=[],
             subjects=subjects,
             q_types=q_types,
@@ -88,9 +95,12 @@ def search_page():
             q_type=type_filter,
             active_tab=active_tab,
             question_page=1,
+            bank_page=1,
             forum_page=1,
             question_total=0,
             question_total_pages=0,
+            bank_total=0,
+            bank_total_pages=0,
             forum_total=0,
             forum_total_pages=0,
             all_total=0,
@@ -189,6 +199,38 @@ def search_page():
             q['options'] = []
         questions.append(q)
 
+    # ── 题库搜索 ──
+    bank_items = []
+    bank_total = 0
+    bank_total_pages = 0
+    try:
+        from app.modules.user_bank.services import plaza_query_service
+
+        bank_result = plaza_query_service.list_public_banks(
+            keyword=keyword,
+            page=bank_page,
+            per_page=BANK_PER_PAGE,
+            user_id=user_id,
+        )
+        bank_items = list(bank_result.get('items') or [])
+        bank_total = int(bank_result.get('total') or 0)
+        bank_total_pages = (bank_total + BANK_PER_PAGE - 1) // BANK_PER_PAGE if bank_total > 0 else 0
+
+        if bank_total_pages > 0 and bank_page > bank_total_pages:
+            bank_page = bank_total_pages
+            bank_result = plaza_query_service.list_public_banks(
+                keyword=keyword,
+                page=bank_page,
+                per_page=BANK_PER_PAGE,
+                user_id=user_id,
+            )
+            bank_items = list(bank_result.get('items') or [])
+    except Exception:
+        current_app.logger.error('全局搜索读取题库结果失败', exc_info=True)
+        bank_items = []
+        bank_total = 0
+        bank_total_pages = 0
+
     forum_posts = []
     forum_total = 0
     forum_total_pages = 0
@@ -224,12 +266,13 @@ def search_page():
             forum_total = 0
             forum_total_pages = 0
 
-    all_total = question_total + forum_total
+    all_total = question_total + bank_total + forum_total
 
     return render_template(
         'main/search/search.html',
         keyword=keyword,
         questions=questions,
+        bank_items=bank_items,
         forum_posts=forum_posts,
         subjects=subjects,
         q_types=q_types,
@@ -237,9 +280,12 @@ def search_page():
         q_type=type_filter,
         active_tab=active_tab,
         question_page=question_page,
+        bank_page=bank_page,
         forum_page=forum_page,
         question_total=question_total,
         question_total_pages=question_total_pages,
+        bank_total=bank_total,
+        bank_total_pages=bank_total_pages,
         forum_total=forum_total,
         forum_total_pages=forum_total_pages,
         all_total=all_total,
