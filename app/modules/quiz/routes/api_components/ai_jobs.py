@@ -9,7 +9,7 @@ from flask import current_app, jsonify, request
 from flask_limiter.util import get_remote_address
 
 from app.core.extensions import limiter
-from app.core.models.question import Question
+from app.core.services.question_service import QuestionService as Question
 from app.core.utils.decorators import auth_required, current_user_id
 from app.core.utils.redis_utils import redis_get_json, redis_get_text, redis_set_text
 from app.core.utils.rq_utils import fetch_job, get_queue

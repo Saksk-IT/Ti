@@ -6,7 +6,7 @@ from app.core.extensions import limiter
 from app.core.utils.decorators import auth_required, current_user_id
 from app.core.utils.redis_utils import redis_get_json, redis_set_json
 from app.core.utils.cache_utils import make_cache_key
-from app.core.models.question import Question
+from app.core.services.question_service import QuestionService as Question
 
 from ..api_bp import quiz_api_bp
 

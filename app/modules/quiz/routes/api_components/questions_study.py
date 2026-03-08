@@ -20,7 +20,7 @@ from app.core.utils.cache_utils import (
     make_cache_key,
 )
 from typing import Optional
-from app.core.models.question import Question
+from app.core.services.question_service import QuestionService as Question
 from app.core.utils.options_parser import parse_options
 from app.modules.quiz.services.study_service import now_bj, dt_to_str, next_4am, calc_next_due, clamp_level
 from app.modules.quiz.services.reinforcement_service import (
