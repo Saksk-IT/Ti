@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-用户模型
+用户业务服务
+
+原 app/core/models/user.py 的业务逻辑迁移至此。
+提供用户 CRUD、密码验证、邮箱绑定等操作。
 """
 from typing import Optional
 import re
@@ -9,9 +12,9 @@ from app.core.extensions import db
 from sqlalchemy import text
 
 
-class User:
-    """用户模型"""
-    
+class UserService:
+    """用户业务操作服务（原 core/models/user.User）。"""
+
     @staticmethod
     def create(username, password, is_admin=False):
         """创建用户"""
@@ -27,8 +30,8 @@ class User:
             {'username': username, 'password_hash': password_hash, 'is_admin': is_admin}
         )
         db.session.commit()
-        return User.get_by_username(username)
-    
+        return UserService.get_by_username(username)
+
     @staticmethod
     def get_by_id(user_id):
         """通过ID获取用户"""
@@ -44,7 +47,7 @@ class User:
             text('SELECT * FROM users WHERE username = :username'), {'username': username}
         ).fetchone()
         return dict(row._mapping) if row else None
-    
+
     @staticmethod
     def verify_password(identifier: str, password: str) -> Optional[dict]:
         """
@@ -64,17 +67,14 @@ class User:
 
         # 判断是邮箱、手机号还是用户名
         if '@' in identifier:
-            # 使用邮箱查询
             row = db.session.execute(
                 text('SELECT * FROM users WHERE email = :email'), {'email': identifier}
             ).fetchone()
         elif re.fullmatch(r'1[3-9]\d{9}', identifier):
-            # 使用手机号查询
             row = db.session.execute(
                 text('SELECT * FROM users WHERE phone = :phone'), {'phone': identifier}
             ).fetchone()
         else:
-            # 使用用户名查询
             row = db.session.execute(
                 text('SELECT * FROM users WHERE username = :username'), {'username': identifier}
             ).fetchone()
@@ -88,7 +88,7 @@ class User:
 
         # 用户已通过密码认证，修正历史数据中可能残留的 has_password_set=false/null 状态
         if user.get('has_password_set') not in (True, 1):
-            if User._mark_has_password_set(int(user['id'])):
+            if UserService._mark_has_password_set(int(user['id'])):
                 user['has_password_set'] = True
 
         return user
@@ -114,7 +114,7 @@ class User:
             except Exception:
                 pass
             return False
-    
+
     @staticmethod
     def update_password(user_id, new_password, set_password=False):
         """
@@ -126,20 +126,12 @@ class User:
             set_password: 是否为设置密码（True表示设置密码，False表示修改密码）
         """
         password_hash = generate_password_hash(new_password)
-
-        if set_password:
-            # 设置密码时，同时标记has_password_set为true
-            db.session.execute(
-                text('UPDATE users SET password_hash = :password_hash, has_password_set = true WHERE id = :user_id'),
-                {'password_hash': password_hash, 'user_id': user_id}
-            )
-        else:
-            db.session.execute(
-                text('UPDATE users SET password_hash = :password_hash, has_password_set = true WHERE id = :user_id'),
-                {'password_hash': password_hash, 'user_id': user_id}
-            )
+        db.session.execute(
+            text('UPDATE users SET password_hash = :password_hash, has_password_set = true WHERE id = :user_id'),
+            {'password_hash': password_hash, 'user_id': user_id}
+        )
         db.session.commit()
-    
+
     @staticmethod
     def has_password_set(user_id: int) -> bool:
         """
@@ -166,19 +158,14 @@ class User:
                 for k in ('email', 'phone', 'openid')
             )
 
-            # 如果has_password_set为true，肯定已设置密码
             if rm['has_password_set'] is True or rm['has_password_set'] == 1:
                 return True
 
-            # 如果has_password_set为false/0，需要判断：
             if rm['has_password_set'] is False or rm['has_password_set'] == 0:
-                # 邮箱/手机/微信登录创建的新账号默认 has_password_set=false，视为未设置密码
                 if has_external_binding:
                     return False
-                # 无外部绑定的历史账号：若存在密码哈希，按已设置密码处理
                 return has_password_hash
 
-            # has_password_set为NULL：仅做推断，不在读取路径中写库
             if rm['has_password_set'] is None:
                 if not has_password_hash:
                     return False
@@ -186,11 +173,10 @@ class User:
 
             return False
         except Exception as e:
-            # 出错时，为了安全起见，假设已设置密码（避免误判，老用户不应该看到设置密码弹窗）
             import logging
             logging.error(f'检查用户密码设置状态失败: {e}')
             return True
-    
+
     @staticmethod
     def update_profile(user_id, avatar=None, contact=None, college=None):
         """更新用户资料"""
@@ -212,8 +198,8 @@ class User:
             db.session.execute(text(sql), params)
             db.session.commit()
 
-        return User.get_by_id(user_id)
-    
+        return UserService.get_by_id(user_id)
+
     @staticmethod
     def get_all(search='', page=1, size=10, sort='created_at', order='desc'):
         """获取所有用户（分页）"""
@@ -232,12 +218,10 @@ class User:
         if order not in ('asc', 'desc'):
             order = 'desc'
 
-        # 获取总数
         total = db.session.execute(
             text(f'SELECT COUNT(*) FROM users {where}'), params
         ).scalar()
 
-        # 获取数据
         params['limit'] = size
         params['offset'] = offset
         rows = db.session.execute(
@@ -249,7 +233,7 @@ class User:
             'data': [dict(row._mapping) for row in rows],
             'total': total
         }
-    
+
     @staticmethod
     def get_by_email(email: str) -> Optional[dict]:
         """通过邮箱获取用户"""
@@ -259,21 +243,19 @@ class User:
             text('SELECT * FROM users WHERE email = :email'), {'email': email}
         ).fetchone()
         return dict(row._mapping) if row else None
-    
+
     @staticmethod
     def bind_email(user_id: int, email: str) -> Optional[dict]:
         """绑定邮箱到用户账户"""
         try:
-            # 检查邮箱是否已被其他用户使用
             existing = db.session.execute(
                 text('SELECT id FROM users WHERE email = :email AND id != :user_id'),
                 {'email': email, 'user_id': user_id}
             ).fetchone()
             if existing:
-                return None  # 邮箱已被使用
+                return None
 
             from app.core.utils.time_utils import now_bj
-            # 更新用户邮箱信息
             db.session.execute(
                 text('''UPDATE users
                    SET email = :email, email_verified = true, email_verified_at = :now
@@ -281,11 +263,11 @@ class User:
                 {'email': email, 'now': now_bj(), 'user_id': user_id}
             )
             db.session.commit()
-            return User.get_by_id(user_id)
+            return UserService.get_by_id(user_id)
         except Exception:
             db.session.rollback()
             return None
-    
+
     @staticmethod
     def update_email_verified(user_id: int, verified: bool = True) -> Optional[dict]:
         """更新邮箱验证状态"""
@@ -304,11 +286,11 @@ class User:
                     {'user_id': user_id}
                 )
             db.session.commit()
-            return User.get_by_id(user_id)
+            return UserService.get_by_id(user_id)
         except Exception:
             db.session.rollback()
             return None
-    
+
     @staticmethod
     def is_email_available(email: str, exclude_user_id: Optional[int] = None) -> bool:
         """检查邮箱是否可用（未被其他用户使用）"""
@@ -325,3 +307,7 @@ class User:
                 {'email': email}
             ).fetchone()
         return row is None
+
+
+# 向后兼容别名：旧代码中 `from ... import User` 可继续工作
+User = UserService

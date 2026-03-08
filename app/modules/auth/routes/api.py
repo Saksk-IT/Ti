@@ -9,7 +9,7 @@ from app.models.user import User as UserModel
 from sqlalchemy.exc import IntegrityError
 from app.core.utils.validators import validate_password
 from app.core.utils.decorators import jwt_required, auth_required, current_user_id
-from app.core.models.user import User
+from app.core.services.user_service import UserService as User
 from app.modules.auth.schemas import (
     SendBindCodeSchema,
     BindEmailSchema,

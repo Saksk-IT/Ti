@@ -5,10 +5,9 @@ core核心模块 - 共享代码
 """
 
 # 导出常用模块，方便导入
-from . import models
 from . import utils
 from . import config
 from . import extensions
 
-__all__ = ['models', 'utils', 'config', 'extensions']
+__all__ = ['utils', 'config', 'extensions']
 

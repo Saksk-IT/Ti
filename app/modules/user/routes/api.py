@@ -510,7 +510,7 @@ def api_profile():
         }
         
         # 检查用户是否设置了密码
-        from app.core.models.user import User as LegacyUser
+        from app.core.services.user_service import UserService as LegacyUser
         has_password_set = LegacyUser.has_password_set(uid)
         
         # 统计数据
@@ -604,7 +604,7 @@ def change_password():
             return jsonify({'status': 'error', 'message': '用户不存在'}), 404
         
         # 检查用户是否设置了密码（使用 LegacyUser 的复杂迁移逻辑）
-        from app.core.models.user import User as LegacyUser
+        from app.core.services.user_service import UserService as LegacyUser
         has_password = LegacyUser.has_password_set(uid)
 
         # 以后端真实状态为准，不信任前端传入 is_set_password，防止绕过当前密码校验
