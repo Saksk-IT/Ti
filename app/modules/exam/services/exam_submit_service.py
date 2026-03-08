@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from app.core.errors import BadRequestError
-from app.core.models.exam import Exam
+from app.modules.exam.services.exam_legacy_service import ExamLegacyService as Exam
 from app.modules.exam.schemas.submit import SubmitExamSchema
 
 

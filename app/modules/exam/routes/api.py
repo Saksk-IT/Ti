@@ -7,7 +7,7 @@ from flask import Blueprint, request, jsonify, session
 
 from app.core.extensions import db
 from app.core.utils.decorators import auth_required, current_user_id
-from app.core.models.exam import Exam as LegacyExam
+from app.modules.exam.services.exam_legacy_service import ExamLegacyService as LegacyExam
 from app.core.utils.cache_utils import bump_user_quiz_version
 from app.core.utils.options_parser import parse_options
 from app.core.utils.validators import parse_int

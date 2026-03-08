@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from app.core.errors import BadRequestError, ForbiddenError, NotFoundError
-from app.core.models.exam import Exam
+from app.modules.exam.services.exam_legacy_service import ExamLegacyService as Exam
 from app.core.utils.subject_permissions import can_user_access_subject
 from app.models.subject import Subject
 from app.models.user_bank import UserQuestionBank
