@@ -51,35 +51,38 @@ DATE_TEXT = '2026年4月6日'
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_ROOT = ROOT / 'output' / 'doc' / PROJECT_FOLDER_NAME
-DIR_01 = OUTPUT_ROOT / '01作品与答辩材料'
-DIR_02 = OUTPUT_ROOT / '02素材与源码'
-DIR_03 = OUTPUT_ROOT / '03设计与开发文档'
-DIR_03_IMG = DIR_03 / '插图'
-DIR_04 = OUTPUT_ROOT / '04作品演示视频'
-SHOT_DIR = DIR_01 / '网站截图'
+DIR_DOC = OUTPUT_ROOT / '1 文档'
+DIR_MATERIAL = OUTPUT_ROOT / '2 创作素材'
+DIR_WORK = OUTPUT_ROOT / '3 作品'
+DIR_OTHER = OUTPUT_ROOT / '4 其他'
+DIR_IMG = DIR_MATERIAL / '插图'
+SHOT_DIR = DIR_MATERIAL / '网站截图'
 TMP_DIR = ROOT / 'tmp' / 'docs'
+SCREENSHOT_SOURCE_DIR = ROOT / '.submission_assets' / 'screenshots'
 
 SUMMARY_TEMPLATE = Path('/Users/saksk/Downloads/01 软件应用与开发作品提交要求/01-2 作品信息摘要模板（2025版）V2.docx')
-SUMMARY_DOCX = DIR_03 / f'中国大学生计算机设计大赛作品信息概要表-{PROJECT_NAME}.docx'
-SUMMARY_PDF = DIR_03 / f'中国大学生计算机设计大赛作品信息概要表-{PROJECT_NAME}.pdf'
-DESIGN_DOCX = DIR_03 / f'软件应用与开发类作品设计和开发文档-{PROJECT_NAME}.docx'
-DESIGN_PDF = DIR_03 / f'软件应用与开发类作品设计和开发文档-{PROJECT_NAME}.pdf'
-RUNTIME_DOCX = DIR_01 / f'{PROJECT_NAME}-运行网址与答辩说明.docx'
-RUNTIME_PDF = DIR_01 / f'{PROJECT_NAME}-运行网址与答辩说明.pdf'
-PPT_DOCX = DIR_01 / f'{PROJECT_NAME}-答辩PPT提纲.docx'
-PPT_PDF = DIR_01 / f'{PROJECT_NAME}-答辩PPT提纲.pdf'
-PPTX_FILE = DIR_01 / f'{PROJECT_NAME}-答辩演示PPT.pptx'
-PPTX_PREVIEW_PDF = DIR_01 / f'{PROJECT_NAME}-答辩演示PPT.pdf'
-SPEECH_DOCX = DIR_01 / f'{PROJECT_NAME}-答辩讲稿要点.docx'
-SPEECH_PDF = DIR_01 / f'{PROJECT_NAME}-答辩讲稿要点.pdf'
-VIDEO_DOCX = DIR_04 / f'{PROJECT_NAME}-演示视频脚本.docx'
-VIDEO_PDF = DIR_04 / f'{PROJECT_NAME}-演示视频脚本.pdf'
-DEMO_VIDEO_MP4 = DIR_04 / f'{PROJECT_NAME}-作品运行演示视频.mp4'
-SOURCE_ZIP = DIR_02 / f'{PROJECT_NAME}-源码包.zip'
-MATERIALS_TXT = DIR_02 / f'{PROJECT_NAME}-代表性素材说明.txt'
-VIDEO_README = DIR_04 / 'README.txt'
-ARCH_IMG = DIR_03_IMG / '系统架构图.png'
-FLOW_IMG = DIR_03_IMG / '核心流程图.png'
+SUMMARY_DOCX = DIR_DOC / f'中国大学生计算机设计大赛作品信息概要表-{PROJECT_NAME}.docx'
+SUMMARY_PDF = DIR_DOC / f'中国大学生计算机设计大赛作品信息概要表-{PROJECT_NAME}.pdf'
+DESIGN_DOCX = DIR_DOC / f'软件应用与开发类作品设计和开发文档-{PROJECT_NAME}.docx'
+DESIGN_PDF = DIR_DOC / f'软件应用与开发类作品设计和开发文档-{PROJECT_NAME}.pdf'
+RUNTIME_DOCX = DIR_DOC / f'{PROJECT_NAME}-运行网址与答辩说明.docx'
+RUNTIME_PDF = DIR_DOC / f'{PROJECT_NAME}-运行网址与答辩说明.pdf'
+PPT_DOCX = DIR_DOC / f'{PROJECT_NAME}-答辩PPT提纲.docx'
+PPT_PDF = DIR_DOC / f'{PROJECT_NAME}-答辩PPT提纲.pdf'
+PPTX_FILE = DIR_WORK / f'{PROJECT_NAME}-答辩演示PPT.pptx'
+PPTX_PREVIEW_PDF = DIR_WORK / f'{PROJECT_NAME}-答辩演示PPT.pdf'
+SPEECH_DOCX = DIR_DOC / f'{PROJECT_NAME}-答辩讲稿要点.docx'
+SPEECH_PDF = DIR_DOC / f'{PROJECT_NAME}-答辩讲稿要点.pdf'
+VIDEO_DOCX = DIR_DOC / f'{PROJECT_NAME}-演示视频脚本.docx'
+VIDEO_PDF = DIR_DOC / f'{PROJECT_NAME}-演示视频脚本.pdf'
+DEMO_VIDEO_MP4 = DIR_WORK / f'{PROJECT_NAME}-作品运行演示视频.mp4'
+SOURCE_ZIP = DIR_WORK / f'{PROJECT_NAME}-源码包.zip'
+WORK_URL_TXT = DIR_WORK / f'{PROJECT_NAME}-访问地址.txt'
+MATERIALS_TXT = DIR_MATERIAL / f'{PROJECT_NAME}-代表性素材说明.txt'
+SUBMISSION_README = DIR_OTHER / '提交说明.txt'
+PLACEHOLDER_README = DIR_OTHER / '待替换信息.txt'
+ARCH_IMG = DIR_IMG / '系统架构图.png'
+FLOW_IMG = DIR_IMG / '核心流程图.png'
 PACKAGE_ZIP = ROOT / 'output' / 'doc' / f'{PROJECT_FOLDER_NAME}.zip'
 TMP_PPT_SLIDES = TMP_DIR / 'ppt_slides'
 
@@ -102,14 +105,14 @@ SCREENSHOTS = [
 ]
 
 FILE_ENTRIES = [
-    ('01作品与答辩材料/运行网址与答辩说明', '运行网址、亮点总结、答辩顺序与截图说明，含本地部署地址与正式演示地址。', '已上传到网盘', '自制'),
-    ('01作品与答辩材料/答辩演示PPT', '实际答辩演示PPT，含首页、架构、核心功能、测试与总结等正式答辩页。', '已上传到网盘', '自制'),
-    ('01作品与答辩材料/答辩讲稿要点', '与PPT逐页对应的口播讲稿要点，便于控制答辩节奏。', '已上传到网盘', '自制'),
-    ('02素材与源码/源码包.zip', '提交用源码压缩包，包含后端、Web、小程序、Docker与文档等代表性源码。', '已上传到网盘', '自制'),
-    ('02素材与源码/代表性素材说明.txt', '说明截图、图表、架构图与源码包的构成来源。', '已上传到网盘', '自制'),
-    ('03设计与开发文档/作品信息概要表', '依据竞赛模板填写的作品基本信息、分工与提交文件摘要。', '已上传到网盘', '自制'),
-    ('03设计与开发文档/设计和开发文档', '按“需求-设计-测试-安装-总结”组织的正式开发文档，含真实截图。', '已上传到网盘', '自制'),
-    ('04作品演示视频/作品运行演示视频.mp4', '基于真实网站截图制作的正式演示视频，覆盖首页、题库、考试、论坛与后台等环节。', '已上传到网盘', '自制'),
+    ('1 文档/运行网址与答辩说明', '运行网址、亮点总结、答辩顺序与截图说明，含本地部署地址与正式演示地址。', '已上传到网盘', '自制'),
+    ('1 文档/答辩演示相关文档', '包含作品信息概要表、设计和开发文档、讲稿与视频脚本等正式说明材料。', '已上传到网盘', '自制'),
+    ('2 创作素材/网站截图与插图', '真实网站截图、系统架构图和核心流程图等创作素材。', '已上传到网盘', '自制'),
+    ('3 作品/源码包.zip', '提交用源码压缩包，包含后端、Web、小程序、Docker与文档等代表性源码。', '已上传到网盘', '自制'),
+    ('3 作品/答辩演示PPT', '实际答辩演示PPT，含首页、架构、核心功能、测试与总结等正式答辩页。', '已上传到网盘', '自制'),
+    ('3 作品/作品运行演示视频.mp4', '基于真实网站截图制作的正式演示视频，覆盖首页、题库、考试、论坛与后台等环节。', '已上传到网盘', '自制'),
+    ('3 作品/访问地址.txt', '列出正式公网访问地址与本地演示地址，便于评审快速打开作品。', '已上传到网盘', '自制'),
+    ('4 其他/提交说明与待替换信息', '补充说明目录结构与当前保留的占位信息。', '已上传到网盘', '自制'),
 ]
 
 
@@ -303,10 +306,25 @@ PPT_SLIDES = [
 
 
 def ensure_dirs() -> None:
-    for path in [OUTPUT_ROOT, DIR_01, DIR_02, DIR_03, DIR_03_IMG, DIR_04, SHOT_DIR, TMP_DIR, TMP_PPT_SLIDES]:
+    if OUTPUT_ROOT.exists():
+        shutil.rmtree(OUTPUT_ROOT)
+    if TMP_DIR.exists():
+        shutil.rmtree(TMP_DIR)
+    for path in [OUTPUT_ROOT, DIR_DOC, DIR_MATERIAL, DIR_WORK, DIR_OTHER, DIR_IMG, SHOT_DIR, TMP_DIR, TMP_PPT_SLIDES]:
         path.mkdir(parents=True, exist_ok=True)
-    for ds_store in OUTPUT_ROOT.rglob('.DS_Store'):
-        ds_store.unlink(missing_ok=True)
+
+
+def copy_submission_assets() -> None:
+    missing: list[str] = []
+    for filename, _, _ in SCREENSHOTS:
+        src = SCREENSHOT_SOURCE_DIR / filename
+        dst = SHOT_DIR / filename
+        if not src.exists():
+            missing.append(str(src))
+            continue
+        shutil.copy2(src, dst)
+    if missing:
+        raise FileNotFoundError('缺少截图源文件：\n' + '\n'.join(missing))
 
 
 def set_cn_font(run, font_name: str = '微软雅黑', size: int | None = None, bold: bool | None = None) -> None:
@@ -1107,19 +1125,35 @@ def build_support_docs() -> None:
 def build_text_files() -> None:
     MATERIALS_TXT.write_text(
         f'作品名称：{PROJECT_NAME}\n'
-        '1. 网站截图：来自本地运行站点 http://127.0.0.1:8000 的真实页面截图，保存在 01作品与答辩材料/网站截图。\n'
-        '2. 系统架构图与核心流程图：由本次整理脚本基于作品实际架构与业务流程自制生成。\n'
-        '3. 答辩演示PPT：由本次整理脚本基于作品截图、架构图和功能亮点自动生成，提供 pptx 与 pdf 两个版本。\n'
-        '4. 作品运行演示视频：由真实页面截图自动生成 mp4 演示视频，覆盖首页、题库、考试、论坛与后台等核心页面。\n'
-        '5. 源码包：来自当前仓库源码，保留 Web、后端、小程序、Docker 与文档目录，排除缓存、运行数据、备份和版本控制元数据。\n'
-        '6. 文档：依据竞赛模板与附件要求整理生成。\n',
+        '1. 网站截图：来自本地运行站点 http://127.0.0.1:8000 的真实页面截图，保存在“2 创作素材/网站截图”。\n'
+        '2. 系统架构图与核心流程图：由本次整理脚本基于作品实际架构与业务流程自制生成，保存在“2 创作素材/插图”。\n'
+        '3. 答辩演示PPT：由本次整理脚本基于作品截图、架构图和功能亮点自动生成，提供 pptx 与 pdf 两个版本，保存在“3 作品”。\n'
+        '4. 作品运行演示视频：由真实页面截图自动生成 mp4 演示视频，覆盖首页、题库、考试、论坛与后台等核心页面，保存在“3 作品”。\n'
+        '5. 源码包：来自当前仓库源码，保留 Web、后端、小程序、Docker 与文档目录，排除缓存、运行数据、备份和版本控制元数据，保存在“3 作品”。\n'
+        '6. 正式文档：依据竞赛模板与附件要求整理生成，统一保存在“1 文档”。\n',
         encoding='utf-8',
     )
-    VIDEO_README.write_text(
-        '本目录已包含正式提交用《Sak-AI答题助手-作品运行演示视频.mp4》。\n'
-        '同时保留《Sak-AI答题助手-演示视频脚本》作为补充说明材料，便于后续重录或修改。\n'
-        '当前视频内容顺序：首页 → 题库广场 → 题库详情 → 我的题库 → 数据中心 → 考试中心 → 论坛 → 后台。\n'
-        '当前视频无配音，适合作为基础提交版；若后续需要更强展示效果，可据脚本补录语音版。 \n',
+    WORK_URL_TXT.write_text(
+        f'作品名称：{PROJECT_NAME}\n'
+        f'正式访问地址：{PUBLIC_URL}\n'
+        f'本地演示地址：{LOCAL_URL}\n'
+        '说明：评审优先使用正式访问地址；如现场网络受限，可说明使用本地部署演示地址。\n',
+        encoding='utf-8',
+    )
+    SUBMISSION_README.write_text(
+        '当前提交目录按以下结构整理：\n'
+        '1 文档：所有正式提交说明材料（概要表、设计开发文档、运行说明、讲稿、脚本等）。\n'
+        '2 创作素材：真实网站截图与自制插图。\n'
+        '3 作品：源码包、正式答辩演示PPT、作品运行演示视频、访问地址说明。\n'
+        '4 其他：补充说明与待替换项。\n'
+        '同时，output/doc 根目录下已附带总压缩包，可直接上传百度网盘。\n',
+        encoding='utf-8',
+    )
+    PLACEHOLDER_README.write_text(
+        '当前仍保留以下占位字段，请在最终提交前按实际情况替换：\n'
+        '1. 作品编号：待填写\n'
+        '2. 指导教师姓名：指导教师（待填写）\n'
+        '3. 若需正式双人署名，可将“队员B”替换为第二作者真实姓名。\n',
         encoding='utf-8',
     )
 
@@ -1164,7 +1198,7 @@ def verify_outputs() -> None:
         SUMMARY_DOCX, SUMMARY_PDF, DESIGN_DOCX, DESIGN_PDF,
         RUNTIME_DOCX, RUNTIME_PDF, PPT_DOCX, PPT_PDF, PPTX_FILE, PPTX_PREVIEW_PDF,
         SPEECH_DOCX, SPEECH_PDF, VIDEO_DOCX, VIDEO_PDF,
-        DEMO_VIDEO_MP4, SOURCE_ZIP, MATERIALS_TXT, VIDEO_README, ARCH_IMG, FLOW_IMG, PACKAGE_ZIP,
+        DEMO_VIDEO_MP4, SOURCE_ZIP, WORK_URL_TXT, MATERIALS_TXT, SUBMISSION_README, PLACEHOLDER_README, ARCH_IMG, FLOW_IMG, PACKAGE_ZIP,
     ] + [SHOT_DIR / item[0] for item in SCREENSHOTS]
     missing = [str(p) for p in required if not p.exists()]
     if missing:
@@ -1180,6 +1214,7 @@ def verify_outputs() -> None:
 def main() -> None:
     ensure_dirs()
     build_diagrams()
+    copy_submission_assets()
     slide_images = build_ppt_slide_images()
     build_summary_docx()
     build_summary_pdf()
@@ -1195,6 +1230,8 @@ def main() -> None:
     build_source_zip()
     build_package_zip()
     verify_outputs()
+    if TMP_DIR.exists():
+        shutil.rmtree(TMP_DIR)
     print(f'已生成交付目录：{OUTPUT_ROOT}')
 
 
