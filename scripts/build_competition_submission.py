@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import subprocess
 import shutil
 import zipfile
 from dataclasses import dataclass
@@ -391,6 +392,49 @@ def set_cell_text(cell, text: str, font_size: int = 10, bold: bool = False) -> N
         set_cn_font(run, size=font_size, bold=bold)
 
 
+def set_paragraph_text_preserve(paragraph, text: str, font_name: str = '仿宋') -> None:
+    if paragraph.runs:
+        paragraph.runs[0].text = text
+        for run in paragraph.runs[1:]:
+            run.text = ''
+        paragraph.runs[0].font.name = font_name
+        paragraph.runs[0]._element.rPr.rFonts.set(qn('w:eastAsia'), font_name)
+    else:
+        run = paragraph.add_run(text)
+        run.font.name = font_name
+        run._element.rPr.rFonts.set(qn('w:eastAsia'), font_name)
+
+
+def set_cell_paragraph(cell, paragraph_index: int, text: str, font_name: str = '仿宋') -> None:
+    while len(cell.paragraphs) <= paragraph_index:
+        cell.add_paragraph()
+    set_paragraph_text_preserve(cell.paragraphs[paragraph_index], text, font_name=font_name)
+
+
+def export_docx_to_pdf_with_pages(docx_path: Path, pdf_path: Path) -> None:
+    script_path = TMP_DIR / 'export_pages_pdf.applescript'
+    script_path.write_text(
+        'on run argv\n'
+        '  set inputPath to POSIX file (item 1 of argv)\n'
+        '  set outputPath to POSIX file (item 2 of argv)\n'
+        '  tell application "Pages"\n'
+        '    activate\n'
+        '    set theDoc to open inputPath\n'
+        '    export theDoc to outputPath as PDF\n'
+        '    close theDoc saving no\n'
+        '    quit\n'
+        '  end tell\n'
+        'end run\n',
+        encoding='utf-8',
+    )
+    subprocess.run(
+        ['osascript', str(script_path), str(docx_path), str(pdf_path)],
+        check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+
 def add_table(document: Document, rows: List[List[str]], widths_cm: List[float] | None = None, font_size: int = 10) -> None:
     table = document.add_table(rows=len(rows), cols=len(rows[0]))
     table.style = 'Table Grid'
@@ -731,98 +775,63 @@ def add_pdf_image(story: list, styles: StyleSheet1, image_path: Path, caption: s
 
 def build_summary_docx() -> None:
     doc = Document(str(SUMMARY_TEMPLATE))
-    configure_doc(doc)
     table = doc.tables[0]
-    set_cell_text(table.cell(0, 2), PROJECT_NUMBER)
-    set_cell_text(table.cell(0, 6), PROJECT_NAME)
-    set_cell_text(table.cell(1, 2), '软件应用与开发')
-    set_cell_text(table.cell(1, 9), 'Web应用与开发')
-    set_cell_text(table.cell(2, 0), f'作品简介(100字以内)：\n{INTRO_TEXT}', font_size=10)
-    set_cell_text(table.cell(3, 0), f'创新描述（100字以内）：\n{INNOVATION_TEXT}', font_size=10)
-    set_cell_text(table.cell(4, 0), f'特别说明\n{SPECIAL_NOTE}', font_size=9)
 
-    set_cell_text(table.cell(6, 2), AUTHOR_1, font_size=10, bold=True)
-    set_cell_text(table.cell(6, 5), AUTHOR_2, font_size=10, bold=True)
-    set_cell_text(table.cell(6, 8), '', font_size=10)
-    set_cell_text(table.cell(6, 10), '', font_size=10)
-    set_cell_text(table.cell(6, 12), '', font_size=10)
+    set_cell_paragraph(table.cell(0, 2), 0, '待填写')
+    set_cell_paragraph(table.cell(0, 6), 0, PROJECT_NAME)
+    set_cell_paragraph(table.cell(1, 2), 0, '软件应用与开发')
+    set_cell_paragraph(table.cell(1, 9), 0, 'Web应用与开发')
 
-    contribution_rows = [
-        ('组织协调', '90%', '10%'),
-        ('作品创意', '90%', '10%'),
-        ('竞品分析', '90%', '10%'),
-        ('方案设计', '90%', '10%'),
-        ('技术实现', '90%', '10%'),
-        ('文献阅读', '90%', '10%'),
-        ('测试分析', '90%', '10%'),
-    ]
-    for offset, (_, p1, p2) in enumerate(contribution_rows, start=7):
-        set_cell_text(table.cell(offset, 2), p1, font_size=10)
-        set_cell_text(table.cell(offset, 5), p2, font_size=10)
-        set_cell_text(table.cell(offset, 8), '', font_size=10)
-        set_cell_text(table.cell(offset, 10), '', font_size=10)
-        set_cell_text(table.cell(offset, 12), '', font_size=10)
+    set_cell_paragraph(table.cell(2, 0), 1, 'Sak-AI答题助手是面向备考场景的Web题库平台，集题库广场、个人题库、刷题、考试、数据中心、论坛与后台管理于一体，')
+    set_cell_paragraph(table.cell(2, 0), 2, '并配套微信小程序延展移动学习场景。')
 
-    set_cell_text(table.cell(15, 3), f'■理论指导  ■技术方案\n姓名：{TEACHER_1}', font_size=10)
-    set_cell_text(table.cell(16, 3), '■Windows  ■Linux  ■macOS（开发整理以 macOS 为主）', font_size=10)
-    set_cell_text(table.cell(17, 3), '■Windows  ■Linux  ■macOS  ■iOS  ■Android（Web + 微信小程序）', font_size=10)
-    set_cell_text(table.cell(18, 3), 'Python 3、Flask 3、SQLAlchemy 2、PostgreSQL 16、Redis 7、Docker、Jinja2、原生 JS/CSS、微信开发者工具、Chrome DevTools、Git', font_size=10)
-    set_cell_text(table.cell(19, 3), '1. Flask 官方文档\n2. SQLAlchemy 官方文档\n3. Docker 官方文档', font_size=10)
-    set_cell_text(table.cell(20, 3), '■素材压缩包  ■报告文档  ■演示视频  ■PPT  ■源代码  ■部署文件  □数据集  □模型  ■作品文件', font_size=10)
+    set_cell_paragraph(table.cell(3, 0), 1, '作品采用Flask单仓全栈架构，实现Web与小程序共享语义；支持Docker一键部署、学习数据可视化与')
+    set_cell_paragraph(table.cell(3, 0), 2, 'AI题目解析，兼顾工程化、扩展性和教学应用价值。')
+
+    set_cell_paragraph(table.cell(4, 0), 1, '1.本作品不含涉及疆域展示的地图内容。')
+    set_cell_paragraph(table.cell(4, 0), 2, '2.作品基于团队自研平台持续完善，本次参赛重点整理并强化Web主体演示链路。')
+    set_cell_paragraph(table.cell(4, 0), 3, '3.作品功能中集成AI题目解析能力，采用DashScope兼容接口生成解析文本。')
+
+    set_cell_paragraph(table.cell(6, 2), 0, AUTHOR_1)
+    set_cell_paragraph(table.cell(6, 5), 0, AUTHOR_2)
+    set_cell_paragraph(table.cell(6, 8), 0, '')
+    set_cell_paragraph(table.cell(6, 10), 0, '')
+    set_cell_paragraph(table.cell(6, 12), 0, '')
+
+    percentages = [('90%', '10%')] * 7
+    for idx, (p1, p2) in enumerate(percentages, start=7):
+        set_cell_paragraph(table.cell(idx, 2), 0, p1)
+        set_cell_paragraph(table.cell(idx, 5), 0, p2)
+        set_cell_paragraph(table.cell(idx, 8), 0, '')
+        set_cell_paragraph(table.cell(idx, 10), 0, '')
+        set_cell_paragraph(table.cell(idx, 12), 0, '')
+
+    set_cell_paragraph(table.cell(15, 3), 0, '□作品创意 ■理论指导 ■技术方案 □实验场地 □硬件资源')
+    set_cell_paragraph(table.cell(15, 3), 1, '□数据提供 □后勤支持 □宣讲通知 □组织协调 □经费支持')
+    set_cell_paragraph(table.cell(15, 3), 2, f'■其他：姓名待补（{TEACHER_1}）')
+    set_cell_paragraph(table.cell(16, 3), 0, '□Windows □Linux ■macOS □其他：')
+    set_cell_paragraph(table.cell(17, 3), 0, '□Windows □Linux ■macOS □iOS □Android □其他：')
+    set_cell_paragraph(table.cell(18, 3), 0, 'Python 3、Flask 3、SQLAlchemy 2、PostgreSQL 16、Redis 7、Docker、Jinja2、原生JS/CSS、微信开发者工具、Chrome DevTools、Git')
+    set_cell_paragraph(table.cell(19, 3), 0, '1、Flask 官方文档')
+    set_cell_paragraph(table.cell(19, 3), 1, '2、SQLAlchemy 官方文档')
+    set_cell_paragraph(table.cell(19, 3), 2, '3、Docker 官方文档')
+    set_cell_paragraph(table.cell(20, 3), 0, '■素材压缩包 ■报告文档 ■演示视频 ■PPT ■源代码 ■部署文件')
+    set_cell_paragraph(table.cell(20, 3), 1, '□数据集 □模型 ■作品文件 □其他')
 
     for i, (name, desc, status, copyright_text) in enumerate(FILE_ENTRIES, start=23):
-        set_cell_text(table.cell(i, 1), f'文件名：{name}\n描述：{desc}', font_size=9)
-        set_cell_text(table.cell(i, 7), f'■{status}', font_size=9)
-        set_cell_text(table.cell(i, 11), f'■{copyright_text}', font_size=9)
+        set_cell_paragraph(table.cell(i, 1), 0, f'文件名：{name}')
+        set_cell_paragraph(table.cell(i, 1), 1, f'描述：{desc}')
+        set_cell_paragraph(table.cell(i, 7), 0, '■已上传到网盘')
+        set_cell_paragraph(table.cell(i, 7), 1, '□未上传，下载地址：')
+        set_cell_paragraph(table.cell(i, 11), 0, '■自制  □未知版权')
+        set_cell_paragraph(table.cell(i, 11), 1, '□开源  □获得授权')
 
-    set_cell_text(table.cell(31, 0), '本作品全体参赛队员郑重承诺：\n本作品全体参赛队员确认本表所列内容是正式参赛内容的重要组成部分，并严格按照本大类参赛作品类别提交要求提交了评审必需的文档、数据等参赛材料，本表内容按照要求如实填写。\n\n全体参赛队员签名：____________________（可附电子签名）\n日期：______年______月______日', font_size=10)
+    set_cell_paragraph(table.cell(31, 0), 3, '全体参赛队员签名：（可附授权使用的电子签名图片）')
     doc.save(str(SUMMARY_DOCX))
 
 
 def build_summary_pdf() -> None:
-    def body(styles: StyleSheet1):
-        story = []
-        story.append(make_table_pdf([
-            ['作品编号', PROJECT_NUMBER, '作品名称', PROJECT_NAME],
-            ['作品大类', '软件应用与开发', '作品小类', 'Web应用与开发'],
-        ], [2.4, 5.4, 2.4, 5.2]))
-        story.append(Spacer(1, 0.3 * cm))
-        story.append(Paragraph('作品简介（100字以内）', styles['CNH2']))
-        story.append(Paragraph(INTRO_TEXT, styles['CNBody']))
-        story.append(Paragraph('创新描述（100字以内）', styles['CNH2']))
-        story.append(Paragraph(INNOVATION_TEXT, styles['CNBody']))
-        story.append(Paragraph('特别说明', styles['CNH2']))
-        story.append(Paragraph(SPECIAL_NOTE.replace('\n', '<br/>'), styles['CNBody']))
-        story.append(Paragraph('作者与分工', styles['CNH2']))
-        story.append(make_table_pdf([
-            ['作者', '主要工作', '占比'],
-            [AUTHOR_1, '组织协调、作品创意、方案设计、技术实现、测试整理、文档撰写', '90%'],
-            [AUTHOR_2, '协助测试、资料整理、辅助性支持工作', '10%'],
-        ], [3.2, 10.4, 2.4]))
-        story.append(Spacer(1, 0.2 * cm))
-        story.append(Paragraph('指导教师作用', styles['CNH2']))
-        story.append(Paragraph(f'{TEACHER_1}：理论指导、技术方案把关。', styles['CNBody']))
-        story.append(Paragraph('开发与运行环境', styles['CNH2']))
-        story.append(make_table_pdf([
-            ['项目', '内容'],
-            ['开发制作平台', 'Windows / Linux / macOS（整理环境以 macOS 为主）'],
-            ['运行展示平台', 'Windows / Linux / macOS / iOS / Android（Web + 微信小程序）'],
-            ['开发制作工具', 'Python 3、Flask 3、SQLAlchemy 2、PostgreSQL 16、Redis 7、Docker、Jinja2、微信开发者工具、Chrome DevTools、Git'],
-            ['参考文献/项目/作品', '1. Flask 官方文档  2. SQLAlchemy 官方文档  3. Docker 官方文档'],
-            ['提交内容', '素材压缩包、报告文档、演示视频、PPT、源代码、部署文件、作品文件'],
-        ], [3.6, 12.4]))
-        story.append(Spacer(1, 0.2 * cm))
-        story.append(Paragraph('相关文件', styles['CNH2']))
-        story.append(make_table_pdf([
-            ['序号', '文件名与描述', '文件状态', '版权状态'],
-            *[[str(idx), f'{name}\n{desc}', status, copyright_text] for idx, (name, desc, status, copyright_text) in enumerate(FILE_ENTRIES, start=1)],
-        ], [1.2, 10.2, 3.0, 2.0]))
-        story.append(Spacer(1, 0.2 * cm))
-        story.append(Paragraph('承诺', styles['CNH2']))
-        story.append(Paragraph('本表内容与提交目录对应，作者与指导教师信息中的占位字段可在最终报名阶段按实际信息替换。承诺页已预留电子签名与日期填写位置。', styles['CNBody']))
-        return story
-
-    build_pdf(SUMMARY_PDF, f'中国大学生计算机设计大赛作品信息概要表\n{PROJECT_NAME}', [DATE_TEXT], body)
+    export_docx_to_pdf_with_pages(SUMMARY_DOCX, SUMMARY_PDF)
 
 
 def build_design_docx() -> None:
