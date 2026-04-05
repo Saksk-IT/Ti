@@ -8,11 +8,12 @@ from pathlib import Path
 from typing import Iterable, List
 
 from docx import Document
-from docx.enum.section import WD_SECTION
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt
+import imageio.v2 as imageio
+import numpy as np
 from PIL import Image as PILImage
 from PIL import ImageDraw, ImageFont
 from pypdf import PdfReader
@@ -23,6 +24,7 @@ from reportlab.lib.styles import ParagraphStyle, StyleSheet1, getSampleStyleShee
 from reportlab.lib.units import cm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+from reportlab.pdfgen import canvas
 from reportlab.platypus import (
     Image,
     PageBreak,
@@ -32,6 +34,8 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
+from pptx import Presentation
+from pptx.util import Inches
 
 
 PROJECT_NAME = 'Sak-AI答题助手'
@@ -40,7 +44,7 @@ PROJECT_NUMBER = '待填写'
 PUBLIC_URL = 'https://saksk.top'
 LOCAL_URL = 'http://127.0.0.1:8000'
 AUTHOR_1 = '王为硕'
-AUTHOR_2 = '队员B（占位）'
+AUTHOR_2 = '队员B'
 TEACHER_1 = '指导教师（待填写）'
 VERSION = 'V1.0'
 DATE_TEXT = '2026年4月6日'
@@ -64,15 +68,20 @@ RUNTIME_DOCX = DIR_01 / f'{PROJECT_NAME}-运行网址与答辩说明.docx'
 RUNTIME_PDF = DIR_01 / f'{PROJECT_NAME}-运行网址与答辩说明.pdf'
 PPT_DOCX = DIR_01 / f'{PROJECT_NAME}-答辩PPT提纲.docx'
 PPT_PDF = DIR_01 / f'{PROJECT_NAME}-答辩PPT提纲.pdf'
+PPTX_FILE = DIR_01 / f'{PROJECT_NAME}-答辩演示PPT.pptx'
+PPTX_PREVIEW_PDF = DIR_01 / f'{PROJECT_NAME}-答辩演示PPT.pdf'
 SPEECH_DOCX = DIR_01 / f'{PROJECT_NAME}-答辩讲稿要点.docx'
 SPEECH_PDF = DIR_01 / f'{PROJECT_NAME}-答辩讲稿要点.pdf'
 VIDEO_DOCX = DIR_04 / f'{PROJECT_NAME}-演示视频脚本.docx'
 VIDEO_PDF = DIR_04 / f'{PROJECT_NAME}-演示视频脚本.pdf'
+DEMO_VIDEO_MP4 = DIR_04 / f'{PROJECT_NAME}-作品运行演示视频.mp4'
 SOURCE_ZIP = DIR_02 / f'{PROJECT_NAME}-源码包.zip'
 MATERIALS_TXT = DIR_02 / f'{PROJECT_NAME}-代表性素材说明.txt'
 VIDEO_README = DIR_04 / 'README.txt'
 ARCH_IMG = DIR_03_IMG / '系统架构图.png'
 FLOW_IMG = DIR_03_IMG / '核心流程图.png'
+PACKAGE_ZIP = ROOT / 'output' / 'doc' / f'{PROJECT_FOLDER_NAME}.zip'
+TMP_PPT_SLIDES = TMP_DIR / 'ppt_slides'
 
 FONT_CANDIDATES = [
     Path('/System/Library/Fonts/STHeiti Medium.ttc'),
@@ -94,13 +103,13 @@ SCREENSHOTS = [
 
 FILE_ENTRIES = [
     ('01作品与答辩材料/运行网址与答辩说明', '运行网址、亮点总结、答辩顺序与截图说明，含本地部署地址与正式演示地址。', '已上传到网盘', '自制'),
-    ('01作品与答辩材料/答辩PPT提纲', '10页答辩PPT结构提纲，可直接据此制作正式演示文稿。', '已上传到网盘', '自制'),
+    ('01作品与答辩材料/答辩演示PPT', '实际答辩演示PPT，含首页、架构、核心功能、测试与总结等正式答辩页。', '已上传到网盘', '自制'),
     ('01作品与答辩材料/答辩讲稿要点', '与PPT逐页对应的口播讲稿要点，便于控制答辩节奏。', '已上传到网盘', '自制'),
     ('02素材与源码/源码包.zip', '提交用源码压缩包，包含后端、Web、小程序、Docker与文档等代表性源码。', '已上传到网盘', '自制'),
     ('02素材与源码/代表性素材说明.txt', '说明截图、图表、架构图与源码包的构成来源。', '已上传到网盘', '自制'),
     ('03设计与开发文档/作品信息概要表', '依据竞赛模板填写的作品基本信息、分工与提交文件摘要。', '已上传到网盘', '自制'),
     ('03设计与开发文档/设计和开发文档', '按“需求-设计-测试-安装-总结”组织的正式开发文档，含真实截图。', '已上传到网盘', '自制'),
-    ('04作品演示视频/脚本与README', '演示视频录制脚本与目录说明，指导后续补录正式MP4演示视频。', '已上传到网盘', '自制'),
+    ('04作品演示视频/作品运行演示视频.mp4', '基于真实网站截图制作的正式演示视频，覆盖首页、题库、考试、论坛与后台等环节。', '已上传到网盘', '自制'),
 ]
 
 
@@ -189,10 +198,115 @@ VIDEO_SECTIONS = [
     SlideSection('结尾 6:20-6:40', ['回到作品总结页，概括“题库-练习-考试-数据-社区-后台”的闭环。', '提示正式提交时将此脚本录制为不超过10分钟的 mp4 视频。']),
 ]
 
+PPT_SLIDES = [
+    {
+        'title': PROJECT_NAME,
+        'subtitle': '软件应用与开发 - Web 应用与开发\n竞赛答辩演示',
+        'bullets': [
+            f'正式访问地址：{PUBLIC_URL}',
+            f'本地演示地址：{LOCAL_URL}',
+            '单仓全栈题库平台，覆盖题库、练习、考试、数据中心、论坛与后台。',
+        ],
+        'image': SHOT_DIR / '01-首页.png',
+    },
+    {
+        'title': '问题背景与作品定位',
+        'subtitle': '围绕备考学习与题库运营场景构建完整 Web 应用',
+        'bullets': [
+            '备考工具常存在题库分散、错题复盘弱、考试训练不足的问题。',
+            '本作品以 Web 为主体，小程序为移动延展端，共享同一套后端与数据语义。',
+            '目标是把题库管理、练习、考试、数据反馈与社区互动打通成闭环。',
+        ],
+        'image': SHOT_DIR / '02-题库广场.png',
+    },
+    {
+        'title': '系统架构',
+        'subtitle': 'Flask + PostgreSQL + Redis + RQ + Docker',
+        'bullets': [
+            'Flask 应用工厂 + Blueprint 模块化组织。',
+            'PostgreSQL 存储题库、考试与用户数据；Redis 支持缓存、限流与任务队列。',
+            'Docker 开发模式便于快速部署、演示与复现。',
+        ],
+        'image': ARCH_IMG,
+    },
+    {
+        'title': '题库体系',
+        'subtitle': '公共题库 + 个人题库双线并行',
+        'bullets': [
+            '题库广场集中展示系统题库和用户公开题库。',
+            '题库名片页支持查看简介、参与人数、加入方式与继续练习入口。',
+            '个人题库支持用户整理自己的长期学习资源。',
+        ],
+        'image': SHOT_DIR / '03-题库名片详情.png',
+    },
+    {
+        'title': '学习闭环',
+        'subtitle': '题库浏览 → 练习/考试 → 数据复盘',
+        'bullets': [
+            '用户可从首页进入题库广场，也可从“我的题库”继续上次学习。',
+            '系统支持错题、收藏、进度同步与考试训练。',
+            '数据中心将练习结果转化为可视化反馈。',
+        ],
+        'image': FLOW_IMG,
+    },
+    {
+        'title': '数据中心',
+        'subtitle': '用图表驱动复盘与决策',
+        'bullets': [
+            '提供趋势图、热力图、能力画像、错题/收藏新增等视图。',
+            '帮助用户从“做了多少题”升级到“知道自己哪里薄弱”。',
+            '适合课程练习、阶段复盘与长期备考监控。',
+        ],
+        'image': SHOT_DIR / '05-数据中心.png',
+    },
+    {
+        'title': '考试与社区',
+        'subtitle': '训练结果与交流协同并存',
+        'bullets': [
+            '考试中心支持按公共题库或个人题库发起模拟考试。',
+            '论坛模块支持版块浏览、热帖查看与学习交流。',
+            '让训练、反馈和经验分享形成连续体验。',
+        ],
+        'image': SHOT_DIR / '07-论坛首页.png',
+    },
+    {
+        'title': '后台与移动适配',
+        'subtitle': '兼顾运营管理与多端体验',
+        'bullets': [
+            '后台仪表盘可查看题目数、科目数、用户数等系统统计信息。',
+            'Web 页面支持移动端响应式布局，便于在窄屏设备上访问。',
+            '小程序延展移动学习场景，但不复制一套独立数据逻辑。',
+        ],
+        'image': SHOT_DIR / '08-后台仪表盘.png',
+    },
+    {
+        'title': '测试与验证',
+        'subtitle': '真实运行、真实截图、真实接口检查',
+        'bullets': [
+            'docker compose 服务状态正常：web/postgres/redis/worker 全部运行。',
+            '/api/ping 与 /api/ping?deep=1 已验证 success、db=true、redis=true。',
+            '首页、题库广场、我的题库、数据中心、考试、论坛、后台均已实际访问截图。',
+        ],
+        'image': SHOT_DIR / '09-首页-移动端.png',
+    },
+    {
+        'title': '总结与展望',
+        'subtitle': '不仅是展示站，更是完整业务系统',
+        'bullets': [
+            '作品已形成题库-练习-考试-数据-社区-后台的一体化 Web 形态。',
+            '工程化、可扩展、可部署、可演示，是本作品的核心优势。',
+            '后续可继续增强个性化推荐、协作维护与更精细的数据分析能力。',
+        ],
+        'image': SHOT_DIR / '01-首页.png',
+    },
+]
+
 
 def ensure_dirs() -> None:
-    for path in [OUTPUT_ROOT, DIR_01, DIR_02, DIR_03, DIR_03_IMG, DIR_04, SHOT_DIR, TMP_DIR]:
+    for path in [OUTPUT_ROOT, DIR_01, DIR_02, DIR_03, DIR_03_IMG, DIR_04, SHOT_DIR, TMP_DIR, TMP_PPT_SLIDES]:
         path.mkdir(parents=True, exist_ok=True)
+    for ds_store in OUTPUT_ROOT.rglob('.DS_Store'):
+        ds_store.unlink(missing_ok=True)
 
 
 def set_cn_font(run, font_name: str = '微软雅黑', size: int | None = None, bold: bool | None = None) -> None:
@@ -360,6 +474,180 @@ def build_diagrams() -> None:
     )
 
 
+def wrap_text_for_pil(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.FreeTypeFont, max_width: int) -> list[str]:
+    words = list(text)
+    lines: list[str] = []
+    current = ''
+    for ch in words:
+        candidate = current + ch
+        if draw.textbbox((0, 0), candidate, font=font)[2] <= max_width:
+            current = candidate
+            continue
+        if current:
+            lines.append(current)
+        current = ch
+    if current:
+        lines.append(current)
+    return lines
+
+
+def fit_image(image: PILImage.Image, max_width: int, max_height: int) -> PILImage.Image:
+    ratio = min(max_width / image.width, max_height / image.height)
+    new_size = (max(1, int(image.width * ratio)), max(1, int(image.height * ratio)))
+    return image.resize(new_size, PILImage.Resampling.LANCZOS)
+
+
+def render_ppt_slide_image(slide_data: dict, index: int, total: int, output_path: Path) -> None:
+    width, height = 1920, 1080
+    img = PILImage.new('RGB', (width, height), '#F8FAFC')
+    draw = ImageDraw.Draw(img)
+    font_path = get_font_path()
+    title_font = ImageFont.truetype(font_path, 52)
+    subtitle_font = ImageFont.truetype(font_path, 28)
+    bullet_font = ImageFont.truetype(font_path, 30)
+    small_font = ImageFont.truetype(font_path, 22)
+
+    draw.rectangle((0, 0, width, 112), fill='#0F172A')
+    draw.text((84, 58), slide_data['title'], fill='white', font=title_font, anchor='lm')
+    draw.text((1770, 58), f'{index:02d}/{total:02d}', fill='#CBD5E1', font=small_font, anchor='rm')
+
+    content_x = 84
+    content_y = 156
+    draw.text((content_x, content_y), slide_data.get('subtitle', ''), fill='#334155', font=subtitle_font)
+
+    bullet_y = content_y + 82
+    bullet_area_width = 700
+    for bullet in slide_data.get('bullets', []):
+        lines = wrap_text_for_pil(draw, bullet, bullet_font, bullet_area_width)
+        draw.ellipse((content_x, bullet_y + 8, content_x + 14, bullet_y + 22), fill='#2563EB')
+        text_x = content_x + 30
+        for line in lines:
+            draw.text((text_x, bullet_y), line, fill='#0F172A', font=bullet_font)
+            bullet_y += 40
+        bullet_y += 14
+
+    image_box = (860, 170, 1820, 860)
+    draw.rounded_rectangle(image_box, radius=28, fill='white', outline='#CBD5E1', width=3)
+    image_path = Path(slide_data['image'])
+    shot = PILImage.open(image_path).convert('RGB')
+    shot_fit = fit_image(shot, image_box[2] - image_box[0] - 28, image_box[3] - image_box[1] - 28)
+    paste_x = image_box[0] + ((image_box[2] - image_box[0] - shot_fit.width) // 2)
+    paste_y = image_box[1] + ((image_box[3] - image_box[1] - shot_fit.height) // 2)
+    img.paste(shot_fit, (paste_x, paste_y))
+
+    caption_box = (80, 900, 1840, 1020)
+    draw.rounded_rectangle(caption_box, radius=24, fill='#E2E8F0')
+    caption = slide_data.get('caption') or ''
+    draw.text((110, 948), caption, fill='#334155', font=small_font)
+    draw.text((1810, 948), PROJECT_NAME, fill='#475569', font=small_font, anchor='rm')
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    img.save(output_path)
+
+
+def build_ppt_slide_images() -> list[Path]:
+    for old_png in TMP_PPT_SLIDES.glob('slide-*.png'):
+        old_png.unlink()
+    slides: list[Path] = []
+    total = len(PPT_SLIDES)
+    for idx, slide in enumerate(PPT_SLIDES, start=1):
+        out = TMP_PPT_SLIDES / f'slide-{idx:02d}.png'
+        caption = slide.get('subtitle', '')
+        slide = {**slide, 'caption': caption}
+        render_ppt_slide_image(slide, idx, total, out)
+        slides.append(out)
+    return slides
+
+
+def build_answer_ppt(slide_images: list[Path]) -> None:
+    prs = Presentation()
+    prs.slide_width = Inches(13.333)
+    prs.slide_height = Inches(7.5)
+    blank_layout = prs.slide_layouts[6]
+    for slide_img in slide_images:
+        slide = prs.slides.add_slide(blank_layout)
+        slide.shapes.add_picture(str(slide_img), 0, 0, width=prs.slide_width, height=prs.slide_height)
+    prs.save(str(PPTX_FILE))
+
+
+def build_answer_ppt_pdf(slide_images: list[Path]) -> None:
+    page_w = 13.333 * 72
+    page_h = 7.5 * 72
+    pdf = canvas.Canvas(str(PPTX_PREVIEW_PDF), pagesize=(page_w, page_h))
+    for slide_img in slide_images:
+        pdf.drawImage(str(slide_img), 0, 0, width=page_w, height=page_h, preserveAspectRatio=True, mask='auto')
+        pdf.showPage()
+    pdf.save()
+
+
+def render_video_frame(title: str, route: str, caption: str, image_path: Path) -> PILImage.Image:
+    width, height = 1280, 720
+    canvas_img = PILImage.new('RGB', (width, height), '#0F172A')
+    draw = ImageDraw.Draw(canvas_img)
+    font_path = get_font_path()
+    title_font = ImageFont.truetype(font_path, 36)
+    text_font = ImageFont.truetype(font_path, 22)
+
+    draw.rectangle((0, 0, width, 80), fill='#111827')
+    draw.text((40, 40), title, fill='white', font=title_font, anchor='lm')
+    draw.text((1240, 40), PUBLIC_URL, fill='#CBD5E1', font=text_font, anchor='rm')
+
+    shot = PILImage.open(image_path).convert('RGB')
+    shot_fit = fit_image(shot, 1180, 500)
+    shot_x = (width - shot_fit.width) // 2
+    shot_y = 110 + (500 - shot_fit.height) // 2
+    canvas_img.paste(shot_fit, (shot_x, shot_y))
+
+    draw.rounded_rectangle((28, 630, 1252, 700), radius=20, fill='#E2E8F0')
+    draw.text((50, 654), f'页面路径：{route}', fill='#0F172A', font=text_font)
+    draw.text((50, 682), caption, fill='#334155', font=text_font)
+    return canvas_img
+
+
+def render_title_frame(title: str, subtitle: str) -> PILImage.Image:
+    width, height = 1280, 720
+    img = PILImage.new('RGB', (width, height), '#0F172A')
+    draw = ImageDraw.Draw(img)
+    font_path = get_font_path()
+    title_font = ImageFont.truetype(font_path, 58)
+    sub_font = ImageFont.truetype(font_path, 28)
+    draw.text((width / 2, 280), title, fill='white', font=title_font, anchor='mm')
+    draw.text((width / 2, 360), subtitle, fill='#CBD5E1', font=sub_font, anchor='mm')
+    draw.text((width / 2, 430), PUBLIC_URL, fill='#93C5FD', font=sub_font, anchor='mm')
+    return img
+
+
+def build_demo_video() -> None:
+    fps = 24
+    writer = imageio.get_writer(str(DEMO_VIDEO_MP4), fps=fps)
+    intro = render_title_frame(PROJECT_NAME, '作品运行演示视频')
+    outro = render_title_frame('演示结束', '题库-练习-考试-数据-社区-后台')
+
+    for _ in range(fps * 2):
+        writer.append_data(np.asarray(intro))
+
+    for filename, route, caption in SCREENSHOTS:
+        title = filename.replace('.png', '')
+        frame = render_video_frame(title, route, caption, SHOT_DIR / filename)
+        for _ in range(fps * 3):
+            writer.append_data(np.asarray(frame))
+
+    for _ in range(fps * 2):
+        writer.append_data(np.asarray(outro))
+    writer.close()
+
+
+def build_package_zip() -> None:
+    if PACKAGE_ZIP.exists():
+        PACKAGE_ZIP.unlink()
+    with zipfile.ZipFile(PACKAGE_ZIP, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=8) as zf:
+        for file in OUTPUT_ROOT.rglob('*'):
+            if file.is_dir() or file == PACKAGE_ZIP or file.name == '.DS_Store':
+                continue
+            arcname = Path(PROJECT_FOLDER_NAME) / file.relative_to(OUTPUT_ROOT)
+            zf.write(file, arcname.as_posix())
+
+
 def reportlab_styles() -> StyleSheet1:
     pdfmetrics.registerFont(UnicodeCIDFont('STSong-Light'))
     styles = getSampleStyleSheet()
@@ -462,7 +750,7 @@ def build_summary_docx() -> None:
     set_cell_text(table.cell(17, 3), '■Windows  ■Linux  ■macOS  ■iOS  ■Android（Web + 微信小程序）', font_size=10)
     set_cell_text(table.cell(18, 3), 'Python 3、Flask 3、SQLAlchemy 2、PostgreSQL 16、Redis 7、Docker、Jinja2、原生 JS/CSS、微信开发者工具、Chrome DevTools、Git', font_size=10)
     set_cell_text(table.cell(19, 3), '1. Flask 官方文档\n2. SQLAlchemy 官方文档\n3. Docker 官方文档', font_size=10)
-    set_cell_text(table.cell(20, 3), '■素材压缩包  ■报告文档  □演示视频  ■PPT  ■源代码  ■部署文件  □数据集  □模型  ■作品文件', font_size=10)
+    set_cell_text(table.cell(20, 3), '■素材压缩包  ■报告文档  ■演示视频  ■PPT  ■源代码  ■部署文件  □数据集  □模型  ■作品文件', font_size=10)
 
     for i, (name, desc, status, copyright_text) in enumerate(FILE_ENTRIES, start=23):
         set_cell_text(table.cell(i, 1), f'文件名：{name}\n描述：{desc}', font_size=9)
@@ -503,7 +791,7 @@ def build_summary_pdf() -> None:
             ['运行展示平台', 'Windows / Linux / macOS / iOS / Android（Web + 微信小程序）'],
             ['开发制作工具', 'Python 3、Flask 3、SQLAlchemy 2、PostgreSQL 16、Redis 7、Docker、Jinja2、微信开发者工具、Chrome DevTools、Git'],
             ['参考文献/项目/作品', '1. Flask 官方文档  2. SQLAlchemy 官方文档  3. Docker 官方文档'],
-            ['提交内容', '素材压缩包、报告文档、PPT、源代码、部署文件、作品文件'],
+            ['提交内容', '素材压缩包、报告文档、演示视频、PPT、源代码、部署文件、作品文件'],
         ], [3.6, 12.4]))
         story.append(Spacer(1, 0.2 * cm))
         story.append(Paragraph('相关文件', styles['CNH2']))
@@ -821,15 +1109,17 @@ def build_text_files() -> None:
         f'作品名称：{PROJECT_NAME}\n'
         '1. 网站截图：来自本地运行站点 http://127.0.0.1:8000 的真实页面截图，保存在 01作品与答辩材料/网站截图。\n'
         '2. 系统架构图与核心流程图：由本次整理脚本基于作品实际架构与业务流程自制生成。\n'
-        '3. 源码包：来自当前仓库源码，保留 Web、后端、小程序、Docker 与文档目录，排除缓存、运行数据、备份和版本控制元数据。\n'
-        '4. 文档：依据竞赛模板与附件要求整理生成。\n',
+        '3. 答辩演示PPT：由本次整理脚本基于作品截图、架构图和功能亮点自动生成，提供 pptx 与 pdf 两个版本。\n'
+        '4. 作品运行演示视频：由真实页面截图自动生成 mp4 演示视频，覆盖首页、题库、考试、论坛与后台等核心页面。\n'
+        '5. 源码包：来自当前仓库源码，保留 Web、后端、小程序、Docker 与文档目录，排除缓存、运行数据、备份和版本控制元数据。\n'
+        '6. 文档：依据竞赛模板与附件要求整理生成。\n',
         encoding='utf-8',
     )
     VIDEO_README.write_text(
-        '本目录已提供演示视频脚本与说明文件。\n'
-        '正式提交前，请据《Sak-AI答题助手-演示视频脚本》录制 1 个 mp4 演示视频，并放置于本目录。\n'
-        '建议时长：6-8 分钟；竞赛要求上限：10 分钟。\n'
-        '建议内容顺序：首页 → 题库广场 → 题库详情 → 我的题库 → 数据中心 → 考试中心 → 论坛 → 后台。\n',
+        '本目录已包含正式提交用《Sak-AI答题助手-作品运行演示视频.mp4》。\n'
+        '同时保留《Sak-AI答题助手-演示视频脚本》作为补充说明材料，便于后续重录或修改。\n'
+        '当前视频内容顺序：首页 → 题库广场 → 题库详情 → 我的题库 → 数据中心 → 考试中心 → 论坛 → 后台。\n'
+        '当前视频无配音，适合作为基础提交版；若后续需要更强展示效果，可据脚本补录语音版。 \n',
         encoding='utf-8',
     )
 
@@ -872,31 +1162,38 @@ def build_source_zip() -> None:
 def verify_outputs() -> None:
     required = [
         SUMMARY_DOCX, SUMMARY_PDF, DESIGN_DOCX, DESIGN_PDF,
-        RUNTIME_DOCX, RUNTIME_PDF, PPT_DOCX, PPT_PDF,
+        RUNTIME_DOCX, RUNTIME_PDF, PPT_DOCX, PPT_PDF, PPTX_FILE, PPTX_PREVIEW_PDF,
         SPEECH_DOCX, SPEECH_PDF, VIDEO_DOCX, VIDEO_PDF,
-        SOURCE_ZIP, MATERIALS_TXT, VIDEO_README, ARCH_IMG, FLOW_IMG,
+        DEMO_VIDEO_MP4, SOURCE_ZIP, MATERIALS_TXT, VIDEO_README, ARCH_IMG, FLOW_IMG, PACKAGE_ZIP,
     ] + [SHOT_DIR / item[0] for item in SCREENSHOTS]
     missing = [str(p) for p in required if not p.exists()]
     if missing:
         raise FileNotFoundError('以下文件未生成成功：\n' + '\n'.join(missing))
-    for pdf in [SUMMARY_PDF, DESIGN_PDF, RUNTIME_PDF, PPT_PDF, SPEECH_PDF, VIDEO_PDF]:
+    for pdf in [SUMMARY_PDF, DESIGN_PDF, RUNTIME_PDF, PPT_PDF, PPTX_PREVIEW_PDF, SPEECH_PDF, VIDEO_PDF]:
         pages = len(PdfReader(str(pdf)).pages)
         if pages <= 0:
             raise RuntimeError(f'PDF 页数异常：{pdf}')
+    if DEMO_VIDEO_MP4.stat().st_size <= 0:
+        raise RuntimeError(f'视频文件异常：{DEMO_VIDEO_MP4}')
 
 
 def main() -> None:
     ensure_dirs()
     build_diagrams()
+    slide_images = build_ppt_slide_images()
     build_summary_docx()
     build_summary_pdf()
     build_design_docx()
     build_design_pdf()
     build_runtime_docx()
     build_runtime_pdf()
+    build_answer_ppt(slide_images)
+    build_answer_ppt_pdf(slide_images)
     build_support_docs()
+    build_demo_video()
     build_text_files()
     build_source_zip()
+    build_package_zip()
     verify_outputs()
     print(f'已生成交付目录：{OUTPUT_ROOT}')
 
