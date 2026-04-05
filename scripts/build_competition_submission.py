@@ -40,9 +40,8 @@ from pptx.util import Inches
 
 
 PROJECT_NAME = 'Sak-AI答题助手'
-SUBMISSION_ID = '2025012345'
-PROJECT_FOLDER_NAME = f'{SUBMISSION_ID}-参赛总文件夹'
-PROJECT_NUMBER = SUBMISSION_ID
+PROJECT_FOLDER_NAME = '1软件应用与开发_1Web应用与开发_Sak-AI答题助手'
+PROJECT_NUMBER = ''
 PUBLIC_URL = 'https://saksk.top'
 LOCAL_URL = 'http://127.0.0.1:8000'
 AUTHOR_1 = '王为硕'
@@ -53,10 +52,10 @@ DATE_TEXT = '2026年4月6日'
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_ROOT = ROOT / 'output' / 'doc' / PROJECT_FOLDER_NAME
-DIR_01 = OUTPUT_ROOT / f'{SUBMISSION_ID}-01作品与答辩材料'
-DIR_02 = OUTPUT_ROOT / f'{SUBMISSION_ID}-02素材与源码'
-DIR_03 = OUTPUT_ROOT / f'{SUBMISSION_ID}-03设计与开发文档'
-DIR_04 = OUTPUT_ROOT / f'{SUBMISSION_ID}-04作品演示视频'
+DIR_01 = OUTPUT_ROOT / '01作品与答辩材料'
+DIR_02 = OUTPUT_ROOT / '02素材与源码'
+DIR_03 = OUTPUT_ROOT / '03设计与开发文档'
+DIR_04 = OUTPUT_ROOT / '04作品演示视频'
 DIR_IMG = DIR_02 / '插图'
 SHOT_DIR = DIR_02 / '网站截图'
 TMP_DIR = ROOT / 'tmp' / 'docs'
@@ -106,14 +105,14 @@ SCREENSHOTS = [
 ]
 
 FILE_ENTRIES = [
-    (f'{SUBMISSION_ID}-01作品与答辩材料/运行网址与答辩说明', '运行网址、亮点总结、答辩顺序与截图说明，含本地部署地址与正式演示地址。', '已上传到网盘', '自制'),
-    (f'{SUBMISSION_ID}-01作品与答辩材料/答辩演示相关文档', '包含作品信息概要表、设计和开发文档、讲稿与视频脚本等正式说明材料。', '已上传到网盘', '自制'),
-    (f'{SUBMISSION_ID}-02素材与源码/网站截图与插图', '真实网站截图、系统架构图和核心流程图等创作素材。', '已上传到网盘', '自制'),
-    (f'{SUBMISSION_ID}-02素材与源码/源码包.zip', '提交用源码压缩包，包含后端、Web、小程序、Docker与文档等代表性源码。', '已上传到网盘', '自制'),
-    (f'{SUBMISSION_ID}-03设计与开发文档/答辩演示PPT', '实际答辩演示PPT，含首页、架构、核心功能、测试与总结等正式答辩页。', '已上传到网盘', '自制'),
-    (f'{SUBMISSION_ID}-03设计与开发文档/设计和开发文档', '作品信息概要表与软件应用开发文档等正式提交文档。', '已上传到网盘', '自制'),
-    (f'{SUBMISSION_ID}-04作品演示视频/作品运行演示视频.mp4', '基于真实网站截图制作的正式演示视频，覆盖首页、题库、考试、论坛与后台等环节。', '已上传到网盘', '自制'),
-    (f'{SUBMISSION_ID}-04作品演示视频/视频脚本与说明', '补充视频脚本与目录说明，便于后续重录或替换。', '已上传到网盘', '自制'),
+    ('01作品与答辩材料/运行网址与答辩说明', '运行网址、亮点总结、答辩顺序与截图说明，含本地部署地址与正式演示地址。', '已上传到网盘', '自制'),
+    ('01作品与答辩材料/答辩演示相关文档', '包含答辩PPT、讲稿、提纲与访问地址说明等材料。', '已上传到网盘', '自制'),
+    ('02素材与源码/网站截图与插图', '真实网站截图、系统架构图和核心流程图等创作素材。', '已上传到网盘', '自制'),
+    ('02素材与源码/源码包.zip', '提交用源码压缩包，包含后端、Web、小程序、Docker与文档等代表性源码。', '已上传到网盘', '自制'),
+    ('03设计与开发文档/作品信息概要表', '按原始模板填写的作品信息摘要表。', '已上传到网盘', '自制'),
+    ('03设计与开发文档/设计和开发文档', '作品设计和开发文档，含真实截图与系统说明。', '已上传到网盘', '自制'),
+    ('04作品演示视频/作品运行演示视频.mp4', '基于真实网站截图制作的正式演示视频，覆盖首页、题库、考试、论坛与后台等环节。', '已上传到网盘', '自制'),
+    ('04作品演示视频/视频脚本与说明', '补充视频脚本与目录说明，便于后续重录或替换。', '已上传到网盘', '自制'),
 ]
 
 
@@ -777,7 +776,7 @@ def build_summary_docx() -> None:
     doc = Document(str(SUMMARY_TEMPLATE))
     table = doc.tables[0]
 
-    set_cell_paragraph(table.cell(0, 2), 0, '待填写')
+    set_cell_paragraph(table.cell(0, 2), 0, '')
     set_cell_paragraph(table.cell(0, 6), 0, PROJECT_NAME)
     set_cell_paragraph(table.cell(1, 2), 0, '软件应用与开发')
     set_cell_paragraph(table.cell(1, 9), 0, 'Web应用与开发')
@@ -923,7 +922,7 @@ def build_design_docx() -> None:
 def build_design_pdf() -> None:
     def body(styles: StyleSheet1):
         story = []
-        story.append(Paragraph('作品编号：待填写<br/>作品名称：Sak-AI答题助手<br/>作者：王为硕、队员B（占位）<br/>版本编号：V1.0<br/>填写日期：2026年4月6日', styles['CNSubTitle']))
+        story.append(Paragraph(f'作品编号：{PROJECT_NUMBER}<br/>作品名称：{PROJECT_NAME}<br/>作者：{AUTHOR_1}、{AUTHOR_2}<br/>版本编号：{VERSION}<br/>填写日期：{DATE_TEXT}', styles['CNSubTitle']))
         story.append(Spacer(1, 0.25 * cm))
 
         story.append(Paragraph('1. 需求分析', styles['CNH1']))
@@ -1150,10 +1149,10 @@ def build_text_files() -> None:
         encoding='utf-8',
     )
     VIDEO_README.write_text(
-        f'本目录对应 {SUBMISSION_ID}-04作品演示视频。\n'
+        '本目录对应 04作品演示视频。\n'
         f'已包含正式提交用《{PROJECT_NAME}-作品运行演示视频.mp4》。\n'
         f'同时保留《{PROJECT_NAME}-演示视频脚本》作为补充说明材料，便于后续重录或替换。\n'
-        '如学校下发正式作品编号，请同步替换总目录名与四个子目录名前缀。\n',
+        '如学校后续下发正式作品编号，可统一重命名总目录与四个子目录。\n',
         encoding='utf-8',
     )
 
