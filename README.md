@@ -1,164 +1,67 @@
-# Ti — 题库系统
+# Ti — 竞赛项目导览 / Competition Overview
 
-面向考试备考的全栈题库平台，支持微信小程序和 Web 双端访问，共享同一后端与数据。
+> 面向中国大学生计算机设计大赛“软件应用与开发 - Web 应用与开发”的作品导览。  
+> Competition-facing overview for the China College Computer Design Competition, Software Application & Development — Web Application track.
 
-## 技术栈
+**完整文档 / Full documents**
+- [中文完整版](README.zh-CN.md)
+- [English Full Version](README.en.md)
+- [开发文档](docs/DEVELOPMENT.md)
+- [生产部署文档](docs/PRODUCTION.md)
 
-| 层 | 技术 |
-|---|---|
-| 后端 | Python 3 / Flask 3.1 / SQLAlchemy 2 / Alembic |
-| 数据库 | PostgreSQL 16（生产） / SQLite（开发可选） |
-| 缓存 & 队列 | Redis 7 / RQ |
-| Web 前端 | Jinja2 模板 + 原生 JS/CSS（响应式，深色/浅色模式） |
-| 小程序 | TypeScript + LESS，微信原生框架（Skyline 渲染） |
-| AI | 阿里云 DashScope（通义千问）— 题目 AI 解析 |
-| 部署 | Docker Compose / Gunicorn / Nginx 反代 |
+## 中文摘要
 
-## 项目结构
+Ti 是一个面向考试备考与题库运营场景的 **Flask 单仓全栈题库系统**。作品以 **Web 应用** 为参赛主体，覆盖公共题库、个人题库、刷题练习、模拟考试、学习数据、论坛互动与后台管理等核心流程；同时配套 **微信原生小程序** 作为移动端延展，两端共享同一套后端与数据语义。
 
-```
-Ti/
-├── app/                        # Flask 后端
-│   ├── __init__.py             # create_app() 工厂
-│   ├── core/                   # 基础设施
-│   │   ├── config.py           # 环境配置类
-│   │   ├── extensions.py       # db, migrate, csrf, limiter, cors
-│   │   ├── errors.py           # 全局错误处理
-│   │   ├── models/             # 数据模型（user, question, exam）
-│   │   └── utils/              # JWT、校验、Redis、RQ 等工具
-│   ├── modules/                # 业务模块（Blueprint）
-│   │   ├── auth/               # 登录注册、微信 OAuth、邮箱验证
-│   │   ├── quiz/               # 刷题练习、收藏、错题、AI 解析
-│   │   ├── exam/               # 模拟考试
-│   │   ├── coding/             # 编程题判题
-│   │   ├── user_bank/          # 用户自建题库（CRUD、分享、公开）
-│   │   ├── chat/               # 聊天消息
-│   │   ├── forum/              # 论坛
-│   │   ├── admin/              # 后台管理
-│   │   ├── notifications/      # 系统通知
-│   │   ├── popups/             # 弹窗管理
-│   │   ├── user/               # 用户资料与设置
-│   │   └── main/               # 首页、导航
-│   └── tasks/                  # RQ 异步任务（AI 解析等）
-├── miniprogram-1/              # 微信小程序
-│   └── miniprogram/
-│       ├── pages/              # ~50 个页面
-│       ├── packages/           # 分包（数据中心等）
-│       ├── components/         # 公共组件
-│       └── utils/              # 工具函数
-├── templates/                  # Jinja2 Web 模板
-├── static/                     # 静态资源（CSS/JS/图标）
-├── migrations/                 # Alembic 迁移脚本
-├── docker/                     # Dockerfile
-├── compose.dev.yml             # 开发环境编排
-├── compose.prod.yml            # 生产环境编排
-├── run.py                      # 开发启动入口
-├── requirements.txt            # Python 依赖
-└── var/                        # 运行时数据（日志、上传、SQLite）
-```
-## 快速开始
+## English Summary
 
-### 前置条件
+Ti is a **single-repository full-stack question-bank platform built with Flask**. The competition entry is centered on the **Web application**, covering public banks, personal banks, practice workflows, mock exams, learning analytics, community interaction, and administration. A **native WeChat Mini Program** extends the same system to mobile scenarios while sharing one backend and one data model.
 
-- Python 3.10+
-- Node.js（小程序开发时需要）
-- 微信开发者工具（小程序开发时需要）
-- Docker & Docker Compose（容器化部署时需要）
+## 赛道适配 / Why This Fits the Web Application Track
 
-### 本地开发（最简方式）
+- **Web 是主体交互端 / Web is the primary interface**：Web 端采用 Flask + Jinja 服务端渲染，承载题库广场、题库详情、数据中心、错题收藏、论坛与管理后台等核心能力。
+- **不是展示站，而是完整业务系统 / Not a showcase site, but a working system**：仓库内已落地 12 个 Flask 业务模块，形成从内容管理到学习闭环的完整链路。
+- **移动端是扩展而非替代 / Mobile is an extension, not a replacement**：微信小程序复用同一后端语义，用于补充高频移动学习场景。
 
-```bash
-# 1. 克隆并进入项目
-git clone <repo-url> && cd Ti
+## 核心亮点 / Key Highlights
 
-# 2. 创建虚拟环境
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+- **单仓全栈 / Single-repo full stack**：Web、Mini Program、Flask 后端、数据库迁移与部署配置统一维护。
+- **共享数据语义 / Shared backend semantics**：公共题库、个人题库、题目、收藏、错题、答案、进度、考试等能力在双端保持一致。
+- **模块化 Flask 架构 / Modular Flask architecture**：应用工厂 + Blueprint 模块注册，已注册 `auth`、`main`、`quiz`、`exam`、`user_bank` 等 12 个业务模块。
+- **双认证兼容 / Dual authentication model**：Web 使用 Session，小程序/API 使用 JWT，并兼顾 CSRF 与 Web XHR 校验链。
+- **Docker 开发模式 / Dockerized development workflow**：默认开发编排包含 `web`、`worker`、`postgres`、`redis`、`backup` 五类服务。
+- **统一接口信封 / Unified API envelope**：新接口遵循 `status / code / data / message` 响应结构，并提供 `/api/ping` 健康检查。
 
-# 3. 安装依赖
-pip install -r requirements.txt
+## 架构总览 / Architecture at a Glance
 
-# 4. 配置环境变量
-cp .env.example .env
-# 编辑 .env，填入微信 AppID 等必要配置
-
-# 5. 初始化数据库（默认 SQLite，零配置）
-flask db upgrade
-
-# 6. 启动
-python run.py
-# 访问 http://127.0.0.1:5000
+```mermaid
+flowchart LR
+  web["Web Browser"] --> flask["Flask Web + API Layer"]
+  mini["WeChat Mini Program"] --> flask
+  flask --> db["PostgreSQL / SQLite"]
+  flask --> redis["Redis"]
+  worker["RQ Worker"] --> redis
+  worker --> db
+  worker --> ai["DashScope AI Explanation"]
 ```
 
-### Docker 开发环境
+## 快速运行 / Quick Start
+
+默认开发方式：
 
 ```bash
 docker compose --env-file .env -f compose.dev.yml up
-# Web: http://localhost:8000
-# 包含: Flask + PostgreSQL 16 + Redis 7 + RQ Worker
 ```
 
-### 生产部署
+最小验证：
+- Web：<http://localhost:8000>
+- 健康检查：<http://localhost:8000/api/ping>
+- 深度检查：<http://localhost:8000/api/ping?deep=1>
 
-```bash
-# 准备 .env.production（参考 .env.example 中的生产配置部分）
-docker compose --env-file .env.production -f compose.prod.yml up -d
-# Gunicorn 绑定 127.0.0.1:8000，需配合 Nginx 反代
-# 同时会启动 backup 服务，默认按北京时间每天 04:00 / 16:00 自动备份到 ./backups
-```
-## 环境变量
+## 进一步阅读 / Read More
 
-完整配置见 `.env.example`，关键项：
-
-| 变量 | 说明 | 开发默认值 |
-|---|---|---|
-| `SECRET_KEY` | Flask 密钥 | `dev-secret-key` |
-| `DATABASE_URL` | PostgreSQL 连接串（不设则回退 SQLite） | — |
-| `REDIS_URL` | Redis 连接串（不设则缓存降级、限流用内存） | — |
-| `WECHAT_APPID` / `WECHAT_SECRET` | 微信小程序凭证 | — |
-| `DASHSCOPE_API_KEY` | 通义千问 API 密钥（AI 解析功能） | — |
-| `MAIL_ENABLED` | 邮件服务开关 | `true` |
-| `MAIL_CONSOLE_OUTPUT` | 开发环境验证码输出到控制台 | `true` |
-
-## 模块说明
-
-每个模块为独立 Blueprint，内含 `pages.py`（Web 路由）和 `api.py`（JSON API）：
-
-| 模块 | 功能 |
-|---|---|
-| `auth` | 登录注册、微信 OAuth、邮箱验证码、JWT 签发 |
-| `quiz` | 刷题练习、收藏/错题本、答题记录、AI 解析、间隔复习 |
-| `exam` | 模拟考试创建与提交、考试模板 |
-| `coding` | 编程题目与在线判题 |
-| `user_bank` | 用户自建题库、分享码/链接分享、公开题库 |
-| `chat` | 用户间聊天消息 |
-| `forum` | 论坛（帖子发布、评论、点赞） |
-| `admin` | 后台管理（用户、题目、科目、通知、系统配置） |
-| `notifications` | 系统通知推送 |
-| `popups` | 弹窗公告管理 |
-| `user` | 用户资料、设置、签到、统计 |
-| `main` | 首页、导航枢纽 |
-
-## 认证机制
-
-- Web 端：Flask Session，支持 `session_version` 强制下线、邮箱绑定拦截
-- 小程序端：JWT Bearer Token（PyJWT），微信 `openid` 登录 + 邮箱 OTP 登录
-
-## 数据库
-
-- 40+ 张表，通过 Alembic 管理迁移
-- 开发环境默认 SQLite（`var/instance/submissions.db`），零配置即可运行
-- 生产环境使用 PostgreSQL 16，支持连接池配置（`DB_POOL_SIZE` / `DB_MAX_OVERFLOW`）
-- 迁移命令：`flask db upgrade`（应用）/ `flask db migrate -m "描述"`（生成）
-
-## 小程序开发
-
-```bash
-# 用微信开发者工具打开 miniprogram-1/ 目录
-# 四 Tab 导航：首页 / 科目 / 题库 / 我的
-# 支持分包加载、深色模式（theme.json）
-```
-
-## 许可证
-
-私有项目，未经授权禁止使用。
+- [中文完整版：项目概述、功能模块、技术亮点、开发验证](README.zh-CN.md)
+- [English full version: overview, features, architecture, validation](README.en.md)
+- [Docker 开发说明](docs/DEVELOPMENT.md)
+- [生产部署与备份](docs/PRODUCTION.md)
+- [小程序 API 配置说明](miniprogram-1/README_API_CONFIG.md)
