@@ -288,76 +288,30 @@ def prep_image(src: Path, out_dir: Path, name: str, width_px: int, height_px: in
 
 
 
-def add_browser_frame(slide, x, y, w, h, image_path: Path, label: str, *, crop=None, mode='contain', note=None, temp_dir: Path | None = None):
-    add_panel(slide, x, y, w, h, fill=CARD, line=BORDER, radius=0.18)
-    bar = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE, x + Inches(0.08), y + Inches(0.08), w - Inches(0.16), Inches(0.26))
-    bar.fill.solid()
-    bar.fill.fore_color.rgb = rgb('EEF3FB')
-    bar.line.fill.background()
-    try:
-        bar.adjustments[0] = 0.3
-    except Exception:
-        pass
-    dot_y = y + Inches(0.145)
-    for idx, color in enumerate(('FF6B6B', 'F7B955', '34C759')):
-        dot = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.OVAL, x + Inches(0.17 + idx * 0.12), dot_y, Inches(0.06), Inches(0.06))
-        dot.fill.solid()
-        dot.fill.fore_color.rgb = rgb(color)
-        dot.line.fill.background()
-    add_textbox(slide, x + Inches(0.58), y + Inches(0.1), w - Inches(0.82), Inches(0.18), label,
-                size=10, color=MUTED, bold=True)
+def safe_asset_name(value: str) -> str:
+    cleaned = ''.join(ch if ch.isalnum() else '_' for ch in (value or 'img'))
+    cleaned = cleaned.strip('_')[:48]
+    return cleaned or 'img'
 
+
+def add_plain_image(slide, x, y, w, h, image_path: Path, label: str, *, crop=None, mode='contain', note=None, temp_dir: Path | None = None, caption_color=TEXT):
+    if label:
+        add_textbox(slide, x, y - Inches(0.28), w, Inches(0.2), label, size=11.5, color=caption_color, bold=True)
     if temp_dir is None:
         temp_dir = Path(tempfile.gettempdir())
-    img_w = emu_to_px(w - Inches(0.18))
-    img_h = emu_to_px(h - Inches(0.58))
-    fitted = prep_image(image_path, temp_dir, f'{label}-{img_w}x{img_h}.png', img_w, img_h, mode=mode, crop=crop)
-    slide.shapes.add_picture(str(fitted), x + Inches(0.09), y + Inches(0.4), width=w - Inches(0.18), height=h - Inches(0.5))
-    if note:
-        add_textbox(slide, x + Inches(0.16), y + h - Inches(0.35), w - Inches(0.32), Inches(0.18), note,
-                    size=9.5, color=SUBTLE)
+    img_w = emu_to_px(w)
+    img_h = emu_to_px(h)
+    fitted = prep_image(image_path, temp_dir, f'{safe_asset_name(label)}-{img_w}x{img_h}.png', img_w, img_h, mode=mode, crop=crop)
+    slide.shapes.add_picture(str(fitted), x, y, width=w, height=h)
 
 
-
-def add_phone_frame(slide, x, y, w, h, image_path: Path, *, crop=None, temp_dir: Path | None = None):
-    body = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE, x, y, w, h)
-    body.fill.solid()
-    body.fill.fore_color.rgb = rgb('0B1120')
-    body.line.color.rgb = rgb('283548')
-    body.line.width = Pt(1.5)
-    try:
-        body.adjustments[0] = 0.22
-    except Exception:
-        pass
-
-    screen_x = x + Inches(0.12)
-    screen_y = y + Inches(0.16)
-    screen_w = w - Inches(0.24)
-    screen_h = h - Inches(0.32)
-    screen = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE, screen_x, screen_y, screen_w, screen_h)
-    screen.fill.solid()
-    screen.fill.fore_color.rgb = rgb('FFFFFF')
-    screen.line.fill.background()
-    try:
-        screen.adjustments[0] = 0.18
-    except Exception:
-        pass
-    notch = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE, x + Inches(0.58), y + Inches(0.08), w - Inches(1.16), Inches(0.08))
-    notch.fill.solid()
-    notch.fill.fore_color.rgb = rgb('172554')
-    notch.line.fill.background()
-    try:
-        notch.adjustments[0] = 0.4
-    except Exception:
-        pass
-
+def add_plain_phone_image(slide, x, y, w, h, image_path: Path, *, crop=None, temp_dir: Path | None = None):
     if temp_dir is None:
         temp_dir = Path(tempfile.gettempdir())
-    img_w = emu_to_px(screen_w)
-    img_h = emu_to_px(screen_h)
-    fitted = prep_image(image_path, temp_dir, f'phone-{img_w}x{img_h}.png', img_w, img_h, mode='cover', crop=crop)
-    slide.shapes.add_picture(str(fitted), screen_x, screen_y, width=screen_w, height=screen_h)
-
+    img_w = emu_to_px(w)
+    img_h = emu_to_px(h)
+    fitted = prep_image(image_path, temp_dir, f'phone_{img_w}x{img_h}.png', img_w, img_h, mode='cover', crop=crop)
+    slide.shapes.add_picture(str(fitted), x, y, width=w, height=h)
 
 
 def add_feature_card(slide, x, y, w, h, title, body, index, *, accent=ACCENT):
@@ -444,9 +398,9 @@ def build_presentation() -> Path:
         add_chip(slide, Inches(0.72), Inches(5.82), Inches(2.6), Inches(0.34), '赛道：软件应用与开发｜Web 应用与开发', fill='172554', line='31415F', text_color='D9E5F5', size=11)
         add_chip(slide, Inches(3.45), Inches(5.82), Inches(2.55), Inches(0.34), '正式访问：https://saksk.top', fill='172554', line='31415F', text_color='D9E5F5', size=11)
 
-        add_browser_frame(slide, Inches(7.12), Inches(0.98), Inches(5.54), Inches(3.14), SCREENSHOT_DIR / '01-首页.png', '首页工作台', mode='contain', temp_dir=temp_dir)
-        add_browser_frame(slide, Inches(7.58), Inches(4.26), Inches(3.65), Inches(2.38), SCREENSHOT_DIR / '05-数据中心.png', '数据中心', mode='cover', crop=(0, 0, 1, 0.32), temp_dir=temp_dir)
-        add_phone_frame(slide, Inches(11.34), Inches(3.82), Inches(1.62), Inches(2.82), SCREENSHOT_DIR / '09-首页-移动端.png', crop=(0, 0, 1, 0.28), temp_dir=temp_dir)
+        add_plain_image(slide, Inches(7.12), Inches(0.98), Inches(5.54), Inches(3.14), SCREENSHOT_DIR / '01-首页.png', '首页工作台', mode='contain', temp_dir=temp_dir, caption_color='D9E5F5')
+        add_plain_image(slide, Inches(7.58), Inches(4.26), Inches(3.65), Inches(2.38), SCREENSHOT_DIR / '05-数据中心.png', '数据中心', mode='cover', crop=(0, 0, 1, 0.32), temp_dir=temp_dir, caption_color='D9E5F5')
+        add_plain_phone_image(slide, Inches(11.34), Inches(3.82), Inches(1.62), Inches(2.82), SCREENSHOT_DIR / '09-首页-移动端.png', crop=(0, 0, 1, 0.28), temp_dir=temp_dir)
         add_footer(slide, 1, dark=True)
 
         # Slide 2: Problem insight
@@ -531,8 +485,8 @@ def build_presentation() -> Path:
         slide = prs.slides.add_slide(blank)
         add_full_bleed(slide, bg_dark)
         section_header(slide, 'ARCHITECTURE', '系统架构：单仓全栈、双端共享、容器化可复现', '不是前后端分离多仓拼装，而是一套围绕业务模块组织的工程系统。', dark=True)
-        add_browser_frame(slide, Inches(7.28), Inches(1.96), Inches(5.4), Inches(3.22), ILLUSTRATION_DIR / '系统架构图.png', '系统架构图', mode='contain', temp_dir=temp_dir)
-        add_browser_frame(slide, Inches(7.28), Inches(5.28), Inches(5.4), Inches(1.42), ILLUSTRATION_DIR / '核心流程图.png', '核心用户流程', mode='contain', temp_dir=temp_dir)
+        add_plain_image(slide, Inches(7.28), Inches(1.96), Inches(5.4), Inches(3.22), ILLUSTRATION_DIR / '系统架构图.png', '系统架构图', mode='contain', temp_dir=temp_dir, caption_color='D9E5F5')
+        add_plain_image(slide, Inches(7.28), Inches(5.28), Inches(5.4), Inches(1.42), ILLUSTRATION_DIR / '核心流程图.png', '核心用户流程', mode='contain', temp_dir=temp_dir, caption_color='D9E5F5')
         add_feature_card(slide, Inches(0.72), Inches(2.06), Inches(5.98), Inches(0.96), '应用层：Web + 微信原生小程序', 'Web 采用 Flask + Jinja 服务端渲染，小程序采用微信原生 TS，两个端共享同一后端语义。', 1, accent='7DD3FC')
         add_feature_card(slide, Inches(0.72), Inches(3.18), Inches(5.98), Inches(0.96), '服务层：Flask 应用工厂 + Blueprint 模块化', '已注册 auth、main、quiz、exam、user、chat、notifications、popups、coding、user_bank、forum、admin 等 12 个模块。', 2, accent='A7F3D0')
         add_feature_card(slide, Inches(0.72), Inches(4.30), Inches(5.98), Inches(0.96), '数据层：PostgreSQL + Redis + RQ', 'PostgreSQL 存储题库与学习数据，Redis 承担缓存/限流/队列，RQ Worker 处理后台任务。', 3, accent='FDE68A')
@@ -570,31 +524,31 @@ def build_presentation() -> Path:
         slide = prs.slides.add_slide(blank)
         add_full_bleed(slide, bg_light_2)
         section_header(slide, 'SHOWCASE A1', '真实界面展示：首页工作台与题库广场', '每页控制为 1~2 张大图，让评委能直接看清真实页面细节。')
-        add_browser_frame(slide, Inches(0.72), Inches(2.0), Inches(5.95), Inches(4.72), SCREENSHOT_DIR / '01-首页.png', '首页工作台', mode='cover', crop=(0.05, 0.02, 0.96, 0.86), temp_dir=temp_dir)
-        add_browser_frame(slide, Inches(6.95), Inches(2.0), Inches(5.66), Inches(4.72), SCREENSHOT_DIR / '02-题库广场.png', '题库广场', mode='cover', crop=(0.05, 0.02, 0.98, 0.90), temp_dir=temp_dir)
+        add_plain_image(slide, Inches(0.72), Inches(2.0), Inches(5.95), Inches(4.72), SCREENSHOT_DIR / '01-首页.png', '首页工作台', mode='cover', crop=(0.05, 0.02, 0.96, 0.86), temp_dir=temp_dir)
+        add_plain_image(slide, Inches(6.95), Inches(2.0), Inches(5.66), Inches(4.72), SCREENSHOT_DIR / '02-题库广场.png', '题库广场', mode='cover', crop=(0.05, 0.02, 0.98, 0.90), temp_dir=temp_dir)
         add_footer(slide, 6)
 
         # Slide 7: showcase A2
         slide = prs.slides.add_slide(blank)
         add_full_bleed(slide, bg_light)
         section_header(slide, 'SHOWCASE A2', '真实界面展示：题库详情与我的题库', '分别对应公共题库详情入口与个人题库资源沉淀入口。')
-        add_browser_frame(slide, Inches(0.72), Inches(2.0), Inches(5.95), Inches(4.72), SCREENSHOT_DIR / '03-题库名片详情.png', '题库详情（名片页）', mode='cover', crop=(0.05, 0.02, 0.98, 0.90), temp_dir=temp_dir)
-        add_browser_frame(slide, Inches(6.95), Inches(2.0), Inches(5.66), Inches(4.72), SCREENSHOT_DIR / '04-我的题库.png', '我的题库', mode='cover', crop=(0.04, 0.02, 0.98, 0.90), temp_dir=temp_dir)
+        add_plain_image(slide, Inches(0.72), Inches(2.0), Inches(5.95), Inches(4.72), SCREENSHOT_DIR / '03-题库名片详情.png', '题库详情（名片页）', mode='cover', crop=(0.05, 0.02, 0.98, 0.90), temp_dir=temp_dir)
+        add_plain_image(slide, Inches(6.95), Inches(2.0), Inches(5.66), Inches(4.72), SCREENSHOT_DIR / '04-我的题库.png', '我的题库', mode='cover', crop=(0.04, 0.02, 0.98, 0.90), temp_dir=temp_dir)
         add_footer(slide, 7)
 
         # Slide 8: data and exam
         slide = prs.slides.add_slide(blank)
         add_full_bleed(slide, bg_light_2)
         section_header(slide, 'SHOWCASE B', '真实界面展示：数据中心与考试中心', '用更大的页面面积呈现复盘分析与考试入口。')
-        add_browser_frame(slide, Inches(0.72), Inches(2.0), Inches(6.02), Inches(4.72), SCREENSHOT_DIR / '05-数据中心.png', '数据中心', mode='cover', crop=(0.0, 0.0, 1.0, 0.40), temp_dir=temp_dir)
-        add_browser_frame(slide, Inches(6.92), Inches(2.0), Inches(5.69), Inches(4.72), SCREENSHOT_DIR / '06-考试选择页.png', '考试中心', mode='cover', crop=(0.04, 0.02, 0.98, 0.90), temp_dir=temp_dir)
+        add_plain_image(slide, Inches(0.72), Inches(2.0), Inches(6.02), Inches(4.72), SCREENSHOT_DIR / '05-数据中心.png', '数据中心', mode='cover', crop=(0.0, 0.0, 1.0, 0.40), temp_dir=temp_dir)
+        add_plain_image(slide, Inches(6.92), Inches(2.0), Inches(5.69), Inches(4.72), SCREENSHOT_DIR / '06-考试选择页.png', '考试中心', mode='cover', crop=(0.04, 0.02, 0.98, 0.90), temp_dir=temp_dir)
         add_footer(slide, 8)
 
         # Slide 9: quiz + ai explain
         slide = prs.slides.add_slide(blank)
         add_full_bleed(slide, bg_light)
         section_header(slide, 'QUIZ + AI', '刷题模块：答题工作台与 AI 解析', '重点展示评委最关心的刷题界面、题目卡片与即时 AI 解析能力。')
-        add_browser_frame(slide, Inches(0.72), Inches(1.98), Inches(7.38), Inches(4.82), SCREENSHOT_DIR / '10-刷题AI解析.png', '刷题工作台 + AI解析', mode='contain', temp_dir=temp_dir)
+        add_plain_image(slide, Inches(0.72), Inches(1.98), Inches(7.38), Inches(4.82), SCREENSHOT_DIR / '10-刷题AI解析.png', '刷题工作台 + AI解析', mode='contain', temp_dir=temp_dir)
         add_panel(slide, Inches(8.36), Inches(2.06), Inches(4.27), Inches(4.72), fill='FFFFFF', line=BORDER)
         add_chip(slide, Inches(8.68), Inches(2.34), Inches(1.34), Inches(0.32), '答题体验', fill='EEF4FF', line='D7E2F2', text_color=ACCENT)
         add_rich_lines(
@@ -615,7 +569,7 @@ def build_presentation() -> Path:
         slide = prs.slides.add_slide(blank)
         add_full_bleed(slide, bg_light_2)
         section_header(slide, 'AI GRADING', '主观题判分：有答即对、AI 判分、自评模式', '通过更大截图展示设置面板，避免模式项过小看不清。')
-        add_browser_frame(slide, Inches(0.72), Inches(1.98), Inches(6.18), Inches(4.82), SCREENSHOT_DIR / '11-刷题AI判分设置.png', '主观题判分设置', mode='cover', crop=(0.28, 0.06, 0.74, 0.92), temp_dir=temp_dir)
+        add_plain_image(slide, Inches(0.72), Inches(1.98), Inches(6.18), Inches(4.82), SCREENSHOT_DIR / '11-刷题AI判分设置.png', '主观题判分设置', mode='cover', crop=(0.28, 0.06, 0.74, 0.92), temp_dir=temp_dir)
         add_panel(slide, Inches(7.16), Inches(2.06), Inches(5.48), Inches(4.72), fill='FFFFFF', line=BORDER)
         add_feature_card(slide, Inches(7.44), Inches(2.38), Inches(4.9), Inches(1.0), '有答即对', '适合快速刷题场景，主观题填写后即可继续推进流程。', 1)
         add_feature_card(slide, Inches(7.44), Inches(3.56), Inches(4.9), Inches(1.0), 'AI 判分', '调用 AI 对主观题作答进行智能评判，并与后台 AI 配置形成呼应。', 2, accent=ACCENT_2)
@@ -626,15 +580,15 @@ def build_presentation() -> Path:
         slide = prs.slides.add_slide(blank)
         add_full_bleed(slide, bg_light)
         section_header(slide, 'FORUM', '论坛模块：社区首页到帖子详情', '帖子列表与帖子阅读都使用更大的图片面积，便于看清结构与信息层次。')
-        add_browser_frame(slide, Inches(0.72), Inches(2.0), Inches(5.86), Inches(4.72), SCREENSHOT_DIR / '07-论坛首页.png', '论坛首页', mode='cover', crop=(0.03, 0.02, 0.98, 0.88), temp_dir=temp_dir)
-        add_browser_frame(slide, Inches(6.86), Inches(2.0), Inches(5.78), Inches(4.72), SCREENSHOT_DIR / '12-论坛帖子详情.png', '论坛帖子详情', mode='contain', temp_dir=temp_dir)
+        add_plain_image(slide, Inches(0.72), Inches(2.0), Inches(5.86), Inches(4.72), SCREENSHOT_DIR / '07-论坛首页.png', '论坛首页', mode='cover', crop=(0.03, 0.02, 0.98, 0.88), temp_dir=temp_dir)
+        add_plain_image(slide, Inches(6.86), Inches(2.0), Inches(5.78), Inches(4.72), SCREENSHOT_DIR / '12-论坛帖子详情.png', '论坛帖子详情', mode='contain', temp_dir=temp_dir)
         add_footer(slide, 11)
 
         # Slide 12: chat
         slide = prs.slides.add_slide(blank)
         add_full_bleed(slide, bg_dark)
         section_header(slide, 'CHAT', '聊天模块：会话、搜索与互动内容承接', '支持从资料页或系统入口进入聊天，会话中可承接题目、图片、语音与帖子转发。', dark=True)
-        add_browser_frame(slide, Inches(0.72), Inches(1.98), Inches(7.4), Inches(4.82), SCREENSHOT_DIR / '13-聊天界面.png', '聊天界面', mode='contain', temp_dir=temp_dir)
+        add_plain_image(slide, Inches(0.72), Inches(1.98), Inches(7.4), Inches(4.82), SCREENSHOT_DIR / '13-聊天界面.png', '聊天界面', mode='contain', temp_dir=temp_dir, caption_color='D9E5F5')
         add_panel(slide, Inches(8.38), Inches(2.08), Inches(4.2), Inches(4.62), fill='18263F', line='324362', radius=0.18)
         add_chip(slide, Inches(8.7), Inches(2.34), Inches(1.32), Inches(0.32), '交互能力', fill='243656', line='39527B', text_color='D9E5F5')
         add_rich_lines(
@@ -655,32 +609,32 @@ def build_presentation() -> Path:
         slide = prs.slides.add_slide(blank)
         add_full_bleed(slide, bg_light_2)
         section_header(slide, 'IMPORT', '个人题目导入：题目管理 + Word 工作区', '个人题库不只是存储入口，还提供完整的题目导入与维护流程。')
-        add_browser_frame(slide, Inches(0.72), Inches(2.0), Inches(5.98), Inches(4.72), SCREENSHOT_DIR / '17-个人题目管理.png', '个人题目管理', mode='contain', temp_dir=temp_dir)
-        add_browser_frame(slide, Inches(6.94), Inches(2.0), Inches(5.7), Inches(4.72), SCREENSHOT_DIR / '18-个人题目Word导入.png', 'Word 导入工作区', mode='contain', temp_dir=temp_dir)
+        add_plain_image(slide, Inches(0.72), Inches(2.0), Inches(5.98), Inches(4.72), SCREENSHOT_DIR / '17-个人题目管理.png', '个人题目管理', mode='contain', temp_dir=temp_dir)
+        add_plain_image(slide, Inches(6.94), Inches(2.0), Inches(5.7), Inches(4.72), SCREENSHOT_DIR / '18-个人题目Word导入.png', 'Word 导入工作区', mode='contain', temp_dir=temp_dir)
         add_footer(slide, 13)
 
         # Slide 14: admin overview
         slide = prs.slides.add_slide(blank)
         add_full_bleed(slide, bg_light)
         section_header(slide, 'ADMIN A', '后台管理：仪表盘与题目管理', '后台页面同样改为大图展示，避免关键信息读不清。')
-        add_browser_frame(slide, Inches(0.72), Inches(2.0), Inches(5.95), Inches(4.72), SCREENSHOT_DIR / '08-后台仪表盘.png', '后台仪表盘', mode='cover', crop=(0.04, 0.02, 0.98, 0.76), temp_dir=temp_dir)
-        add_browser_frame(slide, Inches(6.95), Inches(2.0), Inches(5.66), Inches(4.72), SCREENSHOT_DIR / '14-后台题目管理.png', '后台题目管理', mode='contain', temp_dir=temp_dir)
+        add_plain_image(slide, Inches(0.72), Inches(2.0), Inches(5.95), Inches(4.72), SCREENSHOT_DIR / '08-后台仪表盘.png', '后台仪表盘', mode='cover', crop=(0.04, 0.02, 0.98, 0.76), temp_dir=temp_dir)
+        add_plain_image(slide, Inches(6.95), Inches(2.0), Inches(5.66), Inches(4.72), SCREENSHOT_DIR / '14-后台题目管理.png', '后台题目管理', mode='contain', temp_dir=temp_dir)
         add_footer(slide, 14)
 
         # Slide 15: admin governance
         slide = prs.slides.add_slide(blank)
         add_full_bleed(slide, bg_light_2)
         section_header(slide, 'ADMIN B', '后台管理：论坛治理与 AI 配置', '进一步展示内容治理与系统配置层能力。')
-        add_browser_frame(slide, Inches(0.72), Inches(2.0), Inches(5.95), Inches(4.72), SCREENSHOT_DIR / '15-后台论坛管理.png', '后台论坛管理', mode='contain', temp_dir=temp_dir)
-        add_browser_frame(slide, Inches(6.95), Inches(2.0), Inches(5.66), Inches(4.72), SCREENSHOT_DIR / '16-后台AI配置.png', '后台 AI 配置', mode='cover', crop=(0.15, 0.02, 0.95, 0.92), temp_dir=temp_dir)
+        add_plain_image(slide, Inches(0.72), Inches(2.0), Inches(5.95), Inches(4.72), SCREENSHOT_DIR / '15-后台论坛管理.png', '后台论坛管理', mode='contain', temp_dir=temp_dir, caption_color='D9E5F5')
+        add_plain_image(slide, Inches(6.95), Inches(2.0), Inches(5.66), Inches(4.72), SCREENSHOT_DIR / '16-后台AI配置.png', '后台 AI 配置', mode='cover', crop=(0.15, 0.02, 0.95, 0.92), temp_dir=temp_dir)
         add_footer(slide, 15)
 
         # Slide 16: mobile synergy
         slide = prs.slides.add_slide(blank)
         add_full_bleed(slide, bg_dark)
         section_header(slide, 'CROSS-END', '双端协同：Web 主体 + 小程序延展', '展示主体是 Web；移动端延展同样复用同一套后端与数据语义。', dark=True)
-        add_phone_frame(slide, Inches(0.95), Inches(1.92), Inches(2.26), Inches(4.82), SCREENSHOT_DIR / '09-首页-移动端.png', crop=(0, 0, 1, 0.33), temp_dir=temp_dir)
-        add_browser_frame(slide, Inches(3.62), Inches(2.2), Inches(4.46), Inches(3.0), SCREENSHOT_DIR / '01-首页.png', 'Web 首页（响应式壳层）', mode='contain', temp_dir=temp_dir)
+        add_plain_phone_image(slide, Inches(0.95), Inches(1.92), Inches(2.26), Inches(4.82), SCREENSHOT_DIR / '09-首页-移动端.png', crop=(0, 0, 1, 0.33), temp_dir=temp_dir)
+        add_plain_image(slide, Inches(3.62), Inches(2.2), Inches(4.46), Inches(3.0), SCREENSHOT_DIR / '01-首页.png', 'Web 首页（响应式壳层）', mode='contain', temp_dir=temp_dir, caption_color='D9E5F5')
         add_panel(slide, Inches(8.38), Inches(2.06), Inches(4.25), Inches(4.7), fill='18263F', line='324362', radius=0.18)
         add_chip(slide, Inches(8.7), Inches(2.34), Inches(1.45), Inches(0.32), '共享关键语义', fill='243656', line='39527B', text_color='D9E5F5')
         add_rich_lines(
@@ -762,9 +716,9 @@ def build_presentation() -> Path:
                 {'text': '现场网络受限时可切换本地 Docker 演示环境。', 'size': 11.8, 'color': 'B8C7DC'},
             ],
         )
-        add_browser_frame(slide, Inches(7.15), Inches(1.08), Inches(5.56), Inches(3.14), SCREENSHOT_DIR / '10-刷题AI解析.png', '刷题 + AI解析', mode='contain', temp_dir=temp_dir)
-        add_browser_frame(slide, Inches(7.52), Inches(4.36), Inches(3.42), Inches(2.12), SCREENSHOT_DIR / '15-后台论坛管理.png', '后台论坛管理', mode='contain', temp_dir=temp_dir)
-        add_phone_frame(slide, Inches(11.04), Inches(4.02), Inches(1.78), Inches(2.46), SCREENSHOT_DIR / '09-首页-移动端.png', crop=(0, 0, 1, 0.23), temp_dir=temp_dir)
+        add_plain_image(slide, Inches(7.15), Inches(1.08), Inches(5.56), Inches(3.14), SCREENSHOT_DIR / '10-刷题AI解析.png', '刷题 + AI解析', mode='contain', temp_dir=temp_dir, caption_color='D9E5F5')
+        add_plain_image(slide, Inches(7.52), Inches(4.36), Inches(3.42), Inches(2.12), SCREENSHOT_DIR / '15-后台论坛管理.png', '后台论坛管理', mode='contain', temp_dir=temp_dir, caption_color='D9E5F5')
+        add_plain_phone_image(slide, Inches(11.04), Inches(4.02), Inches(1.78), Inches(2.46), SCREENSHOT_DIR / '09-首页-移动端.png', crop=(0, 0, 1, 0.23), temp_dir=temp_dir)
         add_footer(slide, 19, dark=True)
 
         OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
