@@ -8,12 +8,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List
 
+from bs4 import BeautifulSoup
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt
 import imageio.v2 as imageio
+import markdown
 import numpy as np
 from PIL import Image as PILImage
 from PIL import ImageDraw, ImageFont
@@ -30,6 +32,7 @@ from reportlab.platypus import (
     Image,
     PageBreak,
     Paragraph,
+    Preformatted,
     SimpleDocTemplate,
     Spacer,
     Table,
@@ -81,6 +84,11 @@ SOURCE_ZIP = DIR_02 / f'{PROJECT_NAME}-源码包.zip'
 WORK_URL_TXT = DIR_01 / f'{PROJECT_NAME}-访问地址.txt'
 MATERIALS_TXT = DIR_02 / f'{PROJECT_NAME}-代表性素材说明.txt'
 VIDEO_README = DIR_04 / 'README.txt'
+ROOT_README_PDFS = [
+    (ROOT / 'README.md', DIR_01 / 'README.pdf', 'README（项目总览）'),
+    (ROOT / 'README.zh-CN.md', DIR_01 / 'README.zh-CN.pdf', 'README.zh-CN（中文完整版）'),
+    (ROOT / 'README.en.md', DIR_01 / 'README.en.pdf', 'README.en（英文完整版）'),
+]
 ARCH_IMG = DIR_IMG / '系统架构图.png'
 FLOW_IMG = DIR_IMG / '核心流程图.png'
 PACKAGE_ZIP = ROOT / 'output' / 'doc' / f'{PROJECT_FOLDER_NAME}.zip'
@@ -772,6 +780,88 @@ def add_pdf_image(story: list, styles: StyleSheet1, image_path: Path, caption: s
     story.append(Spacer(1, 0.25 * cm))
 
 
+def build_markdown_readme_pdf(md_path: Path, pdf_path: Path, cover_title: str) -> None:
+    styles = reportlab_styles()
+    if 'CNCode' not in styles:
+        styles.add(
+            ParagraphStyle(
+                name='CNCode',
+                parent=styles['Code'],
+                fontName='Courier',
+                fontSize=8.8,
+                leading=12,
+                textColor=colors.HexColor('#111827'),
+                backColor=colors.HexColor('#F8FAFC'),
+            )
+        )
+
+    text = md_path.read_text(encoding='utf-8')
+    html = markdown.markdown(text, extensions=['tables', 'fenced_code'])
+    soup = BeautifulSoup(html, 'html.parser')
+    elements = soup.contents
+
+    doc = SimpleDocTemplate(
+        str(pdf_path),
+        pagesize=A4,
+        leftMargin=2.0 * cm,
+        rightMargin=2.0 * cm,
+        topMargin=1.8 * cm,
+        bottomMargin=1.8 * cm,
+    )
+    story = [Paragraph(cover_title, styles['CNTitle']), Paragraph(md_path.name, styles['CNSubTitle']), Spacer(1, 0.4 * cm)]
+
+    for node in elements:
+        if getattr(node, 'name', None) is None:
+            text_content = str(node).strip()
+            if text_content:
+                story.append(Paragraph(text_content.replace('\n', '<br/>'), styles['CNBody']))
+                story.append(Spacer(1, 0.15 * cm))
+            continue
+
+        if node.name == 'h1':
+            story.append(Paragraph(node.get_text(' ', strip=True), styles['CNH1']))
+        elif node.name == 'h2':
+            story.append(Paragraph(node.get_text(' ', strip=True), styles['CNH2']))
+        elif node.name == 'h3':
+            story.append(Paragraph(node.get_text(' ', strip=True), styles['CNBodyLeft']))
+        elif node.name == 'p':
+            story.append(Paragraph(node.get_text(' ', strip=True).replace('\n', '<br/>'), styles['CNBody']))
+            story.append(Spacer(1, 0.12 * cm))
+        elif node.name in ('ul', 'ol'):
+            items = [li.get_text(' ', strip=True) for li in node.find_all('li', recursive=False)]
+            add_pdf_bullets(story, styles, items)
+            story.append(Spacer(1, 0.12 * cm))
+        elif node.name == 'pre':
+            code_text = node.get_text('\n', strip=False)
+            story.append(Preformatted(code_text, styles['CNCode']))
+            story.append(Spacer(1, 0.18 * cm))
+        elif node.name == 'blockquote':
+            story.append(Paragraph(node.get_text(' ', strip=True), styles['CNBodyLeft']))
+            story.append(Spacer(1, 0.12 * cm))
+        elif node.name == 'table':
+            rows: list[list[str]] = []
+            max_cols = 0
+            for tr in node.find_all('tr'):
+                row = [cell.get_text(' ', strip=True) for cell in tr.find_all(['th', 'td'])]
+                if row:
+                    max_cols = max(max_cols, len(row))
+                    rows.append(row)
+            if rows and max_cols:
+                normalized = [row + [''] * (max_cols - len(row)) for row in rows]
+                width = 17.0 / max_cols
+                story.append(make_table_pdf(normalized, [width] * max_cols))
+                story.append(Spacer(1, 0.18 * cm))
+        elif node.name == 'hr':
+            story.append(Spacer(1, 0.2 * cm))
+        else:
+            text_content = node.get_text(' ', strip=True)
+            if text_content:
+                story.append(Paragraph(text_content, styles['CNBody']))
+                story.append(Spacer(1, 0.12 * cm))
+
+    doc.build(story)
+
+
 def build_summary_docx() -> None:
     doc = Document(str(SUMMARY_TEMPLATE))
     table = doc.tables[0]
@@ -1156,6 +1246,52 @@ def build_text_files() -> None:
         encoding='utf-8',
     )
 
+    (DIR_01 / 'readme.txt').write_text(
+        '本文件夹作用：存放作品与答辩材料。\n\n'
+        '文件说明：\n'
+        '1. Sak-AI答题助手-运行网址与答辩说明.docx/pdf：说明正式访问地址、本地演示地址、作品亮点与答辩顺序。\n'
+        '2. Sak-AI答题助手-答辩演示PPT.pptx/pdf：正式答辩演示文稿。\n'
+        '3. Sak-AI答题助手-答辩PPT提纲.docx/pdf：PPT 页面结构提纲。\n'
+        '4. Sak-AI答题助手-答辩讲稿要点.docx/pdf：逐页讲稿与口播要点。\n'
+        '5. Sak-AI答题助手-访问地址.txt：记录正式访问地址与本地演示地址。\n'
+        '6. README.pdf：项目根目录 README.md 转换后的 PDF 版本。\n'
+        '7. README.zh-CN.pdf：项目根目录 README.zh-CN.md 转换后的 PDF 版本。\n'
+        '8. README.en.pdf：项目根目录 README.en.md 转换后的 PDF 版本。\n',
+        encoding='utf-8',
+    )
+
+    (DIR_02 / 'readme.txt').write_text(
+        '本文件夹作用：存放素材与源码。\n\n'
+        '文件说明：\n'
+        '1. Sak-AI答题助手-源码包.zip：作品源码压缩包。\n'
+        '2. Sak-AI答题助手-代表性素材说明.txt：说明截图、插图与源码包来源。\n'
+        '3. 网站截图/：真实运行网站截图。\n'
+        '4. 插图/：系统架构图、核心流程图等补充图示。\n',
+        encoding='utf-8',
+    )
+
+    (DIR_03 / 'readme.txt').write_text(
+        '本文件夹作用：存放设计与开发文档。\n\n'
+        '文件说明：\n'
+        '1. 中国大学生计算机设计大赛作品信息概要表-Sak-AI答题助手.docx/pdf：按原模板填写的作品信息摘要表。\n'
+        '2. 软件应用与开发类作品设计和开发文档-Sak-AI答题助手.docx/pdf：作品设计与开发文档正式版。\n',
+        encoding='utf-8',
+    )
+
+    (DIR_04 / 'readme.txt').write_text(
+        '本文件夹作用：存放作品演示视频。\n\n'
+        '文件说明：\n'
+        '1. Sak-AI答题助手-作品运行演示视频.mp4：正式作品运行演示视频。\n'
+        '2. Sak-AI答题助手-演示视频脚本.docx/pdf：演示视频脚本与补充说明。\n'
+        '3. README.txt：说明本文件夹作用及文件构成。\n',
+        encoding='utf-8',
+    )
+
+
+def build_root_readme_pdfs() -> None:
+    for md_path, pdf_path, title in ROOT_README_PDFS:
+        build_markdown_readme_pdf(md_path, pdf_path, title)
+
 
 def should_exclude(path: Path) -> bool:
     parts = set(path.parts)
@@ -1198,6 +1334,7 @@ def verify_outputs() -> None:
         RUNTIME_DOCX, RUNTIME_PDF, PPT_DOCX, PPT_PDF, PPTX_FILE, PPTX_PREVIEW_PDF,
         SPEECH_DOCX, SPEECH_PDF, VIDEO_DOCX, VIDEO_PDF,
         DEMO_VIDEO_MP4, SOURCE_ZIP, WORK_URL_TXT, MATERIALS_TXT, VIDEO_README, ARCH_IMG, FLOW_IMG, PACKAGE_ZIP,
+        *[pdf_path for _, pdf_path, _ in ROOT_README_PDFS],
     ] + [SHOT_DIR / item[0] for item in SCREENSHOTS]
     missing = [str(p) for p in required if not p.exists()]
     if missing:
@@ -1224,6 +1361,7 @@ def main() -> None:
     build_answer_ppt(slide_images)
     build_answer_ppt_pdf(slide_images)
     build_support_docs()
+    build_root_readme_pdfs()
     build_demo_video()
     build_text_files()
     build_source_zip()
