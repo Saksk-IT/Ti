@@ -576,17 +576,73 @@ def build_presentation() -> Path:
         add_browser_frame(slide, Inches(6.95), Inches(4.45), Inches(5.66), Inches(2.23), SCREENSHOT_DIR / '04-我的题库.png', '我的题库', mode='cover', crop=(0.05, 0.02, 0.98, 0.86), temp_dir=temp_dir)
         add_footer(slide, 6)
 
-        # Slide 7: showcase B
+        # Slide 7: quiz + AI
         slide = prs.slides.add_slide(blank)
         add_full_bleed(slide, bg_light)
-        section_header(slide, 'SHOWCASE B', '真实界面展示：复盘分析、考试与平台支撑', '数据中心、考试、论坛与后台共同构成完整应用闭环。')
-        add_browser_frame(slide, Inches(0.72), Inches(2.0), Inches(6.05), Inches(2.23), SCREENSHOT_DIR / '05-数据中心.png', '数据中心', mode='cover', crop=(0, 0, 1, 0.30), temp_dir=temp_dir)
-        add_browser_frame(slide, Inches(6.92), Inches(2.0), Inches(5.69), Inches(2.23), SCREENSHOT_DIR / '06-考试选择页.png', '考试中心', mode='cover', crop=(0.04, 0.02, 0.98, 0.86), temp_dir=temp_dir)
-        add_browser_frame(slide, Inches(0.72), Inches(4.45), Inches(6.05), Inches(2.23), SCREENSHOT_DIR / '07-论坛首页.png', '论坛互动', mode='cover', crop=(0.04, 0.02, 0.98, 0.84), temp_dir=temp_dir)
-        add_browser_frame(slide, Inches(6.92), Inches(4.45), Inches(5.69), Inches(2.23), SCREENSHOT_DIR / '08-后台仪表盘.png', '后台仪表盘', mode='cover', crop=(0.04, 0.02, 0.98, 0.85), temp_dir=temp_dir)
+        section_header(slide, 'QUIZ + AI', '刷题、AI 解析与 AI 判分', '重点展示答题工作台、即时解析与主观题判分配置。')
+        add_browser_frame(slide, Inches(0.72), Inches(1.98), Inches(7.18), Inches(4.78), SCREENSHOT_DIR / '10-刷题AI解析.png', '刷题工作台 + AI解析', mode='contain', temp_dir=temp_dir)
+        add_browser_frame(slide, Inches(8.16), Inches(1.98), Inches(4.47), Inches(2.6), SCREENSHOT_DIR / '11-刷题AI判分设置.png', '主观题 AI 判分设置', mode='contain', temp_dir=temp_dir)
+        add_panel(slide, Inches(8.16), Inches(4.82), Inches(4.47), Inches(1.94), fill='FFFFFF', line=BORDER)
+        add_chip(slide, Inches(8.44), Inches(5.08), Inches(1.2), Inches(0.32), '模块亮点', fill='EEF4FF', line='D7E2F2', text_color=ACCENT)
+        add_rich_lines(
+            slide,
+            Inches(8.44), Inches(5.5), Inches(3.8), Inches(1.0),
+            [
+                {'text': '• 支持题目列表、答题卡片与解析联动。', 'size': 12.4, 'color': TEXT},
+                {'text': '• AI 解析可按题触发，辅助理解知识点。', 'size': 12.4, 'color': TEXT},
+                {'text': '• 主观题支持有答即对 / AI 判分 / 自评模式。', 'size': 12.4, 'color': TEXT},
+            ],
+        )
         add_footer(slide, 7)
 
-        # Slide 8: mobile synergy
+        # Slide 8: forum
+        slide = prs.slides.add_slide(blank)
+        add_full_bleed(slide, bg_light_2)
+        section_header(slide, 'FORUM', '论坛模块：社区首页到帖子详情', '不仅有帖子列表，也有完整的帖子阅读、目录、标签与互动结构。')
+        add_browser_frame(slide, Inches(0.72), Inches(2.0), Inches(5.86), Inches(4.72), SCREENSHOT_DIR / '07-论坛首页.png', '论坛首页', mode='cover', crop=(0.03, 0.02, 0.98, 0.88), temp_dir=temp_dir)
+        add_browser_frame(slide, Inches(6.86), Inches(2.0), Inches(5.78), Inches(4.72), SCREENSHOT_DIR / '12-论坛帖子详情.png', '论坛帖子详情', mode='contain', temp_dir=temp_dir)
+        add_footer(slide, 8)
+
+        # Slide 9: chat
+        slide = prs.slides.add_slide(blank)
+        add_full_bleed(slide, bg_dark)
+        section_header(slide, 'CHAT', '聊天模块：会话、搜索与互动内容承接', '支持从资料页或系统入口进入聊天，会话中可承接题目、图片、语音与帖子转发。', dark=True)
+        add_browser_frame(slide, Inches(0.72), Inches(1.98), Inches(7.4), Inches(4.82), SCREENSHOT_DIR / '13-聊天界面.png', '聊天界面', mode='contain', temp_dir=temp_dir)
+        add_panel(slide, Inches(8.38), Inches(2.08), Inches(4.2), Inches(4.62), fill='18263F', line='324362', radius=0.18)
+        add_chip(slide, Inches(8.7), Inches(2.34), Inches(1.32), Inches(0.32), '交互能力', fill='243656', line='39527B', text_color='D9E5F5')
+        add_rich_lines(
+            slide,
+            Inches(8.7), Inches(2.82), Inches(3.46), Inches(2.5),
+            [
+                {'text': '搜索用户后可直接发起讨论。', 'size': 13, 'color': 'EAF1FF', 'bold': True},
+                {'text': '• 会话列表区分消息与互动。', 'size': 12.4, 'color': 'D9E5F5'},
+                {'text': '• 消息类型覆盖图片、语音、题目与帖子转发。', 'size': 12.4, 'color': 'D9E5F5'},
+                {'text': '• 与论坛、个人资料等模块形成联动。', 'size': 12.4, 'color': 'D9E5F5'},
+            ],
+        )
+        add_stat_card(slide, Inches(8.7), Inches(5.78), Inches(1.72), Inches(0.9), 'IM', '消息流', '会话 / 搜索 / 发送', dark=True)
+        add_stat_card(slide, Inches(10.56), Inches(5.78), Inches(1.72), Inches(0.9), 'Link', '内容互通', '题目 / 帖子 / 图片', accent=ACCENT_2, dark=True)
+        add_footer(slide, 9, dark=True)
+
+        # Slide 10: import workflow
+        slide = prs.slides.add_slide(blank)
+        add_full_bleed(slide, bg_light)
+        section_header(slide, 'IMPORT', '个人题目导入：题目管理 + Word 工作区', '个人题库不只是存储入口，还提供完整的题目导入与维护流程。')
+        add_browser_frame(slide, Inches(0.72), Inches(2.0), Inches(5.98), Inches(4.72), SCREENSHOT_DIR / '17-个人题目管理.png', '个人题目管理', mode='contain', temp_dir=temp_dir)
+        add_browser_frame(slide, Inches(6.94), Inches(2.0), Inches(5.7), Inches(4.72), SCREENSHOT_DIR / '18-个人题目Word导入.png', 'Word 导入工作区', mode='contain', temp_dir=temp_dir)
+        add_footer(slide, 10)
+
+        # Slide 11: admin
+        slide = prs.slides.add_slide(blank)
+        add_full_bleed(slide, bg_light_2)
+        section_header(slide, 'ADMIN', '后台管理：总览、内容治理与 AI 配置', '后台不仅有仪表盘，还覆盖题目治理、论坛管理与系统级 AI 配置。')
+        add_browser_frame(slide, Inches(0.72), Inches(2.0), Inches(5.95), Inches(2.23), SCREENSHOT_DIR / '08-后台仪表盘.png', '后台仪表盘', mode='cover', crop=(0.04, 0.02, 0.98, 0.85), temp_dir=temp_dir)
+        add_browser_frame(slide, Inches(6.95), Inches(2.0), Inches(5.66), Inches(2.23), SCREENSHOT_DIR / '14-后台题目管理.png', '后台题目管理', mode='contain', temp_dir=temp_dir)
+        add_browser_frame(slide, Inches(0.72), Inches(4.45), Inches(5.95), Inches(2.23), SCREENSHOT_DIR / '15-后台论坛管理.png', '后台论坛管理', mode='contain', temp_dir=temp_dir)
+        add_browser_frame(slide, Inches(6.95), Inches(4.45), Inches(5.66), Inches(2.23), SCREENSHOT_DIR / '16-后台AI配置.png', '后台 AI 配置', mode='contain', temp_dir=temp_dir)
+        add_footer(slide, 11)
+
+        # Slide 12: mobile synergy
         slide = prs.slides.add_slide(blank)
         add_full_bleed(slide, bg_dark)
         section_header(slide, 'CROSS-END', '双端协同：Web 主体 + 小程序延展', '展示主体是 Web；移动端延展同样复用同一套后端与数据语义。', dark=True)
@@ -606,18 +662,18 @@ def build_presentation() -> Path:
         )
         add_stat_card(slide, Inches(8.7), Inches(5.72), Inches(1.74), Inches(0.92), 'SSR', 'Web 形态', 'Flask + Jinja', dark=True)
         add_stat_card(slide, Inches(10.55), Inches(5.72), Inches(1.74), Inches(0.92), 'JWT', 'API / 小程序', 'Bearer Token', accent=ACCENT_2, dark=True)
-        add_footer(slide, 8, dark=True)
+        add_footer(slide, 12, dark=True)
 
-        # Slide 9: innovation
+        # Slide 13: innovation
         slide = prs.slides.add_slide(blank)
         add_full_bleed(slide, bg_light)
         section_header(slide, 'INNOVATION', '关键亮点：工程化表达与应用价值并重', '在题库系统常见能力之外，重点强化共享语义、可复现交付与学习辅助增强。')
         add_feature_card(slide, Inches(0.72), Inches(2.22), Inches(3.9), Inches(3.94), '共享数据语义', '公共题库、个人题库、题目、收藏、错题、答案、进度、考试等能力在 Web 与小程序两端保持同一套后端语义，降低维护复杂度，也让学习记录真正可连续。', 1)
         add_feature_card(slide, Inches(4.72), Inches(2.22), Inches(3.9), Inches(3.94), 'Docker 化可复现', '开发环境默认通过 compose.dev.yml 统一拉起 web、worker、postgres、redis、backup。无论课堂演示、现场答辩还是后续交付，都能更稳定地复现运行环境。', 2, accent=ACCENT_2)
-        add_feature_card(slide, Inches(8.72), Inches(2.22), Inches(3.9), Inches(3.94), 'AI 题解增强', '在传统刷题流程上补充 AI 题目解析接口，用于帮助理解题目与知识点，强调“学会”而不只是“做完”，提升平台在教学和备考场景中的延展价值。', 3, accent=ACCENT_3)
-        add_footer(slide, 9)
+        add_feature_card(slide, Inches(8.72), Inches(2.22), Inches(3.9), Inches(3.94), 'AI 学习辅助增强', '围绕刷题流程补充 AI 解析、主观题判分与后台 AI 配置能力，让系统更贴近教学、练习与复盘的真实场景。', 3, accent=ACCENT_3)
+        add_footer(slide, 13)
 
-        # Slide 10: validation
+        # Slide 14: validation
         slide = prs.slides.add_slide(blank)
         add_full_bleed(slide, bg_light_2)
         section_header(slide, 'VALIDATION', '工程验证与答辩可演示性', '答辩现场不仅要讲清功能，还要展示项目具备稳定运行与工程交付能力。')
@@ -631,7 +687,7 @@ def build_presentation() -> Path:
             slide,
             Inches(1.02), Inches(4.54), Inches(4.95), Inches(1.82),
             [
-                {'text': '首页 → 题库广场 → 题库详情 → 我的题库 → 数据中心 → 考试中心 → 论坛 → 后台', 'size': 16, 'color': INK, 'bold': True},
+                {'text': '首页 → 题库广场 → 题库详情 → 刷题/AI → 论坛帖子 → 聊天 → 个人导入 → 后台管理', 'size': 15.2, 'color': INK, 'bold': True},
                 {'text': '正式访问地址：https://saksk.top', 'size': 12.6, 'color': TEXT},
                 {'text': '本地演示备用：http://127.0.0.1:8000', 'size': 12.6, 'color': TEXT},
             ],
@@ -648,9 +704,9 @@ def build_presentation() -> Path:
                 {'text': '• 新接口遵循 status / code / data / message 信封结构。', 'size': 13, 'color': TEXT},
             ],
         )
-        add_footer(slide, 10)
+        add_footer(slide, 14)
 
-        # Slide 11: closing
+        # Slide 15: closing
         slide = prs.slides.add_slide(blank)
         add_full_bleed(slide, bg_cover)
         add_chip(slide, Inches(0.72), Inches(0.62), Inches(2.0), Inches(0.34), 'SUMMARY', fill='1A2845', line='31415F', text_color='DDE7FF', size=11.5)
@@ -659,7 +715,7 @@ def build_presentation() -> Path:
             Inches(0.72), Inches(1.22), Inches(6.1), Inches(2.0),
             [
                 {'text': 'Sak-AI答题助手', 'size': 30, 'bold': True, 'color': 'FFFFFF'},
-                {'text': '让题库沉淀、刷题训练、模拟考试、数据复盘与平台运营在一个系统中完整闭环。', 'size': 17, 'color': 'DDE7FF', 'space_after': 8},
+                {'text': '让题库沉淀、刷题训练、模拟考试、数据复盘、论坛互动与平台运营在一个系统中完整闭环。', 'size': 17, 'color': 'DDE7FF', 'space_after': 8},
                 {'text': '谢谢各位老师指导', 'size': 14, 'color': 'B8C7DC'},
             ],
         )
@@ -673,10 +729,10 @@ def build_presentation() -> Path:
                 {'text': '现场网络受限时可切换本地 Docker 演示环境。', 'size': 11.8, 'color': 'B8C7DC'},
             ],
         )
-        add_browser_frame(slide, Inches(7.15), Inches(1.08), Inches(5.56), Inches(3.14), SCREENSHOT_DIR / '01-首页.png', '首页工作台', mode='contain', temp_dir=temp_dir)
-        add_browser_frame(slide, Inches(7.52), Inches(4.36), Inches(3.42), Inches(2.12), SCREENSHOT_DIR / '08-后台仪表盘.png', '后台仪表盘', mode='contain', temp_dir=temp_dir)
+        add_browser_frame(slide, Inches(7.15), Inches(1.08), Inches(5.56), Inches(3.14), SCREENSHOT_DIR / '10-刷题AI解析.png', '刷题 + AI解析', mode='contain', temp_dir=temp_dir)
+        add_browser_frame(slide, Inches(7.52), Inches(4.36), Inches(3.42), Inches(2.12), SCREENSHOT_DIR / '15-后台论坛管理.png', '后台论坛管理', mode='contain', temp_dir=temp_dir)
         add_phone_frame(slide, Inches(11.04), Inches(4.02), Inches(1.78), Inches(2.46), SCREENSHOT_DIR / '09-首页-移动端.png', crop=(0, 0, 1, 0.23), temp_dir=temp_dir)
-        add_footer(slide, 11, dark=True)
+        add_footer(slide, 15, dark=True)
 
         OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
         prs.save(OUTPUT_PPTX)
