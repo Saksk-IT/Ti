@@ -11,9 +11,18 @@ from flask import (
 from app.core.extensions import db
 from sqlalchemy import text
 from app.core.utils.cache_utils import bump_questions_version, bump_subjects_version
+from app.modules.user_bank.services.plaza_metrics_service import ensure_plaza_metrics
 
 from ..api_bp import admin_api_bp
 from app.core.utils.decorators import subject_admin_required
+
+
+def _refresh_public_bank_plaza_metrics() -> None:
+    """刷新公开题库广场读模型，确保系统题库名称/状态变更即时生效。"""
+    try:
+        ensure_plaza_metrics(force=True)
+    except Exception:
+        current_app.logger.warning('刷新题库广场读模型失败', exc_info=True)
 
 
 @admin_api_bp.route('/subjects', methods=['GET'])
@@ -50,6 +59,7 @@ def api_add_subject():
             bump_subjects_version()
         except Exception:
             pass
+        _refresh_public_bank_plaza_metrics()
         return jsonify({'status': 'success', 'message': '科目添加成功'})
     except Exception as e:
         db.session.rollback()
@@ -77,6 +87,7 @@ def api_edit_subject(subject_id):
             bump_subjects_version()
         except Exception:
             pass
+        _refresh_public_bank_plaza_metrics()
         return jsonify({'status': 'success', 'message': '科目修改成功'})
     except Exception as e:
         db.session.rollback()
@@ -112,6 +123,7 @@ def api_delete_subject(subject_id):
                 bump_questions_version()
             except Exception:
                 pass
+        _refresh_public_bank_plaza_metrics()
 
         return jsonify({'status': 'success', 'message': '科目删除成功'})
     except Exception as e:
@@ -136,6 +148,7 @@ def api_lock_subject(subject_id):
             bump_subjects_version()
         except Exception:
             pass
+        _refresh_public_bank_plaza_metrics()
 
         return jsonify({'status': 'success', 'message': f'科目"{subject._mapping["name"]}"已锁定'})
     except Exception as e:
@@ -160,10 +173,10 @@ def api_unlock_subject(subject_id):
             bump_subjects_version()
         except Exception:
             pass
+        _refresh_public_bank_plaza_metrics()
 
         return jsonify({'status': 'success', 'message': f'科目"{subject._mapping["name"]}"已解锁'})
     except Exception as e:
         db.session.rollback()
         return jsonify({'status': 'error', 'message': str(e)}), 500
-
 
