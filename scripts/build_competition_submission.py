@@ -113,8 +113,7 @@ SCREENSHOTS = [
 ]
 
 FILE_ENTRIES = [
-    ('01作品与答辩材料/运行网址与答辩说明', '运行网址、亮点总结、答辩顺序与截图说明，含本地部署地址与正式演示地址。', '已上传到网盘', '自制'),
-    ('01作品与答辩材料/答辩演示相关文档', '包含答辩PPT、讲稿、提纲与访问地址说明等材料。', '已上传到网盘', '自制'),
+    ('01作品与答辩材料/答辩演示PPT与访问地址', '包含正式答辩演示PPT、访问地址说明，以及项目根目录 README 转换得到的 PDF。', '已上传到网盘', '自制'),
     ('02素材与源码/网站截图与插图', '真实网站截图、系统架构图和核心流程图等创作素材。', '已上传到网盘', '自制'),
     ('02素材与源码/源码包.zip', '提交用源码压缩包，包含后端、Web、小程序、Docker与文档等代表性源码。', '已上传到网盘', '自制'),
     ('03设计与开发文档/作品信息概要表', '按原始模板填写的作品信息摘要表。', '已上传到网盘', '自制'),
@@ -1183,30 +1182,6 @@ def build_sections_pdf(path: Path, title: str, sections: List[SlideSection], pre
 
 def build_support_docs() -> None:
     build_sections_docx(
-        PPT_DOCX,
-        f'{PROJECT_NAME}-答辩PPT提纲',
-        PPT_SECTIONS,
-        preface=['建议总页数控制在 8-12 页之间。', '讲解时可结合截图与实际网站进行同步演示。'],
-    )
-    build_sections_pdf(
-        PPT_PDF,
-        f'{PROJECT_NAME}-答辩PPT提纲',
-        PPT_SECTIONS,
-        preface=['建议总页数控制在 8-12 页之间。', '讲解时可结合截图与实际网站进行同步演示。'],
-    )
-    build_sections_docx(
-        SPEECH_DOCX,
-        f'{PROJECT_NAME}-答辩讲稿要点',
-        SPEECH_SECTIONS,
-        preface=['建议全程控制在 6-8 分钟。', '每一页都尽量遵循“问题-方案-价值”的表达顺序。'],
-    )
-    build_sections_pdf(
-        SPEECH_PDF,
-        f'{PROJECT_NAME}-答辩讲稿要点',
-        SPEECH_SECTIONS,
-        preface=['建议全程控制在 6-8 分钟。', '每一页都尽量遵循“问题-方案-价值”的表达顺序。'],
-    )
-    build_sections_docx(
         VIDEO_DOCX,
         f'{PROJECT_NAME}-演示视频脚本',
         VIDEO_SECTIONS,
@@ -1249,14 +1224,11 @@ def build_text_files() -> None:
     (DIR_01 / 'readme.txt').write_text(
         '本文件夹作用：存放作品与答辩材料。\n\n'
         '文件说明：\n'
-        '1. Sak-AI答题助手-运行网址与答辩说明.docx/pdf：说明正式访问地址、本地演示地址、作品亮点与答辩顺序。\n'
-        '2. Sak-AI答题助手-答辩演示PPT.pptx/pdf：正式答辩演示文稿。\n'
-        '3. Sak-AI答题助手-答辩PPT提纲.docx/pdf：PPT 页面结构提纲。\n'
-        '4. Sak-AI答题助手-答辩讲稿要点.docx/pdf：逐页讲稿与口播要点。\n'
-        '5. Sak-AI答题助手-访问地址.txt：记录正式访问地址与本地演示地址。\n'
-        '6. README.pdf：项目根目录 README.md 转换后的 PDF 版本。\n'
-        '7. README.zh-CN.pdf：项目根目录 README.zh-CN.md 转换后的 PDF 版本。\n'
-        '8. README.en.pdf：项目根目录 README.en.md 转换后的 PDF 版本。\n',
+        '1. Sak-AI答题助手-答辩演示PPT.pptx/pdf：正式答辩演示文稿。\n'
+        '2. Sak-AI答题助手-访问地址.txt：记录正式访问地址与本地演示地址。\n'
+        '3. README.pdf：项目根目录 README.md 转换后的 PDF 版本。\n'
+        '4. README.zh-CN.pdf：项目根目录 README.zh-CN.md 转换后的 PDF 版本。\n'
+        '5. README.en.pdf：项目根目录 README.en.md 转换后的 PDF 版本。\n',
         encoding='utf-8',
     )
 
@@ -1331,15 +1303,14 @@ def build_source_zip() -> None:
 def verify_outputs() -> None:
     required = [
         SUMMARY_DOCX, SUMMARY_PDF, DESIGN_DOCX, DESIGN_PDF,
-        RUNTIME_DOCX, RUNTIME_PDF, PPT_DOCX, PPT_PDF, PPTX_FILE, PPTX_PREVIEW_PDF,
-        SPEECH_DOCX, SPEECH_PDF, VIDEO_DOCX, VIDEO_PDF,
+        PPTX_FILE, PPTX_PREVIEW_PDF, VIDEO_DOCX, VIDEO_PDF,
         DEMO_VIDEO_MP4, SOURCE_ZIP, WORK_URL_TXT, MATERIALS_TXT, VIDEO_README, ARCH_IMG, FLOW_IMG, PACKAGE_ZIP,
         *[pdf_path for _, pdf_path, _ in ROOT_README_PDFS],
     ] + [SHOT_DIR / item[0] for item in SCREENSHOTS]
     missing = [str(p) for p in required if not p.exists()]
     if missing:
         raise FileNotFoundError('以下文件未生成成功：\n' + '\n'.join(missing))
-    for pdf in [SUMMARY_PDF, DESIGN_PDF, RUNTIME_PDF, PPT_PDF, PPTX_PREVIEW_PDF, SPEECH_PDF, VIDEO_PDF]:
+    for pdf in [SUMMARY_PDF, DESIGN_PDF, PPTX_PREVIEW_PDF, VIDEO_PDF]:
         pages = len(PdfReader(str(pdf)).pages)
         if pages <= 0:
             raise RuntimeError(f'PDF 页数异常：{pdf}')
@@ -1356,8 +1327,6 @@ def main() -> None:
     build_summary_pdf()
     build_design_docx()
     build_design_pdf()
-    build_runtime_docx()
-    build_runtime_pdf()
     build_answer_ppt(slide_images)
     build_answer_ppt_pdf(slide_images)
     build_support_docs()
