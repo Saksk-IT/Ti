@@ -10,6 +10,10 @@ APP_DIR="${APP_DIR:-$ROOT_DIR}"
 ENV_FILE="${ENV_FILE:-$ROOT_DIR/.env.production}"
 COMPOSE_OVERRIDE_FILE="${COMPOSE_OVERRIDE_FILE:-$ROOT_DIR/compose.prod.override.yml}"
 SKIP_CERTBOT="${SKIP_CERTBOT:-0}"
+PIP_INDEX_URL="${PIP_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple/}"
+PIP_TRUSTED_HOST="${PIP_TRUSTED_HOST:-mirrors.aliyun.com}"
+PIP_DEFAULT_TIMEOUT="${PIP_DEFAULT_TIMEOUT:-120}"
+PIP_RETRIES="${PIP_RETRIES:-10}"
 POSTGRES_DB="${POSTGRES_DB:-ti_db}"
 POSTGRES_USER="${POSTGRES_USER:-studyuser}"
 POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-$(python3 - <<'PY'
@@ -131,8 +135,15 @@ EOF
 }
 
 deploy_stack() {
-  log "构建镜像"
-  $SUDO docker build -t saksk-ti:latest -f "$ROOT_DIR/docker/Dockerfile" "$ROOT_DIR"
+  log "构建镜像（PyPI 镜像: ${PIP_INDEX_URL}）"
+  $SUDO docker build \
+    --build-arg PIP_INDEX_URL="$PIP_INDEX_URL" \
+    --build-arg PIP_TRUSTED_HOST="$PIP_TRUSTED_HOST" \
+    --build-arg PIP_DEFAULT_TIMEOUT="$PIP_DEFAULT_TIMEOUT" \
+    --build-arg PIP_RETRIES="$PIP_RETRIES" \
+    -t saksk-ti:latest \
+    -f "$ROOT_DIR/docker/Dockerfile" \
+    "$ROOT_DIR"
 
   log "启动生产容器"
   $SUDO docker compose \

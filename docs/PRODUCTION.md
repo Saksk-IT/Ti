@@ -150,6 +150,19 @@ CERTBOT_EMAIL=你的邮箱 \
 - 申请并接入 HTTPS 证书；
 - 做基础健康检查。
 
+脚本默认会在 Docker 构建阶段使用阿里云 PyPI 镜像，并增加 pip 超时与重试。  
+如果你需要临时改成别的 PyPI 源，也可以覆盖：
+
+```bash
+cd /opt/ti
+
+DOMAIN=saksk.top \
+CERTBOT_EMAIL=你的邮箱 \
+PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple \
+PIP_TRUSTED_HOST=pypi.tuna.tsinghua.edu.cn \
+./scripts/deploy_ubuntu24.sh
+```
+
 如果只是临时内网部署、不申请 HTTPS，可以这样跳过证书：
 
 ```bash
