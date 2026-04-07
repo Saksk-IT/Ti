@@ -113,20 +113,49 @@
 # 更新系统
 sudo apt update && sudo apt upgrade -y
 
-# 安装 Docker（官方脚本）
-curl -fsSL https://get.docker.com | sudo sh
+# 安装基础依赖
+sudo apt install -y ca-certificates curl gnupg
 
-# 将当前用户加入 docker 组
-sudo usermod -aG docker $USER
+# 添加 Docker 官方 GPG key
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
 
-# 重新登录使 docker 组生效
-exit
-# 重新 SSH 登录
+# 添加 Docker 官方 apt 源
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo \"$VERSION_CODENAME\") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# 安装 Docker Engine + Compose v2 插件
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
 # 验证安装
-docker --version
+sudo systemctl status docker --no-pager
+sudo docker --version
+sudo docker compose version
+```
+
+如果你使用 **普通用户** 部署，继续执行下面步骤以免每次都要带 `sudo`：
+
+```bash
+# 某些环境会自动创建 docker 组；未创建时补建即可
+sudo groupadd docker 2>/dev/null || true
+sudo usermod -aG docker <你的用户名>
+
+# 重新登录，或临时刷新当前 shell 的组信息
+newgrp docker
+
+# 验证无 sudo 可用
+docker run hello-world
 docker compose version
 ```
+
+> 说明：
+> - **生产环境不再使用 `get.docker.com` 便捷脚本**，改为 Docker 官方 apt 源安装，便于版本管理与审计。
+> - 如果你当前就是 `root` 用户（例如提示符为 `root@主机名`），**不需要**执行 `usermod -aG docker ...`。
+> - 如果服务器无法访问 `download.docker.com`，请先检查 ECS 安全组、出网策略、DNS/代理；仍受限时，改用 Docker 官方文档里的 `.deb` 离线安装流程。
 
 ### 3.2 克隆项目
 
@@ -134,7 +163,7 @@ docker compose version
 # 克隆到 /opt/ti 目录
 sudo mkdir -p /opt/ti
 sudo chown $USER:$USER /opt/ti
-git clone <你的仓库地址> /opt/ti
+git clone https://github.com/Saksk-IT/Ti.git /opt/ti
 cd /opt/ti
 ```
 
@@ -392,6 +421,14 @@ QUIZ_CACHE_TTL_COUNTS_SECONDS: "120"
 ---
 
 ## 10. 故障排查
+
+### Docker 安装阶段就失败
+
+| 错误信息 | 原因 | 解决 |
+|---------|------|------|
+| `curl: (35) Recv failure: Connection reset by peer` | 服务器无法访问 Docker 官方脚本/源 | 不要继续执行 `usermod`；先按 3.1 的 apt 源方式安装，必要时检查出网策略或改用官方 `.deb` 离线安装 |
+| `usermod: group 'docker' does not exist` | Docker 尚未安装成功，因此 `docker` 组不存在 | 先完成 Docker 安装；安装后若系统仍未自动建组，再执行 `sudo groupadd docker` |
+| `docker: command not found` | Docker CLI 尚未安装 | 完整执行 3.1 的安装命令，再用 `sudo docker --version` 验证 |
 
 ### web 容器启动失败
 
