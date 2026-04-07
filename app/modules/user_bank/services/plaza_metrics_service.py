@@ -3,21 +3,48 @@
 
 from __future__ import annotations
 
+import logging
+import secrets
+import threading
+import time
 from datetime import timedelta
 from typing import Any
 
 from sqlalchemy import text
 
 from app.core.extensions import db
+from app.core.utils.redis_utils import get_redis_connection
 from app.core.utils.time_utils import now_bj
 
 METRICS_TTL_SECONDS = 300
+METRICS_MIN_TTL_SECONDS = 60
+METRICS_REFRESH_LOCK_KEY = 'plaza:metrics:refresh:lock'
+METRICS_REFRESH_LOCK_TTL_SECONDS = 30
+METRICS_REFRESH_WAIT_SECONDS = 8.0
+METRICS_REFRESH_POLL_SECONDS = 0.2
+
+_LOCAL_REFRESH_LOCK = threading.Lock()
+_logger = logging.getLogger(__name__)
 
 
 def ensure_plaza_metrics(force: bool = False, ttl_seconds: int = METRICS_TTL_SECONDS) -> None:
-    if not force and not _is_metrics_stale(ttl_seconds):
+    ttl = max(int(ttl_seconds or 0), METRICS_MIN_TTL_SECONDS)
+    if not force and not _is_metrics_stale(ttl):
         return
-    _refresh_plaza_metrics()
+
+    release = _try_acquire_refresh_lock()
+    if release is None:
+        if _wait_for_metrics_refresh(ttl_seconds=ttl):
+            return
+        _logger.warning('题库广场指标刷新锁繁忙，跳过本次同步刷新（force=%s）', force)
+        return
+
+    try:
+        if not force and not _is_metrics_stale(ttl):
+            return
+        _refresh_plaza_metrics()
+    finally:
+        release()
 
 
 def _is_metrics_stale(ttl_seconds: int) -> bool:
@@ -27,38 +54,93 @@ def _is_metrics_stale(ttl_seconds: int) -> bool:
     updated_at = row.get('updated_at') if row else None
     if not updated_at:
         return True
-    return (now_bj() - updated_at).total_seconds() >= max(int(ttl_seconds or 0), 60)
+    return (now_bj() - updated_at).total_seconds() >= max(int(ttl_seconds or 0), METRICS_MIN_TTL_SECONDS)
+
+
+def _try_acquire_refresh_lock():
+    conn = get_redis_connection()
+    if conn is not None:
+        token = secrets.token_urlsafe(12)
+        try:
+            locked = bool(conn.set(
+                METRICS_REFRESH_LOCK_KEY,
+                token,
+                ex=METRICS_REFRESH_LOCK_TTL_SECONDS,
+                nx=True,
+            ))
+        except Exception:
+            locked = False
+        if locked:
+            token_bytes = token.encode('utf-8')
+
+            def _release() -> None:
+                try:
+                    current = conn.get(METRICS_REFRESH_LOCK_KEY)
+                    if current == token_bytes:
+                        conn.delete(METRICS_REFRESH_LOCK_KEY)
+                except Exception:
+                    pass
+
+            return _release
+
+    if not _LOCAL_REFRESH_LOCK.acquire(blocking=False):
+        return None
+
+    def _release_local() -> None:
+        if _LOCAL_REFRESH_LOCK.locked():
+            _LOCAL_REFRESH_LOCK.release()
+
+    return _release_local
+
+
+def _wait_for_metrics_refresh(ttl_seconds: int) -> bool:
+    deadline = time.monotonic() + METRICS_REFRESH_WAIT_SECONDS
+    while time.monotonic() < deadline:
+        time.sleep(METRICS_REFRESH_POLL_SECONDS)
+        try:
+            if not _is_metrics_stale(ttl_seconds):
+                return True
+        except Exception:
+            return False
+    try:
+        return not _is_metrics_stale(ttl_seconds)
+    except Exception:
+        return False
 
 
 def _refresh_plaza_metrics() -> None:
     now = now_bj()
     cutoff_7 = now - timedelta(days=7)
     cutoff_30 = now - timedelta(days=30)
-    rows = _build_system_rows(cutoff_7, cutoff_30) + _build_user_rows(cutoff_7, cutoff_30)
+    try:
+        rows = _build_system_rows(cutoff_7, cutoff_30) + _build_user_rows(cutoff_7, cutoff_30)
 
-    db.session.execute(text('DELETE FROM public_bank_plaza_metrics'))
-    if rows:
-        db.session.execute(
-            text(
-                """
-                INSERT INTO public_bank_plaza_metrics (
-                    source_type, source_id, name, description, cover_image, owner_label,
-                    question_count_total, plaza_board_id, is_featured, featured_weight,
-                    published_at, last_activity_at, join_count_total, join_users_7d,
-                    join_users_30d, answer_count_7d, answer_count_30d, answer_users_7d,
-                    answer_users_30d, hot_score, active_score, recommended_score, updated_at
-                ) VALUES (
-                    :source_type, :source_id, :name, :description, :cover_image, :owner_label,
-                    :question_count_total, :plaza_board_id, :is_featured, :featured_weight,
-                    :published_at, :last_activity_at, :join_count_total, :join_users_7d,
-                    :join_users_30d, :answer_count_7d, :answer_count_30d, :answer_users_7d,
-                    :answer_users_30d, :hot_score, :active_score, :recommended_score, :updated_at
-                )
-                """
-            ),
-            rows,
-        )
-    db.session.commit()
+        db.session.execute(text('DELETE FROM public_bank_plaza_metrics'))
+        if rows:
+            db.session.execute(
+                text(
+                    """
+                    INSERT INTO public_bank_plaza_metrics (
+                        source_type, source_id, name, description, cover_image, owner_label,
+                        question_count_total, plaza_board_id, is_featured, featured_weight,
+                        published_at, last_activity_at, join_count_total, join_users_7d,
+                        join_users_30d, answer_count_7d, answer_count_30d, answer_users_7d,
+                        answer_users_30d, hot_score, active_score, recommended_score, updated_at
+                    ) VALUES (
+                        :source_type, :source_id, :name, :description, :cover_image, :owner_label,
+                        :question_count_total, :plaza_board_id, :is_featured, :featured_weight,
+                        :published_at, :last_activity_at, :join_count_total, :join_users_7d,
+                        :join_users_30d, :answer_count_7d, :answer_count_30d, :answer_users_7d,
+                        :answer_users_30d, :hot_score, :active_score, :recommended_score, :updated_at
+                    )
+                    """
+                ),
+                rows,
+            )
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
 
 
 def _build_system_rows(cutoff_7, cutoff_30) -> list[dict[str, Any]]:

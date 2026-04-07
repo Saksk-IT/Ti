@@ -227,47 +227,54 @@ def cleanup_orphan_uploads(hours: int = 24) -> tuple[int, list[str]]:
 
     # PostgreSQL 和 SQLite 的时间计算语法不同
     if dialect == 'postgresql':
-        time_condition = "uploaded_at < NOW() - INTERVAL ':hours HOUR'"
-        params = {'hours': hours}
+        time_condition = "uploaded_at < NOW() - (:hours * INTERVAL '1 hour')"
+        params = {'hours': int(hours)}
     else:
         # SQLite
         time_condition = "uploaded_at < datetime('now', '-' || :hours || ' hours')"
-        params = {'hours': hours}
+        params = {'hours': int(hours)}
 
-    # 查询孤儿文件
-    rows = db.session.execute(text(f"""
-        SELECT id, filename, filepath
-        FROM forum_uploads
-        WHERE is_attached = false
-        AND {time_condition}
-    """), params).fetchall()
+    try:
+        # 查询孤儿文件
+        rows = db.session.execute(text(f"""
+            SELECT id, filename, filepath
+            FROM forum_uploads
+            WHERE is_attached = false
+            AND {time_condition}
+        """), params).fetchall()
 
-    if not rows:
-        return 0, []
+        if not rows:
+            db.session.rollback()
+            return 0, []
 
-    deleted_files = []
-    deleted_ids = []
+        deleted_files = []
+        deleted_ids = []
 
-    for row in rows:
-        upload_id = row[0]
-        filepath = row[2]
+        for row in rows:
+            upload_id = row[0]
+            filepath = row[2]
 
-        safe_path = _normalize_forum_relative_path(filepath)
-        if safe_path:
-            deleted_files.extend(_delete_files_by_relative_path([safe_path]))
+            safe_path = _normalize_forum_relative_path(filepath)
+            if safe_path:
+                deleted_files.extend(_delete_files_by_relative_path([safe_path]))
 
-        deleted_ids.append(upload_id)
+            deleted_ids.append(upload_id)
 
-    # 删除数据库记录
-    if deleted_ids:
-        placeholders = ','.join([f':id{i}' for i in range(len(deleted_ids))])
-        params = {f'id{i}': uid for i, uid in enumerate(deleted_ids)}
-        db.session.execute(text(f"""
-            DELETE FROM forum_uploads WHERE id IN ({placeholders})
-        """), params)
-        db.session.commit()
+        # 删除数据库记录
+        if deleted_ids:
+            placeholders = ','.join([f':id{i}' for i in range(len(deleted_ids))])
+            delete_params = {f'id{i}': uid for i, uid in enumerate(deleted_ids)}
+            db.session.execute(text(f"""
+                DELETE FROM forum_uploads WHERE id IN ({placeholders})
+            """), delete_params)
+            db.session.commit()
+        else:
+            db.session.rollback()
 
-    return len(deleted_ids), deleted_files
+        return len(deleted_ids), deleted_files
+    except Exception:
+        db.session.rollback()
+        raise
 
 
 def cleanup_post_images(post_id: int, old_cover: Optional[str], old_images: list[str],

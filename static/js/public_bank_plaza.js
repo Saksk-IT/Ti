@@ -118,17 +118,36 @@
     } catch (error) {}
   }
 
-  function fetchJson(path, extra) {
+  function fetchJson(path, extra, options) {
+    options = options || {};
     var url = path;
     var query = buildParams(extra);
     if (query) url += '?' + query;
-    return fetch(url, { credentials: 'same-origin' }).then(function (response) {
+    var timeoutMs = Math.max(0, Number(options.timeoutMs || 12000) || 12000);
+    var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timer = null;
+    if (controller && timeoutMs > 0) {
+      timer = window.setTimeout(function () {
+        try { controller.abort(); } catch (error) {}
+      }, timeoutMs);
+    }
+    return fetch(url, {
+      credentials: 'same-origin',
+      signal: controller ? controller.signal : undefined
+    }).then(function (response) {
       return response.json().catch(function () { return {}; }).then(function (json) {
         if (!response.ok || !json || json.code !== 0) {
           throw new Error((json && json.message) || '加载失败');
         }
         return json.data || {};
       });
+    }).catch(function (error) {
+      if (error && error.name === 'AbortError') {
+        throw new Error('请求超时，请稍后重试');
+      }
+      throw error;
+    }).finally(function () {
+      if (timer) window.clearTimeout(timer);
     });
   }
 
@@ -304,17 +323,31 @@
   }
 
   function loadSidebar() {
-    return fetchJson('/api/public/banks/summary').then(function (summary) {
-      renderSummary(summary || {});
-      return Promise.all([
-        fetchJson('/api/public/banks/boards'),
-        fetchJson('/api/public/banks/hot', { limit: 5 })
-      ]);
-    }).then(function (values) {
-      renderBoards((values[0] && values[0].items) || []);
-      renderHot((values[1] && values[1].items) || []);
+    return Promise.allSettled([
+      fetchJson('/api/public/banks/summary', null, { timeoutMs: 10000 }),
+      fetchJson('/api/public/banks/boards', null, { timeoutMs: 10000 }),
+      fetchJson('/api/public/banks/hot', { limit: 5 }, { timeoutMs: 10000 })
+    ]).then(function (results) {
+      var summary = results[0] && results[0].status === 'fulfilled' ? (results[0].value || {}) : {};
+      var boards = results[1] && results[1].status === 'fulfilled' ? (((results[1].value || {}).items) || []) : [];
+      var hotItems = results[2] && results[2].status === 'fulfilled' ? (((results[2].value || {}).items) || []) : [];
+      renderSummary(summary);
+      renderBoards(boards);
+      renderHot(hotItems);
+      renderActiveBoardChip();
+    }).catch(function () {
+      renderSummary({});
+      renderBoards([]);
+      renderHot([]);
       renderActiveBoardChip();
     });
+  }
+
+  function refreshPlaza(resetList) {
+    return Promise.allSettled([
+      loadSidebar(),
+      loadList(resetList !== false)
+    ]);
   }
 
   function loadList(reset) {
@@ -329,7 +362,7 @@
       tab: state.tab,
       page: state.page,
       per_page: state.perPage
-    }).then(function (data) {
+    }, { timeoutMs: 12000 }).then(function (data) {
       var items = data.items || [];
       state.total = Number(data.total || 0) || 0;
       if (reset && postsListEl) postsListEl.innerHTML = '';
@@ -360,7 +393,7 @@
       node.classList.remove('active');
     });
     if (el) el.classList.add('active');
-    loadSidebar().then(function () { return loadList(true); });
+    refreshPlaza(true);
   };
 
   window.sidebarSelectBoard = function (el, boardId, boardName) {
@@ -371,19 +404,19 @@
     });
     if (el) el.classList.add('active');
     closeDrawer();
-    loadSidebar().then(function () { return loadList(true); });
+    refreshPlaza(true);
   };
 
   window.clearBoardSelection = function () {
     state.boardId = '';
     state.boardName = '';
-    loadSidebar().then(function () { return loadList(true); });
+    refreshPlaza(true);
   };
 
   window.clearKeywordSearch = function () {
     state.keyword = '';
     if (keywordEl) keywordEl.value = '';
-    loadSidebar().then(function () { return loadList(true); });
+    refreshPlaza(true);
   };
 
   window.loadMore = function () {
@@ -397,7 +430,7 @@
       state.keyword = normalizeKeyword(keywordEl.value || '');
       window.clearTimeout(keywordTimer);
       keywordTimer = window.setTimeout(function () {
-        loadSidebar().then(function () { return loadList(true); });
+        refreshPlaza(true);
       }, 250);
     });
     keywordEl.addEventListener('keydown', function (event) {
@@ -405,7 +438,7 @@
         event.preventDefault();
         window.clearTimeout(keywordTimer);
         state.keyword = normalizeKeyword(keywordEl.value || '');
-        loadSidebar().then(function () { return loadList(true); });
+        refreshPlaza(true);
       } else if (event.key === 'Escape') {
         window.clearKeywordSearch();
       }
@@ -429,7 +462,7 @@
     if (recentItem && document.getElementById('publicBankPlazaPage')) {
       state.keyword = normalizeKeyword(recentItem.getAttribute('data-recent-keyword') || '');
       if (keywordEl) keywordEl.value = state.keyword;
-      loadSidebar().then(function () { return loadList(true); });
+      refreshPlaza(true);
       return;
     }
 
@@ -445,7 +478,7 @@
         Array.prototype.slice.call(document.querySelectorAll('#forumTabs .forum-tab')).forEach(function (node) {
           node.classList.toggle('active', node.getAttribute('data-tab') === 'latest');
         });
-        loadSidebar().then(function () { return loadList(true); });
+        refreshPlaza(true);
       } else if (action === 'clear-all') {
         state.keyword = '';
         state.boardId = '';
@@ -455,7 +488,7 @@
         Array.prototype.slice.call(document.querySelectorAll('#forumTabs .forum-tab')).forEach(function (node) {
           node.classList.toggle('active', node.getAttribute('data-tab') === 'latest');
         });
-        loadSidebar().then(function () { return loadList(true); });
+        refreshPlaza(true);
       }
     }
   });
@@ -464,5 +497,5 @@
   Array.prototype.slice.call(document.querySelectorAll('#forumTabs .forum-tab')).forEach(function (node) {
     node.classList.toggle('active', node.getAttribute('data-tab') === state.tab);
   });
-  loadSidebar().then(function () { return loadList(true); });
+  refreshPlaza(true);
 })();
