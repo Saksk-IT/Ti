@@ -61,43 +61,28 @@ class EmailService:
     def _get_smtp_config() -> Dict[str, Any]:
         """
         获取SMTP配置
-        优先从数据库读取，如果不存在则从环境变量读取
+        优先从后台系统配置读取，如果不存在则从环境变量读取
         
         Returns:
             SMTP配置字典
         """
-        from app.models.system import SystemConfig
-
-        # 尝试从数据库读取配置
         try:
-            config_rows = SystemConfig.query.filter(
-                SystemConfig.config_key.like('mail_%')
-            ).all()
+            from app.modules.admin.services.system_config_service import SystemConfigService
 
-            if config_rows:
-                db_config = {}
-                for row in config_rows:
-                    key = row.config_key.replace('mail_', '').upper()
-                    value = row.config_value
-                    if value.lower() in ['true', 'false', '1', '0']:
-                        value = value.lower() in ['true', '1']
-                    elif value.isdigit():
-                        value = int(value)
-                    db_config[key] = value
-
-                if db_config.get('SERVER'):
-                    return {
-                        'server': db_config.get('SERVER'),
-                        'port': db_config.get('PORT', 587),
-                        'use_tls': db_config.get('USE_TLS', True),
-                        'use_ssl': db_config.get('USE_SSL', False),
-                        'username': db_config.get('USERNAME'),
-                        'password': db_config.get('PASSWORD'),
-                        'sender': db_config.get('DEFAULT_SENDER'),
-                        'sender_name': db_config.get('DEFAULT_SENDER_NAME', '系统通知'),
-                    }
+            mail_config = SystemConfigService.get_mail_config()
+            if mail_config.get('server'):
+                return {
+                    'server': mail_config.get('server'),
+                    'port': mail_config.get('port', 587),
+                    'use_tls': mail_config.get('use_tls', True),
+                    'use_ssl': mail_config.get('use_ssl', False),
+                    'username': mail_config.get('username'),
+                    'password': mail_config.get('password'),
+                    'sender': mail_config.get('sender'),
+                    'sender_name': mail_config.get('sender_name', '系统通知'),
+                }
         except Exception as e:
-            current_app.logger.warning(f'从数据库读取邮件配置失败，使用环境变量: {str(e)}')
+            current_app.logger.warning(f'从后台系统设置读取邮件配置失败，使用环境变量: {str(e)}')
         
         # 如果数据库中没有配置，使用环境变量
         return {
@@ -252,21 +237,13 @@ class EmailService:
         if code is None:
             code = EmailService.generate_verification_code()
         
-        # 检查是否启用邮件服务（优先从数据库读取）
-        mail_enabled = True
-        console_output = False
-        
         try:
-            from app.models.system import SystemConfig
-            enabled_row = SystemConfig.query.filter_by(config_key='mail_enabled').first()
-            if enabled_row:
-                mail_enabled = enabled_row.config_value.lower() in ['true', '1', 'yes', 'on']
+            from app.modules.admin.services.system_config_service import SystemConfigService
 
-            console_row = SystemConfig.query.filter_by(config_key='mail_console_output').first()
-            if console_row:
-                console_output = console_row.config_value.lower() in ['true', '1', 'yes', 'on']
+            mail_config = SystemConfigService.get_mail_config()
+            mail_enabled = bool(mail_config.get('enabled', True))
+            console_output = bool(mail_config.get('console_output', False))
         except Exception:
-            # 如果从数据库读取失败，使用环境变量配置
             mail_enabled = current_app.config.get('MAIL_ENABLED', True)
             console_output = current_app.config.get('MAIL_CONSOLE_OUTPUT', False)
         
@@ -355,4 +332,3 @@ class EmailService:
         """
         pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         return bool(re.match(pattern, email))
-

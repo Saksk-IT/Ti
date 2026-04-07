@@ -31,10 +31,11 @@ def _ai_explain_rate_key():
 def api_ai_explain():
     """AI 解析接口（阿里云百炼 DashScope OpenAI 兼容接口）。
 
-    环境变量（推荐写入项目根目录 .env）：
-    - DASHSCOPE_API_KEY: 百炼 API-KEY
-    - DASHSCOPE_BASE_URL: 可选，北京默认 https://dashscope.aliyuncs.com/compatible-mode/v1
-    - DASHSCOPE_MODEL: 可选，默认 qwen-plus
+    优先读取后台管理系统 → 系统设置 → AI 配置。
+    仍兼容旧的环境变量回退：
+    - DASHSCOPE_API_KEY
+    - DASHSCOPE_BASE_URL
+    - DASHSCOPE_MODEL
     """
     from flask import current_app
     from app.core.utils.subject_permissions import can_user_access_subject
@@ -83,7 +84,7 @@ def api_ai_explain():
 
     # 未配置密钥：保留旧行为，返回"占位解析"，同时提示如何配置
     if not api_key:
-        tip = '（未配置 DASHSCOPE_API_KEY，当前为模板解析；配置后将自动使用百炼模型）'
+        tip = '（未配置 AI 服务，当前返回模板解析；可在后台管理系统 → 系统设置 → AI 配置中启用）'
         lines = [tip, '', '建议解题思路：', '1) 先圈出关键词与限定条件。', '2) 把题干转为可验证的结论/公式/步骤。', '3) 对选择题：用排除法 + 代入验证。', '4) 对填空/简答题：列步骤，逐步推导，最后回代检查。']
         return jsonify({'status': 'success', 'data': {'explain': '\n'.join(lines), 'provider': 'placeholder'}})
 
@@ -130,7 +131,7 @@ def api_ai_explain():
         return jsonify({'status': 'success', 'data': data_out})
     except Exception as e:
         current_app.logger.error('AI解析失败: %s', str(e), exc_info=True)
-        return jsonify({'status': 'error', 'message': 'AI解析失败，请检查 DASHSCOPE_API_KEY / 计费状态 / 地域 Base URL 配置'}), 502
+        return jsonify({'status': 'error', 'message': 'AI解析失败，请检查后台管理系统 → 系统设置 → AI 配置、计费状态与地域 Base URL'}), 502
 
 
 @quiz_api_bp.route('/coding/execute', methods=['POST'])

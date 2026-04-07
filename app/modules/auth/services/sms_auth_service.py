@@ -37,18 +37,29 @@ class SmsAuthService:
 
     @staticmethod
     def _sms_config(template_code: Optional[str] = None) -> Dict[str, Any]:
-        """从 Flask config 构建传给 SDK / RQ 的配置字典。"""
-        cfg = current_app.config
+        """从后台系统设置（DB 优先）构建传给 SDK / RQ 的配置字典。"""
+        from app.modules.admin.services.system_config_service import SystemConfigService
+
+        cfg = SystemConfigService.get_sms_config()
         return {
-            'access_key_id': cfg.get('ALIYUN_ACCESS_KEY_ID') or '',
-            'access_key_secret': cfg.get('ALIYUN_ACCESS_KEY_SECRET') or '',
-            'sign_name': cfg.get('ALIYUN_SMS_SIGN_NAME') or '',
-            'template_code': template_code or cfg.get('ALIYUN_SMS_TEMPLATE_CODE') or '',
-            'code_length': cfg.get('ALIYUN_SMS_CODE_LENGTH', 6),
-            'valid_time': cfg.get('ALIYUN_SMS_VALID_TIME', 300),
-            'interval': cfg.get('ALIYUN_SMS_INTERVAL', 60),
-            'console_output': cfg.get('SMS_CONSOLE_OUTPUT', False),
+            'access_key_id': cfg.get('access_key_id') or '',
+            'access_key_secret': cfg.get('access_key_secret') or '',
+            'sign_name': cfg.get('sign_name') or '',
+            'template_code': template_code or cfg.get('template_code') or '',
+            'code_length': cfg.get('code_length', 6),
+            'valid_time': cfg.get('valid_time', 300),
+            'interval': cfg.get('interval', 60),
+            'console_output': cfg.get('console_output', False),
         }
+
+    @staticmethod
+    def _sms_enabled() -> bool:
+        try:
+            from app.modules.admin.services.system_config_service import SystemConfigService
+
+            return bool(SystemConfigService.get_sms_config().get('enabled', True))
+        except Exception:
+            return bool(current_app.config.get('SMS_ENABLED', True))
 
     @staticmethod
     def _check_rate_limit(phone: str) -> Optional[str]:
@@ -143,7 +154,7 @@ class SmsAuthService:
     @staticmethod
     def send_login_code(phone: str) -> Tuple[bool, Optional[str]]:
         """发送登录/注册验证码。"""
-        if not current_app.config.get('SMS_ENABLED', True):
+        if not SmsAuthService._sms_enabled():
             return False, '短信功能未启用'
 
         err = SmsAuthService._check_rate_limit(phone)
@@ -234,7 +245,7 @@ class SmsAuthService:
     @staticmethod
     def send_reset_password_code(phone: str) -> Tuple[bool, Optional[str]]:
         """发送重置密码验证码。"""
-        if not current_app.config.get('SMS_ENABLED', True):
+        if not SmsAuthService._sms_enabled():
             return False, '短信功能未启用'
 
         user = User.query.filter_by(phone=phone).first()
@@ -245,8 +256,11 @@ class SmsAuthService:
         if err:
             return False, err
 
+        from app.modules.admin.services.system_config_service import SystemConfigService
+
+        sms_cfg = SystemConfigService.get_sms_config()
         config = SmsAuthService._sms_config(
-            template_code=current_app.config.get('ALIYUN_SMS_TEMPLATE_CODE_RESET'),
+            template_code=sms_cfg.get('template_code_reset'),
         )
         ok, msg = SmsAuthService._do_send(phone, config)
         if not ok:
@@ -290,7 +304,7 @@ class SmsAuthService:
     @staticmethod
     def send_bind_code(phone: str, user_id: int) -> Tuple[bool, Optional[str]]:
         """发送绑定手机验证码。"""
-        if not current_app.config.get('SMS_ENABLED', True):
+        if not SmsAuthService._sms_enabled():
             return False, '短信功能未启用'
 
         user = User.query.get(user_id)
@@ -307,8 +321,11 @@ class SmsAuthService:
         if err:
             return False, err
 
+        from app.modules.admin.services.system_config_service import SystemConfigService
+
+        sms_cfg = SystemConfigService.get_sms_config()
         config = SmsAuthService._sms_config(
-            template_code=current_app.config.get('ALIYUN_SMS_TEMPLATE_CODE_BIND'),
+            template_code=sms_cfg.get('template_code_bind'),
         )
         ok, msg = SmsAuthService._do_send(phone, config)
         if not ok:

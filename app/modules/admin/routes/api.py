@@ -15,6 +15,7 @@ from .api_components import notifications  # noqa: F401
 from .api_components import popups  # noqa: F401
 from .api_components import questions  # noqa: F401
 from .api_components import questions_io  # noqa: F401
+from .api_components import sms_settings  # noqa: F401
 from .api_components import subject_permissions  # noqa: F401
 from .api_components import subjects  # noqa: F401
 from .api_components import system_config  # noqa: F401

@@ -175,21 +175,21 @@ def admin_settings_page():
 @admin_pages_bp.route('/settings/mail')
 def admin_mail_settings_page():
     """邮件配置页面"""
-    # 获取当前邮件配置
-    config_rows = db.session.execute(
-        text("SELECT config_key, config_value, description FROM system_config WHERE config_key LIKE 'mail_%' ORDER BY config_key")
-    ).fetchall()
+    from app.modules.admin.services.system_config_service import SystemConfigService
 
-    mail_config = {}
-    for row in config_rows:
-        key = row._mapping['config_key']
-        value = row._mapping['config_value']
-        # 对于密码字段，不返回实际值
-        if 'password' in key.lower():
-            mail_config[key] = '***' if value else ''
-        else:
-            mail_config[key] = value
-
+    cfg = SystemConfigService.get_mail_config_masked()
+    mail_config = {
+        'mail_server': cfg.get('server', ''),
+        'mail_port': cfg.get('port', 587),
+        'mail_use_tls': 'true' if cfg.get('use_tls', True) else 'false',
+        'mail_use_ssl': 'true' if cfg.get('use_ssl', False) else 'false',
+        'mail_username': cfg.get('username', ''),
+        'mail_password': cfg.get('password', ''),
+        'mail_default_sender': cfg.get('sender', ''),
+        'mail_default_sender_name': cfg.get('sender_name', '系统通知'),
+        'mail_enabled': 'true' if cfg.get('enabled', True) else 'false',
+        'mail_console_output': 'true' if cfg.get('console_output', False) else 'false',
+    }
     return render_template('admin/settings/mail.html', mail_config=mail_config)
 
 
@@ -205,6 +205,15 @@ def admin_ai_settings_page():
     from app.modules.admin.services.system_config_service import SystemConfigService
     cfg = SystemConfigService.get_dashscope_config_masked()
     return render_template('admin/settings/ai.html', ai_config=cfg)
+
+
+@admin_pages_bp.route('/settings/sms')
+def admin_sms_settings_page():
+    """短信配置页面"""
+    from app.modules.admin.services.system_config_service import SystemConfigService
+
+    cfg = SystemConfigService.get_sms_config_masked()
+    return render_template('admin/settings/sms.html', sms_config=cfg)
 
 
 @admin_pages_bp.route('/permissions')

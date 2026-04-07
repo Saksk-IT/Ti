@@ -17,7 +17,7 @@ from app.modules.quiz.services.ai_explain_service import generate_ai_explain
 
 
 def _placeholder_explain() -> Dict[str, Any]:
-    tip = '（未配置 DASHSCOPE_API_KEY，当前为模板解析；配置后将自动使用百炼模型）'
+    tip = '（未配置 AI 服务，当前返回模板解析；可在后台管理系统 → 系统设置 → AI 配置中启用）'
     lines = [
         tip,
         '',
@@ -58,14 +58,16 @@ def ai_explain_task(
     payload: Dict[str, Any],
     model: Optional[str] = None,
     timeout: int = 25,
+    dashscope_config: Optional[Dict[str, Any]] = None,
     cache_key: Optional[str] = None,
     cache_ttl_seconds: int = 30 * 24 * 60 * 60,
 ) -> Dict[str, Any]:
     """生成 AI 解析（任务侧）。"""
-    cfg = _get_dashscope_cfg_for_worker()
+    cfg = dashscope_config or _get_dashscope_cfg_for_worker()
     api_key = cfg['api_key']
     base_url = cfg['base_url']
     mdl = (model or cfg['model']).strip() or 'qwen-plus'
+    request_timeout = int(timeout or cfg.get('timeout') or 25)
 
     if not api_key:
         result = _placeholder_explain()
@@ -75,7 +77,7 @@ def ai_explain_task(
             base_url=base_url,
             model=mdl,
             payload=payload or {},
-            timeout=int(timeout or 25),
+            timeout=request_timeout,
         )
         result = {'provider': 'dashscope', 'model': mdl, 'explain': explain}
 

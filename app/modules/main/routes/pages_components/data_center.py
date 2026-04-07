@@ -317,7 +317,7 @@ def api_data_ai_advice():
 
     def _build_placeholder_reply() -> str:
         lines = []
-        lines.append('（未配置 DASHSCOPE_API_KEY，以下为模板建议；配置后将自动启用 AI 分析）')
+        lines.append('（未配置 AI 服务，以下为模板建议；可在后台管理系统 → 系统设置 → AI 配置中启用）')
         lines.append('')
         lines.append('你的概览：')
         lines.append(f"- 全局：已做 {summary['all']['answered']} / {summary['all']['total_questions']}（完成度 {summary['all']['completion']}%），正确率 {summary['all']['accuracy']}%")
@@ -345,10 +345,13 @@ def api_data_ai_advice():
             lines.append('补充：设一个"最小计划"（每天 10 题或 8 分钟），先把连续天数做起来。')
         return '\n'.join(lines).strip()
 
-    api_key = (current_app.config.get('DASHSCOPE_API_KEY') or '').strip()
-    base_url = (current_app.config.get('DASHSCOPE_BASE_URL') or '').strip()
-    model = (current_app.config.get('DASHSCOPE_MODEL') or '').strip() or 'qwen-plus'
-    timeout = int(current_app.config.get('DASHSCOPE_TIMEOUT') or 25)
+    from app.modules.admin.services.system_config_service import SystemConfigService
+
+    dashscope_cfg = SystemConfigService.get_dashscope_config()
+    api_key = (dashscope_cfg.get('api_key') or '').strip()
+    base_url = (dashscope_cfg.get('base_url') or '').strip()
+    model = (dashscope_cfg.get('model') or '').strip() or 'qwen-plus'
+    timeout = int(dashscope_cfg.get('timeout') or 25)
 
     if not api_key:
         return jsonify({'status': 'success', 'data': {'reply': _build_placeholder_reply(), 'provider': 'placeholder', 'summary': summary}})
@@ -391,4 +394,3 @@ def api_data_ai_advice():
     except Exception as e:
         current_app.logger.error('AI数据建议失败: %s', str(e), exc_info=True)
         return jsonify({'status': 'success', 'data': {'reply': _build_placeholder_reply(), 'provider': 'placeholder', 'note': 'AI调用失败，已返回模板建议', 'summary': summary}})
-

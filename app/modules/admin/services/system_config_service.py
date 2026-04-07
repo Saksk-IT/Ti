@@ -50,6 +50,28 @@ def _cache_clear():
         _CACHE.clear()
 
 
+def _as_bool(value: Any, default: bool = False) -> bool:
+    if value is None:
+        return bool(default)
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    text = str(value).strip().lower()
+    if not text:
+        return bool(default)
+    return text in {'1', 'true', 'yes', 'on'}
+
+
+def _as_int(value: Any, default: int) -> int:
+    if value is None or str(value).strip() == '':
+        return int(default)
+    try:
+        return int(value)
+    except Exception:
+        return int(default)
+
+
 class SystemConfigService:
     """系统配置管理服务类"""
     
@@ -158,6 +180,28 @@ class SystemConfigService:
         # 默认返回True，保持向后兼容（原有行为）
         return True
 
+    @staticmethod
+    def _get_runtime_value(config_key: str, app_key: str, default: Any = '') -> Any:
+        row = SystemConfigService.get_config(config_key)
+        if row and row.get('config_value') not in (None, ''):
+            return row['config_value']
+
+        try:
+            from flask import current_app
+
+            return current_app.config.get(app_key, default)
+        except RuntimeError:
+            return os.environ.get(app_key, default)
+
+    @staticmethod
+    def mask_secret(value: str, prefix: int = 3, suffix: int = 3) -> str:
+        text = (value or '').strip()
+        if not text:
+            return ''
+        if len(text) <= (prefix + suffix):
+            return '***'
+        return f'{text[:prefix]}****{text[-suffix:]}'
+
     # ── DashScope AI 配置 ──────────────────────────────────
 
     _DASHSCOPE_KEYS = (
@@ -170,9 +214,7 @@ class SystemConfigService:
     @staticmethod
     def mask_api_key(key: str) -> str:
         """API Key 脱敏：保留前 3 位 + 后 3 位，中间用 **** 替代"""
-        if not key or len(key) <= 8:
-            return '****' if key else ''
-        return f"{key[:3]}****{key[-3:]}"
+        return SystemConfigService.mask_secret(key, prefix=3, suffix=3)
 
     @staticmethod
     def get_dashscope_config() -> Dict[str, Any]:
@@ -181,20 +223,15 @@ class SystemConfigService:
         Returns:
             {api_key, base_url, model, timeout} — 均为实际可用值
         """
-        from flask import current_app
-
-        def _val(db_key: str, app_key: str, default: str = '') -> str:
-            row = SystemConfigService.get_config(db_key)
-            if row and row.get('config_value'):
-                return row['config_value']
-            return str(current_app.config.get(app_key) or default)
-
         return {
-            'api_key':  _val('dashscope_api_key',  'DASHSCOPE_API_KEY'),
-            'base_url': _val('dashscope_base_url', 'DASHSCOPE_BASE_URL',
-                             'https://dashscope.aliyuncs.com/compatible-mode/v1'),
-            'model':    _val('dashscope_model',    'DASHSCOPE_MODEL', 'qwen-plus'),
-            'timeout':  int(_val('dashscope_timeout', 'DASHSCOPE_TIMEOUT', '25') or 25),
+            'api_key': str(SystemConfigService._get_runtime_value('dashscope_api_key', 'DASHSCOPE_API_KEY', '') or '').strip(),
+            'base_url': str(SystemConfigService._get_runtime_value(
+                'dashscope_base_url',
+                'DASHSCOPE_BASE_URL',
+                'https://dashscope.aliyuncs.com/compatible-mode/v1',
+            ) or 'https://dashscope.aliyuncs.com/compatible-mode/v1').strip(),
+            'model': str(SystemConfigService._get_runtime_value('dashscope_model', 'DASHSCOPE_MODEL', 'qwen-plus') or 'qwen-plus').strip() or 'qwen-plus',
+            'timeout': _as_int(SystemConfigService._get_runtime_value('dashscope_timeout', 'DASHSCOPE_TIMEOUT', 25), 25),
         }
 
     @staticmethod
@@ -206,6 +243,57 @@ class SystemConfigService:
             'api_key': SystemConfigService.mask_api_key(cfg['api_key']),
         }
 
+    # ── Mail 配置 ─────────────────────────────────────────
+
+    @staticmethod
+    def get_mail_config() -> Dict[str, Any]:
+        return {
+            'server': str(SystemConfigService._get_runtime_value('mail_server', 'MAIL_SERVER', '') or '').strip(),
+            'port': _as_int(SystemConfigService._get_runtime_value('mail_port', 'MAIL_PORT', 587), 587),
+            'use_tls': _as_bool(SystemConfigService._get_runtime_value('mail_use_tls', 'MAIL_USE_TLS', True), True),
+            'use_ssl': _as_bool(SystemConfigService._get_runtime_value('mail_use_ssl', 'MAIL_USE_SSL', False), False),
+            'username': str(SystemConfigService._get_runtime_value('mail_username', 'MAIL_USERNAME', '') or '').strip(),
+            'password': str(SystemConfigService._get_runtime_value('mail_password', 'MAIL_PASSWORD', '') or ''),
+            'sender': str(SystemConfigService._get_runtime_value('mail_default_sender', 'MAIL_DEFAULT_SENDER', '') or '').strip(),
+            'sender_name': str(SystemConfigService._get_runtime_value('mail_default_sender_name', 'MAIL_DEFAULT_SENDER_NAME', '系统通知') or '系统通知').strip() or '系统通知',
+            'enabled': _as_bool(SystemConfigService._get_runtime_value('mail_enabled', 'MAIL_ENABLED', True), True),
+            'console_output': _as_bool(SystemConfigService._get_runtime_value('mail_console_output', 'MAIL_CONSOLE_OUTPUT', False), False),
+        }
+
+    @staticmethod
+    def get_mail_config_masked() -> Dict[str, Any]:
+        cfg = SystemConfigService.get_mail_config()
+        return {
+            **cfg,
+            'password': '***' if cfg.get('password') else '',
+        }
+
+    # ── SMS 配置 ──────────────────────────────────────────
+
+    @staticmethod
+    def get_sms_config() -> Dict[str, Any]:
+        return {
+            'access_key_id': str(SystemConfigService._get_runtime_value('sms_access_key_id', 'ALIYUN_ACCESS_KEY_ID', '') or '').strip(),
+            'access_key_secret': str(SystemConfigService._get_runtime_value('sms_access_key_secret', 'ALIYUN_ACCESS_KEY_SECRET', '') or ''),
+            'sign_name': str(SystemConfigService._get_runtime_value('sms_sign_name', 'ALIYUN_SMS_SIGN_NAME', '') or '').strip(),
+            'template_code': str(SystemConfigService._get_runtime_value('sms_template_code', 'ALIYUN_SMS_TEMPLATE_CODE', '') or '').strip(),
+            'template_code_bind': str(SystemConfigService._get_runtime_value('sms_template_code_bind', 'ALIYUN_SMS_TEMPLATE_CODE_BIND', '') or '').strip(),
+            'template_code_reset': str(SystemConfigService._get_runtime_value('sms_template_code_reset', 'ALIYUN_SMS_TEMPLATE_CODE_RESET', '') or '').strip(),
+            'code_length': _as_int(SystemConfigService._get_runtime_value('sms_code_length', 'ALIYUN_SMS_CODE_LENGTH', 6), 6),
+            'valid_time': _as_int(SystemConfigService._get_runtime_value('sms_valid_time', 'ALIYUN_SMS_VALID_TIME', 300), 300),
+            'interval': _as_int(SystemConfigService._get_runtime_value('sms_interval', 'ALIYUN_SMS_INTERVAL', 60), 60),
+            'enabled': _as_bool(SystemConfigService._get_runtime_value('sms_enabled', 'SMS_ENABLED', True), True),
+            'console_output': _as_bool(SystemConfigService._get_runtime_value('sms_console_output', 'SMS_CONSOLE_OUTPUT', False), False),
+        }
+
+    @staticmethod
+    def get_sms_config_masked() -> Dict[str, Any]:
+        cfg = SystemConfigService.get_sms_config()
+        return {
+            **cfg,
+            'access_key_id': SystemConfigService.mask_secret(cfg['access_key_id'], prefix=3, suffix=3),
+            'access_key_secret': SystemConfigService.mask_secret(cfg['access_key_secret'], prefix=3, suffix=3),
+        }
 
 
 
