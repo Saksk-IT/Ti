@@ -3,7 +3,10 @@ import os
 
 from flask import abort, current_app, redirect, render_template, send_from_directory, session
 
+from app.core.extensions import limiter
 from .bp import main_pages_bp
+
+UPLOADS_ROUTE_LIMIT = "600 per minute;120 per second"
 
 
 @main_pages_bp.route('/quiz_settings')
@@ -13,6 +16,7 @@ def quiz_settings_page():
 
 
 @main_pages_bp.route('/uploads/<path:filename>')
+@limiter.limit(UPLOADS_ROUTE_LIMIT)
 def serve_upload(filename):
     """安全地提供上传的文件（支持音视频 Range 请求）"""
     # 路径遍历防护：拒绝包含 .. 的路径
