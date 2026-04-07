@@ -8,7 +8,6 @@ APP_DOMAIN="${DOMAIN:-saksk.top}"
 CERTBOT_EMAIL="${CERTBOT_EMAIL:-}"
 APP_DIR="${APP_DIR:-$ROOT_DIR}"
 ENV_FILE="${ENV_FILE:-$ROOT_DIR/.env.production}"
-COMPOSE_OVERRIDE_FILE="${COMPOSE_OVERRIDE_FILE:-$ROOT_DIR/compose.prod.override.yml}"
 SKIP_CERTBOT="${SKIP_CERTBOT:-0}"
 PIP_INDEX_URL="${PIP_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple/}"
 PIP_TRUSTED_HOST="${PIP_TRUSTED_HOST:-mirrors.aliyun.com}"
@@ -125,13 +124,7 @@ EOF
     log "检测到已有 .env.production，保留现有内容"
   fi
 
-  log "写入 compose.prod.override.yml"
-  cat > "$COMPOSE_OVERRIDE_FILE" <<'EOF'
-services:
-  nginx:
-    ports:
-      - "127.0.0.1:8080:80"
-EOF
+  log "使用 compose.prod.yml 内置的 127.0.0.1:8080 端口映射"
 }
 
 deploy_stack() {
@@ -149,14 +142,12 @@ deploy_stack() {
   $SUDO docker compose \
     --env-file "$ENV_FILE" \
     -f "$ROOT_DIR/compose.prod.yml" \
-    -f "$COMPOSE_OVERRIDE_FILE" \
     up -d
 
   log "执行数据库迁移"
   $SUDO docker compose \
     --env-file "$ENV_FILE" \
     -f "$ROOT_DIR/compose.prod.yml" \
-    -f "$COMPOSE_OVERRIDE_FILE" \
     exec web flask db upgrade
 }
 
@@ -241,7 +232,6 @@ validate_deploy() {
   $SUDO docker compose \
     --env-file "$ENV_FILE" \
     -f "$ROOT_DIR/compose.prod.yml" \
-    -f "$COMPOSE_OVERRIDE_FILE" \
     ps
 
   log "校验健康检查"

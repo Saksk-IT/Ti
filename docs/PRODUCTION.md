@@ -143,7 +143,6 @@ CERTBOT_EMAIL=你的邮箱 \
 
 - 安装系统依赖、Docker、Nginx、Certbot；
 - 生成最小化 `.env.production`；
-- 创建 `compose.prod.override.yml`；
 - 构建镜像并启动生产容器；
 - 执行数据库迁移；
 - 配置宿主机 Nginx；
@@ -254,7 +253,7 @@ sed -n '1,220p' .env.production
 
 ---
 
-## 7. 创建持久化目录并把 Compose 的 80 端口改为本机回环端口
+## 7. 创建持久化目录
 
 ### 7.1 创建数据目录
 
@@ -268,24 +267,13 @@ mkdir -p \
   backups
 ```
 
-### 7.2 创建生产覆盖文件
+当前主分支的 `compose.prod.yml` 已经内置：
 
-`compose.prod.yml` 默认把容器内 nginx 暴露到宿主机 `80:80`。  
-为了让**宿主机 Nginx**接管 80/443，我们额外创建一个覆盖文件，把容器 HTTP 入口改成 `127.0.0.1:8080`：
-
-```bash
-cat > compose.prod.override.yml <<'EOF'
-services:
-  nginx:
-    ports:
-      - "127.0.0.1:8080:80"
-EOF
+```text
+127.0.0.1:8080 -> 容器 nginx:80
 ```
 
-> 注意：仓库自带备份服务会自动打包 `.env.production` 与 `compose.prod.yml`，但**不会自动打包**这个新建的 `compose.prod.override.yml`。  
-> 建议你把它也纳入自己的 Git 记录或异地备份。
-
----
+所以不再需要额外的覆盖文件来改端口。
 
 ## 8. 构建镜像、启动应用、执行迁移
 
@@ -301,7 +289,6 @@ sudo docker build -t saksk-ti:latest -f docker/Dockerfile .
 sudo docker compose \
   --env-file .env.production \
   -f compose.prod.yml \
-  -f compose.prod.override.yml \
   up -d
 ```
 
@@ -311,7 +298,6 @@ sudo docker compose \
 sudo docker compose \
   --env-file .env.production \
   -f compose.prod.yml \
-  -f compose.prod.override.yml \
   exec web flask db upgrade
 ```
 
@@ -321,7 +307,6 @@ sudo docker compose \
 sudo docker compose \
   --env-file .env.production \
   -f compose.prod.yml \
-  -f compose.prod.override.yml \
   ps
 ```
 
@@ -349,7 +334,6 @@ curl -fsS "http://127.0.0.1:8080/api/ping?deep=1" | python3 -m json.tool
 sudo docker compose \
   --env-file .env.production \
   -f compose.prod.yml \
-  -f compose.prod.override.yml \
   logs --tail=200 web
 ```
 
@@ -471,7 +455,6 @@ sudo certbot renew --dry-run
 sudo docker compose \
   --env-file .env.production \
   -f compose.prod.yml \
-  -f compose.prod.override.yml \
   ps
 
 # 2) 健康检查
@@ -510,7 +493,6 @@ cd /opt/ti
 sudo docker compose \
   --env-file .env.production \
   -f compose.prod.yml \
-  -f compose.prod.override.yml \
   ps
 ```
 
@@ -521,19 +503,16 @@ cd /opt/ti
 sudo docker compose \
   --env-file .env.production \
   -f compose.prod.yml \
-  -f compose.prod.override.yml \
   logs -f web
 
 sudo docker compose \
   --env-file .env.production \
   -f compose.prod.yml \
-  -f compose.prod.override.yml \
   logs -f nginx
 
 sudo docker compose \
   --env-file .env.production \
   -f compose.prod.yml \
-  -f compose.prod.override.yml \
   logs -f backup
 ```
 
@@ -544,7 +523,6 @@ cd /opt/ti
 sudo docker compose \
   --env-file .env.production \
   -f compose.prod.yml \
-  -f compose.prod.override.yml \
   restart
 ```
 
@@ -581,13 +559,11 @@ sudo docker build -t saksk-ti:latest -f docker/Dockerfile .
 sudo docker compose \
   --env-file .env.production \
   -f compose.prod.yml \
-  -f compose.prod.override.yml \
   up -d --force-recreate
 
 sudo docker compose \
   --env-file .env.production \
   -f compose.prod.yml \
-  -f compose.prod.override.yml \
   exec web flask db upgrade
 
 curl -fsS https://saksk.top/api/ping | python3 -m json.tool
@@ -651,7 +627,6 @@ cd /opt/ti
 sudo docker compose \
   --env-file .env.production \
   -f compose.prod.yml \
-  -f compose.prod.override.yml \
   logs --tail=200 web
 ```
 
@@ -670,7 +645,6 @@ source .env.production
 sudo docker compose \
   --env-file .env.production \
   -f compose.prod.yml \
-  -f compose.prod.override.yml \
   exec postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
 ```
 
@@ -685,7 +659,6 @@ cd /opt/ti
 sudo docker compose \
   --env-file .env.production \
   -f compose.prod.yml \
-  -f compose.prod.override.yml \
   logs --tail=200 nginx web
 ```
 
@@ -720,7 +693,6 @@ sudo docker compose \
 - `backups/`
 - `.env.production`
 - `compose.prod.yml`
-- `compose.prod.override.yml`
 
 ---
 
