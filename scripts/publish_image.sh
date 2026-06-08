@@ -7,7 +7,7 @@ cd "$ROOT_DIR"
 IMAGE_NAME="${IMAGE_NAME:-ghcr.io/saksk-it/ti}"
 TAG="${TAG:-$(git rev-parse --short=12 HEAD 2>/dev/null || date +%Y%m%d%H%M%S)}"
 PLATFORMS="${PLATFORMS:-linux/amd64}"
-PUSH_LATEST="${PUSH_LATEST:-0}"
+PUSH_LATEST="${PUSH_LATEST:-1}"
 PUSH_DEV="${PUSH_DEV:-0}"
 PUSH="${PUSH:-1}"
 BUILDER_NAME="${BUILDER_NAME:-ti-builder}"
@@ -67,7 +67,8 @@ cat <<EOF
 
 镜像发布完成：
   ${IMAGE_NAME}:${TAG}
+  ${IMAGE_NAME}:latest
 
-服务器部署可指定：
-  TI_IMAGE=${IMAGE_NAME}:${TAG} ./scripts/deploy_ubuntu24.sh
+服务器默认部署会拉取：
+  ${IMAGE_NAME}:latest
 EOF

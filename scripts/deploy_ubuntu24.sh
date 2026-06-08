@@ -20,7 +20,7 @@ if [[ "$DEPLOY_ENV" == "production" ]]; then
 else
   DEFAULT_ENV_FILE="$ROOT_DIR/.env.development"
   DEFAULT_COMPOSE_FILE="$ROOT_DIR/compose.dev.yml"
-  DEFAULT_TI_IMAGE="ghcr.io/saksk-it/ti:dev"
+  DEFAULT_TI_IMAGE="ghcr.io/saksk-it/ti:latest"
 fi
 
 APP_DOMAIN="${DOMAIN:-saksk.top}"
@@ -100,15 +100,41 @@ load_env_file() {
 
   if [[ -n "$REQUESTED_TI_IMAGE" ]]; then
     TI_IMAGE="$REQUESTED_TI_IMAGE"
+  else
+    TI_IMAGE="$DEFAULT_TI_IMAGE"
   fi
   if [[ -n "$REQUESTED_TI_IMAGE_PULL_POLICY" ]]; then
     TI_IMAGE_PULL_POLICY="$REQUESTED_TI_IMAGE_PULL_POLICY"
+  else
+    TI_IMAGE_PULL_POLICY="always"
   fi
-  TI_IMAGE="${TI_IMAGE:-$DEFAULT_TI_IMAGE}"
-  TI_IMAGE_PULL_POLICY="${TI_IMAGE_PULL_POLICY:-always}"
   export TI_IMAGE TI_IMAGE_PULL_POLICY
   POSTGRES_USER="${POSTGRES_USER:-studyuser}"
   POSTGRES_DB="${POSTGRES_DB:-ti_db}"
+}
+
+upsert_env_value() {
+  local key="$1"
+  local value="$2"
+  local tmp_file
+  tmp_file="$(mktemp)"
+
+  if [[ -f "$ENV_FILE" ]] && grep -q "^${key}=" "$ENV_FILE"; then
+    awk -v key="$key" -v value="$value" '
+      index($0, key "=") == 1 { print key "=" value; next }
+      { print }
+    ' "$ENV_FILE" > "$tmp_file"
+  else
+    if [[ -f "$ENV_FILE" ]]; then
+      cat "$ENV_FILE" > "$tmp_file"
+      printf '%s=%s\n' "$key" "$value" >> "$tmp_file"
+    else
+      printf '%s=%s\n' "$key" "$value" > "$tmp_file"
+    fi
+  fi
+
+  cat "$tmp_file" > "$ENV_FILE"
+  rm -f "$tmp_file"
 }
 
 install_base_packages() {
@@ -235,6 +261,9 @@ prepare_runtime_files() {
 
   chmod 600 "$ENV_FILE"
   load_env_file
+  upsert_env_value "TI_IMAGE" "$TI_IMAGE"
+  upsert_env_value "TI_IMAGE_PULL_POLICY" "$TI_IMAGE_PULL_POLICY"
+  chmod 600 "$ENV_FILE"
 }
 
 validate_env() {

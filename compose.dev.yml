@@ -3,7 +3,7 @@
 
 services:
   web:
-    image: ${TI_IMAGE:-ghcr.io/saksk-it/ti:dev}
+    image: ${TI_IMAGE:-ghcr.io/saksk-it/ti:latest}
     pull_policy: ${TI_IMAGE_PULL_POLICY:-always}
     ports:
       - "${WEB_BIND:-0.0.0.0}:${WEB_PORT:-8000}:8000"
@@ -72,7 +72,7 @@ services:
         condition: service_started
 
   worker:
-    image: ${TI_IMAGE:-ghcr.io/saksk-it/ti:dev}
+    image: ${TI_IMAGE:-ghcr.io/saksk-it/ti:latest}
     pull_policy: ${TI_IMAGE_PULL_POLICY:-always}
     command: sh -c "rq worker -u $$REDIS_URL $$RQ_QUEUE_NAME"
     environment:
