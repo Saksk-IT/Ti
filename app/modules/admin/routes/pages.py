@@ -207,6 +207,15 @@ def admin_ai_settings_page():
     return render_template('admin/settings/ai.html', ai_config=cfg)
 
 
+@admin_pages_bp.route('/settings/payment')
+def admin_payment_settings_page():
+    """支付配置页面"""
+    from app.modules.payment.services.epay_service import EpayService
+
+    cfg = EpayService.get_config(masked=True)
+    return render_template('admin/settings/payment.html', epay_config=cfg)
+
+
 @admin_pages_bp.route('/settings/sms')
 def admin_sms_settings_page():
     """短信配置页面"""

@@ -1,0 +1,319 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}支付配置 - 系统设置{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <div class="header-left">
+            <a href="/admin/settings" class="back-link">← 返回系统设置</a>
+            <h1>支付配置</h1>
+            <p class="page-description">配置易支付渠道的商户信息、接口地址和回调地址。保存后 Web 与后续小程序支付流程共用同一套配置。</p>
+        </div>
+    </div>
+
+    <div class="settings-form-container">
+        <form id="epayConfigForm" class="settings-form">
+            <div class="form-section">
+                <h3 class="section-title">基础开关</h3>
+                <label class="checkbox-card">
+                    <input type="checkbox" id="epay_enabled" {% if epay_config.enabled %}checked{% endif %}>
+                    <div>
+                        <strong>启用易支付渠道</strong>
+                        <div class="form-hint">关闭后业务支付流程应停止使用该渠道，但配置会保留。</div>
+                    </div>
+                </label>
+            </div>
+
+            <div class="form-section">
+                <h3 class="section-title">商户与接口</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="epay_api_base_url">接口地址</label>
+                        <input type="text" id="epay_api_base_url" value="{{ epay_config.api_base_url or 'https://z-pay.cn' }}" placeholder="https://z-pay.cn">
+                        <div class="form-hint">填写网关域名即可，系统会自动拼接 /submit.php 和 /api.php。</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="epay_pid">商户 ID</label>
+                        <input type="text" id="epay_pid" value="{{ epay_config.pid }}" placeholder="请输入易支付商户 ID">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="epay_key">商户密钥</label>
+                    <div class="input-with-action">
+                        <input type="password" id="epay_key" value="{{ epay_config.key }}" placeholder="请输入易支付商户密钥">
+                        <button type="button" class="btn btn-secondary btn-compact" id="toggleKeyBtn">显示</button>
+                    </div>
+                    <div class="form-hint">已配置时显示为脱敏值，输入新值才会更新。</div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="epay_sitename">网站名称</label>
+                        <input type="text" id="epay_sitename" value="{{ epay_config.sitename }}" placeholder="例如：题库系统">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="epay_default_type">默认支付方式</label>
+                        <select id="epay_default_type">
+                            <option value="alipay" {% if epay_config.default_type == 'alipay' %}selected{% endif %}>支付宝</option>
+                            <option value="wxpay" {% if epay_config.default_type == 'wxpay' %}selected{% endif %}>微信支付</option>
+                            <option value="qqpay" {% if epay_config.default_type == 'qqpay' %}selected{% endif %}>QQ 钱包</option>
+                            <option value="tenpay" {% if epay_config.default_type == 'tenpay' %}selected{% endif %}>财付通</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3 class="section-title">回调地址</h3>
+                <div class="form-group">
+                    <label for="epay_notify_url">异步通知地址</label>
+                    <input type="text" id="epay_notify_url" value="{{ epay_config.notify_url }}" placeholder="https://example.com/api/payment/epay/notify">
+                    <div class="form-hint">易支付服务器通知支付结果的地址，后续接订单回调时会使用。</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="epay_return_url">同步跳转地址</label>
+                    <input type="text" id="epay_return_url" value="{{ epay_config.return_url }}" placeholder="https://example.com/payment/result">
+                    <div class="form-hint">用户完成支付后浏览器跳回的地址。</div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3 class="section-title">联调</h3>
+                <div class="form-grid form-grid-compact">
+                    <div class="form-group">
+                        <label for="epay_timeout">接口超时（秒）</label>
+                        <input type="number" id="epay_timeout" min="3" max="60" value="{{ epay_config.timeout or 10 }}">
+                    </div>
+                </div>
+                <div class="test-box">
+                    <div>
+                        <strong>商户信息查询</strong>
+                        <div class="form-hint">使用当前表单值请求易支付 act=query，不会先写库。</div>
+                    </div>
+                    <button type="button" class="btn btn-secondary" id="testBtn">测试连接</button>
+                </div>
+                <pre class="test-result" id="testResult" hidden></pre>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="saveBtn">保存配置</button>
+            </div>
+
+            <div class="form-message" id="formMessage"></div>
+        </form>
+    </div>
+</div>
+
+<style>
+.page-container { padding: 40px; max-width: 960px; margin: 0 auto; }
+.page-header { margin-bottom: 32px; }
+.back-link { display: inline-block; color: var(--text-sub); text-decoration: none; font-size: 14px; margin-bottom: 12px; transition: color 0.2s; }
+.back-link:hover { color: var(--primary); }
+.page-header h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; letter-spacing: 0; }
+.page-description { color: var(--text-sub); font-size: 15px; line-height: 1.7; }
+
+.settings-form-container {
+    background: var(--card-bg);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    border: 0.5px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    box-shadow: var(--shadow);
+}
+
+.settings-form { display: flex; flex-direction: column; gap: 32px; }
+.form-section { display: flex; flex-direction: column; gap: 16px; }
+.section-title { font-size: 20px; font-weight: 600; margin-bottom: 4px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.form-grid-compact { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.form-group { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.form-group label { font-size: 14px; font-weight: 500; color: var(--text-color); }
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="password"],
+.form-group select {
+    width: 100%;
+    min-height: 44px;
+    padding: 11px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg-solid);
+    color: var(--text-color);
+    font-size: 15px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.form-hint { font-size: 13px; color: var(--text-sub); line-height: 1.6; }
+.checkbox-card {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 14px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg-solid);
+}
+.checkbox-card input { margin-top: 2px; width: 16px; height: 16px; }
+.input-with-action { display: flex; gap: 8px; align-items: center; }
+.input-with-action input { flex: 1; min-width: 0; }
+
+.test-box {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: center;
+    padding: 14px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg-solid);
+}
+.test-result {
+    margin: 0;
+    max-height: 260px;
+    overflow: auto;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: rgba(142,142,147,0.1);
+    color: var(--text-color);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.form-actions { display: flex; justify-content: flex-end; padding-top: 8px; }
+.btn {
+    min-height: 44px;
+    padding: 11px 20px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+    white-space: nowrap;
+}
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,122,255,0.25); }
+.btn-secondary { background: var(--card-bg-solid); color: var(--text-color); border-color: var(--border-color); }
+.btn-secondary:hover { background: rgba(142,142,147,0.12); }
+.btn-compact { padding-left: 14px; padding-right: 14px; }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.form-message { margin-top: 8px; padding: 12px 16px; border-radius: var(--radius-sm); font-size: 14px; display: none; }
+.form-message.success { display: block; background: rgba(52,199,89,0.15); color: var(--success); border: 1px solid rgba(52,199,89,0.3); }
+.form-message.error { display: block; background: rgba(255,59,48,0.15); color: var(--danger); border: 1px solid rgba(255,59,48,0.3); }
+
+@media only screen and (max-width: 768px) {
+    .page-container { padding: 20px; }
+    .settings-form-container { padding: 20px; }
+    .page-header h1 { font-size: 24px; }
+    .form-grid, .form-grid-compact { grid-template-columns: 1fr; }
+    .input-with-action, .test-box { align-items: stretch; flex-direction: column; }
+    .form-actions { justify-content: stretch; }
+    .form-actions .btn { width: 100%; }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('epayConfigForm');
+    const saveBtn = document.getElementById('saveBtn');
+    const testBtn = document.getElementById('testBtn');
+    const toggleKeyBtn = document.getElementById('toggleKeyBtn');
+    const keyInput = document.getElementById('epay_key');
+    const messageDiv = document.getElementById('formMessage');
+    const testResult = document.getElementById('testResult');
+
+    function showMessage(text, type) {
+        messageDiv.textContent = text;
+        messageDiv.className = 'form-message ' + type;
+    }
+
+    function getPayload() {
+        return {
+            epay_enabled: document.getElementById('epay_enabled').checked,
+            epay_api_base_url: document.getElementById('epay_api_base_url').value.trim(),
+            epay_pid: document.getElementById('epay_pid').value.trim(),
+            epay_key: keyInput.value.trim(),
+            epay_sitename: document.getElementById('epay_sitename').value.trim(),
+            epay_notify_url: document.getElementById('epay_notify_url').value.trim(),
+            epay_return_url: document.getElementById('epay_return_url').value.trim(),
+            epay_default_type: document.getElementById('epay_default_type').value,
+            epay_timeout: document.getElementById('epay_timeout').value.trim() || '10',
+        };
+    }
+
+    toggleKeyBtn.addEventListener('click', function() {
+        const shouldShow = keyInput.type === 'password';
+        keyInput.type = shouldShow ? 'text' : 'password';
+        toggleKeyBtn.textContent = shouldShow ? '隐藏' : '显示';
+    });
+
+    form.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        saveBtn.disabled = true;
+        saveBtn.textContent = '保存中...';
+
+        try {
+            const response = await fetch('/admin/api/settings/payment/epay', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(getPayload()),
+            });
+            const data = await response.json();
+            if (data.status === 'success') {
+                showMessage(data.message || '易支付配置保存成功', 'success');
+            } else {
+                showMessage(data.message || '易支付配置保存失败', 'error');
+            }
+        } catch (error) {
+            showMessage('网络错误：' + error.message, 'error');
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = '保存配置';
+        }
+    });
+
+    testBtn.addEventListener('click', async function() {
+        testBtn.disabled = true;
+        testBtn.textContent = '测试中...';
+        testResult.hidden = true;
+
+        try {
+            const response = await fetch('/admin/api/settings/payment/epay/test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(getPayload()),
+            });
+            const data = await response.json();
+            if (data.status === 'success') {
+                showMessage(data.message || '易支付连接正常', 'success');
+                testResult.textContent = JSON.stringify(data.data || {}, null, 2);
+                testResult.hidden = false;
+            } else {
+                showMessage(data.message || '易支付连接测试失败', 'error');
+            }
+        } catch (error) {
+            showMessage('网络错误：' + error.message, 'error');
+        } finally {
+            testBtn.disabled = false;
+            testBtn.textContent = '测试连接';
+        }
+    });
+});
+</script>
+{% endblock %}
