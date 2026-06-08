@@ -24,6 +24,20 @@ def _build_named_in(col: str, values: list, prefix: str = 'in') -> tuple[str, di
     return f"{col} IN ({placeholders})", params
 
 
+def _normalize_quiz_record_is_correct(value) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int) and value in (0, 1):
+        return bool(value)
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in ('true', '1', 'yes', 'y', 'on', 'correct', '正确'):
+            return True
+        if normalized in ('false', '0', 'no', 'n', 'off', 'incorrect', '错', '错误'):
+            return False
+    raise ValueError('is_correct 必须是布尔值')
+
+
 @user_bank_api_bp.route('/<int:bank_id>/quiz', methods=['GET'])
 @auth_required
 def get_quiz_questions(bank_id):
@@ -250,12 +264,21 @@ def record_quiz_result(bank_id):
         return jsonify({'code': 403, 'message': '无权访问此题库'}), 403
 
     data = request.get_json() or {}
-    question_id = data.get('question_id')
+    raw_question_id = data.get('question_id')
     user_answer = data.get('user_answer')
-    is_correct = data.get('is_correct')
+    raw_is_correct = data.get('is_correct')
 
-    if not question_id:
+    try:
+        question_id = int(raw_question_id)
+    except (TypeError, ValueError):
         return jsonify({'code': 1, 'message': '缺少题目ID'}), 400
+    if question_id <= 0:
+        return jsonify({'code': 1, 'message': '缺少题目ID'}), 400
+
+    try:
+        is_correct = _normalize_quiz_record_is_correct(raw_is_correct)
+    except ValueError as exc:
+        return jsonify({'code': 1, 'message': str(exc)}), 400
 
     question = db.session.execute(
         text('SELECT id FROM user_bank_questions WHERE id = :qid AND bank_id = :bank_id'),
@@ -273,7 +296,7 @@ def record_quiz_result(bank_id):
             is_correct = EXCLUDED.is_correct,
             created_at = CURRENT_TIMESTAMP
     '''), {'uid': user_id, 'bank_id': bank_id, 'qid': question_id,
-           'user_answer': user_answer, 'is_correct': 1 if is_correct else 0})
+           'user_answer': user_answer, 'is_correct': is_correct})
 
     if not is_correct:
         db.session.execute(text('''
