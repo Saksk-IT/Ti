@@ -27,6 +27,7 @@ def register_all_modules(app: Flask):
     _init_module('app.modules.quiz', 'init_quiz_module', 'quiz')
     _init_module('app.modules.exam', 'init_exam_module', 'exam')
     _init_module('app.modules.user', 'init_user_module', 'user')
+    _init_module('app.modules.ai_chat', 'init_ai_chat_module', 'ai_chat')
     _init_module('app.modules.chat', 'init_chat_module', 'chat')
     _init_module('app.modules.notifications', 'init_notifications_module', 'notifications')
     _init_module('app.modules.popups', 'init_popups_module', 'popups')
@@ -40,4 +41,3 @@ def register_all_modules(app: Flask):
     app.register_blueprint(sse_bp, url_prefix='/api')
 
     app.logger.info('模块注册完成')
-

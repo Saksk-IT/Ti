@@ -1,0 +1,101 @@
+{% extends "main/shared/app_shell.html" %}
+
+{% block title %}SAK · AI 聊天{% endblock %}
+{% block page_title %}AI 聊天{% endblock %}
+
+{% block topbar_actions %}
+  <button class="app-icon-btn ai-chat-mobile-menu" type="button" id="aiChatMobileMenu" aria-label="打开会话列表" title="会话列表">
+    <svg class="app-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M5 7h14M5 12h14M5 17h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </button>
+{% endblock %}
+
+{% block head_extra %}
+  <link rel="stylesheet" href="{{ asset_url('css/ai_chat.css') }}" />
+{% endblock %}
+
+{% block content %}
+  <section class="ai-chat-shell" data-user-id="{{ user_id or '' }}">
+    <aside class="ai-chat-sidebar" id="aiChatSidebar" aria-label="AI 会话列表">
+      <div class="ai-chat-sidebar-head">
+        <div>
+          <h2>AI 聊天</h2>
+          <p>学习问题、题目解析、复习计划</p>
+        </div>
+        <button class="ai-icon-btn" type="button" id="aiNewSessionBtn" aria-label="新建会话" title="新建会话">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <label class="ai-search" for="aiSessionSearch">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+          <path d="m20 20-3.8-3.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <input id="aiSessionSearch" type="search" placeholder="搜索会话" autocomplete="off" />
+      </label>
+
+      <div class="ai-session-list" id="aiSessionList"></div>
+    </aside>
+
+    <div class="ai-chat-overlay" id="aiChatOverlay"></div>
+
+    <div class="ai-chat-main" aria-label="AI 聊天窗口">
+      <header class="ai-chat-header">
+        <div class="ai-current">
+          <span class="ai-current-dot"></span>
+          <div>
+            <h1 id="aiCurrentTitle">新的 AI 会话</h1>
+            <p id="aiCurrentMeta">选择模型后开始提问</p>
+          </div>
+        </div>
+
+        <div class="ai-header-actions">
+          <label class="ai-model-picker" for="aiModelSelect">
+            <span>模型</span>
+            <select id="aiModelSelect" aria-label="选择 AI 模型"></select>
+          </label>
+          <button class="ai-ghost-btn" type="button" id="aiRenameBtn">重命名</button>
+          <button class="ai-danger-btn" type="button" id="aiDeleteBtn">删除</button>
+        </div>
+      </header>
+
+      <main class="ai-message-pane" id="aiMessagePane" aria-live="polite">
+        <div class="ai-empty-state" id="aiEmptyState">
+          <div class="ai-empty-mark">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 3 14.3 8.7 20 11l-5.7 2.3L12 19l-2.3-5.7L4 11l5.7-2.3L12 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h2>今天想解决什么？</h2>
+          <p>可以询问题目思路、错题复盘、考试计划或知识点梳理。</p>
+          <div class="ai-prompt-grid">
+            <button type="button" data-prompt="帮我制定一个本周复习计划，重点兼顾错题和薄弱知识点。">制定复习计划</button>
+            <button type="button" data-prompt="请教我如何高效整理错题，并给出一套可执行流程。">整理错题方法</button>
+            <button type="button" data-prompt="我想提升选择题正确率，请给我一套训练策略。">提升选择题</button>
+            <button type="button" data-prompt="请用简单例子解释一个我容易混淆的知识点。">解释知识点</button>
+          </div>
+        </div>
+      </main>
+
+      <footer class="ai-composer-wrap">
+        <div class="ai-status" id="aiStatus"></div>
+        <form class="ai-composer" id="aiComposerForm">
+          <textarea id="aiComposer" rows="1" maxlength="4000" placeholder="输入问题，Enter 发送，Shift + Enter 换行"></textarea>
+          <button class="ai-send-btn" type="submit" id="aiSendBtn" aria-label="发送">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 5v14M18 11l-6-6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </form>
+      </footer>
+    </div>
+  </section>
+{% endblock %}
+
+{% block body_end %}
+  <script src="{{ asset_url('js/ai_chat.js') }}"></script>
+{% endblock %}
