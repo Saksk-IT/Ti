@@ -14,8 +14,9 @@ worker_class = "gthread"
 # 超时（AI 慢请求可能需要 25s+）
 timeout = 60
 
-# 预加载应用（共享内存，加速 fork）
-preload_app = True
+# 不预加载应用：当前应用启动阶段会初始化扩展、Redis 与后台任务。
+# 预加载后再 fork worker 容易继承连接/线程状态，导致生产健康检查偶发超时。
+preload_app = False
 
 # Worker 自动重启（防内存泄漏）
 max_requests = 1000
