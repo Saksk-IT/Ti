@@ -203,7 +203,7 @@ def admin_limit_settings_page():
 def admin_ai_settings_page():
     """AI 配置页面"""
     from app.modules.admin.services.system_config_service import SystemConfigService
-    cfg = SystemConfigService.get_dashscope_config_masked()
+    cfg = SystemConfigService.get_ai_config_masked()
     return render_template('admin/settings/ai.html', ai_config=cfg)
 
 

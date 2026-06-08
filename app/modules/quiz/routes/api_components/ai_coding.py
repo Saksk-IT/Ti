@@ -29,7 +29,7 @@ def _ai_explain_rate_key():
 @auth_required  # 支持session和JWT
 @limiter.limit("3 per minute;30 per hour", key_func=_ai_explain_rate_key)
 def api_ai_explain():
-    """AI 解析接口（阿里云百炼 DashScope OpenAI 兼容接口）。
+    """AI 解析接口（通用 AI 配置，支持 Chat Completions / Responses）。
 
     优先读取后台管理系统 → 系统设置 → AI 配置。
     仍兼容旧的环境变量回退：
@@ -76,11 +76,13 @@ def api_ai_explain():
         return jsonify({'status': 'error', 'message': '缺少题目信息'}), 400
 
     from app.modules.admin.services.system_config_service import SystemConfigService
-    _ds_cfg = SystemConfigService.get_dashscope_config()
-    api_key = _ds_cfg['api_key']
-    base_url = _ds_cfg['base_url']
-    model = _ds_cfg['model']
-    timeout = _ds_cfg['timeout']
+    ai_cfg = SystemConfigService.get_ai_config()
+    api_key = ai_cfg['api_key']
+    base_url = ai_cfg['base_url']
+    model = ai_cfg['model']
+    timeout = ai_cfg['timeout']
+    provider = ai_cfg.get('provider') or 'custom'
+    api_type = ai_cfg.get('api_type') or 'chat_completions'
 
     # 未配置密钥：保留旧行为，返回"占位解析"，同时提示如何配置
     if not api_key:
@@ -96,8 +98,9 @@ def api_ai_explain():
             cache_key = make_cache_key(
                 'quiz:ai_explain',
                 {
-                    'provider': 'dashscope',
-                    'model': model or 'qwen-plus',
+                    'provider': provider,
+                    'api_type': api_type,
+                    'model': model,
                     'base_url': base_url,
                     'payload': payload,
                 },
@@ -106,8 +109,9 @@ def api_ai_explain():
             if isinstance(cached, dict) and cached.get('explain'):
                 data_out = {
                     'explain': cached.get('explain'),
-                    'provider': cached.get('provider') or 'dashscope',
-                    'model': cached.get('model') or (model or 'qwen-plus'),
+                    'provider': cached.get('provider') or provider,
+                    'api_type': cached.get('api_type') or api_type,
+                    'model': cached.get('model') or model,
                     'cached': True,
                 }
                 return jsonify({'status': 'success', 'data': data_out})
@@ -118,11 +122,13 @@ def api_ai_explain():
         explain = generate_ai_explain(
             api_key=api_key,
             base_url=base_url,
-            model=model or 'qwen-plus',
+            model=model,
             payload=payload,
             timeout=timeout,
+            provider=provider,
+            api_type=api_type,
         )
-        data_out = {'explain': explain, 'provider': 'dashscope', 'model': model or 'qwen-plus'}
+        data_out = {'explain': explain, 'provider': provider, 'api_type': api_type, 'model': model}
         if cache_key and cache_ttl > 0:
             try:
                 redis_set_json(cache_key, data_out, ttl_seconds=cache_ttl)

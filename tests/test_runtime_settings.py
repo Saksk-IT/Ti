@@ -4,6 +4,8 @@ from sqlalchemy import text
 from app.core.extensions import db
 from app.models.system import SystemConfig
 from app.modules.admin.services.system_config_service import SystemConfigService
+from app.modules.payment.services.epay_service import EpayService
+from app.modules.quiz.services.ai_client import AIClient
 from app.tasks.ai_explain_tasks import ai_explain_task
 
 
@@ -32,6 +34,32 @@ SMS_KEYS = [
     'sms_interval',
     'sms_enabled',
     'sms_console_output',
+]
+
+AI_KEYS = [
+    'ai_provider',
+    'ai_api_key',
+    'ai_base_url',
+    'ai_api_type',
+    'ai_model',
+    'ai_model_source',
+    'ai_timeout',
+    'dashscope_api_key',
+    'dashscope_base_url',
+    'dashscope_model',
+    'dashscope_timeout',
+]
+
+EPAY_KEYS = [
+    'epay_enabled',
+    'epay_api_base_url',
+    'epay_pid',
+    'epay_key',
+    'epay_sitename',
+    'epay_notify_url',
+    'epay_return_url',
+    'epay_default_type',
+    'epay_timeout',
 ]
 
 
@@ -125,15 +153,152 @@ def test_admin_sms_settings_roundtrip(app, seed_user):
             db.session.commit()
 
 
+def test_admin_epay_settings_roundtrip(app, seed_user):
+    with app.app_context():
+        db.session.execute(
+            text("UPDATE users SET is_admin = 1 WHERE id = :uid"),
+            {'uid': seed_user['id']},
+        )
+        db.session.commit()
+
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess['user_id'] = seed_user['id']
+        sess['username'] = seed_user['username']
+        sess['is_admin'] = True
+
+    with app.app_context():
+        _clear_system_configs(EPAY_KEYS)
+
+    payload = {
+        'epay_enabled': True,
+        'epay_api_base_url': 'https://z-pay.cn',
+        'epay_pid': '10001',
+        'epay_key': 'secret-key-123456',
+        'epay_sitename': '题库系统',
+        'epay_notify_url': 'https://example.com/api/payment/epay/notify',
+        'epay_return_url': 'https://example.com/payment/result',
+        'epay_default_type': 'wxpay',
+        'epay_timeout': 12,
+    }
+
+    try:
+        response = client.post('/admin/api/settings/payment/epay', json=payload)
+        assert response.status_code == 200
+        assert response.get_json()['status'] == 'success'
+
+        response = client.get('/admin/api/settings/payment/epay')
+        assert response.status_code == 200
+        data = response.get_json()['data']
+        assert data['epay_enabled'] is True
+        assert data['epay_pid'] == '10001'
+        assert '****' in data['epay_key']
+        assert data['epay_default_type'] == 'wxpay'
+
+        with app.app_context():
+            cfg = EpayService.get_config()
+            assert cfg['enabled'] is True
+            assert cfg['pid'] == '10001'
+            assert cfg['key'] == 'secret-key-123456'
+            assert cfg['timeout'] == 12
+    finally:
+        with app.app_context():
+            _clear_system_configs(EPAY_KEYS)
+            db.session.execute(
+                text("UPDATE users SET is_admin = 0 WHERE id = :uid"),
+                {'uid': seed_user['id']},
+            )
+            db.session.commit()
+
+
+def test_epay_payment_url_uses_md5_signature():
+    request_data = EpayService.build_payment_request(
+        money='0.01',
+        name='测试订单',
+        out_trade_no='T202606080001',
+        config={
+            'api_base_url': 'https://z-pay.cn',
+            'pid': '10001',
+            'key': 'secret',
+            'sitename': '题库系统',
+            'notify_url': 'https://example.com/notify',
+            'return_url': 'https://example.com/return',
+            'default_type': 'alipay',
+            'timeout': 10,
+        },
+    )
+
+    assert request_data['sign_base'] == (
+        'money=0.01&name=测试订单&notify_url=https://example.com/notify&'
+        'out_trade_no=T202606080001&pid=10001&return_url=https://example.com/return&'
+        'sitename=题库系统&type=alipay'
+    )
+    assert request_data['params']['sign'] == '803d453efadc65bfc5fd85cd49850b9f'
+    assert request_data['url'].startswith('https://z-pay.cn/submit.php?')
+
+
+def test_ai_config_prefers_new_system_settings(app):
+    with app.app_context():
+        _clear_system_configs(AI_KEYS)
+        try:
+            SystemConfigService.update_config('dashscope_api_key', 'legacy-key', admin_id=1)
+            SystemConfigService.update_config('dashscope_base_url', 'https://dashscope.example.com/v1', admin_id=1)
+            SystemConfigService.update_config('dashscope_model', 'qwen-plus', admin_id=1)
+            SystemConfigService.update_config('ai_provider', 'openai', admin_id=1)
+            SystemConfigService.update_config('ai_api_key', 'new-key', admin_id=1)
+            SystemConfigService.update_config('ai_base_url', 'https://api.example.com/v1', admin_id=1)
+            SystemConfigService.update_config('ai_api_type', 'responses', admin_id=1)
+            SystemConfigService.update_config('ai_model', 'gpt-test-model', admin_id=1)
+            SystemConfigService.update_config('ai_model_source', 'upstream', admin_id=1)
+            SystemConfigService.update_config('ai_timeout', '33', admin_id=1)
+
+            cfg = SystemConfigService.get_ai_config()
+
+            assert cfg == {
+                'provider': 'openai',
+                'api_key': 'new-key',
+                'base_url': 'https://api.example.com/v1',
+                'api_type': 'responses',
+                'model': 'gpt-test-model',
+                'model_source': 'upstream',
+                'timeout': 33,
+            }
+        finally:
+            _clear_system_configs(AI_KEYS)
+
+
+def test_ai_config_falls_back_to_legacy_dashscope(app):
+    with app.app_context():
+        _clear_system_configs(AI_KEYS)
+        try:
+            SystemConfigService.update_config('dashscope_api_key', 'legacy-key', admin_id=1)
+            SystemConfigService.update_config('dashscope_base_url', 'https://dashscope.example.com/v1/', admin_id=1)
+            SystemConfigService.update_config('dashscope_model', 'qwen-max', admin_id=1)
+            SystemConfigService.update_config('dashscope_timeout', '19', admin_id=1)
+
+            cfg = SystemConfigService.get_ai_config()
+
+            assert cfg['provider'] == 'dashscope'
+            assert cfg['api_key'] == 'legacy-key'
+            assert cfg['base_url'] == 'https://dashscope.example.com/v1'
+            assert cfg['api_type'] == 'chat_completions'
+            assert cfg['model'] == 'qwen-max'
+            assert cfg['timeout'] == 19
+        finally:
+            _clear_system_configs(AI_KEYS)
+
+
 def test_ai_explain_task_prefers_explicit_dashscope_config(monkeypatch):
     captured = {}
 
-    def fake_generate_ai_explain(*, api_key, base_url, model, payload, timeout):
+    def fake_generate_ai_explain(*, api_key, base_url, model, payload, timeout, provider, api_type):
         captured['api_key'] = api_key
         captured['base_url'] = base_url
         captured['model'] = model
         captured['payload'] = payload
         captured['timeout'] = timeout
+        captured['provider'] = provider
+        captured['api_type'] = api_type
         return 'AI 解析结果'
 
     monkeypatch.setattr('app.tasks.ai_explain_tasks.generate_ai_explain', fake_generate_ai_explain)
@@ -159,4 +324,128 @@ def test_ai_explain_task_prefers_explicit_dashscope_config(monkeypatch):
         'model': 'qwen-max',
         'payload': {'content': '示例题目'},
         'timeout': 18,
+        'provider': 'dashscope',
+        'api_type': 'chat_completions',
     }
+
+
+def test_ai_explain_task_accepts_openai_responses_config(monkeypatch):
+    captured = {}
+
+    def fake_generate_ai_explain(*, api_key, base_url, model, payload, timeout, provider, api_type):
+        captured.update({
+            'api_key': api_key,
+            'base_url': base_url,
+            'model': model,
+            'payload': payload,
+            'timeout': timeout,
+            'provider': provider,
+            'api_type': api_type,
+        })
+        return 'Responses 解析结果'
+
+    monkeypatch.setattr('app.tasks.ai_explain_tasks.generate_ai_explain', fake_generate_ai_explain)
+
+    result = ai_explain_task(
+        payload={'content': '示例题目'},
+        timeout=21,
+        ai_config={
+            'provider': 'openai',
+            'api_key': 'openai-runtime-key',
+            'base_url': 'https://api.openai.com/v1',
+            'api_type': 'responses',
+            'model': 'gpt-4.1-mini',
+            'timeout': 25,
+        },
+    )
+
+    assert result == {
+        'provider': 'openai',
+        'api_type': 'responses',
+        'model': 'gpt-4.1-mini',
+        'explain': 'Responses 解析结果',
+    }
+    assert captured == {
+        'api_key': 'openai-runtime-key',
+        'base_url': 'https://api.openai.com/v1',
+        'model': 'gpt-4.1-mini',
+        'payload': {'content': '示例题目'},
+        'timeout': 21,
+        'provider': 'openai',
+        'api_type': 'responses',
+    }
+
+
+def test_ai_client_extracts_responses_text(monkeypatch):
+    class FakeResponse:
+        status_code = 200
+
+        def json(self):
+            return {
+                'output': [
+                    {
+                        'content': [
+                            {'type': 'output_text', 'text': '解析正文'}
+                        ]
+                    }
+                ]
+            }
+
+    captured = {}
+
+    def fake_post(url, headers, json, timeout):
+        captured['url'] = url
+        captured['payload'] = json
+        captured['timeout'] = timeout
+        return FakeResponse()
+
+    monkeypatch.setattr('app.modules.quiz.services.ai_client.requests.post', fake_post)
+
+    client = AIClient(
+        api_key='test-key',
+        base_url='https://api.openai.com/v1',
+        api_type='responses',
+        provider='openai',
+    )
+    text = client.generate_text(
+        model='gpt-4.1-mini',
+        messages=[{'role': 'user', 'content': '请解析'}],
+        timeout=12,
+    )
+
+    assert text == '解析正文'
+    assert captured['url'] == 'https://api.openai.com/v1/responses'
+    assert captured['payload']['model'] == 'gpt-4.1-mini'
+    assert captured['payload']['input'] == [{'role': 'user', 'content': '请解析'}]
+    assert captured['timeout'] == 12
+
+
+def test_ai_client_lists_models(monkeypatch):
+    class FakeResponse:
+        status_code = 200
+
+        def json(self):
+            return {
+                'data': [
+                    {'id': 'gpt-4.1-mini', 'owned_by': 'openai'},
+                    {'id': 'custom-model', 'owner': 'upstream'},
+                    {'owned_by': 'missing-id'},
+                ]
+            }
+
+    monkeypatch.setattr(
+        'app.modules.quiz.services.ai_client.requests.get',
+        lambda url, headers, timeout: FakeResponse(),
+    )
+
+    client = AIClient(
+        api_key='test-key',
+        base_url='https://api.openai.com/v1/',
+        api_type='responses',
+        provider='openai',
+    )
+
+    assert client.list_models(timeout=10) == [
+        {'id': 'gpt-4.1-mini', 'owned_by': 'openai'},
+        {'id': 'custom-model', 'owned_by': 'upstream'},
+    ]

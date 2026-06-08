@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-import json
-from typing import Any, Dict, List, Optional
+from typing import Dict, List
 
-import requests
+from .ai_client import AIClient
 
 
 class DashScopeClient:
@@ -22,48 +21,17 @@ class DashScopeClient:
         max_tokens: int = 800,
         timeout: int = 25,
     ) -> str:
-        if not self.api_key:
-            raise ValueError("DASHSCOPE_API_KEY 未配置")
-        if not self.base_url:
-            raise ValueError("DASHSCOPE_BASE_URL 未配置")
-
-        url = f"{self.base_url}/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-        }
-        payload: Dict[str, Any] = {
-            "model": model,
-            "messages": messages,
-            "temperature": float(temperature),
-            "top_p": float(top_p),
-            "max_tokens": int(max_tokens),
-        }
-
-        resp = requests.post(url, headers=headers, json=payload, timeout=timeout)
-        if resp.status_code < 200 or resp.status_code >= 300:
-            # 尽量提取错误信息（不要泄露密钥）
-            msg = ""
-            try:
-                js = resp.json()
-                msg = js.get("error", {}).get("message") or js.get("message") or ""
-            except Exception:
-                msg = resp.text[:300] if resp.text else ""
-            raise RuntimeError(f"DashScope 调用失败：HTTP {resp.status_code} {msg}".strip())
-
-        try:
-            data = resp.json()
-        except json.JSONDecodeError:
-            raise RuntimeError("DashScope 返回非 JSON 响应")
-
-        try:
-            choices = data.get("choices") or []
-            msg = (choices[0] or {}).get("message") or {}
-            content = (msg.get("content") or "").strip()
-        except Exception:
-            content = ""
-
-        if not content:
-            raise RuntimeError("DashScope 未返回有效内容")
-        return content
-
+        client = AIClient(
+            api_key=self.api_key,
+            base_url=self.base_url,
+            api_type="chat_completions",
+            provider="dashscope",
+        )
+        return client.generate_text(
+            model=model,
+            messages=messages,
+            temperature=temperature,
+            top_p=top_p,
+            max_tokens=max_tokens,
+            timeout=timeout,
+        )

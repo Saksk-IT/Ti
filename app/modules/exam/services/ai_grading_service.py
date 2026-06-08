@@ -27,17 +27,22 @@ class GradingResult:
     feedback: str        # 详细评语
 
 
-def _get_dashscope_cfg() -> dict:
-    """获取 DashScope 配置（DB 优先、.env fallback）"""
+def _get_ai_cfg() -> dict:
+    """获取 AI 配置（DB 优先、.env fallback）"""
     from app.modules.admin.services.system_config_service import SystemConfigService
-    return SystemConfigService.get_dashscope_config()
+    return SystemConfigService.get_ai_config()
 
 
 def _get_client():
-    """延迟获取 DashScope 客户端（避免循环导入 + 读取运行时配置）"""
-    from app.modules.quiz.services.dashscope_client import DashScopeClient
-    cfg = _get_dashscope_cfg()
-    return DashScopeClient(api_key=cfg['api_key'], base_url=cfg['base_url'])
+    """延迟获取 AI 客户端（避免循环导入 + 读取运行时配置）"""
+    from app.modules.quiz.services.ai_client import AIClient
+    cfg = _get_ai_cfg()
+    return AIClient(
+        api_key=cfg['api_key'],
+        base_url=cfg['base_url'],
+        api_type=cfg.get('api_type') or 'chat_completions',
+        provider=cfg.get('provider') or 'custom',
+    )
 
 
 _SYSTEM_PROMPT = """\
@@ -113,9 +118,9 @@ def grade_essay_answer(
 
     try:
         client = _get_client()
-        cfg = _get_dashscope_cfg()
+        cfg = _get_ai_cfg()
 
-        response_text = client.chat_completions(
+        response_text = client.generate_text(
             model=cfg['model'],
             messages=[
                 {"role": "system", "content": _SYSTEM_PROMPT},

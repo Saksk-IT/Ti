@@ -142,6 +142,18 @@ class Config:
     SMS_ENABLED = os.environ.get('SMS_ENABLED', 'true').lower() in ['true', 'on', '1']
     SMS_CONSOLE_OUTPUT = os.environ.get('SMS_CONSOLE_OUTPUT', 'false').lower() in ['true', 'on', '1']
 
+    # === 通用 AI 配置（DB 配置优先，环境变量用于兜底）===
+    AI_PROVIDER = os.environ.get('AI_PROVIDER', '')
+    AI_API_KEY = os.environ.get('AI_API_KEY')
+    AI_BASE_URL = os.environ.get('AI_BASE_URL', '')
+    AI_API_TYPE = os.environ.get('AI_API_TYPE', '')
+    AI_MODEL = os.environ.get('AI_MODEL', '')
+    AI_MODEL_SOURCE = os.environ.get('AI_MODEL_SOURCE', '')
+    AI_TIMEOUT = int(os.environ.get('AI_TIMEOUT', '25') or 25)
+    OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+    OPENAI_BASE_URL = os.environ.get('OPENAI_BASE_URL', 'https://api.openai.com/v1')
+    OPENAI_MODEL = os.environ.get('OPENAI_MODEL', 'gpt-4.1-mini')
+
     # === 阿里云百炼（DashScope OpenAI 兼容接口）===
     # 文档：https://help.aliyun.com/zh/model-studio/first-api-call-to-qwen
     DASHSCOPE_API_KEY = os.environ.get('DASHSCOPE_API_KEY')

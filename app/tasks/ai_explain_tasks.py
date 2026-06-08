@@ -30,8 +30,8 @@ def _placeholder_explain() -> Dict[str, Any]:
     return {'provider': 'placeholder', 'explain': '\n'.join(lines)}
 
 
-def _get_dashscope_cfg_for_worker() -> dict:
-    """Worker 侧获取 DashScope 配置。
+def _get_ai_cfg_for_worker() -> dict:
+    """Worker 侧获取 AI 配置。
 
     优先尝试 Flask app context（若可用），否则 fallback 到环境变量。
     """
@@ -40,16 +40,23 @@ def _get_dashscope_cfg_for_worker() -> dict:
         # 如果在 app context 内，走 DB 优先逻辑
         if current_app:
             from app.modules.admin.services.system_config_service import SystemConfigService
-            return SystemConfigService.get_dashscope_config()
+            return SystemConfigService.get_ai_config()
     except RuntimeError:
         pass
 
     # Worker 无 app context 时，直接读环境变量
+    provider = (os.environ.get('AI_PROVIDER') or 'dashscope').strip().lower() or 'dashscope'
+    if provider not in {'dashscope', 'openai', 'custom'}:
+        provider = 'custom'
+    default_base_url = 'https://api.openai.com/v1' if provider in {'openai', 'custom'} else 'https://dashscope.aliyuncs.com/compatible-mode/v1'
+    default_model = 'gpt-4.1-mini' if provider in {'openai', 'custom'} else 'qwen-plus'
     return {
-        'api_key': (os.environ.get('DASHSCOPE_API_KEY') or '').strip(),
-        'base_url': (os.environ.get('DASHSCOPE_BASE_URL') or 'https://dashscope.aliyuncs.com/compatible-mode/v1').strip(),
-        'model': (os.environ.get('DASHSCOPE_MODEL') or 'qwen-plus').strip() or 'qwen-plus',
-        'timeout': int(os.environ.get('DASHSCOPE_TIMEOUT', '25') or 25),
+        'provider': provider,
+        'api_key': (os.environ.get('AI_API_KEY') or os.environ.get('OPENAI_API_KEY') or os.environ.get('DASHSCOPE_API_KEY') or '').strip(),
+        'base_url': (os.environ.get('AI_BASE_URL') or os.environ.get('OPENAI_BASE_URL') or os.environ.get('DASHSCOPE_BASE_URL') or default_base_url).strip(),
+        'api_type': (os.environ.get('AI_API_TYPE') or ('responses' if provider in {'openai', 'custom'} else 'chat_completions')).strip(),
+        'model': (os.environ.get('AI_MODEL') or os.environ.get('OPENAI_MODEL') or os.environ.get('DASHSCOPE_MODEL') or default_model).strip() or default_model,
+        'timeout': int(os.environ.get('AI_TIMEOUT') or os.environ.get('DASHSCOPE_TIMEOUT') or '25'),
     }
 
 
@@ -58,16 +65,19 @@ def ai_explain_task(
     payload: Dict[str, Any],
     model: Optional[str] = None,
     timeout: int = 25,
+    ai_config: Optional[Dict[str, Any]] = None,
     dashscope_config: Optional[Dict[str, Any]] = None,
     cache_key: Optional[str] = None,
     cache_ttl_seconds: int = 30 * 24 * 60 * 60,
 ) -> Dict[str, Any]:
     """生成 AI 解析（任务侧）。"""
-    cfg = dashscope_config or _get_dashscope_cfg_for_worker()
+    cfg = ai_config or dashscope_config or _get_ai_cfg_for_worker()
     api_key = cfg['api_key']
     base_url = cfg['base_url']
     mdl = (model or cfg['model']).strip() or 'qwen-plus'
     request_timeout = int(timeout or cfg.get('timeout') or 25)
+    provider = cfg.get('provider') or 'dashscope'
+    api_type = cfg.get('api_type') or 'chat_completions'
 
     if not api_key:
         result = _placeholder_explain()
@@ -78,8 +88,10 @@ def ai_explain_task(
             model=mdl,
             payload=payload or {},
             timeout=request_timeout,
+            provider=provider,
+            api_type=api_type,
         )
-        result = {'provider': 'dashscope', 'model': mdl, 'explain': explain}
+        result = {'provider': provider, 'api_type': api_type, 'model': mdl, 'explain': explain}
 
     # 写入 Redis 缓存（可选）
     if cache_key:

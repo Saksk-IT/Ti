@@ -2,7 +2,7 @@
 import re
 from typing import Any, Dict, List, Optional
 
-from .dashscope_client import DashScopeClient
+from .ai_client import AIClient
 
 
 def _strip_html(text: str) -> str:
@@ -62,8 +62,15 @@ def generate_ai_explain(
     model: str,
     payload: Dict[str, Any],
     timeout: int = 25,
+    api_type: str = "chat_completions",
+    provider: str = "dashscope",
 ) -> str:
-    client = DashScopeClient(api_key=api_key, base_url=base_url)
+    client = AIClient(
+        api_key=api_key,
+        base_url=base_url,
+        api_type=api_type,
+        provider=provider,
+    )
 
     system_prompt = (
         "你是一名专业的考试题解析老师。"
@@ -77,7 +84,7 @@ def generate_ai_explain(
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_prompt},
     ]
-    return client.chat_completions(
+    return client.generate_text(
         model=model,
         messages=messages,
         temperature=0.2,
@@ -85,4 +92,3 @@ def generate_ai_explain(
         max_tokens=900,
         timeout=timeout,
     )
-

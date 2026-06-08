@@ -12,6 +12,7 @@ from app.core.utils.validators import parse_int
 
 from ..api_bp import admin_api_bp
 from app.core.utils.decorators import admin_required
+from app.core.utils.api_response import error_response, success_response
 from app.modules.admin.schemas import BatchResetQuizCountSchema, SystemConfigUpdateSchema
 from app.modules.admin.services.quiz_stats_service import QuizStatsService
 from app.modules.admin.services.system_config_service import SystemConfigService
@@ -44,7 +45,7 @@ def get_or_update_system_config(config_key: str):
             config = SystemConfigService.get_config(config_key)
             if config:
                 # API Key 脱敏
-                if config_key == 'dashscope_api_key' and config.get('config_value'):
+                if SystemConfigService.is_secret_config_key(config_key) and config.get('config_value'):
                     config = {**config, 'config_value': SystemConfigService.mask_api_key(config['config_value'])}
                 return jsonify({
                     'status': 'success',
@@ -84,7 +85,7 @@ def get_or_update_system_config(config_key: str):
             }), 400
 
         # API Key 脱敏值跳过覆盖（含 **** 表示未修改）
-        if config_key == 'dashscope_api_key' and '****' in (schema.config_value or ''):
+        if SystemConfigService.is_secret_config_key(config_key) and SystemConfigService.is_masked_secret(schema.config_value or ''):
             return jsonify({
                 'status': 'success',
                 'message': '配置未变更（API Key 未修改）',
@@ -114,6 +115,56 @@ def get_or_update_system_config(config_key: str):
             'status': 'error',
             'message': f'更新配置失败: {str(e)}'
         }), 500
+
+
+@admin_api_bp.route('/ai/models', methods=['POST'])
+@admin_required
+def list_ai_models():
+    """从当前配置或表单临时值拉取上游模型列表。"""
+    try:
+        data = request.get_json(silent=True) or {}
+        saved = SystemConfigService.get_ai_config()
+
+        api_key = str(data.get('api_key') or '').strip()
+        if not api_key or SystemConfigService.is_masked_secret(api_key):
+            api_key = saved.get('api_key') or ''
+
+        provider = str(data.get('provider') or saved.get('provider') or 'custom').strip().lower()
+        api_type = str(data.get('api_type') or saved.get('api_type') or 'chat_completions').strip().lower()
+        base_url = str(data.get('base_url') or saved.get('base_url') or '').strip().rstrip('/')
+        timeout = parse_int(data.get('timeout'), saved.get('timeout') or 25, min_val=5, max_val=120)
+
+        if provider not in {'dashscope', 'openai', 'custom'}:
+            return error_response('服务商类型无效', status_code=400)
+        if api_type not in {'chat_completions', 'responses'}:
+            return error_response('接口类型无效', status_code=400)
+        if not api_key:
+            return error_response('请先填写 API Key 后再拉取模型', status_code=400)
+        if not base_url.startswith(('https://', 'http://')):
+            return error_response('API Base URL 必须以 http:// 或 https:// 开头', status_code=400)
+
+        from app.modules.quiz.services.ai_client import AIClient
+
+        client = AIClient(
+            api_key=api_key,
+            base_url=base_url,
+            api_type=api_type,
+            provider=provider,
+        )
+        models = client.list_models(timeout=timeout)
+        return success_response(
+            data={
+                'models': models,
+                'provider': provider,
+                'base_url': base_url,
+            },
+            message='模型列表拉取成功',
+        )
+    except ValueError as e:
+        return error_response(str(e), status_code=400)
+    except Exception as e:
+        current_app.logger.warning('AI模型列表拉取失败: %s', str(e), exc_info=True)
+        return error_response('模型列表拉取失败，请检查 API Key、Base URL 与上游网络', status_code=502)
 
 
 
@@ -215,5 +266,3 @@ def batch_reset_quiz_count():
             'status': 'error',
             'message': f'批量重置失败: {str(e)}'
         }), 500
-
-

@@ -347,17 +347,19 @@ def api_data_ai_advice():
 
     from app.modules.admin.services.system_config_service import SystemConfigService
 
-    dashscope_cfg = SystemConfigService.get_dashscope_config()
-    api_key = (dashscope_cfg.get('api_key') or '').strip()
-    base_url = (dashscope_cfg.get('base_url') or '').strip()
-    model = (dashscope_cfg.get('model') or '').strip() or 'qwen-plus'
-    timeout = int(dashscope_cfg.get('timeout') or 25)
+    ai_cfg = SystemConfigService.get_ai_config()
+    api_key = (ai_cfg.get('api_key') or '').strip()
+    base_url = (ai_cfg.get('base_url') or '').strip()
+    model = (ai_cfg.get('model') or '').strip()
+    timeout = int(ai_cfg.get('timeout') or 25)
+    provider = ai_cfg.get('provider') or 'custom'
+    api_type = ai_cfg.get('api_type') or 'chat_completions'
 
     if not api_key:
         return jsonify({'status': 'success', 'data': {'reply': _build_placeholder_reply(), 'provider': 'placeholder', 'summary': summary}})
 
     try:
-        from app.modules.quiz.services.dashscope_client import DashScopeClient
+        from app.modules.quiz.services.ai_client import AIClient
 
         system_prompt = (
             "你是一名专业的学习数据分析与训练规划教练。"
@@ -378,8 +380,8 @@ def api_data_ai_advice():
             + "\n\n请直接给建议。"
         )
 
-        client = DashScopeClient(api_key=api_key, base_url=base_url)
-        reply = client.chat_completions(
+        client = AIClient(api_key=api_key, base_url=base_url, api_type=api_type, provider=provider)
+        reply = client.generate_text(
             model=model,
             messages=[
                 {'role': 'system', 'content': system_prompt},
@@ -390,7 +392,7 @@ def api_data_ai_advice():
             max_tokens=900,
             timeout=timeout,
         )
-        return jsonify({'status': 'success', 'data': {'reply': reply, 'provider': 'dashscope', 'model': model, 'summary': summary}})
+        return jsonify({'status': 'success', 'data': {'reply': reply, 'provider': provider, 'api_type': api_type, 'model': model, 'summary': summary}})
     except Exception as e:
         current_app.logger.error('AI数据建议失败: %s', str(e), exc_info=True)
         return jsonify({'status': 'success', 'data': {'reply': _build_placeholder_reply(), 'provider': 'placeholder', 'note': 'AI调用失败，已返回模板建议', 'summary': summary}})

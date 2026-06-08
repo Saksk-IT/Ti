@@ -58,21 +58,23 @@ def _build_payload(uid: int, data: Dict[str, Any]) -> Tuple[Dict[str, Any], Opti
     return payload, qid
 
 
-def _payload_hash(payload: Dict[str, Any], model: str) -> str:
+def _payload_hash(payload: Dict[str, Any], cfg: Dict[str, Any]) -> str:
     stable = {
         'question_id': payload.get('question_id'),
         'content': payload.get('content') or '',
         'q_type': payload.get('q_type') or '',
         'options': payload.get('options') or [],
         'answer': payload.get('answer') or '',
-        'model': model or '',
+        'provider': cfg.get('provider') or '',
+        'api_type': cfg.get('api_type') or '',
+        'model': cfg.get('model') or '',
     }
     s = json.dumps(stable, ensure_ascii=False, sort_keys=True, separators=(',', ':'))
     return hashlib.sha256(s.encode('utf-8')).hexdigest()[:32]
 
 
-def _cache_keys(payload: Dict[str, Any], model: str) -> Tuple[str, str]:
-    h = _payload_hash(payload, model)
+def _cache_keys(payload: Dict[str, Any], cfg: Dict[str, Any]) -> Tuple[str, str]:
+    h = _payload_hash(payload, cfg)
     return f'ai_explain:result:{h}', f'ai_explain:job:{h}'
 
 
@@ -100,13 +102,13 @@ def api_ai_explain_async():
         return jsonify({'status': 'error', 'message': '缺少题目信息'}), 400
 
     from app.modules.admin.services.system_config_service import SystemConfigService
-    _ds_cfg = SystemConfigService.get_dashscope_config()
+    ai_cfg = SystemConfigService.get_ai_config()
 
-    model = _ds_cfg['model']
-    timeout = _ds_cfg['timeout']
+    model = ai_cfg['model']
+    timeout = ai_cfg['timeout']
     cache_ttl = int(current_app.config.get('AI_EXPLAIN_CACHE_TTL_SECONDS') or (30 * 24 * 60 * 60))
 
-    result_key, job_key = _cache_keys(payload, model)
+    result_key, job_key = _cache_keys(payload, ai_cfg)
 
     # 1) 先查缓存（命中直接返回，避免重复排队/扣费）
     cached = redis_get_json(result_key)
@@ -121,22 +123,29 @@ def api_ai_explain_async():
     # 3) 尝试入队（RQ + Redis）。若不可用则降级为同步模式
     queue = get_queue()
     if queue is None:
-        api_key = _ds_cfg['api_key']
+        api_key = ai_cfg['api_key']
         if not api_key:
             return jsonify({'status': 'success', 'data': {**_placeholder_explain(), 'cached': False}})
 
         from app.modules.quiz.services.ai_explain_service import generate_ai_explain
 
-        base_url = _ds_cfg['base_url']
         try:
             explain = generate_ai_explain(
                 api_key=api_key,
-                base_url=base_url,
+                base_url=ai_cfg['base_url'],
                 model=model,
                 payload=payload,
                 timeout=timeout,
+                provider=ai_cfg.get('provider') or 'custom',
+                api_type=ai_cfg.get('api_type') or 'chat_completions',
             )
-            result = {'provider': 'dashscope', 'model': model, 'explain': explain, 'cached': False}
+            result = {
+                'provider': ai_cfg.get('provider') or 'custom',
+                'api_type': ai_cfg.get('api_type') or 'chat_completions',
+                'model': model,
+                'explain': explain,
+                'cached': False,
+            }
             return jsonify({'status': 'success', 'data': result})
         except Exception:
             current_app.logger.exception('AI异步降级同步调用失败')
@@ -151,7 +160,7 @@ def api_ai_explain_async():
                 'payload': payload,
                 'model': model,
                 'timeout': timeout,
-                'dashscope_config': _ds_cfg,
+                'ai_config': ai_cfg,
                 'cache_key': result_key,
                 'cache_ttl_seconds': cache_ttl,
             },

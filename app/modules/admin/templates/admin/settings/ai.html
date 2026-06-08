@@ -3,12 +3,13 @@
 {% block title %}AI 配置 - 系统设置{% endblock %}
 
 {% block content %}
+{% set preset_models = ['qwen-plus', 'qwen-turbo', 'qwen-max', 'gpt-4.1-mini', 'gpt-4.1', 'gpt-4o-mini'] %}
 <div class="page-container">
     <div class="page-header">
         <div class="header-left">
             <a href="/admin/settings" class="back-link">← 返回系统设置</a>
             <h1>AI 配置</h1>
-            <p class="page-description">配置 AI 判分与解析服务的 API 密钥和模型参数（阿里云百炼 DashScope）</p>
+            <p class="page-description">配置 AI 判分、解析与数据建议服务，支持 OpenAI Responses 与 OpenAI 兼容接口。</p>
         </div>
     </div>
 
@@ -17,57 +18,95 @@
             <div class="form-section">
                 <h3 class="section-title">API 连接配置</h3>
 
-                <div class="form-group">
-                    <label for="dashscope_api_key">API Key <span class="required">*</span></label>
-                    <div class="input-with-status">
-                        <input type="password" id="dashscope_api_key" name="dashscope_api_key"
-                               value="{{ ai_config.api_key }}"
-                               placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
-                        <button type="button" class="btn-icon" id="toggleKeyBtn" title="显示/隐藏">
-                            <span id="toggleKeyIcon">👁</span>
-                        </button>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="ai_provider">服务商</label>
+                        <select id="ai_provider" name="ai_provider">
+                            <option value="dashscope" {% if ai_config.provider == 'dashscope' %}selected{% endif %}>阿里云百炼 DashScope</option>
+                            <option value="openai" {% if ai_config.provider == 'openai' %}selected{% endif %}>OpenAI</option>
+                            <option value="custom" {% if ai_config.provider == 'custom' %}selected{% endif %}>自定义兼容上游</option>
+                        </select>
                     </div>
-                    {% if ai_config.api_key and ai_config.api_key != '****' %}
-                    <div class="form-hint" style="color: var(--success);">已配置（显示为脱敏值，输入新值以更新）</div>
-                    {% else %}
-                    <div class="form-hint" style="color: var(--warning);">未配置 — AI 判分和解析功能将不可用</div>
-                    {% endif %}
-                    <div class="form-hint">在 <a href="https://bailian.console.aliyun.com/" target="_blank">阿里云百炼控制台</a> 获取 API Key</div>
+
+                    <div class="form-group">
+                        <label for="ai_api_type">接口类型</label>
+                        <select id="ai_api_type" name="ai_api_type">
+                            <option value="chat_completions" {% if ai_config.api_type == 'chat_completions' %}selected{% endif %}>Chat Completions</option>
+                            <option value="responses" {% if ai_config.api_type == 'responses' %}selected{% endif %}>OpenAI Responses</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="dashscope_base_url">API Base URL</label>
-                    <input type="text" id="dashscope_base_url" name="dashscope_base_url"
+                    <label for="ai_api_key">API Key <span class="required">*</span></label>
+                    <div class="input-with-action">
+                        <input type="password" id="ai_api_key" name="ai_api_key"
+                               value="{{ ai_config.api_key }}"
+                               placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+                        <button type="button" class="btn btn-secondary btn-compact" id="toggleKeyBtn">显示</button>
+                    </div>
+                    {% if ai_config.api_key and ai_config.api_key != '***' %}
+                    <div class="form-hint success">已配置。显示为脱敏值，输入新值即可更新。</div>
+                    {% else %}
+                    <div class="form-hint warning">未配置。AI 判分、解析和数据建议将降级为模板结果。</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="ai_base_url">API Base URL</label>
+                    <input type="text" id="ai_base_url" name="ai_base_url"
                            value="{{ ai_config.base_url }}"
-                           placeholder="https://dashscope.aliyuncs.com/compatible-mode/v1">
-                    <div class="form-hint">北京地域（默认）: https://dashscope.aliyuncs.com/compatible-mode/v1<br>新加坡地域: https://dashscope-intl.aliyuncs.com/compatible-mode/v1</div>
+                           placeholder="https://api.openai.com/v1">
+                    <div class="form-hint" id="baseUrlHint">OpenAI: https://api.openai.com/v1；DashScope: https://dashscope.aliyuncs.com/compatible-mode/v1</div>
                 </div>
             </div>
-<!-- __CONTINUE_HERE__ -->
+
             <div class="form-section">
                 <h3 class="section-title">模型配置</h3>
 
-                <div class="form-group">
-                    <label for="dashscope_model">模型名称</label>
-                    <select id="dashscope_model" name="dashscope_model">
-                        <option value="qwen-plus" {% if ai_config.model == 'qwen-plus' %}selected{% endif %}>qwen-plus（推荐，性价比高）</option>
-                        <option value="qwen-turbo" {% if ai_config.model == 'qwen-turbo' %}selected{% endif %}>qwen-turbo（更快，成本更低）</option>
-                        <option value="qwen-max" {% if ai_config.model == 'qwen-max' %}selected{% endif %}>qwen-max（最强，成本较高）</option>
-                        <option value="__custom__" {% if ai_config.model not in ['qwen-plus', 'qwen-turbo', 'qwen-max'] and ai_config.model %}selected{% endif %}>自定义模型...</option>
-                    </select>
-                    <input type="text" id="dashscope_model_custom" name="dashscope_model_custom"
-                           value="{% if ai_config.model not in ['qwen-plus', 'qwen-turbo', 'qwen-max'] %}{{ ai_config.model }}{% endif %}"
-                           placeholder="输入自定义模型名称"
-                           style="display: {% if ai_config.model not in ['qwen-plus', 'qwen-turbo', 'qwen-max'] and ai_config.model %}block{% else %}none{% endif %}; margin-top: 8px;">
-                    <div class="form-hint">用于 AI 解析和 AI 判分，详见 <a href="https://help.aliyun.com/zh/model-studio/getting-started/models" target="_blank">模型列表</a></div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="ai_model_source">模型来源</label>
+                        <select id="ai_model_source" name="ai_model_source">
+                            <option value="custom" {% if ai_config.model_source != 'upstream' %}selected{% endif %}>管理员自定义模型 ID</option>
+                            <option value="upstream" {% if ai_config.model_source == 'upstream' %}selected{% endif %}>从上游模型列表选择</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ai_timeout">请求超时（秒）</label>
+                        <input type="number" id="ai_timeout" name="ai_timeout"
+                               value="{{ ai_config.timeout }}"
+                               placeholder="25" min="5" max="120">
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="dashscope_timeout">请求超时（秒）</label>
-                    <input type="number" id="dashscope_timeout" name="dashscope_timeout"
-                           value="{{ ai_config.timeout }}"
-                           placeholder="25" min="5" max="120">
-                    <div class="form-hint">AI 请求的最大等待时间，建议 15-30 秒</div>
+                <div class="form-group" id="upstreamModelGroup">
+                    <label for="ai_model_list">上游模型列表</label>
+                    <div class="input-with-action">
+                        <select id="ai_model_list" name="ai_model_list">
+                            {% if ai_config.model %}
+                            <option value="{{ ai_config.model }}" selected>{{ ai_config.model }}</option>
+                            {% else %}
+                            <option value="">请先拉取模型列表</option>
+                            {% endif %}
+                        </select>
+                        <button type="button" class="btn btn-secondary" id="fetchModelsBtn">拉取模型</button>
+                    </div>
+                    <div class="form-hint">使用当前 API Key、Base URL 和接口类型访问上游 /models，只保存选中的模型 ID。</div>
+                </div>
+
+                <div class="form-group" id="customModelGroup">
+                    <label for="ai_model_custom">模型 ID</label>
+                    <input type="text" id="ai_model_custom" name="ai_model_custom"
+                           value="{{ ai_config.model }}"
+                           placeholder="例如 qwen-plus、gpt-4.1-mini 或上游自定义模型 ID">
+                    <div class="preset-row" aria-label="常用模型">
+                        {% for model in preset_models %}
+                        <button type="button" class="preset-model" data-model="{{ model }}">{{ model }}</button>
+                        {% endfor %}
+                    </div>
+                    <div class="form-hint">不会限制模型 ID，可填写 OpenAI 官方模型、DashScope 模型或自定义上游模型。</div>
                 </div>
             </div>
 
@@ -79,25 +118,29 @@
         </form>
     </div>
 </div>
-<!-- __CONTINUE_STYLE__ -->
+
 <style>
 .page-container { padding: 40px; max-width: 900px; margin: 0 auto; }
 .page-header { margin-bottom: 32px; }
 .back-link { display: inline-block; color: var(--text-sub); text-decoration: none; font-size: 14px; margin-bottom: 12px; transition: color 0.2s; }
 .back-link:hover { color: var(--primary); }
-.page-header h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.5px; }
-.page-description { color: var(--text-sub); font-size: 15px; }
-.page-description a { color: var(--primary); text-decoration: none; }
+.page-header h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; letter-spacing: 0; }
+.page-description { color: var(--text-sub); font-size: 15px; line-height: 1.6; }
 
 .settings-form-container {
-    background: var(--card-bg); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-    border: 0.5px solid var(--border-color); border-radius: var(--radius-lg);
-    padding: 32px; box-shadow: var(--shadow);
+    background: var(--card-bg);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    border: 0.5px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    box-shadow: var(--shadow);
 }
 .settings-form { display: flex; flex-direction: column; gap: 32px; }
 .form-section { display: flex; flex-direction: column; gap: 20px; }
 .section-title { font-size: 20px; font-weight: 600; margin-bottom: 8px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
-.form-group { display: flex; flex-direction: column; gap: 8px; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.form-group { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .form-group label { font-size: 14px; font-weight: 500; color: var(--text-color); }
 .required { color: var(--danger); }
 
@@ -105,24 +148,60 @@
 .form-group input[type="number"],
 .form-group input[type="password"],
 .form-group select {
-    padding: 12px 16px; border: 1px solid var(--border-color); border-radius: var(--radius-sm);
-    background: var(--card-bg-solid); color: var(--text-color); font-size: 15px; transition: all 0.2s;
+    width: 100%;
+    min-height: 44px;
+    padding: 11px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg-solid);
+    color: var(--text-color);
+    font-size: 15px;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
-.form-group input:focus, .form-group select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+}
 .form-hint { font-size: 13px; color: var(--text-sub); line-height: 1.6; }
-.form-hint a { color: var(--primary); text-decoration: none; }
-.form-hint a:hover { text-decoration: underline; }
+.form-hint.success { color: var(--success); }
+.form-hint.warning { color: var(--warning); }
 
-.input-with-status { display: flex; gap: 8px; align-items: center; }
-.input-with-status input { flex: 1; }
-.btn-icon { background: var(--card-bg-solid); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 10px 14px; cursor: pointer; font-size: 16px; transition: all 0.2s; }
-.btn-icon:hover { background: rgba(142,142,147,0.12); }
+.input-with-action { display: flex; gap: 8px; align-items: center; }
+.input-with-action input,
+.input-with-action select { flex: 1; min-width: 0; }
+.preset-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.preset-model {
+    min-height: 34px;
+    padding: 7px 11px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg-solid);
+    color: var(--text-sub);
+    cursor: pointer;
+    font-size: 13px;
+}
+.preset-model:hover { color: var(--primary); border-color: var(--primary); }
 
 .form-actions { display: flex; gap: 12px; justify-content: flex-end; padding-top: 8px; }
-.btn { padding: 12px 24px; border: none; border-radius: var(--radius-sm); font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
-.btn-primary { background: var(--primary); color: white; }
-.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,122,255,0.3); }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.btn {
+    min-height: 44px;
+    padding: 11px 20px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+    white-space: nowrap;
+}
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,122,255,0.25); }
+.btn-secondary { background: var(--card-bg-solid); color: var(--text-color); border-color: var(--border-color); }
+.btn-secondary:hover { background: rgba(142,142,147,0.12); }
+.btn-compact { padding-left: 14px; padding-right: 14px; }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
 
 .form-message { margin-top: 16px; padding: 12px 16px; border-radius: var(--radius-sm); font-size: 14px; display: none; }
 .form-message.success { display: block; background: rgba(52,199,89,0.15); color: var(--success); border: 1px solid rgba(52,199,89,0.3); }
@@ -132,70 +211,194 @@
     .page-container { padding: 20px; }
     .settings-form-container { padding: 20px; }
     .page-header h1 { font-size: 24px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .input-with-action { align-items: stretch; flex-direction: column; }
+    .form-actions { justify-content: stretch; }
+    .form-actions .btn { width: 100%; }
 }
 </style>
-<!-- __CONTINUE_SCRIPT__ -->
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const providerSelect = document.getElementById('ai_provider');
+    const apiTypeSelect = document.getElementById('ai_api_type');
+    const baseUrlInput = document.getElementById('ai_base_url');
+    const keyInput = document.getElementById('ai_api_key');
+    const timeoutInput = document.getElementById('ai_timeout');
+    const modelSourceSelect = document.getElementById('ai_model_source');
+    const upstreamGroup = document.getElementById('upstreamModelGroup');
+    const customGroup = document.getElementById('customModelGroup');
+    const modelList = document.getElementById('ai_model_list');
+    const modelCustom = document.getElementById('ai_model_custom');
     const form = document.getElementById('aiConfigForm');
     const messageDiv = document.getElementById('formMessage');
+    const saveBtn = document.getElementById('saveBtn');
+    const fetchModelsBtn = document.getElementById('fetchModelsBtn');
     const toggleKeyBtn = document.getElementById('toggleKeyBtn');
-    const keyInput = document.getElementById('dashscope_api_key');
-    const modelSelect = document.getElementById('dashscope_model');
-    const modelCustom = document.getElementById('dashscope_model_custom');
+
+    const defaults = {
+        dashscope: {
+            baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+            apiType: 'chat_completions',
+            model: 'qwen-plus'
+        },
+        openai: {
+            baseUrl: 'https://api.openai.com/v1',
+            apiType: 'responses',
+            model: 'gpt-4.1-mini'
+        },
+        custom: {
+            baseUrl: 'https://api.openai.com/v1',
+            apiType: 'responses',
+            model: 'gpt-4.1-mini'
+        }
+    };
 
     function showMessage(text, type) {
         messageDiv.textContent = text;
         messageDiv.className = 'form-message ' + type;
-        setTimeout(function() { messageDiv.style.display = 'none'; }, 5000);
+        messageDiv.style.display = 'block';
+        window.clearTimeout(showMessage.timer);
+        showMessage.timer = window.setTimeout(function() {
+            messageDiv.style.display = 'none';
+        }, 5000);
     }
 
-    /* 显示/隐藏 API Key */
-    toggleKeyBtn.addEventListener('click', function() {
-        var isPassword = keyInput.type === 'password';
-        keyInput.type = isPassword ? 'text' : 'password';
-        document.getElementById('toggleKeyIcon').textContent = isPassword ? '🙈' : '👁';
-    });
+    function syncModelSourceView() {
+        const useUpstream = modelSourceSelect.value === 'upstream';
+        upstreamGroup.style.display = useUpstream ? 'flex' : 'none';
+        customGroup.style.display = useUpstream ? 'none' : 'flex';
+    }
 
-    /* 自定义模型切换 */
-    modelSelect.addEventListener('change', function() {
-        modelCustom.style.display = this.value === '__custom__' ? 'block' : 'none';
-        if (this.value !== '__custom__') modelCustom.value = '';
-    });
-
-    /* 获取最终模型值 */
     function getModelValue() {
-        return modelSelect.value === '__custom__'
-            ? (modelCustom.value.trim() || 'qwen-plus')
-            : modelSelect.value;
+        if (modelSourceSelect.value === 'upstream') {
+            return (modelList.value || modelCustom.value || defaults[providerSelect.value].model).trim();
+        }
+        return (modelCustom.value || defaults[providerSelect.value].model).trim();
     }
 
-    /* 保存配置 — 逐个 PUT */
+    function setModelValue(model) {
+        const value = (model || '').trim();
+        modelCustom.value = value;
+        if (value) {
+            let existing = Array.from(modelList.options).find(function(option) {
+                return option.value === value;
+            });
+            if (!existing) {
+                existing = new Option(value, value, true, true);
+                modelList.add(existing, 0);
+            }
+            modelList.value = value;
+        }
+    }
+
+    providerSelect.addEventListener('change', function() {
+        const cfg = defaults[providerSelect.value] || defaults.custom;
+        baseUrlInput.value = cfg.baseUrl;
+        apiTypeSelect.value = cfg.apiType;
+        setModelValue(cfg.model);
+    });
+
+    modelSourceSelect.addEventListener('change', syncModelSourceView);
+
+    toggleKeyBtn.addEventListener('click', function() {
+        const shouldShow = keyInput.type === 'password';
+        keyInput.type = shouldShow ? 'text' : 'password';
+        toggleKeyBtn.textContent = shouldShow ? '隐藏' : '显示';
+    });
+
+    document.querySelectorAll('.preset-model').forEach(function(button) {
+        button.addEventListener('click', function() {
+            modelSourceSelect.value = 'custom';
+            syncModelSourceView();
+            setModelValue(button.dataset.model || '');
+        });
+    });
+
+    modelList.addEventListener('change', function() {
+        if (modelList.value) {
+            modelCustom.value = modelList.value;
+        }
+    });
+
+    fetchModelsBtn.addEventListener('click', async function() {
+        fetchModelsBtn.disabled = true;
+        fetchModelsBtn.textContent = '拉取中...';
+        try {
+            const resp = await fetch('/admin/api/ai/models', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    provider: providerSelect.value,
+                    api_type: apiTypeSelect.value,
+                    api_key: keyInput.value.trim(),
+                    base_url: baseUrlInput.value.trim(),
+                    timeout: timeoutInput.value.trim() || '25'
+                })
+            });
+            const data = await resp.json();
+            if (data.status !== 'success') {
+                showMessage(data.message || '模型列表拉取失败', 'error');
+                return;
+            }
+            const models = (data.data && data.data.models) || [];
+            modelList.innerHTML = '';
+            models.forEach(function(item) {
+                const id = item && item.id ? String(item.id) : '';
+                if (!id) return;
+                const owner = item.owned_by ? ' · ' + item.owned_by : '';
+                modelList.add(new Option(id + owner, id));
+            });
+            if (!models.length) {
+                modelList.add(new Option('上游未返回模型', ''));
+            }
+            const currentModel = modelCustom.value.trim();
+            if (currentModel && Array.from(modelList.options).some(function(option) { return option.value === currentModel; })) {
+                modelList.value = currentModel;
+            } else if (modelList.options.length && modelList.options[0].value) {
+                modelList.value = modelList.options[0].value;
+                modelCustom.value = modelList.value;
+            }
+            modelSourceSelect.value = 'upstream';
+            syncModelSourceView();
+            showMessage('模型列表拉取成功', 'success');
+        } catch (err) {
+            showMessage('网络错误: ' + err.message, 'error');
+        } finally {
+            fetchModelsBtn.disabled = false;
+            fetchModelsBtn.textContent = '拉取模型';
+        }
+    });
+
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
-        var saveBtn = document.getElementById('saveBtn');
         saveBtn.disabled = true;
         saveBtn.textContent = '保存中...';
 
-        var configs = [
-            { key: 'dashscope_api_key',  value: keyInput.value.trim() },
-            { key: 'dashscope_base_url', value: document.getElementById('dashscope_base_url').value.trim() },
-            { key: 'dashscope_model',    value: getModelValue() },
-            { key: 'dashscope_timeout',  value: document.getElementById('dashscope_timeout').value.trim() || '25' },
+        const configs = [
+            { key: 'ai_provider', value: providerSelect.value },
+            { key: 'ai_api_type', value: apiTypeSelect.value },
+            { key: 'ai_api_key', value: keyInput.value.trim() },
+            { key: 'ai_base_url', value: baseUrlInput.value.trim() },
+            { key: 'ai_model', value: getModelValue() },
+            { key: 'ai_model_source', value: modelSourceSelect.value },
+            { key: 'ai_timeout', value: timeoutInput.value.trim() || '25' }
         ];
 
         try {
-            var errors = [];
-            for (var i = 0; i < configs.length; i++) {
-                var c = configs[i];
-                if (!c.value) continue;
-                var resp = await fetch('/admin/api/system_config/' + c.key, {
+            const errors = [];
+            for (let i = 0; i < configs.length; i += 1) {
+                const item = configs[i];
+                if (!item.value && item.key !== 'ai_api_key') continue;
+                const resp = await fetch('/admin/api/system_config/' + item.key, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ config_value: c.value })
+                    body: JSON.stringify({ config_value: item.value })
                 });
-                var data = await resp.json();
-                if (data.status !== 'success') errors.push(c.key + ': ' + (data.message || '失败'));
+                const data = await resp.json();
+                if (data.status !== 'success') {
+                    errors.push(item.key + ': ' + (data.message || '失败'));
+                }
             }
             if (errors.length) {
                 showMessage('部分配置保存失败: ' + errors.join('; '), 'error');
@@ -209,6 +412,9 @@ document.addEventListener('DOMContentLoaded', function() {
             saveBtn.textContent = '保存配置';
         }
     });
+
+    setModelValue(modelCustom.value || {{ ai_config.model|tojson }});
+    syncModelSourceView();
 });
 </script>
 {% endblock %}
