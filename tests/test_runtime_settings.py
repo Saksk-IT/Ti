@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import json
+
 from sqlalchemy import text
 
 from app.core.extensions import db
@@ -351,3 +353,51 @@ def test_ai_client_lists_models(monkeypatch):
         {'id': 'gpt-4.1-mini', 'owned_by': 'openai'},
         {'id': 'custom-model', 'owned_by': 'upstream'},
     ]
+
+
+def test_ai_client_stream_decodes_utf8_sse_without_charset(monkeypatch):
+    class FakeStreamResponse:
+        status_code = 200
+        text = ''
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def iter_lines(self, decode_unicode=False):
+            payload = {
+                'choices': [
+                    {'delta': {'content': '你好，中文正常。'}}
+                ]
+            }
+            line = f"data: {json.dumps(payload, ensure_ascii=False)}".encode('utf-8')
+            if decode_unicode:
+                yield line.decode('latin-1')
+                return
+            yield line
+
+    captured = {}
+
+    def fake_post(url, headers, json, timeout, stream):
+        captured['stream'] = stream
+        return FakeStreamResponse()
+
+    monkeypatch.setattr('app.modules.quiz.services.ai_client.requests.post', fake_post)
+
+    client = AIClient(
+        api_key='test-key',
+        base_url='https://api.example.test/v1',
+        api_type='chat_completions',
+        provider='custom',
+    )
+
+    chunks = list(client.stream_text(
+        model='model-a',
+        messages=[{'role': 'user', 'content': '请回复中文'}],
+        timeout=10,
+    ))
+
+    assert captured['stream'] is True
+    assert chunks == ['你好，中文正常。']

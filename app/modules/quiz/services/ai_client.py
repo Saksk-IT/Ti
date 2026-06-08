@@ -299,10 +299,13 @@ class AIClient:
                 raise RuntimeError(f"{error_prefix}：HTTP {resp.status_code} {msg}".strip())
 
             emitted = False
-            for raw_line in resp.iter_lines(decode_unicode=True):
+            for raw_line in resp.iter_lines(decode_unicode=False):
                 if raw_line is None:
                     continue
-                line = str(raw_line).strip()
+                if isinstance(raw_line, bytes):
+                    line = raw_line.decode("utf-8", errors="replace").strip()
+                else:
+                    line = str(raw_line).strip()
                 if not line or line.startswith(":"):
                     continue
                 if not line.startswith("data:"):
