@@ -6,7 +6,7 @@ services:
     image: nginx:1.25-alpine
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8080:80"
+      - "${HTTP_BIND:-0.0.0.0}:${HTTP_PORT:-8080}:80"
     volumes:
       - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./static:/app/static:ro
@@ -44,7 +44,7 @@ services:
       RQ_QUEUE_NAME: saksk
       PROXY_FIX_ENABLED: ${PROXY_FIX_ENABLED:-true}
       ENABLE_GZIP: "false"
-      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-true}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
       WECHAT_APPID: ${WECHAT_APPID:-}
       WECHAT_SECRET: ${WECHAT_SECRET:-}
       DASHSCOPE_BASE_URL: ${DASHSCOPE_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}

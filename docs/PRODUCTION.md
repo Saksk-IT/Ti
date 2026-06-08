@@ -1,20 +1,18 @@
 # Docker 镜像发布与一键部署指南（Ti）
 
-> 目标：开发者本地构建并推送 `ghcr.io/saksk-it/ti:latest`，服务器部署脚本默认拉取最新镜像，并自动完成环境文件、Docker Compose、Nginx、HTTPS、迁移和健康检查。
+> 目标：开发者在本地构建并推送 `ghcr.io/saksk-it/ti:latest`；服务器脚本默认只拉取最新镜像并启动 Docker 栈，达到 `http://服务器IP:8080` 可访问。域名与 HTTPS 单独作为生产环境后续配置。
 
-## 1. 部署架构
+## 1. 部署边界
 
-生产环境默认链路：
+默认生产部署链路：
 
 ```text
-公网 80/443
-  -> 宿主机 Nginx + Certbot
-  -> 127.0.0.1:8080
+服务器 IP:8080
   -> Docker Compose 内 nginx
   -> web / worker / postgres / redis / backup
 ```
 
-开发环境默认链路：
+默认开发部署链路：
 
 ```text
 127.0.0.1:8000
@@ -22,11 +20,11 @@
   -> postgres / redis / worker / backup
 ```
 
-生产 Compose 内的 nginx 会读取服务器仓库目录的 `./static`、`./docker/nginx.conf` 和 `./var/uploads`。因此服务器仍应保留仓库文件；应用镜像负责承载运行环境和代码。
+默认生产部署不配置域名、不申请 HTTPS、不占用宿主机 80/443。生产 Compose 内的 nginx 会读取服务器仓库目录的 `./static`、`./docker/nginx.conf` 和 `./var/uploads`，因此服务器仍应保留仓库文件；应用运行代码由镜像提供。
 
-## 2. 开发者发布最新镜像
+## 2. 开发者发布 latest 镜像
 
-复制整段命令运行，按提示输入 GitHub 用户名和 PAT。脚本默认会同时推送当前提交短 SHA 标签和 `latest` 标签。
+复制整段命令在开发者本机运行。脚本默认会同时推送当前提交短 SHA 标签和 `latest` 标签，服务器部署默认只拉取 `latest`。
 
 ```bash
 cd /Users/sak/Documents/GitHub/Ti
@@ -46,7 +44,7 @@ docker image inspect ghcr.io/saksk-it/ti:latest --format '{{.RepoTags}} {{.Id}}'
 unset GHCR_TOKEN
 ```
 
-如果需要同时发布 amd64 和 arm64，复制整段运行：
+如果服务器包含 amd64 和 arm64，复制整段运行：
 
 ```bash
 cd /Users/sak/Documents/GitHub/Ti
@@ -60,25 +58,25 @@ printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-
 PLATFORMS=linux/amd64,linux/arm64 \
 ./scripts/publish_image.sh
 
+docker pull ghcr.io/saksk-it/ti:latest
+docker image inspect ghcr.io/saksk-it/ti:latest --format '{{.RepoTags}} {{.Id}}'
+
 unset GHCR_TOKEN
 ```
 
 安全要求：
 
-- 不要把真实 `GHCR_TOKEN` 写进仓库、文档、截图或 `.env.production`；
-- 生产发布完成后，服务器默认拉取 `ghcr.io/saksk-it/ti:latest`；
-- 如需回滚或灰度，可额外用 `TAG=xxx ./scripts/publish_image.sh` 发布明确标签，但默认教程统一使用 `latest`。
+- 不要把真实 `GHCR_TOKEN` 写进仓库、文档、截图或 `.env.production`。
+- 默认发布和默认部署统一使用 `ghcr.io/saksk-it/ti:latest`。
+- 如需回滚，可额外用 `TAG=xxx ./scripts/publish_image.sh` 发布明确标签；常规部署教程仍以 `latest` 为准。
 
 ## 3. 服务器一键生产部署
 
-复制整段命令在 Ubuntu 24.04 LTS 服务器运行，按提示输入域名和证书邮箱：
+复制整段命令在 Ubuntu 24.04 LTS 服务器运行。完成后访问 `http://服务器IP:8080`。
 
 ```bash
 read -r -p "部署目录 [/opt/ti]: " APP_DIR
 APP_DIR="${APP_DIR:-/opt/ti}"
-read -r -p "域名 [saksk.top]: " DOMAIN
-DOMAIN="${DOMAIN:-saksk.top}"
-read -r -p "Certbot 邮箱: " CERTBOT_EMAIL
 REPO_URL="https://github.com/Saksk-IT/Ti.git"
 
 sudo mkdir -p "$APP_DIR"
@@ -92,37 +90,52 @@ fi
 
 cd "$APP_DIR"
 
-DOMAIN="$DOMAIN" \
-CERTBOT_EMAIL="$CERTBOT_EMAIL" \
 ./scripts/deploy_ubuntu24.sh
 ```
 
-脚本默认拉取：
+脚本默认写入并拉取：
 
 ```text
-ghcr.io/saksk-it/ti:latest
+TI_IMAGE=ghcr.io/saksk-it/ti:latest
+TI_IMAGE_PULL_POLICY=always
+HTTP_BIND=0.0.0.0
+HTTP_PORT=8080
+SESSION_COOKIE_SECURE=false
 ```
 
 脚本会自动完成：
 
-- 安装系统依赖、Docker Engine、Docker Compose 插件、Nginx、Certbot；
+- 安装基础依赖、Docker Engine、Docker Compose 插件；
 - 创建 `var/postgres`、`var/redis`、`var/uploads`、`var/instance`、`var/logs`、`backups`；
 - 生成最小化 `.env.production` 并设置 `600` 权限；
 - 拉取最新应用镜像与 Compose 依赖镜像；
 - 启动生产容器并执行 `flask db upgrade`；
-- 配置宿主机 Nginx 反代到 `127.0.0.1:8080`；
-- 申请 HTTPS 证书并执行健康检查。
+- 校验 `http://127.0.0.1:8080/api/ping`。
 
-## 4. 私有 GHCR 镜像部署
+如果服务器启用了本机防火墙，复制运行：
 
-如果 GitHub Packages 是私有可见性，复制整段命令运行，按提示输入 GHCR 只读凭据：
+```bash
+sudo ufw allow 8080/tcp
+sudo ufw status
+```
+
+云服务器还需要在云厂商安全组放行入站 TCP `8080`。验证命令：
+
+```bash
+SERVER_IP="$(curl -fsS https://api.ipify.org || hostname -I | awk '{print $1}')"
+printf '访问地址：http://%s:8080\n' "$SERVER_IP"
+
+curl -fsS "http://127.0.0.1:8080/api/ping" | python3 -m json.tool
+curl -fsS "http://127.0.0.1:8080/api/ping?deep=1" | python3 -m json.tool
+```
+
+## 4. 私有 GHCR 镜像生产部署
+
+如果 GitHub Packages 是私有可见性，复制整段命令运行，按提示输入 GHCR 只读凭据。Token 只临时进入当前 shell，不写入仓库文件。
 
 ```bash
 read -r -p "部署目录 [/opt/ti]: " APP_DIR
 APP_DIR="${APP_DIR:-/opt/ti}"
-read -r -p "域名 [saksk.top]: " DOMAIN
-DOMAIN="${DOMAIN:-saksk.top}"
-read -r -p "Certbot 邮箱: " CERTBOT_EMAIL
 read -r -p "GitHub 用户名: " GHCR_USERNAME
 read -r -s -p "GHCR 只读 Token: " GHCR_TOKEN
 printf '\n'
@@ -139,8 +152,6 @@ fi
 
 cd "$APP_DIR"
 
-DOMAIN="$DOMAIN" \
-CERTBOT_EMAIL="$CERTBOT_EMAIL" \
 GHCR_USERNAME="$GHCR_USERNAME" \
 GHCR_TOKEN="$GHCR_TOKEN" \
 ./scripts/deploy_ubuntu24.sh
@@ -148,36 +159,9 @@ GHCR_TOKEN="$GHCR_TOKEN" \
 unset GHCR_TOKEN
 ```
 
-## 5. 临时 HTTP / 内网部署
+## 5. 服务器一键开发部署
 
-不申请 HTTPS 证书时使用下面命令。生产默认 `SESSION_COOKIE_SECURE=true`，HTTP 下 Web Session Cookie 不会发送；公网和小程序正式环境应使用 HTTPS。
-
-```bash
-read -r -p "部署目录 [/opt/ti]: " APP_DIR
-APP_DIR="${APP_DIR:-/opt/ti}"
-read -r -p "域名或内网主机名 [127.0.0.1]: " DOMAIN
-DOMAIN="${DOMAIN:-127.0.0.1}"
-REPO_URL="https://github.com/Saksk-IT/Ti.git"
-
-sudo mkdir -p "$APP_DIR"
-sudo chown "$USER":"$USER" "$APP_DIR"
-
-if [ ! -d "$APP_DIR/.git" ]; then
-  git clone "$REPO_URL" "$APP_DIR"
-else
-  git -C "$APP_DIR" pull --ff-only
-fi
-
-cd "$APP_DIR"
-
-DOMAIN="$DOMAIN" \
-SKIP_CERTBOT=1 \
-./scripts/deploy_ubuntu24.sh
-```
-
-## 6. 服务器一键开发部署
-
-开发环境同样默认拉取 `ghcr.io/saksk-it/ti:latest`。端口默认只绑定本机，避免数据库暴露公网。
+开发环境同样默认拉取 `ghcr.io/saksk-it/ti:latest`。默认只绑定本机，避免开发服务和数据库直接暴露公网。
 
 ```bash
 read -r -p "开发部署目录 [/opt/ti-dev]: " APP_DIR
@@ -205,7 +189,7 @@ DEPLOY_ENV=development \
 http://127.0.0.1:8000
 ```
 
-如需临时开放 Web 给内网访问，同时保持 PostgreSQL 只绑定本机：
+如需临时开放 Web 给内网访问，同时保持 PostgreSQL 只绑定本机，复制运行：
 
 ```bash
 cd /opt/ti-dev
@@ -216,9 +200,46 @@ POSTGRES_BIND=127.0.0.1 \
 ./scripts/deploy_ubuntu24.sh
 ```
 
-## 7. 完整命令式部署
+## 6. 生产环境域名与 HTTPS 后续配置
 
-不使用一键脚本时，下面命令会自动生成 `.env.production`：
+这一节只适用于生产环境。先完成第 3 节，确认 `http://服务器IP:8080` 可访问，并确保 DNS 已经解析到服务器 IP。
+
+```bash
+cd /opt/ti
+
+read -r -p "域名: " DOMAIN
+
+dig +short "$DOMAIN"
+curl -I "http://$DOMAIN" || true
+```
+
+确认解析正确后执行下面命令。脚本会把 Docker 内 nginx 改为只绑定 `127.0.0.1:8080`，宿主机 Nginx 接管 80/443，并将 `DOMAIN`、`CERTBOT_EMAIL`、`SESSION_COOKIE_SECURE=true` 写回 `.env.production`。
+
+```bash
+cd /opt/ti
+
+read -r -p "域名: " DOMAIN
+read -r -p "Certbot 邮箱: " CERTBOT_EMAIL
+
+ENABLE_HTTPS=1 \
+DOMAIN="$DOMAIN" \
+CERTBOT_EMAIL="$CERTBOT_EMAIL" \
+./scripts/deploy_ubuntu24.sh
+```
+
+执行后验证：
+
+```bash
+cd /opt/ti
+
+grep -E '^(HTTP_BIND|HTTP_PORT|SESSION_COOKIE_SECURE)=' .env.production
+DOMAIN="$(grep -E '^DOMAIN=' .env.production | cut -d= -f2-)"
+curl -fsS "https://$DOMAIN/api/ping" | python3 -m json.tool
+```
+
+## 7. 完整命令式生产部署
+
+不使用一键脚本时，复制整段运行。该流程仍然只拉取镜像，不在服务器构建镜像。
 
 ```bash
 read -r -p "部署目录 [/opt/ti]: " APP_DIR
@@ -245,7 +266,9 @@ POSTGRES_USER=studyuser
 POSTGRES_PASSWORD=$(python3 -c "import secrets; print(secrets.token_urlsafe(48))")
 POSTGRES_DB=ti_db
 PROXY_FIX_ENABLED=true
-SESSION_COOKIE_SECURE=true
+HTTP_BIND=0.0.0.0
+HTTP_PORT=8080
+SESSION_COOKIE_SECURE=false
 BACKUP_TZ=Asia/Shanghai
 BACKUP_ANCHOR_TIME=04:00
 BACKUP_INTERVAL=43200
@@ -269,7 +292,7 @@ curl -fsS "http://127.0.0.1:8080/api/ping?deep=1" | python3 -m json.tool
 
 ## 8. 更新部署
 
-开发者先发布最新镜像：
+开发者先发布 latest 镜像：
 
 ```bash
 cd /Users/sak/Documents/GitHub/Ti
@@ -283,20 +306,31 @@ printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-
 PLATFORMS=linux/amd64 \
 ./scripts/publish_image.sh
 
+docker image inspect ghcr.io/saksk-it/ti:latest --format '{{.RepoTags}} {{.Id}}'
+
 unset GHCR_TOKEN
 ```
 
-服务器拉取最新代码配置和最新镜像：
+服务器拉取最新代码配置和 latest 镜像：
 
 ```bash
 cd /opt/ti
 
-read -r -p "域名 [saksk.top]: " DOMAIN
-DOMAIN="${DOMAIN:-saksk.top}"
+git pull --ff-only origin "$(git rev-parse --abbrev-ref HEAD)"
+./scripts/deploy_ubuntu24.sh
+```
+
+如果已启用生产 HTTPS，更新时继续显式传入 HTTPS 参数：
+
+```bash
+cd /opt/ti
+
+read -r -p "域名: " DOMAIN
 read -r -p "Certbot 邮箱: " CERTBOT_EMAIL
 
 git pull --ff-only origin "$(git rev-parse --abbrev-ref HEAD)"
 
+ENABLE_HTTPS=1 \
 DOMAIN="$DOMAIN" \
 CERTBOT_EMAIL="$CERTBOT_EMAIL" \
 ./scripts/deploy_ubuntu24.sh
@@ -345,6 +379,8 @@ read -r -p "备份文件名: " BACKUP_FILE
 
 ## 10. 安全检查完整命令
 
+默认 IP 部署检查：
+
 ```bash
 cd /opt/ti
 
@@ -357,17 +393,32 @@ if grep -q 'build:' /tmp/ti-compose-check.yml; then
 fi
 
 grep -E '^TI_IMAGE=ghcr.io/saksk-it/ti:latest$' .env.production
-grep -E '^SESSION_COOKIE_SECURE=true$' .env.production
+grep -E '^TI_IMAGE_PULL_POLICY=always$' .env.production
+grep -E '^HTTP_BIND=0.0.0.0$' .env.production
+grep -E '^HTTP_PORT=8080$' .env.production
+grep -E '^SESSION_COOKIE_SECURE=false$' .env.production
 
 if grep -E '^POSTGRES_PASSWORD=studypass$|^SECRET_KEY=dev-secret-key' .env.production; then
   echo '错误：生产环境不能使用开发默认密钥或密码'
   exit 1
 fi
 
-ss -tlnp | grep -E ':80|:443|:8080' || true
-curl -fsS "https://$(grep -E '^DOMAIN=' .env.production 2>/dev/null | cut -d= -f2- || echo saksk.top)/api/ping" | python3 -m json.tool || true
+ss -tlnp | grep -E ':8080' || true
 curl -fsS http://127.0.0.1:8080/api/ping | python3 -m json.tool
 curl -fsS "http://127.0.0.1:8080/api/ping?deep=1" | python3 -m json.tool
+```
+
+启用 HTTPS 后追加检查：
+
+```bash
+cd /opt/ti
+
+grep -E '^HTTP_BIND=127.0.0.1$' .env.production
+grep -E '^SESSION_COOKIE_SECURE=true$' .env.production
+ss -tlnp | grep -E ':80|:443|:8080' || true
+
+read -r -p "域名: " DOMAIN
+curl -fsS "https://$DOMAIN/api/ping" | python3 -m json.tool
 ```
 
 ## 11. 常见故障完整命令
@@ -389,14 +440,14 @@ docker compose --env-file .env.production -f compose.prod.yml logs --tail=200 po
 
 如果 `var/postgres` 已存在，PostgreSQL 内部密码不会因为重新生成 env 自动变化。应恢复原 `.env.production`，或使用旧 `POSTGRES_PASSWORD` 重新部署。
 
-HTTPS 正常但静态资源异常：
+IP 无法访问但本机健康检查正常：
 
 ```bash
 cd /opt/ti
-git status --short
-git rev-parse HEAD
-docker inspect "$(docker compose --env-file .env.production -f compose.prod.yml ps -q web)" --format '{{.Config.Image}}'
-docker compose --env-file .env.production -f compose.prod.yml logs --tail=200 nginx
+grep -E '^(HTTP_BIND|HTTP_PORT)=' .env.production
+ss -tlnp | grep ':8080' || true
+sudo ufw status || true
+curl -fsS http://127.0.0.1:8080/api/ping | python3 -m json.tool
 ```
 
 应用容器启动失败：
@@ -404,4 +455,5 @@ docker compose --env-file .env.production -f compose.prod.yml logs --tail=200 ng
 ```bash
 cd /opt/ti
 docker compose --env-file .env.production -f compose.prod.yml logs --tail=200 web
+docker compose --env-file .env.production -f compose.prod.yml logs --tail=200 nginx
 ```
