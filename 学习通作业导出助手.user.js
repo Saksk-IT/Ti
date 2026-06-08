@@ -1,13 +1,18 @@
 // ==UserScript==
 // @name         学习通全能作业导出助手
-// @version      1.0.0
+// @version      1.1.0
 // @description  none
 // @author       Saksk
 // @match      *://mooc1.chaoxing.com/mooc2/work/view*
 // @match      *://mooc1.chaoxing.com/exam-ans/exam/test/reVersionPaperMarkContentNew*
 // @match      *://mooc1.chaoxing.com/mooc-ans/mooc2/work/*
+// @match      *://mooc2-ans.chaoxing.com/mooc2-ans/mycourse/stu*
+// @match      *://mobilelearn.chaoxing.com/page/quiz/stu/quizStudentQuestion*
 // @grant        GM_addStyle
 // @grant        GM_setClipboard
+// @grant        GM_xmlhttpRequest
+// @connect      mobilelearn.chaoxing.com
+// @connect      mooc2-ans.chaoxing.com
 // @require      https://unpkg.com/docx@7.1.1/build/index.js
 // @require      https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js
 // @require      https://unpkg.com/xlsx@0.17.0/dist/xlsx.full.min.js
@@ -684,28 +689,425 @@
         if (sakPromoOverlay) sakPromoOverlay.classList.add('show');
     }
 
-    // 核心解析逻辑
-    function parsePage(e) {
-        createRipple(e);
-        parsedData = [];
-        const pBtn = document.getElementById('p-btn');
-        const eBtns = document.querySelectorAll('.e-btn');
+    function getExportFileName() {
+        const candidates = [
+            document.querySelector('.mark_title')?.innerText,
+            document.querySelector('.course-name')?.innerText,
+            document.querySelector('.courseName')?.innerText,
+            document.querySelector('.coursename')?.innerText,
+            document.querySelector('h1')?.innerText,
+            document.title
+        ];
+        const raw = candidates.map((x) => String(x || '').trim()).find(Boolean) || '作业导出';
+        return raw.replace(/\s*[-_]\s*学习通.*$/g, '').replace(/[\\/:\*\?\"<>\|]/g, '_') || '作业导出';
+    }
 
-        addLog("正在提取页面题目...");
-        pBtn.innerText = "正在解析...";
-        pBtn.disabled = true;
-
-        const keepAns = document.getElementById('c-ans').checked;
-        const items = document.querySelectorAll('.questionLi');
-
-        if (items.length === 0) {
-            addLog("未找到题目，请确认在作业查看页！");
-            pBtn.disabled = false;
-            pBtn.innerText = "1. 解析本页题目";
-            return;
+    function htmlToPlainText(value) {
+        if (value === null || value === undefined) return '';
+        if (Array.isArray(value)) {
+            return value.map((x) => htmlToPlainText(x)).filter(Boolean).join('\n');
+        }
+        if (typeof value === 'object') {
+            const nested = getFirstValueByKeys(value, [
+                'text', 'content', 'html', 'title', 'name', 'value', 'optionContent',
+                'answerContent', 'questionContent', 'questionTitle'
+            ]);
+            return nested === undefined ? '' : htmlToPlainText(nested);
         }
 
-        items.forEach((el, i) => {
+        const source = String(value || '').replace(/\\n/g, '\n');
+        if (!source) return '';
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = source;
+        const decoded = textarea.value;
+        if (!/[<&][a-zA-Z/#?!]/.test(decoded)) {
+            return maybeCompactCjkSpacing(decoded).replace(/[ \t]+\n/g, '\n').trim();
+        }
+
+        const box = document.createElement('div');
+        box.innerHTML = decoded
+            .replace(/<br\s*\/?>/gi, '\n')
+            .replace(/<\/(p|div|li|tr|h[1-6])>/gi, '\n');
+        box.querySelectorAll('script,style,noscript').forEach((n) => n.remove());
+        return maybeCompactCjkSpacing(box.innerText || box.textContent || '')
+            .replace(/\n{3,}/g, '\n\n')
+            .replace(/[ \t]+\n/g, '\n')
+            .trim();
+    }
+
+    function getFirstValueByKeys(obj, keys) {
+        if (!obj || typeof obj !== 'object') return undefined;
+        const lowerKeyMap = Object.keys(obj).reduce((acc, key) => {
+            acc[String(key).toLowerCase()] = key;
+            return acc;
+        }, {});
+        for (const key of keys) {
+            if (Object.prototype.hasOwnProperty.call(obj, key)) return obj[key];
+            const realKey = lowerKeyMap[String(key).toLowerCase()];
+            if (realKey !== undefined) return obj[realKey];
+        }
+        return undefined;
+    }
+
+    function getStemCandidate(obj) {
+        return htmlToPlainText(getFirstValueByKeys(obj, [
+            'questionContent', 'questionTitle', 'questionName', 'quesName',
+            'questionStem', 'stem', 'topic', 'subject', 'title', 'name',
+            'content', 'description', 'question', 'questionText'
+        ])).replace(/^\s*\d+\s*[\.、]\s*/g, '');
+    }
+
+    function getAnswerCandidate(obj) {
+        return getFirstValueByKeys(obj, [
+            'rightAnswer', 'rightAnswers', 'correctAnswer', 'correctAnswers',
+            'standardAnswer', 'standardAnswers', 'referenceAnswer', 'referenceAnswers',
+            'answer', 'answers', 'answerContent', 'rightAnswerContent',
+            'stuAnswer', 'studentAnswer', 'myAnswer', 'userAnswer', 'resultAnswer'
+        ]);
+    }
+
+    function getAnalysisCandidate(obj) {
+        return htmlToPlainText(getFirstValueByKeys(obj, [
+            'analysis', '解析', 'explanation', 'explain', 'answerAnalysis',
+            'analysisContent', 'remark', 'remarks'
+        ]));
+    }
+
+    function extractOptionItems(obj) {
+        const optionArray = getFirstValueByKeys(obj, [
+            'optionList', 'options', 'optionDtos', 'optionArray', 'choiceList',
+            'choices', 'questionOptions', 'answerOptions', 'items'
+        ]);
+        const fromArray = Array.isArray(optionArray) ? optionArray.map((item, idx) => {
+            const label = String(getFirstValueByKeys(item, ['option', 'optionNo', 'optionName', 'label', 'key', 'prefix', 'sort']) || '').trim();
+            const id = String(getFirstValueByKeys(item, ['id', 'optionId', 'answerId', 'itemId', 'oid', 'value']) || '').trim();
+            const text = htmlToPlainText(typeof item === 'object' ? getFirstValueByKeys(item, [
+                'optionContent', 'content', 'text', 'name', 'title', 'answer', 'value'
+            ]) : item);
+            return {
+                label: label || String.fromCharCode(65 + idx),
+                id,
+                text: stripOptionPrefix(text)
+            };
+        }).filter((item) => item.text) : [];
+
+        if (fromArray.length) return fromArray;
+
+        const directOptions = [];
+        Object.keys(obj || {}).forEach((key) => {
+            const m = String(key).match(/^option[_-]?([A-H]|\d{1,2})$/i);
+            if (!m) return;
+            const rawLabel = m[1];
+            const idx = /^\d+$/.test(rawLabel) ? Math.max(0, Number(rawLabel) - 1) : rawLabel.toUpperCase().charCodeAt(0) - 65;
+            const text = stripOptionPrefix(htmlToPlainText(obj[key]));
+            if (text) {
+                directOptions.push({
+                    label: String.fromCharCode(65 + idx),
+                    id: '',
+                    text
+                });
+            }
+        });
+
+        return directOptions.sort((a, b) => String(a.label).localeCompare(String(b.label)));
+    }
+
+    function stringifyAnswerValue(value) {
+        if (value === null || value === undefined) return '';
+        if (Array.isArray(value)) {
+            return value.map((item) => stringifyAnswerValue(item)).filter(Boolean).join('\n');
+        }
+        if (typeof value === 'object') {
+            const nested = getFirstValueByKeys(value, [
+                'answer', 'rightAnswer', 'correctAnswer', 'content', 'text',
+                'name', 'value', 'option', 'optionName', 'optionContent'
+            ]);
+            return nested === undefined ? '' : stringifyAnswerValue(nested);
+        }
+        return htmlToPlainText(value);
+    }
+
+    function mapAnswerToLetters(rawAnswer, optionItems) {
+        const raw = stringifyAnswerValue(rawAnswer).trim();
+        if (!raw || !Array.isArray(optionItems) || !optionItems.length) return raw;
+
+        const tokens = raw.split(/[\s,，;；|、]+/).map((x) => x.trim()).filter(Boolean);
+        const mapped = tokens.map((token) => {
+            const plainToken = stripOptionPrefix(token).trim();
+            const matched = optionItems.find((opt) => {
+                const label = String(opt.label || '').trim().toUpperCase();
+                const id = String(opt.id || '').trim();
+                const text = String(opt.text || '').trim();
+                return token.toUpperCase() === label || (!!id && token === id) || (!!text && plainToken === text);
+            });
+            return matched ? String(matched.label || '').trim().toUpperCase() : token;
+        });
+
+        const allMappedToLetters = mapped.length && mapped.every((token) => /^[A-Z]$/.test(token));
+        return allMappedToLetters ? mapped.join('') : raw;
+    }
+
+    function guessChaoxingQType(rawType, stem, options, rawAnswer) {
+        const typeText = String(rawType || '').replace(/\s+/g, '');
+        const direct = guessBankQType(typeText, stem, options, rawAnswer);
+        if (!/^\d+$/.test(typeText)) return direct;
+
+        if (typeText === '0') return '选择题';
+        if (typeText === '1') return '多选题';
+        if (typeText === '4' || typeText === '5') return '简答题';
+
+        const ans = String(rawAnswer || '').replace(/\s+/g, '');
+        if ((typeText === '2' || typeText === '3') && /^(正确|错误|对|错|√|×|TRUE|FALSE|T|F)$/i.test(ans)) {
+            return '判断题';
+        }
+        if ((typeText === '2' || typeText === '3') && /__|\(\s*\)|（\s*）|_{2,}/.test(String(stem || ''))) {
+            return '填空题';
+        }
+        if (typeText === '2') return options.length ? direct : '填空题';
+        if (typeText === '3') return options.length ? direct : '判断题';
+        return direct;
+    }
+
+    function looksLikeQuestionObject(obj) {
+        if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return false;
+        const stem = getStemCandidate(obj);
+        if (stem.length < 2) return false;
+        const optionItems = extractOptionItems(obj);
+        const rawType = getFirstValueByKeys(obj, ['typeName', 'questionTypeName', 'questionType', 'qType', 'type']);
+        const rawAnswer = getAnswerCandidate(obj);
+        const keys = Object.keys(obj).map((key) => String(key).toLowerCase());
+        const hasStemKey = keys.some((key) => [
+            'questioncontent', 'questiontitle', 'questionname', 'quesname',
+            'questionstem', 'stem', 'topic', 'question', 'questiontext'
+        ].includes(key));
+        return hasStemKey || optionItems.length > 0 || rawAnswer !== undefined || rawType !== undefined;
+    }
+
+    function collectQuestionObjects(root) {
+        const found = [];
+        const seen = new WeakSet();
+        const walk = (node, depth) => {
+            if (!node || depth > 12) return;
+            if (typeof node !== 'object') return;
+            if (seen.has(node)) return;
+            seen.add(node);
+
+            if (Array.isArray(node)) {
+                node.forEach((item) => walk(item, depth + 1));
+                return;
+            }
+
+            if (looksLikeQuestionObject(node)) found.push(node);
+            Object.keys(node).forEach((key) => walk(node[key], depth + 1));
+        };
+        walk(root, 0);
+        return found;
+    }
+
+    function normalizeChaoxingQuestion(obj, index, keepAns) {
+        const stem = normalizeStemForBank(getStemCandidate(obj));
+        if (!stem) return null;
+
+        const rawType = htmlToPlainText(getFirstValueByKeys(obj, [
+            'typeName', 'questionTypeName', 'questionTypeText', 'questionType',
+            'qType', 'type', 'quesType'
+        ]));
+        const optionItems = extractOptionItems(obj);
+        const optionTexts = optionItems.map((item) => item.text).filter(Boolean);
+        const rawAnsValue = getAnswerCandidate(obj);
+        const rawAns = keepAns ? mapAnswerToLetters(rawAnsValue, optionItems) : '';
+        const qType = guessChaoxingQType(rawType, stem, optionTexts, rawAns);
+        const storageAnswer = keepAns ? normalizeAnswerForBankStorage(qType, rawAns, optionTexts, stem) : '';
+        const storageOptions = (qType === '选择题' || qType === '多选题') ? optionTexts : [];
+
+        return {
+            id: index + 1,
+            raw_type: rawType || '',
+            q_type: qType,
+            stem,
+            options: storageOptions,
+            answer: storageAnswer,
+            analysis: getAnalysisCandidate(obj)
+        };
+    }
+
+    function dedupeQuestions(questions) {
+        const seen = new Set();
+        return (questions || []).filter((q) => {
+            const key = [
+                String(q.q_type || ''),
+                String(q.stem || '').replace(/\s+/g, ''),
+                (q.options || []).join('|').replace(/\s+/g, ''),
+                String(q.answer || '').replace(/\s+/g, '')
+            ].join('::');
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        }).map((q, idx) => ({ ...q, id: idx + 1 }));
+    }
+
+    function collectActiveIdsFromText(text) {
+        const ids = new Set();
+        const rawSource = String(text || '');
+        const sources = [rawSource];
+        try {
+            const decoded = decodeURIComponent(rawSource);
+            if (decoded && decoded !== rawSource) sources.push(decoded);
+        } catch (e) {}
+        try {
+            const textarea = document.createElement('textarea');
+            textarea.innerHTML = rawSource;
+            if (textarea.value && textarea.value !== rawSource) sources.push(textarea.value);
+        } catch (e) {}
+        const patterns = [
+            /(?:activeId|activeid)\s*[=:]\s*["']?(\d{6,})/g,
+            /(?:activeId|activeid)=["']?(\d{6,})/g,
+            /quizStudentQuestion\?[^"'<>]*?(?:activeId|activeid)=(\d{6,})/g
+        ];
+        sources.forEach((source) => {
+            patterns.forEach((re) => {
+                re.lastIndex = 0;
+                let m;
+                while ((m = re.exec(source)) !== null) ids.add(m[1]);
+            });
+        });
+        return Array.from(ids);
+    }
+
+    function collectActiveIdsFromJson(root) {
+        const ids = new Set();
+        const seen = new WeakSet();
+        const walk = (node, depth) => {
+            if (!node || depth > 10) return;
+            if (typeof node === 'string') {
+                collectActiveIdsFromText(node).forEach((id) => ids.add(id));
+                return;
+            }
+            if (typeof node !== 'object') return;
+            if (seen.has(node)) return;
+            seen.add(node);
+
+            if (Array.isArray(node)) {
+                node.forEach((item) => walk(item, depth + 1));
+                return;
+            }
+
+            Object.keys(node).forEach((key) => {
+                const value = node[key];
+                const lower = String(key).toLowerCase();
+                if (lower === 'activeid' && /^\d{6,}$/.test(String(value || ''))) {
+                    ids.add(String(value));
+                }
+                if (lower === 'id' && (node.activeType !== undefined || node.activeName !== undefined) && /^\d{6,}$/.test(String(value || ''))) {
+                    ids.add(String(value));
+                }
+                walk(value, depth + 1);
+            });
+        };
+        walk(root, 0);
+        return Array.from(ids);
+    }
+
+    function collectActiveIdsFromPage() {
+        const ids = new Set();
+        collectActiveIdsFromText(window.location.href).forEach((id) => ids.add(id));
+        collectActiveIdsFromText(document.documentElement ? document.documentElement.innerHTML : '').forEach((id) => ids.add(id));
+
+        document.querySelectorAll('a[href], iframe[src], frame[src], [onclick], [data], [data-activeid], [data-active-id]').forEach((el) => {
+            ['href', 'src', 'onclick', 'data', 'data-activeid', 'data-active-id'].forEach((attr) => {
+                collectActiveIdsFromText(el.getAttribute(attr) || '').forEach((id) => ids.add(id));
+            });
+        });
+
+        return Array.from(ids);
+    }
+
+    function requestJson(url) {
+        return new Promise((resolve, reject) => {
+            const onText = (text, status) => {
+                if (status && (status < 200 || status >= 300)) {
+                    reject(new Error(`HTTP ${status}`));
+                    return;
+                }
+                try {
+                    resolve(JSON.parse(text));
+                } catch (err) {
+                    reject(new Error('接口返回不是 JSON'));
+                }
+            };
+
+            if (typeof GM_xmlhttpRequest === 'function') {
+                GM_xmlhttpRequest({
+                    method: 'GET',
+                    url,
+                    anonymous: false,
+                    withCredentials: true,
+                    headers: {
+                        Accept: 'application/json, text/javascript, */*; q=0.01',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    onload: (res) => onText(res.responseText || '', res.status),
+                    onerror: () => reject(new Error('网络请求失败')),
+                    ontimeout: () => reject(new Error('网络请求超时'))
+                });
+                return;
+            }
+
+            fetch(url, {
+                credentials: 'include',
+                headers: {
+                    Accept: 'application/json, text/javascript, */*; q=0.01',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then((res) => res.text().then((text) => onText(text, res.status)))
+                .catch(() => reject(new Error('网络请求失败')));
+        });
+    }
+
+    function buildActivityListUrls() {
+        const params = new URLSearchParams(window.location.search);
+        const courseId = params.get('courseid') || params.get('courseId');
+        const classId = params.get('clazzid') || params.get('classId') || params.get('clazzId');
+        const fid = params.get('fid') || '';
+        if (!courseId || !classId) return [];
+        const baseParams = new URLSearchParams({
+            courseId,
+            classId,
+            showNotStartedActive: '1'
+        });
+        if (fid) baseParams.set('fid', fid);
+        return [
+            `https://mobilelearn.chaoxing.com/v2/apis/active/student/activelist?${baseParams.toString()}`,
+            `https://mobilelearn.chaoxing.com/v2/apis/active/student/activelist?${baseParams.toString()}&page=1&pageSize=200`
+        ];
+    }
+
+    async function collectActiveIdsFromRemoteList(addLog) {
+        const ids = new Set();
+        const urls = buildActivityListUrls();
+        for (const url of urls) {
+            try {
+                const json = await requestJson(url);
+                collectActiveIdsFromJson(json).forEach((id) => ids.add(id));
+            } catch (err) {
+                addLog(`活动列表接口跳过：${err.message || err}`);
+            }
+        }
+        return Array.from(ids);
+    }
+
+    async function fetchQuestionsByActiveId(activeId, keepAns) {
+        const url = `https://mobilelearn.chaoxing.com/v2/apis/studentQuestion/getAnswerResult?activeId=${encodeURIComponent(activeId)}`;
+        const json = await requestJson(url);
+        const objects = collectQuestionObjects(json);
+        return objects
+            .map((obj, index) => normalizeChaoxingQuestion(obj, index, keepAns))
+            .filter((q) => q && q.stem);
+    }
+
+    function parseDomQuestionItems(items, keepAns) {
+        return Array.from(items).map((el, i) => {
             const rawType = (el.querySelector('.colorShallow')?.innerText || '').replace(/[()（）]/g, '').trim();
             let stem = (el.querySelector('.qtContent')?.innerText || '');
             if (!stem) stem = el.querySelector('.mark_name')?.innerText.replace(/^\d+\.\s*/, '') || '';
@@ -736,7 +1138,7 @@
             const storageAnswer = keepAns ? normalizeAnswerForBankStorage(qType, rawAns, options, stem) : '';
             const storageOptions = (qType === '选择题' || qType === '多选题') ? options.filter(Boolean) : [];
 
-            parsedData.push({
+            return {
                 id: i + 1,
                 raw_type: rawType || '',
                 q_type: qType,
@@ -744,20 +1146,77 @@
                 options: storageOptions,
                 answer: storageAnswer,
                 analysis: ''
-            });
-        });
+            };
+        }).filter((q) => q.stem);
+    }
 
-        setTimeout(() => {
-            addLog(`提取完毕！共 ${parsedData.length} 道题目`);
-            const over6 = (parsedData || []).filter((q) => (q.q_type === '选择题' || q.q_type === '多选题') && Array.isArray(q.options) && q.options.length > 6);
-            if (over6.length) addLog(`提示：检测到 ${over6.length} 题选项超过 6 个（Word 导入仅识别 A-F），建议使用 JSON 导入`);
+    async function parseChaoxingCommonPage(keepAns, addLog) {
+        const localIds = collectActiveIdsFromPage();
+        const remoteIds = await collectActiveIdsFromRemoteList(addLog);
+        const activeIds = Array.from(new Set([...localIds, ...remoteIds])).slice(0, 80);
+
+        if (!activeIds.length) {
+            throw new Error('未在当前课程页找到 activeId，请先展开/进入具体作业或题目活动后重试');
+        }
+
+        addLog(`找到 ${activeIds.length} 个活动，正在请求题目结果...`);
+        let questions = [];
+        for (const activeId of activeIds) {
+            try {
+                const one = await fetchQuestionsByActiveId(activeId, keepAns);
+                if (one.length) addLog(`activeId ${activeId}：${one.length} 题`);
+                questions = questions.concat(one);
+            } catch (err) {
+                addLog(`activeId ${activeId} 跳过：${err.message || err}`);
+            }
+        }
+
+        return dedupeQuestions(questions);
+    }
+
+    function finishParseSuccess(pBtn, eBtns) {
+        addLog(`提取完毕！共 ${parsedData.length} 道题目`);
+        const over6 = (parsedData || []).filter((q) => (q.q_type === '选择题' || q.q_type === '多选题') && Array.isArray(q.options) && q.options.length > 6);
+        if (over6.length) addLog(`提示：检测到 ${over6.length} 题选项超过 6 个（Word 导入仅识别 A-F），建议使用 JSON 导入`);
+        pBtn.disabled = false;
+        pBtn.innerText = '✅ 解析成功';
+        pBtn.classList.remove('highlight-red');
+        pBtn.classList.add('success-green');
+        eBtns.forEach(b => b.disabled = false);
+    }
+
+    // 核心解析逻辑
+    async function parsePage(e) {
+        createRipple(e);
+        parsedData = [];
+        const pBtn = document.getElementById('p-btn');
+        const eBtns = document.querySelectorAll('.e-btn');
+
+        addLog("正在提取页面题目...");
+        pBtn.innerText = "正在解析...";
+        pBtn.disabled = true;
+
+        const keepAns = document.getElementById('c-ans').checked;
+        const items = document.querySelectorAll('.questionLi');
+
+        try {
+            if (items.length > 0) {
+                parsedData = parseDomQuestionItems(items, keepAns);
+            } else {
+                addLog('未找到作业详情 DOM，尝试通过通用课程页接口抓取...');
+                parsedData = await parseChaoxingCommonPage(keepAns, addLog);
+            }
+
+            if (!parsedData.length) throw new Error('未解析到题目');
+            finishParseSuccess(pBtn, eBtns);
+        } catch (err) {
+            addLog(`解析失败：${err.message || err}`);
             pBtn.disabled = false;
-            pBtn.innerText = "✅ 解析成功";
-            // 切换为绿色成功状态
-            pBtn.classList.remove('highlight-red');
-            pBtn.classList.add('success-green');
-            eBtns.forEach(b => b.disabled = false);
-        }, 500);
+            pBtn.innerText = "1. 解析本页题目";
+            pBtn.classList.remove('success-green');
+            pBtn.classList.add('highlight-red');
+            eBtns.forEach(b => b.disabled = true);
+        }
     }
 
     // 构建 UI
@@ -818,7 +1277,7 @@
         if (!type || e.target.disabled) return;
         createRipple(e);
 
-        const fName = (document.querySelector('.mark_title')?.innerText.trim() || "作业导出").replace(/[\\/:\*\?\"<>\|]/g, "_");
+        const fName = getExportFileName();
         const hasAnswer = parsedData.some((q) => String(q && q.answer ? q.answer : '').trim());
         if (!hasAnswer) addLog("提示：当前未包含答案，导入题库可能会提示“缺少答案”");
 
