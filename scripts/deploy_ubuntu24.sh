@@ -4,31 +4,45 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
+DEPLOY_ENV="${DEPLOY_ENV:-production}"
+case "$DEPLOY_ENV" in
+  production|development) ;;
+  *)
+    echo "错误：DEPLOY_ENV 只能是 production 或 development，当前值：${DEPLOY_ENV}"
+    exit 1
+    ;;
+esac
+
+if [[ "$DEPLOY_ENV" == "production" ]]; then
+  DEFAULT_ENV_FILE="$ROOT_DIR/.env.production"
+  DEFAULT_COMPOSE_FILE="$ROOT_DIR/compose.prod.yml"
+  DEFAULT_TI_IMAGE="ghcr.io/saksk-it/ti:latest"
+else
+  DEFAULT_ENV_FILE="$ROOT_DIR/.env.development"
+  DEFAULT_COMPOSE_FILE="$ROOT_DIR/compose.dev.yml"
+  DEFAULT_TI_IMAGE="ghcr.io/saksk-it/ti:dev"
+fi
+
 APP_DOMAIN="${DOMAIN:-saksk.top}"
 CERTBOT_EMAIL="${CERTBOT_EMAIL:-}"
 APP_DIR="${APP_DIR:-$ROOT_DIR}"
-ENV_FILE="${ENV_FILE:-$ROOT_DIR/.env.production}"
+ENV_FILE="${ENV_FILE:-$DEFAULT_ENV_FILE}"
+COMPOSE_FILE="${COMPOSE_FILE:-$DEFAULT_COMPOSE_FILE}"
+REQUESTED_TI_IMAGE="${TI_IMAGE-}"
+REQUESTED_TI_IMAGE_PULL_POLICY="${TI_IMAGE_PULL_POLICY-}"
+TI_IMAGE="${TI_IMAGE:-$DEFAULT_TI_IMAGE}"
+TI_IMAGE_PULL_POLICY="${TI_IMAGE_PULL_POLICY:-always}"
 SKIP_CERTBOT="${SKIP_CERTBOT:-0}"
-PIP_INDEX_URL="${PIP_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple/}"
-PIP_TRUSTED_HOST="${PIP_TRUSTED_HOST:-mirrors.aliyun.com}"
-PIP_DEFAULT_TIMEOUT="${PIP_DEFAULT_TIMEOUT:-120}"
-PIP_RETRIES="${PIP_RETRIES:-10}"
+SKIP_HOST_NGINX="${SKIP_HOST_NGINX:-0}"
+RUN_MIGRATIONS="${RUN_MIGRATIONS:-1}"
+ALLOW_INSECURE_DEFAULTS="${ALLOW_INSECURE_DEFAULTS:-0}"
 POSTGRES_DB="${POSTGRES_DB:-ti_db}"
 POSTGRES_USER="${POSTGRES_USER:-studyuser}"
-POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-$(python3 - <<'PY'
-import secrets
-print(secrets.token_urlsafe(24))
-PY
-)}"
-SECRET_KEY="${SECRET_KEY:-$(python3 - <<'PY'
-import secrets
-print(secrets.token_urlsafe(48))
-PY
-)}"
 
-if [[ "$SKIP_CERTBOT" != "1" && -z "$CERTBOT_EMAIL" ]]; then
-  echo "错误：未设置 CERTBOT_EMAIL。"
+if [[ "$DEPLOY_ENV" == "production" && "$SKIP_HOST_NGINX" != "1" && "$SKIP_CERTBOT" != "1" && -z "$CERTBOT_EMAIL" ]]; then
+  echo "错误：生产 HTTPS 部署未设置 CERTBOT_EMAIL。"
   echo "示例：DOMAIN=saksk.top CERTBOT_EMAIL=admin@saksk.top ./scripts/deploy_ubuntu24.sh"
+  echo "临时 HTTP 内网部署可设置 SKIP_CERTBOT=1。"
   exit 1
 fi
 
@@ -43,8 +57,58 @@ else
   SUDO="sudo"
 fi
 
+COMPOSE=($SUDO docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE")
+
 log() {
   printf '\n[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"
+}
+
+fail() {
+  echo "错误：$*" >&2
+  exit 1
+}
+
+random_secret() {
+  if command -v python3 >/dev/null 2>&1; then
+    python3 - <<'PY'
+import secrets
+print(secrets.token_urlsafe(48))
+PY
+    return
+  fi
+
+  if command -v openssl >/dev/null 2>&1; then
+    openssl rand -base64 48 | tr -d '\n'
+    printf '\n'
+    return
+  fi
+
+  fail "无法生成随机密钥：缺少 python3 和 openssl"
+}
+
+postgres_has_existing_data() {
+  [[ -s "$ROOT_DIR/var/postgres/PG_VERSION" || -d "$ROOT_DIR/var/postgres/base" ]]
+}
+
+load_env_file() {
+  if [[ -f "$ENV_FILE" ]]; then
+    set -a
+    # shellcheck disable=SC1090
+    . "$ENV_FILE"
+    set +a
+  fi
+
+  if [[ -n "$REQUESTED_TI_IMAGE" ]]; then
+    TI_IMAGE="$REQUESTED_TI_IMAGE"
+  fi
+  if [[ -n "$REQUESTED_TI_IMAGE_PULL_POLICY" ]]; then
+    TI_IMAGE_PULL_POLICY="$REQUESTED_TI_IMAGE_PULL_POLICY"
+  fi
+  TI_IMAGE="${TI_IMAGE:-$DEFAULT_TI_IMAGE}"
+  TI_IMAGE_PULL_POLICY="${TI_IMAGE_PULL_POLICY:-always}"
+  export TI_IMAGE TI_IMAGE_PULL_POLICY
+  POSTGRES_USER="${POSTGRES_USER:-studyuser}"
+  POSTGRES_DB="${POSTGRES_DB:-ti_db}"
 }
 
 install_base_packages() {
@@ -55,6 +119,7 @@ install_base_packages() {
     curl \
     gnupg \
     openssl \
+    python3 \
     git \
     nginx \
     snapd \
@@ -94,23 +159,18 @@ EOF
   $SUDO systemctl enable --now docker
 }
 
-prepare_runtime_files() {
-  log "创建数据目录"
-  mkdir -p \
-    "$ROOT_DIR/var/postgres" \
-    "$ROOT_DIR/var/redis" \
-    "$ROOT_DIR/var/uploads" \
-    "$ROOT_DIR/var/instance" \
-    "$ROOT_DIR/var/logs" \
-    "$ROOT_DIR/backups"
+write_production_env() {
+  local secret_key postgres_password
+  secret_key="${SECRET_KEY:-$(random_secret)}"
+  postgres_password="${POSTGRES_PASSWORD:-$(random_secret)}"
 
-  if [[ ! -f "$ENV_FILE" ]]; then
-    log "生成最小化 .env.production（邮件 / AI / 短信 改为后台设置）"
-    cat > "$ENV_FILE" <<EOF
+  cat > "$ENV_FILE" <<EOF
 FLASK_ENV=production
-SECRET_KEY=${SECRET_KEY}
+TI_IMAGE=${TI_IMAGE}
+TI_IMAGE_PULL_POLICY=${TI_IMAGE_PULL_POLICY}
+SECRET_KEY=${secret_key}
 POSTGRES_USER=${POSTGRES_USER}
-POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+POSTGRES_PASSWORD=${postgres_password}
 POSTGRES_DB=${POSTGRES_DB}
 PROXY_FIX_ENABLED=true
 SESSION_COOKIE_SECURE=true
@@ -120,38 +180,111 @@ BACKUP_INTERVAL=43200
 BACKUP_CHECK_INTERVAL=60
 BACKUP_RETENTION_DAYS=7
 EOF
+}
+
+write_development_env() {
+  cat > "$ENV_FILE" <<EOF
+FLASK_ENV=development
+TI_IMAGE=${TI_IMAGE}
+TI_IMAGE_PULL_POLICY=${TI_IMAGE_PULL_POLICY}
+WEB_BIND=${WEB_BIND:-127.0.0.1}
+WEB_PORT=${WEB_PORT:-8000}
+POSTGRES_BIND=${POSTGRES_BIND:-127.0.0.1}
+POSTGRES_PORT=${POSTGRES_PORT:-5432}
+SECRET_KEY=${SECRET_KEY:-dev-secret-key}
+POSTGRES_USER=${POSTGRES_USER}
+POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-studypass}
+POSTGRES_DB=${POSTGRES_DB}
+MAIL_ENABLED=true
+MAIL_CONSOLE_OUTPUT=true
+SMS_ENABLED=true
+SMS_CONSOLE_OUTPUT=true
+BACKUP_TZ=Asia/Shanghai
+BACKUP_ANCHOR_TIME=04:00
+BACKUP_INTERVAL=43200
+BACKUP_CHECK_INTERVAL=60
+BACKUP_RETENTION_DAYS=3
+EOF
+}
+
+prepare_runtime_files() {
+  log "创建运行目录"
+  mkdir -p \
+    "$ROOT_DIR/var/postgres" \
+    "$ROOT_DIR/var/redis" \
+    "$ROOT_DIR/var/uploads" \
+    "$ROOT_DIR/var/instance" \
+    "$ROOT_DIR/var/logs" \
+    "$ROOT_DIR/backups"
+  chmod 700 "$ROOT_DIR/backups"
+
+  if [[ ! -f "$ENV_FILE" ]]; then
+    if [[ "$DEPLOY_ENV" == "production" && -z "${POSTGRES_PASSWORD:-}" ]] && postgres_has_existing_data; then
+      fail "检测到已有 PostgreSQL 数据目录，但 ${ENV_FILE} 不存在且未传入 POSTGRES_PASSWORD；请恢复原 env 或显式传入旧密码后再部署"
+    fi
+
+    log "生成 ${ENV_FILE}"
+    if [[ "$DEPLOY_ENV" == "production" ]]; then
+      write_production_env
+    else
+      write_development_env
+    fi
   else
-    log "检测到已有 .env.production，保留现有内容"
+    log "检测到已有环境文件，保留：${ENV_FILE}"
   fi
 
-  log "使用 compose.prod.yml 内置的 127.0.0.1:8080 端口映射"
+  chmod 600 "$ENV_FILE"
+  load_env_file
+}
+
+validate_env() {
+  if [[ "$DEPLOY_ENV" != "production" ]]; then
+    return
+  fi
+
+  [[ -n "${SECRET_KEY:-}" ]] || fail "${ENV_FILE} 缺少 SECRET_KEY"
+  [[ -n "${POSTGRES_PASSWORD:-}" ]] || fail "${ENV_FILE} 缺少 POSTGRES_PASSWORD"
+
+  if [[ "$ALLOW_INSECURE_DEFAULTS" != "1" ]]; then
+    [[ "$POSTGRES_PASSWORD" != "studypass" ]] || fail "生产环境禁止使用默认数据库密码 studypass"
+    [[ "$SECRET_KEY" != "dev-secret-key" && "$SECRET_KEY" != "dev-secret-key-change-in-production" ]] || fail "生产环境禁止使用开发 SECRET_KEY"
+  fi
+}
+
+login_registry_if_needed() {
+  if [[ -z "${GHCR_TOKEN:-}" && -z "${GHCR_USERNAME:-}" ]]; then
+    return
+  fi
+
+  [[ -n "${GHCR_TOKEN:-}" && -n "${GHCR_USERNAME:-}" ]] || fail "GHCR_USERNAME 与 GHCR_TOKEN 必须同时设置"
+  log "登录 GitHub Container Registry"
+  printf '%s' "$GHCR_TOKEN" | $SUDO docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
 }
 
 deploy_stack() {
-  log "构建镜像（PyPI 镜像: ${PIP_INDEX_URL}）"
-  $SUDO docker build \
-    --build-arg PIP_INDEX_URL="$PIP_INDEX_URL" \
-    --build-arg PIP_TRUSTED_HOST="$PIP_TRUSTED_HOST" \
-    --build-arg PIP_DEFAULT_TIMEOUT="$PIP_DEFAULT_TIMEOUT" \
-    --build-arg PIP_RETRIES="$PIP_RETRIES" \
-    -t saksk-ti:latest \
-    -f "$ROOT_DIR/docker/Dockerfile" \
-    "$ROOT_DIR"
+  log "拉取应用镜像：${TI_IMAGE}"
+  $SUDO docker pull "$TI_IMAGE"
 
-  log "启动生产容器"
-  $SUDO docker compose \
-    --env-file "$ENV_FILE" \
-    -f "$ROOT_DIR/compose.prod.yml" \
-    up -d
+  log "拉取 Compose 服务镜像"
+  "${COMPOSE[@]}" pull
 
-  log "执行数据库迁移"
-  $SUDO docker compose \
-    --env-file "$ENV_FILE" \
-    -f "$ROOT_DIR/compose.prod.yml" \
-    exec web flask db upgrade
+  log "启动 ${DEPLOY_ENV} 容器"
+  "${COMPOSE[@]}" up -d --remove-orphans
+
+  if [[ "$RUN_MIGRATIONS" == "1" ]]; then
+    log "执行数据库迁移"
+    "${COMPOSE[@]}" exec -T web flask db upgrade
+  else
+    log "已设置 RUN_MIGRATIONS=0，跳过数据库迁移"
+  fi
 }
 
 configure_host_nginx() {
+  if [[ "$DEPLOY_ENV" != "production" || "$SKIP_HOST_NGINX" == "1" ]]; then
+    log "跳过宿主机 Nginx 配置"
+    return
+  fi
+
   log "配置宿主机 Nginx 反向代理"
   $SUDO tee /etc/nginx/sites-available/ti.conf > /dev/null <<EOF
 server {
@@ -196,6 +329,11 @@ EOF
 }
 
 configure_firewall() {
+  if [[ "$DEPLOY_ENV" != "production" ]]; then
+    log "开发环境跳过防火墙配置"
+    return
+  fi
+
   log "配置防火墙"
   $SUDO ufw allow OpenSSH
   $SUDO ufw allow 'Nginx Full'
@@ -203,8 +341,8 @@ configure_firewall() {
 }
 
 install_certbot() {
-  if [[ "$SKIP_CERTBOT" == "1" ]]; then
-    log "已设置 SKIP_CERTBOT=1，跳过 HTTPS 证书签发"
+  if [[ "$DEPLOY_ENV" != "production" || "$SKIP_HOST_NGINX" == "1" || "$SKIP_CERTBOT" == "1" ]]; then
+    log "跳过 HTTPS 证书签发"
     return
   fi
 
@@ -229,43 +367,48 @@ install_certbot() {
 
 validate_deploy() {
   log "校验容器状态"
-  $SUDO docker compose \
-    --env-file "$ENV_FILE" \
-    -f "$ROOT_DIR/compose.prod.yml" \
-    ps
+  "${COMPOSE[@]}" ps
 
   log "校验健康检查"
-  curl -fsS http://127.0.0.1:8080/api/ping | python3 -m json.tool
+  if [[ "$DEPLOY_ENV" == "production" ]]; then
+    curl --retry 10 --retry-delay 3 --retry-connrefused -fsS http://127.0.0.1:8080/api/ping | python3 -m json.tool
 
-  if [[ "$SKIP_CERTBOT" == "1" ]]; then
-    curl -I "http://${APP_DOMAIN}" || true
+    if [[ "$SKIP_CERTBOT" == "1" || "$SKIP_HOST_NGINX" == "1" ]]; then
+      curl -I "http://${APP_DOMAIN}" || true
+    else
+      curl -I "https://${APP_DOMAIN}" || true
+      curl -fsS "https://${APP_DOMAIN}/api/ping" | python3 -m json.tool
+    fi
   else
-    curl -I "https://${APP_DOMAIN}" || true
-    curl -fsS "https://${APP_DOMAIN}/api/ping" | python3 -m json.tool
+    curl --retry 10 --retry-delay 3 --retry-connrefused -fsS "http://127.0.0.1:${WEB_PORT:-8000}/api/ping" | python3 -m json.tool
   fi
 }
 
 print_summary() {
   log "部署完成"
   cat <<EOF
-域名：${APP_DOMAIN}
+环境：${DEPLOY_ENV}
+镜像：${TI_IMAGE}
 项目目录：${APP_DIR}
+Compose：${COMPOSE_FILE}
 环境文件：${ENV_FILE}
 
-后续首次登录后台后，请到以下页面补齐运行时配置：
-  - /admin/settings/mail
-  - /admin/settings/sms
-  - /admin/settings/ai
+常用命令：
+  docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" ps
+  docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" logs -f web
 
 说明：
-  - 邮件、AI、短信配置已支持优先从后台系统设置读取；
-  - 本脚本生成的是最小化 .env.production，不再要求你在 env 中填写这些服务密钥。
+  - 本脚本只拉取镜像，不在服务器构建应用镜像；
+  - 私有 GHCR 镜像请通过 GHCR_USERNAME / GHCR_TOKEN 临时登录；
+  - 生产备份包可能包含 env 配置，请按密钥级别保护 backups/。
 EOF
 }
 
 install_base_packages
 install_docker
 prepare_runtime_files
+validate_env
+login_registry_if_needed
 deploy_stack
 configure_host_nginx
 configure_firewall

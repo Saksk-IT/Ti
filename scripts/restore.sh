@@ -2,7 +2,7 @@
 # 生产环境完整数据恢复脚本
 # 使用方式: ./scripts/restore.sh backup_20260306_230000.tar.gz
 
-set -e
+set -euo pipefail
 
 if [ -z "$1" ]; then
   echo "错误: 请指定备份文件"
@@ -11,8 +11,21 @@ if [ -z "$1" ]; then
 fi
 
 BACKUP_FILE="$1"
+ENV_FILE="${ENV_FILE:-.env.production}"
+COMPOSE_FILE="${COMPOSE_FILE:-compose.prod.yml}"
 BACKUP_DIR="./backups"
 TEMP_DIR="${BACKUP_DIR}/temp_restore"
+
+if [ -f "$ENV_FILE" ]; then
+  set -a
+  # shellcheck disable=SC1090
+  . "$ENV_FILE"
+  set +a
+fi
+
+POSTGRES_USER="${POSTGRES_USER:-studyuser}"
+POSTGRES_DB="${POSTGRES_DB:-ti_db}"
+COMPOSE=(docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE")
 
 if [ ! -f "${BACKUP_DIR}/${BACKUP_FILE}" ]; then
   echo "错误: 备份文件不存在: ${BACKUP_DIR}/${BACKUP_FILE}"
@@ -54,14 +67,14 @@ fi
 
 # 2. 停止服务
 echo "正在停止服务..."
-docker compose -f compose.prod.yml stop web worker
+"${COMPOSE[@]}" stop web worker
 echo "✓ 服务已停止"
 
 # 3. 恢复数据库
 if [ -f "${TEMP_DIR}/${BACKUP_NAME}/database.sql" ]; then
   echo "正在恢复数据库..."
-  docker compose -f compose.prod.yml exec -T postgres psql -U studyuser -d ti_db -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
-  docker compose -f compose.prod.yml exec -T postgres psql -U studyuser -d ti_db < "${TEMP_DIR}/${BACKUP_NAME}/database.sql"
+  "${COMPOSE[@]}" exec -T postgres psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+  "${COMPOSE[@]}" exec -T postgres psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" < "${TEMP_DIR}/${BACKUP_NAME}/database.sql"
   echo "✓ 数据库恢复完成"
 else
   echo "⚠ 数据库备份文件不存在，跳过"
@@ -70,10 +83,10 @@ fi
 # 4. 恢复 Redis
 if [ -d "${TEMP_DIR}/${BACKUP_NAME}/redis" ]; then
   echo "正在恢复 Redis..."
-  docker compose -f compose.prod.yml stop redis
+  "${COMPOSE[@]}" stop redis
   rm -rf ./var/redis/*
   cp -r "${TEMP_DIR}/${BACKUP_NAME}/redis/"* ./var/redis/
-  docker compose -f compose.prod.yml start redis
+  "${COMPOSE[@]}" start redis
   echo "✓ Redis 恢复完成"
 else
   echo "⚠ Redis 备份不存在，跳过"
@@ -121,9 +134,9 @@ echo "✓ 临时文件清理完成"
 
 # 9. 启动服务
 echo "正在启动服务..."
-docker compose -f compose.prod.yml start web worker
+"${COMPOSE[@]}" start web worker
 echo "✓ 服务已启动"
 
 echo "=== 恢复完成 ==="
-echo "请检查服务状态: docker compose -f compose.prod.yml ps"
-echo "请检查应用日志: docker compose -f compose.prod.yml logs -f web"
+echo "请检查服务状态: docker compose --env-file ${ENV_FILE} -f ${COMPOSE_FILE} ps"
+echo "请检查应用日志: docker compose --env-file ${ENV_FILE} -f ${COMPOSE_FILE} logs -f web"

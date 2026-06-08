@@ -1,31 +1,26 @@
 # 本地开发配置（独立完整版）
-# 使用方式: docker compose -f compose.dev.yml up
+# 使用方式: docker compose --env-file .env -f compose.dev.yml up
 
 services:
   web:
-    image: saksk-ti:dev
-    pull_policy: never
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
-      args:
-        PYTHON_BASE_IMAGE: ${PYTHON_BASE_IMAGE:-docker.m.daocloud.io/library/python:3.11-slim}
+    image: ${TI_IMAGE:-ghcr.io/saksk-it/ti:dev}
+    pull_policy: ${TI_IMAGE_PULL_POLICY:-always}
     ports:
-      - "8000:8000"
+      - "${WEB_BIND:-0.0.0.0}:${WEB_PORT:-8000}:8000"
     environment:
       FLASK_ENV: development
       FLASK_DEBUG: "1"
       DATA_DIR: /data
-      SECRET_KEY: dev-secret-key
-      DATABASE_URL: postgresql://studyuser:studypass@postgres:5432/ti_db
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-studyuser}:${POSTGRES_PASSWORD:-studypass}@postgres:5432/${POSTGRES_DB:-ti_db}
       REDIS_URL: redis://redis:6379/0
       RATELIMIT_STORAGE_URI: redis://redis:6379/0
-      RQ_QUEUE_NAME: saksk
+      RQ_QUEUE_NAME: ${RQ_QUEUE_NAME:-saksk}
       PROXY_FIX_ENABLED: "false"
-      WECHAT_APPID: ${WECHAT_APPID}
-      WECHAT_SECRET: ${WECHAT_SECRET}
+      WECHAT_APPID: ${WECHAT_APPID:-}
+      WECHAT_SECRET: ${WECHAT_SECRET:-}
       DASHSCOPE_BASE_URL: ${DASHSCOPE_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
-      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY}
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
       DASHSCOPE_MODEL: ${DASHSCOPE_MODEL:-qwen-plus}
       DASHSCOPE_TIMEOUT: ${DASHSCOPE_TIMEOUT:-25}
       MAIL_SERVER: ${MAIL_SERVER:-}
@@ -77,20 +72,20 @@ services:
         condition: service_started
 
   worker:
-    image: saksk-ti:dev
-    pull_policy: never
+    image: ${TI_IMAGE:-ghcr.io/saksk-it/ti:dev}
+    pull_policy: ${TI_IMAGE_PULL_POLICY:-always}
     command: sh -c "rq worker -u $$REDIS_URL $$RQ_QUEUE_NAME"
     environment:
       FLASK_ENV: development
       DATA_DIR: /data
-      SECRET_KEY: dev-secret-key
-      DATABASE_URL: postgresql://studyuser:studypass@postgres:5432/ti_db
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-studyuser}:${POSTGRES_PASSWORD:-studypass}@postgres:5432/${POSTGRES_DB:-ti_db}
       REDIS_URL: redis://redis:6379/0
-      RQ_QUEUE_NAME: saksk
-      WECHAT_APPID: ${WECHAT_APPID}
-      WECHAT_SECRET: ${WECHAT_SECRET}
+      RQ_QUEUE_NAME: ${RQ_QUEUE_NAME:-saksk}
+      WECHAT_APPID: ${WECHAT_APPID:-}
+      WECHAT_SECRET: ${WECHAT_SECRET:-}
       DASHSCOPE_BASE_URL: ${DASHSCOPE_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
-      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY}
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
       DASHSCOPE_MODEL: ${DASHSCOPE_MODEL:-qwen-plus}
       DASHSCOPE_TIMEOUT: ${DASHSCOPE_TIMEOUT:-25}
       MAIL_SERVER: ${MAIL_SERVER:-}
@@ -137,16 +132,16 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: studyuser
-      POSTGRES_PASSWORD: studypass
-      POSTGRES_DB: ti_db
+      POSTGRES_USER: ${POSTGRES_USER:-studyuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-studypass}
+      POSTGRES_DB: ${POSTGRES_DB:-ti_db}
     command: ["postgres", "-c", "shared_buffers=128MB", "-c", "work_mem=4MB", "-c", "max_connections=50"]
     ports:
-      - "5432:5432"
+      - "${POSTGRES_BIND:-0.0.0.0}:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - ./var/postgres:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U studyuser -d ti_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-studyuser} -d ${POSTGRES_DB:-ti_db}"]
       interval: 10s
       timeout: 3s
       retries: 3
@@ -188,9 +183,9 @@ services:
     image: postgres:16-alpine
     environment:
       TZ: ${BACKUP_TZ:-Asia/Shanghai}
-      POSTGRES_USER: studyuser
-      POSTGRES_PASSWORD: studypass
-      POSTGRES_DB: ti_db
+      POSTGRES_USER: ${POSTGRES_USER:-studyuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-studypass}
+      POSTGRES_DB: ${POSTGRES_DB:-ti_db}
       BACKUP_TZ: ${BACKUP_TZ:-Asia/Shanghai}
       BACKUP_ANCHOR_TIME: ${BACKUP_ANCHOR_TIME:-04:00}
       BACKUP_INTERVAL: ${BACKUP_INTERVAL:-43200}

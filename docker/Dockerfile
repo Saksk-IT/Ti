@@ -1,6 +1,10 @@
 ARG PYTHON_BASE_IMAGE=python:3.11-slim
 FROM ${PYTHON_BASE_IMAGE}
 
+LABEL org.opencontainers.image.source="https://github.com/Saksk-IT/Ti" \
+      org.opencontainers.image.description="Ti Flask question-bank platform" \
+      org.opencontainers.image.licenses="UNLICENSED"
+
 ARG PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
 ARG PIP_TRUSTED_HOST=mirrors.aliyun.com
 ARG PIP_DEFAULT_TIMEOUT=120

@@ -2,14 +2,27 @@
 # 生产环境完整数据备份脚本
 # 使用方式: ./scripts/backup.sh
 
-set -e
+set -euo pipefail
 
 BACKUP_TZ=${BACKUP_TZ:-Asia/Shanghai}
 export TZ="${BACKUP_TZ}"
 
+ENV_FILE="${ENV_FILE:-.env.production}"
+COMPOSE_FILE="${COMPOSE_FILE:-compose.prod.yml}"
 BACKUP_DIR="./backups"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_NAME="backup_${TIMESTAMP}"
+
+if [ -f "$ENV_FILE" ]; then
+    set -a
+    # shellcheck disable=SC1090
+    . "$ENV_FILE"
+    set +a
+fi
+
+POSTGRES_USER="${POSTGRES_USER:-studyuser}"
+POSTGRES_DB="${POSTGRES_DB:-ti_db}"
+COMPOSE=(docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE")
 
 echo "=== 开始完整备份 ==="
 echo "备份时区: ${BACKUP_TZ}"
@@ -18,15 +31,16 @@ echo "备份目录: ${BACKUP_DIR}/${BACKUP_NAME}"
 
 # 创建备份目录
 mkdir -p "${BACKUP_DIR}/${BACKUP_NAME}"
+chmod 700 "${BACKUP_DIR}"
 
 # 1. 备份数据库
 echo "正在备份数据库..."
-docker compose -f compose.prod.yml exec -T postgres pg_dump -U studyuser ti_db > "${BACKUP_DIR}/${BACKUP_NAME}/database.sql"
+"${COMPOSE[@]}" exec -T postgres pg_dump -U "${POSTGRES_USER}" "${POSTGRES_DB}" > "${BACKUP_DIR}/${BACKUP_NAME}/database.sql"
 echo "✓ 数据库备份完成"
 
 # 2. 备份 Redis 数据
 echo "正在备份 Redis..."
-docker compose -f compose.prod.yml exec -T redis redis-cli SAVE
+"${COMPOSE[@]}" exec -T redis redis-cli SAVE
 cp -r ./var/redis "${BACKUP_DIR}/${BACKUP_NAME}/redis"
 echo "✓ Redis 备份完成"
 
@@ -60,8 +74,8 @@ fi
 
 # 6. 备份配置文件
 echo "正在备份配置文件..."
-cp .env.production "${BACKUP_DIR}/${BACKUP_NAME}/.env.production" 2>/dev/null || echo "警告: .env.production 不存在"
-cp compose.prod.yml "${BACKUP_DIR}/${BACKUP_NAME}/compose.prod.yml"
+cp "$ENV_FILE" "${BACKUP_DIR}/${BACKUP_NAME}/$(basename "$ENV_FILE")" 2>/dev/null || echo "警告: ${ENV_FILE} 不存在"
+cp "$COMPOSE_FILE" "${BACKUP_DIR}/${BACKUP_NAME}/$(basename "$COMPOSE_FILE")"
 echo "✓ 配置文件备份完成"
 
 # 7. 创建备份清单
@@ -70,12 +84,12 @@ cat > "${BACKUP_DIR}/${BACKUP_NAME}/MANIFEST.txt" <<EOF
 备份时间: $(date '+%Y-%m-%d %H:%M:%S %Z')
 备份时区: ${BACKUP_TZ}
 备份内容:
-- 数据库: ti_db
+- 数据库: ${POSTGRES_DB}
 - Redis 数据: $(du -sh ${BACKUP_DIR}/${BACKUP_NAME}/redis 2>/dev/null | cut -f1 || echo "无")
 - 上传文件: $(du -sh ${BACKUP_DIR}/${BACKUP_NAME}/uploads 2>/dev/null | cut -f1 || echo "无")
 - 实例数据: $(du -sh ${BACKUP_DIR}/${BACKUP_NAME}/instance 2>/dev/null | cut -f1 || echo "无")
 - 日志文件: $(du -sh ${BACKUP_DIR}/${BACKUP_NAME}/logs 2>/dev/null | cut -f1 || echo "无")
-- 配置文件: compose.prod.yml, .env.production
+- 配置文件: $(basename "$COMPOSE_FILE"), $(basename "$ENV_FILE")
 
 文件列表:
 $(find ${BACKUP_DIR}/${BACKUP_NAME} -type f | sed "s|${BACKUP_DIR}/${BACKUP_NAME}/||" | sort)
@@ -88,6 +102,7 @@ cd "${BACKUP_DIR}"
 tar -czf "${BACKUP_NAME}.tar.gz" "${BACKUP_NAME}"
 rm -rf "${BACKUP_NAME}"
 cd ..
+chmod 600 "${BACKUP_DIR}/${BACKUP_NAME}.tar.gz"
 echo "✓ 备份压缩完成"
 
 # 9. 清理旧备份（保留最近 7 天）

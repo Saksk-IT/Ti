@@ -45,6 +45,7 @@ nul
 
 # 运行时数据
 var/
+backups/
 *.db
 *.sqlite3
 
@@ -64,9 +65,6 @@ yarn.lock
 
 # Docker
 docker-compose.override.yml
-
-# 备份调度状态
-backups/.last_backup_slot
 
 # Redis
 dump.rdb

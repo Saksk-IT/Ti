@@ -11,6 +11,7 @@ __pycache__
 **/*.pyc
 miniprogram-1
 var
+backups
 instance
 logs
 uploads

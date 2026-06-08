@@ -29,15 +29,16 @@ services:
         condition: service_healthy
 
   web:
-    image: saksk-ti:latest
+    image: ${TI_IMAGE:-ghcr.io/saksk-it/ti:latest}
+    pull_policy: ${TI_IMAGE_PULL_POLICY:-always}
     restart: unless-stopped
     expose:
       - "8000"
     environment:
       FLASK_ENV: production
       DATA_DIR: /data
-      SECRET_KEY: ${SECRET_KEY}
-      DATABASE_URL: postgresql://${POSTGRES_USER:-studyuser}:${POSTGRES_PASSWORD:-studypass}@postgres:5432/${POSTGRES_DB:-ti_db}
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-studyuser}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ti_db}
       REDIS_URL: redis://redis:6379/0
       RATELIMIT_STORAGE_URI: redis://redis:6379/0
       RQ_QUEUE_NAME: saksk
@@ -103,14 +104,15 @@ services:
         condition: service_started
 
   worker:
-    image: saksk-ti:latest
+    image: ${TI_IMAGE:-ghcr.io/saksk-it/ti:latest}
+    pull_policy: ${TI_IMAGE_PULL_POLICY:-always}
     restart: unless-stopped
     command: sh -c "rq worker -u $$REDIS_URL $$RQ_QUEUE_NAME"
     environment:
       FLASK_ENV: production
       DATA_DIR: /data
-      SECRET_KEY: ${SECRET_KEY}
-      DATABASE_URL: postgresql://${POSTGRES_USER:-studyuser}:${POSTGRES_PASSWORD:-studypass}@postgres:5432/${POSTGRES_DB:-ti_db}
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-studyuser}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ti_db}
       REDIS_URL: redis://redis:6379/0
       RQ_QUEUE_NAME: saksk
       WECHAT_APPID: ${WECHAT_APPID:-}
@@ -166,7 +168,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-studyuser}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-studypass}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: ${POSTGRES_DB:-ti_db}
     command: ["postgres", "-c", "shared_buffers=128MB", "-c", "work_mem=4MB", "-c", "max_connections=50"]
     volumes:
@@ -217,7 +219,7 @@ services:
     environment:
       TZ: ${BACKUP_TZ:-Asia/Shanghai}
       POSTGRES_USER: ${POSTGRES_USER:-studyuser}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-studypass}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: ${POSTGRES_DB:-ti_db}
       BACKUP_TZ: ${BACKUP_TZ:-Asia/Shanghai}
       BACKUP_ANCHOR_TIME: ${BACKUP_ANCHOR_TIME:-04:00}
