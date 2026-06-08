@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         学习通全能作业导出助手
-// @version      1.1.0
+// @version      1.1.1
 // @description  none
 // @author       Saksk
 // @match      *://mooc1.chaoxing.com/mooc2/work/view*
@@ -715,17 +715,19 @@
             return nested === undefined ? '' : htmlToPlainText(nested);
         }
 
-        const source = String(value || '').replace(/\\n/g, '\n');
+        const source = String(value).replace(/\\n/g, '\n');
         if (!source) return '';
         const textarea = document.createElement('textarea');
         textarea.innerHTML = source;
         const decoded = textarea.value;
-        if (!/[<&][a-zA-Z/#?!]/.test(decoded)) {
+        const hasActualHtml = /<\s*\/?\s*[a-zA-Z][^>]*>/i.test(source);
+        const htmlSource = hasActualHtml ? source : decoded;
+        if (!/[<&][a-zA-Z/#?!]/.test(htmlSource)) {
             return maybeCompactCjkSpacing(decoded).replace(/[ \t]+\n/g, '\n').trim();
         }
 
         const box = document.createElement('div');
-        box.innerHTML = decoded
+        box.innerHTML = htmlSource
             .replace(/<br\s*\/?>/gi, '\n')
             .replace(/<\/(p|div|li|tr|h[1-6])>/gi, '\n');
         box.querySelectorAll('script,style,noscript').forEach((n) => n.remove());
@@ -747,6 +749,17 @@
             if (realKey !== undefined) return obj[realKey];
         }
         return undefined;
+    }
+
+    function parseMaybeJson(value) {
+        if (typeof value !== 'string') return value;
+        const text = value.trim();
+        if (!text || !/^[\[{]/.test(text)) return value;
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            return value;
+        }
     }
 
     function getStemCandidate(obj) {
@@ -774,12 +787,22 @@
     }
 
     function extractOptionItems(obj) {
-        const optionArray = getFirstValueByKeys(obj, [
+        let optionArray = parseMaybeJson(getFirstValueByKeys(obj, [
             'optionList', 'options', 'optionDtos', 'optionArray', 'choiceList',
             'choices', 'questionOptions', 'answerOptions', 'items'
-        ]);
+        ]));
+        const answerArray = parseMaybeJson(getFirstValueByKeys(obj, ['answer']));
+        if (!Array.isArray(optionArray) && Array.isArray(answerArray) && answerArray.some((item) => {
+            return item && typeof item === 'object' && (
+                getFirstValueByKeys(item, ['name', 'option', 'optionNo', 'optionName', 'label']) !== undefined ||
+                getFirstValueByKeys(item, ['content', 'optionContent', 'text']) !== undefined
+            );
+        })) {
+            optionArray = answerArray;
+        }
+
         const fromArray = Array.isArray(optionArray) ? optionArray.map((item, idx) => {
-            const label = String(getFirstValueByKeys(item, ['option', 'optionNo', 'optionName', 'label', 'key', 'prefix', 'sort']) || '').trim();
+            const label = String(getFirstValueByKeys(item, ['name', 'option', 'optionNo', 'optionName', 'label', 'key', 'prefix', 'sort']) || '').trim();
             const id = String(getFirstValueByKeys(item, ['id', 'optionId', 'answerId', 'itemId', 'oid', 'value']) || '').trim();
             const text = htmlToPlainText(typeof item === 'object' ? getFirstValueByKeys(item, [
                 'optionContent', 'content', 'text', 'name', 'title', 'answer', 'value'
@@ -854,6 +877,7 @@
 
         if (typeText === '0') return '选择题';
         if (typeText === '1') return '多选题';
+        if (typeText === '16') return '判断题';
         if (typeText === '4' || typeText === '5') return '简答题';
 
         const ans = String(rawAnswer || '').replace(/\s+/g, '');
@@ -866,6 +890,17 @@
         if (typeText === '2') return options.length ? direct : '填空题';
         if (typeText === '3') return options.length ? direct : '判断题';
         return direct;
+    }
+
+    function normalizeChaoxingJudgeRawAnswer(rawAnswer, optionItems) {
+        const raw = String(rawAnswer || '').trim();
+        if (!raw || !Array.isArray(optionItems) || !optionItems.length) return raw;
+        const matched = optionItems.find((opt) => {
+            const label = String(opt.label || '').trim();
+            const id = String(opt.id || '').trim();
+            return raw === label || (!!id && raw === id);
+        });
+        return matched ? String(matched.text || raw).trim() : raw;
     }
 
     function looksLikeQuestionObject(obj) {
@@ -917,7 +952,8 @@
         const rawAnsValue = getAnswerCandidate(obj);
         const rawAns = keepAns ? mapAnswerToLetters(rawAnsValue, optionItems) : '';
         const qType = guessChaoxingQType(rawType, stem, optionTexts, rawAns);
-        const storageAnswer = keepAns ? normalizeAnswerForBankStorage(qType, rawAns, optionTexts, stem) : '';
+        const rawAnsForStorage = qType === '判断题' ? normalizeChaoxingJudgeRawAnswer(rawAns, optionItems) : rawAns;
+        const storageAnswer = keepAns ? normalizeAnswerForBankStorage(qType, rawAnsForStorage, optionTexts, stem) : '';
         const storageOptions = (qType === '选择题' || qType === '多选题') ? optionTexts : [];
 
         return {
@@ -1100,7 +1136,8 @@
     async function fetchQuestionsByActiveId(activeId, keepAns) {
         const url = `https://mobilelearn.chaoxing.com/v2/apis/studentQuestion/getAnswerResult?activeId=${encodeURIComponent(activeId)}`;
         const json = await requestJson(url);
-        const objects = collectQuestionObjects(json);
+        const questionList = json && json.data && Array.isArray(json.data.questionList) ? json.data.questionList : null;
+        const objects = questionList || collectQuestionObjects(json);
         return objects
             .map((obj, index) => normalizeChaoxingQuestion(obj, index, keepAns))
             .filter((q) => q && q.stem);
