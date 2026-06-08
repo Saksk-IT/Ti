@@ -187,21 +187,11 @@ class ProductionConfig(Config):
     # 生产环境 Nginx 接管 Gzip，Flask 层默认关闭
     ENABLE_GZIP = os.environ.get('ENABLE_GZIP', 'false').lower() in ['true', 'on', '1']
 
-    # 生产环境必须设置密钥（不允许使用默认值）
+    # 生产环境必须设置密钥（不允许使用默认值，启动时由应用工厂校验）
     SECRET_KEY = os.environ.get('SECRET_KEY')
-    if not SECRET_KEY:
-        raise RuntimeError(
-            'SECRET_KEY 未设置！生产环境必须设置 SECRET_KEY 环境变量。'
-            '生成方式: python -c "import secrets; print(secrets.token_urlsafe(32))"'
-        )
 
-    # 生产环境必须配置 Redis（多 worker 共享缓存/限流/队列）
+    # 生产环境必须配置 Redis（多 worker 共享缓存/限流/队列，启动时由应用工厂校验）
     REDIS_URL = os.environ.get('REDIS_URL')
-    if not REDIS_URL:
-        raise RuntimeError(
-            'REDIS_URL 未设置！生产环境必须设置 REDIS_URL 环境变量。'
-            '示例: redis://redis:6379/0'
-        )
 
     # 强制限流存储使用 Redis（多 worker 共享计数）
     RATELIMIT_STORAGE_URI = REDIS_URL

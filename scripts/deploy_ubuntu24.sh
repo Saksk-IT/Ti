@@ -52,9 +52,15 @@ REQUESTED_SESSION_COOKIE_SECURE="${SESSION_COOKIE_SECURE-}"
 TI_IMAGE="${TI_IMAGE:-$DEFAULT_TI_IMAGE}"
 TI_IMAGE_PULL_POLICY="${TI_IMAGE_PULL_POLICY:-always}"
 RUN_MIGRATIONS="${RUN_MIGRATIONS:-1}"
+ENSURE_DEFAULT_ADMIN="${ENSURE_DEFAULT_ADMIN:-1}"
 ALLOW_INSECURE_DEFAULTS="${ALLOW_INSECURE_DEFAULTS:-0}"
 POSTGRES_DB="${POSTGRES_DB:-ti_db}"
 POSTGRES_USER="${POSTGRES_USER:-studyuser}"
+DEFAULT_ADMIN_USERNAME="${DEFAULT_ADMIN_USERNAME:-admin}"
+DEFAULT_ADMIN_PHONE="${DEFAULT_ADMIN_PHONE:-}"
+DEFAULT_ADMIN_EMAIL="${DEFAULT_ADMIN_EMAIL:-admin@ti.local}"
+DEFAULT_ADMIN_RESET_PASSWORD="${DEFAULT_ADMIN_RESET_PASSWORD:-0}"
+DEFAULT_ADMIN_PASSWORD="${DEFAULT_ADMIN_PASSWORD:-}"
 HTTP_BIND="${HTTP_BIND:-$([[ "$ENABLE_HTTPS" == "1" ]] && printf '127.0.0.1' || printf '0.0.0.0')}"
 HTTP_PORT="${HTTP_PORT:-8080}"
 SESSION_COOKIE_SECURE="${SESSION_COOKIE_SECURE:-$([[ "$ENABLE_HTTPS" == "1" ]] && printf 'true' || printf 'false')}"
@@ -97,6 +103,30 @@ PY
   fi
 
   fail "无法生成随机密钥：缺少 python3 和 openssl"
+}
+
+random_password() {
+  if command -v python3 >/dev/null 2>&1; then
+    python3 - <<'PY'
+import secrets
+import string
+
+alphabet = string.ascii_letters + string.digits
+password = [
+    secrets.choice(string.ascii_lowercase),
+    secrets.choice(string.ascii_uppercase),
+    secrets.choice(string.digits),
+]
+password.extend(secrets.choice(alphabet) for _ in range(21))
+secrets.SystemRandom().shuffle(password)
+print("".join(password))
+PY
+    return
+  fi
+
+  local raw
+  raw="$(random_secret | tr -cd 'A-Za-z0-9' | head -c 24)"
+  printf 'A1%s\n' "$raw"
 }
 
 postgres_has_existing_data() {
@@ -154,6 +184,13 @@ load_env_file() {
   export TI_IMAGE TI_IMAGE_PULL_POLICY HTTP_BIND HTTP_PORT SESSION_COOKIE_SECURE
   POSTGRES_USER="${POSTGRES_USER:-studyuser}"
   POSTGRES_DB="${POSTGRES_DB:-ti_db}"
+  DEFAULT_ADMIN_USERNAME="${DEFAULT_ADMIN_USERNAME:-admin}"
+  DEFAULT_ADMIN_PHONE="${DEFAULT_ADMIN_PHONE:-}"
+  DEFAULT_ADMIN_EMAIL="${DEFAULT_ADMIN_EMAIL:-admin@ti.local}"
+  DEFAULT_ADMIN_RESET_PASSWORD="${DEFAULT_ADMIN_RESET_PASSWORD:-0}"
+  if [[ -z "${DEFAULT_ADMIN_PASSWORD:-}" ]]; then
+    DEFAULT_ADMIN_PASSWORD="$(random_password)"
+  fi
 }
 
 upsert_env_value() {
@@ -238,9 +275,10 @@ EOF
 }
 
 write_production_env() {
-  local secret_key postgres_password
+  local secret_key postgres_password default_admin_password
   secret_key="${SECRET_KEY:-$(random_secret)}"
   postgres_password="${POSTGRES_PASSWORD:-$(random_secret)}"
+  default_admin_password="${DEFAULT_ADMIN_PASSWORD:-$(random_password)}"
 
   cat > "$ENV_FILE" <<EOF
 FLASK_ENV=production
@@ -250,6 +288,11 @@ SECRET_KEY=${secret_key}
 POSTGRES_USER=${POSTGRES_USER}
 POSTGRES_PASSWORD=${postgres_password}
 POSTGRES_DB=${POSTGRES_DB}
+DEFAULT_ADMIN_USERNAME=${DEFAULT_ADMIN_USERNAME}
+DEFAULT_ADMIN_PASSWORD=${default_admin_password}
+DEFAULT_ADMIN_PHONE=${DEFAULT_ADMIN_PHONE}
+DEFAULT_ADMIN_EMAIL=${DEFAULT_ADMIN_EMAIL}
+DEFAULT_ADMIN_RESET_PASSWORD=${DEFAULT_ADMIN_RESET_PASSWORD}
 PROXY_FIX_ENABLED=true
 SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE}
 HTTP_BIND=${HTTP_BIND}
@@ -275,6 +318,11 @@ SECRET_KEY=${SECRET_KEY:-dev-secret-key}
 POSTGRES_USER=${POSTGRES_USER}
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-studypass}
 POSTGRES_DB=${POSTGRES_DB}
+DEFAULT_ADMIN_USERNAME=${DEFAULT_ADMIN_USERNAME}
+DEFAULT_ADMIN_PASSWORD=${DEFAULT_ADMIN_PASSWORD:-$(random_password)}
+DEFAULT_ADMIN_PHONE=${DEFAULT_ADMIN_PHONE}
+DEFAULT_ADMIN_EMAIL=${DEFAULT_ADMIN_EMAIL}
+DEFAULT_ADMIN_RESET_PASSWORD=${DEFAULT_ADMIN_RESET_PASSWORD}
 MAIL_ENABLED=true
 MAIL_CONSOLE_OUTPUT=true
 SMS_ENABLED=true
@@ -317,6 +365,11 @@ prepare_runtime_files() {
   load_env_file
   upsert_env_value "TI_IMAGE" "$TI_IMAGE"
   upsert_env_value "TI_IMAGE_PULL_POLICY" "$TI_IMAGE_PULL_POLICY"
+  upsert_env_value "DEFAULT_ADMIN_USERNAME" "$DEFAULT_ADMIN_USERNAME"
+  upsert_env_value "DEFAULT_ADMIN_PHONE" "$DEFAULT_ADMIN_PHONE"
+  upsert_env_value "DEFAULT_ADMIN_EMAIL" "$DEFAULT_ADMIN_EMAIL"
+  upsert_env_value "DEFAULT_ADMIN_PASSWORD" "$DEFAULT_ADMIN_PASSWORD"
+  upsert_env_value "DEFAULT_ADMIN_RESET_PASSWORD" "$DEFAULT_ADMIN_RESET_PASSWORD"
   if [[ "$DEPLOY_ENV" == "production" ]]; then
     upsert_env_value "HTTP_BIND" "$HTTP_BIND"
     upsert_env_value "HTTP_PORT" "$HTTP_PORT"
@@ -336,6 +389,9 @@ validate_env() {
 
   [[ -n "${SECRET_KEY:-}" ]] || fail "${ENV_FILE} 缺少 SECRET_KEY"
   [[ -n "${POSTGRES_PASSWORD:-}" ]] || fail "${ENV_FILE} 缺少 POSTGRES_PASSWORD"
+  [[ -n "${DEFAULT_ADMIN_USERNAME:-}" ]] || fail "${ENV_FILE} 缺少 DEFAULT_ADMIN_USERNAME"
+  [[ -n "${DEFAULT_ADMIN_PASSWORD:-}" ]] || fail "${ENV_FILE} 缺少 DEFAULT_ADMIN_PASSWORD"
+  [[ -n "${DEFAULT_ADMIN_PHONE:-}${DEFAULT_ADMIN_EMAIL:-}" ]] || fail "${ENV_FILE} 必须配置 DEFAULT_ADMIN_PHONE 或 DEFAULT_ADMIN_EMAIL"
 
   if [[ "$ALLOW_INSECURE_DEFAULTS" != "1" ]]; then
     [[ "$POSTGRES_PASSWORD" != "studypass" ]] || fail "生产环境禁止使用默认数据库密码 studypass"
@@ -374,6 +430,13 @@ deploy_stack() {
     "${COMPOSE[@]}" exec -T web flask db upgrade
   else
     log "已设置 RUN_MIGRATIONS=0，跳过数据库迁移"
+  fi
+
+  if [[ "$ENSURE_DEFAULT_ADMIN" == "1" ]]; then
+    log "确保默认管理员账号"
+    "${COMPOSE[@]}" exec -T web flask ensure-default-admin
+  else
+    log "已设置 ENSURE_DEFAULT_ADMIN=0，跳过默认管理员初始化"
   fi
 }
 
@@ -494,10 +557,12 @@ HTTPS 后续配置：$([[ "$ENABLE_HTTPS" == "1" ]] && printf '已启用，域�
 常用命令：
   docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" ps
   docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" logs -f web
+  docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" exec -T web flask ensure-default-admin
 
 说明：
   - 本脚本只拉取镜像，不在服务器构建应用镜像；
   - 私有 GHCR 镜像请通过 GHCR_USERNAME / GHCR_TOKEN 临时登录；
+  - 默认管理员账号配置保存在环境文件 DEFAULT_ADMIN_* 中，生产密码请按密钥级别保管；
   - 生产备份包可能包含 env 配置，请按密钥级别保护 backups/。
 EOF
 }

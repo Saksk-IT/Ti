@@ -59,6 +59,7 @@ def create_app(config_name=None):
     
     # 加载配置
     app.config.from_object(config[config_name])
+    _validate_required_runtime_config(app)
 
     # 生产/预发布等非调试环境禁止内存限流存储，避免多实例计数失效
     if not app.config.get('DEBUG') and not app.config.get('TESTING'):
@@ -110,6 +111,9 @@ def create_app(config_name=None):
     
     # 注册错误处理器
     _register_error_handlers(app)
+
+    # 注册 Flask CLI 命令
+    _register_cli_commands(app)
     
     # 初始化 ORM 模型（确保 Flask-Migrate 能发现所有表定义）
     with app.app_context():
@@ -121,6 +125,31 @@ def create_app(config_name=None):
     app.logger.info('应用启动完成')
     
     return app
+
+
+def _register_cli_commands(app):
+    """注册运维命令。"""
+    from app.core.cli import register_cli_commands
+
+    register_cli_commands(app)
+
+
+def _validate_required_runtime_config(app: Flask) -> None:
+    """校验生产运行必需配置，避免测试导入阶段误触发生产校验。"""
+    if app.config.get('DEBUG') or app.config.get('TESTING'):
+        return
+
+    if not app.config.get('SECRET_KEY'):
+        raise RuntimeError(
+            'SECRET_KEY 未设置！生产环境必须设置 SECRET_KEY 环境变量。'
+            '生成方式: python -c "import secrets; print(secrets.token_urlsafe(32))"'
+        )
+
+    if not app.config.get('REDIS_URL'):
+        raise RuntimeError(
+            'REDIS_URL 未设置！生产环境必须设置 REDIS_URL 环境变量。'
+            '示例: redis://redis:6379/0'
+        )
 
 
 def _setup_response_compression(app: Flask) -> None:
