@@ -70,6 +70,198 @@
       .replace(/'/g, '&#39;');
   }
 
+  function sanitizeMarkdownUrl(url) {
+    const raw = String(url || '').trim();
+    if (!/^https?:\/\//i.test(raw)) return '';
+    try {
+      const parsed = new URL(raw);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return '';
+      return parsed.href;
+    } catch (err) {
+      return '';
+    }
+  }
+
+  function renderStrongMarkdown(text) {
+    const value = String(text || '');
+    const strongRe = /\*\*([\s\S]+?)\*\*/g;
+    let html = '';
+    let lastIndex = 0;
+    let match;
+    while ((match = strongRe.exec(value)) !== null) {
+      html += escapeHtml(value.slice(lastIndex, match.index));
+      html += `<strong>${escapeHtml(match[1])}</strong>`;
+      lastIndex = match.index + match[0].length;
+    }
+    html += escapeHtml(value.slice(lastIndex));
+    return html;
+  }
+
+  function renderInlineText(text) {
+    const value = String(text || '');
+    const linkRe = /\[([^\]\n]+)\]\(([^()\s]+)\)/g;
+    let html = '';
+    let lastIndex = 0;
+    let match;
+    while ((match = linkRe.exec(value)) !== null) {
+      html += renderStrongMarkdown(value.slice(lastIndex, match.index));
+      const href = sanitizeMarkdownUrl(match[2]);
+      if (href) {
+        html += `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${renderStrongMarkdown(match[1])}</a>`;
+      } else {
+        html += renderStrongMarkdown(match[0]);
+      }
+      lastIndex = match.index + match[0].length;
+    }
+    html += renderStrongMarkdown(value.slice(lastIndex));
+    return html;
+  }
+
+  function renderInlineMarkdown(text) {
+    const value = String(text || '');
+    const codeRe = /`([^`\n]+)`/g;
+    let html = '';
+    let lastIndex = 0;
+    let match;
+    while ((match = codeRe.exec(value)) !== null) {
+      html += renderInlineText(value.slice(lastIndex, match.index));
+      html += `<code>${escapeHtml(match[1])}</code>`;
+      lastIndex = match.index + match[0].length;
+    }
+    html += renderInlineText(value.slice(lastIndex));
+    return html;
+  }
+
+  function renderParagraph(lines) {
+    return `<p>${renderInlineMarkdown(lines.join('\n')).replace(/\n/g, '<br>')}</p>`;
+  }
+
+  function isTableDivider(line) {
+    return /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(line || '');
+  }
+
+  function splitTableRow(line) {
+    return String(line || '')
+      .replace(/^\s*\|/, '')
+      .replace(/\|\s*$/, '')
+      .split('|')
+      .map(cell => cell.trim());
+  }
+
+  function renderTable(lines) {
+    const headers = splitTableRow(lines[0] || '');
+    const rows = lines.slice(2).map(splitTableRow);
+    const headHtml = headers.map(cell => `<th>${renderInlineMarkdown(cell)}</th>`).join('');
+    const bodyHtml = rows.map(row => (
+      `<tr>${headers.map((_, idx) => `<td>${renderInlineMarkdown(row[idx] || '')}</td>`).join('')}</tr>`
+    )).join('');
+    return `<div class="ai-md-table-wrap"><table><thead><tr>${headHtml}</tr></thead><tbody>${bodyHtml}</tbody></table></div>`;
+  }
+
+  function isMarkdownBlockStart(line, nextLine) {
+    const text = String(line || '');
+    return /^```\s*([A-Za-z0-9_-]+)?\s*$/.test(text) ||
+      /^#{1,3}\s+/.test(text) ||
+      /^>\s?/.test(text) ||
+      /^\s*[-*]\s+/.test(text) ||
+      /^\s*\d+[.)]\s+/.test(text) ||
+      (text.includes('|') && isTableDivider(nextLine || ''));
+  }
+
+  function renderMarkdown(markdown) {
+    const lines = String(markdown || '').replace(/\r\n?/g, '\n').split('\n');
+    const html = [];
+    let index = 0;
+
+    while (index < lines.length) {
+      const line = lines[index];
+      if (!line.trim()) {
+        index += 1;
+        continue;
+      }
+
+      const fence = line.match(/^```\s*([A-Za-z0-9_-]+)?\s*$/);
+      if (fence) {
+        const codeLines = [];
+        index += 1;
+        while (index < lines.length && !/^```\s*$/.test(lines[index])) {
+          codeLines.push(lines[index]);
+          index += 1;
+        }
+        if (index < lines.length) index += 1;
+        const lang = fence[1] ? ` class="language-${escapeHtml(fence[1])}"` : '';
+        html.push(`<pre><code${lang}>${escapeHtml(codeLines.join('\n'))}</code></pre>`);
+        continue;
+      }
+
+      const heading = line.match(/^(#{1,3})\s+(.+)$/);
+      if (heading) {
+        const level = heading[1].length;
+        html.push(`<h${level}>${renderInlineMarkdown(heading[2].trim())}</h${level}>`);
+        index += 1;
+        continue;
+      }
+
+      if (line.includes('|') && isTableDivider(lines[index + 1] || '')) {
+        const tableLines = [line, lines[index + 1]];
+        index += 2;
+        while (index < lines.length && lines[index].includes('|') && lines[index].trim()) {
+          tableLines.push(lines[index]);
+          index += 1;
+        }
+        html.push(renderTable(tableLines));
+        continue;
+      }
+
+      if (/^>\s?/.test(line)) {
+        const quoteLines = [];
+        while (index < lines.length && /^>\s?/.test(lines[index])) {
+          quoteLines.push(lines[index].replace(/^>\s?/, ''));
+          index += 1;
+        }
+        html.push(`<blockquote>${renderInlineMarkdown(quoteLines.join('\n')).replace(/\n/g, '<br>')}</blockquote>`);
+        continue;
+      }
+
+      if (/^\s*[-*]\s+/.test(line)) {
+        const items = [];
+        while (index < lines.length && /^\s*[-*]\s+/.test(lines[index])) {
+          items.push(lines[index].replace(/^\s*[-*]\s+/, ''));
+          index += 1;
+        }
+        html.push(`<ul>${items.map(item => `<li>${renderInlineMarkdown(item)}</li>`).join('')}</ul>`);
+        continue;
+      }
+
+      if (/^\s*\d+[.)]\s+/.test(line)) {
+        const items = [];
+        while (index < lines.length && /^\s*\d+[.)]\s+/.test(lines[index])) {
+          items.push(lines[index].replace(/^\s*\d+[.)]\s+/, ''));
+          index += 1;
+        }
+        html.push(`<ol>${items.map(item => `<li>${renderInlineMarkdown(item)}</li>`).join('')}</ol>`);
+        continue;
+      }
+
+      const paragraph = [];
+      while (
+        index < lines.length &&
+        lines[index].trim() &&
+        !isMarkdownBlockStart(lines[index], lines[index + 1])
+      ) {
+        paragraph.push(lines[index]);
+        index += 1;
+      }
+      if (!paragraph.length) {
+        paragraph.push(lines[index]);
+        index += 1;
+      }
+      html.push(renderParagraph(paragraph));
+    }
+
+    return html.join('');
+  }
+
   function formatTime(value) {
     if (!value) return '';
     const d = new Date(value);
@@ -151,6 +343,9 @@
   function renderMessage(message) {
     const role = message.role === 'user' ? 'user' : 'assistant';
     const failed = message.status === 'failed' ? ' failed' : '';
+    const content = message.content || '';
+    const contentHtml = role === 'assistant' ? renderMarkdown(content) : escapeHtml(content);
+    const contentClass = role === 'assistant' ? ' ai-message-markdown' : ' ai-message-plain';
     const status = message.status === 'streaming'
       ? '<div class="ai-message-status">正在回复...</div>'
       : message.status === 'failed'
@@ -162,7 +357,7 @@
         ${role === 'assistant' ? `<div class="ai-avatar">${avatar}</div>` : ''}
         <div class="ai-message${failed}">
           <div class="ai-message-role">${messageRoleText(message.role)}</div>
-          <div class="ai-message-content">${escapeHtml(message.content || '')}</div>
+          <div class="ai-message-content${contentClass}">${contentHtml}</div>
           ${status}
         </div>
         ${role === 'user' ? `<div class="ai-avatar">${avatar}</div>` : ''}

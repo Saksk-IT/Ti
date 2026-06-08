@@ -411,11 +411,147 @@ html[data-theme="dark"] .ai-danger-btn {
 }
 
 .ai-message-content {
-  white-space: pre-wrap;
   word-break: break-word;
   overflow-wrap: anywhere;
   line-height: 1.72;
   font-size: 14px;
+}
+
+.ai-message-plain {
+  white-space: pre-wrap;
+}
+
+.ai-message-markdown > :first-child {
+  margin-top: 0;
+}
+
+.ai-message-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.ai-message-markdown h1,
+.ai-message-markdown h2,
+.ai-message-markdown h3 {
+  margin: 14px 0 8px;
+  color: var(--app-text);
+  line-height: 1.32;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.ai-message-markdown h1 {
+  font-size: 19px;
+}
+
+.ai-message-markdown h2 {
+  font-size: 17px;
+}
+
+.ai-message-markdown h3 {
+  font-size: 15px;
+}
+
+.ai-message-markdown p {
+  margin: 9px 0;
+}
+
+.ai-message-markdown ul,
+.ai-message-markdown ol {
+  margin: 9px 0;
+  padding-left: 22px;
+}
+
+.ai-message-markdown li {
+  margin: 5px 0;
+  padding-left: 2px;
+}
+
+.ai-message-markdown blockquote {
+  margin: 12px 0;
+  padding: 9px 12px;
+  border-left: 3px solid color-mix(in srgb, var(--app-primary) 48%, var(--app-border));
+  border-radius: 0 12px 12px 0;
+  background: color-mix(in srgb, var(--app-primary-soft) 42%, transparent);
+  color: color-mix(in srgb, var(--app-text) 86%, var(--app-muted));
+}
+
+.ai-message-markdown strong {
+  color: var(--app-text);
+  font-weight: 900;
+}
+
+.ai-message-markdown a {
+  color: var(--app-primary);
+  font-weight: 850;
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--app-primary) 42%, transparent);
+}
+
+.ai-message-markdown a:hover {
+  border-bottom-color: var(--app-primary);
+}
+
+.ai-message-markdown code {
+  border: 1px solid color-mix(in srgb, var(--app-border) 82%, transparent);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--app-surface-2) 76%, transparent);
+  color: color-mix(in srgb, var(--app-text) 92%, var(--app-primary));
+  padding: 1px 5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.92em;
+}
+
+.ai-message-markdown pre {
+  margin: 12px 0;
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid color-mix(in srgb, var(--app-border) 88%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--app-surface-2) 86%, #0f172a);
+  padding: 12px;
+}
+
+.ai-message-markdown pre code {
+  display: block;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--app-text);
+  padding: 0;
+  white-space: pre;
+  overflow-wrap: normal;
+}
+
+.ai-md-table-wrap {
+  max-width: 100%;
+  overflow: auto;
+  margin: 12px 0;
+  border: 1px solid var(--ai-line);
+  border-radius: 14px;
+}
+
+.ai-message-markdown table {
+  width: 100%;
+  min-width: 360px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.ai-message-markdown th,
+.ai-message-markdown td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--ai-line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.ai-message-markdown th {
+  background: color-mix(in srgb, var(--app-surface-2) 72%, transparent);
+  font-weight: 900;
+}
+
+.ai-message-markdown tr:last-child td {
+  border-bottom: 0;
 }
 
 .ai-message-status {
