@@ -324,6 +324,253 @@ def test_ai_client_extracts_responses_text(monkeypatch):
     assert captured['timeout'] == 12
 
 
+def test_ai_client_openai_chat_uses_current_token_param(monkeypatch):
+    class FakeResponse:
+        status_code = 200
+
+        def json(self):
+            return {'choices': [{'message': {'content': '解析正文'}}]}
+
+    captured = {}
+
+    def fake_post(url, headers, json, timeout):
+        captured['url'] = url
+        captured['payload'] = json
+        return FakeResponse()
+
+    monkeypatch.setattr('app.modules.quiz.services.ai_client.requests.post', fake_post)
+
+    client = AIClient(
+        api_key='test-key',
+        base_url='https://api.openai.com/v1',
+        api_type='chat_completions',
+        provider='openai',
+    )
+    text = client.generate_text(
+        model='gpt-4.1-mini',
+        messages=[{'role': 'system', 'content': '规则'}, {'role': 'user', 'content': '请解析'}],
+        max_tokens=321,
+    )
+
+    assert text == '解析正文'
+    assert captured['url'] == 'https://api.openai.com/v1/chat/completions'
+    assert captured['payload']['max_completion_tokens'] == 321
+    assert 'max_tokens' not in captured['payload']
+    assert captured['payload']['temperature'] == 0.2
+    assert captured['payload']['top_p'] == 0.8
+    assert captured['payload']['messages'][0] == {'role': 'system', 'content': '规则'}
+
+
+def test_ai_client_openai_reasoning_chat_omits_sampling_params(monkeypatch):
+    class FakeResponse:
+        status_code = 200
+
+        def json(self):
+            return {'choices': [{'message': {'content': '解析正文'}}]}
+
+    captured = {}
+
+    def fake_post(url, headers, json, timeout):
+        captured['payload'] = json
+        return FakeResponse()
+
+    monkeypatch.setattr('app.modules.quiz.services.ai_client.requests.post', fake_post)
+
+    client = AIClient(
+        api_key='test-key',
+        base_url='https://api.openai.com/v1',
+        api_type='chat_completions',
+        provider='openai',
+    )
+    text = client.generate_text(
+        model='gpt-5',
+        messages=[{'role': 'system', 'content': '规则'}, {'role': 'user', 'content': '请解析'}],
+        temperature=0.2,
+        top_p=0.8,
+        max_tokens=456,
+    )
+
+    assert text == '解析正文'
+    assert captured['payload']['max_completion_tokens'] == 456
+    assert 'max_tokens' not in captured['payload']
+    assert 'temperature' not in captured['payload']
+    assert 'top_p' not in captured['payload']
+    assert captured['payload']['messages'][0] == {'role': 'developer', 'content': '规则'}
+
+
+def test_ai_client_openai_reasoning_responses_omits_sampling_params(monkeypatch):
+    class FakeResponse:
+        status_code = 200
+
+        def json(self):
+            return {'output_text': '解析正文'}
+
+    captured = {}
+
+    def fake_post(url, headers, json, timeout):
+        captured['url'] = url
+        captured['payload'] = json
+        return FakeResponse()
+
+    monkeypatch.setattr('app.modules.quiz.services.ai_client.requests.post', fake_post)
+
+    client = AIClient(
+        api_key='test-key',
+        base_url='https://api.openai.com/v1',
+        api_type='responses',
+        provider='openai',
+    )
+    text = client.generate_text(
+        model='gpt-5.1',
+        messages=[{'role': 'system', 'content': '规则'}, {'role': 'user', 'content': '请解析'}],
+        temperature=0.2,
+        top_p=0.8,
+        max_tokens=789,
+    )
+
+    assert text == '解析正文'
+    assert captured['url'] == 'https://api.openai.com/v1/responses'
+    assert captured['payload']['max_output_tokens'] == 789
+    assert 'temperature' not in captured['payload']
+    assert 'top_p' not in captured['payload']
+
+
+def test_ai_client_retries_without_sampling_params_when_upstream_rejects(monkeypatch):
+    class FakeErrorResponse:
+        status_code = 400
+        text = ''
+
+        def json(self):
+            return {'error': {'message': 'Unsupported parameter: temperature is not supported'}}
+
+    class FakeSuccessResponse:
+        status_code = 200
+
+        def json(self):
+            return {'output_text': '重试成功'}
+
+    captured_payloads = []
+
+    def fake_post(url, headers, json, timeout):
+        captured_payloads.append(json)
+        if len(captured_payloads) == 1:
+            return FakeErrorResponse()
+        return FakeSuccessResponse()
+
+    monkeypatch.setattr('app.modules.quiz.services.ai_client.requests.post', fake_post)
+
+    client = AIClient(
+        api_key='test-key',
+        base_url='https://api.openai.com/v1',
+        api_type='responses',
+        provider='openai',
+    )
+    text = client.generate_text(
+        model='gpt-4.1-mini',
+        messages=[{'role': 'user', 'content': '请解析'}],
+        temperature=0.2,
+        top_p=0.8,
+    )
+
+    assert text == '重试成功'
+    assert len(captured_payloads) == 2
+    assert 'temperature' in captured_payloads[0]
+    assert 'top_p' in captured_payloads[0]
+    assert 'temperature' not in captured_payloads[1]
+    assert 'top_p' not in captured_payloads[1]
+
+
+def test_ai_client_responses_empty_output_falls_back_to_chat(monkeypatch):
+    class FakeResponsesResponse:
+        status_code = 200
+
+        def json(self):
+            return {'status': 'completed', 'output': []}
+
+    class FakeChatResponse:
+        status_code = 200
+
+        @property
+        def content(self):
+            return json.dumps(
+                {'choices': [{'message': {'content': 'Chat 兜底解析'}}]},
+                ensure_ascii=False,
+            ).encode('utf-8')
+
+        @property
+        def text(self):
+            return self.content.decode('latin-1')
+
+        def json(self):
+            return {'choices': [{'message': {'content': '乱码兜底不应使用'}}]}
+
+    captured = []
+
+    def fake_post(url, headers, json, timeout):
+        captured.append({'url': url, 'payload': json})
+        if url.endswith('/responses'):
+            return FakeResponsesResponse()
+        return FakeChatResponse()
+
+    monkeypatch.setattr('app.modules.quiz.services.ai_client.requests.post', fake_post)
+
+    client = AIClient(
+        api_key='test-key',
+        base_url='https://api.example.test/v1',
+        api_type='responses',
+        provider='openai',
+    )
+    text = client.generate_text(
+        model='gpt-5.4-mini',
+        messages=[{'role': 'system', 'content': '规则'}, {'role': 'user', 'content': '请解析'}],
+        max_tokens=555,
+    )
+
+    assert text == 'Chat 兜底解析'
+    assert [item['url'] for item in captured] == [
+        'https://api.example.test/v1/responses',
+        'https://api.example.test/v1/chat/completions',
+    ]
+    assert captured[1]['payload']['max_completion_tokens'] == 555
+    assert captured[1]['payload']['messages'][0] == {'role': 'developer', 'content': '规则'}
+
+
+def test_ai_client_decodes_utf8_json_content_before_requests_text(monkeypatch):
+    class FakeResponse:
+        status_code = 200
+
+        @property
+        def content(self):
+            return json.dumps(
+                {'choices': [{'message': {'content': '你好，中文正常。'}}]},
+                ensure_ascii=False,
+            ).encode('utf-8')
+
+        @property
+        def text(self):
+            return self.content.decode('latin-1')
+
+        def json(self):
+            return {'choices': [{'message': {'content': 'ä½\xa0å¥½'}}]}
+
+    monkeypatch.setattr(
+        'app.modules.quiz.services.ai_client.requests.post',
+        lambda url, headers, json, timeout: FakeResponse(),
+    )
+
+    client = AIClient(
+        api_key='test-key',
+        base_url='https://api.example.test/v1',
+        api_type='chat_completions',
+        provider='custom',
+    )
+
+    assert client.generate_text(
+        model='model-a',
+        messages=[{'role': 'user', 'content': '请回复中文'}],
+    ) == '你好，中文正常。'
+
+
 def test_ai_client_lists_models(monkeypatch):
     class FakeResponse:
         status_code = 200
