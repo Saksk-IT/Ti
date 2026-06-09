@@ -142,6 +142,10 @@ class Config:
     SMS_ENABLED = os.environ.get('SMS_ENABLED', 'true').lower() in ['true', 'on', '1']
     SMS_CONSOLE_OUTPUT = os.environ.get('SMS_CONSOLE_OUTPUT', 'false').lower() in ['true', 'on', '1']
 
+    # 登录方式开关（DB 配置优先，环境变量用于兜底）
+    AUTH_PHONE_LOGIN_ENABLED = os.environ.get('AUTH_PHONE_LOGIN_ENABLED', 'true').lower() in ['true', 'on', '1']
+    AUTH_WECHAT_LOGIN_ENABLED = os.environ.get('AUTH_WECHAT_LOGIN_ENABLED', 'true').lower() in ['true', 'on', '1']
+
     # === 通用 AI 配置（DB 配置优先，环境变量用于兜底）===
     AI_PROVIDER = os.environ.get('AI_PROVIDER', '')
     AI_API_KEY = os.environ.get('AI_API_KEY')

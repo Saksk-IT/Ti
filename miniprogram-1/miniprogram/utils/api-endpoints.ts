@@ -63,6 +63,13 @@ export const api = {
   miniWechatBind: (code: string) =>
     request('/mini/wechat/bind', 'POST', { code }),
 
+  getAuthLoginMethods: () =>
+    request('/auth/login-methods', 'GET') as Promise<{
+      phone_login_enabled: boolean;
+      wechat_login_enabled: boolean;
+      default_mode: 'phone' | 'qr' | 'password' | 'code';
+    }>,
+
   // 小程序：忘记密码 — 发送验证码
   miniSendForgotPasswordCode: (email: string) =>
     request('/mini/forgot-password/send-code', 'POST', { email }),

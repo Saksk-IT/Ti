@@ -35,6 +35,20 @@ PHONE_LOGIN_RE = re.compile(r'^1[3-9]\d{9}$')
 _SID_RE = re.compile(r'^[0-9a-f]{16}$')
 
 
+def _get_login_methods_config():
+    from app.modules.admin.services.system_config_service import SystemConfigService
+
+    return SystemConfigService.get_auth_login_methods_config()
+
+
+def _wechat_login_enabled() -> bool:
+    return bool(_get_login_methods_config().get('wechat_login_enabled', True))
+
+
+def _auth_method_disabled_response(method_name: str):
+    return jsonify({'status': 'error', 'message': f'{method_name}已关闭，请使用其他登录方式'}), 403
+
+
 def is_email_or_phone_identifier(identifier: str) -> bool:
     v = (identifier or '').strip()
     if not v:
@@ -133,6 +147,16 @@ def api_logout():
 
     session.clear()
     return jsonify({'status': 'success'})
+
+
+@auth_api_bp.route('/auth/login-methods', methods=['GET'])
+def api_auth_login_methods():
+    """公开登录方式配置，供 Web 登录页和小程序登录页调整入口。"""
+    return jsonify({
+        'status': 'success',
+        'code': 0,
+        'data': _get_login_methods_config(),
+    }), 200
 
 
 @auth_api_bp.route('/email/send-bind-code', methods=['POST'])
@@ -363,6 +387,9 @@ def api_reset_password():
 @limiter.limit("100 per minute")  # 开发环境使用更宽松的限流，生产环境可通过配置调整
 def api_wechat_login():
     """微信登录API"""
+    if not _wechat_login_enabled():
+        return _auth_method_disabled_response('微信登录')
+
     try:
         data = request.json or {}
         
@@ -485,6 +512,9 @@ def api_wechat_login():
 @limiter.limit("10 per minute")
 def api_wechat_create_from_temp():
     """微信未绑定时：创建新账号（基于 wechat_temp_token）"""
+    if not _wechat_login_enabled():
+        return _auth_method_disabled_response('微信登录')
+
     data = request.json or {}
     temp_token = (data.get('wechat_temp_token') or '').strip()
     if not temp_token:
@@ -533,6 +563,9 @@ def api_wechat_create_from_temp():
 @limiter.limit("1 per minute;10 per hour")
 def api_wechat_bind_send_code():
     """绑定已有账号：发送邮箱验证码（不登录也可用，需 wechat_temp_token）"""
+    if not _wechat_login_enabled():
+        return _auth_method_disabled_response('微信登录')
+
     data = request.json or {}
     temp_token = (data.get('wechat_temp_token') or '').strip()
     email = (data.get('email') or '').strip()
@@ -564,6 +597,9 @@ def api_wechat_bind_send_code():
 @limiter.limit("60 per minute")
 def api_wechat_bind_existing_user():
     """微信未绑定时：绑定已有账号（账号密码 / 邮箱验证码）"""
+    if not _wechat_login_enabled():
+        return _auth_method_disabled_response('微信登录')
+
     data = request.json or {}
     temp_token = (data.get('wechat_temp_token') or '').strip()
     bind_mode = (data.get('bind_mode') or '').strip()
@@ -650,6 +686,9 @@ def api_wechat_bind_existing_user():
 @limiter.limit("60 per minute")
 def api_web_login_qrcode():
     """Web：创建扫码登录会话并返回小程序码图片 URL"""
+    if not _wechat_login_enabled():
+        return _auth_method_disabled_response('微信登录')
+
     try:
         meta = {
             "ip": request.remote_addr,
@@ -825,6 +864,9 @@ def api_web_login_mini_webview_url():
 @limiter.limit("30 per minute")
 def api_wechat_bind_qrcode():
     """Web：账号管理页生成绑定微信二维码（需session登录）"""
+    if not _wechat_login_enabled():
+        return _auth_method_disabled_response('微信登录')
+
     uid = session.get('user_id')
     if not uid:
         return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
@@ -880,6 +922,9 @@ def api_wechat_bind_session_status(sid: str):
 @limiter.limit("60 per minute")
 def api_wechat_bind_confirm():
     """小程序：扫码后确认绑定（不要求JWT，使用 wx.login code 获取 openid）"""
+    if not _wechat_login_enabled():
+        return _auth_method_disabled_response('微信登录')
+
     data = request.json or {}
     sid = (data.get('sid') or '').strip()
     nonce = (data.get('nonce') or '').strip()
@@ -1137,6 +1182,9 @@ def api_mini_reset_password():
 @limiter.limit("60 per minute")
 def api_mini_wechat_bind():
     """小程序：已登录用户绑定微信（密码/邮箱登录后弹窗绑定）"""
+    if not _wechat_login_enabled():
+        return _auth_method_disabled_response('微信登录')
+
     from flask import g
 
     data = request.json or {}

@@ -786,6 +786,7 @@ def _register_before_request(app):
             '/privacy',  # 隐私保护协议页面
             '/api/ping',  # 健康检查（无登录）
             '/api/login',
+            '/api/auth/login-methods',  # 登录方式公开配置（登录页/小程序登录页使用）
             '/api/public/banks',  # 公开题库列表（未登录可访问）
             '/api/wechat/login',  # 微信登录（无需登录，支持自动注册）
             '/api/wechat/create',  # 微信创建新账号（临时票据）

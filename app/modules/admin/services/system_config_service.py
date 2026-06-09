@@ -444,3 +444,46 @@ class SystemConfigService:
             'access_key_id': SystemConfigService.mask_secret(cfg['access_key_id'], prefix=3, suffix=3),
             'access_key_secret': SystemConfigService.mask_secret(cfg['access_key_secret'], prefix=3, suffix=3),
         }
+
+    # ── 登录方式配置 ───────────────────────────────────────
+
+    @staticmethod
+    def get_auth_login_methods_config() -> Dict[str, Any]:
+        """获取登录方式开关，默认保持历史行为全部开启。"""
+        phone_enabled = _as_bool(
+            SystemConfigService._get_runtime_value(
+                'auth_phone_login_enabled',
+                'AUTH_PHONE_LOGIN_ENABLED',
+                True,
+            ),
+            True,
+        )
+        wechat_enabled = _as_bool(
+            SystemConfigService._get_runtime_value(
+                'auth_wechat_login_enabled',
+                'AUTH_WECHAT_LOGIN_ENABLED',
+                True,
+            ),
+            True,
+        )
+
+        if phone_enabled:
+            default_mode = 'phone'
+        elif wechat_enabled:
+            default_mode = 'qr'
+        else:
+            default_mode = 'password'
+
+        return {
+            'phone_login_enabled': phone_enabled,
+            'wechat_login_enabled': wechat_enabled,
+            'default_mode': default_mode,
+        }
+
+    @staticmethod
+    def get_auth_login_methods_form_config() -> Dict[str, str]:
+        cfg = SystemConfigService.get_auth_login_methods_config()
+        return {
+            'auth_phone_login_enabled': 'true' if cfg.get('phone_login_enabled', True) else 'false',
+            'auth_wechat_login_enabled': 'true' if cfg.get('wechat_login_enabled', True) else 'false',
+        }

@@ -16,10 +16,23 @@ from app.modules.auth.services.web_login_service import set_web_session
 sms_api_bp = Blueprint('sms_api', __name__)
 
 
+def _phone_login_enabled() -> bool:
+    from app.modules.admin.services.system_config_service import SystemConfigService
+
+    return bool(SystemConfigService.get_auth_login_methods_config().get('phone_login_enabled', True))
+
+
+def _phone_login_disabled_response():
+    return jsonify({'status': 'error', 'message': '手机号验证码登录已关闭，请使用其他登录方式'}), 403
+
+
 @sms_api_bp.route('/send-login-code', methods=['POST'])
 @limiter.limit("5 per minute;10 per hour")
 def send_login_code():
     """发送登录/注册验证码"""
+    if not _phone_login_enabled():
+        return _phone_login_disabled_response()
+
     data = request.json or {}
     try:
         schema = SendPhoneCodeSchema.model_validate(data)
@@ -36,6 +49,9 @@ def send_login_code():
 @limiter.limit("10 per minute")
 def phone_login():
     """手机验证码登录"""
+    if not _phone_login_enabled():
+        return _phone_login_disabled_response()
+
     data = request.json or {}
     try:
         schema = PhoneLoginSchema.model_validate(data)

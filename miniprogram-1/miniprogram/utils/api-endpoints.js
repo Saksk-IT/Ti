@@ -477,6 +477,9 @@ exports.api = {
     miniWechatBind: function (code) {
         return request('/mini/wechat/bind', 'POST', { code: code });
     },
+    getAuthLoginMethods: function () {
+        return request('/auth/login-methods', 'GET');
+    },
     // 获取科目列表
     getSubjects: function () { return request('/quiz/subjects', 'GET'); },
     // 获取科目元信息（id/name/题量）

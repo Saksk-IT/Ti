@@ -5,6 +5,13 @@ import { config } from '../../utils/config';
 import { safeNavigate, consumePendingMiniRedirect } from '../../utils/nav';
 
 const HOME_URL = '/pages/hub-v2/hub-v2';
+type LoginMode = 'wechat' | 'password' | 'email';
+
+type AuthLoginMethods = {
+  phone_login_enabled?: boolean;
+  wechat_login_enabled?: boolean;
+  default_mode?: 'phone' | 'qr' | 'password' | 'code';
+};
 
 function navigateAfterLogin(): void {
   const next = consumePendingMiniRedirect();
@@ -33,9 +40,14 @@ function isDevEnv(): boolean {
   }
 }
 
+function defaultMiniMode(methods: AuthLoginMethods): LoginMode {
+  if (methods.wechat_login_enabled) return 'wechat';
+  return 'password';
+}
+
 Page({
   data: {
-    mode: 'wechat' as 'wechat' | 'password' | 'email',
+    mode: 'wechat' as LoginMode,
     loading: false,
     username: '',
     password: '',
@@ -44,11 +56,14 @@ Page({
     codeSending: false,
     countdown: 20,
     showDevTools: false,
-    apiUrl: ''
+    apiUrl: '',
+    wechatLoginEnabled: true,
+    loginHeroSub: '支持微信 / 邮箱或手机号密码 / 邮箱验证码登录',
   },
 
   async onLoad() {
     this.refreshApiInfo();
+    await this.loadAuthLoginMethods();
     // 避免“旧 token 已失效，但仍在 storage 导致一直跳首页又被 401 踢回”的循环：先轻量校验 token
     const token = wx.getStorageSync('token');
     if (!token) return;
@@ -99,6 +114,41 @@ Page({
     });
   },
 
+  async loadAuthLoginMethods() {
+    try {
+      const methods = await api.getAuthLoginMethods();
+      const phoneEnabled = methods.phone_login_enabled !== false;
+      const wechatEnabled = methods.wechat_login_enabled !== false;
+      const nextMode = this.isModeAvailable(this.data.mode, wechatEnabled)
+        ? this.data.mode
+        : defaultMiniMode({ wechat_login_enabled: wechatEnabled });
+
+      this.setData({
+        mode: nextMode,
+        wechatLoginEnabled: wechatEnabled,
+        loginHeroSub: this.buildLoginHeroSub(phoneEnabled, wechatEnabled),
+      });
+    } catch (e) {
+      this.setData({
+        loginHeroSub: this.buildLoginHeroSub(true, true)
+      });
+    }
+  },
+
+  buildLoginHeroSub(phoneEnabled: boolean, wechatEnabled: boolean): string {
+    const parts: string[] = [];
+    if (wechatEnabled) parts.push('微信');
+    parts.push('邮箱或手机号密码');
+    parts.push('邮箱验证码');
+    return `支持${parts.join(' / ')}登录`;
+  },
+
+  isModeAvailable(mode: LoginMode, wechatEnabled?: boolean): boolean {
+    const canUseWechat = wechatEnabled === undefined ? !!this.data.wechatLoginEnabled : !!wechatEnabled;
+    if (mode === 'wechat') return canUseWechat;
+    return mode === 'password' || mode === 'email';
+  },
+
   onOpenDevSettingsTap() {
     wx.navigateTo({ url: '/pages/dev-settings/dev-settings' });
   },
@@ -114,6 +164,8 @@ Page({
   },
 
   async promptBindWechatIfNeeded(loginData: any) {
+    if (!this.data.wechatLoginEnabled) return;
+
     const userInfo = (loginData && loginData.user_info) || wx.getStorageSync('userInfo') || null;
     const wechatBound = !!(userInfo && (userInfo.wechat_bound || userInfo.wechatBound));
     if (wechatBound) return;
@@ -154,6 +206,10 @@ Page({
   // 微信登录
   async handleLogin() {
     if (this.data.loading) return;
+    if (!this.data.wechatLoginEnabled) {
+      wx.showToast({ title: '微信登录已关闭', icon: 'none' });
+      return;
+    }
     
     this.setData({ loading: true });
     try {
@@ -199,6 +255,10 @@ Page({
   onSwitchMode(e: any) {
     const mode = e.currentTarget.dataset.mode;
     if (mode !== 'wechat' && mode !== 'password' && mode !== 'email') return;
+    if (!this.isModeAvailable(mode)) {
+      wx.showToast({ title: '该登录方式已关闭', icon: 'none' });
+      return;
+    }
     this.setData({ mode });
   },
 

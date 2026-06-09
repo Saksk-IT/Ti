@@ -9,6 +9,7 @@ from .api_bp import ALLOWED_EXTENSIONS, admin_api_bp, allowed_file
 
 # Import component routes (imports register @admin_api_bp.route handlers)
 from .api_components import chat  # noqa: F401
+from .api_components import auth_login_settings  # noqa: F401
 from .api_components import coding_questions  # noqa: F401
 from .api_components import mail_settings  # noqa: F401
 from .api_components import notifications  # noqa: F401

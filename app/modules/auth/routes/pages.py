@@ -50,6 +50,8 @@ def web_login_exchange_redirect():
 @auth_pages_bp.route('/login')
 def login_page():
     """登录页面"""
+    from app.modules.admin.services.system_config_service import SystemConfigService
+
     from_param = request.args.get('from', '')
     redirect_url = request.args.get('redirect', '')
     
@@ -77,7 +79,8 @@ def login_page():
                          mode='login',
                          from_param=from_param,
                          redirect_url=redirect_url,
-                         tip_message=tip_message)
+                         tip_message=tip_message,
+                         auth_login_methods=SystemConfigService.get_auth_login_methods_config())
 
 
 # 注册功能已移除，使用邮箱验证码自动注册
@@ -96,4 +99,3 @@ def terms_page():
 def privacy_page():
     """隐私保护协议页面"""
     return render_template('auth/privacy.html')
-

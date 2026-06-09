@@ -225,6 +225,15 @@ def admin_sms_settings_page():
     return render_template('admin/settings/sms.html', sms_config=cfg)
 
 
+@admin_pages_bp.route('/settings/auth-login')
+def admin_auth_login_settings_page():
+    """登录方式配置页面"""
+    from app.modules.admin.services.system_config_service import SystemConfigService
+
+    cfg = SystemConfigService.get_auth_login_methods_form_config()
+    return render_template('admin/settings/auth_login.html', auth_login_config=cfg)
+
+
 @admin_pages_bp.route('/permissions')
 def admin_permissions_page():
     """权限管理页面"""

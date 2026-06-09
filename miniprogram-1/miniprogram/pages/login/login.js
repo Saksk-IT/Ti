@@ -81,6 +81,11 @@ function isDevEnv() {
         return false;
     }
 }
+function defaultMiniMode(methods) {
+    if (methods.wechat_login_enabled)
+        return 'wechat';
+    return 'password';
+}
 Page({
     data: {
         mode: 'wechat',
@@ -92,7 +97,9 @@ Page({
         codeSending: false,
         countdown: 20,
         showDevTools: false,
-        apiUrl: ''
+        apiUrl: '',
+        wechatLoginEnabled: true,
+        loginHeroSub: '支持微信 / 邮箱或手机号密码 / 邮箱验证码登录',
     },
     onLoad: function () {
         return __awaiter(this, void 0, void 0, function () {
@@ -101,18 +108,21 @@ Page({
                 switch (_a.label) {
                     case 0:
                         this.refreshApiInfo();
+                        return [4 /*yield*/, this.loadAuthLoginMethods()];
+                    case 1:
+                        _a.sent();
                         token = wx.getStorageSync('token');
                         if (!token)
                             return [2 /*return*/];
-                        _a.label = 1;
-                    case 1:
-                        _a.trys.push([1, 3, , 4]);
-                        return [4 /*yield*/, api_1.api.getSubjects()];
+                        _a.label = 2;
                     case 2:
+                        _a.trys.push([2, 4, , 5]);
+                        return [4 /*yield*/, api_1.api.getSubjects()];
+                    case 3:
                         _a.sent();
                         navigateAfterLogin();
-                        return [3 /*break*/, 4];
-                    case 3:
+                        return [3 /*break*/, 5];
+                    case 4:
                         err_1 = _a.sent();
                         // 401：token 无效，清理后留在登录页
                         if (err_1 && err_1.statusCode === 401) {
@@ -139,8 +149,8 @@ Page({
                         }
                         // 其它错误：不阻塞用户（可能是网络波动），仍按“已登录”处理
                         navigateAfterLogin();
-                        return [3 /*break*/, 4];
-                    case 4: return [2 /*return*/];
+                        return [3 /*break*/, 5];
+                    case 5: return [2 /*return*/];
                 }
             });
         });
@@ -153,6 +163,52 @@ Page({
             showDevTools: isDevEnv(),
             apiUrl: config_1.config.getApiUrl()
         });
+    },
+    loadAuthLoginMethods: function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var methods, phoneEnabled, wechatEnabled, nextMode, e_1;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, api_1.api.getAuthLoginMethods()];
+                    case 1:
+                        methods = _a.sent();
+                        phoneEnabled = methods.phone_login_enabled !== false;
+                        wechatEnabled = methods.wechat_login_enabled !== false;
+                        nextMode = this.isModeAvailable(this.data.mode, wechatEnabled)
+                            ? this.data.mode
+                            : defaultMiniMode({ wechat_login_enabled: wechatEnabled });
+                        this.setData({
+                            mode: nextMode,
+                            wechatLoginEnabled: wechatEnabled,
+                            loginHeroSub: this.buildLoginHeroSub(phoneEnabled, wechatEnabled),
+                        });
+                        return [3 /*break*/, 3];
+                    case 2:
+                        e_1 = _a.sent();
+                        this.setData({
+                            loginHeroSub: this.buildLoginHeroSub(true, true)
+                        });
+                        return [3 /*break*/, 3];
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    },
+    buildLoginHeroSub: function (phoneEnabled, wechatEnabled) {
+        var parts = [];
+        if (wechatEnabled)
+            parts.push('微信');
+        parts.push('邮箱或手机号密码');
+        parts.push('邮箱验证码');
+        return "\u652F\u6301".concat(parts.join(' / '), "\u767B\u5F55");
+    },
+    isModeAvailable: function (mode, wechatEnabled) {
+        var canUseWechat = wechatEnabled === undefined ? !!this.data.wechatLoginEnabled : !!wechatEnabled;
+        if (mode === 'wechat')
+            return canUseWechat;
+        return mode === 'password' || mode === 'email';
     },
     onOpenDevSettingsTap: function () {
         wx.navigateTo({ url: '/pages/dev-settings/dev-settings' });
@@ -173,6 +229,8 @@ Page({
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
+                        if (!this.data.wechatLoginEnabled)
+                            return [2 /*return*/];
                         userInfo = (loginData && loginData.user_info) || wx.getStorageSync('userInfo') || null;
                         wechatBound = !!(userInfo && (userInfo.wechat_bound || userInfo.wechatBound));
                         if (wechatBound)
@@ -234,6 +292,10 @@ Page({
                     case 0:
                         if (this.data.loading)
                             return [2 /*return*/];
+                        if (!this.data.wechatLoginEnabled) {
+                            wx.showToast({ title: '微信登录已关闭', icon: 'none' });
+                            return [2 /*return*/];
+                        }
                         this.setData({ loading: true });
                         _a.label = 1;
                     case 1:
@@ -284,6 +346,10 @@ Page({
         var mode = e.currentTarget.dataset.mode;
         if (mode !== 'wechat' && mode !== 'password' && mode !== 'email')
             return;
+        if (!this.isModeAvailable(mode)) {
+            wx.showToast({ title: '该登录方式已关闭', icon: 'none' });
+            return;
+        }
         this.setData({ mode: mode });
     },
     onUsernameInput: function (e) {
