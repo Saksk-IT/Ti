@@ -415,6 +415,35 @@ login_registry_if_needed() {
   printf '%s' "$GHCR_TOKEN" | $SUDO docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
 }
 
+assert_web_cli_command() {
+  local command_name="$1"
+  local help_err
+  help_err="$(mktemp)"
+
+  if "${COMPOSE[@]}" exec -T web flask --help 2>"$help_err" | grep -Eq "^[[:space:]]+${command_name}([[:space:]]|$)"; then
+    rm -f "$help_err"
+    return
+  fi
+
+  local image_id image_revision
+  image_id="$($SUDO docker image inspect "$TI_IMAGE" --format '{{.Id}}' 2>/dev/null || true)"
+  image_revision="$($SUDO docker image inspect "$TI_IMAGE" --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' 2>/dev/null || true)"
+
+  if [[ -s "$help_err" ]]; then
+    cat "$help_err" >&2
+  fi
+  rm -f "$help_err"
+
+  echo "当前镜像：${TI_IMAGE}" >&2
+  if [[ -n "$image_id" ]]; then
+    echo "镜像 ID：${image_id}" >&2
+  fi
+  if [[ -n "$image_revision" && "$image_revision" != "<no value>" ]]; then
+    echo "镜像 revision：${image_revision}" >&2
+  fi
+  fail "当前 web 镜像未提供 flask ${command_name} 命令。请先发布包含该命令的新 ${TI_IMAGE}，再在服务器执行 git pull --ff-only 与 ./scripts/deploy_ubuntu24.sh。"
+}
+
 deploy_stack() {
   log "拉取应用镜像：${TI_IMAGE}"
   $SUDO docker pull "$TI_IMAGE"
@@ -434,6 +463,7 @@ deploy_stack() {
 
   if [[ "$ENSURE_DEFAULT_ADMIN" == "1" ]]; then
     log "确保默认管理员账号"
+    assert_web_cli_command "ensure-default-admin"
     "${COMPOSE[@]}" exec -T web flask ensure-default-admin
   else
     log "已设置 ENSURE_DEFAULT_ADMIN=0，跳过默认管理员初始化"

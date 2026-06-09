@@ -265,6 +265,11 @@ SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(48))")
 POSTGRES_USER=studyuser
 POSTGRES_PASSWORD=$(python3 -c "import secrets; print(secrets.token_urlsafe(48))")
 POSTGRES_DB=ti_db
+DEFAULT_ADMIN_USERNAME=admin
+DEFAULT_ADMIN_PASSWORD=$(python3 -c "import secrets, string; alphabet=string.ascii_letters+string.digits; password=[secrets.choice(string.ascii_lowercase), secrets.choice(string.ascii_uppercase), secrets.choice(string.digits)]; password.extend(secrets.choice(alphabet) for _ in range(21)); secrets.SystemRandom().shuffle(password); print(''.join(password))")
+DEFAULT_ADMIN_PHONE=
+DEFAULT_ADMIN_EMAIL=admin@ti.local
+DEFAULT_ADMIN_RESET_PASSWORD=0
 PROXY_FIX_ENABLED=true
 HTTP_BIND=0.0.0.0
 HTTP_PORT=8080
@@ -284,6 +289,7 @@ docker pull ghcr.io/saksk-it/ti:latest
 docker compose --env-file .env.production -f compose.prod.yml pull
 docker compose --env-file .env.production -f compose.prod.yml up -d --remove-orphans
 docker compose --env-file .env.production -f compose.prod.yml exec -T web flask db upgrade
+docker compose --env-file .env.production -f compose.prod.yml exec -T web flask ensure-default-admin
 
 docker compose --env-file .env.production -f compose.prod.yml ps
 curl -fsS http://127.0.0.1:8080/api/ping | python3 -m json.tool

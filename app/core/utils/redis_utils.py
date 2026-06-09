@@ -15,6 +15,17 @@ import os
 from typing import Any, Optional
 
 
+def _env_float(name: str, default: float) -> float:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return default
+    return value if value > 0 else default
+
+
 def get_redis_url_from_env() -> Optional[str]:
     """在无 Flask 上下文（如 RQ worker）场景获取 Redis URL。"""
     url = (
@@ -52,7 +63,12 @@ def get_redis_url() -> Optional[str]:
         return get_redis_url_from_env()
 
 
-def get_redis_connection(url: Optional[str] = None):
+def get_redis_connection(
+    url: Optional[str] = None,
+    *,
+    socket_connect_timeout: Optional[float] = None,
+    socket_timeout: Optional[float] = None,
+):
     """获取 Redis 连接（decode_responses=False，兼容 RQ 二进制数据）。"""
     try:
         import redis  # type: ignore
@@ -64,7 +80,16 @@ def get_redis_connection(url: Optional[str] = None):
         return None
 
     try:
-        return redis.Redis.from_url(redis_url, decode_responses=False)
+        return redis.Redis.from_url(
+            redis_url,
+            decode_responses=False,
+            socket_connect_timeout=(
+                socket_connect_timeout
+                if socket_connect_timeout is not None
+                else _env_float("REDIS_SOCKET_CONNECT_TIMEOUT", 2.0)
+            ),
+            socket_timeout=socket_timeout,
+        )
     except Exception:
         return None
 

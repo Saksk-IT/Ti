@@ -940,7 +940,11 @@ def _register_health_endpoints(app: Flask) -> None:
         # Redis
         try:
             from app.core.utils.redis_utils import get_redis_connection
-            r = get_redis_connection()
+            redis_timeout = _healthcheck_timeout("HEALTHCHECK_REDIS_TIMEOUT_SECONDS", 2.0)
+            r = get_redis_connection(
+                socket_connect_timeout=redis_timeout,
+                socket_timeout=redis_timeout,
+            )
             if r is not None:
                 r.ping()
                 checks['redis'] = True
@@ -952,6 +956,17 @@ def _register_health_endpoints(app: Flask) -> None:
         all_ok = checks['db'] and checks['redis']
         status_code = 200 if all_ok else 503
         return jsonify({'status': 'success' if all_ok else 'degraded', 'data': checks}), status_code
+
+
+def _healthcheck_timeout(env_name: str, default: float) -> float:
+    raw = os.environ.get(env_name)
+    if raw is None:
+        return default
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return default
+    return value if value > 0 else default
 
 
 def _register_error_handlers(app):
