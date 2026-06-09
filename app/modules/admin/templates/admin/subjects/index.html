@@ -731,6 +731,18 @@
         div.textContent = text;
         return div.innerHTML;
     }
+
+    function isSubjectLocked(subject) {
+        const value = subject && subject.is_locked;
+        return value === true || value === 1 || value === '1' || value === 'true';
+    }
+
+    function updateSubjectLockState(id, locked) {
+        allSubjects = allSubjects.map(subject => (
+            subject.id === id ? { ...subject, is_locked: locked } : subject
+        ));
+        renderSubjects();
+    }
     
     async function loadSubjects() {
         try {
@@ -780,7 +792,7 @@
             const icon = getSubjectIcon(sub.name);
             const count = sub.question_count || 0;
             const countClass = count === 0 ? 'empty' : '';
-            const isLocked = sub.is_locked === 1;
+            const isLocked = isSubjectLocked(sub);
             const lockStatus = isLocked ? '<span style="color: var(--danger, #ff3b30); font-weight: 500;">🔒 已锁定</span>' : '<span style="color: var(--success, #34c759); font-weight: 500;">✓ 正常</span>';
             
             tr.innerHTML = `
@@ -1003,6 +1015,7 @@
             
             if (res.ok && result.status === 'success') {
                 showSuccess(result.message || '科目已锁定');
+                updateSubjectLockState(id, true);
                 loadSubjects();
             } else {
                 showError(result.message || '锁定失败');
@@ -1026,6 +1039,7 @@
             
             if (res.ok && result.status === 'success') {
                 showSuccess(result.message || '科目已解锁');
+                updateSubjectLockState(id, false);
                 loadSubjects();
             } else {
                 showError(result.message || '解锁失败');
