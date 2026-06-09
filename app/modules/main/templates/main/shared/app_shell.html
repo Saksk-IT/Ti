@@ -519,7 +519,34 @@
     #appThemeToggle img { filter: var(--app-theme-icon-filter); }
 
     .app-hamburger { display: none; }
-    .app-sidebar-collapse-top { display: inline-flex; }
+    .app-sidebar-collapse {
+      position: absolute;
+      top: 18px;
+      right: -17px;
+      z-index: 71;
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--app-surface) 92%, var(--app-bg));
+      border-color: var(--app-border);
+      box-shadow: 0 8px 20px rgba(2, 6, 23, 0.08);
+    }
+    .app-sidebar-collapse:hover {
+      background: var(--app-surface);
+      box-shadow: 0 10px 24px rgba(2, 6, 23, 0.12);
+    }
+    .app-sidebar-collapse:active { transform: translateY(0); }
+    .app-sidebar-collapse::before {
+      content: "";
+      position: absolute;
+      left: -8px;
+      top: 5px;
+      width: 12px;
+      height: 22px;
+      border-radius: 999px 0 0 999px;
+      background: inherit;
+      pointer-events: none;
+    }
 
     .app-main {
       flex: 1 1 auto;
@@ -688,7 +715,7 @@
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-user-text,
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-user-dots { display: none; }
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-user-avatar { width: 34px; height: 34px; }
-    #appSidebarCollapse .app-icon { transition: transform 160ms ease; }
+    #appSidebarCollapse .app-icon { position: relative; z-index: 1; transition: transform 160ms ease; }
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) #appSidebarCollapse .app-icon { transform: rotate(180deg); }
 
     @media (max-width: 860px) {
@@ -706,7 +733,7 @@
         border-right: 1px solid var(--app-border);
       }
       .app-hamburger { display: inline-flex; }
-      .app-sidebar-collapse-top { display: none; }
+      .app-sidebar-collapse { display: none; }
       .app-top-practice { display: inline-flex; }
       .app-shell.sidebar-open .app-sidebar { transform: translateX(0); }
       .app-shell.sidebar-open + .app-overlay { opacity: 1; pointer-events: auto; }
@@ -723,6 +750,11 @@
   <div class="app-shell" id="appShell">
     <aside class="app-sidebar" id="appSidebar" aria-label="侧边栏导航">
       {% include 'main/shared/_app_sidebar.html' %}
+      <button class="app-icon-btn app-sidebar-collapse" type="button" id="appSidebarCollapse" aria-label="折叠侧边栏" title="折叠侧边栏">
+        <svg class="app-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
     </aside>
 
     <div class="app-body">
@@ -731,11 +763,6 @@
           <button class="app-icon-btn app-hamburger" type="button" id="appHamburger" aria-label="打开侧边栏" aria-controls="appSidebar" aria-expanded="false">
             <svg class="app-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </button>
-          <button class="app-icon-btn app-sidebar-collapse-top" type="button" id="appSidebarCollapse" aria-label="折叠侧边栏" title="折叠侧边栏">
-            <svg class="app-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </button>
 
