@@ -50,8 +50,15 @@
             <textarea id="wizardPublicDescription" class="plaza-search-input wizard-textarea" maxlength="200" placeholder="展示在题库广场卡片和名片页上的简介"></textarea>
           </div>
           <div class="wizard-field">
-            <label for="wizardCoverImage">封面图地址</label>
-            <input id="wizardCoverImage" class="plaza-search-input wizard-input" type="url" maxlength="500" placeholder="https://...（可选）" />
+            <label for="wizardCoverImage">封面图</label>
+            <div class="wizard-cover-row">
+              <input id="wizardCoverImage" class="plaza-search-input wizard-input" type="text" maxlength="500" placeholder="https://... 或上传图片（可选）" />
+              <label class="plaza-search-link wizard-upload-btn" for="wizardCoverFile" id="wizardCoverUploadBtn">选择图片</label>
+              <input id="wizardCoverFile" class="wizard-file-input" type="file" accept="image/png,image/jpeg,image/gif,image/webp" />
+            </div>
+            <div class="wizard-cover-preview" id="wizardCoverPreview" hidden>
+              <img id="wizardCoverPreviewImg" src="" alt="封面预览" loading="lazy" />
+            </div>
           </div>
         </div>
       </section>

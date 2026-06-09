@@ -223,6 +223,7 @@ def _ensure_directories(app):
         app.config['LOG_DIR'],
         app.config['UPLOAD_FOLDER'],
         os.path.join(app.config['UPLOAD_FOLDER'], 'avatars'),
+        os.path.join(app.config['UPLOAD_FOLDER'], 'bank_covers'),
         os.path.join(app.config['UPLOAD_FOLDER'], 'question_images'),
         os.path.dirname(app.config['DATABASE_PATH'])
     ]
@@ -824,7 +825,7 @@ def _register_before_request(app):
 
         # 小程序 <image> / Web 公共页面无法携带 Authorization Header：
         # 放开头像/题目图片的直链访问（仅常见图片扩展名），避免被登录拦截 302 到 /login 导致图片加载失败。
-        if path.startswith(('/uploads/avatars/', '/uploads/question_images/', '/uploads/questions/')):
+        if path.startswith(('/uploads/avatars/', '/uploads/bank_covers/', '/uploads/question_images/', '/uploads/questions/')):
             lower_path = path.lower()
             if lower_path.endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg')):
                 return

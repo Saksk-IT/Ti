@@ -24,6 +24,7 @@ from . import api_shares  # noqa: F401
 from . import api_quiz  # noqa: F401
 from . import api_favorites  # noqa: F401
 from . import api_tags  # noqa: F401
+from . import api_uploads  # noqa: F401
 
 
 __all__ = [

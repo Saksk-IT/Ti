@@ -9,12 +9,18 @@
   var isPublicEl = document.getElementById('wizardIsPublic');
   var publicDescEl = document.getElementById('wizardPublicDescription');
   var coverImageEl = document.getElementById('wizardCoverImage');
+  var coverFileEl = document.getElementById('wizardCoverFile');
+  var coverUploadBtn = document.getElementById('wizardCoverUploadBtn');
+  var coverPreviewEl = document.getElementById('wizardCoverPreview');
+  var coverPreviewImg = document.getElementById('wizardCoverPreviewImg');
   var joinNoteEl = document.getElementById('wizardJoinNote');
   var feedbackEl = document.getElementById('wizardFeedback');
   var submitBtn = document.getElementById('wizardSubmitBtn');
   var panels = Array.prototype.slice.call(document.querySelectorAll('.wizard-panel'));
   var steps = Array.prototype.slice.call(document.querySelectorAll('.wizard-step'));
   var joinModeButtons = Array.prototype.slice.call(document.querySelectorAll('[data-join-mode]'));
+  var allowedCoverTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+  var maxCoverBytes = 5 * 1024 * 1024;
 
   function esc(value) {
     return String(value == null ? '' : value)
@@ -29,6 +35,24 @@
     if (!feedbackEl) return;
     feedbackEl.textContent = message || '';
     feedbackEl.style.color = isError ? '#ef4444' : '';
+  }
+
+  function setCoverUploading(isUploading) {
+    if (!coverUploadBtn) return;
+    coverUploadBtn.classList.toggle('uploading', !!isUploading);
+    coverUploadBtn.textContent = isUploading ? '上传中...' : '选择图片';
+  }
+
+  function setCoverPreview(url) {
+    var coverUrl = String(url || '').trim();
+    if (!coverPreviewEl || !coverPreviewImg) return;
+    if (!coverUrl) {
+      coverPreviewImg.removeAttribute('src');
+      coverPreviewEl.hidden = true;
+      return;
+    }
+    coverPreviewImg.src = coverUrl;
+    coverPreviewEl.hidden = false;
   }
 
   function renderStep() {
@@ -99,9 +123,49 @@
     if (descEl) descEl.value = bank.description || '';
     if (publicDescEl) publicDescEl.value = bank.public_description || '';
     if (coverImageEl) coverImageEl.value = bank.cover_image || '';
+    setCoverPreview(bank.cover_image || '');
     if (joinNoteEl) joinNoteEl.value = bank.join_note || '';
     if (isPublicEl) isPublicEl.checked = !!bank.is_public;
     updateJoinMode(bank.join_mode || 'free');
+  }
+
+  function uploadCoverFile(file) {
+    if (!file) return Promise.resolve();
+    if (file.type && allowedCoverTypes.indexOf(file.type) === -1) {
+      setFeedback('请上传 png、jpg、jpeg、gif 或 webp 图片', true);
+      return Promise.resolve();
+    }
+    if (file.size > maxCoverBytes) {
+      setFeedback('封面图片不能超过 5MB', true);
+      return Promise.resolve();
+    }
+
+    var formData = new FormData();
+    formData.append('file', file);
+    var uploadUrl = boot.mode === 'edit' && boot.bank_id
+      ? '/user/banks/api/' + encodeURIComponent(String(boot.bank_id)) + '/cover/upload'
+      : '/user/banks/api/cover/upload';
+
+    setCoverUploading(true);
+    setFeedback('正在上传封面图片...');
+
+    return fetchJson(uploadUrl, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      body: formData
+    }).then(function (json) {
+      var url = json.data && json.data.url;
+      if (!url) throw new Error('上传成功但未返回图片地址');
+      if (coverImageEl) coverImageEl.value = url;
+      setCoverPreview(url);
+      setFeedback('封面上传成功，保存后生效');
+    }).catch(function (error) {
+      setFeedback((error && error.message) || '封面上传失败', true);
+    }).finally(function () {
+      setCoverUploading(false);
+      if (coverFileEl) coverFileEl.value = '';
+    });
   }
 
   function loadBank() {
@@ -187,6 +251,17 @@
       updateJoinMode(button.getAttribute('data-join-mode') || 'free');
     });
   });
+  if (coverFileEl) {
+    coverFileEl.addEventListener('change', function () {
+      var file = coverFileEl.files && coverFileEl.files[0];
+      uploadCoverFile(file);
+    });
+  }
+  if (coverImageEl) {
+    coverImageEl.addEventListener('input', function () {
+      setCoverPreview(coverImageEl.value);
+    });
+  }
   steps.forEach(function (button) {
     button.addEventListener('click', function () {
       var next = Number(button.getAttribute('data-step') || 1);
