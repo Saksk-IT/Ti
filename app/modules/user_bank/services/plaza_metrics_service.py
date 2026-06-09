@@ -7,7 +7,7 @@ import logging
 import secrets
 import threading
 import time
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any
 
 from sqlalchemy import text
@@ -54,6 +54,11 @@ def _is_metrics_stale(ttl_seconds: int) -> bool:
     updated_at = row.get('updated_at') if row else None
     if not updated_at:
         return True
+    if isinstance(updated_at, str):
+        try:
+            updated_at = datetime.fromisoformat(updated_at)
+        except ValueError:
+            return True
     return (now_bj() - updated_at).total_seconds() >= max(int(ttl_seconds or 0), METRICS_MIN_TTL_SECONDS)
 
 

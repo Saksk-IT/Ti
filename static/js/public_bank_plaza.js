@@ -69,6 +69,16 @@
     }).join('');
   }
 
+  function renderOwnerAvatar(item) {
+    var avatar = String((item && item.owner_avatar) || '').trim();
+    if (avatar) {
+      return '<img class="forum-avatar" src="' + esc(avatar) + '" alt="">';
+    }
+    var label = String((item && (item.owner_label || item.source_label || item.name)) || 'U').trim();
+    var initial = label ? label.charAt(0).toUpperCase() : 'U';
+    return '<div class="forum-avatar plaza-owner-avatar-fallback" aria-hidden="true">' + esc(initial) + '</div>';
+  }
+
   function buildParams(extra) {
     var params = new URLSearchParams();
     if (state.boardId) params.set('board_id', state.boardId);
@@ -298,7 +308,7 @@
         : '<div class="plaza-bank-cover-fallback">' + esc((item.board && item.board.name) || item.source_label) + '</div>';
       return '<a class="forum-post-card plaza-bank-card' + (hasCover ? '' : ' no-cover') + '" href="' + esc(item.detail_url) + '">' +
         '<div class="forum-post-header">' +
-          '<div class="forum-avatar"></div>' +
+          renderOwnerAvatar(item) +
           '<div class="forum-post-meta"><span class="forum-user-link">' + highlightText(item.owner_label || '系统') + '</span><span class="forum-board-tag">' + esc((item.board && item.board.name) || '未分板块') + '</span></div>' +
         '</div>' +
         '<div class="forum-post-title">' + badges.join('') + '<span class="plaza-bank-title-text">' + highlightText(item.name) + '</span></div>' +

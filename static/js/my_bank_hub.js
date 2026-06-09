@@ -43,6 +43,16 @@
     return new Intl.NumberFormat('zh-CN').format(Number(value || 0) || 0);
   }
 
+  function renderOwnerAvatar(item) {
+    var avatar = String((item && item.owner_avatar) || '').trim();
+    if (avatar) {
+      return '<img class="forum-avatar" src="' + esc(avatar) + '" alt="">';
+    }
+    var label = String((item && (item.owner_label || item.source_label || item.name)) || 'U').trim();
+    var initial = label ? label.charAt(0).toUpperCase() : 'U';
+    return '<div class="forum-avatar plaza-owner-avatar-fallback" aria-hidden="true">' + esc(initial) + '</div>';
+  }
+
   function normalizeKeyword(value) {
     return String(value || '').trim().replace(/\s+/g, ' ');
   }
@@ -238,7 +248,7 @@
             '<div class="forum-post-owner-menu">' + menuButtons.join('') + '</div>' +
           '</div>' +
           '<div class="forum-post-header">' +
-            '<div class="forum-avatar"></div>' +
+            renderOwnerAvatar(item) +
             '<div class="forum-post-meta"><span class="forum-user-link">' + ownerText + '</span><span class="forum-board-tag">' + boardText + '</span></div>' +
           '</div>' +
           '<div class="forum-post-title">' + badges.join('') + '<span class="plaza-bank-title-text">' + esc(item.name) + '</span></div>' +

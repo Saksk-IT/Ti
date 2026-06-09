@@ -167,6 +167,16 @@
   white-space: nowrap;
 }
 
+.plaza-owner-avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--app-text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .plaza-bank-card .forum-board-tag {
   max-width: 128px;
   overflow: hidden;

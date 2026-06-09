@@ -53,6 +53,7 @@ def list_public_banks(
             m.description,
             m.cover_image,
             m.owner_label,
+            owner_user.avatar AS owner_avatar,
             m.question_count_total,
             m.plaza_board_id,
             m.is_featured,
@@ -74,6 +75,9 @@ def list_public_banks(
             b.name AS board_name
         FROM public_bank_plaza_metrics m
         LEFT JOIN plaza_boards b ON b.id = m.plaza_board_id
+        LEFT JOIN user_question_banks owner_bank
+          ON m.source_type = 'user_public' AND owner_bank.id = m.source_id
+        LEFT JOIN users owner_user ON owner_user.id = owner_bank.user_id
         {where_sql}
         ORDER BY {_search_order_sql(current_tab, search_enabled)}
         LIMIT :limit OFFSET :offset
@@ -235,6 +239,7 @@ def list_joined_banks(
                 b.cover_image,
                 b.question_count,
                 COALESCE(u.username, '匿名用户') AS owner_label,
+                u.avatar AS owner_avatar,
                 b.plaza_board_id,
                 pb.slug AS board_slug,
                 pb.name AS board_name,
@@ -394,6 +399,7 @@ def get_public_bank_detail(*, bank_id: int, bank_type: str = 'user', user_id: in
                 COALESCE(NULLIF(b.public_description, ''), b.description, m.description, '') AS description,
                 b.cover_image,
                 COALESCE(u.username, '匿名用户') AS owner_label,
+                u.avatar AS owner_avatar,
                 COALESCE(m.question_count_total, b.question_count, 0) AS question_count_total,
                 b.plaza_board_id,
                 COALESCE(m.is_featured, b.is_plaza_featured, false) AS is_featured,
@@ -482,7 +488,7 @@ def build_legacy_bank_list(
             'public_at': item['published_at'],
             'created_at': item['published_at'],
             'owner_nickname': item['owner_label'],
-            'owner_avatar': None,
+            'owner_avatar': item.get('owner_avatar'),
             'bank_type': 'system' if item['source_type'] == 'system' else 'user',
             'is_shared': 0,
         })
@@ -536,8 +542,10 @@ def _list_created_bank_items(user_id: int, keyword: str = '') -> list[dict[str, 
                 COALESCE(m.join_count_total, 0) AS participants_total,
                 COALESCE(m.last_activity_at, b.updated_at, b.created_at) AS last_activity_at,
                 COALESCE(m.is_featured, false) AS is_featured,
-                pb.name AS board_name
+                pb.name AS board_name,
+                u.avatar AS owner_avatar
             FROM user_question_banks b
+            JOIN users u ON u.id = b.user_id
             LEFT JOIN user_bank_categories c ON c.id = b.category_id
             LEFT JOIN public_bank_plaza_metrics m
               ON m.source_type = 'user_public' AND m.source_id = b.id
@@ -634,6 +642,7 @@ def _list_joined_bank_collection_items(user_id: int, keyword: str = '') -> list[
                 b.cover_image,
                 b.question_count,
                 COALESCE(u.username, '匿名用户') AS owner_label,
+                u.avatar AS owner_avatar,
                 b.plaza_board_id,
                 pb.slug AS board_slug,
                 pb.name AS board_name,
@@ -671,6 +680,7 @@ def _serialize_created_bank_item(row: dict[str, Any]) -> dict[str, Any]:
         'name': str(row.get('name') or '').strip(),
         'description': str(row.get('description') or '').strip(),
         'owner_label': '我创建的题库',
+        'owner_avatar': row.get('owner_avatar') or None,
         'question_count': int(row.get('question_count') or 0),
         'participants_total': int(row.get('participants_total') or 0),
         'answer_users_7d': int(row.get('answer_users_7d') or 0),
@@ -874,6 +884,7 @@ def _serialize_metric_item(row: dict[str, Any], relation: str | None) -> dict[st
         'description': str(row.get('description') or '').strip(),
         'cover_image': row.get('cover_image') or None,
         'owner_label': str(row.get('owner_label') or '').strip(),
+        'owner_avatar': row.get('owner_avatar') or None,
         'question_count': int(row.get('question_count_total') or 0),
         'participants_total': int(row.get('join_count_total') or 0),
         'join_users_7d': int(row.get('join_users_7d') or 0),
@@ -909,6 +920,7 @@ def _serialize_joined_item(row: dict[str, Any]) -> dict[str, Any]:
         'description': str(row.get('description') or '').strip(),
         'cover_image': row.get('cover_image') or None,
         'owner_label': str(row.get('owner_label') or '').strip(),
+        'owner_avatar': row.get('owner_avatar') or None,
         'question_count': int(row.get('question_count') or 0),
         'participants_total': int(row.get('join_count_total') or 0),
         'answer_users_7d': int(row.get('answer_users_7d') or 0),
