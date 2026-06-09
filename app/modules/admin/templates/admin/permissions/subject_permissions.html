@@ -699,7 +699,7 @@
             return;
         }
         
-        if (!confirm(`确定要限制 ${selectedUserIds.size} 个用户访问 ${selectedSubjectIds.size} 个科目吗？`)) {
+        if (!(await appConfirm(`确定要限制 ${selectedUserIds.size} 个用户访问 ${selectedSubjectIds.size} 个科目吗？`))) {
             return;
         }
         
@@ -735,7 +735,7 @@
             return;
         }
         
-        if (!confirm(`确定要取消 ${selectedUserIds.size} 个用户对 ${selectedSubjectIds.size} 个科目的限制吗？`)) {
+        if (!(await appConfirm(`确定要取消 ${selectedUserIds.size} 个用户对 ${selectedSubjectIds.size} 个科目的限制吗？`))) {
             return;
         }
         

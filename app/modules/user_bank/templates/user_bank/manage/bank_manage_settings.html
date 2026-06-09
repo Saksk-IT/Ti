@@ -178,7 +178,7 @@
       deleteBtn?.addEventListener('click', async () => {
         if (!bankId) return;
         const pretty = bankName ? `「${bankName}」` : `#${bankId}`;
-        const ok = window.confirm(`确定要删除题库${pretty}吗？\n\n删除后将从你的题库列表中移除（软删除），且已创建的分享将不可用。\n此操作不可恢复。`);
+        const ok = await appConfirm(`确定要删除题库${pretty}吗？\n\n删除后将从你的题库列表中移除（软删除），且已创建的分享将不可用。\n此操作不可恢复。`);
         if (!ok) return;
 
         try {

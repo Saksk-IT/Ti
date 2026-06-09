@@ -43,7 +43,7 @@
     async function copyShareUrl(){
       const el = document.getElementById('shareUrl');
       const ok = await copyText(el?.value || buildShareUrl());
-      if (!ok) alert('复制失败，请手动复制');
+      if (!ok) appAlert('复制失败，请手动复制');
     }
 
     async function nativeShare(){
@@ -55,7 +55,7 @@
         }
       } catch (e) {}
       await copyText(url);
-      alert('已复制链接');
+      appAlert('已复制链接');
     }
 
     // ===== 数据详情（图表/建议）=====

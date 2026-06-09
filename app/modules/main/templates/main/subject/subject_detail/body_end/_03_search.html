@@ -69,7 +69,7 @@
 
     async function doSubjectSearch(reset){
       if (!LOGGED_IN) {
-        alert('请先登录');
+        appAlert('请先登录');
         window.location.href = '/login';
         return;
       }

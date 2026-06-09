@@ -1215,7 +1215,7 @@
         }
         confirmMsg += '\n\n此操作不可恢复！';
 
-        if (!confirmAction(confirmMsg)) return;
+        if (!(await confirmAction(confirmMsg))) return;
 
         try {
             await api(`/user/banks/api/${id}`, { method: 'DELETE' });

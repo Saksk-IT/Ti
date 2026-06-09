@@ -641,7 +641,7 @@
 
         document.getElementById('unbindWechatLink').addEventListener('click', async (e) => {
             e.preventDefault();
-            if (!confirm('确定要解绑微信吗？解绑后将无法使用微信一键登录。')) return;
+            if (!(await appConfirm('确定要解绑微信吗？解绑后将无法使用微信一键登录。'))) return;
             try {
                 const res = await fetch('/api/wechat/unbind', {
                     method: 'POST',
@@ -651,10 +651,10 @@
                 });
                 const d = await res.json();
                 if (!res.ok || d.status !== 'success') throw new Error(d.message || '解绑失败');
-                alert('解绑成功');
+                appAlert('解绑成功');
                 loadProfile();
             } catch (err) {
-                alert('解绑失败：' + ((err && err.message) ? err.message : '请稍后重试'));
+                appAlert('解绑失败：' + ((err && err.message) ? err.message : '请稍后重试'));
             }
         });
         

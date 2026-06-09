@@ -592,7 +592,7 @@
   async function renameCurrentSession() {
     const session = currentSession();
     if (!session) return;
-    const title = window.prompt('输入新的会话标题', session.title || '新的 AI 会话');
+    const title = await appPrompt('输入新的会话标题', session.title || '新的 AI 会话');
     if (title === null) return;
     const clean = title.trim();
     if (!clean) {
@@ -614,7 +614,7 @@
   async function deleteCurrentSession() {
     const session = currentSession();
     if (!session || state.streaming) return;
-    if (!window.confirm('删除这个 AI 会话？')) return;
+    if (!(await appConfirm('删除这个 AI 会话？'))) return;
     try {
       await apiJson(`/api/ai-chat/sessions/${session.id}`, { method: 'DELETE' });
       state.sessions = state.sessions.filter(item => Number(item.id) !== Number(session.id));

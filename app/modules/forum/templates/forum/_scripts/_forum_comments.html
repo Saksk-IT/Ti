@@ -165,9 +165,9 @@ async function submitComment() {
       return;
     }
 
-    alert(payload.message || '发表失败');
+    appAlert(payload.message || '发表失败');
   } catch (error) {
-    alert('发表失败');
+    appAlert('发表失败');
   }
 }
 

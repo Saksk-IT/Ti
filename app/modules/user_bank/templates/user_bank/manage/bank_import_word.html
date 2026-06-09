@@ -1472,7 +1472,7 @@
 
               const issues = lastImportList.length - ready.length;
               if (issues > 0) {
-                const ok = window.confirm(`还有 ${issues} 题待修，将只入库 ${ready.length} 题。继续吗？`);
+                const ok = await appConfirm(`还有 ${issues} 题待修，将只入库 ${ready.length} 题。继续吗？`);
                 if (!ok) return;
               }
 
@@ -1595,7 +1595,7 @@
             if (!Number.isFinite(qIdx) || qIdx < 0 || qIdx >= lastImportList.length) return;
 
             if (action === 'delete') {
-              const ok = window.confirm(`删除第 ${qIdx + 1} 题？`);
+              const ok = await appConfirm(`删除第 ${qIdx + 1} 题？`);
               if (!ok) return;
               const prevTop = previewEl.scrollTop;
               lastImportList.splice(qIdx, 1);

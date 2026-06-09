@@ -551,7 +551,7 @@
       }
       const now = new Date();
       const stamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-      const title = (prompt('请输入模板名称', `自定义模板 ${stamp}`) || '').trim();
+      const title = (await appPrompt('请输入模板名称', `自定义模板 ${stamp}`) || '').trim();
       if (!title) return;
 
       try {
@@ -583,8 +583,8 @@
       }
     }
 
-    function clearExamPrefs() {
-      if (!confirm('确定要清除考试偏好吗？')) return;
+    async function clearExamPrefs() {
+      if (!(await appConfirm('确定要清除考试偏好吗？'))) return;
       try {
         localStorage.removeItem(PREF_KEY);
         setExamMsg('已清除偏好。', '');
@@ -732,26 +732,26 @@
     }
 
     async function delExam(id) {
-      if (!confirm('确定要删除该考试吗？此操作不可恢复。')) return;
+      if (!(await appConfirm('确定要删除该考试吗？此操作不可恢复。'))) return;
       try {
         var res = await fetch(`/api/exams/${id}`, { method: 'DELETE' });
         var js = await res.json();
         if (res.ok && js.status === 'success') location.reload();
-        else alert(js.message || '删除失败');
+        else appAlert(js.message || '删除失败');
       } catch (e) {
-        alert('删除失败');
+        appAlert('删除失败');
       }
     }
 
     async function toMistakes(id) {
-      if (!confirm('将本次考试的错题加入错题本？')) return;
+      if (!(await appConfirm('将本次考试的错题加入错题本？'))) return;
       try {
         var res = await fetch(`/api/exams/${id}/mistakes`, { method: 'POST' });
         var js = await res.json();
-        if (res.ok && js.status === 'success') alert(`已加入错题本：${js.count} 题`);
-        else alert(js.message || '操作失败');
+        if (res.ok && js.status === 'success') appAlert(`已加入错题本：${js.count} 题`);
+        else appAlert(js.message || '操作失败');
       } catch (e) {
-        alert('操作失败');
+        appAlert('操作失败');
       }
     }
 
@@ -1056,7 +1056,7 @@
 
     async function deleteUserTemplate(id) {
       if (!id) return;
-      if (!confirm('确定要删除该模板吗？')) return;
+      if (!(await appConfirm('确定要删除该模板吗？'))) return;
       try {
         const resp = await fetch(`${TEMPLATE_API}/${id}`, { method: 'DELETE' });
         const js = await resp.json().catch(() => ({}));

@@ -688,7 +688,7 @@
         const action = enable ? '设为' : '取消';
         const permissionName = permissionType === 'subject_admin' ? '科目管理员' : '通知管理员';
         
-        if (!confirm(`确定要${action}${permissionName}吗？\n将影响 ${selectedUserIds.size} 个用户`)) {
+        if (!(await appConfirm(`确定要${action}${permissionName}吗？\n将影响 ${selectedUserIds.size} 个用户`))) {
             return;
         }
         
@@ -728,7 +728,7 @@
         const action = enable ? '设为' : '取消';
         const permissionName = permissionType === 'subject_admin' ? '科目管理员' : '通知管理员';
         
-        if (!confirm(`确定要${action}${permissionName}吗？`)) {
+        if (!(await appConfirm(`确定要${action}${permissionName}吗？`))) {
             return;
         }
         
@@ -814,7 +814,7 @@
         if (typeof showToast === 'function') {
             showToast(msg, success ? 'success' : 'error');
         } else {
-            alert(msg);
+            appAlert(msg);
         }
     }
     

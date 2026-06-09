@@ -70,30 +70,30 @@ async function togglePostHidden(event, postId, nextHidden) {
       body: JSON.stringify({hidden: !!nextHidden}),
     }).then(res => res.json());
     if (r.status !== 'success') {
-      alert(r.message || '操作失败');
+      appAlert(r.message || '操作失败');
       return;
     }
     currentPage = 1;
     loadPosts();
   } catch (e) {
-    alert('操作失败');
+    appAlert('操作失败');
   }
 }
 
 async function deletePostByAuthor(event, postId) {
   event.stopPropagation();
   closeAllPostMenus();
-  if (!confirm('确认删除这篇帖子？删除后不可恢复。')) return;
+  if (!(await appConfirm('确认删除这篇帖子？删除后不可恢复。'))) return;
   try {
     const r = await fetch(`${API}/posts/${postId}`, {method: 'DELETE'}).then(res => res.json());
     if (r.status !== 'success') {
-      alert(r.message || '删除失败');
+      appAlert(r.message || '删除失败');
       return;
     }
     currentPage = 1;
     loadPosts();
   } catch (e) {
-    alert('删除失败');
+    appAlert('删除失败');
   }
 }
 

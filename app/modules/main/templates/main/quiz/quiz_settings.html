@@ -542,7 +542,7 @@
         }
 
         async function clearSubjectFilter(){
-            if (!confirm('确定要显示全部科目吗？')) return;
+            if (!(await appConfirm('确定要显示全部科目吗？'))) return;
             setVisibleSubjects([]);
 
             const ts = Date.now();
@@ -765,8 +765,8 @@
             closeHotkeyModal();
         }
 
-        function resetHotkeysToDefault(){
-            if (!confirm('确定要恢复默认快捷键吗？')) return;
+        async function resetHotkeysToDefault(){
+            if (!(await appConfirm('确定要恢复默认快捷键吗？'))) return;
             setHotkeys({ ...DEFAULT_QUIZ_HOTKEYS });
             openHotkeyModal();
         }
@@ -912,7 +912,7 @@
         }
 
         async function resetDefaults(){
-            if (!confirm('确定要恢复默认设置吗？')) return;
+            if (!(await appConfirm('确定要恢复默认设置吗？'))) return;
             setVisibleSubjects([]);
             setHotkeys({ ...DEFAULT_QUIZ_HOTKEYS });
             setQuizFabEnabled(true);

@@ -2,7 +2,7 @@
         // 重置代码
         async function resetCode() {
             if (!editor || !questionData) return;
-            if (confirm('确定要重置代码吗？未保存的代码将丢失。')) {
+            if (await appConfirm('确定要重置代码吗？未保存的代码将丢失。')) {
                 editor.setValue(questionData.code_template || '');
                 localStorage.removeItem(`coding_${questionId}`);
                 
@@ -650,11 +650,11 @@
                     // 滚动到编辑器
                     document.getElementById('editor-panel').scrollIntoView({ behavior: 'smooth' });
                 } else {
-                    alert('无法加载代码');
+                    appAlert('无法加载代码');
                 }
             } catch (error) {
                 console.error('加载代码失败:', error);
-                alert('加载失败');
+                appAlert('加载失败');
             }
         }
 
@@ -914,7 +914,7 @@
                     const input = testcaseTextarea ? testcaseTextarea.value : '';
                     
                     if (!code.trim()) {
-                        alert('请输入代码');
+                        appAlert('请输入代码');
                         return;
                     }
 

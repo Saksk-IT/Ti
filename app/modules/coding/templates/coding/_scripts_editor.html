@@ -285,7 +285,7 @@
             
             const code = editor.getValue();
             if (!code.trim()) {
-                alert('请输入代码');
+                appAlert('请输入代码');
                 return;
             }
 
@@ -319,7 +319,7 @@
             
             const code = editor.getValue();
             if (!code.trim()) {
-                alert('请输入代码');
+                appAlert('请输入代码');
                 return;
             }
 
@@ -371,10 +371,10 @@
                         console.log('题目已通过');
                     }
                 } else {
-                    alert(`提交失败: ${result.message}`);
+                    appAlert(`提交失败: ${result.message}`);
                 }
             } catch (error) {
-                alert(`提交失败: ${error.message}`);
+                appAlert(`提交失败: ${error.message}`);
             }
         }
 

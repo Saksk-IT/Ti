@@ -381,20 +381,20 @@ async function saveQuestion(event) {
         const result = await res.json();
         
         if (result.status === 'success') {
-            alert(result.message);
+            appAlert(result.message);
             closeModal();
             loadQuestions();
         } else {
-            alert(result.message);
+            appAlert(result.message);
         }
     } catch (error) {
-        alert('保存失败');
+        appAlert('保存失败');
     }
 }
 
 // 删除题目
 async function deleteQuestion(id) {
-    if (!confirm('确定要删除这道题目吗？')) return;
+    if (!(await appConfirm('确定要删除这道题目吗？'))) return;
     
     try {
         const res = await fetch(`/admin/coding/api/questions/${id}`, {
@@ -404,13 +404,13 @@ async function deleteQuestion(id) {
         const result = await res.json();
         
         if (result.status === 'success') {
-            alert(result.message);
+            appAlert(result.message);
             loadQuestions();
         } else {
-            alert(result.message);
+            appAlert(result.message);
         }
     } catch (error) {
-        alert('删除失败');
+        appAlert('删除失败');
     }
 }
 

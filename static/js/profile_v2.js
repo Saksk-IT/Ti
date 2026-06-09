@@ -120,19 +120,19 @@
 
   async function deleteManagedItem(item) {
     var config = getManageConfig(item);
-    if (!window.confirm('确认删除该' + config.label + '？删除后不可恢复。')) return;
+    if (!(await appConfirm('确认删除该' + config.label + '？删除后不可恢复。'))) return;
     try {
       var res = await fetch(config.deleteUrl, { method: 'DELETE', credentials: 'include' });
       var js = await res.json().catch(function () { return {}; });
       var ok = res.ok && (js.status === 'success' || js.success || js.code === 0);
       if (!ok) {
-        alert((js && js.message) ? js.message : '删除失败');
+        appAlert((js && js.message) ? js.message : '删除失败');
         return;
       }
       resetWorksList();
       loadTabContent('works');
     } catch (e) {
-      alert('删除失败，请稍后重试');
+      appAlert('删除失败，请稍后重试');
     }
   }
 

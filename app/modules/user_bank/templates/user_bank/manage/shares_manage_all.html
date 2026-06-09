@@ -238,7 +238,7 @@
     }
 
     async function revokeShare(bankId, shareId) {
-        if (!confirmAction('确定要撤销该分享吗？')) return;
+        if (!(await confirmAction('确定要撤销该分享吗？'))) return;
         try {
             await api(`/user/banks/api/${bankId}/shares/${shareId}`, { method: 'DELETE' });
             showToast('已撤销');

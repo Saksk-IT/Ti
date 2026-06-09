@@ -108,18 +108,18 @@
 {% block body_end %}
   <script>
     async function toMistakes(id) {
-      if (!confirm('将本次考试的错题加入错题本？')) return;
+      if (!(await appConfirm('将本次考试的错题加入错题本？'))) return;
       try {
         var res = await fetch(`/api/exams/${id}/mistakes`, { method: 'POST' });
         var js = await res.json();
         if (res.ok && js.status === 'success') {
-          alert(`已加入错题本：${js.count} 题`);
+          appAlert(`已加入错题本：${js.count} 题`);
           try { window.location.href = '/mistakes'; } catch (e) {}
           return;
         }
-        alert((js && js.message) || '操作失败');
+        appAlert((js && js.message) || '操作失败');
       } catch (e) {
-        alert('操作失败');
+        appAlert('操作失败');
       }
     }
 
@@ -136,13 +136,12 @@
       try {
         if (navigator.clipboard && navigator.clipboard.writeText) {
           await navigator.clipboard.writeText(url);
-          alert('已复制链接');
+          appAlert('已复制链接');
           return;
         }
       } catch (e) {}
 
-      try {
-        prompt('复制链接', url);
+      try { await appPrompt('复制链接', url);
       } catch (e) {}
     }
   </script>

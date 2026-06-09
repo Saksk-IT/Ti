@@ -133,7 +133,7 @@
     }).then(function (data) {
       render(data);
     }).catch(function (error) {
-      window.alert((error && error.message) || '加入失败');
+      appAlert((error && error.message) || '加入失败');
     });
   }
 

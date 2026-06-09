@@ -536,6 +536,16 @@
         #sak-promo-msg { font-size: 13px; line-height: 1.6; color:#666; white-space: pre-wrap; }
         #sak-promo-urlrow { margin-top: 10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
         #sak-promo-url { font-size: 12px; color:#0f766e; font-weight: 600; word-break: break-all; }
+        #sak-promo-setting-form { display:none; margin-top: 12px; }
+        #sak-promo-setting-form.show { display:block; }
+        #sak-promo-setting-input {
+            width: 100%; height: 36px; box-sizing: border-box;
+            border: 1.5px solid #ffe4e6; border-radius: 12px;
+            padding: 0 12px; outline: none; color:#333; font-size: 13px;
+        }
+        #sak-promo-setting-input:focus { border-color:#ff9a9e; box-shadow: 0 0 0 3px rgba(255,154,158,0.14); }
+        #sak-promo-setting-error { min-height: 18px; margin-top: 6px; color:#dc2626; font-size: 12px; line-height: 1.5; }
+        #sak-promo-setting-actions { margin-top: 8px; display:flex; justify-content:flex-end; gap: 8px; flex-wrap:wrap; }
         #sak-promo-actions { margin-top: 14px; display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; }
         .sak-promo-btn {
             height: 36px; padding: 0 12px; border-radius: 999px;
@@ -613,6 +623,45 @@
     let sakPromoMsgEl = null;
     let sakPromoUrlEl = null;
     let sakPromoTitleEl = null;
+    let sakPromoSettingFormEl = null;
+    let sakPromoSettingInputEl = null;
+    let sakPromoSettingErrorEl = null;
+
+    function hideSakSettingForm() {
+        if (sakPromoSettingFormEl) sakPromoSettingFormEl.classList.remove('show');
+        if (sakPromoSettingErrorEl) sakPromoSettingErrorEl.textContent = '';
+    }
+
+    function openSakSettingForm() {
+        showSakPromoModal('settings', '');
+        if (sakPromoSettingInputEl) {
+            sakPromoSettingInputEl.value = getSakSiteUrl();
+            setTimeout(() => {
+                sakPromoSettingInputEl.focus();
+                sakPromoSettingInputEl.select();
+            }, 0);
+        }
+        if (sakPromoSettingErrorEl) sakPromoSettingErrorEl.textContent = '';
+        if (sakPromoSettingFormEl) sakPromoSettingFormEl.classList.add('show');
+    }
+
+    function saveSakSiteUrlFromForm() {
+        const raw = sakPromoSettingInputEl ? sakPromoSettingInputEl.value : '';
+        const v = String(raw || '').trim().replace(/\/+$/g, '');
+        if (!/^https?:\/\//i.test(v)) {
+            if (sakPromoSettingErrorEl) sakPromoSettingErrorEl.textContent = '地址需以 http:// 或 https:// 开头';
+            return;
+        }
+        try {
+            localStorage.setItem(SAK_SITE_URL_KEY, v);
+        } catch (e) {
+            if (sakPromoSettingErrorEl) sakPromoSettingErrorEl.textContent = '保存失败，请检查浏览器存储权限';
+            return;
+        }
+        if (sakPromoUrlEl) sakPromoUrlEl.textContent = v;
+        hideSakSettingForm();
+        addLog('题库网站地址已更新');
+    }
 
     function ensureSakPromoModal() {
         if (sakPromoOverlay) return;
@@ -629,6 +678,14 @@
               <div id="sak-promo-urlrow">
                 <span id="sak-promo-url"></span>
               </div>
+              <div id="sak-promo-setting-form">
+                <input id="sak-promo-setting-input" type="url" placeholder="http://localhost:5000" />
+                <div id="sak-promo-setting-error"></div>
+                <div id="sak-promo-setting-actions">
+                  <button class="sak-promo-btn" type="button" id="sak-promo-setting-cancel">取消</button>
+                  <button class="sak-promo-btn primary" type="button" id="sak-promo-setting-save">保存</button>
+                </div>
+              </div>
             </div>
             <div id="sak-promo-actions">
               <button class="sak-promo-btn" type="button" id="sak-promo-setting">设置站点</button>
@@ -642,13 +699,21 @@
         sakPromoTitleEl = document.getElementById('sak-promo-title');
         sakPromoMsgEl = document.getElementById('sak-promo-msg');
         sakPromoUrlEl = document.getElementById('sak-promo-url');
+        sakPromoSettingFormEl = document.getElementById('sak-promo-setting-form');
+        sakPromoSettingInputEl = document.getElementById('sak-promo-setting-input');
+        sakPromoSettingErrorEl = document.getElementById('sak-promo-setting-error');
 
         const closeBtn = document.getElementById('sak-promo-close');
         const openBtn = document.getElementById('sak-promo-open');
         const copyBtn = document.getElementById('sak-promo-copy');
         const settingBtn = document.getElementById('sak-promo-setting');
+        const settingCancelBtn = document.getElementById('sak-promo-setting-cancel');
+        const settingSaveBtn = document.getElementById('sak-promo-setting-save');
 
-        const hide = () => sakPromoOverlay && sakPromoOverlay.classList.remove('show');
+        const hide = () => {
+            if (sakPromoOverlay) sakPromoOverlay.classList.remove('show');
+            hideSakSettingForm();
+        };
         if (closeBtn) closeBtn.onclick = hide;
         if (sakPromoOverlay) sakPromoOverlay.addEventListener('click', (e) => { if (e.target === sakPromoOverlay) hide(); });
 
@@ -662,30 +727,27 @@
             addLog('已复制题库网站地址');
         };
 
-        if (settingBtn) settingBtn.onclick = () => {
-            const cur = getSakSiteUrl();
-            const next = window.prompt('请输入题库网站地址（例如：http://localhost:5000 或 https://your-domain.com）', cur);
-            if (!next) return;
-            const v = String(next || '').trim().replace(/\/+$/g, '');
-            if (!/^https?:\/\//i.test(v)) {
-                window.alert('地址需以 http:// 或 https:// 开头');
-                return;
-            }
-            try {
-                localStorage.setItem(SAK_SITE_URL_KEY, v);
-            } catch (e) {}
-            if (sakPromoUrlEl) sakPromoUrlEl.textContent = v;
-            addLog('题库网站地址已更新');
-        };
+        if (settingBtn) settingBtn.onclick = openSakSettingForm;
+        if (settingCancelBtn) settingCancelBtn.onclick = hideSakSettingForm;
+        if (settingSaveBtn) settingSaveBtn.onclick = saveSakSiteUrlFromForm;
+        if (sakPromoSettingInputEl) {
+            sakPromoSettingInputEl.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveSakSiteUrlFromForm();
+                }
+            });
+        }
     }
 
     function showSakPromoModal(exportType, fileName) {
         ensureSakPromoModal();
         const url = getSakSiteUrl();
         const msg = buildSakPromoMessage(exportType, fileName);
-        if (sakPromoTitleEl) sakPromoTitleEl.textContent = exportType === 'help' ? '全流程指南' : '导出完成';
+        if (sakPromoTitleEl) sakPromoTitleEl.textContent = exportType === 'help' ? '全流程指南' : exportType === 'settings' ? '设置题库网站地址' : '导出完成';
         if (sakPromoMsgEl) sakPromoMsgEl.textContent = msg;
         if (sakPromoUrlEl) sakPromoUrlEl.textContent = url;
+        if (exportType !== 'settings') hideSakSettingForm();
         if (sakPromoOverlay) sakPromoOverlay.classList.add('show');
     }
 

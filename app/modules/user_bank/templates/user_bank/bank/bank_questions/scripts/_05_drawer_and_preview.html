@@ -99,7 +99,7 @@
     }
 
     async function deleteQuestion(id) {
-        if (!confirmAction('确定要删除该题目吗？此操作不可恢复！')) return;
+        if (!(await confirmAction('确定要删除该题目吗？此操作不可恢复！'))) return;
 
         try {
             await api(`/user/banks/api/${bankId}/questions/${id}`, { method: 'DELETE' });
@@ -118,7 +118,7 @@
             return;
         }
 
-        if (!confirmAction(`确定要删除选中的 ${ids.length} 道题目吗？此操作不可恢复！`)) return;
+        if (!(await confirmAction(`确定要删除选中的 ${ids.length} 道题目吗？此操作不可恢复！`))) return;
 
         try {
             await api(`/user/banks/api/${bankId}/questions/batch_delete`, {

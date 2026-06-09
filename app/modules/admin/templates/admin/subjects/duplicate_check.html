@@ -449,7 +449,7 @@ function updateRecordInfo(data) {
 
 // 重新查重
 async function recheckDuplicates() {
-    if (!confirm('确定要重新查重吗？这将重新计算所有题目的相似度，可能需要一些时间。')) {
+    if (!(await appConfirm('确定要重新查重吗？这将重新计算所有题目的相似度，可能需要一些时间。'))) {
         return;
     }
     
@@ -464,10 +464,10 @@ async function recheckDuplicates() {
     try {
         // 强制重新查重
         await loadDuplicateCheckResults(true);
-        alert('查重完成！');
+        appAlert('查重完成！');
     } catch (error) {
         console.error('重新查重失败:', error);
-        alert('重新查重失败，请重试');
+        appAlert('重新查重失败，请重试');
     } finally {
         btn.disabled = false;
         btn.textContent = originalText;
@@ -621,7 +621,7 @@ async function viewQuestionDetail(questionId) {
         document.getElementById('questionDetailModal').style.display = 'flex';
     } catch (error) {
         console.error('加载题目详情失败:', error);
-        alert('加载题目详情失败');
+        appAlert('加载题目详情失败');
     }
 }
 
@@ -640,7 +640,7 @@ function handleModalBackdropClick(event) {
 
 // 删除题目
 async function deleteQuestion(questionId) {
-    if (!confirm('确定要删除这道题目吗？此操作不可恢复。')) {
+    if (!(await appConfirm('确定要删除这道题目吗？此操作不可恢复。'))) {
         return;
     }
     
@@ -658,13 +658,13 @@ async function deleteQuestion(questionId) {
             
             // 重新应用当前筛选
             applyFilter();
-            alert('删除成功');
+            appAlert('删除成功');
         } else {
-            alert('删除失败：' + (result.message || '未知错误'));
+            appAlert('删除失败：' + (result.message || '未知错误'));
         }
     } catch (error) {
         console.error('删除题目失败:', error);
-        alert('删除失败，请重试');
+        appAlert('删除失败，请重试');
     }
 }
 

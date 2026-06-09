@@ -165,7 +165,7 @@
     });
 
     async function editCategory(id, currentName) {
-        const newName = prompt('请输入新的分类名称：', currentName);
+        const newName = await appPrompt('请输入新的分类名称：', currentName);
         if (!newName || newName.trim() === currentName) return;
 
         try {
@@ -186,7 +186,7 @@
             return;
         }
 
-        if (!confirmAction(`确定要删除分类「${name}」吗？`)) return;
+        if (!(await confirmAction(`确定要删除分类「${name}」吗？`))) return;
 
         try {
             await api(`/user/banks/api/categories/${id}`, { method: 'DELETE' });

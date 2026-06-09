@@ -84,7 +84,7 @@
       const safeId = Number(qid || 0) || 0;
       if (!safeId) return;
       if (!LOGGED_IN) {
-        alert('请先登录');
+        appAlert('请先登录');
         window.location.href = '/login';
         return;
       }
@@ -130,7 +130,7 @@
       const b = Number(bId || 0) || 0;
       if (!a || !b) return;
       if (!LOGGED_IN) {
-        alert('请先登录');
+        appAlert('请先登录');
         window.location.href = '/login';
         return;
       }

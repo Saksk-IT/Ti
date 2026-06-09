@@ -205,11 +205,11 @@
     }
 
     function showError(message) {
-        alert('❌ ' + message);
+        appAlert('❌ ' + message);
     }
 
     function showSuccess(message) {
-        alert('✅ ' + message);
+        appAlert('✅ ' + message);
     }
 
     function searchQuestions() { renderTable(); }
@@ -557,7 +557,7 @@
     }
 
     async function deleteQuestion(id) {
-        if (!confirm('⚠️ 确定要删除该题目吗？\n\n此操作不可恢复！')) return;
+        if (!(await appConfirm('⚠️ 确定要删除该题目吗？\n\n此操作不可恢复！'))) return;
         
         try {
             const res = await fetch(`/admin/questions/${id}`, { method: 'DELETE' });
@@ -582,7 +582,7 @@
             return;
         }
         
-        if (!confirm(`⚠️ 确定要删除选中的 ${ids.length} 道题目吗？\n\n此操作不可恢复！`)) return;
+        if (!(await appConfirm(`⚠️ 确定要删除选中的 ${ids.length} 道题目吗？\n\n此操作不可恢复！`))) return;
         
         try {
             const res = await fetch('/admin/questions/batch_delete', { 
@@ -633,13 +633,13 @@
 
     async function doBatchTypeChange(){
         const ids = getSelectedIds();
-        if(!ids.length) return alert('请先勾选题目');
+        if(!ids.length) return appAlert('请先勾选题目');
         const targetType = document.getElementById('typeChangeTarget').value;
-        if (!targetType) return alert('请选择一个目标题型');
+        if (!targetType) return appAlert('请选择一个目标题型');
 
         const res = await fetch('/admin/questions/batch_change_type', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ids, target_type: targetType })});
         const ret = await res.json();
-        alert(ret.message || '操作失败');
+        appAlert(ret.message || '操作失败');
         if(ret.status === 'success'){
             closeModal('modalTypeChange');
             loadQuestions();
@@ -665,27 +665,27 @@
 
     async function doBatchMove(){
         const ids = getSelectedIds();
-        if(!ids.length) return alert('请先勾选题目');
+        if(!ids.length) return appAlert('请先勾选题目');
         const target = document.getElementById('moveTarget').value;
         const res = await fetch('/admin/questions/batch_move_subject', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ids, target_subject_id: target })});
-        const ret = await res.json(); alert(ret.message||'');
+        const ret = await res.json(); appAlert(ret.message||'');
         if(ret.status==='success'){ closeModal('modalMove'); loadQuestions(); }
     }
     async function doBatchDifficulty(){
         const ids = getSelectedIds();
-        if(!ids.length) return alert('请先勾选题目');
+        if(!ids.length) return appAlert('请先勾选题目');
         const difficulty = parseInt(document.getElementById('diffValue').value)||1;
         const res = await fetch('/admin/questions/batch_set_difficulty', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ids, difficulty })});
-        const ret = await res.json(); alert(ret.message||'');
+        const ret = await res.json(); appAlert(ret.message||'');
         if(ret.status==='success'){ closeModal('modalDifficulty'); loadQuestions(); }
     }
     async function doBatchTags(){
         const ids = getSelectedIds();
-        if(!ids.length) return alert('请先勾选题目');
+        if(!ids.length) return appAlert('请先勾选题目');
         const tags = document.getElementById('tagsInput').value.trim();
-        if(!tags) return alert('请输入标签');
+        if(!tags) return appAlert('请输入标签');
         const res = await fetch('/admin/questions/batch_tags', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ids, action: 'set', tags })});
-        const ret = await res.json(); alert(ret.message||'');
+        const ret = await res.json(); appAlert(ret.message||'');
         if(ret.status==='success'){ closeModal('modalTags'); loadQuestions(); }
     }
 
@@ -709,7 +709,7 @@
                 window.__importData = data;
                 window.__importQuestions = list;
                 showImportPreview(list);
-            }catch(e){ alert('粘贴内容不是有效JSON'); }
+            }catch(e){ appAlert('粘贴内容不是有效JSON'); }
             return;
         }
         if(file){
@@ -721,15 +721,15 @@
                     window.__importData = data;
                     window.__importQuestions = list;
                     showImportPreview(list);
-                }catch(e){ alert('文件内容不是有效JSON'); }
+                }catch(e){ appAlert('文件内容不是有效JSON'); }
             };
             fr.readAsText(file);
             return;
         }
-        alert('请粘贴JSON或选择文件');
+        appAlert('请粘贴JSON或选择文件');
     }
     function showImportPreview(list){
-        if(!Array.isArray(list)) { alert('JSON格式不支持：需要数组或包含 questions 的对象'); return; }
+        if(!Array.isArray(list)) { appAlert('JSON格式不支持：需要数组或包含 questions 的对象'); return; }
         const box = document.getElementById('importPreview');
         let ok=0, bad=0, html='';
         list.forEach((it, i)=>{
@@ -743,9 +743,9 @@
     }
     async function confirmImport(){
         const list = window.__importQuestions;
-        if(!Array.isArray(list) || !list.length) return alert('暂无可导入数据');
+        if(!Array.isArray(list) || !list.length) return appAlert('暂无可导入数据');
         const res = await fetch('/admin/questions/import', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ subject_id: subjectId, questions: list })});
-        const ret = await res.json(); alert(ret.message||'');
+        const ret = await res.json(); appAlert(ret.message||'');
         if(ret.status==='success'){ closeModal('modalImport'); loadQuestions(); }
     }
     function exportSubject(){ window.open(`/admin/questions/export?subject_id=${subjectId}`, '_blank'); }
@@ -810,7 +810,7 @@
                 if (result.errors && result.errors.length > 0) {
                     message += '\n\n遇到的问题:\n' + result.errors.join('\n');
                 }
-                alert('✅ ' + message);
+                appAlert('✅ ' + message);
                 loadQuestions(); // Refresh the list
             } else {
                 showError(result.message || '导入失败');

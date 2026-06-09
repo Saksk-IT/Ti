@@ -795,8 +795,8 @@
         }
 
         // Confirm
-        function confirmAction(message) {
-            return confirm(message);
+        async function confirmAction(message) {
+            return await appConfirm(message);
         }
 
         // API helper

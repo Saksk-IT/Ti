@@ -6,7 +6,7 @@
     if (!ta) return;
     const content = (ta.value || '').trim();
     if (!content) return;
-    if (!ChatState.currentConversationId) { alert('请先选择或创建一个会话'); return; }
+    if (!ChatState.currentConversationId) { appAlert('请先选择或创建一个会话'); return; }
 
     ta.value = '';
     updateComposerActions();
@@ -18,7 +18,7 @@
     setLoading(btn, false);
 
     if (!res.ok || js.status !== 'success') {
-      const ok = confirm((js.message || '发送失败') + "\n\n是否重试？");
+      const ok = await appConfirm((js.message || '发送失败') + "\n\n是否重试？");
       if (ok) {
         ta.value = content;
         sendMessage();
@@ -135,7 +135,7 @@
     const btnImg = document.getElementById('btnPlus');
     setLoading(btnImg, true);
     try {
-      if (!ChatState.currentConversationId) { alert('请先选择或创建一个会话'); return; }
+      if (!ChatState.currentConversationId) { appAlert('请先选择或创建一个会话'); return; }
 
       let prepared = null;
       try {
@@ -158,7 +158,7 @@
 
       if (!res.ok || js.status !== 'success') {
         const msg = (js.message || '图片发送失败') + (sourceLabel ? `（来源：${sourceLabel}）` : '');
-        const ok = confirm(msg + "\n\n是否重试？");
+        const ok = await appConfirm(msg + "\n\n是否重试？");
         if (ok) {
           await sendImageBlob(file, sourceLabel);
         }
@@ -167,22 +167,22 @@
       await pollMessages(true);
     } catch(e) {
       setLoading(btnImg, false);
-      const ok = confirm('图片发送失败\n\n是否重试？');
+      const ok = await appConfirm('图片发送失败\n\n是否重试？');
       if (ok) await sendImageBlob(file, sourceLabel);
     }
   }
 
   async function sendImageFile(input){
     try {
-      if (!ChatState.currentConversationId) { alert('请先选择或创建一个会话'); input.value=''; return; }
+      if (!ChatState.currentConversationId) { appAlert('请先选择或创建一个会话'); input.value=''; return; }
       const file = input.files && input.files[0];
       if (!file) return;
-      if (file.size > 5 * 1024 * 1024) { alert('图片不能超过 5MB'); input.value=''; return; }
+      if (file.size > 5 * 1024 * 1024) { appAlert('图片不能超过 5MB'); input.value=''; return; }
       await sendImageBlob(file, '文件选择');
       input.value = '';
     } catch(e) {
       input.value = '';
-      alert('图片发送失败');
+      appAlert('图片发送失败');
     }
   }
 
@@ -220,14 +220,14 @@
     if (!kw) return;
 
     const users = await Chat.api.searchUsers(kw);
-    if (!users.length) { alert('没有找到用户'); return; }
+    if (!users.length) { appAlert('没有找到用户'); return; }
 
     const exact = users.find(x => (x.username || '').toLowerCase() === kw.toLowerCase());
 
     if (!exact && users.length > 1) {
       openUserPickModal(users, kw, async (picked)=>{
         const { res: cRes, js: cJs } = await Chat.api.createConversation(picked.id);
-        if (!cRes.ok || cJs.status !== 'success') { alert(cJs.message || '创建会话失败'); return; }
+        if (!cRes.ok || cJs.status !== 'success') { appAlert(cJs.message || '创建会话失败'); return; }
         inp.value = '';
         await refreshConversations();
         await openConversation(cJs.conversation_id);
@@ -237,7 +237,7 @@
 
     const u = exact || users[0];
     const { res: cRes, js: cJs } = await Chat.api.createConversation(u.id);
-    if (!cRes.ok || cJs.status !== 'success') { alert(cJs.message || '创建会话失败'); return; }
+    if (!cRes.ok || cJs.status !== 'success') { appAlert(cJs.message || '创建会话失败'); return; }
     inp.value = '';
     await refreshConversations();
     await openConversation(cJs.conversation_id);
@@ -369,9 +369,9 @@
   }
 
   async function startVoiceRecord(){
-    if (!ChatState.currentConversationId) { alert('请先选择或创建一个会话'); return; }
+    if (!ChatState.currentConversationId) { appAlert('请先选择或创建一个会话'); return; }
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      alert('当前浏览器不支持录音');
+      appAlert('当前浏览器不支持录音');
       return;
     }
 
@@ -413,7 +413,7 @@
           return;
         }
         if (blob.size > 8 * 1024 * 1024) {
-          alert('语音文件过大（>8MB），请缩短录音时长');
+          appAlert('语音文件过大（>8MB），请缩短录音时长');
           return;
         }
 
@@ -424,7 +424,7 @@
       mediaRecorder.start();
       showToast('开始录音…上滑取消，松开发送');
     } catch(e) {
-      alert('无法开始录音：可能未授权麦克风');
+      appAlert('无法开始录音：可能未授权麦克风');
     } finally {
       setLoading(btn, false);
     }
@@ -453,7 +453,7 @@
     btn.style.touchAction = 'none';
 
     const onPress = async (e)=>{
-      if (!ChatState.currentConversationId) { alert('请先选择或创建一个会话'); return; }
+      if (!ChatState.currentConversationId) { appAlert('请先选择或创建一个会话'); return; }
       e.preventDefault();
       e.stopPropagation();
       if (isRecording) return;
@@ -540,14 +540,14 @@
       const { res, js } = await Chat.api.uploadAudio(fd);
 
       if (!res.ok || js.status !== 'success') {
-        const ok = confirm((js.message || '语音发送失败') + "\n\n是否重试？");
+        const ok = await appConfirm((js.message || '语音发送失败') + "\n\n是否重试？");
         if (ok) await uploadVoiceBlob(blob, durationSec);
         return;
       }
 
       await pollMessages(true);
     } catch(e) {
-      const ok = confirm('语音发送失败\n\n是否重试？');
+      const ok = await appConfirm('语音发送失败\n\n是否重试？');
       if (ok) await uploadVoiceBlob(blob, durationSec);
     } finally {
       setLoading(btn, false);
@@ -558,16 +558,16 @@
     if (!currentPeerUserId) return;
     try {
       const { res, js } = await Chat.api.getUserRemark(currentPeerUserId);
-      if (!res.ok || js.status !== 'success') { alert(js.message || '读取备注失败'); return; }
+      if (!res.ok || js.status !== 'success') { appAlert(js.message || '读取备注失败'); return; }
 
       const curVal = (js.remark || '').trim();
-      const next = prompt('设置备注（最多30字，留空表示清除）', curVal);
+      const next = await appPrompt('设置备注（最多30字，留空表示清除）', curVal);
       if (next === null) return;
 
       const v = String(next || '').trim();
       const { res: sRes, js: sJs } = await Chat.api.setUserRemark(currentPeerUserId, v);
       if (!sRes.ok || sJs.status !== 'success') {
-        alert((sJs && sJs.message) ? sJs.message : (`设置备注失败（HTTP ${sRes.status}）`));
+        appAlert((sJs && sJs.message) ? sJs.message : (`设置备注失败（HTTP ${sRes.status}）`));
         return;
       }
 
@@ -584,7 +584,7 @@
 
       showToast(v ? '备注已更新' : '备注已清除');
     } catch(e) {
-      alert('备注操作失败');
+      appAlert('备注操作失败');
     }
   }
 
@@ -621,7 +621,7 @@
       return;
     }
     if (kind === 'file') {
-      alert('文件发送暂未实现（可继续扩展）');
+      appAlert('文件发送暂未实现（可继续扩展）');
       return;
     }
   }
@@ -636,7 +636,7 @@
   });
 
   async function init(){
-    if (!LOGGED_IN) { alert('请先登录'); location.href='/login'; return; }
+    if (!LOGGED_IN) { appAlert('请先登录'); location.href='/login'; return; }
 
     const sp = new URLSearchParams(window.location.search || '');
     const preOpenId = Number(sp.get('conversation_id') || 0);

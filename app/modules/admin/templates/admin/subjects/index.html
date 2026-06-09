@@ -964,7 +964,7 @@
         }
         confirmMsg += '\n\n此操作不可恢复！';
         
-        if (!confirm(confirmMsg)) return;
+        if (!(await appConfirm(confirmMsg))) return;
         
         try {
             let res = await fetch(`/admin/api/subjects/${id}`, { method: 'DELETE' });
@@ -977,7 +977,7 @@
             }
             
             if (res.status === 400 && /无法直接删除/.test(result.message || '')) {
-                if (confirm(`${result.message}\n\n⚠️ 是否强制删除该科目及其下所有 ${count} 道题目？\n\n此操作将：\n• 删除科目"${subject.name}"\n• 删除该科目下的所有题目\n• 清除相关的收藏和错题记录\n• 此操作不可恢复！`)) {
+                if (await appConfirm(`${result.message}\n\n⚠️ 是否强制删除该科目及其下所有 ${count} 道题目？\n\n此操作将：\n• 删除科目"${subject.name}"\n• 删除该科目下的所有题目\n• 清除相关的收藏和错题记录\n• 此操作不可恢复！`)) {
                     res = await fetch(`/admin/api/subjects/${id}?force=1`, { method: 'DELETE' });
                     result = await res.json();
                     
@@ -1002,7 +1002,7 @@
         const subject = allSubjects.find(s => s.id === id);
         if (!subject) return;
         
-        if (!confirm(`确定要锁定科目"${subject.name}"吗？\n\n锁定后，用户将无法查看和使用该科目，前台也不会显示该科目。`)) {
+        if (!(await appConfirm(`确定要锁定科目"${subject.name}"吗？\n\n锁定后，用户将无法查看和使用该科目，前台也不会显示该科目。`))) {
             return;
         }
         
@@ -1082,11 +1082,11 @@
     }
     
     function showSuccess(message) {
-        alert('✅ ' + message);
+        appAlert('✅ ' + message);
     }
     
     function showError(message) {
-        alert('❌ ' + message);
+        appAlert('❌ ' + message);
     }
 
     async function importFromExcel() {

@@ -354,7 +354,7 @@
       }
 
       async function resetHotkeys(){
-        if (!confirm('确定要恢复默认快捷键吗？')) return;
+        if (!(await appConfirm('确定要恢复默认快捷键吗？'))) return;
         setHotkeys({ ...DEFAULT_QUIZ_HOTKEYS });
         localStorage.setItem('settings_updated_at', String(Date.now()));
         await syncSettingsToServer();

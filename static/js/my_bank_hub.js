@@ -428,7 +428,7 @@
     });
   }
 
-  document.addEventListener('click', function (event) {
+  document.addEventListener('click', async function (event) {
     var createdCard = event.target && event.target.closest ? event.target.closest('.my-bank-linked-card[data-href]') : null;
     if (createdCard && !(event.target && event.target.closest && event.target.closest('[data-owner-actions]'))) {
       var href = createdCard.getAttribute('data-href');
@@ -469,7 +469,7 @@
     var sourceType = String(leaveBtn.getAttribute('data-leave-source-type') || 'user');
     var bankId = String(leaveBtn.getAttribute('data-leave-id') || '');
     if (!bankId) return;
-    var ok = window.confirm('确定要退出该题库吗？退出后会从“我的题库”中移除。');
+    var ok = await appConfirm('确定要退出该题库吗？退出后会从“我的题库”中移除。');
     if (!ok) return;
     leaveBtn.disabled = true;
     deleteJson('/api/public/banks/' + encodeURIComponent(sourceType) + '/' + encodeURIComponent(bankId) + '/join').then(function () {

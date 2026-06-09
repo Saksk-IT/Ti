@@ -225,7 +225,7 @@
     }
 
     async function removeShared(bankId, name) {
-        if (!confirmAction(`确定要移除「${name}」吗？`)) return;
+        if (!(await confirmAction(`确定要移除「${name}」吗？`))) return;
 
         try {
             await api(`/user/banks/api/shared/${bankId}`, { method: 'DELETE' });

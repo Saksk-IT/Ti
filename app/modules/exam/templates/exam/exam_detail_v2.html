@@ -105,26 +105,26 @@
 {% block body_end %}
   <script>
     async function toMistakes(id) {
-      if (!confirm('将本次考试的错题加入错题本？')) return;
+      if (!(await appConfirm('将本次考试的错题加入错题本？'))) return;
       try {
         var res = await fetch(`/api/exams/${id}/mistakes`, { method: 'POST' });
         var js = await res.json();
-        if (res.ok && js.status === 'success') alert(`已加入错题本：${js.count} 题`);
-        else alert(js.message || '操作失败');
+        if (res.ok && js.status === 'success') appAlert(`已加入错题本：${js.count} 题`);
+        else appAlert(js.message || '操作失败');
       } catch (e) {
-        alert('操作失败');
+        appAlert('操作失败');
       }
     }
 
     async function delExam(id) {
-      if (!confirm('确定要删除该考试吗？此操作不可恢复。')) return;
+      if (!(await appConfirm('确定要删除该考试吗？此操作不可恢复。'))) return;
       try {
         var res = await fetch(`/api/exams/${id}`, { method: 'DELETE' });
         var js = await res.json();
         if (res.ok && js.status === 'success') window.location.href = '/exams';
-        else alert(js.message || '删除失败');
+        else appAlert(js.message || '删除失败');
       } catch (e) {
-        alert('删除失败');
+        appAlert('删除失败');
       }
     }
   </script>

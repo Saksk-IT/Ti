@@ -939,7 +939,7 @@
     
     // 删除会话
     async function deleteConversation(conversationId) {
-        if (!confirm('确定要删除此会话吗？这将删除所有相关消息，此操作不可恢复。')) {
+        if (!(await appConfirm('确定要删除此会话吗？这将删除所有相关消息，此操作不可恢复。'))) {
             return;
         }
         
@@ -950,21 +950,21 @@
             const result = await res.json();
             
             if (result.status === 'success') {
-                alert('✅ 会话已删除');
+                appAlert('✅ 会话已删除');
                 loadConversations();
                 loadStats();
             } else {
-                alert('❌ 删除失败: ' + (result.message || '未知错误'));
+                appAlert('❌ 删除失败: ' + (result.message || '未知错误'));
             }
         } catch (error) {
             console.error('删除会话失败:', error);
-            alert('❌ 删除失败，请稍后重试');
+            appAlert('❌ 删除失败，请稍后重试');
         }
     }
     
     // 删除消息
     async function deleteMessage(messageId) {
-        if (!confirm('确定要删除此消息吗？此操作不可恢复。')) {
+        if (!(await appConfirm('确定要删除此消息吗？此操作不可恢复。'))) {
             return;
         }
         
@@ -975,17 +975,17 @@
             const result = await res.json();
             
             if (result.status === 'success') {
-                alert('✅ 消息已删除');
+                appAlert('✅ 消息已删除');
                 if (currentConversationId) {
                     viewMessages(currentConversationId);
                 }
                 loadStats();
             } else {
-                alert('❌ 删除失败: ' + (result.message || '未知错误'));
+                appAlert('❌ 删除失败: ' + (result.message || '未知错误'));
             }
         } catch (error) {
             console.error('删除消息失败:', error);
-            alert('❌ 删除失败，请稍后重试');
+            appAlert('❌ 删除失败，请稍后重试');
         }
     }
     
@@ -1123,7 +1123,7 @@
                 setAudioPlayButtonState(btn, true);
             }).catch(e => {
                 console.error('播放失败:', e);
-                alert('无法播放语音');
+                appAlert('无法播放语音');
             });
         } else {
             // 暂停

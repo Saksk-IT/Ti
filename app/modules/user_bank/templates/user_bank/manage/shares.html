@@ -313,7 +313,7 @@
     }
 
     async function revokeShare(shareId) {
-        if (!confirmAction('确定要撤销此分享吗？已使用此分享的用户将无法再访问。')) return;
+        if (!(await confirmAction('确定要撤销此分享吗？已使用此分享的用户将无法再访问。'))) return;
 
         try {
             await api(`/user/banks/api/${bankId}/shares/${shareId}`, { method: 'DELETE' });

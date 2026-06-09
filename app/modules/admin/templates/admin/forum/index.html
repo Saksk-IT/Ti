@@ -135,7 +135,7 @@ async function loadPosts() {
 }
 
 async function togglePost(id, field) { await apiPost(`/forum/posts/${id}/toggle`, {field}); loadPosts(); loadStats(); }
-async function delPost(id) { if(!confirm('确定删除？'))return; await apiDel(`/forum/posts/${id}`); loadPosts(); loadStats(); }
+async function delPost(id) { if (!(await appConfirm('确定删除？')))return; await apiDel(`/forum/posts/${id}`); loadPosts(); loadStats(); }
 
 async function loadBoards() {
     const r = await api('/forum/boards');
@@ -162,14 +162,14 @@ function toggleBoardForm() {
 async function createBoard() {
     const name = document.getElementById('bf_name').value.trim();
     const slug = document.getElementById('bf_slug').value.trim();
-    if (!name || !slug) { alert('名称和标识不能为空'); return; }
+    if (!name || !slug) { appAlert('名称和标识不能为空'); return; }
     await apiPost('/forum/boards', {name, slug, description: document.getElementById('bf_desc').value, sort_order: parseInt(document.getElementById('bf_sort').value)||0});
     document.getElementById('boardForm').style.display = 'none';
     loadBoards(); loadStats();
 }
 
-async function delBoard(id) { if(!confirm('确定删除？'))return; await apiDel(`/forum/boards/${id}`); loadBoards(); }
-async function syncBoards() { const r = await apiPost('/forum/boards/sync',{}); alert(r.message||'完成'); loadBoards(); }
+async function delBoard(id) { if (!(await appConfirm('确定删除？')))return; await apiDel(`/forum/boards/${id}`); loadBoards(); }
+async function syncBoards() { const r = await apiPost('/forum/boards/sync',{}); appAlert(r.message||'完成'); loadBoards(); }
 
 function esc(s) { const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
 function fmtDate(s) { if(!s)return'-'; const d=new Date(s); return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
@@ -196,7 +196,7 @@ async function loadReports() {
 }
 
 async function handleReport(id, action) {
-    const note = action==='dismiss' ? (prompt('驳回备注（可选）')||'') : '';
+    const note = action === 'dismiss' ? ((await appPrompt('驳回备注（可选）')) || '') : '';
     await apiPost(`/forum/reports/${id}/handle`, {action, note});
     loadReports(); loadStats();
 }
@@ -227,15 +227,15 @@ function toggleBanForm() {
 async function banUser() {
     const user_id = parseInt(document.getElementById('ban_uid').value);
     const reason = document.getElementById('ban_reason').value.trim();
-    if (!user_id || !reason) { alert('用户ID和原因不能为空'); return; }
+    if (!user_id || !reason) { appAlert('用户ID和原因不能为空'); return; }
     const expires = document.getElementById('ban_expires').value || null;
     const r = await apiPost('/forum/bans', {user_id, reason, expires_at: expires});
-    if (r.status !== 'success') { alert(r.message||'封禁失败'); return; }
+    if (r.status !== 'success') { appAlert(r.message||'封禁失败'); return; }
     document.getElementById('banForm').style.display = 'none';
     loadBans();
 }
 
-async function unbanUser(uid) { if(!confirm('确定解封？'))return; await apiDel(`/forum/bans/${uid}`); loadBans(); }
+async function unbanUser(uid) { if (!(await appConfirm('确定解封？')))return; await apiDel(`/forum/bans/${uid}`); loadBans(); }
 
 loadStats(); loadPosts();
 </script>

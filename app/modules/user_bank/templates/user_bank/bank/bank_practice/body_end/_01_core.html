@@ -575,7 +575,7 @@
     async function deleteBankTag(tagName){
       const name = String(tagName || '').trim();
       if (!name) return;
-      if (!LOGGED_IN) { alert('请先登录'); window.location.href = '/login'; return; }
+      if (!LOGGED_IN) { appAlert('请先登录'); window.location.href = '/login'; return; }
 
       const affected = Number(TAG_COUNT_MAP && Object.prototype.hasOwnProperty.call(TAG_COUNT_MAP, name) ? TAG_COUNT_MAP[name] : NaN);
       const meta = Number.isFinite(affected) ? `关联题目：${affected} 题` : '';
@@ -603,7 +603,7 @@
         });
         const js = await resp.json().catch(() => ({}));
         if (!resp.ok || !js || js.status !== 'success') {
-          alert((js && (js.message || js.msg)) || '删除失败');
+          appAlert((js && (js.message || js.msg)) || '删除失败');
           return;
         }
 
@@ -634,7 +634,7 @@
         syncChipsUI();
         queueStartCount();
       } catch (e) {
-        alert('网络错误，请重试');
+        appAlert('网络错误，请重试');
       }
     }
 
@@ -756,14 +756,14 @@
       const shuffleQ = state.shuffleQ ? '是' : '否';
       const shuffleO = (state.shuffleO && allowShuffleO) ? '是' : '否';
       const msg = `将清除以下组合的进度：\n题库：${BANK_NAME}\n范围：${scopeLabel}\n题型：${typeLabel}\n标签：${tagLabel}\n模式：${modeLabel}\n打乱题目：${shuffleQ}  打乱选项：${shuffleO}\n\n此操作不可恢复，确定继续吗？`;
-      if (!confirm(msg)) return;
+      if (!(await appConfirm(msg))) return;
 
       const key = buildPracticeProgressKey(safeMode);
       try { localStorage.removeItem(key); } catch (e) {}
       if (LOGGED_IN) {
         try { await fetch(`/api/progress?key=${encodeURIComponent(key)}`, { method: 'DELETE' }); } catch (e) {}
       }
-      alert('已清除');
+      appAlert('已清除');
     }
 
     function escapeHtml(input){

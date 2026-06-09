@@ -687,7 +687,7 @@
     const isAdmin = {{ 'true' if user.is_admin else 'false' }};
     const action = isAdmin ? '撤销管理员权限' : '设为管理员';
     
-    if (!confirm(`确定要${action}吗？此操作将立即生效。`)) return;
+    if (!(await appConfirm(`确定要${action}吗？此操作将立即生效。`))) return;
     
     const btn = event.target;
     btn.disabled = true;
@@ -717,7 +717,7 @@
     const isLocked = {{ 'true' if user.is_locked else 'false' }};
     const action = isLocked ? '解锁' : '锁定';
     
-    if (!confirm(`确定要${action}该用户吗？${isLocked ? '' : '锁定后用户将无法登录。'}`)) return;
+    if (!(await appConfirm(`确定要${action}该用户吗？${isLocked ? '' : '锁定后用户将无法登录。'}`))) return;
     
     const btn = event.target;
     btn.disabled = true;
@@ -796,7 +796,7 @@
   
   // 强制用户下线
   async function forceLogout() {
-    if (!confirm('确定要强制该用户下线吗？用户需要重新登录。')) return;
+    if (!(await appConfirm('确定要强制该用户下线吗？用户需要重新登录。'))) return;
     
     const btn = event.target;
     btn.disabled = true;
@@ -955,7 +955,7 @@
   
   // 移除科目限制（从标签点击）
   async function removeSubjectRestriction(subjectId) {
-    if (!confirm('确定要取消该科目的限制吗？')) return;
+    if (!(await appConfirm('确定要取消该科目的限制吗？'))) return;
     
     try {
       const res = await fetch(`/admin/api/users/${UID}/subjects/${subjectId}`, {

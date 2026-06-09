@@ -78,7 +78,7 @@ async function castVote(idx) {
   try {
     const r = await fetch(`/api/forum/posts/${POST_ID}/poll/vote`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({option_index:idx})}).then(r=>r.json());
     if (r.status === 'success') renderPoll(r.data);
-    else alert(r.message||'投票失败');
+    else appAlert(r.message||'投票失败');
   } catch(e) {}
 }
 
@@ -94,9 +94,9 @@ async function submitReport() {
   const detail = document.getElementById('reportDetail').value.trim();
   try {
     const r = await fetch('/api/forum/report', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_type:reportTarget.type,target_id:reportTarget.id,reason,detail})}).then(r=>r.json());
-    if (r.status === 'success') { alert('举报已提交'); closeReportModal(); }
-    else alert(r.message||'举报失败');
-  } catch(e) { alert('举报失败'); }
+    if (r.status === 'success') { appAlert('举报已提交'); closeReportModal(); }
+    else appAlert(r.message||'举报失败');
+  } catch(e) { appAlert('举报失败'); }
 }
 
 // ── 转发 ──
@@ -153,12 +153,12 @@ function selectForwardUser(id, name) {
 
 async function submitForward() {
   const receiver_id = parseInt(document.getElementById('forwardReceiver').value);
-  if (!receiver_id) { alert('请选择接收者'); return; }
+  if (!receiver_id) { appAlert('请选择接收者'); return; }
   try {
     const r = await fetch('/api/forum/forward', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({post_id:POST_ID,receiver_id})}).then(r=>r.json());
-    if (r.status === 'success') { alert('转发成功'); closeForwardModal(); }
-    else alert(r.message||'转发失败');
-  } catch(e) { alert('转发失败'); }
+    if (r.status === 'success') { appAlert('转发成功'); closeForwardModal(); }
+    else appAlert(r.message||'转发失败');
+  } catch(e) { appAlert('转发失败'); }
 }
 
 // loadReactions / loadPoll 由 post_detail.html 的 Promise.all 统一调用

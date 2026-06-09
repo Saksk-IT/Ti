@@ -347,7 +347,7 @@
             const res = await fetch(`/admin/api/notifications/${id}`);
             const js = await res.json();
             if (!res.ok || js.status !== 'success') {
-                alert(js.message || '获取通知失败');
+                appAlert(js.message || '获取通知失败');
                 return;
             }
 
@@ -366,7 +366,7 @@
             qs('#dlgEdit').style.display = 'flex';
         } catch (e) {
             console.error('获取通知失败:', e);
-            alert('获取通知失败');
+            appAlert('获取通知失败');
         }
     }
 
@@ -397,19 +397,19 @@
         const end_at = qs('#editEndAt').value || null;
 
         if (!title) {
-            alert('⚠️ 请填写标题');
+            appAlert('⚠️ 请填写标题');
             qs('#editTitle').focus();
             return;
         }
 
         if (!content) {
-            alert('⚠️ 请填写内容');
+            appAlert('⚠️ 请填写内容');
             qs('#editContent').focus();
             return;
         }
 
         if (priority < 0 || priority > 100) {
-            alert('⚠️ 优先级必须在 0-100 之间');
+            appAlert('⚠️ 优先级必须在 0-100 之间');
             qs('#editPriority').focus();
             return;
         }
@@ -432,16 +432,16 @@
 
             const js = await res.json();
             if (!res.ok || js.status !== 'success') {
-                alert('❌ ' + (js.message || '保存失败'));
+                appAlert('❌ ' + (js.message || '保存失败'));
                 return;
             }
 
-            alert('✅ ' + (js.message || '保存成功'));
+            appAlert('✅ ' + (js.message || '保存成功'));
             closeEdit();
             loadNotifications();
         } catch (e) {
             console.error('保存通知失败:', e);
-            alert('❌ 保存通知失败');
+            appAlert('❌ 保存通知失败');
         } finally {
             btnSave.disabled = false;
             btnSave.textContent = originalText;
@@ -453,32 +453,32 @@
             const res = await fetch(`/admin/api/notifications/${id}/toggle`, { method: 'POST' });
             const js = await res.json();
             if (!res.ok || js.status !== 'success') {
-                alert('❌ ' + (js.message || '操作失败'));
+                appAlert('❌ ' + (js.message || '操作失败'));
                 return;
             }
             loadNotifications();
         } catch (e) {
             console.error('切换状态失败:', e);
-            alert('❌ 切换状态失败');
+            appAlert('❌ 切换状态失败');
         }
     }
 
 
     async function deleteNotification(id) {
-        if (!confirm('⚠️ 确定要删除这条通知吗?\n\n删除后将无法恢复!')) return;
+        if (!(await appConfirm('⚠️ 确定要删除这条通知吗?\n\n删除后将无法恢复!'))) return;
 
         try {
             const res = await fetch(`/admin/api/notifications/${id}`, { method: 'DELETE' });
             const js = await res.json();
             if (!res.ok || js.status !== 'success') {
-                alert('❌ ' + (js.message || '删除失败'));
+                appAlert('❌ ' + (js.message || '删除失败'));
                 return;
             }
-            alert('✅ ' + (js.message || '删除成功'));
+            appAlert('✅ ' + (js.message || '删除成功'));
             loadNotifications();
         } catch (e) {
             console.error('删除通知失败:', e);
-            alert('❌ 删除通知失败');
+            appAlert('❌ 删除通知失败');
         }
     }
 
@@ -798,7 +798,7 @@
             const res = await fetch(`/admin/api/popups/${id}`);
             const js = await res.json();
             if (!res.ok || js.status !== 'success') {
-                alert(js.message || '获取弹窗失败');
+                appAlert(js.message || '获取弹窗失败');
                 return;
             }
 
@@ -817,7 +817,7 @@
             qs('#popupDlgEdit').style.display = 'flex';
         } catch (e) {
             console.error('获取弹窗失败:', e);
-            alert('获取弹窗失败');
+            appAlert('获取弹窗失败');
         }
     }
 
@@ -836,19 +836,19 @@
         const end_at = qs('#popupEditEndAt').value || null;
 
         if (!title) {
-            alert('⚠️ 请填写标题');
+            appAlert('⚠️ 请填写标题');
             qs('#popupEditTitle').focus();
             return;
         }
 
         if (!content) {
-            alert('⚠️ 请填写内容');
+            appAlert('⚠️ 请填写内容');
             qs('#popupEditContent').focus();
             return;
         }
 
         if (priority < 0 || priority > 100) {
-            alert('⚠️ 优先级必须在 0-100 之间');
+            appAlert('⚠️ 优先级必须在 0-100 之间');
             qs('#popupEditPriority').focus();
             return;
         }
@@ -871,16 +871,16 @@
 
             const js = await res.json();
             if (!res.ok || js.status !== 'success') {
-                alert('❌ ' + (js.message || '保存失败'));
+                appAlert('❌ ' + (js.message || '保存失败'));
                 return;
             }
 
-            alert('✅ ' + (js.message || '保存成功'));
+            appAlert('✅ ' + (js.message || '保存成功'));
             closePopupEdit();
             loadPopups();
         } catch (e) {
             console.error('保存弹窗失败:', e);
-            alert('❌ 保存弹窗失败');
+            appAlert('❌ 保存弹窗失败');
         } finally {
             btnSave.disabled = false;
             btnSave.textContent = originalText;
@@ -902,13 +902,13 @@
             });
             const js = await res.json();
             if (!res.ok || js.status !== 'success') {
-                alert('❌ ' + (js.message || '操作失败'));
+                appAlert('❌ ' + (js.message || '操作失败'));
                 return;
             }
             loadPopups();
         } catch (e) {
             console.error('切换状态失败:', e);
-            alert('❌ 切换状态失败');
+            appAlert('❌ 切换状态失败');
         }
     }
 
@@ -946,20 +946,20 @@
     }
 
     async function deletePopup(id) {
-        if (!confirm('⚠️ 确定要删除这条弹窗吗?\n\n删除后将无法恢复!')) return;
+        if (!(await appConfirm('⚠️ 确定要删除这条弹窗吗?\n\n删除后将无法恢复!'))) return;
 
         try {
             const res = await fetch(`/admin/api/popups/${id}`, { method: 'DELETE' });
             const js = await res.json();
             if (!res.ok || js.status !== 'success') {
-                alert('❌ ' + (js.message || '删除失败'));
+                appAlert('❌ ' + (js.message || '删除失败'));
                 return;
             }
-            alert('✅ ' + (js.message || '删除成功'));
+            appAlert('✅ ' + (js.message || '删除成功'));
             loadPopups();
         } catch (e) {
             console.error('删除弹窗失败:', e);
-            alert('❌ 删除弹窗失败');
+            appAlert('❌ 删除弹窗失败');
         }
     }
 

@@ -779,7 +779,7 @@
   }
 
   async function toggleAdmin(id){
-    if (!confirm('确定要切换该用户的管理员权限吗？')) return;
+    if (!(await appConfirm('确定要切换该用户的管理员权限吗？'))) return;
     try {
       const res = await fetch(`/admin/api/users/${id}/toggle_admin`, { method:'POST' });
       const js = await res.json(); 
@@ -791,7 +791,7 @@
   }
   
   async function toggleSubjectAdmin(id){
-    if (!confirm('确定要切换该用户的科目管理员权限吗？')) return;
+    if (!(await appConfirm('确定要切换该用户的科目管理员权限吗？'))) return;
     try {
       const res = await fetch(`/admin/api/users/${id}/toggle_subject_admin`, { method:'POST' });
       const js = await res.json(); 
@@ -803,7 +803,7 @@
   }
   
   async function toggleNotificationAdmin(id){
-    if (!confirm('确定要切换该用户的通知管理员权限吗？')) return;
+    if (!(await appConfirm('确定要切换该用户的通知管理员权限吗？'))) return;
     try {
       const res = await fetch(`/admin/api/users/${id}/toggle_notification_admin`, { method:'POST' });
       const js = await res.json(); 
@@ -815,7 +815,7 @@
   }
   
   async function toggleLock(id){
-    if (!confirm('确定要切换该用户的锁定状态吗？')) return;
+    if (!(await appConfirm('确定要切换该用户的锁定状态吗？'))) return;
     try {
       const res = await fetch(`/admin/api/users/${id}/toggle_lock`, { method:'POST' });
       const js = await res.json(); 
@@ -913,7 +913,7 @@
   }
   
   async function forceLogout(id){
-    if (!confirm('确定要强制该用户下线吗？')) return;
+    if (!(await appConfirm('确定要强制该用户下线吗？'))) return;
     try {
       const res = await fetch(`/admin/api/users/${id}/force_logout`, { method:'POST' });
       const js = await res.json(); 
@@ -970,7 +970,7 @@
   });
 
   async function delUser(id){
-    if(!confirm('⚠️ 确定删除该用户？\n\n该操作将：\n• 删除用户账号\n• 清除所有相关数据\n• 此操作不可恢复！')) return;
+    if (!(await appConfirm('⚠️ 确定删除该用户？\n\n该操作将：\n• 删除用户账号\n• 清除所有相关数据\n• 此操作不可恢复！'))) return;
     
     try {
       const res = await fetch(`/admin/api/users/${id}`, { method:'DELETE' });
@@ -984,11 +984,11 @@
   
   // 消息提示
   function showMessage(msg, isSuccess = true) {
-    alert((isSuccess ? '✅ ' : '❌ ') + msg);
+    appAlert((isSuccess ? '✅ ' : '❌ ') + msg);
   }
   
   function showError(msg) {
-    alert('❌ ' + msg);
+    appAlert('❌ ' + msg);
   }
 
   // 初始化

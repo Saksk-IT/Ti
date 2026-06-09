@@ -531,12 +531,12 @@ async function submitExam(force = false) {
         });
 
         if (unAnsweredIndices.length > 0) {
-            alert(`还有 ${unAnsweredIndices.length} 道题未作答！\n题号：${unAnsweredIndices.join(', ')}`);
+            appAlert(`还有 ${unAnsweredIndices.length} 道题未作答！\n题号：${unAnsweredIndices.join(', ')}`);
             if (!isWholeView) showQuestion(unAnsweredIndices[0] - 1);
             return;
         }
 
-        if (!confirm("确定要交卷吗？交卷后将进入结算页。")) return;
+        if (!(await appConfirm("确定要交卷吗？交卷后将进入结算页。"))) return;
     }
 
     // 立即更新状态并隐藏所有交卷按钮
@@ -1021,7 +1021,7 @@ function resetQuizUI(){
 }
 
 async function clearProgress(confirmMsg = "确定要清除当前模式的做题进度吗？") {
-    if(confirm(confirmMsg)) {
+    if (await appConfirm(confirmMsg)) {
         localStorage.removeItem(progressKey());
         if (LOGGED_IN) {
             try { await fetch(`/api/progress?key=${encodeURIComponent(progressKey())}`, { method: 'DELETE' }); } catch(e) {}
@@ -1034,7 +1034,7 @@ async function clearProgress(confirmMsg = "确定要清除当前模式的做题�
 }
 
 async function reshuffle() {
-    const confirmed = confirm("重新打乱将清空当前进度，确定要继续吗？");
+    const confirmed = await appConfirm("重新打乱将清空当前进度，确定要继续吗？");
     if (confirmed) {
         // 1. Clear progress data without reloading
         localStorage.removeItem(progressKey());

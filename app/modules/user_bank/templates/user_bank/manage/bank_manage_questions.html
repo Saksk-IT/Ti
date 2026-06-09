@@ -821,7 +821,7 @@
 
       async function deleteQuestion(qid) {
         if (!qid) return;
-        if (!confirm('确定要删除该题目吗？此操作不可撤销。')) return;
+        if (!(await appConfirm('确定要删除该题目吗？此操作不可撤销。'))) return;
         try {
           await window.ubmApi(`/user/banks/api/${encodeURIComponent(bankId)}/questions/${encodeURIComponent(String(qid))}`, { method: 'DELETE' });
           try {
@@ -894,7 +894,7 @@
         if (!bankId) return;
         const ids = getSelectedIdsOrToast();
         if (!ids) return;
-        if (!confirm(`确定要删除已选的 ${ids.length} 道题目吗？此操作不可撤销。`)) return;
+        if (!(await appConfirm(`确定要删除已选的 ${ids.length} 道题目吗？此操作不可撤销。`))) return;
         try {
           batchDeleteBtn.disabled = true;
           await window.ubmApi(`/user/banks/api/${encodeURIComponent(bankId)}/questions/batch_delete`, {

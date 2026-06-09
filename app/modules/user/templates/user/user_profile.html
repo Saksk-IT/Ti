@@ -328,7 +328,7 @@
                     document.getElementById('registerDisplay').textContent = u.created_at;
                 }
             } catch(e) {
-                alert('加载失败: ' + e.message);
+                appAlert('加载失败: ' + e.message);
             }
         }
         
@@ -370,11 +370,11 @@
                 const data = await res.json();
                 if(!res.ok || data.status !== 'success') throw new Error(data.message || '更新失败');
                 
-                alert('✅ 更新成功');
+                appAlert('✅ 更新成功');
                 await loadProfile();
                 cancelEdit();
             } catch(e) {
-                alert('❌ ' + e.message);
+                appAlert('❌ ' + e.message);
             }
         }
         
@@ -389,11 +389,11 @@
                 const data = await res.json();
                 if(!res.ok || data.status !== 'success') throw new Error(data.message || '上传失败');
                 
-                alert('✅ 头像上传成功');
+                appAlert('✅ 头像上传成功');
                 document.getElementById('avatarDisplay').style.backgroundImage = `url(${data.avatar_url})`;
                 document.getElementById('avatarText').style.display = 'none';
             } catch(e) {
-                alert('❌ ' + e.message);
+                appAlert('❌ ' + e.message);
             }
         }
         

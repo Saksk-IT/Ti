@@ -68,7 +68,7 @@ function setModeButtonState(mode) {
 
 function initEditor() {
   if (!window.toastui || !toastui.Editor) {
-    alert('编辑器资源加载失败，请刷新页面重试');
+    appAlert('编辑器资源加载失败，请刷新页面重试');
     return;
   }
   const initialMode = getStoredEditorMode();
@@ -143,10 +143,10 @@ async function uploadBodyImages(files) {
         uploadedImages = [...uploadedImages, r.data.url];
         renderImagePreviews();
       } else {
-        alert(r.message || '上传失败');
+        appAlert(r.message || '上传失败');
       }
     } catch(e) {
-      alert('上传失败');
+      appAlert('上传失败');
     }
   }
 }
@@ -180,10 +180,10 @@ async function uploadCoverImage(files) {
       coverImage = r.data.url || '';
       renderCoverPreview();
     } else {
-      alert(r.message || '封面上传失败');
+      appAlert(r.message || '封面上传失败');
     }
   } catch(e) {
-    alert('封面上传失败');
+    appAlert('封面上传失败');
   }
 }
 
@@ -204,12 +204,12 @@ function addTag(rawTag) {
   const value = String(rawTag || '').trim();
   if (!value) return;
   if (value.length > MAX_TAG_LENGTH) {
-    alert(`标签长度不能超过 ${MAX_TAG_LENGTH} 字`);
+    appAlert(`标签长度不能超过 ${MAX_TAG_LENGTH} 字`);
     return;
   }
   if (selectedTags.includes(value)) return;
   if (selectedTags.length >= MAX_TAGS) {
-    alert(`标签最多 ${MAX_TAGS} 个`);
+    appAlert(`标签最多 ${MAX_TAGS} 个`);
     return;
   }
   selectedTags = [...selectedTags, value];
@@ -345,23 +345,23 @@ async function submitPost() {
   const title = document.getElementById('postTitle').value.trim();
   const boardId = document.getElementById('boardSelect').value;
   const summary = document.getElementById('summaryInput').value.trim().slice(0, SUMMARY_MAX);
-  if (!title) { setEditorSettingsOpen(true); alert('请输入标题'); return; }
-  if (!boardId) { setEditorSettingsOpen(true); alert('请选择版块'); return; }
-  if (!editorInstance) { alert('编辑器未初始化'); return; }
+  if (!title) { setEditorSettingsOpen(true); appAlert('请输入标题'); return; }
+  if (!boardId) { setEditorSettingsOpen(true); appAlert('请选择版块'); return; }
+  if (!editorInstance) { appAlert('编辑器未初始化'); return; }
 
   const editorPayload = getEditorPayload();
   const hasContent = editorPayload.content_format === 'markdown'
     ? !!(editorPayload.markdown_source || '').trim()
     : !!(editorPayload.content || '').replace(/<[^>]*>/g, '').trim();
   if (!hasContent) {
-    alert('正文不能为空');
+    appAlert('正文不能为空');
     return;
   }
 
   const poll = buildPollData();
   if (document.getElementById('pollToggle').checked && !poll) {
     setEditorSettingsOpen(true);
-    alert('投票需要填写问题和至少2个选项');
+    appAlert('投票需要填写问题和至少2个选项');
     return;
   }
 
@@ -395,10 +395,10 @@ async function submitPost() {
         location.href = pid ? '/forum/post/' + pid : '/forum';
       }
     } else {
-      alert(r.message || '操作失败');
+      appAlert(r.message || '操作失败');
     }
   } catch(e) {
-    alert('操作失败');
+    appAlert('操作失败');
   }
 }
 

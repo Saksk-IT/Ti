@@ -383,7 +383,7 @@
     if (isLoading) return;
     const unread = getTabAllItems('unread');
     if (unread.length === 0) return;
-    if (!confirm(`将 ${unread.length} 条未读通知全部标记为已读？`)) return;
+    if (!(await appConfirm(`将 ${unread.length} 条未读通知全部标记为已读？`))) return;
 
     const btn = qs('btnMarkAllRead');
     if (btn) {

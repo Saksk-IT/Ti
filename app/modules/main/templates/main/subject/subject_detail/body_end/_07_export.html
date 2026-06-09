@@ -9,7 +9,7 @@
       const v = btn.dataset.val || 'all';
       if (kind === 'scope') {
         if ((v === 'favorites' || v === 'mistakes') && !LOGGED_IN) {
-          alert('收藏/错题范围需要先登录');
+          appAlert('收藏/错题范围需要先登录');
           window.location.href = '/login';
           return;
         }
@@ -81,7 +81,7 @@
       var countEl = document.getElementById('exportCount');
       var countVal = countEl ? parseInt(countEl.textContent, 10) : 0;
       if (!countVal || countVal <= 0) {
-        alert('当前筛选条件下没有可导出的题目');
+        appAlert('当前筛选条件下没有可导出的题目');
         return;
       }
       exportBusy = true;
@@ -109,7 +109,7 @@
         });
         if (!res.ok) {
           var err = await res.json().catch(function() { return {}; });
-          alert((err && err.message) || '导出失败，请稍后重试');
+          appAlert((err && err.message) || '导出失败，请稍后重试');
           return;
         }
         var blob = await res.blob();
@@ -124,7 +124,7 @@
         a.click();
         setTimeout(function() { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
       } catch (e) {
-        alert('导出失败，请检查网络');
+        appAlert('导出失败，请检查网络');
       } finally {
         exportBusy = false;
         if (wordBtn) { wordBtn.disabled = false; wordBtn.textContent = '导出 Word'; }

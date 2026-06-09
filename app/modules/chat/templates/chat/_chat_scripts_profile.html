@@ -146,7 +146,7 @@
     try {
       const { res, js } = await Chat.api.getUserProfile(userId);
       if (!res.ok || js.status !== 'success') {
-        alert(js.message || '加载资料失败');
+        appAlert(js.message || '加载资料失败');
         closeUserProfileModal();
         return;
       }
@@ -234,7 +234,7 @@
       }
 
     } catch(e) {
-      alert('加载资料失败');
+      appAlert('加载资料失败');
       closeUserProfileModal();
     }
   }
@@ -272,7 +272,7 @@
     const v = (typeof forceValue === 'string') ? String(forceValue).trim() : String((inp && inp.value) || '').trim();
 
     if (v.length > 30) {
-      alert('备注过长（最多30字）');
+      appAlert('备注过长（最多30字）');
       return;
     }
 
@@ -280,7 +280,7 @@
     try {
       const { res: sRes, js: sJs } = await Chat.api.setUserRemark(currentProfileUserId, v);
       if (!sRes.ok || sJs.status !== 'success') {
-        alert((sJs && sJs.message) ? sJs.message : (`设置备注失败（HTTP ${sRes.status}）`));
+        appAlert((sJs && sJs.message) ? sJs.message : (`设置备注失败（HTTP ${sRes.status}）`));
         return;
       }
 

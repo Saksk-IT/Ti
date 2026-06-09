@@ -1703,6 +1703,23 @@
       .ptaexp-sak-body { margin-top: 8px; color: var(--ptaexp-text); }
       .ptaexp-sak-msg { font-size: 12px; line-height: 1.6; white-space: pre-wrap; }
       .ptaexp-sak-url { margin-top: 8px; font-size: 12px; color: var(--ptaexp-muted); word-break: break-word; }
+      .ptaexp-sak-setting { margin-top: 10px; display: none; }
+      .ptaexp-sak-setting.show { display: block; }
+      .ptaexp-sak-input {
+        width: 100%;
+        height: 34px;
+        padding: 0 10px;
+        border: 1px solid var(--ptaexp-border);
+        border-radius: 10px;
+        background: var(--ptaexp-bg2);
+        color: var(--ptaexp-text);
+        font: inherit;
+        font-size: 12px;
+        outline: none;
+      }
+      .ptaexp-sak-input:focus { border-color: #0f766e; box-shadow: 0 0 0 3px rgba(15,118,110,0.12); }
+      .ptaexp-sak-error { min-height: 18px; margin-top: 6px; color: #b91c1c; font-size: 12px; line-height: 1.5; }
+      .ptaexp-sak-setting-actions { margin-top: 8px; display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
       .ptaexp-sak-actions { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
       .ptaexp-sak-actions .ptaexp-action { flex: 1 1 auto; }
 
@@ -1836,6 +1853,14 @@
             <div class="ptaexp-sak-notice" data-el="sak-notice" role="alert" hidden></div>
             <div class="ptaexp-sak-msg" data-el="sak-msg"></div>
             <div class="ptaexp-sak-url" data-el="sak-url"></div>
+            <div class="ptaexp-sak-setting" data-el="sak-setting-form">
+              <input class="ptaexp-sak-input" type="url" data-el="sak-setting-input" placeholder="http://localhost:5000" />
+              <div class="ptaexp-sak-error" data-el="sak-setting-error"></div>
+              <div class="ptaexp-sak-setting-actions">
+                <button class="ptaexp-action" type="button" data-act="sak-setting-cancel">取消</button>
+                <button class="ptaexp-action" type="button" data-act="sak-setting-save" data-primary="1">保存</button>
+              </div>
+            </div>
           </div>
           <div class="ptaexp-sak-actions">
             <button class="ptaexp-action" type="button" data-act="sak-setting">设置站点</button>
@@ -1857,6 +1882,9 @@
     const sakNoticeEl = root.querySelector('[data-el="sak-notice"]');
     const sakMsgEl = root.querySelector('[data-el="sak-msg"]');
     const sakUrlEl = root.querySelector('[data-el="sak-url"]');
+    const sakSettingFormEl = root.querySelector('[data-el="sak-setting-form"]');
+    const sakSettingInputEl = root.querySelector('[data-el="sak-setting-input"]');
+    const sakSettingErrorEl = root.querySelector('[data-el="sak-setting-error"]');
 
     const logBodyEl = root.querySelector('[data-el="log-body"]');
     const logLines = [];
@@ -1883,6 +1911,44 @@
       if (!sakOverlay) return;
       sakOverlay.classList.remove('show');
       sakOverlay.setAttribute('aria-hidden', 'true');
+      closeSakSettingForm();
+    }
+
+    function closeSakSettingForm() {
+      if (sakSettingFormEl) sakSettingFormEl.classList.remove('show');
+      if (sakSettingErrorEl) sakSettingErrorEl.textContent = '';
+    }
+
+    function openSakSettingForm() {
+      showSakPromoModal('settings', '', { title: '设置题库网站地址' });
+      if (sakSettingInputEl) {
+        sakSettingInputEl.value = getSakSiteUrl();
+        setTimeout(() => {
+          sakSettingInputEl.focus();
+          sakSettingInputEl.select();
+        }, 0);
+      }
+      if (sakSettingErrorEl) sakSettingErrorEl.textContent = '';
+      if (sakSettingFormEl) sakSettingFormEl.classList.add('show');
+    }
+
+    function saveSakSiteUrlFromForm() {
+      const raw = sakSettingInputEl ? sakSettingInputEl.value : '';
+      const v = String(raw || '').trim().replace(/\/+$/g, '');
+      if (!/^https?:\/\//i.test(v)) {
+        if (sakSettingErrorEl) sakSettingErrorEl.textContent = '地址需以 http:// 或 https:// 开头';
+        return;
+      }
+      try {
+        localStorage.setItem(SAK_SITE_URL_KEY, v);
+      } catch (e) {
+        if (sakSettingErrorEl) sakSettingErrorEl.textContent = '保存失败，请检查浏览器存储权限';
+        return;
+      }
+      if (sakUrlEl) sakUrlEl.textContent = v;
+      closeSakSettingForm();
+      setStatus('题库网站地址已更新');
+      pushLog(`题库网站地址已更新：${v}`);
     }
 
     function showSakPromoModal(exportType, fileName, opts) {
@@ -1899,6 +1965,7 @@
       if (sakUrlEl) sakUrlEl.textContent = getSakSiteUrl();
       sakOverlay.classList.add('show');
       sakOverlay.setAttribute('aria-hidden', 'false');
+      if (exportType !== 'settings') closeSakSettingForm();
     }
 
     let lastParsed = null;
@@ -2199,22 +2266,15 @@
         return;
       }
       if (act === 'sak-setting' || act === 'set-sak') {
-        const cur = getSakSiteUrl();
-        const next = window.prompt('请输入题库网站地址（例如：http://localhost:5000 或 https://your-domain.com）', cur);
-        if (!next) return;
-        const v = String(next || '').trim().replace(/\/+$/g, '');
-        if (!/^https?:\/\//i.test(v)) {
-          window.alert('地址需以 http:// 或 https:// 开头');
-          return;
-        }
-        try {
-          localStorage.setItem(SAK_SITE_URL_KEY, v);
-        } catch (e) {
-          // ignore
-        }
-        if (sakUrlEl) sakUrlEl.textContent = v;
-        setStatus('题库网站地址已更新');
-        pushLog(`题库网站地址已更新：${v}`);
+        openSakSettingForm();
+        return;
+      }
+      if (act === 'sak-setting-save') {
+        saveSakSiteUrlFromForm();
+        return;
+      }
+      if (act === 'sak-setting-cancel') {
+        closeSakSettingForm();
         return;
       }
 

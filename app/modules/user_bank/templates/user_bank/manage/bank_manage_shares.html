@@ -318,7 +318,7 @@
 
       async function revokeShare(shareId) {
         if (!shareId) return;
-        if (!confirm('确定要撤销此分享吗？已使用此分享的用户将无法再访问。')) return;
+        if (!(await appConfirm('确定要撤销此分享吗？已使用此分享的用户将无法再访问。'))) return;
         try {
           await window.ubmApi(`/user/banks/api/${encodeURIComponent(bankId)}/shares/${encodeURIComponent(String(shareId))}`, { method: 'DELETE' });
           window.ubmToast('已撤销', 'success');

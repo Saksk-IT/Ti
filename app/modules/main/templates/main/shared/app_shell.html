@@ -743,6 +743,7 @@
   </style>
 
   {% block head_extra %}{% endblock %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app_dialog.css') }}" />
 </head>
 <body class="{% block body_class %}{% endblock %}">
   <a class="app-skip-link" href="#main">跳到主要内容</a>
@@ -1574,6 +1575,7 @@
   })();
   </script>
 
+  <script src="{{ url_for('static', filename='js/app_dialog.js') }}"></script>
   {% block body_end %}{% endblock %}
 </body>
 </html>

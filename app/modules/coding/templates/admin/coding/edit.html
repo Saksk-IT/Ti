@@ -560,7 +560,7 @@ async function loadSubjects() {
         }
     } catch (error) {
         console.error('加载题目集失败:', error);
-        alert('加载题目集失败');
+        appAlert('加载题目集失败');
     }
 }
 
@@ -597,12 +597,12 @@ async function loadQuestion() {
             }
             renderTestCases(testCasesData);
         } else {
-            alert('加载题目失败: ' + result.message);
+            appAlert('加载题目失败: ' + result.message);
             window.location.href = '/admin/coding/questions';
         }
     } catch (error) {
         console.error('加载题目失败:', error);
-        alert('加载题目失败');
+        appAlert('加载题目失败');
         window.location.href = '/admin/coding/questions';
     }
 }
@@ -621,7 +621,7 @@ async function saveQuestion(event) {
         // 收集测试用例数据并转换为JSON
         const testCasesJson = collectTestCasesToJson();
         if (!testCasesJson) {
-            alert('请至少添加一个测试用例');
+            appAlert('请至少添加一个测试用例');
             submitBtn.disabled = false;
             submitBtn.textContent = '保存';
             return;
@@ -655,20 +655,20 @@ async function saveQuestion(event) {
         const result = await res.json();
         
         if (result.status === 'success') {
-            alert(result.message);
+            appAlert(result.message);
             // 返回题目列表页面，如果有subject参数则带上
             const returnUrl = subjectId 
                 ? `/admin/coding/questions?subject=${subjectId}`
                 : '/admin/coding/questions';
             window.location.href = returnUrl;
         } else {
-            alert('保存失败: ' + result.message);
+            appAlert('保存失败: ' + result.message);
             submitBtn.disabled = false;
             submitBtn.textContent = '保存';
         }
     } catch (error) {
         console.error('保存失败:', error);
-        alert('保存失败');
+        appAlert('保存失败');
         submitBtn.disabled = false;
         submitBtn.textContent = '保存';
     }
@@ -847,7 +847,7 @@ function togglePreview() {
                 preview.classList.add('active');
                 toggleBtn.textContent = '编辑';
             } else {
-                alert('Markdown渲染库加载失败，请刷新页面重试');
+                appAlert('Markdown渲染库加载失败，请刷新页面重试');
                 isPreviewMode = false;
             }
         } catch (e) {

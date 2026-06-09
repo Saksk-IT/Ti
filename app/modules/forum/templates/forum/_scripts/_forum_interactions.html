@@ -308,33 +308,33 @@ async function toggleCurrentPostHidden() {
     var payload = await response.json();
 
     if (payload.status !== 'success') {
-      alert(payload.message || '操作失败');
+      appAlert(payload.message || '操作失败');
       return;
     }
 
     _postData = Object.assign({}, _postData, {is_hidden: nextHidden});
     await loadPostDetail();
   } catch (error) {
-    alert('操作失败');
+    appAlert('操作失败');
   }
 }
 
 async function deleteCurrentPost() {
   if (!_postData || !canManagePost(_postData)) return;
-  if (!confirm('确认删除这篇帖子？删除后不可恢复。')) return;
+  if (!(await appConfirm('确认删除这篇帖子？删除后不可恢复。'))) return;
 
   try {
     var response = await fetch('/api/forum/posts/' + POST_ID, {method: 'DELETE'});
     var payload = await response.json();
 
     if (payload.status !== 'success') {
-      alert(payload.message || '删除失败');
+      appAlert(payload.message || '删除失败');
       return;
     }
 
     location.href = '/forum';
   } catch (error) {
-    alert('删除失败');
+    appAlert('删除失败');
   }
 }
 </script>

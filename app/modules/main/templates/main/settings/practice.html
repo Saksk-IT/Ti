@@ -330,7 +330,7 @@
       }
 
       async function clearSubjectFilter(){
-        if (!confirm('确定要显示全部科目吗？')) return;
+        if (!(await appConfirm('确定要显示全部科目吗？'))) return;
         setVisibleSubjects([]);
         const ts = Date.now();
         localStorage.setItem('settings_updated_at', String(ts));
@@ -427,7 +427,7 @@
       }
 
       async function resetPractice(){
-        if (!confirm('确定要恢复通用设置的默认值吗？')) return;
+        if (!(await appConfirm('确定要恢复通用设置的默认值吗？'))) return;
         setVisibleSubjects([]);
         setQuizFabEnabled(true);
         setQuizLayoutTheme('traditional');

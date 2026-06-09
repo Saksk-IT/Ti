@@ -610,7 +610,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 测试配置
     testBtn.addEventListener('click', async function() {
-        const testEmail = prompt('请输入测试邮箱地址:');
+        const testEmail = await appPrompt('请输入测试邮箱地址:');
         if (!testEmail) return;
 
         const formData = {

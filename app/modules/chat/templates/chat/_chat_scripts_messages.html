@@ -590,7 +590,7 @@
       if (js.status === 'success') {
         _applyRevokeToDOM(messageId);
       } else {
-        alert(js.message || '撤回失败');
+        appAlert(js.message || '撤回失败');
       }
     };
     menu.appendChild(btn);

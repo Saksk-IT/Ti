@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>编程题详情</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app_dialog.css') }}">
 {% include 'coding/_styles_base.html' %}
 {% include 'coding/_styles_components.html' %}
     <!-- Marked.js for Markdown rendering (必须在Monaco之前加载) -->
@@ -30,6 +31,7 @@
 
 {% include 'coding/_submission_modal.html' %}
 
+<script src="{{ url_for('static', filename='js/app_dialog.js') }}"></script>
 {% include 'coding/_scripts_editor.html' %}
 {% include 'coding/_scripts_ui.html' %}
 </body>

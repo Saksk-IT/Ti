@@ -85,7 +85,7 @@
       btn.textContent = '复制';
       btn.addEventListener('click', async () => {
         const ok = await copyText(value);
-        if (!ok) alert('复制失败，请手动复制');
+        if (!ok) appAlert('复制失败，请手动复制');
       });
 
       row.appendChild(input);
@@ -127,7 +127,7 @@
         renderCreateResult(js.data || {});
         await loadShares();
       } catch (e) {
-        alert(e?.message || '创建分享失败，请稍后重试');
+        appAlert(e?.message || '创建分享失败，请稍后重试');
       }
     }
 
@@ -224,7 +224,7 @@
           btn.textContent = '复制码';
           btn.addEventListener('click', async () => {
             const ok = await copyText(code);
-            if (!ok) alert('复制失败，请手动复制');
+            if (!ok) appAlert('复制失败，请手动复制');
           });
           actions.appendChild(btn);
         }
@@ -236,7 +236,7 @@
           btn.textContent = '复制链接';
           btn.addEventListener('click', async () => {
             const ok = await copyText(link);
-            if (!ok) alert('复制失败，请手动复制');
+            if (!ok) appAlert('复制失败，请手动复制');
           });
           actions.appendChild(btn);
         }
@@ -262,7 +262,7 @@
 
     async function revokeShare(shareId){
       if (!CAN_MANAGE_SHARES) return;
-      if (!confirm('确认撤销该分享？撤销后，已加入用户将无法继续访问。')) return;
+      if (!(await appConfirm('确认撤销该分享？撤销后，已加入用户将无法继续访问。'))) return;
       try {
         const resp = await fetch(`/user/banks/api/${BANK_ID}/shares/${shareId}`, { method: 'DELETE', credentials: 'same-origin' });
         const js = await resp.json().catch(() => ({}));
@@ -271,7 +271,7 @@
         }
         await loadShares();
       } catch (e) {
-        alert(e?.message || '撤销失败，请稍后重试');
+        appAlert(e?.message || '撤销失败，请稍后重试');
       }
     }
 

@@ -606,10 +606,10 @@
         // 检查是否已绑定邮箱，防止账号悬空
         const hasEmail = profileCache && profileCache.email && String(profileCache.email).trim();
         if (!hasEmail) {
-          alert('请先绑定邮箱后再解绑微信，否则账号将无法登录。');
+          appAlert('请先绑定邮箱后再解绑微信，否则账号将无法登录。');
           return;
         }
-        if (!confirm('确定要解绑微信吗？解绑后将无法使用微信一键登录。')) return;
+        if (!(await appConfirm('确定要解绑微信吗？解绑后将无法使用微信一键登录。'))) return;
         try {
           const res = await fetch('/api/wechat/unbind', {
             method: 'POST',
@@ -621,7 +621,7 @@
           if (!res.ok || !js || js.status !== 'success') throw new Error(js && js.message ? js.message : '解绑失败');
           await loadProfile();
         } catch (e) {
-          alert((e && e.message) ? e.message : '解绑失败，请稍后重试');
+          appAlert((e && e.message) ? e.message : '解绑失败，请稍后重试');
         }
       }
 

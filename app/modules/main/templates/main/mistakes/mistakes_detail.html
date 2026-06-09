@@ -431,11 +431,11 @@
         await fetchStartCount();
       }
       if (typeof startCountValue !== 'number') {
-        alert('题目数量加载中，请稍后重试');
+        appAlert('题目数量加载中，请稍后重试');
         return;
       }
       if (startCountValue <= 0) {
-        alert('当前筛选暂无题目');
+        appAlert('当前筛选暂无题目');
         return;
       }
       const allowShuffleO = canShuffleOptions();
