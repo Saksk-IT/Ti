@@ -361,6 +361,13 @@
     border: 1px solid rgba(255, 59, 48, 0.3);
 }
 
+.form-message.warning {
+    display: block;
+    background: rgba(255, 149, 0, 0.15);
+    color: var(--warning);
+    border: 1px solid rgba(255, 149, 0, 0.3);
+}
+
 /* 模板预览区域样式 */
 .template-preview-container {
     margin-top: 40px;
@@ -651,7 +658,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             if (data.status === 'success') {
-                showMessage(data.message || '测试邮件发送成功', 'success');
+                const consoleOutputEnabled = document.getElementById('mail_console_output').checked;
+                const suffix = consoleOutputEnabled
+                    ? '。注意：当前已开启“控制台输出验证码”，账号绑定和邮箱登录不会发送真实邮件，请关闭并保存后再使用业务验证码。'
+                    : '';
+                showMessage((data.message || '测试邮件发送成功') + suffix, consoleOutputEnabled ? 'warning' : 'success');
             } else {
                 // 检查是否是限流错误
                 let errorMsg = data.message || `测试失败 (${response.status})，请检查配置`;
@@ -781,4 +792,3 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
-

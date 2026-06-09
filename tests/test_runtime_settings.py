@@ -4,6 +4,7 @@ import json
 from sqlalchemy import text
 
 from app.core.extensions import db
+from app.core.utils.email_service import EmailService
 from app.models.system import SystemConfig
 from app.modules.admin.services.system_config_service import SystemConfigService
 from app.modules.quiz.services.ai_client import AIClient
@@ -77,6 +78,56 @@ def test_mail_config_prefers_system_settings(app):
             assert cfg['password'] == 'db-password'
             assert cfg['sender'] == 'noreply@example.com'
             assert cfg['enabled'] is True
+        finally:
+            _clear_system_configs(MAIL_KEYS)
+
+
+def test_verification_email_uses_default_rq_queue(app, monkeypatch):
+    queue_calls = []
+    enqueued_jobs = []
+
+    class FakeQueue:
+        def enqueue(self, *args, **kwargs):
+            enqueued_jobs.append((args, kwargs))
+            return object()
+
+    def fake_get_queue(*args, **kwargs):
+        queue_calls.append((args, kwargs))
+        return FakeQueue()
+
+    monkeypatch.setattr('app.core.utils.rq_utils.get_queue', fake_get_queue)
+    monkeypatch.setattr(
+        EmailService,
+        '_get_smtp_config',
+        staticmethod(lambda: {
+            'server': 'smtp.example.com',
+            'port': 587,
+            'use_tls': True,
+            'use_ssl': False,
+            'username': 'mailer@example.com',
+            'password': 'secret-password',
+            'sender': 'mailer@example.com',
+            'sender_name': '系统通知',
+        }),
+    )
+
+    with app.app_context():
+        _clear_system_configs(MAIL_KEYS)
+        try:
+            SystemConfigService.update_config('mail_enabled', 'true', admin_id=1)
+            SystemConfigService.update_config('mail_console_output', 'false', admin_id=1)
+
+            ok, code = EmailService.send_verification_code(
+                'user@example.com',
+                'login',
+                code='123456',
+            )
+
+            assert ok is True
+            assert code == '123456'
+            assert queue_calls == [((), {})]
+            assert enqueued_jobs
+            assert enqueued_jobs[0][1]['to_email'] == 'user@example.com'
         finally:
             _clear_system_configs(MAIL_KEYS)
 

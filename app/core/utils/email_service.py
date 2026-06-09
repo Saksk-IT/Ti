@@ -281,7 +281,7 @@ class EmailService:
         # 尝试 RQ 异步发送，不可用时降级为同步
         try:
             from app.core.utils.rq_utils import get_queue
-            queue = get_queue('email')
+            queue = get_queue()
         except Exception:
             queue = None
 
