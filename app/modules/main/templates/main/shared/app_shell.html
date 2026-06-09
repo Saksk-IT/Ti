@@ -560,6 +560,9 @@
       white-space: nowrap;
       gap: 0;
     }
+    .app-footer[hidden] {
+      display: none;
+    }
     .app-footer a {
       color: var(--app-muted);
       transition: color 140ms ease;
@@ -832,7 +835,7 @@
         {% block content %}{% endblock %}
       </main>
 
-      <footer class="app-footer">
+      <footer class="app-footer" hidden aria-hidden="true">
         <a href="https://www.beian.gov.cn/portal/registerSystemInfo?recordcode=37172302372113" target="_blank" rel="noopener noreferrer" style="gap: 4px;">
           <img src="/static/icons/beian.png" alt="公安备案图标" style="width: 14px; height: 14px;">
           <span>鲁公网安备37172302372113号</span>
