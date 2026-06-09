@@ -62,6 +62,9 @@
     var dst = document.getElementById('drawerContent');
     if (!src || !dst) return;
     dst.innerHTML = src.innerHTML;
+    dst.querySelectorAll('[id]').forEach(function (node) {
+      node.removeAttribute('id');
+    });
   }
 
   function setDrawer(open) {
@@ -354,7 +357,6 @@
     });
   }
 
-  var openCreateBtn = document.getElementById('openCreateBank');
   var closeCreateBtn = document.getElementById('closeCreateBank');
   var createCancelBtn = document.getElementById('createBankCancel');
 
@@ -429,6 +431,14 @@
   }
 
   document.addEventListener('click', async function (event) {
+    var createTrigger = event.target && event.target.closest ? event.target.closest('[data-create-bank-trigger]') : null;
+    if (createTrigger) {
+      event.preventDefault();
+      closeDrawer();
+      openCreateModal();
+      return;
+    }
+
     var createdCard = event.target && event.target.closest ? event.target.closest('.my-bank-linked-card[data-href]') : null;
     if (createdCard && !(event.target && event.target.closest && event.target.closest('[data-owner-actions]'))) {
       var href = createdCard.getAttribute('data-href');
