@@ -55,6 +55,8 @@
 .stat-item { text-align: center; padding: 8px; border-radius: 8px; background: var(--app-surface-2, var(--app-primary-soft)); }
 .stat-value { font-size: 18px; font-weight: 700; color: var(--app-text); }
 .stat-label { font-size: 11px; color: var(--app-muted); margin-top: 2px; }
+.sidebar-action-area { margin-top: 8px; }
+.sidebar-primary-action { width: 100%; justify-content: center; box-sizing: border-box; min-height: 42px; }
 
 /* ===== 抽屉（移动端） ===== */
 .forum-drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 90; opacity: 0; pointer-events: none; transition: opacity .25s; }
@@ -72,6 +74,8 @@
 }
 @media (min-width: 1080px) {
   .forum-drawer-overlay, .forum-drawer { display: none !important; }
+  .forum-sidebar-togglebar,
+  .forum-mobile-only-action { display: none; }
 }
 @media (max-width: 640px) {
   .forum-tab { padding: 10px 14px; font-size: 13px; }

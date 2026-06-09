@@ -28,4 +28,13 @@
       <div class="stat-item"><div class="stat-value" id="statBoards">-</div><div class="stat-label">版块</div></div>
     </div>
   </div>
+
+  <div class="sidebar-action-area">
+    <a
+      href="{% if board_id is defined and board_id %}/forum/new?board_id={{ board_id }}{% else %}/forum/new{% endif %}"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="forum-new-btn sidebar-primary-action"
+    >&#43; 发帖</a>
+  </div>
 </div>
