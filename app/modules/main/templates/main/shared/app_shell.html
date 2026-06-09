@@ -520,33 +520,19 @@
 
     .app-hamburger { display: none; }
     .app-sidebar-collapse {
-      position: absolute;
-      top: 18px;
-      right: -17px;
-      z-index: 71;
+      flex: 0 0 auto;
       width: 34px;
       height: 34px;
-      border-radius: 999px;
-      background: color-mix(in srgb, var(--app-surface) 92%, var(--app-bg));
+      border-radius: 12px;
+      background: var(--app-surface-2);
       border-color: var(--app-border);
-      box-shadow: 0 8px 20px rgba(2, 6, 23, 0.08);
+      box-shadow: var(--app-shadow-soft);
     }
     .app-sidebar-collapse:hover {
       background: var(--app-surface);
-      box-shadow: 0 10px 24px rgba(2, 6, 23, 0.12);
+      box-shadow: var(--app-shadow);
     }
     .app-sidebar-collapse:active { transform: translateY(0); }
-    .app-sidebar-collapse::before {
-      content: "";
-      position: absolute;
-      left: -8px;
-      top: 5px;
-      width: 12px;
-      height: 22px;
-      border-radius: 999px 0 0 999px;
-      background: inherit;
-      pointer-events: none;
-    }
 
     .app-main {
       flex: 1 1 auto;
@@ -658,6 +644,11 @@
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-search,
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-cta-secondary,
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-brand-text { display: none; }
+    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-sidebar-head {
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-brand { justify-content: center; padding: 8px; }
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-brand-dot {
       width: 32px;
@@ -669,6 +660,10 @@
       justify-content: center;
     }
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-brand-dot::after { content: 'S'; color: var(--app-bg); font-weight: 950; font-size: 15px; line-height: 1; }
+    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-sidebar-collapse {
+      width: 40px;
+      height: 40px;
+    }
 
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-cta { padding: 6px; overflow: hidden; }
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-cta-actions { place-items: center; margin-top: 0; }
@@ -751,11 +746,6 @@
   <div class="app-shell" id="appShell">
     <aside class="app-sidebar" id="appSidebar" aria-label="侧边栏导航">
       {% include 'main/shared/_app_sidebar.html' %}
-      <button class="app-icon-btn app-sidebar-collapse" type="button" id="appSidebarCollapse" aria-label="折叠侧边栏" title="折叠侧边栏">
-        <svg class="app-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
     </aside>
 
     <div class="app-body">
