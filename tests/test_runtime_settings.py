@@ -699,3 +699,89 @@ def test_ai_client_stream_decodes_utf8_sse_without_charset(monkeypatch):
 
     assert captured['stream'] is True
     assert chunks == ['你好，中文正常。']
+
+
+def test_ai_client_stream_normalizes_cumulative_sse_chunks(monkeypatch):
+    class FakeStreamResponse:
+        status_code = 200
+        text = ''
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def iter_lines(self, decode_unicode=False):
+            payloads = [
+                {'choices': [{'delta': {'content': '你好'}}]},
+                {'choices': [{'delta': {'content': '你好，我在。'}}]},
+                {'choices': [{'delta': {'content': '你好，我在。'}}]},
+            ]
+            for payload in payloads:
+                yield f"data: {json.dumps(payload, ensure_ascii=False)}".encode('utf-8')
+
+    def fake_post(url, headers, json, timeout, stream):
+        return FakeStreamResponse()
+
+    monkeypatch.setattr('app.modules.quiz.services.ai_client.requests.post', fake_post)
+
+    client = AIClient(
+        api_key='test-key',
+        base_url='https://api.example.test/v1',
+        api_type='chat_completions',
+        provider='custom',
+    )
+
+    chunks = list(client.stream_text(
+        model='model-a',
+        messages=[{'role': 'user', 'content': '请回复中文'}],
+        timeout=10,
+    ))
+
+    assert chunks == ['你好', '，我在。']
+
+
+def test_ai_client_responses_stream_ignores_done_snapshot(monkeypatch):
+    class FakeStreamResponse:
+        status_code = 200
+        text = ''
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def iter_lines(self, decode_unicode=False):
+            payloads = [
+                {'type': 'response.output_text.delta', 'delta': '你好'},
+                {'type': 'response.output_text.delta', 'delta': '，我在。'},
+                {'type': 'response.output_text.done', 'text': '你好，我在。'},
+                {
+                    'type': 'response.output_item.done',
+                    'item': {'content': [{'type': 'output_text', 'text': '你好，我在。'}]},
+                },
+            ]
+            for payload in payloads:
+                yield f"data: {json.dumps(payload, ensure_ascii=False)}".encode('utf-8')
+
+    def fake_post(url, headers, json, timeout, stream):
+        return FakeStreamResponse()
+
+    monkeypatch.setattr('app.modules.quiz.services.ai_client.requests.post', fake_post)
+
+    client = AIClient(
+        api_key='test-key',
+        base_url='https://api.openai.com/v1',
+        api_type='responses',
+        provider='openai',
+    )
+
+    chunks = list(client.stream_text(
+        model='gpt-4.1-mini',
+        messages=[{'role': 'user', 'content': '请回复中文'}],
+        timeout=10,
+    ))
+
+    assert chunks == ['你好', '，我在。']

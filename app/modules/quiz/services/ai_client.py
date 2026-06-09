@@ -425,6 +425,7 @@ class AIClient:
                 raise RuntimeError(f"{error_prefix}：HTTP {resp.status_code} {msg}".strip())
 
             emitted = False
+            emitted_text = ""
             for raw_line in resp.iter_lines(decode_unicode=False):
                 if raw_line is None:
                     continue
@@ -444,11 +445,25 @@ class AIClient:
                 except json.JSONDecodeError:
                     continue
                 delta = extract_delta(data)
+                delta = self._normalize_stream_delta(delta, emitted_text)
                 if delta:
                     emitted = True
+                    emitted_text += delta
                     yield delta
             if not emitted:
                 raise RuntimeError(f"{error_prefix}：上游未返回有效流式内容")
+
+    @staticmethod
+    def _normalize_stream_delta(delta: Any, emitted_text: str) -> str:
+        """兼容少数上游把累计全文快照放在流式 delta 中返回的情况。"""
+        text = str(delta or "")
+        if not text or not emitted_text:
+            return text
+        if text == emitted_text:
+            return ""
+        if len(text) > len(emitted_text) and text.startswith(emitted_text):
+            return text[len(emitted_text):]
+        return text
 
     @staticmethod
     def _extract_chat_stream_delta(data: Dict[str, Any]) -> str:
@@ -470,6 +485,8 @@ class AIClient:
         event_type = str(data.get("type") or "")
         if event_type in {"response.output_text.delta", "response.refusal.delta"}:
             return str(data.get("delta") or "")
+        if event_type:
+            return ""
 
         delta = data.get("delta")
         if isinstance(delta, str):
