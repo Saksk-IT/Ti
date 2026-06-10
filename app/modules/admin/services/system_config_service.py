@@ -356,6 +356,13 @@ class SystemConfigService:
         if model_source not in {'custom', 'upstream'}:
             model_source = 'custom'
 
+        user_bank_explain_enabled = _as_bool(SystemConfigService._get_runtime_value_multi(
+            'ai_user_bank_explain_enabled',
+            ('AI_USER_BANK_EXPLAIN_ENABLED',),
+            ('AI_USER_BANK_EXPLAIN_ENABLED',),
+            False,
+        ), False)
+
         return {
             'provider': provider,
             'api_key': api_key,
@@ -364,6 +371,7 @@ class SystemConfigService:
             'model': model,
             'model_source': model_source,
             'timeout': timeout,
+            'user_bank_explain_enabled': user_bank_explain_enabled,
         }
 
     @staticmethod

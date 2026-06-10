@@ -9,10 +9,10 @@ from flask import current_app, jsonify, request
 from flask_limiter.util import get_remote_address
 
 from app.core.extensions import limiter
-from app.core.services.question_service import QuestionService as Question
 from app.core.utils.decorators import auth_required, current_user_id
 from app.core.utils.redis_utils import redis_get_json, redis_get_text, redis_set_text
 from app.core.utils.rq_utils import fetch_job, get_queue
+from app.modules.quiz.services.ai_explain_payload import build_ai_explain_payload
 
 from ..api_bp import quiz_api_bp
 
@@ -24,43 +24,11 @@ def _rate_key() -> str:
     return get_remote_address()
 
 
-def _build_payload(uid: int, data: Dict[str, Any]) -> Tuple[Dict[str, Any], Optional[int]]:
-    """构建 AI 解析 payload；优先以 question_id 为准，避免前端篡改题干/答案。"""
-    from app.core.utils.subject_permissions import can_user_access_subject
-
-    raw_qid = data.get('question_id')
-    qid = None
-    try:
-        qid = int(raw_qid) if raw_qid is not None and str(raw_qid).strip() else None
-    except Exception:
-        qid = None
-
-    payload: Dict[str, Any] = {
-        'question_id': qid,
-        'content': (data.get('content') or '').strip(),
-        'q_type': (data.get('q_type') or '').strip(),
-        'options': data.get('options'),
-        'answer': (data.get('answer') or '').strip(),
-    }
-
-    if qid:
-        q = Question.get_by_id(qid)
-        if q:
-            subject_id = q.get('subject_id')
-            if subject_id and uid and not can_user_access_subject(uid, subject_id):
-                return {'__forbidden__': True}, qid
-
-            payload['content'] = (q.get('content') or '').strip()
-            payload['q_type'] = (q.get('q_type') or '').strip()
-            payload['options'] = q.get('options')
-            payload['answer'] = (q.get('answer') or '').strip()
-
-    return payload, qid
-
-
 def _payload_hash(payload: Dict[str, Any], cfg: Dict[str, Any]) -> str:
     stable = {
         'question_id': payload.get('question_id'),
+        'source': payload.get('source') or 'public',
+        'bank_id': payload.get('bank_id') or None,
         'content': payload.get('content') or '',
         'q_type': payload.get('q_type') or '',
         'options': payload.get('options') or [],
@@ -94,15 +62,15 @@ def api_ai_explain_async():
         return jsonify({'status': 'unauthorized', 'message': '请先登录'}), 401
 
     data = request.json or {}
-    payload, _qid = _build_payload(uid, data)
-    if payload.get('__forbidden__'):
-        return jsonify({'status': 'forbidden', 'message': '无权限访问该题目'}), 403
+    from app.modules.admin.services.system_config_service import SystemConfigService
+    ai_cfg = SystemConfigService.get_ai_config()
+    payload, payload_error = build_ai_explain_payload(uid, data, ai_cfg)
+    if payload_error:
+        status_code = int(payload_error.pop('status_code', 400) or 400)
+        return jsonify(payload_error), status_code
 
     if not payload.get('content') and not payload.get('question_id'):
         return jsonify({'status': 'error', 'message': '缺少题目信息'}), 400
-
-    from app.modules.admin.services.system_config_service import SystemConfigService
-    ai_cfg = SystemConfigService.get_ai_config()
 
     model = ai_cfg['model']
     timeout = ai_cfg['timeout']

@@ -6,7 +6,7 @@ from sqlalchemy import text
 from app.core.extensions import db
 from app.core.utils.email_service import EmailService
 from app.models.system import SystemConfig
-from app.modules.admin.services.system_config_service import SystemConfigService
+from app.modules.admin.services.system_config_service import SystemConfigService, _cache_clear
 from app.modules.quiz.services.ai_client import AIClient
 from app.tasks.ai_explain_tasks import ai_explain_task
 
@@ -46,6 +46,7 @@ AI_KEYS = [
     'ai_model',
     'ai_model_source',
     'ai_timeout',
+    'ai_user_bank_explain_enabled',
     'dashscope_api_key',
     'dashscope_base_url',
     'dashscope_model',
@@ -55,6 +56,7 @@ AI_KEYS = [
 def _clear_system_configs(keys):
     SystemConfig.query.filter(SystemConfig.config_key.in_(keys)).delete(synchronize_session=False)
     db.session.commit()
+    _cache_clear()
 
 
 def test_mail_config_prefers_system_settings(app):
@@ -217,6 +219,7 @@ def test_ai_config_prefers_new_system_settings(app):
                 'model': 'gpt-test-model',
                 'model_source': 'upstream',
                 'timeout': 33,
+                'user_bank_explain_enabled': False,
             }
         finally:
             _clear_system_configs(AI_KEYS)
@@ -239,8 +242,110 @@ def test_ai_config_falls_back_to_legacy_dashscope(app):
             assert cfg['api_type'] == 'chat_completions'
             assert cfg['model'] == 'qwen-max'
             assert cfg['timeout'] == 19
+            assert cfg['user_bank_explain_enabled'] is False
         finally:
             _clear_system_configs(AI_KEYS)
+
+
+def test_ai_config_user_bank_explain_switch(app):
+    with app.app_context():
+        _clear_system_configs(AI_KEYS)
+        try:
+            assert SystemConfigService.get_ai_config()['user_bank_explain_enabled'] is False
+
+            SystemConfigService.update_config('ai_user_bank_explain_enabled', '1', admin_id=1)
+
+            assert SystemConfigService.get_ai_config()['user_bank_explain_enabled'] is True
+        finally:
+            _clear_system_configs(AI_KEYS)
+
+
+def test_user_bank_ai_explain_requires_admin_switch(app, auth_client, seed_user, monkeypatch):
+    captured = {}
+
+    def fake_generate_ai_explain(*, api_key, base_url, model, payload, timeout, provider, api_type):
+        captured.update(payload)
+        return '个人题库 AI 解析结果'
+
+    monkeypatch.setattr(
+        'app.modules.quiz.routes.api_components.ai_coding.generate_ai_explain',
+        fake_generate_ai_explain,
+    )
+
+    with app.app_context():
+        _clear_system_configs(AI_KEYS)
+        bank_id = db.session.execute(
+            text(
+                """
+                INSERT INTO user_question_banks (user_id, name, status, question_count)
+                VALUES (:uid, 'AI开关测试题库', 1, 1)
+                RETURNING id
+                """
+            ),
+            {'uid': seed_user['id']},
+        ).scalar()
+        question_id = db.session.execute(
+            text(
+                """
+                INSERT INTO user_bank_questions
+                    (bank_id, user_id, type, content, options, answer, analysis, difficulty)
+                VALUES
+                    (:bank_id, :uid, 'single_choice', '个人题库题干', '["选项A"]', '[0]', '已有解析', 1)
+                RETURNING id
+                """
+            ),
+            {'bank_id': int(bank_id), 'uid': seed_user['id']},
+        ).scalar()
+        db.session.commit()
+
+    try:
+        response = auth_client.post(
+            '/api/ai/explain',
+            json={
+                'source': 'user_bank',
+                'bank_id': int(bank_id),
+                'question_id': int(question_id),
+                'content': '篡改题干',
+                'answer': 'B',
+            },
+            headers={'X-Requested-With': 'XMLHttpRequest'},
+        )
+        assert response.status_code == 403
+        assert response.get_json()['status'] == 'error'
+
+        with app.app_context():
+            SystemConfigService.update_config('ai_user_bank_explain_enabled', '1', admin_id=1)
+            SystemConfigService.update_config('ai_provider', 'custom', admin_id=1)
+            SystemConfigService.update_config('ai_api_key', 'test-key', admin_id=1)
+            SystemConfigService.update_config('ai_base_url', 'https://api.example.com/v1', admin_id=1)
+            SystemConfigService.update_config('ai_api_type', 'chat_completions', admin_id=1)
+            SystemConfigService.update_config('ai_model', 'test-model', admin_id=1)
+
+        response = auth_client.post(
+            '/api/ai/explain',
+            json={
+                'source': 'user_bank',
+                'bank_id': int(bank_id),
+                'question_id': int(question_id),
+                'content': '篡改题干',
+                'answer': 'B',
+            },
+            headers={'X-Requested-With': 'XMLHttpRequest'},
+        )
+        assert response.status_code == 200
+        body = response.get_json()
+        assert body['status'] == 'success'
+        assert body['data']['explain'] == '个人题库 AI 解析结果'
+        assert captured['question_id'] == int(question_id)
+        assert captured['source'] == 'user_bank'
+        assert captured['bank_id'] == int(bank_id)
+        assert captured['content'] == '个人题库题干'
+        assert captured['answer'] == 'A'
+    finally:
+        with app.app_context():
+            _clear_system_configs(AI_KEYS)
+            db.session.execute(text("DELETE FROM user_question_banks WHERE id = :bank_id"), {'bank_id': int(bank_id)})
+            db.session.commit()
 
 
 def test_ai_explain_task_prefers_explicit_dashscope_config(monkeypatch):

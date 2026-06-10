@@ -3,6 +3,8 @@ const source = '{{ source or "" }}';
 const LOGGED_IN = {{ 'true' if logged_in else 'false' }};
 const USER_KEY = "{{ user_id if logged_in else 'guest' }}"; // 用 user_id 作为进度隔离键
 const STUDY_META = {{ study_meta_json|tojson if study_meta_json else 'null' }};
+const SERVER_BANK_ID = {{ quiz_bank_id|default(none)|tojson }};
+const USER_BANK_AI_EXPLAIN_ENABLED = {{ (user_bank_ai_explain_enabled|default(false))|tojson }};
 const STUDY_MODE = (mode === 'learn' || mode === 'review');
 const STUDY_STREAK_TARGET = 3;
 const STUDY_REPEAT_LIMIT = 3;
@@ -186,6 +188,8 @@ const LAST_PRACTICE_SESSION_KEY = 'last_practice_session';
 // 重要：必须与后端 quiz.py 中的 key 生成逻辑保持一致！
 // 个人题库：/quiz?bank_id=<id>
 const BANK_ID = (() => {
+    const serverValue = Number(SERVER_BANK_ID || 0);
+    if (Number.isFinite(serverValue) && serverValue > 0) return serverValue;
     try {
         const params = new URLSearchParams(window.location.search);
         const v = (params.get('bank_id') || '').trim();
@@ -195,7 +199,7 @@ const BANK_ID = (() => {
         return null;
     }
 })();
-const IS_USER_BANK = !!BANK_ID;
+const IS_USER_BANK = !!BANK_ID || source === 'user_bank' || (STUDY_META && STUDY_META.source === 'user_bank');
 function getUserBankApiPrefix(){
     return IS_USER_BANK ? `/user/banks/api/${BANK_ID}` : '';
 }

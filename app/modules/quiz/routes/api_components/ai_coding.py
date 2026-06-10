@@ -6,7 +6,8 @@ from app.core.extensions import limiter
 from app.core.utils.decorators import auth_required, current_user_id
 from app.core.utils.redis_utils import redis_get_json, redis_set_json
 from app.core.utils.cache_utils import make_cache_key
-from app.core.services.question_service import QuestionService as Question
+from app.modules.quiz.services.ai_explain_payload import build_ai_explain_payload
+from app.modules.quiz.services.ai_explain_service import generate_ai_explain
 
 from ..api_bp import quiz_api_bp
 
@@ -37,46 +38,19 @@ def api_ai_explain():
     - DASHSCOPE_BASE_URL
     - DASHSCOPE_MODEL
     """
-    from flask import current_app
-    from app.core.utils.subject_permissions import can_user_access_subject
-    from app.modules.quiz.services.ai_explain_service import generate_ai_explain
-
     uid = current_user_id()
     data = request.json or {}
 
-    # 允许前端仅传 question_id；后端优先用库内题目，避免前端篡改
-    raw_qid = data.get('question_id')
-    qid = None
-    try:
-        qid = int(raw_qid) if raw_qid is not None and str(raw_qid).strip() else None
-    except Exception:
-        qid = None
-
-    payload = {
-        'question_id': qid,
-        'content': (data.get('content') or '').strip(),
-        'q_type': (data.get('q_type') or '').strip(),
-        'options': data.get('options'),
-        'answer': (data.get('answer') or '').strip(),
-    }
-
-    if qid:
-        q = Question.get_by_id(qid)
-        if q:
-            subject_id = q.get('subject_id')
-            if subject_id and uid and not can_user_access_subject(uid, subject_id):
-                return jsonify({'status': 'forbidden', 'message': '无权限访问该题目'}), 403
-
-            payload['content'] = (q.get('content') or '').strip()
-            payload['q_type'] = (q.get('q_type') or '').strip()
-            payload['options'] = q.get('options')
-            payload['answer'] = (q.get('answer') or '').strip()
+    from app.modules.admin.services.system_config_service import SystemConfigService
+    ai_cfg = SystemConfigService.get_ai_config()
+    payload, payload_error = build_ai_explain_payload(uid, data, ai_cfg)
+    if payload_error:
+        status_code = int(payload_error.pop('status_code', 400) or 400)
+        return jsonify(payload_error), status_code
 
     if not payload.get('content') and not payload.get('question_id'):
         return jsonify({'status': 'error', 'message': '缺少题目信息'}), 400
 
-    from app.modules.admin.services.system_config_service import SystemConfigService
-    ai_cfg = SystemConfigService.get_ai_config()
     api_key = ai_cfg['api_key']
     base_url = ai_cfg['base_url']
     model = ai_cfg['model']

@@ -41,6 +41,23 @@ template_dir = os.path.join(module_dir, 'templates')
 quiz_pages_bp = Blueprint('quiz_pages', __name__, template_folder=template_dir)
 
 
+def _quiz_render_context(**kwargs):
+    """Common template context for quiz page feature flags."""
+    from app.modules.admin.services.system_config_service import SystemConfigService
+
+    try:
+        ai_cfg = SystemConfigService.get_ai_config()
+        user_bank_ai_explain_enabled = bool(ai_cfg.get('user_bank_explain_enabled'))
+    except Exception:
+        user_bank_ai_explain_enabled = False
+
+    return {
+        **kwargs,
+        'quiz_bank_id': kwargs.get('quiz_bank_id'),
+        'user_bank_ai_explain_enabled': user_bank_ai_explain_enabled,
+    }
+
+
 
 @quiz_pages_bp.route('/quiz')
 def quiz_page():
@@ -86,18 +103,21 @@ def quiz_page():
         if not has_access:
             return render_template(
                 'quiz/quiz.html',
-                questions=[],
-                mode=mode,
-                source=source,
-                exam_id=None,
-                user_answers_json='{}',
-                logged_in=True,
-                user_id=uid,
-                username=session.get('username'),
-                is_admin=bool(session.get('is_admin')),
-                is_subject_admin=bool(session.get('is_subject_admin')),
-                duration=0,
-                submitted=False,
+                **_quiz_render_context(
+                    questions=[],
+                    mode=mode,
+                    source=source,
+                    exam_id=None,
+                    user_answers_json='{}',
+                    quiz_bank_id=int(bank_id),
+                    logged_in=True,
+                    user_id=uid,
+                    username=session.get('username'),
+                    is_admin=bool(session.get('is_admin')),
+                    is_subject_admin=bool(session.get('is_subject_admin')),
+                    duration=0,
+                    submitted=False,
+                ),
             )
 
         if custom_ids:
@@ -122,18 +142,21 @@ def quiz_page():
 
             return render_template(
                 "quiz/quiz.html",
-                questions=questions,
-                mode=mode,
-                source=source,
-                exam_id=None,
-                user_answers_json=ua_map,
-                logged_in=True,
-                user_id=uid,
-                username=session.get("username"),
-                is_admin=bool(session.get("is_admin")),
-                is_subject_admin=bool(session.get("is_subject_admin")),
-                duration=0,
-                submitted=False,
+                **_quiz_render_context(
+                    questions=questions,
+                    mode=mode,
+                    source=source,
+                    exam_id=None,
+                    user_answers_json=ua_map,
+                    quiz_bank_id=int(bank_id),
+                    logged_in=True,
+                    user_id=uid,
+                    username=session.get("username"),
+                    is_admin=bool(session.get("is_admin")),
+                    is_subject_admin=bool(session.get("is_subject_admin")),
+                    duration=0,
+                    submitted=False,
+                ),
             )
 
         if mode in ('learn', 'review'):
@@ -230,19 +253,22 @@ def quiz_page():
 
             return render_template(
                 'quiz/quiz.html',
-                questions=questions,
-                mode=mode,
-                source='user_bank',
-                exam_id=None,
-                user_answers_json='{}',
-                logged_in=True,
-                user_id=uid,
-                username=session.get('username'),
-                is_admin=bool(session.get('is_admin')),
-                is_subject_admin=bool(session.get('is_subject_admin')),
-                duration=0,
-                submitted=False,
-                study_meta_json=study_meta,
+                **_quiz_render_context(
+                    questions=questions,
+                    mode=mode,
+                    source='user_bank',
+                    exam_id=None,
+                    user_answers_json='{}',
+                    quiz_bank_id=int(bank_id),
+                    logged_in=True,
+                    user_id=uid,
+                    username=session.get('username'),
+                    is_admin=bool(session.get('is_admin')),
+                    is_subject_admin=bool(session.get('is_subject_admin')),
+                    duration=0,
+                    submitted=False,
+                    study_meta_json=study_meta,
+                ),
             )
 
         # tag 过滤：bank_<bank_id>_tags 存储在 user_progress
@@ -267,18 +293,21 @@ def quiz_page():
             if not tag_question_ids:
                 return render_template(
                     'quiz/quiz.html',
-                    questions=[],
-                    mode=mode,
-                    source=source,
-                    exam_id=None,
-                    user_answers_json='{}',
-                    logged_in=True,
-                    user_id=uid,
-                    username=session.get('username'),
-                    is_admin=bool(session.get('is_admin')),
-                    is_subject_admin=bool(session.get('is_subject_admin')),
-                    duration=0,
-                    submitted=False,
+                    **_quiz_render_context(
+                        questions=[],
+                        mode=mode,
+                        source=source,
+                        exam_id=None,
+                        user_answers_json='{}',
+                        quiz_bank_id=int(bank_id),
+                        logged_in=True,
+                        user_id=uid,
+                        username=session.get('username'),
+                        is_admin=bool(session.get('is_admin')),
+                        is_subject_admin=bool(session.get('is_subject_admin')),
+                        duration=0,
+                        submitted=False,
+                    ),
                 )
 
         # scope：复用 source=favorites/mistakes
@@ -329,56 +358,63 @@ def quiz_page():
 
         return render_template(
             'quiz/quiz.html',
-            questions=questions,
-            mode=mode,
-            source=source,
-            exam_id=None,
-            user_answers_json=ua_map,
-            logged_in=True,
-            user_id=uid,
-            username=session.get('username'),
-            is_admin=bool(session.get('is_admin')),
-            is_subject_admin=bool(session.get('is_subject_admin')),
-            duration=0,
-            submitted=False,
+            **_quiz_render_context(
+                questions=questions,
+                mode=mode,
+                source=source,
+                exam_id=None,
+                user_answers_json=ua_map,
+                quiz_bank_id=int(bank_id),
+                logged_in=True,
+                user_id=uid,
+                username=session.get('username'),
+                is_admin=bool(session.get('is_admin')),
+                is_subject_admin=bool(session.get('is_subject_admin')),
+                duration=0,
+                submitted=False,
+            ),
         )
 
     if mode in ('learn', 'review'):
         if subject == 'all':
             return render_template(
                 'quiz/quiz.html',
-                questions=[],
-                mode=mode,
-                source='public',
-                exam_id=None,
-                user_answers_json='{}',
-                logged_in=bool(uid),
-                user_id=uid,
-                username=session.get('username'),
-                is_admin=bool(session.get('is_admin')),
-                is_subject_admin=bool(session.get('is_subject_admin')),
-                duration=0,
-                submitted=False,
-                study_meta_json={'mode': mode, 'source': 'public', 'subject': subject, 'target_n': _parse_positive_int(learn_n if mode == 'learn' else review_n, default=10), 'review_extra': bool(review_extra), 'due_count': 0},
+                **_quiz_render_context(
+                    questions=[],
+                    mode=mode,
+                    source='public',
+                    exam_id=None,
+                    user_answers_json='{}',
+                    logged_in=bool(uid),
+                    user_id=uid,
+                    username=session.get('username'),
+                    is_admin=bool(session.get('is_admin')),
+                    is_subject_admin=bool(session.get('is_subject_admin')),
+                    duration=0,
+                    submitted=False,
+                    study_meta_json={'mode': mode, 'source': 'public', 'subject': subject, 'target_n': _parse_positive_int(learn_n if mode == 'learn' else review_n, default=10), 'review_extra': bool(review_extra), 'due_count': 0},
+                ),
             )
 
         subject_row = Subject.query.filter_by(name=subject).first()
         if not subject_row:
             return render_template(
                 'quiz/quiz.html',
-                questions=[],
-                mode=mode,
-                source='public',
-                exam_id=None,
-                user_answers_json='{}',
-                logged_in=bool(uid),
-                user_id=uid,
-                username=session.get('username'),
-                is_admin=bool(session.get('is_admin')),
-                is_subject_admin=bool(session.get('is_subject_admin')),
-                duration=0,
-                submitted=False,
-                study_meta_json={'mode': mode, 'source': 'public', 'subject': subject, 'target_n': _parse_positive_int(learn_n if mode == 'learn' else review_n, default=10), 'review_extra': bool(review_extra), 'due_count': 0},
+                **_quiz_render_context(
+                    questions=[],
+                    mode=mode,
+                    source='public',
+                    exam_id=None,
+                    user_answers_json='{}',
+                    logged_in=bool(uid),
+                    user_id=uid,
+                    username=session.get('username'),
+                    is_admin=bool(session.get('is_admin')),
+                    is_subject_admin=bool(session.get('is_subject_admin')),
+                    duration=0,
+                    submitted=False,
+                    study_meta_json={'mode': mode, 'source': 'public', 'subject': subject, 'target_n': _parse_positive_int(learn_n if mode == 'learn' else review_n, default=10), 'review_extra': bool(review_extra), 'due_count': 0},
+                ),
             )
 
         subject_id = subject_row.id
@@ -493,19 +529,21 @@ def quiz_page():
 
         return render_template(
             'quiz/quiz.html',
-            questions=questions,
-            mode=mode,
-            source='public',
-            exam_id=None,
-            user_answers_json='{}',
-            logged_in=bool(uid),
-            user_id=uid,
-            username=session.get('username'),
-            is_admin=bool(session.get('is_admin')),
-            is_subject_admin=bool(session.get('is_subject_admin')),
-            duration=0,
-            submitted=False,
-            study_meta_json=study_meta,
+            **_quiz_render_context(
+                questions=questions,
+                mode=mode,
+                source='public',
+                exam_id=None,
+                user_answers_json='{}',
+                logged_in=bool(uid),
+                user_id=uid,
+                username=session.get('username'),
+                is_admin=bool(session.get('is_admin')),
+                is_subject_admin=bool(session.get('is_subject_admin')),
+                duration=0,
+                submitted=False,
+                study_meta_json=study_meta,
+            ),
         )
     # 获取用户可访问的科目ID列表（用于权限过滤）
     accessible_subject_ids = None
@@ -514,18 +552,20 @@ def quiz_page():
         accessible_subject_ids = get_user_accessible_subjects(uid)
         if not accessible_subject_ids:
             return render_template('quiz/quiz.html',
-                                 questions=[],
-                                 mode=mode,
-                                 source=source,
-                                 exam_id=exam_id,
-                                 user_answers_json='{}',
-                                 logged_in=bool(uid),
-                                 user_id=uid,
-                                 username=session.get('username'),
-                                 is_admin=bool(session.get('is_admin')),
-                                 is_subject_admin=bool(session.get('is_subject_admin')),
-                                 duration=0,
-                                 submitted=False)
+                                 **_quiz_render_context(
+                                     questions=[],
+                                     mode=mode,
+                                     source=source,
+                                     exam_id=exam_id,
+                                     user_answers_json='{}',
+                                     logged_in=bool(uid),
+                                     user_id=uid,
+                                     username=session.get('username'),
+                                     is_admin=bool(session.get('is_admin')),
+                                     is_subject_admin=bool(session.get('is_subject_admin')),
+                                     duration=0,
+                                     submitted=False,
+                                 ))
 
     if custom_ids and mode != 'exam':
         q_query = db.session.query(Question, Subject.name.label('subject_name')).outerjoin(
@@ -572,22 +612,25 @@ def quiz_page():
 
         return render_template(
             'quiz/quiz.html',
-            questions=questions,
-            mode=mode,
-            source=source,
-            exam_id=None,
-            user_answers_json=user_answers_json,
-            logged_in=bool(real_uid),
-            user_id=real_uid,
-            username=session.get('username'),
-            is_admin=bool(session.get('is_admin')),
-            is_subject_admin=bool(session.get('is_subject_admin')),
-            duration=0,
-            submitted=False,
+            **_quiz_render_context(
+                questions=questions,
+                mode=mode,
+                source=source,
+                exam_id=None,
+                user_answers_json=user_answers_json,
+                logged_in=bool(real_uid),
+                user_id=real_uid,
+                username=session.get('username'),
+                is_admin=bool(session.get('is_admin')),
+                is_subject_admin=bool(session.get('is_subject_admin')),
+                duration=0,
+                submitted=False,
+            ),
         )
 
     exam_meta = None
     exam_source = 'public'
+    exam_bank_id = None
     if mode == 'exam' and exam_id:
         exam_meta = db.session.get(Exam, exam_id)
         if not exam_meta:
@@ -605,6 +648,11 @@ def quiz_page():
         exam_source = (cfg.get('source') or 'public').strip().lower()
         if exam_source not in ('public', 'user_bank'):
             exam_source = 'public'
+        if exam_source == 'user_bank':
+            try:
+                exam_bank_id = int(cfg.get('bank_id') or 0) or None
+            except Exception:
+                exam_bank_id = None
 
     # 根据不同模式获取题目
     target = source if source in ('favorites', 'mistakes') else mode
@@ -930,18 +978,21 @@ def quiz_page():
                 submitted = (exam_obj.status == 'submitted')
 
     return render_template('quiz/quiz.html',
-                         questions=questions,
-                         mode=mode,
-                         source=source,
-                         exam_id=exam_id,
-                         user_answers_json=user_answers_json,
-                         logged_in=bool(uid),
-                         user_id=uid,
-                         username=session.get('username'),
-                         is_admin=bool(session.get('is_admin')),
-                         is_subject_admin=bool(session.get('is_subject_admin')),
-                         duration=duration,
-                         submitted=submitted)
+                         **_quiz_render_context(
+                             questions=questions,
+                             mode=mode,
+                             source=exam_source if mode == 'exam' else source,
+                             exam_id=exam_id,
+                             user_answers_json=user_answers_json,
+                             quiz_bank_id=exam_bank_id,
+                             logged_in=bool(uid),
+                             user_id=uid,
+                             username=session.get('username'),
+                             is_admin=bool(session.get('is_admin')),
+                             is_subject_admin=bool(session.get('is_subject_admin')),
+                             duration=duration,
+                             submitted=submitted,
+                         ))
 
 
 @quiz_pages_bp.route('/quiz/settlement')
