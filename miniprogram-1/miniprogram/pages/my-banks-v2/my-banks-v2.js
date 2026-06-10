@@ -70,6 +70,18 @@ function formatDate(dateStr) {
         return '-';
     }
 }
+function hideNativeTabBar() {
+    try {
+        wx.hideTabBar({ animation: false });
+    }
+    catch (e) { }
+}
+function showNativeTabBar() {
+    try {
+        wx.showTabBar({ animation: false });
+    }
+    catch (e) { }
+}
 Page({
     data: {
         drawerOpen: false,
@@ -81,6 +93,7 @@ Page({
         filteredBanks: []
     },
     onShow: function () {
+        hideNativeTabBar();
         if (!(0, auth_1.checkLogin)()) {
             wx.redirectTo({ url: '/pages/login/login' });
             return;
@@ -90,6 +103,12 @@ Page({
         }
         catch (e) { }
         this.loadBanks();
+    },
+    onHide: function () {
+        showNativeTabBar();
+    },
+    onUnload: function () {
+        showNativeTabBar();
     },
     loadBanks: function () {
         return __awaiter(this, void 0, void 0, function () {

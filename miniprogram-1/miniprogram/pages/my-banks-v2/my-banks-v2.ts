@@ -30,6 +30,18 @@ function formatDate(dateStr: any): string {
   }
 }
 
+function hideNativeTabBar(): void {
+  try {
+    wx.hideTabBar({ animation: false });
+  } catch (e) {}
+}
+
+function showNativeTabBar(): void {
+  try {
+    wx.showTabBar({ animation: false });
+  } catch (e) {}
+}
+
 Page({
   data: {
     drawerOpen: false,
@@ -49,6 +61,8 @@ Page({
   },
 
   onShow() {
+    hideNativeTabBar();
+
     if (!checkLogin()) {
       wx.redirectTo({ url: '/pages/login/login' });
       return;
@@ -58,6 +72,14 @@ Page({
     } catch (e) {}
 
     this.loadBanks();
+  },
+
+  onHide() {
+    showNativeTabBar();
+  },
+
+  onUnload() {
+    showNativeTabBar();
   },
 
   async loadBanks() {
@@ -74,7 +96,7 @@ Page({
         is_public: b?.is_public,
         updated_at: b?.updated_at,
         updated_at_fmt: formatDate(b?.updated_at)
-      })).filter((b) => Number.isFinite(b.id) && b.id > 0);
+      })).filter((b: BankMeta) => Number.isFinite(b.id) && b.id > 0);
 
       banks.sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')) || (b.id - a.id));
       this.setData({ banks, inited: true }, () => this.applyFilter());
