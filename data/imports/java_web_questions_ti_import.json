@@ -1,0 +1,8208 @@
+{
+  "meta": {
+    "title": "Java Web题库导入数据",
+    "format": "Ti Portable Question Format",
+    "source_dir": "/Users/sak/Desktop/web",
+    "generated_at": "2026-06-11T03:34:11+08:00",
+    "question_count": 417,
+    "type_counts": {
+      "single_choice": 262,
+      "boolean": 106,
+      "essay": 49
+    },
+    "duplicate_question_count": 11,
+    "notes": [
+      "选择题答案使用0基索引数组，例如A为[0]。",
+      "判断题答案使用布尔数组，例如正确为[true]。",
+      "简答、读程序与编码题统一导入为essay题型；源文件未给出答案时answer为空数组。",
+      "源资料中的重复题未去重，导入后可在Ti后台按需查重处理。"
+    ]
+  },
+  "questions": [
+    {
+      "type": "single_choice",
+      "content": "tomcat安装目录中webapps文件夹下存放的文件为？",
+      "options": [
+        "Web应用的发布目录",
+        "存放服务器的日志文件",
+        "包含服务器的配置文件",
+        "包含服务器和Web应用程序使用的类库"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 1
+    },
+    {
+      "type": "single_choice",
+      "content": "Tomcat的默认端口号是______",
+      "options": [
+        "80",
+        "8080",
+        "8088",
+        "8000"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 2
+    },
+    {
+      "type": "single_choice",
+      "content": "WWW的英文全称是 。",
+      "options": [
+        "World Web Wide",
+        "World Wide Web",
+        "Web Wide World",
+        "World Wide Worth"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 3
+    },
+    {
+      "type": "single_choice",
+      "content": "搭建Java Web运行环境时，若Web服务器选用Tomcat，以下说法正确的是（ ）",
+      "options": [
+        "先安装Tomcat，再安装JDK",
+        "先安装JDK，再安装Tomcat",
+        "不需安装JDK，只安装Tomcat",
+        "JDK和Tomcat安装顺序没影响"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 4
+    },
+    {
+      "type": "single_choice",
+      "content": "Web应用中服务器和浏览器之间通信使用的协议是_________。",
+      "options": [
+        "HTTP",
+        "MAIL",
+        "TELNET",
+        "FTP"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 5
+    },
+    {
+      "type": "single_choice",
+      "content": "JSP的全称为？",
+      "options": [
+        "Java script pages",
+        "Java script page",
+        "Java Server pages",
+        "Java Server page"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 6
+    },
+    {
+      "type": "single_choice",
+      "content": "tomcat安装目录中bin文件夹下存放的文件为？",
+      "options": [
+        "系统日志文件",
+        "tomcat系统的一些配置文件",
+        "网站资源文件",
+        "支持tomcat运行的常见的.exe文件"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 7
+    },
+    {
+      "type": "single_choice",
+      "content": "下列选项中，正确的URL是？",
+      "options": [
+        "http://localhost:8080/hello/index.jsp",
+        "http:\\\\localhost:8080\\hello\\index.jsp",
+        "localhost:8080/hello/index.jsp",
+        "localhost:8080\\hello\\index.jsp"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 8
+    },
+    {
+      "type": "single_choice",
+      "content": "在web程序结构中，浏览器端与服务器端采用请求/响应模式进行交互的过程为？\n①用户输入 ②访问数据库 ③发送响应 ④发送请求 ⑤返回结果 ⑥显示",
+      "options": [
+        "①⑤②③④⑥",
+        "①④②⑤③⑥",
+        "①④②③⑤⑥",
+        "①④⑥⑤②③"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 9
+    },
+    {
+      "type": "single_choice",
+      "content": "关于web项目的目录结构，下列说法错误的是？",
+      "options": [
+        "web.xml是web应用的配置文件，可以随意修改",
+        "lib文件夹里包含了web应用所需的.jar和.zip文件",
+        "META-INF是系统自动生成，用于存放系统描述信息的文件夹",
+        "WebRoot目录是web应用的顶层目录，也称为文档的根目录。"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 10
+    },
+    {
+      "type": "single_choice",
+      "content": "下列 不属于URL的组件部分。",
+      "options": [
+        "服务器名称",
+        "协议类型",
+        "路径",
+        "文件名"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 11
+    },
+    {
+      "type": "single_choice",
+      "content": "Tomcat的默认端口号是______",
+      "options": [
+        "80",
+        "8080",
+        "8088",
+        "8000"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 12
+    },
+    {
+      "type": "single_choice",
+      "content": "WWW的英文全称是 。",
+      "options": [
+        "World Web Wide",
+        "World Wide Web",
+        "Web Wide World",
+        "World Wide Worth"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 13
+    },
+    {
+      "type": "single_choice",
+      "content": "搭建Java Web运行环境时,若Web服务器选用Tomcat,以下说法正确的是( )",
+      "options": [
+        "A. 先安装Tomcat,再安装JDK",
+        "B. 先安装JDK,再安装Tomcat",
+        "C. 不需安装JDK,只安装Tomcat",
+        "D. JDK和Tomcat安装顺序没影响"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 14
+    },
+    {
+      "type": "single_choice",
+      "content": "Web应用中服务器和浏览器之间通信使用的协议是_________。",
+      "options": [
+        "HTTP",
+        "MAIL",
+        "TELNET",
+        "FTP"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 15
+    },
+    {
+      "type": "single_choice",
+      "content": "JSP的全称为?",
+      "options": [
+        "Java script pages",
+        "Java script page",
+        "Java Server pages",
+        "Java Server page"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 16
+    },
+    {
+      "type": "single_choice",
+      "content": "tomcat安装目录中bin文件夹下存放的文件为?",
+      "options": [
+        "系统日志文件",
+        "tomcat系统的一些配置文件",
+        "网站资源文件",
+        "支持tomcat运行的常见的.exe文件"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 17
+    },
+    {
+      "type": "single_choice",
+      "content": "下列选项中,正确的URL是?",
+      "options": [
+        "http://localhost:8080/hello/index.jsp",
+        "http:\\\\localhost:8080\\hello\\index.jsp",
+        "localhost:8080/hello/index.jsp",
+        "localhost:8080\\hello\\index.jsp"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 18
+    },
+    {
+      "type": "single_choice",
+      "content": "在web程序结构中,浏览器端与服务器端采用请求/响应模式进行交互的过程为?\n①用户输入 ②访问数据库 ③发送响应 ④发送请求 ⑤返回结果 ⑥显示",
+      "options": [
+        "①⑤②③④⑥",
+        "①④②⑤③⑥",
+        "①④②③⑤⑥",
+        "①④⑥⑤②③"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 19
+    },
+    {
+      "type": "single_choice",
+      "content": "关于web项目的目录结构,下列说法错误的是?",
+      "options": [
+        "web.xml是web应用的配置文件,可以随意修改",
+        "lib文件夹里包含了web应用所需的.jar和.zip文件",
+        "META-INF是系统自动生成,用于存放系统描述信息的文件夹",
+        "WebRoot目录是web应用的顶层目录,也称为文档的根目录。"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 20
+    },
+    {
+      "type": "boolean",
+      "content": "HTTP是指超文本传输协议。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 21
+    },
+    {
+      "type": "boolean",
+      "content": "Web的工作模式是客户机/服务器模式。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 22
+    },
+    {
+      "type": "boolean",
+      "content": "Web的服务器端应用更新之后,客户端必须同步进行更新。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 23
+    },
+    {
+      "type": "boolean",
+      "content": "Tomcat是Web服务器之一。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 24
+    },
+    {
+      "type": "boolean",
+      "content": "URL是Uniform Resource Locator的缩写,中文称之为统一资源定位器。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 25
+    },
+    {
+      "type": "boolean",
+      "content": "URL通常由4部分组成:协议名称、所在主机的DNS名或IP地址、可选的端口号和资源的名称。\n端口号和资源名称可以省略。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 26
+    },
+    {
+      "type": "boolean",
+      "content": "对于开发的Java Web应用程序,在部署后,其应用程序按照一定的目录结构放置在Tomcat安装目录的webapps文件夹中。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 27
+    },
+    {
+      "type": "boolean",
+      "content": "Web服务器是运行及发布Web应用的容器,只有将开发的Web项目放置到该容器中,才能使网络中的所有用户通过浏览器进行访问。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 28
+    },
+    {
+      "type": "boolean",
+      "content": "HTTP是指超文本传输协议。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 29
+    },
+    {
+      "type": "boolean",
+      "content": "Web的工作模式是客户机/服务器模式。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 30
+    },
+    {
+      "type": "boolean",
+      "content": "Tomcat是Web服务器之一。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 31
+    },
+    {
+      "type": "boolean",
+      "content": "URL是Uniform Resource Locator的缩写,中文称之为统一资源定位器。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 32
+    },
+    {
+      "type": "boolean",
+      "content": "URL通常由4部分组成:协议名称、所在主机的DNS名或IP地址、可选的端口号和资源的名称。\n端口号和资源名称可以省略。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 33
+    },
+    {
+      "type": "boolean",
+      "content": "对于开发的Java Web应用程序,在部署后,其应用程序按照一定的目录结构放置在Tomcat安装目录的webapps文件夹中。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 34
+    },
+    {
+      "type": "boolean",
+      "content": "Web服务器是运行及发布Web应用的容器,只有将开发的Web项目放置到该容器中,才能使网络中的所有用户通过浏览器进行访问。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发概述",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 35
+    },
+    {
+      "type": "single_choice",
+      "content": "下列标签分别定义表格、行、单元格的是?",
+      "options": [
+        "tbody tr td",
+        "table tr td",
+        "table row cell",
+        "table th td"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 36
+    },
+    {
+      "type": "single_choice",
+      "content": "标签<hr/>实现的功能是什么?",
+      "options": [
+        "换行",
+        "插入一条水平分隔符",
+        "设置标题",
+        "设置编码"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 37
+    },
+    {
+      "type": "single_choice",
+      "content": "通过<table>标签的()属性设定表格边框的粗细",
+      "options": [
+        "border",
+        "cellpadding",
+        "cellspacing",
+        "bgcolor"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 38
+    },
+    {
+      "type": "single_choice",
+      "content": "超链接标签<a>的属性中,()用于创建指向另一个文档的链接。",
+      "options": [
+        "target",
+        "href",
+        "name",
+        "type"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 39
+    },
+    {
+      "type": "single_choice",
+      "content": "在HTTP协议中,用于发送大量数据的方法是()",
+      "options": [
+        "POST",
+        "GET",
+        "PUT",
+        "OPTION"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 40
+    },
+    {
+      "type": "single_choice",
+      "content": "以下哪个概念或者哪种功能属于“前端”:",
+      "options": [
+        "web系统中以网页等形式为用户提供的部分,用户能接触到的部分",
+        "web系统中负责数据存取的部分",
+        "web系统中负责平台稳定性与性能的部分",
+        "web系统中负责完成相应的功能、处理业务的部分"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 41
+    },
+    {
+      "type": "single_choice",
+      "content": "以下关于网页源文件的叙述不正确的是:",
+      "options": [
+        "网页源文件是一些代码",
+        "网页源文件客户端是看不到的",
+        "网页源文件可以在记事本里打开",
+        "网页源文件是纯文本文件"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 42
+    },
+    {
+      "type": "single_choice",
+      "content": "以下不是网页的页面元素的是:",
+      "options": [
+        "导航栏",
+        "logo",
+        "文字与图片",
+        "网页源文件"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 43
+    },
+    {
+      "type": "single_choice",
+      "content": "以下说法中,错误的是:",
+      "options": [
+        "网站logo、banner、导航栏等都是网页的组成部分",
+        "主页就是进入网站的第一个页面,也被称为首页",
+        "网站就是一系列逻辑上可以视为一个整体的页面的集合",
+        "所有网页的扩展名都是 .htm"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 44
+    },
+    {
+      "type": "single_choice",
+      "content": "以下说法中,错误的是:",
+      "options": [
+        "网页的本质就是HTML等源代码文件",
+        "网页就是主页",
+        "使用“记事本”编辑网页时,可将其保存为 .htm 或 .html 后缀",
+        "网站通常就是一个完整的文件夹"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 45
+    },
+    {
+      "type": "single_choice",
+      "content": "下列关于HTML语言描述不正确的是:",
+      "options": [
+        "HTML语言中可以嵌入如CSS、JavaScript等语言",
+        "HTML是指超文本链接语言,用超链接将网页组织在一起",
+        "HTML语言是通过一系列特定的标记来标识出相应的意义和作用的",
+        "HTML文档本身就是文本格式的文件"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 46
+    },
+    {
+      "type": "single_choice",
+      "content": "HTML文件中,下面( )标签中包含了网页的全部内容。",
+      "options": [
+        "<head>…</head>",
+        "<pre>…</pre>",
+        "<center>…</center>",
+        "<body>…</body>"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 47
+    },
+    {
+      "type": "single_choice",
+      "content": "用 HTML标记语言编写一个简单的网页,网页最基本的结构是:",
+      "options": [
+        "<html> <head>…</head> <frame>…</frame> </html>",
+        "<html> <title>…</title> <frame>…</frame> </html>",
+        "<html> <head>…</head> <body>…</body> </html>",
+        "<html> <title>…</title> <body>…</body> </html>"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 48
+    },
+    {
+      "type": "single_choice",
+      "content": "以下说法中,正确的是:",
+      "options": [
+        "p标签与br标签的作用一样",
+        "多个br标签可以产生多个空行",
+        "p标签里面是段落内容,文字需要br标签才能换行,不能自动换行",
+        "多个p标签可以产生多个空行"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 49
+    },
+    {
+      "type": "single_choice",
+      "content": "以下标记符中,没有对应的结束标记的是:",
+      "options": [
+        "<title>",
+        "<body>",
+        "<br>",
+        "<html>"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 50
+    },
+    {
+      "type": "single_choice",
+      "content": "已知services.html与text.html在同一站点文件夹site中。text.html位于site根下,但文档services.html在site子文件夹information中。现要求在text.html文档中编写一个超链接,链接到文档services.html。下面语句正确的是:",
+      "options": [
+        "<a href =\"text.html \">Link</a>",
+        "<a href=\"services.html \">Link</a>",
+        "<a href =\"../services.html\">Link</a>",
+        "<a href =\"information/services.html\">Link</a>"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 51
+    },
+    {
+      "type": "single_choice",
+      "content": "HTML中,用什么方法可以将段落内容在页面中居中:",
+      "options": [
+        "align=center",
+        "type=center",
+        "type=middle",
+        "place=middle"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 52
+    },
+    {
+      "type": "single_choice",
+      "content": "我们想要在HTML文档中加入图像,可以使用哪个标记来达到要求:",
+      "options": [
+        "<image>",
+        "<picture>",
+        "<pic>",
+        "<img>"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 53
+    },
+    {
+      "type": "single_choice",
+      "content": "下列的HTML中哪个可以产生超链接:",
+      "options": [
+        "<a>https://www.w3schools.com</a>",
+        "<a href=\"https://www.w3schools.com\">W3Schools</a>",
+        "<a>www.w3schools.com</a>",
+        "<a url=\"https://www.w3schools.com\">W3Schools.com</a>"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 54
+    },
+    {
+      "type": "single_choice",
+      "content": "在 HTML中,插入图片的HTML代码是( )。",
+      "options": [
+        "<img href=\"image.gif>",
+        "<img src=\"image.gif\">",
+        "<image src=\"image.gif\">",
+        "<img>image.gif</img>"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 55
+    },
+    {
+      "type": "single_choice",
+      "content": "如果希望单击超链接后在新窗口中打开HTML页面,则需将target属性设为( )。",
+      "options": [
+        "_self",
+        "_top",
+        "_parent",
+        "_blank"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 56
+    },
+    {
+      "type": "single_choice",
+      "content": "以下有关列表的说法中,错误的是:",
+      "options": [
+        "在创建列表时,ul标签用于创建有序列表",
+        "可以具体指定项目符号或编号样式",
+        "有序列表和无序列表可以互相嵌套",
+        "无序列表应使用ul和li标签进行创建"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 57
+    },
+    {
+      "type": "single_choice",
+      "content": "meta元素的作用是:",
+      "options": [
+        "meta元素用于实现本页的自动刷新",
+        "meta元素用于表达HTML文档的格式",
+        "meta元素可用于定义网页的字符集、关键词、描述、作者等信息",
+        "其他答案都不对"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 58
+    },
+    {
+      "type": "single_choice",
+      "content": "想要在页面中加入一个独立的区域,可以使用哪些HTML标签来描述:",
+      "options": [
+        "<div>",
+        "<floor>",
+        "<level>",
+        "<span>"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 59
+    },
+    {
+      "type": "single_choice",
+      "content": "以下选项中,哪个全部都是表格标签元素:",
+      "options": [
+        "<thead><body><tr>",
+        "<table><head><tfoot>",
+        "<table><tr><td>",
+        "<table><tr><tt>"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 60
+    },
+    {
+      "type": "single_choice",
+      "content": "HTML 指的是?",
+      "options": [
+        "超文本标记语言(Hyper Text Markup Language)",
+        "家庭工具标记语言(Home Tool Markup Language)",
+        "超链接和文本标记语言(Hyperlinks and Text Markup Language)"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 61
+    },
+    {
+      "type": "single_choice",
+      "content": "在下列的 HTML 中,哪个是最大的标题?",
+      "options": [
+        "<h6>",
+        "<head>",
+        "<heading>",
+        "<h1>"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 62
+    },
+    {
+      "type": "single_choice",
+      "content": "在下列的 HTML 中,哪个可以添加背景颜色?",
+      "options": [
+        "<body color=\"yellow\">",
+        "<background>yellow</background>",
+        "<body bgcolor=\"yellow\">"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 63
+    },
+    {
+      "type": "single_choice",
+      "content": "在下列的 HTML 中,哪个可以插入换行?",
+      "options": [
+        "<br>",
+        "<lb>",
+        "<break>"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 64
+    },
+    {
+      "type": "single_choice",
+      "content": "请选择产生粗体字的 HTML 标签:",
+      "options": [
+        "<bold>",
+        "<bb>",
+        "<b>",
+        "<bld>"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 65
+    },
+    {
+      "type": "single_choice",
+      "content": "请选择产生斜体字的 HTML 标签:",
+      "options": [
+        "<i>",
+        "<italics>",
+        "<ii>"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 66
+    },
+    {
+      "type": "single_choice",
+      "content": "在下列的 HTML 中,哪个可以产生超链接?",
+      "options": [
+        "<a url=\"http://www.w3school.com.cn\">W3School.com.cn</a>",
+        "<a href=\"http://www.w3school.com.cn\">W3School</a>",
+        "<a>http://www.w3school.com.cn</a>",
+        "<a name=\"http://www.w3school.com.cn\">W3School.com.cn</a>"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 67
+    },
+    {
+      "type": "single_choice",
+      "content": "如何在新窗口打开链接?",
+      "options": [
+        "<a href=\"url\" new>",
+        "<a href=\"url\" target=\"_blank\">",
+        "<a href=\"url\" target=\"new\">"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 68
+    },
+    {
+      "type": "single_choice",
+      "content": "如何制作电子邮件链接?",
+      "options": [
+        "<a href=\"xxx@yyy\">",
+        "<mail href=\"xxx@yyy\">",
+        "<a href=\"mailto:xxx@yyy\">",
+        "<mail>xxx@yyy</mail>"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 69
+    },
+    {
+      "type": "single_choice",
+      "content": "请选择可以使单元格中的内容进行左对齐的正确 HTML 标签:",
+      "options": [
+        "<td align=\"left\">",
+        "<td valign=\"left\">",
+        "<td leftalign>",
+        "<td left>"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 70
+    },
+    {
+      "type": "single_choice",
+      "content": "以下选项中,哪个全部都是表格标签?",
+      "options": [
+        "<table><head><tfoot>",
+        "<table><tr><td>",
+        "<table><tr><tt>",
+        "<thead><body><tr>"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 71
+    },
+    {
+      "type": "single_choice",
+      "content": "如何产生带有数字列表符号的列表?",
+      "options": [
+        "<ul>",
+        "<dl>",
+        "<ol>",
+        "<list>"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 72
+    },
+    {
+      "type": "single_choice",
+      "content": "在下列的 HTML 中,哪个可以产生文本框?",
+      "options": [
+        "<input type=\"textfield\">",
+        "<textinput type=\"text\">",
+        "<input type=\"text\">"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 73
+    },
+    {
+      "type": "single_choice",
+      "content": "在下列的 HTML 中,哪个可以产生复选框?",
+      "options": [
+        "<input type=\"check\">",
+        "<checkbox>",
+        "<input type=\"checkbox\">",
+        "<check>"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 74
+    },
+    {
+      "type": "single_choice",
+      "content": "在下列的 HTML 中,哪个可以产生文本区(textarea)?",
+      "options": [
+        "<textarea>",
+        "<input type=\"textarea\">",
+        "<input type=\"textbox\">",
+        "<textfield>"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 75
+    },
+    {
+      "type": "single_choice",
+      "content": "如何产生带有圆点列表符号的列表?",
+      "options": [
+        "<dl>",
+        "<list>",
+        "<ol>",
+        "<ul>"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 76
+    },
+    {
+      "type": "single_choice",
+      "content": "在下列的 HTML 中,哪个可以产生下拉列表?",
+      "options": [
+        "<list>",
+        "<input type=\"list\">",
+        "<input type=\"dropdown\">",
+        "<select>"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 77
+    },
+    {
+      "type": "single_choice",
+      "content": "在下列的 HTML 中,哪个可以插入背景图像?",
+      "options": [
+        "<body background=\"background.gif\">",
+        "<background img=\"background.gif\">",
+        "<img src=\"background.gif\" background>"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 78
+    },
+    {
+      "type": "single_choice",
+      "content": "在下列的 HTML 中,哪个可以插入图像?",
+      "options": [
+        "<img href=\"image.gif\">",
+        "<image src=\"image.gif\">",
+        "<img src=\"image.gif\">",
+        "<img>image.gif</img>"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 79
+    },
+    {
+      "type": "single_choice",
+      "content": "HTML5 之前的 HTML 版本是?",
+      "options": [
+        "HTML 4.01",
+        "HTML 4",
+        "HTML 4.1",
+        "HTML 4.9"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 80
+    },
+    {
+      "type": "single_choice",
+      "content": "HTML5 的正确 doctype 是?",
+      "options": [
+        "<!DOCTYPE html>",
+        "<!DOCTYPE HTML5>",
+        "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 5.0//EN\" \"http://www.w3.org/TR/html5/strict.dtd\">"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 81
+    },
+    {
+      "type": "single_choice",
+      "content": "用于播放 HTML5 视频文件的正确 HTML5 元素是:",
+      "options": [
+        "<movie>",
+        "<media>",
+        "<video>"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 82
+    },
+    {
+      "type": "single_choice",
+      "content": "用于播放 HTML5 音频文件的正确 HTML5 元素是:",
+      "options": [
+        "<mp3>",
+        "<audio>",
+        "<sound>"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 83
+    },
+    {
+      "type": "single_choice",
+      "content": "在 HTML5 中,哪个属性用于规定输入字段是必填的?",
+      "options": [
+        "required",
+        "formvalidate",
+        "validate",
+        "placeholder"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 84
+    },
+    {
+      "type": "single_choice",
+      "content": "若要在页面中创建一个图形超链接,要显示的图形为 myhome.jpg,所链接的地址为http://www.pcnetedu.com,以下用法中,正确的是( )。",
+      "options": [
+        "<a href=”http://www.pcnetedu.com”>myhome.jpg</a>",
+        "<a href=” http://www.pcnetedu.com”><img src=”myhome.jpg”></a>",
+        "<img src=”myhome.jpg”><a href =”http://www.pcnetedu.com”></a>",
+        "<a href =http://www.pcneredu.com><img src=”myhome.jpg”>"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 85
+    },
+    {
+      "type": "single_choice",
+      "content": "下列代码运行后的显示效果为______。\n<style>\n#s{color:orange}\ndiv{color:red}\nspan{color:blue}\nspan a{color:green}\n</style>\n<div id=\"s\" class=\"ss\">\n内容1\n<span>\n内容2\n<a>内容3</a>\n</span>\n</div>",
+      "options": [
+        "“内容1”橙色,“内容2”蓝色,“内容3”蓝色",
+        "“内容1”红色,“内容2”蓝色,“内容3”蓝色",
+        "“内容1”红色,“内容2”蓝色,“内容3”绿色",
+        "“内容1”橙色,“内容2”蓝色,“内容3”绿色"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 86
+    },
+    {
+      "type": "single_choice",
+      "content": "指定文字为斜体使用的样式是______",
+      "options": [
+        "font-family",
+        "font-size",
+        "font-style",
+        "font-weight"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 87
+    },
+    {
+      "type": "single_choice",
+      "content": "当页面上通过三种方式引入样式后,从低到高的优先级顺序为______。",
+      "options": [
+        "内嵌样式,内部样式,外部样式",
+        "内部样式,内嵌样式,外部样式",
+        "外部样式,内部样式,内嵌样式",
+        "外部样式,内嵌样式,内部样式"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 88
+    },
+    {
+      "type": "single_choice",
+      "content": "关于类别选择器,说法错误的是()",
+      "options": [
+        "是通过class属性定义的",
+        "它的选择符以#开头",
+        "它的选择符以.开头",
+        "它通常用于选取某一类对象"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 89
+    },
+    {
+      "type": "single_choice",
+      "content": "下列哪段代码能够定义所有p标签内文字加粗( )。",
+      "options": [
+        "p {text-size:bold}",
+        "p {font-weight:bold}",
+        "<p style=\"font-size:bold\">",
+        "<p style=\"text-size:bold\">"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 90
+    },
+    {
+      "type": "single_choice",
+      "content": "如何去掉文本超级链接的下划线 ( )。",
+      "options": [
+        "a {underline:none}",
+        "a {text-decoration:none}",
+        "a {text-decoration:no underline}",
+        "a {decoration:no underline}"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 91
+    },
+    {
+      "type": "single_choice",
+      "content": "关于CSS定义的说法错误的是( )。",
+      "options": [
+        "类样式的定义方法是点+样式名字",
+        "样式定义时属性和属性之间用空格分隔",
+        "标签. 样式名字:表示只有该指定的标签才能引用它",
+        "ID样式的定义方法是#+样式名字"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 92
+    },
+    {
+      "type": "single_choice",
+      "content": "使用link元素调用CSS的语法中,以下哪个属性是用来指定CSS文件的路径的( )。",
+      "options": [
+        "href",
+        "src",
+        "url",
+        "其余都不对"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 93
+    },
+    {
+      "type": "single_choice",
+      "content": "下列哪种方式是用类选择器定义样式的( )。",
+      "options": [
+        "p,h1{color: red}",
+        ". one{color: red}",
+        "p{color: red}",
+        "#two{color: red}"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 94
+    },
+    {
+      "type": "single_choice",
+      "content": "根据以下的CSS代码:h1{ color: limegreen ;font-family: aria }可以知道( )。",
+      "options": [
+        "选择器的名称是color",
+        "此段代码是一个类选择器",
+        "{ }部分是对H1这个选择器的样式的内容",
+        "limegreen和font-family都是值"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 95
+    },
+    {
+      "type": "single_choice",
+      "content": "在HTML页面中,调用外部样式表的方法是( )。",
+      "options": [
+        "<style rel=\"stylesheet\" type=\"text/css\" link=\"外部样式表地址\" />",
+        "<link rel=\"stylesheet\" type=\"text/css\" href=\"外部样式表地址\" />",
+        "<link rel=\"stylesheet\" type=\"text/css\" style=\"外部样式表地址\" />",
+        "<style rel=\"stylesheet\" type=\"text/css\" href=\"外部样式表地址\" />"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 96
+    },
+    {
+      "type": "single_choice",
+      "content": "以下关于超链接样式叙述正确的是( )。",
+      "options": [
+        "页面一显示出来,超链接就处于活动状态",
+        "用户没有单击的时候的超链接状态,可以使用a:linked设置",
+        "可以分别设置四种不同状态下的超链接样式",
+        "用户单击过的超链接,可以采用a:linked设置"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 97
+    },
+    {
+      "type": "single_choice",
+      "content": "关于float描述错误的是( )。",
+      "options": [
+        "可以设置为float:left",
+        "可以设置为float:right",
+        "可以设置为float:none",
+        "可以设置为float:center"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 98
+    },
+    {
+      "type": "single_choice",
+      "content": "以下关于CSS+DIV布局中关于盒子模型说法错误的是( )。",
+      "options": [
+        "填充、边框和边界和内容区域都分为上、下、左、右四个方向,既可以分别定义,也可以统一定义",
+        "盒子的实际高度=上外边距+上边框+上内边距+内容高度(height)+下内边距+下边框+下外边距",
+        "盒子的实际宽度=左外边距+左边框+左内边距+内容宽度(width)+右内边距+右边框+右外边距",
+        "一个盒子除了内容,由以下几个独立的部分组成:margin、border、padding"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 99
+    },
+    {
+      "type": "single_choice",
+      "content": "在CSS中,为页面中的某个div标签设置样式div{width:200px;padding:0 20px; border:5px solid black;},则该标签的实际宽度为( )。",
+      "options": [
+        "250px",
+        "220px",
+        "200px",
+        "240px"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 100
+    },
+    {
+      "type": "single_choice",
+      "content": "可以利用什么标记构建网页布局( )。",
+      "options": [
+        "<div>",
+        "<dif>",
+        "<dis>",
+        "<dir>"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 101
+    },
+    {
+      "type": "single_choice",
+      "content": "下列元素中,是行内元素的是( )。",
+      "options": [
+        "div",
+        "h3",
+        "span",
+        "p"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 102
+    },
+    {
+      "type": "single_choice",
+      "content": "采用DIV+CSS设计页面布局,错误的是( )。",
+      "options": [
+        "其他都不对",
+        "增加代码可读性",
+        "更利于布局与定位",
+        "网页更容易修改和维护"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 103
+    },
+    {
+      "type": "single_choice",
+      "content": "以下哪个不是block类型元素( )。",
+      "options": [
+        "ul",
+        "table",
+        "input",
+        "div"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 104
+    },
+    {
+      "type": "single_choice",
+      "content": "inline类型的元素( )。",
+      "options": [
+        "height、width都能设定",
+        "height能设定、width不能设定,就是内容的宽度",
+        "height不能设定、width能设定",
+        "display:inline表示将该元素表现出inline元素的特点"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 105
+    },
+    {
+      "type": "single_choice",
+      "content": "选项( )为正确的 CSS 语法。",
+      "options": [
+        "body {color: black;}",
+        "{body;color:black}",
+        "body:color=black {body:color=black(body}",
+        "{body: color=black}"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 106
+    },
+    {
+      "type": "single_choice",
+      "content": "在CSS中,设置某个元素的文字颜色的选项是( )。",
+      "options": [
+        "color:",
+        "fgcolor:",
+        "text-color=",
+        "text-color:"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 107
+    },
+    {
+      "type": "single_choice",
+      "content": "CSS 指的是?",
+      "options": [
+        "Computer Style Sheets",
+        "Cascading Style Sheets",
+        "Creative Style Sheets",
+        "Colorful Style Sheets"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 108
+    },
+    {
+      "type": "single_choice",
+      "content": "想要在页面中加入一个独立的区域,可以使用哪些HTML标签来描述:",
+      "options": [
+        "<div>",
+        "<floor>",
+        "<level>",
+        "<span>"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 109
+    },
+    {
+      "type": "single_choice",
+      "content": "关于样式表选择器的优先级,下列哪一种优先级最高?",
+      "options": [
+        "行内样式",
+        "id选择器",
+        "class选择器",
+        "浏览器的自定义属性和继承"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 110
+    },
+    {
+      "type": "single_choice",
+      "content": "下面选项中哪一项应用了行内样式?",
+      "options": [
+        "<p class=\"style\">",
+        "<p id=\"content\">",
+        "<p style=\"color : red;\">",
+        "<p class=\"style1 style2\">"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 111
+    },
+    {
+      "type": "single_choice",
+      "content": "下面关于CSS的说法错误的有( )。",
+      "options": [
+        "一个元素的框模型有多大,那么该元素在页面中所占用的空间就会有多大",
+        "margin属性不能同时设置四个边的边距",
+        "整个body可以作为一个盒子",
+        "CSS可以控制网页背景图片"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 112
+    },
+    {
+      "type": "single_choice",
+      "content": "相对定位与绝对定位说法正确的是( )。",
+      "options": [
+        "它们都脱离了文本流",
+        "它们都相对起始点进行移动",
+        "它们都相对于其直接父元素定位",
+        "它们都相对于浏览器窗口定位"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 113
+    },
+    {
+      "type": "single_choice",
+      "content": "浮动定位说法正确的是( )。",
+      "options": [
+        "浮动元素不能设置高度和宽度",
+        "可以用float属性设置浮动定位",
+        "浮动定位元素原有位置保留",
+        "浮动仍然占用普通流的位置"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 114
+    },
+    {
+      "type": "single_choice",
+      "content": "以下代码可以将div水平居中的是( )。",
+      "options": [
+        "div{\nheight:200px;\nmargin:0 auto;\n}",
+        "div{\nmargin:0 auto;\n}",
+        "div{\nwidth:200px;\nmargin:0 auto;\n}",
+        "div{\ntext-align:center;\n}"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 115
+    },
+    {
+      "type": "single_choice",
+      "content": "下面HTML代码,两个div水平之间的空白距离是( )。\n<style type=\"text/css\">\ndiv{float:left;width:100px;height:200px;margin:5px;}\n</style>\n......\n<div ></div>\n<div ></div>\n......",
+      "options": [
+        "25px",
+        "10px",
+        "0px",
+        "15px"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 116
+    },
+    {
+      "type": "single_choice",
+      "content": "查看如下 html 代码:\n<div style=\"float:left;\">div text</div>\n<p style=\"clear:left;\">p text</p>\n此代码在页面上的显示效果为( )。",
+      "options": [
+        "<div> 中的文本和 <p> 中的文本分两行显示,且文本右对齐",
+        "<div> 中的文本和 <p> 中的文本在一行上显示,且文本右对齐",
+        "<div> 中的文本和 <p> 中的文本在一行上显示,且文本左对齐",
+        "<div> 中的文本和 <p> 中的文本分两行显示,且文本左对齐"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 117
+    },
+    {
+      "type": "single_choice",
+      "content": "下列代码段是某页面的样式设置:\n<style type=\"text/css\">\n.blue { color:blue }\n.red { color:red }\n</style>\n现要求将页面中的第一个h1标题设置为红色,第一个段落设置为蓝色。下列代码正确的是( )。",
+      "options": [
+        "< h1 class=\"red\">第一个标题<h1>\n<p class=\"blue\">第一个段落",
+        "< h1 color:red>第一个标题<h1>\n<p color:blue>第一个段落",
+        "<h2 class=\"red\">第一个标题<h2>\n<h1>第一个标题<h1>\n<p class=\"blue\">第一个段落",
+        "< h1 id=\"red\">第一个标题<h1>\n<p id=\"blue\">第一个段落"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 118
+    },
+    {
+      "type": "single_choice",
+      "content": "阅读下面代码,段落标签<p>内文本最终显示的颜色是( )。\n<style type=\"text/css\">\nbody { color:#333; }\n#text{ color:#f00; }\n.content { color:#00f; }\n.gray { color:#666; }\n</style>\n......\n<p id=\"text\" class=\"gray\">锦瑟无端五十弦,一弦一柱思华年。</p>",
+      "options": [
+        "#333",
+        "#00f",
+        "#f00",
+        "#666"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 119
+    },
+    {
+      "type": "single_choice",
+      "content": "关于样式表选择器的优先级,下列哪一种优先级最低?",
+      "options": [
+        "行内样式",
+        "id选择器",
+        "class选择器",
+        "浏览器的自定义属性和继承"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 120
+    },
+    {
+      "type": "single_choice",
+      "content": "在以下的 HTML 中,哪个是正确引用外部样式表的方法?",
+      "options": [
+        "<style src=\"mystyle.css\">",
+        "<link rel=\"stylesheet\" type=\"text/css\" href=\"mystyle.css\">",
+        "<stylesheet>mystyle.css</stylesheet>"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 121
+    },
+    {
+      "type": "single_choice",
+      "content": "在 HTML 文档中,引用外部样式表的正确位置是?",
+      "options": [
+        "文档的末尾",
+        "文档的顶部",
+        "<body> 部分",
+        "<head> 部分"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 122
+    },
+    {
+      "type": "single_choice",
+      "content": "下列哪个选项的 CSS 语法是正确的?",
+      "options": [
+        "body:color=black",
+        "{body:color=black(body}",
+        "body {color: black}",
+        "{body;color:black}"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 123
+    },
+    {
+      "type": "single_choice",
+      "content": "如何在 CSS 文件中插入注释?",
+      "options": [
+        "// this is a comment",
+        "// this is a comment //",
+        "/* this is a comment */",
+        "this is a comment"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 124
+    },
+    {
+      "type": "single_choice",
+      "content": "哪个CSS属性可用于改变背景颜色?",
+      "options": [
+        "bgcolor:",
+        "background-color:",
+        "color:"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 125
+    },
+    {
+      "type": "single_choice",
+      "content": "如何为所有的 <h1> 元素添加背景颜色?",
+      "options": [
+        "h1.all {background-color:#FFFFFF}",
+        "h1 {background-color:#FFFFFF}",
+        "all.h1 {background-color:#FFFFFF}"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 126
+    },
+    {
+      "type": "single_choice",
+      "content": "如何改变某个元素的文本颜色?",
+      "options": [
+        "text-color:",
+        "fgcolor:",
+        "color:",
+        "text-color="
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 127
+    },
+    {
+      "type": "single_choice",
+      "content": "哪个 CSS 属性可控制文本的尺寸?",
+      "options": [
+        "font-size",
+        "text-style",
+        "font-style",
+        "text-size"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 128
+    },
+    {
+      "type": "single_choice",
+      "content": "在以下的 CSS 中,可使所有 <p> 元素变为粗体的正确语法是?",
+      "options": [
+        "<p style=\"font-size:bold\">",
+        "<p style=\"text-size:bold\">",
+        "p {font-weight:bold}",
+        "p {text-size:bold}"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 129
+    },
+    {
+      "type": "single_choice",
+      "content": "如何显示没有下划线的超链接?",
+      "options": [
+        "a {text-decoration:none}",
+        "a {text-decoration:no underline}",
+        "a {underline:none}",
+        "a {decoration:no underline}"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 130
+    },
+    {
+      "type": "single_choice",
+      "content": "如何使文本以大写字母开头?",
+      "options": [
+        "text-transform:capitalize",
+        "无法通过 CSS 来实现",
+        "text-transform:uppercase"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 131
+    },
+    {
+      "type": "single_choice",
+      "content": "如何改变元素的字体?",
+      "options": [
+        "font=",
+        "f:",
+        "font-family:"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 132
+    },
+    {
+      "type": "single_choice",
+      "content": "如何使文本变为粗体?",
+      "options": [
+        "font:",
+        "B、 font-weight:bold",
+        "style:bold"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 133
+    },
+    {
+      "type": "single_choice",
+      "content": "如何显示这样一个边框:上边框 10 像素、下边框 5 像素、左边框 20 像素、右边框 1 像素?",
+      "options": [
+        "border-width:10px 5px 20px 1px",
+        "border-width:10px 20px 5px 1px",
+        "border-width:5px 20px 10px 1px",
+        "border-width:10px 1px 5px 20px"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 134
+    },
+    {
+      "type": "single_choice",
+      "content": "如何改变元素的左边距?",
+      "options": [
+        "text-indent:",
+        "indent:",
+        "margin:",
+        "margin-left:"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 135
+    },
+    {
+      "type": "single_choice",
+      "content": "如何产生带有正方形项目的列表?",
+      "options": [
+        "list-type: square",
+        "type: 2",
+        "type: square",
+        "list-style-type: square"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 136
+    },
+    {
+      "type": "single_choice",
+      "content": "如下所示的这段 CSS 样式代码,定义的样式效果是( )。",
+      "options": [
+        "默认链接是绿色,访问过链接是蓝色,鼠标悬停是黑色,活动链接是红色",
+        "默认链接是蓝色,访问过链接是黑色,鼠标悬停是红色,活动链接是绿色",
+        "默认链接是黑色,访问过链接是红色,鼠标悬停是绿色,活动链接是蓝色",
+        "默认链接是红色,访问过链接是绿色,鼠标悬停是蓝色,活动链接是黑色"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 137
+    },
+    {
+      "type": "single_choice",
+      "content": "阅读下面代码,段落<p>内文本最终显示的颜色是( )。\n<style>\nbody{color:#333;}\n#text{color:#f00;}\n.content{color:#00f;}\n.gray{color:#666;}\n</style>\n<p id=\"text\" class=\"content gray\">我本将心向明月,奈何明月照沟渠</p>",
+      "options": [
+        "#f00",
+        "#00f",
+        "#666",
+        "#333"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 138
+    },
+    {
+      "type": "single_choice",
+      "content": "下列( )能实现层的隐藏。",
+      "options": [
+        "display:false",
+        "display:hidden",
+        "display:block",
+        "display:none"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 139
+    },
+    {
+      "type": "boolean",
+      "content": "所有的HTML标记符都包括开始标记符和结束标记符。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 140
+    },
+    {
+      "type": "boolean",
+      "content": "B标记符表示用粗体显示所包括的文字。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 141
+    },
+    {
+      "type": "boolean",
+      "content": "HTML是HyperText Markup Language(超文本标记语言)的缩写。超文本使网页之间具有跳转的能力,是一种信息组织的方式,使浏览者可以选择阅读的路径,从而可以不需要顺序阅读。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 142
+    },
+    {
+      "type": "boolean",
+      "content": "超链接是一种标记,单击网页中的这个标记则能够加载另一个网页,这个标记可以作用在文本上也可以作用在图像上。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 143
+    },
+    {
+      "type": "boolean",
+      "content": "HTML的段落标记中,标注文本以原样显示的是标记 P",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 144
+    },
+    {
+      "type": "boolean",
+      "content": "创建最小的标题的文本标签是h1。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 145
+    },
+    {
+      "type": "boolean",
+      "content": "标记 b 无需结束标记。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 146
+    },
+    {
+      "type": "boolean",
+      "content": "< DIV>属于区块标签的一种。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 147
+    },
+    {
+      "type": "boolean",
+      "content": "< a href=\"url\" target=\"_blank\" >可以在新窗口中打开链接",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 148
+    },
+    {
+      "type": "boolean",
+      "content": "当设定一个RGBA色彩的时候,参数依次设定为红、蓝、绿的颜色值和透明值,可以设置0-255或百分数。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 149
+    },
+    {
+      "type": "boolean",
+      "content": "定义背景颜色只能用以#开头的十六进制颜色值。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 150
+    },
+    {
+      "type": "boolean",
+      "content": "设置背景图像不重复平铺的定义是:background-repeat:no-repeat;",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 151
+    },
+    {
+      "type": "boolean",
+      "content": "定义背景图像沿着竖直方向平铺使用background-repeat:repeat-y;",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 152
+    },
+    {
+      "type": "boolean",
+      "content": "行内样式表是通过设置标记的style属性来实现元素的样式设置",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 153
+    },
+    {
+      "type": "boolean",
+      "content": "在CSS代码中,增加注释可以提高代码的可读性,CSS注释的格式为:/* 注释内容 */",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 154
+    },
+    {
+      "type": "boolean",
+      "content": "一个CSS文件可以控制多个网页。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 155
+    },
+    {
+      "type": "boolean",
+      "content": "CSS代码 p {font-weight:bold;}用于设置p标记内文字加粗显示。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 156
+    },
+    {
+      "type": "boolean",
+      "content": "CSS代码 p {color:#ffffff;} 用于设置p标记内文字颜色为白色。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 157
+    },
+    {
+      "type": "boolean",
+      "content": "在CSS中,可以通过float属性将元素设置为浮动布局。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 158
+    },
+    {
+      "type": "boolean",
+      "content": "在CSS3中使用text-shadow属性给页面文字添加阴影效果。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 159
+    },
+    {
+      "type": "boolean",
+      "content": "实际工作中,通常将a:link和a:visited应用相同的样式,使未访问和访问后的链接样式保持一致。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 160
+    },
+    {
+      "type": "boolean",
+      "content": "链接伪类的定义只能用于文本样式设置。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 161
+    },
+    {
+      "type": "boolean",
+      "content": "如果同时使用链接的4种伪类,通常按照a:link、a:visited、a:active和a:hover的顺序。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 162
+    },
+    {
+      "type": "boolean",
+      "content": "在实际工作中,通常只需要设置a:link、a:visited和a:hover来定义未访问、访问后和鼠标悬停时的链接样式。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 163
+    },
+    {
+      "type": "boolean",
+      "content": "使用列表标签制作导航栏时,通常要设置float=left;",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 164
+    },
+    {
+      "type": "boolean",
+      "content": "为所有的元素添加背景颜色的定义为:h1 {background-color:#FFFFFF;}",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 165
+    },
+    {
+      "type": "boolean",
+      "content": "行内元素、块元素或者行内块元素都是通过display属性对元素类型进行转换。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 166
+    },
+    {
+      "type": "boolean",
+      "content": "在定义CSS属性时,属性之间可以用英文的分号隔开,也可以使用空格隔开。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 167
+    },
+    {
+      "type": "boolean",
+      "content": "CSS行内样式的优先级高于外部样式表链接样式,如果有对属性的重复设置,行内样式会覆盖掉外部样式表的样式。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 168
+    },
+    {
+      "type": "boolean",
+      "content": "超链接如果四种状态下做统一设置,则只需要定义选择器名称为a的样式即可。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web开发前端静态技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 169
+    },
+    {
+      "type": "single_choice",
+      "content": "我们可以在下列哪个 HTML 元素中放置 Javascript 代码?",
+      "options": [
+        "<script>",
+        "<javascript>",
+        "<js>",
+        "<jscript>"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "所有的JavaScript代码需放在<script></script>标记里才能生效。",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 170
+    },
+    {
+      "type": "single_choice",
+      "content": "在网页上输出\"Hello World\" 的正确 Javascript 语法是?",
+      "options": [
+        "(\"Hello World\")",
+        "\"Hello World\"",
+        "response.write(\"Hello World\")",
+        "document.write(\"Hello World\")"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 171
+    },
+    {
+      "type": "single_choice",
+      "content": "插入 Javacript 的正确位置是?",
+      "options": [
+        "<body> 部分",
+        "<head> 部分",
+        "<body> 部分和 <head> 部分均可",
+        "</html>前面"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 172
+    },
+    {
+      "type": "single_choice",
+      "content": "如何在JavaScript中添加注释?",
+      "options": [
+        "'This is a comment",
+        "<!--This is a comment-->",
+        "// This is a comment",
+        "“This is a comment ”"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 173
+    },
+    {
+      "type": "single_choice",
+      "content": "可插入多行注释的JavaScript语法是()?",
+      "options": [
+        "// This comment has more than one line//",
+        "/*This comment has more than one line*/",
+        "<!--This comment has more than one line-->",
+        "“This comment has more than one line”"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 174
+    },
+    {
+      "type": "single_choice",
+      "content": "预测以下代码片段的输出结果:\nvar a = 'test string';\nalert(typeof a)?",
+      "options": [
+        "string",
+        "undefined",
+        "object",
+        "function"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 175
+    },
+    {
+      "type": "single_choice",
+      "content": "预测以下代码片段的输出结果:\nvar a;\nalert(typeof a)?",
+      "options": [
+        "string",
+        "object",
+        "undefined",
+        "number"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "typeof是检测变量的类型,由于变量a定义后未赋值,所以typeof返回undefined。\ntypeof各个返回值的含义如下:\nundefined:这个声明了但未赋值;\nboolean:这个值是布尔值;\nstring:这个值是字符串;\nnumber:这个值是数值;\nobject:这个值是对象或null;\nfunction:这个值是函数。",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 176
+    },
+    {
+      "type": "single_choice",
+      "content": "使用typeof检测变量的数据类型,预测以下代码片段的输出结果:\nvar a=true;\nalert(typeof a)?",
+      "options": [
+        "string",
+        "boolean",
+        "object",
+        "number"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "typeof是检测变量的类型,由于变量a是布尔类型,所以typeof返回boolean。\ntypeof各个返回值的含义如下:\nundefined:这个值未定义;\nboolean:这个值是布尔值;\nstring:这个值是字符串;\nnumber:这个值是数值;\nobject:这个值是对象或null;\nfunction:这个值是函数。",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 177
+    },
+    {
+      "type": "single_choice",
+      "content": "下列哪个不是JavaScript中注释的正确写法:",
+      "options": [
+        "< !-- …… -- >",
+        "//……",
+        "/*……*/",
+        "/*\n……\n*/"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "< !-- …… -- >是HTML语言的注释",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 178
+    },
+    {
+      "type": "single_choice",
+      "content": "以下哪项不属于JavaScript的特征?",
+      "options": [
+        "JavaScript是一种脚本语言",
+        "JavaScript是事件驱动的",
+        "JavaScript代码需要编译以后才能执行",
+        "JavaScript是独立于平台的"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "JavaScript是一种跨平台的脚本语言,是边解释边执行的,不同于Java、C#等先编译再执行。",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 179
+    },
+    {
+      "type": "single_choice",
+      "content": "如何弹出警告框提示 \"Hello World\"?",
+      "options": [
+        "<script src=\"xxx.js\">",
+        "msgBox(\"Hello World\")",
+        "alert(\"Hello World\")",
+        "alertBox(\"Hello World\")"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 180
+    },
+    {
+      "type": "single_choice",
+      "content": "如何创建函数?",
+      "options": [
+        "function myFunction()\n{\n....\n}",
+        "function myFunction()",
+        "function=myFunction()"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 181
+    },
+    {
+      "type": "single_choice",
+      "content": "如何调用名为 \"myFunction\" 的函数?",
+      "options": [
+        "call function myFunction",
+        "call myFunction()",
+        "myFunction()"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 182
+    },
+    {
+      "type": "single_choice",
+      "content": "如何编写当 i 等于 5 时执行一些语句的条件语句?",
+      "options": [
+        "if (i==5)",
+        "if i=5 then",
+        "if i=5",
+        "if i==5 then"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 183
+    },
+    {
+      "type": "single_choice",
+      "content": "如何编写当 i 不等于 5 时执行一些语句的条件语句?",
+      "options": [
+        "if =! 5 then",
+        "if <>5",
+        "if (i <> 5)",
+        "if (i != 5)"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 184
+    },
+    {
+      "type": "single_choice",
+      "content": "在 JavaScript 中,有多少种不同类型的循环?",
+      "options": [
+        "两种。for 循环和 while 循环。",
+        "四种。for 循环、while 循环、do...while 循环以及 loop...until 循环。",
+        "一种。for 循环。",
+        "不知道"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 185
+    },
+    {
+      "type": "single_choice",
+      "content": "for 循环如何开始?",
+      "options": [
+        "for (i <= 5; i++)",
+        "for (i = 0; i <= 5; i++)",
+        "for (i = 0; i <= 5)",
+        "for i = 1 to 5"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 186
+    },
+    {
+      "type": "single_choice",
+      "content": "初始化Date对象的方法是",
+      "options": [
+        "var mydate = new Date",
+        "var mydate = new date ( )",
+        "var mydate = date ( )",
+        "var mydate = new Date ( )"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 187
+    },
+    {
+      "type": "single_choice",
+      "content": "假设现在时间是2018-4-18 20:02:10\nvar mydate = new Date ( )\nmydate.getMonth()的结果是",
+      "options": [
+        "4",
+        "3",
+        "5",
+        "0"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 188
+    },
+    {
+      "type": "single_choice",
+      "content": "设置周期性的定时器,每隔1秒调用move()函数,正确的用法是",
+      "options": [
+        "setTimeout(\"move()\",1000);",
+        "setInterval(“move()”,1);",
+        "setInterval(“move()”,1000);",
+        "setTimeout(“move()”,1);"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 189
+    },
+    {
+      "type": "single_choice",
+      "content": "document.getElementById('userid')的意思是",
+      "options": [
+        "查找name为userid的网页元素",
+        "查找id为userid的网页元素",
+        "查找userid的网页元素",
+        "查找id的网页元素"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 190
+    },
+    {
+      "type": "single_choice",
+      "content": "<input type='text' name='username' id='uname' />\n要查找该输入框,可行的是",
+      "options": [
+        "document.getElementsByName('uname')",
+        "document.getElementsById('uname')",
+        "document.getElementsByTagName('username')",
+        "document.getElementsByName('username')"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "A,uname是id不是name。\nB,Elements多了一个s\nC,document.getElementsByTagName('input')才对\nD,正确",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 191
+    },
+    {
+      "type": "single_choice",
+      "content": "以下( )表达式产生一个0~7(范围[0,7))的随机整数。",
+      "options": [
+        "Math.floor(Math.random()*6)",
+        "Math.floor(Math.random()*7)",
+        "Math.floor(Math.random()*8)",
+        "Math.ceil(Math.random()*8)"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "open是window的方法",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 192
+    },
+    {
+      "type": "single_choice",
+      "content": "动态更改网页标题为“JavaScript真难学啊”,正确的是",
+      "options": [
+        "window.title=\"JavaScript真难学啊\"",
+        "document.SetTitle=\"JavaScript真难学啊\"",
+        "document.title==\"JavaScript真难学啊\"",
+        "document.title=\"JavaScript真难学啊\""
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "设置网页标题,可使用向document的属性title赋值。D为正确语法。",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 193
+    },
+    {
+      "type": "single_choice",
+      "content": "document.getElementsByName()返回的对象数是",
+      "options": [
+        "0个",
+        "1个或以上",
+        "2个或以上",
+        "0个或多个"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "因为可以给不同的网页元素如div和p设置相同的name,就像人们起名字时会重名一样。所以正确情况下,document.getElementsByName()返回的对象数是多于1个,也有可能是找不到这个对象。所以正确的答案是D。",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 194
+    },
+    {
+      "type": "single_choice",
+      "content": "给以下代码添加事件,当点击按钮时,调用函数compute(),正确的是",
+      "options": [
+        "<input type='button' onclick='compute()' />",
+        "<input type='button' onclick='compute' />",
+        "<input type='button' click='compute()' />",
+        "<input type='button' onchage='compute()' />"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "点击事件是onclick,注意调用函数,不仅需要写上函数名字,还有带上括号。A正确。",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 195
+    },
+    {
+      "type": "single_choice",
+      "content": "如果要给div写入“前端”二字,正确的是\n<div id='uid'> </div>",
+      "options": [
+        "document.getElementById('uid').innerHtml=\"前端\"",
+        "document.getElementById('uid').innerHTML=\"前端\"",
+        "document.getElementById('uid').outerHTML=\"前端\"",
+        "document.getElementById('uid').html=\"前端\""
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "向div写入一串HTML代码的正确的语法是,document.getElementById('uid').innerHTML=xxx,xxx可以是一串HTML代码,或一串纯文本。",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 196
+    },
+    {
+      "type": "single_choice",
+      "content": "DOM是指",
+      "options": [
+        "Document Object Model(文档对象模型)",
+        "Document Object Model(文档模型对象)",
+        "Document Object Model(网页对象模型)",
+        "Document Object Model(链接对象模型)"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 197
+    },
+    {
+      "type": "single_choice",
+      "content": "下列说法正确的是______",
+      "options": [
+        "JavaScript是一种解释型的语言",
+        "JavaScript是一种强类型的语言",
+        "必须安装Java虚拟机才能运行JavaScript",
+        "JavaScript可以读写客户端硬盘上的文件"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 198
+    },
+    {
+      "type": "single_choice",
+      "content": "下列不属于JavaScript特性的是______",
+      "options": [
+        "JavaScript是弱类型的语言",
+        "JavaScript是事件驱动的",
+        "JavaScript是Java的简化版",
+        "JavaScript主要用于HTML中"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 199
+    },
+    {
+      "type": "single_choice",
+      "content": "下列的变量符合JavaScript命名规则的是______",
+      "options": [
+        "@",
+        "$a",
+        "delete",
+        "with"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 200
+    },
+    {
+      "type": "single_choice",
+      "content": "下列哪项是标准的JavaScript变量声明语句______",
+      "options": [
+        "int a = 10;",
+        "float b = 1.1;",
+        "c = 999;",
+        "var d = 123;"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 201
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,下列语句可用于将字符串a转换为浮点数的是______",
+      "options": [
+        "toInt(a)",
+        "(int)a",
+        "parseFloat(a)",
+        "Integer.parse(a)"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 202
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,下列选项中______可以设定网页背景色。",
+      "options": [
+        "window.bgColor",
+        "window.backgroundColor",
+        "document.bgColor",
+        "document.backgroundColor"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 203
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,当按钮单击时触发_________事件",
+      "options": [
+        "onLoad",
+        "onUnload",
+        "onClick",
+        "onSubmit"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 204
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,关于变量名的命名规范说法错误的是( )。",
+      "options": [
+        "不允许使用js的关键字和保留关键字",
+        "不能以数字开头",
+        "尽量见名知意",
+        "不可以采用驼峰命名法"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 205
+    },
+    {
+      "type": "single_choice",
+      "content": "在javascript中使用( )来分隔两条语句。",
+      "options": [
+        "逗号",
+        "句号",
+        "分号",
+        "括号"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 206
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,下列变量名错误的是( )。",
+      "options": [
+        "stu_1",
+        "stu1",
+        "1stu",
+        "$stu"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 207
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,下列关于变量赋值说法错误的是( )。",
+      "options": [
+        "等号左边必须是变量",
+        "永远都是将等号右边的值值给等号左边的变量",
+        "可以使用age声明变量保存年龄",
+        "35 = 30是正确的"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 208
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,下列哪种数据类型不是原始类型( )。",
+      "options": [
+        "数字类型",
+        "引用类型",
+        "字符串类型",
+        "布尔类型"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 209
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,下列是数字类型的是( )。",
+      "options": [
+        "“55”",
+        "true",
+        "undefined",
+        "66"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 210
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,下列是字符串类型的是( )。",
+      "options": [
+        "“55”",
+        "true",
+        "undefined",
+        "66"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 211
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,下列是布尔类型的是( )。",
+      "options": [
+        "“55”",
+        "true",
+        "undefined",
+        "66"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 212
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,typeof(num);的作用是( )。",
+      "options": [
+        "将num转换为数字类型",
+        "获取num的数据类型",
+        "输出num的结果",
+        "获取num的值"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 213
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,下列不属于运算符的是( )。",
+      "options": [
+        "+",
+        "-",
+        "*",
+        "@"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 214
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,var msg = 20>18?”成年人”:”未成年人”;的结果是( )。",
+      "options": [
+        "20",
+        "18",
+        "成年人",
+        "未成年人"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 215
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,表达式var result = 85 >= 80? \"优秀\" : (score>=60 ? \"合格\" :\"不合格\");的值是( )。",
+      "options": [
+        "优秀",
+        "合格",
+        "不合格",
+        "85"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 216
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,声明函数时,要使用一个关键词是( )。",
+      "options": [
+        "console",
+        "log",
+        "function",
+        "method"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 217
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,下列选项可以将指定数据转换为整数的是( )。",
+      "options": [
+        "parseFloat",
+        "parseInt",
+        "parseByte",
+        "parseDouble"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 218
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,下列关于浏览器对象模型document描述正确的是( )。",
+      "options": [
+        "封装当前正在加载的网页内容",
+        "封装了当前窗口正在打开的url地址",
+        "封装当前窗口打开后,成功访问过的历史url记录",
+        "代表整个窗口"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 219
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,下列关于setInterval(exp,time)描述错误的是( )。",
+      "options": [
+        "表示的是周期性定时器",
+        "表示的是一次性定时器",
+        "time表示时间周期,单位为毫秒",
+        "exp表示的是要执行的语句"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 220
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,创建数组var a=[1,2,3];那么a[1]的值是( )。",
+      "options": [
+        "1",
+        "2",
+        "3",
+        "没有值"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 221
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,下列表达式是获取数组最后一个元素的是( )。",
+      "options": [
+        "arr[arr.length+1]",
+        "arr[arr.length]",
+        "arr[arr.length-1]",
+        "arr[arr.length-2]"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 222
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,数组下标是从( )开始的。",
+      "options": [
+        "0",
+        "1",
+        "-1",
+        "以上都不对"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 223
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,下列关于DOM的描述哪句话是不正确的( )。",
+      "options": [
+        "DOM是万维网联盟W3C的标准",
+        "DOM定义了访问HTML的标准",
+        "DOM定义了访问XML文档的标准",
+        "DOM的Document Object Model浏览器对象模型的缩写"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 224
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,下列可用于精确查找一个元素的是( )。",
+      "options": [
+        "getElementsByTagName()",
+        "createTextNode()",
+        "getElementById()",
+        "getElementsByClassName()"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 225
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,下列是按标签查找元素的是( )。",
+      "options": [
+        "getElementById()",
+        "getElementsByTagName()",
+        "getElementsByClassName()",
+        "appendChild()"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 226
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,下列DOM查找中返回集合的是( )。",
+      "options": [
+        "getElementById()",
+        "getElementsByTagName()",
+        "getAttribute()",
+        "createElement()"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 227
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,已知var h1 = document.getElementById(“a1\"),下列修改属性值正确的是( )。",
+      "options": [
+        "h1.getAttribute(“name”)",
+        "h1.setAttribute(“name”)",
+        "h1.hasAttribute(“name” , ”zhangsan”)",
+        "h1.setAttribute(“name” , ”zhangsan”)"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 228
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,预测以下代码片段的输出结果:\nvar a = 'test string';\nalert(typeof a)?",
+      "options": [
+        "string",
+        "undefined",
+        "object",
+        "function"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 229
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,预测以下代码片段的输出结果:\nvar a;\nalert(typeof a)?",
+      "options": [
+        "string",
+        "object",
+        "undefined",
+        "number"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "typeof是检测变量的类型,由于变量a定义后未赋值,所以typeof返回undefined。\ntypeof各个返回值的含义如下:\nundefined:这个声明了但未赋值;\nboolean:这个值是布尔值;\nstring:这个值是字符串;\nnumber:这个值是数值;\nobject:这个值是对象或null;\nfunction:这个值是函数。",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 230
+    },
+    {
+      "type": "single_choice",
+      "content": "在JavaScript中,预测以下代码片段的输出结果:\nvar a=true;\nalert(typeof a)?",
+      "options": [
+        "string",
+        "boolean",
+        "object",
+        "number"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "typeof是检测变量的类型,由于变量a是布尔类型,所以typeof返回boolean。\ntypeof各个返回值的含义如下:\nundefined:这个值未定义;\nboolean:这个值是布尔值;\nstring:这个值是字符串;\nnumber:这个值是数值;\nobject:这个值是对象或null;\nfunction:这个值是函数。",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 231
+    },
+    {
+      "type": "boolean",
+      "content": "JS中的window.history对象可用于获取当前页面的网址。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 232
+    },
+    {
+      "type": "boolean",
+      "content": "设置网页的背景颜色可以通过修改document对象的bgColor属性值来实现。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 233
+    },
+    {
+      "type": "boolean",
+      "content": "在HTML中嵌入JavaScript代码时,需使用<script>标记。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 234
+    },
+    {
+      "type": "boolean",
+      "content": "JavaScript是一种基于对象和事件驱动并具有相对安全性的客户端脚本语言。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 235
+    },
+    {
+      "type": "boolean",
+      "content": "JavaScript程序不能独立运行,必须依赖于HTML文件。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 236
+    },
+    {
+      "type": "boolean",
+      "content": "当页面载入时,会自动执行位于body部分的JavaScript代码。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 237
+    },
+    {
+      "type": "boolean",
+      "content": "外部JS文件的扩展名为.jsp。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 238
+    },
+    {
+      "type": "boolean",
+      "content": "可以将JavaScript代码放置在HTML文档的body部分,但不能放置在head部分。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 239
+    },
+    {
+      "type": "boolean",
+      "content": "Javascript代码需要编译以后才能执行。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 240
+    },
+    {
+      "type": "boolean",
+      "content": "在JavaScript中,alert( )函数的功能是显示一个警告对话框。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 241
+    },
+    {
+      "type": "boolean",
+      "content": "在JavaScript中,DOM模型对象允许程序和脚本动态地访问和更新文档的内容、结构和样式。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 242
+    },
+    {
+      "type": "boolean",
+      "content": "在JavaScript中,可通过节点的innerHTML属性来访问文本节点的属性值。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 243
+    },
+    {
+      "type": "boolean",
+      "content": "在JavaScript中,getElementsByTagName() 返回带有指定标签名的所有元素。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 244
+    },
+    {
+      "type": "boolean",
+      "content": "在JavaScript中,在浏览器对象模型中,history对象能提供当前页面的URL信息。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 245
+    },
+    {
+      "type": "boolean",
+      "content": "在JavaScript中,getElementsByTagName() 方法返回节点列表,节点列表是一个节点数组。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaScript",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 246
+    },
+    {
+      "type": "single_choice",
+      "content": "JSP页面是以( )为扩展名进行保存的",
+      "options": [
+        ".java",
+        ".jav",
+        ".asp",
+        ".jsp"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 247
+    },
+    {
+      "type": "single_choice",
+      "content": "下面选项中,不属于JSP页面构成的元素是( )",
+      "options": [
+        "声明",
+        "表达式",
+        "HTTP",
+        "指令"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 248
+    },
+    {
+      "type": "single_choice",
+      "content": "JSP容器也称为( )",
+      "options": [
+        "JSP引擎",
+        "编译器",
+        "转换器",
+        "解释器"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 249
+    },
+    {
+      "type": "single_choice",
+      "content": "JSP是在( )阶段生成Servlet代码",
+      "options": [
+        "编译",
+        "翻译",
+        "执行",
+        "响应"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 250
+    },
+    {
+      "type": "single_choice",
+      "content": "Web容器处理JSP文件需要经过3个阶段,这三个阶段按照顺序依次是( )",
+      "options": [
+        "翻译、执行、编译",
+        "翻译、编译、执行",
+        "执行、翻译、编译",
+        "编译、翻译、执行"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 251
+    },
+    {
+      "type": "single_choice",
+      "content": "在JSP页面中有下述代码,第二次访问此页面的输出是______。\n<%! int x = 0; %>\n<% int y = 0; %>\n<%=x++%>,<%=y++%>",
+      "options": [
+        "0,0",
+        "0,1",
+        "1,0",
+        "1,1"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 252
+    },
+    {
+      "type": "single_choice",
+      "content": "在一个Web应用中,admin目录与images目录为同级目录,现在admin目录下的index.jsp需要images目录中的图片top.jpg,以下代码片段正确的是( )",
+      "options": [
+        "<img src=\"../images/top.jpg\" width=\"100\" height=\"20\">",
+        "<img src=\"images/top.jpg\" width=\"100\" height=\"20\">",
+        "<img src=\"./images/top.jpg\" width=\"100\" height=\"20\">",
+        "<img src=\"http://mooc1-api.chaoxing.com//images/top.jpg\" width=\"100\" height=\"20\">"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 253
+    },
+    {
+      "type": "single_choice",
+      "content": "在JSP页面中包含了<% int i=10;%>元素,该元素是( ) 中定义的?",
+      "options": [
+        "声明",
+        "程序片",
+        "指令",
+        "动作"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 254
+    },
+    {
+      "type": "single_choice",
+      "content": "下列注释方式可以在JSP中使用并且客户端无法查看到的是_____________。",
+      "options": [
+        "<--注释-->",
+        "<!--注释-->",
+        "<%--注释--%>",
+        "<%!--注释--%>"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 255
+    },
+    {
+      "type": "single_choice",
+      "content": "在JSP中,以下的page指令设置了使用的脚本语言是Java,且导入了java.rmi.*和java.util.*包.正确的是",
+      "options": [
+        "<%@ page Language=“Java”,import=”java.rmi.*;java.uitl.* ”%>",
+        "<%@ page language=“Java”Import=”java.rmi.*,java.uitl.* ”%>",
+        "<%@ page language=“Java”;import=”java.rmi.*;java.uitl.* ”%>",
+        "<%@ page language=“Java”import=”java.rmi.* ,java.uitl.* ”%>"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 256
+    },
+    {
+      "type": "single_choice",
+      "content": "给定test1.jsp代码片断,如下:\n<html>\n<jsp:include page=”test2.jsp” flush=”false”>\n<jsp:param name=”color” value=”red”/>\n</jsp:include>\n</html>\n要在test2.jsp中输出参数color中的值,以下选项正确的是()",
+      "options": [
+        "<%=request.getParameter(“color”)%>",
+        "<%=request.getAttribute(“color”)%>",
+        "<jsp:getParam name=”color”/>",
+        "<jsp:include param=”color”/>"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 257
+    },
+    {
+      "type": "single_choice",
+      "content": "在a.jsp中有代码片断如下:\n<form action =\"b.jsp\" method =\"POST\" name=\"form1\">\nloginName:<input type=\"text\" name=\"loginName\"/>\n<input type=\"submit\" name=\"submit\" value=\"提交\"/>\n</form>\n在b.jsp中加入下列()代码,可以输出在a.jsp页面上输入的loginName的值",
+      "options": [
+        "<%=(String )request.getParameter(\"loginName\")%>",
+        "<%=(String )request.getAttribute(\"loginName\")%>",
+        "<% Stirng name=request.getParameter(\"loginname\");out.println(name); %>",
+        "<% String name=(String )request.getAttribute(\"loginname\"); out.println(name); %>"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 258
+    },
+    {
+      "type": "single_choice",
+      "content": "下列page指令的使用正确的是 。",
+      "options": [
+        "<%@ page import=\"java.util.* java.sql.* \"%>",
+        "<%@ page import=\"java.util.*, java.sql.* \"%>",
+        "<%@ page import=\"java.util.*;java.sql.* \"%>",
+        "<%@ page import=java.util.*, java.sql.* %>"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 259
+    },
+    {
+      "type": "single_choice",
+      "content": "在JSP页面中有下述代码,第二次访问此页面的输出是______。\n<%! int x = 0; %>\n<% int y = 0; %>\n<%=++x%>,<%=++y%>",
+      "options": [
+        "1,1",
+        "2,1",
+        "1,2",
+        "2,2"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 260
+    },
+    {
+      "type": "single_choice",
+      "content": "定义一个提交按钮<input type=\"submit\" value=\"\">,value属性用于设置()",
+      "options": [
+        "提交按钮的默认值",
+        "提交按钮的显示标题",
+        "提交按钮的属性",
+        "提交按钮的类型"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 261
+    },
+    {
+      "type": "single_choice",
+      "content": "在a.jsp中有代码片断如下:\n<form action =”b.jsp” method =”POST” name=”form1”>\nloginName:<input type=”text” name=”loginName”/>\n<input type=”submit” name=”submit”/>\n</form>\n在b.jsp中加入下列()代码,可以输出在a.jsp页面上输入的loginName的值。",
+      "options": [
+        "<%=request.getParameter(“loginName”)%>",
+        "<%=request.gerAttribute(“loginName”)%>",
+        "<% name=request.getParameter(“loginname”);\nout.println(name);\n%>",
+        "<% String name=request.getAttribute(“loginname”); out.println(name); %>"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 262
+    },
+    {
+      "type": "single_choice",
+      "content": "针对下述JSP页面,在Servlet中需要得到用户选择的爱好的数量,最合适的代码是______。\n<input type=\"checkbox\" name=\"aihao\" value=\"1\"/>游戏<br/>\n<input type=\"checkbox\" name=\"aihao\" value=\"2\"/>运动<br/>\n<input type=\"checkbox\" name=\"aihao\" value=\"3\"/>棋牌<br/>\n<input type=\"checkbox\" name=\"aihao\" value=\"4\"/>美食<br/>",
+      "options": [
+        "request.getParameter(\"aihao\").length",
+        "request.getParameter(\"aihao\").size()",
+        "request.getParameterValues(\"aihao\").length",
+        "request.getParameterValues(\"aihao\").size()"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 263
+    },
+    {
+      "type": "single_choice",
+      "content": "page指令用于定义JSP文件中的全局属性,下列关于该指令用法的描述不正确的是:( )。",
+      "options": [
+        "page指令作用于整个JSP页面",
+        "可以在一个JSP页面中使用多个page指令",
+        "为增强程序的可读性,建议将page指令放在JSP文件的开头,但不是必须的",
+        "page指令中的属性都只能出现一次"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 264
+    },
+    {
+      "type": "single_choice",
+      "content": "对于JSP声明<%! %>,下面说法错误的是:____。",
+      "options": [
+        "次可声明多个变量和方法,只要以分号“;”结尾就行",
+        "1个JSP声明仅在一个页面中有效",
+        "声明的变量将作为局部变量使用",
+        "声明中可以声明方法"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 265
+    },
+    {
+      "type": "single_choice",
+      "content": "下面哪个是JSP的指令标记?",
+      "options": [
+        "<% …… %>",
+        "<%= …… %>",
+        "<%! …… %>",
+        "<%@ …… %>"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 266
+    },
+    {
+      "type": "single_choice",
+      "content": "在JSP中,<%=\"4+5\" %>将输出()。",
+      "options": [
+        "45",
+        "4+5",
+        "9",
+        "不会输出,因为表达式是错误的"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 267
+    },
+    {
+      "type": "single_choice",
+      "content": "在JSP中的page指令中,用来引入需要的包或类的是( )属性。",
+      "options": [
+        "import",
+        "extends",
+        "languge",
+        "contentType"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 268
+    },
+    {
+      "type": "single_choice",
+      "content": "在output.jsp文件中,有如下代码,运行结果是:()。\n<body>\n<% String hi=null;%>\n输出的结果是:<%=hi%>\n</body>",
+      "options": [
+        "运行时发生异常",
+        "输出结果是:null",
+        "编译Servlet源码时发生错误"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 269
+    },
+    {
+      "type": "single_choice",
+      "content": "给定以下JSP代码片段,运行后的输出结果是()。\n<% int x=10; %>\n<%! int x=100; %>\n<%=++x %>",
+      "options": [
+        "10",
+        "11",
+        "100",
+        "101"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 270
+    },
+    {
+      "type": "single_choice",
+      "content": "在JSP中,给定以下JSP代码片段,运行结果是( )。\n<% int a=5; %>\n<%! int a=7; %>\n<%! int getA(){\nreturn a;\n}\n%>\n<%=\"a1=\"+a %>\n<%=\"a2=\"+getA() %>",
+      "options": [
+        "a1=5 a2=7",
+        "a1=5 a2=5",
+        "a1=7 a2=7",
+        "a1=7 a2=5"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 271
+    },
+    {
+      "type": "single_choice",
+      "content": "在JSP文件中使用 <jsp:forward page=\"test.jsp\" /> 后,浏览器地址栏内的内容( )。",
+      "options": [
+        "发生变化",
+        "不会发生变化"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 272
+    },
+    {
+      "type": "single_choice",
+      "content": "要成功运行一个JSP程序,下面( )不是运行必须的条件?",
+      "options": [
+        "操作系统",
+        "数据库",
+        "Java JDK",
+        "支持JSP程序的Web服务器"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 273
+    },
+    {
+      "type": "single_choice",
+      "content": "文件包含指令include可以在一个JSP页面中包含另一个JSP页面,该指令是( )包含。",
+      "options": [
+        "静态",
+        "动态"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 274
+    },
+    {
+      "type": "single_choice",
+      "content": "使用include指令包含文件时,被包含文件中的所有内容会被原样包含到该JSP页面中,即使被包含的文件中有JSP代码,在包含时也()被编译执行。",
+      "options": [
+        "不会",
+        "会"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 275
+    },
+    {
+      "type": "single_choice",
+      "content": "在某个JSP页面中存在这样一行代码:<%=99+\"1\" %>,,下面说法正确的是()",
+      "options": [
+        "这行代码没有对应的输出",
+        "这行代码对应的输出是991",
+        "这行代码对应的输出是100",
+        "这行代码将会报错,无法编译"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 276
+    },
+    {
+      "type": "boolean",
+      "content": "page指令的属性都只能使用一次。\n(1.0)",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 277
+    },
+    {
+      "type": "boolean",
+      "content": "page指令的language属性,指定页面上用到的脚本语言,默认是Java。\n(1.0)",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 278
+    },
+    {
+      "type": "boolean",
+      "content": "JSP指令用来定义整个JSP页面的一些属性和这些属性的值。一个JSP页面中可以包含多个page指令。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 279
+    },
+    {
+      "type": "boolean",
+      "content": "在一个JSP文件中,只允许有一条page指令。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 280
+    },
+    {
+      "type": "boolean",
+      "content": "在page指令中,使用import属性可以引入一个或者多个类,如果引入多个类,需要在多个类之间用分号间隔。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 281
+    },
+    {
+      "type": "boolean",
+      "content": "page指令中的language属性,用来指定当前JSP页面所采用的脚本语言,该属性可以不用设置,当前JSP默认采用JavaScript作为脚本语言。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 282
+    },
+    {
+      "type": "boolean",
+      "content": "include指令是静态包含,被包含文件中的所有内容都会被原样嵌入到当前JSP页面中,将两个文件合并成一个文件后再编译执行。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 283
+    },
+    {
+      "type": "boolean",
+      "content": "page指令中的pageEncoding属性用来指定JSP页面使用的字符编码格式,也就是指定文件编码。JSP页面中的所有代码都使用该属性指定的字符集。JSP页面默认编码ISO-8859-1,该编码格式可以支持中文。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 284
+    },
+    {
+      "type": "boolean",
+      "content": "JSP的声明既可以用来声明变量,也可以用来声明方法。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 285
+    },
+    {
+      "type": "boolean",
+      "content": "SP注释其语法格式:<%-- 注释内容 --%>,在查看源文件时却可以看到。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 286
+    },
+    {
+      "type": "boolean",
+      "content": "在Java脚本片段中,也可以使用Java语言本身的注释机制,在查看源文件时也是可以看见的。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 287
+    },
+    {
+      "type": "boolean",
+      "content": "使用out.print()方法向客户端浏览器输出信息,与使用JSP表达式输出信息的作用相同。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 288
+    },
+    {
+      "type": "boolean",
+      "content": "JSP指令元素提供JSP页面相关信息,不会产生任何输出到页面。page指令只对当前的JSP页面有效。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 289
+    },
+    {
+      "type": "boolean",
+      "content": "在一个JSP文件中,可以包含多个page指令。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 290
+    },
+    {
+      "type": "boolean",
+      "content": "html文件可以由浏览器直接解释执行,而jsp文件不能由浏览器直接解释执行,必须由JSP引擎解释执行。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 291
+    },
+    {
+      "type": "boolean",
+      "content": "使用include指令包含文件可以大大提高代码的重用性,而且也便于以后的维护和升级。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 292
+    },
+    {
+      "type": "boolean",
+      "content": "在JSP文件中,不可以在一个page指令中指定多个属性的值。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 293
+    },
+    {
+      "type": "boolean",
+      "content": "使用<jsp:include>动作标记与使用include指令标记包含文件的处理时间和方式不同。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 294
+    },
+    {
+      "type": "boolean",
+      "content": "JSP文件的page指令可以放在JSP文件的任意位置,不是必须放在文件的头部位置。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 295
+    },
+    {
+      "type": "boolean",
+      "content": "无论将Page指令放在JSP文件的哪个位置,它的作用范围都是整个JSP页面。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 296
+    },
+    {
+      "type": "boolean",
+      "content": "jsp:forward操作允许将请求转发到其他的HTML文件、JSP文件或者是一个程序段,通常请求被转发后,会停止当前JSP文件的执行。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 297
+    },
+    {
+      "type": "boolean",
+      "content": "动态网页是指在接到用户访问要求后动态生成的页面,页面内容会随着访问时间和访问者发生变化。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 298
+    },
+    {
+      "type": "boolean",
+      "content": "静态网页实际上并不是独立存在于服务器上的网页文件,只有当用户请求时服务器才返回一个完整的网页。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP语法基础",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 299
+    },
+    {
+      "type": "single_choice",
+      "content": "下列关于表单的说法不正确的是？",
+      "options": [
+        "表单时可以由用户输入并提交给客户端的一个图形界面",
+        "在表单中一般有一个按钮负责提交",
+        "单击提交“按钮”，表单元素中的内容会提交给服务器端",
+        "在表单中可以输入一些内容，这些输入功能由表单元素提供"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "表单开发",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 300
+    },
+    {
+      "type": "single_choice",
+      "content": "下列说法中，错误的是？",
+      "options": [
+        "除了复选框，多选列表框等，其他一些表单元素也可以设置为同名",
+        "获取同名表单元素中数据的方法为request.getParameterValues（args）",
+        "以文本框在源代码中出现的顺序从数组的第0位开始向后放置同名表单元素的数据",
+        "在提交表单数据时只能用post方法"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "表单开发",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 301
+    },
+    {
+      "type": "single_choice",
+      "content": "下列表单元素不是单一表单元素的是",
+      "options": [
+        "复选框",
+        "文本框",
+        "密码框",
+        "单选按钮"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "表单开发",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 302
+    },
+    {
+      "type": "single_choice",
+      "content": "在提交表单的过程中，不能解决中文乱码问题的方案是？",
+      "options": [
+        "将获取到的数据转换为gb2312格式",
+        "在获取数据之前先修改request的编码方式",
+        "把文件头上的字符集设置为中文字符集",
+        "利用过滤器对整个web应用进行统一的编码过滤"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "表单开发",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 303
+    },
+    {
+      "type": "single_choice",
+      "content": "下列关于用表单传值的说法正确的是？",
+      "options": [
+        "表单传值的数据可以是任何数据类型",
+        "表单数据传值非常安全，即使在客户端的源代码中也看不到传输的值",
+        "将表单元素的type属性设置为“hidden”，且将提交方式设置为post方法可完全隐藏传输的数据",
+        "虽然表单传值的方法不是绝对安全的，但由于其简单性和平台支持的多样性，很多程序还是用表单传值"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "表单开发",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 304
+    },
+    {
+      "type": "single_choice",
+      "content": "下列关于JSP内置对象的说法正确的是______。",
+      "options": [
+        "内置对象无需定义,可直接使用",
+        "内置对象可以在JSP的声明部分中使用",
+        "内置对象只能在JSP的脚本部分使用",
+        "只有使用Tomcat作为JSP容器时才能使用内置对象"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP内置对象和作用域",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 305
+    },
+    {
+      "type": "single_choice",
+      "content": "使用GET方式提交数据,接收数据时,处理中文最直接有效方式为",
+      "options": [
+        "request.setCharacterEncoding(\"utf-8\");",
+        "response.setContentType(\"text/html;charset=utf-8\");",
+        "String name=new String(request.getParameter(\"name\").getBytes(\"ISO-8859-1\"),\"gbk\");",
+        "response.setCharacterEncoding(\"gbk\");"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP内置对象和作用域",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 306
+    },
+    {
+      "type": "single_choice",
+      "content": "下列不属于JSP内置对象的是______。",
+      "options": [
+        "request",
+        "response",
+        "session",
+        "servletContext"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP内置对象和作用域",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 307
+    },
+    {
+      "type": "single_choice",
+      "content": "下列关于内置对象的说法错误的是",
+      "options": [
+        "在所有jsp页面中，直接调用内置对象都是合法的",
+        "内置对象是通过web容器来实现和管理的",
+        "内置对象是自动载入的，因此不需要直接实例化",
+        "在JSP规范中定义了4种内置对象"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP内置对象和作用域",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 308
+    },
+    {
+      "type": "single_choice",
+      "content": "下列内置对象中用来表示页面上发生异常的是？",
+      "options": [
+        "application",
+        "exception",
+        "page",
+        "config"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP内置对象和作用域",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 309
+    },
+    {
+      "type": "single_choice",
+      "content": "在request对象的方法中，用来得到请求的URL地址的方法是？",
+      "options": [
+        "request.getRequestURL（）",
+        "request.getServletPath（）",
+        "request.getQueryString（）",
+        "request.getRemoteAddr（）"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP内置对象和作用域",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 310
+    },
+    {
+      "type": "single_choice",
+      "content": "下列关于<jsp：forward>和response的sendRedirect方法进行重定向的说法中错误的是（）",
+      "options": [
+        "forward方法属于服务器端去请求资源，而redirect方法让客户端重新向服务器端请求一遍",
+        "forward转发的页以及转发到的目标页面不能共享request里面的数据，但redirect方法可以",
+        "forward方法只能在同一个web应用程序内的资源之间转发请求",
+        "与redirect方法相比，forward方法的效率较高"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP内置对象和作用域",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 311
+    },
+    {
+      "type": "boolean",
+      "content": "通过response对象的setHeader()方法,设置名/值对来使用响应头向浏览器传递相应的附加信息。例如,可以使用一个响应头告诉浏览器每隔一定时间重新装载一次页面,即页面的定时刷新。除了让浏览器重新载入当前页面外,使用该方法还可以载入指定的页面",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP内置对象和作用域",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 312
+    },
+    {
+      "type": "boolean",
+      "content": "利用response对象的sendRedirect方法只能实现本网站内的页面跳转,但不能传递参数。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP内置对象和作用域",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 313
+    },
+    {
+      "type": "boolean",
+      "content": "重定向前后的两个页面,也可以共享一个请求对象。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP内置对象和作用域",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 314
+    },
+    {
+      "type": "boolean",
+      "content": "网页中只要使用gb2312编码就不会出现中文乱码。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP内置对象和作用域",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 315
+    },
+    {
+      "type": "boolean",
+      "content": "表单信息的验证只能放在服务器端执行。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP内置对象和作用域",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 316
+    },
+    {
+      "type": "single_choice",
+      "content": "现在session中没有任何属性,阅读下面JSP中的代码,将输出()\n<% out.println(session.getAttribute(\"svse \")); %>",
+      "options": [
+        "异常信息",
+        "null",
+        "空字符",
+        "什么都不输出"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP会话技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 317
+    },
+    {
+      "type": "single_choice",
+      "content": "要在jsp中使用ArrayList,做法正确的是",
+      "options": [
+        "<% import java.util.ArrayList%>",
+        "<%@ import \"java.util.ArrayList\"%>",
+        "<%@ page import=\"java.util.ArrayList\"%>",
+        "<%@ page package=\"java.util.ArrayList\"%>"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP会话技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 318
+    },
+    {
+      "type": "single_choice",
+      "content": "pageContext、request、session、application四个内置对象的作用范围从小到大依次为______。",
+      "options": [
+        "request、pageContext、session、application",
+        "request、session、pageContext、application",
+        "request、session、application、pageContext",
+        "pageContext、request、session、application"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP会话技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 319
+    },
+    {
+      "type": "single_choice",
+      "content": "下面___________选项能将客户端的Cookie的过期时间设置为1天。",
+      "options": [
+        "setMaxAge(1)",
+        "setMaxAge(60)",
+        "setMaxAge(60*60)",
+        "setMaxAge(60*60*24)"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP会话技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 320
+    },
+    {
+      "type": "single_choice",
+      "content": "写入和读取Cookie的代码分别是______。",
+      "options": [
+        "request.addCookies()和response.getCookies()",
+        "response.addCookie()和request.getCookie()",
+        "response.addCookies()和request.getCookies()",
+        "response.addCookie()和request.getCookies()"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP会话技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 321
+    },
+    {
+      "type": "single_choice",
+      "content": "下列关于session的说法错误的是（）",
+      "options": [
+        "在访问网站时，服务器端自动分配一个session对象给用户使用",
+        "对于同一个用户，当网站页面改变时，用户使用的session也会改变",
+        "session负责保存同一个客户端一次会话过程中的一些信息",
+        "session能够跨越保存"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP会话技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 322
+    },
+    {
+      "type": "single_choice",
+      "content": "通过（）方法可以将内容保存在session中",
+      "options": [
+        "session.setAttribute(String name,Object obj)",
+        "session.getAttribute(String name)",
+        "session.setValues(String name,Object obj)",
+        "session.getValues(String name)"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP会话技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 323
+    },
+    {
+      "type": "single_choice",
+      "content": "下列说法中正确的是？",
+      "options": [
+        "session.setAttribute(String name,Object obj)中的第二个参数可以是自定义类型",
+        "session.getAttribute(String name）的返回值是Object类型，当用户从session中取出内容时不需要强制类型转换",
+        "session.removeAttribute(String name）可以将session中的所有内容删除",
+        "session中的数据不能被同一个客户在网站的一次会话过程中共享"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP会话技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 324
+    },
+    {
+      "type": "single_choice",
+      "content": "下列关于sessionId的说法错误的是？",
+      "options": [
+        "对于不同的客户来说，每个人的sessionId是不同的",
+        "对于每个session，服务器端都有一个sessionId来标识它",
+        "在第一次访问时，服务器端就给session分配了一个sessionId",
+        "在客户端访问下一个页面时，不会将sessionId传递给服务器端"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP会话技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 325
+    },
+    {
+      "type": "single_choice",
+      "content": "在服务器启动后就会自动创建application对象，这个对象会一直保存，直到服务器关闭为止，该说法是否正确",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP会话技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 326
+    },
+    {
+      "type": "single_choice",
+      "content": "下列关于application的说法正确的是？",
+      "options": [
+        "对于不同的客户端来说，服务器端的application对象是不同的",
+        "application为每个客户端创建一个实例对象",
+        "将内容放入application用application.getAttribute（String name）",
+        "显示某个页面被访问的次数可以用application对象"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP会话技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 327
+    },
+    {
+      "type": "single_choice",
+      "content": "（ ）对象提供了对JSP页面中所有对象及命名空间的的访问？",
+      "options": [
+        "page",
+        "pageContext",
+        "config",
+        "exception"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JSP会话技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 328
+    },
+    {
+      "type": "single_choice",
+      "content": "为了实现在Java的程序中调用带参数的SQL语句,应该采用( )来完成。",
+      "options": [
+        "Connection",
+        "PreparedStatement",
+        "ResultSet",
+        "Statement"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 329
+    },
+    {
+      "type": "single_choice",
+      "content": "在JDBC连接数据库编程应用开发中,利用可以实现包装数据库中的结果集。",
+      "options": [
+        "Connection",
+        "PreparedStatement",
+        "ResultSet",
+        "Statement"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 330
+    },
+    {
+      "type": "single_choice",
+      "content": "下列代码中rs为查询得到的结果集,代码运行后表格的每一行有单元格。\nwhile(rs.next()){\nout.print(\"<tr>\");\nout.print(\"<td>\"+rs.getString(1)+\"</td>\");\nout.print(\"<td>\"+rs.getString(2)+\"</td>\");\nout.print(\"<td>\"+rs.getString(3)+\"</td>\");\nout.print(\"<td>\"+rs.getString(\"publish\")+\"</td>\");\nout.print(\"<td>\"+rs.getFloat(\"price\")+\"</td>\");\nout.print(\"</tr>\");\n}",
+      "options": [
+        "4",
+        "5",
+        "6",
+        "不确定"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 331
+    },
+    {
+      "type": "single_choice",
+      "content": "关于JDBC技术的说法错误的是()",
+      "options": [
+        "JDBC可以适用于任何语言",
+        "在Java技术系列中,访问数据库的技术叫作JDBC",
+        "JDBC提供了一些列的API,让Java语言编写的代码链接数据库,对数据库进行添加,删除,修改和查询",
+        "JDBC相关的API存放在Java.sql包中"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 332
+    },
+    {
+      "type": "single_choice",
+      "content": "Java.sql.Connection负责()",
+      "options": [
+        "链接数据库",
+        "执行数据库的SQL语句",
+        "存放查询结果",
+        "对数据库进行增删改查"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 333
+    },
+    {
+      "type": "single_choice",
+      "content": "DriverManager.getConnection(“URL”,“用户名”,“密码”)的功能是()",
+      "options": [
+        "指定驱动",
+        "获取数据库连接",
+        "运行SQL语句",
+        "处理SQL语句的执行结果"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 334
+    },
+    {
+      "type": "single_choice",
+      "content": "下列关于ResultSet类说法错误的是()",
+      "options": [
+        "游标是在ResultSet中的一个可以移动的指针,它指向一行数据,初始时指向第1行的前一行",
+        "从ResultSet的某一行中通过getXXX()方法取数据的每一列能取无限次",
+        "当游标指向某一行时可以通过ResultSet的getXXX(“列名”)方法得到这一行的某个数据",
+        "ResultSet的next()方法的返回值是一个布尔类型的数据"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 335
+    },
+    {
+      "type": "single_choice",
+      "content": "在Connection中设置executeUpdate不要自动提交的代码是( )",
+      "options": [
+        "connection.setAutoCommit(false)",
+        "connection.setAutoCommit(true)",
+        "connection.rollback()",
+        "connection.close()"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 336
+    },
+    {
+      "type": "single_choice",
+      "content": "下列关于厂商驱动的说法错误的是()",
+      "options": [
+        "使用厂商驱动需要下载相应的厂商驱动包,将其复制到web项目的“Web-INF/lib”下",
+        "不同驱动程序和不同数据库可以采用不同驱动程序名称和URL",
+        "驱动程序一般弹性较差,往往只适合自己的数据库系统",
+        "JDBC驱动只能在window操作系统上使用"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 337
+    },
+    {
+      "type": "single_choice",
+      "content": "连接到本机MySQL数据库上的school数据库的代码为( ),其用户名为“root”,密码为“manager”",
+      "options": [
+        "Connection conn=DriverManager.getConnection(“jdbc:mysql://localhost:3306/school”,“root”,“manager”)",
+        "Connection conn=DriverManager.getConnection(“jdbc:mysql://localhost:3306/school”)",
+        "Connection conn=DriverManager.getConnection(“jdbc:mysql://localhost:1433/school”)",
+        "Connection conn=DriverManager.getConnection(“jdbc:mysql://localhost:1433/school”,“root”,“manager”)"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 338
+    },
+    {
+      "type": "single_choice",
+      "content": "一个典型的JDBC按照( )顺序编写\n①指定驱动、②获得与数据的连接、③关闭数据库连接、④处理SQL语句的运行结果、⑤使用Statement接口运行SQL语句",
+      "options": [
+        "①②③④⑤",
+        "①②④⑤③",
+        "①②⑤④③",
+        "②⑤④③①"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 339
+    },
+    {
+      "type": "boolean",
+      "content": "使用Class.forName(\"\")加载JDBC驱动程序时,引发的异常是ClassNotFoundException。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 340
+    },
+    {
+      "type": "boolean",
+      "content": "通过java.lang.Class类的forName(String className)方法加载JDBC驱动程序。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 341
+    },
+    {
+      "type": "boolean",
+      "content": "如果使用JDBC驱动器连接数据库,jar文件的存放位置为web应用的WEB-INF的lib文件夹。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 342
+    },
+    {
+      "type": "boolean",
+      "content": "通常关闭数据库的操作,应放在try-catch-finally的finally部分中。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 343
+    },
+    {
+      "type": "boolean",
+      "content": "getConnection()方法的参数可以有三个。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 344
+    },
+    {
+      "type": "boolean",
+      "content": "Connection接口的prepareStatement(String sql)方法用于创建一个PreparedStatement对象。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 345
+    },
+    {
+      "type": "boolean",
+      "content": "下列SQL语句的功能是查找bookdata库表中的所有记录\nselect * from bookdata",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 346
+    },
+    {
+      "type": "boolean",
+      "content": "因为JDBC由java语言编写完成,所以它具有很好的跨平台特性。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 347
+    },
+    {
+      "type": "boolean",
+      "content": "JDBC的主要功能有:建立与数据库或者其他数据源的连接、向数据库发送SQL命令、处理数据库的返回结果。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 348
+    },
+    {
+      "type": "boolean",
+      "content": "JDBC在Java程序与数据库之间起到了一个桥梁的作用,有了JDBC就可以方便地与各种数据库进行交互,不必为某一个特定的数据库制定专门的访问程序。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 349
+    },
+    {
+      "type": "boolean",
+      "content": "JDBC数据库驱动程序都已经事先包含在JDK中,所以要使用JDBC操作数据库时,可以直接使用JDK中的数据库厂商提供的驱动包。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 350
+    },
+    {
+      "type": "boolean",
+      "content": "Statement接口的executeQuery()方法,一般用于执行数据库数据的插入、修改、删除。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 351
+    },
+    {
+      "type": "boolean",
+      "content": "当执行insert/update/delete等SQL语句时,executeUpdate()方法的返回值是执行了这个SQL语句后所影响的记录的总行数。若返回值为0,则表示执行的SQL语句未对数据库造成影响",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 352
+    },
+    {
+      "type": "boolean",
+      "content": "在Jsp文件中,应用JDBC可以加载不同数据库的驱动程序,通过使用相应的参数,就可以建立与各种数据库的连接。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 353
+    },
+    {
+      "type": "boolean",
+      "content": "DriverManger类是JDBC的管理者,主要负责加载、注册JDBC驱动程序。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JDBC数据库技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 354
+    },
+    {
+      "type": "single_choice",
+      "content": "Tomcat的( )文件夹下存放着JSP页面生成的Servlet源文件和字节码文件。",
+      "options": [
+        "work",
+        "bin",
+        "lib",
+        "webapps"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Servlet技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 355
+    },
+    {
+      "type": "single_choice",
+      "content": "创建Servlet时,需要继承( )类",
+      "options": [
+        "HttpServlet",
+        "Servlet",
+        "MyServlet",
+        "ServletInterface"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Servlet技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 356
+    },
+    {
+      "type": "single_choice",
+      "content": "在访问Servlet时,在浏览器地址栏中输入的路径是在_______地方配置的",
+      "options": [
+        "<servlet-name/>",
+        "<uri-pattern/>",
+        "<servlet-mapping/>",
+        "<url-pattern/>"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Servlet技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 357
+    },
+    {
+      "type": "single_choice",
+      "content": "下面不是Servlet生命周期的方法有()",
+      "options": [
+        "init()",
+        "service()",
+        "destroy()",
+        "super()"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Servlet技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 358
+    },
+    {
+      "type": "single_choice",
+      "content": "下列关于Servlet生命周期的说法正确的是______。",
+      "options": [
+        "构造方法只会调用一次,在容器启动时调用",
+        "在Servlet生命周期中,init()方法不仅被调用一次。",
+        "service()方法在每次请求此Servlet时都会被调用",
+        "destroy()方法在每次请求完毕时会被调用"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Servlet技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 359
+    },
+    {
+      "type": "single_choice",
+      "content": "在web.xml文件中配置或注册Servlet时,需要用到两组标签,分别是 <servlet> 和 ____。",
+      "options": [
+        "<servlet-name/>",
+        "<uri-pattern/>",
+        "<servlet-mapping/>",
+        "<url-pattern/>"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Servlet技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 360
+    },
+    {
+      "type": "single_choice",
+      "content": "在Java web中，Servlet程序需要在（ ）文件中配置",
+      "options": [
+        "web.xml",
+        "JSP",
+        "struts.xml",
+        "servlet.xml"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Servlet技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 361
+    },
+    {
+      "type": "single_choice",
+      "content": "在部署带有Servlet的Java web程序时，（ ）不是必须的？",
+      "options": [
+        "web.xml文件",
+        "WEB-INF文件夹",
+        "csses文件夹",
+        "classes文件夹"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Servlet技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 362
+    },
+    {
+      "type": "single_choice",
+      "content": "如果是整个应用程序共享的数据，则适合放在（ ）中成为属性",
+      "options": [
+        "ServletConfig",
+        "ServletContext",
+        "ServletRequest",
+        "Session"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Servlet技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 363
+    },
+    {
+      "type": "single_choice",
+      "content": "在Servlet中，HttpServletResponse的（ ）方法用来把一个HTTP请求重定向到另外的URL.",
+      "options": [
+        "sendURL",
+        "redirectURL",
+        "sendRedirect",
+        "redirectResponse"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Servlet技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 364
+    },
+    {
+      "type": "single_choice",
+      "content": "在web.xml中定义了以下内容\n<servlet>\n<servlet-name>login</servlet-name>\n<servlet-class>servlets.login</servlet-class>\n</servlet>\n<servlet-mapping>\n<servlet-name>login</servlet-name>\n<url-pattern>/servlets/login</url-pattern>\n</servlet-mapping>\n下列可以正确访问该Servlet URL的是（ ）",
+      "options": [
+        "/servlets.login",
+        "servlets.login",
+        "/login",
+        "/servlets/login"
+      ],
+      "answer": [
+        3
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Servlet技术",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 365
+    },
+    {
+      "type": "boolean",
+      "content": "过滤器的接口位于javax.servlet包中",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Servlet技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 366
+    },
+    {
+      "type": "boolean",
+      "content": "过滤器的初始化参数是通过<init-param>标签定义的",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Servlet技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 367
+    },
+    {
+      "type": "boolean",
+      "content": "<init-param>标签可以用来设置Servlet或过滤器的初始化参数",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Servlet技术",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 368
+    },
+    {
+      "type": "essay",
+      "content": "简述 web 应用程序的运行原理",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 369
+    },
+    {
+      "type": "essay",
+      "content": "在网络程序中，有哪两种基本的结构？各有什么特点？",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 370
+    },
+    {
+      "type": "essay",
+      "content": "在表单提交时，GET 方法与 POST 方法的区别是？",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 371
+    },
+    {
+      "type": "essay",
+      "content": "对于 Web 前端设计，最准确的理解就是把网页看成三个层次，分别用什么语言实现？",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 372
+    },
+    {
+      "type": "essay",
+      "content": "编写下面图中所示的表单",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 373
+    },
+    {
+      "type": "essay",
+      "content": "JavaScript 有哪些数据类型？",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 374
+    },
+    {
+      "type": "essay",
+      "content": "简述 include 指令和 include 标准动作的区别",
+      "options": [],
+      "answer": [
+        "include 标准动作用于在 JSP 页面动态包含其他页面。该动作的功能与 JSP 的 include 指\n令类似,区别是 include 指令在编译时完成包含,是静态包含;而 include 标准动作是在运行\n时完成包含,是动态包含"
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 375
+    },
+    {
+      "type": "essay",
+      "content": "简述 JSP 页面中的组成元素。",
+      "options": [],
+      "answer": [
+        "JSP 页面主要有 6 类基本元素组成:\nJSP 指令:用来向 JSP 容器提供编译信息。\n² JSP 声明:用于在 JSP 页面中定义变量和方法。\n² JSP 表达式:用于将 Java 表达式的运行结果输出在页面中。\n² JSP 脚本:用于在 JSP 页面中插入 Java 代码。\n² JSP 动作:实现一些常见的特定功能。\n² JSP 注释"
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 376
+    },
+    {
+      "type": "essay",
+      "content": "简述 JSP 基本原理及执行过程？",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 377
+    },
+    {
+      "type": "essay",
+      "content": "一个 JSP 页面的元素有哪些（或基本结构）？",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 378
+    },
+    {
+      "type": "essay",
+      "content": "<%...%>与<%!...%>中都可以声明变量，有什么区别？",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 379
+    },
+    {
+      "type": "essay",
+      "content": "在 JSP 页面中常用的 JSP 动作标签有哪些（写出 4 种即可）",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 380
+    },
+    {
+      "type": "essay",
+      "content": "简述 session 的生命周期?",
+      "options": [],
+      "answer": [
+        "1) 客户端向服务器第一次发送请求的时候,request 中并无 SessionID。\n2) 此时服务器会创建一个 Session 对象,并分配一个 SessionID。Serssion 对象保存在服\n务器端,此时为新建状态,调用 session.isNew()返回 true。\n3) 当服务器端处理完毕后,会将 SessionID 通过 response 对象传回到客户端,浏览器负责\n保存到当前进程中。\n4) 当客户端再次发送请求时,会同时将 SessionID 发送给服务器。\n5) 服务器根据传递过来的 SessionID 将这次请求(request)与保存在服务器端的 Session\n对象联系起来。此时 Session 已不处于新建状态,调用 session.isNew()返回 false。\n6) 循环执行过程 3-5,直到 Session 超时或销毁。"
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 381
+    },
+    {
+      "type": "essay",
+      "content": "JSP 中 Response 对象中 sendRedirect()方法的作用？，它与 jsp:forward 在作用上",
+      "options": [],
+      "answer": [
+        "有什么区别？"
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 382
+    },
+    {
+      "type": "essay",
+      "content": "JSP 内置对象 request、session 与 application 分别有什么功能？各自的作用域范",
+      "options": [],
+      "answer": [
+        "围？"
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 383
+    },
+    {
+      "type": "essay",
+      "content": "JSP 中内置对象有哪些？",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 384
+    },
+    {
+      "type": "essay",
+      "content": "四种作用域",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 385
+    },
+    {
+      "type": "essay",
+      "content": "HTTP 协议为什么无法跟踪会话？在 JSP 中如何解决这个问题？",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 386
+    },
+    {
+      "type": "essay",
+      "content": "简述 Cookie 的工作原理？",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 387
+    },
+    {
+      "type": "essay",
+      "content": "简述 Session 的工作原理？",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 388
+    },
+    {
+      "type": "essay",
+      "content": "JDBC 访问数据库步骤？",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 389
+    },
+    {
+      "type": "essay",
+      "content": "JDBC 的主要功能有？",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 390
+    },
+    {
+      "type": "essay",
+      "content": "简述自己对 Statement 和 PreparedStatement 的理解。",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 391
+    },
+    {
+      "type": "essay",
+      "content": "Servlet 的生命周期有几个阶段？分别是什么？",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 392
+    },
+    {
+      "type": "essay",
+      "content": "简述 Servlet 与 JSP 的区别？",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 393
+    },
+    {
+      "type": "essay",
+      "content": "需要使用过滤器的一般有哪几种情况？",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 394
+    },
+    {
+      "type": "essay",
+      "content": "使用过滤器的步骤？",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 395
+    },
+    {
+      "type": "essay",
+      "content": "什么是 Javabean？有什么作用？",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web简答题",
+        "简答题"
+      ],
+      "difficulty": 2,
+      "id": 396
+    },
+    {
+      "type": "essay",
+      "content": "写出下列 HTML 代码段的运行结果。\n<table border=\"1px\" >\n<caption>文具订单表</ caption >\n<tr>\n<th>文具</th>\n<th>价格</th>\n<th>数量</th>\n</tr>\n<tr>\n<td>钢笔</td>\n<td>2.50/支</td>\n<td rowspan=2>各 3 支</td>\n</tr>\n<tr>\n<td>铅笔</td>\n<td>0.50/支</td>\n</tr>\n<tr>\n<td>合计</td>\n<td colspan=\"2\">9</td>\n</tr>\n</table>",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web程序与综合应用题",
+        "读程序写结果"
+      ],
+      "difficulty": 3,
+      "id": 397
+    },
+    {
+      "type": "essay",
+      "content": "写出下列 HTML 代码段的运行结果。\n<table border=\"1px\" >\n<caption>学生成绩登记表</caption>\n<tr>\n<th>学号</th>\n<th>姓名</th>\n<th>平时成绩</th>\n<th>期末成绩</th>\n</tr>\n<tr>\n<td>1618006</td>\n<td>张三</td>\n<td>20</td>\n<td>95</td>\n</tr>\n<tr>\n<th rowspan=\"2\">说明</th>\n<td colspan=\"3\">总成绩=平时成绩*20%+期末成绩*80%</td>\n</tr>\n<tr>\n<td colspan=\"3\">2022.06</td>\n</tr>\n</table>",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web程序与综合应用题",
+        "读程序写结果"
+      ],
+      "difficulty": 3,
+      "id": 398
+    },
+    {
+      "type": "essay",
+      "content": "写出下列 HTML 代码段的运行结果。\n<table border=\"1px\" >\n<caption>图书分类表</caption>\n<tr>\n<th>类别</th>\n<th>书名</th>\n<th>价格</th>\n</tr>\n<tr>\n<td rowspan=\"2\">计算机</td>\n<td>Java Web 程序设计</td>\n<td>49.9</td>\n</tr>\n<tr>\n<td>Java 程序设计</td>\n<td>44.8</td>\n</tr>\n<tr>\n<td>文学</td>\n<td>目送</td>\n<td>42</td>\n</tr>\n<tr>\n<td colspan=\"3\">2022 年 06 月</td>\n</tr>\n</table>",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web程序与综合应用题",
+        "读程序写结果"
+      ],
+      "difficulty": 3,
+      "id": 399
+    },
+    {
+      "type": "essay",
+      "content": "在浏览器地址栏中输\n入:http://localhost:8080/reading.jsp?name=Tom&address=Shenyang,请写出下列代码\n的运行结果。\n<%@ page language=\"java\" contentType=\"text/html; charset=GBK\" %>\n<!DOCTYPE html>\n<body>\n<%\nString name=request.getParameter(\"name\");\nString address=request.getParameter(\"address\");\nif(name!=null&&address!=null){\n%>\n<p>欢迎<%=name %></p><hr/><p>您所在城市是<%=address %></p>\n<%} %>\n</body>\n</html>",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web程序与综合应用题",
+        "读程序写结果"
+      ],
+      "difficulty": 3,
+      "id": 400
+    },
+    {
+      "type": "essay",
+      "content": "将下述代码保存为文件 reading.jsp,在浏览器地址栏中输\n入:http://localhost:8080/reading.jsp?name=Tom&name=Mary,写出代码的运行结果。\n<%@ page language=\"java\" import=\"java.util.*\" pageEncoding=\"utf-8\"%>\n<body>\n<%\nString[] names=request.getParameterValues(\"name\");\nif(names!=null){\n%>\n<p>姓名列表如下:</p>\n<%\nfor(int i=0;i<names.length;i++){\nout.println(names[i]+\"<br>\");\n%>\n</body>",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web程序与综合应用题",
+        "读程序写结果"
+      ],
+      "difficulty": 3,
+      "id": 401
+    },
+    {
+      "type": "essay",
+      "content": "在浏览器地址栏中输入:http://localhost:8080/index.jsp,请写出下列代码的运行结\n果。\nindex.jsp 源代码:\n<%@ page language=\"java\" contentType=\"text/html; charset=gb2312\"%>\n<html><body>\n<h2>欢迎进入 JSP 的世界</h2>\n<hr/>\n<jsp:include page=\"welcome.jsp\">\n<jsp:param name=\"userName\" value=\"xiaoming\"/>\n</jsp:include>\n</body></html>\nwelcome.jsp 源代码:\n<%@ page language=\"java\" contentType=\"text/html; charset=gb2312\"%>\n<html><body>\n<p>你好,<%=request.getParameter(\"userName\")%>!</p><hr/><p>欢迎光临!</p>\n</body></html>",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web程序与综合应用题",
+        "读程序写结果"
+      ],
+      "difficulty": 3,
+      "id": 402
+    },
+    {
+      "type": "essay",
+      "content": "使用 HTML 和 JavaScript 实现注册表单前端验证，完成相应代码。要求如下：\n（1）使用 HTML 的表单控件设计一个注册页面，如图所示；\n（2）设计 JavaScript 函数 validate()，验证用户是否输入了姓名及两次输入的密码是否一\n致。若姓名文本框输入为空，则弹出警示窗口提示用户“请输入您的姓名!”，若两次输入\n密码不一致，则弹出警示窗口提示用户“您两次输入的密码不一致！请重新输入! ”。",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web程序与综合应用题",
+        "前端综合题"
+      ],
+      "difficulty": 3,
+      "id": 403
+    },
+    {
+      "type": "essay",
+      "content": "实现下列表格(注意单元格合并)",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web程序与综合应用题",
+        "前端综合题"
+      ],
+      "difficulty": 3,
+      "id": 404
+    },
+    {
+      "type": "essay",
+      "content": "使用 DIV+CSS 完成下列页面效果，DIV 完成页面结构部分，CSS 完成页面布局及样式\n（边框），写出主要代码。",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web程序与综合应用题",
+        "前端综合题"
+      ],
+      "difficulty": 3,
+      "id": 405
+    },
+    {
+      "type": "essay",
+      "content": "使用 CSS 完成仿百度按钮的导航栏,并使用伪类选择器完成超链接悬停效果",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web程序与综合应用题",
+        "前端综合题"
+      ],
+      "difficulty": 3,
+      "id": 406
+    },
+    {
+      "type": "essay",
+      "content": "使用 Request 和 Response 完成用户登录功能，需要完成 3 个文件，请完成主要代码。\n要求如下：\n（1）login.jsp：登录页面（图一），用户输入账号和密码，提交表单；（2）check.jsp：检\n查页面（图二），获取账号和密码，如果账号为 admin，密码为 123456，则登录成功，跳\n转到欢迎页面 welcome.html；否则输出错误信息，页面在 5 秒后返回登录页面；（3）\nwelcome.html：欢迎页面（图三），显示欢迎信息。\n参考 ppt 例题",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web程序与综合应用题",
+        "JSP和内置对象"
+      ],
+      "difficulty": 3,
+      "id": 407
+    },
+    {
+      "type": "essay",
+      "content": "使用 JSP 完成下列程序：用户输入梯形的上底、下底和高的值后，计算并输出梯形面\n积。TX.jsp 页面中设计表单接收用户输入，表单提交给 getArea.jsp 页面。getArea.jsp 页\n面中获取用户的输入，计算梯形面积并输出。\n以及三角形等（实验）",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web程序与综合应用题",
+        "JSP和内置对象"
+      ],
+      "difficulty": 3,
+      "id": 408
+    },
+    {
+      "type": "essay",
+      "content": "使用 Request 完成用户登录功能，需要完成 2 个文件，请完成主要代码。要求如下：\n（1）Login.html：用户注册表单（图一），表单提交给 Display.jsp 页面。\n（2）Display.jsp：显示页面（图二），获取注册页面信息，在此页面进行显示。\n（图一）\n（图二）",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web程序与综合应用题",
+        "JSP和内置对象"
+      ],
+      "difficulty": 3,
+      "id": 409
+    },
+    {
+      "type": "essay",
+      "content": "使用 Cookie 完成文本框信息自动填充程序\n参考 ppt 例题和实验",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web程序与综合应用题",
+        "会话综合题"
+      ],
+      "difficulty": 3,
+      "id": 410
+    },
+    {
+      "type": "essay",
+      "content": "使用 Session 技术完成用户登录程序，写出 2 个页面的主要代码。（1）Main.jsp：系统\n主页面，需要登录才能访问，先使用 Session 检验用户是否已经登录，如果已经登录则显\n示欢迎信息（图一），否则输出提示信息（图二），并在 2 秒后转到登录页面 Login.jsp；\n（2）Login.jsp：用户登录页面，判断账号（admin）和密码（123456）是否正确，如果正\n确则转到主页面 Main.jsp（图一），否则，在本页输出错误信息，提示用户重新输入（图\n三）。\n（图一） （图\n二） （图三）",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web程序与综合应用题",
+        "会话综合题"
+      ],
+      "difficulty": 3,
+      "id": 411
+    },
+    {
+      "type": "essay",
+      "content": "使用 Session 实现带验证码的登录系统\n使用 Session 实现带验证码的登录系统，需要 3 个文件，要求如下：\n（1）在 Login.jsp 页面中用户通过用户名、密码和验证码进行登录；\n（2）登录后的信息由 Handler.jsp 页面进行处理。如果用户名与密码与保存在二维数组中\n的字符串相同，并且输入的验证码与 4 位随机生成的验证码图片上的数字相同，则将用户\n名保存在 session 对象中并跳转到 Main.jsp 页面；否则跳转到 Login.jsp 页面重新登录。\n（3）在 Main.jsp 页面中通过 session 对象获得用户名并输出。\n参考 ppt",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web程序与综合应用题",
+        "会话综合题"
+      ],
+      "difficulty": 3,
+      "id": 412
+    },
+    {
+      "type": "essay",
+      "content": "Session 实现购物车\n参考 ppt 例题和实验",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web程序与综合应用题",
+        "会话综合题"
+      ],
+      "difficulty": 3,
+      "id": 413
+    },
+    {
+      "type": "essay",
+      "content": "用 JSP 实现基于 xsgl 数据库的用户注册与登录系统，如图所示：\n图1 图2 图3",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web程序与综合应用题",
+        "数据库综合题"
+      ],
+      "difficulty": 3,
+      "id": 414
+    },
+    {
+      "type": "essay",
+      "content": "数据库部分 ppt 例题和实验",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web程序与综合应用题",
+        "数据库综合题"
+      ],
+      "difficulty": 3,
+      "id": 415
+    },
+    {
+      "type": "essay",
+      "content": "假如数据库中有表 student(sno,sname,sage),请写出表示其对应的 VO 的 JavaBean。\n提示:在 JavaBean 中不仅要定义其成员变量,还要对成员变量定义 setter/getter 方法。\n通常情况下 DAO(data access object)配合 VO(value object)使用,在 DAO 中可以每查询\n到一条记录就将其封装为 VO。最后将所有实例化的 VO 存放在集合内返回,这样就可以实现\n层次的分开,降低了耦合度。\n看 ppt 例题",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web程序与综合应用题",
+        "数据库和JavaBean"
+      ],
+      "difficulty": 3,
+      "id": 416
+    },
+    {
+      "type": "essay",
+      "content": "在 src/xsgl/servlet 中创建 servlet 文件 stuservlet.java,此 servlet 不能直接被访\n问,需要在 web.xml 中配置 servlet,才能通过 URL 映射到与之对应的 servlet 中,如果用户\n以地址:http://localhost:8080/xsgl/servlet/stuservlet 来访问它,请写出在 web.xml\n中相应的配置代码。",
+      "options": [],
+      "answer": [],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "Java Web程序与综合应用题",
+        "Servlet综合题"
+      ],
+      "difficulty": 3,
+      "id": 417
+    }
+  ]
+}
