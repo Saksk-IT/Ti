@@ -213,7 +213,7 @@ dig +short "$DOMAIN"
 curl -I "http://$DOMAIN" || true
 ```
 
-确认解析正确后执行下面命令。脚本会把 Docker 内 nginx 改为只绑定 `127.0.0.1:8080`，宿主机 Nginx 接管 80/443，并将 `DOMAIN`、`CERTBOT_EMAIL`、`SESSION_COOKIE_SECURE=true` 写回 `.env.production`。
+确认解析正确后执行下面命令。脚本会把 Docker 内 nginx 改为只绑定 `127.0.0.1:8080`，宿主机 Nginx 接管 80/443，并将 `ENABLE_HTTPS=1`、`DOMAIN`、`CERTBOT_EMAIL`、`SESSION_COOKIE_SECURE=true` 写回 `.env.production`。
 
 ```bash
 cd /opt/ti
@@ -317,16 +317,25 @@ docker image inspect ghcr.io/saksk-it/ti:latest --format '{{.RepoTags}} {{.Id}}'
 unset GHCR_TOKEN
 ```
 
-服务器拉取最新代码配置和 latest 镜像：
+服务器拉取最新代码配置和 latest 镜像。日常更新优先使用这个入口，它会自动执行 `git pull --ff-only`，然后调用生产部署脚本：
 
 ```bash
 cd /opt/ti
 
-git pull --ff-only origin "$(git rev-parse --abbrev-ref HEAD)"
-./scripts/deploy_ubuntu24.sh
+./scripts/update_production.sh
 ```
 
-如果已启用生产 HTTPS，更新时继续显式传入 HTTPS 参数：
+如果已启用生产 HTTPS，`.env.production` 中保存了 `ENABLE_HTTPS=1`、`DOMAIN` 和 `CERTBOT_EMAIL` 后，日常更新仍然只需要执行：
+
+```bash
+cd /opt/ti
+
+./scripts/update_production.sh
+```
+
+这个入口会在生产更新后默认重启 Docker 内 nginx，刷新 web 容器更新后的 upstream 连接；如果健康检查首次失败，也会再重启 Docker 内 nginx 后重试。它还会在证书已存在时重新写入宿主机 443 SSL 反代配置，因此通常不需要再手动执行“重启 Docker 内 nginx”和“重新配置 HTTPS”两段命令。
+
+如果 `.env.production` 还没有保存 HTTPS 参数，或者是首次启用 HTTPS，显式传入一次：
 
 ```bash
 cd /opt/ti
@@ -334,44 +343,10 @@ cd /opt/ti
 read -r -p "域名: " DOMAIN
 read -r -p "Certbot 邮箱: " CERTBOT_EMAIL
 
-git pull --ff-only origin "$(git rev-parse --abbrev-ref HEAD)"
-
 ENABLE_HTTPS=1 \
 DOMAIN="$DOMAIN" \
 CERTBOT_EMAIL="$CERTBOT_EMAIL" \
-./scripts/deploy_ubuntu24.sh
-```
-
-如果更新后脚本停在健康检查并返回 `502`，但 `docker compose ps` 显示 `ti-web-1` 为 `healthy`，通常是 Docker 内 nginx 在 web 容器更新后仍缓存旧 upstream 地址。先不要重置数据库或删除 `var/`，复制下面命令重启 Docker 内 nginx 后再验证：
-
-```bash
-cd /opt/ti
-
-docker compose --env-file .env.production -f compose.prod.yml ps
-docker compose --env-file .env.production -f compose.prod.yml restart nginx
-
-curl --retry 10 --retry-delay 3 --retry-all-errors -fsS \
-  "http://127.0.0.1:8080/api/ping" | python3 -m json.tool
-
-DOMAIN="$(grep -E '^DOMAIN=' .env.production | cut -d= -f2-)"
-curl --retry 10 --retry-delay 3 --retry-all-errors -fsS \
-  "https://$DOMAIN/api/ping" | python3 -m json.tool
-```
-
-如果 `http://域名` 能访问应用，但 `https://域名` 在 TLS 握手阶段失败，通常是宿主机 Nginx 只有 80 反代配置，没有写入 443 SSL 配置。先拉取最新部署脚本，再重新执行 HTTPS 配置：
-
-```bash
-cd /opt/ti
-
-git pull --ff-only origin "$(git rev-parse --abbrev-ref HEAD)"
-
-read -r -p "域名: " DOMAIN
-read -r -p "Certbot 邮箱: " CERTBOT_EMAIL
-
-ENABLE_HTTPS=1 \
-DOMAIN="$DOMAIN" \
-CERTBOT_EMAIL="$CERTBOT_EMAIL" \
-./scripts/deploy_ubuntu24.sh
+./scripts/update_production.sh
 ```
 
 ## 9. 日常运维完整命令
@@ -496,7 +471,15 @@ docker compose --env-file .env.production -f compose.prod.yml logs --tail=200 we
 docker compose --env-file .env.production -f compose.prod.yml logs --tail=200 nginx
 ```
 
-HTTPS 部署或更新后健康检查返回 `502`：
+HTTPS 部署或更新后健康检查返回 `502` 时，优先重新运行一次完善后的生产更新入口。脚本会自动拉取当前分支、重启 Docker 内 nginx 并重试健康检查：
+
+```bash
+cd /opt/ti
+
+./scripts/update_production.sh
+```
+
+如果仍然失败，再手动确认容器状态和反代链路：
 
 ```bash
 cd /opt/ti
@@ -523,7 +506,7 @@ sudo nginx -t
 sudo journalctl -u nginx -n 100 --no-pager
 ```
 
-HTTP 正常但 HTTPS 握手失败：
+HTTP 正常但 HTTPS 握手失败时，先用生产更新入口重新写入宿主机 443 SSL 配置：
 
 ```bash
 cd /opt/ti
@@ -532,10 +515,5 @@ curl -I "http://saksk.top" || true
 curl -k -I "https://saksk.top" || true
 sudo nginx -T | sed -n '/server_name saksk.top/,+80p'
 
-git pull --ff-only origin "$(git rev-parse --abbrev-ref HEAD)"
-
-ENABLE_HTTPS=1 \
-DOMAIN=saksk.top \
-CERTBOT_EMAIL="$(grep -E '^CERTBOT_EMAIL=' .env.production | cut -d= -f2-)" \
-./scripts/deploy_ubuntu24.sh
+./scripts/update_production.sh
 ```

@@ -23,6 +23,7 @@ else
   DEFAULT_TI_IMAGE="ghcr.io/saksk-it/ti:latest"
 fi
 
+REQUESTED_ENABLE_HTTPS="${ENABLE_HTTPS-}"
 ENABLE_HTTPS="${ENABLE_HTTPS:-0}"
 case "$ENABLE_HTTPS" in
   0|1) ;;
@@ -53,6 +54,7 @@ TI_IMAGE="${TI_IMAGE:-$DEFAULT_TI_IMAGE}"
 TI_IMAGE_PULL_POLICY="${TI_IMAGE_PULL_POLICY:-always}"
 RUN_MIGRATIONS="${RUN_MIGRATIONS:-1}"
 ENSURE_DEFAULT_ADMIN="${ENSURE_DEFAULT_ADMIN:-1}"
+RESTART_INTERNAL_NGINX="${RESTART_INTERNAL_NGINX:-1}"
 ALLOW_INSECURE_DEFAULTS="${ALLOW_INSECURE_DEFAULTS:-0}"
 POSTGRES_DB="${POSTGRES_DB:-ti_db}"
 POSTGRES_USER="${POSTGRES_USER:-studyuser}"
@@ -141,6 +143,10 @@ load_env_file() {
     set +a
   fi
 
+  if [[ -n "$REQUESTED_ENABLE_HTTPS" ]]; then
+    ENABLE_HTTPS="$REQUESTED_ENABLE_HTTPS"
+  fi
+
   if [[ -n "$REQUESTED_DOMAIN" ]]; then
     APP_DOMAIN="$REQUESTED_DOMAIN"
   else
@@ -150,6 +156,30 @@ load_env_file() {
     CERTBOT_EMAIL="$REQUESTED_CERTBOT_EMAIL"
   else
     CERTBOT_EMAIL="${CERTBOT_EMAIL:-$CERTBOT_EMAIL}"
+  fi
+
+  if [[ "$DEPLOY_ENV" == "production" && -z "$REQUESTED_ENABLE_HTTPS" ]]; then
+    if [[ "${ENABLE_HTTPS:-0}" == "1" ]]; then
+      ENABLE_HTTPS="1"
+    elif [[ -n "$APP_DOMAIN" && -n "$CERTBOT_EMAIL" ]]; then
+      ENABLE_HTTPS="1"
+    elif [[ "${HTTP_BIND:-}" == "127.0.0.1" && "${SESSION_COOKIE_SECURE:-}" == "true" ]]; then
+      ENABLE_HTTPS="1"
+    else
+      ENABLE_HTTPS="0"
+    fi
+  fi
+
+  case "$ENABLE_HTTPS" in
+    0|1) ;;
+    *)
+      echo "错误：ENABLE_HTTPS 只能是 0 或 1，当前值：${ENABLE_HTTPS}"
+      exit 1
+      ;;
+  esac
+  if [[ "$ENABLE_HTTPS" == "1" && "$DEPLOY_ENV" != "production" ]]; then
+    echo "错误：ENABLE_HTTPS=1 仅支持生产环境。"
+    exit 1
   fi
 
   if [[ -n "$REQUESTED_TI_IMAGE" ]]; then
@@ -297,6 +327,7 @@ PROXY_FIX_ENABLED=true
 SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE}
 HTTP_BIND=${HTTP_BIND}
 HTTP_PORT=${HTTP_PORT}
+ENABLE_HTTPS=${ENABLE_HTTPS}
 BACKUP_TZ=Asia/Shanghai
 BACKUP_ANCHOR_TIME=04:00
 BACKUP_INTERVAL=43200
@@ -371,6 +402,7 @@ prepare_runtime_files() {
   upsert_env_value "DEFAULT_ADMIN_PASSWORD" "$DEFAULT_ADMIN_PASSWORD"
   upsert_env_value "DEFAULT_ADMIN_RESET_PASSWORD" "$DEFAULT_ADMIN_RESET_PASSWORD"
   if [[ "$DEPLOY_ENV" == "production" ]]; then
+    upsert_env_value "ENABLE_HTTPS" "$ENABLE_HTTPS"
     upsert_env_value "HTTP_BIND" "$HTTP_BIND"
     upsert_env_value "HTTP_PORT" "$HTTP_PORT"
     upsert_env_value "SESSION_COOKIE_SECURE" "$SESSION_COOKIE_SECURE"
@@ -400,7 +432,9 @@ validate_env() {
 
   if [[ "$ENABLE_HTTPS" == "1" ]]; then
     [[ -n "$APP_DOMAIN" ]] || fail "ENABLE_HTTPS=1 时必须设置 DOMAIN"
-    [[ -n "$CERTBOT_EMAIL" ]] || fail "ENABLE_HTTPS=1 时必须设置 CERTBOT_EMAIL"
+    if [[ -z "$CERTBOT_EMAIL" ]] && ! certificate_files_exist; then
+      fail "ENABLE_HTTPS=1 且证书不存在时必须设置 CERTBOT_EMAIL"
+    fi
     [[ "$SESSION_COOKIE_SECURE" == "true" ]] || fail "ENABLE_HTTPS=1 时 SESSION_COOKIE_SECURE 必须为 true"
   fi
 }
@@ -449,10 +483,6 @@ certificate_files_exist() {
     && $SUDO test -f "/etc/letsencrypt/live/${APP_DOMAIN}/privkey.pem"
 }
 
-certificate_dir_exists() {
-  $SUDO test -d "/etc/letsencrypt/live/${APP_DOMAIN}"
-}
-
 deploy_stack() {
   log "拉取应用镜像：${TI_IMAGE}"
   $SUDO docker pull "$TI_IMAGE"
@@ -477,6 +507,15 @@ deploy_stack() {
   else
     log "已设置 ENSURE_DEFAULT_ADMIN=0，跳过默认管理员初始化"
   fi
+}
+
+restart_internal_nginx() {
+  if [[ "$DEPLOY_ENV" != "production" || "$RESTART_INTERNAL_NGINX" != "1" ]]; then
+    return
+  fi
+
+  log "重启 Docker 内 nginx，刷新 upstream 连接"
+  "${COMPOSE[@]}" restart nginx
 }
 
 configure_host_nginx() {
@@ -605,13 +644,17 @@ install_certbot() {
     return
   fi
 
-  log "安装 Certbot"
-  $SUDO snap install core
-  $SUDO snap refresh core
-  $SUDO snap install --classic certbot
-  $SUDO ln -sf /snap/bin/certbot /usr/bin/certbot
+  if ! command -v certbot >/dev/null 2>&1; then
+    log "安装 Certbot"
+    $SUDO snap install core
+    $SUDO snap refresh core
+    $SUDO snap install --classic certbot
+    $SUDO ln -sf /snap/bin/certbot /usr/bin/certbot
+  else
+    log "Certbot 已安装，跳过"
+  fi
 
-  if ! certificate_dir_exists; then
+  if ! certificate_files_exist; then
     log "申请 HTTPS 证书"
     $SUDO certbot certonly --nginx \
       -d "$APP_DOMAIN" \
@@ -625,20 +668,36 @@ install_certbot() {
   configure_host_nginx
 }
 
+probe_json() {
+  local url="$1"
+  curl --retry 10 --retry-delay 3 --retry-all-errors -fsS "$url" | python3 -m json.tool
+}
+
+probe_json_with_internal_nginx_recovery() {
+  local url="$1"
+
+  if probe_json "$url"; then
+    return
+  fi
+
+  restart_internal_nginx
+  probe_json "$url"
+}
+
 validate_deploy() {
   log "校验容器状态"
   "${COMPOSE[@]}" ps
 
   log "校验健康检查"
   if [[ "$DEPLOY_ENV" == "production" ]]; then
-    curl --retry 10 --retry-delay 3 --retry-connrefused -fsS "http://127.0.0.1:${HTTP_PORT}/api/ping" | python3 -m json.tool
+    probe_json_with_internal_nginx_recovery "http://127.0.0.1:${HTTP_PORT}/api/ping"
 
     if [[ "$ENABLE_HTTPS" == "1" ]]; then
       curl -I "https://${APP_DOMAIN}" || true
-      curl -fsS "https://${APP_DOMAIN}/api/ping" | python3 -m json.tool
+      probe_json_with_internal_nginx_recovery "https://${APP_DOMAIN}/api/ping"
     fi
   else
-    curl --retry 10 --retry-delay 3 --retry-connrefused -fsS "http://127.0.0.1:${WEB_PORT:-8000}/api/ping" | python3 -m json.tool
+    probe_json "http://127.0.0.1:${WEB_PORT:-8000}/api/ping"
   fi
 }
 
@@ -673,6 +732,7 @@ validate_env
 install_https_packages
 login_registry_if_needed
 deploy_stack
+restart_internal_nginx
 configure_host_nginx
 configure_firewall
 install_certbot
