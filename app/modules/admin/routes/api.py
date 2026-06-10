@@ -22,6 +22,7 @@ from .api_components import subject_permissions  # noqa: F401
 from .api_components import subjects  # noqa: F401
 from .api_components import system_config  # noqa: F401
 from .api_components import users  # noqa: F401
+from .api_components import wechat_miniprogram_settings  # noqa: F401
 from .api_components import forum  # noqa: F401
 
 __all__ = ['admin_api_bp', 'ALLOWED_EXTENSIONS', 'allowed_file']

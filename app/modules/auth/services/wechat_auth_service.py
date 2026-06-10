@@ -18,8 +18,11 @@ class WechatAuthService:
     @staticmethod
     def verify_code(code: str) -> Dict[str, Any]:
         """验证微信code，返回openid和session_key"""
-        appid = current_app.config.get('WECHAT_APPID') or current_app.config.get('WX_APPID')
-        secret = current_app.config.get('WECHAT_SECRET') or current_app.config.get('WX_SECRET')
+        from app.modules.admin.services.system_config_service import SystemConfigService
+
+        cfg = SystemConfigService.get_wechat_miniprogram_config()
+        appid = cfg.get('appid')
+        secret = cfg.get('secret')
 
         if not appid or not secret:
             current_app.logger.error('微信小程序配置缺失：WECHAT_APPID 或 WECHAT_SECRET')
@@ -128,4 +131,3 @@ class WechatAuthService:
                 'created_at': new_user.created_at, 'is_new_user': True,
             }
             return result
-

@@ -234,6 +234,15 @@ def admin_auth_login_settings_page():
     return render_template('admin/settings/auth_login.html', auth_login_config=cfg)
 
 
+@admin_pages_bp.route('/settings/wechat-miniprogram')
+def admin_wechat_miniprogram_settings_page():
+    """微信小程序配置页面"""
+    from app.modules.admin.services.system_config_service import SystemConfigService
+
+    cfg = SystemConfigService.get_wechat_miniprogram_form_config()
+    return render_template('admin/settings/wechat_miniprogram.html', wechat_config=cfg)
+
+
 @admin_pages_bp.route('/permissions')
 def admin_permissions_page():
     """权限管理页面"""

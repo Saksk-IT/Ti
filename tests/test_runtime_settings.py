@@ -38,6 +38,13 @@ SMS_KEYS = [
     'sms_console_output',
 ]
 
+WECHAT_KEYS = [
+    'wechat_appid',
+    'wechat_secret',
+    'wechat_minicode_env_version',
+    'wechat_minicode_check_path',
+]
+
 AI_KEYS = [
     'ai_provider',
     'ai_api_key',
@@ -192,6 +199,128 @@ def test_admin_sms_settings_roundtrip(app, seed_user):
                 {'uid': seed_user['id']},
             )
             db.session.commit()
+
+
+def test_wechat_config_prefers_system_settings(app):
+    with app.app_context():
+        _clear_system_configs(WECHAT_KEYS)
+        try:
+            app.config['WECHAT_APPID'] = 'env-appid'
+            app.config['WECHAT_SECRET'] = 'env-secret'
+            app.config['WECHAT_MINICODE_ENV_VERSION'] = 'release'
+            app.config['WECHAT_MINICODE_CHECK_PATH'] = True
+
+            SystemConfigService.update_config('wechat_appid', 'db-appid', admin_id=1)
+            SystemConfigService.update_config('wechat_secret', 'db-secret', admin_id=1)
+            SystemConfigService.update_config('wechat_minicode_env_version', 'trial', admin_id=1)
+            SystemConfigService.update_config('wechat_minicode_check_path', 'false', admin_id=1)
+
+            cfg = SystemConfigService.get_wechat_miniprogram_config()
+
+            assert cfg == {
+                'appid': 'db-appid',
+                'secret': 'db-secret',
+                'minicode_env_version': 'trial',
+                'minicode_check_path': False,
+            }
+        finally:
+            _clear_system_configs(WECHAT_KEYS)
+
+
+def test_admin_wechat_settings_roundtrip(app, seed_user):
+    with app.app_context():
+        db.session.execute(
+            text("UPDATE users SET is_admin = 1 WHERE id = :uid"),
+            {'uid': seed_user['id']},
+        )
+        db.session.commit()
+
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess['user_id'] = seed_user['id']
+        sess['username'] = seed_user['username']
+        sess['is_admin'] = True
+
+    with app.app_context():
+        _clear_system_configs(WECHAT_KEYS)
+
+    payload = {
+        'wechat_appid': 'wx1234567890abcdef',
+        'wechat_secret': 'secret1234567890abcdef',
+        'wechat_minicode_env_version': 'trial',
+        'wechat_minicode_check_path': False,
+    }
+
+    try:
+        response = client.post('/admin/api/settings/wechat-miniprogram', json=payload)
+        assert response.status_code == 200
+        assert response.get_json()['status'] == 'success'
+
+        response = client.get('/admin/api/settings/wechat-miniprogram')
+        assert response.status_code == 200
+        data = response.get_json()['data']
+        assert data['wechat_appid'] == 'wx1234567890abcdef'
+        assert '****' in data['wechat_secret']
+        assert data['wechat_minicode_env_version'] == 'trial'
+        assert data['wechat_minicode_check_path'] == 'false'
+
+        response = client.post(
+            '/admin/api/settings/wechat-miniprogram',
+            json={**payload, 'wechat_secret': data['wechat_secret']},
+        )
+        assert response.status_code == 200
+
+        with app.app_context():
+            cfg = SystemConfigService.get_wechat_miniprogram_config()
+            assert cfg['appid'] == 'wx1234567890abcdef'
+            assert cfg['secret'] == 'secret1234567890abcdef'
+            assert cfg['minicode_env_version'] == 'trial'
+            assert cfg['minicode_check_path'] is False
+    finally:
+        with app.app_context():
+            _clear_system_configs(WECHAT_KEYS)
+            db.session.execute(
+                text("UPDATE users SET is_admin = 0 WHERE id = :uid"),
+                {'uid': seed_user['id']},
+            )
+            db.session.commit()
+
+
+def test_wechat_login_service_uses_system_settings(app, monkeypatch):
+    from app.modules.auth.services.wechat_auth_service import WechatAuthService
+
+    captured = {}
+
+    class _Resp:
+        @staticmethod
+        def json():
+            return {'openid': 'openid-from-wechat', 'session_key': 'session-key'}
+
+    def fake_get(url, params, timeout):
+        captured['url'] = url
+        captured['params'] = dict(params)
+        captured['timeout'] = timeout
+        return _Resp()
+
+    monkeypatch.setattr('app.modules.auth.services.wechat_auth_service.requests.get', fake_get)
+
+    with app.app_context():
+        _clear_system_configs(WECHAT_KEYS)
+        try:
+            app.config['WECHAT_APPID'] = 'env-appid'
+            app.config['WECHAT_SECRET'] = 'env-secret'
+            SystemConfigService.update_config('wechat_appid', 'wxabcdef1234567890', admin_id=1)
+            SystemConfigService.update_config('wechat_secret', 'db-secret-runtime', admin_id=1)
+
+            result = WechatAuthService.verify_code('login-code')
+
+            assert result['openid'] == 'openid-from-wechat'
+            assert captured['url'] == 'https://api.weixin.qq.com/sns/jscode2session'
+            assert captured['params']['appid'] == 'wxabcdef1234567890'
+            assert captured['params']['secret'] == 'db-secret-runtime'
+            assert captured['params']['js_code'] == 'login-code'
+        finally:
+            _clear_system_configs(WECHAT_KEYS)
 
 
 def test_ai_config_prefers_new_system_settings(app):

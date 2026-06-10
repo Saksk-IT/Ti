@@ -2,30 +2,41 @@
 
 ## 配置步骤
 
-### 1. 环境变量配置
+### 1. 后台系统设置配置
 
-微信小程序的 AppID 和 Secret 已经配置在 `.env` 文件中：
+推荐在管理后台配置微信小程序参数：
+
+1. 登录管理后台
+2. 进入「系统设置」→「微信小程序配置」
+3. 填写 AppID、AppSecret，并按需调整扫码登录小程序码版本与路径校验
+4. 保存后约 15 秒内生效
+
+后台配置会优先于环境变量，Web 扫码登录和小程序微信登录共用同一套配置。
+
+### 2. 环境变量兜底配置
+
+如果后台暂未配置，应用会继续读取 Docker 环境变量：
 
 ```
-WECHAT_APPID=wxfc4c270f007773ab
-WECHAT_SECRET=714b6315c5e27cb2689c3c1d5bd54e2d
+WECHAT_APPID=你的AppID
+WECHAT_SECRET=你的AppSecret
+WECHAT_MINICODE_ENV_VERSION=
+WECHAT_MINICODE_CHECK_PATH=auto
 ```
 
-### 2. 验证配置
+### 3. 验证配置
 
-配置已经生效，应用会自动从 `.env` 文件加载这些配置。
+后台保存后无需重启；环境变量变更后需要重启 Docker 服务才能加载。
 
-### 3. 重启应用
+### 4. 重启应用
 
-如果应用正在运行，需要重启才能加载新的环境变量：
+如果修改的是环境变量，需要重启应用：
 
 ```bash
-# 停止当前运行的应用（Ctrl+C）
-# 然后重新启动
-python run.py
+docker compose --env-file .env -f compose.dev.yml restart web worker
 ```
 
-### 4. 测试微信登录
+### 5. 测试微信登录
 
 配置完成后，小程序的微信登录功能应该可以正常工作了。
 
@@ -38,8 +49,8 @@ python run.py
    - 使用 `.env.example` 作为模板（不包含真实密钥）
 
 2. **生产环境配置**
-   - 生产环境建议使用环境变量而非 `.env` 文件
-   - 可以通过服务器环境变量或容器配置来设置
+   - 推荐在后台系统设置中配置，环境变量作为兜底
+   - 如使用环境变量，可以通过服务器环境变量或容器配置来设置
 
 3. **定期更换 Secret**
    - 如果密钥泄露，立即在微信公众平台重置 AppSecret
@@ -59,12 +70,8 @@ python run.py
 如果微信登录仍然失败，请检查：
 
 1. **配置是否正确加载**
-   ```python
-   from app import create_app
-   app = create_app('development')
-   print(app.config.get('WECHAT_APPID'))
-   print(app.config.get('WECHAT_SECRET'))
-   ```
+   - 优先检查管理后台「系统设置」→「微信小程序配置」
+   - 后台为空时再检查 Docker 环境变量 `WECHAT_APPID` 和 `WECHAT_SECRET`
 
 2. **AppID 和 Secret 是否正确**
    - 确认没有多余的空格或换行
@@ -77,4 +84,3 @@ python run.py
 4. **日志信息**
    - 查看应用日志（`logs/app.log`）
    - 查看微信 API 返回的错误信息
-

@@ -20,6 +20,7 @@ _OPENAI_BASE_URL = 'https://api.openai.com/v1'
 _SECRET_CONFIG_KEYS = {
     'ai_api_key',
     'dashscope_api_key',
+    'wechat_secret',
 }
 
 
@@ -76,6 +77,23 @@ def _as_int(value: Any, default: int) -> int:
         return int(value)
     except Exception:
         return int(default)
+
+
+def _as_optional_bool(value: Any) -> Optional[bool]:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    text = str(value).strip().lower()
+    if not text or text == 'auto':
+        return None
+    if text in {'1', 'true', 'yes', 'on'}:
+        return True
+    if text in {'0', 'false', 'no', 'off'}:
+        return False
+    return None
 
 
 class SystemConfigService:
@@ -451,6 +469,60 @@ class SystemConfigService:
             **cfg,
             'access_key_id': SystemConfigService.mask_secret(cfg['access_key_id'], prefix=3, suffix=3),
             'access_key_secret': SystemConfigService.mask_secret(cfg['access_key_secret'], prefix=3, suffix=3),
+        }
+
+    # ── 微信小程序配置 ─────────────────────────────────────
+
+    @staticmethod
+    def get_wechat_miniprogram_config() -> Dict[str, Any]:
+        env_version = str(SystemConfigService._get_runtime_value_multi(
+            'wechat_minicode_env_version',
+            ('WECHAT_MINICODE_ENV_VERSION',),
+            ('WECHAT_MINICODE_ENV_VERSION',),
+            '',
+        ) or '').strip().lower()
+        if env_version not in {'', 'release', 'trial', 'develop'}:
+            env_version = ''
+
+        return {
+            'appid': str(SystemConfigService._get_runtime_value_multi(
+                'wechat_appid',
+                ('WECHAT_APPID', 'WX_APPID'),
+                ('WECHAT_APPID', 'WX_APPID'),
+                '',
+            ) or '').strip(),
+            'secret': str(SystemConfigService._get_runtime_value_multi(
+                'wechat_secret',
+                ('WECHAT_SECRET', 'WX_SECRET'),
+                ('WECHAT_SECRET', 'WX_SECRET'),
+                '',
+            ) or ''),
+            'minicode_env_version': env_version,
+            'minicode_check_path': _as_optional_bool(SystemConfigService._get_runtime_value_multi(
+                'wechat_minicode_check_path',
+                ('WECHAT_MINICODE_CHECK_PATH',),
+                ('WECHAT_MINICODE_CHECK_PATH',),
+                None,
+            )),
+        }
+
+    @staticmethod
+    def get_wechat_miniprogram_config_masked() -> Dict[str, Any]:
+        cfg = SystemConfigService.get_wechat_miniprogram_config()
+        return {
+            **cfg,
+            'secret': SystemConfigService.mask_secret(cfg.get('secret', ''), prefix=3, suffix=3),
+        }
+
+    @staticmethod
+    def get_wechat_miniprogram_form_config() -> Dict[str, str]:
+        cfg = SystemConfigService.get_wechat_miniprogram_config_masked()
+        check_path = cfg.get('minicode_check_path')
+        return {
+            'wechat_appid': cfg.get('appid', ''),
+            'wechat_secret': cfg.get('secret', ''),
+            'wechat_minicode_env_version': cfg.get('minicode_env_version', ''),
+            'wechat_minicode_check_path': 'auto' if check_path is None else ('true' if check_path else 'false'),
         }
 
     # ── 登录方式配置 ───────────────────────────────────────

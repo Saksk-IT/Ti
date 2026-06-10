@@ -128,6 +128,12 @@ class Config:
     # 微信小程序配置
     WECHAT_APPID = os.environ.get('WECHAT_APPID') or os.environ.get('WX_APPID')
     WECHAT_SECRET = os.environ.get('WECHAT_SECRET') or os.environ.get('WX_SECRET')
+    WECHAT_MINICODE_ENV_VERSION = os.environ.get('WECHAT_MINICODE_ENV_VERSION', '')
+    _WECHAT_MINICODE_CHECK_PATH_RAW = os.environ.get('WECHAT_MINICODE_CHECK_PATH')
+    if _WECHAT_MINICODE_CHECK_PATH_RAW is None or str(_WECHAT_MINICODE_CHECK_PATH_RAW).strip().lower() == 'auto':
+        WECHAT_MINICODE_CHECK_PATH = None
+    else:
+        WECHAT_MINICODE_CHECK_PATH = str(_WECHAT_MINICODE_CHECK_PATH_RAW).strip().lower() in ['true', 'on', '1', 'yes']
 
     # 阿里云号码认证服务（DYPNS）
     ALIYUN_ACCESS_KEY_ID = os.environ.get('ALIYUN_ACCESS_KEY_ID')

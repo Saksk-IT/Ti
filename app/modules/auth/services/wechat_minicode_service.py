@@ -13,6 +13,7 @@ from flask import current_app
 
 
 _ACCESS_TOKEN_CACHE = {
+    "appid": None,  # type: Optional[str]
     "token": None,  # type: Optional[str]
     "expires_at": 0.0,  # unix seconds
 }
@@ -21,8 +22,11 @@ _ACCESS_TOKEN_CACHE = {
 class WechatMiniCodeService:
     @staticmethod
     def _get_appid_secret() -> tuple[str, str]:
-        appid = current_app.config.get("WECHAT_APPID") or current_app.config.get("WX_APPID")
-        secret = current_app.config.get("WECHAT_SECRET") or current_app.config.get("WX_SECRET")
+        from app.modules.admin.services.system_config_service import SystemConfigService
+
+        cfg = SystemConfigService.get_wechat_miniprogram_config()
+        appid = cfg.get("appid")
+        secret = cfg.get("secret")
         if not appid or not secret:
             raise ValueError("微信小程序配置缺失：WECHAT_APPID / WECHAT_SECRET")
         return str(appid), str(secret)
@@ -30,12 +34,13 @@ class WechatMiniCodeService:
     @staticmethod
     def get_access_token() -> str:
         now = time.time()
+        appid, secret = WechatMiniCodeService._get_appid_secret()
         cached = _ACCESS_TOKEN_CACHE.get("token")
         expires_at = float(_ACCESS_TOKEN_CACHE.get("expires_at") or 0)
-        if cached and now < (expires_at - 60):
+        cached_appid = _ACCESS_TOKEN_CACHE.get("appid")
+        if cached and cached_appid == appid and now < (expires_at - 60):
             return str(cached)
 
-        appid, secret = WechatMiniCodeService._get_appid_secret()
         url = "https://api.weixin.qq.com/cgi-bin/token"
         params = {"grant_type": "client_credential", "appid": appid, "secret": secret}
         resp = requests.get(url, params=params, timeout=10)
@@ -48,8 +53,11 @@ class WechatMiniCodeService:
         if not token or expires_in <= 0:
             raise RuntimeError("获取微信 access_token 失败: 返回数据异常")
 
-        _ACCESS_TOKEN_CACHE["token"] = token
-        _ACCESS_TOKEN_CACHE["expires_at"] = now + max(0, expires_in)
+        _ACCESS_TOKEN_CACHE.update({
+            "appid": appid,
+            "token": token,
+            "expires_at": now + max(0, expires_in),
+        })
         return str(token)
 
     @staticmethod
@@ -68,12 +76,15 @@ class WechatMiniCodeService:
 
         token = WechatMiniCodeService.get_access_token()
         url = f"https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token={token}"
-        env_version = (current_app.config.get("WECHAT_MINICODE_ENV_VERSION") or "").strip()
+        from app.modules.admin.services.system_config_service import SystemConfigService
+
+        cfg = SystemConfigService.get_wechat_miniprogram_config()
+        env_version = (cfg.get("minicode_env_version") or "").strip()
         if not env_version:
             env_version = "develop" if bool(current_app.config.get("DEBUG") or current_app.debug) else "release"
         if env_version not in ("release", "trial", "develop"):
             env_version = "release"
-        check_path = current_app.config.get("WECHAT_MINICODE_CHECK_PATH")
+        check_path = cfg.get("minicode_check_path")
         if check_path is None:
             # 开发/体验版常见"代码未提审导致 page 不存在"，默认不校验避免 41030
             check_path = False if env_version in ("develop", "trial") else True
