@@ -342,6 +342,22 @@ CERTBOT_EMAIL="$CERTBOT_EMAIL" \
 ./scripts/deploy_ubuntu24.sh
 ```
 
+如果更新后脚本停在健康检查并返回 `502`，但 `docker compose ps` 显示 `ti-web-1` 为 `healthy`，通常是 Docker 内 nginx 在 web 容器更新后仍缓存旧 upstream 地址。先不要重置数据库或删除 `var/`，复制下面命令重启 Docker 内 nginx 后再验证：
+
+```bash
+cd /opt/ti
+
+docker compose --env-file .env.production -f compose.prod.yml ps
+docker compose --env-file .env.production -f compose.prod.yml restart nginx
+
+curl --retry 10 --retry-delay 3 --retry-all-errors -fsS \
+  "http://127.0.0.1:8080/api/ping" | python3 -m json.tool
+
+DOMAIN="$(grep -E '^DOMAIN=' .env.production | cut -d= -f2-)"
+curl --retry 10 --retry-delay 3 --retry-all-errors -fsS \
+  "https://$DOMAIN/api/ping" | python3 -m json.tool
+```
+
 ## 9. 日常运维完整命令
 
 查看状态：
@@ -462,4 +478,31 @@ curl -fsS http://127.0.0.1:8080/api/ping | python3 -m json.tool
 cd /opt/ti
 docker compose --env-file .env.production -f compose.prod.yml logs --tail=200 web
 docker compose --env-file .env.production -f compose.prod.yml logs --tail=200 nginx
+```
+
+HTTPS 部署或更新后健康检查返回 `502`：
+
+```bash
+cd /opt/ti
+
+docker compose --env-file .env.production -f compose.prod.yml ps
+docker compose --env-file .env.production -f compose.prod.yml restart nginx
+
+curl --retry 10 --retry-delay 3 --retry-all-errors -fsS \
+  "http://127.0.0.1:8080/api/ping" | python3 -m json.tool
+
+DOMAIN="$(grep -E '^DOMAIN=' .env.production | cut -d= -f2-)"
+curl --retry 10 --retry-delay 3 --retry-all-errors -fsS \
+  "https://$DOMAIN/api/ping" | python3 -m json.tool
+```
+
+如果重启 Docker 内 nginx 后仍然是 `502`，继续收集反代链路日志：
+
+```bash
+cd /opt/ti
+
+docker compose --env-file .env.production -f compose.prod.yml logs --tail=200 nginx
+docker compose --env-file .env.production -f compose.prod.yml logs --tail=200 web
+sudo nginx -t
+sudo journalctl -u nginx -n 100 --no-pager
 ```
