@@ -3,11 +3,11 @@
     "title": "Java Web题库导入数据",
     "format": "Ti Portable Question Format",
     "source_dir": "/Users/sak/Desktop/web",
-    "generated_at": "2026-06-11T03:34:11+08:00",
-    "question_count": 417,
+    "generated_at": "2026-06-11T03:41:25+08:00",
+    "question_count": 429,
     "type_counts": {
-      "single_choice": 262,
-      "boolean": 106,
+      "single_choice": 268,
+      "boolean": 112,
       "essay": 49
     },
     "duplicate_question_count": 11,
@@ -15,7 +15,8 @@
       "选择题答案使用0基索引数组，例如A为[0]。",
       "判断题答案使用布尔数组，例如正确为[true]。",
       "简答、读程序与编码题统一导入为essay题型；源文件未给出答案时answer为空数组。",
-      "源资料中的重复题未去重，导入后可在Ti后台按需查重处理。"
+      "源资料中的重复题未去重，导入后可在Ti后台按需查重处理。",
+      "已追加截图中的 JavaBean 选择题与判断题。"
     ]
   },
   "questions": [
@@ -8203,6 +8204,245 @@
       ],
       "difficulty": 3,
       "id": 417
+    },
+    {
+      "type": "single_choice",
+      "content": "<jsp:useBean id=\"emp\" scope=\"request\" class=\"com.wfu.entity.Employee\"/>\n<jsp:setProperty name=\"emp\" property=\"ename\" value=\"Susan\"/>\n员工名:__________。\n显示员工姓名正确的做法是( )",
+      "options": [
+        "${requestScope.emp.ename}",
+        "${requestScope.emp.getEname()}",
+        "${requestScope.getAttribute(\"username\")}",
+        "${emp.getEname()}"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaBean",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 418
+    },
+    {
+      "type": "single_choice",
+      "content": "给定 TheBean 类, 假设还没有创建 TheBean 类的实例, 以下 JSP 标准动作语句__________\n能创建这个 bean 的一个新实例, 并把它存储在请求作用域。",
+      "options": [
+        "<jsp:useBean name=\"myBean\" type=\"com.example.TheBean\"/>",
+        "<jsp:takeBean name=\"myBean\" type=\"com.example.TheBean\"/>",
+        "<jsp:useBean id=\"myBean\" class=\"com.example.TheBean\" scope=\"request\"/>",
+        "<jsp:takeBean id=\"myBean\" class=\"com.example.TheBean\" scope=\"request\"/>"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaBean",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 419
+    },
+    {
+      "type": "single_choice",
+      "content": "下面哪一个是正确使用 JavaBean 的方式?",
+      "options": [
+        "<jsp:useBean name=\"beanName\" class=\"test.bean\"/>",
+        "<jsp:useBean id=\"beanName\" class=\"test.bean\"/>",
+        "<jsp:useBean bean=\"beanName\" class=\"test.bean\"/>",
+        "<jsp:useBean beanName=\"beanName\" class=\"test.bean\"/>"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaBean",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 420
+    },
+    {
+      "type": "single_choice",
+      "content": "在 JSP 页面中, 定义 JavaBean 的实例时, 需要用到的标记是:( )。",
+      "options": [
+        "<jsp:setProperty>",
+        "<jsp:useBean>",
+        "<jsp:getProperty>"
+      ],
+      "answer": [
+        1
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaBean",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 421
+    },
+    {
+      "type": "single_choice",
+      "content": "下列关于 Javabean 的说法正确的是（ ）",
+      "options": [
+        "Bean 文件的扩展名为.jsp",
+        "在 Jsp 文件中引用 Bean 必须要用<jsp:useBean>",
+        "JavaBean 本质上就是普通的 Java 文件",
+        "Jsp 文件通过<jsp:useBean>标签声明的 JavaBean 只能被 Jsp 文件访问, 而不能被 Servlet 访问。"
+      ],
+      "answer": [
+        2
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaBean",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 422
+    },
+    {
+      "type": "single_choice",
+      "content": "对于（ ）作用范围将使 Bean 对象, 当客户离开这个页面时, JSP 引擎取消为客户的该页面分配的 Bean, 释放他所占的内存空间。",
+      "options": [
+        "page",
+        "request",
+        "session",
+        "application"
+      ],
+      "answer": [
+        0
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaBean",
+        "选择题"
+      ],
+      "difficulty": 1,
+      "id": 423
+    },
+    {
+      "type": "boolean",
+      "content": "创建 JavaBean 时, 通常将它放在应用项目的 src 下。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaBean",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 424
+    },
+    {
+      "type": "boolean",
+      "content": "在 JSP 页面中既可以通过脚本代码直接访问 JavaBean, 也可以通过 JSP 动作标签来访问 JavaBean。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaBean",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 425
+    },
+    {
+      "type": "boolean",
+      "content": "借助于 JavaBean 技术将数据库中的常用操作封装到 Bean 中, 这样可以减少代码冗余, 减少代码维护工作量。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaBean",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 426
+    },
+    {
+      "type": "boolean",
+      "content": "JavaBean 是一个可重复使用的软件部件。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaBean",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 427
+    },
+    {
+      "type": "boolean",
+      "content": "JavaBean 是一个必须有主方法 main 的 java 类。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        false
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaBean",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 428
+    },
+    {
+      "type": "boolean",
+      "content": "JavaBean 实质上就是 Java 开发中的一个类, 通过属性和方法的封装成为具有某种功能和接口的类。",
+      "options": [
+        "正确",
+        "错误"
+      ],
+      "answer": [
+        true
+      ],
+      "analysis": "",
+      "tags": [
+        "Java Web",
+        "JavaBean",
+        "判断题"
+      ],
+      "difficulty": 1,
+      "id": 429
     }
   ]
 }

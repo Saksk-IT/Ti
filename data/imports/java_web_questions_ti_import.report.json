@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-06-11T03:34:11+08:00",
+  "generated_at": "2026-06-11T03:41:25+08:00",
   "source_dir": "/Users/sak/Desktop/web",
   "output_file": "/Users/sak/Documents/GitHub/Ti/data/imports/java_web_questions_ti_import.json",
   "desktop_copy": "/Users/sak/Desktop/web/java_web_questions_ti_import.json",
-  "question_count": 417,
+  "question_count": 429,
   "type_counts": {
-    "single_choice": 262,
-    "boolean": 106,
+    "single_choice": 268,
+    "boolean": 112,
     "essay": 49
   },
   "duplicate_question_count": 11,
@@ -113,6 +113,19 @@
       },
       "warning_count": 0,
       "warnings": []
+    },
+    {
+      "source": "JavaBean截图",
+      "section_counts": {
+        "选择题": 6,
+        "判断题": 6
+      },
+      "warning_count": 0,
+      "warnings": []
     }
+  ],
+  "appended_from_images": [
+    "/var/folders/jk/2r76ndz5255b5gv56l74f5br0000gn/T/codex-clipboard-89893b7c-75e4-487d-b163-4d4c5e721b8d.png",
+    "/var/folders/jk/2r76ndz5255b5gv56l74f5br0000gn/T/codex-clipboard-87f41906-0033-419f-9481-572a536b11a8.png"
   ]
 }
