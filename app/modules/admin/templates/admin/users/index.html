@@ -714,21 +714,33 @@
     return div.innerHTML;
   }
   
+  function parseDateValue(value) {
+    if (!value) return null;
+
+    const raw = String(value).trim();
+    if (!raw) return null;
+
+    const directDate = new Date(raw);
+    if (!Number.isNaN(directDate.getTime())) return directDate;
+
+    const isoLikeDate = new Date(raw.replace(' ', 'T'));
+    if (!Number.isNaN(isoLikeDate.getTime())) return isoLikeDate;
+
+    return null;
+  }
+
   // 格式化日期时间
   function formatDateTime(dateStr) {
-    if (!dateStr) return '-';
-    try {
-      const date = new Date(dateStr.replace(' ', 'T'));
-      return date.toLocaleString('zh-CN', { 
-        year: 'numeric', 
-        month: '2-digit', 
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch (e) {
-      return dateStr;
-    }
+    const date = parseDateValue(dateStr);
+    if (!date) return dateStr || '-';
+
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   }
   
   // 格式化离线时长
@@ -736,9 +748,10 @@
     if (!lastActive) return '';
 
     try {
-      const lastActiveUTC = lastActive.includes('Z') ? lastActive : lastActive.replace(' ', 'T') + 'Z';
+      const last = parseDateValue(lastActive);
+      if (!last) return lastActive;
+
       const now = new Date();
-      const last = new Date(lastActiveUTC);
       const diffMs = now - last;
       const diffMins = Math.floor(diffMs / 60000);
       const diffHours = Math.floor(diffMs / 3600000);

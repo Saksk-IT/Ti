@@ -43,6 +43,58 @@ def _build_named_in(col: str, values: list, prefix: str = 'in') -> tuple[str, di
     return f"{col} IN ({placeholders})", params
 
 
+def _parse_admin_user_time(value):
+    """按 UTC 解释用户表中的无时区时间，避免 Flask jsonify 输出 RFC 日期。"""
+    if not value:
+        return None
+
+    if isinstance(value, datetime.datetime):
+        parsed = value
+    else:
+        raw_value = str(value).strip()
+        if not raw_value:
+            return None
+
+        normalized = raw_value[:-1] + '+00:00' if raw_value.endswith('Z') else raw_value
+        parsed = None
+        try:
+            parsed = datetime.datetime.fromisoformat(normalized)
+        except ValueError:
+            for fmt in (
+                '%Y-%m-%d %H:%M:%S.%f',
+                '%Y-%m-%d %H:%M:%S',
+                '%a, %d %b %Y %H:%M:%S GMT',
+            ):
+                try:
+                    parsed = datetime.datetime.strptime(raw_value, fmt)
+                    break
+                except ValueError:
+                    continue
+        if parsed is None:
+            return None
+
+    if parsed.tzinfo is not None:
+        parsed = parsed.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+    return parsed
+
+
+def _format_admin_user_time(value):
+    parsed = _parse_admin_user_time(value)
+    if parsed is None:
+        return None
+    return parsed.replace(microsecond=0).isoformat() + 'Z'
+
+
+def _is_user_online(last_active, now_utc=None) -> bool:
+    parsed = _parse_admin_user_time(last_active)
+    if parsed is None:
+        return False
+
+    now = now_utc or datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+    delta = now - parsed
+    return datetime.timedelta(0) <= delta < datetime.timedelta(minutes=5)
+
+
 @admin_api_bp.route('/users')
 @admin_required
 @limiter.limit("30 per minute;300 per hour")
@@ -109,22 +161,11 @@ def admin_api_users():
             query_params
         ).fetchall()
         
-        from datetime import datetime, timedelta
-        from app.core.utils.time_utils import now_bj
-
+        now_utc = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
         data = []
         for r in rows:
             m = r._mapping
-            # 判断在线状态：5分钟内有活动视为在线
-            is_online = False
             last_active_val = m.get('last_active')
-            if last_active_val:
-                try:
-                    last_active_str = str(last_active_val).replace('T', ' ').split('.')[0]
-                    last_active = datetime.strptime(last_active_str, '%Y-%m-%d %H:%M:%S')
-                    is_online = (now_bj() - last_active) < timedelta(minutes=5)
-                except Exception as e:
-                    current_app.logger.warning(f'解析 last_active 失败: {last_active_val}, 错误: {e}')
 
             data.append({
                 'id': m['id'],
@@ -133,9 +174,9 @@ def admin_api_users():
                 'is_subject_admin': bool(m.get('is_subject_admin', False)),
                 'is_notification_admin': bool(m.get('is_notification_admin', False)),
                 'is_locked': bool(m.get('is_locked', False)),
-                'created_at': m.get('created_at', ''),
-                'is_online': is_online,
-                'last_active': last_active_val,
+                'created_at': _format_admin_user_time(m.get('created_at')),
+                'is_online': _is_user_online(last_active_val, now_utc),
+                'last_active': _format_admin_user_time(last_active_val),
                 'restricted_subjects_count': m.get('restricted_subjects_count') or 0
             })
         
@@ -165,15 +206,8 @@ def admin_api_users():
             if um['is_locked']:
                 locked_count += 1
             # 统计在线用户（5分钟内有活动）
-            last_active_val = um.get('last_active')
-            if last_active_val:
-                try:
-                    last_active_str = str(last_active_val).replace('T', ' ').split('.')[0]
-                    last_active = datetime.strptime(last_active_str, '%Y-%m-%d %H:%M:%S')
-                    if (now_bj() - last_active) < timedelta(minutes=5):
-                        online_count += 1
-                except Exception:
-                    pass
+            if _is_user_online(um.get('last_active'), now_utc):
+                online_count += 1
         
         # 返回数据，包含全局统计数据
         return jsonify({
@@ -634,5 +668,3 @@ def admin_export_users():
         'Content-Type':'text/csv; charset=utf-8',
         'Content-Disposition':'attachment; filename=users.csv'
     }
-
-
