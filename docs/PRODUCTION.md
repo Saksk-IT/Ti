@@ -358,6 +358,22 @@ curl --retry 10 --retry-delay 3 --retry-all-errors -fsS \
   "https://$DOMAIN/api/ping" | python3 -m json.tool
 ```
 
+如果 `http://域名` 能访问应用，但 `https://域名` 在 TLS 握手阶段失败，通常是宿主机 Nginx 只有 80 反代配置，没有写入 443 SSL 配置。先拉取最新部署脚本，再重新执行 HTTPS 配置：
+
+```bash
+cd /opt/ti
+
+git pull --ff-only origin "$(git rev-parse --abbrev-ref HEAD)"
+
+read -r -p "域名: " DOMAIN
+read -r -p "Certbot 邮箱: " CERTBOT_EMAIL
+
+ENABLE_HTTPS=1 \
+DOMAIN="$DOMAIN" \
+CERTBOT_EMAIL="$CERTBOT_EMAIL" \
+./scripts/deploy_ubuntu24.sh
+```
+
 ## 9. 日常运维完整命令
 
 查看状态：
@@ -505,4 +521,21 @@ docker compose --env-file .env.production -f compose.prod.yml logs --tail=200 ng
 docker compose --env-file .env.production -f compose.prod.yml logs --tail=200 web
 sudo nginx -t
 sudo journalctl -u nginx -n 100 --no-pager
+```
+
+HTTP 正常但 HTTPS 握手失败：
+
+```bash
+cd /opt/ti
+
+curl -I "http://saksk.top" || true
+curl -k -I "https://saksk.top" || true
+sudo nginx -T | sed -n '/server_name saksk.top/,+80p'
+
+git pull --ff-only origin "$(git rev-parse --abbrev-ref HEAD)"
+
+ENABLE_HTTPS=1 \
+DOMAIN=saksk.top \
+CERTBOT_EMAIL="$(grep -E '^CERTBOT_EMAIL=' .env.production | cut -d= -f2-)" \
+./scripts/deploy_ubuntu24.sh
 ```

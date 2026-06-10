@@ -444,6 +444,15 @@ assert_web_cli_command() {
   fail "当前 web 镜像未提供 flask ${command_name} 命令。请先发布包含该命令的新 ${TI_IMAGE}，再在服务器执行 git pull --ff-only 与 ./scripts/deploy_ubuntu24.sh。"
 }
 
+certificate_files_exist() {
+  $SUDO test -f "/etc/letsencrypt/live/${APP_DOMAIN}/fullchain.pem" \
+    && $SUDO test -f "/etc/letsencrypt/live/${APP_DOMAIN}/privkey.pem"
+}
+
+certificate_dir_exists() {
+  $SUDO test -d "/etc/letsencrypt/live/${APP_DOMAIN}"
+}
+
 deploy_stack() {
   log "拉取应用镜像：${TI_IMAGE}"
   $SUDO docker pull "$TI_IMAGE"
@@ -477,7 +486,63 @@ configure_host_nginx() {
   fi
 
   log "配置宿主机 Nginx 反向代理"
-  $SUDO tee /etc/nginx/sites-available/ti.conf > /dev/null <<EOF
+  write_host_nginx_config
+  reload_host_nginx
+}
+
+write_host_nginx_config() {
+  if certificate_files_exist; then
+    $SUDO tee /etc/nginx/sites-available/ti.conf > /dev/null <<EOF
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${APP_DOMAIN};
+
+    location / {
+        return 301 https://\$host\$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name ${APP_DOMAIN};
+
+    ssl_certificate /etc/letsencrypt/live/${APP_DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${APP_DOMAIN}/privkey.pem;
+
+    client_max_body_size 10m;
+
+    location /sse/ {
+        proxy_pass http://127.0.0.1:${HTTP_PORT};
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header Connection "";
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 300s;
+        chunked_transfer_encoding off;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:${HTTP_PORT};
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Request-ID \$request_id;
+        proxy_connect_timeout 10s;
+        proxy_read_timeout 65s;
+        proxy_send_timeout 65s;
+    }
+}
+EOF
+  else
+    $SUDO tee /etc/nginx/sites-available/ti.conf > /dev/null <<EOF
 server {
     listen 80;
     listen [::]:80;
@@ -513,7 +578,10 @@ server {
     }
 }
 EOF
+  fi
+}
 
+reload_host_nginx() {
   $SUDO ln -sf /etc/nginx/sites-available/ti.conf /etc/nginx/sites-enabled/ti.conf
   $SUDO nginx -t
   $SUDO systemctl reload nginx
@@ -543,17 +611,18 @@ install_certbot() {
   $SUDO snap install --classic certbot
   $SUDO ln -sf /snap/bin/certbot /usr/bin/certbot
 
-  if [[ ! -d "/etc/letsencrypt/live/${APP_DOMAIN}" ]]; then
+  if ! certificate_dir_exists; then
     log "申请 HTTPS 证书"
-    $SUDO certbot --nginx \
+    $SUDO certbot certonly --nginx \
       -d "$APP_DOMAIN" \
-      --redirect \
       -m "$CERTBOT_EMAIL" \
       --agree-tos \
       --no-eff-email
   else
     log "检测到 ${APP_DOMAIN} 证书已存在，跳过首次签发"
   fi
+
+  configure_host_nginx
 }
 
 validate_deploy() {
