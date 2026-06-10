@@ -1584,7 +1584,7 @@
             scheduleSaveDraft('edit');
           });
 
-          previewEl.addEventListener('click', function (ev) {
+          previewEl.addEventListener('click', async function (ev) {
             const el = ev.target;
             if (!el) return;
             const btn = el.closest('[data-action]');
