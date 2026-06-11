@@ -75,13 +75,9 @@
             <view class="pb-cover {{item.has_cover ? 'has-cover' : ''}}">
               <image wx:if="{{item.has_cover}}" src="{{item.cover_url}}" mode="aspectFill"></image>
               <view wx:else class="pb-cover-fallback">
-                <view class="mini-cover-grid"></view>
-                <view class="mini-cover-mark"><text>题</text></view>
-                <view class="mini-cover-pill"><text>{{item.type_label}}</text></view>
                 <view class="mini-cover-copy">
-                  <text class="mini-cover-kicker">Sak AI</text>
                   <view class="mini-cover-title"><text>{{item.name}}</text></view>
-                  <text class="mini-cover-sub">{{item.question_count}} 题 · {{item.owner_label}}</text>
+                  <text class="mini-cover-sub">{{item.type_label}} · {{item.question_count}} 题</text>
                 </view>
               </view>
             </view>
@@ -99,8 +95,6 @@
                 <text>{{item.question_count}} 题</text>
                 <text class="pb-dot">·</text>
                 <text>创建 {{item.created_label}}</text>
-                <text class="pb-dot">·</text>
-                <text>创建者 {{item.owner_label}}</text>
               </view>
             </view>
           </view>
