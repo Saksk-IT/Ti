@@ -50,13 +50,21 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var api_1 = require("../../utils/api");
 var auth_1 = require("../../utils/auth");
 var nav_1 = require("../../utils/nav");
-var config_1 = require("../../utils/config");
 var user_settings_1 = require("../../utils/user-settings");
 var quiz_source_1 = require("../../utils/quiz-source");
 var theme_1 = require("../../utils/theme");
 var request_state_1 = require("../../behaviors/request-state");
 var set_data_batcher_1 = require("../../utils/set-data-batcher");
 var bank_detail_helpers_1 = require("./modules/bank-detail-helpers");
+var _ps = new WeakMap();
+function _p(ctx) {
+    var s = _ps.get(ctx);
+    if (!s) {
+        s = {};
+        _ps.set(ctx, s);
+    }
+    return s;
+}
 Page({
     behaviors: [request_state_1.requestStateBehavior],
     data: {
@@ -195,11 +203,6 @@ Page({
         wechatShareToken: '',
         wechatShareReady: false,
         wechatSharePreparing: false,
-        newShare: {
-            permission: 'read',
-            expiresIn: 0,
-            maxUses: 0
-        }
     },
     startCountTimer: null,
     startCountReq: 0,
@@ -209,14 +212,14 @@ Page({
     scopeForced: '',
     setDataBatcher: null,
     ensureSetDataBatcher: function () {
-        if (this.setDataBatcher)
+        if (_p(this).setDataBatcher)
             return;
-        this.setDataBatcher = (0, set_data_batcher_1.createSetDataBatcher)(this.setData.bind(this));
+        _p(this).setDataBatcher = (0, set_data_batcher_1.createSetDataBatcher)(this.setData.bind(this));
     },
     patchData: function (patch, callback, immediate) {
         if (immediate === void 0) { immediate = false; }
         this.ensureSetDataBatcher();
-        var fn = this.setDataBatcher;
+        var fn = _p(this).setDataBatcher;
         if (typeof fn === 'function') {
             fn(patch, callback, { immediate: immediate });
             return;
@@ -233,8 +236,8 @@ Page({
         var scopeFromParams = (tabKey === 'favorites' || tabKey === 'mistakes')
             ? (0, bank_detail_helpers_1.normalizeScope)(tabKey)
             : (entry === 'favorites' || entry === 'mistakes') ? (0, bank_detail_helpers_1.normalizeScope)(entry) : 'all';
-        this.scopeForced = scopeFromParams !== 'all' ? scopeFromParams : '';
-        this.tabExplicit = rawTab !== undefined && rawTab !== null && String(rawTab).trim() !== '';
+        _p(this).scopeForced = scopeFromParams !== 'all' ? scopeFromParams : '';
+        _p(this).tabExplicit = rawTab !== undefined && rawTab !== null && String(rawTab).trim() !== '';
         this.patchData({
             bankId: Number.isFinite(bankId) ? bankId : 0,
             tab: tab,
@@ -266,7 +269,6 @@ Page({
         }
         if (this.data.tab === 'share' && this.data.canManageShare) {
             this.loadUsageStats();
-            this.ensureWechatShareToken(false);
         }
         if (this.data.tab === 'stats') {
             this.ensureStatsDetail();
@@ -302,10 +304,10 @@ Page({
     },
     bootstrap: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var bankId, keyType, keyTag, keyScope, keySearchType, keyStatsSubTab, keyReinforceSubTab, storedType, storedTag, storedScope, storedSearchType, storedStatsSubTab, storedReinforceSubTab, shuffleQuestions, shuffleOptions, entry, tab, practiceScope, forcedScope, statsSubTab, reinforceSubTab, _a, detailRes, countsRes, myStatsRes, tagsRes, bankData, countsData, myStatsData, tagsData, bankName, bankDescription, accessType, permission, canManageShare, bankIsPublic, bankAllowCopy, bankPublicDescription, tabOrderKey, tabOrder, detailTabs, typesRaw, types, qType, tagsRaw, tags, tag, searchType, totalCount, favCount, mistakeCount, e_1;
-            var _b, _c, _d, _f;
-            return __generator(this, function (_g) {
-                switch (_g.label) {
+            var bankId, keyType, keyTag, keyScope, keySearchType, keyStatsSubTab, keyReinforceSubTab, storedType, storedTag, storedScope, storedSearchType, storedStatsSubTab, storedReinforceSubTab, shuffleQuestions, shuffleOptions, entry, tab, practiceScope, forcedScope, statsSubTab, reinforceSubTab, _a, detailRes, countsRes, myStatsRes, tagsRes, bankData, countsData, myStatsData, tagsResObj, tagsData, bankName, bankDescription, accessType, permission, canManageShare, bankIsPublic, bankAllowCopy, bankPublicDescription, tabOrderKey, tabOrder, detailTabs, typesRaw, types, qType, tagsDataInner, tagsRaw, tags, tag, searchType, totalCount, favCount, mistakeCount, e_1;
+            var _b, _c;
+            return __generator(this, function (_d) {
+                switch (_d.label) {
                     case 0:
                         bankId = Number(this.data.bankId || 0);
                         if (!Number.isFinite(bankId) || bankId <= 0) {
@@ -331,22 +333,22 @@ Page({
                         entry = String(this.data.entry || '').trim().toLowerCase();
                         tab = this.data.tab;
                         practiceScope = this.data.practiceScope || 'all';
-                        if (!this.tabExplicit) {
+                        if (!_p(this).tabExplicit) {
                             if (entry === 'favorites') {
                                 tab = 'practice';
                                 practiceScope = 'favorites';
-                                this.scopeForced = 'favorites';
+                                _p(this).scopeForced = 'favorites';
                             }
                             else if (entry === 'mistakes') {
                                 tab = 'practice';
                                 practiceScope = 'mistakes';
-                                this.scopeForced = 'mistakes';
+                                _p(this).scopeForced = 'mistakes';
                             }
                             else if (entry === 'exam') {
                                 tab = 'exam';
                             }
                         }
-                        forcedScope = this.scopeForced;
+                        forcedScope = _p(this).scopeForced || '';
                         if (forcedScope === 'favorites' || forcedScope === 'mistakes') {
                             practiceScope = forcedScope;
                         }
@@ -356,9 +358,9 @@ Page({
                         statsSubTab = (storedStatsSubTab === 'mistakes' || storedStatsSubTab === 'favorites') ? storedStatsSubTab : 'global';
                         reinforceSubTab = (0, bank_detail_helpers_1.normalizeReinforceSubTab)(storedReinforceSubTab);
                         this.setData({ loading: true, startError: '' });
-                        _g.label = 1;
+                        _d.label = 1;
                     case 1:
-                        _g.trys.push([1, 3, 4, 5]);
+                        _d.trys.push([1, 3, 4, 5]);
                         return [4 /*yield*/, Promise.all([
                                 api_1.api.getBankDetail(bankId),
                                 api_1.api.getBankUserCounts(bankId, { source: 'all' }).catch(function () { return ({ data: { total: 0, favorites: 0, mistakes: 0 } }); }),
@@ -366,11 +368,12 @@ Page({
                                 api_1.api.getBankTags(bankId).catch(function () { return ({ data: { tags: [] } }); })
                             ])];
                     case 2:
-                        _a = _g.sent(), detailRes = _a[0], countsRes = _a[1], myStatsRes = _a[2], tagsRes = _a[3];
-                        bankData = (detailRes === null || detailRes === void 0 ? void 0 : detailRes.data) || detailRes || {};
-                        countsData = (countsRes === null || countsRes === void 0 ? void 0 : countsRes.data) || countsRes || {};
-                        myStatsData = (myStatsRes === null || myStatsRes === void 0 ? void 0 : myStatsRes.data) || myStatsRes || {};
-                        tagsData = (tagsRes === null || tagsRes === void 0 ? void 0 : tagsRes.data) || ((_b = tagsRes === null || tagsRes === void 0 ? void 0 : tagsRes.data) === null || _b === void 0 ? void 0 : _b.data) || (tagsRes === null || tagsRes === void 0 ? void 0 : tagsRes.data) || tagsRes || {};
+                        _a = _d.sent(), detailRes = _a[0], countsRes = _a[1], myStatsRes = _a[2], tagsRes = _a[3];
+                        bankData = ((detailRes === null || detailRes === void 0 ? void 0 : detailRes.data) || detailRes || {});
+                        countsData = ((countsRes === null || countsRes === void 0 ? void 0 : countsRes.data) || countsRes || {});
+                        myStatsData = ((myStatsRes === null || myStatsRes === void 0 ? void 0 : myStatsRes.data) || myStatsRes || {});
+                        tagsResObj = (tagsRes && typeof tagsRes === 'object' ? tagsRes : {});
+                        tagsData = ((tagsResObj.data && typeof tagsResObj.data === 'object' ? tagsResObj.data : tagsResObj) || {});
                         bankName = String((bankData === null || bankData === void 0 ? void 0 : bankData.name) || '').trim();
                         bankDescription = String((bankData === null || bankData === void 0 ? void 0 : bankData.description) || '').trim();
                         accessType = String((bankData === null || bankData === void 0 ? void 0 : bankData.access_type) || '').trim().toLowerCase();
@@ -389,17 +392,18 @@ Page({
                             .filter(function (t) { return typeof t === 'string' && t.trim(); })
                             .map(function (t) { return String(t).trim(); });
                         qType = storedType === 'all' || types.includes(storedType) ? storedType : 'all';
-                        tagsRaw = Array.isArray(tagsData === null || tagsData === void 0 ? void 0 : tagsData.tags)
+                        tagsDataInner = (tagsData.data && typeof tagsData.data === 'object' ? tagsData.data : {});
+                        tagsRaw = Array.isArray(tagsData.tags)
                             ? tagsData.tags
-                            : Array.isArray((_c = tagsData === null || tagsData === void 0 ? void 0 : tagsData.data) === null || _c === void 0 ? void 0 : _c.tags)
-                                ? tagsData.data.tags
+                            : Array.isArray(tagsDataInner.tags)
+                                ? tagsDataInner.tags
                                 : [];
                         tags = (tagsRaw || [])
                             .map(function (t) { return ({ name: String((t === null || t === void 0 ? void 0 : t.name) || '').trim(), count: t === null || t === void 0 ? void 0 : t.count }); })
                             .filter(function (t) { return t.name; });
                         tag = storedTag === 'all' || tags.some(function (t) { return t.name === storedTag; }) ? storedTag : 'all';
                         searchType = storedSearchType === 'all' || types.includes(storedSearchType) ? storedSearchType : 'all';
-                        totalCount = Number((_f = (_d = countsData === null || countsData === void 0 ? void 0 : countsData.total) !== null && _d !== void 0 ? _d : bankData === null || bankData === void 0 ? void 0 : bankData.question_count) !== null && _f !== void 0 ? _f : 0) || 0;
+                        totalCount = Number((_c = (_b = countsData === null || countsData === void 0 ? void 0 : countsData.total) !== null && _b !== void 0 ? _b : bankData === null || bankData === void 0 ? void 0 : bankData.question_count) !== null && _c !== void 0 ? _c : 0) || 0;
                         favCount = Number((countsData === null || countsData === void 0 ? void 0 : countsData.favorites) || 0) || 0;
                         mistakeCount = Number((countsData === null || countsData === void 0 ? void 0 : countsData.mistakes) || 0) || 0;
                         this.setData({
@@ -479,7 +483,7 @@ Page({
                         }
                         return [3 /*break*/, 5];
                     case 3:
-                        e_1 = _g.sent();
+                        e_1 = _d.sent();
                         wx.showToast({ title: (e_1 && e_1.message) || '加载失败', icon: 'none' });
                         return [3 /*break*/, 5];
                     case 4:
@@ -521,7 +525,7 @@ Page({
                     case 0:
                         style = (((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.style) || 'default');
                         theme_1.themeManager.setStyle(style);
-                        this.patchData(__assign(__assign({}, theme_1.themeManager.getPageData()), { drawerOpen: false }), undefined, true);
+                        this.patchData(__assign(__assign({}, (theme_1.themeManager.getPageData())), { drawerOpen: false }), undefined, true);
                         return [4 /*yield*/, (0, user_settings_1.syncUserSettingsToServer)()];
                     case 1:
                         _b.sent();
@@ -532,7 +536,7 @@ Page({
     },
     onCycleThemeModeTap: function () {
         var mode = theme_1.themeManager.cycleMode();
-        this.patchData(__assign(__assign({}, theme_1.themeManager.getPageData()), { themeMode: mode }));
+        this.patchData(__assign(__assign({}, (theme_1.themeManager.getPageData())), { themeMode: mode }));
     },
     initDetailTabOrder: function () {
         var bankId = Number(this.data.bankId || 0);
@@ -593,7 +597,6 @@ Page({
             }
             if (tab === 'share' && _this.data.canManageShare) {
                 _this.loadUsageStats();
-                _this.ensureWechatShareToken(false);
             }
             if (tab === 'stats') {
                 _this.ensureStatsDetail();
@@ -657,7 +660,6 @@ Page({
         this.patchData({ tab: 'share', startError: '' }, function () {
             if (_this.data.canManageShare) {
                 _this.loadUsageStats();
-                _this.ensureWechatShareToken(false);
             }
         });
     },
@@ -970,7 +972,7 @@ Page({
                             if (similarOnlyIds.length) {
                                 startIds = similarOnlyIds.slice();
                                 pairsText = pairsCount > 0 ? "".concat(pairsCount, " \u7EC4") : '';
-                                desc = "\u5DF2\u5728\u672C\u9898\u5E93\u68C0\u6D4B\u5230".concat(pairsText ? (' ' + pairsText) : '', "\u76F8\u4F3C\u9898\uFF08\u9898\u5E72\u76F8\u4F3C\u4F18\u5148\uFF0C\u9009\u9879\u76F8\u4F3C\u515C\u5E95\uFF09\uFF0C\u8BAD\u7EC3\u5171 ").concat(similarOnlyIds.length, " \u9053\u3002");
+                                desc = "\u68C0\u6D4B\u5230".concat(pairsText ? (' ' + pairsText) : '', "\u76F8\u4F3C\u9898\uFF08\u9898\u5E72\u3001\u9009\u9879\u76F8\u4F3C\uFF09\uFF0C\u5171 ").concat(similarOnlyIds.length, " \u9053\u3002");
                             }
                             else {
                                 desc = wrongTotal > 0 ? '暂未检测到明显相似题（题干/选项相似），可先做错题加强。' : '暂未检测到明显相似题（题干/选项相似）。';
@@ -1034,7 +1036,7 @@ Page({
         var bankId = Number(this.data.bankId || 0);
         if (bankId)
             (0, bank_detail_helpers_1.setStoredString)("bank_".concat(bankId, "_scope"), next);
-        this.scopeForced = '';
+        _p(this).scopeForced = '';
         this.setData({ practiceScope: next, startError: '' }, function () {
             if (_this.data.tab === 'practice') {
                 _this.scheduleStartCount();
@@ -1242,7 +1244,7 @@ Page({
                         qid = Number(questionId || 0);
                         if (!Number.isFinite(qid) || qid <= 0)
                             return [2 /*return*/];
-                        reqId = ++this.qDetailReq;
+                        reqId = ++_p(this).qDetailReq;
                         this.setData({
                             qDetailOpen: true,
                             qDetailLoading: true,
@@ -1260,7 +1262,7 @@ Page({
                         return [4 /*yield*/, api_1.api.getBankQuestionDetail(bankId, qid)];
                     case 2:
                         q = _a.sent();
-                        if (reqId !== this.qDetailReq)
+                        if (reqId !== _p(this).qDetailReq)
                             return [2 /*return*/];
                         qType = String((q === null || q === void 0 ? void 0 : q.q_type) || '').trim();
                         options = (0, bank_detail_helpers_1.normalizeBankDetailOptions)(q === null || q === void 0 ? void 0 : q.options, qType);
@@ -1281,7 +1283,7 @@ Page({
                         return [3 /*break*/, 4];
                     case 3:
                         err_3 = _a.sent();
-                        if (reqId !== this.qDetailReq)
+                        if (reqId !== _p(this).qDetailReq)
                             return [2 /*return*/];
                         this.setData({
                             qDetailLoading: false,
@@ -1802,7 +1804,7 @@ Page({
                         bankId = Number(this.data.bankId || 0);
                         if (!Number.isFinite(bankId) || bankId <= 0)
                             return [2 /*return*/];
-                        reqId = ++this.statsReq;
+                        reqId = ++_p(this).statsReq;
                         this.patchData({ statsLoading: true, statsError: '', statsQuestions: [], favoritesTrend: {} });
                         _b.label = 1;
                     case 1:
@@ -1830,7 +1832,7 @@ Page({
                             ])];
                     case 2:
                         _a = _b.sent(), statsRes = _a[0], qRes = _a[1], favRes = _a[2];
-                        if (reqId !== this.statsReq)
+                        if (reqId !== _p(this).statsReq)
                             return [2 /*return*/];
                         if (!statsRes.ok)
                             throw statsRes.reason;
@@ -1909,7 +1911,7 @@ Page({
                         return [3 /*break*/, 4];
                     case 3:
                         err_6 = _b.sent();
-                        if (reqId !== this.statsReq)
+                        if (reqId !== _p(this).statsReq)
                             return [2 /*return*/];
                         this.patchData({
                             statsLoading: false,
@@ -1948,24 +1950,9 @@ Page({
             return '';
         }
     },
-    getShareBaseUrl: function () {
-        try {
-            var apiUrl = String(config_1.config.getApiUrl ? config_1.config.getApiUrl() : config_1.config.apiBaseUrl || '').trim();
-            return apiUrl.replace(/\/api\/?$/i, '');
-        }
-        catch (_a) {
-            return '';
-        }
-    },
-    buildShareLink: function (token) {
-        var base = this.getShareBaseUrl();
-        if (!base)
-            return token;
-        return "".concat(base, "/bank/join?token=").concat(encodeURIComponent(String(token || '')));
-    },
     loadShares: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var bankId, res, data, raw, base_2, shares, picked, err_7, msg;
+            var bankId, res, data, raw, shares, picked, err_7, msg;
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -1986,13 +1973,11 @@ Page({
                         res = _a.sent();
                         data = (res === null || res === void 0 ? void 0 : res.data) || res || {};
                         raw = Array.isArray(data === null || data === void 0 ? void 0 : data.shares) ? data.shares : [];
-                        base_2 = this.getShareBaseUrl();
-                        shares = raw.map(function (s) {
-                            var token = (s === null || s === void 0 ? void 0 : s.share_token) ? String(s.share_token) : '';
-                            var share_link = token ? (base_2 ? "".concat(base_2, "/bank/join?token=").concat(encodeURIComponent(token)) : token) : '';
+                        shares = raw
+                            .filter(function (s) { return !!(s === null || s === void 0 ? void 0 : s.is_active); })
+                            .map(function (s) {
                             return Object.assign({}, s, {
-                                expires_at_display: (s === null || s === void 0 ? void 0 : s.expires_at) ? _this.formatDate(String(s.expires_at)) : '',
-                                share_link: share_link
+                                expires_at_display: (s === null || s === void 0 ? void 0 : s.expires_at) ? _this.formatDate(String(s.expires_at)) : ''
                             });
                         });
                         picked = this.pickShareTokenFromShares(shares);
@@ -2053,20 +2038,21 @@ Page({
     },
     ensureWechatShareToken: function () {
         return __awaiter(this, arguments, void 0, function (force) {
-            var bankId, token, payload, created, e_6;
+            var bankId, currentToken, token, payload, created, e_6;
             if (force === void 0) { force = false; }
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         bankId = Number(this.data.bankId || 0);
                         if (!Number.isFinite(bankId) || bankId <= 0)
-                            return [2 /*return*/];
+                            return [2 /*return*/, ''];
                         if (!this.data.canManageShare)
-                            return [2 /*return*/];
-                        if (!force && this.data.wechatShareReady && String(this.data.wechatShareToken || '').trim())
-                            return [2 /*return*/];
+                            return [2 /*return*/, ''];
+                        currentToken = String(this.data.wechatShareToken || '').trim();
+                        if (!force && this.data.wechatShareReady && currentToken)
+                            return [2 /*return*/, currentToken];
                         if (this.data.wechatSharePreparing)
-                            return [2 /*return*/];
+                            return [2 /*return*/, currentToken];
                         this.patchData({ wechatSharePreparing: true, wechatShareReady: false });
                         _a.label = 1;
                     case 1:
@@ -2078,11 +2064,9 @@ Page({
                         if (!!token) return [3 /*break*/, 4];
                         payload = {
                             type: 'link',
-                            permission: this.data.newShare.permission,
-                            expires_in: this.data.newShare.expiresIn ? this.data.newShare.expiresIn : null
+                            permission: 'read',
+                            expires_in: null
                         };
-                        if (this.data.newShare.maxUses)
-                            payload.max_uses = this.data.newShare.maxUses;
                         return [4 /*yield*/, api_1.api.createBankShare(bankId, payload)];
                     case 3:
                         created = _a.sent();
@@ -2096,10 +2080,11 @@ Page({
                         _a.sent();
                         this.loadUsageStats();
                         _a.label = 6;
-                    case 6: return [3 /*break*/, 9];
+                    case 6: return [2 /*return*/, token];
                     case 7:
                         e_6 = _a.sent();
-                        return [3 /*break*/, 9];
+                        this.patchData({ wechatShareToken: '', wechatShareReady: false });
+                        throw e_6;
                     case 8:
                         this.patchData({ wechatSharePreparing: false });
                         return [7 /*endfinally*/];
@@ -2169,9 +2154,9 @@ Page({
     },
     onWechatShareCard: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var bankId, shareAppMessage, token, shares, _i, shares_1, s, payload, created, updated, _a, updated_1, it, name, title, path, link, err_9;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
+            var bankId, token, err_9;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
                     case 0:
                         bankId = Number(this.data.bankId || 0);
                         if (!Number.isFinite(bankId) || bankId <= 0)
@@ -2180,137 +2165,54 @@ Page({
                             wx.showToast({ title: '无权操作', icon: 'none' });
                             return [2 /*return*/];
                         }
-                        shareAppMessage = wx.shareAppMessage;
                         wx.showLoading({ title: '准备分享...' });
-                        _b.label = 1;
+                        _a.label = 1;
                     case 1:
-                        _b.trys.push([1, 6, 7, 8]);
-                        // 优先复用现有链接分享，避免快速耗尽“最多10个分享”的限制
-                        return [4 /*yield*/, this.loadShares()];
+                        _a.trys.push([1, 3, 4, 5]);
+                        return [4 /*yield*/, this.ensureWechatShareToken(false)];
                     case 2:
-                        // 优先复用现有链接分享，避免快速耗尽“最多10个分享”的限制
-                        _b.sent();
-                        token = '';
-                        shares = Array.isArray(this.data.shares) ? this.data.shares : [];
-                        for (_i = 0, shares_1 = shares; _i < shares_1.length; _i++) {
-                            s = shares_1[_i];
-                            if (!s)
-                                continue;
-                            if (!s.is_active)
-                                continue;
-                            if (s.share_token) {
-                                token = String(s.share_token).trim();
-                                break;
-                            }
-                        }
-                        if (!!token) return [3 /*break*/, 5];
-                        payload = {
-                            type: 'link',
-                            permission: this.data.newShare.permission,
-                            expires_in: this.data.newShare.expiresIn ? this.data.newShare.expiresIn : null
-                        };
-                        if (this.data.newShare.maxUses)
-                            payload.max_uses = this.data.newShare.maxUses;
-                        return [4 /*yield*/, api_1.api.createBankShare(bankId, payload)];
-                    case 3:
-                        created = _b.sent();
-                        token = String((created === null || created === void 0 ? void 0 : created.share_token) || '').trim() || this.extractTokenFromShareLink(created === null || created === void 0 ? void 0 : created.share_link);
-                        if (!!token) return [3 /*break*/, 5];
-                        return [4 /*yield*/, this.loadShares()];
-                    case 4:
-                        _b.sent();
-                        updated = Array.isArray(this.data.shares) ? this.data.shares : [];
-                        for (_a = 0, updated_1 = updated; _a < updated_1.length; _a++) {
-                            it = updated_1[_a];
-                            if (!it)
-                                continue;
-                            if (!it.is_active)
-                                continue;
-                            if (!it.share_token)
-                                continue;
-                            token = String(it.share_token).trim();
-                            break;
-                        }
-                        _b.label = 5;
-                    case 5:
+                        token = _a.sent();
                         if (!token)
-                            throw new Error('生成分享链接失败');
-                        name = String(this.data.bankName || '').trim();
-                        title = name ? "\u9080\u8BF7\u4F60\u52A0\u5165\u9898\u5E93\uFF1A".concat(name) : '邀请你加入题库';
-                        path = "/pages/bank-join/bank-join?token=".concat(encodeURIComponent(token));
-                        if (typeof shareAppMessage === 'function') {
-                            shareAppMessage({ title: title, path: path });
-                        }
-                        else {
-                            link = this.buildShareLink(token);
-                            if (link)
-                                wx.setClipboardData({ data: link });
-                            wx.showModal({
-                                title: '已复制分享链接',
-                                content: '当前微信版本暂不支持直接唤起名片分享，可把链接发送给好友。',
-                                showCancel: false
-                            });
-                        }
-                        return [3 /*break*/, 8];
-                    case 6:
-                        err_9 = _b.sent();
+                            throw new Error('微信分享准备失败');
+                        wx.showToast({ title: '已准备好，请再次点击微信分享', icon: 'none' });
+                        return [3 /*break*/, 5];
+                    case 3:
+                        err_9 = _a.sent();
                         wx.showToast({ title: (err_9 && err_9.message) ? String(err_9.message) : '分享失败', icon: 'none' });
-                        return [3 /*break*/, 8];
-                    case 7:
+                        return [3 /*break*/, 5];
+                    case 4:
                         wx.hideLoading();
                         return [7 /*endfinally*/];
-                    case 8: return [2 /*return*/];
+                    case 5: return [2 /*return*/];
                 }
             });
         });
     },
-    onSharePermissionTap: function (_e) {
-        this.setData({ 'newShare.permission': 'read' });
-    },
-    onShareExpiresTap: function (e) {
-        var _a, _b;
-        var expiresIn = Number(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.expires) || 0);
-        var val = Number.isFinite(expiresIn) ? Math.max(0, Math.min(365, expiresIn)) : 0;
-        this.setData({ 'newShare.expiresIn': val });
-    },
-    onShareMaxTap: function (e) {
-        var _a, _b;
-        var maxUses = Number(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.max) || 0);
-        var val = Number.isFinite(maxUses) ? Math.max(0, Math.min(100000, Math.floor(maxUses))) : 0;
-        this.setData({ 'newShare.maxUses': val });
-    },
-    onCreateShare: function (e) {
+    onCreateShare: function (_e) {
         return __awaiter(this, void 0, void 0, function () {
-            var bankId, type, shareType, payload, res, data, code, link, copied, err_10;
-            var _a, _b;
-            return __generator(this, function (_c) {
-                switch (_c.label) {
+            var bankId, payload, res, data, code, err_10;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
                     case 0:
                         bankId = Number(this.data.bankId || 0);
                         if (!Number.isFinite(bankId) || bankId <= 0)
                             return [2 /*return*/];
-                        type = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.type) || 'code');
-                        shareType = type === 'link' ? 'link' : 'code';
                         wx.showLoading({ title: '创建中...' });
-                        _c.label = 1;
+                        _a.label = 1;
                     case 1:
-                        _c.trys.push([1, 4, 5, 6]);
+                        _a.trys.push([1, 4, 5, 6]);
                         payload = {
-                            type: shareType,
-                            permission: this.data.newShare.permission,
-                            expires_in: this.data.newShare.expiresIn ? this.data.newShare.expiresIn : null
+                            type: 'code',
+                            permission: 'read',
+                            expires_in: null
                         };
-                        if (this.data.newShare.maxUses)
-                            payload.max_uses = this.data.newShare.maxUses;
                         return [4 /*yield*/, api_1.api.createBankShare(bankId, payload)];
                     case 2:
-                        res = _c.sent();
+                        res = _a.sent();
                         data = (res === null || res === void 0 ? void 0 : res.data) || res || {};
                         code = data.share_code ? String(data.share_code) : '';
-                        link = data.share_link ? String(data.share_link) : (data.share_token ? this.buildShareLink(String(data.share_token)) : '');
-                        copied = code || link;
-                        if (copied) {
-                            wx.setClipboardData({ data: copied });
+                        if (code) {
+                            wx.setClipboardData({ data: code });
                             wx.showToast({ title: '已复制', icon: 'success' });
                         }
                         else {
@@ -2318,10 +2220,10 @@ Page({
                         }
                         return [4 /*yield*/, this.loadShares()];
                     case 3:
-                        _c.sent();
+                        _a.sent();
                         return [3 /*break*/, 6];
                     case 4:
-                        err_10 = _c.sent();
+                        err_10 = _a.sent();
                         wx.showToast({ title: (err_10 && err_10.message) ? String(err_10.message) : '创建失败', icon: 'none' });
                         return [3 /*break*/, 6];
                     case 5:
@@ -2332,23 +2234,12 @@ Page({
             });
         });
     },
-    onRefreshShares: function () {
-        this.loadUsageStats();
-        this.ensureWechatShareToken(true);
-    },
     onCopyShareCode: function (e) {
         var _a, _b;
         var code = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.code) || '').trim();
         if (!code)
             return;
         wx.setClipboardData({ data: code });
-    },
-    onCopyShareLink: function (e) {
-        var _a, _b;
-        var link = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.link) || '').trim();
-        if (!link)
-            return;
-        wx.setClipboardData({ data: link });
     },
     onDeleteShare: function (e) {
         var _this = this;
@@ -2382,7 +2273,6 @@ Page({
                         case 3:
                             _a.sent();
                             this.loadUsageStats();
-                            this.ensureWechatShareToken(false);
                             return [3 /*break*/, 6];
                         case 4:
                             err_11 = _a.sent();

@@ -22,11 +22,10 @@ Page({
       question_count: 0
     },
     shares: [] as ShareItem[],
-    newShare: {
-      permission: 'read' as 'read' | 'copy',
-      expiresIn: 0  // 0表示永久，7、30表示天数
-    },
     loading: false,
+    wechatShareToken: '',
+    wechatShareReady: false,
+    wechatSharePreparing: false,
     showCodeModal: false,
     generatedCode: ''
   },
@@ -61,11 +60,13 @@ Page({
       const sharesRes = results[1];
       const bankData = detailRes.data || detailRes || {};
       const sharesData = sharesRes.data || sharesRes || {};
-      const shares = (sharesData.shares || []).map((s: any) => {
-        return Object.assign({}, s, {
-          expires_at_display: s.expires_at ? this.formatDate(s.expires_at) : ''
+      const shares = (sharesData.shares || [])
+        .filter((s: any) => !!s?.is_active)
+        .map((s: any) => {
+          return Object.assign({}, s, {
+            expires_at_display: s.expires_at ? this.formatDate(s.expires_at) : ''
+          });
         });
-      });
 
       this.setData({
         bankInfo: {
@@ -73,7 +74,9 @@ Page({
           question_count: bankData.question_count || 0
         },
         shares,
-        loading: false
+        loading: false,
+        wechatShareToken: this.pickShareTokenFromShares(shares),
+        wechatShareReady: !!this.pickShareTokenFromShares(shares)
       });
     } catch (err: any) {
       console.error('加载数据失败:', err);
@@ -83,6 +86,68 @@ Page({
       }
       wx.showToast({ title: err.message || '加载失败', icon: 'none' });
       this.setData({ loading: false });
+    }
+  },
+
+  isExpiredIso(expiresAt: any): boolean {
+    const s = String(expiresAt || '').trim();
+    if (!s) return false;
+    const d = new Date(s);
+    const ts = d.getTime();
+    return !Number.isFinite(ts) || ts < Date.now();
+  },
+
+  pickShareTokenFromShares(shares: ShareItem[]): string {
+    const list = Array.isArray(shares) ? shares : [];
+    for (const s of list) {
+      if (!s || !s.is_active) continue;
+      const token = String(s.share_token || '').trim();
+      if (!token) continue;
+      if (s.expires_at && this.isExpiredIso(s.expires_at)) continue;
+      return token;
+    }
+    return '';
+  },
+
+  extractTokenFromShareLink(input: any): string {
+    const s = String(input || '').trim();
+    if (!s) return '';
+    if (/^[a-z0-9]{16,}$/i.test(s) && !s.includes('://') && !s.includes('?')) return s;
+    const m = s.match(/[?&]token=([^&#]+)/i);
+    if (m && m[1]) {
+      try {
+        return decodeURIComponent(m[1]);
+      } catch {
+        return m[1];
+      }
+    }
+    return '';
+  },
+
+  async ensureWechatShareToken(force: boolean = false): Promise<string> {
+    const bankId = Number(this.data.bankId || 0);
+    if (!Number.isFinite(bankId) || bankId <= 0) return '';
+    const currentToken = String(this.data.wechatShareToken || '').trim();
+    if (!force && this.data.wechatShareReady && currentToken) return currentToken;
+    if (this.data.wechatSharePreparing) return currentToken;
+
+    this.setData({ wechatSharePreparing: true, wechatShareReady: false });
+    try {
+      await this.loadData();
+      let token = String(this.data.wechatShareToken || '').trim();
+      if (!token) {
+        const created: any = await api.createBankShare(bankId, {
+          type: 'link',
+          permission: 'read',
+          expires_in: null
+        });
+        token = String(created?.share_token || '').trim() || this.extractTokenFromShareLink(created?.share_link);
+      }
+      this.setData({ wechatShareToken: token, wechatShareReady: !!token });
+      if (token) await this.loadData();
+      return token;
+    } finally {
+      this.setData({ wechatSharePreparing: false });
     }
   },
 
@@ -97,25 +162,15 @@ Page({
     }
   },
 
-  onPermissionTap(_e: any) {
-    this.setData({ 'newShare.permission': 'read' });
-  },
-
-  onExpiresTap(e: any) {
-    const expiresIn = Number(e.currentTarget.dataset.expires);
-    this.setData({ 'newShare.expiresIn': expiresIn });
-  },
-
-  async onCreateShare(e: any) {
-    const type = e.currentTarget.dataset.type; // 'code' or 'link'
-    const { bankId, newShare } = this.data;
+  async onCreateShare(_e: any) {
+    const { bankId } = this.data;
 
     wx.showLoading({ title: '创建中...' });
     try {
       const res: any = await api.createBankShare(bankId, {
-        type: type,
-        permission: newShare.permission,
-        expires_in: newShare.expiresIn || null
+        type: 'code',
+        permission: 'read',
+        expires_in: null
       });
 
       wx.hideLoading();
@@ -187,11 +242,29 @@ Page({
     });
   },
 
+  async onWechatShareTap() {
+    if (this.data.wechatSharePreparing) return;
+    wx.showLoading({ title: '准备分享...' });
+    try {
+      const token = await this.ensureWechatShareToken(false);
+      if (!token) throw new Error('微信分享准备失败');
+
+      wx.showToast({ title: '已准备好，请再次点击微信分享', icon: 'none' });
+    } catch (err: any) {
+      wx.showToast({ title: (err && err.message) ? String(err.message) : '分享失败', icon: 'none' });
+    } finally {
+      wx.hideLoading();
+    }
+  },
+
   onShareAppMessage() {
-    const { bankId, bankInfo } = this.data;
+    const { bankInfo } = this.data;
+    const token = String(this.data.wechatShareToken || '').trim();
     return {
       title: `邀请你加入题库：${bankInfo.name}`,
-      path: `/pages/bank-detail/bank-detail?id=${bankId}`
+      path: token
+        ? `/pages/bank-join/bank-join?token=${encodeURIComponent(token)}`
+        : '/pages/my-banks-v2/my-banks-v2'
     };
   }
 });

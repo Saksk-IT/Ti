@@ -9,8 +9,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -47,11 +47,10 @@ Page({
             question_count: 0
         },
         shares: [],
-        newShare: {
-            permission: 'read',
-            expiresIn: 0 // 0表示永久，7、30表示天数
-        },
         loading: false,
+        wechatShareToken: '',
+        wechatShareReady: false,
+        wechatSharePreparing: false,
         showCodeModal: false,
         generatedCode: ''
     },
@@ -92,7 +91,9 @@ Page({
                         sharesRes = results[1];
                         bankData = detailRes.data || detailRes || {};
                         sharesData = sharesRes.data || sharesRes || {};
-                        shares = (sharesData.shares || []).map(function (s) {
+                        shares = (sharesData.shares || [])
+                            .filter(function (s) { return !!(s === null || s === void 0 ? void 0 : s.is_active); })
+                            .map(function (s) {
                             return Object.assign({}, s, {
                                 expires_at_display: s.expires_at ? _this.formatDate(s.expires_at) : ''
                             });
@@ -103,7 +104,9 @@ Page({
                                 question_count: bankData.question_count || 0
                             },
                             shares: shares,
-                            loading: false
+                            loading: false,
+                            wechatShareToken: this.pickShareTokenFromShares(shares),
+                            wechatShareReady: !!this.pickShareTokenFromShares(shares)
                         });
                         return [3 /*break*/, 4];
                     case 3:
@@ -121,6 +124,95 @@ Page({
             });
         });
     },
+    isExpiredIso: function (expiresAt) {
+        var s = String(expiresAt || '').trim();
+        if (!s)
+            return false;
+        var d = new Date(s);
+        var ts = d.getTime();
+        return !Number.isFinite(ts) || ts < Date.now();
+    },
+    pickShareTokenFromShares: function (shares) {
+        var list = Array.isArray(shares) ? shares : [];
+        for (var _i = 0, list_1 = list; _i < list_1.length; _i++) {
+            var s = list_1[_i];
+            if (!s || !s.is_active)
+                continue;
+            var token = String(s.share_token || '').trim();
+            if (!token)
+                continue;
+            if (s.expires_at && this.isExpiredIso(s.expires_at))
+                continue;
+            return token;
+        }
+        return '';
+    },
+    extractTokenFromShareLink: function (input) {
+        var s = String(input || '').trim();
+        if (!s)
+            return '';
+        if (/^[a-z0-9]{16,}$/i.test(s) && !s.includes('://') && !s.includes('?'))
+            return s;
+        var m = s.match(/[?&]token=([^&#]+)/i);
+        if (m && m[1]) {
+            try {
+                return decodeURIComponent(m[1]);
+            }
+            catch (_a) {
+                return m[1];
+            }
+        }
+        return '';
+    },
+    ensureWechatShareToken: function () {
+        return __awaiter(this, arguments, void 0, function (force) {
+            var bankId, currentToken, token, created;
+            if (force === void 0) { force = false; }
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        bankId = Number(this.data.bankId || 0);
+                        if (!Number.isFinite(bankId) || bankId <= 0)
+                            return [2 /*return*/, ''];
+                        currentToken = String(this.data.wechatShareToken || '').trim();
+                        if (!force && this.data.wechatShareReady && currentToken)
+                            return [2 /*return*/, currentToken];
+                        if (this.data.wechatSharePreparing)
+                            return [2 /*return*/, currentToken];
+                        this.setData({ wechatSharePreparing: true, wechatShareReady: false });
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, , 7, 8]);
+                        return [4 /*yield*/, this.loadData()];
+                    case 2:
+                        _a.sent();
+                        token = String(this.data.wechatShareToken || '').trim();
+                        if (!!token) return [3 /*break*/, 4];
+                        return [4 /*yield*/, api_1.api.createBankShare(bankId, {
+                                type: 'link',
+                                permission: 'read',
+                                expires_in: null
+                            })];
+                    case 3:
+                        created = _a.sent();
+                        token = String((created === null || created === void 0 ? void 0 : created.share_token) || '').trim() || this.extractTokenFromShareLink(created === null || created === void 0 ? void 0 : created.share_link);
+                        _a.label = 4;
+                    case 4:
+                        this.setData({ wechatShareToken: token, wechatShareReady: !!token });
+                        if (!token) return [3 /*break*/, 6];
+                        return [4 /*yield*/, this.loadData()];
+                    case 5:
+                        _a.sent();
+                        _a.label = 6;
+                    case 6: return [2 /*return*/, token];
+                    case 7:
+                        this.setData({ wechatSharePreparing: false });
+                        return [7 /*endfinally*/];
+                    case 8: return [2 /*return*/];
+                }
+            });
+        });
+    },
     formatDate: function (dateStr) {
         try {
             var date = new Date(dateStr);
@@ -132,33 +224,24 @@ Page({
             return '';
         }
     },
-    onPermissionTap: function (e) {
-        var permission = e.currentTarget.dataset.permission;
-        this.setData({ 'newShare.permission': permission });
-    },
-    onExpiresTap: function (e) {
-        var expiresIn = Number(e.currentTarget.dataset.expires);
-        this.setData({ 'newShare.expiresIn': expiresIn });
-    },
-    onCreateShare: function (e) {
+    onCreateShare: function (_e) {
         return __awaiter(this, void 0, void 0, function () {
-            var type, _a, bankId, newShare, res, shareData, err_2;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
+            var bankId, res, shareData, err_2;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
                     case 0:
-                        type = e.currentTarget.dataset.type;
-                        _a = this.data, bankId = _a.bankId, newShare = _a.newShare;
+                        bankId = this.data.bankId;
                         wx.showLoading({ title: '创建中...' });
-                        _b.label = 1;
+                        _a.label = 1;
                     case 1:
-                        _b.trys.push([1, 3, , 4]);
+                        _a.trys.push([1, 3, , 4]);
                         return [4 /*yield*/, api_1.api.createBankShare(bankId, {
-                                type: type,
-                                permission: newShare.permission,
-                                expires_in: newShare.expiresIn || null
+                                type: 'code',
+                                permission: 'read',
+                                expires_in: null
                             })];
                     case 2:
-                        res = _b.sent();
+                        res = _a.sent();
                         wx.hideLoading();
                         shareData = res.data || res || {};
                         if (shareData.share_code) {
@@ -171,7 +254,7 @@ Page({
                         this.loadData();
                         return [3 /*break*/, 4];
                     case 3:
-                        err_2 = _b.sent();
+                        err_2 = _a.sent();
                         wx.hideLoading();
                         wx.showToast({ title: err_2.message || '创建失败', icon: 'none' });
                         return [3 /*break*/, 4];
@@ -242,11 +325,45 @@ Page({
             }); }
         });
     },
+    onWechatShareTap: function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var token, err_4;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (this.data.wechatSharePreparing)
+                            return [2 /*return*/];
+                        wx.showLoading({ title: '准备分享...' });
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, 3, 4, 5]);
+                        return [4 /*yield*/, this.ensureWechatShareToken(false)];
+                    case 2:
+                        token = _a.sent();
+                        if (!token)
+                            throw new Error('微信分享准备失败');
+                        wx.showToast({ title: '已准备好，请再次点击微信分享', icon: 'none' });
+                        return [3 /*break*/, 5];
+                    case 3:
+                        err_4 = _a.sent();
+                        wx.showToast({ title: (err_4 && err_4.message) ? String(err_4.message) : '分享失败', icon: 'none' });
+                        return [3 /*break*/, 5];
+                    case 4:
+                        wx.hideLoading();
+                        return [7 /*endfinally*/];
+                    case 5: return [2 /*return*/];
+                }
+            });
+        });
+    },
     onShareAppMessage: function () {
-        var _a = this.data, bankId = _a.bankId, bankInfo = _a.bankInfo;
+        var bankInfo = this.data.bankInfo;
+        var token = String(this.data.wechatShareToken || '').trim();
         return {
             title: "\u9080\u8BF7\u4F60\u52A0\u5165\u9898\u5E93\uFF1A".concat(bankInfo.name),
-            path: "/pages/bank-detail/bank-detail?id=".concat(bankId)
+            path: token
+                ? "/pages/bank-join/bank-join?token=".concat(encodeURIComponent(token))
+                : '/pages/my-banks-v2/my-banks-v2'
         };
     }
 });

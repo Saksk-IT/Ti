@@ -722,40 +722,20 @@
               <view class="card-head">
                 <view class="card-head-left">
                   <text class="card-title">分享管理</text>
-                  <text class="card-sub">{{shareError || '创建分享码/分享链接，并管理撤销与权限。'}}</text>
+                  <text class="card-sub">{{shareError || '使用微信分享或分享码邀请好友加入。'}}</text>
                   <text class="card-sub" wx:if="{{usageStatsLoaded}}">可访问人数：{{usageStats.total_users || 0}}（含你）</text>
                 </view>
               </view>
 
-              <view class="chips" aria-label="权限选择">
-                <view class="chip active" bindtap="onSharePermissionTap" data-permission="read"><text>只读</text></view>
-              </view>
-
-              <view class="chips" aria-label="有效期选择">
-                <view class="chip {{newShare.expiresIn === 0 ? 'active' : ''}}" bindtap="onShareExpiresTap" data-expires="0"><text>永久</text></view>
-                <view class="chip {{newShare.expiresIn === 7 ? 'active' : ''}}" bindtap="onShareExpiresTap" data-expires="7"><text>7天</text></view>
-                <view class="chip {{newShare.expiresIn === 30 ? 'active' : ''}}" bindtap="onShareExpiresTap" data-expires="30"><text>30天</text></view>
-              </view>
-
-              <view class="chips" aria-label="最大使用次数">
-                <view class="chip {{newShare.maxUses === 0 ? 'active' : ''}}" bindtap="onShareMaxTap" data-max="0"><text>不限</text></view>
-                <view class="chip {{newShare.maxUses === 10 ? 'active' : ''}}" bindtap="onShareMaxTap" data-max="10"><text>10次</text></view>
-                <view class="chip {{newShare.maxUses === 50 ? 'active' : ''}}" bindtap="onShareMaxTap" data-max="50"><text>50次</text></view>
-                <view class="chip {{newShare.maxUses === 100 ? 'active' : ''}}" bindtap="onShareMaxTap" data-max="100"><text>100次</text></view>
-              </view>
-
               <view class="actions">
-                <button class="btn btn-primary" open-type="share" hover-class="none" disabled="{{!wechatShareReady}}">
-                  <text>{{wechatSharePreparing ? '准备中…' : '微信分享'}}</text>
+                <button wx:if="{{wechatShareReady}}" class="btn btn-primary" open-type="share" hover-class="none">
+                  <text>微信分享</text>
                 </button>
+                <view wx:else class="btn btn-primary {{wechatSharePreparing ? 'disabled' : ''}}" bindtap="onWechatShareCard">
+                  <text>{{wechatSharePreparing ? '准备中...' : '微信分享'}}</text>
+                </view>
                 <view class="btn" bindtap="onCreateShare" data-type="code">
                   <text>生成分享码</text>
-                </view>
-                <view class="btn" bindtap="onCreateShare" data-type="link">
-                  <text>生成分享链接</text>
-                </view>
-                <view class="btn" bindtap="onRefreshShares">
-                  <text>刷新</text>
                 </view>
               </view>
             </view>
@@ -772,7 +752,7 @@
                 <view class="share-item" wx:for="{{shares}}" wx:key="id">
                   <view class="share-main">
                     <view class="share-code-row">
-                      <text class="share-code">{{item.share_code || '链接分享'}}</text>
+                      <text class="share-code">{{item.share_code || '微信分享'}}</text>
                       <text class="share-permission read">只读</text>
                     </view>
                     <view class="share-meta">
@@ -780,16 +760,10 @@
                       <text class="meta-text" wx:if="{{item.expires_at}}">有效期至 {{item.expires_at_display}}</text>
                       <text class="meta-text" wx:else>永久有效</text>
                     </view>
-                    <view class="share-link" wx:if="{{item.share_link}}">
-                      <text class="meta-text">{{item.share_link}}</text>
-                    </view>
                   </view>
                   <view class="share-actions">
                     <view class="action-btn copy" wx:if="{{item.share_code}}" bindtap="onCopyShareCode" data-code="{{item.share_code}}">
                       <text>复制码</text>
-                    </view>
-                    <view class="action-btn copy" wx:if="{{item.share_link}}" bindtap="onCopyShareLink" data-link="{{item.share_link}}">
-                      <text>复制链接</text>
                     </view>
                     <view class="action-btn delete" wx:if="{{item.is_active}}" bindtap="onDeleteShare" data-id="{{item.id}}">
                       <text>撤销</text>
@@ -800,7 +774,7 @@
 
               <view class="empty-state" wx:if="{{!shareLoading && shares.length === 0}}">
                 <text class="empty-text">暂无分享记录</text>
-                <text class="empty-hint">创建分享码/链接让好友加入题库</text>
+                <text class="empty-hint">使用微信分享或分享码让好友加入题库</text>
               </view>
 
               <view class="loading" wx:if="{{shareLoading}}">
@@ -814,15 +788,7 @@
               <view class="card-head">
                 <view class="card-head-left">
                   <text class="card-title">分享</text>
-                  <text class="card-sub">个人题库的分享为“分享管理”。你当前不是创建者，无法创建/撤销分享码与链接。</text>
-                </view>
-              </view>
-              <view class="actions">
-                <button class="btn btn-primary" open-type="share">
-                  <text>微信分享</text>
-                </button>
-                <view class="btn" bindtap="onCopyBankName">
-                  <text>复制题库名</text>
+                  <text class="card-sub">你当前不是创建者，无法创建或撤销分享。</text>
                 </view>
               </view>
             </view>
@@ -831,7 +797,7 @@
               <view class="card-head">
                 <view class="card-head-left">
                   <text class="card-title">让好友加入</text>
-                  <text class="card-sub">需要授权加入请联系创建者生成分享码/链接，好友可在“我的题库”里输入分享码加入。</text>
+                  <text class="card-sub">需要授权加入请联系创建者使用微信分享或生成分享码。</text>
                 </view>
               </view>
             </view>

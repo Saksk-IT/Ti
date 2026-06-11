@@ -57,7 +57,6 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var api_1 = require("../../utils/api");
-var api_endpoints_1 = require("../../utils/api-endpoints");
 var user_settings_1 = require("../../utils/user-settings");
 var auth_1 = require("../../utils/auth");
 var nav_1 = require("../../utils/nav");
@@ -142,37 +141,27 @@ Page({
                         _a = _b.sent(), myRes = _a[0], sharedRes = _a[1];
                         createdList = Array.isArray(myRes === null || myRes === void 0 ? void 0 : myRes.banks) ? myRes.banks : [];
                         sharedList = Array.isArray(sharedRes === null || sharedRes === void 0 ? void 0 : sharedRes.banks) ? sharedRes.banks : [];
-                        createdBanks = createdList.map(function (b) {
-                            var coverUrl = (0, api_endpoints_1.resolveUploadUrl)(b === null || b === void 0 ? void 0 : b.cover_image);
-                            return {
-                                id: Number((b === null || b === void 0 ? void 0 : b.id) || 0),
-                                name: String((b === null || b === void 0 ? void 0 : b.name) || '未命名题库'),
-                                description: (b === null || b === void 0 ? void 0 : b.description) ? String(b.description) : '',
-                                question_count: Number((b === null || b === void 0 ? void 0 : b.question_count) || 0) || 0,
-                                is_public: b === null || b === void 0 ? void 0 : b.is_public,
-                                updated_at: b === null || b === void 0 ? void 0 : b.updated_at,
-                                updated_at_fmt: formatDate(b === null || b === void 0 ? void 0 : b.updated_at),
-                                source: 'created',
-                                cover_url: coverUrl,
-                                has_cover: !!coverUrl
-                            };
-                        }).filter(function (b) { return Number.isFinite(b.id) && b.id > 0; });
-                        sharedBanks = sharedList.map(function (b) {
-                            var coverUrl = (0, api_endpoints_1.resolveUploadUrl)(b === null || b === void 0 ? void 0 : b.cover_image);
-                            return {
-                                id: Number((b === null || b === void 0 ? void 0 : b.bank_id) || (b === null || b === void 0 ? void 0 : b.id) || 0),
-                                name: String((b === null || b === void 0 ? void 0 : b.bank_name) || (b === null || b === void 0 ? void 0 : b.name) || '未命名题库'),
-                                description: (b === null || b === void 0 ? void 0 : b.description) ? String(b.description) : '',
-                                question_count: Number((b === null || b === void 0 ? void 0 : b.question_count) || 0) || 0,
-                                is_public: false,
-                                updated_at: (b === null || b === void 0 ? void 0 : b.last_access_at) || (b === null || b === void 0 ? void 0 : b.created_at),
-                                updated_at_fmt: formatDate((b === null || b === void 0 ? void 0 : b.last_access_at) || (b === null || b === void 0 ? void 0 : b.created_at)),
-                                source: 'shared',
-                                owner_name: (b === null || b === void 0 ? void 0 : b.owner_nickname) ? String(b.owner_nickname) : '',
-                                cover_url: coverUrl,
-                                has_cover: !!coverUrl
-                            };
-                        }).filter(function (b) { return Number.isFinite(b.id) && b.id > 0; });
+                        createdBanks = createdList.map(function (b) { return ({
+                            id: Number((b === null || b === void 0 ? void 0 : b.id) || 0),
+                            name: String((b === null || b === void 0 ? void 0 : b.name) || '未命名题库'),
+                            description: (b === null || b === void 0 ? void 0 : b.description) ? String(b.description) : '',
+                            question_count: Number((b === null || b === void 0 ? void 0 : b.question_count) || 0) || 0,
+                            is_public: b === null || b === void 0 ? void 0 : b.is_public,
+                            updated_at: b === null || b === void 0 ? void 0 : b.updated_at,
+                            updated_at_fmt: formatDate(b === null || b === void 0 ? void 0 : b.updated_at),
+                            source: 'created'
+                        }); }).filter(function (b) { return Number.isFinite(b.id) && b.id > 0; });
+                        sharedBanks = sharedList.map(function (b) { return ({
+                            id: Number((b === null || b === void 0 ? void 0 : b.bank_id) || (b === null || b === void 0 ? void 0 : b.id) || 0),
+                            name: String((b === null || b === void 0 ? void 0 : b.bank_name) || (b === null || b === void 0 ? void 0 : b.name) || '未命名题库'),
+                            description: (b === null || b === void 0 ? void 0 : b.description) ? String(b.description) : '',
+                            question_count: Number((b === null || b === void 0 ? void 0 : b.question_count) || 0) || 0,
+                            is_public: false,
+                            updated_at: (b === null || b === void 0 ? void 0 : b.last_access_at) || (b === null || b === void 0 ? void 0 : b.created_at),
+                            updated_at_fmt: formatDate((b === null || b === void 0 ? void 0 : b.last_access_at) || (b === null || b === void 0 ? void 0 : b.created_at)),
+                            source: 'shared',
+                            owner_name: (b === null || b === void 0 ? void 0 : b.owner_nickname) ? String(b.owner_nickname) : ''
+                        }); }).filter(function (b) { return Number.isFinite(b.id) && b.id > 0; });
                         byId_1 = new Map();
                         __spreadArray(__spreadArray([], sharedBanks, true), createdBanks, true).forEach(function (b) {
                             byId_1.set(b.id, b);
