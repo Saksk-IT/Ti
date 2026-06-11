@@ -225,10 +225,11 @@
         badges.push('<span class="plaza-badge joined">' + esc(item.source_label || '已加入') + '</span>');
       }
       if (item.is_featured) badges.push('<span class="forum-badge forum-badge-feat">精华</span>');
-      var hasCover = !!item.cover_image;
+      var coverUrl = String(item.cover_image || '').trim();
+      var hasCover = !!coverUrl;
       var coverHtml = hasCover
-        ? '<div class="forum-post-cover-thumb"><img src="' + esc(item.cover_image) + '" alt=""></div>'
-        : '<div class="plaza-bank-cover-fallback">' + esc((item.board && item.board.name) || item.source_label || item.visibility_label || '我的题库') + '</div>';
+        ? '<div class="forum-post-cover-thumb"><img src="' + esc(coverUrl) + '" alt="" loading="lazy"></div>'
+        : window.renderBankDefaultCover((item.board && item.board.name) || item.source_label || item.visibility_label, '我的题库');
       var ownerText = item.kind === 'created' ? '我创建的题库' : esc(item.owner_label || '匿名用户');
       var boardText = esc((item.board && item.board.name) || '未分类');
       var timeText = esc(item.updated_at || item.last_joined_at || item.last_activity_at || '-');
@@ -243,7 +244,7 @@
       }
 
       return '<div class="my-bank-card-shell">' +
-        '<div class="forum-post-card plaza-bank-card my-bank-linked-card' + (hasCover ? '' : ' no-cover') + '" role="link" tabindex="0" data-href="' + esc(item.detail_url) + '">' +
+        '<div class="forum-post-card plaza-bank-card my-bank-linked-card' + (hasCover ? ' has-uploaded-cover' : ' has-default-cover') + '" role="link" tabindex="0" data-href="' + esc(item.detail_url) + '">' +
           '<div class="forum-post-owner-actions" data-owner-actions>' +
             '<button type="button" class="forum-post-owner-toggle" aria-label="更多操作" data-owner-toggle>' +
               '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></svg>' +

@@ -102,7 +102,12 @@
     var html = items.map(function (item) {
       var badges = ['<span class="plaza-badge joined">' + esc(item.relation === 'both' ? '公开 + 分享' : item.relation === 'shared' ? '分享加入' : '公开加入') + '</span>'];
       if (item.is_featured) badges.push('<span class="forum-badge forum-badge-feat">精华</span>');
-      return '<a class="forum-post-card plaza-bank-card no-cover" href="' + esc(item.detail_url) + '">' +
+      var coverUrl = String(item.cover_image || '').trim();
+      var hasCover = !!coverUrl;
+      var coverHtml = hasCover
+        ? '<div class="forum-post-cover-thumb"><img src="' + esc(coverUrl) + '" alt="" loading="lazy"></div>'
+        : window.renderBankDefaultCover(item.board && item.board.name, '智能题库');
+      return '<a class="forum-post-card plaza-bank-card' + (hasCover ? ' has-uploaded-cover' : ' has-default-cover') + '" href="' + esc(item.detail_url) + '">' +
         '<div class="forum-post-header">' +
           '<div class="forum-avatar"></div>' +
           '<div class="forum-post-meta"><span class="forum-user-link">' + esc(item.owner_label || '匿名用户') + '</span><span class="forum-board-tag">' + esc((item.board && item.board.name) || '未分板块') + '</span></div>' +
@@ -115,6 +120,7 @@
           '<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>' + fmtCount(item.answer_users_7d) + ' 活跃</span>' +
         '</div>' +
         '<div class="plaza-bank-time">' + esc(item.last_joined_at || '-') + '</div>' +
+        coverHtml +
       '</a>';
     }).join('');
     listEl.insertAdjacentHTML('beforeend', html);

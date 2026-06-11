@@ -302,11 +302,12 @@
       badges.push('<span class="plaza-badge ' + (item.source_type === 'system' ? 'system' : 'user') + '">' + esc(item.source_label) + '</span>');
       if (item.is_featured) badges.push('<span class="forum-badge forum-badge-feat">精华</span>');
       if (item.relation && item.relation.is_joined) badges.push('<span class="plaza-badge joined">已加入</span>');
-      var hasCover = !!item.cover_image;
+      var coverUrl = String(item.cover_image || '').trim();
+      var hasCover = !!coverUrl;
       var coverHtml = hasCover
-        ? '<div class="forum-post-cover-thumb"><img src="' + esc(item.cover_image) + '" alt=""></div>'
-        : '<div class="plaza-bank-cover-fallback">' + esc((item.board && item.board.name) || item.source_label) + '</div>';
-      return '<a class="forum-post-card plaza-bank-card' + (hasCover ? '' : ' no-cover') + '" href="' + esc(item.detail_url) + '">' +
+        ? '<div class="forum-post-cover-thumb"><img src="' + esc(coverUrl) + '" alt="" loading="lazy"></div>'
+        : window.renderBankDefaultCover((item.board && item.board.name) || item.source_label, '智能题库');
+      return '<a class="forum-post-card plaza-bank-card' + (hasCover ? ' has-uploaded-cover' : ' has-default-cover') + '" href="' + esc(item.detail_url) + '">' +
         '<div class="forum-post-header">' +
           renderOwnerAvatar(item) +
           '<div class="forum-post-meta"><span class="forum-user-link">' + highlightText(item.owner_label || '系统') + '</span><span class="forum-board-tag">' + esc((item.board && item.board.name) || '未分板块') + '</span></div>' +

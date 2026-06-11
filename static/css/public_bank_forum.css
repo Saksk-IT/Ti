@@ -137,22 +137,11 @@
   height: 152px;
 }
 
-.plaza-bank-card.no-cover {
-  grid-template-columns: auto minmax(0, 1fr);
-}
-
 .plaza-bank-card .forum-post-header,
 .plaza-bank-card .forum-post-title,
 .plaza-bank-card .forum-post-preview,
 .plaza-bank-card .forum-post-stats {
   grid-column: 1 / 3;
-}
-
-.plaza-bank-card.no-cover .forum-post-header,
-.plaza-bank-card.no-cover .forum-post-title,
-.plaza-bank-card.no-cover .forum-post-preview,
-.plaza-bank-card.no-cover .forum-post-stats {
-  grid-column: 1 / -1;
 }
 
 .plaza-bank-card .forum-post-meta {
@@ -240,18 +229,108 @@
 }
 
 .plaza-bank-cover-fallback {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px;
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 12px 11px;
   box-sizing: border-box;
-  border: 0.5px solid var(--app-border);
-  background: linear-gradient(135deg, var(--app-primary-soft), color-mix(in srgb, var(--app-surface) 72%, transparent));
+  overflow: hidden;
+  border: 0.5px solid color-mix(in srgb, var(--app-primary) 24%, var(--app-border));
+  background:
+    radial-gradient(circle at 18% 16%, color-mix(in srgb, var(--app-primary) 24%, transparent) 0 18px, transparent 19px),
+    radial-gradient(circle at 88% 78%, color-mix(in srgb, var(--app-primary) 16%, transparent) 0 22px, transparent 23px),
+    linear-gradient(135deg, color-mix(in srgb, var(--app-primary) 12%, var(--app-surface)) 0%, color-mix(in srgb, var(--app-surface) 88%, var(--app-bg)) 100%);
   color: var(--app-text);
-  font-size: 12px;
-  font-weight: 600;
-  text-align: center;
-  line-height: 1.5;
+  isolation: isolate;
+}
+
+.plaza-bank-cover-fallback::before,
+.plaza-bank-cover-fallback::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.plaza-bank-cover-fallback::before {
+  background:
+    linear-gradient(color-mix(in srgb, var(--app-primary) 11%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--app-primary) 11%, transparent) 1px, transparent 1px);
+  background-size: 18px 18px;
+  -webkit-mask-image: linear-gradient(160deg, rgba(0, 0, 0, 0.78), transparent 70%);
+  mask-image: linear-gradient(160deg, rgba(0, 0, 0, 0.78), transparent 70%);
+}
+
+.plaza-bank-cover-fallback::after {
+  inset: auto -26px -30px auto;
+  width: 92px;
+  height: 92px;
+  border-radius: 999px;
+  border: 18px solid color-mix(in srgb, var(--app-primary) 12%, transparent);
+}
+
+.plaza-cover-emblem {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--app-surface) 76%, transparent);
+  color: var(--app-primary);
+  border: 0.5px solid color-mix(in srgb, var(--app-primary) 24%, var(--app-border));
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--app-primary) 10%, transparent);
+}
+
+.plaza-cover-emblem svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+.plaza-cover-copy {
+  min-width: 0;
+  align-self: end;
+  display: grid;
+  gap: 3px;
+  text-align: left;
+}
+
+.plaza-cover-kicker,
+.plaza-cover-board {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plaza-cover-kicker {
+  color: var(--app-muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.plaza-cover-title {
+  color: var(--app-text);
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.plaza-cover-board {
+  width: fit-content;
+  max-width: 100%;
+  min-height: 20px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--app-primary) 10%, var(--app-surface));
+  color: color-mix(in srgb, var(--app-primary) 78%, var(--app-text));
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.35;
 }
 
 .plaza-bank-time {
@@ -262,10 +341,6 @@
   font-size: 12px;
   color: var(--app-muted);
   white-space: nowrap;
-}
-
-.plaza-bank-card.no-cover .plaza-bank-time {
-  grid-column: 1 / -1;
 }
 
 .plaza-sidebar-tips {
@@ -353,8 +428,7 @@
     align-items: stretch;
   }
 
-  .plaza-bank-card,
-  .plaza-bank-card.no-cover {
+  .plaza-bank-card {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto auto auto auto auto;
     height: auto;
@@ -377,7 +451,17 @@
 
   .plaza-bank-card .forum-post-cover-thumb,
   .plaza-bank-cover-fallback {
-    height: 88px;
+    height: 104px;
+  }
+
+  .plaza-bank-cover-fallback {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: 1fr;
+    align-items: center;
+  }
+
+  .plaza-cover-copy {
+    align-self: center;
   }
 
   .plaza-bank-time {
