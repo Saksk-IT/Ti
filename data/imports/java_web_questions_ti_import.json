@@ -7513,8 +7513,10 @@
       "type": "essay",
       "content": "简述 web 应用程序的运行原理",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "1. 用户在浏览器中输入 URL、点击链接或提交表单后，会向 Web 服务器发送 HTTP 请求。\n2. Web 服务器收到请求后，将其交给对应的 Web 应用组件（如 Servlet、JSP、控制器）处理。\n3. 服务器端程序读取请求参数，执行业务逻辑，必要时访问数据库、文件或其他服务。\n4. 处理完成后，服务器把结果封装成 HTML、JSON 等响应数据返回给浏览器。\n5. 浏览器解析响应内容并渲染页面，用户即可看到最终结果。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7527,8 +7529,10 @@
       "type": "essay",
       "content": "在网络程序中，有哪两种基本的结构？各有什么特点？",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "网络程序中常见的两种基本结构是：\n1. C/S（Client/Server）结构：客户端需要安装专用程序，交互能力强、功能丰富，但部署和维护成本较高。\n2. B/S（Browser/Server）结构：客户端通常只需浏览器即可访问，跨平台、升级维护方便，但对浏览器和网络环境依赖较强。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7541,8 +7545,10 @@
       "type": "essay",
       "content": "在表单提交时，GET 方法与 POST 方法的区别是？",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "GET 与 POST 的主要区别如下：\n1. 参数位置不同：GET 把参数拼接在 URL 后面，POST 把参数放在请求体中。\n2. 数据长度不同：GET 受 URL 长度限制较明显，POST 可提交的数据通常更多。\n3. 可见性不同：GET 参数会直接显示在地址栏中，POST 不会显示在地址栏中。\n4. 使用场景不同：GET 常用于查询、获取资源；POST 常用于提交表单、发送较重要的数据。\n5. 缓存与收藏不同：GET 请求更容易被浏览器缓存，也可直接收藏；POST 一般不用于收藏。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7555,8 +7561,10 @@
       "type": "essay",
       "content": "对于 Web 前端设计，最准确的理解就是把网页看成三个层次，分别用什么语言实现？",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "Web 前端通常可以分为三个层次：\n1. 结构层：使用 HTML 实现。\n2. 表现层：使用 CSS 实现。\n3. 行为层：使用 JavaScript 实现。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7569,8 +7577,10 @@
       "type": "essay",
       "content": "编写下面图中所示的表单",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "可参考如下表单代码：\n<form action=\"#\" method=\"post\">\n  姓名：<input type=\"text\" name=\"username\"><br/>\n  密码：<input type=\"password\" name=\"password\"><br/>\n  性别：\n  <input type=\"radio\" name=\"sex\" value=\"男\">男\n  <input type=\"radio\" name=\"sex\" value=\"女\">女<br/>\n  爱好：\n  <input type=\"checkbox\" name=\"hobby\" value=\"读书\">读书\n  <input type=\"checkbox\" name=\"hobby\" value=\"运动\">运动<br/>\n  城市：\n  <select name=\"city\">\n    <option value=\"沈阳\">沈阳</option>\n    <option value=\"大连\">大连</option>\n  </select><br/>\n  <input type=\"submit\" value=\"提交\">\n  <input type=\"reset\" value=\"重置\">\n</form>"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7583,8 +7593,10 @@
       "type": "essay",
       "content": "JavaScript 有哪些数据类型？",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "JavaScript 中常见的数据类型有：\n1. Number（数值）\n2. String（字符串）\n3. Boolean（布尔值）\n4. Undefined（未定义）\n5. Null（空值）\n6. Object（对象）\nES6 以后还补充了 Symbol 和 BigInt。数组、函数本质上也属于对象类型。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7598,9 +7610,9 @@
       "content": "简述 include 指令和 include 标准动作的区别",
       "options": [],
       "answer": [
-        "include 标准动作用于在 JSP 页面动态包含其他页面。该动作的功能与 JSP 的 include 指\n令类似,区别是 include 指令在编译时完成包含,是静态包含;而 include 标准动作是在运行\n时完成包含,是动态包含"
+        "include 指令和 include 标准动作的区别主要有：\n1. include 指令（<%@ include %>）属于静态包含，在 JSP 编译阶段完成，被包含文件内容会直接合并到当前 JSP 中。\n2. include 动作（<jsp:include>）属于动态包含，在请求处理阶段执行，被包含资源先单独处理，再把结果插入当前页面。\n3. 静态包含更适合引入固定页面片段；动态包含更适合根据运行结果包含资源。"
       ],
-      "analysis": "",
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7614,9 +7626,9 @@
       "content": "简述 JSP 页面中的组成元素。",
       "options": [],
       "answer": [
-        "JSP 页面主要有 6 类基本元素组成:\nJSP 指令:用来向 JSP 容器提供编译信息。\n² JSP 声明:用于在 JSP 页面中定义变量和方法。\n² JSP 表达式:用于将 Java 表达式的运行结果输出在页面中。\n² JSP 脚本:用于在 JSP 页面中插入 Java 代码。\n² JSP 动作:实现一些常见的特定功能。\n² JSP 注释"
+        "JSP 页面通常由以下几类元素组成：\n1. 模板元素：普通的 HTML、文本内容。\n2. 指令元素：如 page、include、taglib。\n3. 脚本元素：包括声明、脚本片段、表达式。\n4. 动作元素：如 <jsp:include>、<jsp:forward>、<jsp:useBean> 等。\n5. 注释：JSP 注释和 HTML 注释。"
       ],
-      "analysis": "",
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7629,8 +7641,10 @@
       "type": "essay",
       "content": "简述 JSP 基本原理及执行过程？",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "JSP 的基本原理是“先翻译成 Servlet，再由 Servlet 执行”。其执行过程一般为：\n1. 客户端请求某个 JSP 页面。\n2. Web 容器先把 JSP 翻译成对应的 Servlet 源文件。\n3. 再把 Servlet 源文件编译成字节码文件。\n4. 容器加载并实例化该 Servlet。\n5. 当请求到来时，调用其 _jspService() 方法处理请求。\n6. Servlet 生成响应内容并返回给客户端浏览器。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7643,8 +7657,10 @@
       "type": "essay",
       "content": "一个 JSP 页面的元素有哪些（或基本结构）？",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "一个 JSP 页面的基本组成通常包括：\n1. 模板文本（HTML）\n2. JSP 指令\n3. JSP 声明 <%! ... %>\n4. JSP 脚本片段 <% ... %>\n5. JSP 表达式 <%= ... %>\n6. JSP 动作标签\n7. JSP 注释"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7657,8 +7673,10 @@
       "type": "essay",
       "content": "<%...%>与<%!...%>中都可以声明变量，有什么区别？",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "二者都能声明变量，但位置和作用范围不同：\n1. <% ... %> 中定义的变量属于脚本片段变量，会被翻译到 _jspService() 方法内部，属于局部变量，只在当前请求处理方法内有效。\n2. <%! ... %> 中定义的变量属于声明，会被翻译成 Servlet 类的成员变量或成员方法，作用范围是整个 Servlet 类。\n3. 因此，<%! ... %> 声明的成员变量会被多个请求共享，使用时要注意线程安全问题。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7671,8 +7689,10 @@
       "type": "essay",
       "content": "在 JSP 页面中常用的 JSP 动作标签有哪些（写出 4 种即可）",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "JSP 中常用的动作标签有很多，写出 4 种即可，例如：\n1. <jsp:include>\n2. <jsp:forward>\n3. <jsp:param>\n4. <jsp:useBean>\n5. <jsp:setProperty>\n6. <jsp:getProperty>"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7686,9 +7706,9 @@
       "content": "简述 session 的生命周期?",
       "options": [],
       "answer": [
-        "1) 客户端向服务器第一次发送请求的时候,request 中并无 SessionID。\n2) 此时服务器会创建一个 Session 对象,并分配一个 SessionID。Serssion 对象保存在服\n务器端,此时为新建状态,调用 session.isNew()返回 true。\n3) 当服务器端处理完毕后,会将 SessionID 通过 response 对象传回到客户端,浏览器负责\n保存到当前进程中。\n4) 当客户端再次发送请求时,会同时将 SessionID 发送给服务器。\n5) 服务器根据传递过来的 SessionID 将这次请求(request)与保存在服务器端的 Session\n对象联系起来。此时 Session 已不处于新建状态,调用 session.isNew()返回 false。\n6) 循环执行过程 3-5,直到 Session 超时或销毁。"
+        "Session 的生命周期一般如下：\n1. 用户第一次访问服务器时，如果请求中没有 SessionID，服务器会创建一个新的 Session。\n2. 服务器为该 Session 分配唯一的 SessionID，并通过 Cookie 或 URL 重写返回给客户端。\n3. 客户端后续访问时会携带该 SessionID，服务器据此找到原来的 Session。\n4. 在会话有效期内，服务器可一直使用该 Session 保存用户相关数据。\n5. 当用户主动调用 session.invalidate()、浏览器长时间未访问导致超时，或服务器关闭时，Session 被销毁。"
       ],
-      "analysis": "",
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7699,12 +7719,12 @@
     },
     {
       "type": "essay",
-      "content": "JSP 中 Response 对象中 sendRedirect()方法的作用？，它与 jsp:forward 在作用上",
+      "content": "JSP 中 Response 对象中 sendRedirect() 方法的作用是什么？它与 jsp:forward 在作用上有什么区别？",
       "options": [],
       "answer": [
-        "有什么区别？"
+        "response.sendRedirect() 用于让客户端重新向另一个地址发起请求，实现页面重定向。\n它与 <jsp:forward> 的区别主要有：\n1. sendRedirect() 是客户端行为，会发生两次请求，浏览器地址栏会改变。\n2. <jsp:forward> 是服务器端转发，只发生一次请求，浏览器地址栏不变。\n3. sendRedirect() 可以跳转到站外地址；<jsp:forward> 一般用于当前应用内部资源转发。\n4. 使用 forward 时，请求对象中的 request 数据通常可以继续使用；重定向后原 request 数据不会保留。"
       ],
-      "analysis": "",
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7715,12 +7735,12 @@
     },
     {
       "type": "essay",
-      "content": "JSP 内置对象 request、session 与 application 分别有什么功能？各自的作用域范",
+      "content": "JSP 内置对象 request、session 与 application 分别有什么功能？各自的作用域范围？",
       "options": [],
       "answer": [
-        "围？"
+        "request、session、application 的功能和作用域如下：\n1. request：保存一次请求过程中的数据，如表单参数、转发数据等；作用域是一次请求。\n2. session：保存同一用户多次请求之间共享的数据，如登录状态、购物车；作用域是一次会话。\n3. application：保存整个 Web 应用范围内共享的数据，如系统级配置、全站统计信息；作用域是整个应用程序生命周期。"
       ],
-      "analysis": "",
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7733,8 +7753,10 @@
       "type": "essay",
       "content": "JSP 中内置对象有哪些？",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "JSP 常见的内置对象有 9 个：\n1. request\n2. response\n3. out\n4. session\n5. application\n6. config\n7. pageContext\n8. page\n9. exception（通常只在错误页面中使用）"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7747,8 +7769,10 @@
       "type": "essay",
       "content": "四种作用域",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "JSP 中常见的四种作用域是：\n1. page 作用域：只在当前 JSP 页面内有效。\n2. request 作用域：在一次请求范围内有效，转发后仍可使用。\n3. session 作用域：在同一用户的一次会话过程中有效。\n4. application 作用域：在整个 Web 应用运行期间都有效，对所有用户共享。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7761,8 +7785,10 @@
       "type": "essay",
       "content": "HTTP 协议为什么无法跟踪会话？在 JSP 中如何解决这个问题？",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "HTTP 协议本身是无状态协议，每次请求之间彼此独立，服务器默认不知道两次请求是否来自同一个用户，所以无法天然跟踪会话。\n在 JSP/Servlet 中通常通过以下方式解决：\n1. Cookie：把会话标识（如 JSESSIONID）保存在客户端。\n2. Session：把用户会话数据保存在服务器端，通过 SessionID 关联同一用户。\n3. URL 重写：当 Cookie 不可用时，可把 SessionID 拼接到 URL 中。\n4. 隐藏域：在某些表单场景下也可辅助保存状态。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7775,8 +7801,10 @@
       "type": "essay",
       "content": "简述 Cookie 的工作原理？",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "Cookie 的工作原理如下：\n1. 服务器在响应中通过 Set-Cookie 把键值对发送给浏览器。\n2. 浏览器把 Cookie 保存到本地。\n3. 以后访问同一站点或符合路径规则的资源时，浏览器会自动把 Cookie 附加到请求头中发回服务器。\n4. 服务器读取 Cookie 后，就可以识别用户身份、记录偏好或维持部分会话信息。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7789,8 +7817,10 @@
       "type": "essay",
       "content": "简述 Session 的工作原理？",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "Session 的工作原理如下：\n1. 用户第一次访问服务器时，服务器创建一个 Session 对象，并生成唯一的 SessionID。\n2. 服务器把 SessionID 返回给客户端，通常通过 Cookie（如 JSESSIONID）保存。\n3. 客户端后续请求时带上该 SessionID。\n4. 服务器根据 SessionID 找到对应的 Session 对象，从而读取或保存该用户的会话数据。\n5. 当会话失效、超时或被手动销毁后，Session 中的数据也随之失效。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7803,8 +7833,10 @@
       "type": "essay",
       "content": "JDBC 访问数据库步骤？",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "JDBC 访问数据库的一般步骤如下：\n1. 加载数据库驱动。\n2. 通过 DriverManager 获取数据库连接 Connection。\n3. 创建 Statement 或 PreparedStatement 对象。\n4. 执行 SQL 语句（查询或更新）。\n5. 如果是查询，使用 ResultSet 处理结果集。\n6. 关闭 ResultSet、Statement、Connection 等资源。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7817,8 +7849,10 @@
       "type": "essay",
       "content": "JDBC 的主要功能有？",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "JDBC 的主要功能包括：\n1. 与数据库建立连接。\n2. 执行 SQL 查询、插入、更新、删除等操作。\n3. 处理并读取查询结果集。\n4. 支持事务处理，如提交和回滚。\n5. 支持预编译语句、批处理、元数据读取等数据库访问能力。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7831,8 +7865,10 @@
       "type": "essay",
       "content": "简述自己对 Statement 和 PreparedStatement 的理解。",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "Statement 和 PreparedStatement 的区别可以概括为：\n1. Statement 适合执行简单、一次性的静态 SQL，但需要把参数直接拼接到 SQL 字符串中。\n2. PreparedStatement 先对 SQL 进行预编译，再通过占位符传参，可重复执行，效率通常更高。\n3. PreparedStatement 能更好地处理不同类型参数，并有效降低 SQL 注入风险。\n因此，在实际开发中一般优先使用 PreparedStatement。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7845,8 +7881,10 @@
       "type": "essay",
       "content": "Servlet 的生命周期有几个阶段？分别是什么？",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "Servlet 生命周期通常分为 3 个阶段：\n1. 初始化阶段：容器创建 Servlet 实例后调用 init() 方法，只执行一次。\n2. 处理请求阶段：每当有请求到来时，容器调用 service() 方法，再根据请求方式分发到 doGet()、doPost() 等方法。\n3. 销毁阶段：当 Servlet 被卸载或服务器关闭时，容器调用 destroy() 方法释放资源。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7859,8 +7897,10 @@
       "type": "essay",
       "content": "简述 Servlet 与 JSP 的区别？",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "Servlet 与 JSP 的区别主要有：\n1. Servlet 本质上是 Java 类，适合处理请求、控制流程和编写业务逻辑。\n2. JSP 本质上是用于展示的页面，最终也会被翻译成 Servlet，但更适合编写 HTML 页面视图。\n3. Servlet 输出 HTML 时代码可读性较差；JSP 更适合页面显示。\n4. 实际开发中通常遵循“Servlet 做控制，JSP 做显示”的分工。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7873,8 +7913,10 @@
       "type": "essay",
       "content": "需要使用过滤器的一般有哪几种情况？",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "常见需要使用过滤器（Filter）的情况有：\n1. 统一设置字符编码。\n2. 用户登录校验、权限控制。\n3. 记录访问日志。\n4. 过滤敏感词或非法参数。\n5. 统一压缩响应、缓存控制。\n6. 处理跨域、XSS 防护等通用请求预处理场景。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7887,8 +7929,10 @@
       "type": "essay",
       "content": "使用过滤器的步骤？",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "使用过滤器的一般步骤如下：\n1. 编写一个类实现 javax.servlet.Filter 接口。\n2. 重写 init()、doFilter()、destroy() 方法。\n3. 在 doFilter() 中编写拦截前后的处理逻辑，并通过 chain.doFilter(request,response) 放行请求。\n4. 在 web.xml 中配置过滤器及其拦截路径，或使用注解进行映射。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7901,8 +7945,10 @@
       "type": "essay",
       "content": "什么是 Javabean？有什么作用？",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "JavaBean 是一种符合特定规范的 Java 类，通常要求：\n1. 类具有公共无参构造方法。\n2. 成员变量一般使用 private 封装。\n3. 通过 public 的 getter/setter 方法对外访问属性。\n它的作用主要有：\n1. 封装数据，便于在各层之间传递对象。\n2. 降低程序耦合度，便于维护。\n3. 在 JSP 中可结合 <jsp:useBean>、EL、DAO/VO 等方式复用数据对象。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web简答题",
@@ -7915,8 +7961,10 @@
       "type": "essay",
       "content": "写出下列 HTML 代码段的运行结果。\n<table border=\"1px\" >\n<caption>文具订单表</ caption >\n<tr>\n<th>文具</th>\n<th>价格</th>\n<th>数量</th>\n</tr>\n<tr>\n<td>钢笔</td>\n<td>2.50/支</td>\n<td rowspan=2>各 3 支</td>\n</tr>\n<tr>\n<td>铅笔</td>\n<td>0.50/支</td>\n</tr>\n<tr>\n<td>合计</td>\n<td colspan=\"2\">9</td>\n</tr>\n</table>",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "页面会显示一个带边框的表格，标题为“文具订单表”。表格内容可概括为：\n文具 | 价格    | 数量\n钢笔 | 2.50/支 | 各3支\n铅笔 | 0.50/支 | （数量列与上一行合并）\n合计 | 9（该单元格横跨后两列）"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web程序与综合应用题",
@@ -7929,8 +7977,10 @@
       "type": "essay",
       "content": "写出下列 HTML 代码段的运行结果。\n<table border=\"1px\" >\n<caption>学生成绩登记表</caption>\n<tr>\n<th>学号</th>\n<th>姓名</th>\n<th>平时成绩</th>\n<th>期末成绩</th>\n</tr>\n<tr>\n<td>1618006</td>\n<td>张三</td>\n<td>20</td>\n<td>95</td>\n</tr>\n<tr>\n<th rowspan=\"2\">说明</th>\n<td colspan=\"3\">总成绩=平时成绩*20%+期末成绩*80%</td>\n</tr>\n<tr>\n<td colspan=\"3\">2022.06</td>\n</tr>\n</table>",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "页面会显示一个带边框的表格，标题为“学生成绩登记表”。内容大致如下：\n学号      | 姓名 | 平时成绩 | 期末成绩\n1618006 | 张三 | 20      | 95\n说明（跨两行） | 总成绩=平时成绩*20%+期末成绩*80%\n               | 2022.06（横跨后三列）"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web程序与综合应用题",
@@ -7943,8 +7993,10 @@
       "type": "essay",
       "content": "写出下列 HTML 代码段的运行结果。\n<table border=\"1px\" >\n<caption>图书分类表</caption>\n<tr>\n<th>类别</th>\n<th>书名</th>\n<th>价格</th>\n</tr>\n<tr>\n<td rowspan=\"2\">计算机</td>\n<td>Java Web 程序设计</td>\n<td>49.9</td>\n</tr>\n<tr>\n<td>Java 程序设计</td>\n<td>44.8</td>\n</tr>\n<tr>\n<td>文学</td>\n<td>目送</td>\n<td>42</td>\n</tr>\n<tr>\n<td colspan=\"3\">2022 年 06 月</td>\n</tr>\n</table>",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "页面会显示一个带边框的表格，标题为“图书分类表”。内容大致如下：\n类别   | 书名                  | 价格\n计算机 | Java Web 程序设计     | 49.9\n       | Java 程序设计         | 44.8\n文学   | 目送                  | 42\n2022 年 06 月（最后一行横跨三列）"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web程序与综合应用题",
@@ -7957,8 +8009,10 @@
       "type": "essay",
       "content": "在浏览器地址栏中输\n入:http://localhost:8080/reading.jsp?name=Tom&address=Shenyang,请写出下列代码\n的运行结果。\n<%@ page language=\"java\" contentType=\"text/html; charset=GBK\" %>\n<!DOCTYPE html>\n<body>\n<%\nString name=request.getParameter(\"name\");\nString address=request.getParameter(\"address\");\nif(name!=null&&address!=null){\n%>\n<p>欢迎<%=name %></p><hr/><p>您所在城市是<%=address %></p>\n<%} %>\n</body>\n</html>",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "运行结果为页面输出：\n欢迎Tom\n--------------------------------\n您所在城市是Shenyang\n因为 URL 中传入了 name=Tom 和 address=Shenyang，且两个参数都不为 null，所以 if 语句中的内容会被显示。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web程序与综合应用题",
@@ -7971,8 +8025,10 @@
       "type": "essay",
       "content": "将下述代码保存为文件 reading.jsp,在浏览器地址栏中输\n入:http://localhost:8080/reading.jsp?name=Tom&name=Mary,写出代码的运行结果。\n<%@ page language=\"java\" import=\"java.util.*\" pageEncoding=\"utf-8\"%>\n<body>\n<%\nString[] names=request.getParameterValues(\"name\");\nif(names!=null){\n%>\n<p>姓名列表如下:</p>\n<%\nfor(int i=0;i<names.length;i++){\nout.println(names[i]+\"<br>\");\n%>\n</body>",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "页面会先显示“姓名列表如下:”，然后依次换行输出：\nTom\nMary\n因为 request.getParameterValues(\"name\") 会把同名参数取成字符串数组。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web程序与综合应用题",
@@ -7985,8 +8041,10 @@
       "type": "essay",
       "content": "在浏览器地址栏中输入:http://localhost:8080/index.jsp,请写出下列代码的运行结\n果。\nindex.jsp 源代码:\n<%@ page language=\"java\" contentType=\"text/html; charset=gb2312\"%>\n<html><body>\n<h2>欢迎进入 JSP 的世界</h2>\n<hr/>\n<jsp:include page=\"welcome.jsp\">\n<jsp:param name=\"userName\" value=\"xiaoming\"/>\n</jsp:include>\n</body></html>\nwelcome.jsp 源代码:\n<%@ page language=\"java\" contentType=\"text/html; charset=gb2312\"%>\n<html><body>\n<p>你好,<%=request.getParameter(\"userName\")%>!</p><hr/><p>欢迎光临!</p>\n</body></html>",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "运行结果为：\n欢迎进入 JSP 的世界\n--------------------------------\n你好,xiaoming!\n--------------------------------\n欢迎光临!\n原因是 index.jsp 先输出标题和分隔线，再通过 <jsp:include> 动态包含 welcome.jsp，并把参数 userName 的值 xiaoming 传给它。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web程序与综合应用题",
@@ -7999,8 +8057,10 @@
       "type": "essay",
       "content": "使用 HTML 和 JavaScript 实现注册表单前端验证，完成相应代码。要求如下：\n（1）使用 HTML 的表单控件设计一个注册页面，如图所示；\n（2）设计 JavaScript 函数 validate()，验证用户是否输入了姓名及两次输入的密码是否一\n致。若姓名文本框输入为空，则弹出警示窗口提示用户“请输入您的姓名!”，若两次输入\n密码不一致，则弹出警示窗口提示用户“您两次输入的密码不一致！请重新输入! ”。",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "示例代码如下：\n<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"utf-8\">\n<script>\nfunction validate(){\n  var name=document.getElementById(\"username\").value.trim();\n  var pwd1=document.getElementById(\"pwd1\").value;\n  var pwd2=document.getElementById(\"pwd2\").value;\n  if(name===\"\"){\n    alert(\"请输入您的姓名!\");\n    return false;\n  }\n  if(pwd1!==pwd2){\n    alert(\"您两次输入的密码不一致！请重新输入!\");\n    return false;\n  }\n  return true;\n}\n</script>\n</head>\n<body>\n<form action=\"#\" method=\"post\" onsubmit=\"return validate()\">\n  姓名：<input type=\"text\" id=\"username\" name=\"username\"><br>\n  密码：<input type=\"password\" id=\"pwd1\" name=\"pwd1\"><br>\n  确认密码：<input type=\"password\" id=\"pwd2\" name=\"pwd2\"><br>\n  <input type=\"submit\" value=\"注册\">\n  <input type=\"reset\" value=\"重置\">\n</form>\n</body>\n</html>"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web程序与综合应用题",
@@ -8013,8 +8073,10 @@
       "type": "essay",
       "content": "实现下列表格(注意单元格合并)",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "由于原题截图未完整保存在源文件中，参考实现可写成一个包含单元格合并的表格，例如：\n<table border=\"1\" cellspacing=\"0\" width=\"400\">\n  <tr>\n    <th colspan=\"3\">学生信息表</th>\n  </tr>\n  <tr>\n    <td rowspan=\"2\">张三</td>\n    <td>语文</td>\n    <td>90</td>\n  </tr>\n  <tr>\n    <td>数学</td>\n    <td>95</td>\n  </tr>\n</table>\n其中 colspan 用于跨列合并，rowspan 用于跨行合并。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web程序与综合应用题",
@@ -8027,8 +8089,10 @@
       "type": "essay",
       "content": "使用 DIV+CSS 完成下列页面效果，DIV 完成页面结构部分，CSS 完成页面布局及样式\n（边框），写出主要代码。",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "可参考如下主要代码：\nHTML：\n<div id=\"container\">\n  <div id=\"header\">页头</div>\n  <div id=\"nav\">导航</div>\n  <div id=\"main\">\n    <div id=\"left\">左侧</div>\n    <div id=\"right\">右侧</div>\n  </div>\n  <div id=\"footer\">页脚</div>\n</div>\n\nCSS：\n#container{width:800px;margin:0 auto;border:1px solid #333;}\n#header,#nav,#footer{height:60px;line-height:60px;border:1px solid #333;text-align:center;}\n#main{display:flex;min-height:300px;}\n#left{flex:1;border:1px solid #333;}\n#right{width:220px;border:1px solid #333;}\n这样即可用 DIV 完成结构，用 CSS 完成布局和边框样式。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web程序与综合应用题",
@@ -8041,8 +8105,10 @@
       "type": "essay",
       "content": "使用 CSS 完成仿百度按钮的导航栏,并使用伪类选择器完成超链接悬停效果",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "示例代码如下：\n<ul class=\"nav\">\n  <li><a href=\"#\">新闻</a></li>\n  <li><a href=\"#\">网页</a></li>\n  <li><a href=\"#\">贴吧</a></li>\n  <li><a href=\"#\">知道</a></li>\n</ul>\n\n<style>\n.nav{list-style:none;margin:0;padding:0;background:#4e6ef2;overflow:hidden;}\n.nav li{float:left;}\n.nav a{display:block;padding:12px 24px;color:#fff;text-decoration:none;}\n.nav a:hover{background:#315efb;}\n</style>\n其中 :hover 伪类用于实现鼠标悬停效果。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web程序与综合应用题",
@@ -8055,8 +8121,10 @@
       "type": "essay",
       "content": "使用 Request 和 Response 完成用户登录功能，需要完成 3 个文件，请完成主要代码。\n要求如下：\n（1）login.jsp：登录页面（图一），用户输入账号和密码，提交表单；（2）check.jsp：检\n查页面（图二），获取账号和密码，如果账号为 admin，密码为 123456，则登录成功，跳\n转到欢迎页面 welcome.html；否则输出错误信息，页面在 5 秒后返回登录页面；（3）\nwelcome.html：欢迎页面（图三），显示欢迎信息。\n参考 ppt 例题",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "可参考以下 3 个文件的主要代码：\n1. login.jsp\n<form action=\"check.jsp\" method=\"post\">\n  账号：<input type=\"text\" name=\"username\"><br>\n  密码：<input type=\"password\" name=\"password\"><br>\n  <input type=\"submit\" value=\"登录\">\n</form>\n\n2. check.jsp\n<%\nrequest.setCharacterEncoding(\"utf-8\");\nString username=request.getParameter(\"username\");\nString password=request.getParameter(\"password\");\nif(\"admin\".equals(username) && \"123456\".equals(password)){\n    response.sendRedirect(\"welcome.html\");\n}else{\n    out.print(\"登录失败，5 秒后返回登录页\");\n    response.setHeader(\"refresh\",\"5;url=login.jsp\");\n}\n%>\n\n3. welcome.html\n<!DOCTYPE html>\n<html>\n<body>\n  <h2>欢迎登录系统！</h2>\n</body>\n</html>"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web程序与综合应用题",
@@ -8069,8 +8137,10 @@
       "type": "essay",
       "content": "使用 JSP 完成下列程序：用户输入梯形的上底、下底和高的值后，计算并输出梯形面\n积。TX.jsp 页面中设计表单接收用户输入，表单提交给 getArea.jsp 页面。getArea.jsp 页\n面中获取用户的输入，计算梯形面积并输出。\n以及三角形等（实验）",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "参考答案如下：\n1. TX.jsp\n<form action=\"getArea.jsp\" method=\"post\">\n  上底：<input type=\"text\" name=\"a\"><br>\n  下底：<input type=\"text\" name=\"b\"><br>\n  高：<input type=\"text\" name=\"h\"><br>\n  <input type=\"submit\" value=\"计算面积\">\n</form>\n\n2. getArea.jsp\n<%\nrequest.setCharacterEncoding(\"utf-8\");\ndouble a=Double.parseDouble(request.getParameter(\"a\"));\ndouble b=Double.parseDouble(request.getParameter(\"b\"));\ndouble h=Double.parseDouble(request.getParameter(\"h\"));\ndouble area=(a+b)*h/2;\nout.print(\"梯形面积为：\"+area);\n%>\n若要求三角形面积，公式改为 area=底*高/2 即可。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web程序与综合应用题",
@@ -8083,8 +8153,10 @@
       "type": "essay",
       "content": "使用 Request 完成用户登录功能，需要完成 2 个文件，请完成主要代码。要求如下：\n（1）Login.html：用户注册表单（图一），表单提交给 Display.jsp 页面。\n（2）Display.jsp：显示页面（图二），获取注册页面信息，在此页面进行显示。\n（图一）\n（图二）",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "可参考以下 2 个文件：\n1. Login.html\n<form action=\"Display.jsp\" method=\"post\">\n  用户名：<input type=\"text\" name=\"username\"><br>\n  密码：<input type=\"password\" name=\"password\"><br>\n  性别：\n  <input type=\"radio\" name=\"sex\" value=\"男\">男\n  <input type=\"radio\" name=\"sex\" value=\"女\">女<br>\n  <input type=\"submit\" value=\"提交\">\n</form>\n\n2. Display.jsp\n<%\nrequest.setCharacterEncoding(\"utf-8\");\nString username=request.getParameter(\"username\");\nString password=request.getParameter(\"password\");\nString sex=request.getParameter(\"sex\");\n%>\n用户名：<%=username%><br>\n密码：<%=password%><br>\n性别：<%=sex%><br>"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web程序与综合应用题",
@@ -8097,8 +8169,10 @@
       "type": "essay",
       "content": "使用 Cookie 完成文本框信息自动填充程序\n参考 ppt 例题和实验",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "可用两个页面完成自动填充，核心代码如下：\n1. login.jsp\n<%@ page import=\"java.net.URLDecoder,javax.servlet.http.Cookie\" %>\n<%\nString uname=\"\";\nString upwd=\"\";\nCookie[] cookies=request.getCookies();\nif(cookies!=null){\n  for(Cookie c:cookies){\n    if(\"uname\".equals(c.getName())) uname=URLDecoder.decode(c.getValue(),\"UTF-8\");\n    if(\"upwd\".equals(c.getName())) upwd=URLDecoder.decode(c.getValue(),\"UTF-8\");\n  }\n}\n%>\n<form action=\"save.jsp\" method=\"post\">\n  用户名：<input type=\"text\" name=\"uname\" value=\"<%=uname%>\"><br>\n  密码：<input type=\"text\" name=\"upwd\" value=\"<%=upwd%>\"><br>\n  <input type=\"submit\" value=\"保存\">\n</form>\n\n2. save.jsp\n<%@ page import=\"java.net.URLEncoder,javax.servlet.http.Cookie\" %>\n<%\nString uname=request.getParameter(\"uname\");\nString upwd=request.getParameter(\"upwd\");\nCookie c1=new Cookie(\"uname\",URLEncoder.encode(uname,\"UTF-8\"));\nCookie c2=new Cookie(\"upwd\",URLEncoder.encode(upwd,\"UTF-8\"));\nc1.setMaxAge(7*24*3600);\nc2.setMaxAge(7*24*3600);\nresponse.addCookie(c1);\nresponse.addCookie(c2);\nresponse.sendRedirect(\"login.jsp\");\n%>"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web程序与综合应用题",
@@ -8111,8 +8185,10 @@
       "type": "essay",
       "content": "使用 Session 技术完成用户登录程序，写出 2 个页面的主要代码。（1）Main.jsp：系统\n主页面，需要登录才能访问，先使用 Session 检验用户是否已经登录，如果已经登录则显\n示欢迎信息（图一），否则输出提示信息（图二），并在 2 秒后转到登录页面 Login.jsp；\n（2）Login.jsp：用户登录页面，判断账号（admin）和密码（123456）是否正确，如果正\n确则转到主页面 Main.jsp（图一），否则，在本页输出错误信息，提示用户重新输入（图\n三）。\n（图一） （图\n二） （图三）",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "参考答案可写成 2 个页面：\n1. Main.jsp\n<%\nString user=(String)session.getAttribute(\"user\");\nif(user!=null){\n%>\n欢迎您，<%=user%>\n<%\n}else{\n  out.print(\"您还没有登录，2 秒后跳转到登录页面...\");\n  response.setHeader(\"refresh\",\"2;url=Login.jsp\");\n}\n%>\n\n2. Login.jsp\n<%\nrequest.setCharacterEncoding(\"utf-8\");\nString username=request.getParameter(\"username\");\nString password=request.getParameter(\"password\");\nif(username!=null && password!=null){\n  if(\"admin\".equals(username) && \"123456\".equals(password)){\n    session.setAttribute(\"user\",username);\n    response.sendRedirect(\"Main.jsp\");\n    return;\n  }else{\n    out.print(\"用户名或密码错误，请重新输入。<br>\");\n  }\n}\n%>\n<form action=\"Login.jsp\" method=\"post\">\n  账号：<input type=\"text\" name=\"username\"><br>\n  密码：<input type=\"password\" name=\"password\"><br>\n  <input type=\"submit\" value=\"登录\">\n</form>"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web程序与综合应用题",
@@ -8125,8 +8201,10 @@
       "type": "essay",
       "content": "使用 Session 实现带验证码的登录系统\n使用 Session 实现带验证码的登录系统，需要 3 个文件，要求如下：\n（1）在 Login.jsp 页面中用户通过用户名、密码和验证码进行登录；\n（2）登录后的信息由 Handler.jsp 页面进行处理。如果用户名与密码与保存在二维数组中\n的字符串相同，并且输入的验证码与 4 位随机生成的验证码图片上的数字相同，则将用户\n名保存在 session 对象中并跳转到 Main.jsp 页面；否则跳转到 Login.jsp 页面重新登录。\n（3）在 Main.jsp 页面中通过 session 对象获得用户名并输出。\n参考 ppt",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "参考实现可用 3 个文件完成：\n1. Login.jsp\n<%\nString code=String.valueOf((int)((Math.random()*9000)+1000));\nsession.setAttribute(\"checkCode\",code);\n%>\n<form action=\"Handler.jsp\" method=\"post\">\n  用户名：<input type=\"text\" name=\"username\"><br>\n  密码：<input type=\"password\" name=\"password\"><br>\n  验证码：<input type=\"text\" name=\"code\">\n  <span><%=code%></span><br>\n  <input type=\"submit\" value=\"登录\">\n</form>\n\n2. Handler.jsp\n<%\nrequest.setCharacterEncoding(\"utf-8\");\nString username=request.getParameter(\"username\");\nString password=request.getParameter(\"password\");\nString code=request.getParameter(\"code\");\nString realCode=(String)session.getAttribute(\"checkCode\");\nString[][] users={{\"admin\",\"123456\"},{\"tom\",\"111111\"}};\nboolean ok=false;\nfor(int i=0;i<users.length;i++){\n  if(users[i][0].equals(username) && users[i][1].equals(password)){\n    ok=true;\n    break;\n  }\n}\nif(ok && realCode!=null && realCode.equals(code)){\n  session.setAttribute(\"user\",username);\n  response.sendRedirect(\"Main.jsp\");\n}else{\n  response.sendRedirect(\"Login.jsp\");\n}\n%>\n\n3. Main.jsp\n欢迎您，<%=session.getAttribute(\"user\")%>"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web程序与综合应用题",
@@ -8139,8 +8217,10 @@
       "type": "essay",
       "content": "Session 实现购物车\n参考 ppt 例题和实验",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "Session 购物车的核心思路是：把购物车数据保存到 session 中。参考代码如下：\n1. buy.jsp\n<%@ page import=\"java.util.*\" %>\n<%\nString name=request.getParameter(\"name\");\nList<String> cart=(List<String>)session.getAttribute(\"cart\");\nif(cart==null){\n  cart=new ArrayList<String>();\n}\nif(name!=null && name.length()>0){\n  cart.add(name);\n}\nsession.setAttribute(\"cart\",cart);\nresponse.sendRedirect(\"cart.jsp\");\n%>\n\n2. cart.jsp\n<%@ page import=\"java.util.*\" %>\n<%\nList<String> cart=(List<String>)session.getAttribute(\"cart\");\nout.print(\"购物车中的商品：<br>\");\nif(cart!=null){\n  for(String item:cart){\n    out.print(item+\"<br>\");\n  }\n}\n%>\n访问示例：buy.jsp?name=铅笔、buy.jsp?name=钢笔。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web程序与综合应用题",
@@ -8153,8 +8233,10 @@
       "type": "essay",
       "content": "用 JSP 实现基于 xsgl 数据库的用户注册与登录系统，如图所示：\n图1 图2 图3",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "本题可按“注册 + 登录 + JDBC 连接数据库”的思路完成。主要代码示例如下：\n1. 注册页面 register.jsp：接收用户名和密码，使用 PreparedStatement 执行 insert into users(username,password) values(?,?)。\n2. 登录页面 login.jsp：接收用户名和密码，执行 select * from users where username=? and password=?。\n3. 如果查询到记录，则说明登录成功，可将用户名放入 session 并跳转主页；否则提示登录失败。\n4. JDBC 关键代码：\nClass.forName(\"com.mysql.cj.jdbc.Driver\");\nConnection conn=DriverManager.getConnection(\"jdbc:mysql://localhost:3306/xsgl?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai\",\"root\",\"123456\");\nPreparedStatement ps=conn.prepareStatement(\"select * from users where username=? and password=?\");\nps.setString(1,username);\nps.setString(2,password);\nResultSet rs=ps.executeQuery();\n如果是注册功能，把 SQL 改成 insert 语句即可。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web程序与综合应用题",
@@ -8167,8 +8249,10 @@
       "type": "essay",
       "content": "数据库部分 ppt 例题和实验",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "题目只给出了“数据库部分 ppt 例题和实验”，可参考一个标准 JDBC 示例作为答案：\nClass.forName(\"com.mysql.cj.jdbc.Driver\");\nConnection conn=DriverManager.getConnection(\n  \"jdbc:mysql://localhost:3306/xsgl?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai\",\n  \"root\",\n  \"123456\"\n);\nPreparedStatement ps=conn.prepareStatement(\"select sno,sname,sage from student\");\nResultSet rs=ps.executeQuery();\nwhile(rs.next()){\n  out.print(rs.getString(\"sno\")+\" \"+rs.getString(\"sname\")+\" \"+rs.getInt(\"sage\")+\"<br>\");\n}\nrs.close();\nps.close();\nconn.close();\n若需要新增、修改、删除，只需把 SQL 改为 insert、update、delete 并调用 executeUpdate()。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web程序与综合应用题",
@@ -8181,8 +8265,10 @@
       "type": "essay",
       "content": "假如数据库中有表 student(sno,sname,sage),请写出表示其对应的 VO 的 JavaBean。\n提示:在 JavaBean 中不仅要定义其成员变量,还要对成员变量定义 setter/getter 方法。\n通常情况下 DAO(data access object)配合 VO(value object)使用,在 DAO 中可以每查询\n到一条记录就将其封装为 VO。最后将所有实例化的 VO 存放在集合内返回,这样就可以实现\n层次的分开,降低了耦合度。\n看 ppt 例题",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "对应的 JavaBean 可写为：\npublic class Student {\n    private String sno;\n    private String sname;\n    private int sage;\n\n    public Student() {}\n\n    public Student(String sno, String sname, int sage) {\n        this.sno = sno;\n        this.sname = sname;\n        this.sage = sage;\n    }\n\n    public String getSno() {\n        return sno;\n    }\n\n    public void setSno(String sno) {\n        this.sno = sno;\n    }\n\n    public String getSname() {\n        return sname;\n    }\n\n    public void setSname(String sname) {\n        this.sname = sname;\n    }\n\n    public int getSage() {\n        return sage;\n    }\n\n    public void setSage(int sage) {\n        this.sage = sage;\n    }\n}"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web程序与综合应用题",
@@ -8195,8 +8281,10 @@
       "type": "essay",
       "content": "在 src/xsgl/servlet 中创建 servlet 文件 stuservlet.java,此 servlet 不能直接被访\n问,需要在 web.xml 中配置 servlet,才能通过 URL 映射到与之对应的 servlet 中,如果用户\n以地址:http://localhost:8080/xsgl/servlet/stuservlet 来访问它,请写出在 web.xml\n中相应的配置代码。",
       "options": [],
-      "answer": [],
-      "analysis": "",
+      "answer": [
+        "web.xml 中可配置为：\n<servlet>\n    <servlet-name>stuservlet</servlet-name>\n    <servlet-class>xsgl.servlet.stuservlet</servlet-class>\n</servlet>\n\n<servlet-mapping>\n    <servlet-name>stuservlet</servlet-name>\n    <url-pattern>/servlet/stuservlet</url-pattern>\n</servlet-mapping>\n这样就可以通过 /xsgl/servlet/stuservlet 访问该 Servlet。"
+      ],
+      "analysis": "答案由AI 生成，非官方答案，仅供参考",
       "tags": [
         "Java Web",
         "Java Web程序与综合应用题",
