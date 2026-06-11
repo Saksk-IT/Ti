@@ -395,10 +395,15 @@
       };
 
       window.ubmApi = async function (url, options) {
+        const customHeaders = (options && options.headers) ? options.headers : {};
         const opt = Object.assign({
-          headers: { 'Content-Type': 'application/json' },
+          headers: {},
           credentials: 'same-origin',
         }, options || {});
+        opt.headers = Object.assign({
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        }, customHeaders);
 
         const res = await fetch(url, opt);
         const data = await res.json().catch(() => ({}));

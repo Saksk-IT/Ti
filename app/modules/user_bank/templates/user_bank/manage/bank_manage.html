@@ -2,6 +2,91 @@
 
 {% set manage_tab = 'card' %}
 
+{% block manage_head %}
+  <style>
+    .ubm-cover-field {
+      align-items: start;
+      grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+      gap: 12px;
+    }
+
+    .ubm-cover-preview {
+      position: relative;
+      min-height: 168px;
+      border: 1px solid var(--app-border);
+      border-radius: 14px;
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--app-primary) 10%, transparent), transparent 58%),
+        var(--app-surface);
+      box-shadow: var(--app-shadow-soft);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--app-muted);
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1.4;
+      text-align: center;
+      aspect-ratio: 16 / 9;
+    }
+
+    .ubm-cover-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .ubm-cover-preview.has-image .ubm-cover-empty {
+      display: none;
+    }
+
+    .ubm-cover-controls {
+      min-width: 0;
+      display: grid;
+      gap: 8px;
+    }
+
+    .ubm-cover-url-row {
+      display: flex;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .ubm-cover-url-row .ubm-input {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .ubm-file-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 720px) {
+      .ubm-cover-field {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .ubm-cover-url-row {
+        flex-direction: column;
+      }
+
+      .ubm-cover-url-row .ubm-btn {
+        width: 100%;
+      }
+    }
+  </style>
+{% endblock %}
+
 {% block manage_content %}
   <section class="ubm-card" aria-label="内部名片">
     <h2>内部名片</h2>
@@ -34,6 +119,36 @@
     <div class="ubm-field">
       <div class="ubm-label">题库名称</div>
       <div style="font-size: 15px; font-weight: 950; letter-spacing: -0.1px;">{{ bank_name }}</div>
+    </div>
+
+    <div class="ubm-field ubm-cover-field">
+      <div>
+        <div class="ubm-label">封面图片</div>
+        <div class="ubm-cover-preview" id="ubmCoverPreview">
+          <span class="ubm-cover-empty">暂无封面<br>上传后会展示在题库广场与名片页</span>
+        </div>
+      </div>
+      <div class="ubm-cover-controls">
+        <label class="ubm-label" for="ubmCoverImage">封面地址</label>
+        <div class="ubm-cover-url-row">
+          <input id="ubmCoverImage"
+                 class="ubm-input"
+                 type="text"
+                 maxlength="500"
+                 value="{{ cover_image or '' }}"
+                 placeholder="上传图片后自动生成，也可粘贴图片地址">
+          <button class="ubm-btn" type="button" id="ubmChooseCoverBtn">选择图片</button>
+        </div>
+        <input class="ubm-file-input"
+               type="file"
+               id="ubmCoverFile"
+               accept="image/png,image/jpeg,image/gif,image/webp">
+        <div class="ubm-sub" id="ubmCoverHint">支持 png、jpg、jpeg、gif、webp，最大 5MB。</div>
+        <div class="ubm-actions" style="margin-top: 4px;">
+          <button class="ubm-btn ubm-btn-primary" type="button" id="ubmSaveCoverBtn">保存封面</button>
+          <button class="ubm-btn ubm-btn-ghost" type="button" id="ubmClearCoverBtn">清空封面</button>
+        </div>
+      </div>
     </div>
 
     <div class="ubm-field">
@@ -73,8 +188,16 @@
       const publicDescEl = document.getElementById('ubmPublicDesc');
       const publicHintEl = document.getElementById('ubmPublicDescHint');
       const savePublicBtn = document.getElementById('ubmSavePublicDescBtn');
+      const coverImageEl = document.getElementById('ubmCoverImage');
+      const coverFileEl = document.getElementById('ubmCoverFile');
+      const chooseCoverBtn = document.getElementById('ubmChooseCoverBtn');
+      const saveCoverBtn = document.getElementById('ubmSaveCoverBtn');
+      const clearCoverBtn = document.getElementById('ubmClearCoverBtn');
+      const coverPreviewEl = document.getElementById('ubmCoverPreview');
+      const coverHintEl = document.getElementById('ubmCoverHint');
       let savedPrivateDesc = {{ (bank_description or '')|tojson }};
       let savedPublicDesc = {{ (public_description or '')|tojson }};
+      let savedCoverImage = {{ (cover_image or '')|tojson }};
 
       function setHint(hintEl, text, kind) {
         if (!hintEl) return;
@@ -88,6 +211,107 @@
         if (!descEl) return;
         const len = String(descEl.value || '').trim().length;
         setHint(hintEl, `${len} / 200`, len > 200 ? 'error' : '');
+      }
+
+      function renderCoverPreview(url) {
+        if (!coverPreviewEl) return;
+        const coverUrl = String(url || '').trim();
+        coverPreviewEl.classList.toggle('has-image', !!coverUrl);
+        if (!coverUrl) {
+          coverPreviewEl.innerHTML = '<span class="ubm-cover-empty">暂无封面<br>上传后会展示在题库广场与名片页</span>';
+          return;
+        }
+        const img = document.createElement('img');
+        img.alt = '题库封面预览';
+        img.src = coverUrl;
+        img.loading = 'lazy';
+        img.addEventListener('error', function () {
+          coverPreviewEl.classList.remove('has-image');
+          coverPreviewEl.innerHTML = '<span class="ubm-cover-empty">封面地址无法预览<br>保存前请检查图片链接</span>';
+        }, { once: true });
+        coverPreviewEl.replaceChildren(img);
+      }
+
+      function setCoverUploading(isUploading) {
+        if (chooseCoverBtn) {
+          chooseCoverBtn.disabled = !!isUploading;
+          chooseCoverBtn.textContent = isUploading ? '上传中...' : '选择图片';
+        }
+        if (saveCoverBtn) saveCoverBtn.disabled = !!isUploading;
+        if (clearCoverBtn) clearCoverBtn.disabled = !!isUploading;
+      }
+
+      function extractResponseData(payload) {
+        return (payload && payload.data) ? payload.data : {};
+      }
+
+      async function uploadCover(file) {
+        if (!bankId || !file) return;
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+          setCoverUploading(true);
+          setHint(coverHintEl, '正在上传封面...', '');
+          const res = await fetch(`/user/banks/api/${encodeURIComponent(bankId)}/cover/upload`, {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          });
+          const payload = await res.json().catch(() => ({}));
+          const ok = res.ok && !(payload && (payload.status === 'error' || payload.code === 1));
+          if (!ok) {
+            throw new Error((payload && payload.message) ? payload.message : '上传失败');
+          }
+          const data = extractResponseData(payload);
+          const url = String(data.url || '').trim();
+          if (!url) throw new Error('上传成功但未返回封面地址');
+          if (coverImageEl) coverImageEl.value = url;
+          renderCoverPreview(url);
+          setHint(coverHintEl, '封面已上传，点击“保存封面”后生效。', '');
+          window.ubmToast('封面已上传', 'success');
+        } catch (e) {
+          const msg = e && e.message ? e.message : '上传失败';
+          setHint(coverHintEl, msg, 'error');
+          window.ubmToast(msg, 'error');
+        } finally {
+          setCoverUploading(false);
+          if (coverFileEl) coverFileEl.value = '';
+        }
+      }
+
+      async function saveCover() {
+        if (!bankId || !coverImageEl) return;
+        const nextCover = String(coverImageEl.value || '').trim();
+        if (nextCover.length > 500) {
+          setHint(coverHintEl, '封面地址不能超过 500 字', 'error');
+          window.ubmToast('封面地址不能超过 500 字', 'error');
+          return;
+        }
+        if (nextCover === String(savedCoverImage || '').trim()) {
+          setHint(coverHintEl, '封面未变化', '');
+          window.ubmToast('封面未变化', 'info');
+          return;
+        }
+
+        try {
+          if (saveCoverBtn) saveCoverBtn.disabled = true;
+          setHint(coverHintEl, '正在保存封面...', '');
+          await window.ubmApi(`/user/banks/api/${encodeURIComponent(bankId)}`, {
+            method: 'PUT',
+            body: JSON.stringify({ cover_image: nextCover }),
+          });
+          savedCoverImage = nextCover;
+          renderCoverPreview(nextCover);
+          setHint(coverHintEl, nextCover ? '封面已保存。' : '封面已清空。', '');
+          window.ubmToast(nextCover ? '封面已保存' : '封面已清空', 'success');
+        } catch (e) {
+          const msg = e && e.message ? e.message : '保存失败';
+          setHint(coverHintEl, msg, 'error');
+          window.ubmToast(msg, 'error');
+        } finally {
+          if (saveCoverBtn) saveCoverBtn.disabled = false;
+        }
       }
 
       async function savePrivateDesc() {
@@ -162,8 +386,27 @@
       publicDescEl?.addEventListener('input', function () {
         renderLengthHint(publicDescEl, publicHintEl);
       });
+      coverImageEl?.addEventListener('input', function () {
+        renderCoverPreview(coverImageEl.value);
+        const len = String(coverImageEl.value || '').trim().length;
+        setHint(coverHintEl, len > 500 ? '封面地址不能超过 500 字' : '支持 png、jpg、jpeg、gif、webp，最大 5MB。', len > 500 ? 'error' : '');
+      });
+      chooseCoverBtn?.addEventListener('click', function () {
+        coverFileEl?.click();
+      });
+      coverFileEl?.addEventListener('change', function () {
+        const file = coverFileEl.files && coverFileEl.files[0];
+        uploadCover(file);
+      });
+      saveCoverBtn?.addEventListener('click', saveCover);
+      clearCoverBtn?.addEventListener('click', function () {
+        if (coverImageEl) coverImageEl.value = '';
+        renderCoverPreview('');
+        setHint(coverHintEl, '点击“保存封面”后清空生效。', '');
+      });
       savePrivateBtn?.addEventListener('click', savePrivateDesc);
       savePublicBtn?.addEventListener('click', savePublicDesc);
+      renderCoverPreview(savedCoverImage);
       renderLengthHint(privateDescEl, privateHintEl);
       renderLengthHint(publicDescEl, publicHintEl);
     })();

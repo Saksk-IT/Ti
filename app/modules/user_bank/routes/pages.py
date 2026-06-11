@@ -332,7 +332,7 @@ def bank_manage(bank_id: int):
 
     bank = db.session.execute(
         text("""
-        SELECT id, user_id, name, description, public_description, is_public, allow_copy,
+        SELECT id, user_id, name, description, public_description, cover_image, is_public, allow_copy,
                question_count, share_count
         FROM user_question_banks
         WHERE id = :bid AND status = 1
@@ -349,6 +349,7 @@ def bank_manage(bank_id: int):
         bank_name=bank._mapping['name'],
         bank_description=bank._mapping['description'] or '',
         public_description=bank._mapping['public_description'] or '',
+        cover_image=bank._mapping['cover_image'] or '',
         is_public=bool(bank._mapping['is_public']),
         allow_copy=bool(bank._mapping['allow_copy']),
         question_count=int(bank._mapping['question_count'] or 0),
