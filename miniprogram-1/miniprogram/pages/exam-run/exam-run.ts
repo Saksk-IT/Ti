@@ -1,6 +1,7 @@
 // exam-run.ts - 模拟考试
 import { api, normalizeImageUrls } from '../../utils/api';
 import { checkLogin } from '../../utils/auth';
+import { normalizeOptionItems } from '../quiz/modules/quiz-helpers';
 
 type OptionItem = {
   key: string;
@@ -571,25 +572,6 @@ Page({
   },
 
   normalizeOptions(rawOptions: any, qType: string, correctAnswer?: string): OptionItem[] {
-    let optList: any = rawOptions;
-
-    if (typeof optList === 'string') {
-      const s = optList.trim();
-      if (!s) {
-        optList = [];
-      } else {
-        try {
-          optList = JSON.parse(s);
-        } catch (e) {
-          optList = [s];
-        }
-      }
-    }
-
-    if (!Array.isArray(optList)) {
-      optList = [];
-    }
-
     if (qType === '判断题') {
       const ans = (correctAnswer || '').toString().trim();
       if (!/^[A-Za-z]$/.test(ans)) {
@@ -615,48 +597,7 @@ Page({
       }
     }
 
-    const options: OptionItem[] = [];
-    for (const item of optList) {
-      if (item && typeof item === 'object') {
-        const rawKey = (item as Record<string, unknown>).key;
-        const rawValue = (item as Record<string, unknown>).value;
-        const key = String(rawKey == null ? '' : rawKey).trim();
-        const value = String(rawValue == null ? '' : rawValue).trim();
-        if (key || value) {
-          options.push({ key, value, answerValue: key || value });
-        }
-        continue;
-      }
-
-      const s = String(item == null ? '' : item).trim();
-      if (!s) continue;
-
-      const m = s.match(/^([A-Za-z0-9]+)[、.．:：\s]+(.+)$/);
-      if (m) {
-        const key = m[1].trim().slice(0, 1).toUpperCase();
-        const value = m[2].trim();
-        options.push({ key, value, answerValue: key });
-        continue;
-      }
-
-      const first = s.slice(0, 1).toUpperCase();
-      if (first && 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.includes(first)) {
-        const value = s.slice(1).replace(/^[\s:：.,、]+/, '').trim();
-        options.push({ key: first, value, answerValue: first });
-        continue;
-      }
-
-      options.push({ key: '', value: s, answerValue: s });
-    }
-
-    if (options.length > 0 && options.every((x) => !(x.key || '').trim())) {
-      const seed = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-      options.forEach((x, i) => {
-        x.key = seed[i] || String(i + 1);
-      });
-    }
-
-    return options;
+    return normalizeOptionItems(rawOptions, (input) => String(input == null ? '' : input).trim());
   },
 
   initBlankState(qType: QuestionType, content: string, answer: string): { blankCount: number; blankAnswers: string[]; blankIndexes: number[] } {

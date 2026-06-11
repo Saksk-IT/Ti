@@ -4,6 +4,7 @@ exports.AI_EXPLAIN_CACHE_KEY_PREFIX = void 0;
 exports.getAIExplainCacheKey = getAIExplainCacheKey;
 exports.readAIExplainCache = readAIExplainCache;
 exports.writeAIExplainCache = writeAIExplainCache;
+exports.normalizeOptionItems = normalizeOptionItems;
 exports.parseIdList = parseIdList;
 exports.safeFromCodePoint = safeFromCodePoint;
 exports.decodeHtmlEntities = decodeHtmlEntities;
@@ -13,6 +14,8 @@ exports.resolveInlineUrl = resolveInlineUrl;
 exports.extractInlineImageUrls = extractInlineImageUrls;
 var api_1 = require("../../../utils/api");
 exports.AI_EXPLAIN_CACHE_KEY_PREFIX = 'saksk_ai_explain_v1_';
+var OPTION_ALPHA_SEED = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+var OPTION_DIGIT_SEED = '123456789';
 function getAIExplainCacheKey(qid) {
     return "".concat(exports.AI_EXPLAIN_CACHE_KEY_PREFIX).concat(qid);
 }
@@ -45,6 +48,123 @@ function writeAIExplainCache(qid, explain) {
     catch (e) {
         // ignore
     }
+}
+function parseExplicitOptionPrefix(text) {
+    var match = text.match(/^([A-Za-z]|\d{1,2})\s*([、.．:：])\s*(.+)$/);
+    if (!match)
+        return null;
+    var rawKey = match[1].trim();
+    var delimiter = match[2];
+    var value = match[3].trim();
+    if (!rawKey || !value)
+        return null;
+    if (/^\d+$/.test(rawKey) && (delimiter === '.' || delimiter === '．') && /^\d/.test(value)) {
+        return null;
+    }
+    return { key: rawKey.slice(0, 1).toUpperCase(), value: value };
+}
+function compactAlphaKey(text) {
+    var first = text.slice(0, 1).toUpperCase();
+    var second = text.slice(1, 2);
+    if (!first || OPTION_ALPHA_SEED.indexOf(first) < 0 || !second)
+        return '';
+    if (/^[A-Za-z0-9]$/.test(second))
+        return '';
+    return first;
+}
+function compactDigitKey(text) {
+    var first = text.slice(0, 1);
+    var second = text.slice(1, 2);
+    if (!/^\d$/.test(first) || !second)
+        return '';
+    if (!/[\u3400-\u9fff]/.test(second))
+        return '';
+    return first;
+}
+function isSequential(keys, seed) {
+    if (!keys.length)
+        return false;
+    return keys.every(function (key, index) { return key === seed.slice(index, index + 1); });
+}
+function getCompactOptionKeys(texts) {
+    var keyed = texts
+        .map(function (text, index) { return ({ text: text, index: index }); })
+        .filter(function (item) { return !!item.text; });
+    if (!keyed.length)
+        return {};
+    var alphaKeys = keyed.map(function (item) { return compactAlphaKey(item.text); });
+    if (alphaKeys.every(Boolean) && isSequential(alphaKeys, OPTION_ALPHA_SEED)) {
+        return keyed.reduce(function (acc, item, index) {
+            acc[item.index] = alphaKeys[index];
+            return acc;
+        }, {});
+    }
+    var digitKeys = keyed.map(function (item) { return compactDigitKey(item.text); });
+    if (digitKeys.every(Boolean) && isSequential(digitKeys, OPTION_DIGIT_SEED)) {
+        return keyed.reduce(function (acc, item, index) {
+            acc[item.index] = digitKeys[index];
+            return acc;
+        }, {});
+    }
+    return {};
+}
+function normalizeOptionItems(rawOptions, valueFormatter) {
+    if (valueFormatter === void 0) { valueFormatter = stripHtmlToText; }
+    var optList = rawOptions;
+    if (typeof optList === 'string') {
+        var s = optList.trim();
+        if (!s) {
+            optList = [];
+        }
+        else {
+            try {
+                optList = JSON.parse(s);
+            }
+            catch (e) {
+                optList = [s];
+            }
+        }
+    }
+    if (!Array.isArray(optList)) {
+        optList = [];
+    }
+    var texts = optList.map(function (item) { return (item && typeof item === 'object' ? '' : valueFormatter(item)); });
+    var compactKeys = getCompactOptionKeys(texts);
+    var options = [];
+    optList.forEach(function (item, index) {
+        if (item && typeof item === 'object') {
+            var rawKey = item.key;
+            var rawValue = item.value;
+            var key = String(rawKey == null ? '' : rawKey).trim();
+            var value_1 = valueFormatter(rawValue);
+            if (key || value_1) {
+                options.push({ key: key, value: value_1, answerValue: key || value_1 });
+            }
+            return;
+        }
+        var s = texts[index] || '';
+        if (!s)
+            return;
+        var explicit = parseExplicitOptionPrefix(s);
+        if (explicit) {
+            options.push({ key: explicit.key, value: explicit.value, answerValue: explicit.key });
+            return;
+        }
+        var compactKey = compactKeys[index];
+        if (compactKey) {
+            var value = s.slice(1).replace(/^[\s:：,，.．、\)\]]+/, '').trim();
+            options.push({ key: compactKey, value: value, answerValue: compactKey });
+            return;
+        }
+        options.push({ key: '', value: s, answerValue: s });
+    });
+    if (options.length > 0 && options.every(function (x) { return !(x.key || '').trim(); })) {
+        options.forEach(function (x, i) {
+            x.key = OPTION_ALPHA_SEED.slice(i, i + 1) || String(i + 1);
+            x.answerValue = x.key;
+        });
+    }
+    return options;
 }
 function parseIdList(raw, maxLen) {
     if (maxLen === void 0) { maxLen = 200; }

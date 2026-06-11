@@ -1673,25 +1673,6 @@ Page({
         });
     },
     normalizeOptions: function (rawOptions, qType, correctAnswer) {
-        var optList = rawOptions;
-        if (typeof optList === 'string') {
-            var s = optList.trim();
-            if (!s) {
-                optList = [];
-            }
-            else {
-                try {
-                    optList = JSON.parse(s);
-                }
-                catch (e) {
-                    // ignore parse error and fallback to plain text
-                    optList = [s];
-                }
-            }
-        }
-        if (!Array.isArray(optList)) {
-            optList = [];
-        }
         if (qType === '判断题') {
             var ans = (correctAnswer || '').toString().trim();
             // 如果答案是字母（少数历史格式），优先使用题目自带 options
@@ -1717,49 +1698,7 @@ Page({
                 ];
             }
         }
-        var options = [];
-        for (var _i = 0, optList_1 = optList; _i < optList_1.length; _i++) {
-            var item = optList_1[_i];
-            if (item && typeof item === 'object') {
-                var rawKey = item.key;
-                var rawValue = item.value;
-                var key = String(rawKey == null ? '' : rawKey).trim();
-                var value = (0, quiz_helpers_1.stripHtmlToText)(rawValue);
-                if (key || value) {
-                    options.push({ key: key, value: value, answerValue: key || value });
-                }
-                continue;
-            }
-            var s = (0, quiz_helpers_1.stripHtmlToText)(item);
-            if (!s) {
-                continue;
-            }
-            // 解析 "A、xxx" / "A.xxx" / "A：xxx"
-            var m = s.match(/^([A-Za-z0-9]{1,3})\s*[、.．:：]\s*(.+)$/);
-            if (m) {
-                var key = m[1].trim().slice(0, 1).toUpperCase();
-                var value = m[2].trim();
-                options.push({ key: key, value: value, answerValue: key });
-                continue;
-            }
-            // 兜底：仅当更像“无分隔符的选项前缀”（如 A正确 / 1正确）时才把首字符当 key，避免把 Tony/Gaddis 误当 key
-            var first = s.slice(0, 1).toUpperCase();
-            var second = s.slice(1, 2);
-            if (first && 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.includes(first) && second && !/[A-Za-z0-9]/.test(second)) {
-                var value = s.slice(1).replace(/^[\s:：,，.．、\)\]]+/, '').trim();
-                options.push({ key: first, value: value, answerValue: first });
-                continue;
-            }
-            options.push({ key: '', value: s, answerValue: s });
-        }
-        // 如果 key 全为空，补 A/B/C...（仅用于展示，答题用 answerValue 仍保持原始 value）
-        if (options.length > 0 && options.every(function (x) { return !(x.key || '').trim(); })) {
-            var seed_1 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            options.forEach(function (x, i) {
-                x.key = seed_1[i] || String(i + 1);
-            });
-        }
-        return options;
+        return (0, quiz_helpers_1.normalizeOptionItems)(rawOptions, quiz_helpers_1.stripHtmlToText);
     },
     refreshDisplayOptions: function () {
         var _this = this;

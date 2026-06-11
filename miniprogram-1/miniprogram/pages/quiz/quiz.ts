@@ -13,6 +13,7 @@ import {
   readAIExplainCache,
   writeAIExplainCache,
   stripHtmlToText,
+  normalizeOptionItems,
   extractInlineImageUrls,
   type OptionItem,
   type DisplayOption,
@@ -1979,26 +1980,6 @@ Page({
   },
 
   normalizeOptions(rawOptions: any, qType: string, correctAnswer?: string): OptionItem[] {
-    let optList: any = rawOptions;
-
-    if (typeof optList === 'string') {
-      const s = optList.trim();
-      if (!s) {
-        optList = [];
-      } else {
-        try {
-          optList = JSON.parse(s);
-        } catch (e) {
-          // ignore parse error and fallback to plain text
-          optList = [s];
-        }
-      }
-    }
-
-    if (!Array.isArray(optList)) {
-      optList = [];
-    }
-
     if (qType === '判断题') {
       const ans = (correctAnswer || '').toString().trim();
       // 如果答案是字母（少数历史格式），优先使用题目自带 options
@@ -2025,54 +2006,7 @@ Page({
       }
     }
 
-    const options: OptionItem[] = [];
-    for (const item of optList) {
-      if (item && typeof item === 'object') {
-        const rawKey = (item as Record<string, unknown>).key;
-        const rawValue = (item as Record<string, unknown>).value;
-        const key = String(rawKey == null ? '' : rawKey).trim();
-        const value = stripHtmlToText(rawValue);
-        if (key || value) {
-          options.push({ key, value, answerValue: key || value });
-        }
-        continue;
-      }
-
-      const s = stripHtmlToText(item);
-      if (!s) {
-        continue;
-      }
-
-      // 解析 "A、xxx" / "A.xxx" / "A：xxx"
-      const m = s.match(/^([A-Za-z0-9]{1,3})\s*[、.．:：]\s*(.+)$/);
-      if (m) {
-        const key = m[1].trim().slice(0, 1).toUpperCase();
-        const value = m[2].trim();
-        options.push({ key, value, answerValue: key });
-        continue;
-      }
-
-      // 兜底：仅当更像“无分隔符的选项前缀”（如 A正确 / 1正确）时才把首字符当 key，避免把 Tony/Gaddis 误当 key
-      const first = s.slice(0, 1).toUpperCase();
-      const second = s.slice(1, 2);
-      if (first && 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.includes(first) && second && !/[A-Za-z0-9]/.test(second)) {
-        const value = s.slice(1).replace(/^[\s:：,，.．、\)\]]+/, '').trim();
-        options.push({ key: first, value, answerValue: first });
-        continue;
-      }
-
-      options.push({ key: '', value: s, answerValue: s });
-    }
-
-    // 如果 key 全为空，补 A/B/C...（仅用于展示，答题用 answerValue 仍保持原始 value）
-    if (options.length > 0 && options.every((x) => !(x.key || '').trim())) {
-      const seed = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-      options.forEach((x, i) => {
-        x.key = seed[i] || String(i + 1);
-      });
-    }
-
-    return options;
+    return normalizeOptionItems(rawOptions, stripHtmlToText);
   },
 
   refreshDisplayOptions() {

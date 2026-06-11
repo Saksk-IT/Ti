@@ -39,6 +39,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // exam-run.ts - 模拟考试
 var api_1 = require("../../utils/api");
 var auth_1 = require("../../utils/auth");
+var quiz_helpers_1 = require("../quiz/modules/quiz-helpers");
 Page({
     data: {
         examId: 0,
@@ -589,24 +590,6 @@ Page({
         this.setData({ displayOptions: displayOptions, currentQuestion: Object.assign({}, currentQuestion, { options: normalizedOptions }) });
     },
     normalizeOptions: function (rawOptions, qType, correctAnswer) {
-        var optList = rawOptions;
-        if (typeof optList === 'string') {
-            var s = optList.trim();
-            if (!s) {
-                optList = [];
-            }
-            else {
-                try {
-                    optList = JSON.parse(s);
-                }
-                catch (e) {
-                    optList = [s];
-                }
-            }
-        }
-        if (!Array.isArray(optList)) {
-            optList = [];
-        }
         if (qType === '判断题') {
             var ans = (correctAnswer || '').toString().trim();
             if (!/^[A-Za-z]$/.test(ans)) {
@@ -631,44 +614,7 @@ Page({
                 ];
             }
         }
-        var options = [];
-        for (var _i = 0, optList_1 = optList; _i < optList_1.length; _i++) {
-            var item = optList_1[_i];
-            if (item && typeof item === 'object') {
-                var rawKey = item.key;
-                var rawValue = item.value;
-                var key = String(rawKey == null ? '' : rawKey).trim();
-                var value = String(rawValue == null ? '' : rawValue).trim();
-                if (key || value) {
-                    options.push({ key: key, value: value, answerValue: key || value });
-                }
-                continue;
-            }
-            var s = String(item == null ? '' : item).trim();
-            if (!s)
-                continue;
-            var m = s.match(/^([A-Za-z0-9]+)[、.．:：\s]+(.+)$/);
-            if (m) {
-                var key = m[1].trim().slice(0, 1).toUpperCase();
-                var value = m[2].trim();
-                options.push({ key: key, value: value, answerValue: key });
-                continue;
-            }
-            var first = s.slice(0, 1).toUpperCase();
-            if (first && 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.includes(first)) {
-                var value = s.slice(1).replace(/^[\s:：.,、]+/, '').trim();
-                options.push({ key: first, value: value, answerValue: first });
-                continue;
-            }
-            options.push({ key: '', value: s, answerValue: s });
-        }
-        if (options.length > 0 && options.every(function (x) { return !(x.key || '').trim(); })) {
-            var seed_1 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            options.forEach(function (x, i) {
-                x.key = seed_1[i] || String(i + 1);
-            });
-        }
-        return options;
+        return (0, quiz_helpers_1.normalizeOptionItems)(rawOptions, function (input) { return String(input == null ? '' : input).trim(); });
     },
     initBlankState: function (qType, content, answer) {
         if (qType !== '填空题') {

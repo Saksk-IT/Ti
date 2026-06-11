@@ -14,7 +14,75 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, List
+import re
+from typing import Any, Dict, List, Optional
+
+
+_EXPLICIT_PREFIX_RE = re.compile(r"^([A-Za-z]|\d{1,2})\s*([、.．:：])\s*(.+)$")
+_ALPHA_SEED = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+
+def _parse_explicit_prefix(text: str) -> Optional[Dict[str, str]]:
+    match = _EXPLICIT_PREFIX_RE.match(text)
+    if not match:
+        return None
+
+    raw_key = match.group(1).strip()
+    delimiter = match.group(2)
+    value = match.group(3).strip()
+    if not raw_key or not value:
+        return None
+
+    # 0.4 / 1.25 这类数值选项不是 "1. xxx" 前缀。
+    if raw_key.isdigit() and delimiter in ('.', '．') and value[:1].isdigit():
+        return None
+
+    key = raw_key[:1].upper()
+    return {'key': key, 'value': value}
+
+
+def _compact_alpha_key(text: str) -> Optional[str]:
+    first = text[:1].upper()
+    second = text[1:2]
+    if not first or first not in _ALPHA_SEED or not second:
+        return None
+    if second.isascii() and second.isalnum():
+        return None
+    return first
+
+
+def _compact_digit_key(text: str) -> Optional[str]:
+    first = text[:1]
+    second = text[1:2]
+    if not first.isdigit() or not second:
+        return None
+    # 只兼容 "1正确/2错误" 这类中文紧凑前缀，避免把 "1+1=2" 当选项标号。
+    if not ('\u3400' <= second <= '\u9fff'):
+        return None
+    return first
+
+
+def _is_sequential(keys: List[str], seed: str) -> bool:
+    if not keys:
+        return False
+    expected = list(seed[:len(keys)])
+    return keys == expected
+
+
+def _compact_prefix_keys(texts: List[str]) -> Dict[int, str]:
+    keyed_indexes = [(i, text) for i, text in enumerate(texts) if text]
+    if not keyed_indexes:
+        return {}
+
+    alpha_keys = [_compact_alpha_key(text) for _, text in keyed_indexes]
+    if all(alpha_keys) and _is_sequential([str(k) for k in alpha_keys], _ALPHA_SEED):
+        return {idx: str(key) for (idx, _), key in zip(keyed_indexes, alpha_keys)}
+
+    digit_keys = [_compact_digit_key(text) for _, text in keyed_indexes]
+    if all(digit_keys) and _is_sequential([str(k) for k in digit_keys], "123456789"):
+        return {idx: str(key) for (idx, _), key in zip(keyed_indexes, digit_keys)}
+
+    return {}
 
 
 def parse_options(raw_options: Any) -> List[Dict[str, str]]:
@@ -53,12 +121,24 @@ def parse_options(raw_options: Any) -> List[Dict[str, str]]:
     if not isinstance(opt_list, list):
         return []
 
-    options_payload: List[Dict[str, str]] = []
+    text_items: List[Optional[str]] = []
     for item in opt_list:
         if isinstance(item, dict):
             # 保留 value 中的换行符，只去掉首尾空白（空格、制表符），但保留换行符
             value = str(item.get('value') or '')
             # 去掉首尾的空白字符（空格、制表符），但保留换行符
+            value = value.rstrip(' \t').lstrip(' \t') if value else ''
+            text_items.append(None)
+        else:
+            item_str = '' if item is None else str(item)
+            text_items.append(item_str.strip())
+
+    compact_keys = _compact_prefix_keys([s or '' for s in text_items])
+
+    options_payload: List[Dict[str, str]] = []
+    for idx, item in enumerate(opt_list):
+        if isinstance(item, dict):
+            value = str(item.get('value') or '')
             value = value.rstrip(' \t').lstrip(' \t') if value else ''
             options_payload.append({
                 'key': str(item.get('key') or '').strip(),
@@ -67,29 +147,22 @@ def parse_options(raw_options: Any) -> List[Dict[str, str]]:
             continue
 
         # 其它类型统一转字符串
-        item_str = '' if item is None else str(item)
-        s = item_str.strip()
+        s = text_items[idx] or ''
         if not s:
             options_payload.append({'key': '', 'value': ''})
             continue
 
-        # 优先解析 "A、xxx" / "A.xxx"
-        delimiter = '、' if '、' in s else ('.' if '.' in s else None)
-        if delimiter:
-            parts = s.split(delimiter, 1)
-            # parts[0] 一般为 A/B/C/D 或 1/2 等
-            if len(parts) == 2 and parts[0].strip() and len(parts[0].strip()) <= 3:
-                options_payload.append({'key': parts[0].strip()[:1].upper(), 'value': parts[1].strip()})
-                continue
+        # 优先解析 "A、xxx" / "A.xxx" / "A：xxx" / "1. xxx"
+        parsed = _parse_explicit_prefix(s)
+        if parsed:
+            options_payload.append(parsed)
+            continue
 
-        # 兜底：仅在"看起来像前缀"的情况下把首字符当 key。
-        # 说明：历史上存在 ["A内容"] 这种格式；但如果是 ["GET"] 这类纯文本，不能误把 G 当成 key。
-        first = s[:1].upper()
-        second = s[1:2]
-        looks_like_prefix = bool(first and first in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' and (not second or not second.isalnum()))
-        if looks_like_prefix:
+        # 兜底兼容历史紧凑格式：仅当整组选项连续呈现 A/B/C... 或 1/2/3... 时才剥首字符。
+        compact_key = compact_keys.get(idx)
+        if compact_key:
             options_payload.append({
-                'key': first,
+                'key': compact_key,
                 'value': s[1:].lstrip(' :：.,、\t\r\n').strip(),
             })
         else:
