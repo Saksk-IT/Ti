@@ -29,17 +29,20 @@
 ```bash
 cd /Users/sak/Documents/GitHub/Ti
 
-read -r -p "GitHub 用户名: " GHCR_USERNAME
-read -r -s -p "GitHub PAT: " GHCR_TOKEN
+printf 'GitHub 用户名: '
+IFS= read -r GHCR_USERNAME
+printf 'GitHub PAT: '
+IFS= read -r -s GHCR_TOKEN
 printf '\n'
 
-printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
-
-PLATFORMS=linux/amd64 \
-./scripts/publish_image.sh
-
-docker pull ghcr.io/saksk-it/ti:latest
-docker image inspect ghcr.io/saksk-it/ti:latest --format '{{.RepoTags}} {{.Id}}'
+if printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin; then
+  PLATFORMS=linux/amd64 \
+  ./scripts/publish_image.sh &&
+  docker pull ghcr.io/saksk-it/ti:latest &&
+  docker image inspect ghcr.io/saksk-it/ti:latest --format '{{.RepoTags}} {{.Id}}'
+else
+  echo 'GHCR 登录失败：请确认用户名和 PAT，PAT 至少需要 write:packages 权限。'
+fi
 
 unset GHCR_TOKEN
 ```
@@ -49,17 +52,20 @@ unset GHCR_TOKEN
 ```bash
 cd /Users/sak/Documents/GitHub/Ti
 
-read -r -p "GitHub 用户名: " GHCR_USERNAME
-read -r -s -p "GitHub PAT: " GHCR_TOKEN
+printf 'GitHub 用户名: '
+IFS= read -r GHCR_USERNAME
+printf 'GitHub PAT: '
+IFS= read -r -s GHCR_TOKEN
 printf '\n'
 
-printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
-
-PLATFORMS=linux/amd64,linux/arm64 \
-./scripts/publish_image.sh
-
-docker pull ghcr.io/saksk-it/ti:latest
-docker image inspect ghcr.io/saksk-it/ti:latest --format '{{.RepoTags}} {{.Id}}'
+if printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin; then
+  PLATFORMS=linux/amd64,linux/arm64 \
+  ./scripts/publish_image.sh &&
+  docker pull ghcr.io/saksk-it/ti:latest &&
+  docker image inspect ghcr.io/saksk-it/ti:latest --format '{{.RepoTags}} {{.Id}}'
+else
+  echo 'GHCR 登录失败：请确认用户名和 PAT，PAT 至少需要 write:packages 权限。'
+fi
 
 unset GHCR_TOKEN
 ```
@@ -67,6 +73,7 @@ unset GHCR_TOKEN
 安全要求：
 
 - 不要把真实 `GHCR_TOKEN` 写进仓库、文档、截图或 `.env.production`。
+- 开发者发布镜像的 PAT 至少需要 `write:packages` 权限；服务器只拉取私有镜像时使用只读 Token，至少需要 `read:packages` 权限。
 - 默认发布和默认部署统一使用 `ghcr.io/saksk-it/ti:latest`。
 - 如需回滚，可额外用 `TAG=xxx ./scripts/publish_image.sh` 发布明确标签；常规部署教程仍以 `latest` 为准。
 
@@ -75,7 +82,8 @@ unset GHCR_TOKEN
 复制整段命令在 Ubuntu 24.04 LTS 服务器运行。完成后访问 `http://服务器IP:8080`。
 
 ```bash
-read -r -p "部署目录 [/opt/ti]: " APP_DIR
+printf '部署目录 [/opt/ti]: '
+IFS= read -r APP_DIR
 APP_DIR="${APP_DIR:-/opt/ti}"
 REPO_URL="https://github.com/Saksk-IT/Ti.git"
 
@@ -134,10 +142,13 @@ curl -fsS "http://127.0.0.1:8080/api/ping?deep=1" | python3 -m json.tool
 如果 GitHub Packages 是私有可见性，复制整段命令运行，按提示输入 GHCR 只读凭据。Token 只临时进入当前 shell，不写入仓库文件。
 
 ```bash
-read -r -p "部署目录 [/opt/ti]: " APP_DIR
+printf '部署目录 [/opt/ti]: '
+IFS= read -r APP_DIR
 APP_DIR="${APP_DIR:-/opt/ti}"
-read -r -p "GitHub 用户名: " GHCR_USERNAME
-read -r -s -p "GHCR 只读 Token: " GHCR_TOKEN
+printf 'GitHub 用户名: '
+IFS= read -r GHCR_USERNAME
+printf 'GHCR 只读 Token: '
+IFS= read -r -s GHCR_TOKEN
 printf '\n'
 REPO_URL="https://github.com/Saksk-IT/Ti.git"
 
@@ -164,7 +175,8 @@ unset GHCR_TOKEN
 开发环境同样默认拉取 `ghcr.io/saksk-it/ti:latest`。默认只绑定本机，避免开发服务和数据库直接暴露公网。
 
 ```bash
-read -r -p "开发部署目录 [/opt/ti-dev]: " APP_DIR
+printf '开发部署目录 [/opt/ti-dev]: '
+IFS= read -r APP_DIR
 APP_DIR="${APP_DIR:-/opt/ti-dev}"
 REPO_URL="https://github.com/Saksk-IT/Ti.git"
 
@@ -207,7 +219,8 @@ POSTGRES_BIND=127.0.0.1 \
 ```bash
 cd /opt/ti
 
-read -r -p "域名: " DOMAIN
+printf '域名: '
+IFS= read -r DOMAIN
 
 dig +short "$DOMAIN"
 curl -I "http://$DOMAIN" || true
@@ -218,8 +231,10 @@ curl -I "http://$DOMAIN" || true
 ```bash
 cd /opt/ti
 
-read -r -p "域名: " DOMAIN
-read -r -p "Certbot 邮箱: " CERTBOT_EMAIL
+printf '域名: '
+IFS= read -r DOMAIN
+printf 'Certbot 邮箱: '
+IFS= read -r CERTBOT_EMAIL
 
 ENABLE_HTTPS=1 \
 DOMAIN="$DOMAIN" \
@@ -242,7 +257,8 @@ curl -fsS "https://$DOMAIN/api/ping" | python3 -m json.tool
 不使用一键脚本时，复制整段运行。该流程仍然只拉取镜像，不在服务器构建镜像。
 
 ```bash
-read -r -p "部署目录 [/opt/ti]: " APP_DIR
+printf '部署目录 [/opt/ti]: '
+IFS= read -r APP_DIR
 APP_DIR="${APP_DIR:-/opt/ti}"
 REPO_URL="https://github.com/Saksk-IT/Ti.git"
 
@@ -303,16 +319,19 @@ curl -fsS "http://127.0.0.1:8080/api/ping?deep=1" | python3 -m json.tool
 ```bash
 cd /Users/sak/Documents/GitHub/Ti
 
-read -r -p "GitHub 用户名: " GHCR_USERNAME
-read -r -s -p "GitHub PAT: " GHCR_TOKEN
+printf 'GitHub 用户名: '
+IFS= read -r GHCR_USERNAME
+printf 'GitHub PAT: '
+IFS= read -r -s GHCR_TOKEN
 printf '\n'
 
-printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
-
-PLATFORMS=linux/amd64 \
-./scripts/publish_image.sh
-
-docker image inspect ghcr.io/saksk-it/ti:latest --format '{{.RepoTags}} {{.Id}}'
+if printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin; then
+  PLATFORMS=linux/amd64 \
+  ./scripts/publish_image.sh &&
+  docker image inspect ghcr.io/saksk-it/ti:latest --format '{{.RepoTags}} {{.Id}}'
+else
+  echo 'GHCR 登录失败：请确认用户名和 PAT，PAT 至少需要 write:packages 权限。'
+fi
 
 unset GHCR_TOKEN
 ```
@@ -340,8 +359,10 @@ cd /opt/ti
 ```bash
 cd /opt/ti
 
-read -r -p "域名: " DOMAIN
-read -r -p "Certbot 邮箱: " CERTBOT_EMAIL
+printf '域名: '
+IFS= read -r DOMAIN
+printf 'Certbot 邮箱: '
+IFS= read -r CERTBOT_EMAIL
 
 ENABLE_HTTPS=1 \
 DOMAIN="$DOMAIN" \
@@ -384,7 +405,8 @@ ls -lh backups/
 
 ```bash
 cd /opt/ti
-read -r -p "备份文件名: " BACKUP_FILE
+printf '备份文件名: '
+IFS= read -r BACKUP_FILE
 ./scripts/restore.sh "$BACKUP_FILE"
 ```
 
@@ -430,7 +452,8 @@ grep -E '^HTTP_BIND=127.0.0.1$' .env.production
 grep -E '^SESSION_COOKIE_SECURE=true$' .env.production
 ss -tlnp | grep -E ':80|:443|:8080' || true
 
-read -r -p "域名: " DOMAIN
+printf '域名: '
+IFS= read -r DOMAIN
 curl -fsS "https://$DOMAIN/api/ping" | python3 -m json.tool
 ```
 
