@@ -1,0 +1,307 @@
+{% extends "user_bank/manage/manage_base.html" %}
+
+{% set manage_tab = 'settings' %}
+{% set _join_mode = join_mode or 'free' %}
+
+{% block manage_head %}
+  <style>
+    .ubm-settings-stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .ubm-setting-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .ubm-setting-copy {
+      min-width: 0;
+      display: grid;
+      gap: 6px;
+    }
+
+    .ubm-setting-title {
+      font-size: 14px;
+      font-weight: 950;
+      color: var(--app-text);
+      letter-spacing: -0.1px;
+    }
+
+    .ubm-setting-current {
+      color: var(--app-muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .ubm-choice-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .ubm-choice {
+      min-height: 72px;
+      border-radius: 16px;
+      border: 1px solid var(--app-border);
+      background: var(--app-surface);
+      box-shadow: var(--app-shadow-soft);
+      color: var(--app-text);
+      cursor: pointer;
+      padding: 12px;
+      text-align: left;
+      display: grid;
+      align-content: start;
+      gap: 6px;
+      transition: border-color 140ms ease, background 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+    }
+
+    .ubm-choice:hover {
+      box-shadow: var(--app-shadow);
+      transform: translateY(-1px);
+    }
+
+    .ubm-choice.active {
+      border-color: color-mix(in srgb, var(--app-primary) 42%, var(--app-border));
+      background: color-mix(in srgb, var(--app-primary-soft) 34%, var(--app-surface));
+    }
+
+    .ubm-choice:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px var(--app-primary-soft), var(--app-shadow-soft);
+    }
+
+    .ubm-choice strong {
+      font-size: 13px;
+      font-weight: 950;
+      color: var(--app-text);
+    }
+
+    .ubm-choice span {
+      color: var(--app-muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .ubm-danger-note {
+      border: 1px dashed color-mix(in srgb, #ef4444 42%, var(--app-border));
+      border-radius: 16px;
+      background: color-mix(in srgb, #ef4444 8%, var(--app-surface));
+      padding: 12px;
+      color: var(--app-muted);
+      font-size: 12px;
+      line-height: 1.55;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 640px) {
+      .ubm-setting-row {
+        display: grid;
+      }
+
+      .ubm-setting-row .ubm-actions {
+        margin-top: 0;
+      }
+
+      .ubm-choice-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block manage_content %}
+  <div class="ubm-settings-stack" data-current-public="{{ '1' if is_public else '0' }}" data-current-join-mode="{{ _join_mode|e }}">
+    <section class="ubm-card" aria-label="题库公开状态">
+      <div class="ubm-setting-row">
+        <div class="ubm-setting-copy">
+          <div class="ubm-setting-title">题库公开状态</div>
+          <div class="ubm-setting-current" id="ubmPublicSummary">
+            当前状态：{{ '公开。其他用户可在题库广场访问并按加入方式加入。' if is_public else '私有。仅你和已获得分享权限的用户可访问。' }}
+          </div>
+        </div>
+        <div class="ubm-actions" role="group" aria-label="题库公开状态切换">
+          <button class="ubm-btn {{ 'ubm-btn-primary' if is_public else '' }}" type="button" data-public-value="1">公开</button>
+          <button class="ubm-btn {{ '' if is_public else 'ubm-btn-primary' }}" type="button" data-public-value="0">私有</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="ubm-card" aria-label="加入方式选择">
+      <div class="ubm-setting-copy">
+        <div class="ubm-setting-title">加入方式选择</div>
+        <div class="ubm-setting-current" id="ubmJoinSummary">当前方式：加载中</div>
+      </div>
+
+      <div class="ubm-choice-grid" role="radiogroup" aria-label="加入方式">
+        <button class="ubm-choice" type="button" role="radio" data-join-mode="free">
+          <strong>免费加入</strong>
+          <span>用户确认后可直接加入题库。</span>
+        </button>
+        <button class="ubm-choice" type="button" role="radio" data-join-mode="member">
+          <strong>会员加入</strong>
+          <span>展示会员加入提示，预留会员机制。</span>
+        </button>
+        <button class="ubm-choice" type="button" role="radio" data-join-mode="paid">
+          <strong>付费加入</strong>
+          <span>展示付费加入提示，预留付费机制。</span>
+        </button>
+        <button class="ubm-choice" type="button" role="radio" data-join-mode="approval">
+          <strong>申请加入</strong>
+          <span>展示申请加入提示，预留审批机制。</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="ubm-card" aria-label="题库删除功能">
+      <div class="ubm-setting-row">
+        <div class="ubm-setting-copy">
+          <div class="ubm-setting-title">题库删除功能</div>
+          <div class="ubm-setting-current">删除后题库会从我的题库中移除，当前页面将返回我的题库列表。</div>
+        </div>
+        <div class="ubm-actions">
+          <button class="ubm-btn ubm-btn-danger" type="button" id="ubmDeleteBankBtn">删除题库</button>
+        </div>
+      </div>
+      <div class="ubm-danger-note">此操作会将题库标记为删除状态。请在确认不再需要该题库后操作。</div>
+    </section>
+  </div>
+{% endblock %}
+
+{% block manage_scripts %}
+  <script>
+    (function () {
+      const root = document.querySelector('[data-ubm-bank-id]');
+      const settingsRoot = document.querySelector('.ubm-settings-stack');
+      const bankId = root ? String(root.dataset.ubmBankId || '').trim() : '';
+      const publicSummary = document.getElementById('ubmPublicSummary');
+      const joinSummary = document.getElementById('ubmJoinSummary');
+      const publicButtons = Array.prototype.slice.call(document.querySelectorAll('[data-public-value]'));
+      const joinButtons = Array.prototype.slice.call(document.querySelectorAll('[data-join-mode]'));
+      const deleteBtn = document.getElementById('ubmDeleteBankBtn');
+      const statusBadge = document.querySelector('.ubm-badge');
+      const statusBadgeDot = statusBadge ? statusBadge.querySelector('.ubm-badge-dot') : null;
+      const joinLabels = {
+        free: '免费加入',
+        member: '会员加入',
+        paid: '付费加入',
+        approval: '申请加入',
+      };
+
+      let currentPublic = settingsRoot ? settingsRoot.dataset.currentPublic === '1' : false;
+      let currentJoinMode = settingsRoot ? String(settingsRoot.dataset.currentJoinMode || 'free') : 'free';
+
+      function setBusy(buttons, busy) {
+        buttons.forEach(function (button) {
+          button.disabled = !!busy;
+        });
+      }
+
+      function renderPublicState() {
+        publicButtons.forEach(function (button) {
+          const isActive = button.dataset.publicValue === (currentPublic ? '1' : '0');
+          button.classList.toggle('ubm-btn-primary', isActive);
+          button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+        if (publicSummary) {
+          publicSummary.textContent = currentPublic
+            ? '当前状态：公开。其他用户可在题库广场访问并按加入方式加入。'
+            : '当前状态：私有。仅你和已获得分享权限的用户可访问。';
+        }
+        if (statusBadge) {
+          statusBadge.classList.toggle('public', currentPublic);
+          statusBadge.classList.toggle('private', !currentPublic);
+          statusBadge.textContent = currentPublic ? '公开' : '私有';
+          if (statusBadgeDot) statusBadge.prepend(statusBadgeDot);
+        }
+      }
+
+      function renderJoinMode() {
+        const label = joinLabels[currentJoinMode] || joinLabels.free;
+        joinButtons.forEach(function (button) {
+          const isActive = button.dataset.joinMode === currentJoinMode;
+          button.classList.toggle('active', isActive);
+          button.setAttribute('aria-checked', isActive ? 'true' : 'false');
+        });
+        if (joinSummary) joinSummary.textContent = '当前方式：' + label;
+      }
+
+      async function updatePublic(nextPublic, button) {
+        if (!bankId || nextPublic === currentPublic) return;
+        setBusy(publicButtons, true);
+        try {
+          await window.ubmApi('/user/banks/api/' + encodeURIComponent(bankId) + '/public', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify({ is_public: nextPublic }),
+          });
+          currentPublic = nextPublic;
+          renderPublicState();
+          window.ubmToast(currentPublic ? '题库已公开' : '题库已设为私有', 'success');
+        } catch (error) {
+          window.ubmToast((error && error.message) || '公开状态更新失败', 'error');
+        } finally {
+          setBusy(publicButtons, false);
+          if (button) button.focus();
+        }
+      }
+
+      async function updateJoinMode(nextMode, button) {
+        if (!bankId || !joinLabels[nextMode] || nextMode === currentJoinMode) return;
+        setBusy(joinButtons, true);
+        try {
+          await window.ubmApi('/user/banks/api/' + encodeURIComponent(bankId), {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify({ join_mode: nextMode }),
+          });
+          currentJoinMode = nextMode;
+          renderJoinMode();
+          window.ubmToast('加入方式已更新', 'success');
+        } catch (error) {
+          window.ubmToast((error && error.message) || '加入方式更新失败', 'error');
+        } finally {
+          setBusy(joinButtons, false);
+          if (button) button.focus();
+        }
+      }
+
+      async function deleteBank() {
+        if (!bankId || !deleteBtn) return;
+        const confirmed = await appConfirm('确认删除该题库？删除后将返回我的题库列表。');
+        if (!confirmed) return;
+        deleteBtn.disabled = true;
+        try {
+          await window.ubmApi('/user/banks/api/' + encodeURIComponent(bankId), {
+            method: 'DELETE',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          });
+          window.ubmToast('题库已删除', 'success');
+          window.location.href = '/user/banks?scope=created';
+        } catch (error) {
+          deleteBtn.disabled = false;
+          window.ubmToast((error && error.message) || '删除失败', 'error');
+        }
+      }
+
+      publicButtons.forEach(function (button) {
+        button.addEventListener('click', function () {
+          updatePublic(button.dataset.publicValue === '1', button);
+        });
+      });
+      joinButtons.forEach(function (button) {
+        button.addEventListener('click', function () {
+          updateJoinMode(String(button.dataset.joinMode || 'free'), button);
+        });
+      });
+      if (deleteBtn) deleteBtn.addEventListener('click', deleteBank);
+
+      renderPublicState();
+      renderJoinMode();
+    })();
+  </script>
+{% endblock %}

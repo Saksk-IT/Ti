@@ -303,7 +303,7 @@ def set_bank_public(bank_id):
     user_id = current_user_id()
     data = request.get_json() or {}
     is_public = data.get('is_public', False)
-    public_description = (data.get('public_description') or '').strip()
+    public_description = (data.get('public_description') or '').strip() if 'public_description' in data else None
 
     bank = db.session.execute(
         text('SELECT id FROM user_question_banks WHERE id = :bid AND user_id = :uid AND status = 1'),
@@ -314,12 +314,19 @@ def set_bank_public(bank_id):
         return error_response('题库不存在或无权操作', 404)
 
     if is_public:
-        db.session.execute(text('''
-            UPDATE user_question_banks
-            SET is_public = true, public_description = :pdesc,
-                public_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-            WHERE id = :bid
-        '''), {'pdesc': public_description, 'bid': bank_id})
+        if public_description is None:
+            db.session.execute(text('''
+                UPDATE user_question_banks
+                SET is_public = true, public_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                WHERE id = :bid
+            '''), {'bid': bank_id})
+        else:
+            db.session.execute(text('''
+                UPDATE user_question_banks
+                SET is_public = true, public_description = :pdesc,
+                    public_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                WHERE id = :bid
+            '''), {'pdesc': public_description, 'bid': bank_id})
         message = '题库已公开'
     else:
         db.session.execute(text('''

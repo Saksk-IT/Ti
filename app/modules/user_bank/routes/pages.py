@@ -619,7 +619,7 @@ def _fetch_bank_for_owner(bank_id: int, uid) -> dict | None:
     """获取题库基本信息（仅创建者可访问的页面复用）。"""
     row = db.session.execute(
         text("""
-        SELECT id, name, is_public, question_count, share_count
+        SELECT id, name, is_public, question_count, share_count, COALESCE(join_mode, 'free') AS join_mode
         FROM user_question_banks
         WHERE id = :bid AND status = 1
         """),
@@ -631,7 +631,7 @@ def _fetch_bank_for_owner(bank_id: int, uid) -> dict | None:
 @user_bank_pages_bp.route('/<int:bank_id>/edit')
 @login_required
 def bank_edit(bank_id):
-    """题库信息编辑向导页。"""
+    """题库设置页。"""
     uid = session.get('user_id')
     from app.modules.user_bank.routes.api import check_bank_access
 
@@ -644,15 +644,13 @@ def bank_edit(bank_id):
         return "题库不存在或无权限访问", 404
 
     return render_template(
-        'user_bank/manage/bank_profile_wizard.html',
-        mode='edit',
+        'user_bank/manage/bank_settings.html',
         bank_id=int(bank['id']),
-        logged_in=True,
-        username=session.get('username'),
-        is_admin=session.get('is_admin', False),
-        is_subject_admin=session.get('is_subject_admin', False),
-        is_notification_admin=session.get('is_notification_admin', False),
-        user_id=session.get('user_id') or 0,
+        bank_name=bank['name'],
+        is_public=bool(bank['is_public']),
+        join_mode=bank.get('join_mode') or 'free',
+        question_count=int(bank['question_count'] or 0),
+        share_count=int(bank['share_count'] or 0),
     )
 
 
