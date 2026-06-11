@@ -24,56 +24,53 @@
 
 ## 2. 开发者发布 latest 镜像
 
-复制整段命令在开发者本机运行。脚本默认会同时推送当前提交短 SHA 标签和 `latest` 标签，服务器部署默认只拉取 `latest`。
+同一台开发机只需要登录一次 GHCR。Docker Desktop 会把登录态保存到系统凭据管理器；后续发布直接运行发布脚本，不需要重复输入用户名和 PAT。
+
+首次登录时复制运行：
 
 ```bash
 cd /Users/sak/Documents/GitHub/Ti
 
 printf 'GitHub 用户名: '
 IFS= read -r GHCR_USERNAME
-printf 'GitHub PAT: '
+printf 'GitHub PAT（需要 write:packages）: '
 IFS= read -r -s GHCR_TOKEN
 printf '\n'
 
-if printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin; then
-  PLATFORMS=linux/amd64 \
-  ./scripts/publish_image.sh &&
-  docker pull ghcr.io/saksk-it/ti:latest &&
-  docker image inspect ghcr.io/saksk-it/ti:latest --format '{{.RepoTags}} {{.Id}}'
-else
-  echo 'GHCR 登录失败：请确认用户名和 PAT，PAT 至少需要 write:packages 权限。'
-fi
+printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
 
 unset GHCR_TOKEN
 ```
 
-如果服务器包含 amd64 和 arm64，复制整段运行：
+日常发布 amd64 镜像时复制运行。脚本默认会同时推送当前提交短 SHA 标签和 `latest` 标签，服务器部署默认只拉取 `latest`。
 
 ```bash
 cd /Users/sak/Documents/GitHub/Ti
 
-printf 'GitHub 用户名: '
-IFS= read -r GHCR_USERNAME
-printf 'GitHub PAT: '
-IFS= read -r -s GHCR_TOKEN
-printf '\n'
+PLATFORMS=linux/amd64 \
+./scripts/publish_image.sh
 
-if printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin; then
-  PLATFORMS=linux/amd64,linux/arm64 \
-  ./scripts/publish_image.sh &&
-  docker pull ghcr.io/saksk-it/ti:latest &&
-  docker image inspect ghcr.io/saksk-it/ti:latest --format '{{.RepoTags}} {{.Id}}'
-else
-  echo 'GHCR 登录失败：请确认用户名和 PAT，PAT 至少需要 write:packages 权限。'
-fi
+docker pull ghcr.io/saksk-it/ti:latest
+docker image inspect ghcr.io/saksk-it/ti:latest --format '{{.RepoTags}} {{.Id}}'
+```
 
-unset GHCR_TOKEN
+如果服务器包含 amd64 和 arm64，日常发布改用：
+
+```bash
+cd /Users/sak/Documents/GitHub/Ti
+
+PLATFORMS=linux/amd64,linux/arm64 \
+./scripts/publish_image.sh
+
+docker pull ghcr.io/saksk-it/ti:latest
+docker image inspect ghcr.io/saksk-it/ti:latest --format '{{.RepoTags}} {{.Id}}'
 ```
 
 安全要求：
 
 - 不要把真实 `GHCR_TOKEN` 写进仓库、文档、截图或 `.env.production`。
 - 开发者发布镜像的 PAT 至少需要 `write:packages` 权限；服务器只拉取私有镜像时使用只读 Token，至少需要 `read:packages` 权限。
+- 只有在新机器首次发布、执行过 `docker logout ghcr.io`、PAT 过期或权限被撤销时，才需要重新登录。
 - 默认发布和默认部署统一使用 `ghcr.io/saksk-it/ti:latest`。
 - 如需回滚，可额外用 `TAG=xxx ./scripts/publish_image.sh` 发布明确标签；常规部署教程仍以 `latest` 为准。
 
@@ -139,7 +136,21 @@ curl -fsS "http://127.0.0.1:8080/api/ping?deep=1" | python3 -m json.tool
 
 ## 4. 私有 GHCR 镜像生产部署
 
-如果 GitHub Packages 是私有可见性，复制整段命令运行，按提示输入 GHCR 只读凭据。Token 只临时进入当前 shell，不写入仓库文件。
+如果 GitHub Packages 是私有可见性，服务器也只需要登录一次 GHCR。因为部署脚本使用 `sudo docker`，登录命令也要用 `sudo docker login`，这样后续常规部署不需要重复传只读 Token。
+
+```bash
+printf 'GitHub 用户名: '
+IFS= read -r GHCR_USERNAME
+printf 'GHCR 只读 Token（需要 read:packages）: '
+IFS= read -r -s GHCR_TOKEN
+printf '\n'
+
+printf '%s' "$GHCR_TOKEN" | sudo docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+
+unset GHCR_TOKEN
+```
+
+登录完成后，按第 3 节的一键生产部署命令执行即可。若不想在服务器保存 Docker 登录态，也可以临时传入只读 Token：
 
 ```bash
 printf '部署目录 [/opt/ti]: '
@@ -147,7 +158,7 @@ IFS= read -r APP_DIR
 APP_DIR="${APP_DIR:-/opt/ti}"
 printf 'GitHub 用户名: '
 IFS= read -r GHCR_USERNAME
-printf 'GHCR 只读 Token: '
+printf 'GHCR 只读 Token（需要 read:packages）: '
 IFS= read -r -s GHCR_TOKEN
 printf '\n'
 REPO_URL="https://github.com/Saksk-IT/Ti.git"
@@ -319,21 +330,10 @@ curl -fsS "http://127.0.0.1:8080/api/ping?deep=1" | python3 -m json.tool
 ```bash
 cd /Users/sak/Documents/GitHub/Ti
 
-printf 'GitHub 用户名: '
-IFS= read -r GHCR_USERNAME
-printf 'GitHub PAT: '
-IFS= read -r -s GHCR_TOKEN
-printf '\n'
+PLATFORMS=linux/amd64 \
+./scripts/publish_image.sh
 
-if printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin; then
-  PLATFORMS=linux/amd64 \
-  ./scripts/publish_image.sh &&
-  docker image inspect ghcr.io/saksk-it/ti:latest --format '{{.RepoTags}} {{.Id}}'
-else
-  echo 'GHCR 登录失败：请确认用户名和 PAT，PAT 至少需要 write:packages 权限。'
-fi
-
-unset GHCR_TOKEN
+docker image inspect ghcr.io/saksk-it/ti:latest --format '{{.RepoTags}} {{.Id}}'
 ```
 
 服务器拉取最新代码配置和 latest 镜像。日常更新优先使用这个入口，它会自动执行 `git pull --ff-only`，然后调用生产部署脚本：
