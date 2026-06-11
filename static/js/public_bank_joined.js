@@ -106,7 +106,7 @@
       var hasCover = !!coverUrl;
       var coverHtml = hasCover
         ? '<div class="forum-post-cover-thumb"><img src="' + esc(coverUrl) + '" alt="" loading="lazy"></div>'
-        : window.renderBankDefaultCover(item.board && item.board.name, '智能题库');
+        : window.renderBankDefaultCover(item.name, item.board && item.board.name, '智能题库');
       return '<a class="forum-post-card plaza-bank-card' + (hasCover ? ' has-uploaded-cover' : ' has-default-cover') + '" href="' + esc(item.detail_url) + '">' +
         '<div class="forum-post-header">' +
           '<div class="forum-avatar"></div>' +

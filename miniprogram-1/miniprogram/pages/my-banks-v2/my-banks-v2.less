@@ -466,14 +466,158 @@ page {
   border: 1rpx solid var(--app-border);
   background: var(--app-surface-2);
   box-shadow: var(--app-shadow-soft);
-  padding: 16rpx 16rpx;
   display: flex;
-  flex-direction: column;
-  gap: 10rpx;
+  align-items: stretch;
+  min-height: 174rpx;
+  overflow: hidden;
 }
 
 .mb-card:active {
   opacity: 0.92;
+}
+
+.mb-cover {
+  width: 172rpx;
+  flex: 0 0 172rpx;
+  background: color-mix(in srgb, var(--app-strong-bg) 10%, var(--app-surface));
+  border-right: 1rpx solid var(--app-border);
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  overflow: hidden;
+}
+
+.mb-cover image {
+  width: 100%;
+  height: 100%;
+  min-height: 174rpx;
+  display: block;
+}
+
+.mb-cover-fallback {
+  position: relative;
+  width: 100%;
+  min-height: 174rpx;
+  padding: 18rpx;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: var(--app-text);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 20% 18%, color-mix(in srgb, var(--app-strong-bg) 24%, transparent) 0%, color-mix(in srgb, var(--app-strong-bg) 24%, transparent) 34rpx, transparent 36rpx),
+    radial-gradient(circle at 88% 84%, color-mix(in srgb, var(--app-strong-bg) 16%, transparent) 0%, color-mix(in srgb, var(--app-strong-bg) 16%, transparent) 48rpx, transparent 50rpx),
+    linear-gradient(135deg, color-mix(in srgb, var(--app-strong-bg) 12%, var(--app-surface)) 0%, color-mix(in srgb, var(--app-surface) 82%, var(--app-bg)) 100%);
+}
+
+.mini-cover-grid {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  opacity: 0.42;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--app-strong-bg) 13%, transparent) 1rpx, transparent 1rpx),
+    linear-gradient(color-mix(in srgb, var(--app-strong-bg) 13%, transparent) 1rpx, transparent 1rpx);
+  background-size: 26rpx 26rpx;
+}
+
+.mini-cover-mark {
+  position: relative;
+  z-index: 1;
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: 18rpx;
+  border: 1rpx solid color-mix(in srgb, var(--app-strong-bg) 24%, var(--app-border));
+  background: color-mix(in srgb, var(--app-surface) 82%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12rpx 30rpx color-mix(in srgb, var(--app-strong-bg) 10%, transparent);
+}
+
+.mini-cover-mark text {
+  color: var(--app-strong-bg);
+  font-size: 28rpx;
+  font-weight: 950;
+}
+
+.mini-cover-pill {
+  position: absolute;
+  z-index: 1;
+  right: 14rpx;
+  top: 14rpx;
+  max-width: 108rpx;
+  min-height: 34rpx;
+  padding: 0 12rpx;
+  border-radius: 999rpx;
+  background: color-mix(in srgb, var(--app-strong-bg) 10%, var(--app-surface));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mini-cover-pill text {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--app-text-secondary);
+  font-size: 18rpx;
+  font-weight: 900;
+}
+
+.mini-cover-copy {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2rpx;
+}
+
+.mini-cover-kicker,
+.mini-cover-sub {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mini-cover-kicker {
+  color: var(--app-muted);
+  font-size: 18rpx;
+  font-weight: 900;
+}
+
+.mini-cover-title {
+  max-width: 100%;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  word-break: break-all;
+  color: var(--app-text);
+  font-size: 26rpx;
+  font-weight: 950;
+  line-height: 1.12;
+}
+
+.mini-cover-sub {
+  color: var(--app-text-secondary);
+  font-size: 18rpx;
+  font-weight: 800;
+}
+
+.mb-card-body {
+  flex: 1;
+  min-width: 0;
+  padding: 16rpx 16rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
 }
 
 .mb-top {

@@ -19,7 +19,16 @@
         <view class="public-card" wx:elif="{{card}}">
           <view class="public-cover {{card.hasCover ? 'has-cover' : ''}}">
             <image wx:if="{{card.hasCover}}" src="{{card.coverUrl}}" mode="aspectFill"></image>
-            <view wx:else class="public-cover-fallback"><text>{{card.name}}</text></view>
+            <view wx:else class="public-cover-fallback">
+              <view class="mini-cover-grid"></view>
+              <view class="mini-cover-mark"><text>题</text></view>
+              <view class="mini-cover-pill"><text>{{card.sourceLabel}}</text></view>
+              <view class="mini-cover-copy">
+                <text class="mini-cover-kicker">Sak AI</text>
+                <view class="mini-cover-title"><text>{{card.name}}</text></view>
+                <text class="mini-cover-sub">{{card.questionCount}} 题 · {{card.boardLabel}}</text>
+              </view>
+            </view>
           </view>
 
           <view class="public-body">

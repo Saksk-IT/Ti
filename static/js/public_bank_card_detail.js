@@ -52,6 +52,12 @@
     if (coverEl) {
       if (current.cover_image) {
         coverEl.innerHTML = '<img src="' + esc(current.cover_image) + '" alt="">';
+      } else if (window.renderBankDefaultCover) {
+        coverEl.innerHTML = window.renderBankDefaultCover(
+          current.name,
+          (current.board && current.board.name) || current.source_label || '题库名片',
+          '题库名片'
+        );
       } else {
         coverEl.textContent = current.name || '题库名片';
       }

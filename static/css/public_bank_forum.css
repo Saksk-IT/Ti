@@ -314,6 +314,12 @@
 }
 
 .plaza-cover-title {
+  display: -webkit-box;
+  max-width: 100%;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
   color: var(--app-text);
   font-size: 15px;
   font-weight: 900;
@@ -765,6 +771,38 @@
   object-fit: cover;
 }
 
+.bank-card-cover .plaza-bank-cover-fallback {
+  width: 100%;
+  height: 100%;
+  min-height: 180px;
+  grid-column: auto;
+  grid-row: auto;
+  align-self: stretch;
+  justify-self: stretch;
+  border-radius: inherit;
+  border: 0;
+  padding: 20px;
+}
+
+.bank-card-cover .plaza-cover-emblem {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+}
+
+.bank-card-cover .plaza-cover-emblem svg {
+  width: 28px;
+  height: 28px;
+}
+
+.bank-card-cover .plaza-cover-title {
+  font-size: 24px;
+}
+
+.bank-card-cover .plaza-cover-board {
+  font-size: 12px;
+}
+
 .bank-card-main {
   display: grid;
   gap: 12px;
@@ -906,6 +944,10 @@
   }
 
   .bank-card-cover {
+    min-height: 140px;
+  }
+
+  .bank-card-cover .plaza-bank-cover-fallback {
     min-height: 140px;
   }
 }

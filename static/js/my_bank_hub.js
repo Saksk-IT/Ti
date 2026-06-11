@@ -229,7 +229,7 @@
       var hasCover = !!coverUrl;
       var coverHtml = hasCover
         ? '<div class="forum-post-cover-thumb"><img src="' + esc(coverUrl) + '" alt="" loading="lazy"></div>'
-        : window.renderBankDefaultCover((item.board && item.board.name) || item.source_label || item.visibility_label, '我的题库');
+        : window.renderBankDefaultCover(item.name, (item.board && item.board.name) || item.source_label || item.visibility_label, '我的题库');
       var ownerText = item.kind === 'created' ? '我创建的题库' : esc(item.owner_label || '匿名用户');
       var boardText = esc((item.board && item.board.name) || '未分类');
       var timeText = esc(item.updated_at || item.last_joined_at || item.last_activity_at || '-');
