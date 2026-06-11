@@ -920,8 +920,10 @@ def _register_before_request(app):
 def _register_health_endpoints(app: Flask) -> None:
     """注册简单健康检查接口（用于小程序真机连通性测试）。"""
     from flask import jsonify, request as _req
+    from app.core.extensions import limiter
 
     @app.get('/api/ping')
+    @limiter.exempt
     def api_ping():
         if _req.args.get('deep') != '1':
             return jsonify({'status': 'success', 'data': {'pong': True}})

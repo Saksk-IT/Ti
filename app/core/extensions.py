@@ -9,11 +9,21 @@ from flask_wtf.csrf import CSRFProtect
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from app.core.utils.rate_limit import user_or_ip_rate_key
+from app.core.utils.rate_limit_policy import configure_rate_limit_policy, expand_rate_limit
+
+
+class TiLimiter(Limiter):
+    """Limiter wrapper that applies deployment-wide rate limit policy."""
+
+    def limit(self, limit_value, *args, **kwargs):
+        return super().limit(expand_rate_limit(limit_value), *args, **kwargs)
+
+    def shared_limit(self, limit_value, scope, *args, **kwargs):
+        return super().shared_limit(expand_rate_limit(limit_value), scope, *args, **kwargs)
+
 
 # 初始化限流器（不绑定app）
-limiter = Limiter(
-    key_func=user_or_ip_rate_key
-)
+limiter = TiLimiter(key_func=user_or_ip_rate_key)
 
 # CSRF 保护（不绑定app）
 csrf = CSRFProtect()
@@ -27,6 +37,7 @@ migrate = Migrate()
 
 def init_extensions(app):
     """初始化所有扩展"""
+    configure_rate_limit_policy(app)
     limiter.init_app(app)
 
     # CSRF 保护：保护 Web 表单，API 端点在蓝图注册后统一豁免

@@ -46,6 +46,8 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-studyuser}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ti_db}
       REDIS_URL: redis://redis:6379/0
       RATELIMIT_STORAGE_URI: redis://redis:6379/0
+      RATELIMIT_LIMIT_MULTIPLIER: ${RATELIMIT_LIMIT_MULTIPLIER:-100}
+      RATELIMIT_DEFAULT: "${RATELIMIT_DEFAULT:-500000/day;50000/hour;1000/second}"
       RQ_QUEUE_NAME: saksk
       PROXY_FIX_ENABLED: ${PROXY_FIX_ENABLED:-true}
       ENABLE_GZIP: "false"
@@ -86,7 +88,7 @@ services:
     volumes:
       - ./var:/data
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/ping')\""]
+      test: ["CMD-SHELL", "python -c \"import socket; s=socket.create_connection(('127.0.0.1', 8000), 3); s.close()\""]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -125,6 +127,9 @@ services:
       DEFAULT_ADMIN_EMAIL: ${DEFAULT_ADMIN_EMAIL:-}
       DATABASE_URL: postgresql://${POSTGRES_USER:-studyuser}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ti_db}
       REDIS_URL: redis://redis:6379/0
+      RATELIMIT_STORAGE_URI: redis://redis:6379/0
+      RATELIMIT_LIMIT_MULTIPLIER: ${RATELIMIT_LIMIT_MULTIPLIER:-100}
+      RATELIMIT_DEFAULT: "${RATELIMIT_DEFAULT:-500000/day;50000/hour;1000/second}"
       RQ_QUEUE_NAME: saksk
       WECHAT_APPID: ${WECHAT_APPID:-}
       WECHAT_SECRET: ${WECHAT_SECRET:-}

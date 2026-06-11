@@ -5,6 +5,7 @@
 import os
 import logging
 from datetime import timedelta
+from app.core.utils.rate_limit_policy import production_rate_limit_multiplier
 
 
 class Config:
@@ -86,6 +87,7 @@ class Config:
     RATELIMIT_STORAGE_URL = RATELIMIT_STORAGE_URI
     RATELIMIT_DEFAULT = "5000 per day;500 per hour;10 per second"
     RATELIMIT_HEADERS_ENABLED = True
+    RATELIMIT_LIMIT_MULTIPLIER = 1
 
     # Redis（缓存/队列/限流共享存储）
     # 优先读 REDIS_URL；若未设置且限流存储为 redis://，则复用其连接
@@ -193,6 +195,13 @@ class ProductionConfig(Config):
     """生产环境配置"""
     DEBUG = False
     TESTING = False
+    RATELIMIT_LIMIT_MULTIPLIER = production_rate_limit_multiplier()
+    _RATELIMIT_DEFAULT_RAW = os.environ.get('RATELIMIT_DEFAULT')
+    _RATELIMIT_DEFAULT_FALLBACK = (
+        f"{5000 * RATELIMIT_LIMIT_MULTIPLIER}/day;"
+        f"{500 * RATELIMIT_LIMIT_MULTIPLIER}/hour;"
+        f"{10 * RATELIMIT_LIMIT_MULTIPLIER}/second"
+    )
 
     # 生产环境 PostgreSQL 连接池配置
     # 2 workers × (3 + 5) = 16 连接，安全在 PostgreSQL 默认 max_connections=100 以内
@@ -223,6 +232,13 @@ class ProductionConfig(Config):
     QUIZ_CACHE_TTL_SUBJECTS_SECONDS = int(os.environ.get('QUIZ_CACHE_TTL_SUBJECTS_SECONDS', '300') or 300)
     QUIZ_CACHE_TTL_SUBJECTS_META_SECONDS = int(os.environ.get('QUIZ_CACHE_TTL_SUBJECTS_META_SECONDS', '300') or 300)
     QUIZ_CACHE_TTL_COUNTS_SECONDS = int(os.environ.get('QUIZ_CACHE_TTL_COUNTS_SECONDS', '120') or 120)
+
+    # 生产环境默认大幅放宽全局限流；具体路由上的 @limiter.limit 也会通过 TiLimiter 同步放大。
+    RATELIMIT_DEFAULT = (
+        _RATELIMIT_DEFAULT_RAW.strip()
+        if _RATELIMIT_DEFAULT_RAW and _RATELIMIT_DEFAULT_RAW.strip()
+        else _RATELIMIT_DEFAULT_FALLBACK
+    )
     
     # 生产环境禁用控制台输出验证码
     MAIL_CONSOLE_OUTPUT = False

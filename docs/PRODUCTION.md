@@ -297,6 +297,7 @@ DEFAULT_ADMIN_PASSWORD=$(python3 -c "import secrets, string; alphabet=string.asc
 DEFAULT_ADMIN_PHONE=
 DEFAULT_ADMIN_EMAIL=admin@ti.local
 DEFAULT_ADMIN_RESET_PASSWORD=0
+RATELIMIT_LIMIT_MULTIPLIER=100
 PROXY_FIX_ENABLED=true
 HTTP_BIND=0.0.0.0
 HTTP_PORT=8080
@@ -433,6 +434,7 @@ grep -E '^TI_IMAGE_PULL_POLICY=always$' .env.production
 grep -E '^HTTP_BIND=0.0.0.0$' .env.production
 grep -E '^HTTP_PORT=8080$' .env.production
 grep -E '^SESSION_COOKIE_SECURE=false$' .env.production
+grep -E '^RATELIMIT_LIMIT_MULTIPLIER=100$' .env.production
 
 if grep -E '^POSTGRES_PASSWORD=studypass$|^SECRET_KEY=dev-secret-key' .env.production; then
   echo '错误：生产环境不能使用开发默认密钥或密码'

@@ -10,6 +10,7 @@ from werkzeug.security import generate_password_hash
 from app.core.extensions import db
 from app.models.user import User, EmailVerificationCode
 from app.core.utils.email_service import EmailService
+from app.core.utils.rate_limit_policy import expand_manual_rate_limit_count
 from app.core.utils.time_utils import now_bj
 
 
@@ -20,6 +21,10 @@ class EmailAuthService:
     CODE_EXPIRE_MINUTES = 10
     # 验证码错误次数限制
     MAX_VERIFY_ATTEMPTS = 5
+
+    @staticmethod
+    def _send_limit(base_count: int) -> int:
+        return expand_manual_rate_limit_count(base_count)
     
     @staticmethod
     def send_bind_code(user_id: int, email: str) -> Tuple[bool, Optional[str]]:
@@ -50,7 +55,7 @@ class EmailAuthService:
             EmailVerificationCode.created_at > one_minute_ago,
         ).count()
 
-        if recent_count > 0:
+        if recent_count >= EmailAuthService._send_limit(1):
             return False, '发送验证码过于频繁，请稍后再试'
 
         # 检查用户发送频率（1小时内最多5次）
@@ -61,7 +66,7 @@ class EmailAuthService:
             EmailVerificationCode.created_at > one_hour_ago,
         ).count()
 
-        if user_recent_count >= 5:
+        if user_recent_count >= EmailAuthService._send_limit(5):
             return False, '发送验证码次数过多，请稍后再试'
 
         # 先存后发：先保存验证码到数据库，再异步发送邮件
@@ -208,7 +213,7 @@ class EmailAuthService:
             EmailVerificationCode.created_at > one_minute_ago,
         ).count()
 
-        if recent_count > 0:
+        if recent_count >= EmailAuthService._send_limit(1):
             return False, '发送验证码过于频繁，请稍后再试'
 
         # 先存后发：先保存验证码到数据库，再异步发送邮件
@@ -391,7 +396,7 @@ class EmailAuthService:
             EmailVerificationCode.created_at > one_minute_ago,
         ).count()
 
-        if recent_count > 0:
+        if recent_count >= EmailAuthService._send_limit(1):
             return False, '发送验证码过于频繁，请稍后再试'
 
         # 检查用户发送频率（1小时内最多5次）
@@ -402,7 +407,7 @@ class EmailAuthService:
             EmailVerificationCode.created_at > one_hour_ago,
         ).count()
 
-        if user_recent_count >= 5:
+        if user_recent_count >= EmailAuthService._send_limit(5):
             return False, '发送验证码次数过多，请稍后再试'
 
         # 先存后发：先保存验证码到数据库，再异步发送邮件

@@ -20,8 +20,8 @@ from app.core.utils.redis_utils import (
     get_redis_connection,
     redis_get_text,
     redis_incr,
-    redis_set_text,
 )
+from app.core.utils.rate_limit_policy import expand_manual_rate_limit_count, relax_manual_rate_limit_interval
 from app.core.utils.time_utils import now_bj
 from app.models.user import User
 
@@ -41,6 +41,7 @@ class SmsAuthService:
         from app.modules.admin.services.system_config_service import SystemConfigService
 
         cfg = SystemConfigService.get_sms_config()
+        interval = int(cfg.get('interval', 60) or 60)
         return {
             'access_key_id': cfg.get('access_key_id') or '',
             'access_key_secret': cfg.get('access_key_secret') or '',
@@ -48,7 +49,7 @@ class SmsAuthService:
             'template_code': template_code or cfg.get('template_code') or '',
             'code_length': cfg.get('code_length', 6),
             'valid_time': cfg.get('valid_time', 300),
-            'interval': cfg.get('interval', 60),
+            'interval': relax_manual_rate_limit_interval(interval),
             'console_output': cfg.get('console_output', False),
         }
 
@@ -74,16 +75,22 @@ class SmsAuthService:
             logger.error("短信限流检查失败: Redis ping 失败", exc_info=True)
             return '系统繁忙，请稍后再试'
 
-        # 1 分钟限制
+        # 1 分钟窗口限制
         rate_key = f'sms:rate:{phone}'
-        if redis_get_text(rate_key):
+        minute_count = redis_get_text(rate_key)
+        try:
+            over_minute_limit = bool(minute_count) and int(minute_count) >= expand_manual_rate_limit_count(1)
+        except Exception:
+            logger.warning("短信分钟限流计数解析失败: phone=%s minute_count=%s", phone, minute_count)
+            over_minute_limit = True
+        if over_minute_limit:
             return '发送验证码过于频繁，请稍后再试'
 
         # 1 小时限制
         hour_key = f'sms:rate_hour:{phone}'
         hour_count = redis_get_text(hour_key)
         try:
-            over_limit = bool(hour_count) and int(hour_count) >= 5
+            over_limit = bool(hour_count) and int(hour_count) >= expand_manual_rate_limit_count(5)
         except Exception:
             logger.warning("短信限流计数解析失败: phone=%s hour_count=%s", phone, hour_count)
             over_limit = True
@@ -95,24 +102,30 @@ class SmsAuthService:
     @staticmethod
     def _mark_rate_limit(phone: str) -> bool:
         """标记已发送，更新频率计数。"""
-        minute_ok = redis_set_text(f'sms:rate:{phone}', '1', ttl_seconds=60)
+        minute_key = f'sms:rate:{phone}'
+        minute_val = redis_incr(minute_key)
+        if minute_val is None:
+            return False
+
         hour_key = f'sms:rate_hour:{phone}'
         val = redis_incr(hour_key)
         if val is None:
             return False
 
         ttl_ok = True
-        if val == 1:
-            # 首次，设置 TTL
+        if minute_val == 1 or val == 1:
             conn = get_redis_connection()
             if conn:
                 try:
-                    conn.expire(hour_key, 3600)
+                    if minute_val == 1:
+                        conn.expire(minute_key, 60)
+                    if val == 1:
+                        conn.expire(hour_key, 3600)
                 except Exception:
                     ttl_ok = False
             else:
                 ttl_ok = False
-        return bool(minute_ok) and ttl_ok
+        return ttl_ok
 
     @staticmethod
     def _do_send(phone: str, config: Dict[str, Any]) -> Tuple[bool, Optional[str]]:

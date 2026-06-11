@@ -57,6 +57,34 @@ def test_deep_ping_uses_short_redis_timeouts(client, monkeypatch):
     assert captured["socket_timeout"] == 0.75
 
 
+def test_ping_is_exempt_from_default_rate_limit(app, monkeypatch):
+    app.config["RATELIMIT_DEFAULT"] = "1 per day"
+
+    with app.test_client() as client:
+        first = client.get("/api/ping")
+        second = client.get("/api/ping")
+        third = client.get("/api/ping")
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert third.status_code == 200
+
+
+def test_production_web_healthcheck_uses_tcp_probe():
+    compose_text = Path("compose.prod.yml").read_text(encoding="utf-8")
+
+    assert "socket.create_connection" in compose_text
+    assert "urllib.request.urlopen('http://localhost:8000/api/ping')" not in compose_text
+
+
+def test_production_compose_relaxes_rate_limit_defaults():
+    compose_text = Path("compose.prod.yml").read_text(encoding="utf-8")
+
+    assert "RATELIMIT_LIMIT_MULTIPLIER: ${RATELIMIT_LIMIT_MULTIPLIER:-100}" in compose_text
+    assert 'RATELIMIT_DEFAULT: "${RATELIMIT_DEFAULT:-500000/day;50000/hour;1000/second}"' in compose_text
+    assert "RATELIMIT_DEFAULT: ${RATELIMIT_DEFAULT:-}" not in compose_text
+
+
 def test_production_compose_waits_for_redis_health():
     compose_text = Path("compose.prod.yml").read_text(encoding="utf-8")
 
@@ -85,3 +113,11 @@ def test_production_deploy_runs_migrations_before_full_stack_up():
     assert script_text.index(base_up) < script_text.index(migration) < script_text.index(full_up)
     assert 'exec -T web flask db upgrade' not in script_text
     assert 'logs --tail=200 web' in script_text
+
+
+def test_production_deploy_persists_rate_limit_multiplier():
+    script_text = Path("scripts/deploy_ubuntu24.sh").read_text(encoding="utf-8")
+
+    assert 'RATELIMIT_LIMIT_MULTIPLIER="${RATELIMIT_LIMIT_MULTIPLIER:-100}"' in script_text
+    assert 'RATELIMIT_LIMIT_MULTIPLIER=${RATELIMIT_LIMIT_MULTIPLIER}' in script_text
+    assert 'upsert_env_value "RATELIMIT_LIMIT_MULTIPLIER" "$RATELIMIT_LIMIT_MULTIPLIER"' in script_text
