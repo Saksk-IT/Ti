@@ -241,12 +241,31 @@
       word-break: break-word;
     }
 
+    .result-media {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .result-media-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    }
+
     .result-media img {
       width: 100%;
       max-height: 360px;
       border-radius: 12px;
       border: 1px solid var(--border);
       object-fit: contain;
+      background: color-mix(in srgb, var(--card-solid) 92%, transparent);
+    }
+
+    .result-media-label {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--muted);
     }
 
     .item-footer {
@@ -435,9 +454,14 @@
                   {{ q.content|nl2br }}
                 </div>
 
-                {% if q.image_path %}
+                {% if q.content_images %}
                   <div class="result-media">
-                    <img src="{{ url_for('main.main_pages.serve_upload', filename=q.image_path) }}" alt="题目图片">
+                    <div class="result-media-label">题干图片</div>
+                    <div class="result-media-grid">
+                      {% for image_path in q.content_images %}
+                        <img src="{{ url_for('main.main_pages.serve_upload', filename=image_path) }}" alt="题干图片 {{ loop.index }}">
+                      {% endfor %}
+                    </div>
                   </div>
                 {% endif %}
 
@@ -466,12 +490,44 @@
                   <div class="result-answer">
                     <div class="result-label">答案</div>
                     <div class="result-answer-body">{{ (q.full_answer or '—')|nl2br }}</div>
+                    {% if q.answer_images %}
+                      <div class="result-media">
+                        <div class="result-media-label">答案图片</div>
+                        <div class="result-media-grid">
+                          {% for image_path in q.answer_images %}
+                            <img src="{{ url_for('main.main_pages.serve_upload', filename=image_path) }}" alt="答案图片 {{ loop.index }}">
+                          {% endfor %}
+                        </div>
+                      </div>
+                    {% endif %}
                   </div>
 
                   {% if q.explanation %}
                     <div class="result-explanation">
                       <div class="result-label">解析</div>
                       <div class="result-explanation-body" data-explanation="{{ q.explanation }}">{{ q.explanation|nl2br }}</div>
+                      {% if q.explanation_images %}
+                        <div class="result-media">
+                          <div class="result-media-label">解析图片</div>
+                          <div class="result-media-grid">
+                            {% for image_path in q.explanation_images %}
+                              <img src="{{ url_for('main.main_pages.serve_upload', filename=image_path) }}" alt="解析图片 {{ loop.index }}">
+                            {% endfor %}
+                          </div>
+                        </div>
+                      {% endif %}
+                    </div>
+                  {% elif q.explanation_images %}
+                    <div class="result-explanation">
+                      <div class="result-label">解析</div>
+                      <div class="result-media">
+                        <div class="result-media-label">解析图片</div>
+                        <div class="result-media-grid">
+                          {% for image_path in q.explanation_images %}
+                            <img src="{{ url_for('main.main_pages.serve_upload', filename=image_path) }}" alt="解析图片 {{ loop.index }}">
+                          {% endfor %}
+                        </div>
+                      </div>
                     </div>
                   {% endif %}
                 </div>

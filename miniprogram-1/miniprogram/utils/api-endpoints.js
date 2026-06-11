@@ -111,30 +111,36 @@ function resolveUploadUrl(input) {
     // 默认认为存放在 /uploads 下（如 question_images/...）
     return "".concat(API_ORIGIN, "/uploads/").concat(raw);
 }
-// 兼容 image_path 可能为：单路径字符串、JSON 数组字符串、数组
+function normalizeImagePathList(input) {
+    if (Array.isArray(input)) {
+        return input
+            .map(function (p) { return resolveUploadUrl(p); })
+            .filter(function (p) { return typeof p === 'string' && p.length > 0; });
+    }
+    if (input && typeof input === 'object') {
+        var content = input.content || input.question || input.stem || input.images;
+        return normalizeImagePathList(content);
+    }
+    if (typeof input === 'string') {
+        var url_1 = resolveUploadUrl(input);
+        return url_1 ? [url_1] : [];
+    }
+    return [];
+}
+// 兼容 image_path 可能为：单路径字符串、JSON 数组字符串、JSON 对象字符串、数组
 function normalizeImageUrls(imagePath) {
     if (imagePath == null)
         return [];
     if (Array.isArray(imagePath)) {
-        return imagePath
-            .map(function (p) { return resolveUploadUrl(p); })
-            .filter(function (p) { return typeof p === 'string' && p.length > 0; });
+        return normalizeImagePathList(imagePath);
     }
     var raw = String(imagePath).trim();
     if (!raw || raw === '[]')
         return [];
-    if (raw.startsWith('[')) {
+    if (raw.startsWith('[') || raw.startsWith('{')) {
         try {
             var parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) {
-                return parsed
-                    .map(function (p) { return resolveUploadUrl(p); })
-                    .filter(function (p) { return typeof p === 'string' && p.length > 0; });
-            }
-            if (typeof parsed === 'string') {
-                var url_1 = resolveUploadUrl(parsed);
-                return url_1 ? [url_1] : [];
-            }
+            return normalizeImagePathList(parsed);
         }
         catch (e) {
             // 忽略 JSON 解析失败，走单路径兜底

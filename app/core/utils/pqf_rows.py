@@ -16,6 +16,7 @@ import json
 from collections.abc import Mapping as MappingABC
 from typing import Any, Dict, Mapping, Optional
 
+from app.core.utils.image_helpers import normalize_question_image_groups
 from app.core.utils.portable_question_format import portable_question_to_internal
 
 
@@ -102,5 +103,15 @@ def pqf_row_to_internal(
 
     # tags：默认输出列表（旧页面一般忽略，不会破坏）
     r["tags"] = portable.get("tags") or []
+
+    image_groups = normalize_question_image_groups(r.get("image_path"))
+    r["question_image_groups"] = image_groups
+    r["content_images"] = image_groups["content"]
+    r["answer_images"] = image_groups["answer"]
+    r["explanation_images"] = image_groups["explanation"]
+    r["image_path"] = image_groups["content"][0] if image_groups["content"] else ""
+    r["image_path_json"] = json.dumps(image_groups["content"], ensure_ascii=False)
+    r["answer_image_paths_json"] = json.dumps(image_groups["answer"], ensure_ascii=False)
+    r["explanation_image_paths_json"] = json.dumps(image_groups["explanation"], ensure_ascii=False)
 
     return r

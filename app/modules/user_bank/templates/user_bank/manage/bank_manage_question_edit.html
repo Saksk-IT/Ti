@@ -141,11 +141,88 @@
     .ubm-blank-raw-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
     .ubm-blank-raw-title { font-weight: 950; font-size: 13px; color: var(--app-text); }
 
+    .ubm-image-panel {
+      border: 1px solid var(--app-border);
+      border-radius: 18px;
+      background: color-mix(in srgb, var(--app-surface) 94%, transparent);
+      box-shadow: var(--app-shadow-soft);
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .ubm-image-panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .ubm-image-panel-title {
+      font-weight: 950;
+      font-size: 13px;
+      color: var(--app-text);
+    }
+    .ubm-image-panel-sub {
+      font-size: 12px;
+      color: var(--app-muted);
+      line-height: 1.6;
+    }
+    .ubm-image-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    }
+    .ubm-image-item {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--app-border);
+      background: var(--app-surface-2);
+      box-shadow: var(--app-shadow-soft);
+      min-height: 120px;
+    }
+    .ubm-image-thumb {
+      width: 100%;
+      height: 100%;
+      min-height: 120px;
+      display: block;
+      object-fit: cover;
+      background: color-mix(in srgb, var(--app-surface-2) 90%, transparent);
+    }
+    .ubm-image-remove {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      border: none;
+      background: rgba(15, 23, 42, 0.72);
+      color: #fff;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 900;
+      line-height: 1;
+    }
+    .ubm-image-empty {
+      padding: 12px;
+      border: 1px dashed var(--app-border);
+      border-radius: 14px;
+      background: var(--app-surface-2);
+      color: var(--app-muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
     @media (max-width: 640px) {
       .ubm-opt-row { grid-template-columns: 32px 1fr 38px; gap: 8px; }
       .ubm-opt-label { width: 32px; height: 32px; border-radius: 10px; }
       .ubm-icon-btn { width: 38px; height: 38px; border-radius: 10px; }
       .ubm-textarea-sm { min-height: 56px; }
+      .ubm-image-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
   </style>
 {% endblock %}
@@ -177,6 +254,24 @@
         </div>
       </div>
 
+      <div class="ubm-field">
+        <div class="ubm-label">题干图片</div>
+        <div class="ubm-image-panel">
+          <div class="ubm-image-panel-head">
+            <div>
+              <div class="ubm-image-panel-title">上传题干相关图片</div>
+              <div class="ubm-image-panel-sub">支持 png、jpg、jpeg、gif、webp，可上传多张。</div>
+            </div>
+            <div class="ubm-actions">
+              <input id="ubmContentImageFile" type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple hidden>
+              <button class="ubm-btn" type="button" id="ubmContentImageUploadBtn">上传题干图片</button>
+            </div>
+          </div>
+          <div class="ubm-image-empty" id="ubmContentImageEmpty">暂未上传题干图片。</div>
+          <div class="ubm-image-grid" id="ubmContentImagePreview"></div>
+        </div>
+      </div>
+
       <div class="ubm-field" id="ubmOptionsGroup">
         <div class="ubm-label">选项（选择题/多选题，支持多行）</div>
         <div class="ubm-opt-list" id="ubmOptionsList"></div>
@@ -192,8 +287,44 @@
       </div>
 
       <div class="ubm-field">
+        <div class="ubm-label">答案图片</div>
+        <div class="ubm-image-panel">
+          <div class="ubm-image-panel-head">
+            <div>
+              <div class="ubm-image-panel-title">上传答案相关图片</div>
+              <div class="ubm-image-panel-sub">例如参考图、步骤截图、公式图等。</div>
+            </div>
+            <div class="ubm-actions">
+              <input id="ubmAnswerImageFile" type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple hidden>
+              <button class="ubm-btn" type="button" id="ubmAnswerImageUploadBtn">上传答案图片</button>
+            </div>
+          </div>
+          <div class="ubm-image-empty" id="ubmAnswerImageEmpty">暂未上传答案图片。</div>
+          <div class="ubm-image-grid" id="ubmAnswerImagePreview"></div>
+        </div>
+      </div>
+
+      <div class="ubm-field">
         <div class="ubm-label">解析</div>
         <textarea class="ubm-input ubm-textarea" id="ubmExplanation" placeholder="请输入答案解析（可选）"></textarea>
+      </div>
+
+      <div class="ubm-field">
+        <div class="ubm-label">解析图片</div>
+        <div class="ubm-image-panel">
+          <div class="ubm-image-panel-head">
+            <div>
+              <div class="ubm-image-panel-title">上传解析相关图片</div>
+              <div class="ubm-image-panel-sub">用于补充解题思路、步骤图、标注图等。</div>
+            </div>
+            <div class="ubm-actions">
+              <input id="ubmExplanationImageFile" type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple hidden>
+              <button class="ubm-btn" type="button" id="ubmExplanationImageUploadBtn">上传解析图片</button>
+            </div>
+          </div>
+          <div class="ubm-image-empty" id="ubmExplanationImageEmpty">暂未上传解析图片。</div>
+          <div class="ubm-image-grid" id="ubmExplanationImagePreview"></div>
+        </div>
       </div>
 
       <div class="ubm-field">
@@ -244,6 +375,33 @@
       let answerEl = null;
       let options = ['', '', '', ''];
       let blankEditorTimer = null;
+      let uploadingCount = 0;
+      let imageGroups = { content: [], answer: [], explanation: [] };
+
+      const uploadBaseUrl = {{ url_for('main.main_pages.serve_upload', filename='')|tojson }};
+      const imageConfigs = {
+        content: {
+          label: '题干',
+          input: document.getElementById('ubmContentImageFile'),
+          button: document.getElementById('ubmContentImageUploadBtn'),
+          preview: document.getElementById('ubmContentImagePreview'),
+          empty: document.getElementById('ubmContentImageEmpty'),
+        },
+        answer: {
+          label: '答案',
+          input: document.getElementById('ubmAnswerImageFile'),
+          button: document.getElementById('ubmAnswerImageUploadBtn'),
+          preview: document.getElementById('ubmAnswerImagePreview'),
+          empty: document.getElementById('ubmAnswerImageEmpty'),
+        },
+        explanation: {
+          label: '解析',
+          input: document.getElementById('ubmExplanationImageFile'),
+          button: document.getElementById('ubmExplanationImageUploadBtn'),
+          preview: document.getElementById('ubmExplanationImagePreview'),
+          empty: document.getElementById('ubmExplanationImageEmpty'),
+        },
+      };
 
       function setHint(text, kind) {
         if (!hintEl) return;
@@ -254,6 +412,128 @@
       function setAnswerHint(text) {
         if (!answerHintEl) return;
         answerHintEl.innerHTML = text ? String(text) : '';
+      }
+
+      function normalizeImagePath(path) {
+        const raw = String(path || '').trim();
+        if (!raw) return '';
+        if (raw.startsWith('/uploads/')) return raw.slice('/uploads/'.length).trim();
+        if (raw.startsWith('uploads/')) return raw.slice('uploads/'.length).trim();
+        return raw;
+      }
+
+      function normalizeImagePathList(paths) {
+        if (!Array.isArray(paths)) return [];
+        const next = [];
+        const seen = new Set();
+        paths.forEach((item) => {
+          const normalized = normalizeImagePath(item);
+          if (!normalized || seen.has(normalized)) return;
+          next.push(normalized);
+          seen.add(normalized);
+        });
+        return next;
+      }
+
+      function resolveImageUrl(path) {
+        const raw = String(path || '').trim();
+        if (!raw) return '';
+        if (/^https?:\/\//i.test(raw)) return raw;
+        if (raw.startsWith('/uploads/')) return raw;
+        if (raw.startsWith('uploads/')) return `/${raw}`;
+        if (raw.startsWith('/')) return raw;
+        return `${uploadBaseUrl}${raw}`;
+      }
+
+      function getImagePaths(kind) {
+        return Array.isArray(imageGroups[kind]) ? imageGroups[kind] : [];
+      }
+
+      function renderImagePreviews(kind) {
+        const config = imageConfigs[kind];
+        if (!config || !config.preview || !config.empty) return;
+        const paths = getImagePaths(kind);
+        config.preview.innerHTML = '';
+        config.empty.style.display = paths.length ? 'none' : 'block';
+
+        paths.forEach((path, index) => {
+          const item = document.createElement('div');
+          item.className = 'ubm-image-item';
+
+          const img = document.createElement('img');
+          img.className = 'ubm-image-thumb';
+          img.src = resolveImageUrl(path);
+          img.alt = `${config.label}图片 ${index + 1}`;
+
+          const removeBtn = document.createElement('button');
+          removeBtn.type = 'button';
+          removeBtn.className = 'ubm-image-remove';
+          removeBtn.title = `移除${config.label}图片`;
+          removeBtn.textContent = '×';
+          removeBtn.addEventListener('click', () => {
+            setImagePaths(kind, getImagePaths(kind).filter((itemPath) => itemPath !== path));
+          });
+
+          item.appendChild(img);
+          item.appendChild(removeBtn);
+          config.preview.appendChild(item);
+        });
+      }
+
+      function setImagePaths(kind, paths) {
+        imageGroups = Object.assign({}, imageGroups, {
+          [kind]: normalizeImagePathList(paths),
+        });
+        renderImagePreviews(kind);
+      }
+
+      function collectImageGroups() {
+        return {
+          content: getImagePaths('content').slice(),
+          answer: getImagePaths('answer').slice(),
+          explanation: getImagePaths('explanation').slice(),
+        };
+      }
+
+      async function uploadImages(kind, fileList) {
+        const config = imageConfigs[kind];
+        const files = Array.from(fileList || []);
+        if (!config || !files.length) return;
+
+        uploadingCount += 1;
+        config.button && (config.button.disabled = true);
+        setHint(`正在上传${config.label}图片…`, '');
+
+        try {
+          const nextPaths = getImagePaths(kind).slice();
+          for (const file of files) {
+            const formData = new FormData();
+            formData.append('file', file);
+            const res = await fetch(`/user/banks/api/${encodeURIComponent(String(bankId))}/question-images/upload`, {
+              method: 'POST',
+              headers: { 'X-Requested-With': 'XMLHttpRequest' },
+              body: formData,
+              credentials: 'same-origin',
+            });
+            const result = await res.json().catch(() => ({}));
+            if (!res.ok || !result || result.status !== 'success' || !result.data || !result.data.path) {
+              throw new Error((result && result.message) ? result.message : `${config.label}图片上传失败`);
+            }
+            const savedPath = normalizeImagePath(result.data.path);
+            if (savedPath && !nextPaths.includes(savedPath)) nextPaths.push(savedPath);
+          }
+          setImagePaths(kind, nextPaths);
+          setHint(`${config.label}图片上传完成`, '');
+          window.ubmToast && window.ubmToast(`${config.label}图片上传成功`, 'success');
+        } catch (err) {
+          const message = err && err.message ? err.message : `${config.label}图片上传失败`;
+          setHint(message, 'error');
+          window.ubmToast && window.ubmToast(message, 'error');
+        } finally {
+          uploadingCount = Math.max(0, uploadingCount - 1);
+          if (config.input) config.input.value = '';
+          config.button && (config.button.disabled = false);
+        }
       }
 
       function optionLabel(i) {
@@ -678,6 +958,7 @@
           answer: String(normalizedAnswer || '').trim(),
           explanation: String(explanationEl?.value || '').trim(),
           difficulty: parseInt(String(difficultyEl?.value || '3'), 10) || 3,
+          image_groups: collectImageGroups(),
         };
 
         if (qt === '选择题' || qt === '多选题') {
@@ -701,6 +982,9 @@
           contentEl.value = q.content || '';
           explanationEl.value = q.explanation || '';
           difficultyEl.value = String(q.difficulty || 3);
+          setImagePaths('content', Array.isArray(q.content_images) ? q.content_images : []);
+          setImagePaths('answer', Array.isArray(q.answer_images) ? q.answer_images : []);
+          setImagePaths('explanation', Array.isArray(q.explanation_images) ? q.explanation_images : []);
 
           if (q.options !== undefined && q.options !== null) {
             const raw = q.options;
@@ -757,6 +1041,10 @@
             return;
           }
         }
+        if (uploadingCount > 0) {
+          setHint('图片仍在上传中，请稍后再保存。', 'error');
+          return;
+        }
 
         try {
           saveBtn && (saveBtn.disabled = true);
@@ -787,6 +1075,12 @@
         options.push('');
         renderOptions();
       });
+      Object.entries(imageConfigs).forEach(([kind, config]) => {
+        config.button?.addEventListener('click', () => config.input?.click());
+        config.input?.addEventListener('change', () => {
+          uploadImages(kind, config.input?.files);
+        });
+      });
       qTypeEl?.addEventListener('change', () => {
         updateOptionsVisibility();
         updateFillContentHintVisibility();
@@ -804,6 +1098,9 @@
       });
 
       renderOptions();
+      setImagePaths('content', []);
+      setImagePaths('answer', []);
+      setImagePaths('explanation', []);
       updateOptionsVisibility();
       updateFillContentHintVisibility();
       rebuildAnswerInput('');

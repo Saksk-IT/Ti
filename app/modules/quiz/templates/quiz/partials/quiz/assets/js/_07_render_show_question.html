@@ -491,6 +491,46 @@ function getInlineAnswerHosts(qEl){
     return { answerHost, explainHost };
 }
 
+function getQuestionImageUrlsFromDataset(qEl, attrName) {
+    if (!qEl) return [];
+    try {
+        const raw = (qEl.getAttribute(attrName) || '').toString().trim();
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        const uploadBase = "{{ url_for('main.main_pages.serve_upload', filename='') }}";
+        return parsed
+            .map((item) => {
+                const s = (item || '').toString().trim();
+                if (!s) return '';
+                if (/^https?:\/\//i.test(s)) return s;
+                if (s.startsWith('/uploads/')) return s;
+                if (s.startsWith('uploads/')) return `/${s}`;
+                if (s.startsWith('/')) return s;
+                return `${uploadBase}${s}`;
+            })
+            .filter(Boolean);
+    } catch (e) {
+        return [];
+    }
+}
+
+function renderQuestionImageStrip(imageUrls, label) {
+    if (!Array.isArray(imageUrls) || imageUrls.length === 0) return '';
+    const title = label ? `<div style="font-size:12px;font-weight:800;color:var(--text-sub);margin-bottom:8px;">${escapeHtmlWithBreaks(label)}</div>` : '';
+    const items = imageUrls
+        .map((src, index) => `<img src="${src}" alt="${label || '图片'} ${index + 1}" style="width:100%;max-height:220px;object-fit:contain;border-radius:12px;border:1px solid var(--border-color);background:color-mix(in srgb, var(--card-solid) 92%, transparent);">`)
+        .join('');
+    return `
+        <div style="margin-top:12px;">
+          ${title}
+          <div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
+            ${items}
+          </div>
+        </div>
+    `;
+}
+
 function renderAnswerExplainFromQuestion(qEl, resultState = null) {
     if (!qEl) return;
     const { answerHost, explainHost } = getInlineAnswerHosts(qEl);
@@ -504,6 +544,14 @@ function renderAnswerExplainFromQuestion(qEl, resultState = null) {
     const type = (qEl.getAttribute('data-type') || '').toString();
     const correctRaw = (qEl.getAttribute('data-answer') || '').toString();
     const userAnswerText = getUserAnswerTextForDisplay(qEl, type);
+    const answerImageHtml = renderQuestionImageStrip(
+        getQuestionImageUrlsFromDataset(qEl, 'data-answer-images'),
+        '答案图片'
+    );
+    const explanationImageHtml = renderQuestionImageStrip(
+        getQuestionImageUrlsFromDataset(qEl, 'data-explanation-images'),
+        '解析图片'
+    );
 
     const blankCountHint = (qEl.querySelectorAll('.blank-item').length) || null;
     const correctAnswerHtml = (type === '填空题')
@@ -548,6 +596,7 @@ function renderAnswerExplainFromQuestion(qEl, resultState = null) {
                 ${showAiBtn ? `<button type="button" class="answer-ai-btn" aria-label="AI解析" title="AI解析" onclick="toggleAIExplain()">AI</button>` : ``}
               </div>
               <div class="answer-divider"></div>
+              ${answerImageHtml}
               <div class="answer-tip">${tip}</div>
             </div>
         `;
@@ -586,6 +635,7 @@ function renderAnswerExplainFromQuestion(qEl, resultState = null) {
                 <span class="answer-label">正确答案：</span>
                 <div class="answer-value">${correctAnswerHtml}</div>
               </div>
+              ${answerImageHtml}
               ${showUserAnswer ? `
               <div class="user-answer ${isShortAnswer ? 'short-answer-block' : ''}">
                 <span class="answer-label">你的答案：</span>
@@ -623,6 +673,16 @@ function renderAnswerExplainFromQuestion(qEl, resultState = null) {
             <div class="explanation-card">
               <div class="explanation-title">解析</div>
               <div class="explanation-text">${escapeHtmlWithBreaks(explainRaw)}</div>
+              ${explanationImageHtml}
+              <div class="explain-disclaimer">解析仅供参考</div>
+            </div>
+        `;
+        explainHost.style.display = 'block';
+    } else if (explanationImageHtml) {
+        explainHost.innerHTML = `
+            <div class="explanation-card">
+              <div class="explanation-title">解析</div>
+              ${explanationImageHtml}
               <div class="explain-disclaimer">解析仅供参考</div>
             </div>
         `;

@@ -16,14 +16,14 @@ from app.core.utils.decorators import auth_required, current_user_id
 from .api_base import user_bank_api_bp
 
 
-ALLOWED_BANK_COVER_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
-ALLOWED_BANK_COVER_MIME_TYPES = {
+ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
+ALLOWED_IMAGE_MIME_TYPES = {
     "image/png",
     "image/jpeg",
     "image/gif",
     "image/webp",
 }
-MAX_BANK_COVER_BYTES = 5 * 1024 * 1024
+MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
 
 def _file_extension(filename: str) -> str:
@@ -53,16 +53,16 @@ def _detect_image_extension(head: bytes) -> str:
     return ""
 
 
-def _validate_bank_cover_file(file_storage):
+def _validate_image_file(file_storage, *, label: str):
     if not file_storage or not file_storage.filename:
         return None, "没有选择文件"
 
     ext = _file_extension(file_storage.filename)
-    if ext not in ALLOWED_BANK_COVER_EXTENSIONS:
+    if ext not in ALLOWED_IMAGE_EXTENSIONS:
         return None, "不支持的文件格式，请上传 png、jpg、jpeg、gif 或 webp 图片"
 
     mimetype = (file_storage.mimetype or "").lower()
-    if mimetype and mimetype != "application/octet-stream" and mimetype not in ALLOWED_BANK_COVER_MIME_TYPES:
+    if mimetype and mimetype != "application/octet-stream" and mimetype not in ALLOWED_IMAGE_MIME_TYPES:
         return None, "文件类型不是图片"
 
     try:
@@ -72,8 +72,8 @@ def _validate_bank_cover_file(file_storage):
 
     if size <= 0:
         return None, "不能上传空文件"
-    if size > MAX_BANK_COVER_BYTES:
-        return None, "封面图片不能超过 5MB"
+    if size > MAX_IMAGE_BYTES:
+        return None, f"{label}不能超过 5MB"
 
     head = file_storage.stream.read(16)
     file_storage.stream.seek(0)
@@ -84,21 +84,21 @@ def _validate_bank_cover_file(file_storage):
     return detected_ext, ""
 
 
-def _save_bank_cover_file(file_storage, extension: str, user_id: int) -> dict:
+def _save_image_file(file_storage, extension: str, *, folder: str, filename_prefix: str) -> dict:
     upload_root = current_app.config["UPLOAD_FOLDER"]
-    cover_dir = os.path.realpath(os.path.join(upload_root, "bank_covers"))
-    os.makedirs(cover_dir, exist_ok=True)
+    save_dir = os.path.realpath(os.path.join(upload_root, folder))
+    os.makedirs(save_dir, exist_ok=True)
 
-    filename = f"bank_cover_{int(user_id)}_{uuid.uuid4().hex[:16]}.{extension}"
-    filepath = os.path.realpath(os.path.join(cover_dir, filename))
-    if os.path.commonpath([cover_dir, filepath]) != cover_dir:
+    filename = f"{filename_prefix}_{uuid.uuid4().hex[:16]}.{extension}"
+    filepath = os.path.realpath(os.path.join(save_dir, filename))
+    if os.path.commonpath([save_dir, filepath]) != save_dir:
         raise ValueError("invalid upload path")
 
     file_storage.save(filepath)
     return {
         "filename": filename,
-        "path": f"bank_covers/{filename}",
-        "url": f"/uploads/bank_covers/{filename}",
+        "path": f"{folder}/{filename}",
+        "url": f"/uploads/{folder}/{filename}",
     }
 
 
@@ -118,17 +118,42 @@ def _ensure_bank_owner(bank_id: int, user_id: int) -> bool:
 
 def _handle_bank_cover_upload(user_id: int):
     file_storage = request.files.get("file") or request.files.get("cover")
-    extension, message = _validate_bank_cover_file(file_storage)
+    extension, message = _validate_image_file(file_storage, label="封面图片")
     if not extension:
         return error_response(message)
 
     try:
-        saved = _save_bank_cover_file(file_storage, extension, user_id)
+        saved = _save_image_file(
+            file_storage,
+            extension,
+            folder="bank_covers",
+            filename_prefix=f"bank_cover_{int(user_id)}",
+        )
     except Exception as exc:
         current_app.logger.error("题库封面上传失败: %s", exc, exc_info=True)
         return error_response("上传失败，请稍后重试", 500)
 
     return success_response(data=saved, message="封面上传成功")
+
+
+def _handle_question_image_upload(user_id: int):
+    file_storage = request.files.get("file") or request.files.get("image")
+    extension, message = _validate_image_file(file_storage, label="题目图片")
+    if not extension:
+        return error_response(message)
+
+    try:
+        saved = _save_image_file(
+            file_storage,
+            extension,
+            folder="user_bank_question_images",
+            filename_prefix=f"user_bank_question_{int(user_id)}",
+        )
+    except Exception as exc:
+        current_app.logger.error("个人题库题目图片上传失败: %s", exc, exc_info=True)
+        return error_response("上传失败，请稍后重试", 500)
+
+    return success_response(data=saved, message="题目图片上传成功")
 
 
 @user_bank_api_bp.route("/cover/upload", methods=["POST"])
@@ -149,3 +174,14 @@ def upload_existing_bank_cover(bank_id: int):
     if not _ensure_bank_owner(bank_id, user_id):
         return error_response("题库不存在或无权操作", 404)
     return _handle_bank_cover_upload(user_id)
+
+
+@user_bank_api_bp.route("/<int:bank_id>/question-images/upload", methods=["POST"])
+@auth_required
+@limiter.limit("20 per minute;400 per day")
+def upload_question_image(bank_id: int):
+    """上传个人题库题目图片，仅题库创建者可操作。"""
+    user_id = int(current_user_id() or 0)
+    if not _ensure_bank_owner(bank_id, user_id):
+        return error_response("题库不存在或无权操作", 404)
+    return _handle_question_image_upload(user_id)

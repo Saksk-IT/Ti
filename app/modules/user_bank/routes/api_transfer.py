@@ -9,6 +9,11 @@ from sqlalchemy import text
 
 from app.core.extensions import db
 from app.core.utils.decorators import auth_required, current_user_id
+from app.core.utils.image_helpers import (
+    normalize_question_image_groups,
+    normalize_upload_relative_path,
+    serialize_question_image_groups,
+)
 from app.core.utils.json_helpers import safe_load as _safe_load
 from app.core.utils.portable_question_format import (
     internal_question_to_portable,
@@ -781,6 +786,7 @@ def export_questions_package(bank_id):
             m = q._mapping
             qid = int(m['id'])
             tags = question_tags.get(str(qid), [])
+            exported_image_groups = {kind: [] for kind in ('content', 'answer', 'explanation')}
             q_data = {
                 'id': qid,
                 'type': m['type'] or '',
@@ -792,19 +798,21 @@ def export_questions_package(bank_id):
                 'difficulty': int(m['difficulty'] or 1),
             }
 
-            if m['image_path']:
-                image_filename = os.path.basename(m['image_path'])
-                full_path = os.path.join(upload_folder, m['image_path'].lstrip('/uploads/'))
-
-                if os.path.exists(full_path):
+            raw_image_groups = normalize_question_image_groups(m['image_path'])
+            for kind in ('content', 'answer', 'explanation'):
+                for rel_path in raw_image_groups[kind]:
+                    image_filename = os.path.basename(rel_path)
+                    full_path = os.path.join(upload_folder, normalize_upload_relative_path(rel_path))
+                    if not os.path.exists(full_path):
+                        continue
                     new_image_name = f"images/{image_count}_{image_filename}"
                     zf.write(full_path, new_image_name)
-                    q_data['images'] = [new_image_name]
+                    exported_image_groups[kind].append(new_image_name)
                     image_count += 1
-                else:
-                    q_data['images'] = []
-            else:
-                q_data['images'] = []
+
+            q_data['images'] = list(exported_image_groups['content'])
+            if any(exported_image_groups.values()):
+                q_data['image_groups'] = exported_image_groups
 
             questions_data.append(q_data)
 
@@ -893,7 +901,13 @@ def import_questions_package(bank_id):
                     difficulty = internal.get('difficulty') or 1
                     options = internal.get('options') or []
                     tags = internal.get('tags') or []
-                    images = q.get('images') or []
+                    raw_image_groups = q.get('image_groups')
+                    if raw_image_groups is None:
+                        raw_image_groups = {
+                            'content': q.get('images') or [],
+                            'answer': [],
+                            'explanation': [],
+                        }
                 else:
                     q_type = str(q.get('q_type', '')).strip()
                     content = str(q.get('content', '')).strip()
@@ -902,7 +916,13 @@ def import_questions_package(bank_id):
                     difficulty = q.get('difficulty', 1)
                     options = q.get('options', [])
                     tags = q.get('tags') or q.get('标签') or []
-                    images = q.get('images') or ([] if not q.get('image_path') else [q.get('image_path')])
+                    raw_image_groups = q.get('image_groups')
+                    if raw_image_groups is None:
+                        raw_image_groups = {
+                            'content': q.get('images') or ([] if not q.get('image_path') else [q.get('image_path')]),
+                            'answer': [],
+                            'explanation': [],
+                        }
 
                 if not q_type or not content:
                     errors.append(f'第{idx+1}题: 题型或题干为空')
@@ -921,20 +941,25 @@ def import_questions_package(bank_id):
                 )
                 tags_str = json.dumps(portable.get('tags') or [], ensure_ascii=False)
 
-                image_path = None
-                if images and isinstance(images, list) and images[0]:
-                    src_image = str(images[0])
-                    if src_image in zf.namelist():
-                        img_data = zf.read(src_image)
-                        ext = os.path.splitext(src_image)[1]
+                stored_image_groups = {kind: [] for kind in ('content', 'answer', 'explanation')}
+                parsed_image_groups = normalize_question_image_groups(raw_image_groups)
+                for kind in ('content', 'answer', 'explanation'):
+                    for src_image in parsed_image_groups[kind]:
+                        src_name = str(src_image or '').strip()
+                        if not src_name or src_name not in zf.namelist():
+                            continue
+                        img_data = zf.read(src_name)
+                        ext = os.path.splitext(src_name)[1]
                         new_filename = f"user_bank_{bank_id}_{uuid.uuid4().hex}{ext}"
-                        new_path = os.path.join(upload_folder, 'questions', new_filename)
+                        new_path = os.path.join(upload_folder, 'user_bank_question_images', new_filename)
                         os.makedirs(os.path.dirname(new_path), exist_ok=True)
 
                         with open(new_path, 'wb') as img_file:
                             img_file.write(img_data)
 
-                        image_path = f"/uploads/questions/{new_filename}"
+                        stored_image_groups[kind].append(f"user_bank_question_images/{new_filename}")
+
+                image_path = serialize_question_image_groups(stored_image_groups)
 
                 cursor = db.session.execute(text('''
                     INSERT INTO user_bank_questions

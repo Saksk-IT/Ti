@@ -6,6 +6,8 @@
      data-answer="{{ q.answer|e }}"
      data-id="{{ q.id }}"
      data-score="{{ q.score_val if q.score_val else 0 }}"
+     data-answer-images='{{ q.answer_image_paths_json|e }}'
+     data-explanation-images='{{ q.explanation_image_paths_json|e }}'
      data-index="{{ loop.index0 }}">
 
   {# ========== 传统布局（默认显示） ========== #}

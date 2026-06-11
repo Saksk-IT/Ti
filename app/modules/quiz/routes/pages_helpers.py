@@ -5,6 +5,7 @@ import math
 import random
 import re
 
+from app.core.utils.image_helpers import normalize_question_image_groups
 from app.core.utils.json_helpers import safe_json_load as _safe_json_load
 from app.core.utils.options_parser import parse_options
 from app.models.quiz import Favorite, Mistake
@@ -154,6 +155,15 @@ def _apply_pqf_legacy_fields(q: dict, *, scope: str) -> None:
     q["options"] = internal.get("options") or []
     q["answer"] = internal.get("answer") or ""
     q["explanation"] = internal.get("explanation") or ""
+    image_groups = normalize_question_image_groups(q.get("image_path"))
+    q["question_image_groups"] = image_groups
+    q["content_images"] = image_groups["content"]
+    q["answer_images"] = image_groups["answer"]
+    q["explanation_images"] = image_groups["explanation"]
+    q["image_path"] = image_groups["content"][0] if image_groups["content"] else ""
+    q["image_path_json"] = json.dumps(image_groups["content"], ensure_ascii=False)
+    q["answer_image_paths_json"] = json.dumps(image_groups["answer"], ensure_ascii=False)
+    q["explanation_image_paths_json"] = json.dumps(image_groups["explanation"], ensure_ascii=False)
 
 
 def _build_public_questions(rows, uid):
@@ -178,15 +188,6 @@ def _build_public_questions(rows, uid):
         _apply_pqf_legacy_fields(q, scope='question_center')
         q['is_fav'] = 1 if int(q.get('id') or 0) in fav_set else 0
         q['is_mistake'] = 1 if int(q.get('id') or 0) in mis_set else 0
-
-        image_path = q.get('image_path')
-        image_path_json = '[]'
-        if image_path and isinstance(image_path, str):
-            if image_path.strip().startswith('[') and image_path.strip().endswith(']'):
-                image_path_json = image_path
-            else:
-                image_path_json = json.dumps([image_path])
-        q['image_path_json'] = image_path_json
 
         if q.get('options'):
             try:
@@ -223,15 +224,6 @@ def _build_user_bank_questions(rows, uid, bank_id):
         _apply_pqf_legacy_fields(q, scope='user_bank')
         q['is_fav'] = 1 if int(q.get('id') or 0) in fav_set else 0
         q['is_mistake'] = 1 if int(q.get('id') or 0) in mis_set else 0
-
-        image_path = q.get('image_path')
-        image_path_json = '[]'
-        if image_path and isinstance(image_path, str):
-            if image_path.strip().startswith('[') and image_path.strip().endswith(']'):
-                image_path_json = image_path
-            else:
-                image_path_json = json.dumps([image_path])
-        q['image_path_json'] = image_path_json
 
         if q.get('options'):
             try:

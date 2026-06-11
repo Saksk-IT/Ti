@@ -9,6 +9,7 @@ from sqlalchemy import text
 
 from app.core.extensions import db
 from app.core.utils.decorators import auth_required, current_user_id
+from app.core.utils.image_helpers import serialize_question_image_groups
 from app.core.utils.api_response import success_response, error_response
 
 from .api_base import user_bank_api_bp, check_bank_access
@@ -60,6 +61,22 @@ def _column_exists(table: str, column: str) -> bool:
         result = False
     _SCHEMA_CACHE[key] = result
     return result
+
+
+def _pick_question_image_payload(data: dict) -> object:
+    if not isinstance(data, dict):
+        return None
+    if "image_groups" in data:
+        return data.get("image_groups")
+    if any(key in data for key in ("content_images", "answer_images", "explanation_images")):
+        return {
+            "content": data.get("content_images") or [],
+            "answer": data.get("answer_images") or [],
+            "explanation": data.get("explanation_images") or [],
+        }
+    if "image_path" in data:
+        return data.get("image_path")
+    return None
 
 
 @user_bank_api_bp.route('/<int:bank_id>/questions', methods=['GET'])
@@ -380,6 +397,7 @@ def add_question(bank_id):
     answer = _normalize_answer_for_storage(q_type, data.get('answer'))
     explanation = (data.get('explanation') or '').strip()
     difficulty = data.get('difficulty', 1)
+    image_path = serialize_question_image_groups(_pick_question_image_payload(data))
 
     if not content:
         return error_response('题干不能为空')
@@ -400,8 +418,8 @@ def add_question(bank_id):
     result = db.session.execute(
         text('''
         INSERT INTO user_bank_questions
-        (bank_id, user_id, type, content, options, answer, analysis, tags, difficulty, source_type, sort_order)
-        VALUES (:bid, :uid, :typ, :content, :options, :answer, :analysis, :tags, :difficulty, 'custom',
+        (bank_id, user_id, type, content, options, answer, analysis, tags, difficulty, image_path, source_type, sort_order)
+        VALUES (:bid, :uid, :typ, :content, :options, :answer, :analysis, :tags, :difficulty, :image_path, 'custom',
                 (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM user_bank_questions WHERE bank_id = :bid2))
         RETURNING id
         '''),
@@ -415,6 +433,7 @@ def add_question(bank_id):
             'analysis': pqf['analysis'] or '',
             'tags': pqf['tags'] or '[]',
             'difficulty': int(pqf.get('difficulty') or 1),
+            'image_path': image_path,
             'bid2': bank_id,
         },
     )
@@ -498,7 +517,7 @@ def update_question(bank_id, question_id):
 
     # 检查题目
     question = db.session.execute(
-        text('SELECT id, source_type, type, content, options, answer, analysis, difficulty FROM user_bank_questions WHERE id = :qid AND bank_id = :bid'),
+        text('SELECT id, source_type, type, content, options, answer, analysis, difficulty, image_path FROM user_bank_questions WHERE id = :qid AND bank_id = :bid'),
         {'qid': question_id, 'bid': bank_id}
     ).fetchone()
 
@@ -521,6 +540,10 @@ def update_question(bank_id, question_id):
     next_answer_raw = data.get('answer') if 'answer' in data else (current.get('answer') or '')
     next_explanation = str(data.get('explanation') if 'explanation' in data else current.get('explanation') or '').strip()
     next_difficulty = data.get('difficulty') if 'difficulty' in data else (current.get('difficulty') or 1)
+    image_payload = _pick_question_image_payload(data)
+    next_image_path = question._mapping.get('image_path')
+    if image_payload is not None:
+        next_image_path = serialize_question_image_groups(image_payload)
 
     if not next_content:
         return error_response('题干不能为空')
@@ -552,6 +575,7 @@ def update_question(bank_id, question_id):
             analysis = :analysis,
             tags = :tags,
             difficulty = :difficulty,
+            image_path = :image_path,
             updated_at = CURRENT_TIMESTAMP
         WHERE id = :qid AND bank_id = :bid
         '''),
@@ -563,6 +587,7 @@ def update_question(bank_id, question_id):
             'analysis': pqf['analysis'] or '',
             'tags': pqf['tags'] or '[]',
             'difficulty': int(pqf.get('difficulty') or 1),
+            'image_path': next_image_path,
             'qid': int(question_id),
             'bid': int(bank_id),
         },

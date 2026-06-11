@@ -2,13 +2,13 @@
 """导出题目查询（scope/type/tag 筛选）"""
 from __future__ import annotations
 
-import json
 import logging
 from typing import Any
 
 from sqlalchemy import text
 
 from app.core.extensions import db
+from app.core.utils.image_helpers import flatten_question_image_paths
 from app.core.utils.json_helpers import safe_load as _safe_load
 from app.core.utils.portable_question_format import any_type_to_portable_type
 
@@ -21,18 +21,7 @@ MAX_EXPORT_QUESTIONS = None  # 不限制导出数量
 
 def _parse_image_paths(raw: Any) -> list[str]:
     """将 image_path 字段解析为相对路径列表。"""
-    if not raw:
-        return []
-    s = str(raw).strip()
-    if not s or s == "[]":
-        return []
-    if s.startswith("["):
-        try:
-            paths = json.loads(s)
-            return [p for p in paths if p and isinstance(p, str)]
-        except Exception:
-            return []
-    return [s]
+    return flatten_question_image_paths(raw)
 
 
 def fetch_export_questions(req: ExportRequest) -> list[dict[str, Any]]:

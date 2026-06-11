@@ -833,14 +833,6 @@ def quiz_page():
     for row in rows:
         q = dict(row) if not isinstance(row, dict) else row
         _apply_pqf_legacy_fields(q, scope=pqf_scope)
-        image_path = q.get('image_path')
-        image_path_json = '[]'
-        if image_path and isinstance(image_path, str):
-            if image_path.strip().startswith('[') and image_path.strip().endswith(']'):
-                image_path_json = image_path
-            else:
-                image_path_json = json.dumps([image_path])
-        q['image_path_json'] = image_path_json
 
         if q.get('options'):
             try:
