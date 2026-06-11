@@ -213,6 +213,55 @@ def test_my_created_bank_list_includes_cover_image(app, seed_user):
             db.session.commit()
 
 
+def test_public_bank_lists_prefer_uploaded_cover_over_stale_metrics(app, seed_user):
+    """题库广场列表应优先使用源表上传封面，而不是读模型里的旧空封面。"""
+    suffix = uuid.uuid4().hex[:8]
+    bank_name = f"广场上传封面题库-{suffix}"
+    cover_image = f"/uploads/bank_covers/plaza_uploaded_{suffix}.png"
+    bank_id = None
+    client = _build_admin_client(app, seed_user)
+
+    try:
+        with app.app_context():
+            bank_id = db.session.execute(
+                text(
+                    """
+                    INSERT INTO user_question_banks (
+                        user_id, name, description, cover_image, is_public, public_at, status, question_count
+                    )
+                    VALUES (:user_id, :name, 'stale cover fixture', NULL, true, CURRENT_TIMESTAMP, 1, 7)
+                    RETURNING id
+                    """
+                ),
+                {"user_id": int(seed_user["id"]), "name": bank_name},
+            ).scalar_one()
+            db.session.commit()
+            ensure_plaza_metrics(force=True)
+            db.session.execute(
+                text("UPDATE user_question_banks SET cover_image = :cover_image WHERE id = :bank_id"),
+                {"cover_image": cover_image, "bank_id": int(bank_id)},
+            )
+            db.session.commit()
+
+        plaza_resp = client.get(f"/api/public/banks/list?keyword={bank_name}&per_page=5")
+        assert plaza_resp.status_code == 200
+        plaza_items = plaza_resp.get_json()["data"]["items"]
+        plaza_item = next(item for item in plaza_items if item["source_type"] == "user_public" and item["id"] == bank_id)
+        assert plaza_item["cover_image"] == cover_image
+
+        legacy_resp = client.get(f"/api/public/banks?type=user&keyword={bank_name}&per_page=5")
+        assert legacy_resp.status_code == 200
+        legacy_items = legacy_resp.get_json()["data"]["banks"]
+        legacy_item = next(item for item in legacy_items if item["id"] == bank_id and item["bank_type"] == "user")
+        assert legacy_item["cover_image"] == cover_image
+    finally:
+        with app.app_context():
+            if bank_id is not None:
+                db.session.execute(text("DELETE FROM public_bank_plaza_metrics WHERE source_type = 'user_public' AND source_id = :bank_id"), {"bank_id": int(bank_id)})
+                db.session.execute(text("DELETE FROM user_question_banks WHERE id = :bank_id"), {"bank_id": int(bank_id)})
+            db.session.commit()
+
+
 def test_public_bank_legacy_list_and_card_include_cover_join_relation(app, seed_user):
     """小程序题库广场依赖的兼容列表与名片接口应返回封面、加入方式和关系。"""
     suffix = uuid.uuid4().hex[:8]

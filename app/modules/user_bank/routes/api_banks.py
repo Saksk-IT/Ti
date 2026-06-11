@@ -2,7 +2,7 @@
 
 """用户题库：题库管理 API"""
 
-from flask import request, jsonify
+from flask import current_app, request, jsonify
 from sqlalchemy import text
 
 from app.core.extensions import db
@@ -10,7 +10,19 @@ from app.core.utils.decorators import auth_required, current_user_id
 from app.core.utils.api_response import success_response, error_response
 
 from .api_base import user_bank_api_bp, check_bank_access
+from app.modules.user_bank.services.plaza_metrics_service import ensure_plaza_metrics
 from app.modules.user_bank.services.plaza_query_service import list_my_bank_collections
+
+
+PLAZA_BANK_FIELDS = {'name', 'description', 'public_description', 'cover_image', 'join_mode', 'join_note'}
+
+
+def _refresh_public_bank_plaza_metrics() -> None:
+    """刷新公开题库广场读模型，避免公开卡片继续显示旧封面/旧信息。"""
+    try:
+        ensure_plaza_metrics(force=True)
+    except Exception:
+        current_app.logger.warning('刷新题库广场读模型失败', exc_info=True)
 
 
 @user_bank_api_bp.route('/overview', methods=['GET'])
@@ -175,6 +187,8 @@ def create_bank():
     )
     new_id = result.fetchone()[0]
     db.session.commit()
+    if is_public:
+        _refresh_public_bank_plaza_metrics()
 
     return success_response(data={
         'id': new_id,
@@ -193,12 +207,14 @@ def update_bank(bank_id):
 
     # 检查权限
     bank = db.session.execute(
-        text('SELECT id FROM user_question_banks WHERE id = :bid AND user_id = :uid AND status = 1'),
+        text('SELECT id, is_public FROM user_question_banks WHERE id = :bid AND user_id = :uid AND status = 1'),
         {'bid': bank_id, 'uid': user_id}
     ).fetchone()
 
     if not bank:
         return error_response('题库不存在或无权操作', 404)
+    was_public = bool(bank._mapping.get('is_public'))
+    should_refresh_plaza = was_public and any(field in data for field in PLAZA_BANK_FIELDS)
 
     updates = []
     params: dict = {}
@@ -268,6 +284,8 @@ def update_bank(bank_id):
         params
     )
     db.session.commit()
+    if should_refresh_plaza:
+        _refresh_public_bank_plaza_metrics()
 
     return success_response(message='更新成功')
 
@@ -279,7 +297,7 @@ def delete_bank(bank_id):
     user_id = current_user_id()
 
     bank = db.session.execute(
-        text('SELECT id FROM user_question_banks WHERE id = :bid AND user_id = :uid AND status = 1'),
+        text('SELECT id, is_public FROM user_question_banks WHERE id = :bid AND user_id = :uid AND status = 1'),
         {'bid': bank_id, 'uid': user_id}
     ).fetchone()
 
@@ -292,6 +310,8 @@ def delete_bank(bank_id):
         {'bid': bank_id}
     )
     db.session.commit()
+    if bool(bank._mapping.get('is_public')):
+        _refresh_public_bank_plaza_metrics()
 
     return success_response(message='删除成功')
 
@@ -337,5 +357,6 @@ def set_bank_public(bank_id):
         message = '题库已设为私密'
 
     db.session.commit()
+    _refresh_public_bank_plaza_metrics()
 
     return success_response(message=message)

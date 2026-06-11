@@ -51,7 +51,7 @@ def list_public_banks(
             m.source_id,
             m.name,
             m.description,
-            m.cover_image,
+            COALESCE(NULLIF(owner_bank.cover_image, ''), m.cover_image) AS cover_image,
             m.owner_label,
             owner_user.avatar AS owner_avatar,
             m.question_count_total,
