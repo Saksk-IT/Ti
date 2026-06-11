@@ -314,9 +314,10 @@ chmod 700 backups
 
 docker pull ghcr.io/saksk-it/ti:latest
 docker compose --env-file .env.production -f compose.prod.yml pull
+docker compose --env-file .env.production -f compose.prod.yml up -d postgres redis
+docker compose --env-file .env.production -f compose.prod.yml run --rm --no-deps web flask db upgrade
+docker compose --env-file .env.production -f compose.prod.yml run --rm --no-deps web flask ensure-default-admin
 docker compose --env-file .env.production -f compose.prod.yml up -d --remove-orphans
-docker compose --env-file .env.production -f compose.prod.yml exec -T web flask db upgrade
-docker compose --env-file .env.production -f compose.prod.yml exec -T web flask ensure-default-admin
 
 docker compose --env-file .env.production -f compose.prod.yml ps
 curl -fsS http://127.0.0.1:8080/api/ping | python3 -m json.tool

@@ -449,12 +449,87 @@ login_registry_if_needed() {
   printf '%s' "$GHCR_TOKEN" | $SUDO docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
 }
 
+print_service_health_log() {
+  local service_name="$1"
+  local container_id
+  container_id="$("${COMPOSE[@]}" ps -q "$service_name" 2>/dev/null || true)"
+
+  if [[ -z "$container_id" ]]; then
+    return
+  fi
+
+  printf '\n--- %s container state ---\n' "$service_name" >&2
+  $SUDO docker inspect "$container_id" \
+    --format 'name={{.Name}} status={{.State.Status}} running={{.State.Running}} exit={{.State.ExitCode}} health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}} oom={{.State.OOMKilled}} error={{.State.Error}}' \
+    >&2 || true
+
+  printf '\n--- %s healthcheck log ---\n' "$service_name" >&2
+  $SUDO docker inspect "$container_id" \
+    --format '{{if .State.Health}}{{range .State.Health.Log}}{{println .End "exit=" .ExitCode .Output}}{{end}}{{else}}no healthcheck{{end}}' \
+    >&2 || true
+}
+
+print_deploy_diagnostics() {
+  log "采集部署失败诊断信息"
+
+  "${COMPOSE[@]}" ps >&2 || true
+
+  print_service_health_log web
+  print_service_health_log nginx
+  print_service_health_log postgres
+  print_service_health_log redis
+
+  printf '\n--- web logs ---\n' >&2
+  "${COMPOSE[@]}" logs --tail=200 web >&2 || true
+
+  printf '\n--- web app.log ---\n' >&2
+  "${COMPOSE[@]}" exec -T web sh -c 'test -f /data/logs/app.log && tail -200 /data/logs/app.log || true' >&2 || true
+
+  printf '\n--- nginx logs ---\n' >&2
+  "${COMPOSE[@]}" logs --tail=120 nginx >&2 || true
+
+  printf '\n--- redis logs ---\n' >&2
+  "${COMPOSE[@]}" logs --tail=80 redis >&2 || true
+}
+
+run_web_flask() {
+  "${COMPOSE[@]}" run --rm --no-deps web flask "$@"
+}
+
+wait_for_service_healthy() {
+  local service_name="$1"
+  local timeout_seconds="${2:-90}"
+  local start_ts now_ts container_id health_status state_status
+
+  start_ts="$(date +%s)"
+  while true; do
+    container_id="$("${COMPOSE[@]}" ps -q "$service_name" 2>/dev/null || true)"
+    if [[ -n "$container_id" ]]; then
+      health_status="$($SUDO docker inspect "$container_id" --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' 2>/dev/null || true)"
+      state_status="$($SUDO docker inspect "$container_id" --format '{{.State.Status}}' 2>/dev/null || true)"
+      if [[ "$health_status" == "healthy" ]]; then
+        return
+      fi
+      if [[ "$state_status" == "running" && "$health_status" == "running" ]]; then
+        return
+      fi
+    fi
+
+    now_ts="$(date +%s)"
+    if (( now_ts - start_ts >= timeout_seconds )); then
+      print_service_health_log "$service_name"
+      fail "${service_name} 未在 ${timeout_seconds}s 内变为 healthy"
+    fi
+    sleep 2
+  done
+}
+
 assert_web_cli_command() {
   local command_name="$1"
   local help_err
   help_err="$(mktemp)"
 
-  if "${COMPOSE[@]}" exec -T web flask --help 2>"$help_err" | grep -Eq "^[[:space:]]+${command_name}([[:space:]]|$)"; then
+  if run_web_flask --help 2>"$help_err" | grep -Eq "^[[:space:]]+${command_name}([[:space:]]|$)"; then
     rm -f "$help_err"
     return
   fi
@@ -490,12 +565,20 @@ deploy_stack() {
   log "拉取 Compose 服务镜像"
   "${COMPOSE[@]}" pull
 
-  log "启动 ${DEPLOY_ENV} 容器"
-  "${COMPOSE[@]}" up -d --remove-orphans
+  log "启动基础依赖容器"
+  if ! "${COMPOSE[@]}" up -d postgres redis; then
+    print_deploy_diagnostics
+    fail "基础依赖容器启动失败"
+  fi
+  wait_for_service_healthy postgres 120
+  wait_for_service_healthy redis 60
 
   if [[ "$RUN_MIGRATIONS" == "1" ]]; then
     log "执行数据库迁移"
-    "${COMPOSE[@]}" exec -T web flask db upgrade
+    if ! run_web_flask db upgrade; then
+      print_deploy_diagnostics
+      fail "数据库迁移失败"
+    fi
   else
     log "已设置 RUN_MIGRATIONS=0，跳过数据库迁移"
   fi
@@ -503,9 +586,18 @@ deploy_stack() {
   if [[ "$ENSURE_DEFAULT_ADMIN" == "1" ]]; then
     log "确保默认管理员账号"
     assert_web_cli_command "ensure-default-admin"
-    "${COMPOSE[@]}" exec -T web flask ensure-default-admin
+    if ! run_web_flask ensure-default-admin; then
+      print_deploy_diagnostics
+      fail "默认管理员初始化失败"
+    fi
   else
     log "已设置 ENSURE_DEFAULT_ADMIN=0，跳过默认管理员初始化"
+  fi
+
+  log "启动 ${DEPLOY_ENV} 容器"
+  if ! "${COMPOSE[@]}" up -d --remove-orphans; then
+    print_deploy_diagnostics
+    fail "${DEPLOY_ENV} 容器启动失败"
   fi
 }
 
