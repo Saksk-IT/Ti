@@ -170,3 +170,44 @@ def test_public_and_my_bank_lists_include_owner_avatar(app, seed_user):
             if owner_id is not None:
                 db.session.execute(text("DELETE FROM users WHERE id = :owner_id"), {"owner_id": int(owner_id)})
             db.session.commit()
+
+
+def test_my_created_bank_list_includes_cover_image(app, seed_user):
+    """我的题库里“我创建的题库”列表应返回题库封面。"""
+    suffix = uuid.uuid4().hex[:8]
+    bank_name = f"封面列表题库-{suffix}"
+    cover_image = f"/uploads/bank_covers/bank_cover_{suffix}.png"
+    bank_id = None
+    client = _build_admin_client(app, seed_user)
+
+    try:
+        with app.app_context():
+            bank_id = db.session.execute(
+                text(
+                    """
+                    INSERT INTO user_question_banks (
+                        user_id, name, description, cover_image, is_public, status, question_count
+                    )
+                    VALUES (:user_id, :name, 'cover fixture', :cover_image, true, 1, 5)
+                    RETURNING id
+                    """
+                ),
+                {
+                    "user_id": int(seed_user["id"]),
+                    "name": bank_name,
+                    "cover_image": cover_image,
+                },
+            ).scalar_one()
+            db.session.commit()
+
+        my_resp = client.get(f"/user/banks/api/overview?scope=created&keyword={bank_name}&per_page=5")
+        assert my_resp.status_code == 200
+        my_items = my_resp.get_json()["data"]["items"]
+        my_item = next(item for item in my_items if item["id"] == bank_id and item["kind"] == "created")
+        assert my_item["cover_image"] == cover_image
+    finally:
+        with app.app_context():
+            if bank_id is not None:
+                db.session.execute(text("DELETE FROM public_bank_plaza_metrics WHERE source_type = 'user_public' AND source_id = :bank_id"), {"bank_id": int(bank_id)})
+                db.session.execute(text("DELETE FROM user_question_banks WHERE id = :bank_id"), {"bank_id": int(bank_id)})
+            db.session.commit()
