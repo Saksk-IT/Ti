@@ -21,6 +21,28 @@ import {
 
 // 数据源实例（页面级别）
 let quizSource: IQuizSource | null = null;
+
+function buildQuestionImageFields(q: any) {
+  const contentUrls = uniqUrls([
+    ...normalizeImageUrls(q?.image_path),
+    ...normalizeImageUrls(q?.content_images),
+    ...extractInlineImageUrls(q?.content)
+  ]);
+  const answerUrls = uniqUrls([
+    ...normalizeImageUrls(q?.answer_images)
+  ]);
+  const explanationUrls = uniqUrls([
+    ...normalizeImageUrls(q?.explanation_images)
+  ]);
+
+  return {
+    image_urls: contentUrls,
+    answer_image_urls: answerUrls,
+    explanation_image_urls: explanationUrls,
+    image_path: contentUrls.length > 0 ? contentUrls[0] : ''
+  };
+}
+
 Page({
   behaviors: [requestStateBehavior],
   data: {
@@ -638,12 +660,7 @@ Page({
       // 统一 options 结构，避免不同历史数据格式导致前端无法渲染
       questions = questions.map((q: any) => {
         const normalizedOptions = this.normalizeOptions(q.options, q.q_type, q.answer);
-        const imageUrls = uniqUrls([
-          ...normalizeImageUrls(q.image_path),
-          ...extractInlineImageUrls(q.content)
-        ]);
-        const imagePath = imageUrls.length > 0 ? imageUrls[0] : '';
-        return Object.assign({}, q, { options: normalizedOptions, image_urls: imageUrls, image_path: imagePath });
+        return Object.assign({}, q, { options: normalizedOptions }, buildQuestionImageFields(q));
       });
       
       // 为每个题目生成预览内容
@@ -780,15 +797,10 @@ Page({
 
       const newQuestions = (result.questions || []).map((q: any) => {
         const normalizedOptions = this.normalizeOptions(q.options, q.q_type, q.answer);
-        const imageUrls = uniqUrls([
-          ...normalizeImageUrls(q.image_path),
-          ...extractInlineImageUrls(q.content)
-        ]);
-        const imagePath = imageUrls.length > 0 ? imageUrls[0] : '';
         const content = q.content || '';
         const textContent = content.replace(/<[^>]+>/g, '');
         const preview = textContent.length > 40 ? textContent.substring(0, 40) + '...' : textContent;
-        return Object.assign({}, q, { options: normalizedOptions, image_urls: imageUrls, image_path: imagePath, contentPreview: preview });
+        return Object.assign({}, q, { options: normalizedOptions, contentPreview: preview }, buildQuestionImageFields(q));
       });
 
       if (newQuestions.length > 0) {
@@ -1629,17 +1641,20 @@ Page({
 
   onQuestionImageError(e: any) {
     const idx = Number((e && e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.index) || -1);
-    const q = this.data.currentQuestion;
-    const urls = (q && q.image_urls) || [];
+    const field = String((e && e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.field) || 'image_urls');
+    if (!['image_urls', 'answer_image_urls', 'explanation_image_urls'].includes(field)) return;
+
+    const q: any = this.data.currentQuestion;
+    const urls = (q && q[field]) || [];
     if (!Array.isArray(urls) || urls.length === 0) return;
     if (!Number.isFinite(idx) || idx < 0 || idx >= urls.length) return;
 
     const url = String(urls[idx] || '').trim();
     if (!url || !/^https?:\/\//i.test(url)) return;
 
-    const self = this;
+    const self = this as any;
     self.__imgDlTried = self.__imgDlTried || {};
-    const key = `${q && q.id ? q.id : 'q'}_${idx}_${url}`;
+    const key = `${q && q.id ? q.id : 'q'}_${field}_${idx}_${url}`;
     if (self.__imgDlTried[key]) return;
     self.__imgDlTried[key] = true;
 
@@ -1652,17 +1667,17 @@ Page({
 
         const nextUrls = urls.slice();
         nextUrls[idx] = tempFilePath;
-        const nextQuestion = Object.assign({}, q, { image_urls: nextUrls });
+        const nextQuestion = Object.assign({}, q, { [field]: nextUrls });
 
         const currentIndex = Number(this.data.currentIndex || 0);
         const nextQuestions = Array.isArray(this.data.questions) ? this.data.questions.slice() : [];
         if (currentIndex >= 0 && currentIndex < nextQuestions.length) {
-          nextQuestions[currentIndex] = Object.assign({}, nextQuestions[currentIndex], { image_urls: nextUrls });
+          nextQuestions[currentIndex] = Object.assign({}, nextQuestions[currentIndex], { [field]: nextUrls });
         }
 
         this.setData({ currentQuestion: nextQuestion, questions: nextQuestions });
       },
-      fail: (err) => {
+      fail: () => {
         // ignore
       }
     });
@@ -1671,7 +1686,10 @@ Page({
   // 预览图片
   previewImage(e: any) {
     const idx = Number(e.currentTarget.dataset.index || 0);
-    const urls = (this.data.currentQuestion && this.data.currentQuestion.image_urls) || [];
+    const field = String((e.currentTarget.dataset && e.currentTarget.dataset.field) || 'image_urls');
+    if (!['image_urls', 'answer_image_urls', 'explanation_image_urls'].includes(field)) return;
+    const currentQuestion: any = this.data.currentQuestion;
+    const urls = (currentQuestion && currentQuestion[field]) || [];
     if (!Array.isArray(urls) || urls.length === 0) return;
     const current = urls[Math.max(0, Math.min(idx, urls.length - 1))] || urls[0];
     wx.previewImage({ urls, current });

@@ -62,6 +62,7 @@
                 bindtap="previewImage"
                 binderror="onQuestionImageError"
                 data-index="{{index}}"
+                data-field="image_urls"
               ></image>
             </view>
           </view>
@@ -157,6 +158,19 @@
             </view>
           </view>
           <view class="answer-divider"></view>
+          <view class="answer-images" wx:if="{{currentQuestion.answer_image_urls && currentQuestion.answer_image_urls.length}}">
+            <image
+              class="answer-image"
+              wx:for="{{currentQuestion.answer_image_urls}}"
+              wx:key="*this"
+              src="{{item}}"
+              mode="widthFix"
+              bindtap="previewImage"
+              binderror="onQuestionImageError"
+              data-index="{{index}}"
+              data-field="answer_image_urls"
+            ></image>
+          </view>
           <text
             class="answer-tip"
             wx:if="{{currentQuestion.q_type === '选择题' || currentQuestion.q_type === '多选题' || currentQuestion.q_type === '判断题'}}"
@@ -179,6 +193,19 @@
           <view class="correct-answer {{(currentQuestion.q_type === '简答题' || currentQuestion.q_type === '计算题' || currentQuestion.q_type === '论述题' || currentQuestion.q_type === '问答题') ? 'multiline' : ''}}">
             <text class="answer-label">正确答案：</text>
             <text class="answer-value">{{currentQuestion.displayAnswer || currentQuestion.answer}}</text>
+          </view>
+          <view class="answer-images" wx:if="{{currentQuestion.answer_image_urls && currentQuestion.answer_image_urls.length}}">
+            <image
+              class="answer-image"
+              wx:for="{{currentQuestion.answer_image_urls}}"
+              wx:key="*this"
+              src="{{item}}"
+              mode="widthFix"
+              bindtap="previewImage"
+              binderror="onQuestionImageError"
+              data-index="{{index}}"
+              data-field="answer_image_urls"
+            ></image>
           </view>
           <view class="user-answer {{(currentQuestion.q_type === '简答题' || currentQuestion.q_type === '计算题' || currentQuestion.q_type === '论述题' || currentQuestion.q_type === '问答题') ? 'multiline' : ''}}" wx:if="{{!isJudgable || !isCorrect}}">
             <text class="answer-label">你的答案：</text>
@@ -207,9 +234,22 @@
         </view>
 
         <!-- 解析 -->
-        <view class="explanation-card" wx:if="{{(mode === 'memo' || showAnswer) && currentQuestion.explanation}}">
+        <view class="explanation-card" wx:if="{{(mode === 'memo' || showAnswer) && (currentQuestion.explanation || (currentQuestion.explanation_image_urls && currentQuestion.explanation_image_urls.length))}}">
           <view class="explanation-title">解析：</view>
-          <text class="explanation-text {{currentQuestion.explanationIsCode ? 'mono' : ''}}">{{currentQuestion.displayExplanation || currentQuestion.explanation}}</text>
+          <text wx:if="{{currentQuestion.explanation}}" class="explanation-text {{currentQuestion.explanationIsCode ? 'mono' : ''}}">{{currentQuestion.displayExplanation || currentQuestion.explanation}}</text>
+          <view class="explanation-images" wx:if="{{currentQuestion.explanation_image_urls && currentQuestion.explanation_image_urls.length}}">
+            <image
+              class="explanation-image"
+              wx:for="{{currentQuestion.explanation_image_urls}}"
+              wx:key="*this"
+              src="{{item}}"
+              mode="widthFix"
+              bindtap="previewImage"
+              binderror="onQuestionImageError"
+              data-index="{{index}}"
+              data-field="explanation_image_urls"
+            ></image>
+          </view>
         </view>
 
         <!-- AI 解析（内联卡片：放在解析卡片下方） -->

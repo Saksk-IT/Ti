@@ -68,6 +68,17 @@ var set_data_batcher_1 = require("../../utils/set-data-batcher");
 var quiz_helpers_1 = require("./modules/quiz-helpers");
 // 数据源实例（页面级别）
 var quizSource = null;
+function buildQuestionImageFields(q) {
+    var contentUrls = (0, quiz_helpers_1.uniqUrls)(__spreadArray(__spreadArray(__spreadArray([], (0, api_1.normalizeImageUrls)(q === null || q === void 0 ? void 0 : q.image_path), true), (0, api_1.normalizeImageUrls)(q === null || q === void 0 ? void 0 : q.content_images), true), (0, quiz_helpers_1.extractInlineImageUrls)(q === null || q === void 0 ? void 0 : q.content), true));
+    var answerUrls = (0, quiz_helpers_1.uniqUrls)(__spreadArray([], (0, api_1.normalizeImageUrls)(q === null || q === void 0 ? void 0 : q.answer_images), true));
+    var explanationUrls = (0, quiz_helpers_1.uniqUrls)(__spreadArray([], (0, api_1.normalizeImageUrls)(q === null || q === void 0 ? void 0 : q.explanation_images), true));
+    return {
+        image_urls: contentUrls,
+        answer_image_urls: answerUrls,
+        explanation_image_urls: explanationUrls,
+        image_path: contentUrls.length > 0 ? contentUrls[0] : ''
+    };
+}
 Page({
     behaviors: [request_state_1.requestStateBehavior],
     data: {
@@ -594,9 +605,7 @@ Page({
                         // 统一 options 结构，避免不同历史数据格式导致前端无法渲染
                         questions = questions.map(function (q) {
                             var normalizedOptions = _this.normalizeOptions(q.options, q.q_type, q.answer);
-                            var imageUrls = (0, quiz_helpers_1.uniqUrls)(__spreadArray(__spreadArray([], (0, api_1.normalizeImageUrls)(q.image_path), true), (0, quiz_helpers_1.extractInlineImageUrls)(q.content), true));
-                            var imagePath = imageUrls.length > 0 ? imageUrls[0] : '';
-                            return Object.assign({}, q, { options: normalizedOptions, image_urls: imageUrls, image_path: imagePath });
+                            return Object.assign({}, q, { options: normalizedOptions }, buildQuestionImageFields(q));
                         });
                         questionsWithPreview = questions.map(function (q) {
                             var content = q.content || '';
@@ -1284,8 +1293,11 @@ Page({
     onQuestionImageError: function (e) {
         var _this = this;
         var idx = Number((e && e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.index) || -1);
+        var field = String((e && e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.field) || 'image_urls');
+        if (['image_urls', 'answer_image_urls', 'explanation_image_urls'].indexOf(field) === -1)
+            return;
         var q = this.data.currentQuestion;
-        var urls = (q && q.image_urls) || [];
+        var urls = (q && q[field]) || [];
         if (!Array.isArray(urls) || urls.length === 0)
             return;
         if (!Number.isFinite(idx) || idx < 0 || idx >= urls.length)
@@ -1295,7 +1307,7 @@ Page({
             return;
         var self = this;
         self.__imgDlTried = self.__imgDlTried || {};
-        var key = "".concat(q && q.id ? q.id : 'q', "_").concat(idx, "_").concat(url);
+        var key = "".concat(q && q.id ? q.id : 'q', "_").concat(field, "_").concat(idx, "_").concat(url);
         if (self.__imgDlTried[key])
             return;
         self.__imgDlTried[key] = true;
@@ -1308,15 +1320,17 @@ Page({
                     return;
                 var nextUrls = urls.slice();
                 nextUrls[idx] = tempFilePath;
-                var nextQuestion = Object.assign({}, q, { image_urls: nextUrls });
+                var nextImagePatch = {};
+                nextImagePatch[field] = nextUrls;
+                var nextQuestion = Object.assign({}, q, nextImagePatch);
                 var currentIndex = Number(_this.data.currentIndex || 0);
                 var nextQuestions = Array.isArray(_this.data.questions) ? _this.data.questions.slice() : [];
                 if (currentIndex >= 0 && currentIndex < nextQuestions.length) {
-                    nextQuestions[currentIndex] = Object.assign({}, nextQuestions[currentIndex], { image_urls: nextUrls });
+                    nextQuestions[currentIndex] = Object.assign({}, nextQuestions[currentIndex], nextImagePatch);
                 }
                 _this.setData({ currentQuestion: nextQuestion, questions: nextQuestions });
             },
-            fail: function (err) {
+            fail: function () {
                 // ignore
             }
         });
@@ -1324,7 +1338,10 @@ Page({
     // 预览图片
     previewImage: function (e) {
         var idx = Number(e.currentTarget.dataset.index || 0);
-        var urls = (this.data.currentQuestion && this.data.currentQuestion.image_urls) || [];
+        var field = String((e.currentTarget.dataset && e.currentTarget.dataset.field) || 'image_urls');
+        if (['image_urls', 'answer_image_urls', 'explanation_image_urls'].indexOf(field) === -1)
+            return;
+        var urls = (this.data.currentQuestion && this.data.currentQuestion[field]) || [];
         if (!Array.isArray(urls) || urls.length === 0)
             return;
         var current = urls[Math.max(0, Math.min(idx, urls.length - 1))] || urls[0];

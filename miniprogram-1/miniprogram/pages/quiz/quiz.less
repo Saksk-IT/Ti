@@ -235,6 +235,14 @@ page {
   gap: 16rpx;
 }
 
+.answer-images,
+.explanation-images {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+
 .question-text {
   font-size: calc(32rpx * var(--quiz-font-scale, 1));
   color: var(--app-text);
@@ -256,6 +264,14 @@ page {
   min-height: 200rpx;
   border-radius: 12rpx;
   margin-top: 0;
+  background: var(--app-fill);
+}
+
+.answer-image,
+.explanation-image {
+  width: 100%;
+  min-height: 180rpx;
+  border-radius: 12rpx;
   background: var(--app-fill);
 }
 
@@ -490,6 +506,11 @@ page {
   margin: 24rpx 0;
 }
 
+.answer-divider + .answer-images {
+  margin-top: 0;
+  margin-bottom: 18rpx;
+}
+
 /* 答案结果卡片（刷题模式） */
 .answer-result-card {
   background: var(--app-surface-solid);
@@ -597,6 +618,10 @@ page {
 .explanation-text.mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   white-space: pre-wrap;
+}
+
+.explanation-text + .explanation-images {
+  margin-top: 18rpx;
 }
 
 /* 提交按钮 */
@@ -1560,5 +1585,4 @@ page {
 .edit-save-btn::after {
   border: none;
 }
-
 
