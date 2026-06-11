@@ -2,44 +2,119 @@
 <view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}} bank-join-page">
   <view class="bank-join-container">
     <view class="card">
-      <view class="head">
-        <text class="title">{{mode === 'token' ? (loading ? '正在加入题库…' : (errorMsg ? '加入失败' : '加入题库')) : '输入分享码加入'}}</text>
-        <text class="sub" wx:if="{{mode === 'token' && !errorMsg}}">打开分享将自动加入，无需确认。</text>
-        <text class="sub" wx:if="{{errorMsg}}">{{errorMsg}}</text>
-      </view>
-
-      <view class="form" wx:if="{{mode !== 'token'}}">
-        <text class="label">分享码</text>
-        <input
-          class="input"
-          placeholder="如: ABC123"
-          maxlength="6"
-          value="{{shareCode}}"
-          bindinput="onShareCodeInput"
-        />
-        <text class="hint">可在「题库 → 个人题库 → 分享管理」生成分享码。</text>
-      </view>
-
-      <view class="actions">
-        <view class="btn btn-primary" wx:if="{{mode !== 'token'}}" bindtap="onJoinByCodeTap">
-          <text>加入</text>
+      <block wx:if="{{mode === 'public'}}">
+        <view class="public-loading" wx:if="{{loading}}">
+          <text>正在加载题库名片...</text>
         </view>
-        <view class="btn btn-primary" wx:if="{{mode === 'token' && errorMsg}}" bindtap="onRetry">
-          <text>重试</text>
-        </view>
-        <view class="btn" bindtap="onCancel">
-          <text>返回首页</text>
-        </view>
-      </view>
 
-      <view class="loading" wx:if="{{loading}}">
-        <text>处理中...</text>
-      </view>
+        <view class="public-error" wx:elif="{{errorMsg && !card}}">
+          <text class="title">加载失败</text>
+          <text class="sub">{{errorMsg}}</text>
+          <view class="actions">
+            <view class="btn btn-primary" bindtap="onPublicRetry"><text>重试</text></view>
+            <view class="btn" bindtap="onCancel"><text>返回</text></view>
+          </view>
+        </view>
 
-      <view class="alt" wx:if="{{mode === 'token'}}">
-        <text class="alt-text">也可以改用分享码加入：</text>
-        <view class="alt-btn" bindtap="onSwitchToCode"><text>输入分享码</text></view>
-      </view>
+        <view class="public-card" wx:elif="{{card}}">
+          <view class="public-cover {{card.hasCover ? 'has-cover' : ''}}">
+            <image wx:if="{{card.hasCover}}" src="{{card.coverUrl}}" mode="aspectFill"></image>
+            <view wx:else class="public-cover-fallback"><text>{{card.name}}</text></view>
+          </view>
+
+          <view class="public-body">
+            <view class="public-badges">
+              <view class="badge"><text>{{card.sourceLabel}}</text></view>
+              <view class="badge joined" wx:if="{{card.isJoined}}"><text>已加入</text></view>
+              <view class="badge" wx:if="{{card.allowCopy}}"><text>可复制</text></view>
+            </view>
+            <text class="title">{{card.name}}</text>
+            <text class="sub">{{card.description}}</text>
+
+            <view class="meta-grid">
+              <view class="meta-item"><text class="k">创建者</text><text class="v">{{card.ownerLabel}}</text></view>
+              <view class="meta-item"><text class="k">板块</text><text class="v">{{card.boardLabel}}</text></view>
+              <view class="meta-item"><text class="k">题量</text><text class="v">{{card.questionCount}}</text></view>
+              <view class="meta-item"><text class="k">参与</text><text class="v">{{card.participantsTotal}}</text></view>
+            </view>
+
+            <view class="join-panel">
+              <text class="join-title">加入方式</text>
+              <text class="join-mode">{{card.joinModeLabel}}</text>
+              <text class="join-note">{{card.joinNote}}</text>
+            </view>
+
+            <view class="info-list">
+              <view class="info-row"><text>发布时间</text><text>{{card.publishedAt}}</text></view>
+              <view class="info-row"><text>最近活跃</text><text>{{card.lastActivityAt}}</text></view>
+              <view class="info-row"><text>近 7 天活跃</text><text>{{card.activeUsers7d}}</text></view>
+            </view>
+          </view>
+
+          <view class="actions sticky-actions">
+            <view
+              class="btn btn-primary {{joining ? 'disabled' : ''}}"
+              wx:if="{{card.isOwner || card.isJoined}}"
+              bindtap="goPublicPractice"
+            >
+              <text>继续练习</text>
+            </view>
+            <view
+              class="btn btn-primary {{joining || card.joinMode !== 'free' ? 'disabled-soft' : ''}}"
+              wx:else
+              bindtap="onConfirmPublicJoin"
+            >
+              <text>{{joining ? '加入中...' : (card.joinMode === 'free' ? '确认加入' : '暂未开放')}}</text>
+            </view>
+            <view class="btn" bindtap="onCancel"><text>返回</text></view>
+          </view>
+
+          <view class="public-error inline" wx:if="{{errorMsg}}">
+            <text>{{errorMsg}}</text>
+          </view>
+        </view>
+      </block>
+
+      <block wx:else>
+        <view class="head">
+          <text class="title">{{mode === 'token' ? (loading ? '正在加入题库…' : (errorMsg ? '加入失败' : '加入题库')) : '输入分享码加入'}}</text>
+          <text class="sub" wx:if="{{mode === 'token' && !errorMsg}}">打开分享将自动加入，无需确认。</text>
+          <text class="sub" wx:if="{{errorMsg}}">{{errorMsg}}</text>
+        </view>
+
+        <view class="form" wx:if="{{mode !== 'token'}}">
+          <text class="label">分享码</text>
+          <input
+            class="input"
+            placeholder="如: ABC123"
+            maxlength="6"
+            value="{{shareCode}}"
+            bindinput="onShareCodeInput"
+          />
+          <text class="hint">可在「题库 → 个人题库 → 分享管理」生成分享码。</text>
+        </view>
+
+        <view class="actions">
+          <view class="btn btn-primary" wx:if="{{mode !== 'token'}}" bindtap="onJoinByCodeTap">
+            <text>加入</text>
+          </view>
+          <view class="btn btn-primary" wx:if="{{mode === 'token' && errorMsg}}" bindtap="onRetry">
+            <text>重试</text>
+          </view>
+          <view class="btn" bindtap="onCancel">
+            <text>返回首页</text>
+          </view>
+        </view>
+
+        <view class="loading" wx:if="{{loading}}">
+          <text>处理中...</text>
+        </view>
+
+        <view class="alt" wx:if="{{mode === 'token'}}">
+          <text class="alt-text">也可以改用分享码加入：</text>
+          <view class="alt-btn" bindtap="onSwitchToCode"><text>输入分享码</text></view>
+        </view>
+      </block>
     </view>
   </view>
 </view>

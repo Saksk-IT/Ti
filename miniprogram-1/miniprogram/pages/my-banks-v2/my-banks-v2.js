@@ -20,8 +20,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -46,16 +46,22 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var api_1 = require("../../utils/api");
+var api_endpoints_1 = require("../../utils/api-endpoints");
 var user_settings_1 = require("../../utils/user-settings");
 var auth_1 = require("../../utils/auth");
 var nav_1 = require("../../utils/nav");
 var theme_1 = require("../../utils/theme");
-var web_1 = require("../../utils/web");
-function isTrue(v) {
-    return v === true || v === 1 || v === '1';
-}
 function formatDate(dateStr) {
     var raw = String(dateStr || '').trim();
     if (!raw)
@@ -90,7 +96,12 @@ Page({
         keyword: '',
         filter: 'all',
         banks: [],
-        filteredBanks: []
+        filteredBanks: [],
+        createOpen: false,
+        createName: '',
+        createDesc: '',
+        createError: '',
+        creating: false
     },
     onShow: function () {
         hideNativeTabBar();
@@ -112,35 +123,66 @@ Page({
     },
     loadBanks: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var res, list, banks, e_1;
+            var _a, myRes, sharedRes, createdList, sharedList, createdBanks, sharedBanks, byId_1, banks, e_1;
             var _this = this;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            return __generator(this, function (_b) {
+                switch (_b.label) {
                     case 0:
                         if (this.data.loading)
                             return [2 /*return*/];
                         this.setData({ loading: true });
-                        _a.label = 1;
+                        _b.label = 1;
                     case 1:
-                        _a.trys.push([1, 3, 4, 5]);
-                        return [4 /*yield*/, api_1.api.getMyBanks()];
+                        _b.trys.push([1, 3, 4, 5]);
+                        return [4 /*yield*/, Promise.all([
+                                api_1.api.getMyBanks().catch(function () { return ({ banks: [] }); }),
+                                api_1.api.getSharedBanks().catch(function () { return ({ banks: [] }); })
+                            ])];
                     case 2:
-                        res = _a.sent();
-                        list = Array.isArray(res === null || res === void 0 ? void 0 : res.banks) ? res.banks : [];
-                        banks = list.map(function (b) { return ({
-                            id: Number((b === null || b === void 0 ? void 0 : b.id) || 0),
-                            name: String((b === null || b === void 0 ? void 0 : b.name) || '未命名题库'),
-                            description: (b === null || b === void 0 ? void 0 : b.description) ? String(b.description) : '',
-                            question_count: Number((b === null || b === void 0 ? void 0 : b.question_count) || 0) || 0,
-                            is_public: b === null || b === void 0 ? void 0 : b.is_public,
-                            updated_at: b === null || b === void 0 ? void 0 : b.updated_at,
-                            updated_at_fmt: formatDate(b === null || b === void 0 ? void 0 : b.updated_at)
-                        }); }).filter(function (b) { return Number.isFinite(b.id) && b.id > 0; });
+                        _a = _b.sent(), myRes = _a[0], sharedRes = _a[1];
+                        createdList = Array.isArray(myRes === null || myRes === void 0 ? void 0 : myRes.banks) ? myRes.banks : [];
+                        sharedList = Array.isArray(sharedRes === null || sharedRes === void 0 ? void 0 : sharedRes.banks) ? sharedRes.banks : [];
+                        createdBanks = createdList.map(function (b) {
+                            var coverUrl = (0, api_endpoints_1.resolveUploadUrl)(b === null || b === void 0 ? void 0 : b.cover_image);
+                            return {
+                                id: Number((b === null || b === void 0 ? void 0 : b.id) || 0),
+                                name: String((b === null || b === void 0 ? void 0 : b.name) || '未命名题库'),
+                                description: (b === null || b === void 0 ? void 0 : b.description) ? String(b.description) : '',
+                                question_count: Number((b === null || b === void 0 ? void 0 : b.question_count) || 0) || 0,
+                                is_public: b === null || b === void 0 ? void 0 : b.is_public,
+                                updated_at: b === null || b === void 0 ? void 0 : b.updated_at,
+                                updated_at_fmt: formatDate(b === null || b === void 0 ? void 0 : b.updated_at),
+                                source: 'created',
+                                cover_url: coverUrl,
+                                has_cover: !!coverUrl
+                            };
+                        }).filter(function (b) { return Number.isFinite(b.id) && b.id > 0; });
+                        sharedBanks = sharedList.map(function (b) {
+                            var coverUrl = (0, api_endpoints_1.resolveUploadUrl)(b === null || b === void 0 ? void 0 : b.cover_image);
+                            return {
+                                id: Number((b === null || b === void 0 ? void 0 : b.bank_id) || (b === null || b === void 0 ? void 0 : b.id) || 0),
+                                name: String((b === null || b === void 0 ? void 0 : b.bank_name) || (b === null || b === void 0 ? void 0 : b.name) || '未命名题库'),
+                                description: (b === null || b === void 0 ? void 0 : b.description) ? String(b.description) : '',
+                                question_count: Number((b === null || b === void 0 ? void 0 : b.question_count) || 0) || 0,
+                                is_public: false,
+                                updated_at: (b === null || b === void 0 ? void 0 : b.last_access_at) || (b === null || b === void 0 ? void 0 : b.created_at),
+                                updated_at_fmt: formatDate((b === null || b === void 0 ? void 0 : b.last_access_at) || (b === null || b === void 0 ? void 0 : b.created_at)),
+                                source: 'shared',
+                                owner_name: (b === null || b === void 0 ? void 0 : b.owner_nickname) ? String(b.owner_nickname) : '',
+                                cover_url: coverUrl,
+                                has_cover: !!coverUrl
+                            };
+                        }).filter(function (b) { return Number.isFinite(b.id) && b.id > 0; });
+                        byId_1 = new Map();
+                        __spreadArray(__spreadArray([], sharedBanks, true), createdBanks, true).forEach(function (b) {
+                            byId_1.set(b.id, b);
+                        });
+                        banks = Array.from(byId_1.values());
                         banks.sort(function (a, b) { return String(b.updated_at || '').localeCompare(String(a.updated_at || '')) || (b.id - a.id); });
                         this.setData({ banks: banks, inited: true }, function () { return _this.applyFilter(); });
                         return [3 /*break*/, 5];
                     case 3:
-                        e_1 = _a.sent();
+                        e_1 = _b.sent();
                         wx.showToast({ title: (e_1 && e_1.message) || '加载失败', icon: 'none' });
                         return [3 /*break*/, 5];
                     case 4:
@@ -166,7 +208,7 @@ Page({
         var filter = (_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.filter;
         if (!filter || filter === this.data.filter)
             return;
-        if (filter !== 'all' && filter !== 'public' && filter !== 'private')
+        if (filter !== 'all' && filter !== 'created' && filter !== 'shared')
             return;
         this.setData({ filter: filter }, function () { return _this.applyFilter(); });
     },
@@ -178,13 +220,14 @@ Page({
             out = out.filter(function (b) {
                 var name = String(b.name || '').toLowerCase();
                 var desc = String(b.description || '').toLowerCase();
-                return name.includes(kw) || desc.includes(kw);
+                var owner = String(b.owner_name || '').toLowerCase();
+                return name.includes(kw) || desc.includes(kw) || owner.includes(kw);
             });
         }
-        if (filter === 'public')
-            out = out.filter(function (b) { return isTrue(b.is_public); });
-        if (filter === 'private')
-            out = out.filter(function (b) { return !isTrue(b.is_public); });
+        if (filter === 'created')
+            out = out.filter(function (b) { return b.source === 'created'; });
+        if (filter === 'shared')
+            out = out.filter(function (b) { return b.source === 'shared'; });
         this.setData({ filteredBanks: out });
     },
     onBankTap: function (e) {
@@ -205,23 +248,84 @@ Page({
         (0, nav_1.safeNavigate)('/pages/public-bank-v2/public-bank-v2', 'redirectTo');
     },
     onGoCreateBank: function () {
+        if (this.data.createOpen)
+            return;
+        this.setData({
+            createOpen: true,
+            createName: '',
+            createDesc: '',
+            createError: '',
+            creating: false
+        });
+    },
+    onCreateClose: function () {
+        if (this.data.creating)
+            return;
+        this.setData({ createOpen: false });
+    },
+    onCreateSheetTap: function () { },
+    onCreateNameInput: function (e) {
+        var _a;
+        var value = String(((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value) || '');
+        this.setData({ createName: value, createError: '' });
+    },
+    onCreateDescInput: function (e) {
+        var _a;
+        var value = String(((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value) || '');
+        this.setData({ createDesc: value, createError: '' });
+    },
+    onCreateSubmit: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var opened;
+            var name, description, msg, msg, msg, e_2, msg;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, (0, web_1.showOpenWebModal)({
-                            title: '新建题库',
-                            content: '更完整的创建/导入/维护请在网页端完成。是否打开网页端个人题库？',
-                            confirmText: '打开网页端',
-                            cancelText: '继续小程序',
-                            next: '/user/banks'
-                        })];
-                    case 1:
-                        opened = _a.sent();
-                        if (!opened) {
-                            (0, nav_1.safeNavigate)('/pages/bank-add-v2/bank-add-v2', 'navigateTo');
+                    case 0:
+                        if (this.data.creating)
+                            return [2 /*return*/];
+                        name = String(this.data.createName || '').trim();
+                        description = String(this.data.createDesc || '').trim();
+                        if (!name) {
+                            msg = '题库名称不能为空';
+                            this.setData({ createError: msg });
+                            wx.showToast({ title: msg, icon: 'none' });
+                            return [2 /*return*/];
                         }
-                        return [2 /*return*/];
+                        if (name.length < 2 || name.length > 50) {
+                            msg = '题库名称需要 2-50 个字符';
+                            this.setData({ createError: msg });
+                            wx.showToast({ title: msg, icon: 'none' });
+                            return [2 /*return*/];
+                        }
+                        if (description.length > 200) {
+                            msg = '描述不能超过 200 个字符';
+                            this.setData({ createError: msg });
+                            wx.showToast({ title: msg, icon: 'none' });
+                            return [2 /*return*/];
+                        }
+                        this.setData({ creating: true, createError: '' });
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, 3, , 4]);
+                        return [4 /*yield*/, api_1.api.createBank({ name: name, description: description })];
+                    case 2:
+                        _a.sent();
+                        wx.showToast({ title: '创建成功', icon: 'success' });
+                        this.setData({
+                            createOpen: false,
+                            createName: '',
+                            createDesc: '',
+                            createError: '',
+                            creating: false
+                        });
+                        this.loadBanks();
+                        return [3 /*break*/, 4];
+                    case 3:
+                        e_2 = _a.sent();
+                        msg = (e_2 && e_2.message) ? String(e_2.message) : '创建失败';
+                        this.setData({ creating: false, createError: msg });
+                        wx.showToast({ title: msg, icon: 'none' });
+                        return [3 /*break*/, 4];
+                    case 4: return [2 /*return*/];
                 }
             });
         });
@@ -262,6 +366,6 @@ Page({
     },
     onCycleThemeModeTap: function () {
         var mode = theme_1.themeManager.cycleMode();
-        this.setData(__assign(__assign({}, theme_1.themeManager.getPageData()), { themeMode: mode }));
+        this.setData(__assign(__assign({}, (theme_1.themeManager.getPageData())), { themeMode: mode }));
     }
 });

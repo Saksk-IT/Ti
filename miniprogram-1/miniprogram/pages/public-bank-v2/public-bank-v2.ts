@@ -1,4 +1,5 @@
 import { api } from '../../utils/api';
+import { resolveUploadUrl } from '../../utils/api-endpoints';
 import { syncUserSettingsToServer } from '../../utils/user-settings';
 import { checkLogin } from '../../utils/auth';
 import { safeNavigate } from '../../utils/nav';
@@ -13,10 +14,13 @@ type PlazaBank = {
   use_count?: number;
   allow_copy?: number;
   is_shared?: number | boolean;
+  cover_image?: string | null;
   public_at?: string;
   created_at?: string;
   owner_nickname?: string;
   owner_avatar?: string;
+  join_mode?: string;
+  relation?: { is_joined?: boolean; joined_via?: string };
   bank_type: BankType;
 };
 
@@ -28,11 +32,14 @@ type PlazaBankView = {
   question_count: number;
   use_count: number;
   allow_copy: boolean;
+  cover_url: string;
+  has_cover: boolean;
   owner_label: string;
   created_label: string;
   bank_type: BankType;
   type_label: string;
   is_shared: boolean;
+  is_joined: boolean;
 };
 
 function formatDateLabel(input: any): string {
@@ -127,6 +134,8 @@ Page({
           const useCount = Number(b?.use_count || 0) || 0;
           const allowCopy = !!b?.allow_copy;
           const isShared = !!b?.is_shared;
+          const coverUrl = resolveUploadUrl(b?.cover_image);
+          const isJoined = !!b?.relation?.is_joined;
           const ownerLabel = String(b?.owner_nickname || (bankType === 'system' ? '系统管理员' : '匿名')).trim();
           const createdLabel = formatDateLabel(b?.created_at || b?.public_at);
           return {
@@ -137,11 +146,14 @@ Page({
             question_count: questionCount,
             use_count: useCount,
             allow_copy: allowCopy,
+            cover_url: coverUrl,
+            has_cover: !!coverUrl,
             owner_label: ownerLabel,
             created_label: createdLabel,
             bank_type: bankType,
             type_label: bankType === 'system' ? '系统题库' : '用户',
-            is_shared: isShared
+            is_shared: isShared,
+            is_joined: isJoined
           };
         })
         .filter((b) => b.id > 0 && !!b.name);
@@ -232,7 +244,7 @@ Page({
       return;
     }
 
-    safeNavigate(`/pages/bank-detail/bank-detail?id=${encodeURIComponent(String(id))}`, 'navigateTo');
+    safeNavigate(`/pages/bank-join/bank-join?source_type=user&bank_id=${encodeURIComponent(String(id))}`, 'navigateTo');
   },
 
   onHamburgerTap() {

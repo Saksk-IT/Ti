@@ -72,7 +72,10 @@ def list_public_banks(
             m.recommended_score,
             {_keyword_rank_sql(search_enabled)} AS search_rank,
             b.slug AS board_slug,
-            b.name AS board_name
+            b.name AS board_name,
+            COALESCE(owner_bank.join_mode, 'free') AS join_mode,
+            COALESCE(owner_bank.join_note, '') AS join_note,
+            COALESCE(owner_bank.allow_copy, true) AS allow_copy
         FROM public_bank_plaza_metrics m
         LEFT JOIN plaza_boards b ON b.id = m.plaza_board_id
         LEFT JOIN user_question_banks owner_bank
@@ -482,13 +485,21 @@ def build_legacy_bank_list(
             'id': item['id'],
             'name': item['name'],
             'description': item['description'],
+            'cover_image': item.get('cover_image'),
             'question_count': item['question_count'],
             'use_count': item['participants_total'],
-            'allow_copy': 0,
+            'allow_copy': item.get('allow_copy', 0),
             'public_at': item['published_at'],
             'created_at': item['published_at'],
             'owner_nickname': item['owner_label'],
             'owner_avatar': item.get('owner_avatar'),
+            'join_mode': item.get('join_mode') or 'free',
+            'join_note': item.get('join_note') or '',
+            'relation': item.get('relation') or {'joined_via': 'none', 'is_joined': False},
+            'source_type': item.get('source_type'),
+            'source_label': item.get('source_label'),
+            'participants_total': item.get('participants_total', 0),
+            'answer_users_7d': item.get('answer_users_7d', 0),
             'bank_type': 'system' if item['source_type'] == 'system' else 'user',
             'is_shared': 0,
         })
@@ -907,6 +918,9 @@ def _serialize_metric_item(row: dict[str, Any], relation: str | None) -> dict[st
         'detail_url': detail_url,
         'practice_url': practice_url,
         'source_label': '系统题库' if source_type == 'system' else '用户公开',
+        'join_mode': str(row.get('join_mode') or 'free') if source_type != 'system' else 'free',
+        'join_note': str(row.get('join_note') or '').strip(),
+        'allow_copy': bool(row.get('allow_copy')) if source_type != 'system' else False,
         'relation': {
             'joined_via': relation or 'none',
             'is_joined': relation in {'public', 'shared', 'both'},

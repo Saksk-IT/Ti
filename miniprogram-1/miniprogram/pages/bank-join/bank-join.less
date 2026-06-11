@@ -23,6 +23,8 @@
   border: 1px solid var(--app-border);
   box-shadow: var(--app-shadow-soft);
   padding: 14px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .head {
@@ -132,6 +134,11 @@
   color: var(--app-cta-fg);
 }
 
+.btn.disabled,
+.btn.disabled-soft {
+  opacity: 0.58;
+}
+
 .loading {
   margin-top: 10px;
   font-size: 12px;
@@ -168,4 +175,198 @@
   font-size: 12px;
   font-weight: 900;
   color: var(--app-text);
+}
+
+.public-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.public-loading,
+.public-error {
+  display: grid;
+  gap: 8px;
+}
+
+.public-error.inline {
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px dashed color-mix(in srgb, var(--app-danger) 36%, var(--app-border));
+  background: color-mix(in srgb, var(--app-danger) 8%, var(--app-surface));
+  color: color-mix(in srgb, var(--app-danger) 86%, var(--app-text));
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.public-cover {
+  width: 100%;
+  height: 190px;
+  border-radius: 18px;
+  border: 1px solid var(--app-border);
+  overflow: hidden;
+  background: color-mix(in srgb, var(--app-strong-bg) 10%, var(--app-surface-2));
+}
+
+.public-cover image {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.public-cover-fallback {
+  width: 100%;
+  height: 100%;
+  padding: 16px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-end;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--app-strong-bg) 18%, transparent), transparent 62%),
+    color-mix(in srgb, var(--app-surface) 82%, var(--app-bg));
+  color: var(--app-text);
+  font-size: 22px;
+  line-height: 1.18;
+  font-weight: 950;
+  word-break: break-all;
+}
+
+.public-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.public-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.badge {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge text {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--app-muted);
+}
+
+.badge.joined {
+  background: color-mix(in srgb, var(--app-success) 12%, var(--app-surface));
+  border-color: color-mix(in srgb, var(--app-success) 28%, var(--app-border));
+}
+
+.badge.joined text {
+  color: color-mix(in srgb, var(--app-success) 84%, var(--app-text));
+}
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.meta-item {
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface-2);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meta-item .k,
+.info-row text:first-child {
+  font-size: 11px;
+  color: var(--app-muted);
+}
+
+.meta-item .v {
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--app-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.join-panel {
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid var(--app-border);
+  background: color-mix(in srgb, var(--app-strong-bg) 7%, var(--app-surface-2));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.join-title {
+  font-size: 12px;
+  color: var(--app-muted);
+  font-weight: 800;
+}
+
+.join-mode {
+  font-size: 16px;
+  color: var(--app-text);
+  font-weight: 950;
+}
+
+.join-note {
+  font-size: 12px;
+  color: var(--app-muted);
+  line-height: 1.5;
+}
+
+.info-list {
+  border-radius: 16px;
+  border: 1px solid var(--app-border);
+  overflow: hidden;
+}
+
+.info-row {
+  min-height: 40px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--app-surface-2);
+  border-bottom: 1px solid var(--app-border);
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row text:last-child {
+  min-width: 0;
+  flex: 1;
+  text-align: right;
+  font-size: 12px;
+  color: var(--app-text);
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sticky-actions {
+  position: sticky;
+  bottom: 0;
+  margin: 0 -2px;
+  padding-top: 4px;
+  background: var(--app-surface);
 }

@@ -211,3 +211,92 @@ def test_my_created_bank_list_includes_cover_image(app, seed_user):
                 db.session.execute(text("DELETE FROM public_bank_plaza_metrics WHERE source_type = 'user_public' AND source_id = :bank_id"), {"bank_id": int(bank_id)})
                 db.session.execute(text("DELETE FROM user_question_banks WHERE id = :bank_id"), {"bank_id": int(bank_id)})
             db.session.commit()
+
+
+def test_public_bank_legacy_list_and_card_include_cover_join_relation(app, seed_user):
+    """小程序题库广场依赖的兼容列表与名片接口应返回封面、加入方式和关系。"""
+    suffix = uuid.uuid4().hex[:8]
+    bank_name = f"小程序公开名片题库-{suffix}"
+    cover_image = f"/uploads/bank_covers/public_card_{suffix}.png"
+    join_note = "确认加入后可继续练习"
+    owner_id = None
+    bank_id = None
+    client = _build_admin_client(app, seed_user)
+
+    try:
+        with app.app_context():
+            owner_id = db.session.execute(
+                text(
+                    """
+                    INSERT INTO users (username, email, password_hash, is_admin, has_password_set)
+                    VALUES (:username, :email, :password_hash, 0, 1)
+                    RETURNING id
+                    """
+                ),
+                {
+                    "username": f"mini_owner_{suffix}",
+                    "email": f"mini_owner_{suffix}@test.example.com",
+                    "password_hash": "test",
+                },
+            ).scalar_one()
+            bank_id = db.session.execute(
+                text(
+                    """
+                    INSERT INTO user_question_banks (
+                        user_id, name, description, cover_image, is_public, public_at,
+                        status, question_count, join_mode, join_note, allow_copy
+                    )
+                    VALUES (
+                        :owner_id, :name, 'mini public fixture', :cover_image, true, CURRENT_TIMESTAMP,
+                        1, 9, 'free', :join_note, true
+                    )
+                    RETURNING id
+                    """
+                ),
+                {
+                    "owner_id": int(owner_id),
+                    "name": bank_name,
+                    "cover_image": cover_image,
+                    "join_note": join_note,
+                },
+            ).scalar_one()
+            db.session.commit()
+            ensure_plaza_metrics(force=True)
+
+        list_resp = client.get(f"/api/public/banks?type=user&keyword={bank_name}&per_page=5")
+        assert list_resp.status_code == 200
+        list_items = list_resp.get_json()["data"]["banks"]
+        list_item = next(item for item in list_items if item["id"] == bank_id and item["bank_type"] == "user")
+        assert list_item["cover_image"] == cover_image
+        assert list_item["join_mode"] == "free"
+        assert list_item["join_note"] == join_note
+        assert list_item["relation"]["is_joined"] is False
+
+        card_resp = client.get(f"/api/public/banks/card/user/{bank_id}")
+        assert card_resp.status_code == 200
+        card = card_resp.get_json()["data"]
+        assert card["cover_image"] == cover_image
+        assert card["join_mode"] == "free"
+        assert card["join_note"] == join_note
+        assert card["relation"]["is_joined"] is False
+
+        join_resp = client.post(
+            f"/api/public/banks/user/{bank_id}/join",
+            headers={"X-Requested-With": "XMLHttpRequest"},
+        )
+        assert join_resp.status_code == 200
+        assert join_resp.get_json()["data"]["joined"] is True
+
+        joined_card_resp = client.get(f"/api/public/banks/card/user/{bank_id}")
+        assert joined_card_resp.status_code == 200
+        joined_card = joined_card_resp.get_json()["data"]
+        assert joined_card["relation"]["is_joined"] is True
+    finally:
+        with app.app_context():
+            if bank_id is not None:
+                db.session.execute(text("DELETE FROM public_bank_users WHERE bank_id = :bank_id"), {"bank_id": int(bank_id)})
+                db.session.execute(text("DELETE FROM public_bank_plaza_metrics WHERE source_type = 'user_public' AND source_id = :bank_id"), {"bank_id": int(bank_id)})
+                db.session.execute(text("DELETE FROM user_question_banks WHERE id = :bank_id"), {"bank_id": int(bank_id)})
+            if owner_id is not None:
+                db.session.execute(text("DELETE FROM users WHERE id = :owner_id"), {"owner_id": int(owner_id)})
+            db.session.commit()

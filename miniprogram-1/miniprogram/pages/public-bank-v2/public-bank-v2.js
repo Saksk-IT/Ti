@@ -48,6 +48,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var api_1 = require("../../utils/api");
+var api_endpoints_1 = require("../../utils/api-endpoints");
 var user_settings_1 = require("../../utils/user-settings");
 var auth_1 = require("../../utils/auth");
 var nav_1 = require("../../utils/nav");
@@ -148,6 +149,8 @@ Page({
                             var useCount = Number((b === null || b === void 0 ? void 0 : b.use_count) || 0) || 0;
                             var allowCopy = !!(b === null || b === void 0 ? void 0 : b.allow_copy);
                             var isShared = !!(b === null || b === void 0 ? void 0 : b.is_shared);
+                            var coverUrl = (0, api_endpoints_1.resolveUploadUrl)(b === null || b === void 0 ? void 0 : b.cover_image);
+                            var isJoined = !!(b && b.relation && b.relation.is_joined);
                             var ownerLabel = String((b === null || b === void 0 ? void 0 : b.owner_nickname) || (bankType === 'system' ? '系统管理员' : '匿名')).trim();
                             var createdLabel = formatDateLabel((b === null || b === void 0 ? void 0 : b.created_at) || (b === null || b === void 0 ? void 0 : b.public_at));
                             return {
@@ -158,11 +161,14 @@ Page({
                                 question_count: questionCount,
                                 use_count: useCount,
                                 allow_copy: allowCopy,
+                                cover_url: coverUrl,
+                                has_cover: !!coverUrl,
                                 owner_label: ownerLabel,
                                 created_label: createdLabel,
                                 bank_type: bankType,
                                 type_label: bankType === 'system' ? '系统题库' : '用户',
-                                is_shared: isShared
+                                is_shared: isShared,
+                                is_joined: isJoined
                             };
                         })
                             .filter(function (b) { return b.id > 0 && !!b.name; });
@@ -263,7 +269,7 @@ Page({
             (0, nav_1.safeNavigate)("/pages/subject-detail-v2/subject-detail-v2?".concat(params.join('&')), 'navigateTo');
             return;
         }
-        (0, nav_1.safeNavigate)("/pages/bank-detail/bank-detail?id=".concat(encodeURIComponent(String(id))), 'navigateTo');
+        (0, nav_1.safeNavigate)("/pages/bank-join/bank-join?source_type=user&bank_id=".concat(encodeURIComponent(String(id))), 'navigateTo');
     },
     onHamburgerTap: function () {
         this.setData({ drawerOpen: true });

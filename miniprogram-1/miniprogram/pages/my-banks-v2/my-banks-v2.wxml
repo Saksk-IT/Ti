@@ -33,7 +33,7 @@
                 <text class="mb-title">个人题库</text>
                 <view class="pill mb-count"><text>{{filteredBanks.length}} 个题库</text></view>
               </view>
-              <text class="mb-sub">用户可自建题库</text>
+              <text class="mb-sub">我创建和好友分享给我的题库</text>
             </view>
             <view class="mb-hero-actions">
               <view class="btn" bindtap="onGoPublicBank"><text>题库广场</text></view>
@@ -52,10 +52,10 @@
               </view>
             </view>
 
-            <view class="seg" role="tablist" aria-label="公开状态筛选">
+            <view class="seg" role="tablist" aria-label="题库来源筛选">
               <view class="seg-btn {{filter==='all' ? 'active' : ''}}" bindtap="onFilterTap" data-filter="all"><text>全部</text></view>
-              <view class="seg-btn {{filter==='public' ? 'active' : ''}}" bindtap="onFilterTap" data-filter="public"><text>公开</text></view>
-              <view class="seg-btn {{filter==='private' ? 'active' : ''}}" bindtap="onFilterTap" data-filter="private"><text>私密</text></view>
+              <view class="seg-btn {{filter==='created' ? 'active' : ''}}" bindtap="onFilterTap" data-filter="created"><text>我创建</text></view>
+              <view class="seg-btn {{filter==='shared' ? 'active' : ''}}" bindtap="onFilterTap" data-filter="shared"><text>分享给我</text></view>
             </view>
           </view>
         </view>
@@ -66,7 +66,7 @@
 
         <view class="mb-empty" wx:elif="{{!filteredBanks.length}}">
           <text wx:if="{{banks.length}}">还没有匹配的题库。</text>
-          <text wx:else>你还没有创建题库。</text>
+          <text wx:else>你还没有创建或加入题库。</text>
           <view class="empty-actions">
             <view class="btn btn-primary" bindtap="onGoCreateBank"><text>新建题库</text></view>
           </view>
@@ -74,20 +74,30 @@
 
         <view class="mb-list" wx:else>
           <view class="mb-card" wx:for="{{filteredBanks}}" wx:key="id" bindtap="onBankTap" data-id="{{item.id}}">
-            <view class="mb-top">
-              <text class="mb-name">{{item.name}}</text>
-              <view class="mb-manage" catchtap="onBankManageTap" data-id="{{item.id}}"><text>题库详情</text></view>
+            <view class="mb-cover {{item.has_cover ? 'has-cover' : ''}}">
+              <image wx:if="{{item.has_cover}}" src="{{item.cover_url}}" mode="aspectFill"></image>
+              <view wx:else class="mb-cover-fallback">
+                <text>{{item.name}}</text>
+              </view>
             </view>
+            <view class="mb-card-body">
+              <view class="mb-top">
+                <text class="mb-name">{{item.name}}</text>
+                <view class="mb-manage" catchtap="onBankManageTap" data-id="{{item.id}}"><text>题库详情</text></view>
+              </view>
 
-            <view class="mb-tags">
-              <view class="mb-tag"><text>{{item.is_public ? '公开' : '私密'}}</text></view>
-              <view class="mb-tag"><text>{{item.question_count || 0}} 题</text></view>
-            </view>
+              <view class="mb-tags">
+                <view class="mb-tag mb-tag-shared" wx:if="{{item.source === 'shared'}}"><text>分享给我</text></view>
+                <view class="mb-tag" wx:else><text>{{item.is_public ? '公开' : '私密'}}</text></view>
+                <view class="mb-tag"><text>{{item.question_count || 0}} 题</text></view>
+                <view class="mb-tag" wx:if="{{item.owner_name}}"><text>{{item.owner_name}}</text></view>
+              </view>
 
-            <text class="mb-desc" wx:if="{{item.description}}">{{item.description}}</text>
+              <text class="mb-desc" wx:if="{{item.description}}">{{item.description}}</text>
 
-            <view class="mb-meta">
-              <text>更新 {{item.updated_at_fmt || '-'}}</text>
+              <view class="mb-meta">
+                <text>更新 {{item.updated_at_fmt || '-'}}</text>
+              </view>
             </view>
           </view>
         </view>

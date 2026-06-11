@@ -1,8 +1,33 @@
 import { api } from '../../utils/api';
+import { resolveUploadUrl } from '../../utils/api-endpoints';
 import { checkLogin, wechatLogin } from '../../utils/auth';
 import { safeNavigate } from '../../utils/nav';
 
-type JoinMode = 'token' | 'code';
+type JoinMode = 'public' | 'token' | 'code';
+type PublicSourceType = 'system' | 'user';
+
+type PublicBankCardView = {
+  id: number;
+  sourceType: PublicSourceType;
+  name: string;
+  description: string;
+  coverUrl: string;
+  hasCover: boolean;
+  sourceLabel: string;
+  ownerLabel: string;
+  boardLabel: string;
+  questionCount: number;
+  participantsTotal: number;
+  activeUsers7d: number;
+  publishedAt: string;
+  lastActivityAt: string;
+  joinMode: string;
+  joinModeLabel: string;
+  joinNote: string;
+  allowCopy: boolean;
+  isOwner: boolean;
+  isJoined: boolean;
+};
 
 const PENDING_MINI_REDIRECT_KEY = 'pendingMiniRedirect';
 
@@ -36,16 +61,76 @@ function normalizeTokenFromShareLink(input: any): string {
   return '';
 }
 
+function normalizeSourceType(input: any): PublicSourceType {
+  return String(input || '').trim() === 'system' ? 'system' : 'user';
+}
+
+function joinLabel(mode: any): string {
+  const value = String(mode || 'free').trim().toLowerCase();
+  if (value === 'member') return '会员加入';
+  if (value === 'paid') return '付费加入';
+  if (value === 'approval') return '申请加入';
+  return '免费加入';
+}
+
+function formatText(input: any, fallback = '-'): string {
+  const raw = String(input || '').trim();
+  return raw || fallback;
+}
+
+function buildPublicBankCard(raw: any, sourceType: PublicSourceType): PublicBankCardView {
+  const coverUrl = resolveUploadUrl(raw?.cover_image);
+  const joinMode = String(raw?.join_mode || 'free').trim().toLowerCase() || 'free';
+  const isJoined = !!raw?.relation?.is_joined;
+  return {
+    id: Number(raw?.id || 0) || 0,
+    sourceType,
+    name: formatText(raw?.name, '未命名题库'),
+    description: formatText(raw?.description, '暂无题库简介'),
+    coverUrl,
+    hasCover: !!coverUrl,
+    sourceLabel: formatText(raw?.source_label, sourceType === 'system' ? '系统题库' : '用户公开'),
+    ownerLabel: formatText(raw?.owner_label, sourceType === 'system' ? '系统题库' : '匿名用户'),
+    boardLabel: formatText(raw?.board?.name, '未分板块'),
+    questionCount: Number(raw?.question_count || 0) || 0,
+    participantsTotal: Number(raw?.participants_total || 0) || 0,
+    activeUsers7d: Number(raw?.answer_users_7d || 0) || 0,
+    publishedAt: formatText(raw?.published_at),
+    lastActivityAt: formatText(raw?.last_activity_at),
+    joinMode,
+    joinModeLabel: joinLabel(joinMode),
+    joinNote: formatText(
+      raw?.join_note,
+      joinMode === 'free' ? '确认加入后，该题库会进入“我的题库”。' : '当前加入方式暂未在小程序开放。'
+    ),
+    allowCopy: !!raw?.allow_copy,
+    isOwner: !!raw?.is_owner,
+    isJoined
+  };
+}
+
 Page({
   data: {
     mode: 'code' as JoinMode,
     token: '',
     shareCode: '',
+    sourceType: 'user' as PublicSourceType,
+    bankId: 0,
+    card: null as PublicBankCardView | null,
     loading: false,
+    joining: false,
     errorMsg: ''
   },
 
   async onLoad(options: any) {
+    const sourceType = normalizeSourceType(options?.source_type || options?.sourceType || options?.type);
+    const bankId = Number(options?.bank_id || options?.bankId || options?.id || 0);
+    if (Number.isFinite(bankId) && bankId > 0) {
+      this.setData({ mode: 'public', sourceType, bankId });
+      await this.loadPublicCard(sourceType, bankId);
+      return;
+    }
+
     const rawToken = options?.token || options?.share_token || '';
     let token = normalizeTokenFromShareLink(rawToken);
     // 兼容：扫码/二维码场景可能走 scene 参数
@@ -74,6 +159,22 @@ Page({
     }
   },
 
+  async loadPublicCard(sourceType: PublicSourceType, bankId: number) {
+    if (this.data.loading) return;
+    this.setData({ loading: true, errorMsg: '' });
+    try {
+      const raw: any = await api.getPublicBankCard(sourceType, bankId);
+      const card = buildPublicBankCard(raw, sourceType);
+      if (!card.id) throw new Error('题库信息异常');
+      this.setData({ card, sourceType, bankId: card.id });
+    } catch (e: any) {
+      const msg = (e && e.message) ? String(e.message) : '加载失败';
+      this.setData({ errorMsg: msg, card: null });
+    } finally {
+      this.setData({ loading: false });
+    }
+  },
+
   onShareCodeInput(e: any) {
     const v = String(e?.detail?.value || '').trim().toUpperCase();
     this.setData({ shareCode: v, errorMsg: '' });
@@ -95,6 +196,64 @@ Page({
     }
     wx.redirectTo({ url: '/pages/login/login' });
     return false;
+  },
+
+  async onConfirmPublicJoin() {
+    if (this.data.joining) return;
+    const sourceType = normalizeSourceType(this.data.sourceType);
+    const bankId = Number(this.data.bankId || 0);
+    const card = this.data.card;
+    if (!bankId || !card) return;
+
+    if (card.isOwner || card.isJoined) {
+      this.goPublicPractice();
+      return;
+    }
+
+    if (card.joinMode !== 'free') {
+      wx.showToast({ title: `${card.joinModeLabel}暂未开放`, icon: 'none' });
+      return;
+    }
+
+    const nextUrl = `/pages/bank-join/bank-join?source_type=${encodeURIComponent(sourceType)}&bank_id=${encodeURIComponent(String(bankId))}`;
+    const ok = await this.ensureLoggedIn(nextUrl);
+    if (!ok) return;
+
+    this.setData({ joining: true, errorMsg: '' });
+    wx.showLoading({ title: '加入中...' });
+    try {
+      await api.joinPublicBank(sourceType, bankId);
+      wx.showToast({ title: '已加入', icon: 'success' });
+      await this.loadPublicCard(sourceType, bankId);
+    } catch (e: any) {
+      const msg = (e && e.message) ? String(e.message) : '加入失败';
+      this.setData({ errorMsg: msg });
+      wx.showToast({ title: msg, icon: 'none' });
+    } finally {
+      wx.hideLoading();
+      this.setData({ joining: false });
+    }
+  },
+
+  goPublicPractice() {
+    const sourceType = normalizeSourceType(this.data.sourceType);
+    const bankId = Number(this.data.bankId || 0);
+    const card = this.data.card;
+    if (!bankId) return;
+    if (sourceType === 'system') {
+      const params = [`id=${encodeURIComponent(String(bankId))}`];
+      if (card?.name) params.push(`subject=${encodeURIComponent(card.name)}`);
+      safeNavigate(`/pages/subject-detail-v2/subject-detail-v2?${params.join('&')}`, 'redirectTo');
+      return;
+    }
+    safeNavigate(`/pages/bank-detail/bank-detail?id=${encodeURIComponent(String(bankId))}`, 'redirectTo');
+  },
+
+  onPublicRetry() {
+    const sourceType = normalizeSourceType(this.data.sourceType);
+    const bankId = Number(this.data.bankId || 0);
+    if (!bankId) return;
+    this.loadPublicCard(sourceType, bankId);
   },
 
   async autoJoinByToken(token: string) {
@@ -168,6 +327,10 @@ Page({
   },
 
   onRetry() {
+    if (this.data.mode === 'public') {
+      this.onPublicRetry();
+      return;
+    }
     if (this.data.mode === 'token') {
       this.autoJoinByToken(String(this.data.token || ''));
       return;

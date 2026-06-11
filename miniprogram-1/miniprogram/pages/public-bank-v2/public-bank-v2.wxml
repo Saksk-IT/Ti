@@ -72,20 +72,29 @@
 
         <view class="pb-grid" wx:elif="{{banks.length}}">
           <view class="pb-card" wx:for="{{banks}}" wx:key="key" bindtap="onBankTap" data-id="{{item.id}}" data-bank-type="{{item.bank_type}}" data-name="{{item.name}}">
-            <view class="pb-card-top">
-              <text class="pb-card-title">{{item.name}}</text>
-              <view class="pb-card-arrow"><text>›</text></view>
+            <view class="pb-cover {{item.has_cover ? 'has-cover' : ''}}">
+              <image wx:if="{{item.has_cover}}" src="{{item.cover_url}}" mode="aspectFill"></image>
+              <view wx:else class="pb-cover-fallback">
+                <text>{{item.name}}</text>
+              </view>
             </view>
-            <text class="pb-desc" wx:if="{{item.description}}">{{item.description}}</text>
-            <view class="pb-card-meta">
-              <text class="pb-chip pb-chip-shared" wx:if="{{item.is_shared}}">用户分享</text>
-              <text>{{item.type_label}}</text>
-              <text class="pb-dot">·</text>
-              <text>{{item.question_count}} 题</text>
-              <text class="pb-dot">·</text>
-              <text>创建 {{item.created_label}}</text>
-              <text class="pb-dot">·</text>
-              <text>创建者 {{item.owner_label}}</text>
+            <view class="pb-card-body">
+              <view class="pb-card-top">
+                <text class="pb-card-title">{{item.name}}</text>
+                <view class="pb-card-arrow"><text>›</text></view>
+              </view>
+              <text class="pb-desc" wx:if="{{item.description}}">{{item.description}}</text>
+              <view class="pb-card-meta">
+                <text class="pb-chip pb-chip-shared" wx:if="{{item.is_shared}}">用户分享</text>
+                <text class="pb-chip pb-chip-joined" wx:if="{{item.is_joined}}">已加入</text>
+                <text>{{item.type_label}}</text>
+                <text class="pb-dot">·</text>
+                <text>{{item.question_count}} 题</text>
+                <text class="pb-dot">·</text>
+                <text>创建 {{item.created_label}}</text>
+                <text class="pb-dot">·</text>
+                <text>创建者 {{item.owner_label}}</text>
+              </view>
             </view>
           </view>
         </view>

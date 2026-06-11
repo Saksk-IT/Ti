@@ -496,6 +496,15 @@ exports.api = {
     getPublicBanks: function (params) {
         return request('/public/banks', 'GET', params || {});
     },
+    getPublicBankCard: function (sourceType, bankId) {
+        return request("/public/banks/card/".concat(encodeURIComponent(sourceType), "/").concat(encodeURIComponent(String(bankId))), 'GET');
+    },
+    joinPublicBank: function (sourceType, bankId) {
+        return request("/public/banks/".concat(encodeURIComponent(sourceType), "/").concat(encodeURIComponent(String(bankId)), "/join"), 'POST', {});
+    },
+    leavePublicBank: function (sourceType, bankId) {
+        return request("/public/banks/".concat(encodeURIComponent(sourceType), "/").concat(encodeURIComponent(String(bankId)), "/join"), 'DELETE', {});
+    },
     // 获取题目列表
     getQuestions: function (params) { return request('/quiz/questions', 'GET', params); },
     // 获取题目详情

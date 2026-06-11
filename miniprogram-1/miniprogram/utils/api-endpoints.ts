@@ -1,11 +1,52 @@
 // API 端点定义（基础设施已提取到 api-client.ts 和 url-utils.ts）
 import { request, normalizeDataCenterContext } from './api-client';
-import { getApiOrigin, resolveUploadUrl, normalizeImageUrls } from './url-utils';
+import { getApiBaseUrl, getApiOrigin, resolveUploadUrl, normalizeImageUrls } from './url-utils';
+import { getWxPlatform } from './config';
 import { memoryCache } from './memory-cache';
 
 // 保持向后兼容的导出
 export { getApiOrigin, resolveUploadUrl, normalizeImageUrls };
 export { request };
+
+let hasShownUploadDevHostHint = false;
+function maybeShowUploadDevHostHint(apiBaseUrl: string, message: string): void {
+  if (hasShownUploadDevHostHint) return;
+
+  const msg = String(message || '');
+  try {
+    const envVersion = wx.getAccountInfoSync().miniProgram.envVersion;
+    if (envVersion !== 'develop') return;
+  } catch (e) {}
+
+  let isDevtools = false;
+  try {
+    isDevtools = getWxPlatform() === 'devtools';
+  } catch (e) {}
+
+  const isLocalhost = /^http:\/\/(127\.0\.0\.1|localhost)(:|\/)/i.test(apiBaseUrl);
+  if (!isLocalhost) return;
+
+  const normalizedMsg = msg.toLowerCase();
+  const isConnRefused =
+    msg.includes('ERR_CONNECTION_REFUSED') ||
+    msg.includes('errcode:-102') ||
+    msg.includes('cronet_error_code:-102') ||
+    normalizedMsg.includes('connection refused');
+  const isGenericUploadFail = msg.trim() === 'uploadFile:fail' || msg.trim() === 'request:fail';
+  if (!isConnRefused && !(isDevtools && isGenericUploadFail)) return;
+
+  hasShownUploadDevHostHint = true;
+  wx.showModal({
+    title: '无法连接后端',
+    content: `当前 API 地址为：${apiBaseUrl}\n\n请确认 Docker 开发服务正在运行，或到「开发设置」调整 API Host/Port 后重试。`,
+    confirmText: '去设置',
+    cancelText: '知道了',
+    success: (res) => {
+      if (!res.confirm) return;
+      wx.navigateTo({ url: '/pages/dev-settings/dev-settings' });
+    }
+  });
+}
 
 // 导出API方法
 export const api = {
@@ -105,15 +146,72 @@ export const api = {
         use_count?: number;
         allow_copy?: number;
         is_shared?: number | boolean;
+        cover_image?: string | null;
         public_at?: string;
         created_at?: string;
         owner_id?: number | null;
         owner_nickname?: string;
         owner_avatar?: string;
+        join_mode?: 'free' | 'member' | 'paid' | 'approval' | string;
+        join_note?: string;
+        relation?: {
+          joined_via?: string;
+          is_joined?: boolean;
+        };
+        source_type?: string;
+        source_label?: string;
+        participants_total?: number;
+        answer_users_7d?: number;
         bank_type: 'system' | 'user';
       }>;
       total: number;
       page: number;
+    }>,
+
+  getPublicBankCard: (sourceType: 'system' | 'user', bankId: number) =>
+    request(`/public/banks/card/${encodeURIComponent(sourceType)}/${encodeURIComponent(String(bankId))}`, 'GET') as Promise<{
+      id: number;
+      bank_type: 'system' | 'user';
+      source_type?: string;
+      source_label?: string;
+      name: string;
+      description?: string;
+      cover_image?: string | null;
+      owner_label?: string;
+      owner_avatar?: string | null;
+      question_count?: number;
+      participants_total?: number;
+      answer_users_7d?: number;
+      published_at?: string;
+      last_activity_at?: string;
+      join_mode?: 'free' | 'member' | 'paid' | 'approval' | string;
+      join_note?: string;
+      allow_copy?: boolean;
+      is_owner?: boolean;
+      relation?: {
+        joined_via?: string;
+        is_joined?: boolean;
+      };
+      board?: {
+        id?: number | null;
+        slug?: string | null;
+        name?: string | null;
+      };
+      practice_url?: string;
+      detail_url?: string;
+    }>,
+
+  joinPublicBank: (sourceType: 'system' | 'user', bankId: number) =>
+    request(`/public/banks/${encodeURIComponent(sourceType)}/${encodeURIComponent(String(bankId))}/join`, 'POST', {}) as Promise<{
+      joined?: boolean;
+      self_owned?: boolean;
+      source_type?: string;
+    }>,
+
+  leavePublicBank: (sourceType: 'system' | 'user', bankId: number) =>
+    request(`/public/banks/${encodeURIComponent(sourceType)}/${encodeURIComponent(String(bankId))}/join`, 'DELETE', {}) as Promise<{
+      joined?: boolean;
+      source_type?: string;
     }>,
   
   // 获取题目列表
@@ -401,7 +499,7 @@ export const api = {
         },
         fail: (err: any) => {
           const errorMsg = err?.errMsg || err?.message || '网络异常：上传失败';
-          maybeShowDevHostHint(apiBaseUrl, errorMsg);
+          maybeShowUploadDevHostHint(apiBaseUrl, errorMsg);
           reject(new Error(errorMsg));
         }
       });
