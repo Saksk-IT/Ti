@@ -225,30 +225,42 @@ POSTGRES_BIND=127.0.0.1 \
 
 ## 6. 生产环境域名与 HTTPS 后续配置
 
-这一节只适用于生产环境。先完成第 3 节，确认 `http://服务器IP:8080` 可访问，并确保 DNS 已经解析到服务器 IP。
+这一节只适用于生产环境。先完成第 3 节，确认 `http://服务器IP:8080` 可访问，并确保所有域名的 DNS 都已经解析到服务器 IP。主域名写入 `DOMAIN`，额外域名写入 `EXTRA_DOMAINS`，多个额外域名用空格或逗号分隔。
 
 ```bash
 cd /opt/ti
 
-printf '域名: '
+printf '主域名 [saksk.top]: '
 IFS= read -r DOMAIN
+DOMAIN="${DOMAIN:-saksk.top}"
+printf '额外域名 [ti.saksk.top]: '
+IFS= read -r EXTRA_DOMAINS
+EXTRA_DOMAINS="${EXTRA_DOMAINS:-ti.saksk.top}"
 
-dig +short "$DOMAIN"
-curl -I "http://$DOMAIN" || true
+for name in $DOMAIN ${EXTRA_DOMAINS//,/ }; do
+  echo "== $name =="
+  dig +short "$name"
+  curl -I "http://$name" || true
+done
 ```
 
-确认解析正确后执行下面命令。脚本会把 Docker 内 nginx 改为只绑定 `127.0.0.1:8080`，宿主机 Nginx 接管 80/443，并将 `ENABLE_HTTPS=1`、`DOMAIN`、`CERTBOT_EMAIL`、`SESSION_COOKIE_SECURE=true` 写回 `.env.production`。
+确认解析正确后执行下面命令。脚本会把 Docker 内 nginx 改为只绑定 `127.0.0.1:8080`，宿主机 Nginx 接管 80/443，为 `DOMAIN` 和 `EXTRA_DOMAINS` 申请或扩展同一张证书，并将 `ENABLE_HTTPS=1`、`DOMAIN`、`EXTRA_DOMAINS`、`CERTBOT_EMAIL`、`SESSION_COOKIE_SECURE=true` 写回 `.env.production`。
 
 ```bash
 cd /opt/ti
 
-printf '域名: '
+printf '主域名 [saksk.top]: '
 IFS= read -r DOMAIN
+DOMAIN="${DOMAIN:-saksk.top}"
+printf '额外域名 [ti.saksk.top]: '
+IFS= read -r EXTRA_DOMAINS
+EXTRA_DOMAINS="${EXTRA_DOMAINS:-ti.saksk.top}"
 printf 'Certbot 邮箱: '
 IFS= read -r CERTBOT_EMAIL
 
 ENABLE_HTTPS=1 \
 DOMAIN="$DOMAIN" \
+EXTRA_DOMAINS="$EXTRA_DOMAINS" \
 CERTBOT_EMAIL="$CERTBOT_EMAIL" \
 ./scripts/deploy_ubuntu24.sh
 ```
@@ -258,9 +270,12 @@ CERTBOT_EMAIL="$CERTBOT_EMAIL" \
 ```bash
 cd /opt/ti
 
-grep -E '^(HTTP_BIND|HTTP_PORT|SESSION_COOKIE_SECURE)=' .env.production
+grep -E '^(DOMAIN|EXTRA_DOMAINS|HTTP_BIND|HTTP_PORT|SESSION_COOKIE_SECURE)=' .env.production
 DOMAIN="$(grep -E '^DOMAIN=' .env.production | cut -d= -f2-)"
-curl -fsS "https://$DOMAIN/api/ping" | python3 -m json.tool
+EXTRA_DOMAINS="$(grep -E '^EXTRA_DOMAINS=' .env.production | cut -d= -f2-)"
+for name in $DOMAIN ${EXTRA_DOMAINS//,/ }; do
+  curl -fsS "https://$name/api/ping" | python3 -m json.tool
+done
 ```
 
 ## 7. 完整命令式生产部署
@@ -346,7 +361,7 @@ cd /opt/ti
 ./scripts/update_production.sh
 ```
 
-如果已启用生产 HTTPS，`.env.production` 中保存了 `ENABLE_HTTPS=1`、`DOMAIN` 和 `CERTBOT_EMAIL` 后，日常更新仍然只需要执行：
+如果已启用生产 HTTPS，`.env.production` 中保存了 `ENABLE_HTTPS=1`、`DOMAIN`、`EXTRA_DOMAINS` 和 `CERTBOT_EMAIL` 后，日常更新仍然只需要执行：
 
 ```bash
 cd /opt/ti
@@ -356,18 +371,23 @@ cd /opt/ti
 
 这个入口会在生产更新后默认重启 Docker 内 nginx，刷新 web 容器更新后的 upstream 连接；如果健康检查首次失败，也会再重启 Docker 内 nginx 后重试。它还会在证书已存在时重新写入宿主机 443 SSL 反代配置，因此通常不需要再手动执行“重启 Docker 内 nginx”和“重新配置 HTTPS”两段命令。
 
-如果 `.env.production` 还没有保存 HTTPS 参数，或者是首次启用 HTTPS，显式传入一次：
+如果 `.env.production` 还没有保存 HTTPS 参数，或者是首次启用 HTTPS / 新增额外域名，显式传入一次：
 
 ```bash
 cd /opt/ti
 
-printf '域名: '
+printf '主域名 [saksk.top]: '
 IFS= read -r DOMAIN
+DOMAIN="${DOMAIN:-saksk.top}"
+printf '额外域名 [ti.saksk.top]: '
+IFS= read -r EXTRA_DOMAINS
+EXTRA_DOMAINS="${EXTRA_DOMAINS:-ti.saksk.top}"
 printf 'Certbot 邮箱: '
 IFS= read -r CERTBOT_EMAIL
 
 ENABLE_HTTPS=1 \
 DOMAIN="$DOMAIN" \
+EXTRA_DOMAINS="$EXTRA_DOMAINS" \
 CERTBOT_EMAIL="$CERTBOT_EMAIL" \
 ./scripts/update_production.sh
 ```
@@ -517,8 +537,11 @@ curl --retry 10 --retry-delay 3 --retry-all-errors -fsS \
   "http://127.0.0.1:8080/api/ping" | python3 -m json.tool
 
 DOMAIN="$(grep -E '^DOMAIN=' .env.production | cut -d= -f2-)"
-curl --retry 10 --retry-delay 3 --retry-all-errors -fsS \
-  "https://$DOMAIN/api/ping" | python3 -m json.tool
+EXTRA_DOMAINS="$(grep -E '^EXTRA_DOMAINS=' .env.production | cut -d= -f2-)"
+for name in $DOMAIN ${EXTRA_DOMAINS//,/ }; do
+  curl --retry 10 --retry-delay 3 --retry-all-errors -fsS \
+    "https://$name/api/ping" | python3 -m json.tool
+done
 ```
 
 如果重启 Docker 内 nginx 后仍然是 `502`，继续收集反代链路日志：
@@ -539,7 +562,9 @@ cd /opt/ti
 
 curl -I "http://saksk.top" || true
 curl -k -I "https://saksk.top" || true
-sudo nginx -T | sed -n '/server_name saksk.top/,+80p'
+curl -I "http://ti.saksk.top" || true
+curl -k -I "https://ti.saksk.top" || true
+sudo nginx -T | sed -n '/server_name saksk.top ti.saksk.top/,+80p'
 
 ./scripts/update_production.sh
 ```

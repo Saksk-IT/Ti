@@ -54,9 +54,10 @@ maybe_reexec_after_pull() {
 }
 
 resolve_https_env() {
-  local saved_enable_https saved_domain saved_certbot_email saved_http_bind saved_secure_cookie
+  local saved_enable_https saved_domain saved_extra_domains saved_certbot_email saved_http_bind saved_secure_cookie
   saved_enable_https="$(read_env_value ENABLE_HTTPS)"
   saved_domain="$(read_env_value DOMAIN)"
+  saved_extra_domains="$(read_env_value EXTRA_DOMAINS)"
   saved_certbot_email="$(read_env_value CERTBOT_EMAIL)"
   saved_http_bind="$(read_env_value HTTP_BIND)"
   saved_secure_cookie="$(read_env_value SESSION_COOKIE_SECURE)"
@@ -85,12 +86,13 @@ resolve_https_env() {
   fi
 
   DOMAIN="${DOMAIN:-$saved_domain}"
+  EXTRA_DOMAINS="${EXTRA_DOMAINS:-$saved_extra_domains}"
   CERTBOT_EMAIL="${CERTBOT_EMAIL:-$saved_certbot_email}"
 
   [[ -n "$DOMAIN" ]] || fail "已启用 HTTPS 更新，但 ${ENV_FILE} 缺少 DOMAIN；请临时传入 DOMAIN=域名 后重试"
 
-  export DOMAIN CERTBOT_EMAIL
-  log "检测到生产 HTTPS：${DOMAIN}"
+  export DOMAIN EXTRA_DOMAINS CERTBOT_EMAIL
+  log "检测到生产 HTTPS：${DOMAIN}${EXTRA_DOMAINS:+ ${EXTRA_DOMAINS}}"
 }
 
 script_signature_before_pull="$(file_signature "$SCRIPT_PATH")"

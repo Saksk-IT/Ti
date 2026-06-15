@@ -2,6 +2,8 @@
 import sys
 import types
 import re
+import subprocess
+import textwrap
 from pathlib import Path
 
 
@@ -121,3 +123,69 @@ def test_production_deploy_persists_rate_limit_multiplier():
     assert 'RATELIMIT_LIMIT_MULTIPLIER="${RATELIMIT_LIMIT_MULTIPLIER:-100}"' in script_text
     assert 'RATELIMIT_LIMIT_MULTIPLIER=${RATELIMIT_LIMIT_MULTIPLIER}' in script_text
     assert 'upsert_env_value "RATELIMIT_LIMIT_MULTIPLIER" "$RATELIMIT_LIMIT_MULTIPLIER"' in script_text
+
+
+def test_production_deploy_supports_extra_https_domains():
+    script_text = Path("scripts/deploy_ubuntu24.sh").read_text(encoding="utf-8")
+
+    assert 'EXTRA_DOMAINS="${EXTRA_DOMAINS:-}"' in script_text
+    assert 'raw_extra_domains="${EXTRA_DOMAINS//,/ }"' in script_text
+    assert 'upsert_env_value "EXTRA_DOMAINS" "$EXTRA_DOMAINS"' in script_text
+    assert 'server_names="$APP_DOMAINS"' in script_text
+    assert 'server_name ${server_names};' in script_text
+    assert 'for domain in $APP_DOMAINS; do' in script_text
+    assert 'if [[ -z "$CERTBOT_EMAIL" ]] && ! certificate_covers_all_domains; then' in script_text
+    assert 'certbot_domain_args+=(-d "$domain")' in script_text
+    assert 'certbot_common_args+=(--expand)' in script_text
+    assert 'for domain in $APP_DOMAINS; do' in script_text
+    assert '"https://${domain}/api/ping"' in script_text
+
+
+def test_update_production_preserves_extra_https_domains():
+    script_text = Path("scripts/update_production.sh").read_text(encoding="utf-8")
+
+    assert "saved_extra_domains" in script_text
+    assert "saved_extra_domains=\"$(read_env_value EXTRA_DOMAINS)\"" in script_text
+    assert 'EXTRA_DOMAINS="${EXTRA_DOMAINS:-$saved_extra_domains}"' in script_text
+    assert "export DOMAIN EXTRA_DOMAINS CERTBOT_EMAIL" in script_text
+
+
+def test_deploy_helper_generates_multi_domain_nginx_and_certbot_args(tmp_path):
+    nginx_conf = tmp_path / "ti.conf"
+    enabled_conf = tmp_path / "enabled-ti.conf"
+
+    command = textwrap.dedent(
+        f"""
+        set -euo pipefail
+        export DEPLOY_UBUNTU24_TEST_HELPERS=1
+        export DOMAIN=saksk.top
+        export EXTRA_DOMAINS='ti.saksk.top,api.saksk.top'
+        export HOST_NGINX_CONFIG_PATH='{nginx_conf}'
+        export HOST_NGINX_ENABLED_PATH='{enabled_conf}'
+        source scripts/deploy_ubuntu24.sh
+        SUDO=
+        APP_DOMAIN=saksk.top
+        EXTRA_DOMAINS='ti.saksk.top,api.saksk.top'
+        HTTP_PORT=8080
+        APP_DOMAINS=
+        build_app_domains
+        certificate_files_exist() {{ return 0; }}
+        reload_host_nginx() {{ :; }}
+        write_host_nginx_config
+        echo "DOMAINS:$APP_DOMAINS"
+        cat '{nginx_conf}'
+        """
+    )
+
+    result = subprocess.run(
+        ["bash", "-c", command],
+        cwd=Path.cwd(),
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+
+    assert "DOMAINS:saksk.top ti.saksk.top api.saksk.top" in result.stdout
+    assert "server_name saksk.top ti.saksk.top api.saksk.top;" in result.stdout
+    assert "ssl_certificate /etc/letsencrypt/live/saksk.top/fullchain.pem;" in result.stdout
+    assert "proxy_pass http://127.0.0.1:8080;" in result.stdout

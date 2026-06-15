@@ -39,11 +39,13 @@ if [[ "$ENABLE_HTTPS" == "1" && "$DEPLOY_ENV" != "production" ]]; then
 fi
 
 APP_DOMAIN="${DOMAIN:-}"
+EXTRA_DOMAINS="${EXTRA_DOMAINS:-}"
 CERTBOT_EMAIL="${CERTBOT_EMAIL:-}"
 APP_DIR="${APP_DIR:-$ROOT_DIR}"
 ENV_FILE="${ENV_FILE:-$DEFAULT_ENV_FILE}"
 COMPOSE_FILE="${COMPOSE_FILE:-$DEFAULT_COMPOSE_FILE}"
 REQUESTED_DOMAIN="${DOMAIN-}"
+REQUESTED_EXTRA_DOMAINS="${EXTRA_DOMAINS-}"
 REQUESTED_CERTBOT_EMAIL="${CERTBOT_EMAIL-}"
 REQUESTED_TI_IMAGE="${TI_IMAGE-}"
 REQUESTED_TI_IMAGE_PULL_POLICY="${TI_IMAGE_PULL_POLICY-}"
@@ -67,6 +69,9 @@ RATELIMIT_LIMIT_MULTIPLIER="${RATELIMIT_LIMIT_MULTIPLIER:-100}"
 HTTP_BIND="${HTTP_BIND:-$([[ "$ENABLE_HTTPS" == "1" ]] && printf '127.0.0.1' || printf '0.0.0.0')}"
 HTTP_PORT="${HTTP_PORT:-8080}"
 SESSION_COOKIE_SECURE="${SESSION_COOKIE_SECURE:-$([[ "$ENABLE_HTTPS" == "1" ]] && printf 'true' || printf 'false')}"
+APP_DOMAINS=""
+HOST_NGINX_CONFIG_PATH="${HOST_NGINX_CONFIG_PATH:-/etc/nginx/sites-available/ti.conf}"
+HOST_NGINX_ENABLED_PATH="${HOST_NGINX_ENABLED_PATH:-/etc/nginx/sites-enabled/ti.conf}"
 
 if ! command -v sudo >/dev/null 2>&1 && [[ "$(id -u)" -ne 0 ]]; then
   echo "错误：当前用户不是 root，且系统中没有 sudo。"
@@ -88,6 +93,32 @@ log() {
 fail() {
   echo "错误：$*" >&2
   exit 1
+}
+
+append_app_domain() {
+  local domain="$1"
+  [[ -n "$domain" ]] || return
+
+  if [[ ! "$domain" =~ ^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$ ]]; then
+    fail "域名格式不合法：${domain}"
+  fi
+
+  case " ${APP_DOMAINS} " in
+    *" ${domain} "*) return ;;
+  esac
+
+  APP_DOMAINS="${APP_DOMAINS:+${APP_DOMAINS} }${domain}"
+}
+
+build_app_domains() {
+  local raw_extra_domains domain
+  APP_DOMAINS=""
+  append_app_domain "$APP_DOMAIN"
+
+  raw_extra_domains="${EXTRA_DOMAINS//,/ }"
+  for domain in $raw_extra_domains; do
+    append_app_domain "$domain"
+  done
 }
 
 random_secret() {
@@ -152,6 +183,9 @@ load_env_file() {
     APP_DOMAIN="$REQUESTED_DOMAIN"
   else
     APP_DOMAIN="${DOMAIN:-$APP_DOMAIN}"
+  fi
+  if [[ -n "$REQUESTED_EXTRA_DOMAINS" ]]; then
+    EXTRA_DOMAINS="$REQUESTED_EXTRA_DOMAINS"
   fi
   if [[ -n "$REQUESTED_CERTBOT_EMAIL" ]]; then
     CERTBOT_EMAIL="$REQUESTED_CERTBOT_EMAIL"
@@ -411,6 +445,7 @@ prepare_runtime_files() {
     upsert_env_value "SESSION_COOKIE_SECURE" "$SESSION_COOKIE_SECURE"
     if [[ "$ENABLE_HTTPS" == "1" ]]; then
       [[ -n "$APP_DOMAIN" ]] && upsert_env_value "DOMAIN" "$APP_DOMAIN"
+      upsert_env_value "EXTRA_DOMAINS" "$EXTRA_DOMAINS"
       [[ -n "$CERTBOT_EMAIL" ]] && upsert_env_value "CERTBOT_EMAIL" "$CERTBOT_EMAIL"
     fi
   fi
@@ -435,8 +470,10 @@ validate_env() {
 
   if [[ "$ENABLE_HTTPS" == "1" ]]; then
     [[ -n "$APP_DOMAIN" ]] || fail "ENABLE_HTTPS=1 时必须设置 DOMAIN"
-    if [[ -z "$CERTBOT_EMAIL" ]] && ! certificate_files_exist; then
-      fail "ENABLE_HTTPS=1 且证书不存在时必须设置 CERTBOT_EMAIL"
+    build_app_domains
+    [[ -n "$APP_DOMAINS" ]] || fail "ENABLE_HTTPS=1 时至少需要一个域名"
+    if [[ -z "$CERTBOT_EMAIL" ]] && ! certificate_covers_all_domains; then
+      fail "ENABLE_HTTPS=1 且证书未覆盖全部域名时必须设置 CERTBOT_EMAIL"
     fi
     [[ "$SESSION_COOKIE_SECURE" == "true" ]] || fail "ENABLE_HTTPS=1 时 SESSION_COOKIE_SECURE 必须为 true"
   fi
@@ -561,6 +598,22 @@ certificate_files_exist() {
     && $SUDO test -f "/etc/letsencrypt/live/${APP_DOMAIN}/privkey.pem"
 }
 
+certificate_covers_all_domains() {
+  local certificate_path certificate_text domain
+
+  certificate_path="/etc/letsencrypt/live/${APP_DOMAIN}/fullchain.pem"
+  if ! certificate_files_exist; then
+    return 1
+  fi
+
+  certificate_text="$($SUDO openssl x509 -in "$certificate_path" -noout -text 2>/dev/null)" || return 1
+  for domain in $APP_DOMAINS; do
+    if ! grep -Fq "DNS:${domain}" <<<"$certificate_text"; then
+      return 1
+    fi
+  done
+}
+
 deploy_stack() {
   log "拉取应用镜像：${TI_IMAGE}"
   $SUDO docker pull "$TI_IMAGE"
@@ -619,18 +672,22 @@ configure_host_nginx() {
     return
   fi
 
+  build_app_domains
   log "配置宿主机 Nginx 反向代理"
   write_host_nginx_config
   reload_host_nginx
 }
 
 write_host_nginx_config() {
+  local server_names
+  server_names="$APP_DOMAINS"
+
   if certificate_files_exist; then
-    $SUDO tee /etc/nginx/sites-available/ti.conf > /dev/null <<EOF
+    $SUDO tee "$HOST_NGINX_CONFIG_PATH" > /dev/null <<EOF
 server {
     listen 80;
     listen [::]:80;
-    server_name ${APP_DOMAIN};
+    server_name ${server_names};
 
     location / {
         return 301 https://\$host\$request_uri;
@@ -640,7 +697,7 @@ server {
 server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
-    server_name ${APP_DOMAIN};
+    server_name ${server_names};
 
     ssl_certificate /etc/letsencrypt/live/${APP_DOMAIN}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/${APP_DOMAIN}/privkey.pem;
@@ -676,11 +733,11 @@ server {
 }
 EOF
   else
-    $SUDO tee /etc/nginx/sites-available/ti.conf > /dev/null <<EOF
+    $SUDO tee "$HOST_NGINX_CONFIG_PATH" > /dev/null <<EOF
 server {
     listen 80;
     listen [::]:80;
-    server_name ${APP_DOMAIN};
+    server_name ${server_names};
 
     client_max_body_size 10m;
 
@@ -716,7 +773,7 @@ EOF
 }
 
 reload_host_nginx() {
-  $SUDO ln -sf /etc/nginx/sites-available/ti.conf /etc/nginx/sites-enabled/ti.conf
+  $SUDO ln -sf "$HOST_NGINX_CONFIG_PATH" "$HOST_NGINX_ENABLED_PATH"
   $SUDO nginx -t
   $SUDO systemctl reload nginx
 }
@@ -749,15 +806,28 @@ install_certbot() {
     log "Certbot 已安装，跳过"
   fi
 
-  if ! certificate_files_exist; then
+  build_app_domains
+  if certificate_covers_all_domains; then
+    log "检测到 ${APP_DOMAINS} 证书已覆盖全部域名，跳过签发"
+  else
+    local -a certbot_domain_args=()
+    local -a certbot_common_args=("--nginx" "--cert-name" "$APP_DOMAIN")
+    local domain
+    for domain in $APP_DOMAINS; do
+      certbot_domain_args+=(-d "$domain")
+    done
+
     log "申请 HTTPS 证书"
-    $SUDO certbot certonly --nginx \
-      -d "$APP_DOMAIN" \
+    if certificate_files_exist; then
+      certbot_common_args+=(--expand)
+    fi
+
+    $SUDO certbot certonly \
+      "${certbot_common_args[@]}" \
+      "${certbot_domain_args[@]}" \
       -m "$CERTBOT_EMAIL" \
       --agree-tos \
       --no-eff-email
-  else
-    log "检测到 ${APP_DOMAIN} 证书已存在，跳过首次签发"
   fi
 
   configure_host_nginx
@@ -788,8 +858,11 @@ validate_deploy() {
     probe_json_with_internal_nginx_recovery "http://127.0.0.1:${HTTP_PORT}/api/ping"
 
     if [[ "$ENABLE_HTTPS" == "1" ]]; then
-      curl -I "https://${APP_DOMAIN}" || true
-      probe_json_with_internal_nginx_recovery "https://${APP_DOMAIN}/api/ping"
+      local domain
+      for domain in $APP_DOMAINS; do
+        curl -I "https://${domain}" || true
+        probe_json_with_internal_nginx_recovery "https://${domain}/api/ping"
+      done
     fi
   else
     probe_json "http://127.0.0.1:${WEB_PORT:-8000}/api/ping"
@@ -805,7 +878,7 @@ print_summary() {
 Compose：${COMPOSE_FILE}
 环境文件：${ENV_FILE}
 生产 HTTP 绑定：${HTTP_BIND:-未设置}:${HTTP_PORT:-未设置}
-HTTPS 后续配置：$([[ "$ENABLE_HTTPS" == "1" ]] && printf '已启用，域名 %s' "$APP_DOMAIN" || printf '未启用')
+HTTPS 后续配置：$([[ "$ENABLE_HTTPS" == "1" ]] && printf '已启用，域名 %s' "$APP_DOMAINS" || printf '未启用')
 
 常用命令：
   docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" ps
@@ -819,6 +892,10 @@ HTTPS 后续配置：$([[ "$ENABLE_HTTPS" == "1" ]] && printf '已启用，域�
   - 生产备份包可能包含 env 配置，请按密钥级别保护 backups/。
 EOF
 }
+
+if [[ "${DEPLOY_UBUNTU24_TEST_HELPERS:-0}" == "1" ]]; then
+  return 0 2>/dev/null || exit 0
+fi
 
 install_base_packages
 install_docker
