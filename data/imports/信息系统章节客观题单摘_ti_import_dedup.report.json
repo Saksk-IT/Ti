@@ -1,0 +1,123 @@
+{
+  "generated_at": "2026-06-18T23:39:07+08:00",
+  "source_dir": "/Users/sak/Desktop/梁志恒/信息系统分析与设计题库",
+  "output_file": "/Users/sak/Documents/GitHub/Ti/data/imports/信息系统章节客观题单摘_ti_import_dedup.json",
+  "question_count": 353,
+  "original_question_count": 353,
+  "removed_duplicate_count": 0,
+  "type_counts": {
+    "boolean": 130,
+    "single_choice": 118,
+    "multi_choice": 105
+  },
+  "answer_source_counts": {
+    "source": 353
+  },
+  "duplicate_group_count": 0,
+  "duplicate_involved_count": 0,
+  "same_content_group_count": 1,
+  "same_content_involved_count": 2,
+  "same_content_conflict_group_count": 1,
+  "same_content_conflict_groups": [
+    {
+      "content": "面向对象设计的准则包括（）",
+      "count": 2,
+      "items": [
+        {
+          "id": 232,
+          "type": "single_choice",
+          "source": "第7章客观题题库.docx",
+          "source_no": "15",
+          "answer_source": "source",
+          "options": [
+            "可重用",
+            "可设计",
+            "可编码",
+            "可维护"
+          ],
+          "answer": [
+            0
+          ]
+        },
+        {
+          "id": 242,
+          "type": "multi_choice",
+          "source": "第7章客观题题库.docx",
+          "source_no": "25",
+          "answer_source": "source",
+          "options": [
+            "模块化",
+            "强内聚",
+            "低耦合",
+            "可复用"
+          ],
+          "answer": [
+            0,
+            1,
+            2,
+            3
+          ]
+        }
+      ]
+    }
+  ],
+  "conflict_group_count": 1,
+  "conflict_groups": [
+    {
+      "content": "面向对象设计的准则包括（）",
+      "count": 2,
+      "items": [
+        {
+          "id": 232,
+          "type": "single_choice",
+          "source": "第7章客观题题库.docx",
+          "source_no": "15",
+          "answer_source": "source",
+          "options": [
+            "可重用",
+            "可设计",
+            "可编码",
+            "可维护"
+          ],
+          "answer": [
+            0
+          ]
+        },
+        {
+          "id": 242,
+          "type": "multi_choice",
+          "source": "第7章客观题题库.docx",
+          "source_no": "25",
+          "answer_source": "source",
+          "options": [
+            "模块化",
+            "强内聚",
+            "低耦合",
+            "可复用"
+          ],
+          "answer": [
+            0,
+            1,
+            2,
+            3
+          ]
+        }
+      ]
+    }
+  ],
+  "duplicate_groups": [],
+  "validation_error_count": 0,
+  "validation_errors": [],
+  "source_warnings": {
+    "第10章-客观题题库.pdf": [
+      "第10章-客观题题库.pdf: 第1题题干为空或残缺，已跳过"
+    ]
+  },
+  "notes": [
+    "本文件只包含 信息系统分析与设计题库 文件夹内的章节客观题。",
+    "选择题答案使用0基索引数组，例如A为[0]。",
+    "判断题答案使用布尔数组，例如正确为[true]。",
+    "原始资料无题干的空题块已跳过。",
+    "去重版只删除题干、题型、选项、答案均一致的完全重复题；同题干但题型或选项不同的题目保留并在报告中列出。"
+  ]
+}
