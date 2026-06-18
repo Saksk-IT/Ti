@@ -1,931 +1,39 @@
 {
-  "generated_at": "2026-06-18T13:52:34+08:00",
-  "source_files": [
-    "/Users/sak/Desktop/梁志恒/信息系统选择填空.pdf",
-    "/Users/sak/Desktop/梁志恒/信息系统简答.pdf"
-  ],
+  "generated_at": "2026-06-19T00:04:28+08:00",
+  "source": "信息系统学习通PDF单摘题库",
+  "source_file": "/Users/sak/Documents/GitHub/Ti/data/imports/信息系统学习通PDF单摘_ti_import.json",
   "output_file": "/Users/sak/Documents/GitHub/Ti/data/imports/信息系统学习通PDF单摘_ti_import_dedup.json",
-  "question_count": 450,
+  "question_count": 479,
   "original_question_count": 585,
-  "removed_duplicate_count": 135,
+  "source_original_question_count": 585,
+  "skipped_invalid_question_count": 0,
+  "removed_duplicate_count": 106,
   "type_counts": {
-    "single_choice": 154,
-    "fill": 143,
-    "essay": 153
+    "single_choice": 164,
+    "fill": 161,
+    "essay": 154
   },
   "answer_source_counts": {
-    "source": 297,
-    "ai": 153
+    "source": 317,
+    "ai": 162
   },
   "essay_analysis_counts": {
-    "答案由AI 生成，非官方答案，仅供参考": 89,
+    "答案由AI 生成，非官方答案，仅供参考": 90,
     "来源学习通": 64
   },
-  "duplicate_group_count": 104,
-  "duplicate_involved_count": 239,
-  "conflict_group_count": 18,
-  "conflict_groups": [
-    {
-      "content": "描述数据流图的基本元素包括( )。",
-      "count": 4,
-      "kept": {
-        "original_id": 3,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "3",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 18,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "18",
-          "answer_source": "source"
-        },
-        {
-          "original_id": 138,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "138",
-          "answer_source": "source"
-        },
-        {
-          "original_id": 177,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "177",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "系统分析的任务是( )。",
-      "count": 3,
-      "kept": {
-        "original_id": 8,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "8",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 37,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "37",
-          "answer_source": "source"
-        },
-        {
-          "original_id": 210,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "210",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "执行者（Actor）与用例之间的关系是（ ）。",
-      "count": 3,
-      "kept": {
-        "original_id": 9,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "9",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 208,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "208",
-          "answer_source": "source"
-        },
-        {
-          "original_id": 291,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "56",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "用来划分子系统的U/C矩阵由以下两者之间的关系形成( )。",
-      "count": 2,
-      "kept": {
-        "original_id": 46,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "46",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 152,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "152",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "数据字典建立应从( )阶段开始。",
-      "count": 3,
-      "kept": {
-        "original_id": 72,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "72",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 192,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "192",
-          "answer_source": "source"
-        },
-        {
-          "original_id": 237,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "2",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "2个字节表示（ ）个二进制位。",
-      "count": 2,
-      "kept": {
-        "original_id": 90,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "90",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 316,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "81",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "数据字典中，一般不包括下列选项中的( )条目。",
-      "count": 2,
-      "kept": {
-        "original_id": 143,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "143",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 303,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "68",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "描述系统中各模块的层次及其输入输出功能的图是( )。",
-      "count": 3,
-      "kept": {
-        "original_id": 149,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "149",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 163,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "163",
-          "answer_source": "source"
-        },
-        {
-          "original_id": 220,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "220",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "日文有50个平假名和50个片假名，每个假名的信息量是（ ）。",
-      "count": 2,
-      "kept": {
-        "original_id": 159,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "159",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 321,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "86",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "每位数字的信息量为1，十进制数字有10个，每位数字的信息量是（ ）。",
-      "count": 2,
-      "kept": {
-        "original_id": 164,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "164",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 254,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "19",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "汉字编码用（ ）个字节表示一个汉字。",
-      "count": 2,
-      "kept": {
-        "original_id": 188,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "188",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 372,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "137",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "每位数字的信息量为1，十六进制的每位数字的信息量是（ ）。",
-      "count": 2,
-      "kept": {
-        "original_id": 193,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "193",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 360,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "125",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "数据字典是软件需求分析阶段的最重要的工具之一，其最基本的功能是( )。",
-      "count": 2,
-      "kept": {
-        "original_id": 199,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "199",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 332,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "97",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "数据字典(DD)所定义的对象都包含在（ ）中。",
-      "count": 3,
-      "kept": {
-        "original_id": 215,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "215",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 218,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "218",
-          "answer_source": "source"
-        },
-        {
-          "original_id": 361,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "126",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "面向数据流的设计方法把信息流映射成软件结构,信息流有下述两种类型即____________和 ____________。",
-      "count": 5,
-      "kept": {
-        "original_id": 244,
-        "type": "fill",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "9",
-        "answer_source": "ai"
-      },
-      "removed": [
-        {
-          "original_id": 266,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "31",
-          "answer_source": "ai"
-        },
-        {
-          "original_id": 269,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "34",
-          "answer_source": "ai"
-        },
-        {
-          "original_id": 277,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "42",
-          "answer_source": "ai"
-        },
-        {
-          "original_id": 330,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "95",
-          "answer_source": "ai"
-        }
-      ]
-    },
-    {
-      "content": "大型软件系统的测试过程基本上由 、 、系统测试、 和平行运行等五个步骤。",
-      "count": 2,
-      "kept": {
-        "original_id": 298,
-        "type": "fill",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "63",
-        "answer_source": "ai"
-      },
-      "removed": [
-        {
-          "original_id": 350,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "115",
-          "answer_source": "ai"
-        }
-      ]
-    },
-    {
-      "content": "总体设计又可称为概要设计的过程通常由 和 两个主要阶段组成。",
-      "count": 2,
-      "kept": {
-        "original_id": 309,
-        "type": "fill",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "74",
-        "answer_source": "ai"
-      },
-      "removed": [
-        {
-          "original_id": 397,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "162",
-          "answer_source": "ai"
-        }
-      ]
-    },
-    {
-      "content": "软件测试的目的是“建设性”的,即为了竭力证明已经建造好的软件系统的正确性和适用性",
-      "count": 2,
-      "kept": {
-        "original_id": 446,
-        "type": "essay",
-        "source": "信息系统简答.pdf",
-        "source_no": "45",
-        "answer_source": "ai"
-      },
-      "removed": [
-        {
-          "original_id": 562,
-          "type": "essay",
-          "source": "信息系统简答.pdf",
-          "source_no": "161",
-          "answer_source": "ai"
-        }
-      ]
-    }
-  ],
+  "essay_answer_source_counts": {
+    "ai": 90,
+    "source": 64
+  },
+  "dedup_key": "normalized_type_content_options_answer",
+  "duplicate_group_count": 86,
+  "duplicate_involved_count": 192,
   "duplicate_groups": [
-    {
-      "content": "知识表示的方法主要有逻辑表示法（谓词表示法）、（ ）、产生式系统和语义网络等，在语义网 络表示知识时，所使用的推理方法有AKO和ISA。",
-      "count": 2,
-      "kept": {
-        "original_id": 1,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "1",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 147,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "147",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "模块耦合的最好方式是( )。",
-      "count": 2,
-      "kept": {
-        "original_id": 2,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "2",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 224,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "224",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "描述数据流图的基本元素包括( )。",
-      "count": 4,
-      "kept": {
-        "original_id": 3,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "3",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 18,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "18",
-          "answer_source": "source"
-        },
-        {
-          "original_id": 138,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "138",
-          "answer_source": "source"
-        },
-        {
-          "original_id": 177,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "177",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "数据流图是描述信息系统的( )。",
-      "count": 2,
-      "kept": {
-        "original_id": 7,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "7",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 59,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "59",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "系统分析的任务是( )。",
-      "count": 3,
-      "kept": {
-        "original_id": 8,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "8",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 37,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "37",
-          "answer_source": "source"
-        },
-        {
-          "original_id": 210,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "210",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "执行者（Actor）与用例之间的关系是（ ）。",
-      "count": 3,
-      "kept": {
-        "original_id": 9,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "9",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 208,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "208",
-          "answer_source": "source"
-        },
-        {
-          "original_id": 291,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "56",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "在计算机内用两个字节的二进制编码来表示一个汉字，这种编码称为（ )。",
-      "count": 2,
-      "kept": {
-        "original_id": 10,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "10",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 127,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "127",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "系统的逻辑模型是描述系统什么问题( )。",
-      "count": 2,
-      "kept": {
-        "original_id": 11,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "11",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 223,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "223",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "用于对面向对象系统的物理方面建模进行描述图形是( )。",
-      "count": 2,
-      "kept": {
-        "original_id": 12,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "12",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 58,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "58",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "下列建模需求中，适合使用活动图来完成的是（ ）。",
-      "count": 5,
-      "kept": {
-        "original_id": 14,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "14",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 136,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "136",
-          "answer_source": "source"
-        },
-        {
-          "original_id": 162,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "162",
-          "answer_source": "source"
-        },
-        {
-          "original_id": 169,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "169",
-          "answer_source": "source"
-        },
-        {
-          "original_id": 183,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "183",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "以下说法错误的是（ ）。",
-      "count": 4,
-      "kept": {
-        "original_id": 15,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "15",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 80,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "80",
-          "answer_source": "source"
-        },
-        {
-          "original_id": 130,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "130",
-          "answer_source": "source"
-        },
-        {
-          "original_id": 211,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "211",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "下列UML图中与协作图建模的内容相同的是（ A ）。",
-      "count": 4,
-      "kept": {
-        "original_id": 17,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "17",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 49,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "49",
-          "answer_source": "source"
-        },
-        {
-          "original_id": 123,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "123",
-          "answer_source": "source"
-        },
-        {
-          "original_id": 203,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "203",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "（）是一种特殊/一般的关系，也可以看作是常说的继承关系。",
-      "count": 2,
-      "kept": {
-        "original_id": 19,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "19",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 104,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "104",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "假设一般常用汉字为3000个，他们以等概率出现，试求表达3000个汉字的信息量为多 少？",
-      "count": 2,
-      "kept": {
-        "original_id": 22,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "22",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 100,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "100",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "数据字典没有对下列（ ）元素进行详细定义。",
-      "count": 2,
-      "kept": {
-        "original_id": 23,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "23",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 207,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "207",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "对一次交互过程中有意义的对象间关系建模，并且着重刻画对象间如何交互以执行用 例的图是（ ）。",
-      "count": 2,
-      "kept": {
-        "original_id": 27,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "27",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 174,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "174",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "面向对设计的基本特性除了封装和继承之外，还包括（ ）。",
-      "count": 3,
-      "kept": {
-        "original_id": 32,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "32",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 82,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "82",
-          "answer_source": "source"
-        },
-        {
-          "original_id": 158,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "158",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "（ ）是描述系统中类的动态结构。",
-      "count": 2,
-      "kept": {
-        "original_id": 34,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "34",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 233,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "233",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "下列不在人工智能系统的知识包含的四个要素中( )。",
-      "count": 2,
-      "kept": {
-        "original_id": 35,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "35",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 181,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "181",
-          "answer_source": "source"
-        }
-      ]
-    },
     {
       "content": "下列不是状态图组成要素的是（ ）。",
       "count": 5,
       "kept": {
-        "original_id": 36,
+        "id": 36,
         "type": "single_choice",
         "source": "信息系统选择填空.pdf",
         "source_no": "36",
@@ -933,28 +41,28 @@
       },
       "removed": [
         {
-          "original_id": 75,
+          "id": 75,
           "type": "single_choice",
           "source": "信息系统选择填空.pdf",
           "source_no": "75",
           "answer_source": "source"
         },
         {
-          "original_id": 105,
+          "id": 105,
           "type": "single_choice",
           "source": "信息系统选择填空.pdf",
           "source_no": "105",
           "answer_source": "source"
         },
         {
-          "original_id": 116,
+          "id": 116,
           "type": "single_choice",
           "source": "信息系统选择填空.pdf",
           "source_no": "116",
           "answer_source": "source"
         },
         {
-          "original_id": 204,
+          "id": 204,
           "type": "single_choice",
           "source": "信息系统选择填空.pdf",
           "source_no": "204",
@@ -963,108 +71,42 @@
       ]
     },
     {
-      "content": "系统设计的工作不包括( )。",
-      "count": 2,
+      "content": "下列建模需求中，适合使用活动图来完成的是（ ）。",
+      "count": 5,
       "kept": {
-        "original_id": 38,
+        "id": 14,
         "type": "single_choice",
         "source": "信息系统选择填空.pdf",
-        "source_no": "38",
+        "source_no": "14",
         "answer_source": "source"
       },
       "removed": [
         {
-          "original_id": 168,
+          "id": 136,
           "type": "single_choice",
           "source": "信息系统选择填空.pdf",
-          "source_no": "168",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "数据字典是用于定义和说明数据流图上的各种( )。",
-      "count": 2,
-      "kept": {
-        "original_id": 40,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "40",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 109,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "109",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "面向数据流的设计（SD方法）和面向数据结构的设计（JSP方法）是根据（ ）的表示 来进行设计。",
-      "count": 2,
-      "kept": {
-        "original_id": 41,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "41",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 42,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "42",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "评价模块质量的标准是( )。",
-      "count": 3,
-      "kept": {
-        "original_id": 43,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "43",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 153,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "153",
+          "source_no": "136",
           "answer_source": "source"
         },
         {
-          "original_id": 235,
+          "id": 162,
           "type": "single_choice",
           "source": "信息系统选择填空.pdf",
-          "source_no": "235",
+          "source_no": "162",
           "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "数据词典描述的主要内容不包括（ ）。",
-      "count": 2,
-      "kept": {
-        "original_id": 44,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "44",
-        "answer_source": "source"
-      },
-      "removed": [
+        },
         {
-          "original_id": 55,
+          "id": 169,
           "type": "single_choice",
           "source": "信息系统选择填空.pdf",
-          "source_no": "55",
+          "source_no": "169",
+          "answer_source": "source"
+        },
+        {
+          "id": 183,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "183",
           "answer_source": "source"
         }
       ]
@@ -1073,7 +115,7 @@
       "content": "组件图主要描述的问题是（ ）。",
       "count": 5,
       "kept": {
-        "original_id": 45,
+        "id": 45,
         "type": "single_choice",
         "source": "信息系统选择填空.pdf",
         "source_no": "45",
@@ -1081,28 +123,28 @@
       },
       "removed": [
         {
-          "original_id": 52,
+          "id": 52,
           "type": "single_choice",
           "source": "信息系统选择填空.pdf",
           "source_no": "52",
           "answer_source": "source"
         },
         {
-          "original_id": 71,
+          "id": 71,
           "type": "single_choice",
           "source": "信息系统选择填空.pdf",
           "source_no": "71",
           "answer_source": "source"
         },
         {
-          "original_id": 195,
+          "id": 195,
           "type": "single_choice",
           "source": "信息系统选择填空.pdf",
           "source_no": "195",
           "answer_source": "source"
         },
         {
-          "original_id": 202,
+          "id": 202,
           "type": "single_choice",
           "source": "信息系统选择填空.pdf",
           "source_no": "202",
@@ -1111,21 +153,35 @@
       ]
     },
     {
-      "content": "用来划分子系统的U/C矩阵由以下两者之间的关系形成( )。",
-      "count": 2,
+      "content": "下列UML图中与协作图建模的内容相同的是（ A ）。",
+      "count": 4,
       "kept": {
-        "original_id": 46,
+        "id": 17,
         "type": "single_choice",
         "source": "信息系统选择填空.pdf",
-        "source_no": "46",
+        "source_no": "17",
         "answer_source": "source"
       },
       "removed": [
         {
-          "original_id": 152,
+          "id": 49,
           "type": "single_choice",
           "source": "信息系统选择填空.pdf",
-          "source_no": "152",
+          "source_no": "49",
+          "answer_source": "source"
+        },
+        {
+          "id": 123,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "123",
+          "answer_source": "source"
+        },
+        {
+          "id": 203,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "203",
           "answer_source": "source"
         }
       ]
@@ -1134,7 +190,7 @@
       "content": "下列UMＬ关系中在用例图中不会出现的一项是（ A ）。",
       "count": 4,
       "kept": {
-        "original_id": 47,
+        "id": 47,
         "type": "single_choice",
         "source": "信息系统选择填空.pdf",
         "source_no": "47",
@@ -1142,21 +198,21 @@
       },
       "removed": [
         {
-          "original_id": 124,
+          "id": 124,
           "type": "single_choice",
           "source": "信息系统选择填空.pdf",
           "source_no": "124",
           "answer_source": "source"
         },
         {
-          "original_id": 150,
+          "id": 150,
           "type": "single_choice",
           "source": "信息系统选择填空.pdf",
           "source_no": "150",
           "answer_source": "source"
         },
         {
-          "original_id": 225,
+          "id": 225,
           "type": "single_choice",
           "source": "信息系统选择填空.pdf",
           "source_no": "225",
@@ -1165,1057 +221,35 @@
       ]
     },
     {
-      "content": "下列关于协作图的说法错误的是（ ）。",
-      "count": 2,
+      "content": "以下说法错误的是（ ）。",
+      "count": 4,
       "kept": {
-        "original_id": 50,
+        "id": 15,
         "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "50",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 228,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "228",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "系统设计的目的是( )。",
-      "count": 2,
-      "kept": {
-        "original_id": 53,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "53",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 214,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "214",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "下列哪部分不是专家系统的组成部分（ ）。",
-      "count": 2,
-      "kept": {
-        "original_id": 57,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "57",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 213,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "213",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "系统设计的基本原则不包括（ ）。",
-      "count": 2,
-      "kept": {
-        "original_id": 63,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "63",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 161,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "161",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "软件系统的层次结构是（ ）的具体体现。",
-      "count": 2,
-      "kept": {
-        "original_id": 66,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "66",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 184,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "184",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "产生式系统的推理不包括( )。",
-      "count": 2,
-      "kept": {
-        "original_id": 67,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "67",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 180,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "180",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "下列模块的耦合方式中,耦合性最高的是( )。",
-      "count": 3,
-      "kept": {
-        "original_id": 68,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "68",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 77,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "77",
-          "answer_source": "source"
-        },
-        {
-          "original_id": 194,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "194",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "数据字典建立应从( )阶段开始。",
-      "count": 3,
-      "kept": {
-        "original_id": 72,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "72",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 192,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "192",
-          "answer_source": "source"
-        },
-        {
-          "original_id": 237,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "2",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "数据流图是描述信息系统的（ ）的主要工具。",
-      "count": 2,
-      "kept": {
-        "original_id": 74,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "74",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 131,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "131",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "两个模块通过传递数据结构 (不是简单数据，而是记录、数 组等)加以联系，或都与一 个数据结构有关系，则称这两个模块间存在（ ）。",
-      "count": 2,
-      "kept": {
-        "original_id": 76,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "76",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 111,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "111",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "适合描述处理中具有多种策略的工具是( )。",
-      "count": 2,
-      "kept": {
-        "original_id": 84,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "84",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 140,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "140",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "数据流和数据结构的基本组成项是（ ）。",
-      "count": 2,
-      "kept": {
-        "original_id": 88,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "88",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 226,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "226",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "2个字节表示（ ）个二进制位。",
-      "count": 2,
-      "kept": {
-        "original_id": 90,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "90",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 316,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "81",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "HIPO图应用于系统开发的哪个阶段( )。",
-      "count": 2,
-      "kept": {
-        "original_id": 93,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "93",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 187,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "187",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "UML的全称是 ( )。",
-      "count": 2,
-      "kept": {
-        "original_id": 95,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "95",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 120,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "120",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "在进行某网上商店的用例图绘制时，（ ）是一个不合适的用例。",
-      "count": 2,
-      "kept": {
-        "original_id": 96,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "96",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 135,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "135",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "以下不是结构化系统分析工具的是( )。",
-      "count": 2,
-      "kept": {
-        "original_id": 99,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "99",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 176,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "176",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "下面不是用例图组成要素的是（ ）。",
-      "count": 2,
-      "kept": {
-        "original_id": 102,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "102",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 221,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "221",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "数据处理逻辑描述系统对信息进行处理的逻辑功能，数据加工处理逻辑中可以具有（ ）。",
-      "count": 2,
-      "kept": {
-        "original_id": 110,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "110",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 189,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "189",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "以下各项中，（ ）不是用例图适于表达的内容。",
-      "count": 2,
-      "kept": {
-        "original_id": 113,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "113",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 144,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "144",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "要想让机器具有智能，必须让机器具有知识。因此，在人工智能中有一个研究领域， 主要研究计算机如何自动获取知识和技能，实现自我完善，这门研究分支学科叫（ ）。",
-      "count": 2,
-      "kept": {
-        "original_id": 115,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "115",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 201,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "201",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "以下几种耦合类型中耦合性高、独立性差的是（ ）。",
-      "count": 2,
-      "kept": {
-        "original_id": 118,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "118",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 167,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "167",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "下列关于用例图的描述，错误的是（ ）。",
-      "count": 2,
-      "kept": {
-        "original_id": 119,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "119",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 182,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "182",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "在一个“订单输入子系统”中，创建新订单和更新订单都要核查用户账号是否正确，则 用例“创建新订单”、“更新订单”与用例“核查用户账号”之间的关系是（ ）。",
-      "count": 2,
-      "kept": {
-        "original_id": 129,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "129",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 209,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "209",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "数据流图中包含数据的（ ）、流动、加工、使用的情况。",
-      "count": 2,
-      "kept": {
-        "original_id": 134,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "134",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 171,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "171",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "（ ）是两个事物之间的语义关系，其中一个事物(独立事物)发生变化，会影响到另 一个事物的语义。",
-      "count": 2,
-      "kept": {
-        "original_id": 139,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "139",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 196,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "196",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "判断表由以下几方面内容组成( )。",
-      "count": 2,
-      "kept": {
-        "original_id": 142,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "142",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 232,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "232",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "数据字典中，一般不包括下列选项中的( )条目。",
-      "count": 2,
-      "kept": {
-        "original_id": 143,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "143",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 303,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "68",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "描述系统中各模块的层次及其输入输出功能的图是( )。",
-      "count": 3,
-      "kept": {
-        "original_id": 149,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "149",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 163,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "163",
-          "answer_source": "source"
-        },
-        {
-          "original_id": 220,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "220",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "日文有50个平假名和50个片假名，每个假名的信息量是（ ）。",
-      "count": 2,
-      "kept": {
-        "original_id": 159,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "159",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 321,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "86",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "每位数字的信息量为1，十进制数字有10个，每位数字的信息量是（ ）。",
-      "count": 2,
-      "kept": {
-        "original_id": 164,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "164",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 254,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "19",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "系统的逻辑模型描述系统（ ）的问题。",
-      "count": 2,
-      "kept": {
-        "original_id": 178,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "178",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 179,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "179",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "汉字编码用（ ）个字节表示一个汉字。",
-      "count": 2,
-      "kept": {
-        "original_id": 188,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "188",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 372,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "137",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "每位数字的信息量为1，十六进制的每位数字的信息量是（ ）。",
-      "count": 2,
-      "kept": {
-        "original_id": 193,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "193",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 360,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "125",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "系统分析的结果就是要给出系统的( )。",
-      "count": 2,
-      "kept": {
-        "original_id": 197,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "197",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 234,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "234",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "数据字典是软件需求分析阶段的最重要的工具之一，其最基本的功能是( )。",
-      "count": 2,
-      "kept": {
-        "original_id": 199,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "199",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 332,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "97",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "数据字典(DD)所定义的对象都包含在（ ）中。",
-      "count": 3,
-      "kept": {
-        "original_id": 215,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "215",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 218,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "218",
-          "answer_source": "source"
-        },
-        {
-          "original_id": 361,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "126",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "绘制数据流图指的是绘制( )。",
-      "count": 2,
-      "kept": {
-        "original_id": 222,
-        "type": "single_choice",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "222",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 229,
-          "type": "single_choice",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "229",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "面向数据流的设计方法把信息流映射成软件结构,信息流有下述两种类型即____________和 ____________。",
-      "count": 5,
-      "kept": {
-        "original_id": 244,
-        "type": "fill",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "9",
-        "answer_source": "ai"
-      },
-      "removed": [
-        {
-          "original_id": 266,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "31",
-          "answer_source": "ai"
-        },
-        {
-          "original_id": 269,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "34",
-          "answer_source": "ai"
-        },
-        {
-          "original_id": 277,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "42",
-          "answer_source": "ai"
-        },
-        {
-          "original_id": 330,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "95",
-          "answer_source": "ai"
-        }
-      ]
-    },
-    {
-      "content": "一般说来,软件调试途径主要有以下3种即 、 和 。",
-      "count": 3,
-      "kept": {
-        "original_id": 245,
-        "type": "fill",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "10",
-        "answer_source": "ai"
-      },
-      "removed": [
-        {
-          "original_id": 338,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "103",
-          "answer_source": "ai"
-        },
-        {
-          "original_id": 358,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "123",
-          "answer_source": "ai"
-        }
-      ]
-    },
-    {
-      "content": "如果两个模块彼此间传递的信息中有控制信息，那么这种块间耦合称为（ ）。",
-      "count": 2,
-      "kept": {
-        "original_id": 250,
-        "type": "fill",
         "source": "信息系统选择填空.pdf",
         "source_no": "15",
         "answer_source": "source"
       },
       "removed": [
         {
-          "original_id": 281,
-          "type": "fill",
+          "id": 80,
+          "type": "single_choice",
           "source": "信息系统选择填空.pdf",
-          "source_no": "46",
+          "source_no": "80",
           "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "数据词典的作用是给（ ）上每个成分给以定义和说明。",
-      "count": 2,
-      "kept": {
-        "original_id": 260,
-        "type": "fill",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "25",
-        "answer_source": "source"
-      },
-      "removed": [
+        },
         {
-          "original_id": 351,
-          "type": "fill",
+          "id": 130,
+          "type": "single_choice",
           "source": "信息系统选择填空.pdf",
-          "source_no": "116",
+          "source_no": "130",
           "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "描述数据流图的四个要素有源点终点、__________________ 、__________________ 和 __________________。",
-      "count": 2,
-      "kept": {
-        "original_id": 276,
-        "type": "fill",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "41",
-        "answer_source": "ai"
-      },
-      "removed": [
+        },
         {
-          "original_id": 393,
-          "type": "fill",
+          "id": 211,
+          "type": "single_choice",
           "source": "信息系统选择填空.pdf",
-          "source_no": "158",
-          "answer_source": "ai"
-        }
-      ]
-    },
-    {
-      "content": "如果两个模块彼此间通过数据交换信息，而且每一个参数仅仅为数据，那么这种块间 耦合称之为（ ）。",
-      "count": 2,
-      "kept": {
-        "original_id": 279,
-        "type": "fill",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "44",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 302,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "67",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "大型软件系统的测试过程基本上由 、 、系统测试、 和平行运行等五个步骤。",
-      "count": 2,
-      "kept": {
-        "original_id": 298,
-        "type": "fill",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "63",
-        "answer_source": "ai"
-      },
-      "removed": [
-        {
-          "original_id": 350,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "115",
-          "answer_source": "ai"
-        }
-      ]
-    },
-    {
-      "content": "总体设计又可称为概要设计的过程通常由 和 两个主要阶段组成。",
-      "count": 2,
-      "kept": {
-        "original_id": 309,
-        "type": "fill",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "74",
-        "answer_source": "ai"
-      },
-      "removed": [
-        {
-          "original_id": 397,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "162",
-          "answer_source": "ai"
-        }
-      ]
-    },
-    {
-      "content": "RUP是以____________为驱动、以系统架构为中心的迭代与增量过程。RUP包括初始、细 化、构造和移交4个阶段。",
-      "count": 2,
-      "kept": {
-        "original_id": 327,
-        "type": "fill",
-        "source": "信息系统选择填空.pdf",
-        "source_no": "92",
-        "answer_source": "ai"
-      },
-      "removed": [
-        {
-          "original_id": 380,
-          "type": "fill",
-          "source": "信息系统选择填空.pdf",
-          "source_no": "145",
-          "answer_source": "ai"
-        }
-      ]
-    },
-    {
-      "content": "简述系统设计的目标及其基本原则。",
-      "count": 2,
-      "kept": {
-        "original_id": 404,
-        "type": "essay",
-        "source": "信息系统简答.pdf",
-        "source_no": "3",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 574,
-          "type": "essay",
-          "source": "信息系统简答.pdf",
-          "source_no": "173",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "简述数据流图的局限性。",
-      "count": 2,
-      "kept": {
-        "original_id": 406,
-        "type": "essay",
-        "source": "信息系统简答.pdf",
-        "source_no": "5",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 521,
-          "type": "essay",
-          "source": "信息系统简答.pdf",
-          "source_no": "120",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "简述U/C矩阵的正确性的检验步骤。",
-      "count": 2,
-      "kept": {
-        "original_id": 407,
-        "type": "essay",
-        "source": "信息系统简答.pdf",
-        "source_no": "6",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 552,
-          "type": "essay",
-          "source": "信息系统简答.pdf",
-          "source_no": "151",
+          "source_no": "211",
           "answer_source": "source"
         }
       ]
@@ -2224,7 +258,7 @@
       "content": "什么是模块的扇入和扇出，在设计良好的软件结构中，如何正确地设置模块的扇入和 扇出。",
       "count": 3,
       "kept": {
-        "original_id": 418,
+        "id": 418,
         "type": "essay",
         "source": "信息系统简答.pdf",
         "source_no": "17",
@@ -2232,14 +266,14 @@
       },
       "removed": [
         {
-          "original_id": 548,
+          "id": 548,
           "type": "essay",
           "source": "信息系统简答.pdf",
           "source_no": "147",
           "answer_source": "source"
         },
         {
-          "original_id": 568,
+          "id": 568,
           "type": "essay",
           "source": "信息系统简答.pdf",
           "source_no": "167",
@@ -2248,41 +282,55 @@
       ]
     },
     {
-      "content": "简述MVC的缺点。",
-      "count": 2,
+      "content": "描述数据流图的基本元素包括（ ）。",
+      "count": 3,
       "kept": {
-        "original_id": 419,
-        "type": "essay",
-        "source": "信息系统简答.pdf",
+        "id": 18,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
         "source_no": "18",
         "answer_source": "source"
       },
       "removed": [
         {
-          "original_id": 536,
-          "type": "essay",
-          "source": "信息系统简答.pdf",
-          "source_no": "135",
+          "id": 138,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "138",
+          "answer_source": "source"
+        },
+        {
+          "id": 177,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "177",
           "answer_source": "source"
         }
       ]
     },
     {
-      "content": "简述U/C矩阵的特点。",
-      "count": 2,
+      "content": "评价模块质量的标准是( )。",
+      "count": 3,
       "kept": {
-        "original_id": 420,
-        "type": "essay",
-        "source": "信息系统简答.pdf",
-        "source_no": "19",
+        "id": 43,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "43",
         "answer_source": "source"
       },
       "removed": [
         {
-          "original_id": 519,
-          "type": "essay",
-          "source": "信息系统简答.pdf",
-          "source_no": "118",
+          "id": 153,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "153",
+          "answer_source": "source"
+        },
+        {
+          "id": 235,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "235",
           "answer_source": "source"
         }
       ]
@@ -2291,7 +339,7 @@
       "content": "软件危机:",
       "count": 3,
       "kept": {
-        "original_id": 424,
+        "id": 424,
         "type": "essay",
         "source": "信息系统简答.pdf",
         "source_no": "23",
@@ -2299,14 +347,14 @@
       },
       "removed": [
         {
-          "original_id": 539,
+          "id": 539,
           "type": "essay",
           "source": "信息系统简答.pdf",
           "source_no": "138",
           "answer_source": "ai"
         },
         {
-          "original_id": 584,
+          "id": 584,
           "type": "essay",
           "source": "信息系统简答.pdf",
           "source_no": "183",
@@ -2315,281 +363,48 @@
       ]
     },
     {
-      "content": "简述采用结构化系统分析的工具建立的系统逻辑模型的特点。",
-      "count": 2,
+      "content": "面向对设计的基本特性除了封装和继承之外，还包括（ ）。",
+      "count": 3,
       "kept": {
-        "original_id": 426,
-        "type": "essay",
-        "source": "信息系统简答.pdf",
-        "source_no": "25",
+        "id": 32,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "32",
         "answer_source": "source"
       },
       "removed": [
         {
-          "original_id": 581,
-          "type": "essay",
-          "source": "信息系统简答.pdf",
-          "source_no": "180",
+          "id": 82,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "82",
+          "answer_source": "source"
+        },
+        {
+          "id": 158,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "158",
           "answer_source": "source"
         }
       ]
     },
     {
-      "content": "简述数据词典的基本要求。",
+      "content": "HIPO图应用于系统开发的哪个阶段( )。",
       "count": 2,
       "kept": {
-        "original_id": 427,
-        "type": "essay",
-        "source": "信息系统简答.pdf",
-        "source_no": "26",
+        "id": 93,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "93",
         "answer_source": "source"
       },
       "removed": [
         {
-          "original_id": 436,
-          "type": "essay",
-          "source": "信息系统简答.pdf",
-          "source_no": "35",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "请简要说明数据流图的主要组成部分及其定义。",
-      "count": 2,
-      "kept": {
-        "original_id": 430,
-        "type": "essay",
-        "source": "信息系统简答.pdf",
-        "source_no": "29",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 478,
-          "type": "essay",
-          "source": "信息系统简答.pdf",
-          "source_no": "77",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "请简要说明Jackson方法的设计步骤。",
-      "count": 2,
-      "kept": {
-        "original_id": 441,
-        "type": "essay",
-        "source": "信息系统简答.pdf",
-        "source_no": "40",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 511,
-          "type": "essay",
-          "source": "信息系统简答.pdf",
-          "source_no": "110",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "软件测试的目的是“建设性”的,即为了竭力证明已经建造好的软件系统的正确性和适用性",
-      "count": 2,
-      "kept": {
-        "original_id": 446,
-        "type": "essay",
-        "source": "信息系统简答.pdf",
-        "source_no": "45",
-        "answer_source": "ai"
-      },
-      "removed": [
-        {
-          "original_id": 562,
-          "type": "essay",
-          "source": "信息系统简答.pdf",
-          "source_no": "161",
-          "answer_source": "ai"
-        }
-      ]
-    },
-    {
-      "content": "简述典型的可重用软件成分都包含哪些？",
-      "count": 2,
-      "kept": {
-        "original_id": 451,
-        "type": "essay",
-        "source": "信息系统简答.pdf",
-        "source_no": "50",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 482,
-          "type": "essay",
-          "source": "信息系统简答.pdf",
-          "source_no": "81",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "简述MVC的优点。",
-      "count": 2,
-      "kept": {
-        "original_id": 460,
-        "type": "essay",
-        "source": "信息系统简答.pdf",
-        "source_no": "59",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 567,
-          "type": "essay",
-          "source": "信息系统简答.pdf",
-          "source_no": "166",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "请简要说明PDL语言（Program Design Language）的概念及其主要特征。",
-      "count": 2,
-      "kept": {
-        "original_id": 466,
-        "type": "essay",
-        "source": "信息系统简答.pdf",
-        "source_no": "65",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 585,
-          "type": "essay",
-          "source": "信息系统简答.pdf",
-          "source_no": "184",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "什么是耦合度，耦合的强度依赖于哪些因素？",
-      "count": 2,
-      "kept": {
-        "original_id": 468,
-        "type": "essay",
-        "source": "信息系统简答.pdf",
-        "source_no": "67",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 500,
-          "type": "essay",
-          "source": "信息系统简答.pdf",
-          "source_no": "99",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "简述公共耦合存在的问题。",
-      "count": 2,
-      "kept": {
-        "original_id": 469,
-        "type": "essay",
-        "source": "信息系统简答.pdf",
-        "source_no": "68",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 529,
-          "type": "essay",
-          "source": "信息系统简答.pdf",
-          "source_no": "128",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "简述软件需求分析的原则。",
-      "count": 2,
-      "kept": {
-        "original_id": 472,
-        "type": "essay",
-        "source": "信息系统简答.pdf",
-        "source_no": "71",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 569,
-          "type": "essay",
-          "source": "信息系统简答.pdf",
-          "source_no": "168",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "简述去除模块间控制耦合的方法。",
-      "count": 2,
-      "kept": {
-        "original_id": 479,
-        "type": "essay",
-        "source": "信息系统简答.pdf",
-        "source_no": "78",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 542,
-          "type": "essay",
-          "source": "信息系统简答.pdf",
-          "source_no": "141",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "简述绘制数据流图的主要原则。",
-      "count": 2,
-      "kept": {
-        "original_id": 480,
-        "type": "essay",
-        "source": "信息系统简答.pdf",
-        "source_no": "79",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 582,
-          "type": "essay",
-          "source": "信息系统简答.pdf",
-          "source_no": "181",
-          "answer_source": "source"
-        }
-      ]
-    },
-    {
-      "content": "简述U/C矩阵的主要功能。",
-      "count": 2,
-      "kept": {
-        "original_id": 485,
-        "type": "essay",
-        "source": "信息系统简答.pdf",
-        "source_no": "84",
-        "answer_source": "source"
-      },
-      "removed": [
-        {
-          "original_id": 518,
-          "type": "essay",
-          "source": "信息系统简答.pdf",
-          "source_no": "117",
+          "id": 187,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "187",
           "answer_source": "source"
         }
       ]
@@ -2598,7 +413,7 @@
       "content": "MVC模式的模型/视图/控制器（Model/View/Controller）三元组包括哪些对象。",
       "count": 2,
       "kept": {
-        "original_id": 489,
+        "id": 489,
         "type": "essay",
         "source": "信息系统简答.pdf",
         "source_no": "88",
@@ -2606,7 +421,7 @@
       },
       "removed": [
         {
-          "original_id": 566,
+          "id": 566,
           "type": "essay",
           "source": "信息系统简答.pdf",
           "source_no": "165",
@@ -2615,42 +430,182 @@
       ]
     },
     {
-      "content": "简述软件成分的重用级别。",
+      "content": "UML的全称是 ( )。",
       "count": 2,
       "kept": {
-        "original_id": 495,
-        "type": "essay",
-        "source": "信息系统简答.pdf",
-        "source_no": "94",
+        "id": 95,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "95",
         "answer_source": "source"
       },
       "removed": [
         {
-          "original_id": 560,
-          "type": "essay",
-          "source": "信息系统简答.pdf",
-          "source_no": "159",
+          "id": 120,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "120",
           "answer_source": "source"
         }
       ]
     },
     {
-      "content": "软件维护:",
+      "content": "一般说来,软件调试途径主要有以下3种即 、 和 。",
       "count": 2,
       "kept": {
-        "original_id": 498,
-        "type": "essay",
-        "source": "信息系统简答.pdf",
-        "source_no": "97",
+        "id": 245,
+        "type": "fill",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "10",
         "answer_source": "ai"
       },
       "removed": [
         {
-          "original_id": 506,
-          "type": "essay",
-          "source": "信息系统简答.pdf",
-          "source_no": "105",
+          "id": 338,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "103",
           "answer_source": "ai"
+        }
+      ]
+    },
+    {
+      "content": "下列不在人工智能系统的知识包含的四个要素中( )。",
+      "count": 2,
+      "kept": {
+        "id": 35,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "35",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 181,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "181",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "下列关于协作图的说法错误的是（ ）。",
+      "count": 2,
+      "kept": {
+        "id": 50,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "50",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 228,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "228",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "下列关于用例图的描述，错误的是（ ）。",
+      "count": 2,
+      "kept": {
+        "id": 119,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "119",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 182,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "182",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "下列哪部分不是专家系统的组成部分（ ）。",
+      "count": 2,
+      "kept": {
+        "id": 57,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "57",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 213,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "213",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "下列模块的耦合方式中,耦合性最高的是( )。",
+      "count": 2,
+      "kept": {
+        "id": 68,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "68",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 77,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "77",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "下面不是用例图组成要素的是（ ）。",
+      "count": 2,
+      "kept": {
+        "id": 102,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "102",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 221,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "221",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "产生式系统的推理不包括( )。",
+      "count": 2,
+      "kept": {
+        "id": 67,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "67",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 180,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "180",
+          "answer_source": "source"
         }
       ]
     },
@@ -2658,7 +613,7 @@
       "content": "什么是U/C矩阵？",
       "count": 2,
       "kept": {
-        "original_id": 501,
+        "id": 501,
         "type": "essay",
         "source": "信息系统简答.pdf",
         "source_no": "100",
@@ -2666,7 +621,7 @@
       },
       "removed": [
         {
-          "original_id": 549,
+          "id": 549,
           "type": "essay",
           "source": "信息系统简答.pdf",
           "source_no": "148",
@@ -2675,22 +630,842 @@
       ]
     },
     {
-      "content": "软件工程:",
+      "content": "什么是耦合度，耦合的强度依赖于哪些因素？",
       "count": 2,
       "kept": {
-        "original_id": 512,
+        "id": 468,
         "type": "essay",
         "source": "信息系统简答.pdf",
-        "source_no": "111",
-        "answer_source": "ai"
+        "source_no": "67",
+        "answer_source": "source"
       },
       "removed": [
         {
-          "original_id": 538,
+          "id": 500,
           "type": "essay",
           "source": "信息系统简答.pdf",
-          "source_no": "137",
-          "answer_source": "ai"
+          "source_no": "99",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "以下不是结构化系统分析工具的是( )。",
+      "count": 2,
+      "kept": {
+        "id": 99,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "99",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 176,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "176",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "以下几种耦合类型中耦合性高、独立性差的是（ ）。",
+      "count": 2,
+      "kept": {
+        "id": 118,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "118",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 167,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "167",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "假设一般常用汉字为3000个，他们以等概率出现，试求表达3000个汉字的信息量为多 少？",
+      "count": 2,
+      "kept": {
+        "id": 22,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "22",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 100,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "100",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "判断表由以下几方面内容组成( )。",
+      "count": 2,
+      "kept": {
+        "id": 142,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "142",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 232,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "232",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "在一个“订单输入子系统”中，创建新订单和更新订单都要核查用户账号是否正确，则 用例“创建新订单”、“更新订单”与用例“核查用户账号”之间的关系是（ ）。",
+      "count": 2,
+      "kept": {
+        "id": 129,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "129",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 209,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "209",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "在计算机内用两个字节的二进制编码来表示一个汉字，这种编码称为（ )。",
+      "count": 2,
+      "kept": {
+        "id": 10,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "10",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 127,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "127",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "在进行某网上商店的用例图绘制时，（ ）是一个不合适的用例。",
+      "count": 2,
+      "kept": {
+        "id": 96,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "96",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 135,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "135",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "如果两个模块彼此间传递的信息中有控制信息，那么这种块间耦合称为（ ）。",
+      "count": 2,
+      "kept": {
+        "id": 250,
+        "type": "fill",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "15",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 281,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "46",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "如果两个模块彼此间通过数据交换信息，而且每一个参数仅仅为数据，那么这种块间 耦合称之为（ ）。",
+      "count": 2,
+      "kept": {
+        "id": 279,
+        "type": "fill",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "44",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 302,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "67",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "对一次交互过程中有意义的对象间关系建模，并且着重刻画对象间如何交互以执行用 例的图是（ ）。",
+      "count": 2,
+      "kept": {
+        "id": 27,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "27",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 174,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "174",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "执行者（Actor）与用例之间的关系是（ ）。",
+      "count": 2,
+      "kept": {
+        "id": 9,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "9",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 208,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "208",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "描述系统中各模块的层次及其输入输出功能的图是( )。",
+      "count": 2,
+      "kept": {
+        "id": 163,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "163",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 220,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "220",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "数据处理逻辑描述系统对信息进行处理的逻辑功能，数据加工处理逻辑中可以具有（ ）。",
+      "count": 2,
+      "kept": {
+        "id": 110,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "110",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 189,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "189",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "数据字典(DD)所定义的对象都包含在（ ）中。",
+      "count": 2,
+      "kept": {
+        "id": 215,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "215",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 218,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "218",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "数据字典建立应从( )阶段开始。",
+      "count": 2,
+      "kept": {
+        "id": 72,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "72",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 192,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "192",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "数据字典是用于定义和说明数据流图上的各种( )。",
+      "count": 2,
+      "kept": {
+        "id": 40,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "40",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 109,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "109",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "数据字典没有对下列（ ）元素进行详细定义。",
+      "count": 2,
+      "kept": {
+        "id": 23,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "23",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 207,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "207",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "数据流和数据结构的基本组成项是（ ）。",
+      "count": 2,
+      "kept": {
+        "id": 88,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "88",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 226,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "226",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "数据流图中包含数据的（ ）、流动、加工、使用的情况。",
+      "count": 2,
+      "kept": {
+        "id": 134,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "134",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 171,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "171",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "数据流图是描述信息系统的( )。",
+      "count": 2,
+      "kept": {
+        "id": 7,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "7",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 59,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "59",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "数据流图是描述信息系统的（ ）的主要工具。",
+      "count": 2,
+      "kept": {
+        "id": 74,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "74",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 131,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "131",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "数据词典描述的主要内容不包括（ ）。",
+      "count": 2,
+      "kept": {
+        "id": 44,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "44",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 55,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "55",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "数据词典的作用是给（ ）上每个成分给以定义和说明。",
+      "count": 2,
+      "kept": {
+        "id": 260,
+        "type": "fill",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "25",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 351,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "116",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "模块耦合的最好方式是( )。",
+      "count": 2,
+      "kept": {
+        "id": 2,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "2",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 224,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "224",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "用于对面向对象系统的物理方面建模进行描述图形是( )。",
+      "count": 2,
+      "kept": {
+        "id": 12,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "12",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 58,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "58",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "知识表示的方法主要有逻辑表示法（谓词表示法）、（ ）、产生式系统和语义网络等，在语义网 络表示知识时，所使用的推理方法有AKO和ISA。",
+      "count": 2,
+      "kept": {
+        "id": 1,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "1",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 147,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "147",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "简述MVC的优点。",
+      "count": 2,
+      "kept": {
+        "id": 460,
+        "type": "essay",
+        "source": "信息系统简答.pdf",
+        "source_no": "59",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 567,
+          "type": "essay",
+          "source": "信息系统简答.pdf",
+          "source_no": "166",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "简述MVC的缺点。",
+      "count": 2,
+      "kept": {
+        "id": 419,
+        "type": "essay",
+        "source": "信息系统简答.pdf",
+        "source_no": "18",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 536,
+          "type": "essay",
+          "source": "信息系统简答.pdf",
+          "source_no": "135",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "简述U/C矩阵的主要功能。",
+      "count": 2,
+      "kept": {
+        "id": 485,
+        "type": "essay",
+        "source": "信息系统简答.pdf",
+        "source_no": "84",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 518,
+          "type": "essay",
+          "source": "信息系统简答.pdf",
+          "source_no": "117",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "简述U/C矩阵的正确性的检验步骤。",
+      "count": 2,
+      "kept": {
+        "id": 407,
+        "type": "essay",
+        "source": "信息系统简答.pdf",
+        "source_no": "6",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 552,
+          "type": "essay",
+          "source": "信息系统简答.pdf",
+          "source_no": "151",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "简述U/C矩阵的特点。",
+      "count": 2,
+      "kept": {
+        "id": 420,
+        "type": "essay",
+        "source": "信息系统简答.pdf",
+        "source_no": "19",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 519,
+          "type": "essay",
+          "source": "信息系统简答.pdf",
+          "source_no": "118",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "简述公共耦合存在的问题。",
+      "count": 2,
+      "kept": {
+        "id": 469,
+        "type": "essay",
+        "source": "信息系统简答.pdf",
+        "source_no": "68",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 529,
+          "type": "essay",
+          "source": "信息系统简答.pdf",
+          "source_no": "128",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "简述典型的可重用软件成分都包含哪些？",
+      "count": 2,
+      "kept": {
+        "id": 451,
+        "type": "essay",
+        "source": "信息系统简答.pdf",
+        "source_no": "50",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 482,
+          "type": "essay",
+          "source": "信息系统简答.pdf",
+          "source_no": "81",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "简述去除模块间控制耦合的方法。",
+      "count": 2,
+      "kept": {
+        "id": 479,
+        "type": "essay",
+        "source": "信息系统简答.pdf",
+        "source_no": "78",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 542,
+          "type": "essay",
+          "source": "信息系统简答.pdf",
+          "source_no": "141",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "简述数据流图的局限性。",
+      "count": 2,
+      "kept": {
+        "id": 406,
+        "type": "essay",
+        "source": "信息系统简答.pdf",
+        "source_no": "5",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 521,
+          "type": "essay",
+          "source": "信息系统简答.pdf",
+          "source_no": "120",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "简述数据词典的基本要求。",
+      "count": 2,
+      "kept": {
+        "id": 427,
+        "type": "essay",
+        "source": "信息系统简答.pdf",
+        "source_no": "26",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 436,
+          "type": "essay",
+          "source": "信息系统简答.pdf",
+          "source_no": "35",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "简述系统设计的目标及其基本原则。",
+      "count": 2,
+      "kept": {
+        "id": 404,
+        "type": "essay",
+        "source": "信息系统简答.pdf",
+        "source_no": "3",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 574,
+          "type": "essay",
+          "source": "信息系统简答.pdf",
+          "source_no": "173",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "简述绘制数据流图的主要原则。",
+      "count": 2,
+      "kept": {
+        "id": 480,
+        "type": "essay",
+        "source": "信息系统简答.pdf",
+        "source_no": "79",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 582,
+          "type": "essay",
+          "source": "信息系统简答.pdf",
+          "source_no": "181",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "简述软件成分的重用级别。",
+      "count": 2,
+      "kept": {
+        "id": 495,
+        "type": "essay",
+        "source": "信息系统简答.pdf",
+        "source_no": "94",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 560,
+          "type": "essay",
+          "source": "信息系统简答.pdf",
+          "source_no": "159",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "简述软件需求分析的原则。",
+      "count": 2,
+      "kept": {
+        "id": 472,
+        "type": "essay",
+        "source": "信息系统简答.pdf",
+        "source_no": "71",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 569,
+          "type": "essay",
+          "source": "信息系统简答.pdf",
+          "source_no": "168",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "简述采用结构化系统分析的工具建立的系统逻辑模型的特点。",
+      "count": 2,
+      "kept": {
+        "id": 426,
+        "type": "essay",
+        "source": "信息系统简答.pdf",
+        "source_no": "25",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 581,
+          "type": "essay",
+          "source": "信息系统简答.pdf",
+          "source_no": "180",
+          "answer_source": "source"
         }
       ]
     },
@@ -2698,7 +1473,7 @@
       "content": "简述面向对象设计的原则。",
       "count": 2,
       "kept": {
-        "original_id": 515,
+        "id": 515,
         "type": "essay",
         "source": "信息系统简答.pdf",
         "source_no": "114",
@@ -2706,7 +1481,7 @@
       },
       "removed": [
         {
-          "original_id": 531,
+          "id": 531,
           "type": "essay",
           "source": "信息系统简答.pdf",
           "source_no": "130",
@@ -2715,10 +1490,250 @@
       ]
     },
     {
+      "content": "系统分析的任务是( )。",
+      "count": 2,
+      "kept": {
+        "id": 8,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "8",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 37,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "37",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "系统分析的结果就是要给出系统的( )。",
+      "count": 2,
+      "kept": {
+        "id": 197,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "197",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 234,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "234",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "系统的逻辑模型描述系统（ ）的问题。",
+      "count": 2,
+      "kept": {
+        "id": 178,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "178",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 179,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "179",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "系统的逻辑模型是描述系统什么问题( )。",
+      "count": 2,
+      "kept": {
+        "id": 11,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "11",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 223,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "223",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "系统设计的基本原则不包括（ ）。",
+      "count": 2,
+      "kept": {
+        "id": 63,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "63",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 161,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "161",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "系统设计的工作不包括( )。",
+      "count": 2,
+      "kept": {
+        "id": 38,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "38",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 168,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "168",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "系统设计的目的是( )。",
+      "count": 2,
+      "kept": {
+        "id": 53,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "53",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 214,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "214",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "绘制数据流图指的是绘制( )。",
+      "count": 2,
+      "kept": {
+        "id": 222,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "222",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 229,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "229",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "要想让机器具有智能，必须让机器具有知识。因此，在人工智能中有一个研究领域， 主要研究计算机如何自动获取知识和技能，实现自我完善，这门研究分支学科叫（ ）。",
+      "count": 2,
+      "kept": {
+        "id": 115,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "115",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 201,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "201",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "请简要说明Jackson方法的设计步骤。",
+      "count": 2,
+      "kept": {
+        "id": 441,
+        "type": "essay",
+        "source": "信息系统简答.pdf",
+        "source_no": "40",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 511,
+          "type": "essay",
+          "source": "信息系统简答.pdf",
+          "source_no": "110",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "请简要说明PDL语言（Program Design Language）的概念及其主要特征。",
+      "count": 2,
+      "kept": {
+        "id": 466,
+        "type": "essay",
+        "source": "信息系统简答.pdf",
+        "source_no": "65",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 585,
+          "type": "essay",
+          "source": "信息系统简答.pdf",
+          "source_no": "184",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "请简要说明数据流图的主要组成部分及其定义。",
+      "count": 2,
+      "kept": {
+        "id": 430,
+        "type": "essay",
+        "source": "信息系统简答.pdf",
+        "source_no": "29",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 478,
+          "type": "essay",
+          "source": "信息系统简答.pdf",
+          "source_no": "77",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
       "content": "请结合自身的编程经验简要地描述降低模块间耦合度的常用方法。",
       "count": 2,
       "kept": {
-        "original_id": 516,
+        "id": 516,
         "type": "essay",
         "source": "信息系统简答.pdf",
         "source_no": "115",
@@ -2726,7 +1741,7 @@
       },
       "removed": [
         {
-          "original_id": 546,
+          "id": 546,
           "type": "essay",
           "source": "信息系统简答.pdf",
           "source_no": "145",
@@ -2738,7 +1753,7 @@
       "content": "软件可靠性:",
       "count": 2,
       "kept": {
-        "original_id": 527,
+        "id": 527,
         "type": "essay",
         "source": "信息系统简答.pdf",
         "source_no": "126",
@@ -2746,22 +1761,1891 @@
       },
       "removed": [
         {
-          "original_id": 570,
+          "id": 570,
           "type": "essay",
           "source": "信息系统简答.pdf",
           "source_no": "169",
           "answer_source": "ai"
         }
       ]
+    },
+    {
+      "content": "软件工程:",
+      "count": 2,
+      "kept": {
+        "id": 512,
+        "type": "essay",
+        "source": "信息系统简答.pdf",
+        "source_no": "111",
+        "answer_source": "ai"
+      },
+      "removed": [
+        {
+          "id": 538,
+          "type": "essay",
+          "source": "信息系统简答.pdf",
+          "source_no": "137",
+          "answer_source": "ai"
+        }
+      ]
+    },
+    {
+      "content": "软件系统的层次结构是（ ）的具体体现。",
+      "count": 2,
+      "kept": {
+        "id": 66,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "66",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 184,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "184",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "软件维护:",
+      "count": 2,
+      "kept": {
+        "id": 498,
+        "type": "essay",
+        "source": "信息系统简答.pdf",
+        "source_no": "97",
+        "answer_source": "ai"
+      },
+      "removed": [
+        {
+          "id": 506,
+          "type": "essay",
+          "source": "信息系统简答.pdf",
+          "source_no": "105",
+          "answer_source": "ai"
+        }
+      ]
+    },
+    {
+      "content": "适合描述处理中具有多种策略的工具是( )。",
+      "count": 2,
+      "kept": {
+        "id": 84,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "84",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 140,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "140",
+          "answer_source": "source"
+        }
+      ]
+    },
+    {
+      "content": "面向数据流的设计方法把信息流映射成软件结构,信息流有下述两种类型即 和 。",
+      "count": 2,
+      "kept": {
+        "id": 277,
+        "type": "fill",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "42",
+        "answer_source": "ai"
+      },
+      "removed": [
+        {
+          "id": 330,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "95",
+          "answer_source": "ai"
+        }
+      ]
+    },
+    {
+      "content": "面向数据流的设计（SD方法）和面向数据结构的设计（JSP方法）是根据（ ）的表示 来进行设计。",
+      "count": 2,
+      "kept": {
+        "id": 41,
+        "type": "single_choice",
+        "source": "信息系统选择填空.pdf",
+        "source_no": "41",
+        "answer_source": "source"
+      },
+      "removed": [
+        {
+          "id": 42,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "42",
+          "answer_source": "source"
+        }
+      ]
     }
   ],
+  "removed_records": [
+    {
+      "id": 147,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "147",
+      "answer_source": "source"
+    },
+    {
+      "id": 224,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "224",
+      "answer_source": "source"
+    },
+    {
+      "id": 59,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "59",
+      "answer_source": "source"
+    },
+    {
+      "id": 37,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "37",
+      "answer_source": "source"
+    },
+    {
+      "id": 208,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "208",
+      "answer_source": "source"
+    },
+    {
+      "id": 127,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "127",
+      "answer_source": "source"
+    },
+    {
+      "id": 223,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "223",
+      "answer_source": "source"
+    },
+    {
+      "id": 58,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "58",
+      "answer_source": "source"
+    },
+    {
+      "id": 136,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "136",
+      "answer_source": "source"
+    },
+    {
+      "id": 162,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "162",
+      "answer_source": "source"
+    },
+    {
+      "id": 169,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "169",
+      "answer_source": "source"
+    },
+    {
+      "id": 183,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "183",
+      "answer_source": "source"
+    },
+    {
+      "id": 80,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "80",
+      "answer_source": "source"
+    },
+    {
+      "id": 130,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "130",
+      "answer_source": "source"
+    },
+    {
+      "id": 211,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "211",
+      "answer_source": "source"
+    },
+    {
+      "id": 49,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "49",
+      "answer_source": "source"
+    },
+    {
+      "id": 123,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "123",
+      "answer_source": "source"
+    },
+    {
+      "id": 203,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "203",
+      "answer_source": "source"
+    },
+    {
+      "id": 138,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "138",
+      "answer_source": "source"
+    },
+    {
+      "id": 177,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "177",
+      "answer_source": "source"
+    },
+    {
+      "id": 100,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "100",
+      "answer_source": "source"
+    },
+    {
+      "id": 207,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "207",
+      "answer_source": "source"
+    },
+    {
+      "id": 174,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "174",
+      "answer_source": "source"
+    },
+    {
+      "id": 82,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "82",
+      "answer_source": "source"
+    },
+    {
+      "id": 158,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "158",
+      "answer_source": "source"
+    },
+    {
+      "id": 181,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "181",
+      "answer_source": "source"
+    },
+    {
+      "id": 75,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "75",
+      "answer_source": "source"
+    },
+    {
+      "id": 105,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "105",
+      "answer_source": "source"
+    },
+    {
+      "id": 116,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "116",
+      "answer_source": "source"
+    },
+    {
+      "id": 204,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "204",
+      "answer_source": "source"
+    },
+    {
+      "id": 168,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "168",
+      "answer_source": "source"
+    },
+    {
+      "id": 109,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "109",
+      "answer_source": "source"
+    },
+    {
+      "id": 42,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "42",
+      "answer_source": "source"
+    },
+    {
+      "id": 153,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "153",
+      "answer_source": "source"
+    },
+    {
+      "id": 235,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "235",
+      "answer_source": "source"
+    },
+    {
+      "id": 55,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "55",
+      "answer_source": "source"
+    },
+    {
+      "id": 52,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "52",
+      "answer_source": "source"
+    },
+    {
+      "id": 71,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "71",
+      "answer_source": "source"
+    },
+    {
+      "id": 195,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "195",
+      "answer_source": "source"
+    },
+    {
+      "id": 202,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "202",
+      "answer_source": "source"
+    },
+    {
+      "id": 124,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "124",
+      "answer_source": "source"
+    },
+    {
+      "id": 150,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "150",
+      "answer_source": "source"
+    },
+    {
+      "id": 225,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "225",
+      "answer_source": "source"
+    },
+    {
+      "id": 228,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "228",
+      "answer_source": "source"
+    },
+    {
+      "id": 214,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "214",
+      "answer_source": "source"
+    },
+    {
+      "id": 213,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "213",
+      "answer_source": "source"
+    },
+    {
+      "id": 161,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "161",
+      "answer_source": "source"
+    },
+    {
+      "id": 184,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "184",
+      "answer_source": "source"
+    },
+    {
+      "id": 180,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "180",
+      "answer_source": "source"
+    },
+    {
+      "id": 77,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "77",
+      "answer_source": "source"
+    },
+    {
+      "id": 192,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "192",
+      "answer_source": "source"
+    },
+    {
+      "id": 131,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "131",
+      "answer_source": "source"
+    },
+    {
+      "id": 140,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "140",
+      "answer_source": "source"
+    },
+    {
+      "id": 226,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "226",
+      "answer_source": "source"
+    },
+    {
+      "id": 187,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "187",
+      "answer_source": "source"
+    },
+    {
+      "id": 120,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "120",
+      "answer_source": "source"
+    },
+    {
+      "id": 135,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "135",
+      "answer_source": "source"
+    },
+    {
+      "id": 176,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "176",
+      "answer_source": "source"
+    },
+    {
+      "id": 221,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "221",
+      "answer_source": "source"
+    },
+    {
+      "id": 189,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "189",
+      "answer_source": "source"
+    },
+    {
+      "id": 201,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "201",
+      "answer_source": "source"
+    },
+    {
+      "id": 167,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "167",
+      "answer_source": "source"
+    },
+    {
+      "id": 182,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "182",
+      "answer_source": "source"
+    },
+    {
+      "id": 209,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "209",
+      "answer_source": "source"
+    },
+    {
+      "id": 171,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "171",
+      "answer_source": "source"
+    },
+    {
+      "id": 232,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "232",
+      "answer_source": "source"
+    },
+    {
+      "id": 220,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "220",
+      "answer_source": "source"
+    },
+    {
+      "id": 179,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "179",
+      "answer_source": "source"
+    },
+    {
+      "id": 234,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "234",
+      "answer_source": "source"
+    },
+    {
+      "id": 218,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "218",
+      "answer_source": "source"
+    },
+    {
+      "id": 229,
+      "type": "single_choice",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "229",
+      "answer_source": "source"
+    },
+    {
+      "id": 338,
+      "type": "fill",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "103",
+      "answer_source": "ai"
+    },
+    {
+      "id": 281,
+      "type": "fill",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "46",
+      "answer_source": "source"
+    },
+    {
+      "id": 351,
+      "type": "fill",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "116",
+      "answer_source": "source"
+    },
+    {
+      "id": 330,
+      "type": "fill",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "95",
+      "answer_source": "ai"
+    },
+    {
+      "id": 302,
+      "type": "fill",
+      "source": "信息系统选择填空.pdf",
+      "source_no": "67",
+      "answer_source": "source"
+    },
+    {
+      "id": 574,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "173",
+      "answer_source": "source"
+    },
+    {
+      "id": 521,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "120",
+      "answer_source": "source"
+    },
+    {
+      "id": 552,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "151",
+      "answer_source": "source"
+    },
+    {
+      "id": 548,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "147",
+      "answer_source": "source"
+    },
+    {
+      "id": 568,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "167",
+      "answer_source": "source"
+    },
+    {
+      "id": 536,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "135",
+      "answer_source": "source"
+    },
+    {
+      "id": 519,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "118",
+      "answer_source": "source"
+    },
+    {
+      "id": 539,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "138",
+      "answer_source": "ai"
+    },
+    {
+      "id": 584,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "183",
+      "answer_source": "ai"
+    },
+    {
+      "id": 581,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "180",
+      "answer_source": "source"
+    },
+    {
+      "id": 436,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "35",
+      "answer_source": "source"
+    },
+    {
+      "id": 478,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "77",
+      "answer_source": "source"
+    },
+    {
+      "id": 511,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "110",
+      "answer_source": "source"
+    },
+    {
+      "id": 482,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "81",
+      "answer_source": "source"
+    },
+    {
+      "id": 567,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "166",
+      "answer_source": "source"
+    },
+    {
+      "id": 585,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "184",
+      "answer_source": "source"
+    },
+    {
+      "id": 500,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "99",
+      "answer_source": "source"
+    },
+    {
+      "id": 529,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "128",
+      "answer_source": "source"
+    },
+    {
+      "id": 569,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "168",
+      "answer_source": "source"
+    },
+    {
+      "id": 542,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "141",
+      "answer_source": "source"
+    },
+    {
+      "id": 582,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "181",
+      "answer_source": "source"
+    },
+    {
+      "id": 518,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "117",
+      "answer_source": "source"
+    },
+    {
+      "id": 566,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "165",
+      "answer_source": "source"
+    },
+    {
+      "id": 560,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "159",
+      "answer_source": "source"
+    },
+    {
+      "id": 506,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "105",
+      "answer_source": "ai"
+    },
+    {
+      "id": 549,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "148",
+      "answer_source": "source"
+    },
+    {
+      "id": 538,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "137",
+      "answer_source": "ai"
+    },
+    {
+      "id": 531,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "130",
+      "answer_source": "source"
+    },
+    {
+      "id": 546,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "145",
+      "answer_source": "source"
+    },
+    {
+      "id": 570,
+      "type": "essay",
+      "source": "信息系统简答.pdf",
+      "source_no": "169",
+      "answer_source": "ai"
+    }
+  ],
+  "same_content_conflict_group_count": 27,
+  "same_content_conflict_groups": [
+    {
+      "content": "面向数据流的设计方法把信息流映射成软件结构,信息流有下述两种类型即____________和 ____________。",
+      "count": 4,
+      "items": [
+        {
+          "id": 173,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "9",
+          "answer_source": "ai",
+          "options": [],
+          "answer": [
+            [
+              "参考答案"
+            ],
+            [
+              "参考答案"
+            ]
+          ]
+        },
+        {
+          "id": 195,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "31",
+          "answer_source": "ai",
+          "options": [],
+          "answer": [
+            [
+              "参考答案"
+            ],
+            [
+              "参考答案"
+            ]
+          ]
+        },
+        {
+          "id": 198,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "34",
+          "answer_source": "ai",
+          "options": [],
+          "answer": [
+            [
+              "参考答案"
+            ],
+            [
+              "参考答案"
+            ]
+          ]
+        },
+        {
+          "id": 206,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "42",
+          "answer_source": "ai",
+          "options": [],
+          "answer": [
+            [
+              "参考答案"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "content": "2个字节表示（ ）个二进制位。",
+      "count": 2,
+      "items": [
+        {
+          "id": 78,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "90",
+          "answer_source": "source",
+          "options": [
+            "",
+            "4",
+            "8",
+            ""
+          ],
+          "answer": [
+            3
+          ]
+        },
+        {
+          "id": 243,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "81",
+          "answer_source": "source",
+          "options": [],
+          "answer": [
+            [
+              "(1) 16"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "content": "RUP是以____________为驱动、以系统架构为中心的迭代与增量过程。RUP包括初始、细 化、构造和移交4个阶段。",
+      "count": 2,
+      "items": [
+        {
+          "id": 254,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "92",
+          "answer_source": "ai",
+          "options": [],
+          "answer": [
+            [
+              "用例"
+            ]
+          ]
+        },
+        {
+          "id": 304,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "145",
+          "answer_source": "ai",
+          "options": [],
+          "answer": [
+            [
+              "用例"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "content": "一般说来,软件调试途径主要有以下3种即 、 和 。",
+      "count": 2,
+      "items": [
+        {
+          "id": 174,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "10",
+          "answer_source": "ai",
+          "options": [],
+          "answer": [
+            [
+              "蛮干法、回溯法、原因排除法"
+            ]
+          ]
+        },
+        {
+          "id": 282,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "123",
+          "answer_source": "ai",
+          "options": [],
+          "answer": [
+            [
+              "蛮干法、回溯法、原因排除法"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "content": "下列模块的耦合方式中,耦合性最高的是( )。",
+      "count": 2,
+      "items": [
+        {
+          "id": 61,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "68",
+          "answer_source": "source",
+          "options": [
+            "内容耦合",
+            "模块耦合",
+            "特征耦合",
+            "公共耦合"
+          ],
+          "answer": [
+            0
+          ]
+        },
+        {
+          "id": 146,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "194",
+          "answer_source": "source",
+          "options": [
+            "内容耦合",
+            "模块耦合",
+            "特征耦合",
+            "公共耦合"
+          ],
+          "answer": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "content": "两个模块通过传递数据结构 (不是简单数据，而是记录、数 组等)加以联系，或都与一 个数据结构有关系，则称这两个模块间存在（ ）。",
+      "count": 2,
+      "items": [
+        {
+          "id": 67,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "76",
+          "answer_source": "source",
+          "options": [
+            "标记耦合",
+            "非直接耦合",
+            "数据耦合",
+            "控制耦合"
+          ],
+          "answer": [
+            0
+          ]
+        },
+        {
+          "id": 96,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "111",
+          "answer_source": "source",
+          "options": [
+            "标记耦合",
+            "非直接耦合",
+            "数据耦合",
+            "控制耦合"
+          ],
+          "answer": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "content": "以下各项中，（ ）不是用例图适于表达的内容。",
+      "count": 2,
+      "items": [
+        {
+          "id": 98,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "113",
+          "answer_source": "source",
+          "options": [
+            "参与者",
+            "事件流",
+            "用例关系",
+            "系统边界"
+          ],
+          "answer": [
+            1
+          ]
+        },
+        {
+          "id": 118,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "144",
+          "answer_source": "source",
+          "options": [
+            "参与者",
+            "事件流",
+            "用例关系",
+            "系统边界"
+          ],
+          "answer": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "content": "大型软件系统的测试过程基本上由 、 、系统测试、 和平行运行等五个步骤。",
+      "count": 2,
+      "items": [
+        {
+          "id": 226,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "63",
+          "answer_source": "ai",
+          "options": [],
+          "answer": [
+            [
+              "参考答案"
+            ]
+          ]
+        },
+        {
+          "id": 275,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "115",
+          "answer_source": "ai",
+          "options": [],
+          "answer": [
+            [
+              "参考答案"
+            ],
+            [
+              "参考答案"
+            ],
+            [
+              "参考答案"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "content": "总体设计又可称为概要设计的过程通常由 和 两个主要阶段组成。",
+      "count": 2,
+      "items": [
+        {
+          "id": 236,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "74",
+          "answer_source": "ai",
+          "options": [],
+          "answer": [
+            [
+              "参考答案"
+            ]
+          ]
+        },
+        {
+          "id": 321,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "162",
+          "answer_source": "ai",
+          "options": [],
+          "answer": [
+            [
+              "参考答案"
+            ],
+            [
+              "参考答案"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "content": "执行者（Actor）与用例之间的关系是（ ）。",
+      "count": 2,
+      "items": [
+        {
+          "id": 9,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "9",
+          "answer_source": "source",
+          "options": [
+            "包含关系",
+            "泛化关系",
+            "关联关系",
+            "扩展关系"
+          ],
+          "answer": [
+            2
+          ]
+        },
+        {
+          "id": 219,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "56",
+          "answer_source": "source",
+          "options": [],
+          "answer": [
+            [
+              "(1) 关联关系"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "content": "描述数据流图的四个要素有源点终点、__________________ 、__________________ 和 __________________。",
+      "count": 2,
+      "items": [
+        {
+          "id": 205,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "41",
+          "answer_source": "ai",
+          "options": [],
+          "answer": [
+            [
+              "外部实体、处理、数据流、数据存储"
+            ]
+          ]
+        },
+        {
+          "id": 317,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "158",
+          "answer_source": "ai",
+          "options": [],
+          "answer": [
+            [
+              "外部实体、处理、数据流、数据存储"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "content": "描述数据流图的基本元素包括( )。",
+      "count": 2,
+      "items": [
+        {
+          "id": 3,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "3",
+          "answer_source": "source",
+          "options": [
+            "数据流,内部实体,处理功能,数据存储",
+            "数据流,内部实体,外部实体,信息流",
+            "数据流,信息流,物流,资金流",
+            "数据流,处理功能,外部实体,数据存储"
+          ],
+          "answer": [
+            3
+          ]
+        },
+        {
+          "id": 18,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "18",
+          "answer_source": "source",
+          "options": [
+            "数据流、内部实体、处理功能、数据存储",
+            "数据流、内部实体、外部实体、信息流",
+            "数据流、信息流、物流、资金流",
+            "数据流、处理功能、外部实体、数据存储"
+          ],
+          "answer": [
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "content": "描述系统中各模块的层次及其输入输出功能的图是( )。",
+      "count": 2,
+      "items": [
+        {
+          "id": 122,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "149",
+          "answer_source": "source",
+          "options": [
+            "HIPO图",
+            "系统流程图",
+            "数据流程图",
+            "程序流程图"
+          ],
+          "answer": [
+            0
+          ]
+        },
+        {
+          "id": 131,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "163",
+          "answer_source": "source",
+          "options": [
+            "HIPO图",
+            "系统流程图",
+            "数据流图",
+            "程序流程图"
+          ],
+          "answer": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "content": "数据字典(DD)所定义的对象都包含在（ ）中。",
+      "count": 2,
+      "items": [
+        {
+          "id": 156,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "215",
+          "answer_source": "source",
+          "options": [
+            "软件结构图",
+            "方框图",
+            "数据流图",
+            "程序流程图"
+          ],
+          "answer": [
+            3
+          ]
+        },
+        {
+          "id": 285,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "126",
+          "answer_source": "source",
+          "options": [],
+          "answer": [
+            [
+              "(1) 数据流图"
+            ],
+            [
+              "DFD图"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "content": "数据字典中，一般不包括下列选项中的( )条目。",
+      "count": 2,
+      "items": [
+        {
+          "id": 117,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "143",
+          "answer_source": "source",
+          "options": [
+            "数据流",
+            "数据存储",
+            "数据加工处理",
+            "源点与终点"
+          ],
+          "answer": [
+            3
+          ]
+        },
+        {
+          "id": 230,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "68",
+          "answer_source": "source",
+          "options": [],
+          "answer": [
+            [
+              "(1)\n源点与终点"
+            ],
+            [
+              "外部实体"
+            ],
+            [
+              "实体"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "content": "数据字典建立应从( )阶段开始。",
+      "count": 2,
+      "items": [
+        {
+          "id": 64,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "72",
+          "answer_source": "source",
+          "options": [
+            "系统设计",
+            "系统分析",
+            "系统实施",
+            "系统规划"
+          ],
+          "answer": [
+            1
+          ]
+        },
+        {
+          "id": 166,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "2",
+          "answer_source": "source",
+          "options": [],
+          "answer": [
+            [
+              "(1)\n系统分析"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "content": "数据字典是软件需求分析阶段的最重要的工具之一，其最基本的功能是( )。",
+      "count": 2,
+      "items": [
+        {
+          "id": 150,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "199",
+          "answer_source": "source",
+          "options": [
+            "数据库设计",
+            "数据维护",
+            "数据定义",
+            "数据通信"
+          ],
+          "answer": [
+            2
+          ]
+        },
+        {
+          "id": 258,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "97",
+          "answer_source": "source",
+          "options": [],
+          "answer": [
+            [
+              "(1) 数据定义"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "content": "日文有50个平假名和50个片假名，每个假名的信息量是（ ）。",
+      "count": 2,
+      "items": [
+        {
+          "id": 129,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "159",
+          "answer_source": "source",
+          "options": [
+            "5",
+            "6",
+            "7",
+            "8"
+          ],
+          "answer": [
+            2
+          ]
+        },
+        {
+          "id": 248,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "86",
+          "answer_source": "source",
+          "options": [],
+          "answer": [
+            [
+              "(1) 7"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "content": "每位数字的信息量为1，十六进制的每位数字的信息量是（ ）。",
+      "count": 2,
+      "items": [
+        {
+          "id": 145,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "193",
+          "answer_source": "source",
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4"
+          ],
+          "answer": [
+            3
+          ]
+        },
+        {
+          "id": 284,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "125",
+          "answer_source": "source",
+          "options": [],
+          "answer": [
+            [
+              "(1) 4"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "content": "每位数字的信息量为1，十进制数字有10个，每位数字的信息量是（ ）。",
+      "count": 2,
+      "items": [
+        {
+          "id": 132,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "164",
+          "answer_source": "source",
+          "options": [
+            "1",
+            "2",
+            "3",
+            ""
+          ],
+          "answer": [
+            3
+          ]
+        },
+        {
+          "id": 183,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "19",
+          "answer_source": "source",
+          "options": [],
+          "answer": [
+            [
+              "(1) 4"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "content": "汉字编码用（ ）个字节表示一个汉字。",
+      "count": 2,
+      "items": [
+        {
+          "id": 142,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "188",
+          "answer_source": "source",
+          "options": [
+            "1",
+            "",
+            "3",
+            "4"
+          ],
+          "answer": [
+            1
+          ]
+        },
+        {
+          "id": 296,
+          "type": "fill",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "137",
+          "answer_source": "source",
+          "options": [],
+          "answer": [
+            [
+              "(1) 2"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "content": "用来划分子系统的U/C矩阵由以下两者之间的关系形成( )。",
+      "count": 2,
+      "items": [
+        {
+          "id": 44,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "46",
+          "answer_source": "source",
+          "options": [
+            "管理功能和数据类",
+            "功能类/数据类",
+            "代码和数据项",
+            "管理层次和管理功能"
+          ],
+          "answer": [
+            0
+          ]
+        },
+        {
+          "id": 124,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "152",
+          "answer_source": "source",
+          "options": [
+            "功能类和数据类",
+            "项目和字段",
+            "代码和数据项",
+            "管理层次和管理功能"
+          ],
+          "answer": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "content": "系统分析的任务是( )。",
+      "count": 2,
+      "items": [
+        {
+          "id": 8,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "8",
+          "answer_source": "source",
+          "options": [
+            "完成系统的物理设计",
+            "完成系统的逻辑设计",
+            "完成系统的测试",
+            "完成系统的代码设计"
+          ],
+          "answer": [
+            1
+          ]
+        },
+        {
+          "id": 154,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "210",
+          "answer_source": "source",
+          "options": [
+            "完成系统的物理设计",
+            "完成系统的逻辑模型",
+            "完成系统的测试",
+            "完成系统的代码设计"
+          ],
+          "answer": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "content": "软件测试的目的是“建设性”的,即为了竭力证明已经建造好的软件系统的正确性和适用性",
+      "count": 2,
+      "items": [
+        {
+          "id": 369,
+          "type": "essay",
+          "source": "信息系统简答.pdf",
+          "source_no": "45",
+          "answer_source": "ai",
+          "options": [],
+          "answer": [
+            "参考答案：软件测试的目的是“建设性”的,即为了竭力证明已经建造好的软件系统的正确性和适用性应从概念、目标、组成要素、实施步骤和注意事项几个方面回答。一般应先说明其基本含义，再列出核心内容或步骤，最后说明其在信息系统分析、设计、实施或维护中的作用。作答时要突出与业务需求、数据、功能、用户和系统约束之间的关系。"
+          ]
+        },
+        {
+          "id": 466,
+          "type": "essay",
+          "source": "信息系统简答.pdf",
+          "source_no": "161",
+          "answer_source": "ai",
+          "options": [],
+          "answer": [
+            "参考答案：该表述基本正确。作答时应围绕题干涉及的概念说明其含义、适用场景、主要组成或作用，并结合信息系统分析与设计过程进行简要解释。"
+          ]
+        }
+      ]
+    },
+    {
+      "content": "（ ）是两个事物之间的语义关系，其中一个事物(独立事物)发生变化，会影响到另 一个事物的语义。",
+      "count": 2,
+      "items": [
+        {
+          "id": 114,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "139",
+          "answer_source": "source",
+          "options": [
+            "依赖(dependency)",
+            "关联(association)",
+            "泛化(generalization)",
+            "实现(realization)"
+          ],
+          "answer": [
+            0
+          ]
+        },
+        {
+          "id": 147,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "196",
+          "answer_source": "source",
+          "options": [
+            "依赖(dependency)",
+            "关联(association)",
+            "泛化(generalization)",
+            "实现(realization)"
+          ],
+          "answer": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "content": "（ ）是描述系统中类的动态结构。",
+      "count": 2,
+      "items": [
+        {
+          "id": 34,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "34",
+          "answer_source": "source",
+          "options": [
+            "对象图",
+            "用例图",
+            "顺序图",
+            "协作图"
+          ],
+          "answer": [
+            0
+          ]
+        },
+        {
+          "id": 164,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "233",
+          "answer_source": "source",
+          "options": [
+            "对象图",
+            "用例图",
+            "顺序图",
+            "协作图"
+          ],
+          "answer": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "content": "（）是一种特殊/一般的关系，也可以看作是常说的继承关系。",
+      "count": 2,
+      "items": [
+        {
+          "id": 19,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "19",
+          "answer_source": "source",
+          "options": [
+            "依赖(dependency)",
+            "关联(association)",
+            "泛化(generalization)",
+            "实现(realization)"
+          ],
+          "answer": [
+            2
+          ]
+        },
+        {
+          "id": 91,
+          "type": "single_choice",
+          "source": "信息系统选择填空.pdf",
+          "source_no": "104",
+          "answer_source": "source",
+          "options": [
+            "依赖(dependency)",
+            "关联(association)",
+            "泛化(generalization)",
+            "实现(realization)"
+          ],
+          "answer": [
+            2
+          ]
+        }
+      ]
+    }
+  ],
+  "remaining_duplicate_group_count": 0,
+  "remaining_duplicate_groups": [],
   "validation_error_count": 0,
   "validation_errors": [],
   "notes": [
-    "本文件只包含 信息系统选择填空.pdf 与 信息系统简答.pdf 两个学习通 PDF 的题目。",
-    "选择题答案使用0基索引数组，例如A为[0]。",
-    "判断题答案使用布尔数组，例如正确为[true]。",
-    "填空题答案使用二维数组，每个空一个答案组。",
-    "简答题有学习通原答案时解析为“来源学习通”；AI补答案时解析为“答案由AI 生成，非官方答案，仅供参考”。"
+    "去重版只删除题型、题干、选项顺序与内容、答案均一致的完全重复题。",
+    "同题干但题型、选项或答案不同的题目保留，并在报告 same_content_conflict_groups 中列出。"
   ]
 }

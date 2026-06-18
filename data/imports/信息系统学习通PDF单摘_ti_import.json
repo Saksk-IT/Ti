@@ -24,16 +24,30 @@
     "deduplicated": false,
     "dedup_key": null,
     "original_question_count": 585,
-    "duplicate_group_count": 104,
-    "duplicate_involved_count": 239,
+    "duplicate_group_count": 86,
+    "duplicate_involved_count": 192,
     "removed_duplicate_count": 0,
     "notes": [
       "本文件只包含 信息系统选择填空.pdf 与 信息系统简答.pdf 两个学习通 PDF 的题目。",
       "选择题答案使用0基索引数组，例如A为[0]。",
       "判断题答案使用布尔数组，例如正确为[true]。",
       "填空题答案使用二维数组，每个空一个答案组。",
-      "简答题有学习通原答案时解析为“来源学习通”；AI补答案时解析为“答案由AI 生成，非官方答案，仅供参考”。"
-    ]
+      "简答题有学习通原答案时解析为“来源学习通”；AI补答案时解析为“答案由AI 生成，非官方答案，仅供参考”。",
+      "2026-06-18: 去重标准修正为题型、题干、选项顺序与内容、答案均一致才判定为重复；同题干但题型/选项/答案不同的题目保留，仅在报告中列为疑似冲突。"
+    ],
+    "duplicate_question_count": 192,
+    "same_content_conflict_group_count": 27,
+    "skipped_invalid_question_count": 0,
+    "updated_at": "2026-06-19T00:04:27+08:00",
+    "essay_answer_source_counts": {
+      "ai": 95,
+      "source": 89
+    },
+    "essay_analysis_rule": {
+      "source": "来源学习通",
+      "ai": "答案由AI 生成，非官方答案，仅供参考"
+    },
+    "source_original_question_count": 585
   },
   "questions": [
     {
