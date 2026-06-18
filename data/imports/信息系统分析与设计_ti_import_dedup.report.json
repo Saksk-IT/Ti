@@ -6770,5 +6770,21 @@
     },
     "duplicate_question_count": 334,
     "duplicate_group_count": 127
-  }
+  },
+  "updated_at": "2026-06-18T13:40:13+08:00",
+  "essay_analysis_counts": {
+    "答案由AI 生成，非官方答案，仅供参考": 89,
+    "来源学习通": 65
+  },
+  "essay_answer_source_counts": {
+    "ai": 89,
+    "source": 65
+  },
+  "essay_analysis_rule": {
+    "source": "来源学习通",
+    "ai": "答案由AI 生成，非官方答案，仅供参考"
+  },
+  "post_process_notes": [
+    "2026-06-18: 简答题解析已按答案来源区分；原答案标记为“来源学习通”，AI补答案标记为“答案由AI 生成，非官方答案，仅供参考”。"
+  ]
 }

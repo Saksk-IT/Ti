@@ -2914,5 +2914,21 @@
       "warnings": []
     }
   ],
-  "parse_warnings_by_source": {}
+  "parse_warnings_by_source": {},
+  "updated_at": "2026-06-18T13:40:13+08:00",
+  "essay_analysis_counts": {
+    "答案由AI 生成，非官方答案，仅供参考": 95,
+    "来源学习通": 89
+  },
+  "essay_answer_source_counts": {
+    "ai": 95,
+    "source": 89
+  },
+  "essay_analysis_rule": {
+    "source": "来源学习通",
+    "ai": "答案由AI 生成，非官方答案，仅供参考"
+  },
+  "post_process_notes": [
+    "2026-06-18: 简答题解析已按答案来源区分；原答案标记为“来源学习通”，AI补答案标记为“答案由AI 生成，非官方答案，仅供参考”。"
+  ]
 }
