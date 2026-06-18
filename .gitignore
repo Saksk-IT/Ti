@@ -49,6 +49,9 @@ backups/
 *.db
 *.sqlite3
 
+# 本地题库导入文件
+data/imports/*.json
+
 # 日志
 logs/
 *.log
