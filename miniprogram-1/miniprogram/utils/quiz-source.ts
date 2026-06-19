@@ -19,6 +19,75 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
+const OPTION_KEYS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const OPTION_TYPES = new Set(['选择题', '多选题']);
+
+function parseOptions(rawOptions: any): Array<{ key: string; value: string }> {
+  let opts = rawOptions;
+  if (typeof opts === 'string') {
+    try {
+      opts = JSON.parse(opts);
+    } catch (e) {
+      opts = [];
+    }
+  }
+  if (!Array.isArray(opts)) return [];
+
+  return opts.map((item: any, index: number) => {
+    if (item && typeof item === 'object') {
+      const rawKey = String(item.key || '').trim().toUpperCase();
+      return {
+        key: rawKey || (OPTION_KEYS[index] || String(index + 1)),
+        value: String(item.value || '')
+      };
+    }
+    return {
+      key: OPTION_KEYS[index] || String(index + 1),
+      value: String(item == null ? '' : item)
+    };
+  });
+}
+
+function shuffleChoiceOptions(question: Question): Question {
+  if (!OPTION_TYPES.has(String(question.q_type || ''))) return question;
+  const options = parseOptions(question.options);
+  if (options.length <= 1) return question;
+
+  const answerLetters = new Set(
+    String(question.answer || '')
+      .toUpperCase()
+      .split('')
+      .filter((c) => /[A-Z]/.test(c))
+  );
+  const answerIndexes = new Set<number>();
+  options.forEach((opt, index) => {
+    const key = String(opt.key || OPTION_KEYS[index] || '').toUpperCase().slice(0, 1);
+    if (answerLetters.has(key)) {
+      answerIndexes.add(index);
+    }
+  });
+
+  const shuffled = shuffleArray(options.map((opt, index) => ({
+    originalIndex: index,
+    value: String(opt.value || '')
+  })));
+  const nextOptions = shuffled.map((opt, index) => {
+    const key = OPTION_KEYS[index] || String(index + 1);
+    return { key, value: opt.value, originalIndex: opt.originalIndex };
+  });
+  const nextAnswer = nextOptions
+    .filter((opt) => answerIndexes.has(opt.originalIndex))
+    .map((opt) => opt.key)
+    .sort()
+    .join('');
+
+  return {
+    ...question,
+    options: nextOptions.map((opt) => ({ key: opt.key, value: opt.value })),
+    answer: nextAnswer
+  };
+}
+
 // ============================================
 // 类型定义
 // ============================================
@@ -416,24 +485,8 @@ export class BankQuizSource implements IQuizSource {
 
     // 如果需要打乱选项（仅选择题/多选题）
     if (params?.shuffle_options && Array.isArray(questions)) {
-      const optionTypes = new Set(['选择题', '多选题']);
       questions = questions.map((q: Question) => {
-        if (!optionTypes.has((q as Record<string, unknown>).q_type as string || '')) return q;
-        if (q.options) {
-          let opts = q.options;
-          if (typeof opts === 'string') {
-            try {
-              opts = JSON.parse(opts);
-            } catch (e) {
-              opts = [];
-            }
-          }
-          if (Array.isArray(opts) && opts.length > 0) {
-            const shuffled = shuffleArray(opts);
-            return { ...q, options: shuffled };
-          }
-        }
-        return q;
+        return shuffleChoiceOptions(q);
       });
     }
 

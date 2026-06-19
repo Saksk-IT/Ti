@@ -43,6 +43,7 @@
     let startCountTimer = null;
     let startCountReq = 0;
     let startCountValue = null;
+    let shuffleOptionsAvailable = false;
 
     const PAGE_TAB_KEY = `bank_${BANK_ID}_detail_tab`;
     let pageTab = 'practice';
@@ -538,13 +539,12 @@
       }
       persist();
       startCountValue = null;
-      if (kind === 'type') syncShuffleAvailability();
       syncChipsUI();
       queueStartCount();
     }
 
     function canShuffleOptions(){
-      return state.type === 'all' || OPTION_TYPES.has(state.type);
+      return !!shuffleOptionsAvailable;
     }
 
     function syncChipsUI(){
@@ -724,10 +724,15 @@
         if (!res.ok) throw new Error('count request failed');
         const data = await res.json();
         if (reqId !== startCountReq) return;
-        const count = Number(data && data.data && data.data.total) || 0;
+        const payload = data && data.data ? data.data : {};
+        const count = Number(payload.total) || 0;
+        shuffleOptionsAvailable = !!payload.shuffle_options_available;
+        syncShuffleAvailability();
         setStartCount(count, false);
       } catch (e) {
         if (reqId !== startCountReq) return;
+        shuffleOptionsAvailable = false;
+        syncShuffleAvailability();
         setStartCount('—', false);
       }
     }
@@ -782,4 +787,3 @@
       if (!text) return '';
       return text.length > 80 ? (text.slice(0, 80) + '…') : text;
     }
-

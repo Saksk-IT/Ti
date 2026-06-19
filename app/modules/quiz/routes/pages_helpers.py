@@ -4,6 +4,7 @@ import json
 import math
 import random
 import re
+from typing import Any
 
 from app.core.utils.image_helpers import normalize_question_image_groups
 from app.core.utils.json_helpers import safe_json_load as _safe_json_load
@@ -135,6 +136,161 @@ def _normalize_answer(q):
         pass
 
 
+_OPTION_KEYS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+_OPTION_Q_TYPES = {"选择题", "多选题"}
+
+
+def _option_value(option: Any) -> str:
+    if isinstance(option, dict):
+        return str(option.get("value") or "")
+    return str(option or "")
+
+
+def _option_key(option: Any, index: int) -> str:
+    if isinstance(option, dict):
+        raw = str(option.get("key") or "").strip().upper()
+        if raw:
+            return raw[:1]
+    return _OPTION_KEYS[index] if index < len(_OPTION_KEYS) else str(index + 1)
+
+
+def shuffle_choice_options(question: dict, *, rng: random.Random | None = None) -> dict:
+    """Return a copy with shuffled choice options and remapped answer letters."""
+    q_type = str(question.get("q_type") or "")
+    if q_type not in _OPTION_Q_TYPES:
+        return dict(question)
+
+    options = question.get("options") or []
+    if not isinstance(options, list) or len(options) <= 1:
+        return dict(question)
+
+    parsed_options = parse_options(options)
+    if len(parsed_options) <= 1:
+        return dict(question)
+
+    answer_letters = {
+        c.upper()
+        for c in str(question.get("answer") or "")
+        if c.isalpha()
+    }
+    original_answer_indexes = set()
+    for index, option in enumerate(parsed_options):
+        key = _option_key(option, index)
+        if key in answer_letters:
+            original_answer_indexes.add(index)
+
+    indexed_options = [
+        {"original_index": index, "value": _option_value(option)}
+        for index, option in enumerate(parsed_options)
+    ]
+    shuffled = list(indexed_options)
+    (rng or random).shuffle(shuffled)
+
+    next_options = []
+    next_answers = []
+    for index, option in enumerate(shuffled):
+        next_key = _OPTION_KEYS[index] if index < len(_OPTION_KEYS) else str(index + 1)
+        next_options.append({"key": next_key, "value": option["value"]})
+        if option["original_index"] in original_answer_indexes:
+            next_answers.append(next_key)
+
+    out = dict(question)
+    out["options"] = next_options
+    out["answer"] = "".join(sorted(next_answers))
+    return out
+
+
+def build_quiz_progress_key(
+    *,
+    uid: int,
+    mode: str,
+    subject: str,
+    q_type: str,
+    data_scope: str,
+    tag: str = "",
+    rk: str = "",
+    shuffle_questions: bool = False,
+    shuffle_options: bool = False,
+) -> str:
+    key_parts = [
+        f"{_progress_key_prefix(mode)}_{uid}",
+        mode,
+        subject,
+        q_type,
+        data_scope,
+        f"tag{tag}" if tag and str(tag).lower() != "all" else None,
+        f"rk{rk}" if mode == "reinforce" and rk in ("wrong", "similar") else None,
+        f"q{1 if shuffle_questions else 0}",
+        f"o{1 if shuffle_options else 0}",
+    ]
+    return "_".join([p for p in key_parts if p])
+
+
+def load_saved_question_order(*, uid: int, progress_key: str, progress_model) -> list[int] | None:
+    try:
+        saved = progress_model.query.filter_by(user_id=uid, p_key=progress_key).first()
+        if not saved or not saved.data:
+            return None
+        saved_json = json.loads(saved.data)
+        if isinstance(saved_json, dict) and isinstance(saved_json.get("order"), list):
+            return [int(x) for x in saved_json["order"]]
+    except Exception:
+        return None
+    return None
+
+
+def save_question_order(
+    *,
+    uid: int,
+    progress_key: str,
+    order: list[int],
+    progress_model,
+    session,
+) -> None:
+    try:
+        existing = progress_model.query.filter_by(user_id=uid, p_key=progress_key).first()
+        if existing and existing.data:
+            try:
+                payload = json.loads(existing.data)
+                if not isinstance(payload, dict):
+                    payload = {}
+            except Exception:
+                payload = {}
+        else:
+            payload = {}
+        payload["order"] = order
+        payload["timestamp"] = payload.get("timestamp", 0)
+        data_to_save = json.dumps(payload, ensure_ascii=False)
+        if existing:
+            existing.data = data_to_save
+        else:
+            session.add(progress_model(user_id=uid, p_key=progress_key, data=data_to_save))
+        session.commit()
+    except Exception:
+        session.rollback()
+
+
+def apply_question_shuffle(
+    questions: list[dict],
+    *,
+    saved_order: list[int] | None = None,
+    rng: random.Random | None = None,
+) -> tuple[list[dict], list[int]]:
+    if saved_order:
+        q_map = {int(q.get("id") or 0): q for q in questions}
+        ordered_questions = []
+        for qid in saved_order:
+            if qid in q_map:
+                ordered_questions.append(q_map.pop(qid))
+        if q_map:
+            ordered_questions.extend(q_map.values())
+        return ordered_questions, [int(q.get("id") or 0) for q in ordered_questions]
+
+    shuffled = list(questions)
+    (rng or random).shuffle(shuffled)
+    return shuffled, [int(q.get("id") or 0) for q in shuffled]
+
+
 def _apply_pqf_legacy_fields(q: dict, *, scope: str) -> None:
     """把 DB(PQF) 字段转成 quiz 页面历史字段。"""
     from app.core.utils.portable_question_format import portable_question_to_internal
@@ -202,7 +358,7 @@ def _build_public_questions(rows, uid):
     return questions
 
 
-def _build_user_bank_questions(rows, uid, bank_id):
+def _build_user_bank_questions(rows, uid, bank_id, *, shuffle_options=False):
     q_ids = [int(r['id']) for r in rows] if rows else []
     fav_set = set()
     mis_set = set()
@@ -234,6 +390,9 @@ def _build_user_bank_questions(rows, uid, bank_id):
             q['options'] = []
 
         _normalize_answer(q)
+        if shuffle_options:
+            rng = random.Random((int(uid or 0) * 1000000) + int(q.get('id') or 0))
+            q = shuffle_choice_options(q, rng=rng)
         questions.append(q)
     return questions
 

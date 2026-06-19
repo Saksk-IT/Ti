@@ -28,6 +28,10 @@ from .pages_helpers import (
     _apply_pqf_legacy_fields,
     _build_public_questions,
     _build_user_bank_questions,
+    apply_question_shuffle,
+    build_quiz_progress_key,
+    load_saved_question_order,
+    save_question_order,
     _orm_to_dict,
     _row_to_dict,
 )
@@ -127,7 +131,12 @@ def quiz_page():
             ).all()
             q_map = {obj.id: _orm_to_dict(obj) for obj in (q_objs or [])}
             ordered_rows = [q_map[i] for i in custom_ids if i in q_map]
-            questions = _build_user_bank_questions(ordered_rows, uid, int(bank_id))
+            questions = _build_user_bank_questions(
+                ordered_rows,
+                uid,
+                int(bank_id),
+                shuffle_options=shuffle_options,
+            )
 
             ua_map = {}
             try:
@@ -200,7 +209,12 @@ def quiz_page():
                 else:
                     ordered_rows = []
 
-                questions = _build_user_bank_questions(ordered_rows, uid, int(bank_id))
+                questions = _build_user_bank_questions(
+                    ordered_rows,
+                    uid,
+                    int(bank_id),
+                    shuffle_options=shuffle_options,
+                )
                 study_meta['streak_map'] = streak_map
             else:
                 due_rows = db.session.query(
@@ -249,7 +263,12 @@ def quiz_page():
                 else:
                     ordered_rows = []
 
-                questions = _build_user_bank_questions(ordered_rows, uid, int(bank_id))
+                questions = _build_user_bank_questions(
+                    ordered_rows,
+                    uid,
+                    int(bank_id),
+                    shuffle_options=shuffle_options,
+                )
 
             return render_template(
                 'quiz/quiz.html',
@@ -343,7 +362,34 @@ def quiz_page():
             if len(rows) > limit:
                 rows = random.sample(rows, limit)
             random.shuffle(rows)
-        questions = _build_user_bank_questions(rows, uid, int(bank_id))
+        questions = _build_user_bank_questions(rows, uid, int(bank_id), shuffle_options=shuffle_options)
+        if shuffle_questions:
+            bank_subject = f"bank_{int(bank_id)}"
+            data_scope = source if source in ("favorites", "mistakes") else "all"
+            progress_key = build_quiz_progress_key(
+                uid=int(uid),
+                mode=mode,
+                subject=bank_subject,
+                q_type=q_type,
+                data_scope=data_scope,
+                tag=tag,
+                shuffle_questions=shuffle_questions,
+                shuffle_options=shuffle_options,
+            )
+            saved_order = load_saved_question_order(
+                uid=int(uid),
+                progress_key=progress_key,
+                progress_model=UserProgress,
+            )
+            questions, order = apply_question_shuffle(questions, saved_order=saved_order)
+            if not saved_order:
+                save_question_order(
+                    uid=int(uid),
+                    progress_key=progress_key,
+                    order=order,
+                    progress_model=UserProgress,
+                    session=db.session,
+                )
         q_ids = [int(q.get('id') or 0) for q in (questions or []) if int(q.get('id') or 0) > 0]
 
         # 历史答案回显

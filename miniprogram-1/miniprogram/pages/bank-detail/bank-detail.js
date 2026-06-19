@@ -124,7 +124,7 @@ Page({
         practiceAdvancedOpen: false,
         shuffleQuestions: false,
         shuffleOptions: false,
-        shuffleOptionsDisabled: false,
+        shuffleOptionsDisabled: true,
         startCount: 0,
         startCountText: '—',
         startDisabled: true,
@@ -1408,13 +1408,9 @@ Page({
         });
     },
     syncShuffleOptionsDisabled: function () {
-        var disabled = this.data.qType !== 'all' && !bank_detail_helpers_1.OPTION_TYPES.has(String(this.data.qType || ''));
+        var disabled = true;
         if (disabled !== this.data.shuffleOptionsDisabled) {
             this.setData({ shuffleOptionsDisabled: disabled });
-        }
-        if (disabled && this.data.shuffleOptions) {
-            this.setData({ shuffleOptions: false });
-            (0, bank_detail_helpers_1.setStoredBool)(bank_detail_helpers_1.KEY_SHUFFLE_O, false);
         }
     },
     onToggleShuffleQuestions: function () {
@@ -1448,7 +1444,7 @@ Page({
     },
     loadStartCount: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var reqId, bankId, params, res, data, count, e_5;
+            var reqId, bankId, params, res, data, shuffleOptionsAvailable, hadShuffleOptions, count, e_5, hadShuffleOptions;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -1470,24 +1466,37 @@ Page({
                         if (reqId !== this.startCountReq)
                             return [2 /*return*/];
                         data = (res === null || res === void 0 ? void 0 : res.data) || res || {};
+                        shuffleOptionsAvailable = !!(data === null || data === void 0 ? void 0 : data.shuffle_options_available);
+                        hadShuffleOptions = !!this.data.shuffleOptions;
                         count = Number((data === null || data === void 0 ? void 0 : data.total) || 0) || 0;
                         this.patchData({
                             startCount: count,
                             startCountText: String(count),
                             startDisabled: count <= 0,
+                            shuffleOptionsDisabled: !shuffleOptionsAvailable,
+                            shuffleOptions: shuffleOptionsAvailable ? this.data.shuffleOptions : false,
                             startError: ''
                         });
+                        if (!shuffleOptionsAvailable && hadShuffleOptions) {
+                            (0, bank_detail_helpers_1.setStoredBool)(bank_detail_helpers_1.KEY_SHUFFLE_O, false);
+                        }
                         return [3 /*break*/, 4];
                     case 3:
                         e_5 = _a.sent();
                         if (reqId !== this.startCountReq)
                             return [2 /*return*/];
+                        hadShuffleOptions = !!this.data.shuffleOptions;
                         this.patchData({
                             startCount: 0,
                             startCountText: '0',
                             startDisabled: true,
+                            shuffleOptionsDisabled: true,
+                            shuffleOptions: false,
                             startError: (e_5 && e_5.message) ? String(e_5.message) : '获取题量失败'
                         });
+                        if (hadShuffleOptions) {
+                            (0, bank_detail_helpers_1.setStoredBool)(bank_detail_helpers_1.KEY_SHUFFLE_O, false);
+                        }
                         return [3 /*break*/, 4];
                     case 4: return [2 /*return*/];
                 }

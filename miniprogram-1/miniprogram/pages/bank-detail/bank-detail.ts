@@ -134,7 +134,7 @@ Page({
 
     shuffleQuestions: false,
     shuffleOptions: false,
-    shuffleOptionsDisabled: false,
+    shuffleOptionsDisabled: true,
 
     startCount: 0,
     startCountText: '—',
@@ -1316,13 +1316,9 @@ Page({
   },
 
   syncShuffleOptionsDisabled() {
-    const disabled = this.data.qType !== 'all' && !OPTION_TYPES.has(String(this.data.qType || ''));
+    const disabled = true;
     if (disabled !== this.data.shuffleOptionsDisabled) {
       this.setData({ shuffleOptionsDisabled: disabled });
-    }
-    if (disabled && this.data.shuffleOptions) {
-      this.setData({ shuffleOptions: false });
-      setStoredBool(KEY_SHUFFLE_O, false);
     }
   },
 
@@ -1368,21 +1364,34 @@ Page({
       const res: any = await api.getBankUserCounts(bankId, params);
       if (reqId !== this.startCountReq) return;
       const data = res?.data || res || {};
+      const shuffleOptionsAvailable = !!data?.shuffle_options_available;
+      const hadShuffleOptions = !!this.data.shuffleOptions;
       const count = Number(data?.total || 0) || 0;
       this.patchData({
         startCount: count,
         startCountText: String(count),
         startDisabled: count <= 0,
+        shuffleOptionsDisabled: !shuffleOptionsAvailable,
+        shuffleOptions: shuffleOptionsAvailable ? this.data.shuffleOptions : false,
         startError: ''
       });
+      if (!shuffleOptionsAvailable && hadShuffleOptions) {
+        setStoredBool(KEY_SHUFFLE_O, false);
+      }
     } catch (e: any) {
       if (reqId !== this.startCountReq) return;
+      const hadShuffleOptions = !!this.data.shuffleOptions;
       this.patchData({
         startCount: 0,
         startCountText: '0',
         startDisabled: true,
+        shuffleOptionsDisabled: true,
+        shuffleOptions: false,
         startError: (e && e.message) ? String(e.message) : '获取题量失败'
       });
+      if (hadShuffleOptions) {
+        setStoredBool(KEY_SHUFFLE_O, false);
+      }
     }
   },
 

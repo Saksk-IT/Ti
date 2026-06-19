@@ -64,6 +64,66 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getSourceLabel = exports.createSourceFromOptions = exports.createQuizSource = exports.BankQuizSource = exports.PublicQuizSource = void 0;
 var api_1 = require("./api");
+var OPTION_KEYS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+var OPTION_TYPES = new Set(['选择题', '多选题']);
+function parseOptions(rawOptions) {
+    var opts = rawOptions;
+    if (typeof opts === 'string') {
+        try {
+            opts = JSON.parse(opts);
+        }
+        catch (e) {
+            opts = [];
+        }
+    }
+    if (!Array.isArray(opts))
+        return [];
+    return opts.map(function (item, index) {
+        if (item && typeof item === 'object') {
+            var rawKey = String(item.key || '').trim().toUpperCase();
+            return {
+                key: rawKey || (OPTION_KEYS[index] || String(index + 1)),
+                value: String(item.value || '')
+            };
+        }
+        return {
+            key: OPTION_KEYS[index] || String(index + 1),
+            value: String(item == null ? '' : item)
+        };
+    });
+}
+function shuffleChoiceOptions(question) {
+    if (!OPTION_TYPES.has(String(question.q_type || '')))
+        return question;
+    var options = parseOptions(question.options);
+    if (options.length <= 1)
+        return question;
+    var answerLetters = new Set(String(question.answer || '')
+        .toUpperCase()
+        .split('')
+        .filter(function (c) { return /[A-Z]/.test(c); }));
+    var answerIndexes = new Set();
+    options.forEach(function (opt, index) {
+        var key = String(opt.key || OPTION_KEYS[index] || '').toUpperCase().slice(0, 1);
+        if (answerLetters.has(key)) {
+            answerIndexes.add(index);
+        }
+    });
+    var shuffled = shuffleArray(options.map(function (opt, index) { return ({
+        originalIndex: index,
+        value: String(opt.value || '')
+    }); }));
+    var nextOptions = shuffled.map(function (opt, index) {
+        var key = OPTION_KEYS[index] || String(index + 1);
+        return { key: key, value: opt.value, originalIndex: opt.originalIndex };
+    });
+    var nextAnswer = nextOptions
+        .filter(function (opt) { return answerIndexes.has(opt.originalIndex); })
+        .map(function (opt) { return opt.key; })
+        .sort()
+        .join('');
+    return __assign(__assign({}, question), { options: nextOptions.map(function (opt) { return ({ key: opt.key, value: opt.value }); }), answer: nextAnswer });
+}
 // ============================================
 // 公有题库数据源
 // ============================================
@@ -338,7 +398,7 @@ var BankQuizSource = /** @class */ (function () {
     };
     BankQuizSource.prototype.getQuestions = function (params) {
         return __awaiter(this, void 0, void 0, function () {
-            var apiParams, ids, limit, res, questions, optionTypes_1;
+            var apiParams, ids, limit, res, questions;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -382,26 +442,8 @@ var BankQuizSource = /** @class */ (function () {
                         }
                         // 如果需要打乱选项（仅选择题/多选题）
                         if ((params === null || params === void 0 ? void 0 : params.shuffle_options) && Array.isArray(questions)) {
-                            optionTypes_1 = new Set(['选择题', '多选题']);
                             questions = questions.map(function (q) {
-                                if (!optionTypes_1.has(q.q_type || ''))
-                                    return q;
-                                if (q.options) {
-                                    var opts = q.options;
-                                    if (typeof opts === 'string') {
-                                        try {
-                                            opts = JSON.parse(opts);
-                                        }
-                                        catch (e) {
-                                            opts = [];
-                                        }
-                                    }
-                                    if (Array.isArray(opts) && opts.length > 0) {
-                                        var shuffled = __spreadArray([], opts, true).sort(function () { return Math.random() - 0.5; });
-                                        return __assign(__assign({}, q), { options: shuffled });
-                                    }
-                                }
-                                return q;
+                                return shuffleChoiceOptions(q);
                             });
                         }
                         return [2 /*return*/, {

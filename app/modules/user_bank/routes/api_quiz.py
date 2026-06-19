@@ -757,6 +757,8 @@ def get_user_counts(bank_id):
         return jsonify({'code': 403, 'message': '无权访问此题库'}), 403
 
     q_type = request.args.get('q_type', '').strip()
+    if q_type.lower() == 'all':
+        q_type = ''
     source = request.args.get('source', 'all').strip()
     tag = (request.args.get('tag') or '').strip()
 
@@ -779,9 +781,9 @@ def get_user_counts(bank_id):
             tag_question_ids = []
 
         if not tag_question_ids:
-            return jsonify({'code': 0, 'data': {'total': 0, 'favorites': 0, 'mistakes': 0}})
+            return jsonify({'code': 0, 'data': {'total': 0, 'favorites': 0, 'mistakes': 0, 'types': [], 'shuffle_options_available': False}})
 
-    from app.core.utils.portable_question_format import any_type_to_portable_type
+    from app.core.utils.portable_question_format import any_type_to_portable_type, portable_type_to_q_type
 
     type_condition = ' AND q.type = :q_type_f' if q_type else ''
     type_params = {'q_type_f': any_type_to_portable_type(q_type)} if q_type else {}
@@ -830,11 +832,42 @@ def get_user_counts(bank_id):
     except Exception:
         mistakes = 0
 
+    types_join = ''
+    types_where = 'q.bank_id = :bank_id'
+    if source == 'favorites':
+        types_join = 'JOIN user_bank_favorites f ON q.id = f.question_id'
+        types_where += ' AND f.user_id = :uid'
+    elif source == 'mistakes':
+        types_join = 'JOIN user_bank_mistakes m ON q.id = m.question_id'
+        types_where += ' AND m.user_id = :uid'
+
+    try:
+        type_rows = db.session.execute(text(f'''
+            SELECT DISTINCT q.type AS p_type
+            FROM user_bank_questions q
+            {types_join}
+            WHERE {types_where}
+        ''' + type_condition + tag_condition + '''
+            ORDER BY q.type
+        '''), base).fetchall()
+        types = [
+            portable_type_to_q_type((r._mapping['p_type'] or ''), essay_q_type='简答题')
+            for r in (type_rows or [])
+            if r and r._mapping['p_type']
+        ]
+    except Exception:
+        types = []
+
+    option_types = {'选择题', '多选题'}
+    shuffle_options_available = bool(types) and all(t in option_types for t in types)
+
     return jsonify({
         'code': 0,
         'data': {
             'total': total,
             'favorites': favorites,
-            'mistakes': mistakes
+            'mistakes': mistakes,
+            'types': types,
+            'shuffle_options_available': shuffle_options_available,
         }
     })
