@@ -66,7 +66,11 @@ def phone_login():
     set_web_session(user_info['id'])
 
     # 生成 JWT
-    token = generate_jwt_token(user_info['id'], user_info.get('session_version', 0))
+    token = generate_jwt_token(
+        user_id=user_info['id'],
+        openid=str(user_info.get('openid') or ''),
+        session_version=int(user_info.get('session_version') or 0),
+    )
 
     return jsonify({
         'status': 'success',

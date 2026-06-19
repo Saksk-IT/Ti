@@ -110,6 +110,7 @@ class Config:
 
     # JWT 用户状态缓存（用于减少每次请求都查询 users 表）
     # 注意：对会话强制失效（session_version bump）仍然以 DB 为准；缓存仅作为短 TTL 加速。
+    JWT_ACCESS_TOKEN_EXPIRES_SECONDS = int(os.environ.get('JWT_ACCESS_TOKEN_EXPIRES_SECONDS', str(15 * 24 * 60 * 60)) or (15 * 24 * 60 * 60))
     JWT_USER_STATE_CACHE_TTL_SECONDS = int(os.environ.get('JWT_USER_STATE_CACHE_TTL_SECONDS', '20') or 20)
 
     # 邮件服务配置

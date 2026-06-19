@@ -20,6 +20,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-studyuser}:${POSTGRES_PASSWORD:-studypass}@postgres:5432/${POSTGRES_DB:-ti_db}
       REDIS_URL: redis://redis:6379/0
       RATELIMIT_STORAGE_URI: redis://redis:6379/0
+      JWT_ACCESS_TOKEN_EXPIRES_SECONDS: ${JWT_ACCESS_TOKEN_EXPIRES_SECONDS:-1296000}
       RQ_QUEUE_NAME: ${RQ_QUEUE_NAME:-saksk}
       PROXY_FIX_ENABLED: "false"
       WECHAT_APPID: ${WECHAT_APPID:-}

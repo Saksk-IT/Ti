@@ -5,7 +5,7 @@ JWT工具函数
 """
 import uuid
 import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from flask import current_app
 from typing import Dict, Any, Optional
 
@@ -13,7 +13,7 @@ from typing import Dict, Any, Optional
 def generate_jwt_token(
     user_id: int,
     openid: str,
-    expires_in: int = 2 * 60 * 60,
+    expires_in: Optional[int] = None,
     session_version: Optional[int] = None,
 ) -> str:
     """
@@ -22,17 +22,23 @@ def generate_jwt_token(
     Args:
         user_id: 用户ID
         openid: 微信openid
-        expires_in: token过期时间（秒），默认2小时
+        expires_in: token过期时间（秒），默认读取 JWT_ACCESS_TOKEN_EXPIRES_SECONDS
 
     Returns:
         JWT token字符串
     """
+    token_expires_in = int(
+        expires_in
+        if expires_in is not None
+        else current_app.config.get('JWT_ACCESS_TOKEN_EXPIRES_SECONDS', 15 * 24 * 60 * 60)
+    )
+    now = datetime.now(timezone.utc)
     payload = {
         'user_id': user_id,
         'openid': openid,
         'session_version': int(session_version or 0),
-        'exp': datetime.utcnow() + timedelta(seconds=expires_in),
-        'iat': datetime.utcnow(),
+        'exp': now + timedelta(seconds=token_expires_in),
+        'iat': now,
         'jti': uuid.uuid4().hex,
     }
     
@@ -78,4 +84,3 @@ def verify_jwt_token(token: str) -> Optional[Dict[str, Any]]:
         包含user_id和openid的字典，如果token无效返回None
     """
     return decode_jwt_token(token)
-
