@@ -1,5 +1,11 @@
 <!-- bank-join.wxml - 题库加入确认页（支持 token / 分享码） -->
-<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}} bank-join-page">
+<view class="page-root mine-linked-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}} bank-join-page">
+  <view class="gradient-bg">
+    <view class="gradient-orb orb-1"></view>
+    <view class="gradient-orb orb-2"></view>
+    <view class="gradient-orb orb-3"></view>
+  </view>
+
   <view class="bank-join-container">
     <view class="card">
       <block wx:if="{{mode === 'public'}}">

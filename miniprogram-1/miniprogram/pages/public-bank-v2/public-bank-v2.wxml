@@ -1,5 +1,11 @@
 <!-- public-bank-v2.wxml - 对齐 Web /（题库广场） -->
 <view class="page-root mine-linked-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <view class="gradient-bg">
+    <view class="gradient-orb orb-1"></view>
+    <view class="gradient-orb orb-2"></view>
+    <view class="gradient-orb orb-3"></view>
+  </view>
+
   <navigation-bar title="题库广场" back="{{false}}" color="var(--app-nav-fg)" background="transparent">
     <view slot="left" class="nav-left">
       <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
@@ -24,33 +30,27 @@
           </view>
         </view>
 
-        <view class="card pb-toolbar" aria-label="题库筛选">
-          <view class="pb-toolbar-left">
-            <view class="search-wrap">
-              <text class="search-icon">⌕</text>
-              <input class="search-input" type="text" placeholder="搜索题库/科目" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" />
-              <view class="search-clear" wx:if="{{keyword}}" bindtap="onClearKeyword" aria-role="button" aria-label="清空搜索">
-                <text>×</text>
-              </view>
+        <view class="pb-tool-area" aria-label="题库搜索与排序">
+          <view class="search-wrap">
+            <text class="search-icon">⌕</text>
+            <input class="search-input" type="text" placeholder="搜索题库/科目" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" />
+            <view class="search-clear" wx:if="{{keyword}}" bindtap="onClearKeyword" aria-role="button" aria-label="清空搜索">
+              <text>×</text>
             </view>
+          </view>
 
-            <view class="pb-seg" aria-label="题库类型筛选">
-              <view class="pb-seg-btn {{typeFilter === '' ? 'active' : ''}}" bindtap="onTypeTap" data-type="" aria-role="button" aria-label="筛选全部">
-                <text>全部</text>
-              </view>
-              <view class="pb-seg-btn {{typeFilter === 'system' ? 'active' : ''}}" bindtap="onTypeTap" data-type="system" aria-role="button" aria-label="筛选系统题库">
-                <text>系统</text>
-              </view>
-              <view class="pb-seg-btn {{typeFilter === 'user' ? 'active' : ''}}" bindtap="onTypeTap" data-type="user" aria-role="button" aria-label="筛选用户公开">
-                <text>用户</text>
-              </view>
+          <view class="sort-seg" aria-label="排序筛选">
+            <view
+              wx:for="{{sortLabels}}"
+              wx:key="*this"
+              class="sort-seg-btn {{sortIndex === index ? 'active' : ''}}"
+              bindtap="onSortTap"
+              data-index="{{index}}"
+              aria-role="button"
+              aria-label="按{{item}}排序"
+            >
+              <text>{{item}}</text>
             </view>
-
-            <picker class="pb-sort" mode="selector" range="{{sortLabels}}" value="{{sortIndex}}" bindchange="onSortChange">
-              <view class="pill pill-btn" aria-role="button" aria-label="排序方式">
-                <text>{{sortLabels[sortIndex]}}</text>
-              </view>
-            </picker>
           </view>
         </view>
 

@@ -1,3 +1,5 @@
+@import "../../styles/hub-inspired-pages.less";
+
 page {
   height: 100vh;
   overflow: hidden;
@@ -395,6 +397,45 @@ page {
   overflow: hidden;
   background: var(--app-bg);
   color: var(--app-text);
+}
+
+.page-root .card,
+.page-root .basebar,
+.page-root .stat,
+.page-root .toggle,
+.page-root .qdetail-block,
+.page-root .taborder-item,
+.page-root .reinforce-row,
+.page-root .pair-row,
+.page-root .pair-bubble,
+.page-root .result-item,
+.page-root .data-card,
+.page-root .data-pill {
+  border-radius: var(--app-radius-lg);
+  background: var(--app-surface-glass);
+  box-shadow: var(--app-shadow-soft);
+  backdrop-filter: blur(24rpx);
+  -webkit-backdrop-filter: blur(24rpx);
+}
+
+.page-root .practice-hero,
+.page-root .data-hero,
+.page-root .hero-card {
+  background: linear-gradient(135deg, var(--app-surface-glass), var(--app-surface));
+}
+
+.page-root .tab,
+.page-root .chip,
+.page-root .btn,
+.page-root .action-btn,
+.page-root .mini-btn,
+.page-root .tab-order-btn,
+.page-root .search-input,
+.page-root .start-count,
+.page-root .meta-pill {
+  border-radius: 18rpx;
+  background: var(--app-surface-glass);
+  box-shadow: var(--app-shadow-soft);
 }
 
 .page-container {

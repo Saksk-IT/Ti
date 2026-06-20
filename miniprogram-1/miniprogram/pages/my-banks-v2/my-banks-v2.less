@@ -1,3 +1,5 @@
+@import "../../styles/hub-inspired-pages.less";
+
 page {
   height: 100vh;
   overflow: hidden;
@@ -321,17 +323,23 @@ page {
   color: var(--app-text);
 }
 
-.mb-toolbar {
+.mb-toolbar,
+.mb-tool-area {
   margin-top: 12rpx;
-  padding: 12rpx 14rpx;
 }
 
 .mb-toolbar-left,
-.mb-toolbar-right {
+.mb-toolbar-right,
+.mb-tool-area {
   display: flex;
   align-items: center;
   gap: 8rpx;
   flex-wrap: wrap;
+}
+
+.mb-tool-area {
+  padding: 0;
+  align-items: stretch;
 }
 
 .search-wrap {
@@ -400,6 +408,43 @@ page {
 }
 
 .seg-btn:active {
+  opacity: 0.92;
+}
+
+.sort-seg {
+  display: flex;
+  align-items: stretch;
+  gap: 8rpx;
+  flex: 0 0 auto;
+}
+
+.sort-seg-btn {
+  min-width: 118rpx;
+  height: 68rpx;
+  padding: 0 16rpx;
+  border-radius: 18rpx;
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface-glass);
+  box-shadow: var(--app-shadow-soft);
+  backdrop-filter: blur(18rpx);
+  -webkit-backdrop-filter: blur(18rpx);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--app-muted);
+  font-size: 24rpx;
+  font-weight: 900;
+  box-sizing: border-box;
+}
+
+.sort-seg-btn.active {
+  border-color: var(--app-border-strong);
+  background: linear-gradient(135deg, var(--app-surface-glass), var(--app-surface));
+  color: var(--app-text);
+}
+
+.sort-seg-btn:active {
+  transform: scale(0.98);
   opacity: 0.92;
 }
 
@@ -693,7 +738,8 @@ page {
   background: var(--app-surface-glass);
 }
 
-.mine-linked-page .mb-toolbar-left {
+.mine-linked-page .mb-toolbar-left,
+.mine-linked-page .mb-tool-area {
   gap: 12rpx;
 }
 
@@ -709,6 +755,16 @@ page {
 
 .mine-linked-page .seg-btn {
   min-width: 120rpx;
+  padding: 0 18rpx;
+}
+
+.mine-linked-page .sort-seg {
+  gap: 10rpx;
+}
+
+.mine-linked-page .sort-seg-btn {
+  height: 76rpx;
+  min-width: 128rpx;
   padding: 0 18rpx;
 }
 
@@ -734,4 +790,43 @@ page {
 .mine-linked-page .mb-empty {
   padding: 24rpx;
   gap: 18rpx;
+}
+
+.page-root .card,
+.page-root .mb-card,
+.page-root .mb-modal-sheet {
+  border-radius: var(--app-radius-lg);
+  background: var(--app-surface-glass);
+  box-shadow: var(--app-shadow-soft);
+  backdrop-filter: blur(24rpx);
+  -webkit-backdrop-filter: blur(24rpx);
+}
+
+.page-root .mb-hero {
+  background: linear-gradient(135deg, var(--app-surface-glass), var(--app-surface));
+}
+
+.page-root .mb-card {
+  min-height: 188rpx;
+  border-color: var(--app-border-strong);
+}
+
+.page-root .mb-cover {
+  width: 176rpx;
+  flex-basis: 176rpx;
+}
+
+.page-root .mb-cover image,
+.page-root .mb-cover-fallback {
+  min-height: 188rpx;
+}
+
+.page-root .btn,
+.page-root .mb-manage,
+.page-root .search-wrap,
+.page-root .seg,
+.page-root .sort-seg-btn {
+  border-radius: 18rpx;
+  background: var(--app-surface-glass);
+  box-shadow: var(--app-shadow-soft);
 }

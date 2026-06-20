@@ -4,8 +4,43 @@
 @import "../settings-practice-v2/settings-practice-v2.less";
 @import "../settings-theme-v2/settings-theme-v2.less";
 @import "../settings-about-v2/settings-about-v2.less";
+@import "../../styles/hub-inspired-pages.less";
 
 .tab-panel {
   width: 100%;
 }
 
+.page-root .card,
+.page-root .section-card,
+.page-root .nav-card,
+.page-root .profile-head,
+.page-root .status-row,
+.page-root .setting-card,
+.page-root .form-card,
+.page-root .message-card,
+.page-root .info-row {
+  border-radius: var(--app-radius-lg);
+  background: var(--app-surface-glass);
+  box-shadow: var(--app-shadow-soft);
+  backdrop-filter: blur(24rpx);
+  -webkit-backdrop-filter: blur(24rpx);
+}
+
+.page-root .hero {
+  padding: 24rpx 28rpx;
+  background: linear-gradient(135deg, var(--app-surface-glass), var(--app-surface));
+}
+
+.page-root .tab,
+.page-root .subtab,
+.page-root .btn,
+.page-root .mini-btn,
+.page-root .profile-chip,
+.page-root .status-chip,
+.page-root .acc-input,
+.page-root .acc-textarea,
+.page-root .input-row {
+  border-radius: 18rpx;
+  background: var(--app-surface-glass);
+  box-shadow: var(--app-shadow-soft);
+}

@@ -1,3 +1,5 @@
+@import "../../styles/hub-inspired-pages.less";
+
 page {
   height: 100vh;
   overflow: hidden;
@@ -134,17 +136,23 @@ page {
   color: var(--app-text);
 }
 
-.pb-toolbar {
+.pb-toolbar,
+.pb-tool-area {
   margin-top: 12rpx;
-  padding: 12rpx 14rpx;
 }
 
 .pb-toolbar-left,
-.pb-toolbar-right {
+.pb-toolbar-right,
+.pb-tool-area {
   display: flex;
   align-items: center;
   gap: 8rpx;
   flex-wrap: wrap;
+}
+
+.pb-tool-area {
+  padding: 0;
+  align-items: stretch;
 }
 
 .pb-seg {
@@ -177,6 +185,43 @@ page {
 
 .pb-sort {
   flex: 0 0 auto;
+}
+
+.sort-seg {
+  display: flex;
+  align-items: stretch;
+  gap: 8rpx;
+  flex: 0 0 auto;
+}
+
+.sort-seg-btn {
+  min-width: 118rpx;
+  height: 68rpx;
+  padding: 0 16rpx;
+  border-radius: 18rpx;
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface-glass);
+  box-shadow: var(--app-shadow-soft);
+  backdrop-filter: blur(18rpx);
+  -webkit-backdrop-filter: blur(18rpx);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--app-muted);
+  font-size: 24rpx;
+  font-weight: 900;
+  box-sizing: border-box;
+}
+
+.sort-seg-btn.active {
+  border-color: var(--app-border-strong);
+  background: linear-gradient(135deg, var(--app-surface-glass), var(--app-surface));
+  color: var(--app-text);
+}
+
+.sort-seg-btn:active {
+  transform: scale(0.98);
+  opacity: 0.92;
 }
 
 .pill-btn:active {
@@ -509,7 +554,8 @@ page {
   background: var(--app-surface-glass);
 }
 
-.mine-linked-page .pb-toolbar-left {
+.mine-linked-page .pb-toolbar-left,
+.mine-linked-page .pb-tool-area {
   gap: 12rpx;
 }
 
@@ -535,6 +581,16 @@ page {
   align-items: center;
 }
 
+.mine-linked-page .sort-seg {
+  gap: 10rpx;
+}
+
+.mine-linked-page .sort-seg-btn {
+  height: 76rpx;
+  min-width: 128rpx;
+  padding: 0 18rpx;
+}
+
 .mine-linked-page .pb-grid {
   margin-top: 16rpx;
   gap: 14rpx;
@@ -557,4 +613,42 @@ page {
 
 .mine-linked-page .pb-more {
   margin-top: 16rpx;
+}
+
+.page-root .card,
+.page-root .pb-card {
+  border-radius: var(--app-radius-lg);
+  background: var(--app-surface-glass);
+  box-shadow: var(--app-shadow-soft);
+  backdrop-filter: blur(24rpx);
+  -webkit-backdrop-filter: blur(24rpx);
+}
+
+.page-root .pb-hero {
+  background: linear-gradient(135deg, var(--app-surface-glass), var(--app-surface));
+}
+
+.page-root .pb-card {
+  min-height: 188rpx;
+  border-color: var(--app-border-strong);
+}
+
+.page-root .pb-cover {
+  width: 176rpx;
+  flex-basis: 176rpx;
+}
+
+.page-root .pb-cover image,
+.page-root .pb-cover-fallback {
+  min-height: 188rpx;
+}
+
+.page-root .pb-card-arrow,
+.page-root .pill,
+.page-root .search-wrap,
+.page-root .pb-seg,
+.page-root .sort-seg-btn {
+  border-radius: 18rpx;
+  background: var(--app-surface-glass);
+  box-shadow: var(--app-shadow-soft);
 }

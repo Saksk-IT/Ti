@@ -1,5 +1,11 @@
 <!--profile-view-v2.wxml - 个人资料展示 -->
 <view class="page-root mine-linked-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <view class="gradient-bg">
+    <view class="gradient-orb orb-1"></view>
+    <view class="gradient-orb orb-2"></view>
+    <view class="gradient-orb orb-3"></view>
+  </view>
+
   <navigation-bar title="个人资料" back="{{true}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent">
     <view slot="right" class="nav-right">
       <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">

@@ -20,8 +20,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -76,9 +76,8 @@ Page({
         inited: false,
         banks: [],
         keyword: '',
-        typeFilter: '', // ''=全部
         sortIndex: 0,
-        sortLabels: ['最新发布', '最受欢迎', '题目最多'],
+        sortLabels: ['最近', '最受欢迎', '题目最多'],
         sortValues: ['newest', 'popular', 'questions'],
         page: 1,
         perPage: 20,
@@ -101,7 +100,7 @@ Page({
     },
     loadBanks: function () {
         return __awaiter(this, arguments, void 0, function (reset) {
-            var that, reqSeq, nextPage, sortValues, sort, params, keyword, res, rawBanks, total, mapped, merged, existing, seen_1, shownTotal, hasMore, e_1;
+            var that, reqSeq, nextPage, sortValues, sort, params, keyword, res, resObj, rawBanks, total, mapped, merged, existing, seen_1, shownTotal, hasMore, e_1;
             if (reset === void 0) { reset = false; }
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -124,8 +123,7 @@ Page({
                         params = {
                             page: nextPage,
                             per_page: this.data.perPage || 20,
-                            sort: sort,
-                            type: this.data.typeFilter || ''
+                            sort: sort
                         };
                         keyword = String(this.data.keyword || '').trim();
                         if (keyword)
@@ -135,10 +133,12 @@ Page({
                         res = _a.sent();
                         if (reqSeq !== that._bankReqSeq)
                             return [2 /*return*/];
-                        rawBanks = Array.isArray(res === null || res === void 0 ? void 0 : res.banks) ? res.banks : [];
-                        total = Number((res === null || res === void 0 ? void 0 : res.total) || 0) || 0;
+                        resObj = (res && typeof res === 'object' ? res : {});
+                        rawBanks = Array.isArray(resObj.banks) ? resObj.banks : [];
+                        total = Number(resObj.total || 0) || 0;
                         mapped = (rawBanks || [])
                             .map(function (b) {
+                            var _a;
                             var bankType = (b === null || b === void 0 ? void 0 : b.bank_type) === 'system' ? 'system' : 'user';
                             var id = Number((b === null || b === void 0 ? void 0 : b.id) || 0) || 0;
                             var name = String((b === null || b === void 0 ? void 0 : b.name) || '').trim();
@@ -148,7 +148,7 @@ Page({
                             var allowCopy = !!(b === null || b === void 0 ? void 0 : b.allow_copy);
                             var isShared = !!(b === null || b === void 0 ? void 0 : b.is_shared);
                             var coverUrl = (0, api_endpoints_1.resolveUploadUrl)(b === null || b === void 0 ? void 0 : b.cover_image);
-                            var isJoined = !!(b && b.relation && b.relation.is_joined);
+                            var isJoined = !!((_a = b === null || b === void 0 ? void 0 : b.relation) === null || _a === void 0 ? void 0 : _a.is_joined);
                             var ownerLabel = String((b === null || b === void 0 ? void 0 : b.owner_nickname) || (bankType === 'system' ? '系统管理员' : '匿名')).trim();
                             var createdLabel = formatDateLabel((b === null || b === void 0 ? void 0 : b.created_at) || (b === null || b === void 0 ? void 0 : b.public_at));
                             return {
@@ -230,12 +230,15 @@ Page({
         var _this = this;
         this.setData({ keyword: '' }, function () { return _this.loadBanks(true); });
     },
-    onTypeTap: function (e) {
+    onSortTap: function (e) {
         var _this = this;
         var _a, _b, _c;
-        var next = String((_c = (_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.type) !== null && _c !== void 0 ? _c : '').trim();
-        var typeFilter = next === 'system' ? 'system' : next === 'user' ? 'user' : '';
-        this.setData({ typeFilter: typeFilter, page: 1, hasMore: true }, function () { return _this.loadBanks(true); });
+        var idx = Number((_c = (_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.index) !== null && _c !== void 0 ? _c : 0) || 0;
+        var max = (this.data.sortLabels || []).length - 1;
+        var sortIndex = Math.max(0, Math.min(idx, max));
+        if (sortIndex === this.data.sortIndex)
+            return;
+        this.setData({ sortIndex: sortIndex, page: 1, hasMore: true }, function () { return _this.loadBanks(true); });
     },
     onSortChange: function (e) {
         var _this = this;
@@ -271,6 +274,6 @@ Page({
     },
     onCycleThemeModeTap: function () {
         var mode = theme_1.themeManager.cycleMode();
-        this.setData(__assign(__assign({}, theme_1.themeManager.getPageData()), { themeMode: mode }));
+        this.setData(__assign(__assign({}, (theme_1.themeManager.getPageData())), { themeMode: mode }));
     }
 });

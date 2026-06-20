@@ -66,9 +66,8 @@ Page({
     banks: [] as PlazaBankView[],
     keyword: '',
 
-    typeFilter: '' as '' | BankType, // ''=全部
     sortIndex: 0,
-    sortLabels: ['最新发布', '最受欢迎', '题目最多'],
+    sortLabels: ['最近', '最受欢迎', '题目最多'],
     sortValues: ['newest', 'popular', 'questions'],
 
     page: 1,
@@ -110,8 +109,7 @@ Page({
       const params: any = {
         page: nextPage,
         per_page: this.data.perPage || 20,
-        sort,
-        type: this.data.typeFilter || ''
+        sort
       };
       const keyword = String(this.data.keyword || '').trim();
       if (keyword) params.keyword = keyword;
@@ -208,10 +206,12 @@ Page({
     this.setData({ keyword: '' }, () => this.loadBanks(true));
   },
 
-  onTypeTap(e: any) {
-    const next = String(e?.currentTarget?.dataset?.type ?? '').trim();
-    const typeFilter: any = next === 'system' ? 'system' : next === 'user' ? 'user' : '';
-    this.setData({ typeFilter, page: 1, hasMore: true }, () => this.loadBanks(true));
+  onSortTap(e: any) {
+    const idx = Number(e?.currentTarget?.dataset?.index ?? 0) || 0;
+    const max = (this.data.sortLabels || []).length - 1;
+    const sortIndex = Math.max(0, Math.min(idx, max));
+    if (sortIndex === this.data.sortIndex) return;
+    this.setData({ sortIndex, page: 1, hasMore: true }, () => this.loadBanks(true));
   },
 
   onSortChange(e: any) {

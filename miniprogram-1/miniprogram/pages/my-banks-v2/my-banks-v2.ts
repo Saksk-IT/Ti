@@ -12,6 +12,7 @@ type BankMeta = {
   is_public?: boolean | number;
   updated_at?: string;
   updated_at_fmt?: string;
+  popularity_count?: number;
   source: 'created' | 'shared';
   owner_name?: string;
   cover_url?: string;
@@ -36,7 +37,9 @@ Page({
     inited: false,
 
     keyword: '',
-    filter: 'all' as 'all' | 'created' | 'shared',
+    sortIndex: 0,
+    sortLabels: ['最近', '最受欢迎', '题目最多'],
+    sortValues: ['recent', 'popular', 'questions'],
     banks: [] as BankMeta[],
     filteredBanks: [] as BankMeta[],
 
@@ -81,6 +84,7 @@ Page({
           is_public: b?.is_public,
           updated_at: b?.updated_at,
           updated_at_fmt: formatDate(b?.updated_at),
+          popularity_count: Number(b?.public_use_count || b?.share_count || b?.use_count || 0) || 0,
           source: 'created' as const,
           cover_url: coverUrl,
           has_cover: !!coverUrl
@@ -97,6 +101,7 @@ Page({
           is_public: false,
           updated_at: b?.last_access_at || b?.created_at,
           updated_at_fmt: formatDate(b?.last_access_at || b?.created_at),
+          popularity_count: Number(b?.access_count || b?.share_count || 0) || 0,
           source: 'shared' as const,
           owner_name: b?.owner_nickname ? String(b.owner_nickname) : '',
           cover_url: coverUrl,
@@ -109,7 +114,6 @@ Page({
         byId.set(b.id, b);
       });
       const banks = Array.from(byId.values());
-      banks.sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')) || (b.id - a.id));
       this.setData({ banks, inited: true }, () => this.applyFilter());
     } catch (e: any) {
       wx.showToast({ title: (e && e.message) || '加载失败', icon: 'none' });
@@ -127,16 +131,16 @@ Page({
     this.setData({ keyword: '' }, () => this.applyFilter());
   },
 
-  onFilterTap(e: any) {
-    const filter = e?.currentTarget?.dataset?.filter;
-    if (!filter || filter === this.data.filter) return;
-    if (filter !== 'all' && filter !== 'created' && filter !== 'shared') return;
-    this.setData({ filter }, () => this.applyFilter());
+  onSortTap(e: any) {
+    const idx = Number(e?.currentTarget?.dataset?.index ?? 0) || 0;
+    const max = (this.data.sortLabels || []).length - 1;
+    const sortIndex = Math.max(0, Math.min(idx, max));
+    if (sortIndex === this.data.sortIndex) return;
+    this.setData({ sortIndex }, () => this.applyFilter());
   },
 
   applyFilter() {
     const kw = (this.data.keyword || '').trim().toLowerCase();
-    const filter = this.data.filter;
     let out = (this.data.banks || []).slice();
 
     if (kw) {
@@ -148,8 +152,21 @@ Page({
       });
     }
 
-    if (filter === 'created') out = out.filter((b) => b.source === 'created');
-    if (filter === 'shared') out = out.filter((b) => b.source === 'shared');
+    const sortValues = this.data.sortValues || ['recent', 'popular', 'questions'];
+    const sort = sortValues[this.data.sortIndex] || 'recent';
+    out.sort((a, b) => {
+      if (sort === 'popular') {
+        return (Number(b.popularity_count || 0) - Number(a.popularity_count || 0))
+          || String(b.updated_at || '').localeCompare(String(a.updated_at || ''))
+          || (b.id - a.id);
+      }
+      if (sort === 'questions') {
+        return (Number(b.question_count || 0) - Number(a.question_count || 0))
+          || String(b.updated_at || '').localeCompare(String(a.updated_at || ''))
+          || (b.id - a.id);
+      }
+      return String(b.updated_at || '').localeCompare(String(a.updated_at || '')) || (b.id - a.id);
+    });
 
     this.setData({ filteredBanks: out });
   },

@@ -1,3 +1,5 @@
+@import "../../styles/hub-inspired-pages.less";
+
 page {
   height: 100vh;
   overflow: hidden;
@@ -471,4 +473,36 @@ page {
     height: 48rpx;
     font-size: 20rpx;
   }
+}
+
+.page-root .card,
+.page-root .section-card,
+.page-root .info-list,
+.page-root .info-row,
+.page-root .kpi-card {
+  border-radius: var(--app-radius-lg);
+  background: var(--app-surface-glass);
+  box-shadow: var(--app-shadow-soft);
+  backdrop-filter: blur(24rpx);
+  -webkit-backdrop-filter: blur(24rpx);
+}
+
+.page-root .hero {
+  padding: 24rpx 28rpx;
+  background: linear-gradient(135deg, var(--app-surface-glass), var(--app-surface));
+}
+
+.page-root .hero-actions .btn,
+.page-root .panel-actions .btn,
+.page-root .chip,
+.page-root .badge {
+  border-radius: 18rpx;
+  background: var(--app-surface-glass);
+  box-shadow: var(--app-shadow-soft);
+}
+
+.page-root .avatar-wrap {
+  border-radius: 50%;
+  border: 3rpx solid var(--app-border-strong);
+  box-shadow: var(--app-shadow-soft);
 }

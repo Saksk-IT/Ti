@@ -1,3 +1,5 @@
+@import "../../styles/hub-inspired-pages.less";
+
 .bank-join-page {
   min-height: 100vh;
   display: flex;
@@ -469,4 +471,182 @@
   margin: 0 -2px;
   padding-top: 4px;
   background: var(--app-surface);
+}
+
+.bank-join-page {
+  position: relative;
+  overflow: hidden;
+  background: var(--app-bg);
+}
+
+.bank-join-page .bank-join-container {
+  padding: 48rpx 24rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.bank-join-page .card {
+  padding: 24rpx;
+  border-radius: var(--app-radius-lg);
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface-glass);
+  box-shadow: var(--app-shadow-soft);
+  backdrop-filter: blur(24rpx);
+  -webkit-backdrop-filter: blur(24rpx);
+}
+
+.bank-join-page .head {
+  gap: 14rpx;
+}
+
+.bank-join-page .title {
+  font-size: 36rpx;
+  line-height: 1.2;
+}
+
+.bank-join-page .sub,
+.bank-join-page .hint,
+.bank-join-page .alt-text,
+.bank-join-page .loading {
+  font-size: 24rpx;
+}
+
+.bank-join-page .form,
+.bank-join-page .actions,
+.bank-join-page .alt {
+  margin-top: 24rpx;
+  gap: 18rpx;
+}
+
+.bank-join-page .input,
+.bank-join-page .btn,
+.bank-join-page .alt-btn,
+.bank-join-page .badge {
+  border-radius: 18rpx;
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface-glass);
+  box-shadow: var(--app-shadow-soft);
+  backdrop-filter: blur(18rpx);
+  -webkit-backdrop-filter: blur(18rpx);
+}
+
+.bank-join-page .input {
+  height: 88rpx;
+  padding: 0 24rpx;
+  font-size: 34rpx;
+}
+
+.bank-join-page .btn,
+.bank-join-page .alt-btn {
+  min-height: 80rpx;
+  padding: 0 28rpx;
+  transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+}
+
+.bank-join-page .btn:active,
+.bank-join-page .alt-btn:active,
+.bank-join-page .meta-item:active,
+.bank-join-page .join-panel:active,
+.bank-join-page .info-row:active {
+  transform: scale(0.98);
+  opacity: 0.92;
+}
+
+.bank-join-page .btn-primary {
+  background: var(--app-cta);
+  border-color: transparent;
+}
+
+.bank-join-page .btn text,
+.bank-join-page .alt-btn text {
+  font-size: 26rpx;
+}
+
+.bank-join-page .btn-primary text {
+  color: var(--app-primary-contrast);
+}
+
+.bank-join-page .public-card {
+  gap: 24rpx;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--app-radius-lg);
+  background: linear-gradient(135deg, var(--app-surface-glass), var(--app-surface));
+}
+
+.bank-join-page .public-cover {
+  height: 380rpx;
+  border-radius: var(--app-radius-lg);
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface-glass);
+  box-shadow: var(--app-shadow-soft);
+}
+
+.bank-join-page .public-cover-fallback {
+  padding: 36rpx;
+}
+
+.bank-join-page .mini-cover-mark {
+  width: 108rpx;
+  height: 108rpx;
+  border-radius: 20rpx;
+  box-shadow: var(--app-shadow-soft);
+}
+
+.bank-join-page .mini-cover-pill {
+  min-height: 60rpx;
+  padding: 0 24rpx;
+  border-radius: 18rpx;
+  background: var(--app-surface-glass);
+  box-shadow: var(--app-shadow-soft);
+}
+
+.bank-join-page .public-body {
+  gap: 20rpx;
+}
+
+.bank-join-page .public-badges {
+  gap: 12rpx;
+}
+
+.bank-join-page .badge {
+  min-height: 56rpx;
+  padding: 0 20rpx;
+}
+
+.bank-join-page .meta-grid {
+  gap: 16rpx;
+}
+
+.bank-join-page .meta-item,
+.bank-join-page .join-panel,
+.bank-join-page .info-list {
+  border-radius: var(--app-radius-lg);
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface-glass);
+  box-shadow: var(--app-shadow-soft);
+  backdrop-filter: blur(24rpx);
+  -webkit-backdrop-filter: blur(24rpx);
+}
+
+.bank-join-page .meta-item {
+  padding: 20rpx 24rpx;
+}
+
+.bank-join-page .join-panel {
+  padding: 24rpx;
+  gap: 12rpx;
+}
+
+.bank-join-page .info-row {
+  min-height: 80rpx;
+  padding: 0 24rpx;
+  background: transparent;
+  border-bottom: 1rpx solid var(--app-border);
+}
+
+.bank-join-page .sticky-actions {
+  margin: 0;
+  padding-top: 16rpx;
+  background: transparent;
 }
