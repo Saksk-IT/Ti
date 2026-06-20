@@ -1,9 +1,17 @@
 "use strict";
+function toPositiveNumber(value) {
+    var num = Number(value);
+    return Number.isFinite(num) && num > 0 ? num : 0;
+}
 function buildLayout(compact) {
     var rectLeft = 0;
+    var rectTop = 0;
+    var rectHeight = 0;
     try {
         var rect = wx.getMenuButtonBoundingClientRect();
-        rectLeft = Number(rect === null || rect === void 0 ? void 0 : rect.left) || 0;
+        rectLeft = toPositiveNumber(rect === null || rect === void 0 ? void 0 : rect.left);
+        rectTop = toPositiveNumber(rect === null || rect === void 0 ? void 0 : rect.top);
+        rectHeight = toPositiveNumber(rect === null || rect === void 0 ? void 0 : rect.height);
     }
     catch (e) { }
     // wx.getSystemInfo 已废弃：优先使用 getDeviceInfo/getWindowInfo
@@ -16,20 +24,24 @@ function buildLayout(compact) {
     catch (e) { }
     var windowWidth = 0;
     var safeAreaTop = 0;
+    var statusBarHeight = 0;
     try {
         var wi = wx.getWindowInfo ? wx.getWindowInfo() : null;
-        var ww = wi && wi.windowWidth;
-        var st = wi && wi.safeArea && wi.safeArea.top;
-        windowWidth = Number(ww);
-        safeAreaTop = Number(st);
+        windowWidth = toPositiveNumber(wi && wi.windowWidth);
+        safeAreaTop = toPositiveNumber(wi && wi.safeArea && wi.safeArea.top);
+        statusBarHeight = toPositiveNumber(wi && wi.statusBarHeight);
     }
     catch (e) { }
     // 兼容旧基础库：兜底使用 getSystemInfoSync（旧版不算废弃）
-    if (!Number.isFinite(windowWidth) || windowWidth <= 0) {
+    if (windowWidth <= 0 || safeAreaTop <= 0 || statusBarHeight <= 0) {
         try {
             var si = wx.getSystemInfoSync();
-            windowWidth = Number(si.windowWidth);
-            safeAreaTop = Number(si.safeArea && si.safeArea.top);
+            if (windowWidth <= 0)
+                windowWidth = toPositiveNumber(si.windowWidth);
+            if (safeAreaTop <= 0)
+                safeAreaTop = toPositiveNumber(si.safeArea && si.safeArea.top);
+            if (statusBarHeight <= 0)
+                statusBarHeight = toPositiveNumber(si.statusBarHeight);
             if (!platform)
                 platform = String(si.platform || '');
         }
@@ -37,9 +49,11 @@ function buildLayout(compact) {
     }
     var isAndroid = platform === 'android';
     var isDevtools = platform === 'devtools';
-    var padRight = Math.max(0, (Number.isFinite(windowWidth) ? windowWidth : 0) - rectLeft);
-    var top = Number.isFinite(safeAreaTop) && safeAreaTop > 0 ? safeAreaTop : 0;
-    var styleVars = "--nb-pad-right: ".concat(padRight, "px;").concat(top > 0 ? "--nb-safe-top: ".concat(top, "px;") : "");
+    var navHeight = isAndroid ? 48 : 44;
+    var topFromMenu = rectTop > 0 ? Math.max(0, rectTop - Math.max(0, (navHeight - rectHeight) / 2)) : 0;
+    var padRight = windowWidth > 0 && rectLeft > 0 ? Math.max(0, windowWidth - rectLeft) : 0;
+    var top = Math.max(statusBarHeight, safeAreaTop, topFromMenu);
+    var styleVars = "--nb-pad-right: ".concat(padRight, "px;").concat(top > 0 ? "--nb-safe-top: ".concat(top, "px;") : '');
     return {
         ios: !isAndroid,
         innerPaddingRight: "".concat(styleVars, "padding-right: ").concat(padRight, "px"),

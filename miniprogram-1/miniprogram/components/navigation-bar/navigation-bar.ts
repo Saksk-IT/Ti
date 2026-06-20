@@ -5,42 +5,56 @@ type NavBarLayoutData = {
   safeAreaTop: string;
 };
 
+function toPositiveNumber(value: unknown): number {
+  const num = Number(value);
+  return Number.isFinite(num) && num > 0 ? num : 0;
+}
+
 function buildLayout(compact: boolean): NavBarLayoutData {
   let rectLeft = 0;
+  let rectTop = 0;
+  let rectHeight = 0;
   try {
     const rect = wx.getMenuButtonBoundingClientRect();
-    rectLeft = Number(rect?.left) || 0;
+    rectLeft = toPositiveNumber(rect?.left);
+    rectTop = toPositiveNumber(rect?.top);
+    rectHeight = toPositiveNumber(rect?.height);
   } catch (e) {}
 
   // wx.getSystemInfo 已废弃：优先使用 getDeviceInfo/getWindowInfo
   let platform = '';
   try {
-    const di = wx.getDeviceInfo();
-    if (di?.platform) platform = String(di.platform);
+    const di = wx.getDeviceInfo ? wx.getDeviceInfo() : null;
+    if (di && di.platform) platform = String(di.platform);
   } catch (e) {}
 
   let windowWidth = 0;
   let safeAreaTop = 0;
+  let statusBarHeight = 0;
   try {
-    const wi = wx.getWindowInfo();
-    windowWidth = Number(wi?.windowWidth);
-    safeAreaTop = Number(wi?.safeArea?.top);
+    const wi = wx.getWindowInfo ? wx.getWindowInfo() : null;
+    windowWidth = toPositiveNumber(wi && wi.windowWidth);
+    safeAreaTop = toPositiveNumber(wi && wi.safeArea && wi.safeArea.top);
+    statusBarHeight = toPositiveNumber(wi && wi.statusBarHeight);
   } catch (e) {}
 
   // 兼容旧基础库：兜底使用 getSystemInfoSync（旧版不算废弃）
-  if (!Number.isFinite(windowWidth) || windowWidth <= 0) {
+  if (windowWidth <= 0 || safeAreaTop <= 0 || statusBarHeight <= 0) {
     try {
       const si = wx.getSystemInfoSync();
-      windowWidth = Number(si.windowWidth);
-      safeAreaTop = Number(si.safeArea?.top);
+      if (windowWidth <= 0) windowWidth = toPositiveNumber(si.windowWidth);
+      if (safeAreaTop <= 0) safeAreaTop = toPositiveNumber(si.safeArea && si.safeArea.top);
+      if (statusBarHeight <= 0) statusBarHeight = toPositiveNumber(si.statusBarHeight);
       if (!platform) platform = String(si.platform || '');
     } catch (e) {}
   }
 
   const isAndroid = platform === 'android';
   const isDevtools = platform === 'devtools';
-  const padRight = Math.max(0, (Number.isFinite(windowWidth) ? windowWidth : 0) - rectLeft);
-  const top = Number.isFinite(safeAreaTop) && safeAreaTop > 0 ? safeAreaTop : 0;
+  const navHeight = isAndroid ? 48 : 44;
+  const topFromMenu = rectTop > 0 ? Math.max(0, rectTop - Math.max(0, (navHeight - rectHeight) / 2)) : 0;
+  const padRight = windowWidth > 0 && rectLeft > 0 ? Math.max(0, windowWidth - rectLeft) : 0;
+  const top = Math.max(statusBarHeight, safeAreaTop, topFromMenu);
   const styleVars = `--nb-pad-right: ${padRight}px;${top > 0 ? `--nb-safe-top: ${top}px;` : ''}`;
 
   return {
