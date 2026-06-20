@@ -323,7 +323,7 @@ Page({
         (0, nav_1.safeNavigate)('/pages/exams-select-v2/exams-select-v2', 'redirectTo');
     },
     onAboutTap: function () {
-        (0, nav_1.safeNavigate)('/pages/settings-center-v2/settings-center-v2?navKey=about', 'redirectTo');
+        (0, nav_1.safeNavigate)('/pages/settings-about-v2/settings-about-v2', 'redirectTo');
     },
     // 头像点击 - 跳转个人资料
     onAvatarTap: function () {
@@ -360,6 +360,6 @@ Page({
     },
     // 设置
     onGoSettings: function () {
-        (0, nav_1.safeNavigate)('/pages/settings-center-v2/settings-center-v2', 'redirectTo');
+        (0, nav_1.safeNavigate)('/pages/settings-account-profile-v2/settings-account-profile-v2', 'redirectTo');
     },
 });

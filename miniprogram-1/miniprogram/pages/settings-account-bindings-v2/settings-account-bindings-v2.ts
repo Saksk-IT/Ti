@@ -55,10 +55,6 @@ Page({
     unbindingWechat: false
   },
 
-  onLoad() {
-    wx.redirectTo({ url: '/pages/settings-center-v2/settings-center-v2?navKey=account&accTab=bindings' });
-  },
-
   onShow() {
     if (!checkLogin()) {
       wx.redirectTo({ url: '/pages/login/login' });

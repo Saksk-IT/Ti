@@ -126,7 +126,7 @@ Page({
         this.setData(__assign(__assign({}, (theme_1.themeManager.getPageData())), { themeMode: mode }));
     },
     onEditProfile: function () {
-        wx.navigateTo({ url: '/pages/settings-center-v2/settings-center-v2?navKey=account&accTab=profile&edit=1' });
+        wx.navigateTo({ url: '/pages/settings-account-profile-v2/settings-account-profile-v2?edit=1' });
     },
     onLogoutTap: function () {
         wx.showModal({

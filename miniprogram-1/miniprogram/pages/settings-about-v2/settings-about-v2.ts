@@ -36,8 +36,9 @@ Page({
     errorMsg: ''
   },
 
-  onLoad() {
-    wx.redirectTo({ url: '/pages/settings-center-v2/settings-center-v2?navKey=about' });
+  onLoad(options: any) {
+    const tab = String(options?.aboutTab || options?.about || '').toLowerCase();
+    if (tab === 'legal') this.setData({ aboutTab: 'legal' });
   },
 
   onShow() {

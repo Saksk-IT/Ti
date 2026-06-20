@@ -51,6 +51,7 @@ var auth_1 = require("../../utils/auth");
 var user_settings_1 = require("../../utils/user-settings");
 var last_practice_1 = require("../../utils/last-practice");
 var theme_1 = require("../../utils/theme");
+var font_1 = require("../../utils/font");
 function navTo(key) {
     if (key === 'account')
         return '/pages/settings-account-profile-v2/settings-account-profile-v2';
@@ -63,10 +64,12 @@ function navTo(key) {
 Page({
     data: {
         navKey: 'theme',
-        msg: ''
-    },
-    onLoad: function () {
-        wx.redirectTo({ url: '/pages/settings-center-v2/settings-center-v2?navKey=theme' });
+        msg: '',
+        fontMsg: '',
+        fontStyle: 'system',
+        fontStyleClass: '',
+        fontStyleName: '系统默认',
+        fontStyleList: Object.values(font_1.FONT_STYLE_CONFIG)
     },
     onShow: function () {
         if (!(0, auth_1.checkLogin)()) {
@@ -75,6 +78,7 @@ Page({
         }
         try {
             this.setData(theme_1.themeManager.getPageData());
+            this.setData(font_1.fontManager.getPageData());
         }
         catch (e) { }
     },
@@ -118,6 +122,14 @@ Page({
                 }
             });
         });
+    },
+    onFontStyleTap: function (e) {
+        var _a, _b;
+        var style = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.style) || 'system');
+        font_1.fontManager.setStyle(style);
+        this.setData(font_1.fontManager.getPageData());
+        var config = font_1.FONT_STYLE_CONFIG[style] || font_1.FONT_STYLE_CONFIG.system;
+        this.setData({ fontMsg: "\u5DF2\u5207\u6362\u5230\u300C".concat(config.name, "\u300D\u5B57\u4F53") });
     },
     onSettingsNavTap: function (e) {
         var _a, _b;

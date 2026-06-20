@@ -113,14 +113,12 @@ Page({
         wechatBadge: '未绑定'
     },
     onLoad: function (options) {
-        var qs = ['navKey=account', 'accTab=profile'];
         try {
             var edit = String((options === null || options === void 0 ? void 0 : options.edit) || '');
             if (edit === '1')
-                qs.push('edit=1');
+                this.setData({ editing: true });
         }
         catch (e) { }
-        wx.redirectTo({ url: "/pages/settings-center-v2/settings-center-v2?".concat(qs.join('&')) });
     },
     onShow: function () {
         if (!(0, auth_1.checkLogin)()) {

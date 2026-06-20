@@ -117,10 +117,6 @@ Page({
     modalRows: [] as ModalRow[]
   },
 
-  onLoad() {
-    wx.redirectTo({ url: '/pages/settings-center-v2/settings-center-v2?navKey=practice' });
-  },
-
   onShow() {
     if (!checkLogin()) {
       wx.redirectTo({ url: '/pages/login/login' });
@@ -212,9 +208,17 @@ Page({
 
   onModalSubjectToggle(e: any) {
     const name = String(e?.currentTarget?.dataset?.name || '').trim();
-    const checked = !!(e && e.detail && e.detail.value);
     if (!name) return;
+    const current = (this.data.modalRows || []).find((r) => r.name === name);
+    const checked = !(current && current.checked);
     const modalRows = (this.data.modalRows || []).map((r) => (r.name === name ? { ...r, checked } : r));
+    this.setData({ modalRows });
+  },
+
+  onModalSubjectChange(e: any) {
+    const values = Array.isArray(e?.detail?.value) ? e.detail.value : [];
+    const selected = new Set(values.map((x: any) => String(x || '').trim()).filter(Boolean));
+    const modalRows = (this.data.modalRows || []).map((r) => ({ ...r, checked: selected.has(r.name) }));
     this.setData({ modalRows });
   },
 

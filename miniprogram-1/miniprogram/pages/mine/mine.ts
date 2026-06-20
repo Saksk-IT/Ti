@@ -76,7 +76,7 @@ Page({
   },
 
   onGoAccountTap() {
-    safeNavigate('/pages/settings-center-v2/settings-center-v2?navKey=account&accTab=security', 'navigateTo');
+    safeNavigate('/pages/settings-account-security-v2/settings-account-security-v2', 'navigateTo');
   },
 
   onGoReviewTap() {
@@ -100,11 +100,11 @@ Page({
   },
 
   onGoThemeTap() {
-    safeNavigate('/pages/settings-center-v2/settings-center-v2?navKey=theme', 'navigateTo');
+    safeNavigate('/pages/settings-theme-v2/settings-theme-v2', 'navigateTo');
   },
 
   onGoPracticeSettingsTap() {
-    safeNavigate('/pages/settings-center-v2/settings-center-v2?navKey=practice', 'navigateTo');
+    safeNavigate('/pages/settings-practice-v2/settings-practice-v2', 'navigateTo');
   },
 
   onGoAdminTap() {

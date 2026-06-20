@@ -75,7 +75,7 @@ Page({
   },
 
   onEditProfile() {
-    wx.navigateTo({ url: '/pages/settings-center-v2/settings-center-v2?navKey=account&accTab=profile&edit=1' });
+    wx.navigateTo({ url: '/pages/settings-account-profile-v2/settings-account-profile-v2?edit=1' });
   },
 
    onLogoutTap() {

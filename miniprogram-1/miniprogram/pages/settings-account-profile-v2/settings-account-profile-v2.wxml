@@ -19,15 +19,6 @@
           <text class="hero-sub">头像、昵称、学院与个人签名等信息。</text>
         </view>
 
-        <view class="card nav-card" aria-label="设置分区导航">
-          <view class="tabs">
-            <view class="tab {{navKey==='account' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="account"><text>账号管理</text></view>
-            <view class="tab {{navKey==='practice' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="practice"><text>通用</text></view>
-            <view class="tab {{navKey==='theme' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="theme"><text>主题</text></view>
-            <view class="tab {{navKey==='about' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="about"><text>关于</text></view>
-          </view>
-        </view>
-
         <view class="subtabs" aria-label="账号管理子导航">
           <view class="subtab {{accTab==='profile' ? 'active' : ''}}" bindtap="onAccountSubTap" data-key="profile"><text>个人资料</text></view>
           <view class="subtab {{accTab==='security' ? 'active' : ''}}" bindtap="onAccountSubTap" data-key="security"><text>账号安全</text></view>

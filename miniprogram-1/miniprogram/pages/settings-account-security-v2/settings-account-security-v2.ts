@@ -49,10 +49,6 @@ Page({
     showConfirm: false
   },
 
-  onLoad() {
-    wx.redirectTo({ url: '/pages/settings-center-v2/settings-center-v2?navKey=account&accTab=security' });
-  },
-
   onShow() {
     if (!checkLogin()) {
       wx.redirectTo({ url: '/pages/login/login' });
@@ -213,4 +209,3 @@ Page({
     }
   }
 });
-

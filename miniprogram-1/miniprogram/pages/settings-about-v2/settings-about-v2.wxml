@@ -19,15 +19,6 @@
           <text class="hero-sub">应用信息与相关协议。</text>
         </view>
 
-        <view class="card nav-card" aria-label="设置分区导航">
-          <view class="tabs">
-            <view class="tab {{navKey==='account' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="account"><text>账号管理</text></view>
-            <view class="tab {{navKey==='practice' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="practice"><text>通用</text></view>
-            <view class="tab {{navKey==='theme' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="theme"><text>主题</text></view>
-            <view class="tab {{navKey==='about' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="about"><text>关于</text></view>
-          </view>
-        </view>
-
         <view class="subtabs" aria-label="关于分区">
           <view class="subtab {{aboutTab==='app' ? 'active' : ''}}" bindtap="onAboutTabTap" data-tab="app"><text>应用信息</text></view>
           <view class="subtab {{aboutTab==='legal' ? 'active' : ''}}" bindtap="onAboutTabTap" data-tab="legal"><text>协议</text></view>

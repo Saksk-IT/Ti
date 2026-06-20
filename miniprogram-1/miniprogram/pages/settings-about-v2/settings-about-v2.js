@@ -78,8 +78,10 @@ Page({
         chatDisabledReason: '',
         errorMsg: ''
     },
-    onLoad: function () {
-        wx.redirectTo({ url: '/pages/settings-center-v2/settings-center-v2?navKey=about' });
+    onLoad: function (options) {
+        var tab = String((options === null || options === void 0 ? void 0 : options.aboutTab) || (options === null || options === void 0 ? void 0 : options.about) || '').toLowerCase();
+        if (tab === 'legal')
+            this.setData({ aboutTab: 'legal' });
     },
     onShow: function () {
         if (!(0, auth_1.checkLogin)()) {

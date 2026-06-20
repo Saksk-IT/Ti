@@ -23,27 +23,27 @@
           <text class="section-title">设置分区</text>
           <text class="section-sub">与 Web /settings/* 对齐的子页面（*-v2）。</text>
           <view class="nav-list">
-            <view class="nav-row" bindtap="onGoSubpage" data-url="/pages/settings-center-v2/settings-center-v2?navKey=account&accTab=profile">
+            <view class="nav-row" bindtap="onGoSubpage" data-url="/pages/settings-account-profile-v2/settings-account-profile-v2">
               <text class="nav-label">账号管理 · 个人资料</text>
               <text class="nav-chev">›</text>
             </view>
-            <view class="nav-row" bindtap="onGoSubpage" data-url="/pages/settings-center-v2/settings-center-v2?navKey=account&accTab=security">
+            <view class="nav-row" bindtap="onGoSubpage" data-url="/pages/settings-account-security-v2/settings-account-security-v2">
               <text class="nav-label">账号管理 · 账号安全</text>
               <text class="nav-chev">›</text>
             </view>
-            <view class="nav-row" bindtap="onGoSubpage" data-url="/pages/settings-center-v2/settings-center-v2?navKey=account&accTab=bindings">
+            <view class="nav-row" bindtap="onGoSubpage" data-url="/pages/settings-account-bindings-v2/settings-account-bindings-v2">
               <text class="nav-label">账号管理 · 账号绑定</text>
               <text class="nav-chev">›</text>
             </view>
-            <view class="nav-row" bindtap="onGoSubpage" data-url="/pages/settings-center-v2/settings-center-v2?navKey=practice">
+            <view class="nav-row" bindtap="onGoSubpage" data-url="/pages/settings-practice-v2/settings-practice-v2">
               <text class="nav-label">通用</text>
               <text class="nav-chev">›</text>
             </view>
-            <view class="nav-row" bindtap="onGoSubpage" data-url="/pages/settings-center-v2/settings-center-v2?navKey=theme">
+            <view class="nav-row" bindtap="onGoSubpage" data-url="/pages/settings-theme-v2/settings-theme-v2">
               <text class="nav-label">主题</text>
               <text class="nav-chev">›</text>
             </view>
-            <view class="nav-row" bindtap="onGoSubpage" data-url="/pages/settings-center-v2/settings-center-v2?navKey=about">
+            <view class="nav-row" bindtap="onGoSubpage" data-url="/pages/settings-about-v2/settings-about-v2">
               <text class="nav-label">关于</text>
               <text class="nav-chev">›</text>
             </view>

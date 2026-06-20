@@ -477,7 +477,7 @@ Page({
   },
 
   onAboutTap() {
-    safeNavigate('/pages/settings-center-v2/settings-center-v2?navKey=about', 'redirectTo');
+    safeNavigate('/pages/settings-about-v2/settings-about-v2', 'redirectTo');
   },
 
   // 头像点击 - 跳转个人资料
@@ -519,7 +519,7 @@ Page({
 
   // 设置
   onGoSettings() {
-    safeNavigate('/pages/settings-center-v2/settings-center-v2', 'redirectTo');
+    safeNavigate('/pages/settings-account-profile-v2/settings-account-profile-v2', 'redirectTo');
   },
 
   // 检查是否为新用户，显示资料设置引导

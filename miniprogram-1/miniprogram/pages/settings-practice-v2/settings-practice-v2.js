@@ -161,9 +161,6 @@ Page({
         subjectModalOpen: false,
         modalRows: []
     },
-    onLoad: function () {
-        wx.redirectTo({ url: '/pages/settings-center-v2/settings-center-v2?navKey=practice' });
-    },
     onShow: function () {
         if (!(0, auth_1.checkLogin)()) {
             wx.redirectTo({ url: '/pages/login/login' });
@@ -275,10 +272,18 @@ Page({
     onModalSubjectToggle: function (e) {
         var _a, _b;
         var name = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.name) || '').trim();
-        var checked = !!(e && e.detail && e.detail.value);
         if (!name)
             return;
+        var current = (this.data.modalRows || []).find(function (r) { return r.name === name; });
+        var checked = !(current && current.checked);
         var modalRows = (this.data.modalRows || []).map(function (r) { return (r.name === name ? __assign(__assign({}, r), { checked: checked }) : r); });
+        this.setData({ modalRows: modalRows });
+    },
+    onModalSubjectChange: function (e) {
+        var _a;
+        var values = Array.isArray((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value) ? e.detail.value : [];
+        var selected = new Set(values.map(function (x) { return String(x || '').trim(); }).filter(Boolean));
+        var modalRows = (this.data.modalRows || []).map(function (r) { return (__assign(__assign({}, r), { checked: selected.has(r.name) })); });
         this.setData({ modalRows: modalRows });
     },
     onCancelSubjectSelection: function () {

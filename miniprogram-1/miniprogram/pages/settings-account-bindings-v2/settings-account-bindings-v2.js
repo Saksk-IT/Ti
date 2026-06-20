@@ -100,9 +100,6 @@ Page({
         bindingWechat: false,
         unbindingWechat: false
     },
-    onLoad: function () {
-        wx.redirectTo({ url: '/pages/settings-center-v2/settings-center-v2?navKey=account&accTab=bindings' });
-    },
     onShow: function () {
         if (!(0, auth_1.checkLogin)()) {
             wx.redirectTo({ url: '/pages/login/login' });

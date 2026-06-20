@@ -66,13 +66,10 @@ Page({
   },
 
   onLoad(options: any) {
-    const qs: string[] = ['navKey=account', 'accTab=profile'];
     try {
       const edit = String(options?.edit || '');
-      if (edit === '1') qs.push('edit=1');
+      if (edit === '1') this.setData({ editing: true });
     } catch (e) {}
-
-    wx.redirectTo({ url: `/pages/settings-center-v2/settings-center-v2?${qs.join('&')}` });
   },
 
   onShow() {

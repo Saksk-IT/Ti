@@ -2,6 +2,7 @@ import { checkLogin } from '../../utils/auth';
 import { syncUserSettingsToServer } from '../../utils/user-settings';
 import { buildLastPracticeUrl } from '../../utils/last-practice';
 import { themeManager, ThemeMode, ThemeStyle } from '../../utils/theme';
+import { fontManager, FontStyle, FONT_STYLE_CONFIG } from '../../utils/font';
 
 type SettingsNavKey = 'account' | 'practice' | 'theme' | 'about';
 
@@ -15,11 +16,12 @@ function navTo(key: SettingsNavKey): string {
 Page({
   data: {
     navKey: 'theme' as SettingsNavKey,
-    msg: ''
-  },
-
-  onLoad() {
-    wx.redirectTo({ url: '/pages/settings-center-v2/settings-center-v2?navKey=theme' });
+    msg: '',
+    fontMsg: '',
+    fontStyle: 'system' as FontStyle,
+    fontStyleClass: '',
+    fontStyleName: '系统默认',
+    fontStyleList: Object.values(FONT_STYLE_CONFIG)
   },
 
   onShow() {
@@ -29,6 +31,7 @@ Page({
     }
     try {
       this.setData(themeManager.getPageData());
+      this.setData(fontManager.getPageData());
     } catch (e) {}
   },
   onCycleThemeModeTap() {
@@ -60,6 +63,14 @@ Page({
     this.setData(themeManager.getPageData());
     await syncUserSettingsToServer();
     this.setData({ msg: '已应用并尝试同步到云端' });
+  },
+
+  onFontStyleTap(e: any) {
+    const style = String(e?.currentTarget?.dataset?.style || 'system') as FontStyle;
+    fontManager.setStyle(style);
+    this.setData(fontManager.getPageData());
+    const config = FONT_STYLE_CONFIG[style] || FONT_STYLE_CONFIG.system;
+    this.setData({ fontMsg: `已切换到「${config.name}」字体` });
   },
 
   onSettingsNavTap(e: any) {
