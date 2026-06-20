@@ -1,5 +1,4 @@
 import { api, resolveUploadUrl } from '../../utils/api';
-import { syncUserSettingsToServer } from '../../utils/user-settings';
 import { checkLogin } from '../../utils/auth';
 import { safeNavigate } from '../../utils/nav';
 import { themeManager, ThemeStyle, ThemeMode } from '../../utils/theme';
@@ -99,7 +98,6 @@ function getGreetingText(): string {
 
 Page({
   data: {
-    drawerOpen: false,
     loading: false,
     inited: false,
     isLoggedIn: false, // 是否已登录
@@ -188,11 +186,6 @@ Page({
     const isLoggedIn = checkLogin();
     this.setData({ isLoggedIn });
 
-    // 隐藏tabBar
-    try {
-      wx.hideTabBar({ animation: false });
-    } catch (e) {}
-
     // 更新主题
     try {
       this.setData(themeManager.getPageData());
@@ -206,18 +199,6 @@ Page({
 
     // 检查是否为新用户，显示资料设置引导
     this.checkNewUserSetup();
-  },
-
-  onHide() {
-    try {
-      wx.showTabBar({ animation: false });
-    } catch (e) {}
-  },
-
-  onUnload() {
-    try {
-      wx.showTabBar({ animation: false });
-    } catch (e) {}
   },
 
   async loadAllData() {
@@ -462,31 +443,6 @@ Page({
     if (!item) return;
     // 跳转到对应科目的练习页
     safeNavigate('/pages/public-bank-v2/public-bank-v2', 'redirectTo');
-  },
-
-  // 侧边栏
-  onHamburgerTap() {
-    this.setData({ drawerOpen: true });
-  },
-
-  onDrawerClose() {
-    this.setData({ drawerOpen: false });
-  },
-
-  onDrawerNavigate(e: any) {
-    const url = e?.detail?.url;
-    const navType = e?.detail?.navType;
-    this.setData({ drawerOpen: false });
-    if (!url) return;
-    safeNavigate(url, navType);
-  },
-
-  async onDrawerSelectStyle(e: any) {
-    const style = (e?.detail?.style || 'default') as ThemeStyle;
-    themeManager.setStyle(style);
-    this.setData(themeManager.getPageData());
-    this.setData({ drawerOpen: false });
-    await syncUserSettingsToServer();
   },
 
   // 主题切换

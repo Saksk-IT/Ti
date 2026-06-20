@@ -10,14 +10,11 @@
   <!-- 顶部导航 -->
   <!--
     navigation-bar 默认会把 left 区域宽度限制为胶囊按钮右侧留白（padRight）。
-    hub-v2 左侧有 3 个 icon-btn（汉堡/通知/主题），在部分机型会溢出导致末尾按钮无法点击。
+    hub-v2 左侧有 2 个 icon-btn（通知/主题），在部分机型会溢出导致末尾按钮无法点击。
     使用 compact 让 left 区域按内容自适应，确保点击区域完整。
   -->
   <navigation-bar title="首页" back="{{false}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent">
     <view slot="left" class="nav-left">
-      <view class="icon-btn" bindtap="onHamburgerTap" aria-role="button" aria-label="打开侧边栏">
-        <view class="icon-hamburger"></view>
-      </view>
       <view class="icon-btn" bindtap="onGoNotifications" aria-role="button" aria-label="通知">
         <image class="icon" src="/images/icons/bell.svg" mode="aspectFit"></image>
       </view>
@@ -29,15 +26,6 @@
       </view>
     </view>
   </navigation-bar>
-
-  <v2-drawer
-    open="{{drawerOpen}}"
-    themeStyle="{{themeStyle}}"
-    activeKey="hub"
-    bind:close="onDrawerClose"
-    bind:navigate="onDrawerNavigate"
-    bind:selectstyle="onDrawerSelectStyle"
-  />
 
   <scroll-view class="content-scroll" scroll-y enhanced show-scrollbar="{{false}}">
     <skeleton-screen wx:if="{{!inited}}" layout="hub" showCards="{{3}}" rows="{{3}}" />

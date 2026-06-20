@@ -20,48 +20,128 @@
         </view>
 
         <view class="bento-grid">
-          <view class="bento-card">
+          <view class="bento-card" bindtap="onGoFavoritesTap">
             <text class="bento-value">{{stats.favorites || 0}}</text>
             <text class="bento-label">收藏</text>
           </view>
-          <view class="bento-card">
+          <view class="bento-card" bindtap="onGoMistakesTap">
             <text class="bento-value">{{stats.mistakes || 0}}</text>
             <text class="bento-label">错题</text>
           </view>
-          <view class="bento-card" bindtap="onGoSubjectsTap">
-            <text class="bento-action-title">科目</text>
-            <text class="bento-action-sub">进入科目页</text>
+          <view class="bento-card" bindtap="onGoDataTap">
+            <text class="bento-action-title">数据</text>
+            <text class="bento-action-sub">学习统计</text>
           </view>
-          <view class="bento-card" bindtap="onOpenLogsTap">
-            <text class="bento-action-title">日志</text>
-            <text class="bento-action-sub">启动日志</text>
+          <view class="bento-card" bindtap="onGoExamTap">
+            <text class="bento-action-title">考试</text>
+            <text class="bento-action-sub">模拟测验</text>
           </view>
         </view>
 
-        <view class="menu-card">
-          <view class="menu-item" bindtap="onOpenHubV2Tap">
-            <text class="menu-text">题库中心-v2（原生复刻）</text>
-            <text class="menu-arrow">›</text>
+        <view class="menu-section">
+          <text class="menu-section-title">账号</text>
+          <view class="menu-card">
+            <view class="menu-item" bindtap="onGoProfileTap">
+              <view class="menu-main">
+                <text class="menu-text">个人资料</text>
+                <text class="menu-sub">头像、昵称与公开资料</text>
+              </view>
+              <text class="menu-arrow">›</text>
+            </view>
+            <view class="menu-item" bindtap="onGoAccountTap">
+              <view class="menu-main">
+                <text class="menu-text">账号安全</text>
+                <text class="menu-sub">密码、邮箱与绑定</text>
+              </view>
+              <text class="menu-arrow">›</text>
+            </view>
           </view>
-          <view class="menu-item" bindtap="onOpenPublicBankV2Tap">
-            <text class="menu-text">公共题库-v2（原生复刻）</text>
-            <text class="menu-arrow">›</text>
+        </view>
+
+        <view class="menu-section">
+          <text class="menu-section-title">学习</text>
+          <view class="menu-card">
+            <view class="menu-item" bindtap="onGoReviewTap">
+              <view class="menu-main">
+                <text class="menu-text">复盘</text>
+                <text class="menu-sub">错题、收藏与标签回看</text>
+              </view>
+              <text class="menu-arrow">›</text>
+            </view>
+            <view class="menu-item" bindtap="onGoDataTap">
+              <view class="menu-main">
+                <text class="menu-text">数据中心</text>
+                <text class="menu-sub">全局统计与题库表现</text>
+              </view>
+              <text class="menu-arrow">›</text>
+            </view>
+            <view class="menu-item" bindtap="onGoExamTap">
+              <view class="menu-main">
+                <text class="menu-text">考试</text>
+                <text class="menu-sub">创建或继续模拟考试</text>
+              </view>
+              <text class="menu-arrow">›</text>
+            </view>
+            <view class="menu-item" bindtap="onGoCodingTap">
+              <view class="menu-main">
+                <text class="menu-text">编程</text>
+                <text class="menu-sub">代码练习入口</text>
+              </view>
+              <text class="menu-arrow">›</text>
+            </view>
           </view>
-          <view class="menu-item" bindtap="onOpenMyBanksV2Tap">
-            <text class="menu-text">个人题库-v2（原生复刻）</text>
-            <text class="menu-arrow">›</text>
+        </view>
+
+        <view class="menu-section">
+          <text class="menu-section-title">消息</text>
+          <view class="menu-card">
+            <view class="menu-item" bindtap="onGoNotificationsTap">
+              <view class="menu-main">
+                <text class="menu-text">通知</text>
+                <text class="menu-sub">系统消息与学习提醒</text>
+              </view>
+              <text class="menu-arrow">›</text>
+            </view>
           </view>
-          <view class="menu-item" bindtap="onOpenSearchV2Tap">
-            <text class="menu-text">搜索-v2（原生复刻）</text>
-            <text class="menu-arrow">›</text>
+        </view>
+
+        <view class="menu-section">
+          <text class="menu-section-title">设置</text>
+          <view class="menu-card">
+            <view class="menu-item" bindtap="onGoThemeTap">
+              <view class="menu-main">
+                <text class="menu-text">主题与字体</text>
+                <text class="menu-sub">深浅色、主题风格和字体</text>
+              </view>
+              <text class="menu-arrow">›</text>
+            </view>
+            <view class="menu-item" bindtap="onGoPracticeSettingsTap">
+              <view class="menu-main">
+                <text class="menu-text">通用设置</text>
+                <text class="menu-sub">练习偏好与应用设置</text>
+              </view>
+              <text class="menu-arrow">›</text>
+            </view>
           </view>
-          <view class="menu-item" bindtap="onOpenIndexV2Tap">
-            <text class="menu-text">首页-v2（原生复刻）</text>
-            <text class="menu-arrow">›</text>
-          </view>
-          <view class="menu-item" bindtap="onLogoutTap">
-            <text class="menu-text danger">退出登录</text>
-            <text class="menu-arrow">›</text>
+        </view>
+
+        <view class="menu-section">
+          <text class="menu-section-title">系统</text>
+          <view class="menu-card">
+            <view class="menu-item" wx:if="{{canShowAdmin}}" bindtap="onGoAdminTap">
+              <view class="menu-main">
+                <text class="menu-text">管理</text>
+                <text class="menu-sub">后台管理入口</text>
+              </view>
+              <text class="menu-arrow">›</text>
+            </view>
+            <view class="menu-item" bindtap="onLogoutTap">
+              <view class="menu-main">
+                <text class="menu-text danger">退出登录</text>
+                <text class="menu-sub">清除当前登录状态</text>
+              </view>
+              <text class="menu-arrow">›</text>
+            </view>
           </view>
         </view>
 

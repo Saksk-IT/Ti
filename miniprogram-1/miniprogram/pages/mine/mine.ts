@@ -2,10 +2,18 @@
 import { api, resolveUploadUrl } from '../../utils/api';
 import { checkLogin, logout } from '../../utils/auth';
 import { decorateAvatarUrl } from '../../utils/avatar';
+import { safeNavigate } from '../../utils/nav';
+import { themeManager } from '../../utils/theme';
+import { fontManager } from '../../utils/font';
+
+function canShowAdmin(userInfo: any): boolean {
+  return !!(userInfo?.is_admin || userInfo?.is_subject_admin || userInfo?.is_notification_admin);
+}
 
 Page({
   data: {
     userInfo: null as Record<string, unknown> | null,
+    canShowAdmin: false,
     stats: {
       favorites: 0,
       mistakes: 0
@@ -19,6 +27,12 @@ Page({
       return;
     }
     const userInfo = wx.getStorageSync('userInfo');
+    try {
+      this.setData({
+        ...themeManager.getPageData(),
+        ...fontManager.getPageData()
+      });
+    } catch (e) {}
     // 将相对路径的 avatar 转为完整 URL
     if (userInfo && (userInfo.avatar || userInfo.avatar_url)) {
       const rawAvatar = userInfo.avatar || userInfo.avatar_url;
@@ -26,7 +40,7 @@ Page({
       userInfo.avatar = fullUrl;
       userInfo.avatar_url = fullUrl;
     }
-    this.setData({ userInfo });
+    this.setData({ userInfo, canShowAdmin: canShowAdmin(userInfo) });
     this.loadStats();
   },
 
@@ -49,32 +63,53 @@ Page({
     }
   },
 
-  onGoSubjectsTap() {
-    wx.switchTab({ url: '/pages/subjects/subjects' });
+  onGoFavoritesTap() {
+    safeNavigate('/pages/favorites-v2/favorites-v2', 'navigateTo');
   },
 
-  onOpenLogsTap() {
-    wx.navigateTo({ url: '/pages/logs/logs' });
+  onGoMistakesTap() {
+    safeNavigate('/pages/mistakes-v2/mistakes-v2', 'navigateTo');
   },
 
-  onOpenIndexV2Tap() {
-    wx.navigateTo({ url: '/pages/index-v2/index-v2' });
+  onGoProfileTap() {
+    safeNavigate('/pages/profile-view-v2/profile-view-v2', 'navigateTo');
   },
 
-  onOpenHubV2Tap() {
-    wx.switchTab({ url: '/pages/hub-v2/hub-v2' });
+  onGoAccountTap() {
+    safeNavigate('/pages/settings-center-v2/settings-center-v2?navKey=account&accTab=security', 'navigateTo');
   },
 
-  onOpenPublicBankV2Tap() {
-    wx.navigateTo({ url: '/pages/public-bank-v2/public-bank-v2' });
+  onGoReviewTap() {
+    safeNavigate('/pages/review-hub-v3/review-hub-v3', 'navigateTo');
   },
 
-  onOpenMyBanksV2Tap() {
-    wx.navigateTo({ url: '/pages/my-banks-v2/my-banks-v2' });
+  onGoDataTap() {
+    safeNavigate('/packages/data/pages/data-center-v2/data-center-v2', 'navigateTo');
   },
 
-  onOpenSearchV2Tap() {
-    wx.navigateTo({ url: '/pages/search-v2/search-v2' });
+  onGoExamTap() {
+    safeNavigate('/pages/exams-select-v2/exams-select-v2', 'navigateTo');
+  },
+
+  onGoCodingTap() {
+    safeNavigate('/pages/coding-v2/coding-v2', 'navigateTo');
+  },
+
+  onGoNotificationsTap() {
+    safeNavigate('/pages/notifications-v2/notifications-v2', 'navigateTo');
+  },
+
+  onGoThemeTap() {
+    safeNavigate('/pages/settings-center-v2/settings-center-v2?navKey=theme', 'navigateTo');
+  },
+
+  onGoPracticeSettingsTap() {
+    safeNavigate('/pages/settings-center-v2/settings-center-v2?navKey=practice', 'navigateTo');
+  },
+
+  onGoAdminTap() {
+    if (!this.data.canShowAdmin) return;
+    safeNavigate('/pages/admin-v2/admin-v2', 'navigateTo');
   },
 
   onLogoutTap() {

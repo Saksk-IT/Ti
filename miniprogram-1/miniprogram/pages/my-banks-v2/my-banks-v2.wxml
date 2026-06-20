@@ -2,9 +2,6 @@
 <view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
   <navigation-bar title="个人题库" back="{{false}}" color="var(--app-nav-fg)" background="var(--app-nav-bg)">
     <view slot="left" class="nav-left">
-      <view class="icon-btn" bindtap="onHamburgerTap" aria-role="button" aria-label="打开侧边栏">
-        <view class="icon-hamburger"></view>
-      </view>
       <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
         <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
         <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
@@ -13,15 +10,6 @@
       </view>
     </view>
   </navigation-bar>
-
-  <v2-drawer
-    open="{{drawerOpen}}"
-    themeStyle="{{themeStyle}}"
-    activeKey="banks"
-    bind:close="onDrawerClose"
-    bind:navigate="onDrawerNavigate"
-    bind:selectstyle="onDrawerSelectStyle"
-  />
 
   <view class="page-container">
     <scroll-view class="content-area" scroll-y bounces="{{false}}">

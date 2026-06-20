@@ -1,9 +1,8 @@
 import { api } from '../../utils/api';
 import { resolveUploadUrl } from '../../utils/api-endpoints';
-import { syncUserSettingsToServer } from '../../utils/user-settings';
 import { checkLogin } from '../../utils/auth';
 import { safeNavigate } from '../../utils/nav';
-import { themeManager, ThemeMode, ThemeStyle } from '../../utils/theme';
+import { themeManager, ThemeMode } from '../../utils/theme';
 
 type BankType = 'system' | 'user';
 type PlazaBank = {
@@ -61,7 +60,6 @@ function formatDateLabel(input: any): string {
 
 Page({
   data: {
-    drawerOpen: false,
     loading: false,
     inited: false,
 
@@ -245,30 +243,6 @@ Page({
     }
 
     safeNavigate(`/pages/bank-join/bank-join?source_type=user&bank_id=${encodeURIComponent(String(id))}`, 'navigateTo');
-  },
-
-  onHamburgerTap() {
-    this.setData({ drawerOpen: true });
-  },
-
-  onDrawerClose() {
-    this.setData({ drawerOpen: false });
-  },
-
-  onDrawerNavigate(e: any) {
-    const url = e?.detail?.url;
-    const navType = e?.detail?.navType;
-    this.setData({ drawerOpen: false });
-    if (!url) return;
-    safeNavigate(url, navType);
-  },
-
-  async onDrawerSelectStyle(e: any) {
-    const style = (e?.detail?.style || 'default') as ThemeStyle;
-    themeManager.setStyle(style);
-    this.setData(themeManager.getPageData());
-    this.setData({ drawerOpen: false });
-    await syncUserSettingsToServer();
   },
 
   onCycleThemeModeTap() {

@@ -40,9 +40,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var api_1 = require("../../utils/api");
 var auth_1 = require("../../utils/auth");
 var avatar_1 = require("../../utils/avatar");
+var nav_1 = require("../../utils/nav");
+var theme_1 = require("../../utils/theme");
+var font_1 = require("../../utils/font");
+function canShowAdmin(userInfo) {
+    return !!((userInfo === null || userInfo === void 0 ? void 0 : userInfo.is_admin) || (userInfo === null || userInfo === void 0 ? void 0 : userInfo.is_subject_admin) || (userInfo === null || userInfo === void 0 ? void 0 : userInfo.is_notification_admin));
+}
 Page({
     data: {
         userInfo: null,
+        canShowAdmin: false,
         stats: {
             favorites: 0,
             mistakes: 0
@@ -55,6 +62,10 @@ Page({
             return;
         }
         var userInfo = wx.getStorageSync('userInfo');
+        try {
+            this.setData(Object.assign({}, theme_1.themeManager.getPageData(), font_1.fontManager.getPageData()));
+        }
+        catch (e) { }
         // 将相对路径的 avatar 转为完整 URL
         if (userInfo && (userInfo.avatar || userInfo.avatar_url)) {
             var rawAvatar = userInfo.avatar || userInfo.avatar_url;
@@ -62,7 +73,7 @@ Page({
             userInfo.avatar = fullUrl;
             userInfo.avatar_url = fullUrl;
         }
-        this.setData({ userInfo: userInfo });
+        this.setData({ userInfo: userInfo, canShowAdmin: canShowAdmin(userInfo) });
         this.loadStats();
     },
     loadStats: function () {
@@ -99,29 +110,43 @@ Page({
             });
         });
     },
-    onGoSubjectsTap: function () {
-        wx.switchTab({ url: '/pages/subjects/subjects' });
+    onGoFavoritesTap: function () {
+        (0, nav_1.safeNavigate)('/pages/favorites-v2/favorites-v2', 'navigateTo');
     },
-    onOpenLogsTap: function () {
-        wx.navigateTo({ url: '/pages/logs/logs' });
+    onGoMistakesTap: function () {
+        (0, nav_1.safeNavigate)('/pages/mistakes-v2/mistakes-v2', 'navigateTo');
     },
-    onOpenIndexV2Tap: function () {
-        wx.navigateTo({ url: '/pages/index-v2/index-v2' });
+    onGoProfileTap: function () {
+        (0, nav_1.safeNavigate)('/pages/profile-view-v2/profile-view-v2', 'navigateTo');
     },
-    onOpenHubV2Tap: function () {
-        wx.switchTab({ url: '/pages/hub-v2/hub-v2' });
+    onGoAccountTap: function () {
+        (0, nav_1.safeNavigate)('/pages/settings-center-v2/settings-center-v2?navKey=account&accTab=security', 'navigateTo');
     },
-    onOpenPublicBankV2Tap: function () {
-        wx.navigateTo({ url: '/pages/public-bank-v2/public-bank-v2' });
+    onGoReviewTap: function () {
+        (0, nav_1.safeNavigate)('/pages/review-hub-v3/review-hub-v3', 'navigateTo');
     },
-    onOpenMyBanksV2Tap: function () {
-        wx.navigateTo({ url: '/pages/my-banks-v2/my-banks-v2' });
+    onGoDataTap: function () {
+        (0, nav_1.safeNavigate)('/packages/data/pages/data-center-v2/data-center-v2', 'navigateTo');
     },
-    onOpenSearchV2Tap: function () {
-        wx.navigateTo({ url: '/pages/search-v2/search-v2' });
+    onGoExamTap: function () {
+        (0, nav_1.safeNavigate)('/pages/exams-select-v2/exams-select-v2', 'navigateTo');
     },
-    onOpenWebFrontendTap: function () {
-        wx.navigateTo({ url: '/pages/web-frontend/web-frontend?next=%2Fhub' });
+    onGoCodingTap: function () {
+        (0, nav_1.safeNavigate)('/pages/coding-v2/coding-v2', 'navigateTo');
+    },
+    onGoNotificationsTap: function () {
+        (0, nav_1.safeNavigate)('/pages/notifications-v2/notifications-v2', 'navigateTo');
+    },
+    onGoThemeTap: function () {
+        (0, nav_1.safeNavigate)('/pages/settings-center-v2/settings-center-v2?navKey=theme', 'navigateTo');
+    },
+    onGoPracticeSettingsTap: function () {
+        (0, nav_1.safeNavigate)('/pages/settings-center-v2/settings-center-v2?navKey=practice', 'navigateTo');
+    },
+    onGoAdminTap: function () {
+        if (!this.data.canShowAdmin)
+            return;
+        (0, nav_1.safeNavigate)('/pages/admin-v2/admin-v2', 'navigateTo');
     },
     onLogoutTap: function () {
         wx.showModal({
