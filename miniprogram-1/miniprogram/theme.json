@@ -5,7 +5,7 @@
     "navigationBarBackgroundColor": "#FFFFFF",
     "navigationBarTextStyle": "black",
     "tabBarColor": "#7A7E83",
-    "tabBarSelectedColor": "#007AFF",
+    "tabBarSelectedColor": "#2F6FED",
     "tabBarBackgroundColor": "#FFFFFF",
     "tabBarBorderStyle": "black"
   },
@@ -15,7 +15,7 @@
     "navigationBarBackgroundColor": "#000000",
     "navigationBarTextStyle": "white",
     "tabBarColor": "#8E8E93",
-    "tabBarSelectedColor": "#007AFF",
+    "tabBarSelectedColor": "#2F6FED",
     "tabBarBackgroundColor": "#1C1C1E",
     "tabBarBorderStyle": "white"
   }

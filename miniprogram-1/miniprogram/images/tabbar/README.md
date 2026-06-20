@@ -1,19 +1,14 @@
-# TabBar图标说明
+# TabBar 图标说明
 
-请在此目录下放置以下图标文件：
+当前底部导航使用 4 组 PNG 图标：
 
-1. home.png / home-active.png - 首页图标（未选中/选中）
-2. practice.png / practice-active.png - 练习图标（未选中/选中）
-3. mine.png / mine-active.png - 我的图标（未选中/选中）
+1. `home.png` / `home-active.png` - 首页
+2. `plaza.png` / `plaza-active.png` - 题库广场
+3. `banks.png` / `banks-active.png` - 个人题库
+4. `mine.png` / `mine-active.png` - 我的
 
-图标规格建议：
-- 尺寸：81px × 81px
+图标规格：
+- 尺寸：81px x 81px
 - 格式：PNG
-- 未选中状态：灰色 (#7A7E83)
-- 选中状态：蓝色 (#007AFF)
-
-可以使用图标库如：
-- IconFont
-- Ionicons
-- Material Icons
-
+- 未选中：#7A7E83
+- 选中：#2F6FED

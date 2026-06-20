@@ -107,14 +107,14 @@
       },
       {
         "pagePath": "pages/public-bank-v2/public-bank-v2",
-        "iconPath": "images/tabbar/subject.png",
-        "selectedIconPath": "images/tabbar/subject-active.png",
+        "iconPath": "images/tabbar/plaza.png",
+        "selectedIconPath": "images/tabbar/plaza-active.png",
         "text": "题库广场"
       },
       {
         "pagePath": "pages/my-banks-v2/my-banks-v2",
-        "iconPath": "images/tabbar/practice.png",
-        "selectedIconPath": "images/tabbar/practice-active.png",
+        "iconPath": "images/tabbar/banks.png",
+        "selectedIconPath": "images/tabbar/banks-active.png",
         "text": "个人题库"
       },
       {
