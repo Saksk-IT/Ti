@@ -1,6 +1,6 @@
 <!-- my-banks-v2.wxml - 对齐 Web /user/banks（个人题库） -->
-<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
-  <navigation-bar title="个人题库" back="{{false}}" color="var(--app-nav-fg)" background="var(--app-nav-bg)">
+<view class="page-root mine-linked-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="个人题库" back="{{false}}" color="var(--app-nav-fg)" background="transparent">
     <view slot="left" class="nav-left">
       <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
         <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>

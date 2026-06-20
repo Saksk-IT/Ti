@@ -123,6 +123,13 @@
 .mine-linked-page .card,
 .mine-linked-page .section-card,
 .mine-linked-page .basebar,
+.mine-linked-page .pb-hero,
+.mine-linked-page .pb-toolbar,
+.mine-linked-page .mb-hero,
+.mine-linked-page .mb-toolbar,
+.mine-linked-page .mb-modal-sheet,
+.mine-linked-page .taborder-sheet,
+.mine-linked-page .qdetail-sheet,
 .mine-linked-page .nav-card,
 .mine-linked-page .dc-card,
 .mine-linked-page .dc-section-card,
@@ -146,7 +153,12 @@
 }
 
 .mine-linked-page .hero,
-.mine-linked-page .dc-hero {
+.mine-linked-page .dc-hero,
+.mine-linked-page .pb-hero,
+.mine-linked-page .mb-hero,
+.mine-linked-page .practice-hero,
+.mine-linked-page .data-hero,
+.mine-linked-page .hero-card {
   border-radius: var(--app-radius-lg);
   border: 1rpx solid var(--app-border);
   background: linear-gradient(135deg, var(--app-surface-glass), var(--app-surface));
@@ -158,7 +170,12 @@
 }
 
 .mine-linked-page .hero::before,
-.mine-linked-page .dc-hero::before {
+.mine-linked-page .dc-hero::before,
+.mine-linked-page .pb-hero::before,
+.mine-linked-page .mb-hero::before,
+.mine-linked-page .practice-hero::before,
+.mine-linked-page .data-hero::before,
+.mine-linked-page .hero-card::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -170,13 +187,25 @@
 .mine-linked-page .hero > view,
 .mine-linked-page .hero > text,
 .mine-linked-page .dc-hero > view,
-.mine-linked-page .dc-hero > text {
+.mine-linked-page .dc-hero > text,
+.mine-linked-page .pb-hero > view,
+.mine-linked-page .pb-hero > text,
+.mine-linked-page .mb-hero > view,
+.mine-linked-page .mb-hero > text,
+.mine-linked-page .practice-hero > view,
+.mine-linked-page .practice-hero > text,
+.mine-linked-page .data-hero > view,
+.mine-linked-page .data-hero > text,
+.mine-linked-page .hero-card > view,
+.mine-linked-page .hero-card > text {
   position: relative;
   z-index: 1;
 }
 
 .mine-linked-page .hero-title,
-.mine-linked-page .dc-h1 {
+.mine-linked-page .dc-h1,
+.mine-linked-page .pb-title,
+.mine-linked-page .mb-title {
   font-size: 36rpx;
   line-height: 1.2;
   font-weight: 900;
@@ -187,7 +216,9 @@
 .mine-linked-page .hero-sub,
 .mine-linked-page .section-sub,
 .mine-linked-page .dc-sub,
-.mine-linked-page .dc-muted {
+.mine-linked-page .dc-muted,
+.mine-linked-page .pb-sub,
+.mine-linked-page .mb-sub {
   color: var(--app-text-secondary);
 }
 
@@ -220,6 +251,10 @@
 .mine-linked-page .tab,
 .mine-linked-page .subtab,
 .mine-linked-page .chip,
+.mine-linked-page .pb-seg,
+.mine-linked-page .mb-toolbar .seg,
+.mine-linked-page .pb-seg-btn,
+.mine-linked-page .seg-btn,
 .mine-linked-page .dc-tab,
 .mine-linked-page .dc-window-tab,
 .mine-linked-page .data-tab,
@@ -240,6 +275,8 @@
 .mine-linked-page .tab.active,
 .mine-linked-page .subtab.active,
 .mine-linked-page .chip.active,
+.mine-linked-page .pb-seg-btn.active,
+.mine-linked-page .seg-btn.active,
 .mine-linked-page .dc-tab.active,
 .mine-linked-page .dc-window-tab.active,
 .mine-linked-page .data-tab.active,
@@ -253,6 +290,9 @@
 .mine-linked-page .mini-btn,
 .mine-linked-page .dc-mini-btn,
 .mine-linked-page .pill-btn,
+.mine-linked-page .mb-manage,
+.mine-linked-page .mb-modal-x,
+.mine-linked-page .search-clear,
 .mine-linked-page .action-btn,
 .mine-linked-page .primary-btn,
 .mine-linked-page .secondary-btn,
@@ -279,6 +319,20 @@
 }
 
 .mine-linked-page .pb-card,
+.mine-linked-page .mb-card,
+.mine-linked-page .stat,
+.mine-linked-page .data-card,
+.mine-linked-page .data-pill,
+.mine-linked-page .start-count,
+.mine-linked-page .toggle,
+.mine-linked-page .danger-action,
+.mine-linked-page .reinforce-row,
+.mine-linked-page .pair-row,
+.mine-linked-page .pair-bubble,
+.mine-linked-page .qdetail-block,
+.mine-linked-page .taborder-item,
+.mine-linked-page .weblead-link,
+.mine-linked-page .weblead-msg,
 .mine-linked-page .qa-item,
 .mine-linked-page .weak-row,
 .mine-linked-page .notification-card,
@@ -309,6 +363,9 @@
 }
 
 .mine-linked-page .search-wrap,
+.mine-linked-page .search-input,
+.mine-linked-page .mb-input,
+.mine-linked-page .mb-textarea,
 .mine-linked-page .input-row,
 .mine-linked-page .acc-input,
 .mine-linked-page .picker,
@@ -323,11 +380,158 @@
 
 .mine-linked-page .empty,
 .mine-linked-page .pb-empty,
+.mine-linked-page .mb-empty,
 .mine-linked-page .dc-empty,
 .mine-linked-page .qdetail-loading,
-.mine-linked-page .loading {
+.mine-linked-page .loading,
+.mine-linked-page .pb-loading,
+.mine-linked-page .mb-loading {
   border-radius: var(--app-radius-lg);
   color: var(--app-text-secondary);
+}
+
+.mine-linked-page .pb-toolbar,
+.mine-linked-page .mb-toolbar {
+  margin-top: 14rpx;
+  padding: 14rpx;
+}
+
+.mine-linked-page .pb-card,
+.mine-linked-page .mb-card {
+  min-height: 172rpx;
+  overflow: hidden;
+  background:
+    linear-gradient(145deg, var(--app-surface-glass), var(--app-surface));
+}
+
+.mine-linked-page .pb-cover,
+.mine-linked-page .mb-cover {
+  width: 164rpx;
+  flex-basis: 164rpx;
+  background:
+    linear-gradient(135deg, var(--app-primary-soft), var(--app-surface-glass));
+}
+
+.mine-linked-page .pb-cover-fallback,
+.mine-linked-page .mb-cover-fallback {
+  min-height: 172rpx;
+  border: 0;
+}
+
+.mine-linked-page .pb-card-body,
+.mine-linked-page .mb-card-body {
+  padding: 18rpx;
+  gap: 12rpx;
+}
+
+.mine-linked-page .pb-card-arrow,
+.mine-linked-page .mb-manage,
+.mine-linked-page .tab-order-btn,
+.mine-linked-page .mini-btn {
+  background: var(--app-surface-glass);
+  backdrop-filter: blur(18rpx);
+  -webkit-backdrop-filter: blur(18rpx);
+}
+
+.mine-linked-page .pb-chip,
+.mine-linked-page .meta-pill,
+.mine-linked-page .reinforce-badge,
+.mine-linked-page .data-card-cta,
+.mine-linked-page .danger-pill,
+.mine-linked-page .start-count {
+  border-radius: 16rpx;
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface-glass);
+}
+
+.mine-linked-page .btn,
+.mine-linked-page .action-btn,
+.mine-linked-page .pb-seg-btn,
+.mine-linked-page .seg-btn,
+.mine-linked-page .tab,
+.mine-linked-page .chip,
+.mine-linked-page .pb-card,
+.mine-linked-page .mb-card,
+.mine-linked-page .stat,
+.mine-linked-page .data-card,
+.mine-linked-page .data-pill,
+.mine-linked-page .start-count,
+.mine-linked-page .toggle,
+.mine-linked-page .result-item,
+.mine-linked-page .reinforce-row,
+.mine-linked-page .pair-row,
+.mine-linked-page .danger-action {
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+}
+
+.mine-linked-page .pb-card:active,
+.mine-linked-page .mb-card:active,
+.mine-linked-page .stat:active,
+.mine-linked-page .data-card:active,
+.mine-linked-page .data-pill:active,
+.mine-linked-page .toggle:active,
+.mine-linked-page .result-item:active,
+.mine-linked-page .reinforce-row:active,
+.mine-linked-page .pair-row:active,
+.mine-linked-page .danger-action:active {
+  transform: scale(0.99);
+  opacity: 0.94;
+}
+
+.mine-linked-page .basebar {
+  background: rgba(255, 255, 255, 0.68);
+  backdrop-filter: blur(28rpx);
+  -webkit-backdrop-filter: blur(28rpx);
+}
+
+.theme-dark.mine-linked-page .basebar {
+  background: rgba(28, 28, 30, 0.68);
+}
+
+.mine-linked-page .tab {
+  min-height: 64rpx;
+  padding: 0 20rpx;
+}
+
+.mine-linked-page .tab.active,
+.mine-linked-page .scope-stat.active,
+.mine-linked-page .chip.active {
+  box-shadow: inset 0 0 0 1rpx var(--app-border-strong);
+}
+
+.mine-linked-page .practice-hero {
+  margin-top: 16rpx;
+}
+
+.mine-linked-page .card-head {
+  padding: 22rpx 22rpx 14rpx;
+}
+
+.mine-linked-page .stats {
+  padding-left: 22rpx;
+  padding-right: 22rpx;
+  gap: 14rpx;
+}
+
+.mine-linked-page .actions {
+  padding-left: 22rpx;
+  padding-right: 22rpx;
+  gap: 14rpx;
+}
+
+.mine-linked-page .start-meta,
+.mine-linked-page .advanced,
+.mine-linked-page .chips,
+.mine-linked-page .toggles,
+.mine-linked-page .seg,
+.mine-linked-page .search {
+  padding-left: 22rpx;
+  padding-right: 22rpx;
+}
+
+.mine-linked-page .search-results,
+.mine-linked-page .reinforce-results {
+  margin-top: 18rpx;
 }
 
 .theme-dark.mine-linked-page {
