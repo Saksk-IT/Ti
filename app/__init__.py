@@ -728,7 +728,8 @@ def _register_before_request(app):
                 # 4. /admin/api/questions 相关路径（通过路径包含判断）
                 # 5. /admin/download_template（Excel模板下载）
                 is_subject_admin_path = (
-                    path.startswith('/admin/subjects') or
+                    (path.startswith('/admin/subjects/') and path != '/admin/subjects') or
+                    path == '/admin/legacy-subjects' or
                     path.startswith('/admin/api/subjects') or
                     path.startswith('/admin/questions') or
                     path == '/admin/types' or  # 题型列表API

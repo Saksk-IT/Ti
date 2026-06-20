@@ -366,11 +366,11 @@
     
     <div class="stat-card subjects">
         <div class="stat-card-header"></div>
-        <div class="label">科目数量</div>
+        <div class="label">题库数量</div>
         <div class="value">{{ stats.s_count }}</div>
-        <div class="description">已创建的科目分类</div>
+        <div class="description">用户创建的题库</div>
         <div class="stat-card-action">
-            <a href="/admin/subjects">管理科目</a>
+            <a href="/admin/subjects">管理题库</a>
         </div>
     </div>
     
@@ -402,7 +402,7 @@
     <h3>系统信息</h3>
     <div class="system-info-grid">
         <div class="system-info-item">
-            <div class="system-info-label">平均题目/科目</div>
+            <div class="system-info-label">平均题目/题库</div>
             <div class="system-info-value">{{ (stats.q_count / stats.s_count) | round(1) if stats.s_count > 0 else 0 }}</div>
         </div>
         <div class="system-info-item">

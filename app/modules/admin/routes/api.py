@@ -21,6 +21,7 @@ from .api_components import sms_settings  # noqa: F401
 from .api_components import subject_permissions  # noqa: F401
 from .api_components import subjects  # noqa: F401
 from .api_components import system_config  # noqa: F401
+from .api_components import user_banks  # noqa: F401
 from .api_components import users  # noqa: F401
 from .api_components import wechat_miniprogram_settings  # noqa: F401
 from .api_components import forum  # noqa: F401

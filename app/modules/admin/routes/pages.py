@@ -15,7 +15,7 @@ def admin_dashboard():
     from app.core.utils.portable_question_format import portable_question_to_internal
 
     q_count = db.session.execute(text('SELECT COUNT(1) FROM questions')).scalar()
-    s_count = db.session.execute(text('SELECT COUNT(1) FROM subjects')).scalar()
+    s_count = db.session.execute(text('SELECT COUNT(1) FROM user_question_banks WHERE status = 1')).scalar()
     u_count = db.session.execute(text('SELECT COUNT(1) FROM users')).scalar()
     admin_count = db.session.execute(text('SELECT COUNT(1) FROM users WHERE is_admin = true')).scalar()
 
@@ -67,8 +67,14 @@ def admin_users_page():
 
 @admin_pages_bp.route('/subjects')
 def admin_subjects_page():
-    """科目管理页面"""
+    """题库管理页面"""
     return render_template('admin/subjects/index.html')
+
+
+@admin_pages_bp.route('/legacy-subjects')
+def admin_legacy_subjects_page():
+    """旧公共科目管理入口。"""
+    return render_template('admin/subjects/legacy.html')
 
 
 @admin_pages_bp.route('/subjects/<int:subject_id>/questions')
