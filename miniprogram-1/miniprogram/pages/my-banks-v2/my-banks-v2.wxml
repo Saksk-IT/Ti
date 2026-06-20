@@ -77,9 +77,14 @@
             <view class="mb-cover {{item.has_cover ? 'has-cover' : ''}}">
               <image wx:if="{{item.has_cover}}" src="{{item.cover_url}}" mode="aspectFill"></image>
               <view wx:else class="mb-cover-fallback">
+                <view class="mini-cover-grid"></view>
+                <view class="mini-cover-emblem" aria-hidden="true">
+                  <view class="mini-cover-book-icon"></view>
+                </view>
                 <view class="mini-cover-copy">
+                  <text class="mini-cover-kicker">Sak AI</text>
                   <view class="mini-cover-title"><text>{{item.name}}</text></view>
-                  <text class="mini-cover-sub">{{item.question_count || 0}} 题 · {{item.source === 'shared' ? (item.owner_name || '分享') : (item.is_public ? '公开' : '私密')}}</text>
+                  <text class="mini-cover-sub">{{item.source === 'shared' ? '分享给我' : (item.is_public ? '公开' : '私密')}}</text>
                 </view>
               </view>
             </view>
