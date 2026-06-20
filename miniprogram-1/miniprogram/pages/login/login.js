@@ -99,7 +99,7 @@ Page({
         showDevTools: false,
         apiUrl: '',
         wechatLoginEnabled: true,
-        loginHeroSub: '支持微信 / 邮箱或手机号密码 / 邮箱验证码登录',
+        loginHeroSub: '支持微信 / 账号密码 / 邮箱验证码登录',
     },
     onLoad: function () {
         return __awaiter(this, void 0, void 0, function () {
@@ -200,7 +200,7 @@ Page({
         var parts = [];
         if (wechatEnabled)
             parts.push('微信');
-        parts.push('邮箱或手机号密码');
+        parts.push('账号密码');
         parts.push('邮箱验证码');
         return "\u652F\u6301".concat(parts.join(' / '), "\u767B\u5F55");
     },
@@ -377,11 +377,11 @@ Page({
                         isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username);
                         isPhone = /^1[3-9]\d{9}$/.test(username);
                         if (!username || !password) {
-                            wx.showToast({ title: '请输入邮箱/手机号和密码', icon: 'none' });
+                            wx.showToast({ title: '请输入账号和密码', icon: 'none' });
                             return [2 /*return*/];
                         }
                         if (!isEmail && !isPhone) {
-                            wx.showToast({ title: '仅支持邮箱或手机号登录', icon: 'none' });
+                            wx.showToast({ title: '请输入有效账号', icon: 'none' });
                             return [2 /*return*/];
                         }
                         this.setData({ loading: true });

@@ -34,8 +34,8 @@
           <view wx:if="{{mode==='password'}}" class="panel">
             <view class="form-grid">
               <view class="field">
-                <text class="label">邮箱 / 手机号</text>
-                <input class="input" placeholder="请输入邮箱或手机号" placeholder-class="placeholder" value="{{username}}" bindinput="onUsernameInput" />
+                <text class="label">账号</text>
+                <input class="input" placeholder="请输入账号" placeholder-class="placeholder" value="{{username}}" bindinput="onUsernameInput" />
               </view>
               <view class="field">
                 <text class="label">密码</text>

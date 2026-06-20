@@ -58,7 +58,7 @@ Page({
     showDevTools: false,
     apiUrl: '',
     wechatLoginEnabled: true,
-    loginHeroSub: '支持微信 / 邮箱或手机号密码 / 邮箱验证码登录',
+    loginHeroSub: '支持微信 / 账号密码 / 邮箱验证码登录',
   },
 
   async onLoad() {
@@ -138,7 +138,7 @@ Page({
   buildLoginHeroSub(phoneEnabled: boolean, wechatEnabled: boolean): string {
     const parts: string[] = [];
     if (wechatEnabled) parts.push('微信');
-    parts.push('邮箱或手机号密码');
+    parts.push('账号密码');
     parts.push('邮箱验证码');
     return `支持${parts.join(' / ')}登录`;
   },
@@ -289,11 +289,11 @@ Page({
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username);
     const isPhone = /^1[3-9]\d{9}$/.test(username);
     if (!username || !password) {
-      wx.showToast({ title: '请输入邮箱/手机号和密码', icon: 'none' });
+      wx.showToast({ title: '请输入账号和密码', icon: 'none' });
       return;
     }
     if (!isEmail && !isPhone) {
-      wx.showToast({ title: '仅支持邮箱或手机号登录', icon: 'none' });
+      wx.showToast({ title: '请输入有效账号', icon: 'none' });
       return;
     }
 
