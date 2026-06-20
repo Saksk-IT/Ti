@@ -20,8 +20,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -50,7 +50,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var api_1 = require("../../utils/api");
 var auth_1 = require("../../utils/auth");
 var nav_1 = require("../../utils/nav");
-var user_settings_1 = require("../../utils/user-settings");
 var theme_1 = require("../../utils/theme");
 var KEY_TAB = 'exams_bank_tab';
 var KEY_KW = 'exams_bank_kw';
@@ -93,7 +92,6 @@ function normalizeBank(raw) {
 }
 Page({
     data: {
-        drawerOpen: false,
         loading: false,
         inited: false,
         tab: 'public',
@@ -131,7 +129,7 @@ Page({
     },
     bootstrap: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var _a, meta, myBanksRes, sharedBanksRes, subjectsRaw, subjects, map, myBanksRaw, sharedBanksRaw, _i, myBanksRaw_1, b, item, _b, sharedBanksRaw_1, b, item, banks, e_1;
+            var _a, meta, myBanksRes, sharedBanksRes, metaObj, subjectsRaw, subjects, map, myBanksObj, sharedBanksObj, myBanksRaw, sharedBanksRaw, _i, myBanksRaw_1, b, item, _b, sharedBanksRaw_1, b, item, banks, e_1;
             var _this = this;
             return __generator(this, function (_c) {
                 switch (_c.label) {
@@ -149,12 +147,15 @@ Page({
                             ])];
                     case 2:
                         _a = _c.sent(), meta = _a[0], myBanksRes = _a[1], sharedBanksRes = _a[2];
-                        subjectsRaw = Array.isArray(meta === null || meta === void 0 ? void 0 : meta.subjects) ? meta.subjects : [];
+                        metaObj = (meta && typeof meta === 'object' ? meta : {});
+                        subjectsRaw = Array.isArray(metaObj.subjects) ? metaObj.subjects : [];
                         subjects = subjectsRaw.map(normalizeSubject).filter(Boolean);
                         subjects.sort(function (a, b) { return a.id - b.id; });
                         map = new Map();
-                        myBanksRaw = Array.isArray(myBanksRes === null || myBanksRes === void 0 ? void 0 : myBanksRes.banks) ? myBanksRes.banks : [];
-                        sharedBanksRaw = Array.isArray(sharedBanksRes === null || sharedBanksRes === void 0 ? void 0 : sharedBanksRes.banks) ? sharedBanksRes.banks : [];
+                        myBanksObj = (myBanksRes && typeof myBanksRes === 'object' ? myBanksRes : {});
+                        sharedBanksObj = (sharedBanksRes && typeof sharedBanksRes === 'object' ? sharedBanksRes : {});
+                        myBanksRaw = Array.isArray(myBanksObj.banks) ? myBanksObj.banks : [];
+                        sharedBanksRaw = Array.isArray(sharedBanksObj.banks) ? sharedBanksObj.banks : [];
                         for (_i = 0, myBanksRaw_1 = myBanksRaw; _i < myBanksRaw_1.length; _i++) {
                             b = myBanksRaw_1[_i];
                             item = normalizeBank(b);
@@ -249,42 +250,8 @@ Page({
         var url = "/pages/index-v2/index-v2?tab=new&source=user_bank&bank_id=".concat(encodeURIComponent(String(id)));
         (0, nav_1.safeNavigate)(url, 'navigateTo');
     },
-    onHamburgerTap: function () {
-        this.setData({ drawerOpen: true });
-    },
-    onDrawerClose: function () {
-        this.setData({ drawerOpen: false });
-    },
-    onDrawerNavigate: function (e) {
-        var _a, _b;
-        var url = (_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.url;
-        var navType = (_b = e === null || e === void 0 ? void 0 : e.detail) === null || _b === void 0 ? void 0 : _b.navType;
-        this.setData({ drawerOpen: false });
-        if (!url)
-            return;
-        (0, nav_1.safeNavigate)(url, navType);
-    },
-    onDrawerSelectStyle: function (e) {
-        return __awaiter(this, void 0, void 0, function () {
-            var style;
-            var _a;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        style = (((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.style) || 'default');
-                        theme_1.themeManager.setStyle(style);
-                        this.setData(theme_1.themeManager.getPageData());
-                        this.setData({ drawerOpen: false });
-                        return [4 /*yield*/, (0, user_settings_1.syncUserSettingsToServer)()];
-                    case 1:
-                        _b.sent();
-                        return [2 /*return*/];
-                }
-            });
-        });
-    },
     onCycleThemeModeTap: function () {
         var mode = theme_1.themeManager.cycleMode();
-        this.setData(__assign(__assign({}, theme_1.themeManager.getPageData()), { themeMode: mode }));
+        this.setData(__assign(__assign({}, (theme_1.themeManager.getPageData())), { themeMode: mode }));
     }
 });

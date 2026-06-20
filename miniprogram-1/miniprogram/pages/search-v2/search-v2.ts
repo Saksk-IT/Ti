@@ -1,8 +1,6 @@
 import { api, normalizeImageUrls } from '../../utils/api';
-import { syncUserSettingsToServer } from '../../utils/user-settings';
 import { checkLogin } from '../../utils/auth';
-import { safeNavigate } from '../../utils/nav';
-import { themeManager, ThemeMode, ThemeStyle } from '../../utils/theme';
+import { themeManager, ThemeMode } from '../../utils/theme';
 
 type Option<T> = { value: T; label: string };
 
@@ -50,7 +48,6 @@ function formatAnswerForDisplay(qType: string, answer: string): string {
 Page({
   activeDetailReqId: 0,
   data: {
-    drawerOpen: false,
     loading: false,
     searched: false,
     advancedOpen: false,
@@ -192,30 +189,6 @@ Page({
     } catch (e: any) {
       wx.showToast({ title: (e && e.message) || '初始化失败', icon: 'none' });
     }
-  },
-
-  onHamburgerTap() {
-    this.setData({ drawerOpen: true });
-  },
-
-  onDrawerClose() {
-    this.setData({ drawerOpen: false });
-  },
-
-  onDrawerNavigate(e: any) {
-    const url = e?.detail?.url;
-    const navType = e?.detail?.navType;
-    this.setData({ drawerOpen: false });
-    if (!url) return;
-    safeNavigate(url, navType);
-  },
-
-  async onDrawerSelectStyle(e: any) {
-    const style = (e?.detail?.style || 'default') as ThemeStyle;
-    themeManager.setStyle(style);
-    this.setData(themeManager.getPageData());
-    this.setData({ drawerOpen: false });
-    await syncUserSettingsToServer();
   },
 
   onCycleThemeModeTap() {

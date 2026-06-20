@@ -48,7 +48,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var auth_1 = require("../../utils/auth");
-var nav_1 = require("../../utils/nav");
 var user_settings_1 = require("../../utils/user-settings");
 var theme_1 = require("../../utils/theme");
 var PRACTICE_SETTINGS_KEY = 'quiz_practice_settings_v1';
@@ -99,7 +98,6 @@ function summarizeUser(userInfo) {
 }
 Page({
     data: {
-        drawerOpen: false,
         userName: '—',
         userMeta: '未登录',
         appVersion: '—',
@@ -121,40 +119,6 @@ Page({
             userMeta: u.meta,
             appVersion: getAppVersion(),
             practiceSettings: readPracticeSettings()
-        });
-    },
-    onHamburgerTap: function () {
-        this.setData({ drawerOpen: true });
-    },
-    onDrawerClose: function () {
-        this.setData({ drawerOpen: false });
-    },
-    onDrawerNavigate: function (e) {
-        var _a, _b;
-        var url = (_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.url;
-        var navType = (_b = e === null || e === void 0 ? void 0 : e.detail) === null || _b === void 0 ? void 0 : _b.navType;
-        this.setData({ drawerOpen: false });
-        if (!url)
-            return;
-        (0, nav_1.safeNavigate)(url, navType);
-    },
-    onDrawerSelectStyle: function (e) {
-        return __awaiter(this, void 0, void 0, function () {
-            var style;
-            var _a;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        style = (((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.style) || 'default');
-                        theme_1.themeManager.setStyle(style);
-                        this.setData(theme_1.themeManager.getPageData());
-                        this.setData({ drawerOpen: false });
-                        return [4 /*yield*/, (0, user_settings_1.syncUserSettingsToServer)()];
-                    case 1:
-                        _b.sent();
-                        return [2 /*return*/];
-                }
-            });
         });
     },
     onCycleThemeModeTap: function () {

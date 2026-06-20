@@ -1,10 +1,7 @@
-<!-- settings-account-profile-v2.wxml - 对齐 Web /settings/account/profile（原生组件复刻） -->
-<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
-  <navigation-bar title="设置" back="{{false}}" color="var(--app-nav-fg)" background="var(--app-bg)">
-    <view slot="left" class="nav-left">
-      <view class="icon-btn" bindtap="onHamburgerTap" aria-role="button" aria-label="打开侧边栏">
-        <view class="icon-hamburger"></view>
-      </view>
+<!--settings-account-profile-v2.wxml - -->
+<view class="page-root mine-linked-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="个人资料" back="{{true}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent">
+    <view slot="right" class="nav-right">
       <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
         <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
         <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
@@ -12,21 +9,7 @@
         </view>
       </view>
     </view>
-    <view slot="right" class="nav-right">
-      <view class="pill-btn" bindtap="onContinueLast" aria-role="button" aria-label="继续上次">
-        <text>继续上次</text>
-      </view>
-    </view>
   </navigation-bar>
-
-  <v2-drawer
-    open="{{drawerOpen}}"
-    themeStyle="{{themeStyle}}"
-    activeKey="settings"
-    bind:close="onDrawerClose"
-    bind:navigate="onDrawerNavigate"
-    bind:selectstyle="onDrawerSelectStyle"
-  />
 
   <view class="page-container">
     <scroll-view class="content-area" scroll-y bounces="{{false}}" refresher-enabled="{{true}}" bindrefresherrefresh="onPullDownRefresh">

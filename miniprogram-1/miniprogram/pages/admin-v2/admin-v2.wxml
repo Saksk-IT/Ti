@@ -1,10 +1,7 @@
-<!-- admin-v2.wxml - 对齐 Web /admin（小程序端管理入口占位） -->
-<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
-  <navigation-bar title="管理" back="{{false}}" color="var(--app-nav-fg)" background="var(--app-nav-bg)">
-    <view slot="left" class="nav-left">
-      <view class="icon-btn" bindtap="onHamburgerTap" aria-role="button" aria-label="打开侧边栏">
-        <view class="icon-hamburger"></view>
-      </view>
+<!--admin-v2.wxml - （ -->
+<view class="page-root mine-linked-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="管理" back="{{true}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent">
+    <view slot="right" class="nav-right">
       <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
         <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
         <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
@@ -14,21 +11,12 @@
     </view>
   </navigation-bar>
 
-  <v2-drawer
-    open="{{drawerOpen}}"
-    themeStyle="{{themeStyle}}"
-    activeKey="admin"
-    bind:close="onDrawerClose"
-    bind:navigate="onDrawerNavigate"
-    bind:selectstyle="onDrawerSelectStyle"
-  />
-
   <view class="page-container">
     <scroll-view class="content-area" scroll-y bounces="{{false}}">
       <view class="container">
         <view class="card hero" aria-label="管理入口">
           <text class="hero-title">管理</text>
-          <text class="hero-sub">对齐 Web /admin（小程序端管理入口占位）</text>
+          <text class="hero-sub">管理能力入口，仅对具备权限的账号开放。</text>
         </view>
 
         <view class="card section-card" aria-label="工具">

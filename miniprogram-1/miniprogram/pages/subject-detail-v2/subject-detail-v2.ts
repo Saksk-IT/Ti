@@ -1,10 +1,8 @@
 import { api } from '../../utils/api';
 import { checkLogin } from '../../utils/auth';
-import { safeNavigate } from '../../utils/nav';
-import { syncUserSettingsToServer } from '../../utils/user-settings';
 import { createQuizSource } from '../../utils/quiz-source';
 import { getApiBaseUrl } from '../../utils/url-utils';
-import { themeManager, ThemeMode, ThemeStyle } from '../../utils/theme';
+import { themeManager, ThemeMode } from '../../utils/theme';
 import { requestStateBehavior } from '../../behaviors/request-state';
 import { createSetDataBatcher } from '../../utils/set-data-batcher';
 import {
@@ -53,7 +51,6 @@ import {
 Page({
   behaviors: [requestStateBehavior],
   data: {
-    drawerOpen: false,
     loading: false,
     inited: false,
 
@@ -265,32 +262,6 @@ Page({
     if (this.data.tab === 'reinforce') {
       this.ensureReinforce(false);
     }
-  },
-
-  onHamburgerTap() {
-    this.patchData({ drawerOpen: true });
-  },
-
-  onDrawerClose() {
-    this.patchData({ drawerOpen: false });
-  },
-
-  onDrawerNavigate(e: any) {
-    const url = e?.detail?.url;
-    const navType = e?.detail?.navType;
-    this.patchData({ drawerOpen: false });
-    if (!url) return;
-    safeNavigate(url, navType);
-  },
-
-  async onDrawerSelectStyle(e: any) {
-    const style = (e?.detail?.style || 'default') as ThemeStyle;
-    themeManager.setStyle(style);
-    this.patchData({
-      ...(themeManager.getPageData()),
-      drawerOpen: false
-    }, undefined, true);
-    await syncUserSettingsToServer();
   },
 
   onCycleThemeModeTap() {
@@ -1776,4 +1747,3 @@ Page({
     };
   }
 });
-

@@ -32,7 +32,6 @@ page {
   box-sizing: border-box;
 }
 
-.nav-left,
 .nav-right {
   display: flex;
   align-items: center;
@@ -63,25 +62,13 @@ page {
   height: 36rpx;
 }
 
-.icon-hamburger {
-  width: 36rpx;
-  height: 36rpx;
-  background: var(--app-text);
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 7h16M4 12h16M4 17h16' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")
-    no-repeat center;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 7h16M4 12h16M4 17h16' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")
-    no-repeat center;
-  -webkit-mask-size: 100% 100%;
-  mask-size: 100% 100%;
-}
-
 .theme-auto {
   position: absolute;
   right: 10rpx;
   bottom: 10rpx;
   width: 26rpx;
   height: 26rpx;
-  border-radius: 999px;
+  border-radius: var(--app-radius-sm);
   background: var(--app-fill);
   border: 1rpx solid var(--app-border);
   display: flex;
@@ -152,7 +139,7 @@ page {
 .chip {
   height: 64rpx;
   padding: 0 18rpx;
-  border-radius: 999px;
+  border-radius: var(--app-radius-md);
   border: 1rpx solid var(--app-border);
   background: var(--app-surface);
   display: inline-flex;
@@ -239,7 +226,7 @@ switch {
 .btn {
   height: 72rpx;
   padding: 0 18rpx;
-  border-radius: 999px;
+  border-radius: var(--app-radius-md);
   border: 1rpx solid var(--app-border);
   background: var(--app-surface);
   display: inline-flex;

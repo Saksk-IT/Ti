@@ -49,8 +49,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var api_1 = require("../../utils/api");
 var auth_1 = require("../../utils/auth");
-var nav_1 = require("../../utils/nav");
-var user_settings_1 = require("../../utils/user-settings");
 var quiz_source_1 = require("../../utils/quiz-source");
 var theme_1 = require("../../utils/theme");
 var request_state_1 = require("../../behaviors/request-state");
@@ -68,7 +66,6 @@ function _p(ctx) {
 Page({
     behaviors: [request_state_1.requestStateBehavior],
     data: {
-        drawerOpen: false,
         loading: false,
         inited: false,
         tab: 'practice',
@@ -500,39 +497,6 @@ Page({
     },
     onPullDownRefresh: function () {
         this.bootstrap();
-    },
-    onHamburgerTap: function () {
-        this.patchData({ drawerOpen: true });
-    },
-    onDrawerClose: function () {
-        this.patchData({ drawerOpen: false });
-    },
-    onDrawerNavigate: function (e) {
-        var _a, _b;
-        var url = (_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.url;
-        var navType = (_b = e === null || e === void 0 ? void 0 : e.detail) === null || _b === void 0 ? void 0 : _b.navType;
-        this.patchData({ drawerOpen: false });
-        if (!url)
-            return;
-        (0, nav_1.safeNavigate)(url, navType);
-    },
-    onDrawerSelectStyle: function (e) {
-        return __awaiter(this, void 0, void 0, function () {
-            var style;
-            var _a;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        style = (((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.style) || 'default');
-                        theme_1.themeManager.setStyle(style);
-                        this.patchData(__assign(__assign({}, (theme_1.themeManager.getPageData())), { drawerOpen: false }), undefined, true);
-                        return [4 /*yield*/, (0, user_settings_1.syncUserSettingsToServer)()];
-                    case 1:
-                        _b.sent();
-                        return [2 /*return*/];
-                }
-            });
-        });
     },
     onCycleThemeModeTap: function () {
         var mode = theme_1.themeManager.cycleMode();

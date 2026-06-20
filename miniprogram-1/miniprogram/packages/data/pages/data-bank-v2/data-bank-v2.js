@@ -3,7 +3,6 @@
 const { api } = require('../../../../utils/api');
 const { checkLogin } = require('../../../../utils/auth');
 const { safeNavigate } = require('../../../../utils/nav');
-const { syncUserSettingsToServer } = require('../../../../utils/user-settings');
 const { themeManager } = require('../../../../utils/theme');
 const { normalizeDays, toInt, pct1 } = require('../../../../utils/data-center');
 const { getCachedDataCenter, setCachedDataCenter } = require('../../../../utils/data-center-cache');
@@ -97,7 +96,6 @@ const CHART_IDS = [
 
 Page({
   data: Object.assign({}, themeManager.getPageData(), {
-    drawerOpen: false,
     loading: false,
     inited: false,
     lazyStage: 1,
@@ -249,30 +247,6 @@ Page({
     this.loadStats(true).finally(() => {
       wx.stopPullDownRefresh();
     });
-  },
-
-  onHamburgerTap() {
-    this.setData({ drawerOpen: true });
-  },
-
-  onDrawerClose() {
-    this.setData({ drawerOpen: false });
-  },
-
-  onDrawerNavigate(e) {
-    const url = e && e.detail ? e.detail.url : '';
-    const navType = e && e.detail ? e.detail.navType : '';
-    this.setData({ drawerOpen: false });
-    if (!url) return;
-    safeNavigate(url, navType);
-  },
-
-  async onDrawerSelectStyle(e) {
-    const style = (e && e.detail && e.detail.style) || 'default';
-    themeManager.setStyle(style);
-    this.setData(themeManager.getPageData());
-    this.setData({ drawerOpen: false });
-    await syncUserSettingsToServer();
   },
 
   onCycleThemeModeTap() {

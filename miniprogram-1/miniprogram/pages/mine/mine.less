@@ -10,6 +10,55 @@ page {
   flex-direction: column;
   overflow: hidden;
   background: var(--app-bg);
+  color: var(--app-text);
+  position: relative;
+}
+
+.page-root::before,
+.page-root::after,
+.page-container::before {
+  content: '';
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(120rpx);
+  background: var(--app-primary-soft);
+  pointer-events: none;
+  z-index: 0;
+  animation: mine-bg-float 20s ease-in-out infinite;
+}
+
+.page-root::before {
+  width: 500rpx;
+  height: 500rpx;
+  top: -100rpx;
+  right: -100rpx;
+  opacity: 0.8;
+  animation-delay: 0s;
+}
+
+.page-root::after {
+  width: 400rpx;
+  height: 400rpx;
+  bottom: 200rpx;
+  left: -80rpx;
+  opacity: 0.6;
+  animation-delay: -7s;
+}
+
+.page-container::before {
+  width: 350rpx;
+  height: 350rpx;
+  right: 100rpx;
+  bottom: -50rpx;
+  opacity: 0.5;
+  animation-delay: -14s;
+}
+
+@keyframes mine-bg-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30rpx, -30rpx) scale(1.05); }
+  50% { transform: translate(-20rpx, 20rpx) scale(0.95); }
+  75% { transform: translate(-30rpx, -20rpx) scale(1.02); }
 }
 
 .page-container {
@@ -18,12 +67,16 @@ page {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 1;
 }
 
 .content-area {
   flex: 1;
   min-height: 0;
   height: 0;
+  position: relative;
+  z-index: 2;
 }
 
 .container {
@@ -36,11 +89,13 @@ page {
 .profile-card {
   width: 100%;
   padding: 22rpx;
-  background: var(--app-surface);
+  background: var(--app-surface-glass);
   border: 1rpx solid var(--app-border);
-  border-radius: 14rpx;
+  border-radius: var(--app-radius-lg);
   box-sizing: border-box;
-  box-shadow: 0 8rpx 22rpx rgba(0, 0, 0, 0.045);
+  box-shadow: var(--app-shadow-soft);
+  backdrop-filter: blur(24rpx);
+  -webkit-backdrop-filter: blur(24rpx);
   margin-bottom: 16rpx;
   display: flex;
   align-items: center;
@@ -92,11 +147,12 @@ page {
 }
 
 .profile-action {
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 12rpx;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 18rpx;
   border: 1rpx solid var(--app-border);
-  background: var(--app-surface-solid);
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow-soft);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -118,8 +174,8 @@ page {
 }
 
 .bento-card {
-  background: var(--app-surface);
-  border-radius: 14rpx;
+  background: var(--app-surface-glass);
+  border-radius: var(--app-radius-lg);
   border: 1rpx solid var(--app-border);
   box-sizing: border-box;
   padding: 18rpx;
@@ -127,7 +183,9 @@ page {
   display: flex;
   align-items: center;
   gap: 14rpx;
-  box-shadow: 0 8rpx 22rpx rgba(0, 0, 0, 0.04);
+  box-shadow: var(--app-shadow-soft);
+  backdrop-filter: blur(24rpx);
+  -webkit-backdrop-filter: blur(24rpx);
   overflow: hidden;
 }
 
@@ -164,9 +222,9 @@ page {
 .bento-icon-wrap {
   width: 56rpx;
   height: 56rpx;
-  border-radius: 12rpx;
+  border-radius: 18rpx;
   border: 1rpx solid var(--app-border-weak);
-  background: var(--app-surface-solid);
+  background: var(--app-primary-soft);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -192,10 +250,12 @@ page {
 
 .menu-card {
   width: 100%;
-  background: var(--app-surface);
-  border-radius: 14rpx;
+  background: var(--app-surface-glass);
+  border-radius: var(--app-radius-lg);
   border: 1rpx solid var(--app-border);
-  box-shadow: 0 8rpx 22rpx rgba(0, 0, 0, 0.04);
+  box-shadow: var(--app-shadow-soft);
+  backdrop-filter: blur(24rpx);
+  -webkit-backdrop-filter: blur(24rpx);
   overflow: hidden;
 }
 
@@ -264,9 +324,9 @@ page {
 .menu-icon-wrap {
   width: 54rpx;
   height: 54rpx;
-  border-radius: 12rpx;
+  border-radius: 18rpx;
   border: 1rpx solid var(--app-border-weak);
-  background: var(--app-surface-solid);
+  background: var(--app-primary-soft);
   display: flex;
   align-items: center;
   justify-content: center;

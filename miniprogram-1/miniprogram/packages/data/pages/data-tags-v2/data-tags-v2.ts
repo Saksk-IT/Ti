@@ -1,8 +1,7 @@
 import { api } from '../../../../utils/api';
 import { checkLogin } from '../../../../utils/auth';
 import { safeNavigate } from '../../../../utils/nav';
-import { syncUserSettingsToServer } from '../../../../utils/user-settings';
-import { themeManager, ThemeMode, ThemeStyle } from '../../../../utils/theme';
+import { themeManager, ThemeMode } from '../../../../utils/theme';
 import { normalizeDays, toInt, pct1 } from '../../../../utils/data-center';
 import { getCachedDataCenter, setCachedDataCenter } from '../../../../utils/data-center-cache';
 import { buildDataCenterCompatPayload, buildDataCenterChartOption, getDataCenterThemeTokens } from '../../utils/data-center-echarts';
@@ -123,7 +122,6 @@ const CHART_IDS: string[] = ['dcTagGraphChart', 'dcTagTreemapChart', 'dcTagTopCh
 Page({
   data: {
     ...(themeManager.getPageData()),
-    drawerOpen: false,
     loading: false,
     inited: false,
     lazyStage: 1,
@@ -281,30 +279,6 @@ Page({
     this.loadStats(true).finally(() => {
       wx.stopPullDownRefresh();
     });
-  },
-
-  onHamburgerTap() {
-    this.setData({ drawerOpen: true });
-  },
-
-  onDrawerClose() {
-    this.setData({ drawerOpen: false });
-  },
-
-  onDrawerNavigate(e: any) {
-    const url = e?.detail?.url;
-    const navType = e?.detail?.navType;
-    this.setData({ drawerOpen: false });
-    if (!url) return;
-    safeNavigate(url, navType);
-  },
-
-  async onDrawerSelectStyle(e: any) {
-    const style = (e?.detail?.style || 'default') as ThemeStyle;
-    themeManager.setStyle(style);
-    this.setData(themeManager.getPageData());
-    this.setData({ drawerOpen: false });
-    await syncUserSettingsToServer();
   },
 
   onCycleThemeModeTap() {

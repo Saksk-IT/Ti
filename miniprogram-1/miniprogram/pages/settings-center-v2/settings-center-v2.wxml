@@ -1,24 +1,12 @@
 <!-- settings-center-v2.wxml - 设置子页面合并为同页 Tab 切换，避免路由级白屏 -->
-<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
-  <navigation-bar title="设置" back="{{false}}" color="var(--app-nav-fg)" background="var(--app-bg)">
-    <view slot="left" class="nav-left">
-      <view class="icon-btn" bindtap="onHamburgerTap" aria-role="button" aria-label="打开侧边栏">
-        <view class="icon-hamburger"></view>
-      </view>
-      <view class="icon-btn" bindtap="onToggleDarkTap" aria-role="button" aria-label="切换深色模式">
+<view class="page-root mine-linked-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="设置" back="{{true}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent">
+    <view slot="right" class="nav-right">
+      <view class="icon-btn" bindtap="onToggleDarkTap" aria-role="button" aria-label="切换主题模式">
         <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
       </view>
     </view>
   </navigation-bar>
-
-  <v2-drawer
-    open="{{drawerOpen}}"
-    themeStyle="{{themeStyle}}"
-    activeKey="settings"
-    bind:close="onDrawerClose"
-    bind:navigate="onDrawerNavigate"
-    bind:selectstyle="onDrawerSelectStyle"
-  />
 
   <view class="page-container">
     <scroll-view

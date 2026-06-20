@@ -1,8 +1,7 @@
 import { api } from '../../utils/api';
 import { checkLogin } from '../../utils/auth';
 import { safeNavigate } from '../../utils/nav';
-import { syncUserSettingsToServer } from '../../utils/user-settings';
-import { themeManager, ThemeMode, ThemeStyle } from '../../utils/theme';
+import { themeManager, ThemeMode } from '../../utils/theme';
 
 type ReviewKind = 'mistakes' | 'favorites' | 'tags';
 type TabKey = 'practice' | 'search' | 'data';
@@ -143,17 +142,16 @@ function inferAdviceAction(kind: ReviewKind, title: string, content: string): Ad
 function defaultTitles(kind: ReviewKind): {
   navTitle: string;
   pageTitle: string;
-  drawerKey: string;
   quizLabel: string;
   memoLabel: string;
 } {
   if (kind === 'favorites') {
-    return { navTitle: '收藏中心', pageTitle: '收藏中心', drawerKey: 'review', quizLabel: '刷题', memoLabel: '背题' };
+    return { navTitle: '收藏中心', pageTitle: '收藏中心', quizLabel: '刷题', memoLabel: '背题' };
   }
   if (kind === 'tags') {
-    return { navTitle: '标签中心', pageTitle: '标签中心', drawerKey: 'review', quizLabel: '刷标签', memoLabel: '背标签' };
+    return { navTitle: '标签中心', pageTitle: '标签中心', quizLabel: '刷标签', memoLabel: '背标签' };
   }
-  return { navTitle: '错题中心', pageTitle: '错题中心', drawerKey: 'review', quizLabel: '刷错题', memoLabel: '背错题' };
+  return { navTitle: '错题中心', pageTitle: '错题中心', quizLabel: '刷错题', memoLabel: '背错题' };
 }
 
 function getPracticeMeta(kind: ReviewKind): PracticeMeta {
@@ -186,7 +184,6 @@ function getPracticeMeta(kind: ReviewKind): PracticeMeta {
 
 Page({
   data: {
-    drawerOpen: false,
     loading: false,
     inited: false,
 
@@ -198,8 +195,6 @@ Page({
     navTitle: '复盘中心',
     pageTitle: '复盘中心',
     pageSubtitle: '在当前题库范围内完成练习、搜索与数据复盘（与 Web 端保持同语义）。',
-    drawerActiveKey: 'review',
-
     scopeLabel: '公共',
     scopeName: '',
 
@@ -296,7 +291,6 @@ Page({
       bankId: sourceType === 'bank' ? bankId : 0,
       navTitle: titles.navTitle,
       pageTitle: titles.pageTitle,
-      drawerActiveKey: titles.drawerKey,
       startQuizLabel: titles.quizLabel,
       startMemoLabel: titles.memoLabel,
       isTagsMode: kind === 'tags',
@@ -457,7 +451,6 @@ Page({
         kind: nextKind,
         navTitle: titles.navTitle,
         pageTitle: titles.pageTitle,
-        drawerActiveKey: titles.drawerKey,
         startQuizLabel: titles.quizLabel,
         startMemoLabel: titles.memoLabel,
         isTagsMode: nextKind === 'tags',
@@ -968,30 +961,6 @@ Page({
     const current = (this.data as Record<string, unknown>)[key];
     const next = !current;
     this.setData({ [key]: next } as Record<string, unknown>, () => this.refreshComputed());
-  },
-
-  onHamburgerTap() {
-    this.setData({ drawerOpen: true });
-  },
-
-  onDrawerClose() {
-    this.setData({ drawerOpen: false });
-  },
-
-  onDrawerNavigate(e: any) {
-    const url = e?.detail?.url;
-    const navType = e?.detail?.navType;
-    this.setData({ drawerOpen: false });
-    if (!url) return;
-    safeNavigate(url, navType);
-  },
-
-  async onDrawerSelectStyle(e: any) {
-    const style = (e?.detail?.style || 'default') as ThemeStyle;
-    themeManager.setStyle(style);
-    this.setData(themeManager.getPageData());
-    this.setData({ drawerOpen: false });
-    await syncUserSettingsToServer();
   },
 
   onCycleThemeModeTap() {

@@ -1,8 +1,6 @@
 import { api } from '../../utils/api';
-import { syncUserSettingsToServer } from '../../utils/user-settings';
 import { checkLogin } from '../../utils/auth';
-import { safeNavigate } from '../../utils/nav';
-import { themeManager, ThemeMode, ThemeStyle } from '../../utils/theme';
+import { themeManager, ThemeMode } from '../../utils/theme';
 import { requestStateBehavior } from '../../behaviors/request-state';
 import { createSetDataBatcher } from '../../utils/set-data-batcher';
 import {
@@ -40,7 +38,6 @@ Page({
   behaviors: [requestStateBehavior],
   data: {
     tab: 'new' as TabKey,
-    drawerOpen: false,
     inited: false,
     bootstrapping: false,
 
@@ -353,33 +350,7 @@ Page({
     }
   },
 
-  onHamburgerTap() {
-    this.patchData({ drawerOpen: true });
-  },
-
-  onDrawerClose() {
-    this.patchData({ drawerOpen: false });
-  },
-
-  onDrawerNavigate(e: any) {
-    const url = e?.detail?.url;
-    const navType = e?.detail?.navType;
-    this.patchData({ drawerOpen: false });
-    if (!url) return;
-    safeNavigate(url, navType);
-  },
-
   stopTap() {},
-
-  async onDrawerSelectStyle(e: any) {
-    const style = (e?.detail?.style || 'default') as ThemeStyle;
-    themeManager.setStyle(style);
-    this.patchData({
-      ...(themeManager.getPageData()),
-      drawerOpen: false
-    }, undefined, true);
-    await syncUserSettingsToServer();
-  },
 
   onCycleThemeModeTap() {
     const mode = themeManager.cycleMode() as ThemeMode;
@@ -1438,4 +1409,3 @@ Page({
     });
   }
 });
-

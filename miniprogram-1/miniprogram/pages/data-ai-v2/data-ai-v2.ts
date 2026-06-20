@@ -1,8 +1,7 @@
 import { api } from '../../utils/api';
 import { checkLogin } from '../../utils/auth';
 import { safeNavigate } from '../../utils/nav';
-import { syncUserSettingsToServer } from '../../utils/user-settings';
-import { themeManager, ThemeMode, ThemeStyle } from '../../utils/theme';
+import { themeManager } from '../../utils/theme';
 import { normalizeDays, pct1, toInt } from '../../utils/data-center';
 import { getCachedDataCenter, setCachedDataCenter } from '../../utils/data-center-cache';
 
@@ -33,7 +32,6 @@ function buildAiPatch(res: any) {
 
 Page({
   data: {
-    drawerOpen: false,
     loading: false,
     inited: false,
     errorMsg: '',
@@ -88,35 +86,6 @@ Page({
     this.loadStats(true).finally(() => {
       wx.stopPullDownRefresh();
     });
-  },
-
-  onHamburgerTap() {
-    this.setData({ drawerOpen: true });
-  },
-
-  onDrawerClose() {
-    this.setData({ drawerOpen: false });
-  },
-
-  onDrawerNavigate(e: any) {
-    const url = e?.detail?.url;
-    const navType = e?.detail?.navType;
-    this.setData({ drawerOpen: false });
-    if (!url) return;
-    safeNavigate(url, navType);
-  },
-
-  async onDrawerSelectStyle(e: any) {
-    const style = (e?.detail?.style || 'default') as ThemeStyle;
-    themeManager.setStyle(style);
-    this.setData(themeManager.getPageData());
-    this.setData({ drawerOpen: false });
-    await syncUserSettingsToServer();
-  },
-
-  onCycleThemeModeTap() {
-    const mode = themeManager.cycleMode() as ThemeMode;
-    this.setData({ ...(themeManager.getPageData()), themeMode: mode });
   },
 
   onTabTap(e: any) {

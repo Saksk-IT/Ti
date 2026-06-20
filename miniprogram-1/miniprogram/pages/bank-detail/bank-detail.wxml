@@ -1,10 +1,7 @@
 <!-- bank-detail.wxml - 个人题库详情（练习设置 / 题库数据） -->
-<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
-  <navigation-bar title="{{bankName || '题库详情'}}" back="{{false}}" color="var(--app-nav-fg)" background="var(--app-nav-bg)">
-    <view slot="left" class="nav-left">
-      <view class="icon-btn" bindtap="onHamburgerTap" aria-role="button" aria-label="打开侧边栏">
-        <view class="icon-hamburger"></view>
-      </view>
+<view class="page-root mine-linked-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="{{bankName || '题库详情'}}" back="{{true}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent">
+    <view slot="right" class="nav-right">
       <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
         <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
         <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
@@ -13,15 +10,6 @@
       </view>
     </view>
   </navigation-bar>
-
-  <v2-drawer
-    open="{{drawerOpen}}"
-    themeStyle="{{themeStyle}}"
-    activeKey="banks"
-    bind:close="onDrawerClose"
-    bind:navigate="onDrawerNavigate"
-    bind:selectstyle="onDrawerSelectStyle"
-  />
 
   <view class="page-container">
     <scroll-view

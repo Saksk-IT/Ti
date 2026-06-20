@@ -1,9 +1,7 @@
 import { api } from '../../utils/api';
 import { checkLogin } from '../../utils/auth';
-import { safeNavigate } from '../../utils/nav';
-import { syncUserSettingsToServer } from '../../utils/user-settings';
 import { buildLastPracticeUrl } from '../../utils/last-practice';
-import { themeManager, ThemeMode, ThemeStyle } from '../../utils/theme';
+import { themeManager, ThemeMode } from '../../utils/theme';
 
 type SettingsNavKey = 'account' | 'practice' | 'theme' | 'about';
 type AboutTab = 'app' | 'legal';
@@ -23,7 +21,6 @@ function summarizeUsername(): string {
 
 Page({
   data: {
-    drawerOpen: false,
     navKey: 'about' as SettingsNavKey,
     aboutTab: 'app' as AboutTab,
     contactOpen: false,
@@ -55,30 +52,6 @@ Page({
 
     this.setData({ currentUsername: summarizeUsername() });
     this.loadAboutInfo();
-  },
-
-  onHamburgerTap() {
-    this.setData({ drawerOpen: true });
-  },
-
-  onDrawerClose() {
-    this.setData({ drawerOpen: false });
-  },
-
-  onDrawerNavigate(e: any) {
-    const url = e?.detail?.url;
-    const navType = e?.detail?.navType;
-    this.setData({ drawerOpen: false });
-    if (!url) return;
-    safeNavigate(url, navType);
-  },
-
-  async onDrawerSelectStyle(e: any) {
-    const style = (e?.detail?.style || 'default') as ThemeStyle;
-    themeManager.setStyle(style);
-    this.setData(themeManager.getPageData());
-    this.setData({ drawerOpen: false });
-    await syncUserSettingsToServer();
   },
 
   onCycleThemeModeTap() {

@@ -1,0 +1,335 @@
+/* 二级页统一视觉：沿用首页玻璃卡片、按钮倒角与主题柔光背景 */
+.mine-linked-page {
+  position: relative;
+  overflow: hidden;
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+.mine-linked-page::before,
+.mine-linked-page::after,
+.mine-linked-page .page-container::before {
+  content: '';
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(120rpx);
+  background: var(--app-primary-soft);
+  pointer-events: none;
+  z-index: 0;
+  animation: mine-linked-float 20s ease-in-out infinite;
+}
+
+.mine-linked-page::before {
+  width: 500rpx;
+  height: 500rpx;
+  top: -100rpx;
+  right: -100rpx;
+  opacity: 0.8;
+  animation-delay: 0s;
+}
+
+.mine-linked-page::after {
+  width: 400rpx;
+  height: 400rpx;
+  bottom: 200rpx;
+  left: -80rpx;
+  opacity: 0.6;
+  animation-delay: -7s;
+}
+
+.mine-linked-page .page-container::before {
+  width: 350rpx;
+  height: 350rpx;
+  right: 100rpx;
+  bottom: -50rpx;
+  opacity: 0.5;
+  animation-delay: -14s;
+}
+
+@keyframes mine-linked-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30rpx, -30rpx) scale(1.05); }
+  50% { transform: translate(-20rpx, 20rpx) scale(0.95); }
+  75% { transform: translate(-30rpx, -20rpx) scale(1.02); }
+}
+
+.mine-linked-page .page-container,
+.mine-linked-page .content-area {
+  position: relative;
+}
+
+.mine-linked-page .page-container {
+  z-index: 1;
+}
+
+.mine-linked-page .content-area {
+  z-index: 2;
+}
+
+.mine-linked-page .container {
+  padding: 22rpx 24rpx;
+  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+.mine-linked-page .nav-left,
+.mine-linked-page .nav-right {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  gap: 12rpx;
+}
+
+.mine-linked-page .icon-btn {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 18rpx;
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.mine-linked-page .icon-btn:active {
+  opacity: 0.92;
+  transform: scale(0.99);
+}
+
+.mine-linked-page .icon {
+  width: 36rpx;
+  height: 36rpx;
+}
+
+.mine-linked-page .theme-auto {
+  position: absolute;
+  right: 8rpx;
+  bottom: 8rpx;
+  width: 22rpx;
+  height: 22rpx;
+  border-radius: 50%;
+  background: var(--app-fill);
+  border: 1rpx solid var(--app-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14rpx;
+  font-weight: 900;
+  color: var(--app-text-secondary);
+}
+
+.mine-linked-page .card,
+.mine-linked-page .section-card,
+.mine-linked-page .basebar,
+.mine-linked-page .nav-card,
+.mine-linked-page .dc-card,
+.mine-linked-page .dc-section-card,
+.mine-linked-page .dc-panel,
+.mine-linked-page .panel,
+.mine-linked-page .search-hero,
+.mine-linked-page .qdetail-panel,
+.mine-linked-page .stats-card,
+.mine-linked-page .summary-card,
+.mine-linked-page .review-card,
+.mine-linked-page .exam-card,
+.mine-linked-page .form-card,
+.mine-linked-page .setting-card,
+.mine-linked-page .message-card {
+  border-radius: var(--app-radius-lg);
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface-glass);
+  box-shadow: var(--app-shadow-soft);
+  backdrop-filter: blur(24rpx);
+  -webkit-backdrop-filter: blur(24rpx);
+}
+
+.mine-linked-page .hero,
+.mine-linked-page .dc-hero {
+  border-radius: var(--app-radius-lg);
+  border: 1rpx solid var(--app-border);
+  background: linear-gradient(135deg, var(--app-surface-glass), var(--app-surface));
+  box-shadow: var(--app-shadow-soft);
+  backdrop-filter: blur(24rpx);
+  -webkit-backdrop-filter: blur(24rpx);
+  overflow: hidden;
+  position: relative;
+}
+
+.mine-linked-page .hero::before,
+.mine-linked-page .dc-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--app-primary-soft);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.mine-linked-page .hero > view,
+.mine-linked-page .hero > text,
+.mine-linked-page .dc-hero > view,
+.mine-linked-page .dc-hero > text {
+  position: relative;
+  z-index: 1;
+}
+
+.mine-linked-page .hero-title,
+.mine-linked-page .dc-h1 {
+  font-size: 36rpx;
+  line-height: 1.2;
+  font-weight: 900;
+  color: var(--app-text);
+  letter-spacing: 0;
+}
+
+.mine-linked-page .hero-sub,
+.mine-linked-page .section-sub,
+.mine-linked-page .dc-sub,
+.mine-linked-page .dc-muted {
+  color: var(--app-text-secondary);
+}
+
+.mine-linked-page .tabs,
+.mine-linked-page .subtabs,
+.mine-linked-page .dc-tabs,
+.mine-linked-page .dc-window,
+.mine-linked-page .data-tabs,
+.mine-linked-page .days-tabs,
+.mine-linked-page .filters,
+.mine-linked-page .chips {
+  display: flex;
+  gap: 10rpx;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.mine-linked-page .tabs::-webkit-scrollbar,
+.mine-linked-page .subtabs::-webkit-scrollbar,
+.mine-linked-page .dc-tabs::-webkit-scrollbar,
+.mine-linked-page .dc-window::-webkit-scrollbar,
+.mine-linked-page .data-tabs::-webkit-scrollbar,
+.mine-linked-page .days-tabs::-webkit-scrollbar,
+.mine-linked-page .filters::-webkit-scrollbar,
+.mine-linked-page .chips::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.mine-linked-page .tab,
+.mine-linked-page .subtab,
+.mine-linked-page .chip,
+.mine-linked-page .dc-tab,
+.mine-linked-page .dc-window-tab,
+.mine-linked-page .data-tab,
+.mine-linked-page .days-tab,
+.mine-linked-page .pill,
+.mine-linked-page .status-chip,
+.mine-linked-page .filter-chip,
+.mine-linked-page .scope-chip,
+.mine-linked-page .hero-chip,
+.mine-linked-page .tag-chip,
+.mine-linked-page .select,
+.mine-linked-page .control {
+  border-radius: 18rpx;
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface-glass);
+}
+
+.mine-linked-page .tab.active,
+.mine-linked-page .subtab.active,
+.mine-linked-page .chip.active,
+.mine-linked-page .dc-tab.active,
+.mine-linked-page .dc-window-tab.active,
+.mine-linked-page .data-tab.active,
+.mine-linked-page .days-tab.active {
+  color: var(--app-text);
+  background: var(--app-primary-soft);
+  border-color: var(--app-border-strong);
+}
+
+.mine-linked-page .btn,
+.mine-linked-page .mini-btn,
+.mine-linked-page .dc-mini-btn,
+.mine-linked-page .pill-btn,
+.mine-linked-page .action-btn,
+.mine-linked-page .primary-btn,
+.mine-linked-page .secondary-btn,
+.mine-linked-page .danger-btn,
+.mine-linked-page .ghost-btn,
+.mine-linked-page .submit-btn,
+.mine-linked-page .save-btn,
+.mine-linked-page .refresh-btn,
+.mine-linked-page .start-btn,
+.mine-linked-page .link-btn,
+.mine-linked-page .pb-card-arrow,
+.mine-linked-page .dc-action,
+.mine-linked-page .search-btn,
+.mine-linked-page .advanced-toggle {
+  border-radius: 18rpx;
+  border: 1rpx solid var(--app-border);
+  box-shadow: var(--app-shadow-soft);
+}
+
+.mine-linked-page .btn-primary,
+.mine-linked-page .mini-btn.primary {
+  background: var(--app-cta);
+  color: var(--app-primary-contrast);
+}
+
+.mine-linked-page .pb-card,
+.mine-linked-page .qa-item,
+.mine-linked-page .weak-row,
+.mine-linked-page .notification-card,
+.mine-linked-page .notice-card,
+.mine-linked-page .about-row,
+.mine-linked-page .bind-row,
+.mine-linked-page .profile-head,
+.mine-linked-page .info-row,
+.mine-linked-page .nav-row,
+.mine-linked-page .dc-kpi-pill,
+.mine-linked-page .dc-rank-row,
+.mine-linked-page .dc-item,
+.mine-linked-page .rank-item,
+.mine-linked-page .result-item,
+.mine-linked-page .qdetail-card,
+.mine-linked-page .list-row,
+.mine-linked-page .option-row,
+.mine-linked-page .setting-row,
+.mine-linked-page .exam-row,
+.mine-linked-page .record-row,
+.mine-linked-page .practice-row {
+  border-radius: var(--app-radius-lg);
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface-glass);
+  box-shadow: var(--app-shadow-soft);
+  backdrop-filter: blur(24rpx);
+  -webkit-backdrop-filter: blur(24rpx);
+}
+
+.mine-linked-page .search-wrap,
+.mine-linked-page .input-row,
+.mine-linked-page .acc-input,
+.mine-linked-page .picker,
+.mine-linked-page .textarea,
+.mine-linked-page .select,
+.mine-linked-page .field,
+.mine-linked-page .search-input-wrap {
+  border-radius: 18rpx;
+  border-color: var(--app-border);
+  background: var(--app-surface-glass);
+}
+
+.mine-linked-page .empty,
+.mine-linked-page .pb-empty,
+.mine-linked-page .dc-empty,
+.mine-linked-page .qdetail-loading,
+.mine-linked-page .loading {
+  border-radius: var(--app-radius-lg);
+  color: var(--app-text-secondary);
+}
+
+.theme-dark.mine-linked-page {
+  background: var(--app-bg);
+}

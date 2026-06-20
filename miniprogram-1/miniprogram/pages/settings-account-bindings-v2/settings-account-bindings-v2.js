@@ -20,8 +20,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -49,8 +49,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var api_1 = require("../../utils/api");
 var auth_1 = require("../../utils/auth");
-var nav_1 = require("../../utils/nav");
-var user_settings_1 = require("../../utils/user-settings");
 var last_practice_1 = require("../../utils/last-practice");
 var theme_1 = require("../../utils/theme");
 function navTo(key) {
@@ -80,7 +78,6 @@ function validateEmail(email) {
 }
 Page({
     data: {
-        drawerOpen: false,
         navKey: 'account',
         accTab: 'bindings',
         loading: false,
@@ -138,43 +135,9 @@ Page({
             wx.stopPullDownRefresh();
         });
     },
-    onHamburgerTap: function () {
-        this.setData({ drawerOpen: true });
-    },
-    onDrawerClose: function () {
-        this.setData({ drawerOpen: false });
-    },
-    onDrawerNavigate: function (e) {
-        var _a, _b;
-        var url = (_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.url;
-        var navType = (_b = e === null || e === void 0 ? void 0 : e.detail) === null || _b === void 0 ? void 0 : _b.navType;
-        this.setData({ drawerOpen: false });
-        if (!url)
-            return;
-        (0, nav_1.safeNavigate)(url, navType);
-    },
-    onDrawerSelectStyle: function (e) {
-        return __awaiter(this, void 0, void 0, function () {
-            var style;
-            var _a;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        style = (((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.style) || 'default');
-                        theme_1.themeManager.setStyle(style);
-                        this.setData(theme_1.themeManager.getPageData());
-                        this.setData({ drawerOpen: false });
-                        return [4 /*yield*/, (0, user_settings_1.syncUserSettingsToServer)()];
-                    case 1:
-                        _b.sent();
-                        return [2 /*return*/];
-                }
-            });
-        });
-    },
     onCycleThemeModeTap: function () {
         var mode = theme_1.themeManager.cycleMode();
-        this.setData(__assign(__assign({}, theme_1.themeManager.getPageData()), { themeMode: mode }));
+        this.setData(__assign(__assign({}, (theme_1.themeManager.getPageData())), { themeMode: mode }));
     },
     onContinueLast: function () {
         var url = (0, last_practice_1.buildLastPracticeUrl)();
@@ -399,12 +362,23 @@ Page({
     },
     onWechatUnbindTap: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var ok, e_4;
+            var emailChip, hasEmail, ok, e_4;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         if (this.data.unbindingWechat)
                             return [2 /*return*/];
+                        emailChip = this.data.emailChip || '';
+                        hasEmail = emailChip.includes('已绑定');
+                        if (!hasEmail) {
+                            wx.showModal({
+                                title: '无法解绑',
+                                content: '请先绑定邮箱后再解绑微信，否则账号将无法登录。',
+                                showCancel: false,
+                                confirmText: '去绑定邮箱'
+                            });
+                            return [2 /*return*/];
+                        }
                         return [4 /*yield*/, new Promise(function (resolve) {
                                 wx.showModal({
                                     title: '确认解绑微信',

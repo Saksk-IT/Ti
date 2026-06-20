@@ -1,8 +1,7 @@
 import { api } from '../../utils/api';
 import { checkLogin } from '../../utils/auth';
 import { safeNavigate } from '../../utils/nav';
-import { syncUserSettingsToServer } from '../../utils/user-settings';
-import { themeManager, ThemeMode, ThemeStyle } from '../../utils/theme';
+import { themeManager, ThemeMode } from '../../utils/theme';
 
 type TabKey = 'public' | 'bank';
 type ReviewKind = 'mistakes' | 'favorites' | 'tags';
@@ -213,7 +212,6 @@ function buildQuizUrlFromSession(session: LastSession, mode: 'quiz' | 'memo'): s
 
 Page({
   data: {
-    drawerOpen: false,
     loading: false,
     inited: false,
 
@@ -409,30 +407,6 @@ Page({
       return;
     }
     safeNavigate(buildReviewCenterUrl(session, { kind: 'mistakes', tab: 'practice', qType: 'all', tag: 'all' }), 'navigateTo');
-  },
-
-  onHamburgerTap() {
-    this.setData({ drawerOpen: true });
-  },
-
-  onDrawerClose() {
-    this.setData({ drawerOpen: false });
-  },
-
-  onDrawerNavigate(e: any) {
-    const url = e?.detail?.url;
-    const navType = e?.detail?.navType;
-    this.setData({ drawerOpen: false });
-    if (!url) return;
-    safeNavigate(url, navType);
-  },
-
-  async onDrawerSelectStyle(e: any) {
-    const style = (e?.detail?.style || 'default') as ThemeStyle;
-    themeManager.setStyle(style);
-    this.setData(themeManager.getPageData());
-    this.setData({ drawerOpen: false });
-    await syncUserSettingsToServer();
   },
 
   onCycleThemeModeTap() {

@@ -1,6 +1,5 @@
 import { api, resolveUploadUrl } from '../../utils/api';
 import { checkLogin, logout } from '../../utils/auth';
-import { safeNavigate } from '../../utils/nav';
 import { syncUserSettingsToServer } from '../../utils/user-settings';
 import { buildLastPracticeUrl } from '../../utils/last-practice';
 import { themeManager, ThemeStyle } from '../../utils/theme';
@@ -88,7 +87,6 @@ function _p(ctx: object): _PrivState {
 
 Page({
   data: {
-    drawerOpen: false,
     navKey: 'account' as SettingsNavKey,
     accTab: 'profile' as AccountSubKey,
     aboutTab: 'app' as AboutTab,
@@ -258,31 +256,6 @@ Page({
   resetScroll() {
     typedSetData(this,{ scrollTop: bumpScrollTop(this.data.scrollTop) });
   },
-
-  onHamburgerTap() {
-    typedSetData(this,{ drawerOpen: true });
-  },
-
-  onDrawerClose() {
-    typedSetData(this,{ drawerOpen: false });
-  },
-
-  onDrawerNavigate(e: any) {
-    const url = e?.detail?.url;
-    const navType = e?.detail?.navType;
-    typedSetData(this,{ drawerOpen: false });
-    if (!url) return;
-    safeNavigate(url, navType);
-  },
-
-  async onDrawerSelectStyle(e: any) {
-    const style = (e?.detail?.style || 'default') as ThemeStyle;
-    themeManager.setStyle(style);
-    typedSetData(this,themeManager.getPageData());
-    typedSetData(this,{ drawerOpen: false });
-    await syncUserSettingsToServer();
-  },
-
   onToggleDarkTap() {
     themeManager.toggleDark();
     typedSetData(this,themeManager.getPageData());

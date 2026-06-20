@@ -1,12 +1,9 @@
 {
   "navigationStyle": "custom",
-  "backgroundColor": "#000000",
-  "backgroundColorTop": "#000000",
-  "backgroundColorBottom": "#000000",
-  "backgroundTextStyle": "light",
+  "backgroundColor": "@backgroundColor",
+  "backgroundTextStyle": "@backgroundTextStyle",
   "usingComponents": {
     "navigation-bar": "../../../../components/navigation-bar/navigation-bar",
-    "v2-drawer": "../../../../components/v2-drawer/v2-drawer",
     "ec-canvas": "../../components/ec-canvas/ec-canvas"
   }
 }

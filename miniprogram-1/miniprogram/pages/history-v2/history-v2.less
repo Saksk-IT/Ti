@@ -1,1 +1,40 @@
 @import "../../styles/data-center.less";
+
+.mine-linked-page .days-tab,
+.mine-linked-page .data-tab,
+.mine-linked-page .mini-btn,
+.mine-linked-page .tag-pill,
+.mine-linked-page .progress,
+.mine-linked-page .progress-inner,
+.mine-linked-page .rank-bar,
+.mine-linked-page .rank-fill,
+.mine-linked-page .trend-bar,
+.mine-linked-page .trend-fill,
+.mine-linked-page .mini-badge {
+  border-radius: 18rpx;
+}
+
+.mine-linked-page .kpi,
+.mine-linked-page .note,
+.mine-linked-page .subject-row,
+.mine-linked-page .chart-card,
+.mine-linked-page .rank-item,
+.mine-linked-page .ai-panel,
+.mine-linked-page .ai-textarea {
+  border-radius: var(--app-radius-lg);
+  background: var(--app-surface-glass);
+  backdrop-filter: blur(24rpx);
+  -webkit-backdrop-filter: blur(24rpx);
+}
+
+.mine-linked-page .data-tab,
+.mine-linked-page .days-tab,
+.mine-linked-page .tag-pill {
+  background: var(--app-surface-glass);
+}
+
+.mine-linked-page .data-tab.active,
+.mine-linked-page .days-tab.active {
+  background: var(--app-primary-soft);
+  border-color: var(--app-border-strong);
+}

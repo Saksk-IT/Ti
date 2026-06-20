@@ -32,7 +32,6 @@ page {
   box-sizing: border-box;
 }
 
-.nav-left,
 .nav-right {
   display: flex;
   align-items: center;
@@ -63,22 +62,10 @@ page {
   height: 36rpx;
 }
 
-.icon-hamburger {
-  width: 36rpx;
-  height: 36rpx;
-  background: var(--app-text);
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 7h16M4 12h16M4 17h16' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")
-    no-repeat center;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 7h16M4 12h16M4 17h16' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")
-    no-repeat center;
-  -webkit-mask-size: 100% 100%;
-  mask-size: 100% 100%;
-}
-
 .pill-btn {
   height: 72rpx;
   padding: 0 22rpx;
-  border-radius: 999px;
+  border-radius: var(--app-radius-md);
   border: 1rpx solid var(--app-border);
   background: var(--app-surface);
   box-shadow: var(--app-shadow-soft);
@@ -101,7 +88,7 @@ page {
   bottom: 10rpx;
   width: 26rpx;
   height: 26rpx;
-  border-radius: 999px;
+  border-radius: var(--app-radius-sm);
   background: var(--app-fill);
   border: 1rpx solid var(--app-border);
   display: flex;
@@ -166,7 +153,7 @@ page {
 .tab {
   height: 64rpx;
   padding: 0 16rpx;
-  border-radius: 999px;
+  border-radius: var(--app-radius-md);
   border: 1rpx solid transparent;
   background: transparent;
   display: inline-flex;
@@ -271,7 +258,7 @@ page {
   font-weight: 900;
   color: var(--app-text);
   padding: 8rpx 12rpx;
-  border-radius: 999px;
+  border-radius: var(--app-radius-md);
   border: 1rpx solid var(--app-border);
   background: var(--app-surface-solid);
   display: inline-flex;
@@ -290,7 +277,7 @@ page {
 .btn {
   height: 72rpx;
   padding: 0 18rpx;
-  border-radius: 999px;
+  border-radius: var(--app-radius-md);
   border: 1rpx solid var(--app-border);
   background: var(--app-surface);
   display: inline-flex;
@@ -315,4 +302,3 @@ page {
   border-color: color-mix(in srgb, var(--app-primary) 20%, var(--app-border));
   background: color-mix(in srgb, var(--app-primary) 8%, var(--app-surface));
 }
-

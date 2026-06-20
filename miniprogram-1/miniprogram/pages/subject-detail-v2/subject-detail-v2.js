@@ -49,9 +49,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var api_1 = require("../../utils/api");
 var auth_1 = require("../../utils/auth");
-var nav_1 = require("../../utils/nav");
-var user_settings_1 = require("../../utils/user-settings");
 var quiz_source_1 = require("../../utils/quiz-source");
+var url_utils_1 = require("../../utils/url-utils");
 var theme_1 = require("../../utils/theme");
 var request_state_1 = require("../../behaviors/request-state");
 var set_data_batcher_1 = require("../../utils/set-data-batcher");
@@ -59,7 +58,6 @@ var subject_detail_helpers_1 = require("./modules/subject-detail-helpers");
 Page({
     behaviors: [request_state_1.requestStateBehavior],
     data: {
-        drawerOpen: false,
         loading: false,
         inited: false,
         tab: 'practice',
@@ -104,6 +102,17 @@ Page({
         startCountText: '—',
         startDisabled: true,
         startError: '',
+        // 导出模块
+        exportScope: 'all',
+        exportType: 'all',
+        exportTag: 'all',
+        exportAnswer: 'yes',
+        exportCountText: '—',
+        exportCount: 0,
+        exportDisabled: true,
+        exportBusy: false,
+        exportProgress: 0,
+        exportError: '',
         // 统计详情（对齐 Web 题库详情-统计子页面）
         statsDays: 14,
         statsLoading: false,
@@ -170,6 +179,8 @@ Page({
     },
     startCountTimer: null,
     startCountReq: 0,
+    exportCountTimer: null,
+    exportCountReq: 0,
     statsReq: 0,
     qDetailReq: 0,
     tabExplicit: false,
@@ -234,7 +245,12 @@ Page({
         }
         this.syncShuffleOptionsDisabled();
         if ((0, subject_detail_helpers_1.shouldCountForTab)(this.data.tab)) {
-            this.scheduleStartCount();
+            if (this.data.tab === 'export') {
+                this.scheduleExportCount();
+            }
+            else {
+                this.scheduleStartCount();
+            }
         }
         if (this.data.tab === 'stats') {
             this.ensureStatsDetail();
@@ -243,42 +259,9 @@ Page({
             this.ensureReinforce(false);
         }
     },
-    onHamburgerTap: function () {
-        this.patchData({ drawerOpen: true });
-    },
-    onDrawerClose: function () {
-        this.patchData({ drawerOpen: false });
-    },
-    onDrawerNavigate: function (e) {
-        var _a, _b;
-        var url = (_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.url;
-        var navType = (_b = e === null || e === void 0 ? void 0 : e.detail) === null || _b === void 0 ? void 0 : _b.navType;
-        this.patchData({ drawerOpen: false });
-        if (!url)
-            return;
-        (0, nav_1.safeNavigate)(url, navType);
-    },
-    onDrawerSelectStyle: function (e) {
-        return __awaiter(this, void 0, void 0, function () {
-            var style;
-            var _a;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        style = (((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.style) || 'default');
-                        theme_1.themeManager.setStyle(style);
-                        this.patchData(__assign(__assign({}, theme_1.themeManager.getPageData()), { drawerOpen: false }), undefined, true);
-                        return [4 /*yield*/, (0, user_settings_1.syncUserSettingsToServer)()];
-                    case 1:
-                        _b.sent();
-                        return [2 /*return*/];
-                }
-            });
-        });
-    },
     onCycleThemeModeTap: function () {
         var mode = theme_1.themeManager.cycleMode();
-        this.patchData(__assign(__assign({}, theme_1.themeManager.getPageData()), { themeMode: mode }));
+        this.patchData(__assign(__assign({}, (theme_1.themeManager.getPageData())), { themeMode: mode }));
     },
     applyDetailTabOrder: function (nextOrder) {
         var normalized = (0, subject_detail_helpers_1.normalizeDetailTabOrder)(nextOrder, subject_detail_helpers_1.DEFAULT_DETAIL_TAB_ORDER);
@@ -347,20 +330,20 @@ Page({
     },
     bootstrap: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var meta, subjects, subjectId_1, subject, name_1, subjectName, subjectIdFinal, totalCount, tabOrderKey, tabOrder, detailTabs, keyType, keyTag, keySearchType, keyScope, keyStatsSubTab, keyReinforceSubTab, storedType, storedTag_1, storedSearchType, storedScope, storedStatsSubTab, storedReinforceSubTab, shuffleQuestions, shuffleOptions, entry, tab, entryScope, scope, _a, info, counts, tagsRes, availableTypes, types, tagsRaw, tags, qType, tag, searchType, dataSubTab, reinforceSubTab, e_1;
+            var meta, metaObj, subjects, subjectId_1, subject, name_1, subjectName, subjectIdFinal, totalCount, tabOrderKey, tabOrder, detailTabs, keyType, keyTag, keySearchType, keyScope, keyStatsSubTab, keyReinforceSubTab, storedType, storedTag_1, storedSearchType, storedScope, storedStatsSubTab, storedReinforceSubTab, shuffleQuestions, shuffleOptions, entry, tab, entryScope, scope, _a, info, counts, tagsRes, infoObj, infoData, availableTypes, types, tagsObj, tagsDataObj, tagsRaw, tags, qType, tag, searchType, dataSubTab, reinforceSubTab, e_1;
             var _this = this;
-            var _b, _c;
-            return __generator(this, function (_d) {
-                switch (_d.label) {
+            return __generator(this, function (_b) {
+                switch (_b.label) {
                     case 0:
                         this.patchData({ loading: true, startError: '' });
-                        _d.label = 1;
+                        _b.label = 1;
                     case 1:
-                        _d.trys.push([1, 4, 5, 6]);
+                        _b.trys.push([1, 4, 5, 6]);
                         return [4 /*yield*/, api_1.api.getSubjectsMeta()];
                     case 2:
-                        meta = _d.sent();
-                        subjects = Array.isArray(meta === null || meta === void 0 ? void 0 : meta.subjects) ? meta.subjects : [];
+                        meta = _b.sent();
+                        metaObj = (meta && typeof meta === 'object' ? meta : {});
+                        subjects = Array.isArray(metaObj.subjects) ? metaObj.subjects : [];
                         subjectId_1 = Number(this.data.subjectId || 0);
                         subject = subjectId_1 ? subjects.find(function (s) { return Number(s === null || s === void 0 ? void 0 : s.id) === subjectId_1; }) : null;
                         if (!subject && this.data.subjectName) {
@@ -410,19 +393,23 @@ Page({
                                 api_1.api.getTags({ subject: subjectName }).catch(function () { return ({ tags: [] }); })
                             ])];
                     case 3:
-                        _a = _d.sent(), info = _a[0], counts = _a[1], tagsRes = _a[2];
-                        availableTypes = Array.isArray(info === null || info === void 0 ? void 0 : info.available_types)
-                            ? info.available_types
-                            : Array.isArray((_b = info === null || info === void 0 ? void 0 : info.data) === null || _b === void 0 ? void 0 : _b.available_types)
-                                ? info.data.available_types
+                        _a = _b.sent(), info = _a[0], counts = _a[1], tagsRes = _a[2];
+                        infoObj = (info && typeof info === 'object' ? info : {});
+                        infoData = (infoObj.data && typeof infoObj.data === 'object' ? infoObj.data : {});
+                        availableTypes = Array.isArray(infoObj.available_types)
+                            ? infoObj.available_types
+                            : Array.isArray(infoData.available_types)
+                                ? infoData.available_types
                                 : [];
                         types = (availableTypes || [])
                             .filter(function (t) { return typeof t === 'string' && t.trim(); })
                             .map(function (t) { return String(t).trim(); });
-                        tagsRaw = Array.isArray(tagsRes === null || tagsRes === void 0 ? void 0 : tagsRes.tags)
-                            ? tagsRes.tags
-                            : Array.isArray((_c = tagsRes === null || tagsRes === void 0 ? void 0 : tagsRes.data) === null || _c === void 0 ? void 0 : _c.tags)
-                                ? tagsRes.data.tags
+                        tagsObj = (tagsRes && typeof tagsRes === 'object' ? tagsRes : {});
+                        tagsDataObj = (tagsObj.data && typeof tagsObj.data === 'object' ? tagsObj.data : {});
+                        tagsRaw = Array.isArray(tagsObj.tags)
+                            ? tagsObj.tags
+                            : Array.isArray(tagsDataObj.tags)
+                                ? tagsDataObj.tags
                                 : [];
                         tags = (tagsRaw || [])
                             .map(function (t) { return ({ name: String((t === null || t === void 0 ? void 0 : t.name) || '').trim(), count: t === null || t === void 0 ? void 0 : t.count }); })
@@ -483,7 +470,12 @@ Page({
                         (0, subject_detail_helpers_1.setStoredString)(keyReinforceSubTab, reinforceSubTab);
                         this.syncShuffleOptionsDisabled();
                         if ((0, subject_detail_helpers_1.shouldCountForTab)(tab)) {
-                            this.scheduleStartCount();
+                            if (tab === 'export') {
+                                this.scheduleExportCount();
+                            }
+                            else {
+                                this.scheduleStartCount();
+                            }
                         }
                         if (tab === 'stats') {
                             this.setData({ statsLoadedDays: 0, statsLoadedSubTab: dataSubTab }, function () { return _this.ensureStatsDetail(); });
@@ -493,7 +485,7 @@ Page({
                         }
                         return [3 /*break*/, 6];
                     case 4:
-                        e_1 = _d.sent();
+                        e_1 = _b.sent();
                         wx.showToast({ title: (e_1 && e_1.message) || '初始化失败', icon: 'none' });
                         return [3 /*break*/, 6];
                     case 5:
@@ -699,7 +691,12 @@ Page({
         this.patchData({ tab: tab, startError: '' }, function () {
             _this.syncShuffleOptionsDisabled();
             if ((0, subject_detail_helpers_1.shouldCountForTab)(tab)) {
-                _this.scheduleStartCount();
+                if (tab === 'export') {
+                    _this.scheduleExportCount();
+                }
+                else {
+                    _this.scheduleStartCount();
+                }
             }
             if (tab === 'reinforce') {
                 _this.ensureReinforce(false);
@@ -956,7 +953,7 @@ Page({
                             if (similarOnlyIds.length) {
                                 startIds = similarOnlyIds.slice();
                                 pairsText = pairsCount > 0 ? "".concat(pairsCount, " \u7EC4") : '';
-                                desc = "\u5DF2\u5728\u672C\u9898\u5E93\u68C0\u6D4B\u5230".concat(pairsText ? (' ' + pairsText) : '', "\u76F8\u4F3C\u9898\uFF08\u9898\u5E72\u76F8\u4F3C\u4F18\u5148\uFF0C\u9009\u9879\u76F8\u4F3C\u515C\u5E95\uFF09\uFF0C\u8BAD\u7EC3\u5171 ").concat(similarOnlyIds.length, " \u9053\u3002");
+                                desc = "\u68C0\u6D4B\u5230".concat(pairsText ? (' ' + pairsText) : '', "\u76F8\u4F3C\u9898\uFF08\u9898\u5E72\u3001\u9009\u9879\u76F8\u4F3C\uFF09\uFF0C\u5171 ").concat(similarOnlyIds.length, " \u9053");
                             }
                             else {
                                 desc = wrongTotal > 0 ? '暂无明显相似题（题干/选项相似），可先做错题加强。' : '暂无明显相似题（题干/选项相似）。';
@@ -1246,7 +1243,7 @@ Page({
     },
     scheduleStartCount: function () {
         var _this = this;
-        if (!(0, subject_detail_helpers_1.shouldCountForTab)(this.data.tab))
+        if (this.data.tab !== 'practice')
             return;
         if (this.startCountTimer) {
             clearTimeout(this.startCountTimer);
@@ -1727,6 +1724,196 @@ Page({
         if (!subject)
             return;
         wx.setClipboardData({ data: subject });
+    },
+    // ===== 导出模块 =====
+    onExportScopeTap: function (e) {
+        var _this = this;
+        var _a, _b;
+        var next = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.scope) || 'all').trim() || 'all';
+        if (next === this.data.exportScope)
+            return;
+        var scope = next === 'favorites' || next === 'mistakes' ? next : 'all';
+        this.patchData({ exportScope: scope }, function () { return _this.scheduleExportCount(); });
+    },
+    onExportTypeTap: function (e) {
+        var _this = this;
+        var _a, _b;
+        var next = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.type) || 'all').trim() || 'all';
+        if (next === this.data.exportType)
+            return;
+        var types = Array.isArray(this.data.types) ? this.data.types : [];
+        var v = next === 'all' || types.includes(next) ? next : 'all';
+        this.patchData({ exportType: v }, function () { return _this.scheduleExportCount(); });
+    },
+    onExportTagTap: function (e) {
+        var _this = this;
+        var _a, _b;
+        var next = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.tag) || 'all').trim() || 'all';
+        if (next === this.data.exportTag)
+            return;
+        this.patchData({ exportTag: next }, function () { return _this.scheduleExportCount(); });
+    },
+    onExportAnswerTap: function (e) {
+        var _a, _b;
+        var next = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.answer) || 'yes').trim();
+        if (next === this.data.exportAnswer)
+            return;
+        this.patchData({ exportAnswer: next === 'no' ? 'no' : 'yes' });
+    },
+    scheduleExportCount: function () {
+        var _this = this;
+        if (this.exportCountTimer) {
+            clearTimeout(this.exportCountTimer);
+            this.exportCountTimer = null;
+        }
+        var reqId = ++this.exportCountReq;
+        this.patchData({ exportCountText: '…', exportDisabled: true, exportError: '' });
+        this.exportCountTimer = setTimeout(function () { return _this.refreshExportCount(reqId); }, 220);
+    },
+    refreshExportCount: function (reqId) {
+        return __awaiter(this, void 0, void 0, function () {
+            var subject, params, res, count, e_6;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (reqId !== this.exportCountReq)
+                            return [2 /*return*/];
+                        subject = String(this.data.subjectName || '').trim();
+                        if (!subject)
+                            return [2 /*return*/];
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, 3, , 4]);
+                        params = { subject: subject, type: 'all', source: this.data.exportScope || 'all' };
+                        if (this.data.exportType && this.data.exportType !== 'all')
+                            params.type = this.data.exportType;
+                        if (this.data.exportTag && this.data.exportTag !== 'all')
+                            params.tag = this.data.exportTag;
+                        return [4 /*yield*/, api_1.api.getQuestionsCount(params)];
+                    case 2:
+                        res = _a.sent();
+                        if (reqId !== this.exportCountReq)
+                            return [2 /*return*/];
+                        count = Number((res === null || res === void 0 ? void 0 : res.count) || 0) || 0;
+                        this.patchData({
+                            exportCount: count,
+                            exportCountText: String(count),
+                            exportDisabled: count <= 0,
+                            exportError: ''
+                        });
+                        return [3 /*break*/, 4];
+                    case 3:
+                        e_6 = _a.sent();
+                        if (reqId !== this.exportCountReq)
+                            return [2 /*return*/];
+                        this.patchData({
+                            exportCount: 0,
+                            exportCountText: '0',
+                            exportDisabled: true,
+                            exportError: (e_6 && e_6.message) ? String(e_6.message) : '获取题量失败'
+                        });
+                        return [3 /*break*/, 4];
+                    case 4: return [2 /*return*/];
+                }
+            });
+        });
+    },
+    onExportWord: function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                this.doExport('word');
+                return [2 /*return*/];
+            });
+        });
+    },
+    onExportPdf: function () {
+        var _this = this;
+        var count = this.data.exportCount || 0;
+        if (count > 100) {
+            wx.showModal({
+                title: '提示',
+                content: "\u5F53\u524D\u7B5B\u9009 ".concat(count, " \u9898\uFF0CPDF \u751F\u6210\u8F83\u6162\uFF0C\u53EF\u80FD\u9700\u8981\u7B49\u5F85\u8F83\u957F\u65F6\u95F4\u3002\u5EFA\u8BAE\u9898\u91CF\u8F83\u5927\u65F6\u4F18\u5148\u4F7F\u7528 Word \u5BFC\u51FA\u3002"),
+                confirmText: '继续导出',
+                cancelText: '取消',
+                success: function (res) {
+                    if (res.confirm)
+                        _this.doExport('pdf');
+                }
+            });
+            return;
+        }
+        this.doExport('pdf');
+    },
+    doExport: function (format) {
+        return __awaiter(this, void 0, void 0, function () {
+            var subjectId, fileType, baseUrl, token, params, url, downloadTask;
+            var _this = this;
+            return __generator(this, function (_a) {
+                if (this.data.exportDisabled || this.data.exportBusy)
+                    return [2 /*return*/];
+                if (this.data.exportCount <= 0) {
+                    wx.showToast({ title: '当前筛选无题目', icon: 'none' });
+                    return [2 /*return*/];
+                }
+                subjectId = Number(this.data.subjectId || 0);
+                if (!subjectId)
+                    return [2 /*return*/];
+                fileType = format === 'pdf' ? 'pdf' : 'docx';
+                this.patchData({ exportBusy: true, exportProgress: 0, exportError: '' });
+                try {
+                    baseUrl = (0, url_utils_1.getApiBaseUrl)();
+                    token = wx.getStorageSync('token') || '';
+                    params = ["format=".concat(format)];
+                    params.push("scope=".concat(encodeURIComponent(this.data.exportScope || 'all')));
+                    if (this.data.exportType && this.data.exportType !== 'all') {
+                        params.push("q_type=".concat(encodeURIComponent(this.data.exportType)));
+                    }
+                    if (this.data.exportTag && this.data.exportTag !== 'all') {
+                        params.push("tag=".concat(encodeURIComponent(this.data.exportTag)));
+                    }
+                    params.push("include_answer=".concat(this.data.exportAnswer === 'no' ? 'false' : 'true'));
+                    url = "".concat(baseUrl, "/subjects/").concat(subjectId, "/export?").concat(params.join('&'));
+                    downloadTask = wx.downloadFile({
+                        url: url,
+                        header: { 'Authorization': token ? "Bearer ".concat(token) : '' },
+                        success: function (res) {
+                            if (res.statusCode === 200 && res.tempFilePath) {
+                                wx.openDocument({
+                                    filePath: res.tempFilePath,
+                                    fileType: fileType,
+                                    showMenu: true,
+                                    fail: function () {
+                                        _this.patchData({ exportError: '打开文档失败，请重试' });
+                                        wx.showToast({ title: '打开文档失败', icon: 'none' });
+                                    }
+                                });
+                            }
+                            else {
+                                _this.patchData({ exportError: '导出失败，请稍后重试' });
+                                wx.showToast({ title: '导出失败', icon: 'none' });
+                            }
+                        },
+                        fail: function () {
+                            _this.patchData({ exportError: '下载失败，请检查网络' });
+                            wx.showToast({ title: '下载失败', icon: 'none' });
+                        },
+                        complete: function () {
+                            _this.patchData({ exportBusy: false });
+                        }
+                    });
+                    downloadTask.onProgressUpdate(function (res) {
+                        _this.patchData({ exportProgress: res.progress || 0 });
+                    });
+                }
+                catch (e) {
+                    this.patchData({
+                        exportBusy: false,
+                        exportError: (e && e.message) ? String(e.message) : '导出失败'
+                    });
+                }
+                return [2 /*return*/];
+            });
+        });
     },
     onShareAppMessage: function () {
         var subject = String(this.data.subjectName || '').trim();

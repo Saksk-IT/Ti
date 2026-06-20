@@ -1,9 +1,8 @@
 import { api } from '../../utils/api';
 import { checkLogin } from '../../utils/auth';
-import { safeNavigate } from '../../utils/nav';
 import { syncUserSettingsToServer } from '../../utils/user-settings';
 import { buildLastPracticeUrl } from '../../utils/last-practice';
-import { themeManager, ThemeMode, ThemeStyle } from '../../utils/theme';
+import { themeManager, ThemeMode } from '../../utils/theme';
 
 type SettingsNavKey = 'account' | 'practice' | 'theme' | 'about';
 type QuizLayoutTheme = 'traditional' | 'card';
@@ -104,7 +103,6 @@ function buildSubjectSummary(visible: string[], all: string[]): string {
 
 Page({
   data: {
-    drawerOpen: false,
     navKey: 'practice' as SettingsNavKey,
     msg: '',
 
@@ -144,31 +142,6 @@ Page({
     // 背景拉取一次科目列表，用于“全部科目”判断与弹层
     this.ensureSubjects(false);
   },
-
-  onHamburgerTap() {
-    this.setData({ drawerOpen: true });
-  },
-
-  onDrawerClose() {
-    this.setData({ drawerOpen: false });
-  },
-
-  onDrawerNavigate(e: any) {
-    const url = e?.detail?.url;
-    const navType = e?.detail?.navType;
-    this.setData({ drawerOpen: false });
-    if (!url) return;
-    safeNavigate(url, navType);
-  },
-
-  async onDrawerSelectStyle(e: any) {
-    const style = (e?.detail?.style || 'default') as ThemeStyle;
-    themeManager.setStyle(style);
-    this.setData(themeManager.getPageData());
-    this.setData({ drawerOpen: false });
-    await syncUserSettingsToServer();
-  },
-
   onCycleThemeModeTap() {
     const mode = themeManager.cycleMode() as ThemeMode;
     this.setData({ ...(themeManager.getPageData()), themeMode: mode });

@@ -2,8 +2,6 @@
   "navigationStyle": "custom",
   "backgroundColor": "@backgroundColor",
   "usingComponents": {
-    "navigation-bar": "../../components/navigation-bar/navigation-bar",
-    "v2-drawer": "../../components/v2-drawer/v2-drawer"
+    "navigation-bar": "../../components/navigation-bar/navigation-bar"
   }
 }
-

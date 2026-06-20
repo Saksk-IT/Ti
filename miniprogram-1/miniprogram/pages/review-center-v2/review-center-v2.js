@@ -20,8 +20,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -59,8 +59,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var api_1 = require("../../utils/api");
 var auth_1 = require("../../utils/auth");
 var nav_1 = require("../../utils/nav");
-var user_settings_1 = require("../../utils/user-settings");
 var theme_1 = require("../../utils/theme");
+var KEY_LAST_SESSION = 'review_last_session_v1';
 function safeDecode(v) {
     if (v == null)
         return '';
@@ -135,14 +135,49 @@ function pctOf(n, maxN) {
     var v = Math.max(0, Math.min(100, (n * 100) / maxN));
     return Math.round(v);
 }
+function extractFirstTypeFromAdvice(content) {
+    var s = String(content || '');
+    var m = s.match(/「([^」]+)」/);
+    if (!m || !m[1])
+        return '';
+    return String(m[1])
+        .split('、')[0]
+        .trim();
+}
+function inferAdviceAction(kind, title, content) {
+    var t = String(title || '').trim();
+    var c = String(content || '').trim();
+    if (!t || !c)
+        return null;
+    if (t.includes('优先攻克题型')) {
+        var qType = extractFirstTypeFromAdvice(c);
+        if (qType)
+            return { label: '按题型开练', tab: 'practice', qType: qType, startMode: 'quiz' };
+        return { label: '开始刷题', tab: 'practice', startMode: 'quiz' };
+    }
+    if (t.includes('聚焦薄弱点')) {
+        if (kind !== 'mistakes')
+            return { label: '开始刷错题', kind: 'mistakes', tab: 'practice', startMode: 'quiz' };
+        return { label: '开始刷题', tab: 'practice', startMode: 'quiz' };
+    }
+    if (t.includes('错题要闭环')) {
+        return { label: '开始背题', kind: 'mistakes', tab: 'practice', startMode: 'memo' };
+    }
+    if (t.includes('先建立手感') || t.includes('提高完成度') || t.includes('暂无题目')) {
+        if (t.includes('暂无题目'))
+            return { label: '去练习', tab: 'practice' };
+        return { label: '开始刷题', tab: 'practice', startMode: 'quiz' };
+    }
+    return { label: '去练习', tab: 'practice' };
+}
 function defaultTitles(kind) {
     if (kind === 'favorites') {
-        return { navTitle: '收藏中心', pageTitle: '收藏中心', drawerKey: 'review', quizLabel: '刷题', memoLabel: '背题' };
+        return { navTitle: '收藏中心', pageTitle: '收藏中心', quizLabel: '刷题', memoLabel: '背题' };
     }
     if (kind === 'tags') {
-        return { navTitle: '标签中心', pageTitle: '标签中心', drawerKey: 'review', quizLabel: '刷标签', memoLabel: '背标签' };
+        return { navTitle: '标签中心', pageTitle: '标签中心', quizLabel: '刷标签', memoLabel: '背标签' };
     }
-    return { navTitle: '错题中心', pageTitle: '错题中心', drawerKey: 'review', quizLabel: '刷错题', memoLabel: '背错题' };
+    return { navTitle: '错题中心', pageTitle: '错题中心', quizLabel: '刷错题', memoLabel: '背错题' };
 }
 function getPracticeMeta(kind) {
     if (kind === 'favorites') {
@@ -159,7 +194,7 @@ function getPracticeMeta(kind) {
             title: '标签',
             subtitle: '按你的标签体系聚合题目：练习、搜索与数据复盘均可按标签过滤。',
             recommend: '分组复习',
-            tip: '先选标签，再开始练习',
+            tip: '可选标签做专项复习，或保持全部标签直接开始',
             countLabel: '可用题目'
         };
     }
@@ -173,7 +208,6 @@ function getPracticeMeta(kind) {
 }
 Page({
     data: {
-        drawerOpen: false,
         loading: false,
         inited: false,
         kind: 'mistakes',
@@ -183,7 +217,6 @@ Page({
         navTitle: '复盘中心',
         pageTitle: '复盘中心',
         pageSubtitle: '在当前题库范围内完成练习、搜索与数据复盘（与 Web 端保持同语义）。',
-        drawerActiveKey: 'review',
         scopeLabel: '公共',
         scopeName: '',
         tab: 'practice',
@@ -243,6 +276,9 @@ Page({
         tagStatsExpanded: false,
         advice: []
     },
+    _startCountToken: 0,
+    _dataToken: 0,
+    _searchToken: 0,
     onLoad: function (options) {
         var _a, _b;
         var kind = normalizeKind((options === null || options === void 0 ? void 0 : options.kind) || (options === null || options === void 0 ? void 0 : options.entry) || (options === null || options === void 0 ? void 0 : options.mode));
@@ -263,7 +299,6 @@ Page({
             bankId: sourceType === 'bank' ? bankId : 0,
             navTitle: titles.navTitle,
             pageTitle: titles.pageTitle,
-            drawerActiveKey: titles.drawerKey,
             startQuizLabel: titles.quizLabel,
             startMemoLabel: titles.memoLabel,
             isTagsMode: kind === 'tags',
@@ -301,19 +336,19 @@ Page({
     },
     bootstrap: function () {
         return __awaiter(this, arguments, void 0, function (force) {
-            var kind, sourceType, subject, bankId, _a, info, tagsRes, infoData, scopeName, availableTypes, types, typeOptions, tagsData, tagsList, tagOptions, qType_1, typeIndex, tag_1, tagIndex, firstHit_1, idx2, e_1;
+            var kind, sourceType, subject, bankId, _a, info, tagsRes, infoData, scopeName, availableTypes, types, typeOptions, tagsData, tagsList, tagOptions, qType_1, typeIndex, tag_1, tagIndex, e_1;
             var _this = this;
-            var _b, _c;
+            var _b;
             if (force === void 0) { force = false; }
-            return __generator(this, function (_d) {
-                switch (_d.label) {
+            return __generator(this, function (_c) {
+                switch (_c.label) {
                     case 0:
                         if (this.data.loading && !force)
                             return [2 /*return*/];
                         this.setData({ loading: true });
-                        _d.label = 1;
+                        _c.label = 1;
                     case 1:
-                        _d.trys.push([1, 3, 4, 5]);
+                        _c.trys.push([1, 3, 4, 5]);
                         kind = this.data.kind;
                         sourceType = this.data.bankId > 0 ? 'bank' : 'public';
                         subject = String(this.data.subject || '').trim();
@@ -337,7 +372,7 @@ Page({
                                     : api_1.api.getBankTags(bankId).catch(function () { return ({ tags: [] }); })
                             ])];
                     case 2:
-                        _a = _d.sent(), info = _a[0], tagsRes = _a[1];
+                        _a = _c.sent(), info = _a[0], tagsRes = _a[1];
                         infoData = (info === null || info === void 0 ? void 0 : info.data) || info || {};
                         scopeName = sourceType === 'public'
                             ? String((infoData === null || infoData === void 0 ? void 0 : infoData.name) || subject)
@@ -361,15 +396,6 @@ Page({
                         if (tagIndex < 0)
                             tagIndex = 0;
                         tag_1 = ((_b = tagOptions[tagIndex]) === null || _b === void 0 ? void 0 : _b.value) || 'all';
-                        // 标签中心：默认选中第一个真实标签（避免“全部标签=全量题目”造成误解）
-                        if (kind === 'tags' && tag_1 === 'all' && tagsList.length) {
-                            firstHit_1 = tagsList.find(function (t) { return (Number((t === null || t === void 0 ? void 0 : t.count) || 0) || 0) > 0; }) || tagsList[0];
-                            if (firstHit_1 && firstHit_1.name) {
-                                idx2 = tagOptions.findIndex(function (o) { return o.value === firstHit_1.name; });
-                                tagIndex = idx2 >= 0 ? idx2 : 0;
-                                tag_1 = ((_c = tagOptions[tagIndex]) === null || _c === void 0 ? void 0 : _c.value) || firstHit_1.name;
-                            }
-                        }
                         this.setData({
                             inited: true,
                             sourceType: sourceType,
@@ -386,7 +412,7 @@ Page({
                         }, function () { return _this.refreshComputed(); });
                         return [3 /*break*/, 5];
                     case 3:
-                        e_1 = _d.sent();
+                        e_1 = _c.sent();
                         wx.showToast({ title: (e_1 && e_1.message) || '加载失败', icon: 'none' });
                         return [3 /*break*/, 5];
                     case 4:
@@ -417,6 +443,45 @@ Page({
         if (this.data.tab === 'data') {
             this.refreshDataStats();
         }
+    },
+    applyKind: function (nextKind, after) {
+        var _this = this;
+        if (nextKind === this.data.kind) {
+            if (after)
+                after();
+            return;
+        }
+        this._startCountToken = (this._startCountToken || 0) + 1;
+        this._dataToken = (this._dataToken || 0) + 1;
+        this._searchToken = (this._searchToken || 0) + 1;
+        var titles = defaultTitles(nextKind);
+        var practiceMeta = getPracticeMeta(nextKind);
+        this.setData({
+            kind: nextKind,
+            navTitle: titles.navTitle,
+            pageTitle: titles.pageTitle,
+            startQuizLabel: titles.quizLabel,
+            startMemoLabel: titles.memoLabel,
+            isTagsMode: nextKind === 'tags',
+            practiceMeta: practiceMeta,
+            // kind 会影响 search/source，避免残留旧结果
+            searched: false,
+            searchLoading: false,
+            page: 1,
+            total: 0,
+            hasMore: false,
+            questions: []
+        }, function () {
+            if (after)
+                after();
+            else
+                _this.refreshComputed();
+        });
+    },
+    onKindTap: function (e) {
+        var _a, _b;
+        var nextKind = normalizeKind(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.kind) || 'mistakes');
+        this.applyKind(nextKind);
     },
     onTabTap: function (e) {
         var _this = this;
@@ -492,27 +557,18 @@ Page({
     },
     refreshStartCount: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var kind, sourceType, subject, bankId, qType, tag, isTagsMode, tagRequired, count, params, source, res, params, source, res, startDisabled, e_2;
+            var token, kind, sourceType, subject, bankId, qType, tag, count, params, source, res, params, source, res, startDisabled, e_2;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
+                        this._startCountToken = (this._startCountToken || 0) + 1;
+                        token = this._startCountToken;
                         kind = this.data.kind;
                         sourceType = this.data.sourceType;
                         subject = String(this.data.subject || '').trim();
                         bankId = Number(this.data.bankId || 0) || 0;
                         qType = String(this.data.qType || 'all');
                         tag = String(this.data.tag || 'all');
-                        isTagsMode = kind === 'tags';
-                        tagRequired = isTagsMode;
-                        if (tagRequired && (!tag || tag === 'all')) {
-                            this.setData({
-                                startCount: 0,
-                                startCountText: '—',
-                                startDisabled: true,
-                                startError: '请选择一个标签再开始练习。'
-                            });
-                            return [2 /*return*/];
-                        }
                         this.setData({ startError: '', startCountText: '…' });
                         _a.label = 1;
                     case 1:
@@ -547,10 +603,14 @@ Page({
                         _a.label = 5;
                     case 5:
                         startDisabled = count <= 0;
+                        if (token !== this._startCountToken)
+                            return [2 /*return*/];
                         this.setData({ startCount: count, startCountText: formatCountText(count), startDisabled: startDisabled });
                         return [3 /*break*/, 7];
                     case 6:
                         e_2 = _a.sent();
+                        if (token !== this._startCountToken)
+                            return [2 /*return*/];
                         this.setData({
                             startCount: 0,
                             startCountText: '0',
@@ -590,14 +650,38 @@ Page({
             params.push("start_id=".concat(encodeURIComponent(String(extra.start_id))));
         return "/pages/quiz/quiz?".concat(params.join('&'));
     },
+    persistLastSession: function (mode, extra) {
+        try {
+            var payload = {
+                ts: Date.now(),
+                kind: this.data.kind,
+                tab: this.data.tab,
+                sourceType: this.data.sourceType,
+                subject: this.data.subject,
+                bankId: this.data.bankId,
+                qType: this.data.qType,
+                tag: this.data.tag,
+                shuffleQuestions: !!this.data.shuffleQuestions,
+                shuffleOptions: !!(this.data.shuffleOptions && !this.data.shuffleOptionsDisabled),
+                scopeLabel: this.data.scopeLabel,
+                scopeName: this.data.scopeName,
+                mode: mode,
+                start_id: extra === null || extra === void 0 ? void 0 : extra.start_id
+            };
+            wx.setStorageSync(KEY_LAST_SESSION, payload);
+        }
+        catch (e) { }
+    },
     onStartQuiz: function () {
         if (this.data.startDisabled)
             return;
+        this.persistLastSession('quiz');
         (0, nav_1.safeNavigate)(this.buildQuizUrl('quiz'), 'navigateTo');
     },
     onStartMemo: function () {
         if (this.data.startDisabled)
             return;
+        this.persistLastSession('memo');
         (0, nav_1.safeNavigate)(this.buildQuizUrl('memo'), 'navigateTo');
     },
     onResultTap: function (e) {
@@ -605,6 +689,7 @@ Page({
         var id = Number(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.id) || 0);
         if (!Number.isFinite(id) || id <= 0)
             return;
+        this.persistLastSession('quiz', { start_id: id });
         (0, nav_1.safeNavigate)(this.buildQuizUrl('quiz', { start_id: id }), 'navigateTo');
     },
     onJumpPracticeType: function (e) {
@@ -615,6 +700,61 @@ Page({
         var typeIndex = idx >= 0 ? idx : 0;
         var qType = ((_c = (this.data.typeOptions || [])[typeIndex]) === null || _c === void 0 ? void 0 : _c.value) || 'all';
         this.setData({ tab: 'practice', typeIndex: typeIndex, qType: qType }, function () { return _this.refreshComputed(); });
+    },
+    onAdviceActionTap: function (e) {
+        var _this = this;
+        var _a, _b, _c, _d;
+        var idx = Number((_c = (_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.idx) !== null && _c !== void 0 ? _c : -1);
+        var list = Array.isArray(this.data.advice) ? this.data.advice : [];
+        if (!Number.isFinite(idx) || idx < 0 || idx >= list.length)
+            return;
+        var action = (_d = list[idx]) === null || _d === void 0 ? void 0 : _d.action;
+        if (!action)
+            return;
+        var startMode = action.startMode;
+        var apply = function () {
+            var _a;
+            var patch = {};
+            var tab = action.tab;
+            if (tab && tab !== _this.data.tab)
+                patch.tab = tab;
+            var rawType = action.qType != null ? String(action.qType) : '';
+            if (rawType) {
+                var types = Array.isArray(_this.data.types) ? _this.data.types : [];
+                var qType_2 = rawType === 'all' || types.includes(rawType) ? rawType : 'all';
+                var typeOptions = _this.data.typeOptions || [];
+                var typeIndex = typeOptions.findIndex(function (o) { return o.value === qType_2; });
+                if (typeIndex < 0)
+                    typeIndex = 0;
+                patch.qType = qType_2;
+                patch.typeIndex = typeIndex;
+            }
+            var rawTag = action.tag != null ? String(action.tag) : '';
+            if (rawTag) {
+                var tagOptions = _this.data.tagOptions || [];
+                var tagIndex = tagOptions.findIndex(function (o) { return o.value === rawTag; });
+                if (tagIndex < 0)
+                    tagIndex = 0;
+                var nextTag = ((_a = tagOptions[tagIndex]) === null || _a === void 0 ? void 0 : _a.value) || 'all';
+                patch.tag = nextTag;
+                patch.tagIndex = tagIndex;
+            }
+            var done = function () {
+                _this.refreshComputed();
+                if (startMode)
+                    (0, nav_1.safeNavigate)(_this.buildQuizUrl(startMode), 'navigateTo');
+            };
+            if (Object.keys(patch).length)
+                _this.setData(patch, done);
+            else
+                done();
+        };
+        var nextKind = action.kind;
+        if (nextKind && nextKind !== this.data.kind) {
+            this.applyKind(nextKind, apply);
+            return;
+        }
+        apply();
     },
     buildTagStats: function () {
         var chips = Array.isArray(this.data.tagChips) ? this.data.tagChips : [];
@@ -646,24 +786,24 @@ Page({
     },
     refreshDataStats: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var kind, sourceType, subject, bankId, tag, qType, source, dataTotalLabel, days, params, stats, _a, dataTotal, dataAnswered, dataCorrect, dataWrong, dataFavorites, dataMistakes, dataMistakesTimes, dataAccuracy, dataCompletion, dataStreakDays, lastActivityRaw, dataLastActivityText, dataTrendDays, trend, trendBars, byType, typeRows, maxType_1, typeStats, dataTypeCount, byDiff, diffRows, maxDiff_1, diffStats, advice, tagStatsAll, tagStats, e_3, tagStatsAll, tagStats;
+            var token, kind_1, sourceType, subject, bankId, tag, qType, source, dataTotalLabel, days, params, stats, _a, dataTotal, dataAnswered, dataCorrect, dataWrong, dataFavorites, dataMistakes, dataMistakesTimes, dataAccuracy, dataCompletion, dataStreakDays, lastActivityRaw, dataLastActivityText, dataTrendDays, trend, trendBars, byType, typeRows, maxType_1, typeStats, dataTypeCount, byDiff, diffRows, maxDiff_1, diffStats, advice, tagStatsAll, tagStats, e_3, tagStatsAll, tagStats;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        if (this.data.dataLoading)
-                            return [2 /*return*/];
+                        this._dataToken = (this._dataToken || 0) + 1;
+                        token = this._dataToken;
                         this.setData({ dataLoading: true });
                         _b.label = 1;
                     case 1:
                         _b.trys.push([1, 6, 7, 8]);
-                        kind = this.data.kind;
+                        kind_1 = this.data.kind;
                         sourceType = this.data.sourceType;
                         subject = String(this.data.subject || '').trim();
                         bankId = Number(this.data.bankId || 0) || 0;
                         tag = String(this.data.tag || 'all');
                         qType = String(this.data.qType || 'all');
-                        source = kind === 'mistakes' ? 'mistakes' : kind === 'favorites' ? 'favorites' : 'all';
-                        dataTotalLabel = kind === 'mistakes' ? '可用错题' : kind === 'favorites' ? '收藏题目' : tag && tag !== 'all' ? '标签题目' : '题库题目';
+                        source = kind_1 === 'mistakes' ? 'mistakes' : kind_1 === 'favorites' ? 'favorites' : 'all';
+                        dataTotalLabel = kind_1 === 'mistakes' ? '可用错题' : kind_1 === 'favorites' ? '收藏题目' : tag && tag !== 'all' ? '标签题目' : '题库题目';
                         days = [7, 14, 30, 90].includes(Number(this.data.dataDays)) ? Number(this.data.dataDays) : 14;
                         params = { days: days };
                         if (source !== 'all')
@@ -729,11 +869,20 @@ Page({
                         diffStats = diffRows.map(function (r) { return (__assign(__assign({}, r), { pct: pctOf(r.count, maxDiff_1) })); });
                         advice = Array.isArray(stats === null || stats === void 0 ? void 0 : stats.advice)
                             ? stats.advice
-                                .map(function (a) { return ({ title: String((a === null || a === void 0 ? void 0 : a.title) || '').trim(), content: String((a === null || a === void 0 ? void 0 : a.content) || '').trim() }); })
-                                .filter(function (a) { return a.title && a.content; })
+                                .map(function (a) {
+                                var title = String((a === null || a === void 0 ? void 0 : a.title) || '').trim();
+                                var content = String((a === null || a === void 0 ? void 0 : a.content) || '').trim();
+                                if (!title || !content)
+                                    return null;
+                                var action = inferAdviceAction(kind_1, title, content);
+                                return { title: title, content: content, action: action || undefined };
+                            })
+                                .filter(Boolean)
                             : [];
                         tagStatsAll = this.buildTagStats();
                         tagStats = this.data.tagStatsExpanded ? tagStatsAll : tagStatsAll.slice(0, 12);
+                        if (token !== this._dataToken)
+                            return [2 /*return*/];
                         this.setData({
                             dataHint: '',
                             dataDays: days,
@@ -763,6 +912,8 @@ Page({
                         e_3 = _b.sent();
                         tagStatsAll = this.buildTagStats();
                         tagStats = this.data.tagStatsExpanded ? tagStatsAll : tagStatsAll.slice(0, 12);
+                        if (token !== this._dataToken)
+                            return [2 /*return*/];
                         this.setData({
                             dataHint: '',
                             dataTotal: 0,
@@ -786,7 +937,9 @@ Page({
                         });
                         return [3 /*break*/, 8];
                     case 7:
-                        this.setData({ dataLoading: false });
+                        if (token === this._dataToken) {
+                            this.setData({ dataLoading: false });
+                        }
                         return [7 /*endfinally*/];
                     case 8: return [2 /*return*/];
                 }
@@ -835,13 +988,17 @@ Page({
     },
     fetchSearchPage: function (page_1) {
         return __awaiter(this, arguments, void 0, function (page, append) {
-            var kind, sourceType, subject, bankId, qType, tag, keyword, tagRequired, source, per_page, data, params, params, questions, total, nextList, hasMore, e_4;
+            var token, kind, sourceType, subject, bankId, qType, tag, keyword, source, per_page, data, params, params, questions, total, nextList, hasMore, e_4;
             var _a, _b, _c;
             if (append === void 0) { append = false; }
             return __generator(this, function (_d) {
                 switch (_d.label) {
                     case 0:
-                        _d.trys.push([0, 5, 6, 7]);
+                        this._searchToken = (this._searchToken || 0) + 1;
+                        token = this._searchToken;
+                        _d.label = 1;
+                    case 1:
+                        _d.trys.push([1, 6, 7, 8]);
                         kind = this.data.kind;
                         sourceType = this.data.sourceType;
                         subject = String(this.data.subject || '').trim();
@@ -849,15 +1006,10 @@ Page({
                         qType = String(this.data.qType || 'all');
                         tag = String(this.data.tag || 'all');
                         keyword = String(this.data.searchKeyword || '').trim();
-                        tagRequired = kind === 'tags';
-                        if (tagRequired && (!tag || tag === 'all')) {
-                            this.setData({ searchLoading: false, searched: true, total: 0, hasMore: false, questions: [] });
-                            return [2 /*return*/];
-                        }
                         source = kind === 'mistakes' ? 'mistakes' : kind === 'favorites' ? 'favorites' : 'all';
                         per_page = Number(this.data.perPage || 20) || 20;
                         data = null;
-                        if (!(sourceType === 'public')) return [3 /*break*/, 2];
+                        if (!(sourceType === 'public')) return [3 /*break*/, 3];
                         params = { keyword: keyword, subject: subject, page: page, per_page: per_page };
                         if (qType && qType !== 'all')
                             params.q_type = qType;
@@ -866,10 +1018,10 @@ Page({
                         if (tag && tag !== 'all')
                             params.tag = tag;
                         return [4 /*yield*/, api_1.api.searchQuestions(params)];
-                    case 1:
-                        data = _d.sent();
-                        return [3 /*break*/, 4];
                     case 2:
+                        data = _d.sent();
+                        return [3 /*break*/, 5];
+                    case 3:
                         params = { keyword: keyword, page: page, per_page: per_page };
                         if (qType && qType !== 'all')
                             params.q_type = qType;
@@ -878,25 +1030,31 @@ Page({
                         if (tag && tag !== 'all')
                             params.tag = tag;
                         return [4 /*yield*/, api_1.api.searchBankQuestions(bankId, params)];
-                    case 3:
-                        data = _d.sent();
-                        _d.label = 4;
                     case 4:
+                        data = _d.sent();
+                        _d.label = 5;
+                    case 5:
                         questions = (data && (data.questions || ((_a = data.data) === null || _a === void 0 ? void 0 : _a.questions))) ? (data.questions || ((_b = data.data) === null || _b === void 0 ? void 0 : _b.questions)) : [];
                         total = Number((data === null || data === void 0 ? void 0 : data.total) || ((_c = data === null || data === void 0 ? void 0 : data.data) === null || _c === void 0 ? void 0 : _c.total) || 0) || 0;
                         nextList = append ? (this.data.questions || []).concat(questions) : questions;
                         hasMore = nextList.length < total;
+                        if (token !== this._searchToken)
+                            return [2 /*return*/];
                         this.setData({ page: page, questions: nextList, total: total, hasMore: hasMore });
-                        return [3 /*break*/, 7];
-                    case 5:
+                        return [3 /*break*/, 8];
+                    case 6:
                         e_4 = _d.sent();
+                        if (token !== this._searchToken)
+                            return [2 /*return*/];
                         wx.showToast({ title: (e_4 && e_4.message) || '搜索失败', icon: 'none' });
                         this.setData({ total: 0, hasMore: false });
-                        return [3 /*break*/, 7];
-                    case 6:
-                        this.setData({ searchLoading: false });
+                        return [3 /*break*/, 8];
+                    case 7:
+                        if (token === this._searchToken) {
+                            this.setData({ searchLoading: false });
+                        }
                         return [7 /*endfinally*/];
-                    case 7: return [2 /*return*/];
+                    case 8: return [2 /*return*/];
                 }
             });
         });
@@ -914,42 +1072,8 @@ Page({
         var next = !current;
         this.setData((_a = {}, _a[key] = next, _a), function () { return _this.refreshComputed(); });
     },
-    onHamburgerTap: function () {
-        this.setData({ drawerOpen: true });
-    },
-    onDrawerClose: function () {
-        this.setData({ drawerOpen: false });
-    },
-    onDrawerNavigate: function (e) {
-        var _a, _b;
-        var url = (_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.url;
-        var navType = (_b = e === null || e === void 0 ? void 0 : e.detail) === null || _b === void 0 ? void 0 : _b.navType;
-        this.setData({ drawerOpen: false });
-        if (!url)
-            return;
-        (0, nav_1.safeNavigate)(url, navType);
-    },
-    onDrawerSelectStyle: function (e) {
-        return __awaiter(this, void 0, void 0, function () {
-            var style;
-            var _a;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        style = (((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.style) || 'default');
-                        theme_1.themeManager.setStyle(style);
-                        this.setData(theme_1.themeManager.getPageData());
-                        this.setData({ drawerOpen: false });
-                        return [4 /*yield*/, (0, user_settings_1.syncUserSettingsToServer)()];
-                    case 1:
-                        _b.sent();
-                        return [2 /*return*/];
-                }
-            });
-        });
-    },
     onCycleThemeModeTap: function () {
         var mode = theme_1.themeManager.cycleMode();
-        this.setData(__assign(__assign({}, theme_1.themeManager.getPageData()), { themeMode: mode }));
+        this.setData(__assign(__assign({}, (theme_1.themeManager.getPageData())), { themeMode: mode }));
     }
 });

@@ -1,10 +1,7 @@
 <!-- review-center-v2.wxml - 错题/收藏/标签中心（练习/搜索/数据） -->
-<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
-  <navigation-bar title="{{navTitle}}" back="{{false}}" color="var(--app-nav-fg)" background="var(--app-nav-bg)">
-    <view slot="left" class="nav-left">
-      <view class="icon-btn" bindtap="onHamburgerTap" aria-role="button" aria-label="打开侧边栏">
-        <view class="icon-hamburger"></view>
-      </view>
+<view class="page-root mine-linked-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="{{navTitle}}" back="{{true}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent">
+    <view slot="right" class="nav-right">
       <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
         <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
         <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
@@ -13,15 +10,6 @@
       </view>
     </view>
   </navigation-bar>
-
-  <v2-drawer
-    open="{{drawerOpen}}"
-    themeStyle="{{themeStyle}}"
-    activeKey="{{drawerActiveKey}}"
-    bind:close="onDrawerClose"
-    bind:navigate="onDrawerNavigate"
-    bind:selectstyle="onDrawerSelectStyle"
-  />
 
   <view class="page-container">
     <scroll-view
@@ -69,122 +57,6 @@
 
         <!-- 练习 -->
         <view wx:if="{{tab==='practice'}}">
-          <view wx:if="{{false}}">
-          <view class="card section-card" aria-label="练习设置">
-            <view class="section-head">
-              <text class="section-title">练习设置</text>
-              <text class="section-hint">{{filterHint}}</text>
-            </view>
-
-            <view class="form">
-              <view class="form-row" aria-label="题型筛选" wx:if="{{typeOptions.length}}">
-                <text class="label">题型</text>
-                <picker mode="selector" range="{{typeOptions}}" range-key="label" value="{{typeIndex}}" bindchange="onTypePickerChange">
-                  <view class="picker">
-                    <text class="picker-text">{{qType === 'all' ? '全部题型' : qType}}</text>
-                    <text class="picker-arrow">›</text>
-                  </view>
-                </picker>
-              </view>
-
-              <view class="form-row" aria-label="标签筛选" wx:if="{{tagOptions.length}}">
-                <text class="label">标签</text>
-                <picker mode="selector" range="{{tagOptions}}" range-key="label" value="{{tagIndex}}" bindchange="onTagPickerChange">
-                  <view class="picker">
-                    <text class="picker-text">{{tag === 'all' ? '全部标签' : tag}}</text>
-                    <text class="picker-arrow">›</text>
-                  </view>
-                </picker>
-              </view>
-
-              <view class="chip-wrap" wx:if="{{isTagsMode && tagChips.length}}">
-                <scroll-view class="chip-scroll" scroll-x enhanced show-scrollbar="{{false}}">
-                  <view class="chips chips-inline">
-                    <view class="chip {{tag==='all' ? 'active' : ''}}" bindtap="onTagChipTap" data-tag="all">
-                      <text>全部</text>
-                    </view>
-                    <view
-                      class="chip {{tag===item.name ? 'active' : ''}}"
-                      wx:for="{{tagChips}}"
-                      wx:key="name"
-                      bindtap="onTagChipTap"
-                      data-tag="{{item.name}}"
-                    >
-                      <text>{{item.name}}</text>
-                      <text class="chip-count">{{item.count || 0}}</text>
-                    </view>
-                  </view>
-                </scroll-view>
-                <text class="chip-hint">提示：标签为用户私有，用于把题目聚类到你的复习清单。</text>
-              </view>
-            </view>
-
-            <view class="divider"></view>
-
-            <view class="toggles toggles-compact" aria-label="练习选项">
-              <view
-                class="toggle"
-                bindtap="onToggleTap"
-                data-key="shuffleQuestions"
-                aria-role="switch"
-                aria-label="打乱题目"
-                aria-checked="{{shuffleQuestions}}"
-              >
-                <view class="toggle-left">
-                  <text class="toggle-label">打乱题目</text>
-                  <text class="toggle-desc">随机顺序</text>
-                </view>
-                <view class="toggle-right">
-                  <view class="mini-switch {{shuffleQuestions ? 'on' : ''}}">
-                    <view class="mini-knob"></view>
-                  </view>
-                </view>
-              </view>
-
-              <view
-                class="toggle {{shuffleOptionsDisabled ? 'disabled' : ''}}"
-                bindtap="onToggleTap"
-                data-key="shuffleOptions"
-                aria-role="switch"
-                aria-label="打乱选项"
-                aria-checked="{{shuffleOptions}}"
-              >
-                <view class="toggle-left">
-                  <text class="toggle-label">打乱选项</text>
-                  <text class="toggle-desc">仅选择/多选可用</text>
-                </view>
-                <view class="toggle-right">
-                  <view class="mini-switch {{shuffleOptions ? 'on' : ''}} {{shuffleOptionsDisabled ? 'disabled' : ''}}">
-                    <view class="mini-knob"></view>
-                  </view>
-                </view>
-              </view>
-            </view>
-
-            <view class="divider"></view>
-
-            <view class="start-row" aria-label="开始练习">
-              <view class="count-pill" aria-label="可用题目数量">
-                <text class="k">可用</text>
-                <text class="v">{{startCountText}}</text>
-              </view>
-
-              <view class="start-actions">
-                <view class="btn btn-primary {{startDisabled ? 'disabled' : ''}}" bindtap="onStartQuiz">
-                  <text>{{startQuizLabel}}</text>
-                </view>
-                <view class="btn {{startDisabled ? 'disabled' : ''}}" bindtap="onStartMemo">
-                  <text>{{startMemoLabel}}</text>
-                </view>
-              </view>
-            </view>
-
-            <view class="msg error" wx:if="{{startError}}" role="alert">
-              <text>{{startError}}</text>
-            </view>
-          </view>
-          </view>
-
           <view class="card card-mt" aria-label="练习概览">
             <view class="card-head">
               <view class="card-head-left">

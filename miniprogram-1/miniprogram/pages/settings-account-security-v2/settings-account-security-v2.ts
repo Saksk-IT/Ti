@@ -1,9 +1,7 @@
 import { api } from '../../utils/api';
 import { checkLogin, logout } from '../../utils/auth';
-import { safeNavigate } from '../../utils/nav';
-import { syncUserSettingsToServer } from '../../utils/user-settings';
 import { buildLastPracticeUrl } from '../../utils/last-practice';
-import { themeManager, ThemeMode, ThemeStyle } from '../../utils/theme';
+import { themeManager, ThemeMode } from '../../utils/theme';
 
 type SettingsNavKey = 'account' | 'practice' | 'theme' | 'about';
 type AccountSubKey = 'profile' | 'security' | 'bindings';
@@ -29,7 +27,6 @@ function isStrongPassword(pwd: string): boolean {
 
 Page({
   data: {
-    drawerOpen: false,
     navKey: 'account' as SettingsNavKey,
     accTab: 'security' as AccountSubKey,
 
@@ -76,30 +73,6 @@ Page({
       .finally(() => {
         wx.stopPullDownRefresh();
       });
-  },
-
-  onHamburgerTap() {
-    this.setData({ drawerOpen: true });
-  },
-
-  onDrawerClose() {
-    this.setData({ drawerOpen: false });
-  },
-
-  onDrawerNavigate(e: any) {
-    const url = e?.detail?.url;
-    const navType = e?.detail?.navType;
-    this.setData({ drawerOpen: false });
-    if (!url) return;
-    safeNavigate(url, navType);
-  },
-
-  async onDrawerSelectStyle(e: any) {
-    const style = (e?.detail?.style || 'default') as ThemeStyle;
-    themeManager.setStyle(style);
-    this.setData(themeManager.getPageData());
-    this.setData({ drawerOpen: false });
-    await syncUserSettingsToServer();
   },
 
   onCycleThemeModeTap() {

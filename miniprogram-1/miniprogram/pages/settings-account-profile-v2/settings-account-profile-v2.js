@@ -20,8 +20,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -49,8 +49,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var api_1 = require("../../utils/api");
 var auth_1 = require("../../utils/auth");
-var nav_1 = require("../../utils/nav");
-var user_settings_1 = require("../../utils/user-settings");
 var last_practice_1 = require("../../utils/last-practice");
 var theme_1 = require("../../utils/theme");
 var avatar_1 = require("../../utils/avatar");
@@ -93,7 +91,6 @@ function clampLen(s, max) {
 }
 Page({
     data: {
-        drawerOpen: false,
         navKey: 'account',
         accTab: 'profile',
         loading: false,
@@ -137,40 +134,6 @@ Page({
         if (!this.data.loading)
             this.loadProfile(false);
     },
-    onHamburgerTap: function () {
-        this.setData({ drawerOpen: true });
-    },
-    onDrawerClose: function () {
-        this.setData({ drawerOpen: false });
-    },
-    onDrawerNavigate: function (e) {
-        var _a, _b;
-        var url = (_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.url;
-        var navType = (_b = e === null || e === void 0 ? void 0 : e.detail) === null || _b === void 0 ? void 0 : _b.navType;
-        this.setData({ drawerOpen: false });
-        if (!url)
-            return;
-        (0, nav_1.safeNavigate)(url, navType);
-    },
-    onDrawerSelectStyle: function (e) {
-        return __awaiter(this, void 0, void 0, function () {
-            var style;
-            var _a;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        style = (((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.style) || 'default');
-                        theme_1.themeManager.setStyle(style);
-                        this.setData(theme_1.themeManager.getPageData());
-                        this.setData({ drawerOpen: false });
-                        return [4 /*yield*/, (0, user_settings_1.syncUserSettingsToServer)()];
-                    case 1:
-                        _b.sent();
-                        return [2 /*return*/];
-                }
-            });
-        });
-    },
     onPullDownRefresh: function () {
         var _this = this;
         Promise.resolve()
@@ -190,7 +153,7 @@ Page({
     },
     onCycleThemeModeTap: function () {
         var mode = theme_1.themeManager.cycleMode();
-        this.setData(__assign(__assign({}, theme_1.themeManager.getPageData()), { themeMode: mode }));
+        this.setData(__assign(__assign({}, (theme_1.themeManager.getPageData())), { themeMode: mode }));
     },
     onContinueLast: function () {
         var url = (0, last_practice_1.buildLastPracticeUrl)();
@@ -289,17 +252,17 @@ Page({
     },
     onAvatarTap: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var currentUrl, idx, filePath, res, url, e_2;
+            var currentUrl, idx, idx, filePath, res, url, cachedUserInfo, e_2;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         if (this.data.loading || this.data.saving)
                             return [2 /*return*/];
                         currentUrl = String(this.data.avatarUrl || '').trim();
-                        if (!currentUrl) return [3 /*break*/, 2];
+                        if (!currentUrl) return [3 /*break*/, 4];
                         return [4 /*yield*/, new Promise(function (resolve) {
                                 wx.showActionSheet({
-                                    itemList: ['预览头像', '更换头像'],
+                                    itemList: ['预览头像', '更换头像', '使用微信头像'],
                                     success: function (res) { return resolve(Number(res === null || res === void 0 ? void 0 : res.tapIndex)); },
                                     fail: function () { return resolve(-1); }
                                 });
@@ -310,10 +273,34 @@ Page({
                             wx.previewImage({ urls: [currentUrl], current: currentUrl });
                             return [2 /*return*/];
                         }
+                        if (!(idx === 2)) return [3 /*break*/, 3];
+                        return [4 /*yield*/, this.useWechatAvatar()];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/];
+                    case 3:
                         if (idx !== 1)
                             return [2 /*return*/];
-                        _a.label = 2;
-                    case 2: return [4 /*yield*/, new Promise(function (resolve) {
+                        return [3 /*break*/, 8];
+                    case 4: return [4 /*yield*/, new Promise(function (resolve) {
+                            wx.showActionSheet({
+                                itemList: ['从相册/相机选择', '使用微信头像'],
+                                success: function (res) { return resolve(Number(res === null || res === void 0 ? void 0 : res.tapIndex)); },
+                                fail: function () { return resolve(-1); }
+                            });
+                        })];
+                    case 5:
+                        idx = _a.sent();
+                        if (!(idx === 1)) return [3 /*break*/, 7];
+                        return [4 /*yield*/, this.useWechatAvatar()];
+                    case 6:
+                        _a.sent();
+                        return [2 /*return*/];
+                    case 7:
+                        if (idx !== 0)
+                            return [2 /*return*/];
+                        _a.label = 8;
+                    case 8: return [4 /*yield*/, new Promise(function (resolve) {
                             var pick = wx.chooseMedia ? 'chooseMedia' : 'chooseImage';
                             if (pick === 'chooseMedia') {
                                 wx.chooseMedia({
@@ -333,31 +320,115 @@ Page({
                                 fail: function () { return resolve(''); }
                             });
                         })];
-                    case 3:
+                    case 9:
                         filePath = _a.sent();
                         if (!filePath)
                             return [2 /*return*/];
                         this.setData({ msg: '', errorMsg: '' });
                         wx.showLoading({ title: '上传中…', mask: true });
-                        _a.label = 4;
-                    case 4:
-                        _a.trys.push([4, 7, 8, 9]);
+                        _a.label = 10;
+                    case 10:
+                        _a.trys.push([10, 13, 14, 15]);
                         return [4 /*yield*/, api_1.api.uploadProfileAvatar(filePath)];
+                    case 11:
+                        res = _a.sent();
+                        (0, avatar_1.bumpAvatarRev)();
+                        url = (0, avatar_1.decorateAvatarUrl)((0, api_1.resolveUploadUrl)(res === null || res === void 0 ? void 0 : res.avatar_url));
+                        this.setData({ avatarUrl: url, msg: '头像已更新' });
+                        cachedUserInfo = wx.getStorageSync('userInfo') || {};
+                        wx.setStorageSync('userInfo', __assign(__assign({}, cachedUserInfo), { avatar: res === null || res === void 0 ? void 0 : res.avatar_url }));
+                        return [4 /*yield*/, this.loadProfile(true)];
+                    case 12:
+                        _a.sent();
+                        return [3 /*break*/, 15];
+                    case 13:
+                        e_2 = _a.sent();
+                        wx.showToast({ title: (e_2 === null || e_2 === void 0 ? void 0 : e_2.message) || '上传失败', icon: 'none' });
+                        return [3 /*break*/, 15];
+                    case 14:
+                        wx.hideLoading();
+                        return [7 /*endfinally*/];
+                    case 15: return [2 /*return*/];
+                }
+            });
+        });
+    },
+    // 使用微信头像
+    useWechatAvatar: function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var avatarUrl, cachedInfo, tempFilePath, res, url, cachedUserInfo, e_3;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        avatarUrl = '';
+                        cachedInfo = wx.getStorageSync('wechatUserInfo');
+                        if (cachedInfo && cachedInfo.avatarUrl) {
+                            avatarUrl = cachedInfo.avatarUrl;
+                        }
+                        if (!!avatarUrl) return [3 /*break*/, 2];
+                        return [4 /*yield*/, new Promise(function (resolve) {
+                                var _a, _b;
+                                ((_b = (_a = wx).getUserProfile) === null || _b === void 0 ? void 0 : _b.call(_a, {
+                                    desc: '用于设置账号头像',
+                                    success: function (res) {
+                                        var info = (res === null || res === void 0 ? void 0 : res.userInfo) || {};
+                                        if (info.avatarUrl) {
+                                            // 缓存微信用户信息
+                                            wx.setStorageSync('wechatUserInfo', {
+                                                nickName: info.nickName,
+                                                avatarUrl: info.avatarUrl
+                                            });
+                                        }
+                                        resolve(info.avatarUrl || '');
+                                    },
+                                    fail: function () { return resolve(''); }
+                                })) || resolve('');
+                            })];
+                    case 1:
+                        avatarUrl = _a.sent();
+                        _a.label = 2;
+                    case 2:
+                        if (!avatarUrl) {
+                            wx.showToast({ title: '无法获取微信头像', icon: 'none' });
+                            return [2 /*return*/];
+                        }
+                        // 下载微信头像并上传
+                        this.setData({ msg: '', errorMsg: '' });
+                        wx.showLoading({ title: '设置中…', mask: true });
+                        _a.label = 3;
+                    case 3:
+                        _a.trys.push([3, 7, 8, 9]);
+                        return [4 /*yield*/, new Promise(function (resolve, reject) {
+                                wx.downloadFile({
+                                    url: avatarUrl,
+                                    success: function (res) {
+                                        if (res.statusCode === 200 && res.tempFilePath) {
+                                            resolve(res.tempFilePath);
+                                        }
+                                        else {
+                                            reject(new Error('下载失败'));
+                                        }
+                                    },
+                                    fail: function () { return reject(new Error('下载失败')); }
+                                });
+                            })];
+                    case 4:
+                        tempFilePath = _a.sent();
+                        return [4 /*yield*/, api_1.api.uploadProfileAvatar(tempFilePath)];
                     case 5:
                         res = _a.sent();
                         (0, avatar_1.bumpAvatarRev)();
                         url = (0, avatar_1.decorateAvatarUrl)((0, api_1.resolveUploadUrl)(res === null || res === void 0 ? void 0 : res.avatar_url));
                         this.setData({ avatarUrl: url, msg: '头像已更新' });
-                        // 同步更新本地缓存，确保其他页面（首页等）能立即显示新头像
                         cachedUserInfo = wx.getStorageSync('userInfo') || {};
-                        wx.setStorageSync('userInfo', Object.assign({}, cachedUserInfo, { avatar: res === null || res === void 0 ? void 0 : res.avatar_url }));
+                        wx.setStorageSync('userInfo', __assign(__assign({}, cachedUserInfo), { avatar: res === null || res === void 0 ? void 0 : res.avatar_url }));
                         return [4 /*yield*/, this.loadProfile(true)];
                     case 6:
                         _a.sent();
                         return [3 /*break*/, 9];
                     case 7:
-                        e_2 = _a.sent();
-                        wx.showToast({ title: (e_2 === null || e_2 === void 0 ? void 0 : e_2.message) || '上传失败', icon: 'none' });
+                        e_3 = _a.sent();
+                        wx.showToast({ title: (e_3 === null || e_3 === void 0 ? void 0 : e_3.message) || '设置失败', icon: 'none' });
                         return [3 /*break*/, 9];
                     case 8:
                         wx.hideLoading();
@@ -368,6 +439,7 @@ Page({
         });
     },
     onAvatarError: function () {
+        var _this = this;
         var url = String(this.data.avatarUrl || '').trim();
         if (!url || !/^https?:\/\//i.test(url)) {
             this.setData({ avatarUrl: '' });
@@ -375,7 +447,7 @@ Page({
         }
         var self = this;
         if (self.__avatarDlTried) {
-            self.setData({ avatarUrl: '' });
+            this.setData({ avatarUrl: '' });
             return;
         }
         self.__avatarDlTried = true;
@@ -384,16 +456,16 @@ Page({
             timeout: 15000,
             success: function (res) {
                 var tempFilePath = String((res && res.tempFilePath) || '').trim();
-                self.setData({ avatarUrl: tempFilePath || '' });
+                _this.setData({ avatarUrl: tempFilePath || '' });
             },
             fail: function () {
-                self.setData({ avatarUrl: '' });
+                _this.setData({ avatarUrl: '' });
             }
         });
     },
     loadProfile: function () {
         return __awaiter(this, arguments, void 0, function (force) {
-            var self, now, lastAt, p, username, avatar, isAdmin, createdAtText, college, contact, signature, emailMasked, emailVerified, hasPasswordSet, wechatBound, emailBadge, passwordBadge, wechatBadge, e_3;
+            var self, now, lastAt, p, username, avatar, isAdmin, createdAtText, college, contact, signature, emailMasked, emailVerified, hasPasswordSet, wechatBound, emailBadge, passwordBadge, wechatBadge, e_4;
             if (force === void 0) { force = false; }
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -429,7 +501,7 @@ Page({
                         wechatBadge = wechatBound ? '已绑定' : '未绑定';
                         this.setData({
                             username: username,
-                            avatarUrl: avatar,
+                            avatarUrl: avatar || '/images/default-avatar.png',
                             avatarInitial: (username || 'U').charAt(0).toUpperCase(),
                             roleText: isAdmin ? '管理员' : '普通用户',
                             createdAtText: createdAtText,
@@ -445,8 +517,8 @@ Page({
                         self.__originalProfile = { college: college, contact: contact, signature: signature };
                         return [3 /*break*/, 5];
                     case 3:
-                        e_3 = _a.sent();
-                        this.setData({ errorMsg: (e_3 === null || e_3 === void 0 ? void 0 : e_3.message) || '加载失败，请稍后重试' });
+                        e_4 = _a.sent();
+                        this.setData({ errorMsg: (e_4 === null || e_4 === void 0 ? void 0 : e_4.message) || '加载失败，请稍后重试' });
                         return [3 /*break*/, 5];
                     case 4:
                         this.setData({ loading: false });
