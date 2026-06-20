@@ -61,10 +61,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var api_1 = require("../../utils/api");
 var auth_1 = require("../../utils/auth");
 var quiz_source_1 = require("../../utils/quiz-source");
-var markdown_1 = require("../../utils/markdown");
+var markdown_1 = require("./utils/markdown");
 var theme_1 = require("../../utils/theme");
-var request_state_1 = require("../../behaviors/request-state");
-var set_data_batcher_1 = require("../../utils/set-data-batcher");
+var request_state_1 = require("./behaviors/request-state");
+var set_data_batcher_1 = require("./utils/set-data-batcher");
 var quiz_helpers_1 = require("./modules/quiz-helpers");
 // 数据源实例（页面级别）
 var quizSource = null;

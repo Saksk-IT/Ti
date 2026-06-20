@@ -51,8 +51,8 @@ var api_1 = require("../../utils/api");
 var auth_1 = require("../../utils/auth");
 var nav_1 = require("../../utils/nav");
 var theme_1 = require("../../utils/theme");
-var data_center_1 = require("../../utils/data-center");
-var data_center_cache_1 = require("../../utils/data-center-cache");
+var data_center_1 = require("../../packages/data/utils/data-center");
+var data_center_cache_1 = require("../../packages/data/utils/data-center-cache");
 function buildAiPatch(res) {
     var abilityList = (Array.isArray(res === null || res === void 0 ? void 0 : res.ability_radar) ? res.ability_radar : []).map(function (a) { return ({
         name: String((a === null || a === void 0 ? void 0 : a.name) || ''),

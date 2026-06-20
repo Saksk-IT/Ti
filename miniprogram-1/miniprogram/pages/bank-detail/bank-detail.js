@@ -51,8 +51,8 @@ var api_1 = require("../../utils/api");
 var auth_1 = require("../../utils/auth");
 var quiz_source_1 = require("../../utils/quiz-source");
 var theme_1 = require("../../utils/theme");
-var request_state_1 = require("../../behaviors/request-state");
-var set_data_batcher_1 = require("../../utils/set-data-batcher");
+var request_state_1 = require("./behaviors/request-state");
+var set_data_batcher_1 = require("./utils/set-data-batcher");
 var bank_detail_helpers_1 = require("./modules/bank-detail-helpers");
 var _ps = new WeakMap();
 function _p(ctx) {

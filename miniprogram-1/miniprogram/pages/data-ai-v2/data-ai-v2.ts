@@ -2,8 +2,8 @@ import { api } from '../../utils/api';
 import { checkLogin } from '../../utils/auth';
 import { safeNavigate } from '../../utils/nav';
 import { themeManager } from '../../utils/theme';
-import { normalizeDays, pct1, toInt } from '../../utils/data-center';
-import { getCachedDataCenter, setCachedDataCenter } from '../../utils/data-center-cache';
+import { normalizeDays, pct1, toInt } from '../../packages/data/utils/data-center';
+import { getCachedDataCenter, setCachedDataCenter } from '../../packages/data/utils/data-center-cache';
 
 type AbilityItem = { name: string; value: number };
 type FocusRow = { name: string; gap: number; accuracy: number; answered: number };

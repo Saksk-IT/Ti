@@ -59,8 +59,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var api_1 = require("../../utils/api");
 var auth_1 = require("../../utils/auth");
 var theme_1 = require("../../utils/theme");
-var request_state_1 = require("../../behaviors/request-state");
-var set_data_batcher_1 = require("../../utils/set-data-batcher");
+var request_state_1 = require("./behaviors/request-state");
+var set_data_batcher_1 = require("./utils/set-data-batcher");
 var index_v2_helpers_1 = require("./modules/index-v2-helpers");
 var examPresetApplied = false;
 Page({

@@ -3,10 +3,10 @@
 import { api, normalizeImageUrls } from '../../utils/api';
 import { checkLogin } from '../../utils/auth';
 import { createSourceFromOptions, IQuizSource } from '../../utils/quiz-source';
-import { markdownToRichTextHtml } from '../../utils/markdown';
+import { markdownToRichTextHtml } from './utils/markdown';
 import { themeManager } from '../../utils/theme';
-import { requestStateBehavior } from '../../behaviors/request-state';
-import { createSetDataBatcher } from '../../utils/set-data-batcher';
+import { requestStateBehavior } from './behaviors/request-state';
+import { createSetDataBatcher } from './utils/set-data-batcher';
 import {
   parseIdList,
   uniqUrls,

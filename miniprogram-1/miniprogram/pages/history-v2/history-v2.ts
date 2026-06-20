@@ -2,8 +2,8 @@ import { api } from '../../utils/api';
 import { checkLogin } from '../../utils/auth';
 import { safeNavigate } from '../../utils/nav';
 import { themeManager } from '../../utils/theme';
-import { normalizeDays, toInt, pct1, buildTrendBars, buildHeatmapGrid, buildTopMix } from '../../utils/data-center';
-import { getCachedDataCenter, setCachedDataCenter } from '../../utils/data-center-cache';
+import { normalizeDays, toInt, pct1, buildTrendBars, buildHeatmapGrid, buildTopMix } from '../../packages/data/utils/data-center';
+import { getCachedDataCenter, setCachedDataCenter } from '../../packages/data/utils/data-center-cache';
 
 type NextAction = { title: string; meta: string; subject: string; q_type: string };
 type WeaknessRow = { key: string; subject: string; q_type: string; answered: number; accuracy: number };

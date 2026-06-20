@@ -95,7 +95,7 @@ function markdownToRichTextHtml(markdown) {
             out.push("<blockquote class=\"md-bq\">".concat(inlineFormat(bqMatch[1]), "</blockquote>"));
             continue;
         }
-        var ulMatch = (line || '').match(/^\s*[-*]\s+(.+)$/);
+        var ulMatch = line.match(/^\s*[-*]\s+(.+)$/);
         if (ulMatch) {
             flushParagraph();
             if (inOl) {
@@ -109,7 +109,7 @@ function markdownToRichTextHtml(markdown) {
             out.push("<li class=\"md-li\">".concat(inlineFormat(ulMatch[1].trim()), "</li>"));
             continue;
         }
-        var olMatch = (line || '').match(/^\s*\d+\.\s+(.+)$/);
+        var olMatch = line.match(/^\s*\d+\.\s+(.+)$/);
         if (olMatch) {
             flushParagraph();
             if (inUl) {
@@ -131,4 +131,3 @@ function markdownToRichTextHtml(markdown) {
     closeLists();
     return out.join('');
 }
-

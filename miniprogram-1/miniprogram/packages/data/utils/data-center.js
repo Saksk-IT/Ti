@@ -1,25 +1,27 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buildTopMix = exports.buildHeatmapGrid = exports.buildTrendBars = exports.pct1 = exports.toInt = exports.normalizeDays = void 0;
+exports.normalizeDays = normalizeDays;
+exports.toInt = toInt;
+exports.pct1 = pct1;
+exports.buildTrendBars = buildTrendBars;
+exports.buildHeatmapGrid = buildHeatmapGrid;
+exports.buildTopMix = buildTopMix;
 function normalizeDays(input) {
     var n = Number(input || 30);
     if (n === 7 || n === 30 || n === 90)
         return n;
     return 30;
 }
-exports.normalizeDays = normalizeDays;
 function toInt(v) {
     var n = Number(v);
     return Number.isFinite(n) ? Math.trunc(n) : 0;
 }
-exports.toInt = toInt;
 function pct1(v) {
     var n = Number(v);
     if (!Number.isFinite(n))
         return 0;
     return Math.round(n * 10) / 10;
 }
-exports.pct1 = pct1;
 function buildTrendBars(dailyRaw, dailyMax) {
     var max = Math.max(toInt(dailyMax), 1);
     var rows = Array.isArray(dailyRaw) ? dailyRaw : [];
@@ -39,7 +41,6 @@ function buildTrendBars(dailyRaw, dailyMax) {
         };
     });
 }
-exports.buildTrendBars = buildTrendBars;
 function buildHeatmapGrid(all, maxValue) {
     var max = Math.max(toInt(maxValue), 1);
     var grid = Array.from({ length: 7 }, function () { return Array.from({ length: 24 }, function () { return 0; }); });
@@ -64,7 +65,6 @@ function buildHeatmapGrid(all, maxValue) {
         })
     }); });
 }
-exports.buildHeatmapGrid = buildHeatmapGrid;
 function buildTopMix(subjects, banks, limit) {
     if (limit === void 0) { limit = 8; }
     var items = [];
@@ -78,4 +78,3 @@ function buildTopMix(subjects, banks, limit) {
     });
     return items.sort(function (a, b) { return b.answered - a.answered; }).slice(0, limit);
 }
-exports.buildTopMix = buildTopMix;

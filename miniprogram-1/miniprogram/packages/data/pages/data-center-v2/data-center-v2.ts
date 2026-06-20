@@ -2,8 +2,8 @@ import { api } from '../../../../utils/api';
 import { checkLogin } from '../../../../utils/auth';
 import { safeNavigate } from '../../../../utils/nav';
 import { themeManager, ThemeMode } from '../../../../utils/theme';
-import { normalizeDays, toInt, pct1 } from '../../../../utils/data-center';
-import { getCachedDataCenter, setCachedDataCenter } from '../../../../utils/data-center-cache';
+import { normalizeDays, toInt, pct1 } from '../../utils/data-center';
+import { getCachedDataCenter, setCachedDataCenter } from '../../utils/data-center-cache';
 import { buildDataCenterCompatPayload, buildDataCenterChartOption, getDataCenterThemeTokens } from '../../utils/data-center-echarts';
 import * as echarts from '../../components/ec-canvas/echarts';
 

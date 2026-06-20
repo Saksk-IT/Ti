@@ -60,8 +60,8 @@ var api_1 = require("../../../../utils/api");
 var auth_1 = require("../../../../utils/auth");
 var nav_1 = require("../../../../utils/nav");
 var theme_1 = require("../../../../utils/theme");
-var data_center_1 = require("../../../../utils/data-center");
-var data_center_cache_1 = require("../../../../utils/data-center-cache");
+var data_center_1 = require("../../utils/data-center");
+var data_center_cache_1 = require("../../utils/data-center-cache");
 function resolveDataTabUrl(tab) {
     var map = {
         global: '/packages/data/pages/data-global-v2/data-global-v2',

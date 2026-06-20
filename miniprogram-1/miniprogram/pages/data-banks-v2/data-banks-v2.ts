@@ -2,8 +2,8 @@ import { api } from '../../utils/api';
 import { checkLogin } from '../../utils/auth';
 import { safeNavigate } from '../../utils/nav';
 import { themeManager } from '../../utils/theme';
-import { normalizeDays, toInt, pct1 } from '../../utils/data-center';
-import { getCachedDataCenter, setCachedDataCenter } from '../../utils/data-center-cache';
+import { normalizeDays, toInt, pct1 } from '../../packages/data/utils/data-center';
+import { getCachedDataCenter, setCachedDataCenter } from '../../packages/data/utils/data-center-cache';
 
 type CategoryRow = { category_id: number; category_name: string; answered: number; accuracy: number; barPct: number };
 type BankRow = { bank_id: number; name: string; answered: number; accuracy: number; barPct: number };

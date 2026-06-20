@@ -4,8 +4,8 @@ const { api } = require('../../../../utils/api');
 const { checkLogin } = require('../../../../utils/auth');
 const { safeNavigate } = require('../../../../utils/nav');
 const { themeManager } = require('../../../../utils/theme');
-const { normalizeDays, toInt, pct1 } = require('../../../../utils/data-center');
-const { getCachedDataCenter, setCachedDataCenter } = require('../../../../utils/data-center-cache');
+const { normalizeDays, toInt, pct1 } = require('../../utils/data-center');
+const { getCachedDataCenter, setCachedDataCenter } = require('../../utils/data-center-cache');
 const { buildDataCenterCompatPayload, buildDataCenterChartOption, getDataCenterThemeTokens } = require('../../utils/data-center-echarts');
 const echarts = require('../../components/ec-canvas/echarts');
 

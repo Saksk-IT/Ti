@@ -60,8 +60,8 @@ var api_1 = require("../../utils/api");
 var auth_1 = require("../../utils/auth");
 var nav_1 = require("../../utils/nav");
 var theme_1 = require("../../utils/theme");
-var data_center_1 = require("../../utils/data-center");
-var data_center_cache_1 = require("../../utils/data-center-cache");
+var data_center_1 = require("../../packages/data/utils/data-center");
+var data_center_cache_1 = require("../../packages/data/utils/data-center-cache");
 function buildBanksPatch(res) {
     var allSummary = (res === null || res === void 0 ? void 0 : res.all_summary) || {};
     var bankSummary = (res === null || res === void 0 ? void 0 : res.bank_summary) || {};

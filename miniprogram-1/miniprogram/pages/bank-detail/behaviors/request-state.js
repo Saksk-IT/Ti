@@ -64,7 +64,7 @@ exports.requestStateBehavior = Behavior({
             this.setData((_a = {}, _a[errorKey] = '', _a));
         },
         withRequestState: function (runner, options) {
-            return __awaiter(this, void 0, Promise, function () {
+            return __awaiter(this, void 0, void 0, function () {
                 var result, e_1;
                 return __generator(this, function (_a) {
                     switch (_a.label) {

@@ -52,8 +52,8 @@ var auth_1 = require("../../utils/auth");
 var quiz_source_1 = require("../../utils/quiz-source");
 var url_utils_1 = require("../../utils/url-utils");
 var theme_1 = require("../../utils/theme");
-var request_state_1 = require("../../behaviors/request-state");
-var set_data_batcher_1 = require("../../utils/set-data-batcher");
+var request_state_1 = require("./behaviors/request-state");
+var set_data_batcher_1 = require("./utils/set-data-batcher");
 var subject_detail_helpers_1 = require("./modules/subject-detail-helpers");
 Page({
     behaviors: [request_state_1.requestStateBehavior],

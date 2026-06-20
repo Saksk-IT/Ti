@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.clearCachedDataCenter = exports.setCachedDataCenter = exports.getCachedDataCenter = void 0;
+exports.getCachedDataCenter = getCachedDataCenter;
+exports.setCachedDataCenter = setCachedDataCenter;
+exports.clearCachedDataCenter = clearCachedDataCenter;
 var TTL_MS = 60 * 1000;
 var cache = Object.create(null);
 function toKey(days) {
@@ -20,14 +22,12 @@ function getCachedDataCenter(days) {
         return null;
     return entry.res;
 }
-exports.getCachedDataCenter = getCachedDataCenter;
 function setCachedDataCenter(days, res) {
     var key = toKey(days);
     if (!key)
         return;
     cache[key] = { at: Date.now(), res: res };
 }
-exports.setCachedDataCenter = setCachedDataCenter;
 function clearCachedDataCenter(days) {
     if (days == null) {
         Object.keys(cache).forEach(function (k) { return delete cache[k]; });
@@ -38,5 +38,3 @@ function clearCachedDataCenter(days) {
         return;
     delete cache[key];
 }
-exports.clearCachedDataCenter = clearCachedDataCenter;
-

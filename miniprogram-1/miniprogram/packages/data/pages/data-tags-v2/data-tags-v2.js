@@ -60,8 +60,8 @@ var api_1 = require("../../../../utils/api");
 var auth_1 = require("../../../../utils/auth");
 var nav_1 = require("../../../../utils/nav");
 var theme_1 = require("../../../../utils/theme");
-var data_center_1 = require("../../../../utils/data-center");
-var data_tags_cache_1 = require("../../../../utils/data-tags-cache");
+var data_center_1 = require("../../utils/data-center");
+var data_center_cache_1 = require("../../utils/data-center-cache");
 function resolveDataTabUrl(tab) {
     var map = {
         global: '/packages/data/pages/data-global-v2/data-global-v2',
@@ -190,7 +190,7 @@ Page({
         catch (e) { }
         if (!this.data.inited) {
             try {
-                var cached = (0, data_tags_cache_1.getCachedDataTags)(this.data.days);
+                var cached = (0, data_center_cache_1.getCachedDataCenter)(this.data.days);
                 if (cached) {
                     this.__lastLoadedAt = Date.now();
                     __assign(patch, buildTagsViewData(cached));
@@ -277,7 +277,7 @@ Page({
                     case 2:
                         res = _v.sent();
                         try {
-                            (0, data_tags_cache_1.setCachedDataTags)(this.data.days, res);
+                            (0, data_center_cache_1.setCachedDataCenter)(this.data.days, res);
                         }
                         catch (e) { }
                         summary = (res === null || res === void 0 ? void 0 : res.summary) || {};

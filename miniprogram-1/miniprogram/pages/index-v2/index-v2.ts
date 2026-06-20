@@ -1,8 +1,8 @@
 import { api } from '../../utils/api';
 import { checkLogin } from '../../utils/auth';
 import { themeManager, ThemeMode } from '../../utils/theme';
-import { requestStateBehavior } from '../../behaviors/request-state';
-import { createSetDataBatcher } from '../../utils/set-data-batcher';
+import { requestStateBehavior } from './behaviors/request-state';
+import { createSetDataBatcher } from './utils/set-data-batcher';
 import {
   QUICK_PRESETS,
   SYSTEM_TEMPLATES,
