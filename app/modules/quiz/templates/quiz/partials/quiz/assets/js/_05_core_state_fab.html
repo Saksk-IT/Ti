@@ -15,10 +15,16 @@ let cachedOrder = null; // 缓存题目顺序，保存进度时需要保留
 // ===== 悬浮球（Fab）+ 圆环菜单 + 可拖动 =====
 const FAB_ENABLED_KEY = 'quiz_fab_enabled_v1';
 const FAB_AUTO_NEXT_KEY = 'quiz_fab_auto_next';
+const FAB_AUTO_NEXT_DELAY_KEY = 'quiz_fab_auto_next_delay_v1';
 const FAB_AUTO_FAVORITE_ON_WRONG_KEY = 'quiz_fab_auto_fav_on_wrong_v1';
 const FAB_POS_KEY = 'quiz_fab_pos_v1';
 const FAB_DOCK_LAYOUT_KEY = 'quiz_fab_dock_layout'; // 'default' | 'right' | 'left'
 const FAB_HINT_DISMISSED_KEY = 'quiz_fab_hint_dismissed';
+const AUTO_NEXT_DELAY_OPTIONS = [
+    { key: 'fast', label: '快', delay: 300 },
+    { key: 'normal', label: '标准', delay: 500 },
+    { key: 'slow', label: '慢', delay: 800 }
+];
 let fabOpen = false;
 
 function isFabEnabled(){
@@ -49,6 +55,31 @@ function isFabAutoNextEnabled(){
 }
 function setFabAutoNextEnabled(on){
     localStorage.setItem(FAB_AUTO_NEXT_KEY, on ? '1' : '0');
+}
+
+function normalizeAutoNextDelayKey(raw){
+    const value = String(raw || '').trim().toLowerCase();
+    return AUTO_NEXT_DELAY_OPTIONS.some(item => item.key === value) ? value : 'fast';
+}
+
+function getAutoNextDelayKey(){
+    try {
+        return normalizeAutoNextDelayKey(localStorage.getItem(FAB_AUTO_NEXT_DELAY_KEY));
+    } catch(e) {
+        return 'fast';
+    }
+}
+
+function setAutoNextDelayKey(key){
+    const next = normalizeAutoNextDelayKey(key);
+    try { localStorage.setItem(FAB_AUTO_NEXT_DELAY_KEY, next); } catch(e) {}
+    return next;
+}
+
+function getAutoNextDelayMs(){
+    const key = getAutoNextDelayKey();
+    const found = AUTO_NEXT_DELAY_OPTIONS.find(item => item.key === key);
+    return found ? found.delay : 300;
 }
 
 function isFabAutoFavoriteOnWrongEnabled(){

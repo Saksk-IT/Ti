@@ -68,6 +68,11 @@ var set_data_batcher_1 = require("./utils/set-data-batcher");
 var quiz_helpers_1 = require("./modules/quiz-helpers");
 // 数据源实例（页面级别）
 var quizSource = null;
+var AUTO_NEXT_DELAY_OPTIONS = [
+    { key: 'fast', label: '快', delay: 300 },
+    { key: 'normal', label: '标准', delay: 500 },
+    { key: 'slow', label: '慢', delay: 800 }
+];
 function buildQuestionImageFields(q) {
     var contentUrls = (0, quiz_helpers_1.uniqUrls)(__spreadArray(__spreadArray(__spreadArray([], (0, api_1.normalizeImageUrls)(q === null || q === void 0 ? void 0 : q.image_path), true), (0, api_1.normalizeImageUrls)(q === null || q === void 0 ? void 0 : q.content_images), true), (0, quiz_helpers_1.extractInlineImageUrls)(q === null || q === void 0 ? void 0 : q.content), true));
     var answerUrls = (0, quiz_helpers_1.uniqUrls)(__spreadArray([], (0, api_1.normalizeImageUrls)(q === null || q === void 0 ? void 0 : q.answer_images), true));
@@ -117,9 +122,11 @@ Page({
         showSettings: false,
         practiceSettings: {
             autoNextOnCorrect: false, // 答对自动切题（答错不切题）
+            autoNextDelayKey: 'fast',
             autoFavoriteOnWrong: false, // 做错自动收藏
             vibrationFeedback: false // 答题震动反馈
         },
+        autoNextDelayOptions: AUTO_NEXT_DELAY_OPTIONS,
         // 字体大小（仅影响答题页字体）
         quizFontSize: 'md', // 'sm' | 'md' | 'lg'
         quizFontClass: 'quiz-font-md',
@@ -371,6 +378,7 @@ Page({
                 var s = raw;
                 var next = {
                     autoNextOnCorrect: !!s.autoNextOnCorrect,
+                    autoNextDelayKey: this.normalizeAutoNextDelayKey(s.autoNextDelayKey),
                     autoFavoriteOnWrong: !!s.autoFavoriteOnWrong,
                     vibrationFeedback: !!s.vibrationFeedback
                 };
@@ -388,6 +396,28 @@ Page({
         catch (e) {
             // 忽略本地存储异常
         }
+    },
+    normalizeAutoNextDelayKey: function (raw) {
+        var value = String(raw || '').trim().toLowerCase();
+        var found = AUTO_NEXT_DELAY_OPTIONS.find(function (item) { return item.key === value; });
+        return found ? found.key : 'fast';
+    },
+    getAutoNextDelayMs: function () {
+        var key = this.normalizeAutoNextDelayKey(this.data.practiceSettings.autoNextDelayKey);
+        var found = AUTO_NEXT_DELAY_OPTIONS.find(function (item) { return item.key === key; });
+        return found ? found.delay : 300;
+    },
+    onAutoNextDelaySelect: function (e) {
+        var _this = this;
+        var _a, _b;
+        var key = this.normalizeAutoNextDelayKey((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.key);
+        var next = Object.assign({}, this.data.practiceSettings, { autoNextDelayKey: key });
+        var found = AUTO_NEXT_DELAY_OPTIONS.find(function (item) { return item.key === key; });
+        var label = (found && found.label) || '快';
+        this.setData({ practiceSettings: next }, function () {
+            _this.savePracticeSettings();
+            wx.showToast({ title: "\u5DF2\u5207\u6362\uFF1A".concat(label, "\u901F\u5207\u9898"), icon: 'none' });
+        });
     },
     normalizeQuizFontSize: function (raw) {
         var v = String(raw || '').trim().toLowerCase();
@@ -467,6 +497,8 @@ Page({
         var key = (_b = (_a = e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.key;
         var value = !!(e && e.detail && e.detail.value);
         if (!key)
+            return;
+        if (key !== 'autoNextOnCorrect' && key !== 'autoFavoriteOnWrong' && key !== 'vibrationFeedback')
             return;
         var next = Object.assign({}, this.data.practiceSettings);
         next[key] = value;
@@ -1028,12 +1060,13 @@ Page({
                     case 7:
                         // 答对自动切题（给用户一点点反馈时间）
                         if (isJudgable && isCorrect && this.data.practiceSettings.autoNextOnCorrect) {
+                            var delay_1 = this.getAutoNextDelayMs();
                             setTimeout(function () {
                                 // 仍在当前题且已展示答案时再切题
                                 if (_this.data.showAnswer && _this.data.currentQuestion && _this.data.currentQuestion.id === currentQuestion.id) {
                                     _this.onNextQuestion();
                                 }
-                            }, 650);
+                            }, delay_1);
                         }
                         return [2 /*return*/];
                 }

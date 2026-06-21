@@ -116,7 +116,7 @@ async function checkAnswer(isManualClick) {
                     if (questions[currentIndex] === currentQ) {
                         nextQuestion();
                     }
-                }, 350);
+                }, getAutoNextDelayMs());
             }
         }
     } catch (e) {}
@@ -180,7 +180,7 @@ async function _checkAnswerSubjective(currentQ, type, qId) {
                 try {
                     if (isCorrect === true && isFabAutoNextEnabled() && currentIndex < totalQuestions - 1) {
                         const savedQ = currentQ;
-                        setTimeout(() => { if (questions[currentIndex] === savedQ) nextQuestion(); }, 350);
+                        setTimeout(() => { if (questions[currentIndex] === savedQ) nextQuestion(); }, getAutoNextDelayMs());
                     }
                 } catch(e) {}
                 return;
@@ -317,7 +317,7 @@ function _showSubjectiveSelfEval(qEl, qId) {
         try {
             if (isCorrect && isFabAutoNextEnabled() && currentIndex < totalQuestions - 1) {
                 const savedQ = qEl;
-                setTimeout(() => { if (questions[currentIndex] === savedQ) nextQuestion(); }, 500);
+                setTimeout(() => { if (questions[currentIndex] === savedQ) nextQuestion(); }, getAutoNextDelayMs());
             }
         } catch(e) {}
     });

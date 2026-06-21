@@ -26,6 +26,18 @@
         </label>
       </div>
 
+      <div class="feature-item" id="featureAutoNextSpeedItem" style="display:none;">
+        <div class="feature-text">
+          <div class="feature-title">切题速度</div>
+          <div class="feature-desc">选择答对后的停留时间</div>
+        </div>
+        <div class="feature-seg" role="group" aria-label="切题速度">
+          <button type="button" class="feature-seg-btn" data-delay-key="fast" onclick="onFeatureAutoNextDelaySelect('fast')">快</button>
+          <button type="button" class="feature-seg-btn" data-delay-key="normal" onclick="onFeatureAutoNextDelaySelect('normal')">标准</button>
+          <button type="button" class="feature-seg-btn" data-delay-key="slow" onclick="onFeatureAutoNextDelaySelect('slow')">慢</button>
+        </div>
+      </div>
+
       <div class="feature-item">
         <div class="feature-text">
           <div class="feature-title">做错自动收藏</div>
@@ -95,4 +107,3 @@
     </div>
   </div>
 </div>
-

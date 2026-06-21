@@ -23,6 +23,14 @@ import {
 // 数据源实例（页面级别）
 let quizSource: IQuizSource | null = null;
 
+const AUTO_NEXT_DELAY_OPTIONS = [
+  { key: 'fast', label: '快', delay: 300 },
+  { key: 'normal', label: '标准', delay: 500 },
+  { key: 'slow', label: '慢', delay: 800 }
+] as const;
+
+type AutoNextDelayKey = typeof AUTO_NEXT_DELAY_OPTIONS[number]['key'];
+
 function buildQuestionImageFields(q: any) {
   const contentUrls = uniqUrls([
     ...normalizeImageUrls(q?.image_path),
@@ -84,9 +92,11 @@ Page({
     showSettings: false,
     practiceSettings: {
       autoNextOnCorrect: false,   // 答对自动切题（答错不切题）
+      autoNextDelayKey: 'fast' as AutoNextDelayKey,
       autoFavoriteOnWrong: false, // 做错自动收藏
       vibrationFeedback: false    // 答题震动反馈
     },
+    autoNextDelayOptions: AUTO_NEXT_DELAY_OPTIONS,
     gradingMode: 'auto_full' as string,  // 主观题判分模式
     hasSubjectiveType: false,             // 当前题集是否含主观题
     showSelfEval: false,                  // 是否显示自评按钮
@@ -389,6 +399,7 @@ Page({
         const s: any = raw;
         const next = {
           autoNextOnCorrect: !!s.autoNextOnCorrect,
+          autoNextDelayKey: this.normalizeAutoNextDelayKey(s.autoNextDelayKey),
           autoFavoriteOnWrong: !!s.autoFavoriteOnWrong,
           vibrationFeedback: !!s.vibrationFeedback
         };
@@ -405,6 +416,28 @@ Page({
     } catch (e) {
       // 忽略本地存储异常
     }
+  },
+
+  normalizeAutoNextDelayKey(raw: any): AutoNextDelayKey {
+    const value = String(raw || '').trim().toLowerCase();
+    const found = AUTO_NEXT_DELAY_OPTIONS.find((item) => item.key === value);
+    return found ? found.key : 'fast';
+  },
+
+  getAutoNextDelayMs(): number {
+    const key = this.normalizeAutoNextDelayKey((this.data.practiceSettings as any).autoNextDelayKey);
+    const found = AUTO_NEXT_DELAY_OPTIONS.find((item) => item.key === key);
+    return found ? found.delay : 300;
+  },
+
+  onAutoNextDelaySelect(e: any) {
+    const key = this.normalizeAutoNextDelayKey(e?.currentTarget?.dataset?.key);
+    const next = Object.assign({}, this.data.practiceSettings, { autoNextDelayKey: key });
+    const label = AUTO_NEXT_DELAY_OPTIONS.find((item) => item.key === key)?.label || '快';
+    this.setData({ practiceSettings: next }, () => {
+      this.savePracticeSettings();
+      wx.showToast({ title: `已切换：${label}速切题`, icon: 'none' });
+    });
   },
 
   initGradingMode() {
@@ -518,9 +551,9 @@ Page({
     const key = e.currentTarget?.dataset?.key;
     const value = !!(e && e.detail && e.detail.value);
     if (!key) return;
+    if (key !== 'autoNextOnCorrect' && key !== 'autoFavoriteOnWrong' && key !== 'vibrationFeedback') return;
 
-    const next = Object.assign({}, this.data.practiceSettings);
-    (next as Record<string, boolean>)[key] = value;
+    const next = Object.assign({}, this.data.practiceSettings, { [key]: value });
     this.setData({ practiceSettings: next }, () => this.savePracticeSettings());
   },
 
@@ -1183,12 +1216,13 @@ Page({
 
     // 答对自动切题（给用户一点点反馈时间）
     if (isJudgable && isCorrect && this.data.practiceSettings.autoNextOnCorrect) {
+      const delay = this.getAutoNextDelayMs();
       setTimeout(() => {
         // 仍在当前题且已展示答案时再切题
         if (this.data.showAnswer && this.data.currentQuestion && this.data.currentQuestion.id === currentQuestion.id) {
           this.onNextQuestion();
         }
-      }, 650);
+      }, delay);
     }
   },
 
@@ -1302,11 +1336,12 @@ Page({
         // 答对自动切题
         if (isCurrentQuestionActive() && isCorrect && this.data.practiceSettings.autoNextOnCorrect) {
           const savedId = currentQuestion.id;
+          const delay = this.getAutoNextDelayMs();
           setTimeout(() => {
             if (this.data.showAnswer && this.data.currentQuestion && this.data.currentQuestion.id === savedId) {
               this.onNextQuestion();
             }
-          }, 650);
+          }, delay);
         }
         return;
       }
@@ -1385,11 +1420,12 @@ Page({
     // 答对自动切题
     if (isCorrect && this.data.practiceSettings.autoNextOnCorrect) {
       const savedId = currentQuestion.id;
+      const delay = this.getAutoNextDelayMs();
       setTimeout(() => {
         if (this.data.showAnswer && this.data.currentQuestion && this.data.currentQuestion.id === savedId) {
           this.onNextQuestion();
         }
-      }, 650);
+      }, delay);
     }
   },
 

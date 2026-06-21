@@ -364,6 +364,23 @@
         </view>
         <switch checked="{{practiceSettings.autoNextOnCorrect}}" bindchange="onSettingSwitchChange" data-key="autoNextOnCorrect" color="{{themeCtaColor}}" />
       </view>
+      <view class="setting-item setting-item-sub" wx:if="{{practiceSettings.autoNextOnCorrect}}">
+        <view class="setting-text">
+          <text class="setting-title">切题速度</text>
+          <text class="setting-desc">选择答对后的停留时间</text>
+        </view>
+        <view class="font-seg auto-next-speed-seg" role="group" aria-label="切题速度">
+          <view
+            wx:for="{{autoNextDelayOptions}}"
+            wx:key="key"
+            class="font-seg-btn auto-next-speed-btn {{practiceSettings.autoNextDelayKey === item.key ? 'active' : ''}}"
+            bindtap="onAutoNextDelaySelect"
+            data-key="{{item.key}}"
+          >
+            <text>{{item.label}}</text>
+          </view>
+        </view>
+      </view>
       <view class="setting-item">
         <view class="setting-text">
           <text class="setting-title">做错自动收藏</text>

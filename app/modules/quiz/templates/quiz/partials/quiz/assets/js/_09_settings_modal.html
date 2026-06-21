@@ -55,6 +55,7 @@ function openFeatureModal(){
         const sw = document.getElementById('featureAutoNextSwitch');
         if (sw) sw.checked = isFabAutoNextEnabled();
     } catch(e) {}
+    try { syncFeatureAutoNextDelayUI(); } catch(e) {}
     try {
         const sw = document.getElementById('featureAutoFavoriteSwitch');
         if (sw) sw.checked = isFabAutoFavoriteOnWrongEnabled();
@@ -76,7 +77,30 @@ function closeFeatureModal(e){
 function onFeatureAutoNextToggle(checked){
     try {
         setFabAutoNextEnabled(!!checked);
+        syncFeatureAutoNextDelayUI();
         showToast(checked ? '已开启：答对自动切题' : '已关闭：答对自动切题');
+    } catch(e) {}
+}
+
+function onFeatureAutoNextDelaySelect(key){
+    try {
+        const saved = setAutoNextDelayKey(key);
+        syncFeatureAutoNextDelayUI();
+        const found = AUTO_NEXT_DELAY_OPTIONS.find(item => item.key === saved);
+        showToast('已切换：' + ((found && found.label) || '快') + '速切题');
+    } catch(e) {}
+}
+
+function syncFeatureAutoNextDelayUI(){
+    try {
+        const speedItem = document.getElementById('featureAutoNextSpeedItem');
+        if (speedItem) speedItem.style.display = isFabAutoNextEnabled() ? '' : 'none';
+        const key = getAutoNextDelayKey();
+        document.querySelectorAll('#featureOverlay .feature-seg-btn[data-delay-key]').forEach(btn => {
+            const v = btn.getAttribute('data-delay-key') || '';
+            btn.classList.toggle('active', v === key);
+            btn.setAttribute('aria-pressed', v === key ? 'true' : 'false');
+        });
     } catch(e) {}
 }
 
@@ -118,7 +142,7 @@ function onFeatureFontSizeSelect(size){
 function syncFeatureFontSizeUI(){
     try {
         const size = (typeof getQuizFontSize === 'function') ? getQuizFontSize() : 'md';
-        document.querySelectorAll('#featureOverlay .feature-seg-btn').forEach(btn => {
+        document.querySelectorAll('#featureOverlay .feature-seg-btn[data-size]').forEach(btn => {
             const v = btn.getAttribute('data-size') || '';
             btn.classList.toggle('active', v === size);
             btn.setAttribute('aria-pressed', v === size ? 'true' : 'false');
@@ -1075,4 +1099,3 @@ function changeSize(sz){
     url.searchParams.set('page', 1);
     window.location.href = url.toString();
 }
-
