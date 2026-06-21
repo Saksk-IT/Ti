@@ -3,8 +3,8 @@ import { checkLogin } from '../../utils/auth';
 import { createQuizSource } from '../../utils/quiz-source';
 import { getApiBaseUrl } from '../../utils/url-utils';
 import { themeManager, ThemeMode } from '../../utils/theme';
-import { requestStateBehavior } from './behaviors/request-state';
-import { createSetDataBatcher } from './utils/set-data-batcher';
+import { requestStateBehavior } from '../../behaviors/request-state';
+import { createSetDataBatcher } from '../../utils/set-data-batcher';
 import {
   OPTION_TYPES,
   KEY_SHUFFLE_Q,
