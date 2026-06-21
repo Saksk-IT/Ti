@@ -124,6 +124,53 @@ function shuffleChoiceOptions(question) {
         .join('');
     return __assign(__assign({}, question), { options: nextOptions.map(function (opt) { return ({ key: opt.key, value: opt.value }); }), answer: nextAnswer });
 }
+var FULL_LOAD_PAGE_SIZE = 200;
+var FULL_LOAD_MAX_PAGES = 100;
+function normalizePageSize(value) {
+    var n = Number(value || FULL_LOAD_PAGE_SIZE);
+    if (!Number.isFinite(n) || n <= 0)
+        return FULL_LOAD_PAGE_SIZE;
+    return Math.max(1, Math.min(Math.floor(n), 1000));
+}
+function normalizeQuestionListResponse(res) {
+    var questions = Array.isArray(res === null || res === void 0 ? void 0 : res.questions) ? res.questions : (Array.isArray(res) ? res : []);
+    var totalRaw = Number(res === null || res === void 0 ? void 0 : res.total);
+    var total = Number.isFinite(totalRaw) && totalRaw >= 0 ? Math.floor(totalRaw) : questions.length;
+    return { questions: questions, total: total };
+}
+function fetchAllQuestionPages(fetchPage, perPage) {
+    return __awaiter(this, void 0, void 0, function () {
+        var allQuestions, total, page, data, pageQuestions;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    allQuestions = [];
+                    total = 0;
+                    page = 1;
+                    _a.label = 1;
+                case 1:
+                    if (!(page <= FULL_LOAD_MAX_PAGES)) return [3 /*break*/, 4];
+                    return [4 /*yield*/, fetchPage(page, perPage)];
+                case 2:
+                    data = normalizeQuestionListResponse(_a.sent());
+                    pageQuestions = data.questions;
+                    total = data.total || allQuestions.length + pageQuestions.length;
+                    allQuestions.push.apply(allQuestions, pageQuestions);
+                    if (!pageQuestions.length || allQuestions.length >= total || pageQuestions.length < perPage) {
+                        return [3 /*break*/, 4];
+                    }
+                    _a.label = 3;
+                case 3:
+                    page++;
+                    return [3 /*break*/, 1];
+                case 4: return [2 /*return*/, {
+                        questions: allQuestions,
+                        total: total || allQuestions.length
+                    }];
+            }
+        });
+    });
+}
 // ============================================
 // 公有题库数据源
 // ============================================
@@ -183,7 +230,7 @@ var PublicQuizSource = /** @class */ (function () {
     };
     PublicQuizSource.prototype.getQuestions = function (params) {
         return __awaiter(this, void 0, void 0, function () {
-            var apiParams, ids, res;
+            var apiParams, ids, perPage, res;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -222,13 +269,15 @@ var PublicQuizSource = /** @class */ (function () {
                         if (params === null || params === void 0 ? void 0 : params.per_page) {
                             apiParams.per_page = params.per_page;
                         }
-                        return [4 /*yield*/, api_1.api.getQuestions(apiParams)];
-                    case 1:
+                        if (!(params === null || params === void 0 ? void 0 : params.full_load)) return [3 /*break*/, 2];
+                        perPage = normalizePageSize((params === null || params === void 0 ? void 0 : params.per_page) || (params === null || params === void 0 ? void 0 : params.limit));
+                        return [2 /*return*/, fetchAllQuestionPages(function (page, pageSize) {
+                                return api_1.api.getQuestions(__assign(__assign({}, apiParams), { page: page, per_page: pageSize }));
+                            }, perPage)];
+                    case 2: return [4 /*yield*/, api_1.api.getQuestions(apiParams)];
+                    case 3:
                         res = _a.sent();
-                        return [2 /*return*/, {
-                                questions: res.questions || res || [],
-                                total: res.total || (res.questions || res || []).length
-                            }];
+                        return [2 /*return*/, normalizeQuestionListResponse(res)];
                 }
             });
         });
@@ -398,7 +447,7 @@ var BankQuizSource = /** @class */ (function () {
     };
     BankQuizSource.prototype.getQuestions = function (params) {
         return __awaiter(this, void 0, void 0, function () {
-            var apiParams, ids, limit, res, questions;
+            var apiParams, ids, limit, sourceId, result, questions;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -428,20 +477,30 @@ var BankQuizSource = /** @class */ (function () {
                         if ((params === null || params === void 0 ? void 0 : params.tag) && params.tag !== 'all') {
                             apiParams.tag = params.tag;
                         }
-                        if (params === null || params === void 0 ? void 0 : params.page) {
+                        if (!(params === null || params === void 0 ? void 0 : params.full_load) && (params === null || params === void 0 ? void 0 : params.page)) {
                             apiParams.page = params.page;
                         }
-                        if (params === null || params === void 0 ? void 0 : params.per_page) {
+                        if (!(params === null || params === void 0 ? void 0 : params.full_load) && (params === null || params === void 0 ? void 0 : params.per_page)) {
                             apiParams.per_page = params.per_page;
                         }
-                        limit = (params === null || params === void 0 ? void 0 : params.limit) || (!(params === null || params === void 0 ? void 0 : params.per_page) ? 1000 : undefined);
+                        limit = (params === null || params === void 0 ? void 0 : params.limit) || (!(params === null || params === void 0 ? void 0 : params.full_load) && !(params === null || params === void 0 ? void 0 : params.per_page) ? 1000 : undefined);
                         if (limit) {
                             apiParams.limit = limit;
                         }
-                        return [4 /*yield*/, api_1.api.getBankQuizQuestions(this.sourceId, apiParams)];
+                        if (!(params === null || params === void 0 ? void 0 : params.full_load)) return [3 /*break*/, 2];
+                        sourceId = this.sourceId;
+                        return [4 /*yield*/, fetchAllQuestionPages(function (page, pageSize) {
+                                return api_1.api.getBankQuizQuestions(sourceId, __assign(__assign({}, apiParams), { page: page, per_page: pageSize }));
+                            }, normalizePageSize((params === null || params === void 0 ? void 0 : params.per_page) || (params === null || params === void 0 ? void 0 : params.limit)))];
                     case 1:
-                        res = _a.sent();
-                        questions = res.questions || res || [];
+                        result = _a.sent();
+                        return [3 /*break*/, 4];
+                    case 2: return [4 /*yield*/, api_1.api.getBankQuizQuestions(this.sourceId, apiParams)];
+                    case 3:
+                        result = normalizeQuestionListResponse(_a.sent());
+                        _a.label = 4;
+                    case 4:
+                        questions = result.questions || [];
                         // 如果需要打乱题目
                         if ((params === null || params === void 0 ? void 0 : params.shuffle_questions) && Array.isArray(questions)) {
                             questions = __spreadArray([], questions, true).sort(function () { return Math.random() - 0.5; });
@@ -454,7 +513,7 @@ var BankQuizSource = /** @class */ (function () {
                         }
                         return [2 /*return*/, {
                                 questions: questions,
-                                total: res.total || questions.length
+                                total: result.total || questions.length
                             }];
                 }
             });

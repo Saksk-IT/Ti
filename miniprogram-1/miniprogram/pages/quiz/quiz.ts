@@ -640,9 +640,8 @@ Page({
       this.setData({ canEdit });
 
       // 使用数据源适配器获取题目
-      // 分页策略：打乱/reinforce 模式需要完整集合，其余按需分页
-      const needFullLoad = shuffleQuestions || (reinforceIds && reinforceIds.length > 0);
-      const perPage = needFullLoad ? 1000 : this.data.paginationPerPage;
+      // 答题页的题号、题目列表、进度和打乱顺序都依赖完整题集。
+      const perPage = 200;
       const result = await quizSource.getQuestions({
         mode: requestMode,
         source: source,
@@ -650,8 +649,8 @@ Page({
         tag: tag && tag !== 'all' ? tag : undefined,
         shuffle_questions: shuffleQuestions,
         shuffle_options: shuffleOptions,
+        full_load: true,
         ids: (reinforceIds && reinforceIds.length) ? reinforceIds : undefined,
-        page: needFullLoad ? undefined : 1,
         per_page: perPage
       });
 
@@ -717,10 +716,6 @@ Page({
       const restoredRecords = this.buildAnswerRecordsFromStatus(questionsWithPreview, this.progressStatusMap);
 
       // 分页状态
-      const paginationEnabled = !needFullLoad;
-      const loadedCount = questionsWithPreview.length;
-      const paginationHasMore = paginationEnabled && loadedCount < total;
-
       this.setData({
         questions: questionsWithPreview,
         loading: false,
@@ -729,10 +724,10 @@ Page({
           current: 1,
           total: total
         },
-        paginationEnabled,
+        paginationEnabled: false,
         paginationPage: 1,
         paginationTotal: total,
-        paginationHasMore,
+        paginationHasMore: false,
         paginationLoading: false
       });
 

@@ -595,8 +595,9 @@ Page({
                                 tag: tag && tag !== 'all' ? tag : undefined,
                                 shuffle_questions: shuffleQuestions,
                                 shuffle_options: shuffleOptions,
+                                full_load: true,
                                 ids: (reinforceIds && reinforceIds.length) ? reinforceIds : undefined,
-                                per_page: 1000 // 一次性加载所有题目
+                                per_page: 200
                             })];
                     case 10:
                         result = _d.sent();
@@ -659,7 +660,12 @@ Page({
                             progress: {
                                 current: 1,
                                 total: total
-                            }
+                            },
+                            paginationEnabled: false,
+                            paginationPage: 1,
+                            paginationTotal: total,
+                            paginationHasMore: false,
+                            paginationLoading: false
                         });
                         // 加载第一题
                         if (questionsWithPreview.length > 0) {

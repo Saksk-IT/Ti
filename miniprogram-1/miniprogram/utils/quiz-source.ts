@@ -136,6 +136,7 @@ export interface QuestionParams {
   tag?: string;               // 标签（用户私有）
   shuffle_questions?: boolean;
   shuffle_options?: boolean;
+  full_load?: boolean;         // 是否自动分页拉取完整题集
   ids?: number[];             // 指定题目ID列表（用于加强训练等）
   page?: number;
   per_page?: number;
@@ -215,6 +216,46 @@ export interface IQuizSource {
     shuffleQuestions?: boolean;
     shuffleOptions?: boolean;
   }): string;
+}
+
+const FULL_LOAD_PAGE_SIZE = 200;
+const FULL_LOAD_MAX_PAGES = 100;
+
+function normalizePageSize(value: any): number {
+  const n = Number(value || FULL_LOAD_PAGE_SIZE);
+  if (!Number.isFinite(n) || n <= 0) return FULL_LOAD_PAGE_SIZE;
+  return Math.max(1, Math.min(Math.floor(n), 1000));
+}
+
+function normalizeQuestionListResponse(res: any): { questions: Question[]; total: number } {
+  const questions = Array.isArray(res?.questions) ? res.questions : (Array.isArray(res) ? res : []);
+  const totalRaw = Number(res?.total);
+  const total = Number.isFinite(totalRaw) && totalRaw >= 0 ? Math.floor(totalRaw) : questions.length;
+  return { questions, total };
+}
+
+async function fetchAllQuestionPages(
+  fetchPage: (page: number, perPage: number) => Promise<any>,
+  perPage: number
+): Promise<{ questions: Question[]; total: number }> {
+  const allQuestions: Question[] = [];
+  let total = 0;
+
+  for (let page = 1; page <= FULL_LOAD_MAX_PAGES; page++) {
+    const data = normalizeQuestionListResponse(await fetchPage(page, perPage));
+    const pageQuestions = data.questions;
+    total = data.total || allQuestions.length + pageQuestions.length;
+    allQuestions.push(...pageQuestions);
+
+    if (!pageQuestions.length || allQuestions.length >= total || pageQuestions.length < perPage) {
+      break;
+    }
+  }
+
+  return {
+    questions: allQuestions,
+    total: total || allQuestions.length
+  };
 }
 
 // ============================================
@@ -307,11 +348,15 @@ export class PublicQuizSource implements IQuizSource {
       apiParams.per_page = params.per_page;
     }
 
+    if (params?.full_load) {
+      const perPage = normalizePageSize(params.per_page || params.limit);
+      return fetchAllQuestionPages((page, pageSize) => {
+        return api.getQuestions({ ...apiParams, page, per_page: pageSize });
+      }, perPage);
+    }
+
     const res: any = await api.getQuestions(apiParams);
-    return {
-      questions: res.questions || res || [],
-      total: res.total || (res.questions || res || []).length
-    };
+    return normalizeQuestionListResponse(res);
   }
 
   async recordResult(params: RecordParams) {
@@ -469,21 +514,26 @@ export class BankQuizSource implements IQuizSource {
       apiParams.tag = params.tag;
     }
 
-    if (params?.page) {
+    if (!params?.full_load && params?.page) {
       apiParams.page = params.page;
     }
-    if (params?.per_page) {
+    if (!params?.full_load && params?.per_page) {
       apiParams.per_page = params.per_page;
     }
 
     // 兼容旧调用：未传分页时仍按 limit 一次性取题
-    const limit = params?.limit || (!params?.per_page ? 1000 : undefined);
+    const limit = params?.limit || (!params?.full_load && !params?.per_page ? 1000 : undefined);
     if (limit) {
       apiParams.limit = limit;
     }
 
-    const res: any = await api.getBankQuizQuestions(this.sourceId, apiParams);
-    let questions = res.questions || res || [];
+    const result = params?.full_load
+      ? await fetchAllQuestionPages((page, pageSize) => {
+          return api.getBankQuizQuestions(this.sourceId, { ...apiParams, page, per_page: pageSize });
+        }, normalizePageSize(params.per_page || params.limit))
+      : normalizeQuestionListResponse(await api.getBankQuizQuestions(this.sourceId, apiParams));
+
+    let questions = result.questions || [];
 
     // 如果需要打乱题目
     if (params?.shuffle_questions && Array.isArray(questions)) {
@@ -499,7 +549,7 @@ export class BankQuizSource implements IQuizSource {
 
     return {
       questions,
-      total: res.total || questions.length
+      total: result.total || questions.length
     };
   }
 
