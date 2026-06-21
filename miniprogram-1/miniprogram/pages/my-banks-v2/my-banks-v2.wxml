@@ -90,19 +90,17 @@
             <view class="mb-card-body">
               <view class="mb-top">
                 <text class="mb-name">{{item.name}}</text>
-                <view class="mb-manage" catchtap="onBankManageTap" data-id="{{item.id}}"><text>题库详情</text></view>
               </view>
 
-              <text class="mb-desc" wx:if="{{item.description}}">{{item.description}}</text>
-
               <view class="mb-meta">
-                <text>{{item.source === 'shared' ? '分享给我' : (item.is_public ? '公开' : '私密')}}</text>
+                <text class="mb-chip" wx:if="{{item.source === 'shared'}}">已加入</text>
+                <text class="mb-chip" wx:elif="{{item.is_public}}">公开</text>
+                <text class="mb-chip" wx:else>私密</text>
+                <text>用户</text>
                 <text class="mb-dot">·</text>
                 <text>{{item.question_count || 0}} 题</text>
-                <text class="mb-dot" wx:if="{{item.owner_name}}">·</text>
-                <text wx:if="{{item.owner_name}}">{{item.owner_name}}</text>
                 <text class="mb-dot">·</text>
-                <text>更新 {{item.updated_at_fmt || '-'}}</text>
+                <text>创建 {{item.created_at_fmt || item.updated_at_fmt || '-'}}</text>
               </view>
             </view>
           </view>

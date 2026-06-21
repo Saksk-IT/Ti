@@ -131,6 +131,8 @@ Page({
                                 description: (b === null || b === void 0 ? void 0 : b.description) ? String(b.description) : '',
                                 question_count: Number((b === null || b === void 0 ? void 0 : b.question_count) || 0) || 0,
                                 is_public: b === null || b === void 0 ? void 0 : b.is_public,
+                                created_at: (b === null || b === void 0 ? void 0 : b.created_at) || (b === null || b === void 0 ? void 0 : b.updated_at),
+                                created_at_fmt: formatDate((b === null || b === void 0 ? void 0 : b.created_at) || (b === null || b === void 0 ? void 0 : b.updated_at)),
                                 updated_at: b === null || b === void 0 ? void 0 : b.updated_at,
                                 updated_at_fmt: formatDate(b === null || b === void 0 ? void 0 : b.updated_at),
                                 popularity_count: Number((b === null || b === void 0 ? void 0 : b.public_use_count) || (b === null || b === void 0 ? void 0 : b.share_count) || (b === null || b === void 0 ? void 0 : b.use_count) || 0) || 0,
@@ -147,6 +149,8 @@ Page({
                                 description: (b === null || b === void 0 ? void 0 : b.description) ? String(b.description) : '',
                                 question_count: Number((b === null || b === void 0 ? void 0 : b.question_count) || 0) || 0,
                                 is_public: false,
+                                created_at: (b === null || b === void 0 ? void 0 : b.created_at) || (b === null || b === void 0 ? void 0 : b.last_access_at),
+                                created_at_fmt: formatDate((b === null || b === void 0 ? void 0 : b.created_at) || (b === null || b === void 0 ? void 0 : b.last_access_at)),
                                 updated_at: (b === null || b === void 0 ? void 0 : b.last_access_at) || (b === null || b === void 0 ? void 0 : b.created_at),
                                 updated_at_fmt: formatDate((b === null || b === void 0 ? void 0 : b.last_access_at) || (b === null || b === void 0 ? void 0 : b.created_at)),
                                 popularity_count: Number((b === null || b === void 0 ? void 0 : b.access_count) || (b === null || b === void 0 ? void 0 : b.share_count) || 0) || 0,
@@ -223,13 +227,6 @@ Page({
         this.setData({ filteredBanks: out });
     },
     onBankTap: function (e) {
-        var _a, _b;
-        var id = Number(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.id) || 0);
-        if (!Number.isFinite(id) || id <= 0)
-            return;
-        (0, nav_1.safeNavigate)("/pages/bank-detail/bank-detail?id=".concat(id), 'navigateTo');
-    },
-    onBankManageTap: function (e) {
         var _a, _b;
         var id = Number(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.id) || 0);
         if (!Number.isFinite(id) || id <= 0)

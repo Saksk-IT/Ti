@@ -10,6 +10,8 @@ type BankMeta = {
   description?: string;
   question_count?: number;
   is_public?: boolean | number;
+  created_at?: string;
+  created_at_fmt?: string;
   updated_at?: string;
   updated_at_fmt?: string;
   popularity_count?: number;
@@ -82,6 +84,8 @@ Page({
           description: b?.description ? String(b.description) : '',
           question_count: Number(b?.question_count || 0) || 0,
           is_public: b?.is_public,
+          created_at: b?.created_at || b?.updated_at,
+          created_at_fmt: formatDate(b?.created_at || b?.updated_at),
           updated_at: b?.updated_at,
           updated_at_fmt: formatDate(b?.updated_at),
           popularity_count: Number(b?.public_use_count || b?.share_count || b?.use_count || 0) || 0,
@@ -99,6 +103,8 @@ Page({
           description: b?.description ? String(b.description) : '',
           question_count: Number(b?.question_count || 0) || 0,
           is_public: false,
+          created_at: b?.created_at || b?.last_access_at,
+          created_at_fmt: formatDate(b?.created_at || b?.last_access_at),
           updated_at: b?.last_access_at || b?.created_at,
           updated_at_fmt: formatDate(b?.last_access_at || b?.created_at),
           popularity_count: Number(b?.access_count || b?.share_count || 0) || 0,
@@ -172,12 +178,6 @@ Page({
   },
 
   onBankTap(e: any) {
-    const id = Number(e?.currentTarget?.dataset?.id || 0);
-    if (!Number.isFinite(id) || id <= 0) return;
-    safeNavigate(`/pages/bank-detail/bank-detail?id=${id}`, 'navigateTo');
-  },
-
-  onBankManageTap(e: any) {
     const id = Number(e?.currentTarget?.dataset?.id || 0);
     if (!Number.isFinite(id) || id <= 0) return;
     safeNavigate(`/pages/bank-detail/bank-detail?id=${id}`, 'navigateTo');

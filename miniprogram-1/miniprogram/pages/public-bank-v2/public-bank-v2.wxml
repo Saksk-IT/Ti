@@ -39,19 +39,12 @@
             </view>
           </view>
 
-          <view class="sort-seg" aria-label="排序筛选">
-            <view
-              wx:for="{{sortLabels}}"
-              wx:key="*this"
-              class="sort-seg-btn {{sortIndex === index ? 'active' : ''}}"
-              bindtap="onSortTap"
-              data-index="{{index}}"
-              aria-role="button"
-              aria-label="按{{item}}排序"
-            >
-              <text>{{item}}</text>
+          <picker class="sort-picker" mode="selector" range="{{sortLabels}}" value="{{sortIndex}}" bindchange="onSortChange">
+            <view class="sort-trigger" aria-role="button" aria-label="选择排序方式">
+              <text>{{sortLabels[sortIndex]}}</text>
+              <text class="sort-chevron">⌄</text>
             </view>
-          </view>
+          </picker>
         </view>
 
         <view class="pb-loading" wx:if="{{loading && !banks.length}}">
@@ -77,9 +70,7 @@
             <view class="pb-card-body">
               <view class="pb-card-top">
                 <text class="pb-card-title">{{item.name}}</text>
-                <view class="pb-card-arrow"><text>›</text></view>
               </view>
-              <text class="pb-desc" wx:if="{{item.description}}">{{item.description}}</text>
               <view class="pb-card-meta">
                 <text class="pb-chip pb-chip-shared" wx:if="{{item.is_shared}}">用户分享</text>
                 <text class="pb-chip pb-chip-joined" wx:if="{{item.is_joined}}">已加入</text>

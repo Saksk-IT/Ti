@@ -206,14 +206,6 @@ Page({
     this.setData({ keyword: '' }, () => this.loadBanks(true));
   },
 
-  onSortTap(e: any) {
-    const idx = Number(e?.currentTarget?.dataset?.index ?? 0) || 0;
-    const max = (this.data.sortLabels || []).length - 1;
-    const sortIndex = Math.max(0, Math.min(idx, max));
-    if (sortIndex === this.data.sortIndex) return;
-    this.setData({ sortIndex, page: 1, hasMore: true }, () => this.loadBanks(true));
-  },
-
   onSortChange(e: any) {
     const idx = Number(e?.detail?.value ?? 0) || 0;
     const max = (this.data.sortLabels || []).length - 1;

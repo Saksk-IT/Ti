@@ -230,16 +230,6 @@ Page({
         var _this = this;
         this.setData({ keyword: '' }, function () { return _this.loadBanks(true); });
     },
-    onSortTap: function (e) {
-        var _this = this;
-        var _a, _b, _c;
-        var idx = Number((_c = (_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.index) !== null && _c !== void 0 ? _c : 0) || 0;
-        var max = (this.data.sortLabels || []).length - 1;
-        var sortIndex = Math.max(0, Math.min(idx, max));
-        if (sortIndex === this.data.sortIndex)
-            return;
-        this.setData({ sortIndex: sortIndex, page: 1, hasMore: true }, function () { return _this.loadBanks(true); });
-    },
     onSortChange: function (e) {
         var _this = this;
         var _a, _b;
