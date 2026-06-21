@@ -23,7 +23,7 @@
     <view class="section">
       <view class="section-title-row">
         <text class="section-title">考试模板</text>
-        <view class="section-link" bindtap="onGoExamCenterTemplates" aria-role="button" aria-label="去考试中心管理模板">
+        <view class="section-link tap-scale" hover-class="hover" bindtap="onGoExamCenterTemplates" aria-role="button" aria-label="去考试中心管理模板">
           <text>管理</text>
         </view>
       </view>
@@ -54,14 +54,15 @@
       <text class="section-title">快捷参数</text>
       <view class="quick-grid">
         <view
-          class="quick-btn"
+          class="quick-btn tap-scale"
+          hover-class="hover"
           wx:for="{{quickPresets}}"
           wx:key="label"
           bindtap="onQuickPresetTap"
           data-duration="{{item.duration}}"
           data-total="{{item.total}}"
         >
-          <text>{{item.label}}</text>
+          <text class="quick-label">{{item.label}}</text>
         </view>
       </view>
 
@@ -79,15 +80,17 @@
 
       <view class="types-box">
         <view class="types-row types-head">
-          <text class="col-type">题型</text>
-          <text class="col-count">题量</text>
-          <text class="col-score">分值</text>
-          <text class="col-subtotal">小计</text>
+          <text class="types-head-text col-type">题型</text>
+          <text class="types-head-text col-count">题量</text>
+          <text class="types-head-text col-score">分值</text>
+          <text class="types-head-text col-subtotal">小计</text>
         </view>
 
         <view class="types-row {{item.enabled ? '' : 'disabled'}}" wx:for="{{examTypes}}" wx:key="name">
           <view class="type-name" bindtap="onTypeToggleTap" data-name="{{item.name}}">
-            <view class="check {{item.enabled ? 'on' : ''}}"></view>
+            <view class="check {{item.enabled ? 'on' : ''}}">
+              <view class="check-mark"></view>
+            </view>
             <view class="type-text-wrap">
               <text class="type-text">{{item.name}}</text>
               <text class="type-meta">可用 {{item.available}} 题</text>
@@ -96,7 +99,7 @@
 
           <view class="type-input">
             <input
-              class="mini-input"
+              class="mini-input {{item.enabled ? '' : 'mini-input-disabled'}}"
               type="number"
               value="{{item.count}}"
               disabled="{{!item.enabled}}"
@@ -110,7 +113,7 @@
 
           <view class="type-input">
             <input
-              class="mini-input"
+              class="mini-input {{item.enabled ? '' : 'mini-input-disabled'}}"
               type="digit"
               value="{{item.score}}"
               disabled="{{!item.enabled}}"
@@ -134,8 +137,8 @@
     </view>
 
     <view class="inline-actions">
-      <view class="btn" bindtap="onOpenSaveTemplate"><text>设为模板</text></view>
-      <view class="btn btn-primary {{examStartDisabled ? 'disabled' : ''}}" bindtap="onStartExamTap">
+      <view class="btn tap-scale" hover-class="hover" bindtap="onOpenSaveTemplate"><text>设为模板</text></view>
+      <view class="btn btn-primary tap-scale {{examStartDisabled ? 'disabled' : ''}}" hover-class="hover" bindtap="onStartExamTap">
         <text>{{examCreating ? '创建中…' : '开始考试'}}</text>
       </view>
     </view>
@@ -189,8 +192,8 @@
         maxlength="30"
       />
       <view class="modal-actions">
-        <view class="btn" bindtap="onCloseSaveModal"><text>取消</text></view>
-        <view class="btn btn-primary {{savingTemplate ? 'disabled' : ''}}" bindtap="onConfirmSaveTemplate">
+        <view class="btn tap-scale" hover-class="hover" bindtap="onCloseSaveModal"><text>取消</text></view>
+        <view class="btn btn-primary tap-scale {{savingTemplate ? 'disabled' : ''}}" hover-class="hover" bindtap="onConfirmSaveTemplate">
           <text>{{savingTemplate ? '保存中…' : '保存'}}</text>
         </view>
       </view>

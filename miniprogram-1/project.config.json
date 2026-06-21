@@ -47,7 +47,36 @@
   "libVersion": "3.13.0",
   "packOptions": {
     "ignore": [],
-    "include": []
+    "include": [
+      {
+        "type": "folder",
+        "value": "pages/bank-detail/behaviors"
+      },
+      {
+        "type": "folder",
+        "value": "pages/bank-detail/components"
+      },
+      {
+        "type": "folder",
+        "value": "pages/bank-detail/modules"
+      },
+      {
+        "type": "folder",
+        "value": "pages/bank-detail/utils"
+      },
+      {
+        "type": "folder",
+        "value": "pages/quiz/behaviors"
+      },
+      {
+        "type": "folder",
+        "value": "pages/quiz/modules"
+      },
+      {
+        "type": "folder",
+        "value": "pages/quiz/utils"
+      }
+    ]
   },
   "appid": "wxfc4c270f007773ab",
   "projectArchitecture": "multiPlatform"
