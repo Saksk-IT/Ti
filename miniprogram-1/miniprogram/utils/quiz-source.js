@@ -428,7 +428,13 @@ var BankQuizSource = /** @class */ (function () {
                         if ((params === null || params === void 0 ? void 0 : params.tag) && params.tag !== 'all') {
                             apiParams.tag = params.tag;
                         }
-                        limit = (params === null || params === void 0 ? void 0 : params.limit) || (params === null || params === void 0 ? void 0 : params.per_page) || 1000;
+                        if (params === null || params === void 0 ? void 0 : params.page) {
+                            apiParams.page = params.page;
+                        }
+                        if (params === null || params === void 0 ? void 0 : params.per_page) {
+                            apiParams.per_page = params.per_page;
+                        }
+                        limit = (params === null || params === void 0 ? void 0 : params.limit) || (!(params === null || params === void 0 ? void 0 : params.per_page) ? 1000 : undefined);
                         if (limit) {
                             apiParams.limit = limit;
                         }

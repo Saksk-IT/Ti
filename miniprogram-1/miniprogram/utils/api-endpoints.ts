@@ -585,6 +585,8 @@ export const api = {
     ids?: string;   // 指定题目ID列表（用于加强训练等）
     question_ids?: string; // 兼容字段
     limit?: number;
+    page?: number;
+    per_page?: number;
     q_type?: string; // 题型筛选
     tag?: string;    // 题库标签筛选（用户私有）
   }) => request(`/user/banks/api/${bankId}/quiz`, 'GET', params || {}),

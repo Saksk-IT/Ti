@@ -469,8 +469,15 @@ export class BankQuizSource implements IQuizSource {
       apiParams.tag = params.tag;
     }
 
-    // 兼容 quiz 页面传 per_page=1000 的用法
-    const limit = params?.limit || params?.per_page || 1000;
+    if (params?.page) {
+      apiParams.page = params.page;
+    }
+    if (params?.per_page) {
+      apiParams.per_page = params.per_page;
+    }
+
+    // 兼容旧调用：未传分页时仍按 limit 一次性取题
+    const limit = params?.limit || (!params?.per_page ? 1000 : undefined);
     if (limit) {
       apiParams.limit = limit;
     }

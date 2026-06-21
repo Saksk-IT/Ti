@@ -49,7 +49,17 @@ def get_quiz_questions(bank_id):
         return jsonify({'code': 403, 'message': '无权访问此题库'}), 403
 
     mode = request.args.get('mode', 'all')
-    limit = request.args.get('limit', 20, type=int)
+    page = max(1, request.args.get('page', 1, type=int) or 1)
+    per_page_arg = request.args.get('per_page', type=int)
+    limit_arg = request.args.get('limit', type=int)
+    if per_page_arg is not None:
+        limit = per_page_arg
+    elif limit_arg is not None:
+        limit = limit_arg
+    else:
+        limit = 20
+    limit = max(1, min(int(limit or 20), 1000))
+    offset = (page - 1) * limit
     q_type = (request.args.get('q_type') or '').strip()
     tag = (request.args.get('tag') or '').strip()
     custom_ids_raw = (request.args.get('ids') or request.args.get('question_ids') or '').strip()
@@ -126,7 +136,14 @@ def get_quiz_questions(bank_id):
             tag_condition, tag_params = _build_named_in('q.id', tag_question_ids, 'tq')
             tag_condition = ' AND ' + tag_condition
 
-        base_params = {'bank_id': bank_id, 'uid': user_id, 'lim': limit, **type_params, **tag_params}
+        base_params = {
+            'bank_id': bank_id,
+            'uid': user_id,
+            'lim': limit,
+            'off': offset,
+            **type_params,
+            **tag_params,
+        }
 
         if mode == 'wrong':
             questions = db.session.execute(text('''
@@ -135,7 +152,7 @@ def get_quiz_questions(bank_id):
                 WHERE q.bank_id = :bank_id AND m.user_id = :uid
             ''' + type_condition + tag_condition + '''
                 ORDER BY m.wrong_count DESC, m.updated_at DESC
-                LIMIT :lim
+                LIMIT :lim OFFSET :off
             '''), base_params).fetchall()
 
             total = db.session.execute(text('''
@@ -150,7 +167,7 @@ def get_quiz_questions(bank_id):
                 WHERE q.bank_id = :bank_id AND f.user_id = :uid
             ''' + type_condition + tag_condition + '''
                 ORDER BY f.created_at DESC
-                LIMIT :lim
+                LIMIT :lim OFFSET :off
             '''), base_params).fetchall()
 
             total = db.session.execute(text('''
@@ -163,7 +180,7 @@ def get_quiz_questions(bank_id):
                 SELECT q.* FROM user_bank_questions q
                 WHERE q.bank_id = :bank_id
             ''' + type_condition + tag_condition + '''
-                ORDER BY RANDOM() LIMIT :lim
+                ORDER BY RANDOM() LIMIT :lim OFFSET :off
             '''), base_params).fetchall()
 
             total = db.session.execute(text('''
@@ -175,7 +192,7 @@ def get_quiz_questions(bank_id):
                 SELECT q.* FROM user_bank_questions q
                 WHERE q.bank_id = :bank_id
             ''' + type_condition + tag_condition + '''
-                ORDER BY q.sort_order ASC, q.id ASC LIMIT :lim
+                ORDER BY q.sort_order ASC, q.id ASC LIMIT :lim OFFSET :off
             '''), base_params).fetchall()
 
             total = db.session.execute(text('''
@@ -248,7 +265,9 @@ def get_quiz_questions(bank_id):
         'code': 0,
         'data': {
             'questions': result_questions,
-            'total': total
+            'total': total,
+            'page': page,
+            'per_page': limit
         }
     })
 

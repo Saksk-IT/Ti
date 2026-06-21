@@ -177,9 +177,44 @@ def test_bank_user_counts_reports_shuffle_options_availability(app, auth_client,
     finally:
         with app.app_context():
             db.session.execute(
+                text("DELETE FROM user_bank_questions WHERE bank_id IN (:choice_bank_id, :mixed_bank_id)"),
+                {"choice_bank_id": choice_bank_id, "mixed_bank_id": mixed_bank_id},
+            )
+            db.session.execute(
                 text("DELETE FROM user_question_banks WHERE id IN (:choice_bank_id, :mixed_bank_id)"),
                 {"choice_bank_id": choice_bank_id, "mixed_bank_id": mixed_bank_id},
             )
+            db.session.commit()
+
+
+def test_bank_quiz_questions_supports_page_per_page_pagination(app, auth_client, seed_user):
+    bank_id = _create_bank_with_questions(app, seed_user["id"], ["single_choice"] * 55)
+
+    try:
+        first_resp = auth_client.get(f"/user/banks/api/{bank_id}/quiz?page=1&per_page=50")
+        assert first_resp.status_code == 200
+        first_data = first_resp.get_json()["data"]
+        assert first_data["total"] == 55
+        assert len(first_data["questions"]) == 50
+        assert first_data["questions"][0]["content"] == "题目 1"
+        assert first_data["questions"][-1]["content"] == "题目 50"
+
+        second_resp = auth_client.get(f"/user/banks/api/{bank_id}/quiz?page=2&per_page=50")
+        assert second_resp.status_code == 200
+        second_data = second_resp.get_json()["data"]
+        assert second_data["total"] == 55
+        assert len(second_data["questions"]) == 5
+        assert [q["content"] for q in second_data["questions"]] == [
+            "题目 51",
+            "题目 52",
+            "题目 53",
+            "题目 54",
+            "题目 55",
+        ]
+    finally:
+        with app.app_context():
+            db.session.execute(text("DELETE FROM user_bank_questions WHERE bank_id = :bank_id"), {"bank_id": int(bank_id)})
+            db.session.execute(text("DELETE FROM user_question_banks WHERE id = :bank_id"), {"bank_id": int(bank_id)})
             db.session.commit()
 
 
@@ -231,6 +266,7 @@ def test_web_user_bank_quiz_applies_saved_shuffle_order(app, auth_client, seed_u
         assert positions == sorted(positions)
     finally:
         with app.app_context():
+            db.session.execute(text("DELETE FROM user_bank_questions WHERE bank_id = :bank_id"), {"bank_id": int(bank_id)})
             db.session.execute(text("DELETE FROM user_question_banks WHERE id = :bank_id"), {"bank_id": int(bank_id)})
             db.session.execute(
                 text("DELETE FROM user_progress WHERE user_id = :user_id AND p_key = :p_key"),
