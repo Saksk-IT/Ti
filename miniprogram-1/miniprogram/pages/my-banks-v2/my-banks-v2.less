@@ -647,6 +647,13 @@ page {
   gap: 12rpx;
 }
 
+.mb-card-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
 .mb-name {
   min-width: 0;
   font-size: 28rpx;
@@ -655,6 +662,16 @@ page {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.mb-desc {
+  font-size: 24rpx;
+  line-height: 1.5;
+  color: var(--app-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .mb-meta {

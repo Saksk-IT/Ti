@@ -68,8 +68,11 @@
               </view>
             </view>
             <view class="pb-card-body">
-              <view class="pb-card-top">
-                <text class="pb-card-title">{{item.name}}</text>
+              <view class="pb-card-main">
+                <view class="pb-card-top">
+                  <text class="pb-card-title">{{item.name}}</text>
+                </view>
+                <text class="pb-desc" wx:if="{{item.description}}">{{item.description}}</text>
               </view>
               <view class="pb-card-meta">
                 <text class="pb-chip pb-chip-shared" wx:if="{{item.is_shared}}">用户分享</text>

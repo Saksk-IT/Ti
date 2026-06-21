@@ -88,8 +88,11 @@
               </view>
             </view>
             <view class="mb-card-body">
-              <view class="mb-top">
-                <text class="mb-name">{{item.name}}</text>
+              <view class="mb-card-main">
+                <view class="mb-top">
+                  <text class="mb-name">{{item.name}}</text>
+                </view>
+                <text class="mb-desc" wx:if="{{item.description}}">{{item.description}}</text>
               </view>
 
               <view class="mb-meta">
