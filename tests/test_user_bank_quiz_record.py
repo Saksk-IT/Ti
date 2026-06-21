@@ -4,10 +4,14 @@
 from __future__ import annotations
 
 import json
+import uuid
 import pytest
 from sqlalchemy import text
+from werkzeug.security import generate_password_hash
 
 from app.core.extensions import db
+from app.core.utils.jwt_utils import generate_jwt_token
+from app.core.utils.user_state_cache import invalidate_user_state
 from app.modules.quiz.routes.pages_helpers import (
     apply_question_shuffle,
     shuffle_choice_options,
@@ -158,6 +162,71 @@ def _create_bank_with_questions(app, user_id: int, question_types: list[str]) ->
         return int(bank_id)
 
 
+def _create_public_subject_with_questions(app, question_count: int) -> tuple[int, str]:
+    subject_name = "全量加载回归科目"
+    with app.app_context():
+        db.session.execute(text("DELETE FROM questions WHERE subject_id IN (SELECT id FROM subjects WHERE name = :name)"), {"name": subject_name})
+        db.session.execute(text("DELETE FROM subjects WHERE name = :name"), {"name": subject_name})
+        subject_id = db.session.execute(
+            text(
+                """
+                INSERT INTO subjects (name, description, is_locked)
+                VALUES (:name, 'full load regression', 0)
+                RETURNING id
+                """
+            ),
+            {"name": subject_name},
+        ).scalar_one()
+        for index in range(1, question_count + 1):
+            db.session.execute(
+                text(
+                    """
+                    INSERT INTO questions
+                    (subject_id, type, content, options, answer, analysis, tags, difficulty)
+                    VALUES
+                    (:subject_id, 'single_choice', :content, :options, :answer, '', '[]', 1)
+                    """
+                ),
+                {
+                    "subject_id": int(subject_id),
+                    "content": f"公共题目 {index}",
+                    "options": json.dumps(["错误 A", "正确 B", "错误 C"], ensure_ascii=False),
+                    "answer": json.dumps([1], ensure_ascii=False),
+                },
+            )
+        db.session.commit()
+        return int(subject_id), subject_name
+
+
+def _create_jwt_test_user(app) -> tuple[int, dict[str, str]]:
+    suffix = uuid.uuid4().hex[:8]
+    username = f"full_load_user_{suffix}"
+    openid = f"openid_{username}"
+    with app.app_context():
+        user_id = db.session.execute(
+            text(
+                """
+                INSERT INTO users (username, email, password_hash, is_admin, has_password_set, openid, session_version)
+                VALUES (:username, :email, :password_hash, 0, 1, :openid, 0)
+                RETURNING id
+                """
+            ),
+            {
+                "username": username,
+                "email": f"{username}@test.example.com",
+                "password_hash": generate_password_hash("Test1234!"),
+                "openid": openid,
+            },
+        ).scalar_one()
+        db.session.commit()
+        invalidate_user_state(int(user_id))
+        token = generate_jwt_token(user_id=int(user_id), openid=openid, session_version=0)
+    return int(user_id), {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+    }
+
+
 def test_bank_user_counts_reports_shuffle_options_availability(app, auth_client, seed_user):
     choice_bank_id = _create_bank_with_questions(app, seed_user["id"], ["single_choice", "multi_choice"])
     mixed_bank_id = _create_bank_with_questions(app, seed_user["id"], ["single_choice", "boolean"])
@@ -184,6 +253,53 @@ def test_bank_user_counts_reports_shuffle_options_availability(app, auth_client,
                 text("DELETE FROM user_question_banks WHERE id IN (:choice_bank_id, :mixed_bank_id)"),
                 {"choice_bank_id": choice_bank_id, "mixed_bank_id": mixed_bank_id},
             )
+            db.session.commit()
+
+
+def test_bank_quiz_questions_full_load_returns_all_questions(app, auth_client, seed_user):
+    bank_id = _create_bank_with_questions(app, seed_user["id"], ["single_choice"] * 55)
+
+    try:
+        response = auth_client.get(f"/user/banks/api/{bank_id}/quiz?full_load=1")
+        assert response.status_code == 200
+        data = response.get_json()["data"]
+        assert data["total"] == 55
+        assert data["page"] == 1
+        assert data["per_page"] == 55
+        assert len(data["questions"]) == 55
+        assert data["questions"][0]["content"] == "题目 1"
+        assert data["questions"][-1]["content"] == "题目 55"
+    finally:
+        with app.app_context():
+            db.session.execute(text("DELETE FROM user_bank_questions WHERE bank_id = :bank_id"), {"bank_id": int(bank_id)})
+            db.session.execute(text("DELETE FROM user_question_banks WHERE id = :bank_id"), {"bank_id": int(bank_id)})
+            db.session.commit()
+
+
+def test_public_quiz_questions_full_load_returns_all_questions(app):
+    subject_id, subject_name = _create_public_subject_with_questions(app, 55)
+    user_id, headers = _create_jwt_test_user(app)
+    api_client = app.test_client()
+
+    try:
+        response = api_client.get(
+            f"/api/quiz/questions?subject={subject_name}&full_load=1",
+            headers=headers,
+        )
+        assert response.status_code == 200, response.get_json()
+        data = response.get_json()["data"]
+        assert data["total"] == 55
+        assert data["page"] == 1
+        assert data["per_page"] == 55
+        assert len(data["questions"]) == 55
+        assert data["questions"][0]["content"] == "公共题目 1"
+        assert data["questions"][-1]["content"] == "公共题目 55"
+    finally:
+        with app.app_context():
+            db.session.execute(text("DELETE FROM questions WHERE subject_id = :subject_id"), {"subject_id": int(subject_id)})
+            db.session.execute(text("DELETE FROM subjects WHERE id = :subject_id"), {"subject_id": int(subject_id)})
+            invalidate_user_state(int(user_id))
+            db.session.execute(text("DELETE FROM users WHERE id = :uid"), {"uid": int(user_id)})
             db.session.commit()
 
 

@@ -120,7 +120,7 @@ class QuestionService:
         mode='quiz',
         user_id=None,
         page: int = 1,
-        per_page: int = 20,
+        per_page: int | None = 20,
         tag_ids: list | None = None,
         accessible_subject_ids: list | None = None,
     ) -> tuple[list, int]:
@@ -184,20 +184,21 @@ class QuestionService:
         if total == 0:
             return [], 0
 
-        # 分页
-        if page < 1:
-            page = 1
-        offset = (page - 1) * per_page
-
         select_sql = (
             "SELECT q.*, s.name as subject,"
             " CASE WHEN f.id IS NOT NULL THEN 1 ELSE 0 END as is_fav,"
             " CASE WHEN m.id IS NOT NULL THEN 1 ELSE 0 END as is_mistake "
             + base_from
-            + " ORDER BY q.id LIMIT :_limit OFFSET :_offset"
+            + " ORDER BY q.id"
         )
-        params['_limit'] = per_page
-        params['_offset'] = offset
+        if per_page is not None:
+            if page < 1:
+                page = 1
+            per_page = max(1, int(per_page))
+            offset = (page - 1) * per_page
+            select_sql += " LIMIT :_limit OFFSET :_offset"
+            params['_limit'] = per_page
+            params['_offset'] = offset
 
         rows = db.session.execute(text(select_sql), params).fetchall()
 

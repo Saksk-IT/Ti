@@ -258,6 +258,18 @@ async function fetchAllQuestionPages(
   };
 }
 
+async function fetchFullQuestionList(
+  fetchFull: () => Promise<any>,
+  fetchPage: (page: number, perPage: number) => Promise<any>,
+  perPage: number
+): Promise<{ questions: Question[]; total: number }> {
+  const first = normalizeQuestionListResponse(await fetchFull());
+  if (first.questions.length >= first.total || first.questions.length < perPage) {
+    return first;
+  }
+  return fetchAllQuestionPages(fetchPage, perPage);
+}
+
 // ============================================
 // 公有题库数据源
 // ============================================
@@ -350,9 +362,11 @@ export class PublicQuizSource implements IQuizSource {
 
     if (params?.full_load) {
       const perPage = normalizePageSize(params.per_page || params.limit);
-      return fetchAllQuestionPages((page, pageSize) => {
-        return api.getQuestions({ ...apiParams, page, per_page: pageSize });
-      }, perPage);
+      return fetchFullQuestionList(
+        () => api.getQuestions({ ...apiParams, full_load: 1, page: 1, per_page: perPage }),
+        (page, pageSize) => api.getQuestions({ ...apiParams, page, per_page: pageSize }),
+        perPage
+      );
     }
 
     const res: any = await api.getQuestions(apiParams);
@@ -528,9 +542,16 @@ export class BankQuizSource implements IQuizSource {
     }
 
     const result = params?.full_load
-      ? await fetchAllQuestionPages((page, pageSize) => {
-          return api.getBankQuizQuestions(this.sourceId, { ...apiParams, page, per_page: pageSize });
-        }, normalizePageSize(params.per_page || params.limit))
+      ? await fetchFullQuestionList(
+          () => api.getBankQuizQuestions(this.sourceId, {
+            ...apiParams,
+            full_load: 1,
+            page: 1,
+            per_page: normalizePageSize(params.per_page || params.limit)
+          }),
+          (page, pageSize) => api.getBankQuizQuestions(this.sourceId, { ...apiParams, page, per_page: pageSize }),
+          normalizePageSize(params.per_page || params.limit)
+        )
       : normalizeQuestionListResponse(await api.getBankQuizQuestions(this.sourceId, apiParams));
 
     let questions = result.questions || [];

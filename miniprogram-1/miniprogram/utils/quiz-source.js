@@ -171,6 +171,22 @@ function fetchAllQuestionPages(fetchPage, perPage) {
         });
     });
 }
+function fetchFullQuestionList(fetchFull, fetchPage, perPage) {
+    return __awaiter(this, void 0, void 0, function () {
+        var first;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, fetchFull()];
+                case 1:
+                    first = normalizeQuestionListResponse(_a.sent());
+                    if (first.questions.length >= first.total || first.questions.length < perPage) {
+                        return [2 /*return*/, first];
+                    }
+                    return [2 /*return*/, fetchAllQuestionPages(fetchPage, perPage)];
+            }
+        });
+    });
+}
 // ============================================
 // 公有题库数据源
 // ============================================
@@ -271,7 +287,9 @@ var PublicQuizSource = /** @class */ (function () {
                         }
                         if (!(params === null || params === void 0 ? void 0 : params.full_load)) return [3 /*break*/, 2];
                         perPage = normalizePageSize((params === null || params === void 0 ? void 0 : params.per_page) || (params === null || params === void 0 ? void 0 : params.limit));
-                        return [2 /*return*/, fetchAllQuestionPages(function (page, pageSize) {
+                        return [2 /*return*/, fetchFullQuestionList(function () {
+                                return api_1.api.getQuestions(__assign(__assign({}, apiParams), { full_load: 1, page: 1, per_page: perPage }));
+                            }, function (page, pageSize) {
                                 return api_1.api.getQuestions(__assign(__assign({}, apiParams), { page: page, per_page: pageSize }));
                             }, perPage)];
                     case 2: return [4 /*yield*/, api_1.api.getQuestions(apiParams)];
@@ -489,7 +507,9 @@ var BankQuizSource = /** @class */ (function () {
                         }
                         if (!(params === null || params === void 0 ? void 0 : params.full_load)) return [3 /*break*/, 2];
                         sourceId = this.sourceId;
-                        return [4 /*yield*/, fetchAllQuestionPages(function (page, pageSize) {
+                        return [4 /*yield*/, fetchFullQuestionList(function () {
+                                return api_1.api.getBankQuizQuestions(sourceId, __assign(__assign({}, apiParams), { full_load: 1, page: 1, per_page: normalizePageSize((params === null || params === void 0 ? void 0 : params.per_page) || (params === null || params === void 0 ? void 0 : params.limit)) }));
+                            }, function (page, pageSize) {
                                 return api_1.api.getBankQuizQuestions(sourceId, __assign(__assign({}, apiParams), { page: page, per_page: pageSize }));
                             }, normalizePageSize((params === null || params === void 0 ? void 0 : params.per_page) || (params === null || params === void 0 ? void 0 : params.limit)))];
                     case 1:

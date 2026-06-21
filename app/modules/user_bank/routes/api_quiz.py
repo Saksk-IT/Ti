@@ -38,6 +38,10 @@ def _normalize_quiz_record_is_correct(value) -> bool:
     raise ValueError('is_correct 必须是布尔值')
 
 
+def _is_truthy_request_arg(value) -> bool:
+    return str(value or '').strip().lower() in ('1', 'true', 'yes', 'y', 'on')
+
+
 @user_bank_api_bp.route('/<int:bank_id>/quiz', methods=['GET'])
 @auth_required
 def get_quiz_questions(bank_id):
@@ -49,6 +53,7 @@ def get_quiz_questions(bank_id):
         return jsonify({'code': 403, 'message': '无权访问此题库'}), 403
 
     mode = request.args.get('mode', 'all')
+    full_load = _is_truthy_request_arg(request.args.get('full_load') or request.args.get('load_all'))
     page = max(1, request.args.get('page', 1, type=int) or 1)
     per_page_arg = request.args.get('per_page', type=int)
     limit_arg = request.args.get('limit', type=int)
@@ -59,6 +64,8 @@ def get_quiz_questions(bank_id):
     else:
         limit = 20
     limit = max(1, min(int(limit or 20), 1000))
+    if full_load:
+        page = 1
     offset = (page - 1) * limit
     q_type = (request.args.get('q_type') or '').strip()
     tag = (request.args.get('tag') or '').strip()
@@ -144,6 +151,7 @@ def get_quiz_questions(bank_id):
             **type_params,
             **tag_params,
         }
+        pagination_sql = '' if full_load else ' LIMIT :lim OFFSET :off'
 
         if mode == 'wrong':
             questions = db.session.execute(text('''
@@ -152,8 +160,7 @@ def get_quiz_questions(bank_id):
                 WHERE q.bank_id = :bank_id AND m.user_id = :uid
             ''' + type_condition + tag_condition + '''
                 ORDER BY m.wrong_count DESC, m.updated_at DESC
-                LIMIT :lim OFFSET :off
-            '''), base_params).fetchall()
+            ''' + pagination_sql), base_params).fetchall()
 
             total = db.session.execute(text('''
                 SELECT COUNT(*) as cnt FROM user_bank_questions q
@@ -167,8 +174,7 @@ def get_quiz_questions(bank_id):
                 WHERE q.bank_id = :bank_id AND f.user_id = :uid
             ''' + type_condition + tag_condition + '''
                 ORDER BY f.created_at DESC
-                LIMIT :lim OFFSET :off
-            '''), base_params).fetchall()
+            ''' + pagination_sql), base_params).fetchall()
 
             total = db.session.execute(text('''
                 SELECT COUNT(*) as cnt FROM user_bank_questions q
@@ -180,8 +186,8 @@ def get_quiz_questions(bank_id):
                 SELECT q.* FROM user_bank_questions q
                 WHERE q.bank_id = :bank_id
             ''' + type_condition + tag_condition + '''
-                ORDER BY RANDOM() LIMIT :lim OFFSET :off
-            '''), base_params).fetchall()
+                ORDER BY RANDOM()
+            ''' + pagination_sql), base_params).fetchall()
 
             total = db.session.execute(text('''
                 SELECT COUNT(*) as cnt FROM user_bank_questions q
@@ -192,8 +198,8 @@ def get_quiz_questions(bank_id):
                 SELECT q.* FROM user_bank_questions q
                 WHERE q.bank_id = :bank_id
             ''' + type_condition + tag_condition + '''
-                ORDER BY q.sort_order ASC, q.id ASC LIMIT :lim OFFSET :off
-            '''), base_params).fetchall()
+                ORDER BY q.sort_order ASC, q.id ASC
+            ''' + pagination_sql), base_params).fetchall()
 
             total = db.session.execute(text('''
                 SELECT COUNT(*) as cnt FROM user_bank_questions q
@@ -267,7 +273,7 @@ def get_quiz_questions(bank_id):
             'questions': result_questions,
             'total': total,
             'page': page,
-            'per_page': limit
+            'per_page': len(result_questions) if full_load else limit
         }
     })
 

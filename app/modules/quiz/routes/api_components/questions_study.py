@@ -63,6 +63,10 @@ def _parse_id_list(val, max_len: int = 200):
     return out
 
 
+def _is_truthy_request_arg(value) -> bool:
+    return str(value or '').strip().lower() in ('1', 'true', 'yes', 'y', 'on')
+
+
 @quiz_api_bp.route('/questions', methods=['GET'])
 @jwt_required
 def api_get_questions():
@@ -75,9 +79,12 @@ def api_get_questions():
         source = (request.args.get('source') or '').strip().lower()
         tag = (request.args.get('tag') or '').strip()
         shuffle_options = request.args.get('shuffle_options', '0') in ('1', 'true', 'True')
+        full_load = _is_truthy_request_arg(request.args.get('full_load') or request.args.get('load_all'))
         page = request.args.get('page', 1, type=int)
         # 小程序刷题页支持一次性加载较多题目（用于离线/顺滑切题）
         per_page = min(request.args.get('per_page', 20, type=int), 1000)
+        if full_load:
+            page = 1
         
         # 从JWT token获取用户ID
         user_id = g.current_user_id
@@ -156,7 +163,7 @@ def api_get_questions():
                 mode=query_mode,
                 user_id=user_id,
                 page=page,
-                per_page=per_page,
+                per_page=None if full_load else per_page,
                 tag_ids=list(tag_ids_set) if tag_ids_set else None,
                 accessible_subject_ids=accessible_ids,
             )
@@ -165,9 +172,12 @@ def api_get_questions():
         # 分页处理（仅 custom_ids 分支需要；SQL 分页分支已在上面完成）
         if custom_ids:
             total = len(questions)
-            start = (page - 1) * per_page
-            end = start + per_page
-            paginated_questions = questions[start:end]
+            if full_load:
+                paginated_questions = questions
+            else:
+                start = (page - 1) * per_page
+                end = start + per_page
+                paginated_questions = questions[start:end]
         else:
             paginated_questions = questions
         
@@ -233,7 +243,7 @@ def api_get_questions():
                 'questions': formatted_questions,
                 'total': total,
                 'page': page,
-                'per_page': per_page
+                'per_page': len(formatted_questions) if full_load else per_page
             }
         }), 200
         

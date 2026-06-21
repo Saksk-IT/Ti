@@ -418,12 +418,14 @@ def _register_before_request(app):
 
     def _has_valid_jwt_header() -> bool:
         cache_key = '_valid_jwt_header_cache'
+        token = request.headers.get('Authorization') or request.headers.get('authorization') or ''
+        raw = str(token).strip()
         cached = getattr(g, cache_key, None)
-        if cached is not None:
-            return bool(cached)
+        if isinstance(cached, tuple) and len(cached) == 2 and cached[0] == raw:
+            return bool(cached[1])
         payload = _valid_jwt_payload_from_header()
         ok = bool(payload)
-        setattr(g, cache_key, ok)
+        setattr(g, cache_key, (raw, ok))
         return ok
     @app.before_request
     def _assign_request_id():

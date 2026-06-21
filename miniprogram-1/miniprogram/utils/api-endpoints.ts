@@ -223,6 +223,8 @@ export const api = {
     source?: string;
     shuffle_questions?: string | number;
     shuffle_options?: string | number;
+    full_load?: string | number;
+    load_all?: string | number;
     page?: number;
     per_page?: number;
   }) => request('/quiz/questions', 'GET', params),
@@ -587,6 +589,8 @@ export const api = {
     limit?: number;
     page?: number;
     per_page?: number;
+    full_load?: string | number;
+    load_all?: string | number;
     q_type?: string; // 题型筛选
     tag?: string;    // 题库标签筛选（用户私有）
   }) => request(`/user/banks/api/${bankId}/quiz`, 'GET', params || {}),
