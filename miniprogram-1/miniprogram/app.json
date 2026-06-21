@@ -125,16 +125,6 @@
       }
     ]
   },
-  "preloadRule": {
-    "pages/hub-v2/hub-v2": {
-      "network": "all",
-      "packages": [
-        "pages/index-v2",
-        "pages/subject-detail-v2",
-        "pages/bank-detail"
-      ]
-    }
-  },
   "style": "v2",
   "darkmode": true,
   "themeLocation": "theme.json",
