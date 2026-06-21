@@ -16,6 +16,10 @@ from .api_base import user_bank_api_bp, check_bank_access
 from .api_tags import _load_bank_tag_store
 
 
+QUESTION_LIST_DEFAULT_PER_PAGE = 20
+QUESTION_LIST_MAX_PER_PAGE = 200
+
+
 def _build_named_in(col: str, values: list, prefix: str = 'in') -> tuple[str, dict]:
     """构建命名参数 IN 子句，返回 (sql_fragment, params_dict)"""
     if not values:
@@ -79,6 +83,14 @@ def _pick_question_image_payload(data: dict) -> object:
     return None
 
 
+def _normalize_question_list_per_page(value: int | None) -> int:
+    try:
+        per_page = int(value)
+    except (TypeError, ValueError):
+        return QUESTION_LIST_DEFAULT_PER_PAGE
+    return max(1, min(per_page, QUESTION_LIST_MAX_PER_PAGE))
+
+
 @user_bank_api_bp.route('/<int:bank_id>/questions', methods=['GET'])
 @auth_required
 def get_bank_questions(bank_id):
@@ -93,8 +105,8 @@ def get_bank_questions(bank_id):
     if not has_access:
         return error_response('无权访问此题库', 403, code=403)
 
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 20, type=int)
+    page = max(1, request.args.get('page', 1, type=int) or 1)
+    per_page = _normalize_question_list_per_page(request.args.get('per_page', QUESTION_LIST_DEFAULT_PER_PAGE, type=int))
     q_type = request.args.get('q_type', '')
     keyword = request.args.get('keyword', '').strip()
     source = (request.args.get('source') or 'all').strip().lower()  # all/favorites/mistakes
