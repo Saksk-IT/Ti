@@ -30,8 +30,7 @@
               <text class="mb-sub">我创建和好友分享给我的题库</text>
             </view>
             <view class="mb-hero-actions">
-              <view class="btn" bindtap="onGoPublicBank"><text>题库广场</text></view>
-              <view class="btn btn-primary" bindtap="onGoCreateBank"><text>新建题库</text></view>
+              <view class="btn" bindtap="onGoCreateBank"><text>创建题库</text></view>
             </view>
           </view>
         </view>
@@ -68,7 +67,7 @@
           <text wx:if="{{banks.length}}">还没有匹配的题库。</text>
           <text wx:else>你还没有创建或加入题库。</text>
           <view class="empty-actions">
-            <view class="btn btn-primary" bindtap="onGoCreateBank"><text>新建题库</text></view>
+            <view class="btn" bindtap="onGoCreateBank"><text>创建题库</text></view>
           </view>
         </view>
 

@@ -112,7 +112,7 @@
             </view>
 
             <view class="actions actions-hero">
-              <view class="btn btn-primary {{startDisabled ? 'disabled' : ''}}" bindtap="onStartQuiz"><text>开始刷题</text></view>
+              <view class="btn {{startDisabled ? 'disabled' : ''}}" bindtap="onStartQuiz"><text>开始刷题</text></view>
               <view class="btn {{startDisabled ? 'disabled' : ''}}" bindtap="onStartMemo"><text>开始背题</text></view>
             </view>
 
@@ -496,7 +496,7 @@
               <view class="start-error" wx:if="{{startError}}"><text>{{startError}}</text></view>
             </view>
             <view class="actions">
-              <view class="btn btn-primary {{startDisabled ? 'disabled' : ''}}" bindtap="onStartQuiz"><text>开始刷题</text></view>
+              <view class="btn {{startDisabled ? 'disabled' : ''}}" bindtap="onStartQuiz"><text>开始刷题</text></view>
               <view class="btn {{startDisabled ? 'disabled' : ''}}" bindtap="onStartMemo"><text>开始背题</text></view>
             </view>
           </view>
@@ -597,7 +597,7 @@
               <view class="start-error" wx:if="{{startError}}"><text>{{startError}}</text></view>
             </view>
             <view class="actions">
-              <view class="btn btn-primary {{startDisabled ? 'disabled' : ''}}" bindtap="onStartQuiz"><text>开始刷题</text></view>
+              <view class="btn {{startDisabled ? 'disabled' : ''}}" bindtap="onStartQuiz"><text>开始刷题</text></view>
               <view class="btn {{startDisabled ? 'disabled' : ''}}" bindtap="onStartMemo"><text>开始背题</text></view>
             </view>
           </view>
