@@ -96,6 +96,28 @@
       font-size: 13px;
       font-weight: 950;
     }
+    .ubd-breakdown {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .ubd-breakdown-pill {
+      border: 1px solid var(--app-border);
+      border-radius: 999px;
+      background: var(--app-surface-2);
+      color: var(--app-muted);
+      font-size: 11px;
+      font-weight: 900;
+      line-height: 1;
+      padding: 6px 8px;
+      white-space: nowrap;
+    }
+    .ubd-breakdown-pill.strong {
+      border-color: color-mix(in srgb, var(--app-primary) 30%, var(--app-border));
+      background: var(--app-primary-soft);
+      color: var(--app-primary);
+    }
     .ubd-q-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -313,6 +335,30 @@
         return Math.round((parseFloat(String(pair && pair.similarity || 0)) || 0) * 100);
       }
 
+      function percentFromScore(value) {
+        const numberValue = parseFloat(String(value != null ? value : 0));
+        return Math.round((Number.isFinite(numberValue) ? numberValue : 0) * 100);
+      }
+
+      function renderBreakdown(pair) {
+        const breakdown = pair && pair.match_breakdown && typeof pair.match_breakdown === 'object'
+          ? pair.match_breakdown
+          : {};
+        if (!Object.keys(breakdown).length) {
+          return '<div class="ubd-breakdown"><span class="ubd-breakdown-pill">旧版结果，重新查重生成分项</span></div>';
+        }
+        const typeLabel = breakdown.type_match === false ? '题型不同' : '同题型';
+        const items = [
+          { label: typeLabel, strong: breakdown.type_match !== false },
+          { label: `题干 ${percentFromScore(breakdown.stem_similarity)}%`, strong: percentFromScore(breakdown.stem_similarity) >= 90 },
+          { label: `选项/填空 ${percentFromScore(breakdown.options_similarity ?? breakdown.secondary_similarity)}%`, strong: percentFromScore(breakdown.options_similarity ?? breakdown.secondary_similarity) >= 90 },
+          { label: `答案 ${percentFromScore(breakdown.answer_similarity)}%`, strong: percentFromScore(breakdown.answer_similarity) >= 90 },
+        ];
+        return `<div class="ubd-breakdown">${items.map((item) => (
+          `<span class="ubd-breakdown-pill ${item.strong ? 'strong' : ''}">${escapeHtml(item.label)}</span>`
+        )).join('')}</div>`;
+      }
+
       function renderQuestionPreview(question) {
         const q = question || {};
         return `
@@ -349,6 +395,7 @@
               <div class="ubd-score">第 ${index + 1} 组 · 相似度 ${pairPercent(pair)}%</div>
               <div class="ubm-q-meta"><span class="ubm-q-pill">点击查看详情</span></div>
             </div>
+            ${renderBreakdown(pair)}
             <div class="ubd-q-grid">
               ${renderQuestionPreview(pair && pair.question1)}
               ${renderQuestionPreview(pair && pair.question2)}

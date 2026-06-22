@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import uuid
 
 from sqlalchemy import text
@@ -66,7 +67,19 @@ def _delete_bank(app, bank_id: int | None) -> None:
         db.session.commit()
 
 
-def _insert_question(app, bank_id: int, user_id: int, content: str, sort_order: int) -> int:
+def _insert_question(
+    app,
+    bank_id: int,
+    user_id: int,
+    content: str,
+    sort_order: int,
+    *,
+    q_type: str = "single_choice",
+    options: list[str] | None = None,
+    answer: list | None = None,
+) -> int:
+    storage_options = options if options is not None else ["A", "B"]
+    storage_answer = answer if answer is not None else [0]
     with app.app_context():
         question_id = db.session.execute(
             text(
@@ -76,8 +89,8 @@ def _insert_question(app, bank_id: int, user_id: int, content: str, sort_order: 
                     analysis, tags, difficulty, source_type, sort_order
                 )
                 VALUES (
-                    :bank_id, :user_id, 'single_choice', :content,
-                    '["A","B"]', '["A"]', '解析', '[]', 1, 'custom', :sort_order
+                    :bank_id, :user_id, :q_type, :content,
+                    :options, :answer, '解析', '[]', 1, 'custom', :sort_order
                 )
                 RETURNING id
                 """
@@ -85,7 +98,10 @@ def _insert_question(app, bank_id: int, user_id: int, content: str, sort_order: 
             {
                 "bank_id": int(bank_id),
                 "user_id": int(user_id),
+                "q_type": q_type,
                 "content": content,
+                "options": json.dumps(storage_options, ensure_ascii=False),
+                "answer": json.dumps(storage_answer, ensure_ascii=False),
                 "sort_order": int(sort_order),
             },
         ).scalar_one()
@@ -99,6 +115,18 @@ def _insert_question(app, bank_id: int, user_id: int, content: str, sort_order: 
         )
         db.session.commit()
         return int(question_id)
+
+
+def _find_pair(duplicates: list[dict], left_id: int, right_id: int) -> dict | None:
+    expected = {int(left_id), int(right_id)}
+    for pair in duplicates:
+        ids = {
+            int(pair["question1"]["id"]),
+            int(pair["question2"]["id"]),
+        }
+        if ids == expected:
+            return pair
+    return None
 
 
 def test_user_bank_duplicate_check_post_saves_and_get_keeps_result(app, auth_client, seed_user):
@@ -171,6 +199,126 @@ def test_user_bank_duplicate_check_post_saves_and_get_keeps_result(app, auth_cli
         assert pruned_data["total_pairs"] == 1
         assert second_id not in remaining_ids
         assert {first_id, fourth_id}.issubset(remaining_ids)
+    finally:
+        _delete_bank(app, bank_id)
+
+
+def test_user_bank_duplicate_check_uses_options_and_answers_as_secondary_signals(app, auth_client, seed_user):
+    bank_id = _create_bank(app, seed_user["id"], name="选项答案查重测试题库")
+    try:
+        first_id = _insert_question(
+            app,
+            bank_id,
+            seed_user["id"],
+            "缓存穿透的常见处理方式是什么？",
+            1,
+            options=["使用布隆过滤器", "增加 JVM 堆内存", "关闭索引", "扩大事务范围"],
+            answer=[0],
+        )
+        second_id = _insert_question(
+            app,
+            bank_id,
+            seed_user["id"],
+            "接口限流与布隆过滤器通常解决什么问题？",
+            2,
+            options=["使用布隆过滤器", "增加 JVM 堆内存", "关闭索引", "扩大事务范围"],
+            answer=[0],
+        )
+        _insert_question(
+            app,
+            bank_id,
+            seed_user["id"],
+            "完全不同的网络协议分层模型题目。",
+            3,
+            options=["应用层", "传输层"],
+            answer=[1],
+        )
+
+        response = auth_client.post(
+            f"/user/banks/api/{bank_id}/questions/duplicate-check",
+            json={"similarity_threshold": 0.7},
+        )
+        data = response.get_json()["data"]
+        pair = _find_pair(data["duplicates"], first_id, second_id)
+
+        assert response.status_code == 200
+        assert pair is not None
+        assert pair["similarity"] >= 0.7
+        assert pair["match_breakdown"]["stem_similarity"] < 0.5
+        assert pair["match_breakdown"]["options_similarity"] == 1.0
+        assert pair["match_breakdown"]["answer_similarity"] == 1.0
+    finally:
+        _delete_bank(app, bank_id)
+
+
+def test_user_bank_duplicate_check_penalizes_same_stem_with_different_answer(app, auth_client, seed_user):
+    bank_id = _create_bank(app, seed_user["id"], name="答案差异查重测试题库")
+    try:
+        first_id = _insert_question(
+            app,
+            bank_id,
+            seed_user["id"],
+            "数据库事务的四个特性包括哪些？",
+            1,
+            options=["原子性、一致性、隔离性、持久性", "封装、继承、多态", "路由、交换、转发", "线程、进程、协程"],
+            answer=[0],
+        )
+        second_id = _insert_question(
+            app,
+            bank_id,
+            seed_user["id"],
+            "数据库事务的四个特性包括哪些？",
+            2,
+            options=["原子性、一致性、隔离性、持久性", "封装、继承、多态", "路由、交换、转发", "线程、进程、协程"],
+            answer=[1],
+        )
+
+        response = auth_client.post(
+            f"/user/banks/api/{bank_id}/questions/duplicate-check",
+            json={"similarity_threshold": 0.8},
+        )
+        data = response.get_json()["data"]
+        pair = _find_pair(data["duplicates"], first_id, second_id)
+
+        assert response.status_code == 200
+        assert pair is not None
+        assert 0.8 <= pair["similarity"] < 1.0
+        assert pair["match_breakdown"]["stem_similarity"] == 1.0
+        assert pair["match_breakdown"]["answer_similarity"] == 0.0
+    finally:
+        _delete_bank(app, bank_id)
+
+
+def test_user_bank_duplicate_check_lowers_priority_when_type_differs(app, auth_client, seed_user):
+    bank_id = _create_bank(app, seed_user["id"], name="题型优先级查重测试题库")
+    try:
+        first_id = _insert_question(app, bank_id, seed_user["id"], "Redis 过期键删除策略包括哪些？", 1)
+        second_id = _insert_question(app, bank_id, seed_user["id"], "Redis 过期键删除策略包括哪些？", 2)
+        third_id = _insert_question(
+            app,
+            bank_id,
+            seed_user["id"],
+            "Redis 过期键删除策略包括哪些？",
+            3,
+            q_type="essay",
+            options=[],
+            answer=["定时删除、惰性删除、定期删除"],
+        )
+
+        response = auth_client.post(
+            f"/user/banks/api/{bank_id}/questions/duplicate-check",
+            json={"similarity_threshold": 0.5},
+        )
+        data = response.get_json()["data"]
+        same_type_pair = _find_pair(data["duplicates"], first_id, second_id)
+        cross_type_pair = _find_pair(data["duplicates"], first_id, third_id)
+
+        assert response.status_code == 200
+        assert same_type_pair is not None
+        assert cross_type_pair is not None
+        assert same_type_pair["similarity"] > cross_type_pair["similarity"]
+        assert cross_type_pair["match_breakdown"]["type_match"] is False
+        assert data["duplicates"][0] == same_type_pair
     finally:
         _delete_bank(app, bank_id)
 
