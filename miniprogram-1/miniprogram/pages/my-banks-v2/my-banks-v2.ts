@@ -39,9 +39,9 @@ Page({
     inited: false,
 
     keyword: '',
-    sortIndex: 0,
-    sortLabels: ['最近', '最受欢迎', '题目最多'],
-    sortValues: ['recent', 'popular', 'questions'],
+    sourceIndex: 0,
+    sourceLabels: ['全部', '我加入的', '我创建的'],
+    sourceValues: ['all', 'shared', 'created'],
     banks: [] as BankMeta[],
     filteredBanks: [] as BankMeta[],
 
@@ -137,17 +137,23 @@ Page({
     this.setData({ keyword: '' }, () => this.applyFilter());
   },
 
-  onSortTap(e: any) {
-    const idx = Number(e?.currentTarget?.dataset?.index ?? 0) || 0;
-    const max = (this.data.sortLabels || []).length - 1;
-    const sortIndex = Math.max(0, Math.min(idx, max));
-    if (sortIndex === this.data.sortIndex) return;
-    this.setData({ sortIndex }, () => this.applyFilter());
+  onSourceChange(e: any) {
+    const idx = Number(e?.detail?.value ?? 0) || 0;
+    const max = (this.data.sourceLabels || []).length - 1;
+    const sourceIndex = Math.max(0, Math.min(idx, max));
+    if (sourceIndex === this.data.sourceIndex) return;
+    this.setData({ sourceIndex }, () => this.applyFilter());
   },
 
   applyFilter() {
     const kw = (this.data.keyword || '').trim().toLowerCase();
     let out = (this.data.banks || []).slice();
+    const sourceValues = this.data.sourceValues || ['all', 'shared', 'created'];
+    const source = sourceValues[this.data.sourceIndex] || 'all';
+
+    if (source === 'shared' || source === 'created') {
+      out = out.filter((b) => b.source === source);
+    }
 
     if (kw) {
       out = out.filter((b) => {
@@ -158,19 +164,7 @@ Page({
       });
     }
 
-    const sortValues = this.data.sortValues || ['recent', 'popular', 'questions'];
-    const sort = sortValues[this.data.sortIndex] || 'recent';
     out.sort((a, b) => {
-      if (sort === 'popular') {
-        return (Number(b.popularity_count || 0) - Number(a.popularity_count || 0))
-          || String(b.updated_at || '').localeCompare(String(a.updated_at || ''))
-          || (b.id - a.id);
-      }
-      if (sort === 'questions') {
-        return (Number(b.question_count || 0) - Number(a.question_count || 0))
-          || String(b.updated_at || '').localeCompare(String(a.updated_at || ''))
-          || (b.id - a.id);
-      }
       return String(b.updated_at || '').localeCompare(String(a.updated_at || '')) || (b.id - a.id);
     });
 

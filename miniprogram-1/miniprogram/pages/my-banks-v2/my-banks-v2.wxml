@@ -35,7 +35,7 @@
           </view>
         </view>
 
-        <view class="mb-tool-area" aria-label="题库搜索与排序">
+        <view class="mb-tool-area" aria-label="题库搜索与筛选">
           <view class="search-wrap">
             <text class="search-icon">⌕</text>
             <input class="search-input" type="text" placeholder="搜索题库名称/描述" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" />
@@ -44,19 +44,12 @@
             </view>
           </view>
 
-          <view class="sort-seg" role="tablist" aria-label="排序筛选">
-            <view
-              wx:for="{{sortLabels}}"
-              wx:key="*this"
-              class="sort-seg-btn {{sortIndex === index ? 'active' : ''}}"
-              bindtap="onSortTap"
-              data-index="{{index}}"
-              aria-role="button"
-              aria-label="按{{item}}排序"
-            >
-              <text>{{item}}</text>
+          <picker class="source-picker" mode="selector" range="{{sourceLabels}}" value="{{sourceIndex}}" bindchange="onSourceChange">
+            <view class="source-trigger" aria-role="button" aria-label="筛选题库来源">
+              <text>{{sourceLabels[sourceIndex]}}</text>
+              <text class="source-chevron">⌄</text>
             </view>
-          </view>
+          </picker>
         </view>
 
         <view class="mb-loading" wx:if="{{loading}}">

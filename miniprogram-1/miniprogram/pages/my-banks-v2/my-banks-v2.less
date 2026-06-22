@@ -340,6 +340,7 @@ page {
 .mb-tool-area {
   padding: 0;
   align-items: stretch;
+  flex-wrap: nowrap;
 }
 
 .search-wrap {
@@ -411,15 +412,13 @@ page {
   opacity: 0.92;
 }
 
-.sort-seg {
-  display: flex;
-  align-items: stretch;
-  gap: 8rpx;
-  flex: 0 0 auto;
+.source-picker {
+  flex: 0 0 176rpx;
+  min-width: 0;
 }
 
-.sort-seg-btn {
-  min-width: 118rpx;
+.source-trigger {
+  width: 100%;
   height: 68rpx;
   padding: 0 16rpx;
   border-radius: 18rpx;
@@ -431,19 +430,21 @@ page {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--app-muted);
+  gap: 8rpx;
+  color: var(--app-text);
   font-size: 24rpx;
   font-weight: 900;
   box-sizing: border-box;
 }
 
-.sort-seg-btn.active {
-  border-color: var(--app-border-strong);
-  background: linear-gradient(135deg, var(--app-surface-glass), var(--app-surface));
-  color: var(--app-text);
+.source-chevron {
+  flex: 0 0 auto;
+  color: var(--app-muted);
+  font-size: 22rpx;
+  line-height: 1;
 }
 
-.sort-seg-btn:active {
+.source-trigger:active {
   transform: scale(0.98);
   opacity: 0.92;
 }
@@ -757,13 +758,12 @@ page {
   padding: 0 18rpx;
 }
 
-.mine-linked-page .sort-seg {
-  gap: 10rpx;
+.mine-linked-page .source-picker {
+  flex-basis: 184rpx;
 }
 
-.mine-linked-page .sort-seg-btn {
+.mine-linked-page .source-trigger {
   height: 76rpx;
-  min-width: 128rpx;
   padding: 0 18rpx;
 }
 
@@ -814,7 +814,7 @@ page {
 .page-root .btn,
 .page-root .search-wrap,
 .page-root .seg,
-.page-root .sort-seg-btn {
+.page-root .source-trigger {
   border-radius: 18rpx;
   background: var(--app-surface-glass);
   box-shadow: var(--app-shadow-soft);

@@ -80,9 +80,9 @@ Page({
         loading: false,
         inited: false,
         keyword: '',
-        sortIndex: 0,
-        sortLabels: ['最近', '最受欢迎', '题目最多'],
-        sortValues: ['recent', 'popular', 'questions'],
+        sourceIndex: 0,
+        sourceLabels: ['全部', '我加入的', '我创建的'],
+        sourceValues: ['all', 'shared', 'created'],
         banks: [],
         filteredBanks: [],
         createOpen: false,
@@ -188,19 +188,24 @@ Page({
         var _this = this;
         this.setData({ keyword: '' }, function () { return _this.applyFilter(); });
     },
-    onSortTap: function (e) {
+    onSourceChange: function (e) {
         var _this = this;
-        var _a, _b, _c;
-        var idx = Number((_c = (_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.index) !== null && _c !== void 0 ? _c : 0) || 0;
-        var max = (this.data.sortLabels || []).length - 1;
-        var sortIndex = Math.max(0, Math.min(idx, max));
-        if (sortIndex === this.data.sortIndex)
+        var _a, _b;
+        var idx = Number((_b = (_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value) !== null && _b !== void 0 ? _b : 0) || 0;
+        var max = (this.data.sourceLabels || []).length - 1;
+        var sourceIndex = Math.max(0, Math.min(idx, max));
+        if (sourceIndex === this.data.sourceIndex)
             return;
-        this.setData({ sortIndex: sortIndex }, function () { return _this.applyFilter(); });
+        this.setData({ sourceIndex: sourceIndex }, function () { return _this.applyFilter(); });
     },
     applyFilter: function () {
         var kw = (this.data.keyword || '').trim().toLowerCase();
         var out = (this.data.banks || []).slice();
+        var sourceValues = this.data.sourceValues || ['all', 'shared', 'created'];
+        var source = sourceValues[this.data.sourceIndex] || 'all';
+        if (source === 'shared' || source === 'created') {
+            out = out.filter(function (b) { return b.source === source; });
+        }
         if (kw) {
             out = out.filter(function (b) {
                 var name = String(b.name || '').toLowerCase();
@@ -209,19 +214,7 @@ Page({
                 return name.includes(kw) || desc.includes(kw) || owner.includes(kw);
             });
         }
-        var sortValues = this.data.sortValues || ['recent', 'popular', 'questions'];
-        var sort = sortValues[this.data.sortIndex] || 'recent';
         out.sort(function (a, b) {
-            if (sort === 'popular') {
-                return (Number(b.popularity_count || 0) - Number(a.popularity_count || 0))
-                    || String(b.updated_at || '').localeCompare(String(a.updated_at || ''))
-                    || (b.id - a.id);
-            }
-            if (sort === 'questions') {
-                return (Number(b.question_count || 0) - Number(a.question_count || 0))
-                    || String(b.updated_at || '').localeCompare(String(a.updated_at || ''))
-                    || (b.id - a.id);
-            }
             return String(b.updated_at || '').localeCompare(String(a.updated_at || '')) || (b.id - a.id);
         });
         this.setData({ filteredBanks: out });
