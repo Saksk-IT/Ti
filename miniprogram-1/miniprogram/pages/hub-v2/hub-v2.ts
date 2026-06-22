@@ -3,6 +3,15 @@ import { checkLogin } from '../../utils/auth';
 import { safeNavigate } from '../../utils/nav';
 import { themeManager, ThemeStyle, ThemeMode } from '../../utils/theme';
 import { decorateAvatarUrl } from '../../utils/avatar';
+import {
+  buildRecentBanks,
+  buildStudyAdvice,
+  buildWeaknessEmptyActions,
+  normalizeHubStats,
+  RecentBankItem,
+  StudyAdviceItem,
+  WeaknessEmptyAction,
+} from './hub-content';
 
 interface CheckinData {
   checked_in_today: boolean;
@@ -37,6 +46,20 @@ interface StatsData {
   accuracy: number;
   favorites: number;
   mistakes: number;
+}
+
+type HubPageThis = WechatMiniprogram.Page.Instance<Record<string, any>, Record<string, any>> & {
+  __userAvatarDlTried?: boolean;
+};
+
+function toSafeNumber(value: unknown): number {
+  const num = Number(value || 0);
+  return Number.isFinite(num) ? num : 0;
+}
+
+function toSafeString(value: unknown, fallback = ''): string {
+  const text = String(value || '').trim();
+  return text || fallback;
 }
 
 function formatTimeAgo(dateStr: string | null): string {
@@ -140,6 +163,11 @@ Page({
       mistakes: 0,
     } as StatsData,
 
+    // 首页扩展内容
+    studyAdvice: [] as StudyAdviceItem[],
+    recentBanks: [] as RecentBankItem[],
+    weaknessEmptyActions: [] as WeaknessEmptyAction[],
+
     // 主题
     isDarkMode: false,
     themeClass: '',
@@ -220,21 +248,22 @@ Page({
           inited: true,
           loading: false,
         });
+        this.refreshHubContent();
         return;
       }
 
       // 已登录：并行加载所有数据
-      const [profile, checkinStatus, lastPractice, historyStats] = await Promise.all([
+      const [profile, checkinStatus, lastPractice, homeStats] = await Promise.all([
         api.getProfile().catch(() => null),
         api.getCheckinStatus().catch(() => null),
         api.getLastPractice().catch(() => null),
-        api.getHistoryStats(30).catch(() => null),
+        api.getDataCenter(30).catch(() => api.getHistoryStats(30).catch(() => null)),
       ]);
 
       // 用户信息
       if (profile) {
         const nextAvatar = profile.avatar ? decorateAvatarUrl(resolveUploadUrl(profile.avatar)) : '';
-        const self = this;
+        const self = this as HubPageThis;
         self.__userAvatarDlTried = false;
         this.setData({
           userName: profile.username || '用户',
@@ -278,23 +307,19 @@ Page({
       }
 
       // 学习统计 + 薄弱环节
-      if (historyStats) {
-        const data = historyStats as Record<string, unknown>;
+      if (homeStats) {
+        const data = homeStats as Record<string, unknown>;
         this.setData({
-          stats: {
-            answered: data.answered_count || 0,
-            accuracy: data.accuracy || 0,
-            favorites: data.favorites_count || 0,
-            mistakes: data.mistakes_count || 0,
-          },
+          stats: normalizeHubStats(data),
         });
 
         // 薄弱环节（取前2条）
-        const weaknessRows = (data.weakness_rows || []).slice(0, 2);
+        const weaknessRows = Array.isArray(data.weakness_rows) ? data.weakness_rows.slice(0, 2) : [];
         this.setData({ weakness: weaknessRows });
       }
 
       this.setData({ inited: true });
+      this.refreshHubContent();
     } catch (e: any) {
       console.error('加载首页数据失败:', e);
       // 如果是401错误，清除登录状态但不跳转
@@ -303,12 +328,87 @@ Page({
         wx.removeStorageSync('token');
         wx.removeStorageSync('userInfo');
         this.setData({ isLoggedIn: false, userName: '游客', userAvatar: '' });
+        this.refreshHubContent();
       } else {
         wx.showToast({ title: e?.message || '加载失败', icon: 'none' });
       }
     } finally {
       this.setData({ loading: false });
     }
+  },
+
+  refreshHubContent() {
+    const { stats, weakness, lastPractice, isLoggedIn } = this.data;
+    this.rememberRecentBank(lastPractice);
+    const storedRecentBanks = this.getStoredRecentBanks();
+    this.setData({
+      studyAdvice: buildStudyAdvice(stats, weakness, lastPractice, isLoggedIn),
+      recentBanks: buildRecentBanks(lastPractice, storedRecentBanks),
+      weaknessEmptyActions: buildWeaknessEmptyActions(isLoggedIn, stats),
+    });
+  },
+
+  getStoredRecentBanks(): unknown[] {
+    try {
+      const raw = wx.getStorageSync('hub_recent_banks_v1');
+      if (Array.isArray(raw)) return raw;
+      if (typeof raw === 'string' && raw.trim()) {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  },
+
+  rememberRecentBank(lastPractice: LastPracticeData) {
+    if (!lastPractice || !lastPractice.has_practice) return;
+    const sourceId = lastPractice.source_id || lastPractice.subject_id || '';
+    const title = toSafeString(lastPractice.subject_name || lastPractice.display_name);
+    if (!sourceId || !title) return;
+
+    const sourceType = toSafeString(lastPractice.source_type, lastPractice.subject_id ? 'public' : '');
+    const current: RecentBankItem = {
+      key: `${sourceType || 'practice'}-${String(sourceId)}`,
+      title,
+      meta: toSafeString(lastPractice.last_at_display, '最近练习'),
+      source_type: sourceType,
+      source_id: sourceId,
+      target: 'stored',
+      mode: toSafeString(lastPractice.mode),
+    };
+
+    try {
+      const existing: RecentBankItem[] = this.getStoredRecentBanks()
+        .filter((row) => row && typeof row === 'object')
+        .map((row, index) => {
+          const item = row as Record<string, unknown>;
+          return {
+            key: toSafeString(item.key, `stored-${index}`),
+            title: toSafeString(item.title || item.name || item.display_name || item.subject_name),
+            meta: toSafeString(item.meta || item.last_at_display || item.subtitle, '最近使用'),
+            source_type: toSafeString(item.source_type),
+            source_id: toSafeString(item.source_id || item.subject_id || item.bank_id),
+            target: toSafeString(item.target, 'stored'),
+            mode: toSafeString(item.mode),
+          };
+        })
+        .filter((row) => !!row.title && !!row.source_id);
+      const nextRows = [current]
+        .concat(existing)
+        .filter((row, index, rows) => {
+          if (!row) return false;
+          const key = `${toSafeString(row.source_type, 'unknown')}:${toSafeString(row.source_id, row.title)}`;
+          return rows.findIndex((candidate) => {
+            if (!candidate) return false;
+            const candidateKey = `${toSafeString(candidate.source_type, 'unknown')}:${toSafeString(candidate.source_id, candidate.title)}`;
+            return candidateKey === key;
+          }) === index;
+        })
+        .slice(0, 6);
+      wx.setStorageSync('hub_recent_banks_v1', nextRows);
+    } catch (e) {}
   },
 
   // 签到
@@ -397,6 +497,61 @@ Page({
     wx.navigateTo({ url: '/pages/login/login' });
   },
 
+  onAdviceTap(e: any) {
+    const target = String(e?.currentTarget?.dataset?.target || '');
+    this.routeHubTarget(target);
+  },
+
+  onRecentBankTap(e: any) {
+    const target = String(e?.currentTarget?.dataset?.target || '');
+    if (target === 'continue') {
+      this.onContinuePractice();
+      return;
+    }
+    const sourceType = String(e?.currentTarget?.dataset?.sourceType || '');
+    const sourceId = e?.currentTarget?.dataset?.sourceId;
+    if (sourceType === 'bank' && sourceId) {
+      safeNavigate(`/pages/bank-detail/bank-detail?bank_id=${encodeURIComponent(String(sourceId))}`, 'navigateTo');
+      return;
+    }
+    if (sourceType === 'public' && sourceId) {
+      safeNavigate(`/pages/subject-detail-v2/subject-detail-v2?subject=${encodeURIComponent(String(sourceId))}`, 'navigateTo');
+      return;
+    }
+    this.onGoPublicBank();
+  },
+
+  onWeaknessEmptyActionTap(e: any) {
+    const target = String(e?.currentTarget?.dataset?.target || '');
+    this.routeHubTarget(target);
+  },
+
+  routeHubTarget(target: string) {
+    switch (target) {
+      case 'login':
+        this.onGoLoginTap();
+        break;
+      case 'continue':
+        this.onContinuePractice();
+        break;
+      case 'weakness':
+        this.onGoHistory();
+        break;
+      case 'review':
+        this.onGoReview();
+        break;
+      case 'favorites':
+        this.onGoFavorites();
+        break;
+      case 'publicBank':
+        this.onGoPublicBank();
+        break;
+      default:
+        this.onGoPublicBank();
+        break;
+    }
+  },
+
   // 获取本地保存的上次练习会话
   getLocalLastSession(): LastPracticeData | null {
     try {
@@ -404,20 +559,21 @@ Page({
       if (!raw || typeof raw !== 'object') return null;
 
       const session = raw as Record<string, unknown>;
-      const sourceType = session.source_type || '';
+      const sourceType = toSafeString(session.source_type);
       const sourceId = session.source_id || session.subject || session.bank_id;
 
       if (!sourceType || !sourceId) return null;
 
       // 计算时间显示（直接用时间戳计算，避免时区问题）
-      const timestamp = session.timestamp || 0;
+      const timestamp = toSafeNumber(session.timestamp);
       let lastAtDisplay = '';
       if (timestamp) {
         lastAtDisplay = formatTimeAgoFromTimestamp(timestamp);
       }
 
       // 直接使用保存的显示名称，无名称时使用默认
-      const subjectName = session.display_name || (sourceType === 'bank' ? '个人题库' : '公共题库');
+      const subjectName = toSafeString(session.display_name, sourceType === 'bank' ? '个人题库' : '公共题库');
+      const normalizedSourceType = sourceType === 'bank' || sourceType === 'public' ? sourceType : '';
 
       return {
         has_practice: true,
@@ -426,10 +582,10 @@ Page({
         subject_name: subjectName,
         path: null,  // 由 onContinuePractice 动态构建
         last_at_display: lastAtDisplay,
-        source_type: sourceType,
-        source_id: sourceId,
+        source_type: normalizedSourceType,
+        source_id: sourceId as string | number,
         display_name: subjectName,
-        mode: session.mode,
+        mode: toSafeString(session.mode),
         has_local_session: true,
       };
     } catch (e) {
@@ -492,7 +648,7 @@ Page({
       return;
     }
 
-    const self = this;
+    const self = this as HubPageThis;
     if (self.__userAvatarDlTried) {
       this.setData({ userAvatar: '' });
       return;

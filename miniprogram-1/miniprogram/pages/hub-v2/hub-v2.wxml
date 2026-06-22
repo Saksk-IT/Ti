@@ -143,6 +143,61 @@
         </view>
       </view>
 
+      <!-- 今日学习建议 -->
+      <view class="section animate-slide-up" wx:if="{{studyAdvice.length}}" style="animation-delay: 0.18s">
+        <view class="section-header">
+          <text class="section-title">今日学习建议</text>
+        </view>
+        <view class="advice-list">
+          <view
+            class="advice-card glass-card"
+            wx:for="{{studyAdvice}}"
+            wx:key="key"
+            bindtap="onAdviceTap"
+            data-target="{{item.target}}"
+          >
+            <view class="advice-icon advice-icon-{{item.icon}}">
+              <text>{{index + 1}}</text>
+            </view>
+            <view class="advice-copy">
+              <text class="advice-title">{{item.title}}</text>
+              <text class="advice-subtitle">{{item.subtitle}}</text>
+            </view>
+            <view class="advice-action">
+              <text>{{item.action}}</text>
+              <image class="action-icon" src="/images/icons/arrow-left.svg" mode="aspectFit"></image>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 最近使用的题库 -->
+      <view class="section animate-slide-up" wx:if="{{recentBanks.length}}" style="animation-delay: 0.19s">
+        <view class="section-header">
+          <text class="section-title">最近使用</text>
+          <text class="section-link" bindtap="onGoMyBanks">个人题库</text>
+        </view>
+        <scroll-view class="recent-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+          <view class="recent-row">
+            <view
+              class="recent-card glass-card"
+              wx:for="{{recentBanks}}"
+              wx:key="key"
+              bindtap="onRecentBankTap"
+              data-target="{{item.target}}"
+              data-source-type="{{item.source_type}}"
+              data-source-id="{{item.source_id}}"
+            >
+              <view class="recent-mark">
+                <text>{{index + 1}}</text>
+              </view>
+              <text class="recent-title">{{item.title}}</text>
+              <text class="recent-meta">{{item.meta}}</text>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+
       <!-- 快捷入口 -->
       <view class="section animate-slide-up" style="animation-delay: 0.2s">
         <view class="section-header">
@@ -189,12 +244,12 @@
       </view>
 
       <!-- 薄弱环节提示 -->
-      <view class="section animate-slide-up" wx:if="{{weakness.length > 0}}" style="animation-delay: 0.25s">
+      <view class="section animate-slide-up" style="animation-delay: 0.25s">
         <view class="section-header">
           <text class="section-title">薄弱环节</text>
-          <text class="section-link" bindtap="onGoHistory">查看全部</text>
+          <text class="section-link" wx:if="{{weakness.length > 0}}" bindtap="onGoHistory">查看全部</text>
         </view>
-        <view class="weakness-list">
+        <view class="weakness-list" wx:if="{{weakness.length > 0}}">
           <view 
             class="weakness-card glass-card" 
             wx:for="{{weakness}}" 
@@ -215,6 +270,24 @@
                 <text class="action-text">强化</text>
                 <image class="action-icon" src="/images/icons/arrow-left.svg" mode="aspectFit"></image>
               </view>
+            </view>
+          </view>
+        </view>
+        <view class="weakness-empty-list" wx:else>
+          <view
+            class="weakness-empty-card glass-card"
+            wx:for="{{weaknessEmptyActions}}"
+            wx:key="key"
+            bindtap="onWeaknessEmptyActionTap"
+            data-target="{{item.target}}"
+          >
+            <view class="weakness-empty-copy">
+              <text class="weakness-empty-title">{{item.title}}</text>
+              <text class="weakness-empty-subtitle">{{item.subtitle}}</text>
+            </view>
+            <view class="weakness-empty-action">
+              <text>{{item.action}}</text>
+              <image class="action-icon" src="/images/icons/arrow-left.svg" mode="aspectFit"></image>
             </view>
           </view>
         </view>

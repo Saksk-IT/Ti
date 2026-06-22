@@ -473,6 +473,143 @@ page {
   color: var(--app-muted);
 }
 
+/* ========== 今日学习建议 ========== */
+.advice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.advice-card {
+  min-height: 112rpx;
+  padding: 22rpx 24rpx;
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  box-sizing: border-box;
+}
+
+.advice-icon {
+  width: 54rpx;
+  height: 54rpx;
+  flex-shrink: 0;
+  border-radius: 16rpx;
+  background: var(--app-primary-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--app-primary);
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.advice-icon-weakness,
+.advice-icon-mistake {
+  background: color-mix(in srgb, var(--app-warning) 18%, var(--app-surface));
+  color: var(--app-warning);
+}
+
+.advice-icon-favorite {
+  background: color-mix(in srgb, var(--app-primary) 14%, var(--app-surface));
+}
+
+.advice-copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.advice-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--app-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.advice-subtitle {
+  font-size: 23rpx;
+  color: var(--app-muted);
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.advice-action {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  padding: 10rpx 14rpx;
+  border-radius: 10rpx;
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+  font-size: 23rpx;
+  font-weight: 700;
+}
+
+/* ========== 最近使用 ========== */
+.recent-scroll {
+  width: 100%;
+  white-space: nowrap;
+}
+
+.recent-row {
+  display: flex;
+  gap: 14rpx;
+  padding: 2rpx 2rpx 4rpx;
+}
+
+.recent-card {
+  width: 214rpx;
+  min-height: 146rpx;
+  padding: 20rpx;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+  overflow: hidden;
+}
+
+.recent-mark {
+  width: 42rpx;
+  height: 42rpx;
+  border-radius: 14rpx;
+  background: var(--app-primary-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--app-primary);
+  font-size: 22rpx;
+  font-weight: 800;
+}
+
+.recent-title {
+  font-size: 27rpx;
+  font-weight: 700;
+  color: var(--app-text);
+  line-height: 1.25;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.recent-meta {
+  margin-top: auto;
+  font-size: 22rpx;
+  color: var(--app-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ========== 快捷入口网格 ========== */
 .quick-grid {
   display: grid;
@@ -591,6 +728,55 @@ page {
   height: 20rpx;
   transform: rotate(180deg);
   opacity: 0.7;
+}
+
+.weakness-empty-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.weakness-empty-card {
+  min-height: 116rpx;
+  padding: 22rpx 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  box-sizing: border-box;
+}
+
+.weakness-empty-copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.weakness-empty-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--app-text);
+}
+
+.weakness-empty-subtitle {
+  font-size: 23rpx;
+  line-height: 1.4;
+  color: var(--app-muted);
+}
+
+.weakness-empty-action {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  padding: 10rpx 14rpx;
+  border-radius: 10rpx;
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+  font-size: 23rpx;
+  font-weight: 700;
 }
 
 /* ========== 页脚 ========== */
