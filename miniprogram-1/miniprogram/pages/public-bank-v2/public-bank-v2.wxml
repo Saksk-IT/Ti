@@ -22,11 +22,13 @@
       <view class="container">
         <view class="card pb-hero" aria-label="题库广场概览">
           <view class="pb-hero-top">
-            <view class="pb-hero-head">
-              <text class="pb-title">题库广场</text>
-              <view class="pill pb-hero-kpi"><text>{{total}} 题库</text></view>
+            <view class="pb-hero-left">
+              <view class="pb-title-row">
+                <text class="pb-title">题库广场</text>
+                <view class="pill pb-count"><text>{{total}} 个题库</text></view>
+              </view>
+              <text class="pb-sub">系统题库 + 用户公开题库，一处完成筛选与进入练习设置。</text>
             </view>
-            <text class="pb-sub">系统题库 + 用户公开题库，一处完成筛选与进入练习设置。</text>
           </view>
         </view>
 

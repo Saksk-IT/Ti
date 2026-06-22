@@ -96,22 +96,27 @@ page {
 .pb-hero-top {
   display: flex;
   flex-direction: column;
-  gap: 8rpx;
+  gap: 10rpx;
 }
 
-.pb-hero-head {
+.pb-hero-left {
+  min-width: 0;
+}
+
+.pb-title-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12rpx;
+  width: 100%;
 }
 
-.pb-hero-kpi {
+.pb-count {
   flex: 0 0 auto;
-  white-space: nowrap;
 }
 
 .pb-title {
+  min-width: 0;
   font-size: 32rpx;
   font-weight: 950;
   letter-spacing: 0;
@@ -119,7 +124,7 @@ page {
 }
 
 .pb-sub {
-  margin-top: 0;
+  margin-top: 6rpx;
   font-size: 24rpx;
   line-height: 1.6;
   color: var(--app-muted);
