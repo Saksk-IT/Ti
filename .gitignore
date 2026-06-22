@@ -21,14 +21,21 @@ pip-log.txt
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.pyre/
+.pytype/
+.tox/
+.nox/
 .coverage
+.coverage.*
 htmlcov/
 coverage.xml
 *.cover
+.hypothesis/
 
 # IDE
 .vscode/
 .idea/
+.cursor/
 *.swp
 *.swo
 *.sublime-project
@@ -36,6 +43,7 @@ coverage.xml
 
 # OS
 .DS_Store
+**/.DS_Store
 Thumbs.db
 Desktop.ini
 nul
@@ -46,7 +54,12 @@ nul
 # 运行时数据
 var/
 backups/
+instance/
+tmp/
 *.db
+*.db-wal
+*.db-shm
+*.sqlite
 *.sqlite3
 
 # 本地题库导入文件
@@ -62,15 +75,38 @@ uploads/
 # Node.js / 小程序
 node_modules/
 miniprogram_npm/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+.npm/
+.yarn/
+.yarn/cache/
+coverage/
+playwright-report/
+test-results/
+blob-report/
 *.js.map
 package-lock.json
 yarn.lock
+
+# 小程序本地构建 / 预览产物
+miniprogram-1/miniprogram/miniprogram_npm/
+miniprogram-1/miniprogram/sourcemap/
+miniprogram-1/miniprogram/**/*.map
+miniprogram-1/miniprogram/**/*.wxss.map
+miniprogram-1/miniprogram/**/*.wxml.map
 
 # Docker
 docker-compose.override.yml
 
 # Redis
 dump.rdb
+
+# 本地 AI / Agent 工具
+.agents/
+.codex/
 
 # 临时调试文件
 _route_check.py
