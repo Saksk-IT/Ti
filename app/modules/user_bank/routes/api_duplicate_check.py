@@ -11,8 +11,9 @@ from app.core.utils.api_response import error_response, success_response
 from app.core.utils.decorators import auth_required, current_user_id
 from app.modules.user_bank.services.duplicate_check_service import (
     DEFAULT_SIMILARITY_THRESHOLD,
-    check_bank_duplicates,
+    load_saved_duplicate_check,
     normalize_similarity_threshold,
+    run_and_save_duplicate_check,
 )
 
 from .api_base import user_bank_api_bp
@@ -27,10 +28,25 @@ def get_question_duplicates(bank_id: int):
     if not _is_bank_owner(bank_id, user_id):
         return error_response("题库不存在或无权操作", 404)
 
-    threshold = normalize_similarity_threshold(
-        request.args.get("similarity_threshold", DEFAULT_SIMILARITY_THRESHOLD, type=float)
-    )
-    result = check_bank_duplicates(int(bank_id), threshold)
+    result = load_saved_duplicate_check(user_id, int(bank_id))
+    return success_response(data=result)
+
+
+@user_bank_api_bp.route("/<int:bank_id>/questions/duplicate-check", methods=["POST"])
+@auth_required
+def run_question_duplicates(bank_id: int):
+    user_id = _current_int_user_id()
+    if user_id is None:
+        return error_response("请先登录", 401, code=401)
+    if not _is_bank_owner(bank_id, user_id):
+        return error_response("题库不存在或无权操作", 404)
+
+    payload = request.get_json(silent=True) or {}
+    threshold_value = payload.get("similarity_threshold")
+    if threshold_value is None:
+        threshold_value = request.args.get("similarity_threshold", DEFAULT_SIMILARITY_THRESHOLD, type=float)
+    threshold = normalize_similarity_threshold(threshold_value)
+    result = run_and_save_duplicate_check(user_id, int(bank_id), threshold)
     return success_response(data=result)
 
 

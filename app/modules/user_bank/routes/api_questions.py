@@ -11,6 +11,7 @@ from app.core.extensions import db
 from app.core.utils.decorators import auth_required, current_user_id
 from app.core.utils.image_helpers import serialize_question_image_groups
 from app.core.utils.api_response import success_response, error_response
+from app.modules.user_bank.services.duplicate_check_service import prune_saved_duplicate_check_questions
 
 from .api_base import user_bank_api_bp, check_bank_access
 from .api_tags import _load_bank_tag_store
@@ -636,6 +637,7 @@ def delete_question(bank_id, question_id):
         text('UPDATE user_question_banks SET question_count = question_count - 1, updated_at = CURRENT_TIMESTAMP WHERE id = :bid'),
         {'bid': bank_id}
     )
+    prune_saved_duplicate_check_questions(int(user_id), int(bank_id), {int(question_id)})
     db.session.commit()
 
     return success_response(message='删除成功')
@@ -661,6 +663,11 @@ def batch_delete_questions(bank_id):
         return error_response('题库不存在或无权操作', 404)
 
     in_frag, in_p = _build_named_in('id', question_ids, 'del')
+    rows = db.session.execute(
+        text(f'SELECT id FROM user_bank_questions WHERE {in_frag} AND bank_id = :bid'),
+        {**in_p, 'bid': bank_id},
+    ).fetchall()
+    deleted_ids = [int(row._mapping['id']) for row in rows or []]
     db.session.execute(
         text(f'DELETE FROM user_bank_questions WHERE {in_frag} AND bank_id = :bid'),
         {**in_p, 'bid': bank_id}
@@ -676,6 +683,7 @@ def batch_delete_questions(bank_id):
         text('UPDATE user_question_banks SET question_count = :cnt, updated_at = CURRENT_TIMESTAMP WHERE id = :bid'),
         {'cnt': count, 'bid': bank_id}
     )
+    prune_saved_duplicate_check_questions(int(user_id), int(bank_id), deleted_ids)
     db.session.commit()
 
     return success_response(message=f'成功删除{len(question_ids)}道题目')

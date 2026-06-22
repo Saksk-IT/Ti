@@ -1,0 +1,503 @@
+{% extends "user_bank/manage/manage_base.html" %}
+
+{% set manage_tab = 'questions' %}
+
+{% block manage_head %}
+  <style>
+    .ubd-toolbar {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .ubd-threshold {
+      min-width: min(360px, 100%);
+      flex: 1 1 360px;
+    }
+    .ubd-threshold-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .ubd-threshold-value {
+      color: var(--app-text);
+      font-size: 12px;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+    .ubd-range {
+      width: 100%;
+      accent-color: var(--app-primary);
+    }
+    .ubd-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .ubd-stat {
+      border: 1px solid var(--app-border);
+      border-radius: 14px;
+      background: var(--app-surface);
+      box-shadow: var(--app-shadow-soft);
+      padding: 12px;
+      min-width: 0;
+    }
+    .ubd-stat .k {
+      color: var(--app-muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .ubd-stat .v {
+      margin-top: 6px;
+      color: var(--app-text);
+      font-size: 18px;
+      font-weight: 950;
+      overflow-wrap: anywhere;
+    }
+    .ubd-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .ubd-pair {
+      width: 100%;
+      border: 1px solid var(--app-border);
+      border-radius: 16px;
+      background: var(--app-surface);
+      box-shadow: var(--app-shadow-soft);
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      text-align: left;
+      color: var(--app-text);
+      cursor: pointer;
+    }
+    .ubd-pair:hover {
+      border-color: color-mix(in srgb, var(--app-primary) 34%, var(--app-border));
+      box-shadow: var(--app-shadow);
+    }
+    .ubd-pair:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px var(--app-primary-soft), var(--app-shadow-soft);
+    }
+    .ubd-pair-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .ubd-score {
+      color: var(--app-text);
+      font-size: 13px;
+      font-weight: 950;
+    }
+    .ubd-q-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .ubd-q {
+      border: 1px solid color-mix(in srgb, var(--app-border) 76%, transparent);
+      border-radius: 14px;
+      background: var(--app-surface-2);
+      padding: 10px;
+      min-width: 0;
+    }
+    .ubd-q-preview {
+      margin-top: 8px;
+      color: var(--app-text);
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.55;
+      word-break: break-word;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .ubd-detail-overlay {
+      align-items: stretch;
+      overflow: auto;
+    }
+    .ubd-detail-wrap {
+      width: min(1120px, 100%);
+      margin: auto;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      align-items: stretch;
+    }
+    .ubd-detail-modal {
+      width: 100%;
+      max-height: min(82vh, 780px);
+    }
+    .ubd-detail-section {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .ubd-detail-label {
+      color: var(--app-muted);
+      font-size: 12px;
+      font-weight: 950;
+    }
+    .ubd-detail-text {
+      color: var(--app-text);
+      font-size: 13px;
+      line-height: 1.6;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+    .ubd-options {
+      display: grid;
+      gap: 8px;
+    }
+    .ubd-option {
+      border: 1px solid var(--app-border);
+      border-radius: 12px;
+      background: var(--app-surface-2);
+      padding: 8px 10px;
+      color: var(--app-text);
+      font-size: 13px;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+    @media (max-width: 900px) {
+      .ubd-stats,
+      .ubd-q-grid,
+      .ubd-detail-wrap {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .ubd-detail-modal {
+        max-height: none;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block manage_content %}
+  <section class="ubm-card" aria-label="查重去重">
+    <div class="ubd-toolbar">
+      <div class="ubd-threshold">
+        <div class="ubd-threshold-head">
+          <label class="ubm-label" for="ubdThreshold">相似度阈值</label>
+          <span class="ubd-threshold-value" id="ubdThresholdValue">80%</span>
+        </div>
+        <input class="ubd-range" id="ubdThreshold" type="range" min="50" max="100" step="5" value="80" />
+      </div>
+      <div class="ubm-actions" style="margin-top:0;">
+        <a class="ubm-btn" href="/user/banks/{{ bank_id }}">返回题目管理</a>
+        <button class="ubm-btn ubm-btn-primary" type="button" id="ubdRunBtn">再次查重</button>
+      </div>
+    </div>
+    <div class="ubm-sub" id="ubdHint" style="margin-top: 10px;">正在读取上次查重结果…</div>
+    <div class="ubd-stats" id="ubdStats" aria-live="polite">
+      <div class="ubd-stat"><div class="k">状态</div><div class="v">—</div></div>
+      <div class="ubd-stat"><div class="k">总题数</div><div class="v">—</div></div>
+      <div class="ubd-stat"><div class="k">重复组</div><div class="v">—</div></div>
+      <div class="ubd-stat"><div class="k">阈值</div><div class="v">—</div></div>
+    </div>
+  </section>
+
+  <section class="ubm-card" aria-label="重复题目列表">
+    <h2>重复组</h2>
+    <div class="ubm-sub">点击任意一组查看两道题的完整详情，并选择要删除的题目。</div>
+    <div class="ubd-list" id="ubdList">
+      <div class="ubm-empty">暂无查重结果。</div>
+    </div>
+  </section>
+
+  <div class="ubm-modal-overlay ubd-detail-overlay" id="ubdDetailOverlay" aria-hidden="true">
+    <div class="ubd-detail-wrap" role="group" aria-label="重复题目详情">
+      <div class="ubm-modal ubd-detail-modal" role="dialog" aria-modal="true" aria-label="重复题目 A">
+        <div class="ubm-modal-head">
+          <div class="ubm-modal-title" id="ubdModalTitle1">题目 A</div>
+          <button class="ubm-btn ubm-btn-ghost" type="button" data-ubd-close>关闭</button>
+        </div>
+        <div class="ubm-modal-body" id="ubdModalBody1"></div>
+        <div class="ubm-modal-foot">
+          <a class="ubm-btn" id="ubdEdit1" href="#">编辑</a>
+          <button class="ubm-btn ubm-btn-danger" type="button" id="ubdDelete1">删除此题</button>
+        </div>
+      </div>
+      <div class="ubm-modal ubd-detail-modal" role="dialog" aria-modal="true" aria-label="重复题目 B">
+        <div class="ubm-modal-head">
+          <div class="ubm-modal-title" id="ubdModalTitle2">题目 B</div>
+          <button class="ubm-btn ubm-btn-ghost" type="button" data-ubd-close>关闭</button>
+        </div>
+        <div class="ubm-modal-body" id="ubdModalBody2"></div>
+        <div class="ubm-modal-foot">
+          <a class="ubm-btn" id="ubdEdit2" href="#">编辑</a>
+          <button class="ubm-btn ubm-btn-danger" type="button" id="ubdDelete2">删除此题</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block manage_scripts %}
+  <script>
+    (function () {
+      const root = document.querySelector('[data-ubm-bank-id]');
+      const bankId = root ? String(root.dataset.ubmBankId || '').trim() : '';
+      const threshold = document.getElementById('ubdThreshold');
+      const thresholdValue = document.getElementById('ubdThresholdValue');
+      const runBtn = document.getElementById('ubdRunBtn');
+      const hint = document.getElementById('ubdHint');
+      const stats = document.getElementById('ubdStats');
+      const list = document.getElementById('ubdList');
+      const detailOverlay = document.getElementById('ubdDetailOverlay');
+      const modalTitle1 = document.getElementById('ubdModalTitle1');
+      const modalTitle2 = document.getElementById('ubdModalTitle2');
+      const modalBody1 = document.getElementById('ubdModalBody1');
+      const modalBody2 = document.getElementById('ubdModalBody2');
+      const edit1 = document.getElementById('ubdEdit1');
+      const edit2 = document.getElementById('ubdEdit2');
+      const delete1 = document.getElementById('ubdDelete1');
+      const delete2 = document.getElementById('ubdDelete2');
+
+      let currentPairs = [];
+      let activePair = null;
+
+      function escapeHtml(value) {
+        const div = document.createElement('div');
+        div.textContent = String(value || '');
+        return div.innerHTML;
+      }
+
+      function thresholdPercent() {
+        const raw = parseInt(String(threshold?.value || '80'), 10);
+        return Math.max(50, Math.min(raw || 80, 100));
+      }
+
+      function syncThresholdLabel() {
+        if (thresholdValue) thresholdValue.textContent = `${thresholdPercent()}%`;
+      }
+
+      function setHint(text, kind) {
+        if (!hint) return;
+        hint.textContent = String(text || '');
+        hint.style.color = kind === 'error' ? 'color-mix(in srgb, #ef4444 70%, var(--app-text))' : 'var(--app-muted)';
+      }
+
+      function renderStats(data) {
+        if (!stats) return;
+        const hasResult = Boolean(data && data.has_result);
+        const totalQuestions = parseInt(String(data && data.total_questions != null ? data.total_questions : 0), 10) || 0;
+        const totalPairs = parseInt(String(data && data.total_pairs != null ? data.total_pairs : currentPairs.length), 10) || 0;
+        const thresholdText = Math.round((parseFloat(String(data && data.similarity_threshold || 0)) || thresholdPercent() / 100) * 100);
+        const checkedAt = data && data.checked_at ? String(data.checked_at).replace('T', ' ') : '未查重';
+        stats.innerHTML = `
+          <div class="ubd-stat"><div class="k">状态</div><div class="v">${escapeHtml(hasResult ? checkedAt : '无结果')}</div></div>
+          <div class="ubd-stat"><div class="k">总题数</div><div class="v">${totalQuestions}</div></div>
+          <div class="ubd-stat"><div class="k">重复组</div><div class="v">${totalPairs}</div></div>
+          <div class="ubd-stat"><div class="k">阈值</div><div class="v">${thresholdText}%</div></div>
+        `;
+      }
+
+      function readQuestionId(question) {
+        const id = parseInt(String(question && question.id != null ? question.id : ''), 10);
+        return Number.isFinite(id) ? id : null;
+      }
+
+      function pairPercent(pair) {
+        if (pair && pair.similarity_percent != null) {
+          const value = parseInt(String(pair.similarity_percent), 10);
+          return Number.isFinite(value) ? value : 0;
+        }
+        return Math.round((parseFloat(String(pair && pair.similarity || 0)) || 0) * 100);
+      }
+
+      function renderQuestionPreview(question) {
+        const q = question || {};
+        return `
+          <div class="ubd-q">
+            <div class="ubm-q-meta">
+              <span class="ubm-q-pill">${escapeHtml(q.q_type || '—')}</span>
+              <span class="ubm-q-pill">ID ${escapeHtml(q.id != null ? q.id : '—')}</span>
+            </div>
+            <div class="ubd-q-preview">${escapeHtml(q.content_preview || q.content || '—')}</div>
+          </div>
+        `;
+      }
+
+      function renderList(data) {
+        if (!list) return;
+        currentPairs = Array.isArray(data && data.duplicates) ? data.duplicates.slice() : [];
+        renderStats(data || {});
+
+        if (!data || !data.has_result) {
+          list.innerHTML = '<div class="ubm-empty">暂无查重结果。点击“再次查重”开始检测。</div>';
+          setHint('查重结果会保留在此页面；点击“再次查重”才会重新计算。', '');
+          return;
+        }
+        if (!currentPairs.length) {
+          list.innerHTML = '<div class="ubm-empty">上次查重未发现达到阈值的重复题。</div>';
+          setHint('可降低阈值后点击“再次查重”更新结果。', '');
+          return;
+        }
+
+        setHint('当前展示的是保存的查重结果。删除题目不会自动重新查重，可点击“再次查重”刷新。', '');
+        list.innerHTML = currentPairs.map((pair, index) => `
+          <button class="ubd-pair" type="button" data-pair-index="${index}">
+            <div class="ubd-pair-head">
+              <div class="ubd-score">第 ${index + 1} 组 · 相似度 ${pairPercent(pair)}%</div>
+              <div class="ubm-q-meta"><span class="ubm-q-pill">点击查看详情</span></div>
+            </div>
+            <div class="ubd-q-grid">
+              ${renderQuestionPreview(pair && pair.question1)}
+              ${renderQuestionPreview(pair && pair.question2)}
+            </div>
+          </button>
+        `).join('');
+      }
+
+      function renderOptions(question) {
+        const options = Array.isArray(question && question.options) ? question.options : [];
+        if (!options.length) return '<div class="ubd-detail-text">—</div>';
+        return `<div class="ubd-options">${options.map((option, index) => {
+          const letter = String.fromCharCode(65 + index);
+          return `<div class="ubd-option">${letter}. ${escapeHtml(option)}</div>`;
+        }).join('')}</div>`;
+      }
+
+      function renderDetail(question) {
+        const q = question || {};
+        return `
+          <div class="ubm-q-meta">
+            <span class="ubm-q-pill">${escapeHtml(q.q_type || '—')}</span>
+            <span class="ubm-q-pill">ID ${escapeHtml(q.id != null ? q.id : '—')}</span>
+            <span class="ubm-q-pill">难度 ${escapeHtml(q.difficulty != null ? q.difficulty : '—')}</span>
+          </div>
+          <div class="ubd-detail-section">
+            <div class="ubd-detail-label">题干</div>
+            <div class="ubd-detail-text">${escapeHtml(q.content || '—')}</div>
+          </div>
+          <div class="ubd-detail-section">
+            <div class="ubd-detail-label">选项</div>
+            ${renderOptions(q)}
+          </div>
+          <div class="ubd-detail-section">
+            <div class="ubd-detail-label">答案</div>
+            <div class="ubd-detail-text">${escapeHtml(q.answer || '—')}</div>
+          </div>
+          <div class="ubd-detail-section">
+            <div class="ubd-detail-label">解析</div>
+            <div class="ubd-detail-text">${escapeHtml(q.explanation || '—')}</div>
+          </div>
+        `;
+      }
+
+      function openDetail(pair) {
+        activePair = pair || null;
+        const q1 = activePair && activePair.question1 ? activePair.question1 : {};
+        const q2 = activePair && activePair.question2 ? activePair.question2 : {};
+        if (modalTitle1) modalTitle1.textContent = `题目 A · ID ${q1.id != null ? q1.id : '—'}`;
+        if (modalTitle2) modalTitle2.textContent = `题目 B · ID ${q2.id != null ? q2.id : '—'}`;
+        if (modalBody1) modalBody1.innerHTML = renderDetail(q1);
+        if (modalBody2) modalBody2.innerHTML = renderDetail(q2);
+        if (edit1) edit1.href = q1.id != null ? `/user/banks/${encodeURIComponent(bankId)}/questions/${encodeURIComponent(String(q1.id))}/edit` : '#';
+        if (edit2) edit2.href = q2.id != null ? `/user/banks/${encodeURIComponent(bankId)}/questions/${encodeURIComponent(String(q2.id))}/edit` : '#';
+        if (delete1) delete1.dataset.questionId = q1.id != null ? String(q1.id) : '';
+        if (delete2) delete2.dataset.questionId = q2.id != null ? String(q2.id) : '';
+        detailOverlay?.classList.add('show');
+        detailOverlay?.setAttribute('aria-hidden', 'false');
+      }
+
+      function closeDetail() {
+        detailOverlay?.classList.remove('show');
+        detailOverlay?.setAttribute('aria-hidden', 'true');
+        activePair = null;
+      }
+
+      async function loadSaved() {
+        if (!bankId) return;
+        try {
+          setHint('正在读取上次查重结果…', '');
+          const res = await window.ubmApi(`/user/banks/api/${encodeURIComponent(bankId)}/questions/duplicate-check`);
+          renderList(res && res.data ? res.data : {});
+        } catch (e) {
+          renderStats({});
+          list.innerHTML = `<div class="ubm-empty">${escapeHtml(e && e.message ? e.message : '读取失败')}</div>`;
+          setHint('请稍后重试。', 'error');
+        }
+      }
+
+      async function runCheck() {
+        if (!bankId) return;
+        try {
+          runBtn.disabled = true;
+          list.innerHTML = '<div class="ubm-empty">正在查重…</div>';
+          setHint('正在重新计算并保存查重结果…', '');
+          const similarity = (thresholdPercent() / 100).toFixed(2);
+          const res = await window.ubmApi(`/user/banks/api/${encodeURIComponent(bankId)}/questions/duplicate-check`, {
+            method: 'POST',
+            body: JSON.stringify({ similarity_threshold: similarity }),
+          });
+          renderList(res && res.data ? res.data : {});
+          window.ubmToast('查重完成', 'success');
+        } catch (e) {
+          list.innerHTML = `<div class="ubm-empty">${escapeHtml(e && e.message ? e.message : '查重失败')}</div>`;
+          setHint('查重失败，请稍后重试。', 'error');
+          window.ubmToast(e && e.message ? e.message : '查重失败', 'error');
+        } finally {
+          runBtn.disabled = false;
+        }
+      }
+
+      async function deleteQuestion(targetQuestionId) {
+        const qid = parseInt(String(targetQuestionId || ''), 10);
+        if (!Number.isFinite(qid)) return;
+        if (!(await appConfirm('确定要删除该题目吗？此操作不可撤销。'))) return;
+        try {
+          await window.ubmApi(`/user/banks/api/${encodeURIComponent(bankId)}/questions/${encodeURIComponent(String(qid))}`, { method: 'DELETE' });
+          currentPairs = currentPairs.filter((pair) => readQuestionId(pair.question1) !== qid && readQuestionId(pair.question2) !== qid);
+          closeDetail();
+          renderList({
+            has_result: true,
+            total_questions: 0,
+            total_pairs: currentPairs.length,
+            similarity_threshold: thresholdPercent() / 100,
+            duplicates: currentPairs,
+          });
+          setHint('已删除题目；当前列表只在页面内移除相关重复组，点击“再次查重”可刷新保存结果。', '');
+          window.ubmToast('已删除', 'success');
+        } catch (e) {
+          window.ubmToast(e && e.message ? e.message : '删除失败', 'error');
+        }
+      }
+
+      threshold?.addEventListener('input', () => {
+        syncThresholdLabel();
+        setHint('阈值已调整，点击“再次查重”后才会重新计算。', '');
+      });
+      runBtn?.addEventListener('click', runCheck);
+      list?.addEventListener('click', (event) => {
+        const item = event.target && event.target.closest ? event.target.closest('[data-pair-index]') : null;
+        if (!item) return;
+        const index = parseInt(String(item.getAttribute('data-pair-index') || ''), 10);
+        if (!Number.isFinite(index) || !currentPairs[index]) return;
+        openDetail(currentPairs[index]);
+      });
+      detailOverlay?.addEventListener('click', (event) => {
+        if (event.target === detailOverlay) closeDetail();
+      });
+      detailOverlay?.querySelectorAll('[data-ubd-close]').forEach((button) => {
+        button.addEventListener('click', closeDetail);
+      });
+      delete1?.addEventListener('click', () => deleteQuestion(delete1.dataset.questionId));
+      delete2?.addEventListener('click', () => deleteQuestion(delete2.dataset.questionId));
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closeDetail();
+      });
+
+      syncThresholdLabel();
+      loadSaved();
+    })();
+  </script>
+{% endblock %}

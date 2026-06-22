@@ -89,6 +89,38 @@ def bank_detail(bank_id):
     )
 
 
+@user_bank_pages_bp.route('/<int:bank_id>/duplicate-check')
+@login_required
+def bank_duplicate_check(bank_id: int):
+    """个人题库查重去重页面。"""
+    uid = session.get('user_id')
+    from app.modules.user_bank.routes.api import check_bank_access
+
+    has_access, _permission, access_type = check_bank_access(uid, int(bank_id))
+    if not has_access or access_type != 'owner':
+        return "题库不存在或无权限访问", 404
+
+    bank = db.session.execute(
+        text("""
+        SELECT id, name, is_public, question_count, share_count
+        FROM user_question_banks
+        WHERE id = :bid AND status = 1
+        """),
+        {'bid': int(bank_id)},
+    ).fetchone()
+    if not bank:
+        return "题库不存在或无权限访问", 404
+
+    return render_template(
+        'user_bank/manage/bank_duplicate_check.html',
+        bank_id=int(bank._mapping['id']),
+        bank_name=bank._mapping['name'],
+        is_public=bool(bank._mapping['is_public']),
+        question_count=int(bank._mapping['question_count'] or 0),
+        share_count=int(bank._mapping['share_count'] or 0),
+    )
+
+
 @user_bank_pages_bp.route('/<int:bank_id>/practice')
 @login_required
 def bank_practice(bank_id: int):
