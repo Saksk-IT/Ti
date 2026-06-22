@@ -1,0 +1,52 @@
+{
+  "manifest_version": 3,
+  "name": "SAK 题库导出助手",
+  "version": "1.0.0",
+  "description": "用于学习通作业与 PTA 题目的导出，并生成可导入 SAK 题库的 JSON/Word 等文件。",
+  "permissions": [
+    "clipboardWrite"
+  ],
+  "host_permissions": [
+    "*://mooc1.chaoxing.com/*",
+    "*://mooc2-ans.chaoxing.com/*",
+    "*://mobilelearn.chaoxing.com/*",
+    "*://pintia.cn/*",
+    "*://pta.pintia.cn/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://mooc1.chaoxing.com/mooc2/work/view*",
+        "*://mooc1.chaoxing.com/exam-ans/exam/test/reVersionPaperMarkContentNew*",
+        "*://mooc1.chaoxing.com/mooc-ans/mooc2/work/*",
+        "*://mooc2-ans.chaoxing.com/mooc2-ans/mycourse/stu*",
+        "*://mobilelearn.chaoxing.com/page/quiz/stu/quizStudentQuestion*"
+      ],
+      "js": [
+        "vendor/docx.min.js",
+        "vendor/FileSaver.min.js",
+        "vendor/xlsx.full.min.js",
+        "vendor/jspdf.umd.min.js",
+        "vendor/html2canvas.min.js",
+        "content/userscript-compat.js",
+        "content/xuexitong-export.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "*://pintia.cn/problem-sets/*/exam/problems/*",
+        "*://pta.pintia.cn/problem-sets/*/exam/problems/*"
+      ],
+      "js": [
+        "vendor/docx.min.js",
+        "vendor/FileSaver.min.js",
+        "vendor/jspdf.umd.min.js",
+        "vendor/html2canvas.min.js",
+        "content/userscript-compat.js",
+        "content/pta-export.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

@@ -5,9 +5,8 @@
 {% block head_extra %}
   <style>
     .res-hero { padding: 14px; }
-    .res-hero-row { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
     .res-title { font-size: 18px; font-weight: 950; letter-spacing: -0.2px; }
-    .res-sub { margin-top: 6px; color: var(--app-muted); font-size: 13px; line-height: 1.55; max-width: 56ch; }
+    .res-sub { margin-top: 8px; color: var(--app-muted); font-size: 13px; line-height: 1.65; max-width: 70ch; }
 
     .res-list { display: grid; gap: 12px; margin-top: 12px; }
     .res-item { padding: 14px; }
@@ -15,6 +14,14 @@
     .res-item-name { margin: 0; font-size: 15px; font-weight: 950; letter-spacing: -0.1px; overflow-wrap: anywhere; }
     .res-item-meta { margin-top: 4px; color: var(--app-muted); font-size: 12px; line-height: 1.4; }
     .res-item-desc { margin-top: 10px; color: var(--app-text); font-size: 13px; line-height: 1.65; }
+    .res-steps {
+      margin: 12px 0 0;
+      padding-left: 20px;
+      color: var(--app-text);
+      font-size: 13px;
+      line-height: 1.8;
+    }
+    .res-steps li { padding-left: 2px; }
 
     .res-actions { display:flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
     .res-btn {
@@ -46,6 +53,24 @@
     }
     .res-btn-secondary { background: transparent; }
     .res-icon { width: 18px; height: 18px; display: block; }
+    .res-support {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .res-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      border-radius: 999px;
+      border: 1px solid var(--app-border);
+      background: var(--app-surface-2);
+      padding: 0 10px;
+      color: var(--app-muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
 
     .res-footnote { margin-top: 12px; color: var(--app-muted); font-size: 12px; line-height: 1.55; }
     .res-footnote code {
@@ -64,42 +89,50 @@
 {% block content %}
   <div class="app-container">
     <div class="app-card res-hero">
-      <div class="res-title">脚本资源</div>
-      <div class="res-footnote">下载后你可以直接在浏览器扩展中导入（例如 <code>Tampermonkey</code>），或按脚本说明运行。</div>
+      <div class="res-title">导出助手扩展</div>
+      <div class="res-sub">学习通作业导出助手与 PTA 题目导出已合并为一个浏览器扩展。下载后解压，在浏览器扩展页加载未打包扩展即可安装。</div>
     </div>
 
     <div class="res-list">
-      {% for key, item in resources.items() %}
-        <div class="app-card res-item">
-          <div class="res-item-head">
-            <div style="min-width:0;">
-              <h2 class="res-item-name">{{ item.title }}{% if item.filename %}<span style="font-weight:800;opacity:.8;"> · {{ item.filename }}</span>{% endif %}</h2>
-              <div class="res-item-meta">类型：{{ item.kind }}</div>
-            </div>
-          </div>
-
-          <div class="res-item-desc">
-            {% if key == 'xuexitong' %}
-              用于学习通作业相关内容导出（以脚本能力为准）。
-            {% elif key == 'pta' %}
-              用于 PTA 题目导出（以脚本能力为准）。
-            {% else %}
-              常用脚本资源。
-            {% endif %}
-          </div>
-
-          <div class="res-actions">
-            <a class="res-btn res-btn-primary" href="/resources/download/{{ key }}" aria-label="下载 {{ item.filename }}" title="下载 {{ item.filename }}">
-              <svg class="res-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M12 3v10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <path d="m8 11 4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M4 17v3h16v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              下载脚本
-            </a>
+      <div class="app-card res-item">
+        <div class="res-item-head">
+          <div style="min-width:0;">
+            <h2 class="res-item-name">{{ resource.title }}{% if resource.filename %}<span style="font-weight:800;opacity:.8;"> · {{ resource.filename }}</span>{% endif %}</h2>
+            <div class="res-item-meta">类型：{{ resource.kind }}</div>
           </div>
         </div>
-      {% endfor %}
+
+        <div class="res-support" aria-label="支持范围">
+          <span class="res-pill">学习通作业/考试</span>
+          <span class="res-pill">PTA 题目页面</span>
+          <span class="res-pill">JSON / Word / PDF 导出</span>
+        </div>
+
+        <div class="res-item-desc">
+          扩展会根据当前网站自动启用对应导出工具，不再需要分别安装两个脚本。
+        </div>
+
+        <ol class="res-steps">
+          <li>下载扩展包并解压。</li>
+          <li>打开 Chrome / Edge 扩展管理页并开启开发者模式。</li>
+          <li>点击“加载已解压的扩展程序”，选择解压后的扩展文件夹。</li>
+        </ol>
+
+        <div class="res-actions">
+          <a class="res-btn res-btn-primary" href="/resources/download/{{ resource.download_key }}" aria-label="下载 {{ resource.filename }}" title="下载 {{ resource.filename }}">
+            <svg class="res-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 3v10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="m8 11 4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M4 17v3h16v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            下载扩展包
+          </a>
+        </div>
+
+        <div class="res-footnote">
+          加载未打包扩展时请选择解压后的文件夹；该文件夹根目录应直接包含 <code>manifest.json</code>。
+        </div>
+      </div>
     </div>
   </div>
 {% endblock %}
