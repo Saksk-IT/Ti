@@ -48,6 +48,18 @@
       gap: 8px;
     }
 
+    .ubm-inline-field-row {
+      display: flex;
+      gap: 8px;
+      min-width: 0;
+      align-items: center;
+    }
+
+    .ubm-inline-field-row .ubm-input {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
     .ubm-cover-url-row {
       display: flex;
       gap: 8px;
@@ -78,6 +90,15 @@
 
       .ubm-cover-url-row {
         flex-direction: column;
+      }
+
+      .ubm-inline-field-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .ubm-inline-field-row .ubm-btn {
+        width: 100%;
       }
 
       .ubm-cover-url-row .ubm-btn {
@@ -112,13 +133,22 @@
     </div>
   </section>
 
-  <section class="ubm-card" aria-label="描述">
-    <h2>描述</h2>
-    <div class="ubm-sub">可在本页直接修改私人描述与公开描述；公开状态的切换请在“设置 → 题库属性”中进行。</div>
+  <section class="ubm-card" aria-label="名片信息">
+    <h2>名片信息</h2>
+    <div class="ubm-sub">可在本页直接修改题库名称、私人描述与公开描述；公开状态的切换请在“设置 → 题库属性”中进行。</div>
 
     <div class="ubm-field">
-      <div class="ubm-label">题库名称</div>
-      <div style="font-size: 15px; font-weight: 950; letter-spacing: -0.1px;">{{ bank_name }}</div>
+      <label class="ubm-label" for="ubmBankName">题库名称</label>
+      <div class="ubm-inline-field-row">
+        <input id="ubmBankName"
+               class="ubm-input"
+               type="text"
+               maxlength="50"
+               value="{{ bank_name or '' }}"
+               placeholder="请输入题库名称（2-50 字）">
+        <button class="ubm-btn ubm-btn-primary" type="button" id="ubmSaveBankNameBtn">保存题库名称</button>
+      </div>
+      <div class="ubm-sub" id="ubmBankNameHint">0 / 50</div>
     </div>
 
     <div class="ubm-field ubm-cover-field">
@@ -182,6 +212,9 @@
     (function () {
       const root = document.querySelector('[data-ubm-bank-id]');
       const bankId = root ? String(root.dataset.ubmBankId || '').trim() : '';
+      const bankNameEl = document.getElementById('ubmBankName');
+      const bankNameHintEl = document.getElementById('ubmBankNameHint');
+      const saveBankNameBtn = document.getElementById('ubmSaveBankNameBtn');
       const privateDescEl = document.getElementById('ubmPrivateDesc');
       const privateHintEl = document.getElementById('ubmPrivateDescHint');
       const savePrivateBtn = document.getElementById('ubmSavePrivateDescBtn');
@@ -195,6 +228,7 @@
       const clearCoverBtn = document.getElementById('ubmClearCoverBtn');
       const coverPreviewEl = document.getElementById('ubmCoverPreview');
       const coverHintEl = document.getElementById('ubmCoverHint');
+      let savedBankName = {{ (bank_name or '')|tojson }};
       let savedPrivateDesc = {{ (bank_description or '')|tojson }};
       let savedPublicDesc = {{ (public_description or '')|tojson }};
       let savedCoverImage = {{ (cover_image or '')|tojson }};
@@ -211,6 +245,21 @@
         if (!descEl) return;
         const len = String(descEl.value || '').trim().length;
         setHint(hintEl, `${len} / 200`, len > 200 ? 'error' : '');
+      }
+
+      function renderNameHint() {
+        if (!bankNameEl) return;
+        const len = String(bankNameEl.value || '').trim().length;
+        const kind = (len > 0 && len < 2) || len > 50 ? 'error' : '';
+        setHint(bankNameHintEl, `${len} / 50`, kind);
+      }
+
+      function updateVisibleBankName(nextName) {
+        const titleEl = document.querySelector('.ubm-title');
+        if (titleEl) titleEl.textContent = nextName;
+        const topbarTitleEl = document.querySelector('.app-topbar-title');
+        if (topbarTitleEl) topbarTitleEl.textContent = `${nextName} · 管理`;
+        document.title = `${nextName} · 管理`;
       }
 
       function renderCoverPreview(url) {
@@ -277,6 +326,41 @@
         } finally {
           setCoverUploading(false);
           if (coverFileEl) coverFileEl.value = '';
+        }
+      }
+
+      async function saveBankName() {
+        if (!bankId || !bankNameEl) return;
+        const nextName = String(bankNameEl.value || '').trim();
+        if (nextName.length < 2 || nextName.length > 50) {
+          setHint(bankNameHintEl, '题库名称需要 2-50 个字符', 'error');
+          window.ubmToast('题库名称需要 2-50 个字符', 'error');
+          return;
+        }
+        if (nextName === String(savedBankName || '').trim()) {
+          renderNameHint();
+          window.ubmToast('题库名称未变化', 'info');
+          return;
+        }
+
+        try {
+          if (saveBankNameBtn) saveBankNameBtn.disabled = true;
+          setHint(bankNameHintEl, '正在保存…', '');
+          await window.ubmApi(`/user/banks/api/${encodeURIComponent(bankId)}`, {
+            method: 'PUT',
+            body: JSON.stringify({ name: nextName }),
+          });
+          savedBankName = nextName;
+          bankNameEl.value = nextName;
+          updateVisibleBankName(nextName);
+          renderNameHint();
+          window.ubmToast('题库名称已保存', 'success');
+        } catch (e) {
+          const msg = e && e.message ? e.message : '保存失败';
+          setHint(bankNameHintEl, msg, 'error');
+          window.ubmToast(msg, 'error');
+        } finally {
+          if (saveBankNameBtn) saveBankNameBtn.disabled = false;
         }
       }
 
@@ -380,6 +464,8 @@
         }
       }
 
+      bankNameEl?.addEventListener('input', renderNameHint);
+      saveBankNameBtn?.addEventListener('click', saveBankName);
       privateDescEl?.addEventListener('input', function () {
         renderLengthHint(privateDescEl, privateHintEl);
       });
@@ -407,6 +493,7 @@
       savePrivateBtn?.addEventListener('click', savePrivateDesc);
       savePublicBtn?.addEventListener('click', savePublicDesc);
       renderCoverPreview(savedCoverImage);
+      renderNameHint();
       renderLengthHint(privateDescEl, privateHintEl);
       renderLengthHint(publicDescEl, publicHintEl);
     })();

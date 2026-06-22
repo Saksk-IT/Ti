@@ -86,6 +86,16 @@ def _fetch_cover_image(app, bank_id: int) -> str | None:
         return row._mapping["cover_image"]
 
 
+def _fetch_bank_name(app, bank_id: int) -> str:
+    with app.app_context():
+        row = db.session.execute(
+            text("SELECT name FROM user_question_banks WHERE id = :bank_id"),
+            {"bank_id": int(bank_id)},
+        ).fetchone()
+        assert row is not None
+        return str(row._mapping["name"])
+
+
 def test_manage_page_renders_cover_upload_controls(app, auth_client, seed_user):
     cover_url = "/uploads/bank_covers/bank_cover_manage_existing.png"
     bank_id = _create_bank(app, seed_user["id"], name="管理页封面测试题库", cover_image=cover_url)
@@ -95,6 +105,9 @@ def test_manage_page_renders_cover_upload_controls(app, auth_client, seed_user):
 
         assert response.status_code == 200
         html = response.get_data(as_text=True)
+        assert 'id="ubmBankName"' in html
+        assert 'id="ubmSaveBankNameBtn"' in html
+        assert '保存题库名称' in html
         assert 'id="ubmCoverImage"' in html
         assert 'id="ubmCoverFile"' in html
         assert 'id="ubmChooseCoverBtn"' in html
@@ -102,6 +115,24 @@ def test_manage_page_renders_cover_upload_controls(app, auth_client, seed_user):
         assert 'accept="image/png,image/jpeg,image/gif,image/webp"' in html
         assert f'value="{cover_url}"' in html
         assert "/cover/upload" in html
+    finally:
+        _delete_bank(app, bank_id)
+
+
+def test_manage_bank_name_save_updates_bank_name(app, auth_client, seed_user):
+    bank_id = _create_bank(app, seed_user["id"], name="管理页名称保存旧题库")
+    next_name = "管理页名称保存新题库"
+
+    try:
+        response = auth_client.put(
+            f"/user/banks/api/{bank_id}",
+            json={"name": next_name},
+            headers={"X-Requested-With": "XMLHttpRequest"},
+        )
+
+        assert response.status_code == 200
+        assert response.get_json()["status"] == "success"
+        assert _fetch_bank_name(app, bank_id) == next_name
     finally:
         _delete_bank(app, bank_id)
 
