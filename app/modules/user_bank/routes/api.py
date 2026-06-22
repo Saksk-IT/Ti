@@ -19,6 +19,7 @@ from .api_tags import _load_bank_tag_store
 from . import api_categories  # noqa: F401
 from . import api_banks  # noqa: F401
 from . import api_questions  # noqa: F401
+from . import api_duplicate_check  # noqa: F401
 from . import api_transfer  # noqa: F401
 from . import api_shares  # noqa: F401
 from . import api_quiz  # noqa: F401
