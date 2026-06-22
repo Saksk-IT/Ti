@@ -21,9 +21,9 @@ const FAB_POS_KEY = 'quiz_fab_pos_v1';
 const FAB_DOCK_LAYOUT_KEY = 'quiz_fab_dock_layout'; // 'default' | 'right' | 'left'
 const FAB_HINT_DISMISSED_KEY = 'quiz_fab_hint_dismissed';
 const AUTO_NEXT_DELAY_OPTIONS = [
-    { key: 'fast', label: '快', delay: 300 },
-    { key: 'normal', label: '标准', delay: 500 },
-    { key: 'slow', label: '慢', delay: 800 }
+    { key: 'fast', label: '快', delay: 150 },
+    { key: 'normal', label: '标准', delay: 350 },
+    { key: 'slow', label: '慢', delay: 650 }
 ];
 let fabOpen = false;
 
@@ -79,7 +79,7 @@ function setAutoNextDelayKey(key){
 function getAutoNextDelayMs(){
     const key = getAutoNextDelayKey();
     const found = AUTO_NEXT_DELAY_OPTIONS.find(item => item.key === key);
-    return found ? found.delay : 300;
+    return found ? found.delay : 150;
 }
 
 function isFabAutoFavoriteOnWrongEnabled(){

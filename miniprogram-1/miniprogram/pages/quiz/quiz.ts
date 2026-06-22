@@ -24,9 +24,9 @@ import {
 let quizSource: IQuizSource | null = null;
 
 const AUTO_NEXT_DELAY_OPTIONS = [
-  { key: 'fast', label: '快', delay: 300 },
-  { key: 'normal', label: '标准', delay: 500 },
-  { key: 'slow', label: '慢', delay: 800 }
+  { key: 'fast', label: '快', delay: 150 },
+  { key: 'normal', label: '标准', delay: 350 },
+  { key: 'slow', label: '慢', delay: 650 }
 ] as const;
 
 type AutoNextDelayKey = typeof AUTO_NEXT_DELAY_OPTIONS[number]['key'];
@@ -427,7 +427,7 @@ Page({
   getAutoNextDelayMs(): number {
     const key = this.normalizeAutoNextDelayKey((this.data.practiceSettings as any).autoNextDelayKey);
     const found = AUTO_NEXT_DELAY_OPTIONS.find((item) => item.key === key);
-    return found ? found.delay : 300;
+    return found ? found.delay : 150;
   },
 
   onAutoNextDelaySelect(e: any) {

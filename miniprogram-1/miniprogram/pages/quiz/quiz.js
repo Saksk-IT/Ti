@@ -69,9 +69,9 @@ var quiz_helpers_1 = require("./modules/quiz-helpers");
 // 数据源实例（页面级别）
 var quizSource = null;
 var AUTO_NEXT_DELAY_OPTIONS = [
-    { key: 'fast', label: '快', delay: 300 },
-    { key: 'normal', label: '标准', delay: 500 },
-    { key: 'slow', label: '慢', delay: 800 }
+    { key: 'fast', label: '快', delay: 150 },
+    { key: 'normal', label: '标准', delay: 350 },
+    { key: 'slow', label: '慢', delay: 650 }
 ];
 function buildQuestionImageFields(q) {
     var contentUrls = (0, quiz_helpers_1.uniqUrls)(__spreadArray(__spreadArray(__spreadArray([], (0, api_1.normalizeImageUrls)(q === null || q === void 0 ? void 0 : q.image_path), true), (0, api_1.normalizeImageUrls)(q === null || q === void 0 ? void 0 : q.content_images), true), (0, quiz_helpers_1.extractInlineImageUrls)(q === null || q === void 0 ? void 0 : q.content), true));
@@ -405,7 +405,7 @@ Page({
     getAutoNextDelayMs: function () {
         var key = this.normalizeAutoNextDelayKey(this.data.practiceSettings.autoNextDelayKey);
         var found = AUTO_NEXT_DELAY_OPTIONS.find(function (item) { return item.key === key; });
-        return found ? found.delay : 300;
+        return found ? found.delay : 150;
     },
     onAutoNextDelaySelect: function (e) {
         var _this = this;
