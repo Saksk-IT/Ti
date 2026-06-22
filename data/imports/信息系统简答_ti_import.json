@@ -1,0 +1,2135 @@
+{
+  "meta": {
+    "title": "信息系统简答",
+    "source": "/Users/sak/Desktop/信息系统简答.docx",
+    "generated_at": "2026-06-22T20:43:45.515577+00:00",
+    "notes": [
+      "答案已压缩为便于背诵的分点版，并尽量保留考试得分点。",
+      "analysis 字段统一为：精简版答案，应对考试。",
+      "36、81 为画数据流图题，答案以文字化得分点补全。"
+    ],
+    "question_count": 92,
+    "deduplicated": false
+  },
+  "questions": [
+    {
+      "id": 1,
+      "type": "essay",
+      "content": "简述软件需求分析的原则。",
+      "options": [],
+      "answer": [
+        "1. 表达清楚：能表达、理解问题的信息域和功能域。\n2. 层次分解：对问题逐层分解、不断细化。\n3. 两种视图：给出逻辑视图和物理视图。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "1",
+        "paragraph": 1,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 2,
+      "type": "essay",
+      "content": "简述UML中构成的各种图形。",
+      "options": [],
+      "answer": [
+        "1. 用例图：描述系统功能和操作者。\n2. 静态图：类图、对象图、包图。\n3. 行为图：状态图、活动图。\n4. 交互图：时序图、协作图。\n5. 实现图：构件图、部署图。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "2",
+        "paragraph": 5,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 3,
+      "type": "essay",
+      "content": "简述U/C矩阵的正确性的检验步骤。",
+      "options": [],
+      "answer": [
+        "1. 完备性：每列有一个C，至少一个U；每个功能有U或C。\n2. 一致性：每类数据有且仅有一个产生者C。\n3. 无冗余：矩阵中无空行、无空列。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "3",
+        "paragraph": 11,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 4,
+      "type": "essay",
+      "content": "简述数据流图的局限性。",
+      "options": [],
+      "answer": [
+        "1. 难说明具体内容：数据流、数据存储、加工、外部项细节不清。\n2. 难反映决策与控制。\n3. 难描述人机交互、反馈和循环处理。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "4",
+        "paragraph": 15,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 5,
+      "type": "essay",
+      "content": "简述信息系统规划过程中，识别业务流程的主要过程。",
+      "options": [],
+      "answer": [
+        "1. 了解企业资源及生命周期。\n2. 识别计划和控制流程。\n3. 识别产品及服务流程。\n4. 识别支持性资源流程。\n5. 分析业务流程与组织关系。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "5",
+        "paragraph": 19,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 6,
+      "type": "essay",
+      "content": "什么是数据挖掘？数据挖掘研究内容？",
+      "options": [],
+      "answer": [
+        "1. 概念：从大量、不完全、有噪声、模糊、随机数据中发现潜在有用信息和知识。\n2. 数据特点：真实、大量、含噪声。\n3. 知识要求：用户感兴趣、可接受、可理解、可运用。\n4. 研究内容：理论、算法、数据仓库、可视化、知识表示、知识维护、半/非结构化数据和网上挖掘。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "6",
+        "paragraph": 25,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 7,
+      "type": "essay",
+      "content": "简述部署图与构件图的关系。",
+      "options": [],
+      "answer": [
+        "1. 对象不同：部署图表现构件实例；构件图表现构件类型定义。\n2. 侧重点不同：部署图描述运行节点和环境；构件图描述构件依赖关系。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "7",
+        "paragraph": 28,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 8,
+      "type": "essay",
+      "content": "简述信息系统可行性研究的报告内容。",
+      "options": [],
+      "answer": [
+        "1. 引言。\n2. 可行性研究前提。\n3. 现行系统分析。\n4. 建议信息系统。\n5. 可选开发方案。\n6. 投资及收益分析。\n7. 社会条件可行性。\n8. 结论。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "8",
+        "paragraph": 31,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 9,
+      "type": "essay",
+      "content": "简述系统设计的目的及其基本原则。",
+      "options": [],
+      "answer": [
+        "目标：\n1. 实现显性需求，满足隐性需求。\n2. 设计可读、可理解，便于编程、维护、测试。\n3. 从实现角度说明数据、功能、行为全貌。\n原则：抽象化、逐层细化、模块化、结构化、信息隐蔽。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "9",
+        "paragraph": 40,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 10,
+      "type": "essay",
+      "content": "简述软件成分的重用级别。",
+      "options": [],
+      "answer": [
+        "1. 代码重用：复用库、函数、模块等代码。\n2. 设计重用：复用设计模型，可支持平台迁移。\n3. 分析重用：复用分析模型，适合需求不变但体系结构变化。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "10",
+        "paragraph": 43,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 11,
+      "type": "essay",
+      "content": "简要说明Jackson方法的设计步骤。",
+      "options": [],
+      "answer": [
+        "1. 分析输入、输出数据逻辑结构。\n2. 用Jackson图表示数据结构。\n3. 找出输入、输出中对应的数据单元。\n4. 导出Jackson程序结构图。\n5. 列出操作并分配到结构图。\n6. 用伪码表示程序。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "11",
+        "paragraph": 47,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 12,
+      "type": "essay",
+      "content": "什么是耦合度，耦合的强度依赖于哪些因素？",
+      "options": [],
+      "answer": [
+        "1. 概念：耦合度是模块间关联、感知和依赖程度，衡量模块独立性。\n2. 影响因素：模块调用关系、传递数据量、控制量、接口复杂度。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "12",
+        "paragraph": 51,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 13,
+      "type": "essay",
+      "content": "什么是专家系统？",
+      "options": [],
+      "answer": [
+        "1. 本质：模拟专家推理、学习、思考、规划的计算机信息系统。\n2. 基础：拥有大量专门知识和经验。\n3. 方法：利用人工智能和专家知识推理判断。\n4. 目标：解决需人类专家处理的复杂问题。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "13",
+        "paragraph": 54,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 14,
+      "type": "essay",
+      "content": "简述典型的可重用软件成分都包含哪些。",
+      "options": [],
+      "answer": [
+        "项目计划、成本估计、体系结构、需求模型和规格说明、设计、源代码、用户/技术文档、用户界面、数据、测试用例。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "14",
+        "paragraph": 56,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 15,
+      "type": "essay",
+      "content": "简述去除模块间控制耦合的方法。",
+      "options": [],
+      "answer": [
+        "1. 将被调用模块中的判定上移到调用模块。\n2. 将被调用模块分解为多个单一功能模块。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "15",
+        "paragraph": 67,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 16,
+      "type": "essay",
+      "content": "MVC模式的模型、视图、控制器三元组包括那些对象？",
+      "options": [],
+      "answer": [
+        "1. 模型：封装核心数据、逻辑和功能计算，独立于界面。\n2. 视图：以特定形式向用户展示模型数据和状态。\n3. 控制器：处理用户输入，协调模型与视图，控制流程。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "16",
+        "paragraph": 75,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 17,
+      "type": "essay",
+      "content": "简述面向对象设计的原则。",
+      "options": [],
+      "answer": [
+        "开闭原则、里氏替换原则、依赖倒转原则、接口隔离原则、组合复用原则、迪米特法则、单一职责原则。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "17",
+        "paragraph": 79,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 18,
+      "type": "essay",
+      "content": "简述UML中状态图的各个控制节点。",
+      "options": [],
+      "answer": [
+        "初始状态、分叉与会合、汇接、选择、历史状态、终止状态、入口点与出口点。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "18",
+        "paragraph": 87,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 19,
+      "type": "essay",
+      "content": "简述数据词典的基本要求。",
+      "options": [],
+      "answer": [
+        "1. 定义明确、易理解、唯一。\n2. 命名和编号与数据流图一致。\n3. 满足一致性、完整性，无遗漏。\n4. 格式规范、风格统一、文字精炼、符号正确。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "19",
+        "paragraph": 95,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 20,
+      "type": "essay",
+      "content": "简述信息系统的可行性研究过程。",
+      "options": [],
+      "answer": [
+        "1. 初期阶段：收集资料、现场考察、数据评估、初期报告。\n2. 方案评价：制定原则、技术比较、初步估算、中期报告。\n3. 推荐方案：研究具体问题，估算投资和成本，做技术经济评价，写最终报告。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "20",
+        "paragraph": 102,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 21,
+      "type": "essay",
+      "content": "简述公共耦合存在的问题。",
+      "options": [],
+      "answer": [
+        "1. 降低系统可理解性。\n2. 降低可维护性。\n3. 降低可靠性。\n4. 应慎用公共数据区和全局变量。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "21",
+        "paragraph": 106,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 22,
+      "type": "essay",
+      "content": "简述U/C矩阵的特点。",
+      "options": [],
+      "answer": [
+        "1. 明确过程与数据的C/U关系。\n2. 规范分析逻辑，支持数据库设计和模块划分。\n3. 发现数据不一致、冗余、缺失。\n4. 支持模块化设计，降低耦合。\n5. 便于用户和开发者沟通。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "22",
+        "paragraph": 110,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 23,
+      "type": "essay",
+      "content": "请简要说明PDL语言的概念及其主要特征。",
+      "options": [],
+      "answer": [
+        "概念：PDL是描述程序逻辑的伪码/结构化语言。\n特征：\n1. 外语法用高级语言关键字，内语法用自然语言。\n2. 正文格式固定，语法少而简单。\n3. 逐步细化书写。\n4. 可加注释，便于阅读。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "23",
+        "paragraph": 117,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 24,
+      "type": "essay",
+      "content": "简述决策支持系统中知识发现的过程。",
+      "options": [],
+      "answer": [
+        "数据准备 → 数据挖掘 → 模式评估/解释 → 巩固知识 → 运用知识。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "24",
+        "paragraph": 119,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 25,
+      "type": "essay",
+      "content": "简要说明数据流图的主要组成部分及其定义。",
+      "options": [],
+      "answer": [
+        "1. 外部实体：系统外与系统交换数据的人、组织、系统或设备。\n2. 处理过程：对输入数据加工并产生输出。\n3. 数据存储：逻辑存储单元。\n4. 数据流：数据在系统中的流动方向和相关数据项集合。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "25",
+        "paragraph": 121,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 26,
+      "type": "essay",
+      "content": "什么是信息管理系统。",
+      "options": [],
+      "answer": [
+        "MIS是以人为主导，利用计算机、软件、网络通信和办公设备，完成信息收集、传输、加工、存储、更新、维护，支持高层决策、中层控制和基层运作的集成化人机系统。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "26",
+        "paragraph": 127,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 27,
+      "type": "essay",
+      "content": "什么是联机分析处理（OLAP）？",
+      "options": [],
+      "answer": [
+        "1. OLAP是面向决策分析的联机分析处理技术。\n2. 核心：以多维形式灵活操纵数据，从多角度观察组织状态。\n3. 特点：与数据源存储相分离，有足够数据即可分析。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "27",
+        "paragraph": 129,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 28,
+      "type": "essay",
+      "content": "简述MVC的优点。",
+      "options": [],
+      "answer": [
+        "1. 组件解耦，降低耦合。\n2. 提高代码复用。\n3. 便于团队协作。\n4. 简化维护和迭代。\n5. 支持多视图。\n6. 利于测试优化。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "28",
+        "paragraph": 131,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 29,
+      "type": "essay",
+      "content": "简述在信息系统规划过程中企业信息系统规划法的工作步骤。",
+      "options": [],
+      "answer": [
+        "任务下达、准备工作、调查与分析、识别业务流程、定义数据类、定义总体结构、确定子系统优先级、形成系统规划报告。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "29",
+        "paragraph": 133,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 30,
+      "type": "essay",
+      "content": "简述计算机支持下的协同工作。",
+      "options": [],
+      "answer": [
+        "1. 概念：在计算机支持的共享环境中，群体协作完成共同任务。\n2. 研究内容：协作行为、交流行为、支持协同工作的信息系统设计方法。\n3. 关键因素：共享任务和计算机支持的共享环境。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "30",
+        "paragraph": 142,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 31,
+      "type": "essay",
+      "content": "针对每个类建立的动态模型,描述了实例的生命周期或运行周期。",
+      "options": [],
+      "answer": [
+        "状态图。它用于描述类实例的生命周期或运行周期。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "31",
+        "paragraph": 147,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 32,
+      "type": "essay",
+      "content": "简述系统设计的目标及其基本原则。",
+      "options": [],
+      "answer": [
+        "目标：\n1. 实现显式需求，满足隐式需求。\n2. 设计可读、可理解，便于编程、测试、维护。\n3. 给出数据、功能、行为相关的软件全貌。\n原则：抽象化、逐层细化、模块化、结构化、信息隐蔽。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "32",
+        "paragraph": 150,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 33,
+      "type": "essay",
+      "content": "请说明软件重用的概念并简单说明其3个层次的内容。",
+      "options": [],
+      "answer": [
+        "概念：软件重用是在新系统开发中复用已有软件制品，以提高效率和质量。\n层次：\n1. 代码重用：复用代码、函数库、类库。\n2. 设计重用：复用设计模型、体系结构、设计模式。\n3. 分析重用：复用需求规格、领域模型、用例模型。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "33",
+        "paragraph": 157,
+        "answer_source": "source_simplified",
+        "source_marker": "AI"
+      }
+    },
+    {
+      "id": 34,
+      "type": "essay",
+      "content": "简述软件测试准则",
+      "options": [],
+      "answer": [
+        "1. 测试可追溯到用户需求。\n2. 测试计划应提前制定，并尽早、持续测试。\n3. 应由独立第三方测试。\n4. 穷举测试不可能，应设计有效用例。\n5. 用例含合理/不合理输入及预期输出。\n6. 注意错误群集现象。\n7. 严格执行计划并保存文档。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "34",
+        "paragraph": 160,
+        "answer_source": "source_simplified",
+        "source_marker": "AI"
+      }
+    },
+    {
+      "id": 35,
+      "type": "essay",
+      "content": "简要描述软件开发模型中的瀑布模型的的优缺点",
+      "options": [],
+      "answer": [
+        "优点：易理解、管理成本低、文档完整、阶段基线清楚、便于配置控制。\n缺点：要求需求完整清晰；难适应需求变化；文档负担重；早期进度难评估；集成测试集中在后期；很晚才能演示系统能力。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "35",
+        "paragraph": 163,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 36,
+      "type": "essay",
+      "content": "图书借还书处理：请画出顶层数据流图和0层数据流图。",
+      "options": [],
+      "answer": [
+        "顶层图得分点：\n1. 外部实体：读者。\n2. 处理：图书借还书系统。\n3. 数据流：借书证、借书请求、还书条码、借阅结果、罚款通知。\n0层图得分点：\n1. 借书处理：查询读者档案，检查借书数量，修改库存记录和读者档案。\n2. 还书处理：读取条形码，修改库存记录和读者档案，超期罚款。\n3. 数据存储：读者档案、库存记录。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "36",
+        "paragraph": 168,
+        "answer_source": "generated_from_prompt"
+      }
+    },
+    {
+      "id": 37,
+      "type": "essay",
+      "content": "请简述总体设计过程的阶段划分及其任务,并说明典型的总体设计过程包括的9个步骤。",
+      "options": [],
+      "answer": [
+        "阶段：\n1. 系统设计：确定软硬件、网络、数据存储等实现环境。\n2. 结构设计：划分模块，确定调用关系、接口和数据结构。\n九步骤：设想方案、选合理方案、推荐最佳方案、功能分解、设计软件结构、数据库设计、制定测试计划、写概要设计文档、审查复审。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "37",
+        "paragraph": 172,
+        "answer_source": "source_simplified",
+        "source_marker": "AI"
+      }
+    },
+    {
+      "id": 38,
+      "type": "essay",
+      "content": "软件生命周期的主要环节",
+      "options": [],
+      "answer": [
+        "计划制定、需求分析、软件设计、程序编写、软件测试、运行/维护。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "38",
+        "paragraph": 178,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 39,
+      "type": "essay",
+      "content": "什么是模块独立性?为什么模块的独立性很重要呢?",
+      "options": [],
+      "answer": [
+        "1. 概念：模块只完成相对独立子功能，接口简单，外部联系少。\n2. 标准：高内聚、低耦合。\n3. 重要性：易理解、易测试、易维护，减少错误蔓延，便于并行开发和复用，修改影响局部化。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "39",
+        "paragraph": 181,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 40,
+      "type": "essay",
+      "content": "简述MVC的缺点",
+      "options": [],
+      "answer": [
+        "1. 结构和实现更复杂，简单界面可能效率降低。\n2. 视图与控制器连接紧密，独立性受限。\n3. 视图访问模型可能低效，重复访问影响性能。\n4. 部分高级界面工具不支持MVC，改造成本高。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "40",
+        "paragraph": 185,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 41,
+      "type": "essay",
+      "content": "简述单元测试的测试重点有哪些?",
+      "options": [],
+      "answer": [
+        "模块接口、局部数据结构、边界条件、独立执行路径、错误处理路径。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "41",
+        "paragraph": 195,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 42,
+      "type": "essay",
+      "content": "简述软件工程的七条基本原理",
+      "options": [],
+      "answer": [
+        "1. 生命周期计划严格管理。\n2. 坚持阶段评审。\n3. 实行严格产品控制。\n4. 采用现代程序设计技术。\n5. 结果应清楚可审查。\n6. 开发小组少而精。\n7. 承认并持续改进软件工程实践。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "42",
+        "paragraph": 198,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 43,
+      "type": "essay",
+      "content": "简述采用结构化系统分析的工具建立的系统逻辑模型的特点",
+      "options": [],
+      "answer": [
+        "1. 表达规范、内容确切、无二义。\n2. 形式简洁、易理解，便于与用户交流。\n3. 便于查询、检索、维护。\n4. 便于计算机辅助建模。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "43",
+        "paragraph": 201,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 44,
+      "type": "essay",
+      "content": "请简要说明数据、信息与知识之间的相互关系与区别",
+      "options": [],
+      "answer": [
+        "1. 数据：客观事物的可识别符号记录。\n2. 信息：数据经加工解释后产生意义，并对客观世界产生影响。\n3. 知识：信息进入大脑后形成的认识痕迹，由信息形成。\n4. 关系：数据经处理成信息，信息经理解和积累成知识。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "44",
+        "paragraph": 207,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 45,
+      "type": "essay",
+      "content": "需求分析的描述工具有哪些",
+      "options": [],
+      "answer": [
+        "数据流图DFD、数据字典DD、实体-联系图E-R、状态转换图STD、用例图、判定树、判定表、结构化语言。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "45",
+        "paragraph": 214,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 46,
+      "type": "essay",
+      "content": "何谓产生式系统？它由哪几部分组成（缺）",
+      "options": [],
+      "answer": [
+        "概念：产生式系统用“条件-动作”规则表示和求解问题。\n组成：\n1. 综合数据库：存放当前问题信息。\n2. 产生式规则：描述领域知识。\n3. 控制系统：选择匹配规则并执行，处理冲突消解。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "46",
+        "paragraph": 218,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 47,
+      "type": "essay",
+      "content": "软件的可维护性,主要由哪五个因素决定",
+      "options": [],
+      "answer": [
+        "可理解性、可测试性、可修改性、可靠性、可移植性。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "47",
+        "paragraph": 225,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 48,
+      "type": "essay",
+      "content": "简要描述软件开发模型中的增量模型（增量生存周期模型）的的优缺点。",
+      "options": [],
+      "answer": [
+        "优点：首个可交付版本成本和时间少；小增量风险低；早发布可减少需求变更；支持增量投资。\n缺点：早期增量若规划不足会不稳定；需求不稳定会导致重做；成本、进度、配置管理复杂。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "48",
+        "paragraph": 228,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 49,
+      "type": "essay",
+      "content": "请简要说明什么是“耦合小、内聚大”的系统设计原则",
+      "options": [],
+      "answer": [
+        "1. 模块独立性由耦合和内聚衡量。\n2. 耦合：模块之间联系程度。\n3. 内聚：模块内部成分联系程度。\n4. 原则：模块内部强、模块之间弱，接口明确简单，适当共享。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "49",
+        "paragraph": 233,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 50,
+      "type": "essay",
+      "content": "请简要说明知识发现的概念及知识发现的过程",
+      "options": [],
+      "answer": [
+        "1. 概念：从数据集中识别有效模式，模式应新颖、有潜在价值、最终可理解。\n2. 过程：数据准备、数据挖掘、评估/解释模式、巩固知识、运用知识。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "50",
+        "paragraph": 239,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 51,
+      "type": "essay",
+      "content": "请列举系统详细设计使用的工具有哪些",
+      "options": [],
+      "answer": [
+        "程序流程图、盒图/N-S图、PAD图、判定表、判定树、过程设计语言PDL、类图、顺序图、活动图、状态图。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "51",
+        "paragraph": 242,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 52,
+      "type": "essay",
+      "content": "请简要说明用例图的定义及其作用",
+      "options": [],
+      "answer": [
+        "定义：用参与者、用例及其关系描述系统功能的图。\n作用：\n1. 展示用户和期望功能，促进沟通。\n2. 可视化表达需求，直观规范。\n3. 从外部定义系统，分离需求与设计。\n4. 用户无需关心内部实现。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "52",
+        "paragraph": 245,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 53,
+      "type": "essay",
+      "content": "请简述产生式系统的优点及其局限性",
+      "options": [],
+      "answer": [
+        "优点：\n1. 自然性：if-then形式直观。\n2. 模块性：规则与推理机构相对独立。\n3. 有效性：可表示确定/不确定、启发式/过程性知识。\n4. 清晰性：前件-后件格式固定。\n局限：效率不高；难表示结构性知识。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "53",
+        "paragraph": 249,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 54,
+      "type": "essay",
+      "content": "什么是管理信息系统",
+      "options": [],
+      "answer": [
+        "MIS是以人为主导，利用计算机硬件、软件、网络通信和办公设备，完成信息收集、传输、加工、存储、更新、维护，支持战略竞争、提高效益效率，并服务高层决策、中层控制、基层运作的集成化人机系统。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "54",
+        "paragraph": 260,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 55,
+      "type": "essay",
+      "content": "请简要说明类图的定义及其作用",
+      "options": [],
+      "answer": [
+        "定义：类图是表达系统类及其相互联系的逻辑图，是面向对象设计核心。\n作用：\n1. 显示类、接口及静态结构关系。\n2. 支持结构化设计。\n3. 是状态图、协作图等其他图的基础。\n4. 基本元素：类或接口；关系包括关联、聚合/组合、泛化、依赖。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "55",
+        "paragraph": 265,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 56,
+      "type": "essay",
+      "content": "典型的瀑布模型把生存周期划分了几个大的阶段?说明各阶段又可区分为哪些过程?该模型软件开发有哪些特点?",
+      "options": [],
+      "answer": [
+        "阶段：\n1. 定义阶段：问题定义、可行性研究、需求分析。\n2. 开发阶段：总体设计、详细设计、编码与单元测试、综合测试。\n3. 维护阶段：运行与维护。\n特点：顺序依赖、自上而下；推迟实现；阶段文档完整并评审；适合需求明确项目。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "56",
+        "paragraph": 271,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 57,
+      "type": "essay",
+      "content": "假设自己被指派为一个软件公司的项目负责人,任务是开发一个技术上具有传统性的产品,该产品把现有的虚拟现实硬件和软件结合在一起。由于家庭娱乐市场的竞争非常激烈,虽然开发团队具有丰富的类似产品的开发经验,但此项工作的压力依然很大。应该选择哪种项目组织结构?为什么?打算采用哪种软件过程模型?为什么? (10分)",
+      "options": [],
+      "answer": [
+        "1. 组织结构：矩阵型组织。\n2. 理由：技术传统但压力大，需兼顾专业支持和项目集中管理，便于协调软硬件融合。\n3. 过程模型：瀑布模型。\n4. 理由：团队经验丰富、技术成熟、需求较清晰、风险可控，阶段化和文档化便于控制进度质量。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "57",
+        "paragraph": 278,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 58,
+      "type": "essay",
+      "content": "简述绘制数据流图的主要原则。",
+      "options": [],
+      "answer": [
+        "主要原则：\n1. 明确系统边界。\n2. 自顶向下逐层分解。\n3. 合理布局。\n4. 只反映数据流向、加工和逻辑存储，不反映技术过程、时间顺序、判断控制。\n绘制步骤：定外部实体→画关联图→分解主要处理→确定数据流和存储→逐层分解→检查修改→用户交流→绘制正规图→复审。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "58",
+        "paragraph": 284,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 59,
+      "type": "essay",
+      "content": "请简要描述人机界面设计的10大要素",
+      "options": [],
+      "answer": [
+        "合适性、易理解、及时反馈、防错处理、风格一致与个性化、合理布局、合理色彩、适应用户群体、最少操作步骤、可复用。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "59",
+        "paragraph": 305,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 60,
+      "type": "essay",
+      "content": "请简要说明时序图的定义及其作用",
+      "options": [],
+      "answer": [
+        "定义：时序图是UML行为图，按时间顺序描述对象间消息交互。\n作用：展示多个对象动态协作，表示用例行为顺序。\n要素：角色、对象、生命线、激活期、消息。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "60",
+        "paragraph": 317,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 61,
+      "type": "essay",
+      "content": "简述面向对象设计时有哪些准则",
+      "options": [],
+      "answer": [
+        "模块化、抽象、信息隐藏、弱耦合、强内聚、可复用。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "61",
+        "paragraph": 320,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 62,
+      "type": "essay",
+      "content": "简述U/C矩阵的主要功能。",
+      "options": [],
+      "answer": [
+        "1. 通过正确性检验发现分析调查遗漏和错误。\n2. 分析数据正确性和完整性。\n3. 通过求解得到子系统划分。\n4. 通过子系统间的U确定共享数据。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "62",
+        "paragraph": 323,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 63,
+      "type": "essay",
+      "content": "简述软件测试方法之黑盒测试力图发现哪些类型的软件错误?",
+      "options": [],
+      "answer": [
+        "功能错误或遗漏、接口错误、数据结构或外部数据库访问错误、性能错误、初始化和终止错误。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "63",
+        "paragraph": 329,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 64,
+      "type": "essay",
+      "content": "请简要说明模式的概念及其主要类型",
+      "options": [],
+      "answer": [
+        "1. 概念：模式是用某种语言形成的表达式，用于概括描述数据集中某一子集特性。\n2. 类型：分类、回归、时间序列、聚类、关联、序列模式。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "64",
+        "paragraph": 333,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 65,
+      "type": "essay",
+      "content": "请简述需求分析任务中综合性要求的具体任务包括哪些?",
+      "options": [],
+      "answer": [
+        "系统功能需求、性能需求、运行环境需求、可靠性和可用性需求、安全保密需求、接口需求、标准与约束条件、需求规格说明书和用户手册概要。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "65",
+        "paragraph": 337,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 66,
+      "type": "essay",
+      "content": "MVC模式的模型/视图/控制器（Model/View/Controller）三元组包括哪些对象。",
+      "options": [],
+      "answer": [
+        "1. 模型：封装问题逻辑、核心数据、功能计算，独立于界面和输入输出。\n2. 视图：展示模型数据、逻辑关系和状态。\n3. 控制器：响应用户输入，处理交互，控制流程，协调模型与视图。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "66",
+        "paragraph": 340,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 67,
+      "type": "essay",
+      "content": "请简要说明结构化问题和非结构化问题有哪些共同点和不同点",
+      "options": [],
+      "answer": [
+        "共同点：都属于管理/决策问题，都需要信息支持和求解过程。\n不同点：\n1. 结构化问题：目标明确、信息需求确定、规则固定、可形式化、可程序化，常规重复。\n2. 非结构化问题：目标含糊或冲突、信息不全、规则不固定、求解途径多，结论可能不一致。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "67",
+        "paragraph": 345,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 68,
+      "type": "essay",
+      "content": "简要描述软件开发模型中的瀑布模型的开发过程。",
+      "options": [],
+      "answer": [
+        "1. 开发活动：计划、需求分析说明、软件设计、编码、测试、运行维护。\n2. 顺序：自上而下、逐级衔接。\n3. 阶段交付物：需求规格、设计说明、代码/测试用例、最终产品、升级版本。\n4. 特点：每阶段以验证/确认结束，后续可对前阶段产品迭代。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "68",
+        "paragraph": 353,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 69,
+      "type": "essay",
+      "content": "耦合度常见的耦合形式共有哪几种类型，请简要对这些耦合形式进行描述",
+      "options": [],
+      "answer": [
+        "1. 内容耦合：直接操作或转入其他模块。\n2. 公共耦合：多个模块共用全局数据。\n3. 控制耦合：传递控制信号影响对方动作。\n4. 标记耦合：传递复杂数据结构。\n5. 数据耦合：传递基本类型数据。\n6. 非直接耦合：模块间无信息传递。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "69",
+        "paragraph": 359,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 70,
+      "type": "essay",
+      "content": "简述大型软件系统的测试过程的五个步骤",
+      "options": [],
+      "answer": [
+        "模块测试、子系统测试/集成测试、系统测试、验收测试/确认测试、平行运行。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "70",
+        "paragraph": 367,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 71,
+      "type": "essay",
+      "content": "请简述软件测试准则有哪些",
+      "options": [],
+      "answer": [
+        "1. 可追溯到用户需求。\n2. 提前制定测试计划，尽早持续测试。\n3. 独立第三方测试。\n4. 穷举测试不可能，需设计有效用例。\n5. 用例含合理/不合理输入及预期输出。\n6. 注意错误群集。\n7. 严格执行计划并保存结果和文档。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "71",
+        "paragraph": 370,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 72,
+      "type": "essay",
+      "content": "瀑布模型的主要环节",
+      "options": [],
+      "answer": [
+        "问题定义、可行性研究、需求分析、总体设计、详细设计、编码与单元测试、综合测试、运行维护。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "72",
+        "paragraph": 373,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 73,
+      "type": "essay",
+      "content": "什么是知识？知识有什么特性？什么是知识表示",
+      "options": [],
+      "answer": [
+        "1. 知识：信息经过关联、处理和理解后形成。\n2. 特性：相对正确性、不确定性、可表示性、可利用性。\n3. 知识表示：用计算机可处理的数据结构表达知识。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "73",
+        "paragraph": 376,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 74,
+      "type": "essay",
+      "content": "请简要说明专家系统的开发与一般的软件系统开发相比较有哪些共同点和不同点",
+      "options": [],
+      "answer": [
+        "共同点：都遵循软件工程步骤和原则，都要系统分析、系统设计等。\n不同点：专家系统还强调知识获取、知识表示语言、知识库设计、推理机与解释模块、总控与界面、测试评价和维护。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "74",
+        "paragraph": 380,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 75,
+      "type": "essay",
+      "content": "什么叫测试方案?请简述软件测试的基本准则。黑盒测试技术力图发现哪些类型的错误?",
+      "options": [],
+      "answer": [
+        "1. 测试方案：描述测试目标、策略、资源、进度和用例的文档。\n2. 基本准则：同用户需求可追溯、提前计划、独立测试、不能穷举、设计有效用例、关注错误群集、保存文档。\n3. 黑盒错误：功能、接口、数据结构/数据库、性能、初始化和终止错误。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "75",
+        "paragraph": 384,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 76,
+      "type": "essay",
+      "content": "简述面向对象设计的原则",
+      "options": [],
+      "answer": [
+        "开闭原则OCP、里氏替换原则LSP、依赖倒转原则DIP、接口隔离原则ISP、组合复用原则CRP、迪米特法则LoD、单一职责原则SRP。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "76",
+        "paragraph": 389,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 77,
+      "type": "essay",
+      "content": "请结合自身的编程经验简要地描述降低模块间耦合度的常用方法",
+      "options": [],
+      "answer": [
+        "1. 少继承，多用接口隐藏实现。\n2. 模块功能单一。\n3. 遵循单一定义。\n4. 少用全局变量。\n5. 少public，多private。\n6. 用设计模式，如MVC。\n7. 避免硬编码和直接SQL。\n8. 避免内容耦合，优先数据耦合，少用控制耦合，限制公共耦合。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "77",
+        "paragraph": 398,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 78,
+      "type": "essay",
+      "content": "简述框架表示法的优点及其局限性",
+      "options": [],
+      "answer": [
+        "优点：\n1. 结构和求解过程接近人类思维。\n2. 表达能力强，层次结构丰富，便于组织知识。\n3. 可用过去知识预测未来，并通过实例修正框架。\n局限：缺乏形式理论和明确推理机制；适应能力不强；子框架结构不一致会影响清晰性和推理。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "78",
+        "paragraph": 408,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 79,
+      "type": "essay",
+      "content": "仅当每个与会者都在事先作了准备时,正式的技术复审才能取得预期的效果。如果自己是复审小组的组长,怎样发现事先没做准备的与会者?打算采取什么措施来促使大家事先做准备",
+      "options": [],
+      "answer": [
+        "发现未准备者：会前小测或提问；轮流概述评审意见；检查是否带标注文档。\n促进准备：提前3天发材料；通知中写明准备要求；纳入绩效；未准备者补审汇报，必要时退出会议并重排复审。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "79",
+        "paragraph": 414,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 80,
+      "type": "essay",
+      "content": "简述利用U/C矩阵方法划分子系统的步骤。",
+      "options": [],
+      "answer": [
+        "1. 用矩阵行列记录数据类和过程，交叉处填C或U。\n2. 重新排列功能组和数据类，使C靠近对角线。\n3. 将U/C密集区域框出并命名为子系统。\n4. 框外U表示子系统间数据流。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "80",
+        "paragraph": 418,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 81,
+      "type": "essay",
+      "content": "取款处理:系统将取款单上的取款金额分别记录在存折和帐目文件中,并从现金库提取现金;最后将现金和存折还给储户。绘制该系统的数据流图。",
+      "options": [],
+      "answer": [
+        "得分点：\n1. 外部实体：储户。\n2. 处理：取款处理。\n3. 输入：取款单、存折。\n4. 数据存储：存折文件、账目文件、现金库。\n5. 处理逻辑：登记取款金额到存折和账目文件，从现金库提取现金。\n6. 输出：现金和存折返回储户。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "81",
+        "paragraph": 423,
+        "answer_source": "generated_from_prompt"
+      }
+    },
+    {
+      "id": 82,
+      "type": "essay",
+      "content": "请简要说明采用一阶谓词逻辑表示法表示知识的步骤。",
+      "options": [],
+      "answer": [
+        "1. 定义谓词及个体，明确含义。\n2. 给谓词变元赋具体值。\n3. 按语义用连接符组成谓词公式。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "82",
+        "paragraph": 426,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 83,
+      "type": "essay",
+      "content": "什么是模块的扇入和扇出，在设计良好的软件结构中，如何正确地设置模块的扇入和扇出？",
+      "options": [],
+      "answer": [
+        "1. 扇入：直接调用该模块的上级模块数，扇入大表示复用度高。\n2. 扇出：该模块直接调用的下级模块数，过大表示复杂度高，过小也不合理。\n3. 设置原则：顶层扇出较大，中间扇出较小，底层模块大扇入；扇出过大加中间层，过小可分解或合并。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "83",
+        "paragraph": 431,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 84,
+      "type": "essay",
+      "content": "什么是U/C矩阵",
+      "options": [],
+      "answer": [
+        "1. 定义：U/C矩阵表达过程与数据类关系，U表示使用，C表示产生。\n2. 形式：行列列出功能和数据类，交叉处填写U/C。\n3. 作用：用于MIS系统分析、正确性检验、表上作业和子系统划分。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "84",
+        "paragraph": 440,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 85,
+      "type": "essay",
+      "content": "简述统一建模语言",
+      "options": [],
+      "answer": [
+        "1. UML是绘制软件蓝图的标准可视化建模语言。\n2. 可对软件系统制品进行可视化、详述、构造和文档化。\n3. 特点：定义良好、易表达、功能强、普遍适用。\n4. 作用：用多种图从静态和动态方面描述待开发系统，支持从需求分析开始的全过程。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "85",
+        "paragraph": 445,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 86,
+      "type": "essay",
+      "content": "软件工程的本质特征有那些",
+      "options": [],
+      "answer": [
+        "大型程序构造、复杂性控制、软件经常变化、开发效率提升、团队协作、支持用户需求、文化背景差异。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "86",
+        "paragraph": 448,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 87,
+      "type": "essay",
+      "content": "简述语义网络表示法的优点及其局限性",
+      "options": [],
+      "answer": [
+        "优点：结构性强，能显式表示属性和语义联系；联想性强，便于查找相关信息；自然直观，易理解。\n局限：形式不严格，含义依赖解释程序；表示灵活但处理复杂。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "87",
+        "paragraph": 451,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 88,
+      "type": "essay",
+      "content": "简述面向数据流的设计（SD方法）和面向数据结构的设计（JSP方法）的异同。",
+      "options": [],
+      "answer": [
+        "共同点：都以数据信息驱动，把数据表示转换为软件表示。\n不同点：SD方法面向数据流，利用数据流图；JSP方法面向数据结构，不利用数据流图，而按数据结构设计。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "88",
+        "paragraph": 463,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 89,
+      "type": "essay",
+      "content": "简要描述软件开发模型中的增量模型的开发过程",
+      "options": [],
+      "answer": [
+        "1. 增量模型是逐步开发、逐步交付的软件过程。\n2. 可先做原型或部分功能，向用户展示并收集意见。\n3. 需求可分成一系列增量产品，每个增量单独开发。\n4. 优点是灵活、早交付、早发现问题，适合需求不明确或有风险项目。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "89",
+        "paragraph": 471,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 90,
+      "type": "essay",
+      "content": "什么是知识表示？在选择知识表示时，应该考虑哪几个因素",
+      "options": [],
+      "answer": [
+        "1. 知识表示：用机器可处理的数据结构表示知识，是数据结构与控制结构统一体。\n2. 选择因素：能否充分表达领域知识；是否利于利用知识；是否便于组织、维护、管理；是否便于理解和实现。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "90",
+        "paragraph": 474,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 91,
+      "type": "essay",
+      "content": "简述产生式系统的组成要素",
+      "options": [],
+      "answer": [
+        "1. 综合数据库：存放当前问题信息。\n2. 产生式规则：描述领域知识。\n3. 控制系统：选择匹配规则并执行，必要时冲突消解。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "91",
+        "paragraph": 481,
+        "answer_source": "source_simplified"
+      }
+    },
+    {
+      "id": 92,
+      "type": "essay",
+      "content": "简要说明传统结构化软件设计过程中所遵循的5条基本原则",
+      "options": [],
+      "answer": [
+        "抽象、逐步求精、模块化、信息隐藏和局部化、结构化程序设计。"
+      ],
+      "analysis": "精简版答案，应对考试。",
+      "tags": [
+        "信息系统",
+        "简答",
+        "期末复习"
+      ],
+      "difficulty": 2,
+      "source": {
+        "file": "信息系统简答.docx",
+        "kind": "docx",
+        "no": "92",
+        "paragraph": 486,
+        "answer_source": "source_simplified"
+      }
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "file": "data/imports/信息系统简答_ti_import.json",
+  "total": 92,
+  "type_counts": {
+    "essay": 92
+  },
+  "duplicate_stem_count": 1,
+  "duplicate_stems": [
+    [
+      17,
+      76
+    ]
+  ],
+  "error_count": 0,
+  "errors": []
+}
