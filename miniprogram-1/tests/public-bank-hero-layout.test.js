@@ -25,4 +25,10 @@ test('public bank hero keeps the count pill in the title row like personal banks
     /\.pb-count\s*\{[\s\S]*?flex:\s*0 0 auto;[\s\S]*?\}/,
     'pb-count 需要与个人题库 mb-count 一样保持内容宽度'
   );
+
+  assert.match(
+    less,
+    /\.pb-count\s*\{[\s\S]*?white-space:\s*nowrap;[\s\S]*?line-height:\s*1;[\s\S]*?\}/,
+    'pb-count 需要禁止文字换行，避免数量徽标被撑成长框'
+  );
 });
