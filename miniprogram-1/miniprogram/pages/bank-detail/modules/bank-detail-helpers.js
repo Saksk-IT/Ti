@@ -25,7 +25,7 @@ var web_1 = require("../../../utils/web");
 exports.OPTION_TYPES = new Set(['选择题', '多选题']);
 exports.KEY_SHUFFLE_Q = 'shuffle_questions';
 exports.KEY_SHUFFLE_O = 'shuffle_options';
-exports.DEFAULT_DETAIL_TAB_ORDER = ['practice', 'reinforce', 'exam', 'search', 'stats', 'share', 'manage'];
+exports.DEFAULT_DETAIL_TAB_ORDER = ['practice', 'reinforce', 'exam', 'search', 'stats', 'settings', 'share', 'manage'];
 exports.VALID_DETAIL_TABS = new Set(exports.DEFAULT_DETAIL_TAB_ORDER);
 exports.DETAIL_TAB_LABELS = {
     practice: '练习',
@@ -33,6 +33,7 @@ exports.DETAIL_TAB_LABELS = {
     exam: '考试',
     search: '搜索',
     stats: '数据',
+    settings: '设置',
     share: '分享',
     manage: '管理'
 };
@@ -53,14 +54,17 @@ function normalizeDetailTabOrder(input, fallback) {
     base.forEach(push);
     return out;
 }
-function buildDetailTabViews(order, canManage, showShareTab) {
+function buildDetailTabViews(order, canManage, showShareTab, showSettingsTab) {
     if (canManage === void 0) { canManage = false; }
     if (showShareTab === void 0) { showShareTab = true; }
+    if (showSettingsTab === void 0) { showSettingsTab = false; }
     var list = Array.isArray(order) ? order : exports.DEFAULT_DETAIL_TAB_ORDER;
     var filtered = list.filter(function (key) {
         if (!canManage && key === 'manage')
             return false;
         if (!showShareTab && key === 'share')
+            return false;
+        if (!showSettingsTab && key === 'settings')
             return false;
         return true;
     });
@@ -125,6 +129,8 @@ function normalizeTab(input) {
         return 'search';
     if (s === 'stats')
         return 'stats';
+    if (s === 'settings')
+        return 'settings';
     if (s === 'reinforce' || s === 'strengthen' || s === 'enhance')
         return 'reinforce';
     if (s === 'favorites' || s === 'mistakes')

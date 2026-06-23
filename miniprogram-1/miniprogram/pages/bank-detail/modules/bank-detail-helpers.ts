@@ -2,7 +2,7 @@ import { getApiOrigin } from '../../../utils/api';
 import { normalizeWebNextPath } from '../../../utils/web';
 
 export type Scope = 'all' | 'favorites' | 'mistakes';
-export type DetailTab = 'practice' | 'reinforce' | 'exam' | 'search' | 'stats' | 'share' | 'manage';
+export type DetailTab = 'practice' | 'reinforce' | 'exam' | 'search' | 'stats' | 'settings' | 'share' | 'manage';
 export type TagItem = { name: string; count?: number };
 export type SearchItem = {
   id: number;
@@ -153,7 +153,7 @@ export const KEY_SHUFFLE_O = 'shuffle_options';
 
 export type DetailTabView = { key: DetailTab; label: string };
 
-export const DEFAULT_DETAIL_TAB_ORDER: DetailTab[] = ['practice', 'reinforce', 'exam', 'search', 'stats', 'share', 'manage'];
+export const DEFAULT_DETAIL_TAB_ORDER: DetailTab[] = ['practice', 'reinforce', 'exam', 'search', 'stats', 'settings', 'share', 'manage'];
 export const VALID_DETAIL_TABS = new Set(DEFAULT_DETAIL_TAB_ORDER);
 export const DETAIL_TAB_LABELS: Record<DetailTab, string> = {
   practice: '练习',
@@ -161,6 +161,7 @@ export const DETAIL_TAB_LABELS: Record<DetailTab, string> = {
   exam: '考试',
   search: '搜索',
   stats: '数据',
+  settings: '设置',
   share: '分享',
   manage: '管理'
 };
@@ -183,11 +184,17 @@ export function normalizeDetailTabOrder(input: any, fallback: DetailTab[]): Deta
   return out;
 }
 
-export function buildDetailTabViews(order: DetailTab[], canManage: boolean = false, showShareTab: boolean = true): DetailTabView[] {
+export function buildDetailTabViews(
+  order: DetailTab[],
+  canManage: boolean = false,
+  showShareTab: boolean = true,
+  showSettingsTab: boolean = false
+): DetailTabView[] {
   const list = Array.isArray(order) ? order : DEFAULT_DETAIL_TAB_ORDER;
   const filtered = list.filter((key) => {
     if (!canManage && key === 'manage') return false;
     if (!showShareTab && key === 'share') return false;
+    if (!showSettingsTab && key === 'settings') return false;
     return true;
   });
   return filtered.map((key) => ({ key, label: DETAIL_TAB_LABELS[key] || key }));
@@ -243,6 +250,7 @@ export function normalizeTab(input: any): DetailTab {
   if (s === 'exam') return 'exam';
   if (s === 'search') return 'search';
   if (s === 'stats') return 'stats';
+  if (s === 'settings') return 'settings';
   if (s === 'reinforce' || s === 'strengthen' || s === 'enhance') return 'reinforce';
   if (s === 'favorites' || s === 'mistakes') return 'practice';
   if (s === 'share') return 'share';
@@ -372,4 +380,3 @@ export function buildExternalWebUrl(next: any): string {
   if (!origin) return path;
   return appendFromMiniapp(`${origin}${path}`);
 }
-

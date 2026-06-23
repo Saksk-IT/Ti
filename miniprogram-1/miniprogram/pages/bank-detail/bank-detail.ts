@@ -96,7 +96,7 @@ Page({
     tab: 'practice' as DetailTab,
     entry: '',
     tabOrderOpen: false,
-    detailTabs: buildDetailTabViews(DEFAULT_DETAIL_TAB_ORDER, false, false),
+    detailTabs: buildDetailTabViews(DEFAULT_DETAIL_TAB_ORDER, false, false, false),
 
     bankId: 0,
     bankName: '',
@@ -426,12 +426,14 @@ Page({
       const permission = String(bankData?.permission || '').trim().toLowerCase();
       const canManageShare = accessType === 'owner' || permission === 'owner';
       const showShareTab = canManageShare;
-      if ((tab === 'manage' || tab === 'share') && !canManageShare) tab = 'practice';
 
       const joinedSource = normalizeJoinedBankSource(this.data.joinedBankSource);
       const joinedRelation = normalizeJoinedBankRelation(this.data.joinedBankRelation || joinedSource);
       const leaveBankSourceType = normalizeBankSourceType(this.data.leaveBankSourceType);
       const showLeaveBankAction = !canManageShare && leaveBankSourceType === 'user' && hasJoinedBankContext(joinedSource, joinedRelation);
+      const showSettingsTab = showLeaveBankAction;
+      if ((tab === 'manage' || tab === 'share') && !canManageShare) tab = 'practice';
+      if (tab === 'settings' && !showSettingsTab) tab = 'practice';
 
       const bankIsPublic = parseBoolFlag(bankData?.is_public, false);
       const bankAllowCopy = parseBoolFlag(bankData?.allow_copy, true);
@@ -439,7 +441,7 @@ Page({
 
       const tabOrderKey = getBankDetailTabOrderKey(bankId);
       const tabOrder = readBankDetailTabOrder(tabOrderKey, DEFAULT_DETAIL_TAB_ORDER);
-      const detailTabs = buildDetailTabViews(tabOrder, canManageShare, showShareTab);
+      const detailTabs = buildDetailTabViews(tabOrder, canManageShare, showShareTab, showSettingsTab);
 
       const typesRaw = Array.isArray(bankData?.available_types) ? bankData.available_types : [];
       const types = (typesRaw || [])
@@ -570,7 +572,8 @@ Page({
     const key = getBankDetailTabOrderKey(bankId);
     const order = readBankDetailTabOrder(key, DEFAULT_DETAIL_TAB_ORDER);
     const showShareTab = Boolean(this.data.canManageShare);
-    this.patchData({ detailTabs: buildDetailTabViews(order, Boolean(this.data.canManageShare), showShareTab) });
+    const showSettingsTab = Boolean(this.data.showLeaveBankAction);
+    this.patchData({ detailTabs: buildDetailTabViews(order, Boolean(this.data.canManageShare), showShareTab, showSettingsTab) });
   },
 
   applyDetailTabOrder(nextOrder: DetailTab[]) {
@@ -579,7 +582,8 @@ Page({
     const key = getBankDetailTabOrderKey(bankId);
     persistBankDetailTabOrder(key, normalized);
     const showShareTab = Boolean(this.data.canManageShare);
-    this.patchData({ detailTabs: buildDetailTabViews(normalized, Boolean(this.data.canManageShare), showShareTab) });
+    const showSettingsTab = Boolean(this.data.showLeaveBankAction);
+    this.patchData({ detailTabs: buildDetailTabViews(normalized, Boolean(this.data.canManageShare), showShareTab, showSettingsTab) });
   },
 
   onOpenTabOrder() {

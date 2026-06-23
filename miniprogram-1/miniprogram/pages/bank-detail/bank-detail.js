@@ -89,7 +89,7 @@ Page({
         tab: 'practice',
         entry: '',
         tabOrderOpen: false,
-        detailTabs: (0, bank_detail_helpers_1.buildDetailTabViews)(bank_detail_helpers_1.DEFAULT_DETAIL_TAB_ORDER, false, false),
+        detailTabs: (0, bank_detail_helpers_1.buildDetailTabViews)(bank_detail_helpers_1.DEFAULT_DETAIL_TAB_ORDER, false, false, false),
         bankId: 0,
         bankName: '',
         bankDescription: '',
@@ -330,7 +330,7 @@ Page({
     },
     bootstrap: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var bankId, keyType, keyTag, keyScope, keySearchType, keyStatsSubTab, keyReinforceSubTab, storedType, storedTag, storedScope, storedSearchType, storedStatsSubTab, storedReinforceSubTab, shuffleQuestions, shuffleOptions, entry, tab, practiceScope, forcedScope, statsSubTab, reinforceSubTab, _a, detailRes, countsRes, myStatsRes, tagsRes, bankData, countsData, myStatsData, tagsResObj, tagsData, bankName, bankDescription, accessType, permission, canManageShare, showShareTab, joinedSource, joinedRelation, leaveBankSourceType, showLeaveBankAction, bankIsPublic, bankAllowCopy, bankPublicDescription, tabOrderKey, tabOrder, detailTabs, typesRaw, types, qType, tagsDataInner, tagsRaw, tags, tag, searchType, totalCount, favCount, mistakeCount, e_1;
+            var bankId, keyType, keyTag, keyScope, keySearchType, keyStatsSubTab, keyReinforceSubTab, storedType, storedTag, storedScope, storedSearchType, storedStatsSubTab, storedReinforceSubTab, shuffleQuestions, shuffleOptions, entry, tab, practiceScope, forcedScope, statsSubTab, reinforceSubTab, _a, detailRes, countsRes, myStatsRes, tagsRes, bankData, countsData, myStatsData, tagsResObj, tagsData, bankName, bankDescription, accessType, permission, canManageShare, showShareTab, joinedSource, joinedRelation, leaveBankSourceType, showLeaveBankAction, showSettingsTab, bankIsPublic, bankAllowCopy, bankPublicDescription, tabOrderKey, tabOrder, detailTabs, typesRaw, types, qType, tagsDataInner, tagsRaw, tags, tag, searchType, totalCount, favCount, mistakeCount, e_1;
             var _b, _c;
             return __generator(this, function (_d) {
                 switch (_d.label) {
@@ -406,18 +406,21 @@ Page({
                         permission = String((bankData === null || bankData === void 0 ? void 0 : bankData.permission) || '').trim().toLowerCase();
                         canManageShare = accessType === 'owner' || permission === 'owner';
                         showShareTab = canManageShare;
-                        if ((tab === 'manage' || tab === 'share') && !canManageShare)
-                            tab = 'practice';
                         joinedSource = normalizeJoinedBankSource(this.data.joinedBankSource);
                         joinedRelation = normalizeJoinedBankRelation(this.data.joinedBankRelation || joinedSource);
                         leaveBankSourceType = normalizeBankSourceType(this.data.leaveBankSourceType);
                         showLeaveBankAction = !canManageShare && leaveBankSourceType === 'user' && hasJoinedBankContext(joinedSource, joinedRelation);
+                        showSettingsTab = showLeaveBankAction;
+                        if ((tab === 'manage' || tab === 'share') && !canManageShare)
+                            tab = 'practice';
+                        if (tab === 'settings' && !showSettingsTab)
+                            tab = 'practice';
                         bankIsPublic = (0, bank_detail_helpers_1.parseBoolFlag)(bankData === null || bankData === void 0 ? void 0 : bankData.is_public, false);
                         bankAllowCopy = (0, bank_detail_helpers_1.parseBoolFlag)(bankData === null || bankData === void 0 ? void 0 : bankData.allow_copy, true);
                         bankPublicDescription = String((bankData === null || bankData === void 0 ? void 0 : bankData.public_description) || '').trim();
                         tabOrderKey = (0, bank_detail_helpers_1.getBankDetailTabOrderKey)(bankId);
                         tabOrder = (0, bank_detail_helpers_1.readBankDetailTabOrder)(tabOrderKey, bank_detail_helpers_1.DEFAULT_DETAIL_TAB_ORDER);
-                        detailTabs = (0, bank_detail_helpers_1.buildDetailTabViews)(tabOrder, canManageShare, showShareTab);
+                        detailTabs = (0, bank_detail_helpers_1.buildDetailTabViews)(tabOrder, canManageShare, showShareTab, showSettingsTab);
                         typesRaw = Array.isArray(bankData === null || bankData === void 0 ? void 0 : bankData.available_types) ? bankData.available_types : [];
                         types = (typesRaw || [])
                             .filter(function (t) { return typeof t === 'string' && t.trim(); })
@@ -546,7 +549,8 @@ Page({
         var key = (0, bank_detail_helpers_1.getBankDetailTabOrderKey)(bankId);
         var order = (0, bank_detail_helpers_1.readBankDetailTabOrder)(key, bank_detail_helpers_1.DEFAULT_DETAIL_TAB_ORDER);
         var showShareTab = Boolean(this.data.canManageShare);
-        this.patchData({ detailTabs: (0, bank_detail_helpers_1.buildDetailTabViews)(order, Boolean(this.data.canManageShare), showShareTab) });
+        var showSettingsTab = Boolean(this.data.showLeaveBankAction);
+        this.patchData({ detailTabs: (0, bank_detail_helpers_1.buildDetailTabViews)(order, Boolean(this.data.canManageShare), showShareTab, showSettingsTab) });
     },
     applyDetailTabOrder: function (nextOrder) {
         var normalized = (0, bank_detail_helpers_1.normalizeDetailTabOrder)(nextOrder, bank_detail_helpers_1.DEFAULT_DETAIL_TAB_ORDER);
@@ -554,7 +558,8 @@ Page({
         var key = (0, bank_detail_helpers_1.getBankDetailTabOrderKey)(bankId);
         (0, bank_detail_helpers_1.persistBankDetailTabOrder)(key, normalized);
         var showShareTab = Boolean(this.data.canManageShare);
-        this.patchData({ detailTabs: (0, bank_detail_helpers_1.buildDetailTabViews)(normalized, Boolean(this.data.canManageShare), showShareTab) });
+        var showSettingsTab = Boolean(this.data.showLeaveBankAction);
+        this.patchData({ detailTabs: (0, bank_detail_helpers_1.buildDetailTabViews)(normalized, Boolean(this.data.canManageShare), showShareTab, showSettingsTab) });
     },
     onOpenTabOrder: function () {
         this.patchData({ tabOrderOpen: true });

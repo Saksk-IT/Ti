@@ -32,20 +32,24 @@ def test_my_banks_joined_detail_entry_carries_leave_context():
 
 
 def test_bank_detail_supports_leaving_joined_user_bank():
-    """加入的用户题库详情页应显示退出按钮，并调用 Web 同款退出接口。"""
+    """加入的用户题库详情页应在设置页显示退出按钮，并调用 Web 同款退出接口。"""
     detail_ts = _read(BANK_DETAIL_TS)
     detail_wxml = _read(BANK_DETAIL_WXML)
     api_ts = _read(API_ENDPOINTS_TS)
 
     assert "leavePublicBank" in api_ts
     assert "showLeaveBankAction" in detail_ts
+    assert "showSettingsTab = showLeaveBankAction" in detail_ts
     assert "leavingBank" in detail_ts
     assert "onLeaveJoinedBank" in detail_ts
     assert "api.leavePublicBank('user', bankId)" in detail_ts
     assert "确定要退出该题库吗？退出后会从“我的题库”中移除。" in detail_ts
+    assert "tab === 'settings'" in detail_wxml
+    assert '<text class="card-title">设置</text>' in detail_wxml
     assert "退出题库" in detail_wxml
     assert "bindtap=\"onLeaveJoinedBank\"" in detail_wxml
     assert "wx:if=\"{{showLeaveBankAction}}\"" in detail_wxml
+    assert "actions-with-leave" not in detail_wxml
 
 
 def test_joined_bank_detail_no_longer_shows_non_owner_share_page():
@@ -55,7 +59,10 @@ def test_joined_bank_detail_no_longer_shows_non_owner_share_page():
     detail_wxml = _read(BANK_DETAIL_WXML)
 
     assert "showShareTab: boolean = true" in helper_ts
+    assert "showSettingsTab: boolean = false" in helper_ts
+    assert "settings: '设置'" in helper_ts
     assert "key === 'share'" in helper_ts
+    assert "key === 'settings'" in helper_ts
     assert "showShareTab = canManageShare" in detail_ts
     assert "你当前不是创建者，无法创建或撤销分享。" not in detail_wxml
     assert '<text class="card-title">让好友加入</text>' not in detail_wxml

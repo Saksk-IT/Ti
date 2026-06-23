@@ -111,12 +111,9 @@
               <view class="start-error" wx:if="{{startError}}"><text>{{startError}}</text></view>
             </view>
 
-            <view class="actions actions-hero {{showLeaveBankAction ? 'actions-with-leave' : ''}}">
+            <view class="actions actions-hero">
               <view class="btn {{startDisabled ? 'disabled' : ''}}" bindtap="onStartQuiz"><text>开始刷题</text></view>
               <view class="btn {{startDisabled ? 'disabled' : ''}}" bindtap="onStartMemo"><text>开始背题</text></view>
-              <view wx:if="{{showLeaveBankAction}}" class="btn btn-danger leave-btn {{leavingBank ? 'disabled' : ''}}" bindtap="onLeaveJoinedBank">
-                <text>{{leavingBank ? '退出中...' : '退出题库'}}</text>
-              </view>
             </view>
 
             <view class="adv-toggle" bindtap="onTogglePracticeAdvanced" aria-role="button" aria-label="展开更多筛选与选项">
@@ -602,6 +599,27 @@
             <view class="actions">
               <view class="btn {{startDisabled ? 'disabled' : ''}}" bindtap="onStartQuiz"><text>开始刷题</text></view>
               <view class="btn {{startDisabled ? 'disabled' : ''}}" bindtap="onStartMemo"><text>开始背题</text></view>
+            </view>
+          </view>
+        </view>
+
+        <view wx:elif="{{tab === 'settings'}}">
+          <view class="card" aria-label="设置">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">设置</text>
+                <text class="card-sub">管理当前已加入题库的个人操作。</text>
+              </view>
+            </view>
+
+            <view wx:if="{{showLeaveBankAction}}" class="settings-list">
+              <view class="danger-action {{leavingBank ? 'is-disabled' : ''}}" bindtap="onLeaveJoinedBank" aria-role="button" aria-label="退出题库">
+                <view class="danger-left">
+                  <text class="danger-title">退出题库</text>
+                  <text class="danger-desc">退出后会从“我的题库”中移除，不影响原题库内容。</text>
+                </view>
+                <view class="danger-pill"><text>{{leavingBank ? '退出中' : '退出'}}</text></view>
+              </view>
             </view>
           </view>
         </view>

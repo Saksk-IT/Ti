@@ -1072,12 +1072,15 @@ page {
   padding-bottom: 0;
 }
 
-.actions.actions-with-leave .leave-btn {
-  grid-column: 1 / -1;
-}
-
 .actions.actions-single {
   grid-template-columns: 1fr;
+}
+
+.settings-list {
+  padding: 0 18rpx 18rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
 }
 
 .weblead-list {
@@ -1223,6 +1226,11 @@ page {
   transform: scale(0.99);
 }
 
+.danger-action.is-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 .danger-left {
   min-width: 0;
   flex: 1 1 auto;
@@ -1300,12 +1308,6 @@ page {
   border-color: color-mix(in srgb, var(--app-cta) 38%, var(--app-border));
   background: color-mix(in srgb, var(--app-cta) 16%, var(--app-surface));
   color: var(--app-cta);
-}
-
-.btn-danger {
-  border-color: color-mix(in srgb, var(--app-danger) 36%, var(--app-border));
-  background: color-mix(in srgb, var(--app-danger) 12%, var(--app-surface));
-  color: var(--app-danger);
 }
 
 .btn:active {
