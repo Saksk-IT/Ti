@@ -13,3 +13,9 @@ edu_schedule_pages_bp = Blueprint("edu_schedule_pages", __name__)
 @login_required
 def edu_schedule_page():
     return render_template("edu_schedule/index.html")
+
+
+@edu_schedule_pages_bp.route("/edu-grades")
+@login_required
+def edu_grades_page():
+    return render_template("edu_schedule/grades.html")

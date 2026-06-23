@@ -24,6 +24,7 @@ def api_schedule_status():
         data={
             "credential": EduScheduleService.credential_status(user_id),
             "snapshots": EduScheduleService.list_snapshots(user_id),
+            "grade_snapshots": EduScheduleService.list_grade_snapshots(user_id),
         }
     )
 
@@ -74,8 +75,37 @@ def api_query_schedule():
         return error_response(user_safe_error(exc), status_code=400)
 
 
+@edu_schedule_api_bp.route("/edu-schedule/grades/query", methods=["POST"])
+@auth_required
+def api_query_grades():
+    user_id = int(current_user_id() or 0)
+    try:
+        schema = EduScheduleQuerySchema.model_validate(request.get_json(silent=True) or {})
+        data = EduScheduleService.query_grade_terms(
+            user_id,
+            [term.model_dump() for term in schema.terms],
+            username=schema.username,
+            password=schema.password,
+            remember=schema.remember,
+        )
+        return success_response(data=data, message="成绩查询成功")
+    except ValidationError:
+        current_app.logger.warning("教务成绩查询输入校验失败: ValidationError")
+        return error_response("输入参数不正确", status_code=400)
+    except Exception as exc:
+        current_app.logger.warning("教务成绩查询失败: %s", type(exc).__name__)
+        return error_response(user_safe_error(exc), status_code=400)
+
+
 @edu_schedule_api_bp.route("/edu-schedule/snapshots", methods=["GET"])
 @auth_required
 def api_list_schedule_snapshots():
     user_id = int(current_user_id() or 0)
     return success_response(data={"snapshots": EduScheduleService.list_snapshots(user_id)})
+
+
+@edu_schedule_api_bp.route("/edu-schedule/grades/snapshots", methods=["GET"])
+@auth_required
+def api_list_grade_snapshots():
+    user_id = int(current_user_id() or 0)
+    return success_response(data={"snapshots": EduScheduleService.list_grade_snapshots(user_id)})

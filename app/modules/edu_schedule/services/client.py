@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""正方教务系统课表客户端。"""
+"""正方教务系统客户端。"""
 
 from __future__ import annotations
 
@@ -54,6 +54,7 @@ class ClientConfig:
     jwxt_base_url: str
     jwxt_login_path: str
     schedule_path: str
+    grade_path: str
     request_timeout: int
     verify_tls: bool
     allowed_hosts: tuple[str, ...]
@@ -93,6 +94,7 @@ class JWXTClient:
             jwxt_base_url=_validate_url(str(config.get("jwxt_base_url") or ""), allowed_hosts),
             jwxt_login_path=str(config.get("jwxt_login_path") or "/xtgl/login_slogin.html"),
             schedule_path=str(config.get("schedule_path") or "/kbcx/xskbcx_cxXsgrkb.html?gnmkdm=N253508"),
+            grade_path=str(config.get("grade_path") or "/cjcx/cjcx_cxXsgrcj.html?doType=query&gnmkdm=N305005"),
             request_timeout=int(config.get("request_timeout") or 20),
             verify_tls=bool(config.get("verify_tls", True)),
             allowed_hosts=allowed_hosts,
@@ -110,6 +112,19 @@ class JWXTClient:
             self._prepare_webvpn(session)
         self._login_jwxt(session, username, password)
         return self._query_schedule(session, xnm, xqm)
+
+    def fetch_grades(self, username: str, password: str, xnm: str, xqm: str) -> Dict[str, Any]:
+        if not self.config.enabled:
+            raise ScheduleClientError("成绩查询功能未开启")
+        session = requests.Session()
+        session.headers.update({
+            "User-Agent": "Mozilla/5.0 (compatible; TiEduSchedule/1.0)",
+            "Accept-Language": "zh-CN,zh;q=0.9",
+        })
+        if self.config.use_webvpn:
+            self._prepare_webvpn(session)
+        self._login_jwxt(session, username, password)
+        return self._query_grades(session, xnm, xqm)
 
     def _request(self, session: requests.Session, method: str, url: str, **kwargs):
         follow_redirects = bool(kwargs.pop("allow_redirects", False))
@@ -223,6 +238,36 @@ class JWXTClient:
             raise ScheduleClientError("教务课表返回格式不正确") from exc
         if not isinstance(payload, dict) or "kbList" not in payload:
             raise ScheduleClientError("教务课表数据不完整")
+        return payload
+
+    def _query_grades(self, session: requests.Session, xnm: str, xqm: str) -> Dict[str, Any]:
+        url = urljoin(self.config.jwxt_base_url.rstrip("/") + "/", self.config.grade_path.lstrip("/"))
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+            "X-Requested-With": "XMLHttpRequest",
+            "Accept": "application/json, text/javascript, */*; q=0.01",
+        }
+        data = {
+            "xnm": xnm,
+            "xqm": xqm,
+            "sfzgcj": "",
+            "kcbj": "",
+            "pkey": "",
+            "_search": "false",
+            "nd": str(int(time.time() * 1000)),
+            "queryModel.showCount": "100",
+            "queryModel.currentPage": "1",
+            "queryModel.sortName": "+",
+            "queryModel.sortOrder": "asc",
+            "time": "0",
+        }
+        response = self._request(session, "POST", url, headers=headers, data=data, allow_redirects=True)
+        try:
+            payload = response.json()
+        except json.JSONDecodeError as exc:
+            raise ScheduleClientError("教务成绩返回格式不正确") from exc
+        if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
+            raise ScheduleClientError("教务成绩数据不完整")
         return payload
 
 

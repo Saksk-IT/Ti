@@ -1,0 +1,437 @@
+{% extends "main/shared/app_shell.html" %}
+
+{% block title %}成绩查询 - SAK{% endblock %}
+{% block page_title %}成绩查询{% endblock %}
+
+{% block content %}
+<section class="grade-page">
+  <div class="grade-toolbar">
+    <form id="gradeForm" class="grade-form" autocomplete="off">
+      <div class="field-group account-fields">
+        <label>
+          <span>教务账号</span>
+          <input id="gradeUsername" name="username" type="text" inputmode="text" autocomplete="username" maxlength="64" placeholder="学号/工号">
+        </label>
+        <label>
+          <span>教务密码</span>
+          <input id="gradePassword" name="password" type="password" autocomplete="current-password" maxlength="128" placeholder="教务系统密码">
+        </label>
+        <label class="checkbox-field">
+          <input id="gradeRemember" type="checkbox">
+          <span>加密保存</span>
+        </label>
+      </div>
+
+      <div class="field-group term-fields">
+        <label>
+          <span>开始学年</span>
+          <input id="gradeStartYear" type="number" min="2000" max="2100" step="1" value="2025">
+        </label>
+        <label>
+          <span>结束学年</span>
+          <input id="gradeEndYear" type="number" min="2000" max="2100" step="1" value="2025">
+        </label>
+        <label>
+          <span>学期</span>
+          <select id="gradeSemester">
+            <option value="all">第一、二学期</option>
+            <option value="3" selected>第一学期</option>
+            <option value="12">第二学期</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="grade-actions">
+        <button class="primary-btn" type="submit" id="gradeSubmit">查询</button>
+        <button class="ghost-btn" type="button" id="gradeClearCredential">删除凭据</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="grade-state" id="gradeState" role="status"></div>
+  <div class="grade-results" id="gradeResults"></div>
+</section>
+
+<style>
+  .grade-page {
+    width: min(1180px, calc(100vw - 32px));
+    margin: 0 auto;
+    padding: 24px 0 44px;
+    display: grid;
+    gap: 18px;
+  }
+  .grade-toolbar,
+  .term-panel {
+    border: 1px solid var(--app-border);
+    background: var(--app-surface);
+    border-radius: 8px;
+    box-shadow: var(--app-shadow-soft);
+  }
+  .grade-toolbar {
+    padding: 16px;
+  }
+  .grade-form {
+    display: grid;
+    grid-template-columns: minmax(260px, 1.2fr) minmax(260px, 1fr) auto;
+    gap: 14px;
+    align-items: end;
+  }
+  .field-group {
+    display: grid;
+    gap: 10px;
+  }
+  .account-fields {
+    grid-template-columns: minmax(120px, 1fr) minmax(150px, 1fr) auto;
+    align-items: end;
+  }
+  .term-fields {
+    grid-template-columns: repeat(3, minmax(92px, 1fr));
+  }
+  .grade-form label {
+    display: grid;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--app-muted);
+  }
+  .grade-form input,
+  .grade-form select {
+    width: 100%;
+    min-height: 40px;
+    border: 1px solid var(--app-border);
+    border-radius: 8px;
+    padding: 0 10px;
+    background: var(--app-surface-2);
+    color: var(--app-text);
+    font-size: 14px;
+  }
+  .checkbox-field {
+    min-height: 40px;
+    display: inline-flex !important;
+    grid-template-columns: auto auto;
+    align-items: center;
+    justify-content: center;
+    gap: 8px !important;
+    padding: 0 10px;
+    border: 1px solid var(--app-border);
+    border-radius: 8px;
+    color: var(--app-text) !important;
+    background: var(--app-surface-2);
+  }
+  .checkbox-field input {
+    width: 16px;
+    min-height: 16px;
+    padding: 0;
+  }
+  .grade-actions {
+    display: inline-flex;
+    gap: 10px;
+    justify-content: flex-end;
+    align-items: center;
+  }
+  .primary-btn,
+  .ghost-btn {
+    min-height: 40px;
+    border-radius: 8px;
+    padding: 0 16px;
+    border: 1px solid var(--app-border);
+    font-weight: 850;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .primary-btn {
+    background: var(--app-primary);
+    color: var(--app-primary-contrast);
+    border-color: var(--app-primary);
+  }
+  .ghost-btn {
+    background: transparent;
+    color: var(--app-text);
+  }
+  .grade-state {
+    min-height: 22px;
+    color: var(--app-muted);
+    font-size: 13px;
+  }
+  .grade-state.error { color: #dc2626; }
+  .grade-results {
+    display: grid;
+    gap: 18px;
+  }
+  .term-panel {
+    overflow: hidden;
+  }
+  .term-head {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--app-border);
+  }
+  .term-title {
+    font-size: 18px;
+    font-weight: 900;
+  }
+  .term-meta,
+  .summary-item span {
+    color: var(--app-muted);
+    font-size: 13px;
+  }
+  .grade-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(92px, auto));
+    gap: 8px;
+  }
+  .summary-item {
+    display: grid;
+    gap: 2px;
+    min-width: 92px;
+  }
+  .summary-item strong {
+    font-size: 18px;
+  }
+  .grade-table-wrap {
+    overflow-x: auto;
+  }
+  .grade-table {
+    width: 100%;
+    min-width: 880px;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  .grade-table th,
+  .grade-table td {
+    border-bottom: 1px solid var(--app-border);
+    padding: 10px;
+    vertical-align: top;
+    text-align: left;
+    font-size: 13px;
+  }
+  .grade-table th {
+    background: var(--app-surface-2);
+    color: var(--app-muted);
+    font-weight: 900;
+  }
+  .course-name {
+    font-weight: 900;
+    color: var(--app-text);
+  }
+  .subtle {
+    color: var(--app-muted);
+    line-height: 1.45;
+  }
+  @media (max-width: 980px) {
+    .grade-form,
+    .term-head {
+      grid-template-columns: 1fr;
+    }
+    .grade-actions {
+      justify-content: flex-start;
+      flex-wrap: wrap;
+    }
+    .grade-summary {
+      grid-template-columns: repeat(2, minmax(92px, 1fr));
+    }
+  }
+  @media (max-width: 640px) {
+    .grade-page {
+      width: min(100vw - 20px, 1180px);
+      padding-top: 12px;
+    }
+    .grade-toolbar {
+      padding: 12px;
+    }
+    .account-fields,
+    .term-fields {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block body_end %}
+<script>
+(function () {
+  const form = document.getElementById('gradeForm');
+  const state = document.getElementById('gradeState');
+  const results = document.getElementById('gradeResults');
+  const submitBtn = document.getElementById('gradeSubmit');
+  const clearBtn = document.getElementById('gradeClearCredential');
+
+  function setState(text, type) {
+    state.textContent = text || '';
+    state.className = type ? 'grade-state ' + type : 'grade-state';
+  }
+
+  function buildTerms() {
+    const start = Number(document.getElementById('gradeStartYear').value || 0);
+    const end = Number(document.getElementById('gradeEndYear').value || 0);
+    const semester = document.getElementById('gradeSemester').value;
+    const terms = [];
+    if (!Number.isInteger(start) || !Number.isInteger(end) || start < 2000 || end > 2100 || start > end) {
+      throw new Error('学年范围不正确');
+    }
+    const semesters = semester === 'all' ? ['3', '12'] : [semester];
+    for (let year = start; year <= end; year += 1) {
+      semesters.forEach(function (xqm) { terms.push({ xnm: String(year), xqm: xqm }); });
+    }
+    if (terms.length > 12) {
+      throw new Error('一次最多查询 12 个学期');
+    }
+    return terms;
+  }
+
+  function appendText(parent, tagName, className, text) {
+    const el = document.createElement(tagName);
+    el.className = className;
+    el.textContent = text || '';
+    parent.appendChild(el);
+    return el;
+  }
+
+  function summaryNode(label, value) {
+    const wrap = document.createElement('div');
+    wrap.className = 'summary-item';
+    appendText(wrap, 'span', '', label);
+    appendText(wrap, 'strong', '', String(value || 0));
+    return wrap;
+  }
+
+  function renderGradeRow(grade) {
+    const tr = document.createElement('tr');
+    const course = document.createElement('td');
+    appendText(course, 'div', 'course-name', grade.course_name || '-');
+    appendText(course, 'div', 'subtle', [grade.course_code, grade.course_type, grade.course_tag].filter(Boolean).join(' / '));
+    tr.appendChild(course);
+    ['score', 'credits', 'grade_point', 'credit_grade_point', 'assessment', 'exam_type', 'teacher'].forEach(function (field) {
+      const td = document.createElement('td');
+      td.textContent = grade[field] || '-';
+      tr.appendChild(td);
+    });
+    return tr;
+  }
+
+  function renderResult(item) {
+    const panel = document.createElement('article');
+    panel.className = 'term-panel';
+
+    const head = document.createElement('div');
+    head.className = 'term-head';
+    const titleWrap = document.createElement('div');
+    appendText(titleWrap, 'div', 'term-title', (item.term && item.term.label) || '成绩');
+    const student = item.student || {};
+    appendText(titleWrap, 'div', 'term-meta', [student.name, student.class_name, student.major_name].filter(Boolean).join(' / '));
+    head.appendChild(titleWrap);
+
+    const summary = item.summary || {};
+    const summaryWrap = document.createElement('div');
+    summaryWrap.className = 'grade-summary';
+    summaryWrap.appendChild(summaryNode('课程数', summary.course_count));
+    summaryWrap.appendChild(summaryNode('总学分', summary.total_credits));
+    summaryWrap.appendChild(summaryNode('加权绩点', summary.gpa));
+    summaryWrap.appendChild(summaryNode('绩点总和', summary.total_grade_points));
+    head.appendChild(summaryWrap);
+    panel.appendChild(head);
+
+    const tableWrap = document.createElement('div');
+    tableWrap.className = 'grade-table-wrap';
+    const table = document.createElement('table');
+    table.className = 'grade-table';
+    const thead = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    ['课程', '成绩', '学分', '绩点', '学分绩点', '考核', '考试性质', '任课教师'].forEach(function (name) {
+      const th = document.createElement('th');
+      th.textContent = name;
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+    const tbody = document.createElement('tbody');
+    (item.grades || []).forEach(function (grade) { tbody.appendChild(renderGradeRow(grade)); });
+    table.appendChild(tbody);
+    tableWrap.appendChild(table);
+    panel.appendChild(tableWrap);
+    return panel;
+  }
+
+  function renderResults(items) {
+    results.replaceChildren();
+    (items || []).forEach(function (item) {
+      results.appendChild(renderResult(item));
+    });
+  }
+
+  async function loadStatus() {
+    try {
+      const response = await fetch('/api/edu-schedule/status', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
+      const data = await response.json();
+      if (data.status !== 'success') return;
+      const credential = data.data && data.data.credential;
+      const snapshots = data.data && data.data.grade_snapshots;
+      if (credential && credential.has_credentials) {
+        setState('已保存教务凭据：' + credential.username_hint, '');
+      }
+      if (Array.isArray(snapshots) && snapshots.length) {
+        renderResults(snapshots.map(function (item) { return item.payload; }));
+      }
+    } catch (error) {
+      setState('', '');
+    }
+  }
+
+  form.addEventListener('submit', async function (event) {
+    event.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.textContent = '查询中';
+    setState('正在查询成绩...', '');
+    try {
+      const payload = {
+        terms: buildTerms(),
+        username: document.getElementById('gradeUsername').value.trim() || undefined,
+        password: document.getElementById('gradePassword').value || undefined,
+        remember: document.getElementById('gradeRemember').checked
+      };
+      const response = await fetch('/api/edu-schedule/grades/query', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      if (data.status !== 'success') {
+        throw new Error(data.message || '查询失败');
+      }
+      renderResults(data.data && data.data.results);
+      setState('查询完成', '');
+      document.getElementById('gradePassword').value = '';
+    } catch (error) {
+      setState(error.message || '查询失败', 'error');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = '查询';
+    }
+  });
+
+  clearBtn.addEventListener('click', async function () {
+    if (!window.confirm('确认删除已保存的教务凭据？')) return;
+    const response = await fetch('/api/edu-schedule/credentials', {
+      method: 'DELETE',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+    const data = await response.json();
+    if (data.status === 'success') {
+      setState('已删除保存的教务凭据', '');
+    } else {
+      setState(data.message || '删除失败', 'error');
+    }
+  });
+
+  loadStatus();
+})();
+</script>
+{% endblock %}

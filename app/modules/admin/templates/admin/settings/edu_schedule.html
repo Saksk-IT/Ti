@@ -83,6 +83,10 @@
                         <input type="text" id="schedule_path" value="{{ schedule_config.schedule_path }}" placeholder="/kbcx/xskbcx_cxXsgrkb.html?gnmkdm=N253508">
                     </div>
                     <div class="form-group">
+                        <label for="grade_path">成绩接口路径</label>
+                        <input type="text" id="grade_path" value="{{ schedule_config.grade_path }}" placeholder="/cjcx/cjcx_cxXsgrcj.html?doType=query&gnmkdm=N305005">
+                    </div>
+                    <div class="form-group">
                         <label for="allowed_hosts_text">允许域名</label>
                         <input type="text" id="allowed_hosts_text" value="{{ schedule_config.allowed_hosts_text }}" placeholder="webvpn.synu.edu.cn,jwxt.webvpn.synu.edu.cn">
                     </div>
@@ -186,6 +190,7 @@ document.addEventListener('DOMContentLoaded', function() {
             jwxt_base_url: val('jwxt_base_url'),
             jwxt_login_path: val('jwxt_login_path'),
             schedule_path: val('schedule_path'),
+            grade_path: val('grade_path'),
             allowed_hosts_text: val('allowed_hosts_text'),
             request_timeout: Number(val('request_timeout') || 20),
             verify_tls: val('verify_tls') === 'true',

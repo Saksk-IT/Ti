@@ -57,6 +57,66 @@ def _sample_schedule_payload(xnm="2025", xqm="12"):
     }
 
 
+def _sample_grade_payload(xnm="2025", xqm="3"):
+    return {
+        "items": [
+            {
+                "row_id": "1",
+                "xm": "测试学生",
+                "xh": "stu_demo_2026",
+                "bj": "软件工程26-1班",
+                "zymc": "软件工程",
+                "jgmc": "信息学院",
+                "xnm": xnm,
+                "xnmmc": f"{xnm}-{int(xnm) + 1}",
+                "xqm": xqm,
+                "xqmmc": "1" if xqm == "3" else "2",
+                "kch": "CS1001",
+                "kcmc": "数据结构",
+                "kcxzmc": "专业必修",
+                "kcbj": "主修",
+                "jsxm": "任课教师A",
+                "xf": "4.0",
+                "zxs": "64",
+                "cj": "92",
+                "bfzcj": "92",
+                "jd": "4.00",
+                "xfjd": "16.00",
+                "khfsmc": "考试",
+                "ksxz": "正常考试",
+                "kkbmmc": "信息学院",
+            },
+            {
+                "row_id": "2",
+                "xm": "测试学生",
+                "xh": "stu_demo_2026",
+                "bj": "软件工程26-1班",
+                "zymc": "软件工程",
+                "jgmc": "信息学院",
+                "xnm": xnm,
+                "xnmmc": f"{xnm}-{int(xnm) + 1}",
+                "xqm": xqm,
+                "xqmmc": "1" if xqm == "3" else "2",
+                "kch": "CS1002",
+                "kcmc": "创新实践",
+                "kcxzmc": "通识选修",
+                "kcbj": "主修",
+                "jsxm": "任课教师B",
+                "xf": "2.0",
+                "zxs": "32",
+                "cj": "良好",
+                "bfzcj": "85",
+                "jd": "3.00",
+                "xfjd": "6.00",
+                "khfsmc": "考查",
+                "ksxz": "正常考试",
+                "kkbmmc": "创新学院",
+            },
+        ],
+        "totalResult": 2,
+    }
+
+
 def _admin_client(app, seed_user):
     c = app.test_client()
     with app.app_context():
@@ -103,6 +163,22 @@ def test_schedule_payload_normalizes_week_table():
     assert data["week_table"]["星期一"]["1-2节"][0]["course_name"] == "WEB程序设计"
     assert data["week_table"]["星期二"]["5-8节"][0]["weeks"] == "14周"
     assert data["practice_courses"][0]["course_name"] == "专业技术综合实践"
+
+
+def test_grade_payload_normalizes_summary():
+    from app.modules.edu_schedule.services.grade_parser import normalize_grade_payload
+
+    data = normalize_grade_payload(_sample_grade_payload())
+
+    assert data["student"]["name"] == "测试学生"
+    assert data["term"]["xnm"] == "2025"
+    assert data["term"]["label"] == "2025-2026 第1学期"
+    assert data["grades"][0]["course_name"] == "数据结构"
+    assert data["grades"][0]["score"] == "92"
+    assert data["grades"][1]["grade_point"] == "3.00"
+    assert data["summary"]["course_count"] == 2
+    assert data["summary"]["total_credits"] == 6.0
+    assert data["summary"]["gpa"] == 3.67
 
 
 def test_user_can_save_encrypted_jwxt_credentials(app, auth_client):
@@ -220,6 +296,64 @@ def test_query_multiple_terms_saves_schedule_snapshots(app, auth_client, monkeyp
     with app.app_context():
         count = app.extensions["sqlalchemy"].session.execute(
             text("SELECT COUNT(1) FROM edu_schedule_snapshots WHERE user_id IS NOT NULL")
+        ).scalar()
+    assert count >= 2
+
+
+def test_query_multiple_terms_saves_grade_snapshots(app, auth_client, monkeypatch):
+    from app.modules.admin.services.system_config_service import SystemConfigService
+    from app.modules.edu_schedule.services import schedule_service
+
+    class FakeJWXTClient:
+        def __init__(self, config):
+            self.config = config
+
+        def fetch_grades(self, username, password, xnm, xqm):
+            assert username == "stu_demo_2026"
+            assert password == "DemoSecret123!"
+            return _sample_grade_payload(xnm=xnm, xqm=xqm)
+
+    monkeypatch.setattr(schedule_service, "JWXTClient", FakeJWXTClient)
+
+    with app.app_context():
+        SystemConfigService.save_edu_schedule_config(
+            {
+                "enabled": True,
+                "use_webvpn": False,
+                "jwxt_base_url": "https://jwxt.webvpn.synu.edu.cn/jwglxt",
+                "request_timeout": 20,
+                "verify_tls": True,
+                "store_user_credentials": True,
+            },
+            admin_id=1,
+        )
+
+    auth_client.post(
+        "/api/edu-schedule/credentials",
+        json={"username": "stu_demo_2026", "password": "DemoSecret123!"},
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+    response = auth_client.post(
+        "/api/edu-schedule/grades/query",
+        json={
+            "terms": [
+                {"xnm": "2024", "xqm": "3"},
+                {"xnm": "2025", "xqm": "12"},
+            ]
+        },
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["status"] == "success"
+    assert [item["term"]["xnm"] for item in body["data"]["results"]] == ["2024", "2025"]
+    assert body["data"]["results"][0]["grades"][0]["course_name"] == "数据结构"
+    assert body["data"]["results"][1]["summary"]["course_count"] == 2
+
+    with app.app_context():
+        count = app.extensions["sqlalchemy"].session.execute(
+            text("SELECT COUNT(1) FROM edu_grade_snapshots WHERE user_id IS NOT NULL")
         ).scalar()
     assert count >= 2
 
