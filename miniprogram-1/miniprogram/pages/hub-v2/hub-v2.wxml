@@ -175,7 +175,7 @@
       <view class="section animate-slide-up" wx:if="{{recentBanks.length}}" style="animation-delay: 0.19s">
         <view class="section-header">
           <text class="section-title">最近使用</text>
-          <text class="section-link" bindtap="onGoMyBanks">个人题库</text>
+          <text class="section-link" bindtap="onGoMyBanks">我的题库</text>
         </view>
         <scroll-view class="recent-scroll" scroll-x enhanced show-scrollbar="{{false}}">
           <view class="recent-row">

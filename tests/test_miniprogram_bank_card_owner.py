@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import uuid
 from pathlib import Path
@@ -13,8 +14,10 @@ from app.core.extensions import db
 
 
 ROOT = Path(__file__).resolve().parents[1]
+APP_JSON = ROOT / "miniprogram-1" / "miniprogram" / "app.json"
 PUBLIC_BANK_DIR = ROOT / "miniprogram-1" / "miniprogram" / "pages" / "public-bank-v2"
 MY_BANKS_DIR = ROOT / "miniprogram-1" / "miniprogram" / "pages" / "my-banks-v2"
+HUB_V2_DIR = ROOT / "miniprogram-1" / "miniprogram" / "pages" / "hub-v2"
 API_ENDPOINTS_TS = ROOT / "miniprogram-1" / "miniprogram" / "utils" / "api-endpoints.ts"
 
 
@@ -73,6 +76,25 @@ def test_my_banks_page_uses_web_aligned_overview_sources():
     assert "我创建、公开加入和分享加入的题库" in wxml
     assert "公开加入" in wxml
     assert "分享加入" in wxml
+
+
+def test_visible_my_bank_entry_labels_use_my_banks():
+    """底部 tab 栏与首页最近使用入口应显示“我的题库”。"""
+    app_config = json.loads(_read(APP_JSON))
+    my_bank_tab = next(
+        item for item in app_config["tabBar"]["list"]
+        if item["pagePath"] == "pages/my-banks-v2/my-banks-v2"
+    )
+    hub_wxml = _read(HUB_V2_DIR / "hub-v2.wxml")
+    recent_header = re.search(
+        r'<!-- 最近使用的题库 -->[\s\S]+?<view class="section-header">([\s\S]+?)</view>',
+        hub_wxml,
+    )
+
+    assert my_bank_tab["text"] == "我的题库"
+    assert recent_header is not None
+    assert 'bindtap="onGoMyBanks">我的题库</text>' in recent_header.group(1)
+    assert 'bindtap="onGoMyBanks">个人题库</text>' not in recent_header.group(1)
 
 
 def test_my_created_bank_api_returns_owner_name_and_avatar(app, auth_client, seed_user):

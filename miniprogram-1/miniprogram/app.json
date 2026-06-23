@@ -115,7 +115,7 @@
         "pagePath": "pages/my-banks-v2/my-banks-v2",
         "iconPath": "images/tabbar/banks.png",
         "selectedIconPath": "images/tabbar/banks-active.png",
-        "text": "个人题库"
+        "text": "我的题库"
       },
       {
         "pagePath": "pages/mine/mine",
