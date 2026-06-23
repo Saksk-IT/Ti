@@ -4,6 +4,7 @@ import { safeNavigate } from '../../utils/nav';
 import { themeManager, ThemeMode } from '../../utils/theme';
 import {
   buildCampusTerms,
+  campusFriendlyError,
   CampusMode,
   CampusSemesterValue,
   normalizeGradeSnapshots,
@@ -39,6 +40,8 @@ Page({
     endYear: String(defaultYear),
     loading: false,
     statusLoading: false,
+    statusReady: false,
+    statusFailed: false,
     errorMsg: '',
     statusMsg: '',
     eduBound: false,
@@ -72,7 +75,7 @@ Page({
   onModeTap(e: any) {
     const mode = String(e?.currentTarget?.dataset?.mode || '') as CampusMode;
     if (mode !== 'schedule' && mode !== 'grades') return;
-    this.setData({ mode, errorMsg: '', statusMsg: '' });
+    this.setData({ mode, errorMsg: '' });
   },
 
   onStartYearInput(e: any) {
@@ -94,9 +97,19 @@ Page({
     safeNavigate('/pages/settings-account-bindings-v2/settings-account-bindings-v2', 'navigateTo');
   },
 
+  onHeroActionTap() {
+    if (this.data.statusFailed) {
+      this.loadEduStatus(true);
+      return;
+    }
+    this.onGoEduBindingTap();
+  },
+
   applyEduStatus(data: any) {
     const credential = normalizeCredential(data?.credential);
     this.setData({
+      statusReady: true,
+      statusFailed: false,
       eduBound: credential.has_credentials,
       eduUsernameHint: credential.username_hint,
       statusMsg: credential.has_credentials ? `已绑定教务系统账号：${credential.username_hint || '已保存'}` : '未绑定教务系统账号',
@@ -112,12 +125,19 @@ Page({
     if (!force && now - lastAt < 8000) return;
     self.__lastCampusStatusAt = now;
 
-    this.setData({ statusLoading: true, errorMsg: '' });
+    this.setData({ statusLoading: true, statusFailed: false, errorMsg: '' });
     try {
       const data: any = await api.getEduScheduleStatus();
       this.applyEduStatus(data || {});
     } catch (e: any) {
-      this.setData({ errorMsg: e?.message || '教务账号状态加载失败' });
+      const message = campusFriendlyError(e, '教务账号状态加载失败');
+      this.setData({
+        statusReady: true,
+        statusFailed: true,
+        eduBound: false,
+        statusMsg: message,
+        errorMsg: message,
+      });
     } finally {
       this.setData({ statusLoading: false });
     }
@@ -137,6 +157,15 @@ Page({
 
   async onQueryTap() {
     if (this.data.loading) return;
+    if (this.data.statusLoading || !this.data.statusReady) {
+      this.setData({ errorMsg: '教务系统账号状态同步中，请稍后再试' });
+      return;
+    }
+    if (this.data.statusFailed) {
+      const message = '教务接口暂不可用，请检查 API 地址或稍后重试';
+      this.setData({ statusMsg: message, errorMsg: message });
+      return;
+    }
     if (!this.data.eduBound) {
       this.showBindPrompt();
       return;
@@ -176,7 +205,7 @@ Page({
         });
       }
     } catch (e: any) {
-      this.setData({ errorMsg: e?.message || '查询失败，请稍后重试' });
+      this.setData({ errorMsg: campusFriendlyError(e, '查询失败，请稍后重试') });
     } finally {
       this.setData({ loading: false });
     }

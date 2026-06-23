@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildCampusTerms = buildCampusTerms;
+exports.campusFriendlyError = campusFriendlyError;
 exports.normalizeScheduleSnapshots = normalizeScheduleSnapshots;
 exports.normalizeGradeSnapshots = normalizeGradeSnapshots;
 exports.normalizeTermResults = normalizeTermResults;
@@ -14,6 +15,20 @@ function cleanText(value, fallback) {
     if (fallback === void 0) { fallback = ''; }
     var text = String(value || '').trim();
     return text || fallback;
+}
+function campusFriendlyError(error, fallback) {
+    var source = error && typeof error === 'object' && 'message' in error
+        ? error.message
+        : error;
+    var message = cleanText(source, fallback);
+    var lower = message.toLowerCase();
+    if (lower.includes('requested url was not found')
+        || lower.includes('not found on the server')
+        || lower.includes('请求失败: 404')
+        || lower === '404') {
+        return '教务接口暂不可用，请检查 API 地址或稍后重试';
+    }
+    return message;
 }
 function normalizeList(value) {
     return Array.isArray(value) ? value : [];

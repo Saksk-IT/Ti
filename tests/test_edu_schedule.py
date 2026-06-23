@@ -359,8 +359,13 @@ def test_miniprogram_campus_tab_exposes_schedule_and_grade_queries():
     assert "查询成绩" in wxml
     assert "教务系统账号" in wxml
     assert "onGoEduBindingTap" in wxml
+    assert "statusReady && !statusFailed && !eduBound" in wxml
+    assert "onHeroActionTap" in wxml
     assert "api.queryEduSchedule" in ts
     assert "api.queryEduGrades" in ts
+    assert "campusFriendlyError" in ts
+    assert "statusLoading || !this.data.statusReady" in ts
+    assert "this.data.statusFailed" in ts
     assert "queryEduSchedule" in api
     assert "request('/edu-schedule/query'" in api
     assert "queryEduGrades" in api

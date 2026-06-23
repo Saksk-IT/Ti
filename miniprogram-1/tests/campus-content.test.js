@@ -3,6 +3,7 @@ const test = require('node:test');
 
 const {
   buildCampusTerms,
+  campusFriendlyError,
   normalizeGradeSnapshots,
   normalizeScheduleSnapshots,
   normalizeTermResults,
@@ -22,6 +23,15 @@ test('buildCampusTerms rejects ranges with more than 12 terms', () => {
     () => buildCampusTerms(2020, 2026, 'all'),
     /一次最多查询 12 个学期/
   );
+});
+
+test('campusFriendlyError hides raw backend 404 text', () => {
+  const message = campusFriendlyError(
+    new Error('The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.'),
+    '教务账号状态加载失败'
+  );
+
+  assert.equal(message, '教务接口暂不可用，请检查 API 地址或稍后重试');
 });
 
 test('normalizeGradeSnapshots maps summary and grade rows for campus cards', () => {

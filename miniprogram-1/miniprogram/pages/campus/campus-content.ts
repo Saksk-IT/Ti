@@ -19,6 +19,23 @@ function cleanText(value: unknown, fallback = ''): string {
   return text || fallback;
 }
 
+export function campusFriendlyError(error: unknown, fallback: string): string {
+  const source = error && typeof error === 'object' && 'message' in error
+    ? (error as { message?: unknown }).message
+    : error;
+  const message = cleanText(source, fallback);
+  const lower = message.toLowerCase();
+  if (
+    lower.includes('requested url was not found')
+    || lower.includes('not found on the server')
+    || lower.includes('请求失败: 404')
+    || lower === '404'
+  ) {
+    return '教务接口暂不可用，请检查 API 地址或稍后重试';
+  }
+  return message;
+}
+
 function normalizeList(value: unknown): any[] {
   return Array.isArray(value) ? value : [];
 }

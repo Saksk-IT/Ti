@@ -19,8 +19,8 @@
             <text class="hero-title">校园</text>
             <text class="hero-status">{{statusMsg || '教务系统账号状态同步中'}}</text>
           </view>
-          <view class="hero-action {{eduBound ? '' : 'warn'}}" bindtap="onGoEduBindingTap" aria-role="button" aria-label="教务系统账号绑定">
-            <text>{{eduBound ? '更换绑定' : '去绑定'}}</text>
+          <view class="hero-action {{statusFailed || !eduBound ? 'warn' : ''}}" bindtap="onHeroActionTap" aria-role="button" aria-label="教务系统账号操作">
+            <text>{{statusFailed ? '重试' : (eduBound ? '更换绑定' : '去绑定')}}</text>
           </view>
         </view>
 
@@ -62,7 +62,7 @@
           <text>{{errorMsg}}</text>
         </view>
 
-        <view class="bind-prompt" wx:if="{{!eduBound && !statusLoading}}">
+        <view class="bind-prompt" wx:if="{{statusReady && !statusFailed && !eduBound && !statusLoading}}">
           <text class="prompt-title">未绑定教务系统账号</text>
           <text class="prompt-sub">绑定后可在此查询课表和成绩。</text>
           <view class="prompt-action" bindtap="onGoEduBindingTap" aria-role="button" aria-label="去绑定教务系统账号">

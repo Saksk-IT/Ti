@@ -65,6 +65,8 @@ Page({
         endYear: String(defaultYear),
         loading: false,
         statusLoading: false,
+        statusReady: false,
+        statusFailed: false,
         errorMsg: '',
         statusMsg: '',
         eduBound: false,
@@ -97,7 +99,7 @@ Page({
         var mode = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.mode) || '');
         if (mode !== 'schedule' && mode !== 'grades')
             return;
-        this.setData({ mode: mode, errorMsg: '', statusMsg: '' });
+        this.setData({ mode: mode, errorMsg: '' });
     },
     onStartYearInput: function (e) {
         var _a, _b;
@@ -117,9 +119,18 @@ Page({
     onGoEduBindingTap: function () {
         (0, nav_1.safeNavigate)('/pages/settings-account-bindings-v2/settings-account-bindings-v2', 'navigateTo');
     },
+    onHeroActionTap: function () {
+        if (this.data.statusFailed) {
+            this.loadEduStatus(true);
+            return;
+        }
+        this.onGoEduBindingTap();
+    },
     applyEduStatus: function (data) {
         var credential = normalizeCredential(data === null || data === void 0 ? void 0 : data.credential);
         this.setData({
+            statusReady: true,
+            statusFailed: false,
             eduBound: credential.has_credentials,
             eduUsernameHint: credential.username_hint,
             statusMsg: credential.has_credentials ? "\u5DF2\u7ED1\u5B9A\u6559\u52A1\u7CFB\u7EDF\u8D26\u53F7\uFF1A".concat(credential.username_hint || '已保存') : '未绑定教务系统账号',
@@ -130,7 +141,7 @@ Page({
     loadEduStatus: function (force) {
         if (force === void 0) { force = false; }
         return __awaiter(this, void 0, void 0, function () {
-            var self, now, lastAt, data, e_1;
+            var self, now, lastAt, data, e_1, message;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -140,7 +151,7 @@ Page({
                         if (!force && now - lastAt < 8000)
                             return [2 /*return*/];
                         self.__lastCampusStatusAt = now;
-                        this.setData({ statusLoading: true, errorMsg: '' });
+                        this.setData({ statusLoading: true, statusFailed: false, errorMsg: '' });
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 3, 4, 5]);
@@ -151,7 +162,14 @@ Page({
                         return [3 /*break*/, 5];
                     case 3:
                         e_1 = _a.sent();
-                        this.setData({ errorMsg: (e_1 === null || e_1 === void 0 ? void 0 : e_1.message) || '教务账号状态加载失败' });
+                        message = (0, campus_content_1.campusFriendlyError)(e_1, '教务账号状态加载失败');
+                        this.setData({
+                            statusReady: true,
+                            statusFailed: true,
+                            eduBound: false,
+                            statusMsg: message,
+                            errorMsg: message,
+                        });
                         return [3 /*break*/, 5];
                     case 4:
                         this.setData({ statusLoading: false });
@@ -176,12 +194,21 @@ Page({
     },
     onQueryTap: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var terms, semester, e_2, mode, payload, data, rows, credential, e_3;
+            var message, terms, semester, e_2, mode, payload, data, rows, credential, e_3;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         if (this.data.loading)
                             return [2 /*return*/];
+                        if (this.data.statusLoading || !this.data.statusReady) {
+                            this.setData({ errorMsg: '教务系统账号状态同步中，请稍后再试' });
+                            return [2 /*return*/];
+                        }
+                        if (this.data.statusFailed) {
+                            message = '教务接口暂不可用，请检查 API 地址或稍后重试';
+                            this.setData({ statusMsg: message, errorMsg: message });
+                            return [2 /*return*/];
+                        }
                         if (!this.data.eduBound) {
                             this.showBindPrompt();
                             return [2 /*return*/];
@@ -232,7 +259,7 @@ Page({
                         return [3 /*break*/, 8];
                     case 6:
                         e_3 = _a.sent();
-                        this.setData({ errorMsg: (e_3 === null || e_3 === void 0 ? void 0 : e_3.message) || '查询失败，请稍后重试' });
+                        this.setData({ errorMsg: (0, campus_content_1.campusFriendlyError)(e_3, '查询失败，请稍后重试') });
                         return [3 /*break*/, 8];
                     case 7:
                         this.setData({ loading: false });
