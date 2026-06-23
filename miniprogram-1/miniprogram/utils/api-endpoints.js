@@ -618,8 +618,9 @@ exports.api = {
     updateProfile: function (data) {
         return request('/profile/update', 'POST', data);
     },
-    checkUsername: function (username) {
-        return request('/profile/check-username', 'POST', { username: username });
+    checkUsername: function (username, strictNickname) {
+        if (strictNickname === void 0) { strictNickname = false; }
+        return request('/profile/check-username', 'POST', { username: username, strict_nickname: strictNickname });
     },
     updateProfilePassword: function (data) {
         return request('/profile/password', 'POST', {

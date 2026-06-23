@@ -332,11 +332,17 @@
 
         <!-- 昵称输入 -->
         <view class="setup-nickname-section">
-          <text class="setup-label">昵称</text>
+          <view class="setup-label-row">
+            <text class="setup-label">昵称</text>
+            <view class="setup-random-btn" bindtap="onRefreshSetupNickname">
+              <text>换一个</text>
+            </view>
+          </view>
           <input
             class="setup-nickname-input {{usernameStatus === 'error' ? 'input-error' : usernameStatus === 'ok' ? 'input-ok' : ''}}"
             type="nickname"
-            placeholder="点击获取微信昵称"
+            placeholder="汉字、字母、数字"
+            maxlength="8"
             value="{{setupNickName}}"
             bindinput="onSetupNickNameInput"
             bindchange="onSetupNickNameChange"
@@ -347,7 +353,7 @@
         <!-- 提示信息 -->
         <view class="setup-tip">
           <text class="tip-icon">💡</text>
-          <text class="tip-text">昵称可作为登录账号，建议设置一个好记的名字</text>
+          <text class="tip-text">昵称只能使用汉字、字母、数字，最多8个字符</text>
         </view>
       </view>
 
@@ -390,9 +396,9 @@
       <view class="setup-actions">
         <block wx:if="{{setupStep === 'profile'}}">
           <button class="setup-btn setup-btn-primary" bindtap="onSaveProfileSetup" loading="{{savingProfile}}" disabled="{{usernameStatus === 'checking' || usernameStatus === 'error'}}">
-            <text>保存并继续</text>
+            <text>{{needsPasswordSetup ? '保存并继续' : '保存'}}</text>
           </button>
-          <button class="setup-btn" bindtap="onSkipProfileSetup">
+          <button wx:if="{{!requiresNicknameSetup}}" class="setup-btn" bindtap="onSkipProfileSetup">
             <text>跳过</text>
           </button>
         </block>

@@ -13,6 +13,10 @@ import {
   WeaknessEmptyAction,
 } from './hub-content';
 
+const SETUP_NICKNAME_RE = /^[\u4e00-\u9fffA-Za-z0-9]{1,8}$/;
+const SETUP_NICKNAME_ERROR = '昵称只能使用汉字、字母、数字，最多8个字符';
+const RANDOM_NICKNAME_PREFIXES = ['题友', '学友', '考友', '小题'];
+
 interface CheckinData {
   checked_in_today: boolean;
   streak_days: number;
@@ -60,6 +64,30 @@ function toSafeNumber(value: unknown): number {
 function toSafeString(value: unknown, fallback = ''): string {
   const text = String(value || '').trim();
   return text || fallback;
+}
+
+function padNumber(value: number, length: number): string {
+  let result = String(value);
+  while (result.length < length) {
+    result = `0${result}`;
+  }
+  return result;
+}
+
+function createRandomNickname(): string {
+  const prefix = RANDOM_NICKNAME_PREFIXES[Math.floor(Math.random() * RANDOM_NICKNAME_PREFIXES.length)] || '题友';
+  const suffixLength = 8 - prefix.length;
+  const suffixMax = Math.pow(10, suffixLength);
+  const suffix = padNumber(Math.floor(Math.random() * suffixMax), suffixLength);
+  return `${prefix}${suffix}`;
+}
+
+function normalizeSetupNickname(value: any): string {
+  return String(value || '').trim();
+}
+
+function isValidSetupNickname(value: string): boolean {
+  return SETUP_NICKNAME_RE.test(value);
 }
 
 function formatTimeAgo(dateStr: string | null): string {
@@ -184,6 +212,8 @@ Page({
     setupAvatarTempPath: '',
     setupNickName: '',
     savingProfile: false,
+    requiresNicknameSetup: false,
+    needsPasswordSetup: false,
     // 昵称检查状态
     usernameStatus: '' as '' | 'checking' | 'ok' | 'error',
     usernameStatusText: '',
@@ -269,7 +299,7 @@ Page({
           userName: profile.username || '用户',
           userAvatar: nextAvatar,
         });
-        this.maybePromptPasswordSetup(profile);
+        this.maybePromptAccountSetup(profile);
       }
 
       // 签到状态
@@ -685,21 +715,48 @@ Page({
       // 延迟显示弹窗，等页面加载完成
       setTimeout(() => {
         if (!this.data.isLoggedIn || this.data.showProfileSetupModal) return;
-        this.setData({ showProfileSetupModal: true, setupStep: 'profile' });
+        const setupNickName = isValidSetupNickname(normalizeSetupNickname(this.data.setupNickName))
+          ? normalizeSetupNickname(this.data.setupNickName)
+          : createRandomNickname();
+        this.setData({
+          showProfileSetupModal: true,
+          setupStep: 'profile',
+          setupNickName,
+          requiresNicknameSetup: true,
+          needsPasswordSetup: true,
+          usernameStatus: '',
+          usernameStatusText: '',
+        });
       }, 500);
     }
   },
 
-  // 登录后自动检测：未设置密码则弹出设置密码弹窗
-  maybePromptPasswordSetup(profile: any) {
+  // 登录后自动检测：历史微信昵称需先设置昵称；未设置密码则进入密码步骤
+  maybePromptAccountSetup(profile: any) {
     if (!this.data.isLoggedIn || !profile) return;
-    const hasPasswordSet = !!profile.has_password_set;
-    if (hasPasswordSet) return;
-    this.setData({
+    const needsNicknameSetup = !!profile.needs_nickname_setup;
+    const needsPasswordSetup = !profile.has_password_set;
+    if (this.data.showProfileSetupModal) {
+      this.setData({ needsPasswordSetup });
+      return;
+    }
+    if (!needsNicknameSetup && !needsPasswordSetup) return;
+
+    const nextData: Record<string, any> = {
       showProfileSetupModal: true,
-      setupStep: 'password',
+      setupStep: needsNicknameSetup ? 'profile' : 'password',
+      requiresNicknameSetup: needsNicknameSetup,
+      needsPasswordSetup,
       setupPassword: '',
-      setupPasswordConfirm: ''
+      setupPasswordConfirm: '',
+    };
+    if (needsNicknameSetup) {
+      nextData.setupNickName = createRandomNickname();
+      nextData.usernameStatus = '';
+      nextData.usernameStatusText = '';
+    }
+    this.setData({
+      ...nextData,
     });
   },
 
@@ -713,7 +770,7 @@ Page({
 
   // 昵称实时输入回调（用于防抖检查）
   onSetupNickNameInput(e: any) {
-    const nickName = e.detail?.value || '';
+    const nickName = normalizeSetupNickname(e.detail?.value);
     this.setData({ setupNickName: nickName });
 
     // 清除之前的定时器
@@ -721,37 +778,62 @@ Page({
       clearTimeout(this.data.usernameCheckTimer);
     }
 
-    if (!nickName.trim()) {
+    if (!nickName) {
       this.setData({ usernameStatus: '', usernameStatusText: '' });
       return;
     }
 
-    if (nickName.trim().length < 2) {
-      this.setData({ usernameStatus: 'error', usernameStatusText: '至少2个字符' });
+    if (!isValidSetupNickname(nickName)) {
+      this.setData({ usernameStatus: 'error', usernameStatusText: SETUP_NICKNAME_ERROR });
       return;
     }
 
     // 防抖检查用户名
     this.setData({ usernameStatus: 'checking', usernameStatusText: '检查中...' });
     const timer = setTimeout(() => {
-      this.checkUsernameAvailable(nickName.trim());
+      this.checkUsernameAvailable(nickName);
     }, 500);
     this.setData({ usernameCheckTimer: timer });
   },
 
   // 昵称输入完成回调
   onSetupNickNameChange(e: any) {
-    const nickName = e.detail?.value || '';
+    const nickName = normalizeSetupNickname(e.detail?.value);
     this.setData({ setupNickName: nickName });
-    if (nickName.trim() && nickName.trim().length >= 2) {
-      this.checkUsernameAvailable(nickName.trim());
+    if (nickName && isValidSetupNickname(nickName)) {
+      this.checkUsernameAvailable(nickName);
     }
+  },
+
+  onRefreshSetupNickname() {
+    if (this.data.savingProfile) return;
+    const setupNickName = createRandomNickname();
+    this.setData({
+      setupNickName,
+      usernameStatus: '',
+      usernameStatusText: '',
+    });
+    this.checkUsernameAvailable(setupNickName);
+  },
+
+  validateSetupNickname(username: string): boolean {
+    if (!username) {
+      this.setData({ usernameStatus: 'error', usernameStatusText: SETUP_NICKNAME_ERROR });
+      return false;
+    }
+    if (!isValidSetupNickname(username)) {
+      this.setData({ usernameStatus: 'error', usernameStatusText: SETUP_NICKNAME_ERROR });
+      return false;
+    }
+    return true;
   },
 
   // 检查用户名是否可用
   async checkUsernameAvailable(username: string) {
+    if (!this.validateSetupNickname(username)) return;
     try {
-      const res = await api.checkUsername(username);
+      const res = await api.checkUsername(username, true);
+      if (normalizeSetupNickname(this.data.setupNickName) !== username) return;
       if (res.available) {
         this.setData({ usernameStatus: 'ok', usernameStatusText: '可以使用' });
       } else {
@@ -764,6 +846,10 @@ Page({
 
   // 关闭资料设置弹窗
   onCloseProfileSetupModal() {
+    if (this.data.requiresNicknameSetup) {
+      wx.showToast({ title: '请先设置昵称', icon: 'none' });
+      return;
+    }
     this.setData({ showProfileSetupModal: false });
     wx.removeStorageSync('isNewUser');
   },
@@ -775,6 +861,10 @@ Page({
 
   // 跳过资料设置
   onSkipProfileSetup() {
+    if (this.data.requiresNicknameSetup) {
+      wx.showToast({ title: '请先设置昵称', icon: 'none' });
+      return;
+    }
     this.setData({ showProfileSetupModal: false });
     wx.removeStorageSync('isNewUser');
     wx.showToast({ title: '可在设置中修改', icon: 'none' });
@@ -784,9 +874,25 @@ Page({
   async onSaveProfileSetup() {
     if (this.data.savingProfile) return;
 
-    const { setupAvatarTempPath, setupNickName, usernameStatus } = this.data;
-    if (!setupAvatarTempPath && !setupNickName) {
+    const { setupAvatarTempPath, usernameStatus, requiresNicknameSetup, needsPasswordSetup } = this.data;
+    const setupNickName = normalizeSetupNickname(this.data.setupNickName);
+    if (requiresNicknameSetup && !this.validateSetupNickname(setupNickName)) {
+      wx.showToast({ title: SETUP_NICKNAME_ERROR, icon: 'none' });
+      return;
+    }
+
+    if (!requiresNicknameSetup && !setupAvatarTempPath && !setupNickName) {
       wx.showToast({ title: '请选择头像或输入昵称', icon: 'none' });
+      return;
+    }
+
+    if (setupNickName && !this.validateSetupNickname(setupNickName)) {
+      wx.showToast({ title: SETUP_NICKNAME_ERROR, icon: 'none' });
+      return;
+    }
+
+    if (setupNickName && usernameStatus === 'checking') {
+      wx.showToast({ title: '昵称检查中，请稍候', icon: 'none' });
       return;
     }
 
@@ -816,10 +922,10 @@ Page({
       // 更新昵称
       if (setupNickName) {
         try {
-          await api.updateProfile({ username: setupNickName });
+          await api.updateProfile({ username: setupNickName, strict_nickname: true });
           this.setData({ userName: setupNickName });
           const cachedUserInfo = wx.getStorageSync('userInfo') || {};
-          wx.setStorageSync('userInfo', { ...cachedUserInfo, username: setupNickName });
+          wx.setStorageSync('userInfo', { ...cachedUserInfo, username: setupNickName, needs_nickname_setup: false });
         } catch (nicknameErr: any) {
           wx.showToast({ title: nicknameErr?.message || '昵称设置失败', icon: 'none' });
           this.setData({ savingProfile: false });
@@ -828,9 +934,25 @@ Page({
       }
 
       wx.showToast({ title: '资料已保存', icon: 'success' });
-      // 进入密码设置步骤
       setTimeout(() => {
-        this.setData({ setupStep: 'password', savingProfile: false });
+        if (needsPasswordSetup) {
+          this.setData({
+            setupStep: 'password',
+            savingProfile: false,
+            requiresNicknameSetup: false,
+          });
+          return;
+        }
+        this.setData({
+          showProfileSetupModal: false,
+          setupStep: 'profile',
+          savingProfile: false,
+          requiresNicknameSetup: false,
+          needsPasswordSetup: false,
+          usernameStatus: '',
+          usernameStatusText: '',
+        });
+        wx.removeStorageSync('isNewUser');
       }, 500);
     } catch (e: any) {
       wx.showToast({ title: e?.message || '保存失败', icon: 'none' });
@@ -903,6 +1025,7 @@ Page({
       this.setData({
         showProfileSetupModal: false,
         setupStep: 'profile',
+        needsPasswordSetup: false,
         setupPassword: '',
         setupPasswordConfirm: '',
         showPassword: false

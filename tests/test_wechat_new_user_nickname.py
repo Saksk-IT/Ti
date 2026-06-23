@@ -16,6 +16,11 @@ def _delete_openid(openid: str) -> None:
     db.session.commit()
 
 
+def _delete_username(username: str) -> None:
+    User.query.filter_by(username=username).delete(synchronize_session=False)
+    db.session.commit()
+
+
 def test_wechat_new_user_without_nickname_gets_valid_random_nickname(app):
     openid = 'nickname-random-openid-001'
     with app.app_context():
@@ -27,6 +32,43 @@ def test_wechat_new_user_without_nickname_gets_valid_random_nickname(app):
             assert NICKNAME_RE.fullmatch(user['username'])
             assert len(user['username']) <= 8
             assert not user['username'].startswith('微信用户_')
+        finally:
+            _delete_openid(openid)
+
+
+@pytest.mark.parametrize(
+    ('username', 'openid'),
+    [
+        ('微信用户_uw123A', 'legacy-wechat-nickname-openid-001'),
+        ('微信用户uw123A', 'legacy-wechat-nickname-openid-002'),
+    ],
+)
+def test_profile_marks_legacy_wechat_nickname_as_needing_setup(app, client, username, openid):
+
+    with app.app_context():
+        _delete_openid(openid)
+        _delete_username(username)
+        try:
+            user = User(
+                username=username,
+                openid=openid,
+                password_hash='',
+                has_password_set=True,
+            )
+            db.session.add(user)
+            db.session.commit()
+            user_id = user.id
+
+            with client.session_transaction() as sess:
+                sess['user_id'] = user_id
+                sess['username'] = username
+
+            response = client.get('/api/profile')
+
+            assert response.status_code == 200
+            payload = response.get_json()
+            assert payload['status'] == 'success'
+            assert payload['data']['needs_nickname_setup'] is True
         finally:
             _delete_openid(openid)
 

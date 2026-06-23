@@ -9,6 +9,11 @@ from app.models.subject import Subject, Question
 from app.models.exam import Exam
 from app.core.utils.decorators import auth_required, current_user_id
 from app.core.utils.time_utils import now_bj, today_bj
+from app.modules.auth.services.wechat_auth_service import (
+    WECHAT_NICKNAME_DUPLICATE_ERROR,
+    WECHAT_NICKNAME_ERROR,
+    WechatAuthService,
+)
 from datetime import datetime, timedelta
 from html import unescape
 import json
@@ -356,17 +361,24 @@ def check_username():
     uid = int(current_user_id() or 0)
     data = request.json or {}
     username = data.get('username', '').strip()
+    strict_nickname = bool(data.get('strict_nickname') or data.get('nickname_setup'))
 
-    ok, err = validate_profile_nickname(username)
-    if not ok:
-        return jsonify({'status': 'error', 'message': err}), 400
+    if strict_nickname:
+        username = WechatAuthService.normalize_nickname(username)
+        if not username:
+            return jsonify({'status': 'error', 'message': WECHAT_NICKNAME_ERROR}), 400
+    else:
+        ok, err = validate_profile_nickname(username)
+        if not ok:
+            return jsonify({'status': 'error', 'message': err}), 400
 
     existing = db.session.query(UserModel.id).filter(
         UserModel.username == username, UserModel.id != uid
     ).first()
 
     if existing:
-        return jsonify({'status': 'error', 'available': False, 'message': '该昵称已被使用'})
+        message = WECHAT_NICKNAME_DUPLICATE_ERROR if strict_nickname else '该昵称已被使用'
+        return jsonify({'status': 'error', 'available': False, 'message': message})
 
     return jsonify({'status': 'success', 'available': True, 'message': '昵称可用'})
 
@@ -383,6 +395,7 @@ def update_profile():
     college = data.get('college')
     signature = data.get('signature')
     username = data.get('username')
+    strict_nickname = bool(data.get('strict_nickname') or data.get('nickname_setup'))
 
 
     try:
@@ -392,15 +405,22 @@ def update_profile():
             if not isinstance(username, str):
                 return jsonify({'status': 'error', 'message': '昵称格式不正确'}), 400
             username_clean = username.strip()
-            ok, err = validate_profile_nickname(username_clean)
-            if not ok:
-                return jsonify({'status': 'error', 'message': err}), 400
+            if strict_nickname:
+                normalized = WechatAuthService.normalize_nickname(username_clean)
+                if not normalized:
+                    return jsonify({'status': 'error', 'message': WECHAT_NICKNAME_ERROR}), 400
+                username_clean = normalized
+            else:
+                ok, err = validate_profile_nickname(username_clean)
+                if not ok:
+                    return jsonify({'status': 'error', 'message': err}), 400
             # 检查唯一性
             existing = db.session.query(UserModel.id).filter(
                 UserModel.username == username_clean, UserModel.id != uid
             ).first()
             if existing:
-                return jsonify({'status': 'error', 'message': '该昵称已被使用，请换一个'}), 400
+                message = WECHAT_NICKNAME_DUPLICATE_ERROR if strict_nickname else '该昵称已被使用，请换一个'
+                return jsonify({'status': 'error', 'message': message}), 400
 
         # 签名（不改DB结构，存到 user_progress）
         signature_clean = None
@@ -527,6 +547,7 @@ def api_profile():
         
         # 计算连续学习天数
         streak_days = calculate_streak_days(uid)
+        needs_nickname_setup = WechatAuthService.is_legacy_wechat_nickname(user['username'])
 
         # 用户扩展资料（不改DB结构：存储在 user_progress）
         signature = ''
@@ -560,6 +581,7 @@ def api_profile():
                 'created_at': user['created_at'].strftime('%Y-%m-%d') if user['created_at'] else '-',
                 'is_admin': bool(user['is_admin']),
                 'has_password_set': has_password_set,
+                'needs_nickname_setup': needs_nickname_setup,
                 'streak_days': streak_days,
                 'total_answered': total_answered,
                 'correct_answered': correct_answered,

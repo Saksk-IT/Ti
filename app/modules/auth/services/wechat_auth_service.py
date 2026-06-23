@@ -18,6 +18,7 @@ from app.models.user import User
 WECHAT_NICKNAME_ERROR = '昵称只能由汉字、字母、数字组成，且不超过8个字符'
 WECHAT_NICKNAME_DUPLICATE_ERROR = '昵称已被使用，请换一个'
 WECHAT_NICKNAME_RE = re.compile(r'^[\u4e00-\u9fffA-Za-z0-9]{1,8}$')
+LEGACY_WECHAT_NICKNAME_RE = re.compile(r'^微信用户(?:[_-]?[A-Za-z0-9_-]+)?$')
 RANDOM_NICKNAME_PREFIXES = ('题友', '学友', '考友', '小题')
 
 
@@ -35,6 +36,14 @@ class WechatAuthService:
         if not WECHAT_NICKNAME_RE.fullmatch(nickname):
             return None
         return nickname
+
+    @staticmethod
+    def is_legacy_wechat_nickname(value: Any) -> bool:
+        """识别历史自动生成的“微信用户_随机串”昵称。"""
+        nickname = str(value or '').strip()
+        if not nickname:
+            return False
+        return bool(LEGACY_WECHAT_NICKNAME_RE.fullmatch(nickname))
 
     @staticmethod
     def _nickname_exists(nickname: str, exclude_user_id: Optional[int] = None) -> bool:
@@ -151,8 +160,11 @@ class WechatAuthService:
                 if raw_nickname is not None and nickname is None and strict_nickname:
                     raise ValueError(WECHAT_NICKNAME_ERROR)
 
-                has_legacy_username = not WechatAuthService.normalize_nickname(user.username)
-                if nickname and (not user.username or user.username.startswith('微信用户_') or has_legacy_username):
+                has_legacy_username = (
+                    WechatAuthService.is_legacy_wechat_nickname(user.username)
+                    or not WechatAuthService.normalize_nickname(user.username)
+                )
+                if nickname and (not user.username or has_legacy_username):
                     existing = User.query.filter(
                         User.username == nickname,
                         User.id != user.id
@@ -175,6 +187,7 @@ class WechatAuthService:
                 'is_subject_admin': user.is_subject_admin,
                 'is_notification_admin': user.is_notification_admin,
                 'created_at': user.created_at, 'is_new_user': False,
+                'needs_nickname_setup': WechatAuthService.is_legacy_wechat_nickname(user.username),
             }
             return result
         else:
@@ -200,5 +213,6 @@ class WechatAuthService:
                 'is_subject_admin': new_user.is_subject_admin,
                 'is_notification_admin': new_user.is_notification_admin,
                 'created_at': new_user.created_at, 'is_new_user': True,
+                'needs_nickname_setup': False,
             }
             return result

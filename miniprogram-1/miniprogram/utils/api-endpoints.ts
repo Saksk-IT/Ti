@@ -444,6 +444,7 @@ export const api = {
       created_at?: string;
       is_admin?: boolean;
       has_password_set?: boolean;
+      needs_nickname_setup?: boolean;
       streak_days?: number;
       total_answered?: number;
       correct_answered?: number;
@@ -452,11 +453,11 @@ export const api = {
       mistakes_count?: number;
     }>,
 
-  updateProfile: (data: { username?: string; avatar?: string; contact?: string; college?: string; signature?: string }) =>
+  updateProfile: (data: { username?: string; avatar?: string; contact?: string; college?: string; signature?: string; strict_nickname?: boolean; nickname_setup?: boolean }) =>
     request('/profile/update', 'POST', data) as Promise<{ message?: string }>,
 
-  checkUsername: (username: string) =>
-    request('/profile/check-username', 'POST', { username }) as Promise<{ available: boolean; message?: string }>,
+  checkUsername: (username: string, strictNickname = false) =>
+    request('/profile/check-username', 'POST', { username, strict_nickname: strictNickname }) as Promise<{ available: boolean; message?: string }>,
 
   updateProfilePassword: (data: { current_password?: string; new_password: string; is_set_password: boolean }) =>
     request('/profile/password', 'POST', {
