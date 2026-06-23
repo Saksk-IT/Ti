@@ -518,6 +518,8 @@ exports.api = {
             is_correct: isCorrect
         });
     },
+    // 主观题判分（公共题库与个人题库共用）
+    gradeSubjective: function (payload) { return request('/quiz/grade_subjective', 'POST', payload); },
     // 切换收藏
     toggleFavorite: function (questionId) {
         return request('/quiz/favorite', 'POST', { question_id: questionId });

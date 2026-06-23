@@ -117,6 +117,7 @@ Page({
         blankCount: 0,
         showSubmitButton: false,
         submitDisabled: true,
+        subjectiveSubmitting: false,
         userAnswerText: '',
         // 刷题设置
         showSettings: false,
@@ -127,6 +128,14 @@ Page({
             vibrationFeedback: false // 答题震动反馈
         },
         autoNextDelayOptions: AUTO_NEXT_DELAY_OPTIONS,
+        gradingMode: 'auto_full',
+        hasSubjectiveType: false,
+        showSelfEval: false,
+        gradingModeOptions: [
+            { value: 'auto_full', label: '有答即对', desc: '填写即判对，快速刷题' },
+            { value: 'ai', label: 'AI 判分', desc: 'AI 智能评判，需后台配置' },
+            { value: 'manual', label: '自评模式', desc: '查看参考答案后自行评判' }
+        ],
         // 字体大小（仅影响答题页字体）
         quizFontSize: 'md', // 'sm' | 'md' | 'lg'
         quizFontClass: 'quiz-font-md',
@@ -146,6 +155,8 @@ Page({
         aiExplainRichText: '',
         aiExplainError: '',
         aiExplainQuestionId: 0,
+        aiGradingScore: null,
+        aiGradingFeedback: '',
         // 进度信息
         progress: {
             current: 0, // 当前题号
@@ -182,6 +193,7 @@ Page({
     syncPending: false,
     lastSavedPayload: null,
     practiceSettingsKey: 'quiz_practice_settings_v1',
+    gradingModeKey: 'quiz_grading_mode_v1',
     quizFontSizeKey: 'quiz_font_size_v1',
     sessionStartedAt: 0,
     setDataBatcher: null,
@@ -295,6 +307,7 @@ Page({
             loading: true
         });
         this.initPracticeSettings();
+        this.initGradingMode();
         this.initQuizFontSize();
         this.syncThemeStyleName();
         this.loadQuestions(type, source, shuffleQuestions, shuffleOptions, tag);
@@ -419,6 +432,38 @@ Page({
             wx.showToast({ title: "\u5DF2\u5207\u6362\uFF1A".concat(label, "\u901F\u5207\u9898"), icon: 'none' });
         });
     },
+    initGradingMode: function () {
+        try {
+            var raw = wx.getStorageSync(this.gradingModeKey);
+            var valid = ['auto_full', 'ai', 'manual'];
+            var mode = valid.includes(raw) ? raw : 'auto_full';
+            this.setData({ gradingMode: mode });
+        }
+        catch (e) {
+            // ignore
+        }
+    },
+    saveGradingMode: function (mode) {
+        var valid = ['auto_full', 'ai', 'manual'];
+        var v = valid.includes(mode) ? mode : 'auto_full';
+        try {
+            wx.setStorageSync(this.gradingModeKey, v);
+        }
+        catch (e) { }
+        this.setData({ gradingMode: v });
+    },
+    onGradingModeChange: function (e) {
+        var _a, _b;
+        var value = ((_b = (_a = e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.value) || 'auto_full';
+        this.saveGradingMode(value);
+        var labels = { auto_full: '有答即对', ai: 'AI 判分', manual: '自评模式' };
+        wx.showToast({ title: '已切换：' + (labels[value] || value), icon: 'none' });
+    },
+    checkHasSubjectiveType: function () {
+        var subjectiveTypes = new Set(['简答题', '计算题', '论述题', '问答题']);
+        var has = (this.data.questions || []).some(function (q) { return subjectiveTypes.has(q.q_type || ''); });
+        this.setData({ hasSubjectiveType: has });
+    },
     normalizeQuizFontSize: function (raw) {
         var v = String(raw || '').trim().toLowerCase();
         return (v === 'sm' || v === 'md' || v === 'lg') ? v : 'md';
@@ -506,6 +551,10 @@ Page({
     },
     onClearCurrentAnswerRecord: function () {
         var _this = this;
+        if (this.data.subjectiveSubmitting) {
+            wx.showToast({ title: '正在提交，请稍候', icon: 'none' });
+            return;
+        }
         var cq = this.data.currentQuestion;
         if (!cq)
             return;
@@ -544,6 +593,7 @@ Page({
                     showAnswer: false,
                     isCorrect: false,
                     userAnswerText: '',
+                    subjectiveSubmitting: false,
                     selectedAnswer: '',
                     selectedAnswers: [],
                     blankAnswers: nextBlankAnswers,
@@ -699,6 +749,7 @@ Page({
                             paginationHasMore: false,
                             paginationLoading: false
                         });
+                        this.checkHasSubjectiveType();
                         // 加载第一题
                         if (questionsWithPreview.length > 0) {
                             idx = savedPayload && typeof savedPayload.index === 'number' ? savedPayload.index : 0;
@@ -841,6 +892,9 @@ Page({
             aiExplainRichText: '',
             aiExplainError: '',
             aiExplainQuestionId: question.id || 0,
+            aiGradingScore: null,
+            aiGradingFeedback: '',
+            subjectiveSubmitting: false,
             progress: {
                 current: index + 1,
                 total: this.data.progress.total
@@ -929,7 +983,7 @@ Page({
     // 提交答案（刷题模式）
     onSubmitAnswer: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var _a, currentQuestion, selectedAnswer, selectedAnswers, mode, blankAnswers, qType, isJudgable, userAnswer, userAnswerText, normalized, t, correctAnswer, isCorrect, nextRecords, questions, err_2, vibrateType;
+            var _a, currentQuestion, selectedAnswer, selectedAnswers, mode, blankAnswers, qType, isJudgable, userAnswer, userAnswerText, normalized, t, correctAnswer, isSubjective, gradingMode, lockSubmitDuringRequest, submitIndex, isCorrect, nextRecords, questions, err_3, vibrateType, delay;
             var _this = this;
             return __generator(this, function (_b) {
                 switch (_b.label) {
@@ -980,7 +1034,37 @@ Page({
                             userAnswerText = userAnswer;
                         }
                         correctAnswer = currentQuestion.answer || '';
-                        isCorrect = isJudgable ? this.checkAnswer(userAnswer, correctAnswer, qType) : false;
+                        isSubjective = !isJudgable;
+                        if (!isSubjective) return [3 /*break*/, 5];
+                        gradingMode = this.data.gradingMode || 'auto_full';
+                        lockSubmitDuringRequest = gradingMode === 'ai';
+                        if (lockSubmitDuringRequest && this.data.subjectiveSubmitting) {
+                            return [2 /*return*/];
+                        }
+                        submitIndex = this.data.currentIndex;
+                        this.setProgressAnswerForIndex(this.data.currentIndex, qType);
+                        if (lockSubmitDuringRequest) {
+                            this.patchData({ subjectiveSubmitting: true }, function () {
+                                _this.updateSubmitState();
+                            });
+                        }
+                        _b.label = 1;
+                    case 1:
+                        _b.trys.push([1, , 3, 4]);
+                        return [4 /*yield*/, this._submitSubjectiveAnswer(currentQuestion, userAnswer, userAnswerText, qType, submitIndex)];
+                    case 2:
+                        _b.sent();
+                        return [3 /*break*/, 4];
+                    case 3:
+                        if (lockSubmitDuringRequest) {
+                            this.patchData({ subjectiveSubmitting: false }, function () {
+                                _this.updateSubmitState();
+                            });
+                        }
+                        return [7 /*endfinally*/];
+                    case 4: return [2 /*return*/];
+                    case 5:
+                        isCorrect = this.checkAnswer(userAnswer, correctAnswer, qType);
                         // 更新进度缓存（answers/status/order/index）
                         this.setProgressAnswerForIndex(this.data.currentIndex, qType);
                         if (isJudgable) {
@@ -1018,24 +1102,24 @@ Page({
                         }
                         // 重要操作：立即同步进度到云端
                         this.saveProgressIndex(true);
-                        _b.label = 1;
-                    case 1:
-                        _b.trys.push([1, 4, , 5]);
-                        if (!(isJudgable && quizSource)) return [3 /*break*/, 3];
+                        _b.label = 6;
+                    case 6:
+                        _b.trys.push([6, 9, , 10]);
+                        if (!(isJudgable && quizSource)) return [3 /*break*/, 8];
                         return [4 /*yield*/, quizSource.recordResult({
                                 questionId: currentQuestion.id,
                                 userAnswer: userAnswer,
                                 isCorrect: isCorrect
                             })];
-                    case 2:
+                    case 7:
                         _b.sent();
-                        _b.label = 3;
-                    case 3: return [3 /*break*/, 5];
-                    case 4:
-                        err_2 = _b.sent();
+                        _b.label = 8;
+                    case 8: return [3 /*break*/, 10];
+                    case 9:
+                        err_3 = _b.sent();
                         wx.showToast({ title: '记录结果失败，已忽略', icon: 'none' });
-                        return [3 /*break*/, 5];
-                    case 5:
+                        return [3 /*break*/, 10];
+                    case 10:
                         // 震动反馈（提交后）
                         if (isJudgable && this.data.practiceSettings.vibrationFeedback) {
                             try {
@@ -1052,21 +1136,21 @@ Page({
                                 }
                             }
                         }
-                        if (!(isJudgable && !isCorrect && this.data.practiceSettings.autoFavoriteOnWrong)) return [3 /*break*/, 7];
+                        if (!(isJudgable && !isCorrect && this.data.practiceSettings.autoFavoriteOnWrong)) return [3 /*break*/, 12];
                         return [4 /*yield*/, this.autoFavoriteIfNeeded()];
-                    case 6:
+                    case 11:
                         _b.sent();
-                        _b.label = 7;
-                    case 7:
+                        _b.label = 12;
+                    case 12:
                         // 答对自动切题（给用户一点点反馈时间）
                         if (isJudgable && isCorrect && this.data.practiceSettings.autoNextOnCorrect) {
-                            var delay_1 = this.getAutoNextDelayMs();
+                            delay = this.getAutoNextDelayMs();
                             setTimeout(function () {
                                 // 仍在当前题且已展示答案时再切题
                                 if (_this.data.showAnswer && _this.data.currentQuestion && _this.data.currentQuestion.id === currentQuestion.id) {
                                     _this.onNextQuestion();
                                 }
-                            }, delay_1);
+                            }, delay);
                         }
                         return [2 /*return*/];
                 }
@@ -1104,6 +1188,193 @@ Page({
                 }
             });
         });
+    },
+    // ===== 主观题判分（三模式） =====
+    _submitSubjectiveAnswer: function (currentQuestion, userAnswer, userAnswerText, qType, submitIndex) {
+        return __awaiter(this, void 0, void 0, function () {
+            var gradingMode, isCurrentQuestionActive, payload, result, isCorrect_1, aiScore, aiFeedback, nextRecords, questions, savedId_1, delay, e_3;
+            var _this = this;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        gradingMode = this.data.gradingMode || 'auto_full';
+                        isCurrentQuestionActive = function () {
+                            var cq = _this.data.currentQuestion;
+                            return !!(cq && cq.id === currentQuestion.id);
+                        };
+                        if (gradingMode === 'manual') {
+                            // 自评模式：展示答案 + 自评按钮
+                            this.patchData({
+                                showAnswer: true,
+                                isCorrect: false,
+                                isJudgable: false,
+                                userAnswerText: userAnswerText,
+                                showSelfEval: true
+                            }, function () {
+                                _this.refreshDisplayOptions();
+                                _this.updateSubmitState();
+                            });
+                            this.saveProgressIndex(true);
+                            return [2 /*return*/];
+                        }
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, 6, , 7]);
+                        payload = {
+                            question_id: currentQuestion.id,
+                            user_answer: userAnswer,
+                            grading_mode: gradingMode
+                        };
+                        if (this.data.sourceType === 'bank' && this.data.sourceId) {
+                            payload.source = 'user_bank';
+                            payload.bank_id = Number(this.data.sourceId) || this.data.sourceId;
+                        }
+                        return [4 /*yield*/, api_1.api.gradeSubjective(payload)];
+                    case 2:
+                        result = _a.sent();
+                        if (!result) return [3 /*break*/, 5];
+                        isCorrect_1 = !!result.is_correct;
+                        aiScore = (result.score != null) ? Number(result.score) : null;
+                        aiFeedback = result.feedback ? String(result.feedback) : '';
+                        this.progressStatusMap = this.progressStatusMap || {};
+                        this.progressStatusMap[String(submitIndex)] = isCorrect_1 ? 'correct' : 'wrong';
+                        if (isCurrentQuestionActive()) {
+                            this.patchData({
+                                showAnswer: true,
+                                isCorrect: isCorrect_1,
+                                isJudgable: true,
+                                userAnswerText: userAnswerText,
+                                showSelfEval: false,
+                                aiGradingScore: aiScore,
+                                aiGradingFeedback: aiFeedback
+                            }, function () {
+                                _this.refreshDisplayOptions();
+                                _this.updateSubmitState();
+                            });
+                        }
+                        nextRecords = Object.assign({}, this.data.answerRecords);
+                        nextRecords[currentQuestion.id] = { answered: true, isCorrect: isCorrect_1 };
+                        this.patchData({ answerRecords: nextRecords });
+                        questions = this.data.questions.map(function (q) {
+                            if (q.id !== currentQuestion.id)
+                                return q;
+                            return Object.assign({}, q, { is_mistake: isCorrect_1 ? 0 : 1 });
+                        });
+                        this.patchData({ questions: questions });
+                        this.saveProgressIndex(true);
+                        // 震动反馈
+                        if (isCurrentQuestionActive() && this.data.practiceSettings.vibrationFeedback) {
+                            try {
+                                wx.vibrateShort({ type: isCorrect_1 ? 'medium' : 'heavy' });
+                            }
+                            catch (e) { }
+                        }
+                        if (!(isCurrentQuestionActive() && !isCorrect_1 && this.data.practiceSettings.autoFavoriteOnWrong)) return [3 /*break*/, 4];
+                        return [4 /*yield*/, this.autoFavoriteIfNeeded()];
+                    case 3:
+                        _a.sent();
+                        _a.label = 4;
+                    case 4:
+                        // 答对自动切题
+                        if (isCurrentQuestionActive() && isCorrect_1 && this.data.practiceSettings.autoNextOnCorrect) {
+                            savedId_1 = currentQuestion.id;
+                            delay = this.getAutoNextDelayMs();
+                            setTimeout(function () {
+                                if (_this.data.showAnswer && _this.data.currentQuestion && _this.data.currentQuestion.id === savedId_1) {
+                                    _this.onNextQuestion();
+                                }
+                            }, delay);
+                        }
+                        return [2 /*return*/];
+                    case 5:
+                        wx.showToast({ title: '判分失败', icon: 'none' });
+                        return [3 /*break*/, 7];
+                    case 6:
+                        e_3 = _a.sent();
+                        wx.showToast({ title: (e_3 === null || e_3 === void 0 ? void 0 : e_3.message) || '网络错误，请重试', icon: 'none' });
+                        return [3 /*break*/, 7];
+                    case 7:
+                        // 失败降级：仅展示答案
+                        if (isCurrentQuestionActive()) {
+                            this.patchData({
+                                showAnswer: true,
+                                isCorrect: false,
+                                isJudgable: false,
+                                userAnswerText: userAnswerText,
+                                showSelfEval: false
+                            }, function () {
+                                _this.refreshDisplayOptions();
+                                _this.updateSubmitState();
+                            });
+                        }
+                        this.saveProgressIndex(true);
+                        return [2 /*return*/];
+                }
+            });
+        });
+    },
+    // 自评按钮点击
+    onSelfEvalResult: function (e) {
+        var _this = this;
+        var _a, _b;
+        var result = (_b = (_a = e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.result;
+        var isCorrect = result === 'correct';
+        var currentQuestion = this.data.currentQuestion;
+        if (!currentQuestion)
+            return;
+        this.progressStatusMap = this.progressStatusMap || {};
+        this.progressStatusMap[String(this.data.currentIndex)] = isCorrect ? 'correct' : 'wrong';
+        this.patchData({
+            isCorrect: isCorrect,
+            isJudgable: true,
+            showSelfEval: false
+        }, function () {
+            _this.refreshDisplayOptions();
+        });
+        // 记录到 answerRecords
+        var nextRecords = Object.assign({}, this.data.answerRecords);
+        nextRecords[currentQuestion.id] = { answered: true, isCorrect: isCorrect };
+        this.patchData({ answerRecords: nextRecords });
+        // 更新错题标记
+        var questions = this.data.questions.map(function (q) {
+            if (q.id !== currentQuestion.id)
+                return q;
+            return Object.assign({}, q, { is_mistake: isCorrect ? 0 : 1 });
+        });
+        this.patchData({ questions: questions });
+        this.saveProgressIndex(true);
+        // 调用后端记录结果
+        try {
+            if (quizSource) {
+                quizSource.recordResult({
+                    questionId: currentQuestion.id,
+                    userAnswer: this.data.userAnswerText || '',
+                    isCorrect: isCorrect
+                });
+            }
+        }
+        catch (e) { }
+        // 震动反馈
+        if (this.data.practiceSettings.vibrationFeedback) {
+            try {
+                wx.vibrateShort({ type: isCorrect ? 'medium' : 'heavy' });
+            }
+            catch (e) { }
+        }
+        // 做错自动收藏
+        if (!isCorrect && this.data.practiceSettings.autoFavoriteOnWrong) {
+            this.autoFavoriteIfNeeded();
+        }
+        // 答对自动切题
+        if (isCorrect && this.data.practiceSettings.autoNextOnCorrect) {
+            var savedId_2 = currentQuestion.id;
+            var delay = this.getAutoNextDelayMs();
+            setTimeout(function () {
+                if (_this.data.showAnswer && _this.data.currentQuestion && _this.data.currentQuestion.id === savedId_2) {
+                    _this.onNextQuestion();
+                }
+            }, delay);
+        }
     },
     onToggleAIExplain: function () {
         var _this = this;
@@ -1288,6 +1559,9 @@ Page({
     },
     // 上一题
     onPrevQuestion: function () {
+        if (this.data.subjectiveSubmitting) {
+            return;
+        }
         var currentIndex = this.data.currentIndex;
         if (currentIndex > 0) {
             this.loadQuestion(currentIndex - 1);
@@ -1295,6 +1569,9 @@ Page({
     },
     // 下一题
     onNextQuestion: function () {
+        if (this.data.subjectiveSubmitting) {
+            return;
+        }
         var _a = this.data, currentIndex = _a.currentIndex, questions = _a.questions;
         if (currentIndex < questions.length - 1) {
             this.loadQuestion(currentIndex + 1);
@@ -1306,6 +1583,9 @@ Page({
     },
     // 打开题目列表抽屉
     onOpenQuestionList: function () {
+        if (this.data.subjectiveSubmitting) {
+            return;
+        }
         this.setData({ showQuestionList: true });
     },
     // 关闭题目列表抽屉
@@ -1314,6 +1594,10 @@ Page({
     },
     // 点击题目列表项
     onQuestionListItemTap: function (e) {
+        if (this.data.subjectiveSubmitting) {
+            wx.showToast({ title: '正在提交，请稍候', icon: 'none' });
+            return;
+        }
         var index = e.currentTarget.dataset.index;
         this.loadQuestion(index);
         this.onCloseQuestionList();
@@ -1784,7 +2068,7 @@ Page({
         return qType === '选择题' || qType === '多选题' || qType === '判断题' || qType === '填空题';
     },
     updateSubmitState: function () {
-        var _a = this.data, currentQuestion = _a.currentQuestion, mode = _a.mode, showAnswer = _a.showAnswer, selectedAnswers = _a.selectedAnswers, selectedAnswer = _a.selectedAnswer, blankAnswers = _a.blankAnswers;
+        var _a = this.data, currentQuestion = _a.currentQuestion, mode = _a.mode, showAnswer = _a.showAnswer, selectedAnswers = _a.selectedAnswers, selectedAnswer = _a.selectedAnswer, blankAnswers = _a.blankAnswers, subjectiveSubmitting = _a.subjectiveSubmitting;
         if (!currentQuestion || (mode !== 'quiz' && mode !== 'reinforce') || showAnswer) {
             this.setData({ showSubmitButton: false, submitDisabled: true });
             return;
@@ -1799,7 +2083,7 @@ Page({
             disabled = !blankAnswers.length || blankAnswers.some(function (x) { return !(x || '').trim(); });
         }
         else if (qType === '简答题' || qType === '问答题' || qType === '计算题') {
-            disabled = !(selectedAnswer || '').trim();
+            disabled = subjectiveSubmitting || !(selectedAnswer || '').trim();
         }
         else {
             disabled = true;

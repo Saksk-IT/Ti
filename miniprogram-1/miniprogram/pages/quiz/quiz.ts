@@ -1269,30 +1269,22 @@ Page({
 
     // auto_full / ai 模式：调用后端判分
     try {
-      const app = getApp();
-      const baseUrl = (app && app.globalData && app.globalData.baseUrl) || '';
-      const res = await new Promise<any>((resolve, reject) => {
-        wx.request({
-          url: `${baseUrl}/api/quiz/grade_subjective`,
-          method: 'POST',
-          header: {
-            'Content-Type': 'application/json',
-            'Cookie': (app && app.globalData && app.globalData.cookie) || ''
-          },
-          data: {
-            question_id: currentQuestion.id,
-            user_answer: userAnswer,
-            grading_mode: gradingMode
-          },
-          success: (r: any) => resolve(r.data),
-          fail: reject
-        });
-      });
+      const payload: any = {
+        question_id: currentQuestion.id,
+        user_answer: userAnswer,
+        grading_mode: gradingMode
+      };
+      if (this.data.sourceType === 'bank' && this.data.sourceId) {
+        payload.source = 'user_bank';
+        payload.bank_id = Number(this.data.sourceId) || this.data.sourceId;
+      }
 
-      if (res && res.status === 'success' && res.data) {
-        const isCorrect = !!res.data.is_correct;
-        const aiScore = (res.data.score != null) ? Number(res.data.score) : null;
-        const aiFeedback = res.data.feedback ? String(res.data.feedback) : '';
+      const result: any = await api.gradeSubjective(payload);
+
+      if (result) {
+        const isCorrect = !!result.is_correct;
+        const aiScore = (result.score != null) ? Number(result.score) : null;
+        const aiFeedback = result.feedback ? String(result.feedback) : '';
         this.progressStatusMap = this.progressStatusMap || {};
         this.progressStatusMap[String(submitIndex)] = isCorrect ? 'correct' : 'wrong';
 
@@ -1345,9 +1337,9 @@ Page({
         }
         return;
       }
-      wx.showToast({ title: (res && res.message) || '判分失败', icon: 'none' });
-    } catch (e) {
-      wx.showToast({ title: '网络错误，请重试', icon: 'none' });
+      wx.showToast({ title: '判分失败', icon: 'none' });
+    } catch (e: any) {
+      wx.showToast({ title: e?.message || '网络错误，请重试', icon: 'none' });
     }
 
     // 失败降级：仅展示答案

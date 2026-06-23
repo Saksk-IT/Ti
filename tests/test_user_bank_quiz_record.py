@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from types import SimpleNamespace
 import pytest
 from sqlalchemy import text
 from werkzeug.security import generate_password_hash
@@ -436,6 +437,133 @@ def test_quiz_subjective_grade_falls_back_to_user_bank_question(app, auth_client
             assert recorded is not None
             assert recorded._mapping["user_answer"] == "小程序旧请求"
             assert bool(recorded._mapping["is_correct"]) is True
+    finally:
+        with app.app_context():
+            db.session.execute(text("DELETE FROM user_bank_answers WHERE bank_id = :bank_id"), {"bank_id": int(bank_id)})
+            db.session.execute(text("DELETE FROM user_bank_mistakes WHERE bank_id = :bank_id"), {"bank_id": int(bank_id)})
+            db.session.execute(text("DELETE FROM user_bank_questions WHERE bank_id = :bank_id"), {"bank_id": int(bank_id)})
+            db.session.execute(text("DELETE FROM user_question_banks WHERE id = :bank_id"), {"bank_id": int(bank_id)})
+            db.session.commit()
+
+
+def test_user_bank_subjective_manual_mode_returns_pending_without_recording(app, auth_client, seed_user):
+    bank_id = _create_bank_with_questions(app, seed_user["id"], ["essay"])
+
+    try:
+        with app.app_context():
+            question_id = int(
+                db.session.execute(
+                    text("SELECT id FROM user_bank_questions WHERE bank_id = :bank_id"),
+                    {"bank_id": int(bank_id)},
+                ).scalar_one()
+            )
+
+        response = auth_client.post(
+            "/api/grade_subjective",
+            json={
+                "question_id": question_id,
+                "user_answer": "我先看参考答案再自评",
+                "grading_mode": "manual",
+                "source": "user_bank",
+                "bank_id": bank_id,
+            },
+            headers={"X-Requested-With": "XMLHttpRequest"},
+        )
+
+        assert response.status_code == 200, response.get_json()
+        payload = response.get_json()
+        assert payload["status"] == "success"
+        assert payload["code"] == 0
+        assert payload["data"]["pending"] is True
+        assert payload["data"]["is_correct"] is None
+        assert payload["data"]["standard_answer"] == "参考答案"
+
+        with app.app_context():
+            recorded = db.session.execute(
+                text(
+                    """
+                    SELECT 1
+                    FROM user_bank_answers
+                    WHERE user_id = :user_id AND bank_id = :bank_id AND question_id = :question_id
+                    """
+                ),
+                {
+                    "user_id": int(seed_user["id"]),
+                    "bank_id": int(bank_id),
+                    "question_id": int(question_id),
+                },
+            ).fetchone()
+            assert recorded is None
+    finally:
+        with app.app_context():
+            db.session.execute(text("DELETE FROM user_bank_answers WHERE bank_id = :bank_id"), {"bank_id": int(bank_id)})
+            db.session.execute(text("DELETE FROM user_bank_mistakes WHERE bank_id = :bank_id"), {"bank_id": int(bank_id)})
+            db.session.execute(text("DELETE FROM user_bank_questions WHERE bank_id = :bank_id"), {"bank_id": int(bank_id)})
+            db.session.execute(text("DELETE FROM user_question_banks WHERE id = :bank_id"), {"bank_id": int(bank_id)})
+            db.session.commit()
+
+
+def test_user_bank_subjective_ai_mode_returns_feedback_and_records_result(app, auth_client, seed_user, monkeypatch):
+    from app.modules.exam.services import ai_grading_service
+
+    bank_id = _create_bank_with_questions(app, seed_user["id"], ["essay"])
+
+    def fake_grade_essay_answer(question_content, standard_answer, user_answer):
+        assert question_content == "题目 1"
+        assert standard_answer == "参考答案"
+        assert user_answer == "遗漏关键点"
+        return SimpleNamespace(score=42, is_correct=False, feedback="缺少核心要点")
+
+    monkeypatch.setattr(ai_grading_service, "grade_essay_answer", fake_grade_essay_answer)
+
+    try:
+        with app.app_context():
+            question_id = int(
+                db.session.execute(
+                    text("SELECT id FROM user_bank_questions WHERE bank_id = :bank_id"),
+                    {"bank_id": int(bank_id)},
+                ).scalar_one()
+            )
+
+        response = auth_client.post(
+            "/api/quiz/grade_subjective",
+            json={
+                "question_id": question_id,
+                "user_answer": "遗漏关键点",
+                "grading_mode": "ai",
+                "source": "user_bank",
+                "bank_id": bank_id,
+            },
+            headers={"X-Requested-With": "XMLHttpRequest"},
+        )
+
+        assert response.status_code == 200, response.get_json()
+        payload = response.get_json()
+        assert payload["status"] == "success"
+        assert payload["code"] == 0
+        assert payload["data"]["grading"] == "ai"
+        assert payload["data"]["is_correct"] is False
+        assert payload["data"]["score"] == 42
+        assert payload["data"]["feedback"] == "缺少核心要点"
+
+        with app.app_context():
+            recorded = db.session.execute(
+                text(
+                    """
+                    SELECT user_answer, is_correct
+                    FROM user_bank_answers
+                    WHERE user_id = :user_id AND bank_id = :bank_id AND question_id = :question_id
+                    """
+                ),
+                {
+                    "user_id": int(seed_user["id"]),
+                    "bank_id": int(bank_id),
+                    "question_id": int(question_id),
+                },
+            ).fetchone()
+            assert recorded is not None
+            assert recorded._mapping["user_answer"] == "遗漏关键点"
+            assert bool(recorded._mapping["is_correct"]) is False
     finally:
         with app.app_context():
             db.session.execute(text("DELETE FROM user_bank_answers WHERE bank_id = :bank_id"), {"bank_id": int(bank_id)})

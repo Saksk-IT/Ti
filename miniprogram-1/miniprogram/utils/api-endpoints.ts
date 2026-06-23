@@ -250,6 +250,15 @@ export const api = {
       question_id: questionId,
       is_correct: isCorrect
     }),
+
+  // 主观题判分（公共题库与个人题库共用）
+  gradeSubjective: (payload: {
+    question_id: number | string;
+    user_answer: string;
+    grading_mode?: 'auto_full' | 'ai' | 'manual' | string;
+    source?: 'user_bank' | 'bank' | 'public' | string;
+    bank_id?: number | string | null;
+  }) => request('/quiz/grade_subjective', 'POST', payload),
   
   // 切换收藏
   toggleFavorite: (questionId: number) =>

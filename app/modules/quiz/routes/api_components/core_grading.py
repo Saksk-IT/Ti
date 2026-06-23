@@ -11,10 +11,11 @@ import json
 import logging
 from typing import Optional
 
-from flask import request, jsonify, current_app
+from flask import request, current_app
 from sqlalchemy import text
 
 from app.core.extensions import db, limiter
+from app.core.utils.api_response import error_response, success_response
 from app.core.utils.decorators import auth_required, current_user_id
 from app.core.utils.cache_utils import bump_user_quiz_version
 from app.core.services.quiz_data_service import QuizDataService
@@ -29,6 +30,11 @@ logger = logging.getLogger(__name__)
 # DB 存储的是 portable type（英文），前端通过 portable_type_to_q_type 转中文显示
 _SUBJECTIVE_TYPES = frozenset(['essay'])
 _VALID_GRADING_MODES = frozenset(['auto_full', 'ai', 'manual'])
+
+
+def _error_json(message: str, status_code: int):
+    response, _ = error_response(message=message, status_code=status_code)
+    return response
 
 
 def _grade_auto_full(user_answer: str) -> dict:
@@ -100,18 +106,18 @@ def _load_user_bank_question(uid: int, q_id: int, bank_id: Optional[int]):
     if bank_id is not None:
         has_access, _permission, _access_type = check_bank_access(int(uid), int(bank_id))
         if not has_access:
-            return None, jsonify({'status': 'error', 'message': '无权访问该题目'}), 403
+            return None, _error_json('无权访问该题目', 403), 403
         query = query.filter(UserBankQuestion.bank_id == int(bank_id))
 
     question = query.first()
     if not question:
-        return None, jsonify({'status': 'error', 'message': '题目不存在'}), 404
+        return None, _error_json('题目不存在', 404), 404
 
     resolved_bank_id = int(question.bank_id)
     if bank_id is None:
         has_access, _permission, _access_type = check_bank_access(int(uid), resolved_bank_id)
         if not has_access:
-            return None, jsonify({'status': 'error', 'message': '无权访问该题目'}), 403
+            return None, _error_json('无权访问该题目', 403), 403
 
     return question, None, None
 
@@ -168,13 +174,13 @@ def _handle_user_bank_subjective(
     grading_mode: str,
     uid: int,
 ):
-    question, error_response, status_code = _load_user_bank_question(uid, q_id_int, bank_id)
-    if error_response is not None:
-        return error_response, status_code
+    question, error_body, status_code = _load_user_bank_question(uid, q_id_int, bank_id)
+    if error_body is not None:
+        return error_body, status_code
 
     q_type = str(getattr(question, 'type', '') or '')
     if q_type not in _SUBJECTIVE_TYPES:
-        return jsonify({'status': 'error', 'message': '该题型不支持此判分接口'}), 400
+        return error_response('该题型不支持此判分接口', status_code=400)
 
     question_content = str(getattr(question, 'content', '') or '')
     standard_answer = _standard_answer_text(getattr(question, 'answer', '') or '')
@@ -205,16 +211,13 @@ def _handle_user_bank_subjective(
             db.session.rollback()
             logger.error("记录个人题库主观题结果失败: %s", e, exc_info=True)
 
-    return jsonify({
-        'status': 'success',
-        'data': {
-            'is_correct': is_correct,
-            'grading': result.get('grading', grading_mode),
-            'pending': result.get('pending', False),
-            'score': result.get('score'),
-            'feedback': result.get('feedback'),
-            'standard_answer': standard_answer if grading_mode == 'manual' else None,
-        },
+    return success_response({
+        'is_correct': is_correct,
+        'grading': result.get('grading', grading_mode),
+        'pending': result.get('pending', False),
+        'score': result.get('score'),
+        'feedback': result.get('feedback'),
+        'standard_answer': standard_answer if grading_mode == 'manual' else None,
     })
 
 
@@ -239,7 +242,7 @@ def api_grade_subjective():
     try:
         q_id_int = int(q_id)
     except (TypeError, ValueError):
-        return jsonify({'status': 'error', 'message': 'question_id 参数错误'}), 400
+        return error_response('question_id 参数错误', status_code=400)
 
     if grading_mode not in _VALID_GRADING_MODES:
         grading_mode = 'auto_full'
@@ -267,14 +270,14 @@ def api_grade_subjective():
         fallback_status = fallback[1] if isinstance(fallback, tuple) else getattr(fallback, 'status_code', 200)
         if fallback_status != 404:
             return fallback
-        return jsonify({'status': 'error', 'message': '题目不存在'}), 404
+        return error_response('题目不存在', status_code=404)
     if question.subject_id and not can_user_access_subject(int(uid), int(question.subject_id)):
-        return jsonify({'status': 'error', 'message': '无权访问该题目'}), 403
+        return error_response('无权访问该题目', status_code=403)
 
     # 题型校验（仅主观题走此接口）
     q_type = str(getattr(question, 'type', '') or '')
     if q_type not in _SUBJECTIVE_TYPES:
-        return jsonify({'status': 'error', 'message': '该题型不支持此判分接口'}), 400
+        return error_response('该题型不支持此判分接口', status_code=400)
 
     # 获取题目内容和标准答案
     question_content = str(getattr(question, 'content', '') or '')
@@ -313,14 +316,11 @@ def api_grade_subjective():
             db.session.rollback()
             logger.error("记录主观题结果失败: %s", e, exc_info=True)
 
-    return jsonify({
-        'status': 'success',
-        'data': {
-            'is_correct': is_correct,
-            'grading': result.get('grading', grading_mode),
-            'pending': result.get('pending', False),
-            'score': result.get('score'),
-            'feedback': result.get('feedback'),
-            'standard_answer': standard_answer if grading_mode == 'manual' else None,
-        },
+    return success_response({
+        'is_correct': is_correct,
+        'grading': result.get('grading', grading_mode),
+        'pending': result.get('pending', False),
+        'score': result.get('score'),
+        'feedback': result.get('feedback'),
+        'standard_answer': standard_answer if grading_mode == 'manual' else None,
     })
