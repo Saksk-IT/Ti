@@ -684,6 +684,31 @@ page {
   color: var(--app-muted);
 }
 
+.mb-owner {
+  min-width: 0;
+  max-width: 180rpx;
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.mb-owner-avatar {
+  width: 30rpx;
+  height: 30rpx;
+  border-radius: 50%;
+  flex: 0 0 30rpx;
+  background: var(--app-surface);
+  border: 1rpx solid var(--app-border);
+}
+
+.mb-owner-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--app-muted);
+}
+
 .mb-chip {
   padding: 4rpx 10rpx;
   border-radius: 10rpx;

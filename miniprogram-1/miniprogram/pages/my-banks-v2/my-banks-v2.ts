@@ -17,6 +17,8 @@ type BankMeta = {
   popularity_count?: number;
   source: 'created' | 'shared';
   owner_name?: string;
+  owner_label?: string;
+  owner_avatar_url?: string;
   cover_url?: string;
   has_cover?: boolean;
 };
@@ -78,6 +80,8 @@ Page({
 
       const createdBanks: BankMeta[] = createdList.map((b: any) => {
         const coverUrl = resolveUploadUrl(b?.cover_image);
+        const ownerLabel = String(b?.owner_nickname || '我').trim();
+        const ownerAvatarUrl = resolveUploadUrl(b?.owner_avatar) || '/images/default-avatar.png';
         return {
           id: Number(b?.id || 0),
           name: String(b?.name || '未命名题库'),
@@ -90,6 +94,9 @@ Page({
           updated_at_fmt: formatDate(b?.updated_at),
           popularity_count: Number(b?.public_use_count || b?.share_count || b?.use_count || 0) || 0,
           source: 'created' as const,
+          owner_name: ownerLabel,
+          owner_label: ownerLabel,
+          owner_avatar_url: ownerAvatarUrl,
           cover_url: coverUrl,
           has_cover: !!coverUrl
         };
@@ -97,6 +104,8 @@ Page({
 
       const sharedBanks: BankMeta[] = sharedList.map((b: any) => {
         const coverUrl = resolveUploadUrl(b?.cover_image);
+        const ownerLabel = String(b?.owner_nickname || b?.owner_name || '匿名用户').trim();
+        const ownerAvatarUrl = resolveUploadUrl(b?.owner_avatar) || '/images/default-avatar.png';
         return {
           id: Number(b?.bank_id || b?.id || 0),
           name: String(b?.bank_name || b?.name || '未命名题库'),
@@ -109,7 +118,9 @@ Page({
           updated_at_fmt: formatDate(b?.last_access_at || b?.created_at),
           popularity_count: Number(b?.access_count || b?.share_count || 0) || 0,
           source: 'shared' as const,
-          owner_name: b?.owner_nickname ? String(b.owner_nickname) : '',
+          owner_name: ownerLabel,
+          owner_label: ownerLabel,
+          owner_avatar_url: ownerAvatarUrl,
           cover_url: coverUrl,
           has_cover: !!coverUrl
         };

@@ -34,6 +34,7 @@ type PlazaBankView = {
   cover_url: string;
   has_cover: boolean;
   owner_label: string;
+  owner_avatar_url: string;
   created_label: string;
   bank_type: BankType;
   type_label: string;
@@ -133,6 +134,7 @@ Page({
           const coverUrl = resolveUploadUrl(b?.cover_image);
           const isJoined = !!b?.relation?.is_joined;
           const ownerLabel = String(b?.owner_nickname || (bankType === 'system' ? '系统管理员' : '匿名')).trim();
+          const ownerAvatarUrl = resolveUploadUrl(b?.owner_avatar) || '/images/default-avatar.png';
           const createdLabel = formatDateLabel(b?.created_at || b?.public_at);
           return {
             key: `${bankType}_${id}`,
@@ -145,6 +147,7 @@ Page({
             cover_url: coverUrl,
             has_cover: !!coverUrl,
             owner_label: ownerLabel,
+            owner_avatar_url: ownerAvatarUrl,
             created_label: createdLabel,
             bank_type: bankType,
             type_label: bankType === 'system' ? '系统题库' : '用户',

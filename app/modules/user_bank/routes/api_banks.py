@@ -49,9 +49,10 @@ def get_banks():
     is_public = request.args.get('is_public', type=int)
 
     query = '''
-        SELECT b.*, c.name as category_name
+        SELECT b.*, c.name as category_name, u.username as owner_nickname, u.avatar as owner_avatar
         FROM user_question_banks b
         LEFT JOIN user_bank_categories c ON b.category_id = c.id
+        LEFT JOIN users u ON b.user_id = u.id
         WHERE b.user_id = :user_id AND b.status = 1
     '''
     params: dict = {'user_id': user_id}

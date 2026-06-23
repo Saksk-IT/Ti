@@ -125,6 +125,8 @@ Page({
                         sharedList = Array.isArray(sharedRes === null || sharedRes === void 0 ? void 0 : sharedRes.banks) ? sharedRes.banks : [];
                         createdBanks = createdList.map(function (b) {
                             var coverUrl = (0, api_endpoints_1.resolveUploadUrl)(b === null || b === void 0 ? void 0 : b.cover_image);
+                            var ownerLabel = String((b === null || b === void 0 ? void 0 : b.owner_nickname) || '我').trim();
+                            var ownerAvatarUrl = (0, api_endpoints_1.resolveUploadUrl)(b === null || b === void 0 ? void 0 : b.owner_avatar) || '/images/default-avatar.png';
                             return {
                                 id: Number((b === null || b === void 0 ? void 0 : b.id) || 0),
                                 name: String((b === null || b === void 0 ? void 0 : b.name) || '未命名题库'),
@@ -137,12 +139,17 @@ Page({
                                 updated_at_fmt: formatDate(b === null || b === void 0 ? void 0 : b.updated_at),
                                 popularity_count: Number((b === null || b === void 0 ? void 0 : b.public_use_count) || (b === null || b === void 0 ? void 0 : b.share_count) || (b === null || b === void 0 ? void 0 : b.use_count) || 0) || 0,
                                 source: 'created',
+                                owner_name: ownerLabel,
+                                owner_label: ownerLabel,
+                                owner_avatar_url: ownerAvatarUrl,
                                 cover_url: coverUrl,
                                 has_cover: !!coverUrl
                             };
                         }).filter(function (b) { return Number.isFinite(b.id) && b.id > 0; });
                         sharedBanks = sharedList.map(function (b) {
                             var coverUrl = (0, api_endpoints_1.resolveUploadUrl)(b === null || b === void 0 ? void 0 : b.cover_image);
+                            var ownerLabel = String((b === null || b === void 0 ? void 0 : b.owner_nickname) || (b === null || b === void 0 ? void 0 : b.owner_name) || '匿名用户').trim();
+                            var ownerAvatarUrl = (0, api_endpoints_1.resolveUploadUrl)(b === null || b === void 0 ? void 0 : b.owner_avatar) || '/images/default-avatar.png';
                             return {
                                 id: Number((b === null || b === void 0 ? void 0 : b.bank_id) || (b === null || b === void 0 ? void 0 : b.id) || 0),
                                 name: String((b === null || b === void 0 ? void 0 : b.bank_name) || (b === null || b === void 0 ? void 0 : b.name) || '未命名题库'),
@@ -155,7 +162,9 @@ Page({
                                 updated_at_fmt: formatDate((b === null || b === void 0 ? void 0 : b.last_access_at) || (b === null || b === void 0 ? void 0 : b.created_at)),
                                 popularity_count: Number((b === null || b === void 0 ? void 0 : b.access_count) || (b === null || b === void 0 ? void 0 : b.share_count) || 0) || 0,
                                 source: 'shared',
-                                owner_name: (b === null || b === void 0 ? void 0 : b.owner_nickname) ? String(b.owner_nickname) : '',
+                                owner_name: ownerLabel,
+                                owner_label: ownerLabel,
+                                owner_avatar_url: ownerAvatarUrl,
                                 cover_url: coverUrl,
                                 has_cover: !!coverUrl
                             };

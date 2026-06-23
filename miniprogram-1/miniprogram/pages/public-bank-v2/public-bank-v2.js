@@ -150,6 +150,7 @@ Page({
                             var coverUrl = (0, api_endpoints_1.resolveUploadUrl)(b === null || b === void 0 ? void 0 : b.cover_image);
                             var isJoined = !!((_a = b === null || b === void 0 ? void 0 : b.relation) === null || _a === void 0 ? void 0 : _a.is_joined);
                             var ownerLabel = String((b === null || b === void 0 ? void 0 : b.owner_nickname) || (bankType === 'system' ? '系统管理员' : '匿名')).trim();
+                            var ownerAvatarUrl = (0, api_endpoints_1.resolveUploadUrl)(b === null || b === void 0 ? void 0 : b.owner_avatar) || '/images/default-avatar.png';
                             var createdLabel = formatDateLabel((b === null || b === void 0 ? void 0 : b.created_at) || (b === null || b === void 0 ? void 0 : b.public_at));
                             return {
                                 key: "".concat(bankType, "_").concat(id),
@@ -162,6 +163,7 @@ Page({
                                 cover_url: coverUrl,
                                 has_cover: !!coverUrl,
                                 owner_label: ownerLabel,
+                                owner_avatar_url: ownerAvatarUrl,
                                 created_label: createdLabel,
                                 bank_type: bankType,
                                 type_label: bankType === 'system' ? '系统题库' : '用户',

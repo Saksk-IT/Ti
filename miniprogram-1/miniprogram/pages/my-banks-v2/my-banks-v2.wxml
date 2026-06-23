@@ -92,7 +92,10 @@
                 <text class="mb-chip" wx:if="{{item.source === 'shared'}}">已加入</text>
                 <text class="mb-chip" wx:elif="{{item.is_public}}">公开</text>
                 <text class="mb-chip" wx:else>私密</text>
-                <text>用户</text>
+                <view class="mb-owner" aria-label="题库作者">
+                  <image class="mb-owner-avatar" src="{{item.owner_avatar_url}}" mode="aspectFill"></image>
+                  <text class="mb-owner-name">{{item.owner_label}}</text>
+                </view>
                 <text class="mb-dot">·</text>
                 <text>{{item.question_count || 0}} 题</text>
                 <text class="mb-dot">·</text>
