@@ -1,4 +1,4 @@
-<!-- my-banks-v2.wxml - 对齐 Web /user/banks（个人题库） -->
+<!-- my-banks-v2.wxml - 对齐 Web /user/banks（我的题库） -->
 <view class="page-root mine-linked-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
   <view class="gradient-bg">
     <view class="gradient-orb orb-1"></view>
@@ -6,7 +6,7 @@
     <view class="gradient-orb orb-3"></view>
   </view>
 
-  <navigation-bar title="个人题库" back="{{false}}" color="var(--app-nav-fg)" background="transparent">
+  <navigation-bar title="我的题库" back="{{false}}" color="var(--app-nav-fg)" background="transparent">
     <view slot="left" class="nav-left">
       <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
         <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
@@ -20,14 +20,14 @@
   <view class="page-container">
     <scroll-view class="content-area" scroll-y bounces="{{false}}">
       <view class="container">
-        <view class="card mb-hero" aria-label="个人题库概览">
+        <view class="card mb-hero" aria-label="我的题库概览">
           <view class="mb-hero-top">
             <view class="mb-hero-left">
               <view class="mb-title-row">
-                <text class="mb-title">个人题库</text>
+                <text class="mb-title">我的题库</text>
                 <view class="pill mb-count"><text>{{filteredBanks.length}} 个题库</text></view>
               </view>
-              <text class="mb-sub">我创建和好友分享给我的题库</text>
+              <text class="mb-sub">我创建、公开加入和分享加入的题库</text>
             </view>
             <view class="mb-hero-actions">
               <view class="btn" bindtap="onGoCreateBank"><text>创建题库</text></view>
@@ -65,7 +65,7 @@
         </view>
 
         <view class="mb-list" wx:else>
-          <view class="mb-card" wx:for="{{filteredBanks}}" wx:key="id" bindtap="onBankTap" data-id="{{item.id}}">
+          <view class="mb-card" wx:for="{{filteredBanks}}" wx:key="key" bindtap="onBankTap" data-id="{{item.id}}" data-key="{{item.key}}">
             <view class="mb-cover {{item.has_cover ? 'has-cover' : ''}}">
               <image wx:if="{{item.has_cover}}" src="{{item.cover_url}}" mode="aspectFill"></image>
               <view wx:else class="mb-cover-fallback">
@@ -76,7 +76,10 @@
                 <view class="mini-cover-copy">
                   <text class="mini-cover-kicker">Sak AI</text>
                   <view class="mini-cover-title"><text>{{item.name}}</text></view>
-                  <text class="mini-cover-sub">{{item.source === 'shared' ? '分享给我' : (item.is_public ? '公开' : '私密')}}</text>
+                  <text class="mini-cover-sub" wx:if="{{item.source === 'created'}}">{{item.is_public ? '公开' : '私密'}}</text>
+                  <text class="mini-cover-sub" wx:elif="{{item.relation === 'both'}}">公开+分享</text>
+                  <text class="mini-cover-sub" wx:elif="{{item.source === 'public'}}">公开加入</text>
+                  <text class="mini-cover-sub" wx:else>分享加入</text>
                 </view>
               </view>
             </view>
@@ -89,9 +92,10 @@
               </view>
 
               <view class="mb-meta">
-                <text class="mb-chip" wx:if="{{item.source === 'shared'}}">已加入</text>
-                <text class="mb-chip" wx:elif="{{item.is_public}}">公开</text>
-                <text class="mb-chip" wx:else>私密</text>
+                <text class="mb-chip" wx:if="{{item.source === 'created'}}">{{item.is_public ? '公开' : '私密'}}</text>
+                <text class="mb-chip" wx:elif="{{item.relation === 'both'}}">公开+分享</text>
+                <text class="mb-chip" wx:elif="{{item.source === 'public'}}">公开加入</text>
+                <text class="mb-chip" wx:else>分享加入</text>
                 <view class="mb-owner" aria-label="题库作者">
                   <image class="mb-owner-avatar" src="{{item.owner_avatar_url}}" mode="aspectFill"></image>
                   <text class="mb-owner-name">{{item.owner_label}}</text>
@@ -99,7 +103,7 @@
                 <text class="mb-dot">·</text>
                 <text>{{item.question_count || 0}} 题</text>
                 <text class="mb-dot">·</text>
-                <text>创建 {{item.created_at_fmt || item.updated_at_fmt || '-'}}</text>
+                <text>{{item.source === 'created' ? '创建' : '加入'}} {{item.created_at_fmt || item.updated_at_fmt || '-'}}</text>
               </view>
             </view>
           </view>

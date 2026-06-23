@@ -15,6 +15,7 @@ from app.core.extensions import db
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC_BANK_DIR = ROOT / "miniprogram-1" / "miniprogram" / "pages" / "public-bank-v2"
 MY_BANKS_DIR = ROOT / "miniprogram-1" / "miniprogram" / "pages" / "my-banks-v2"
+API_ENDPOINTS_TS = ROOT / "miniprogram-1" / "miniprogram" / "utils" / "api-endpoints.ts"
 
 
 def _read(path: Path) -> str:
@@ -46,12 +47,32 @@ def test_my_bank_cards_render_owner_name_and_avatar():
 
     assert "return `${y}-${m}`" in ts
     assert "owner_avatar_url" in ts
-    assert "resolveUploadUrl(b?.owner_avatar)" in ts
+    assert "resolveUploadUrl(item?.owner_avatar)" in ts
     assert "owner_label" in ts
     assert owner_block is not None
     assert "{{item.owner_avatar_url}}" in owner_block.group(0)
     assert "{{item.owner_label}}" in owner_block.group(0)
     assert "<text>用户</text>" not in wxml
+
+
+def test_my_banks_page_uses_web_aligned_overview_sources():
+    """小程序“我的题库”应与 Web 端一致展示创建、公开加入、分享加入三类来源。"""
+    api_ts = _read(API_ENDPOINTS_TS)
+    page_ts = _read(MY_BANKS_DIR / "my-banks-v2.ts")
+    wxml = _read(MY_BANKS_DIR / "my-banks-v2.wxml")
+
+    assert "getMyBankOverview" in api_ts
+    assert "request('/user/banks/api/overview'" in api_ts
+    assert "api.getMyBankOverview" in page_ts
+    assert "api.getMyBanks()" not in page_ts
+    assert "api.getSharedBanks()" not in page_ts
+    assert "source: 'created' | 'public' | 'shared'" in page_ts
+    assert "sourceLabels: ['全部', '我创建的', '公开加入', '分享加入']" in page_ts
+    assert "navigation-bar title=\"我的题库\"" in wxml
+    assert "<text class=\"mb-title\">我的题库</text>" in wxml
+    assert "我创建、公开加入和分享加入的题库" in wxml
+    assert "公开加入" in wxml
+    assert "分享加入" in wxml
 
 
 def test_my_created_bank_api_returns_owner_name_and_avatar(app, auth_client, seed_user):

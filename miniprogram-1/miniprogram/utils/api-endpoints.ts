@@ -567,6 +567,46 @@ export const api = {
   getMyBanks: (params?: { category_id?: number; is_public?: number }) =>
     request('/user/banks/api/list', 'GET', params || {}),
 
+  // 获取我的题库融合视图（我创建 + 公开加入 + 分享加入，对齐 Web /user/banks）
+  getMyBankOverview: (params?: {
+    scope?: 'all' | 'created' | 'public' | 'shared';
+    keyword?: string;
+    page?: number;
+    per_page?: number;
+  }) =>
+    request('/user/banks/api/overview', 'GET', params || {}) as Promise<{
+      items: Array<{
+        id: number;
+        kind?: 'created' | 'joined' | string;
+        relation?: 'created' | 'public' | 'shared' | 'both' | string;
+        source_type?: 'user' | 'system' | string;
+        source_label?: string;
+        visibility_label?: string;
+        name: string;
+        description?: string;
+        cover_image?: string | null;
+        owner_label?: string;
+        owner_avatar?: string | null;
+        question_count?: number;
+        participants_total?: number;
+        answer_users_7d?: number;
+        is_featured?: boolean;
+        updated_at?: string;
+        last_joined_at?: string;
+        last_activity_at?: string;
+      }>;
+      total: number;
+      page: number;
+      per_page: number;
+      scope: 'all' | 'created' | 'public' | 'shared';
+      counts?: {
+        all?: number;
+        created?: number;
+        public?: number;
+        shared?: number;
+      };
+    }>,
+
   // 获取收到的分享题库列表
   getSharedBanks: () => request('/user/banks/api/shared', 'GET'),
 

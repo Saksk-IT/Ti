@@ -5,6 +5,7 @@ import { safeNavigate } from '../../utils/nav';
 import { themeManager, ThemeMode } from '../../utils/theme';
 
 type BankMeta = {
+  key: string;
   id: number;
   name: string;
   description?: string;
@@ -15,12 +16,16 @@ type BankMeta = {
   updated_at?: string;
   updated_at_fmt?: string;
   popularity_count?: number;
-  source: 'created' | 'shared';
+  source: 'created' | 'public' | 'shared';
+  relation?: 'created' | 'public' | 'shared' | 'both';
+  source_type?: 'user' | 'system';
+  source_label?: string;
   owner_name?: string;
   owner_label?: string;
   owner_avatar_url?: string;
   cover_url?: string;
   has_cover?: boolean;
+  detail_path?: string;
 };
 
 function formatDate(dateStr: any): string {
@@ -38,6 +43,95 @@ function formatDate(dateStr: any): string {
   return raw;
 }
 
+async function fetchAllOverviewItems(): Promise<any[]> {
+  const perPage = 50;
+  let page = 1;
+  let total = 0;
+  let items: any[] = [];
+  let keepGoing = true;
+
+  while (keepGoing) {
+    const res: any = await api.getMyBankOverview({ scope: 'all', page, per_page: perPage });
+    const pageItems = Array.isArray(res?.items) ? res.items : [];
+    total = Number(res?.total || pageItems.length || 0) || 0;
+    items = [...items, ...pageItems];
+    page += 1;
+    keepGoing = pageItems.length > 0 && items.length < total;
+  }
+
+  return items;
+}
+
+function normalizeSource(item: any): 'created' | 'public' | 'shared' {
+  if (String(item?.kind || '') === 'created') return 'created';
+  const relation = String(item?.relation || '').toLowerCase();
+  if (relation === 'shared') return 'shared';
+  if (relation === 'both') return 'shared';
+  return 'public';
+}
+
+function normalizeRelation(item: any): 'created' | 'public' | 'shared' | 'both' {
+  if (String(item?.kind || '') === 'created') return 'created';
+  const relation = String(item?.relation || '').toLowerCase();
+  if (relation === 'shared' || relation === 'both') return relation;
+  return 'public';
+}
+
+function sourceLabelFor(item: any, source: 'created' | 'public' | 'shared', relation: 'created' | 'public' | 'shared' | 'both'): string {
+  if (source === 'created') {
+    const visibility = String(item?.visibility_label || '').trim();
+    return visibility || (item?.is_public ? '公开' : '私密');
+  }
+  if (relation === 'both') return '公开+分享';
+  return source === 'shared' ? '分享加入' : '公开加入';
+}
+
+function detailPathFor(item: any, id: number): string {
+  const sourceType = String(item?.source_type || 'user').toLowerCase();
+  if (sourceType === 'system') {
+    return `/pages/subject-detail-v2/subject-detail-v2?id=${encodeURIComponent(String(id))}`;
+  }
+  return `/pages/bank-detail/bank-detail?id=${encodeURIComponent(String(id))}`;
+}
+
+function overviewItemToBank(item: any): BankMeta | null {
+  const id = Number(item?.id || 0);
+  if (!Number.isFinite(id) || id <= 0) return null;
+
+  const source = normalizeSource(item);
+  const relation = normalizeRelation(item);
+  const sourceType = String(item?.source_type || 'user').toLowerCase() === 'system' ? 'system' : 'user';
+  const coverUrl = resolveUploadUrl(item?.cover_image);
+  const ownerLabel = String(item?.owner_label || (source === 'created' ? '我创建的题库' : '匿名用户')).trim();
+  const ownerAvatarUrl = resolveUploadUrl(item?.owner_avatar) || '/images/default-avatar.png';
+  const timeValue = item?.updated_at || item?.last_joined_at || item?.last_activity_at;
+  const isPublic = source === 'created' && String(item?.visibility_label || '') === '公开';
+
+  return {
+    key: `${sourceType}-${source}-${id}`,
+    id,
+    name: String(item?.name || '未命名题库'),
+    description: item?.description ? String(item.description) : '',
+    question_count: Number(item?.question_count || 0) || 0,
+    is_public: isPublic,
+    created_at: timeValue,
+    created_at_fmt: formatDate(timeValue),
+    updated_at: timeValue,
+    updated_at_fmt: formatDate(timeValue),
+    popularity_count: Number(item?.participants_total || item?.answer_users_7d || 0) || 0,
+    source,
+    relation,
+    source_type: sourceType,
+    source_label: sourceLabelFor(item, source, relation),
+    owner_name: ownerLabel,
+    owner_label: ownerLabel,
+    owner_avatar_url: ownerAvatarUrl,
+    cover_url: coverUrl,
+    has_cover: !!coverUrl,
+    detail_path: detailPathFor(item, id)
+  };
+}
+
 Page({
   data: {
     loading: false,
@@ -45,8 +139,8 @@ Page({
 
     keyword: '',
     sourceIndex: 0,
-    sourceLabels: ['全部', '我加入的', '我创建的'],
-    sourceValues: ['all', 'shared', 'created'],
+    sourceLabels: ['全部', '我创建的', '公开加入', '分享加入'],
+    sourceValues: ['all', 'created', 'public', 'shared'],
     banks: [] as BankMeta[],
     filteredBanks: [] as BankMeta[],
 
@@ -73,67 +167,10 @@ Page({
     if (this.data.loading) return;
     this.setData({ loading: true });
     try {
-      const [myRes, sharedRes]: any[] = await Promise.all([
-        api.getMyBanks().catch(() => ({ banks: [] })),
-        api.getSharedBanks().catch(() => ({ banks: [] }))
-      ]);
-
-      const createdList = Array.isArray(myRes?.banks) ? myRes.banks : [];
-      const sharedList = Array.isArray(sharedRes?.banks) ? sharedRes.banks : [];
-
-      const createdBanks: BankMeta[] = createdList.map((b: any) => {
-        const coverUrl = resolveUploadUrl(b?.cover_image);
-        const ownerLabel = String(b?.owner_nickname || '我').trim();
-        const ownerAvatarUrl = resolveUploadUrl(b?.owner_avatar) || '/images/default-avatar.png';
-        return {
-          id: Number(b?.id || 0),
-          name: String(b?.name || '未命名题库'),
-          description: b?.description ? String(b.description) : '',
-          question_count: Number(b?.question_count || 0) || 0,
-          is_public: b?.is_public,
-          created_at: b?.created_at || b?.updated_at,
-          created_at_fmt: formatDate(b?.created_at || b?.updated_at),
-          updated_at: b?.updated_at,
-          updated_at_fmt: formatDate(b?.updated_at),
-          popularity_count: Number(b?.public_use_count || b?.share_count || b?.use_count || 0) || 0,
-          source: 'created' as const,
-          owner_name: ownerLabel,
-          owner_label: ownerLabel,
-          owner_avatar_url: ownerAvatarUrl,
-          cover_url: coverUrl,
-          has_cover: !!coverUrl
-        };
-      }).filter((b: BankMeta) => Number.isFinite(b.id) && b.id > 0);
-
-      const sharedBanks: BankMeta[] = sharedList.map((b: any) => {
-        const coverUrl = resolveUploadUrl(b?.cover_image);
-        const ownerLabel = String(b?.owner_nickname || b?.owner_name || '匿名').trim();
-        const ownerAvatarUrl = resolveUploadUrl(b?.owner_avatar) || '/images/default-avatar.png';
-        return {
-          id: Number(b?.bank_id || b?.id || 0),
-          name: String(b?.bank_name || b?.name || '未命名题库'),
-          description: b?.description ? String(b.description) : '',
-          question_count: Number(b?.question_count || 0) || 0,
-          is_public: false,
-          created_at: b?.created_at || b?.last_access_at,
-          created_at_fmt: formatDate(b?.created_at || b?.last_access_at),
-          updated_at: b?.last_access_at || b?.created_at,
-          updated_at_fmt: formatDate(b?.last_access_at || b?.created_at),
-          popularity_count: Number(b?.access_count || b?.share_count || 0) || 0,
-          source: 'shared' as const,
-          owner_name: ownerLabel,
-          owner_label: ownerLabel,
-          owner_avatar_url: ownerAvatarUrl,
-          cover_url: coverUrl,
-          has_cover: !!coverUrl
-        };
-      }).filter((b: BankMeta) => Number.isFinite(b.id) && b.id > 0);
-
-      const byId = new Map<number, BankMeta>();
-      [...sharedBanks, ...createdBanks].forEach((b) => {
-        byId.set(b.id, b);
-      });
-      const banks = Array.from(byId.values());
+      const overviewItems = await fetchAllOverviewItems();
+      const banks = overviewItems
+        .map((item: any) => overviewItemToBank(item))
+        .filter((bank: BankMeta | null): bank is BankMeta => !!bank);
       this.setData({ banks, inited: true }, () => this.applyFilter());
     } catch (e: any) {
       wx.showToast({ title: (e && e.message) || '加载失败', icon: 'none' });
@@ -162,11 +199,15 @@ Page({
   applyFilter() {
     const kw = (this.data.keyword || '').trim().toLowerCase();
     let out = (this.data.banks || []).slice();
-    const sourceValues = this.data.sourceValues || ['all', 'shared', 'created'];
+    const sourceValues = this.data.sourceValues || ['all', 'created', 'public', 'shared'];
     const source = sourceValues[this.data.sourceIndex] || 'all';
 
-    if (source === 'shared' || source === 'created') {
-      out = out.filter((b) => b.source === source);
+    if (source === 'created') {
+      out = out.filter((b) => b.source === 'created');
+    } else if (source === 'public') {
+      out = out.filter((b) => b.source === 'public' || b.relation === 'both');
+    } else if (source === 'shared') {
+      out = out.filter((b) => b.source === 'shared' || b.relation === 'both');
     }
 
     if (kw) {
@@ -187,8 +228,10 @@ Page({
 
   onBankTap(e: any) {
     const id = Number(e?.currentTarget?.dataset?.id || 0);
-    if (!Number.isFinite(id) || id <= 0) return;
-    safeNavigate(`/pages/bank-detail/bank-detail?id=${id}`, 'navigateTo');
+    const key = String(e?.currentTarget?.dataset?.key || '');
+    const bank = (this.data.banks || []).find((item) => (key && item.key === key) || item.id === id);
+    if (!bank && (!Number.isFinite(id) || id <= 0)) return;
+    safeNavigate(bank?.detail_path || `/pages/bank-detail/bank-detail?id=${id}`, 'navigateTo');
   },
 
   onGoPublicBank() {

@@ -77,14 +77,112 @@ function formatDate(dateStr) {
         return "".concat(m[1], "-").concat(m[2]);
     return raw;
 }
+function fetchAllOverviewItems() {
+    return __awaiter(this, void 0, void 0, function () {
+        var perPage, page, total, items, keepGoing, res, pageItems;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    perPage = 50;
+                    page = 1;
+                    total = 0;
+                    items = [];
+                    keepGoing = true;
+                    _a.label = 1;
+                case 1:
+                    if (!keepGoing) return [3 /*break*/, 3];
+                    return [4 /*yield*/, api_1.api.getMyBankOverview({ scope: 'all', page: page, per_page: perPage })];
+                case 2:
+                    res = _a.sent();
+                    pageItems = Array.isArray(res === null || res === void 0 ? void 0 : res.items) ? res.items : [];
+                    total = Number((res === null || res === void 0 ? void 0 : res.total) || pageItems.length || 0) || 0;
+                    items = __spreadArray(__spreadArray([], items, true), pageItems, true);
+                    page += 1;
+                    keepGoing = pageItems.length > 0 && items.length < total;
+                    return [3 /*break*/, 1];
+                case 3: return [2 /*return*/, items];
+            }
+        });
+    });
+}
+function normalizeSource(item) {
+    if (String((item === null || item === void 0 ? void 0 : item.kind) || '') === 'created')
+        return 'created';
+    var relation = String((item === null || item === void 0 ? void 0 : item.relation) || '').toLowerCase();
+    if (relation === 'shared')
+        return 'shared';
+    if (relation === 'both')
+        return 'shared';
+    return 'public';
+}
+function normalizeRelation(item) {
+    if (String((item === null || item === void 0 ? void 0 : item.kind) || '') === 'created')
+        return 'created';
+    var relation = String((item === null || item === void 0 ? void 0 : item.relation) || '').toLowerCase();
+    if (relation === 'shared' || relation === 'both')
+        return relation;
+    return 'public';
+}
+function sourceLabelFor(item, source, relation) {
+    if (source === 'created') {
+        var visibility = String((item === null || item === void 0 ? void 0 : item.visibility_label) || '').trim();
+        return visibility || ((item === null || item === void 0 ? void 0 : item.is_public) ? '公开' : '私密');
+    }
+    if (relation === 'both')
+        return '公开+分享';
+    return source === 'shared' ? '分享加入' : '公开加入';
+}
+function detailPathFor(item, id) {
+    var sourceType = String((item === null || item === void 0 ? void 0 : item.source_type) || 'user').toLowerCase();
+    if (sourceType === 'system') {
+        return "/pages/subject-detail-v2/subject-detail-v2?id=".concat(encodeURIComponent(String(id)));
+    }
+    return "/pages/bank-detail/bank-detail?id=".concat(encodeURIComponent(String(id)));
+}
+function overviewItemToBank(item) {
+    var id = Number((item === null || item === void 0 ? void 0 : item.id) || 0);
+    if (!Number.isFinite(id) || id <= 0)
+        return null;
+    var source = normalizeSource(item);
+    var relation = normalizeRelation(item);
+    var sourceType = String((item === null || item === void 0 ? void 0 : item.source_type) || 'user').toLowerCase() === 'system' ? 'system' : 'user';
+    var coverUrl = (0, api_endpoints_1.resolveUploadUrl)(item === null || item === void 0 ? void 0 : item.cover_image);
+    var ownerLabel = String((item === null || item === void 0 ? void 0 : item.owner_label) || (source === 'created' ? '我创建的题库' : '匿名用户')).trim();
+    var ownerAvatarUrl = (0, api_endpoints_1.resolveUploadUrl)(item === null || item === void 0 ? void 0 : item.owner_avatar) || '/images/default-avatar.png';
+    var timeValue = (item === null || item === void 0 ? void 0 : item.updated_at) || (item === null || item === void 0 ? void 0 : item.last_joined_at) || (item === null || item === void 0 ? void 0 : item.last_activity_at);
+    var isPublic = source === 'created' && String((item === null || item === void 0 ? void 0 : item.visibility_label) || '') === '公开';
+    return {
+        key: "".concat(sourceType, "-").concat(source, "-").concat(id),
+        id: id,
+        name: String((item === null || item === void 0 ? void 0 : item.name) || '未命名题库'),
+        description: (item === null || item === void 0 ? void 0 : item.description) ? String(item.description) : '',
+        question_count: Number((item === null || item === void 0 ? void 0 : item.question_count) || 0) || 0,
+        is_public: isPublic,
+        created_at: timeValue,
+        created_at_fmt: formatDate(timeValue),
+        updated_at: timeValue,
+        updated_at_fmt: formatDate(timeValue),
+        popularity_count: Number((item === null || item === void 0 ? void 0 : item.participants_total) || (item === null || item === void 0 ? void 0 : item.answer_users_7d) || 0) || 0,
+        source: source,
+        relation: relation,
+        source_type: sourceType,
+        source_label: sourceLabelFor(item, source, relation),
+        owner_name: ownerLabel,
+        owner_label: ownerLabel,
+        owner_avatar_url: ownerAvatarUrl,
+        cover_url: coverUrl,
+        has_cover: !!coverUrl,
+        detail_path: detailPathFor(item, id)
+    };
+}
 Page({
     data: {
         loading: false,
         inited: false,
         keyword: '',
         sourceIndex: 0,
-        sourceLabels: ['全部', '我加入的', '我创建的'],
-        sourceValues: ['all', 'shared', 'created'],
+        sourceLabels: ['全部', '我创建的', '公开加入', '分享加入'],
+        sourceValues: ['all', 'created', 'public', 'shared'],
         banks: [],
         filteredBanks: [],
         createOpen: false,
@@ -106,80 +204,27 @@ Page({
     },
     loadBanks: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var _a, myRes, sharedRes, createdList, sharedList, createdBanks, sharedBanks, byId_1, banks, e_1;
+            var overviewItems, banks, e_1;
             var _this = this;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
                     case 0:
                         if (this.data.loading)
                             return [2 /*return*/];
                         this.setData({ loading: true });
-                        _b.label = 1;
+                        _a.label = 1;
                     case 1:
-                        _b.trys.push([1, 3, 4, 5]);
-                        return [4 /*yield*/, Promise.all([
-                                api_1.api.getMyBanks().catch(function () { return ({ banks: [] }); }),
-                                api_1.api.getSharedBanks().catch(function () { return ({ banks: [] }); })
-                            ])];
+                        _a.trys.push([1, 3, 4, 5]);
+                        return [4 /*yield*/, fetchAllOverviewItems()];
                     case 2:
-                        _a = _b.sent(), myRes = _a[0], sharedRes = _a[1];
-                        createdList = Array.isArray(myRes === null || myRes === void 0 ? void 0 : myRes.banks) ? myRes.banks : [];
-                        sharedList = Array.isArray(sharedRes === null || sharedRes === void 0 ? void 0 : sharedRes.banks) ? sharedRes.banks : [];
-                        createdBanks = createdList.map(function (b) {
-                            var coverUrl = (0, api_endpoints_1.resolveUploadUrl)(b === null || b === void 0 ? void 0 : b.cover_image);
-                            var ownerLabel = String((b === null || b === void 0 ? void 0 : b.owner_nickname) || '我').trim();
-                            var ownerAvatarUrl = (0, api_endpoints_1.resolveUploadUrl)(b === null || b === void 0 ? void 0 : b.owner_avatar) || '/images/default-avatar.png';
-                            return {
-                                id: Number((b === null || b === void 0 ? void 0 : b.id) || 0),
-                                name: String((b === null || b === void 0 ? void 0 : b.name) || '未命名题库'),
-                                description: (b === null || b === void 0 ? void 0 : b.description) ? String(b.description) : '',
-                                question_count: Number((b === null || b === void 0 ? void 0 : b.question_count) || 0) || 0,
-                                is_public: b === null || b === void 0 ? void 0 : b.is_public,
-                                created_at: (b === null || b === void 0 ? void 0 : b.created_at) || (b === null || b === void 0 ? void 0 : b.updated_at),
-                                created_at_fmt: formatDate((b === null || b === void 0 ? void 0 : b.created_at) || (b === null || b === void 0 ? void 0 : b.updated_at)),
-                                updated_at: b === null || b === void 0 ? void 0 : b.updated_at,
-                                updated_at_fmt: formatDate(b === null || b === void 0 ? void 0 : b.updated_at),
-                                popularity_count: Number((b === null || b === void 0 ? void 0 : b.public_use_count) || (b === null || b === void 0 ? void 0 : b.share_count) || (b === null || b === void 0 ? void 0 : b.use_count) || 0) || 0,
-                                source: 'created',
-                                owner_name: ownerLabel,
-                                owner_label: ownerLabel,
-                                owner_avatar_url: ownerAvatarUrl,
-                                cover_url: coverUrl,
-                                has_cover: !!coverUrl
-                            };
-                        }).filter(function (b) { return Number.isFinite(b.id) && b.id > 0; });
-                        sharedBanks = sharedList.map(function (b) {
-                            var coverUrl = (0, api_endpoints_1.resolveUploadUrl)(b === null || b === void 0 ? void 0 : b.cover_image);
-                            var ownerLabel = String((b === null || b === void 0 ? void 0 : b.owner_nickname) || (b === null || b === void 0 ? void 0 : b.owner_name) || '匿名').trim();
-                            var ownerAvatarUrl = (0, api_endpoints_1.resolveUploadUrl)(b === null || b === void 0 ? void 0 : b.owner_avatar) || '/images/default-avatar.png';
-                            return {
-                                id: Number((b === null || b === void 0 ? void 0 : b.bank_id) || (b === null || b === void 0 ? void 0 : b.id) || 0),
-                                name: String((b === null || b === void 0 ? void 0 : b.bank_name) || (b === null || b === void 0 ? void 0 : b.name) || '未命名题库'),
-                                description: (b === null || b === void 0 ? void 0 : b.description) ? String(b.description) : '',
-                                question_count: Number((b === null || b === void 0 ? void 0 : b.question_count) || 0) || 0,
-                                is_public: false,
-                                created_at: (b === null || b === void 0 ? void 0 : b.created_at) || (b === null || b === void 0 ? void 0 : b.last_access_at),
-                                created_at_fmt: formatDate((b === null || b === void 0 ? void 0 : b.created_at) || (b === null || b === void 0 ? void 0 : b.last_access_at)),
-                                updated_at: (b === null || b === void 0 ? void 0 : b.last_access_at) || (b === null || b === void 0 ? void 0 : b.created_at),
-                                updated_at_fmt: formatDate((b === null || b === void 0 ? void 0 : b.last_access_at) || (b === null || b === void 0 ? void 0 : b.created_at)),
-                                popularity_count: Number((b === null || b === void 0 ? void 0 : b.access_count) || (b === null || b === void 0 ? void 0 : b.share_count) || 0) || 0,
-                                source: 'shared',
-                                owner_name: ownerLabel,
-                                owner_label: ownerLabel,
-                                owner_avatar_url: ownerAvatarUrl,
-                                cover_url: coverUrl,
-                                has_cover: !!coverUrl
-                            };
-                        }).filter(function (b) { return Number.isFinite(b.id) && b.id > 0; });
-                        byId_1 = new Map();
-                        __spreadArray(__spreadArray([], sharedBanks, true), createdBanks, true).forEach(function (b) {
-                            byId_1.set(b.id, b);
-                        });
-                        banks = Array.from(byId_1.values());
+                        overviewItems = _a.sent();
+                        banks = overviewItems
+                            .map(function (item) { return overviewItemToBank(item); })
+                            .filter(function (bank) { return !!bank; });
                         this.setData({ banks: banks, inited: true }, function () { return _this.applyFilter(); });
                         return [3 /*break*/, 5];
                     case 3:
-                        e_1 = _b.sent();
+                        e_1 = _a.sent();
                         wx.showToast({ title: (e_1 && e_1.message) || '加载失败', icon: 'none' });
                         return [3 /*break*/, 5];
                     case 4:
@@ -212,10 +257,16 @@ Page({
     applyFilter: function () {
         var kw = (this.data.keyword || '').trim().toLowerCase();
         var out = (this.data.banks || []).slice();
-        var sourceValues = this.data.sourceValues || ['all', 'shared', 'created'];
+        var sourceValues = this.data.sourceValues || ['all', 'created', 'public', 'shared'];
         var source = sourceValues[this.data.sourceIndex] || 'all';
-        if (source === 'shared' || source === 'created') {
-            out = out.filter(function (b) { return b.source === source; });
+        if (source === 'created') {
+            out = out.filter(function (b) { return b.source === 'created'; });
+        }
+        else if (source === 'public') {
+            out = out.filter(function (b) { return b.source === 'public' || b.relation === 'both'; });
+        }
+        else if (source === 'shared') {
+            out = out.filter(function (b) { return b.source === 'shared' || b.relation === 'both'; });
         }
         if (kw) {
             out = out.filter(function (b) {
@@ -231,11 +282,13 @@ Page({
         this.setData({ filteredBanks: out });
     },
     onBankTap: function (e) {
-        var _a, _b;
+        var _a, _b, _c, _d;
         var id = Number(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.id) || 0);
-        if (!Number.isFinite(id) || id <= 0)
+        var key = String(((_d = (_c = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _c === void 0 ? void 0 : _c.dataset) === null || _d === void 0 ? void 0 : _d.key) || '');
+        var bank = (this.data.banks || []).find(function (item) { return (key && item.key === key) || item.id === id; });
+        if (!bank && (!Number.isFinite(id) || id <= 0))
             return;
-        (0, nav_1.safeNavigate)("/pages/bank-detail/bank-detail?id=".concat(id), 'navigateTo');
+        (0, nav_1.safeNavigate)((bank === null || bank === void 0 ? void 0 : bank.detail_path) || "/pages/bank-detail/bank-detail?id=".concat(id), 'navigateTo');
     },
     onGoPublicBank: function () {
         (0, nav_1.safeNavigate)('/pages/public-bank-v2/public-bank-v2', 'redirectTo');

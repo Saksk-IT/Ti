@@ -704,6 +704,10 @@ exports.api = {
     getMyBanks: function (params) {
         return request('/user/banks/api/list', 'GET', params || {});
     },
+    // 获取我的题库融合视图（我创建 + 公开加入 + 分享加入，对齐 Web /user/banks）
+    getMyBankOverview: function (params) {
+        return request('/user/banks/api/overview', 'GET', params || {});
+    },
     // 获取收到的分享题库列表
     getSharedBanks: function () { return request('/user/banks/api/shared', 'GET'); },
     // 获取题库详情
