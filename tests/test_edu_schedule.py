@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """教务课表查询功能测试。"""
 
+from pathlib import Path
+
 from sqlalchemy import text
 
 
@@ -257,3 +259,10 @@ def test_webvpn_cookie_table_normalizes_to_header():
         "webvpn_username=user%7Ctime%7Csig"
     )
     assert _normalize_cookie_header("SERVERID=Server1; route=webvpn") == "SERVERID=Server1; route=webvpn"
+
+
+def test_schedule_api_routes_do_not_have_rate_limits():
+    route_source = Path("app/modules/edu_schedule/routes/api.py").read_text(encoding="utf-8")
+
+    assert "per hour" not in route_source
+    assert "limiter.limit" not in route_source

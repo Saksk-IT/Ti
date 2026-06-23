@@ -6,7 +6,6 @@ from __future__ import annotations
 from flask import Blueprint, current_app, request
 from pydantic import ValidationError
 
-from app.core.extensions import limiter
 from app.core.utils.api_response import error_response, success_response
 from app.core.utils.decorators import auth_required, current_user_id
 
@@ -19,7 +18,6 @@ edu_schedule_api_bp = Blueprint("edu_schedule_api", __name__)
 
 @edu_schedule_api_bp.route("/edu-schedule/status", methods=["GET"])
 @auth_required
-@limiter.limit("60 per minute;600 per hour")
 def api_schedule_status():
     user_id = int(current_user_id() or 0)
     return success_response(
@@ -32,7 +30,6 @@ def api_schedule_status():
 
 @edu_schedule_api_bp.route("/edu-schedule/credentials", methods=["POST"])
 @auth_required
-@limiter.limit("3 per minute;20 per hour")
 def api_save_schedule_credentials():
     user_id = int(current_user_id() or 0)
     try:
@@ -49,7 +46,6 @@ def api_save_schedule_credentials():
 
 @edu_schedule_api_bp.route("/edu-schedule/credentials", methods=["DELETE"])
 @auth_required
-@limiter.limit("10 per minute;100 per hour")
 def api_delete_schedule_credentials():
     user_id = int(current_user_id() or 0)
     EduScheduleService.delete_credentials(user_id)
@@ -58,7 +54,6 @@ def api_delete_schedule_credentials():
 
 @edu_schedule_api_bp.route("/edu-schedule/query", methods=["POST"])
 @auth_required
-@limiter.limit("3 per minute;20 per hour")
 def api_query_schedule():
     user_id = int(current_user_id() or 0)
     try:
@@ -81,7 +76,6 @@ def api_query_schedule():
 
 @edu_schedule_api_bp.route("/edu-schedule/snapshots", methods=["GET"])
 @auth_required
-@limiter.limit("60 per minute;600 per hour")
 def api_list_schedule_snapshots():
     user_id = int(current_user_id() or 0)
     return success_response(data={"snapshots": EduScheduleService.list_snapshots(user_id)})
