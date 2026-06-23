@@ -55,7 +55,7 @@ def _normalize_payload(data: Dict[str, Any]) -> Dict[str, Any]:
         "jwxt_base_url": jwxt_base,
         "jwxt_login_path": str(data.get("jwxt_login_path") or "/xtgl/login_slogin.html").strip(),
         "schedule_path": str(data.get("schedule_path") or "/kbcx/xskbcx_cxXsgrkb.html?gnmkdm=N253508").strip(),
-        "grade_path": str(data.get("grade_path") or "/cjcx/cjcx_cxXsgrcj.html?doType=query&gnmkdm=N305005").strip(),
+        "grade_path": str(data.get("grade_path") or "/cjcx/cjcx_cxDgXscj.html?doType=query&gnmkdm=N305005").strip(),
         "request_timeout": timeout,
         "verify_tls": _as_bool(data.get("verify_tls"), True),
         "store_user_credentials": _as_bool(data.get("store_user_credentials"), True),

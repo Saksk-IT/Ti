@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """教务课表查询功能测试。"""
 
+import json
 from pathlib import Path
 
 from sqlalchemy import text
@@ -179,6 +180,83 @@ def test_grade_payload_normalizes_summary():
     assert data["summary"]["course_count"] == 2
     assert data["summary"]["total_credits"] == 6.0
     assert data["summary"]["gpa"] == 3.67
+
+
+def test_grade_query_falls_back_when_primary_endpoint_returns_html():
+    from app.modules.edu_schedule.services.client import JWXTClient
+
+    class FakeResponse:
+        def __init__(self, payload=None, json_error=False):
+            self.payload = payload
+            self.json_error = json_error
+
+        def json(self):
+            if self.json_error:
+                raise json.JSONDecodeError("Expecting value", "<html>", 0)
+            return self.payload
+
+    client = JWXTClient(
+        {
+            "enabled": True,
+            "use_webvpn": False,
+            "jwxt_base_url": "https://jwxt.webvpn.synu.edu.cn/jwglxt",
+            "grade_path": "/cjcx/cjcx_cxXsgrcj.html?doType=query&gnmkdm=N305005",
+            "request_timeout": 20,
+            "verify_tls": True,
+            "allowed_hosts": ("jwxt.webvpn.synu.edu.cn",),
+        }
+    )
+    called_urls = []
+
+    def fake_request(session, method, url, **kwargs):
+        called_urls.append(url)
+        if "cjcx_cxXsgrcj" in url:
+            return FakeResponse(json_error=True)
+        return FakeResponse({"items": [], "totalResult": 0})
+
+    client._request = fake_request
+
+    payload = client._query_grades(object(), "2025", "3")
+
+    assert payload["items"] == []
+    assert "cjcx_cxXsgrcj" in called_urls[0]
+    assert "cjcx_cxDgXscj" in called_urls[1]
+
+
+def test_grade_query_uses_browser_form_encoding_for_empty_sort_name():
+    from app.modules.edu_schedule.services.client import JWXTClient
+
+    class FakeResponse:
+        def json(self):
+            return {"items": [], "totalResult": 0}
+
+    client = JWXTClient(
+        {
+            "enabled": True,
+            "use_webvpn": False,
+            "jwxt_base_url": "https://jwxt.webvpn.synu.edu.cn/jwglxt",
+            "grade_path": "/cjcx/cjcx_cxDgXscj.html?doType=query&gnmkdm=N305005",
+            "request_timeout": 20,
+            "verify_tls": True,
+            "allowed_hosts": ("jwxt.webvpn.synu.edu.cn",),
+        }
+    )
+    calls = []
+
+    def fake_request(session, method, url, **kwargs):
+        calls.append({"method": method, "url": url, **kwargs})
+        return FakeResponse()
+
+    client._request = fake_request
+
+    client._query_grades(object(), "2025", "12")
+
+    post_call = calls[0]
+    assert post_call["data"]["queryModel.sortName"] == " "
+    assert post_call["headers"]["Origin"] == "https://jwxt.webvpn.synu.edu.cn"
+    assert post_call["headers"]["Referer"].endswith(
+        "/jwglxt/cjcx/cjcx_cxDgXscj.html?gnmkdm=N305005&layout=default"
+    )
 
 
 def test_user_can_save_encrypted_jwxt_credentials(app, auth_client):

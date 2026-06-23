@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from http.cookiejar import Cookie
 from ipaddress import ip_address, ip_network
 from typing import Any, Dict
-from urllib.parse import urljoin, urlparse
+from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlunparse
 
 import requests
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
@@ -40,6 +40,9 @@ _BLOCKED_NETWORKS = tuple(
         "fe80::/10",
     )
 )
+
+_DEFAULT_GRADE_PATH = "/cjcx/cjcx_cxDgXscj.html?doType=query&gnmkdm=N305005"
+_LEGACY_GRADE_PATH = "/cjcx/cjcx_cxXsgrcj.html?doType=query&gnmkdm=N305005"
 
 
 @dataclass(frozen=True)
@@ -94,7 +97,7 @@ class JWXTClient:
             jwxt_base_url=_validate_url(str(config.get("jwxt_base_url") or ""), allowed_hosts),
             jwxt_login_path=str(config.get("jwxt_login_path") or "/xtgl/login_slogin.html"),
             schedule_path=str(config.get("schedule_path") or "/kbcx/xskbcx_cxXsgrkb.html?gnmkdm=N253508"),
-            grade_path=str(config.get("grade_path") or "/cjcx/cjcx_cxXsgrcj.html?doType=query&gnmkdm=N305005"),
+            grade_path=str(config.get("grade_path") or _DEFAULT_GRADE_PATH),
             request_timeout=int(config.get("request_timeout") or 20),
             verify_tls=bool(config.get("verify_tls", True)),
             allowed_hosts=allowed_hosts,
@@ -241,12 +244,6 @@ class JWXTClient:
         return payload
 
     def _query_grades(self, session: requests.Session, xnm: str, xqm: str) -> Dict[str, Any]:
-        url = urljoin(self.config.jwxt_base_url.rstrip("/") + "/", self.config.grade_path.lstrip("/"))
-        headers = {
-            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-            "X-Requested-With": "XMLHttpRequest",
-            "Accept": "application/json, text/javascript, */*; q=0.01",
-        }
         data = {
             "xnm": xnm,
             "xqm": xqm,
@@ -257,18 +254,34 @@ class JWXTClient:
             "nd": str(int(time.time() * 1000)),
             "queryModel.showCount": "100",
             "queryModel.currentPage": "1",
-            "queryModel.sortName": "+",
+            "queryModel.sortName": " ",
             "queryModel.sortOrder": "asc",
             "time": "0",
         }
-        response = self._request(session, "POST", url, headers=headers, data=data, allow_redirects=True)
-        try:
-            payload = response.json()
-        except json.JSONDecodeError as exc:
-            raise ScheduleClientError("教务成绩返回格式不正确") from exc
-        if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
-            raise ScheduleClientError("教务成绩数据不完整")
-        return payload
+        last_error: Exception | None = None
+        for grade_path in _grade_path_candidates(self.config.grade_path):
+            url = urljoin(self.config.jwxt_base_url.rstrip("/") + "/", grade_path.lstrip("/"))
+            headers = {
+                "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+                "X-Requested-With": "XMLHttpRequest",
+                "Accept": "application/json, text/javascript, */*; q=0.01",
+                "Origin": _origin_from_url(url),
+                "Referer": urljoin(
+                    self.config.jwxt_base_url.rstrip("/") + "/",
+                    _grade_page_path(grade_path).lstrip("/"),
+                ),
+            }
+            response = self._request(session, "POST", url, headers=headers, data=data, allow_redirects=True)
+            try:
+                payload = response.json()
+            except json.JSONDecodeError as exc:
+                last_error = exc
+                continue
+            if isinstance(payload, dict) and isinstance(payload.get("items"), list):
+                return payload
+            last_error = ScheduleClientError("教务成绩数据不完整")
+
+        raise ScheduleClientError("教务成绩返回格式不正确") from last_error
 
 
 def _extract_input_value(html_text: str, name: str) -> str:
@@ -284,6 +297,32 @@ def _extract_input_value(html_text: str, name: str) -> str:
 def _looks_logged_in(html_text: str) -> bool:
     text = html_text or ""
     return "login_slogin" not in text and ("退出" in text or "个人信息" in text or "jwglxt" in text)
+
+
+def _grade_path_candidates(configured_path: str) -> tuple[str, ...]:
+    primary = (configured_path or "").strip() or _DEFAULT_GRADE_PATH
+    candidates = [primary, _DEFAULT_GRADE_PATH, _LEGACY_GRADE_PATH]
+    result = []
+    seen = set()
+    for path in candidates:
+        if path in seen:
+            continue
+        seen.add(path)
+        result.append(path)
+    return tuple(result)
+
+
+def _grade_page_path(query_path: str) -> str:
+    parsed = urlparse((query_path or "").strip() or _DEFAULT_GRADE_PATH)
+    params = [(key, value) for key, value in parse_qsl(parsed.query, keep_blank_values=True) if key != "doType"]
+    if not any(key == "layout" for key, _ in params):
+        params.append(("layout", "default"))
+    return urlunparse(("", "", parsed.path, "", urlencode(params), ""))
+
+
+def _origin_from_url(url: str) -> str:
+    parsed = urlparse(url)
+    return f"{parsed.scheme}://{parsed.netloc}"
 
 
 def _load_cookie_header(session: requests.Session, cookie_header: str, base_url: str) -> None:
