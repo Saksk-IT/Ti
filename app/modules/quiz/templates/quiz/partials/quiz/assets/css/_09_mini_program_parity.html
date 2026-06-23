@@ -955,6 +955,67 @@
             margin-top: var(--mini-gap);
             box-shadow: var(--mini-shadow);
         }
+        body.quiz-layout-card .answer-flip-card{
+            width: 100%;
+            margin-top: var(--mini-gap);
+            perspective: 1000px;
+            cursor: pointer;
+            outline: none;
+        }
+        body.quiz-layout-card .answer-flip-card:focus-visible{
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--mini-blue) 28%, transparent);
+            border-radius: var(--mini-radius-lg);
+        }
+        body.quiz-layout-card .answer-flip-inner{
+            display: grid;
+            transform-style: preserve-3d;
+            transition: transform 0.34s ease;
+        }
+        body.quiz-layout-card .answer-flip-card.is-answer-hidden .answer-flip-inner{
+            transform: rotateY(180deg);
+        }
+        body.quiz-layout-card .answer-flip-card .answer-display-card{
+            grid-area: 1 / 1;
+            min-height: 110px;
+            margin-top: 0;
+            margin-bottom: 0;
+            box-sizing: border-box;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        body.quiz-layout-card .answer-flip-card .answer-card-back{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: rotateY(180deg);
+        }
+        body.quiz-layout-card .answer-hidden-content{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            text-align: center;
+        }
+        body.quiz-layout-card .answer-hidden-title{
+            font-size: calc(16px * var(--quiz-font-scale, 1));
+            font-weight: 800;
+            color: var(--mini-text);
+        }
+        body.quiz-layout-card .answer-hidden-tip,
+        body.quiz-layout-card .answer-toggle-tip{
+            font-size: calc(12px * var(--quiz-font-scale, 1));
+            font-weight: 600;
+            color: var(--mini-text-sub);
+            line-height: 1.5;
+        }
+        body.quiz-layout-card .answer-toggle-tip{
+            margin-top: 10px;
+        }
+        @media (prefers-reduced-motion: reduce){
+            body.quiz-layout-card .answer-flip-inner{
+                transition: none;
+            }
+        }
 
         /* AI 判分详情（score bar + feedback） */
         body.quiz-layout-card .ai-grading-detail{

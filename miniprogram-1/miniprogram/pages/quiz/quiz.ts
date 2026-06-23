@@ -19,6 +19,12 @@ import {
   type DisplayOption,
   type QuestionType
 } from './modules/quiz-helpers';
+import {
+  getAnswerCardHidden,
+  resetAnswerCardHidden,
+  toggleAnswerCardHidden,
+  type AnswerCardHiddenMap
+} from './modules/answer-card-state';
 
 // 数据源实例（页面级别）
 let quizSource: IQuizSource | null = null;
@@ -74,6 +80,8 @@ Page({
     selectedAnswer: '',        // 选中的答案（刷题模式 - 单选题/判断题/填空题）
     selectedAnswers: [] as string[], // 多选题答案数组
     showAnswer: false,         // 是否显示答案（刷题模式）
+    memoAnswerHidden: false,   // 背题模式答案卡片是否隐藏
+    answerCardHiddenMap: {} as AnswerCardHiddenMap,
     isFavorite: false,         // 是否收藏
     isCorrect: false,          // 回答是否正确（刷题模式）
     isJudgable: true,          // 是否可自动判分（主观题为 false）
@@ -852,6 +860,11 @@ Page({
     }
   },
 
+  getMemoAnswerCardKey(question: any, index: number): string {
+    const id = question && question.id != null ? question.id : index;
+    return String(id);
+  },
+
   // 加载指定题目
   loadQuestion(index: number) {
     const { questions } = this.data;
@@ -939,6 +952,9 @@ Page({
       showAnswer = true;
       isCorrect = savedStatus === 'correct';
     }
+
+    const answerCardKey = this.getMemoAnswerCardKey(question, index);
+    const answerCardHiddenMap = resetAnswerCardHidden(this.data.answerCardHiddenMap, answerCardKey);
     
     this.setData({
       currentIndex: index,
@@ -956,6 +972,8 @@ Page({
       blankAnswers: nextBlankAnswers,
       blankIndexes,
       showAnswer,
+      memoAnswerHidden: getAnswerCardHidden(answerCardHiddenMap, answerCardKey),
+      answerCardHiddenMap,
       isJudgable: this.isAutoJudgable(qType),
       isCorrect,
       userAnswerText,
@@ -1435,6 +1453,18 @@ Page({
           this.patchData({ scrollIntoView: 'aiExplainCard' });
         }
       }, 60);
+    });
+  },
+
+  onToggleMemoAnswerCard() {
+    if (this.data.mode !== 'memo' || !this.data.currentQuestion) return;
+
+    const key = this.getMemoAnswerCardKey(this.data.currentQuestion, Number(this.data.currentIndex) || 0);
+    const answerCardHiddenMap = toggleAnswerCardHidden(this.data.answerCardHiddenMap, key);
+
+    this.setData({
+      answerCardHiddenMap,
+      memoAnswerHidden: getAnswerCardHidden(answerCardHiddenMap, key)
     });
   },
 

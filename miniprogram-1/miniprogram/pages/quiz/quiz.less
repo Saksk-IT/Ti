@@ -439,6 +439,68 @@ page {
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
 }
 
+.answer-flip-card {
+  width: 100%;
+  margin-bottom: 24rpx;
+  perspective: 1400rpx;
+}
+
+.answer-flip-card-hover {
+  opacity: 0.96;
+}
+
+.answer-flip-inner {
+  display: grid;
+  transform-style: preserve-3d;
+  transition: transform 0.34s ease;
+}
+
+.answer-flip-card.is-hidden .answer-flip-inner {
+  transform: rotateY(180deg);
+}
+
+.answer-card-face {
+  grid-area: 1 / 1;
+  min-height: 220rpx;
+  margin-bottom: 0;
+  box-sizing: border-box;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.answer-card-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotateY(180deg);
+}
+
+.answer-hidden-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  text-align: center;
+}
+
+.answer-hidden-title {
+  font-size: calc(32rpx * var(--quiz-font-scale, 1));
+  font-weight: 700;
+  color: var(--app-text);
+}
+
+.answer-hidden-tip,
+.answer-toggle-tip {
+  font-size: calc(24rpx * var(--quiz-font-scale, 1));
+  color: var(--app-text-secondary);
+  line-height: 1.5;
+}
+
+.answer-toggle-tip {
+  display: block;
+  margin-top: 18rpx;
+}
+
 .answer-display-header {
   display: flex;
   align-items: flex-start;

@@ -147,38 +147,56 @@
         </view>
 
         <!-- 背题模式：答案展示 -->
-        <view wx:if="{{mode === 'memo'}}" class="answer-display-card">
-          <view class="answer-display-header">
-            <view class="answer-title {{(currentQuestion.q_type === '简答题' || currentQuestion.q_type === '问答题') ? 'multiline' : ''}}">
-              <text class="answer-title-label">正确答案：</text>
-              <text class="answer-title-value">{{currentQuestion.displayAnswer || currentQuestion.answer}}</text>
+        <view
+          wx:if="{{mode === 'memo'}}"
+          class="answer-flip-card {{memoAnswerHidden ? 'is-hidden' : ''}}"
+          bindtap="onToggleMemoAnswerCard"
+          hover-class="answer-flip-card-hover"
+          aria-label="{{memoAnswerHidden ? '答案已隐藏，点击显示答案' : '答案已显示，点击隐藏答案'}}"
+        >
+          <view class="answer-flip-inner">
+            <view class="answer-display-card answer-card-face answer-card-front">
+              <view class="answer-display-header">
+                <view class="answer-title {{(currentQuestion.q_type === '简答题' || currentQuestion.q_type === '问答题') ? 'multiline' : ''}}">
+                  <text class="answer-title-label">正确答案：</text>
+                  <text class="answer-title-value">{{currentQuestion.displayAnswer || currentQuestion.answer}}</text>
+                </view>
+                <view class="answer-card-actions">
+                  <view class="answer-ai-btn" catchtap="onToggleAIExplain" hover-class="answer-ai-btn-hover">AI</view>
+                </view>
+              </view>
+              <view class="answer-divider"></view>
+              <view class="answer-images" wx:if="{{currentQuestion.answer_image_urls && currentQuestion.answer_image_urls.length}}">
+                <image
+                  class="answer-image"
+                  wx:for="{{currentQuestion.answer_image_urls}}"
+                  wx:key="*this"
+                  src="{{item}}"
+                  mode="widthFix"
+                  catchtap="previewImage"
+                  binderror="onQuestionImageError"
+                  data-index="{{index}}"
+                  data-field="answer_image_urls"
+                ></image>
+              </view>
+              <text
+                class="answer-tip"
+                wx:if="{{currentQuestion.q_type === '选择题' || currentQuestion.q_type === '多选题' || currentQuestion.q_type === '判断题'}}"
+              >已在选项中高亮正确答案</text>
+              <text
+                class="answer-tip"
+                wx:if="{{!(currentQuestion.q_type === '选择题' || currentQuestion.q_type === '多选题' || currentQuestion.q_type === '判断题')}}"
+              >请对照答案巩固记忆</text>
+              <text class="answer-toggle-tip">点击卡片隐藏答案</text>
             </view>
-            <view class="answer-card-actions">
-              <view class="answer-ai-btn" bindtap="onToggleAIExplain" hover-class="answer-ai-btn-hover">AI</view>
+
+            <view class="answer-display-card answer-card-face answer-card-back">
+              <view class="answer-hidden-content">
+                <text class="answer-hidden-title">答案已隐藏</text>
+                <text class="answer-hidden-tip">点击卡片显示答案</text>
+              </view>
             </view>
           </view>
-          <view class="answer-divider"></view>
-          <view class="answer-images" wx:if="{{currentQuestion.answer_image_urls && currentQuestion.answer_image_urls.length}}">
-            <image
-              class="answer-image"
-              wx:for="{{currentQuestion.answer_image_urls}}"
-              wx:key="*this"
-              src="{{item}}"
-              mode="widthFix"
-              bindtap="previewImage"
-              binderror="onQuestionImageError"
-              data-index="{{index}}"
-              data-field="answer_image_urls"
-            ></image>
-          </view>
-          <text
-            class="answer-tip"
-            wx:if="{{currentQuestion.q_type === '选择题' || currentQuestion.q_type === '多选题' || currentQuestion.q_type === '判断题'}}"
-          >已在选项中高亮正确答案</text>
-          <text
-            class="answer-tip"
-            wx:if="{{!(currentQuestion.q_type === '选择题' || currentQuestion.q_type === '多选题' || currentQuestion.q_type === '判断题')}}"
-          >请对照答案巩固记忆</text>
         </view>
 
         <!-- 刷题模式：答案结果展示 -->

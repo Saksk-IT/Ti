@@ -66,6 +66,7 @@ var theme_1 = require("../../utils/theme");
 var request_state_1 = require("./behaviors/request-state");
 var set_data_batcher_1 = require("./utils/set-data-batcher");
 var quiz_helpers_1 = require("./modules/quiz-helpers");
+var answer_card_state_1 = require("./modules/answer-card-state");
 // 数据源实例（页面级别）
 var quizSource = null;
 var AUTO_NEXT_DELAY_OPTIONS = [
@@ -106,6 +107,8 @@ Page({
         selectedAnswer: '', // 选中的答案（刷题模式 - 单选题/判断题/填空题）
         selectedAnswers: [], // 多选题答案数组
         showAnswer: false, // 是否显示答案（刷题模式）
+        memoAnswerHidden: false, // 背题模式答案卡片是否隐藏
+        answerCardHiddenMap: {},
         isFavorite: false, // 是否收藏
         isCorrect: false, // 回答是否正确（刷题模式）
         isJudgable: true, // 是否可自动判分（主观题为 false）
@@ -787,6 +790,10 @@ Page({
             });
         });
     },
+    getMemoAnswerCardKey: function (question, index) {
+        var id = question && question.id != null ? question.id : index;
+        return String(id);
+    },
     // 加载指定题目
     loadQuestion: function (index) {
         var _this = this;
@@ -865,6 +872,8 @@ Page({
             showAnswer = true;
             isCorrect = savedStatus === 'correct';
         }
+        var answerCardKey = this.getMemoAnswerCardKey(question, index);
+        var answerCardHiddenMap = (0, answer_card_state_1.resetAnswerCardHidden)(this.data.answerCardHiddenMap, answerCardKey);
         this.setData({
             currentIndex: index,
             currentQuestion: Object.assign({}, question, {
@@ -881,6 +890,8 @@ Page({
             blankAnswers: nextBlankAnswers,
             blankIndexes: blankIndexes,
             showAnswer: showAnswer,
+            memoAnswerHidden: (0, answer_card_state_1.getAnswerCardHidden)(answerCardHiddenMap, answerCardKey),
+            answerCardHiddenMap: answerCardHiddenMap,
             isJudgable: this.isAutoJudgable(qType),
             isCorrect: isCorrect,
             userAnswerText: userAnswerText,
@@ -1390,6 +1401,16 @@ Page({
                     _this.patchData({ scrollIntoView: 'aiExplainCard' });
                 }
             }, 60);
+        });
+    },
+    onToggleMemoAnswerCard: function () {
+        if (this.data.mode !== 'memo' || !this.data.currentQuestion)
+            return;
+        var key = this.getMemoAnswerCardKey(this.data.currentQuestion, Number(this.data.currentIndex) || 0);
+        var answerCardHiddenMap = (0, answer_card_state_1.toggleAnswerCardHidden)(this.data.answerCardHiddenMap, key);
+        this.setData({
+            answerCardHiddenMap: answerCardHiddenMap,
+            memoAnswerHidden: (0, answer_card_state_1.getAnswerCardHidden)(answerCardHiddenMap, key)
         });
     },
     onRegenerateAIExplain: function () {

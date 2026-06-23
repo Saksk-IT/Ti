@@ -388,6 +388,50 @@ function setAnswerResultBadge(state) {
     }
 }
 
+function shouldIgnoreMemoAnswerCardToggle(target) {
+    if (!target || !target.closest) return false;
+    return !!target.closest('[data-answer-card-ignore], button, a, input, textarea, select, [role="button"][data-answer-card-ignore]');
+}
+
+function setMemoAnswerCardHidden(card, hidden) {
+    if (!card) return;
+    const isHidden = hidden === true;
+    card.classList.toggle('is-answer-hidden', isHidden);
+    card.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
+    card.setAttribute('aria-label', isHidden ? '答案已隐藏，点击显示答案' : '答案已显示，点击隐藏答案');
+
+    const front = card.querySelector('[data-answer-card-front]');
+    const back = card.querySelector('[data-answer-card-back]');
+    if (front) front.setAttribute('aria-hidden', isHidden ? 'true' : 'false');
+    if (back) back.setAttribute('aria-hidden', isHidden ? 'false' : 'true');
+
+    const tip = card.querySelector('[data-answer-toggle-text]');
+    if (tip) tip.textContent = isHidden ? '点击卡片显示答案' : '点击卡片隐藏答案';
+}
+
+function toggleMemoAnswerCardHidden(card) {
+    if (!card) return;
+    setMemoAnswerCardHidden(card, !card.classList.contains('is-answer-hidden'));
+}
+
+document.addEventListener('click', function(e){
+    const target = e.target;
+    if (!target || !target.closest) return;
+    const card = target.closest('[data-answer-toggle-card]');
+    if (!card || shouldIgnoreMemoAnswerCardToggle(target)) return;
+    toggleMemoAnswerCardHidden(card);
+});
+
+document.addEventListener('keydown', function(e){
+    const target = e.target;
+    if (!target || !target.closest) return;
+    const card = target.closest('[data-answer-toggle-card]');
+    if (!card || shouldIgnoreMemoAnswerCardToggle(target)) return;
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    toggleMemoAnswerCardHidden(card);
+});
+
 // 将“当前题”的答案/解析内容渲染到 mainCard 外部的独立卡片容器
 function formatFillBlankAnswerForDock(raw, blankCountHint) {
     // raw 格式约定（历史兼容）：
@@ -590,14 +634,25 @@ function renderAnswerExplainFromQuestion(qEl, resultState = null) {
             ? `<span class="answer-title-label">正确答案：</span><br><span class="answer-title-value">${escapeHtmlWithBreaks(correctRaw)}</span>`
             : `正确答案：${escapeHtmlWithBreaks(correctRaw)}`;
         answerHost.innerHTML = `
-            <div class="answer-display-card">
-              <div class="answer-card-toprow">
-                <div class="answer-title">${memoAnswerTitle}</div>
-                ${showAiBtn ? `<button type="button" class="answer-ai-btn" aria-label="AI解析" title="AI解析" onclick="toggleAIExplain()">AI</button>` : ``}
+            <div class="answer-flip-card" data-answer-toggle-card role="button" tabindex="0" aria-pressed="false" aria-label="答案已显示，点击隐藏答案">
+              <div class="answer-flip-inner">
+                <div class="answer-display-card answer-card-face answer-card-front" data-answer-card-front aria-hidden="false">
+                  <div class="answer-card-toprow">
+                    <div class="answer-title">${memoAnswerTitle}</div>
+                    ${showAiBtn ? `<button type="button" class="answer-ai-btn" data-answer-card-ignore="1" aria-label="AI解析" title="AI解析" onclick="toggleAIExplain()">AI</button>` : ``}
+                  </div>
+                  <div class="answer-divider"></div>
+                  ${answerImageHtml}
+                  <div class="answer-tip">${tip}</div>
+                  <div class="answer-toggle-tip" data-answer-toggle-text>点击卡片隐藏答案</div>
+                </div>
+                <div class="answer-display-card answer-card-face answer-card-back" data-answer-card-back aria-hidden="true">
+                  <div class="answer-hidden-content">
+                    <div class="answer-hidden-title">答案已隐藏</div>
+                    <div class="answer-hidden-tip">点击卡片显示答案</div>
+                  </div>
+                </div>
               </div>
-              <div class="answer-divider"></div>
-              ${answerImageHtml}
-              <div class="answer-tip">${tip}</div>
             </div>
         `;
         answerHost.style.display = 'block';
