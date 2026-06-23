@@ -34,6 +34,7 @@ from .system import (
     SystemConfig, UserSubject, UserQuestionTagItem,
     DuplicateCheckRecord, ReinforceSimilarCache, SchemaMigration,
 )
+from .edu_schedule import EduScheduleCredential, EduScheduleSnapshot
 
 __all__ = [
     'db',
@@ -69,4 +70,6 @@ __all__ = [
     # system
     'SystemConfig', 'UserSubject', 'UserQuestionTagItem',
     'DuplicateCheckRecord', 'ReinforceSimilarCache', 'SchemaMigration',
+    # edu schedule
+    'EduScheduleCredential', 'EduScheduleSnapshot',
 ]

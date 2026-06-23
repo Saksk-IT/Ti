@@ -534,6 +534,17 @@
   </div>
 
   <div class="app-nav-section">
+    <div class="app-nav-title">校园</div>
+    <a class="app-nav-item {{ 'active' if _path.startswith('/edu-schedule') else '' }}" href="/edu-schedule" aria-label="教务课表" title="教务课表">
+      <svg class="app-nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="2"/>
+        <path d="M8 2v4M16 2v4M3 10h18M8 14h3M13 14h3M8 18h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span class="app-nav-label">教务课表</span>
+    </a>
+  </div>
+
+  <div class="app-nav-section">
     <div class="app-nav-title">题库</div>
     <a class="app-nav-item {{ 'active' if _path.startswith('/public/banks') or _path.startswith('/subjects') or _path == '/' else '' }}" href="/public/banks" aria-label="题库广场" title="题库广场">
       <svg class="app-nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">

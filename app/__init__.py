@@ -246,7 +246,7 @@ def _setup_logging(app):
     import re
 
     _SENSITIVE_PATTERNS = [
-        (re.compile(r'(SECRET_KEY|WECHAT_SECRET|AI_API_KEY|OPENAI_API_KEY|DASHSCOPE_API_KEY|MAIL_PASSWORD|password|token|secret)[=:]\s*["\']?([^\s"\']{4})[^\s"\']*', re.IGNORECASE), r'\1=\2****'),
+        (re.compile(r'(SECRET_KEY|WECHAT_SECRET|AI_API_KEY|OPENAI_API_KEY|DASHSCOPE_API_KEY|MAIL_PASSWORD|webvpn_password|edu_password|jwc_password|jwxt_password|credential|cookie|password|token|secret)[=:]\s*["\']?([^\s"\']{4})[^\s"\']*', re.IGNORECASE), r'\1=\2****'),
         (re.compile(r'(sk-)[a-zA-Z0-9]{4}[a-zA-Z0-9]+', re.IGNORECASE), r'\1****'),
     ]
 

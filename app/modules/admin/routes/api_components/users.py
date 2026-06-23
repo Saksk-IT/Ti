@@ -425,6 +425,8 @@ def delete_user(user_id):
             ('user_quiz_stats', 'SELECT COUNT(1) FROM user_quiz_stats WHERE user_id=:uid'),
             ('email_verification_codes', 'SELECT COUNT(1) FROM email_verification_codes WHERE user_id=:uid'),
             ('popup_dismissals', 'SELECT COUNT(1) FROM popup_dismissals WHERE user_id=:uid'),
+            ('edu_schedule_credentials', 'SELECT COUNT(1) FROM edu_schedule_credentials WHERE user_id=:uid'),
+            ('edu_schedule_snapshots', 'SELECT COUNT(1) FROM edu_schedule_snapshots WHERE user_id=:uid'),
         ]
         details = []
         for name, sql in checks:
@@ -483,6 +485,8 @@ def delete_user(user_id):
         db.session.execute(text('DELETE FROM user_quiz_stats WHERE user_id=:uid'), uid_p)
         db.session.execute(text('DELETE FROM email_verification_codes WHERE user_id=:uid'), uid_p)
         db.session.execute(text('DELETE FROM popup_dismissals WHERE user_id=:uid'), uid_p)
+        db.session.execute(text('DELETE FROM edu_schedule_credentials WHERE user_id=:uid'), uid_p)
+        db.session.execute(text('DELETE FROM edu_schedule_snapshots WHERE user_id=:uid'), uid_p)
 
         # 7. 更新引用该用户的字段（SET NULL 处理）
         db.session.execute(text('UPDATE questions SET created_by=NULL WHERE created_by=:uid'), uid_p)

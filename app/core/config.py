@@ -155,6 +155,9 @@ class Config:
     AUTH_PHONE_LOGIN_ENABLED = os.environ.get('AUTH_PHONE_LOGIN_ENABLED', 'true').lower() in ['true', 'on', '1']
     AUTH_WECHAT_LOGIN_ENABLED = os.environ.get('AUTH_WECHAT_LOGIN_ENABLED', 'true').lower() in ['true', 'on', '1']
 
+    # 教务课表凭据加密密钥（未设置时开发/测试环境由 SECRET_KEY 派生）
+    SCHEDULE_CREDENTIAL_SECRET = os.environ.get('SCHEDULE_CREDENTIAL_SECRET')
+
     # === 通用 AI 配置（DB 配置优先，环境变量用于兜底）===
     AI_PROVIDER = os.environ.get('AI_PROVIDER', '')
     AI_API_KEY = os.environ.get('AI_API_KEY')

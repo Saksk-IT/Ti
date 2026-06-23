@@ -249,6 +249,15 @@ def admin_wechat_miniprogram_settings_page():
     return render_template('admin/settings/wechat_miniprogram.html', wechat_config=cfg)
 
 
+@admin_pages_bp.route('/settings/edu-schedule')
+def admin_edu_schedule_settings_page():
+    """教务课表配置页面"""
+    from app.modules.admin.services.system_config_service import SystemConfigService
+
+    cfg = SystemConfigService.get_edu_schedule_config_masked()
+    return render_template('admin/settings/edu_schedule.html', schedule_config=cfg)
+
+
 @admin_pages_bp.route('/permissions')
 def admin_permissions_page():
     """权限管理页面"""

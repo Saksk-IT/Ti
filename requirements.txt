@@ -63,6 +63,7 @@ importlib_metadata==8.7.1  # 元数据导入
 zipp==3.23.0  # ZIP 文件处理
 requests==2.31.0  # HTTP请求库（用于微信API）
 PyJWT==2.8.0  # JWT token生成和验证
+cryptography>=46.0.0  # 凭据加密存储
 redis>=5.0.0,<6  # Redis 客户端（缓存/队列/限流共享存储）
 rq>=1.16.0,<2  # 轻量任务队列（依赖 Redis）
 

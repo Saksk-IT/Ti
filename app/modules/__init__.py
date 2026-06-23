@@ -34,6 +34,7 @@ def register_all_modules(app: Flask):
     _init_module('app.modules.coding', 'init_coding_module', 'coding')
     _init_module('app.modules.user_bank', 'init_user_bank_module', 'user_bank')
     _init_module('app.modules.forum', 'init_forum_module', 'forum')
+    _init_module('app.modules.edu_schedule', 'init_edu_schedule_module', 'edu_schedule')
     _init_module('app.modules.admin', 'init_admin_module', 'admin')
 
     # SSE 流端点

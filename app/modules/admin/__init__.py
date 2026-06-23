@@ -39,6 +39,19 @@ def _check_admin_permission():
                         is_notification_admin = bool(u.is_notification_admin)
                 except Exception:
                     pass
+    elif user_id:
+        try:
+            from app.models.user import User as UserModel
+            u = UserModel.query.get(int(user_id))
+            if u:
+                is_admin = bool(u.is_admin)
+                is_subject_admin = bool(u.is_subject_admin)
+                is_notification_admin = bool(u.is_notification_admin)
+                session['is_admin'] = is_admin
+                session['is_subject_admin'] = is_subject_admin
+                session['is_notification_admin'] = is_notification_admin
+        except Exception:
+            pass
 
     # --- 3. 未认证 ---
     if not user_id:

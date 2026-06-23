@@ -21,7 +21,11 @@ _SECRET_CONFIG_KEYS = {
     'ai_api_key',
     'dashscope_api_key',
     'wechat_secret',
+    'edu_schedule_webvpn_username',
+    'edu_schedule_webvpn_password',
+    'edu_schedule_webvpn_cookie',
 }
+_EDU_SCHEDULE_DEFAULT_ALLOWED_HOSTS = 'webvpn.synu.edu.cn,jwxt.webvpn.synu.edu.cn'
 
 
 def _now() -> float:
@@ -567,3 +571,105 @@ class SystemConfigService:
             'auth_phone_login_enabled': 'true' if cfg.get('phone_login_enabled', True) else 'false',
             'auth_wechat_login_enabled': 'true' if cfg.get('wechat_login_enabled', True) else 'false',
         }
+
+    # ── 教务课表配置 ───────────────────────────────────────
+
+    @staticmethod
+    def _get_encrypted_config_value(config_key: str, app_key: str = '', default: str = '') -> str:
+        row = SystemConfigService.get_config(config_key)
+        if row and row.get('config_value'):
+            from app.core.utils.credential_crypto import decrypt_secret, is_encrypted_secret
+
+            value = str(row.get('config_value') or '')
+            return decrypt_secret(value) if is_encrypted_secret(value) else ''
+        return str(SystemConfigService._get_runtime_value(config_key, app_key or config_key.upper(), default) or '')
+
+    @staticmethod
+    def _get_plain_config_value(config_key: str, app_key: str = '', default: Any = '') -> Any:
+        return SystemConfigService._get_runtime_value(config_key, app_key or config_key.upper(), default)
+
+    @staticmethod
+    def get_edu_schedule_config() -> Dict[str, Any]:
+        allowed_hosts_raw = str(SystemConfigService._get_plain_config_value(
+            'edu_schedule_allowed_hosts',
+            'EDU_SCHEDULE_ALLOWED_HOSTS',
+            _EDU_SCHEDULE_DEFAULT_ALLOWED_HOSTS,
+        ) or _EDU_SCHEDULE_DEFAULT_ALLOWED_HOSTS)
+        allowed_hosts = tuple(
+            host.strip().lower()
+            for host in allowed_hosts_raw.split(',')
+            if host.strip()
+        )
+
+        return {
+            'enabled': _as_bool(SystemConfigService._get_plain_config_value('edu_schedule_enabled', 'EDU_SCHEDULE_ENABLED', False), False),
+            'use_webvpn': _as_bool(SystemConfigService._get_plain_config_value('edu_schedule_use_webvpn', 'EDU_SCHEDULE_USE_WEBVPN', True), True),
+            'webvpn_base_url': str(SystemConfigService._get_plain_config_value('edu_schedule_webvpn_base_url', 'EDU_SCHEDULE_WEBVPN_BASE_URL', 'https://webvpn.synu.edu.cn') or '').strip().rstrip('/'),
+            'webvpn_login_path': str(SystemConfigService._get_plain_config_value('edu_schedule_webvpn_login_path', 'EDU_SCHEDULE_WEBVPN_LOGIN_PATH', '/users/sign_in') or '/users/sign_in').strip(),
+            'webvpn_username': SystemConfigService._get_encrypted_config_value('edu_schedule_webvpn_username', 'EDU_SCHEDULE_WEBVPN_USERNAME', ''),
+            'webvpn_password': SystemConfigService._get_encrypted_config_value('edu_schedule_webvpn_password', 'EDU_SCHEDULE_WEBVPN_PASSWORD', ''),
+            'webvpn_cookie': SystemConfigService._get_encrypted_config_value('edu_schedule_webvpn_cookie', 'EDU_SCHEDULE_WEBVPN_COOKIE', ''),
+            'jwxt_base_url': str(SystemConfigService._get_plain_config_value('edu_schedule_jwxt_base_url', 'EDU_SCHEDULE_JWXT_BASE_URL', 'https://jwxt.webvpn.synu.edu.cn/jwglxt') or '').strip().rstrip('/'),
+            'jwxt_login_path': str(SystemConfigService._get_plain_config_value('edu_schedule_jwxt_login_path', 'EDU_SCHEDULE_JWXT_LOGIN_PATH', '/xtgl/login_slogin.html') or '/xtgl/login_slogin.html').strip(),
+            'schedule_path': str(SystemConfigService._get_plain_config_value('edu_schedule_path', 'EDU_SCHEDULE_PATH', '/kbcx/xskbcx_cxXsgrkb.html?gnmkdm=N253508') or '').strip(),
+            'request_timeout': _as_int(SystemConfigService._get_plain_config_value('edu_schedule_request_timeout', 'EDU_SCHEDULE_REQUEST_TIMEOUT', 20), 20),
+            'verify_tls': _as_bool(SystemConfigService._get_plain_config_value('edu_schedule_verify_tls', 'EDU_SCHEDULE_VERIFY_TLS', True), True),
+            'store_user_credentials': _as_bool(SystemConfigService._get_plain_config_value('edu_schedule_store_user_credentials', 'EDU_SCHEDULE_STORE_USER_CREDENTIALS', True), True),
+            'allowed_hosts': allowed_hosts,
+            'allowed_hosts_text': ','.join(allowed_hosts),
+        }
+
+    @staticmethod
+    def get_edu_schedule_config_masked() -> Dict[str, Any]:
+        cfg = SystemConfigService.get_edu_schedule_config()
+        return {
+            **cfg,
+            'webvpn_username': SystemConfigService.mask_secret(cfg.get('webvpn_username', ''), prefix=3, suffix=3),
+            'webvpn_password': SystemConfigService.mask_secret(cfg.get('webvpn_password', ''), prefix=3, suffix=3),
+            'webvpn_cookie': SystemConfigService.mask_secret(cfg.get('webvpn_cookie', ''), prefix=3, suffix=3),
+        }
+
+    @staticmethod
+    def save_edu_schedule_config(data: Dict[str, Any], admin_id: Optional[int] = None) -> Dict[str, Any]:
+        from app.core.utils.credential_crypto import encrypt_secret
+
+        plain_fields = {
+            'edu_schedule_enabled': 'true' if _as_bool(data.get('enabled'), False) else 'false',
+            'edu_schedule_use_webvpn': 'true' if _as_bool(data.get('use_webvpn'), True) else 'false',
+            'edu_schedule_webvpn_base_url': str(data.get('webvpn_base_url') or '').strip().rstrip('/'),
+            'edu_schedule_webvpn_login_path': str(data.get('webvpn_login_path') or '/users/sign_in').strip(),
+            'edu_schedule_jwxt_base_url': str(data.get('jwxt_base_url') or '').strip().rstrip('/'),
+            'edu_schedule_jwxt_login_path': str(data.get('jwxt_login_path') or '/xtgl/login_slogin.html').strip(),
+            'edu_schedule_path': str(data.get('schedule_path') or '/kbcx/xskbcx_cxXsgrkb.html?gnmkdm=N253508').strip(),
+            'edu_schedule_request_timeout': str(_as_int(data.get('request_timeout'), 20)),
+            'edu_schedule_verify_tls': 'true' if _as_bool(data.get('verify_tls'), True) else 'false',
+            'edu_schedule_store_user_credentials': 'true' if _as_bool(data.get('store_user_credentials'), True) else 'false',
+            'edu_schedule_allowed_hosts': str(data.get('allowed_hosts_text') or data.get('allowed_hosts') or _EDU_SCHEDULE_DEFAULT_ALLOWED_HOSTS).strip(),
+        }
+        descriptions = {
+            'edu_schedule_enabled': '教务课表查询开关',
+            'edu_schedule_use_webvpn': '教务课表是否使用 WebVPN',
+            'edu_schedule_webvpn_base_url': 'WebVPN 基础地址',
+            'edu_schedule_webvpn_login_path': 'WebVPN 登录路径',
+            'edu_schedule_jwxt_base_url': '教务系统基础地址',
+            'edu_schedule_jwxt_login_path': '教务系统登录路径',
+            'edu_schedule_path': '个人课表接口路径',
+            'edu_schedule_request_timeout': '教务课表请求超时秒数',
+            'edu_schedule_verify_tls': '教务课表请求是否校验证书',
+            'edu_schedule_store_user_credentials': '是否允许用户加密保存教务凭据',
+            'edu_schedule_allowed_hosts': '教务课表允许访问的上游域名',
+        }
+        for key, value in plain_fields.items():
+            SystemConfigService.update_config(key, value, descriptions[key], admin_id)
+
+        secret_fields = {
+            'edu_schedule_webvpn_username': str(data.get('webvpn_username') or '').strip(),
+            'edu_schedule_webvpn_password': str(data.get('webvpn_password') or ''),
+            'edu_schedule_webvpn_cookie': str(data.get('webvpn_cookie') or ''),
+        }
+        for key, value in secret_fields.items():
+            if SystemConfigService.is_masked_secret(value):
+                continue
+            SystemConfigService.update_config(key, encrypt_secret(value) if value else '', key, admin_id)
+
+        return SystemConfigService.get_edu_schedule_config_masked()

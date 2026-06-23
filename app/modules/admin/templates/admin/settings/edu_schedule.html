@@ -1,0 +1,224 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}教务课表配置 - 系统设置{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <div class="header-left">
+            <a href="/admin/settings" class="back-link">← 返回系统设置</a>
+            <h1>教务课表配置</h1>
+            <p class="page-description">配置 WebVPN 与教务系统接口。敏感值保存后仅显示脱敏内容。</p>
+        </div>
+    </div>
+
+    <div class="settings-form-container">
+        <form id="scheduleConfigForm" class="settings-form" autocomplete="off">
+            <div class="form-section">
+                <h3 class="section-title">功能开关</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="enabled">课表查询</label>
+                        <select id="enabled">
+                            <option value="true" {% if schedule_config.enabled %}selected{% endif %}>开启</option>
+                            <option value="false" {% if not schedule_config.enabled %}selected{% endif %}>关闭</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="store_user_credentials">用户凭据保存</label>
+                        <select id="store_user_credentials">
+                            <option value="true" {% if schedule_config.store_user_credentials %}selected{% endif %}>允许加密保存</option>
+                            <option value="false" {% if not schedule_config.store_user_credentials %}selected{% endif %}>仅单次查询</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3 class="section-title">WebVPN</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="use_webvpn">使用 WebVPN</label>
+                        <select id="use_webvpn">
+                            <option value="true" {% if schedule_config.use_webvpn %}selected{% endif %}>使用</option>
+                            <option value="false" {% if not schedule_config.use_webvpn %}selected{% endif %}>不使用</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="webvpn_base_url">WebVPN 地址</label>
+                        <input type="url" id="webvpn_base_url" value="{{ schedule_config.webvpn_base_url }}" placeholder="https://webvpn.synu.edu.cn">
+                    </div>
+                    <div class="form-group">
+                        <label for="webvpn_login_path">登录路径</label>
+                        <input type="text" id="webvpn_login_path" value="{{ schedule_config.webvpn_login_path }}" placeholder="/users/sign_in">
+                    </div>
+                    <div class="form-group">
+                        <label for="webvpn_username">WebVPN 账号</label>
+                        <input type="text" id="webvpn_username" value="{{ schedule_config.webvpn_username }}" placeholder="WebVPN 账号">
+                    </div>
+                    <div class="form-group">
+                        <label for="webvpn_password">WebVPN 密码</label>
+                        <input type="password" id="webvpn_password" value="{{ schedule_config.webvpn_password }}" placeholder="WebVPN 密码">
+                    </div>
+                    <div class="form-group">
+                        <label for="webvpn_cookie">WebVPN Cookie</label>
+                        <input type="password" id="webvpn_cookie" value="{{ schedule_config.webvpn_cookie }}" placeholder="JSESSIONID=...; route=...">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3 class="section-title">教务系统</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="jwxt_base_url">教务基础地址</label>
+                        <input type="url" id="jwxt_base_url" value="{{ schedule_config.jwxt_base_url }}" placeholder="https://jwxt.webvpn.synu.edu.cn/jwglxt">
+                    </div>
+                    <div class="form-group">
+                        <label for="jwxt_login_path">教务登录路径</label>
+                        <input type="text" id="jwxt_login_path" value="{{ schedule_config.jwxt_login_path }}" placeholder="/xtgl/login_slogin.html">
+                    </div>
+                    <div class="form-group">
+                        <label for="schedule_path">课表接口路径</label>
+                        <input type="text" id="schedule_path" value="{{ schedule_config.schedule_path }}" placeholder="/kbcx/xskbcx_cxXsgrkb.html?gnmkdm=N253508">
+                    </div>
+                    <div class="form-group">
+                        <label for="allowed_hosts_text">允许域名</label>
+                        <input type="text" id="allowed_hosts_text" value="{{ schedule_config.allowed_hosts_text }}" placeholder="webvpn.synu.edu.cn,jwxt.webvpn.synu.edu.cn">
+                    </div>
+                    <div class="form-group">
+                        <label for="request_timeout">请求超时</label>
+                        <input type="number" id="request_timeout" value="{{ schedule_config.request_timeout }}" min="5" max="120" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="verify_tls">TLS 校验</label>
+                        <select id="verify_tls">
+                            <option value="true" {% if schedule_config.verify_tls %}selected{% endif %}>开启</option>
+                            <option value="false" {% if not schedule_config.verify_tls %}selected{% endif %}>关闭</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="saveBtn">保存配置</button>
+            </div>
+            <div class="form-message" id="formMessage"></div>
+        </form>
+    </div>
+</div>
+
+<style>
+.page-container { padding: 40px; max-width: 980px; margin: 0 auto; }
+.page-header { margin-bottom: 32px; }
+.back-link { display: inline-block; color: var(--text-sub); text-decoration: none; font-size: 14px; margin-bottom: 12px; transition: color 0.2s; }
+.back-link:hover { color: var(--primary); }
+.page-header h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; letter-spacing: 0; }
+.page-description { color: var(--text-sub); font-size: 15px; line-height: 1.7; }
+.settings-form-container {
+    background: var(--card-bg);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    border: 0.5px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    box-shadow: var(--shadow);
+}
+.settings-form { display: flex; flex-direction: column; gap: 32px; }
+.form-section { display: flex; flex-direction: column; gap: 16px; }
+.section-title { font-size: 20px; font-weight: 600; margin-bottom: 4px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.form-group { display: flex; flex-direction: column; gap: 8px; }
+.form-group label { font-size: 14px; font-weight: 500; color: var(--text-color); }
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg-solid);
+    color: var(--text-color);
+    font-size: 15px;
+}
+.form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+}
+.form-actions { display: flex; justify-content: flex-end; }
+.btn { padding: 12px 20px; border: none; border-radius: var(--radius-sm); font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.form-message { margin-top: 8px; padding: 12px 16px; border-radius: var(--radius-sm); font-size: 14px; display: none; }
+.form-message.success { display: block; background: rgba(52,199,89,0.15); color: var(--success); border: 1px solid rgba(52,199,89,0.3); }
+.form-message.error { display: block; background: rgba(255,59,48,0.15); color: var(--danger); border: 1px solid rgba(255,59,48,0.3); }
+@media only screen and (max-width: 768px) {
+    .page-container { padding: 20px; }
+    .settings-form-container { padding: 20px; }
+    .page-header h1 { font-size: 24px; }
+    .form-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('scheduleConfigForm');
+    const saveBtn = document.getElementById('saveBtn');
+    const messageDiv = document.getElementById('formMessage');
+
+    function showMessage(text, type) {
+        messageDiv.textContent = text;
+        messageDiv.className = 'form-message ' + type;
+    }
+
+    function val(id) {
+        return document.getElementById(id).value.trim();
+    }
+
+    function payload() {
+        return {
+            enabled: val('enabled') === 'true',
+            use_webvpn: val('use_webvpn') === 'true',
+            webvpn_base_url: val('webvpn_base_url'),
+            webvpn_login_path: val('webvpn_login_path'),
+            webvpn_username: val('webvpn_username'),
+            webvpn_password: document.getElementById('webvpn_password').value,
+            webvpn_cookie: document.getElementById('webvpn_cookie').value,
+            jwxt_base_url: val('jwxt_base_url'),
+            jwxt_login_path: val('jwxt_login_path'),
+            schedule_path: val('schedule_path'),
+            allowed_hosts_text: val('allowed_hosts_text'),
+            request_timeout: Number(val('request_timeout') || 20),
+            verify_tls: val('verify_tls') === 'true',
+            store_user_credentials: val('store_user_credentials') === 'true'
+        };
+    }
+
+    form.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        saveBtn.disabled = true;
+        saveBtn.textContent = '保存中...';
+        try {
+            const response = await fetch('/admin/api/settings/edu-schedule', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify(payload()),
+            });
+            const data = await response.json();
+            if (data.status === 'success') {
+                showMessage(data.message || '配置保存成功', 'success');
+            } else {
+                showMessage(data.message || '配置保存失败', 'error');
+            }
+        } catch (error) {
+            showMessage('网络错误：' + error.message, 'error');
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = '保存配置';
+        }
+    });
+});
+</script>
+{% endblock %}
