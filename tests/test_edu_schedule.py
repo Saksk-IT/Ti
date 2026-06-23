@@ -339,6 +339,34 @@ def test_miniprogram_account_bindings_page_exposes_edu_credential_binding():
     assert "getEduScheduleStatus" in api
 
 
+def test_miniprogram_campus_tab_exposes_schedule_and_grade_queries():
+    app_config = json.loads(Path("miniprogram-1/miniprogram/app.json").read_text(encoding="utf-8"))
+    campus_dir = Path("miniprogram-1/miniprogram/pages/campus")
+    wxml = (campus_dir / "campus.wxml").read_text(encoding="utf-8")
+    ts = (campus_dir / "campus.ts").read_text(encoding="utf-8")
+    api = Path("miniprogram-1/miniprogram/utils/api-endpoints.ts").read_text(encoding="utf-8")
+
+    assert "pages/campus/campus" in app_config["pages"]
+    campus_tab = next(
+        item for item in app_config["tabBar"]["list"]
+        if item["pagePath"] == "pages/campus/campus"
+    )
+    assert campus_tab["text"] == "校园"
+    assert campus_tab["iconPath"] == "images/tabbar/subject.png"
+    assert campus_tab["selectedIconPath"] == "images/tabbar/subject-active.png"
+
+    assert "查询课表" in wxml
+    assert "查询成绩" in wxml
+    assert "教务系统账号" in wxml
+    assert "onGoEduBindingTap" in wxml
+    assert "api.queryEduSchedule" in ts
+    assert "api.queryEduGrades" in ts
+    assert "queryEduSchedule" in api
+    assert "request('/edu-schedule/query'" in api
+    assert "queryEduGrades" in api
+    assert "request('/edu-schedule/grades/query'" in api
+
+
 def test_admin_can_save_webvpn_schedule_config_masked(app, seed_user):
     client = _admin_client(app, seed_user)
 

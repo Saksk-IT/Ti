@@ -639,6 +639,12 @@ exports.api = {
     getEduScheduleStatus: function () {
         return request('/edu-schedule/status', 'GET');
     },
+    queryEduSchedule: function (payload) {
+        return request('/edu-schedule/query', 'POST', payload);
+    },
+    queryEduGrades: function (payload) {
+        return request('/edu-schedule/grades/query', 'POST', payload);
+    },
     saveEduCredentials: function (username, password) {
         return request('/edu-schedule/credentials', 'POST', { username: username, password: password });
     },

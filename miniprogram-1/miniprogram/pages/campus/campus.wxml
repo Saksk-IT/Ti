@@ -1,0 +1,132 @@
+<!-- campus.wxml - 校园 -->
+<view class="page-root campus-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="校园" back="{{false}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent">
+    <view slot="right" class="nav-right">
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <view class="page-container">
+    <scroll-view class="content-area" scroll-y bounces="{{false}}" refresher-enabled="{{true}}" bindrefresherrefresh="onRefresh">
+      <view class="container">
+        <view class="campus-hero">
+          <view class="hero-copy">
+            <text class="hero-title">校园</text>
+            <text class="hero-status">{{statusMsg || '教务系统账号状态同步中'}}</text>
+          </view>
+          <view class="hero-action {{eduBound ? '' : 'warn'}}" bindtap="onGoEduBindingTap" aria-role="button" aria-label="教务系统账号绑定">
+            <text>{{eduBound ? '更换绑定' : '去绑定'}}</text>
+          </view>
+        </view>
+
+        <view class="mode-switch" aria-label="校园查询类型">
+          <view class="mode-option {{mode === 'schedule' ? 'active' : ''}}" data-mode="schedule" bindtap="onModeTap">
+            <text>查询课表</text>
+          </view>
+          <view class="mode-option {{mode === 'grades' ? 'active' : ''}}" data-mode="grades" bindtap="onModeTap">
+            <text>查询成绩</text>
+          </view>
+        </view>
+
+        <view class="filter-panel">
+          <view class="year-row">
+            <view class="field">
+              <text class="field-label">开始学年</text>
+              <input class="field-input" type="number" value="{{startYear}}" maxlength="4" bindinput="onStartYearInput" />
+            </view>
+            <view class="field">
+              <text class="field-label">结束学年</text>
+              <input class="field-input" type="number" value="{{endYear}}" maxlength="4" bindinput="onEndYearInput" />
+            </view>
+          </view>
+          <picker class="semester-picker" mode="selector" range="{{semesterLabels}}" value="{{semesterIndex}}" bindchange="onSemesterChange">
+            <view class="semester-trigger" aria-role="button" aria-label="选择学期">
+              <view>
+                <text class="field-label">学期</text>
+                <text class="semester-value">{{semesterLabels[semesterIndex]}}</text>
+              </view>
+              <text class="chevron">⌄</text>
+            </view>
+          </picker>
+          <view class="query-btn {{loading ? 'disabled' : ''}}" bindtap="onQueryTap" aria-role="button" aria-label="查询校园信息">
+            <text>{{loading ? '查询中...' : (mode === 'grades' ? '查询成绩' : '查询课表')}}</text>
+          </view>
+        </view>
+
+        <view class="msg error" wx:if="{{errorMsg}}">
+          <text>{{errorMsg}}</text>
+        </view>
+
+        <view class="bind-prompt" wx:if="{{!eduBound && !statusLoading}}">
+          <text class="prompt-title">未绑定教务系统账号</text>
+          <text class="prompt-sub">绑定后可在此查询课表和成绩。</text>
+          <view class="prompt-action" bindtap="onGoEduBindingTap" aria-role="button" aria-label="去绑定教务系统账号">
+            <text>去绑定</text>
+          </view>
+        </view>
+
+        <block wx:if="{{mode === 'schedule'}}">
+          <view class="term-list" wx:if="{{scheduleResults.length}}">
+            <view class="term-card" wx:for="{{scheduleResults}}" wx:key="title">
+              <view class="term-head">
+                <text class="term-title">{{item.title}}</text>
+                <text class="term-meta" wx:if="{{item.studentText}}">{{item.studentText}}</text>
+              </view>
+              <view class="day-block" wx:for="{{item.weekRows}}" wx:for-item="dayRow" wx:key="day">
+                <text class="day-title">{{dayRow.day}}</text>
+                <view class="section-row" wx:for="{{dayRow.sections}}" wx:for-item="sectionRow" wx:key="section">
+                  <text class="section-label">{{sectionRow.section}}</text>
+                  <view class="course-list">
+                    <view class="course-chip" wx:for="{{sectionRow.courses}}" wx:for-item="course" wx:key="course_name">
+                      <text class="course-name">{{course.course_name}}</text>
+                      <text class="course-detail">{{course.teacher || '-'}} / {{course.location || '-'}} / {{course.weeks || '-'}}</text>
+                    </view>
+                  </view>
+                </view>
+              </view>
+              <view class="practice-block" wx:if="{{item.practice_courses.length}}">
+                <text class="practice-title">集中实践</text>
+                <view class="course-chip" wx:for="{{item.practice_courses}}" wx:for-item="course" wx:key="course_name">
+                  <text class="course-name">{{course.course_name}}</text>
+                  <text class="course-detail">{{course.teacher || '-'}} / {{course.weeks || '-'}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+          <view class="empty-state" wx:elif="{{eduBound && !loading}}">
+            <text>暂无课表记录。</text>
+          </view>
+        </block>
+
+        <block wx:else>
+          <view class="term-list" wx:if="{{gradeResults.length}}">
+            <view class="term-card" wx:for="{{gradeResults}}" wx:key="title">
+              <view class="term-head">
+                <text class="term-title">{{item.title}}</text>
+                <text class="term-meta">{{item.summaryText}}</text>
+              </view>
+              <view class="grade-row" wx:for="{{item.grades}}" wx:for-item="grade" wx:key="course_name">
+                <view class="grade-main">
+                  <text class="course-name">{{grade.course_name}}</text>
+                  <text class="course-detail">{{grade.teacher || grade.assessment || '-'}}</text>
+                </view>
+                <view class="grade-score">
+                  <text class="score">{{grade.score}}</text>
+                  <text class="score-sub">{{grade.credits}} 学分 / 绩点 {{grade.grade_point}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+          <view class="empty-state" wx:elif="{{eduBound && !loading}}">
+            <text>暂无成绩记录。</text>
+          </view>
+        </block>
+      </view>
+    </scroll-view>
+  </view>
+</view>

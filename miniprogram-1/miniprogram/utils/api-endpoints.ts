@@ -481,6 +481,18 @@ export const api = {
       grade_snapshots?: any[];
     }>,
 
+  queryEduSchedule: (payload: { terms: Array<{ xnm: string; xqm: string }> }) =>
+    request('/edu-schedule/query', 'POST', payload) as Promise<{
+      results?: any[];
+      credential?: { has_credentials?: boolean; username_hint?: string };
+    }>,
+
+  queryEduGrades: (payload: { terms: Array<{ xnm: string; xqm: string }> }) =>
+    request('/edu-schedule/grades/query', 'POST', payload) as Promise<{
+      results?: any[];
+      credential?: { has_credentials?: boolean; username_hint?: string };
+    }>,
+
   saveEduCredentials: (username: string, password: string) =>
     request('/edu-schedule/credentials', 'POST', { username, password }) as Promise<{
       has_credentials?: boolean;

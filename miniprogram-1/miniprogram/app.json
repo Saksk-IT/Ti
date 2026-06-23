@@ -25,6 +25,7 @@
     "pages/settings-about-v2/settings-about-v2",
     "pages/profile-view-v2/profile-view-v2",
     "pages/subjects/subjects",
+    "pages/campus/campus",
     "pages/mine/mine",
     "pages/login/login",
     "pages/dev-settings/dev-settings",
@@ -116,6 +117,12 @@
         "iconPath": "images/tabbar/banks.png",
         "selectedIconPath": "images/tabbar/banks-active.png",
         "text": "我的题库"
+      },
+      {
+        "pagePath": "pages/campus/campus",
+        "iconPath": "images/tabbar/subject.png",
+        "selectedIconPath": "images/tabbar/subject-active.png",
+        "text": "校园"
       },
       {
         "pagePath": "pages/mine/mine",
