@@ -27,6 +27,16 @@ function validateEmail(email: string): { ok: boolean; msg?: string; value?: stri
   return { ok: true, value: v };
 }
 
+function validateEduAccount(username: string, password: string): { ok: boolean; msg?: string; username?: string; password?: string } {
+  const account = String(username || '').trim();
+  const secret = String(password || '');
+  if (!account) return { ok: false, msg: '请输入教务账号' };
+  if (!/^[A-Za-z0-9_.@-]{3,64}$/.test(account)) return { ok: false, msg: '教务账号格式不正确' };
+  if (!secret) return { ok: false, msg: '请输入教务密码' };
+  if (secret.length > 128) return { ok: false, msg: '教务密码过长' };
+  return { ok: true, username: account, password: secret };
+}
+
 Page({
   data: {
     navKey: 'account' as SettingsNavKey,
@@ -52,7 +62,17 @@ Page({
     wechatChip: '-',
     wechatDesc: '加载中…',
     bindingWechat: false,
-    unbindingWechat: false
+    unbindingWechat: false,
+
+    eduBound: false,
+    eduChip: '-',
+    eduDesc: '加载中…',
+    eduActionText: '绑定',
+    eduFormOpen: false,
+    bindEduUsername: '',
+    bindEduPassword: '',
+    bindingEdu: false,
+    deletingEdu: false
   },
 
   onShow() {
@@ -65,6 +85,7 @@ Page({
     } catch (e) {}
 
     if (!this.data.loading) this.loadProfile(false);
+    this.loadEduCredentialStatus(false);
   },
 
   onUnload() {
@@ -74,7 +95,10 @@ Page({
   onPullDownRefresh() {
     Promise.resolve()
       .then(async () => {
-        await this.loadProfile(true);
+        await Promise.all([
+          this.loadProfile(true),
+          this.loadEduCredentialStatus(true)
+        ]);
       })
       .finally(() => {
         wx.stopPullDownRefresh();
@@ -301,6 +325,84 @@ Page({
     }
   },
 
+  onEduActionTap() {
+    if (this.data.loading || this.data.bindingEdu) return;
+    this.setData({
+      msg: '',
+      errorMsg: '',
+      eduFormOpen: true
+    });
+  },
+
+  onCloseEduFormTap() {
+    if (this.data.bindingEdu) return;
+    this.setData({
+      eduFormOpen: false,
+      bindEduUsername: '',
+      bindEduPassword: ''
+    });
+  },
+
+  onBindEduUsernameInput(e: any) {
+    this.setData({ bindEduUsername: String(e?.detail?.value || '') });
+  },
+
+  onBindEduPasswordInput(e: any) {
+    this.setData({ bindEduPassword: String(e?.detail?.value || '') });
+  },
+
+  async onBindEduCredentialsTap() {
+    if (this.data.bindingEdu) return;
+    const v = validateEduAccount(this.data.bindEduUsername, this.data.bindEduPassword);
+    if (!v.ok) {
+      this.setData({ errorMsg: v.msg || '教务账号信息不正确' });
+      return;
+    }
+
+    this.setData({ bindingEdu: true, msg: '', errorMsg: '' });
+    try {
+      const credential: any = await api.saveEduCredentials(v.username as string, v.password as string);
+      wx.showToast({ title: '教务账号已绑定', icon: 'none' });
+      this.applyEduCredential(credential);
+      this.setData({
+        eduFormOpen: false,
+        bindEduUsername: '',
+        bindEduPassword: '',
+        msg: '教务账号已绑定'
+      });
+    } catch (e: any) {
+      this.setData({ errorMsg: e?.message || '保存失败，请稍后重试' });
+    } finally {
+      this.setData({ bindingEdu: false });
+    }
+  },
+
+  async onDeleteEduCredentialsTap() {
+    if (this.data.deletingEdu || !this.data.eduBound) return;
+    const ok = await new Promise<boolean>((resolve) => {
+      wx.showModal({
+        title: '解绑教务账号',
+        content: '解绑后，课表和成绩查询需要重新绑定教务系统账号。',
+        confirmText: '解绑',
+        cancelText: '取消',
+        success: (res) => resolve(!!res.confirm),
+        fail: () => resolve(false)
+      });
+    });
+    if (!ok) return;
+
+    this.setData({ deletingEdu: true, msg: '', errorMsg: '' });
+    try {
+      const credential: any = await api.deleteEduCredentials();
+      this.applyEduCredential(credential);
+      this.setData({ eduFormOpen: false, bindEduUsername: '', bindEduPassword: '', msg: '教务账号已解绑' });
+    } catch (e: any) {
+      this.setData({ errorMsg: e?.message || '解绑失败，请稍后重试' });
+    } finally {
+      this.setData({ deletingEdu: false });
+    }
+  },
+
   applyProfile(p: any) {
     const email = String(p?.email || '').trim();
     const verified = !!p?.email_verified;
@@ -342,6 +444,33 @@ Page({
       this.setData({ errorMsg: e?.message || '加载失败，请稍后重试' });
     } finally {
       this.setData({ loading: false });
+    }
+  },
+
+  applyEduCredential(credential: any) {
+    const bound = !!credential?.has_credentials;
+    const hint = String(credential?.username_hint || '').trim();
+    this.setData({
+      eduBound: bound,
+      eduChip: bound ? '已绑定' : '未绑定',
+      eduDesc: bound ? `当前教务账号：${hint || '已保存'}` : '绑定教务系统账号后，课表和成绩查询无需重复输入账号密码。',
+      eduActionText: bound ? '更换' : '绑定'
+    });
+  },
+
+  async loadEduCredentialStatus(force = false) {
+    const self = this;
+    const now = Date.now();
+    const lastAt = Number(self.__lastEduLoadedAt || 0) || 0;
+    if (!force && now - lastAt < 8000) return;
+    self.__lastEduLoadedAt = now;
+
+    try {
+      const data: any = await api.getEduScheduleStatus();
+      this.applyEduCredential(data?.credential || {});
+    } catch (e: any) {
+      this.applyEduCredential({});
+      this.setData({ errorMsg: e?.message || '教务账号状态加载失败' });
     }
   }
 });

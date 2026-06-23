@@ -289,6 +289,56 @@ def test_user_can_save_encrypted_jwxt_credentials(app, auth_client):
     assert "DemoSecret123!" not in row[1]
 
 
+def test_account_bindings_page_exposes_edu_credential_binding(auth_client):
+    page = auth_client.get("/settings/account/bindings")
+
+    assert page.status_code == 200
+    html = page.get_data(as_text=True)
+    assert "教务系统" in html
+    assert "eduBindForm" in html
+    assert "/api/edu-schedule/credentials" in html
+    assert "/api/edu-schedule/status" in html
+
+
+def test_campus_pages_only_keep_term_filters_and_bind_prompt(auth_client):
+    schedule_page = auth_client.get("/edu-schedule")
+    grades_page = auth_client.get("/edu-grades")
+
+    assert schedule_page.status_code == 200
+    assert grades_page.status_code == 200
+
+    schedule_html = schedule_page.get_data(as_text=True)
+    grade_html = grades_page.get_data(as_text=True)
+
+    assert "scheduleUsername" not in schedule_html
+    assert "schedulePassword" not in schedule_html
+    assert "scheduleRemember" not in schedule_html
+    assert "scheduleClearCredential" not in schedule_html
+    assert "未绑定教务系统账号" in schedule_html
+    assert "/settings/account/bindings" in schedule_html
+
+    assert "gradeUsername" not in grade_html
+    assert "gradePassword" not in grade_html
+    assert "gradeRemember" not in grade_html
+    assert "gradeClearCredential" not in grade_html
+    assert "未绑定教务系统账号" in grade_html
+    assert "/settings/account/bindings" in grade_html
+
+
+def test_miniprogram_account_bindings_page_exposes_edu_credential_binding():
+    page_dir = Path("miniprogram-1/miniprogram/pages/settings-account-bindings-v2")
+    wxml = (page_dir / "settings-account-bindings-v2.wxml").read_text(encoding="utf-8")
+    ts = (page_dir / "settings-account-bindings-v2.ts").read_text(encoding="utf-8")
+    api = Path("miniprogram-1/miniprogram/utils/api-endpoints.ts").read_text(encoding="utf-8")
+
+    assert "教务系统" in wxml
+    assert "bindEduUsername" in wxml
+    assert "onEduActionTap" in wxml
+    assert "loadEduCredentialStatus" in ts
+    assert "saveEduCredentials" in api
+    assert "getEduScheduleStatus" in api
+
+
 def test_admin_can_save_webvpn_schedule_config_masked(app, seed_user):
     client = _admin_client(app, seed_user)
 

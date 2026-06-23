@@ -636,6 +636,15 @@ exports.api = {
         return request('/email/bind', 'POST', { email: email, code: code });
     },
     wechatUnbind: function () { return request('/wechat/unbind', 'POST', {}); },
+    getEduScheduleStatus: function () {
+        return request('/edu-schedule/status', 'GET');
+    },
+    saveEduCredentials: function (username, password) {
+        return request('/edu-schedule/credentials', 'POST', { username: username, password: password });
+    },
+    deleteEduCredentials: function () {
+        return request('/edu-schedule/credentials', 'DELETE');
+    },
     uploadProfileAvatar: function (filePath) {
         return new Promise(function (resolve, reject) {
             var apiBaseUrl = getApiBaseUrl();

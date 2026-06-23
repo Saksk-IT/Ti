@@ -7,21 +7,6 @@
 <section class="grade-page">
   <div class="grade-toolbar">
     <form id="gradeForm" class="grade-form" autocomplete="off">
-      <div class="field-group account-fields">
-        <label>
-          <span>教务账号</span>
-          <input id="gradeUsername" name="username" type="text" inputmode="text" autocomplete="username" maxlength="64" placeholder="学号/工号">
-        </label>
-        <label>
-          <span>教务密码</span>
-          <input id="gradePassword" name="password" type="password" autocomplete="current-password" maxlength="128" placeholder="教务系统密码">
-        </label>
-        <label class="checkbox-field">
-          <input id="gradeRemember" type="checkbox">
-          <span>加密保存</span>
-        </label>
-      </div>
-
       <div class="field-group term-fields">
         <label>
           <span>开始学年</span>
@@ -43,7 +28,7 @@
 
       <div class="grade-actions">
         <button class="primary-btn" type="submit" id="gradeSubmit">查询</button>
-        <button class="ghost-btn" type="button" id="gradeClearCredential">删除凭据</button>
+        <a class="ghost-btn" href="/settings/account/bindings">账号绑定</a>
       </div>
     </form>
   </div>
@@ -72,17 +57,13 @@
   }
   .grade-form {
     display: grid;
-    grid-template-columns: minmax(260px, 1.2fr) minmax(260px, 1fr) auto;
+    grid-template-columns: minmax(260px, 1fr) auto;
     gap: 14px;
     align-items: end;
   }
   .field-group {
     display: grid;
     gap: 10px;
-  }
-  .account-fields {
-    grid-template-columns: minmax(120px, 1fr) minmax(150px, 1fr) auto;
-    align-items: end;
   }
   .term-fields {
     grid-template-columns: repeat(3, minmax(92px, 1fr));
@@ -105,24 +86,6 @@
     color: var(--app-text);
     font-size: 14px;
   }
-  .checkbox-field {
-    min-height: 40px;
-    display: inline-flex !important;
-    grid-template-columns: auto auto;
-    align-items: center;
-    justify-content: center;
-    gap: 8px !important;
-    padding: 0 10px;
-    border: 1px solid var(--app-border);
-    border-radius: 8px;
-    color: var(--app-text) !important;
-    background: var(--app-surface-2);
-  }
-  .checkbox-field input {
-    width: 16px;
-    min-height: 16px;
-    padding: 0;
-  }
   .grade-actions {
     display: inline-flex;
     gap: 10px;
@@ -138,6 +101,10 @@
     font-weight: 850;
     cursor: pointer;
     white-space: nowrap;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
   .primary-btn {
     background: var(--app-primary);
@@ -242,7 +209,6 @@
     .grade-toolbar {
       padding: 12px;
     }
-    .account-fields,
     .term-fields {
       grid-template-columns: 1fr;
     }
@@ -257,7 +223,8 @@
   const state = document.getElementById('gradeState');
   const results = document.getElementById('gradeResults');
   const submitBtn = document.getElementById('gradeSubmit');
-  const clearBtn = document.getElementById('gradeClearCredential');
+  let credentialReady = false;
+  let credentialPromptShown = false;
 
   function setState(text, type) {
     state.textContent = text || '';
@@ -362,6 +329,18 @@
     });
   }
 
+  async function showBindPrompt() {
+    if (credentialPromptShown) return;
+    credentialPromptShown = true;
+    const message = '未绑定教务系统账号，请先到账号绑定页绑定后再查询成绩。';
+    if (window.appConfirm) {
+      const ok = await window.appConfirm(message);
+      if (ok) window.location.href = '/settings/account/bindings';
+      return;
+    }
+    if (window.confirm(message)) window.location.href = '/settings/account/bindings';
+  }
+
   async function loadStatus() {
     try {
       const response = await fetch('/api/edu-schedule/status', {
@@ -372,7 +351,12 @@
       const credential = data.data && data.data.credential;
       const snapshots = data.data && data.data.grade_snapshots;
       if (credential && credential.has_credentials) {
-        setState('已保存教务凭据：' + credential.username_hint, '');
+        credentialReady = true;
+        setState('已绑定教务系统账号：' + credential.username_hint, '');
+      } else {
+        credentialReady = false;
+        setState('未绑定教务系统账号，请先绑定后查询。', 'error');
+        showBindPrompt();
       }
       if (Array.isArray(snapshots) && snapshots.length) {
         renderResults(snapshots.map(function (item) { return item.payload; }));
@@ -388,11 +372,13 @@
     submitBtn.textContent = '查询中';
     setState('正在查询成绩...', '');
     try {
+      if (!credentialReady) {
+        setState('未绑定教务系统账号，请先绑定后查询。', 'error');
+        showBindPrompt();
+        return;
+      }
       const payload = {
-        terms: buildTerms(),
-        username: document.getElementById('gradeUsername').value.trim() || undefined,
-        password: document.getElementById('gradePassword').value || undefined,
-        remember: document.getElementById('gradeRemember').checked
+        terms: buildTerms()
       };
       const response = await fetch('/api/edu-schedule/grades/query', {
         method: 'POST',
@@ -408,26 +394,11 @@
       }
       renderResults(data.data && data.data.results);
       setState('查询完成', '');
-      document.getElementById('gradePassword').value = '';
     } catch (error) {
       setState(error.message || '查询失败', 'error');
     } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = '查询';
-    }
-  });
-
-  clearBtn.addEventListener('click', async function () {
-    if (!window.confirm('确认删除已保存的教务凭据？')) return;
-    const response = await fetch('/api/edu-schedule/credentials', {
-      method: 'DELETE',
-      headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    });
-    const data = await response.json();
-    if (data.status === 'success') {
-      setState('已删除保存的教务凭据', '');
-    } else {
-      setState(data.message || '删除失败', 'error');
     }
   });
 

@@ -2,7 +2,7 @@
 {% block account_title %}账号绑定{% endblock %}
 {% block account_page_title %}账号绑定{% endblock %}
 {% block account_header_title %}账号绑定{% endblock %}
-{% block account_header_sub %}管理邮箱、手机与微信绑定状态。{% endblock %}
+{% block account_header_sub %}管理邮箱、手机、微信与教务系统绑定状态。{% endblock %}
 
 {% block account_head_extra %}
   <style>
@@ -200,6 +200,45 @@
         </div>
       </div>
     </section>
+
+    <section class="acc-card" aria-labelledby="eduBindTitle">
+      <div class="bind-row">
+        <div class="bind-meta">
+          <h2 class="acc-card-title" id="eduBindTitle">教务系统</h2>
+          <div class="bind-desc" id="eduDesc">加载中…</div>
+        </div>
+        <div class="bind-actions">
+          <span class="bind-chip" id="eduStatusChip">-</span>
+          <button type="button" class="acc-btn acc-btn-secondary" id="eduActionBtn">绑定</button>
+          <button type="button" class="acc-btn" id="eduDeleteBtn" style="display:none;">解绑</button>
+        </div>
+      </div>
+
+      <div class="bind-form" id="eduBindForm">
+        <div class="bind-form-grid">
+          <div class="acc-field">
+            <div class="acc-label">教务账号</div>
+            <input class="acc-input" id="eduUsernameInput" type="text" inputmode="text" autocomplete="username" maxlength="64" placeholder="学号/工号" />
+          </div>
+
+          <div class="acc-field">
+            <div class="acc-label">教务密码</div>
+            <input class="acc-input" id="eduPasswordInput" type="password" autocomplete="current-password" maxlength="128" placeholder="教务系统密码" />
+          </div>
+
+          <div class="acc-field span-2">
+            <div class="acc-help">绑定后，课表和成绩查询页面将直接使用此账号，只需要选择学年和学期。</div>
+          </div>
+
+          <div class="acc-field span-2" style="display:flex; justify-content:flex-end; gap:10px;">
+            <button type="button" class="acc-btn" id="eduCancelBtn">取消</button>
+            <button type="button" class="acc-btn acc-btn-primary" id="eduBindBtn">保存绑定</button>
+          </div>
+        </div>
+
+        <div class="acc-msg" id="eduMsg" role="status" aria-live="polite"></div>
+      </div>
+    </section>
   </div>
 
   <div class="acc-modal-overlay" id="wechatBindModal" aria-hidden="true">
@@ -251,6 +290,17 @@
       const wechatBindBtn = document.getElementById('wechatBindBtn');
       const wechatUnbindBtn = document.getElementById('wechatUnbindBtn');
 
+      const eduDesc = document.getElementById('eduDesc');
+      const eduChip = document.getElementById('eduStatusChip');
+      const eduActionBtn = document.getElementById('eduActionBtn');
+      const eduDeleteBtn = document.getElementById('eduDeleteBtn');
+      const eduForm = document.getElementById('eduBindForm');
+      const eduUsernameInput = document.getElementById('eduUsernameInput');
+      const eduPasswordInput = document.getElementById('eduPasswordInput');
+      const eduBindBtn = document.getElementById('eduBindBtn');
+      const eduCancelBtn = document.getElementById('eduCancelBtn');
+      const eduMsg = document.getElementById('eduMsg');
+
       const wechatModal = document.getElementById('wechatBindModal');
       const wechatQrImg = document.getElementById('wechatQrImg');
       const wechatQrPh = document.getElementById('wechatQrPh');
@@ -268,6 +318,7 @@
       let wechatBindSid = null;
       let wechatBindTimer = null;
       let wechatBindBusy = false;
+      let eduCredentialCache = null;
 
       function showEmailMessage(text){
         if (!emailMsg) return;
@@ -346,6 +397,104 @@
         if (!v) return { ok:false, msg:'请输入手机号' };
         if (!/^1[3-9]\d{9}$/.test(v)) return { ok:false, msg:'手机号格式不正确' };
         return { ok:true, value:v };
+      }
+
+      function showEduMessage(text){
+        if (!eduMsg) return;
+        const t = (text || '').trim();
+        if (!t) { eduMsg.style.display = 'none'; eduMsg.textContent = ''; return; }
+        eduMsg.textContent = t;
+        eduMsg.style.display = 'block';
+      }
+
+      function setEduFormVisible(visible){
+        if (!eduForm) return;
+        eduForm.style.display = visible ? 'block' : 'none';
+        if (!visible) showEduMessage('');
+      }
+
+      function validateEduAccount(username, password){
+        const account = (username || '').trim();
+        const secret = password || '';
+        if (!account) return { ok:false, msg:'请输入教务账号' };
+        if (!/^[A-Za-z0-9_.@-]{3,64}$/.test(account)) return { ok:false, msg:'教务账号格式不正确' };
+        if (!secret) return { ok:false, msg:'请输入教务密码' };
+        if (secret.length > 128) return { ok:false, msg:'教务密码过长' };
+        return { ok:true, username:account, password:secret };
+      }
+
+      function applyEduCredential(credential){
+        eduCredentialCache = credential || {};
+        const bound = !!(eduCredentialCache && eduCredentialCache.has_credentials);
+        const hint = (eduCredentialCache && eduCredentialCache.username_hint) ? eduCredentialCache.username_hint : '';
+        if (eduChip) eduChip.textContent = bound ? '已绑定' : '未绑定';
+        if (eduDesc) eduDesc.textContent = bound ? `当前教务账号：${hint || '已保存'}` : '绑定教务系统账号后，课表和成绩查询无需重复输入账号密码。';
+        if (eduActionBtn) eduActionBtn.textContent = bound ? '更换' : '绑定';
+        if (eduDeleteBtn) eduDeleteBtn.style.display = bound ? 'inline-flex' : 'none';
+      }
+
+      async function loadEduCredentialStatus(){
+        try {
+          const res = await fetch('/api/edu-schedule/status', {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'include'
+          });
+          const js = await res.json().catch(()=> ({}));
+          if (!res.ok || !js || js.status !== 'success') throw new Error(js && js.message ? js.message : '加载失败');
+          applyEduCredential(js.data && js.data.credential);
+        } catch (e) {
+          applyEduCredential({});
+          showEduMessage((e && e.message) ? e.message : '教务账号状态加载失败');
+        }
+      }
+
+      async function saveEduCredentials(){
+        showEduMessage('');
+        const v = validateEduAccount(eduUsernameInput ? eduUsernameInput.value : '', eduPasswordInput ? eduPasswordInput.value : '');
+        if (!v.ok) { showEduMessage(v.msg); return; }
+        if (eduBindBtn) { eduBindBtn.disabled = true; eduBindBtn.textContent = '保存中…'; }
+        try {
+          const res = await fetch('/api/edu-schedule/credentials', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'include',
+            body: JSON.stringify({ username: v.username, password: v.password })
+          });
+          const js = await res.json().catch(()=> ({}));
+          if (!res.ok || !js || js.status !== 'success') throw new Error(js && js.message ? js.message : '保存失败');
+          showEduMessage(js.message || '教务账号已绑定');
+          applyEduCredential(js.data);
+          setTimeout(() => {
+            setEduFormVisible(false);
+            if (eduUsernameInput) eduUsernameInput.value = '';
+            if (eduPasswordInput) eduPasswordInput.value = '';
+          }, 700);
+        } catch (e) {
+          showEduMessage((e && e.message) ? e.message : '保存失败，请稍后重试');
+        } finally {
+          if (eduBindBtn) { eduBindBtn.disabled = false; eduBindBtn.textContent = '保存绑定'; }
+        }
+      }
+
+      async function deleteEduCredentials(){
+        if (!(await appConfirm('确定要解绑教务系统账号吗？解绑后课表和成绩查询需要重新绑定。'))) return;
+        try {
+          const res = await fetch('/api/edu-schedule/credentials', {
+            method: 'DELETE',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'include'
+          });
+          const js = await res.json().catch(()=> ({}));
+          if (!res.ok || !js || js.status !== 'success') throw new Error(js && js.message ? js.message : '解绑失败');
+          applyEduCredential(js.data);
+          setEduFormVisible(false);
+          showEduMessage('');
+        } catch (e) {
+          appAlert((e && e.message) ? e.message : '解绑失败，请稍后重试');
+        }
       }
 
       function applyProfile(d){
@@ -654,12 +803,25 @@
       wechatBindBtn && wechatBindBtn.addEventListener('click', openWechatModal);
       wechatUnbindBtn && wechatUnbindBtn.addEventListener('click', unbindWechat);
 
+      eduActionBtn && eduActionBtn.addEventListener('click', function(){
+        setEduFormVisible(true);
+        eduUsernameInput && eduUsernameInput.focus();
+      });
+      eduCancelBtn && eduCancelBtn.addEventListener('click', function(){
+        setEduFormVisible(false);
+        if (eduUsernameInput) eduUsernameInput.value = '';
+        if (eduPasswordInput) eduPasswordInput.value = '';
+      });
+      eduBindBtn && eduBindBtn.addEventListener('click', saveEduCredentials);
+      eduDeleteBtn && eduDeleteBtn.addEventListener('click', deleteEduCredentials);
+
       wechatModal && wechatModal.addEventListener('click', closeWechatModal);
       wechatCloseBtn && wechatCloseBtn.addEventListener('click', function(){ closeWechatModal(); });
       wechatRefreshBtn && wechatRefreshBtn.addEventListener('click', refreshWechatBindQr);
       window.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeWechatModal(); });
 
       loadProfile();
+      loadEduCredentialStatus();
     })();
   </script>
 {% endblock %}

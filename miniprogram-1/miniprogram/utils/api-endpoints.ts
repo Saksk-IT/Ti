@@ -474,6 +474,25 @@ export const api = {
 
   wechatUnbind: () => request('/wechat/unbind', 'POST', {}) as Promise<{ message?: string }>,
 
+  getEduScheduleStatus: () =>
+    request('/edu-schedule/status', 'GET') as Promise<{
+      credential?: { has_credentials?: boolean; username_hint?: string };
+      snapshots?: any[];
+      grade_snapshots?: any[];
+    }>,
+
+  saveEduCredentials: (username: string, password: string) =>
+    request('/edu-schedule/credentials', 'POST', { username, password }) as Promise<{
+      has_credentials?: boolean;
+      username_hint?: string;
+    }>,
+
+  deleteEduCredentials: () =>
+    request('/edu-schedule/credentials', 'DELETE') as Promise<{
+      has_credentials?: boolean;
+      username_hint?: string;
+    }>,
+
   uploadProfileAvatar: (filePath: string) =>
     new Promise<{ avatar_url: string }>((resolve, reject) => {
       const apiBaseUrl = getApiBaseUrl();

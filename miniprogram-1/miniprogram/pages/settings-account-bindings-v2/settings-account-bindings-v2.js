@@ -76,6 +76,19 @@ function validateEmail(email) {
         return { ok: false, msg: '邮箱格式不正确' };
     return { ok: true, value: v };
 }
+function validateEduAccount(username, password) {
+    var account = String(username || '').trim();
+    var secret = String(password || '');
+    if (!account)
+        return { ok: false, msg: '请输入教务账号' };
+    if (!/^[A-Za-z0-9_.@-]{3,64}$/.test(account))
+        return { ok: false, msg: '教务账号格式不正确' };
+    if (!secret)
+        return { ok: false, msg: '请输入教务密码' };
+    if (secret.length > 128)
+        return { ok: false, msg: '教务密码过长' };
+    return { ok: true, username: account, password: secret };
+}
 Page({
     data: {
         navKey: 'account',
@@ -98,7 +111,16 @@ Page({
         wechatChip: '-',
         wechatDesc: '加载中…',
         bindingWechat: false,
-        unbindingWechat: false
+        unbindingWechat: false,
+        eduBound: false,
+        eduChip: '-',
+        eduDesc: '加载中…',
+        eduActionText: '绑定',
+        eduFormOpen: false,
+        bindEduUsername: '',
+        bindEduPassword: '',
+        bindingEdu: false,
+        deletingEdu: false
     },
     onShow: function () {
         if (!(0, auth_1.checkLogin)()) {
@@ -111,6 +133,7 @@ Page({
         catch (e) { }
         if (!this.data.loading)
             this.loadProfile(false);
+        this.loadEduCredentialStatus(false);
     },
     onUnload: function () {
         this.clearCountdown();
@@ -121,7 +144,10 @@ Page({
             .then(function () { return __awaiter(_this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.loadProfile(true)];
+                    case 0: return [4 /*yield*/, Promise.all([
+                            this.loadProfile(true),
+                            this.loadEduCredentialStatus(true)
+                        ])];
                     case 1:
                         _a.sent();
                         return [2 /*return*/];
@@ -423,6 +449,117 @@ Page({
             });
         });
     },
+    onEduActionTap: function () {
+        if (this.data.loading || this.data.bindingEdu)
+            return;
+        this.setData({
+            msg: '',
+            errorMsg: '',
+            eduFormOpen: true
+        });
+    },
+    onCloseEduFormTap: function () {
+        if (this.data.bindingEdu)
+            return;
+        this.setData({
+            eduFormOpen: false,
+            bindEduUsername: '',
+            bindEduPassword: ''
+        });
+    },
+    onBindEduUsernameInput: function (e) {
+        var _a;
+        this.setData({ bindEduUsername: String(((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value) || '') });
+    },
+    onBindEduPasswordInput: function (e) {
+        var _a;
+        this.setData({ bindEduPassword: String(((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value) || '') });
+    },
+    onBindEduCredentialsTap: function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var v, credential, e_5;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (this.data.bindingEdu)
+                            return [2 /*return*/];
+                        v = validateEduAccount(this.data.bindEduUsername, this.data.bindEduPassword);
+                        if (!v.ok) {
+                            this.setData({ errorMsg: v.msg || '教务账号信息不正确' });
+                            return [2 /*return*/];
+                        }
+                        this.setData({ bindingEdu: true, msg: '', errorMsg: '' });
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, 3, 4, 5]);
+                        return [4 /*yield*/, api_1.api.saveEduCredentials(v.username, v.password)];
+                    case 2:
+                        credential = _a.sent();
+                        wx.showToast({ title: '教务账号已绑定', icon: 'none' });
+                        this.applyEduCredential(credential);
+                        this.setData({
+                            eduFormOpen: false,
+                            bindEduUsername: '',
+                            bindEduPassword: '',
+                            msg: '教务账号已绑定'
+                        });
+                        return [3 /*break*/, 5];
+                    case 3:
+                        e_5 = _a.sent();
+                        this.setData({ errorMsg: (e_5 === null || e_5 === void 0 ? void 0 : e_5.message) || '保存失败，请稍后重试' });
+                        return [3 /*break*/, 5];
+                    case 4:
+                        this.setData({ bindingEdu: false });
+                        return [7 /*endfinally*/];
+                    case 5: return [2 /*return*/];
+                }
+            });
+        });
+    },
+    onDeleteEduCredentialsTap: function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var ok, credential, e_6;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (this.data.deletingEdu || !this.data.eduBound)
+                            return [2 /*return*/];
+                        return [4 /*yield*/, new Promise(function (resolve) {
+                                wx.showModal({
+                                    title: '解绑教务账号',
+                                    content: '解绑后，课表和成绩查询需要重新绑定教务系统账号。',
+                                    confirmText: '解绑',
+                                    cancelText: '取消',
+                                    success: function (res) { return resolve(!!res.confirm); },
+                                    fail: function () { return resolve(false); }
+                                });
+                            })];
+                    case 1:
+                        ok = _a.sent();
+                        if (!ok)
+                            return [2 /*return*/];
+                        this.setData({ deletingEdu: true, msg: '', errorMsg: '' });
+                        _a.label = 2;
+                    case 2:
+                        _a.trys.push([2, 4, 5, 6]);
+                        return [4 /*yield*/, api_1.api.deleteEduCredentials()];
+                    case 3:
+                        credential = _a.sent();
+                        this.applyEduCredential(credential);
+                        this.setData({ eduFormOpen: false, bindEduUsername: '', bindEduPassword: '', msg: '教务账号已解绑' });
+                        return [3 /*break*/, 6];
+                    case 4:
+                        e_6 = _a.sent();
+                        this.setData({ errorMsg: (e_6 === null || e_6 === void 0 ? void 0 : e_6.message) || '解绑失败，请稍后重试' });
+                        return [3 /*break*/, 6];
+                    case 5:
+                        this.setData({ deletingEdu: false });
+                        return [7 /*endfinally*/];
+                    case 6: return [2 /*return*/];
+                }
+            });
+        });
+    },
     applyProfile: function (p) {
         var email = String((p === null || p === void 0 ? void 0 : p.email) || '').trim();
         var verified = !!(p === null || p === void 0 ? void 0 : p.email_verified);
@@ -443,7 +580,7 @@ Page({
     },
     loadProfile: function () {
         return __awaiter(this, arguments, void 0, function (force) {
-            var self, now, lastAt, p, e_5;
+            var self, now, lastAt, p, e_7;
             if (force === void 0) { force = false; }
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -467,14 +604,55 @@ Page({
                         this.refreshSendCodeUi();
                         return [3 /*break*/, 5];
                     case 3:
-                        e_5 = _a.sent();
+                        e_7 = _a.sent();
                         this.applyProfile({});
-                        this.setData({ errorMsg: (e_5 === null || e_5 === void 0 ? void 0 : e_5.message) || '加载失败，请稍后重试' });
+                        this.setData({ errorMsg: (e_7 === null || e_7 === void 0 ? void 0 : e_7.message) || '加载失败，请稍后重试' });
                         return [3 /*break*/, 5];
                     case 4:
                         this.setData({ loading: false });
                         return [7 /*endfinally*/];
                     case 5: return [2 /*return*/];
+                }
+            });
+        });
+    },
+    applyEduCredential: function (credential) {
+        var bound = !!(credential === null || credential === void 0 ? void 0 : credential.has_credentials);
+        var hint = String((credential === null || credential === void 0 ? void 0 : credential.username_hint) || '').trim();
+        this.setData({
+            eduBound: bound,
+            eduChip: bound ? '已绑定' : '未绑定',
+            eduDesc: bound ? "\u5F53\u524D\u6559\u52A1\u8D26\u53F7\uFF1A".concat(hint || '已保存') : '绑定教务系统账号后，课表和成绩查询无需重复输入账号密码。',
+            eduActionText: bound ? '更换' : '绑定'
+        });
+    },
+    loadEduCredentialStatus: function () {
+        return __awaiter(this, arguments, void 0, function (force) {
+            var self, now, lastAt, data, e_8;
+            if (force === void 0) { force = false; }
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        self = this;
+                        now = Date.now();
+                        lastAt = Number(self.__lastEduLoadedAt || 0) || 0;
+                        if (!force && now - lastAt < 8000)
+                            return [2 /*return*/];
+                        self.__lastEduLoadedAt = now;
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, 3, , 4]);
+                        return [4 /*yield*/, api_1.api.getEduScheduleStatus()];
+                    case 2:
+                        data = _a.sent();
+                        this.applyEduCredential((data === null || data === void 0 ? void 0 : data.credential) || {});
+                        return [3 /*break*/, 4];
+                    case 3:
+                        e_8 = _a.sent();
+                        this.applyEduCredential({});
+                        this.setData({ errorMsg: (e_8 === null || e_8 === void 0 ? void 0 : e_8.message) || '教务账号状态加载失败' });
+                        return [3 /*break*/, 4];
+                    case 4: return [2 /*return*/];
                 }
             });
         });

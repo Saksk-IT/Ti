@@ -16,7 +16,7 @@
       <view class="container">
         <view class="card hero" aria-label="账号绑定概览">
           <text class="hero-title">账号绑定</text>
-          <text class="hero-sub">管理邮箱与微信绑定状态。</text>
+          <text class="hero-sub">管理邮箱、微信与教务系统绑定状态。</text>
         </view>
 
         <view class="subtabs" aria-label="账号管理子导航">
@@ -109,6 +109,67 @@
               <view class="btn {{unbindingWechat ? 'disabled' : ''}}" wx:if="{{wechatBound}}" bindtap="onWechatUnbindTap" aria-role="button" aria-label="解绑微信">
                 <text>{{unbindingWechat ? '解绑中…' : '解绑'}}</text>
               </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 教务系统 -->
+        <view class="card section-card" aria-label="教务系统绑定">
+          <view class="bind-row">
+            <view class="bind-meta">
+              <text class="bind-name">教务系统</text>
+              <text class="bind-desc">{{eduDesc}}</text>
+            </view>
+            <view class="bind-actions">
+              <view class="status-chip"><text>{{eduChip}}</text></view>
+              <view class="btn btn-quiet {{bindingEdu ? 'disabled' : ''}}" bindtap="onEduActionTap" aria-role="button" aria-label="绑定或更换教务系统账号">
+                <text>{{bindingEdu ? '保存中…' : eduActionText}}</text>
+              </view>
+              <view class="btn {{deletingEdu ? 'disabled' : ''}}" wx:if="{{eduBound}}" bindtap="onDeleteEduCredentialsTap" aria-role="button" aria-label="解绑教务系统账号">
+                <text>{{deletingEdu ? '解绑中…' : '解绑'}}</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="bind-form" wx:if="{{eduFormOpen}}">
+            <view class="divider"></view>
+            <view class="form-grid">
+              <view class="acc-field">
+                <text class="acc-label">教务账号</text>
+                <input
+                  class="acc-input"
+                  value="{{bindEduUsername}}"
+                  type="text"
+                  maxlength="64"
+                  placeholder="学号/工号"
+                  placeholder-class="placeholder"
+                  bindinput="onBindEduUsernameInput"
+                />
+              </view>
+
+              <view class="acc-field">
+                <text class="acc-label">教务密码</text>
+                <input
+                  class="acc-input"
+                  value="{{bindEduPassword}}"
+                  password="{{true}}"
+                  maxlength="128"
+                  placeholder="教务系统密码"
+                  placeholder-class="placeholder"
+                  bindinput="onBindEduPasswordInput"
+                />
+              </view>
+
+              <view class="form-actions">
+                <view class="btn btn-primary {{bindingEdu ? 'disabled' : ''}}" bindtap="onBindEduCredentialsTap" aria-role="button" aria-label="保存教务系统账号绑定">
+                  <text>{{bindingEdu ? '保存中…' : '保存绑定'}}</text>
+                </view>
+                <view class="btn {{bindingEdu ? 'disabled' : ''}}" bindtap="onCloseEduFormTap" aria-role="button" aria-label="取消绑定教务系统账号">
+                  <text>取消</text>
+                </view>
+              </view>
+
+              <text class="acc-help">绑定后，课表和成绩查询只需要选择学年与学期。</text>
             </view>
           </view>
         </view>
