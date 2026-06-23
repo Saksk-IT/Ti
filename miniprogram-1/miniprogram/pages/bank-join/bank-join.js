@@ -46,6 +46,11 @@ function normalizeSourceType(input) {
     return String(input || '').trim() === 'system' ? 'system' : 'user';
 }
 
+function joinedBankDetailUrl(bankId, source) {
+    var id = encodeURIComponent(String(bankId));
+    return "/pages/bank-detail/bank-detail?id=".concat(id, "&source_type=user&source=").concat(source, "&relation=").concat(source);
+}
+
 function joinLabel(mode) {
     var value = String(mode || 'free').trim().toLowerCase();
     if (value === 'member')
@@ -231,7 +236,7 @@ Page({
             (0, nav_1.safeNavigate)("/pages/subject-detail-v2/subject-detail-v2?".concat(params.join('&')), 'redirectTo');
             return;
         }
-        (0, nav_1.safeNavigate)("/pages/bank-detail/bank-detail?id=".concat(encodeURIComponent(String(bankId))), 'redirectTo');
+    (0, nav_1.safeNavigate)(joinedBankDetailUrl(bankId, 'public'), 'redirectTo');
     },
 
     onPublicRetry: function () {
@@ -259,7 +264,7 @@ Page({
                 wx.showToast({ title: bankName ? "\u5DF2\u52A0\u5165\u300C".concat(bankName, "\u300D") : '已加入', icon: 'success' });
                 clearPendingMiniRedirect();
                 if (bankId > 0) {
-                    (0, nav_1.safeNavigate)("/pages/bank-detail/bank-detail?id=".concat(encodeURIComponent(String(bankId))), 'redirectTo');
+                    (0, nav_1.safeNavigate)(joinedBankDetailUrl(bankId, 'shared'), 'redirectTo');
                 }
                 else {
                     (0, nav_1.safeNavigate)('/pages/my-banks-v2/my-banks-v2', 'switchTab');
@@ -295,7 +300,7 @@ Page({
                 wx.showToast({ title: bankName ? "\u5DF2\u52A0\u5165\u300C".concat(bankName, "\u300D") : '已加入', icon: 'success' });
                 clearPendingMiniRedirect();
                 if (bankId > 0) {
-                    (0, nav_1.safeNavigate)("/pages/bank-detail/bank-detail?id=".concat(encodeURIComponent(String(bankId))), 'redirectTo');
+                    (0, nav_1.safeNavigate)(joinedBankDetailUrl(bankId, 'shared'), 'redirectTo');
                 }
                 else {
                     (0, nav_1.safeNavigate)('/pages/my-banks-v2/my-banks-v2', 'switchTab');

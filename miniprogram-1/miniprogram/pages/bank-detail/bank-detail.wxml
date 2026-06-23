@@ -111,9 +111,12 @@
               <view class="start-error" wx:if="{{startError}}"><text>{{startError}}</text></view>
             </view>
 
-            <view class="actions actions-hero">
+            <view class="actions actions-hero {{showLeaveBankAction ? 'actions-with-leave' : ''}}">
               <view class="btn {{startDisabled ? 'disabled' : ''}}" bindtap="onStartQuiz"><text>开始刷题</text></view>
               <view class="btn {{startDisabled ? 'disabled' : ''}}" bindtap="onStartMemo"><text>开始背题</text></view>
+              <view wx:if="{{showLeaveBankAction}}" class="btn btn-danger leave-btn {{leavingBank ? 'disabled' : ''}}" bindtap="onLeaveJoinedBank">
+                <text>{{leavingBank ? '退出中...' : '退出题库'}}</text>
+              </view>
             </view>
 
             <view class="adv-toggle" bindtap="onTogglePracticeAdvanced" aria-role="button" aria-label="展开更多筛选与选项">
@@ -777,25 +780,6 @@
             </view>
           </view>
 
-          <view wx:else>
-            <view class="card" aria-label="分享">
-              <view class="card-head">
-                <view class="card-head-left">
-                  <text class="card-title">分享</text>
-                  <text class="card-sub">你当前不是创建者，无法创建或撤销分享。</text>
-                </view>
-              </view>
-            </view>
-
-            <view class="card" aria-label="加入提示">
-              <view class="card-head">
-                <view class="card-head-left">
-                  <text class="card-title">让好友加入</text>
-                  <text class="card-sub">需要授权加入请联系创建者使用微信分享或生成分享码。</text>
-                </view>
-              </view>
-            </view>
-          </view>
         </view>
 
         <view class="loading" wx:if="{{loading}}">

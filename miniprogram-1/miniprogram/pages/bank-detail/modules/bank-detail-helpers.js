@@ -53,10 +53,17 @@ function normalizeDetailTabOrder(input, fallback) {
     base.forEach(push);
     return out;
 }
-function buildDetailTabViews(order, canManage) {
+function buildDetailTabViews(order, canManage, showShareTab) {
     if (canManage === void 0) { canManage = false; }
+    if (showShareTab === void 0) { showShareTab = true; }
     var list = Array.isArray(order) ? order : exports.DEFAULT_DETAIL_TAB_ORDER;
-    var filtered = canManage ? list : list.filter(function (k) { return k !== 'manage'; });
+    var filtered = list.filter(function (key) {
+        if (!canManage && key === 'manage')
+            return false;
+        if (!showShareTab && key === 'share')
+            return false;
+        return true;
+    });
     return filtered.map(function (key) { return ({ key: key, label: exports.DETAIL_TAB_LABELS[key] || key }); });
 }
 function getBankDetailTabOrderKey(bankId) {

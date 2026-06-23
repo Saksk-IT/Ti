@@ -65,6 +65,11 @@ function normalizeSourceType(input: any): PublicSourceType {
   return String(input || '').trim() === 'system' ? 'system' : 'user';
 }
 
+function joinedBankDetailUrl(bankId: number, source: 'public' | 'shared'): string {
+  const id = encodeURIComponent(String(bankId));
+  return `/pages/bank-detail/bank-detail?id=${id}&source_type=user&source=${source}&relation=${source}`;
+}
+
 function joinLabel(mode: any): string {
   const value = String(mode || 'free').trim().toLowerCase();
   if (value === 'member') return '会员加入';
@@ -246,7 +251,7 @@ Page({
       safeNavigate(`/pages/subject-detail-v2/subject-detail-v2?${params.join('&')}`, 'redirectTo');
       return;
     }
-    safeNavigate(`/pages/bank-detail/bank-detail?id=${encodeURIComponent(String(bankId))}`, 'redirectTo');
+    safeNavigate(joinedBankDetailUrl(bankId, 'public'), 'redirectTo');
   },
 
   onPublicRetry() {
@@ -274,7 +279,7 @@ Page({
       wx.showToast({ title: bankName ? `已加入「${bankName}」` : '已加入', icon: 'success' });
       clearPendingMiniRedirect();
       if (bankId > 0) {
-        safeNavigate(`/pages/bank-detail/bank-detail?id=${encodeURIComponent(String(bankId))}`, 'redirectTo');
+        safeNavigate(joinedBankDetailUrl(bankId, 'shared'), 'redirectTo');
       } else {
         safeNavigate('/pages/my-banks-v2/my-banks-v2', 'switchTab');
       }
@@ -308,7 +313,7 @@ Page({
       wx.showToast({ title: bankName ? `已加入「${bankName}」` : '已加入', icon: 'success' });
       clearPendingMiniRedirect();
       if (bankId > 0) {
-        safeNavigate(`/pages/bank-detail/bank-detail?id=${encodeURIComponent(String(bankId))}`, 'redirectTo');
+        safeNavigate(joinedBankDetailUrl(bankId, 'shared'), 'redirectTo');
       } else {
         safeNavigate('/pages/my-banks-v2/my-banks-v2', 'switchTab');
       }

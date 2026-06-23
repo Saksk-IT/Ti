@@ -132,12 +132,23 @@ function sourceLabelFor(item, source, relation) {
         return '公开+分享';
     return source === 'shared' ? '分享加入' : '公开加入';
 }
-function detailPathFor(item, id) {
-    var sourceType = String((item === null || item === void 0 ? void 0 : item.source_type) || 'user').toLowerCase();
+function detailPathFor(id, source, relation, sourceType) {
     if (sourceType === 'system') {
-        return "/pages/subject-detail-v2/subject-detail-v2?id=".concat(encodeURIComponent(String(id)));
+        var systemParams = ["id=".concat(encodeURIComponent(String(id)))];
+        if (source !== 'created') {
+            systemParams.push("source_type=".concat(encodeURIComponent('system')));
+            systemParams.push("source=".concat(encodeURIComponent(source)));
+            systemParams.push("relation=".concat(encodeURIComponent(relation)));
+        }
+        return "/pages/subject-detail-v2/subject-detail-v2?".concat(systemParams.join('&'));
     }
-    return "/pages/bank-detail/bank-detail?id=".concat(encodeURIComponent(String(id)));
+    var params = ["id=".concat(encodeURIComponent(String(id)))];
+    if (source !== 'created') {
+        params.push("source_type=".concat(encodeURIComponent(sourceType)));
+        params.push("source=".concat(encodeURIComponent(source)));
+        params.push("relation=".concat(encodeURIComponent(relation)));
+    }
+    return "/pages/bank-detail/bank-detail?".concat(params.join('&'));
 }
 function overviewItemToBank(item) {
     var id = Number((item === null || item === void 0 ? void 0 : item.id) || 0);
@@ -172,7 +183,7 @@ function overviewItemToBank(item) {
         owner_avatar_url: ownerAvatarUrl,
         cover_url: coverUrl,
         has_cover: !!coverUrl,
-        detail_path: detailPathFor(item, id)
+        detail_path: detailPathFor(id, source, relation, sourceType)
     };
 }
 Page({

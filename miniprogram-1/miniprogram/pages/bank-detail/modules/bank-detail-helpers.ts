@@ -183,9 +183,13 @@ export function normalizeDetailTabOrder(input: any, fallback: DetailTab[]): Deta
   return out;
 }
 
-export function buildDetailTabViews(order: DetailTab[], canManage: boolean = false): DetailTabView[] {
+export function buildDetailTabViews(order: DetailTab[], canManage: boolean = false, showShareTab: boolean = true): DetailTabView[] {
   const list = Array.isArray(order) ? order : DEFAULT_DETAIL_TAB_ORDER;
-  const filtered = canManage ? list : list.filter((k) => k !== 'manage');
+  const filtered = list.filter((key) => {
+    if (!canManage && key === 'manage') return false;
+    if (!showShareTab && key === 'share') return false;
+    return true;
+  });
   return filtered.map((key) => ({ key, label: DETAIL_TAB_LABELS[key] || key }));
 }
 
@@ -368,5 +372,4 @@ export function buildExternalWebUrl(next: any): string {
   if (!origin) return path;
   return appendFromMiniapp(`${origin}${path}`);
 }
-
 

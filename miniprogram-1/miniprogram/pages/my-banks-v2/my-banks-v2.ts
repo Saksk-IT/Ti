@@ -86,12 +86,28 @@ function sourceLabelFor(item: any, source: 'created' | 'public' | 'shared', rela
   return source === 'shared' ? '分享加入' : '公开加入';
 }
 
-function detailPathFor(item: any, id: number): string {
-  const sourceType = String(item?.source_type || 'user').toLowerCase();
+function detailPathFor(
+  id: number,
+  source: 'created' | 'public' | 'shared',
+  relation: 'created' | 'public' | 'shared' | 'both',
+  sourceType: 'user' | 'system'
+): string {
   if (sourceType === 'system') {
-    return `/pages/subject-detail-v2/subject-detail-v2?id=${encodeURIComponent(String(id))}`;
+    const params = [`id=${encodeURIComponent(String(id))}`];
+    if (source !== 'created') {
+      params.push(`source_type=${encodeURIComponent('system')}`);
+      params.push(`source=${encodeURIComponent(source)}`);
+      params.push(`relation=${encodeURIComponent(relation)}`);
+    }
+    return `/pages/subject-detail-v2/subject-detail-v2?${params.join('&')}`;
   }
-  return `/pages/bank-detail/bank-detail?id=${encodeURIComponent(String(id))}`;
+  const params = [`id=${encodeURIComponent(String(id))}`];
+  if (source !== 'created') {
+    params.push(`source_type=${encodeURIComponent(sourceType)}`);
+    params.push(`source=${encodeURIComponent(source)}`);
+    params.push(`relation=${encodeURIComponent(relation)}`);
+  }
+  return `/pages/bank-detail/bank-detail?${params.join('&')}`;
 }
 
 function overviewItemToBank(item: any): BankMeta | null {
@@ -128,7 +144,7 @@ function overviewItemToBank(item: any): BankMeta | null {
     owner_avatar_url: ownerAvatarUrl,
     cover_url: coverUrl,
     has_cover: !!coverUrl,
-    detail_path: detailPathFor(item, id)
+    detail_path: detailPathFor(id, source, relation, sourceType)
   };
 }
 

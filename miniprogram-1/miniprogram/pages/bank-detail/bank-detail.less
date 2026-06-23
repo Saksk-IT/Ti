@@ -1072,6 +1072,10 @@ page {
   padding-bottom: 0;
 }
 
+.actions.actions-with-leave .leave-btn {
+  grid-column: 1 / -1;
+}
+
 .actions.actions-single {
   grid-template-columns: 1fr;
 }
@@ -1296,6 +1300,12 @@ page {
   border-color: color-mix(in srgb, var(--app-cta) 38%, var(--app-border));
   background: color-mix(in srgb, var(--app-cta) 16%, var(--app-surface));
   color: var(--app-cta);
+}
+
+.btn-danger {
+  border-color: color-mix(in srgb, var(--app-danger) 36%, var(--app-border));
+  background: color-mix(in srgb, var(--app-danger) 12%, var(--app-surface));
+  color: var(--app-danger);
 }
 
 .btn:active {

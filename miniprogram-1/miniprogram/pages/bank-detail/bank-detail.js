@@ -54,6 +54,24 @@ var theme_1 = require("../../utils/theme");
 var request_state_1 = require("../../behaviors/request-state");
 var set_data_batcher_1 = require("../../utils/set-data-batcher");
 var bank_detail_helpers_1 = require("./modules/bank-detail-helpers");
+function normalizeBankSourceType(input) {
+    return String(input || '').trim().toLowerCase() === 'system' ? 'system' : 'user';
+}
+function normalizeJoinedBankSource(input) {
+    var raw = String(input || '').trim().toLowerCase();
+    if (raw === 'public' || raw === 'shared')
+        return raw;
+    return '';
+}
+function normalizeJoinedBankRelation(input) {
+    var raw = String(input || '').trim().toLowerCase();
+    if (raw === 'public' || raw === 'shared' || raw === 'both')
+        return raw;
+    return '';
+}
+function hasJoinedBankContext(source, relation) {
+    return source === 'public' || source === 'shared' || relation === 'public' || relation === 'shared' || relation === 'both';
+}
 var _ps = new WeakMap();
 function _p(ctx) {
     var s = _ps.get(ctx);
@@ -71,7 +89,7 @@ Page({
         tab: 'practice',
         entry: '',
         tabOrderOpen: false,
-        detailTabs: (0, bank_detail_helpers_1.buildDetailTabViews)(bank_detail_helpers_1.DEFAULT_DETAIL_TAB_ORDER, false),
+        detailTabs: (0, bank_detail_helpers_1.buildDetailTabViews)(bank_detail_helpers_1.DEFAULT_DETAIL_TAB_ORDER, false, false),
         bankId: 0,
         bankName: '',
         bankDescription: '',
@@ -81,6 +99,11 @@ Page({
         bankPublicDescription: '',
         bankPublicSaving: false,
         bankPublicError: '',
+        joinedBankSource: '',
+        joinedBankRelation: '',
+        leaveBankSourceType: 'user',
+        showLeaveBankAction: false,
+        leavingBank: false,
         totalCount: 0,
         favCount: 0,
         mistakeCount: 0,
@@ -229,6 +252,9 @@ Page({
         var rawTab = options === null || options === void 0 ? void 0 : options.tab;
         var tab = (0, bank_detail_helpers_1.normalizeTab)(rawTab);
         var entry = String((options === null || options === void 0 ? void 0 : options.entry) || '').trim().toLowerCase();
+        var joinedBankSource = normalizeJoinedBankSource((options === null || options === void 0 ? void 0 : options.source) || (options === null || options === void 0 ? void 0 : options.joined_source) || (options === null || options === void 0 ? void 0 : options.joinedSource));
+        var joinedBankRelation = normalizeJoinedBankRelation((options === null || options === void 0 ? void 0 : options.relation) || (options === null || options === void 0 ? void 0 : options.joined_relation) || (options === null || options === void 0 ? void 0 : options.joinedRelation) || joinedBankSource);
+        var leaveBankSourceType = normalizeBankSourceType((options === null || options === void 0 ? void 0 : options.source_type) || (options === null || options === void 0 ? void 0 : options.sourceType) || (options === null || options === void 0 ? void 0 : options.bank_type) || (options === null || options === void 0 ? void 0 : options.bankType));
         var tabKey = String(rawTab || '').trim().toLowerCase();
         var scopeFromParams = (tabKey === 'favorites' || tabKey === 'mistakes')
             ? (0, bank_detail_helpers_1.normalizeScope)(tabKey)
@@ -239,6 +265,9 @@ Page({
             bankId: Number.isFinite(bankId) ? bankId : 0,
             tab: tab,
             entry: entry,
+            joinedBankSource: joinedBankSource,
+            joinedBankRelation: joinedBankRelation,
+            leaveBankSourceType: leaveBankSourceType,
             practiceScope: scopeFromParams
         }, undefined, true);
     },
@@ -301,7 +330,7 @@ Page({
     },
     bootstrap: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var bankId, keyType, keyTag, keyScope, keySearchType, keyStatsSubTab, keyReinforceSubTab, storedType, storedTag, storedScope, storedSearchType, storedStatsSubTab, storedReinforceSubTab, shuffleQuestions, shuffleOptions, entry, tab, practiceScope, forcedScope, statsSubTab, reinforceSubTab, _a, detailRes, countsRes, myStatsRes, tagsRes, bankData, countsData, myStatsData, tagsResObj, tagsData, bankName, bankDescription, accessType, permission, canManageShare, bankIsPublic, bankAllowCopy, bankPublicDescription, tabOrderKey, tabOrder, detailTabs, typesRaw, types, qType, tagsDataInner, tagsRaw, tags, tag, searchType, totalCount, favCount, mistakeCount, e_1;
+            var bankId, keyType, keyTag, keyScope, keySearchType, keyStatsSubTab, keyReinforceSubTab, storedType, storedTag, storedScope, storedSearchType, storedStatsSubTab, storedReinforceSubTab, shuffleQuestions, shuffleOptions, entry, tab, practiceScope, forcedScope, statsSubTab, reinforceSubTab, _a, detailRes, countsRes, myStatsRes, tagsRes, bankData, countsData, myStatsData, tagsResObj, tagsData, bankName, bankDescription, accessType, permission, canManageShare, showShareTab, joinedSource, joinedRelation, leaveBankSourceType, showLeaveBankAction, bankIsPublic, bankAllowCopy, bankPublicDescription, tabOrderKey, tabOrder, detailTabs, typesRaw, types, qType, tagsDataInner, tagsRaw, tags, tag, searchType, totalCount, favCount, mistakeCount, e_1;
             var _b, _c;
             return __generator(this, function (_d) {
                 switch (_d.label) {
@@ -376,14 +405,19 @@ Page({
                         accessType = String((bankData === null || bankData === void 0 ? void 0 : bankData.access_type) || '').trim().toLowerCase();
                         permission = String((bankData === null || bankData === void 0 ? void 0 : bankData.permission) || '').trim().toLowerCase();
                         canManageShare = accessType === 'owner' || permission === 'owner';
-                        if (tab === 'manage' && !canManageShare)
+                        showShareTab = canManageShare;
+                        if ((tab === 'manage' || tab === 'share') && !canManageShare)
                             tab = 'practice';
+                        joinedSource = normalizeJoinedBankSource(this.data.joinedBankSource);
+                        joinedRelation = normalizeJoinedBankRelation(this.data.joinedBankRelation || joinedSource);
+                        leaveBankSourceType = normalizeBankSourceType(this.data.leaveBankSourceType);
+                        showLeaveBankAction = !canManageShare && leaveBankSourceType === 'user' && hasJoinedBankContext(joinedSource, joinedRelation);
                         bankIsPublic = (0, bank_detail_helpers_1.parseBoolFlag)(bankData === null || bankData === void 0 ? void 0 : bankData.is_public, false);
                         bankAllowCopy = (0, bank_detail_helpers_1.parseBoolFlag)(bankData === null || bankData === void 0 ? void 0 : bankData.allow_copy, true);
                         bankPublicDescription = String((bankData === null || bankData === void 0 ? void 0 : bankData.public_description) || '').trim();
                         tabOrderKey = (0, bank_detail_helpers_1.getBankDetailTabOrderKey)(bankId);
                         tabOrder = (0, bank_detail_helpers_1.readBankDetailTabOrder)(tabOrderKey, bank_detail_helpers_1.DEFAULT_DETAIL_TAB_ORDER);
-                        detailTabs = (0, bank_detail_helpers_1.buildDetailTabViews)(tabOrder, canManageShare);
+                        detailTabs = (0, bank_detail_helpers_1.buildDetailTabViews)(tabOrder, canManageShare, showShareTab);
                         typesRaw = Array.isArray(bankData === null || bankData === void 0 ? void 0 : bankData.available_types) ? bankData.available_types : [];
                         types = (typesRaw || [])
                             .filter(function (t) { return typeof t === 'string' && t.trim(); })
@@ -414,6 +448,11 @@ Page({
                             bankPublicDescription: bankPublicDescription,
                             bankPublicSaving: false,
                             bankPublicError: '',
+                            joinedBankSource: joinedSource,
+                            joinedBankRelation: joinedRelation,
+                            leaveBankSourceType: leaveBankSourceType,
+                            showLeaveBankAction: showLeaveBankAction,
+                            leavingBank: false,
                             totalCount: totalCount,
                             favCount: favCount,
                             mistakeCount: mistakeCount,
@@ -506,14 +545,16 @@ Page({
         var bankId = Number(this.data.bankId || 0);
         var key = (0, bank_detail_helpers_1.getBankDetailTabOrderKey)(bankId);
         var order = (0, bank_detail_helpers_1.readBankDetailTabOrder)(key, bank_detail_helpers_1.DEFAULT_DETAIL_TAB_ORDER);
-        this.patchData({ detailTabs: (0, bank_detail_helpers_1.buildDetailTabViews)(order, Boolean(this.data.canManageShare)) });
+        var showShareTab = Boolean(this.data.canManageShare);
+        this.patchData({ detailTabs: (0, bank_detail_helpers_1.buildDetailTabViews)(order, Boolean(this.data.canManageShare), showShareTab) });
     },
     applyDetailTabOrder: function (nextOrder) {
         var normalized = (0, bank_detail_helpers_1.normalizeDetailTabOrder)(nextOrder, bank_detail_helpers_1.DEFAULT_DETAIL_TAB_ORDER);
         var bankId = Number(this.data.bankId || 0);
         var key = (0, bank_detail_helpers_1.getBankDetailTabOrderKey)(bankId);
         (0, bank_detail_helpers_1.persistBankDetailTabOrder)(key, normalized);
-        this.patchData({ detailTabs: (0, bank_detail_helpers_1.buildDetailTabViews)(normalized, Boolean(this.data.canManageShare)) });
+        var showShareTab = Boolean(this.data.canManageShare);
+        this.patchData({ detailTabs: (0, bank_detail_helpers_1.buildDetailTabViews)(normalized, Boolean(this.data.canManageShare), showShareTab) });
     },
     onOpenTabOrder: function () {
         this.patchData({ tabOrderOpen: true });
@@ -625,6 +666,43 @@ Page({
             if (_this.data.canManageShare) {
                 _this.loadUsageStats();
             }
+        });
+    },
+    onLeaveJoinedBank: function () {
+        var _this = this;
+        var bankId = Number(this.data.bankId || 0);
+        if (!Number.isFinite(bankId) || bankId <= 0)
+            return;
+        if (!this.data.showLeaveBankAction || this.data.leavingBank)
+            return;
+        new Promise(function (resolve) {
+            wx.showModal({
+                title: '退出题库',
+                content: '确定要退出该题库吗？退出后会从“我的题库”中移除。',
+                confirmText: '退出',
+                confirmColor: '#dc2626',
+                cancelText: '取消',
+                success: function (res) { return resolve(!!res.confirm); },
+                fail: function () { return resolve(false); }
+            });
+        }).then(function (confirmed) {
+            if (!confirmed)
+                return;
+            _this.patchData({ leavingBank: true }, undefined, true);
+            return api_1.api.leavePublicBank('user', bankId).then(function () {
+                _this.patchData({ showLeaveBankAction: false, leavingBank: false }, undefined, true);
+                wx.showToast({ title: '已退出题库', icon: 'success' });
+                setTimeout(function () {
+                    wx.switchTab({
+                        url: '/pages/my-banks-v2/my-banks-v2',
+                        fail: function () { return wx.navigateBack(); }
+                    });
+                }, 500);
+            }).catch(function (err) {
+                var msg = (err && err.message) ? String(err.message) : '退出失败';
+                _this.patchData({ leavingBank: false }, undefined, true);
+                wx.showToast({ title: msg, icon: 'none' });
+            });
         });
     },
     onBankOwnershipTap: function (e) {

@@ -57,6 +57,29 @@ type _PrivState = {
   qDetailReq?: number;
   statsReq?: number;
 };
+type JoinedBankSource = '' | 'public' | 'shared';
+type JoinedBankRelation = '' | 'public' | 'shared' | 'both';
+type BankSourceType = 'user' | 'system';
+
+function normalizeBankSourceType(input: any): BankSourceType {
+  return String(input || '').trim().toLowerCase() === 'system' ? 'system' : 'user';
+}
+
+function normalizeJoinedBankSource(input: any): JoinedBankSource {
+  const raw = String(input || '').trim().toLowerCase();
+  if (raw === 'public' || raw === 'shared') return raw;
+  return '';
+}
+
+function normalizeJoinedBankRelation(input: any): JoinedBankRelation {
+  const raw = String(input || '').trim().toLowerCase();
+  if (raw === 'public' || raw === 'shared' || raw === 'both') return raw;
+  return '';
+}
+
+function hasJoinedBankContext(source: JoinedBankSource, relation: JoinedBankRelation): boolean {
+  return source === 'public' || source === 'shared' || relation === 'public' || relation === 'shared' || relation === 'both';
+}
 const _ps = new WeakMap<object, _PrivState>();
 function _p(ctx: object): _PrivState {
   let s = _ps.get(ctx);
@@ -73,7 +96,7 @@ Page({
     tab: 'practice' as DetailTab,
     entry: '',
     tabOrderOpen: false,
-    detailTabs: buildDetailTabViews(DEFAULT_DETAIL_TAB_ORDER, false),
+    detailTabs: buildDetailTabViews(DEFAULT_DETAIL_TAB_ORDER, false, false),
 
     bankId: 0,
     bankName: '',
@@ -84,6 +107,11 @@ Page({
     bankPublicDescription: '',
     bankPublicSaving: false,
     bankPublicError: '',
+    joinedBankSource: '' as JoinedBankSource,
+    joinedBankRelation: '' as JoinedBankRelation,
+    leaveBankSourceType: 'user' as BankSourceType,
+    showLeaveBankAction: false,
+    leavingBank: false,
 
     totalCount: 0,
     favCount: 0,
@@ -246,6 +274,9 @@ Page({
     const rawTab = options?.tab;
     const tab = normalizeTab(rawTab);
     const entry = String(options?.entry || '').trim().toLowerCase();
+    const joinedBankSource = normalizeJoinedBankSource(options?.source || options?.joined_source || options?.joinedSource);
+    const joinedBankRelation = normalizeJoinedBankRelation(options?.relation || options?.joined_relation || options?.joinedRelation || joinedBankSource);
+    const leaveBankSourceType = normalizeBankSourceType(options?.source_type || options?.sourceType || options?.bank_type || options?.bankType);
     const tabKey = String(rawTab || '').trim().toLowerCase();
     const scopeFromParams = (tabKey === 'favorites' || tabKey === 'mistakes')
       ? normalizeScope(tabKey)
@@ -256,6 +287,9 @@ Page({
       bankId: Number.isFinite(bankId) ? bankId : 0,
       tab,
       entry,
+      joinedBankSource,
+      joinedBankRelation,
+      leaveBankSourceType,
       practiceScope: scopeFromParams
     }, undefined, true);
   },
@@ -391,7 +425,13 @@ Page({
       const accessType = String(bankData?.access_type || '').trim().toLowerCase();
       const permission = String(bankData?.permission || '').trim().toLowerCase();
       const canManageShare = accessType === 'owner' || permission === 'owner';
-      if (tab === 'manage' && !canManageShare) tab = 'practice';
+      const showShareTab = canManageShare;
+      if ((tab === 'manage' || tab === 'share') && !canManageShare) tab = 'practice';
+
+      const joinedSource = normalizeJoinedBankSource(this.data.joinedBankSource);
+      const joinedRelation = normalizeJoinedBankRelation(this.data.joinedBankRelation || joinedSource);
+      const leaveBankSourceType = normalizeBankSourceType(this.data.leaveBankSourceType);
+      const showLeaveBankAction = !canManageShare && leaveBankSourceType === 'user' && hasJoinedBankContext(joinedSource, joinedRelation);
 
       const bankIsPublic = parseBoolFlag(bankData?.is_public, false);
       const bankAllowCopy = parseBoolFlag(bankData?.allow_copy, true);
@@ -399,7 +439,7 @@ Page({
 
       const tabOrderKey = getBankDetailTabOrderKey(bankId);
       const tabOrder = readBankDetailTabOrder(tabOrderKey, DEFAULT_DETAIL_TAB_ORDER);
-      const detailTabs = buildDetailTabViews(tabOrder, canManageShare);
+      const detailTabs = buildDetailTabViews(tabOrder, canManageShare, showShareTab);
 
       const typesRaw = Array.isArray(bankData?.available_types) ? bankData.available_types : [];
       const types = (typesRaw || [])
@@ -435,6 +475,11 @@ Page({
         bankPublicDescription,
         bankPublicSaving: false,
         bankPublicError: '',
+        joinedBankSource: joinedSource,
+        joinedBankRelation: joinedRelation,
+        leaveBankSourceType,
+        showLeaveBankAction,
+        leavingBank: false,
         totalCount,
         favCount,
         mistakeCount,
@@ -524,7 +569,8 @@ Page({
     const bankId = Number(this.data.bankId || 0);
     const key = getBankDetailTabOrderKey(bankId);
     const order = readBankDetailTabOrder(key, DEFAULT_DETAIL_TAB_ORDER);
-    this.patchData({ detailTabs: buildDetailTabViews(order, Boolean(this.data.canManageShare)) });
+    const showShareTab = Boolean(this.data.canManageShare);
+    this.patchData({ detailTabs: buildDetailTabViews(order, Boolean(this.data.canManageShare), showShareTab) });
   },
 
   applyDetailTabOrder(nextOrder: DetailTab[]) {
@@ -532,7 +578,8 @@ Page({
     const bankId = Number(this.data.bankId || 0);
     const key = getBankDetailTabOrderKey(bankId);
     persistBankDetailTabOrder(key, normalized);
-    this.patchData({ detailTabs: buildDetailTabViews(normalized, Boolean(this.data.canManageShare)) });
+    const showShareTab = Boolean(this.data.canManageShare);
+    this.patchData({ detailTabs: buildDetailTabViews(normalized, Boolean(this.data.canManageShare), showShareTab) });
   },
 
   onOpenTabOrder() {
@@ -650,6 +697,42 @@ Page({
         this.loadUsageStats();
       }
     });
+  },
+
+  async onLeaveJoinedBank() {
+    const bankId = Number(this.data.bankId || 0);
+    if (!Number.isFinite(bankId) || bankId <= 0) return;
+    if (!this.data.showLeaveBankAction || this.data.leavingBank) return;
+
+    const confirmed = await new Promise<boolean>((resolve) => {
+      wx.showModal({
+        title: '退出题库',
+        content: '确定要退出该题库吗？退出后会从“我的题库”中移除。',
+        confirmText: '退出',
+        confirmColor: '#dc2626',
+        cancelText: '取消',
+        success: (res) => resolve(!!res.confirm),
+        fail: () => resolve(false)
+      });
+    });
+    if (!confirmed) return;
+
+    this.patchData({ leavingBank: true }, undefined, true);
+    try {
+      await api.leavePublicBank('user', bankId);
+      this.patchData({ showLeaveBankAction: false, leavingBank: false }, undefined, true);
+      wx.showToast({ title: '已退出题库', icon: 'success' });
+      setTimeout(() => {
+        wx.switchTab({
+          url: '/pages/my-banks-v2/my-banks-v2',
+          fail: () => wx.navigateBack()
+        });
+      }, 500);
+    } catch (err: any) {
+      const msg = (err && err.message) ? String(err.message) : '退出失败';
+      this.patchData({ leavingBank: false }, undefined, true);
+      wx.showToast({ title: msg, icon: 'none' });
+    }
   },
 
   async onBankOwnershipTap(e: any) {
