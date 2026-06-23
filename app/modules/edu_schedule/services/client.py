@@ -243,7 +243,7 @@ def _looks_logged_in(html_text: str) -> bool:
 
 def _load_cookie_header(session: requests.Session, cookie_header: str, base_url: str) -> None:
     domain = urlparse(base_url).hostname or ""
-    for item in (cookie_header or "").split(";"):
+    for item in _normalize_cookie_header(cookie_header).split(";"):
         if "=" not in item:
             continue
         name, value = item.split("=", 1)
@@ -271,3 +271,30 @@ def _load_cookie_header(session: requests.Session, cookie_header: str, base_url:
             rfc2109=False,
         )
         session.cookies.set_cookie(cookie)
+
+
+def _normalize_cookie_header(cookie_text: str) -> str:
+    """兼容标准 Cookie 头和浏览器导出的 Cookie 表格。"""
+    text = (cookie_text or "").strip()
+    if not text:
+        return ""
+    if "\n" not in text and "=" in text:
+        return text
+
+    pairs = []
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if "=" in line and "\t" not in line:
+            pairs.append(line)
+            continue
+        parts = line.split("\t") if "\t" in line else line.split()
+        if len(parts) < 2:
+            continue
+        name = parts[0].strip()
+        value = parts[1].strip()
+        if not name or not re.fullmatch(r"[A-Za-z0-9_.$-]+", name):
+            continue
+        pairs.append(f"{name}={value}")
+    return "; ".join(pairs)

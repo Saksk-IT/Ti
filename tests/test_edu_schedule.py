@@ -236,3 +236,24 @@ def test_query_rejects_partial_inline_credentials(auth_client):
     body = response.get_json()
     assert body["status"] == "error"
     assert body["message"] == "输入参数不正确"
+
+
+def test_webvpn_cookie_table_normalizes_to_header():
+    from app.modules.edu_schedule.services.client import _normalize_cookie_header
+
+    cookie_table = "\n".join(
+        [
+            "_astraeus_session\tabc%3D%3D--sig\twebvpn.synu.edu.cn\t/\t会话",
+            "_webvpn_key\tjwt.token.value\t.synu.edu.cn\t/\t会话",
+            "SERVERID\tServer1\twebvpn.synu.edu.cn\t/\t会话",
+            "webvpn_username\tuser%7Ctime%7Csig\t.synu.edu.cn\t/\t会话",
+        ]
+    )
+
+    assert _normalize_cookie_header(cookie_table) == (
+        "_astraeus_session=abc%3D%3D--sig; "
+        "_webvpn_key=jwt.token.value; "
+        "SERVERID=Server1; "
+        "webvpn_username=user%7Ctime%7Csig"
+    )
+    assert _normalize_cookie_header("SERVERID=Server1; route=webvpn") == "SERVERID=Server1; route=webvpn"
