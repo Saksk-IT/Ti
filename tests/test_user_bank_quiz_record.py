@@ -136,6 +136,7 @@ def _create_bank_with_questions(app, user_id: int, question_types: list[str]) ->
             "single_choice": (json.dumps(["错误 A", "正确 B", "错误 C"], ensure_ascii=False), json.dumps([1])),
             "multi_choice": (json.dumps(["正确 A", "错误 B", "正确 C"], ensure_ascii=False), json.dumps([0, 2])),
             "boolean": (json.dumps([], ensure_ascii=False), json.dumps([True])),
+            "essay": (json.dumps([], ensure_ascii=False), json.dumps(["参考答案"], ensure_ascii=False)),
         }
         for index, q_type in enumerate(question_types, start=1):
             options, answer = type_to_payload[q_type]
@@ -329,6 +330,116 @@ def test_bank_quiz_questions_supports_page_per_page_pagination(app, auth_client,
         ]
     finally:
         with app.app_context():
+            db.session.execute(text("DELETE FROM user_bank_questions WHERE bank_id = :bank_id"), {"bank_id": int(bank_id)})
+            db.session.execute(text("DELETE FROM user_question_banks WHERE id = :bank_id"), {"bank_id": int(bank_id)})
+            db.session.commit()
+
+
+def test_web_user_bank_subjective_grade_records_bank_answer(app, auth_client, seed_user):
+    bank_id = _create_bank_with_questions(app, seed_user["id"], ["essay"])
+
+    try:
+        with app.app_context():
+            question_id = int(
+                db.session.execute(
+                    text("SELECT id FROM user_bank_questions WHERE bank_id = :bank_id"),
+                    {"bank_id": int(bank_id)},
+                ).scalar_one()
+            )
+
+        response = auth_client.post(
+            "/api/grade_subjective",
+            json={
+                "question_id": question_id,
+                "user_answer": "我的答案",
+                "grading_mode": "auto_full",
+                "source": "user_bank",
+                "bank_id": bank_id,
+            },
+            headers={"X-Requested-With": "XMLHttpRequest"},
+        )
+
+        assert response.status_code == 200, response.get_json()
+        payload = response.get_json()
+        assert payload["status"] == "success"
+        assert payload["data"]["is_correct"] is True
+
+        with app.app_context():
+            recorded = db.session.execute(
+                text(
+                    """
+                    SELECT user_answer, is_correct
+                    FROM user_bank_answers
+                    WHERE user_id = :user_id AND bank_id = :bank_id AND question_id = :question_id
+                    """
+                ),
+                {
+                    "user_id": int(seed_user["id"]),
+                    "bank_id": int(bank_id),
+                    "question_id": int(question_id),
+                },
+            ).fetchone()
+            assert recorded is not None
+            assert recorded._mapping["user_answer"] == "我的答案"
+            assert bool(recorded._mapping["is_correct"]) is True
+    finally:
+        with app.app_context():
+            db.session.execute(text("DELETE FROM user_bank_answers WHERE bank_id = :bank_id"), {"bank_id": int(bank_id)})
+            db.session.execute(text("DELETE FROM user_bank_mistakes WHERE bank_id = :bank_id"), {"bank_id": int(bank_id)})
+            db.session.execute(text("DELETE FROM user_bank_questions WHERE bank_id = :bank_id"), {"bank_id": int(bank_id)})
+            db.session.execute(text("DELETE FROM user_question_banks WHERE id = :bank_id"), {"bank_id": int(bank_id)})
+            db.session.commit()
+
+
+def test_quiz_subjective_grade_falls_back_to_user_bank_question(app, auth_client, seed_user):
+    bank_id = _create_bank_with_questions(app, seed_user["id"], ["essay"])
+
+    try:
+        with app.app_context():
+            question_id = int(
+                db.session.execute(
+                    text("SELECT id FROM user_bank_questions WHERE bank_id = :bank_id"),
+                    {"bank_id": int(bank_id)},
+                ).scalar_one()
+            )
+
+        response = auth_client.post(
+            "/api/quiz/grade_subjective",
+            json={
+                "question_id": question_id,
+                "user_answer": "小程序旧请求",
+                "grading_mode": "auto_full",
+            },
+            headers={"X-Requested-With": "XMLHttpRequest"},
+        )
+
+        assert response.status_code == 200, response.get_json()
+        payload = response.get_json()
+        assert payload["status"] == "success"
+        assert payload["data"]["is_correct"] is True
+
+        with app.app_context():
+            recorded = db.session.execute(
+                text(
+                    """
+                    SELECT user_answer, is_correct
+                    FROM user_bank_answers
+                    WHERE user_id = :user_id AND bank_id = :bank_id AND question_id = :question_id
+                    """
+                ),
+                {
+                    "user_id": int(seed_user["id"]),
+                    "bank_id": int(bank_id),
+                    "question_id": int(question_id),
+                },
+            ).fetchone()
+            assert recorded is not None
+            assert recorded._mapping["user_answer"] == "小程序旧请求"
+            assert bool(recorded._mapping["is_correct"]) is True
+    finally:
+        with app.app_context():
+            db.session.execute(text("DELETE FROM user_bank_answers WHERE bank_id = :bank_id"), {"bank_id": int(bank_id)})
+            db.session.execute(text("DELETE FROM user_bank_mistakes WHERE bank_id = :bank_id"), {"bank_id": int(bank_id)})
             db.session.execute(text("DELETE FROM user_bank_questions WHERE bank_id = :bank_id"), {"bank_id": int(bank_id)})
             db.session.execute(text("DELETE FROM user_question_banks WHERE id = :bank_id"), {"bank_id": int(bank_id)})
             db.session.commit()

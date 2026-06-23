@@ -145,14 +145,19 @@ async function _checkAnswerSubjective(currentQ, type, qId) {
             setSubjectiveAiSubmittingState(currentQ, true);
         }
         try {
+            const payload = {
+                question_id: qId,
+                user_answer: userAnswer,
+                grading_mode: gradingMode
+            };
+            if (typeof IS_USER_BANK !== 'undefined' && IS_USER_BANK && typeof BANK_ID !== 'undefined' && BANK_ID) {
+                payload.source = 'user_bank';
+                payload.bank_id = BANK_ID;
+            }
             const res = await fetch('/api/grade_subjective', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    question_id: qId,
-                    user_answer: userAnswer,
-                    grading_mode: gradingMode
-                })
+                body: JSON.stringify(payload)
             });
             const data = await res.json();
             if (data && data.status === 'success' && data.data) {
