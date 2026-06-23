@@ -62,12 +62,11 @@ function formatDateLabel(input) {
     if (Number.isFinite(d.getTime())) {
         var y = d.getFullYear();
         var m_1 = String(d.getMonth() + 1).padStart(2, '0');
-        var day = String(d.getDate()).padStart(2, '0');
-        return "".concat(y, "-").concat(m_1, "-").concat(day);
+        return "".concat(y, "-").concat(m_1);
     }
     var m = normalized.match(/^(\d{4})[\/-](\d{2})[\/-](\d{2})/);
     if (m)
-        return "".concat(m[1], "-").concat(m[2], "-").concat(m[3]);
+        return "".concat(m[1], "-").concat(m[2]);
     return raw;
 }
 Page({

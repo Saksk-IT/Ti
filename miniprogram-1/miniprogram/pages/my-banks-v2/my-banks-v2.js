@@ -65,15 +65,17 @@ function formatDate(dateStr) {
     var raw = String(dateStr || '').trim();
     if (!raw)
         return '-';
-    var d = new Date(raw);
-    if (Number.isNaN(d.getTime()))
-        return '-';
-    try {
-        return d.toLocaleDateString('zh-CN');
+    var normalized = raw.replace(/-/g, '/');
+    var d = new Date(normalized);
+    if (Number.isFinite(d.getTime())) {
+        var y = d.getFullYear();
+        var m_1 = String(d.getMonth() + 1).padStart(2, '0');
+        return "".concat(y, "-").concat(m_1);
     }
-    catch (e) {
-        return '-';
-    }
+    var m = normalized.match(/^(\d{4})[\/-](\d{2})[\/-](\d{2})/);
+    if (m)
+        return "".concat(m[1], "-").concat(m[2]);
+    return raw;
 }
 Page({
     data: {
@@ -148,7 +150,7 @@ Page({
                         }).filter(function (b) { return Number.isFinite(b.id) && b.id > 0; });
                         sharedBanks = sharedList.map(function (b) {
                             var coverUrl = (0, api_endpoints_1.resolveUploadUrl)(b === null || b === void 0 ? void 0 : b.cover_image);
-                            var ownerLabel = String((b === null || b === void 0 ? void 0 : b.owner_nickname) || (b === null || b === void 0 ? void 0 : b.owner_name) || '匿名用户').trim();
+                            var ownerLabel = String((b === null || b === void 0 ? void 0 : b.owner_nickname) || (b === null || b === void 0 ? void 0 : b.owner_name) || '匿名').trim();
                             var ownerAvatarUrl = (0, api_endpoints_1.resolveUploadUrl)(b === null || b === void 0 ? void 0 : b.owner_avatar) || '/images/default-avatar.png';
                             return {
                                 id: Number((b === null || b === void 0 ? void 0 : b.bank_id) || (b === null || b === void 0 ? void 0 : b.id) || 0),

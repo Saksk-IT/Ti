@@ -26,13 +26,16 @@ type BankMeta = {
 function formatDate(dateStr: any): string {
   const raw = String(dateStr || '').trim();
   if (!raw) return '-';
-  const d = new Date(raw);
-  if (Number.isNaN(d.getTime())) return '-';
-  try {
-    return d.toLocaleDateString('zh-CN');
-  } catch (e) {
-    return '-';
+  const normalized = raw.replace(/-/g, '/');
+  const d = new Date(normalized);
+  if (Number.isFinite(d.getTime())) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    return `${y}-${m}`;
   }
+  const m = normalized.match(/^(\d{4})[\/-](\d{2})[\/-](\d{2})/);
+  if (m) return `${m[1]}-${m[2]}`;
+  return raw;
 }
 
 Page({
@@ -104,7 +107,7 @@ Page({
 
       const sharedBanks: BankMeta[] = sharedList.map((b: any) => {
         const coverUrl = resolveUploadUrl(b?.cover_image);
-        const ownerLabel = String(b?.owner_nickname || b?.owner_name || '匿名用户').trim();
+        const ownerLabel = String(b?.owner_nickname || b?.owner_name || '匿名').trim();
         const ownerAvatarUrl = resolveUploadUrl(b?.owner_avatar) || '/images/default-avatar.png';
         return {
           id: Number(b?.bank_id || b?.id || 0),

@@ -22,24 +22,29 @@ def _read(path: Path) -> str:
 
 
 def test_public_bank_cards_render_owner_name_and_avatar():
-    """题库广场卡片底部应显示真实作者昵称和头像。"""
+    """题库广场卡片底部应显示真实作者昵称头像，且不再显示“用户”类型标签。"""
     ts = _read(PUBLIC_BANK_DIR / "public-bank-v2.ts")
     wxml = _read(PUBLIC_BANK_DIR / "public-bank-v2.wxml")
     owner_block = re.search(r'<view class="pb-owner"[\s\S]+?</view>', wxml)
 
+    assert "return `${y}-${m}`" in ts
     assert "owner_avatar_url" in ts
     assert "resolveUploadUrl(b?.owner_avatar)" in ts
     assert owner_block is not None
     assert "{{item.owner_avatar_url}}" in owner_block.group(0)
     assert "{{item.owner_label}}" in owner_block.group(0)
+    assert '<text>{{item.type_label}}</text>' not in wxml
+    assert '<text class="mini-cover-sub">{{item.type_label}}</text>' not in wxml
+    assert "用户分享" not in wxml
 
 
 def test_my_bank_cards_render_owner_name_and_avatar():
-    """个人题库卡片底部应显示创建者或分享者昵称和头像。"""
+    """个人题库卡片底部应显示创建者或分享者昵称头像，且日期只到月份。"""
     ts = _read(MY_BANKS_DIR / "my-banks-v2.ts")
     wxml = _read(MY_BANKS_DIR / "my-banks-v2.wxml")
     owner_block = re.search(r'<view class="mb-owner"[\s\S]+?</view>', wxml)
 
+    assert "return `${y}-${m}`" in ts
     assert "owner_avatar_url" in ts
     assert "resolveUploadUrl(b?.owner_avatar)" in ts
     assert "owner_label" in ts

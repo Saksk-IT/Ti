@@ -51,11 +51,10 @@ function formatDateLabel(input: any): string {
   if (Number.isFinite(d.getTime())) {
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
+    return `${y}-${m}`;
   }
   const m = normalized.match(/^(\d{4})[\/-](\d{2})[\/-](\d{2})/);
-  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  if (m) return `${m[1]}-${m[2]}`;
   return raw;
 }
 

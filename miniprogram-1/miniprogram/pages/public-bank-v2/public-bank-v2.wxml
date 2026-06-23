@@ -65,7 +65,7 @@
                 <view class="mini-cover-copy">
                   <text class="mini-cover-kicker">Sak AI</text>
                   <view class="mini-cover-title"><text>{{item.name}}</text></view>
-                  <text class="mini-cover-sub">{{item.type_label}}</text>
+                  <text class="mini-cover-sub">题库</text>
                 </view>
               </view>
             </view>
@@ -77,14 +77,12 @@
                 <text class="pb-desc" wx:if="{{item.description}}">{{item.description}}</text>
               </view>
               <view class="pb-card-meta">
-                <text class="pb-chip pb-chip-shared" wx:if="{{item.is_shared}}">用户分享</text>
+                <text class="pb-chip pb-chip-shared" wx:if="{{item.is_shared}}">分享</text>
                 <text class="pb-chip pb-chip-joined" wx:if="{{item.is_joined}}">已加入</text>
                 <view class="pb-owner" aria-label="题库作者">
                   <image class="pb-owner-avatar" src="{{item.owner_avatar_url}}" mode="aspectFill"></image>
                   <text class="pb-owner-name">{{item.owner_label}}</text>
                 </view>
-                <text class="pb-dot">·</text>
-                <text>{{item.type_label}}</text>
                 <text class="pb-dot">·</text>
                 <text>{{item.question_count}} 题</text>
                 <text class="pb-dot">·</text>
