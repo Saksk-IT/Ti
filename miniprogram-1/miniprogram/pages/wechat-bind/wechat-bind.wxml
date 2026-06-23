@@ -15,7 +15,7 @@
 
         <!-- 选择面板 -->
         <view wx:if="{{step === 'choice'}}" class="choice-panel">
-          <view class="choice-card {{actionDisabled ? 'disabled' : ''}}" bindtap="onCreate">
+          <view class="choice-card {{actionDisabled ? 'disabled' : ''}}" bindtap="onGoCreate">
             <view class="choice-icon">
               <view class="choice-icon-inner icon-create"></view>
             </view>
@@ -35,6 +35,30 @@
               <text class="choice-desc">将微信绑定到已有的账号</text>
             </view>
             <view class="choice-arrow"></view>
+          </view>
+        </view>
+
+        <!-- 昵称设置面板 -->
+        <view wx:if="{{step === 'nickname'}}" class="nickname-panel">
+          <view class="form-grid">
+            <view class="field">
+              <view class="label-row">
+                <text class="label">昵称</text>
+                <view class="text-btn {{loadingCreate ? 'disabled' : ''}}" bindtap="onRefreshNickname">
+                  <text>换一个</text>
+                </view>
+              </view>
+              <input class="input" placeholder="汉字、字母、数字" placeholder-class="placeholder" maxlength="8" value="{{createNickname}}" bindinput="onNickname" />
+            </view>
+          </view>
+
+          <view class="actions">
+            <button class="btn btn-primary {{actionDisabled ? 'disabled' : ''}}" bindtap="onCreate" disabled="{{actionDisabled}}" loading="{{loadingCreate}}">
+              <text>确认创建</text>
+            </button>
+            <button class="btn {{actionDisabled ? 'disabled' : ''}}" bindtap="onBack" disabled="{{actionDisabled}}">
+              <text>返回</text>
+            </button>
           </view>
         </view>
 

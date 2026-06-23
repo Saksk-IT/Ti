@@ -2,6 +2,33 @@ import { api } from '../../utils/api';
 import { safeNavigate, consumePendingMiniRedirect } from '../../utils/nav';
 
 const HOME_URL = '/pages/hub-v2/hub-v2';
+const NICKNAME_RE = /^[\u4e00-\u9fffA-Za-z0-9]{1,8}$/;
+const NICKNAME_ERROR = '昵称只能使用汉字、字母、数字，最多8个字符';
+const RANDOM_NICKNAME_PREFIXES = ['题友', '学友', '考友', '小题'];
+
+function padNumber(value: number, length: number): string {
+  let result = String(value);
+  while (result.length < length) {
+    result = `0${result}`;
+  }
+  return result;
+}
+
+function createRandomNickname(): string {
+  const prefix = RANDOM_NICKNAME_PREFIXES[Math.floor(Math.random() * RANDOM_NICKNAME_PREFIXES.length)] || '题友';
+  const suffixLength = 8 - prefix.length;
+  const suffixMax = Math.pow(10, suffixLength);
+  const suffix = padNumber(Math.floor(Math.random() * suffixMax), suffixLength);
+  return `${prefix}${suffix}`;
+}
+
+function normalizeNickname(value: any): string {
+  return String(value || '').trim();
+}
+
+function isValidNickname(value: string): boolean {
+  return NICKNAME_RE.test(value);
+}
 
 function navigateAfterBind(): void {
   const next = consumePendingMiniRedirect();
@@ -14,9 +41,10 @@ function navigateAfterBind(): void {
 
 Page({
   data: {
-    step: 'choice' as 'choice' | 'bind',
+    step: 'choice' as 'choice' | 'nickname' | 'bind',
     mode: 'password' as 'password' | 'email_code',
     wechatTempToken: '',
+    createNickname: '',
 
     account: '',
     password: '',
@@ -48,7 +76,7 @@ Page({
       this.setData({ error: '缺少临时票据，请重新登录' });
       return;
     }
-    this.setData({ wechatTempToken: token });
+    this.setData({ wechatTempToken: token, createNickname: createRandomNickname() });
   },
 
   setMode(e: any) {
@@ -61,8 +89,25 @@ Page({
     this.setData({ step: 'bind', error: '' });
   },
 
+  onGoCreate() {
+    this.setData({
+      step: 'nickname',
+      createNickname: this.data.createNickname || createRandomNickname(),
+      error: ''
+    });
+  },
+
   onBack() {
     this.setData({ step: 'choice', error: '' });
+  },
+
+  onNickname(e: any) {
+    this.setData({ createNickname: normalizeNickname(e.detail.value), error: '' });
+  },
+
+  onRefreshNickname() {
+    if (this.data.loadingCreate) return;
+    this.setData({ createNickname: createRandomNickname(), error: '' });
   },
 
   onAccount(e: any) {
@@ -84,17 +129,20 @@ Page({
   // 创建新账号
   async onCreate() {
     if (this.data.loadingCreate) return;
+    const nickname = normalizeNickname(this.data.createNickname);
+    if (!isValidNickname(nickname)) {
+      this.setData({ error: NICKNAME_ERROR });
+      return;
+    }
+
     this.setLoading({ loadingCreate: true, error: '' });
     try {
-      const res: any = await api.wechatCreate(this.data.wechatTempToken);
+      const res: any = await api.wechatCreate(this.data.wechatTempToken, { nickName: nickname });
       if (!res || !res.token) throw new Error('返回数据异常');
 
       wx.setStorageSync('token', res.token);
       if (res.user_info) wx.setStorageSync('userInfo', res.user_info);
       wx.removeStorageSync('wechatTempToken');
-
-      // 标记为新用户，首页会提示设置头像昵称
-      wx.setStorageSync('isNewUser', true);
 
       wx.showToast({ title: '已创建', icon: 'success' });
       const pending = wx.getStorageSync('pendingWebLogin');

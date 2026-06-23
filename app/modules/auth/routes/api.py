@@ -525,12 +525,15 @@ def api_wechat_create_from_temp():
         if not temp:
             return jsonify({'status': 'error', 'message': '临时票据无效或已过期'}), 401
         openid = temp.get('openid')
-        # 优先使用前端传来的 user_info（用户选择的头像和昵称）
-        user_info = data.get('user_info') or temp.get('user_info')
+        # 优先使用前端传来的 user_info；保留临时票据里的头像等微信信息。
+        temp_user_info = temp.get('user_info') if isinstance(temp.get('user_info'), dict) else {}
+        request_user_info = data.get('user_info') if isinstance(data.get('user_info'), dict) else {}
+        user_info = {**temp_user_info, **request_user_info}
+        strict_nickname = 'nickName' in request_user_info
         if not openid:
             return jsonify({'status': 'error', 'message': '临时票据无效'}), 401
 
-        user = WechatAuthService.get_or_create_user(openid, user_info)
+        user = WechatAuthService.get_or_create_user(openid, user_info, strict_nickname=strict_nickname)
         if not user:
             return jsonify({'status': 'error', 'message': '创建用户失败'}), 500
         if user.get('is_locked'):
@@ -554,6 +557,8 @@ def api_wechat_create_from_temp():
                 }
             }
         }), 200
+    except ValueError as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 400
     except Exception as e:
         current_app.logger.error(f'微信创建账号失败: {e}', exc_info=True)
         return jsonify({'status': 'error', 'message': '创建失败，请稍后重试'}), 500

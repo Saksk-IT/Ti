@@ -225,10 +225,49 @@ button.choice-card::after {
   gap: 10rpx;
 }
 
+.nickname-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
 .label {
   font-size: 24rpx;
   font-weight: 950;
   color: var(--app-text);
+}
+
+.text-btn {
+  min-width: 112rpx;
+  height: 56rpx;
+  padding: 0 18rpx;
+  border-radius: 18rpx;
+  border: 1rpx solid color-mix(in srgb, var(--app-primary) 28%, var(--app-border));
+  background: var(--app-primary-soft);
+  color: var(--app-text);
+  font-size: 22rpx;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.text-btn:active {
+  opacity: 0.92;
+  transform: scale(0.99);
+}
+
+.text-btn.disabled {
+  opacity: 0.55;
+  pointer-events: none;
 }
 
 .input {

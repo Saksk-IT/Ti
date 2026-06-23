@@ -50,6 +50,29 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var api_1 = require("../../utils/api");
 var nav_1 = require("../../utils/nav");
 var HOME_URL = '/pages/hub-v2/hub-v2';
+var NICKNAME_RE = /^[\u4e00-\u9fffA-Za-z0-9]{1,8}$/;
+var NICKNAME_ERROR = '昵称只能使用汉字、字母、数字，最多8个字符';
+var RANDOM_NICKNAME_PREFIXES = ['题友', '学友', '考友', '小题'];
+function padNumber(value, length) {
+    var result = String(value);
+    while (result.length < length) {
+        result = "0".concat(result);
+    }
+    return result;
+}
+function createRandomNickname() {
+    var prefix = RANDOM_NICKNAME_PREFIXES[Math.floor(Math.random() * RANDOM_NICKNAME_PREFIXES.length)] || '题友';
+    var suffixLength = 8 - prefix.length;
+    var suffixMax = Math.pow(10, suffixLength);
+    var suffix = padNumber(Math.floor(Math.random() * suffixMax), suffixLength);
+    return "".concat(prefix).concat(suffix);
+}
+function normalizeNickname(value) {
+    return String(value || '').trim();
+}
+function isValidNickname(value) {
+    return NICKNAME_RE.test(value);
+}
 var PENDING_MINI_REDIRECT_KEY = 'pendingMiniRedirect';
 function consumePendingMiniRedirect() {
     try {
@@ -79,6 +102,7 @@ Page({
         step: 'choice',
         mode: 'password',
         wechatTempToken: '',
+        createNickname: '',
         account: '',
         password: '',
         email: '',
@@ -105,7 +129,7 @@ Page({
             this.setData({ error: '缺少临时票据，请重新登录' });
             return;
         }
-        this.setData({ wechatTempToken: token });
+        this.setData({ wechatTempToken: token, createNickname: createRandomNickname() });
     },
     setMode: function (e) {
         var mode = e.currentTarget.dataset.mode;
@@ -116,8 +140,23 @@ Page({
     onGoBind: function () {
         this.setData({ step: 'bind', error: '' });
     },
+    onGoCreate: function () {
+        this.setData({
+            step: 'nickname',
+            createNickname: this.data.createNickname || createRandomNickname(),
+            error: ''
+        });
+    },
     onBack: function () {
         this.setData({ step: 'choice', error: '' });
+    },
+    onNickname: function (e) {
+        this.setData({ createNickname: normalizeNickname(e.detail.value), error: '' });
+    },
+    onRefreshNickname: function () {
+        if (this.data.loadingCreate)
+            return;
+        this.setData({ createNickname: createRandomNickname(), error: '' });
     },
     onAccount: function (e) {
         this.setData({ account: e.detail.value || '' });
@@ -133,17 +172,22 @@ Page({
     },
     onCreate: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var res, pending_1, e_1, msg;
+            var nickname, res, pending_1, e_1, msg;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         if (this.data.loadingCreate)
                             return [2 /*return*/];
+                        nickname = normalizeNickname(this.data.createNickname);
+                        if (!isValidNickname(nickname)) {
+                            this.setData({ error: NICKNAME_ERROR });
+                            return [2 /*return*/];
+                        }
                         this.setLoading({ loadingCreate: true, error: '' });
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 3, 4, 5]);
-                        return [4 /*yield*/, api_1.api.wechatCreate(this.data.wechatTempToken)];
+                        return [4 /*yield*/, api_1.api.wechatCreate(this.data.wechatTempToken, { nickName: nickname })];
                     case 2:
                         res = _a.sent();
                         if (!res || !res.token)
