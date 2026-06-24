@@ -390,12 +390,11 @@
   function taskProgressPercent(task) {
     const status = task && task.status;
     const attempt = Number((task && task.attempt) || 0);
-    const maxAttempts = Math.max(1, Number((task && task.max_attempts) || 3));
     if (status === 'succeeded') return 100;
     if (status === 'failed') return 100;
     if (status === 'webvpn_refresh_required') return 72;
-    if (status === 'retrying') return Math.min(88, 38 + Math.round((attempt / maxAttempts) * 42));
-    if (status === 'running') return Math.min(62, 22 + Math.round((attempt / maxAttempts) * 30));
+    if (status === 'retrying') return Math.min(88, 38 + Math.min(attempt, 8) * 6);
+    if (status === 'running') return Math.min(62, 22 + Math.min(attempt, 5) * 6);
     if (status === 'pending') return 12;
     return 8;
   }
@@ -422,7 +421,7 @@
     const termsText = formatTaskTerms(task);
     const attempt = Number(task.attempt || 0);
     const maxAttempts = Number(task.max_attempts || 0);
-    const attemptText = attempt && maxAttempts ? ('第 ' + attempt + '/' + maxAttempts + ' 次') : '';
+    const attemptText = attempt ? (maxAttempts ? ('第 ' + attempt + '/' + maxAttempts + ' 次') : ('第 ' + attempt + ' 次')) : '';
     queryProgressMeta.textContent = [termsText, attemptText].filter(Boolean).join(' · ');
   }
 

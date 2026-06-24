@@ -26,8 +26,8 @@ from .webvpn_refresh import (
 
 
 _QUERY_TASK_TTL_SECONDS = 1800
-_QUERY_TASK_MAX_ATTEMPTS = 3
-_QUERY_TASK_BACKOFF_SECONDS = (5, 20)
+_QUERY_TASK_MAX_ATTEMPTS = None
+_QUERY_TASK_BACKOFF_SECONDS = (5, 20, 60, 120, 300)
 _QUERY_TASK_KEY_PREFIX = "edu_schedule:query_task:"
 _QUERY_TASK_USER_KEY_PREFIX = "edu_schedule:user_query_tasks:"
 _QUERY_TASK_LOCK = threading.Lock()
@@ -85,7 +85,11 @@ def _cleanup_memory_tasks(now: float) -> None:
 
 
 def _save_state(state: Dict[str, Any]) -> Dict[str, Any]:
-    next_state = {**state, "updated_at": _now_iso()}
+    next_state = {
+        **state,
+        "updated_at": _now_iso(),
+        "expires_at": time.time() + _QUERY_TASK_TTL_SECONDS,
+    }
     task_id = str(next_state["task_id"])
     with _QUERY_TASK_LOCK:
         _cleanup_memory_tasks(time.time())
@@ -154,10 +158,15 @@ def _results_from_snapshots(snapshots: List[Dict[str, Any]]) -> List[Dict[str, A
     return [item.get("payload") for item in snapshots if isinstance(item.get("payload"), dict)]
 
 
-def _busy_message(has_snapshot: bool) -> str:
+def _retrying_message(attempt: int, has_snapshot: bool) -> str:
     if has_snapshot:
-        return "教务系统繁忙，当前展示上次成功结果，后台刷新暂未成功"
-    return "教务系统繁忙，后台刷新暂未成功，请稍后重试"
+        return f"教务系统繁忙，当前展示上次成功结果，后台会继续自动重试（第 {attempt} 次未成功）"
+    return f"教务系统繁忙，后台会继续自动重试（第 {attempt} 次未成功）"
+
+
+def _backoff_seconds_for(attempt: int) -> int:
+    backoff_index = min(max(0, int(attempt) - 1), len(_QUERY_TASK_BACKOFF_SECONDS) - 1)
+    return int(_QUERY_TASK_BACKOFF_SECONDS[backoff_index])
 
 
 def _is_upstream_busy(exc: Exception) -> bool:
@@ -302,9 +311,11 @@ class EduScheduleQueryTaskService:
         user_id = int(job["user_id"])
         terms = _normalize_terms(job["terms"])
         last_error: Optional[Exception] = None
-        for attempt in range(1, _QUERY_TASK_MAX_ATTEMPTS + 1):
+        attempt = 0
+        while True:
+            attempt += 1
             status = "running" if attempt == 1 else "retrying"
-            message = "正在连接教务系统并查询" if attempt == 1 else f"教务系统繁忙，正在第 {attempt} 次尝试"
+            message = "正在连接教务系统并查询" if attempt == 1 else f"教务系统繁忙，正在第 {attempt} 次自动重试"
             state = _save_state({
                 **state,
                 "status": status,
@@ -372,9 +383,20 @@ class EduScheduleQueryTaskService:
                         "finished_at": _now_iso(),
                     })
                     return _public_state(final_state)
-                if attempt < _QUERY_TASK_MAX_ATTEMPTS and _is_upstream_busy(exc):
-                    backoff_index = min(attempt - 1, len(_QUERY_TASK_BACKOFF_SECONDS) - 1)
-                    _sleep(_QUERY_TASK_BACKOFF_SECONDS[backoff_index])
+                if _is_upstream_busy(exc):
+                    snapshots = _snapshots_for(kind, user_id, terms)
+                    state = _save_state({
+                        **state,
+                        "status": "retrying",
+                        "message": _retrying_message(attempt, bool(snapshots)),
+                        "results": _results_from_snapshots(snapshots),
+                        "snapshots": snapshots,
+                        "error": user_safe_error(exc),
+                        "error_type": type(exc).__name__,
+                        "challenge": None,
+                        "finished_at": None,
+                    })
+                    _sleep(_backoff_seconds_for(attempt))
                     continue
                 break
 
@@ -383,7 +405,7 @@ class EduScheduleQueryTaskService:
         final_state = _save_state({
             **state,
             "status": "failed",
-            "message": _busy_message(bool(snapshots)) if last_error and _is_upstream_busy(last_error) else error_message,
+            "message": error_message,
             "results": _results_from_snapshots(snapshots),
             "snapshots": snapshots,
             "error": error_message,

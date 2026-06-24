@@ -872,7 +872,7 @@ def test_schedule_status_returns_recent_query_task_for_page_reload(app, auth_cli
     assert "owner_user_id" not in recent
 
 
-def test_background_schedule_task_retries_timeout_and_keeps_snapshot(app, seed_user, monkeypatch):
+def test_background_schedule_task_retries_until_upstream_success(app, seed_user, monkeypatch):
     from requests.exceptions import ReadTimeout
 
     from app.modules.admin.services.system_config_service import SystemConfigService
@@ -888,10 +888,12 @@ def test_background_schedule_task_retries_timeout_and_keeps_snapshot(app, seed_u
 
         def fetch_schedule(self, username, password, xnm, xqm):
             attempts.append((username, password, xnm, xqm))
-            raise ReadTimeout("upstream busy")
+            if len(attempts) <= 3:
+                raise ReadTimeout("upstream busy")
+            return _sample_schedule_payload(xnm=xnm, xqm=xqm)
 
     monkeypatch.setattr(schedule_service, "JWXTClient", TimeoutJWXTClient)
-    monkeypatch.setattr(query_tasks, "_QUERY_TASK_BACKOFF_SECONDS", (0, 0))
+    monkeypatch.setattr(query_tasks, "_QUERY_TASK_BACKOFF_SECONDS", (0, 0, 0, 0))
     monkeypatch.setattr(query_tasks, "_sleep", lambda seconds: None)
 
     user_id = int(seed_user["id"])
@@ -920,11 +922,12 @@ def test_background_schedule_task_retries_timeout_and_keeps_snapshot(app, seed_u
     )
     final_state = query_tasks.EduScheduleQueryTaskService.run_task(task["task_id"])
 
-    assert len(attempts) == 3
-    assert final_state["status"] == "failed"
-    assert "教务系统繁忙" in final_state["message"]
+    assert len(attempts) == 4
+    assert final_state["status"] == "succeeded"
+    assert final_state["attempt"] == 4
+    assert final_state["max_attempts"] is None
     assert final_state["snapshots"][0]["payload"]["term"]["xnm"] == "2028"
-    assert final_state["results"] == [normalized_snapshot]
+    assert final_state["results"][0]["term"]["xnm"] == "2028"
 
 
 def test_webvpn_refresh_service_uses_temp_cookie_and_saves_refreshed_cookie(app, monkeypatch):
