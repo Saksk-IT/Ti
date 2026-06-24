@@ -34,6 +34,19 @@
   </div>
 
   <div class="schedule-state" id="scheduleState" role="status"></div>
+  <div class="query-progress" id="scheduleQueryProgress" hidden>
+    <div class="query-progress-head">
+      <strong>查询进度</strong>
+      <span class="query-progress-status" id="scheduleQueryProgressStatus">等待提交</span>
+    </div>
+    <div class="query-progress-bar" id="scheduleQueryProgressBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <span class="query-progress-fill" id="scheduleQueryProgressFill"></span>
+    </div>
+    <div class="query-progress-foot">
+      <span id="scheduleQueryProgressDetail">尚未提交查询</span>
+      <span id="scheduleQueryProgressMeta"></span>
+    </div>
+  </div>
   <div class="webvpn-captcha-overlay" id="webvpnCaptchaDialog" role="dialog" aria-modal="true" aria-labelledby="webvpnCaptchaTitle" hidden>
     <div class="webvpn-captcha-modal">
       <div class="webvpn-captcha-head">
@@ -326,6 +339,7 @@
     }
   }
 </style>
+{% include "edu_schedule/_query_progress_styles.html" %}
 {% endblock %}
 
 {% block body_end %}
@@ -337,6 +351,12 @@
   const state = document.getElementById('scheduleState');
   const results = document.getElementById('scheduleResults');
   const submitBtn = document.getElementById('scheduleSubmit');
+  const queryProgress = document.getElementById('scheduleQueryProgress');
+  const queryProgressStatus = document.getElementById('scheduleQueryProgressStatus');
+  const queryProgressBar = document.getElementById('scheduleQueryProgressBar');
+  const queryProgressFill = document.getElementById('scheduleQueryProgressFill');
+  const queryProgressDetail = document.getElementById('scheduleQueryProgressDetail');
+  const queryProgressMeta = document.getElementById('scheduleQueryProgressMeta');
   const webvpnCaptchaDialog = document.getElementById('webvpnCaptchaDialog');
   const webvpnCaptchaImage = document.getElementById('webvpnCaptchaImage');
   const webvpnCaptchaCode = document.getElementById('webvpnCaptchaCode');
@@ -353,6 +373,66 @@
   function setState(text, type) {
     state.textContent = text || '';
     state.className = type ? 'schedule-state ' + type : 'schedule-state';
+  }
+
+  function taskStatusLabel(task) {
+    const labels = {
+      pending: '排队中',
+      running: '连接教务系统',
+      retrying: '自动重试中',
+      webvpn_refresh_required: '等待验证码',
+      succeeded: '已完成',
+      failed: '未完成'
+    };
+    return labels[task && task.status] || '查询中';
+  }
+
+  function taskProgressPercent(task) {
+    const status = task && task.status;
+    const attempt = Number((task && task.attempt) || 0);
+    const maxAttempts = Math.max(1, Number((task && task.max_attempts) || 3));
+    if (status === 'succeeded') return 100;
+    if (status === 'failed') return 100;
+    if (status === 'webvpn_refresh_required') return 72;
+    if (status === 'retrying') return Math.min(88, 38 + Math.round((attempt / maxAttempts) * 42));
+    if (status === 'running') return Math.min(62, 22 + Math.round((attempt / maxAttempts) * 30));
+    if (status === 'pending') return 12;
+    return 8;
+  }
+
+  function formatTaskTerms(task) {
+    const terms = task && Array.isArray(task.terms) ? task.terms : [];
+    const termNames = terms.map(function (term) {
+      const xnm = String(term.xnm || '');
+      const xqm = String(term.xqm || '');
+      const semester = { '3': '第一学期', '12': '第二学期', '16': '第三学期' }[xqm] || xqm;
+      return xnm ? (xnm + '-' + (Number(xnm) + 1) + ' ' + semester) : semester;
+    }).filter(Boolean);
+    return termNames.join('、');
+  }
+
+  function renderTaskProgress(task) {
+    if (!task) return;
+    const percent = taskProgressPercent(task);
+    queryProgress.hidden = false;
+    queryProgressStatus.textContent = taskStatusLabel(task);
+    queryProgressFill.style.width = percent + '%';
+    queryProgressBar.setAttribute('aria-valuenow', String(percent));
+    queryProgressDetail.textContent = task.message || '正在后台查询课表';
+    const termsText = formatTaskTerms(task);
+    const attempt = Number(task.attempt || 0);
+    const maxAttempts = Number(task.max_attempts || 0);
+    const attemptText = attempt && maxAttempts ? ('第 ' + attempt + '/' + maxAttempts + ' 次') : '';
+    queryProgressMeta.textContent = [termsText, attemptText].filter(Boolean).join(' · ');
+  }
+
+  function hideTaskProgress() {
+    queryProgress.hidden = true;
+    queryProgressFill.style.width = '0%';
+    queryProgressBar.setAttribute('aria-valuenow', '0');
+    queryProgressStatus.textContent = '等待提交';
+    queryProgressDetail.textContent = '尚未提交查询';
+    queryProgressMeta.textContent = '';
   }
 
   function buildTerms() {
@@ -478,6 +558,7 @@
     if (!task) {
       throw new Error('查询任务状态不正确');
     }
+    renderTaskProgress(task);
     if (task.status === 'webvpn_refresh_required') {
       stopTaskPolling();
       showWebvpnCaptcha({
@@ -502,6 +583,24 @@
     const suffix = hasFallback ? '，当前显示上次成功结果' : '';
     setState((task.message || '正在后台查询课表') + suffix, '');
     return false;
+  }
+
+  function restoreRecentTask(statusData) {
+    const recentTasks = statusData && statusData.recent_tasks;
+    const task = recentTasks && recentTasks.schedule;
+    if (!task || !task.task_id) {
+      hideTaskProgress();
+      return false;
+    }
+    const payload = { terms: Array.isArray(task.terms) ? task.terms : [] };
+    const finished = handleTaskState(task, payload);
+    if (!finished) {
+      pollEduQueryTask(task.task_id, payload).catch(function (error) {
+        stopTaskPolling();
+        setState(error.message || '查询任务状态获取失败', 'error');
+      });
+    }
+    return true;
   }
 
   async function pollEduQueryTask(taskId, payload) {
@@ -593,20 +692,25 @@
       });
       const data = await response.json();
       if (data.status !== 'success') return;
-      const credential = data.data && data.data.credential;
-      const snapshots = data.data && data.data.snapshots;
+      const statusData = data.data || {};
+      const credential = statusData.credential;
+      const snapshots = statusData.snapshots;
       if (credential && credential.has_credentials) {
         credentialReady = true;
         setState('已绑定教务系统账号：' + credential.username_hint, '');
       } else {
         credentialReady = false;
+        hideTaskProgress();
         setState('未绑定教务系统账号，请先绑定后查询。', 'error');
         showBindPrompt();
+        return;
       }
       if (Array.isArray(snapshots) && snapshots.length) {
         renderResults(snapshots.map(function (item) { return item.payload; }));
       }
+      restoreRecentTask(statusData);
     } catch (error) {
+      hideTaskProgress();
       setState('', '');
     }
   }
@@ -615,6 +719,7 @@
     event.preventDefault();
     submitBtn.disabled = true;
     submitBtn.textContent = '提交中';
+    hideTaskProgress();
     setState('正在提交后台查询任务...', '');
     try {
       if (!credentialReady) {

@@ -1,0 +1,53 @@
+<style>
+  .query-progress {
+    border: 1px solid var(--app-border);
+    border-radius: 8px;
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow-soft);
+    padding: 14px 16px;
+    display: grid;
+    gap: 10px;
+  }
+  .query-progress[hidden] {
+    display: none;
+  }
+  .query-progress-head,
+  .query-progress-foot {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .query-progress-head strong {
+    font-size: 14px;
+    font-weight: 900;
+  }
+  .query-progress-status {
+    color: var(--app-muted);
+    font-size: 13px;
+    font-weight: 800;
+  }
+  .query-progress-bar {
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--app-surface-2);
+  }
+  .query-progress-fill {
+    display: block;
+    width: 0%;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--app-primary);
+    transition: width 180ms ease;
+  }
+  .query-progress-foot {
+    color: var(--app-muted);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .query-progress-foot span {
+    overflow-wrap: anywhere;
+  }
+</style>

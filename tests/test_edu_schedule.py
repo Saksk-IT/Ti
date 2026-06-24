@@ -344,6 +344,27 @@ def test_campus_pages_expose_user_webvpn_captcha_refresh(auth_client):
         assert "教务系统繁忙" in html
 
 
+def test_campus_pages_expose_persistent_query_progress(auth_client):
+    schedule_page = auth_client.get("/edu-schedule")
+    grades_page = auth_client.get("/edu-grades")
+
+    assert schedule_page.status_code == 200
+    assert grades_page.status_code == 200
+
+    schedule_html = schedule_page.get_data(as_text=True)
+    grade_html = grades_page.get_data(as_text=True)
+
+    assert "scheduleQueryProgress" in schedule_html
+    assert "restoreRecentTask" in schedule_html
+    assert "query-progress-fill" in schedule_html
+    assert "查询进度" in schedule_html
+
+    assert "gradeQueryProgress" in grade_html
+    assert "restoreRecentTask" in grade_html
+    assert "query-progress-fill" in grade_html
+    assert "查询进度" in grade_html
+
+
 def test_campus_year_filters_use_academic_year_range_labels(auth_client):
     schedule_page = auth_client.get("/edu-schedule")
     grades_page = auth_client.get("/edu-grades")
@@ -800,6 +821,55 @@ def test_schedule_query_returns_background_task_without_running_upstream(app, au
     assert status_response.status_code == 200
     status_body = status_response.get_json()
     assert status_body["data"]["task"]["task_id"] == task_id
+
+
+def test_schedule_status_returns_recent_query_task_for_page_reload(app, auth_client, monkeypatch):
+    from app.modules.admin.services.system_config_service import SystemConfigService
+    from app.modules.edu_schedule.services import query_tasks
+
+    monkeypatch.setattr(
+        query_tasks.EduScheduleQueryTaskService,
+        "_start_worker",
+        staticmethod(lambda task_id: None),
+    )
+
+    with app.app_context():
+        SystemConfigService.save_edu_schedule_config(
+            {
+                "enabled": True,
+                "use_webvpn": False,
+                "jwxt_base_url": "https://jwxt.webvpn.synu.edu.cn/jwglxt",
+                "request_timeout": 20,
+                "verify_tls": True,
+                "store_user_credentials": True,
+            },
+            admin_id=1,
+        )
+
+    auth_client.post(
+        "/api/edu-schedule/credentials",
+        json={"username": "stu_demo_2026", "password": "DemoSecret123!"},
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+    response = auth_client.post(
+        "/api/edu-schedule/query",
+        json={"terms": [{"xnm": "2031", "xqm": "12"}]},
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+    task_id = response.get_json()["data"]["task"]["task_id"]
+
+    status_response = auth_client.get(
+        "/api/edu-schedule/status",
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+
+    assert status_response.status_code == 200
+    status_body = status_response.get_json()
+    recent = status_body["data"]["recent_tasks"]["schedule"]
+    assert recent["task_id"] == task_id
+    assert recent["status"] == "pending"
+    assert recent["terms"] == [{"xnm": "2031", "xqm": "12"}]
+    assert "owner_user_id" not in recent
 
 
 def test_background_schedule_task_retries_timeout_and_keeps_snapshot(app, seed_user, monkeypatch):

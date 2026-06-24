@@ -47,6 +47,16 @@ def _task_response(task: dict, message: str):
     )
 
 
+def _recent_tasks_payload(user_id: int) -> dict:
+    schedule_tasks = EduScheduleQueryTaskService.list_recent(user_id, kind="schedule", limit=3)
+    grade_tasks = EduScheduleQueryTaskService.list_recent(user_id, kind="grades", limit=3)
+    return {
+        "schedule": schedule_tasks[0] if schedule_tasks else None,
+        "grades": grade_tasks[0] if grade_tasks else None,
+        "items": [*schedule_tasks, *grade_tasks],
+    }
+
+
 @edu_schedule_api_bp.route("/edu-schedule/status", methods=["GET"])
 @auth_required
 def api_schedule_status():
@@ -56,6 +66,7 @@ def api_schedule_status():
             "credential": EduScheduleService.credential_status(user_id),
             "snapshots": EduScheduleService.list_snapshots(user_id),
             "grade_snapshots": EduScheduleService.list_grade_snapshots(user_id),
+            "recent_tasks": _recent_tasks_payload(user_id),
         }
     )
 

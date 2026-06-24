@@ -29,10 +29,12 @@ _QUERY_TASK_TTL_SECONDS = 1800
 _QUERY_TASK_MAX_ATTEMPTS = 3
 _QUERY_TASK_BACKOFF_SECONDS = (5, 20)
 _QUERY_TASK_KEY_PREFIX = "edu_schedule:query_task:"
+_QUERY_TASK_USER_KEY_PREFIX = "edu_schedule:user_query_tasks:"
 _QUERY_TASK_LOCK = threading.Lock()
 _QUERY_TASKS: Dict[str, Dict[str, Any]] = {}
 _QUERY_TASK_JOBS: Dict[str, Dict[str, Any]] = {}
 _QUERY_TASK_DEDUPES: Dict[str, str] = {}
+_QUERY_TASK_USER_TASKS: Dict[int, List[str]] = {}
 _sleep = time.sleep
 
 
@@ -42,6 +44,10 @@ def _now_iso() -> str:
 
 def _task_key(task_id: str) -> str:
     return f"{_QUERY_TASK_KEY_PREFIX}{task_id}"
+
+
+def _user_tasks_key(user_id: int) -> str:
+    return f"{_QUERY_TASK_USER_KEY_PREFIX}{int(user_id)}"
 
 
 def _normalize_terms(terms: Iterable[Dict[str, str]]) -> List[Dict[str, str]]:
@@ -70,6 +76,12 @@ def _cleanup_memory_tasks(now: float) -> None:
     for key, task_id in list(_QUERY_TASK_DEDUPES.items()):
         if task_id not in _QUERY_TASKS:
             _QUERY_TASK_DEDUPES.pop(key, None)
+    for user_id, task_ids in list(_QUERY_TASK_USER_TASKS.items()):
+        next_task_ids = [task_id for task_id in task_ids if task_id in _QUERY_TASKS]
+        if next_task_ids:
+            _QUERY_TASK_USER_TASKS[user_id] = next_task_ids
+        else:
+            _QUERY_TASK_USER_TASKS.pop(user_id, None)
 
 
 def _save_state(state: Dict[str, Any]) -> Dict[str, Any]:
@@ -101,6 +113,35 @@ def _load_job(task_id: str) -> Optional[Dict[str, Any]]:
     with _QUERY_TASK_LOCK:
         job = _QUERY_TASK_JOBS.get(task_id)
     return dict(job) if isinstance(job, dict) else None
+
+
+def _unique_task_ids(task_ids: Iterable[str]) -> List[str]:
+    seen = set()
+    items: List[str] = []
+    for raw_task_id in task_ids:
+        task_id = str(raw_task_id or "").strip()
+        if not task_id or task_id in seen:
+            continue
+        seen.add(task_id)
+        items.append(task_id)
+    return items
+
+
+def _load_user_task_ids(user_id: int) -> List[str]:
+    redis_ids = redis_get_json(_user_tasks_key(user_id))
+    with _QUERY_TASK_LOCK:
+        _cleanup_memory_tasks(time.time())
+        memory_ids = list(_QUERY_TASK_USER_TASKS.get(int(user_id), []))
+    if isinstance(redis_ids, list):
+        return _unique_task_ids([*redis_ids, *memory_ids])
+    return _unique_task_ids(memory_ids)
+
+
+def _index_task(user_id: int, task_id: str) -> None:
+    next_task_ids = _unique_task_ids([str(task_id), *_load_user_task_ids(user_id)])[:10]
+    with _QUERY_TASK_LOCK:
+        _QUERY_TASK_USER_TASKS[int(user_id)] = list(next_task_ids)
+    redis_set_json(_user_tasks_key(user_id), next_task_ids, ttl_seconds=_QUERY_TASK_TTL_SECONDS)
 
 
 def _snapshots_for(kind: str, user_id: int, terms: List[Dict[str, str]]) -> List[Dict[str, Any]]:
@@ -160,6 +201,7 @@ class EduScheduleQueryTaskService:
             existing_id = _QUERY_TASK_DEDUPES.get(dedupe_key)
             existing = _QUERY_TASKS.get(existing_id or "") if existing_id else None
         if existing and existing.get("status") in {"pending", "running", "retrying"}:
+            _index_task(user_id, str(existing["task_id"]))
             return _public_state({**existing, "coalesced": True})
 
         task_id = secrets.token_urlsafe(18)
@@ -190,6 +232,7 @@ class EduScheduleQueryTaskService:
         _save_state(state)
         with _QUERY_TASK_LOCK:
             _QUERY_TASK_DEDUPES[dedupe_key] = task_id
+        _index_task(user_id, task_id)
         _store_job(
             task_id,
             {
@@ -204,6 +247,24 @@ class EduScheduleQueryTaskService:
         if autostart:
             EduScheduleQueryTaskService._start_worker(task_id)
         return _public_state(state)
+
+    @staticmethod
+    def list_recent(owner_user_id: int, *, kind: Optional[str] = None, limit: int = 6) -> List[Dict[str, Any]]:
+        task_kind = str(kind or "").strip()
+        if task_kind and task_kind not in {"schedule", "grades"}:
+            raise ValueError("教务查询类型不正确")
+        items: List[Dict[str, Any]] = []
+        for task_id in _load_user_task_ids(int(owner_user_id)):
+            state = _load_state(task_id)
+            if not state:
+                continue
+            if int(state.get("owner_user_id") or 0) != int(owner_user_id):
+                continue
+            if task_kind and state.get("kind") != task_kind:
+                continue
+            items.append(_public_state(state))
+        items.sort(key=lambda item: str(item.get("updated_at") or item.get("created_at") or ""), reverse=True)
+        return items[: max(1, int(limit))]
 
     @staticmethod
     def get(task_id: str, owner_user_id: int) -> Dict[str, Any]:
