@@ -9,16 +9,8 @@
     <form id="scheduleForm" class="schedule-form" autocomplete="off">
       <div class="field-group term-fields">
         <label>
-          <span>开始学年</span>
-          <select id="scheduleStartYear">
-            {% for option in academic_year_options %}
-            <option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.label }}</option>
-            {% endfor %}
-          </select>
-        </label>
-        <label>
-          <span>结束学年</span>
-          <select id="scheduleEndYear">
+          <span>学年</span>
+          <select id="scheduleAcademicYear">
             {% for option in academic_year_options %}
             <option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.label }}</option>
             {% endfor %}
@@ -71,7 +63,7 @@
     gap: 10px;
   }
   .term-fields {
-    grid-template-columns: repeat(3, minmax(92px, 1fr));
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
   }
   .schedule-form label {
     display: grid;
@@ -258,17 +250,14 @@
   }
 
   function buildTerms() {
-    const start = Number(document.getElementById('scheduleStartYear').value || 0);
-    const end = Number(document.getElementById('scheduleEndYear').value || 0);
+    const academicYear = Number(document.getElementById('scheduleAcademicYear').value || 0);
     const semester = document.getElementById('scheduleSemester').value;
     const terms = [];
-    if (!Number.isInteger(start) || !Number.isInteger(end) || start < 2000 || end > 2100 || start > end) {
-      throw new Error('学年范围不正确');
+    if (!Number.isInteger(academicYear) || academicYear < 2000 || academicYear > 2100) {
+      throw new Error('学年不正确');
     }
     const semesters = semester === 'all' ? ['3', '12'] : [semester];
-    for (let year = start; year <= end; year += 1) {
-      semesters.forEach(function (xqm) { terms.push({ xnm: String(year), xqm: xqm }); });
-    }
+    semesters.forEach(function (xqm) { terms.push({ xnm: String(academicYear), xqm: xqm }); });
     if (terms.length > 12) {
       throw new Error('一次最多查询 12 个学期');
     }

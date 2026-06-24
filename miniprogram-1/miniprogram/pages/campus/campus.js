@@ -84,12 +84,10 @@ Page({
         mode: 'schedule',
         modeLabels: ['查询课表', '查询成绩'],
         academicYearLabels: ACADEMIC_YEAR_OPTIONS.map(function (item) { return item.label; }),
-        startYearIndex: DEFAULT_ACADEMIC_YEAR_INDEX,
-        endYearIndex: DEFAULT_ACADEMIC_YEAR_INDEX,
+        academicYearIndex: DEFAULT_ACADEMIC_YEAR_INDEX,
         semesterLabels: SEMESTER_LABELS,
         semesterIndex: 0,
-        startYear: academicYearValueAt(DEFAULT_ACADEMIC_YEAR_INDEX),
-        endYear: academicYearValueAt(DEFAULT_ACADEMIC_YEAR_INDEX),
+        academicYear: academicYearValueAt(DEFAULT_ACADEMIC_YEAR_INDEX),
         loading: false,
         statusLoading: false,
         statusReady: false,
@@ -128,24 +126,12 @@ Page({
             return;
         this.setData({ mode: mode, errorMsg: '' });
     },
-    onStartYearChange: function (e) {
+    onAcademicYearChange: function (e) {
         var _a;
-        var startYearIndex = clampAcademicYearIndex((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value, this.data.startYearIndex);
-        var startYear = academicYearValueAt(startYearIndex);
-        var endYearIndex = Number(this.data.endYear) < Number(startYear) ? startYearIndex : this.data.endYearIndex;
+        var academicYearIndex = clampAcademicYearIndex((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value, this.data.academicYearIndex);
         this.setData({
-            startYearIndex: startYearIndex,
-            startYear: startYear,
-            endYearIndex: endYearIndex,
-            endYear: academicYearValueAt(endYearIndex),
-        });
-    },
-    onEndYearChange: function (e) {
-        var _a;
-        var endYearIndex = clampAcademicYearIndex((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value, this.data.endYearIndex);
-        this.setData({
-            endYearIndex: endYearIndex,
-            endYear: academicYearValueAt(endYearIndex),
+            academicYearIndex: academicYearIndex,
+            academicYear: academicYearValueAt(academicYearIndex),
         });
     },
     onSemesterChange: function (e) {
@@ -254,7 +240,7 @@ Page({
                         }
                         try {
                             semester = SEMESTER_VALUES[this.data.semesterIndex] || 'all';
-                            terms = (0, campus_content_1.buildCampusTerms)(this.data.startYear, this.data.endYear, semester);
+                            terms = (0, campus_content_1.buildCampusTerms)(this.data.academicYear, this.data.academicYear, semester);
                         }
                         catch (e) {
                             e_2 = e;

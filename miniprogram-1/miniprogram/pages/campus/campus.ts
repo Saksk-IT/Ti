@@ -66,12 +66,10 @@ Page({
     mode: 'schedule' as CampusMode,
     modeLabels: ['查询课表', '查询成绩'],
     academicYearLabels: ACADEMIC_YEAR_OPTIONS.map((item) => item.label),
-    startYearIndex: DEFAULT_ACADEMIC_YEAR_INDEX,
-    endYearIndex: DEFAULT_ACADEMIC_YEAR_INDEX,
+    academicYearIndex: DEFAULT_ACADEMIC_YEAR_INDEX,
     semesterLabels: SEMESTER_LABELS,
     semesterIndex: 0,
-    startYear: academicYearValueAt(DEFAULT_ACADEMIC_YEAR_INDEX),
-    endYear: academicYearValueAt(DEFAULT_ACADEMIC_YEAR_INDEX),
+    academicYear: academicYearValueAt(DEFAULT_ACADEMIC_YEAR_INDEX),
     loading: false,
     statusLoading: false,
     statusReady: false,
@@ -112,23 +110,11 @@ Page({
     this.setData({ mode, errorMsg: '' });
   },
 
-  onStartYearChange(e: any) {
-    const startYearIndex = clampAcademicYearIndex(e?.detail?.value, this.data.startYearIndex);
-    const startYear = academicYearValueAt(startYearIndex);
-    const endYearIndex = Number(this.data.endYear) < Number(startYear) ? startYearIndex : this.data.endYearIndex;
+  onAcademicYearChange(e: any) {
+    const academicYearIndex = clampAcademicYearIndex(e?.detail?.value, this.data.academicYearIndex);
     this.setData({
-      startYearIndex,
-      startYear,
-      endYearIndex,
-      endYear: academicYearValueAt(endYearIndex),
-    });
-  },
-
-  onEndYearChange(e: any) {
-    const endYearIndex = clampAcademicYearIndex(e?.detail?.value, this.data.endYearIndex);
-    this.setData({
-      endYearIndex,
-      endYear: academicYearValueAt(endYearIndex),
+      academicYearIndex,
+      academicYear: academicYearValueAt(academicYearIndex),
     });
   },
 
@@ -220,7 +206,7 @@ Page({
     let terms;
     try {
       const semester = SEMESTER_VALUES[this.data.semesterIndex] || 'all';
-      terms = buildCampusTerms(this.data.startYear, this.data.endYear, semester);
+      terms = buildCampusTerms(this.data.academicYear, this.data.academicYear, semester);
     } catch (e: any) {
       this.setData({ errorMsg: e?.message || '学年或学期不正确' });
       return;

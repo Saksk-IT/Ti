@@ -335,21 +335,32 @@ def test_campus_year_filters_use_academic_year_range_labels(auth_client):
     schedule_html = schedule_page.get_data(as_text=True)
     grade_html = grades_page.get_data(as_text=True)
     for prefix, html in (("schedule", schedule_html), ("grade", grade_html)):
-        assert f'<select id="{prefix}StartYear"' in html
-        assert f'<select id="{prefix}EndYear"' in html
+        assert f'<select id="{prefix}AcademicYear"' in html
         assert f'<input id="{prefix}StartYear"' not in html
         assert f'<input id="{prefix}EndYear"' not in html
+        assert f'id="{prefix}StartYear"' not in html
+        assert f'id="{prefix}EndYear"' not in html
+        assert "开始学年" not in html
+        assert "结束学年" not in html
         assert "2025~2026" in html
 
     campus_dir = Path("miniprogram-1/miniprogram/pages/campus")
     wxml = (campus_dir / "campus.wxml").read_text(encoding="utf-8")
     ts = (campus_dir / "campus.ts").read_text(encoding="utf-8")
 
+    assert wxml.count('range="{{academicYearLabels}}"') == 1
     assert 'range="{{academicYearLabels}}"' in wxml
-    assert "onStartYearChange" in wxml
-    assert "onEndYearChange" in wxml
+    assert "onAcademicYearChange" in wxml
+    assert "onStartYearChange" not in wxml
+    assert "onEndYearChange" not in wxml
     assert "onStartYearInput" not in wxml
     assert "onEndYearInput" not in wxml
+    assert "开始学年" not in wxml
+    assert "结束学年" not in wxml
+    assert "academicYearIndex" in ts
+    assert "academicYear:" in ts
+    assert "startYearIndex" not in ts
+    assert "endYearIndex" not in ts
     assert "formatAcademicYearLabel" in ts
     assert "~" in ts
 
