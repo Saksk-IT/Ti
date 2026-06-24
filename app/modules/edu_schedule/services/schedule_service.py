@@ -239,6 +239,8 @@ def user_safe_error(exc: Exception) -> str:
             return WEBVPN_INTERACTIVE_CHALLENGE_MESSAGE
         if auth_message == "教务系统账号或密码错误":
             return "教务系统账号或密码错误，请检查绑定信息后重试"
+        if auth_message == "WebVPN 登录态不可用":
+            return "WebVPN 登录态不可用，请联系管理员在后台刷新 WebVPN 登录态"
         if auth_message == "WebVPN 未配置可用登录态":
             return "WebVPN 未配置可用登录态，请在后台配置有效 Cookie 或登录信息"
         return "上游登录失败，请检查授权信息后重试"

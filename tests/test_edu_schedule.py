@@ -450,6 +450,119 @@ def test_admin_can_save_webvpn_schedule_config_masked(app, seed_user):
     assert b"JSESSIONID=abc" not in page.data
 
 
+def test_admin_can_refresh_webvpn_cookie_with_manual_captcha(app, seed_user, monkeypatch):
+    from app.modules.admin.routes.api_components import edu_schedule_settings
+    from app.modules.admin.services.system_config_service import SystemConfigService
+
+    client = _admin_client(app, seed_user)
+
+    class FakeResponse:
+        def __init__(self, *, text="", content=b"", content_type="text/html", url="https://webvpn.synu.edu.cn/users/sign_in"):
+            self.text = text
+            self.content = content
+            self.headers = {"Content-Type": content_type}
+            self.url = url
+
+    class FakeClient:
+        def __init__(self, config):
+            self.config = config
+
+        def _request(self, session, method, url, **kwargs):
+            if method == "GET" and url.endswith("/users/sign_in"):
+                assert kwargs["headers"]["Accept"].startswith("text/html")
+                return FakeResponse(
+                    text="""
+                    <form id="login-form">
+                      <input name="authenticity_token" value="token-123">
+                      <input name="_rucaptcha">
+                    </form>
+                    """
+                )
+            if method == "GET" and url.endswith("/rucaptcha/"):
+                assert kwargs["headers"]["Referer"].endswith("/users/sign_in")
+                assert kwargs["headers"]["Accept"].startswith("image/")
+                return FakeResponse(content=b"captcha-png", content_type="image/png")
+            if method == "POST" and url.endswith("/users/sign_in"):
+                assert kwargs["headers"]["Origin"] == "https://webvpn.synu.edu.cn"
+                assert kwargs["headers"]["Referer"].endswith("/users/sign_in")
+                assert kwargs["data"]["authenticity_token"] == "token-123"
+                assert kwargs["data"]["_rucaptcha"] == "vxpj"
+                assert kwargs["data"]["user[login]"] == "vpn-admin"
+                assert kwargs["data"]["user[password]"] == "VpnSecret123!"
+                session.cookies.set("SERVERID", "Server1", domain="webvpn.synu.edu.cn", path="/")
+                session.cookies.set("_astraeus_session", "logged-session", domain="webvpn.synu.edu.cn", path="/")
+                session.cookies.set("_webvpn_key", "webvpn-key-value", domain=".synu.edu.cn", path="/")
+                return FakeResponse(
+                    text='<body class="vpn"><a href="/users/sign_out">退出登录</a></body>',
+                    url="https://webvpn.synu.edu.cn/",
+                )
+            raise AssertionError(f"unexpected request {method} {url}")
+
+    monkeypatch.setattr(edu_schedule_settings, "JWXTClient", FakeClient)
+
+    with app.app_context():
+        SystemConfigService.save_edu_schedule_config(
+            {
+                "enabled": True,
+                "use_webvpn": True,
+                "webvpn_base_url": "https://webvpn.synu.edu.cn",
+                "webvpn_login_path": "/users/sign_in",
+                "webvpn_username": "vpn-admin",
+                "webvpn_password": "VpnSecret123!",
+                "webvpn_cookie": "",
+                "jwxt_base_url": "https://jwxt.webvpn.synu.edu.cn/jwglxt",
+                "request_timeout": 20,
+                "verify_tls": True,
+                "store_user_credentials": True,
+            },
+            admin_id=1,
+        )
+
+    start_response = client.post(
+        "/admin/api/settings/edu-schedule/webvpn-session/start",
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+    assert start_response.status_code == 200
+    start_body = start_response.get_json()
+    assert start_body["status"] == "success"
+    assert start_body["data"]["challenge_id"]
+    assert start_body["data"]["captcha_image"].startswith("data:image/png;base64,")
+
+    submit_response = client.post(
+        "/admin/api/settings/edu-schedule/webvpn-session/complete",
+        json={
+            "challenge_id": start_body["data"]["challenge_id"],
+            "captcha_code": "vxpj",
+        },
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+
+    assert submit_response.status_code == 200
+    submit_body = submit_response.get_json()
+    assert submit_body["status"] == "success"
+    assert submit_body["data"]["webvpn_cookie"].startswith("SER")
+    assert "logged-session" not in submit_body["data"]["webvpn_cookie"]
+
+    with app.app_context():
+        saved = SystemConfigService.get_edu_schedule_config()["webvpn_cookie"]
+    assert "SERVERID=Server1" in saved
+    assert "_astraeus_session=logged-session" in saved
+    assert "_webvpn_key=webvpn-key-value" in saved
+
+
+def test_admin_edu_schedule_page_exposes_webvpn_refresh_controls(app, seed_user):
+    client = _admin_client(app, seed_user)
+
+    page = client.get("/admin/settings/edu-schedule")
+
+    assert page.status_code == 200
+    html = page.get_data(as_text=True)
+    assert "刷新 WebVPN 登录态" in html
+    assert "webvpnCaptchaImage" in html
+    assert "/admin/api/settings/edu-schedule/webvpn-session/start" in html
+    assert "/admin/api/settings/edu-schedule/webvpn-session/complete" in html
+
+
 def test_query_multiple_terms_saves_schedule_snapshots(app, auth_client, monkeypatch):
     from app.modules.admin.services.system_config_service import SystemConfigService
     from app.modules.edu_schedule.services import schedule_service

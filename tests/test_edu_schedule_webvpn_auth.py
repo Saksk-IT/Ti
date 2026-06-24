@@ -5,6 +5,7 @@ import pytest
 
 from app.modules.edu_schedule.routes import api as edu_schedule_api
 from app.modules.edu_schedule.services.client import JWXTClient, ScheduleAuthError
+from app.modules.edu_schedule.services.schedule_service import user_safe_error
 
 
 def _webvpn_config():
@@ -106,3 +107,9 @@ def test_grade_query_returns_actionable_webvpn_challenge_message(auth_client, mo
     body = response.get_json()
     assert body["status"] == "error"
     assert body["message"] == challenge_message
+
+
+def test_user_safe_error_tells_admin_to_refresh_expired_webvpn_cookie():
+    message = user_safe_error(ScheduleAuthError("WebVPN 登录态不可用"))
+
+    assert message == "WebVPN 登录态不可用，请联系管理员在后台刷新 WebVPN 登录态"

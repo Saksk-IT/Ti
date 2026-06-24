@@ -676,3 +676,16 @@ class SystemConfigService:
             SystemConfigService.update_config(key, encrypt_secret(value) if value else '', key, admin_id)
 
         return SystemConfigService.get_edu_schedule_config_masked()
+
+    @staticmethod
+    def save_edu_schedule_webvpn_cookie(cookie_header: str, admin_id: Optional[int] = None) -> Dict[str, Any]:
+        from app.core.utils.credential_crypto import encrypt_secret
+
+        value = str(cookie_header or '').strip()
+        SystemConfigService.update_config(
+            'edu_schedule_webvpn_cookie',
+            encrypt_secret(value) if value else '',
+            'WebVPN 自动刷新登录态 Cookie',
+            admin_id,
+        )
+        return SystemConfigService.get_edu_schedule_config_masked()

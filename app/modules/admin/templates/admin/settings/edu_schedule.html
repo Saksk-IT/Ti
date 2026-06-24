@@ -65,6 +65,17 @@
                         <input type="password" id="webvpn_cookie" value="{{ schedule_config.webvpn_cookie }}" placeholder="可粘贴 Cookie 头或浏览器 Cookie 表格">
                     </div>
                 </div>
+                <div class="webvpn-refresh">
+                    <div class="webvpn-refresh-actions">
+                        <button type="button" class="btn btn-secondary" id="startWebvpnRefreshBtn">刷新 WebVPN 登录态</button>
+                        <span class="refresh-status" id="webvpnRefreshStatus"></span>
+                    </div>
+                    <div class="captcha-panel" id="webvpnCaptchaPanel" hidden>
+                        <img id="webvpnCaptchaImage" class="captcha-image" alt="WebVPN 验证码">
+                        <input type="text" id="webvpnCaptchaCode" class="captcha-input" placeholder="输入验证码" maxlength="10" autocomplete="off">
+                        <button type="button" class="btn btn-primary" id="completeWebvpnRefreshBtn">提交验证码</button>
+                    </div>
+                </div>
             </div>
 
             <div class="form-section">
@@ -151,7 +162,23 @@
 .form-actions { display: flex; justify-content: flex-end; }
 .btn { padding: 12px 20px; border: none; border-radius: var(--radius-sm); font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
 .btn-primary { background: var(--primary); color: #fff; }
+.btn-secondary { background: var(--card-bg-solid); color: var(--text-color); border: 1px solid var(--border-color); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.webvpn-refresh { display: flex; flex-direction: column; gap: 12px; }
+.webvpn-refresh-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.refresh-status { color: var(--text-sub); font-size: 14px; line-height: 1.6; }
+.captcha-panel { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.captcha-panel[hidden] { display: none; }
+.captcha-image { width: 150px; height: 50px; object-fit: contain; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: #fff; }
+.captcha-input {
+    width: 160px;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg-solid);
+    color: var(--text-color);
+    font-size: 15px;
+}
 .form-message { margin-top: 8px; padding: 12px 16px; border-radius: var(--radius-sm); font-size: 14px; display: none; }
 .form-message.success { display: block; background: rgba(52,199,89,0.15); color: var(--success); border: 1px solid rgba(52,199,89,0.3); }
 .form-message.error { display: block; background: rgba(255,59,48,0.15); color: var(--danger); border: 1px solid rgba(255,59,48,0.3); }
@@ -168,6 +195,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('scheduleConfigForm');
     const saveBtn = document.getElementById('saveBtn');
     const messageDiv = document.getElementById('formMessage');
+    const startWebvpnRefreshBtn = document.getElementById('startWebvpnRefreshBtn');
+    const completeWebvpnRefreshBtn = document.getElementById('completeWebvpnRefreshBtn');
+    const webvpnCaptchaPanel = document.getElementById('webvpnCaptchaPanel');
+    const webvpnCaptchaImage = document.getElementById('webvpnCaptchaImage');
+    const webvpnCaptchaCode = document.getElementById('webvpnCaptchaCode');
+    const webvpnRefreshStatus = document.getElementById('webvpnRefreshStatus');
+    let webvpnChallengeId = '';
 
     function showMessage(text, type) {
         messageDiv.textContent = text;
@@ -176,6 +210,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function val(id) {
         return document.getElementById(id).value.trim();
+    }
+
+    function setRefreshStatus(text) {
+        webvpnRefreshStatus.textContent = text || '';
+    }
+
+    function setCookieHint(maskedCookie) {
+        if (maskedCookie) {
+            document.getElementById('webvpn_cookie').value = maskedCookie;
+        }
     }
 
     function payload() {
@@ -222,6 +266,89 @@ document.addEventListener('DOMContentLoaded', function() {
         } finally {
             saveBtn.disabled = false;
             saveBtn.textContent = '保存配置';
+        }
+    });
+
+    startWebvpnRefreshBtn.addEventListener('click', async function() {
+        startWebvpnRefreshBtn.disabled = true;
+        completeWebvpnRefreshBtn.disabled = true;
+        webvpnCaptchaPanel.hidden = true;
+        webvpnCaptchaCode.value = '';
+        setRefreshStatus('正在获取验证码...');
+        try {
+            const response = await fetch('/admin/api/settings/edu-schedule/webvpn-session/start', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({}),
+            });
+            const data = await response.json();
+            if (data.status !== 'success') {
+                setRefreshStatus(data.message || '刷新失败');
+                showMessage(data.message || '刷新 WebVPN 登录态失败', 'error');
+                return;
+            }
+            const result = data.data || {};
+            if (result.captcha_image) {
+                webvpnChallengeId = result.challenge_id || '';
+                webvpnCaptchaImage.src = result.captcha_image;
+                webvpnCaptchaPanel.hidden = false;
+                webvpnCaptchaCode.focus();
+                setRefreshStatus(data.message || '请输入验证码');
+                return;
+            }
+            setCookieHint(result.webvpn_cookie);
+            setRefreshStatus(data.message || 'WebVPN 登录态已刷新');
+            showMessage(data.message || 'WebVPN 登录态已刷新', 'success');
+        } catch (error) {
+            setRefreshStatus('网络错误');
+            showMessage('网络错误：' + error.message, 'error');
+        } finally {
+            startWebvpnRefreshBtn.disabled = false;
+            completeWebvpnRefreshBtn.disabled = false;
+        }
+    });
+
+    completeWebvpnRefreshBtn.addEventListener('click', async function() {
+        const captchaCode = webvpnCaptchaCode.value.trim();
+        if (!webvpnChallengeId || !captchaCode) {
+            showMessage('请输入 WebVPN 验证码', 'error');
+            return;
+        }
+        completeWebvpnRefreshBtn.disabled = true;
+        setRefreshStatus('正在提交验证码...');
+        try {
+            const response = await fetch('/admin/api/settings/edu-schedule/webvpn-session/complete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({
+                    challenge_id: webvpnChallengeId,
+                    captcha_code: captchaCode,
+                }),
+            });
+            const data = await response.json();
+            if (data.status !== 'success') {
+                setRefreshStatus(data.message || '刷新失败');
+                showMessage(data.message || '刷新 WebVPN 登录态失败', 'error');
+                return;
+            }
+            const result = data.data || {};
+            setCookieHint(result.webvpn_cookie);
+            webvpnChallengeId = '';
+            webvpnCaptchaPanel.hidden = true;
+            webvpnCaptchaCode.value = '';
+            setRefreshStatus(data.message || 'WebVPN 登录态已刷新');
+            showMessage(data.message || 'WebVPN 登录态已刷新', 'success');
+        } catch (error) {
+            setRefreshStatus('网络错误');
+            showMessage('网络错误：' + error.message, 'error');
+        } finally {
+            completeWebvpnRefreshBtn.disabled = false;
         }
     });
 });
