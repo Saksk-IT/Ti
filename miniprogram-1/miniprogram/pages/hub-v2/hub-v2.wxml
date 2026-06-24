@@ -198,6 +198,51 @@
         </scroll-view>
       </view>
 
+      <!-- 校园服务 -->
+      <view class="section campus-home-section animate-slide-up" style="animation-delay: 0.195s">
+        <view class="section-header">
+          <text class="section-title">校园服务</text>
+          <text class="section-link" bindtap="onGoCampus">进入校园</text>
+        </view>
+        <view class="campus-home-card glass-card-strong">
+          <view class="campus-home-main" bindtap="onGoCampus" aria-role="button" aria-label="进入校园服务">
+            <view class="campus-home-icon-wrap">
+              <image class="campus-home-icon" src="/images/icons/campus.svg" mode="aspectFit"></image>
+            </view>
+            <view class="campus-home-copy">
+              <view class="campus-home-title-row">
+                <text class="campus-home-title">{{campusSummary.title}}</text>
+                <view class="campus-home-status status-{{campusSummary.statusTone}}">
+                  <text>{{campusSummary.statusLabel}}</text>
+                </view>
+              </view>
+              <text class="campus-home-subtitle">{{campusSummary.subtitle}}</text>
+            </view>
+          </view>
+          <view class="campus-home-metrics">
+            <view class="campus-home-metric">
+              <text class="campus-home-metric-value">{{campusSummary.scheduleCount}}</text>
+              <text class="campus-home-metric-label">课表记录</text>
+            </view>
+            <view class="campus-home-divider"></view>
+            <view class="campus-home-metric">
+              <text class="campus-home-metric-value">{{campusSummary.gradeCount}}</text>
+              <text class="campus-home-metric-label">成绩记录</text>
+            </view>
+          </view>
+          <view class="campus-home-actions">
+            <view class="campus-home-action primary" bindtap="onCampusPrimaryAction" aria-role="button" aria-label="{{campusSummary.primaryAction}}">
+              <image class="campus-home-action-icon" src="/images/icons/book-open.svg" mode="aspectFit"></image>
+              <text>{{campusSummary.primaryAction}}</text>
+            </view>
+            <view class="campus-home-action" bindtap="onCampusSecondaryAction" aria-role="button" aria-label="{{campusSummary.secondaryAction}}">
+              <image class="campus-home-action-icon" src="/images/icons/chart.svg" mode="aspectFit"></image>
+              <text>{{campusSummary.secondaryAction}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
       <!-- 快捷入口 -->
       <view class="section animate-slide-up" style="animation-delay: 0.2s">
         <view class="section-header">
@@ -233,6 +278,12 @@
               <image class="quick-icon" src="/images/icons/edit.svg" mode="aspectFit"></image>
             </view>
             <text class="quick-label">考试</text>
+          </view>
+          <view class="quick-card glass-card" bindtap="onGoCampus">
+            <view class="quick-icon-wrap">
+              <image class="quick-icon" src="/images/icons/campus.svg" mode="aspectFit"></image>
+            </view>
+            <text class="quick-label">校园</text>
           </view>
           <view class="quick-card glass-card" bindtap="onGoHistory">
             <view class="quick-icon-wrap">

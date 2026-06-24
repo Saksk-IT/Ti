@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.normalizeHubStats = normalizeHubStats;
+exports.buildCampusSummary = buildCampusSummary;
 exports.buildStudyAdvice = buildStudyAdvice;
 exports.buildRecentBanks = buildRecentBanks;
 exports.buildWeaknessEmptyActions = buildWeaknessEmptyActions;
@@ -14,6 +15,9 @@ function cleanText(value, fallback) {
     var text = String(value || '').trim();
     return text || fallback;
 }
+function countRows(value) {
+    return Array.isArray(value) ? value.length : 0;
+}
 function normalizeHubStats(payload) {
     var data = payload && typeof payload === 'object' ? payload : {};
     var allSummary = data.all_summary && typeof data.all_summary === 'object' ? data.all_summary : null;
@@ -22,6 +26,62 @@ function normalizeHubStats(payload) {
         accuracy: toNumber(allSummary ? allSummary.accuracy : data.accuracy),
         favorites: toNumber(allSummary ? allSummary.favorites : (data.favorites_count || data.favorites)),
         mistakes: toNumber(allSummary ? allSummary.mistakes : (data.mistakes_count || data.mistakes)),
+    };
+}
+function buildCampusSummary(payload, isLoggedIn) {
+    var data = payload && typeof payload === 'object' ? payload : {};
+    var scheduleCount = countRows(data.snapshots);
+    var gradeCount = countRows(data.grade_snapshots);
+    if (!isLoggedIn) {
+        return {
+            title: '校园服务',
+            subtitle: '登录后绑定教务系统账号，查询课表和成绩',
+            statusLabel: '登录后使用',
+            statusTone: 'muted',
+            scheduleCount: 0,
+            gradeCount: 0,
+            primaryAction: '去登录',
+            secondaryAction: '进校园'
+        };
+    }
+    if (data.error) {
+        return {
+            title: '校园服务',
+            subtitle: '校园状态暂时无法同步，仍可进入校园页查看',
+            statusLabel: '同步失败',
+            statusTone: 'warn',
+            scheduleCount: scheduleCount,
+            gradeCount: gradeCount,
+            primaryAction: '进入校园',
+            secondaryAction: '稍后重试'
+        };
+    }
+    var credential = data.credential && typeof data.credential === 'object'
+        ? data.credential
+        : {};
+    var hasCredentials = !!credential.has_credentials;
+    var usernameHint = cleanText(credential.username_hint, '已保存');
+    if (hasCredentials) {
+        return {
+            title: '校园服务',
+            subtitle: "\u5DF2\u7ED1\u5B9A ".concat(usernameHint, "\uFF0C\u53EF\u76F4\u63A5\u67E5\u8BE2\u8BFE\u8868\u548C\u6210\u7EE9"),
+            statusLabel: '已绑定',
+            statusTone: 'ok',
+            scheduleCount: scheduleCount,
+            gradeCount: gradeCount,
+            primaryAction: '查课表',
+            secondaryAction: '查成绩'
+        };
+    }
+    return {
+        title: '校园服务',
+        subtitle: '绑定教务系统账号后，可在校园页查询课表和成绩',
+        statusLabel: '待绑定',
+        statusTone: 'warn',
+        scheduleCount: scheduleCount,
+        gradeCount: gradeCount,
+        primaryAction: '去绑定',
+        secondaryAction: '进校园'
     };
 }
 function buildStudyAdvice(stats, weakness, lastPractice, isLoggedIn) {

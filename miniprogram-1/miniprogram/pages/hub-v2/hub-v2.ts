@@ -4,15 +4,18 @@ import { safeNavigate } from '../../utils/nav';
 import { themeManager, ThemeStyle, ThemeMode } from '../../utils/theme';
 import { decorateAvatarUrl } from '../../utils/avatar';
 import {
+  buildCampusSummary,
   buildRecentBanks,
   buildStudyAdvice,
   buildWeaknessEmptyActions,
+  CampusSummary,
   normalizeHubStats,
   RecentBankItem,
   StudyAdviceItem,
   WeaknessEmptyAction,
 } from './hub-content';
 
+const CAMPUS_PREFERRED_MODE_KEY = 'campus_preferred_mode_v1';
 const SETUP_NICKNAME_RE = /^[\u4e00-\u9fffA-Za-z0-9]{1,8}$/;
 const SETUP_NICKNAME_ERROR = '昵称只能使用汉字、字母、数字，最多8个字符';
 const RANDOM_NICKNAME_PREFIXES = ['题友', '学友', '考友', '小题'];
@@ -195,6 +198,7 @@ Page({
     studyAdvice: [] as StudyAdviceItem[],
     recentBanks: [] as RecentBankItem[],
     weaknessEmptyActions: [] as WeaknessEmptyAction[],
+    campusSummary: buildCampusSummary(null, false) as CampusSummary,
 
     // 主题
     isDarkMode: false,
@@ -275,6 +279,7 @@ Page({
           lastPractice: { has_practice: false, last_at: null, subject_id: null, subject_name: null, path: null, last_at_display: '' },
           stats: { answered: 0, accuracy: 0, favorites: 0, mistakes: 0 },
           weakness: [],
+          campusSummary: buildCampusSummary(null, false),
           inited: true,
           loading: false,
         });
@@ -283,11 +288,12 @@ Page({
       }
 
       // 已登录：并行加载所有数据
-      const [profile, checkinStatus, lastPractice, homeStats] = await Promise.all([
+      const [profile, checkinStatus, lastPractice, homeStats, campusStatus] = await Promise.all([
         api.getProfile().catch(() => null),
         api.getCheckinStatus().catch(() => null),
         api.getLastPractice().catch(() => null),
         api.getDataCenter(30).catch(() => api.getHistoryStats(30).catch(() => null)),
+        api.getEduScheduleStatus().catch((error) => ({ error })),
       ]);
 
       // 用户信息
@@ -348,6 +354,7 @@ Page({
         this.setData({ weakness: weaknessRows });
       }
 
+      this.setData({ campusSummary: buildCampusSummary(campusStatus, true) });
       this.setData({ inited: true });
       this.refreshHubContent();
     } catch (e: any) {
@@ -357,7 +364,12 @@ Page({
       if (errorMsg.includes('401') || errorMsg.includes('登录') || errorMsg.includes('过期') || errorMsg.includes('unauthorized')) {
         wx.removeStorageSync('token');
         wx.removeStorageSync('userInfo');
-        this.setData({ isLoggedIn: false, userName: '游客', userAvatar: '' });
+        this.setData({
+          isLoggedIn: false,
+          userName: '游客',
+          userAvatar: '',
+          campusSummary: buildCampusSummary(null, false),
+        });
         this.refreshHubContent();
       } else {
         wx.showToast({ title: e?.message || '加载失败', icon: 'none' });
@@ -580,6 +592,58 @@ Page({
         this.onGoPublicBank();
         break;
     }
+  },
+
+  async refreshCampusSummary() {
+    if (!this.data.isLoggedIn) {
+      this.setData({ campusSummary: buildCampusSummary(null, false) });
+      return;
+    }
+    try {
+      const data = await api.getEduScheduleStatus();
+      this.setData({ campusSummary: buildCampusSummary(data, true) });
+      wx.showToast({ title: '校园状态已同步', icon: 'success' });
+    } catch (error: any) {
+      this.setData({ campusSummary: buildCampusSummary({ error }, true) });
+      wx.showToast({ title: '同步失败', icon: 'none' });
+    }
+  },
+
+  openCampus(mode?: 'schedule' | 'grades') {
+    try {
+      if (mode) wx.setStorageSync(CAMPUS_PREFERRED_MODE_KEY, mode);
+    } catch (e) {}
+    safeNavigate('/pages/campus/campus', 'switchTab');
+  },
+
+  onGoCampus() {
+    this.openCampus();
+  },
+
+  onCampusPrimaryAction() {
+    const summary = this.data.campusSummary as CampusSummary;
+    if (!this.data.isLoggedIn) {
+      this.onGoLoginTap();
+      return;
+    }
+    if (summary.statusLabel === '待绑定') {
+      safeNavigate('/pages/settings-account-bindings-v2/settings-account-bindings-v2', 'navigateTo');
+      return;
+    }
+    this.openCampus(summary.statusLabel === '已绑定' ? 'schedule' : undefined);
+  },
+
+  onCampusSecondaryAction() {
+    const summary = this.data.campusSummary as CampusSummary;
+    if (!this.data.isLoggedIn) {
+      this.openCampus();
+      return;
+    }
+    if (summary.statusLabel === '同步失败') {
+      this.refreshCampusSummary();
+      return;
+    }
+    this.openCampus(summary.statusLabel === '已绑定' ? 'grades' : undefined);
   },
 
   // 获取本地保存的上次练习会话

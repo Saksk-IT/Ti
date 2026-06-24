@@ -50,6 +50,19 @@ export interface WeaknessEmptyAction {
   target: 'login' | 'publicBank' | 'review';
 }
 
+export type CampusSummaryTone = 'ok' | 'warn' | 'muted';
+
+export interface CampusSummary {
+  title: string;
+  subtitle: string;
+  statusLabel: string;
+  statusTone: CampusSummaryTone;
+  scheduleCount: number;
+  gradeCount: number;
+  primaryAction: string;
+  secondaryAction: string;
+}
+
 type HubStatsPayload = {
   all_summary?: Record<string, unknown>;
   answered_count?: unknown;
@@ -74,6 +87,10 @@ function cleanText(value: unknown, fallback: string): string {
   return text || fallback;
 }
 
+function countRows(value: unknown): number {
+  return Array.isArray(value) ? value.length : 0;
+}
+
 export function normalizeHubStats(payload: HubStatsPayload | null | undefined): HubStats {
   const data = payload && typeof payload === 'object' ? payload : {};
   const allSummary = data.all_summary && typeof data.all_summary === 'object' ? data.all_summary : null;
@@ -82,6 +99,68 @@ export function normalizeHubStats(payload: HubStatsPayload | null | undefined): 
     accuracy: toNumber(allSummary ? allSummary.accuracy : data.accuracy),
     favorites: toNumber(allSummary ? allSummary.favorites : (data.favorites_count || data.favorites)),
     mistakes: toNumber(allSummary ? allSummary.mistakes : (data.mistakes_count || data.mistakes)),
+  };
+}
+
+export function buildCampusSummary(payload: unknown, isLoggedIn: boolean): CampusSummary {
+  const data = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {};
+  const scheduleCount = countRows(data.snapshots);
+  const gradeCount = countRows(data.grade_snapshots);
+
+  if (!isLoggedIn) {
+    return {
+      title: '校园服务',
+      subtitle: '登录后绑定教务系统账号，查询课表和成绩',
+      statusLabel: '登录后使用',
+      statusTone: 'muted',
+      scheduleCount: 0,
+      gradeCount: 0,
+      primaryAction: '去登录',
+      secondaryAction: '进校园'
+    };
+  }
+
+  if (data.error) {
+    return {
+      title: '校园服务',
+      subtitle: '校园状态暂时无法同步，仍可进入校园页查看',
+      statusLabel: '同步失败',
+      statusTone: 'warn',
+      scheduleCount,
+      gradeCount,
+      primaryAction: '进入校园',
+      secondaryAction: '稍后重试'
+    };
+  }
+
+  const credential = data.credential && typeof data.credential === 'object'
+    ? data.credential as Record<string, unknown>
+    : {};
+  const hasCredentials = !!credential.has_credentials;
+  const usernameHint = cleanText(credential.username_hint, '已保存');
+
+  if (hasCredentials) {
+    return {
+      title: '校园服务',
+      subtitle: `已绑定 ${usernameHint}，可直接查询课表和成绩`,
+      statusLabel: '已绑定',
+      statusTone: 'ok',
+      scheduleCount,
+      gradeCount,
+      primaryAction: '查课表',
+      secondaryAction: '查成绩'
+    };
+  }
+
+  return {
+    title: '校园服务',
+    subtitle: '绑定教务系统账号后，可在校园页查询课表和成绩',
+    statusLabel: '待绑定',
+    statusTone: 'warn',
+    scheduleCount,
+    gradeCount,
+    primaryAction: '去绑定',
+    secondaryAction: '进校园'
   };
 }
 

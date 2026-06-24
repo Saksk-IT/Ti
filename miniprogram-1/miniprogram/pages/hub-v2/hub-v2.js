@@ -53,6 +53,7 @@ var nav_1 = require("../../utils/nav");
 var theme_1 = require("../../utils/theme");
 var avatar_1 = require("../../utils/avatar");
 var hub_content_1 = require("./hub-content");
+var CAMPUS_PREFERRED_MODE_KEY = 'campus_preferred_mode_v1';
 var SETUP_NICKNAME_RE = /^[\u4e00-\u9fffA-Za-z0-9]{1,8}$/;
 var SETUP_NICKNAME_ERROR = '昵称只能使用汉字、字母、数字，最多8个字符';
 var RANDOM_NICKNAME_PREFIXES = ['题友', '学友', '考友', '小题'];
@@ -195,6 +196,7 @@ Page({
         studyAdvice: [],
         recentBanks: [],
         weaknessEmptyActions: [],
+        campusSummary: (0, hub_content_1.buildCampusSummary)(null, false),
         // 主题
         isDarkMode: false,
         themeClass: '',
@@ -252,7 +254,7 @@ Page({
     },
     loadAllData: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var isLoggedIn, _a, profile, checkinStatus, lastPractice, homeStats, nextAvatar, self, localSession, data, weaknessRows, e_1, errorMsg;
+            var isLoggedIn, _a, profile, checkinStatus, lastPractice, homeStats, campusStatus, nextAvatar, self, localSession, data, weaknessRows, e_1, errorMsg;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -272,6 +274,7 @@ Page({
                                 lastPractice: { has_practice: false, last_at: null, subject_id: null, subject_name: null, path: null, last_at_display: '' },
                                 stats: { answered: 0, accuracy: 0, favorites: 0, mistakes: 0 },
                                 weakness: [],
+                                campusSummary: (0, hub_content_1.buildCampusSummary)(null, false),
                                 inited: true,
                                 loading: false,
                             });
@@ -283,9 +286,10 @@ Page({
                                 api_1.api.getCheckinStatus().catch(function () { return null; }),
                                 api_1.api.getLastPractice().catch(function () { return null; }),
                                 api_1.api.getDataCenter(30).catch(function () { return api_1.api.getHistoryStats(30).catch(function () { return null; }); }),
+                                api_1.api.getEduScheduleStatus().catch(function (error) { return ({ error: error }); }),
                             ])];
                     case 2:
-                        _a = _b.sent(), profile = _a[0], checkinStatus = _a[1], lastPractice = _a[2], homeStats = _a[3];
+                        _a = _b.sent(), profile = _a[0], checkinStatus = _a[1], lastPractice = _a[2], homeStats = _a[3], campusStatus = _a[4];
                         // 用户信息
                         if (profile) {
                             nextAvatar = profile.avatar ? (0, avatar_1.decorateAvatarUrl)((0, api_1.resolveUploadUrl)(profile.avatar)) : '';
@@ -337,6 +341,7 @@ Page({
                             weaknessRows = Array.isArray(data.weakness_rows) ? data.weakness_rows.slice(0, 2) : [];
                             this.setData({ weakness: weaknessRows });
                         }
+                        this.setData({ campusSummary: (0, hub_content_1.buildCampusSummary)(campusStatus, true) });
                         this.setData({ inited: true });
                         this.refreshHubContent();
                         return [3 /*break*/, 5];
@@ -347,7 +352,12 @@ Page({
                         if (errorMsg.includes('401') || errorMsg.includes('登录') || errorMsg.includes('过期') || errorMsg.includes('unauthorized')) {
                             wx.removeStorageSync('token');
                             wx.removeStorageSync('userInfo');
-                            this.setData({ isLoggedIn: false, userName: '游客', userAvatar: '' });
+                            this.setData({
+                                isLoggedIn: false,
+                                userName: '游客',
+                                userAvatar: '',
+                                campusSummary: (0, hub_content_1.buildCampusSummary)(null, false),
+                            });
                             this.refreshHubContent();
                         }
                         else {
@@ -582,6 +592,70 @@ Page({
                 this.onGoPublicBank();
                 break;
         }
+    },
+    refreshCampusSummary: function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var data, error_1;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!this.data.isLoggedIn) {
+                            this.setData({ campusSummary: (0, hub_content_1.buildCampusSummary)(null, false) });
+                            return [2 /*return*/];
+                        }
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, 3, , 4]);
+                        return [4 /*yield*/, api_1.api.getEduScheduleStatus()];
+                    case 2:
+                        data = _a.sent();
+                        this.setData({ campusSummary: (0, hub_content_1.buildCampusSummary)(data, true) });
+                        wx.showToast({ title: '校园状态已同步', icon: 'success' });
+                        return [3 /*break*/, 4];
+                    case 3:
+                        error_1 = _a.sent();
+                        this.setData({ campusSummary: (0, hub_content_1.buildCampusSummary)({ error: error_1 }, true) });
+                        wx.showToast({ title: '同步失败', icon: 'none' });
+                        return [3 /*break*/, 4];
+                    case 4: return [2 /*return*/];
+                }
+            });
+        });
+    },
+    openCampus: function (mode) {
+        try {
+            if (mode)
+                wx.setStorageSync(CAMPUS_PREFERRED_MODE_KEY, mode);
+        }
+        catch (e) { }
+        (0, nav_1.safeNavigate)('/pages/campus/campus', 'switchTab');
+    },
+    onGoCampus: function () {
+        this.openCampus();
+    },
+    onCampusPrimaryAction: function () {
+        var summary = this.data.campusSummary;
+        if (!this.data.isLoggedIn) {
+            this.onGoLoginTap();
+            return;
+        }
+        if (summary.statusLabel === '待绑定') {
+            (0, nav_1.safeNavigate)('/pages/settings-account-bindings-v2/settings-account-bindings-v2', 'navigateTo');
+            return;
+        }
+        this.openCampus(summary.statusLabel === '已绑定' ? 'schedule' : undefined);
+    },
+    onCampusSecondaryAction: function () {
+        var summary = this.data.campusSummary;
+        if (!this.data.isLoggedIn) {
+            this.openCampus();
+            return;
+        }
+        if (summary.statusLabel === '同步失败') {
+            this.refreshCampusSummary();
+            return;
+        }
+        this.openCampus(summary.statusLabel === '已绑定' ? 'grades' : undefined);
     },
     // 获取本地保存的上次练习会话
     getLocalLastSession: function () {

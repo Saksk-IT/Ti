@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 
 const {
+  buildCampusSummary,
   buildStudyAdvice,
   buildRecentBanks,
   buildWeaknessEmptyActions,
@@ -90,4 +91,37 @@ test('normalizeHubStats prefers data center all_summary for public and personal 
     favorites: 6,
     mistakes: 4
   });
+});
+
+test('buildCampusSummary exposes binding state and snapshot counts', () => {
+  const summary = buildCampusSummary({
+    credential: { has_credentials: true, username_hint: '2024****18' },
+    snapshots: [{ id: 1 }, { id: 2 }],
+    grade_snapshots: [{ id: 3 }]
+  }, true);
+
+  assert.deepEqual(summary, {
+    title: '校园服务',
+    subtitle: '已绑定 2024****18，可直接查询课表和成绩',
+    statusLabel: '已绑定',
+    statusTone: 'ok',
+    scheduleCount: 2,
+    gradeCount: 1,
+    primaryAction: '查课表',
+    secondaryAction: '查成绩'
+  });
+});
+
+test('buildCampusSummary prompts visitors and unbound users without leaking errors', () => {
+  const visitor = buildCampusSummary(null, false);
+  assert.equal(visitor.statusLabel, '登录后使用');
+  assert.equal(visitor.primaryAction, '去登录');
+
+  const unbound = buildCampusSummary({ credential: { has_credentials: false } }, true);
+  assert.equal(unbound.statusLabel, '待绑定');
+  assert.equal(unbound.primaryAction, '去绑定');
+
+  const failed = buildCampusSummary({ error: new Error('raw upstream failed') }, true);
+  assert.equal(failed.statusLabel, '同步失败');
+  assert.equal(failed.subtitle, '校园状态暂时无法同步，仍可进入校园页查看');
 });
