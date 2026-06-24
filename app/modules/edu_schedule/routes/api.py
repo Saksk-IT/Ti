@@ -6,6 +6,7 @@ from __future__ import annotations
 from flask import Blueprint, current_app, request
 from pydantic import ValidationError
 
+from app.core.extensions import limiter
 from app.core.utils.api_response import error_response, success_response
 from app.core.utils.decorators import auth_required, current_user_id
 
@@ -22,6 +23,7 @@ from ..services.webvpn_refresh import (
 
 
 edu_schedule_api_bp = Blueprint("edu_schedule_api", __name__)
+limiter.exempt(edu_schedule_api_bp)
 
 
 def _webvpn_refresh_required_response(user_id: int):

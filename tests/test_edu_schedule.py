@@ -1191,3 +1191,24 @@ def test_schedule_api_routes_do_not_have_rate_limits():
 
     assert "per hour" not in route_source
     assert "limiter.limit" not in route_source
+
+
+def test_schedule_api_blueprint_is_exempt_from_default_rate_limit(monkeypatch):
+    from app import create_app
+    from app.core.config import TestingConfig
+    from app.core.extensions import limiter
+
+    monkeypatch.setattr(TestingConfig, "RATELIMIT_DEFAULT", "1 per day")
+    app = create_app("testing")
+    storage = getattr(limiter, "storage", None)
+    if storage is not None:
+        storage.reset()
+
+    try:
+        with app.test_client() as client:
+            responses = [client.get("/api/edu-schedule/status") for _ in range(3)]
+    finally:
+        if storage is not None:
+            storage.reset()
+
+    assert [response.status_code for response in responses] == [401, 401, 401]
