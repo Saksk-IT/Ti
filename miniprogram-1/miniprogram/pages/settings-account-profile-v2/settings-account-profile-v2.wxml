@@ -62,8 +62,8 @@
           <view class="profile-grid">
             <view class="acc-field">
               <text class="acc-label">昵称</text>
-              <input class="acc-input" value="{{username}}" disabled="{{true}}" />
-              <text class="acc-help">昵称由系统账号标识决定，当前不支持在此页修改。</text>
+              <input class="acc-input" value="{{username}}" disabled="{{!editing}}" placeholder="未设置" placeholder-class="placeholder" maxlength="8" bindinput="onUsernameInput" />
+              <text class="acc-help">仅支持汉字、字母、数字，最多8个字符。</text>
             </view>
 
             <view class="acc-field">

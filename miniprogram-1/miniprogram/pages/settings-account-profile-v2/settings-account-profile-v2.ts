@@ -7,6 +7,9 @@ import { bumpAvatarRev, decorateAvatarUrl } from '../../utils/avatar';
 type SettingsNavKey = 'account' | 'practice' | 'theme' | 'about';
 type AccountSubKey = 'profile' | 'security' | 'bindings';
 
+const PROFILE_NICKNAME_RE = /^[\u4e00-\u9fffA-Za-z0-9]{1,8}$/;
+const PROFILE_NICKNAME_ERROR = '昵称只能使用汉字、字母、数字，最多8个字符';
+
 function navTo(key: SettingsNavKey): string {
   if (key === 'practice') return '/pages/settings-practice-v2/settings-practice-v2';
   if (key === 'theme') return '/pages/settings-theme-v2/settings-theme-v2';
@@ -36,6 +39,15 @@ function clampLen(s: any, max: number): string {
   const v = String(s || '');
   if (v.length <= max) return v;
   return v.slice(0, max);
+}
+
+function normalizeProfileNickname(value: any): string {
+  return String(value || '').trim();
+}
+
+function validateProfileNickname(value: string): string {
+  if (!PROFILE_NICKNAME_RE.test(value)) return PROFILE_NICKNAME_ERROR;
+  return '';
 }
 
 Page({
@@ -135,11 +147,17 @@ Page({
       editing: false,
       msg: '',
       errorMsg: '',
+      username: String(original.username || ''),
       college: String(original.college || ''),
       contact: String(original.contact || ''),
       signature: String(original.signature || ''),
       signatureCount: String(original.signature || '').length
     });
+  },
+
+  onUsernameInput(e: any) {
+    const v = clampLen(e?.detail?.value, 8);
+    this.setData({ username: v, errorMsg: '' });
   },
 
   onCollegeInput(e: any) {
@@ -159,13 +177,35 @@ Page({
 
   async onSave() {
     if (this.data.saving) return;
+    const self = this as any;
+    const username = normalizeProfileNickname(this.data.username);
+    const originalUsername = normalizeProfileNickname(self.__originalProfile?.username);
+    const usernameChanged = username !== originalUsername;
+    if (usernameChanged) {
+      const usernameError = validateProfileNickname(username);
+      if (usernameError) {
+        this.setData({ errorMsg: usernameError, msg: '' });
+        wx.showToast({ title: usernameError, icon: 'none' });
+        return;
+      }
+    }
+
     this.setData({ saving: true, msg: '', errorMsg: '' });
     try {
-      await api.updateProfile({
+      const profilePayload = {
         college: String(this.data.college || '').trim(),
         contact: String(this.data.contact || '').trim(),
         signature: String(this.data.signature || '').trim()
-      });
+      };
+      await api.updateProfile(usernameChanged ? {
+        username: String(this.data.username || '').trim(),
+        strict_nickname: true,
+        ...profilePayload
+      } : profilePayload);
+      if (usernameChanged) {
+        const cachedUserInfo = wx.getStorageSync('userInfo') || {};
+        wx.setStorageSync('userInfo', { ...cachedUserInfo, username });
+      }
       this.setData({ editing: false, msg: '已保存' });
       await this.loadProfile(true);
     } catch (e: any) {
@@ -397,7 +437,7 @@ Page({
         wechatBadge
       });
 
-      self.__originalProfile = { college, contact, signature };
+      self.__originalProfile = { username, college, contact, signature };
     } catch (e: any) {
       this.setData({ errorMsg: e?.message || '加载失败，请稍后重试' });
     } finally {

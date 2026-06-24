@@ -52,6 +52,8 @@ var auth_1 = require("../../utils/auth");
 var last_practice_1 = require("../../utils/last-practice");
 var theme_1 = require("../../utils/theme");
 var avatar_1 = require("../../utils/avatar");
+var PROFILE_NICKNAME_RE = /^[\u4e00-\u9fffA-Za-z0-9]{1,8}$/;
+var PROFILE_NICKNAME_ERROR = '昵称只能使用汉字、字母、数字，最多8个字符';
 function navTo(key) {
     if (key === 'practice')
         return '/pages/settings-practice-v2/settings-practice-v2';
@@ -88,6 +90,14 @@ function clampLen(s, max) {
     if (v.length <= max)
         return v;
     return v.slice(0, max);
+}
+function normalizeProfileNickname(value) {
+    return String(value || '').trim();
+}
+function validateProfileNickname(value) {
+    if (!PROFILE_NICKNAME_RE.test(value))
+        return PROFILE_NICKNAME_ERROR;
+    return '';
 }
 Page({
     data: {
@@ -191,11 +201,17 @@ Page({
             editing: false,
             msg: '',
             errorMsg: '',
+            username: String(original.username || ''),
             college: String(original.college || ''),
             contact: String(original.contact || ''),
             signature: String(original.signature || ''),
             signatureCount: String(original.signature || '').length
         });
+    },
+    onUsernameInput: function (e) {
+        var _a;
+        var v = clampLen((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value, 8);
+        this.setData({ username: v, errorMsg: '' });
     },
     onCollegeInput: function (e) {
         var _a;
@@ -214,30 +230,48 @@ Page({
     },
     onSave: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var e_1;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            var self, username, originalUsername, usernameChanged, usernameError, profilePayload, cachedUserInfo, e_1;
+            var _a;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
                     case 0:
                         if (this.data.saving)
                             return [2 /*return*/];
+                        self = this;
+                        username = normalizeProfileNickname(this.data.username);
+                        originalUsername = normalizeProfileNickname((_a = self.__originalProfile) === null || _a === void 0 ? void 0 : _a.username);
+                        usernameChanged = username !== originalUsername;
+                        if (usernameChanged) {
+                            usernameError = validateProfileNickname(username);
+                            if (usernameError) {
+                                this.setData({ errorMsg: usernameError, msg: '' });
+                                wx.showToast({ title: usernameError, icon: 'none' });
+                                return [2 /*return*/];
+                            }
+                        }
                         this.setData({ saving: true, msg: '', errorMsg: '' });
-                        _a.label = 1;
+                        _b.label = 1;
                     case 1:
-                        _a.trys.push([1, 4, 5, 6]);
-                        return [4 /*yield*/, api_1.api.updateProfile({
-                                college: String(this.data.college || '').trim(),
-                                contact: String(this.data.contact || '').trim(),
-                                signature: String(this.data.signature || '').trim()
-                            })];
+                        _b.trys.push([1, 4, 5, 6]);
+                        profilePayload = {
+                            college: String(this.data.college || '').trim(),
+                            contact: String(this.data.contact || '').trim(),
+                            signature: String(this.data.signature || '').trim()
+                        };
+                        return [4 /*yield*/, api_1.api.updateProfile(usernameChanged ? __assign({ username: String(this.data.username || '').trim(), strict_nickname: true }, profilePayload) : profilePayload)];
                     case 2:
-                        _a.sent();
+                        _b.sent();
+                        if (usernameChanged) {
+                            cachedUserInfo = wx.getStorageSync('userInfo') || {};
+                            wx.setStorageSync('userInfo', __assign(__assign({}, cachedUserInfo), { username: username }));
+                        }
                         this.setData({ editing: false, msg: '已保存' });
                         return [4 /*yield*/, this.loadProfile(true)];
                     case 3:
-                        _a.sent();
+                        _b.sent();
                         return [3 /*break*/, 6];
                     case 4:
-                        e_1 = _a.sent();
+                        e_1 = _b.sent();
                         this.setData({ errorMsg: (e_1 === null || e_1 === void 0 ? void 0 : e_1.message) || '保存失败，请稍后重试' });
                         return [3 /*break*/, 6];
                     case 5:
@@ -512,7 +546,7 @@ Page({
                             passwordBadge: passwordBadge,
                             wechatBadge: wechatBadge
                         });
-                        self.__originalProfile = { college: college, contact: contact, signature: signature };
+                        self.__originalProfile = { username: username, college: college, contact: contact, signature: signature };
                         return [3 /*break*/, 5];
                     case 3:
                         e_4 = _a.sent();
