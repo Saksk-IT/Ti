@@ -1,0 +1,51 @@
+  function isTaskActive(task) {
+    return !!(
+      task &&
+      task.task_id &&
+      ['pending', 'running', 'retrying', 'webvpn_refresh_required'].indexOf(task.status) !== -1
+    );
+  }
+
+  function rememberActiveTask(task) {
+    if (!task || !task.task_id) return;
+    if (isTaskActive(task)) {
+      activeQueryTask = task;
+      return;
+    }
+    if (activeQueryTask && activeQueryTask.task_id === task.task_id) {
+      activeQueryTask = null;
+    }
+  }
+
+  async function confirmReplacingActiveTask() {
+    if (!isTaskActive(activeQueryTask)) return true;
+    const message = queryReplaceConfirmMessage || ('发起本次查询会停止上次的' + queryKindLabel + '查询，确定继续吗？');
+    if (window.appConfirm) {
+      return await window.appConfirm(message);
+    }
+    return window.confirm(message);
+  }
+
+  async function cancelActiveQueryTask() {
+    if (!isTaskActive(activeQueryTask)) return;
+    const task = activeQueryTask;
+    stopTaskPolling();
+    if (task.status === 'webvpn_refresh_required') {
+      hideWebvpnCaptcha();
+    }
+    const response = await fetch('/api/edu-schedule/query-tasks/' + encodeURIComponent(task.task_id) + '/cancel', {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+    const data = await response.json();
+    if (data.status !== 'success') {
+      throw new Error(data.message || '停止上次查询失败');
+    }
+    activeQueryTask = null;
+  }
+
+  async function ensureQueryReplacementAllowed() {
+    if (!(await confirmReplacingActiveTask())) return false;
+    await cancelActiveQueryTask();
+    return true;
+  }

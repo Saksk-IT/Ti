@@ -35,6 +35,8 @@ _QUERY_TASKS: Dict[str, Dict[str, Any]] = {}
 _QUERY_TASK_JOBS: Dict[str, Dict[str, Any]] = {}
 _QUERY_TASK_DEDUPES: Dict[str, str] = {}
 _QUERY_TASK_USER_TASKS: Dict[int, List[str]] = {}
+_QUERY_TASK_ACTIVE_STATUSES = {"pending", "running", "retrying", "webvpn_refresh_required"}
+_QUERY_TASK_DEDUPE_STATUSES = {"pending", "running", "retrying"}
 _sleep = time.sleep
 
 
@@ -93,8 +95,14 @@ def _save_state(state: Dict[str, Any]) -> Dict[str, Any]:
     task_id = str(next_state["task_id"])
     with _QUERY_TASK_LOCK:
         _cleanup_memory_tasks(time.time())
+        current_state = _QUERY_TASKS.get(task_id)
+        if not current_state:
+            redis_state = redis_get_json(_task_key(task_id))
+            current_state = redis_state if isinstance(redis_state, dict) else None
+        if current_state and current_state.get("status") == "cancelled" and next_state.get("status") != "cancelled":
+            return dict(current_state)
         _QUERY_TASKS[task_id] = next_state
-    redis_set_json(_task_key(task_id), next_state, ttl_seconds=_QUERY_TASK_TTL_SECONDS)
+        redis_set_json(_task_key(task_id), next_state, ttl_seconds=_QUERY_TASK_TTL_SECONDS)
     return next_state
 
 
@@ -182,6 +190,13 @@ def _public_state(state: Dict[str, Any]) -> Dict[str, Any]:
     return {key: value for key, value in state.items() if key not in blocked_keys}
 
 
+def _cancelled_state(task_id: str) -> Optional[Dict[str, Any]]:
+    state = _load_state(task_id)
+    if state and state.get("status") == "cancelled":
+        return _public_state(state)
+    return None
+
+
 class EduScheduleQueryTaskService:
     """轻量级教务查询任务队列，优先用 Redis 保存状态，进程内线程执行。"""
 
@@ -209,7 +224,7 @@ class EduScheduleQueryTaskService:
             _cleanup_memory_tasks(time.time())
             existing_id = _QUERY_TASK_DEDUPES.get(dedupe_key)
             existing = _QUERY_TASKS.get(existing_id or "") if existing_id else None
-        if existing and existing.get("status") in {"pending", "running", "retrying"}:
+        if existing and existing.get("status") in _QUERY_TASK_DEDUPE_STATUSES:
             _index_task(user_id, str(existing["task_id"]))
             return _public_state({**existing, "coalesced": True})
 
@@ -286,6 +301,31 @@ class EduScheduleQueryTaskService:
         return _public_state(state)
 
     @staticmethod
+    def cancel(task_id: str, owner_user_id: int) -> Dict[str, Any]:
+        task_id = str(task_id or "").strip()
+        state = _load_state(task_id)
+        if not state:
+            raise ValueError("查询任务不存在或已过期")
+        if int(state.get("owner_user_id") or 0) != int(owner_user_id):
+            raise ValueError("查询任务不存在或已过期")
+        if state.get("status") not in _QUERY_TASK_ACTIVE_STATUSES:
+            return _public_state(state)
+
+        next_state = _save_state({
+            **state,
+            "status": "cancelled",
+            "message": "查询已停止",
+            "challenge": None,
+            "finished_at": _now_iso(),
+        })
+        dedupe_key = str(state.get("dedupe_key") or "")
+        if dedupe_key:
+            with _QUERY_TASK_LOCK:
+                if _QUERY_TASK_DEDUPES.get(dedupe_key) == task_id:
+                    _QUERY_TASK_DEDUPES.pop(dedupe_key, None)
+        return _public_state(next_state)
+
+    @staticmethod
     def _start_worker(task_id: str) -> None:
         app = current_app._get_current_object() if has_app_context() else None
 
@@ -306,6 +346,9 @@ class EduScheduleQueryTaskService:
         job = _load_job(task_id)
         if not state or not job:
             raise ValueError("查询任务不存在或已过期")
+        cancelled_state = _cancelled_state(task_id)
+        if cancelled_state:
+            return cancelled_state
 
         kind = str(job["kind"])
         user_id = int(job["user_id"])
@@ -313,6 +356,9 @@ class EduScheduleQueryTaskService:
         last_error: Optional[Exception] = None
         attempt = 0
         while True:
+            cancelled_state = _cancelled_state(task_id)
+            if cancelled_state:
+                return cancelled_state
             attempt += 1
             status = "running" if attempt == 1 else "retrying"
             message = "正在连接教务系统并查询" if attempt == 1 else f"教务系统繁忙，正在第 {attempt} 次自动重试"
@@ -322,6 +368,8 @@ class EduScheduleQueryTaskService:
                 "message": message,
                 "attempt": attempt,
             })
+            if state.get("status") == "cancelled":
+                return _public_state(state)
             try:
                 if kind == "grades":
                     data = EduScheduleService.query_grade_terms(
@@ -339,6 +387,9 @@ class EduScheduleQueryTaskService:
                         password=job.get("password"),
                         remember=bool(job.get("remember")),
                     )
+                cancelled_state = _cancelled_state(task_id)
+                if cancelled_state:
+                    return cancelled_state
                 snapshots = _snapshots_for(kind, user_id, terms)
                 final_state = _save_state({
                     **state,
@@ -355,6 +406,9 @@ class EduScheduleQueryTaskService:
                 return _public_state(final_state)
             except Exception as exc:
                 last_error = exc
+                cancelled_state = _cancelled_state(task_id)
+                if cancelled_state:
+                    return cancelled_state
                 if should_start_webvpn_refresh(exc):
                     snapshots = _snapshots_for(kind, user_id, terms)
                     try:
@@ -396,6 +450,8 @@ class EduScheduleQueryTaskService:
                         "challenge": None,
                         "finished_at": None,
                     })
+                    if state.get("status") == "cancelled":
+                        return _public_state(state)
                     _sleep(_backoff_seconds_for(attempt))
                     continue
                 break

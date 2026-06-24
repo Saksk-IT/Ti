@@ -367,6 +367,25 @@ def test_campus_pages_expose_persistent_query_progress(auth_client):
     assert "查询进度" in grade_html
 
 
+def test_campus_pages_confirm_before_replacing_active_query(auth_client):
+    schedule_page = auth_client.get("/edu-schedule")
+    grades_page = auth_client.get("/edu-grades")
+
+    assert schedule_page.status_code == 200
+    assert grades_page.status_code == 200
+
+    schedule_html = schedule_page.get_data(as_text=True)
+    grade_html = grades_page.get_data(as_text=True)
+
+    assert "confirmReplacingActiveTask" in schedule_html
+    assert "/cancel" in schedule_html
+    assert "发起本次查询会停止上次的课表查询" in schedule_html
+
+    assert "confirmReplacingActiveTask" in grade_html
+    assert "/cancel" in grade_html
+    assert "发起本次查询会停止上次的成绩查询" in grade_html
+
+
 def test_campus_year_filters_use_academic_year_range_labels(auth_client):
     schedule_page = auth_client.get("/edu-schedule")
     grades_page = auth_client.get("/edu-grades")
@@ -872,6 +891,107 @@ def test_schedule_status_returns_recent_query_task_for_page_reload(app, auth_cli
     assert recent["status"] == "pending"
     assert recent["terms"] == [{"xnm": "2031", "xqm": "12"}]
     assert "owner_user_id" not in recent
+
+
+def test_cancel_schedule_query_task_keeps_grade_task_independent(app, auth_client, monkeypatch):
+    from app.modules.admin.services.system_config_service import SystemConfigService
+    from app.modules.edu_schedule.services import query_tasks
+
+    monkeypatch.setattr(
+        query_tasks.EduScheduleQueryTaskService,
+        "_start_worker",
+        staticmethod(lambda task_id: None),
+    )
+
+    with app.app_context():
+        SystemConfigService.save_edu_schedule_config(
+            {
+                "enabled": True,
+                "use_webvpn": False,
+                "jwxt_base_url": "https://jwxt.webvpn.synu.edu.cn/jwglxt",
+                "request_timeout": 20,
+                "verify_tls": True,
+                "store_user_credentials": True,
+            },
+            admin_id=1,
+        )
+
+    auth_client.post(
+        "/api/edu-schedule/credentials",
+        json={"username": "stu_demo_2026", "password": "DemoSecret123!"},
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+    schedule_response = auth_client.post(
+        "/api/edu-schedule/query",
+        json={"terms": [{"xnm": "2034", "xqm": "12"}]},
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+    grade_response = auth_client.post(
+        "/api/edu-schedule/grades/query",
+        json={"terms": [{"xnm": "2034", "xqm": "12"}]},
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+    schedule_task_id = schedule_response.get_json()["data"]["task"]["task_id"]
+    grade_task_id = grade_response.get_json()["data"]["task"]["task_id"]
+
+    cancel_response = auth_client.post(
+        f"/api/edu-schedule/query-tasks/{schedule_task_id}/cancel",
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+    grade_status_response = auth_client.get(
+        f"/api/edu-schedule/query-tasks/{grade_task_id}",
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+
+    assert cancel_response.status_code == 200
+    assert cancel_response.get_json()["data"]["task"]["status"] == "cancelled"
+    assert "已停止" in cancel_response.get_json()["data"]["task"]["message"]
+    assert grade_status_response.get_json()["data"]["task"]["status"] == "pending"
+
+
+def test_cancelled_query_task_does_not_run_upstream(app, seed_user, monkeypatch):
+    from app.modules.admin.services.system_config_service import SystemConfigService
+    from app.modules.edu_schedule.services import query_tasks, schedule_service
+    from app.modules.edu_schedule.services.schedule_service import EduScheduleService
+
+    calls = []
+
+    class ShouldNotRunClient:
+        def __init__(self, config):
+            self.config = config
+
+        def fetch_schedule(self, username, password, xnm, xqm):
+            calls.append((username, password, xnm, xqm))
+            return _sample_schedule_payload(xnm=xnm, xqm=xqm)
+
+    monkeypatch.setattr(schedule_service, "JWXTClient", ShouldNotRunClient)
+    user_id = int(seed_user["id"])
+    with app.app_context():
+        SystemConfigService.save_edu_schedule_config(
+            {
+                "enabled": True,
+                "use_webvpn": False,
+                "jwxt_base_url": "https://jwxt.webvpn.synu.edu.cn/jwglxt",
+                "request_timeout": 20,
+                "verify_tls": True,
+                "store_user_credentials": True,
+            },
+            admin_id=1,
+        )
+        EduScheduleService.save_credentials(user_id, "stu_demo_2026", "DemoSecret123!")
+
+    task = query_tasks.EduScheduleQueryTaskService.enqueue(
+        "schedule",
+        user_id,
+        [{"xnm": "2035", "xqm": "12"}],
+        autostart=False,
+    )
+    query_tasks.EduScheduleQueryTaskService.cancel(task["task_id"], user_id)
+
+    final_state = query_tasks.EduScheduleQueryTaskService.run_task(task["task_id"])
+
+    assert final_state["status"] == "cancelled"
+    assert calls == []
 
 
 def test_background_schedule_task_retries_until_upstream_success(app, seed_user, monkeypatch):

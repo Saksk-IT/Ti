@@ -369,11 +369,16 @@
   let webvpnChallengeId = '';
   let pendingQueryPayload = null;
   let activeTaskTimer = null;
+  const queryKindLabel = '课表';
+  const queryReplaceConfirmMessage = '发起本次查询会停止上次的课表查询，确定继续吗？';
+  let activeQueryTask = null;
 
   function setState(text, type) {
     state.textContent = text || '';
     state.className = type ? 'schedule-state ' + type : 'schedule-state';
   }
+
+{% include "edu_schedule/_query_replace_helpers.html" %}
 
   function taskStatusLabel(task) {
     const labels = {
@@ -382,7 +387,8 @@
       retrying: '自动重试中',
       webvpn_refresh_required: '等待验证码',
       succeeded: '已完成',
-      failed: '未完成'
+      failed: '未完成',
+      cancelled: '已停止'
     };
     return labels[task && task.status] || '查询中';
   }
@@ -392,6 +398,7 @@
     const attempt = Number((task && task.attempt) || 0);
     if (status === 'succeeded') return 100;
     if (status === 'failed') return 100;
+    if (status === 'cancelled') return 100;
     if (status === 'webvpn_refresh_required') return 72;
     if (status === 'retrying') return Math.min(88, 38 + Math.min(attempt, 8) * 6);
     if (status === 'running') return Math.min(62, 22 + Math.min(attempt, 5) * 6);
@@ -557,7 +564,13 @@
     if (!task) {
       throw new Error('查询任务状态不正确');
     }
+    rememberActiveTask(task);
     renderTaskProgress(task);
+    if (task.status === 'cancelled') {
+      stopTaskPolling();
+      setState(task.message || '查询已停止', '');
+      return true;
+    }
     if (task.status === 'webvpn_refresh_required') {
       stopTaskPolling();
       showWebvpnCaptcha({
@@ -716,10 +729,6 @@
 
   form.addEventListener('submit', async function (event) {
     event.preventDefault();
-    submitBtn.disabled = true;
-    submitBtn.textContent = '提交中';
-    hideTaskProgress();
-    setState('正在提交后台查询任务...', '');
     try {
       if (!credentialReady) {
         setState('未绑定教务系统账号，请先绑定后查询。', 'error');
@@ -729,6 +738,11 @@
       const payload = {
         terms: buildTerms()
       };
+      if (!(await ensureQueryReplacementAllowed())) return;
+      submitBtn.disabled = true;
+      submitBtn.textContent = '提交中';
+      hideTaskProgress();
+      setState('正在提交后台查询任务...', '');
       await submitQueryAfterWebvpnRefresh(payload);
     } catch (error) {
       setState(error.message || '查询失败', 'error');

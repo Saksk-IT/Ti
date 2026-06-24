@@ -164,6 +164,17 @@ def api_get_query_task(task_id: str):
         return error_response(str(exc), status_code=404)
 
 
+@edu_schedule_api_bp.route("/edu-schedule/query-tasks/<task_id>/cancel", methods=["POST"])
+@auth_required
+def api_cancel_query_task(task_id: str):
+    user_id = int(current_user_id() or 0)
+    try:
+        task = EduScheduleQueryTaskService.cancel(task_id, user_id)
+        return _task_response(task, task.get("message") or "查询任务已停止")
+    except ValueError as exc:
+        return error_response(str(exc), status_code=404)
+
+
 @edu_schedule_api_bp.route("/edu-schedule/webvpn-session/complete", methods=["POST"])
 @auth_required
 def api_complete_user_webvpn_session_refresh():
