@@ -81,16 +81,18 @@
                 </view>
               </picker>
             </view>
-          </view>
-          <picker class="semester-picker" mode="selector" range="{{semesterLabels}}" value="{{semesterIndex}}" bindchange="onSemesterChange">
-            <view class="semester-trigger" aria-role="button" aria-label="选择学期">
-              <view>
-                <text class="field-label">学期</text>
-                <text class="semester-value">{{semesterLabels[semesterIndex]}}</text>
-              </view>
-              <text class="chevron">⌄</text>
+            <view class="field">
+              <picker class="semester-picker" mode="selector" range="{{semesterLabels}}" value="{{semesterIndex}}" bindchange="onSemesterChange">
+                <view class="semester-trigger" aria-role="button" aria-label="选择学期">
+                  <view>
+                    <text class="field-label">学期</text>
+                    <text class="semester-value">{{semesterLabels[semesterIndex]}}</text>
+                  </view>
+                  <text class="chevron">⌄</text>
+                </view>
+              </picker>
             </view>
-          </picker>
+          </view>
           <view class="query-btn {{loading ? 'disabled' : ''}}" bindtap="onQueryTap" aria-role="button" aria-label="查询校园信息">
             <image class="query-icon" src="{{mode === 'grades' ? '/images/icons/chart.svg' : '/images/icons/book-open.svg'}}" mode="aspectFit"></image>
             <text>{{loading ? '提交中...' : (mode === 'grades' ? '查询成绩' : '查询课表')}}</text>

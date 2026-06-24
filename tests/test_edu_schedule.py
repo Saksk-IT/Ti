@@ -440,9 +440,11 @@ def test_campus_year_filters_use_academic_year_range_labels(auth_client):
 
     campus_dir = Path("miniprogram-1/miniprogram/pages/campus")
     wxml = (campus_dir / "campus.wxml").read_text(encoding="utf-8")
+    less = (campus_dir / "campus.less").read_text(encoding="utf-8")
     ts = (campus_dir / "campus.ts").read_text(encoding="utf-8")
 
     assert wxml.count('range="{{academicYearLabels}}"') == 1
+    assert wxml.index('class="year-picker"') < wxml.index('class="semester-picker"')
     assert 'range="{{academicYearLabels}}"' in wxml
     assert "onAcademicYearChange" in wxml
     assert "onStartYearChange" not in wxml
@@ -457,6 +459,8 @@ def test_campus_year_filters_use_academic_year_range_labels(auth_client):
     assert "endYearIndex" not in ts
     assert "formatAcademicYearLabel" in ts
     assert "~" in ts
+    assert ".year-row {\n  display: flex;" in less
+    assert ".semester-picker {\n  min-width: 0;" in less
 
 
 def test_miniprogram_account_bindings_page_exposes_edu_credential_binding():
