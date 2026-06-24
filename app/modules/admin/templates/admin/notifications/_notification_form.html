@@ -1,120 +1,7 @@
-    <!-- 弹窗管理区域 -->
-    <div id="popupsTab" class="tab-content" style="display: none;">
-        <div class="toolbar">
-            <div class="toolbar-left">
-                <h1>弹窗管理</h1>
-            </div>
-            <div class="toolbar-right">
-                <button class="btn-outline" onclick="refreshPopupsData()">刷新</button>
-                <button class="btn-primary" onclick="openPopupCreate()">新建弹窗</button>
-            </div>
-        </div>
-
-        <!-- 统计卡片 -->
-        <div class="stats-row" id="popupsStatsRow"></div>
-
-        <!-- 搜索和筛选栏 -->
-        <div class="filter-bar">
-            <div class="search-box">
-                <span class="search-icon">🔍</span>
-                <input type="text" id="popupsSearchInput" placeholder="       搜索标题或内容..." oninput="handlePopupsSearch()">
-                <button class="clear-search" id="popupsClearSearch" onclick="clearPopupsSearch()">×</button>
-            </div>
-        </div>
-        
-        <div class="filter-bar" style="margin-top: -8px;">
-            <div class="filter-group">
-                <span class="filter-label">类型:</span>
-                <div class="filter-chips">
-                    <button class="filter-chip active" data-popup-type="all" onclick="filterPopupsByType('all')">全部</button>
-                    <button class="filter-chip" data-popup-type="info" onclick="filterPopupsByType('info')">信息</button>
-                    <button class="filter-chip" data-popup-type="success" onclick="filterPopupsByType('success')">成功</button>
-                    <button class="filter-chip" data-popup-type="warning" onclick="filterPopupsByType('warning')">警告</button>
-                    <button class="filter-chip" data-popup-type="error" onclick="filterPopupsByType('error')">错误</button>
-                </div>
-            </div>
-
-            <div class="filter-group">
-                <span class="filter-label">状态:</span>
-                <div class="filter-chips">
-                    <button class="filter-chip active" data-popup-status="all" onclick="filterPopupsByStatus('all')">全部</button>
-                    <button class="filter-chip" data-popup-status="active" onclick="filterPopupsByStatus('active')">启用</button>
-                    <button class="filter-chip" data-popup-status="inactive" onclick="filterPopupsByStatus('inactive')">禁用</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- 表格 -->
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width:50px;">ID</th>
-                        <th style="width:140px;">类型</th>
-                        <th>标题</th>
-                        <th>内容预览</th>
-                        <th style="width:80px;">优先级</th>
-                        <th style="width:90px;">状态</th>
-                        <th style="width:100px;">显示次数</th>
-                        <th style="width:100px;">关闭次数</th>
-                        <th style="width:100px;">关闭率</th>
-                        <th style="width:160px;">创建时间</th>
-                        <th style="width:100px;">操作</th>
-                    </tr>
-                </thead>
-                <tbody id="popupsTbody">
-                    <tr>
-                        <td colspan="11" class="loading">
-                            <div class="loading-spinner"></div>
-                            <div style="margin-top: 12px;">加载中...</div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- 分页 -->
-        <div class="pagination" id="popupsPagination" style="display: none;">
-            <button onclick="changePopupsPage('first')" id="popupsBtnFirst">首页</button>
-            <button onclick="changePopupsPage('prev')" id="popupsBtnPrev">上一页</button>
-            <span class="page-info" id="popupsPageInfo">第 1 页 / 共 1 页</span>
-            <button onclick="changePopupsPage('next')" id="popupsBtnNext">下一页</button>
-            <button onclick="changePopupsPage('last')" id="popupsBtnLast">末页</button>
-        </div>
-    </div>
-</div>
-
-<!-- 新建/编辑弹窗 -->
 <div id="dlgEdit" class="modal-overlay">
     <div class="modal">
         <h3 id="dlgTitle">新建通知</h3>
         <input type="hidden" id="editId">
-
-        <div class="form-group">
-            <label>通知类型 <span class="required">*</span></label>
-            <div class="type-selector" id="typeSelector">
-                <label class="type-option selected" onclick="selectType('info')">
-                    <input type="radio" name="n_type" value="info" checked>
-                    <span class="type-dot info"></span>
-                    <span class="type-label">信息</span>
-                </label>
-                <label class="type-option" onclick="selectType('announcement')">
-                    <input type="radio" name="n_type" value="announcement">
-                    <span class="type-dot announcement"></span>
-                    <span class="type-label">公告</span>
-                </label>
-                <label class="type-option" onclick="selectType('reminder')">
-                    <input type="radio" name="n_type" value="reminder">
-                    <span class="type-dot reminder"></span>
-                    <span class="type-label">提醒</span>
-                </label>
-                <label class="type-option" onclick="selectType('warning')">
-                    <input type="radio" name="n_type" value="warning">
-                    <span class="type-dot warning"></span>
-                    <span class="type-label">警告</span>
-                </label>
-            </div>
-        </div>
 
         <div class="form-group">
             <label>标题 <span class="required">*</span></label>
@@ -137,8 +24,8 @@
             <div class="form-group">
                 <label>状态</label>
                 <select id="editActive">
-                    <option value="1">✅ 启用</option>
-                    <option value="0">❌ 禁用</option>
+                    <option value="1">启用</option>
+                    <option value="0">禁用</option>
                 </select>
             </div>
         </div>
@@ -147,12 +34,12 @@
             <div class="form-group">
                 <label>开始时间</label>
                 <input type="datetime-local" id="editStartAt">
-                <div class="muted" style="margin-top: 4px;">可选,留空表示立即生效</div>
+                <div class="muted" style="margin-top: 4px;">可选，留空表示立即生效</div>
             </div>
             <div class="form-group">
                 <label>结束时间</label>
                 <input type="datetime-local" id="editEndAt">
-                <div class="muted" style="margin-top: 4px;">可选,留空表示永久有效</div>
+                <div class="muted" style="margin-top: 4px;">可选，留空表示永久有效</div>
             </div>
         </div>
 
@@ -163,86 +50,6 @@
     </div>
 </div>
 
-<!-- 新建/编辑弹窗（弹窗管理） -->
-<div id="popupDlgEdit" class="modal-overlay">
-    <div class="modal">
-        <h3 id="popupDlgTitle">新建弹窗</h3>
-        <input type="hidden" id="popupEditId">
-
-        <div class="form-group">
-            <label>弹窗类型 <span class="required">*</span></label>
-            <div class="type-selector" id="popupTypeSelector">
-                <label class="type-option popup-type-option selected" onclick="selectPopupType('info')">
-                    <input type="radio" name="popup_type" value="info" checked>
-                    <span class="type-dot info"></span>
-                    <span class="type-label">信息</span>
-                </label>
-                <label class="type-option popup-type-option" onclick="selectPopupType('success')">
-                    <input type="radio" name="popup_type" value="success">
-                    <span class="type-dot success"></span>
-                    <span class="type-label">成功</span>
-                </label>
-                <label class="type-option popup-type-option" onclick="selectPopupType('warning')">
-                    <input type="radio" name="popup_type" value="warning">
-                    <span class="type-dot warning"></span>
-                    <span class="type-label">警告</span>
-                </label>
-                <label class="type-option popup-type-option" onclick="selectPopupType('error')">
-                    <input type="radio" name="popup_type" value="error">
-                    <span class="type-dot error"></span>
-                    <span class="type-label">错误</span>
-                </label>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label>标题 <span class="required">*</span></label>
-            <input type="text" id="popupEditTitle" placeholder="请输入弹窗标题" maxlength="200" oninput="updateCharCount('popupEditTitle', 'popupTitleCount', 200)">
-            <div class="char-counter" id="popupTitleCount">0 / 200</div>
-        </div>
-
-        <div class="form-group">
-            <label>内容 <span class="required">*</span></label>
-            <textarea id="popupEditContent" placeholder="请输入弹窗内容（纯文本）" maxlength="1000" oninput="updateCharCount('popupEditContent', 'popupContentCount', 1000)"></textarea>
-            <div class="char-counter" id="popupContentCount">0 / 1000</div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label>优先级</label>
-                <input type="number" id="popupEditPriority" value="0" min="0" max="100" placeholder="0-100">
-                <div class="muted" style="margin-top: 4px;">数字越大优先级越高</div>
-            </div>
-            <div class="form-group">
-                <label>状态</label>
-                <select id="popupEditActive">
-                    <option value="1">✅ 启用</option>
-                    <option value="0">❌ 禁用</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label>开始时间</label>
-                <input type="datetime-local" id="popupEditStartAt">
-                <div class="muted" style="margin-top: 4px;">可选,留空表示立即生效</div>
-            </div>
-            <div class="form-group">
-                <label>结束时间</label>
-                <input type="datetime-local" id="popupEditEndAt">
-                <div class="muted" style="margin-top: 4px;">可选,留空表示永久有效</div>
-            </div>
-        </div>
-
-        <div class="modal-actions">
-            <button class="btn-outline" onclick="closePopupEdit()">取消</button>
-            <button class="btn-primary" onclick="savePopup()" id="popupBtnSave">保存</button>
-        </div>
-    </div>
-</div>
-
-<!-- 内容预览弹窗 -->
 <div id="contentPreviewModal" class="modal-overlay" style="display: none;">
     <div class="modal" style="max-width: 600px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">

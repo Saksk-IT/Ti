@@ -2,6 +2,7 @@
 import { themeManager } from './utils/theme';
 import { fontManager } from './utils/font';
 import { syncUserSettingsFromServer } from './utils/user-settings';
+import { api } from './utils/api';
 
 // 启动期尽早读取用户手动主题和字体（避免 Page 首帧使用默认导致闪烁）
 try {
@@ -17,6 +18,117 @@ function maybeSyncUserSettings(): void {
   if (now - lastSettingsSyncAt < 30000) return;
   lastSettingsSyncAt = now;
   syncUserSettingsFromServer();
+}
+
+type AppNotificationPopup = {
+  id: number;
+  title: string;
+  content: string;
+  is_read?: number | boolean;
+};
+
+let notificationPopupQueue: AppNotificationPopup[] = [];
+let notificationPopupActive: AppNotificationPopup | null = null;
+let notificationPopupFetching = false;
+let notificationPopupTimer: number | undefined;
+let lastNotificationPopupFetchAt = 0;
+
+function hasLoginToken(): boolean {
+  return !!wx.getStorageSync('token');
+}
+
+function normalizeNotificationPopup(input: any): AppNotificationPopup | null {
+  const id = Number(input && input.id);
+  if (!Number.isFinite(id) || id <= 0) return null;
+  return {
+    id,
+    title: String((input && input.title) || '通知'),
+    content: String((input && input.content) || ''),
+    is_read: input && input.is_read
+  };
+}
+
+function showNextNotificationPopup(): void {
+  if (notificationPopupActive) return;
+  const next = notificationPopupQueue.shift() || null;
+  if (!next) return;
+
+  notificationPopupActive = next;
+  wx.showModal({
+    title: next.title || '通知',
+    content: next.content || '',
+    confirmText: '已读',
+    cancelText: '关闭',
+    success: () => {
+      markNotificationPopupRead(next.id);
+    },
+    fail: () => {
+      notificationPopupActive = null;
+      notificationPopupQueue = [next, ...notificationPopupQueue];
+      setTimeout(() => {
+        showNextNotificationPopup();
+      }, 1200);
+    }
+  });
+}
+
+async function markNotificationPopupRead(id: number): Promise<void> {
+  let synced = false;
+  try {
+    await api.markNotificationRead(id);
+    synced = true;
+  } catch (err: any) {
+    wx.showToast({
+      title: err && err.message ? err.message : '已读同步失败',
+      icon: 'none'
+    });
+  } finally {
+    if (!synced && notificationPopupActive) {
+      const current = notificationPopupActive;
+      notificationPopupQueue = [current, ...notificationPopupQueue];
+      setTimeout(() => {
+        showNextNotificationPopup();
+      }, 1800);
+    }
+    notificationPopupActive = null;
+    if (synced) showNextNotificationPopup();
+  }
+}
+
+async function fetchNotificationPopups(force = false): Promise<void> {
+  if (!hasLoginToken() || notificationPopupFetching || notificationPopupActive) return;
+
+  const now = Date.now();
+  if (!force && now - lastNotificationPopupFetchAt < 15000) return;
+  lastNotificationPopupFetchAt = now;
+  notificationPopupFetching = true;
+
+  try {
+    const raw = await api.getNotifications({ limit: 20 });
+    const list = Array.isArray(raw) ? raw : [];
+    notificationPopupQueue = list
+      .map((item: any) => normalizeNotificationPopup(item))
+      .filter((item: AppNotificationPopup | null): item is AppNotificationPopup => !!item && !item.is_read);
+    showNextNotificationPopup();
+  } catch (err) {
+    void err;
+    // 未登录、网络异常或接口限流时不阻断当前页面。
+  } finally {
+    notificationPopupFetching = false;
+  }
+}
+
+function startNotificationPopupPolling(): void {
+  if (notificationPopupTimer) return;
+  notificationPopupTimer = setInterval(() => {
+    fetchNotificationPopups(false);
+  }, 30000) as unknown as number;
+}
+
+function stopNotificationPopupPolling(): void {
+  if (!notificationPopupTimer) return;
+  clearInterval(notificationPopupTimer);
+  notificationPopupTimer = undefined;
 }
 
 let subpackagePreloaded = false;
@@ -115,6 +227,8 @@ App<IAppOption>({
 
     maybeSyncUserSettings();
     preloadCriticalSubpackages();
+    fetchNotificationPopups(true);
+    startNotificationPopupPolling();
 
     // 监听主题变化，更新全局数据
     themeManager.onThemeChange((isDark) => {
@@ -144,9 +258,11 @@ App<IAppOption>({
                 try {
                   themeManager.applySystemUI();
                 } catch (e) {}
+                fetchNotificationPopups(false);
               });
             }
           } catch (e) {}
+          fetchNotificationPopups(false);
         });
       }
     } catch (e) {}
@@ -166,6 +282,11 @@ App<IAppOption>({
   onShow() {
     themeManager.applySystemUI();
     maybeSyncUserSettings();
+    fetchNotificationPopups(true);
+    startNotificationPopupPolling();
+  },
+  onHide() {
+    stopNotificationPopupPolling();
   },
   onError(err: string) {
     console.error('[App.onError]', err);

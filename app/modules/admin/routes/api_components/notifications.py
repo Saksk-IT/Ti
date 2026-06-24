@@ -42,7 +42,7 @@ def admin_api_notifications_create():
     data = request.json or {}
     title = (data.get('title') or '').strip()
     content = (data.get('content') or '').strip()
-    n_type = data.get('n_type', 'info')
+    n_type = 'info'
     priority = data.get('priority', 0)
     is_active = 1 if data.get('is_active', True) else 0
     start_at = data.get('start_at') or None
@@ -51,9 +51,6 @@ def admin_api_notifications_create():
 
     if not title or not content:
         return jsonify({'status': 'error', 'message': '标题和内容不能为空'}), 400
-
-    if n_type not in ('info', 'announcement', 'reminder', 'warning'):
-        n_type = 'info'
 
     try:
         result = db.session.execute(text('''
@@ -105,7 +102,7 @@ def admin_api_notifications_update(nid):
     data = request.json or {}
     title = (data.get('title') or '').strip()
     content = (data.get('content') or '').strip()
-    n_type = data.get('n_type', 'info')
+    n_type = 'info'
     priority = data.get('priority', 0)
     is_active = 1 if data.get('is_active', True) else 0
     start_at = data.get('start_at') or None
@@ -113,9 +110,6 @@ def admin_api_notifications_update(nid):
 
     if not title or not content:
         return jsonify({'status': 'error', 'message': '标题和内容不能为空'}), 400
-
-    if n_type not in ('info', 'announcement', 'reminder', 'warning'):
-        n_type = 'info'
 
     try:
         result = db.session.execute(text('''
@@ -199,5 +193,4 @@ def admin_api_notifications_toggle(nid):
     except Exception as e:
         db.session.rollback()
         return jsonify({'status': 'error', 'message': str(e)}), 500
-
 

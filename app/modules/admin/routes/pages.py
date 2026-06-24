@@ -148,12 +148,6 @@ def admin_user_detail_page(user_id):
     )
 
 
-@admin_pages_bp.route('/popups')
-def admin_popups_page():
-    """弹窗管理页面"""
-    return render_template('admin/notifications/popups.html')
-
-
 @admin_pages_bp.route('/notifications')
 def admin_notifications_page():
     """通知管理页面"""

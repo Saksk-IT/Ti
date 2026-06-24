@@ -585,12 +585,6 @@
         letter-spacing: 0.3px;
     }
 
-    .tag-info { background:#dbeafe; color:#1e40af; }
-    .tag-announcement { background:#cffafe; color:#0e7490; }
-    .tag-reminder { background:#fef3c7; color:#92400e; }
-    .tag-warning { background:#fee2e2; color:#991b1b; }
-    .tag-success { background:#d1fae5; color:#065f46; }
-    .tag-error { background:#fee2e2; color:#991b1b; }
     .tag-active { background:#d1fae5; color:#065f46; }
     .tag-inactive { background:#f3f4f6; color:#4b5563; }
 
@@ -716,80 +710,6 @@
         margin-top: 24px; 
         padding-top: 20px; 
         border-top: 1px solid var(--border-color); 
-    }
-
-    /* 通知类型选择器优化 */
-    .type-selector { 
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-    }
-
-    .type-option { 
-        display: flex; 
-        align-items: center; 
-        gap: 10px; 
-        padding: 12px 16px; 
-        border: 2px solid var(--border-color); 
-        border-radius: 10px; 
-        cursor: pointer; 
-        transition: all 0.2s;
-        background: white;
-    }
-
-    .type-option:hover { 
-        border-color: #9ca3af;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    }
-
-    .type-option.selected { 
-        border-color: var(--primary); 
-        background: #eef2ff;
-        box-shadow: 0 0 0 3px var(--primary-light);
-    }
-
-    /* 黑暗模式下的类型选择器 */
-    [data-theme="dark"] .type-option {
-        background: rgba(28, 28, 30, 0.6);
-        border-color: var(--border-color);
-        color: var(--text-color);
-    }
-
-    [data-theme="dark"] .type-option:hover {
-        background: rgba(28, 28, 30, 0.8);
-        border-color: rgba(142, 142, 147, 0.5);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    }
-
-    [data-theme="dark"] .type-option.selected {
-        background: rgba(10, 132, 255, 0.15);
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.2);
-    }
-
-    .type-option input { 
-        display: none; 
-    }
-
-    .type-dot { 
-        width: 16px; 
-        height: 16px; 
-        border-radius: 50%;
-        flex-shrink: 0;
-    }
-
-    .type-dot.info { background: #3b82f6; }
-    .type-dot.announcement { background: #06b6d4; }
-    .type-dot.reminder { background: #f59e0b; }
-    .type-dot.warning { background: #ef4444; }
-    .type-dot.success { background: #10b981; }
-    .type-dot.error { background: #ef4444; }
-
-    .type-label {
-        font-weight: 600;
-        font-size: 14px;
-        color: var(--text-color);
     }
 
     /* 分页样式 */
@@ -921,7 +841,6 @@
             grid-template-columns: 1fr; 
             gap: 12px;
         }
-        .type-selector { grid-template-columns: 1fr; }
         .form-row { flex-direction: column; }
         .table-wrapper {
             font-size: 13px;
@@ -961,59 +880,6 @@
         color: var(--danger);
     }
     
-    /* 标签页样式 */
-    .tab-container {
-        display: flex;
-        gap: 8px;
-        margin-bottom: 24px;
-        border-bottom: 1px solid var(--border-color);
-        padding-bottom: 0;
-    }
-    
-    .tab-btn {
-        padding: 12px 24px;
-        background: none;
-        border: none;
-        border-bottom: 2px solid transparent;
-        color: var(--text-sub);
-        font-size: 15px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s;
-        position: relative;
-        bottom: -1px;
-    }
-    
-    .tab-btn:hover {
-        color: var(--text-color);
-    }
-    
-    .tab-btn.active {
-        color: var(--primary);
-        border-bottom-color: var(--primary);
-        font-weight: 600;
-    }
-    
-    .tab-content {
-        display: none;
-    }
-    
-    .tab-content.active {
-        display: block;
-    }
-    
-    [data-theme="dark"] .tab-btn {
-        color: var(--text-sub);
-    }
-    
-    [data-theme="dark"] .tab-btn:hover {
-        color: var(--text-color);
-    }
-    
-    [data-theme="dark"] .tab-btn.active {
-        color: var(--primary);
-    }
-
     /* 内容预览弹窗样式 */
     .preview-close-btn {
         background: none;

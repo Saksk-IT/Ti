@@ -436,6 +436,100 @@
       font-size: 11px; color: var(--app-muted); margin-top: 2px;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
+    .app-notification-dialog {
+      position: fixed;
+      inset: 0;
+      z-index: 140;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(8px);
+    }
+    .app-notification-dialog.visible { display: flex; }
+    .app-notification-panel {
+      position: relative;
+      width: min(480px, 100%);
+      max-height: min(72vh, 620px);
+      display: flex;
+      flex-direction: column;
+      background: var(--app-surface);
+      color: var(--app-text);
+      border: 1px solid var(--app-border);
+      border-radius: 18px;
+      box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+      overflow: hidden;
+    }
+    .app-notification-panelHd {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px 18px 10px;
+      border-bottom: 1px solid var(--app-border);
+    }
+    .app-notification-kicker {
+      font-size: 12px;
+      color: var(--app-muted);
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .app-notification-title {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.35;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+    .app-notification-close {
+      width: 34px;
+      height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      border: 1px solid var(--app-border);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--app-muted);
+      cursor: pointer;
+      font-size: 22px;
+      line-height: 1;
+    }
+    .app-notification-close:hover {
+      color: var(--app-text);
+      background: rgba(148, 163, 184, 0.12);
+    }
+    .app-notification-content {
+      padding: 16px 18px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      line-height: 1.7;
+      font-size: 14px;
+      color: var(--app-text);
+    }
+    .app-notification-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding: 12px 18px 18px;
+      border-top: 1px solid var(--app-border);
+    }
+    .app-notification-readBtn {
+      min-height: 40px;
+      padding: 0 18px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--app-primary);
+      color: white;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .app-notification-readBtn:disabled {
+      cursor: wait;
+      opacity: 0.72;
+    }
 
     /* 聊天消息列表项 */
     .app-chat-item {
@@ -737,6 +831,8 @@
       .app-shell.sidebar-open + .app-overlay { opacity: 1; pointer-events: auto; }
       .app-topbar-center { display: none; }
       .app-topbar-popover { width: min(320px, calc(100vw - 28px)); right: -40px; }
+      .app-notification-dialog { padding: 14px; align-items: flex-end; }
+      .app-notification-panel { max-height: 78vh; border-radius: 18px 18px 14px 14px; }
     }
   </style>
 
@@ -847,6 +943,24 @@
   </div>
 
   <div class="app-overlay" id="appOverlay" aria-hidden="true"></div>
+
+  {% if logged_in %}
+  <div class="app-notification-dialog" id="appNotificationDialog" role="dialog" aria-modal="true" aria-labelledby="appNotificationTitle" aria-hidden="true">
+    <div class="app-notification-panel">
+      <div class="app-notification-panelHd">
+        <div>
+          <div class="app-notification-kicker">系统通知</div>
+          <h2 class="app-notification-title" id="appNotificationTitle">通知</h2>
+        </div>
+        <button class="app-notification-close" type="button" id="appNotificationClose" aria-label="关闭并标记已读">&times;</button>
+      </div>
+      <div class="app-notification-content" id="appNotificationContent"></div>
+      <div class="app-notification-actions">
+        <button class="app-notification-readBtn" type="button" id="appNotificationRead">已读</button>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 
   <script>
     (function () {
@@ -1248,9 +1362,18 @@
     var chatBody = document.getElementById('chatPopoverBody');
     var notifWrap = document.getElementById('notifIconWrap');
     var chatWrap = document.getElementById('chatIconWrap');
+    var notifDialog = document.getElementById('appNotificationDialog');
+    var notifDialogTitle = document.getElementById('appNotificationTitle');
+    var notifDialogContent = document.getElementById('appNotificationContent');
+    var notifDialogClose = document.getElementById('appNotificationClose');
+    var notifDialogRead = document.getElementById('appNotificationRead');
 
     var notifLoaded = false;
     var chatLoaded = false;
+    var notifDialogQueue = [];
+    var notifDialogActive = null;
+    var notifDialogLoading = false;
+    var notifDialogSaving = false;
 
     function escHtml(s) {
       var d = document.createElement('div');
@@ -1311,6 +1434,102 @@
           notifBody.innerHTML = html;
         })
         .catch(function() { notifLoaded = false; });
+    }
+
+    function setNotifDialogVisible(visible) {
+      if (!notifDialog) return;
+      notifDialog.classList.toggle('visible', !!visible);
+      notifDialog.setAttribute('aria-hidden', visible ? 'false' : 'true');
+    }
+
+    function renderNotifDialogNext() {
+      if (!notifDialog || notifDialogSaving) return;
+      notifDialogActive = notifDialogQueue.shift() || null;
+      if (!notifDialogActive) {
+        setNotifDialogVisible(false);
+        return;
+      }
+
+      if (notifDialogTitle) notifDialogTitle.textContent = notifDialogActive.title || '通知';
+      if (notifDialogContent) notifDialogContent.textContent = notifDialogActive.content || '';
+      if (notifDialogRead) {
+        notifDialogRead.disabled = false;
+        notifDialogRead.textContent = '已读';
+      }
+      setNotifDialogVisible(true);
+      try { notifDialogRead && notifDialogRead.focus(); } catch (e) {}
+    }
+
+    function fetchNotifDialogQueue() {
+      if (!notifDialog || notifDialogLoading || notifDialogActive) return;
+      notifDialogLoading = true;
+      fetch('/api/notifications?limit=20', {
+        credentials: 'include',
+        cache: 'no-store'
+      })
+        .then(function(r) {
+          if (r.status === 401 || r.status === 403) return null;
+          return r.json();
+        })
+        .then(function(d) {
+          if (!d || d.status !== 'success' || !Array.isArray(d.data)) return;
+          notifDialogQueue = d.data.filter(function(n) { return n && !n.is_read; });
+          renderNotifDialogNext();
+        })
+        .catch(function() {})
+        .finally(function() { notifDialogLoading = false; });
+    }
+
+    function markActiveNotifRead() {
+      if (!notifDialogActive || notifDialogSaving) return;
+      var id = Number(notifDialogActive.id || 0);
+      if (!id) {
+        notifDialogActive = null;
+        renderNotifDialogNext();
+        return;
+      }
+
+      notifDialogSaving = true;
+      if (notifDialogRead) {
+        notifDialogRead.disabled = true;
+        notifDialogRead.textContent = '处理中...';
+      }
+      if (notifDialogClose) notifDialogClose.disabled = true;
+
+      fetch('/api/notifications/' + encodeURIComponent(String(id)) + '/read', {
+        method: 'POST',
+        credentials: 'include'
+      })
+        .then(function(r) {
+          return r.json()
+            .catch(function() { return {}; })
+            .then(function(d) {
+              if (!r.ok || (d && d.status && d.status !== 'success')) {
+                throw new Error((d && (d.message || d.error)) || '同步已读失败');
+              }
+            });
+        })
+        .then(function() {
+          notifDialogActive = null;
+          notifLoaded = false;
+          fetchNotifCount();
+          notifDialogSaving = false;
+          if (notifDialogClose) notifDialogClose.disabled = false;
+          renderNotifDialogNext();
+          if (!notifDialogActive) setTimeout(fetchNotifDialogQueue, 250);
+        })
+        .catch(function(err) {
+          if (window.appAlert) window.appAlert(err.message || '同步已读失败，请稍后重试');
+          else window.alert(err.message || '同步已读失败，请稍后重试');
+        })
+        .finally(function() {
+          notifDialogSaving = false;
+          if (notifDialogRead && notifDialogActive) {
+            notifDialogRead.disabled = false;
+            notifDialogRead.textContent = '已读';
+          }
+          if (notifDialogClose) notifDialogClose.disabled = false;
+        });
     }
 
     /* ---- 聊天 ---- */
@@ -1377,10 +1596,19 @@
     if (chatWrap) {
       chatWrap.addEventListener('mouseenter', function() { fetchChatList(); });
     }
+    if (notifDialogClose) {
+      notifDialogClose.addEventListener('click', markActiveNotifRead);
+    }
+    if (notifDialogRead) {
+      notifDialogRead.addEventListener('click', markActiveNotifRead);
+    }
 
     /* ---- 初始化：拉取未读数 ---- */
     fetchNotifCount();
     fetchChatCount();
+    {% if logged_in %}
+    setTimeout(fetchNotifDialogQueue, 450);
+    {% endif %}
 
     /* ---- SSE 实时推送 ---- */
     var _sseSource = null;
@@ -1411,6 +1639,7 @@
         fetchChatCount();
         notifLoaded = false;
         chatLoaded = false;
+        fetchNotifDialogQueue();
       }, 60000);
     }
 
@@ -1520,6 +1749,7 @@
         source.addEventListener('notif_unread', function() {
           fetchNotifCount();
           notifLoaded = false;
+          fetchNotifDialogQueue();
         });
 
         source.addEventListener('interact_unread', function() {
@@ -1551,6 +1781,7 @@
         if (!_sseSource) {
           connectSSE();
         }
+        fetchNotifDialogQueue();
         _syncSseToWindow();
         {% endif %}
       } else {

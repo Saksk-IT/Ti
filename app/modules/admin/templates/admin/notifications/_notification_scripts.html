@@ -1,67 +1,13 @@
 <script>
-    const TYPE_LABELS = {
-        info: '信息',
-        announcement: '公告',
-        reminder: '提醒',
-        warning: '警告'
-    };
-
-    const TYPE_ICONS = {
-        info: '',
-        announcement: '',
-        reminder: '',
-        warning: ''
-    };
-
-    // 全局状态
     let allNotifications = [];
     let filteredNotifications = [];
     let currentPage = 1;
     const pageSize = 10;
-    let currentTypeFilter = 'all';
     let currentStatusFilter = 'all';
     let searchKeyword = '';
 
-    // 弹窗管理全局状态
-    let allPopups = [];
-    let filteredPopups = [];
-    let popupStats = {};
-    let popupsCurrentPage = 1;
-    const popupsPageSize = 10;
-    let popupsCurrentTypeFilter = 'all';
-    let popupsCurrentStatusFilter = 'all';
-    let popupsSearchKeyword = '';
-
     function qs(sel) { return document.querySelector(sel); }
     function getVal(id) { return document.getElementById(id).value.trim(); }
-
-    // 切换标签页
-    function switchTab(tab) {
-        // 更新按钮状态
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.tab === tab);
-        });
-
-        // 更新内容区域
-        const notificationsTab = document.getElementById('notificationsTab');
-        const popupsTab = document.getElementById('popupsTab');
-        
-        if (tab === 'notifications') {
-            notificationsTab.classList.add('active');
-            notificationsTab.style.display = 'block';
-            popupsTab.classList.remove('active');
-            popupsTab.style.display = 'none';
-        } else if (tab === 'popups') {
-            popupsTab.classList.add('active');
-            popupsTab.style.display = 'block';
-            notificationsTab.classList.remove('active');
-            notificationsTab.style.display = 'none';
-            // 首次切换到弹窗管理时加载数据
-            if (allPopups.length === 0) {
-                loadPopups();
-            }
-        }
-    }
 
     async function loadNotifications() {
         try {
@@ -87,7 +33,7 @@
 
     function showLoading() {
         const tb = document.getElementById('tbody');
-        tb.innerHTML = `<tr><td colspan="8" class="loading">
+        tb.innerHTML = `<tr><td colspan="7" class="loading">
             <div class="loading-spinner"></div>
             <div style="margin-top: 12px;">加载中...</div>
         </td></tr>`;
@@ -95,20 +41,19 @@
 
     function showError(msg) {
         const tb = document.getElementById('tbody');
-            tb.innerHTML = `<tr><td colspan="8" class="empty-state">
-                <div class="empty-state-text">加载失败</div>
-                <div class="empty-state-hint">${escapeHtml(msg)}</div>
-            </td></tr>`;
+        tb.innerHTML = `<tr><td colspan="7" class="empty-state">
+            <div class="empty-state-text">加载失败</div>
+            <div class="empty-state-hint">${escapeHtml(msg)}</div>
+        </td></tr>`;
     }
 
-    // 渲染统计卡片
     function renderStats() {
         const total = allNotifications.length;
         const active = allNotifications.filter(n => n.is_active).length;
         const inactive = total - active;
         const highPriority = allNotifications.filter(n => n.priority >= 50).length;
 
-        const statsHtml = `
+        qs('#statsRow').innerHTML = `
             <div class="stat-card info">
                 <div class="stat-label">总通知数</div>
                 <div class="stat-value">${total}</div>
@@ -126,49 +71,30 @@
                 <div class="stat-value">${highPriority}</div>
             </div>
         `;
-        
-        qs('#statsRow').innerHTML = statsHtml;
     }
 
-    // 应用筛选
     function applyFilters() {
         filteredNotifications = allNotifications.filter(n => {
-            // 类型筛选
-            if (currentTypeFilter !== 'all' && n.n_type !== currentTypeFilter) {
-                return false;
-            }
-            
-            // 状态筛选
-            if (currentStatusFilter === 'active' && !n.is_active) {
-                return false;
-            }
-            if (currentStatusFilter === 'inactive' && n.is_active) {
-                return false;
-            }
-            
-            // 搜索关键词
+            if (currentStatusFilter === 'active' && !n.is_active) return false;
+            if (currentStatusFilter === 'inactive' && n.is_active) return false;
+
             if (searchKeyword) {
                 const keyword = searchKeyword.toLowerCase();
                 const title = (n.title || '').toLowerCase();
                 const content = (n.content || '').toLowerCase();
-                if (!title.includes(keyword) && !content.includes(keyword)) {
-                    return false;
-                }
+                if (!title.includes(keyword) && !content.includes(keyword)) return false;
             }
-            
             return true;
         });
-        
+
         currentPage = 1;
         renderTable();
     }
 
-    // 搜索处理
     function handleSearch() {
         const input = qs('#searchInput');
         searchKeyword = input.value.trim();
-        const clearBtn = qs('#clearSearch');
-        clearBtn.style.display = searchKeyword ? 'block' : 'none';
+        qs('#clearSearch').style.display = searchKeyword ? 'block' : 'none';
         applyFilters();
     }
 
@@ -179,16 +105,6 @@
         applyFilters();
     }
 
-    // 类型筛选
-    function filterByType(type) {
-        currentTypeFilter = type;
-        document.querySelectorAll('[data-type]').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.type === type);
-        });
-        applyFilters();
-    }
-
-    // 状态筛选
     function filterByStatus(status) {
         currentStatusFilter = status;
         document.querySelectorAll('[data-status]').forEach(btn => {
@@ -197,10 +113,9 @@
         applyFilters();
     }
 
-    // 分页处理
     function changePage(action) {
-        const totalPages = Math.ceil(filteredNotifications.length / pageSize);
-        
+        const totalPages = Math.max(1, Math.ceil(filteredNotifications.length / pageSize));
+
         switch(action) {
             case 'first':
                 currentPage = 1;
@@ -215,42 +130,35 @@
                 currentPage = totalPages;
                 break;
         }
-        
+
         renderTable();
     }
 
     function renderTable() {
         const tb = document.getElementById('tbody');
-        const totalPages = Math.ceil(filteredNotifications.length / pageSize);
-        
+        const totalPages = Math.max(1, Math.ceil(filteredNotifications.length / pageSize));
+
         if (filteredNotifications.length === 0) {
-            tb.innerHTML = `<tr><td colspan="8" class="empty-state">
+            tb.innerHTML = `<tr><td colspan="7" class="empty-state">
                 <div class="empty-state-text">暂无通知</div>
-                <div class="empty-state-hint">点击"新建通知"按钮创建第一条通知</div>
+                <div class="empty-state-hint">点击“新建通知”创建第一条通知</div>
             </td></tr>`;
             qs('#pagination').style.display = 'none';
             return;
         }
 
-        // 分页数据
         const start = (currentPage - 1) * pageSize;
-        const end = start + pageSize;
-        const pageData = filteredNotifications.slice(start, end);
+        const pageData = filteredNotifications.slice(start, start + pageSize);
 
         tb.innerHTML = pageData.map(n => {
-            const typeClass = `tag-${n.n_type || 'info'}`;
             const statusClass = n.is_active ? 'tag-active' : 'tag-inactive';
             const statusText = n.is_active ? '启用' : '禁用';
-            const icon = TYPE_ICONS[n.n_type] || 'ℹ️';
-            
-            // 优先级徽章
             let priorityClass = 'priority-low';
             if (n.priority >= 70) priorityClass = 'priority-high';
             else if (n.priority >= 30) priorityClass = 'priority-medium';
 
             return `<tr>
                 <td>${n.id}</td>
-                <td><span class="tag ${typeClass}">${TYPE_LABELS[n.n_type] || n.n_type}</span></td>
                 <td><strong>${escapeHtml(n.title)}</strong></td>
                 <td class="content-preview" title="${escapeHtml(n.content)}" data-content="${escapeHtml(n.content).replace(/"/g, '&quot;')}" onclick="showContentPreview(this.dataset.content)">${escapeHtml(n.content)}</td>
                 <td><span class="priority-badge ${priorityClass}">${n.priority || 0}</span></td>
@@ -270,7 +178,6 @@
             </tr>`;
         }).join('');
 
-        // 更新分页控件
         if (totalPages > 1) {
             qs('#pagination').style.display = 'flex';
             qs('#pageInfo').innerText = `第 ${currentPage} 页 / 共 ${totalPages} 页 (共 ${filteredNotifications.length} 条)`;
@@ -293,38 +200,27 @@
         if (!dateStr) return '';
         try {
             const d = new Date(dateStr);
-            return d.toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+            return d.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
         } catch (e) {
             return dateStr;
         }
     }
 
-    // 字符计数器
     function updateCharCount(inputId, counterId, maxLength) {
         const input = document.getElementById(inputId);
         const counter = document.getElementById(counterId);
         const length = input.value.length;
         counter.textContent = `${length} / ${maxLength}`;
-        
-        counter.classList.remove('warning', 'danger');
-        if (length > maxLength * 0.9) {
-            counter.classList.add('danger');
-        } else if (length > maxLength * 0.7) {
-            counter.classList.add('warning');
-        }
-    }
 
-    function selectType(type) {
-        document.querySelectorAll('.type-option').forEach(el => {
-            const input = el.querySelector('input');
-            if (input.value === type) {
-                el.classList.add('selected');
-                input.checked = true;
-            } else {
-                el.classList.remove('selected');
-                input.checked = false;
-            }
-        });
+        counter.classList.remove('warning', 'danger');
+        if (length > maxLength * 0.9) counter.classList.add('danger');
+        else if (length > maxLength * 0.7) counter.classList.add('warning');
     }
 
     function openCreate() {
@@ -336,7 +232,6 @@
         qs('#editActive').value = '1';
         qs('#editStartAt').value = '';
         qs('#editEndAt').value = '';
-        selectType('info');
         updateCharCount('editTitle', 'titleCount', 100);
         updateCharCount('editContent', 'contentCount', 500);
         qs('#dlgEdit').style.display = 'flex';
@@ -360,7 +255,6 @@
             qs('#editActive').value = n.is_active ? '1' : '0';
             qs('#editStartAt').value = formatDateTimeLocal(n.start_at);
             qs('#editEndAt').value = formatDateTimeLocal(n.end_at);
-            selectType(n.n_type || 'info');
             updateCharCount('editTitle', 'titleCount', 100);
             updateCharCount('editContent', 'contentCount', 500);
             qs('#dlgEdit').style.display = 'flex';
@@ -390,31 +284,27 @@
         const id = qs('#editId').value;
         const title = getVal('editTitle');
         const content = getVal('editContent');
-        const n_type = qs('input[name="n_type"]:checked').value;
-        const priority = parseInt(qs('#editPriority').value) || 0;
+        const priority = parseInt(qs('#editPriority').value, 10) || 0;
         const is_active = qs('#editActive').value === '1';
         const start_at = qs('#editStartAt').value || null;
         const end_at = qs('#editEndAt').value || null;
 
         if (!title) {
-            appAlert('⚠️ 请填写标题');
+            appAlert('请填写标题');
             qs('#editTitle').focus();
             return;
         }
-
         if (!content) {
-            appAlert('⚠️ 请填写内容');
+            appAlert('请填写内容');
             qs('#editContent').focus();
             return;
         }
-
         if (priority < 0 || priority > 100) {
-            appAlert('⚠️ 优先级必须在 0-100 之间');
+            appAlert('优先级必须在 0-100 之间');
             qs('#editPriority').focus();
             return;
         }
 
-        const data = { title, content, n_type, priority, is_active, start_at, end_at };
         const btnSave = qs('#btnSave');
         const originalText = btnSave.textContent;
         btnSave.disabled = true;
@@ -423,25 +313,24 @@
         try {
             const url = id ? `/admin/api/notifications/${id}` : '/admin/api/notifications';
             const method = id ? 'PUT' : 'POST';
-
             const res = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+                body: JSON.stringify({ title, content, priority, is_active, start_at, end_at })
             });
 
             const js = await res.json();
             if (!res.ok || js.status !== 'success') {
-                appAlert('❌ ' + (js.message || '保存失败'));
+                appAlert(js.message || '保存失败');
                 return;
             }
 
-            appAlert('✅ ' + (js.message || '保存成功'));
+            appAlert(js.message || '保存成功');
             closeEdit();
             loadNotifications();
         } catch (e) {
             console.error('保存通知失败:', e);
-            appAlert('❌ 保存通知失败');
+            appAlert('保存通知失败');
         } finally {
             btnSave.disabled = false;
             btnSave.textContent = originalText;
@@ -453,59 +342,49 @@
             const res = await fetch(`/admin/api/notifications/${id}/toggle`, { method: 'POST' });
             const js = await res.json();
             if (!res.ok || js.status !== 'success') {
-                appAlert('❌ ' + (js.message || '操作失败'));
+                appAlert(js.message || '操作失败');
                 return;
             }
             loadNotifications();
         } catch (e) {
             console.error('切换状态失败:', e);
-            appAlert('❌ 切换状态失败');
+            appAlert('切换状态失败');
         }
     }
 
-
     async function deleteNotification(id) {
-        if (!(await appConfirm('⚠️ 确定要删除这条通知吗?\n\n删除后将无法恢复!'))) return;
+        if (!(await appConfirm('确定要删除这条通知吗？\n\n删除后将无法恢复。'))) return;
 
         try {
             const res = await fetch(`/admin/api/notifications/${id}`, { method: 'DELETE' });
             const js = await res.json();
             if (!res.ok || js.status !== 'success') {
-                appAlert('❌ ' + (js.message || '删除失败'));
+                appAlert(js.message || '删除失败');
                 return;
             }
-            appAlert('✅ ' + (js.message || '删除成功'));
+            appAlert(js.message || '删除成功');
             loadNotifications();
         } catch (e) {
             console.error('删除通知失败:', e);
-            appAlert('❌ 删除通知失败');
+            appAlert('删除通知失败');
         }
     }
 
-    // 通知栏管理操作菜单控制
     function toggleNotificationsActionMenu(notificationId, event) {
         event.stopPropagation();
         const menuId = `notificationsActionMenu_${notificationId}`;
         const menu = document.getElementById(menuId);
 
-        // 关闭所有已打开的操作菜单（包括通知栏和弹窗管理的，但不包括用户管理页面的）
-        const allMenus = document.querySelectorAll('.action-menu.show');
-        allMenus.forEach(m => {
-            // 只处理通知管理页面的菜单，不影响用户管理页面（actionMenu_开头）
-            if (m.id && (m.id.startsWith('notificationsActionMenu_') || m.id.startsWith('popupsActionMenu_'))) {
-                if (m.id !== menuId) {
-                    m.classList.remove('show');
-                    // 恢复所在行的 z-index
-                    const tr = m.closest('tr');
-                    if (tr) tr.style.zIndex = '';
-                }
+        document.querySelectorAll('.action-menu.show').forEach(m => {
+            if (m.id && m.id.startsWith('notificationsActionMenu_') && m.id !== menuId) {
+                m.classList.remove('show');
+                const tr = m.closest('tr');
+                if (tr) tr.style.zIndex = '';
             }
         });
 
-        // 切换当前菜单
         if (menu) {
             menu.classList.toggle('show');
-            // 提升所在行的 z-index，确保菜单不被后续行遮挡
             const tr = menu.closest('tr');
             if (tr) tr.style.zIndex = menu.classList.contains('show') ? '100' : '';
         }
@@ -520,455 +399,10 @@
         }
     }
 
-    // 点击弹窗外部关闭
-    qs('#dlgEdit').addEventListener('click', function(e) {
-        if (e.target === this) closeEdit();
-    });
-    
-    // 点击弹窗外部关闭（弹窗管理）
-    document.getElementById('popupDlgEdit').addEventListener('click', function(e) {
-        if (e.target === this) closePopupEdit();
-    });
-
-    // ==================== 弹窗管理 ====================
-    const POPUP_TYPE_LABELS = {
-        info: '信息',
-        success: '成功',
-        warning: '警告',
-        error: '错误'
-    };
-
-    async function loadPopups() {
-        try {
-            const [popupsRes, statsRes] = await Promise.all([
-                fetch('/admin/api/popups'),
-                fetch('/admin/api/popups/stats')
-            ]);
-            
-            const popupsJs = await popupsRes.json();
-            if (!popupsRes.ok || popupsJs.status !== 'success') {
-                showPopupsError(popupsJs.message || '加载失败');
-                return;
-            }
-            allPopups = popupsJs.popups || [];
-            
-            const statsJs = await statsRes.json();
-            if (statsRes.ok && statsJs.status === 'success') {
-                popupStats = {};
-                (statsJs.stats || []).forEach(s => {
-                    popupStats[s.popup_id] = s;
-                });
-            }
-            
-            applyPopupsFilters();
-            renderPopupsStats();
-        } catch (e) {
-            console.error('加载弹窗失败:', e);
-            showPopupsError('加载弹窗失败');
-        }
-    }
-
-    function refreshPopupsData() {
-        showPopupsLoading();
-        loadPopups();
-    }
-
-    function showPopupsLoading() {
-        const tb = document.getElementById('popupsTbody');
-        tb.innerHTML = `<tr><td colspan="11" class="loading">
-            <div class="loading-spinner"></div>
-            <div style="margin-top: 12px;">加载中...</div>
-        </td></tr>`;
-    }
-
-    function showPopupsError(msg) {
-        const tb = document.getElementById('popupsTbody');
-        tb.innerHTML = `<tr><td colspan="11" class="empty-state">
-            <div class="empty-state-text">加载失败</div>
-            <div class="empty-state-hint">${escapeHtml(msg)}</div>
-        </td></tr>`;
-    }
-
-    function renderPopupsStats() {
-        const total = allPopups.length;
-        const active = allPopups.filter(p => p.is_active).length;
-        const inactive = total - active;
-        const totalViews = Object.values(popupStats).reduce((sum, s) => sum + (s.total_views || 0), 0);
-        const totalDismissals = Object.values(popupStats).reduce((sum, s) => sum + (s.total_dismissals || 0), 0);
-        const avgDismissalRate = totalViews > 0 ? ((totalDismissals / totalViews) * 100).toFixed(1) : 0;
-
-        const statsHtml = `
-            <div class="stat-card info">
-                <div class="stat-label">总弹窗数</div>
-                <div class="stat-value">${total}</div>
-            </div>
-            <div class="stat-card success">
-                <div class="stat-label">已启用</div>
-                <div class="stat-value">${active}</div>
-            </div>
-            <div class="stat-card warning">
-                <div class="stat-label">总显示次数</div>
-                <div class="stat-value">${totalViews}</div>
-            </div>
-            <div class="stat-card danger">
-                <div class="stat-label">平均关闭率</div>
-                <div class="stat-value">${avgDismissalRate}%</div>
-            </div>
-        `;
-        
-        qs('#popupsStatsRow').innerHTML = statsHtml;
-    }
-
-    function applyPopupsFilters() {
-        filteredPopups = allPopups.filter(p => {
-            if (popupsCurrentTypeFilter !== 'all' && p.popup_type !== popupsCurrentTypeFilter) {
-                return false;
-            }
-            
-            if (popupsCurrentStatusFilter === 'active' && !p.is_active) {
-                return false;
-            }
-            if (popupsCurrentStatusFilter === 'inactive' && p.is_active) {
-                return false;
-            }
-            
-            if (popupsSearchKeyword) {
-                const keyword = popupsSearchKeyword.toLowerCase();
-                const title = (p.title || '').toLowerCase();
-                const content = (p.content || '').toLowerCase();
-                if (!title.includes(keyword) && !content.includes(keyword)) {
-                    return false;
-                }
-            }
-            
-            return true;
-        });
-        
-        popupsCurrentPage = 1;
-        renderPopupsTable();
-    }
-
-    function handlePopupsSearch() {
-        const input = qs('#popupsSearchInput');
-        popupsSearchKeyword = input.value.trim();
-        const clearBtn = qs('#popupsClearSearch');
-        clearBtn.style.display = popupsSearchKeyword ? 'block' : 'none';
-        applyPopupsFilters();
-    }
-
-    function clearPopupsSearch() {
-        qs('#popupsSearchInput').value = '';
-        popupsSearchKeyword = '';
-        qs('#popupsClearSearch').style.display = 'none';
-        applyPopupsFilters();
-    }
-
-    function filterPopupsByType(type) {
-        popupsCurrentTypeFilter = type;
-        document.querySelectorAll('[data-popup-type]').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.popupType === type);
-        });
-        applyPopupsFilters();
-    }
-
-    function filterPopupsByStatus(status) {
-        popupsCurrentStatusFilter = status;
-        document.querySelectorAll('[data-popup-status]').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.popupStatus === status);
-        });
-        applyPopupsFilters();
-    }
-
-    function changePopupsPage(action) {
-        const totalPages = Math.ceil(filteredPopups.length / popupsPageSize);
-        
-        switch(action) {
-            case 'first':
-                popupsCurrentPage = 1;
-                break;
-            case 'prev':
-                if (popupsCurrentPage > 1) popupsCurrentPage--;
-                break;
-            case 'next':
-                if (popupsCurrentPage < totalPages) popupsCurrentPage++;
-                break;
-            case 'last':
-                popupsCurrentPage = totalPages;
-                break;
-        }
-        
-        renderPopupsTable();
-    }
-
-    function renderPopupsTable() {
-        const tb = document.getElementById('popupsTbody');
-        const totalPages = Math.ceil(filteredPopups.length / popupsPageSize);
-        
-        if (filteredPopups.length === 0) {
-            tb.innerHTML = `<tr><td colspan="11" class="empty-state">
-                <div class="empty-state-text">暂无弹窗</div>
-                <div class="empty-state-hint">点击"新建弹窗"按钮创建第一条弹窗</div>
-            </td></tr>`;
-            qs('#popupsPagination').style.display = 'none';
-            return;
-        }
-
-        const start = (popupsCurrentPage - 1) * popupsPageSize;
-        const end = start + popupsPageSize;
-        const pageData = filteredPopups.slice(start, end);
-
-        tb.innerHTML = pageData.map(p => {
-            const typeClass = `tag-${p.popup_type || 'info'}`;
-            const statusClass = p.is_active ? 'tag-active' : 'tag-inactive';
-            const statusText = p.is_active ? '启用' : '禁用';
-            const stats = popupStats[p.id] || { total_views: 0, total_dismissals: 0, dismissal_rate: 0 };
-            const dismissalRate = stats.total_views > 0 ? ((stats.dismissal_rate * 100).toFixed(1)) : 0;
-            
-            let priorityClass = 'priority-low';
-            if (p.priority >= 70) priorityClass = 'priority-high';
-            else if (p.priority >= 30) priorityClass = 'priority-medium';
-
-            return `<tr>
-                <td>${p.id}</td>
-                <td><span class="tag ${typeClass}">${POPUP_TYPE_LABELS[p.popup_type] || p.popup_type}</span></td>
-                <td><strong>${escapeHtml(p.title)}</strong></td>
-                <td class="content-preview" title="${escapeHtml(p.content)}" data-content="${escapeHtml(p.content).replace(/"/g, '&quot;')}" onclick="showContentPreview(this.dataset.content)">${escapeHtml(p.content)}</td>
-                <td><span class="priority-badge ${priorityClass}">${p.priority || 0}</span></td>
-                <td><span class="tag ${statusClass}">${statusText}</span></td>
-                <td class="muted">${stats.total_views || 0}</td>
-                <td class="muted">${stats.total_dismissals || 0}</td>
-                <td class="muted">${dismissalRate}%</td>
-                <td class="muted">${formatDate(p.created_at)}</td>
-                <td class="actions">
-                    <div class="action-menu-wrapper">
-                        <button class="btn-sm btn-action" onclick="togglePopupsActionMenu(${p.id}, event)" title="操作">操作</button>
-                        <div class="action-menu" id="popupsActionMenu_${p.id}">
-                            <button class="action-menu-item" onclick="openPopupEdit(${p.id}); closePopupsActionMenu(${p.id})">编辑</button>
-                            <button class="action-menu-item" onclick="togglePopupActive(${p.id}); closePopupsActionMenu(${p.id})">${p.is_active ? '禁用' : '启用'}</button>
-                            <div class="action-menu-divider"></div>
-                            <button class="action-menu-item danger" onclick="deletePopup(${p.id}); closePopupsActionMenu(${p.id})">删除</button>
-                        </div>
-                    </div>
-                </td>
-            </tr>`;
-        }).join('');
-
-        if (totalPages > 1) {
-            qs('#popupsPagination').style.display = 'flex';
-            qs('#popupsPageInfo').innerText = `第 ${popupsCurrentPage} 页 / 共 ${totalPages} 页 (共 ${filteredPopups.length} 条)`;
-            qs('#popupsBtnFirst').disabled = popupsCurrentPage === 1;
-            qs('#popupsBtnPrev').disabled = popupsCurrentPage === 1;
-            qs('#popupsBtnNext').disabled = popupsCurrentPage === totalPages;
-            qs('#popupsBtnLast').disabled = popupsCurrentPage === totalPages;
-        } else {
-            qs('#popupsPagination').style.display = 'none';
-        }
-    }
-
-    function selectPopupType(type) {
-        document.querySelectorAll('.popup-type-option').forEach(el => {
-            const input = el.querySelector('input');
-            if (input && input.value === type) {
-                el.classList.add('selected');
-                input.checked = true;
-            } else {
-                el.classList.remove('selected');
-                if (input) input.checked = false;
-            }
-        });
-    }
-
-    function openPopupCreate() {
-        qs('#popupDlgTitle').innerText = '新建弹窗';
-        qs('#popupEditId').value = '';
-        qs('#popupEditTitle').value = '';
-        qs('#popupEditContent').value = '';
-        qs('#popupEditPriority').value = '0';
-        qs('#popupEditActive').value = '1';
-        qs('#popupEditStartAt').value = '';
-        qs('#popupEditEndAt').value = '';
-        selectPopupType('info');
-        updateCharCount('popupEditTitle', 'popupTitleCount', 200);
-        updateCharCount('popupEditContent', 'popupContentCount', 1000);
-        qs('#popupDlgEdit').style.display = 'flex';
-    }
-
-    async function openPopupEdit(id) {
-        try {
-            const res = await fetch(`/admin/api/popups/${id}`);
-            const js = await res.json();
-            if (!res.ok || js.status !== 'success') {
-                appAlert(js.message || '获取弹窗失败');
-                return;
-            }
-
-            const p = js.popup;
-            qs('#popupDlgTitle').innerText = '编辑弹窗';
-            qs('#popupEditId').value = p.id;
-            qs('#popupEditTitle').value = p.title || '';
-            qs('#popupEditContent').value = p.content || '';
-            qs('#popupEditPriority').value = p.priority || 0;
-            qs('#popupEditActive').value = p.is_active ? '1' : '0';
-            qs('#popupEditStartAt').value = formatDateTimeLocal(p.start_at);
-            qs('#popupEditEndAt').value = formatDateTimeLocal(p.end_at);
-            selectPopupType(p.popup_type || 'info');
-            updateCharCount('popupEditTitle', 'popupTitleCount', 200);
-            updateCharCount('popupEditContent', 'popupContentCount', 1000);
-            qs('#popupDlgEdit').style.display = 'flex';
-        } catch (e) {
-            console.error('获取弹窗失败:', e);
-            appAlert('获取弹窗失败');
-        }
-    }
-
-    function closePopupEdit() {
-        qs('#popupDlgEdit').style.display = 'none';
-    }
-
-    async function savePopup() {
-        const id = qs('#popupEditId').value;
-        const title = getVal('popupEditTitle');
-        const content = getVal('popupEditContent');
-        const popup_type = qs('input[name="popup_type"]:checked').value;
-        const priority = parseInt(qs('#popupEditPriority').value) || 0;
-        const is_active = qs('#popupEditActive').value === '1';
-        const start_at = qs('#popupEditStartAt').value || null;
-        const end_at = qs('#popupEditEndAt').value || null;
-
-        if (!title) {
-            appAlert('⚠️ 请填写标题');
-            qs('#popupEditTitle').focus();
-            return;
-        }
-
-        if (!content) {
-            appAlert('⚠️ 请填写内容');
-            qs('#popupEditContent').focus();
-            return;
-        }
-
-        if (priority < 0 || priority > 100) {
-            appAlert('⚠️ 优先级必须在 0-100 之间');
-            qs('#popupEditPriority').focus();
-            return;
-        }
-
-        const data = { title, content, popup_type, priority, is_active, start_at, end_at };
-        const btnSave = qs('#popupBtnSave');
-        const originalText = btnSave.textContent;
-        btnSave.disabled = true;
-        btnSave.textContent = '保存中...';
-
-        try {
-            const url = id ? `/admin/api/popups/${id}` : '/admin/api/popups';
-            const method = id ? 'PUT' : 'POST';
-
-            const res = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-
-            const js = await res.json();
-            if (!res.ok || js.status !== 'success') {
-                appAlert('❌ ' + (js.message || '保存失败'));
-                return;
-            }
-
-            appAlert('✅ ' + (js.message || '保存成功'));
-            closePopupEdit();
-            loadPopups();
-        } catch (e) {
-            console.error('保存弹窗失败:', e);
-            appAlert('❌ 保存弹窗失败');
-        } finally {
-            btnSave.disabled = false;
-            btnSave.textContent = originalText;
-        }
-    }
-
-    async function togglePopupActive(id) {
-        const popup = allPopups.find(p => p.id === id);
-        if (!popup) return;
-        
-        const newActive = !popup.is_active;
-        const data = { is_active: newActive };
-        
-        try {
-            const res = await fetch(`/admin/api/popups/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            const js = await res.json();
-            if (!res.ok || js.status !== 'success') {
-                appAlert('❌ ' + (js.message || '操作失败'));
-                return;
-            }
-            loadPopups();
-        } catch (e) {
-            console.error('切换状态失败:', e);
-            appAlert('❌ 切换状态失败');
-        }
-    }
-
-    function togglePopupsActionMenu(popupId, event) {
-        event.stopPropagation();
-        const menuId = `popupsActionMenu_${popupId}`;
-        const menu = document.getElementById(menuId);
-
-        // 关闭所有已打开的操作菜单
-        const allMenus = document.querySelectorAll('.action-menu.show');
-        allMenus.forEach(m => {
-            if (m.id && (m.id.startsWith('notificationsActionMenu_') || m.id.startsWith('popupsActionMenu_'))) {
-                if (m.id !== menuId) {
-                    m.classList.remove('show');
-                    const tr = m.closest('tr');
-                    if (tr) tr.style.zIndex = '';
-                }
-            }
-        });
-
-        if (menu) {
-            menu.classList.toggle('show');
-            const tr = menu.closest('tr');
-            if (tr) tr.style.zIndex = menu.classList.contains('show') ? '100' : '';
-        }
-    }
-
-    function closePopupsActionMenu(popupId) {
-        const menu = document.getElementById(`popupsActionMenu_${popupId}`);
-        if (menu) {
-            menu.classList.remove('show');
-            const tr = menu.closest('tr');
-            if (tr) tr.style.zIndex = '';
-        }
-    }
-
-    async function deletePopup(id) {
-        if (!(await appConfirm('⚠️ 确定要删除这条弹窗吗?\n\n删除后将无法恢复!'))) return;
-
-        try {
-            const res = await fetch(`/admin/api/popups/${id}`, { method: 'DELETE' });
-            const js = await res.json();
-            if (!res.ok || js.status !== 'success') {
-                appAlert('❌ ' + (js.message || '删除失败'));
-                return;
-            }
-            appAlert('✅ ' + (js.message || '删除成功'));
-            loadPopups();
-        } catch (e) {
-            console.error('删除弹窗失败:', e);
-            appAlert('❌ 删除弹窗失败');
-        }
-    }
-
-    // ==================== 内容预览弹窗 ====================
     function showContentPreview(content) {
         const modal = document.getElementById('contentPreviewModal');
         const previewContent = document.getElementById('previewContent');
         if (modal && previewContent) {
-            // 解码 HTML 实体
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = content;
             previewContent.textContent = tempDiv.textContent || tempDiv.innerText || content;
@@ -978,34 +412,30 @@
 
     function closeContentPreview() {
         const modal = document.getElementById('contentPreviewModal');
-        if (modal) {
-            modal.style.display = 'none';
-        }
+        if (modal) modal.style.display = 'none';
     }
 
-    // 点击弹窗外部关闭预览弹窗
-    document.getElementById('contentPreviewModal')?.addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeContentPreview();
-        }
+    qs('#dlgEdit').addEventListener('click', function(e) {
+        if (e.target === this) closeEdit();
     });
 
-    // ESC键关闭预览弹窗
+    document.getElementById('contentPreviewModal')?.addEventListener('click', function(e) {
+        if (e.target === this) closeContentPreview();
+    });
+
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
-            const modal = document.getElementById('contentPreviewModal');
-            if (modal && modal.style.display === 'flex') {
-                closeContentPreview();
-            }
+            const previewModal = document.getElementById('contentPreviewModal');
+            if (previewModal && previewModal.style.display === 'flex') closeContentPreview();
+            const editModal = document.getElementById('dlgEdit');
+            if (editModal && editModal.style.display === 'flex') closeEdit();
         }
     });
 
-    // 点击外部区域关闭所有操作菜单（仅限通知管理页面的菜单）
     document.addEventListener('click', function(event) {
         if (!event.target.closest('.action-menu-wrapper')) {
-            const allMenus = document.querySelectorAll('.action-menu.show');
-            allMenus.forEach(menu => {
-                if (menu.id && (menu.id.startsWith('notificationsActionMenu_') || menu.id.startsWith('popupsActionMenu_'))) {
+            document.querySelectorAll('.action-menu.show').forEach(menu => {
+                if (menu.id && menu.id.startsWith('notificationsActionMenu_')) {
                     menu.classList.remove('show');
                     const tr = menu.closest('tr');
                     if (tr) tr.style.zIndex = '';
@@ -1014,6 +444,5 @@
         }
     });
 
-    // 初始化
     loadNotifications();
 </script>

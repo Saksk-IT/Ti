@@ -629,7 +629,7 @@
             <li><a href="/admin/forum" class="{% if request.path.startswith('/admin/forum') %}active{% endif %}">论坛管理</a></li>
             {% endif %}
             {% if session.get('is_admin') or session.get('is_notification_admin') %}
-            <li><a href="/admin/notifications" class="{% if request.path == '/admin/notifications' or request.path == '/admin/popups' %}active{% endif %}">通知管理</a></li>
+            <li><a href="/admin/notifications" class="{% if request.path == '/admin/notifications' %}active{% endif %}">通知管理</a></li>
             {% endif %}
             {% if session.get('is_admin') %}
             <li><a href="/admin/settings" class="{% if request.path.startswith('/admin/settings') %}active{% endif %}">系统设置</a></li>

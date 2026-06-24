@@ -744,16 +744,11 @@ def _register_before_request(app):
                 # 匹配规则：
                 # 1. /admin/notifications 及其子路径
                 # 2. /admin/api/notifications 及其子路径
-                # 3. /admin/popups 及其子路径（弹窗管理是通知管理的一部分）
-                # 4. /admin/api/popups 及其子路径
-                # 5. /admin 和 /admin/dashboard（重定向到通知管理）
+                # 3. /admin 和 /admin/dashboard（重定向到通知管理）
                 is_notification_admin_path = (
                     path.startswith('/admin/notifications') or
                     path.startswith('/admin/api/notifications') or
-                    path.startswith('/admin/popups') or
-                    path.startswith('/admin/api/popups') or
-                    '/api/notifications' in path or
-                    '/api/popups' in path
+                    '/api/notifications' in path
                 )
                 
                 # 通知管理员访问 /admin 或 /admin/dashboard 时，重定向到通知管理页面

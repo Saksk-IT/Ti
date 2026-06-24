@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var theme_1 = require("./utils/theme");
 var font_1 = require("./utils/font");
 var user_settings_1 = require("./utils/user-settings");
+var api_1 = require("./utils/api");
 // 启动期尽早读取用户手动主题和字体（避免 Page 首帧使用默认导致闪烁）
 try {
     theme_1.themeManager.bootstrap();
@@ -31,6 +32,111 @@ function maybeSyncUserSettings() {
         return;
     lastSettingsSyncAt = now;
     (0, user_settings_1.syncUserSettingsFromServer)();
+}
+var notificationPopupQueue = [];
+var notificationPopupActive = null;
+var notificationPopupFetching = false;
+var notificationPopupTimer = undefined;
+var lastNotificationPopupFetchAt = 0;
+function hasLoginToken() {
+    return !!wx.getStorageSync('token');
+}
+function normalizeNotificationPopup(input) {
+    var id = Number(input && input.id);
+    if (!Number.isFinite(id) || id <= 0)
+        return null;
+    return {
+        id: id,
+        title: String((input && input.title) || '通知'),
+        content: String((input && input.content) || ''),
+        is_read: input && input.is_read
+    };
+}
+function showNextNotificationPopup() {
+    if (notificationPopupActive)
+        return;
+    var next = notificationPopupQueue.shift() || null;
+    if (!next)
+        return;
+    notificationPopupActive = next;
+    wx.showModal({
+        title: next.title || '通知',
+        content: next.content || '',
+        confirmText: '已读',
+        cancelText: '关闭',
+        success: function () {
+            markNotificationPopupRead(next.id);
+        },
+        fail: function () {
+            notificationPopupActive = null;
+            notificationPopupQueue = [next].concat(notificationPopupQueue);
+            setTimeout(function () {
+                showNextNotificationPopup();
+            }, 1200);
+        }
+    });
+}
+function markNotificationPopupRead(id) {
+    var synced = false;
+    return api_1.api.markNotificationRead(id)
+        .then(function () {
+        synced = true;
+    })
+        .catch(function (err) {
+        wx.showToast({
+            title: err && err.message ? err.message : '已读同步失败',
+            icon: 'none'
+        });
+    })
+        .then(function () {
+        if (!synced && notificationPopupActive) {
+            var current_1 = notificationPopupActive;
+            notificationPopupQueue = [current_1].concat(notificationPopupQueue);
+            setTimeout(function () {
+                showNextNotificationPopup();
+            }, 1800);
+        }
+        notificationPopupActive = null;
+        if (synced)
+            showNextNotificationPopup();
+    });
+}
+function fetchNotificationPopups(force) {
+    if (force === void 0) { force = false; }
+    if (!hasLoginToken() || notificationPopupFetching || notificationPopupActive)
+        return Promise.resolve();
+    var now = Date.now();
+    if (!force && now - lastNotificationPopupFetchAt < 15000)
+        return Promise.resolve();
+    lastNotificationPopupFetchAt = now;
+    notificationPopupFetching = true;
+    return api_1.api.getNotifications({ limit: 20 })
+        .then(function (raw) {
+        var list = Array.isArray(raw) ? raw : [];
+        notificationPopupQueue = list
+            .map(function (item) { return normalizeNotificationPopup(item); })
+            .filter(function (item) { return !!item && !item.is_read; });
+        showNextNotificationPopup();
+    })
+        .catch(function (err) {
+        void err;
+    })
+        .then(function () {
+        notificationPopupFetching = false;
+    });
+}
+function startNotificationPopupPolling() {
+    if (notificationPopupTimer)
+        return;
+    notificationPopupTimer = setInterval(function () {
+        fetchNotificationPopups(false);
+    }, 30000);
+}
+function stopNotificationPopupPolling() {
+    if (!notificationPopupTimer)
+        return;
+    clearInterval(notificationPopupTimer);
+    notificationPopupTimer = undefined;
 }
 var subpackagePreloaded = false;
 function preloadCriticalSubpackages() {
@@ -137,6 +243,8 @@ App({
         this.globalData.fontStyle = font_1.fontManager.getStyle();
         maybeSyncUserSettings();
         preloadCriticalSubpackages();
+        fetchNotificationPopups(true);
+        startNotificationPopupPolling();
         // 监听主题变化，更新全局数据
         theme_1.themeManager.onThemeChange(function (isDark) {
             _this.globalData.isDarkMode = isDark;
@@ -165,10 +273,12 @@ App({
                                     theme_1.themeManager.applySystemUI();
                                 }
                                 catch (e) { }
+                                fetchNotificationPopups(false);
                             });
                         }
                     }
                     catch (e) { }
+                    fetchNotificationPopups(false);
                 });
             }
         }
@@ -187,5 +297,16 @@ App({
     onShow: function () {
         theme_1.themeManager.applySystemUI();
         maybeSyncUserSettings();
+        fetchNotificationPopups(true);
+        startNotificationPopupPolling();
+    },
+    onHide: function () {
+        stopNotificationPopupPolling();
+    },
+    onError: function (err) {
+        console.error('[App.onError]', err);
+    },
+    onUnhandledRejection: function (event) {
+        console.error('[App.onUnhandledRejection]', event.reason);
     },
 });

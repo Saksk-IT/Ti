@@ -72,10 +72,7 @@ def _check_admin_permission():
     is_notification_admin_path = (
         path.startswith('/admin/notifications') or
         path.startswith('/admin/api/notifications') or
-        path.startswith('/admin/popups') or
-        path.startswith('/admin/api/popups') or
-        '/api/notifications' in path or
-        '/api/popups' in path
+        '/api/notifications' in path
     )
 
     if is_subject_admin_path:

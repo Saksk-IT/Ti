@@ -14,7 +14,6 @@ from .api_components import coding_questions  # noqa: F401
 from .api_components import mail_settings  # noqa: F401
 from .api_components import notifications  # noqa: F401
 from .api_components import payment_settings  # noqa: F401
-from .api_components import popups  # noqa: F401
 from .api_components import questions  # noqa: F401
 from .api_components import questions_io  # noqa: F401
 from .api_components import sms_settings  # noqa: F401

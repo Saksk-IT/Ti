@@ -1,44 +1,20 @@
 <div class="container">
-    <!-- 标签页切换 -->
-    <div class="tab-container">
-        <button class="tab-btn active" data-tab="notifications" onclick="switchTab('notifications')">通知栏管理</button>
-        <button class="tab-btn" data-tab="popups" onclick="switchTab('popups')">弹窗管理</button>
-    </div>
-    
-    <!-- 通知栏管理区域 -->
-    <div id="notificationsTab" class="tab-content active">
-        <div class="toolbar">
-            <div class="toolbar-left">
-                <h1>通知管理</h1>
-            </div>
-            <div class="toolbar-right">
-                <button class="btn-outline" onclick="refreshData()">刷新</button>
-                <button class="btn-primary" onclick="openCreate()">新建通知</button>
-            </div>
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <h1>通知管理</h1>
         </div>
+        <div class="toolbar-right">
+            <button class="btn-outline" onclick="refreshData()">刷新</button>
+            <button class="btn-primary" onclick="openCreate()">新建通知</button>
+        </div>
+    </div>
 
-    <!-- 统计卡片 -->
     <div class="stats-row" id="statsRow"></div>
 
-    <!-- 搜索和筛选栏 -->
     <div class="filter-bar">
         <div class="search-box">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="searchInput" placeholder="       搜索标题或内容..." oninput="handleSearch()">
+            <input type="text" id="searchInput" placeholder="搜索标题或内容..." oninput="handleSearch()">
             <button class="clear-search" id="clearSearch" onclick="clearSearch()">×</button>
-        </div>
-    </div>
-    
-    <div class="filter-bar" style="margin-top: -8px;">
-        <div class="filter-group">
-            <span class="filter-label">类型:</span>
-            <div class="filter-chips">
-                <button class="filter-chip active" data-type="all" onclick="filterByType('all')">全部</button>
-                <button class="filter-chip" data-type="info" onclick="filterByType('info')">信息</button>
-                <button class="filter-chip" data-type="announcement" onclick="filterByType('announcement')">公告</button>
-                <button class="filter-chip" data-type="reminder" onclick="filterByType('reminder')">提醒</button>
-                <button class="filter-chip" data-type="warning" onclick="filterByType('warning')">警告</button>
-            </div>
         </div>
 
         <div class="filter-group">
@@ -51,13 +27,11 @@
         </div>
     </div>
 
-    <!-- 表格 -->
     <div class="table-wrapper">
         <table>
             <thead>
                 <tr>
                     <th style="width:50px;">ID</th>
-                    <th style="width:140px;">类型</th>
                     <th>标题</th>
                     <th>内容预览</th>
                     <th style="width:80px;">优先级</th>
@@ -68,7 +42,7 @@
             </thead>
             <tbody id="tbody">
                 <tr>
-                    <td colspan="8" class="loading">
+                    <td colspan="7" class="loading">
                         <div class="loading-spinner"></div>
                         <div style="margin-top: 12px;">加载中...</div>
                     </td>
@@ -77,7 +51,6 @@
         </table>
     </div>
 
-    <!-- 分页 -->
     <div class="pagination" id="pagination" style="display: none;">
         <button onclick="changePage('first')" id="btnFirst">首页</button>
         <button onclick="changePage('prev')" id="btnPrev">上一页</button>
