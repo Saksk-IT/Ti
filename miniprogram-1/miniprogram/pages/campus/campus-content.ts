@@ -53,6 +53,30 @@ function trimNumberText(value: unknown): string {
   return text.replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
 }
 
+function semesterLabelFromValue(value: unknown): string {
+  const xqm = cleanText(value);
+  if (xqm === '3') return '第一学期';
+  if (xqm === '12') return '第二学期';
+  return xqm ? `第${xqm}学期` : '';
+}
+
+function normalizeTermMeta(termInput: any, fallbackTitle: string): any {
+  const term = termInput && typeof termInput === 'object' ? termInput : {};
+  const xnm = cleanText(term.xnm || term.XNM);
+  const xqm = cleanText(term.xqm || term.XQM);
+  const yearLabel = xnm && /^\d+$/.test(xnm) ? `${xnm}~${Number(xnm) + 1}` : cleanText(term.year_label);
+  const semesterLabel = cleanText(term.semester_label) || semesterLabelFromValue(xqm);
+  const title = cleanText(term.label, [yearLabel, semesterLabel].filter(Boolean).join(' ') || fallbackTitle);
+  return {
+    xnm,
+    xqm,
+    termKey: [xnm, xqm].filter(Boolean).join('-') || title,
+    yearLabel,
+    semesterLabel,
+    title,
+  };
+}
+
 function normalizeCourse(row: any): any {
   const item = row && typeof row === 'object' ? row : {};
   return {
@@ -118,6 +142,7 @@ export function normalizeScheduleSnapshots(rows: unknown[]): any[] {
     .map((row) => {
       const payload = unwrapPayload(row);
       const term = payload.term && typeof payload.term === 'object' ? payload.term : {};
+      const termMeta = normalizeTermMeta(term, '课表');
       const student = payload.student && typeof payload.student === 'object' ? payload.student : {};
       const weekTable = payload.week_table && typeof payload.week_table === 'object' ? payload.week_table : {};
 
@@ -131,7 +156,7 @@ export function normalizeScheduleSnapshots(rows: unknown[]): any[] {
       }).filter((dayRow) => dayRow.sections.length > 0);
 
       return {
-        title: cleanText(term.label, '课表'),
+        ...termMeta,
         studentText: [student.name, student.class_name, student.major_name].map((item) => cleanText(item)).filter(Boolean).join(' / '),
         weekRows,
         practice_courses: normalizeList(payload.practice_courses).map(normalizeCourse),
@@ -145,12 +170,13 @@ export function normalizeGradeSnapshots(rows: unknown[]): any[] {
     .map((row) => {
       const payload = unwrapPayload(row);
       const term = payload.term && typeof payload.term === 'object' ? payload.term : {};
+      const termMeta = normalizeTermMeta(term, '成绩');
       const summary = payload.summary && typeof payload.summary === 'object' ? payload.summary : {};
       const courseCount = trimNumberText(summary.course_count);
       const credits = trimNumberText(summary.total_credits);
       const gpa = trimNumberText(summary.gpa);
       return {
-        title: cleanText(term.label, '成绩'),
+        ...termMeta,
         summaryText: `${courseCount} 门课 / ${credits} 学分 / GPA ${gpa}`,
         grades: normalizeList(payload.grades).map(normalizeGrade),
       };

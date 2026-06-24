@@ -1,7 +1,18 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buildCampusTerms = buildCampusTerms;
 exports.campusFriendlyError = campusFriendlyError;
+exports.buildCampusTerms = buildCampusTerms;
 exports.normalizeScheduleSnapshots = normalizeScheduleSnapshots;
 exports.normalizeGradeSnapshots = normalizeGradeSnapshots;
 exports.normalizeTermResults = normalizeTermResults;
@@ -44,6 +55,30 @@ function trimNumberText(value) {
     if (!text.includes('.'))
         return text;
     return text.replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
+}
+function semesterLabelFromValue(value) {
+    var xqm = cleanText(value);
+    if (xqm === '3')
+        return '第一学期';
+    if (xqm === '12')
+        return '第二学期';
+    return xqm ? "\u7B2C".concat(xqm, "\u5B66\u671F") : '';
+}
+function normalizeTermMeta(termInput, fallbackTitle) {
+    var term = termInput && typeof termInput === 'object' ? termInput : {};
+    var xnm = cleanText(term.xnm || term.XNM);
+    var xqm = cleanText(term.xqm || term.XQM);
+    var yearLabel = xnm && /^\d+$/.test(xnm) ? "".concat(xnm, "~").concat(Number(xnm) + 1) : cleanText(term.year_label);
+    var semesterLabel = cleanText(term.semester_label) || semesterLabelFromValue(xqm);
+    var title = cleanText(term.label, [yearLabel, semesterLabel].filter(Boolean).join(' ') || fallbackTitle);
+    return {
+        xnm: xnm,
+        xqm: xqm,
+        termKey: [xnm, xqm].filter(Boolean).join('-') || title,
+        yearLabel: yearLabel,
+        semesterLabel: semesterLabel,
+        title: title,
+    };
 }
 function normalizeCourse(row) {
     var item = row && typeof row === 'object' ? row : {};
@@ -104,6 +139,7 @@ function normalizeScheduleSnapshots(rows) {
         .map(function (row) {
         var payload = unwrapPayload(row);
         var term = payload.term && typeof payload.term === 'object' ? payload.term : {};
+        var termMeta = normalizeTermMeta(term, '课表');
         var student = payload.student && typeof payload.student === 'object' ? payload.student : {};
         var weekTable = payload.week_table && typeof payload.week_table === 'object' ? payload.week_table : {};
         var weekRows = DAY_NAMES.map(function (day) {
@@ -114,12 +150,7 @@ function normalizeScheduleSnapshots(rows) {
             }); }).filter(function (section) { return section.courses.length > 0; });
             return { day: day, sections: sections };
         }).filter(function (dayRow) { return dayRow.sections.length > 0; });
-        return {
-            title: cleanText(term.label, '课表'),
-            studentText: [student.name, student.class_name, student.major_name].map(function (item) { return cleanText(item); }).filter(Boolean).join(' / '),
-            weekRows: weekRows,
-            practice_courses: normalizeList(payload.practice_courses).map(normalizeCourse),
-        };
+        return __assign(__assign({}, termMeta), { studentText: [student.name, student.class_name, student.major_name].map(function (item) { return cleanText(item); }).filter(Boolean).join(' / '), weekRows: weekRows, practice_courses: normalizeList(payload.practice_courses).map(normalizeCourse) });
     })
         .filter(function (item) { return item.weekRows.length > 0 || item.practice_courses.length > 0 || item.title !== '课表'; });
 }
@@ -128,15 +159,12 @@ function normalizeGradeSnapshots(rows) {
         .map(function (row) {
         var payload = unwrapPayload(row);
         var term = payload.term && typeof payload.term === 'object' ? payload.term : {};
+        var termMeta = normalizeTermMeta(term, '成绩');
         var summary = payload.summary && typeof payload.summary === 'object' ? payload.summary : {};
         var courseCount = trimNumberText(summary.course_count);
         var credits = trimNumberText(summary.total_credits);
         var gpa = trimNumberText(summary.gpa);
-        return {
-            title: cleanText(term.label, '成绩'),
-            summaryText: "".concat(courseCount, " \u95E8\u8BFE / ").concat(credits, " \u5B66\u5206 / GPA ").concat(gpa),
-            grades: normalizeList(payload.grades).map(normalizeGrade),
-        };
+        return __assign(__assign({}, termMeta), { summaryText: "".concat(courseCount, " \u95E8\u8BFE / ").concat(credits, " \u5B66\u5206 / GPA ").concat(gpa), grades: normalizeList(payload.grades).map(normalizeGrade) });
     })
         .filter(function (item) { return item.grades.length > 0 || item.title !== '成绩'; });
 }

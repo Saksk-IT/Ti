@@ -93,8 +93,23 @@
           </picker>
           <view class="query-btn {{loading ? 'disabled' : ''}}" bindtap="onQueryTap" aria-role="button" aria-label="查询校园信息">
             <image class="query-icon" src="{{mode === 'grades' ? '/images/icons/chart.svg' : '/images/icons/book-open.svg'}}" mode="aspectFit"></image>
-            <text>{{loading ? '查询中...' : (mode === 'grades' ? '查询成绩' : '查询课表')}}</text>
+            <text>{{loading ? '提交中...' : (mode === 'grades' ? '查询成绩' : '查询课表')}}</text>
           </view>
+        </view>
+
+        <view class="campus-query-progress" wx:if="{{queryProgressVisible}}">
+          <view class="progress-head">
+            <view class="progress-title-wrap">
+              <image class="progress-icon" src="/images/icons/refresh-cw.svg" mode="aspectFit"></image>
+              <text class="progress-title">查询进度</text>
+            </view>
+            <text class="progress-status">{{queryProgressStatus}}</text>
+          </view>
+          <view class="query-progress-track">
+            <view class="query-progress-fill" style="width: {{queryProgressPercent}}%;"></view>
+          </view>
+          <text class="progress-detail">{{queryProgressDetail}}</text>
+          <text class="progress-meta" wx:if="{{queryProgressMeta}}">{{queryProgressMeta}}</text>
         </view>
 
         <view class="msg error" wx:if="{{errorMsg}}">
@@ -114,6 +129,42 @@
           <view class="prompt-action" bindtap="onGoEduBindingTap" aria-role="button" aria-label="去绑定教务系统账号">
             <image class="prompt-action-icon" src="/images/icons/settings.svg" mode="aspectFit"></image>
             <text>去绑定</text>
+          </view>
+        </view>
+
+        <view class="snapshot-browser" wx:if="{{snapshotYears.length}}">
+          <view class="snapshot-head">
+            <view>
+              <text class="snapshot-title">{{mode === 'grades' ? '已查询成绩' : '已查询课表'}}</text>
+              <text class="snapshot-sub">按学年和学期查看历史结果</text>
+            </view>
+            <text class="snapshot-current">{{snapshotDrawerTitle}}</text>
+          </view>
+          <scroll-view class="snapshot-year-list" scroll-x show-scrollbar="{{false}}">
+            <view class="snapshot-year-row">
+              <view
+                class="snapshot-year-chip {{item.active ? 'active' : ''}}"
+                wx:for="{{snapshotYears}}"
+                wx:key="value"
+                data-year="{{item.value}}"
+                bindtap="onSnapshotYearTap"
+              >
+                <text>{{item.label}}</text>
+                <text class="snapshot-count">{{item.count}}</text>
+              </view>
+            </view>
+          </scroll-view>
+          <view class="snapshot-term-drawer" wx:if="{{snapshotDrawerOpen}}">
+            <view
+              class="snapshot-term-chip {{item.active ? 'active' : ''}}"
+              wx:for="{{snapshotTerms}}"
+              wx:key="value"
+              data-semester="{{item.value}}"
+              bindtap="onSnapshotTermTap"
+            >
+              <text>{{item.label}}</text>
+              <text class="snapshot-count">{{item.count}}</text>
+            </view>
           </view>
         </view>
 
@@ -175,5 +226,24 @@
         </block>
       </view>
     </scroll-view>
+  </view>
+
+  <view class="campus-captcha-dialog" wx:if="{{captchaVisible}}">
+    <view class="captcha-mask" bindtap="onCaptchaCancelTap"></view>
+    <view class="captcha-panel">
+      <view class="captcha-head">
+        <text class="captcha-title">输入 WebVPN 验证码</text>
+        <text class="captcha-sub">{{captchaMode === 'grades' ? '成绩查询需要刷新登录态' : '课表查询需要刷新登录态'}}</text>
+      </view>
+      <text class="captcha-message">{{captchaMessage}}</text>
+      <image class="captcha-image" wx:if="{{captchaImage}}" src="{{captchaImage}}" mode="aspectFit"></image>
+      <input class="captcha-input" value="{{captchaCode}}" maxlength="10" placeholder="请输入验证码" bindinput="onCaptchaInput" />
+      <view class="captcha-actions">
+        <view class="captcha-action ghost" bindtap="onCaptchaCancelTap" aria-role="button" aria-label="取消验证码输入">取消</view>
+        <view class="captcha-action primary {{captchaSubmitting ? 'disabled' : ''}}" bindtap="onCaptchaSubmitTap" aria-role="button" aria-label="提交验证码">
+          {{captchaSubmitting ? '提交中...' : '继续查询'}}
+        </view>
+      </view>
+    </view>
   </view>
 </view>

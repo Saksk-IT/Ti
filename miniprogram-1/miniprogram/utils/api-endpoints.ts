@@ -479,18 +479,48 @@ export const api = {
       credential?: { has_credentials?: boolean; username_hint?: string };
       snapshots?: any[];
       grade_snapshots?: any[];
+      recent_tasks?: any;
     }>,
 
   queryEduSchedule: (payload: { terms: Array<{ xnm: string; xqm: string }> }) =>
     request('/edu-schedule/query', 'POST', payload) as Promise<{
+      task?: any;
       results?: any[];
+      snapshots?: any[];
       credential?: { has_credentials?: boolean; username_hint?: string };
     }>,
 
   queryEduGrades: (payload: { terms: Array<{ xnm: string; xqm: string }> }) =>
     request('/edu-schedule/grades/query', 'POST', payload) as Promise<{
+      task?: any;
       results?: any[];
+      snapshots?: any[];
       credential?: { has_credentials?: boolean; username_hint?: string };
+    }>,
+
+  getEduQueryTask: (taskId: string) =>
+    request(`/edu-schedule/query-tasks/${encodeURIComponent(taskId)}`, 'GET') as Promise<{
+      task?: any;
+      results?: any[];
+      snapshots?: any[];
+      credential?: { has_credentials?: boolean; username_hint?: string };
+    }>,
+
+  cancelEduQueryTask: (taskId: string) =>
+    request(`/edu-schedule/query-tasks/${encodeURIComponent(taskId)}/cancel`, 'POST', {}) as Promise<{
+      task?: any;
+      results?: any[];
+      snapshots?: any[];
+      credential?: { has_credentials?: boolean; username_hint?: string };
+    }>,
+
+  completeEduWebvpnSession: (challengeId: string, captchaCode: string) =>
+    request('/edu-schedule/webvpn-session/complete', 'POST', {
+      challenge_id: challengeId,
+      captcha_code: captchaCode,
+    }) as Promise<{
+      webvpn_cookie?: string;
+      updated_at?: string;
     }>,
 
   saveEduCredentials: (username: string, password: string) =>

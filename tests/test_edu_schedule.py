@@ -512,6 +512,40 @@ def test_miniprogram_campus_tab_exposes_schedule_and_grade_queries():
     assert "request('/edu-schedule/grades/query'" in api
 
 
+def test_miniprogram_campus_page_matches_background_query_flow():
+    campus_dir = Path("miniprogram-1/miniprogram/pages/campus")
+    wxml = (campus_dir / "campus.wxml").read_text(encoding="utf-8")
+    ts = (campus_dir / "campus.ts").read_text(encoding="utf-8")
+    js = (campus_dir / "campus.js").read_text(encoding="utf-8")
+    api_ts = Path("miniprogram-1/miniprogram/utils/api-endpoints.ts").read_text(encoding="utf-8")
+    api_js = Path("miniprogram-1/miniprogram/utils/api-endpoints.js").read_text(encoding="utf-8")
+
+    assert "campus-query-progress" in wxml
+    assert "query-progress-fill" in wxml
+    assert "snapshot-browser" in wxml
+    assert "snapshot-year-chip" in wxml
+    assert "snapshot-term-drawer" in wxml
+    assert "<picker" not in wxml.split("snapshot-browser", 1)[-1]
+    assert "campus-captcha-dialog" in wxml
+    assert "onCaptchaSubmitTap" in wxml
+    assert "发起本次查询会停止上次的" in ts
+    assert "confirmReplacingActiveTask" in ts
+    assert "restoreRecentCampusTasks" in ts
+    assert "startTaskPolling" in ts
+    assert "showWebvpnCaptcha" in ts
+    assert "onSnapshotYearTap" in ts
+    assert "onSnapshotTermTap" in ts
+    assert "cancelEduQueryTask" in ts
+    assert "completeEduWebvpnSession" in ts
+    assert "onCaptchaSubmitTap" in js
+    assert "cancelEduQueryTask" in api_ts
+    assert "completeEduWebvpnSession" in api_ts
+    assert "request(`/edu-schedule/query-tasks/${encodeURIComponent(taskId)}/cancel`" in api_ts
+    assert "request('/edu-schedule/webvpn-session/complete'" in api_ts
+    assert "cancelEduQueryTask" in api_js
+    assert "completeEduWebvpnSession" in api_js
+
+
 def test_admin_can_save_webvpn_schedule_config_masked(app, seed_user):
     client = _admin_client(app, seed_user)
 
