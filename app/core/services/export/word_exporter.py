@@ -195,7 +195,12 @@ def _add_promo(doc: Document) -> None:
     r1.font.name = "微软雅黑"
     r1.element.rPr.rFonts.set(qn("w:eastAsia"), "微软雅黑")
 
-    _add_hyperlink(lp, "https://saksk.top", "saksk.top", _CLR_PROMO_URL, Pt(9))
+    r2 = lp.add_run("https://www.saksk.top")
+    r2.font.size = Pt(9)
+    r2.font.bold = True
+    r2.font.color.rgb = _CLR_PROMO_URL
+    r2.font.name = "微软雅黑"
+    r2.element.rPr.rFonts.set(qn("w:eastAsia"), "微软雅黑")
 
     r3 = lp.add_run(" — 大学生刷题备考平台")
     r3.font.size = Pt(9)

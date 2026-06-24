@@ -216,7 +216,7 @@
 {% block manage_content %}
   <section class="ubm-card" aria-label="题目管理">
     <h2>题目管理</h2>
-    <div class="ubm-sub">支持搜索、按题型筛选、导入 Word/JSON/Excel/题库包、导出 JSON/Excel/题库包，并进入题目编辑页维护内容。</div>
+    <div class="ubm-sub">支持搜索、按题型筛选、导入 Word/JSON/Excel/题库包、导出 Word/PDF/JSON/Excel/题库包，并进入题目编辑页维护内容。</div>
 
     <div class="ubm-q-toolbar" aria-label="筛选条件">
       <div class="ubm-field">
@@ -262,6 +262,8 @@
       <div class="ubm-dropdown ubm-dropdown-right" id="ubmExportDropdown">
         <button class="ubm-btn ubm-dropdown-toggle" type="button" id="ubmExportToggle" aria-haspopup="menu" aria-expanded="false">导出</button>
         <div class="ubm-dropdown-menu" id="ubmExportMenu" role="menu" aria-hidden="true">
+          <a class="ubm-dropdown-item" role="menuitem" href="/user/banks/api/{{ bank_id }}/questions/export/word">导出 Word</a>
+          <a class="ubm-dropdown-item" role="menuitem" href="/user/banks/api/{{ bank_id }}/questions/export/pdf">导出 PDF</a>
           <a class="ubm-dropdown-item" role="menuitem" href="/user/banks/api/{{ bank_id }}/questions/export/excel">导出 Excel</a>
           <a class="ubm-dropdown-item" role="menuitem" href="/user/banks/api/{{ bank_id }}/questions/export?download=1">导出 JSON</a>
           <a class="ubm-dropdown-item" role="menuitem" href="/user/banks/api/{{ bank_id }}/questions/export/package">导出题库包</a>
@@ -308,6 +310,8 @@
       <div class="ubm-dropdown ubm-dropdown-up ubm-dropdown-right" id="ubmBatchExportDropdown">
         <button class="ubm-btn ubm-dropdown-toggle" type="button" id="ubmBatchExportToggle" aria-haspopup="menu" aria-expanded="false">导出已选</button>
         <div class="ubm-dropdown-menu" id="ubmBatchExportMenu" role="menu" aria-hidden="true">
+          <button class="ubm-dropdown-item" type="button" id="ubmBatchExportWordBtn" role="menuitem">导出 Word</button>
+          <button class="ubm-dropdown-item" type="button" id="ubmBatchExportPdfBtn" role="menuitem">导出 PDF</button>
           <button class="ubm-dropdown-item" type="button" id="ubmBatchExportExcelBtn" role="menuitem">导出 Excel</button>
           <button class="ubm-dropdown-item" type="button" id="ubmBatchExportJsonBtn" role="menuitem">导出 JSON</button>
           <button class="ubm-dropdown-item" type="button" id="ubmBatchExportPackageBtn" role="menuitem">导出题库包</button>
@@ -508,6 +512,8 @@
       const batchExportDropdown = document.getElementById('ubmBatchExportDropdown');
       const batchExportToggle = document.getElementById('ubmBatchExportToggle');
       const batchExportMenu = document.getElementById('ubmBatchExportMenu');
+      const batchExportWordBtn = document.getElementById('ubmBatchExportWordBtn');
+      const batchExportPdfBtn = document.getElementById('ubmBatchExportPdfBtn');
       const batchExportExcelBtn = document.getElementById('ubmBatchExportExcelBtn');
       const batchExportJsonBtn = document.getElementById('ubmBatchExportJsonBtn');
       const batchExportPackageBtn = document.getElementById('ubmBatchExportPackageBtn');
@@ -866,6 +872,24 @@
       batchClearBtn?.addEventListener('click', () => {
         selectedIds.clear();
         render(lastItems);
+      });
+
+      batchExportWordBtn?.addEventListener('click', () => {
+        if (!bankId) return;
+        closeAllDropdowns();
+        const ids = getSelectedIdsOrToast();
+        if (!ids) return;
+        const idsParam = encodeURIComponent(ids.join(','));
+        window.location.href = `/user/banks/api/${encodeURIComponent(bankId)}/questions/export/word?ids=${idsParam}`;
+      });
+
+      batchExportPdfBtn?.addEventListener('click', () => {
+        if (!bankId) return;
+        closeAllDropdowns();
+        const ids = getSelectedIdsOrToast();
+        if (!ids) return;
+        const idsParam = encodeURIComponent(ids.join(','));
+        window.location.href = `/user/banks/api/${encodeURIComponent(bankId)}/questions/export/pdf?ids=${idsParam}`;
       });
 
       batchExportExcelBtn?.addEventListener('click', () => {

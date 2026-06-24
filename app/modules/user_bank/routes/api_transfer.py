@@ -3,17 +3,24 @@
 """用户题库：导入/导出 API"""
 
 import json
+import logging
+from urllib.parse import quote
 
-from flask import request, jsonify, current_app
+from flask import request, jsonify, current_app, send_file
 from sqlalchemy import text
 
 from app.core.extensions import db
+from app.core.services.export import ExportRequest, ExportResult
+from app.core.services.export.pdf_exporter import generate_pdf
+from app.core.services.export.word_exporter import generate_word
 from app.core.utils.decorators import auth_required, current_user_id
 from app.core.utils.image_helpers import (
+    flatten_question_image_paths,
     normalize_question_image_groups,
     normalize_upload_relative_path,
     serialize_question_image_groups,
 )
+from app.core.utils.pqf_rows import pqf_row_to_internal
 from app.core.utils.json_helpers import safe_load as _safe_load
 from app.core.utils.portable_question_format import (
     internal_question_to_portable,
@@ -21,6 +28,9 @@ from app.core.utils.portable_question_format import (
 )
 
 from .api_base import user_bank_api_bp, check_bank_access
+
+
+logger = logging.getLogger(__name__)
 
 
 def _build_named_in(col: str, values: list, prefix: str = 'in') -> tuple[str, dict]:
@@ -343,6 +353,141 @@ def _parse_question_ids_from_request_args():
         seen.add(i)
         result.append(i)
     return result
+
+
+def _load_question_tags_for_export(bank_id: int, user_id: int) -> dict:
+    try:
+        from .api_tags import _load_bank_tag_store
+
+        raw_conn = db.session.connection()
+        store = _load_bank_tag_store(raw_conn, bank_id, user_id)
+        return store.get('question_tags', {}) or {}
+    except Exception:
+        return {}
+
+
+def _fetch_user_bank_questions_for_document_export(bank_id: int, selected_ids: list[int]):
+    if selected_ids:
+        in_clause, in_params = _build_named_in('id', selected_ids, 'sid')
+        return db.session.execute(
+            text(f'''
+            SELECT id, type, content, options, answer, analysis, tags, difficulty, image_path
+            FROM user_bank_questions
+            WHERE bank_id = :bank_id AND {in_clause}
+            ORDER BY sort_order ASC, id ASC
+            '''),
+            {'bank_id': bank_id, **in_params},
+        ).fetchall()
+
+    return db.session.execute(
+        text('''
+        SELECT id, type, content, options, answer, analysis, tags, difficulty, image_path
+        FROM user_bank_questions
+        WHERE bank_id = :bank_id
+        ORDER BY sort_order ASC, id ASC
+        '''),
+        {'bank_id': bank_id},
+    ).fetchall()
+
+
+def _rows_to_document_export_questions(rows, question_tags: dict) -> list[dict]:
+    questions: list[dict] = []
+    for row in rows:
+        row_data = dict(row._mapping)
+        qid = int(row_data['id'])
+        tags = question_tags.get(str(qid), [])
+        normalized_tags = tags if isinstance(tags, list) else []
+        internal = pqf_row_to_internal(row_data, scope='user_bank', override_tags=normalized_tags)
+        portable = internal_question_to_portable(
+            q_id=qid,
+            q_type=internal.get('q_type') or '',
+            content=internal.get('content') or '',
+            options=internal.get('options') or [],
+            answer=internal.get('answer') or '',
+            explanation=internal.get('explanation') or '',
+            difficulty=internal.get('difficulty') or 1,
+            tags=internal.get('tags') or [],
+        )
+        portable['image_paths'] = flatten_question_image_paths(row_data.get('image_path'))
+        questions.append(portable)
+    return questions
+
+
+def _include_answer_from_request_args() -> bool:
+    raw = str(request.args.get('include_answer') or 'true').strip().lower()
+    return raw not in ('0', 'false', 'no', 'off')
+
+
+def _send_document_export_result(result: ExportResult, ext: str):
+    response = send_file(
+        result.buffer,
+        as_attachment=True,
+        download_name=f'export.{ext}',
+        mimetype=result.content_type,
+    )
+    encoded = quote(result.filename, safe='')
+    response.headers['Content-Disposition'] = (
+        f'attachment; filename="export.{ext}"; filename*=UTF-8\'\'{encoded}'
+    )
+    return response
+
+
+def _export_questions_document(bank_id: int, fmt: str):
+    user_id = current_user_id()
+    has_access, _permission, _access_type = check_bank_access(user_id, bank_id)
+    if not has_access:
+        return jsonify({'code': 403, 'message': '无权访问此题库'}), 403
+
+    bank = db.session.execute(
+        text('SELECT id, name FROM user_question_banks WHERE id = :bank_id AND status = 1'),
+        {'bank_id': bank_id},
+    ).fetchone()
+    if not bank:
+        return jsonify({'code': 1, 'message': '题库不存在'}), 404
+
+    selected_ids = _parse_question_ids_from_request_args()
+    rows = _fetch_user_bank_questions_for_document_export(bank_id, selected_ids)
+    if not rows:
+        return jsonify({'code': 1, 'message': '题库中没有可导出的题目'}), 400
+
+    req = ExportRequest(
+        subject_id=int(bank_id),
+        subject_name=bank._mapping['name'],
+        format=fmt,
+        scope='all',
+        q_type='all',
+        tag='已选题目' if selected_ids else 'all',
+        include_answer=_include_answer_from_request_args(),
+        user_id=user_id,
+    )
+    questions = _rows_to_document_export_questions(rows, _load_question_tags_for_export(bank_id, user_id))
+
+    try:
+        if fmt == 'word':
+            result = generate_word(req, questions)
+            return _send_document_export_result(result, 'docx')
+        result = generate_pdf(req, questions)
+        return _send_document_export_result(result, 'pdf')
+    except RuntimeError as e:
+        logger.error('个人题库文档导出失败: %s', e, exc_info=True)
+        return jsonify({'code': 1, 'message': str(e)}), 500
+    except Exception as e:
+        logger.error('个人题库文档导出失败: %s', e, exc_info=True)
+        return jsonify({'code': 1, 'message': '导出生成失败，请稍后重试'}), 500
+
+
+@user_bank_api_bp.route('/<int:bank_id>/questions/export/word', methods=['GET'])
+@auth_required
+def export_questions_word(bank_id):
+    """导出题目为 Word 文件。"""
+    return _export_questions_document(bank_id, 'word')
+
+
+@user_bank_api_bp.route('/<int:bank_id>/questions/export/pdf', methods=['GET'])
+@auth_required
+def export_questions_pdf(bank_id):
+    """导出题目为 PDF 文件。"""
+    return _export_questions_document(bank_id, 'pdf')
 
 
 @user_bank_api_bp.route('/<int:bank_id>/questions/export', methods=['GET'])
