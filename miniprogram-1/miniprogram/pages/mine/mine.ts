@@ -103,10 +103,6 @@ Page({
     safeNavigate('/pages/settings-theme-v2/settings-theme-v2', 'navigateTo');
   },
 
-  onGoPracticeSettingsTap() {
-    safeNavigate('/pages/settings-practice-v2/settings-practice-v2', 'navigateTo');
-  },
-
   onGoAdminTap() {
     if (!this.data.canShowAdmin) return;
     safeNavigate('/pages/admin-v2/admin-v2', 'navigateTo');

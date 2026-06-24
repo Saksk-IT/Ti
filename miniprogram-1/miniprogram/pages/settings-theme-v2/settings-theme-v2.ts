@@ -4,11 +4,10 @@ import { buildLastPracticeUrl } from '../../utils/last-practice';
 import { themeManager, ThemeMode, ThemeStyle } from '../../utils/theme';
 import { fontManager, FontStyle, FONT_STYLE_CONFIG } from '../../utils/font';
 
-type SettingsNavKey = 'account' | 'practice' | 'theme' | 'about';
+type SettingsNavKey = 'account' | 'theme' | 'about';
 
 function navTo(key: SettingsNavKey): string {
   if (key === 'account') return '/pages/settings-account-profile-v2/settings-account-profile-v2';
-  if (key === 'practice') return '/pages/settings-practice-v2/settings-practice-v2';
   if (key === 'about') return '/pages/settings-about-v2/settings-about-v2';
   return '/pages/settings-theme-v2/settings-theme-v2';
 }

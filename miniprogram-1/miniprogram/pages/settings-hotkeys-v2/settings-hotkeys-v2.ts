@@ -3,7 +3,7 @@ import { buildLastPracticeUrl } from '../../utils/last-practice';
 import { syncUserSettingsToServer } from '../../utils/user-settings';
 import { themeManager, ThemeMode } from '../../utils/theme';
 
-type SettingsNavKey = 'account' | 'practice' | 'theme' | 'hotkeys' | 'about';
+type SettingsNavKey = 'account' | 'theme' | 'hotkeys' | 'about';
 
 type HotkeyDef = { key: string; label: string; desc: string };
 type HotkeyRow = HotkeyDef & { display: string };
@@ -38,7 +38,6 @@ const HOTKEY_DEFS: HotkeyDef[] = [
 
 function navTo(key: SettingsNavKey): string {
   if (key === 'account') return '/pages/settings-account-profile-v2/settings-account-profile-v2';
-  if (key === 'practice') return '/pages/settings-practice-v2/settings-practice-v2';
   if (key === 'theme') return '/pages/settings-theme-v2/settings-theme-v2';
   if (key === 'about') return '/pages/settings-about-v2/settings-about-v2';
   return '/pages/settings-hotkeys-v2/settings-hotkeys-v2';

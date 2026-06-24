@@ -151,9 +151,6 @@ Page({
     onGoThemeTap: function () {
         (0, nav_1.safeNavigate)('/pages/settings-theme-v2/settings-theme-v2', 'navigateTo');
     },
-    onGoPracticeSettingsTap: function () {
-        (0, nav_1.safeNavigate)('/pages/settings-practice-v2/settings-practice-v2', 'navigateTo');
-    },
     onGoAdminTap: function () {
         if (!this.data.canShowAdmin)
             return;

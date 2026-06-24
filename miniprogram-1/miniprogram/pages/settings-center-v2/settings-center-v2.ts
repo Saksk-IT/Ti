@@ -1,10 +1,10 @@
-type SettingsNavKey = 'account' | 'practice' | 'theme' | 'about';
+type SettingsNavKey = 'account' | 'theme' | 'about';
 type AccountSubKey = 'profile' | 'security' | 'bindings';
 type AboutTab = 'app' | 'legal';
 
 function normalizeNavKey(raw: any): SettingsNavKey {
   const v = String(raw || '').trim().toLowerCase();
-  if (v === 'practice' || v === 'theme' || v === 'about') return v;
+  if (v === 'theme' || v === 'about') return v;
   return 'account';
 }
 
@@ -24,7 +24,6 @@ function buildTargetUrl(options: any): string {
   const accTab = normalizeAccTab(options?.accTab || options?.acc || options?.sub);
   const aboutTab = normalizeAboutTab(options?.aboutTab || options?.about);
 
-  if (navKey === 'practice') return '/pages/settings-practice-v2/settings-practice-v2';
   if (navKey === 'theme') return '/pages/settings-theme-v2/settings-theme-v2';
   if (navKey === 'about') {
     return aboutTab === 'legal'

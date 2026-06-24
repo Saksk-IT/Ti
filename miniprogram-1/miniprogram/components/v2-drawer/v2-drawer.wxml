@@ -135,10 +135,6 @@
                 <text class="nav-label">个人资料</text>
                 <text class="nav-chev">›</text>
               </view>
-              <view class="nav-item sub" bindtap="onNavTap" data-nav-type="redirectTo" data-url="/pages/settings-center-v2/settings-center-v2?navKey=practice">
-                <text class="nav-label">通用</text>
-                <text class="nav-chev">›</text>
-              </view>
               <view class="nav-item sub" bindtap="onNavTap" data-nav-type="redirectTo" data-url="/pages/settings-center-v2/settings-center-v2?navKey=theme">
                 <text class="nav-label">主题</text>
                 <text class="nav-chev">›</text>

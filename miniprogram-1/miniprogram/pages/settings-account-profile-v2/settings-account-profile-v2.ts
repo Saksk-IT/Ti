@@ -4,14 +4,13 @@ import { buildLastPracticeUrl } from '../../utils/last-practice';
 import { themeManager, ThemeMode } from '../../utils/theme';
 import { bumpAvatarRev, decorateAvatarUrl } from '../../utils/avatar';
 
-type SettingsNavKey = 'account' | 'practice' | 'theme' | 'about';
+type SettingsNavKey = 'account' | 'theme' | 'about';
 type AccountSubKey = 'profile' | 'security' | 'bindings';
 
 const PROFILE_NICKNAME_RE = /^[\u4e00-\u9fffA-Za-z0-9]{1,8}$/;
 const PROFILE_NICKNAME_ERROR = '昵称只能使用汉字、字母、数字，最多8个字符';
 
 function navTo(key: SettingsNavKey): string {
-  if (key === 'practice') return '/pages/settings-practice-v2/settings-practice-v2';
   if (key === 'theme') return '/pages/settings-theme-v2/settings-theme-v2';
   if (key === 'about') return '/pages/settings-about-v2/settings-about-v2';
   return '/pages/settings-account-profile-v2/settings-account-profile-v2';

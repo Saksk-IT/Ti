@@ -162,16 +162,6 @@
               </view>
               <text class="menu-arrow">›</text>
             </view>
-            <view class="menu-item" bindtap="onGoPracticeSettingsTap">
-              <view class="menu-icon-wrap">
-                <image class="menu-icon" src="/images/icons/sliders.svg" mode="aspectFit"></image>
-              </view>
-              <view class="menu-main">
-                <text class="menu-text">通用设置</text>
-                <text class="menu-sub">练习偏好与应用设置</text>
-              </view>
-              <text class="menu-arrow">›</text>
-            </view>
           </view>
         </view>
 

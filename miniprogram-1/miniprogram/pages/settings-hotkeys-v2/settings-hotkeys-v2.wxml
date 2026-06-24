@@ -25,7 +25,6 @@
         <view class="card nav-card" aria-label="设置分区导航">
           <view class="tabs">
             <view class="tab {{navKey==='account' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="account"><text>账号管理</text></view>
-            <view class="tab {{navKey==='practice' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="practice"><text>通用</text></view>
             <view class="tab {{navKey==='theme' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="theme"><text>主题</text></view>
             <view class="tab {{navKey==='hotkeys' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="hotkeys"><text>快捷键</text></view>
             <view class="tab {{navKey==='about' ? 'active' : ''}}" bindtap="onSettingsNavTap" data-key="about"><text>关于</text></view>

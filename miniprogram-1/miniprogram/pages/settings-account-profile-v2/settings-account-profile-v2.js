@@ -55,8 +55,6 @@ var avatar_1 = require("../../utils/avatar");
 var PROFILE_NICKNAME_RE = /^[\u4e00-\u9fffA-Za-z0-9]{1,8}$/;
 var PROFILE_NICKNAME_ERROR = '昵称只能使用汉字、字母、数字，最多8个字符';
 function navTo(key) {
-    if (key === 'practice')
-        return '/pages/settings-practice-v2/settings-practice-v2';
     if (key === 'theme')
         return '/pages/settings-theme-v2/settings-theme-v2';
     if (key === 'about')

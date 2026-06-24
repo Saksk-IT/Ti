@@ -52,8 +52,6 @@ var auth_1 = require("../../utils/auth");
 var last_practice_1 = require("../../utils/last-practice");
 var theme_1 = require("../../utils/theme");
 function navTo(key) {
-    if (key === 'practice')
-        return '/pages/settings-practice-v2/settings-practice-v2';
     if (key === 'theme')
         return '/pages/settings-theme-v2/settings-theme-v2';
     if (key === 'about')

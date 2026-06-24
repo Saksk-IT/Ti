@@ -54,8 +54,6 @@ var theme_1 = require("../../utils/theme");
 function navTo(key) {
     if (key === 'account')
         return '/pages/settings-account-profile-v2/settings-account-profile-v2';
-    if (key === 'practice')
-        return '/pages/settings-practice-v2/settings-practice-v2';
     if (key === 'theme')
         return '/pages/settings-theme-v2/settings-theme-v2';
     return '/pages/settings-about-v2/settings-about-v2';

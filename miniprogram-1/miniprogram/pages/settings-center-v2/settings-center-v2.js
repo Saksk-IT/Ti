@@ -1,6 +1,6 @@
 function normalizeNavKey(raw) {
     var v = String(raw || '').trim().toLowerCase();
-    if (v === 'practice' || v === 'theme' || v === 'about')
+    if (v === 'theme' || v === 'about')
         return v;
     return 'account';
 }
@@ -18,8 +18,6 @@ function buildTargetUrl(options) {
     var navKey = normalizeNavKey((options === null || options === void 0 ? void 0 : options.navKey) || (options === null || options === void 0 ? void 0 : options.nav) || (options === null || options === void 0 ? void 0 : options.tab));
     var accTab = normalizeAccTab((options === null || options === void 0 ? void 0 : options.accTab) || (options === null || options === void 0 ? void 0 : options.acc) || (options === null || options === void 0 ? void 0 : options.sub));
     var aboutTab = normalizeAboutTab((options === null || options === void 0 ? void 0 : options.aboutTab) || (options === null || options === void 0 ? void 0 : options.about));
-    if (navKey === 'practice')
-        return '/pages/settings-practice-v2/settings-practice-v2';
     if (navKey === 'theme')
         return '/pages/settings-theme-v2/settings-theme-v2';
     if (navKey === 'about') {

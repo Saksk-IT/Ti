@@ -35,10 +35,6 @@
               <text class="nav-label">账号管理 · 账号绑定</text>
               <text class="nav-chev">›</text>
             </view>
-            <view class="nav-row" bindtap="onGoSubpage" data-url="/pages/settings-practice-v2/settings-practice-v2">
-              <text class="nav-label">通用</text>
-              <text class="nav-chev">›</text>
-            </view>
             <view class="nav-row" bindtap="onGoSubpage" data-url="/pages/settings-theme-v2/settings-theme-v2">
               <text class="nav-label">主题</text>
               <text class="nav-chev">›</text>
