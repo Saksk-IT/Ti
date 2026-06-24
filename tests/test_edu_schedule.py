@@ -352,12 +352,18 @@ def test_miniprogram_campus_tab_exposes_schedule_and_grade_queries():
         if item["pagePath"] == "pages/campus/campus"
     )
     assert campus_tab["text"] == "校园"
-    assert campus_tab["iconPath"] == "images/tabbar/subject.png"
-    assert campus_tab["selectedIconPath"] == "images/tabbar/subject-active.png"
+    assert campus_tab["iconPath"] == "images/tabbar/campus.png"
+    assert campus_tab["selectedIconPath"] == "images/tabbar/campus-active.png"
+    assert Path("miniprogram-1/miniprogram/images/tabbar/campus.png").exists()
+    assert Path("miniprogram-1/miniprogram/images/tabbar/campus-active.png").exists()
+    assert Path("miniprogram-1/miniprogram/images/icons/campus.svg").exists()
 
     assert "查询课表" in wxml
     assert "查询成绩" in wxml
     assert "教务系统账号" in wxml
+    assert "/images/icons/campus.svg" in wxml
+    assert "mode-icon-wrap" in wxml
+    assert "query-icon" in wxml
     assert "onGoEduBindingTap" in wxml
     assert "statusReady && !statusFailed && !eduBound" in wxml
     assert "onHeroActionTap" in wxml

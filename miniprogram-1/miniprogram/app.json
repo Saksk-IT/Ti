@@ -120,8 +120,8 @@
       },
       {
         "pagePath": "pages/campus/campus",
-        "iconPath": "images/tabbar/subject.png",
-        "selectedIconPath": "images/tabbar/subject-active.png",
+        "iconPath": "images/tabbar/campus.png",
+        "selectedIconPath": "images/tabbar/campus-active.png",
         "text": "校园"
       },
       {
