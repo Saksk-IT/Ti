@@ -325,6 +325,22 @@ def test_campus_pages_only_keep_term_filters_and_bind_prompt(auth_client):
     assert "/settings/account/bindings" in grade_html
 
 
+def test_campus_pages_expose_user_webvpn_captcha_refresh(auth_client):
+    schedule_page = auth_client.get("/edu-schedule")
+    grades_page = auth_client.get("/edu-grades")
+
+    assert schedule_page.status_code == 200
+    assert grades_page.status_code == 200
+
+    for html in (schedule_page.get_data(as_text=True), grades_page.get_data(as_text=True)):
+        assert "webvpnCaptchaDialog" in html
+        assert "webvpnCaptchaImage" in html
+        assert "submitWebvpnCaptcha" in html
+        assert "WEBVPN_REFRESH_REQUIRED" in html
+        assert "/api/edu-schedule/webvpn-session/complete" in html
+        assert "submitQueryAfterWebvpnRefresh" in html
+
+
 def test_campus_year_filters_use_academic_year_range_labels(auth_client):
     schedule_page = auth_client.get("/edu-schedule")
     grades_page = auth_client.get("/edu-grades")
@@ -451,8 +467,8 @@ def test_admin_can_save_webvpn_schedule_config_masked(app, seed_user):
 
 
 def test_admin_can_refresh_webvpn_cookie_with_manual_captcha(app, seed_user, monkeypatch):
-    from app.modules.admin.routes.api_components import edu_schedule_settings
     from app.modules.admin.services.system_config_service import SystemConfigService
+    from app.modules.edu_schedule.services import webvpn_refresh
 
     client = _admin_client(app, seed_user)
 
@@ -498,7 +514,7 @@ def test_admin_can_refresh_webvpn_cookie_with_manual_captcha(app, seed_user, mon
                 )
             raise AssertionError(f"unexpected request {method} {url}")
 
-    monkeypatch.setattr(edu_schedule_settings, "JWXTClient", FakeClient)
+    monkeypatch.setattr(webvpn_refresh, "JWXTClient", FakeClient)
 
     with app.app_context():
         SystemConfigService.save_edu_schedule_config(
@@ -548,6 +564,173 @@ def test_admin_can_refresh_webvpn_cookie_with_manual_captcha(app, seed_user, mon
     assert "SERVERID=Server1" in saved
     assert "_astraeus_session=logged-session" in saved
     assert "_webvpn_key=webvpn-key-value" in saved
+
+
+def test_user_query_returns_webvpn_refresh_challenge_when_cookie_expired(app, auth_client, monkeypatch):
+    from app.modules.admin.services.system_config_service import SystemConfigService
+    from app.modules.edu_schedule.routes import api as edu_schedule_api
+    from app.modules.edu_schedule.services import schedule_service
+    from app.modules.edu_schedule.services.client import ScheduleAuthError
+
+    class ExpiredCookieClient:
+        def __init__(self, config):
+            self.config = config
+
+        def fetch_schedule(self, username, password, xnm, xqm):
+            raise ScheduleAuthError("WebVPN 登录态不可用")
+
+    class FakeRefreshService:
+        @staticmethod
+        def start(owner_user_id=None):
+            assert owner_user_id
+            return {
+                "challenge_id": "challenge-user-1",
+                "captcha_image": "data:image/png;base64,Y2FwdGNoYQ==",
+                "expires_in_seconds": 300,
+            }
+
+    monkeypatch.setattr(schedule_service, "JWXTClient", ExpiredCookieClient)
+    monkeypatch.setattr(edu_schedule_api, "WebVPNSessionRefreshService", FakeRefreshService)
+
+    with app.app_context():
+        SystemConfigService.save_edu_schedule_config(
+            {
+                "enabled": True,
+                "use_webvpn": True,
+                "webvpn_base_url": "https://webvpn.synu.edu.cn",
+                "webvpn_login_path": "/users/sign_in",
+                "webvpn_username": "vpn-admin",
+                "webvpn_password": "VpnSecret123!",
+                "webvpn_cookie": "SERVERID=expired",
+                "jwxt_base_url": "https://jwxt.webvpn.synu.edu.cn/jwglxt",
+                "request_timeout": 20,
+                "verify_tls": True,
+                "store_user_credentials": True,
+            },
+            admin_id=1,
+        )
+
+    auth_client.post(
+        "/api/edu-schedule/credentials",
+        json={"username": "stu_demo_2026", "password": "DemoSecret123!"},
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+    response = auth_client.post(
+        "/api/edu-schedule/query",
+        json={"terms": [{"xnm": "2025", "xqm": "12"}]},
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+
+    assert response.status_code == 409
+    body = response.get_json()
+    assert body["status"] == "error"
+    assert body["error_code"] == "WEBVPN_REFRESH_REQUIRED"
+    assert body["data"]["challenge_id"] == "challenge-user-1"
+    assert body["data"]["captcha_image"].startswith("data:image/png;base64,")
+
+
+def test_user_can_complete_webvpn_refresh_challenge(app, auth_client, monkeypatch):
+    from app.modules.edu_schedule.routes import api as edu_schedule_api
+
+    captured = {}
+
+    class FakeRefreshService:
+        @staticmethod
+        def complete(challenge_id, captcha_code, owner_user_id=None):
+            captured["challenge_id"] = challenge_id
+            captured["captcha_code"] = captcha_code
+            captured["owner_user_id"] = owner_user_id
+            return {"webvpn_cookie": "SER****key"}
+
+    monkeypatch.setattr(edu_schedule_api, "WebVPNSessionRefreshService", FakeRefreshService)
+
+    response = auth_client.post(
+        "/api/edu-schedule/webvpn-session/complete",
+        json={"challenge_id": "challenge-user-1", "captcha_code": "vxpj"},
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["status"] == "success"
+    assert body["data"]["webvpn_cookie"] == "SER****key"
+    assert captured["challenge_id"] == "challenge-user-1"
+    assert captured["captcha_code"] == "vxpj"
+    assert captured["owner_user_id"]
+
+
+def test_webvpn_refresh_service_uses_temp_cookie_and_saves_refreshed_cookie(app, monkeypatch):
+    from app.modules.admin.services.system_config_service import SystemConfigService
+    from app.modules.edu_schedule.services import webvpn_refresh
+
+    class FakeResponse:
+        def __init__(self, *, text="", content=b"", content_type="text/html", url="https://webvpn.synu.edu.cn/users/sign_in"):
+            self.text = text
+            self.content = content
+            self.headers = {"Content-Type": content_type}
+            self.url = url
+
+    class FakeClient:
+        def __init__(self, config):
+            self.config = config
+
+        def _request(self, session, method, url, **kwargs):
+            if method == "GET" and url.endswith("/users/sign_in"):
+                session.cookies.set("SERVERID", "Server1", domain="webvpn.synu.edu.cn", path="/")
+                session.cookies.set("_astraeus_session", "temporary-session", domain="webvpn.synu.edu.cn", path="/")
+                return FakeResponse(
+                    text='<input name="authenticity_token" value="token-456"><input name="_rucaptcha">'
+                )
+            if method == "GET" and url.endswith("/rucaptcha/"):
+                assert "SERVERID=Server1" in webvpn_refresh._session_cookie_header(session)
+                return FakeResponse(content=b"captcha-png", content_type="image/png")
+            if method == "POST" and url.endswith("/users/sign_in"):
+                assert "SERVERID=Server1" in webvpn_refresh._session_cookie_header(session)
+                assert "_astraeus_session=temporary-session" in webvpn_refresh._session_cookie_header(session)
+                assert kwargs["data"]["authenticity_token"] == "token-456"
+                assert kwargs["data"]["_rucaptcha"] == "vxpj"
+                session.cookies.set("_astraeus_session", "refreshed-session", domain="webvpn.synu.edu.cn", path="/")
+                session.cookies.set("_webvpn_key", "refreshed-key", domain=".synu.edu.cn", path="/")
+                return FakeResponse(
+                    text='<body class="vpn"><a href="/users/sign_out">退出登录</a></body>',
+                    url="https://webvpn.synu.edu.cn/",
+                )
+            raise AssertionError(f"unexpected request {method} {url}")
+
+    monkeypatch.setattr(webvpn_refresh, "JWXTClient", FakeClient)
+
+    with app.app_context():
+        SystemConfigService.save_edu_schedule_config(
+            {
+                "enabled": True,
+                "use_webvpn": True,
+                "webvpn_base_url": "https://webvpn.synu.edu.cn",
+                "webvpn_login_path": "/users/sign_in",
+                "webvpn_username": "vpn-admin",
+                "webvpn_password": "VpnSecret123!",
+                "webvpn_cookie": "SERVERID=expired",
+                "jwxt_base_url": "https://jwxt.webvpn.synu.edu.cn/jwglxt",
+                "request_timeout": 20,
+                "verify_tls": True,
+                "store_user_credentials": True,
+            },
+            admin_id=1,
+        )
+
+        challenge = webvpn_refresh.WebVPNSessionRefreshService.start(owner_user_id=42)
+        assert challenge["captcha_image"].startswith("data:image/png;base64,")
+
+        result = webvpn_refresh.WebVPNSessionRefreshService.complete(
+            challenge["challenge_id"],
+            "vxpj",
+            owner_user_id=42,
+        )
+
+        assert result["webvpn_cookie"].startswith("SER")
+        saved = SystemConfigService.get_edu_schedule_config()["webvpn_cookie"]
+        assert "SERVERID=Server1" in saved
+        assert "_astraeus_session=refreshed-session" in saved
+        assert "_webvpn_key=refreshed-key" in saved
 
 
 def test_admin_edu_schedule_page_exposes_webvpn_refresh_controls(app, seed_user):

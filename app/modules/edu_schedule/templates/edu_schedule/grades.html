@@ -34,6 +34,23 @@
   </div>
 
   <div class="grade-state" id="gradeState" role="status"></div>
+  <div class="webvpn-captcha-overlay" id="webvpnCaptchaDialog" role="dialog" aria-modal="true" aria-labelledby="webvpnCaptchaTitle" hidden>
+    <div class="webvpn-captcha-modal">
+      <div class="webvpn-captcha-head">
+        <h2 id="webvpnCaptchaTitle">刷新校园网络登录态</h2>
+        <button type="button" class="webvpn-captcha-close" id="closeWebvpnCaptcha" aria-label="关闭">×</button>
+      </div>
+      <div class="webvpn-captcha-body">
+        <p id="webvpnCaptchaMessage">WebVPN 登录态失效，请输入验证码后继续查询。</p>
+        <img id="webvpnCaptchaImage" class="webvpn-captcha-image" alt="WebVPN 验证码">
+        <input type="text" id="webvpnCaptchaCode" class="webvpn-captcha-input" placeholder="输入验证码" maxlength="10" autocomplete="off">
+      </div>
+      <div class="webvpn-captcha-actions">
+        <button type="button" class="ghost-btn" id="cancelWebvpnCaptcha">取消</button>
+        <button type="button" class="primary-btn" id="submitWebvpnCaptcha">提交并继续查询</button>
+      </div>
+    </div>
+  </div>
   <div class="grade-results" id="gradeResults"></div>
 </section>
 
@@ -123,6 +140,85 @@
   .grade-results {
     display: grid;
     gap: 18px;
+  }
+  .webvpn-captcha-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    background: rgba(15, 23, 42, 0.42);
+  }
+  .webvpn-captcha-overlay[hidden] {
+    display: none;
+  }
+  .webvpn-captcha-modal {
+    width: min(420px, calc(100vw - 36px));
+    border: 1px solid var(--app-border);
+    border-radius: 8px;
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow-soft);
+    padding: 16px;
+    display: grid;
+    gap: 14px;
+  }
+  .webvpn-captcha-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .webvpn-captcha-head h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 0;
+  }
+  .webvpn-captcha-close {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--app-border);
+    background: var(--app-surface-2);
+    color: var(--app-text);
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+  }
+  .webvpn-captcha-body {
+    display: grid;
+    gap: 10px;
+  }
+  .webvpn-captcha-body p {
+    margin: 0;
+    color: var(--app-muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .webvpn-captcha-image {
+    width: 160px;
+    height: 54px;
+    object-fit: contain;
+    border: 1px solid var(--app-border);
+    border-radius: 8px;
+    background: #fff;
+  }
+  .webvpn-captcha-input {
+    width: 100%;
+    min-height: 40px;
+    border: 1px solid var(--app-border);
+    border-radius: 8px;
+    padding: 0 10px;
+    background: var(--app-surface-2);
+    color: var(--app-text);
+    font-size: 14px;
+  }
+  .webvpn-captcha-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
   }
   .term-panel {
     overflow: hidden;
@@ -222,8 +318,17 @@
   const state = document.getElementById('gradeState');
   const results = document.getElementById('gradeResults');
   const submitBtn = document.getElementById('gradeSubmit');
+  const webvpnCaptchaDialog = document.getElementById('webvpnCaptchaDialog');
+  const webvpnCaptchaImage = document.getElementById('webvpnCaptchaImage');
+  const webvpnCaptchaCode = document.getElementById('webvpnCaptchaCode');
+  const webvpnCaptchaMessage = document.getElementById('webvpnCaptchaMessage');
+  const submitWebvpnCaptcha = document.getElementById('submitWebvpnCaptcha');
+  const cancelWebvpnCaptcha = document.getElementById('cancelWebvpnCaptcha');
+  const closeWebvpnCaptcha = document.getElementById('closeWebvpnCaptcha');
   let credentialReady = false;
   let credentialPromptShown = false;
+  let webvpnChallengeId = '';
+  let pendingQueryPayload = null;
 
   function setState(text, type) {
     state.textContent = text || '';
@@ -325,6 +430,44 @@
     });
   }
 
+  function hideWebvpnCaptcha() {
+    webvpnCaptchaDialog.hidden = true;
+    webvpnCaptchaCode.value = '';
+    webvpnChallengeId = '';
+  }
+
+  function showWebvpnCaptcha(data, payload) {
+    const challenge = data && data.data ? data.data : {};
+    webvpnChallengeId = challenge.challenge_id || '';
+    pendingQueryPayload = payload;
+    webvpnCaptchaImage.src = challenge.captcha_image || '';
+    webvpnCaptchaMessage.textContent = data.message || 'WebVPN 登录态失效，请输入验证码后继续查询。';
+    webvpnCaptchaDialog.hidden = false;
+    webvpnCaptchaCode.value = '';
+    webvpnCaptchaCode.focus();
+  }
+
+  async function submitQueryAfterWebvpnRefresh(payload) {
+    const response = await fetch('/api/edu-schedule/grades/query', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json();
+    if (data.status !== 'success') {
+      if (data.error_code === 'WEBVPN_REFRESH_REQUIRED') {
+        showWebvpnCaptcha(data, payload);
+        return;
+      }
+      throw new Error(data.message || '查询失败');
+    }
+    renderResults(data.data && data.data.results);
+    setState('查询完成', '');
+  }
+
   async function showBindPrompt() {
     if (credentialPromptShown) return;
     credentialPromptShown = true;
@@ -376,20 +519,7 @@
       const payload = {
         terms: buildTerms()
       };
-      const response = await fetch('/api/edu-schedule/grades/query', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: JSON.stringify(payload)
-      });
-      const data = await response.json();
-      if (data.status !== 'success') {
-        throw new Error(data.message || '查询失败');
-      }
-      renderResults(data.data && data.data.results);
-      setState('查询完成', '');
+      await submitQueryAfterWebvpnRefresh(payload);
     } catch (error) {
       setState(error.message || '查询失败', 'error');
     } finally {
@@ -397,6 +527,47 @@
       submitBtn.textContent = '查询';
     }
   });
+
+  submitWebvpnCaptcha.addEventListener('click', async function () {
+    const captchaCode = webvpnCaptchaCode.value.trim();
+    if (!webvpnChallengeId || !captchaCode) {
+      setState('请输入 WebVPN 验证码', 'error');
+      return;
+    }
+    submitWebvpnCaptcha.disabled = true;
+    setState('正在刷新 WebVPN 登录态...', '');
+    try {
+      const response = await fetch('/api/edu-schedule/webvpn-session/complete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+          challenge_id: webvpnChallengeId,
+          captcha_code: captchaCode
+        })
+      });
+      const data = await response.json();
+      if (data.status !== 'success') {
+        throw new Error(data.message || '刷新 WebVPN 登录态失败');
+      }
+      const payload = pendingQueryPayload;
+      hideWebvpnCaptcha();
+      if (payload) {
+        await submitQueryAfterWebvpnRefresh(payload);
+      }
+    } catch (error) {
+      setState(error.message || '刷新 WebVPN 登录态失败', 'error');
+    } finally {
+      submitWebvpnCaptcha.disabled = false;
+      submitBtn.disabled = false;
+      submitBtn.textContent = '查询';
+    }
+  });
+
+  cancelWebvpnCaptcha.addEventListener('click', hideWebvpnCaptcha);
+  closeWebvpnCaptcha.addEventListener('click', hideWebvpnCaptcha);
 
   loadStatus();
 })();
