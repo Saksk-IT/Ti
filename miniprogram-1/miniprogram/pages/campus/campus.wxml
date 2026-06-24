@@ -71,12 +71,26 @@
           </view>
           <view class="year-row">
             <view class="field">
-              <text class="field-label">开始学年</text>
-              <input class="field-input" type="number" value="{{startYear}}" maxlength="4" bindinput="onStartYearInput" />
+              <picker class="year-picker" mode="selector" range="{{academicYearLabels}}" value="{{startYearIndex}}" bindchange="onStartYearChange">
+                <view class="year-trigger" aria-role="button" aria-label="选择开始学年">
+                  <view>
+                    <text class="field-label">开始学年</text>
+                    <text class="year-value">{{academicYearLabels[startYearIndex]}}</text>
+                  </view>
+                  <text class="chevron">⌄</text>
+                </view>
+              </picker>
             </view>
             <view class="field">
-              <text class="field-label">结束学年</text>
-              <input class="field-input" type="number" value="{{endYear}}" maxlength="4" bindinput="onEndYearInput" />
+              <picker class="year-picker" mode="selector" range="{{academicYearLabels}}" value="{{endYearIndex}}" bindchange="onEndYearChange">
+                <view class="year-trigger" aria-role="button" aria-label="选择结束学年">
+                  <view>
+                    <text class="field-label">结束学年</text>
+                    <text class="year-value">{{academicYearLabels[endYearIndex]}}</text>
+                  </view>
+                  <text class="chevron">⌄</text>
+                </view>
+              </picker>
             </view>
           </view>
           <picker class="semester-picker" mode="selector" range="{{semesterLabels}}" value="{{semesterIndex}}" bindchange="onSemesterChange">

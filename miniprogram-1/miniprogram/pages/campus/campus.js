@@ -43,10 +43,32 @@ var theme_1 = require("../../utils/theme");
 var campus_content_1 = require("./campus-content");
 var SEMESTER_LABELS = ['第一、二学期', '第一学期', '第二学期'];
 var SEMESTER_VALUES = ['all', '3', '12'];
+var ACADEMIC_YEAR_PAST_COUNT = 6;
+var ACADEMIC_YEAR_FUTURE_COUNT = 2;
 function defaultAcademicYear() {
     var now = new Date();
     var month = now.getMonth() + 1;
     return month >= 9 ? now.getFullYear() : now.getFullYear() - 1;
+}
+function formatAcademicYearLabel(year) {
+    return "".concat(year, "~").concat(year + 1);
+}
+function buildAcademicYearOptions(defaultYear) {
+    var options = [];
+    for (var year = defaultYear - ACADEMIC_YEAR_PAST_COUNT; year <= defaultYear + ACADEMIC_YEAR_FUTURE_COUNT; year += 1) {
+        options.push({ label: formatAcademicYearLabel(year), value: String(year) });
+    }
+    return options;
+}
+function clampAcademicYearIndex(value, fallback) {
+    var index = Number(value);
+    if (!Number.isInteger(index))
+        return fallback;
+    return Math.max(0, Math.min(index, ACADEMIC_YEAR_OPTIONS.length - 1));
+}
+function academicYearValueAt(index) {
+    var _a;
+    return ((_a = ACADEMIC_YEAR_OPTIONS[index]) === null || _a === void 0 ? void 0 : _a.value) || String(defaultYear);
 }
 function normalizeCredential(credential) {
     return {
@@ -55,14 +77,19 @@ function normalizeCredential(credential) {
     };
 }
 var defaultYear = defaultAcademicYear();
+var ACADEMIC_YEAR_OPTIONS = buildAcademicYearOptions(defaultYear);
+var DEFAULT_ACADEMIC_YEAR_INDEX = ACADEMIC_YEAR_PAST_COUNT;
 Page({
     data: {
         mode: 'schedule',
         modeLabels: ['查询课表', '查询成绩'],
+        academicYearLabels: ACADEMIC_YEAR_OPTIONS.map(function (item) { return item.label; }),
+        startYearIndex: DEFAULT_ACADEMIC_YEAR_INDEX,
+        endYearIndex: DEFAULT_ACADEMIC_YEAR_INDEX,
         semesterLabels: SEMESTER_LABELS,
         semesterIndex: 0,
-        startYear: String(defaultYear),
-        endYear: String(defaultYear),
+        startYear: academicYearValueAt(DEFAULT_ACADEMIC_YEAR_INDEX),
+        endYear: academicYearValueAt(DEFAULT_ACADEMIC_YEAR_INDEX),
         loading: false,
         statusLoading: false,
         statusReady: false,
@@ -101,13 +128,25 @@ Page({
             return;
         this.setData({ mode: mode, errorMsg: '' });
     },
-    onStartYearInput: function (e) {
-        var _a, _b;
-        this.setData({ startYear: String(((_b = (_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value) !== null && _b !== void 0 ? _b : '')).trim() });
+    onStartYearChange: function (e) {
+        var _a;
+        var startYearIndex = clampAcademicYearIndex((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value, this.data.startYearIndex);
+        var startYear = academicYearValueAt(startYearIndex);
+        var endYearIndex = Number(this.data.endYear) < Number(startYear) ? startYearIndex : this.data.endYearIndex;
+        this.setData({
+            startYearIndex: startYearIndex,
+            startYear: startYear,
+            endYearIndex: endYearIndex,
+            endYear: academicYearValueAt(endYearIndex),
+        });
     },
-    onEndYearInput: function (e) {
-        var _a, _b;
-        this.setData({ endYear: String(((_b = (_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value) !== null && _b !== void 0 ? _b : '')).trim() });
+    onEndYearChange: function (e) {
+        var _a;
+        var endYearIndex = clampAcademicYearIndex((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value, this.data.endYearIndex);
+        this.setData({
+            endYearIndex: endYearIndex,
+            endYear: academicYearValueAt(endYearIndex),
+        });
     },
     onSemesterChange: function (e) {
         var _a, _b;

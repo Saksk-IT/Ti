@@ -325,6 +325,35 @@ def test_campus_pages_only_keep_term_filters_and_bind_prompt(auth_client):
     assert "/settings/account/bindings" in grade_html
 
 
+def test_campus_year_filters_use_academic_year_range_labels(auth_client):
+    schedule_page = auth_client.get("/edu-schedule")
+    grades_page = auth_client.get("/edu-grades")
+
+    assert schedule_page.status_code == 200
+    assert grades_page.status_code == 200
+
+    schedule_html = schedule_page.get_data(as_text=True)
+    grade_html = grades_page.get_data(as_text=True)
+    for prefix, html in (("schedule", schedule_html), ("grade", grade_html)):
+        assert f'<select id="{prefix}StartYear"' in html
+        assert f'<select id="{prefix}EndYear"' in html
+        assert f'<input id="{prefix}StartYear"' not in html
+        assert f'<input id="{prefix}EndYear"' not in html
+        assert "2025~2026" in html
+
+    campus_dir = Path("miniprogram-1/miniprogram/pages/campus")
+    wxml = (campus_dir / "campus.wxml").read_text(encoding="utf-8")
+    ts = (campus_dir / "campus.ts").read_text(encoding="utf-8")
+
+    assert 'range="{{academicYearLabels}}"' in wxml
+    assert "onStartYearChange" in wxml
+    assert "onEndYearChange" in wxml
+    assert "onStartYearInput" not in wxml
+    assert "onEndYearInput" not in wxml
+    assert "formatAcademicYearLabel" in ts
+    assert "~" in ts
+
+
 def test_miniprogram_account_bindings_page_exposes_edu_credential_binding():
     page_dir = Path("miniprogram-1/miniprogram/pages/settings-account-bindings-v2")
     wxml = (page_dir / "settings-account-bindings-v2.wxml").read_text(encoding="utf-8")

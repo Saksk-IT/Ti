@@ -14,11 +14,40 @@ import {
 
 const SEMESTER_LABELS = ['第一、二学期', '第一学期', '第二学期'];
 const SEMESTER_VALUES: CampusSemesterValue[] = ['all', '3', '12'];
+const ACADEMIC_YEAR_PAST_COUNT = 6;
+const ACADEMIC_YEAR_FUTURE_COUNT = 2;
+
+interface AcademicYearOption {
+  label: string;
+  value: string;
+}
 
 function defaultAcademicYear(): number {
   const now = new Date();
   const month = now.getMonth() + 1;
   return month >= 9 ? now.getFullYear() : now.getFullYear() - 1;
+}
+
+function formatAcademicYearLabel(year: number): string {
+  return `${year}~${year + 1}`;
+}
+
+function buildAcademicYearOptions(defaultYear: number): AcademicYearOption[] {
+  const options: AcademicYearOption[] = [];
+  for (let year = defaultYear - ACADEMIC_YEAR_PAST_COUNT; year <= defaultYear + ACADEMIC_YEAR_FUTURE_COUNT; year += 1) {
+    options.push({ label: formatAcademicYearLabel(year), value: String(year) });
+  }
+  return options;
+}
+
+function clampAcademicYearIndex(value: unknown, fallback: number): number {
+  const index = Number(value);
+  if (!Number.isInteger(index)) return fallback;
+  return Math.max(0, Math.min(index, ACADEMIC_YEAR_OPTIONS.length - 1));
+}
+
+function academicYearValueAt(index: number): string {
+  return ACADEMIC_YEAR_OPTIONS[index]?.value || String(defaultYear);
 }
 
 function normalizeCredential(credential: any): { has_credentials: boolean; username_hint: string } {
@@ -29,15 +58,20 @@ function normalizeCredential(credential: any): { has_credentials: boolean; usern
 }
 
 const defaultYear = defaultAcademicYear();
+const ACADEMIC_YEAR_OPTIONS = buildAcademicYearOptions(defaultYear);
+const DEFAULT_ACADEMIC_YEAR_INDEX = ACADEMIC_YEAR_PAST_COUNT;
 
 Page({
   data: {
     mode: 'schedule' as CampusMode,
     modeLabels: ['查询课表', '查询成绩'],
+    academicYearLabels: ACADEMIC_YEAR_OPTIONS.map((item) => item.label),
+    startYearIndex: DEFAULT_ACADEMIC_YEAR_INDEX,
+    endYearIndex: DEFAULT_ACADEMIC_YEAR_INDEX,
     semesterLabels: SEMESTER_LABELS,
     semesterIndex: 0,
-    startYear: String(defaultYear),
-    endYear: String(defaultYear),
+    startYear: academicYearValueAt(DEFAULT_ACADEMIC_YEAR_INDEX),
+    endYear: academicYearValueAt(DEFAULT_ACADEMIC_YEAR_INDEX),
     loading: false,
     statusLoading: false,
     statusReady: false,
@@ -78,12 +112,24 @@ Page({
     this.setData({ mode, errorMsg: '' });
   },
 
-  onStartYearInput(e: any) {
-    this.setData({ startYear: String(e?.detail?.value || '').trim() });
+  onStartYearChange(e: any) {
+    const startYearIndex = clampAcademicYearIndex(e?.detail?.value, this.data.startYearIndex);
+    const startYear = academicYearValueAt(startYearIndex);
+    const endYearIndex = Number(this.data.endYear) < Number(startYear) ? startYearIndex : this.data.endYearIndex;
+    this.setData({
+      startYearIndex,
+      startYear,
+      endYearIndex,
+      endYear: academicYearValueAt(endYearIndex),
+    });
   },
 
-  onEndYearInput(e: any) {
-    this.setData({ endYear: String(e?.detail?.value || '').trim() });
+  onEndYearChange(e: any) {
+    const endYearIndex = clampAcademicYearIndex(e?.detail?.value, this.data.endYearIndex);
+    this.setData({
+      endYearIndex,
+      endYear: academicYearValueAt(endYearIndex),
+    });
   },
 
   onSemesterChange(e: any) {

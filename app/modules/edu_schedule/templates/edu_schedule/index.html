@@ -10,11 +10,19 @@
       <div class="field-group term-fields">
         <label>
           <span>开始学年</span>
-          <input id="scheduleStartYear" type="number" min="2000" max="2100" step="1" value="2025">
+          <select id="scheduleStartYear">
+            {% for option in academic_year_options %}
+            <option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.label }}</option>
+            {% endfor %}
+          </select>
         </label>
         <label>
           <span>结束学年</span>
-          <input id="scheduleEndYear" type="number" min="2000" max="2100" step="1" value="2025">
+          <select id="scheduleEndYear">
+            {% for option in academic_year_options %}
+            <option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.label }}</option>
+            {% endfor %}
+          </select>
         </label>
         <label>
           <span>学期</span>
@@ -72,7 +80,6 @@
     font-weight: 800;
     color: var(--app-muted);
   }
-  .schedule-form input,
   .schedule-form select {
     width: 100%;
     min-height: 40px;
