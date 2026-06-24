@@ -177,6 +177,8 @@ class JWXTClient:
 
         login_url = urljoin(self.config.webvpn_base_url + "/", self.config.webvpn_login_path.lstrip("/"))
         page = self._request(session, "GET", login_url, allow_redirects=True)
+        if _looks_webvpn_logged_in(page.text):
+            return
         if _requires_webvpn_interactive_challenge(page.text):
             raise ScheduleAuthError(WEBVPN_INTERACTIVE_CHALLENGE_MESSAGE)
 
@@ -194,6 +196,8 @@ class JWXTClient:
             "commit": "登录 Login",
         }
         result = self._request(session, "POST", login_url, data=data, allow_redirects=True)
+        if _looks_webvpn_logged_in(result.text):
+            return
         if _requires_webvpn_interactive_challenge(result.text):
             raise ScheduleAuthError(WEBVPN_INTERACTIVE_CHALLENGE_MESSAGE)
         if "用户登录" in result.text:
@@ -303,6 +307,15 @@ def _extract_input_value(html_text: str, name: str) -> str:
 def _looks_logged_in(html_text: str) -> bool:
     text = html_text or ""
     return "login_slogin" not in text and ("退出" in text or "个人信息" in text or "jwglxt" in text)
+
+
+def _looks_webvpn_logged_in(html_text: str) -> bool:
+    text = html_text or ""
+    return bool(
+        "/users/sign_out" in text
+        or ("退出登录" in text and "body class=\"vpn\"" in text)
+        or ("教务管理系统" in text and "jwxt.webvpn.synu.edu.cn" in text)
+    )
 
 
 def _requires_webvpn_interactive_challenge(html_text: str) -> bool:

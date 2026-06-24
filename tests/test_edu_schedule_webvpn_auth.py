@@ -52,6 +52,24 @@ class _CaptchaWebVPNClient(JWXTClient):
         )
 
 
+class _LoggedInWebVPNClient(JWXTClient):
+    def __init__(self):
+        super().__init__(_webvpn_config())
+        self.methods = []
+
+    def _request(self, session, method, url, **kwargs):
+        self.methods.append(method)
+        return _Response(
+            """
+            <body class="vpn">
+              <a rel="nofollow" data-method="delete" href="/users/sign_out">退出登录</a>
+              <a href="https://jwxt.webvpn.synu.edu.cn:443/jwglxt">教务管理系统一</a>
+            </body>
+            """,
+            url="https://webvpn.synu.edu.cn/",
+        )
+
+
 def test_webvpn_captcha_page_stops_before_password_post():
     client = _CaptchaWebVPNClient()
 
@@ -59,6 +77,14 @@ def test_webvpn_captcha_page_stops_before_password_post():
         client._prepare_webvpn(object())
 
     assert "仅凭账号密码自动登录" in str(exc_info.value)
+    assert client.methods == ["GET"]
+
+
+def test_webvpn_logged_in_home_page_is_accepted_without_password_post():
+    client = _LoggedInWebVPNClient()
+
+    client._prepare_webvpn(object())
+
     assert client.methods == ["GET"]
 
 
