@@ -179,6 +179,23 @@ class EduScheduleService:
             .order_by(EduScheduleSnapshot.xnm.desc(), EduScheduleSnapshot.xqm.desc())
             .all()
         )
+        return EduScheduleService._snapshot_rows_to_dicts(rows)
+
+    @staticmethod
+    def list_snapshots_for_terms(user_id: int, terms: Iterable[Dict[str, str]]) -> List[Dict[str, Any]]:
+        items: List[Dict[str, Any]] = []
+        for term in terms:
+            row = EduScheduleSnapshot.query.filter_by(
+                user_id=int(user_id),
+                xnm=str(term["xnm"]),
+                xqm=str(term["xqm"]),
+            ).first()
+            if row:
+                items.extend(EduScheduleService._snapshot_rows_to_dicts([row]))
+        return items
+
+    @staticmethod
+    def _snapshot_rows_to_dicts(rows) -> List[Dict[str, Any]]:
         return [
             {
                 "id": row.id,
@@ -219,6 +236,23 @@ class EduScheduleService:
             .order_by(EduGradeSnapshot.xnm.desc(), EduGradeSnapshot.xqm.desc())
             .all()
         )
+        return EduScheduleService._grade_snapshot_rows_to_dicts(rows)
+
+    @staticmethod
+    def list_grade_snapshots_for_terms(user_id: int, terms: Iterable[Dict[str, str]]) -> List[Dict[str, Any]]:
+        items: List[Dict[str, Any]] = []
+        for term in terms:
+            row = EduGradeSnapshot.query.filter_by(
+                user_id=int(user_id),
+                xnm=str(term["xnm"]),
+                xqm=str(term["xqm"]),
+            ).first()
+            if row:
+                items.extend(EduScheduleService._grade_snapshot_rows_to_dicts([row]))
+        return items
+
+    @staticmethod
+    def _grade_snapshot_rows_to_dicts(rows) -> List[Dict[str, Any]]:
         return [
             {
                 "id": row.id,

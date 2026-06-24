@@ -329,6 +329,7 @@
   let credentialPromptShown = false;
   let webvpnChallengeId = '';
   let pendingQueryPayload = null;
+  let activeTaskTimer = null;
 
   function setState(text, type) {
     state.textContent = text || '';
@@ -430,6 +431,80 @@
     });
   }
 
+  function stopTaskPolling() {
+    if (activeTaskTimer) {
+      clearTimeout(activeTaskTimer);
+      activeTaskTimer = null;
+    }
+  }
+
+  function renderTaskFallback(task) {
+    const items = task && Array.isArray(task.results) ? task.results : [];
+    if (items.length) {
+      renderResults(items);
+      return true;
+    }
+    const snapshots = task && Array.isArray(task.snapshots) ? task.snapshots : [];
+    if (snapshots.length) {
+      renderResults(snapshots.map(function (item) { return item.payload; }));
+      return true;
+    }
+    return false;
+  }
+
+  function handleTaskState(task, payload) {
+    if (!task) {
+      throw new Error('查询任务状态不正确');
+    }
+    if (task.status === 'webvpn_refresh_required') {
+      stopTaskPolling();
+      showWebvpnCaptcha({
+        message: task.message || 'WebVPN 登录态失效，请输入验证码后继续查询。',
+        data: task.challenge || {}
+      }, payload);
+      return true;
+    }
+    if (task.status === 'succeeded') {
+      stopTaskPolling();
+      renderResults(task.results || []);
+      setState('查询完成', '');
+      return true;
+    }
+    if (task.status === 'failed') {
+      stopTaskPolling();
+      const hasFallback = renderTaskFallback(task);
+      setState(task.message || '教务系统繁忙，请稍后重试', hasFallback ? '' : 'error');
+      return true;
+    }
+    const hasFallback = renderTaskFallback(task);
+    const suffix = hasFallback ? '，当前显示上次成功结果' : '';
+    setState((task.message || '正在后台查询成绩') + suffix, '');
+    return false;
+  }
+
+  async function pollEduQueryTask(taskId, payload) {
+    stopTaskPolling();
+    const poll = async function () {
+      const response = await fetch('/api/edu-schedule/query-tasks/' + encodeURIComponent(taskId), {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
+      const data = await response.json();
+      if (data.status !== 'success') {
+        throw new Error(data.message || '查询任务状态获取失败');
+      }
+      const task = data.data && data.data.task;
+      if (!handleTaskState(task, payload)) {
+        activeTaskTimer = setTimeout(function () {
+          poll().catch(function (error) {
+            stopTaskPolling();
+            setState(error.message || '查询任务状态获取失败', 'error');
+          });
+        }, 2000);
+      }
+    };
+    await poll();
+  }
+
   function hideWebvpnCaptcha() {
     webvpnCaptchaDialog.hidden = true;
     webvpnCaptchaCode.value = '';
@@ -448,6 +523,7 @@
   }
 
   async function submitQueryAfterWebvpnRefresh(payload) {
+    stopTaskPolling();
     const response = await fetch('/api/edu-schedule/grades/query', {
       method: 'POST',
       headers: {
@@ -463,6 +539,14 @@
         return;
       }
       throw new Error(data.message || '查询失败');
+    }
+    const task = data.data && data.data.task;
+    if (task && task.task_id) {
+      handleTaskState(task, payload);
+      if (task.status !== 'succeeded' && task.status !== 'failed' && task.status !== 'webvpn_refresh_required') {
+        await pollEduQueryTask(task.task_id, payload);
+      }
+      return;
     }
     renderResults(data.data && data.data.results);
     setState('查询完成', '');
@@ -508,8 +592,8 @@
   form.addEventListener('submit', async function (event) {
     event.preventDefault();
     submitBtn.disabled = true;
-    submitBtn.textContent = '查询中';
-    setState('正在查询成绩...', '');
+    submitBtn.textContent = '提交中';
+    setState('正在提交后台查询任务...', '');
     try {
       if (!credentialReady) {
         setState('未绑定教务系统账号，请先绑定后查询。', 'error');

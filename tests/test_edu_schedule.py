@@ -339,6 +339,9 @@ def test_campus_pages_expose_user_webvpn_captcha_refresh(auth_client):
         assert "WEBVPN_REFRESH_REQUIRED" in html
         assert "/api/edu-schedule/webvpn-session/complete" in html
         assert "submitQueryAfterWebvpnRefresh" in html
+        assert "/api/edu-schedule/query-tasks/" in html
+        assert "pollEduQueryTask" in html
+        assert "教务系统繁忙" in html
 
 
 def test_campus_year_filters_use_academic_year_range_labels(auth_client):
@@ -568,8 +571,7 @@ def test_admin_can_refresh_webvpn_cookie_with_manual_captcha(app, seed_user, mon
 
 def test_user_query_returns_webvpn_refresh_challenge_when_cookie_expired(app, auth_client, monkeypatch):
     from app.modules.admin.services.system_config_service import SystemConfigService
-    from app.modules.edu_schedule.routes import api as edu_schedule_api
-    from app.modules.edu_schedule.services import schedule_service
+    from app.modules.edu_schedule.services import query_tasks, schedule_service
     from app.modules.edu_schedule.services.client import ScheduleAuthError
 
     class ExpiredCookieClient:
@@ -590,7 +592,12 @@ def test_user_query_returns_webvpn_refresh_challenge_when_cookie_expired(app, au
             }
 
     monkeypatch.setattr(schedule_service, "JWXTClient", ExpiredCookieClient)
-    monkeypatch.setattr(edu_schedule_api, "WebVPNSessionRefreshService", FakeRefreshService)
+    monkeypatch.setattr(query_tasks, "WebVPNSessionRefreshService", FakeRefreshService)
+    monkeypatch.setattr(
+        query_tasks.EduScheduleQueryTaskService,
+        "_start_worker",
+        staticmethod(lambda task_id: None),
+    )
 
     with app.app_context():
         SystemConfigService.save_edu_schedule_config(
@@ -621,12 +628,96 @@ def test_user_query_returns_webvpn_refresh_challenge_when_cookie_expired(app, au
         headers={"X-Requested-With": "XMLHttpRequest"},
     )
 
-    assert response.status_code == 409
+    assert response.status_code == 200
     body = response.get_json()
-    assert body["status"] == "error"
-    assert body["error_code"] == "WEBVPN_REFRESH_REQUIRED"
-    assert body["data"]["challenge_id"] == "challenge-user-1"
-    assert body["data"]["captcha_image"].startswith("data:image/png;base64,")
+    assert body["status"] == "success"
+    task_id = body["data"]["task"]["task_id"]
+
+    final_state = query_tasks.EduScheduleQueryTaskService.run_task(task_id)
+
+    assert final_state["status"] == "webvpn_refresh_required"
+    assert final_state["challenge"]["challenge_id"] == "challenge-user-1"
+    assert final_state["challenge"]["captcha_image"].startswith("data:image/png;base64,")
+
+    poll_response = auth_client.get(
+        f"/api/edu-schedule/query-tasks/{task_id}",
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+    poll_body = poll_response.get_json()
+    assert poll_body["data"]["task"]["status"] == "webvpn_refresh_required"
+
+
+def test_same_term_query_after_webvpn_challenge_creates_new_task(app, auth_client, monkeypatch):
+    from app.modules.admin.services.system_config_service import SystemConfigService
+    from app.modules.edu_schedule.services import query_tasks, schedule_service
+    from app.modules.edu_schedule.services.client import ScheduleAuthError
+
+    class ExpiredCookieClient:
+        def __init__(self, config):
+            self.config = config
+
+        def fetch_schedule(self, username, password, xnm, xqm):
+            raise ScheduleAuthError("WebVPN 登录态不可用")
+
+    class FakeRefreshService:
+        @staticmethod
+        def start(owner_user_id=None):
+            return {
+                "challenge_id": "challenge-repeat-1",
+                "captcha_image": "data:image/png;base64,Y2FwdGNoYQ==",
+                "expires_in_seconds": 300,
+            }
+
+    monkeypatch.setattr(schedule_service, "JWXTClient", ExpiredCookieClient)
+    monkeypatch.setattr(query_tasks, "WebVPNSessionRefreshService", FakeRefreshService)
+    monkeypatch.setattr(
+        query_tasks.EduScheduleQueryTaskService,
+        "_start_worker",
+        staticmethod(lambda task_id: None),
+    )
+
+    with app.app_context():
+        SystemConfigService.save_edu_schedule_config(
+            {
+                "enabled": True,
+                "use_webvpn": True,
+                "webvpn_base_url": "https://webvpn.synu.edu.cn",
+                "webvpn_login_path": "/users/sign_in",
+                "webvpn_username": "vpn-admin",
+                "webvpn_password": "VpnSecret123!",
+                "webvpn_cookie": "SERVERID=expired",
+                "jwxt_base_url": "https://jwxt.webvpn.synu.edu.cn/jwglxt",
+                "request_timeout": 20,
+                "verify_tls": True,
+                "store_user_credentials": True,
+            },
+            admin_id=1,
+        )
+
+    auth_client.post(
+        "/api/edu-schedule/credentials",
+        json={"username": "stu_demo_2026", "password": "DemoSecret123!"},
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+    first_response = auth_client.post(
+        "/api/edu-schedule/query",
+        json={"terms": [{"xnm": "2030", "xqm": "12"}]},
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+    first_task_id = first_response.get_json()["data"]["task"]["task_id"]
+
+    first_final_state = query_tasks.EduScheduleQueryTaskService.run_task(first_task_id)
+    assert first_final_state["status"] == "webvpn_refresh_required"
+
+    second_response = auth_client.post(
+        "/api/edu-schedule/query",
+        json={"terms": [{"xnm": "2030", "xqm": "12"}]},
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+    second_task = second_response.get_json()["data"]["task"]
+    assert second_task["task_id"] != first_task_id
+    assert second_task["status"] == "pending"
+    assert second_task["coalesced"] is False
 
 
 def test_user_can_complete_webvpn_refresh_challenge(app, auth_client, monkeypatch):
@@ -657,6 +748,113 @@ def test_user_can_complete_webvpn_refresh_challenge(app, auth_client, monkeypatc
     assert captured["challenge_id"] == "challenge-user-1"
     assert captured["captcha_code"] == "vxpj"
     assert captured["owner_user_id"]
+
+
+def test_schedule_query_returns_background_task_without_running_upstream(app, auth_client, monkeypatch):
+    from app.modules.admin.services.system_config_service import SystemConfigService
+    from app.modules.edu_schedule.services import query_tasks
+
+    monkeypatch.setattr(
+        query_tasks.EduScheduleQueryTaskService,
+        "_start_worker",
+        staticmethod(lambda task_id: None),
+    )
+
+    with app.app_context():
+        SystemConfigService.save_edu_schedule_config(
+            {
+                "enabled": True,
+                "use_webvpn": False,
+                "jwxt_base_url": "https://jwxt.webvpn.synu.edu.cn/jwglxt",
+                "request_timeout": 20,
+                "verify_tls": True,
+                "store_user_credentials": True,
+            },
+            admin_id=1,
+        )
+
+    auth_client.post(
+        "/api/edu-schedule/credentials",
+        json={"username": "stu_demo_2026", "password": "DemoSecret123!"},
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+    response = auth_client.post(
+        "/api/edu-schedule/query",
+        json={"terms": [{"xnm": "2029", "xqm": "12"}]},
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["status"] == "success"
+    assert body["data"]["task"]["task_id"]
+    assert body["data"]["task"]["status"] == "pending"
+    assert body["data"]["task"]["kind"] == "schedule"
+    assert body["data"]["results"] == []
+
+    task_id = body["data"]["task"]["task_id"]
+    status_response = auth_client.get(
+        f"/api/edu-schedule/query-tasks/{task_id}",
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+    assert status_response.status_code == 200
+    status_body = status_response.get_json()
+    assert status_body["data"]["task"]["task_id"] == task_id
+
+
+def test_background_schedule_task_retries_timeout_and_keeps_snapshot(app, seed_user, monkeypatch):
+    from requests.exceptions import ReadTimeout
+
+    from app.modules.admin.services.system_config_service import SystemConfigService
+    from app.modules.edu_schedule.services import query_tasks, schedule_service
+    from app.modules.edu_schedule.services.parser import normalize_schedule_payload
+    from app.modules.edu_schedule.services.schedule_service import EduScheduleService
+
+    attempts = []
+
+    class TimeoutJWXTClient:
+        def __init__(self, config):
+            self.config = config
+
+        def fetch_schedule(self, username, password, xnm, xqm):
+            attempts.append((username, password, xnm, xqm))
+            raise ReadTimeout("upstream busy")
+
+    monkeypatch.setattr(schedule_service, "JWXTClient", TimeoutJWXTClient)
+    monkeypatch.setattr(query_tasks, "_QUERY_TASK_BACKOFF_SECONDS", (0, 0))
+    monkeypatch.setattr(query_tasks, "_sleep", lambda seconds: None)
+
+    user_id = int(seed_user["id"])
+    raw_snapshot = _sample_schedule_payload(xnm="2028", xqm="12")
+    normalized_snapshot = normalize_schedule_payload(raw_snapshot)
+    with app.app_context():
+        SystemConfigService.save_edu_schedule_config(
+            {
+                "enabled": True,
+                "use_webvpn": False,
+                "jwxt_base_url": "https://jwxt.webvpn.synu.edu.cn/jwglxt",
+                "request_timeout": 20,
+                "verify_tls": True,
+                "store_user_credentials": True,
+            },
+            admin_id=1,
+        )
+        EduScheduleService.save_credentials(user_id, "stu_demo_2026", "DemoSecret123!")
+        EduScheduleService._save_snapshot(user_id, "2028", "12", normalized_snapshot, raw_snapshot)
+
+    task = query_tasks.EduScheduleQueryTaskService.enqueue(
+        "schedule",
+        user_id,
+        [{"xnm": "2028", "xqm": "12"}],
+        autostart=False,
+    )
+    final_state = query_tasks.EduScheduleQueryTaskService.run_task(task["task_id"])
+
+    assert len(attempts) == 3
+    assert final_state["status"] == "failed"
+    assert "教务系统繁忙" in final_state["message"]
+    assert final_state["snapshots"][0]["payload"]["term"]["xnm"] == "2028"
+    assert final_state["results"] == [normalized_snapshot]
 
 
 def test_webvpn_refresh_service_uses_temp_cookie_and_saves_refreshed_cookie(app, monkeypatch):
@@ -748,7 +946,7 @@ def test_admin_edu_schedule_page_exposes_webvpn_refresh_controls(app, seed_user)
 
 def test_query_multiple_terms_saves_schedule_snapshots(app, auth_client, monkeypatch):
     from app.modules.admin.services.system_config_service import SystemConfigService
-    from app.modules.edu_schedule.services import schedule_service
+    from app.modules.edu_schedule.services import query_tasks, schedule_service
 
     class FakeJWXTClient:
         def __init__(self, config):
@@ -760,6 +958,11 @@ def test_query_multiple_terms_saves_schedule_snapshots(app, auth_client, monkeyp
             return _sample_schedule_payload(xnm=xnm, xqm=xqm)
 
     monkeypatch.setattr(schedule_service, "JWXTClient", FakeJWXTClient)
+    monkeypatch.setattr(
+        query_tasks.EduScheduleQueryTaskService,
+        "_start_worker",
+        staticmethod(lambda task_id: None),
+    )
 
     with app.app_context():
         SystemConfigService.save_edu_schedule_config(
@@ -793,8 +996,13 @@ def test_query_multiple_terms_saves_schedule_snapshots(app, auth_client, monkeyp
     assert response.status_code == 200
     body = response.get_json()
     assert body["status"] == "success"
-    assert [item["term"]["xnm"] for item in body["data"]["results"]] == ["2024", "2025"]
-    assert body["data"]["results"][1]["week_table"]["星期一"]["1-2节"][0]["course_name"] == "WEB程序设计"
+    task_id = body["data"]["task"]["task_id"]
+
+    final_state = query_tasks.EduScheduleQueryTaskService.run_task(task_id)
+
+    assert final_state["status"] == "succeeded"
+    assert [item["term"]["xnm"] for item in final_state["results"]] == ["2024", "2025"]
+    assert final_state["results"][1]["week_table"]["星期一"]["1-2节"][0]["course_name"] == "WEB程序设计"
 
     with app.app_context():
         count = app.extensions["sqlalchemy"].session.execute(
@@ -805,7 +1013,7 @@ def test_query_multiple_terms_saves_schedule_snapshots(app, auth_client, monkeyp
 
 def test_query_multiple_terms_saves_grade_snapshots(app, auth_client, monkeypatch):
     from app.modules.admin.services.system_config_service import SystemConfigService
-    from app.modules.edu_schedule.services import schedule_service
+    from app.modules.edu_schedule.services import query_tasks, schedule_service
 
     class FakeJWXTClient:
         def __init__(self, config):
@@ -817,6 +1025,11 @@ def test_query_multiple_terms_saves_grade_snapshots(app, auth_client, monkeypatc
             return _sample_grade_payload(xnm=xnm, xqm=xqm)
 
     monkeypatch.setattr(schedule_service, "JWXTClient", FakeJWXTClient)
+    monkeypatch.setattr(
+        query_tasks.EduScheduleQueryTaskService,
+        "_start_worker",
+        staticmethod(lambda task_id: None),
+    )
 
     with app.app_context():
         SystemConfigService.save_edu_schedule_config(
@@ -850,9 +1063,14 @@ def test_query_multiple_terms_saves_grade_snapshots(app, auth_client, monkeypatc
     assert response.status_code == 200
     body = response.get_json()
     assert body["status"] == "success"
-    assert [item["term"]["xnm"] for item in body["data"]["results"]] == ["2024", "2025"]
-    assert body["data"]["results"][0]["grades"][0]["course_name"] == "数据结构"
-    assert body["data"]["results"][1]["summary"]["course_count"] == 2
+    task_id = body["data"]["task"]["task_id"]
+
+    final_state = query_tasks.EduScheduleQueryTaskService.run_task(task_id)
+
+    assert final_state["status"] == "succeeded"
+    assert [item["term"]["xnm"] for item in final_state["results"]] == ["2024", "2025"]
+    assert final_state["results"][0]["grades"][0]["course_name"] == "数据结构"
+    assert final_state["results"][1]["summary"]["course_count"] == 2
 
     with app.app_context():
         count = app.extensions["sqlalchemy"].session.execute(

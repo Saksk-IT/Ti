@@ -11,6 +11,7 @@ from app.core.utils.decorators import auth_required, current_user_id
 
 from ..schemas import EduScheduleCredentialSchema, EduScheduleQuerySchema
 from ..services.client import ScheduleAuthError, ScheduleClientError
+from ..services.query_tasks import EduScheduleQueryTaskService
 from ..services.schedule_service import EduScheduleService, user_safe_error
 from ..services.webvpn_refresh import (
     WEBVPN_REFRESH_REQUIRED_ERROR_CODE,
@@ -31,6 +32,18 @@ def _webvpn_refresh_required_response(user_id: int):
         code=409,
         error_code=WEBVPN_REFRESH_REQUIRED_ERROR_CODE,
         data=challenge,
+    )
+
+
+def _task_response(task: dict, message: str):
+    return success_response(
+        data={
+            "task": task,
+            "results": task.get("results") or [],
+            "snapshots": task.get("snapshots") or [],
+            "credential": task.get("credential") or {},
+        },
+        message=message,
     )
 
 
@@ -77,14 +90,15 @@ def api_query_schedule():
     user_id = int(current_user_id() or 0)
     try:
         schema = EduScheduleQuerySchema.model_validate(request.get_json(silent=True) or {})
-        data = EduScheduleService.query_terms(
+        task = EduScheduleQueryTaskService.enqueue(
+            "schedule",
             user_id,
             [term.model_dump() for term in schema.terms],
             username=schema.username,
             password=schema.password,
             remember=schema.remember,
         )
-        return success_response(data=data, message="课表查询成功")
+        return _task_response(task, "课表查询已提交后台刷新")
     except ValidationError:
         current_app.logger.warning("教务课表查询输入校验失败: ValidationError")
         return error_response("输入参数不正确", status_code=400)
@@ -104,14 +118,15 @@ def api_query_grades():
     user_id = int(current_user_id() or 0)
     try:
         schema = EduScheduleQuerySchema.model_validate(request.get_json(silent=True) or {})
-        data = EduScheduleService.query_grade_terms(
+        task = EduScheduleQueryTaskService.enqueue(
+            "grades",
             user_id,
             [term.model_dump() for term in schema.terms],
             username=schema.username,
             password=schema.password,
             remember=schema.remember,
         )
-        return success_response(data=data, message="成绩查询成功")
+        return _task_response(task, "成绩查询已提交后台刷新")
     except ValidationError:
         current_app.logger.warning("教务成绩查询输入校验失败: ValidationError")
         return error_response("输入参数不正确", status_code=400)
@@ -123,6 +138,17 @@ def api_query_grades():
             except Exception as refresh_exc:
                 current_app.logger.warning("生成 WebVPN 验证码失败: %s", type(refresh_exc).__name__)
         return error_response(user_safe_error(exc), status_code=400)
+
+
+@edu_schedule_api_bp.route("/edu-schedule/query-tasks/<task_id>", methods=["GET"])
+@auth_required
+def api_get_query_task(task_id: str):
+    user_id = int(current_user_id() or 0)
+    try:
+        task = EduScheduleQueryTaskService.get(task_id, user_id)
+        return _task_response(task, task.get("message") or "查询任务状态已更新")
+    except ValueError as exc:
+        return error_response(str(exc), status_code=404)
 
 
 @edu_schedule_api_bp.route("/edu-schedule/webvpn-session/complete", methods=["POST"])

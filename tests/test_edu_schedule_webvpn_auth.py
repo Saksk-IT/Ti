@@ -5,6 +5,7 @@ import pytest
 
 from app.modules.edu_schedule.routes import api as edu_schedule_api
 from app.modules.edu_schedule.services.client import JWXTClient, ScheduleAuthError
+from app.modules.edu_schedule.services import query_tasks
 from app.modules.edu_schedule.services.schedule_service import user_safe_error
 
 
@@ -96,17 +97,30 @@ def test_grade_query_returns_actionable_webvpn_challenge_message(auth_client, mo
         raise ScheduleAuthError(challenge_message)
 
     monkeypatch.setattr(edu_schedule_api.EduScheduleService, "query_grade_terms", raise_challenge)
+    monkeypatch.setattr(
+        query_tasks.EduScheduleQueryTaskService,
+        "_start_worker",
+        staticmethod(lambda task_id: None),
+    )
 
     response = auth_client.post(
         "/api/edu-schedule/grades/query",
-        json={"terms": [{"xnm": "2025", "xqm": "3"}]},
+        json={
+            "terms": [{"xnm": "2025", "xqm": "3"}],
+            "username": "stu_demo_2026",
+            "password": "DemoSecret123!",
+        },
         headers={"X-Requested-With": "XMLHttpRequest"},
     )
 
-    assert response.status_code == 400
+    assert response.status_code == 200
     body = response.get_json()
-    assert body["status"] == "error"
-    assert body["message"] == challenge_message
+    assert body["status"] == "success"
+
+    final_state = query_tasks.EduScheduleQueryTaskService.run_task(body["data"]["task"]["task_id"])
+
+    assert final_state["status"] == "failed"
+    assert final_state["message"] == challenge_message
 
 
 def test_user_safe_error_tells_admin_to_refresh_expired_webvpn_cookie():
