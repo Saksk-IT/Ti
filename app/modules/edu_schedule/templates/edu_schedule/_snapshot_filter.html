@@ -1,0 +1,17 @@
+<aside class="snapshot-filter" id="{{ snapshot_filter_prefix }}SnapshotFilter" aria-label="已查询{{ snapshot_filter_label }}筛选">
+  <div class="snapshot-filter-head">
+    <strong>已查询{{ snapshot_filter_label }}</strong>
+    <span id="{{ snapshot_filter_prefix }}SnapshotCount">暂无记录</span>
+  </div>
+  <button type="button" class="ghost-btn snapshot-filter-reset" id="{{ snapshot_filter_prefix }}SnapshotAll" disabled>查看全部</button>
+  <div class="snapshot-year-list" id="{{ snapshot_filter_prefix }}SnapshotYearList" aria-label="选择学年">
+    <button type="button" class="snapshot-year-button" disabled>暂无记录</button>
+  </div>
+  <div class="snapshot-term-drawer" id="{{ snapshot_filter_prefix }}SnapshotTermDrawer" hidden>
+    <div class="snapshot-term-drawer-head">
+      <span id="{{ snapshot_filter_prefix }}SnapshotDrawerTitle">选择学期</span>
+      <button type="button" id="{{ snapshot_filter_prefix }}SnapshotDrawerClose" aria-label="关闭学期选择">×</button>
+    </div>
+    <div class="snapshot-term-list" id="{{ snapshot_filter_prefix }}SnapshotTermList" aria-label="选择学期"></div>
+  </div>
+</aside>

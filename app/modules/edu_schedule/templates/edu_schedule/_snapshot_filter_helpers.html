@@ -1,0 +1,248 @@
+  function resultTerm(item) {
+    return (item && item.term) || {};
+  }
+
+  function termYearValue(item) {
+    return String(resultTerm(item).xnm || '').trim();
+  }
+
+  function termSemesterValue(item) {
+    return String(resultTerm(item).xqm || '').trim();
+  }
+
+  function termYearLabel(item) {
+    const xnm = termYearValue(item);
+    const term = resultTerm(item);
+    if (term.year_name) return String(term.year_name);
+    return xnm && /^\d+$/.test(xnm) ? (xnm + '-' + (Number(xnm) + 1)) : (xnm || '未知学年');
+  }
+
+  function termSemesterLabel(item) {
+    const xqm = termSemesterValue(item);
+    const labels = { '3': '第一学期', '12': '第二学期', '16': '第三学期' };
+    return labels[xqm] || String(resultTerm(item).term_name || xqm || '未知学期');
+  }
+
+  function termKey(item) {
+    return termYearValue(item) + ':' + termSemesterValue(item);
+  }
+
+  function semesterRank(value) {
+    return { '3': 1, '12': 2, '16': 3 }[String(value)] || 99;
+  }
+
+  function sortResultItems(items) {
+    return items.slice().sort(function (left, right) {
+      const leftYear = Number(termYearValue(left));
+      const rightYear = Number(termYearValue(right));
+      if (Number.isFinite(leftYear) && Number.isFinite(rightYear) && leftYear !== rightYear) {
+        return rightYear - leftYear;
+      }
+      return semesterRank(termSemesterValue(left)) - semesterRank(termSemesterValue(right));
+    });
+  }
+
+  function normalizeResultItems(items) {
+    return (items || []).filter(function (item) {
+      return item && termYearValue(item) && termSemesterValue(item);
+    });
+  }
+
+  function optionList(items, valueGetter, labelGetter, sorter) {
+    const optionMap = new Map();
+    items.forEach(function (item) {
+      const value = valueGetter(item);
+      if (!value || optionMap.has(value)) return;
+      optionMap.set(value, { value: value, label: labelGetter(item) });
+    });
+    return Array.from(optionMap.values()).sort(sorter);
+  }
+
+  function yearOptions() {
+    return optionList(
+      snapshotResultItems,
+      termYearValue,
+      termYearLabel,
+      function (left, right) { return Number(right.value) - Number(left.value); }
+    );
+  }
+
+  function termOptionsForYear(yearValue) {
+    return optionList(
+      snapshotResultItems.filter(function (item) { return termYearValue(item) === yearValue; }),
+      termSemesterValue,
+      termSemesterLabel,
+      function (left, right) { return semesterRank(left.value) - semesterRank(right.value); }
+    );
+  }
+
+  function hasYear(value) {
+    return yearOptions().some(function (option) { return option.value === value; });
+  }
+
+  function hasSemester(yearValue, semesterValue) {
+    return termOptionsForYear(yearValue).some(function (option) { return option.value === semesterValue; });
+  }
+
+  function selectedSnapshotItems() {
+    return snapshotResultItems.filter(function (item) {
+      const yearMatches = selectedSnapshotYear === 'all' || termYearValue(item) === selectedSnapshotYear;
+      const semesterMatches = selectedSnapshotSemester === 'all' || termSemesterValue(item) === selectedSnapshotSemester;
+      return yearMatches && semesterMatches;
+    });
+  }
+
+  function renderSnapshotEmpty() {
+    const empty = document.createElement('div');
+    empty.className = 'snapshot-empty';
+    empty.textContent = snapshotResultItems.length
+      ? ('暂无符合条件的' + resultKindLabel + '记录')
+      : ('暂无已查询' + resultKindLabel + '记录');
+    results.replaceChildren(empty);
+  }
+
+  function updateSnapshotCount(visibleCount) {
+    if (!snapshotResultItems.length) {
+      snapshotFilterCount.textContent = '暂无记录';
+      return;
+    }
+    snapshotFilterCount.textContent = visibleCount + '/' + snapshotResultItems.length + ' 个学期';
+  }
+
+  function createButton(className, text) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = className;
+    button.textContent = text;
+    return button;
+  }
+
+  function renderEmptyYearButton() {
+    const button = createButton('snapshot-year-button', '暂无记录');
+    button.disabled = true;
+    snapshotFilterYearList.replaceChildren(button);
+  }
+
+  function renderYearButtons() {
+    const options = yearOptions();
+    if (!options.length) {
+      renderEmptyYearButton();
+      return;
+    }
+    const buttons = options.map(function (option) {
+      const button = createButton(
+        selectedSnapshotYear === option.value ? 'snapshot-year-button active' : 'snapshot-year-button',
+        ''
+      );
+      const label = document.createElement('span');
+      label.textContent = option.label;
+      const count = document.createElement('span');
+      count.className = 'snapshot-year-count';
+      count.textContent = termOptionsForYear(option.value).length + ' 学期';
+      button.append(label, count);
+      button.addEventListener('click', function () {
+        selectedSnapshotYear = option.value;
+        selectedSnapshotSemester = 'all';
+        renderSnapshotControls();
+        applySnapshotFilter();
+      });
+      return button;
+    });
+    snapshotFilterYearList.replaceChildren(...buttons);
+  }
+
+  function renderTermDrawer() {
+    if (selectedSnapshotYear === 'all') {
+      snapshotTermDrawer.hidden = true;
+      snapshotTermList.replaceChildren();
+      return;
+    }
+    const selectedYearLabel = (yearOptions().find(function (option) {
+      return option.value === selectedSnapshotYear;
+    }) || {}).label || '选择学期';
+    snapshotDrawerTitle.textContent = selectedYearLabel + ' 学期';
+    const termOptions = termOptionsForYear(selectedSnapshotYear);
+    const allButton = createButton(
+      selectedSnapshotSemester === 'all' ? 'snapshot-term-button active' : 'snapshot-term-button',
+      '全部学期'
+    );
+    allButton.addEventListener('click', function () {
+      selectedSnapshotSemester = 'all';
+      renderSnapshotControls();
+      applySnapshotFilter();
+    });
+    const buttons = termOptions.map(function (option) {
+      const button = createButton(
+        selectedSnapshotSemester === option.value ? 'snapshot-term-button active' : 'snapshot-term-button',
+        option.label
+      );
+      button.addEventListener('click', function () {
+        selectedSnapshotSemester = option.value;
+        renderSnapshotControls();
+        applySnapshotFilter();
+      });
+      return button;
+    });
+    snapshotTermDrawer.hidden = false;
+    snapshotTermList.replaceChildren(allButton, ...buttons);
+  }
+
+  function normalizeSelection() {
+    if (selectedSnapshotYear !== 'all' && !hasYear(selectedSnapshotYear)) {
+      selectedSnapshotYear = 'all';
+      selectedSnapshotSemester = 'all';
+      return;
+    }
+    if (
+      selectedSnapshotYear === 'all' ||
+      (selectedSnapshotSemester !== 'all' && !hasSemester(selectedSnapshotYear, selectedSnapshotSemester))
+    ) {
+      selectedSnapshotSemester = 'all';
+    }
+  }
+
+  function renderSnapshotControls() {
+    normalizeSelection();
+    snapshotFilterAll.disabled = snapshotResultItems.length === 0;
+    snapshotFilterAll.classList.toggle('active', selectedSnapshotYear === 'all' && selectedSnapshotSemester === 'all');
+    renderYearButtons();
+    renderTermDrawer();
+  }
+
+  function resetSnapshotFilter() {
+    selectedSnapshotYear = 'all';
+    selectedSnapshotSemester = 'all';
+    renderSnapshotControls();
+    applySnapshotFilter();
+  }
+
+  function applySnapshotFilter() {
+    const visibleItems = selectedSnapshotItems();
+    updateSnapshotCount(visibleItems.length);
+    if (!visibleItems.length) {
+      renderSnapshotEmpty();
+      return;
+    }
+    renderResultList(visibleItems);
+  }
+
+  function renderResults(items) {
+    const incomingItems = normalizeResultItems(items);
+    const mergedItems = new Map(snapshotResultItems.map(function (item) {
+      return [termKey(item), item];
+    }));
+    incomingItems.forEach(function (item) {
+      mergedItems.set(termKey(item), item);
+    });
+    snapshotResultItems = sortResultItems(Array.from(mergedItems.values()));
+    renderSnapshotControls();
+    applySnapshotFilter();
+  }
+
+  snapshotFilterAll.addEventListener('click', resetSnapshotFilter);
+  snapshotDrawerClose.addEventListener('click', function () {
+    selectedSnapshotYear = 'all';
+    selectedSnapshotSemester = 'all';
+    renderSnapshotControls();
+    applySnapshotFilter();
+  });

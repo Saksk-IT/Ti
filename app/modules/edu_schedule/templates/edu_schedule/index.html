@@ -5,71 +5,78 @@
 
 {% block content %}
 <section class="schedule-page">
-  <div class="schedule-toolbar">
-    <form id="scheduleForm" class="schedule-form" autocomplete="off">
-      <div class="field-group term-fields">
-        <label>
-          <span>学年</span>
-          <select id="scheduleAcademicYear">
-            {% for option in academic_year_options %}
-            <option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.label }}</option>
-            {% endfor %}
-          </select>
-        </label>
-        <label>
-          <span>学期</span>
-          <select id="scheduleSemester">
-            <option value="all">第一、二学期</option>
-            <option value="3">第一学期</option>
-            <option value="12" selected>第二学期</option>
-          </select>
-        </label>
-      </div>
+  <div class="schedule-content">
+    <div class="schedule-toolbar">
+      <form id="scheduleForm" class="schedule-form" autocomplete="off">
+        <div class="field-group term-fields">
+          <label>
+            <span>学年</span>
+            <select id="scheduleAcademicYear">
+              {% for option in academic_year_options %}
+              <option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>
+            <span>学期</span>
+            <select id="scheduleSemester">
+              <option value="all">第一、二学期</option>
+              <option value="3">第一学期</option>
+              <option value="12" selected>第二学期</option>
+            </select>
+          </label>
+        </div>
 
-      <div class="schedule-actions">
-        <button class="primary-btn" type="submit" id="scheduleSubmit">查询</button>
-        <a class="ghost-btn" href="/settings/account/bindings">账号绑定</a>
-      </div>
-    </form>
-  </div>
+        <div class="schedule-actions">
+          <button class="primary-btn" type="submit" id="scheduleSubmit">查询</button>
+          <a class="ghost-btn" href="/settings/account/bindings">账号绑定</a>
+        </div>
+      </form>
+    </div>
 
-  <div class="schedule-state" id="scheduleState" role="status"></div>
-  <div class="query-progress" id="scheduleQueryProgress" hidden>
-    <div class="query-progress-head">
-      <strong>查询进度</strong>
-      <span class="query-progress-status" id="scheduleQueryProgressStatus">等待提交</span>
+    <div class="schedule-state" id="scheduleState" role="status"></div>
+    <div class="query-progress" id="scheduleQueryProgress" hidden>
+      <div class="query-progress-head">
+        <strong>查询进度</strong>
+        <span class="query-progress-status" id="scheduleQueryProgressStatus">等待提交</span>
+      </div>
+      <div class="query-progress-bar" id="scheduleQueryProgressBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <span class="query-progress-fill" id="scheduleQueryProgressFill"></span>
+      </div>
+      <div class="query-progress-foot">
+        <span id="scheduleQueryProgressDetail">尚未提交查询</span>
+        <span id="scheduleQueryProgressMeta"></span>
+      </div>
     </div>
-    <div class="query-progress-bar" id="scheduleQueryProgressBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-      <span class="query-progress-fill" id="scheduleQueryProgressFill"></span>
-    </div>
-    <div class="query-progress-foot">
-      <span id="scheduleQueryProgressDetail">尚未提交查询</span>
-      <span id="scheduleQueryProgressMeta"></span>
+    <div class="webvpn-captcha-overlay" id="webvpnCaptchaDialog" role="dialog" aria-modal="true" aria-labelledby="webvpnCaptchaTitle" hidden>
+      <div class="webvpn-captcha-modal">
+        <div class="webvpn-captcha-head">
+          <h2 id="webvpnCaptchaTitle">刷新校园网络登录态</h2>
+          <button type="button" class="webvpn-captcha-close" id="closeWebvpnCaptcha" aria-label="关闭">×</button>
+        </div>
+        <div class="webvpn-captcha-body">
+          <p id="webvpnCaptchaMessage">WebVPN 登录态失效，请输入验证码后继续查询。</p>
+          <img id="webvpnCaptchaImage" class="webvpn-captcha-image" alt="WebVPN 验证码">
+          <input type="text" id="webvpnCaptchaCode" class="webvpn-captcha-input" placeholder="输入验证码" maxlength="10" autocomplete="off">
+        </div>
+        <div class="webvpn-captcha-actions">
+          <button type="button" class="ghost-btn" id="cancelWebvpnCaptcha">取消</button>
+          <button type="button" class="primary-btn" id="submitWebvpnCaptcha">提交并继续查询</button>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="webvpn-captcha-overlay" id="webvpnCaptchaDialog" role="dialog" aria-modal="true" aria-labelledby="webvpnCaptchaTitle" hidden>
-    <div class="webvpn-captcha-modal">
-      <div class="webvpn-captcha-head">
-        <h2 id="webvpnCaptchaTitle">刷新校园网络登录态</h2>
-        <button type="button" class="webvpn-captcha-close" id="closeWebvpnCaptcha" aria-label="关闭">×</button>
-      </div>
-      <div class="webvpn-captcha-body">
-        <p id="webvpnCaptchaMessage">WebVPN 登录态失效，请输入验证码后继续查询。</p>
-        <img id="webvpnCaptchaImage" class="webvpn-captcha-image" alt="WebVPN 验证码">
-        <input type="text" id="webvpnCaptchaCode" class="webvpn-captcha-input" placeholder="输入验证码" maxlength="10" autocomplete="off">
-      </div>
-      <div class="webvpn-captcha-actions">
-        <button type="button" class="ghost-btn" id="cancelWebvpnCaptcha">取消</button>
-        <button type="button" class="primary-btn" id="submitWebvpnCaptcha">提交并继续查询</button>
-      </div>
-    </div>
+  <div class="schedule-result-layout" id="scheduleResultLayout">
+    {% set snapshot_filter_prefix = "schedule" %}
+    {% set snapshot_filter_label = "课表" %}
+    {% include "edu_schedule/_snapshot_filter.html" %}
+    <div class="schedule-results" id="scheduleResults"></div>
   </div>
-  <div class="schedule-results" id="scheduleResults"></div>
 </section>
 
 <style>
   .schedule-page {
-    width: min(1180px, calc(100vw - 32px));
+    width: min(1180px, 100%);
     margin: 0 auto;
     padding: 24px 0 44px;
     display: grid;
@@ -150,6 +157,7 @@
   .schedule-results {
     display: grid;
     gap: 18px;
+    min-width: 0;
   }
   .webvpn-captcha-overlay {
     position: fixed;
@@ -324,7 +332,7 @@
   }
   @media (max-width: 640px) {
     .schedule-page {
-      width: min(100vw - 20px, 1180px);
+      width: 100%;
       padding-top: 12px;
     }
     .schedule-toolbar {
@@ -340,6 +348,7 @@
   }
 </style>
 {% include "edu_schedule/_query_progress_styles.html" %}
+{% include "edu_schedule/_snapshot_filter_styles.html" %}
 {% endblock %}
 
 {% block body_end %}
@@ -357,6 +366,13 @@
   const queryProgressFill = document.getElementById('scheduleQueryProgressFill');
   const queryProgressDetail = document.getElementById('scheduleQueryProgressDetail');
   const queryProgressMeta = document.getElementById('scheduleQueryProgressMeta');
+  const snapshotFilterCount = document.getElementById('scheduleSnapshotCount');
+  const snapshotFilterAll = document.getElementById('scheduleSnapshotAll');
+  const snapshotFilterYearList = document.getElementById('scheduleSnapshotYearList');
+  const snapshotTermDrawer = document.getElementById('scheduleSnapshotTermDrawer');
+  const snapshotTermList = document.getElementById('scheduleSnapshotTermList');
+  const snapshotDrawerTitle = document.getElementById('scheduleSnapshotDrawerTitle');
+  const snapshotDrawerClose = document.getElementById('scheduleSnapshotDrawerClose');
   const webvpnCaptchaDialog = document.getElementById('webvpnCaptchaDialog');
   const webvpnCaptchaImage = document.getElementById('webvpnCaptchaImage');
   const webvpnCaptchaCode = document.getElementById('webvpnCaptchaCode');
@@ -371,7 +387,11 @@
   let activeTaskTimer = null;
   const queryKindLabel = '课表';
   const queryReplaceConfirmMessage = '发起本次查询会停止上次的课表查询，确定继续吗？';
+  const resultKindLabel = '课表';
   let activeQueryTask = null;
+  let snapshotResultItems = [];
+  let selectedSnapshotYear = 'all';
+  let selectedSnapshotSemester = 'all';
 
   function setState(text, type) {
     state.textContent = text || '';
@@ -532,12 +552,14 @@
     return panel;
   }
 
-  function renderResults(items) {
+  function renderResultList(items) {
     results.replaceChildren();
     (items || []).forEach(function (item) {
       results.appendChild(renderResult(item));
     });
   }
+
+{% include "edu_schedule/_snapshot_filter_helpers.html" %}
 
   function stopTaskPolling() {
     if (activeTaskTimer) {

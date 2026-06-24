@@ -367,6 +367,39 @@ def test_campus_pages_expose_persistent_query_progress(auth_client):
     assert "查询进度" in grade_html
 
 
+def test_campus_pages_expose_snapshot_term_filter(auth_client):
+    schedule_page = auth_client.get("/edu-schedule")
+    grades_page = auth_client.get("/edu-grades")
+
+    assert schedule_page.status_code == 200
+    assert grades_page.status_code == 200
+
+    schedule_html = schedule_page.get_data(as_text=True)
+    grade_html = grades_page.get_data(as_text=True)
+
+    assert "scheduleResultLayout" in schedule_html
+    assert "scheduleSnapshotFilter" in schedule_html
+    assert "scheduleSnapshotYearList" in schedule_html
+    assert "scheduleSnapshotTermDrawer" in schedule_html
+    assert "scheduleSnapshotTermList" in schedule_html
+    assert '<select id="scheduleSnapshotYear"' not in schedule_html
+    assert '<select id="scheduleSnapshotSemester"' not in schedule_html
+    assert "已查询课表" in schedule_html
+    assert "applySnapshotFilter" in schedule_html
+    assert "snapshot-year-button" in schedule_html
+
+    assert "gradeResultLayout" in grade_html
+    assert "gradeSnapshotFilter" in grade_html
+    assert "gradeSnapshotYearList" in grade_html
+    assert "gradeSnapshotTermDrawer" in grade_html
+    assert "gradeSnapshotTermList" in grade_html
+    assert '<select id="gradeSnapshotYear"' not in grade_html
+    assert '<select id="gradeSnapshotSemester"' not in grade_html
+    assert "已查询成绩" in grade_html
+    assert "applySnapshotFilter" in grade_html
+    assert "snapshot-term-drawer" in grade_html
+
+
 def test_campus_pages_confirm_before_replacing_active_query(auth_client):
     schedule_page = auth_client.get("/edu-schedule")
     grades_page = auth_client.get("/edu-grades")

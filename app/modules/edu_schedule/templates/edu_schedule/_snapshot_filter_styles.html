@@ -1,0 +1,145 @@
+<style>
+  .schedule-content,
+  .grade-content {
+    width: min(1180px, 100%);
+    margin: 0 auto;
+    display: grid;
+    gap: 18px;
+  }
+  .schedule-result-layout,
+  .grade-result-layout {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+  }
+  .snapshot-filter {
+    border: 1px solid var(--app-border);
+    border-radius: 8px;
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow-soft);
+    padding: 14px;
+    display: grid;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .snapshot-filter-head {
+    display: grid;
+    gap: 4px;
+  }
+  .snapshot-filter-head strong {
+    font-size: 15px;
+    font-weight: 900;
+  }
+  .snapshot-filter-head span {
+    color: var(--app-muted);
+    font-size: 12px;
+  }
+  .snapshot-filter-reset {
+    width: 100%;
+  }
+  .snapshot-filter-reset.active {
+    border-color: var(--app-primary);
+    background: var(--app-primary-soft);
+  }
+  .snapshot-year-list,
+  .snapshot-term-list {
+    display: grid;
+    gap: 8px;
+  }
+  .snapshot-year-button,
+  .snapshot-term-button {
+    width: 100%;
+    min-height: 38px;
+    border: 1px solid var(--app-border);
+    border-radius: 8px;
+    padding: 0 10px;
+    background: var(--app-surface-2);
+    color: var(--app-text);
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    text-align: left;
+  }
+  .snapshot-year-button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .snapshot-year-button[disabled],
+  .snapshot-term-button[disabled] {
+    cursor: not-allowed;
+    color: var(--app-muted);
+  }
+  .snapshot-year-button.active,
+  .snapshot-term-button.active {
+    border-color: var(--app-primary);
+    background: var(--app-primary);
+    color: var(--app-primary-contrast);
+  }
+  .snapshot-year-count {
+    color: inherit;
+    font-size: 12px;
+    opacity: 0.78;
+  }
+  .snapshot-term-drawer {
+    border-top: 1px solid var(--app-border);
+    padding-top: 12px;
+    display: grid;
+    gap: 10px;
+  }
+  .snapshot-term-drawer[hidden] {
+    display: none;
+  }
+  .snapshot-term-drawer-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    color: var(--app-muted);
+    font-size: 12px;
+    font-weight: 900;
+  }
+  .snapshot-term-drawer-head button {
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--app-border);
+    border-radius: 8px;
+    background: var(--app-surface-2);
+    color: var(--app-text);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+  }
+  .snapshot-empty {
+    border: 1px solid var(--app-border);
+    border-radius: 8px;
+    background: var(--app-surface);
+    color: var(--app-muted);
+    padding: 28px 16px;
+    text-align: center;
+    box-shadow: var(--app-shadow-soft);
+  }
+  @media (min-width: 1860px) {
+    .snapshot-filter {
+      position: absolute;
+      top: 0;
+      right: calc(100% + 18px);
+      width: 220px;
+      max-height: calc(100vh - var(--app-topbar-h) - 36px);
+      overflow: auto;
+      margin-bottom: 0;
+    }
+  }
+  @media (max-width: 1859px) {
+    .snapshot-year-list {
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    }
+  }
+  @media (max-width: 640px) {
+    .schedule-content,
+    .grade-content {
+      gap: 14px;
+    }
+  }
+</style>
