@@ -3,11 +3,16 @@
 
 from __future__ import annotations
 
+import concurrent.futures
 import json
+import secrets
+import threading
+import time
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from app.core.extensions import db
 from app.core.utils.credential_crypto import decrypt_secret, encrypt_secret
+from app.core.utils.redis_utils import get_redis_connection
 from app.models.edu_schedule import EduGradeSnapshot, EduScheduleCredential, EduScheduleSnapshot
 from app.modules.admin.services.system_config_service import SystemConfigService
 
@@ -19,6 +24,28 @@ from .client import (
 )
 from .grade_parser import normalize_grade_payload
 from .parser import normalize_schedule_payload
+
+
+_EDU_UPSTREAM_TASK_CONCURRENCY = 5
+_EDU_UPSTREAM_GLOBAL_CONCURRENCY = 20
+_EDU_UPSTREAM_SEMAPHORE = threading.BoundedSemaphore(_EDU_UPSTREAM_GLOBAL_CONCURRENCY)
+_EDU_UPSTREAM_REDIS_KEY = "edu_schedule:upstream_slots"
+_EDU_UPSTREAM_REDIS_TTL_SECONDS = 120
+_EDU_UPSTREAM_SLOT_WAIT_SECONDS = 0.05
+_EDU_UPSTREAM_ACQUIRE_SCRIPT = """
+local key = KEYS[1]
+local limit = tonumber(ARGV[1])
+local ttl = tonumber(ARGV[2])
+local token = ARGV[3]
+local now = tonumber(ARGV[4])
+redis.call('ZREMRANGEBYSCORE', key, '-inf', now - ttl)
+if redis.call('ZCARD', key) < limit then
+  redis.call('ZADD', key, now, token)
+  redis.call('EXPIRE', key, ttl)
+  return 1
+end
+return 0
+"""
 
 
 class EduScheduleError(RuntimeError):
@@ -78,6 +105,75 @@ class EduScheduleService:
         )
 
     @staticmethod
+    def _run_with_global_upstream_slot(fetch_once):
+        redis_conn = get_redis_connection()
+        if redis_conn is not None:
+            token = secrets.token_urlsafe(18)
+            acquired = False
+            try:
+                while not acquired:
+                    raw_acquired = redis_conn.eval(
+                        _EDU_UPSTREAM_ACQUIRE_SCRIPT,
+                        1,
+                        _EDU_UPSTREAM_REDIS_KEY,
+                        _EDU_UPSTREAM_GLOBAL_CONCURRENCY,
+                        _EDU_UPSTREAM_REDIS_TTL_SECONDS,
+                        token,
+                        time.time(),
+                    )
+                    acquired = int(raw_acquired or 0) == 1
+                    if not acquired:
+                        time.sleep(_EDU_UPSTREAM_SLOT_WAIT_SECONDS)
+                return fetch_once()
+            except Exception:
+                if acquired:
+                    raise
+            finally:
+                if acquired:
+                    try:
+                        redis_conn.zrem(_EDU_UPSTREAM_REDIS_KEY, token)
+                    except Exception:
+                        pass
+
+        _EDU_UPSTREAM_SEMAPHORE.acquire()
+        try:
+            return fetch_once()
+        finally:
+            _EDU_UPSTREAM_SEMAPHORE.release()
+
+    @staticmethod
+    def _select_hedged_error(errors: List[Exception]) -> Exception:
+        for exc in errors:
+            if isinstance(exc, ScheduleAuthError):
+                return exc
+        return errors[-1] if errors else ScheduleClientError("教务查询失败，请稍后重试")
+
+    @staticmethod
+    def _fetch_first_success(fetch_once):
+        worker_count = max(1, min(_EDU_UPSTREAM_TASK_CONCURRENCY, _EDU_UPSTREAM_GLOBAL_CONCURRENCY))
+        executor = concurrent.futures.ThreadPoolExecutor(
+            max_workers=worker_count,
+            thread_name_prefix="edu-upstream",
+        )
+        futures = [
+            executor.submit(EduScheduleService._run_with_global_upstream_slot, fetch_once)
+            for _ in range(worker_count)
+        ]
+        errors: List[Exception] = []
+        try:
+            for future in concurrent.futures.as_completed(futures):
+                try:
+                    return future.result()
+                except Exception as exc:
+                    errors.append(exc)
+            raise EduScheduleService._select_hedged_error(errors)
+        finally:
+            for future in futures:
+                if not future.done():
+                    future.cancel()
+            executor.shutdown(wait=False, cancel_futures=True)
+
+    @staticmethod
     def query_terms(
         user_id: int,
         terms: Iterable[Dict[str, str]],
@@ -98,12 +194,15 @@ class EduScheduleService:
         else:
             account, secret = EduScheduleService._load_credentials(user_id)
 
-        client = JWXTClient(cfg)
         results: List[Dict[str, Any]] = []
         for term in terms:
-            raw_payload = client.fetch_schedule(account, secret, str(term["xnm"]), str(term["xqm"]))
+            xnm = str(term["xnm"])
+            xqm = str(term["xqm"])
+            raw_payload = EduScheduleService._fetch_first_success(
+                lambda xnm=xnm, xqm=xqm: JWXTClient(cfg).fetch_schedule(account, secret, xnm, xqm)
+            )
             normalized = normalize_schedule_payload(raw_payload)
-            EduScheduleService._save_snapshot(int(user_id), str(term["xnm"]), str(term["xqm"]), normalized, raw_payload)
+            EduScheduleService._save_snapshot(int(user_id), xnm, xqm, normalized, raw_payload)
             results.append(normalized)
 
         return {
@@ -132,15 +231,18 @@ class EduScheduleService:
         else:
             account, secret = EduScheduleService._load_credentials(user_id)
 
-        client = JWXTClient(cfg)
         results: List[Dict[str, Any]] = []
         for term in terms:
-            raw_payload = client.fetch_grades(account, secret, str(term["xnm"]), str(term["xqm"]))
-            normalized = normalize_grade_payload(raw_payload, str(term["xnm"]), str(term["xqm"]))
+            xnm = str(term["xnm"])
+            xqm = str(term["xqm"])
+            raw_payload = EduScheduleService._fetch_first_success(
+                lambda xnm=xnm, xqm=xqm: JWXTClient(cfg).fetch_grades(account, secret, xnm, xqm)
+            )
+            normalized = normalize_grade_payload(raw_payload, xnm, xqm)
             EduScheduleService._save_grade_snapshot(
                 int(user_id),
-                str(term["xnm"]),
-                str(term["xqm"]),
+                xnm,
+                xqm,
                 normalized,
                 raw_payload,
             )

@@ -2,6 +2,8 @@
 """教务课表查询功能测试。"""
 
 import json
+import threading
+import time
 from pathlib import Path
 
 from sqlalchemy import text
@@ -888,7 +890,7 @@ def test_background_schedule_task_retries_until_upstream_success(app, seed_user,
 
         def fetch_schedule(self, username, password, xnm, xqm):
             attempts.append((username, password, xnm, xqm))
-            if len(attempts) <= 3:
+            if len(attempts) <= 15:
                 raise ReadTimeout("upstream busy")
             return _sample_schedule_payload(xnm=xnm, xqm=xqm)
 
@@ -922,12 +924,165 @@ def test_background_schedule_task_retries_until_upstream_success(app, seed_user,
     )
     final_state = query_tasks.EduScheduleQueryTaskService.run_task(task["task_id"])
 
-    assert len(attempts) == 4
+    assert len(attempts) >= 16
     assert final_state["status"] == "succeeded"
     assert final_state["attempt"] == 4
     assert final_state["max_attempts"] is None
     assert final_state["snapshots"][0]["payload"]["term"]["xnm"] == "2028"
     assert final_state["results"][0]["term"]["xnm"] == "2028"
+
+
+def test_schedule_task_uses_five_concurrent_hedged_requests(app, seed_user, monkeypatch):
+    from requests.exceptions import ReadTimeout
+
+    from app.modules.admin.services.system_config_service import SystemConfigService
+    from app.modules.edu_schedule.services import query_tasks, schedule_service
+    from app.modules.edu_schedule.services.schedule_service import EduScheduleService
+
+    lock = threading.Lock()
+    stats = {"active": 0, "max_active": 0, "calls": 0}
+
+    class HedgedJWXTClient:
+        def __init__(self, config):
+            self.config = config
+
+        def fetch_schedule(self, username, password, xnm, xqm):
+            with lock:
+                stats["calls"] += 1
+                call_number = stats["calls"]
+                stats["active"] += 1
+                stats["max_active"] = max(stats["max_active"], stats["active"])
+            try:
+                time.sleep(0.05)
+                if call_number < 5:
+                    raise ReadTimeout("upstream busy")
+                return _sample_schedule_payload(xnm=xnm, xqm=xqm)
+            finally:
+                with lock:
+                    stats["active"] -= 1
+
+    monkeypatch.setattr(schedule_service, "JWXTClient", HedgedJWXTClient)
+    monkeypatch.setattr(query_tasks, "_QUERY_TASK_BACKOFF_SECONDS", (0,))
+    monkeypatch.setattr(query_tasks, "_sleep", lambda seconds: None)
+
+    user_id = int(seed_user["id"])
+    with app.app_context():
+        SystemConfigService.save_edu_schedule_config(
+            {
+                "enabled": True,
+                "use_webvpn": False,
+                "jwxt_base_url": "https://jwxt.webvpn.synu.edu.cn/jwglxt",
+                "request_timeout": 20,
+                "verify_tls": True,
+                "store_user_credentials": True,
+            },
+            admin_id=1,
+        )
+        EduScheduleService.save_credentials(user_id, "stu_demo_2026", "DemoSecret123!")
+
+    task = query_tasks.EduScheduleQueryTaskService.enqueue(
+        "schedule",
+        user_id,
+        [{"xnm": "2032", "xqm": "12"}],
+        autostart=False,
+    )
+    final_state = query_tasks.EduScheduleQueryTaskService.run_task(task["task_id"])
+
+    assert final_state["status"] == "succeeded"
+    assert final_state["attempt"] == 1
+    assert stats["calls"] == 5
+    assert stats["max_active"] == 5
+
+
+def test_schedule_query_caps_global_upstream_concurrency_at_twenty(monkeypatch):
+    from app.modules.edu_schedule.services import schedule_service
+
+    lock = threading.Lock()
+    twenty_started = threading.Event()
+    stats = {"active": 0, "max_active": 0, "started": 0}
+
+    class SlowJWXTClient:
+        def __init__(self, config):
+            self.config = config
+
+        def fetch_schedule(self, username, password, xnm, xqm):
+            with lock:
+                stats["active"] += 1
+                stats["started"] += 1
+                stats["max_active"] = max(stats["max_active"], stats["active"])
+                if stats["started"] >= 20:
+                    twenty_started.set()
+            try:
+                twenty_started.wait(timeout=0.2)
+                time.sleep(0.02)
+                return _sample_schedule_payload(xnm=xnm, xqm=xqm)
+            finally:
+                with lock:
+                    stats["active"] -= 1
+
+    monkeypatch.setattr(schedule_service, "JWXTClient", SlowJWXTClient)
+    monkeypatch.setattr(
+        schedule_service.SystemConfigService,
+        "get_edu_schedule_config",
+        staticmethod(lambda: {"enabled": True, "use_webvpn": False}),
+    )
+    monkeypatch.setattr(
+        schedule_service.EduScheduleService,
+        "_save_snapshot",
+        staticmethod(lambda *args, **kwargs: None),
+    )
+    monkeypatch.setattr(
+        schedule_service.EduScheduleService,
+        "credential_status",
+        staticmethod(lambda user_id: {"has_credentials": True, "username_hint": "stu***026"}),
+    )
+
+    errors = []
+
+    def worker(index):
+        try:
+            schedule_service.EduScheduleService.query_terms(
+                1000 + index,
+                [{"xnm": "2033", "xqm": "12"}],
+                username="stu_demo_2026",
+                password="DemoSecret123!",
+            )
+        except Exception as exc:
+            errors.append(exc)
+
+    threads = [threading.Thread(target=worker, args=(index,)) for index in range(5)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=2)
+
+    assert not [thread for thread in threads if thread.is_alive()]
+    assert errors == []
+    assert stats["max_active"] == 20
+
+
+def test_schedule_upstream_slot_uses_redis_when_available(monkeypatch):
+    from app.modules.edu_schedule.services import schedule_service
+
+    events = []
+
+    class FakeRedis:
+        def eval(self, script, key_count, key, limit, ttl, token, now):
+            events.append(("eval", key_count, key, int(limit), int(ttl), bool(token), float(now) > 0))
+            return 1
+
+        def zrem(self, key, token):
+            events.append(("zrem", key, bool(token)))
+            return 1
+
+    monkeypatch.setattr(schedule_service, "get_redis_connection", lambda: FakeRedis())
+
+    result = schedule_service.EduScheduleService._run_with_global_upstream_slot(lambda: "ok")
+
+    assert result == "ok"
+    assert events[0][0] == "eval"
+    assert events[0][3] == 20
+    assert events[-1][0] == "zrem"
 
 
 def test_webvpn_refresh_service_uses_temp_cookie_and_saves_refreshed_cookie(app, monkeypatch):
