@@ -43,6 +43,7 @@ _BLOCKED_NETWORKS = tuple(
 
 _DEFAULT_GRADE_PATH = "/cjcx/cjcx_cxDgXscj.html?doType=query&gnmkdm=N305005"
 _LEGACY_GRADE_PATH = "/cjcx/cjcx_cxXsgrcj.html?doType=query&gnmkdm=N305005"
+WEBVPN_INTERACTIVE_CHALLENGE_MESSAGE = "WebVPN 登录需要验证码或二次验证，无法仅凭账号密码自动登录"
 
 
 @dataclass(frozen=True)
@@ -176,6 +177,9 @@ class JWXTClient:
 
         login_url = urljoin(self.config.webvpn_base_url + "/", self.config.webvpn_login_path.lstrip("/"))
         page = self._request(session, "GET", login_url, allow_redirects=True)
+        if _requires_webvpn_interactive_challenge(page.text):
+            raise ScheduleAuthError(WEBVPN_INTERACTIVE_CHALLENGE_MESSAGE)
+
         token = _extract_input_value(page.text, "authenticity_token")
         if not token:
             raise ScheduleAuthError("WebVPN 登录页解析失败")
@@ -190,8 +194,10 @@ class JWXTClient:
             "commit": "登录 Login",
         }
         result = self._request(session, "POST", login_url, data=data, allow_redirects=True)
-        if "用户登录" in result.text or "请输入验证码" in result.text:
-            raise ScheduleAuthError("WebVPN 登录需要验证码或账号密码校验失败")
+        if _requires_webvpn_interactive_challenge(result.text):
+            raise ScheduleAuthError(WEBVPN_INTERACTIVE_CHALLENGE_MESSAGE)
+        if "用户登录" in result.text:
+            raise ScheduleAuthError("WebVPN 账号或密码校验失败")
 
     def _login_jwxt(self, session: requests.Session, username: str, password: str) -> None:
         login_url = urljoin(self.config.jwxt_base_url.rstrip("/") + "/", self.config.jwxt_login_path.lstrip("/"))
@@ -297,6 +303,16 @@ def _extract_input_value(html_text: str, name: str) -> str:
 def _looks_logged_in(html_text: str) -> bool:
     text = html_text or ""
     return "login_slogin" not in text and ("退出" in text or "个人信息" in text or "jwglxt" in text)
+
+
+def _requires_webvpn_interactive_challenge(html_text: str) -> bool:
+    text = html_text or ""
+    return bool(
+        re.search(r'name=["\']_rucaptcha["\']', text, re.I)
+        or "请输入验证码" in text
+        or "/rucaptcha/" in text
+        or "otp_with_capcha" in text
+    )
 
 
 def _grade_path_candidates(configured_path: str) -> tuple[str, ...]:

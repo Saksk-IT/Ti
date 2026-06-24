@@ -11,7 +11,12 @@ from app.core.utils.credential_crypto import decrypt_secret, encrypt_secret
 from app.models.edu_schedule import EduGradeSnapshot, EduScheduleCredential, EduScheduleSnapshot
 from app.modules.admin.services.system_config_service import SystemConfigService
 
-from .client import JWXTClient, ScheduleAuthError, ScheduleClientError
+from .client import (
+    JWXTClient,
+    ScheduleAuthError,
+    ScheduleClientError,
+    WEBVPN_INTERACTIVE_CHALLENGE_MESSAGE,
+)
 from .grade_parser import normalize_grade_payload
 from .parser import normalize_schedule_payload
 
@@ -229,6 +234,13 @@ class EduScheduleService:
 
 def user_safe_error(exc: Exception) -> str:
     if isinstance(exc, ScheduleAuthError):
+        auth_message = str(exc).strip()
+        if auth_message == WEBVPN_INTERACTIVE_CHALLENGE_MESSAGE:
+            return WEBVPN_INTERACTIVE_CHALLENGE_MESSAGE
+        if auth_message == "教务系统账号或密码错误":
+            return "教务系统账号或密码错误，请检查绑定信息后重试"
+        if auth_message == "WebVPN 未配置可用登录态":
+            return "WebVPN 未配置可用登录态，请在后台配置有效 Cookie 或登录信息"
         return "上游登录失败，请检查授权信息后重试"
     if isinstance(exc, ScheduleClientError):
         return "教务查询失败，请稍后重试"
