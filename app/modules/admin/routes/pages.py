@@ -168,11 +168,11 @@ def admin_campus_page():
     return render_template('admin/campus/index.html')
 
 
-@admin_pages_bp.route('/campus/records/<int:credential_id>')
+@admin_pages_bp.route('/campus/records/<record_key>')
 @admin_required
-def admin_campus_record_detail_page(credential_id):
+def admin_campus_record_detail_page(record_key):
     """校园管理绑定记录详情页面"""
-    return render_template('admin/campus/record_detail.html', credential_id=credential_id)
+    return render_template('admin/campus/record_detail.html', record_key=record_key)
 
 
 @admin_pages_bp.route('/subject_permissions')

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from datetime import datetime, timezone
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
@@ -186,33 +187,65 @@ def _snapshot_base(row: Any, user: User, kind: str, payload: Dict[str, Any]) -> 
     return data
 
 
-def _latest_snapshot(model: Any, user_id: int) -> Optional[Any]:
-    return (
-        model.query.filter_by(user_id=int(user_id))
-        .order_by(model.fetched_at.desc(), model.id.desc())
-        .first()
+def _latest_credential(rows: List[EduScheduleCredential]) -> EduScheduleCredential:
+    return max(
+        rows,
+        key=lambda row: (
+            _format_time(row.updated_at) or "",
+            _format_time(row.created_at) or "",
+            int(row.id or 0),
+        ),
     )
 
 
-def _snapshot_sort_key(kind: str, row: Optional[Any]) -> Tuple[str, int, int]:
-    if row is None:
-        return ("", 0, 0)
-    fetched_at = _format_time(row.fetched_at) or ""
-    kind_weight = 1 if kind == "grades" else 0
-    return (fetched_at, kind_weight, int(row.id or 0))
+def _credential_display(credential: EduScheduleCredential) -> Dict[str, str]:
+    return {
+        "jwxt_username": _decrypt_or_error(credential.jwxt_username_ciphertext),
+        "jwxt_password": _decrypt_or_error(credential.jwxt_password_ciphertext),
+    }
 
 
-def _student_from_user_snapshots(user_id: int) -> Dict[str, str]:
-    candidates = [
-        ("schedule", _latest_snapshot(EduScheduleSnapshot, user_id)),
-        ("grades", _latest_snapshot(EduGradeSnapshot, user_id)),
-    ]
-    for kind, row in sorted(candidates, key=lambda item: _snapshot_sort_key(item[0], item[1]), reverse=True):
-        if row is None:
-            continue
-        student = _student_info(_safe_json_loads(row.payload_json))
+def _credential_group_key(credential: EduScheduleCredential) -> Tuple[str, str, str]:
+    display = _credential_display(credential)
+    username = display["jwxt_username"]
+    password = display["jwxt_password"]
+    if username == "解密失败" or password == "解密失败":
+        return ("credential", str(credential.id), "")
+    return ("secret", username, password)
+
+
+def _record_key(username: str, password: str) -> str:
+    return hashlib.sha256(f"{username}\0{password}".encode("utf-8")).hexdigest()
+
+
+def _snapshot_credential_display(row: Any) -> Optional[Dict[str, str]]:
+    username_ciphertext = getattr(row, "jwxt_username_ciphertext", None)
+    password_ciphertext = getattr(row, "jwxt_password_ciphertext", None)
+    if not username_ciphertext or not password_ciphertext:
+        return None
+    username = _decrypt_or_error(username_ciphertext)
+    password = _decrypt_or_error(password_ciphertext)
+    if username == "解密失败" or password == "解密失败":
+        return None
+    return {"jwxt_username": username, "jwxt_password": password}
+
+
+def _snapshot_item_sort_key(item: Dict[str, Any]) -> Tuple[str, int, int]:
+    kind_weight = 1 if item.get("kind") == "grades" else 0
+    return (str(item.get("fetched_at") or ""), kind_weight, int(item.get("id") or 0))
+
+
+def _student_from_snapshot_items(items: List[Dict[str, Any]]) -> Dict[str, str]:
+    for item in sorted(items, key=_snapshot_item_sort_key, reverse=True):
+        student = item.get("student") if isinstance(item.get("student"), dict) else {}
         if student.get("name"):
-            return student
+            return {
+                "name": str(student.get("name") or ""),
+                "student_no": str(student.get("student_no") or ""),
+                "class_name": str(student.get("class_name") or ""),
+                "major_name": str(student.get("major_name") or ""),
+                "college_name": str(student.get("college_name") or ""),
+            }
     return {
         "name": "未查询",
         "student_no": "",
@@ -222,38 +255,162 @@ def _student_from_user_snapshots(user_id: int) -> Dict[str, str]:
     }
 
 
-def _snapshot_count(model: Any, user_id: int) -> int:
-    return int(model.query.filter_by(user_id=int(user_id)).count())
+def _snapshot_term_key(item: Dict[str, Any]) -> Tuple[str, str]:
+    return (str(item.get("xnm") or ""), str(item.get("xqm") or ""))
 
 
-def _latest_fetched_at(user_id: int) -> Optional[str]:
-    latest_schedule = _latest_snapshot(EduScheduleSnapshot, user_id)
-    latest_grades = _latest_snapshot(EduGradeSnapshot, user_id)
-    latest = max(
-        (row for row in (latest_schedule, latest_grades) if row is not None),
-        key=lambda row: _format_time(row.fetched_at) or "",
-        default=None,
+def _snapshot_items(kind: str) -> List[Dict[str, Any]]:
+    model = _KIND_TO_MODEL[kind]
+    rows = (
+        db.session.query(model, User)
+        .join(User, User.id == model.user_id)
+        .order_by(model.fetched_at.desc(), model.id.desc())
+        .all()
     )
-    return _format_time(latest.fetched_at) if latest is not None else None
+    items: List[Dict[str, Any]] = []
+    for snapshot, user in rows:
+        credentials = _snapshot_credential_display(snapshot)
+        if credentials is None:
+            continue
+        payload = _safe_json_loads(snapshot.payload_json)
+        item = _snapshot_base(snapshot, user, kind, payload)
+        item.update(credentials)
+        item["record_key"] = _record_key(credentials["jwxt_username"], credentials["jwxt_password"])
+        items.append(item)
+    return items
 
 
-def _record_from_credential(credential: EduScheduleCredential) -> Dict[str, Any]:
-    user_id = int(credential.user_id)
-    student = _student_from_user_snapshots(user_id)
+def _merge_latest_snapshot_terms(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    merged: List[Dict[str, Any]] = []
+    seen_terms = set()
+    for item in sorted(items, key=_snapshot_item_sort_key, reverse=True):
+        term_key = _snapshot_term_key(item)
+        if term_key in seen_terms:
+            continue
+        seen_terms.add(term_key)
+        merged.append(item)
+    return merged
+
+
+def _credential_groups(rows: List[EduScheduleCredential]) -> Dict[Tuple[str, str, str], List[EduScheduleCredential]]:
+    grouped: Dict[Tuple[str, str, str], List[EduScheduleCredential]] = {}
+    for credential in rows:
+        grouped.setdefault(_credential_group_key(credential), []).append(credential)
+    return grouped
+
+
+def _detail_url(record_key: str) -> str:
+    return f"/admin/campus/records/{record_key}"
+
+
+def _record_from_snapshot_group(
+    *,
+    record_key: str,
+    jwxt_username: str,
+    jwxt_password: str,
+    schedule_items: List[Dict[str, Any]],
+    grade_items: List[Dict[str, Any]],
+    credential_id: int = 0,
+    created_at: Optional[Any] = None,
+    updated_at: Optional[Any] = None,
+) -> Dict[str, Any]:
+    all_snapshot_items = schedule_items + grade_items
+    student = _student_from_snapshot_items(all_snapshot_items)
+    latest_snapshot = max(all_snapshot_items, key=_snapshot_item_sort_key, default=None)
     return {
-        "credential_id": int(credential.id),
-        "jwxt_username": _decrypt_or_error(credential.jwxt_username_ciphertext),
-        "jwxt_password": _decrypt_or_error(credential.jwxt_password_ciphertext),
-        "username_hint": credential.username_hint or "",
+        "credential_id": int(credential_id or 0),
+        "record_key": record_key,
+        "jwxt_username": jwxt_username,
+        "jwxt_password": jwxt_password,
+        "username_hint": "",
         "student_name": student.get("name") or "未查询",
         "student": student,
-        "schedule_snapshot_count": _snapshot_count(EduScheduleSnapshot, user_id),
-        "grade_snapshot_count": _snapshot_count(EduGradeSnapshot, user_id),
-        "latest_fetched_at": _latest_fetched_at(user_id),
-        "created_at": _format_time(credential.created_at),
-        "updated_at": _format_time(credential.updated_at),
-        "detail_url": f"/admin/campus/records/{int(credential.id)}",
+        "schedule_snapshot_count": len(schedule_items),
+        "grade_snapshot_count": len(grade_items),
+        "latest_fetched_at": latest_snapshot.get("fetched_at") if latest_snapshot else None,
+        "created_at": _format_time(created_at),
+        "updated_at": _format_time(updated_at),
+        "detail_url": _detail_url(record_key),
     }
+
+
+def _record_entries_from_credentials(rows: List[EduScheduleCredential]) -> List[Dict[str, Any]]:
+    credential_groups = _credential_groups(rows)
+    snapshot_groups: Dict[str, Dict[str, Any]] = {}
+    for kind in ("schedule", "grades"):
+        for item in _snapshot_items(kind):
+            key = item["record_key"]
+            group = snapshot_groups.setdefault(
+                key,
+                {
+                    "record_key": key,
+                    "jwxt_username": item["jwxt_username"],
+                    "jwxt_password": item["jwxt_password"],
+                    "schedule": [],
+                    "grades": [],
+                },
+            )
+            group[kind].append(item)
+
+    entries: List[Dict[str, Any]] = []
+    groups_with_snapshots = set()
+    for group in snapshot_groups.values():
+        credential_group_key = ("secret", group["jwxt_username"], group["jwxt_password"])
+        credentials = credential_groups.get(credential_group_key) or []
+        credential = _latest_credential(credentials) if credentials else None
+        schedule_items = _merge_latest_snapshot_terms(group["schedule"])
+        grade_items = _merge_latest_snapshot_terms(group["grades"])
+        entries.append(
+            {
+                "record_key": group["record_key"],
+                "record": _record_from_snapshot_group(
+                    record_key=group["record_key"],
+                    jwxt_username=group["jwxt_username"],
+                    jwxt_password=group["jwxt_password"],
+                    schedule_items=schedule_items,
+                    grade_items=grade_items,
+                    credential_id=int(credential.id) if credential else 0,
+                    created_at=credential.created_at if credential else None,
+                    updated_at=credential.updated_at if credential else None,
+                ),
+                "schedule_snapshots": schedule_items,
+                "grade_snapshots": grade_items,
+            }
+        )
+        groups_with_snapshots.add(credential_group_key)
+
+    for credential_group_key, credentials in credential_groups.items():
+        if credential_group_key in groups_with_snapshots:
+            continue
+        credential = _latest_credential(credentials)
+        display = _credential_display(credential)
+        key = _record_key(display["jwxt_username"], display["jwxt_password"])
+        entries.append(
+            {
+                "record_key": key,
+                "record": _record_from_snapshot_group(
+                    record_key=key,
+                    jwxt_username=display["jwxt_username"],
+                    jwxt_password=display["jwxt_password"],
+                    schedule_items=[],
+                    grade_items=[],
+                    credential_id=int(credential.id),
+                    created_at=credential.created_at,
+                    updated_at=credential.updated_at,
+                ),
+                "schedule_snapshots": [],
+                "grade_snapshots": [],
+            }
+        )
+
+    entries.sort(
+        key=lambda entry: (
+            str(entry["record"].get("latest_fetched_at") or ""),
+            int(entry["record"].get("credential_id") or 0),
+        ),
+        reverse=True,
+    )
+    return entries
 
 
 class CampusManagementService:
@@ -306,15 +463,15 @@ class CampusManagementService:
             .order_by(EduScheduleCredential.updated_at.desc(), EduScheduleCredential.id.desc())
             .all()
         )
-        items = [
-            item
-            for item in (_record_from_credential(credential) for credential in rows)
+        items: List[Dict[str, Any]] = []
+        for entry in _record_entries_from_credentials(rows):
+            item = entry["record"]
             if _contains_any(
                 item,
                 search,
                 ("jwxt_username", "jwxt_password", "username_hint", "student_name"),
-            )
-        ]
+            ):
+                items.append(item)
         page_items, total = _paginate(items, page, size)
         return {
             "items": page_items,
@@ -356,26 +513,18 @@ class CampusManagementService:
         }
 
     @staticmethod
-    def get_record_detail(credential_id: int) -> Optional[Dict[str, Any]]:
-        credential = EduScheduleCredential.query.filter_by(id=int(credential_id)).first()
-        if credential is None:
+    def get_record_detail(record_key: str) -> Optional[Dict[str, Any]]:
+        rows = EduScheduleCredential.query.order_by(EduScheduleCredential.updated_at.desc()).all()
+        selected_entry = next(
+            (entry for entry in _record_entries_from_credentials(rows) if entry["record_key"] == str(record_key)),
+            None,
+        )
+        if selected_entry is None:
             return None
-
-        user_id = int(credential.user_id)
         return {
-            "record": _record_from_credential(credential),
-            "schedule_snapshots": CampusManagementService.list_snapshots(
-                "schedule",
-                user_id=user_id,
-                page=1,
-                size=100,
-            )["items"],
-            "grade_snapshots": CampusManagementService.list_snapshots(
-                "grades",
-                user_id=user_id,
-                page=1,
-                size=100,
-            )["items"],
+            "record": selected_entry["record"],
+            "schedule_snapshots": selected_entry["schedule_snapshots"],
+            "grade_snapshots": selected_entry["grade_snapshots"],
             "summary": CampusManagementService.summary(),
         }
 

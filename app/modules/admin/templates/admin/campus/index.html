@@ -161,7 +161,7 @@ function gradeSummaryLine(summary) {
 }
 
 function recordDetailUrl(row) {
-    return row.detail_url || `${campusApi.recordDetailPrefix}${encodeURIComponent(row.credential_id)}`;
+    return row.detail_url || `${campusApi.recordDetailPrefix}${encodeURIComponent(row.record_key || row.credential_id)}`;
 }
 
 function renderRecordRows(rows) {

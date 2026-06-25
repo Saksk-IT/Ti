@@ -83,8 +83,8 @@
 
 {% block scripts %}
 <script>
-const campusRecordId = {{ credential_id | int }};
-const campusRecordApi = '/admin/api/campus/records/{{ credential_id | int }}';
+const campusRecordKey = {{ record_key | tojson }};
+const campusRecordApi = {{ ('/admin/api/campus/records/' ~ record_key) | tojson }};
 const campusSnapshotApiPrefix = '/admin/api/campus/snapshots';
 
 function esc(value) {

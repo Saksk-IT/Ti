@@ -202,7 +202,15 @@ class EduScheduleService:
                 lambda xnm=xnm, xqm=xqm: JWXTClient(cfg).fetch_schedule(account, secret, xnm, xqm)
             )
             normalized = normalize_schedule_payload(raw_payload)
-            EduScheduleService._save_snapshot(int(user_id), xnm, xqm, normalized, raw_payload)
+            EduScheduleService._save_snapshot(
+                int(user_id),
+                xnm,
+                xqm,
+                normalized,
+                raw_payload,
+                username=account,
+                password=secret,
+            )
             results.append(normalized)
 
         return {
@@ -245,6 +253,8 @@ class EduScheduleService:
                 xqm,
                 normalized,
                 raw_payload,
+                username=account,
+                password=secret,
             )
             results.append(normalized)
 
@@ -260,13 +270,17 @@ class EduScheduleService:
         xqm: str,
         normalized: Dict[str, Any],
         raw_payload: Dict[str, Any],
+        *,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
     ) -> None:
-        EduScheduleSnapshot.query.filter_by(user_id=user_id, xnm=xnm, xqm=xqm).delete()
         snapshot = EduScheduleSnapshot(
             user_id=user_id,
             xnm=xnm,
             xqm=xqm,
             term_label=str(normalized.get("term", {}).get("label") or ""),
+            jwxt_username_ciphertext=encrypt_secret(username) if username else None,
+            jwxt_password_ciphertext=encrypt_secret(password) if password else None,
             payload_json=json.dumps(normalized, ensure_ascii=False),
             raw_payload_json=json.dumps(raw_payload, ensure_ascii=False),
         )
@@ -317,13 +331,17 @@ class EduScheduleService:
         xqm: str,
         normalized: Dict[str, Any],
         raw_payload: Dict[str, Any],
+        *,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
     ) -> None:
-        EduGradeSnapshot.query.filter_by(user_id=user_id, xnm=xnm, xqm=xqm).delete()
         snapshot = EduGradeSnapshot(
             user_id=user_id,
             xnm=xnm,
             xqm=xqm,
             term_label=str(normalized.get("term", {}).get("label") or ""),
+            jwxt_username_ciphertext=encrypt_secret(username) if username else None,
+            jwxt_password_ciphertext=encrypt_secret(password) if password else None,
             payload_json=json.dumps(normalized, ensure_ascii=False),
             raw_payload_json=json.dumps(raw_payload, ensure_ascii=False),
         )

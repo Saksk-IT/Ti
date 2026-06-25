@@ -57,11 +57,11 @@ def api_campus_records():
         return error_response("加载校园绑定记录失败，请稍后重试", status_code=500)
 
 
-@admin_api_bp.route("/campus/records/<int:credential_id>", methods=["GET"])
+@admin_api_bp.route("/campus/records/<record_key>", methods=["GET"])
 @admin_required
-def api_campus_record_detail(credential_id: int):
+def api_campus_record_detail(record_key: str):
     try:
-        data = CampusManagementService.get_record_detail(credential_id)
+        data = CampusManagementService.get_record_detail(record_key)
         if data is None:
             return error_response("校园绑定记录不存在", status_code=404)
         return success_response(data=data)

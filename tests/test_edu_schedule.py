@@ -14,6 +14,7 @@ def _sample_schedule_payload(xnm="2025", xqm="12"):
     return {
         "xsxx": {
             "XM": "王为硕",
+            "XH": "stu_demo_2026",
             "BJMC": "计算机科学与技术23-5班",
             "ZYMC": "计算机科学与技术",
             "XNMC": "2025-2026",
@@ -1365,27 +1366,61 @@ def test_admin_edu_schedule_page_exposes_webvpn_refresh_controls(app, seed_user)
     assert "/admin/api/settings/edu-schedule/webvpn-session/complete" in html
 
 
-def _seed_admin_campus_data(app, user_id):
+def _create_site_user(app, prefix="campus_admin_user"):
+    suffix = uuid4().hex[:8]
+    username = f"{prefix}_{suffix}"
+    with app.app_context():
+        row = app.extensions["sqlalchemy"].session.execute(
+            text(
+                "INSERT INTO users (username, password_hash, is_admin, has_password_set) "
+                "VALUES (:username, :password_hash, 0, 1) RETURNING id"
+            ),
+            {"username": username, "password_hash": "test"},
+        ).fetchone()
+        app.extensions["sqlalchemy"].session.commit()
+    return {"id": int(row[0]), "username": username}
+
+
+def _seed_admin_campus_data(app, user_id, *, username=None, password="CampusSecret123!"):
     from app.modules.edu_schedule.services.grade_parser import normalize_grade_payload
     from app.modules.edu_schedule.services.parser import normalize_schedule_payload
     from app.modules.edu_schedule.services.schedule_service import EduScheduleService
 
+    edu_username = username or f"campus_admin_{uuid4().hex[:8]}"
     schedule_raw = _sample_schedule_payload(xnm="2031", xqm="12")
     grade_raw = _sample_grade_payload(xnm="2031", xqm="3")
     schedule_payload = normalize_schedule_payload(schedule_raw)
     grade_payload = normalize_grade_payload(grade_raw, "2031", "3")
 
     with app.app_context():
-        EduScheduleService.save_credentials(user_id, "campus_admin_demo", "CampusSecret123!")
-        EduScheduleService._save_snapshot(user_id, "2031", "12", schedule_payload, schedule_raw)
-        EduScheduleService._save_grade_snapshot(user_id, "2031", "3", grade_payload, grade_raw)
+        EduScheduleService.save_credentials(user_id, edu_username, password)
+        EduScheduleService._save_snapshot(
+            user_id,
+            "2031",
+            "12",
+            schedule_payload,
+            schedule_raw,
+            username=edu_username,
+            password=password,
+        )
+        EduScheduleService._save_grade_snapshot(
+            user_id,
+            "2031",
+            "3",
+            grade_payload,
+            grade_raw,
+            username=edu_username,
+            password=password,
+        )
+    return {"user_id": int(user_id), "edu_username": edu_username, "edu_password": password}
 
 
-def _create_bound_edu_user_without_query(app):
+def _create_bound_edu_user_without_query(app, *, edu_username=None, edu_password="NoQuerySecret123!"):
     from app.modules.edu_schedule.services.schedule_service import EduScheduleService
 
     suffix = uuid4().hex[:8]
     username = f"campus_no_query_{suffix}"
+    bound_username = edu_username or f"edu_no_query_{suffix}"
     with app.app_context():
         row = app.extensions["sqlalchemy"].session.execute(
             text(
@@ -1396,12 +1431,162 @@ def _create_bound_edu_user_without_query(app):
         ).fetchone()
         user_id = int(row[0])
         app.extensions["sqlalchemy"].session.commit()
-        EduScheduleService.save_credentials(user_id, f"edu_no_query_{suffix}", "NoQuerySecret123!")
+        EduScheduleService.save_credentials(user_id, bound_username, edu_password)
         credential_id = app.extensions["sqlalchemy"].session.execute(
             text("SELECT id FROM edu_schedule_credentials WHERE user_id = :uid"),
             {"uid": user_id},
         ).scalar()
-    return {"user_id": user_id, "username": username, "credential_id": int(credential_id), "edu_username": f"edu_no_query_{suffix}"}
+    return {"user_id": user_id, "username": username, "credential_id": int(credential_id), "edu_username": bound_username}
+
+
+def _create_duplicate_campus_record(
+    app,
+    *,
+    username: str,
+    password: str,
+    student_no: str = "stu_demo_2026",
+    schedule_name: str = "最新课表学生",
+    grade_name: str = "最新成绩学生",
+    schedule_fetched_at: str = "2040-01-01 10:00:00",
+    grade_fetched_at: str = "2040-01-01 11:00:00",
+):
+    from app.modules.edu_schedule.services.grade_parser import normalize_grade_payload
+    from app.modules.edu_schedule.services.parser import normalize_schedule_payload
+    from app.modules.edu_schedule.services.schedule_service import EduScheduleService
+
+    suffix = uuid4().hex[:8]
+    site_username = f"campus_duplicate_{suffix}"
+    schedule_raw = _sample_schedule_payload(xnm="2031", xqm="12")
+    schedule_raw["xsxx"]["XM"] = schedule_name
+    schedule_raw["xsxx"]["XH"] = student_no
+    schedule_raw["kbList"] = schedule_raw["kbList"][:1]
+    schedule_raw["sjkList"] = []
+    grade_raw = _sample_grade_payload(xnm="2031", xqm="3")
+    grade_raw["items"] = grade_raw["items"][:1]
+    grade_raw["items"][0]["xm"] = grade_name
+    grade_raw["items"][0]["xh"] = student_no
+    grade_payload = normalize_grade_payload(grade_raw, "2031", "3")
+    schedule_payload = normalize_schedule_payload(schedule_raw)
+
+    with app.app_context():
+        row = app.extensions["sqlalchemy"].session.execute(
+            text(
+                "INSERT INTO users (username, password_hash, is_admin, has_password_set) "
+                "VALUES (:username, :password_hash, 0, 1) RETURNING id"
+            ),
+            {"username": site_username, "password_hash": "test"},
+        ).fetchone()
+        user_id = int(row[0])
+        app.extensions["sqlalchemy"].session.commit()
+        EduScheduleService.save_credentials(user_id, username, password)
+        EduScheduleService._save_snapshot(
+            user_id,
+            "2031",
+            "12",
+            schedule_payload,
+            schedule_raw,
+            username=username,
+            password=password,
+        )
+        EduScheduleService._save_grade_snapshot(
+            user_id,
+            "2031",
+            "3",
+            grade_payload,
+            grade_raw,
+            username=username,
+            password=password,
+        )
+        app.extensions["sqlalchemy"].session.execute(
+            text(
+                "UPDATE edu_schedule_snapshots SET fetched_at = :fetched_at "
+                "WHERE user_id = :uid"
+            ),
+            {"uid": user_id, "fetched_at": schedule_fetched_at},
+        )
+        app.extensions["sqlalchemy"].session.execute(
+            text(
+                "UPDATE edu_grade_snapshots SET fetched_at = :fetched_at "
+                "WHERE user_id = :uid"
+            ),
+            {"uid": user_id, "fetched_at": grade_fetched_at},
+        )
+        credential_id = app.extensions["sqlalchemy"].session.execute(
+            text("SELECT id FROM edu_schedule_credentials WHERE user_id = :uid"),
+            {"uid": user_id},
+        ).scalar()
+        app.extensions["sqlalchemy"].session.commit()
+    return {"user_id": user_id, "credential_id": int(credential_id)}
+
+
+def _save_campus_snapshots_for_account(
+    app,
+    user_id,
+    *,
+    username: str,
+    password: str,
+    student_no: str,
+    student_name: str,
+    schedule_fetched_at: str,
+    grade_fetched_at: str,
+):
+    from app.modules.edu_schedule.services.grade_parser import normalize_grade_payload
+    from app.modules.edu_schedule.services.parser import normalize_schedule_payload
+    from app.modules.edu_schedule.services.schedule_service import EduScheduleService
+
+    schedule_raw = _sample_schedule_payload(xnm="2031", xqm="12")
+    schedule_raw["xsxx"]["XM"] = student_name
+    schedule_raw["xsxx"]["XH"] = student_no
+    grade_raw = _sample_grade_payload(xnm="2031", xqm="3")
+    for item in grade_raw["items"]:
+        item["xm"] = student_name
+        item["xh"] = student_no
+    schedule_payload = normalize_schedule_payload(schedule_raw)
+    grade_payload = normalize_grade_payload(grade_raw, "2031", "3")
+
+    with app.app_context():
+        EduScheduleService.save_credentials(user_id, username, password)
+        EduScheduleService._save_snapshot(
+            user_id,
+            "2031",
+            "12",
+            schedule_payload,
+            schedule_raw,
+            username=username,
+            password=password,
+        )
+        EduScheduleService._save_grade_snapshot(
+            user_id,
+            "2031",
+            "3",
+            grade_payload,
+            grade_raw,
+            username=username,
+            password=password,
+        )
+        schedule_id = app.extensions["sqlalchemy"].session.execute(
+            text("SELECT MAX(id) FROM edu_schedule_snapshots WHERE user_id = :uid"),
+            {"uid": user_id},
+        ).scalar()
+        grade_id = app.extensions["sqlalchemy"].session.execute(
+            text("SELECT MAX(id) FROM edu_grade_snapshots WHERE user_id = :uid"),
+            {"uid": user_id},
+        ).scalar()
+        app.extensions["sqlalchemy"].session.execute(
+            text(
+                "UPDATE edu_schedule_snapshots SET fetched_at = :fetched_at "
+                "WHERE id = :snapshot_id"
+            ),
+            {"snapshot_id": schedule_id, "fetched_at": schedule_fetched_at},
+        )
+        app.extensions["sqlalchemy"].session.execute(
+            text(
+                "UPDATE edu_grade_snapshots SET fetched_at = :fetched_at "
+                "WHERE id = :snapshot_id"
+            ),
+            {"snapshot_id": grade_id, "fetched_at": grade_fetched_at},
+        )
+        app.extensions["sqlalchemy"].session.commit()
 
 
 def test_admin_campus_page_exposes_management_apis(app, seed_user):
@@ -1426,11 +1611,12 @@ def test_admin_campus_page_exposes_management_apis(app, seed_user):
 
 
 def test_admin_campus_records_are_indexed_by_edu_account_and_student_name(app, seed_user):
-    _seed_admin_campus_data(app, seed_user["id"])
+    campus_user = _create_site_user(app, "campus_record")
+    campus_seed = _seed_admin_campus_data(app, campus_user["id"])
     no_query = _create_bound_edu_user_without_query(app)
     client = _admin_client(app, seed_user)
 
-    queried_response = client.get("/admin/api/campus/records?search=campus_admin_demo")
+    queried_response = client.get(f"/admin/api/campus/records?search={campus_seed['edu_username']}")
     no_query_response = client.get(f"/admin/api/campus/records?search={no_query['edu_username']}")
 
     assert queried_response.status_code == 200
@@ -1442,12 +1628,13 @@ def test_admin_campus_records_are_indexed_by_edu_account_and_student_name(app, s
 
     queried = queried_rows[0]
     assert queried["credential_id"] > 0
-    assert queried["jwxt_username"] == "campus_admin_demo"
-    assert queried["jwxt_password"] == "CampusSecret123!"
+    assert queried["jwxt_username"] == campus_seed["edu_username"]
+    assert queried["jwxt_password"] == campus_seed["edu_password"]
     assert queried["student_name"] == "测试学生"
     assert queried["schedule_snapshot_count"] >= 1
     assert queried["grade_snapshot_count"] >= 1
-    assert queried["detail_url"] == f"/admin/campus/records/{queried['credential_id']}"
+    assert queried["record_key"]
+    assert queried["detail_url"].startswith("/admin/campus/records/")
     assert "username" not in queried
 
     no_query_row = no_query_rows[0]
@@ -1457,26 +1644,131 @@ def test_admin_campus_records_are_indexed_by_edu_account_and_student_name(app, s
     assert no_query_row["grade_snapshot_count"] == 0
 
 
-def test_admin_campus_record_detail_page_and_api_show_student_snapshots(app, seed_user):
-    _seed_admin_campus_data(app, seed_user["id"])
+def test_admin_campus_records_merge_duplicate_edu_account_and_keep_latest_snapshots(app, seed_user):
+    campus_user = _create_site_user(app, "campus_merge_base")
+    edu_username = f"campus_merge_{uuid4().hex[:8]}"
+    edu_password = "CampusMergeSecret123!"
+    _seed_admin_campus_data(app, campus_user["id"], username=edu_username, password=edu_password)
+    duplicate = _create_duplicate_campus_record(
+        app,
+        username=edu_username,
+        password=edu_password,
+    )
+    with app.app_context():
+        app.extensions["sqlalchemy"].session.execute(
+            text(
+                "UPDATE edu_schedule_snapshots SET fetched_at = '2039-01-01 10:00:00' "
+                "WHERE user_id = :uid"
+            ),
+            {"uid": campus_user["id"]},
+        )
+        app.extensions["sqlalchemy"].session.execute(
+            text(
+                "UPDATE edu_grade_snapshots SET fetched_at = '2039-01-01 11:00:00' "
+                "WHERE user_id = :uid"
+            ),
+            {"uid": campus_user["id"]},
+        )
+        app.extensions["sqlalchemy"].session.commit()
     client = _admin_client(app, seed_user)
 
-    records = client.get("/admin/api/campus/records?search=campus_admin_demo").get_json()["data"]["items"]
-    credential_id = int(records[0]["credential_id"])
-    page = client.get(f"/admin/campus/records/{credential_id}")
-    detail = client.get(f"/admin/api/campus/records/{credential_id}")
+    records_response = client.get(f"/admin/api/campus/records?search={edu_username}")
+
+    assert records_response.status_code == 200
+    records = records_response.get_json()["data"]["items"]
+    assert len(records) == 1
+    record = records[0]
+    assert record["credential_id"] == duplicate["credential_id"]
+    assert record["jwxt_username"] == edu_username
+    assert record["jwxt_password"] == edu_password
+    assert record["student_name"] == "最新成绩学生"
+    assert record["schedule_snapshot_count"] == 1
+    assert record["grade_snapshot_count"] == 1
+
+    detail_response = client.get(f"/admin/api/campus/records/{record['record_key']}")
+
+    assert detail_response.status_code == 200
+    detail = detail_response.get_json()["data"]
+    assert len(detail["schedule_snapshots"]) == 1
+    assert len(detail["grade_snapshots"]) == 1
+    assert detail["schedule_snapshots"][0]["student"]["name"] == "最新课表学生"
+    assert detail["schedule_snapshots"][0]["course_count"] == 1
+    assert detail["grade_snapshots"][0]["student"]["name"] == "最新成绩学生"
+    assert detail["grade_snapshots"][0]["summary"]["course_count"] == 1
+
+
+def test_admin_campus_records_keep_same_user_multiple_query_accounts_separate(app, seed_user):
+    campus_user = _create_site_user(app, "campus_multi_account")
+    first_account = f"2399{uuid4().hex[:4]}"
+    second_account = f"2399{uuid4().hex[:4]}"
+    _save_campus_snapshots_for_account(
+        app,
+        campus_user["id"],
+        username=first_account,
+        password="FirstSecret123!",
+        student_no=first_account,
+        student_name="第一账号学生",
+        schedule_fetched_at="2040-01-02 10:00:00",
+        grade_fetched_at="2040-01-02 11:00:00",
+    )
+    _save_campus_snapshots_for_account(
+        app,
+        campus_user["id"],
+        username=second_account,
+        password="SecondSecret123!",
+        student_no=second_account,
+        student_name="第二账号学生",
+        schedule_fetched_at="2040-01-03 10:00:00",
+        grade_fetched_at="2040-01-03 11:00:00",
+    )
+    client = _admin_client(app, seed_user)
+
+    records_response = client.get("/admin/api/campus/records?search=2399")
+
+    assert records_response.status_code == 200
+    matching_records = [
+        item
+        for item in records_response.get_json()["data"]["items"]
+        if item["jwxt_username"] in {first_account, second_account}
+    ]
+    assert len(matching_records) == 2
+    records_by_account = {item["jwxt_username"]: item for item in matching_records}
+    assert records_by_account[first_account]["jwxt_password"] == "FirstSecret123!"
+    assert records_by_account[first_account]["student_name"] == "第一账号学生"
+    assert records_by_account[second_account]["jwxt_password"] == "SecondSecret123!"
+    assert records_by_account[second_account]["student_name"] == "第二账号学生"
+
+    for account, record in records_by_account.items():
+        detail_response = client.get(f"/admin/api/campus/records/{record['record_key']}")
+
+        assert detail_response.status_code == 200
+        detail = detail_response.get_json()["data"]
+        assert detail["record"]["jwxt_username"] == account
+        assert {item["student"]["student_no"] for item in detail["schedule_snapshots"]} == {account}
+        assert {item["student"]["student_no"] for item in detail["grade_snapshots"]} == {account}
+
+
+def test_admin_campus_record_detail_page_and_api_show_student_snapshots(app, seed_user):
+    campus_user = _create_site_user(app, "campus_detail")
+    campus_seed = _seed_admin_campus_data(app, campus_user["id"])
+    client = _admin_client(app, seed_user)
+
+    records = client.get(f"/admin/api/campus/records?search={campus_seed['edu_username']}").get_json()["data"]["items"]
+    record_key = records[0]["record_key"]
+    page = client.get(f"/admin/campus/records/{record_key}")
+    detail = client.get(f"/admin/api/campus/records/{record_key}")
 
     assert page.status_code == 200
     html = page.get_data(as_text=True)
     assert "记录详情" in html
-    assert "campusRecordId" in html
-    assert f"/admin/api/campus/records/{credential_id}" in html
+    assert "campusRecordKey" in html
+    assert f"/admin/api/campus/records/{record_key}" in html
 
     assert detail.status_code == 200
     body = detail.get_json()
     assert body["status"] == "success"
     data = body["data"]
-    assert data["record"]["jwxt_username"] == "campus_admin_demo"
+    assert data["record"]["jwxt_username"] == campus_seed["edu_username"]
     assert data["record"]["student_name"] == "测试学生"
     assert data["schedule_snapshots"][0]["student"]["name"] == "王为硕"
     assert data["grade_snapshots"][0]["student"]["name"] == "测试学生"
@@ -1498,10 +1790,11 @@ def test_admin_campus_rejects_non_admin(app, auth_client):
 
 
 def test_admin_campus_credentials_returns_decrypted_saved_account(app, seed_user):
-    _seed_admin_campus_data(app, seed_user["id"])
+    campus_user = _create_site_user(app, "campus_credential")
+    campus_seed = _seed_admin_campus_data(app, campus_user["id"])
     client = _admin_client(app, seed_user)
 
-    response = client.get("/admin/api/campus/credentials?search=campus_admin_demo")
+    response = client.get(f"/admin/api/campus/credentials?search={campus_seed['edu_username']}")
 
     assert response.status_code == 200
     body = response.get_json()
@@ -1509,10 +1802,10 @@ def test_admin_campus_credentials_returns_decrypted_saved_account(app, seed_user
     rows = body["data"]["items"]
     assert rows
     row = rows[0]
-    assert row["user_id"] == seed_user["id"]
-    assert row["username"] == seed_user["username"]
-    assert row["jwxt_username"] == "campus_admin_demo"
-    assert row["jwxt_password"] == "CampusSecret123!"
+    assert row["user_id"] == campus_user["id"]
+    assert row["username"] == campus_user["username"]
+    assert row["jwxt_username"] == campus_seed["edu_username"]
+    assert row["jwxt_password"] == campus_seed["edu_password"]
     assert body["data"]["summary"]["credential_count"] >= 1
 
     with app.app_context():
@@ -1521,22 +1814,23 @@ def test_admin_campus_credentials_returns_decrypted_saved_account(app, seed_user
                 "SELECT jwxt_username_ciphertext, jwxt_password_ciphertext "
                 "FROM edu_schedule_credentials WHERE user_id = :uid"
             ),
-            {"uid": seed_user["id"]},
+            {"uid": campus_user["id"]},
         ).fetchone()
     assert stored is not None
-    assert "campus_admin_demo" not in stored[0]
-    assert "CampusSecret123!" not in stored[1]
+    assert campus_seed["edu_username"] not in stored[0]
+    assert campus_seed["edu_password"] not in stored[1]
 
 
 def test_admin_campus_snapshot_list_and_detail_return_grade_and_schedule_data(app, seed_user):
-    _seed_admin_campus_data(app, seed_user["id"])
+    campus_user = _create_site_user(app, "campus_snapshot")
+    _seed_admin_campus_data(app, campus_user["id"])
     client = _admin_client(app, seed_user)
 
     schedule_list = client.get(
-        f"/admin/api/campus/snapshots?kind=schedule&user_id={seed_user['id']}&search=2031&size=20"
+        f"/admin/api/campus/snapshots?kind=schedule&user_id={campus_user['id']}&search=2031&size=20"
     )
     grade_list = client.get(
-        f"/admin/api/campus/snapshots?kind=grades&user_id={seed_user['id']}&search=2031&size=20"
+        f"/admin/api/campus/snapshots?kind=grades&user_id={campus_user['id']}&search=2031&size=20"
     )
 
     assert schedule_list.status_code == 200
