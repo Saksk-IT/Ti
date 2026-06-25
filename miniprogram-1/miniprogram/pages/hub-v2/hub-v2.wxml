@@ -219,31 +219,43 @@
               <text class="campus-home-subtitle">{{campusSummary.subtitle}}</text>
             </view>
           </view>
-          <view class="campus-home-metrics campus-home-grade-metrics" wx:if="{{campusSummary.hasGradeSummary}}">
-            <view class="campus-home-metric campus-home-term-metric">
-              <text class="campus-home-metric-value campus-home-term-value">{{campusSummary.latestGradeTerm}}</text>
-              <text class="campus-home-metric-label">最新成绩学期</text>
-            </view>
-            <view class="campus-home-divider"></view>
+          <view class="campus-home-metrics campus-home-overview-metrics">
             <view class="campus-home-metric">
-              <text class="campus-home-metric-value">{{campusSummary.latestGradeCourseCount}}</text>
-              <text class="campus-home-metric-label">课程数</text>
+              <text class="campus-home-metric-value">{{campusSummary.todayCourseCount}}</text>
+              <text class="campus-home-metric-label">今日课程</text>
             </view>
             <view class="campus-home-divider"></view>
             <view class="campus-home-metric">
               <text class="campus-home-metric-value">{{campusSummary.latestGradeGpa}}</text>
-              <text class="campus-home-metric-label">GPA</text>
-            </view>
-          </view>
-          <view class="campus-home-metrics" wx:else>
-            <view class="campus-home-metric">
-              <text class="campus-home-metric-value">{{campusSummary.scheduleCount}}</text>
-              <text class="campus-home-metric-label">课表记录</text>
+              <text class="campus-home-metric-label">最新 GPA</text>
             </view>
             <view class="campus-home-divider"></view>
             <view class="campus-home-metric">
-              <text class="campus-home-metric-value">{{campusSummary.gradeCount}}</text>
-              <text class="campus-home-metric-label">成绩记录</text>
+              <text class="campus-home-metric-value campus-home-status-value">{{campusSummary.statusLabel}}</text>
+              <text class="campus-home-metric-label">教务账号</text>
+            </view>
+          </view>
+          <view class="campus-home-today">
+            <view class="campus-home-today-head">
+              <view class="campus-home-today-copy">
+                <text class="campus-home-today-title">今日课程</text>
+                <text class="campus-home-today-subtitle">{{campusSummary.todayCourseSubtitle}}</text>
+              </view>
+              <view class="campus-home-today-badge">
+                <text>{{campusSummary.todayCourseCount}} 门</text>
+              </view>
+            </view>
+            <view class="campus-home-course-list" wx:if="{{campusSummary.hasTodayCourses}}">
+              <view class="campus-home-course-row" wx:for="{{campusSummary.todayCourses}}" wx:key="key">
+                <text class="campus-home-course-section">{{item.section}}</text>
+                <view class="campus-home-course-copy">
+                  <text class="campus-home-course-name">{{item.course_name}}</text>
+                  <text class="campus-home-course-detail">{{item.detail}}</text>
+                </view>
+              </view>
+            </view>
+            <view class="campus-home-course-empty" wx:else>
+              <text>{{campusSummary.todayCourseEmptyText}}</text>
             </view>
           </view>
           <view class="campus-home-actions">

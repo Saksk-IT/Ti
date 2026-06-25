@@ -93,27 +93,49 @@ test('normalizeHubStats prefers data center all_summary for public and personal 
   });
 });
 
-test('buildCampusSummary exposes binding state and snapshot counts', () => {
+test('buildCampusSummary reuses campus page schedule and grade summaries', () => {
   const summary = buildCampusSummary({
     credential: { has_credentials: true, username_hint: '2024****18' },
-    snapshots: [{ id: 1 }, { id: 2 }],
-    grade_snapshots: [{ id: 3 }]
-  }, true);
+    snapshots: [
+      { id: 1 },
+      {
+        payload: {
+          term: { xnm: '2025', xqm: '12', label: '2025-2026 第二学期' },
+          week_table: {
+            星期一: {
+              '1-2节': [
+                { course_name: 'WEB程序设计', teacher: '尹老师', location: '软件楼122', weeks: '1-15周' },
+              ],
+            },
+          },
+        },
+      },
+    ],
+    grade_snapshots: [
+      {
+        payload: {
+          term: { xnm: '2025', xqm: '3', label: '2025-2026 第一学期' },
+          summary: { course_count: 1, total_credits: 3, gpa: 3.5 },
+          grades: [
+            { course_name: '数据结构', score: '90', credits: '3.0', grade_point: '3.50' },
+          ],
+        },
+      },
+    ]
+  }, true, new Date(2026, 5, 22));
 
-  assert.deepEqual(summary, {
-    title: '校园服务',
-    subtitle: '已绑定 2024****18，可直接查询课表和成绩',
-    statusLabel: '已绑定',
-    statusTone: 'ok',
-    scheduleCount: 2,
-    gradeCount: 1,
-    hasGradeSummary: false,
-    latestGradeTerm: '',
-    latestGradeCourseCount: 0,
-    latestGradeGpa: '',
-    primaryAction: '查课表',
-    secondaryAction: '查成绩'
-  });
+  assert.equal(summary.statusLabel, '已绑定');
+  assert.equal(summary.scheduleCount, 1);
+  assert.equal(summary.gradeCount, 1);
+  assert.equal(summary.hasTodayCourses, true);
+  assert.equal(summary.todayCourseCount, 1);
+  assert.equal(summary.todayCourseSubtitle, '星期一 · 2025-2026 第二学期');
+  assert.deepEqual(summary.todayCourses.map((item) => item.course_name), ['WEB程序设计']);
+  assert.equal(summary.hasGradeSummary, true);
+  assert.equal(summary.latestGradeTerm, '2025-2026 第一学期');
+  assert.equal(summary.latestGradeCourseCount, 1);
+  assert.equal(summary.latestGradeCredits, '3');
+  assert.equal(summary.latestGradeGpa, '3.5');
 });
 
 test('buildCampusSummary highlights the latest grade term, courses, and GPA', () => {
@@ -127,6 +149,9 @@ test('buildCampusSummary highlights the latest grade term, courses, and GPA', ()
         payload: {
           term: { label: '2024-2025 第二学期' },
           summary: { course_count: 3, gpa: 3.12 },
+          grades: [
+            { course_name: '旧学期课程', score: '88' },
+          ],
         },
       },
       {
@@ -134,17 +159,23 @@ test('buildCampusSummary highlights the latest grade term, courses, and GPA', ()
         xqm: '3',
         term_label: '2025-2026 第一学期',
         payload: {
+          term: { xnm: '2025', xqm: '3', label: '2025-2026 第一学期' },
           summary: { course_count: 5, gpa: 3.87 },
+          grades: [
+            { course_name: '数据结构', score: '95' },
+            { course_name: '数据库原理', score: '91' },
+          ],
         },
       },
     ],
-  }, true);
+  }, true, new Date(2026, 5, 22));
 
   assert.equal(summary.hasGradeSummary, true);
   assert.equal(summary.latestGradeTerm, '2025-2026 第一学期');
   assert.equal(summary.latestGradeCourseCount, 5);
+  assert.equal(summary.latestGradeCredits, '0');
   assert.equal(summary.latestGradeGpa, '3.87');
-  assert.equal(summary.scheduleCount, 1);
+  assert.equal(summary.scheduleCount, 0);
   assert.equal(summary.gradeCount, 2);
 });
 
@@ -153,13 +184,16 @@ test('buildCampusSummary falls back to snapshot counts when there are no grades'
     credential: { has_credentials: true, username_hint: '2024****18' },
     snapshots: [{ id: 1 }, { id: 2 }],
     grade_snapshots: [],
-  }, true);
+  }, true, new Date(2026, 5, 22));
 
   assert.equal(summary.hasGradeSummary, false);
-  assert.equal(summary.latestGradeTerm, '');
+  assert.equal(summary.latestGradeTerm, '暂无成绩');
   assert.equal(summary.latestGradeCourseCount, 0);
-  assert.equal(summary.latestGradeGpa, '');
-  assert.equal(summary.scheduleCount, 2);
+  assert.equal(summary.latestGradeCredits, '-');
+  assert.equal(summary.latestGradeGpa, '-');
+  assert.equal(summary.hasTodayCourses, false);
+  assert.equal(summary.todayCourseCount, 0);
+  assert.equal(summary.scheduleCount, 0);
   assert.equal(summary.gradeCount, 0);
 });
 

@@ -727,6 +727,10 @@ page {
   grid-template-columns: minmax(0, 1.45fr) 1rpx minmax(0, 0.75fr) 1rpx minmax(0, 0.8fr);
 }
 
+.campus-home-overview-metrics {
+  grid-template-columns: minmax(0, 1fr) 1rpx minmax(0, 1fr) 1rpx minmax(0, 1fr);
+}
+
 .campus-home-metric {
   display: flex;
   flex-direction: column;
@@ -753,6 +757,16 @@ page {
   overflow: hidden;
 }
 
+.campus-home-status-value {
+  max-width: 100%;
+  font-size: 26rpx;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .campus-home-metric-label {
   font-size: 22rpx;
   color: var(--app-muted);
@@ -762,6 +776,114 @@ page {
   width: 1rpx;
   height: 48rpx;
   background: var(--app-border);
+}
+
+.campus-home-today {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 14rpx;
+  padding: 18rpx;
+  border-radius: 18rpx;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--app-primary) 7%, var(--app-surface)), var(--app-surface-glass));
+  border: 1rpx solid var(--app-border);
+}
+
+.campus-home-today-head {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.campus-home-today-copy,
+.campus-home-course-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5rpx;
+}
+
+.campus-home-today-title {
+  font-size: 27rpx;
+  line-height: 1.25;
+  font-weight: 850;
+  color: var(--app-text);
+}
+
+.campus-home-today-subtitle,
+.campus-home-course-empty {
+  font-size: 22rpx;
+  line-height: 1.4;
+  color: var(--app-muted);
+}
+
+.campus-home-today-subtitle {
+  max-width: 430rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.campus-home-today-badge {
+  flex: 0 0 auto;
+  min-height: 40rpx;
+  padding: 0 12rpx;
+  border-radius: 12rpx;
+  background: var(--app-text);
+  color: var(--app-bg);
+  font-size: 21rpx;
+  font-weight: 850;
+  display: flex;
+  align-items: center;
+}
+
+.campus-home-course-list {
+  display: grid;
+  gap: 10rpx;
+}
+
+.campus-home-course-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 82rpx minmax(0, 1fr);
+  gap: 12rpx;
+  align-items: center;
+}
+
+.campus-home-course-section {
+  min-height: 46rpx;
+  border-radius: 14rpx;
+  background: var(--app-surface);
+  color: var(--app-text-secondary);
+  font-size: 20rpx;
+  line-height: 1.2;
+  font-weight: 850;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.campus-home-course-name {
+  min-width: 0;
+  color: var(--app-text);
+  font-size: 25rpx;
+  line-height: 1.25;
+  font-weight: 850;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.campus-home-course-detail {
+  min-width: 0;
+  color: var(--app-muted);
+  font-size: 21rpx;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .campus-home-actions {
