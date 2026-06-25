@@ -723,6 +723,10 @@ page {
   background: color-mix(in srgb, var(--app-primary) 5%, var(--app-surface));
 }
 
+.campus-home-grade-metrics {
+  grid-template-columns: minmax(0, 1.45fr) 1rpx minmax(0, 0.75fr) 1rpx minmax(0, 0.8fr);
+}
+
 .campus-home-metric {
   display: flex;
   flex-direction: column;
@@ -736,6 +740,17 @@ page {
   font-weight: 850;
   line-height: 1.1;
   color: var(--app-text);
+}
+
+.campus-home-term-value {
+  max-width: 100%;
+  font-size: 24rpx;
+  line-height: 1.25;
+  text-align: center;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .campus-home-metric-label {

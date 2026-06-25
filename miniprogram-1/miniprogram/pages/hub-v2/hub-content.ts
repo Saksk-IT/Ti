@@ -59,6 +59,10 @@ export interface CampusSummary {
   statusTone: CampusSummaryTone;
   scheduleCount: number;
   gradeCount: number;
+  hasGradeSummary: boolean;
+  latestGradeTerm: string;
+  latestGradeCourseCount: number;
+  latestGradeGpa: string;
   primaryAction: string;
   secondaryAction: string;
 }
@@ -76,6 +80,12 @@ type HubStatsPayload = {
 
 const DEFAULT_RECENT_LIMIT = 3;
 const DEFAULT_ADVICE_LIMIT = 3;
+const SEMESTER_ORDER: Record<string, number> = { '3': 1, '12': 2, '16': 3 };
+
+type CampusGradeSummary = Pick<
+  CampusSummary,
+  'hasGradeSummary' | 'latestGradeTerm' | 'latestGradeCourseCount' | 'latestGradeGpa'
+>;
 
 function toNumber(value: unknown): number {
   const num = Number(value || 0);
@@ -89,6 +99,100 @@ function cleanText(value: unknown, fallback: string): string {
 
 function countRows(value: unknown): number {
   return Array.isArray(value) ? value.length : 0;
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' ? value as Record<string, unknown> : {};
+}
+
+function semesterLabel(xqm: unknown): string {
+  const value = String(xqm || '').trim();
+  if (value === '3') return '第一学期';
+  if (value === '12') return '第二学期';
+  if (value === '16') return '第三学期';
+  return value ? `第${value}学期` : '';
+}
+
+function gradePayload(row: Record<string, unknown>): Record<string, unknown> {
+  const payload = asRecord(row.payload);
+  return Object.keys(payload).length > 0 ? payload : row;
+}
+
+function gradeYear(row: Record<string, unknown>): number {
+  const payload = gradePayload(row);
+  const term = asRecord(payload.term);
+  return toNumber(row.xnm || term.xnm);
+}
+
+function gradeSemesterRank(row: Record<string, unknown>): number {
+  const payload = gradePayload(row);
+  const term = asRecord(payload.term);
+  const xqm = String(row.xqm || term.xqm || '').trim();
+  return SEMESTER_ORDER[xqm] || toNumber(xqm);
+}
+
+function compareGradeSnapshot(a: Record<string, unknown>, b: Record<string, unknown>): number {
+  const yearDiff = gradeYear(a) - gradeYear(b);
+  if (yearDiff !== 0) return yearDiff;
+
+  const semesterDiff = gradeSemesterRank(a) - gradeSemesterRank(b);
+  if (semesterDiff !== 0) return semesterDiff;
+
+  const fetchedA = Date.parse(String(a.fetched_at || '')) || 0;
+  const fetchedB = Date.parse(String(b.fetched_at || '')) || 0;
+  return fetchedA - fetchedB;
+}
+
+function gradeTermLabel(row: Record<string, unknown>, payload: Record<string, unknown>): string {
+  const term = asRecord(payload.term);
+  const existingLabel = cleanText(row.term_label || term.label, '');
+  if (existingLabel) return existingLabel;
+
+  const year = cleanText(row.xnm || term.xnm, '');
+  const semester = semesterLabel(row.xqm || term.xqm);
+  if (!year) return semester || '最新成绩';
+
+  const yearEnd = toNumber(year) ? String(toNumber(year) + 1) : '';
+  return `${year}${yearEnd ? `-${yearEnd}` : ''}${semester ? ` ${semester}` : ''}`;
+}
+
+function numberText(value: unknown): string {
+  return String(value ?? '').trim();
+}
+
+function hasGradeSummaryData(row: Record<string, unknown>): boolean {
+  const payload = gradePayload(row);
+  const summary = asRecord(payload.summary);
+  const hasSummaryValue =
+    Object.prototype.hasOwnProperty.call(summary, 'course_count') ||
+    Object.prototype.hasOwnProperty.call(summary, 'gpa');
+  const grades = Array.isArray(payload.grades) ? payload.grades : [];
+  return hasSummaryValue || grades.length > 0;
+}
+
+function buildLatestGradeSummary(rows: unknown): CampusGradeSummary {
+  const gradeRows = Array.isArray(rows) ? rows.map(asRecord).filter(hasGradeSummaryData) : [];
+  if (!gradeRows.length) {
+    return {
+      hasGradeSummary: false,
+      latestGradeTerm: '',
+      latestGradeCourseCount: 0,
+      latestGradeGpa: '',
+    };
+  }
+
+  const latest = gradeRows.reduce((best, row) => (compareGradeSnapshot(row, best) > 0 ? row : best));
+  const payload = gradePayload(latest);
+  const summary = asRecord(payload.summary);
+  const grades = Array.isArray(payload.grades) ? payload.grades : [];
+  const summaryCourseCount = toNumber(summary.course_count);
+
+  return {
+    hasGradeSummary: true,
+    latestGradeTerm: gradeTermLabel(latest, payload),
+    latestGradeCourseCount: summaryCourseCount || grades.length,
+    latestGradeGpa: numberText(summary.gpa) || '--',
+  };
 }
 
 export function normalizeHubStats(payload: HubStatsPayload | null | undefined): HubStats {
@@ -106,6 +210,7 @@ export function buildCampusSummary(payload: unknown, isLoggedIn: boolean): Campu
   const data = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {};
   const scheduleCount = countRows(data.snapshots);
   const gradeCount = countRows(data.grade_snapshots);
+  const latestGrade = buildLatestGradeSummary(data.grade_snapshots);
 
   if (!isLoggedIn) {
     return {
@@ -115,6 +220,10 @@ export function buildCampusSummary(payload: unknown, isLoggedIn: boolean): Campu
       statusTone: 'muted',
       scheduleCount: 0,
       gradeCount: 0,
+      hasGradeSummary: false,
+      latestGradeTerm: '',
+      latestGradeCourseCount: 0,
+      latestGradeGpa: '',
       primaryAction: '去登录',
       secondaryAction: '进校园'
     };
@@ -128,6 +237,7 @@ export function buildCampusSummary(payload: unknown, isLoggedIn: boolean): Campu
       statusTone: 'warn',
       scheduleCount,
       gradeCount,
+      ...latestGrade,
       primaryAction: '进入校园',
       secondaryAction: '稍后重试'
     };
@@ -147,6 +257,7 @@ export function buildCampusSummary(payload: unknown, isLoggedIn: boolean): Campu
       statusTone: 'ok',
       scheduleCount,
       gradeCount,
+      ...latestGrade,
       primaryAction: '查课表',
       secondaryAction: '查成绩'
     };
@@ -159,6 +270,7 @@ export function buildCampusSummary(payload: unknown, isLoggedIn: boolean): Campu
     statusTone: 'warn',
     scheduleCount,
     gradeCount,
+    ...latestGrade,
     primaryAction: '去绑定',
     secondaryAction: '进校园'
   };

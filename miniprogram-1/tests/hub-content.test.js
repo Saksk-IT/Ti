@@ -107,9 +107,60 @@ test('buildCampusSummary exposes binding state and snapshot counts', () => {
     statusTone: 'ok',
     scheduleCount: 2,
     gradeCount: 1,
+    hasGradeSummary: false,
+    latestGradeTerm: '',
+    latestGradeCourseCount: 0,
+    latestGradeGpa: '',
     primaryAction: '查课表',
     secondaryAction: '查成绩'
   });
+});
+
+test('buildCampusSummary highlights the latest grade term, courses, and GPA', () => {
+  const summary = buildCampusSummary({
+    credential: { has_credentials: true, username_hint: '2024****18' },
+    snapshots: [{ id: 1 }],
+    grade_snapshots: [
+      {
+        xnm: '2024',
+        xqm: '12',
+        payload: {
+          term: { label: '2024-2025 第二学期' },
+          summary: { course_count: 3, gpa: 3.12 },
+        },
+      },
+      {
+        xnm: '2025',
+        xqm: '3',
+        term_label: '2025-2026 第一学期',
+        payload: {
+          summary: { course_count: 5, gpa: 3.87 },
+        },
+      },
+    ],
+  }, true);
+
+  assert.equal(summary.hasGradeSummary, true);
+  assert.equal(summary.latestGradeTerm, '2025-2026 第一学期');
+  assert.equal(summary.latestGradeCourseCount, 5);
+  assert.equal(summary.latestGradeGpa, '3.87');
+  assert.equal(summary.scheduleCount, 1);
+  assert.equal(summary.gradeCount, 2);
+});
+
+test('buildCampusSummary falls back to snapshot counts when there are no grades', () => {
+  const summary = buildCampusSummary({
+    credential: { has_credentials: true, username_hint: '2024****18' },
+    snapshots: [{ id: 1 }, { id: 2 }],
+    grade_snapshots: [],
+  }, true);
+
+  assert.equal(summary.hasGradeSummary, false);
+  assert.equal(summary.latestGradeTerm, '');
+  assert.equal(summary.latestGradeCourseCount, 0);
+  assert.equal(summary.latestGradeGpa, '');
+  assert.equal(summary.scheduleCount, 2);
+  assert.equal(summary.gradeCount, 0);
 });
 
 test('buildCampusSummary prompts visitors and unbound users without leaking errors', () => {

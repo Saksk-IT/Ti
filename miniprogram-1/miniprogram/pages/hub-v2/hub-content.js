@@ -1,4 +1,15 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.normalizeHubStats = normalizeHubStats;
 exports.buildCampusSummary = buildCampusSummary;
@@ -7,6 +18,7 @@ exports.buildRecentBanks = buildRecentBanks;
 exports.buildWeaknessEmptyActions = buildWeaknessEmptyActions;
 var DEFAULT_RECENT_LIMIT = 3;
 var DEFAULT_ADVICE_LIMIT = 3;
+var SEMESTER_ORDER = { '3': 1, '12': 2, '16': 3 };
 function toNumber(value) {
     var num = Number(value || 0);
     return Number.isFinite(num) ? num : 0;
@@ -17,6 +29,90 @@ function cleanText(value, fallback) {
 }
 function countRows(value) {
     return Array.isArray(value) ? value.length : 0;
+}
+function asRecord(value) {
+    return value && typeof value === 'object' ? value : {};
+}
+function semesterLabel(xqm) {
+    var value = String(xqm || '').trim();
+    if (value === '3')
+        return '第一学期';
+    if (value === '12')
+        return '第二学期';
+    if (value === '16')
+        return '第三学期';
+    return value ? "\u7B2C".concat(value, "\u5B66\u671F") : '';
+}
+function gradePayload(row) {
+    var payload = asRecord(row.payload);
+    return Object.keys(payload).length > 0 ? payload : row;
+}
+function gradeYear(row) {
+    var payload = gradePayload(row);
+    var term = asRecord(payload.term);
+    return toNumber(row.xnm || term.xnm);
+}
+function gradeSemesterRank(row) {
+    var payload = gradePayload(row);
+    var term = asRecord(payload.term);
+    var xqm = String(row.xqm || term.xqm || '').trim();
+    return SEMESTER_ORDER[xqm] || toNumber(xqm);
+}
+function compareGradeSnapshot(a, b) {
+    var yearDiff = gradeYear(a) - gradeYear(b);
+    if (yearDiff !== 0)
+        return yearDiff;
+    var semesterDiff = gradeSemesterRank(a) - gradeSemesterRank(b);
+    if (semesterDiff !== 0)
+        return semesterDiff;
+    var fetchedA = Date.parse(String(a.fetched_at || '')) || 0;
+    var fetchedB = Date.parse(String(b.fetched_at || '')) || 0;
+    return fetchedA - fetchedB;
+}
+function gradeTermLabel(row, payload) {
+    var term = asRecord(payload.term);
+    var existingLabel = cleanText(row.term_label || term.label, '');
+    if (existingLabel)
+        return existingLabel;
+    var year = cleanText(row.xnm || term.xnm, '');
+    var semester = semesterLabel(row.xqm || term.xqm);
+    if (!year)
+        return semester || '最新成绩';
+    var yearEnd = toNumber(year) ? String(toNumber(year) + 1) : '';
+    return "".concat(year).concat(yearEnd ? "-".concat(yearEnd) : '').concat(semester ? " ".concat(semester) : '');
+}
+function numberText(value) {
+    return String(value !== null && value !== void 0 ? value : '').trim();
+}
+function hasGradeSummaryData(row) {
+    var payload = gradePayload(row);
+    var summary = asRecord(payload.summary);
+    var hasSummaryValue = Object.prototype.hasOwnProperty.call(summary, 'course_count') ||
+        Object.prototype.hasOwnProperty.call(summary, 'gpa');
+    var grades = Array.isArray(payload.grades) ? payload.grades : [];
+    return hasSummaryValue || grades.length > 0;
+}
+function buildLatestGradeSummary(rows) {
+    var gradeRows = Array.isArray(rows) ? rows.map(asRecord).filter(hasGradeSummaryData) : [];
+    if (!gradeRows.length) {
+        return {
+            hasGradeSummary: false,
+            latestGradeTerm: '',
+            latestGradeCourseCount: 0,
+            latestGradeGpa: '',
+        };
+    }
+    var latest = gradeRows.reduce(function (best, row) { return (compareGradeSnapshot(row, best) > 0 ? row : best); });
+    var payload = gradePayload(latest);
+    var summary = asRecord(payload.summary);
+    var grades = Array.isArray(payload.grades) ? payload.grades : [];
+    var summaryCourseCount = toNumber(summary.course_count);
+    return {
+        hasGradeSummary: true,
+        latestGradeTerm: gradeTermLabel(latest, payload),
+        latestGradeCourseCount: summaryCourseCount || grades.length,
+        latestGradeGpa: numberText(summary.gpa) || '--',
+    };
 }
 function normalizeHubStats(payload) {
     var data = payload && typeof payload === 'object' ? payload : {};
@@ -32,6 +128,7 @@ function buildCampusSummary(payload, isLoggedIn) {
     var data = payload && typeof payload === 'object' ? payload : {};
     var scheduleCount = countRows(data.snapshots);
     var gradeCount = countRows(data.grade_snapshots);
+    var latestGrade = buildLatestGradeSummary(data.grade_snapshots);
     if (!isLoggedIn) {
         return {
             title: '校园服务',
@@ -40,21 +137,16 @@ function buildCampusSummary(payload, isLoggedIn) {
             statusTone: 'muted',
             scheduleCount: 0,
             gradeCount: 0,
+            hasGradeSummary: false,
+            latestGradeTerm: '',
+            latestGradeCourseCount: 0,
+            latestGradeGpa: '',
             primaryAction: '去登录',
             secondaryAction: '进校园'
         };
     }
     if (data.error) {
-        return {
-            title: '校园服务',
-            subtitle: '校园状态暂时无法同步，仍可进入校园页查看',
-            statusLabel: '同步失败',
-            statusTone: 'warn',
-            scheduleCount: scheduleCount,
-            gradeCount: gradeCount,
-            primaryAction: '进入校园',
-            secondaryAction: '稍后重试'
-        };
+        return __assign(__assign({ title: '校园服务', subtitle: '校园状态暂时无法同步，仍可进入校园页查看', statusLabel: '同步失败', statusTone: 'warn', scheduleCount: scheduleCount, gradeCount: gradeCount }, latestGrade), { primaryAction: '进入校园', secondaryAction: '稍后重试' });
     }
     var credential = data.credential && typeof data.credential === 'object'
         ? data.credential
@@ -62,27 +154,9 @@ function buildCampusSummary(payload, isLoggedIn) {
     var hasCredentials = !!credential.has_credentials;
     var usernameHint = cleanText(credential.username_hint, '已保存');
     if (hasCredentials) {
-        return {
-            title: '校园服务',
-            subtitle: "\u5DF2\u7ED1\u5B9A ".concat(usernameHint, "\uFF0C\u53EF\u76F4\u63A5\u67E5\u8BE2\u8BFE\u8868\u548C\u6210\u7EE9"),
-            statusLabel: '已绑定',
-            statusTone: 'ok',
-            scheduleCount: scheduleCount,
-            gradeCount: gradeCount,
-            primaryAction: '查课表',
-            secondaryAction: '查成绩'
-        };
+        return __assign(__assign({ title: '校园服务', subtitle: "\u5DF2\u7ED1\u5B9A ".concat(usernameHint, "\uFF0C\u53EF\u76F4\u63A5\u67E5\u8BE2\u8BFE\u8868\u548C\u6210\u7EE9"), statusLabel: '已绑定', statusTone: 'ok', scheduleCount: scheduleCount, gradeCount: gradeCount }, latestGrade), { primaryAction: '查课表', secondaryAction: '查成绩' });
     }
-    return {
-        title: '校园服务',
-        subtitle: '绑定教务系统账号后，可在校园页查询课表和成绩',
-        statusLabel: '待绑定',
-        statusTone: 'warn',
-        scheduleCount: scheduleCount,
-        gradeCount: gradeCount,
-        primaryAction: '去绑定',
-        secondaryAction: '进校园'
-    };
+    return __assign(__assign({ title: '校园服务', subtitle: '绑定教务系统账号后，可在校园页查询课表和成绩', statusLabel: '待绑定', statusTone: 'warn', scheduleCount: scheduleCount, gradeCount: gradeCount }, latestGrade), { primaryAction: '去绑定', secondaryAction: '进校园' });
 }
 function buildStudyAdvice(stats, weakness, lastPractice, isLoggedIn) {
     var safeStats = stats || {};

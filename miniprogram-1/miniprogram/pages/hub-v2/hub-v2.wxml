@@ -219,7 +219,23 @@
               <text class="campus-home-subtitle">{{campusSummary.subtitle}}</text>
             </view>
           </view>
-          <view class="campus-home-metrics">
+          <view class="campus-home-metrics campus-home-grade-metrics" wx:if="{{campusSummary.hasGradeSummary}}">
+            <view class="campus-home-metric campus-home-term-metric">
+              <text class="campus-home-metric-value campus-home-term-value">{{campusSummary.latestGradeTerm}}</text>
+              <text class="campus-home-metric-label">最新成绩学期</text>
+            </view>
+            <view class="campus-home-divider"></view>
+            <view class="campus-home-metric">
+              <text class="campus-home-metric-value">{{campusSummary.latestGradeCourseCount}}</text>
+              <text class="campus-home-metric-label">课程数</text>
+            </view>
+            <view class="campus-home-divider"></view>
+            <view class="campus-home-metric">
+              <text class="campus-home-metric-value">{{campusSummary.latestGradeGpa}}</text>
+              <text class="campus-home-metric-label">GPA</text>
+            </view>
+          </view>
+          <view class="campus-home-metrics" wx:else>
             <view class="campus-home-metric">
               <text class="campus-home-metric-value">{{campusSummary.scheduleCount}}</text>
               <text class="campus-home-metric-label">课表记录</text>
