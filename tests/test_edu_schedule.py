@@ -515,6 +515,9 @@ def test_campus_year_filters_use_academic_year_range_labels(auth_client):
     assert "查询成绩" in grades_wxml
     assert "刷新全部成绩" not in grades_wxml
     assert "按学年学期归档" not in grades_wxml
+    assert "grade-term-panel" not in grades_wxml
+    assert "grade-term-panel" not in shared_less
+    assert 'class="grade-term-strip"' in grades_wxml
     assert 'class="term-selector-scroll year-selector-scroll"' in grades_wxml
     assert 'class="term-selector-scroll semester-selector-scroll"' in grades_wxml
     assert 'bindtap="onAcademicYearChipTap"' in grades_wxml

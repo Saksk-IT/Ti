@@ -14,11 +14,7 @@
   <view class="page-container">
     <scroll-view class="content-area" scroll-y bounces="{{false}}" refresher-enabled="{{true}}" bindrefresherrefresh="onRefresh">
       <view class="container query-container">
-        <view class="grade-term-panel">
-          <view class="campus-section-head query-head">
-            <text class="campus-section-title">成绩查询</text>
-            <text class="campus-section-sub">{{selectedTermLabel}}</text>
-          </view>
+        <view class="grade-term-strip">
           <scroll-view class="term-selector-scroll year-selector-scroll" scroll-x show-scrollbar="{{false}}" enhanced="{{true}}">
             <view class="term-chip-row">
               <view
