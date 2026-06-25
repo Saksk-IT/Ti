@@ -337,16 +337,16 @@ Page({
     });
   },
 
-  onAcademicYearChange(e: any) {
-    const academicYearIndex = clampAcademicYearIndex(e?.detail?.value, this.data.academicYearIndex);
+  onAcademicYearTap(e: any) {
+    const academicYearIndex = clampAcademicYearIndex(e?.currentTarget?.dataset?.index, this.data.academicYearIndex);
     this.setData({
       academicYearIndex,
       academicYear: academicYearValueAt(academicYearIndex),
     });
   },
 
-  onSemesterChange(e: any) {
-    const value = Number(e?.detail?.value ?? 0);
+  onSemesterTap(e: any) {
+    const value = Number(e?.currentTarget?.dataset?.index ?? 0);
     const max = SEMESTER_LABELS.length - 1;
     const semesterIndex = Math.max(0, Math.min(value, max));
     this.setData({ semesterIndex });
@@ -450,10 +450,10 @@ Page({
     this.setData(patch);
   },
 
-  onSnapshotYearChange(e: any) {
+  onSnapshotYearTap(e: any) {
     const options = this.data.snapshotYears || [];
-    const max = Math.max(0, options.length - 1);
-    const index = Math.max(0, Math.min(Number(e?.detail?.value ?? 0) || 0, max));
+    const value = String(e?.currentTarget?.dataset?.value || '').trim();
+    const index = options.findIndex((item) => item.value === value);
     const year = String(options[index]?.value || '').trim();
     if (!year) return;
     this.setData({
@@ -465,10 +465,10 @@ Page({
     }, () => this.syncSnapshotBrowserForMode(this.data.mode as CampusMode));
   },
 
-  onSnapshotSemesterChange(e: any) {
+  onSnapshotTermTap(e: any) {
     const options = this.data.snapshotTerms || [];
-    const max = Math.max(0, options.length - 1);
-    const index = Math.max(0, Math.min(Number(e?.detail?.value ?? 0) || 0, max));
+    const value = String(e?.currentTarget?.dataset?.value || '').trim();
+    const index = options.findIndex((item) => item.value === value);
     const semester = String(options[index]?.value || 'all').trim() || 'all';
     this.setData({
       snapshotSelectedSemester: semester,

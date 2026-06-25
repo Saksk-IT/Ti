@@ -69,7 +69,8 @@ page {
 .mode-option:active,
 .query-btn:active,
 .prompt-action:active,
-.snapshot-filter-field:active,
+.selector-chip:active,
+.snapshot-chip:active,
 .captcha-action:active {
   opacity: 0.92;
   transform: scale(0.99);
@@ -368,36 +369,23 @@ page {
 }
 
 .year-row {
-  display: flex;
-  gap: 12rpx;
-  align-items: stretch;
+  display: grid;
+  gap: 14rpx;
 }
 
-.field {
-  flex: 1 1 238rpx;
+.selector-group,
+.snapshot-selector-group {
   min-width: 0;
   display: grid;
-  gap: 8rpx;
+  gap: 10rpx;
 }
 
-.year-field {
-  flex-basis: 258rpx;
-}
-
-.semester-field {
-  flex-basis: 226rpx;
-}
-
-.year-picker,
-.semester-picker {
+.selector-head {
   min-width: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.field-copy {
-  min-width: 0;
-  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
 }
 
 .field-label {
@@ -405,40 +393,63 @@ page {
   font-weight: 800;
 }
 
-.year-trigger,
-.semester-trigger {
-  min-height: 70rpx;
-  border-radius: 16rpx;
-  border: 1rpx solid var(--app-border);
-  background: var(--app-surface);
+.selector-current {
+  min-width: 0;
   color: var(--app-text);
-  box-sizing: border-box;
-}
-
-.year-trigger,
-.semester-trigger {
-  padding: 10rpx 16rpx;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14rpx;
-}
-
-.year-value,
-.semester-value {
-  display: block;
-  margin-top: 4rpx;
-  font-size: 28rpx;
+  font-size: 23rpx;
   font-weight: 900;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.chevron {
+.term-selector-scroll {
+  width: 100%;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.selector-chip-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10rpx;
+  min-width: 100%;
+  padding: 2rpx 2rpx 4rpx;
+  box-sizing: border-box;
+}
+
+.selector-chip {
   flex: 0 0 auto;
-  color: var(--app-text-secondary);
-  font-size: 30rpx;
+  min-height: 64rpx;
+  max-width: 320rpx;
+  padding: 0 22rpx;
+  border-radius: 16rpx;
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface);
+  color: var(--app-text);
+  font-size: 25rpx;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.semester-chip {
+  max-width: 360rpx;
+}
+
+.selector-chip text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selector-chip.active {
+  background: var(--app-text);
+  color: var(--app-bg);
+  border-color: var(--app-text);
+  box-shadow: var(--app-shadow-soft);
 }
 
 .query-btn {
@@ -561,7 +572,7 @@ page {
 .snapshot-browser {
   padding: 0;
   display: grid;
-  gap: 0;
+  gap: 14rpx;
   margin-bottom: 16rpx;
   border: 0;
   background: transparent;
@@ -570,48 +581,70 @@ page {
   -webkit-backdrop-filter: none;
 }
 
-.snapshot-filter-row {
-  display: flex;
-  align-items: stretch;
-  gap: 12rpx;
-}
-
-.snapshot-filter-picker {
-  flex: 1 1 0;
+.snapshot-selector-scroll {
+  width: 100%;
   min-width: 0;
-  display: block;
+  white-space: nowrap;
 }
 
-.snapshot-filter-field {
-  min-height: 76rpx;
-  padding: 10rpx 14rpx;
+.snapshot-chip-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10rpx;
+  min-width: 100%;
+  padding: 2rpx 2rpx 4rpx;
+  box-sizing: border-box;
+}
+
+.snapshot-chip {
+  flex: 0 0 auto;
+  min-height: 62rpx;
+  max-width: 330rpx;
+  padding: 0 18rpx;
   border-radius: 16rpx;
   border: 1rpx solid var(--app-border);
   background: var(--app-surface);
   color: var(--app-text);
   box-shadow: var(--app-shadow-soft);
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8rpx;
+  justify-content: center;
+  gap: 10rpx;
   box-sizing: border-box;
-}
-
-.snapshot-filter-copy {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: grid;
-  gap: 4rpx;
-}
-
-.snapshot-filter-value {
-  display: block;
-  color: var(--app-text);
   font-size: 24rpx;
   font-weight: 900;
+}
+
+.snapshot-chip text:first-child {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.snapshot-chip.active {
+  background: var(--app-text);
+  color: var(--app-bg);
+  border-color: var(--app-text);
+}
+
+.chip-count {
+  min-width: 34rpx;
+  height: 34rpx;
+  padding: 0 8rpx;
+  border-radius: 999rpx;
+  background: var(--app-fill);
+  color: var(--app-text-secondary);
+  font-size: 20rpx;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.snapshot-chip.active .chip-count {
+  background: color-mix(in srgb, var(--app-bg) 18%, transparent);
+  color: var(--app-bg);
 }
 
 .prompt-head {

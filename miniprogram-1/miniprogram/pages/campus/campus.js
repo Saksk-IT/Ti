@@ -362,17 +362,17 @@ Page({
             _this.refreshProgressForMode(mode);
         });
     },
-    onAcademicYearChange: function (e) {
-        var _a;
-        var academicYearIndex = clampAcademicYearIndex((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value, this.data.academicYearIndex);
+    onAcademicYearTap: function (e) {
+        var _a, _b;
+        var academicYearIndex = clampAcademicYearIndex((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.index, this.data.academicYearIndex);
         this.setData({
             academicYearIndex: academicYearIndex,
             academicYear: academicYearValueAt(academicYearIndex),
         });
     },
-    onSemesterChange: function (e) {
+    onSemesterTap: function (e) {
         var _a, _b;
-        var value = Number((_b = (_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value) !== null && _b !== void 0 ? _b : 0);
+        var value = Number((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.index) || 0;
         var max = SEMESTER_LABELS.length - 1;
         var semesterIndex = Math.max(0, Math.min(value, max));
         this.setData({ semesterIndex: semesterIndex });
@@ -491,12 +491,12 @@ Page({
             : [];
         this.setData(patch);
     },
-    onSnapshotYearChange: function (e) {
+    onSnapshotYearTap: function (e) {
         var _this = this;
         var _a, _b;
         var options = this.data.snapshotYears || [];
-        var max = Math.max(0, options.length - 1);
-        var index = Math.max(0, Math.min(Number((_b = (_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value) !== null && _b !== void 0 ? _b : 0) || 0, max));
+        var value = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.value) || '').trim();
+        var index = options.findIndex(function (item) { return item.value === value; });
         var year = String(((_a = options[index]) === null || _a === void 0 ? void 0 : _a.value) || '').trim();
         if (!year)
             return;
@@ -508,12 +508,12 @@ Page({
             snapshotSemesterIndex: 0,
         }, function () { return _this.syncSnapshotBrowserForMode(_this.data.mode); });
     },
-    onSnapshotSemesterChange: function (e) {
+    onSnapshotTermTap: function (e) {
         var _this = this;
         var _a, _b;
         var options = this.data.snapshotTerms || [];
-        var max = Math.max(0, options.length - 1);
-        var index = Math.max(0, Math.min(Number((_b = (_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value) !== null && _b !== void 0 ? _b : 0) || 0, max));
+        var value = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.value) || '').trim();
+        var index = options.findIndex(function (item) { return item.value === value; });
         var semester = String(((_a = options[index]) === null || _a === void 0 ? void 0 : _a.value) || 'all').trim() || 'all';
         this.setData({
             snapshotSelectedSemester: semester,
