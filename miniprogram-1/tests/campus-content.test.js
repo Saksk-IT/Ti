@@ -12,6 +12,9 @@ const {
   normalizeScheduleSnapshots,
   normalizeTermResults,
 } = require('../miniprogram/pages/campus/campus-content');
+const {
+  filterScheduleRowsByWeek,
+} = require('../miniprogram/pages/campus/campus-query-core');
 
 test('buildCampusTerms builds all semesters for a year range', () => {
   assert.deepEqual(buildCampusTerms(2024, 2025, 'all'), [
@@ -87,6 +90,68 @@ test('normalizeScheduleSnapshots maps week table and practice courses', () => {
   assert.equal(rows[0].weekRows[0].day, '星期一');
   assert.equal(rows[0].weekRows[0].sections[0].courses[0].course_name, 'WEB程序设计');
   assert.equal(rows[0].practice_courses[0].course_name, '专业技术综合实践');
+});
+
+test('normalizeScheduleSnapshots keeps weekend courses with nonstandard sections', () => {
+  const rows = normalizeScheduleSnapshots([
+    {
+      payload: {
+        term: { xnm: '2023', xqm: '3', label: '2023-2024 第一学期' },
+        week_table: {
+          星期六: {
+            '1-4节': [
+              { course_name: '工程实训', teacher: '周老师', location: '实训楼', weeks: '1-8周', section: '1-4节' },
+            ],
+          },
+          星期日: {
+            '13-14节': [
+              { course_name: '创新创业实践', teacher: '赵老师', location: '双创中心', weeks: '9-12周', section: '13-14节' },
+            ],
+          },
+        },
+      },
+    },
+  ]);
+
+  assert.equal(rows.length, 1);
+  assert.deepEqual(
+    rows[0].weekRows.map((dayRow) => dayRow.day),
+    ['星期六', '星期日']
+  );
+  assert.equal(rows[0].weekRows[0].sections[0].section, '1-4节');
+  assert.equal(rows[0].weekRows[0].sections[0].courses[0].course_name, '工程实训');
+  assert.equal(rows[0].weekRows[1].sections[0].section, '13-14节');
+  assert.equal(rows[0].weekRows[1].sections[0].courses[0].course_name, '创新创业实践');
+});
+
+test('filterScheduleRowsByWeek keeps practice courses visible with the selected term', () => {
+  const rows = [
+    {
+      title: '2023-2024 第一学期',
+      weekRows: [
+        {
+          day: '星期一',
+          sections: [
+            {
+              section: '1-2节',
+              courses: [
+                { course_name: '数据结构', weeks: '1-8周' },
+              ],
+            },
+          ],
+        },
+      ],
+      practice_courses: [
+        { course_name: '专业技术综合实践', weeks: '16-18周' },
+      ],
+    },
+  ];
+
+  const filtered = filterScheduleRowsByWeek(rows, 1);
+
+  assert.equal(filtered.length, 1);
+  assert.equal(filtered[0].weekRows[0].sections[0].courses[0].course_name, '数据结构');
+  assert.equal(filtered[0].practice_courses[0].course_name, '专业技术综合实践');
 });
 
 test('normalizeTermResults accepts direct query results', () => {

@@ -59,7 +59,6 @@ export interface CampusHighlightItem {
 
 const DAY_NAMES = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
 const DATE_DAY_NAMES = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
-const SECTION_NAMES = ['1-2节', '3-4节', '5-6节', '7-8节', '9-10节', '11-12节'];
 const SEMESTER_ORDER: { [key: string]: number } = { '3': 1, '12': 2, '16': 3 };
 
 function toInteger(value: unknown): number {
@@ -172,6 +171,7 @@ function normalizeTermMeta(termInput: any, fallbackTitle: string): any {
 
 function normalizeCourse(row: any): any {
   const item = row && typeof row === 'object' ? row : {};
+  const section = cleanText(item.section, '');
   return {
     course_name: cleanText(item.course_name, '-'),
     teacher: cleanText(item.teacher, ''),
@@ -179,8 +179,24 @@ function normalizeCourse(row: any): any {
     weeks: cleanText(item.weeks, ''),
     assessment: cleanText(item.assessment, ''),
     credits: cleanText(item.credits, ''),
-    section: cleanText(item.section, ''),
+    section,
   };
+}
+
+function sectionRank(value: unknown): number {
+  const matched = /^(\d+)/.exec(cleanText(value));
+  return matched ? Number(matched[1]) : 999;
+}
+
+function collectDaySections(dayTable: any): string[] {
+  const source = dayTable && typeof dayTable === 'object' ? dayTable : {};
+  return Object.keys(source)
+    .map((section) => cleanText(section))
+    .filter((section) => section && normalizeList(source[section]).length > 0)
+    .sort((a, b) => {
+      const rankDiff = sectionRank(a) - sectionRank(b);
+      return rankDiff !== 0 ? rankDiff : a.localeCompare(b, 'zh-Hans-CN');
+    });
 }
 
 function normalizeGrade(row: any): any {
@@ -241,10 +257,10 @@ export function normalizeScheduleSnapshots(rows: unknown[]): any[] {
 
       const weekRows = DAY_NAMES.map((day) => {
         const dayTable = weekTable[day] && typeof weekTable[day] === 'object' ? weekTable[day] : {};
-        const sections = SECTION_NAMES.map((section) => ({
+        const sections = collectDaySections(dayTable).map((section) => ({
           section,
           courses: normalizeList(dayTable[section]).map(normalizeCourse),
-        })).filter((section) => section.courses.length > 0);
+        }));
         return { day, sections };
       }).filter((dayRow) => dayRow.sections.length > 0);
 

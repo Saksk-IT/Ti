@@ -47,6 +47,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.filterScheduleRowsByWeek = filterScheduleRowsByWeek;
 exports.createCampusQueryPage = createCampusQueryPage;
 var api_1 = require("../../utils/api");
 var auth_1 = require("../../utils/auth");
@@ -366,7 +367,7 @@ function courseMatchesWeek(course, weekInput) {
 function filterScheduleRowsByWeek(rows, weekInput) {
     return (Array.isArray(rows) ? rows : []).map(function (term) {
         var weekRows = (Array.isArray(term.weekRows) ? term.weekRows : []).map(function (dayRow) { return (__assign(__assign({}, dayRow), { sections: (Array.isArray(dayRow.sections) ? dayRow.sections : []).map(function (sectionRow) { return (__assign(__assign({}, sectionRow), { courses: (Array.isArray(sectionRow.courses) ? sectionRow.courses : []).filter(function (course) { return courseMatchesWeek(course, weekInput); }) })); }).filter(function (sectionRow) { return Array.isArray(sectionRow.courses) && sectionRow.courses.length; }) })); }).filter(function (dayRow) { return Array.isArray(dayRow.sections) && dayRow.sections.length; });
-        var practiceCourses = (Array.isArray(term.practice_courses) ? term.practice_courses : []).filter(function (course) { return courseMatchesWeek(course, weekInput); });
+        var practiceCourses = Array.isArray(term.practice_courses) ? term.practice_courses.slice() : [];
         return __assign(__assign({}, term), { weekRows: weekRows, practice_courses: practiceCourses });
     }).filter(function (term) { return (term.weekRows || []).length || (term.practice_courses || []).length; });
 }

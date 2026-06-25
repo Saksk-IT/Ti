@@ -355,7 +355,7 @@
 <script>
 (function () {
   const days = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
-  const sections = ['1-2节', '3-4节', '5-6节', '7-8节', '9-10节', '11-12节'];
+  const defaultSections = ['1-2节', '3-4节', '5-6节', '7-8节', '9-10节', '11-12节'];
   const form = document.getElementById('scheduleForm');
   const state = document.getElementById('scheduleState');
   const results = document.getElementById('scheduleResults');
@@ -498,6 +498,31 @@
     return wrap;
   }
 
+  function sectionRank(section) {
+    const matched = String(section || '').trim().match(/^(\d+)/);
+    return matched ? Number(matched[1]) : 999;
+  }
+
+  function collectScheduleSections(item) {
+    const seen = {};
+    defaultSections.forEach(function (section) {
+      seen[section] = true;
+    });
+    days.forEach(function (day) {
+      const dayTable = item.week_table && item.week_table[day];
+      if (!dayTable || typeof dayTable !== 'object') return;
+      Object.keys(dayTable).forEach(function (section) {
+        if (Array.isArray(dayTable[section]) && dayTable[section].length) {
+          seen[section] = true;
+        }
+      });
+    });
+    return Object.keys(seen).sort(function (a, b) {
+      const rankDiff = sectionRank(a) - sectionRank(b);
+      return rankDiff !== 0 ? rankDiff : a.localeCompare(b, 'zh-Hans-CN');
+    });
+  }
+
   function renderResult(item) {
     const panel = document.createElement('article');
     panel.className = 'term-panel';
@@ -524,7 +549,7 @@
     table.appendChild(thead);
 
     const tbody = document.createElement('tbody');
-    sections.forEach(function (section) {
+    collectScheduleSections(item).forEach(function (section) {
       const tr = document.createElement('tr');
       const first = document.createElement('td');
       first.className = 'section-label';

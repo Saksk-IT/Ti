@@ -22,7 +22,6 @@ exports.buildCampusActions = buildCampusActions;
 exports.buildCampusHighlights = buildCampusHighlights;
 var DAY_NAMES = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
 var DATE_DAY_NAMES = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
-var SECTION_NAMES = ['1-2节', '3-4节', '5-6节', '7-8节', '9-10节', '11-12节'];
 var SEMESTER_ORDER = { '3': 1, '12': 2, '16': 3 };
 function toInteger(value) {
     var num = Number(value);
@@ -125,6 +124,7 @@ function normalizeTermMeta(termInput, fallbackTitle) {
 }
 function normalizeCourse(row) {
     var item = row && typeof row === 'object' ? row : {};
+    var section = cleanText(item.section, '');
     return {
         course_name: cleanText(item.course_name, '-'),
         teacher: cleanText(item.teacher, ''),
@@ -132,8 +132,22 @@ function normalizeCourse(row) {
         weeks: cleanText(item.weeks, ''),
         assessment: cleanText(item.assessment, ''),
         credits: cleanText(item.credits, ''),
-        section: cleanText(item.section, ''),
+        section: section,
     };
+}
+function sectionRank(value) {
+    var matched = /^(\d+)/.exec(cleanText(value));
+    return matched ? Number(matched[1]) : 999;
+}
+function collectDaySections(dayTable) {
+    var source = dayTable && typeof dayTable === 'object' ? dayTable : {};
+    return Object.keys(source)
+        .map(function (section) { return cleanText(section); })
+        .filter(function (section) { return section && normalizeList(source[section]).length > 0; })
+        .sort(function (a, b) {
+        var rankDiff = sectionRank(a) - sectionRank(b);
+        return rankDiff !== 0 ? rankDiff : a.localeCompare(b, 'zh-Hans-CN');
+    });
 }
 function normalizeGrade(row) {
     var item = row && typeof row === 'object' ? row : {};
@@ -187,10 +201,10 @@ function normalizeScheduleSnapshots(rows) {
         var weekTable = payload.week_table && typeof payload.week_table === 'object' ? payload.week_table : {};
         var weekRows = DAY_NAMES.map(function (day) {
             var dayTable = weekTable[day] && typeof weekTable[day] === 'object' ? weekTable[day] : {};
-            var sections = SECTION_NAMES.map(function (section) { return ({
+            var sections = collectDaySections(dayTable).map(function (section) { return ({
                 section: section,
                 courses: normalizeList(dayTable[section]).map(normalizeCourse),
-            }); }).filter(function (section) { return section.courses.length > 0; });
+            }); });
             return { day: day, sections: sections };
         }).filter(function (dayRow) { return dayRow.sections.length > 0; });
         return __assign(__assign({}, termMeta), { studentText: [student.name, student.class_name, student.major_name].map(function (item) { return cleanText(item); }).filter(Boolean).join(' / '), weekRows: weekRows, practice_courses: normalizeList(payload.practice_courses).map(normalizeCourse) });

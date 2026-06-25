@@ -370,7 +370,7 @@ function courseMatchesWeek(course: any, weekInput: unknown): boolean {
   });
 }
 
-function filterScheduleRowsByWeek(rows: any[], weekInput: unknown): any[] {
+export function filterScheduleRowsByWeek(rows: any[], weekInput: unknown): any[] {
   return (Array.isArray(rows) ? rows : []).map((term) => {
     const weekRows = (Array.isArray(term.weekRows) ? term.weekRows : []).map((dayRow: any) => ({
       ...dayRow,
@@ -379,7 +379,7 @@ function filterScheduleRowsByWeek(rows: any[], weekInput: unknown): any[] {
         courses: (Array.isArray(sectionRow.courses) ? sectionRow.courses : []).filter((course: any) => courseMatchesWeek(course, weekInput)),
       })).filter((sectionRow: any) => Array.isArray(sectionRow.courses) && sectionRow.courses.length),
     })).filter((dayRow: any) => Array.isArray(dayRow.sections) && dayRow.sections.length);
-    const practiceCourses = (Array.isArray(term.practice_courses) ? term.practice_courses : []).filter((course: any) => courseMatchesWeek(course, weekInput));
+    const practiceCourses = Array.isArray(term.practice_courses) ? term.practice_courses.slice() : [];
     return { ...term, weekRows, practice_courses: practiceCourses };
   }).filter((term) => (term.weekRows || []).length || (term.practice_courses || []).length);
 }

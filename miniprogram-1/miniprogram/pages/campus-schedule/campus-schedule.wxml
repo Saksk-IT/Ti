@@ -158,7 +158,16 @@
               </view>
             </scroll-view>
           </view>
-          <view class="empty-state" wx:elif="{{eduBound && !loading}}">
+          <block wx:for="{{visibleScheduleResults}}" wx:for-item="termItem" wx:key="title">
+            <view class="practice-block table-practice-block" wx:if="{{termItem.practice_courses.length}}">
+              <text class="practice-title">{{termItem.title}} · 集中实践</text>
+              <view class="course-chip" wx:for="{{termItem.practice_courses}}" wx:for-item="course" wx:key="course_name">
+                <text class="course-name">{{course.course_name}}</text>
+                <text class="course-detail">{{course.teacher || '-'}} / {{course.weeks || '-'}}</text>
+              </view>
+            </view>
+          </block>
+          <view class="empty-state" wx:if="{{!scheduleTableRows.length && eduBound && !loading && !visibleScheduleResults.length}}">
             <text>暂无本周课程表记录。</text>
           </view>
         </block>

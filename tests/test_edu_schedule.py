@@ -177,6 +177,14 @@ def test_schedule_payload_normalizes_week_table():
     assert data["practice_courses"][0]["course_name"] == "专业技术综合实践"
 
 
+def test_schedule_web_renderer_collects_nonstandard_sections_from_payload():
+    html = Path("app/modules/edu_schedule/templates/edu_schedule/index.html").read_text(encoding="utf-8")
+
+    assert "function collectScheduleSections(item)" in html
+    assert "collectScheduleSections(item).forEach" in html
+    assert "sectionRank(section)" in html
+
+
 def test_grade_payload_normalizes_summary():
     from app.modules.edu_schedule.services.grade_parser import normalize_grade_payload
 
