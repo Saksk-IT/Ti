@@ -1,4 +1,6 @@
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const test = require('node:test');
 
 const {
@@ -177,6 +179,21 @@ test('buildCampusSummary highlights the latest grade term, courses, and GPA', ()
   assert.equal(summary.latestGradeGpa, '3.87');
   assert.equal(summary.scheduleCount, 0);
   assert.equal(summary.gradeCount, 2);
+});
+
+test('hub campus metrics show latest term courses, GPA, and credits', () => {
+  const wxml = fs.readFileSync(
+    path.join(__dirname, '../miniprogram/pages/hub-v2/hub-v2.wxml'),
+    'utf8'
+  );
+
+  assert.match(wxml, /campusSummary\.latestGradeCourseCount/);
+  assert.match(wxml, /最新学期课程/);
+  assert.match(wxml, /campusSummary\.latestGradeGpa/);
+  assert.match(wxml, /绩点/);
+  assert.match(wxml, /campusSummary\.latestGradeCredits/);
+  assert.match(wxml, /学分/);
+  assert.doesNotMatch(wxml, /campusSummary\.statusLabel<\/text>\s*<text class="campus-home-metric-label">教务账号/);
 });
 
 test('buildCampusSummary falls back to snapshot counts when there are no grades', () => {

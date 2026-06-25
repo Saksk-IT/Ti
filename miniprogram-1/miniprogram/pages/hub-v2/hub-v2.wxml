@@ -221,18 +221,18 @@
           </view>
           <view class="campus-home-metrics campus-home-overview-metrics">
             <view class="campus-home-metric">
-              <text class="campus-home-metric-value">{{campusSummary.todayCourseCount}}</text>
-              <text class="campus-home-metric-label">今日课程</text>
+              <text class="campus-home-metric-value">{{campusSummary.latestGradeCourseCount}}</text>
+              <text class="campus-home-metric-label">最新学期课程</text>
             </view>
             <view class="campus-home-divider"></view>
             <view class="campus-home-metric">
               <text class="campus-home-metric-value">{{campusSummary.latestGradeGpa}}</text>
-              <text class="campus-home-metric-label">最新 GPA</text>
+              <text class="campus-home-metric-label">绩点</text>
             </view>
             <view class="campus-home-divider"></view>
             <view class="campus-home-metric">
-              <text class="campus-home-metric-value campus-home-status-value">{{campusSummary.statusLabel}}</text>
-              <text class="campus-home-metric-label">教务账号</text>
+              <text class="campus-home-metric-value">{{campusSummary.latestGradeCredits}}</text>
+              <text class="campus-home-metric-label">学分</text>
             </view>
           </view>
           <view class="campus-home-today">
