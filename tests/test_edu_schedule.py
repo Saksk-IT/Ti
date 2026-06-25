@@ -1363,6 +1363,113 @@ def test_admin_edu_schedule_page_exposes_webvpn_refresh_controls(app, seed_user)
     assert "/admin/api/settings/edu-schedule/webvpn-session/complete" in html
 
 
+def _seed_admin_campus_data(app, user_id):
+    from app.modules.edu_schedule.services.grade_parser import normalize_grade_payload
+    from app.modules.edu_schedule.services.parser import normalize_schedule_payload
+    from app.modules.edu_schedule.services.schedule_service import EduScheduleService
+
+    schedule_raw = _sample_schedule_payload(xnm="2031", xqm="12")
+    grade_raw = _sample_grade_payload(xnm="2031", xqm="3")
+    schedule_payload = normalize_schedule_payload(schedule_raw)
+    grade_payload = normalize_grade_payload(grade_raw, "2031", "3")
+
+    with app.app_context():
+        EduScheduleService.save_credentials(user_id, "campus_admin_demo", "CampusSecret123!")
+        EduScheduleService._save_snapshot(user_id, "2031", "12", schedule_payload, schedule_raw)
+        EduScheduleService._save_grade_snapshot(user_id, "2031", "3", grade_payload, grade_raw)
+
+
+def test_admin_campus_page_exposes_management_apis(app, seed_user):
+    client = _admin_client(app, seed_user)
+
+    page = client.get("/admin/campus")
+
+    assert page.status_code == 200
+    html = page.get_data(as_text=True)
+    assert "校园管理" in html
+    assert "/admin/api/campus/credentials" in html
+    assert "/admin/api/campus/snapshots" in html
+
+
+def test_admin_campus_rejects_non_admin(app, auth_client):
+    page = auth_client.get("/admin/campus")
+    api_response = auth_client.get("/admin/api/campus/credentials")
+
+    assert page.status_code in (302, 403)
+    assert api_response.status_code == 403
+
+
+def test_admin_campus_credentials_returns_decrypted_saved_account(app, seed_user):
+    _seed_admin_campus_data(app, seed_user["id"])
+    client = _admin_client(app, seed_user)
+
+    response = client.get("/admin/api/campus/credentials?search=campus_admin_demo")
+
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["status"] == "success"
+    rows = body["data"]["items"]
+    assert rows
+    row = rows[0]
+    assert row["user_id"] == seed_user["id"]
+    assert row["username"] == seed_user["username"]
+    assert row["jwxt_username"] == "campus_admin_demo"
+    assert row["jwxt_password"] == "CampusSecret123!"
+    assert body["data"]["summary"]["credential_count"] >= 1
+
+    with app.app_context():
+        stored = app.extensions["sqlalchemy"].session.execute(
+            text(
+                "SELECT jwxt_username_ciphertext, jwxt_password_ciphertext "
+                "FROM edu_schedule_credentials WHERE user_id = :uid"
+            ),
+            {"uid": seed_user["id"]},
+        ).fetchone()
+    assert stored is not None
+    assert "campus_admin_demo" not in stored[0]
+    assert "CampusSecret123!" not in stored[1]
+
+
+def test_admin_campus_snapshot_list_and_detail_return_grade_and_schedule_data(app, seed_user):
+    _seed_admin_campus_data(app, seed_user["id"])
+    client = _admin_client(app, seed_user)
+
+    schedule_list = client.get(
+        f"/admin/api/campus/snapshots?kind=schedule&user_id={seed_user['id']}&search=2031&size=20"
+    )
+    grade_list = client.get(
+        f"/admin/api/campus/snapshots?kind=grades&user_id={seed_user['id']}&search=2031&size=20"
+    )
+
+    assert schedule_list.status_code == 200
+    assert grade_list.status_code == 200
+    schedule_items = schedule_list.get_json()["data"]["items"]
+    grade_items = grade_list.get_json()["data"]["items"]
+    assert schedule_items
+    assert grade_items
+
+    schedule_item = next(item for item in schedule_items if item["xnm"] == "2031" and item["xqm"] == "12")
+    grade_item = next(item for item in grade_items if item["xnm"] == "2031" and item["xqm"] == "3")
+    assert schedule_item["kind"] == "schedule"
+    assert schedule_item["course_count"] >= 2
+    assert grade_item["kind"] == "grades"
+    assert grade_item["course_count"] == 2
+
+    schedule_detail = client.get(f"/admin/api/campus/snapshots/schedule/{schedule_item['id']}")
+    grade_detail = client.get(f"/admin/api/campus/snapshots/grades/{grade_item['id']}")
+
+    assert schedule_detail.status_code == 200
+    assert grade_detail.status_code == 200
+    schedule_body = schedule_detail.get_json()["data"]
+    grade_body = grade_detail.get_json()["data"]
+    assert schedule_body["kind"] == "schedule"
+    assert schedule_body["items"][0]["course_name"] == "WEB程序设计"
+    assert schedule_body["items"][0]["weekday"] == "星期一"
+    assert grade_body["kind"] == "grades"
+    assert grade_body["items"][0]["course_name"] == "数据结构"
+    assert grade_body["items"][0]["score"] == "92"
+
+
 def test_query_multiple_terms_saves_schedule_snapshots(app, auth_client, monkeypatch):
     from app.modules.admin.services.system_config_service import SystemConfigService
     from app.modules.edu_schedule.services import query_tasks, schedule_service

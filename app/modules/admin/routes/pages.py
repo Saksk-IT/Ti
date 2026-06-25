@@ -4,6 +4,7 @@ from flask import Blueprint, render_template, session, request
 from sqlalchemy import text
 
 from app.core.extensions import db
+from app.core.utils.decorators import admin_required
 
 admin_pages_bp = Blueprint('admin_pages', __name__)
 
@@ -158,6 +159,13 @@ def admin_notifications_page():
 def admin_chat_page():
     """聊天管理页面"""
     return render_template('admin/chat/index.html')
+
+
+@admin_pages_bp.route('/campus')
+@admin_required
+def admin_campus_page():
+    """校园管理页面"""
+    return render_template('admin/campus/index.html')
 
 
 @admin_pages_bp.route('/subject_permissions')

@@ -626,6 +626,7 @@
             <li><a href="/admin/subject_permissions" class="{% if request.path == '/admin/subject_permissions' %}active{% endif %}">限制管理</a></li>
             <li><a href="/admin/coding" class="{% if request.path.startswith('/admin/coding') %}active{% endif %}">编程管理</a></li>
             <li><a href="/admin/chat" class="{% if request.path.startswith('/admin/chat') %}active{% endif %}">聊天管理</a></li>
+            <li><a href="/admin/campus" class="{% if request.path.startswith('/admin/campus') %}active{% endif %}">校园管理</a></li>
             <li><a href="/admin/forum" class="{% if request.path.startswith('/admin/forum') %}active{% endif %}">论坛管理</a></li>
             {% endif %}
             {% if session.get('is_admin') or session.get('is_notification_admin') %}
