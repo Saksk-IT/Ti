@@ -517,11 +517,16 @@ def test_campus_year_filters_use_academic_year_range_labels(auth_client):
     assert "按学年学期归档" not in grades_wxml
     assert "grade-term-panel" not in grades_wxml
     assert "grade-term-panel" not in shared_less
-    assert 'class="grade-term-strip"' in grades_wxml
-    assert 'class="term-selector-scroll year-selector-scroll"' in grades_wxml
-    assert 'class="term-selector-scroll semester-selector-scroll"' in grades_wxml
-    assert 'bindtap="onAcademicYearChipTap"' in grades_wxml
-    assert 'bindtap="onSemesterChipTap"' in grades_wxml
+    assert "grade-term-strip" not in grades_wxml
+    assert "term-selector-scroll" not in grades_wxml
+    assert "year-selector-scroll" not in grades_wxml
+    assert "semester-selector-scroll" not in grades_wxml
+    assert "onAcademicYearChipTap" not in grades_wxml
+    assert "onSemesterChipTap" not in grades_wxml
+    assert "term-selector-scroll" not in shared_less
+    assert "term-select-chip" not in shared_less
+    assert "onAcademicYearChipTap" not in core_ts
+    assert "onSemesterChipTap" not in core_ts
     assert 'class="floating-query-bubble {{loading ? \'disabled\' : \'\'}}"' in grades_wxml
     assert "查询课表" in schedule_wxml
     assert schedule_wxml.count('range="{{academicYearLabels}}"') == 1
@@ -567,7 +572,6 @@ def test_campus_year_filters_use_academic_year_range_labels(auth_client):
     assert "~" in core_ts
     assert ".sheet-picker-row" in schedule_less
     assert ".semester-picker {\n  min-width: 0;" in (campus_dir / "campus.less").read_text(encoding="utf-8")
-    assert ".term-selector-scroll" in shared_less
     assert ".snapshot-selector-scroll {\n  width: 100%;" in (campus_dir / "campus.less").read_text(encoding="utf-8")
     assert ".snapshot-chip.active {\n  background: var(--app-text);" in (campus_dir / "campus.less").read_text(encoding="utf-8")
 
@@ -652,7 +656,8 @@ def test_miniprogram_campus_tab_exposes_schedule_and_grade_queries():
     assert "floating-query-bubble" in schedule_wxml
     assert "floating-query-bubble" in grades_wxml
     assert "schedule-term-sheet" in schedule_wxml
-    assert "term-selector-scroll year-selector-scroll" in grades_wxml
+    assert "term-selector-scroll year-selector-scroll" not in grades_wxml
+    assert 'class="snapshot-selector-scroll snapshot-term-list"' in grades_wxml
     assert "buildTodayScheduleSummary" in ts
     assert "buildLatestGradeSummary" in ts
     assert "buildCampusActions" in ts

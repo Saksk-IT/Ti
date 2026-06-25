@@ -550,28 +550,8 @@ export function createCampusQueryPage(config: CampusQueryPageConfig): any {
     });
   },
 
-  onAcademicYearChipTap(e: any) {
-    const academicYearIndex = clampAcademicYearIndex(e?.currentTarget?.dataset?.index, this.data.academicYearIndex);
-    const academicYear = academicYearValueAt(academicYearIndex);
-    this.setData({
-      academicYearIndex,
-      academicYear,
-      selectedTermLabel: termLabelFromSelection(academicYear, this.data.semesterIndex),
-    });
-  },
-
   onSemesterChange(e: any) {
     const value = Number(e?.detail?.value ?? 0);
-    const max = SEMESTER_LABELS.length - 1;
-    const semesterIndex = Math.max(0, Math.min(value, max));
-    this.setData({
-      semesterIndex,
-      selectedTermLabel: termLabelFromSelection(this.data.academicYear, semesterIndex),
-    });
-  },
-
-  onSemesterChipTap(e: any) {
-    const value = Number(e?.currentTarget?.dataset?.index ?? 0);
     const max = SEMESTER_LABELS.length - 1;
     const semesterIndex = Math.max(0, Math.min(value, max));
     this.setData({

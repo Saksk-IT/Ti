@@ -14,39 +14,6 @@
   <view class="page-container">
     <scroll-view class="content-area" scroll-y bounces="{{false}}" refresher-enabled="{{true}}" bindrefresherrefresh="onRefresh">
       <view class="container query-container">
-        <view class="grade-term-strip">
-          <scroll-view class="term-selector-scroll year-selector-scroll" scroll-x show-scrollbar="{{false}}" enhanced="{{true}}">
-            <view class="term-chip-row">
-              <view
-                class="term-select-chip {{index === academicYearIndex ? 'active' : ''}}"
-                wx:for="{{academicYearLabels}}"
-                wx:key="*this"
-                data-index="{{index}}"
-                bindtap="onAcademicYearChipTap"
-                aria-role="button"
-                aria-label="选择{{item}}"
-              >
-                <text>{{item}}</text>
-              </view>
-            </view>
-          </scroll-view>
-          <scroll-view class="term-selector-scroll semester-selector-scroll" scroll-x show-scrollbar="{{false}}" enhanced="{{true}}">
-            <view class="term-chip-row">
-              <view
-                class="term-select-chip semester {{index === semesterIndex ? 'active' : ''}}"
-                wx:for="{{semesterLabels}}"
-                wx:key="*this"
-                data-index="{{index}}"
-                bindtap="onSemesterChipTap"
-                aria-role="button"
-                aria-label="选择{{item}}"
-              >
-                <text>{{item}}</text>
-              </view>
-            </view>
-          </scroll-view>
-        </view>
-
         <view class="campus-query-progress" wx:if="{{queryProgressVisible}}">
           <view class="progress-head">
             <view class="progress-title-wrap">

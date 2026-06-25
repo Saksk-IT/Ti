@@ -16,60 +16,6 @@
   box-sizing: border-box;
 }
 
-.grade-term-strip {
-  display: grid;
-  gap: 10rpx;
-  margin: 2rpx -2rpx 16rpx;
-}
-
-.term-selector-scroll {
-  width: 100%;
-  white-space: nowrap;
-}
-
-.term-chip-row {
-  min-width: 100%;
-  display: inline-flex;
-  align-items: center;
-  gap: 10rpx;
-  padding: 2rpx 2rpx 4rpx;
-  box-sizing: border-box;
-}
-
-.term-select-chip {
-  flex: 0 0 auto;
-  min-height: 62rpx;
-  max-width: 260rpx;
-  padding: 0 18rpx;
-  border-radius: 16rpx;
-  border: 1rpx solid var(--app-border);
-  background: var(--app-surface);
-  color: var(--app-text);
-  box-shadow: var(--app-shadow-soft);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24rpx;
-  font-weight: 900;
-  box-sizing: border-box;
-}
-
-.term-select-chip text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.term-select-chip.active {
-  background: var(--app-text);
-  color: var(--app-bg);
-  border-color: var(--app-text);
-}
-
-.term-select-chip.semester {
-  min-width: 150rpx;
-}
-
 .floating-query-bubble {
   position: fixed;
   right: 28rpx;
@@ -92,8 +38,7 @@
   box-sizing: border-box;
 }
 
-.floating-query-bubble:active,
-.term-select-chip:active {
+.floating-query-bubble:active {
   opacity: 0.92;
   transform: scale(0.99);
 }

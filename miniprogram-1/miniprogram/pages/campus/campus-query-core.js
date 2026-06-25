@@ -528,29 +528,9 @@ function createCampusQueryPage(config) {
                 selectedTermLabel: termLabelFromSelection(academicYear, this.data.semesterIndex),
             });
         },
-        onAcademicYearChipTap: function (e) {
-            var _a, _b;
-            var academicYearIndex = clampAcademicYearIndex((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.index, this.data.academicYearIndex);
-            var academicYear = academicYearValueAt(academicYearIndex);
-            this.setData({
-                academicYearIndex: academicYearIndex,
-                academicYear: academicYear,
-                selectedTermLabel: termLabelFromSelection(academicYear, this.data.semesterIndex),
-            });
-        },
         onSemesterChange: function (e) {
             var _a, _b;
             var value = Number((_b = (_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value) !== null && _b !== void 0 ? _b : 0);
-            var max = SEMESTER_LABELS.length - 1;
-            var semesterIndex = Math.max(0, Math.min(value, max));
-            this.setData({
-                semesterIndex: semesterIndex,
-                selectedTermLabel: termLabelFromSelection(this.data.academicYear, semesterIndex),
-            });
-        },
-        onSemesterChipTap: function (e) {
-            var _a, _b, _c;
-            var value = Number((_c = (_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.index) !== null && _c !== void 0 ? _c : 0);
             var max = SEMESTER_LABELS.length - 1;
             var semesterIndex = Math.max(0, Math.min(value, max));
             this.setData({
