@@ -514,6 +514,10 @@ def test_campus_year_filters_use_academic_year_range_labels(auth_client):
     assert "按学年学期归档" in wxml
     assert wxml.count('range="{{academicYearLabels}}"') == 1
     assert wxml.index('class="year-picker"') < wxml.index('class="semester-picker"')
+    assert 'class="field year-field"' in wxml
+    assert 'class="field semester-field"' in wxml
+    assert '<scroll-view class="snapshot-year-list"' not in wxml
+    assert '<view class="snapshot-year-list"' in wxml
     assert 'range="{{academicYearLabels}}"' in wxml
     assert "onAcademicYearChange" in wxml
     assert "onStartYearChange" not in wxml
@@ -528,8 +532,10 @@ def test_campus_year_filters_use_academic_year_range_labels(auth_client):
     assert "endYearIndex" not in ts
     assert "formatAcademicYearLabel" in ts
     assert "~" in ts
-    assert ".year-row {\n  display: flex;" in less
+    assert ".year-row {\n  display: flex;\n  flex-wrap: wrap;" in less
     assert ".semester-picker {\n  min-width: 0;" in less
+    assert ".snapshot-year-row {\n  display: flex;\n  flex-wrap: wrap;" in less
+    assert ".snapshot-current {\n  flex: 0 1 220rpx;" in less
 
 
 def test_miniprogram_account_bindings_page_exposes_edu_credential_binding():

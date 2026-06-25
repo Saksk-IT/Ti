@@ -70,10 +70,10 @@
             <text class="panel-note">最多 12 个学期</text>
           </view>
           <view class="year-row">
-            <view class="field">
+            <view class="field year-field">
               <picker class="year-picker" mode="selector" range="{{academicYearLabels}}" value="{{academicYearIndex}}" bindchange="onAcademicYearChange">
                 <view class="year-trigger" aria-role="button" aria-label="选择学年">
-                  <view>
+                  <view class="field-copy">
                     <text class="field-label">学年</text>
                     <text class="year-value">{{academicYearLabels[academicYearIndex]}}</text>
                   </view>
@@ -81,10 +81,10 @@
                 </view>
               </picker>
             </view>
-            <view class="field">
+            <view class="field semester-field">
               <picker class="semester-picker" mode="selector" range="{{semesterLabels}}" value="{{semesterIndex}}" bindchange="onSemesterChange">
                 <view class="semester-trigger" aria-role="button" aria-label="选择学期">
-                  <view>
+                  <view class="field-copy">
                     <text class="field-label">学期</text>
                     <text class="semester-value">{{semesterLabels[semesterIndex]}}</text>
                   </view>
@@ -160,7 +160,7 @@
             </view>
             <text class="snapshot-current">{{snapshotDrawerTitle}}</text>
           </view>
-          <scroll-view class="snapshot-year-list" scroll-x show-scrollbar="{{false}}">
+          <view class="snapshot-year-list" aria-label="学年筛选">
             <view class="snapshot-year-row">
               <view
                 class="snapshot-year-chip {{item.active ? 'active' : ''}}"
@@ -173,7 +173,7 @@
                 <text class="snapshot-count">{{item.count}}</text>
               </view>
             </view>
-          </scroll-view>
+          </view>
           <view class="snapshot-term-drawer" wx:if="{{snapshotDrawerOpen}}">
             <view
               class="snapshot-term-chip {{item.active ? 'active' : ''}}"
