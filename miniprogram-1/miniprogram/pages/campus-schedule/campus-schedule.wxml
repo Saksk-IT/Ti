@@ -111,7 +111,7 @@
                 <view class="section-row" wx:for="{{dayRow.sections}}" wx:for-item="sectionRow" wx:key="section">
                   <text class="section-label">{{sectionRow.section}}</text>
                   <view class="course-list">
-                    <view class="course-chip" wx:for="{{sectionRow.courses}}" wx:for-item="course" wx:key="course_name">
+                    <view class="course-chip {{course.isCurrentWeek === false ? 'inactive-week' : ''}}" wx:for="{{sectionRow.courses}}" wx:for-item="course" wx:key="course_name">
                       <text class="course-name">{{course.course_name}}</text>
                       <text class="course-detail">{{course.teacher || '-'}} / {{course.location || '-'}} / {{course.weeks || '-'}}</text>
                     </view>
@@ -148,8 +148,8 @@
                   <view class="schedule-table-cell section-head-cell">
                     <text>{{row.section}}</text>
                   </view>
-                  <view class="schedule-table-cell course-table-cell {{cell.hasCourses ? 'has-course' : ''}}" wx:for="{{row.cells}}" wx:for-item="cell" wx:key="key">
-                    <view class="table-course" wx:for="{{cell.courses}}" wx:for-item="course" wx:key="course_name">
+                  <view class="schedule-table-cell course-table-cell {{cell.hasCourses ? 'has-course' : ''}} {{cell.hasCurrentWeek ? 'has-current-course' : ''}}" wx:for="{{row.cells}}" wx:for-item="cell" wx:key="key">
+                    <view class="table-course {{course.isCurrentWeek === false ? 'inactive-week' : ''}}" wx:for="{{cell.courses}}" wx:for-item="course" wx:key="course_name">
                       <text class="table-course-name">{{course.course_name}}</text>
                       <text class="table-course-detail">{{course.location || '-'}}</text>
                     </view>

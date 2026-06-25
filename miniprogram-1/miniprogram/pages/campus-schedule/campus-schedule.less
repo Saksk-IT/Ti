@@ -164,10 +164,21 @@
   border-color: var(--app-border-strong);
 }
 
+.course-table-cell.has-course:not(.has-current-course) {
+  background: color-mix(in srgb, var(--app-fill) 70%, var(--app-surface));
+  border-color: var(--app-border);
+}
+
 .table-course {
   min-width: 0;
   display: grid;
   gap: 4rpx;
+}
+
+.course-chip.inactive-week,
+.table-course.inactive-week {
+  opacity: 0.46;
+  filter: grayscale(0.25);
 }
 
 .table-course-name {

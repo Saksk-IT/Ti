@@ -47,6 +47,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getScheduleStartDateStorageKey = getScheduleStartDateStorageKey;
 exports.filterScheduleRowsByWeek = filterScheduleRowsByWeek;
 exports.createCampusQueryPage = createCampusQueryPage;
 var api_1 = require("../../utils/api");
@@ -62,7 +63,7 @@ var ACTIVE_TASK_STATUSES = ['pending', 'running', 'retrying', 'webvpn_refresh_re
 var POLL_INTERVAL_MS = 2000;
 var WEEK_COUNT = 25;
 var SCHEDULE_VIEW_STORAGE_KEY = 'campus_schedule_view_mode_v1';
-var SCHEDULE_START_DATE_STORAGE_KEY = 'campus_schedule_start_date_v1';
+var SCHEDULE_START_DATE_STORAGE_PREFIX = 'campus_schedule_start_date_v1';
 var SCHEDULE_VIEW_MODES = {
     list: '列表',
     table: '课程表',
@@ -293,18 +294,42 @@ function addDays(date, days) {
 function displayDate(date) {
     return "".concat(date.getMonth() + 1, "\u6708").concat(date.getDate(), "\u65E5");
 }
-function defaultScheduleStartDate(yearInput) {
+function semesterValueFromTermKey(termKey) {
+    var parts = String(termKey || '').split('-');
+    return parts[1] || selectedSemesterValue(DEFAULT_SEMESTER_INDEX);
+}
+function yearValueFromTermKey(termKey) {
+    var parts = String(termKey || '').split('-');
+    return parts[0] || String(defaultYear);
+}
+function defaultScheduleStartDate(yearInput, semesterInput) {
+    if (semesterInput === void 0) { semesterInput = '3'; }
     var year = Number(yearInput) || defaultYear;
+    var semester = String(semesterInput || '3').trim();
+    if (semester === '12')
+        return formatDateValue(new Date(year + 1, 2, 1));
     return formatDateValue(new Date(year, 8, 1));
 }
-function readStoredScheduleStartDate(yearInput) {
+function getScheduleStartDateStorageKey(yearInput, semesterInput) {
+    var year = String(yearInput || '').trim() || String(defaultYear);
+    var semester = String(semesterInput || '').trim() || '3';
+    return "".concat(SCHEDULE_START_DATE_STORAGE_PREFIX, "_").concat(year, "_").concat(semester);
+}
+function readStoredScheduleStartDate(yearInput, semesterInput) {
     try {
-        var stored = String(wx.getStorageSync(SCHEDULE_START_DATE_STORAGE_KEY) || '').trim();
+        var stored = String(wx.getStorageSync(getScheduleStartDateStorageKey(yearInput, semesterInput)) || '').trim();
         if (/^\d{4}-\d{2}-\d{2}$/.test(stored))
             return stored;
     }
     catch (e) { }
-    return defaultScheduleStartDate(yearInput);
+    return defaultScheduleStartDate(yearInput, semesterInput);
+}
+function scheduleStartPatchForTerm(yearInput, semesterInput, weekInput) {
+    var weekStartDate = readStoredScheduleStartDate(yearInput, semesterInput);
+    return {
+        weekStartDate: weekStartDate,
+        selectedWeekDateRange: weekDateRangeText(weekStartDate, weekInput),
+    };
 }
 function readStoredScheduleViewMode() {
     try {
@@ -364,9 +389,13 @@ function courseMatchesWeek(course, weekInput) {
         return true;
     });
 }
+function markCourseWeekStatus(course, weekInput) {
+    var isCurrentWeek = courseMatchesWeek(course, weekInput);
+    return __assign(__assign({}, (course || {})), { isCurrentWeek: isCurrentWeek, inactiveWeek: !isCurrentWeek });
+}
 function filterScheduleRowsByWeek(rows, weekInput) {
     return (Array.isArray(rows) ? rows : []).map(function (term) {
-        var weekRows = (Array.isArray(term.weekRows) ? term.weekRows : []).map(function (dayRow) { return (__assign(__assign({}, dayRow), { sections: (Array.isArray(dayRow.sections) ? dayRow.sections : []).map(function (sectionRow) { return (__assign(__assign({}, sectionRow), { courses: (Array.isArray(sectionRow.courses) ? sectionRow.courses : []).filter(function (course) { return courseMatchesWeek(course, weekInput); }) })); }).filter(function (sectionRow) { return Array.isArray(sectionRow.courses) && sectionRow.courses.length; }) })); }).filter(function (dayRow) { return Array.isArray(dayRow.sections) && dayRow.sections.length; });
+        var weekRows = (Array.isArray(term.weekRows) ? term.weekRows : []).map(function (dayRow) { return (__assign(__assign({}, dayRow), { sections: (Array.isArray(dayRow.sections) ? dayRow.sections : []).map(function (sectionRow) { return (__assign(__assign({}, sectionRow), { courses: (Array.isArray(sectionRow.courses) ? sectionRow.courses : []).map(function (course) { return markCourseWeekStatus(course, weekInput); }) })); }).filter(function (sectionRow) { return Array.isArray(sectionRow.courses) && sectionRow.courses.length; }) })); }).filter(function (dayRow) { return Array.isArray(dayRow.sections) && dayRow.sections.length; });
         var practiceCourses = Array.isArray(term.practice_courses) ? term.practice_courses.slice() : [];
         return __assign(__assign({}, term), { weekRows: weekRows, practice_courses: practiceCourses });
     }).filter(function (term) { return (term.weekRows || []).length || (term.practice_courses || []).length; });
@@ -385,7 +414,7 @@ function buildScheduleTable(rows, weekInput) {
             var current = sectionMap[section] || { section: section, dayCourses: {} };
             sectionMap[section] = {
                 section: section,
-                dayCourses: __assign(__assign({}, current.dayCourses), (_a = {}, _a[day] = (Array.isArray(sectionRow.courses) ? sectionRow.courses : []).filter(function (course) { return courseMatchesWeek(course, weekInput); }), _a)),
+                dayCourses: __assign(__assign({}, current.dayCourses), (_a = {}, _a[day] = (Array.isArray(sectionRow.courses) ? sectionRow.courses : []).map(function (course) { return markCourseWeekStatus(course, weekInput); }), _a)),
             };
         });
     });
@@ -394,7 +423,13 @@ function buildScheduleTable(rows, weekInput) {
         section: section,
         cells: days.map(function (day) {
             var courses = sectionMap[section].dayCourses[day] || [];
-            return { key: "".concat(section, "-").concat(day), day: day, courses: courses, hasCourses: courses.length > 0 };
+            return {
+                key: "".concat(section, "-").concat(day),
+                day: day,
+                courses: courses,
+                hasCourses: courses.length > 0,
+                hasCurrentWeek: courses.some(function (course) { return (course === null || course === void 0 ? void 0 : course.isCurrentWeek) !== false; }),
+            };
         }),
     }); });
     return { days: days, tableRows: tableRows };
@@ -458,8 +493,8 @@ function createCampusQueryPage(config) {
             weekLabels: WEEK_LABELS,
             selectedWeekIndex: 0,
             selectedWeek: 1,
-            weekStartDate: defaultScheduleStartDate(defaultAcademicYearValue),
-            selectedWeekDateRange: weekDateRangeText(defaultScheduleStartDate(defaultAcademicYearValue), 1),
+            weekStartDate: defaultScheduleStartDate(defaultAcademicYearValue, selectedSemesterValue(DEFAULT_SEMESTER_INDEX)),
+            selectedWeekDateRange: weekDateRangeText(defaultScheduleStartDate(defaultAcademicYearValue, selectedSemesterValue(DEFAULT_SEMESTER_INDEX)), 1),
             isQueryPage: true,
             pageTitle: fixedPageTitle,
             snapshotTerms: [],
@@ -483,7 +518,7 @@ function createCampusQueryPage(config) {
         onLoad: function () {
             var _this = this;
             var weekStartDate = fixedMode === 'schedule'
-                ? readStoredScheduleStartDate(this.data.academicYear)
+                ? readStoredScheduleStartDate(this.data.academicYear, selectedSemesterValue(this.data.semesterIndex))
                 : this.data.weekStartDate;
             var scheduleViewMode = fixedMode === 'schedule' ? readStoredScheduleViewMode() : 'list';
             this.setData({
@@ -523,21 +558,14 @@ function createCampusQueryPage(config) {
             var _a;
             var academicYearIndex = clampAcademicYearIndex((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value, this.data.academicYearIndex);
             var academicYear = academicYearValueAt(academicYearIndex);
-            this.setData({
-                academicYearIndex: academicYearIndex,
-                academicYear: academicYear,
-                selectedTermLabel: termLabelFromSelection(academicYear, this.data.semesterIndex),
-            });
+            this.setData(__assign({ academicYearIndex: academicYearIndex, academicYear: academicYear, selectedTermLabel: termLabelFromSelection(academicYear, this.data.semesterIndex) }, (fixedMode === 'schedule' ? scheduleStartPatchForTerm(academicYear, selectedSemesterValue(this.data.semesterIndex), this.data.selectedWeek) : {})));
         },
         onSemesterChange: function (e) {
             var _a, _b;
             var value = Number((_b = (_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value) !== null && _b !== void 0 ? _b : 0);
             var max = SEMESTER_LABELS.length - 1;
             var semesterIndex = Math.max(0, Math.min(value, max));
-            this.setData({
-                semesterIndex: semesterIndex,
-                selectedTermLabel: termLabelFromSelection(this.data.academicYear, semesterIndex),
-            });
+            this.setData(__assign({ semesterIndex: semesterIndex, selectedTermLabel: termLabelFromSelection(this.data.academicYear, semesterIndex) }, (fixedMode === 'schedule' ? scheduleStartPatchForTerm(this.data.academicYear, selectedSemesterValue(semesterIndex), this.data.selectedWeek) : {})));
         },
         onGoEduBindingTap: function () {
             (0, nav_1.safeNavigate)('/pages/settings-account-bindings-v2/settings-account-bindings-v2', 'navigateTo');
@@ -635,7 +663,7 @@ function createCampusQueryPage(config) {
             patch[mode === 'grades' ? 'gradeResults' : 'scheduleResults'] = selectedTermKey
                 ? filterSnapshotRows(rows, selectedTermKey)
                 : [];
-            this.setData(__assign(__assign({}, patch), (selectedTermKey ? termSelectionPatchFromKey(selectedTermKey) : {})), function () {
+            this.setData(__assign(__assign({}, patch), (selectedTermKey ? __assign(__assign({}, termSelectionPatchFromKey(selectedTermKey)), scheduleStartPatchForTerm(yearValueFromTermKey(selectedTermKey), semesterValueFromTermKey(selectedTermKey), this.data.selectedWeek)) : {})), function () {
                 if (mode === 'schedule')
                     _this.rebuildScheduleDisplay();
             });
@@ -649,7 +677,7 @@ function createCampusQueryPage(config) {
             var selectedTermKey = String(((_c = options[index]) === null || _c === void 0 ? void 0 : _c.value) || '').trim();
             if (!selectedTermKey)
                 return;
-            this.setData(__assign({ snapshotSelectedTermKey: selectedTermKey, snapshotTermIndex: index, snapshotDrawerOpen: false }, termSelectionPatchFromKey(selectedTermKey)), function () { return _this.syncSnapshotBrowserForMode(fixedMode); });
+            this.setData(__assign(__assign({ snapshotSelectedTermKey: selectedTermKey, snapshotTermIndex: index, snapshotDrawerOpen: false }, termSelectionPatchFromKey(selectedTermKey)), scheduleStartPatchForTerm(yearValueFromTermKey(selectedTermKey), semesterValueFromTermKey(selectedTermKey), this.data.selectedWeek)), function () { return _this.syncSnapshotBrowserForMode(fixedMode); });
         },
         rebuildScheduleDisplay: function () {
             if (fixedMode !== 'schedule')
@@ -694,9 +722,10 @@ function createCampusQueryPage(config) {
         onWeekStartDateChange: function (e) {
             var _this = this;
             var _a;
-            var weekStartDate = String(((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value) || '').trim() || defaultScheduleStartDate(this.data.academicYear);
+            var semester = selectedSemesterValue(this.data.semesterIndex);
+            var weekStartDate = String(((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value) || '').trim() || defaultScheduleStartDate(this.data.academicYear, semester);
             try {
-                wx.setStorageSync(SCHEDULE_START_DATE_STORAGE_KEY, weekStartDate);
+                wx.setStorageSync(getScheduleStartDateStorageKey(this.data.academicYear, semester), weekStartDate);
             }
             catch (err) { }
             this.setData({

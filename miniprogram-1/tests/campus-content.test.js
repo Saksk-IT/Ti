@@ -14,6 +14,7 @@ const {
 } = require('../miniprogram/pages/campus/campus-content');
 const {
   filterScheduleRowsByWeek,
+  getScheduleStartDateStorageKey,
 } = require('../miniprogram/pages/campus/campus-query-core');
 
 test('buildCampusTerms builds all semesters for a year range', () => {
@@ -152,6 +153,51 @@ test('filterScheduleRowsByWeek keeps practice courses visible with the selected 
   assert.equal(filtered.length, 1);
   assert.equal(filtered[0].weekRows[0].sections[0].courses[0].course_name, '数据结构');
   assert.equal(filtered[0].practice_courses[0].course_name, '专业技术综合实践');
+});
+
+test('filterScheduleRowsByWeek keeps out-of-week courses and marks them inactive', () => {
+  const rows = [
+    {
+      title: '2026-2027 第一学期',
+      weekRows: [
+        {
+          day: '星期日',
+          sections: [
+            {
+              section: '5-8节',
+              courses: [
+                { course_name: '形势与政策4', weeks: '10-11周' },
+              ],
+            },
+          ],
+        },
+      ],
+      practice_courses: [],
+    },
+  ];
+
+  const weekOne = filterScheduleRowsByWeek(rows, 1);
+  const weekTen = filterScheduleRowsByWeek(rows, 10);
+
+  assert.equal(weekOne.length, 1);
+  assert.equal(weekOne[0].weekRows[0].sections[0].courses[0].course_name, '形势与政策4');
+  assert.equal(weekOne[0].weekRows[0].sections[0].courses[0].isCurrentWeek, false);
+  assert.equal(weekTen[0].weekRows[0].sections[0].courses[0].isCurrentWeek, true);
+});
+
+test('schedule start date storage is isolated by academic year and semester', () => {
+  assert.equal(
+    getScheduleStartDateStorageKey('2023', '3'),
+    'campus_schedule_start_date_v1_2023_3'
+  );
+  assert.equal(
+    getScheduleStartDateStorageKey('2023', '12'),
+    'campus_schedule_start_date_v1_2023_12'
+  );
+  assert.notEqual(
+    getScheduleStartDateStorageKey('2023', '3'),
+    getScheduleStartDateStorageKey('2023', '12')
+  );
 });
 
 test('normalizeTermResults accepts direct query results', () => {
