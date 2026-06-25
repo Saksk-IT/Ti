@@ -16,8 +16,9 @@
     .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
     .section-head h2 { margin: 0; font-size: 20px; font-weight: 650; letter-spacing: 0; }
     .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .toolbar input, .toolbar select {
+    .toolbar input {
         min-height: 40px;
+        min-width: 260px;
         padding: 9px 12px;
         border: 0.5px solid var(--border-color);
         border-radius: var(--radius-sm);
@@ -26,37 +27,32 @@
         font-size: 14px;
         box-sizing: border-box;
     }
-    .toolbar input { min-width: 220px; }
     .table-wrap { width: 100%; overflow-x: auto; border: 0.5px solid var(--border-color); border-radius: var(--radius-md); background: var(--card-bg-solid); }
-    table { width: 100%; border-collapse: collapse; min-width: 760px; }
+    table { width: 100%; border-collapse: collapse; min-width: 860px; }
     th, td { padding: 12px 14px; border-bottom: 0.5px solid var(--border-color); text-align: left; font-size: 14px; vertical-align: top; }
     th { color: var(--text-sub); font-size: 13px; font-weight: 600; background: rgba(142, 142, 147, 0.06); }
     tbody tr:last-child td { border-bottom: none; }
-    tbody tr:hover { background: rgba(142, 142, 147, 0.06); }
+    .record-row { cursor: pointer; }
+    .record-row:hover { background: rgba(142, 142, 147, 0.06); }
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; white-space: nowrap; }
     .muted { color: var(--text-sub); }
+    .student-name { font-weight: 650; letter-spacing: 0; }
     .student-info-line { color: var(--text-sub); font-size: 12px; line-height: 1.5; margin-top: 4px; }
+    .record-counts { display: flex; gap: 8px; flex-wrap: wrap; }
+    .count-badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 6px; background: rgba(142, 142, 147, 0.1); font-size: 12px; font-weight: 600; }
     .grade-summary-line { display: grid; grid-template-columns: repeat(4, minmax(72px, 1fr)); gap: 10px; min-width: 320px; }
     .grade-summary-item { display: flex; flex-direction: column; gap: 2px; }
     .grade-summary-label { color: var(--text-sub); font-size: 12px; white-space: nowrap; }
     .grade-summary-value { color: var(--text-color); font-size: 15px; font-weight: 700; letter-spacing: 0; }
-    .badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }
-    .badge.schedule { background: rgba(0, 122, 255, 0.1); color: var(--primary); }
-    .badge.grades { background: rgba(52, 199, 89, 0.12); color: var(--success); }
     .empty { padding: 32px; text-align: center; color: var(--text-sub); border: 0.5px dashed var(--border-color); border-radius: var(--radius-md); }
-    .detail-panel { margin-top: 18px; border: 0.5px solid var(--border-color); border-radius: var(--radius-md); background: var(--card-bg-solid); overflow: hidden; }
-    .detail-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px; border-bottom: 0.5px solid var(--border-color); flex-wrap: wrap; }
-    .detail-head h3 { margin: 0; font-size: 17px; letter-spacing: 0; }
-    .detail-body { padding: 16px; overflow-x: auto; }
-    .detail-body table { min-width: 820px; }
-    .btn-xs { padding: 6px 12px; min-height: 32px; font-size: 13px; }
     .status-line { min-height: 20px; color: var(--text-sub); font-size: 13px; }
+    .btn-xs { padding: 6px 12px; min-height: 32px; font-size: 13px; }
 
     @media (max-width: 900px) {
         .campus-stats { grid-template-columns: 1fr; }
         .campus-section { padding: 18px; }
         .toolbar { width: 100%; }
-        .toolbar input, .toolbar select, .toolbar button { width: 100%; }
+        .toolbar input, .toolbar button { width: 100%; }
     }
 </style>
 {% endblock %}
@@ -66,7 +62,7 @@
     <div class="campus-header">
         <div>
             <h1>校园管理</h1>
-            <p>查看已保存的教务系统账号密码，以及用户查询后保留的成绩和课表记录。</p>
+            <p>按已绑定教务账号、教务密码和学生姓名查看记录；未成功查询的账号以“未查询”占位。</p>
         </div>
         <button class="btn btn-secondary" type="button" id="refreshAllBtn">刷新</button>
     </div>
@@ -88,32 +84,14 @@
 
     <section class="campus-section">
         <div class="section-head">
-            <h2>教务账号</h2>
+            <h2>绑定记录</h2>
             <div class="toolbar">
-                <input id="credentialSearch" type="text" placeholder="搜索用户或教务账号">
-                <button class="btn btn-secondary btn-sm" type="button" id="credentialSearchBtn">搜索</button>
+                <input id="recordSearch" type="text" placeholder="搜索教务账号或学生姓名">
+                <button class="btn btn-secondary btn-sm" type="button" id="recordSearchBtn">搜索</button>
             </div>
         </div>
-        <div id="credentialStatus" class="status-line"></div>
-        <div id="credentialTable"></div>
-    </section>
-
-    <section class="campus-section">
-        <div class="section-head">
-            <h2>查询记录</h2>
-            <div class="toolbar">
-                <select id="snapshotKind">
-                    <option value="schedule">课表</option>
-                    <option value="grades">成绩</option>
-                </select>
-                <input id="snapshotUserId" type="text" inputmode="numeric" placeholder="用户 ID">
-                <input id="snapshotSearch" type="text" placeholder="搜索用户或学期">
-                <button class="btn btn-secondary btn-sm" type="button" id="snapshotSearchBtn">搜索</button>
-            </div>
-        </div>
-        <div id="snapshotStatus" class="status-line"></div>
-        <div id="snapshotTable"></div>
-        <div id="snapshotDetail"></div>
+        <div id="recordStatus" class="status-line"></div>
+        <div id="recordTable"></div>
     </section>
 </div>
 {% endblock %}
@@ -121,8 +99,8 @@
 {% block scripts %}
 <script>
 const campusApi = {
-    credentials: '/admin/api/campus/credentials',
-    snapshots: '/admin/api/campus/snapshots'
+    records: '/admin/api/campus/records',
+    recordDetailPrefix: '/admin/campus/records/'
 };
 
 function esc(value) {
@@ -158,43 +136,9 @@ async function fetchJson(url) {
     return data.data || {};
 }
 
-async function loadCredentials() {
-    const keyword = document.getElementById('credentialSearch').value.trim();
-    const target = document.getElementById('credentialTable');
-    const status = document.getElementById('credentialStatus');
-    status.textContent = '加载中...';
-    try {
-        const data = await fetchJson(`${campusApi.credentials}?search=${encodeURIComponent(keyword)}&size=100`);
-        updateSummary(data.summary);
-        const rows = data.items || [];
-        status.textContent = rows.length ? `共 ${data.total || rows.length} 条账号记录` : '';
-        if (!rows.length) {
-            target.innerHTML = '<div class="empty">暂无已保存的教务账号</div>';
-            return;
-        }
-        target.innerHTML = `<div class="table-wrap"><table>
-            <thead><tr><th>用户</th><th>教务账号</th><th>教务密码</th><th>绑定时间</th><th>更新时间</th></tr></thead>
-            <tbody>${rows.map(row => `<tr>
-                <td><div>${esc(row.username)}</div><div class="muted">ID ${esc(row.user_id)}</div></td>
-                <td class="mono">${esc(row.jwxt_username)}</td>
-                <td class="mono">${esc(row.jwxt_password)}</td>
-                <td>${fmtTime(row.created_at)}</td>
-                <td>${fmtTime(row.updated_at)}</td>
-            </tr>`).join('')}</tbody>
-        </table></div>`;
-    } catch (error) {
-        status.textContent = '';
-        target.innerHTML = `<div class="empty">${esc(error.message)}</div>`;
-    }
-}
-
-function snapshotKindLabel(kind) {
-    return kind === 'grades' ? '成绩' : '课表';
-}
-
 function studentInfoLine(student) {
     const data = student || {};
-    return [data.name, data.student_no, data.class_name, data.major_name]
+    return [data.student_no, data.class_name, data.major_name, data.college_name]
         .filter(Boolean)
         .map(esc)
         .join(' / ');
@@ -216,43 +160,50 @@ function gradeSummaryLine(summary) {
     return `<div class="grade-summary-line">${items.map(([label, value]) => `<div class="grade-summary-item"><span class="grade-summary-label">${label}</span><span class="grade-summary-value">${metricValue(value)}</span></div>`).join('')}</div>`;
 }
 
-function snapshotSummaryCell(row) {
-    if (row.kind === 'grades') {
-        return gradeSummaryLine(row.summary);
-    }
-    return esc(row.course_count);
+function recordDetailUrl(row) {
+    return row.detail_url || `${campusApi.recordDetailPrefix}${encodeURIComponent(row.credential_id)}`;
 }
 
-async function loadSnapshots() {
-    const kind = document.getElementById('snapshotKind').value;
-    const keyword = document.getElementById('snapshotSearch').value.trim();
-    const userId = document.getElementById('snapshotUserId').value.trim();
-    const target = document.getElementById('snapshotTable');
-    const detail = document.getElementById('snapshotDetail');
-    const status = document.getElementById('snapshotStatus');
-    detail.innerHTML = '';
+function renderRecordRows(rows) {
+    return rows.map(row => {
+        const url = recordDetailUrl(row);
+        const studentLine = studentInfoLine(row.student);
+        return `<tr class="record-row" onclick="window.location.href='${esc(url)}'">
+            <td>
+                <div class="student-name">${esc(row.student_name || '未查询')}</div>
+                <div class="student-info-line">${studentLine || '暂无学生信息'}</div>
+            </td>
+            <td class="mono">${esc(row.jwxt_username)}</td>
+            <td class="mono">${esc(row.jwxt_password)}</td>
+            <td>
+                <div class="record-counts">
+                    <span class="count-badge">课表 ${esc(row.schedule_snapshot_count || 0)}</span>
+                    <span class="count-badge">成绩 ${esc(row.grade_snapshot_count || 0)}</span>
+                </div>
+            </td>
+            <td>${fmtTime(row.latest_fetched_at)}</td>
+            <td><a class="btn btn-secondary btn-xs" href="${esc(url)}" onclick="event.stopPropagation()">记录详情</a></td>
+        </tr>`;
+    }).join('');
+}
+
+async function loadRecords() {
+    const keyword = document.getElementById('recordSearch').value.trim();
+    const target = document.getElementById('recordTable');
+    const status = document.getElementById('recordStatus');
     status.textContent = '加载中...';
-    const params = new URLSearchParams({ kind, search: keyword, size: '100' });
-    if (userId) params.set('user_id', userId);
     try {
-        const data = await fetchJson(`${campusApi.snapshots}?${params.toString()}`);
+        const data = await fetchJson(`${campusApi.records}?search=${encodeURIComponent(keyword)}&size=100`);
         updateSummary(data.summary);
         const rows = data.items || [];
-        status.textContent = rows.length ? `共 ${data.total || rows.length} 条${snapshotKindLabel(kind)}记录` : '';
+        status.textContent = rows.length ? `共 ${data.total || rows.length} 条绑定记录` : '';
         if (!rows.length) {
-            target.innerHTML = '<div class="empty">暂无查询记录</div>';
+            target.innerHTML = '<div class="empty">暂无已绑定的教务账号记录</div>';
             return;
         }
         target.innerHTML = `<div class="table-wrap"><table>
-            <thead><tr><th>类型</th><th>用户</th><th>学年学期</th><th>汇总</th><th>查询时间</th><th>操作</th></tr></thead>
-            <tbody>${rows.map(row => `<tr>
-                <td><span class="badge ${esc(row.kind)}">${snapshotKindLabel(row.kind)}</span></td>
-                <td><div>${esc(row.username)}</div><div class="muted">ID ${esc(row.user_id)}</div></td>
-                <td><div>${esc(row.term_label || '-')}</div><div class="student-info-line">${studentInfoLine(row.student)}</div><div class="muted">${esc(row.xnm)} / ${esc(row.xqm)}</div></td>
-                <td>${snapshotSummaryCell(row)}</td>
-                <td>${fmtTime(row.fetched_at)}</td>
-                <td><button class="btn btn-secondary btn-xs" type="button" onclick="loadSnapshotDetail('${esc(row.kind)}', ${Number(row.id)})">详情</button></td>
-            </tr>`).join('')}</tbody>
+            <thead><tr><th>学生姓名</th><th>教务账号</th><th>教务密码</th><th>查询记录</th><th>最近查询</th><th>操作</th></tr></thead>
+            <tbody>${renderRecordRows(rows)}</tbody>
         </table></div>`;
     } catch (error) {
         status.textContent = '';
@@ -260,62 +211,13 @@ async function loadSnapshots() {
     }
 }
 
-async function loadSnapshotDetail(kind, id) {
-    const target = document.getElementById('snapshotDetail');
-    target.innerHTML = '<div class="detail-panel"><div class="detail-body muted">加载中...</div></div>';
-    try {
-        const data = await fetchJson(`${campusApi.snapshots}/${encodeURIComponent(kind)}/${encodeURIComponent(id)}`);
-        const rows = data.items || [];
-        const studentLine = studentInfoLine(data.student);
-        const head = `<div class="detail-head">
-            <div>
-                <h3>${esc(data.username)} 的${snapshotKindLabel(data.kind)}详情</h3>
-                <div class="student-info-line">${studentLine}</div>
-            </div>
-            <div>${data.kind === 'grades' ? gradeSummaryLine(data.summary) : `<span class="muted">${esc(data.course_count)} 门课</span>`}</div>
-            <span class="muted">${esc(data.term_label || '')} · ${fmtTime(data.fetched_at)}</span>
-        </div>`;
-        const table = data.kind === 'grades' ? renderGradeDetail(rows) : renderScheduleDetail(rows);
-        target.innerHTML = `<div class="detail-panel">${head}<div class="detail-body">${table}</div></div>`;
-    } catch (error) {
-        target.innerHTML = `<div class="detail-panel"><div class="detail-body">${esc(error.message)}</div></div>`;
-    }
-}
-
-function renderScheduleDetail(rows) {
-    if (!rows.length) return '<div class="empty">暂无课表明细</div>';
-    return `<table><thead><tr><th>星期</th><th>节次</th><th>课程</th><th>教师</th><th>地点</th><th>周次</th><th>学分</th><th>考核</th></tr></thead>
-        <tbody>${rows.map(row => `<tr>
-            <td>${esc(row.weekday)}</td><td>${esc(row.section)}</td><td>${esc(row.course_name)}</td><td>${esc(row.teacher)}</td>
-            <td>${esc(row.location)}</td><td>${esc(row.weeks)}</td><td>${esc(row.credits)}</td><td>${esc(row.assessment)}</td>
-        </tr>`).join('')}</tbody></table>`;
-}
-
-function renderGradeDetail(rows) {
-    if (!rows.length) return '<div class="empty">暂无成绩明细</div>';
-    return `<table><thead><tr><th>课程</th><th>代码</th><th>成绩</th><th>绩点</th><th>学分</th><th>教师</th><th>类型</th><th>考核</th></tr></thead>
-        <tbody>${rows.map(row => `<tr>
-            <td>${esc(row.course_name)}</td><td>${esc(row.course_code)}</td><td>${esc(row.score)}</td><td>${esc(row.grade_point)}</td>
-            <td>${esc(row.credits)}</td><td>${esc(row.teacher)}</td><td>${esc(row.course_type)}</td><td>${esc(row.assessment || row.exam_type)}</td>
-        </tr>`).join('')}</tbody></table>`;
-}
-
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('credentialSearchBtn').addEventListener('click', loadCredentials);
-    document.getElementById('snapshotSearchBtn').addEventListener('click', loadSnapshots);
-    document.getElementById('snapshotKind').addEventListener('change', loadSnapshots);
-    document.getElementById('refreshAllBtn').addEventListener('click', () => {
-        loadCredentials();
-        loadSnapshots();
+    document.getElementById('recordSearchBtn').addEventListener('click', loadRecords);
+    document.getElementById('refreshAllBtn').addEventListener('click', loadRecords);
+    document.getElementById('recordSearch').addEventListener('keydown', event => {
+        if (event.key === 'Enter') loadRecords();
     });
-    document.getElementById('credentialSearch').addEventListener('keydown', event => {
-        if (event.key === 'Enter') loadCredentials();
-    });
-    document.getElementById('snapshotSearch').addEventListener('keydown', event => {
-        if (event.key === 'Enter') loadSnapshots();
-    });
-    loadCredentials();
-    loadSnapshots();
+    loadRecords();
 });
 </script>
 {% endblock %}

@@ -186,6 +186,76 @@ def _snapshot_base(row: Any, user: User, kind: str, payload: Dict[str, Any]) -> 
     return data
 
 
+def _latest_snapshot(model: Any, user_id: int) -> Optional[Any]:
+    return (
+        model.query.filter_by(user_id=int(user_id))
+        .order_by(model.fetched_at.desc(), model.id.desc())
+        .first()
+    )
+
+
+def _snapshot_sort_key(kind: str, row: Optional[Any]) -> Tuple[str, int, int]:
+    if row is None:
+        return ("", 0, 0)
+    fetched_at = _format_time(row.fetched_at) or ""
+    kind_weight = 1 if kind == "grades" else 0
+    return (fetched_at, kind_weight, int(row.id or 0))
+
+
+def _student_from_user_snapshots(user_id: int) -> Dict[str, str]:
+    candidates = [
+        ("schedule", _latest_snapshot(EduScheduleSnapshot, user_id)),
+        ("grades", _latest_snapshot(EduGradeSnapshot, user_id)),
+    ]
+    for kind, row in sorted(candidates, key=lambda item: _snapshot_sort_key(item[0], item[1]), reverse=True):
+        if row is None:
+            continue
+        student = _student_info(_safe_json_loads(row.payload_json))
+        if student.get("name"):
+            return student
+    return {
+        "name": "未查询",
+        "student_no": "",
+        "class_name": "",
+        "major_name": "",
+        "college_name": "",
+    }
+
+
+def _snapshot_count(model: Any, user_id: int) -> int:
+    return int(model.query.filter_by(user_id=int(user_id)).count())
+
+
+def _latest_fetched_at(user_id: int) -> Optional[str]:
+    latest_schedule = _latest_snapshot(EduScheduleSnapshot, user_id)
+    latest_grades = _latest_snapshot(EduGradeSnapshot, user_id)
+    latest = max(
+        (row for row in (latest_schedule, latest_grades) if row is not None),
+        key=lambda row: _format_time(row.fetched_at) or "",
+        default=None,
+    )
+    return _format_time(latest.fetched_at) if latest is not None else None
+
+
+def _record_from_credential(credential: EduScheduleCredential) -> Dict[str, Any]:
+    user_id = int(credential.user_id)
+    student = _student_from_user_snapshots(user_id)
+    return {
+        "credential_id": int(credential.id),
+        "jwxt_username": _decrypt_or_error(credential.jwxt_username_ciphertext),
+        "jwxt_password": _decrypt_or_error(credential.jwxt_password_ciphertext),
+        "username_hint": credential.username_hint or "",
+        "student_name": student.get("name") or "未查询",
+        "student": student,
+        "schedule_snapshot_count": _snapshot_count(EduScheduleSnapshot, user_id),
+        "grade_snapshot_count": _snapshot_count(EduGradeSnapshot, user_id),
+        "latest_fetched_at": _latest_fetched_at(user_id),
+        "created_at": _format_time(credential.created_at),
+        "updated_at": _format_time(credential.updated_at),
+        "detail_url": f"/admin/campus/records/{int(credential.id)}",
+    }
+
+
 class CampusManagementService:
     """读取后台校园管理所需的凭据与查询快照。"""
 
@@ -230,6 +300,31 @@ class CampusManagementService:
         }
 
     @staticmethod
+    def list_records(search: str = "", page: int = 1, size: int = 20) -> Dict[str, Any]:
+        rows = (
+            EduScheduleCredential.query
+            .order_by(EduScheduleCredential.updated_at.desc(), EduScheduleCredential.id.desc())
+            .all()
+        )
+        items = [
+            item
+            for item in (_record_from_credential(credential) for credential in rows)
+            if _contains_any(
+                item,
+                search,
+                ("jwxt_username", "jwxt_password", "username_hint", "student_name"),
+            )
+        ]
+        page_items, total = _paginate(items, page, size)
+        return {
+            "items": page_items,
+            "total": total,
+            "page": page,
+            "size": size,
+            "summary": CampusManagementService.summary(),
+        }
+
+    @staticmethod
     def list_snapshots(
         kind: str,
         *,
@@ -257,6 +352,30 @@ class CampusManagementService:
             "total": total,
             "page": page,
             "size": size,
+            "summary": CampusManagementService.summary(),
+        }
+
+    @staticmethod
+    def get_record_detail(credential_id: int) -> Optional[Dict[str, Any]]:
+        credential = EduScheduleCredential.query.filter_by(id=int(credential_id)).first()
+        if credential is None:
+            return None
+
+        user_id = int(credential.user_id)
+        return {
+            "record": _record_from_credential(credential),
+            "schedule_snapshots": CampusManagementService.list_snapshots(
+                "schedule",
+                user_id=user_id,
+                page=1,
+                size=100,
+            )["items"],
+            "grade_snapshots": CampusManagementService.list_snapshots(
+                "grades",
+                user_id=user_id,
+                page=1,
+                size=100,
+            )["items"],
             "summary": CampusManagementService.summary(),
         }
 

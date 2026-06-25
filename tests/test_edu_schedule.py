@@ -5,6 +5,7 @@ import json
 import threading
 import time
 from pathlib import Path
+from uuid import uuid4
 
 from sqlalchemy import text
 
@@ -1380,6 +1381,29 @@ def _seed_admin_campus_data(app, user_id):
         EduScheduleService._save_grade_snapshot(user_id, "2031", "3", grade_payload, grade_raw)
 
 
+def _create_bound_edu_user_without_query(app):
+    from app.modules.edu_schedule.services.schedule_service import EduScheduleService
+
+    suffix = uuid4().hex[:8]
+    username = f"campus_no_query_{suffix}"
+    with app.app_context():
+        row = app.extensions["sqlalchemy"].session.execute(
+            text(
+                "INSERT INTO users (username, password_hash, is_admin, has_password_set) "
+                "VALUES (:username, :password_hash, 0, 1) RETURNING id"
+            ),
+            {"username": username, "password_hash": "test"},
+        ).fetchone()
+        user_id = int(row[0])
+        app.extensions["sqlalchemy"].session.commit()
+        EduScheduleService.save_credentials(user_id, f"edu_no_query_{suffix}", "NoQuerySecret123!")
+        credential_id = app.extensions["sqlalchemy"].session.execute(
+            text("SELECT id FROM edu_schedule_credentials WHERE user_id = :uid"),
+            {"uid": user_id},
+        ).scalar()
+    return {"user_id": user_id, "username": username, "credential_id": int(credential_id), "edu_username": f"edu_no_query_{suffix}"}
+
+
 def test_admin_campus_page_exposes_management_apis(app, seed_user):
     client = _admin_client(app, seed_user)
 
@@ -1388,8 +1412,10 @@ def test_admin_campus_page_exposes_management_apis(app, seed_user):
     assert page.status_code == 200
     html = page.get_data(as_text=True)
     assert "校园管理" in html
-    assert "/admin/api/campus/credentials" in html
-    assert "/admin/api/campus/snapshots" in html
+    assert "/admin/api/campus/records" in html
+    assert "/admin/campus/records/" in html
+    assert "loadRecords" in html
+    assert "记录详情" in html
     assert "student-info-line" in html
     assert "studentInfoLine" in html
     assert "gradeSummaryLine" in html
@@ -1399,12 +1425,76 @@ def test_admin_campus_page_exposes_management_apis(app, seed_user):
     assert "绩点总和" in html
 
 
+def test_admin_campus_records_are_indexed_by_edu_account_and_student_name(app, seed_user):
+    _seed_admin_campus_data(app, seed_user["id"])
+    no_query = _create_bound_edu_user_without_query(app)
+    client = _admin_client(app, seed_user)
+
+    queried_response = client.get("/admin/api/campus/records?search=campus_admin_demo")
+    no_query_response = client.get(f"/admin/api/campus/records?search={no_query['edu_username']}")
+
+    assert queried_response.status_code == 200
+    assert no_query_response.status_code == 200
+    queried_rows = queried_response.get_json()["data"]["items"]
+    no_query_rows = no_query_response.get_json()["data"]["items"]
+    assert queried_rows
+    assert no_query_rows
+
+    queried = queried_rows[0]
+    assert queried["credential_id"] > 0
+    assert queried["jwxt_username"] == "campus_admin_demo"
+    assert queried["jwxt_password"] == "CampusSecret123!"
+    assert queried["student_name"] == "测试学生"
+    assert queried["schedule_snapshot_count"] >= 1
+    assert queried["grade_snapshot_count"] >= 1
+    assert queried["detail_url"] == f"/admin/campus/records/{queried['credential_id']}"
+    assert "username" not in queried
+
+    no_query_row = no_query_rows[0]
+    assert no_query_row["jwxt_username"] == no_query["edu_username"]
+    assert no_query_row["student_name"] == "未查询"
+    assert no_query_row["schedule_snapshot_count"] == 0
+    assert no_query_row["grade_snapshot_count"] == 0
+
+
+def test_admin_campus_record_detail_page_and_api_show_student_snapshots(app, seed_user):
+    _seed_admin_campus_data(app, seed_user["id"])
+    client = _admin_client(app, seed_user)
+
+    records = client.get("/admin/api/campus/records?search=campus_admin_demo").get_json()["data"]["items"]
+    credential_id = int(records[0]["credential_id"])
+    page = client.get(f"/admin/campus/records/{credential_id}")
+    detail = client.get(f"/admin/api/campus/records/{credential_id}")
+
+    assert page.status_code == 200
+    html = page.get_data(as_text=True)
+    assert "记录详情" in html
+    assert "campusRecordId" in html
+    assert f"/admin/api/campus/records/{credential_id}" in html
+
+    assert detail.status_code == 200
+    body = detail.get_json()
+    assert body["status"] == "success"
+    data = body["data"]
+    assert data["record"]["jwxt_username"] == "campus_admin_demo"
+    assert data["record"]["student_name"] == "测试学生"
+    assert data["schedule_snapshots"][0]["student"]["name"] == "王为硕"
+    assert data["grade_snapshots"][0]["student"]["name"] == "测试学生"
+    assert data["grade_snapshots"][0]["summary"]["course_count"] == 2
+
+
 def test_admin_campus_rejects_non_admin(app, auth_client):
     page = auth_client.get("/admin/campus")
+    detail_page = auth_client.get("/admin/campus/records/1")
     api_response = auth_client.get("/admin/api/campus/credentials")
+    records_response = auth_client.get("/admin/api/campus/records")
+    record_detail_response = auth_client.get("/admin/api/campus/records/1")
 
     assert page.status_code in (302, 403)
+    assert detail_page.status_code in (302, 403)
     assert api_response.status_code == 403
+    assert records_response.status_code == 403
+    assert record_detail_response.status_code == 403
 
 
 def test_admin_campus_credentials_returns_decrypted_saved_account(app, seed_user):

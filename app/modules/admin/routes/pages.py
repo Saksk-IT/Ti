@@ -168,6 +168,13 @@ def admin_campus_page():
     return render_template('admin/campus/index.html')
 
 
+@admin_pages_bp.route('/campus/records/<int:credential_id>')
+@admin_required
+def admin_campus_record_detail_page(credential_id):
+    """校园管理绑定记录详情页面"""
+    return render_template('admin/campus/record_detail.html', credential_id=credential_id)
+
+
 @admin_pages_bp.route('/subject_permissions')
 def admin_subject_permissions_page():
     """题库管理页面（批量操作）"""

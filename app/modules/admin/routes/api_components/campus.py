@@ -40,6 +40,36 @@ def api_campus_credentials():
         return error_response("加载校园凭据失败，请稍后重试", status_code=500)
 
 
+@admin_api_bp.route("/campus/records", methods=["GET"])
+@admin_required
+def api_campus_records():
+    try:
+        page = parse_int(request.args.get("page"), 1, 1)
+        size = parse_int(request.args.get("size"), 20, 5, 100)
+        data = CampusManagementService.list_records(
+            search=(request.args.get("search") or "").strip(),
+            page=page,
+            size=size,
+        )
+        return success_response(data=data)
+    except Exception as exc:
+        current_app.logger.error("加载校园绑定记录失败: %s", type(exc).__name__, exc_info=True)
+        return error_response("加载校园绑定记录失败，请稍后重试", status_code=500)
+
+
+@admin_api_bp.route("/campus/records/<int:credential_id>", methods=["GET"])
+@admin_required
+def api_campus_record_detail(credential_id: int):
+    try:
+        data = CampusManagementService.get_record_detail(credential_id)
+        if data is None:
+            return error_response("校园绑定记录不存在", status_code=404)
+        return success_response(data=data)
+    except Exception as exc:
+        current_app.logger.error("加载校园绑定详情失败: %s", type(exc).__name__, exc_info=True)
+        return error_response("加载校园绑定详情失败，请稍后重试", status_code=500)
+
+
 @admin_api_bp.route("/campus/snapshots", methods=["GET"])
 @admin_required
 def api_campus_snapshots():
