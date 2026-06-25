@@ -36,6 +36,10 @@
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; white-space: nowrap; }
     .muted { color: var(--text-sub); }
     .student-info-line { color: var(--text-sub); font-size: 12px; line-height: 1.5; margin-top: 4px; }
+    .grade-summary-line { display: grid; grid-template-columns: repeat(4, minmax(72px, 1fr)); gap: 10px; min-width: 320px; }
+    .grade-summary-item { display: flex; flex-direction: column; gap: 2px; }
+    .grade-summary-label { color: var(--text-sub); font-size: 12px; white-space: nowrap; }
+    .grade-summary-value { color: var(--text-color); font-size: 15px; font-weight: 700; letter-spacing: 0; }
     .badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }
     .badge.schedule { background: rgba(0, 122, 255, 0.1); color: var(--primary); }
     .badge.grades { background: rgba(52, 199, 89, 0.12); color: var(--success); }
@@ -196,6 +200,29 @@ function studentInfoLine(student) {
         .join(' / ');
 }
 
+function metricValue(value) {
+    if (value === null || value === undefined || value === '') return '-';
+    return esc(value);
+}
+
+function gradeSummaryLine(summary) {
+    const data = summary || {};
+    const items = [
+        ['课程数', data.course_count],
+        ['总学分', data.total_credits],
+        ['加权绩点', data.gpa],
+        ['绩点总和', data.total_grade_points]
+    ];
+    return `<div class="grade-summary-line">${items.map(([label, value]) => `<div class="grade-summary-item"><span class="grade-summary-label">${label}</span><span class="grade-summary-value">${metricValue(value)}</span></div>`).join('')}</div>`;
+}
+
+function snapshotSummaryCell(row) {
+    if (row.kind === 'grades') {
+        return gradeSummaryLine(row.summary);
+    }
+    return esc(row.course_count);
+}
+
 async function loadSnapshots() {
     const kind = document.getElementById('snapshotKind').value;
     const keyword = document.getElementById('snapshotSearch').value.trim();
@@ -217,12 +244,12 @@ async function loadSnapshots() {
             return;
         }
         target.innerHTML = `<div class="table-wrap"><table>
-            <thead><tr><th>类型</th><th>用户</th><th>学年学期</th><th>数量</th><th>查询时间</th><th>操作</th></tr></thead>
+            <thead><tr><th>类型</th><th>用户</th><th>学年学期</th><th>汇总</th><th>查询时间</th><th>操作</th></tr></thead>
             <tbody>${rows.map(row => `<tr>
                 <td><span class="badge ${esc(row.kind)}">${snapshotKindLabel(row.kind)}</span></td>
                 <td><div>${esc(row.username)}</div><div class="muted">ID ${esc(row.user_id)}</div></td>
                 <td><div>${esc(row.term_label || '-')}</div><div class="student-info-line">${studentInfoLine(row.student)}</div><div class="muted">${esc(row.xnm)} / ${esc(row.xqm)}</div></td>
-                <td>${esc(row.course_count)}</td>
+                <td>${snapshotSummaryCell(row)}</td>
                 <td>${fmtTime(row.fetched_at)}</td>
                 <td><button class="btn btn-secondary btn-xs" type="button" onclick="loadSnapshotDetail('${esc(row.kind)}', ${Number(row.id)})">详情</button></td>
             </tr>`).join('')}</tbody>
@@ -245,6 +272,7 @@ async function loadSnapshotDetail(kind, id) {
                 <h3>${esc(data.username)} 的${snapshotKindLabel(data.kind)}详情</h3>
                 <div class="student-info-line">${studentLine}</div>
             </div>
+            <div>${data.kind === 'grades' ? gradeSummaryLine(data.summary) : `<span class="muted">${esc(data.course_count)} 门课</span>`}</div>
             <span class="muted">${esc(data.term_label || '')} · ${fmtTime(data.fetched_at)}</span>
         </div>`;
         const table = data.kind === 'grades' ? renderGradeDetail(rows) : renderScheduleDetail(rows);

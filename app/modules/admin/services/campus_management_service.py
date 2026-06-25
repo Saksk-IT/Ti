@@ -95,6 +95,16 @@ def _student_info(payload: Dict[str, Any]) -> Dict[str, str]:
     }
 
 
+def _grade_summary(payload: Dict[str, Any]) -> Dict[str, Any]:
+    summary = payload.get("summary") if isinstance(payload.get("summary"), dict) else {}
+    return {
+        "course_count": summary.get("course_count") or _grade_course_count(payload),
+        "total_credits": summary.get("total_credits") or 0,
+        "gpa": summary.get("gpa") or 0,
+        "total_grade_points": summary.get("total_grade_points") or 0,
+    }
+
+
 def _flatten_schedule_items(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
     rows: List[Dict[str, Any]] = []
     courses = payload.get("courses") if isinstance(payload.get("courses"), list) else []
@@ -159,7 +169,7 @@ def _flatten_grade_items(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 def _snapshot_base(row: Any, user: User, kind: str, payload: Dict[str, Any]) -> Dict[str, Any]:
     term = payload.get("term") if isinstance(payload.get("term"), dict) else {}
-    return {
+    data = {
         "id": int(row.id),
         "kind": kind,
         "user_id": int(user.id),
@@ -171,6 +181,9 @@ def _snapshot_base(row: Any, user: User, kind: str, payload: Dict[str, Any]) -> 
         "course_count": _snapshot_course_count(kind, payload),
         "fetched_at": _format_time(row.fetched_at),
     }
+    if kind == "grades":
+        data["summary"] = _grade_summary(payload)
+    return data
 
 
 class CampusManagementService:

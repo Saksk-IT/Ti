@@ -1392,6 +1392,11 @@ def test_admin_campus_page_exposes_management_apis(app, seed_user):
     assert "/admin/api/campus/snapshots" in html
     assert "student-info-line" in html
     assert "studentInfoLine" in html
+    assert "gradeSummaryLine" in html
+    assert "课程数" in html
+    assert "总学分" in html
+    assert "加权绩点" in html
+    assert "绩点总和" in html
 
 
 def test_admin_campus_rejects_non_admin(app, auth_client):
@@ -1464,6 +1469,10 @@ def test_admin_campus_snapshot_list_and_detail_return_grade_and_schedule_data(ap
     assert grade_item["student"]["student_no"] == "stu_demo_2026"
     assert grade_item["student"]["class_name"] == "软件工程26-1班"
     assert grade_item["student"]["major_name"] == "软件工程"
+    assert grade_item["summary"]["course_count"] == 2
+    assert grade_item["summary"]["total_credits"] == 6.0
+    assert grade_item["summary"]["gpa"] == 3.67
+    assert grade_item["summary"]["total_grade_points"] == 22.0
 
     schedule_detail = client.get(f"/admin/api/campus/snapshots/schedule/{schedule_item['id']}")
     grade_detail = client.get(f"/admin/api/campus/snapshots/grades/{grade_item['id']}")
@@ -1480,6 +1489,10 @@ def test_admin_campus_snapshot_list_and_detail_return_grade_and_schedule_data(ap
     assert grade_body["kind"] == "grades"
     assert grade_body["student"]["name"] == "测试学生"
     assert grade_body["student"]["class_name"] == "软件工程26-1班"
+    assert grade_body["summary"]["course_count"] == 2
+    assert grade_body["summary"]["total_credits"] == 6.0
+    assert grade_body["summary"]["gpa"] == 3.67
+    assert grade_body["summary"]["total_grade_points"] == 22.0
     assert grade_body["items"][0]["course_name"] == "数据结构"
     assert grade_body["items"][0]["score"] == "92"
 
