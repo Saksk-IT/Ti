@@ -203,6 +203,17 @@ function formatTaskTerms(terms: any[]): string {
     .join('、') + (normalized.length > 3 ? ` 等 ${normalized.length} 个学期` : '');
 }
 
+function formatTaskMeta(mode: CampusMode, terms: any[]): string {
+  if (mode === 'grades') return '全部成绩';
+  return formatTaskTerms(terms);
+}
+
+function buildGradeQueryTerms(yearInput: unknown): Array<{ xnm: string; xqm: string }> {
+  const year = Number(yearInput) || defaultYear;
+  const xnm = Number.isInteger(year) && year >= 2000 && year <= 2100 ? year : defaultYear;
+  return [{ xnm: String(xnm), xqm: '3' }];
+}
+
 function taskRowsSource(task: any, data: any): any {
   const credential = data?.credential || task?.credential || {};
   if (Array.isArray(task?.results) && task.results.length) return { results: task.results, credential };
@@ -476,8 +487,8 @@ Page({
       queryProgressVisible: true,
       queryProgressStatus: taskStatusLabel(status),
       queryProgressPercent: taskProgressPercent(task),
-      queryProgressDetail: String(task?.message || (mode === 'grades' ? '正在后台查询成绩' : '正在后台查询课表')),
-      queryProgressMeta: formatTaskTerms(Array.isArray(task?.terms) ? task.terms : []),
+      queryProgressDetail: String(task?.message || (mode === 'grades' ? '正在刷新全部成绩' : '正在后台查询课表')),
+      queryProgressMeta: formatTaskMeta(mode, Array.isArray(task?.terms) ? task.terms : []),
     };
     const self = ensureRuntimeState(this as any);
     self.__lastCampusProgress[mode] = progress;
@@ -546,7 +557,7 @@ Page({
       return true;
     }
     if (status === 'succeeded') {
-      if (this.data.mode === mode) this.setData({ statusMsg: mode === 'grades' ? '成绩查询完成' : '课表查询完成' });
+      if (this.data.mode === mode) this.setData({ statusMsg: mode === 'grades' ? '全部成绩已同步' : '课表查询完成' });
       return true;
     }
     if (status === 'failed') {
@@ -581,7 +592,9 @@ Page({
     return new Promise((resolve) => {
       wx.showModal({
         title: '停止上次查询？',
-        content: `发起本次查询会停止上次的${label}查询，确定继续吗？`,
+        content: mode === 'grades'
+          ? '发起本次刷新会停止上次的成绩刷新，确定继续吗？'
+          : `发起本次查询会停止上次的${label}查询，确定继续吗？`,
         confirmText: '继续',
         cancelText: '取消',
         success: (res) => resolve(!!res.confirm),
@@ -609,7 +622,7 @@ Page({
     this.setData({
       loading: true,
       errorMsg: '',
-      statusMsg: mode === 'grades' ? '成绩查询已提交，正在连接教务系统...' : '课表查询已提交，正在连接教务系统...',
+      statusMsg: mode === 'grades' ? '全部成绩刷新已提交，正在连接教务系统...' : '课表查询已提交，正在连接教务系统...',
     });
     try {
       const data: any = mode === 'grades'
@@ -621,8 +634,8 @@ Page({
         if (!finished) this.startTaskPolling(String(task.task_id), mode, payload);
         return;
       }
-      this.applyQueryRows(data || {}, mode, mode === 'grades' ? '成绩查询完成' : '课表查询完成');
-      this.setProgressForTask({ status: 'succeeded', message: '查询完成', terms: payload.terms }, mode);
+      this.applyQueryRows(data || {}, mode, mode === 'grades' ? '全部成绩已同步' : '课表查询完成');
+      this.setProgressForTask({ status: 'succeeded', message: mode === 'grades' ? '全部成绩已同步' : '查询完成', terms: payload.terms }, mode);
     } catch (e: any) {
       this.setData({ errorMsg: campusFriendlyError(e, '查询失败，请稍后重试') });
     } finally {
@@ -705,16 +718,20 @@ Page({
       return;
     }
 
+    const mode = this.data.mode as CampusMode;
     let terms;
     try {
-      const semester = SEMESTER_VALUES[this.data.semesterIndex] || 'all';
-      terms = buildCampusTerms(this.data.academicYear, this.data.academicYear, semester);
+      if (mode === 'grades') {
+        terms = buildGradeQueryTerms(this.data.academicYear);
+      } else {
+        const semester = SEMESTER_VALUES[this.data.semesterIndex] || 'all';
+        terms = buildCampusTerms(this.data.academicYear, this.data.academicYear, semester);
+      }
     } catch (e: any) {
       this.setData({ errorMsg: e?.message || '学年或学期不正确' });
       return;
     }
 
-    const mode = this.data.mode as CampusMode;
     if (isActiveTask(this.getActiveCampusTask(mode))) {
       const confirmed = await this.confirmReplacingActiveTask(mode);
       if (!confirmed) return;

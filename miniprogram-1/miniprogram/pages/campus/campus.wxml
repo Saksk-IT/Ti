@@ -61,7 +61,7 @@
           </view>
         </view>
 
-        <view class="filter-panel">
+        <view class="filter-panel" wx:if="{{mode === 'schedule'}}">
           <view class="panel-header">
             <view class="panel-title-wrap">
               <image class="panel-icon" src="/images/icons/sliders.svg" mode="aspectFit"></image>
@@ -95,7 +95,25 @@
           </view>
           <view class="query-btn {{loading ? 'disabled' : ''}}" bindtap="onQueryTap" aria-role="button" aria-label="查询校园信息">
             <image class="query-icon" src="{{mode === 'grades' ? '/images/icons/chart.svg' : '/images/icons/book-open.svg'}}" mode="aspectFit"></image>
-            <text>{{loading ? '提交中...' : (mode === 'grades' ? '查询成绩' : '查询课表')}}</text>
+            <text>{{loading ? '提交中...' : '查询课表'}}</text>
+          </view>
+        </view>
+
+        <view class="filter-panel grade-sync-panel" wx:elif="{{mode === 'grades'}}">
+          <view class="panel-header">
+            <view class="panel-title-wrap">
+              <image class="panel-icon" src="/images/icons/chart.svg" mode="aspectFit"></image>
+              <text class="panel-title">全部成绩</text>
+            </view>
+            <text class="panel-note">全量刷新</text>
+          </view>
+          <view class="grade-sync-copy">
+            <text class="grade-sync-title">按学年学期归档</text>
+            <text class="grade-sync-sub">同步后在下方结果区查看</text>
+          </view>
+          <view class="query-btn {{loading ? 'disabled' : ''}}" bindtap="onQueryTap" aria-role="button" aria-label="刷新全部成绩">
+            <image class="query-icon" src="/images/icons/chart.svg" mode="aspectFit"></image>
+            <text>{{loading ? '提交中...' : '刷新全部成绩'}}</text>
           </view>
         </view>
 

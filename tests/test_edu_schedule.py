@@ -477,7 +477,7 @@ def test_campus_pages_confirm_before_replacing_active_query(auth_client):
 
     assert "confirmReplacingActiveTask" in grade_html
     assert "/cancel" in grade_html
-    assert "发起本次查询会停止上次的成绩查询" in grade_html
+    assert "发起本次刷新会停止上次的成绩刷新" in grade_html
 
 
 def test_campus_year_filters_use_academic_year_range_labels(auth_client):
@@ -489,21 +489,29 @@ def test_campus_year_filters_use_academic_year_range_labels(auth_client):
 
     schedule_html = schedule_page.get_data(as_text=True)
     grade_html = grades_page.get_data(as_text=True)
+    assert '<select id="scheduleAcademicYear"' in schedule_html
+    assert '<select id="gradeAcademicYear"' not in grade_html
+    assert '<select id="gradeSemester"' not in grade_html
+    assert "刷新全部成绩" in grade_html
+    assert "按学年学期归档" in grade_html
     for prefix, html in (("schedule", schedule_html), ("grade", grade_html)):
-        assert f'<select id="{prefix}AcademicYear"' in html
         assert f'<input id="{prefix}StartYear"' not in html
         assert f'<input id="{prefix}EndYear"' not in html
         assert f'id="{prefix}StartYear"' not in html
         assert f'id="{prefix}EndYear"' not in html
         assert "开始学年" not in html
         assert "结束学年" not in html
-        assert "2025~2026" in html
+    assert "2025~2026" in schedule_html
 
     campus_dir = Path("miniprogram-1/miniprogram/pages/campus")
     wxml = (campus_dir / "campus.wxml").read_text(encoding="utf-8")
     less = (campus_dir / "campus.less").read_text(encoding="utf-8")
     ts = (campus_dir / "campus.ts").read_text(encoding="utf-8")
 
+    assert 'wx:if="{{mode === \'schedule\'}}"' in wxml
+    assert 'wx:elif="{{mode === \'grades\'}}"' in wxml
+    assert "刷新全部成绩" in wxml
+    assert "按学年学期归档" in wxml
     assert wxml.count('range="{{academicYearLabels}}"') == 1
     assert wxml.index('class="year-picker"') < wxml.index('class="semester-picker"')
     assert 'range="{{academicYearLabels}}"' in wxml

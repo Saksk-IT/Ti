@@ -362,7 +362,10 @@ class EduScheduleQueryTaskService:
                 return cancelled_state
             attempt += 1
             status = "running" if attempt == 1 else "retrying"
-            message = "正在连接教务系统并查询" if attempt == 1 else f"教务系统繁忙，正在第 {attempt} 次自动重试"
+            if kind == "grades":
+                message = "正在连接教务系统并刷新全部成绩" if attempt == 1 else f"教务系统繁忙，正在第 {attempt} 次自动重试"
+            else:
+                message = "正在连接教务系统并查询" if attempt == 1 else f"教务系统繁忙，正在第 {attempt} 次自动重试"
             state = _save_state({
                 **state,
                 "status": status,
@@ -395,7 +398,7 @@ class EduScheduleQueryTaskService:
                 final_state = _save_state({
                     **state,
                     "status": "succeeded",
-                    "message": "查询完成",
+                    "message": "全部成绩已同步" if kind == "grades" else "查询完成",
                     "results": data.get("results") or [],
                     "snapshots": snapshots,
                     "credential": data.get("credential") or EduScheduleService.credential_status(user_id),

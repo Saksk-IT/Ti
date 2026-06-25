@@ -8,27 +8,13 @@
   <div class="grade-content">
     <div class="grade-toolbar">
       <form id="gradeForm" class="grade-form" autocomplete="off">
-        <div class="field-group term-fields">
-          <label>
-            <span>学年</span>
-            <select id="gradeAcademicYear">
-              {% for option in academic_year_options %}
-              <option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.label }}</option>
-              {% endfor %}
-            </select>
-          </label>
-          <label>
-            <span>学期</span>
-            <select id="gradeSemester">
-              <option value="all">第一、二学期</option>
-              <option value="3" selected>第一学期</option>
-              <option value="12">第二学期</option>
-            </select>
-          </label>
+        <div class="grade-query-copy">
+          <strong>全部成绩</strong>
+          <span>按学年学期归档</span>
         </div>
 
         <div class="grade-actions">
-          <button class="primary-btn" type="submit" id="gradeSubmit">查询</button>
+          <button class="primary-btn" type="submit" id="gradeSubmit">刷新全部成绩</button>
           <a class="ghost-btn" href="/settings/account/bindings">账号绑定</a>
         </div>
       </form>
@@ -94,33 +80,24 @@
   }
   .grade-form {
     display: grid;
-    grid-template-columns: minmax(260px, 1fr) auto;
+    grid-template-columns: minmax(180px, 1fr) auto;
     gap: 14px;
-    align-items: end;
+    align-items: center;
   }
-  .field-group {
+  .grade-query-copy {
     display: grid;
-    gap: 10px;
+    gap: 4px;
+    min-width: 0;
   }
-  .term-fields {
-    grid-template-columns: repeat(2, minmax(120px, 1fr));
-  }
-  .grade-form label {
-    display: grid;
-    gap: 6px;
-    font-size: 12px;
-    font-weight: 800;
-    color: var(--app-muted);
-  }
-  .grade-form select {
-    width: 100%;
-    min-height: 40px;
-    border: 1px solid var(--app-border);
-    border-radius: 8px;
-    padding: 0 10px;
-    background: var(--app-surface-2);
+  .grade-query-copy strong {
     color: var(--app-text);
-    font-size: 14px;
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 0;
+  }
+  .grade-query-copy span {
+    color: var(--app-muted);
+    font-size: 13px;
   }
   .grade-actions {
     display: inline-flex;
@@ -325,9 +302,6 @@
     .grade-toolbar {
       padding: 12px;
     }
-    .term-fields {
-      grid-template-columns: 1fr;
-    }
   }
 </style>
 {% include "edu_schedule/_query_progress_styles.html" %}
@@ -367,7 +341,7 @@
   let pendingQueryPayload = null;
   let activeTaskTimer = null;
   const queryKindLabel = '成绩';
-  const queryReplaceConfirmMessage = '发起本次查询会停止上次的成绩查询，确定继续吗？';
+  const queryReplaceConfirmMessage = '发起本次刷新会停止上次的成绩刷新，确定继续吗？';
   const resultKindLabel = '成绩';
   let activeQueryTask = null;
   let snapshotResultItems = [];
@@ -408,14 +382,7 @@
   }
 
   function formatTaskTerms(task) {
-    const terms = task && Array.isArray(task.terms) ? task.terms : [];
-    const termNames = terms.map(function (term) {
-      const xnm = String(term.xnm || '');
-      const xqm = String(term.xqm || '');
-      const semester = { '3': '第一学期', '12': '第二学期', '16': '第三学期' }[xqm] || xqm;
-      return xnm ? (xnm + '-' + (Number(xnm) + 1) + ' ' + semester) : semester;
-    }).filter(Boolean);
-    return termNames.join('、');
+    return task ? '全部成绩' : '';
   }
 
   function renderTaskProgress(task) {
@@ -425,7 +392,7 @@
     queryProgressStatus.textContent = taskStatusLabel(task);
     queryProgressFill.style.width = percent + '%';
     queryProgressBar.setAttribute('aria-valuenow', String(percent));
-    queryProgressDetail.textContent = task.message || '正在后台查询成绩';
+    queryProgressDetail.textContent = task.message || '正在后台刷新全部成绩';
     const termsText = formatTaskTerms(task);
     const attempt = Number(task.attempt || 0);
     const maxAttempts = Number(task.max_attempts || 0);
@@ -443,18 +410,9 @@
   }
 
   function buildTerms() {
-    const academicYear = Number(document.getElementById('gradeAcademicYear').value || 0);
-    const semester = document.getElementById('gradeSemester').value;
-    const terms = [];
-    if (!Number.isInteger(academicYear) || academicYear < 2000 || academicYear > 2100) {
-      throw new Error('学年不正确');
-    }
-    const semesters = semester === 'all' ? ['3', '12'] : [semester];
-    semesters.forEach(function (xqm) { terms.push({ xnm: String(academicYear), xqm: xqm }); });
-    if (terms.length > 12) {
-      throw new Error('一次最多查询 12 个学期');
-    }
-    return terms;
+    const now = new Date();
+    const academicYear = now.getMonth() + 1 >= 9 ? now.getFullYear() : now.getFullYear() - 1;
+    return [{ xnm: String(academicYear), xqm: '3' }];
   }
 
   function appendText(parent, tagName, className, text) {
@@ -582,7 +540,7 @@
     if (task.status === 'succeeded') {
       stopTaskPolling();
       renderResults(task.results || []);
-      setState('查询完成', '');
+      setState('全部成绩已同步', '');
       return true;
     }
     if (task.status === 'failed') {
@@ -593,7 +551,7 @@
     }
     const hasFallback = renderTaskFallback(task);
     const suffix = hasFallback ? '，当前显示上次成功结果' : '';
-    setState((task.message || '正在后台查询成绩') + suffix, '');
+    setState((task.message || '正在后台刷新全部成绩') + suffix, '');
     return false;
   }
 
@@ -682,7 +640,7 @@
       return;
     }
     renderResults(data.data && data.data.results);
-    setState('查询完成', '');
+    setState('全部成绩已同步', '');
   }
 
   async function showBindPrompt() {
@@ -742,13 +700,13 @@
       submitBtn.disabled = true;
       submitBtn.textContent = '提交中';
       hideTaskProgress();
-      setState('正在提交后台查询任务...', '');
+      setState('正在提交全部成绩刷新任务...', '');
       await submitQueryAfterWebvpnRefresh(payload);
     } catch (error) {
       setState(error.message || '查询失败', 'error');
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = '查询';
+      submitBtn.textContent = '刷新全部成绩';
     }
   });
 
@@ -786,7 +744,7 @@
     } finally {
       submitWebvpnCaptcha.disabled = false;
       submitBtn.disabled = false;
-      submitBtn.textContent = '查询';
+      submitBtn.textContent = '刷新全部成绩';
     }
   });
 

@@ -139,7 +139,7 @@ def api_query_grades():
             password=schema.password,
             remember=schema.remember,
         )
-        return _task_response(task, "成绩查询已提交后台刷新")
+        return _task_response(task, "全部成绩刷新已提交后台")
     except ValidationError:
         current_app.logger.warning("教务成绩查询输入校验失败: ValidationError")
         return error_response("输入参数不正确", status_code=400)

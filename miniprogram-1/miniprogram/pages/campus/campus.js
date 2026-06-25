@@ -234,6 +234,16 @@ function formatTaskTerms(terms) {
         .map(function (term) { return "".concat(formatAcademicYearLabel(Number(term === null || term === void 0 ? void 0 : term.xnm) || 0), " ").concat(xqmLabel(term === null || term === void 0 ? void 0 : term.xqm)); })
         .join('、') + (normalized.length > 3 ? " \u7B49 ".concat(normalized.length, " \u4E2A\u5B66\u671F") : '');
 }
+function formatTaskMeta(mode, terms) {
+    if (mode === 'grades')
+        return '全部成绩';
+    return formatTaskTerms(terms);
+}
+function buildGradeQueryTerms(yearInput) {
+    var year = Number(yearInput) || defaultYear;
+    var xnm = Number.isInteger(year) && year >= 2000 && year <= 2100 ? year : defaultYear;
+    return [{ xnm: String(xnm), xqm: '3' }];
+}
 function taskRowsSource(task, data) {
     var credential = (data === null || data === void 0 ? void 0 : data.credential) || (task === null || task === void 0 ? void 0 : task.credential) || {};
     if (Array.isArray(task === null || task === void 0 ? void 0 : task.results) && task.results.length)
@@ -523,8 +533,8 @@ Page({
             queryProgressVisible: true,
             queryProgressStatus: taskStatusLabel(status),
             queryProgressPercent: taskProgressPercent(task),
-            queryProgressDetail: String((task === null || task === void 0 ? void 0 : task.message) || (mode === 'grades' ? '正在后台查询成绩' : '正在后台查询课表')),
-            queryProgressMeta: formatTaskTerms(Array.isArray(task === null || task === void 0 ? void 0 : task.terms) ? task.terms : []),
+            queryProgressDetail: String((task === null || task === void 0 ? void 0 : task.message) || (mode === 'grades' ? '正在刷新全部成绩' : '正在后台查询课表')),
+            queryProgressMeta: formatTaskMeta(mode, Array.isArray(task === null || task === void 0 ? void 0 : task.terms) ? task.terms : []),
         };
         var self = ensureRuntimeState(this);
         self.__lastCampusProgress[mode] = progress;
@@ -606,7 +616,7 @@ Page({
         }
         if (status === 'succeeded') {
             if (this.data.mode === mode)
-                this.setData({ statusMsg: mode === 'grades' ? '成绩查询完成' : '课表查询完成' });
+                this.setData({ statusMsg: mode === 'grades' ? '全部成绩已同步' : '课表查询完成' });
             return true;
         }
         if (status === 'failed') {
@@ -646,7 +656,9 @@ Page({
         return new Promise(function (resolve) {
             wx.showModal({
                 title: '停止上次查询？',
-                content: "\u53D1\u8D77\u672C\u6B21\u67E5\u8BE2\u4F1A\u505C\u6B62\u4E0A\u6B21\u7684".concat(label, "\u67E5\u8BE2\uFF0C\u786E\u5B9A\u7EE7\u7EED\u5417\uFF1F"),
+                content: mode === 'grades'
+                    ? '发起本次刷新会停止上次的成绩刷新，确定继续吗？'
+                    : "\u53D1\u8D77\u672C\u6B21\u67E5\u8BE2\u4F1A\u505C\u6B62\u4E0A\u6B21\u7684".concat(label, "\u67E5\u8BE2\uFF0C\u786E\u5B9A\u7EE7\u7EED\u5417\uFF1F"),
                 confirmText: '继续',
                 cancelText: '取消',
                 success: function (res) { return resolve(!!res.confirm); },
@@ -696,7 +708,7 @@ Page({
                         this.setData({
                             loading: true,
                             errorMsg: '',
-                            statusMsg: mode === 'grades' ? '成绩查询已提交，正在连接教务系统...' : '课表查询已提交，正在连接教务系统...',
+                            statusMsg: mode === 'grades' ? '全部成绩刷新已提交，正在连接教务系统...' : '课表查询已提交，正在连接教务系统...',
                         });
                         _b.label = 1;
                     case 1:
@@ -719,8 +731,8 @@ Page({
                                 this.startTaskPolling(String(task.task_id), mode, payload);
                             return [2 /*return*/];
                         }
-                        this.applyQueryRows(data || {}, mode, mode === 'grades' ? '成绩查询完成' : '课表查询完成');
-                        this.setProgressForTask({ status: 'succeeded', message: '查询完成', terms: payload.terms }, mode);
+                        this.applyQueryRows(data || {}, mode, mode === 'grades' ? '全部成绩已同步' : '课表查询完成');
+                        this.setProgressForTask({ status: 'succeeded', message: mode === 'grades' ? '全部成绩已同步' : '查询完成', terms: payload.terms }, mode);
                         return [3 /*break*/, 8];
                     case 6:
                         e_4 = _b.sent();
@@ -810,7 +822,7 @@ Page({
     },
     onQueryTap: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var message, terms, semester, mode, confirmed;
+            var message, mode, terms, semester, confirmed;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -829,15 +841,20 @@ Page({
                             this.showBindPrompt();
                             return [2 /*return*/];
                         }
+                        mode = this.data.mode;
                         try {
-                            semester = SEMESTER_VALUES[this.data.semesterIndex] || 'all';
-                            terms = (0, campus_content_1.buildCampusTerms)(this.data.academicYear, this.data.academicYear, semester);
+                            if (mode === 'grades') {
+                                terms = buildGradeQueryTerms(this.data.academicYear);
+                            }
+                            else {
+                                semester = SEMESTER_VALUES[this.data.semesterIndex] || 'all';
+                                terms = (0, campus_content_1.buildCampusTerms)(this.data.academicYear, this.data.academicYear, semester);
+                            }
                         }
                         catch (e) {
                             this.setData({ errorMsg: (e === null || e === void 0 ? void 0 : e.message) || '学年或学期不正确' });
                             return [2 /*return*/];
                         }
-                        mode = this.data.mode;
                         if (!isActiveTask(this.getActiveCampusTask(mode))) return [3 /*break*/, 3];
                         return [4 /*yield*/, this.confirmReplacingActiveTask(mode)];
                     case 1:
