@@ -247,6 +247,18 @@ function emptyProgress() {
 var defaultYear = defaultAcademicYear();
 var ACADEMIC_YEAR_OPTIONS = buildAcademicYearOptions(defaultYear);
 var DEFAULT_ACADEMIC_YEAR_INDEX = ACADEMIC_YEAR_PAST_COUNT;
+var DEFAULT_TODAY_SUMMARY = (0, campus_content_1.buildTodayScheduleSummary)([]);
+var DEFAULT_GRADE_SUMMARY = (0, campus_content_1.buildLatestGradeSummary)([]);
+function buildCampusOverviewPatch(scheduleRows, gradeRows, eduBound, statusFailed) {
+    var todayCourses = (0, campus_content_1.buildTodayScheduleSummary)(scheduleRows);
+    var latestGradeSummary = (0, campus_content_1.buildLatestGradeSummary)(gradeRows);
+    return {
+        todayCourses: todayCourses,
+        latestGradeSummary: latestGradeSummary,
+        campusActions: (0, campus_content_1.buildCampusActions)(eduBound, statusFailed),
+        campusHighlights: (0, campus_content_1.buildCampusHighlights)(todayCourses, latestGradeSummary, eduBound),
+    };
+}
 Page({
     data: {
         mode: 'schedule',
@@ -268,6 +280,10 @@ Page({
         allGradeResults: [],
         scheduleResults: [],
         gradeResults: [],
+        todayCourses: DEFAULT_TODAY_SUMMARY,
+        latestGradeSummary: DEFAULT_GRADE_SUMMARY,
+        campusActions: (0, campus_content_1.buildCampusActions)(false, false),
+        campusHighlights: (0, campus_content_1.buildCampusHighlights)(DEFAULT_TODAY_SUMMARY, DEFAULT_GRADE_SUMMARY, false),
         snapshotTerms: [],
         snapshotTermLabels: [],
         snapshotTermIndex: 0,
@@ -362,18 +378,39 @@ Page({
         }
         this.onGoEduBindingTap();
     },
+    onCampusActionTap: function (e) {
+        var _this = this;
+        var _a, _b;
+        var key = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.key) || '').trim();
+        var action = (this.data.campusActions || []).find(function (item) { return item.key === key; });
+        if (!action)
+            return;
+        if (key === 'binding') {
+            this.onGoEduBindingTap();
+            return;
+        }
+        if (action.disabled) {
+            wx.showToast({ title: key === 'schedule' || key === 'grades' ? '教务接口暂不可用' : '功能建设中', icon: 'none' });
+            return;
+        }
+        if (key === 'evaluation' || key === 'more') {
+            wx.showToast({ title: key === 'evaluation' ? '一键教评建设中' : '功能建设中', icon: 'none' });
+            return;
+        }
+        if (key === 'schedule' || key === 'grades') {
+            var mode_1 = key;
+            this.setData({ mode: mode_1, errorMsg: '', snapshotDrawerOpen: false }, function () {
+                _this.syncSnapshotBrowserForMode(mode_1);
+                _this.refreshProgressForMode(mode_1);
+            });
+        }
+    },
     applyEduStatus: function (data) {
         var _this = this;
         var credential = normalizeCredential(data === null || data === void 0 ? void 0 : data.credential);
-        this.setData({
-            statusReady: true,
-            statusFailed: false,
-            eduBound: credential.has_credentials,
-            eduUsernameHint: credential.username_hint,
-            statusMsg: credential.has_credentials ? "\u5DF2\u7ED1\u5B9A\u6559\u52A1\u7CFB\u7EDF\u8D26\u53F7\uFF1A".concat(credential.username_hint || '已保存') : '未绑定教务系统账号',
-            allScheduleResults: (0, campus_content_1.normalizeScheduleSnapshots)((data === null || data === void 0 ? void 0 : data.snapshots) || []),
-            allGradeResults: (0, campus_content_1.normalizeGradeSnapshots)((data === null || data === void 0 ? void 0 : data.grade_snapshots) || []),
-        }, function () {
+        var allScheduleResults = (0, campus_content_1.normalizeScheduleSnapshots)((data === null || data === void 0 ? void 0 : data.snapshots) || []);
+        var allGradeResults = (0, campus_content_1.normalizeGradeSnapshots)((data === null || data === void 0 ? void 0 : data.grade_snapshots) || []);
+        this.setData(__assign({ statusReady: true, statusFailed: false, eduBound: credential.has_credentials, eduUsernameHint: credential.username_hint, statusMsg: credential.has_credentials ? "\u5DF2\u7ED1\u5B9A\u6559\u52A1\u7CFB\u7EDF\u8D26\u53F7\uFF1A".concat(credential.username_hint || '已保存') : '未绑定教务系统账号', allScheduleResults: allScheduleResults, allGradeResults: allGradeResults }, buildCampusOverviewPatch(allScheduleResults, allGradeResults, credential.has_credentials, false)), function () {
             _this.syncSnapshotBrowserForMode(_this.data.mode);
             _this.restoreRecentCampusTasks((data === null || data === void 0 ? void 0 : data.recent_tasks) || {});
         });
@@ -403,13 +440,7 @@ Page({
                     case 3:
                         e_1 = _a.sent();
                         message = (0, campus_content_1.campusFriendlyError)(e_1, '教务账号状态加载失败');
-                        this.setData({
-                            statusReady: true,
-                            statusFailed: true,
-                            eduBound: false,
-                            statusMsg: message,
-                            errorMsg: message,
-                        });
+                        this.setData(__assign({ statusReady: true, statusFailed: true, eduBound: false, statusMsg: message, errorMsg: message }, buildCampusOverviewPatch(this.data.allScheduleResults || [], this.data.allGradeResults || [], false, true)));
                         return [3 /*break*/, 5];
                     case 4:
                         this.setData({ statusLoading: false });
@@ -476,20 +507,25 @@ Page({
         var rows = (0, campus_content_1.normalizeTermResults)(data || {}, mode);
         var sourceKey = mode === 'grades' ? 'allGradeResults' : 'allScheduleResults';
         var patch = {};
-        patch[sourceKey] = mergeCampusRows(this.data[sourceKey] || [], rows);
+        var mergedRows = mergeCampusRows(this.data[sourceKey] || [], rows);
+        var credential = (data === null || data === void 0 ? void 0 : data.credential) ? normalizeCredential(data.credential) : null;
+        var eduBound = credential ? credential.has_credentials : this.data.eduBound;
+        var scheduleRows = mode === 'schedule' ? mergedRows : (this.data.allScheduleResults || []);
+        var gradeRows = mode === 'grades' ? mergedRows : (this.data.allGradeResults || []);
+        patch[sourceKey] = mergedRows;
+        Object.assign(patch, buildCampusOverviewPatch(scheduleRows, gradeRows, eduBound, false));
         if (statusMsg)
             patch.statusMsg = statusMsg;
+        if (credential) {
+            patch.eduBound = credential.has_credentials;
+            patch.eduUsernameHint = credential.username_hint;
+            patch.campusActions = (0, campus_content_1.buildCampusActions)(credential.has_credentials, false);
+            patch.campusHighlights = (0, campus_content_1.buildCampusHighlights)(patch.todayCourses, patch.latestGradeSummary, credential.has_credentials);
+        }
         this.setData(patch, function () {
             if (_this.data.mode === mode)
                 _this.syncSnapshotBrowserForMode(mode);
         });
-        if (data === null || data === void 0 ? void 0 : data.credential) {
-            var credential = normalizeCredential(data.credential);
-            this.setData({
-                eduBound: credential.has_credentials,
-                eduUsernameHint: credential.username_hint,
-            });
-        }
         return rows;
     },
     getActiveCampusTask: function (mode) {

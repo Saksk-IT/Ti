@@ -3,7 +3,11 @@ import { checkLogin } from '../../utils/auth';
 import { safeNavigate } from '../../utils/nav';
 import { themeManager, ThemeMode } from '../../utils/theme';
 import {
+  buildCampusActions,
+  buildCampusHighlights,
   buildCampusTerms,
+  buildLatestGradeSummary,
+  buildTodayScheduleSummary,
   campusFriendlyError,
   CampusMode,
   CampusSemesterValue,
@@ -230,6 +234,19 @@ function emptyProgress(): CampusProgressData {
 const defaultYear = defaultAcademicYear();
 const ACADEMIC_YEAR_OPTIONS = buildAcademicYearOptions(defaultYear);
 const DEFAULT_ACADEMIC_YEAR_INDEX = ACADEMIC_YEAR_PAST_COUNT;
+const DEFAULT_TODAY_SUMMARY = buildTodayScheduleSummary([]);
+const DEFAULT_GRADE_SUMMARY = buildLatestGradeSummary([]);
+
+function buildCampusOverviewPatch(scheduleRows: any[], gradeRows: any[], eduBound: boolean, statusFailed: boolean): any {
+  const todayCourses = buildTodayScheduleSummary(scheduleRows);
+  const latestGradeSummary = buildLatestGradeSummary(gradeRows);
+  return {
+    todayCourses,
+    latestGradeSummary,
+    campusActions: buildCampusActions(eduBound, statusFailed),
+    campusHighlights: buildCampusHighlights(todayCourses, latestGradeSummary, eduBound),
+  };
+}
 
 Page({
   data: {
@@ -252,6 +269,10 @@ Page({
     allGradeResults: [] as any[],
     scheduleResults: [] as any[],
     gradeResults: [] as any[],
+    todayCourses: DEFAULT_TODAY_SUMMARY as any,
+    latestGradeSummary: DEFAULT_GRADE_SUMMARY as any,
+    campusActions: buildCampusActions(false, false) as any[],
+    campusHighlights: buildCampusHighlights(DEFAULT_TODAY_SUMMARY, DEFAULT_GRADE_SUMMARY, false) as any[],
     snapshotTerms: [] as SnapshotOption[],
     snapshotTermLabels: [] as string[],
     snapshotTermIndex: 0,
@@ -351,16 +372,44 @@ Page({
     this.onGoEduBindingTap();
   },
 
+  onCampusActionTap(e: any) {
+    const key = String(e?.currentTarget?.dataset?.key || '').trim();
+    const action = (this.data.campusActions || []).find((item: any) => item.key === key);
+    if (!action) return;
+    if (key === 'binding') {
+      this.onGoEduBindingTap();
+      return;
+    }
+    if (action.disabled) {
+      wx.showToast({ title: key === 'schedule' || key === 'grades' ? '教务接口暂不可用' : '功能建设中', icon: 'none' });
+      return;
+    }
+    if (key === 'evaluation' || key === 'more') {
+      wx.showToast({ title: key === 'evaluation' ? '一键教评建设中' : '功能建设中', icon: 'none' });
+      return;
+    }
+    if (key === 'schedule' || key === 'grades') {
+      const mode = key as CampusMode;
+      this.setData({ mode, errorMsg: '', snapshotDrawerOpen: false }, () => {
+        this.syncSnapshotBrowserForMode(mode);
+        this.refreshProgressForMode(mode);
+      });
+    }
+  },
+
   applyEduStatus(data: any) {
     const credential = normalizeCredential(data?.credential);
+    const allScheduleResults = normalizeScheduleSnapshots(data?.snapshots || []);
+    const allGradeResults = normalizeGradeSnapshots(data?.grade_snapshots || []);
     this.setData({
       statusReady: true,
       statusFailed: false,
       eduBound: credential.has_credentials,
       eduUsernameHint: credential.username_hint,
       statusMsg: credential.has_credentials ? `已绑定教务系统账号：${credential.username_hint || '已保存'}` : '未绑定教务系统账号',
-      allScheduleResults: normalizeScheduleSnapshots(data?.snapshots || []),
-      allGradeResults: normalizeGradeSnapshots(data?.grade_snapshots || []),
+      allScheduleResults,
+      allGradeResults,
+      ...buildCampusOverviewPatch(allScheduleResults, allGradeResults, credential.has_credentials, false),
     }, () => {
       this.syncSnapshotBrowserForMode(this.data.mode as CampusMode);
       this.restoreRecentCampusTasks(data?.recent_tasks || {});
@@ -386,6 +435,7 @@ Page({
         eduBound: false,
         statusMsg: message,
         errorMsg: message,
+        ...buildCampusOverviewPatch(this.data.allScheduleResults || [], this.data.allGradeResults || [], false, true),
       });
     } finally {
       this.setData({ statusLoading: false });
@@ -443,18 +493,23 @@ Page({
     const rows = normalizeTermResults(data || {}, mode);
     const sourceKey = mode === 'grades' ? 'allGradeResults' : 'allScheduleResults';
     const patch: any = {};
-    patch[sourceKey] = mergeCampusRows(this.data[sourceKey] || [], rows);
+    const mergedRows = mergeCampusRows(this.data[sourceKey] || [], rows);
+    const credential = data?.credential ? normalizeCredential(data.credential) : null;
+    const eduBound = credential ? credential.has_credentials : this.data.eduBound;
+    const scheduleRows = mode === 'schedule' ? mergedRows : (this.data.allScheduleResults || []);
+    const gradeRows = mode === 'grades' ? mergedRows : (this.data.allGradeResults || []);
+    patch[sourceKey] = mergedRows;
+    Object.assign(patch, buildCampusOverviewPatch(scheduleRows, gradeRows, eduBound, false));
     if (statusMsg) patch.statusMsg = statusMsg;
+    if (credential) {
+      patch.eduBound = credential.has_credentials;
+      patch.eduUsernameHint = credential.username_hint;
+      patch.campusActions = buildCampusActions(credential.has_credentials, false);
+      patch.campusHighlights = buildCampusHighlights(patch.todayCourses, patch.latestGradeSummary, credential.has_credentials);
+    }
     this.setData(patch, () => {
       if (this.data.mode === mode) this.syncSnapshotBrowserForMode(mode);
     });
-    if (data?.credential) {
-      const credential = normalizeCredential(data.credential);
-      this.setData({
-        eduBound: credential.has_credentials,
-        eduUsernameHint: credential.username_hint,
-      });
-    }
     return rows;
   },
 

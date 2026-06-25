@@ -40,69 +40,176 @@
           <view class="hero-glow"></view>
         </view>
 
-        <view class="mode-switch" aria-label="校园查询类型">
-          <view class="mode-option {{mode === 'schedule' ? 'active' : ''}}" data-mode="schedule" bindtap="onModeTap">
-            <view class="mode-icon-wrap">
-              <image class="mode-icon" src="/images/icons/book-open.svg" mode="aspectFit"></image>
+        <view class="campus-highlights" aria-label="校园概览">
+          <view class="highlight-card" wx:for="{{campusHighlights}}" wx:key="key">
+            <text class="highlight-value">{{item.value}}</text>
+            <text class="highlight-label">{{item.label}}</text>
+            <text class="highlight-hint">{{item.hint}}</text>
+          </view>
+        </view>
+
+        <view class="campus-overview">
+          <view class="overview-card today-card">
+            <view class="overview-head">
+              <view class="overview-title-wrap">
+                <view class="overview-icon-wrap">
+                  <image class="overview-icon" src="/images/icons/book-open.svg" mode="aspectFit"></image>
+                </view>
+                <view class="overview-title-copy">
+                  <text class="overview-title">{{todayCourses.title}}</text>
+                  <text class="overview-subtitle">{{todayCourses.subtitle}}</text>
+                </view>
+              </view>
+              <view class="overview-badge">
+                <text>{{todayCourses.courseCount}} 门</text>
+              </view>
             </view>
-            <view class="mode-copy">
-              <text class="mode-title">查询课表</text>
-              <text class="mode-sub">课程安排</text>
+            <view class="today-course-list" wx:if="{{todayCourses.hasCourses}}">
+              <view class="today-course-row" wx:for="{{todayCourses.courses}}" wx:key="key">
+                <text class="today-section">{{item.section}}</text>
+                <view class="today-course-copy">
+                  <text class="today-course-name">{{item.course_name}}</text>
+                  <text class="today-course-detail">{{item.detail}}</text>
+                </view>
+              </view>
+            </view>
+            <view class="overview-empty" wx:else>
+              <text>{{todayCourses.emptyText}}</text>
             </view>
           </view>
-          <view class="mode-option {{mode === 'grades' ? 'active' : ''}}" data-mode="grades" bindtap="onModeTap">
-            <view class="mode-icon-wrap">
-              <image class="mode-icon" src="/images/icons/chart.svg" mode="aspectFit"></image>
+
+          <view class="overview-card grade-card">
+            <view class="overview-head">
+              <view class="overview-title-wrap">
+                <view class="overview-icon-wrap grade">
+                  <image class="overview-icon" src="/images/icons/chart.svg" mode="aspectFit"></image>
+                </view>
+                <view class="overview-title-copy">
+                  <text class="overview-title">{{latestGradeSummary.title}}</text>
+                  <text class="overview-subtitle">{{latestGradeSummary.subtitle}}</text>
+                </view>
+              </view>
             </view>
-            <view class="mode-copy">
-              <text class="mode-title">查询成绩</text>
-              <text class="mode-sub">学分绩点</text>
+            <view class="grade-metric-row">
+              <view class="grade-metric">
+                <text class="grade-metric-value">{{latestGradeSummary.courseCount}}</text>
+                <text class="grade-metric-label">课程</text>
+              </view>
+              <view class="grade-metric">
+                <text class="grade-metric-value">{{latestGradeSummary.totalCredits}}</text>
+                <text class="grade-metric-label">学分</text>
+              </view>
+              <view class="grade-metric">
+                <text class="grade-metric-value">{{latestGradeSummary.gpa}}</text>
+                <text class="grade-metric-label">GPA</text>
+              </view>
+            </view>
+            <view class="latest-grade-list" wx:if="{{latestGradeSummary.hasGrades}}">
+              <view class="latest-grade-row" wx:for="{{latestGradeSummary.grades}}" wx:key="course_name">
+                <text class="latest-grade-name">{{item.course_name}}</text>
+                <text class="latest-grade-score">{{item.score}}</text>
+              </view>
+            </view>
+            <view class="overview-empty" wx:else>
+              <text>{{latestGradeSummary.emptyText}}</text>
             </view>
           </view>
         </view>
 
-        <view class="filter-panel" wx:if="{{mode === 'schedule'}}">
-          <view class="panel-header">
-            <view class="panel-title-wrap">
-              <image class="panel-icon" src="/images/icons/sliders.svg" mode="aspectFit"></image>
-              <text class="panel-title">查询范围</text>
+        <view class="campus-section-head">
+          <text class="campus-section-title">校园功能</text>
+          <text class="campus-section-sub">进入二级页面处理</text>
+        </view>
+        <view class="campus-action-grid" aria-label="校园功能入口">
+          <view
+            class="campus-action-card tone-{{item.tone}} {{item.disabled ? 'disabled' : ''}}"
+            wx:for="{{campusActions}}"
+            wx:key="key"
+            data-key="{{item.key}}"
+            bindtap="onCampusActionTap"
+            aria-role="button"
+            aria-label="{{item.title}}"
+          >
+            <view class="campus-action-icon-wrap">
+              <image class="campus-action-icon" src="{{item.icon}}" mode="aspectFit"></image>
             </view>
-            <text class="panel-note">最多 12 个学期</text>
-          </view>
-          <view class="year-row">
-            <view class="field year-field">
-              <picker class="year-picker" mode="selector" range="{{academicYearLabels}}" value="{{academicYearIndex}}" bindchange="onAcademicYearChange">
-                <view class="year-trigger" aria-role="button" aria-label="选择学年">
-                  <view class="field-copy">
-                    <text class="field-label">学年</text>
-                    <text class="year-value">{{academicYearLabels[academicYearIndex]}}</text>
-                  </view>
-                  <text class="chevron">⌄</text>
-                </view>
-              </picker>
+            <view class="campus-action-copy">
+              <text class="campus-action-title">{{item.title}}</text>
+              <text class="campus-action-sub">{{item.subtitle}}</text>
             </view>
-            <view class="field semester-field">
-              <picker class="semester-picker" mode="selector" range="{{semesterLabels}}" value="{{semesterIndex}}" bindchange="onSemesterChange">
-                <view class="semester-trigger" aria-role="button" aria-label="选择学期">
-                  <view class="field-copy">
-                    <text class="field-label">学期</text>
-                    <text class="semester-value">{{semesterLabels[semesterIndex]}}</text>
-                  </view>
-                  <text class="chevron">⌄</text>
-                </view>
-              </picker>
-            </view>
-          </view>
-          <view class="query-btn {{loading ? 'disabled' : ''}}" bindtap="onQueryTap" aria-role="button" aria-label="查询校园信息">
-            <image class="query-icon" src="{{mode === 'grades' ? '/images/icons/chart.svg' : '/images/icons/book-open.svg'}}" mode="aspectFit"></image>
-            <text>{{loading ? '提交中...' : '查询课表'}}</text>
           </view>
         </view>
 
-        <view class="grade-query-panel" wx:elif="{{mode === 'grades'}}">
-          <view class="query-btn grade-query-btn {{loading ? 'disabled' : ''}}" bindtap="onQueryTap" aria-role="button" aria-label="查询成绩">
-            <image class="query-icon" src="/images/icons/chart.svg" mode="aspectFit"></image>
-            <text>{{loading ? '提交中...' : '查询成绩'}}</text>
+        <view id="campus-query-section" class="query-workbench">
+          <view class="campus-section-head query-head">
+            <text class="campus-section-title">二级处理</text>
+            <text class="campus-section-sub">{{mode === 'grades' ? '成绩查询' : '课表查询'}}</text>
+          </view>
+
+          <view class="mode-switch" aria-label="校园查询类型">
+            <view class="mode-option {{mode === 'schedule' ? 'active' : ''}}" data-mode="schedule" bindtap="onModeTap">
+              <view class="mode-icon-wrap">
+                <image class="mode-icon" src="/images/icons/book-open.svg" mode="aspectFit"></image>
+              </view>
+              <view class="mode-copy">
+                <text class="mode-title">查询课表</text>
+                <text class="mode-sub">课程安排</text>
+              </view>
+            </view>
+            <view class="mode-option {{mode === 'grades' ? 'active' : ''}}" data-mode="grades" bindtap="onModeTap">
+              <view class="mode-icon-wrap">
+                <image class="mode-icon" src="/images/icons/chart.svg" mode="aspectFit"></image>
+              </view>
+              <view class="mode-copy">
+                <text class="mode-title">查询成绩</text>
+                <text class="mode-sub">学分绩点</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="filter-panel" wx:if="{{mode === 'schedule'}}">
+            <view class="panel-header">
+              <view class="panel-title-wrap">
+                <image class="panel-icon" src="/images/icons/sliders.svg" mode="aspectFit"></image>
+                <text class="panel-title">查询范围</text>
+              </view>
+              <text class="panel-note">最多 12 个学期</text>
+            </view>
+            <view class="year-row">
+              <view class="field year-field">
+                <picker class="year-picker" mode="selector" range="{{academicYearLabels}}" value="{{academicYearIndex}}" bindchange="onAcademicYearChange">
+                  <view class="year-trigger" aria-role="button" aria-label="选择学年">
+                    <view class="field-copy">
+                      <text class="field-label">学年</text>
+                      <text class="year-value">{{academicYearLabels[academicYearIndex]}}</text>
+                    </view>
+                    <text class="chevron">⌄</text>
+                  </view>
+                </picker>
+              </view>
+              <view class="field semester-field">
+                <picker class="semester-picker" mode="selector" range="{{semesterLabels}}" value="{{semesterIndex}}" bindchange="onSemesterChange">
+                  <view class="semester-trigger" aria-role="button" aria-label="选择学期">
+                    <view class="field-copy">
+                      <text class="field-label">学期</text>
+                      <text class="semester-value">{{semesterLabels[semesterIndex]}}</text>
+                    </view>
+                    <text class="chevron">⌄</text>
+                  </view>
+                </picker>
+              </view>
+            </view>
+            <view class="query-btn {{loading ? 'disabled' : ''}}" bindtap="onQueryTap" aria-role="button" aria-label="查询校园信息">
+              <image class="query-icon" src="{{mode === 'grades' ? '/images/icons/chart.svg' : '/images/icons/book-open.svg'}}" mode="aspectFit"></image>
+              <text>{{loading ? '提交中...' : '查询课表'}}</text>
+            </view>
+          </view>
+
+          <view class="grade-query-panel" wx:elif="{{mode === 'grades'}}">
+            <view class="query-btn grade-query-btn {{loading ? 'disabled' : ''}}" bindtap="onQueryTap" aria-role="button" aria-label="查询成绩">
+              <image class="query-icon" src="/images/icons/chart.svg" mode="aspectFit"></image>
+              <text>{{loading ? '提交中...' : '查询成绩'}}</text>
+            </view>
           </view>
         </view>
 

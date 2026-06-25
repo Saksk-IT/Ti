@@ -592,6 +592,7 @@ def test_miniprogram_campus_tab_exposes_schedule_and_grade_queries():
     campus_dir = Path("miniprogram-1/miniprogram/pages/campus")
     wxml = (campus_dir / "campus.wxml").read_text(encoding="utf-8")
     ts = (campus_dir / "campus.ts").read_text(encoding="utf-8")
+    content_ts = (campus_dir / "campus-content.ts").read_text(encoding="utf-8")
     api = Path("miniprogram-1/miniprogram/utils/api-endpoints.ts").read_text(encoding="utf-8")
 
     assert "pages/campus/campus" in app_config["pages"]
@@ -609,6 +610,12 @@ def test_miniprogram_campus_tab_exposes_schedule_and_grade_queries():
     assert "查询课表" in wxml
     assert "查询成绩" in wxml
     assert "教务系统账号" in wxml
+    assert "校园功能" in wxml
+    assert "todayCourses.title" in wxml
+    assert "latestGradeSummary.title" in wxml
+    assert "campus-action-grid" in wxml
+    assert "onCampusActionTap" in wxml
+    assert "campus-query-section" in wxml
     assert "/images/icons/campus.svg" in wxml
     assert "mode-icon-wrap" in wxml
     assert "query-icon" in wxml
@@ -617,9 +624,17 @@ def test_miniprogram_campus_tab_exposes_schedule_and_grade_queries():
     assert "onHeroActionTap" in wxml
     assert "api.queryEduSchedule" in ts
     assert "api.queryEduGrades" in ts
+    assert "buildTodayScheduleSummary" in ts
+    assert "buildLatestGradeSummary" in ts
+    assert "buildCampusActions" in ts
+    assert "buildCampusHighlights" in ts
     assert "campusFriendlyError" in ts
     assert "statusLoading || !this.data.statusReady" in ts
     assert "this.data.statusFailed" in ts
+    assert "今天要上的课" in content_ts
+    assert "最近一学期成绩" in content_ts
+    assert "一键教评" in content_ts
+    assert "buildCampusActions" in content_ts
     assert "queryEduSchedule" in api
     assert "request('/edu-schedule/query'" in api
     assert "queryEduGrades" in api

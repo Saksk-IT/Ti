@@ -18,9 +18,10 @@ page {
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(145deg, var(--app-primary-soft) 0%, transparent 42%),
-    linear-gradient(0deg, transparent 58%, var(--app-surface-glass) 100%);
-  opacity: 0.86;
+    radial-gradient(circle at 86% 6%, var(--app-primary-soft) 0%, transparent 34%),
+    radial-gradient(circle at 8% 42%, var(--app-primary-soft) 0%, transparent 30%),
+    linear-gradient(180deg, var(--app-surface-glass) 0%, transparent 52%, var(--app-bg) 100%);
+  opacity: 0.92;
   z-index: 0;
 }
 
@@ -69,6 +70,7 @@ page {
 .mode-option:active,
 .query-btn:active,
 .prompt-action:active,
+.campus-action-card:active,
 .snapshot-chip:active,
 .captcha-action:active {
   opacity: 0.92;
@@ -101,6 +103,9 @@ page {
 .filter-panel,
 .bind-prompt,
 .campus-query-progress,
+.overview-card,
+.highlight-card,
+.campus-action-card,
 .snapshot-browser,
 .term-card {
   border: 1rpx solid var(--app-border);
@@ -255,6 +260,310 @@ page {
   background: linear-gradient(135deg, transparent, var(--app-primary-soft));
   opacity: 0.85;
   pointer-events: none;
+}
+
+.campus-highlights {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.highlight-card {
+  min-width: 0;
+  min-height: 118rpx;
+  padding: 16rpx 12rpx;
+  display: grid;
+  align-content: center;
+  gap: 6rpx;
+  text-align: center;
+  background: var(--app-surface-glass);
+}
+
+.highlight-value {
+  min-width: 0;
+  color: var(--app-text);
+  font-size: 32rpx;
+  line-height: 1.05;
+  font-weight: 950;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.highlight-label,
+.highlight-hint,
+.overview-subtitle,
+.overview-empty,
+.today-course-detail,
+.latest-grade-score,
+.campus-section-sub,
+.campus-action-sub {
+  color: var(--app-text-secondary);
+}
+
+.highlight-label {
+  font-size: 22rpx;
+  font-weight: 900;
+}
+
+.highlight-hint {
+  font-size: 20rpx;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.campus-overview {
+  display: grid;
+  gap: 14rpx;
+  margin-bottom: 18rpx;
+}
+
+.overview-card {
+  padding: 20rpx;
+  display: grid;
+  gap: 16rpx;
+  background: linear-gradient(135deg, var(--app-surface-glass), var(--app-surface));
+  overflow: hidden;
+}
+
+.overview-head {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14rpx;
+}
+
+.overview-title-wrap {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+
+.overview-icon-wrap,
+.campus-action-icon-wrap {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 18rpx;
+  background: var(--app-primary-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.overview-icon-wrap.grade {
+  background: color-mix(in srgb, var(--app-warning) 18%, var(--app-surface));
+}
+
+.overview-icon,
+.campus-action-icon {
+  width: 32rpx;
+  height: 32rpx;
+}
+
+.overview-title-copy,
+.today-course-copy,
+.campus-action-copy {
+  min-width: 0;
+  display: grid;
+  gap: 6rpx;
+}
+
+.overview-title {
+  color: var(--app-text);
+  font-size: 30rpx;
+  line-height: 1.2;
+  font-weight: 900;
+}
+
+.overview-subtitle,
+.overview-empty {
+  font-size: 23rpx;
+  line-height: 1.4;
+}
+
+.overview-badge {
+  flex: 0 0 auto;
+  min-height: 44rpx;
+  padding: 0 14rpx;
+  border-radius: 12rpx;
+  background: var(--app-text);
+  color: var(--app-bg);
+  font-size: 22rpx;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+}
+
+.today-course-list,
+.latest-grade-list {
+  display: grid;
+  gap: 10rpx;
+}
+
+.today-course-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 86rpx minmax(0, 1fr);
+  gap: 12rpx;
+  align-items: center;
+}
+
+.today-section {
+  min-height: 48rpx;
+  border-radius: 14rpx;
+  background: var(--app-surface);
+  color: var(--app-text-secondary);
+  font-size: 21rpx;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.today-course-name,
+.latest-grade-name,
+.campus-action-title {
+  min-width: 0;
+  color: var(--app-text);
+  font-size: 27rpx;
+  line-height: 1.28;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.today-course-detail,
+.campus-action-sub {
+  min-width: 0;
+  font-size: 22rpx;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grade-metric-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10rpx;
+}
+
+.grade-metric {
+  min-height: 92rpx;
+  border-radius: 16rpx;
+  background: var(--app-surface);
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 4rpx;
+  padding: 10rpx;
+  box-sizing: border-box;
+}
+
+.grade-metric-value {
+  max-width: 100%;
+  color: var(--app-text);
+  font-size: 32rpx;
+  line-height: 1.1;
+  font-weight: 950;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grade-metric-label {
+  color: var(--app-text-secondary);
+  font-size: 21rpx;
+  font-weight: 800;
+}
+
+.latest-grade-row {
+  min-height: 54rpx;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 104rpx;
+  gap: 12rpx;
+  align-items: center;
+  border-top: 1rpx solid var(--app-border);
+  padding-top: 10rpx;
+}
+
+.latest-grade-row:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.latest-grade-score {
+  text-align: right;
+  font-size: 24rpx;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.campus-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin: 6rpx 4rpx 14rpx;
+}
+
+.campus-section-title {
+  color: var(--app-text);
+  font-size: 30rpx;
+  font-weight: 900;
+}
+
+.campus-section-sub {
+  font-size: 23rpx;
+  font-weight: 800;
+}
+
+.campus-action-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12rpx;
+  margin-bottom: 20rpx;
+}
+
+.campus-action-card {
+  min-width: 0;
+  min-height: 126rpx;
+  padding: 16rpx;
+  display: grid;
+  grid-template-columns: 64rpx minmax(0, 1fr);
+  align-items: center;
+  gap: 14rpx;
+  background: var(--app-surface-glass);
+}
+
+.campus-action-card.tone-primary {
+  border-color: var(--app-border-strong);
+  background: linear-gradient(135deg, var(--app-surface), var(--app-primary-soft));
+}
+
+.campus-action-card.tone-muted {
+  opacity: 0.78;
+}
+
+.campus-action-card.disabled {
+  opacity: 0.58;
+}
+
+.query-workbench {
+  margin-bottom: 16rpx;
+}
+
+.query-head {
+  margin-top: 2rpx;
 }
 
 .mode-switch {
