@@ -2189,6 +2189,77 @@ def test_query_multiple_terms_saves_grade_snapshots(app, auth_client, monkeypatc
     assert count >= 2
 
 
+def test_user_snapshot_lists_keep_latest_entry_per_term(app, auth_client, seed_user):
+    from app.modules.edu_schedule.services.grade_parser import normalize_grade_payload
+    from app.modules.edu_schedule.services.parser import normalize_schedule_payload
+    from app.modules.edu_schedule.services.schedule_service import EduScheduleService
+
+    user_id = int(seed_user["id"])
+    snapshot_fixtures = [
+        ("schedule", "旧课表课程", "2026-01-01 08:00:00"),
+        ("schedule", "最新课表课程", "2026-01-01 09:00:00"),
+        ("grades", "旧成绩课程", "2026-01-01 08:30:00"),
+        ("grades", "最新成绩课程", "2026-01-01 09:30:00"),
+    ]
+
+    with app.app_context():
+        for kind, course_name, fetched_at in snapshot_fixtures:
+            if kind == "schedule":
+                raw = _sample_schedule_payload(xnm="2026", xqm="12")
+                raw["kbList"][0]["kcmc"] = course_name
+                EduScheduleService._save_snapshot(
+                    user_id,
+                    "2026",
+                    "12",
+                    normalize_schedule_payload(raw),
+                    raw,
+                )
+                table_name = "edu_schedule_snapshots"
+            else:
+                raw = _sample_grade_payload(xnm="2026", xqm="12")
+                raw["items"][0]["kcmc"] = course_name
+                EduScheduleService._save_grade_snapshot(
+                    user_id,
+                    "2026",
+                    "12",
+                    normalize_grade_payload(raw, "2026", "12"),
+                    raw,
+                )
+                table_name = "edu_grade_snapshots"
+
+            snapshot_id = app.extensions["sqlalchemy"].session.execute(
+                text(f"SELECT MAX(id) FROM {table_name} WHERE user_id = :uid"),
+                {"uid": user_id},
+            ).scalar()
+            app.extensions["sqlalchemy"].session.execute(
+                text(f"UPDATE {table_name} SET fetched_at = :fetched_at WHERE id = :snapshot_id"),
+                {"snapshot_id": snapshot_id, "fetched_at": fetched_at},
+            )
+        app.extensions["sqlalchemy"].session.commit()
+
+        schedule_terms = EduScheduleService.list_snapshots_for_terms(
+            user_id,
+            [{"xnm": "2026", "xqm": "12"}],
+        )
+
+    response = auth_client.get("/api/edu-schedule/status")
+
+    assert response.status_code == 200
+    body = response.get_json()["data"]
+    schedule_snapshots = [
+        item for item in body["snapshots"] if item["xnm"] == "2026" and item["xqm"] == "12"
+    ]
+    grade_snapshots = [
+        item for item in body["grade_snapshots"] if item["xnm"] == "2026" and item["xqm"] == "12"
+    ]
+    assert len(schedule_snapshots) == 1
+    assert len(grade_snapshots) == 1
+    assert len(schedule_terms) == 1
+    assert schedule_snapshots[0]["payload"]["courses"][0]["course_name"] == "最新课表课程"
+    assert schedule_terms[0]["payload"]["courses"][0]["course_name"] == "最新课表课程"
+    assert grade_snapshots[0]["payload"]["grades"][0]["course_name"] == "最新成绩课程"
+
+
 def test_query_rejects_partial_inline_credentials(auth_client):
     response = auth_client.post(
         "/api/edu-schedule/query",

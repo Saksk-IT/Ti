@@ -295,23 +295,51 @@ class EduScheduleService:
         rows = (
             EduScheduleSnapshot.query
             .filter_by(user_id=int(user_id))
-            .order_by(EduScheduleSnapshot.xnm.desc(), EduScheduleSnapshot.xqm.desc())
+            .order_by(
+                EduScheduleSnapshot.xnm.desc(),
+                EduScheduleSnapshot.xqm.desc(),
+                EduScheduleSnapshot.fetched_at.desc(),
+                EduScheduleSnapshot.id.desc(),
+            )
             .all()
         )
-        return EduScheduleService._snapshot_rows_to_dicts(rows)
+        return EduScheduleService._snapshot_rows_to_dicts(
+            EduScheduleService._latest_rows_by_term(rows)
+        )
 
     @staticmethod
     def list_snapshots_for_terms(user_id: int, terms: Iterable[Dict[str, str]]) -> List[Dict[str, Any]]:
         items: List[Dict[str, Any]] = []
+        seen_terms = set()
         for term in terms:
-            row = EduScheduleSnapshot.query.filter_by(
-                user_id=int(user_id),
-                xnm=str(term["xnm"]),
-                xqm=str(term["xqm"]),
-            ).first()
+            term_key = (str(term["xnm"]), str(term["xqm"]))
+            if term_key in seen_terms:
+                continue
+            seen_terms.add(term_key)
+            row = (
+                EduScheduleSnapshot.query.filter_by(
+                    user_id=int(user_id),
+                    xnm=term_key[0],
+                    xqm=term_key[1],
+                )
+                .order_by(EduScheduleSnapshot.fetched_at.desc(), EduScheduleSnapshot.id.desc())
+                .first()
+            )
             if row:
                 items.extend(EduScheduleService._snapshot_rows_to_dicts([row]))
         return items
+
+    @staticmethod
+    def _latest_rows_by_term(rows) -> List[Any]:
+        latest_rows = []
+        seen_terms = set()
+        for row in rows:
+            term_key = (str(row.xnm or ""), str(row.xqm or ""))
+            if term_key in seen_terms:
+                continue
+            seen_terms.add(term_key)
+            latest_rows.append(row)
+        return latest_rows
 
     @staticmethod
     def _snapshot_rows_to_dicts(rows) -> List[Dict[str, Any]]:
@@ -356,20 +384,36 @@ class EduScheduleService:
         rows = (
             EduGradeSnapshot.query
             .filter_by(user_id=int(user_id))
-            .order_by(EduGradeSnapshot.xnm.desc(), EduGradeSnapshot.xqm.desc())
+            .order_by(
+                EduGradeSnapshot.xnm.desc(),
+                EduGradeSnapshot.xqm.desc(),
+                EduGradeSnapshot.fetched_at.desc(),
+                EduGradeSnapshot.id.desc(),
+            )
             .all()
         )
-        return EduScheduleService._grade_snapshot_rows_to_dicts(rows)
+        return EduScheduleService._grade_snapshot_rows_to_dicts(
+            EduScheduleService._latest_rows_by_term(rows)
+        )
 
     @staticmethod
     def list_grade_snapshots_for_terms(user_id: int, terms: Iterable[Dict[str, str]]) -> List[Dict[str, Any]]:
         items: List[Dict[str, Any]] = []
+        seen_terms = set()
         for term in terms:
-            row = EduGradeSnapshot.query.filter_by(
-                user_id=int(user_id),
-                xnm=str(term["xnm"]),
-                xqm=str(term["xqm"]),
-            ).first()
+            term_key = (str(term["xnm"]), str(term["xqm"]))
+            if term_key in seen_terms:
+                continue
+            seen_terms.add(term_key)
+            row = (
+                EduGradeSnapshot.query.filter_by(
+                    user_id=int(user_id),
+                    xnm=term_key[0],
+                    xqm=term_key[1],
+                )
+                .order_by(EduGradeSnapshot.fetched_at.desc(), EduGradeSnapshot.id.desc())
+                .first()
+            )
             if row:
                 items.extend(EduScheduleService._grade_snapshot_rows_to_dicts([row]))
         return items
