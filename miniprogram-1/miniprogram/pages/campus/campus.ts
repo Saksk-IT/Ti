@@ -145,57 +145,49 @@ function mergeCampusRows(existing: any[], incoming: any[]): any[] {
   return next.sort(compareTermRows);
 }
 
-function buildSnapshotYearOptions(rows: any[], selectedYear: string): SnapshotOption[] {
-  const counts: { [key: string]: number } = {};
-  rows.forEach((row) => {
-    const year = rowYearValue(row);
-    if (!year) return;
-    counts[year] = (counts[year] || 0) + 1;
-  });
-  return Object.keys(counts)
-    .sort((a, b) => (Number(b) || 0) - (Number(a) || 0))
-    .map((year) => ({
-      value: year,
-      label: formatAcademicYearLabel(Number(year)),
-      count: counts[year],
-      active: year === selectedYear,
-    }));
+function rowTermValue(row: any): string {
+  const year = rowYearValue(row);
+  const semester = rowSemesterValue(row);
+  return year && semester ? `${year}-${semester}` : '';
 }
 
-function buildSnapshotOptionLabels(options: SnapshotOption[]): string[] {
+function termLabel(year: string, semester: string): string {
+  return `${formatAcademicYearLabel(Number(year))} ${xqmLabel(semester)}`;
+}
+
+function buildSnapshotTermOptions(rows: any[], selectedTermKey: string): SnapshotOption[] {
+  const counts: { [key: string]: number } = {};
+  rows.forEach((row) => {
+    const value = rowTermValue(row);
+    if (!value) return;
+    counts[value] = (counts[value] || 0) + 1;
+  });
+  return Object.keys(counts)
+    .sort((a, b) => {
+      const [yearA, semesterA] = a.split('-');
+      const [yearB, semesterB] = b.split('-');
+      const yearDiff = (Number(yearB) || 0) - (Number(yearA) || 0);
+      if (yearDiff !== 0) return yearDiff;
+      const order: { [key: string]: number } = { '12': 2, '3': 1 };
+      return (order[semesterB] || Number(semesterB) || 0) - (order[semesterA] || Number(semesterA) || 0);
+    })
+    .map((value) => {
+      const [year, semester] = value.split('-');
+      return {
+        value,
+        label: termLabel(year, semester),
+        count: counts[value],
+        active: value === selectedTermKey,
+      };
+    });
+}
+
+function buildSnapshotTermLabels(options: SnapshotOption[]): string[] {
   return options.map((item) => `${item.label}（${item.count}）`);
 }
 
-function buildSnapshotTermOptions(rows: any[], selectedYear: string, selectedSemester: string): SnapshotOption[] {
-  const counts: { [key: string]: number } = {};
-  rows.forEach((row) => {
-    if (rowYearValue(row) !== selectedYear) return;
-    const semester = rowSemesterValue(row);
-    if (!semester) return;
-    counts[semester] = (counts[semester] || 0) + 1;
-  });
-  const terms = Object.keys(counts).sort((a, b) => {
-    const order: { [key: string]: number } = { '12': 2, '3': 1 };
-    return (order[b] || Number(b) || 0) - (order[a] || Number(a) || 0);
-  });
-  const total = terms.reduce((sum, semester) => sum + counts[semester], 0);
-  return [
-    { value: 'all', label: '全部学期', count: total, active: selectedSemester === 'all' },
-    ...terms.map((semester) => ({
-      value: semester,
-      label: xqmLabel(semester),
-      count: counts[semester],
-      active: semester === selectedSemester,
-    })),
-  ];
-}
-
-function filterSnapshotRows(rows: any[], selectedYear: string, selectedSemester: string): any[] {
-  return rows.filter((row) => {
-    if (selectedYear && rowYearValue(row) !== selectedYear) return false;
-    if (selectedSemester !== 'all' && rowSemesterValue(row) !== selectedSemester) return false;
-    return true;
-  });
+function filterSnapshotRows(rows: any[], selectedTermKey: string): any[] {
+  return rows.filter((row) => rowTermValue(row) === selectedTermKey);
 }
 
 function formatTaskTerms(terms: any[]): string {
@@ -260,16 +252,11 @@ Page({
     allGradeResults: [] as any[],
     scheduleResults: [] as any[],
     gradeResults: [] as any[],
-    snapshotYears: [] as SnapshotOption[],
-    snapshotYearLabels: [] as string[],
-    snapshotYearIndex: 0,
     snapshotTerms: [] as SnapshotOption[],
-    snapshotSemesterLabels: [] as string[],
-    snapshotSemesterIndex: 0,
-    snapshotSelectedYear: '',
-    snapshotSelectedSemester: 'all',
+    snapshotTermLabels: [] as string[],
+    snapshotTermIndex: 0,
+    snapshotSelectedTermKey: '',
     snapshotDrawerOpen: false,
-    snapshotDrawerTitle: '',
     queryProgressVisible: false,
     queryProgressStatus: '',
     queryProgressPercent: 0,
@@ -337,16 +324,16 @@ Page({
     });
   },
 
-  onAcademicYearTap(e: any) {
-    const academicYearIndex = clampAcademicYearIndex(e?.currentTarget?.dataset?.index, this.data.academicYearIndex);
+  onAcademicYearChange(e: any) {
+    const academicYearIndex = clampAcademicYearIndex(e?.detail?.value, this.data.academicYearIndex);
     this.setData({
       academicYearIndex,
       academicYear: academicYearValueAt(academicYearIndex),
     });
   },
 
-  onSemesterTap(e: any) {
-    const value = Number(e?.currentTarget?.dataset?.index ?? 0);
+  onSemesterChange(e: any) {
+    const value = Number(e?.detail?.value ?? 0);
     const max = SEMESTER_LABELS.length - 1;
     const semesterIndex = Math.max(0, Math.min(value, max));
     this.setData({ semesterIndex });
@@ -420,59 +407,34 @@ Page({
   syncSnapshotBrowserForMode(modeInput?: CampusMode) {
     const mode = modeInput || this.data.mode as CampusMode;
     const rows = mode === 'grades' ? this.data.allGradeResults : this.data.allScheduleResults;
-    const years = buildSnapshotYearOptions(rows, this.data.snapshotSelectedYear);
-    const selectedYear = years.some((item) => item.value === this.data.snapshotSelectedYear)
-      ? this.data.snapshotSelectedYear
-      : (years[0]?.value || '');
-    const terms = selectedYear ? buildSnapshotTermOptions(rows, selectedYear, this.data.snapshotSelectedSemester) : [];
-    const selectedSemester = terms.some((item) => item.value === this.data.snapshotSelectedSemester)
-      ? this.data.snapshotSelectedSemester
-      : 'all';
-    const selectedYears = buildSnapshotYearOptions(rows, selectedYear);
-    const selectedYearIndex = Math.max(0, selectedYears.findIndex((item) => item.value === selectedYear));
-    const selectedTerms = selectedYear ? buildSnapshotTermOptions(rows, selectedYear, selectedSemester) : [];
-    const selectedSemesterIndex = Math.max(0, selectedTerms.findIndex((item) => item.value === selectedSemester));
+    const terms = buildSnapshotTermOptions(rows, this.data.snapshotSelectedTermKey);
+    const selectedTermKey = terms.some((item) => item.value === this.data.snapshotSelectedTermKey)
+      ? this.data.snapshotSelectedTermKey
+      : (terms[0]?.value || '');
+    const selectedTerms = buildSnapshotTermOptions(rows, selectedTermKey);
+    const selectedTermIndex = Math.max(0, selectedTerms.findIndex((item) => item.value === selectedTermKey));
     const patch: any = {
-      snapshotSelectedYear: selectedYear,
-      snapshotSelectedSemester: selectedSemester,
-      snapshotYears: selectedYears,
-      snapshotYearLabels: buildSnapshotOptionLabels(selectedYears),
-      snapshotYearIndex: selectedYearIndex,
+      snapshotSelectedTermKey: selectedTermKey,
       snapshotTerms: selectedTerms,
-      snapshotSemesterLabels: buildSnapshotOptionLabels(selectedTerms),
-      snapshotSemesterIndex: selectedSemesterIndex,
-      snapshotDrawerTitle: selectedYear ? `${formatAcademicYearLabel(Number(selectedYear))} 学期` : '',
+      snapshotTermLabels: buildSnapshotTermLabels(selectedTerms),
+      snapshotTermIndex: selectedTermIndex,
       snapshotDrawerOpen: false,
     };
-    patch[mode === 'grades' ? 'gradeResults' : 'scheduleResults'] = selectedYear
-      ? filterSnapshotRows(rows, selectedYear, selectedSemester)
+    patch[mode === 'grades' ? 'gradeResults' : 'scheduleResults'] = selectedTermKey
+      ? filterSnapshotRows(rows, selectedTermKey)
       : [];
     this.setData(patch);
-  },
-
-  onSnapshotYearTap(e: any) {
-    const options = this.data.snapshotYears || [];
-    const value = String(e?.currentTarget?.dataset?.value || '').trim();
-    const index = options.findIndex((item) => item.value === value);
-    const year = String(options[index]?.value || '').trim();
-    if (!year) return;
-    this.setData({
-      snapshotSelectedYear: year,
-      snapshotSelectedSemester: 'all',
-      snapshotDrawerOpen: false,
-      snapshotYearIndex: index,
-      snapshotSemesterIndex: 0,
-    }, () => this.syncSnapshotBrowserForMode(this.data.mode as CampusMode));
   },
 
   onSnapshotTermTap(e: any) {
     const options = this.data.snapshotTerms || [];
     const value = String(e?.currentTarget?.dataset?.value || '').trim();
     const index = options.findIndex((item) => item.value === value);
-    const semester = String(options[index]?.value || 'all').trim() || 'all';
+    const selectedTermKey = String(options[index]?.value || '').trim();
+    if (!selectedTermKey) return;
     this.setData({
-      snapshotSelectedSemester: semester,
-      snapshotSemesterIndex: index,
+      snapshotSelectedTermKey: selectedTermKey,
+      snapshotTermIndex: index,
       snapshotDrawerOpen: false,
     }, () => this.syncSnapshotBrowserForMode(this.data.mode as CampusMode));
   },

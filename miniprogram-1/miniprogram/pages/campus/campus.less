@@ -69,7 +69,6 @@ page {
 .mode-option:active,
 .query-btn:active,
 .prompt-action:active,
-.selector-chip:active,
 .snapshot-chip:active,
 .captcha-action:active {
   opacity: 0.92;
@@ -369,23 +368,36 @@ page {
 }
 
 .year-row {
-  display: grid;
-  gap: 14rpx;
-}
-
-.selector-group,
-.snapshot-selector-group {
-  min-width: 0;
-  display: grid;
-  gap: 10rpx;
-}
-
-.selector-head {
-  min-width: 0;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16rpx;
+  gap: 12rpx;
+  align-items: stretch;
+}
+
+.field {
+  flex: 1 1 238rpx;
+  min-width: 0;
+  display: grid;
+  gap: 8rpx;
+}
+
+.year-field {
+  flex-basis: 258rpx;
+}
+
+.semester-field {
+  flex-basis: 226rpx;
+}
+
+.year-picker,
+.semester-picker {
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.field-copy {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .field-label {
@@ -393,63 +405,46 @@ page {
   font-weight: 800;
 }
 
-.selector-current {
-  min-width: 0;
-  color: var(--app-text);
-  font-size: 23rpx;
-  font-weight: 900;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.term-selector-scroll {
-  width: 100%;
-  min-width: 0;
-  white-space: nowrap;
-}
-
-.selector-chip-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 10rpx;
-  min-width: 100%;
-  padding: 2rpx 2rpx 4rpx;
-  box-sizing: border-box;
-}
-
-.selector-chip {
-  flex: 0 0 auto;
-  min-height: 64rpx;
-  max-width: 320rpx;
-  padding: 0 22rpx;
+.year-trigger,
+.semester-trigger {
+  min-height: 70rpx;
   border-radius: 16rpx;
   border: 1rpx solid var(--app-border);
   background: var(--app-surface);
   color: var(--app-text);
-  font-size: 25rpx;
-  font-weight: 900;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   box-sizing: border-box;
 }
 
-.semester-chip {
-  max-width: 360rpx;
+.year-trigger,
+.semester-trigger {
+  padding: 10rpx 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14rpx;
 }
 
-.selector-chip text {
+.year-value,
+.semester-value {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 28rpx;
+  font-weight: 900;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.selector-chip.active {
-  background: var(--app-text);
-  color: var(--app-bg);
-  border-color: var(--app-text);
-  box-shadow: var(--app-shadow-soft);
+.chevron {
+  flex: 0 0 auto;
+  color: var(--app-text-secondary);
+  font-size: 30rpx;
+}
+
+.snapshot-selector-group {
+  min-width: 0;
+  display: grid;
+  gap: 10rpx;
 }
 
 .query-btn {

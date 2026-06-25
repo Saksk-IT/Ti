@@ -513,30 +513,33 @@ def test_campus_year_filters_use_academic_year_range_labels(auth_client):
     assert "查询成绩" in wxml
     assert "刷新全部成绩" not in wxml
     assert "按学年学期归档" not in wxml
-    assert wxml.count('class="term-selector-scroll year-selector-scroll"') == 1
-    assert wxml.count('class="term-selector-scroll semester-selector-scroll"') == 1
-    assert wxml.index('class="term-selector-scroll year-selector-scroll"') < wxml.index('class="term-selector-scroll semester-selector-scroll"')
-    assert 'class="selector-chip year-chip {{academicYearIndex === index ? \'active\' : \'\'}}"' in wxml
-    assert 'class="selector-chip semester-chip {{semesterIndex === index ? \'active\' : \'\'}}"' in wxml
-    assert 'bindtap="onAcademicYearTap"' in wxml
-    assert 'bindtap="onSemesterTap"' in wxml
-    assert '<picker class="year-picker"' not in wxml
-    assert '<picker class="semester-picker"' not in wxml
+    assert wxml.count('range="{{academicYearLabels}}"') == 1
+    assert wxml.index('class="year-picker"') < wxml.index('class="semester-picker"')
+    assert 'class="field year-field"' in wxml
+    assert 'class="field semester-field"' in wxml
+    assert 'bindchange="onAcademicYearChange"' in wxml
+    assert 'bindchange="onSemesterChange"' in wxml
+    assert 'class="term-selector-scroll year-selector-scroll"' not in wxml
+    assert 'class="term-selector-scroll semester-selector-scroll"' not in wxml
+    assert 'bindtap="onAcademicYearTap"' not in wxml
+    assert 'bindtap="onSemesterTap"' not in wxml
     assert '<scroll-view class="snapshot-year-list"' not in wxml
     assert 'class="snapshot-filter-row"' not in wxml
     assert "snapshot-year-picker" not in wxml
     assert "snapshot-semester-picker" not in wxml
-    assert 'class="snapshot-selector-scroll snapshot-year-list"' in wxml
     assert 'class="snapshot-selector-scroll snapshot-term-list"' in wxml
-    assert 'class="snapshot-chip snapshot-year-chip {{item.active ? \'active\' : \'\'}}"' in wxml
     assert 'class="snapshot-chip snapshot-term-chip {{item.active ? \'active\' : \'\'}}"' in wxml
-    assert 'bindtap="onSnapshotYearTap"' in wxml
+    assert 'wx:for="{{snapshotTerms}}"' in wxml
+    assert 'snapshotYearLabels' not in wxml
+    assert 'snapshotSemesterLabels' not in wxml
+    assert 'snapshot-year-chip' not in wxml
+    assert 'bindtap="onSnapshotYearTap"' not in wxml
     assert 'bindtap="onSnapshotTermTap"' in wxml
     assert "snapshot-term-drawer" not in wxml
     assert "已查询成绩" not in wxml
-    assert 'range="{{academicYearLabels}}"' not in wxml
-    assert "onAcademicYearChange" not in wxml
-    assert "onSemesterChange" not in wxml
+    assert 'range="{{academicYearLabels}}"' in wxml
+    assert "onAcademicYearChange" in wxml
+    assert "onSemesterChange" in wxml
     assert "onSnapshotYearChange" not in wxml
     assert "onSnapshotSemesterChange" not in wxml
     assert "onStartYearChange" not in wxml
@@ -549,22 +552,22 @@ def test_campus_year_filters_use_academic_year_range_labels(auth_client):
     assert "academicYear:" in ts
     assert "startYearIndex" not in ts
     assert "endYearIndex" not in ts
-    assert "snapshotYearIndex" in ts
-    assert "snapshotYearLabels" in ts
-    assert "snapshotSemesterIndex" in ts
-    assert "snapshotSemesterLabels" in ts
-    assert "onAcademicYearTap" in ts
-    assert "onSemesterTap" in ts
-    assert "onAcademicYearChange" not in ts
-    assert "onSemesterChange" not in ts
+    assert "snapshotTermIndex" in ts
+    assert "snapshotTermLabels" in ts
+    assert "snapshotSelectedTermKey" in ts
+    assert "buildSnapshotTermOptions" in ts
+    assert "onAcademicYearTap" not in ts
+    assert "onSemesterTap" not in ts
+    assert "onAcademicYearChange" in ts
+    assert "onSemesterChange" in ts
     assert "onSnapshotYearChange" not in ts
     assert "onSnapshotSemesterChange" not in ts
-    assert "onSnapshotYearTap" in ts
+    assert "onSnapshotYearTap" not in ts
     assert "onSnapshotTermTap" in ts
     assert "formatAcademicYearLabel" in ts
     assert "~" in ts
-    assert ".term-selector-scroll {\n  width: 100%;" in less
-    assert ".selector-chip.active {\n  background: var(--app-text);" in less
+    assert ".year-row {\n  display: flex;\n  gap: 12rpx;" in less
+    assert ".semester-picker {\n  min-width: 0;" in less
     assert ".snapshot-selector-scroll {\n  width: 100%;" in less
     assert ".snapshot-chip.active {\n  background: var(--app-text);" in less
     assert ".snapshot-browser {\n  padding: 0;" in less
@@ -634,10 +637,10 @@ def test_miniprogram_campus_page_matches_background_query_flow():
     assert "campus-query-progress" in wxml
     assert "query-progress-fill" in wxml
     assert "snapshot-browser" in wxml
-    assert "snapshot-year-chip" in wxml
-    assert "snapshotYearLabels" in wxml
+    assert "snapshot-year-chip" not in wxml
+    assert "snapshotYearLabels" not in wxml
     assert "snapshot-term-chip" in wxml
-    assert "snapshotSemesterLabels" in wxml
+    assert "snapshotTermLabels" in ts
     assert "snapshot-term-drawer" not in wxml
     assert '<scroll-view class="snapshot-year-list"' not in wxml
     assert "campus-captcha-dialog" in wxml
@@ -647,7 +650,7 @@ def test_miniprogram_campus_page_matches_background_query_flow():
     assert "restoreRecentCampusTasks" in ts
     assert "startTaskPolling" in ts
     assert "showWebvpnCaptcha" in ts
-    assert "onSnapshotYearTap" in ts
+    assert "onSnapshotYearTap" not in ts
     assert "onSnapshotTermTap" in ts
     assert "onSnapshotYearChange" not in ts
     assert "onSnapshotSemesterChange" not in ts

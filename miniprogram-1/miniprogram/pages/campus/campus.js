@@ -46,15 +46,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
-    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-        if (ar || !(i in from)) {
-            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-            ar[i] = from[i];
-        }
-    }
-    return to.concat(ar || Array.prototype.slice.call(from));
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 var api_1 = require("../../utils/api");
 var auth_1 = require("../../utils/auth");
@@ -175,58 +166,47 @@ function mergeCampusRows(existing, incoming) {
     });
     return next.sort(compareTermRows);
 }
-function buildSnapshotYearOptions(rows, selectedYear) {
+function rowTermValue(row) {
+    var year = rowYearValue(row);
+    var semester = rowSemesterValue(row);
+    return year && semester ? "".concat(year, "-").concat(semester) : '';
+}
+function termLabel(year, semester) {
+    return "".concat(formatAcademicYearLabel(Number(year)), " ").concat(xqmLabel(semester));
+}
+function buildSnapshotTermOptions(rows, selectedTermKey) {
     var counts = {};
     rows.forEach(function (row) {
-        var year = rowYearValue(row);
-        if (!year)
+        var value = rowTermValue(row);
+        if (!value)
             return;
-        counts[year] = (counts[year] || 0) + 1;
+        counts[value] = (counts[value] || 0) + 1;
     });
     return Object.keys(counts)
-        .sort(function (a, b) { return (Number(b) || 0) - (Number(a) || 0); })
-        .map(function (year) { return ({
-        value: year,
-        label: formatAcademicYearLabel(Number(year)),
-        count: counts[year],
-        active: year === selectedYear,
-    }); });
+        .sort(function (a, b) {
+        var _a = a.split('-'), yearA = _a[0], semesterA = _a[1];
+        var _b = b.split('-'), yearB = _b[0], semesterB = _b[1];
+        var yearDiff = (Number(yearB) || 0) - (Number(yearA) || 0);
+        if (yearDiff !== 0)
+            return yearDiff;
+        var order = { '12': 2, '3': 1 };
+        return (order[semesterB] || Number(semesterB) || 0) - (order[semesterA] || Number(semesterA) || 0);
+    })
+        .map(function (value) {
+        var _a = value.split('-'), year = _a[0], semester = _a[1];
+        return {
+            value: value,
+            label: termLabel(year, semester),
+            count: counts[value],
+            active: value === selectedTermKey,
+        };
+    });
 }
-function buildSnapshotOptionLabels(options) {
+function buildSnapshotTermLabels(options) {
     return options.map(function (item) { return "".concat(item.label, "\uFF08").concat(item.count, "\uFF09"); });
 }
-function buildSnapshotTermOptions(rows, selectedYear, selectedSemester) {
-    var counts = {};
-    rows.forEach(function (row) {
-        if (rowYearValue(row) !== selectedYear)
-            return;
-        var semester = rowSemesterValue(row);
-        if (!semester)
-            return;
-        counts[semester] = (counts[semester] || 0) + 1;
-    });
-    var terms = Object.keys(counts).sort(function (a, b) {
-        var order = { '12': 2, '3': 1 };
-        return (order[b] || Number(b) || 0) - (order[a] || Number(a) || 0);
-    });
-    var total = terms.reduce(function (sum, semester) { return sum + counts[semester]; }, 0);
-    return __spreadArray([
-        { value: 'all', label: '全部学期', count: total, active: selectedSemester === 'all' }
-    ], terms.map(function (semester) { return ({
-        value: semester,
-        label: xqmLabel(semester),
-        count: counts[semester],
-        active: semester === selectedSemester,
-    }); }), true);
-}
-function filterSnapshotRows(rows, selectedYear, selectedSemester) {
-    return rows.filter(function (row) {
-        if (selectedYear && rowYearValue(row) !== selectedYear)
-            return false;
-        if (selectedSemester !== 'all' && rowSemesterValue(row) !== selectedSemester)
-            return false;
-        return true;
-    });
+function filterSnapshotRows(rows, selectedTermKey) {
+    return rows.filter(function (row) { return rowTermValue(row) === selectedTermKey; });
 }
 function formatTaskTerms(terms) {
     var normalized = Array.isArray(terms) ? terms : [];
@@ -288,16 +268,11 @@ Page({
         allGradeResults: [],
         scheduleResults: [],
         gradeResults: [],
-        snapshotYears: [],
-        snapshotYearLabels: [],
-        snapshotYearIndex: 0,
         snapshotTerms: [],
-        snapshotSemesterLabels: [],
-        snapshotSemesterIndex: 0,
-        snapshotSelectedYear: '',
-        snapshotSelectedSemester: 'all',
+        snapshotTermLabels: [],
+        snapshotTermIndex: 0,
+        snapshotSelectedTermKey: '',
         snapshotDrawerOpen: false,
-        snapshotDrawerTitle: '',
         queryProgressVisible: false,
         queryProgressStatus: '',
         queryProgressPercent: 0,
@@ -362,17 +337,17 @@ Page({
             _this.refreshProgressForMode(mode);
         });
     },
-    onAcademicYearTap: function (e) {
-        var _a, _b;
-        var academicYearIndex = clampAcademicYearIndex((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.index, this.data.academicYearIndex);
+    onAcademicYearChange: function (e) {
+        var _a;
+        var academicYearIndex = clampAcademicYearIndex((_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value, this.data.academicYearIndex);
         this.setData({
             academicYearIndex: academicYearIndex,
             academicYear: academicYearValueAt(academicYearIndex),
         });
     },
-    onSemesterTap: function (e) {
+    onSemesterChange: function (e) {
         var _a, _b;
-        var value = Number((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.index) || 0;
+        var value = Number((_b = (_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value) !== null && _b !== void 0 ? _b : 0);
         var max = SEMESTER_LABELS.length - 1;
         var semesterIndex = Math.max(0, Math.min(value, max));
         this.setData({ semesterIndex: semesterIndex });
@@ -462,62 +437,36 @@ Page({
         var _a;
         var mode = modeInput || this.data.mode;
         var rows = mode === 'grades' ? this.data.allGradeResults : this.data.allScheduleResults;
-        var years = buildSnapshotYearOptions(rows, this.data.snapshotSelectedYear);
-        var selectedYear = years.some(function (item) { return item.value === _this.data.snapshotSelectedYear; })
-            ? this.data.snapshotSelectedYear
-            : (((_a = years[0]) === null || _a === void 0 ? void 0 : _a.value) || '');
-        var terms = selectedYear ? buildSnapshotTermOptions(rows, selectedYear, this.data.snapshotSelectedSemester) : [];
-        var selectedSemester = terms.some(function (item) { return item.value === _this.data.snapshotSelectedSemester; })
-            ? this.data.snapshotSelectedSemester
-            : 'all';
-        var selectedYears = buildSnapshotYearOptions(rows, selectedYear);
-        var selectedYearIndex = Math.max(0, selectedYears.findIndex(function (item) { return item.value === selectedYear; }));
-        var selectedTerms = selectedYear ? buildSnapshotTermOptions(rows, selectedYear, selectedSemester) : [];
-        var selectedSemesterIndex = Math.max(0, selectedTerms.findIndex(function (item) { return item.value === selectedSemester; }));
+        var terms = buildSnapshotTermOptions(rows, this.data.snapshotSelectedTermKey);
+        var selectedTermKey = terms.some(function (item) { return item.value === _this.data.snapshotSelectedTermKey; })
+            ? this.data.snapshotSelectedTermKey
+            : (((_a = terms[0]) === null || _a === void 0 ? void 0 : _a.value) || '');
+        var selectedTerms = buildSnapshotTermOptions(rows, selectedTermKey);
+        var selectedTermIndex = Math.max(0, selectedTerms.findIndex(function (item) { return item.value === selectedTermKey; }));
         var patch = {
-            snapshotSelectedYear: selectedYear,
-            snapshotSelectedSemester: selectedSemester,
-            snapshotYears: selectedYears,
-            snapshotYearLabels: buildSnapshotOptionLabels(selectedYears),
-            snapshotYearIndex: selectedYearIndex,
+            snapshotSelectedTermKey: selectedTermKey,
             snapshotTerms: selectedTerms,
-            snapshotSemesterLabels: buildSnapshotOptionLabels(selectedTerms),
-            snapshotSemesterIndex: selectedSemesterIndex,
-            snapshotDrawerTitle: selectedYear ? "".concat(formatAcademicYearLabel(Number(selectedYear)), " \u5B66\u671F") : '',
+            snapshotTermLabels: buildSnapshotTermLabels(selectedTerms),
+            snapshotTermIndex: selectedTermIndex,
             snapshotDrawerOpen: false,
         };
-        patch[mode === 'grades' ? 'gradeResults' : 'scheduleResults'] = selectedYear
-            ? filterSnapshotRows(rows, selectedYear, selectedSemester)
+        patch[mode === 'grades' ? 'gradeResults' : 'scheduleResults'] = selectedTermKey
+            ? filterSnapshotRows(rows, selectedTermKey)
             : [];
         this.setData(patch);
     },
-    onSnapshotYearTap: function (e) {
-        var _this = this;
-        var _a, _b;
-        var options = this.data.snapshotYears || [];
-        var value = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.value) || '').trim();
-        var index = options.findIndex(function (item) { return item.value === value; });
-        var year = String(((_a = options[index]) === null || _a === void 0 ? void 0 : _a.value) || '').trim();
-        if (!year)
-            return;
-        this.setData({
-            snapshotSelectedYear: year,
-            snapshotSelectedSemester: 'all',
-            snapshotDrawerOpen: false,
-            snapshotYearIndex: index,
-            snapshotSemesterIndex: 0,
-        }, function () { return _this.syncSnapshotBrowserForMode(_this.data.mode); });
-    },
     onSnapshotTermTap: function (e) {
         var _this = this;
-        var _a, _b;
+        var _a, _b, _c;
         var options = this.data.snapshotTerms || [];
         var value = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.value) || '').trim();
         var index = options.findIndex(function (item) { return item.value === value; });
-        var semester = String(((_a = options[index]) === null || _a === void 0 ? void 0 : _a.value) || 'all').trim() || 'all';
+        var selectedTermKey = String(((_c = options[index]) === null || _c === void 0 ? void 0 : _c.value) || '').trim();
+        if (!selectedTermKey)
+            return;
         this.setData({
-            snapshotSelectedSemester: semester,
-            snapshotSemesterIndex: index,
+            snapshotSelectedTermKey: selectedTermKey,
+            snapshotTermIndex: index,
             snapshotDrawerOpen: false,
         }, function () { return _this.syncSnapshotBrowserForMode(_this.data.mode); });
     },
