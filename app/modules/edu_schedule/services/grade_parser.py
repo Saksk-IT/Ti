@@ -50,6 +50,36 @@ def _grade_item(row: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def split_grade_payload_by_term(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """按成绩行返回的学年学期拆分全量成绩 payload。"""
+    rows = payload.get("items") if isinstance(payload.get("items"), list) else []
+    groups: List[Dict[str, Any]] = []
+    indexes: Dict[tuple[str, str], int] = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        xnm = _text(row.get("xnm"))
+        xqm = _text(row.get("xqm"))
+        if not xnm or not xqm:
+            continue
+        key = (xnm, xqm)
+        if key not in indexes:
+            indexes[key] = len(groups)
+            groups.append({**payload, "items": []})
+        group_index = indexes[key]
+        groups[group_index] = {
+            **groups[group_index],
+            "items": [*groups[group_index]["items"], dict(row)],
+        }
+    return [
+        {
+            **group,
+            "totalResult": len(group.get("items") or []),
+        }
+        for group in groups
+    ]
+
+
 def normalize_grade_payload(payload: Dict[str, Any], xnm: str = "", xqm: str = "") -> Dict[str, Any]:
     """将正方成绩接口返回值整理成前端稳定结构。"""
     rows = payload.get("items") if isinstance(payload.get("items"), list) else []

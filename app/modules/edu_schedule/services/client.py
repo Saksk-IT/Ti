@@ -41,8 +41,8 @@ _BLOCKED_NETWORKS = tuple(
     )
 )
 
-_DEFAULT_GRADE_PATH = "/cjcx/cjcx_cxDgXscj.html?doType=query&gnmkdm=N305005"
-_LEGACY_GRADE_PATH = "/cjcx/cjcx_cxXsgrcj.html?doType=query&gnmkdm=N305005"
+_DEFAULT_GRADE_PATH = "/cjcx/cjcx_cxXsgrcj.html?doType=query&gnmkdm=N305005"
+_LEGACY_GRADE_PATH = "/cjcx/cjcx_cxDgXscj.html?doType=query&gnmkdm=N305005"
 WEBVPN_INTERACTIVE_CHALLENGE_MESSAGE = "WebVPN 登录需要验证码或二次验证，无法仅凭账号密码自动登录"
 
 
@@ -129,6 +129,19 @@ class JWXTClient:
             self._prepare_webvpn(session)
         self._login_jwxt(session, username, password)
         return self._query_grades(session, xnm, xqm)
+
+    def fetch_all_grades(self, username: str, password: str) -> Dict[str, Any]:
+        if not self.config.enabled:
+            raise ScheduleClientError("成绩查询功能未开启")
+        session = requests.Session()
+        session.headers.update({
+            "User-Agent": "Mozilla/5.0 (compatible; TiEduSchedule/1.0)",
+            "Accept-Language": "zh-CN,zh;q=0.9",
+        })
+        if self.config.use_webvpn:
+            self._prepare_webvpn(session)
+        self._login_jwxt(session, username, password)
+        return self._query_grades(session, "", "")
 
     def _request(self, session: requests.Session, method: str, url: str, **kwargs):
         follow_redirects = bool(kwargs.pop("allow_redirects", False))
@@ -255,18 +268,18 @@ class JWXTClient:
 
     def _query_grades(self, session: requests.Session, xnm: str, xqm: str) -> Dict[str, Any]:
         data = {
-            "xnm": xnm,
-            "xqm": xqm,
+            "xnm": str(xnm or ""),
+            "xqm": str(xqm or ""),
             "sfzgcj": "",
             "kcbj": "",
             "pkey": "",
             "_search": "false",
             "nd": str(int(time.time() * 1000)),
-            "queryModel.showCount": "100",
+            "queryModel.showCount": "1000",
             "queryModel.currentPage": "1",
             "queryModel.sortName": " ",
             "queryModel.sortOrder": "asc",
-            "time": "0",
+            "time": "8",
         }
         last_error: Exception | None = None
         for grade_path in _grade_path_candidates(self.config.grade_path):
@@ -343,10 +356,13 @@ def _grade_path_candidates(configured_path: str) -> tuple[str, ...]:
 
 def _grade_page_path(query_path: str) -> str:
     parsed = urlparse((query_path or "").strip() or _DEFAULT_GRADE_PATH)
+    page_path = parsed.path
+    if page_path.endswith("cjcx_cxXsgrcj.html"):
+        page_path = page_path[: -len("cjcx_cxXsgrcj.html")] + "cjcx_cxDgXscj.html"
     params = [(key, value) for key, value in parse_qsl(parsed.query, keep_blank_values=True) if key != "doType"]
     if not any(key == "layout" for key, _ in params):
         params.append(("layout", "default"))
-    return urlunparse(("", "", parsed.path, "", urlencode(params), ""))
+    return urlunparse(("", "", page_path, "", urlencode(params), ""))
 
 
 def _origin_from_url(url: str) -> str:

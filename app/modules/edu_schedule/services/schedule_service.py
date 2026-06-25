@@ -22,7 +22,7 @@ from .client import (
     ScheduleClientError,
     WEBVPN_INTERACTIVE_CHALLENGE_MESSAGE,
 )
-from .grade_parser import normalize_grade_payload
+from .grade_parser import normalize_grade_payload, split_grade_payload_by_term
 from .parser import normalize_schedule_payload
 
 
@@ -239,20 +239,23 @@ class EduScheduleService:
         else:
             account, secret = EduScheduleService._load_credentials(user_id)
 
+        raw_payload = EduScheduleService._fetch_first_success(
+            lambda: JWXTClient(cfg).fetch_all_grades(account, secret)
+        )
+
         results: List[Dict[str, Any]] = []
-        for term in terms:
-            xnm = str(term["xnm"])
-            xqm = str(term["xqm"])
-            raw_payload = EduScheduleService._fetch_first_success(
-                lambda xnm=xnm, xqm=xqm: JWXTClient(cfg).fetch_grades(account, secret, xnm, xqm)
-            )
-            normalized = normalize_grade_payload(raw_payload, xnm, xqm)
+        for term_payload in split_grade_payload_by_term(raw_payload):
+            normalized = normalize_grade_payload(term_payload)
+            xnm = str(normalized.get("term", {}).get("xnm") or "")
+            xqm = str(normalized.get("term", {}).get("xqm") or "")
+            if not xnm or not xqm:
+                continue
             EduScheduleService._save_grade_snapshot(
                 int(user_id),
                 xnm,
                 xqm,
                 normalized,
-                raw_payload,
+                term_payload,
                 username=account,
                 password=secret,
             )

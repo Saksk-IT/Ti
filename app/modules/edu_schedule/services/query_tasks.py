@@ -57,8 +57,9 @@ def _normalize_terms(terms: Iterable[Dict[str, str]]) -> List[Dict[str, str]]:
 
 
 def _dedupe_key(kind: str, user_id: int, terms: List[Dict[str, str]]) -> str:
+    dedupe_terms = [] if kind == "grades" else terms
     payload = json.dumps(
-        {"kind": kind, "user_id": int(user_id), "terms": terms},
+        {"kind": kind, "user_id": int(user_id), "terms": dedupe_terms},
         ensure_ascii=False,
         sort_keys=True,
         separators=(",", ":"),
@@ -158,7 +159,7 @@ def _index_task(user_id: int, task_id: str) -> None:
 
 def _snapshots_for(kind: str, user_id: int, terms: List[Dict[str, str]]) -> List[Dict[str, Any]]:
     if kind == "grades":
-        return EduScheduleService.list_grade_snapshots_for_terms(user_id, terms)
+        return EduScheduleService.list_grade_snapshots(user_id)
     return EduScheduleService.list_snapshots_for_terms(user_id, terms)
 
 

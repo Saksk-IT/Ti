@@ -123,6 +123,12 @@ def _sample_grade_payload(xnm="2025", xqm="3"):
     }
 
 
+def _sample_all_grade_payload():
+    first_term = _sample_grade_payload(xnm="2024", xqm="12")["items"]
+    second_term = _sample_grade_payload(xnm="2025", xqm="3")["items"]
+    return {"items": [*first_term, *second_term], "totalResult": 4}
+
+
 def _admin_client(app, seed_user):
     c = app.test_client()
     with app.app_context():
@@ -185,6 +191,19 @@ def test_grade_payload_normalizes_summary():
     assert data["summary"]["course_count"] == 2
     assert data["summary"]["total_credits"] == 6.0
     assert data["summary"]["gpa"] == 3.67
+
+
+def test_grade_payload_splits_all_grades_by_returned_term():
+    from app.modules.edu_schedule.services.grade_parser import split_grade_payload_by_term
+
+    payloads = split_grade_payload_by_term(_sample_all_grade_payload())
+
+    assert len(payloads) == 2
+    assert [(item["items"][0]["xnm"], item["items"][0]["xqm"]) for item in payloads] == [
+        ("2024", "12"),
+        ("2025", "3"),
+    ]
+    assert [item["totalResult"] for item in payloads] == [2, 2]
 
 
 def test_grade_query_falls_back_when_primary_endpoint_returns_html():
@@ -258,7 +277,46 @@ def test_grade_query_uses_browser_form_encoding_for_empty_sort_name():
 
     post_call = calls[0]
     assert post_call["data"]["queryModel.sortName"] == " "
+    assert post_call["data"]["queryModel.showCount"] == "1000"
+    assert post_call["data"]["time"] == "8"
     assert post_call["headers"]["Origin"] == "https://jwxt.webvpn.synu.edu.cn"
+    assert post_call["headers"]["Referer"].endswith(
+        "/jwglxt/cjcx/cjcx_cxDgXscj.html?gnmkdm=N305005&layout=default"
+    )
+
+
+def test_grade_query_can_request_all_grades_without_term_filters():
+    from app.modules.edu_schedule.services.client import JWXTClient
+
+    class FakeResponse:
+        def json(self):
+            return {"items": [], "totalResult": 0}
+
+    client = JWXTClient(
+        {
+            "enabled": True,
+            "use_webvpn": False,
+            "jwxt_base_url": "https://jwxt.webvpn.synu.edu.cn/jwglxt",
+            "grade_path": "/cjcx/cjcx_cxXsgrcj.html?doType=query&gnmkdm=N305005",
+            "request_timeout": 20,
+            "verify_tls": True,
+            "allowed_hosts": ("jwxt.webvpn.synu.edu.cn",),
+        }
+    )
+    calls = []
+
+    def fake_request(session, method, url, **kwargs):
+        calls.append({"method": method, "url": url, **kwargs})
+        return FakeResponse()
+
+    client._request = fake_request
+
+    client._query_grades(object(), "", "")
+
+    post_call = calls[0]
+    assert "cjcx_cxXsgrcj" in post_call["url"]
+    assert post_call["data"]["xnm"] == ""
+    assert post_call["data"]["xqm"] == ""
     assert post_call["headers"]["Referer"].endswith(
         "/jwglxt/cjcx/cjcx_cxDgXscj.html?gnmkdm=N305005&layout=default"
     )
@@ -1956,10 +2014,10 @@ def test_query_multiple_terms_saves_grade_snapshots(app, auth_client, monkeypatc
         def __init__(self, config):
             self.config = config
 
-        def fetch_grades(self, username, password, xnm, xqm):
+        def fetch_all_grades(self, username, password):
             assert username == "stu_demo_2026"
             assert password == "DemoSecret123!"
-            return _sample_grade_payload(xnm=xnm, xqm=xqm)
+            return _sample_all_grade_payload()
 
     monkeypatch.setattr(schedule_service, "JWXTClient", FakeJWXTClient)
     monkeypatch.setattr(
@@ -2006,6 +2064,7 @@ def test_query_multiple_terms_saves_grade_snapshots(app, auth_client, monkeypatc
 
     assert final_state["status"] == "succeeded"
     assert [item["term"]["xnm"] for item in final_state["results"]] == ["2024", "2025"]
+    assert [item["term"]["xqm"] for item in final_state["results"]] == ["12", "3"]
     assert final_state["results"][0]["grades"][0]["course_name"] == "数据结构"
     assert final_state["results"][1]["summary"]["course_count"] == 2
 
