@@ -192,6 +192,9 @@ function buildSnapshotYearOptions(rows, selectedYear) {
         active: year === selectedYear,
     }); });
 }
+function buildSnapshotYearLabels(options) {
+    return options.map(function (item) { return "".concat(item.label, "\uFF08").concat(item.count, "\uFF09"); });
+}
 function buildSnapshotTermOptions(rows, selectedYear, selectedSemester) {
     var counts = {};
     rows.forEach(function (row) {
@@ -286,6 +289,8 @@ Page({
         scheduleResults: [],
         gradeResults: [],
         snapshotYears: [],
+        snapshotYearLabels: [],
+        snapshotYearIndex: 0,
         snapshotTerms: [],
         snapshotSelectedYear: '',
         snapshotSelectedSemester: 'all',
@@ -463,10 +468,14 @@ Page({
         var selectedSemester = terms.some(function (item) { return item.value === _this.data.snapshotSelectedSemester; })
             ? this.data.snapshotSelectedSemester
             : 'all';
+        var selectedYears = buildSnapshotYearOptions(rows, selectedYear);
+        var selectedYearIndex = Math.max(0, selectedYears.findIndex(function (item) { return item.value === selectedYear; }));
         var patch = {
             snapshotSelectedYear: selectedYear,
             snapshotSelectedSemester: selectedSemester,
-            snapshotYears: buildSnapshotYearOptions(rows, selectedYear),
+            snapshotYears: selectedYears,
+            snapshotYearLabels: buildSnapshotYearLabels(selectedYears),
+            snapshotYearIndex: selectedYearIndex,
             snapshotTerms: selectedYear ? buildSnapshotTermOptions(rows, selectedYear, selectedSemester) : [],
             snapshotDrawerTitle: selectedYear ? "".concat(formatAcademicYearLabel(Number(selectedYear)), " \u5B66\u671F") : '',
             snapshotDrawerOpen: selectedYear ? this.data.snapshotDrawerOpen : false,
@@ -476,16 +485,20 @@ Page({
             : [];
         this.setData(patch);
     },
-    onSnapshotYearTap: function (e) {
+    onSnapshotYearChange: function (e) {
         var _this = this;
         var _a, _b;
-        var year = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.year) || '').trim();
+        var options = this.data.snapshotYears || [];
+        var max = Math.max(0, options.length - 1);
+        var index = Math.max(0, Math.min(Number((_b = (_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value) !== null && _b !== void 0 ? _b : 0) || 0, max));
+        var year = String(((_a = options[index]) === null || _a === void 0 ? void 0 : _a.value) || '').trim();
         if (!year)
             return;
         this.setData({
             snapshotSelectedYear: year,
             snapshotSelectedSemester: 'all',
             snapshotDrawerOpen: true,
+            snapshotYearIndex: index,
         }, function () { return _this.syncSnapshotBrowserForMode(_this.data.mode); });
     },
     onSnapshotTermTap: function (e) {

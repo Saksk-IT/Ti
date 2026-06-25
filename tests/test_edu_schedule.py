@@ -518,8 +518,14 @@ def test_campus_year_filters_use_academic_year_range_labels(auth_client):
     assert 'class="field semester-field"' in wxml
     assert '<scroll-view class="snapshot-year-list"' not in wxml
     assert '<view class="snapshot-year-list"' in wxml
+    assert 'class="snapshot-year-picker"' in wxml
+    assert 'range="{{snapshotYearLabels}}"' in wxml
+    assert 'value="{{snapshotYearIndex}}"' in wxml
+    assert 'bindchange="onSnapshotYearChange"' in wxml
+    assert "snapshot-year-chip" not in wxml
     assert 'range="{{academicYearLabels}}"' in wxml
     assert "onAcademicYearChange" in wxml
+    assert "onSnapshotYearTap" not in wxml
     assert "onStartYearChange" not in wxml
     assert "onEndYearChange" not in wxml
     assert "onStartYearInput" not in wxml
@@ -530,11 +536,16 @@ def test_campus_year_filters_use_academic_year_range_labels(auth_client):
     assert "academicYear:" in ts
     assert "startYearIndex" not in ts
     assert "endYearIndex" not in ts
+    assert "snapshotYearIndex" in ts
+    assert "snapshotYearLabels" in ts
+    assert "onSnapshotYearChange" in ts
+    assert "onSnapshotYearTap" not in ts
     assert "formatAcademicYearLabel" in ts
     assert "~" in ts
-    assert ".year-row {\n  display: flex;\n  flex-wrap: wrap;" in less
+    assert ".year-row {\n  display: flex;\n  gap: 12rpx;" in less
     assert ".semester-picker {\n  min-width: 0;" in less
-    assert ".snapshot-year-row {\n  display: flex;\n  flex-wrap: wrap;" in less
+    assert ".snapshot-year-select {\n  min-height: 62rpx;" in less
+    assert ".snapshot-year-chip" not in less
     assert ".snapshot-current {\n  flex: 0 1 220rpx;" in less
 
 
@@ -602,9 +613,10 @@ def test_miniprogram_campus_page_matches_background_query_flow():
     assert "campus-query-progress" in wxml
     assert "query-progress-fill" in wxml
     assert "snapshot-browser" in wxml
-    assert "snapshot-year-chip" in wxml
+    assert "snapshot-year-picker" in wxml
+    assert "snapshotYearLabels" in wxml
     assert "snapshot-term-drawer" in wxml
-    assert "<picker" not in wxml.split("snapshot-browser", 1)[-1]
+    assert '<scroll-view class="snapshot-year-list"' not in wxml
     assert "campus-captcha-dialog" in wxml
     assert "onCaptchaSubmitTap" in wxml
     assert "发起本次查询会停止上次的" in ts
@@ -612,7 +624,7 @@ def test_miniprogram_campus_page_matches_background_query_flow():
     assert "restoreRecentCampusTasks" in ts
     assert "startTaskPolling" in ts
     assert "showWebvpnCaptcha" in ts
-    assert "onSnapshotYearTap" in ts
+    assert "onSnapshotYearChange" in ts
     assert "onSnapshotTermTap" in ts
     assert "cancelEduQueryTask" in ts
     assert "completeEduWebvpnSession" in ts

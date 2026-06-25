@@ -69,7 +69,7 @@ page {
 .mode-option:active,
 .query-btn:active,
 .prompt-action:active,
-.snapshot-year-chip:active,
+.snapshot-year-select:active,
 .snapshot-term-chip:active,
 .captcha-action:active {
   opacity: 0.92;
@@ -390,7 +390,6 @@ page {
 
 .year-row {
   display: flex;
-  flex-wrap: wrap;
   gap: 12rpx;
   align-items: stretch;
 }
@@ -607,16 +606,44 @@ page {
 
 .snapshot-year-list {
   width: 100%;
-  overflow: visible;
 }
 
-.snapshot-year-row {
+.snapshot-year-picker {
+  display: block;
+  width: 100%;
+}
+
+.snapshot-year-select {
+  min-height: 62rpx;
+  padding: 10rpx 16rpx;
+  border-radius: 16rpx;
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface);
+  color: var(--app-text);
   display: flex;
-  flex-wrap: wrap;
-  gap: 12rpx;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14rpx;
+  box-sizing: border-box;
 }
 
-.snapshot-year-chip,
+.snapshot-year-select-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  gap: 4rpx;
+}
+
+.snapshot-year-select-value {
+  display: block;
+  color: var(--app-text);
+  font-size: 28rpx;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .snapshot-term-chip {
   min-height: 62rpx;
   padding: 0 16rpx;
@@ -633,20 +660,6 @@ page {
   box-sizing: border-box;
 }
 
-.snapshot-year-chip {
-  flex: 1 1 196rpx;
-  min-width: 0;
-  max-width: calc(50% - 6rpx);
-}
-
-.snapshot-year-chip > text:first-child {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.snapshot-year-chip.active,
 .snapshot-term-chip.active {
   background: var(--app-primary-soft);
   color: var(--app-primary);

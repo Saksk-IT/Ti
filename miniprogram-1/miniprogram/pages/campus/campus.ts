@@ -162,6 +162,10 @@ function buildSnapshotYearOptions(rows: any[], selectedYear: string): SnapshotOp
     }));
 }
 
+function buildSnapshotYearLabels(options: SnapshotOption[]): string[] {
+  return options.map((item) => `${item.label}（${item.count}）`);
+}
+
 function buildSnapshotTermOptions(rows: any[], selectedYear: string, selectedSemester: string): SnapshotOption[] {
   const counts: { [key: string]: number } = {};
   rows.forEach((row) => {
@@ -257,6 +261,8 @@ Page({
     scheduleResults: [] as any[],
     gradeResults: [] as any[],
     snapshotYears: [] as SnapshotOption[],
+    snapshotYearLabels: [] as string[],
+    snapshotYearIndex: 0,
     snapshotTerms: [] as SnapshotOption[],
     snapshotSelectedYear: '',
     snapshotSelectedSemester: 'all',
@@ -420,10 +426,14 @@ Page({
     const selectedSemester = terms.some((item) => item.value === this.data.snapshotSelectedSemester)
       ? this.data.snapshotSelectedSemester
       : 'all';
+    const selectedYears = buildSnapshotYearOptions(rows, selectedYear);
+    const selectedYearIndex = Math.max(0, selectedYears.findIndex((item) => item.value === selectedYear));
     const patch: any = {
       snapshotSelectedYear: selectedYear,
       snapshotSelectedSemester: selectedSemester,
-      snapshotYears: buildSnapshotYearOptions(rows, selectedYear),
+      snapshotYears: selectedYears,
+      snapshotYearLabels: buildSnapshotYearLabels(selectedYears),
+      snapshotYearIndex: selectedYearIndex,
       snapshotTerms: selectedYear ? buildSnapshotTermOptions(rows, selectedYear, selectedSemester) : [],
       snapshotDrawerTitle: selectedYear ? `${formatAcademicYearLabel(Number(selectedYear))} 学期` : '',
       snapshotDrawerOpen: selectedYear ? this.data.snapshotDrawerOpen : false,
@@ -434,13 +444,17 @@ Page({
     this.setData(patch);
   },
 
-  onSnapshotYearTap(e: any) {
-    const year = String(e?.currentTarget?.dataset?.year || '').trim();
+  onSnapshotYearChange(e: any) {
+    const options = this.data.snapshotYears || [];
+    const max = Math.max(0, options.length - 1);
+    const index = Math.max(0, Math.min(Number(e?.detail?.value ?? 0) || 0, max));
+    const year = String(options[index]?.value || '').trim();
     if (!year) return;
     this.setData({
       snapshotSelectedYear: year,
       snapshotSelectedSemester: 'all',
       snapshotDrawerOpen: true,
+      snapshotYearIndex: index,
     }, () => this.syncSnapshotBrowserForMode(this.data.mode as CampusMode));
   },
 

@@ -158,21 +158,24 @@
               <text class="snapshot-title">{{mode === 'grades' ? '已查询成绩' : '已查询课表'}}</text>
               <text class="snapshot-sub">按学年和学期查看历史结果</text>
             </view>
-            <text class="snapshot-current">{{snapshotDrawerTitle}}</text>
+            <text class="snapshot-current">{{snapshotYears.length}} 个学年</text>
           </view>
           <view class="snapshot-year-list" aria-label="学年筛选">
-            <view class="snapshot-year-row">
-              <view
-                class="snapshot-year-chip {{item.active ? 'active' : ''}}"
-                wx:for="{{snapshotYears}}"
-                wx:key="value"
-                data-year="{{item.value}}"
-                bindtap="onSnapshotYearTap"
-              >
-                <text>{{item.label}}</text>
-                <text class="snapshot-count">{{item.count}}</text>
+            <picker
+              class="snapshot-year-picker"
+              mode="selector"
+              range="{{snapshotYearLabels}}"
+              value="{{snapshotYearIndex}}"
+              bindchange="onSnapshotYearChange"
+            >
+              <view class="snapshot-year-select" aria-role="button" aria-label="选择历史学年">
+                <view class="snapshot-year-select-copy">
+                  <text class="field-label">学年筛选</text>
+                  <text class="snapshot-year-select-value">{{snapshotYearLabels[snapshotYearIndex]}}</text>
+                </view>
+                <text class="chevron">⌄</text>
               </view>
-            </view>
+            </picker>
           </view>
           <view class="snapshot-term-drawer" wx:if="{{snapshotDrawerOpen}}">
             <view
