@@ -1,3 +1,4 @@
+"use strict";
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -9,10 +10,45 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
-
-var themeManager = require('../../utils/theme').themeManager;
-var echarts = require('../../pages/subject-detail-v2/components/ec-canvas/echarts');
-var ubdv2Echarts = require('../../utils/ubdv2-echarts');
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var theme_1 = require("../../utils/theme");
+// 主包 components/ec-canvas/echarts 是占位 stub（会抛错），
+// 这里显式复用 subject-detail-v2 页面内的完整 ECharts 实现，避免数据页空白。
+var echarts = __importStar(require("../../pages/subject-detail-v2/components/ec-canvas/echarts"));
+var ubdv2Echarts = __importStar(require("../../utils/ubdv2-echarts"));
 function clamp(value, min, max) {
     if (!Number.isFinite(value))
         return min;
@@ -95,7 +131,7 @@ function buildCalendarCells(trend, statsDays) {
     var list = Array.isArray(trend) ? trend : [];
     if (!list.length)
         return [];
-    var maxAnswered = list.reduce(function (m, it) { return Math.max(m, toNum(it === null || it === void 0 ? void 0 : it.answered)); }, 0) || 0;
+    var maxAnswered = list.reduce(function (m, it) { return Math.max(m, toNum(it.answered)); }, 0) || 0;
     var padStart = weekdayFromIsoDate(list[0].day);
     var cells = [];
     for (var i = 0; i < padStart; i++) {
@@ -103,8 +139,8 @@ function buildCalendarCells(trend, statsDays) {
     }
     for (var _i = 0, list_1 = list; _i < list_1.length; _i++) {
         var it = list_1[_i];
-        var day = String((it === null || it === void 0 ? void 0 : it.day) || '');
-        var answered = toNum(it === null || it === void 0 ? void 0 : it.answered);
+        var day = String(it.day || '');
+        var answered = toNum(it.answered);
         var pct = maxAnswered > 0 ? answered / maxAnswered : 0;
         var level = pct >= 0.75 ? 3 : pct >= 0.5 ? 2 : pct > 0 ? 1 : 0;
         var dayText = /^\d{4}-\d{2}-\d{2}/.test(day) ? day.slice(8, 10) : '';
@@ -123,22 +159,22 @@ function buildCalendarCells(trend, statsDays) {
     return cells;
 }
 function calcActiveDays(trend) {
-    return (trend || []).filter(function (d) { return toNum(d === null || d === void 0 ? void 0 : d.answered) > 0; }).length;
+    return (trend || []).filter(function (d) { return toNum(d.answered) > 0; }).length;
 }
 function calcRecentAnswered(trend, days) {
     var list = Array.isArray(trend) ? trend : [];
     if (!list.length)
         return 0;
     var slice = list.slice(Math.max(0, list.length - Math.max(1, Math.floor(days))));
-    return slice.reduce(function (sum, it) { return sum + toNum(it === null || it === void 0 ? void 0 : it.answered); }, 0);
+    return slice.reduce(function (sum, it) { return sum + toNum(it.answered); }, 0);
 }
 function buildHeadline(subtab, overview, trend, statsDays) {
     var activeDays = calcActiveDays(trend);
-    var accuracy = toNum(overview === null || overview === void 0 ? void 0 : overview.accuracy);
-    var completion = toNum(overview === null || overview === void 0 ? void 0 : overview.completion);
-    var total = toNum(overview === null || overview === void 0 ? void 0 : overview.total);
-    var answered = toNum(overview === null || overview === void 0 ? void 0 : overview.answered);
-    var mistakesTimes = toNum(overview === null || overview === void 0 ? void 0 : overview.mistakeTimes);
+    var accuracy = toNum(overview.accuracy);
+    var completion = toNum(overview.completion);
+    var total = toNum(overview.total);
+    var answered = toNum(overview.answered);
+    var mistakesTimes = toNum(overview.mistakeTimes);
     if (subtab === 'mistakes') {
         return "\u9519\u9898\u6C60 ".concat(fmtCount(total), " \u9898 \u00B7 \u9519\u9898\u6B21\u6570 ").concat(fmtCount(mistakesTimes), " \u00B7 \u8FD1").concat(statsDays, "\u5929\u6D3B\u8DC3").concat(fmtCount(activeDays), "\u5929");
     }
@@ -150,16 +186,16 @@ function buildHeadline(subtab, overview, trend, statsDays) {
 }
 function computeKpis(subtab, overview, trend, statsDays, extras) {
     var _a;
-    var total = toNum(overview === null || overview === void 0 ? void 0 : overview.total);
-    var answered = toNum(overview === null || overview === void 0 ? void 0 : overview.answered);
-    var correct = toNum(overview === null || overview === void 0 ? void 0 : overview.correct);
-    var wrong = toNum(overview === null || overview === void 0 ? void 0 : overview.wrong);
-    var favorites = toNum(overview === null || overview === void 0 ? void 0 : overview.favorites);
-    var mistakes = toNum(overview === null || overview === void 0 ? void 0 : overview.mistakes);
-    var mistakeTimes = toNum(overview === null || overview === void 0 ? void 0 : overview.mistakeTimes);
-    var accuracy = toNum(overview === null || overview === void 0 ? void 0 : overview.accuracy);
-    var completion = toNum(overview === null || overview === void 0 ? void 0 : overview.completion);
-    var streakDays = toNum(overview === null || overview === void 0 ? void 0 : overview.streakDays);
+    var total = toNum(overview.total);
+    var answered = toNum(overview.answered);
+    var correct = toNum(overview.correct);
+    var wrong = toNum(overview.wrong);
+    var favorites = toNum(overview.favorites);
+    var mistakes = toNum(overview.mistakes);
+    var mistakeTimes = toNum(overview.mistakeTimes);
+    var accuracy = toNum(overview.accuracy);
+    var completion = toNum(overview.completion);
+    var streakDays = toNum(overview.streakDays);
     var recentAnswered = calcRecentAnswered(trend, Math.min(7, Math.max(1, Math.floor(statsDays || 7))));
     var mistakeRate = answered > 0 ? (wrong * 100) / answered : 0;
     if (subtab === 'mistakes') {
@@ -169,10 +205,10 @@ function computeKpis(subtab, overview, trend, statsDays, extras) {
         var highRisk_1 = 0;
         var aging_1 = 0;
         ((extras === null || extras === void 0 ? void 0 : extras.questions) || []).forEach(function (q) {
-            var wc = toNum(q === null || q === void 0 ? void 0 : q.mistake_wrong_count) || 1;
+            var wc = toNum(q.mistake_wrong_count) || 1;
             if (wc >= 3)
                 highRisk_1 += 1;
-            var ds = daysSince((q === null || q === void 0 ? void 0 : q.mistake_updated_at) || (q === null || q === void 0 ? void 0 : q.mistake_created_at));
+            var ds = daysSince(q.mistake_updated_at || q.mistake_created_at);
             if (ds != null && ds >= 14)
                 aging_1 += 1;
         });
@@ -211,10 +247,10 @@ function computeKpis(subtab, overview, trend, statsDays, extras) {
     ];
 }
 function computeGauge(subtab, overview, trend, statsDays) {
-    var accuracy = toNum(overview === null || overview === void 0 ? void 0 : overview.accuracy);
-    var completion = toNum(overview === null || overview === void 0 ? void 0 : overview.completion);
-    var answered = toNum(overview === null || overview === void 0 ? void 0 : overview.answered);
-    var wrong = toNum(overview === null || overview === void 0 ? void 0 : overview.wrong);
+    var accuracy = toNum(overview.accuracy);
+    var completion = toNum(overview.completion);
+    var answered = toNum(overview.answered);
+    var wrong = toNum(overview.wrong);
     var activeDays = calcActiveDays(trend);
     var recentAnswered = calcRecentAnswered(trend, Math.min(7, Math.max(1, Math.floor(statsDays || 7))));
     var mistakeRate = answered > 0 ? (wrong * 100) / answered : 0;
@@ -240,19 +276,19 @@ function computeTypeChartRows(byType) {
         return [];
     var top = list
         .slice()
-        .sort(function (a, b) { return toNum(b === null || b === void 0 ? void 0 : b.answered) - toNum(a === null || a === void 0 ? void 0 : a.answered); })
+        .sort(function (a, b) { return toNum(b.answered) - toNum(a.answered); })
         .slice(0, 8);
-    var maxAnswered = top.reduce(function (m, it) { return Math.max(m, toNum(it === null || it === void 0 ? void 0 : it.answered)); }, 0) || 0;
+    var maxAnswered = top.reduce(function (m, it) { return Math.max(m, toNum(it.answered)); }, 0) || 0;
     return top.map(function (it) {
-        var correct = toNum(it === null || it === void 0 ? void 0 : it.correct);
-        var wrong = toNum(it === null || it === void 0 ? void 0 : it.wrong);
+        var correct = toNum(it.correct);
+        var wrong = toNum(it.wrong);
         var correctWidth = maxAnswered > 0 ? clamp((correct / maxAnswered) * 100, 0, 100) : 0;
         var wrongWidth = maxAnswered > 0 ? clamp((wrong / maxAnswered) * 100, 0, 100) : 0;
         return {
-            q_type: String((it === null || it === void 0 ? void 0 : it.q_type) || '未知'),
+            q_type: String(it.q_type || '未知'),
             correctWidth: correctWidth,
             wrongWidth: wrongWidth,
-            completionText: String((it === null || it === void 0 ? void 0 : it.completionText) || '0.0%')
+            completionText: String(it.completionText || '0.0%')
         };
     });
 }
@@ -274,16 +310,16 @@ function buildMistakeMatrixDots(items) {
     if (!list.length)
         return [];
     var sample = list.slice(0, 80);
-    var maxWrong = sample.reduce(function (m, it) { return Math.max(m, Math.max(1, toNum(it === null || it === void 0 ? void 0 : it.mistake_wrong_count) || 1)); }, 1);
+    var maxWrong = sample.reduce(function (m, it) { return Math.max(m, Math.max(1, toNum(it.mistake_wrong_count) || 1)); }, 1);
     var capWrong = clamp(maxWrong, 3, 8);
     var capDays = 30;
     var out = [];
     sample.forEach(function (it) {
-        var id = Math.floor(toNum(it === null || it === void 0 ? void 0 : it.id));
+        var id = Math.floor(toNum(it.id));
         if (!id)
             return;
-        var wc = Math.max(1, toNum(it === null || it === void 0 ? void 0 : it.mistake_wrong_count) || 1);
-        var ds = daysSince((it === null || it === void 0 ? void 0 : it.mistake_updated_at) || (it === null || it === void 0 ? void 0 : it.mistake_created_at));
+        var wc = Math.max(1, toNum(it.mistake_wrong_count) || 1);
+        var ds = daysSince(it.mistake_updated_at || it.mistake_created_at);
         if (ds == null)
             return;
         var x = capWrong > 1 ? clamp(((Math.min(wc, capWrong) - 1) / (capWrong - 1)) * 100, 0, 100) : 0;
@@ -300,15 +336,15 @@ function buildTopMistakes(items) {
         return [];
     var sorted = list
         .slice()
-        .sort(function (a, b) { return (toNum(b === null || b === void 0 ? void 0 : b.mistake_wrong_count) || 1) - (toNum(a === null || a === void 0 ? void 0 : a.mistake_wrong_count) || 1); })
+        .sort(function (a, b) { return (toNum(b.mistake_wrong_count) || 1) - (toNum(a.mistake_wrong_count) || 1); })
         .slice(0, 8);
-    var max = sorted.reduce(function (m, it) { return Math.max(m, toNum(it === null || it === void 0 ? void 0 : it.mistake_wrong_count) || 1); }, 1) || 1;
+    var max = sorted.reduce(function (m, it) { return Math.max(m, toNum(it.mistake_wrong_count) || 1); }, 1) || 1;
     return sorted.map(function (it) {
-        var id = Math.floor(toNum(it === null || it === void 0 ? void 0 : it.id));
-        var wc = Math.max(1, toNum(it === null || it === void 0 ? void 0 : it.mistake_wrong_count) || 1);
-        var title = String((it === null || it === void 0 ? void 0 : it.content_preview) || '').trim() || "\u9898\u76EE #".concat(id);
-        var qt = String((it === null || it === void 0 ? void 0 : it.q_type) || '').trim() || '—';
-        var lw = fmtMD((it === null || it === void 0 ? void 0 : it.mistake_updated_at) || (it === null || it === void 0 ? void 0 : it.mistake_created_at));
+        var id = Math.floor(toNum(it.id));
+        var wc = Math.max(1, toNum(it.mistake_wrong_count) || 1);
+        var title = String(it.content_preview || '').trim() || "\u9898\u76EE #".concat(id);
+        var qt = String(it.q_type || '').trim() || '—';
+        var lw = fmtMD(it.mistake_updated_at || it.mistake_created_at);
         var meta = "".concat(qt, " \u00B7 \u6700\u8FD1\u9519\u9898 ").concat(lw);
         var bar = clamp((wc / max) * 100, 0, 100);
         return { id: id, title: title, meta: meta, count: wc, bar: bar };
@@ -337,14 +373,14 @@ function buildMistakeRows(items, limit) {
     if (limit === void 0) { limit = 50; }
     var list = Array.isArray(items) ? items.slice(0, Math.max(0, limit)) : [];
     return list.map(function (q) {
-        var id = Math.floor(toNum(q === null || q === void 0 ? void 0 : q.id));
-        var content = String((q === null || q === void 0 ? void 0 : q.content_preview) || '').trim() || "\u9898\u76EE #".concat(id);
-        var q_type = String((q === null || q === void 0 ? void 0 : q.q_type) || '').trim() || '—';
-        var difficultyText = normalizeDifficultyText(q === null || q === void 0 ? void 0 : q.difficulty);
-        var wc = Math.max(1, toNum(q === null || q === void 0 ? void 0 : q.mistake_wrong_count) || 1);
-        var lastWrong = fmtMDHM((q === null || q === void 0 ? void 0 : q.mistake_updated_at) || (q === null || q === void 0 ? void 0 : q.mistake_created_at));
-        var lastAnswer = fmtMDHM(q === null || q === void 0 ? void 0 : q.last_answered_at);
-        var res = normalizeResult(q === null || q === void 0 ? void 0 : q.last_is_correct);
+        var id = Math.floor(toNum(q.id));
+        var content = String(q.content_preview || '').trim() || "\u9898\u76EE #".concat(id);
+        var q_type = String(q.q_type || '').trim() || '—';
+        var difficultyText = normalizeDifficultyText(q.difficulty);
+        var wc = Math.max(1, toNum(q.mistake_wrong_count) || 1);
+        var lastWrong = fmtMDHM(q.mistake_updated_at || q.mistake_created_at);
+        var lastAnswer = fmtMDHM(q.last_answered_at);
+        var res = normalizeResult(q.last_is_correct);
         return {
             id: id,
             content: content,
@@ -362,13 +398,13 @@ function buildFavoriteRows(items, limit) {
     if (limit === void 0) { limit = 50; }
     var list = Array.isArray(items) ? items.slice(0, Math.max(0, limit)) : [];
     return list.map(function (q) {
-        var id = Math.floor(toNum(q === null || q === void 0 ? void 0 : q.id));
-        var content = String((q === null || q === void 0 ? void 0 : q.content_preview) || '').trim() || "\u9898\u76EE #".concat(id);
-        var q_type = String((q === null || q === void 0 ? void 0 : q.q_type) || '').trim() || '—';
-        var difficultyText = normalizeDifficultyText(q === null || q === void 0 ? void 0 : q.difficulty);
-        var favAt = fmtMDHM(q === null || q === void 0 ? void 0 : q.favorite_created_at);
-        var lastAnswer = fmtMDHM(q === null || q === void 0 ? void 0 : q.last_answered_at);
-        var res = normalizeResult(q === null || q === void 0 ? void 0 : q.last_is_correct);
+        var id = Math.floor(toNum(q.id));
+        var content = String(q.content_preview || '').trim() || "\u9898\u76EE #".concat(id);
+        var q_type = String(q.q_type || '').trim() || '—';
+        var difficultyText = normalizeDifficultyText(q.difficulty);
+        var favAt = fmtMDHM(q.favorite_created_at);
+        var lastAnswer = fmtMDHM(q.last_answered_at);
+        var res = normalizeResult(q.last_is_correct);
         return {
             id: id,
             content: content,
@@ -386,88 +422,84 @@ function buildTypeDistRows(byType) {
     var list = Array.isArray(byType) ? byType.slice() : [];
     if (!list.length)
         return [];
-    var sum = list.reduce(function (m, it) { return m + Math.max(0, toNum(it === null || it === void 0 ? void 0 : it.total)); }, 0) || 0;
+    var sum = list.reduce(function (m, it) { return m + Math.max(0, toNum(it.total)); }, 0) || 0;
     var rows = list
         .slice()
-        .sort(function (a, b) { return toNum(b === null || b === void 0 ? void 0 : b.total) - toNum(a === null || a === void 0 ? void 0 : a.total); })
+        .sort(function (a, b) { return toNum(b.total) - toNum(a.total); })
         .slice(0, 12);
     return rows.map(function (it) {
-        var total = Math.max(0, toNum(it === null || it === void 0 ? void 0 : it.total));
-        var answered = Math.max(0, toNum(it === null || it === void 0 ? void 0 : it.answered));
-        var accText = String((it === null || it === void 0 ? void 0 : it.accuracyText) || '');
+        var total = Math.max(0, toNum(it.total));
+        var answered = Math.max(0, toNum(it.answered));
+        var accText = String(it.accuracyText || '');
         var bar = sum > 0 ? clamp((total / sum) * 100, 0, 100) : 0;
-        var q_type = String((it === null || it === void 0 ? void 0 : it.q_type) || '未知');
+        var q_type = String(it.q_type || '未知');
         var meta = "\u5171 ".concat(fmtCount(total), " \u9898 \u00B7 \u5DF2\u505A ").concat(fmtCount(answered), " \u00B7 \u6B63\u786E\u7387 ").concat(accText || '—');
         return { q_type: q_type, total: total, bar: bar, meta: meta };
     });
 }
-
 function buildCompatByTypeStats(byType) {
     var list = Array.isArray(byType) ? byType.slice() : [];
     return list.map(function (it) {
-        var total = Math.max(0, toNum(it === null || it === void 0 ? void 0 : it.total));
-        var answered = Math.max(0, toNum(it === null || it === void 0 ? void 0 : it.answered));
-        var correctRaw = Math.max(0, toNum(it === null || it === void 0 ? void 0 : it.correct));
+        var total = Math.max(0, toNum(it.total));
+        var answered = Math.max(0, toNum(it.answered));
+        var correctRaw = Math.max(0, toNum(it.correct));
         var correct = Math.min(answered, correctRaw);
-        var wrongRaw = toNum(it === null || it === void 0 ? void 0 : it.wrong);
+        var wrongRaw = toNum(it.wrong);
         var wrong = Math.max(0, Number.isFinite(wrongRaw) && wrongRaw > 0 ? wrongRaw : answered - correct);
         var accuracy = answered > 0 ? clamp((correct * 100) / answered, 0, 100) : 0;
         var completion = total > 0 ? clamp((answered * 100) / total, 0, 100) : 0;
         return {
-            q_type: String((it === null || it === void 0 ? void 0 : it.q_type) || '未知'),
+            q_type: String(it.q_type || '未知'),
             total: total,
             answered: answered,
             correct: correct,
             wrong: wrong,
-            favorites: Math.max(0, toNum(it === null || it === void 0 ? void 0 : it.favorites)),
-            mistakes: Math.max(0, toNum(it === null || it === void 0 ? void 0 : it.mistakes)),
+            favorites: Math.max(0, toNum(it.favorites)),
+            mistakes: Math.max(0, toNum(it.mistakes)),
             accuracy: accuracy,
             completion: completion
         };
     });
 }
-
 function buildCompatByDifficultyStats(byDifficulty) {
     var list = Array.isArray(byDifficulty) ? byDifficulty.slice() : [];
     return list.map(function (it) {
-        var label = String((it === null || it === void 0 ? void 0 : it.label) || (it === null || it === void 0 ? void 0 : it.difficulty) || '—');
-        var total = Math.max(0, toNum(it === null || it === void 0 ? void 0 : it.total));
-        var answered = Math.max(0, toNum(it === null || it === void 0 ? void 0 : it.answered));
-        var correctRaw = Math.max(0, toNum(it === null || it === void 0 ? void 0 : it.correct));
+        var label = String(it.label || it.difficulty || '—');
+        var total = Math.max(0, toNum(it.total));
+        var answered = Math.max(0, toNum(it.answered));
+        var correctRaw = Math.max(0, toNum(it.correct));
         var correct = Math.min(answered, correctRaw);
-        var wrongRaw = toNum(it === null || it === void 0 ? void 0 : it.wrong);
+        var wrongRaw = toNum(it.wrong);
         var wrong = Math.max(0, Number.isFinite(wrongRaw) && wrongRaw > 0 ? wrongRaw : answered - correct);
         var accuracy = answered > 0 ? clamp((correct * 100) / answered, 0, 100) : 0;
         var completion = total > 0 ? clamp((answered * 100) / total, 0, 100) : 0;
         return { label: label, total: total, answered: answered, correct: correct, wrong: wrong, accuracy: accuracy, completion: completion };
     });
 }
-
 function buildCompatStatsPayload(overview, trend, byType, byDifficulty) {
-    var total = Math.max(0, toNum(overview === null || overview === void 0 ? void 0 : overview.total));
-    var answered = Math.max(0, toNum(overview === null || overview === void 0 ? void 0 : overview.answered));
-    var correctRaw = Math.max(0, toNum(overview === null || overview === void 0 ? void 0 : overview.correct));
+    var total = Math.max(0, toNum(overview.total));
+    var answered = Math.max(0, toNum(overview.answered));
+    var correctRaw = Math.max(0, toNum(overview.correct));
     var correct = Math.min(answered, correctRaw);
-    var wrongRaw = toNum(overview === null || overview === void 0 ? void 0 : overview.wrong);
+    var wrongRaw = toNum(overview.wrong);
     var wrong = Math.max(0, Number.isFinite(wrongRaw) && wrongRaw > 0 ? wrongRaw : answered - correct);
     return {
         total_count: total,
         answered: answered,
         correct: correct,
         wrong: wrong,
-        favorites: Math.max(0, toNum(overview === null || overview === void 0 ? void 0 : overview.favorites)),
-        mistakes: Math.max(0, toNum(overview === null || overview === void 0 ? void 0 : overview.mistakes)),
-        mistakes_times: Math.max(0, toNum(overview === null || overview === void 0 ? void 0 : overview.mistakeTimes)),
-        accuracy: clamp(toNum(overview === null || overview === void 0 ? void 0 : overview.accuracy), 0, 100),
-        completion: clamp(toNum(overview === null || overview === void 0 ? void 0 : overview.completion), 0, 100),
-        streak_days: Math.max(0, toNum(overview === null || overview === void 0 ? void 0 : overview.streakDays)),
-        last_activity: String((overview === null || overview === void 0 ? void 0 : overview.lastText) || ''),
+        favorites: Math.max(0, toNum(overview.favorites)),
+        mistakes: Math.max(0, toNum(overview.mistakes)),
+        mistakes_times: Math.max(0, toNum(overview.mistakeTimes)),
+        accuracy: clamp(toNum(overview.accuracy), 0, 100),
+        completion: clamp(toNum(overview.completion), 0, 100),
+        streak_days: Math.max(0, toNum(overview.streakDays)),
+        last_activity: String(overview.lastText || ''),
         trend: Array.isArray(trend) ? trend : [],
         by_type: buildCompatByTypeStats(byType),
-        by_difficulty: buildCompatByDifficultyStats(byDifficulty)
+        by_difficulty: buildCompatByDifficultyStats(byDifficulty),
     };
 }
-
 function resolveActiveChartIds(subtab, hasDifficulty) {
     if (subtab === 'mistakes') {
         return ['ubdMistakeMatrixChart', 'ubdMistakeTopChart', 'ubdMisTrendChart', 'ubdMisTypePieChart', 'ubdMisDiffChart'];
@@ -540,6 +572,7 @@ Component({
             });
         },
         'dataSubTab,statsDays,statsLoading,statsError,statsOverview,statsTrend,statsByType,totalCount,statsQuestions,favoritesTrend': function () {
+            var _this = this;
             var rawSub = String(this.data.dataSubTab || 'global');
             var subtab = rawSub === 'mistakes' || rawSub === 'favorites' ? rawSub : 'global';
             var days = Math.max(1, Math.floor(toNum(this.data.statsDays || 14)));
@@ -588,7 +621,7 @@ Component({
             }
             else {
                 headlineText = buildHeadline(subtab, overview, trend, days);
-                updatedAtText = "\u6700\u8FD1\u6D3B\u8DC3\uFF1A".concat(String((overview === null || overview === void 0 ? void 0 : overview.lastText) || '—'));
+                updatedAtText = "\u6700\u8FD1\u6D3B\u8DC3\uFF1A".concat(String(overview.lastText || '—'));
                 kpiItems = computeKpis(subtab, overview, trend, days, { bankTotal: bankTotal, questions: questions, favoritesTrend: favTrend });
                 if (subtab === 'global') {
                     calendarCells = buildCalendarCells(trend, days);
@@ -609,7 +642,6 @@ Component({
                     favoriteRows = buildFavoriteRows(questions, 50);
                 }
             }
-            var _this = this;
             this.setData(__assign({ headlineText: headlineText, updatedAtText: updatedAtText, kpiItems: kpiItems, calendarCells: calendarCells, typeChartRows: typeChartRows, typeTableRows: typeTableRows, typeDistRows: typeDistRows, mistakeMatrixDots: mistakeMatrixDots, mistakeTopItems: mistakeTopItems, mistakeRows: mistakeRows, favoriteAddedBars: favoriteAddedBars, favoriteRows: favoriteRows }, gauge), function () {
                 try {
                     _this.scheduleRenderCharts(false);
@@ -626,7 +658,7 @@ Component({
             self.__renderTimer = null;
             self.__pendingForceInit = false;
             self.__pendingIsDark = undefined;
-            self.__themeUnsub = themeManager.onThemeChange(function (isDark) {
+            self.__themeUnsub = theme_1.themeManager.onThemeChange(function (isDark) {
                 try {
                     _this.scheduleRenderCharts(false, isDark);
                 }
@@ -676,6 +708,7 @@ Component({
             self.__charts = {};
         },
         scheduleRenderCharts: function (forceInit, isDarkOverride) {
+            var _this = this;
             if (forceInit === void 0) { forceInit = false; }
             var self = this;
             if (forceInit)
@@ -692,19 +725,20 @@ Component({
                 self.__renderTimer = null;
                 wx.nextTick(function () {
                     try {
-                        self.renderCharts(pendingForce, pendingIsDark);
+                        _this.renderCharts(pendingForce, pendingIsDark);
                     }
                     catch (e) { }
                 });
             }, 0);
         },
         renderCharts: function (forceInit, isDarkOverride) {
+            var _this = this;
             if (forceInit === void 0) { forceInit = false; }
             var raw = String(this.data.dataSubTab || 'global');
             var subtab = raw === 'mistakes' || raw === 'favorites' ? raw : 'global';
             var hasDifficulty = !!this.data.statsHasDifficulty;
-            var isDark = typeof isDarkOverride === 'boolean' ? isDarkOverride : themeManager.isDarkMode();
-            var style = themeManager.getStyle();
+            var isDark = typeof isDarkOverride === 'boolean' ? isDarkOverride : theme_1.themeManager.isDarkMode();
+            var style = theme_1.themeManager.getStyle();
             var tokens = ubdv2Echarts.getUbdv2ThemeTokens(isDark, style);
             var overview = (this.data.statsOverview || {});
             var trend = (this.data.statsTrend || []);
@@ -730,7 +764,7 @@ Component({
                 }
             });
             activeIds.forEach(function (id) {
-                var comp = self.selectComponent("#" + id);
+                var comp = _this.selectComponent("#".concat(id));
                 var existing = charts[id];
                 if (!comp || typeof comp.init !== 'function') {
                     if (existing) {

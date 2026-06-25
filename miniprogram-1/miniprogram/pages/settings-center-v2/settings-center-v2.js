@@ -1,3 +1,4 @@
+"use strict";
 function normalizeNavKey(raw) {
     var v = String(raw || '').trim().toLowerCase();
     if (v === 'theme' || v === 'about')

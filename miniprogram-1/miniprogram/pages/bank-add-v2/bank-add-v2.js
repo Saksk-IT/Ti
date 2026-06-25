@@ -20,8 +20,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -51,6 +51,16 @@ var api_1 = require("../../utils/api");
 var auth_1 = require("../../utils/auth");
 var theme_1 = require("../../utils/theme");
 var web_1 = require("../../utils/web");
+function buildExternalWebUrl(next) {
+    var origin = String((0, api_1.getApiOrigin)() || '').trim().replace(/\/$/, '');
+    var path = (0, web_1.normalizeWebNextPath)(next, '/hub');
+    if (!origin)
+        return path;
+    var raw = "".concat(origin).concat(path);
+    if (/([?&])from=/.test(raw))
+        return raw;
+    return "".concat(raw).concat(raw.includes('?') ? '&' : '?', "from=miniapp");
+}
 Page({
     data: {
         name: '',
@@ -82,13 +92,28 @@ Page({
     },
     onCycleThemeModeTap: function () {
         var mode = theme_1.themeManager.cycleMode();
-        this.setData(__assign(__assign({}, theme_1.themeManager.getPageData()), { themeMode: mode }));
+        this.setData(__assign(__assign({}, (theme_1.themeManager.getPageData())), { themeMode: mode }));
     },
     onCancel: function () {
         wx.navigateBack();
     },
     onOpenWebCreate: function () {
-        (0, web_1.openWebFrontend)('/user/banks');
+        var url = buildExternalWebUrl('/user/banks');
+        wx.showModal({
+            title: '请前往网页端',
+            content: '小程序内不再内嵌网页端。点击「复制链接」后在浏览器打开并登录。',
+            confirmText: '复制链接',
+            cancelText: '关闭',
+            success: function (res) {
+                if (!res.confirm)
+                    return;
+                wx.setClipboardData({
+                    data: url,
+                    success: function () { return wx.showToast({ title: '链接已复制', icon: 'success' }); },
+                    fail: function () { return wx.showToast({ title: '复制失败', icon: 'none' }); }
+                });
+            }
+        });
     },
     onSubmit: function () {
         return __awaiter(this, void 0, void 0, function () {

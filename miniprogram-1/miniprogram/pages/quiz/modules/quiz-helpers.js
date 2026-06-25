@@ -14,8 +14,6 @@ exports.resolveInlineUrl = resolveInlineUrl;
 exports.extractInlineImageUrls = extractInlineImageUrls;
 var api_1 = require("../../../utils/api");
 exports.AI_EXPLAIN_CACHE_KEY_PREFIX = 'saksk_ai_explain_v1_';
-var OPTION_ALPHA_SEED = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-var OPTION_DIGIT_SEED = '123456789';
 function getAIExplainCacheKey(qid) {
     return "".concat(exports.AI_EXPLAIN_CACHE_KEY_PREFIX).concat(qid);
 }
@@ -49,6 +47,8 @@ function writeAIExplainCache(qid, explain) {
         // ignore
     }
 }
+var OPTION_ALPHA_SEED = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+var OPTION_DIGIT_SEED = '123456789';
 function parseExplicitOptionPrefix(text) {
     var match = text.match(/^([A-Za-z]|\d{1,2})\s*([、.．:：])\s*(.+)$/);
     if (!match)
@@ -136,9 +136,9 @@ function normalizeOptionItems(rawOptions, valueFormatter) {
             var rawKey = item.key;
             var rawValue = item.value;
             var key = String(rawKey == null ? '' : rawKey).trim();
-            var value_1 = valueFormatter(rawValue);
-            if (key || value_1) {
-                options.push({ key: key, value: value_1, answerValue: key || value_1 });
+            var value = valueFormatter(rawValue);
+            if (key || value) {
+                options.push({ key: key, value: value, answerValue: key || value });
             }
             return;
         }

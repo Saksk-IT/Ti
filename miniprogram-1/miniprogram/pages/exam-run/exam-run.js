@@ -9,8 +9,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -58,7 +58,10 @@ Page({
         answers: {},
         showQuestionList: false,
         timeLeft: 0,
-        timeText: '00:00'
+        timeText: '00:00',
+        // 滑屏切题
+        touchStartX: 0,
+        touchStartY: 0
     },
     draftTimer: null,
     tickTimer: null,
@@ -657,6 +660,7 @@ Page({
         return a;
     },
     onQuestionImageError: function (e) {
+        var _this = this;
         var idx = Number((e && e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.index) || -1);
         var q = this.data.currentQuestion;
         var urls = (q && q.image_urls) || [];
@@ -683,12 +687,12 @@ Page({
                 var nextUrls = urls.slice();
                 nextUrls[idx] = tempFilePath;
                 var nextQuestion = Object.assign({}, q, { image_urls: nextUrls });
-                var currentIndex = Number(self.data.currentIndex || 0);
-                var nextQuestions = Array.isArray(self.data.questions) ? self.data.questions.slice() : [];
+                var currentIndex = Number(_this.data.currentIndex || 0);
+                var nextQuestions = Array.isArray(_this.data.questions) ? _this.data.questions.slice() : [];
                 if (currentIndex >= 0 && currentIndex < nextQuestions.length) {
                     nextQuestions[currentIndex] = Object.assign({}, nextQuestions[currentIndex], { image_urls: nextUrls });
                 }
-                self.setData({ currentQuestion: nextQuestion, questions: nextQuestions });
+                _this.setData({ currentQuestion: nextQuestion, questions: nextQuestions });
             },
             fail: function (err) {
                 console.warn('downloadFile 题目图片失败:', url, err);
@@ -702,5 +706,40 @@ Page({
             return;
         var current = urls[Math.max(0, Math.min(idx, urls.length - 1))] || urls[0];
         wx.previewImage({ urls: urls, current: current });
+    },
+    // === 滑屏切题 ===
+    onTouchStart: function (e) {
+        if (!e.touches || !e.touches.length)
+            return;
+        var touch = e.touches[0];
+        this.setData({
+            touchStartX: touch.clientX,
+            touchStartY: touch.clientY
+        });
+    },
+    onTouchEnd: function (e) {
+        if (!e.changedTouches || !e.changedTouches.length)
+            return;
+        var touch = e.changedTouches[0];
+        var _a = this.data, touchStartX = _a.touchStartX, touchStartY = _a.touchStartY, loading = _a.loading, currentQuestion = _a.currentQuestion;
+        // 未加载完成或无题目时不处理
+        if (loading || !currentQuestion)
+            return;
+        var deltaX = touch.clientX - touchStartX;
+        var deltaY = touch.clientY - touchStartY;
+        var absDeltaX = Math.abs(deltaX);
+        var absDeltaY = Math.abs(deltaY);
+        // 水平滑动距离 > 80px 且水平距离 > 垂直距离的 1.5 倍（避免误触）
+        var swipeThreshold = 80;
+        if (absDeltaX > swipeThreshold && absDeltaX > absDeltaY * 1.5) {
+            if (deltaX > 0) {
+                // 右滑 → 上一题
+                this.onPrevQuestion();
+            }
+            else {
+                // 左滑 → 下一题
+                this.onNextQuestion();
+            }
+        }
     }
 });

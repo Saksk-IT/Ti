@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.decorateAvatarUrl = exports.bumpAvatarRev = exports.getAvatarRev = void 0;
+exports.getAvatarRev = getAvatarRev;
+exports.bumpAvatarRev = bumpAvatarRev;
+exports.decorateAvatarUrl = decorateAvatarUrl;
 var AVATAR_REV_KEY = 'avatar_rev_v1';
 function getAvatarRev() {
     try {
@@ -11,7 +13,6 @@ function getAvatarRev() {
         return '';
     }
 }
-exports.getAvatarRev = getAvatarRev;
 function bumpAvatarRev() {
     var rev = String(Date.now());
     try {
@@ -20,7 +21,6 @@ function bumpAvatarRev() {
     catch (e) { }
     return rev;
 }
-exports.bumpAvatarRev = bumpAvatarRev;
 function decorateAvatarUrl(url) {
     var raw = String(url || '').trim();
     if (!raw)
@@ -31,4 +31,3 @@ function decorateAvatarUrl(url) {
     var sep = raw.includes('?') ? '&' : '?';
     return "".concat(raw).concat(sep, "v=").concat(encodeURIComponent(rev));
 }
-exports.decorateAvatarUrl = decorateAvatarUrl;

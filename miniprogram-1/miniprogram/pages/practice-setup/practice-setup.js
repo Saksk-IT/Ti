@@ -20,8 +20,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -75,7 +75,7 @@ Page({
         },
         canShuffleOptions: true,
         loading: false, // 加载状态
-        debounceTimer: null // 防抖定时器
+        debounceTimer: null
     },
     getSettingsStorageKey: function () {
         if (this.data.sourceType === 'bank' && this.data.bankId) {
@@ -210,7 +210,7 @@ Page({
                         return [4 /*yield*/, api_1.api.getBankDetail(this.data.bankId)];
                     case 2:
                         res = _a.sent();
-                        info = (res && res.data) ? res.data : (res || {});
+                        info = ((res === null || res === void 0 ? void 0 : res.data) || res || {});
                         name = info.name || "\u9898\u5E93".concat(this.data.bankId);
                         if (name && name !== this.data.subject) {
                             this.setData({ subject: name });
@@ -219,7 +219,7 @@ Page({
                     case 3: return [4 /*yield*/, api_1.api.getSubjectInfo(this.data.subject)];
                     case 4:
                         res = _a.sent();
-                        info = (res && res.data) ? res.data : (res || {});
+                        info = ((res === null || res === void 0 ? void 0 : res.data) || res || {});
                         _a.label = 5;
                     case 5:
                         types = Array.isArray(info.available_types) ? info.available_types : [];
@@ -373,7 +373,7 @@ Page({
                         return [4 /*yield*/, api_1.api.getBankUserCounts(bankId, params)];
                     case 2:
                         res = _c.sent();
-                        data = (res && res.data) ? res.data : (res || {});
+                        data = ((res === null || res === void 0 ? void 0 : res.data) || res || {});
                         this.setData({
                             stats: {
                                 total: data.total || 0,

@@ -26,8 +26,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -52,18 +52,23 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
-    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-        if (ar || !(i in from)) {
-            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-            ar[i] = from[i];
-        }
-    }
-    return to.concat(ar || Array.prototype.slice.call(from));
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getSourceLabel = exports.createSourceFromOptions = exports.createQuizSource = exports.BankQuizSource = exports.PublicQuizSource = void 0;
+exports.BankQuizSource = exports.PublicQuizSource = void 0;
+exports.createQuizSource = createQuizSource;
+exports.createSourceFromOptions = createSourceFromOptions;
+exports.getSourceLabel = getSourceLabel;
 var api_1 = require("./api");
+// Fisher-Yates 洗牌算法（均匀分布）
+function shuffleArray(array) {
+    var shuffled = array.slice();
+    for (var i = shuffled.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = shuffled[i];
+        shuffled[i] = shuffled[j];
+        shuffled[j] = tmp;
+    }
+    return shuffled;
+}
 var OPTION_KEYS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 var OPTION_TYPES = new Set(['选择题', '多选题']);
 function parseOptions(rawOptions) {
@@ -140,26 +145,27 @@ function normalizeQuestionListResponse(res) {
 }
 function fetchAllQuestionPages(fetchPage, perPage) {
     return __awaiter(this, void 0, void 0, function () {
-        var allQuestions, total, page, data, pageQuestions;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var allQuestions, total, page, data, _a, pageQuestions;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
                 case 0:
                     allQuestions = [];
                     total = 0;
                     page = 1;
-                    _a.label = 1;
+                    _b.label = 1;
                 case 1:
                     if (!(page <= FULL_LOAD_MAX_PAGES)) return [3 /*break*/, 4];
+                    _a = normalizeQuestionListResponse;
                     return [4 /*yield*/, fetchPage(page, perPage)];
                 case 2:
-                    data = normalizeQuestionListResponse(_a.sent());
+                    data = _a.apply(void 0, [_b.sent()]);
                     pageQuestions = data.questions;
                     total = data.total || allQuestions.length + pageQuestions.length;
                     allQuestions.push.apply(allQuestions, pageQuestions);
                     if (!pageQuestions.length || allQuestions.length >= total || pageQuestions.length < perPage) {
                         return [3 /*break*/, 4];
                     }
-                    _a.label = 3;
+                    _b.label = 3;
                 case 3:
                     page++;
                     return [3 /*break*/, 1];
@@ -173,12 +179,14 @@ function fetchAllQuestionPages(fetchPage, perPage) {
 }
 function fetchFullQuestionList(fetchFull, fetchPage, perPage) {
     return __awaiter(this, void 0, void 0, function () {
-        var first;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0: return [4 /*yield*/, fetchFull()];
+        var first, _a;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    _a = normalizeQuestionListResponse;
+                    return [4 /*yield*/, fetchFull()];
                 case 1:
-                    first = normalizeQuestionListResponse(_a.sent());
+                    first = _a.apply(void 0, [_b.sent()]);
                     if (first.questions.length >= first.total || first.questions.length < perPage) {
                         return [2 /*return*/, first];
                     }
@@ -246,7 +254,7 @@ var PublicQuizSource = /** @class */ (function () {
     };
     PublicQuizSource.prototype.getQuestions = function (params) {
         return __awaiter(this, void 0, void 0, function () {
-            var apiParams, ids, perPage, res;
+            var apiParams, ids, perPage_1, res;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -285,15 +293,12 @@ var PublicQuizSource = /** @class */ (function () {
                         if (params === null || params === void 0 ? void 0 : params.per_page) {
                             apiParams.per_page = params.per_page;
                         }
-                        if (!(params === null || params === void 0 ? void 0 : params.full_load)) return [3 /*break*/, 2];
-                        perPage = normalizePageSize((params === null || params === void 0 ? void 0 : params.per_page) || (params === null || params === void 0 ? void 0 : params.limit));
-                        return [2 /*return*/, fetchFullQuestionList(function () {
-                                return api_1.api.getQuestions(__assign(__assign({}, apiParams), { full_load: 1, page: 1, per_page: perPage }));
-                            }, function (page, pageSize) {
-                                return api_1.api.getQuestions(__assign(__assign({}, apiParams), { page: page, per_page: pageSize }));
-                            }, perPage)];
-                    case 2: return [4 /*yield*/, api_1.api.getQuestions(apiParams)];
-                    case 3:
+                        if (params === null || params === void 0 ? void 0 : params.full_load) {
+                            perPage_1 = normalizePageSize(params.per_page || params.limit);
+                            return [2 /*return*/, fetchFullQuestionList(function () { return api_1.api.getQuestions(__assign(__assign({}, apiParams), { full_load: 1, page: 1, per_page: perPage_1 })); }, function (page, pageSize) { return api_1.api.getQuestions(__assign(__assign({}, apiParams), { page: page, per_page: pageSize })); }, perPage_1)];
+                        }
+                        return [4 /*yield*/, api_1.api.getQuestions(apiParams)];
+                    case 1:
                         res = _a.sent();
                         return [2 /*return*/, normalizeQuestionListResponse(res)];
                 }
@@ -465,9 +470,10 @@ var BankQuizSource = /** @class */ (function () {
     };
     BankQuizSource.prototype.getQuestions = function (params) {
         return __awaiter(this, void 0, void 0, function () {
-            var apiParams, ids, limit, sourceId, result, questions;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            var apiParams, ids, limit, result, _a, _b, questions;
+            var _this = this;
+            return __generator(this, function (_c) {
+                switch (_c.label) {
                     case 0:
                         apiParams = {};
                         // 个人题库使用不同的模式映射
@@ -506,24 +512,22 @@ var BankQuizSource = /** @class */ (function () {
                             apiParams.limit = limit;
                         }
                         if (!(params === null || params === void 0 ? void 0 : params.full_load)) return [3 /*break*/, 2];
-                        sourceId = this.sourceId;
-                        return [4 /*yield*/, fetchFullQuestionList(function () {
-                                return api_1.api.getBankQuizQuestions(sourceId, __assign(__assign({}, apiParams), { full_load: 1, page: 1, per_page: normalizePageSize((params === null || params === void 0 ? void 0 : params.per_page) || (params === null || params === void 0 ? void 0 : params.limit)) }));
-                            }, function (page, pageSize) {
-                                return api_1.api.getBankQuizQuestions(sourceId, __assign(__assign({}, apiParams), { page: page, per_page: pageSize }));
-                            }, normalizePageSize((params === null || params === void 0 ? void 0 : params.per_page) || (params === null || params === void 0 ? void 0 : params.limit)))];
+                        return [4 /*yield*/, fetchFullQuestionList(function () { return api_1.api.getBankQuizQuestions(_this.sourceId, __assign(__assign({}, apiParams), { full_load: 1, page: 1, per_page: normalizePageSize(params.per_page || params.limit) })); }, function (page, pageSize) { return api_1.api.getBankQuizQuestions(_this.sourceId, __assign(__assign({}, apiParams), { page: page, per_page: pageSize })); }, normalizePageSize(params.per_page || params.limit))];
                     case 1:
-                        result = _a.sent();
+                        _a = _c.sent();
                         return [3 /*break*/, 4];
-                    case 2: return [4 /*yield*/, api_1.api.getBankQuizQuestions(this.sourceId, apiParams)];
+                    case 2:
+                        _b = normalizeQuestionListResponse;
+                        return [4 /*yield*/, api_1.api.getBankQuizQuestions(this.sourceId, apiParams)];
                     case 3:
-                        result = normalizeQuestionListResponse(_a.sent());
-                        _a.label = 4;
+                        _a = _b.apply(void 0, [_c.sent()]);
+                        _c.label = 4;
                     case 4:
+                        result = _a;
                         questions = result.questions || [];
                         // 如果需要打乱题目
                         if ((params === null || params === void 0 ? void 0 : params.shuffle_questions) && Array.isArray(questions)) {
-                            questions = __spreadArray([], questions, true).sort(function () { return Math.random() - 0.5; });
+                            questions = shuffleArray(questions);
                         }
                         // 如果需要打乱选项（仅选择题/多选题）
                         if ((params === null || params === void 0 ? void 0 : params.shuffle_options) && Array.isArray(questions)) {
@@ -676,7 +680,6 @@ function createQuizSource(options) {
     }
     throw new Error('必须提供 subject 或 bankId');
 }
-exports.createQuizSource = createQuizSource;
 /**
  * 从页面参数创建数据源
  * @param options - 页面 onLoad 的 options 参数
@@ -696,7 +699,6 @@ function createSourceFromOptions(options) {
     }
     return null;
 }
-exports.createSourceFromOptions = createSourceFromOptions;
 /**
  * 获取数据源的显示标签
  */
@@ -706,4 +708,3 @@ function getSourceLabel(source) {
     }
     return '公有题库';
 }
-exports.getSourceLabel = getSourceLabel;

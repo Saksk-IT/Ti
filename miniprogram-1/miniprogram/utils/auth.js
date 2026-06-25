@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.logout = exports.checkLogin = exports.wechatLogin = void 0;
+exports.wechatLogin = wechatLogin;
+exports.checkLogin = checkLogin;
+exports.logout = logout;
 var api_1 = require("./api");
 // 微信登录
 function wechatLogin() {
@@ -10,10 +12,8 @@ function wechatLogin() {
                 if (res.code) {
                     // 直接使用 code 登录，不强制获取用户信息
                     // 首次未绑定时：由后端返回 need_bind，让用户选择创建/绑定
-                    console.log('开始调用登录API，code:', res.code);
                     api_1.api.wechatLogin(res.code, undefined, false)
                         .then(function (data) {
-                        console.log('登录API返回数据:', data);
                         if (data && data.need_bind && data.wechat_temp_token) {
                             wx.setStorageSync('wechatTempToken', data.wechat_temp_token);
                             resolve('need_bind');
@@ -27,7 +27,6 @@ function wechatLogin() {
                         wx.setStorageSync('token', data.token);
                         if (data.user_info)
                             wx.setStorageSync('userInfo', data.user_info);
-                        console.log('登录成功，token已保存');
                         resolve('success');
                     })
                         .catch(function (err) {
@@ -47,16 +46,13 @@ function wechatLogin() {
         });
     });
 }
-exports.wechatLogin = wechatLogin;
 // 检查登录状态
 function checkLogin() {
     var token = wx.getStorageSync('token');
     return !!token;
 }
-exports.checkLogin = checkLogin;
 // 退出登录
 function logout() {
     wx.removeStorageSync('token');
     wx.removeStorageSync('userInfo');
 }
-exports.logout = logout;

@@ -10,6 +10,39 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -20,8 +53,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -62,127 +95,155 @@ var nav_1 = require("../../../../utils/nav");
 var theme_1 = require("../../../../utils/theme");
 var data_center_1 = require("../../utils/data-center");
 var data_center_cache_1 = require("../../utils/data-center-cache");
+var data_center_echarts_1 = require("../../utils/data-center-echarts");
+var echarts = __importStar(require("../../components/ec-canvas/echarts"));
 function resolveDataTabUrl(tab) {
     var map = {
         global: '/packages/data/pages/data-global-v2/data-global-v2',
-        bank: '/packages/data/pages/data-bank-v2/data-bank-v2',
+        banks: '/packages/data/pages/data-bank-v2/data-bank-v2',
         mistakes: '/packages/data/pages/data-mistakes-v2/data-mistakes-v2',
         favorites: '/packages/data/pages/data-favorites-v2/data-favorites-v2',
         tags: '/packages/data/pages/data-tags-v2/data-tags-v2'
     };
     return map[tab];
 }
-function clamp100(v) {
-    var n = Number(v);
-    if (!Number.isFinite(n))
-        return 0;
-    return Math.max(0, Math.min(100, n));
+function safeArr(v) {
+    return Array.isArray(v) ? v : [];
 }
-function buildMistakesViewData(res) {
+function buildExportObject(tab, days, payload) {
+    var p = tab === 'global' ? '/data/global' : "/data/".concat(tab);
+    var search = "?days=".concat(encodeURIComponent(String(days || 30)));
+    return {
+        meta: { exported_at: new Date().toISOString(), path: p, search: search },
+        data: payload
+    };
+}
+function sumDailyAll(list) {
+    var rows = Array.isArray(list) ? list : [];
+    return rows.reduce(function (acc, r) { return acc + (0, data_center_1.toInt)(r === null || r === void 0 ? void 0 : r.all); }, 0);
+}
+function buildMistakesViewModel(res, currentDays) {
+    var payload = (0, data_center_echarts_1.buildDataCenterCompatPayload)(res, 'mistakes');
     var allSummary = (res === null || res === void 0 ? void 0 : res.all_summary) || {};
-    var lastActivityRaw = (allSummary === null || allSummary === void 0 ? void 0 : allSummary.last_activity) ? String(allSummary.last_activity) : '';
-    var lastActivityText = lastActivityRaw ? lastActivityRaw.slice(0, 10) : '—';
-    var answeredCount = (0, data_center_1.toInt)(allSummary === null || allSummary === void 0 ? void 0 : allSummary.answered);
-    var accuracy = (0, data_center_1.pct1)(allSummary === null || allSummary === void 0 ? void 0 : allSummary.accuracy);
-    var mistakesCount = (0, data_center_1.toInt)(allSummary === null || allSummary === void 0 ? void 0 : allSummary.mistakes);
-    var mistakesTimes = (0, data_center_1.toInt)(allSummary === null || allSummary === void 0 ? void 0 : allSummary.mistakes_times);
-    var mistakeRate = answeredCount > 0 ? (0, data_center_1.pct1)((mistakesTimes * 100) / answeredCount) : 0;
-    var mistakeDepth = mistakesCount > 0 ? (0, data_center_1.pct1)((mistakesTimes * 100) / mistakesCount) : 0;
-    var weaknessRaw = Array.isArray(res === null || res === void 0 ? void 0 : res.weakness_rows) ? res.weakness_rows : [];
-    var weaknessRows = weaknessRaw.map(function (w) { return ({
-        key: "".concat(String((w === null || w === void 0 ? void 0 : w.subject) || ''), "__").concat(String((w === null || w === void 0 ? void 0 : w.q_type) || '')),
-        subject: String((w === null || w === void 0 ? void 0 : w.subject) || ''),
-        q_type: String((w === null || w === void 0 ? void 0 : w.q_type) || ''),
-        answered: (0, data_center_1.toInt)(w === null || w === void 0 ? void 0 : w.answered),
-        accuracy: (0, data_center_1.pct1)(clamp100(w === null || w === void 0 ? void 0 : w.accuracy)),
-        mistakes: (0, data_center_1.toInt)(w === null || w === void 0 ? void 0 : w.mistakes)
+    var windowDays = (0, data_center_1.normalizeDays)((res === null || res === void 0 ? void 0 : res.window_days) || currentDays);
+    var mistakesNew = sumDailyAll(res === null || res === void 0 ? void 0 : res.mistakes_daily);
+    var topRaw = safeArr(res === null || res === void 0 ? void 0 : res.mistakes_top_items).slice(0, 12);
+    var weights = topRaw.map(function (it) { return (0, data_center_1.toInt)((it === null || it === void 0 ? void 0 : it.times) || (it === null || it === void 0 ? void 0 : it.count)); });
+    var denom = Math.max.apply(Math, __spreadArray([1], weights, false));
+    var topItems = topRaw.map(function (it, idx) {
+        var source = String((it === null || it === void 0 ? void 0 : it.source) || '');
+        var bankId = (0, data_center_1.toInt)(it === null || it === void 0 ? void 0 : it.bank_id);
+        var w = (0, data_center_1.toInt)((it === null || it === void 0 ? void 0 : it.times) || (it === null || it === void 0 ? void 0 : it.count));
+        return {
+            key: String((it === null || it === void 0 ? void 0 : it.bank_id) || (it === null || it === void 0 ? void 0 : it.name) || idx),
+            source: source,
+            scope_label: source === 'public' ? '公共' : '个人',
+            name: String((it === null || it === void 0 ? void 0 : it.name) || ''),
+            count: (0, data_center_1.toInt)(it === null || it === void 0 ? void 0 : it.count),
+            times: (0, data_center_1.toInt)(it === null || it === void 0 ? void 0 : it.times),
+            bank_id: bankId,
+            can_quiz_bank: source === 'banks' && bankId > 0,
+            bar_pct: (0, data_center_1.pct1)((w * 100) / denom)
+        };
+    });
+    var recentPublic = safeArr(res === null || res === void 0 ? void 0 : res.recent_mistakes)
+        .slice(0, 6)
+        .map(function (m, idx) { return ({
+        key: String((m === null || m === void 0 ? void 0 : m.question_id) || idx),
+        subject: String((m === null || m === void 0 ? void 0 : m.subject) || ''),
+        q_type: String((m === null || m === void 0 ? void 0 : m.q_type) || ''),
+        difficulty: (0, data_center_1.toInt)(m === null || m === void 0 ? void 0 : m.difficulty),
+        snippet: String((m === null || m === void 0 ? void 0 : m.snippet) || '')
     }); });
-    var subjectRows = Array.isArray(res === null || res === void 0 ? void 0 : res.subject_rows) ? res.subject_rows : [];
-    var topSubjectsRaw = subjectRows
-        .map(function (s) { return ({ name: String((s === null || s === void 0 ? void 0 : s.subject) || ''), total: (0, data_center_1.toInt)(s === null || s === void 0 ? void 0 : s.mistakes) }); })
-        .filter(function (x) { return x.total > 0; })
-        .sort(function (a, b) { return b.total - a.total; })
-        .slice(0, 10);
-    var subMax = Math.max.apply(Math, __spreadArray([1], topSubjectsRaw.map(function (x) { return x.total; }), false));
-    var topSubjectMistakes = topSubjectsRaw.map(function (x) { return ({
-        key: "sub_".concat(x.name),
-        name: x.name,
-        total: x.total,
-        barPct: (0, data_center_1.pct1)((x.total * 100) / subMax),
-        meta: "\u9519\u9898 ".concat(x.total)
-    }); });
-    var bankRows = Array.isArray(res === null || res === void 0 ? void 0 : res.bank_rows) ? res.bank_rows : [];
-    var topBanksRaw = bankRows
-        .map(function (b) { return ({
-        bank_id: (0, data_center_1.toInt)(b === null || b === void 0 ? void 0 : b.bank_id),
-        name: String((b === null || b === void 0 ? void 0 : b.name) || ''),
-        total: (0, data_center_1.toInt)((b === null || b === void 0 ? void 0 : b.mistakes_times) || (b === null || b === void 0 ? void 0 : b.mistakes))
-    }); })
-        .filter(function (x) { return x.total > 0; })
-        .sort(function (a, b) { return b.total - a.total; })
-        .slice(0, 10);
-    var bankMax = Math.max.apply(Math, __spreadArray([1], topBanksRaw.map(function (x) { return x.total; }), false));
-    var topBankMistakes = topBanksRaw.map(function (x) { return ({
-        key: "bank_".concat(x.bank_id),
-        name: x.name,
-        total: x.total,
-        barPct: (0, data_center_1.pct1)((x.total * 100) / bankMax),
-        meta: "\u7D2F\u8BA1\u9519 ".concat(x.total, " \u6B21")
-    }); });
-    var recentRaw = Array.isArray(res === null || res === void 0 ? void 0 : res.recent_mistakes) ? res.recent_mistakes : [];
-    var recentMistakes = recentRaw.map(function (m, idx) { return ({
-        key: "m_".concat(idx, "_").concat(String((m === null || m === void 0 ? void 0 : m.question_id) || '')),
-        subject: String((m === null || m === void 0 ? void 0 : m.subject) || '未分类'),
-        q_type: String((m === null || m === void 0 ? void 0 : m.q_type) || '未知'),
-        difficulty: (0, data_center_1.toInt)((m === null || m === void 0 ? void 0 : m.difficulty) || 1),
+    var recentBank = safeArr(res === null || res === void 0 ? void 0 : res.recent_mistakes_bank)
+        .slice(0, 6)
+        .map(function (m, idx) { return ({
+        key: String((m === null || m === void 0 ? void 0 : m.question_id) || (m === null || m === void 0 ? void 0 : m.bank_id) || idx),
+        bank_id: (0, data_center_1.toInt)(m === null || m === void 0 ? void 0 : m.bank_id),
+        bank_name: String((m === null || m === void 0 ? void 0 : m.bank_name) || ''),
+        q_type: String((m === null || m === void 0 ? void 0 : m.q_type) || ''),
+        difficulty: (0, data_center_1.toInt)(m === null || m === void 0 ? void 0 : m.difficulty),
         snippet: String((m === null || m === void 0 ? void 0 : m.snippet) || ''),
         wrong_count: (m === null || m === void 0 ? void 0 : m.wrong_count) == null ? null : (0, data_center_1.toInt)(m === null || m === void 0 ? void 0 : m.wrong_count)
     }); });
     return {
-        inited: true,
-        errorMsg: '',
-        lastActivityText: lastActivityText,
-        answeredCount: answeredCount,
-        accuracy: accuracy,
-        mistakesCount: mistakesCount,
-        mistakesTimes: mistakesTimes,
-        mistakeRate: mistakeRate,
-        mistakeDepth: mistakeDepth,
-        weaknessRows: weaknessRows,
-        topSubjectMistakes: topSubjectMistakes,
-        topBankMistakes: topBankMistakes,
-        recentMistakes: recentMistakes
+        payload: payload,
+        data: {
+            inited: true,
+            window_days: windowDays,
+            errorMsg: '',
+            all_summary: allSummary,
+            health_score: (0, data_center_1.toInt)(res === null || res === void 0 ? void 0 : res.health_score),
+            mistakes_new: mistakesNew,
+            mistakes_top_items: topItems,
+            recent_mistakes: recentPublic,
+            recent_mistakes_bank: recentBank
+        }
     };
 }
+var CHART_IDS = ['dcMistakeTrendChart', 'dcMistakeTopChart', 'dcMistakeDifficultyChart', 'dcMistakeTypeChart'];
 Page({
-    data: __assign(__assign({}, theme_1.themeManager.getPageData()), {
-        loading: false,
-        inited: false,
-        errorMsg: '',
-        days: 30,
-        lastActivityText: '—',
-        answeredCount: 0,
-        accuracy: 0,
-        mistakesCount: 0,
-        mistakesTimes: 0,
-        mistakeRate: 0,
-        mistakeDepth: 0,
-        weaknessRows: [],
-        topSubjectMistakes: [],
-        topBankMistakes: [],
-        recentMistakes: []
-    }),
+    data: __assign(__assign({}, (theme_1.themeManager.getPageData())), { loading: false, inited: false, lazyStage: 1, errorMsg: '', ecLazy: { lazyLoad: true }, days: 30, window_days: 30, all_summary: {}, health_score: 0, mistakes_new: 0, mistakes_top_items: [], recent_mistakes: [], recent_mistakes_bank: [] }),
     onLoad: function (options) {
+        var _this = this;
         var days = (0, data_center_1.normalizeDays)(options === null || options === void 0 ? void 0 : options.days);
         var url = "/packages/data/pages/data-center-v2/data-center-v2?tab=mistakes&days=".concat(encodeURIComponent(String(days)));
         wx.redirectTo({
             url: url,
             fail: function () {
-                this.setData({ days: days, window_days: days });
-            }.bind(this)
+                _this.setData({ days: days, window_days: days });
+            }
         });
     },
+    onReady: function () {
+        var self = this;
+        self.__pageReady = true;
+        this.initViewportLazy();
+        if (self.__pendingRender) {
+            self.__pendingRender = false;
+            this.renderCharts();
+        }
+    },
+    initViewportLazy: function () {
+        var _this = this;
+        var self = this;
+        if (this.data.lazyStage >= 2)
+            return;
+        if (self.__lazyObserver)
+            return;
+        var ob;
+        try {
+            ob = this.createIntersectionObserver({ observeAll: false });
+        }
+        catch (e) {
+            return;
+        }
+        self.__lazyObserver = ob;
+        try {
+            ob.relativeToViewport({ bottom: 600 }).observe('#dcLazyStage2Trigger', function (res) {
+                if (!res || res.intersectionRatio <= 0)
+                    return;
+                if (_this.data.lazyStage >= 2)
+                    return;
+                _this.setData({ lazyStage: 2 }, function () {
+                    wx.nextTick(function () {
+                        try {
+                            _this.renderCharts();
+                        }
+                        catch (err) { }
+                    });
+                });
+                try {
+                    ob.disconnect();
+                }
+                catch (e) { }
+                self.__lazyObserver = null;
+            });
+        }
+        catch (e) { }
+    },
     onShow: function () {
+        var _this = this;
         if (!(0, auth_1.checkLogin)()) {
             wx.redirectTo({ url: '/pages/login/login' });
             return;
@@ -190,28 +251,65 @@ Page({
         var patch = {};
         var hydrated = false;
         try {
-            __assign(patch, theme_1.themeManager.getPageData());
+            Object.assign(patch, theme_1.themeManager.getPageData());
         }
         catch (e) { }
         if (!this.data.inited) {
             try {
                 var cached = (0, data_center_cache_1.getCachedDataCenter)(this.data.days);
                 if (cached) {
-                    this.__lastLoadedAt = Date.now();
-                    __assign(patch, buildMistakesViewData(cached));
+                    var built = buildMistakesViewModel(cached, this.data.days);
+                    var self = this;
+                    self.__dcPayload = built.payload;
+                    self.__lastLoadedAt = Date.now();
+                    Object.assign(patch, built.data);
                     hydrated = true;
                 }
             }
             catch (e) { }
         }
         try {
-            if (Object.keys(patch).length)
-                this.setData(patch);
+            if (Object.keys(patch).length) {
+                this.setData(patch, hydrated
+                    ? function () {
+                        wx.nextTick(function () {
+                            try {
+                                _this.renderCharts();
+                            }
+                            catch (err) {
+                                console.error('[data-mistakes-v2] renderCharts failed:', err);
+                            }
+                        });
+                    }
+                    : undefined);
+            }
         }
         catch (e) { }
         if (!hydrated && !this.data.inited && !this.data.loading) {
             this.loadStats(true);
+            return;
         }
+        if (!hydrated)
+            this.renderCharts();
+    },
+    onUnload: function () {
+        var self = this;
+        try {
+            self.__lazyObserver && typeof self.__lazyObserver.disconnect === 'function' && self.__lazyObserver.disconnect();
+        }
+        catch (e) { }
+        self.__lazyObserver = null;
+        var charts = (self.__charts || {});
+        Object.keys(charts).forEach(function (k) {
+            try {
+                charts[k] && typeof charts[k].dispose === 'function' && charts[k].dispose();
+            }
+            catch (e) { }
+        });
+        self.__charts = {};
+    },
+    onThemeChange: function (isDark) {
+        this.renderCharts(false, isDark);
     },
     onPullDownRefresh: function () {
         this.loadStats(true).finally(function () {
@@ -220,7 +318,7 @@ Page({
     },
     onCycleThemeModeTap: function () {
         var mode = theme_1.themeManager.cycleMode();
-        this.setData(__assign(__assign({}, theme_1.themeManager.getPageData()), { themeMode: mode }));
+        this.setData(__assign(__assign({}, (theme_1.themeManager.getPageData())), { themeMode: mode }));
     },
     onDaysTap: function (e) {
         var _this = this;
@@ -228,34 +326,100 @@ Page({
         var days = (0, data_center_1.normalizeDays)((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.days);
         if (days === this.data.days)
             return;
-        this.setData({ days: days }, function () {
+        this.setData({ days: days, window_days: days }, function () {
             _this.loadStats(true);
         });
     },
     onTabTap: function (e) {
         var _a, _b;
-        var raw = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.tab) || '');
-        var tab = raw === 'global' || raw === 'bank' || raw === 'favorites' || raw === 'tags' ? raw : 'mistakes';
+        var raw = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.tab) || '').trim().toLowerCase();
+        var tab = raw === 'global' || raw === 'banks' || raw === 'favorites' || raw === 'tags' ? raw : 'mistakes';
         var days = this.data.days;
         var base = resolveDataTabUrl(tab);
         (0, nav_1.safeNavigate)("".concat(base, "?days=").concat(encodeURIComponent(String(days))), 'redirectTo');
     },
-    onGoQuiz: function (e) {
-        var _a, _b, _c, _d, _e, _f;
-        var subject = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.subject) || 'all');
-        var type = String(((_d = (_c = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _c === void 0 ? void 0 : _c.dataset) === null || _d === void 0 ? void 0 : _d.type) || 'all');
-        var source = String(((_f = (_e = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _e === void 0 ? void 0 : _e.dataset) === null || _f === void 0 ? void 0 : _f.source) || 'mistakes');
-        var params = [];
-        params.push("subject=".concat(encodeURIComponent(subject)));
-        params.push('mode=quiz');
-        params.push("source=".concat(encodeURIComponent(source)));
-        if (type && type !== 'all')
-            params.push("type=".concat(encodeURIComponent(type)));
-        wx.navigateTo({ url: "/pages/quiz/quiz?".concat(params.join('&')) });
+    onGoMistakesCenter: function () {
+        (0, nav_1.safeNavigate)('/pages/mistakes-v2/mistakes-v2', 'redirectTo');
+    },
+    onGoBankMistakes: function (e) {
+        var _a, _b;
+        var bankId = Number(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.bankId) || 0);
+        if (!Number.isFinite(bankId) || bankId <= 0)
+            return;
+        var url = "/pages/quiz/quiz?mode=quiz&source=mistakes&bank_id=".concat(encodeURIComponent(String(bankId)));
+        (0, nav_1.safeNavigate)(url, 'navigateTo');
+    },
+    onGoQuizPublicMistakes: function (e) {
+        var _a, _b, _c, _d;
+        var subject = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.subject) || '').trim();
+        var qType = String(((_d = (_c = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _c === void 0 ? void 0 : _c.dataset) === null || _d === void 0 ? void 0 : _d.qType) || '').trim();
+        if (!subject)
+            return;
+        var url = "/pages/quiz/quiz?mode=quiz&source=mistakes&subject=".concat(encodeURIComponent(subject)) + (qType ? "&type=".concat(encodeURIComponent(qType)) : '');
+        (0, nav_1.safeNavigate)(url, 'navigateTo');
+    },
+    onGoQuizBankMistakes: function (e) {
+        var _a, _b;
+        var bankId = Number(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.bankId) || 0);
+        if (!Number.isFinite(bankId) || bankId <= 0)
+            return;
+        var url = "/pages/quiz/quiz?mode=quiz&source=mistakes&bank_id=".concat(encodeURIComponent(String(bankId)));
+        (0, nav_1.safeNavigate)(url, 'navigateTo');
+    },
+    renderCharts: function (forceInit, isDarkOverride) {
+        var _this = this;
+        if (forceInit === void 0) { forceInit = false; }
+        var self = this;
+        var payload = self.__dcPayload;
+        if (!payload)
+            return;
+        if (!self.__pageReady) {
+            self.__pendingRender = true;
+            return;
+        }
+        var isDark = typeof isDarkOverride === 'boolean' ? isDarkOverride : theme_1.themeManager.isDarkMode();
+        var style = theme_1.themeManager.getStyle();
+        var tokens = (0, data_center_echarts_1.getDataCenterThemeTokens)(isDark, style);
+        var charts = (self.__charts || (self.__charts = {}));
+        CHART_IDS.forEach(function (id) {
+            var comp = _this.selectComponent("#".concat(id));
+            if (!comp || typeof comp.init !== 'function')
+                return;
+            var existing = charts[id];
+            if (existing && !forceInit) {
+                try {
+                    var opt = (0, data_center_echarts_1.buildDataCenterChartOption)(id, payload, tokens, existing);
+                    if (opt)
+                        existing.setOption(opt, { notMerge: true, lazyUpdate: false });
+                }
+                catch (e) { }
+                return;
+            }
+            if (existing) {
+                try {
+                    existing.dispose && existing.dispose();
+                }
+                catch (e) { }
+                delete charts[id];
+            }
+            comp.init(function (canvas, width, height, dpr) {
+                var chart = echarts.init(canvas, null, { width: width, height: height, devicePixelRatio: dpr });
+                canvas.setChart(chart);
+                charts[id] = chart;
+                try {
+                    var opt = (0, data_center_echarts_1.buildDataCenterChartOption)(id, payload, tokens, chart);
+                    if (opt)
+                        chart.setOption(opt, { notMerge: true, lazyUpdate: false });
+                }
+                catch (e) { }
+                return chart;
+            });
+        });
     },
     loadStats: function () {
         return __awaiter(this, arguments, void 0, function (force) {
-            var self, now, lastAt, res, allSummary, lastActivityRaw, lastActivityText, answeredCount, accuracy, mistakesCount, mistakesTimes, mistakeRate, mistakeDepth, weaknessRaw, weaknessRows, subjectRows, topSubjectsRaw, subMax_1, topSubjectMistakes, bankRows, topBanksRaw, bankMax_1, topBankMistakes, recentRaw, recentMistakes, e_1;
+            var self, now, lastAt, res, built, e_1, msg, nowToast, lastToast;
+            var _this = this;
             if (force === void 0) { force = false; }
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -265,7 +429,7 @@ Page({
                         self = this;
                         now = Date.now();
                         lastAt = Number(self.__lastLoadedAt || 0) || 0;
-                        if (!force && now - lastAt < 10000)
+                        if (!force && now - lastAt < 8000)
                             return [2 /*return*/];
                         self.__lastLoadedAt = now;
                         this.setData({ loading: true, errorMsg: '' });
@@ -279,83 +443,32 @@ Page({
                             (0, data_center_cache_1.setCachedDataCenter)(this.data.days, res);
                         }
                         catch (e) { }
-                        allSummary = (res === null || res === void 0 ? void 0 : res.all_summary) || {};
-                        lastActivityRaw = (allSummary === null || allSummary === void 0 ? void 0 : allSummary.last_activity) ? String(allSummary.last_activity) : '';
-                        lastActivityText = lastActivityRaw ? lastActivityRaw.slice(0, 10) : '—';
-                        answeredCount = (0, data_center_1.toInt)(allSummary === null || allSummary === void 0 ? void 0 : allSummary.answered);
-                        accuracy = (0, data_center_1.pct1)(allSummary === null || allSummary === void 0 ? void 0 : allSummary.accuracy);
-                        mistakesCount = (0, data_center_1.toInt)(allSummary === null || allSummary === void 0 ? void 0 : allSummary.mistakes);
-                        mistakesTimes = (0, data_center_1.toInt)(allSummary === null || allSummary === void 0 ? void 0 : allSummary.mistakes_times);
-                        mistakeRate = answeredCount > 0 ? (0, data_center_1.pct1)((mistakesTimes * 100) / answeredCount) : 0;
-                        mistakeDepth = mistakesCount > 0 ? (0, data_center_1.pct1)((mistakesTimes * 100) / mistakesCount) : 0;
-                        weaknessRaw = Array.isArray(res === null || res === void 0 ? void 0 : res.weakness_rows) ? res.weakness_rows : [];
-                        weaknessRows = weaknessRaw.map(function (w) { return ({
-                            key: "".concat(String((w === null || w === void 0 ? void 0 : w.subject) || ''), "__").concat(String((w === null || w === void 0 ? void 0 : w.q_type) || '')),
-                            subject: String((w === null || w === void 0 ? void 0 : w.subject) || ''),
-                            q_type: String((w === null || w === void 0 ? void 0 : w.q_type) || ''),
-                            answered: (0, data_center_1.toInt)(w === null || w === void 0 ? void 0 : w.answered),
-                            accuracy: (0, data_center_1.pct1)(clamp100(w === null || w === void 0 ? void 0 : w.accuracy)),
-                            mistakes: (0, data_center_1.toInt)(w === null || w === void 0 ? void 0 : w.mistakes)
-                        }); });
-                        subjectRows = Array.isArray(res === null || res === void 0 ? void 0 : res.subject_rows) ? res.subject_rows : [];
-                        topSubjectsRaw = subjectRows
-                            .map(function (s) { return ({ name: String((s === null || s === void 0 ? void 0 : s.subject) || ''), total: (0, data_center_1.toInt)(s === null || s === void 0 ? void 0 : s.mistakes) }); })
-                            .filter(function (x) { return x.total > 0; })
-                            .sort(function (a, b) { return b.total - a.total; })
-                            .slice(0, 10);
-                        subMax_1 = Math.max.apply(Math, __spreadArray([1], topSubjectsRaw.map(function (x) { return x.total; }), false));
-                        topSubjectMistakes = topSubjectsRaw.map(function (x) { return ({
-                            key: "sub_".concat(x.name),
-                            name: x.name,
-                            total: x.total,
-                            barPct: (0, data_center_1.pct1)((x.total * 100) / subMax_1),
-                            meta: "\u9519\u9898 ".concat(x.total)
-                        }); });
-                        bankRows = Array.isArray(res === null || res === void 0 ? void 0 : res.bank_rows) ? res.bank_rows : [];
-                        topBanksRaw = bankRows
-                            .map(function (b) { return ({
-                            bank_id: (0, data_center_1.toInt)(b === null || b === void 0 ? void 0 : b.bank_id),
-                            name: String((b === null || b === void 0 ? void 0 : b.name) || ''),
-                            total: (0, data_center_1.toInt)((b === null || b === void 0 ? void 0 : b.mistakes_times) || (b === null || b === void 0 ? void 0 : b.mistakes))
-                        }); })
-                            .filter(function (x) { return x.total > 0; })
-                            .sort(function (a, b) { return b.total - a.total; })
-                            .slice(0, 10);
-                        bankMax_1 = Math.max.apply(Math, __spreadArray([1], topBanksRaw.map(function (x) { return x.total; }), false));
-                        topBankMistakes = topBanksRaw.map(function (x) { return ({
-                            key: "bank_".concat(x.bank_id),
-                            name: x.name,
-                            total: x.total,
-                            barPct: (0, data_center_1.pct1)((x.total * 100) / bankMax_1),
-                            meta: "\u7D2F\u8BA1\u9519 ".concat(x.total, " \u6B21")
-                        }); });
-                        recentRaw = Array.isArray(res === null || res === void 0 ? void 0 : res.recent_mistakes) ? res.recent_mistakes : [];
-                        recentMistakes = recentRaw.map(function (m, idx) { return ({
-                            key: "m_".concat(idx, "_").concat(String((m === null || m === void 0 ? void 0 : m.question_id) || '')),
-                            subject: String((m === null || m === void 0 ? void 0 : m.subject) || '未分类'),
-                            q_type: String((m === null || m === void 0 ? void 0 : m.q_type) || '未知'),
-                            difficulty: (0, data_center_1.toInt)((m === null || m === void 0 ? void 0 : m.difficulty) || 1),
-                            snippet: String((m === null || m === void 0 ? void 0 : m.snippet) || ''),
-                            wrong_count: (m === null || m === void 0 ? void 0 : m.wrong_count) == null ? null : (0, data_center_1.toInt)(m === null || m === void 0 ? void 0 : m.wrong_count)
-                        }); });
-                        this.setData({
-                            inited: true,
-                            lastActivityText: lastActivityText,
-                            answeredCount: answeredCount,
-                            accuracy: accuracy,
-                            mistakesCount: mistakesCount,
-                            mistakesTimes: mistakesTimes,
-                            mistakeRate: mistakeRate,
-                            mistakeDepth: mistakeDepth,
-                            weaknessRows: weaknessRows,
-                            topSubjectMistakes: topSubjectMistakes,
-                            topBankMistakes: topBankMistakes,
-                            recentMistakes: recentMistakes
+                        built = buildMistakesViewModel(res, this.data.days);
+                        self.__dcPayload = built.payload;
+                        this.setData(built.data, function () {
+                            wx.nextTick(function () {
+                                try {
+                                    _this.renderCharts();
+                                }
+                                catch (err) {
+                                    console.error('[data-mistakes-v2] renderCharts failed:', err);
+                                }
+                            });
                         });
                         return [3 /*break*/, 5];
                     case 3:
                         e_1 = _a.sent();
-                        this.setData({ errorMsg: (e_1 === null || e_1 === void 0 ? void 0 : e_1.message) || '加载失败，请稍后再试。' });
+                        msg = (e_1 && e_1.message) || '加载失败，请稍后再试。';
+                        this.setData({ errorMsg: msg });
+                        try {
+                            nowToast = Date.now();
+                            lastToast = Number(self.__lastErrorToastAt || 0) || 0;
+                            if (nowToast - lastToast > 3500) {
+                                self.__lastErrorToastAt = nowToast;
+                                wx.showToast({ title: msg.length > 18 ? '数据加载失败' : msg, icon: 'none' });
+                            }
+                        }
+                        catch (e) { }
                         return [3 /*break*/, 5];
                     case 4:
                         this.setData({ loading: false });

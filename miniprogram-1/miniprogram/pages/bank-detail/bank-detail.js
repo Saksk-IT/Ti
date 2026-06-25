@@ -674,45 +674,61 @@ Page({
         });
     },
     onLeaveJoinedBank: function () {
-        var _this = this;
-        var bankId = Number(this.data.bankId || 0);
-        if (!Number.isFinite(bankId) || bankId <= 0)
-            return;
-        if (!this.data.showLeaveBankAction || this.data.leavingBank)
-            return;
-        new Promise(function (resolve) {
-            wx.showModal({
-                title: '退出题库',
-                content: '确定要退出该题库吗？退出后会从“我的题库”中移除。',
-                confirmText: '退出',
-                confirmColor: '#dc2626',
-                cancelText: '取消',
-                success: function (res) { return resolve(!!res.confirm); },
-                fail: function () { return resolve(false); }
-            });
-        }).then(function (confirmed) {
-            if (!confirmed)
-                return;
-            _this.patchData({ leavingBank: true }, undefined, true);
-            return api_1.api.leavePublicBank('user', bankId).then(function () {
-                _this.patchData({ showLeaveBankAction: false, leavingBank: false }, undefined, true);
-                wx.showToast({ title: '已退出题库', icon: 'success' });
-                setTimeout(function () {
-                    wx.switchTab({
-                        url: '/pages/my-banks-v2/my-banks-v2',
-                        fail: function () { return wx.navigateBack(); }
-                    });
-                }, 500);
-            }).catch(function (err) {
-                var msg = (err && err.message) ? String(err.message) : '退出失败';
-                _this.patchData({ leavingBank: false }, undefined, true);
-                wx.showToast({ title: msg, icon: 'none' });
+        return __awaiter(this, void 0, void 0, function () {
+            var bankId, confirmed, err_1, msg;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        bankId = Number(this.data.bankId || 0);
+                        if (!Number.isFinite(bankId) || bankId <= 0)
+                            return [2 /*return*/];
+                        if (!this.data.showLeaveBankAction || this.data.leavingBank)
+                            return [2 /*return*/];
+                        return [4 /*yield*/, new Promise(function (resolve) {
+                                wx.showModal({
+                                    title: '退出题库',
+                                    content: '确定要退出该题库吗？退出后会从“我的题库”中移除。',
+                                    confirmText: '退出',
+                                    confirmColor: '#dc2626',
+                                    cancelText: '取消',
+                                    success: function (res) { return resolve(!!res.confirm); },
+                                    fail: function () { return resolve(false); }
+                                });
+                            })];
+                    case 1:
+                        confirmed = _a.sent();
+                        if (!confirmed)
+                            return [2 /*return*/];
+                        this.patchData({ leavingBank: true }, undefined, true);
+                        _a.label = 2;
+                    case 2:
+                        _a.trys.push([2, 4, , 5]);
+                        return [4 /*yield*/, api_1.api.leavePublicBank('user', bankId)];
+                    case 3:
+                        _a.sent();
+                        this.patchData({ showLeaveBankAction: false, leavingBank: false }, undefined, true);
+                        wx.showToast({ title: '已退出题库', icon: 'success' });
+                        setTimeout(function () {
+                            wx.switchTab({
+                                url: '/pages/my-banks-v2/my-banks-v2',
+                                fail: function () { return wx.navigateBack(); }
+                            });
+                        }, 500);
+                        return [3 /*break*/, 5];
+                    case 4:
+                        err_1 = _a.sent();
+                        msg = (err_1 && err_1.message) ? String(err_1.message) : '退出失败';
+                        this.patchData({ leavingBank: false }, undefined, true);
+                        wx.showToast({ title: msg, icon: 'none' });
+                        return [3 /*break*/, 5];
+                    case 5: return [2 /*return*/];
+                }
             });
         });
     },
     onBankOwnershipTap: function (e) {
         return __awaiter(this, void 0, void 0, function () {
-            var bankId, raw, nextPublic, confirmed, payload, res, msg, err_1, msg;
+            var bankId, raw, nextPublic, confirmed, payload, res, msg, err_2, msg;
             var _a, _b;
             return __generator(this, function (_c) {
                 switch (_c.label) {
@@ -762,8 +778,8 @@ Page({
                         wx.showToast({ title: msg, icon: 'success' });
                         return [3 /*break*/, 6];
                     case 4:
-                        err_1 = _c.sent();
-                        msg = (err_1 && err_1.message) ? String(err_1.message) : '保存失败';
+                        err_2 = _c.sent();
+                        msg = (err_2 && err_2.message) ? String(err_2.message) : '保存失败';
                         this.setData({ bankPublicError: msg });
                         wx.showToast({ title: msg, icon: 'none' });
                         return [3 /*break*/, 6];
@@ -1198,7 +1214,7 @@ Page({
     },
     doBankSearch: function (reset) {
         return __awaiter(this, void 0, void 0, function () {
-            var kw, bankId, page, perPage, res, list, total, nextList, err_2;
+            var kw, bankId, page, perPage, res, list, total, nextList, err_3;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -1244,8 +1260,8 @@ Page({
                         });
                         return [3 /*break*/, 4];
                     case 3:
-                        err_2 = _a.sent();
-                        this.setData({ searchLoading: false, searchError: (err_2 && err_2.message) ? String(err_2.message) : '搜索失败' });
+                        err_3 = _a.sent();
+                        this.setData({ searchLoading: false, searchError: (err_3 && err_3.message) ? String(err_3.message) : '搜索失败' });
                         return [3 /*break*/, 4];
                     case 4: return [2 /*return*/];
                 }
@@ -1281,7 +1297,7 @@ Page({
     },
     openQuestionDetail: function (questionId) {
         return __awaiter(this, void 0, void 0, function () {
-            var bankId, qid, reqId, q, qType, options, metaParts, err_3;
+            var bankId, qid, reqId, q, qType, options, metaParts, err_4;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -1329,12 +1345,12 @@ Page({
                         });
                         return [3 /*break*/, 4];
                     case 3:
-                        err_3 = _a.sent();
+                        err_4 = _a.sent();
                         if (reqId !== _p(this).qDetailReq)
                             return [2 /*return*/];
                         this.setData({
                             qDetailLoading: false,
-                            qDetailError: (err_3 && err_3.message) ? String(err_3.message) : '加载失败'
+                            qDetailError: (err_4 && err_4.message) ? String(err_4.message) : '加载失败'
                         });
                         return [3 /*break*/, 4];
                     case 4: return [2 /*return*/];
@@ -1403,7 +1419,7 @@ Page({
             confirmText: '删除',
             confirmColor: '#FF3B30',
             success: function (r) { return __awaiter(_this, void 0, void 0, function () {
-                var res, tagsRaw, tags, prevTag, nextTag, keyTag, err_4;
+                var res, tagsRaw, tags, prevTag, nextTag, keyTag, err_5;
                 var _this = this;
                 var _a;
                 return __generator(this, function (_b) {
@@ -1439,8 +1455,8 @@ Page({
                             wx.showToast({ title: '已删除', icon: 'success' });
                             return [3 /*break*/, 5];
                         case 3:
-                            err_4 = _b.sent();
-                            wx.showToast({ title: (err_4 && err_4.message) ? String(err_4.message) : '删除失败', icon: 'none' });
+                            err_5 = _b.sent();
+                            wx.showToast({ title: (err_5 && err_5.message) ? String(err_5.message) : '删除失败', icon: 'none' });
                             return [3 /*break*/, 5];
                         case 4:
                             try {
@@ -1578,7 +1594,7 @@ Page({
     },
     onQuickExam: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var bankId, typesList, duration, total, typesCfg, n, base_1, rem_1, name, detail, ok, res, examId, err_5;
+            var bankId, typesList, duration, total, typesCfg, n, base_1, rem_1, name, detail, ok, res, examId, err_6;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -1646,8 +1662,8 @@ Page({
                         wx.navigateTo({ url: "/pages/exam-run/exam-run?exam_id=".concat(examId) });
                         return [3 /*break*/, 6];
                     case 4:
-                        err_5 = _a.sent();
-                        wx.showToast({ title: (err_5 && err_5.message) ? String(err_5.message) : '创建失败', icon: 'none' });
+                        err_6 = _a.sent();
+                        wx.showToast({ title: (err_6 && err_6.message) ? String(err_6.message) : '创建失败', icon: 'none' });
                         return [3 /*break*/, 6];
                     case 5:
                         wx.hideLoading();
@@ -1853,7 +1869,7 @@ Page({
     },
     loadStatsDetail: function (days, subtab) {
         return __awaiter(this, void 0, void 0, function () {
-            var bankId, reqId, source, statsPromise, questionsPromise, favTrendPromise, settle, _a, statsRes, qRes, favRes, data, qPayload, statsQuestions, favoritesTrend, view, ringAccuracy, ringCompletion, heatCells, displayTypes, ringActive, activeDaysRate, ringRepeat, repeatRateText, mistakeRateText, favMistakeRateText, repeatRate, mistakeRate, activeDays, favMistakeRate, activeDays, err_6;
+            var bankId, reqId, source, statsPromise, questionsPromise, favTrendPromise, settle, _a, statsRes, qRes, favRes, data, qPayload, statsQuestions, favoritesTrend, view, ringAccuracy, ringCompletion, heatCells, displayTypes, ringActive, activeDaysRate, ringRepeat, repeatRateText, mistakeRateText, favMistakeRateText, repeatRate, mistakeRate, activeDays, favMistakeRate, activeDays, err_7;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -1966,12 +1982,12 @@ Page({
                         });
                         return [3 /*break*/, 4];
                     case 3:
-                        err_6 = _b.sent();
+                        err_7 = _b.sent();
                         if (reqId !== _p(this).statsReq)
                             return [2 /*return*/];
                         this.patchData({
                             statsLoading: false,
-                            statsError: (err_6 && err_6.message) ? String(err_6.message) : '统计加载失败',
+                            statsError: (err_7 && err_7.message) ? String(err_7.message) : '统计加载失败',
                             statsQuestions: [],
                             favoritesTrend: {}
                         });
@@ -2008,7 +2024,7 @@ Page({
     },
     loadShares: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var bankId, res, data, raw, shares, picked, err_7, msg;
+            var bankId, res, data, raw, shares, picked, err_8, msg;
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -2045,8 +2061,8 @@ Page({
                         });
                         return [3 /*break*/, 4];
                     case 3:
-                        err_7 = _a.sent();
-                        msg = (err_7 && err_7.message) ? String(err_7.message) : '无权查看分享（仅创建者可管理）';
+                        err_8 = _a.sent();
+                        msg = (err_8 && err_8.message) ? String(err_8.message) : '无权查看分享（仅创建者可管理）';
                         this.patchData({
                             shares: [],
                             shareLoading: false,
@@ -2151,7 +2167,7 @@ Page({
     },
     loadUsageStats: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var bankId, res, data, stats, err_8;
+            var bankId, res, data, stats, err_9;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -2183,7 +2199,7 @@ Page({
                         this.patchData({ usageStats: stats, usageStatsLoaded: true, usageStatsLoading: false });
                         return [3 /*break*/, 4];
                     case 3:
-                        err_8 = _a.sent();
+                        err_9 = _a.sent();
                         this.patchData({ usageStatsLoaded: false, usageStatsLoading: false });
                         return [3 /*break*/, 4];
                     case 4: return [2 /*return*/];
@@ -2210,7 +2226,7 @@ Page({
     },
     onWechatShareCard: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var bankId, token, err_9;
+            var bankId, token, err_10;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -2233,8 +2249,8 @@ Page({
                         wx.showToast({ title: '已准备好，请再次点击微信分享', icon: 'none' });
                         return [3 /*break*/, 5];
                     case 3:
-                        err_9 = _a.sent();
-                        wx.showToast({ title: (err_9 && err_9.message) ? String(err_9.message) : '分享失败', icon: 'none' });
+                        err_10 = _a.sent();
+                        wx.showToast({ title: (err_10 && err_10.message) ? String(err_10.message) : '分享失败', icon: 'none' });
                         return [3 /*break*/, 5];
                     case 4:
                         wx.hideLoading();
@@ -2246,7 +2262,7 @@ Page({
     },
     onCreateShare: function (_e) {
         return __awaiter(this, void 0, void 0, function () {
-            var bankId, payload, res, data, code, err_10;
+            var bankId, payload, res, data, code, err_11;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -2279,8 +2295,8 @@ Page({
                         _a.sent();
                         return [3 /*break*/, 6];
                     case 4:
-                        err_10 = _a.sent();
-                        wx.showToast({ title: (err_10 && err_10.message) ? String(err_10.message) : '创建失败', icon: 'none' });
+                        err_11 = _a.sent();
+                        wx.showToast({ title: (err_11 && err_11.message) ? String(err_11.message) : '创建失败', icon: 'none' });
                         return [3 /*break*/, 6];
                     case 5:
                         wx.hideLoading();
@@ -2311,7 +2327,7 @@ Page({
             content: '撤销后，使用此分享加入的用户将无法继续访问。',
             confirmColor: '#FF3B30',
             success: function (res) { return __awaiter(_this, void 0, void 0, function () {
-                var err_11;
+                var err_12;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
@@ -2331,8 +2347,8 @@ Page({
                             this.loadUsageStats();
                             return [3 /*break*/, 6];
                         case 4:
-                            err_11 = _a.sent();
-                            wx.showToast({ title: (err_11 && err_11.message) ? String(err_11.message) : '撤销失败', icon: 'none' });
+                            err_12 = _a.sent();
+                            wx.showToast({ title: (err_12 && err_12.message) ? String(err_12.message) : '撤销失败', icon: 'none' });
                             return [3 /*break*/, 6];
                         case 5:
                             wx.hideLoading();

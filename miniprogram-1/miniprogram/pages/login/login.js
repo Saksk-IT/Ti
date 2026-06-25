@@ -9,8 +9,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -42,24 +42,8 @@ var api_1 = require("../../utils/api");
 var config_1 = require("../../utils/config");
 var nav_1 = require("../../utils/nav");
 var HOME_URL = '/pages/hub-v2/hub-v2';
-var PENDING_MINI_REDIRECT_KEY = 'pendingMiniRedirect';
-function consumePendingMiniRedirect() {
-    try {
-        var raw = wx.getStorageSync(PENDING_MINI_REDIRECT_KEY);
-        var url = String(raw || '').trim();
-        if (!url)
-            return '';
-        wx.removeStorageSync(PENDING_MINI_REDIRECT_KEY);
-        if (!url.startsWith('/'))
-            return '';
-        return url;
-    }
-    catch (e) {
-        return '';
-    }
-}
 function navigateAfterLogin() {
-    var next = consumePendingMiniRedirect();
+    var next = (0, nav_1.consumePendingMiniRedirect)();
     if (next) {
         (0, nav_1.safeNavigate)(next, 'redirectTo');
         return;
@@ -136,7 +120,7 @@ Page({
                                 title: '无法连接后端',
                                 content: "\u5F53\u524D API \u5730\u5740\u4E3A\uFF1A".concat(config_1.config.getApiUrl(), "\n\n") +
                                     '请到「开发设置」切换到“自定义”，填写电脑局域网 IP（如 192.168.1.100）或粘贴完整 URL，并点击“保存并启用自定义”。\n\n' +
-                                        '同时确保后端已启动（python run.py）。',
+                                    '同时确保后端已启动（python run.py）。',
                                 confirmText: '去设置',
                                 cancelText: '知道了',
                                 success: function (res) {
@@ -225,7 +209,7 @@ Page({
     },
     promptBindWechatIfNeeded: function (loginData) {
         return __awaiter(this, void 0, void 0, function () {
-            var userInfo, wechatBound, modalRes, code, bindRes, e_1, msg;
+            var userInfo, wechatBound, modalRes, code, bindRes, e_2, msg;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -274,8 +258,8 @@ Page({
                         wx.showToast({ title: '微信已绑定', icon: 'success' });
                         return [3 /*break*/, 6];
                     case 5:
-                        e_1 = _a.sent();
-                        msg = (e_1 && (e_1.message || e_1.errMsg)) || '绑定失败';
+                        e_2 = _a.sent();
+                        msg = (e_2 && (e_2.message || e_2.errMsg)) || '绑定失败';
                         wx.showToast({ title: msg, icon: 'none' });
                         return [3 /*break*/, 6];
                     case 6: return [2 /*return*/];
@@ -358,6 +342,9 @@ Page({
     onPasswordInput: function (e) {
         this.setData({ password: e.detail.value || '' });
     },
+    onForgotPasswordTap: function () {
+        wx.navigateTo({ url: '/pages/forgot-password/forgot-password' });
+    },
     onEmailInput: function (e) {
         this.setData({ email: e.detail.value || '' });
     },
@@ -366,7 +353,7 @@ Page({
     },
     onPasswordLoginTap: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var username, password, isEmail, isPhone, data, pending_2, e_2;
+            var username, password, isEmail, isPhone, data, pending_2, e_3;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -412,8 +399,8 @@ Page({
                         setTimeout(function () { return navigateAfterLogin(); }, 600);
                         return [3 /*break*/, 5];
                     case 4:
-                        e_2 = _a.sent();
-                        wx.showToast({ title: (e_2 && (e_2.message || e_2.errMsg)) || '登录失败', icon: 'none' });
+                        e_3 = _a.sent();
+                        wx.showToast({ title: (e_3 && (e_3.message || e_3.errMsg)) || '登录失败', icon: 'none' });
                         this.setData({ loading: false });
                         return [3 /*break*/, 5];
                     case 5: return [2 /*return*/];
@@ -423,7 +410,7 @@ Page({
     },
     onSendCodeTap: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var email, e_3;
+            var email, e_4;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -444,8 +431,8 @@ Page({
                         this.startCountdown();
                         return [3 /*break*/, 4];
                     case 3:
-                        e_3 = _a.sent();
-                        wx.showToast({ title: (e_3 && (e_3.message || e_3.errMsg)) || '发送失败', icon: 'none' });
+                        e_4 = _a.sent();
+                        wx.showToast({ title: (e_4 && (e_4.message || e_4.errMsg)) || '发送失败', icon: 'none' });
                         return [3 /*break*/, 4];
                     case 4: return [2 /*return*/];
                 }
@@ -467,7 +454,7 @@ Page({
     },
     onEmailLoginTap: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var email, code, data, pending_3, e_4;
+            var email, code, data, pending_3, e_5;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -507,13 +494,17 @@ Page({
                         setTimeout(function () { return navigateAfterLogin(); }, 600);
                         return [3 /*break*/, 5];
                     case 4:
-                        e_4 = _a.sent();
-                        wx.showToast({ title: (e_4 && (e_4.message || e_4.errMsg)) || '登录失败', icon: 'none' });
+                        e_5 = _a.sent();
+                        wx.showToast({ title: (e_5 && (e_5.message || e_5.errMsg)) || '登录失败', icon: 'none' });
                         this.setData({ loading: false });
                         return [3 /*break*/, 5];
                     case 5: return [2 /*return*/];
                 }
             });
         });
+    },
+    // 返回首页（游客模式）
+    onBackHomeTap: function () {
+        wx.switchTab({ url: '/pages/hub-v2/hub-v2' });
     }
 });

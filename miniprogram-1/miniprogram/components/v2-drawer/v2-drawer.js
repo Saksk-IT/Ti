@@ -9,8 +9,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -84,7 +84,7 @@ Component({
         actionMenuOpen: false,
         themeMenuOpen: false,
         fontMenuOpen: false,
-        themeMode: 'system',
+        themeStyle: 'dune',
         fontStyle: 'modern',
         isDarkMode: false,
         themeClass: 'theme-light',
@@ -99,17 +99,19 @@ Component({
                 var off = theme_1.themeManager.onThemeChange(function () {
                     _this.refreshThemeData();
                 });
-                this.__offThemeChange = off;
+                var self = this;
+                self.__offThemeChange = off;
             }
             catch (e) { }
         },
         detached: function () {
+            var self = this;
             try {
-                if (typeof this.__offThemeChange === 'function')
-                    this.__offThemeChange();
+                if (typeof self.__offThemeChange === 'function')
+                    self.__offThemeChange();
             }
             catch (e) { }
-            this.__offThemeChange = null;
+            self.__offThemeChange = null;
         }
     },
     methods: {
@@ -128,7 +130,7 @@ Component({
                 var p = theme_1.themeManager.getPageData();
                 var f = font_1.fontManager.getPageData();
                 this.setData({
-                    themeMode: (p === null || p === void 0 ? void 0 : p.themeMode) || theme_1.themeManager.getMode(),
+                    themeStyle: (p === null || p === void 0 ? void 0 : p.themeStyle) || theme_1.themeManager.getStyle(),
                     fontStyle: (f === null || f === void 0 ? void 0 : f.fontStyle) || font_1.fontManager.getStyle(),
                     isDarkMode: !!(p === null || p === void 0 ? void 0 : p.isDarkMode),
                     themeClass: String((p === null || p === void 0 ? void 0 : p.themeClass) || ''),
@@ -201,7 +203,7 @@ Component({
         },
         onMoreTap: function () {
             var opened = !!this.data.actionMenuOpen;
-            this.setData({ actionMenuOpen: !opened, themeMenuOpen: false, fontMenuOpen: false });
+            this.setData({ actionMenuOpen: !opened, themeMenuOpen: false });
             if (!opened)
                 this.refreshThemeData();
         },
@@ -226,48 +228,40 @@ Component({
         onBackToQuickMenu: function () {
             this.setData({ actionMenuOpen: true, themeMenuOpen: false, fontMenuOpen: false });
         },
-        onThemeModeTap: function (e) {
-            var _a, _b, _c, _d;
-            var mode = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.mode) || 'system');
-            if (mode !== 'light' && mode !== 'dark' && mode !== 'system')
-                return;
-            theme_1.themeManager.setMode(mode);
-            this.setData({ themeMode: theme_1.themeManager.getMode() });
-            this.closeQuickMenus();
-        },
         onThemeStyleTap: function (e) {
             return __awaiter(this, void 0, void 0, function () {
-                var _a, _b, _c, _d, style;
-                return __generator(this, function (_e) {
-                    switch (_e.label) {
+                var style;
+                var _a, _b;
+                return __generator(this, function (_c) {
+                    switch (_c.label) {
                         case 0:
                             style = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.style) || 'default');
                             theme_1.themeManager.setStyle(style);
                             this.closeQuickMenus();
                             return [4 /*yield*/, (0, user_settings_1.syncUserSettingsToServer)()];
                         case 1:
-                            _e.sent();
+                            _c.sent();
                             return [2 /*return*/];
                     }
                 });
             });
         },
         onFontStyleTap: function (e) {
-            var _this = this;
             return __awaiter(this, void 0, void 0, function () {
                 var style;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
+                var _a, _b;
+                return __generator(this, function (_c) {
+                    switch (_c.label) {
                         case 0:
-                            style = String((e === null || e === void 0 ? void 0 : e.currentTarget.dataset.style) || 'system');
+                            style = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.style) || 'system');
                             return [4 /*yield*/, font_1.fontManager.setStyle(style)];
                         case 1:
-                            _a.sent();
-                            _this.refreshThemeData();
-                            _this.closeQuickMenus();
+                            _c.sent();
+                            this.refreshThemeData();
+                            this.closeQuickMenus();
                             return [4 /*yield*/, (0, user_settings_1.syncUserSettingsToServer)()];
                         case 2:
-                            _a.sent();
+                            _c.sent();
                             return [2 /*return*/];
                     }
                 });

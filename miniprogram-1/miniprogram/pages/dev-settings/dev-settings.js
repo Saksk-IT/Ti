@@ -1,4 +1,13 @@
 "use strict";
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var config_1 = require("../../utils/config");
 var DEV_API_BASE_URL_KEY = 'dev_api_base_url';
@@ -6,6 +15,31 @@ var DEV_API_HOST_KEY = 'dev_api_host';
 var DEV_API_PORT_KEY = 'dev_api_port';
 var PROD_API_BASE_URL_KEY = 'prod_api_base_url';
 var PROD_API_PRESETS_KEY = 'prod_api_presets_v1';
+function getEnvVersion() {
+    try {
+        return wx.getAccountInfoSync().miniProgram.envVersion || '';
+    }
+    catch (e) {
+        return '';
+    }
+}
+function getPlatform() {
+    try {
+        var info = wx.getDeviceInfo ? wx.getDeviceInfo() : null;
+        var p = info && info.platform;
+        if (p)
+            return String(p);
+    }
+    catch (e) {
+        // ignore
+    }
+    try {
+        return wx.getSystemInfoSync().platform || '';
+    }
+    catch (e) {
+        return '';
+    }
+}
 function normalizeMode(input) {
     var m = String(input || '').trim().toLowerCase();
     return m === 'custom' ? 'custom' : 'prod';
@@ -110,31 +144,6 @@ function isDevEnv() {
         return false;
     }
 }
-function getEnvVersion() {
-    try {
-        return wx.getAccountInfoSync().miniProgram.envVersion || '';
-    }
-    catch (e) {
-        return '';
-    }
-}
-function getPlatform() {
-    try {
-        var info = wx.getDeviceInfo ? wx.getDeviceInfo() : null;
-        var p = info && info.platform;
-        if (p)
-            return String(p);
-    }
-    catch (e) {
-        // ignore
-    }
-    try {
-        return wx.getSystemInfoSync().platform || '';
-    }
-    catch (e) {
-        return '';
-    }
-}
 Page({
     data: {
         mode: 'prod',
@@ -153,7 +162,6 @@ Page({
         testResult: ''
     },
     onLoad: function () {
-        var _this = this;
         if (!isDevEnv()) {
             wx.showModal({
                 title: '仅开发版可用',
@@ -264,7 +272,7 @@ Page({
             this.refresh();
             wx.showToast({ title: "\u5DF2\u5207\u6362\uFF1A".concat(item.name || '预设'), icon: 'success' });
         }
-        catch (e2) {
+        catch (e) {
             wx.showToast({ title: '切换失败', icon: 'none' });
         }
     },
@@ -294,7 +302,7 @@ Page({
             wx.showToast({ title: '预设已存在', icon: 'none' });
             return;
         }
-        var next = list.concat([{ name: name, url: url }]);
+        var next = __spreadArray(__spreadArray([], list, true), [{ name: name, url: url }], false);
         saveProdPresets(next);
         this.setData({ prodPresetName: '' });
         this.refresh();

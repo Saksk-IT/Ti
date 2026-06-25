@@ -20,8 +20,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -154,7 +154,7 @@ function normalizeTemplateConfig(raw) {
     return {
         source: source,
         subject: subject,
-        bank_id: source === 'user_bank' ? (Number.isFinite(bank_id) ? bank_id : null) : null,
+        bank_id: source === 'user_bank' ? (Number.isFinite(Number(bank_id)) ? bank_id : null) : null,
         duration: duration,
         targetTotal: targetTotal,
         types: types,
@@ -171,6 +171,15 @@ function isSameScope(cfg, source, subject, bankId) {
         return cfg.source === 'user_bank' && Number(cfg.bank_id || 0) === bankId;
     var s = subject || 'all';
     return cfg.source === 'public' && String(cfg.subject || 'all') === s;
+}
+var _ps = new WeakMap();
+function _p(ctx) {
+    var s = _ps.get(ctx);
+    if (!s) {
+        s = {};
+        _ps.set(ctx, s);
+    }
+    return s;
 }
 Component({
     properties: {
@@ -237,17 +246,17 @@ Component({
     },
     methods: {
         normalizeSource: function () {
-            var raw = String(this.properties.source || '').trim().toLowerCase();
+            var raw = String(this.data.source || '').trim().toLowerCase();
             return raw === 'user_bank' ? 'user_bank' : 'public';
         },
         buildScopeText: function () {
             var source = this.normalizeSource();
             if (source === 'user_bank') {
-                var bankId = Number(this.properties.bankId || 0) || 0;
-                var bankName = String(this.properties.bankName || '').trim() || (bankId > 0 ? "\u9898\u5E93#".concat(bankId) : '未选择题库');
+                var bankId = Number(this.data.bankId || 0) || 0;
+                var bankName = String(this.data.bankName || '').trim() || (bankId > 0 ? "\u9898\u5E93#".concat(bankId) : '未选择题库');
                 return "\u4E2A\u4EBA\u9898\u5E93 \u00B7 ".concat(bankName);
             }
-            var subject = String(this.properties.subject || '').trim() || '全部科目';
+            var subject = String(this.data.subject || '').trim() || '全部科目';
             return "\u516C\u5171\u9898\u5E93 \u00B7 ".concat(subject);
         },
         bootstrap: function () {
@@ -257,8 +266,8 @@ Component({
                 return __generator(this, function (_a) {
                     scopeText = this.buildScopeText();
                     source = this.normalizeSource();
-                    subject = String(this.properties.subject || '').trim();
-                    bankId = Number(this.properties.bankId || 0) || 0;
+                    subject = String(this.data.subject || '').trim();
+                    bankId = Number(this.data.bankId || 0) || 0;
                     emptyText = '暂无题型数据';
                     if (source === 'user_bank' && bankId <= 0)
                         emptyText = '请先选择一个题库';
@@ -279,9 +288,9 @@ Component({
                         templateMsg: '',
                         templateMsgKind: ''
                     }, function () {
-                        _this.__tplCfgById = {};
-                        _this.__tplMetaById = {};
-                        _this.__lastTplLoadAt = 0;
+                        _p(_this).tplCfgById = {};
+                        _p(_this).tplMetaById = {};
+                        _p(_this).lastTplLoadAt = 0;
                         _this.reloadExamTypes();
                         _this.loadUserTemplates(true);
                     });
@@ -295,8 +304,8 @@ Component({
         },
         onGoExamCenterTemplates: function () {
             var source = this.normalizeSource();
-            var subject = String(this.properties.subject || '').trim() || 'all';
-            var bankId = Number(this.properties.bankId || 0) || 0;
+            var subject = String(this.data.subject || '').trim() || 'all';
+            var bankId = Number(this.data.bankId || 0) || 0;
             var qs = ['tab=templates', "source=".concat(source)];
             if (source === 'public')
                 qs.push("subject=".concat(encodeURIComponent(subject)));
@@ -312,13 +321,13 @@ Component({
                 return __generator(this, function (_b) {
                     switch (_b.label) {
                         case 0:
-                            rawSubject = String(this.properties.subject || '').trim();
+                            rawSubject = String(this.data.subject || '').trim();
                             source = this.normalizeSource();
                             subject = rawSubject || 'all';
-                            bankId = Number(this.properties.bankId || 0) || 0;
+                            bankId = Number(this.data.bankId || 0) || 0;
                             if (source === 'public' && !rawSubject) {
-                                this.__tplCfgById = {};
-                                this.__tplMetaById = {};
+                                _p(this).tplCfgById = {};
+                                _p(this).tplMetaById = {};
                                 this.setData({
                                     templatesLoading: false,
                                     templateOptions: [{ id: 0, label: '不使用模板' }],
@@ -329,8 +338,8 @@ Component({
                                 return [2 /*return*/];
                             }
                             if (source === 'user_bank' && bankId <= 0) {
-                                this.__tplCfgById = {};
-                                this.__tplMetaById = {};
+                                _p(this).tplCfgById = {};
+                                _p(this).tplMetaById = {};
                                 this.setData({
                                     templatesLoading: false,
                                     templateOptions: [{ id: 0, label: '不使用模板' }],
@@ -341,7 +350,7 @@ Component({
                                 return [2 /*return*/];
                             }
                             now = Date.now();
-                            lastAt = Number(this.__lastTplLoadAt || 0) || 0;
+                            lastAt = Number(_p(this).lastTplLoadAt || 0) || 0;
                             if (!force && now - lastAt < 5000 && (this.data.templateOptions || []).length > 1)
                                 return [2 /*return*/];
                             if (this.data.templatesLoading)
@@ -371,9 +380,9 @@ Component({
                                 metaById_1[String(id)] = buildTemplateMeta(cfg);
                                 options_1.push({ id: id, label: title });
                             });
-                            this.__tplCfgById = cfgById_1;
-                            this.__tplMetaById = metaById_1;
-                            this.__lastTplLoadAt = now;
+                            _p(this).tplCfgById = cfgById_1;
+                            _p(this).tplMetaById = metaById_1;
+                            _p(this).lastTplLoadAt = now;
                             currentId_1 = Number(((_a = (this.data.templateOptions || [])[this.data.templateIndex]) === null || _a === void 0 ? void 0 : _a.id) || 0);
                             templateIndex = 0;
                             if (currentId_1 > 0) {
@@ -393,9 +402,9 @@ Component({
                             return [3 /*break*/, 4];
                         case 3:
                             e_1 = _b.sent();
-                            this.__tplCfgById = {};
-                            this.__tplMetaById = {};
-                            this.__lastTplLoadAt = now;
+                            _p(this).tplCfgById = {};
+                            _p(this).tplMetaById = {};
+                            _p(this).lastTplLoadAt = now;
                             this.setData({
                                 templatesLoading: false,
                                 templateOptions: [{ id: 0, label: '不使用模板' }],
@@ -417,7 +426,7 @@ Component({
             var options = (this.data.templateOptions || []);
             var safeIdx = Number.isFinite(idx) ? Math.max(0, Math.min(options.length - 1, idx)) : 0;
             var opt = options[safeIdx] || { id: 0, label: '不使用模板' };
-            var metaById = (this.__tplMetaById || {});
+            var metaById = (_p(this).tplMetaById || {});
             var meta = opt.id > 0 ? String(metaById[String(opt.id)] || '') : '';
             this.setData({
                 templateIndex: safeIdx,
@@ -430,7 +439,7 @@ Component({
                 this.setData({ examTypes: [], presetApplied: false }, function () { return _this.reloadExamTypes(); });
                 return;
             }
-            var cfgById = (this.__tplCfgById || {});
+            var cfgById = (_p(this).tplCfgById || {});
             var cfg = cfgById[String(opt.id)];
             if (!cfg) {
                 this.setTemplateMsg('模板不可用，请稍后刷新', 'error');
@@ -451,8 +460,8 @@ Component({
                     switch (_b.label) {
                         case 0:
                             source = this.normalizeSource();
-                            subject = String(this.properties.subject || '').trim();
-                            bankId = Number(this.properties.bankId || 0) || 0;
+                            subject = String(this.data.subject || '').trim();
+                            bankId = Number(this.data.bankId || 0) || 0;
                             _b.label = 1;
                         case 1:
                             _b.trys.push([1, 5, , 6]);
@@ -462,7 +471,7 @@ Component({
                             return [4 /*yield*/, api_1.api.getBankDetail(bankId)];
                         case 2:
                             info_1 = _b.sent();
-                            infoData_1 = (info_1 === null || info_1 === void 0 ? void 0 : info_1.data) || info_1 || {};
+                            infoData_1 = ((info_1 === null || info_1 === void 0 ? void 0 : info_1.data) || info_1 || {});
                             arr_1 = Array.isArray(infoData_1 === null || infoData_1 === void 0 ? void 0 : infoData_1.available_types) ? infoData_1.available_types : [];
                             return [2 /*return*/, (arr_1 || []).filter(function (x) { return typeof x === 'string' && String(x).trim(); }).map(function (s) { return String(s).trim(); })];
                         case 3:
@@ -471,7 +480,7 @@ Component({
                             return [4 /*yield*/, api_1.api.getSubjectInfo(subject)];
                         case 4:
                             info = _b.sent();
-                            infoData = (info === null || info === void 0 ? void 0 : info.data) || info || {};
+                            infoData = ((info === null || info === void 0 ? void 0 : info.data) || info || {});
                             arr = Array.isArray(infoData === null || infoData === void 0 ? void 0 : infoData.available_types) ? infoData.available_types : [];
                             return [2 /*return*/, (arr || []).filter(function (x) { return typeof x === 'string' && String(x).trim(); }).map(function (s) { return String(s).trim(); })];
                         case 5:
@@ -509,8 +518,8 @@ Component({
         },
         refreshExamSummary: function () {
             var source = this.normalizeSource();
-            var subject = String(this.properties.subject || '').trim();
-            var bankId = Number(this.properties.bankId || 0) || 0;
+            var subject = String(this.data.subject || '').trim();
+            var bankId = Number(this.data.bankId || 0) || 0;
             var scopeText = this.buildScopeText();
             var rows = this.data.examTypes || [];
             var types = {};
@@ -560,8 +569,8 @@ Component({
                                 return [2 /*return*/];
                             this.setData({ examLoading: true, examMsg: '', examMsgKind: '' });
                             source = this.normalizeSource();
-                            subject = String(this.properties.subject || '').trim();
-                            bankId = Number(this.properties.bankId || 0) || 0;
+                            subject = String(this.data.subject || '').trim();
+                            bankId = Number(this.data.bankId || 0) || 0;
                             if (source === 'public' && !subject) {
                                 this.setData({ examTypes: [], examLoading: false }, function () { return _this.refreshExamSummary(); });
                                 return [2 /*return*/];
@@ -751,8 +760,8 @@ Component({
         },
         collectTemplateConfig: function () {
             var source = this.normalizeSource();
-            var subjectRaw = String(this.properties.subject || '').trim();
-            var bankId = Number(this.properties.bankId || 0) || 0;
+            var subjectRaw = String(this.data.subject || '').trim();
+            var bankId = Number(this.data.bankId || 0) || 0;
             if (source === 'public' && !subjectRaw)
                 return null;
             if (source === 'user_bank' && bankId <= 0)
@@ -830,8 +839,8 @@ Component({
         },
         collectExamPayload: function () {
             var source = this.normalizeSource();
-            var subject = String(this.properties.subject || '').trim();
-            var bankId = Number(this.properties.bankId || 0) || 0;
+            var subject = String(this.data.subject || '').trim();
+            var bankId = Number(this.data.bankId || 0) || 0;
             if (source === 'public' && !subject)
                 return null;
             if (source === 'user_bank' && bankId <= 0)
@@ -851,7 +860,7 @@ Component({
             });
             return {
                 source: source,
-                subject: source === 'user_bank' ? (String(this.properties.bankName || '').trim() || 'all') : subject,
+                subject: source === 'user_bank' ? (String(this.data.bankName || '').trim() || 'all') : subject,
                 bank_id: source === 'user_bank' ? bankId : null,
                 duration: duration,
                 types: types,

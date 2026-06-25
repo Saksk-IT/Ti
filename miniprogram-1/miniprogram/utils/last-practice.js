@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buildLastPracticeUrl = void 0;
+exports.buildLastPracticeUrl = buildLastPracticeUrl;
 function toBool(v) {
     if (v === true)
         return true;
@@ -55,4 +55,3 @@ function buildLastPracticeUrl() {
         params.push('shuffle_options=1');
     return "/pages/quiz/quiz?".concat(params.join('&'));
 }
-exports.buildLastPracticeUrl = buildLastPracticeUrl;

@@ -131,16 +131,16 @@ Page({
             vibrationFeedback: false // 答题震动反馈
         },
         autoNextDelayOptions: AUTO_NEXT_DELAY_OPTIONS,
-        gradingMode: 'auto_full',
-        hasSubjectiveType: false,
-        showSelfEval: false,
+        gradingMode: 'auto_full', // 主观题判分模式
+        hasSubjectiveType: false, // 当前题集是否含主观题
+        showSelfEval: false, // 是否显示自评按钮
         gradingModeOptions: [
             { value: 'auto_full', label: '有答即对', desc: '填写即判对，快速刷题' },
             { value: 'ai', label: 'AI 判分', desc: 'AI 智能评判，需后台配置' },
             { value: 'manual', label: '自评模式', desc: '查看参考答案后自行评判' }
         ],
         // 字体大小（仅影响答题页字体）
-        quizFontSize: 'md', // 'sm' | 'md' | 'lg'
+        quizFontSize: 'md',
         quizFontClass: 'quiz-font-md',
         themeStyleName: '默认',
         // 主题（深浅/风格）
@@ -158,6 +158,7 @@ Page({
         aiExplainRichText: '',
         aiExplainError: '',
         aiExplainQuestionId: 0,
+        // AI 判分详情（主观题）
         aiGradingScore: null,
         aiGradingFeedback: '',
         // 进度信息
@@ -185,7 +186,14 @@ Page({
         editSaving: false, // 编辑保存中
         // 滑屏切题
         touchStartX: 0,
-        touchStartY: 0
+        touchStartY: 0,
+        // 分页懒加载
+        paginationEnabled: false, // 是否启用分页
+        paginationPage: 1, // 当前已加载页码
+        paginationPerPage: 50, // 每页题数
+        paginationTotal: 0, // 服务端总题数
+        paginationHasMore: false, // 是否还有更多题目
+        paginationLoading: false // 是否正在加载更多
     },
     // === 进度同步（与 Web 端 /api/progress 互通）===
     progressKey: '',
@@ -425,11 +433,10 @@ Page({
     },
     onAutoNextDelaySelect: function (e) {
         var _this = this;
-        var _a, _b;
+        var _a, _b, _c;
         var key = this.normalizeAutoNextDelayKey((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.key);
         var next = Object.assign({}, this.data.practiceSettings, { autoNextDelayKey: key });
-        var found = AUTO_NEXT_DELAY_OPTIONS.find(function (item) { return item.key === key; });
-        var label = (found && found.label) || '快';
+        var label = ((_c = AUTO_NEXT_DELAY_OPTIONS.find(function (item) { return item.key === key; })) === null || _c === void 0 ? void 0 : _c.label) || '快';
         this.setData({ practiceSettings: next }, function () {
             _this.savePracticeSettings();
             wx.showToast({ title: "\u5DF2\u5207\u6362\uFF1A".concat(label, "\u901F\u5207\u9898"), icon: 'none' });
@@ -540,16 +547,16 @@ Page({
         this.setData({ showSettings: false });
     },
     onSettingSwitchChange: function (e) {
+        var _a;
         var _this = this;
-        var _a, _b;
-        var key = (_b = (_a = e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.key;
+        var _b, _c;
+        var key = (_c = (_b = e.currentTarget) === null || _b === void 0 ? void 0 : _b.dataset) === null || _c === void 0 ? void 0 : _c.key;
         var value = !!(e && e.detail && e.detail.value);
         if (!key)
             return;
         if (key !== 'autoNextOnCorrect' && key !== 'autoFavoriteOnWrong' && key !== 'vibrationFeedback')
             return;
-        var next = Object.assign({}, this.data.practiceSettings);
-        next[key] = value;
+        var next = Object.assign({}, this.data.practiceSettings, (_a = {}, _a[key] = value, _a));
         this.setData({ practiceSettings: next }, function () { return _this.savePracticeSettings(); });
     },
     onClearCurrentAnswerRecord: function () {
@@ -620,7 +627,7 @@ Page({
     // 加载题目列表（使用数据源适配器）
     loadQuestions: function (type, source, shuffleQuestions, shuffleOptions, tag) {
         return __awaiter(this, void 0, void 0, function () {
-            var _a, mode, sourceType, sourceId, requestMode, reinforceIds, canEdit, userInfo, currentUserId, bankDetail, bankName, bankOwnerId, e_1, e_2, result, questions, total, questionsWithPreview, pKey, saved, savedPayload, hasHistory, nextPayload, restoredRecords, idx, startId_1, found, safeIndex, err_1, errorMsg;
+            var _a, mode, sourceType, sourceId, requestMode, reinforceIds, canEdit, userInfo, currentUserId, bankDetail, bankName, bankOwnerId, e_1, e_2, perPage, result, questions, total, questionsWithPreview, pKey, saved, savedPayload, hasHistory, nextPayload, restoredRecords, idx, startId_1, found, safeIndex, err_1, errorMsg;
             var _this = this;
             var _b, _c;
             return __generator(this, function (_d) {
@@ -673,6 +680,7 @@ Page({
                         return [3 /*break*/, 9];
                     case 9:
                         this.setData({ canEdit: canEdit });
+                        perPage = 200;
                         return [4 /*yield*/, quizSource.getQuestions({
                                 mode: requestMode,
                                 source: source,
@@ -682,7 +690,7 @@ Page({
                                 shuffle_options: shuffleOptions,
                                 full_load: true,
                                 ids: (reinforceIds && reinforceIds.length) ? reinforceIds : undefined,
-                                per_page: 200
+                                per_page: perPage
                             })];
                     case 10:
                         result = _d.sent();
@@ -738,6 +746,7 @@ Page({
                             }
                         }
                         restoredRecords = this.buildAnswerRecordsFromStatus(questionsWithPreview, this.progressStatusMap);
+                        // 分页状态
                         this.setData({
                             questions: questionsWithPreview,
                             loading: false,
@@ -790,6 +799,68 @@ Page({
             });
         });
     },
+    // 分页懒加载：加载下一批题目
+    loadMoreQuestions: function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var nextPage, _a, mode, source, qType, tag, shuffleOptions, requestMode, result, newQuestions, merged, total, hasMore, err_2;
+            var _this = this;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        if (!quizSource || !this.data.paginationEnabled || !this.data.paginationHasMore || this.data.paginationLoading) {
+                            return [2 /*return*/];
+                        }
+                        nextPage = this.data.paginationPage + 1;
+                        this.setData({ paginationLoading: true });
+                        _b.label = 1;
+                    case 1:
+                        _b.trys.push([1, 3, , 4]);
+                        _a = this.data, mode = _a.mode, source = _a.source, qType = _a.qType, tag = _a.tag, shuffleOptions = _a.shuffleOptions;
+                        requestMode = mode === 'reinforce' ? 'quiz' : mode;
+                        return [4 /*yield*/, quizSource.getQuestions({
+                                mode: requestMode,
+                                source: source,
+                                type: qType !== 'all' ? qType : undefined,
+                                tag: tag && tag !== 'all' ? tag : undefined,
+                                shuffle_questions: false,
+                                shuffle_options: !!shuffleOptions,
+                                page: nextPage,
+                                per_page: this.data.paginationPerPage
+                            })];
+                    case 2:
+                        result = _b.sent();
+                        newQuestions = (result.questions || []).map(function (q) {
+                            var normalizedOptions = _this.normalizeOptions(q.options, q.q_type, q.answer);
+                            var content = q.content || '';
+                            var textContent = content.replace(/<[^>]+>/g, '');
+                            var preview = textContent.length > 40 ? textContent.substring(0, 40) + '...' : textContent;
+                            return Object.assign({}, q, { options: normalizedOptions, contentPreview: preview }, buildQuestionImageFields(q));
+                        });
+                        if (newQuestions.length > 0) {
+                            merged = this.data.questions.concat(newQuestions);
+                            total = result.total || this.data.paginationTotal;
+                            hasMore = merged.length < total;
+                            this.setData({
+                                questions: merged,
+                                paginationPage: nextPage,
+                                paginationTotal: total,
+                                paginationHasMore: hasMore,
+                                paginationLoading: false
+                            });
+                        }
+                        else {
+                            this.setData({ paginationHasMore: false, paginationLoading: false });
+                        }
+                        return [3 /*break*/, 4];
+                    case 3:
+                        err_2 = _b.sent();
+                        this.setData({ paginationLoading: false });
+                        return [3 /*break*/, 4];
+                    case 4: return [2 /*return*/];
+                }
+            });
+        });
+    },
     getMemoAnswerCardKey: function (question, index) {
         var id = question && question.id != null ? question.id : index;
         return String(id);
@@ -800,6 +871,10 @@ Page({
         var questions = this.data.questions;
         if (index < 0 || index >= questions.length) {
             return;
+        }
+        // 分页预加载：距离已加载末尾 10 题时触发
+        if (this.data.paginationEnabled && this.data.paginationHasMore && index >= questions.length - 10) {
+            this.loadMoreQuestions();
         }
         var question = questions[index];
         var qType = question.q_type || '';
@@ -1170,7 +1245,7 @@ Page({
     },
     autoFavoriteIfNeeded: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var _a, currentQuestion, isFavorite, questions, err_3;
+            var _a, currentQuestion, isFavorite, questions, err_4;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -1192,7 +1267,7 @@ Page({
                         this.patchData({ questions: questions });
                         return [3 /*break*/, 4];
                     case 3:
-                        err_3 = _b.sent();
+                        err_4 = _b.sent();
                         wx.showToast({ title: '自动收藏失败', icon: 'none' });
                         return [3 /*break*/, 4];
                     case 4: return [2 /*return*/];
@@ -1418,7 +1493,7 @@ Page({
     },
     loadAIExplain: function (force) {
         return __awaiter(this, void 0, void 0, function () {
-            var cq, qid, cached, options, res, text, cleaned, finalText, err_4;
+            var cq, qid, cached, options, res, text, cleaned, finalText, err_5;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -1470,8 +1545,8 @@ Page({
                         });
                         return [3 /*break*/, 4];
                     case 3:
-                        err_4 = _a.sent();
-                        this.patchData({ aiExplainError: (err_4 === null || err_4 === void 0 ? void 0 : err_4.message) || 'AI解析失败，请稍后重试', aiLoading: false });
+                        err_5 = _a.sent();
+                        this.patchData({ aiExplainError: (err_5 === null || err_5 === void 0 ? void 0 : err_5.message) || 'AI解析失败，请稍后重试', aiLoading: false });
                         return [3 /*break*/, 4];
                     case 4: return [2 /*return*/];
                 }
@@ -1538,7 +1613,7 @@ Page({
     // 切换收藏（使用数据源适配器）
     onToggleFavorite: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var _a, currentQuestion, isFavorite, result, newFavoriteState_1, questions, err_5;
+            var _a, currentQuestion, isFavorite, result, newFavoriteState_1, questions, err_6;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -1570,8 +1645,8 @@ Page({
                         });
                         return [3 /*break*/, 4];
                     case 3:
-                        err_5 = _b.sent();
-                        wx.showToast({ title: err_5.message || '操作失败', icon: 'none' });
+                        err_6 = _b.sent();
+                        wx.showToast({ title: err_6.message || '操作失败', icon: 'none' });
                         return [3 /*break*/, 4];
                     case 4: return [2 /*return*/];
                 }
@@ -1590,12 +1665,27 @@ Page({
     },
     // 下一题
     onNextQuestion: function () {
+        var _this = this;
         if (this.data.subjectiveSubmitting) {
             return;
         }
-        var _a = this.data, currentIndex = _a.currentIndex, questions = _a.questions;
+        var _a = this.data, currentIndex = _a.currentIndex, questions = _a.questions, paginationEnabled = _a.paginationEnabled, paginationHasMore = _a.paginationHasMore;
         if (currentIndex < questions.length - 1) {
             this.loadQuestion(currentIndex + 1);
+        }
+        else if (paginationEnabled && paginationHasMore) {
+            // 分页模式：还有更多题目，加载后跳转
+            wx.showLoading({ title: '加载中', mask: false });
+            this.loadMoreQuestions().then(function () {
+                wx.hideLoading();
+                var updated = _this.data.questions;
+                if (currentIndex + 1 < updated.length) {
+                    _this.loadQuestion(currentIndex + 1);
+                }
+                else {
+                    _this.openQuizSettlement();
+                }
+            });
         }
         else {
             // 最后一题：进入结算页（替代答题结束弹窗）
@@ -1638,7 +1728,7 @@ Page({
         var _this = this;
         var idx = Number((e && e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.index) || -1);
         var field = String((e && e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.field) || 'image_urls');
-        if (['image_urls', 'answer_image_urls', 'explanation_image_urls'].indexOf(field) === -1)
+        if (!['image_urls', 'answer_image_urls', 'explanation_image_urls'].includes(field))
             return;
         var q = this.data.currentQuestion;
         var urls = (q && q[field]) || [];
@@ -1659,18 +1749,17 @@ Page({
             url: url,
             timeout: 15000,
             success: function (res) {
+                var _a, _b;
                 var tempFilePath = String((res && res.tempFilePath) || '').trim();
                 if (!tempFilePath)
                     return;
                 var nextUrls = urls.slice();
                 nextUrls[idx] = tempFilePath;
-                var nextImagePatch = {};
-                nextImagePatch[field] = nextUrls;
-                var nextQuestion = Object.assign({}, q, nextImagePatch);
+                var nextQuestion = Object.assign({}, q, (_a = {}, _a[field] = nextUrls, _a));
                 var currentIndex = Number(_this.data.currentIndex || 0);
                 var nextQuestions = Array.isArray(_this.data.questions) ? _this.data.questions.slice() : [];
                 if (currentIndex >= 0 && currentIndex < nextQuestions.length) {
-                    nextQuestions[currentIndex] = Object.assign({}, nextQuestions[currentIndex], nextImagePatch);
+                    nextQuestions[currentIndex] = Object.assign({}, nextQuestions[currentIndex], (_b = {}, _b[field] = nextUrls, _b));
                 }
                 _this.setData({ currentQuestion: nextQuestion, questions: nextQuestions });
             },
@@ -1683,9 +1772,10 @@ Page({
     previewImage: function (e) {
         var idx = Number(e.currentTarget.dataset.index || 0);
         var field = String((e.currentTarget.dataset && e.currentTarget.dataset.field) || 'image_urls');
-        if (['image_urls', 'answer_image_urls', 'explanation_image_urls'].indexOf(field) === -1)
+        if (!['image_urls', 'answer_image_urls', 'explanation_image_urls'].includes(field))
             return;
-        var urls = (this.data.currentQuestion && this.data.currentQuestion[field]) || [];
+        var currentQuestion = this.data.currentQuestion;
+        var urls = (currentQuestion && currentQuestion[field]) || [];
         if (!Array.isArray(urls) || urls.length === 0)
             return;
         var current = urls[Math.max(0, Math.min(idx, urls.length - 1))] || urls[0];
@@ -1725,7 +1815,7 @@ Page({
     },
     onCreateTag: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var _a, newTagName, sourceType, sourceId, subject, err_6;
+            var _a, newTagName, sourceType, sourceId, subject, err_7;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -1756,8 +1846,8 @@ Page({
                         wx.showToast({ title: '创建成功', icon: 'none' });
                         return [3 /*break*/, 8];
                     case 7:
-                        err_6 = _b.sent();
-                        wx.showToast({ title: err_6.message || '创建失败', icon: 'none' });
+                        err_7 = _b.sent();
+                        wx.showToast({ title: err_7.message || '创建失败', icon: 'none' });
                         return [3 /*break*/, 8];
                     case 8: return [2 /*return*/];
                 }
@@ -1766,7 +1856,7 @@ Page({
     },
     onToggleTagSelection: function (e) {
         return __awaiter(this, void 0, void 0, function () {
-            var tagName, _a, currentQuestion, allTags, currentQuestionTags, sourceType, sourceId, tagItem, isSelected, newTags, updatedAllTags, err_7;
+            var tagName, _a, currentQuestion, allTags, currentQuestionTags, sourceType, sourceId, tagItem, isSelected, newTags, updatedAllTags, err_8;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -1808,8 +1898,8 @@ Page({
                         });
                         return [3 /*break*/, 7];
                     case 6:
-                        err_7 = _b.sent();
-                        wx.showToast({ title: err_7.message || '设置失败', icon: 'none' });
+                        err_8 = _b.sent();
+                        wx.showToast({ title: err_8.message || '设置失败', icon: 'none' });
                         return [3 /*break*/, 7];
                     case 7: return [2 /*return*/];
                 }
@@ -1818,7 +1908,7 @@ Page({
     },
     loadAllTags: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var _a, sourceType, sourceId, res, subject, tags, currentQuestionTags_1, allTags, err_8;
+            var _a, sourceType, sourceId, res, subject, tags, currentQuestionTags_1, allTags, err_9;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -1847,7 +1937,7 @@ Page({
                         this.setData({ allTags: allTags });
                         return [3 /*break*/, 6];
                     case 5:
-                        err_8 = _b.sent();
+                        err_9 = _b.sent();
                         return [3 /*break*/, 6];
                     case 6: return [2 /*return*/];
                 }
@@ -1856,7 +1946,7 @@ Page({
     },
     loadQuestionTags: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var _a, currentQuestion, sourceType, sourceId, res, tags, tagNames_1, allTags, updatedAllTags, err_9;
+            var _a, currentQuestion, sourceType, sourceId, res, tags, tagNames_1, allTags, updatedAllTags, err_10;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -1887,7 +1977,7 @@ Page({
                         });
                         return [3 /*break*/, 7];
                     case 6:
-                        err_9 = _b.sent();
+                        err_10 = _b.sent();
                         this.setData({ currentQuestionTags: [] });
                         return [3 /*break*/, 7];
                     case 7: return [2 /*return*/];
@@ -1937,7 +2027,7 @@ Page({
     },
     onSaveQuestion: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var _a, currentQuestion, editForm, editSaving, sourceType, sourceId, options, updateData, updatedQuestion_1, questions, err_10;
+            var _a, currentQuestion, editForm, editSaving, sourceType, sourceId, options, updateData, updatedQuestion_1, questions, err_11;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -2007,9 +2097,9 @@ Page({
                         wx.showToast({ title: '保存成功', icon: 'success' });
                         return [3 /*break*/, 7];
                     case 6:
-                        err_10 = _b.sent();
+                        err_11 = _b.sent();
                         this.setData({ editSaving: false });
-                        wx.showToast({ title: err_10.message || '保存失败', icon: 'none' });
+                        wx.showToast({ title: err_11.message || '保存失败', icon: 'none' });
                         return [3 /*break*/, 7];
                     case 7: return [2 /*return*/];
                 }
@@ -2191,8 +2281,8 @@ Page({
         return "".concat(prefix, "_").concat(uid, "_").concat(mode, "_").concat(sourceId, "_").concat(type, "_").concat(dataScope).concat(tagPart, "_q").concat(shuffleQ, "_o").concat(shuffleO);
     },
     loadProgressState: function (key) {
-        return __awaiter(this, void 0, Promise, function () {
-            var local, remote, e_3, merged;
+        return __awaiter(this, void 0, void 0, function () {
+            var local, remote, e_4, merged;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -2208,7 +2298,7 @@ Page({
                         remote = _a.sent();
                         return [3 /*break*/, 4];
                     case 3:
-                        e_3 = _a.sent();
+                        e_4 = _a.sent();
                         remote = null;
                         return [3 /*break*/, 4];
                     case 4:
@@ -2380,7 +2470,7 @@ Page({
     },
     syncToServer: function (payload) {
         return __awaiter(this, void 0, void 0, function () {
-            var key, e_4;
+            var key, e_5;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -2398,7 +2488,7 @@ Page({
                         this.syncPending = false;
                         return [3 /*break*/, 4];
                     case 3:
-                        e_4 = _a.sent();
+                        e_5 = _a.sent();
                         return [3 /*break*/, 4];
                     case 4: return [2 /*return*/];
                 }
@@ -2408,7 +2498,7 @@ Page({
     // 保存"上次练习"指针（云端 + 本地），用于首页一键继续
     saveLastSession: function () {
         return __awaiter(this, arguments, void 0, function (force) {
-            var _a, sourceType, sourceId, displayName, payload, key, e_5;
+            var _a, sourceType, sourceId, displayName, payload, key, e_6;
             if (force === void 0) { force = false; }
             return __generator(this, function (_b) {
                 switch (_b.label) {
@@ -2451,7 +2541,7 @@ Page({
                         _b.sent();
                         return [3 /*break*/, 4];
                     case 3:
-                        e_5 = _b.sent();
+                        e_6 = _b.sent();
                         return [3 /*break*/, 4];
                     case 4: return [2 /*return*/];
                 }

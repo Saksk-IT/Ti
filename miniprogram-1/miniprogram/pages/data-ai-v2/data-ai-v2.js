@@ -1,15 +1,4 @@
 "use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -20,8 +9,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -62,7 +51,7 @@ function buildAiPatch(res) {
         .map(function (w) {
         var acc = (0, data_center_1.pct1)(w === null || w === void 0 ? void 0 : w.accuracy);
         return {
-            name: "".concat(String((w === null || w === void 0 ? void 0 : w.subject) || ''), " \u00B7 ").concat(String((w === null || w === void 0 ? void 0 : w.q_type) || '')),
+            name: "".concat(String((w === null || w === void 0 ? void 0 : w.subject) || ''), " \u8DEF ").concat(String((w === null || w === void 0 ? void 0 : w.q_type) || '')),
             gap: (0, data_center_1.pct1)(100 - acc),
             accuracy: acc,
             answered: (0, data_center_1.toInt)(w === null || w === void 0 ? void 0 : w.answered)
@@ -96,15 +85,16 @@ Page({
         var patch = {};
         var hydrated = false;
         try {
-            __assign(patch, theme_1.themeManager.getPageData());
+            Object.assign(patch, theme_1.themeManager.getPageData());
         }
         catch (e) { }
         if (!this.data.inited) {
             try {
                 var cached = (0, data_center_cache_1.getCachedDataCenter)(this.data.days);
                 if (cached) {
-                    __assign(patch, buildAiPatch(cached), { errorMsg: '' });
-                    this.__lastLoadedAt = Date.now();
+                    Object.assign(patch, buildAiPatch(cached), { errorMsg: '' });
+                    var self = this;
+                    self.__lastLoadedAt = Date.now();
                     hydrated = true;
                 }
             }

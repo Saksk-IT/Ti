@@ -134,13 +134,13 @@ function sourceLabelFor(item, source, relation) {
 }
 function detailPathFor(id, source, relation, sourceType) {
     if (sourceType === 'system') {
-        var systemParams = ["id=".concat(encodeURIComponent(String(id)))];
+        var params_1 = ["id=".concat(encodeURIComponent(String(id)))];
         if (source !== 'created') {
-            systemParams.push("source_type=".concat(encodeURIComponent('system')));
-            systemParams.push("source=".concat(encodeURIComponent(source)));
-            systemParams.push("relation=".concat(encodeURIComponent(relation)));
+            params_1.push("source_type=".concat(encodeURIComponent('system')));
+            params_1.push("source=".concat(encodeURIComponent(source)));
+            params_1.push("relation=".concat(encodeURIComponent(relation)));
         }
-        return "/pages/subject-detail-v2/subject-detail-v2?".concat(systemParams.join('&'));
+        return "/pages/subject-detail-v2/subject-detail-v2?".concat(params_1.join('&'));
     }
     var params = ["id=".concat(encodeURIComponent(String(id)))];
     if (source !== 'created') {

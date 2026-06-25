@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.safeNavigate = void 0;
+exports.safeNavigate = safeNavigate;
+exports.consumePendingMiniRedirect = consumePendingMiniRedirect;
 var theme_1 = require("./theme");
 var NAV_LOCK_MS = 350;
 var STACK_SOFT_LIMIT = 8;
@@ -79,12 +80,12 @@ function safeNavigate(url, navType) {
         targetRoute === 'pages/data-banks-v2/data-banks-v2' ||
         targetRoute === 'pages/data-trend-v2/data-trend-v2' ||
         targetRoute === 'pages/data-ai-v2/data-ai-v2' ||
-            targetRoute === 'packages/data/pages/data-center-v2/data-center-v2' ||
-            targetRoute === 'packages/data/pages/data-global-v2/data-global-v2' ||
-            targetRoute === 'packages/data/pages/data-bank-v2/data-bank-v2' ||
-            targetRoute === 'packages/data/pages/data-mistakes-v2/data-mistakes-v2' ||
-            targetRoute === 'packages/data/pages/data-favorites-v2/data-favorites-v2' ||
-            targetRoute === 'packages/data/pages/data-tags-v2/data-tags-v2';
+        targetRoute === 'packages/data/pages/data-center-v2/data-center-v2' ||
+        targetRoute === 'packages/data/pages/data-global-v2/data-global-v2' ||
+        targetRoute === 'packages/data/pages/data-bank-v2/data-bank-v2' ||
+        targetRoute === 'packages/data/pages/data-mistakes-v2/data-mistakes-v2' ||
+        targetRoute === 'packages/data/pages/data-favorites-v2/data-favorites-v2' ||
+        targetRoute === 'packages/data/pages/data-tags-v2/data-tags-v2';
     // 数据中心五大子页（全局/题库/错题/收藏/标签）之间切换：更像「同页 tab 切换」
     // - 避免 navigateTo 堆栈不断增长
     // - 避免 reLaunch 的“先白屏再出现”观感
@@ -182,4 +183,20 @@ function safeNavigate(url, navType) {
     catch (e) { }
     scheduleStart();
 }
-exports.safeNavigate = safeNavigate;
+var PENDING_MINI_REDIRECT_KEY = 'pendingMiniRedirect';
+/** 消费并返回待跳转的小程序页面路径（一次性读取后清除） */
+function consumePendingMiniRedirect() {
+    try {
+        var raw = wx.getStorageSync(PENDING_MINI_REDIRECT_KEY);
+        var url = String(raw || '').trim();
+        if (!url)
+            return '';
+        wx.removeStorageSync(PENDING_MINI_REDIRECT_KEY);
+        if (!url.startsWith('/'))
+            return '';
+        return url;
+    }
+    catch (e) {
+        return '';
+    }
+}

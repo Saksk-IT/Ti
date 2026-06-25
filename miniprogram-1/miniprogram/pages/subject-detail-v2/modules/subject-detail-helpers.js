@@ -20,7 +20,7 @@ exports.clampPct = clampPct;
 exports.OPTION_TYPES = new Set(['选择题', '多选题']);
 exports.KEY_SHUFFLE_Q = 'shuffle_questions';
 exports.KEY_SHUFFLE_O = 'shuffle_options';
-exports.DEFAULT_DETAIL_TAB_ORDER = ['practice', 'reinforce', 'exam', 'search', 'stats', 'share'];
+exports.DEFAULT_DETAIL_TAB_ORDER = ['practice', 'reinforce', 'exam', 'search', 'stats', 'export', 'share'];
 exports.VALID_DETAIL_TABS = new Set(exports.DEFAULT_DETAIL_TAB_ORDER);
 exports.DETAIL_TAB_LABELS = {
     practice: '练习',
@@ -28,6 +28,7 @@ exports.DETAIL_TAB_LABELS = {
     exam: '考试',
     search: '搜索',
     stats: '数据',
+    export: '导出',
     share: '分享'
 };
 function normalizeDetailTabOrder(input, fallback) {
@@ -98,7 +99,7 @@ function scopeFromEntry(entry) {
     return 'all';
 }
 function shouldCountForTab(tab) {
-    return tab === 'practice';
+    return tab === 'practice' || tab === 'export';
 }
 function normalizeTab(input) {
     var s = String(input || '').trim().toLowerCase();
@@ -114,6 +115,8 @@ function normalizeTab(input) {
         return 'stats';
     if (s === 'favorites' || s === 'mistakes')
         return 'practice';
+    if (s === 'export')
+        return 'export';
     if (s === 'share')
         return 'share';
     return 'practice';

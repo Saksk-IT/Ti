@@ -9,8 +9,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -49,7 +49,14 @@ Page({
         computedScoreText: '0',
         loading: false,
         creating: false,
-        warnText: ''
+        warnText: '',
+        gradingMode: 'auto_full',
+        hasSubjectiveType: false,
+        gradingModeOptions: [
+            { value: 'auto_full', label: '有作答即满分', desc: '主观题只要有作答就给满分' },
+            { value: 'ai', label: 'AI 智能判分', desc: 'AI 自动评判主观题答案' },
+            { value: 'manual', label: '人工判分', desc: '提交后由管理员人工评分' },
+        ]
     },
     onLoad: function (options) {
         if (!(0, auth_1.checkLogin)()) {
@@ -218,6 +225,12 @@ Page({
             warnText = "\u5F53\u524D\u5DF2\u8BBE\u7F6E ".concat(total, " \u9898\uFF0C\u4E0E\u76EE\u6807 ").concat(this.data.total, " \u9898\u4E0D\u4E00\u81F4");
         }
         this.setData({ computedTotal: total, computedScoreText: scoreText, warnText: warnText });
+        // 检测是否包含主观题
+        var subjectiveNames = ['简答题', '计算题', '论述题', '问答题'];
+        var hasSubjective = types.some(function (t) { return t.enabled && t.count > 0 && subjectiveNames.indexOf(t.name) !== -1; });
+        if (hasSubjective !== this.data.hasSubjectiveType) {
+            this.setData({ hasSubjectiveType: hasSubjective });
+        }
     },
     formatScore: function (v) {
         var n = Number(v) || 0;
@@ -225,6 +238,10 @@ Page({
             return String(Math.round(n));
         }
         return n.toFixed(1).replace(/\.0$/, '');
+    },
+    onGradingModeChange: function (e) {
+        var value = e.currentTarget.dataset.value || 'auto_full';
+        this.setData({ gradingMode: value });
     },
     stopPropagation: function () { },
     onStartExam: function () {
@@ -264,7 +281,8 @@ Page({
                                 subject: this.data.subject,
                                 duration: duration,
                                 types: typesConfig,
-                                scores: scoresConfig
+                                scores: scoresConfig,
+                                grading_mode: this.data.gradingMode
                             })];
                     case 4:
                         res = _b.sent();

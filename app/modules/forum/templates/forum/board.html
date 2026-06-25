@@ -9,12 +9,6 @@
 {% endblock %}
 
 {% block content %}
-<div class="forum-drawer-overlay" id="forumDrawerOverlay" onclick="closeDrawer()"></div>
-<div class="forum-drawer" id="forumDrawer">
-  <div class="forum-drawer-close"><button onclick="closeDrawer()">&times;</button></div>
-  <div id="drawerContent"></div>
-</div>
-
 <div class="forum-layout">
   <!-- 左侧边栏（桌面端） -->
   <aside class="forum-sidebar">
@@ -23,15 +17,13 @@
 
   <!-- 主内容区 -->
   <div class="forum-main">
-    <div class="forum-topbar forum-sidebar-togglebar">
-      <button class="forum-drawer-toggle" onclick="openDrawer()" title="侧边栏"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg></button>
-    </div>
     <div class="forum-board-header" id="boardHeader"></div>
     <div class="forum-toolbar">
       <div class="forum-sort">
         <button class="sort-btn active" data-sort="latest" onclick="setSort(this,'latest')">最新</button>
         <button class="sort-btn" data-sort="hot" onclick="setSort(this,'hot')">最热</button>
       </div>
+      <a href="/forum/new?board_id={{ board_id }}" target="_blank" rel="noopener noreferrer" class="forum-new-btn forum-mobile-only-action">&#43; 发帖</a>
     </div>
     <div class="forum-posts" id="postsList"></div>
     <div class="forum-load-more" id="loadMore" style="display:none">

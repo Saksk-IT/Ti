@@ -11,6 +11,7 @@
 // 2) 本文件的快速配置区默认值
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.config = exports.API_BASE_URL = void 0;
+exports.getWxPlatform = getWxPlatform;
 /** ======================== 快速配置区（建议只改这里） ======================== */
 var DEFAULT_API_MODE = 'prod';
 // 生产环境默认地址（可通过 config.setProdApiUrl 覆盖）
@@ -18,11 +19,10 @@ var PROD_API_BASE_URL = 'https://saksk.top/api';
 // 开发环境默认 Host（仅在开发者工具 devtools 且未手动配置时生效）
 // 真机预览无法访问 127.0.0.1/localhost，请在「开发设置」页设置为电脑局域网 IP
 var DEV_DEFAULT_HOST = '127.0.0.1';
-/** ======================== 本地存储 key（一般不需要改） ======================== */
-var PROD_API_BASE_URL_KEY = 'prod_api_base_url';
 // 开发环境：后端服务端口（默认值，可在真机里动态覆盖）
 var DEV_PORT = 5000;
-// 开发环境：允许直接配置完整的 API BaseURL（例如 https://saksk.top/api）
+/** ======================== 本地存储 key（一般不需要改） ======================== */
+var PROD_API_BASE_URL_KEY = 'prod_api_base_url';
 var DEV_API_BASE_URL_KEY = 'dev_api_base_url';
 var DEV_API_HOST_KEY = 'dev_api_host';
 var DEV_API_PORT_KEY = 'dev_api_port';
@@ -40,12 +40,13 @@ function normalizeDevApiBaseUrl(input) {
         return '';
     return "".concat(scheme, "://").concat(hostPort, "/api");
 }
-
 function normalizeProdApiBaseUrl(input) {
     return normalizeDevApiBaseUrl(input);
 }
 function parseSchemeHostPort(url) {
-    var m = String(url || '').trim().match(/^(https?):\/\/([^/]+)(\/|$)/i);
+    var m = String(url || '')
+        .trim()
+        .match(/^(https?):\/\/([^/]+)(\/|$)/i);
     if (!m)
         return null;
     var scheme = String(m[1] || '').toLowerCase();
@@ -72,7 +73,6 @@ function getDevApiBaseUrlOverride() {
         return '';
     }
 }
-
 function getProdApiBaseUrlOverride() {
     try {
         var v = wx.getStorageSync(PROD_API_BASE_URL_KEY);
@@ -83,11 +83,9 @@ function getProdApiBaseUrlOverride() {
         return '';
     }
 }
-
 function getProdApiBaseUrl() {
     return getProdApiBaseUrlOverride() || PROD_API_BASE_URL;
 }
-
 function hasAnyCustomConfig() {
     try {
         if (getDevApiBaseUrlOverride())
@@ -100,7 +98,6 @@ function hasAnyCustomConfig() {
         return false;
     }
 }
-
 function getApiMode() {
     try {
         var v = wx.getStorageSync(API_MODE_KEY);
@@ -108,9 +105,9 @@ function getApiMode() {
             return v;
     }
     catch (e) { }
+    // 兼容旧行为：曾经保存过自定义 Host/Port/BaseURL，则默认认为在 custom 模式
     return hasAnyCustomConfig() ? 'custom' : DEFAULT_API_MODE;
 }
-
 function setApiMode(mode) {
     try {
         wx.setStorageSync(API_MODE_KEY, mode);
@@ -187,7 +184,6 @@ function getDevApiBaseUrl() {
     var port = getDevPort();
     return "http://".concat(host, ":").concat(port, "/api");
 }
-
 function getApiBaseUrl() {
     var mode = getApiMode();
     if (mode === 'prod')
