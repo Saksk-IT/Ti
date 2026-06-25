@@ -192,7 +192,7 @@ function buildSnapshotYearOptions(rows, selectedYear) {
         active: year === selectedYear,
     }); });
 }
-function buildSnapshotYearLabels(options) {
+function buildSnapshotOptionLabels(options) {
     return options.map(function (item) { return "".concat(item.label, "\uFF08").concat(item.count, "\uFF09"); });
 }
 function buildSnapshotTermOptions(rows, selectedYear, selectedSemester) {
@@ -292,6 +292,8 @@ Page({
         snapshotYearLabels: [],
         snapshotYearIndex: 0,
         snapshotTerms: [],
+        snapshotSemesterLabels: [],
+        snapshotSemesterIndex: 0,
         snapshotSelectedYear: '',
         snapshotSelectedSemester: 'all',
         snapshotDrawerOpen: false,
@@ -470,15 +472,19 @@ Page({
             : 'all';
         var selectedYears = buildSnapshotYearOptions(rows, selectedYear);
         var selectedYearIndex = Math.max(0, selectedYears.findIndex(function (item) { return item.value === selectedYear; }));
+        var selectedTerms = selectedYear ? buildSnapshotTermOptions(rows, selectedYear, selectedSemester) : [];
+        var selectedSemesterIndex = Math.max(0, selectedTerms.findIndex(function (item) { return item.value === selectedSemester; }));
         var patch = {
             snapshotSelectedYear: selectedYear,
             snapshotSelectedSemester: selectedSemester,
             snapshotYears: selectedYears,
-            snapshotYearLabels: buildSnapshotYearLabels(selectedYears),
+            snapshotYearLabels: buildSnapshotOptionLabels(selectedYears),
             snapshotYearIndex: selectedYearIndex,
-            snapshotTerms: selectedYear ? buildSnapshotTermOptions(rows, selectedYear, selectedSemester) : [],
+            snapshotTerms: selectedTerms,
+            snapshotSemesterLabels: buildSnapshotOptionLabels(selectedTerms),
+            snapshotSemesterIndex: selectedSemesterIndex,
             snapshotDrawerTitle: selectedYear ? "".concat(formatAcademicYearLabel(Number(selectedYear)), " \u5B66\u671F") : '',
-            snapshotDrawerOpen: selectedYear ? this.data.snapshotDrawerOpen : false,
+            snapshotDrawerOpen: false,
         };
         patch[mode === 'grades' ? 'gradeResults' : 'scheduleResults'] = selectedYear
             ? filterSnapshotRows(rows, selectedYear, selectedSemester)
@@ -497,16 +503,21 @@ Page({
         this.setData({
             snapshotSelectedYear: year,
             snapshotSelectedSemester: 'all',
-            snapshotDrawerOpen: true,
+            snapshotDrawerOpen: false,
             snapshotYearIndex: index,
+            snapshotSemesterIndex: 0,
         }, function () { return _this.syncSnapshotBrowserForMode(_this.data.mode); });
     },
-    onSnapshotTermTap: function (e) {
+    onSnapshotSemesterChange: function (e) {
         var _this = this;
         var _a, _b;
-        var semester = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.semester) || 'all').trim() || 'all';
+        var options = this.data.snapshotTerms || [];
+        var max = Math.max(0, options.length - 1);
+        var index = Math.max(0, Math.min(Number((_b = (_a = e === null || e === void 0 ? void 0 : e.detail) === null || _a === void 0 ? void 0 : _a.value) !== null && _b !== void 0 ? _b : 0) || 0, max));
+        var semester = String(((_a = options[index]) === null || _a === void 0 ? void 0 : _a.value) || 'all').trim() || 'all';
         this.setData({
             snapshotSelectedSemester: semester,
+            snapshotSemesterIndex: index,
             snapshotDrawerOpen: false,
         }, function () { return _this.syncSnapshotBrowserForMode(_this.data.mode); });
     },

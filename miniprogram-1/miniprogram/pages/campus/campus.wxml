@@ -99,21 +99,10 @@
           </view>
         </view>
 
-        <view class="filter-panel grade-sync-panel" wx:elif="{{mode === 'grades'}}">
-          <view class="panel-header">
-            <view class="panel-title-wrap">
-              <image class="panel-icon" src="/images/icons/chart.svg" mode="aspectFit"></image>
-              <text class="panel-title">全部成绩</text>
-            </view>
-            <text class="panel-note">全量刷新</text>
-          </view>
-          <view class="grade-sync-copy">
-            <text class="grade-sync-title">按学年学期归档</text>
-            <text class="grade-sync-sub">同步后在下方结果区查看</text>
-          </view>
-          <view class="query-btn {{loading ? 'disabled' : ''}}" bindtap="onQueryTap" aria-role="button" aria-label="刷新全部成绩">
+        <view class="grade-query-panel" wx:elif="{{mode === 'grades'}}">
+          <view class="query-btn grade-query-btn {{loading ? 'disabled' : ''}}" bindtap="onQueryTap" aria-role="button" aria-label="查询成绩">
             <image class="query-icon" src="/images/icons/chart.svg" mode="aspectFit"></image>
-            <text>{{loading ? '提交中...' : '刷新全部成绩'}}</text>
+            <text>{{loading ? '提交中...' : '查询成绩'}}</text>
           </view>
         </view>
 
@@ -153,41 +142,37 @@
         </view>
 
         <view class="snapshot-browser" wx:if="{{snapshotYears.length}}">
-          <view class="snapshot-head">
-            <view>
-              <text class="snapshot-title">{{mode === 'grades' ? '已查询成绩' : '已查询课表'}}</text>
-              <text class="snapshot-sub">按学年和学期查看历史结果</text>
-            </view>
-            <text class="snapshot-current">{{snapshotYears.length}} 个学年</text>
-          </view>
-          <view class="snapshot-year-list" aria-label="学年筛选">
+          <view class="snapshot-filter-row" aria-label="历史结果筛选">
             <picker
-              class="snapshot-year-picker"
+              class="snapshot-filter-picker snapshot-year-picker"
               mode="selector"
               range="{{snapshotYearLabels}}"
               value="{{snapshotYearIndex}}"
               bindchange="onSnapshotYearChange"
             >
-              <view class="snapshot-year-select" aria-role="button" aria-label="选择历史学年">
-                <view class="snapshot-year-select-copy">
-                  <text class="field-label">学年筛选</text>
-                  <text class="snapshot-year-select-value">{{snapshotYearLabels[snapshotYearIndex]}}</text>
+              <view class="snapshot-filter-field" aria-role="button" aria-label="选择历史学年">
+                <view class="snapshot-filter-copy">
+                  <text class="field-label">学年</text>
+                  <text class="snapshot-filter-value">{{snapshotYearLabels[snapshotYearIndex]}}</text>
                 </view>
                 <text class="chevron">⌄</text>
               </view>
             </picker>
-          </view>
-          <view class="snapshot-term-drawer" wx:if="{{snapshotDrawerOpen}}">
-            <view
-              class="snapshot-term-chip {{item.active ? 'active' : ''}}"
-              wx:for="{{snapshotTerms}}"
-              wx:key="value"
-              data-semester="{{item.value}}"
-              bindtap="onSnapshotTermTap"
+            <picker
+              class="snapshot-filter-picker snapshot-semester-picker"
+              mode="selector"
+              range="{{snapshotSemesterLabels}}"
+              value="{{snapshotSemesterIndex}}"
+              bindchange="onSnapshotSemesterChange"
             >
-              <text>{{item.label}}</text>
-              <text class="snapshot-count">{{item.count}}</text>
-            </view>
+              <view class="snapshot-filter-field" aria-role="button" aria-label="选择历史学期">
+                <view class="snapshot-filter-copy">
+                  <text class="field-label">学期</text>
+                  <text class="snapshot-filter-value">{{snapshotSemesterLabels[snapshotSemesterIndex]}}</text>
+                </view>
+                <text class="chevron">⌄</text>
+              </view>
+            </picker>
           </view>
         </view>
 

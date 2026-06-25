@@ -69,8 +69,7 @@ page {
 .mode-option:active,
 .query-btn:active,
 .prompt-action:active,
-.snapshot-year-select:active,
-.snapshot-term-chip:active,
+.snapshot-filter-field:active,
 .captcha-action:active {
   opacity: 0.92;
   transform: scale(0.99);
@@ -360,32 +359,12 @@ page {
   font-weight: 700;
 }
 
-.grade-sync-panel {
-  gap: 16rpx;
+.grade-query-panel {
+  margin-bottom: 16rpx;
 }
 
-.grade-sync-copy {
-  min-height: 74rpx;
-  border-radius: 16rpx;
-  border: 1rpx solid var(--app-border);
-  background: var(--app-surface);
-  color: var(--app-text);
-  padding: 14rpx 18rpx;
-  box-sizing: border-box;
-  display: grid;
-  gap: 6rpx;
-}
-
-.grade-sync-title {
-  font-size: 28rpx;
-  font-weight: 900;
-  line-height: 1.25;
-}
-
-.grade-sync-sub {
-  color: var(--app-text-secondary);
-  font-size: 22rpx;
-  line-height: 1.35;
+.grade-query-btn {
+  min-height: 82rpx;
 }
 
 .year-row {
@@ -580,111 +559,59 @@ page {
 }
 
 .snapshot-browser {
-  padding: 20rpx;
+  padding: 0;
   display: grid;
-  gap: 16rpx;
+  gap: 0;
   margin-bottom: 16rpx;
-  background: linear-gradient(180deg, var(--app-surface-glass), var(--app-surface));
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
-.snapshot-head > view {
+.snapshot-filter-row {
+  display: flex;
+  align-items: stretch;
+  gap: 12rpx;
+}
+
+.snapshot-filter-picker {
+  flex: 1 1 0;
   min-width: 0;
-  display: grid;
-  gap: 6rpx;
-}
-
-.snapshot-current {
-  flex: 0 1 220rpx;
-  max-width: 220rpx;
-  min-width: 0;
-  font-weight: 800;
-  overflow: hidden;
-  text-align: right;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.snapshot-year-list {
-  width: 100%;
-}
-
-.snapshot-year-picker {
   display: block;
-  width: 100%;
 }
 
-.snapshot-year-select {
-  min-height: 62rpx;
-  padding: 10rpx 16rpx;
+.snapshot-filter-field {
+  min-height: 76rpx;
+  padding: 10rpx 14rpx;
   border-radius: 16rpx;
   border: 1rpx solid var(--app-border);
   background: var(--app-surface);
   color: var(--app-text);
+  box-shadow: var(--app-shadow-soft);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14rpx;
+  gap: 8rpx;
   box-sizing: border-box;
 }
 
-.snapshot-year-select-copy {
+.snapshot-filter-copy {
   flex: 1 1 auto;
   min-width: 0;
   display: grid;
   gap: 4rpx;
 }
 
-.snapshot-year-select-value {
+.snapshot-filter-value {
   display: block;
   color: var(--app-text);
-  font-size: 28rpx;
+  font-size: 24rpx;
   font-weight: 900;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.snapshot-term-chip {
-  min-height: 62rpx;
-  padding: 0 16rpx;
-  border-radius: 16rpx;
-  border: 1rpx solid var(--app-border);
-  background: var(--app-surface);
-  color: var(--app-text-secondary);
-  font-size: 24rpx;
-  font-weight: 900;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10rpx;
-  box-sizing: border-box;
-}
-
-.snapshot-term-chip.active {
-  background: var(--app-primary-soft);
-  color: var(--app-primary);
-  border-color: color-mix(in srgb, var(--app-primary) 42%, var(--app-border));
-}
-
-.snapshot-count {
-  min-width: 34rpx;
-  height: 34rpx;
-  border-radius: 999rpx;
-  background: var(--app-fill);
-  color: inherit;
-  font-size: 20rpx;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.snapshot-term-drawer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12rpx;
-  padding: 14rpx;
-  border-radius: 18rpx;
-  background: var(--app-fill);
 }
 
 .prompt-head {
