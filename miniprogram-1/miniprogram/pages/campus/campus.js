@@ -58,7 +58,6 @@ var ACADEMIC_YEAR_PAST_COUNT = 6;
 var ACADEMIC_YEAR_FUTURE_COUNT = 2;
 var ACTIVE_TASK_STATUSES = ['pending', 'running', 'retrying', 'webvpn_refresh_required'];
 var POLL_INTERVAL_MS = 2000;
-var CAMPUS_PREFERRED_MODE_KEY = 'campus_preferred_mode_v1';
 function defaultAcademicYear() {
     var now = new Date();
     var month = now.getMonth() + 1;
@@ -305,19 +304,12 @@ Page({
         captchaSubmitting: false,
     },
     onShow: function () {
-        var _this = this;
         if (!(0, auth_1.checkLogin)()) {
             wx.redirectTo({ url: '/pages/login/login' });
             return;
         }
-        var preferredMode = this.consumePreferredMode();
         try {
-            this.setData(__assign(__assign({}, theme_1.themeManager.getPageData()), (preferredMode ? { mode: preferredMode, errorMsg: '', snapshotDrawerOpen: false } : {})), function () {
-                if (preferredMode) {
-                    _this.syncSnapshotBrowserForMode(preferredMode);
-                    _this.refreshProgressForMode(preferredMode);
-                }
-            });
+            this.setData(__assign({}, theme_1.themeManager.getPageData()));
         }
         catch (e) { }
         this.loadEduStatus(false);
@@ -333,16 +325,6 @@ Page({
     onCycleThemeModeTap: function () {
         var mode = theme_1.themeManager.cycleMode();
         this.setData(__assign(__assign({}, (theme_1.themeManager.getPageData())), { themeMode: mode }));
-    },
-    consumePreferredMode: function () {
-        try {
-            var mode = String(wx.getStorageSync(CAMPUS_PREFERRED_MODE_KEY) || '').trim();
-            wx.removeStorageSync(CAMPUS_PREFERRED_MODE_KEY);
-            if (mode === 'schedule' || mode === 'grades')
-                return mode;
-        }
-        catch (e) { }
-        return '';
     },
     onModeTap: function (e) {
         var _this = this;
@@ -398,8 +380,12 @@ Page({
             wx.showToast({ title: key === 'schedule' || key === 'grades' ? '教务接口暂不可用' : '功能建设中', icon: 'none' });
             return;
         }
-        if (key === 'schedule' || key === 'grades') {
-            (0, nav_1.safeNavigate)("/pages/campus-query/campus-query?mode=".concat(key), 'navigateTo');
+        if (key === 'schedule') {
+            (0, nav_1.safeNavigate)('/pages/campus-schedule/campus-schedule', 'navigateTo');
+            return;
+        }
+        if (key === 'grades') {
+            (0, nav_1.safeNavigate)('/pages/campus-grades/campus-grades', 'navigateTo');
         }
     },
     applyEduStatus: function (data) {
@@ -409,7 +395,6 @@ Page({
         var allGradeResults = (0, campus_content_1.normalizeGradeSnapshots)((data === null || data === void 0 ? void 0 : data.grade_snapshots) || []);
         this.setData(__assign({ statusReady: true, statusFailed: false, eduBound: credential.has_credentials, eduUsernameHint: credential.username_hint, statusMsg: credential.has_credentials ? "\u5DF2\u7ED1\u5B9A\u6559\u52A1\u7CFB\u7EDF\u8D26\u53F7\uFF1A".concat(credential.username_hint || '已保存') : '未绑定教务系统账号', allScheduleResults: allScheduleResults, allGradeResults: allGradeResults }, buildCampusOverviewPatch(allScheduleResults, allGradeResults, credential.has_credentials, false)), function () {
             _this.syncSnapshotBrowserForMode(_this.data.mode);
-            _this.restoreRecentCampusTasks((data === null || data === void 0 ? void 0 : data.recent_tasks) || {});
         });
     },
     loadEduStatus: function () {

@@ -1,0 +1,274 @@
+@import "../campus/campus-query-shared.less";
+
+.schedule-nav-right {
+  gap: 10rpx;
+}
+
+.schedule-control-band {
+  min-height: 116rpx;
+  padding: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-bottom: 14rpx;
+  background: linear-gradient(135deg, var(--app-surface-glass), var(--app-surface));
+}
+
+.schedule-term-summary {
+  min-width: 0;
+  display: grid;
+  gap: 8rpx;
+}
+
+.schedule-term-title {
+  color: var(--app-text);
+  font-size: 31rpx;
+  line-height: 1.2;
+  font-weight: 950;
+}
+
+.schedule-term-sub {
+  color: var(--app-text-secondary);
+  font-size: 23rpx;
+  line-height: 1.35;
+  font-weight: 800;
+}
+
+.schedule-view-toggle {
+  flex: 0 0 auto;
+  min-height: 66rpx;
+  min-width: 142rpx;
+  padding: 0 16rpx;
+  border-radius: 18rpx;
+  border: 1rpx solid var(--app-border);
+  background: var(--app-text);
+  color: var(--app-bg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  font-size: 24rpx;
+  font-weight: 900;
+  box-sizing: border-box;
+}
+
+.schedule-view-icon {
+  width: 30rpx;
+  height: 30rpx;
+  filter: brightness(0) invert(1);
+}
+
+.schedule-week-panel {
+  padding: 16rpx;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.week-picker,
+.week-start-picker {
+  min-width: 0;
+  width: 100%;
+}
+
+.week-trigger {
+  min-height: 78rpx;
+  padding: 10rpx 16rpx;
+  border-radius: 16rpx;
+  background: var(--app-surface);
+  border: 1rpx solid var(--app-border);
+  display: grid;
+  align-content: center;
+  gap: 4rpx;
+  box-sizing: border-box;
+}
+
+.week-label {
+  color: var(--app-text-secondary);
+  font-size: 21rpx;
+  font-weight: 800;
+}
+
+.week-value {
+  min-width: 0;
+  color: var(--app-text);
+  font-size: 27rpx;
+  font-weight: 950;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.schedule-table-shell {
+  padding: 14rpx;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--app-surface-glass), var(--app-surface));
+}
+
+.schedule-table-scroll {
+  width: 100%;
+  white-space: nowrap;
+}
+
+.schedule-table-grid {
+  display: inline-grid;
+  gap: 8rpx;
+  min-width: 100%;
+}
+
+.schedule-table-row {
+  display: grid;
+  grid-template-columns: 92rpx repeat(7, 178rpx);
+  gap: 8rpx;
+}
+
+.schedule-table-cell {
+  min-height: 96rpx;
+  border-radius: 16rpx;
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface);
+  box-sizing: border-box;
+  padding: 10rpx;
+}
+
+.table-head-row .schedule-table-cell {
+  min-height: 58rpx;
+  color: var(--app-text-secondary);
+  font-size: 22rpx;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.section-head-cell {
+  color: var(--app-text-secondary);
+  font-size: 21rpx;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.course-table-cell {
+  display: grid;
+  align-content: start;
+  gap: 8rpx;
+}
+
+.course-table-cell.has-course {
+  background: color-mix(in srgb, var(--app-primary-soft) 54%, var(--app-surface));
+  border-color: var(--app-border-strong);
+}
+
+.table-course {
+  min-width: 0;
+  display: grid;
+  gap: 4rpx;
+}
+
+.table-course-name {
+  color: var(--app-text);
+  font-size: 22rpx;
+  line-height: 1.25;
+  font-weight: 950;
+  white-space: normal;
+}
+
+.table-course-detail {
+  color: var(--app-text-secondary);
+  font-size: 20rpx;
+  line-height: 1.25;
+  white-space: normal;
+}
+
+.schedule-term-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 48;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.sheet-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.46);
+}
+
+.schedule-sheet-panel {
+  width: 100%;
+  padding: 28rpx 24rpx calc(28rpx + env(safe-area-inset-bottom));
+  border-radius: 28rpx 28rpx 0 0;
+  background: var(--app-surface);
+  box-shadow: 0 -18rpx 50rpx rgba(15, 23, 42, 0.18);
+  box-sizing: border-box;
+  display: grid;
+  gap: 18rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.sheet-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.sheet-title {
+  color: var(--app-text);
+  font-size: 31rpx;
+  font-weight: 950;
+}
+
+.sheet-sub {
+  color: var(--app-text-secondary);
+  font-size: 23rpx;
+  font-weight: 800;
+}
+
+.sheet-picker-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+  gap: 12rpx;
+}
+
+.sheet-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14rpx;
+}
+
+.sheet-action {
+  min-height: 76rpx;
+  border-radius: 18rpx;
+  border: 1rpx solid var(--app-border);
+  font-size: 26rpx;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.sheet-action.ghost {
+  background: var(--app-surface);
+  color: var(--app-text);
+}
+
+.sheet-action.primary {
+  background: var(--app-text);
+  color: var(--app-bg);
+}
+
+.schedule-view-toggle:active,
+.week-trigger:active,
+.sheet-action:active {
+  opacity: 0.92;
+  transform: scale(0.99);
+}

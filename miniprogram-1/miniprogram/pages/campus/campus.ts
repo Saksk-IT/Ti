@@ -22,7 +22,6 @@ const ACADEMIC_YEAR_PAST_COUNT = 6;
 const ACADEMIC_YEAR_FUTURE_COUNT = 2;
 const ACTIVE_TASK_STATUSES = ['pending', 'running', 'retrying', 'webvpn_refresh_required'];
 const POLL_INTERVAL_MS = 2000;
-const CAMPUS_PREFERRED_MODE_KEY = 'campus_preferred_mode_v1';
 
 interface AcademicYearOption {
   label: string;
@@ -299,17 +298,8 @@ Page({
       wx.redirectTo({ url: '/pages/login/login' });
       return;
     }
-    const preferredMode = this.consumePreferredMode();
     try {
-      this.setData({
-        ...themeManager.getPageData(),
-        ...(preferredMode ? { mode: preferredMode, errorMsg: '', snapshotDrawerOpen: false } : {}),
-      }, () => {
-        if (preferredMode) {
-          this.syncSnapshotBrowserForMode(preferredMode);
-          this.refreshProgressForMode(preferredMode);
-        }
-      });
+      this.setData({ ...themeManager.getPageData() });
     } catch (e) {}
     this.loadEduStatus(false);
   },
@@ -327,15 +317,6 @@ Page({
   onCycleThemeModeTap() {
     const mode = themeManager.cycleMode() as ThemeMode;
     this.setData({ ...(themeManager.getPageData()), themeMode: mode });
-  },
-
-  consumePreferredMode(): CampusMode | '' {
-    try {
-      const mode = String(wx.getStorageSync(CAMPUS_PREFERRED_MODE_KEY) || '').trim();
-      wx.removeStorageSync(CAMPUS_PREFERRED_MODE_KEY);
-      if (mode === 'schedule' || mode === 'grades') return mode;
-    } catch (e) {}
-    return '';
   },
 
   onModeTap(e: any) {
@@ -390,8 +371,12 @@ Page({
       wx.showToast({ title: key === 'schedule' || key === 'grades' ? '教务接口暂不可用' : '功能建设中', icon: 'none' });
       return;
     }
-    if (key === 'schedule' || key === 'grades') {
-      safeNavigate(`/pages/campus-query/campus-query?mode=${key}`, 'navigateTo');
+    if (key === 'schedule') {
+      safeNavigate('/pages/campus-schedule/campus-schedule', 'navigateTo');
+      return;
+    }
+    if (key === 'grades') {
+      safeNavigate('/pages/campus-grades/campus-grades', 'navigateTo');
     }
   },
 
@@ -410,7 +395,6 @@ Page({
       ...buildCampusOverviewPatch(allScheduleResults, allGradeResults, credential.has_credentials, false),
     }, () => {
       this.syncSnapshotBrowserForMode(this.data.mode as CampusMode);
-      this.restoreRecentCampusTasks(data?.recent_tasks || {});
     });
   },
 

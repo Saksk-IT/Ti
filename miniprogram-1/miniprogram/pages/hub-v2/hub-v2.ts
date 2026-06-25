@@ -609,8 +609,12 @@ Page({
   },
 
   openCampus(mode?: 'schedule' | 'grades') {
-    if (mode) {
-      safeNavigate(`/pages/campus-query/campus-query?mode=${mode}`, 'navigateTo');
+    if (mode === 'schedule') {
+      safeNavigate('/pages/campus-schedule/campus-schedule', 'navigateTo');
+      return;
+    }
+    if (mode === 'grades') {
+      safeNavigate('/pages/campus-grades/campus-grades', 'navigateTo');
       return;
     }
     safeNavigate('/pages/campus/campus', 'switchTab');

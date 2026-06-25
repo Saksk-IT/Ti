@@ -503,74 +503,70 @@ def test_campus_year_filters_use_academic_year_range_labels(auth_client):
         assert "结束学年" not in html
     assert "2025~2026" in schedule_html
 
+    schedule_dir = Path("miniprogram-1/miniprogram/pages/campus-schedule")
+    grades_dir = Path("miniprogram-1/miniprogram/pages/campus-grades")
     campus_dir = Path("miniprogram-1/miniprogram/pages/campus")
-    wxml = (campus_dir / "campus.wxml").read_text(encoding="utf-8")
-    less = (campus_dir / "campus.less").read_text(encoding="utf-8")
-    ts = (campus_dir / "campus.ts").read_text(encoding="utf-8")
+    schedule_wxml = (schedule_dir / "campus-schedule.wxml").read_text(encoding="utf-8")
+    grades_wxml = (grades_dir / "campus-grades.wxml").read_text(encoding="utf-8")
+    schedule_less = (schedule_dir / "campus-schedule.less").read_text(encoding="utf-8")
+    shared_less = (campus_dir / "campus-query-shared.less").read_text(encoding="utf-8")
+    core_ts = (campus_dir / "campus-query-core.ts").read_text(encoding="utf-8")
 
-    assert 'wx:if="{{mode === \'schedule\'}}"' in wxml
-    assert 'wx:elif="{{mode === \'grades\'}}"' in wxml
-    assert "查询成绩" in wxml
-    assert "刷新全部成绩" not in wxml
-    assert "按学年学期归档" not in wxml
-    assert wxml.count('range="{{academicYearLabels}}"') == 1
-    assert wxml.index('class="year-picker"') < wxml.index('class="semester-picker"')
-    assert 'class="field year-field"' in wxml
-    assert 'class="field semester-field"' in wxml
-    assert 'bindchange="onAcademicYearChange"' in wxml
-    assert 'bindchange="onSemesterChange"' in wxml
-    assert 'class="term-selector-scroll year-selector-scroll"' not in wxml
-    assert 'class="term-selector-scroll semester-selector-scroll"' not in wxml
-    assert 'bindtap="onAcademicYearTap"' not in wxml
-    assert 'bindtap="onSemesterTap"' not in wxml
-    assert '<scroll-view class="snapshot-year-list"' not in wxml
-    assert 'class="snapshot-filter-row"' not in wxml
-    assert "snapshot-year-picker" not in wxml
-    assert "snapshot-semester-picker" not in wxml
-    assert 'class="snapshot-selector-scroll snapshot-term-list"' in wxml
-    assert 'class="snapshot-chip snapshot-term-chip {{item.active ? \'active\' : \'\'}}"' in wxml
-    assert 'wx:for="{{snapshotTerms}}"' in wxml
-    assert 'snapshotYearLabels' not in wxml
-    assert 'snapshotSemesterLabels' not in wxml
-    assert 'snapshot-year-chip' not in wxml
-    assert 'bindtap="onSnapshotYearTap"' not in wxml
-    assert 'bindtap="onSnapshotTermTap"' in wxml
-    assert "snapshot-term-drawer" not in wxml
-    assert "已查询成绩" not in wxml
-    assert 'range="{{academicYearLabels}}"' in wxml
-    assert "onAcademicYearChange" in wxml
-    assert "onSemesterChange" in wxml
-    assert "onSnapshotYearChange" not in wxml
-    assert "onSnapshotSemesterChange" not in wxml
-    assert "onStartYearChange" not in wxml
-    assert "onEndYearChange" not in wxml
-    assert "onStartYearInput" not in wxml
-    assert "onEndYearInput" not in wxml
-    assert "开始学年" not in wxml
-    assert "结束学年" not in wxml
-    assert "academicYearIndex" in ts
-    assert "academicYear:" in ts
-    assert "startYearIndex" not in ts
-    assert "endYearIndex" not in ts
-    assert "snapshotTermIndex" in ts
-    assert "snapshotTermLabels" in ts
-    assert "snapshotSelectedTermKey" in ts
-    assert "buildSnapshotTermOptions" in ts
-    assert "onAcademicYearTap" not in ts
-    assert "onSemesterTap" not in ts
-    assert "onAcademicYearChange" in ts
-    assert "onSemesterChange" in ts
-    assert "onSnapshotYearChange" not in ts
-    assert "onSnapshotSemesterChange" not in ts
-    assert "onSnapshotYearTap" not in ts
-    assert "onSnapshotTermTap" in ts
-    assert "formatAcademicYearLabel" in ts
-    assert "~" in ts
-    assert ".year-row {\n  display: flex;\n  gap: 12rpx;" in less
-    assert ".semester-picker {\n  min-width: 0;" in less
-    assert ".snapshot-selector-scroll {\n  width: 100%;" in less
-    assert ".snapshot-chip.active {\n  background: var(--app-text);" in less
-    assert ".snapshot-browser {\n  padding: 0;" in less
+    assert "查询成绩" in grades_wxml
+    assert "刷新全部成绩" not in grades_wxml
+    assert "按学年学期归档" not in grades_wxml
+    assert 'class="term-selector-scroll year-selector-scroll"' in grades_wxml
+    assert 'class="term-selector-scroll semester-selector-scroll"' in grades_wxml
+    assert 'bindtap="onAcademicYearChipTap"' in grades_wxml
+    assert 'bindtap="onSemesterChipTap"' in grades_wxml
+    assert 'class="floating-query-bubble {{loading ? \'disabled\' : \'\'}}"' in grades_wxml
+    assert "查询课表" in schedule_wxml
+    assert schedule_wxml.count('range="{{academicYearLabels}}"') == 1
+    assert schedule_wxml.index('class="year-picker"') < schedule_wxml.index('class="semester-picker"')
+    assert 'bindchange="onAcademicYearChange"' in schedule_wxml
+    assert 'bindchange="onSemesterChange"' in schedule_wxml
+    assert 'bindtap="onOpenScheduleTermSheetTap"' in schedule_wxml
+    assert 'bindtap="onOpenScheduleQuerySheetTap"' not in schedule_wxml
+    assert 'class="schedule-term-sheet"' in schedule_wxml
+    assert 'mode="date" value="{{weekStartDate}}"' in schedule_wxml
+    assert 'class="schedule-table-grid"' in schedule_wxml
+    assert 'bindtap="onScheduleViewToggleTap"' in schedule_wxml
+    assert 'bindtap="onAcademicYearTap"' not in schedule_wxml + grades_wxml + core_ts
+    assert 'bindtap="onSemesterTap"' not in schedule_wxml + grades_wxml + core_ts
+    assert 'bindtap="onSemesterTap"' not in core_ts
+    assert "snapshot-year-picker" not in schedule_wxml
+    assert "snapshot-semester-picker" not in schedule_wxml
+    assert 'class="snapshot-selector-scroll snapshot-term-list"' in schedule_wxml
+    assert 'class="snapshot-selector-scroll snapshot-term-list"' in grades_wxml
+    assert 'wx:for="{{snapshotTerms}}"' in schedule_wxml
+    assert 'wx:for="{{snapshotTerms}}"' in grades_wxml
+    assert "snapshotYearLabels" not in core_ts
+    assert "snapshotSemesterLabels" not in core_ts
+    assert "snapshot-year-chip" not in schedule_wxml
+    assert 'bindtap="onSnapshotYearTap"' not in core_ts
+    assert 'bindtap="onSnapshotTermTap"' in schedule_wxml
+    assert 'bindtap="onSnapshotTermTap"' in grades_wxml
+    assert "snapshot-term-drawer" not in schedule_wxml
+    assert "已查询成绩" not in grades_wxml
+    assert "academicYearIndex" in core_ts
+    assert "academicYear:" in core_ts
+    assert "startYearIndex" not in core_ts
+    assert "endYearIndex" not in core_ts
+    assert "snapshotTermIndex" in core_ts
+    assert "snapshotTermLabels" in core_ts
+    assert "snapshotSelectedTermKey" in core_ts
+    assert "buildSnapshotTermOptions" in core_ts
+    assert "onAcademicYearChange" in core_ts
+    assert "onSemesterChange" in core_ts
+    assert "onSnapshotYearChange" not in core_ts
+    assert "onSnapshotSemesterChange" not in core_ts
+    assert "formatAcademicYearLabel" in core_ts
+    assert "~" in core_ts
+    assert ".sheet-picker-row" in schedule_less
+    assert ".semester-picker {\n  min-width: 0;" in (campus_dir / "campus.less").read_text(encoding="utf-8")
+    assert ".term-selector-scroll" in shared_less
+    assert ".snapshot-selector-scroll {\n  width: 100%;" in (campus_dir / "campus.less").read_text(encoding="utf-8")
+    assert ".snapshot-chip.active {\n  background: var(--app-text);" in (campus_dir / "campus.less").read_text(encoding="utf-8")
 
 
 def test_miniprogram_account_bindings_page_exposes_edu_credential_binding():
@@ -590,19 +586,28 @@ def test_miniprogram_account_bindings_page_exposes_edu_credential_binding():
 def test_miniprogram_campus_tab_exposes_schedule_and_grade_queries():
     app_config = json.loads(Path("miniprogram-1/miniprogram/app.json").read_text(encoding="utf-8"))
     campus_dir = Path("miniprogram-1/miniprogram/pages/campus")
-    query_dir = Path("miniprogram-1/miniprogram/pages/campus-query")
+    schedule_dir = Path("miniprogram-1/miniprogram/pages/campus-schedule")
+    grades_dir = Path("miniprogram-1/miniprogram/pages/campus-grades")
     feature_dir = Path("miniprogram-1/miniprogram/pages/campus-feature")
     hub_ts = Path("miniprogram-1/miniprogram/pages/hub-v2/hub-v2.ts").read_text(encoding="utf-8")
     wxml = (campus_dir / "campus.wxml").read_text(encoding="utf-8")
     ts = (campus_dir / "campus.ts").read_text(encoding="utf-8")
-    query_ts = (query_dir / "campus-query.ts").read_text(encoding="utf-8")
+    core_ts = (campus_dir / "campus-query-core.ts").read_text(encoding="utf-8")
+    schedule_ts = (schedule_dir / "campus-schedule.ts").read_text(encoding="utf-8")
+    grades_ts = (grades_dir / "campus-grades.ts").read_text(encoding="utf-8")
+    schedule_wxml = (schedule_dir / "campus-schedule.wxml").read_text(encoding="utf-8")
+    grades_wxml = (grades_dir / "campus-grades.wxml").read_text(encoding="utf-8")
     content_ts = (campus_dir / "campus-content.ts").read_text(encoding="utf-8")
     api = Path("miniprogram-1/miniprogram/utils/api-endpoints.ts").read_text(encoding="utf-8")
 
     assert "pages/campus/campus" in app_config["pages"]
-    assert "pages/campus-query/campus-query" in app_config["pages"]
+    assert "pages/campus-schedule/campus-schedule" in app_config["pages"]
+    assert "pages/campus-grades/campus-grades" in app_config["pages"]
+    assert "pages/campus-query/campus-query" not in app_config["pages"]
     assert "pages/campus-feature/campus-feature" in app_config["pages"]
-    assert "/pages/campus-query/campus-query?mode=${mode}" in hub_ts
+    assert "/pages/campus-schedule/campus-schedule" in hub_ts
+    assert "/pages/campus-grades/campus-grades" in hub_ts
+    assert "/pages/campus-query/campus-query" not in hub_ts
     assert "campus_preferred_mode_v1" not in hub_ts
     campus_tab = next(
         item for item in app_config["tabBar"]["list"]
@@ -615,27 +620,36 @@ def test_miniprogram_campus_tab_exposes_schedule_and_grade_queries():
     assert Path("miniprogram-1/miniprogram/images/tabbar/campus-active.png").exists()
     assert Path("miniprogram-1/miniprogram/images/icons/campus.svg").exists()
 
-    assert "查询课表" in wxml
-    assert "查询成绩" in wxml
+    assert "课表查询" in wxml
+    assert "成绩查询" in wxml
     assert "教务系统账号" in wxml
     assert "校园功能" in wxml
     assert "todayCourses.title" in wxml
     assert "latestGradeSummary.title" in wxml
     assert "campus-action-grid" in wxml
     assert "onCampusActionTap" in wxml
-    assert 'wx:if="{{!isQueryPage}}"' in wxml
-    assert 'wx:if="{{isQueryPage}}"' in wxml
+    assert 'wx:if="{{!isQueryPage}}"' not in wxml
+    assert 'wx:if="{{isQueryPage}}"' not in wxml
+    assert "campus-query-section" not in wxml
     assert "/images/icons/campus.svg" in wxml
-    assert "onGoEduBindingTap" in wxml
-    assert "statusReady && !statusFailed && !eduBound" in wxml
+    assert "onGoEduBindingTap" in ts
+    assert "hero-action {{statusFailed || !eduBound ? 'warn' : ''}}" in wxml
     assert "onHeroActionTap" in wxml
-    assert "/pages/campus-query/campus-query?mode=" in ts
+    assert "/pages/campus-schedule/campus-schedule" in ts
+    assert "/pages/campus-grades/campus-grades" in ts
+    assert "/pages/campus-query/campus-query" not in ts
     assert "/pages/campus-feature/campus-feature?feature=" in ts
     assert 'isQueryPage: false' in ts
-    assert 'isQueryPage: true' in query_ts
-    assert "onLoad(options" in query_ts
-    assert "api.queryEduSchedule" in query_ts
-    assert "api.queryEduGrades" in query_ts
+    assert "createCampusQueryPage" in schedule_ts
+    assert "mode: 'schedule'" in schedule_ts
+    assert "createCampusQueryPage" in grades_ts
+    assert "mode: 'grades'" in grades_ts
+    assert "api.queryEduSchedule" in core_ts
+    assert "api.queryEduGrades" in core_ts
+    assert "floating-query-bubble" in schedule_wxml
+    assert "floating-query-bubble" in grades_wxml
+    assert "schedule-term-sheet" in schedule_wxml
+    assert "term-selector-scroll year-selector-scroll" in grades_wxml
     assert "buildTodayScheduleSummary" in ts
     assert "buildLatestGradeSummary" in ts
     assert "buildCampusActions" in ts
@@ -647,7 +661,6 @@ def test_miniprogram_campus_tab_exposes_schedule_and_grade_queries():
     assert "最近一学期成绩" in content_ts
     assert "一键教评" in content_ts
     assert "buildCampusActions" in content_ts
-    assert (query_dir / "campus-query.wxml").read_text(encoding="utf-8").strip() == '<include src="../campus/campus.wxml" />'
     assert "一键教评" in (feature_dir / "campus-feature.ts").read_text(encoding="utf-8")
     assert "queryEduSchedule" in api
     assert "request('/edu-schedule/query'" in api
@@ -657,10 +670,13 @@ def test_miniprogram_campus_tab_exposes_schedule_and_grade_queries():
 
 def test_miniprogram_campus_page_matches_background_query_flow():
     campus_dir = Path("miniprogram-1/miniprogram/pages/campus")
-    query_dir = Path("miniprogram-1/miniprogram/pages/campus-query")
-    wxml = (campus_dir / "campus.wxml").read_text(encoding="utf-8")
-    ts = (query_dir / "campus-query.ts").read_text(encoding="utf-8")
-    js = (query_dir / "campus-query.js").read_text(encoding="utf-8")
+    schedule_dir = Path("miniprogram-1/miniprogram/pages/campus-schedule")
+    grades_dir = Path("miniprogram-1/miniprogram/pages/campus-grades")
+    schedule_wxml = (schedule_dir / "campus-schedule.wxml").read_text(encoding="utf-8")
+    grades_wxml = (grades_dir / "campus-grades.wxml").read_text(encoding="utf-8")
+    wxml = schedule_wxml + grades_wxml
+    ts = (campus_dir / "campus-query-core.ts").read_text(encoding="utf-8")
+    js = (campus_dir / "campus-query-core.js").read_text(encoding="utf-8")
     api_ts = Path("miniprogram-1/miniprogram/utils/api-endpoints.ts").read_text(encoding="utf-8")
     api_js = Path("miniprogram-1/miniprogram/utils/api-endpoints.js").read_text(encoding="utf-8")
 
@@ -675,6 +691,12 @@ def test_miniprogram_campus_page_matches_background_query_flow():
     assert '<scroll-view class="snapshot-year-list"' not in wxml
     assert "campus-captcha-dialog" in wxml
     assert "onCaptchaSubmitTap" in wxml
+    assert "schedule-table-grid" in schedule_wxml
+    assert "scheduleViewMode" in ts
+    assert "weekStartDate" in ts
+    assert "filterScheduleRowsByWeek" in ts
+    assert "buildScheduleTable" in ts
+    assert "scheduleTermSheetVisible" in ts
     assert "发起本次查询会停止上次的" in ts
     assert "confirmReplacingActiveTask" in ts
     assert "restoreRecentCampusTasks" in ts

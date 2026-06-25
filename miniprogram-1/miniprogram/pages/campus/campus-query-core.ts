@@ -3,26 +3,28 @@ import { checkLogin } from '../../utils/auth';
 import { safeNavigate } from '../../utils/nav';
 import { themeManager, ThemeMode } from '../../utils/theme';
 import {
-  buildCampusActions,
-  buildCampusHighlights,
   buildCampusTerms,
-  buildLatestGradeSummary,
-  buildTodayScheduleSummary,
   campusFriendlyError,
   CampusMode,
   CampusSemesterValue,
   normalizeGradeSnapshots,
   normalizeScheduleSnapshots,
   normalizeTermResults,
-} from '../campus/campus-content';
+} from './campus-content';
 
-const SEMESTER_LABELS = ['第一、二学期', '第一学期', '第二学期'];
-const SEMESTER_VALUES: CampusSemesterValue[] = ['all', '3', '12'];
+const SEMESTER_LABELS = ['第一学期', '第二学期'];
+const SEMESTER_VALUES: CampusSemesterValue[] = ['3', '12'];
 const ACADEMIC_YEAR_PAST_COUNT = 6;
 const ACADEMIC_YEAR_FUTURE_COUNT = 2;
 const ACTIVE_TASK_STATUSES = ['pending', 'running', 'retrying', 'webvpn_refresh_required'];
 const POLL_INTERVAL_MS = 2000;
-const CAMPUS_PREFERRED_MODE_KEY = 'campus_preferred_mode_v1';
+const WEEK_COUNT = 25;
+const SCHEDULE_VIEW_STORAGE_KEY = 'campus_schedule_view_mode_v1';
+const SCHEDULE_START_DATE_STORAGE_KEY = 'campus_schedule_start_date_v1';
+const SCHEDULE_VIEW_MODES = {
+  list: '列表',
+  table: '课程表',
+};
 
 interface AcademicYearOption {
   label: string;
@@ -44,10 +46,33 @@ interface CampusProgressData {
   queryProgressMeta: string;
 }
 
+interface CampusQueryPageConfig {
+  mode: CampusMode;
+  pageTitle: string;
+}
+
+interface ScheduleTableCell {
+  key: string;
+  day: string;
+  courses: any[];
+  hasCourses: boolean;
+}
+
+interface ScheduleTableRow {
+  key: string;
+  section: string;
+  cells: ScheduleTableCell[];
+}
+
 function defaultAcademicYear(): number {
   const now = new Date();
   const month = now.getMonth() + 1;
   return month >= 9 ? now.getFullYear() : now.getFullYear() - 1;
+}
+
+function defaultSemesterIndex(): number {
+  const month = new Date().getMonth() + 1;
+  return month >= 2 && month <= 8 ? 1 : 0;
 }
 
 function formatAcademicYearLabel(year: number): string {
@@ -70,6 +95,22 @@ function clampAcademicYearIndex(value: unknown, fallback: number): number {
 
 function academicYearValueAt(index: number): string {
   return ACADEMIC_YEAR_OPTIONS[index]?.value || String(defaultYear);
+}
+
+function academicYearIndexForValue(value: unknown): number {
+  const year = String(value || '').trim();
+  const index = ACADEMIC_YEAR_OPTIONS.findIndex((item) => item.value === year);
+  return index >= 0 ? index : DEFAULT_ACADEMIC_YEAR_INDEX;
+}
+
+function semesterIndexForValue(value: unknown): number {
+  const semester = String(value || '').trim();
+  const index = SEMESTER_VALUES.findIndex((item) => item === semester);
+  return index >= 0 ? index : defaultSemesterIndex();
+}
+
+function selectedSemesterValue(index: number): CampusSemesterValue {
+  return SEMESTER_VALUES[Math.max(0, Math.min(index, SEMESTER_VALUES.length - 1))] || '3';
 }
 
 function normalizeCredential(credential: any): { has_credentials: boolean; username_hint: string } {
@@ -136,17 +177,15 @@ function compareTermRows(a: any, b: any): number {
 }
 
 function mergeCampusRows(existing: any[], incoming: any[]): any[] {
-  const next = (Array.isArray(existing) ? existing : []).slice();
+  const byKey: { [key: string]: any } = {};
+  (Array.isArray(existing) ? existing : []).forEach((row, index) => {
+    byKey[rowKey(row, index)] = { ...row };
+  });
   (Array.isArray(incoming) ? incoming : []).forEach((row, index) => {
     const key = rowKey(row, index);
-    const found = next.findIndex((item, itemIndex) => rowKey(item, itemIndex) === key);
-    if (found >= 0) {
-      next.splice(found, 1, { ...next[found], ...row });
-    } else {
-      next.push({ ...row });
-    }
+    byKey[key] = byKey[key] ? { ...byKey[key], ...row } : { ...row };
   });
-  return next.sort(compareTermRows);
+  return Object.keys(byKey).map((key) => byKey[key]).sort(compareTermRows);
 }
 
 function rowTermValue(row: any): string {
@@ -204,14 +243,175 @@ function formatTaskTerms(terms: any[]): string {
 }
 
 function formatTaskMeta(mode: CampusMode, terms: any[]): string {
-  if (mode === 'grades') return '全部成绩';
   return formatTaskTerms(terms);
 }
 
-function buildGradeQueryTerms(yearInput: unknown): Array<{ xnm: string; xqm: string }> {
+function buildSelectedTerm(yearInput: unknown, semesterIndexInput: unknown): Array<{ xnm: string; xqm: string }> {
   const year = Number(yearInput) || defaultYear;
   const xnm = Number.isInteger(year) && year >= 2000 && year <= 2100 ? year : defaultYear;
-  return [{ xnm: String(xnm), xqm: '3' }];
+  const semester = selectedSemesterValue(Number(semesterIndexInput) || 0);
+  return buildCampusTerms(String(xnm), String(xnm), semester);
+}
+
+function termKeyFromSelection(yearInput: unknown, semesterIndexInput: unknown): string {
+  const year = String(yearInput || '').trim();
+  const semester = selectedSemesterValue(Number(semesterIndexInput) || 0);
+  return year && semester ? `${year}-${semester}` : '';
+}
+
+function termLabelFromSelection(yearInput: unknown, semesterIndexInput: unknown): string {
+  const year = Number(yearInput) || defaultYear;
+  return `${formatAcademicYearLabel(year)} ${xqmLabel(selectedSemesterValue(Number(semesterIndexInput) || 0))}`;
+}
+
+function termSelectionPatchFromKey(termKey: string): any {
+  const [year, semester] = String(termKey || '').split('-');
+  if (!year || !semester) return {};
+  const academicYearIndex = academicYearIndexForValue(year);
+  const semesterIndex = semesterIndexForValue(semester);
+  const academicYear = academicYearValueAt(academicYearIndex);
+  return {
+    academicYearIndex,
+    academicYear,
+    semesterIndex,
+    selectedTermLabel: termLabelFromSelection(academicYear, semesterIndex),
+  };
+}
+
+function pad2(value: number): string {
+  return value < 10 ? `0${value}` : String(value);
+}
+
+function formatDateValue(date: Date): string {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+}
+
+function parseDateValue(value: unknown): Date {
+  const text = String(value || '').trim();
+  const matched = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+  if (!matched) return new Date(defaultYear, 8, 1);
+  const date = new Date(Number(matched[1]), Number(matched[2]) - 1, Number(matched[3]));
+  return Number.isNaN(date.getTime()) ? new Date(defaultYear, 8, 1) : date;
+}
+
+function addDays(date: Date, days: number): Date {
+  const next = new Date(date.getTime());
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function displayDate(date: Date): string {
+  return `${date.getMonth() + 1}月${date.getDate()}日`;
+}
+
+function defaultScheduleStartDate(yearInput: unknown): string {
+  const year = Number(yearInput) || defaultYear;
+  return formatDateValue(new Date(year, 8, 1));
+}
+
+function readStoredScheduleStartDate(yearInput: unknown): string {
+  try {
+    const stored = String(wx.getStorageSync(SCHEDULE_START_DATE_STORAGE_KEY) || '').trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(stored)) return stored;
+  } catch (e) {}
+  return defaultScheduleStartDate(yearInput);
+}
+
+function readStoredScheduleViewMode(): 'list' | 'table' {
+  try {
+    const mode = String(wx.getStorageSync(SCHEDULE_VIEW_STORAGE_KEY) || '').trim();
+    if (mode === 'table') return 'table';
+  } catch (e) {}
+  return 'list';
+}
+
+function buildWeekLabels(): string[] {
+  const labels: string[] = [];
+  for (let week = 1; week <= WEEK_COUNT; week += 1) labels.push(`第 ${week} 周`);
+  return labels;
+}
+
+function weekDateRangeText(startDateValue: unknown, weekInput: unknown): string {
+  const week = Math.max(1, Math.min(Number(weekInput) || 1, WEEK_COUNT));
+  const start = addDays(parseDateValue(startDateValue), (week - 1) * 7);
+  const end = addDays(start, 6);
+  return `${displayDate(start)} - ${displayDate(end)}`;
+}
+
+function parseCourseWeeks(value: unknown): { start: number; end: number; oddEven: '' | 'odd' | 'even' }[] {
+  const text = String(value || '').trim();
+  if (!text) return [];
+  const normalized = text
+    .replace(/[，、]/g, ',')
+    .replace(/第/g, '')
+    .replace(/周/g, '');
+  const oddEven = /单/.test(text) ? 'odd' : (/双/.test(text) ? 'even' : '');
+  const ranges: { start: number; end: number; oddEven: '' | 'odd' | 'even' }[] = [];
+  normalized.split(',').forEach((part) => {
+    const matched = /(\d+)(?:\s*[-~至]\s*(\d+))?/.exec(part);
+    if (!matched) return;
+    const start = Number(matched[1]);
+    const end = Number(matched[2] || matched[1]);
+    if (!Number.isFinite(start) || !Number.isFinite(end)) return;
+    ranges.push({ start: Math.min(start, end), end: Math.max(start, end), oddEven });
+  });
+  return ranges;
+}
+
+function courseMatchesWeek(course: any, weekInput: unknown): boolean {
+  const week = Math.max(1, Math.min(Number(weekInput) || 1, WEEK_COUNT));
+  const ranges = parseCourseWeeks(course?.weeks);
+  if (!ranges.length) return true;
+  return ranges.some((range) => {
+    if (week < range.start || week > range.end) return false;
+    if (range.oddEven === 'odd') return week % 2 === 1;
+    if (range.oddEven === 'even') return week % 2 === 0;
+    return true;
+  });
+}
+
+function filterScheduleRowsByWeek(rows: any[], weekInput: unknown): any[] {
+  return (Array.isArray(rows) ? rows : []).map((term) => {
+    const weekRows = (Array.isArray(term.weekRows) ? term.weekRows : []).map((dayRow: any) => ({
+      ...dayRow,
+      sections: (Array.isArray(dayRow.sections) ? dayRow.sections : []).map((sectionRow: any) => ({
+        ...sectionRow,
+        courses: (Array.isArray(sectionRow.courses) ? sectionRow.courses : []).filter((course: any) => courseMatchesWeek(course, weekInput)),
+      })).filter((sectionRow: any) => Array.isArray(sectionRow.courses) && sectionRow.courses.length),
+    })).filter((dayRow: any) => Array.isArray(dayRow.sections) && dayRow.sections.length);
+    const practiceCourses = (Array.isArray(term.practice_courses) ? term.practice_courses : []).filter((course: any) => courseMatchesWeek(course, weekInput));
+    return { ...term, weekRows, practice_courses: practiceCourses };
+  }).filter((term) => (term.weekRows || []).length || (term.practice_courses || []).length);
+}
+
+function buildScheduleTable(rows: any[], weekInput: unknown): { days: string[]; tableRows: ScheduleTableRow[] } {
+  const firstTerm = (Array.isArray(rows) ? rows : [])[0] || {};
+  const days = (Array.isArray(firstTerm.weekRows) ? firstTerm.weekRows : []).map((dayRow: any) => String(dayRow.day || '').trim()).filter(Boolean);
+  const sectionMap: { [key: string]: { section: string; dayCourses: { [day: string]: any[] } } } = {};
+  (firstTerm.weekRows || []).forEach((dayRow: any) => {
+    const day = String(dayRow.day || '').trim();
+    (dayRow.sections || []).forEach((sectionRow: any) => {
+      const section = String(sectionRow.section || '').trim();
+      if (!section) return;
+      const current = sectionMap[section] || { section, dayCourses: {} };
+      sectionMap[section] = {
+        section,
+        dayCourses: {
+          ...current.dayCourses,
+          [day]: (Array.isArray(sectionRow.courses) ? sectionRow.courses : []).filter((course: any) => courseMatchesWeek(course, weekInput)),
+        },
+      };
+    });
+  });
+  const tableRows = Object.keys(sectionMap).map((section) => ({
+    key: section,
+    section,
+    cells: days.map((day) => {
+      const courses = sectionMap[section].dayCourses[day] || [];
+      return { key: `${section}-${day}`, day, courses, hasCourses: courses.length > 0 };
+    }),
+  }));
+  return { days, tableRows };
 }
 
 function taskRowsSource(task: any, data: any): any {
@@ -234,29 +434,25 @@ function emptyProgress(): CampusProgressData {
 const defaultYear = defaultAcademicYear();
 const ACADEMIC_YEAR_OPTIONS = buildAcademicYearOptions(defaultYear);
 const DEFAULT_ACADEMIC_YEAR_INDEX = ACADEMIC_YEAR_PAST_COUNT;
-const DEFAULT_TODAY_SUMMARY = buildTodayScheduleSummary([]);
-const DEFAULT_GRADE_SUMMARY = buildLatestGradeSummary([]);
+const DEFAULT_SEMESTER_INDEX = defaultSemesterIndex();
+const WEEK_LABELS = buildWeekLabels();
 
-function buildCampusOverviewPatch(scheduleRows: any[], gradeRows: any[], eduBound: boolean, statusFailed: boolean): any {
-  const todayCourses = buildTodayScheduleSummary(scheduleRows);
-  const latestGradeSummary = buildLatestGradeSummary(gradeRows);
+export function createCampusQueryPage(config: CampusQueryPageConfig): any {
+  const fixedMode = config.mode;
+  const fixedPageTitle = config.pageTitle;
+  const defaultAcademicYearValue = academicYearValueAt(DEFAULT_ACADEMIC_YEAR_INDEX);
+  const defaultTermLabel = termLabelFromSelection(defaultAcademicYearValue, DEFAULT_SEMESTER_INDEX);
+
   return {
-    todayCourses,
-    latestGradeSummary,
-    campusActions: buildCampusActions(eduBound, statusFailed),
-    campusHighlights: buildCampusHighlights(todayCourses, latestGradeSummary, eduBound),
-  };
-}
-
-Page({
   data: {
-    mode: 'schedule' as CampusMode,
-    modeLabels: ['查询课表', '查询成绩'],
+    mode: fixedMode,
+    queryPageKind: fixedMode,
     academicYearLabels: ACADEMIC_YEAR_OPTIONS.map((item) => item.label),
     academicYearIndex: DEFAULT_ACADEMIC_YEAR_INDEX,
     semesterLabels: SEMESTER_LABELS,
-    semesterIndex: 0,
-    academicYear: academicYearValueAt(DEFAULT_ACADEMIC_YEAR_INDEX),
+    semesterIndex: DEFAULT_SEMESTER_INDEX,
+    academicYear: defaultAcademicYearValue,
+    selectedTermLabel: defaultTermLabel,
     loading: false,
     statusLoading: false,
     statusReady: false,
@@ -269,12 +465,20 @@ Page({
     allGradeResults: [] as any[],
     scheduleResults: [] as any[],
     gradeResults: [] as any[],
+    visibleScheduleResults: [] as any[],
+    scheduleViewMode: 'list',
+    scheduleViewModeLabel: SCHEDULE_VIEW_MODES.list,
+    scheduleTableDays: [] as string[],
+    scheduleTableRows: [] as ScheduleTableRow[],
+    scheduleTermSheetVisible: false,
+    scheduleTermSheetMode: 'switch',
+    weekLabels: WEEK_LABELS,
+    selectedWeekIndex: 0,
+    selectedWeek: 1,
+    weekStartDate: defaultScheduleStartDate(defaultAcademicYearValue),
+    selectedWeekDateRange: weekDateRangeText(defaultScheduleStartDate(defaultAcademicYearValue), 1),
     isQueryPage: true,
-    pageTitle: '课表查询',
-    todayCourses: DEFAULT_TODAY_SUMMARY as any,
-    latestGradeSummary: DEFAULT_GRADE_SUMMARY as any,
-    campusActions: buildCampusActions(false, false) as any[],
-    campusHighlights: buildCampusHighlights(DEFAULT_TODAY_SUMMARY, DEFAULT_GRADE_SUMMARY, false) as any[],
+    pageTitle: fixedPageTitle,
     snapshotTerms: [] as SnapshotOption[],
     snapshotTermLabels: [] as string[],
     snapshotTermIndex: 0,
@@ -294,13 +498,20 @@ Page({
     captchaSubmitting: false,
   },
 
-  onLoad(options: any) {
-    const mode = String(options?.mode || '').trim() as CampusMode;
-    if (mode === 'grades') {
-      this.setData({ mode: 'grades', pageTitle: '成绩查询' });
-      return;
-    }
-    this.setData({ mode: 'schedule', pageTitle: '课表查询' });
+  onLoad() {
+    const weekStartDate = fixedMode === 'schedule'
+      ? readStoredScheduleStartDate(this.data.academicYear)
+      : this.data.weekStartDate;
+    const scheduleViewMode = fixedMode === 'schedule' ? readStoredScheduleViewMode() : 'list';
+    this.setData({
+      mode: fixedMode,
+      queryPageKind: fixedMode,
+      pageTitle: fixedPageTitle,
+      scheduleViewMode,
+      scheduleViewModeLabel: SCHEDULE_VIEW_MODES[scheduleViewMode],
+      weekStartDate,
+      selectedWeekDateRange: weekDateRangeText(weekStartDate, this.data.selectedWeek),
+    }, () => this.rebuildScheduleDisplay());
   },
 
   onShow() {
@@ -308,22 +519,8 @@ Page({
       wx.redirectTo({ url: '/pages/login/login' });
       return;
     }
-    const preferredMode = this.consumePreferredMode();
     try {
-      this.setData({
-        ...themeManager.getPageData(),
-        ...(preferredMode ? {
-          mode: preferredMode,
-          pageTitle: preferredMode === 'grades' ? '成绩查询' : '课表查询',
-          errorMsg: '',
-          snapshotDrawerOpen: false,
-        } : {}),
-      }, () => {
-        if (preferredMode) {
-          this.syncSnapshotBrowserForMode(preferredMode);
-          this.refreshProgressForMode(preferredMode);
-        }
-      });
+      this.setData({ ...themeManager.getPageData() });
     } catch (e) {}
     this.loadEduStatus(false);
   },
@@ -343,34 +540,23 @@ Page({
     this.setData({ ...(themeManager.getPageData()), themeMode: mode });
   },
 
-  consumePreferredMode(): CampusMode | '' {
-    try {
-      const mode = String(wx.getStorageSync(CAMPUS_PREFERRED_MODE_KEY) || '').trim();
-      wx.removeStorageSync(CAMPUS_PREFERRED_MODE_KEY);
-      if (mode === 'schedule' || mode === 'grades') return mode;
-    } catch (e) {}
-    return '';
-  },
-
-  onModeTap(e: any) {
-    const mode = String(e?.currentTarget?.dataset?.mode || '') as CampusMode;
-    if (mode !== 'schedule' && mode !== 'grades') return;
+  onAcademicYearChange(e: any) {
+    const academicYearIndex = clampAcademicYearIndex(e?.detail?.value, this.data.academicYearIndex);
+    const academicYear = academicYearValueAt(academicYearIndex);
     this.setData({
-      mode,
-      pageTitle: mode === 'grades' ? '成绩查询' : '课表查询',
-      errorMsg: '',
-      snapshotDrawerOpen: false,
-    }, () => {
-      this.syncSnapshotBrowserForMode(mode);
-      this.refreshProgressForMode(mode);
+      academicYearIndex,
+      academicYear,
+      selectedTermLabel: termLabelFromSelection(academicYear, this.data.semesterIndex),
     });
   },
 
-  onAcademicYearChange(e: any) {
-    const academicYearIndex = clampAcademicYearIndex(e?.detail?.value, this.data.academicYearIndex);
+  onAcademicYearChipTap(e: any) {
+    const academicYearIndex = clampAcademicYearIndex(e?.currentTarget?.dataset?.index, this.data.academicYearIndex);
+    const academicYear = academicYearValueAt(academicYearIndex);
     this.setData({
       academicYearIndex,
-      academicYear: academicYearValueAt(academicYearIndex),
+      academicYear,
+      selectedTermLabel: termLabelFromSelection(academicYear, this.data.semesterIndex),
     });
   },
 
@@ -378,44 +564,24 @@ Page({
     const value = Number(e?.detail?.value ?? 0);
     const max = SEMESTER_LABELS.length - 1;
     const semesterIndex = Math.max(0, Math.min(value, max));
-    this.setData({ semesterIndex });
+    this.setData({
+      semesterIndex,
+      selectedTermLabel: termLabelFromSelection(this.data.academicYear, semesterIndex),
+    });
+  },
+
+  onSemesterChipTap(e: any) {
+    const value = Number(e?.currentTarget?.dataset?.index ?? 0);
+    const max = SEMESTER_LABELS.length - 1;
+    const semesterIndex = Math.max(0, Math.min(value, max));
+    this.setData({
+      semesterIndex,
+      selectedTermLabel: termLabelFromSelection(this.data.academicYear, semesterIndex),
+    });
   },
 
   onGoEduBindingTap() {
     safeNavigate('/pages/settings-account-bindings-v2/settings-account-bindings-v2', 'navigateTo');
-  },
-
-  onHeroActionTap() {
-    if (this.data.statusFailed) {
-      this.loadEduStatus(true);
-      return;
-    }
-    this.onGoEduBindingTap();
-  },
-
-  onCampusActionTap(e: any) {
-    const key = String(e?.currentTarget?.dataset?.key || '').trim();
-    const action = (this.data.campusActions || []).find((item: any) => item.key === key);
-    if (!action) return;
-    if (key === 'binding') {
-      this.onGoEduBindingTap();
-      return;
-    }
-    if (action.disabled) {
-      wx.showToast({ title: key === 'schedule' || key === 'grades' ? '教务接口暂不可用' : '功能建设中', icon: 'none' });
-      return;
-    }
-    if (key === 'evaluation' || key === 'more') {
-      wx.showToast({ title: key === 'evaluation' ? '一键教评建设中' : '功能建设中', icon: 'none' });
-      return;
-    }
-    if (key === 'schedule' || key === 'grades') {
-      const mode = key as CampusMode;
-      this.setData({ mode, errorMsg: '', snapshotDrawerOpen: false }, () => {
-        this.syncSnapshotBrowserForMode(mode);
-        this.refreshProgressForMode(mode);
-      });
-    }
   },
 
   applyEduStatus(data: any) {
@@ -430,9 +596,8 @@ Page({
       statusMsg: credential.has_credentials ? `已绑定教务系统账号：${credential.username_hint || '已保存'}` : '未绑定教务系统账号',
       allScheduleResults,
       allGradeResults,
-      ...buildCampusOverviewPatch(allScheduleResults, allGradeResults, credential.has_credentials, false),
     }, () => {
-      this.syncSnapshotBrowserForMode(this.data.mode as CampusMode);
+      this.syncSnapshotBrowserForMode(fixedMode);
       this.restoreRecentCampusTasks(data?.recent_tasks || {});
     });
   },
@@ -456,7 +621,6 @@ Page({
         eduBound: false,
         statusMsg: message,
         errorMsg: message,
-        ...buildCampusOverviewPatch(this.data.allScheduleResults || [], this.data.allGradeResults || [], false, true),
       });
     } finally {
       this.setData({ statusLoading: false });
@@ -476,7 +640,7 @@ Page({
   },
 
   syncSnapshotBrowserForMode(modeInput?: CampusMode) {
-    const mode = modeInput || this.data.mode as CampusMode;
+    const mode = modeInput || fixedMode;
     const rows = mode === 'grades' ? this.data.allGradeResults : this.data.allScheduleResults;
     const terms = buildSnapshotTermOptions(rows, this.data.snapshotSelectedTermKey);
     const selectedTermKey = terms.some((item) => item.value === this.data.snapshotSelectedTermKey)
@@ -494,7 +658,12 @@ Page({
     patch[mode === 'grades' ? 'gradeResults' : 'scheduleResults'] = selectedTermKey
       ? filterSnapshotRows(rows, selectedTermKey)
       : [];
-    this.setData(patch);
+    this.setData({
+      ...patch,
+      ...(selectedTermKey ? termSelectionPatchFromKey(selectedTermKey) : {}),
+    }, () => {
+      if (mode === 'schedule') this.rebuildScheduleDisplay();
+    });
   },
 
   onSnapshotTermTap(e: any) {
@@ -507,7 +676,90 @@ Page({
       snapshotSelectedTermKey: selectedTermKey,
       snapshotTermIndex: index,
       snapshotDrawerOpen: false,
-    }, () => this.syncSnapshotBrowserForMode(this.data.mode as CampusMode));
+      ...termSelectionPatchFromKey(selectedTermKey),
+    }, () => this.syncSnapshotBrowserForMode(fixedMode));
+  },
+
+  rebuildScheduleDisplay() {
+    if (fixedMode !== 'schedule') return;
+    const selectedWeek = Math.max(1, Math.min(Number(this.data.selectedWeek) || 1, WEEK_COUNT));
+    const visibleScheduleResults = filterScheduleRowsByWeek(this.data.scheduleResults || [], selectedWeek);
+    const table = buildScheduleTable(this.data.scheduleResults || [], selectedWeek);
+    this.setData({
+      visibleScheduleResults,
+      scheduleTableDays: table.days,
+      scheduleTableRows: table.tableRows,
+      selectedWeek,
+      selectedWeekDateRange: weekDateRangeText(this.data.weekStartDate, selectedWeek),
+    });
+  },
+
+  onScheduleViewToggleTap() {
+    if (fixedMode !== 'schedule') return;
+    const scheduleViewMode = this.data.scheduleViewMode === 'table' ? 'list' : 'table';
+    try {
+      wx.setStorageSync(SCHEDULE_VIEW_STORAGE_KEY, scheduleViewMode);
+    } catch (e) {}
+    this.setData({
+      scheduleViewMode,
+      scheduleViewModeLabel: SCHEDULE_VIEW_MODES[scheduleViewMode],
+    }, () => this.rebuildScheduleDisplay());
+  },
+
+  onWeekChange(e: any) {
+    const value = Number(e?.detail?.value ?? 0);
+    const selectedWeekIndex = Math.max(0, Math.min(value, WEEK_COUNT - 1));
+    const selectedWeek = selectedWeekIndex + 1;
+    this.setData({
+      selectedWeekIndex,
+      selectedWeek,
+      selectedWeekDateRange: weekDateRangeText(this.data.weekStartDate, selectedWeek),
+    }, () => this.rebuildScheduleDisplay());
+  },
+
+  onWeekStartDateChange(e: any) {
+    const weekStartDate = String(e?.detail?.value || '').trim() || defaultScheduleStartDate(this.data.academicYear);
+    try {
+      wx.setStorageSync(SCHEDULE_START_DATE_STORAGE_KEY, weekStartDate);
+    } catch (err) {}
+    this.setData({
+      weekStartDate,
+      selectedWeekDateRange: weekDateRangeText(weekStartDate, this.data.selectedWeek),
+    }, () => this.rebuildScheduleDisplay());
+  },
+
+  onOpenScheduleTermSheetTap() {
+    if (fixedMode !== 'schedule') return;
+    this.setData({ scheduleTermSheetVisible: true, scheduleTermSheetMode: 'switch' });
+  },
+
+  onOpenScheduleQuerySheetTap() {
+    if (fixedMode !== 'schedule') return;
+    this.setData({ scheduleTermSheetVisible: true, scheduleTermSheetMode: 'query' });
+  },
+
+  onCloseScheduleTermSheetTap() {
+    this.setData({ scheduleTermSheetVisible: false });
+  },
+
+  onScheduleTermSheetConfirmTap() {
+    if (this.data.scheduleTermSheetMode === 'query') {
+      this.setData({ scheduleTermSheetVisible: false }, () => this.executeCampusQuery());
+      return;
+    }
+    const selectedTermKey = termKeyFromSelection(this.data.academicYear, this.data.semesterIndex);
+    const options = this.data.snapshotTerms || [];
+    const index = options.findIndex((item) => item.value === selectedTermKey);
+    if (index < 0) {
+      wx.showToast({ title: '暂无该学期课表记录', icon: 'none' });
+      this.setData({ scheduleTermSheetVisible: false });
+      return;
+    }
+    this.setData({
+      scheduleTermSheetVisible: false,
+      snapshotSelectedTermKey: selectedTermKey,
+      snapshotTermIndex: index,
+    }, () => this.syncSnapshotBrowserForMode('schedule'));
   },
 
   applyQueryRows(data: any, mode: CampusMode, statusMsg = '') {
@@ -516,20 +768,14 @@ Page({
     const patch: any = {};
     const mergedRows = mergeCampusRows(this.data[sourceKey] || [], rows);
     const credential = data?.credential ? normalizeCredential(data.credential) : null;
-    const eduBound = credential ? credential.has_credentials : this.data.eduBound;
-    const scheduleRows = mode === 'schedule' ? mergedRows : (this.data.allScheduleResults || []);
-    const gradeRows = mode === 'grades' ? mergedRows : (this.data.allGradeResults || []);
     patch[sourceKey] = mergedRows;
-    Object.assign(patch, buildCampusOverviewPatch(scheduleRows, gradeRows, eduBound, false));
     if (statusMsg) patch.statusMsg = statusMsg;
     if (credential) {
       patch.eduBound = credential.has_credentials;
       patch.eduUsernameHint = credential.username_hint;
-      patch.campusActions = buildCampusActions(credential.has_credentials, false);
-      patch.campusHighlights = buildCampusHighlights(patch.todayCourses, patch.latestGradeSummary, credential.has_credentials);
     }
     this.setData(patch, () => {
-      if (this.data.mode === mode) this.syncSnapshotBrowserForMode(mode);
+      if (fixedMode === mode) this.syncSnapshotBrowserForMode(mode);
     });
     return rows;
   },
@@ -635,19 +881,14 @@ Page({
   },
 
   restoreRecentCampusTasks(recentTasks: any) {
-    const pairs: Array<{ mode: CampusMode; task: any }> = [
-      { mode: 'schedule', task: recentTasks?.schedule },
-      { mode: 'grades', task: recentTasks?.grades },
-    ];
-    let restoredCurrent = false;
-    pairs.forEach(({ mode, task }) => {
-      if (!isActiveTask(task)) return;
+    const task = recentTasks?.[fixedMode];
+    if (isActiveTask(task)) {
       const payload = { terms: Array.isArray(task.terms) ? task.terms : [] };
-      const finished = this.handleTaskState(task, payload, mode, { task });
-      if (!finished) this.startTaskPolling(String(task.task_id), mode, payload);
-      if (mode === this.data.mode) restoredCurrent = true;
-    });
-    if (!restoredCurrent) this.refreshProgressForMode(this.data.mode as CampusMode);
+      const finished = this.handleTaskState(task, payload, fixedMode, { task });
+      if (!finished) this.startTaskPolling(String(task.task_id), fixedMode, payload);
+      return;
+    }
+    this.refreshProgressForMode(fixedMode);
   },
 
   confirmReplacingActiveTask(mode: CampusMode): Promise<boolean> {
@@ -765,7 +1006,7 @@ Page({
     }
   },
 
-  async onQueryTap() {
+  async executeCampusQuery() {
     if (this.data.loading) return;
     if (this.data.statusLoading || !this.data.statusReady) {
       this.setData({ errorMsg: '教务系统账号状态同步中，请稍后再试' });
@@ -781,15 +1022,10 @@ Page({
       return;
     }
 
-    const mode = this.data.mode as CampusMode;
+    const mode = fixedMode;
     let terms;
     try {
-      if (mode === 'grades') {
-        terms = buildGradeQueryTerms(this.data.academicYear);
-      } else {
-        const semester = SEMESTER_VALUES[this.data.semesterIndex] || 'all';
-        terms = buildCampusTerms(this.data.academicYear, this.data.academicYear, semester);
-      }
+      terms = buildSelectedTerm(this.data.academicYear, this.data.semesterIndex);
     } catch (e: any) {
       this.setData({ errorMsg: e?.message || '学年或学期不正确' });
       return;
@@ -802,4 +1038,13 @@ Page({
     }
     await this.submitCampusQuery(mode, { terms });
   },
-});
+
+  async onQueryTap() {
+    if (fixedMode === 'schedule') {
+      this.onOpenScheduleQuerySheetTap();
+      return;
+    }
+    await this.executeCampusQuery();
+  },
+  };
+}

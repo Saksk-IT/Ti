@@ -622,8 +622,12 @@ Page({
         });
     },
     openCampus: function (mode) {
-        if (mode) {
-            (0, nav_1.safeNavigate)("/pages/campus-query/campus-query?mode=".concat(mode), 'navigateTo');
+        if (mode === 'schedule') {
+            (0, nav_1.safeNavigate)('/pages/campus-schedule/campus-schedule', 'navigateTo');
+            return;
+        }
+        if (mode === 'grades') {
+            (0, nav_1.safeNavigate)('/pages/campus-grades/campus-grades', 'navigateTo');
             return;
         }
         (0, nav_1.safeNavigate)('/pages/campus/campus', 'switchTab');
