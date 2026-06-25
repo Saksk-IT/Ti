@@ -590,12 +590,20 @@ def test_miniprogram_account_bindings_page_exposes_edu_credential_binding():
 def test_miniprogram_campus_tab_exposes_schedule_and_grade_queries():
     app_config = json.loads(Path("miniprogram-1/miniprogram/app.json").read_text(encoding="utf-8"))
     campus_dir = Path("miniprogram-1/miniprogram/pages/campus")
+    query_dir = Path("miniprogram-1/miniprogram/pages/campus-query")
+    feature_dir = Path("miniprogram-1/miniprogram/pages/campus-feature")
+    hub_ts = Path("miniprogram-1/miniprogram/pages/hub-v2/hub-v2.ts").read_text(encoding="utf-8")
     wxml = (campus_dir / "campus.wxml").read_text(encoding="utf-8")
     ts = (campus_dir / "campus.ts").read_text(encoding="utf-8")
+    query_ts = (query_dir / "campus-query.ts").read_text(encoding="utf-8")
     content_ts = (campus_dir / "campus-content.ts").read_text(encoding="utf-8")
     api = Path("miniprogram-1/miniprogram/utils/api-endpoints.ts").read_text(encoding="utf-8")
 
     assert "pages/campus/campus" in app_config["pages"]
+    assert "pages/campus-query/campus-query" in app_config["pages"]
+    assert "pages/campus-feature/campus-feature" in app_config["pages"]
+    assert "/pages/campus-query/campus-query?mode=${mode}" in hub_ts
+    assert "campus_preferred_mode_v1" not in hub_ts
     campus_tab = next(
         item for item in app_config["tabBar"]["list"]
         if item["pagePath"] == "pages/campus/campus"
@@ -615,15 +623,19 @@ def test_miniprogram_campus_tab_exposes_schedule_and_grade_queries():
     assert "latestGradeSummary.title" in wxml
     assert "campus-action-grid" in wxml
     assert "onCampusActionTap" in wxml
-    assert "campus-query-section" in wxml
+    assert 'wx:if="{{!isQueryPage}}"' in wxml
+    assert 'wx:if="{{isQueryPage}}"' in wxml
     assert "/images/icons/campus.svg" in wxml
-    assert "mode-icon-wrap" in wxml
-    assert "query-icon" in wxml
     assert "onGoEduBindingTap" in wxml
     assert "statusReady && !statusFailed && !eduBound" in wxml
     assert "onHeroActionTap" in wxml
-    assert "api.queryEduSchedule" in ts
-    assert "api.queryEduGrades" in ts
+    assert "/pages/campus-query/campus-query?mode=" in ts
+    assert "/pages/campus-feature/campus-feature?feature=" in ts
+    assert 'isQueryPage: false' in ts
+    assert 'isQueryPage: true' in query_ts
+    assert "onLoad(options" in query_ts
+    assert "api.queryEduSchedule" in query_ts
+    assert "api.queryEduGrades" in query_ts
     assert "buildTodayScheduleSummary" in ts
     assert "buildLatestGradeSummary" in ts
     assert "buildCampusActions" in ts
@@ -635,6 +647,8 @@ def test_miniprogram_campus_tab_exposes_schedule_and_grade_queries():
     assert "最近一学期成绩" in content_ts
     assert "一键教评" in content_ts
     assert "buildCampusActions" in content_ts
+    assert (query_dir / "campus-query.wxml").read_text(encoding="utf-8").strip() == '<include src="../campus/campus.wxml" />'
+    assert "一键教评" in (feature_dir / "campus-feature.ts").read_text(encoding="utf-8")
     assert "queryEduSchedule" in api
     assert "request('/edu-schedule/query'" in api
     assert "queryEduGrades" in api
@@ -643,9 +657,10 @@ def test_miniprogram_campus_tab_exposes_schedule_and_grade_queries():
 
 def test_miniprogram_campus_page_matches_background_query_flow():
     campus_dir = Path("miniprogram-1/miniprogram/pages/campus")
+    query_dir = Path("miniprogram-1/miniprogram/pages/campus-query")
     wxml = (campus_dir / "campus.wxml").read_text(encoding="utf-8")
-    ts = (campus_dir / "campus.ts").read_text(encoding="utf-8")
-    js = (campus_dir / "campus.js").read_text(encoding="utf-8")
+    ts = (query_dir / "campus-query.ts").read_text(encoding="utf-8")
+    js = (query_dir / "campus-query.js").read_text(encoding="utf-8")
     api_ts = Path("miniprogram-1/miniprogram/utils/api-endpoints.ts").read_text(encoding="utf-8")
     api_js = Path("miniprogram-1/miniprogram/utils/api-endpoints.js").read_text(encoding="utf-8")
 

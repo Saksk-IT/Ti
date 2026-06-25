@@ -25,6 +25,8 @@
     "pages/profile-view-v2/profile-view-v2",
     "pages/subjects/subjects",
     "pages/campus/campus",
+    "pages/campus-query/campus-query",
+    "pages/campus-feature/campus-feature",
     "pages/mine/mine",
     "pages/login/login",
     "pages/dev-settings/dev-settings",

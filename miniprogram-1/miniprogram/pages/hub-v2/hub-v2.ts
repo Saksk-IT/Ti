@@ -15,7 +15,6 @@ import {
   WeaknessEmptyAction,
 } from './hub-content';
 
-const CAMPUS_PREFERRED_MODE_KEY = 'campus_preferred_mode_v1';
 const SETUP_NICKNAME_RE = /^[\u4e00-\u9fffA-Za-z0-9]{1,8}$/;
 const SETUP_NICKNAME_ERROR = '昵称只能使用汉字、字母、数字，最多8个字符';
 const RANDOM_NICKNAME_PREFIXES = ['题友', '学友', '考友', '小题'];
@@ -610,9 +609,10 @@ Page({
   },
 
   openCampus(mode?: 'schedule' | 'grades') {
-    try {
-      if (mode) wx.setStorageSync(CAMPUS_PREFERRED_MODE_KEY, mode);
-    } catch (e) {}
+    if (mode) {
+      safeNavigate(`/pages/campus-query/campus-query?mode=${mode}`, 'navigateTo');
+      return;
+    }
     safeNavigate('/pages/campus/campus', 'switchTab');
   },
 

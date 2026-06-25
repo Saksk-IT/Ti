@@ -1,7 +1,7 @@
 <!-- campus.wxml - 校园 -->
 <view class="page-root campus-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
   <view class="campus-bg"></view>
-  <navigation-bar title="校园" back="{{false}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent">
+  <navigation-bar title="{{pageTitle || '校园'}}" back="{{isQueryPage}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent">
     <view slot="right" class="nav-right">
       <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
         <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
@@ -15,6 +15,7 @@
   <view class="page-container">
     <scroll-view class="content-area" scroll-y bounces="{{false}}" refresher-enabled="{{true}}" bindrefresherrefresh="onRefresh">
       <view class="container">
+        <block wx:if="{{!isQueryPage}}">
         <view class="campus-hero">
           <view class="hero-main">
             <view class="hero-icon-wrap">
@@ -139,10 +140,12 @@
             </view>
           </view>
         </view>
+        </block>
 
+        <block wx:if="{{isQueryPage}}">
         <view id="campus-query-section" class="query-workbench">
           <view class="campus-section-head query-head">
-            <text class="campus-section-title">二级处理</text>
+            <text class="campus-section-title">校园查询</text>
             <text class="campus-section-sub">{{mode === 'grades' ? '成绩查询' : '课表查询'}}</text>
           </view>
 
@@ -324,6 +327,7 @@
           <view class="empty-state" wx:elif="{{eduBound && !loading}}">
             <text>暂无成绩记录。</text>
           </view>
+        </block>
         </block>
       </view>
     </scroll-view>

@@ -1,0 +1,26 @@
+<view class="page-root campus-feature-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <view class="campus-feature-bg"></view>
+  <navigation-bar title="{{pageTitle}}" back="{{true}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent">
+    <view slot="right" class="nav-right">
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <view class="feature-container">
+    <view class="feature-card">
+      <view class="feature-icon-wrap">
+        <image class="feature-icon" src="/images/icons/clipboard-check.svg" mode="aspectFit"></image>
+      </view>
+      <text class="feature-title">{{title}}</text>
+      <text class="feature-subtitle">{{subtitle}}</text>
+      <view class="feature-status">
+        <text>{{action}}</text>
+      </view>
+    </view>
+  </view>
+</view>

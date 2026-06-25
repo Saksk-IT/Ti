@@ -51,7 +51,7 @@ var api_1 = require("../../utils/api");
 var auth_1 = require("../../utils/auth");
 var nav_1 = require("../../utils/nav");
 var theme_1 = require("../../utils/theme");
-var campus_content_1 = require("./campus-content");
+var campus_content_1 = require("../campus/campus-content");
 var SEMESTER_LABELS = ['第一、二学期', '第一学期', '第二学期'];
 var SEMESTER_VALUES = ['all', '3', '12'];
 var ACADEMIC_YEAR_PAST_COUNT = 6;
@@ -280,8 +280,8 @@ Page({
         allGradeResults: [],
         scheduleResults: [],
         gradeResults: [],
-        isQueryPage: false,
-        pageTitle: '校园',
+        isQueryPage: true,
+        pageTitle: '课表查询',
         todayCourses: DEFAULT_TODAY_SUMMARY,
         latestGradeSummary: DEFAULT_GRADE_SUMMARY,
         campusActions: (0, campus_content_1.buildCampusActions)(false, false),
@@ -304,6 +304,14 @@ Page({
         captchaMessage: '',
         captchaSubmitting: false,
     },
+    onLoad: function (options) {
+        var mode = String((options === null || options === void 0 ? void 0 : options.mode) || '').trim();
+        if (mode === 'grades') {
+            this.setData({ mode: 'grades', pageTitle: '成绩查询' });
+            return;
+        }
+        this.setData({ mode: 'schedule', pageTitle: '课表查询' });
+    },
     onShow: function () {
         var _this = this;
         if (!(0, auth_1.checkLogin)()) {
@@ -312,7 +320,12 @@ Page({
         }
         var preferredMode = this.consumePreferredMode();
         try {
-            this.setData(__assign(__assign({}, theme_1.themeManager.getPageData()), (preferredMode ? { mode: preferredMode, errorMsg: '', snapshotDrawerOpen: false } : {})), function () {
+            this.setData(__assign(__assign({}, theme_1.themeManager.getPageData()), (preferredMode ? {
+                mode: preferredMode,
+                pageTitle: preferredMode === 'grades' ? '成绩查询' : '课表查询',
+                errorMsg: '',
+                snapshotDrawerOpen: false,
+            } : {})), function () {
                 if (preferredMode) {
                     _this.syncSnapshotBrowserForMode(preferredMode);
                     _this.refreshProgressForMode(preferredMode);
@@ -350,7 +363,12 @@ Page({
         var mode = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.mode) || '');
         if (mode !== 'schedule' && mode !== 'grades')
             return;
-        this.setData({ mode: mode, errorMsg: '', snapshotDrawerOpen: false }, function () {
+        this.setData({
+            mode: mode,
+            pageTitle: mode === 'grades' ? '成绩查询' : '课表查询',
+            errorMsg: '',
+            snapshotDrawerOpen: false,
+        }, function () {
             _this.syncSnapshotBrowserForMode(mode);
             _this.refreshProgressForMode(mode);
         });
@@ -381,6 +399,7 @@ Page({
         this.onGoEduBindingTap();
     },
     onCampusActionTap: function (e) {
+        var _this = this;
         var _a, _b;
         var key = String(((_b = (_a = e === null || e === void 0 ? void 0 : e.currentTarget) === null || _a === void 0 ? void 0 : _a.dataset) === null || _b === void 0 ? void 0 : _b.key) || '').trim();
         var action = (this.data.campusActions || []).find(function (item) { return item.key === key; });
@@ -390,16 +409,20 @@ Page({
             this.onGoEduBindingTap();
             return;
         }
-        if (key === 'evaluation' || key === 'more') {
-            (0, nav_1.safeNavigate)("/pages/campus-feature/campus-feature?feature=".concat(key), 'navigateTo');
-            return;
-        }
         if (action.disabled) {
             wx.showToast({ title: key === 'schedule' || key === 'grades' ? '教务接口暂不可用' : '功能建设中', icon: 'none' });
             return;
         }
+        if (key === 'evaluation' || key === 'more') {
+            wx.showToast({ title: key === 'evaluation' ? '一键教评建设中' : '功能建设中', icon: 'none' });
+            return;
+        }
         if (key === 'schedule' || key === 'grades') {
-            (0, nav_1.safeNavigate)("/pages/campus-query/campus-query?mode=".concat(key), 'navigateTo');
+            var mode_1 = key;
+            this.setData({ mode: mode_1, errorMsg: '', snapshotDrawerOpen: false }, function () {
+                _this.syncSnapshotBrowserForMode(mode_1);
+                _this.refreshProgressForMode(mode_1);
+            });
         }
     },
     applyEduStatus: function (data) {

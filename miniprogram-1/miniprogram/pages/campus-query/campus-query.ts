@@ -14,7 +14,7 @@ import {
   normalizeGradeSnapshots,
   normalizeScheduleSnapshots,
   normalizeTermResults,
-} from './campus-content';
+} from '../campus/campus-content';
 
 const SEMESTER_LABELS = ['第一、二学期', '第一学期', '第二学期'];
 const SEMESTER_VALUES: CampusSemesterValue[] = ['all', '3', '12'];
@@ -269,8 +269,8 @@ Page({
     allGradeResults: [] as any[],
     scheduleResults: [] as any[],
     gradeResults: [] as any[],
-    isQueryPage: false,
-    pageTitle: '校园',
+    isQueryPage: true,
+    pageTitle: '课表查询',
     todayCourses: DEFAULT_TODAY_SUMMARY as any,
     latestGradeSummary: DEFAULT_GRADE_SUMMARY as any,
     campusActions: buildCampusActions(false, false) as any[],
@@ -294,6 +294,15 @@ Page({
     captchaSubmitting: false,
   },
 
+  onLoad(options: any) {
+    const mode = String(options?.mode || '').trim() as CampusMode;
+    if (mode === 'grades') {
+      this.setData({ mode: 'grades', pageTitle: '成绩查询' });
+      return;
+    }
+    this.setData({ mode: 'schedule', pageTitle: '课表查询' });
+  },
+
   onShow() {
     if (!checkLogin()) {
       wx.redirectTo({ url: '/pages/login/login' });
@@ -303,7 +312,12 @@ Page({
     try {
       this.setData({
         ...themeManager.getPageData(),
-        ...(preferredMode ? { mode: preferredMode, errorMsg: '', snapshotDrawerOpen: false } : {}),
+        ...(preferredMode ? {
+          mode: preferredMode,
+          pageTitle: preferredMode === 'grades' ? '成绩查询' : '课表查询',
+          errorMsg: '',
+          snapshotDrawerOpen: false,
+        } : {}),
       }, () => {
         if (preferredMode) {
           this.syncSnapshotBrowserForMode(preferredMode);
@@ -341,7 +355,12 @@ Page({
   onModeTap(e: any) {
     const mode = String(e?.currentTarget?.dataset?.mode || '') as CampusMode;
     if (mode !== 'schedule' && mode !== 'grades') return;
-    this.setData({ mode, errorMsg: '', snapshotDrawerOpen: false }, () => {
+    this.setData({
+      mode,
+      pageTitle: mode === 'grades' ? '成绩查询' : '课表查询',
+      errorMsg: '',
+      snapshotDrawerOpen: false,
+    }, () => {
       this.syncSnapshotBrowserForMode(mode);
       this.refreshProgressForMode(mode);
     });
@@ -382,16 +401,20 @@ Page({
       this.onGoEduBindingTap();
       return;
     }
-    if (key === 'evaluation' || key === 'more') {
-      safeNavigate(`/pages/campus-feature/campus-feature?feature=${key}`, 'navigateTo');
-      return;
-    }
     if (action.disabled) {
       wx.showToast({ title: key === 'schedule' || key === 'grades' ? '教务接口暂不可用' : '功能建设中', icon: 'none' });
       return;
     }
+    if (key === 'evaluation' || key === 'more') {
+      wx.showToast({ title: key === 'evaluation' ? '一键教评建设中' : '功能建设中', icon: 'none' });
+      return;
+    }
     if (key === 'schedule' || key === 'grades') {
-      safeNavigate(`/pages/campus-query/campus-query?mode=${key}`, 'navigateTo');
+      const mode = key as CampusMode;
+      this.setData({ mode, errorMsg: '', snapshotDrawerOpen: false }, () => {
+        this.syncSnapshotBrowserForMode(mode);
+        this.refreshProgressForMode(mode);
+      });
     }
   },
 

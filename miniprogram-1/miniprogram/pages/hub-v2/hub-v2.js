@@ -53,7 +53,6 @@ var nav_1 = require("../../utils/nav");
 var theme_1 = require("../../utils/theme");
 var avatar_1 = require("../../utils/avatar");
 var hub_content_1 = require("./hub-content");
-var CAMPUS_PREFERRED_MODE_KEY = 'campus_preferred_mode_v1';
 var SETUP_NICKNAME_RE = /^[\u4e00-\u9fffA-Za-z0-9]{1,8}$/;
 var SETUP_NICKNAME_ERROR = '昵称只能使用汉字、字母、数字，最多8个字符';
 var RANDOM_NICKNAME_PREFIXES = ['题友', '学友', '考友', '小题'];
@@ -623,11 +622,10 @@ Page({
         });
     },
     openCampus: function (mode) {
-        try {
-            if (mode)
-                wx.setStorageSync(CAMPUS_PREFERRED_MODE_KEY, mode);
+        if (mode) {
+            (0, nav_1.safeNavigate)("/pages/campus-query/campus-query?mode=".concat(mode), 'navigateTo');
+            return;
         }
-        catch (e) { }
         (0, nav_1.safeNavigate)('/pages/campus/campus', 'switchTab');
     },
     onGoCampus: function () {
