@@ -1,0 +1,1246 @@
+{
+  "meta": {
+    "title": "Java Web简答程序题期末精简背诵版（去重版）",
+    "source": "/Users/sak/Desktop/web/简答.pdf; /Users/sak/Desktop/web/程序.pdf",
+    "generated_at": "2026-06-25T16:56:24+08:00",
+    "question_count": 49,
+    "type_counts": {
+      "essay": 49
+    },
+    "duplicate_question_count": 0,
+    "notes": [
+      "本文件只包含简答题与程序题，均为 essay 类型。",
+      "答案按期末背诵目标精简为短分点、口诀或最小代码骨架。",
+      "程序题中截图依赖题已根据 PDF 截图和常见 Java Web 考点保守整理。",
+      "analysis 字段提供一句记忆提示，便于理解和背诵。",
+      "未发现需要合并的重复题，去重版与原版题目一致。"
+    ]
+  },
+  "questions": [
+    {
+      "id": 1,
+      "type": "essay",
+      "content": "简述 web 应用程序的运行原理",
+      "options": [],
+      "answer": [
+        "1. 浏览器发请求：输入 URL、点链接或交表单。\n2. 服务器处理：Servlet/JSP/控制器接收请求，执行业务逻辑，可访问数据库。\n3. 返回响应：服务器返回 HTML/数据，浏览器解析显示。\n口诀：请求 -> 处理 -> 响应。"
+      ],
+      "analysis": "记忆：Web 运行就背“浏览器请求、服务器处理、浏览器显示”。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "1",
+        "original_id": 369,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 2,
+      "type": "essay",
+      "content": "在网络程序中，有哪两种基本的结构？各有什么特点？",
+      "options": [],
+      "answer": [
+        "1. C/S：客户端/服务器。要安装客户端，功能强，维护麻烦。\n2. B/S：浏览器/服务器。只用浏览器，维护方便，依赖网络和浏览器。\n口诀：C/S 重客户端，B/S 重浏览器。"
+      ],
+      "analysis": "记忆：C/S 要装软件，B/S 打开浏览器。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "2",
+        "original_id": 370,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 3,
+      "type": "essay",
+      "content": "在表单提交时，GET 方法与 POST 方法的区别是？",
+      "options": [],
+      "answer": [
+        "1. GET：参数在 URL 后，可见，适合查询，数据量小，可收藏。\n2. POST：参数在请求体，不显示在地址栏，适合提交表单，数据量较大。\n口诀：GET 查，POST 提交。"
+      ],
+      "analysis": "记忆：看地址栏，能看到多半是 GET。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "3",
+        "original_id": 371,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 4,
+      "type": "essay",
+      "content": "对于 Web 前端设计，最准确的理解就是把网页看成三个层次，分别用什么语言实现？",
+      "options": [],
+      "answer": [
+        "网页三层：\n1. HTML：结构层，放内容。\n2. CSS：表现层，管样式。\n3. JavaScript：行为层，管交互。\n口诀：HTML 骨架，CSS 衣服，JS 动作。"
+      ],
+      "analysis": "记忆：结构 HTML，样式 CSS，行为 JS。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "4",
+        "original_id": 372,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 5,
+      "type": "essay",
+      "content": "编写下面图中所示的表单",
+      "options": [],
+      "answer": [
+        "核心代码：\n<form action=\"#\" method=\"post\">\n  <h2>用户注册</h2>\n  姓名：<input type=\"text\" name=\"username\" placeholder=\"输入姓名\"><br>\n  密码：<input type=\"password\" name=\"password\" placeholder=\"输入密码\"><br>\n  <input type=\"submit\" value=\"登录\">\n</form>\n得分点：form、text、password、submit。"
+      ],
+      "analysis": "记忆：表单题先写 form，再写 input 类型。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "5",
+        "original_id": 373,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 6,
+      "type": "essay",
+      "content": "JavaScript 有哪些数据类型？",
+      "options": [],
+      "answer": [
+        "常见类型：\n1. 基本类型：number、string、boolean、undefined、null。\n2. 引用类型：object。\n3. ES6+：symbol、bigint。\n口诀：数、字、布、未、空、对象。"
+      ],
+      "analysis": "记忆：考试常背六个，补充 Symbol 和 BigInt。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "6",
+        "original_id": 374,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 7,
+      "type": "essay",
+      "content": "简述 include 指令和 include 标准动作的区别",
+      "options": [],
+      "answer": [
+        "1. include 指令：<%@ include %>，编译时包含，静态包含。\n2. include 动作：<jsp:include>，运行时包含，动态包含。\n口诀：指令静态，动作动态。"
+      ],
+      "analysis": "记忆：指令在编译前合并，动作在运行时插入结果。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "7",
+        "original_id": 375,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 8,
+      "type": "essay",
+      "content": "简述 JSP 页面中的组成元素。",
+      "options": [],
+      "answer": [
+        "JSP 组成：\n1. 指令：page/include/taglib。\n2. 脚本元素：声明、脚本片段、表达式。\n3. 动作标签：jsp:include、jsp:forward 等。\n4. 模板文本：HTML。\n5. 注释。\n口诀：指令、脚本、动作、模板、注释。"
+      ],
+      "analysis": "记忆：JSP 是 HTML 里混入 JSP 元素。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "8",
+        "original_id": 376,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 9,
+      "type": "essay",
+      "content": "简述 JSP 基本原理及执行过程？",
+      "options": [],
+      "answer": [
+        "JSP 原理：本质会被翻译成 Servlet。\n执行过程：\n1. 请求 JSP。\n2. JSP 翻译成 Servlet。\n3. Servlet 编译、加载、实例化。\n4. 调用 _jspService() 处理请求。\n5. 输出响应给浏览器。\n口诀：JSP -> Servlet -> 响应。"
+      ],
+      "analysis": "记忆：JSP 不直接跑，先变 Servlet。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "9",
+        "original_id": 377,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 10,
+      "type": "essay",
+      "content": "一个 JSP 页面的元素有哪些（或基本结构）？",
+      "options": [],
+      "answer": [
+        "基本结构：\n1. HTML 模板文本。\n2. JSP 指令。\n3. JSP 声明 <%! %>。\n4. JSP 脚本片段 <% %>。\n5. JSP 表达式 <%= %>。\n6. JSP 动作标签和注释。"
+      ],
+      "analysis": "记忆：把 JSP 元素按“文本、指令、脚本、动作、注释”归类。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "10",
+        "original_id": 378,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 11,
+      "type": "essay",
+      "content": "<%...%>与<%!...%>中都可以声明变量，有什么区别？",
+      "options": [],
+      "answer": [
+        "1. <% ... %>：脚本片段，变量在 _jspService() 方法内，是局部变量。\n2. <%! ... %>：声明，变量变成 Servlet 成员变量，多个请求共享。\n3. 注意：成员变量有线程安全风险。\n口诀：无叹号局部，有叹号成员。"
+      ],
+      "analysis": "记忆：感叹号表示声明到类里。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "11",
+        "original_id": 379,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 12,
+      "type": "essay",
+      "content": "在 JSP 页面中常用的 JSP 动作标签有哪些（写出 4 种即可）",
+      "options": [],
+      "answer": [
+        "写 4 个即可：\n1. <jsp:include>\n2. <jsp:forward>\n3. <jsp:param>\n4. <jsp:useBean>\n可补：<jsp:setProperty>、<jsp:getProperty>。"
+      ],
+      "analysis": "记忆：包含、转发、传参、用 Bean。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "12",
+        "original_id": 380,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 13,
+      "type": "essay",
+      "content": "简述 session 的生命周期?",
+      "options": [],
+      "answer": [
+        "1. 第一次请求无 SessionID，服务器创建 Session。\n2. 服务器返回 SessionID，通常存在 Cookie 中。\n3. 后续请求带 SessionID，服务器找到对应 Session。\n4. 超时、invalidate() 或服务器关闭后销毁。\n口诀：创建 -> 绑定 ID -> 复用 -> 销毁。"
+      ],
+      "analysis": "记忆：Session 在服务器，浏览器只拿 ID。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "13",
+        "original_id": 381,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 14,
+      "type": "essay",
+      "content": "JSP 中 Response 对象中 sendRedirect() 方法的作用是什么？它与 jsp:forward 在作用上有什么区别？",
+      "options": [],
+      "answer": [
+        "sendRedirect()：让浏览器重新请求新地址。\n区别：\n1. redirect：客户端跳转，两次请求，地址栏变，可跳站外。\n2. forward：服务器转发，一次请求，地址栏不变，常用于站内。\n口诀：重定向变地址，转发不变地址。"
+      ],
+      "analysis": "记忆：redirect 是浏览器再跑一趟。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "14",
+        "original_id": 382,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 15,
+      "type": "essay",
+      "content": "JSP 内置对象 request、session 与 application 分别有什么功能？各自的作用域范围？",
+      "options": [],
+      "answer": [
+        "1. request：一次请求内有效，存表单参数/转发数据。\n2. session：一次会话内有效，存登录状态/购物车。\n3. application：整个 Web 应用内有效，所有用户共享。\n口诀：一次请求、一次会话、整个应用。"
+      ],
+      "analysis": "记忆：作用范围从小到大：request < session < application。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "15",
+        "original_id": 383,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 16,
+      "type": "essay",
+      "content": "JSP 中内置对象有哪些？",
+      "options": [],
+      "answer": [
+        "JSP 九大内置对象：\nrequest、response、out、session、application、config、pageContext、page、exception。\n口诀：请求响应输出，会话应用配置，页面上下文、页面、异常。"
+      ],
+      "analysis": "记忆：常考“9 个”，exception 多在错误页。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "16",
+        "original_id": 384,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 17,
+      "type": "essay",
+      "content": "四种作用域",
+      "options": [],
+      "answer": [
+        "四种作用域：\n1. page：当前页面。\n2. request：一次请求，转发可用。\n3. session：一次会话。\n4. application：整个应用，所有用户共享。\n口诀：page < request < session < application。"
+      ],
+      "analysis": "记忆：按范围从小到大背。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "17",
+        "original_id": 385,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 18,
+      "type": "essay",
+      "content": "HTTP 协议为什么无法跟踪会话？在 JSP 中如何解决这个问题？",
+      "options": [],
+      "answer": [
+        "原因：HTTP 是无状态协议，每次请求互不记忆。\n解决：\n1. Cookie：客户端保存标识。\n2. Session：服务器保存会话数据。\n3. URL 重写：Cookie 不可用时把 SessionID 放 URL。\n口诀：无状态靠 Cookie/Session 补状态。"
+      ],
+      "analysis": "记忆：HTTP 不记人，JSESSIONID 帮它认人。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "18",
+        "original_id": 386,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 19,
+      "type": "essay",
+      "content": "简述 Cookie 的工作原理？",
+      "options": [],
+      "answer": [
+        "1. 服务器用 Set-Cookie 把键值对发给浏览器。\n2. 浏览器保存 Cookie。\n3. 以后访问同站点时自动带回 Cookie。\n4. 服务器读取 Cookie 识别用户或保存偏好。\n口诀：服务器发，浏览器存，下次带。"
+      ],
+      "analysis": "记忆：Cookie 在客户端。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "19",
+        "original_id": 387,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 20,
+      "type": "essay",
+      "content": "简述 Session 的工作原理？",
+      "options": [],
+      "answer": [
+        "1. 服务器创建 Session，并生成 SessionID。\n2. Session 数据保存在服务器。\n3. SessionID 返回浏览器，通常存在 Cookie。\n4. 浏览器下次带 ID，服务器取回对应 Session。\n口诀：数据在服务器，钥匙在浏览器。"
+      ],
+      "analysis": "记忆：Session 和 Cookie 常配合使用。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "20",
+        "original_id": 388,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 21,
+      "type": "essay",
+      "content": "JDBC 访问数据库步骤？",
+      "options": [],
+      "answer": [
+        "JDBC 步骤：\n1. 加载驱动。\n2. 获取连接 Connection。\n3. 创建 Statement/PreparedStatement。\n4. 执行 SQL。\n5. 处理 ResultSet。\n6. 关闭资源。\n口诀：驱动、连接、语句、执行、结果、关闭。"
+      ],
+      "analysis": "记忆：最后一定写关闭资源。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "21",
+        "original_id": 389,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 22,
+      "type": "essay",
+      "content": "JDBC 的主要功能有？",
+      "options": [],
+      "answer": [
+        "主要功能：\n1. 连接数据库。\n2. 执行 SQL。\n3. 处理结果集。\n4. 支持事务提交/回滚。\n5. 支持预编译、批处理等。\n口诀：连库、执行、取结果、管事务。"
+      ],
+      "analysis": "记忆：JDBC 是 Java 访问数据库的标准接口。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "22",
+        "original_id": 390,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 23,
+      "type": "essay",
+      "content": "简述自己对 Statement 和 PreparedStatement 的理解。",
+      "options": [],
+      "answer": [
+        "1. Statement：直接拼 SQL，适合简单静态语句，易注入。\n2. PreparedStatement：SQL 预编译，用 ? 传参，可重复执行，更安全。\n3. 实际开发优先 PreparedStatement。\n口诀：Statement 拼接，PreparedStatement 占位。"
+      ],
+      "analysis": "记忆：有参数就优先 PreparedStatement。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "23",
+        "original_id": 391,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 24,
+      "type": "essay",
+      "content": "Servlet 的生命周期有几个阶段？分别是什么？",
+      "options": [],
+      "answer": [
+        "Servlet 生命周期 3 阶段：\n1. init()：初始化，只执行一次。\n2. service()：处理请求，可多次执行，并分发 doGet()/doPost()。\n3. destroy()：销毁，释放资源。\n口诀：init -> service -> destroy。"
+      ],
+      "analysis": "记忆：一生三步，service 最常用。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "24",
+        "original_id": 392,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 25,
+      "type": "essay",
+      "content": "简述 Servlet 与 JSP 的区别？",
+      "options": [],
+      "answer": [
+        "1. Servlet：Java 类，适合控制流程和业务处理。\n2. JSP：页面模板，适合显示 HTML。\n3. JSP 最终也会翻译成 Servlet。\n4. 常见分工：Servlet 控制，JSP 显示。\n口诀：Servlet 管逻辑，JSP 管页面。"
+      ],
+      "analysis": "记忆：一个偏控制，一个偏展示。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "25",
+        "original_id": 393,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 26,
+      "type": "essay",
+      "content": "需要使用过滤器的一般有哪几种情况？",
+      "options": [],
+      "answer": [
+        "常见场景：\n1. 统一编码。\n2. 登录/权限检查。\n3. 日志记录。\n4. 敏感词或非法参数过滤。\n5. XSS、跨域、缓存等统一处理。\n口诀：共性处理交给 Filter。"
+      ],
+      "analysis": "记忆：多个请求都要做的事，适合过滤器。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "26",
+        "original_id": 394,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 27,
+      "type": "essay",
+      "content": "使用过滤器的步骤？",
+      "options": [],
+      "answer": [
+        "步骤：\n1. 写类实现 Filter。\n2. 实现 init()、doFilter()、destroy()。\n3. doFilter() 中处理逻辑，并用 chain.doFilter() 放行。\n4. 在 web.xml 或注解中配置过滤路径。\n口诀：实现接口、写 doFilter、配置映射。"
+      ],
+      "analysis": "记忆：不写 chain.doFilter() 请求就过不去。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "27",
+        "original_id": 395,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 28,
+      "type": "essay",
+      "content": "什么是 JavaBean？有什么作用？",
+      "options": [],
+      "answer": [
+        "JavaBean：符合规范的 Java 类。\n特点：\n1. public 无参构造。\n2. private 属性。\n3. public getter/setter。\n作用：封装数据、方便复用、降低耦合，常配合 DAO/VO/JSP 使用。\n口诀：私有属性，公开 getter/setter。"
+      ],
+      "analysis": "记忆：JavaBean 本质是标准数据对象。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "简答题",
+        "简答题"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "简答.pdf",
+        "kind": "pdf",
+        "section": "简答题",
+        "no": "28",
+        "original_id": 396,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 29,
+      "type": "essay",
+      "content": "写出下列 HTML 代码段的运行结果。\n<table border=\"1px\" >\n<caption>文具订单表</ caption >\n<tr>\n<th>文具</th>\n<th>价格</th>\n<th>数量</th>\n</tr>\n<tr>\n<td>钢笔</td>\n<td>2.50/支</td>\n<td rowspan=2>各 3 支</td>\n</tr>\n<tr>\n<td>铅笔</td>\n<td>0.50/支</td>\n</tr>\n<tr>\n<td>合计</td>\n<td colspan=\"2\">9</td>\n</tr>\n</table>",
+      "options": [],
+      "answer": [
+        "运行结果：带边框表格，标题“文具订单表”。\n表头：文具 | 价格 | 数量\n第1行：钢笔 | 2.50/支 | 各3支\n第2行：铅笔 | 0.50/支 | 数量列与上一行合并\n最后：合计 | 9 横跨后两列\n得分点：rowspan 合并两行，colspan 合并两列。"
+      ],
+      "analysis": "记忆：rowspan 竖合并，colspan 横合并。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "程序题",
+        "读程序写结果"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "程序.pdf",
+        "kind": "pdf",
+        "section": "读程序写结果",
+        "no": "1",
+        "original_id": 397,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 30,
+      "type": "essay",
+      "content": "写出下列 HTML 代码段的运行结果。\n<table border=\"1px\" >\n<caption>学生成绩登记表</caption>\n<tr>\n<th>学号</th>\n<th>姓名</th>\n<th>平时成绩</th>\n<th>期末成绩</th>\n</tr>\n<tr>\n<td>1618006</td>\n<td>张三</td>\n<td>20</td>\n<td>95</td>\n</tr>\n<tr>\n<th rowspan=\"2\">说明</th>\n<td colspan=\"3\">总成绩=平时成绩*20%+期末成绩*80%</td>\n</tr>\n<tr>\n<td colspan=\"3\">2022.06</td>\n</tr>\n</table>",
+      "options": [],
+      "answer": [
+        "运行结果：带边框表格，标题“学生成绩登记表”。\n表头：学号 | 姓名 | 平时成绩 | 期末成绩\n数据：1618006 | 张三 | 20 | 95\n说明：左侧“说明”跨两行；右侧两行分别横跨后三列：\n总成绩=平时成绩*20%+期末成绩*80%\n2022.06"
+      ],
+      "analysis": "记忆：说明 rowspan=2，说明内容 colspan=3。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "程序题",
+        "读程序写结果"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "程序.pdf",
+        "kind": "pdf",
+        "section": "读程序写结果",
+        "no": "2",
+        "original_id": 398,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 31,
+      "type": "essay",
+      "content": "写出下列 HTML 代码段的运行结果。\n<table border=\"1px\" >\n<caption>图书分类表</caption>\n<tr>\n<th>类别</th>\n<th>书名</th>\n<th>价格</th>\n</tr>\n<tr>\n<td rowspan=\"2\">计算机</td>\n<td>Java Web 程序设计</td>\n<td>49.9</td>\n</tr>\n<tr>\n<td>Java 程序设计</td>\n<td>44.8</td>\n</tr>\n<tr>\n<td>文学</td>\n<td>目送</td>\n<td>42</td>\n</tr>\n<tr>\n<td colspan=\"3\">2022 年 06 月</td>\n</tr>\n</table>",
+      "options": [],
+      "answer": [
+        "运行结果：带边框表格，标题“图书分类表”。\n表头：类别 | 书名 | 价格\n计算机跨两行：Java Web 程序设计 49.9；Java 程序设计 44.8\n文学：目送 42\n最后一行“2022 年 06 月”横跨三列。"
+      ],
+      "analysis": "记忆：计算机 rowspan=2，日期 colspan=3。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "程序题",
+        "读程序写结果"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "程序.pdf",
+        "kind": "pdf",
+        "section": "读程序写结果",
+        "no": "3",
+        "original_id": 399,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 32,
+      "type": "essay",
+      "content": "在浏览器地址栏中输\n入:http://localhost:8080/reading.jsp?name=Tom&address=Shenyang,请写出下列代码\n的运行结果。\n<%@ page language=\"java\" contentType=\"text/html; charset=GBK\" %>\n<!DOCTYPE html>\n<body>\n<%\nString name=request.getParameter(\"name\");\nString address=request.getParameter(\"address\");\nif(name!=null&&address!=null){\n%>\n<p>欢迎<%=name %></p><hr/><p>您所在城市是<%=address %></p>\n<%} %>\n</body>\n</html>",
+      "options": [],
+      "answer": [
+        "页面输出：\n欢迎Tom\n----------------\n您所在城市是Shenyang\n原因：URL 参数 name=Tom，address=Shenyang，两个参数都不为 null。"
+      ],
+      "analysis": "记忆：getParameter 取 URL 参数。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "程序题",
+        "读程序写结果"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "程序.pdf",
+        "kind": "pdf",
+        "section": "读程序写结果",
+        "no": "4",
+        "original_id": 400,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 33,
+      "type": "essay",
+      "content": "将下述代码保存为文件 reading.jsp,在浏览器地址栏中输\n入:http://localhost:8080/reading.jsp?name=Tom&name=Mary,写出代码的运行结果。\n<%@ page language=\"java\" import=\"java.util.*\" pageEncoding=\"utf-8\"%>\n<body>\n<%\nString[] names=request.getParameterValues(\"name\");\nif(names!=null){\n%>\n<p>姓名列表如下:</p>\n<%\nfor(int i=0;i<names.length;i++){\nout.println(names[i]+\"<br>\");\n%>\n</body>",
+      "options": [],
+      "answer": [
+        "页面输出：\n姓名列表如下:\nTom\nMary\n原因：同名参数 name 出现两次，getParameterValues(\"name\") 返回数组。"
+      ],
+      "analysis": "记忆：多个同名参数用 getParameterValues。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "程序题",
+        "读程序写结果"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "程序.pdf",
+        "kind": "pdf",
+        "section": "读程序写结果",
+        "no": "5",
+        "original_id": 401,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 34,
+      "type": "essay",
+      "content": "在浏览器地址栏中输入:http://localhost:8080/index.jsp,请写出下列代码的运行结\n果。\nindex.jsp 源代码:\n<%@ page language=\"java\" contentType=\"text/html; charset=gb2312\"%>\n<html><body>\n<h2>欢迎进入 JSP 的世界</h2>\n<hr/>\n<jsp:include page=\"welcome.jsp\">\n<jsp:param name=\"userName\" value=\"xiaoming\"/>\n</jsp:include>\n</body></html>\nwelcome.jsp 源代码:\n<%@ page language=\"java\" contentType=\"text/html; charset=gb2312\"%>\n<html><body>\n<p>你好,<%=request.getParameter(\"userName\")%>!</p><hr/><p>欢迎光临!</p>\n</body></html>",
+      "options": [],
+      "answer": [
+        "页面输出：\n欢迎进入 JSP 的世界\n----------------\n你好,xiaoming!\n----------------\n欢迎光临!\n原因：index.jsp 用 <jsp:include> 包含 welcome.jsp，并传入 userName=xiaoming。"
+      ],
+      "analysis": "记忆：jsp:include 可带 jsp:param。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "程序题",
+        "读程序写结果"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "程序.pdf",
+        "kind": "pdf",
+        "section": "读程序写结果",
+        "no": "6",
+        "original_id": 402,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 35,
+      "type": "essay",
+      "content": "使用 HTML 和 JavaScript 实现注册表单前端验证，完成相应代码。要求如下：\n（1）使用 HTML 的表单控件设计一个注册页面，如图所示；\n（2）设计 JavaScript 函数 validate()，验证用户是否输入了姓名及两次输入的密码是否一\n致。若姓名文本框输入为空，则弹出警示窗口提示用户“请输入您的姓名!”，若两次输入\n密码不一致，则弹出警示窗口提示用户“您两次输入的密码不一致！请重新输入! ”。",
+      "options": [],
+      "answer": [
+        "核心代码：\n<script>\nfunction validate(){\n  var name=document.getElementById(\"name\").value;\n  var p1=document.getElementById(\"p1\").value;\n  var p2=document.getElementById(\"p2\").value;\n  if(name==\"\"){alert(\"请输入您的姓名!\");return false;}\n  if(p1!=p2){alert(\"您两次输入的密码不一致！请重新输入!\");return false;}\n  return true;\n}\n</script>\n<form onsubmit=\"return validate()\">\n姓名：<input id=\"name\"><br>\n密码：<input id=\"p1\" type=\"password\"><br>\n确认密码：<input id=\"p2\" type=\"password\"><br>\n<input type=\"submit\" value=\"提交\">\n</form>"
+      ],
+      "analysis": "记忆：表单验证题抓住 onsubmit 和 return false。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "程序题",
+        "前端"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "程序.pdf",
+        "kind": "pdf",
+        "section": "前端",
+        "no": "1",
+        "original_id": 403,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 36,
+      "type": "essay",
+      "content": "实现下列表格(注意单元格合并)",
+      "options": [],
+      "answer": [
+        "核心代码：\n<table border=\"1\" cellspacing=\"0\">\n  <caption>学生成绩单</caption>\n  <tr><th>学号</th><th>姓名</th><th>Web程序设计</th><th>数据库原理</th></tr>\n  <tr><td>10999102</td><td>张三</td><td>95</td><td>90</td></tr>\n  <tr><td rowspan=\"2\">说明</td><td colspan=\"3\">总成绩=平时*20%+期末*80%</td></tr>\n  <tr><td colspan=\"3\" align=\"right\">软件学院</td></tr>\n</table>\n得分点：caption、rowspan、colspan。"
+      ],
+      "analysis": "记忆：这题主要考表格标题和单元格合并。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "程序题",
+        "前端"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "程序.pdf",
+        "kind": "pdf",
+        "section": "前端",
+        "no": "2",
+        "original_id": 404,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 37,
+      "type": "essay",
+      "content": "使用 DIV+CSS 完成下列页面效果，DIV 完成页面结构部分，CSS 完成页面布局及样式\n（边框），写出主要代码。",
+      "options": [],
+      "answer": [
+        "核心代码：\n<div id=\"wrap\">\n  <div id=\"banner\">banner</div>\n  <div id=\"main\"><div id=\"links\">links</div><div id=\"content\">content</div></div>\n  <div id=\"footer\">footer</div>\n</div>\n<style>\n#wrap{width:600px;margin:auto;text-align:center;}\n#banner,#footer,#links,#content{border:1px solid #333;}\n#banner,#footer{height:30px;line-height:30px;}\n#main{display:flex;height:150px;}\n#links{width:150px;} #content{flex:1;}\n</style>"
+      ],
+      "analysis": "记忆：上 banner，中间左右两栏，下 footer。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "程序题",
+        "前端"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "程序.pdf",
+        "kind": "pdf",
+        "section": "前端",
+        "no": "3",
+        "original_id": 405,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 38,
+      "type": "essay",
+      "content": "使用 CSS 完成仿百度按钮的导航栏,并使用伪类选择器完成超链接悬停效果",
+      "options": [],
+      "answer": [
+        "核心代码：\n<div class=\"box\">\n  <h4>CSS属性超链接的应用</h4>\n  <a href=\"https://www.baidu.com\">百度</a>\n</div>\n<style>\n.box{width:200px;border:1px solid #ccc;padding:8px;}\n.box a{display:block;background:#66b3ff;color:white;text-align:center;text-decoration:none;padding:6px;}\n.box a:hover{background:#0066ff;}\n</style>\n得分点：a:hover 改悬停样式。"
+      ],
+      "analysis": "记忆：悬停效果就写 :hover。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "程序题",
+        "前端"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "程序.pdf",
+        "kind": "pdf",
+        "section": "前端",
+        "no": "4",
+        "original_id": 406,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 39,
+      "type": "essay",
+      "content": "使用 Request 和 Response 完成用户登录功能，需要完成 3 个文件，请完成主要代码。\n要求如下：\n（1）login.jsp：登录页面（图一），用户输入账号和密码，提交表单；（2）check.jsp：检\n查页面（图二），获取账号和密码，如果账号为 admin，密码为 123456，则登录成功，跳\n转到欢迎页面 welcome.html；否则输出错误信息，页面在 5 秒后返回登录页面；（3）\nwelcome.html：欢迎页面（图三），显示欢迎信息。\n参考 ppt 例题",
+      "options": [],
+      "answer": [
+        "login.jsp：\n<form action=\"check.jsp\" method=\"post\">\n账号：<input name=\"user\"><br>密码：<input type=\"password\" name=\"pwd\"><br><input type=\"submit\" value=\"登录\">\n</form>\ncheck.jsp：\n<%\nString u=request.getParameter(\"user\"), p=request.getParameter(\"pwd\");\nif(\"admin\".equals(u)&&\"123456\".equals(p)) response.sendRedirect(\"welcome.html\");\nelse{out.print(\"登录失败，5秒后返回\");response.setHeader(\"refresh\",\"5;url=login.jsp\");}\n%>\nwelcome.html：<h2>欢迎登录</h2>"
+      ],
+      "analysis": "记忆：成功 sendRedirect，失败 refresh 返回。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "程序题",
+        "JSP和内置对象"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "程序.pdf",
+        "kind": "pdf",
+        "section": "JSP和内置对象",
+        "no": "1",
+        "original_id": 407,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 40,
+      "type": "essay",
+      "content": "使用 JSP 完成下列程序：用户输入梯形的上底、下底和高的值后，计算并输出梯形面\n积。TX.jsp 页面中设计表单接收用户输入，表单提交给 getArea.jsp 页面。getArea.jsp 页\n面中获取用户的输入，计算梯形面积并输出。\n以及三角形等（实验）",
+      "options": [],
+      "answer": [
+        "TX.jsp：\n<form action=\"getArea.jsp\" method=\"post\">\n上底：<input name=\"a\"><br>下底：<input name=\"b\"><br>高：<input name=\"h\"><br><input type=\"submit\" value=\"计算\">\n</form>\ngetArea.jsp：\n<%\ndouble a=Double.parseDouble(request.getParameter(\"a\"));\ndouble b=Double.parseDouble(request.getParameter(\"b\"));\ndouble h=Double.parseDouble(request.getParameter(\"h\"));\nout.print(\"面积=\"+((a+b)*h/2));\n%>\n公式：梯形面积=(上底+下底)*高/2。"
+      ],
+      "analysis": "记忆：表单提交到 JSP，JSP 取参计算输出。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "程序题",
+        "JSP和内置对象"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "程序.pdf",
+        "kind": "pdf",
+        "section": "JSP和内置对象",
+        "no": "2",
+        "original_id": 408,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 41,
+      "type": "essay",
+      "content": "使用 Request 完成用户登录功能，需要完成 2 个文件，请完成主要代码。要求如下：\n（1）Login.html：用户注册表单（图一），表单提交给 Display.jsp 页面。\n（2）Display.jsp：显示页面（图二），获取注册页面信息，在此页面进行显示。\n（图一）\n（图二）",
+      "options": [],
+      "answer": [
+        "Login.html：\n<form action=\"Display.jsp\" method=\"post\">\n姓名：<input name=\"name\"><br>密码：<input type=\"password\" name=\"pwd\"><br>\n性别：<input type=\"radio\" name=\"sex\" value=\"male\">男 <input type=\"radio\" name=\"sex\" value=\"female\">女<br>\n爱好：<input type=\"checkbox\" name=\"hobby\" value=\"swim\">游泳 <input type=\"checkbox\" name=\"hobby\" value=\"read\">读书<br>\n班级：<input name=\"clazz\" value=\"sy\"><br><input type=\"submit\" value=\"提交\">\n</form>\nDisplay.jsp：用 request.getParameter 取单值，用 getParameterValues(\"hobby\") 取多选并输出。"
+      ],
+      "analysis": "记忆：单值 getParameter，多选 getParameterValues。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "程序题",
+        "JSP和内置对象"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "程序.pdf",
+        "kind": "pdf",
+        "section": "JSP和内置对象",
+        "no": "3",
+        "original_id": 409,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 42,
+      "type": "essay",
+      "content": "使用 Cookie 完成文本框信息自动填充程序\n参考 ppt 例题和实验",
+      "options": [],
+      "answer": [
+        "核心思路：Cookie 保存输入值，下次回填。\n保存：\nCookie c=new Cookie(\"uname\",request.getParameter(\"uname\"));\nc.setMaxAge(7*24*3600); response.addCookie(c);\n读取：\nCookie[] cs=request.getCookies();\nfor(Cookie c:cs){ if(\"uname\".equals(c.getName())) uname=c.getValue(); }\n回填：\n<input name=\"uname\" value=\"<%=uname%>\">\n口诀：保存 Cookie，读取 Cookie，value 回填。"
+      ],
+      "analysis": "记忆：自动填充靠 input 的 value。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "程序题",
+        "会话"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "程序.pdf",
+        "kind": "pdf",
+        "section": "会话",
+        "no": "1",
+        "original_id": 410,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 43,
+      "type": "essay",
+      "content": "使用 Session 技术完成用户登录程序，写出 2 个页面的主要代码。（1）Main.jsp：系统\n主页面，需要登录才能访问，先使用 Session 检验用户是否已经登录，如果已经登录则显\n示欢迎信息（图一），否则输出提示信息（图二），并在 2 秒后转到登录页面 Login.jsp；\n（2）Login.jsp：用户登录页面，判断账号（admin）和密码（123456）是否正确，如果正\n确则转到主页面 Main.jsp（图一），否则，在本页输出错误信息，提示用户重新输入（图\n三）。\n（图一） （图\n二） （图三）",
+      "options": [],
+      "answer": [
+        "Main.jsp：\n<%\nString user=(String)session.getAttribute(\"user\");\nif(user!=null) out.print(\"您好,\"+user);\nelse{out.print(\"您还没登录，2秒后跳转\");response.setHeader(\"refresh\",\"2;url=Login.jsp\");}\n%>\nLogin.jsp：\n<%\nString u=request.getParameter(\"user\"), p=request.getParameter(\"pwd\");\nif(\"admin\".equals(u)&&\"123456\".equals(p)){session.setAttribute(\"user\",u);response.sendRedirect(\"Main.jsp\");}\nelse if(u!=null) out.print(\"账号或密码错误\");\n%>\n再写登录表单即可。"
+      ],
+      "analysis": "记忆：Session 登录题核心是 setAttribute/getAttribute。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "程序题",
+        "会话"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "程序.pdf",
+        "kind": "pdf",
+        "section": "会话",
+        "no": "2",
+        "original_id": 411,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 44,
+      "type": "essay",
+      "content": "使用 Session 实现带验证码的登录系统\n使用 Session 实现带验证码的登录系统，需要 3 个文件，要求如下：\n（1）在 Login.jsp 页面中用户通过用户名、密码和验证码进行登录；\n（2）登录后的信息由 Handler.jsp 页面进行处理。如果用户名与密码与保存在二维数组中\n的字符串相同，并且输入的验证码与 4 位随机生成的验证码图片上的数字相同，则将用户\n名保存在 session 对象中并跳转到 Main.jsp 页面；否则跳转到 Login.jsp 页面重新登录。\n（3）在 Main.jsp 页面中通过 session 对象获得用户名并输出。\n参考 ppt",
+      "options": [],
+      "answer": [
+        "3 个页面思路：\n1. Login.jsp：生成 4 位验证码，session.setAttribute(\"code\",code)，表单提交 username、password、code。\n2. Handler.jsp：遍历二维数组校验用户名密码，再比较输入验证码和 session 中 code；都正确就 session.setAttribute(\"user\",username) 并跳 Main.jsp，否则回 Login.jsp。\n3. Main.jsp：输出 session.getAttribute(\"user\")。\n口诀：验证码存 session，提交后再比较。"
+      ],
+      "analysis": "记忆：验证码不能只看页面，要和 session 中保存的值比。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "程序题",
+        "会话"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "程序.pdf",
+        "kind": "pdf",
+        "section": "会话",
+        "no": "3",
+        "original_id": 412,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 45,
+      "type": "essay",
+      "content": "Session 实现购物车\n参考 ppt 例题和实验",
+      "options": [],
+      "answer": [
+        "核心思路：购物车保存在 session。\n<%@ page import=\"java.util.*\" %>\n<%\nList cart=(List)session.getAttribute(\"cart\");\nif(cart==null) cart=new ArrayList();\nString goods=request.getParameter(\"goods\");\nif(goods!=null) cart.add(goods);\nsession.setAttribute(\"cart\",cart);\nfor(Object g:cart){out.print(g+\"<br>\");}\n%>\n口诀：取 cart，没有就新建，加商品，再存回 session。"
+      ],
+      "analysis": "记忆：购物车属于同一用户多次请求的数据。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "程序题",
+        "会话"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "程序.pdf",
+        "kind": "pdf",
+        "section": "会话",
+        "no": "4",
+        "original_id": 413,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 46,
+      "type": "essay",
+      "content": "用 JSP 实现基于 xsgl 数据库的用户注册与登录系统，如图所示：\n图1 图2 图3",
+      "options": [],
+      "answer": [
+        "核心流程：\n1. 注册页：表单提交学号、密码、验证码；JDBC insert 保存用户。\n2. 登录页：表单提交学号、密码；JDBC select 校验。\n3. 成功：保存 session 或跳转欢迎页；失败：提示错误。\n关键代码：\nPreparedStatement ps=conn.prepareStatement(\"select * from user where sno=? and pwd=?\");\nps.setString(1,sno); ps.setString(2,pwd);\nResultSet rs=ps.executeQuery();\nif(rs.next()) out.print(\"您好，\"+sno);"
+      ],
+      "analysis": "记忆：数据库登录题核心是 PreparedStatement + rs.next()。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "程序题",
+        "数据库"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "程序.pdf",
+        "kind": "pdf",
+        "section": "数据库",
+        "no": "1",
+        "original_id": 414,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 47,
+      "type": "essay",
+      "content": "数据库部分 ppt 例题和实验",
+      "options": [],
+      "answer": [
+        "数据库题通用 JDBC 模板：\nClass.forName(\"com.mysql.cj.jdbc.Driver\");\nConnection conn=DriverManager.getConnection(url,user,pwd);\nPreparedStatement ps=conn.prepareStatement(\"select * from student\");\nResultSet rs=ps.executeQuery();\nwhile(rs.next()){\n  out.print(rs.getString(\"sno\")+rs.getString(\"sname\")+rs.getInt(\"sage\"));\n}\nrs.close(); ps.close(); conn.close();\n口诀：驱动、连接、预编译、执行、遍历、关闭。"
+      ],
+      "analysis": "记忆：JDBC 代码题按固定模板默写。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "程序题",
+        "数据库"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "程序.pdf",
+        "kind": "pdf",
+        "section": "数据库",
+        "no": "2",
+        "original_id": 415,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 48,
+      "type": "essay",
+      "content": "假如数据库中有表 student(sno,sname,sage),请写出表示其对应的 VO 的 JavaBean。\n提示:在 JavaBean 中不仅要定义其成员变量,还要对成员变量定义 setter/getter 方法。\n通常情况下 DAO(data access object)配合 VO(value object)使用,在 DAO 中可以每查询\n到一条记录就将其封装为 VO。最后将所有实例化的 VO 存放在集合内返回,这样就可以实现\n层次的分开,降低了耦合度。\n看 ppt 例题",
+      "options": [],
+      "answer": [
+        "public class Student{\n  private String sno;\n  private String sname;\n  private int sage;\n  public Student(){}\n  public String getSno(){return sno;}\n  public void setSno(String sno){this.sno=sno;}\n  public String getSname(){return sname;}\n  public void setSname(String sname){this.sname=sname;}\n  public int getSage(){return sage;}\n  public void setSage(int sage){this.sage=sage;}\n}\n得分点：private 属性、无参构造、getter/setter。"
+      ],
+      "analysis": "记忆：JavaBean 先写 private 字段，再生成 getter/setter。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "程序题",
+        "数据库和JavaBean"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "程序.pdf",
+        "kind": "pdf",
+        "section": "数据库和JavaBean",
+        "no": "1",
+        "original_id": 416,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    },
+    {
+      "id": 49,
+      "type": "essay",
+      "content": "在 src/xsgl/servlet 中创建 servlet 文件 stuservlet.java,此 servlet 不能直接被访\n问,需要在 web.xml 中配置 servlet,才能通过 URL 映射到与之对应的 servlet 中,如果用户\n以地址:http://localhost:8080/xsgl/servlet/stuservlet 来访问它,请写出在 web.xml\n中相应的配置代码。",
+      "options": [],
+      "answer": [
+        "web.xml 配置：\n<servlet>\n  <servlet-name>stuservlet</servlet-name>\n  <servlet-class>xsgl.servlet.stuservlet</servlet-class>\n</servlet>\n<servlet-mapping>\n  <servlet-name>stuservlet</servlet-name>\n  <url-pattern>/servlet/stuservlet</url-pattern>\n</servlet-mapping>\n得分点：servlet-name 前后一致，url-pattern 对应访问路径。"
+      ],
+      "analysis": "记忆：先声明 servlet，再写 mapping。",
+      "tags": [
+        "Java Web",
+        "期末背诵",
+        "程序题",
+        "Servlet"
+      ],
+      "difficulty": 1,
+      "source": {
+        "file": "程序.pdf",
+        "kind": "pdf",
+        "section": "Servlet",
+        "no": "1",
+        "original_id": 417,
+        "answer_source": "AI根据题干、截图和常见考试得分点精简整理"
+      }
+    }
+  ]
+}
