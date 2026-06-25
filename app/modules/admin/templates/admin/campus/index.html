@@ -35,6 +35,7 @@
     tbody tr:hover { background: rgba(142, 142, 147, 0.06); }
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; white-space: nowrap; }
     .muted { color: var(--text-sub); }
+    .student-info-line { color: var(--text-sub); font-size: 12px; line-height: 1.5; margin-top: 4px; }
     .badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }
     .badge.schedule { background: rgba(0, 122, 255, 0.1); color: var(--primary); }
     .badge.grades { background: rgba(52, 199, 89, 0.12); color: var(--success); }
@@ -187,6 +188,14 @@ function snapshotKindLabel(kind) {
     return kind === 'grades' ? '成绩' : '课表';
 }
 
+function studentInfoLine(student) {
+    const data = student || {};
+    return [data.name, data.student_no, data.class_name, data.major_name]
+        .filter(Boolean)
+        .map(esc)
+        .join(' / ');
+}
+
 async function loadSnapshots() {
     const kind = document.getElementById('snapshotKind').value;
     const keyword = document.getElementById('snapshotSearch').value.trim();
@@ -212,7 +221,7 @@ async function loadSnapshots() {
             <tbody>${rows.map(row => `<tr>
                 <td><span class="badge ${esc(row.kind)}">${snapshotKindLabel(row.kind)}</span></td>
                 <td><div>${esc(row.username)}</div><div class="muted">ID ${esc(row.user_id)}</div></td>
-                <td><div>${esc(row.term_label || '-')}</div><div class="muted">${esc(row.xnm)} / ${esc(row.xqm)}</div></td>
+                <td><div>${esc(row.term_label || '-')}</div><div class="student-info-line">${studentInfoLine(row.student)}</div><div class="muted">${esc(row.xnm)} / ${esc(row.xqm)}</div></td>
                 <td>${esc(row.course_count)}</td>
                 <td>${fmtTime(row.fetched_at)}</td>
                 <td><button class="btn btn-secondary btn-xs" type="button" onclick="loadSnapshotDetail('${esc(row.kind)}', ${Number(row.id)})">详情</button></td>
@@ -230,8 +239,12 @@ async function loadSnapshotDetail(kind, id) {
     try {
         const data = await fetchJson(`${campusApi.snapshots}/${encodeURIComponent(kind)}/${encodeURIComponent(id)}`);
         const rows = data.items || [];
+        const studentLine = studentInfoLine(data.student);
         const head = `<div class="detail-head">
-            <h3>${esc(data.username)} 的${snapshotKindLabel(data.kind)}详情</h3>
+            <div>
+                <h3>${esc(data.username)} 的${snapshotKindLabel(data.kind)}详情</h3>
+                <div class="student-info-line">${studentLine}</div>
+            </div>
             <span class="muted">${esc(data.term_label || '')} · ${fmtTime(data.fetched_at)}</span>
         </div>`;
         const table = data.kind === 'grades' ? renderGradeDetail(rows) : renderScheduleDetail(rows);

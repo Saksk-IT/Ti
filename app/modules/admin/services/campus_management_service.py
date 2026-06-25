@@ -84,6 +84,17 @@ def _snapshot_course_count(kind: str, payload: Dict[str, Any]) -> int:
     return _schedule_course_count(payload)
 
 
+def _student_info(payload: Dict[str, Any]) -> Dict[str, str]:
+    student = payload.get("student") if isinstance(payload.get("student"), dict) else {}
+    return {
+        "name": str(student.get("name") or ""),
+        "student_no": str(student.get("student_no") or ""),
+        "class_name": str(student.get("class_name") or ""),
+        "major_name": str(student.get("major_name") or ""),
+        "college_name": str(student.get("college_name") or ""),
+    }
+
+
 def _flatten_schedule_items(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
     rows: List[Dict[str, Any]] = []
     courses = payload.get("courses") if isinstance(payload.get("courses"), list) else []
@@ -156,6 +167,7 @@ def _snapshot_base(row: Any, user: User, kind: str, payload: Dict[str, Any]) -> 
         "xnm": str(row.xnm or term.get("xnm") or ""),
         "xqm": str(row.xqm or term.get("xqm") or ""),
         "term_label": str(row.term_label or term.get("label") or ""),
+        "student": _student_info(payload),
         "course_count": _snapshot_course_count(kind, payload),
         "fetched_at": _format_time(row.fetched_at),
     }

@@ -14,6 +14,7 @@ def _sample_schedule_payload(xnm="2025", xqm="12"):
         "xsxx": {
             "XM": "王为硕",
             "BJMC": "计算机科学与技术23-5班",
+            "ZYMC": "计算机科学与技术",
             "XNMC": "2025-2026",
             "XNM": xnm,
             "XQM": xqm,
@@ -1389,6 +1390,8 @@ def test_admin_campus_page_exposes_management_apis(app, seed_user):
     assert "校园管理" in html
     assert "/admin/api/campus/credentials" in html
     assert "/admin/api/campus/snapshots" in html
+    assert "student-info-line" in html
+    assert "studentInfoLine" in html
 
 
 def test_admin_campus_rejects_non_admin(app, auth_client):
@@ -1452,8 +1455,15 @@ def test_admin_campus_snapshot_list_and_detail_return_grade_and_schedule_data(ap
     grade_item = next(item for item in grade_items if item["xnm"] == "2031" and item["xqm"] == "3")
     assert schedule_item["kind"] == "schedule"
     assert schedule_item["course_count"] >= 2
+    assert schedule_item["student"]["name"] == "王为硕"
+    assert schedule_item["student"]["class_name"] == "计算机科学与技术23-5班"
+    assert schedule_item["student"]["major_name"] == "计算机科学与技术"
     assert grade_item["kind"] == "grades"
     assert grade_item["course_count"] == 2
+    assert grade_item["student"]["name"] == "测试学生"
+    assert grade_item["student"]["student_no"] == "stu_demo_2026"
+    assert grade_item["student"]["class_name"] == "软件工程26-1班"
+    assert grade_item["student"]["major_name"] == "软件工程"
 
     schedule_detail = client.get(f"/admin/api/campus/snapshots/schedule/{schedule_item['id']}")
     grade_detail = client.get(f"/admin/api/campus/snapshots/grades/{grade_item['id']}")
@@ -1463,9 +1473,13 @@ def test_admin_campus_snapshot_list_and_detail_return_grade_and_schedule_data(ap
     schedule_body = schedule_detail.get_json()["data"]
     grade_body = grade_detail.get_json()["data"]
     assert schedule_body["kind"] == "schedule"
+    assert schedule_body["student"]["name"] == "王为硕"
+    assert schedule_body["student"]["class_name"] == "计算机科学与技术23-5班"
     assert schedule_body["items"][0]["course_name"] == "WEB程序设计"
     assert schedule_body["items"][0]["weekday"] == "星期一"
     assert grade_body["kind"] == "grades"
+    assert grade_body["student"]["name"] == "测试学生"
+    assert grade_body["student"]["class_name"] == "软件工程26-1班"
     assert grade_body["items"][0]["course_name"] == "数据结构"
     assert grade_body["items"][0]["score"] == "92"
 
