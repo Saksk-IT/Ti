@@ -92,14 +92,11 @@
   "window": {
     "navigationStyle": "custom",
     "backgroundColor": "@backgroundColor",
-    "backgroundColorTop": "@backgroundColor",
-    "backgroundColorBottom": "@backgroundColor",
     "backgroundTextStyle": "@backgroundTextStyle",
     "navigationBarBackgroundColor": "@navigationBarBackgroundColor",
     "navigationBarTextStyle": "@navigationBarTextStyle"
   },
   "tabBar": {
-    "custom": true,
     "color": "@tabBarColor",
     "selectedColor": "@tabBarSelectedColor",
     "borderStyle": "@tabBarBorderStyle",

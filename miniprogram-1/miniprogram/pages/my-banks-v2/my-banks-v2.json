@@ -1,9 +1,6 @@
 {
   "navigationStyle": "custom",
   "backgroundColor": "@backgroundColor",
-  "backgroundColorTop": "@backgroundColor",
-  "backgroundColorBottom": "@backgroundColor",
-  "backgroundColorContent": "@backgroundColor",
   "usingComponents": {
     "navigation-bar": "../../components/navigation-bar/navigation-bar"
   }

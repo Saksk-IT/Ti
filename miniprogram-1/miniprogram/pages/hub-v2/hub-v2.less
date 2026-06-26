@@ -14,9 +14,14 @@ page {
   background: var(--app-bg);
   color: var(--app-text);
   position: relative;
+  /* 页面进入动画：从右侧滑入 */
+  transform: translateX(100%);
+  opacity: 0;
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
 }
 
 .page-root.page-visible {
+  transform: translateX(0);
   opacity: 1;
 }
 
@@ -311,7 +316,7 @@ page {
 /* ========== 主内容区 ========== */
 .main-content {
   padding: 0 24rpx;
-  padding-bottom: calc(164rpx + env(safe-area-inset-bottom));
+  padding-bottom: calc(60rpx + env(safe-area-inset-bottom));
 }
 
 .section {

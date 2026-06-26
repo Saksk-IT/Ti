@@ -214,21 +214,18 @@ Page({
             this.setData(theme_1.themeManager.getPageData());
         }
         catch (e) { }
-        this.loadBanks({ silent: !!this.data.inited });
+        this.loadBanks();
     },
-    loadBanks: function (options) {
+    loadBanks: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var silent, overviewItems, banks, e_1;
+            var overviewItems, banks, e_1;
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        if (options === void 0) { options = {}; }
                         if (this.data.loading)
                             return [2 /*return*/];
-                        silent = !!options.silent;
-                        if (!silent)
-                            this.setData({ loading: true });
+                        this.setData({ loading: true });
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 3, 4, 5]);
@@ -245,8 +242,7 @@ Page({
                         wx.showToast({ title: (e_1 && e_1.message) || '加载失败', icon: 'none' });
                         return [3 /*break*/, 5];
                     case 4:
-                        if (!silent)
-                            this.setData({ loading: false });
+                        this.setData({ loading: false });
                         return [7 /*endfinally*/];
                     case 5: return [2 /*return*/];
                 }

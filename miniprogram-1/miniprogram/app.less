@@ -50,7 +50,8 @@ page {
   --app-radius-md: 24rpx;
   --app-radius-sm: 20rpx;
 
-  background: var(--app-bg);
+  /* 让原生 window backgroundColor（可通过 wx.setBackgroundColor 动态更新）透出，避免切页露出浅色底 */
+  background: transparent;
   color: var(--app-text);
 }
 
