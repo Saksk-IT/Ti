@@ -52,6 +52,7 @@ var api_1 = require("../../utils/api");
 var auth_1 = require("../../utils/auth");
 var avatar_1 = require("../../utils/avatar");
 var nav_1 = require("../../utils/nav");
+var tab_transition_1 = require("../../utils/tab-transition");
 var theme_1 = require("../../utils/theme");
 var font_1 = require("../../utils/font");
 function canShowAdmin(userInfo) {
@@ -65,13 +66,15 @@ Page({
             favorites: 0,
             mistakes: 0
         },
-        loading: false
+        loading: false,
+        tabPageTransitionClass: ''
     },
     onShow: function () {
         if (!(0, auth_1.checkLogin)()) {
             wx.redirectTo({ url: '/pages/login/login' });
             return;
         }
+        (0, tab_transition_1.restartTabPageTransition)(this);
         var userInfo = wx.getStorageSync('userInfo');
         try {
             this.setData(__assign(__assign({}, theme_1.themeManager.getPageData()), font_1.fontManager.getPageData()));

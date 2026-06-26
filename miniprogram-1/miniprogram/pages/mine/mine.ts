@@ -3,6 +3,7 @@ import { api, resolveUploadUrl } from '../../utils/api';
 import { checkLogin, logout } from '../../utils/auth';
 import { decorateAvatarUrl } from '../../utils/avatar';
 import { safeNavigate } from '../../utils/nav';
+import { restartTabPageTransition } from '../../utils/tab-transition';
 import { themeManager } from '../../utils/theme';
 import { fontManager } from '../../utils/font';
 
@@ -18,7 +19,8 @@ Page({
       favorites: 0,
       mistakes: 0
     },
-    loading: false
+    loading: false,
+    tabPageTransitionClass: ''
   },
 
   onShow() {
@@ -26,6 +28,7 @@ Page({
       wx.redirectTo({ url: '/pages/login/login' });
       return;
     }
+    restartTabPageTransition(this);
     const userInfo = wx.getStorageSync('userInfo');
     try {
       this.setData({

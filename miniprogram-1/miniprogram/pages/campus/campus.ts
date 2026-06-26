@@ -1,6 +1,7 @@
 import { api } from '../../utils/api';
 import { checkLogin } from '../../utils/auth';
 import { safeNavigate } from '../../utils/nav';
+import { restartTabPageTransition } from '../../utils/tab-transition';
 import { themeManager, ThemeMode } from '../../utils/theme';
 import {
   buildCampusActions,
@@ -291,6 +292,7 @@ Page({
     captchaCode: '',
     captchaMessage: '',
     captchaSubmitting: false,
+    tabPageTransitionClass: '',
   },
 
   onShow() {
@@ -298,6 +300,7 @@ Page({
       wx.redirectTo({ url: '/pages/login/login' });
       return;
     }
+    restartTabPageTransition(this);
     try {
       this.setData({ ...themeManager.getPageData() });
     } catch (e) {}

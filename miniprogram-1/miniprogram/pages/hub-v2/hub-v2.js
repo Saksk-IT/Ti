@@ -50,6 +50,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var api_1 = require("../../utils/api");
 var auth_1 = require("../../utils/auth");
 var nav_1 = require("../../utils/nav");
+var tab_transition_1 = require("../../utils/tab-transition");
 var theme_1 = require("../../utils/theme");
 var avatar_1 = require("../../utils/avatar");
 var hub_content_1 = require("./hub-content");
@@ -204,6 +205,7 @@ Page({
         themeMode: 'light',
         // 页面进入动画
         pageVisible: false,
+        tabPageTransitionClass: '',
         // 新用户资料设置弹窗
         showProfileSetupModal: false,
         setupStep: 'profile',
@@ -237,6 +239,7 @@ Page({
         }, 50);
     },
     onShow: function () {
+        (0, tab_transition_1.restartTabPageTransition)(this);
         var isLoggedIn = (0, auth_1.checkLogin)();
         this.setData({ isLoggedIn: isLoggedIn });
         // 更新主题

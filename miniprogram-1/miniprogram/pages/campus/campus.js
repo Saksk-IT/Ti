@@ -50,6 +50,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var api_1 = require("../../utils/api");
 var auth_1 = require("../../utils/auth");
 var nav_1 = require("../../utils/nav");
+var tab_transition_1 = require("../../utils/tab-transition");
 var theme_1 = require("../../utils/theme");
 var campus_content_1 = require("./campus-content");
 var SEMESTER_LABELS = ['第一、二学期', '第一学期', '第二学期'];
@@ -302,12 +303,14 @@ Page({
         captchaCode: '',
         captchaMessage: '',
         captchaSubmitting: false,
+        tabPageTransitionClass: '',
     },
     onShow: function () {
         if (!(0, auth_1.checkLogin)()) {
             wx.redirectTo({ url: '/pages/login/login' });
             return;
         }
+        (0, tab_transition_1.restartTabPageTransition)(this);
         try {
             this.setData(__assign({}, theme_1.themeManager.getPageData()));
         }

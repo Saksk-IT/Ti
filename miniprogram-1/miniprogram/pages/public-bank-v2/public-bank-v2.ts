@@ -2,6 +2,7 @@ import { api } from '../../utils/api';
 import { resolveUploadUrl } from '../../utils/api-endpoints';
 import { checkLogin } from '../../utils/auth';
 import { safeNavigate } from '../../utils/nav';
+import { restartTabPageTransition } from '../../utils/tab-transition';
 import { themeManager, ThemeMode } from '../../utils/theme';
 
 type BankType = 'system' | 'user';
@@ -74,7 +75,8 @@ Page({
     perPage: 20,
     total: 0,
     shownTotal: 0,
-    hasMore: true
+    hasMore: true,
+    tabPageTransitionClass: ''
   },
 
   onShow() {
@@ -82,6 +84,7 @@ Page({
       wx.redirectTo({ url: '/pages/login/login' });
       return;
     }
+    restartTabPageTransition(this);
     try {
       this.setData(themeManager.getPageData());
     } catch (e) {}
