@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "Atkinson Hyperlegible";
+        src: url("capture/assets/fonts/9Bt23C1KxNDXMspQ1lPyU89-1h6ONRlW45GE5Q.ttf") format("truetype");
+        font-weight: 400;
+        font-style: normal;
+      }
+
+      @font-face {
+        font-family: "Atkinson Hyperlegible";
+        src: url("capture/assets/fonts/9Bt73C1KxNDXMspQ1lPyU89-1h6ONRlW45G8WbcNcw.ttf") format("truetype");
+        font-weight: 700;
+        font-style: normal;
+      }
+
+      @font-face {
+        font-family: "Crimson Pro";
+        src: url("capture/assets/fonts/q5uUsoa5M_tv7IihmnkabC5XiXCAlXGks1WZKWp8OA.ttf") format("truetype");
+        font-weight: 700;
+        font-style: normal;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #f6f7f8;
+      }
+
+      body {
+        font-family: "Atkinson Hyperlegible", sans-serif;
+        color: #111827;
+      }
+
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #f6f7f8;
+      }
+
+      .scene {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #f6f7f8;
+      }
+
+      .scene:not(#scene1) {
+        opacity: 0;
+      }
+
+      .grid-bg {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(17, 24, 39, 0.045) 1px, rgba(17, 24, 39, 0) 1px),
+          linear-gradient(90deg, rgba(17, 24, 39, 0.045) 1px, rgba(17, 24, 39, 0) 1px);
+        background-size: 64px 64px;
+      }
+
+      .soft-glow {
+        position: absolute;
+        width: 720px;
+        height: 720px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(45, 186, 125, 0.18), rgba(45, 186, 125, 0) 68%);
+      }
+
+      .brand-pill {
+        position: absolute;
+        top: 64px;
+        left: 72px;
+        width: 174px;
+        height: 56px;
+        border-radius: 16px;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        box-shadow: rgba(2, 6, 23, 0.05) 0 2px 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        font-weight: 700;
+        font-size: 24px;
+      }
+
+      .brand-dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #111827;
+        box-shadow: 0 0 0 6px rgba(17, 24, 39, 0.08);
+      }
+
+      .product-frame {
+        position: absolute;
+        width: 1200px;
+        border-radius: 28px;
+        padding: 18px;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 34px 90px rgba(2, 6, 23, 0.18);
+      }
+
+      .product-frame img {
+        display: block;
+        width: 100%;
+        border-radius: 18px;
+      }
+
+      .fragment {
+        position: absolute;
+        min-width: 150px;
+        height: 58px;
+        border-radius: 16px;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        box-shadow: rgba(2, 6, 23, 0.08) 0 12px 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 22px;
+        color: #6b7280;
+        font-size: 23px;
+        font-weight: 700;
+      }
+
+      .hero-copy {
+        position: absolute;
+        left: 98px;
+        top: 188px;
+        width: 560px;
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+      }
+
+      .kicker {
+        color: #6b7280;
+        font-size: 22px;
+        font-weight: 700;
+      }
+
+      .hero-title,
+      .section-title,
+      .final-title {
+        margin: 0;
+        font-family: "Crimson Pro", serif;
+        font-weight: 700;
+        letter-spacing: 0;
+        color: #111827;
+      }
+
+      .hero-title {
+        font-size: 104px;
+        line-height: 0.94;
+      }
+
+      .hero-subtitle,
+      .section-subtitle {
+        margin: 0;
+        color: #6b7280;
+        font-size: 28px;
+        line-height: 1.45;
+      }
+
+      .draw-ring {
+        position: absolute;
+        left: 944px;
+        top: 232px;
+        width: 446px;
+        height: 150px;
+        pointer-events: none;
+      }
+
+      .draw-ring path {
+        stroke-dasharray: 1250;
+        stroke-dashoffset: 1250;
+      }
+
+      .scene-content {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        padding: 96px 112px;
+        display: flex;
+        flex-direction: column;
+        gap: 52px;
+      }
+
+      .section-title {
+        font-size: 82px;
+        line-height: 1;
+      }
+
+      .feature-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 26px;
+      }
+
+      .feature-card,
+      .metric-card,
+      .step-card,
+      .cta-panel {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 18px;
+        box-shadow: rgba(2, 6, 23, 0.05) 0 2px 10px;
+      }
+
+      .feature-card {
+        min-height: 330px;
+        padding: 34px;
+        display: flex;
+        flex-direction: column;
+        gap: 26px;
+      }
+
+      .icon-tile {
+        width: 72px;
+        height: 72px;
+        border-radius: 18px;
+        background: #f6f7f8;
+        border: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .icon-tile img {
+        width: 34px;
+        height: 34px;
+      }
+
+      .feature-title {
+        margin: 0;
+        font-family: "Crimson Pro", serif;
+        color: #111827;
+        font-size: 42px;
+        line-height: 1.05;
+      }
+
+      .feature-copy {
+        margin: 0;
+        color: #6b7280;
+        font-size: 24px;
+        line-height: 1.42;
+      }
+
+      .connector {
+        position: absolute;
+        left: 258px;
+        top: 596px;
+        width: 1410px;
+        height: 130px;
+        pointer-events: none;
+      }
+
+      .connector path {
+        stroke-dasharray: 1610;
+        stroke-dashoffset: 1610;
+      }
+
+      .progress-dot {
+        position: absolute;
+        left: 242px;
+        top: 637px;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: #2dba7d;
+        box-shadow: 0 0 0 12px rgba(45, 186, 125, 0.16);
+      }
+
+      .workflow {
+        display: grid;
+        grid-template-columns: 0.92fr 1.08fr;
+        gap: 40px;
+        flex: 1;
+        min-height: 0;
+      }
+
+      .workflow-left,
+      .workflow-right {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      .search-pill {
+        height: 82px;
+        border-radius: 18px;
+        border: 1px solid #e5e7eb;
+        background: #ffffff;
+        box-shadow: rgba(2, 6, 23, 0.05) 0 2px 10px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 0 26px;
+        color: #111827;
+        font-size: 28px;
+        font-weight: 700;
+      }
+
+      .search-pill img {
+        width: 32px;
+        height: 32px;
+      }
+
+      .typed-text {
+        min-width: 340px;
+      }
+
+      .cursor {
+        width: 4px;
+        height: 34px;
+        border-radius: 99px;
+        background: #111827;
+      }
+
+      .step-card {
+        height: 122px;
+        padding: 26px;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+      }
+
+      .step-text {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .step-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #111827;
+      }
+
+      .step-copy {
+        font-size: 21px;
+        color: #6b7280;
+      }
+
+      .dashboard {
+        height: 100%;
+        min-height: 562px;
+        border-radius: 24px;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        box-shadow: rgba(2, 6, 23, 0.08) 0 24px 60px;
+        padding: 34px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      .dashboard-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .dashboard-title {
+        font-family: "Crimson Pro", serif;
+        font-size: 48px;
+        font-weight: 700;
+      }
+
+      .dashboard-badge {
+        padding: 10px 18px;
+        border-radius: 999px;
+        background: rgba(45, 186, 125, 0.14);
+        color: #0d9488;
+        font-weight: 700;
+        font-size: 21px;
+      }
+
+      .metric-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+
+      .metric-card {
+        padding: 24px;
+      }
+
+      .metric-label {
+        color: #6b7280;
+        font-size: 20px;
+        font-weight: 700;
+      }
+
+      .metric-value {
+        margin-top: 12px;
+        color: #111827;
+        font-size: 54px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .chart {
+        flex: 1;
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 14px;
+        align-items: end;
+        padding: 28px 12px 4px;
+      }
+
+      .bar-wrap {
+        height: 250px;
+        display: flex;
+        align-items: end;
+        justify-content: center;
+      }
+
+      .bar {
+        width: 44px;
+        height: 20px;
+        border-radius: 14px 14px 7px 7px;
+        background: #2dba7d;
+      }
+
+      .bar:nth-child(even) {
+        background: #0d9488;
+      }
+
+      .final-layout {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        padding: 86px 112px;
+        display: grid;
+        grid-template-columns: 1fr 780px;
+        gap: 54px;
+        align-items: center;
+      }
+
+      .final-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 26px;
+      }
+
+      .final-title {
+        font-size: 114px;
+        line-height: 0.96;
+      }
+
+      .final-subtitle {
+        margin: 0;
+        color: #6b7280;
+        font-size: 32px;
+        line-height: 1.42;
+      }
+
+      .cta-panel {
+        width: 700px;
+        padding: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 28px;
+      }
+
+      .cta-text {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .cta-title {
+        font-family: "Crimson Pro", serif;
+        font-size: 42px;
+        font-weight: 700;
+      }
+
+      .cta-copy {
+        color: #6b7280;
+        font-size: 22px;
+      }
+
+      .cta-button {
+        height: 68px;
+        min-width: 178px;
+        border-radius: 18px;
+        background: #111827;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: 700;
+      }
+
+      .final-shot {
+        position: relative;
+        width: 780px;
+        border-radius: 28px;
+        padding: 14px;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 30px 78px rgba(2, 6, 23, 0.14);
+      }
+
+      .final-shot img {
+        width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 18px;
+      }
+
+      .shot-image {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        border-radius: 18px;
+        background: #ffffff url("capture/screenshots/scroll-000.png") center / cover no-repeat;
+      }
+
+      .check-mark {
+        width: 74px;
+        height: 74px;
+        border-radius: 24px;
+        background: #f6f7f8;
+        border: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .check-mark img {
+        width: 40px;
+        height: 40px;
+      }
+
+      .accent-dot {
+        position: absolute;
+        border-radius: 50%;
+        background: #e07a2c;
+      }
+    </style>
+  </head>
+  <body>
+    <div data-hf-id="hf-at0g" id="root" data-composition-id="main" data-start="0" data-duration="20" data-width="1920" data-height="1080">
+      <audio data-hf-id="hf-p12q" id="narration" src="narration.mp3" data-start="0" data-duration="20" data-track-index="0" data-volume="1"></audio>
+
+      <section data-hf-id="hf-4u6f" id="scene1" class="scene">
+        <div data-hf-id="hf-q4u8" class="grid-bg"></div>
+        <div data-hf-id="hf-zje7" class="soft-glow" data-layout-ignore="" aria-hidden="true" style="right: 60px; top: 30px"></div>
+        <div data-hf-id="hf-9c95" class="brand-pill"><span data-hf-id="hf-i9p2" class="brand-dot"></span><span data-hf-id="hf-4uii">SAK</span></div>
+        <div data-hf-id="hf-jloi" class="hero-copy">
+          <div data-hf-id="hf-u32h" class="kicker">高效备考，轻松通关</div>
+          <h1 data-hf-id="hf-i2ra" class="hero-title">不再被零散资料打断</h1>
+          <p data-hf-id="hf-7mqy" class="hero-subtitle">题库、错题、进度和模拟考试，收束进一个清晰入口。</p>
+        </div>
+        <div data-hf-id="hf-dvc1" class="fragment" id="frag1" style="right: 280px; top: 104px">资料</div>
+        <div data-hf-id="hf-71k1" class="fragment" id="frag2" style="right: 144px; bottom: 250px">错题</div>
+        <div data-hf-id="hf-60cn" class="fragment" id="frag3" style="left: 630px; bottom: 146px">进度</div>
+        <div data-hf-id="hf-z1ne" class="product-frame" id="heroFrame" style="right: 118px; top: 198px">
+          <img data-hf-id="hf-x6ie" src="capture/screenshots/scroll-000.png" alt="SAK Ti homepage screenshot">
+        </div>
+        <svg data-hf-id="hf-5whf" class="draw-ring" viewBox="0 0 446 150" fill="none">
+          <path data-hf-id="hf-2i1z" d="M16 78 C42 6 370 6 426 70 C468 120 96 150 34 98" stroke="#E07A2C" stroke-width="7" stroke-linecap="round" />
+        </svg>
+      </section>
+
+      <section data-hf-id="hf-tyos" id="scene2" class="scene">
+        <div data-hf-id="hf-wbnc" class="grid-bg"></div>
+        <div data-hf-id="hf-zyam" class="soft-glow" data-layout-ignore="" aria-hidden="true" style="left: -160px; bottom: -240px"></div>
+        <div data-hf-id="hf-cn5c" class="scene-content">
+          <div data-hf-id="hf-yeow">
+            <div data-hf-id="hf-pqa1" class="kicker">SAK 题库</div>
+            <h2 data-hf-id="hf-hxjn" class="section-title">一个入口，完整备考闭环</h2>
+          </div>
+          <div data-hf-id="hf-a651" class="feature-row">
+            <article data-hf-id="hf-5zmo" class="feature-card">
+              <div data-hf-id="hf-dp9k" class="icon-tile"><img data-hf-id="hf-iyrl" src="capture/assets/svgs/svg-da36a5f5.svg" alt=""></div>
+              <h3 data-hf-id="hf-0pur" class="feature-title">题库广场</h3>
+              <p data-hf-id="hf-dhme" class="feature-copy">覆盖多学科、多题型，持续更新优质题目资源。</p>
+            </article>
+            <article data-hf-id="hf-382g" class="feature-card">
+              <div data-hf-id="hf-ryn4" class="icon-tile"><img data-hf-id="hf-kdql" src="capture/assets/svgs/svg-52d41952-feature.svg" alt=""></div>
+              <h3 data-hf-id="hf-uxen" class="feature-title">错题复盘</h3>
+              <p data-hf-id="hf-l3fb" class="feature-copy">自动沉淀薄弱点，把复习目标变得明确。</p>
+            </article>
+            <article data-hf-id="hf-215d" class="feature-card">
+              <div data-hf-id="hf-qrq1" class="icon-tile"><img data-hf-id="hf-yqzh" src="capture/assets/svgs/svg-11626555.svg" alt=""></div>
+              <h3 data-hf-id="hf-gcy3" class="feature-title">学习数据</h3>
+              <p data-hf-id="hf-8dzo" class="feature-copy">用可视化轨迹看清练习强度与正确率。</p>
+            </article>
+            <article data-hf-id="hf-2fge" class="feature-card">
+              <div data-hf-id="hf-r612" class="icon-tile"><img data-hf-id="hf-itpt" src="capture/assets/svgs/svg-111d95ca.svg" alt=""></div>
+              <h3 data-hf-id="hf-1ko7" class="feature-title">模拟考试</h3>
+              <p data-hf-id="hf-cjac" class="feature-copy">限时作答，提前熟悉真实考试节奏。</p>
+            </article>
+          </div>
+        </div>
+        <svg data-hf-id="hf-c4j1" class="connector" viewBox="0 0 1410 130" fill="none">
+          <path data-hf-id="hf-1uyg" d="M20 82 C250 22 428 108 654 66 C860 28 1032 104 1390 48" stroke="#2DBA7D" stroke-width="6" stroke-linecap="round" />
+        </svg>
+        <div data-hf-id="hf-bxnf" class="progress-dot"></div>
+      </section>
+
+      <section data-hf-id="hf-uqcl" id="scene3" class="scene">
+        <div data-hf-id="hf-v4q9" class="grid-bg"></div>
+        <div data-hf-id="hf-g40g" class="soft-glow" data-layout-ignore="" aria-hidden="true" style="right: -190px; bottom: -220px"></div>
+        <div data-hf-id="hf-o0eg" class="scene-content">
+          <div data-hf-id="hf-y7yw">
+            <div data-hf-id="hf-x4di" class="kicker">从练习到提分</div>
+            <h2 data-hf-id="hf-h86h" class="section-title">每一步，都回到学习结果</h2>
+          </div>
+          <div data-hf-id="hf-kfi7" class="workflow">
+            <div data-hf-id="hf-ti1v" class="workflow-left">
+              <div data-hf-id="hf-138w" class="search-pill">
+                <img data-hf-id="hf-uwz5" src="capture/assets/svgs/svg-52d41952-search.svg" alt="">
+                <span data-hf-id="hf-bk4g" class="typed-text" id="typedText"></span>
+                <span data-hf-id="hf-1edb" class="cursor"></span>
+              </div>
+              <article data-hf-id="hf-63vm" class="step-card">
+                <div data-hf-id="hf-pz3z" class="icon-tile"><img data-hf-id="hf-cqlz" src="capture/assets/svgs/svg-246de598.svg" alt=""></div>
+                <div data-hf-id="hf-eyjm" class="step-text">
+                  <span data-hf-id="hf-6lud" class="step-title">收藏重点题</span>
+                  <span data-hf-id="hf-4za8" class="step-copy">把高频题和薄弱点集中管理</span>
+                </div>
+              </article>
+              <article data-hf-id="hf-4t8m" class="step-card">
+                <div data-hf-id="hf-qdf0" class="icon-tile"><img data-hf-id="hf-7v8e" src="capture/assets/svgs/svg-580ef70c.svg" alt=""></div>
+                <div data-hf-id="hf-ns5i" class="step-text">
+                  <span data-hf-id="hf-7b0k" class="step-title">错题自动复盘</span>
+                  <span data-hf-id="hf-t52a" class="step-copy">针对性复习，减少重复丢分</span>
+                </div>
+              </article>
+              <article data-hf-id="hf-57jn" class="step-card">
+                <div data-hf-id="hf-p6hx" class="icon-tile"><img data-hf-id="hf-wpvs" src="capture/assets/svgs/svg-580c2e9b.svg" alt=""></div>
+                <div data-hf-id="hf-o6gj" class="step-text">
+                  <span data-hf-id="hf-sr8i" class="step-title">进度持续同步</span>
+                  <span data-hf-id="hf-uyru" class="step-copy">Web 与移动入口共享学习语义</span>
+                </div>
+              </article>
+            </div>
+            <div data-hf-id="hf-y4jy" class="workflow-right">
+              <div data-hf-id="hf-v70k" class="dashboard">
+                <div data-hf-id="hf-s05v" class="dashboard-head">
+                  <div data-hf-id="hf-8hz5" class="dashboard-title">学习数据</div>
+                  <div data-hf-id="hf-97qj" class="dashboard-badge">近 7 天</div>
+                </div>
+                <div data-hf-id="hf-bf37" class="metric-row">
+                  <div data-hf-id="hf-swxr" class="metric-card">
+                    <div data-hf-id="hf-32dq" class="metric-label">收藏</div>
+                    <div data-hf-id="hf-ur46" class="metric-value" id="favoriteCounter">0</div>
+                  </div>
+                  <div data-hf-id="hf-djun" class="metric-card">
+                    <div data-hf-id="hf-q6s0" class="metric-label">错题</div>
+                    <div data-hf-id="hf-t326" class="metric-value" id="mistakeCounter">0</div>
+                  </div>
+                  <div data-hf-id="hf-d5jm" class="metric-card">
+                    <div data-hf-id="hf-ms99" class="metric-label">正确率</div>
+                    <div data-hf-id="hf-iyjr" class="metric-value"><span data-hf-id="hf-olsx" id="accuracyCounter">0</span>%</div>
+                  </div>
+                </div>
+                <div data-hf-id="hf-ntnc" class="chart">
+                  <div data-hf-id="hf-i058" class="bar-wrap"><div data-hf-id="hf-pmdd" class="bar" style="height: 72px"></div></div>
+                  <div data-hf-id="hf-tnsk" class="bar-wrap"><div data-hf-id="hf-9sym" class="bar" style="height: 112px"></div></div>
+                  <div data-hf-id="hf-sgvh" class="bar-wrap"><div data-hf-id="hf-6qdv" class="bar" style="height: 148px"></div></div>
+                  <div data-hf-id="hf-sv6i" class="bar-wrap"><div data-hf-id="hf-dddm" class="bar" style="height: 116px"></div></div>
+                  <div data-hf-id="hf-uupn" class="bar-wrap"><div data-hf-id="hf-wxrx" class="bar" style="height: 182px"></div></div>
+                  <div data-hf-id="hf-v90o" class="bar-wrap"><div data-hf-id="hf-2z9p" class="bar" style="height: 212px"></div></div>
+                  <div data-hf-id="hf-u23l" class="bar-wrap"><div data-hf-id="hf-9ez8" class="bar" style="height: 244px"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section data-hf-id="hf-di2a" id="scene4" class="scene">
+        <div data-hf-id="hf-vj1a" class="grid-bg"></div>
+        <div data-hf-id="hf-lehm" class="soft-glow" data-layout-ignore="" aria-hidden="true" style="left: -220px; top: 40px"></div>
+        <div data-hf-id="hf-ux4q" class="accent-dot" style="right: 146px; top: 138px; width: 18px; height: 18px"></div>
+        <div data-hf-id="hf-0yqq" class="accent-dot" style="left: 760px; bottom: 166px; width: 12px; height: 12px; background: #2DBA7D"></div>
+        <div data-hf-id="hf-pk5j" class="final-layout">
+          <div data-hf-id="hf-thpm" class="final-copy">
+            <div data-hf-id="hf-c0k6" class="brand-pill" style="position: static"><span data-hf-id="hf-k48q" class="brand-dot"></span><span data-hf-id="hf-1lwe">SAK</span></div>
+            <h2 data-hf-id="hf-7t23" class="final-title">打开 SAK 题库</h2>
+            <p data-hf-id="hf-jjax" class="final-subtitle">从今天这一组题开始，把备考节奏重新抓回来。</p>
+            <div data-hf-id="hf-8svj" class="cta-panel">
+        <div data-hf-id="hf-gbae" class="check-mark"><img data-hf-id="hf-p8jr" src="capture/assets/svgs/svg-580c2e9b-final.svg" alt=""></div>
+              <div data-hf-id="hf-ce6a" class="cta-text">
+                <div data-hf-id="hf-scun" class="cta-title">开始今天的学习</div>
+                <div data-hf-id="hf-g4eh" class="cta-copy">题库广场 · 错题复盘 · 学习数据 · 模拟考试</div>
+              </div>
+              <div data-hf-id="hf-dela" class="cta-button">登录 / 注册</div>
+            </div>
+          </div>
+          <div data-hf-id="hf-cylx" class="final-shot">
+            <div data-hf-id="hf-cdfb" class="shot-image" aria-label="SAK Ti homepage screenshot"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      function countTo(selector, target, duration, at) {
+        const node = document.querySelector(selector);
+        const state = { value: 0 };
+        tl.to(
+          state,
+          {
+            value: target,
+            duration,
+            ease: "power2.out",
+            onUpdate: function () {
+              node.textContent = Math.round(state.value).toString();
+            },
+          },
+          at,
+        );
+      }
+
+      function typeText(text, at, duration) {
+        const node = document.getElementById("typedText");
+        for (let i = 0; i < text.length; i += 1) {
+          tl.call(
+            function () {
+              node.textContent = text.slice(0, i + 1);
+            },
+            [],
+            at + (duration * i) / text.length,
+          );
+        }
+      }
+
+      tl.fromTo(".brand-pill", { y: -28, opacity: 0 }, { y: 0, opacity: 1, duration: 0.48, ease: "back.out(1.8)" }, 0.18);
+      tl.fromTo(".hero-copy .kicker", { x: -30, opacity: 0 }, { x: 0, opacity: 1, duration: 0.44, ease: "power2.out" }, 0.28);
+      tl.fromTo(".hero-title", { y: 42, opacity: 0 }, { y: 0, opacity: 1, duration: 0.68, ease: "expo.out" }, 0.45);
+      tl.fromTo(".hero-subtitle", { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.52, ease: "sine.out" }, 0.82);
+      tl.to("#heroFrame img", { scale: 1.018, duration: 4.2, ease: "none" }, 0.7);
+      tl.fromTo("#frag1", { y: -30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "back.out(1.5)" }, 0.72);
+      tl.fromTo("#frag2", { x: 42, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: "power2.out" }, 0.86);
+      tl.fromTo("#frag3", { y: 38, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "circ.out" }, 1.02);
+      tl.to(".fragment", { y: -8, duration: 1.5, yoyo: true, repeat: 2, ease: "sine.inOut" }, 1.3);
+      tl.to(".draw-ring path", { strokeDashoffset: 0, duration: 0.9, ease: "power2.out" }, 1.45);
+      tl.to("#scene1", { filter: "blur(18px)", opacity: 0.16, duration: 0.48, ease: "power2.inOut" }, 4.52);
+      tl.set("#scene2", { opacity: 1, filter: "blur(18px)" }, 4.78);
+      tl.to("#scene2", { filter: "blur(0px)", duration: 0.42, ease: "power3.out" }, 4.82);
+      tl.set("#scene1", { visibility: "hidden" }, 5.02);
+
+      tl.fromTo("#scene2 .kicker", { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.36, ease: "power2.out" }, 5.12);
+      tl.fromTo("#scene2 .section-title", { y: 44, opacity: 0 }, { y: 0, opacity: 1, duration: 0.62, ease: "expo.out" }, 5.28);
+      tl.fromTo("#scene2 .feature-card", { y: 76, opacity: 0 }, { y: 0, opacity: 1, duration: 0.62, ease: "power3.out", stagger: 0.14 }, 5.78);
+      tl.fromTo("#scene2 .icon-tile", { scale: 0.72, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: "back.out(1.8)", stagger: 0.12 }, 6.1);
+      tl.to(".connector path", { strokeDashoffset: 0, duration: 1.18, ease: "power2.out" }, 6.9);
+      tl.to(".progress-dot", { x: 1390, duration: 1.4, ease: "power2.inOut" }, 6.88);
+      tl.to("#scene2 .feature-card", { y: -7, duration: 1.5, yoyo: true, repeat: 1, ease: "sine.inOut" }, 7.75);
+      tl.to("#scene2", { y: -118, filter: "blur(14px)", opacity: 0.18, duration: 0.45, ease: "power2.in" }, 9.72);
+      tl.set("#scene3", { opacity: 1, y: 150, filter: "blur(18px)" }, 9.88);
+      tl.to("#scene3", { y: 0, filter: "blur(0px)", duration: 0.62, ease: "power2.out" }, 9.9);
+      tl.set("#scene2", { visibility: "hidden" }, 10.25);
+
+      tl.fromTo("#scene3 .kicker", { x: -32, opacity: 0 }, { x: 0, opacity: 1, duration: 0.36, ease: "sine.out" }, 10.18);
+      tl.fromTo("#scene3 .section-title", { y: 36, opacity: 0 }, { y: 0, opacity: 1, duration: 0.56, ease: "expo.out" }, 10.34);
+      tl.fromTo(".search-pill", { y: 46, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" }, 10.72);
+      typeText("高数  极限", 11.0, 0.82);
+      tl.to(".cursor", { opacity: 0, duration: 0.18, yoyo: true, repeat: 12, ease: "steps(1)" }, 10.86);
+      tl.fromTo(".step-card", { x: -54, opacity: 0 }, { x: 0, opacity: 1, duration: 0.48, ease: "power2.out", stagger: 0.18 }, 11.18);
+      tl.fromTo(".dashboard", { x: 80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.62, ease: "power3.out" }, 11.28);
+      tl.fromTo(".metric-card", { y: 44, opacity: 0 }, { y: 0, opacity: 1, duration: 0.44, ease: "back.out(1.4)", stagger: 0.1 }, 11.86);
+      countTo("#favoriteCounter", 24, 0.3, 12.0);
+      countTo("#mistakeCounter", 9, 0.3, 12.34);
+      countTo("#accuracyCounter", 86, 0.3, 12.68);
+      tl.fromTo(".bar", { scaleY: 0.08, transformOrigin: "bottom center" }, { scaleY: 1, duration: 0.8, ease: "power2.out", stagger: 0.08 }, 12.62);
+      tl.to(".dashboard", { scale: 1.018, duration: 1.6, ease: "none" }, 13.1);
+      tl.to("#scene3", { scale: 1.1, filter: "blur(16px)", opacity: 0.16, duration: 0.46, ease: "power3.in" }, 14.9);
+      tl.set("#scene4", { opacity: 1, scale: 0.92, filter: "blur(18px)" }, 15.08);
+      tl.to("#scene4", { scale: 1, filter: "blur(0px)", duration: 0.62, ease: "expo.out" }, 15.1);
+      tl.set("#scene3", { visibility: "hidden" }, 15.52);
+
+      tl.fromTo("#scene4 .brand-pill", { y: -28, opacity: 0 }, { y: 0, opacity: 1, duration: 0.44, ease: "back.out(1.6)" }, 15.44);
+      tl.fromTo(".final-title", { y: 54, opacity: 0 }, { y: 0, opacity: 1, duration: 0.68, ease: "expo.out" }, 15.62);
+      tl.fromTo(".final-subtitle", { y: 26, opacity: 0 }, { y: 0, opacity: 1, duration: 0.46, ease: "power2.out" }, 16.02);
+      tl.fromTo(".final-shot", { x: 84, rotationY: 8, opacity: 0 }, { x: 0, rotationY: 3, opacity: 1, duration: 0.7, ease: "power3.out" }, 15.72);
+      tl.to(".shot-image", { scale: 1.024, duration: 3.6, ease: "none" }, 15.8);
+      tl.fromTo(".cta-panel", { y: 54, opacity: 0 }, { y: 0, opacity: 1, duration: 0.56, ease: "back.out(1.5)" }, 16.46);
+      tl.fromTo(".check-mark", { scale: 0.72, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.38, ease: "back.out(2)" }, 16.68);
+      tl.fromTo(".cta-button", { scale: 0.88, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.38, ease: "power3.out" }, 16.86);
+      tl.to(".accent-dot", { y: -10, duration: 1.2, yoyo: true, repeat: 2, ease: "sine.inOut" }, 17.0);
+      tl.to("#scene4", { opacity: 0.82, duration: 0.42, ease: "sine.inOut" }, 19.58);
+      tl.set("#scene4", { visibility: "hidden" }, 20.0);
+
+      tl.fromTo("#heroFrame", { x: 120 }, { x: 0, duration: 0.88, ease: "power3.out" }, 0.58);
+
+      tl.fromTo("#heroFrame", { rotationY: -8 }, { rotationY: -4, duration: 0.88, ease: "power3.out" }, 0.58);
+
+      tl.fromTo("#heroFrame", { opacity: 0 }, { opacity: 1, duration: 0.88, ease: "power3.out" }, 0.58);
+
+      tl.set("#heroFrame", { width: 1057, height: 568, immediateRender: true }, 0);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

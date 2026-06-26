@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="app-nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M8 9 5 12l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+        <path d="M16 9l3 3-3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+        <path d="M10 19 14 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+      </svg>

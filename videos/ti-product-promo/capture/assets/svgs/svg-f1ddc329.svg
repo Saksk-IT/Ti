@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="app-nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M7.5 15.5h-.9A3.6 3.6 0 0 1 3 11.9V7.6A3.6 3.6 0 0 1 6.6 4h7.2a3.6 3.6 0 0 1 3.6 3.6v4.3a3.6 3.6 0 0 1-3.6 3.6h-3.1L7 19v-3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+        <path d="M17.3 9.1h.1A3.6 3.6 0 0 1 21 12.7v2.5a3.6 3.6 0 0 1-3.6 3.6h-.9l-2.6 2.2v-2.2h-2.6a3.6 3.6 0 0 1-3.3-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+        <path d="M7.2 9h6M7.2 12h3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+      </svg>
