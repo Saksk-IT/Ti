@@ -179,12 +179,13 @@ Page({
       this.setData(themeManager.getPageData());
     } catch (e) {}
 
-    this.loadBanks();
+    this.loadBanks({ silent: !!this.data.inited });
   },
 
-  async loadBanks() {
+  async loadBanks(options: { silent?: boolean } = {}) {
     if (this.data.loading) return;
-    this.setData({ loading: true });
+    const silent = !!options.silent;
+    if (!silent) this.setData({ loading: true });
     try {
       const overviewItems = await fetchAllOverviewItems();
       const banks = overviewItems
@@ -194,7 +195,7 @@ Page({
     } catch (e: any) {
       wx.showToast({ title: (e && e.message) || '加载失败', icon: 'none' });
     } finally {
-      this.setData({ loading: false });
+      if (!silent) this.setData({ loading: false });
     }
   },
 

@@ -1,0 +1,17 @@
+<cover-view class="tab-route-cover {{themeClass}} {{themeStyleClass}} {{switching ? 'show' : ''}}"></cover-view>
+
+<cover-view class="custom-tab-bar {{themeClass}} {{themeStyleClass}} {{switching ? 'switching' : ''}}">
+  <cover-view
+    class="tab-item {{selected === index ? 'active' : ''}} {{switchingIndex === index ? 'pending' : ''}}"
+    wx:for="{{list}}"
+    wx:key="pagePath"
+    data-index="{{index}}"
+    data-path="{{item.pagePath}}"
+    bindtap="onTabTap"
+  >
+    <cover-view class="tab-icon-wrap">
+      <cover-image class="tab-icon" src="{{selected === index ? item.selectedIconPath : item.iconPath}}"></cover-image>
+    </cover-view>
+    <cover-view class="tab-label">{{item.text}}</cover-view>
+  </cover-view>
+</cover-view>
