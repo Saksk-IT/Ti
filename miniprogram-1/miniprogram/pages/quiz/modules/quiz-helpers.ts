@@ -166,9 +166,9 @@ export function normalizeOptionItems(rawOptions: any, valueFormatter: (input: an
   });
 
   if (options.length > 0 && options.every((x) => !(x.key || '').trim())) {
-    options.forEach((x, i) => {
-      x.key = OPTION_ALPHA_SEED.slice(i, i + 1) || String(i + 1);
-      x.answerValue = x.key;
+    return options.map((x, i) => {
+      const key = OPTION_ALPHA_SEED.slice(i, i + 1) || String(i + 1);
+      return Object.assign({}, x, { key, answerValue: key });
     });
   }
 
@@ -232,6 +232,20 @@ export function decodeHtmlEntities(input: any): string {
     .replace(/&#([0-9]+);/g, (_, num) => safeFromCodePoint(parseInt(num, 10)));
 }
 
+function normalizeDisplayWhitespace(input: string): string {
+  return input
+    .replace(/\r\n/g, '\n')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+export function formatQuizTextForDisplay(input: any): string {
+  const raw = String(input || '');
+  if (!raw) return '';
+  return normalizeDisplayWhitespace(decodeHtmlEntities(raw));
+}
+
 export function stripHtmlToText(input: any): string {
   const raw = String(input || '');
   if (!raw) return '';
@@ -251,12 +265,7 @@ export function stripHtmlToText(input: any): string {
       .replace(/<[^>]+>/g, '');
   }
 
-  out = decodeHtmlEntities(out);
-  out = out
-    .replace(/[ \t]+\n/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-  return out;
+  return normalizeDisplayWhitespace(decodeHtmlEntities(out));
 }
 
 export function uniqUrls(urls: string[]): string[] {

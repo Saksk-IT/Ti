@@ -8,6 +8,7 @@ exports.normalizeOptionItems = normalizeOptionItems;
 exports.parseIdList = parseIdList;
 exports.safeFromCodePoint = safeFromCodePoint;
 exports.decodeHtmlEntities = decodeHtmlEntities;
+exports.formatQuizTextForDisplay = formatQuizTextForDisplay;
 exports.stripHtmlToText = stripHtmlToText;
 exports.uniqUrls = uniqUrls;
 exports.resolveInlineUrl = resolveInlineUrl;
@@ -159,9 +160,9 @@ function normalizeOptionItems(rawOptions, valueFormatter) {
         options.push({ key: '', value: s, answerValue: s });
     });
     if (options.length > 0 && options.every(function (x) { return !(x.key || '').trim(); })) {
-        options.forEach(function (x, i) {
-            x.key = OPTION_ALPHA_SEED.slice(i, i + 1) || String(i + 1);
-            x.answerValue = x.key;
+        return options.map(function (x, i) {
+            var key = OPTION_ALPHA_SEED.slice(i, i + 1) || String(i + 1);
+            return Object.assign({}, x, { key: key, answerValue: key });
         });
     }
     return options;
@@ -227,6 +228,19 @@ function decodeHtmlEntities(input) {
         .replace(/&#x([0-9a-fA-F]+);/g, function (_, hex) { return safeFromCodePoint(parseInt(hex, 16)); })
         .replace(/&#([0-9]+);/g, function (_, num) { return safeFromCodePoint(parseInt(num, 10)); });
 }
+function normalizeDisplayWhitespace(input) {
+    return input
+        .replace(/\r\n/g, '\n')
+        .replace(/[ \t]+\n/g, '\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+}
+function formatQuizTextForDisplay(input) {
+    var raw = String(input || '');
+    if (!raw)
+        return '';
+    return normalizeDisplayWhitespace(decodeHtmlEntities(raw));
+}
 function stripHtmlToText(input) {
     var raw = String(input || '');
     if (!raw)
@@ -244,12 +258,7 @@ function stripHtmlToText(input) {
             .replace(/<\s*img\b[^>]*>/gi, '')
             .replace(/<[^>]+>/g, '');
     }
-    out = decodeHtmlEntities(out);
-    out = out
-        .replace(/[ \t]+\n/g, '\n')
-        .replace(/\n{3,}/g, '\n\n')
-        .trim();
-    return out;
+    return normalizeDisplayWhitespace(decodeHtmlEntities(out));
 }
 function uniqUrls(urls) {
     var set = new Set();

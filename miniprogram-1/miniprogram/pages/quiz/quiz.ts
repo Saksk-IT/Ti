@@ -12,7 +12,7 @@ import {
   uniqUrls,
   readAIExplainCache,
   writeAIExplainCache,
-  stripHtmlToText,
+  formatQuizTextForDisplay,
   normalizeOptionItems,
   extractInlineImageUrls,
   type OptionItem,
@@ -706,10 +706,7 @@ Page({
       
       // 为每个题目生成预览内容
       let questionsWithPreview = questions.map((q: any) => {
-        const content = q.content || '';
-        const textContent = content.replace(/<[^>]+>/g, ''); // 移除HTML标签
-        const preview = textContent.length > 40 ? textContent.substring(0, 40) + '...' : textContent;
-        return Object.assign({}, q, { contentPreview: preview });
+        return Object.assign({}, q, { contentPreview: this.buildContentPreview(q.content) });
       });
 
       // 进度key（必须与 Web progressKey() 格式一致）
@@ -834,10 +831,12 @@ Page({
 
       const newQuestions = (result.questions || []).map((q: any) => {
         const normalizedOptions = this.normalizeOptions(q.options, q.q_type, q.answer);
-        const content = q.content || '';
-        const textContent = content.replace(/<[^>]+>/g, '');
-        const preview = textContent.length > 40 ? textContent.substring(0, 40) + '...' : textContent;
-        return Object.assign({}, q, { options: normalizedOptions, contentPreview: preview }, buildQuestionImageFields(q));
+        return Object.assign(
+          {},
+          q,
+          { options: normalizedOptions, contentPreview: this.buildContentPreview(q.content) },
+          buildQuestionImageFields(q)
+        );
       });
 
       if (newQuestions.length > 0) {
@@ -894,7 +893,7 @@ Page({
     }
     const displayAnswer = this.formatAnswerForDisplay(qType, rawAnswer);
 
-    const rawExplanation = (question.explanation || '').toString();
+    const rawExplanation = this.formatContentForDisplay((question.explanation || '').toString());
     const explanationIsCode = this.looksLikeCode(rawExplanation);
     const displayExplanation = explanationIsCode ? this.preserveSpacesForCode(rawExplanation) : rawExplanation;
 
@@ -2059,7 +2058,7 @@ Page({
       }
     }
 
-    return normalizeOptionItems(rawOptions, stripHtmlToText);
+    return normalizeOptionItems(rawOptions, formatQuizTextForDisplay);
   },
 
   refreshDisplayOptions() {
@@ -2159,7 +2158,12 @@ Page({
   },
 
   formatContentForDisplay(content: string): string {
-    return stripHtmlToText(content);
+    return formatQuizTextForDisplay(content);
+  },
+
+  buildContentPreview(content: any): string {
+    const textContent = this.formatContentForDisplay(String(content || ''));
+    return textContent.length > 40 ? textContent.substring(0, 40) + '...' : textContent;
   },
 
   looksLikeCode(text: string): boolean {
