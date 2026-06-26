@@ -12,6 +12,8 @@ from app.core.extensions import db
 from app.core.utils.credential_crypto import decrypt_secret
 from app.models.edu_schedule import EduGradeSnapshot, EduScheduleCredential, EduScheduleSnapshot
 from app.models.user import User
+from app.modules.edu_schedule.services.query_tasks import EduScheduleQueryTaskService
+from app.modules.edu_schedule.services.webvpn_refresh import WEBVPN_REFRESH_REQUIRED_MESSAGE
 
 
 _KIND_TO_MODEL = {
@@ -235,6 +237,109 @@ def _snapshot_item_sort_key(item: Dict[str, Any]) -> Tuple[str, int, int]:
     return (str(item.get("fetched_at") or ""), kind_weight, int(item.get("id") or 0))
 
 
+def _latest_query_time(task: Dict[str, Any]) -> Optional[str]:
+    return _format_time(task.get("finished_at") or task.get("updated_at") or task.get("created_at"))
+
+
+def _query_status_label(status: str, kind: str = "") -> str:
+    labels = {
+        "pending": "排队中",
+        "running": "查询中",
+        "retrying": "重试中",
+        "succeeded": "已完成",
+        "failed": "查询失败",
+        "webvpn_refresh_required": "需刷新 WebVPN",
+        "not_queried": "未查询",
+        "cancelled": "已停止",
+    }
+    if status == "succeeded" and kind == "grades":
+        return "成绩已同步"
+    return labels.get(status, "未知状态")
+
+
+def _snapshot_status_kind(item: Dict[str, Any]) -> str:
+    if int(item.get("grade_snapshot_count") or 0) and not int(item.get("schedule_snapshot_count") or 0):
+        return "grades"
+    return "schedule"
+
+
+def _query_status_from_snapshot(item: Dict[str, Any]) -> Dict[str, Any]:
+    latest_fetched_at = item.get("latest_fetched_at")
+    has_snapshot = bool(item.get("schedule_snapshot_count") or item.get("grade_snapshot_count"))
+    if has_snapshot:
+        status = "succeeded"
+        return {
+            "latest_query_status": status,
+            "latest_query_status_label": _query_status_label(status, _snapshot_status_kind(item)),
+            "latest_failure_reason": "",
+            "webvpn_refresh_required": False,
+            "latest_query_time": latest_fetched_at,
+        }
+    status = "not_queried"
+    return {
+        "latest_query_status": status,
+        "latest_query_status_label": _query_status_label(status, _snapshot_status_kind(item)),
+        "latest_failure_reason": "",
+        "webvpn_refresh_required": False,
+        "latest_query_time": None,
+    }
+
+
+def _query_status_from_task(task: Dict[str, Any]) -> Dict[str, Any]:
+    status = str(task.get("status") or "not_queried")
+    kind = str(task.get("kind") or "")
+    message = str(task.get("message") or "").strip()
+    if status == "webvpn_refresh_required":
+        message = message or WEBVPN_REFRESH_REQUIRED_MESSAGE
+    elif status == "succeeded":
+        message = message or _query_status_label(status, kind)
+    elif status in {"failed", "cancelled"}:
+        message = message or _query_status_label(status, kind)
+    elif not message:
+        message = _query_status_label(status, kind)
+    return {
+        "latest_query_status": status,
+        "latest_query_status_label": _query_status_label(status, kind),
+        "latest_failure_reason": message if status in {"failed", "webvpn_refresh_required", "cancelled"} else "",
+        "webvpn_refresh_required": status == "webvpn_refresh_required",
+        "latest_query_time": _latest_query_time(task),
+    }
+
+
+def _task_sort_key(task: Dict[str, Any]) -> Tuple[str, str]:
+    return (_latest_query_time(task) or "", str(task.get("task_id") or ""))
+
+
+def _latest_task_for_users(user_ids: Iterable[int]) -> Optional[Dict[str, Any]]:
+    latest_task: Optional[Dict[str, Any]] = None
+    for raw_user_id in {int(user_id) for user_id in user_ids if int(user_id or 0) > 0}:
+        tasks = EduScheduleQueryTaskService.list_recent(raw_user_id, limit=1)
+        if not tasks:
+            continue
+        candidate = tasks[0]
+        if not isinstance(candidate, dict):
+            continue
+        if not latest_task or _task_sort_key(candidate) > _task_sort_key(latest_task):
+            latest_task = candidate
+    return latest_task
+
+
+def _query_status_info(user_ids: Iterable[int], item: Dict[str, Any]) -> Dict[str, Any]:
+    latest_task = _latest_task_for_users(user_ids)
+    if latest_task:
+        task_status = str(latest_task.get("status") or "")
+        if task_status:
+            return _query_status_from_task(latest_task)
+    return _query_status_from_snapshot(item)
+
+
+def _matches_query_status(item: Dict[str, Any], status: str) -> bool:
+    target = str(status or "").strip().lower()
+    if not target:
+        return True
+    return str(item.get("latest_query_status") or "").lower() == target
+
+
 def _student_from_snapshot_items(items: List[Dict[str, Any]]) -> Dict[str, str]:
     for item in sorted(items, key=_snapshot_item_sort_key, reverse=True):
         student = item.get("student") if isinstance(item.get("student"), dict) else {}
@@ -313,6 +418,11 @@ def _record_from_snapshot_group(
     credential_id: int = 0,
     created_at: Optional[Any] = None,
     updated_at: Optional[Any] = None,
+    latest_query_status: str = "not_queried",
+    latest_query_status_label: str = "未查询",
+    latest_failure_reason: str = "",
+    webvpn_refresh_required: bool = False,
+    latest_query_time: Optional[str] = None,
 ) -> Dict[str, Any]:
     all_snapshot_items = schedule_items + grade_items
     student = _student_from_snapshot_items(all_snapshot_items)
@@ -330,8 +440,25 @@ def _record_from_snapshot_group(
         "latest_fetched_at": latest_snapshot.get("fetched_at") if latest_snapshot else None,
         "created_at": _format_time(created_at),
         "updated_at": _format_time(updated_at),
+        "latest_query_status": latest_query_status,
+        "latest_query_status_label": latest_query_status_label,
+        "latest_failure_reason": latest_failure_reason,
+        "webvpn_refresh_required": webvpn_refresh_required,
+        "latest_query_time": latest_query_time,
         "detail_url": _detail_url(record_key),
     }
+
+
+def _record_user_ids(credentials: List[EduScheduleCredential], schedule_items: List[Dict[str, Any]], grade_items: List[Dict[str, Any]]) -> List[int]:
+    user_ids = [int(credential.user_id) for credential in credentials if int(getattr(credential, "user_id", 0) or 0) > 0]
+    if user_ids:
+        return list(dict.fromkeys(user_ids))
+    snapshot_user_ids = [
+        int(item.get("user_id") or 0)
+        for item in [*schedule_items, *grade_items]
+        if int(item.get("user_id") or 0) > 0
+    ]
+    return list(dict.fromkeys(snapshot_user_ids))
 
 
 def _record_entries_from_credentials(rows: List[EduScheduleCredential]) -> List[Dict[str, Any]]:
@@ -360,6 +487,17 @@ def _record_entries_from_credentials(rows: List[EduScheduleCredential]) -> List[
         credential = _latest_credential(credentials) if credentials else None
         schedule_items = _merge_latest_snapshot_terms(group["schedule"])
         grade_items = _merge_latest_snapshot_terms(group["grades"])
+        query_status = _query_status_info(
+            _record_user_ids(credentials, schedule_items, grade_items),
+            {
+                "schedule_snapshot_count": len(schedule_items),
+                "grade_snapshot_count": len(grade_items),
+                "latest_fetched_at": max(
+                    [item.get("fetched_at") for item in [*schedule_items, *grade_items] if item.get("fetched_at")],
+                    default=None,
+                ),
+            },
+        )
         entries.append(
             {
                 "record_key": group["record_key"],
@@ -372,6 +510,11 @@ def _record_entries_from_credentials(rows: List[EduScheduleCredential]) -> List[
                     credential_id=int(credential.id) if credential else 0,
                     created_at=credential.created_at if credential else None,
                     updated_at=credential.updated_at if credential else None,
+                    latest_query_status=query_status["latest_query_status"],
+                    latest_query_status_label=query_status["latest_query_status_label"],
+                    latest_failure_reason=query_status["latest_failure_reason"],
+                    webvpn_refresh_required=query_status["webvpn_refresh_required"],
+                    latest_query_time=query_status["latest_query_time"],
                 ),
                 "schedule_snapshots": schedule_items,
                 "grade_snapshots": grade_items,
@@ -385,6 +528,11 @@ def _record_entries_from_credentials(rows: List[EduScheduleCredential]) -> List[
         credential = _latest_credential(credentials)
         display = _credential_display(credential)
         key = _record_key(display["jwxt_username"], display["jwxt_password"])
+        query_status = _query_status_info([int(credential.user_id)], {
+            "schedule_snapshot_count": 0,
+            "grade_snapshot_count": 0,
+            "latest_fetched_at": None,
+        })
         entries.append(
             {
                 "record_key": key,
@@ -397,6 +545,11 @@ def _record_entries_from_credentials(rows: List[EduScheduleCredential]) -> List[
                     credential_id=int(credential.id),
                     created_at=credential.created_at,
                     updated_at=credential.updated_at,
+                    latest_query_status=query_status["latest_query_status"],
+                    latest_query_status_label=query_status["latest_query_status_label"],
+                    latest_failure_reason=query_status["latest_failure_reason"],
+                    webvpn_refresh_required=query_status["webvpn_refresh_required"],
+                    latest_query_time=query_status["latest_query_time"],
                 ),
                 "schedule_snapshots": [],
                 "grade_snapshots": [],
@@ -405,7 +558,7 @@ def _record_entries_from_credentials(rows: List[EduScheduleCredential]) -> List[
 
     entries.sort(
         key=lambda entry: (
-            str(entry["record"].get("latest_fetched_at") or ""),
+            str(entry["record"].get("latest_query_time") or entry["record"].get("latest_fetched_at") or ""),
             int(entry["record"].get("credential_id") or 0),
         ),
         reverse=True,
@@ -457,7 +610,7 @@ class CampusManagementService:
         }
 
     @staticmethod
-    def list_records(search: str = "", page: int = 1, size: int = 20) -> Dict[str, Any]:
+    def list_records(search: str = "", status: str = "", page: int = 1, size: int = 20) -> Dict[str, Any]:
         rows = (
             EduScheduleCredential.query
             .order_by(EduScheduleCredential.updated_at.desc(), EduScheduleCredential.id.desc())
@@ -470,7 +623,7 @@ class CampusManagementService:
                 item,
                 search,
                 ("jwxt_username", "jwxt_password", "username_hint", "student_name"),
-            ):
+            ) and _matches_query_status(item, status):
                 items.append(item)
         page_items, total = _paginate(items, page, size)
         return {

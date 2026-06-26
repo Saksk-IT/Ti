@@ -27,8 +27,19 @@
         font-size: 14px;
         box-sizing: border-box;
     }
+    .toolbar select {
+        min-height: 40px;
+        min-width: 170px;
+        padding: 9px 12px;
+        border: 0.5px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        background: var(--card-bg-solid);
+        color: var(--text-color);
+        font-size: 14px;
+        box-sizing: border-box;
+    }
     .table-wrap { width: 100%; overflow-x: auto; border: 0.5px solid var(--border-color); border-radius: var(--radius-md); background: var(--card-bg-solid); }
-    table { width: 100%; border-collapse: collapse; min-width: 860px; }
+    table { width: 100%; border-collapse: collapse; min-width: 980px; }
     th, td { padding: 12px 14px; border-bottom: 0.5px solid var(--border-color); text-align: left; font-size: 14px; vertical-align: top; }
     th { color: var(--text-sub); font-size: 13px; font-weight: 600; background: rgba(142, 142, 147, 0.06); }
     tbody tr:last-child td { border-bottom: none; }
@@ -40,6 +51,45 @@
     .student-info-line { color: var(--text-sub); font-size: 12px; line-height: 1.5; margin-top: 4px; }
     .record-counts { display: flex; gap: 8px; flex-wrap: wrap; }
     .count-badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 6px; background: rgba(142, 142, 147, 0.1); font-size: 12px; font-weight: 600; }
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 28px;
+        padding: 4px 10px;
+        border-radius: var(--radius-sm);
+        border: 0.5px solid var(--border-color);
+        background: rgba(142, 142, 147, 0.1);
+        color: var(--text-color);
+        font-size: 13px;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+    .status-badge.status-success {
+        color: var(--success);
+        border-color: rgba(52, 199, 89, 0.24);
+        background: rgba(52, 199, 89, 0.1);
+    }
+    .status-badge.status-warning {
+        color: var(--warning);
+        border-color: rgba(255, 149, 0, 0.24);
+        background: rgba(255, 149, 0, 0.1);
+    }
+    .status-badge.status-danger {
+        color: var(--danger);
+        border-color: rgba(255, 69, 58, 0.24);
+        background: rgba(255, 69, 58, 0.1);
+    }
+    .status-badge.status-muted {
+        color: var(--text-sub);
+    }
+    .status-detail {
+        color: var(--text-sub);
+        font-size: 12px;
+        line-height: 1.5;
+        margin-top: 4px;
+        overflow-wrap: anywhere;
+    }
     .grade-summary-line { display: grid; grid-template-columns: repeat(4, minmax(72px, 1fr)); gap: 10px; min-width: 320px; }
     .grade-summary-item { display: flex; flex-direction: column; gap: 2px; }
     .grade-summary-label { color: var(--text-sub); font-size: 12px; white-space: nowrap; }
@@ -52,7 +102,7 @@
         .campus-stats { grid-template-columns: 1fr; }
         .campus-section { padding: 18px; }
         .toolbar { width: 100%; }
-        .toolbar input, .toolbar button { width: 100%; }
+        .toolbar input, .toolbar select, .toolbar button { width: 100%; }
     }
 </style>
 {% endblock %}
@@ -87,6 +137,14 @@
             <h2>绑定记录</h2>
             <div class="toolbar">
                 <input id="recordSearch" type="text" placeholder="搜索教务账号或学生姓名">
+                <select id="recordStatusFilter">
+                    <option value="">全部状态</option>
+                    <option value="succeeded">已完成</option>
+                    <option value="webvpn_refresh_required">需刷新 WebVPN</option>
+                    <option value="failed">查询失败</option>
+                    <option value="running">查询中</option>
+                    <option value="not_queried">未查询</option>
+                </select>
                 <button class="btn btn-secondary btn-sm" type="button" id="recordSearchBtn">搜索</button>
             </div>
         </div>
@@ -160,6 +218,17 @@ function gradeSummaryLine(summary) {
     return `<div class="grade-summary-line">${items.map(([label, value]) => `<div class="grade-summary-item"><span class="grade-summary-label">${label}</span><span class="grade-summary-value">${metricValue(value)}</span></div>`).join('')}</div>`;
 }
 
+function queryStatusClass(status) {
+    if (status === 'succeeded') return 'status-success';
+    if (status === 'webvpn_refresh_required' || status === 'running' || status === 'pending' || status === 'retrying') return 'status-warning';
+    if (status === 'failed' || status === 'cancelled') return 'status-danger';
+    return 'status-muted';
+}
+
+function queryStatusLabel(row) {
+    return row.latest_query_status_label || row.latest_query_status || '未查询';
+}
+
 function recordDetailUrl(row) {
     return row.detail_url || `${campusApi.recordDetailPrefix}${encodeURIComponent(row.record_key || row.credential_id)}`;
 }
@@ -168,6 +237,9 @@ function renderRecordRows(rows) {
     return rows.map(row => {
         const url = recordDetailUrl(row);
         const studentLine = studentInfoLine(row.student);
+        const statusText = queryStatusLabel(row);
+        const statusClass = queryStatusClass(row.latest_query_status);
+        const statusDetail = row.latest_failure_reason || (row.webvpn_refresh_required ? '请先刷新 WebVPN 登录态' : '');
         return `<tr class="record-row" onclick="window.location.href='${esc(url)}'">
             <td>
                 <div class="student-name">${esc(row.student_name || '未查询')}</div>
@@ -181,7 +253,14 @@ function renderRecordRows(rows) {
                     <span class="count-badge">成绩 ${esc(row.grade_snapshot_count || 0)}</span>
                 </div>
             </td>
-            <td>${fmtTime(row.latest_fetched_at)}</td>
+            <td>
+                <span class="latest-query-status-badge status-badge ${statusClass}">${esc(statusText)}</span>
+                ${statusDetail ? `<div class="status-detail">${esc(statusDetail)}</div>` : ''}
+            </td>
+            <td>
+                <div>${fmtTime(row.latest_query_time || row.latest_fetched_at)}</div>
+                ${row.latest_query_time && row.latest_fetched_at && row.latest_query_time !== row.latest_fetched_at ? `<div class="status-detail">最近成功：${fmtTime(row.latest_fetched_at)}</div>` : ''}
+            </td>
             <td><a class="btn btn-secondary btn-xs" href="${esc(url)}" onclick="event.stopPropagation()">记录详情</a></td>
         </tr>`;
     }).join('');
@@ -189,11 +268,12 @@ function renderRecordRows(rows) {
 
 async function loadRecords() {
     const keyword = document.getElementById('recordSearch').value.trim();
+    const statusFilter = document.getElementById('recordStatusFilter').value;
     const target = document.getElementById('recordTable');
     const status = document.getElementById('recordStatus');
     status.textContent = '加载中...';
     try {
-        const data = await fetchJson(`${campusApi.records}?search=${encodeURIComponent(keyword)}&size=100`);
+        const data = await fetchJson(`${campusApi.records}?search=${encodeURIComponent(keyword)}&status=${encodeURIComponent(statusFilter)}&size=100`);
         updateSummary(data.summary);
         const rows = data.items || [];
         status.textContent = rows.length ? `共 ${data.total || rows.length} 条绑定记录` : '';
@@ -202,7 +282,7 @@ async function loadRecords() {
             return;
         }
         target.innerHTML = `<div class="table-wrap"><table>
-            <thead><tr><th>学生姓名</th><th>教务账号</th><th>教务密码</th><th>查询记录</th><th>最近查询</th><th>操作</th></tr></thead>
+            <thead><tr><th>学生姓名</th><th>教务账号</th><th>教务密码</th><th>查询记录</th><th>最近状态/失败原因</th><th>最近查询时间</th><th>操作</th></tr></thead>
             <tbody>${renderRecordRows(rows)}</tbody>
         </table></div>`;
     } catch (error) {
@@ -214,6 +294,7 @@ async function loadRecords() {
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('recordSearchBtn').addEventListener('click', loadRecords);
     document.getElementById('refreshAllBtn').addEventListener('click', loadRecords);
+    document.getElementById('recordStatusFilter').addEventListener('change', loadRecords);
     document.getElementById('recordSearch').addEventListener('keydown', event => {
         if (event.key === 'Enter') loadRecords();
     });

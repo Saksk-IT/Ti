@@ -1788,6 +1788,80 @@ def test_admin_campus_page_exposes_management_apis(app, seed_user):
     assert "总学分" in html
     assert "加权绩点" in html
     assert "绩点总和" in html
+    assert "recordStatusFilter" in html
+    assert "latest-query-status-badge" in html
+    assert "最近状态/失败原因" in html
+    assert "webvpn_refresh_required" in html
+
+
+def test_admin_campus_records_include_latest_query_status_and_filter(app, seed_user, monkeypatch):
+    from app.modules.admin.services import campus_management_service
+    from app.modules.edu_schedule.services.webvpn_refresh import WEBVPN_REFRESH_REQUIRED_MESSAGE
+
+    no_query = _create_bound_edu_user_without_query(app)
+    failed_query = _create_bound_edu_user_without_query(app)
+    client = _admin_client(app, seed_user)
+    latest_query_time = "2042-02-03T04:05:06+00:00"
+    failure_message = "教务系统返回错误，请稍后重试"
+
+    def fake_list_recent(owner_user_id, *, kind=None, limit=6):
+        if int(owner_user_id) == no_query["user_id"]:
+            return [
+                {
+                    "task_id": "task-webvpn-required",
+                    "kind": "schedule",
+                    "status": "webvpn_refresh_required",
+                    "message": WEBVPN_REFRESH_REQUIRED_MESSAGE,
+                    "updated_at": latest_query_time,
+                    "finished_at": None,
+                }
+            ]
+        if int(owner_user_id) == failed_query["user_id"]:
+            return [
+                {
+                    "task_id": "task-failed",
+                    "kind": "grades",
+                    "status": "failed",
+                    "message": failure_message,
+                    "updated_at": latest_query_time,
+                    "finished_at": None,
+                }
+            ]
+        return []
+
+    monkeypatch.setattr(
+        campus_management_service.EduScheduleQueryTaskService,
+        "list_recent",
+        staticmethod(fake_list_recent),
+    )
+
+    all_response = client.get(f"/admin/api/campus/records?search={no_query['edu_username']}")
+    webvpn_response = client.get(
+        f"/admin/api/campus/records?search={no_query['edu_username']}&status=webvpn_refresh_required"
+    )
+    succeeded_response = client.get(
+        f"/admin/api/campus/records?search={no_query['edu_username']}&status=succeeded"
+    )
+    failed_response = client.get(f"/admin/api/campus/records?search={failed_query['edu_username']}&status=failed")
+
+    assert all_response.status_code == 200
+    rows = all_response.get_json()["data"]["items"]
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["latest_query_status"] == "webvpn_refresh_required"
+    assert row["latest_query_status_label"] == "需刷新 WebVPN"
+    assert row["webvpn_refresh_required"] is True
+    assert row["latest_failure_reason"] == WEBVPN_REFRESH_REQUIRED_MESSAGE
+    assert row["latest_query_time"] == "2042-02-03T04:05:06Z"
+
+    assert webvpn_response.status_code == 200
+    assert len(webvpn_response.get_json()["data"]["items"]) == 1
+    assert succeeded_response.status_code == 200
+    assert succeeded_response.get_json()["data"]["items"] == []
+    assert failed_response.status_code == 200
+    failed_row = failed_response.get_json()["data"]["items"][0]
+    assert failed_row["latest_query_status"] == "failed"
+    assert failed_row["latest_failure_reason"] == failure_message
 
 
 def test_admin_campus_records_are_indexed_by_edu_account_and_student_name(app, seed_user):

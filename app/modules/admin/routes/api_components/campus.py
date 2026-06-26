@@ -48,6 +48,7 @@ def api_campus_records():
         size = parse_int(request.args.get("size"), 20, 5, 100)
         data = CampusManagementService.list_records(
             search=(request.args.get("search") or "").strip(),
+            status=(request.args.get("status") or "").strip(),
             page=page,
             size=size,
         )
