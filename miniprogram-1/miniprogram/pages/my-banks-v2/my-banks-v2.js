@@ -60,7 +60,6 @@ var api_1 = require("../../utils/api");
 var api_endpoints_1 = require("../../utils/api-endpoints");
 var auth_1 = require("../../utils/auth");
 var nav_1 = require("../../utils/nav");
-var tab_transition_1 = require("../../utils/tab-transition");
 var theme_1 = require("../../utils/theme");
 function formatDate(dateStr) {
     var raw = String(dateStr || '').trim();
@@ -201,15 +200,13 @@ Page({
         createName: '',
         createDesc: '',
         createError: '',
-        creating: false,
-        tabPageTransitionClass: ''
+        creating: false
     },
     onShow: function () {
         if (!(0, auth_1.checkLogin)()) {
             wx.redirectTo({ url: '/pages/login/login' });
             return;
         }
-        (0, tab_transition_1.restartTabPageTransition)(this);
         try {
             this.setData(theme_1.themeManager.getPageData());
         }

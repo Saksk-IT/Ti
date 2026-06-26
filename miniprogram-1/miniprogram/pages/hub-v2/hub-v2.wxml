@@ -27,7 +27,7 @@
     </view>
   </navigation-bar>
 
-  <scroll-view class="content-scroll {{tabPageTransitionClass}}" scroll-y enhanced show-scrollbar="{{false}}">
+  <scroll-view class="content-scroll" scroll-y enhanced show-scrollbar="{{false}}">
     <skeleton-screen wx:if="{{!inited}}" layout="hub" showCards="{{3}}" rows="{{3}}" />
     <!-- Hero 区域：个性化问候 + 签到 -->
     <view class="hero-section">

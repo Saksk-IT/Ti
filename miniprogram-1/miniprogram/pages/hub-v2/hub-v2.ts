@@ -1,7 +1,6 @@
 import { api, resolveUploadUrl } from '../../utils/api';
 import { checkLogin } from '../../utils/auth';
 import { safeNavigate } from '../../utils/nav';
-import { restartTabPageTransition } from '../../utils/tab-transition';
 import { themeManager, ThemeStyle, ThemeMode } from '../../utils/theme';
 import { decorateAvatarUrl } from '../../utils/avatar';
 import {
@@ -209,7 +208,6 @@ Page({
 
     // 页面进入动画
     pageVisible: false,
-    tabPageTransitionClass: '',
 
     // 新用户资料设置弹窗
     showProfileSetupModal: false,
@@ -246,7 +244,6 @@ Page({
   },
 
   onShow() {
-    restartTabPageTransition(this);
     const isLoggedIn = checkLogin();
     this.setData({ isLoggedIn });
 

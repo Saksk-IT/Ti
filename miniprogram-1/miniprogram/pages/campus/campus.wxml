@@ -13,7 +13,7 @@
   </navigation-bar>
 
   <view class="page-container">
-    <scroll-view class="content-area {{tabPageTransitionClass}}" scroll-y bounces="{{false}}" refresher-enabled="{{true}}" bindrefresherrefresh="onRefresh">
+    <scroll-view class="content-area" scroll-y bounces="{{false}}" refresher-enabled="{{true}}" bindrefresherrefresh="onRefresh">
       <view class="container">
         <view class="campus-hero">
           <view class="hero-main">

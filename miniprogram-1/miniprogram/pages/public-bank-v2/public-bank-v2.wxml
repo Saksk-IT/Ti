@@ -18,7 +18,7 @@
   </navigation-bar>
 
   <view class="page-container">
-    <scroll-view class="content-area {{tabPageTransitionClass}}" scroll-y bounces="{{false}}" lower-threshold="120" bindscrolltolower="onScrollToLower">
+    <scroll-view class="content-area" scroll-y bounces="{{false}}" lower-threshold="120" bindscrolltolower="onScrollToLower">
       <view class="container">
         <view class="card pb-hero" aria-label="题库广场概览">
           <view class="pb-hero-top">

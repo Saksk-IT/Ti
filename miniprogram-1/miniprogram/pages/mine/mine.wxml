@@ -3,7 +3,7 @@
   <navigation-bar title="我的" back="{{false}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent"></navigation-bar>
 
   <view class="page-container">
-    <scroll-view class="content-area {{tabPageTransitionClass}}" scroll-y type="list" bounces="{{false}}">
+    <scroll-view class="content-area" scroll-y type="list" bounces="{{false}}">
       <view class="container">
         <view class="profile-card">
           <view class="profile-left">

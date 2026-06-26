@@ -18,7 +18,7 @@
   </navigation-bar>
 
   <view class="page-container">
-    <scroll-view class="content-area {{tabPageTransitionClass}}" scroll-y bounces="{{false}}">
+    <scroll-view class="content-area" scroll-y bounces="{{false}}">
       <view class="container">
         <view class="card mb-hero" aria-label="我的题库概览">
           <view class="mb-hero-top">
