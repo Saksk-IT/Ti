@@ -1,0 +1,340 @@
+{
+  "source_dir": "/Users/sak/Desktop/web",
+  "source_files": [
+    "1-Java Web开发概述.doc",
+    "2-Java Web开发前端静态技术.doc",
+    "3-JavaScript.doc",
+    "4- JSP语法基础.doc",
+    "5-表单开发.doc",
+    "6-JSP内置对象和作用域.doc",
+    "7-JSP会话技术.doc",
+    "8-JDBC数据库技术.doc",
+    "9-Servlet技术.doc",
+    "1.png",
+    "2.png"
+  ],
+  "file_counts": {
+    "1-Java Web开发概述.doc": {
+      "total": 35,
+      "type_counts": {
+        "single_choice": 20,
+        "boolean": 15
+      }
+    },
+    "2-Java Web开发前端静态技术.doc": {
+      "total": 134,
+      "type_counts": {
+        "single_choice": 104,
+        "boolean": 30
+      }
+    },
+    "3-JavaScript.doc": {
+      "total": 77,
+      "type_counts": {
+        "single_choice": 62,
+        "boolean": 15
+      }
+    },
+    "4- JSP语法基础.doc": {
+      "total": 53,
+      "type_counts": {
+        "single_choice": 30,
+        "boolean": 23
+      }
+    },
+    "5-表单开发.doc": {
+      "total": 5,
+      "type_counts": {
+        "single_choice": 5
+      }
+    },
+    "6-JSP内置对象和作用域.doc": {
+      "total": 12,
+      "type_counts": {
+        "single_choice": 7,
+        "boolean": 5
+      }
+    },
+    "7-JSP会话技术.doc": {
+      "total": 12,
+      "type_counts": {
+        "single_choice": 12
+      }
+    },
+    "8-JDBC数据库技术.doc": {
+      "total": 26,
+      "type_counts": {
+        "single_choice": 11,
+        "boolean": 15
+      }
+    },
+    "9-Servlet技术.doc": {
+      "total": 14,
+      "type_counts": {
+        "single_choice": 11,
+        "boolean": 3
+      }
+    }
+  },
+  "original_total": 380,
+  "dedup_total": 363,
+  "type_counts": {
+    "single_choice": 268,
+    "boolean": 112
+  },
+  "dedup_type_counts": {
+    "single_choice": 258,
+    "boolean": 105
+  },
+  "duplicate_group_count": 17,
+  "dedup_removed_count": 17,
+  "duplicate_groups": [
+    {
+      "kept_original_id": 2,
+      "merged_original_ids": [
+        12
+      ],
+      "content": "Tomcat的默认端口号是______",
+      "source": {
+        "file": "1-Java Web开发概述.doc",
+        "kind": "html_doc",
+        "section": "选择题",
+        "no": "2",
+        "answer_source": "source"
+      }
+    },
+    {
+      "kept_original_id": 3,
+      "merged_original_ids": [
+        13
+      ],
+      "content": "WWW的英文全称是 。",
+      "source": {
+        "file": "1-Java Web开发概述.doc",
+        "kind": "html_doc",
+        "section": "选择题",
+        "no": "3",
+        "answer_source": "source"
+      }
+    },
+    {
+      "kept_original_id": 4,
+      "merged_original_ids": [
+        14
+      ],
+      "content": "搭建Java Web运行环境时，若Web服务器选用Tomcat，以下说法正确的是（ ）",
+      "source": {
+        "file": "1-Java Web开发概述.doc",
+        "kind": "html_doc",
+        "section": "选择题",
+        "no": "4",
+        "answer_source": "source"
+      }
+    },
+    {
+      "kept_original_id": 5,
+      "merged_original_ids": [
+        15
+      ],
+      "content": "Web应用中服务器和浏览器之间通信使用的协议是_________。",
+      "source": {
+        "file": "1-Java Web开发概述.doc",
+        "kind": "html_doc",
+        "section": "选择题",
+        "no": "5",
+        "answer_source": "source"
+      }
+    },
+    {
+      "kept_original_id": 6,
+      "merged_original_ids": [
+        16
+      ],
+      "content": "JSP的全称为？",
+      "source": {
+        "file": "1-Java Web开发概述.doc",
+        "kind": "html_doc",
+        "section": "选择题",
+        "no": "6",
+        "answer_source": "source"
+      }
+    },
+    {
+      "kept_original_id": 7,
+      "merged_original_ids": [
+        17
+      ],
+      "content": "tomcat安装目录中bin文件夹下存放的文件为？",
+      "source": {
+        "file": "1-Java Web开发概述.doc",
+        "kind": "html_doc",
+        "section": "选择题",
+        "no": "7",
+        "answer_source": "source"
+      }
+    },
+    {
+      "kept_original_id": 8,
+      "merged_original_ids": [
+        18
+      ],
+      "content": "下列选项中，正确的URL是？",
+      "source": {
+        "file": "1-Java Web开发概述.doc",
+        "kind": "html_doc",
+        "section": "选择题",
+        "no": "8",
+        "answer_source": "source"
+      }
+    },
+    {
+      "kept_original_id": 9,
+      "merged_original_ids": [
+        19
+      ],
+      "content": "在web程序结构中，浏览器端与服务器端采用请求/响应模式进行交互的过程为？\n①用户输入 ②访问数据库 ③发送响应 ④发送请求 ⑤返回结果 ⑥显示",
+      "source": {
+        "file": "1-Java Web开发概述.doc",
+        "kind": "html_doc",
+        "section": "选择题",
+        "no": "9",
+        "answer_source": "source"
+      }
+    },
+    {
+      "kept_original_id": 10,
+      "merged_original_ids": [
+        20
+      ],
+      "content": "关于web项目的目录结构，下列说法错误的是？",
+      "source": {
+        "file": "1-Java Web开发概述.doc",
+        "kind": "html_doc",
+        "section": "选择题",
+        "no": "10",
+        "answer_source": "source"
+      }
+    },
+    {
+      "kept_original_id": 21,
+      "merged_original_ids": [
+        29
+      ],
+      "content": "HTTP是指超文本传输协议。",
+      "source": {
+        "file": "1-Java Web开发概述.doc",
+        "kind": "html_doc",
+        "section": "判断题",
+        "no": "1",
+        "answer_source": "source"
+      }
+    },
+    {
+      "kept_original_id": 22,
+      "merged_original_ids": [
+        30
+      ],
+      "content": "Web的工作模式是客户机/服务器模式。",
+      "source": {
+        "file": "1-Java Web开发概述.doc",
+        "kind": "html_doc",
+        "section": "判断题",
+        "no": "2",
+        "answer_source": "source"
+      }
+    },
+    {
+      "kept_original_id": 24,
+      "merged_original_ids": [
+        31
+      ],
+      "content": "Tomcat是Web服务器之一。",
+      "source": {
+        "file": "1-Java Web开发概述.doc",
+        "kind": "html_doc",
+        "section": "判断题",
+        "no": "4",
+        "answer_source": "source"
+      }
+    },
+    {
+      "kept_original_id": 25,
+      "merged_original_ids": [
+        32
+      ],
+      "content": "URL是Uniform Resource Locator的缩写,中文称之为统一资源定位器。",
+      "source": {
+        "file": "1-Java Web开发概述.doc",
+        "kind": "html_doc",
+        "section": "判断题",
+        "no": "5",
+        "answer_source": "source"
+      }
+    },
+    {
+      "kept_original_id": 26,
+      "merged_original_ids": [
+        33
+      ],
+      "content": "URL通常由4部分组成:协议名称、所在主机的DNS名或IP地址、可选的端口号和资源的名称。\n端口号和资源名称可以省略。",
+      "source": {
+        "file": "1-Java Web开发概述.doc",
+        "kind": "html_doc",
+        "section": "判断题",
+        "no": "6",
+        "answer_source": "source"
+      }
+    },
+    {
+      "kept_original_id": 27,
+      "merged_original_ids": [
+        34
+      ],
+      "content": "对于开发的Java Web应用程序,在部署后,其应用程序按照一定的目录结构放置在Tomcat安装目录的webapps文件夹中。",
+      "source": {
+        "file": "1-Java Web开发概述.doc",
+        "kind": "html_doc",
+        "section": "判断题",
+        "no": "7",
+        "answer_source": "source"
+      }
+    },
+    {
+      "kept_original_id": 28,
+      "merged_original_ids": [
+        35
+      ],
+      "content": "Web服务器是运行及发布Web应用的容器,只有将开发的Web项目放置到该容器中,才能使网络中的所有用户通过浏览器进行访问。",
+      "source": {
+        "file": "1-Java Web开发概述.doc",
+        "kind": "html_doc",
+        "section": "判断题",
+        "no": "8",
+        "answer_source": "source"
+      }
+    },
+    {
+      "kept_original_id": 59,
+      "merged_original_ids": [
+        109
+      ],
+      "content": "想要在页面中加入一个独立的区域,可以使用哪些HTML标签来描述:",
+      "source": {
+        "file": "2-Java Web开发前端静态技术.doc",
+        "kind": "html_doc",
+        "section": "选择题",
+        "no": "24",
+        "answer_source": "source"
+      }
+    }
+  ],
+  "html_code_preservation_checks": [
+    "<table>",
+    "<style>",
+    "<script>",
+    "<jsp:useBean>",
+    "${requestScope.emp.ename}",
+    "<% int y = 0; %>"
+  ],
+  "warnings": []
+}

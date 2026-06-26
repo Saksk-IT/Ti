@@ -1,0 +1,21 @@
+{
+  "file": "data/imports/java_web_course_ti_import_dedup.json",
+  "total": 363,
+  "type_counts": {
+    "single_choice": 258,
+    "boolean": 105
+  },
+  "duplicate_stem_count": 2,
+  "duplicate_stems": [
+    [
+      28,
+      29
+    ],
+    [
+      235,
+      243
+    ]
+  ],
+  "error_count": 0,
+  "errors": []
+}
