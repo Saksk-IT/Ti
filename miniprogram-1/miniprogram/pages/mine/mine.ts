@@ -6,6 +6,11 @@ import { safeNavigate } from '../../utils/nav';
 import { themeManager } from '../../utils/theme';
 import { fontManager } from '../../utils/font';
 
+function toSafeNumber(value: unknown): number {
+  const num = Number(value || 0);
+  return Number.isFinite(num) ? num : 0;
+}
+
 function canShowAdmin(userInfo: any): boolean {
   return !!(userInfo?.is_admin || userInfo?.is_subject_admin || userInfo?.is_notification_admin);
 }
@@ -48,11 +53,14 @@ Page({
     if (this.data.loading) return;
     this.setData({ loading: true });
     try {
-      const userCounts: any = await api.getUserCounts({ subject: 'all' });
+      const data: any = await api.getDataCenter(30);
+      const summary: any = data && typeof data === 'object' && data.all_summary
+        ? data.all_summary
+        : {};
       this.setData({
         stats: {
-          favorites: userCounts.favorites || 0,
-          mistakes: userCounts.mistakes || 0
+          favorites: toSafeNumber(summary.favorites),
+          mistakes: toSafeNumber(summary.mistakes)
         },
         loading: false
       });

@@ -54,6 +54,10 @@ var avatar_1 = require("../../utils/avatar");
 var nav_1 = require("../../utils/nav");
 var theme_1 = require("../../utils/theme");
 var font_1 = require("../../utils/font");
+function toSafeNumber(value) {
+    var num = Number(value || 0);
+    return Number.isFinite(num) ? num : 0;
+}
 function canShowAdmin(userInfo) {
     return !!((userInfo === null || userInfo === void 0 ? void 0 : userInfo.is_admin) || (userInfo === null || userInfo === void 0 ? void 0 : userInfo.is_subject_admin) || (userInfo === null || userInfo === void 0 ? void 0 : userInfo.is_notification_admin));
 }
@@ -89,7 +93,7 @@ Page({
     },
     loadStats: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var userCounts, err_1;
+            var data, summary, err_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -99,13 +103,16 @@ Page({
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 3, , 4]);
-                        return [4 /*yield*/, api_1.api.getUserCounts({ subject: 'all' })];
+                        return [4 /*yield*/, api_1.api.getDataCenter(30)];
                     case 2:
-                        userCounts = _a.sent();
+                        data = _a.sent();
+                        summary = data && typeof data === 'object' && data.all_summary
+                            ? data.all_summary
+                            : {};
                         this.setData({
                             stats: {
-                                favorites: userCounts.favorites || 0,
-                                mistakes: userCounts.mistakes || 0
+                                favorites: toSafeNumber(summary.favorites),
+                                mistakes: toSafeNumber(summary.mistakes)
                             },
                             loading: false
                         });

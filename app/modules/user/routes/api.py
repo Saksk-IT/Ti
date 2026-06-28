@@ -667,23 +667,23 @@ def stats_daily():
     
     uid = session.get('user_id')
     days = request.args.get('days', 30, type=int)
+    if days not in (7, 30, 90):
+        days = 30
     
     try:
-        start_date = (today_bj() - timedelta(days=days)).isoformat()
-        rows = (
-            db.session.query(
-                db.func.date(UserAnswer.created_at).label('date'),
-                db.func.count().label('total'),
-                db.func.sum(db.case((UserAnswer.is_correct == True, 1), else_=0)).label('correct'),
-            )
-            .filter(UserAnswer.user_id == uid)
-            .filter(UserAnswer.created_at >= start_date)
-            .group_by(db.func.date(UserAnswer.created_at))
-            .order_by(db.text('date'))
-            .all()
-        )
-        
-        data = [{'date': str(r.date), 'total': r.total, 'correct': r.correct} for r in rows]
+        from app.modules.main.routes.pages_components.data_center import _compute_data_center_context
+
+        ctx = _compute_data_center_context(int(uid), int(days))
+        rows = ctx.get('all_daily') or []
+        data = [
+            {
+                'date': str((row or {}).get('day') or ''),
+                'total': int((row or {}).get('total') or 0),
+                'correct': int((row or {}).get('correct') or 0),
+            }
+            for row in rows
+            if row and (row or {}).get('day')
+        ]
         
         return jsonify({'status': 'success', 'data': data})
     except Exception as e:

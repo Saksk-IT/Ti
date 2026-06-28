@@ -22,6 +22,40 @@ def _build_named_in(col: str, values: list, prefix: str = "in") -> tuple[str, di
     return f"{col} IN ({placeholders})", params
 
 
+def _safe_int(value, default: int = 0) -> int:
+    try:
+        return int(value or 0)
+    except Exception:
+        return int(default)
+
+
+def _safe_float(value, default: float = 0.0) -> float:
+    try:
+        return float(value or 0)
+    except Exception:
+        return float(default)
+
+
+def _build_spark_points(values: list[int]) -> str:
+    try:
+        safe_values = values or [0] * 7
+        width = 96
+        height = 28
+        pad = 2
+        max_v = max(safe_values) if safe_values else 0
+        min_v = min(safe_values) if safe_values else 0
+        span = (max_v - min_v) or 1
+        step = (width - pad * 2) / (len(safe_values) - 1 or 1)
+        pts = []
+        for idx, value in enumerate(safe_values):
+            x = pad + step * idx
+            y = pad + (height - pad * 2) * (1 - ((value - min_v) / span))
+            pts.append(f"{x:.1f},{y:.1f}")
+        return " ".join(pts)
+    except Exception:
+        return ""
+
+
 @main_pages_bp.route("/hub")
 def hub():
     """介绍页"""
@@ -385,6 +419,55 @@ def hub():
             accuracy_7d_delta = 0
             answers_7d_series = []
             answers_7d_spark_points = ""
+
+        try:
+            from .data_center import _compute_data_center_context
+
+            data_center_ctx = _compute_data_center_context(int(uid), 30)
+            all_summary = data_center_ctx.get("all_summary") or {}
+            bank_summary = data_center_ctx.get("bank_summary") or {}
+            all_daily = data_center_ctx.get("all_daily") or []
+
+            if all_summary:
+                question_total = _safe_int(all_summary.get("total_questions"))
+                favorites_count = _safe_int(all_summary.get("favorites"))
+                mistakes_count = _safe_int(all_summary.get("mistakes"))
+
+            if bank_summary:
+                my_bank_total = _safe_int(bank_summary.get("bank_total"), my_bank_total)
+
+            if all_daily:
+                recent_days = list(all_daily)[-7:]
+                previous_days = list(all_daily)[-14:-7]
+                answers_7d_series = [
+                    _safe_int((row or {}).get("total")) for row in recent_days
+                ]
+                answers_7d_total = sum(answers_7d_series)
+                answers_7d_correct = sum(
+                    _safe_int((row or {}).get("correct")) for row in recent_days
+                )
+                answers_7d_accuracy = (
+                    round(answers_7d_correct / answers_7d_total * 100, 1)
+                    if answers_7d_total > 0
+                    else 0
+                )
+
+                prev_total = sum(
+                    _safe_int((row or {}).get("total")) for row in previous_days
+                )
+                prev_correct = sum(
+                    _safe_int((row or {}).get("correct")) for row in previous_days
+                )
+                prev_accuracy = (
+                    round(prev_correct / prev_total * 100, 1) if prev_total > 0 else 0
+                )
+                answers_7d_delta = int(answers_7d_total - prev_total)
+                accuracy_7d_delta = round(
+                    _safe_float(answers_7d_accuracy) - _safe_float(prev_accuracy), 1
+                )
+                answers_7d_spark_points = _build_spark_points(answers_7d_series)
+        except Exception as e:
+            current_app.logger.warning(f"Error applying global hub stats: {e}")
 
     # 获取用户头像
     avatar = None
