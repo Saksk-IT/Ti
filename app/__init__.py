@@ -597,10 +597,17 @@ def _register_before_request(app):
 
                 from app.models.user import User as UserModel
                 from app.core.extensions import db as _db
-                from app.core.utils.user_state_cache import get_user_state, set_user_state
+                from app.core.utils.user_state_cache import (
+                    get_user_state,
+                    has_complete_web_session_state,
+                    set_user_state,
+                    user_state_from_model,
+                )
 
                 # 优先从缓存读取用户状态（减少每次请求的 DB 查询）
                 cached_state = get_user_state(int(uid))
+                if not has_complete_web_session_state(cached_state):
+                    cached_state = None
                 if cached_state is not None:
                     is_locked = cached_state.get('is_locked', False)
                     cached_sv = cached_state.get('session_version', 0)
@@ -645,14 +652,7 @@ def _register_before_request(app):
                     session['is_notification_admin'] = bool(user.is_notification_admin)
 
                     # 写入缓存供后续请求复用
-                    set_user_state(int(uid), {
-                        'is_locked': bool(user.is_locked),
-                        'session_version': user.session_version or 0,
-                        'is_admin': bool(user.is_admin),
-                        'is_subject_admin': bool(user.is_subject_admin),
-                        'is_notification_admin': bool(user.is_notification_admin),
-                        'email': user.email or '',
-                    })
+                    set_user_state(int(uid), user_state_from_model(user))
 
                 # 检查用户是否绑定邮箱（排除管理员和绑定邮箱相关的API）
                 if not session.get('is_admin'):

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-用户状态缓存（JWT 校验加速）
+用户状态缓存（JWT/Web 会话校验加速）
 
 目标：
-- 小程序端每次请求都会走 JWT 校验，原实现每次都查询 users 表；
-  在 SQLite + 单机场景下会带来不必要的读压力。
+- 小程序端每次请求都会走 JWT 校验，Web 端每次请求也需要同步锁定/权限状态；
+  原实现每次都查询 users 表，在 SQLite + 单机场景下会带来不必要的读压力。
 - 本缓存采用"短 TTL + 变更时主动失效"的策略，尽量做到：
   - 正常情况下减少 DB 读；
   - 用户被锁定/强制下线/解绑微信等变更能尽快生效。
@@ -21,6 +21,14 @@ from .redis_utils import redis_delete, redis_get_json, redis_set_json
 
 _CACHE_PREFIX = 'auth:user_state:'
 _MISSING = object()
+_WEB_SESSION_STATE_KEYS = frozenset({
+    'session_version',
+    'is_locked',
+    'is_admin',
+    'is_subject_admin',
+    'is_notification_admin',
+    'email',
+})
 
 _MEM_LOCK = threading.Lock()
 _MEM_CACHE: Dict[str, Any] = {}
@@ -74,7 +82,7 @@ def _key(user_id: int) -> str:
 
 
 def get_user_state(user_id: int) -> Optional[Dict[str, Any]]:
-    """获取用户状态缓存：{session_version,is_locked,openid}。"""
+    """获取用户状态缓存。"""
     k = _key(user_id)
     cached = redis_get_json(k)
     if isinstance(cached, dict):
@@ -101,3 +109,20 @@ def invalidate_user_state(user_id: int) -> None:
     redis_delete(k)
     _mem_delete(k)
 
+
+def has_complete_web_session_state(state: Any) -> bool:
+    """判断缓存是否包含 Web 会话同步所需的完整权限字段。"""
+    return isinstance(state, dict) and _WEB_SESSION_STATE_KEYS.issubset(state.keys())
+
+
+def user_state_from_model(user: Any) -> Dict[str, Any]:
+    """从 User 模型构造完整用户状态缓存。"""
+    return {
+        'session_version': user.session_version or 0,
+        'is_locked': bool(user.is_locked),
+        'openid': (user.openid or '').strip(),
+        'is_admin': bool(user.is_admin),
+        'is_subject_admin': bool(user.is_subject_admin),
+        'is_notification_admin': bool(user.is_notification_admin),
+        'email': user.email or '',
+    }

@@ -4,7 +4,7 @@
 """
 from functools import wraps
 from flask import session, redirect, url_for, jsonify, request, g
-from app.core.utils.user_state_cache import get_user_state, set_user_state
+from app.core.utils.user_state_cache import get_user_state, set_user_state, user_state_from_model
 
 
 def _validate_jwt_user(payload):
@@ -50,11 +50,7 @@ def _validate_jwt_user(payload):
                 return False, '微信已解绑或账号已变更，请重新登录'
 
         try:
-            set_user_state(uid, {
-                'session_version': user.session_version or 0,
-                'is_locked': 1 if user.is_locked else 0,
-                'openid': (user.openid or '').strip(),
-            })
+            set_user_state(uid, user_state_from_model(user))
         except Exception:
             pass
 
