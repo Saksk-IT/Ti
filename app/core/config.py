@@ -74,6 +74,11 @@ class Config:
     # Web 会话活跃时间写入节流（避免每次请求都写 SQLite）
     LAST_ACTIVE_UPDATE_INTERVAL_SECONDS = int(os.environ.get('LAST_ACTIVE_UPDATE_INTERVAL_SECONDS', '60') or 60)
 
+    # SSE 实时推送。生产环境默认关闭，避免同步 Gunicorn 线程被长连接占满。
+    SSE_ENABLED = os.environ.get('SSE_ENABLED', 'true').lower() in ['true', 'on', '1', 'yes']
+    SSE_MAX_CONNECTIONS_PER_USER = int(os.environ.get('SSE_MAX_CONNECTIONS_PER_USER', '3') or 3)
+    SSE_MAX_TOTAL_CONNECTIONS = int(os.environ.get('SSE_MAX_TOTAL_CONNECTIONS', '200') or 200)
+
     # SSE 被拒绝后的建议重试间隔（秒）
     SSE_RETRY_AFTER_SECONDS = int(os.environ.get('SSE_RETRY_AFTER_SECONDS', '30') or 30)
     
@@ -221,6 +226,11 @@ class ProductionConfig(Config):
 
     # 生产环境 Nginx 接管 Gzip，Flask 层默认关闭
     ENABLE_GZIP = os.environ.get('ENABLE_GZIP', 'false').lower() in ['true', 'on', '1']
+
+    # 生产默认禁用 SSE 长连接，避免 2C/4G 小规格服务器上 Web 切页请求被长连接排队。
+    SSE_ENABLED = os.environ.get('SSE_ENABLED', 'false').lower() in ['true', 'on', '1', 'yes']
+    SSE_RETRY_AFTER_SECONDS = int(os.environ.get('SSE_RETRY_AFTER_SECONDS', '300') or 300)
+    SSE_MAX_CONNECTIONS_PER_USER = int(os.environ.get('SSE_MAX_CONNECTIONS_PER_USER', '1') or 1)
 
     # 生产环境必须设置密钥（不允许使用默认值，启动时由应用工厂校验）
     SECRET_KEY = os.environ.get('SECRET_KEY')

@@ -87,6 +87,13 @@ def test_production_compose_relaxes_rate_limit_defaults():
     assert "RATELIMIT_DEFAULT: ${RATELIMIT_DEFAULT:-}" not in compose_text
 
 
+def test_production_compose_disables_sse_by_default():
+    compose_text = Path("compose.prod.yml").read_text(encoding="utf-8")
+
+    assert "SSE_ENABLED: ${SSE_ENABLED:-false}" in compose_text
+    assert "SSE_RETRY_AFTER_SECONDS: ${SSE_RETRY_AFTER_SECONDS:-300}" in compose_text
+
+
 def test_production_compose_waits_for_redis_health():
     compose_text = Path("compose.prod.yml").read_text(encoding="utf-8")
 
@@ -123,6 +130,16 @@ def test_production_deploy_persists_rate_limit_multiplier():
     assert 'RATELIMIT_LIMIT_MULTIPLIER="${RATELIMIT_LIMIT_MULTIPLIER:-100}"' in script_text
     assert 'RATELIMIT_LIMIT_MULTIPLIER=${RATELIMIT_LIMIT_MULTIPLIER}' in script_text
     assert 'upsert_env_value "RATELIMIT_LIMIT_MULTIPLIER" "$RATELIMIT_LIMIT_MULTIPLIER"' in script_text
+
+
+def test_production_deploy_persists_sse_disabled_default():
+    script_text = Path("scripts/deploy_ubuntu24.sh").read_text(encoding="utf-8")
+
+    assert 'SSE_ENABLED="${SSE_ENABLED:-$DEFAULT_SSE_ENABLED}"' in script_text
+    assert 'SSE_ENABLED=${SSE_ENABLED}' in script_text
+    assert 'SSE_RETRY_AFTER_SECONDS=${SSE_RETRY_AFTER_SECONDS}' in script_text
+    assert 'upsert_env_value "SSE_ENABLED" "$SSE_ENABLED"' in script_text
+    assert 'upsert_env_value "SSE_RETRY_AFTER_SECONDS" "$SSE_RETRY_AFTER_SECONDS"' in script_text
 
 
 def test_production_deploy_supports_extra_https_domains():

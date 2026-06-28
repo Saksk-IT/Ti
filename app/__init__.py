@@ -371,6 +371,7 @@ def _register_context_processors(app):
             'is_admin': bool(session.get('is_admin')),
             'is_subject_admin': bool(session.get('is_subject_admin')),
             'is_notification_admin': bool(session.get('is_notification_admin')),
+            'sse_enabled': bool(app.config.get('SSE_ENABLED', True)),
         }
 
     @app.context_processor

@@ -11,7 +11,7 @@ from flask import Blueprint, Response, session, stream_with_context, jsonify, cu
 from .event_bus import (
     subscribe, unsubscribe, get_connection_count, get_total_connection_count,
     SSEEvent, MAX_TOTAL_CONNECTIONS, MAX_CONNECTION_DURATION_SECONDS,
-    HEARTBEAT_INTERVAL_SECONDS,
+    HEARTBEAT_INTERVAL_SECONDS, MAX_CONNECTIONS_PER_USER,
 )
 
 sse_bp = Blueprint('sse', __name__)
@@ -42,8 +42,20 @@ def _build_rejected_response(status_code: int, message: str, reason: str):
     return resp
 
 
+def _sse_enabled() -> bool:
+    """当前应用是否允许建立 SSE 长连接。"""
+    return bool(current_app.config.get('SSE_ENABLED', True))
+
+
 def _validate_sse_capacity(uid: int):
     """校验 SSE 连接容量；通过返回 None，不通过返回 response"""
+    if not _sse_enabled():
+        return _build_rejected_response(
+            status_code=503,
+            message='实时推送已关闭，页面将使用轮询刷新',
+            reason='disabled',
+        )
+
     # 全局连接数上限
     max_total = current_app.config.get('SSE_MAX_TOTAL_CONNECTIONS', MAX_TOTAL_CONNECTIONS)
     if get_total_connection_count() >= max_total:
@@ -54,7 +66,8 @@ def _validate_sse_capacity(uid: int):
         )
 
     # 每用户最大连接数
-    if get_connection_count(uid) >= 3:
+    max_per_user = current_app.config.get('SSE_MAX_CONNECTIONS_PER_USER', MAX_CONNECTIONS_PER_USER)
+    if get_connection_count(uid) >= max_per_user:
         return _build_rejected_response(
             status_code=429,
             message='连接数超限，请关闭其他标签页',
@@ -91,6 +104,7 @@ def sse_stream():
 
     - 已登录用户建立连接后，持续接收推送事件
     - 15 秒无事件发送心跳注释行（防止代理/浏览器超时）
+    - 生产可通过 SSE_ENABLED=false 快速关闭，客户端自动降级轮询
     - 全局连接数上限 200，超限返回 503
     - 最大连接时长 10 分钟，到期发送 reconnect 事件
     - 客户端断开时自动清理订阅

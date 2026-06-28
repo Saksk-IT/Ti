@@ -1618,6 +1618,7 @@
     var _sseFallbackCount = 0;
     var _sseConnecting = false;
     var _sseCooldownUntil = 0;
+    var _sseDisabled = false;
 
     function _toPositiveInt(value, fallbackValue) {
       var n = parseInt(value, 10);
@@ -1644,6 +1645,7 @@
     }
 
     function _scheduleSseReconnect(delayMs) {
+      if (_sseDisabled) return;
       var safeDelay = Math.max(1000, delayMs || 1000);
       if (_sseRetryTimer) clearTimeout(_sseRetryTimer);
       _sseRetryTimer = setTimeout(function() {
@@ -1686,6 +1688,9 @@
     }
 
     function connectSSE() {
+      if (_sseDisabled) {
+        return;
+      }
       if (_sseSource || _sseConnecting) {
         return;
       }
@@ -1704,6 +1709,12 @@
             result.data && result.data.retry_after,
             Math.ceil(_sseRetryDelay / 1000)
           );
+          if (result.data && result.data.reason === 'disabled') {
+            _sseDisabled = true;
+            _sseConnecting = false;
+            _startSseFallbackPolling();
+            return;
+          }
           if (result.status === 429 || result.status === 503) {
             _sseCooldownUntil = Date.now() + retryAfter * 1000;
           }
@@ -1770,7 +1781,12 @@
     function _syncSseToWindow() { window._sseSource = _sseSource; }
 
     {% if logged_in %}
+    {% if sse_enabled %}
     connectSSE();
+    {% else %}
+    _sseDisabled = true;
+    _startSseFallbackPolling();
+    {% endif %}
     _syncSseToWindow();
     {% endif %}
 
@@ -1778,9 +1794,11 @@
     document.addEventListener('visibilitychange', function() {
       if (document.visibilityState === 'visible') {
         {% if logged_in %}
+        {% if sse_enabled %}
         if (!_sseSource) {
           connectSSE();
         }
+        {% endif %}
         fetchNotifDialogQueue();
         _syncSseToWindow();
         {% endif %}
