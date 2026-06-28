@@ -180,6 +180,8 @@ function setEditQuestionSaving(on){
         btn.disabled = !!on;
         btn.textContent = on ? '保存中...' : '保存';
     }
+    const deleteBtn = document.getElementById('editQuestionDeleteBtn');
+    if (deleteBtn) deleteBtn.disabled = !!on;
 }
 
 function openEditQuestionModal(){
@@ -197,6 +199,9 @@ function openEditQuestionModal(){
 
     const meta = document.getElementById('editQuestionMeta');
     if (meta) meta.textContent = `ID: ${qid} · 题型: ${qtype} · 第 ${currentIndex + 1} 题 / ${totalQuestions}`;
+
+    const deleteBtn = document.getElementById('editQuestionDeleteBtn');
+    if (deleteBtn) deleteBtn.style.display = IS_USER_BANK ? '' : 'none';
 
     const contentTa = document.getElementById('editQuestionContent');
     if (contentTa) {
@@ -238,6 +243,14 @@ function openEditQuestionModal(){
 
     setEditQuestionSaving(false);
     ov.style.display = 'flex';
+}
+
+function confirmEditQuestionDelete(){
+    const message = '确定要删除该题目吗？此操作不可撤销。';
+    if (typeof window.appConfirm === 'function') {
+        return Promise.resolve(window.appConfirm(message));
+    }
+    return Promise.resolve(window.confirm(message));
 }
 
 function parseOptionsTextForEdit(optionsText){
@@ -443,5 +456,46 @@ async function submitEditQuestion(){
     } catch(e) {
         setEditQuestionSaving(false);
         showToast('保存失败');
+    }
+}
+
+async function deleteCurrentQuestionFromEditModal(){
+    const ov = document.getElementById('editQuestionOverlay');
+    if (!ov) return;
+    if (ov.dataset && ov.dataset.saving === '1') return;
+
+    const qid = Number((ov.dataset && ov.dataset.qid) ? ov.dataset.qid : 0);
+    if (!qid) { showToast('题目ID异常'); return; }
+    if (!IS_USER_BANK || !BANK_ID) { showToast('当前题目不支持在此处删除'); return; }
+
+    const confirmed = await confirmEditQuestionDelete();
+    if (!confirmed) return;
+
+    setEditQuestionSaving(true);
+    const btn = document.getElementById('editQuestionDeleteBtn');
+    if (btn) btn.textContent = '删除中...';
+
+    try {
+        const res = await fetch(`${getUserBankApiPrefix()}/questions/${encodeURIComponent(String(qid))}`, {
+            method: 'DELETE'
+        });
+        const js = await res.json().catch(() => ({}));
+        const ok = res.ok && js && (Number(js.code) === 0 || js.status === 'success');
+        if (!ok) {
+            showToast((js && (js.message || js.msg)) || '删除失败');
+            setEditQuestionSaving(false);
+            if (btn) btn.textContent = '删除';
+            return;
+        }
+
+        showToast('已删除，正在刷新');
+        setEditQuestionSaving(false);
+        if (btn) btn.textContent = '删除';
+        closeEditQuestionModal();
+        setTimeout(() => window.location.reload(), 450);
+    } catch(e) {
+        showToast('删除失败');
+        setEditQuestionSaving(false);
+        if (btn) btn.textContent = '删除';
     }
 }

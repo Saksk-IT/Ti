@@ -484,5 +484,9 @@ exports.api = {
         return (0, api_client_1.request)("/user/banks/api/".concat(bankId, "/questions/").concat(questionId, "/tags"), 'POST', { tags: tags });
     },
     // === 编辑题目（个人题库） ===
-    updateBankQuestion: function (bankId, questionId, data) { return (0, api_client_1.request)("/user/banks/api/".concat(bankId, "/questions/").concat(questionId), 'PUT', data); }
+    updateBankQuestion: function (bankId, questionId, data) { return (0, api_client_1.request)("/user/banks/api/".concat(bankId, "/questions/").concat(questionId), 'PUT', data); },
+    // 删除题库题目（个人题库创建者）
+    deleteBankQuestion: function (bankId, questionId) {
+        return (0, api_client_1.request)("/user/banks/api/".concat(bankId, "/questions/").concat(questionId), 'DELETE', {});
+    }
 };

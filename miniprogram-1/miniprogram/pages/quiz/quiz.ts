@@ -166,6 +166,7 @@ Page({
       showOptions: false
     },
     editSaving: false,              // 编辑保存中
+    editDeleting: false,            // 编辑删除中
 
     // 滑屏切题
     touchStartX: 0,
@@ -1928,7 +1929,65 @@ Page({
   },
 
   onCloseEditModal() {
+    if (this.data.editSaving || this.data.editDeleting) return;
     this.setData({ showEditModal: false });
+  },
+
+  confirmDeleteQuestion(): Promise<boolean> {
+    return new Promise((resolve) => {
+      wx.showModal({
+        title: '删除题目',
+        content: '确定要删除该题目吗？此操作不可撤销。',
+        confirmText: '删除',
+        confirmColor: '#dc2626',
+        success: (res) => resolve(!!res.confirm),
+        fail: () => resolve(false)
+      });
+    });
+  },
+
+  reindexProgressMapAfterDelete(map: any, deletedIndex: number) {
+    const out: Record<string, any> = {};
+    if (!map || typeof map !== 'object') return out;
+
+    Object.keys(map).forEach((key) => {
+      const index = Number(key);
+      if (!Number.isInteger(index) || index < 0 || index === deletedIndex) return;
+      const nextKey = String(index > deletedIndex ? index - 1 : index);
+      const value = map[key];
+      if (Array.isArray(value)) {
+        out[nextKey] = value.slice();
+      } else if (value && typeof value === 'object') {
+        out[nextKey] = Object.assign({}, value);
+      } else {
+        out[nextKey] = value;
+      }
+    });
+
+    return out;
+  },
+
+  saveProgressAfterQuestionDelete(questionId: number, deletedIndex: number) {
+    const remainingCount = Math.max((this.data.questions || []).length - 1, 0);
+    const nextIndex = remainingCount > 0 ? Math.min(deletedIndex, remainingCount - 1) : 0;
+    const nextStatus = this.reindexProgressMapAfterDelete(this.progressStatusMap, deletedIndex);
+    const nextAnswers = this.reindexProgressMapAfterDelete(this.progressAnswerMap, deletedIndex);
+    const nextOrder = Array.isArray(this.progressOrder)
+      ? this.progressOrder.map((id: any) => Number(id)).filter((id: number) => Number.isFinite(id) && id !== questionId)
+      : null;
+
+    this.progressStatusMap = nextStatus;
+    this.progressAnswerMap = nextAnswers;
+    this.progressOrder = nextOrder;
+
+    const payload: any = {
+      index: nextIndex,
+      status: nextStatus,
+      answers: nextAnswers,
+      timestamp: Date.now()
+    };
+    if (nextOrder) payload.order = nextOrder;
+    this.saveProgressState(payload, true);
   },
 
   onEditContentInput(e: any) {
@@ -1948,8 +2007,8 @@ Page({
   },
 
   async onSaveQuestion() {
-    const { currentQuestion, editForm, editSaving, sourceType, sourceId } = this.data;
-    if (!currentQuestion || editSaving) return;
+    const { currentQuestion, editForm, editSaving, editDeleting, sourceType, sourceId } = this.data;
+    if (!currentQuestion || editSaving || editDeleting) return;
 
     if (!editForm.content.trim()) {
       wx.showToast({ title: '题干不能为空', icon: 'none' });
@@ -2028,6 +2087,53 @@ Page({
       
       this.setData({ editSaving: false });
       wx.showToast({ title: err.message || '保存失败', icon: 'none' });
+    }
+  },
+
+  async onDeleteQuestion() {
+    const {
+      currentQuestion,
+      sourceType,
+      sourceId,
+      editSaving,
+      editDeleting,
+      currentIndex,
+      qType,
+      source,
+      shuffleQuestions,
+      shuffleOptions,
+      tag
+    } = this.data;
+
+    if (!currentQuestion || editSaving || editDeleting) return;
+    if (sourceType !== 'bank' || !sourceId) {
+      wx.showToast({ title: '当前题目不支持删除', icon: 'none' });
+      return;
+    }
+
+    const questionId = Number(currentQuestion.id || 0);
+    if (!questionId) {
+      wx.showToast({ title: '题目ID异常', icon: 'none' });
+      return;
+    }
+
+    const confirmed = await this.confirmDeleteQuestion();
+    if (!confirmed) return;
+
+    this.setData({ editDeleting: true });
+    try {
+      await api.deleteBankQuestion(Number(sourceId), questionId);
+      this.saveProgressAfterQuestionDelete(questionId, Number(currentIndex) || 0);
+      this.setData({
+        showEditModal: false,
+        editDeleting: false,
+        loading: true
+      });
+      wx.showToast({ title: '已删除', icon: 'success' });
+      await this.loadQuestions(qType, source, shuffleQuestions, shuffleOptions, tag);
+    } catch (err: any) {
+      this.setData({ editDeleting: false });
+      wx.showToast({ title: err.message || '删除失败', icon: 'none' });
     }
   },
 

@@ -632,10 +632,19 @@ def delete_question(bank_id, question_id):
     if not question:
         return error_response('题目不存在', 404)
 
-    db.session.execute(text('DELETE FROM user_bank_questions WHERE id = :qid'), {'qid': question_id})
     db.session.execute(
-        text('UPDATE user_question_banks SET question_count = question_count - 1, updated_at = CURRENT_TIMESTAMP WHERE id = :bid'),
+        text('DELETE FROM user_bank_questions WHERE id = :qid AND bank_id = :bid'),
+        {'qid': question_id, 'bid': bank_id},
+    )
+
+    count = db.session.execute(
+        text('SELECT COUNT(*) as cnt FROM user_bank_questions WHERE bank_id = :bid'),
         {'bid': bank_id}
+    ).fetchone()._mapping['cnt']
+
+    db.session.execute(
+        text('UPDATE user_question_banks SET question_count = :cnt, updated_at = CURRENT_TIMESTAMP WHERE id = :bid'),
+        {'cnt': count, 'bid': bank_id}
     )
     prune_saved_duplicate_check_questions(int(user_id), int(bank_id), {int(question_id)})
     db.session.commit()

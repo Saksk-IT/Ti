@@ -539,8 +539,15 @@
       </view>
     </scroll-view>
     <view class="edit-modal-footer">
-      <button class="edit-cancel-btn" bindtap="onCloseEditModal">取消</button>
-      <button class="edit-save-btn" bindtap="onSaveQuestion" loading="{{editSaving}}" disabled="{{editSaving}}">保存</button>
+      <button
+        wx:if="{{sourceType === 'bank'}}"
+        class="edit-delete-btn"
+        bindtap="onDeleteQuestion"
+        loading="{{editDeleting}}"
+        disabled="{{editSaving || editDeleting}}"
+      >删除</button>
+      <button class="edit-cancel-btn" bindtap="onCloseEditModal" disabled="{{editSaving || editDeleting}}">取消</button>
+      <button class="edit-save-btn" bindtap="onSaveQuestion" loading="{{editSaving}}" disabled="{{editSaving || editDeleting}}">保存</button>
     </view>
   </view>
 </view>

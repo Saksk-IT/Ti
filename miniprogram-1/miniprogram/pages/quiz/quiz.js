@@ -184,6 +184,7 @@ Page({
             showOptions: false
         },
         editSaving: false, // 编辑保存中
+        editDeleting: false, // 编辑删除中
         // 滑屏切题
         touchStartX: 0,
         touchStartY: 0,
@@ -2005,7 +2006,64 @@ Page({
         });
     },
     onCloseEditModal: function () {
+        if (this.data.editSaving || this.data.editDeleting)
+            return;
         this.setData({ showEditModal: false });
+    },
+    confirmDeleteQuestion: function () {
+        return new Promise(function (resolve) {
+            wx.showModal({
+                title: '删除题目',
+                content: '确定要删除该题目吗？此操作不可撤销。',
+                confirmText: '删除',
+                confirmColor: '#dc2626',
+                success: function (res) { return resolve(!!res.confirm); },
+                fail: function () { return resolve(false); }
+            });
+        });
+    },
+    reindexProgressMapAfterDelete: function (map, deletedIndex) {
+        var out = {};
+        if (!map || typeof map !== 'object')
+            return out;
+        Object.keys(map).forEach(function (key) {
+            var index = Number(key);
+            if (!Number.isInteger(index) || index < 0 || index === deletedIndex)
+                return;
+            var nextKey = String(index > deletedIndex ? index - 1 : index);
+            var value = map[key];
+            if (Array.isArray(value)) {
+                out[nextKey] = value.slice();
+            }
+            else if (value && typeof value === 'object') {
+                out[nextKey] = Object.assign({}, value);
+            }
+            else {
+                out[nextKey] = value;
+            }
+        });
+        return out;
+    },
+    saveProgressAfterQuestionDelete: function (questionId, deletedIndex) {
+        var remainingCount = Math.max((this.data.questions || []).length - 1, 0);
+        var nextIndex = remainingCount > 0 ? Math.min(deletedIndex, remainingCount - 1) : 0;
+        var nextStatus = this.reindexProgressMapAfterDelete(this.progressStatusMap, deletedIndex);
+        var nextAnswers = this.reindexProgressMapAfterDelete(this.progressAnswerMap, deletedIndex);
+        var nextOrder = Array.isArray(this.progressOrder)
+            ? this.progressOrder.map(function (id) { return Number(id); }).filter(function (id) { return Number.isFinite(id) && id !== questionId; })
+            : null;
+        this.progressStatusMap = nextStatus;
+        this.progressAnswerMap = nextAnswers;
+        this.progressOrder = nextOrder;
+        var payload = {
+            index: nextIndex,
+            status: nextStatus,
+            answers: nextAnswers,
+            timestamp: Date.now()
+        };
+        if (nextOrder)
+            payload.order = nextOrder;
+        this.saveProgressState(payload, true);
     },
     onEditContentInput: function (e) {
         this.setData({ 'editForm.content': e.detail.value });
@@ -2021,12 +2079,12 @@ Page({
     },
     onSaveQuestion: function () {
         return __awaiter(this, void 0, void 0, function () {
-            var _a, currentQuestion, editForm, editSaving, sourceType, sourceId, options, updateData, updatedQuestion_1, questions, err_11;
+            var _a, currentQuestion, editForm, editSaving, editDeleting, sourceType, sourceId, options, updateData, updatedQuestion_1, questions, err_11;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        _a = this.data, currentQuestion = _a.currentQuestion, editForm = _a.editForm, editSaving = _a.editSaving, sourceType = _a.sourceType, sourceId = _a.sourceId;
-                        if (!currentQuestion || editSaving)
+                        _a = this.data, currentQuestion = _a.currentQuestion, editForm = _a.editForm, editSaving = _a.editSaving, editDeleting = _a.editDeleting, sourceType = _a.sourceType, sourceId = _a.sourceId;
+                        if (!currentQuestion || editSaving || editDeleting)
                             return [2 /*return*/];
                         if (!editForm.content.trim()) {
                             wx.showToast({ title: '题干不能为空', icon: 'none' });
@@ -2096,6 +2154,57 @@ Page({
                         wx.showToast({ title: err_11.message || '保存失败', icon: 'none' });
                         return [3 /*break*/, 7];
                     case 7: return [2 /*return*/];
+                }
+            });
+        });
+    },
+    onDeleteQuestion: function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var _a, currentQuestion, sourceType, sourceId, editSaving, editDeleting, currentIndex, qType, source, shuffleQuestions, shuffleOptions, tag, questionId, confirmed, err_12;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        _a = this.data, currentQuestion = _a.currentQuestion, sourceType = _a.sourceType, sourceId = _a.sourceId, editSaving = _a.editSaving, editDeleting = _a.editDeleting, currentIndex = _a.currentIndex, qType = _a.qType, source = _a.source, shuffleQuestions = _a.shuffleQuestions, shuffleOptions = _a.shuffleOptions, tag = _a.tag;
+                        if (!currentQuestion || editSaving || editDeleting)
+                            return [2 /*return*/];
+                        if (sourceType !== 'bank' || !sourceId) {
+                            wx.showToast({ title: '当前题目不支持删除', icon: 'none' });
+                            return [2 /*return*/];
+                        }
+                        questionId = Number(currentQuestion.id || 0);
+                        if (!questionId) {
+                            wx.showToast({ title: '题目ID异常', icon: 'none' });
+                            return [2 /*return*/];
+                        }
+                        return [4 /*yield*/, this.confirmDeleteQuestion()];
+                    case 1:
+                        confirmed = _b.sent();
+                        if (!confirmed)
+                            return [2 /*return*/];
+                        this.setData({ editDeleting: true });
+                        _b.label = 2;
+                    case 2:
+                        _b.trys.push([2, 5, , 6]);
+                        return [4 /*yield*/, api_1.api.deleteBankQuestion(Number(sourceId), questionId)];
+                    case 3:
+                        _b.sent();
+                        this.saveProgressAfterQuestionDelete(questionId, Number(currentIndex) || 0);
+                        this.setData({
+                            showEditModal: false,
+                            editDeleting: false,
+                            loading: true
+                        });
+                        wx.showToast({ title: '已删除', icon: 'success' });
+                        return [4 /*yield*/, this.loadQuestions(qType, source, shuffleQuestions, shuffleOptions, tag)];
+                    case 4:
+                        _b.sent();
+                        return [3 /*break*/, 6];
+                    case 5:
+                        err_12 = _b.sent();
+                        this.setData({ editDeleting: false });
+                        wx.showToast({ title: err_12.message || '删除失败', icon: 'none' });
+                        return [3 /*break*/, 6];
+                    case 6: return [2 /*return*/];
                 }
             });
         });

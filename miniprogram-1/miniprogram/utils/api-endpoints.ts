@@ -836,5 +836,9 @@ export const api = {
     options?: Array<{ key: string; value: string }>;
     answer?: string;
     explanation?: string;
-  }) => request(`/user/banks/api/${bankId}/questions/${questionId}`, 'PUT', data)
+  }) => request(`/user/banks/api/${bankId}/questions/${questionId}`, 'PUT', data),
+
+  // 删除题库题目（个人题库创建者）
+  deleteBankQuestion: (bankId: number, questionId: number) =>
+    request(`/user/banks/api/${bankId}/questions/${questionId}`, 'DELETE', {})
 };
