@@ -26,6 +26,7 @@
 from __future__ import annotations
 
 import re
+from html import unescape as _html_unescape
 from typing import Any, Dict, List, Optional, Tuple
 
 BLANK_TOKEN = "__"
@@ -35,6 +36,21 @@ PORTABLE_TYPES = ("single_choice", "multi_choice", "boolean", "fill", "essay")
 
 def normalize_newlines(text: Any) -> str:
     return str(text or "").replace("\r\n", "\n").replace("\r", "\n")
+
+
+def normalize_html_fragment_text(text: Any) -> str:
+    """把题目中的 HTML/JSP 片段统一为字面文本，交给前端文本节点安全展示。"""
+    s = normalize_newlines(text)
+    if not s:
+        return ""
+
+    out = s
+    for _ in range(3):
+        decoded = _html_unescape(out).replace("\xa0", " ").replace("\u2003", "  ")
+        if decoded == out:
+            break
+        out = decoded
+    return out
 
 
 def normalize_tags(tags: Any) -> List[str]:
@@ -264,7 +280,7 @@ def fill_storage_to_portable(answer: Any, *, blank_count: Optional[int] = None) 
     groups = [g for g in s.split(";;")]
     out: List[List[str]] = []
     for g in groups:
-        alts = [x.strip() for x in str(g or "").split(";") if x.strip()]
+        alts = [normalize_html_fragment_text(x).strip() for x in str(g or "").split(";") if x.strip()]
         out.append(alts)
     if blank_count is not None and blank_count > 0:
         while len(out) < blank_count:
@@ -281,10 +297,10 @@ def fill_portable_to_storage(answer: Any, *, content_placeholder_order: Optional
     groups_by_index: List[List[str]] = []
     for g in answer:
         if isinstance(g, list):
-            groups_by_index.append([str(x).strip() for x in g if str(x).strip()])
+            groups_by_index.append([normalize_html_fragment_text(x).strip() for x in g if str(x).strip()])
         else:
             # 兼容传了字符串：认为该空只有一个答案
-            v = str(g).strip()
+            v = normalize_html_fragment_text(g).strip()
             groups_by_index.append([v] if v else [])
 
     order = content_placeholder_order or list(range(len(groups_by_index)))
@@ -316,7 +332,7 @@ def portable_question_to_internal(
         errors.append("缺少 type")
     q_type = portable_type_to_q_type(p_type, essay_q_type=essay_qt)
 
-    raw_content = normalize_newlines(item.get("content")).strip()
+    raw_content = normalize_html_fragment_text(item.get("content")).strip()
     if not raw_content:
         errors.append("题干为空")
 
@@ -329,7 +345,7 @@ def portable_question_to_internal(
             options_raw = _json.loads(options_raw)
         except Exception:
             options_raw = []
-    options_list = [str(x) for x in (options_raw or [])] if isinstance(options_raw, list) else []
+    options_list = [normalize_html_fragment_text(x) for x in (options_raw or [])] if isinstance(options_raw, list) else []
 
     content = raw_content
     placeholder_order: List[int] = []
@@ -350,11 +366,11 @@ def portable_question_to_internal(
     else:
         # essay
         if isinstance(answer_val, list):
-            answer_storage = "\n".join([normalize_newlines(x).rstrip() for x in answer_val if str(x or "").strip()]).strip()
+            answer_storage = "\n".join([normalize_html_fragment_text(x).rstrip() for x in answer_val if str(x or "").strip()]).strip()
         else:
-            answer_storage = normalize_newlines(answer_val).strip()
+            answer_storage = normalize_html_fragment_text(answer_val).strip()
 
-    analysis = normalize_newlines(item.get("analysis")).strip()
+    analysis = normalize_html_fragment_text(item.get("analysis")).strip()
     difficulty = item.get("difficulty", 1)
     try:
         difficulty = int(difficulty or 1)
@@ -397,7 +413,7 @@ def internal_question_to_portable(
 ) -> Dict[str, Any]:
     p_type = q_type_to_portable_type(q_type)
 
-    text = normalize_newlines(content).strip()
+    text = normalize_html_fragment_text(content).strip()
     out_content = fill_content_internal_to_portable(text) if p_type == "fill" else text
 
     # options 允许为 JSON 字符串/列表/None
@@ -419,13 +435,13 @@ def internal_question_to_portable(
 
                 parsed = parse_options(raw)
                 if parsed:
-                    opts = [str(x.get("value") or "") for x in parsed]
+                    opts = [normalize_html_fragment_text(x.get("value") or "") for x in parsed]
                 else:
-                    opts = [str(x) for x in raw]
+                    opts = [normalize_html_fragment_text(x) for x in raw]
             except Exception:
-                opts = [str(x) for x in raw]
+                opts = [normalize_html_fragment_text(x) for x in raw]
 
-    ans = normalize_newlines(answer).strip()
+    ans = normalize_html_fragment_text(answer).strip()
     portable_answer: Any = []
     if p_type == "single_choice":
         idxs = _choice_answer_letters_to_indices(ans)
@@ -454,7 +470,7 @@ def internal_question_to_portable(
         "content": out_content,
         "options": opts,
         "answer": portable_answer,
-        "analysis": normalize_newlines(explanation).strip(),
+        "analysis": normalize_html_fragment_text(explanation).strip(),
         "tags": normalize_tags(tags),
         "difficulty": diff,
     }
