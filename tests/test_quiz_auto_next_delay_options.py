@@ -47,3 +47,15 @@ def test_web_auto_next_delay_has_matching_user_options():
     assert "getAutoNextDelayMs()" in check_js
     assert "}, 350)" not in check_js
     assert "}, 500)" not in check_js
+
+
+def test_web_auto_favorite_on_wrong_uses_explicit_favorite_api():
+    settings_js = WEB_SETTINGS_JS.read_text(encoding="utf-8")
+    check_js = WEB_CHECK_JS.read_text(encoding="utf-8")
+
+    assert "function setQuestionFavoriteState(qEl, isFavorite)" in settings_js
+    assert "async function favoriteQuestion(qEl, id)" in settings_js
+    assert "setQuestionFavoriteState(qEl, true)" in settings_js
+    assert "await favoriteQuestion(currentQ, qId)" in check_js
+    assert "await favoriteQuestion(qEl, qId)" in check_js
+    assert ".fav-btn.click()" not in check_js

@@ -100,10 +100,7 @@ async function checkAnswer(isManualClick) {
     try {
         if (isJudgable && isCorrect === false && isFabAutoFavoriteOnWrongEnabled()) {
             if (LOGGED_IN) {
-                const favBtn = currentQ ? currentQ.querySelector('.fav-btn') : null;
-                if (favBtn && !favBtn.classList.contains('active') && typeof favBtn.click === 'function') {
-                    favBtn.click();
-                }
+                await favoriteQuestion(currentQ, qId);
             }
         }
     } catch (e) {}
@@ -177,8 +174,7 @@ async function _checkAnswerSubjective(currentQ, type, qId) {
                 // 做错自动收藏
                 try {
                     if (isCorrect === false && isFabAutoFavoriteOnWrongEnabled()) {
-                        const favBtn = currentQ.querySelector('.fav-btn');
-                        if (favBtn && !favBtn.classList.contains('active')) favBtn.click();
+                        await favoriteQuestion(currentQ, qId);
                     }
                 } catch(e) {}
                 // 答对自动下一题
@@ -314,8 +310,7 @@ function _showSubjectiveSelfEval(qEl, qId) {
         // 做错自动收藏
         try {
             if (!isCorrect && isFabAutoFavoriteOnWrongEnabled() && LOGGED_IN) {
-                const favBtn = qEl.querySelector('.fav-btn');
-                if (favBtn && !favBtn.classList.contains('active')) favBtn.click();
+                await favoriteQuestion(qEl, qId);
             }
         } catch(e) {}
         // 答对自动下一题

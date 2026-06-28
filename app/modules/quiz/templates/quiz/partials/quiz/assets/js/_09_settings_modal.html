@@ -239,7 +239,29 @@ function clearCurrentQuestionProgress(){
     return true;
 }
 
-function toggleStar(btn, id) {
+function getFavoriteButtonsForQuestion(qEl) {
+    if (!qEl) return [];
+    return Array.from(qEl.querySelectorAll('.fav-btn'));
+}
+
+function setQuestionFavoriteState(qEl, isFavorite) {
+    getFavoriteButtonsForQuestion(qEl).forEach(favBtn => {
+        favBtn.classList.toggle('active', !!isFavorite);
+        favBtn.setAttribute('aria-pressed', isFavorite ? 'true' : 'false');
+    });
+}
+
+function isQuestionFavoriteActive(qEl) {
+    return getFavoriteButtonsForQuestion(qEl).some(favBtn => favBtn.classList.contains('active'));
+}
+
+function getFavoriteStateFromResponse(data) {
+    if (data && data.data && typeof data.data.is_favorite === 'boolean') return data.data.is_favorite;
+    if (data && typeof data.is_favorite === 'boolean') return data.is_favorite;
+    return null;
+}
+
+async function requestFavoriteToggle(id) {
      const url = IS_USER_BANK
         ? `${getUserBankApiPrefix()}/questions/${encodeURIComponent(id)}/favorite`
         : '/api/favorite';
@@ -250,13 +272,52 @@ function toggleStar(btn, id) {
         body: JSON.stringify({ question_id: id })
      };
 
-     fetch(url, options).then(res => res.json()).then(data => {
+     const res = await fetch(url, options);
+     const data = await res.json();
+     const ok = data && (data.status === 'success' || data.code === 0);
+     if (!res.ok || !ok) {
+        throw new Error((data && data.message) || '收藏失败');
+     }
+     return data;
+}
+
+async function toggleStar(btn, id) {
+     const qEl = btn ? btn.closest('.question-box') : null;
+     try {
+        const data = await requestFavoriteToggle(id);
         const ok = data && (data.status === 'success' || data.code === 0);
         if(ok) {
-            const isActive = btn.classList.toggle('active');
-            btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            const responseState = getFavoriteStateFromResponse(data);
+            const isFavorite = typeof responseState === 'boolean' ? responseState : !isQuestionFavoriteActive(qEl);
+            setQuestionFavoriteState(qEl, isFavorite);
         }
-     });
+     } catch(e) {
+        console.error('收藏切换失败:', e);
+        showToast((e && e.message) || '收藏失败');
+     }
+}
+
+async function favoriteQuestion(qEl, id) {
+    if (!LOGGED_IN || !qEl) return false;
+    if (isQuestionFavoriteActive(qEl)) {
+        setQuestionFavoriteState(qEl, true);
+        return true;
+    }
+    try {
+        let data = await requestFavoriteToggle(id);
+        let isFavorite = getFavoriteStateFromResponse(data);
+        if (isFavorite === false) {
+            data = await requestFavoriteToggle(id);
+            isFavorite = getFavoriteStateFromResponse(data);
+        }
+        const finalState = typeof isFavorite === 'boolean' ? isFavorite : true;
+        setQuestionFavoriteState(qEl, finalState);
+        return finalState;
+    } catch(e) {
+        console.error('自动收藏失败:', e);
+        showToast((e && e.message) || '自动收藏失败');
+        return false;
+    }
 }
 
 function applyReviewFromServer() {
