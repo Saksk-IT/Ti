@@ -5,6 +5,9 @@
 // @description  try to take over the world!
 // @author       Saksk
 // @match        https://pintia.cn/problem-sets/*/exam/problems/*
+// @match        https://pta.pintia.cn/problem-sets/*/exam/problems/*
+// @match        https://*.yuketang.cn/result/*
+// @match        https://*.yuketang.cn/exam_room/show_paper*
 // @grant        none
 // @require      https://unpkg.com/docx@7.1.1/build/index.js
 // @require      https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js
@@ -17,6 +20,7 @@
  *
  * 目标：
  * - 在 PTA（pintia.cn / pta.pintia.cn）“答题结果/题目浏览/试卷回顾”等页面，智能识别题型并导出题目 JSON
+ * - 在雨课堂考试结果页（*.yuketang.cn/result/*）通过 show_paper 接口导出题目 JSON
  *
  * 导出模式：
  * - 精简：仅保留 题干/选项/答案/解析
@@ -198,6 +202,91 @@
   function safeText(el) {
     if (!el) return '';
     return maybeCompactCjkSpacing(extractTextPreserveWhitespace(el));
+  }
+
+  function isYuketangExamPage() {
+    const host = String(window.location?.hostname || '').toLowerCase();
+    const path = String(window.location?.pathname || '');
+    return host.endsWith('yuketang.cn') && (/^\/result\/[^/]+/.test(path) || /^\/exam_room\/show_paper/.test(path));
+  }
+
+  function getToolTitle() {
+    return isYuketangExamPage() ? '雨课堂题目导出' : 'PTA题目导出';
+  }
+
+  function getReadyLogText() {
+    return isYuketangExamPage()
+      ? '脚本已就绪：点击“解析题目”将读取雨课堂 show_paper 数据'
+      : '脚本已就绪：先滚动到底，再点“解析题目”';
+  }
+
+  function getReadyHintText() {
+    return isYuketangExamPage()
+      ? '提示：请保持当前雨课堂账号已登录，解析时会读取本页考试数据。'
+      : '提示：先滚动到底，确保题目全部加载。';
+  }
+
+  function htmlToPlainText(value) {
+    if (value === null || value === undefined) return '';
+    if (Array.isArray(value)) return value.map((x) => htmlToPlainText(x)).filter(Boolean).join('\n');
+    if (typeof value === 'object') {
+      const nested = getFirstValueByKeys(value, [
+        'text',
+        'content',
+        'html',
+        'title',
+        'name',
+        'value',
+        'optionContent',
+        'questionContent',
+        'questionTitle',
+      ]);
+      return nested === undefined ? '' : htmlToPlainText(nested);
+    }
+
+    const source = String(value).replace(/\\n/g, '\n');
+    if (!source) return '';
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = source;
+    const decoded = textarea.value;
+    const hasActualHtml = /<\s*\/?\s*[a-zA-Z][^>]*>/i.test(source);
+    const htmlSource = hasActualHtml ? source : decoded;
+    if (!/[<&][a-zA-Z/#?!]/.test(htmlSource)) {
+      return maybeCompactCjkSpacing(decoded).replace(/[ \t]+\n/g, '\n').trim();
+    }
+
+    const box = document.createElement('div');
+    box.innerHTML = htmlSource.replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|li|tr|h[1-6])>/gi, '\n');
+    box.querySelectorAll('script,style,noscript').forEach((n) => n.remove());
+    return maybeCompactCjkSpacing(box.innerText || box.textContent || '')
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/[ \t]+\n/g, '\n')
+      .trim();
+  }
+
+  function getFirstValueByKeys(obj, keys) {
+    if (!obj || typeof obj !== 'object') return undefined;
+    const lowerKeyMap = Object.keys(obj).reduce((acc, key) => {
+      acc[String(key).toLowerCase()] = key;
+      return acc;
+    }, {});
+    for (const key of keys) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) return obj[key];
+      const realKey = lowerKeyMap[String(key).toLowerCase()];
+      if (realKey !== undefined) return obj[realKey];
+    }
+    return undefined;
+  }
+
+  function parseMaybeJson(value) {
+    if (typeof value !== 'string') return value;
+    const text = value.trim();
+    if (!text || !/^[\[{]/.test(text)) return value;
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      return value;
+    }
   }
 
   function parseFirstNumber(text) {
@@ -399,6 +488,559 @@
       if (u >= 'A' && u <= 'Z') out.push(u.charCodeAt(0) - 65);
     }
     return out.filter((n) => Number.isInteger(n) && n >= 0).sort((a, b) => a - b);
+  }
+
+  const YUKETANG_OPTION_KEYS = [
+    'optionList',
+    'option_list',
+    'options',
+    'option',
+    'optionDtos',
+    'optionArray',
+    'choiceList',
+    'choice_list',
+    'choices',
+    'questionOptions',
+    'question_options',
+    'answerOptions',
+    'answer_options',
+    'items',
+  ];
+
+  const YUKETANG_ANSWER_KEYS = [
+    'rightAnswer',
+    'right_answer',
+    'rightAnswers',
+    'right_answers',
+    'correctAnswer',
+    'correct_answer',
+    'correctAnswers',
+    'correct_answers',
+    'standardAnswer',
+    'standard_answer',
+    'referenceAnswer',
+    'reference_answer',
+    'answer',
+    'answers',
+    'answerContent',
+    'answer_content',
+    'rightAnswerContent',
+    'right_answer_content',
+    'stuAnswer',
+    'stu_answer',
+    'studentAnswer',
+    'student_answer',
+    'myAnswer',
+    'my_answer',
+    'userAnswer',
+    'user_answer',
+    'resultAnswer',
+    'result_answer',
+  ];
+
+  function normalizeBooleanFlag(value) {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') {
+      if (value === 1) return true;
+      if (value === 0) return false;
+    }
+    const raw = String(value ?? '').trim().toLowerCase();
+    if (!raw) return null;
+    if (['1', 'true', 'yes', 'y', 'right', 'correct', '正确', '对', '是'].includes(raw)) return true;
+    if (['0', 'false', 'no', 'n', 'wrong', 'incorrect', '错误', '错', '否'].includes(raw)) return false;
+    return null;
+  }
+
+  function normalizeYuketangOptionLabel(raw, idx) {
+    const text = String(raw ?? '').trim();
+    if (/^[A-Z]$/i.test(text)) return text.toUpperCase();
+    if (/^\d+$/.test(text)) {
+      const n = Number(text);
+      if (Number.isInteger(n) && n >= 1 && n <= 26) return indexToLetter(n - 1);
+      if (Number.isInteger(n) && n >= 0 && n < 26) return indexToLetter(n);
+    }
+    return indexToLetter(idx);
+  }
+
+  function looksLikeYuketangOptionItem(item) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) return false;
+    const text = getFirstValueByKeys(item, [
+      'optionContent',
+      'option_content',
+      'content',
+      'html',
+      'text',
+      'title',
+      'name',
+      'body',
+      'value',
+    ]);
+    const marker = getFirstValueByKeys(item, [
+      'label',
+      'key',
+      'prefix',
+      'sort',
+      'option',
+      'optionNo',
+      'option_no',
+      'optionName',
+      'option_name',
+      'id',
+      'optionId',
+      'option_id',
+      'isCorrect',
+      'is_correct',
+      'correct',
+      'right',
+      'isRight',
+      'is_right',
+    ]);
+    return text !== undefined && marker !== undefined;
+  }
+
+  function isYuketangOptionArray(value) {
+    return Array.isArray(value) && value.some((item) => looksLikeYuketangOptionItem(item));
+  }
+
+  function extractYuketangOptionItems(obj) {
+    let optionArray = parseMaybeJson(getFirstValueByKeys(obj, YUKETANG_OPTION_KEYS));
+    const answerArray = parseMaybeJson(getFirstValueByKeys(obj, ['answer', 'answers']));
+    if (!Array.isArray(optionArray) && isYuketangOptionArray(answerArray)) optionArray = answerArray;
+
+    if (!Array.isArray(optionArray)) return [];
+    return optionArray
+      .map((item, idx) => {
+        if (item && typeof item === 'object') {
+          const label = normalizeYuketangOptionLabel(
+            getFirstValueByKeys(item, [
+              'label',
+              'key',
+              'prefix',
+              'sort',
+              'option',
+              'optionNo',
+              'option_no',
+              'optionName',
+              'option_name',
+              'name',
+            ]),
+            idx
+          );
+          const id = String(
+            getFirstValueByKeys(item, ['id', 'optionId', 'option_id', 'answerId', 'answer_id', 'itemId', 'item_id', 'oid', 'value']) ?? ''
+          ).trim();
+          const text = stripOptionPrefix(
+            htmlToPlainText(
+              getFirstValueByKeys(item, ['optionContent', 'option_content', 'content', 'html', 'text', 'title', 'body', 'value'])
+            )
+          );
+          const correct = normalizeBooleanFlag(
+            getFirstValueByKeys(item, ['isCorrect', 'is_correct', 'correct', 'right', 'isRight', 'is_right', 'rightFlag', 'right_flag', 'correctFlag', 'correct_flag', 'isAnswer', 'is_answer'])
+          );
+          return { label, id, text, correct, raw: item };
+        }
+        return {
+          label: indexToLetter(idx),
+          id: '',
+          text: stripOptionPrefix(htmlToPlainText(item)),
+          correct: null,
+          raw: item,
+        };
+      })
+      .filter((item) => item.text);
+  }
+
+  function getYuketangStemCandidate(obj) {
+    return htmlToPlainText(
+      getFirstValueByKeys(obj, [
+        'questionContent',
+        'question_content',
+        'questionTitle',
+        'question_title',
+        'questionName',
+        'question_name',
+        'quesName',
+        'ques_name',
+        'questionStem',
+        'question_stem',
+        'stem',
+        'stemHtml',
+        'stem_html',
+        'problemContent',
+        'problem_content',
+        'problemTitle',
+        'problem_title',
+        'problem',
+        'topic',
+        'subject',
+        'title',
+        'name',
+        'content',
+        'description',
+        'body',
+        'question',
+        'questionText',
+        'question_text',
+      ])
+    ).replace(/^\s*\d+\s*[\.、]\s*/g, '');
+  }
+
+  function getYuketangAnalysisCandidate(obj) {
+    return htmlToPlainText(
+      getFirstValueByKeys(obj, [
+        'analysis',
+        '解析',
+        'explanation',
+        'explain',
+        'answerAnalysis',
+        'answer_analysis',
+        'analysisContent',
+        'analysis_content',
+        'remark',
+        'remarks',
+      ])
+    );
+  }
+
+  function getYuketangAnswerCandidate(obj) {
+    for (const key of YUKETANG_ANSWER_KEYS) {
+      const value = parseMaybeJson(getFirstValueByKeys(obj, [key]));
+      if (value === undefined) continue;
+      if (isYuketangOptionArray(value)) {
+        const correctItems = value.filter(
+          (item) => normalizeBooleanFlag(getFirstValueByKeys(item, ['isCorrect', 'is_correct', 'correct', 'right', 'isRight', 'is_right'])) === true
+        );
+        if (correctItems.length) return correctItems;
+        continue;
+      }
+      return value;
+    }
+    return undefined;
+  }
+
+  function flattenYuketangAnswerValues(value) {
+    const out = [];
+    const walk = (item) => {
+      const parsed = parseMaybeJson(item);
+      if (parsed === null || parsed === undefined) return;
+      if (Array.isArray(parsed)) {
+        parsed.forEach((x) => walk(x));
+        return;
+      }
+      if (typeof parsed === 'object') {
+        const nested = getFirstValueByKeys(parsed, [
+          'label',
+          'key',
+          'prefix',
+          'option',
+          'optionNo',
+          'option_no',
+          'optionName',
+          'option_name',
+          'id',
+          'optionId',
+          'option_id',
+          'answerId',
+          'answer_id',
+          'value',
+          'answer',
+          'rightAnswer',
+          'right_answer',
+          'correctAnswer',
+          'correct_answer',
+          'content',
+          'text',
+          'name',
+          'title',
+        ]);
+        if (nested !== undefined && nested !== parsed) walk(nested);
+        return;
+      }
+      const text = htmlToPlainText(parsed).trim();
+      if (text) out.push(text);
+    };
+    walk(value);
+    return out;
+  }
+
+  function matchYuketangOptionToken(token, optionItems) {
+    const raw = String(token || '').trim();
+    if (!raw) return null;
+    const plain = stripOptionPrefix(raw).trim();
+    const upper = raw.toUpperCase();
+
+    const byLabelOrId = optionItems.find((opt) => {
+      const label = String(opt.label || '').trim().toUpperCase();
+      const id = String(opt.id || '').trim();
+      return (!!label && upper === label) || (!!id && raw === id);
+    });
+    if (byLabelOrId) return optionItems.indexOf(byLabelOrId);
+
+    if (/^\d+$/.test(raw)) {
+      const n = Number(raw);
+      if (Number.isInteger(n) && n >= 1 && n <= optionItems.length) return n - 1;
+      if (Number.isInteger(n) && n >= 0 && n < optionItems.length) return n;
+    }
+
+    const byText = optionItems.find((opt) => {
+      const text = String(opt.text || '').trim();
+      return text && (plain === text || raw === text);
+    });
+    return byText ? optionItems.indexOf(byText) : null;
+  }
+
+  function normalizeYuketangChoiceAnswer(rawAnswer, optionItems) {
+    const fromFlags = optionItems
+      .map((opt, idx) => (opt.correct === true ? idx : null))
+      .filter((idx) => Number.isInteger(idx));
+    const values = flattenYuketangAnswerValues(rawAnswer);
+    const out = [];
+
+    for (const value of values) {
+      const compactLetters = String(value || '').trim().toUpperCase();
+      const tokens = /^[A-Z]{2,26}$/.test(compactLetters)
+        ? compactLetters.split('')
+        : String(value || '')
+            .split(/[\s,，;；|、]+/)
+            .map((x) => x.trim())
+            .filter(Boolean);
+      for (const token of tokens) {
+        const idx = matchYuketangOptionToken(token, optionItems);
+        if (Number.isInteger(idx) && idx >= 0 && idx < optionItems.length && !out.includes(idx)) out.push(idx);
+      }
+    }
+
+    const merged = out.length ? out : fromFlags;
+    return merged.slice().sort((a, b) => a - b);
+  }
+
+  function normalizeYuketangType(rawType, stem, optionItems, rawAnswer) {
+    const typeText = htmlToPlainText(rawType).replace(/\s+/g, '').toLowerCase();
+    const optionTexts = optionItems.map((item) => item.text);
+    const choiceAnswer = normalizeYuketangChoiceAnswer(rawAnswer, optionItems);
+
+    if (/多选|多项|multiple|multi|checkbox/.test(typeText)) return 'multi_choice';
+    if (/判断|正误|truefalse|true\/false|boolean|judge/.test(typeText)) return 'boolean';
+    if (/填空|blank|completion|cloze/.test(typeText)) return 'fill';
+    if (/简答|问答|主观|essay|subjective|shortanswer|short_answer/.test(typeText)) return 'essay';
+    if (/单选|单项|single|radio|choice/.test(typeText)) return 'single_choice';
+    if (/^2$/.test(typeText) && optionItems.length) return 'multi_choice';
+    if (/^4$/.test(typeText)) return 'fill';
+    if (/^5$/.test(typeText)) return 'essay';
+    if (optionItems.length === 2 && isBooleanOptions(optionTexts)) return 'boolean';
+    if (optionItems.length && choiceAnswer.length > 1) return 'multi_choice';
+    if (optionItems.length) return 'single_choice';
+    if (/_{2,}|（\s*）|\(\s*\)|\{\d+\}/.test(String(stem || ''))) return 'fill';
+    return 'essay';
+  }
+
+  function normalizeYuketangBooleanAnswer(rawAnswer, optionItems) {
+    const direct = flattenYuketangAnswerValues(rawAnswer)
+      .map((value) => optionTextToBoolean(value))
+      .find((value) => typeof value === 'boolean');
+    if (typeof direct === 'boolean') return [direct];
+
+    const idxs = normalizeYuketangChoiceAnswer(rawAnswer, optionItems);
+    if (idxs.length) {
+      const value = optionTextToBoolean(optionItems[idxs[0]]?.text);
+      if (typeof value === 'boolean') return [value];
+    }
+
+    const flagged = optionItems.find((item) => item.correct === true);
+    if (flagged) {
+      const value = optionTextToBoolean(flagged.text);
+      if (typeof value === 'boolean') return [value];
+    }
+    return [];
+  }
+
+  function normalizeYuketangAnswer(rawAnswer, type, optionItems) {
+    if (type === 'boolean') return normalizeYuketangBooleanAnswer(rawAnswer, optionItems);
+    if (type === 'single_choice' || type === 'multi_choice') {
+      const idxs = normalizeYuketangChoiceAnswer(rawAnswer, optionItems);
+      return type === 'single_choice' ? idxs.slice(0, 1) : idxs;
+    }
+
+    const values = flattenYuketangAnswerValues(rawAnswer);
+    if (type === 'fill') return values.map((value) => [value]).filter((group) => group[0]);
+    if (type === 'essay') return values.length ? [values.join('\n')] : [];
+    return [];
+  }
+
+  function hasPortableAnswer(answer, type) {
+    const list = Array.isArray(answer) ? answer : [];
+    if (!list.length) return false;
+    if (type === 'fill') return list.some((group) => Array.isArray(group) && group.some((x) => String(x || '').trim()));
+    return list.some((value) => typeof value === 'boolean' || Number.isFinite(value) || String(value || '').trim());
+  }
+
+  function looksLikeYuketangQuestionObject(obj) {
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return false;
+    const stem = getYuketangStemCandidate(obj);
+    if (stem.length < 2) return false;
+    const optionItems = extractYuketangOptionItems(obj);
+    const rawType = getFirstValueByKeys(obj, ['typeName', 'type_name', 'questionTypeName', 'question_type_name', 'questionType', 'question_type', 'qType', 'q_type', 'type', 'problemType', 'problem_type']);
+    const rawAnswer = getYuketangAnswerCandidate(obj);
+    const keys = Object.keys(obj).map((key) => String(key).toLowerCase());
+    const hasStemKey = keys.some((key) =>
+      [
+        'questioncontent',
+        'question_content',
+        'questiontitle',
+        'question_title',
+        'questionstem',
+        'question_stem',
+        'problemcontent',
+        'problem_content',
+        'stem',
+        'stemhtml',
+        'stem_html',
+        'topic',
+        'question',
+        'questiontext',
+        'question_text',
+      ].includes(key)
+    );
+    return hasStemKey || optionItems.length > 0 || rawAnswer !== undefined || rawType !== undefined;
+  }
+
+  function collectYuketangQuestionObjects(root) {
+    const found = [];
+    const seen = new WeakSet();
+    const walk = (node, depth) => {
+      if (!node || depth > 14 || typeof node !== 'object') return;
+      if (seen.has(node)) return;
+      seen.add(node);
+      if (Array.isArray(node)) {
+        node.forEach((item) => walk(item, depth + 1));
+        return;
+      }
+      if (looksLikeYuketangQuestionObject(node)) found.push(node);
+      Object.keys(node).forEach((key) => walk(node[key], depth + 1));
+    };
+    walk(root, 0);
+    return found;
+  }
+
+  function normalizeYuketangQuestion(obj) {
+    const stem = getYuketangStemCandidate(obj);
+    if (!stem) return null;
+    const optionItems = extractYuketangOptionItems(obj);
+    const rawType = getFirstValueByKeys(obj, ['typeName', 'type_name', 'questionTypeName', 'question_type_name', 'questionType', 'question_type', 'qType', 'q_type', 'type', 'problemType', 'problem_type']);
+    const rawAnswer = getYuketangAnswerCandidate(obj);
+    const type = normalizeYuketangType(rawType, stem, optionItems, rawAnswer);
+    const options = type === 'single_choice' || type === 'multi_choice' ? optionItems.map((item) => item.text) : [];
+    const answer = normalizeYuketangAnswer(rawAnswer, type, optionItems);
+    const answerCertain = hasPortableAnswer(answer, type);
+    const baseAnalysis = getYuketangAnalysisCandidate(obj);
+    const needsNotice = !answerCertain && ['single_choice', 'multi_choice', 'boolean', 'fill'].includes(type);
+
+    return {
+      type,
+      content: stem,
+      options: type === 'boolean' ? ['正确', '错误'] : options,
+      answer,
+      analysis: baseAnalysis || (needsNotice ? ANSWER_VERIFY_NOTICE : ''),
+      __answerCertain: answerCertain,
+      __boolCorrected: false,
+    };
+  }
+
+  function dedupeYuketangQuestions(questions) {
+    const seen = new Set();
+    return (Array.isArray(questions) ? questions : []).filter((q) => {
+      const key = [
+        String(q?.type || ''),
+        String(q?.content || '').replace(/\s+/g, ''),
+        (Array.isArray(q?.options) ? q.options : []).join('|').replace(/\s+/g, ''),
+      ].join('::');
+      if (!key.replace(/:/g, '')) return false;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  function buildYuketangStats(totalBlocks, questions) {
+    const stats = {
+      source: 'yuketang',
+      total_blocks: totalBlocks,
+      parsed: questions.length,
+      skipped_empty: Math.max(0, totalBlocks - questions.length),
+      unknown_answer: 0,
+      need_verify: 0,
+      boolean_corrected: 0,
+      type_counts: {
+        single_choice: 0,
+        multi_choice: 0,
+        boolean: 0,
+        fill: 0,
+        essay: 0,
+      },
+    };
+    questions.forEach((q) => {
+      const type = String(q?.type || 'essay');
+      if (stats.type_counts[type] != null) stats.type_counts[type] += 1;
+      if (!hasPortableAnswer(q?.answer, type)) stats.unknown_answer += 1;
+      if (q?.__answerCertain === false && ['single_choice', 'multi_choice', 'boolean', 'fill'].includes(type)) stats.need_verify += 1;
+    });
+    return stats;
+  }
+
+  function buildYuketangPortableJson(payload) {
+    const root = payload && typeof payload === 'object' && payload.data !== undefined ? payload.data : payload;
+    const questionObjects = collectYuketangQuestionObjects(root);
+    const questions = dedupeYuketangQuestions(questionObjects.map((obj) => normalizeYuketangQuestion(obj)).filter(Boolean));
+    return {
+      questions,
+      stats: buildYuketangStats(questionObjects.length, questions),
+    };
+  }
+
+  function getYuketangExamId() {
+    const params = new URLSearchParams(window.location.search || '');
+    const direct = params.get('exam_id') || params.get('examId') || params.get('examid');
+    if (direct) return String(direct).trim();
+    const m = String(window.location.pathname || '').match(/\/result\/([^/?#]+)/);
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+
+  function tryReadYuketangInlineJson() {
+    if (!/^\/exam_room\/show_paper/.test(String(window.location.pathname || ''))) return null;
+    const text = String(document.querySelector('pre')?.textContent || document.body?.textContent || '').trim();
+    if (!text || !/^[\[{]/.test(text)) return null;
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function fetchYuketangShowPaperPayload() {
+    const inline = tryReadYuketangInlineJson();
+    if (inline) return inline;
+
+    const examId = getYuketangExamId();
+    if (!examId) throw new Error('未找到雨课堂 exam_id');
+
+    const url = new URL('/exam_room/show_paper', window.location.origin);
+    url.searchParams.set('exam_id', examId);
+    const response = await fetch(url.toString(), {
+      credentials: 'include',
+      headers: {
+        accept: 'application/json, text/plain, */*',
+        'x-client': 'web',
+        xtbz: 'cloud',
+      },
+    });
+    if (!response.ok) throw new Error(`雨课堂接口请求失败：HTTP ${response.status}`);
+
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      throw new Error('雨课堂接口返回内容不是 JSON');
+    }
   }
 
   function getBestStemElement(root) {
@@ -647,7 +1289,15 @@
     };
   }
 
-  function exportPortableJson(opts) {
+  async function exportPortableJson(opts) {
+    if (isYuketangExamPage()) {
+      const payload = await fetchYuketangShowPaperPayload();
+      return buildYuketangPortableJson(payload, opts);
+    }
+    return exportPortableJsonFromDom(opts);
+  }
+
+  function exportPortableJsonFromDom(opts) {
     const blocks = getQuestionBlocks();
 
     const stats = {
@@ -1790,21 +2440,24 @@
     if (document.getElementById(TOOL_ID)) return;
     injectStyle();
 
+    const toolTitle = getToolTitle();
+    const readyHintText = getReadyHintText();
+
     const root = document.createElement('div');
     root.id = TOOL_ID;
     root.innerHTML = `
-      <button class="ptaexp-fab" type="button" aria-label="PTA题目导出" aria-haspopup="dialog" aria-expanded="false" data-el="fab">
+      <button class="ptaexp-fab" type="button" aria-label="${toolTitle}" aria-haspopup="dialog" aria-expanded="false" data-el="fab">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M12 3v10m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
           <path d="M4 17v3h16v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
         </svg>
         <span>导出</span>
       </button>
-      <div class="ptaexp-panel" role="dialog" aria-modal="false" aria-label="PTA题目导出面板">
+      <div class="ptaexp-panel" role="dialog" aria-modal="false" aria-label="${toolTitle}面板">
         <div class="ptaexp-head">
           <div>
             <div class="ptaexp-title-row">
-              <div class="ptaexp-title">PTA题目导出</div>
+              <div class="ptaexp-title">${toolTitle}</div>
               <span class="ptaexp-badge" aria-label="导出格式：PQF">PQF</span>
             </div>
             <div class="ptaexp-sub-row">
@@ -1835,7 +2488,7 @@
           <div class="ptaexp-log-body" data-el="log-body" role="log" aria-label="运行日志"></div>
         </div>
 
-        <div class="ptaexp-muted">提示：先滚动到底，确保题目全部加载。</div>
+        <div class="ptaexp-muted">${readyHintText}</div>
         <div class="ptaexp-status" data-el="status">未解析</div>
       </div>
 
@@ -1978,7 +2631,7 @@
     );
     const watchScope = document.querySelector('#exam-app') || document.body;
 
-    pushLog('脚本已就绪：先滚动到底，再点“解析题目”');
+    pushLog(getReadyLogText());
 
     function markManualEdited(target) {
       if (!(target instanceof HTMLElement)) return false;
@@ -2182,21 +2835,34 @@
       setExportEnabled(exportCount > 0);
     }
 
-    function doParse() {
+    async function doParse() {
       pushLog('开始解析题目…');
-      const data = exportPortableJson({});
-      lastParsed = data;
-      needsReparse = false;
-      booleanFixedCount = Number(data?.stats?.boolean_corrected || 0);
-      hasShownBooleanFixNotice = false;
-      updateSummary();
-      const parsedNum = Array.isArray(data.questions) ? data.questions.length : 0;
-      setStatus(`已解析：${parsedNum} 题`);
-      pushLog(`解析完成：${parsedNum} 题`);
-      if (booleanFixedCount) pushLog(`判断题自动修正：${booleanFixedCount} 题`);
-      const needVerify = Number(data?.stats?.need_verify || 0);
-      if (needVerify) pushLog(`需要核对答案：${needVerify} 题`);
-      return data;
+      setStatus('解析中…');
+      setExportEnabled(false);
+      try {
+        const data = await exportPortableJson({});
+        lastParsed = data;
+        needsReparse = false;
+        booleanFixedCount = Number(data?.stats?.boolean_corrected || 0);
+        hasShownBooleanFixNotice = false;
+        updateSummary();
+        const parsedNum = Array.isArray(data.questions) ? data.questions.length : 0;
+        setStatus(`已解析：${parsedNum} 题`);
+        pushLog(`解析完成：${parsedNum} 题`);
+        if (booleanFixedCount) pushLog(`判断题自动修正：${booleanFixedCount} 题`);
+        const needVerify = Number(data?.stats?.need_verify || 0);
+        if (needVerify) pushLog(`需要核对答案：${needVerify} 题`);
+        return data;
+      } catch (e) {
+        lastParsed = null;
+        needsReparse = false;
+        updateSummary();
+        const message = String(e?.message || e || '未知错误');
+        setStatus(`解析失败：${message}`);
+        pushLog(`解析失败：${message}`);
+        console.warn('[PTA题目导出] 解析失败：', e);
+        return null;
+      }
     }
 
     function openPanel() {
@@ -2283,7 +2949,7 @@
         return;
       }
       if (act === 'parse') {
-        doParse();
+        await doParse();
         return;
       }
       if (act === 'unlock') {
@@ -2307,7 +2973,10 @@
         setStatus('请先点击“解析题目”');
         return;
       }
-      if (needsReparse) doParse();
+      if (needsReparse) {
+        const reparsed = await doParse();
+        if (!reparsed) return;
+      }
       const parsed = getParsedForCurrentSelection();
       const issues = collectExportIssues(parsed);
 
@@ -2392,6 +3061,8 @@
       buildExportPayload,
       buildLegacyExportPayload,
       getQuestionBlocks,
+      fetchYuketangShowPaperPayload,
+      buildYuketangPortableJson,
       buildExportHtml,
       buildLegacyExportHtml,
       openPrintWindow,

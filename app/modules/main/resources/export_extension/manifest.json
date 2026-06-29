@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "SAK 题库导出助手",
   "version": "1.0.0",
-  "description": "用于学习通作业与 PTA 题目的导出，并生成可导入 SAK 题库的 JSON/Word 等文件。",
+  "description": "用于学习通作业、PTA 题目与雨课堂考试题目的导出，并生成可导入 SAK 题库的 JSON/Word 等文件。",
   "permissions": [
     "clipboardWrite"
   ],
@@ -11,7 +11,8 @@
     "*://mooc2-ans.chaoxing.com/*",
     "*://mobilelearn.chaoxing.com/*",
     "*://pintia.cn/*",
-    "*://pta.pintia.cn/*"
+    "*://pta.pintia.cn/*",
+    "*://*.yuketang.cn/*"
   ],
   "content_scripts": [
     {
@@ -36,7 +37,9 @@
     {
       "matches": [
         "*://pintia.cn/problem-sets/*/exam/problems/*",
-        "*://pta.pintia.cn/problem-sets/*/exam/problems/*"
+        "*://pta.pintia.cn/problem-sets/*/exam/problems/*",
+        "*://*.yuketang.cn/result/*",
+        "*://*.yuketang.cn/exam_room/show_paper*"
       ],
       "js": [
         "vendor/docx.min.js",
