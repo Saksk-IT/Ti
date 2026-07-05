@@ -807,6 +807,12 @@ def _register_before_request(app):
         if path in allow_paths or path.startswith('/static'):
             return
 
+        if path.startswith('/admin/api/ai-change-records') and (
+            request.headers.get('X-AI-Record-Token') or
+            str(request.headers.get('Authorization') or '').startswith('Bearer ')
+        ):
+            return
+
         # 公开题库相关动态接口（未登录可访问；需要登录的操作由路由装饰器控制）
         if path.startswith('/api/public/banks/'):
             return

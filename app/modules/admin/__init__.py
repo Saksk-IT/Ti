@@ -11,6 +11,11 @@ def _check_admin_permission():
     此钩子独立于全局 before_request，防止 JWT 请求绕过 admin 权限检查。
     """
     path = request.path or ''
+    if path.startswith('/admin/api/ai-change-records') and (
+        request.headers.get('X-AI-Record-Token') or
+        str(request.headers.get('Authorization') or '').startswith('Bearer ')
+    ):
+        return None
 
     # --- 1. 尝试从 session 获取身份 ---
     user_id = session.get('user_id')

@@ -20,6 +20,7 @@ _OPENAI_BASE_URL = 'https://api.openai.com/v1'
 _SECRET_CONFIG_KEYS = {
     'ai_api_key',
     'dashscope_api_key',
+    'ai_change_record_token',
     'wechat_secret',
     'edu_schedule_webvpn_username',
     'edu_schedule_webvpn_password',
