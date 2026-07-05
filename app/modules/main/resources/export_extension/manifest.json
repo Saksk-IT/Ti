@@ -36,8 +36,11 @@
     },
     {
       "matches": [
+        "*://pintia.cn/*",
+        "*://pta.pintia.cn/*",
         "*://pintia.cn/problem-sets/*/exam/problems/*",
         "*://pta.pintia.cn/problem-sets/*/exam/problems/*",
+        "*://*.yuketang.cn/*",
         "*://*.yuketang.cn/result/*",
         "*://*.yuketang.cn/exam_room/show_paper*"
       ],

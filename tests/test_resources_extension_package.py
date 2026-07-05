@@ -60,6 +60,9 @@ def test_export_helper_manifest_supports_yuketang_exam_pages(auth_client):
         for script in pta_scripts
         for match in script.get("matches", [])
     }
+    assert "*://pintia.cn/*" in pta_matches
+    assert "*://pta.pintia.cn/*" in pta_matches
+    assert "*://*.yuketang.cn/*" in pta_matches
     assert "*://*.yuketang.cn/result/*" in pta_matches
     assert "*://*.yuketang.cn/exam_room/show_paper*" in pta_matches
 
@@ -74,6 +77,27 @@ def test_pta_export_script_contains_yuketang_adapter_without_bundled_token():
     assert "buildYuketangPortableJson" in source
     assert "credentials: 'include'" in source
     assert "x_access_token" not in source
+
+
+def test_pta_export_script_has_page_state_prompts_and_fetch_fallbacks():
+    packaged_source = Path(
+        "app/modules/main/resources/export_extension/content/pta-export.js"
+    ).read_text(encoding="utf-8")
+    root_source = Path("PTA题目导出.js").read_text(encoding="utf-8")
+
+    assert root_source == packaged_source
+
+    for text in (
+        "当前页面暂不支持导出",
+        "请打开已支持的 PTA 题目页面、雨课堂考试结果页或 show_paper 页面后再试",
+        "雨课堂登录态缺失或无权限",
+        "请先在当前浏览器登录雨课堂",
+        "show_paper 拉取失败",
+        "可以直接打开 show_paper 页面确认接口能返回 JSON",
+        "getPageSupportState",
+        "buildYuketangShowPaperFetchErrorMessage",
+    ):
+        assert text in packaged_source
 
 
 def test_legacy_script_download_keys_return_combined_extension_package(auth_client):

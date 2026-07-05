@@ -4,8 +4,11 @@
 // @version      0.1.1
 // @description  try to take over the world!
 // @author       Saksk
+// @match        https://pintia.cn/*
+// @match        https://pta.pintia.cn/*
 // @match        https://pintia.cn/problem-sets/*/exam/problems/*
 // @match        https://pta.pintia.cn/problem-sets/*/exam/problems/*
+// @match        https://*.yuketang.cn/*
 // @match        https://*.yuketang.cn/result/*
 // @match        https://*.yuketang.cn/exam_room/show_paper*
 // @grant        none
@@ -46,6 +49,12 @@
   const UI_Z_INDEX = 2147483647;
   const ANSWER_VERIFY_NOTICE = '该题目答案错误，请你核对后修改答案';
   const MANUAL_EDIT_ATTR = 'data-ptaexp-manual';
+  const UNSUPPORTED_PAGE_NOTICE =
+    '当前页面暂不支持导出：请打开已支持的 PTA 题目页面、雨课堂考试结果页或 show_paper 页面后再试。';
+  const YUKETANG_LOGIN_MISSING_NOTICE =
+    '雨课堂登录态缺失或无权限：请先在当前浏览器登录雨课堂，确认可打开该考试结果页，刷新后再点击解析题目。';
+  const YUKETANG_SHOW_PAPER_FALLBACK_NOTICE =
+    'show_paper 拉取失败：请刷新页面后重试；可以直接打开 show_paper 页面确认接口能返回 JSON，再回到考试结果页点击解析题目。';
 
   // =======================
   // 导出后引流到题库网站（可按需修改）
@@ -78,6 +87,12 @@
 
   function buildSakPromoMessage(exportType, fileName) {
     const f = fileName ? `（${fileName}）` : '';
+    if (exportType === 'unsupported') {
+      return `${UNSUPPORTED_PAGE_NOTICE}\n\n支持范围：PTA 题目页面、雨课堂考试结果页、雨课堂 show_paper 页面。`;
+    }
+    if (exportType === 'parse-error') {
+      return '请按上方提示处理后，刷新页面并重新点击“解析题目”。如果接口页能直接显示 JSON，助手会优先读取页面内数据。';
+    }
     if (exportType === 'help') {
       return `全流程（PTA → ${SAK_SITE_NAME}）：\n1) 先滚动到最底部，确保题目加载完成。\n2) 点击脚本「解析题目」，推荐「下载 JSON」。\n3) 打开 ${SAK_SITE_NAME} → 个人题库 → 新建题库。\n4) 进入题库 → 题目管理 → 导入 JSON。\n5) 抽查 3–5 题；异常题在题目编辑里修正。\n6) 回到题库详情开始刷题（错题/收藏会自动沉淀）。`;
     }
@@ -204,26 +219,63 @@
     return maybeCompactCjkSpacing(extractTextPreserveWhitespace(el));
   }
 
+  function isPtaExamPage() {
+    const host = String(window.location?.hostname || '').toLowerCase();
+    const path = String(window.location?.pathname || '');
+    return (host === 'pintia.cn' || host === 'pta.pintia.cn') && /^\/problem-sets\/[^/]+\/exam\/problems\/[^/]+/.test(path);
+  }
+
   function isYuketangExamPage() {
     const host = String(window.location?.hostname || '').toLowerCase();
     const path = String(window.location?.pathname || '');
     return host.endsWith('yuketang.cn') && (/^\/result\/[^/]+/.test(path) || /^\/exam_room\/show_paper/.test(path));
   }
 
+  function isSupportedExportPage() {
+    return isPtaExamPage() || isYuketangExamPage();
+  }
+
+  function getPageSupportState() {
+    if (isYuketangExamPage()) {
+      return {
+        supported: true,
+        title: '雨课堂题目导出',
+        readyLog: '脚本已就绪：点击“解析题目”将读取雨课堂 show_paper 数据',
+        readyHint: '提示：请保持当前雨课堂账号已登录，解析时会读取本页考试数据。',
+        initialStatus: '未解析',
+        parseLabel: '解析题目',
+      };
+    }
+    if (isPtaExamPage()) {
+      return {
+        supported: true,
+        title: 'PTA题目导出',
+        readyLog: '脚本已就绪：先滚动到底，再点“解析题目”',
+        readyHint: '提示：先滚动到底，确保题目全部加载。',
+        initialStatus: '未解析',
+        parseLabel: '解析题目',
+      };
+    }
+    return {
+      supported: false,
+      title: 'SAK 题库导出助手',
+      readyLog: UNSUPPORTED_PAGE_NOTICE,
+      readyHint: UNSUPPORTED_PAGE_NOTICE,
+      initialStatus: UNSUPPORTED_PAGE_NOTICE,
+      parseLabel: '查看支持范围',
+    };
+  }
+
   function getToolTitle() {
-    return isYuketangExamPage() ? '雨课堂题目导出' : 'PTA题目导出';
+    return getPageSupportState().title;
   }
 
   function getReadyLogText() {
-    return isYuketangExamPage()
-      ? '脚本已就绪：点击“解析题目”将读取雨课堂 show_paper 数据'
-      : '脚本已就绪：先滚动到底，再点“解析题目”';
+    return getPageSupportState().readyLog;
   }
 
   function getReadyHintText() {
-    return isYuketangExamPage()
-      ? '提示：请保持当前雨课堂账号已登录，解析时会读取本页考试数据。'
-      : '提示：先滚动到底，确保题目全部加载。';
+    return getPageSupportState().readyHint;
   }
 
   function htmlToPlainText(value) {
@@ -1005,6 +1057,41 @@
     return m ? decodeURIComponent(m[1]) : '';
   }
 
+  function looksLikeYuketangLoginMissing(response, bodyText) {
+    const status = Number(response?.status || 0);
+    if (status === 401 || status === 403) return true;
+
+    const text = String(bodyText || '').trim();
+    if (!text || /^[\[{]/.test(text)) return false;
+    const sample = text.slice(0, 3000).toLowerCase();
+    return /登录|未登录|无权限|认证|授权|login|signin|sign in|passport|unauthorized|forbidden/.test(sample);
+  }
+
+  function getYuketangResponseMessage(payload) {
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return '';
+    const value = getFirstValueByKeys(payload, ['message', 'msg', 'error', 'errorMsg', 'error_msg', 'detail', 'reason']);
+    return htmlToPlainText(value).trim();
+  }
+
+  function looksLikeYuketangLoginMessage(message) {
+    return /登录|未登录|无权限|认证|授权|login|signin|sign in|passport|unauthorized|forbidden/i.test(String(message || ''));
+  }
+
+  function looksLikeYuketangFailedPayload(payload) {
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return false;
+    const success = getFirstValueByKeys(payload, ['success', 'ok']);
+    if (success === false || String(success).toLowerCase() === 'false') return true;
+    const code = getFirstValueByKeys(payload, ['code', 'status', 'errcode', 'errorCode', 'error_code']);
+    if (typeof code === 'number') return code !== 0 && code !== 200;
+    const codeText = String(code ?? '').trim().toLowerCase();
+    return Boolean(codeText && !['0', '200', 'ok', 'success'].includes(codeText));
+  }
+
+  function buildYuketangShowPaperFetchErrorMessage(detail) {
+    const extra = String(detail || '').trim();
+    return extra ? `${YUKETANG_SHOW_PAPER_FALLBACK_NOTICE}（${extra}）` : YUKETANG_SHOW_PAPER_FALLBACK_NOTICE;
+  }
+
   function tryReadYuketangInlineJson() {
     if (!/^\/exam_room\/show_paper/.test(String(window.location.pathname || ''))) return null;
     const text = String(document.querySelector('pre')?.textContent || document.body?.textContent || '').trim();
@@ -1025,21 +1112,44 @@
 
     const url = new URL('/exam_room/show_paper', window.location.origin);
     url.searchParams.set('exam_id', examId);
-    const response = await fetch(url.toString(), {
-      credentials: 'include',
-      headers: {
-        accept: 'application/json, text/plain, */*',
-        'x-client': 'web',
-        xtbz: 'cloud',
-      },
-    });
-    if (!response.ok) throw new Error(`雨课堂接口请求失败：HTTP ${response.status}`);
-
-    const text = await response.text();
+    let response = null;
     try {
-      return JSON.parse(text);
+      response = await fetch(url.toString(), {
+        credentials: 'include',
+        headers: {
+          accept: 'application/json, text/plain, */*',
+          'x-client': 'web',
+          xtbz: 'cloud',
+        },
+      });
     } catch (e) {
-      throw new Error('雨课堂接口返回内容不是 JSON');
+      const detail = String(e?.message || e || '网络请求失败');
+      throw new Error(buildYuketangShowPaperFetchErrorMessage(detail));
+    }
+
+    let text = '';
+    try {
+      text = await response.text();
+    } catch (e) {
+      const detail = String(e?.message || e || '读取响应失败');
+      throw new Error(buildYuketangShowPaperFetchErrorMessage(detail));
+    }
+
+    if (looksLikeYuketangLoginMissing(response, text)) throw new Error(YUKETANG_LOGIN_MISSING_NOTICE);
+    if (!response.ok) throw new Error(buildYuketangShowPaperFetchErrorMessage(`HTTP ${response.status}`));
+
+    try {
+      const parsed = JSON.parse(text);
+      const payloadMessage = getYuketangResponseMessage(parsed);
+      if (looksLikeYuketangLoginMessage(payloadMessage)) throw new Error(YUKETANG_LOGIN_MISSING_NOTICE);
+      if (looksLikeYuketangFailedPayload(parsed)) {
+        throw new Error(buildYuketangShowPaperFetchErrorMessage(payloadMessage || '接口返回失败'));
+      }
+      return parsed;
+    } catch (e) {
+      if (e && e.message === YUKETANG_LOGIN_MISSING_NOTICE) throw e;
+      if (String(e?.message || '').startsWith(YUKETANG_SHOW_PAPER_FALLBACK_NOTICE)) throw e;
+      throw new Error(buildYuketangShowPaperFetchErrorMessage('接口返回内容不是 JSON'));
     }
   }
 
@@ -1290,6 +1400,7 @@
   }
 
   async function exportPortableJson(opts) {
+    if (!isSupportedExportPage()) throw new Error(UNSUPPORTED_PAGE_NOTICE);
     if (isYuketangExamPage()) {
       const payload = await fetchYuketangShowPaperPayload();
       return buildYuketangPortableJson(payload, opts);
@@ -2440,6 +2551,7 @@
     if (document.getElementById(TOOL_ID)) return;
     injectStyle();
 
+    const pageSupportState = getPageSupportState();
     const toolTitle = getToolTitle();
     const readyHintText = getReadyHintText();
 
@@ -2476,7 +2588,7 @@
         </div>
 
         <div class="ptaexp-actions">
-          <button class="ptaexp-action" data-act="parse" data-primary="1" type="button">解析题目</button>
+          <button class="ptaexp-action" data-act="parse" data-primary="1" type="button">${pageSupportState.parseLabel}</button>
           <button class="ptaexp-action" data-act="download" type="button" disabled>下载 JSON</button>
           <button class="ptaexp-action" data-act="word" type="button" disabled>导出 Word</button>
           <button class="ptaexp-action" data-act="pdf" type="button" disabled>导出 PDF</button>
@@ -2489,7 +2601,7 @@
         </div>
 
         <div class="ptaexp-muted">${readyHintText}</div>
-        <div class="ptaexp-status" data-el="status">未解析</div>
+        <div class="ptaexp-status" data-el="status">${pageSupportState.initialStatus}</div>
       </div>
 
       <div class="ptaexp-sak-overlay" data-el="sak-overlay" aria-hidden="true">
@@ -2786,6 +2898,14 @@
       return buildExportPayload(parsed, { difficulty: DEFAULT_DIFFICULTY, exportMode: 'pqf' });
     }
 
+    function getParseFailureMessage(error) {
+      return String(error?.message || error || '未知错误').trim() || '未知错误';
+    }
+
+    function shouldShowParseFailureModal(message) {
+      return /当前页面暂不支持导出|雨课堂登录态缺失或无权限|show_paper 拉取失败/.test(String(message || ''));
+    }
+
     function buildParsedTypeLabel(stats) {
       const counts = (stats && typeof stats === 'object' && stats.type_counts) || {};
       const items = [
@@ -2836,6 +2956,20 @@
     }
 
     async function doParse() {
+      const currentSupportState = getPageSupportState();
+      if (!currentSupportState.supported) {
+        lastParsed = null;
+        needsReparse = false;
+        updateSummary();
+        setStatus(currentSupportState.initialStatus);
+        pushLog(currentSupportState.readyLog);
+        showSakPromoModal('unsupported', '', {
+          title: '暂不支持当前页面',
+          notice: currentSupportState.initialStatus,
+        });
+        return null;
+      }
+
       pushLog('开始解析题目…');
       setStatus('解析中…');
       setExportEnabled(false);
@@ -2857,9 +2991,15 @@
         lastParsed = null;
         needsReparse = false;
         updateSummary();
-        const message = String(e?.message || e || '未知错误');
+        const message = getParseFailureMessage(e);
         setStatus(`解析失败：${message}`);
         pushLog(`解析失败：${message}`);
+        if (shouldShowParseFailureModal(message)) {
+          showSakPromoModal('parse-error', '', {
+            title: '解析失败',
+            notice: message,
+          });
+        }
         console.warn('[PTA题目导出] 解析失败：', e);
         return null;
       }
@@ -3061,7 +3201,9 @@
       buildExportPayload,
       buildLegacyExportPayload,
       getQuestionBlocks,
+      getPageSupportState,
       fetchYuketangShowPaperPayload,
+      buildYuketangShowPaperFetchErrorMessage,
       buildYuketangPortableJson,
       buildExportHtml,
       buildLegacyExportHtml,
