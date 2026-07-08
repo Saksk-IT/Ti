@@ -12,15 +12,8 @@
     "*://mobilelearn.chaoxing.com/*",
     "*://pintia.cn/*",
     "*://pta.pintia.cn/*",
-    "*://*.yuketang.cn/*",
-    "http://localhost/*",
-    "http://127.0.0.1/*",
-    "https://saksk.top/*",
-    "https://www.saksk.top/*"
+    "*://*.yuketang.cn/*"
   ],
-  "background": {
-    "service_worker": "background/import-to-bank.js"
-  },
   "content_scripts": [
     {
       "matches": [

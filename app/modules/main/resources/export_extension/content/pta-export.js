@@ -61,9 +61,7 @@
   // =======================
   const SAK_SITE_NAME = 'SAK 题库';
   const SAK_SITE_URL_KEY = 'sak_site_url_v1';
-  const SAK_BANK_ID_KEY = 'sak_bank_id_v1';
-  const SAK_IMPORT_MESSAGE_TYPE = 'SAK_IMPORT_TO_BANK_REQUEST';
-  const DEFAULT_SAK_SITE_URL = 'http://localhost:8000';
+  const DEFAULT_SAK_SITE_URL = 'http://localhost:5000';
 
   function getSakSiteUrl() {
     try {
@@ -77,23 +75,6 @@
   function getSakPromoLine() {
     const url = getSakSiteUrl();
     return `导入刷题推荐：${SAK_SITE_NAME}（${url}）`;
-  }
-
-  function getSakBankId() {
-    try {
-      return String(localStorage.getItem(SAK_BANK_ID_KEY) || '').trim();
-    } catch (e) {
-      return '';
-    }
-  }
-
-  function saveSakBankId(bankId) {
-    const id = String(bankId || '').trim();
-    if (!/^[1-9]\d*$/.test(id)) {
-      throw new Error('个人题库 ID 需为正整数');
-    }
-    localStorage.setItem(SAK_BANK_ID_KEY, id);
-    return id;
   }
 
   function sakResolveUrl(path) {
@@ -121,9 +102,6 @@
     if (exportType === 'json-download') {
       return `已下载 JSON${f}。\n下一步：打开 ${SAK_SITE_NAME} → 个人题库 → 进入题库 → 题目管理 → 导入 JSON。`;
     }
-    if (exportType === 'bank-import') {
-      return `已发送到个人题库${f}。\n可打开 ${SAK_SITE_NAME} 的题目管理页抽查导入结果。`;
-    }
     if (exportType === 'docx' || exportType === 'doc') {
       return `已导出 Word${f}。\n提示：Word 更适合编辑/复习；如需导入刷题，建议导出 JSON。`;
     }
@@ -134,58 +112,6 @@
       return `已打开打印预览。\n提示：如需导入刷题，请导出 JSON 并导入 ${SAK_SITE_NAME}。`;
     }
     return `导出完成。\n下一步：打开 ${SAK_SITE_NAME} 导入并开始刷题。`;
-  }
-
-  function requestSakBankId() {
-    const current = getSakBankId();
-    const raw = window.prompt('请输入要导入的个人题库 ID：', current || '');
-    if (raw === null) return null;
-    return saveSakBankId(raw);
-  }
-
-  function getImportQuestionCount(payload) {
-    return Array.isArray(payload?.questions) ? payload.questions.length : 0;
-  }
-
-  function sendSakImportRequest(payload, bankId) {
-    return new Promise((resolve, reject) => {
-      if (typeof chrome === 'undefined' || !chrome.runtime || typeof chrome.runtime.sendMessage !== 'function') {
-        reject(new Error('一键导入需使用“SAK 题库导出助手扩展”版本'));
-        return;
-      }
-
-      chrome.runtime.sendMessage(
-        {
-          type: SAK_IMPORT_MESSAGE_TYPE,
-          siteUrl: getSakSiteUrl(),
-          bankId,
-          payload,
-        },
-        (response) => {
-          const lastError = chrome.runtime.lastError;
-          if (lastError) {
-            reject(new Error(lastError.message || '扩展后台导入失败'));
-            return;
-          }
-          if (!response || !response.ok) {
-            reject(new Error(String(response?.message || '导入失败')));
-            return;
-          }
-          resolve(response.body || {});
-        }
-      );
-    });
-  }
-
-  async function importPayloadToSakBank(payload) {
-    const count = getImportQuestionCount(payload);
-    if (!count) throw new Error('没有可导入的题目');
-
-    const bankId = requestSakBankId();
-    if (!bankId) return null;
-
-    const result = await sendSakImportRequest(payload, bankId);
-    return { bankId, result };
   }
 
   function normalizeNewlines(text) {
@@ -2664,7 +2590,6 @@
         <div class="ptaexp-actions">
           <button class="ptaexp-action" data-act="parse" data-primary="1" type="button">${pageSupportState.parseLabel}</button>
           <button class="ptaexp-action" data-act="download" type="button" disabled>下载 JSON</button>
-          <button class="ptaexp-action" data-act="import-bank" data-primary="1" type="button" disabled>一键导入题库</button>
           <button class="ptaexp-action" data-act="word" type="button" disabled>导出 Word</button>
           <button class="ptaexp-action" data-act="pdf" type="button" disabled>导出 PDF</button>
           <button class="ptaexp-action" data-act="unlock" type="button">解锁选项</button>
@@ -2694,7 +2619,7 @@
             <div class="ptaexp-sak-msg" data-el="sak-msg"></div>
             <div class="ptaexp-sak-url" data-el="sak-url"></div>
             <div class="ptaexp-sak-setting" data-el="sak-setting-form">
-              <input class="ptaexp-sak-input" type="url" data-el="sak-setting-input" placeholder="http://localhost:8000" />
+              <input class="ptaexp-sak-input" type="url" data-el="sak-setting-input" placeholder="http://localhost:5000" />
               <div class="ptaexp-sak-error" data-el="sak-setting-error"></div>
               <div class="ptaexp-sak-setting-actions">
                 <button class="ptaexp-action" type="button" data-act="sak-setting-cancel">取消</button>
@@ -2814,7 +2739,7 @@
     let hasShownBooleanFixNotice = false;
 
     const requiresParseButtons = Array.from(
-      root.querySelectorAll('[data-act="download"], [data-act="import-bank"], [data-act="word"], [data-act="pdf"]')
+      root.querySelectorAll('[data-act="download"], [data-act="word"], [data-act="pdf"]')
     );
     const watchScope = document.querySelector('#exam-app') || document.body;
 
@@ -3204,30 +3129,6 @@
         setStatus(`已下载：${payload.questions.length} 题`);
         pushLog(`已下载 JSON：${payload.questions.length} 题（${filename}）`);
         showSakPromoModal('json-download', filename, { notice });
-        return;
-      }
-      if (act === 'import-bank') {
-        const notice = [consumeBooleanFixNotice(issues.booleanFixedIndices), buildAnswerIssueNotice(issues)].filter(Boolean).join('\n');
-        const payload = getCurrentPayload();
-        setStatus('正在导入题库…');
-        pushLog(`开始导入题库：${payload.questions.length} 题`);
-        try {
-          const imported = await importPayloadToSakBank(payload);
-          if (!imported) {
-            setStatus('已取消导入');
-            pushLog('已取消导入题库');
-            return;
-          }
-          const importedCount = Number(imported?.result?.data?.imported || payload.questions.length || 0);
-          setStatus(`已导入题库：${importedCount} 题`);
-          pushLog(`已导入个人题库 ${imported.bankId}：${importedCount} 题`);
-          showSakPromoModal('bank-import', `ID ${imported.bankId}`, { notice });
-        } catch (error) {
-          const message = String(error?.message || error || '导入失败');
-          setStatus(`导入失败：${message}`);
-          pushLog(`导入失败：${message}`);
-          showSakPromoModal('parse-error', '', { title: '导入失败', notice: message });
-        }
         return;
       }
       if (act === 'word') {
