@@ -39,6 +39,33 @@ def test_export_helper_download_contains_loadable_extension_files(auth_client):
     assert "vendor/xlsx.full.min.js" in names
     assert "vendor/jspdf.umd.min.js" in names
     assert "vendor/html2canvas.min.js" in names
+    assert "background/import-to-bank.js" in names
+    assert manifest["background"]["service_worker"] == "background/import-to-bank.js"
+
+
+def test_export_helper_supports_one_click_user_bank_import(auth_client):
+    response = auth_client.get("/resources/download/export-helper")
+
+    assert response.status_code == 200
+    with zipfile.ZipFile(io.BytesIO(response.data), "r") as zf:
+        manifest = json.loads(zf.read("manifest.json").decode("utf-8"))
+        background = zf.read("background/import-to-bank.js").decode("utf-8")
+        pta_source = zf.read("content/pta-export.js").decode("utf-8")
+        xuexitong_source = zf.read("content/xuexitong-export.js").decode("utf-8")
+
+    assert "http://localhost/*" in manifest["host_permissions"]
+    assert "http://127.0.0.1/*" in manifest["host_permissions"]
+    assert "/user/banks/api/" in background
+    assert "/questions/import/json" in background
+    assert "credentials: 'include'" in background
+    assert "'X-Requested-With': 'XMLHttpRequest'" in background
+    assert "SAK_IMPORT_TO_BANK_REQUEST" in background
+
+    for source in (pta_source, xuexitong_source):
+        assert "一键导入题库" in source
+        assert "SAK_BANK_ID_KEY" in source
+        assert "SAK_IMPORT_TO_BANK_REQUEST" in source
+        assert "chrome.runtime.sendMessage" in source
 
 
 def test_export_helper_manifest_supports_yuketang_exam_pages(auth_client):

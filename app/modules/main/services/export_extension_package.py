@@ -18,6 +18,7 @@ SCRIPT_SOURCES = (
 REQUIRED_EXTENSION_FILES = (
     "manifest.json",
     "README.md",
+    "background/import-to-bank.js",
     "content/userscript-compat.js",
 )
 VENDOR_FILES = (

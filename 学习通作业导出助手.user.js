@@ -30,7 +30,9 @@
     // =======================
     const SAK_SITE_NAME = 'SAK 题库';
     const SAK_SITE_URL_KEY = 'sak_site_url_v1';
-    const DEFAULT_SAK_SITE_URL = 'http://localhost:5000';
+    const SAK_BANK_ID_KEY = 'sak_bank_id_v1';
+    const SAK_IMPORT_MESSAGE_TYPE = 'SAK_IMPORT_TO_BANK_REQUEST';
+    const DEFAULT_SAK_SITE_URL = 'http://localhost:8000';
 
     function getSakSiteUrl() {
         try {
@@ -44,6 +46,23 @@
     function getSakPromoLine() {
         const url = getSakSiteUrl();
         return `导入刷题推荐：${SAK_SITE_NAME}（${url}）`;
+    }
+
+    function getSakBankId() {
+        try {
+            return String(localStorage.getItem(SAK_BANK_ID_KEY) || '').trim();
+        } catch (e) {
+            return '';
+        }
+    }
+
+    function saveSakBankId(bankId) {
+        const id = String(bankId || '').trim();
+        if (!/^[1-9]\d*$/.test(id)) {
+            throw new Error('个人题库 ID 需为正整数');
+        }
+        localStorage.setItem(SAK_BANK_ID_KEY, id);
+        return id;
     }
 
     // =============
@@ -604,6 +623,9 @@
         if (exportType === 'json') {
             return `已导出 JSON${f}。\n下一步：打开 ${SAK_SITE_NAME} → 个人题库 → 进入题库 → 题目管理 → 导入 JSON。`;
         }
+        if (exportType === 'bank-import') {
+            return `已发送到个人题库${f}。\n可打开 ${SAK_SITE_NAME} 的题目管理页抽查导入结果。`;
+        }
         if (exportType === 'docx') {
             return `已导出 Word${f}。\n提示：Word 更适合编辑/复习；如需导入刷题，建议再导出 JSON。`;
         }
@@ -617,6 +639,54 @@
             return `已复制 Markdown。\n如需导入刷题，建议导出 JSON 再导入 ${SAK_SITE_NAME}。`;
         }
         return `导出完成。\n下一步：打开 ${SAK_SITE_NAME} 导入并开始刷题。`;
+    }
+
+    function requestSakBankId() {
+        const current = getSakBankId();
+        const raw = window.prompt('请输入要导入的个人题库 ID：', current || '');
+        if (raw === null) return null;
+        return saveSakBankId(raw);
+    }
+
+    function sendSakImportRequest(payload, bankId) {
+        return new Promise((resolve, reject) => {
+            if (typeof chrome === 'undefined' || !chrome.runtime || typeof chrome.runtime.sendMessage !== 'function') {
+                reject(new Error('一键导入需使用“SAK 题库导出助手扩展”版本'));
+                return;
+            }
+
+            chrome.runtime.sendMessage(
+                {
+                    type: SAK_IMPORT_MESSAGE_TYPE,
+                    siteUrl: getSakSiteUrl(),
+                    bankId,
+                    payload,
+                },
+                (response) => {
+                    const lastError = chrome.runtime.lastError;
+                    if (lastError) {
+                        reject(new Error(lastError.message || '扩展后台导入失败'));
+                        return;
+                    }
+                    if (!response || !response.ok) {
+                        reject(new Error(String(response?.message || '导入失败')));
+                        return;
+                    }
+                    resolve(response.body || {});
+                }
+            );
+        });
+    }
+
+    async function importPayloadToSakBank(payload) {
+        const questions = Array.isArray(payload?.questions) ? payload.questions : [];
+        if (!questions.length) throw new Error('没有可导入的题目');
+
+        const bankId = requestSakBankId();
+        if (!bankId) return null;
+
+        const result = await sendSakImportRequest(payload, bankId);
+        return { bankId, result };
     }
 
     let sakPromoOverlay = null;
@@ -679,7 +749,7 @@
                 <span id="sak-promo-url"></span>
               </div>
               <div id="sak-promo-setting-form">
-                <input id="sak-promo-setting-input" type="url" placeholder="http://localhost:5000" />
+                <input id="sak-promo-setting-input" type="url" placeholder="http://localhost:8000" />
                 <div id="sak-promo-setting-error"></div>
                 <div id="sak-promo-setting-actions">
                   <button class="sak-promo-btn" type="button" id="sak-promo-setting-cancel">取消</button>
@@ -1336,6 +1406,7 @@
             <button id="p-btn" class="highlight-red">1. 解析本页题目</button>
             <button class="e-btn word-btn" data-type="docx" disabled>导出 Word (.docx)</button>
             <button class="e-btn json-btn" data-type="json" disabled>导出 JSON (.json)</button>
+            <button class="e-btn import-bank-btn" data-type="import-bank" disabled>一键导入题库</button>
             <button class="e-btn xlsx-btn" data-type="xlsx" disabled>导出 Excel (.xlsx)</button>
             <button class="e-btn pdf-btn" data-type="pdf" disabled>导出 PDF (.pdf)</button>
             <button class="e-btn md-btn" data-type="copy-md" disabled>复制 Markdown</button>
@@ -1477,6 +1548,23 @@
             saveAs(new Blob([jsonStr], { type: 'application/json;charset=utf-8' }), `${fName}_题库导入.json`);
             addLog("JSON 下载已启动");
             showSakPromoModal('json', `${fName}_题库导入.json`);
+        } else if (type === 'import-bank') {
+            const payload = buildPortableExportJson(parsedData, 3);
+            addLog(`正在导入题库：${payload.questions.length} 题`);
+            try {
+                const imported = await importPayloadToSakBank(payload);
+                if (!imported) {
+                    addLog('已取消导入题库');
+                    return;
+                }
+                const importedCount = Number(imported && imported.result && imported.result.data ? imported.result.data.imported : payload.questions.length) || 0;
+                addLog(`已导入个人题库 ${imported.bankId}：${importedCount} 题`);
+                showSakPromoModal('bank-import', `ID ${imported.bankId}`);
+            } catch (err) {
+                const message = String(err && err.message ? err.message : err || '导入失败');
+                addLog(`导入失败：${message}`);
+                alert(`导入失败：${message}`);
+            }
         } else if (type === 'xlsx') {
             // Excel 导出统一为题库模板格式（instance/question_import_template.xlsx）
             const seed = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
