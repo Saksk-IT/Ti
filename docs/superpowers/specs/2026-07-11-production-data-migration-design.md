@@ -42,6 +42,7 @@ cd /opt/ti
 - `http://127.0.0.1:8080/api/ping?deep=1` 正常；
 - 已配置从服务器 2 到服务器 1 的 SSH 密钥登录；
 - SSH 主机密钥已由管理员核验并写入可信 `known_hosts`；
+- 两端当前用户为 root，或 `sudo -n true` 可成功执行；迁移过程不能交互输入 sudo 密码；
 - 私有 GHCR 场景下，服务器 2 已独立完成只读登录。
 
 建议新部署阶段仅使用 IP/HTTP 验证。DNS 和 HTTPS 在数据迁移成功后切换。
@@ -174,8 +175,8 @@ cd /opt/ti
 恢复算法：
 
 1. 读取源配置快照，作为输出基础；
-2. 从目标现有 `.env.production` 读取部署本地键；
-3. 用目标值覆盖下列键；
+2. 从目标现有 `.env.production` 读取部署本地键，并保留源配置中尚不存在的目标新版本键，保证新部署版本向前兼容；
+3. 同名业务键以源值为准，下列部署本地键始终用目标值覆盖；
 4. 写入同目录临时文件；
 5. 校验必需键后以原子替换更新 `.env.production`；
 6. 设置权限 `600`。
@@ -200,6 +201,8 @@ SESSION_COOKIE_SECURE
 包括 `SECRET_KEY`、默认管理员配置、微信、AI、邮件、短信、Sentry、限流、SSE 和备份策略在内的其他源配置随服务器 1 迁移。
 
 GHCR Token 不属于 `.env.production` 的迁移内容，服务器 2 必须独立登录。
+
+即使源 env 意外包含 `GHCR_TOKEN`、`GHCR_USERNAME` 或 `DOCKER_AUTH_CONFIG`，合并器也必须显式删除这些容器仓库认证键，不得写入服务器 2 的 `.env.production`。
 
 ## 7. 完整执行流程
 
@@ -261,7 +264,9 @@ PostgreSQL 保持运行以完成逻辑导出，但服务器 1 的入口、应用
 9. 启动 PostgreSQL 与 Redis并等待健康；
 10. 使用 `RUN_MIGRATIONS=1 ENSURE_DEFAULT_ADMIN=0` 执行数据库迁移；
 11. 启动全部目标服务；
-12. 执行迁移后验证。
+12. 在启动 `web`/`worker` 前比较 PostgreSQL、Redis 和文件摘要，避免应用启动产生的新缓存或队列 key 干扰迁移一致性判断；
+13. 启动 `web`、`worker`、`nginx` 和 `backup`；
+14. 执行运行态迁移后验证。
 
 目标恢复不调用默认管理员重置逻辑，避免覆盖服务器 1 已有管理员凭据。
 
@@ -290,7 +295,7 @@ PostgreSQL 保持运行以完成逻辑导出，但服务器 1 的入口、应用
 
 自动验证至少覆盖：
 
-- 目标 Compose 所有服务状态和 health；
+- 目标 Compose 中带 healthcheck 的服务必须为 `healthy`，其余服务必须为 `running`；
 - `/api/ping` 与 `/api/ping?deep=1`；
 - PostgreSQL `alembic_version`；
 - 源、目标数据库公共表行数摘要；

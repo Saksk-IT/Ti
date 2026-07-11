@@ -568,3 +568,168 @@ sudo nginx -T | sed -n '/server_name saksk.top ti.saksk.top/,+80p'
 
 ./scripts/update_production.sh
 ```
+## 12. 两台服务器一键迁移生产数据
+
+本流程适用于服务器 1 已通过一键部署脚本运行完整生产环境、服务器 2 使用相同 Ubuntu 24.04 系统的场景。执行入口位于服务器 2：它从服务器 1 拉取 PostgreSQL、Redis、`var/uploads`、`var/instance` 和必要业务配置，并在失败时恢复两端。
+
+### 12.1 服务器 2 全新部署
+
+先在服务器 2 完成本章第 3 节的一键生产部署。私有 GHCR 镜像还必须先按第 4 节在服务器 2 独立完成只读登录；迁移不会复制服务器 1 的 Docker 登录凭据。
+
+```bash
+cd /opt/ti
+./scripts/deploy_ubuntu24.sh
+
+curl -fsS 'http://127.0.0.1:8080/api/ping' | python3 -m json.tool
+curl -fsS 'http://127.0.0.1:8080/api/ping?deep=1' | python3 -m json.tool
+```
+
+此时先使用服务器 IP 和 HTTP 验证，不要提前切换 DNS，也不要复制服务器 1 的 TLS 证书。
+
+### 12.2 准备专用 SSH 密钥和可信主机指纹
+
+在服务器 2 创建专用密钥，并把公钥加入服务器 1 对应用户的 `~/.ssh/authorized_keys`：
+
+```bash
+install -d -m 700 ~/.ssh
+ssh-keygen -t ed25519 -f ~/.ssh/ti-production-migration -C ti-production-migration
+ssh-copy-id -i ~/.ssh/ti-production-migration.pub ubuntu@服务器1IP
+```
+
+`ssh-keyscan` 取得的内容本身未经认证。先生成待核验文件，再用云厂商控制台、服务器 1 本地控制台或其他可信通道取得真实 SSH 指纹，进行人工核验；只有完全一致才能启用：
+
+```bash
+ssh-keyscan -p 22 -t ed25519 服务器1IP \
+  > ~/.ssh/ti-production-migration.known_hosts.pending
+
+ssh-keygen -lf ~/.ssh/ti-production-migration.known_hosts.pending
+# 与服务器 1 可信控制台执行下列命令的结果逐字比较：
+# sudo ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub
+
+mv ~/.ssh/ti-production-migration.known_hosts.pending \
+  ~/.ssh/ti-production-migration.known_hosts
+chmod 600 ~/.ssh/ti-production-migration.known_hosts
+
+ssh -i ~/.ssh/ti-production-migration \
+  -o BatchMode=yes \
+  -o StrictHostKeyChecking=yes \
+  -o UserKnownHostsFile="$HOME/.ssh/ti-production-migration.known_hosts" \
+  ubuntu@服务器1IP 'sudo -n true && echo READY'
+```
+
+两端当前用户必须是 root，或 `sudo -n true` 能够成功；正式迁移期间不会交互读取 sudo 密码。
+
+### 12.3 先执行 dry-run
+
+dry-run 会校验两端部署目录、Docker Compose、机器身份、磁盘空间、PostgreSQL/Redis 主版本、应用镜像 digest、SSH 信任和服务器 2 健康状态，但不会停止服务、创建迁移包或覆盖数据。
+
+```bash
+cd /opt/ti
+
+./scripts/migrate_production_data.sh \
+  --source ubuntu@服务器1IP \
+  --source-dir /opt/ti \
+  --identity-file "$HOME/.ssh/ti-production-migration" \
+  --known-hosts "$HOME/.ssh/ti-production-migration.known_hosts" \
+  --dry-run
+```
+
+必须先处理 dry-run 报告的镜像 digest、版本、磁盘或健康检查差异，再进入最终迁移。
+
+### 12.4 执行最终迁移
+
+选择低峰维护窗口，在服务器 2 运行：
+
+```bash
+cd /opt/ti
+
+./scripts/migrate_production_data.sh \
+  --source ubuntu@服务器1IP \
+  --source-dir /opt/ti \
+  --identity-file "$HOME/.ssh/ti-production-migration" \
+  --known-hosts "$HOME/.ssh/ti-production-migration.known_hosts"
+```
+
+脚本会显示包含源主机和目标主机名的唯一确认文本，例如：
+
+```text
+MIGRATE 192.0.2.10 TO ti-new.example.internal
+```
+
+必须原样输入；`yes` 不会绕过覆盖确认。确认后脚本先创建服务器 2 的一致性回滚包，再停止服务器 1 的入口、Web、worker、backup 和 Redis，导出并校验最终快照。因此实际停机窗口从服务器 1 冻结开始，持续到服务器 2 完成恢复和深度健康检查。
+
+迁移包与校验文件包含配置和业务数据，默认在成功后删除。仅在受控排障时增加 `--keep-bundle`，并确保目录权限为 `700`、文件权限为 `600`，使用完立即安全删除。
+
+### 12.5 成功、失败与人工恢复
+
+成功后服务器 1 保持停止，防止两端继续写入造成数据分叉；服务器 1 的原始数据库和文件不会删除。至少保留服务器 1 **24～72 小时**，完成业务验收后再人工下线。
+
+任一校验、数据库恢复、Redis 恢复、文件替换、迁移或健康检查失败时，脚本会执行失败自动回滚：恢复服务器 2 的迁移前快照，并让服务器 1 只恢复迁移前原本运行的服务。两个恢复动作相互独立，一个失败不会阻止另一个继续尝试。
+
+如果日志提示“目标已验证且源端提交结果不确定”，说明服务器 2 已通过完整验证，但 SSH 未能确认服务器 1 的 `finalize` 应答。为避免数据分叉，脚本会保留服务器 2 的新数据、保持服务器 1 停止并保留目标迁移锁；此时不要执行 `resume` 或删除目标锁，应先重新上传 helper，以同一迁移 ID 幂等执行 `finalize`，确认 `STATUS=FINALIZED` 后再人工清理锁和临时文件。
+
+若日志明确提示服务器 1 自动恢复未完全成功，先停止切换操作。在服务器 2 重新上传当前 helper，并使用日志中的迁移 ID 手工执行 `resume`：
+
+```bash
+MIGRATION_ID='替换为失败日志中的迁移ID'
+REMOTE_TMP="$(ssh -i ~/.ssh/ti-production-migration \
+  -o StrictHostKeyChecking=yes \
+  -o UserKnownHostsFile="$HOME/.ssh/ti-production-migration.known_hosts" \
+  ubuntu@服务器1IP 'mktemp -d /tmp/ti-production-migration.XXXXXX')"
+
+ssh -i ~/.ssh/ti-production-migration \
+  -o StrictHostKeyChecking=yes \
+  -o UserKnownHostsFile="$HOME/.ssh/ti-production-migration.known_hosts" \
+  ubuntu@服务器1IP "mkdir -m 700 '$REMOTE_TMP/lib'"
+
+scp -i ~/.ssh/ti-production-migration \
+  -o StrictHostKeyChecking=yes \
+  -o UserKnownHostsFile="$HOME/.ssh/ti-production-migration.known_hosts" \
+  scripts/export_production_data.sh \
+  "ubuntu@服务器1IP:$REMOTE_TMP/export_production_data.sh"
+scp -i ~/.ssh/ti-production-migration \
+  -o StrictHostKeyChecking=yes \
+  -o UserKnownHostsFile="$HOME/.ssh/ti-production-migration.known_hosts" \
+  scripts/lib/production_migration_common.sh \
+  "ubuntu@服务器1IP:$REMOTE_TMP/lib/production_migration_common.sh"
+
+ssh -i ~/.ssh/ti-production-migration \
+  -o StrictHostKeyChecking=yes \
+  -o UserKnownHostsFile="$HOME/.ssh/ti-production-migration.known_hosts" \
+  ubuntu@服务器1IP \
+  "bash '$REMOTE_TMP/export_production_data.sh' resume --source-dir /opt/ti --migration-id '$MIGRATION_ID'; rm -rf -- '$REMOTE_TMP'"
+```
+
+对于前述“源端提交结果不确定”场景，完成同样的 helper 上传后，**不要执行上面的 `resume`**，改为幂等重试 `finalize`。只有收到 `STATUS=FINALIZED` 后，才能删除服务器 2 上由同一迁移 ID 持有的目标锁：
+
+```bash
+ssh -i ~/.ssh/ti-production-migration \
+  -o StrictHostKeyChecking=yes \
+  -o UserKnownHostsFile="$HOME/.ssh/ti-production-migration.known_hosts" \
+  ubuntu@服务器1IP \
+  "bash '$REMOTE_TMP/export_production_data.sh' finalize --source-dir /opt/ti --migration-id '$MIGRATION_ID'"
+
+TARGET_LOCK='/opt/ti/var/.production-data-migration.lock'
+if sudo test "$(sudo cat "$TARGET_LOCK/owner")" = "$MIGRATION_ID"; then
+  sudo rm -rf -- "$TARGET_LOCK"
+else
+  echo '目标锁 owner 不匹配，拒绝删除' >&2
+  exit 1
+fi
+
+ssh -i ~/.ssh/ti-production-migration \
+  -o StrictHostKeyChecking=yes \
+  -o UserKnownHostsFile="$HOME/.ssh/ti-production-migration.known_hosts" \
+  ubuntu@服务器1IP "rm -rf -- '$REMOTE_TMP'"
+```
+
+### 12.6 DNS、HTTPS 与业务切换
+
+自动迁移全部成功后再执行：
+
+1. 将 DNS A/AAAA 记录指向服务器 2，并移除不再使用的旧地址；
+2. 在服务器 2 按第 6 节重新运行 `deploy_ubuntu24.sh`，签发服务器 2 自己的 HTTPS 证书；
+3. 验证域名的 `/api/ping` 与 `/api/ping?deep=1`；
+4. 验证管理员和普通用户登录、上传文件读取、后台任务与定时备份；
+5. 更新微信、短信、邮件、AI 上游、对象存储等第三方平台的源 IP 白名单与回调配置；
+6. 观察服务器 2 日志和资源使用情况，确认稳定后再安排服务器 1 下线。
