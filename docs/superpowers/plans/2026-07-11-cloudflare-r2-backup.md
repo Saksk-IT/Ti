@@ -14,7 +14,7 @@
 
 **Files:**
 - Create: `app/models/backup.py`
-- Create: `migrations/versions/e1f2a3b4c5d6_add_backup_jobs.py`
+- Create: `migrations/versions/f3c4d5e6a7b8_add_backup_jobs.py`
 - Create: `app/modules/admin/services/backup_config_service.py`
 - Modify: `app/models/__init__.py`
 - Modify: `app/modules/admin/services/system_config_service.py`
@@ -92,4 +92,3 @@
 - [ ] 完成规格审查、代码质量审查和安全复查，修复 CRITICAL/HIGH/MEDIUM。
 - [ ] 确认不包含 `miniprogram-1/.gitignore` 等无关改动。
 - [ ] 按约定式提交信息提交并推送 `main`。
-

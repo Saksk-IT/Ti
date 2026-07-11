@@ -8,6 +8,7 @@ import logging
 import threading
 import time
 from logging.handlers import RotatingFileHandler
+from uuid import UUID
 from flask import Flask
 
 # 加载.env文件（如果存在）
@@ -24,6 +25,32 @@ from markupsafe import Markup, escape as _escape
 
 _LAST_ACTIVE_LOCK = threading.Lock()
 _LAST_ACTIVE_TS = {}
+
+_BACKUP_ADMIN_API_STATIC_PATHS = frozenset({
+    '/admin/api/settings/backup',
+    '/admin/api/settings/backup/test',
+    '/admin/api/backups',
+})
+
+
+def _is_backup_admin_api_path(path: str) -> bool:
+    """仅匹配实际存在的 Cloudflare R2 备份管理 API 路径。"""
+    if path in _BACKUP_ADMIN_API_STATIC_PATHS:
+        return True
+
+    prefix = '/admin/api/backups/'
+    if not path.startswith(prefix):
+        return False
+    job_path = path[len(prefix):]
+    if job_path.endswith('/download'):
+        job_path = job_path[:-len('/download')]
+    if not job_path or '/' in job_path:
+        return False
+    try:
+        UUID(job_path)
+    except (AttributeError, TypeError, ValueError):
+        return False
+    return True
 
 
 def _should_update_last_active(user_id: int, interval_seconds: int) -> bool:
@@ -93,6 +120,13 @@ def create_app(config_name=None):
     
     # 配置日志
     _setup_logging(app)
+
+    # 备份 Sidecar 只需要配置、ORM 和模型，不注册任何会写入 /data 的 Web 模块。
+    if os.environ.get('TI_BACKUP_SCHEDULER') == '1':
+        with app.app_context():
+            from app import models as _models  # noqa: F401
+        app.logger.info('备份 Sidecar 最小运行时已启动')
+        return app
     
     # 注册蓝图
     _register_blueprints(app)
@@ -219,6 +253,8 @@ def _setup_sentry(app: Flask) -> None:
 
 def _ensure_directories(app):
     """确保必要的目录存在"""
+    if os.environ.get('TI_BACKUP_SCHEDULER') == '1':
+        return
     dirs = [
         app.config['LOG_DIR'],
         app.config['UPLOAD_FOLDER'],
@@ -304,7 +340,8 @@ def _setup_logging(app):
         handler.addFilter(request_id_filter)
         handler.addFilter(sensitive_filter)
 
-    if not app.debug and not app.testing:
+    stdout_only = os.environ.get('TI_BACKUP_SCHEDULER') == '1'
+    if not app.debug and not app.testing and not stdout_only:
         # P0-2: encoding='utf-8' 解决 Windows 中文乱码
         file_handler = RotatingFileHandler(
             os.path.join(app.config['LOG_DIR'], 'app.log'),
@@ -773,6 +810,12 @@ def _register_before_request(app):
                 # 其他管理后台路由需要管理员权限
                 elif not is_admin_user:
                     if path.startswith('/admin/'):
+                        if _is_backup_admin_api_path(path):
+                            return jsonify({
+                                'status': 'error',
+                                'code': 1,
+                                'message': '需要管理员权限',
+                            }), 403
                         return jsonify({'status': 'forbidden', 'message': '需要管理员权限'}), 403
                     return redirect('/')
             return
@@ -914,10 +957,18 @@ def _register_before_request(app):
                     return  # 跳过检查，让装饰器处理
                 return jsonify({'status': 'unauthorized', 'message': '请先登录后使用此功能', 'request_id': getattr(g, 'request_id', None)}), 401
         
-        if path.startswith('/api'):
+        is_backup_admin_api = _is_backup_admin_api_path(path)
+        if path.startswith('/api') or is_backup_admin_api:
             # 如果有JWT token，让@auth_required装饰器处理
             if has_jwt_token:
                 return  # 跳过检查，让装饰器处理
+            if is_backup_admin_api:
+                return jsonify({
+                    'status': 'error',
+                    'code': 1,
+                    'message': '请先登录',
+                    'request_id': getattr(g, 'request_id', None),
+                }), 401
             return jsonify({'status': 'unauthorized', 'message': '请先登录', 'request_id': getattr(g, 'request_id', None)}), 401
         return redirect('/login')
 
@@ -984,5 +1035,7 @@ def _register_error_handlers(app):
 
 def _start_background_tasks(app):
     """启动后台任务"""
+    if os.environ.get('TI_BACKUP_SCHEDULER') == '1':
+        return
     from .core.tasks import start_background_tasks
     start_background_tasks(app)

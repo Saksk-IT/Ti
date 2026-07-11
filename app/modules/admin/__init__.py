@@ -4,6 +4,16 @@ import os
 from flask import Flask, Blueprint, session, request, jsonify, redirect
 
 
+def _api_permission_error(message: str, status_code: int):
+    """保持现有后台响应兼容，仅为备份 API 使用统一错误信封。"""
+    from app import _is_backup_admin_api_path
+
+    if _is_backup_admin_api_path(request.path or ''):
+        return jsonify({'status': 'error', 'code': 1, 'message': message}), status_code
+    legacy_status = 'unauthorized' if status_code == 401 else 'forbidden'
+    return jsonify({'status': legacy_status, 'message': message}), status_code
+
+
 def _check_admin_permission():
     """Admin 蓝图独立权限检查钩子。
 
@@ -61,7 +71,7 @@ def _check_admin_permission():
     # --- 3. 未认证 ---
     if not user_id:
         if path.startswith('/admin/api'):
-            return jsonify({'status': 'unauthorized', 'message': '需要登录'}), 401
+            return _api_permission_error('需要登录', 401)
         return redirect('/login')
 
     # --- 4. 权限判断（与全局钩子逻辑一致） ---
@@ -83,16 +93,16 @@ def _check_admin_permission():
     if is_subject_admin_path:
         if not (is_admin or is_subject_admin):
             if path.startswith('/admin/api'):
-                return jsonify({'status': 'forbidden', 'message': '需要管理员或科目管理员权限'}), 403
+                return _api_permission_error('需要管理员或科目管理员权限', 403)
             return redirect('/')
     elif is_notification_admin_path:
         if not (is_admin or is_notification_admin):
             if path.startswith('/admin/api'):
-                return jsonify({'status': 'forbidden', 'message': '需要管理员或通知管理员权限'}), 403
+                return _api_permission_error('需要管理员或通知管理员权限', 403)
             return redirect('/')
     elif not is_admin:
         if path.startswith('/admin/api'):
-            return jsonify({'status': 'forbidden', 'message': '需要管理员权限'}), 403
+            return _api_permission_error('需要管理员权限', 403)
         return redirect('/')
 
     return None

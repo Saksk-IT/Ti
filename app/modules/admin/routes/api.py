@@ -11,6 +11,7 @@ from .api_bp import ALLOWED_EXTENSIONS, admin_api_bp, allowed_file
 from .api_components import chat  # noqa: F401
 from .api_components import auth_login_settings  # noqa: F401
 from .api_components import ai_change_records  # noqa: F401
+from .api_components import backup_settings  # noqa: F401
 from .api_components import campus  # noqa: F401
 from .api_components import coding_questions  # noqa: F401
 from .api_components import mail_settings  # noqa: F401

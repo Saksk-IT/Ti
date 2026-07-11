@@ -64,6 +64,8 @@ zipp==3.23.0  # ZIP 文件处理
 requests==2.31.0  # HTTP请求库（用于微信API）
 PyJWT==2.8.0  # JWT token生成和验证
 cryptography>=46.0.0  # 凭据加密存储
+boto3>=1.34,<2  # Cloudflare R2 S3 客户端
+croniter>=6.0,<7  # 五段 cron 调度计算
 redis>=5.0.0,<6  # Redis 客户端（缓存/队列/限流共享存储）
 rq>=1.16.0,<2  # 轻量任务队列（依赖 Redis）
 

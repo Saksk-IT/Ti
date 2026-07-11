@@ -267,6 +267,13 @@ def admin_edu_schedule_settings_page():
     return render_template('admin/settings/edu_schedule.html', schedule_config=cfg)
 
 
+@admin_pages_bp.route('/settings/backup')
+@admin_required
+def admin_backup_settings_page():
+    """数据备份配置页面。"""
+    return render_template('admin/settings/backup.html')
+
+
 @admin_pages_bp.route('/permissions')
 def admin_permissions_page():
     """权限管理页面"""

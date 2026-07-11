@@ -18,6 +18,7 @@ from .coding import (
 from .chat import ChatConversation, ChatMember, ChatMessage, UserRemark
 from .ai_chat import AIChatSession, AIChatMessage
 from .ai_change_record import AIChangeRecord
+from .backup import BackupJob
 from .notification import Notification, NotificationDismissal
 from .popup import Popup, PopupDismissal, PopupView
 from .plaza import PlazaBoard, PublicBankPlazaMetric, PublicSubjectUser
@@ -52,7 +53,7 @@ __all__ = [
     'CodingStatistics', 'UserCodingStats', 'CodeDraft',
     # chat
     'ChatConversation', 'ChatMember', 'ChatMessage', 'UserRemark',
-    'AIChatSession', 'AIChatMessage', 'AIChangeRecord',
+    'AIChatSession', 'AIChatMessage', 'AIChangeRecord', 'BackupJob',
     # notification
     'Notification', 'NotificationDismissal',
     # popup

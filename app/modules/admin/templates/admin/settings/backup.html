@@ -1,0 +1,668 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}数据备份 - 系统设置{% endblock %}
+
+{% block content %}
+<main class="backup-page">
+    <header class="page-header">
+        <a href="/admin/settings" class="back-link">← 返回系统设置</a>
+        <div class="header-row">
+            <div>
+                <h1>数据备份</h1>
+                <p>将数据库加密凭据安全保存到服务端，并备份至私有 Cloudflare R2 Bucket。</p>
+            </div>
+            <button type="button" class="btn btn-secondary" id="openR2TutorialBtn">R2 配置教程</button>
+        </div>
+    </header>
+
+    <section class="backup-section" aria-labelledby="storageTitle">
+        <div class="section-heading">
+            <div>
+                <h2 id="storageTitle">Cloudflare R2 存储配置</h2>
+                <p>凭据仅用于服务端备份，页面不会回显完整密钥。</p>
+            </div>
+        </div>
+        <form id="storageForm" autocomplete="off">
+            <div class="form-grid">
+                <div class="form-group form-group-wide">
+                    <label for="endpoint">Endpoint</label>
+                    <input id="endpoint" name="endpoint" type="url" required placeholder="https://&lt;account-id&gt;.r2.cloudflarestorage.com" spellcheck="false">
+                </div>
+                <div class="form-group">
+                    <label for="region">Region</label>
+                    <input id="region" value="auto" readonly aria-readonly="true">
+                </div>
+                <div class="form-group">
+                    <label for="bucket">Bucket</label>
+                    <input id="bucket" name="bucket" required placeholder="ti-backups" spellcheck="false">
+                </div>
+                <div class="form-group">
+                    <label for="prefix">Prefix</label>
+                    <input id="prefix" name="prefix" value="backups/" required placeholder="backups/" spellcheck="false">
+                </div>
+                <div class="form-group">
+                    <label for="access_key_id">Access Key ID</label>
+                    <input id="access_key_id" name="access_key_id" type="password" autocomplete="new-password" placeholder="输入或留空以保留现有值">
+                </div>
+                <div class="form-group">
+                    <label for="secret_access_key">Secret Access Key</label>
+                    <input id="secret_access_key" name="secret_access_key" type="password" autocomplete="new-password" placeholder="输入或留空以保留现有值">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="testConnectionBtn">测试连接</button>
+                <button type="submit" class="btn btn-primary" id="saveStorageBtn">保存存储配置</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="backup-section" aria-labelledby="scheduleTitle">
+        <div class="section-heading">
+            <div>
+                <h2 id="scheduleTitle">定时备份</h2>
+                <p>使用五段 Cron 表达式设置执行时间，并限制备份保留周期与数量。</p>
+            </div>
+        </div>
+        <form id="scheduleForm">
+            <div class="form-grid">
+                <div class="form-group switch-group">
+                    <label for="schedule_enabled">启用定时备份</label>
+                    <input id="schedule_enabled" name="schedule_enabled" type="checkbox" role="switch">
+                </div>
+                <div class="form-group">
+                    <label for="cron_expression">Cron 表达式</label>
+                    <input id="cron_expression" name="cron_expression" value="0 2 * * *" required spellcheck="false">
+                    <small>默认每天凌晨 02:00 执行。</small>
+                </div>
+                <div class="form-group">
+                    <label for="retention_days">保留天数</label>
+                    <input id="retention_days" name="retention_days" type="number" value="14" min="0" max="3650" required>
+                </div>
+                <div class="form-group">
+                    <label for="max_backups">最多保留份数</label>
+                    <input id="max_backups" name="max_backups" type="number" value="3" min="1" max="100" required>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="saveScheduleBtn">保存定时策略</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="backup-section records-section" aria-labelledby="recordsTitle">
+        <div class="section-heading records-heading">
+            <div>
+                <h2 id="recordsTitle">备份记录</h2>
+                <p>运行中的任务会自动刷新。恢复操作仅提供服务器端安全步骤。</p>
+            </div>
+            <div class="record-actions">
+                <button type="button" class="btn btn-secondary" id="refreshBtn">刷新</button>
+                <button type="button" class="btn btn-primary" id="createBackupBtn">创建备份</button>
+            </div>
+        </div>
+        <div class="records-table" role="table" aria-label="备份记录">
+            <div class="record-row record-header" role="row">
+                <span role="columnheader">状态</span>
+                <span role="columnheader">文件名</span>
+                <span role="columnheader">大小</span>
+                <span role="columnheader">过期时间</span>
+                <span role="columnheader">触发方式</span>
+                <span role="columnheader">开始时间</span>
+                <span role="columnheader">操作</span>
+            </div>
+            <div id="recordsBody" class="records-body" role="rowgroup" aria-live="polite"></div>
+        </div>
+        <p id="emptyRecords" class="empty-state" hidden>暂无备份记录</p>
+    </section>
+</main>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<div class="modal" id="r2TutorialModal" role="dialog" aria-modal="true" aria-labelledby="r2TutorialTitle" hidden>
+    <div class="modal-panel">
+        <div class="modal-header">
+            <h2 id="r2TutorialTitle">Cloudflare R2 配置教程</h2>
+            <button type="button" class="modal-close" data-modal-close aria-label="关闭 R2 配置教程">×</button>
+        </div>
+        <ol class="tutorial-list">
+            <li>在 Cloudflare R2 中创建私有 Bucket，禁止公开访问。</li>
+            <li>进入 <strong>Manage API Tokens</strong>，创建仅具备 <strong>Object Read &amp; Write</strong> 权限的令牌。</li>
+            <li>资源范围选择仅指定 Bucket，不要授予账户级的其他权限。</li>
+            <li>立即复制只显示一次的一次性 Secret，同时保存 Access Key ID。</li>
+            <li>复制 Bucket 的 S3 API Endpoint，Region 保持 <code>auto</code>。</li>
+            <li>回到本页填写信息，先保存，再点击测试连接。</li>
+        </ol>
+        <a class="official-link" href="https://developers.cloudflare.com/r2/" target="_blank" rel="noopener noreferrer">查看 Cloudflare R2 官方文档</a>
+    </div>
+</div>
+
+<div class="modal" id="restoreTutorialModal" role="dialog" aria-modal="true" aria-labelledby="restoreTutorialTitle" hidden>
+    <div class="modal-panel">
+        <div class="modal-header">
+            <h2 id="restoreTutorialTitle">服务器恢复教程</h2>
+            <button type="button" class="modal-close" data-modal-close aria-label="关闭恢复教程">×</button>
+        </div>
+        <p>恢复必须由运维人员在服务器维护窗口执行，本页面不会直接发起恢复。</p>
+        <dl class="restore-details">
+            <div><dt>文件名</dt><dd id="restoreFilename">-</dd></div>
+            <div><dt>SHA-256</dt><dd id="restoreSha">-</dd></div>
+        </dl>
+        <ol class="tutorial-list">
+            <li>点击下载，将文件下载到 backups 目录（服务器项目根目录下的 <code>backups</code> 文件夹）。</li>
+            <li>校验 SHA-256 与上方记录完全一致。</li>
+            <li>确认已进入服务器维护窗口，并停止外部写入。</li>
+            <li>在项目根目录运行：</li>
+        </ol>
+        <code id="restoreCommand" class="command-block">ENV_FILE=.env.production COMPOSE_FILE=compose.prod.yml ./scripts/restore.sh &lt;filename&gt;</code>
+    </div>
+</div>
+
+<style>
+.backup-page, .backup-page * { box-sizing: border-box; }
+.backup-page { width: 100%; max-width: 1200px; margin: 0 auto; padding: 40px; overflow-x: hidden; }
+.page-header { margin-bottom: 24px; }
+.back-link { display: inline-block; margin-bottom: 12px; color: var(--text-sub); text-decoration: none; font-size: 14px; }
+.back-link:hover { color: var(--primary); }
+.header-row, .section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.page-header h1 { margin: 0 0 8px; font-size: 32px; letter-spacing: -0.5px; }
+.page-header p, .section-heading p { margin: 0; color: var(--text-sub); line-height: 1.65; }
+.backup-section { margin-bottom: 20px; padding: 28px; background: var(--card-bg); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); border: 0.5px solid var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-soft); }
+.section-heading { margin-bottom: 22px; }
+.section-heading h2 { margin: 0 0 6px; font-size: 20px; }
+.section-heading p { font-size: 14px; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.form-group { display: flex; min-width: 0; flex-direction: column; gap: 8px; }
+.form-group-wide { grid-column: 1 / -1; }
+.form-group label { font-size: 14px; font-weight: 600; }
+.form-group small { color: var(--text-sub); line-height: 1.5; }
+.form-group input:not([type="checkbox"]) { width: 100%; min-width: 0; min-height: 44px; padding: 10px 13px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--card-bg-solid); color: var(--text-color); font: inherit; }
+.form-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+.form-group input[readonly] { color: var(--text-sub); cursor: not-allowed; }
+.switch-group { justify-content: center; }
+.switch-group input { width: 22px; height: 22px; accent-color: var(--primary); }
+.form-actions, .record-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+.record-actions { margin-top: 0; }
+.btn { min-height: 44px; padding: 10px 18px; border: 1px solid transparent; border-radius: var(--radius-sm); font: inherit; font-weight: 600; cursor: pointer; transition: opacity .2s, transform .2s; }
+.btn:hover:not(:disabled) { transform: translateY(-1px); }
+.btn:disabled { opacity: .55; cursor: wait; }
+.btn-primary { color: #fff; background: var(--primary); }
+.btn-secondary { color: var(--text-color); background: var(--card-bg-solid); border-color: var(--border-color); }
+.records-table { width: 100%; }
+.record-row { display: grid; grid-template-columns: .75fr 1.6fr .75fr 1.15fr .8fr 1.15fr 1.6fr; align-items: center; gap: 12px; min-width: 0; padding: 14px 10px; border-bottom: 1px solid var(--border-color); }
+.record-header { color: var(--text-sub); font-size: 13px; font-weight: 600; }
+.record-cell { min-width: 0; overflow-wrap: anywhere; font-size: 13px; }
+.record-cell::before { display: none; color: var(--text-sub); font-size: 12px; font-weight: 600; }
+.record-operation { display: flex; flex-wrap: wrap; gap: 6px; }
+.record-operation button { min-height: 36px; padding: 6px 9px; font-size: 12px; }
+.status-badge { display: inline-flex; width: fit-content; padding: 4px 8px; border-radius: 999px; background: var(--primary-light); color: var(--primary); font-weight: 600; }
+.status-failed { color: var(--danger); background: rgba(255, 59, 48, .12); }
+.status-completed { color: var(--success); background: rgba(52, 199, 89, .12); }
+.empty-state { margin: 24px 0 4px; color: var(--text-sub); text-align: center; }
+.toast { position: fixed; z-index: 1200; right: 24px; bottom: 24px; max-width: min(380px, calc(100vw - 40px)); padding: 13px 16px; border-radius: var(--radius-sm); color: #fff; background: rgba(30, 30, 32, .94); box-shadow: var(--shadow-hover); }
+.toast.error { background: rgba(176, 34, 27, .96); }
+.modal { position: fixed; z-index: 1100; inset: 0; display: grid; place-items: center; padding: 20px; background: rgba(0, 0, 0, .48); }
+.modal[hidden] { display: none; }
+.modal-panel { width: min(640px, 100%); max-height: min(760px, calc(100vh - 40px)); overflow-y: auto; padding: 28px; border: 1px solid var(--border-color); border-radius: var(--radius-lg); background: var(--card-bg-solid); box-shadow: var(--shadow-hover); }
+.modal-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.modal-header h2 { margin: 0; font-size: 22px; }
+.modal-close { width: 44px; height: 44px; flex: 0 0 auto; border: 0; border-radius: 50%; color: var(--text-color); background: transparent; font-size: 28px; cursor: pointer; }
+.modal-close:hover { background: var(--primary-light); }
+.tutorial-list { margin: 0 0 18px; padding-left: 22px; line-height: 1.75; }
+.tutorial-list li + li { margin-top: 7px; }
+.official-link { color: var(--primary); }
+.restore-details { display: grid; gap: 10px; margin: 18px 0; }
+.restore-details div { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 10px; }
+.restore-details dt { color: var(--text-sub); }
+.restore-details dd { margin: 0; overflow-wrap: anywhere; }
+.command-block { display: block; overflow-wrap: anywhere; padding: 14px; border-radius: var(--radius-sm); background: rgba(127, 127, 127, .12); line-height: 1.6; }
+@media (max-width: 768px) {
+    html, body { max-width: 100%; overflow-x: hidden; }
+    body { display: block; }
+    .sidebar { position: static; width: 100%; height: auto; max-height: none; border-right: 0; border-bottom: 1px solid var(--border-color); }
+    .sidebar::before, .sidebar::after { display: none; }
+    .sidebar-header { position: static; padding: 16px 20px; font-size: 20px; }
+    .sidebar-nav { display: flex; overflow-x: auto; padding: 8px; scrollbar-width: thin; }
+    .sidebar-nav li { flex: 0 0 auto; }
+    .sidebar-nav a { margin: 0 3px; padding: 10px 12px; white-space: nowrap; }
+    .sidebar-footer { display: none; }
+    .main-content { margin-left: 0; width: 100%; max-width: none; padding: 0; min-width: 0; }
+    .backup-page { padding: 20px; }
+    .page-header h1 { font-size: 26px; }
+    .header-row, .section-heading { flex-direction: column; }
+    .backup-section { padding: 20px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-group-wide { grid-column: auto; }
+    .form-actions, .record-actions, .header-row .btn { width: 100%; }
+    .form-actions .btn, .record-actions .btn, .header-row .btn { min-height: 44px; flex: 1 1 auto; }
+    .record-header { display: none; }
+    .record-row { grid-template-columns: 1fr; gap: 9px; margin-bottom: 12px; padding: 16px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); }
+    .record-cell { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 10px; }
+    .record-cell::before { display: block; content: attr(data-label); }
+    .record-operation { display: flex; }
+    .record-operation::before { flex: 0 0 72px; }
+    .record-operation button { min-height: 44px; }
+    .toast { right: 20px; bottom: 20px; }
+    .modal-panel { padding: 20px; }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const storageForm = document.getElementById('storageForm');
+    const scheduleForm = document.getElementById('scheduleForm');
+    const recordsBody = document.getElementById('recordsBody');
+    const emptyRecords = document.getElementById('emptyRecords');
+    const toast = document.getElementById('toast');
+    const testConnectionBtn = document.getElementById('testConnectionBtn');
+    const saveStorageBtn = document.getElementById('saveStorageBtn');
+    const saveScheduleBtn = document.getElementById('saveScheduleBtn');
+    const createBackupBtn = document.getElementById('createBackupBtn');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const recordsById = new Map();
+    const statusLabels = { queued: '排队中', running: '备份中', completed: '已完成', failed: '失败', deleting: '删除中' };
+    const triggerLabels = { manual: '手动', scheduled: '定时' };
+    let toastTimer = null;
+    let pollTimer = null;
+    let recordsRequestSequence = 0;
+    let recordsAbortController = null;
+    let recordsRequestInFlight = false;
+    let shouldPollRecords = false;
+    let pageUnloading = false;
+    let previousFocus = null;
+    let previousBodyOverflow = '';
+    const backgroundState = new Map();
+
+    function showToast(message, type = 'success') {
+        window.clearTimeout(toastTimer);
+        toast.textContent = String(message || '操作完成');
+        toast.className = type === 'error' ? 'toast error' : 'toast';
+        toast.hidden = false;
+        toastTimer = window.setTimeout(() => { toast.hidden = true; }, 3200);
+    }
+
+    async function apiRequest(url, options = {}) {
+        const method = options.method || 'GET';
+        const headers = { Accept: 'application/json', ...(options.headers || {}) };
+        if (method !== 'GET') {
+            headers['Content-Type'] = 'application/json';
+            headers['X-Requested-With'] = 'XMLHttpRequest';
+        }
+        const response = await fetch(url, { ...options, method, headers, credentials: 'same-origin' });
+        let payload;
+        try {
+            payload = await response.json();
+        } catch (error) {
+            throw new Error('服务器响应格式异常，请稍后重试');
+        }
+        if (!response.ok || payload.status !== 'success') {
+            throw new Error(payload.message || '请求失败，请稍后重试');
+        }
+        return payload;
+    }
+
+    async function withLoading(button, loadingText, action) {
+        if (button.disabled) return;
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = loadingText;
+        try {
+            return await action();
+        } catch (error) {
+            showToast(error instanceof Error ? error.message : '操作失败，请稍后重试', 'error');
+        } finally {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+    }
+
+    function inputValue(id) {
+        return document.getElementById(id).value.trim();
+    }
+
+    function storagePayload() {
+        const payload = {
+            endpoint: inputValue('endpoint'),
+            region: 'auto',
+            bucket: inputValue('bucket'),
+            prefix: inputValue('prefix')
+        };
+        const accessKeyId = inputValue('access_key_id');
+        const secretAccessKey = inputValue('secret_access_key');
+        if (accessKeyId) payload.access_key_id = accessKeyId;
+        if (secretAccessKey) payload.secret_access_key = secretAccessKey;
+        return payload;
+    }
+
+    function schedulePayload() {
+        return {
+            schedule_enabled: document.getElementById('schedule_enabled').checked,
+            cron_expression: inputValue('cron_expression'),
+            retention_days: Number(inputValue('retention_days')),
+            max_backups: Number(inputValue('max_backups'))
+        };
+    }
+
+    function applyStorageConfig(config) {
+        document.getElementById('endpoint').value = config.endpoint || '';
+        document.getElementById('bucket').value = config.bucket || '';
+        document.getElementById('prefix').value = config.prefix || 'backups/';
+        document.getElementById('access_key_id').value = '';
+        document.getElementById('secret_access_key').value = '';
+        document.getElementById('access_key_id').placeholder = config.access_key_id_configured ? '已配置，留空以保留现有值' : '请输入 Access Key ID';
+        document.getElementById('secret_access_key').placeholder = config.secret_access_key_configured ? '已配置，留空以保留现有值' : '请输入 Secret Access Key';
+    }
+
+    function applyScheduleConfig(config) {
+        document.getElementById('schedule_enabled').checked = Boolean(config.schedule_enabled);
+        document.getElementById('cron_expression').value = config.cron_expression || '0 2 * * *';
+        document.getElementById('retention_days').value = String(config.retention_days ?? 14);
+        document.getElementById('max_backups').value = String(config.max_backups ?? 3);
+    }
+
+    function applyConfig(config) {
+        applyStorageConfig(config);
+        applyScheduleConfig(config);
+    }
+
+    async function saveStorageConfig({ silent = false } = {}) {
+        const payload = await apiRequest('/admin/api/settings/backup', {
+            method: 'POST',
+            body: JSON.stringify(storagePayload())
+        });
+        applyStorageConfig(payload.data || {});
+        if (!silent) showToast(payload.message || '存储配置已保存');
+        return payload;
+    }
+
+    async function loadConfig() {
+        const payload = await apiRequest('/admin/api/settings/backup', { method: 'GET' });
+        applyConfig(payload.data || {});
+    }
+
+    function formatSize(value) {
+        const bytes = Number(value);
+        if (!Number.isFinite(bytes) || bytes < 0) return '-';
+        if (bytes < 1024) return `${bytes} B`;
+        const units = ['KB', 'MB', 'GB', 'TB'];
+        let size = bytes / 1024;
+        let unitIndex = 0;
+        while (size >= 1024 && unitIndex < units.length - 1) {
+            size /= 1024;
+            unitIndex += 1;
+        }
+        return `${size.toFixed(size >= 10 ? 1 : 2)} ${units[unitIndex]}`;
+    }
+
+    function formatTime(value) {
+        if (!value) return '-';
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString('zh-CN', { hour12: false });
+    }
+
+    function appendCell(row, label, value, className = '') {
+        const cell = document.createElement('span');
+        cell.className = `record-cell ${className}`.trim();
+        cell.setAttribute('role', 'cell');
+        cell.dataset.label = label;
+        cell.textContent = value;
+        row.appendChild(cell);
+        return cell;
+    }
+
+    function actionButton(label, action, jobId, disabled = false) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = action === 'delete' ? 'btn btn-secondary' : 'btn btn-secondary';
+        button.textContent = label;
+        button.setAttribute('data-action', action);
+        button.setAttribute('data-id', jobId);
+        button.disabled = disabled;
+        return button;
+    }
+
+    function renderRecord(record) {
+        const row = document.createElement('div');
+        row.className = 'record-row';
+        row.setAttribute('role', 'row');
+        const status = appendCell(row, '状态', statusLabels[record.status] || '未知', `status-badge status-${record.status || 'unknown'}`);
+        status.title = record.status === 'failed' ? String(record.error_message || '备份失败') : '';
+        appendCell(row, '文件名', String(record.filename || '-'));
+        appendCell(row, '大小', formatSize(record.size_bytes));
+        appendCell(row, '过期时间', formatTime(record.expires_at));
+        appendCell(row, '触发方式', triggerLabels[record.trigger] || '未知');
+        appendCell(row, '开始时间', formatTime(record.started_at || record.created_at));
+        const operations = appendCell(row, '操作', '', 'record-operation');
+        const completed = record.status === 'completed';
+        const deleting = record.status === 'deleting';
+        operations.appendChild(actionButton('下载', 'download', record.id, !completed));
+        operations.appendChild(actionButton('恢复', 'restore', record.id, !completed));
+        operations.appendChild(actionButton(deleting ? '重试删除' : '删除', 'delete', record.id, !(completed || deleting)));
+        recordsBody.appendChild(row);
+    }
+
+    function clearPollTimer() {
+        if (!pollTimer) return;
+        window.clearTimeout(pollTimer);
+        pollTimer = null;
+    }
+
+    function hasActiveRecords(items) {
+        return items.some((item) => item.status === 'queued' || item.status === 'running');
+    }
+
+    function scheduleNextPoll() {
+        clearPollTimer();
+        if (!shouldPollRecords || pageUnloading) return;
+        pollTimer = window.setTimeout(() => {
+            pollTimer = null;
+            loadRecords({ quiet: true, abortPrevious: false });
+        }, 4000);
+    }
+
+    async function loadRecords({ quiet = false, abortPrevious = true } = {}) {
+        if (recordsRequestInFlight && !abortPrevious) return;
+        clearPollTimer();
+        const requestSequence = ++recordsRequestSequence;
+        if (abortPrevious && recordsAbortController) recordsAbortController.abort();
+        const requestController = new AbortController();
+        recordsAbortController = requestController;
+        recordsRequestInFlight = true;
+        try {
+            const payload = await apiRequest('/admin/api/backups', {
+                method: 'GET',
+                signal: requestController.signal
+            });
+            if (requestSequence !== recordsRequestSequence) return;
+            const items = Array.isArray(payload.data?.items) ? payload.data.items : [];
+            recordsById.clear();
+            recordsBody.replaceChildren();
+            items.forEach((record) => {
+                if (!record || typeof record.id !== 'string') return;
+                const safeRecord = { ...record };
+                recordsById.set(safeRecord.id, safeRecord);
+                renderRecord(safeRecord);
+            });
+            emptyRecords.hidden = items.length !== 0;
+            shouldPollRecords = hasActiveRecords(items);
+            if (!quiet) showToast('备份记录已刷新');
+        } catch (error) {
+            if (error && error.name === 'AbortError') return;
+            if (requestSequence !== recordsRequestSequence) return;
+            showToast(error instanceof Error ? error.message : '读取备份记录失败', 'error');
+        } finally {
+            if (requestSequence === recordsRequestSequence) {
+                recordsAbortController = null;
+                recordsRequestInFlight = false;
+                if (shouldPollRecords) scheduleNextPoll();
+            }
+        }
+    }
+
+    function backgroundElements() {
+        return ['.backup-page', '#toast', '.sidebar', '.theme-toggle']
+            .map((selector) => document.querySelector(selector))
+            .filter(Boolean);
+    }
+
+    function isolateBackground() {
+        backgroundElements().forEach((element) => {
+            backgroundState.set(element, {
+                inert: element.inert,
+                ariaHidden: element.getAttribute('aria-hidden')
+            });
+            element.inert = true;
+            element.setAttribute('aria-hidden', 'true');
+        });
+    }
+
+    function restoreBackground() {
+        backgroundState.forEach((state, element) => {
+            element.inert = state.inert;
+            if (state.ariaHidden === null) element.removeAttribute('aria-hidden');
+            else element.setAttribute('aria-hidden', state.ariaHidden);
+        });
+        backgroundState.clear();
+    }
+
+    function getFocusableElements(modal) {
+        const selector = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+        return Array.from(modal.querySelectorAll(selector)).filter((element) => !element.hidden);
+    }
+
+    function openModal(modal) {
+        previousFocus = document.activeElement;
+        previousBodyOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        modal.hidden = false;
+        isolateBackground();
+        const closeButton = modal.querySelector('[data-modal-close]');
+        if (closeButton) closeButton.focus();
+    }
+
+    function closeModal(modal) {
+        modal.hidden = true;
+        document.body.style.overflow = previousBodyOverflow;
+        restoreBackground();
+        if (previousFocus && typeof previousFocus.focus === 'function') previousFocus.focus();
+        previousFocus = null;
+    }
+
+    function openRestoreTutorial(record) {
+        const filename = String(record.filename || '-');
+        document.getElementById('restoreFilename').textContent = filename;
+        document.getElementById('restoreSha').textContent = String(record.sha256 || '记录中暂无 SHA-256');
+        document.getElementById('restoreCommand').textContent = `ENV_FILE=.env.production COMPOSE_FILE=compose.prod.yml ./scripts/restore.sh ${filename}`;
+        openModal(document.getElementById('restoreTutorialModal'));
+    }
+
+    storageForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        withLoading(saveStorageBtn, '保存中…', () => saveStorageConfig());
+    });
+
+    scheduleForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        withLoading(saveScheduleBtn, '保存中…', async () => {
+            const payload = await apiRequest('/admin/api/settings/backup', {
+                method: 'POST',
+                body: JSON.stringify(schedulePayload())
+            });
+            applyScheduleConfig(payload.data || {});
+            showToast(payload.message || '定时策略已保存');
+        });
+    });
+
+    testConnectionBtn.addEventListener('click', () => {
+        withLoading(testConnectionBtn, '测试中…', async () => {
+            await saveStorageConfig({ silent: true });
+            const payload = await apiRequest('/admin/api/settings/backup/test', { method: 'POST', body: '{}' });
+            showToast(payload.message || '连接测试成功');
+        });
+    });
+
+    createBackupBtn.addEventListener('click', () => {
+        withLoading(createBackupBtn, '创建中…', async () => {
+            const payload = await apiRequest('/admin/api/backups', { method: 'POST', body: '{}' });
+            showToast(payload.message || '备份任务已创建');
+            await loadRecords({ quiet: true });
+        });
+    });
+
+    refreshBtn.addEventListener('click', () => withLoading(refreshBtn, '刷新中…', () => loadRecords({ quiet: true })));
+
+    recordsBody.addEventListener('click', async (event) => {
+        const button = event.target.closest('button[data-id]');
+        if (!button || button.disabled) return;
+        const jobId = button.dataset.id;
+        const record = recordsById.get(jobId);
+        if (!record) {
+            showToast('备份记录已变化，请刷新后重试', 'error');
+            return;
+        }
+        const action = button.dataset.action;
+        if (action === 'restore') {
+            openRestoreTutorial(record);
+            return;
+        }
+        if (action === 'delete' && !window.confirm(`确定删除备份“${record.filename || '未命名备份'}”吗？此操作不可撤销。`)) return;
+        await withLoading(button, action === 'delete' ? '删除中…' : '获取中…', async () => {
+            if (action === 'download') {
+                const payload = await apiRequest(`/admin/api/backups/${jobId}/download`, { method: 'GET' });
+                const downloadUrl = String(payload.data?.url || '');
+                let parsedUrl;
+                try { parsedUrl = new URL(downloadUrl); } catch (error) { throw new Error('下载链接无效，请重试'); }
+                if (parsedUrl.protocol !== 'https:') throw new Error('下载链接无效，请重试');
+                window.location.assign(downloadUrl);
+                return;
+            }
+            if (action === 'delete') {
+                const payload = await apiRequest(`/admin/api/backups/${jobId}`, { method: 'DELETE' });
+                showToast(payload.message || '备份已删除');
+                await loadRecords({ quiet: true });
+            }
+        });
+    });
+
+    document.getElementById('openR2TutorialBtn').addEventListener('click', () => openModal(document.getElementById('r2TutorialModal')));
+    document.querySelectorAll('.modal').forEach((modal) => {
+        modal.addEventListener('click', (event) => { if (event.target === modal) closeModal(modal); });
+        modal.querySelector('[data-modal-close]').addEventListener('click', () => closeModal(modal));
+    });
+    document.addEventListener('keydown', (event) => {
+        const openDialog = document.querySelector('.modal:not([hidden])');
+        if (!openDialog) return;
+        if (event.key === 'Escape') {
+            closeModal(openDialog);
+            return;
+        }
+        if (event.key === 'Tab') {
+            const focusableElements = getFocusableElements(openDialog);
+            const firstFocusable = focusableElements[0];
+            const lastFocusable = focusableElements[focusableElements.length - 1];
+            if (!firstFocusable) {
+                event.preventDefault();
+                return;
+            }
+            if (event.shiftKey && (document.activeElement === firstFocusable || !openDialog.contains(document.activeElement))) {
+                event.preventDefault();
+                lastFocusable.focus();
+            } else if (!event.shiftKey && (document.activeElement === lastFocusable || !openDialog.contains(document.activeElement))) {
+                event.preventDefault();
+                firstFocusable.focus();
+            }
+        }
+    });
+
+    window.addEventListener('beforeunload', () => {
+        pageUnloading = true;
+        window.clearTimeout(toastTimer);
+        window.clearTimeout(pollTimer);
+        if (recordsAbortController) recordsAbortController.abort();
+    });
+
+    Promise.all([loadConfig(), loadRecords({ quiet: true })]).catch((error) => {
+        showToast(error instanceof Error ? error.message : '页面数据加载失败', 'error');
+    });
+});
+</script>
+{% endblock %}

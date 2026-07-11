@@ -26,6 +26,19 @@ fi
 POSTGRES_USER="${POSTGRES_USER:-studyuser}"
 POSTGRES_DB="${POSTGRES_DB:-ti_db}"
 COMPOSE=(docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE")
+SERVICES_STOPPED=0
+
+recover_services_on_error() {
+  status=$?
+  if [ "$SERVICES_STOPPED" -eq 1 ]; then
+    echo "恢复过程失败，正在尝试重新启动服务..." >&2
+    "${COMPOSE[@]}" start web worker backup >/dev/null 2>&1 || true
+  fi
+  rm -rf "${TEMP_DIR}"
+  exit "$status"
+}
+
+trap recover_services_on_error ERR INT TERM
 
 if [ ! -f "${BACKUP_DIR}/${BACKUP_FILE}" ]; then
   echo "错误: 备份文件不存在: ${BACKUP_DIR}/${BACKUP_FILE}"
@@ -67,7 +80,8 @@ fi
 
 # 2. 停止服务
 echo "正在停止服务..."
-"${COMPOSE[@]}" stop web worker
+"${COMPOSE[@]}" stop web worker backup
+SERVICES_STOPPED=1
 echo "✓ 服务已停止"
 
 # 3. 恢复数据库
@@ -85,7 +99,8 @@ if [ -d "${TEMP_DIR}/${BACKUP_NAME}/redis" ]; then
   echo "正在恢复 Redis..."
   "${COMPOSE[@]}" stop redis
   rm -rf ./var/redis/*
-  cp -r "${TEMP_DIR}/${BACKUP_NAME}/redis/"* ./var/redis/
+  mkdir -p ./var/redis
+  cp -a "${TEMP_DIR}/${BACKUP_NAME}/redis/." ./var/redis/
   "${COMPOSE[@]}" start redis
   echo "✓ Redis 恢复完成"
 else
@@ -96,7 +111,8 @@ fi
 if [ -d "${TEMP_DIR}/${BACKUP_NAME}/uploads" ]; then
   echo "正在恢复上传文件..."
   rm -rf ./var/uploads/*
-  cp -r "${TEMP_DIR}/${BACKUP_NAME}/uploads/"* ./var/uploads/
+  mkdir -p ./var/uploads
+  cp -a "${TEMP_DIR}/${BACKUP_NAME}/uploads/." ./var/uploads/
   echo "✓ 上传文件恢复完成"
 else
   echo "⚠ 上传文件备份不存在，跳过"
@@ -106,7 +122,8 @@ fi
 if [ -d "${TEMP_DIR}/${BACKUP_NAME}/instance" ]; then
   echo "正在恢复实例数据..."
   rm -rf ./var/instance/*
-  cp -r "${TEMP_DIR}/${BACKUP_NAME}/instance/"* ./var/instance/
+  mkdir -p ./var/instance
+  cp -a "${TEMP_DIR}/${BACKUP_NAME}/instance/." ./var/instance/
   echo "✓ 实例数据恢复完成"
 else
   echo "⚠ 实例数据备份不存在，跳过"
@@ -118,7 +135,7 @@ if [ -d "${TEMP_DIR}/${BACKUP_NAME}/logs" ]; then
   if [ "$restore_logs" = "yes" ]; then
     echo "正在恢复日志文件..."
     mkdir -p ./var/logs
-    cp -r "${TEMP_DIR}/${BACKUP_NAME}/logs/"* ./var/logs/
+    cp -a "${TEMP_DIR}/${BACKUP_NAME}/logs/." ./var/logs/
     echo "✓ 日志文件恢复完成"
   else
     echo "⊘ 跳过日志恢复"
@@ -134,7 +151,9 @@ echo "✓ 临时文件清理完成"
 
 # 9. 启动服务
 echo "正在启动服务..."
-"${COMPOSE[@]}" start web worker
+"${COMPOSE[@]}" start web worker backup
+SERVICES_STOPPED=0
+trap - ERR INT TERM
 echo "✓ 服务已启动"
 
 echo "=== 恢复完成 ==="

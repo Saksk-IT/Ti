@@ -38,6 +38,7 @@ services:
       FLASK_ENV: production
       DATA_DIR: /data
       SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
+      BACKUP_CREDENTIAL_SECRET: ${BACKUP_CREDENTIAL_SECRET:?BACKUP_CREDENTIAL_SECRET is required}
       DEFAULT_ADMIN_USERNAME: ${DEFAULT_ADMIN_USERNAME:?DEFAULT_ADMIN_USERNAME is required}
       DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:?DEFAULT_ADMIN_PASSWORD is required}
       DEFAULT_ADMIN_PHONE: ${DEFAULT_ADMIN_PHONE:-}
@@ -242,29 +243,26 @@ services:
           memory: 64M
 
   backup:
-    image: postgres:16-alpine
+    image: ${TI_IMAGE:-ghcr.io/saksk-it/ti:latest}
+    pull_policy: ${TI_IMAGE_PULL_POLICY:-always}
     restart: unless-stopped
     environment:
-      TZ: ${BACKUP_TZ:-Asia/Shanghai}
-      POSTGRES_USER: ${POSTGRES_USER:-studyuser}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
-      POSTGRES_DB: ${POSTGRES_DB:-ti_db}
-      BACKUP_TZ: ${BACKUP_TZ:-Asia/Shanghai}
-      BACKUP_ANCHOR_TIME: ${BACKUP_ANCHOR_TIME:-04:00}
-      BACKUP_INTERVAL: ${BACKUP_INTERVAL:-43200}
-      BACKUP_CHECK_INTERVAL: ${BACKUP_CHECK_INTERVAL:-60}
-      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
-      BACKUP_INCLUDE_REDIS: "true"
-      BACKUP_INCLUDE_CONFIG: "true"
-      BACKUP_ENV_FILE_PATH: /run/backup-config/.env.production
-      BACKUP_COMPOSE_FILE_PATH: /run/backup-config/compose.prod.yml
+      FLASK_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-studyuser}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ti_db}
+      DATA_DIR: /data
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
+      BACKUP_CREDENTIAL_SECRET: ${BACKUP_CREDENTIAL_SECRET:?BACKUP_CREDENTIAL_SECRET is required}
+      TZ: ${TZ:-Asia/Shanghai}
+      BACKUP_SCHEDULER_POLL_SECONDS: ${BACKUP_SCHEDULER_POLL_SECONDS:-60}
+      BACKUP_JOB_LEASE_SECONDS: ${BACKUP_JOB_LEASE_SECONDS:-3600}
+      BACKUP_PG_DUMP_TIMEOUT: ${BACKUP_PG_DUMP_TIMEOUT:-900}
+      TI_BACKUP_SCHEDULER: "1"
+      REDIS_URL: redis://redis:6379/0
+      RATELIMIT_STORAGE_URI: redis://redis:6379/0
     volumes:
-      - ./backups:/backups
       - ./var:/data:ro
-      - ./scripts/backup-cron.sh:/backup-cron.sh:ro
-      - ./compose.prod.yml:/run/backup-config/compose.prod.yml:ro
-      - ./.env.production:/run/backup-config/.env.production:ro
-    command: sh -c "/backup-cron.sh"
+    command: python -m app.tasks.backup_scheduler
+    stop_grace_period: ${BACKUP_STOP_GRACE_PERIOD:-1h}
     depends_on:
       postgres:
         condition: service_healthy
@@ -279,7 +277,7 @@ services:
       resources:
         limits:
           cpus: '0.25'
-          memory: 128M
+          memory: 512M
         reservations:
           cpus: '0.1'
-          memory: 64M
+          memory: 128M

@@ -304,6 +304,7 @@ FLASK_ENV=production
 TI_IMAGE=ghcr.io/saksk-it/ti:latest
 TI_IMAGE_PULL_POLICY=always
 SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(48))")
+BACKUP_CREDENTIAL_SECRET=$(python3 -c "import secrets; print(secrets.token_urlsafe(48))")
 POSTGRES_USER=studyuser
 POSTGRES_PASSWORD=$(python3 -c "import secrets; print(secrets.token_urlsafe(48))")
 POSTGRES_DB=ti_db
@@ -317,11 +318,11 @@ PROXY_FIX_ENABLED=true
 HTTP_BIND=0.0.0.0
 HTTP_PORT=8080
 SESSION_COOKIE_SECURE=false
-BACKUP_TZ=Asia/Shanghai
-BACKUP_ANCHOR_TIME=04:00
-BACKUP_INTERVAL=43200
-BACKUP_CHECK_INTERVAL=60
-BACKUP_RETENTION_DAYS=7
+TZ=Asia/Shanghai
+BACKUP_SCHEDULER_POLL_SECONDS=60
+BACKUP_JOB_LEASE_SECONDS=3600
+BACKUP_PG_DUMP_TIMEOUT=900
+BACKUP_STOP_GRACE_PERIOD=1h
 EOF
 
 chmod 600 .env.production
@@ -733,3 +734,78 @@ ssh -i ~/.ssh/ti-production-migration \
 4. 验证管理员和普通用户登录、上传文件读取、后台任务与定时备份；
 5. 更新微信、短信、邮件、AI 上游、对象存储等第三方平台的源 IP 白名单与回调配置；
 6. 观察服务器 2 日志和资源使用情况，确认稳定后再安排服务器 1 下线。
+
+## 13. Cloudflare R2 数据库备份
+
+生产 Compose 使用与 Web 相同的 `TI_IMAGE` 启动独立 Python sidecar：
+`python -m app.tasks.backup_scheduler`。调度器不在 Flask/Gunicorn 线程内运行，
+并通过数据库唯一约束保证同一 Cron 时间槽只创建一次任务。
+
+### 13.1 创建最小权限 R2 凭据
+
+在 Cloudflare R2 中创建专用 bucket 和专用 API Token，只授予该 bucket 的
+**Object Read** 与 **Object Write** 权限。不要授予账户管理、Worker、DNS 或其他
+bucket 的权限。记录 S3 API endpoint、bucket、Access Key ID 和 Secret Access Key；
+生产服务不需要 Cloudflare 全局 API Key。
+
+### 13.2 离线保存凭据加密密钥
+
+`BACKUP_CREDENTIAL_SECRET` 只用于加密数据库中保存的 R2 凭据。首次部署前生成
+独立强随机值，写入权限为 `600` 的 `.env.production`，并在密码管理器或离线介质
+另存一份：
+
+```bash
+umask 077
+if ! grep -q '^BACKUP_CREDENTIAL_SECRET=' .env.production; then
+  BACKUP_CREDENTIAL_SECRET="$(python3 -c 'import secrets; print(secrets.token_urlsafe(48))')"
+  printf 'BACKUP_CREDENTIAL_SECRET=%s\n' "$BACKUP_CREDENTIAL_SECRET" \
+    >> .env.production
+  unset BACKUP_CREDENTIAL_SECRET
+fi
+chmod 600 .env.production
+```
+
+此值丢失或变更后，已有 R2 凭据将无法解密，必须在后台重新保存。不要把该值提交
+到 Git，也不要只保存在运行服务器上。
+
+### 13.3 后台配置与运行检查
+
+以管理员身份进入“系统设置 -> 数据库备份”，填写 R2 endpoint、bucket、对象前缀
+和两项访问凭据，先执行连接测试，再配置五段 Cron、时区下的执行计划、保留天数与
+最大保留份数并启用定时备份。Cron 与留存策略存储在后台配置中，不通过环境变量维护。
+
+Sidecar 的环境变量仅保留运行参数：
+
+```dotenv
+TZ=Asia/Shanghai
+BACKUP_SCHEDULER_POLL_SECONDS=60
+BACKUP_JOB_LEASE_SECONDS=3600
+BACKUP_PG_DUMP_TIMEOUT=900
+BACKUP_STOP_GRACE_PERIOD=1h
+```
+
+`BACKUP_STOP_GRACE_PERIOD` 是 Compose 停机宽限期。默认 1 小时，收到
+SIGTERM 后允许正在执行的备份完成并安全落库；如调大单次备份超时，也应同步调大此值。
+
+部署后检查独立进程和安全日志：
+
+```bash
+docker compose --env-file .env.production -f compose.prod.yml ps backup
+docker compose --env-file .env.production -f compose.prod.yml logs --tail=200 backup
+```
+
+### 13.4 下载后使用 CLI 恢复
+
+后台下载使用短时签名 URL。先将完整 `.tar.gz` 文件下载到部署目录的 `backups/`，
+核对文件名和大小，再在维护窗口使用现有 CLI 恢复；恢复会覆盖当前业务数据：
+
+```bash
+cd /opt/ti
+install -d -m 700 backups
+# 将后台下载的文件保存为 backups/backup_YYYYMMDD_HHMMSS_xxxxxxxx.tar.gz
+tar -tzf backups/backup_YYYYMMDD_HHMMSS_xxxxxxxx.tar.gz | head
+ENV_FILE=.env.production COMPOSE_FILE=compose.prod.yml \
+  ./scripts/restore.sh backup_YYYYMMDD_HHMMSS_xxxxxxxx.tar.gz
+```
+
+恢复完成后运行 `/api/ping?deep=1`，并人工验证登录、题库、上传文件及后台备份列表。

@@ -28,12 +28,12 @@ R2 和调度配置保存在 `system_config`。`Secret Access Key` 使用独立 `
 
 ### 任务与 Sidecar
 
-新增 `BackupJob` 表，记录 `queued/running/completed/failed` 状态、触发方式、文件名、对象 Key、大小、SHA-256、错误摘要和关键时间。
+新增 `BackupJob` 表，记录 `queued/running/completed/failed/deleting` 状态、触发方式、文件名、对象 Key、大小、SHA-256、错误摘要和关键时间。内部使用唯一活动槽、Cron 时间槽、Worker 所有权令牌与续租时间实现并发隔离和崩溃恢复，这些字段不进入管理端 DTO。
 
 Web 端只创建任务。独立 Sidecar：
 
 1. 原子认领一条排队任务；
-2. 使用数据库/Redis 锁防止并发；
+2. 使用数据库唯一活动槽、原子认领和带 fencing token 的续租防止并发；
 3. 通过 `pg_dump` 生成数据库文件，并复制上传/实例目录；
 4. 写入清单并创建权限为 `0600` 的 `tar.gz`；
 5. 上传 R2，使用 `head_object` 核对大小；
@@ -97,4 +97,3 @@ Web 端只创建任务。独立 Sidecar：
 - 归档生成不包含 Redis、日志或部署配置。
 - 页面入口、教程文案、弹窗无障碍与移动端 CSS。
 - Compose Sidecar 配置、Python 编译、定向 pytest、桌面和移动端浏览器交互。
-

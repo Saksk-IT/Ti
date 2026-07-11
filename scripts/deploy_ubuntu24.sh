@@ -364,8 +364,9 @@ EOF
 }
 
 write_production_env() {
-  local secret_key postgres_password default_admin_password
+  local secret_key backup_credential_secret postgres_password default_admin_password
   secret_key="${SECRET_KEY:-$(random_secret)}"
+  backup_credential_secret="${BACKUP_CREDENTIAL_SECRET:-$(random_secret)}"
   postgres_password="${POSTGRES_PASSWORD:-$(random_secret)}"
   default_admin_password="${DEFAULT_ADMIN_PASSWORD:-$(random_password)}"
 
@@ -374,6 +375,7 @@ FLASK_ENV=production
 TI_IMAGE=${TI_IMAGE}
 TI_IMAGE_PULL_POLICY=${TI_IMAGE_PULL_POLICY}
 SECRET_KEY=${secret_key}
+BACKUP_CREDENTIAL_SECRET=${backup_credential_secret}
 POSTGRES_USER=${POSTGRES_USER}
 POSTGRES_PASSWORD=${postgres_password}
 POSTGRES_DB=${POSTGRES_DB}
@@ -390,11 +392,11 @@ SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE}
 HTTP_BIND=${HTTP_BIND}
 HTTP_PORT=${HTTP_PORT}
 ENABLE_HTTPS=${ENABLE_HTTPS}
-BACKUP_TZ=Asia/Shanghai
-BACKUP_ANCHOR_TIME=04:00
-BACKUP_INTERVAL=43200
-BACKUP_CHECK_INTERVAL=60
-BACKUP_RETENTION_DAYS=7
+TZ=${TZ:-Asia/Shanghai}
+BACKUP_SCHEDULER_POLL_SECONDS=${BACKUP_SCHEDULER_POLL_SECONDS:-60}
+BACKUP_JOB_LEASE_SECONDS=${BACKUP_JOB_LEASE_SECONDS:-3600}
+BACKUP_PG_DUMP_TIMEOUT=${BACKUP_PG_DUMP_TIMEOUT:-900}
+BACKUP_STOP_GRACE_PERIOD=${BACKUP_STOP_GRACE_PERIOD:-1h}
 EOF
 }
 
@@ -408,6 +410,7 @@ WEB_PORT=${WEB_PORT:-8000}
 POSTGRES_BIND=${POSTGRES_BIND:-127.0.0.1}
 POSTGRES_PORT=${POSTGRES_PORT:-5432}
 SECRET_KEY=${SECRET_KEY:-dev-secret-key}
+BACKUP_CREDENTIAL_SECRET=${BACKUP_CREDENTIAL_SECRET:-dev-backup-credential-secret}
 POSTGRES_USER=${POSTGRES_USER}
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-studypass}
 POSTGRES_DB=${POSTGRES_DB}
@@ -422,12 +425,32 @@ SMS_ENABLED=true
 SMS_CONSOLE_OUTPUT=true
 SSE_ENABLED=${SSE_ENABLED}
 SSE_RETRY_AFTER_SECONDS=${SSE_RETRY_AFTER_SECONDS}
-BACKUP_TZ=Asia/Shanghai
-BACKUP_ANCHOR_TIME=04:00
-BACKUP_INTERVAL=43200
-BACKUP_CHECK_INTERVAL=60
-BACKUP_RETENTION_DAYS=3
+TZ=${TZ:-Asia/Shanghai}
+BACKUP_SCHEDULER_POLL_SECONDS=${BACKUP_SCHEDULER_POLL_SECONDS:-60}
+BACKUP_JOB_LEASE_SECONDS=${BACKUP_JOB_LEASE_SECONDS:-3600}
+BACKUP_PG_DUMP_TIMEOUT=${BACKUP_PG_DUMP_TIMEOUT:-900}
+BACKUP_STOP_GRACE_PERIOD=${BACKUP_STOP_GRACE_PERIOD:-1h}
 EOF
+}
+
+ensure_backup_credential_secret() {
+  [[ "$DEPLOY_ENV" == "production" ]] || return
+
+  local existing_line existing_value generated_secret previous_umask
+  existing_line="$(grep -m 1 '^BACKUP_CREDENTIAL_SECRET=' "$ENV_FILE" 2>/dev/null || true)"
+  existing_value="${existing_line#*=}"
+  if [[ -n "$existing_line" && -n "$existing_value" ]]; then
+    chmod 600 "$ENV_FILE"
+    return
+  fi
+
+  previous_umask="$(umask)"
+  umask 077
+  generated_secret="${BACKUP_CREDENTIAL_SECRET:-$(random_secret)}"
+  [[ -n "$generated_secret" ]] || fail "无法生成备份凭据加密密钥"
+  upsert_env_value "BACKUP_CREDENTIAL_SECRET" "$generated_secret"
+  chmod 600 "$ENV_FILE"
+  umask "$previous_umask"
 }
 
 prepare_runtime_files() {
@@ -456,6 +479,7 @@ prepare_runtime_files() {
     log "检测到已有环境文件，保留：${ENV_FILE}"
   fi
 
+  ensure_backup_credential_secret
   chmod 600 "$ENV_FILE"
   load_env_file
   upsert_env_value "TI_IMAGE" "$TI_IMAGE"

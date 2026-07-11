@@ -25,6 +25,12 @@ _SECRET_CONFIG_KEYS = {
     'edu_schedule_webvpn_username',
     'edu_schedule_webvpn_password',
     'edu_schedule_webvpn_cookie',
+    'backup_access_key_id',
+    'backup_secret_access_key',
+}
+_PROTECTED_BACKUP_CREDENTIAL_KEYS = {
+    'backup_access_key_id',
+    'backup_secret_access_key',
 }
 _EDU_SCHEDULE_DEFAULT_ALLOWED_HOSTS = 'webvpn.synu.edu.cn,jwxt.webvpn.synu.edu.cn'
 
@@ -116,7 +122,11 @@ class SystemConfigService:
             {
                 'id': r.id,
                 'config_key': r.config_key,
-                'config_value': r.config_value,
+                'config_value': (
+                    '***'
+                    if r.config_value and r.config_key in _SECRET_CONFIG_KEYS
+                    else ('' if r.config_key in _SECRET_CONFIG_KEYS else r.config_value)
+                ),
                 'description': r.description,
                 'updated_at': r.updated_at,
                 'updated_by': r.updated_by,
@@ -158,6 +168,9 @@ class SystemConfigService:
         admin_id: Optional[int] = None
     ) -> Dict[str, Any]:
         """更新系统配置"""
+        if config_key in _PROTECTED_BACKUP_CREDENTIAL_KEYS:
+            raise ValueError('备份凭据只能通过专用备份配置服务写入')
+
         existing = SystemConfig.query.filter_by(config_key=config_key).first()
 
         if existing:
