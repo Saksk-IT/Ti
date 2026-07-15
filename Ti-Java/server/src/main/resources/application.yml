@@ -1,0 +1,90 @@
+spring:
+  application:
+    name: ti-server
+  profiles:
+    default: local
+  jackson:
+    time-zone: UTC
+    default-property-inclusion: non_null
+    property-naming-strategy: SNAKE_CASE
+    datatype:
+      datetime:
+        WRITE_DATES_AS_TIMESTAMPS: false
+        WRITE_DATES_WITH_CONTEXT_TIME_ZONE: true
+  mvc:
+    log-request-details: false
+    problemdetails:
+      enabled: false
+  jpa:
+    generate-ddl: false
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  sql:
+    init:
+      mode: never
+  task:
+    execution:
+      pool:
+        core-size: 2
+        max-size: 8
+        queue-capacity: 100
+
+  web:
+    error:
+      include-binding-errors: never
+      include-exception: false
+      include-message: never
+      include-path: never
+      include-stacktrace: never
+      whitelabel:
+        enabled: false
+
+server:
+  port: ${TI_SERVER_PORT:8080}
+  shutdown: graceful
+  tomcat:
+    accesslog:
+      enabled: false
+    accept-count: 64
+    threads:
+      max: 64
+      min-spare: 4
+
+management:
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+      show-components: never
+      group:
+        liveness:
+          include: livenessState
+          additional-path: server:/livez
+        readiness:
+          include: readinessState,db
+          additional-path: server:/readyz
+  info:
+    env:
+      enabled: false
+
+logging:
+  structured:
+    format:
+      console: logstash
+  level:
+    org.springframework.web: INFO
+    org.springframework.security: INFO

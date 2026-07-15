@@ -35,6 +35,18 @@
 5. 应用数据库角色无 DDL 权限；迁移使用单独、短时授权的角色。PostgreSQL 是业务事实源，Redis 内容必须可重建。
 6. `03-data-ownership.csv` 中每个资源必须映射到唯一目标模块。跨模块外键可以保留数据库完整性，但 Java 对象只保存对方 ID，所有者之外的模块无写表权限。
 
+### 阶段 2 PostgreSQL 版本漂移处置
+
+2026-07-16 的只读现场核验发现：根 `compose.dev.yml` 与运行容器配置仍显示浮动标签 `postgres:16-alpine`，但容器内 `postgres --version`、`SHOW server_version_num` 及本机同名镜像元数据均为 PostgreSQL `18.4` / `180004`。因此镜像 tag 不能作为旧结构实际数据库版本的证据，生产权威版本在获得授权盘点前保持未知。
+
+阶段 2 采用以下临时但可验证的处置：
+
+1. 新 Compose、Testcontainers 和验证命令只使用带 OCI digest 的官方镜像，不复用本机浮动 `postgres:16-alpine`。
+2. 参考结构验证使用与当前开发实例一致的 PostgreSQL 18.4；另在 PostgreSQL 16.14 运行兼容测试，防止仓库原声明被静默丢弃。两者通过只代表这两套脱敏夹具，不代表生产版本已确认。
+3. 每个 schema-only 夹具记录真实 `server_version`/`server_version_num`、旧提交、Alembic head、表/列计数与 schema SHA-256；只记录镜像名或 Compose 文本不算证据。
+4. 不假设 PostgreSQL 18 的 dump 可反向恢复到 16。生产迁移前必须先读取获批源实例的真实版本，并用同版本或官方支持的升级方向完成恢复演练；版本未知或恢复失败会阻断阶段 8/10。
+5. 本节不授权查询生产，也不改变正式 Flyway baseline 仍延后到阶段 8 的决定。
+
 ### 最终切换与回滚
 
 生产切换只能在另行授权的维护窗口按 `Prepared → Frozen → BackedUp → Migrated → Validated → Switched → AcceptingWrites` 推进：先拒绝写流量、停 Worker/定时任务、撤销旧写权限并用连接审计证明写入者为零，随后备份、恢复到新库、执行受审 Flyway、校验并整体切换入口。
@@ -84,3 +96,4 @@ Java 开始接收业务写入前，可停止 Java 并整体回到未变化的旧
 - 逐资源唯一初始所有者：[`../03-data-ownership.csv`](../03-data-ownership.csv)。
 - 完整并行拓扑、状态机、切换和回滚：[`../04-migration-runbook.md`](../04-migration-runbook.md)。
 - 目标数据与事务约束：[`../01-target-architecture.md`](../01-target-architecture.md) 第 7 节。
+- PostgreSQL `pg_dump` 版本兼容边界：<https://www.postgresql.org/docs/18/app-pgdump.html>。

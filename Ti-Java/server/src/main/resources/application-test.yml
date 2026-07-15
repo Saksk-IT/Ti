@@ -1,0 +1,16 @@
+spring:
+  config:
+    activate:
+      on-profile: test
+  jpa:
+    generate-ddl: false
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  sql:
+    init:
+      mode: never
+
+logging:
+  level:
+    root: WARN

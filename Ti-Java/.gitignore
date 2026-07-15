@@ -15,3 +15,9 @@
 **/coverage/
 **/*.log
 infra/reports/*.actual.json
+
+# Phase 2 local container inputs and disposable verification evidence.
+infra/phase2/secrets/*
+!infra/phase2/secrets/*.example
+infra/phase2/artifacts/
+infra/phase2/.testcontainers/

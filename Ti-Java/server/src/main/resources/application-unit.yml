@@ -1,0 +1,28 @@
+spring:
+  config:
+    activate:
+      on-profile: unit
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
+      - org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration
+      - org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration
+  data:
+    redis:
+      repositories:
+        enabled: false
+
+management:
+  endpoint:
+    health:
+      validate-group-membership: false
+      group:
+        readiness:
+          include: readinessState
+  health:
+    redis:
+      enabled: false
+
+logging:
+  level:
+    root: WARN

@@ -1,0 +1,29 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+    import: optional:configtree:/run/secrets/
+  datasource:
+    url: ${TI_DB_URL}
+    username: ${TI_DB_USERNAME}
+    password: ${ti.db.password:${TI_DB_PASSWORD}}
+    hikari:
+      maximum-pool-size: ${TI_DB_POOL_MAX:12}
+      minimum-idle: ${TI_DB_POOL_MIN:2}
+      connection-timeout: ${TI_DB_CONNECTION_TIMEOUT_MS:3000}
+      validation-timeout: ${TI_DB_VALIDATION_TIMEOUT_MS:1000}
+  data:
+    redis:
+      host: ${TI_REDIS_HOST}
+      port: ${TI_REDIS_PORT:6379}
+      password: ${ti.redis.password:${TI_REDIS_PASSWORD}}
+      timeout: ${TI_REDIS_TIMEOUT:2s}
+      connect-timeout: ${TI_REDIS_CONNECT_TIMEOUT:2s}
+
+server:
+  forward-headers-strategy: framework
+
+management:
+  server:
+    address: ${TI_MANAGEMENT_ADDRESS:127.0.0.1}
+    port: ${TI_MANAGEMENT_PORT:9090}

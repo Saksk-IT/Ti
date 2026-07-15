@@ -1,0 +1,91 @@
+{
+  "contract_id": "ti.phase2.application-api-shape-status",
+  "schema_version": 1,
+  "source_contract": "../phase1/module-contracts.json",
+  "phase": 2,
+  "migrated_route_count": 0,
+  "implemented_public_operation_count": 0,
+  "policy": "Named Interfaces exist now; operation, DTO, and event payload shapes remain absent until backed by observed compatibility evidence.",
+  "event_payload_shape_status": "deferred_to_phase5",
+  "modules": [
+    {
+      "module_id": "identity",
+      "java_api": "io.saksk.ti.identity.api.IdentityApplicationApi",
+      "inputs": ["AuthenticateCommand", "RefreshSessionCommand", "IdentityId"],
+      "outputs": ["AuthenticationResult", "IdentitySummary"],
+      "shape_status": "deferred_shape"
+    },
+    {
+      "module_id": "catalog",
+      "java_api": "io.saksk.ti.catalog.api.CatalogApplicationApi",
+      "inputs": ["QuestionId", "CategoryId", "CatalogQuery"],
+      "outputs": ["QuestionView", "CatalogPage"],
+      "shape_status": "deferred_shape",
+      "phase2_internal_probe": "io.saksk.ti.catalog.application.port.SubjectReadPort",
+      "phase2_internal_probe_is_public_contract": false
+    },
+    {
+      "module_id": "personalbank",
+      "java_api": "io.saksk.ti.personalbank.api.PersonalBankApplicationApi",
+      "inputs": ["ActorId", "BankId", "BankCommand"],
+      "outputs": ["BankView", "BankPermissionDecision"],
+      "shape_status": "deferred_shape"
+    },
+    {
+      "module_id": "assessment",
+      "java_api": "io.saksk.ti.assessment.api.AssessmentApplicationApi",
+      "inputs": ["ActorId", "ExamId", "SubmissionId", "AssessmentCommand"],
+      "outputs": ["AssessmentResult", "ScoreView"],
+      "shape_status": "deferred_shape"
+    },
+    {
+      "module_id": "learning",
+      "java_api": "io.saksk.ti.learning.api.LearningApplicationApi",
+      "inputs": ["ActorId", "QuestionId", "AttemptId", "LearningCommand"],
+      "outputs": ["AnswerResult", "LearningProgressView"],
+      "shape_status": "deferred_shape"
+    },
+    {
+      "module_id": "community",
+      "java_api": "io.saksk.ti.community.api.CommunityApplicationApi",
+      "inputs": ["ActorId", "PostId", "CommunityCommand"],
+      "outputs": ["PostView", "CommunityPage"],
+      "shape_status": "deferred_shape"
+    },
+    {
+      "module_id": "campus",
+      "java_api": "io.saksk.ti.campus.api.CampusApplicationApi",
+      "inputs": ["ActorId", "CampusAccountId", "RefreshId", "CampusQuery"],
+      "outputs": ["RefreshReceipt", "CampusSnapshotView"],
+      "shape_status": "deferred_shape"
+    },
+    {
+      "module_id": "coding",
+      "java_api": "io.saksk.ti.coding.api.CodingApplicationApi",
+      "inputs": ["ActorId", "CodingProblemId", "CodeSubmissionId"],
+      "outputs": ["SubmissionReceipt", "JudgeResultView"],
+      "shape_status": "deferred_shape"
+    },
+    {
+      "module_id": "intelligence",
+      "java_api": "io.saksk.ti.intelligence.api.IntelligenceApplicationApi",
+      "inputs": ["ActorId", "IntelligenceRequestId", "PromptCommand"],
+      "outputs": ["IntelligenceResult", "UsageView"],
+      "shape_status": "deferred_shape"
+    },
+    {
+      "module_id": "messaging",
+      "java_api": "io.saksk.ti.messaging.api.MessagingApplicationApi",
+      "inputs": ["ActorId", "MessageId", "DeliveryCommand"],
+      "outputs": ["MessageView", "DeliveryReceipt"],
+      "shape_status": "deferred_shape"
+    },
+    {
+      "module_id": "operations",
+      "java_api": "io.saksk.ti.operations.api.OperationsApplicationApi",
+      "inputs": ["OperatorId", "OperationId", "OperationsCommand"],
+      "outputs": ["OperationReceipt", "OperationsStatusView"],
+      "shape_status": "deferred_shape"
+    }
+  ]
+}

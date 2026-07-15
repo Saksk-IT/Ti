@@ -1,0 +1,4 @@
+services:
+  redis:
+    ports:
+      - "127.0.0.1:${TI_JAVA_REDIS_PORT:-26379}:6379"

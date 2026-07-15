@@ -1,0 +1,40 @@
+{
+  "manifestVersion": 1,
+  "observedAt": "2026-07-16",
+  "scope": "authorized local development reference instance, read-only inspection",
+  "legacySourceCommit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "alembicHead": "f5b6c7d8e9f0",
+  "repositoryDeclaration": {
+    "postgresImage": "postgres:16-alpine"
+  },
+  "observedReference": {
+    "postgresVersion": "18.4",
+    "postgresVersionNum": 180004,
+    "physicalTableCount": 70,
+    "physicalColumnCount": 617
+  },
+  "production": {
+    "postgresVersionStatus": "unknown",
+    "inspectionAuthorized": false
+  },
+  "phase2Fixture": {
+    "kind": "minimal subjects schema-only fixture",
+    "flywayBaseline": false,
+    "tableCount": 2,
+    "columnCount": 10,
+    "schemaResource": "server/src/test/resources/db/phase2/minimal-reference-schema.sql",
+    "schemaSha256": "2873948e1d0a59eb8ceb9dce94e23ec05d9db6bfe288e33140d33519dac62c83",
+    "primaryPostgres": {
+      "version": "18.4",
+      "image": "postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15"
+    },
+    "compatibilityPostgres": {
+      "version": "16.14",
+      "image": "postgres:16.14-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777"
+    }
+  },
+  "compatibilityConstraints": {
+    "postgres18DumpRestoresToPostgres16": "not supported and not assumed",
+    "passingFixtureTestsConfirmsProductionVersion": false
+  }
+}

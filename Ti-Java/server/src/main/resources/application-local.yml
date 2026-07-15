@@ -1,0 +1,23 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: ${TI_DB_URL:jdbc:postgresql://127.0.0.1:5433/ti_java}
+    username: ${TI_DB_USERNAME:ti_java}
+    password: ${TI_DB_PASSWORD:ti_java}
+    hikari:
+      maximum-pool-size: 8
+      minimum-idle: 1
+      connection-timeout: 3000
+      validation-timeout: 1000
+  data:
+    redis:
+      host: ${TI_REDIS_HOST:127.0.0.1}
+      port: ${TI_REDIS_PORT:6380}
+      password: ${TI_REDIS_PASSWORD:}
+      timeout: 2s
+      connect-timeout: 2s
+
+server:
+  address: ${TI_SERVER_ADDRESS:127.0.0.1}

@@ -13,7 +13,7 @@ Spring 官方将 Spring MVC 定义为基于 Servlet API 的原始 Web 框架，�
 
 ## 决策
 
-1. Java API 只引入 `spring-boot-starter-web`，使用 Spring MVC annotated controller、Jakarta Validation、Servlet Filter 与 Spring Security Servlet 支持。
+1. Java API 只引入 Spring Boot 4 的 `spring-boot-starter-webmvc`，使用 Spring MVC annotated controller、Jakarta Validation、Servlet Filter 与 Spring Security Servlet 支持。
 2. 事务数据访问使用 JPA/JDBC 的同步 API；请求级外部 HTTP 默认使用 Spring `RestClient` 或受控同步客户端，必须设置连接、读取、总调用超时。
 3. 兼容 SSE 由 `messaging` 模块的 MVC 输出适配器实现，可使用 `SseEmitter`；连接在线与否不影响 PostgreSQL 中消息/通知事实。心跳、断线、重复事件和降级轮询均需契约测试。
 4. 受控下载可使用 `Resource`/`StreamingResponseBody`；大文件导入导出、模型解析、音频转码和脆弱教务查询不得长期占用请求线程，改为提交带幂等键的后台命令并返回既有兼容状态。
