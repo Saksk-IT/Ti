@@ -2,10 +2,10 @@
 
 ## 1. 文档状态
 
-- 状态：阶段 0 架构基线，供阶段 1 ADR 固化使用。
-- 依据：`00-current-state.md`、`02-route-parity-matrix.csv`、`03-data-ownership.csv` 与重构目标契约。
-- 本文给出目标边界和待验证约束，不代表阶段 1 ADR 已评审或实现已完成。
-- 路由矩阵中的目标模块是初始归属；阶段 1 可依据真实事务和业务不变量调整，但每条路由、每张表及每类持久化资源最终都必须有且只有一个所有者。
+- 状态：阶段 1 架构决策已接受；实现必须遵守 ADR、机器合同和契约门禁。
+- 依据：`00-current-state.md`、`02-route-parity-matrix.csv`、`03-data-ownership.csv`、`phase1/module-contracts.json`、`phase1/business-invariants.json` 与 `adr/`。
+- 阶段 1 已把候选边界固化为 11 个业务模块、一个 Web 适配边界和无环依赖合同；后续不得用实现便利绕过公开 API、唯一所有权或单写者约束。
+- 路由、资源和契约仍按迁移矩阵逐项推进；“架构已接受”不表示任何旧路由、数据写所有权或生产流量已经迁入 Java。
 
 ## 2. 架构目标与明确非目标
 
@@ -110,7 +110,7 @@ io.saksk.ti
 
 ## 6. 目标依赖 DAG
 
-建议依赖只指向下方层级，事件消费者依赖生产者的公开事件包；禁止反向同步回调：
+下图是阶段 1 已接受的业务依赖方向；事件消费者只依赖生产者公开事件，禁止反向同步回调。为保持图可读，除已画出的 `identity`/`operations` 外，其余模块到 `sharedkernel` 的重复直接边以及 Web 对 11 个业务公开 API 的扇出未展开；精确允许边以 `phase1/module-contracts.json` 和 ADR-0010 为机器权威。
 
 ```mermaid
 flowchart TD
@@ -130,6 +130,7 @@ flowchart TD
     ID --> SK
     OP --> SK
     CAT --> SK
+    CAT --> ID
     PB --> ID
     PB --> CAT
     AS --> ID
@@ -157,17 +158,17 @@ flowchart TD
     MSG -. "消费公开事件" .-> AI
 ```
 
-图中未画出的依赖默认禁止。`operations` 不反向调用所有领域来实现集中式后台；平台配置如果确需被其他模块读取，只暴露窄的、只读公开接口，阶段 1 必须证明不会引入环。更优先的做法是把领域专属配置迁回对应模块，把纯运行配置放入类型安全的外部配置。
+图中及机器合同未列出的依赖默认禁止。`catalog → identity` 是阶段 1 根据科目权限真实代码新增的窄只读边；`messaging` 对六个领域的边只能异步消费公开事件。`operations` 不反向调用所有领域来实现集中式后台，Web 不拥有表或 JPA 持久化。
 
-阶段 1 必须把该建议图转成机器可验证的 Modulith 模块定义和架构测试。若真实事务要求不同方向，应先更新 ADR、公开 API 和图，再改实现，不能用内部类引用绕过检查。
+`validate_phase1_boundaries.py` 已证明合同无环、154 类资源唯一归属且无共享 JPA Entity。阶段 2 必须把同一允许边落实为 Modulith `allowedDependencies`、Named Interface 与架构测试；若真实事务要求新方向，应先更新机器合同和 ADR，再改实现，不能用内部类、反射或字符串事件绕过检查。
 
 ## 7. 数据与事务
 
 - PostgreSQL 是业务事实源；每张表只能由一个模块写入。
 - 同一用例内的聚合变更和待发布事件在一个本地数据库事务提交。
 - 跨模块不共享数据库会话来修改对方表；需要立即结果时调用公开应用 API，需要后续动作时使用领域事件。
-- 可靠发布采用 Spring Modulith Event Publication Registry 或显式 Transactional Outbox，具体实现由 ADR 决定；消费者必须支持稳定幂等键、重试、失败观察和死信处置。
-- Redis 数据必须可从 PostgreSQL或确定性计算重建。缓存失效由拥有事实的模块发出事件，缓存适配器负责执行。
+- 可靠发布采用 ADR-0009 已接受的 Spring Modulith JDBC Event Publication Registry；业务事实、幂等记录和 publication 在同一本地事务提交，消费者仍必须支持稳定幂等键、重试、失败观察和人工处置。
+- Redis 数据必须可从 PostgreSQL 或确定性计算重建。缓存失效由拥有事实的模块发出事件，缓存适配器负责执行。
 - Flyway 正式 baseline 只在阶段 8 建立，并记录旧 Alembic head `f5b6c7d8e9f0` 的对应关系；此前禁止伪造 baseline。
 - Hibernate 在所有非测试运行档使用 `ddl-auto=validate` 或等价只校验模式。
 
@@ -175,11 +176,11 @@ flowchart TD
 
 兼容层首先复现矩阵记录的旧路径、方法、状态码、信封、分页、空值、鉴权和错误语义。新设计可以规划 `/api/v1`，但在 Web 和小程序都迁移并通过之前，旧路径由 Java 内部兼容 Controller 直接实现，不能代理旧 Flask。
 
-- OpenAPI 3.1 是 Java HTTP 契约和 Vue TypeScript 客户端的唯一类型来源。
+- OpenAPI 3.1.2 是 Java HTTP 契约和 Vue TypeScript 客户端的唯一类型来源；阶段 1 初稿位于 `../../contracts/openapi.json`。
 - Web 目标认证为安全 Cookie；小程序使用短期 Access Token、可撤销/轮换 Refresh Token，并兼容现有 `session_version` 语义。
 - 旧密码哈希、角色、微信绑定和会话失效语义由 Java 本地实现兼容，不使用旧 Flask introspection。
 - SSE 作为 `messaging` 的输出适配器保留兼容；PostgreSQL 中的消息和通知事实不能依赖连接是否在线。
-- 时间、金额/分数精度、枚举、分页、空值和错误信封必须在阶段 1 契约 ADR 中固定。
+- 时间、金额/分数精度、枚举、分页、空值和错误信封已由 ADR-0006 与 `phase1/api-contract-conventions.md` 固定；旧兼容 operation 仍以逐项观测行为为准。
 
 ## 9. 外部集成和 Python 边界
 
@@ -202,21 +203,21 @@ flowchart TD
 - 数据所有权测试保证 `03-data-ownership.csv` 中每个资源恰有一个所有者。
 - 从只含 `Ti-Java/` 的临时目录执行构建、测试与启动，检测父目录依赖。
 
-## 11. ADR 索引（阶段 1 待创建）
+## 11. ADR 索引（阶段 1 已接受）
 
-下表只是文件名和问题清单，状态均为“待评审”，不表示已经接受决策：
+下列 ADR 均于 2026-07-16 接受；后续实现与决策不一致时必须先修订对应 ADR 并重新运行阶段门禁：
 
-| ADR | 主题 | 阶段 0 候选方向 | 状态 |
+| ADR | 主题 | 已接受方向 | 状态 |
 | --- | --- | --- | --- |
-| `adrs/0001-java-25-and-spring-boot.md` | Java、Spring Boot、Modulith 精确版本 | 固定稳定 patch 版本及官方兼容矩阵 | 待阶段 1 创建/评审 |
-| `adrs/0002-modular-monolith.md` | 模块化单体与轻量六边形边界 | 单 Maven 应用、package 模块 | 待阶段 1 创建/评审 |
-| `adrs/0003-spring-mvc.md` | MVC 与阻塞数据访问 | Spring MVC，不使用 WebFlux 包装 JPA | 待阶段 1 创建/评审 |
-| `adrs/0004-database-coexistence.md` | 新旧数据库并行、单写者与 Flyway | 独立双库验证，最终停写整体切换 | 待阶段 1 创建/评审 |
-| `adrs/0005-authentication-transition.md` | Session/JWT/密码哈希/微信兼容 | Java 本地兼容，最终 Web Cookie + 小程序令牌 | 待阶段 1 创建/评审 |
-| `adrs/0006-api-contract.md` | 信封、错误、分页、时间和精度 | OpenAPI 3.1 + 旧路径兼容 Controller | 待阶段 1 创建/评审 |
-| `adrs/0007-vue-web-migration.md` | Vue SPA、公开页面 SEO 与客户端生成 | 先等价迁移；有 SEO 证据后再决定预渲染/Nuxt | 待阶段 1 创建/评审 |
-| `adrs/0008-python-worker-boundary.md` | Python 保留条件 | 默认 Java；证据充分才创建 Python Worker | 待阶段 1 创建/评审 |
-| `adrs/0009-reliable-events.md` | Modulith 发布记录或显式 Outbox | 本地事务 + 可恢复可靠事件 | 待阶段 1 创建/评审 |
-| `adrs/0010-module-dependency-dag.md` | 模块公开 API、事件与依赖方向 | 本文第 6 节作为待验证输入 | 待阶段 1 创建/评审 |
+| [`adr/0001-java-25-and-spring-boot.md`](adr/0001-java-25-and-spring-boot.md) | Java、Spring Boot、Modulith 精确版本 | Java 25、Boot 4.1.0、Modulith 2.1.0、Maven Wrapper 3.9.16 | 已接受 |
+| [`adr/0002-modular-monolith.md`](adr/0002-modular-monolith.md) | 模块化单体与轻量六边形边界 | 单 Maven 应用、package 模块、唯一资源所有者 | 已接受 |
+| [`adr/0003-spring-mvc.md`](adr/0003-spring-mvc.md) | MVC 与阻塞数据访问 | Spring MVC，不使用 WebFlux 包装 JPA | 已接受 |
+| [`adr/0004-database-coexistence.md`](adr/0004-database-coexistence.md) | 新旧数据库并行、单写者与 Flyway | 独立双库验证，最终停写整体切换 | 已接受 |
+| [`adr/0005-authentication-transition.md`](adr/0005-authentication-transition.md) | Session/JWT/密码哈希/微信兼容 | Java 本地限时兼容，最终 Web Cookie + 小程序令牌 | 已接受 |
+| [`adr/0006-api-contract.md`](adr/0006-api-contract.md) | 信封、错误、分页、时间和精度 | OpenAPI 3.1.2 + 旧路径兼容 Controller | 已接受 |
+| [`adr/0007-vue-web-migration.md`](adr/0007-vue-web-migration.md) | Vue SPA、公开页面 SEO 与客户端生成 | 垂直等价迁移；有量化证据后再决定预渲染/Nuxt | 已接受 |
+| [`adr/0008-python-worker-boundary.md`](adr/0008-python-worker-boundary.md) | Python 保留条件 | 默认 Java；证据充分且隔离后才创建 Python Worker | 已接受 |
+| [`adr/0009-reliable-events.md`](adr/0009-reliable-events.md) | 可靠事件与后台命令 | PostgreSQL 持久化的 Modulith JDBC Publication Registry | 已接受 |
+| [`adr/0010-module-dependency-dag.md`](adr/0010-module-dependency-dag.md) | 模块公开 API、事件与依赖方向 | 机器合同定义 11 个业务模块、Web 边界和无环允许边 | 已接受 |
 
-ADR 创建后必须记录上下文、候选方案、决定、后果、回退条件和验证证据。遇到真实代码事实推翻候选方向时，应更新 ADR 状态和矩阵，不能把阶段 0 假设包装为既定事实。
+每份 ADR 已记录上下文、决定、后果、拒绝方案和验证证据。遇到真实代码事实推翻已接受方向时，应明确修订状态、机器合同和迁移矩阵，不能悄悄让实现漂移。

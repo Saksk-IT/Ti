@@ -1,0 +1,247 @@
+{
+  "schema_version": 1,
+  "policy": {
+    "unknown_schema": "Unknown request, parameter, and response shapes remain explicit in x-ti-contract and UnknownPayload; an inventory-only route must never receive a fabricated DTO.",
+    "path_method_collisions": "Exactly one effective Flask rule can become an OpenAPI Operation. Every shadowed rule remains in x-ti-shadowed-operations.",
+    "path_template_conflicts": "Templated paths with the same hierarchy require an explicit resolution before generation.",
+    "manual_contracts": "Each override names immutable route IDs and source evidence; unmatched or unused overrides fail validation."
+  },
+  "collision_resolutions": [
+    {
+      "id": "get-profile-registration-shadow",
+      "method": "GET",
+      "path": "/profile",
+      "effective_route_id": "1aae474aceca",
+      "shadowed_route_ids": [
+        "ddd38e139d39"
+      ],
+      "reason": "The runtime URL map registers main.main_pages.profile_page first; Werkzeug therefore matches it and leaves user.user_pages.profile unreachable for GET /profile.",
+      "sources": [
+        "docs/refactor/02-route-parity-matrix.csv:compatibility_notes",
+        "app/modules/main/routes/pages_components/account_settings.py:11",
+        "app/modules/user/routes/pages.py:8"
+      ]
+    }
+  ],
+  "path_template_resolutions": [],
+  "operation_overrides": [
+    {
+      "id": "login-request-source-contract",
+      "route_id": "02366fc520ac",
+      "method": "POST",
+      "confidence": "source-audited",
+      "sources": [
+        "app/modules/auth/schemas.py:48",
+        "app/modules/auth/routes/api.py:68"
+      ],
+      "request_body": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/LoginRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "400": {
+          "$ref": "#/components/responses/BadRequest"
+        },
+        "403": {
+          "$ref": "#/components/responses/Forbidden"
+        },
+        "429": {
+          "$ref": "#/components/responses/TooManyRequests"
+        }
+      }
+    },
+    {
+      "id": "record-result-request-source-contract",
+      "route_id": "87bb4fb340c8",
+      "method": "POST",
+      "confidence": "source-audited",
+      "sources": [
+        "app/modules/quiz/routes/api_components/core.py:85",
+        "docs/refactor/golden-samples/03-learning.json"
+      ],
+      "request_body": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RecordResultRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "400": {
+          "$ref": "#/components/responses/BadRequest"
+        },
+        "403": {
+          "$ref": "#/components/responses/Forbidden"
+        },
+        "404": {
+          "$ref": "#/components/responses/NotFound"
+        },
+        "429": {
+          "$ref": "#/components/responses/TooManyRequests"
+        },
+        "500": {
+          "$ref": "#/components/responses/InternalError"
+        }
+      }
+    },
+    {
+      "id": "public-bank-summary-query-contract",
+      "route_id": "f3644c1474f3",
+      "method": "GET",
+      "confidence": "source-audited",
+      "sources": [
+        "app/modules/user_bank/routes/public.py:59"
+      ],
+      "parameters": [
+        {
+          "name": "board_id",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "x-ti-legacy-nonpositive-value": "normalizes-to-null"
+        },
+        {
+          "name": "keyword",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      ]
+    },
+    {
+      "id": "exam-records-query-contract",
+      "route_id": "ee831203df4d",
+      "method": "GET",
+      "confidence": "source-audited",
+      "sources": [
+        "app/modules/exam/routes/api.py:401"
+      ],
+      "parameters": [
+        {
+          "name": "source",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "all",
+              "public",
+              "user_bank"
+            ],
+            "default": "all",
+            "x-ti-enum-policy": "closed-wire-values"
+          },
+          "x-ti-legacy-invalid-value": "normalizes-to-all"
+        },
+        {
+          "name": "subject",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "default": "all"
+          }
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          },
+          "x-ti-legacy-invalid-value": "defaults-or-clamps-to-1"
+        },
+        {
+          "name": "size",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 50,
+            "default": 10
+          },
+          "x-ti-legacy-invalid-value": "defaults-to-10-or-clamps-to-5..50"
+        },
+        {
+          "name": "bank_id",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "x-ti-legacy-nonpositive-value": "clamps-to-zero-then-normalizes-to-null"
+        }
+      ]
+    }
+  ],
+  "golden_contract_pins": [
+    {
+      "sample": "01-identity.json",
+      "route_id": "02366fc520ac",
+      "method": "POST",
+      "path": "/api/login",
+      "status": 200
+    },
+    {
+      "sample": "02-catalog.json",
+      "route_id": "f3644c1474f3",
+      "method": "GET",
+      "path": "/api/public/banks/summary",
+      "status": 200
+    },
+    {
+      "sample": "03-learning.json",
+      "route_id": "87bb4fb340c8",
+      "method": "POST",
+      "path": "/api/record_result",
+      "status": 200
+    },
+    {
+      "sample": "04-assessment.json",
+      "route_id": "ee831203df4d",
+      "method": "GET",
+      "path": "/api/exams/records",
+      "status": 200
+    },
+    {
+      "sample": "05-community.json",
+      "route_id": "570805fbf02a",
+      "method": "GET",
+      "path": "/api/forum/boards",
+      "status": 200
+    },
+    {
+      "sample": "06-campus.json",
+      "route_id": "f59a2e9c9bc4",
+      "method": "GET",
+      "path": "/api/edu-schedule/status",
+      "status": 200
+    },
+    {
+      "sample": "07-operations.json",
+      "route_id": "6e1a36f5052d",
+      "method": "GET",
+      "path": "/admin/api/subjects",
+      "status": 200
+    }
+  ]
+}

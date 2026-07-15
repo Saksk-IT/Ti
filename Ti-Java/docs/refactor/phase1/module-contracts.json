@@ -1,0 +1,1332 @@
+{
+  "contract_id": "ti.phase1.module-boundaries",
+  "schema_version": 1,
+  "baseline_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "java_root_package": "io.saksk.ti",
+  "data_ownership_source": "../03-data-ownership.csv",
+  "declared_business_module_count": 11,
+  "declared_adapter_boundary_count": 1,
+  "shared_kernel": {
+    "module_id": "sharedkernel",
+    "base_package": "io.saksk.ti.sharedkernel",
+    "allowed_contents": [
+      "typed scalar identifiers",
+      "time and request correlation types",
+      "stable error/result primitives",
+      "outbox envelope primitives"
+    ],
+    "forbidden_contents": [
+      "JPA entities",
+      "repositories",
+      "business services",
+      "module-specific DTOs",
+      "mutable shared aggregates"
+    ]
+  },
+  "cross_module_rules": {
+    "storage_reference": "scalar foreign IDs only",
+    "transport_reference": "typed IDs, owner-defined DTOs/events, and stable shared-kernel primitives only",
+    "cross_owner_foreign_id_count_from_matrix": 76,
+    "physical_foreign_key_implies_java_dependency": false,
+    "shared_jpa_entities": [],
+    "forbidden": [
+      "cross-module JPA relationships",
+      "imports of another module domain, infrastructure, persistence, or entity package",
+      "multi-module database transactions",
+      "web adapters reading or writing repositories directly",
+      "dual writes to Python and Java runtimes"
+    ]
+  },
+  "dependency_direction": {
+    "meaning": "consumer module may depend only on the listed provider public API or shared kernel; dependencies are compile-time edges and must form a DAG",
+    "physical_database_foreign_keys": "inventory evidence only; they do not create Java package dependencies"
+  },
+  "spring_modulith_mapping": {
+    "module_declaration": "each io.saksk.ti.<module> package declares @ApplicationModule with this contract's allowedDependencies",
+    "public_api_exposure": "io.saksk.ti.<module>.api is an explicit @NamedInterface(\"api\"); all other subpackages remain internal",
+    "public_event_exposure": "provider-owned immutable integration events live under io.saksk.ti.<module>.api.events and are part of the api named interface",
+    "verification": "ApplicationModules.of(TiApplication.class).verify() plus this Phase 1 validator",
+    "web_boundary": "io.saksk.ti.web is an adapter boundary and never exposes a domain entity, repository or transaction"
+  },
+  "dependency_adjustments": [
+    {
+      "edge": "catalog -> identity",
+      "change_from_phase0_candidate": "added",
+      "evidence": [
+        "app/core/utils/subject_permissions.py:is_admin",
+        "app/core/utils/subject_permissions.py:can_user_access_subject",
+        "app/core/utils/subject_permissions.py:get_user_accessible_subjects",
+        "03-data-ownership.csv:public_subject_users"
+      ],
+      "rationale": "目录可见性是 catalog 规则，但旧实现需要查询 identity 拥有的账号存在性和管理员角色；阶段 1 因此只允许 catalog 同步调用 identity 的窄只读公开 API。public_subject_users 中的 user_id 仍只是标量外部 ID。",
+      "constraint": "catalog may query identity public API for actor/account state; identity must not depend on catalog and catalog must not import identity internals"
+    }
+  ],
+  "event_dependency_constraints": {
+    "consumer": "messaging",
+    "event_providers": [
+      "assessment",
+      "learning",
+      "community",
+      "campus",
+      "coding",
+      "intelligence"
+    ],
+    "contract": "provider-owned immutable public event contracts only",
+    "delivery": "asynchronous through a reliable publication/outbox path",
+    "synchronous_reverse_calls": "forbidden",
+    "identity_exception": "messaging may synchronously query the narrow identity public API to resolve an actor or recipient; identity must not call messaging in the same transaction"
+  },
+  "public_event_edges": [
+    {
+      "consumer": "learning",
+      "provider": "assessment",
+      "interaction": "public_event_contract",
+      "mode": "asynchronous_consumption_only"
+    },
+    {
+      "consumer": "messaging",
+      "provider": "assessment",
+      "interaction": "public_event_contract",
+      "mode": "asynchronous_consumption_only"
+    },
+    {
+      "consumer": "messaging",
+      "provider": "learning",
+      "interaction": "public_event_contract",
+      "mode": "asynchronous_consumption_only"
+    },
+    {
+      "consumer": "messaging",
+      "provider": "community",
+      "interaction": "public_event_contract",
+      "mode": "asynchronous_consumption_only"
+    },
+    {
+      "consumer": "messaging",
+      "provider": "campus",
+      "interaction": "public_event_contract",
+      "mode": "asynchronous_consumption_only"
+    },
+    {
+      "consumer": "messaging",
+      "provider": "coding",
+      "interaction": "public_event_contract",
+      "mode": "asynchronous_consumption_only"
+    },
+    {
+      "consumer": "messaging",
+      "provider": "intelligence",
+      "interaction": "public_event_contract",
+      "mode": "asynchronous_consumption_only"
+    }
+  ],
+  "modules": [
+    {
+      "module_id": "identity",
+      "display_name": "身份与访问",
+      "boundary_kind": "business_module",
+      "base_package": "io.saksk.ti.identity",
+      "responsibility": "用户身份、会话、认证、账号安全状态和授权主体。",
+      "public_application_apis": [
+        {
+          "type": "IdentityApplicationApi",
+          "package": "io.saksk.ti.identity.api",
+          "purpose": "认证、令牌验证、账号状态与主体查询。",
+          "inputs": [
+            "AuthenticateCommand",
+            "RefreshSessionCommand",
+            "IdentityId"
+          ],
+          "outputs": [
+            "AuthenticationResult",
+            "IdentitySummary"
+          ],
+          "payload_policy": "typed IDs and owner-defined immutable DTOs only; never expose persistence entities"
+        }
+      ],
+      "internal_packages": [
+        {
+          "package": "io.saksk.ti.identity.application",
+          "role": "use-case orchestration and local transaction boundaries"
+        },
+        {
+          "package": "io.saksk.ti.identity.domain",
+          "role": "module-owned aggregates, value objects and domain rules"
+        },
+        {
+          "package": "io.saksk.ti.identity.infrastructure",
+          "role": "module-owned persistence and external adapters"
+        }
+      ],
+      "owned_tables": [
+        "email_verification_codes",
+        "user_subjects",
+        "users"
+      ],
+      "owned_resources": [
+        {
+          "kind": "db_kv_namespace",
+          "name": "user_profile_extra_v1",
+          "persistence_role": "business_state"
+        },
+        {
+          "kind": "db_kv_namespace",
+          "name": "user_settings_v1",
+          "persistence_role": "business_state"
+        },
+        {
+          "kind": "db_kv_namespace",
+          "name": "web_login_session:<sid>",
+          "persistence_role": "short_lived_coordination"
+        },
+        {
+          "kind": "db_kv_namespace",
+          "name": "web_login_token:<token>",
+          "persistence_role": "single_use_coordination"
+        },
+        {
+          "kind": "db_kv_namespace",
+          "name": "web_wechat_bind_session:<sid>",
+          "persistence_role": "short_lived_coordination"
+        },
+        {
+          "kind": "db_kv_namespace",
+          "name": "wechat_temp_token:<token>",
+          "persistence_role": "single_use_coordination"
+        },
+        {
+          "kind": "external_api",
+          "name": "Aliyun DYPNS SMS",
+          "persistence_role": "external_integration"
+        },
+        {
+          "kind": "external_api",
+          "name": "SMTP email",
+          "persistence_role": "external_integration"
+        },
+        {
+          "kind": "external_api",
+          "name": "WeChat jscode2session/token/getwxacodeunlimit",
+          "persistence_role": "external_integration"
+        },
+        {
+          "kind": "object_prefix",
+          "name": "uploads/avatars/",
+          "persistence_role": "durable_file"
+        },
+        {
+          "kind": "object_prefix",
+          "name": "uploads/web_login/",
+          "persistence_role": "short_lived_file"
+        },
+        {
+          "kind": "object_prefix",
+          "name": "uploads/wechat_bind/",
+          "persistence_role": "short_lived_file"
+        },
+        {
+          "kind": "queue_task",
+          "name": "app.tasks.email_tasks.send_email_task",
+          "persistence_role": "background_command"
+        },
+        {
+          "kind": "queue_task",
+          "name": "app.tasks.sms_tasks.send_sms_task",
+          "persistence_role": "background_command"
+        },
+        {
+          "kind": "redis_key",
+          "name": "auth:user_state:<user_id>",
+          "persistence_role": "rebuildable_auth_cache"
+        },
+        {
+          "kind": "redis_key",
+          "name": "sms:rate:<phone>",
+          "persistence_role": "rate_limit"
+        },
+        {
+          "kind": "redis_key",
+          "name": "sms:rate_hour:<phone>",
+          "persistence_role": "rate_limit"
+        },
+        {
+          "kind": "scheduled_or_background_task",
+          "name": "expired email verification cleanup",
+          "persistence_role": "background_process"
+        }
+      ],
+      "allowed_dependencies": [
+        "sharedkernel"
+      ],
+      "cross_module_reference_policy": "id_only",
+      "shared_entities": [],
+      "cross_module_forbidden_imports": [
+        "*.domain.*",
+        "*.infrastructure.*",
+        "*.persistence.*",
+        "*.entity.*"
+      ],
+      "transaction_boundary": "one module-owned local PostgreSQL transaction; publish integration facts through a same-transaction outbox when another module reacts"
+    },
+    {
+      "module_id": "catalog",
+      "display_name": "题目目录",
+      "boundary_kind": "business_module",
+      "base_package": "io.saksk.ti.catalog",
+      "responsibility": "公共题目、分类、标签、知识点与可检索目录事实。",
+      "public_application_apis": [
+        {
+          "type": "CatalogApplicationApi",
+          "package": "io.saksk.ti.catalog.api",
+          "purpose": "按稳定 ID 查询题目与目录元数据。",
+          "inputs": [
+            "QuestionId",
+            "CategoryId",
+            "CatalogQuery"
+          ],
+          "outputs": [
+            "QuestionView",
+            "CatalogPage"
+          ],
+          "payload_policy": "typed IDs and owner-defined immutable DTOs only; never expose persistence entities"
+        }
+      ],
+      "internal_packages": [
+        {
+          "package": "io.saksk.ti.catalog.application",
+          "role": "use-case orchestration and local transaction boundaries"
+        },
+        {
+          "package": "io.saksk.ti.catalog.domain",
+          "role": "module-owned aggregates, value objects and domain rules"
+        },
+        {
+          "package": "io.saksk.ti.catalog.infrastructure",
+          "role": "module-owned persistence and external adapters"
+        }
+      ],
+      "owned_tables": [
+        "plaza_boards",
+        "public_bank_plaza_metrics",
+        "public_subject_users",
+        "questions",
+        "subjects"
+      ],
+      "owned_resources": [
+        {
+          "kind": "db_kv_namespace",
+          "name": "subject:overview",
+          "persistence_role": "seed_state"
+        },
+        {
+          "kind": "object_prefix",
+          "name": "uploads/question_images/",
+          "persistence_role": "durable_file"
+        },
+        {
+          "kind": "object_prefix",
+          "name": "uploads/questions/",
+          "persistence_role": "legacy_compatibility_file"
+        },
+        {
+          "kind": "redis_key",
+          "name": "cache:quiz:question_detail:<sha256(params)>",
+          "persistence_role": "rebuildable_cache"
+        },
+        {
+          "kind": "redis_key",
+          "name": "cache:quiz:questions_count:<sha256(params)>",
+          "persistence_role": "rebuildable_cache"
+        },
+        {
+          "kind": "redis_key",
+          "name": "cache:quiz:subject_info:<sha256(params)>",
+          "persistence_role": "rebuildable_cache"
+        },
+        {
+          "kind": "redis_key",
+          "name": "cache:quiz:subjects:<sha256(params)>",
+          "persistence_role": "rebuildable_cache"
+        },
+        {
+          "kind": "redis_key",
+          "name": "cache:quiz:subjects_meta:<sha256(params)>",
+          "persistence_role": "rebuildable_cache"
+        },
+        {
+          "kind": "redis_key",
+          "name": "cache:ver:quiz:questions",
+          "persistence_role": "rebuildable_cache_version"
+        },
+        {
+          "kind": "redis_key",
+          "name": "cache:ver:quiz:subjects",
+          "persistence_role": "rebuildable_cache_version"
+        },
+        {
+          "kind": "redis_key",
+          "name": "plaza:metrics:refresh:lock",
+          "persistence_role": "distributed_lock"
+        }
+      ],
+      "allowed_dependencies": [
+        "sharedkernel",
+        "identity"
+      ],
+      "cross_module_reference_policy": "id_only",
+      "shared_entities": [],
+      "cross_module_forbidden_imports": [
+        "*.domain.*",
+        "*.infrastructure.*",
+        "*.persistence.*",
+        "*.entity.*"
+      ],
+      "transaction_boundary": "one module-owned local PostgreSQL transaction; publish integration facts through a same-transaction outbox when another module reacts"
+    },
+    {
+      "module_id": "personalbank",
+      "display_name": "个人题库",
+      "boundary_kind": "business_module",
+      "base_package": "io.saksk.ti.personalbank",
+      "responsibility": "个人题库、分享、复制、导入及基于所有权的访问控制。",
+      "public_application_apis": [
+        {
+          "type": "PersonalBankApplicationApi",
+          "package": "io.saksk.ti.personalbank.api",
+          "purpose": "校验题库权限并执行题库命令。",
+          "inputs": [
+            "ActorId",
+            "BankId",
+            "BankCommand"
+          ],
+          "outputs": [
+            "BankView",
+            "BankPermissionDecision"
+          ],
+          "payload_policy": "typed IDs and owner-defined immutable DTOs only; never expose persistence entities"
+        }
+      ],
+      "internal_packages": [
+        {
+          "package": "io.saksk.ti.personalbank.application",
+          "role": "use-case orchestration and local transaction boundaries"
+        },
+        {
+          "package": "io.saksk.ti.personalbank.domain",
+          "role": "module-owned aggregates, value objects and domain rules"
+        },
+        {
+          "package": "io.saksk.ti.personalbank.infrastructure",
+          "role": "module-owned persistence and external adapters"
+        }
+      ],
+      "owned_tables": [
+        "bank_share_records",
+        "bank_shares",
+        "public_bank_users",
+        "user_bank_categories",
+        "user_bank_questions",
+        "user_question_banks"
+      ],
+      "owned_resources": [
+        {
+          "kind": "db_kv_namespace",
+          "name": "bank_<bank_id>_tags",
+          "persistence_role": "legacy_compatibility_state"
+        },
+        {
+          "kind": "db_kv_namespace",
+          "name": "user_bank_duplicate_check:<bank_id>",
+          "persistence_role": "rebuildable_snapshot"
+        },
+        {
+          "kind": "object_prefix",
+          "name": "uploads/bank_covers/",
+          "persistence_role": "durable_file"
+        },
+        {
+          "kind": "object_prefix",
+          "name": "uploads/user_bank_question_images/",
+          "persistence_role": "durable_file"
+        }
+      ],
+      "allowed_dependencies": [
+        "sharedkernel",
+        "identity",
+        "catalog"
+      ],
+      "cross_module_reference_policy": "id_only",
+      "shared_entities": [],
+      "cross_module_forbidden_imports": [
+        "*.domain.*",
+        "*.infrastructure.*",
+        "*.persistence.*",
+        "*.entity.*"
+      ],
+      "transaction_boundary": "one module-owned local PostgreSQL transaction; publish integration facts through a same-transaction outbox when another module reacts"
+    },
+    {
+      "module_id": "assessment",
+      "display_name": "考试测评",
+      "boundary_kind": "business_module",
+      "base_package": "io.saksk.ti.assessment",
+      "responsibility": "考试定义、考试会话、交卷、阅卷与精确分数事实。",
+      "public_application_apis": [
+        {
+          "type": "AssessmentApplicationApi",
+          "package": "io.saksk.ti.assessment.api",
+          "purpose": "创建考试会话、提交答案和读取测评结果。",
+          "inputs": [
+            "ActorId",
+            "ExamId",
+            "SubmissionId",
+            "AssessmentCommand"
+          ],
+          "outputs": [
+            "AssessmentResult",
+            "ScoreView"
+          ],
+          "payload_policy": "typed IDs and owner-defined immutable DTOs only; never expose persistence entities"
+        }
+      ],
+      "internal_packages": [
+        {
+          "package": "io.saksk.ti.assessment.application",
+          "role": "use-case orchestration and local transaction boundaries"
+        },
+        {
+          "package": "io.saksk.ti.assessment.domain",
+          "role": "module-owned aggregates, value objects and domain rules"
+        },
+        {
+          "package": "io.saksk.ti.assessment.infrastructure",
+          "role": "module-owned persistence and external adapters"
+        }
+      ],
+      "owned_tables": [
+        "exam_questions",
+        "exam_templates",
+        "exams"
+      ],
+      "owned_resources": [],
+      "allowed_dependencies": [
+        "sharedkernel",
+        "identity",
+        "catalog",
+        "personalbank"
+      ],
+      "cross_module_reference_policy": "id_only",
+      "shared_entities": [],
+      "cross_module_forbidden_imports": [
+        "*.domain.*",
+        "*.infrastructure.*",
+        "*.persistence.*",
+        "*.entity.*"
+      ],
+      "transaction_boundary": "one module-owned local PostgreSQL transaction; publish integration facts through a same-transaction outbox when another module reacts"
+    },
+    {
+      "module_id": "learning",
+      "display_name": "学习与刷题",
+      "boundary_kind": "business_module",
+      "base_package": "io.saksk.ti.learning",
+      "responsibility": "练习会话、答案记录、错题、收藏、进度与学习统计。",
+      "public_application_apis": [
+        {
+          "type": "LearningApplicationApi",
+          "package": "io.saksk.ti.learning.api",
+          "purpose": "执行幂等答题命令并读取学习进度。",
+          "inputs": [
+            "ActorId",
+            "QuestionId",
+            "AttemptId",
+            "LearningCommand"
+          ],
+          "outputs": [
+            "AnswerResult",
+            "LearningProgressView"
+          ],
+          "payload_policy": "typed IDs and owner-defined immutable DTOs only; never expose persistence entities"
+        }
+      ],
+      "internal_packages": [
+        {
+          "package": "io.saksk.ti.learning.application",
+          "role": "use-case orchestration and local transaction boundaries"
+        },
+        {
+          "package": "io.saksk.ti.learning.domain",
+          "role": "module-owned aggregates, value objects and domain rules"
+        },
+        {
+          "package": "io.saksk.ti.learning.infrastructure",
+          "role": "module-owned persistence and external adapters"
+        }
+      ],
+      "owned_tables": [
+        "favorites",
+        "mistakes",
+        "reinforce_similar_cache",
+        "study_learning",
+        "study_review",
+        "user_answers",
+        "user_bank_answers",
+        "user_bank_favorites",
+        "user_bank_mistakes",
+        "user_checkins",
+        "user_progress",
+        "user_question_tag_items",
+        "user_quiz_stats"
+      ],
+      "owned_resources": [
+        {
+          "kind": "db_kv_namespace",
+          "name": "<client_supplied_p_key>",
+          "persistence_role": "unbounded_legacy_namespace"
+        },
+        {
+          "kind": "db_kv_namespace",
+          "name": "bank_quiz_progress_<uid>_...",
+          "persistence_role": "business_state"
+        },
+        {
+          "kind": "db_kv_namespace",
+          "name": "last_practice_session",
+          "persistence_role": "business_state"
+        },
+        {
+          "kind": "db_kv_namespace",
+          "name": "question_tags_v1",
+          "persistence_role": "legacy_compatibility_state"
+        },
+        {
+          "kind": "db_kv_namespace",
+          "name": "quiz_progress_<uid>_...",
+          "persistence_role": "business_state"
+        },
+        {
+          "kind": "db_kv_namespace",
+          "name": "study_progress_<uid>_...",
+          "persistence_role": "business_state"
+        },
+        {
+          "kind": "redis_key",
+          "name": "cache:data_center:<sha256(params)>",
+          "persistence_role": "rebuildable_cache"
+        },
+        {
+          "kind": "redis_key",
+          "name": "cache:quiz:history:<sha256(params)>",
+          "persistence_role": "rebuildable_cache"
+        },
+        {
+          "kind": "redis_key",
+          "name": "cache:quiz:subject_stats_detail:<sha256(params)>",
+          "persistence_role": "rebuildable_cache"
+        },
+        {
+          "kind": "redis_key",
+          "name": "cache:quiz:user_counts:<sha256(params)>",
+          "persistence_role": "rebuildable_cache"
+        },
+        {
+          "kind": "redis_key",
+          "name": "cache:ver:quiz:u:<user_id>",
+          "persistence_role": "rebuildable_cache_version"
+        }
+      ],
+      "allowed_dependencies": [
+        "sharedkernel",
+        "identity",
+        "catalog",
+        "personalbank",
+        "assessment"
+      ],
+      "cross_module_reference_policy": "id_only",
+      "shared_entities": [],
+      "cross_module_forbidden_imports": [
+        "*.domain.*",
+        "*.infrastructure.*",
+        "*.persistence.*",
+        "*.entity.*"
+      ],
+      "transaction_boundary": "one module-owned local PostgreSQL transaction; publish integration facts through a same-transaction outbox when another module reacts"
+    },
+    {
+      "module_id": "community",
+      "display_name": "社区",
+      "boundary_kind": "business_module",
+      "base_package": "io.saksk.ti.community",
+      "responsibility": "帖子、评论、互动、审核状态与社区聚合事实。",
+      "public_application_apis": [
+        {
+          "type": "CommunityApplicationApi",
+          "package": "io.saksk.ti.community.api",
+          "purpose": "发布与查询社区内容及互动。",
+          "inputs": [
+            "ActorId",
+            "PostId",
+            "CommunityCommand"
+          ],
+          "outputs": [
+            "PostView",
+            "CommunityPage"
+          ],
+          "payload_policy": "typed IDs and owner-defined immutable DTOs only; never expose persistence entities"
+        }
+      ],
+      "internal_packages": [
+        {
+          "package": "io.saksk.ti.community.application",
+          "role": "use-case orchestration and local transaction boundaries"
+        },
+        {
+          "package": "io.saksk.ti.community.domain",
+          "role": "module-owned aggregates, value objects and domain rules"
+        },
+        {
+          "package": "io.saksk.ti.community.infrastructure",
+          "role": "module-owned persistence and external adapters"
+        }
+      ],
+      "owned_tables": [
+        "forum_boards",
+        "forum_comments",
+        "forum_favorites",
+        "forum_likes",
+        "forum_mentions",
+        "forum_poll_votes",
+        "forum_posts",
+        "forum_reactions",
+        "forum_reports",
+        "forum_uploads",
+        "forum_user_bans",
+        "user_follows"
+      ],
+      "owned_resources": [
+        {
+          "kind": "object_prefix",
+          "name": "uploads/forum/",
+          "persistence_role": "durable_file"
+        },
+        {
+          "kind": "redis_key",
+          "name": "cache:forum:boards:<sha256(params)>",
+          "persistence_role": "rebuildable_cache"
+        },
+        {
+          "kind": "redis_key",
+          "name": "cache:ver:forum:boards",
+          "persistence_role": "rebuildable_cache_version"
+        },
+        {
+          "kind": "scheduled_or_background_task",
+          "name": "orphan forum upload cleanup",
+          "persistence_role": "background_process"
+        }
+      ],
+      "allowed_dependencies": [
+        "sharedkernel",
+        "identity",
+        "catalog"
+      ],
+      "cross_module_reference_policy": "id_only",
+      "shared_entities": [],
+      "cross_module_forbidden_imports": [
+        "*.domain.*",
+        "*.infrastructure.*",
+        "*.persistence.*",
+        "*.entity.*"
+      ],
+      "transaction_boundary": "one module-owned local PostgreSQL transaction; publish integration facts through a same-transaction outbox when another module reacts"
+    },
+    {
+      "module_id": "campus",
+      "display_name": "校园服务",
+      "boundary_kind": "business_module",
+      "base_package": "io.saksk.ti.campus",
+      "responsibility": "教务账号、课表、成绩、总览快照与刷新任务。",
+      "public_application_apis": [
+        {
+          "type": "CampusApplicationApi",
+          "package": "io.saksk.ti.campus.api",
+          "purpose": "发起教务刷新并读取规范化校园快照。",
+          "inputs": [
+            "ActorId",
+            "CampusAccountId",
+            "RefreshId",
+            "CampusQuery"
+          ],
+          "outputs": [
+            "RefreshReceipt",
+            "CampusSnapshotView"
+          ],
+          "payload_policy": "typed IDs and owner-defined immutable DTOs only; never expose persistence entities"
+        }
+      ],
+      "internal_packages": [
+        {
+          "package": "io.saksk.ti.campus.application",
+          "role": "use-case orchestration and local transaction boundaries"
+        },
+        {
+          "package": "io.saksk.ti.campus.domain",
+          "role": "module-owned aggregates, value objects and domain rules"
+        },
+        {
+          "package": "io.saksk.ti.campus.infrastructure",
+          "role": "module-owned persistence and external adapters"
+        }
+      ],
+      "owned_tables": [
+        "edu_grade_overview_snapshots",
+        "edu_grade_snapshots",
+        "edu_schedule_credentials",
+        "edu_schedule_snapshots"
+      ],
+      "owned_resources": [
+        {
+          "kind": "external_api",
+          "name": "SYN U WebVPN/JWXT",
+          "persistence_role": "external_integration"
+        },
+        {
+          "kind": "redis_key",
+          "name": "edu_schedule:grade_refresh_order:<user_id>:<account_key>",
+          "persistence_role": "sequence_coordination"
+        },
+        {
+          "kind": "redis_key",
+          "name": "edu_schedule:query_dedupe:<sha256>",
+          "persistence_role": "idempotency_coordination"
+        },
+        {
+          "kind": "redis_key",
+          "name": "edu_schedule:query_task:<task_id>",
+          "persistence_role": "temporary_task_state"
+        },
+        {
+          "kind": "redis_key",
+          "name": "edu_schedule:upstream_slots",
+          "persistence_role": "concurrency_coordination"
+        },
+        {
+          "kind": "redis_key",
+          "name": "edu_schedule:user_query_tasks:<user_id>",
+          "persistence_role": "temporary_task_index"
+        },
+        {
+          "kind": "redis_key",
+          "name": "edu_schedule:webvpn_challenge:<challenge_id>",
+          "persistence_role": "short_lived_coordination"
+        },
+        {
+          "kind": "scheduled_or_background_task",
+          "name": "campus schedule/grade query",
+          "persistence_role": "background_process"
+        }
+      ],
+      "allowed_dependencies": [
+        "sharedkernel",
+        "identity"
+      ],
+      "cross_module_reference_policy": "id_only",
+      "shared_entities": [],
+      "cross_module_forbidden_imports": [
+        "*.domain.*",
+        "*.infrastructure.*",
+        "*.persistence.*",
+        "*.entity.*"
+      ],
+      "transaction_boundary": "one module-owned local PostgreSQL transaction; publish integration facts through a same-transaction outbox when another module reacts"
+    },
+    {
+      "module_id": "coding",
+      "display_name": "编程练习",
+      "boundary_kind": "business_module",
+      "base_package": "io.saksk.ti.coding",
+      "responsibility": "编程题、代码提交、判题结果与代码练习统计。",
+      "public_application_apis": [
+        {
+          "type": "CodingApplicationApi",
+          "package": "io.saksk.ti.coding.api",
+          "purpose": "提交代码并读取判题结果。",
+          "inputs": [
+            "ActorId",
+            "CodingProblemId",
+            "CodeSubmissionId"
+          ],
+          "outputs": [
+            "SubmissionReceipt",
+            "JudgeResultView"
+          ],
+          "payload_policy": "typed IDs and owner-defined immutable DTOs only; never expose persistence entities"
+        }
+      ],
+      "internal_packages": [
+        {
+          "package": "io.saksk.ti.coding.application",
+          "role": "use-case orchestration and local transaction boundaries"
+        },
+        {
+          "package": "io.saksk.ti.coding.domain",
+          "role": "module-owned aggregates, value objects and domain rules"
+        },
+        {
+          "package": "io.saksk.ti.coding.infrastructure",
+          "role": "module-owned persistence and external adapters"
+        }
+      ],
+      "owned_tables": [
+        "code_drafts",
+        "code_submissions",
+        "coding_questions",
+        "coding_statistics",
+        "coding_subjects",
+        "user_coding_stats"
+      ],
+      "owned_resources": [],
+      "allowed_dependencies": [
+        "sharedkernel",
+        "identity",
+        "catalog"
+      ],
+      "cross_module_reference_policy": "id_only",
+      "shared_entities": [],
+      "cross_module_forbidden_imports": [
+        "*.domain.*",
+        "*.infrastructure.*",
+        "*.persistence.*",
+        "*.entity.*"
+      ],
+      "transaction_boundary": "one module-owned local PostgreSQL transaction; publish integration facts through a same-transaction outbox when another module reacts"
+    },
+    {
+      "module_id": "intelligence",
+      "display_name": "智能能力",
+      "boundary_kind": "business_module",
+      "base_package": "io.saksk.ti.intelligence",
+      "responsibility": "AI 会话、模型调用、变更记录与供应商交互事实。",
+      "public_application_apis": [
+        {
+          "type": "IntelligenceApplicationApi",
+          "package": "io.saksk.ti.intelligence.api",
+          "purpose": "执行可审计、可重试的智能能力请求。",
+          "inputs": [
+            "ActorId",
+            "IntelligenceRequestId",
+            "PromptCommand"
+          ],
+          "outputs": [
+            "IntelligenceResult",
+            "UsageView"
+          ],
+          "payload_policy": "typed IDs and owner-defined immutable DTOs only; never expose persistence entities"
+        }
+      ],
+      "internal_packages": [
+        {
+          "package": "io.saksk.ti.intelligence.application",
+          "role": "use-case orchestration and local transaction boundaries"
+        },
+        {
+          "package": "io.saksk.ti.intelligence.domain",
+          "role": "module-owned aggregates, value objects and domain rules"
+        },
+        {
+          "package": "io.saksk.ti.intelligence.infrastructure",
+          "role": "module-owned persistence and external adapters"
+        }
+      ],
+      "owned_tables": [
+        "ai_change_records",
+        "ai_chat_messages",
+        "ai_chat_sessions"
+      ],
+      "owned_resources": [
+        {
+          "kind": "external_api",
+          "name": "OpenAI-compatible /models,/chat/completions,/responses",
+          "persistence_role": "external_integration"
+        },
+        {
+          "kind": "queue_task",
+          "name": "app.tasks.ai_explain_tasks.ai_explain_task",
+          "persistence_role": "background_command"
+        },
+        {
+          "kind": "realtime_channel",
+          "name": "AI chat response stream",
+          "persistence_role": "ephemeral_delivery"
+        },
+        {
+          "kind": "redis_key",
+          "name": "ai_explain:job:<hash>",
+          "persistence_role": "idempotency_coordination"
+        },
+        {
+          "kind": "redis_key",
+          "name": "ai_explain:result:<hash>",
+          "persistence_role": "rebuildable_result_cache"
+        },
+        {
+          "kind": "redis_key",
+          "name": "cache:quiz:ai_explain:<sha256(params)>",
+          "persistence_role": "rebuildable_cache"
+        }
+      ],
+      "allowed_dependencies": [
+        "sharedkernel",
+        "identity",
+        "catalog",
+        "personalbank",
+        "coding"
+      ],
+      "cross_module_reference_policy": "id_only",
+      "shared_entities": [],
+      "cross_module_forbidden_imports": [
+        "*.domain.*",
+        "*.infrastructure.*",
+        "*.persistence.*",
+        "*.entity.*"
+      ],
+      "transaction_boundary": "one module-owned local PostgreSQL transaction; publish integration facts through a same-transaction outbox when another module reacts"
+    },
+    {
+      "module_id": "messaging",
+      "display_name": "消息与通知",
+      "boundary_kind": "business_module",
+      "base_package": "io.saksk.ti.messaging",
+      "responsibility": "站内消息、通知投递、实时通道与可靠消息出站。",
+      "public_application_apis": [
+        {
+          "type": "MessagingApplicationApi",
+          "package": "io.saksk.ti.messaging.api",
+          "purpose": "记录通知事实并驱动异步投递。",
+          "inputs": [
+            "ActorId",
+            "MessageId",
+            "DeliveryCommand"
+          ],
+          "outputs": [
+            "MessageView",
+            "DeliveryReceipt"
+          ],
+          "payload_policy": "typed IDs and owner-defined immutable DTOs only; never expose persistence entities"
+        }
+      ],
+      "internal_packages": [
+        {
+          "package": "io.saksk.ti.messaging.application",
+          "role": "use-case orchestration and local transaction boundaries"
+        },
+        {
+          "package": "io.saksk.ti.messaging.domain",
+          "role": "module-owned aggregates, value objects and domain rules"
+        },
+        {
+          "package": "io.saksk.ti.messaging.infrastructure",
+          "role": "module-owned persistence and external adapters"
+        }
+      ],
+      "owned_tables": [
+        "chat_conversations",
+        "chat_members",
+        "chat_messages",
+        "interaction_notifications",
+        "notification_dismissals",
+        "notifications",
+        "user_remarks"
+      ],
+      "owned_resources": [
+        {
+          "kind": "object_prefix",
+          "name": "uploads/chat/",
+          "persistence_role": "durable_file"
+        },
+        {
+          "kind": "queue_task",
+          "name": "app.modules.chat.tasks.transcode_audio_task",
+          "persistence_role": "background_command"
+        },
+        {
+          "kind": "realtime_channel",
+          "name": "sse:events",
+          "persistence_role": "ephemeral_delivery"
+        },
+        {
+          "kind": "redis_key",
+          "name": "cache:chat:convs:<sha256(params)>",
+          "persistence_role": "rebuildable_cache"
+        },
+        {
+          "kind": "redis_key",
+          "name": "cache:ver:chat:conv:<user_id>",
+          "persistence_role": "rebuildable_cache_version"
+        },
+        {
+          "kind": "redis_key",
+          "name": "chat:unread:<user_id>",
+          "persistence_role": "rebuildable_counter_cache"
+        },
+        {
+          "kind": "scheduled_or_background_task",
+          "name": "SSE Redis subscriber",
+          "persistence_role": "background_process"
+        }
+      ],
+      "allowed_dependencies": [
+        "sharedkernel",
+        "identity",
+        "assessment",
+        "learning",
+        "community",
+        "campus",
+        "coding",
+        "intelligence"
+      ],
+      "dependency_contracts": [
+        {
+          "provider": "identity",
+          "interaction": "public_application_api",
+          "mode": "narrow_synchronous_query"
+        },
+        {
+          "provider": "assessment",
+          "interaction": "public_event_contract",
+          "mode": "asynchronous_consumption_only"
+        },
+        {
+          "provider": "learning",
+          "interaction": "public_event_contract",
+          "mode": "asynchronous_consumption_only"
+        },
+        {
+          "provider": "community",
+          "interaction": "public_event_contract",
+          "mode": "asynchronous_consumption_only"
+        },
+        {
+          "provider": "campus",
+          "interaction": "public_event_contract",
+          "mode": "asynchronous_consumption_only"
+        },
+        {
+          "provider": "coding",
+          "interaction": "public_event_contract",
+          "mode": "asynchronous_consumption_only"
+        },
+        {
+          "provider": "intelligence",
+          "interaction": "public_event_contract",
+          "mode": "asynchronous_consumption_only"
+        }
+      ],
+      "cross_module_reference_policy": "id_only",
+      "shared_entities": [],
+      "cross_module_forbidden_imports": [
+        "*.domain.*",
+        "*.infrastructure.*",
+        "*.persistence.*",
+        "*.entity.*"
+      ],
+      "transaction_boundary": "one module-owned local PostgreSQL transaction; publish integration facts through a same-transaction outbox when another module reacts"
+    },
+    {
+      "module_id": "operations",
+      "display_name": "运营与平台运维",
+      "boundary_kind": "business_module",
+      "base_package": "io.saksk.ti.operations",
+      "responsibility": "备份、配置、审计、迁移工具表和受控后台作业。",
+      "public_application_apis": [
+        {
+          "type": "OperationsApplicationApi",
+          "package": "io.saksk.ti.operations.api",
+          "purpose": "执行受控运维命令并读取作业状态。",
+          "inputs": [
+            "OperatorId",
+            "OperationId",
+            "OperationsCommand"
+          ],
+          "outputs": [
+            "OperationReceipt",
+            "OperationsStatusView"
+          ],
+          "payload_policy": "typed IDs and owner-defined immutable DTOs only; never expose persistence entities"
+        }
+      ],
+      "internal_packages": [
+        {
+          "package": "io.saksk.ti.operations.application",
+          "role": "use-case orchestration and local transaction boundaries"
+        },
+        {
+          "package": "io.saksk.ti.operations.domain",
+          "role": "module-owned aggregates, value objects and domain rules"
+        },
+        {
+          "package": "io.saksk.ti.operations.infrastructure",
+          "role": "module-owned persistence and external adapters"
+        }
+      ],
+      "owned_tables": [
+        "alembic_version",
+        "backup_jobs",
+        "duplicate_check_records",
+        "popup_dismissals",
+        "popup_views",
+        "popups",
+        "schema_migrations",
+        "system_config"
+      ],
+      "owned_resources": [
+        {
+          "kind": "external_api",
+          "name": "Cloudflare R2 S3 API",
+          "persistence_role": "external_integration"
+        },
+        {
+          "kind": "external_api",
+          "name": "Epay submit/query/order",
+          "persistence_role": "external_integration"
+        },
+        {
+          "kind": "external_api",
+          "name": "Sentry SDK/DSN",
+          "persistence_role": "external_integration"
+        },
+        {
+          "kind": "object_prefix",
+          "name": "R2 <configured-prefix>/.healthcheck/<uuid>.txt",
+          "persistence_role": "temporary_healthcheck_object"
+        },
+        {
+          "kind": "object_prefix",
+          "name": "R2 <configured-prefix>/backup_*.tar.gz",
+          "persistence_role": "durable_backup_archive"
+        },
+        {
+          "kind": "queue",
+          "name": "RQ queue default",
+          "persistence_role": "transient_work_queue"
+        },
+        {
+          "kind": "queue",
+          "name": "RQ queue saksk",
+          "persistence_role": "transient_work_queue"
+        },
+        {
+          "kind": "redis_key",
+          "name": "LIMITS:*",
+          "persistence_role": "library_managed_rate_limit"
+        },
+        {
+          "kind": "redis_key",
+          "name": "email:failed:<timestamp>",
+          "persistence_role": "failure_telemetry"
+        },
+        {
+          "kind": "redis_key",
+          "name": "rq:*",
+          "persistence_role": "library_managed_queue_state"
+        },
+        {
+          "kind": "redis_key",
+          "name": "sms:failed:<timestamp>",
+          "persistence_role": "failure_telemetry"
+        },
+        {
+          "kind": "scheduled_or_background_task",
+          "name": "R2 backup scheduler",
+          "persistence_role": "background_process"
+        },
+        {
+          "kind": "scheduled_or_background_task",
+          "name": "backup lease heartbeat",
+          "persistence_role": "background_process"
+        }
+      ],
+      "allowed_dependencies": [
+        "sharedkernel"
+      ],
+      "cross_module_reference_policy": "id_only",
+      "shared_entities": [],
+      "cross_module_forbidden_imports": [
+        "*.domain.*",
+        "*.infrastructure.*",
+        "*.persistence.*",
+        "*.entity.*"
+      ],
+      "transaction_boundary": "one module-owned local PostgreSQL transaction; publish integration facts through a same-transaction outbox when another module reacts"
+    },
+    {
+      "module_id": "web",
+      "display_name": "HTTP/Web 适配器",
+      "boundary_kind": "adapter_boundary",
+      "base_package": "io.saksk.ti.web",
+      "responsibility": "兼容 HTTP 与新版 HTTP 的输入输出适配、认证上下文转换和生成契约暴露；不拥有业务事实。",
+      "public_application_apis": [],
+      "internal_packages": [
+        {
+          "package": "io.saksk.ti.web.compat",
+          "role": "legacy Flask-compatible HTTP adapters"
+        },
+        {
+          "package": "io.saksk.ti.web.v1",
+          "role": "new versioned HTTP adapters"
+        },
+        {
+          "package": "io.saksk.ti.web.security",
+          "role": "transport authentication and CSRF integration"
+        },
+        {
+          "package": "io.saksk.ti.web.contract",
+          "role": "OpenAPI generation and wire DTO mapping"
+        }
+      ],
+      "owned_tables": [],
+      "owned_resources": [
+        {
+          "kind": "external_api",
+          "name": "browser CDN/fonts",
+          "persistence_role": "external_integration"
+        },
+        {
+          "kind": "external_api",
+          "name": "browser export extension: Chaoxing/PTA/Yuketang",
+          "persistence_role": "external_integration"
+        }
+      ],
+      "allowed_dependencies": [
+        "sharedkernel",
+        "identity",
+        "catalog",
+        "personalbank",
+        "assessment",
+        "learning",
+        "community",
+        "campus",
+        "coding",
+        "intelligence",
+        "messaging",
+        "operations"
+      ],
+      "cross_module_reference_policy": "api_only",
+      "shared_entities": [],
+      "cross_module_forbidden_imports": [
+        "*.domain.*",
+        "*.infrastructure.*",
+        "*.persistence.*",
+        "*.entity.*"
+      ],
+      "transaction_boundary": "none; a web request invokes one owning application API command and never coordinates multi-module database writes",
+      "adapter_contract": {
+        "consumes": "business module public application APIs only",
+        "wire_source_of_truth": "generated OpenAPI plus explicit legacy compatibility evidence",
+        "database_access": "forbidden",
+        "legacy_runtime_fallback": "forbidden after a route is cut over"
+      }
+    }
+  ]
+}

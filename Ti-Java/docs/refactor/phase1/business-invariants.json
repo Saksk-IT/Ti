@@ -1,0 +1,304 @@
+{
+  "contract_id": "ti.phase1.business-invariants",
+  "schema_version": 1,
+  "baseline_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "module_contract_source": "module-contracts.json",
+  "required_invariant_ids": [
+    "identity.account-lock-immediate-revocation",
+    "personalbank.bank-access-matrix",
+    "learning.answer-command-idempotency",
+    "assessment.single-final-submission",
+    "assessment.decimal-score-determinism",
+    "campus.refresh-and-snapshot-deduplication"
+  ],
+  "global_idempotency_contract": {
+    "request_scope": "authenticated actor + operation + Idempotency-Key",
+    "request_digest": "SHA-256 of a versioned canonical request representation; secrets and transport-only fields excluded",
+    "same_key_same_digest": "wait for or return the first committed business result without repeating side effects",
+    "same_key_different_digest": "409 IDEMPOTENCY_CONFLICT with no business write",
+    "atomicity": "idempotency record and module-owned business facts commit in one local transaction",
+    "retention": "operation-specific and longer than the maximum client retry/offline window; deletion must not make an otherwise terminal business command repeatable"
+  },
+  "score_precision_policy": {
+    "scope": "new_v1_target_rule",
+    "internal_type": "java.math.BigDecimal",
+    "input_conversion": "parse the original decimal token/string directly; never construct from float/double",
+    "item_and_total": {
+      "scale": "exact operand scale",
+      "rounding": "UNNECESSARY"
+    },
+    "derived_percentage_and_average": {
+      "scale": 2,
+      "rounding": "HALF_UP"
+    },
+    "legacy_compatibility_precision_status": "unknown",
+    "legacy_wire_compatibility": "每个兼容字段必须由 operation-specific 黄金样本和新旧对比证据逐字段确定 scale、舍入、JSON number/string、尾零和 null 形状；不得把新 v1 的 scale=2 HALF_UP 反推成已证明的旧契约。",
+    "cutover_gate": "zero unexplained score differences on fixed and de-identified production-scale fixtures"
+  },
+  "invariants": [
+    {
+      "invariant_id": "identity.account-lock-immediate-revocation",
+      "owner_module": "identity",
+      "title": "账号锁定后立即阻断新请求并撤销既有会话",
+      "legacy_evidence": [
+        "app/modules/auth/services/web_login_service.py: locked login rejection",
+        "app/modules/auth/routes/api.py: JWT session_version and locked checks",
+        "app/modules/admin/routes/api_legacy.py: account lock toggle and session_version update"
+      ],
+      "legacy_gap": "锁定、版本递增、会话撤销与缓存失效散落在路由和认证实现中，缺少单一事务与并发证明。",
+      "command_scope": "LockAccount(actorId, targetIdentityId, reason, idempotencyKey)",
+      "idempotency_key": "operator identity + LockAccount + Idempotency-Key; a request digest binds target and reason",
+      "transaction_boundary": "锁定标志、session_version 递增、服务端会话撤销记录、幂等结果和账号锁定事件在 identity 的同一本地事务提交。",
+      "concurrency_rule": "以目标账号行锁或 version compare-and-set 串行化 lock/unlock；提交后的每个认证入口都同时验证 locked 与 session_version，缓存只能缩短拒绝路径，不能允许陈旧版本。",
+      "rule": "锁定提交后，不得再签发登录态；此前签发的 Session、JWT、小程序令牌和刷新令牌在下一次受保护请求时必须失败。锁定提交前已经进入事务的请求按其原事务完成，不得把锁定回滚。",
+      "success_observation": "一次状态变化、session_version 恰增 1、所有既有会话失效、重复同 key 返回同一结果且不再次递增。",
+      "failure_observation": "任一步失败则锁定状态、版本、会话撤销记录和事件全部不提交；不得出现已锁定但旧令牌仍可开启新事务。",
+      "verification_scenarios": [
+        {
+          "given": "账号未锁定且存在 Web Session/JWT/刷新令牌",
+          "when": "管理员成功锁定账号",
+          "then": "所有旧凭据下一次访问均被拒绝，session_version 只增加一次"
+        },
+        {
+          "given": "同一锁定请求已成功",
+          "when": "相同 Idempotency-Key 和摘要并发重放",
+          "then": "返回首次结果，不再次递增版本或发布事件"
+        },
+        {
+          "given": "同一 Idempotency-Key 已绑定账号 A",
+          "when": "用该 key 尝试锁定账号 B",
+          "then": "返回 IDEMPOTENCY_CONFLICT 且账号 B 不变"
+        },
+        {
+          "given": "锁定事务在事件持久化前失败",
+          "when": "事务回滚",
+          "then": "账号状态、版本和会话撤销记录均保持原值"
+        }
+      ]
+    },
+    {
+      "invariant_id": "personalbank.bank-access-matrix",
+      "owner_module": "personalbank",
+      "title": "个人题库所有权、公开读取和分享授权矩阵",
+      "legacy_evidence": [
+        "app/modules/user_bank/routes/api_base.py:check_bank_access",
+        "app/models/user_bank.py:UserQuestionBank and BankShare constraints"
+      ],
+      "legacy_gap": "旧权限函数返回自由文本 permission，写路由仍需逐一证明没有绕过；客户端字段不能作为授权依据。",
+      "command_scope": "AuthorizeBankAction(actorId, bankId, action, observedAt)",
+      "idempotency_key": "读取不建幂等记录；导入、复制、分享、编辑和删除命令使用 actor + operation + Idempotency-Key。",
+      "transaction_boundary": "授权判定与受保护写入使用同一 personalbank 事务和同一数据库快照；写命令提交幂等记录与业务事实。",
+      "concurrency_rule": "修改、撤销分享或删除时锁定题库/分享记录或校验版本；授权在写入点重新判断，不能复用请求开始时的陈旧 allow。",
+      "rule": "status=0 或不存在的题库一律拒绝。活跃所有者拥有完整权限；活跃公开题库只允许读取；活跃、未过期且接收记录有效的分享只允许服务端映射表明确列出的 read/copy 权限。编辑、删除、导入、改可见性和创建/撤销分享仅所有者可做。actor、owner、permission 和过期时间全部来自受信服务端事实。",
+      "success_observation": "每个 action 的 allow/deny 与矩阵一致；授权与写入之间发生撤销时写入失败；拒绝响应不暴露题库敏感内容。",
+      "failure_observation": "授权解析失败、未知 permission、过期/撤销分享、停用题库或 actor 不一致均默认拒绝且无部分写入。",
+      "verification_scenarios": [
+        {
+          "given": "活跃题库所有者",
+          "when": "读取、编辑、导入、删除或分享",
+          "then": "允许并记录真实 actor"
+        },
+        {
+          "given": "非所有者访问活跃公开题库",
+          "when": "读取后尝试编辑",
+          "then": "读取允许，编辑拒绝且无数据库变化"
+        },
+        {
+          "given": "接收记录有效且 share=read/copy",
+          "when": "执行对应读取/复制",
+          "then": "只允许映射动作；复制产生独立所有权事实"
+        },
+        {
+          "given": "分享已过期、撤销或 permission 未知",
+          "when": "访问或写入",
+          "then": "默认拒绝"
+        },
+        {
+          "given": "授权后并发撤销分享",
+          "when": "受保护写入提交",
+          "then": "版本/行锁检查阻止写入"
+        }
+      ]
+    },
+    {
+      "invariant_id": "learning.answer-command-idempotency",
+      "owner_module": "learning",
+      "title": "答案写入、错题和学习统计原子幂等",
+      "legacy_evidence": [
+        "app/modules/quiz/routes/api_components/core.py: answer route side effects",
+        "app/core/services/quiz_data_service.py:QuizDataService.record_answer",
+        "app/models/quiz.py:user_answers unique user_id+question_id"
+      ],
+      "legacy_gap": "旧实现通过删除再插入维护最新答案，但同一请求重试仍可能重复增加错题次数和刷题统计。",
+      "command_scope": "RecordAnswer(actorId, questionId, logicalAttemptId, answerPayload, idempotencyKey)",
+      "idempotency_key": "actor identity + RecordAnswer + Idempotency-Key；请求摘要覆盖 questionId、logicalAttemptId 和规范化答案。",
+      "transaction_boundary": "幂等记录、最新答案事实、逻辑尝试事实、错题/收藏派生状态、学习计数及 outbox 在 learning 的同一本地事务提交。",
+      "concurrency_rule": "先占用唯一幂等键并锁定 actor+question 的当前状态；相同 key 同摘要等待/读取首次结果，相同 key 不同摘要返回 409；不同 logicalAttemptId 按业务顺序串行更新。",
+      "rule": "同一逻辑答题命令无论超时、重试或并发到达都只改变一次业务事实和统计。相同题目的新逻辑尝试必须使用新 logicalAttemptId/幂等键，不能把网络重试误算为再次答题。",
+      "success_observation": "重放响应与首次业务结果等价，答案版本、错题次数、总答题数和事件数均不增加；新逻辑尝试才可产生下一次统计变化。",
+      "failure_observation": "答案校验或任一派生更新失败时整笔回滚；不得出现答案已写但统计/错题半更新。",
+      "verification_scenarios": [
+        {
+          "given": "首次正确答案命令",
+          "when": "同 key 同摘要串行重放",
+          "then": "结果相同且所有计数只变化一次"
+        },
+        {
+          "given": "首次错误答案命令",
+          "when": "同 key 同摘要并发 20 次",
+          "then": "只有一条逻辑尝试和一次错题/统计增量"
+        },
+        {
+          "given": "key 已绑定答案 A",
+          "when": "同 key 提交答案 B",
+          "then": "返回 IDEMPOTENCY_CONFLICT 且首次事实不变"
+        },
+        {
+          "given": "更新错题后模拟统计写入失败",
+          "when": "事务回滚并用同 key 重试",
+          "then": "第一次无部分事实，重试完整成功一次"
+        },
+        {
+          "given": "同题开始新的逻辑尝试",
+          "when": "使用新 attemptId 和新 key",
+          "then": "按已确认的学习规则产生一次新变化"
+        }
+      ]
+    },
+    {
+      "invariant_id": "assessment.single-final-submission",
+      "owner_module": "assessment",
+      "title": "考试只允许一次最终交卷状态转换",
+      "legacy_evidence": [
+        "app/modules/exam/services/exam_legacy_service.py:submit_exam",
+        "app/modules/exam/routes/api.py: exam submission endpoints"
+      ],
+      "legacy_gap": "旧服务只显式拒绝 submitted，人工阅卷 pending_review 与并发交卷路径缺少统一终态和 compare-and-set 证明。",
+      "command_scope": "SubmitExam(actorId, examId, submissionId, answers, submittedAt, idempotencyKey)",
+      "idempotency_key": "actor identity + SubmitExam + Idempotency-Key；请求摘要覆盖 examId、submissionId、答案集合和规范化客户端时间。",
+      "transaction_boundary": "考试状态转换、答案冻结、自动评分、待人工阅卷状态、幂等结果和考试完成事件在 assessment 的同一本地事务提交。",
+      "concurrency_rule": "以 exam version compare-and-set 或行锁只允许 ongoing 到 submitted/pending_review 一次；submitted 和 pending_review 都是提交终态。重新评分使用独立 RegradeExam 命令与版本，不重开提交。",
+      "rule": "同一提交 key 重放不产生第二次评分或事件；终态后的新 submissionId 返回稳定冲突。服务端截止时间决定正常/超时提交，超时规则本身必须可重复。部分失败不得留下终态或半份答案。",
+      "success_observation": "恰有一次终态转换、一个冻结答案集、一个初始评分版本和一次完成事件；同 key 重放得到首次结果。",
+      "failure_observation": "状态竞争失败、所有权错误、摘要冲突或评分异常均不覆盖已存在终态，也不产生第二套答案/分数。",
+      "verification_scenarios": [
+        {
+          "given": "ongoing 考试",
+          "when": "同一提交并发 20 次",
+          "then": "仅一次转为 submitted 或 pending_review，评分和事件各一次"
+        },
+        {
+          "given": "考试已 pending_review",
+          "when": "用新 submissionId 再交卷",
+          "then": "稳定冲突且人工阅卷事实不变"
+        },
+        {
+          "given": "首次请求超时但事务已提交",
+          "when": "客户端用同 key 重试",
+          "then": "返回首次结果，不再次评分"
+        },
+        {
+          "given": "截止时间前后边界固定",
+          "when": "服务端时间越过截止线",
+          "then": "严格按测试夹具的超时规则得到确定结果"
+        },
+        {
+          "given": "写入答案后评分异常",
+          "when": "事务失败",
+          "then": "考试保持 ongoing 且无冻结答案/事件"
+        }
+      ]
+    },
+    {
+      "invariant_id": "assessment.decimal-score-determinism",
+      "owner_module": "assessment",
+      "title": "考试分数使用十进制精确计算与显式派生舍入",
+      "legacy_evidence": [
+        "app/modules/exam/services/exam_legacy_service.py: float-based score accumulation",
+        "app/modules/exam/services/exam_create_service.py: numeric score configuration",
+        "Ti-Java/docs/refactor/phase1/api-contract-conventions.md: numeric precision policy"
+      ],
+      "legacy_gap": "旧考试配置和累计使用二进制浮点；尚未用脱敏真实样本证明所有兼容响应字段的 scale 与字符串/数字形状。",
+      "command_scope": "GradeSubmission(examId, submissionId, gradingPolicyVersion, frozenAnswers)",
+      "idempotency_key": "examId + submissionId + gradingPolicyVersion；评分结果按该组合唯一。",
+      "transaction_boundary": "评分策略版本、逐题得分、总分、派生指标和评分结果在 assessment 事务中一起持久化；重新评分写新版本。",
+      "concurrency_rule": "同一评分版本只能由一个 worker 获得；重复执行校验已持久化请求摘要并返回同一逐题和总分结果。",
+      "rule": "JSON 十进制 token 直接解析为 BigDecimal，禁止先经过 float/double。新 /api/v1 目标规则是：逐题得分和总分只做精确十进制加法，不舍入，必要舍入使用 RoundingMode.UNNECESSARY；百分比和平均分统一在最终派生边界 scale=2、RoundingMode.HALF_UP。兼容路径的 precision status 当前为 unknown，adapter 必须逐字段按黄金/对比证据确定 scale、舍入、number/string、尾零和空值形状；不得把 v1 目标规则伪装成旧契约证据，证据未收齐前不得切换写流量。",
+      "success_observation": "同一冻结答案和策略版本在不同运行、顺序和并发下产生逐位相同的持久化十进制值；派生值固定两位 HALF_UP。",
+      "failure_observation": "输入 scale/范围不合法、需要对逐题/总分做隐式舍入、策略版本缺失或兼容差异未批准时拒绝评分/切换，不回退到 double。",
+      "verification_scenarios": [
+        {
+          "given": "题目分值 0.1、0.2、0.5 的固定试卷",
+          "when": "多次改变遍历顺序评分",
+          "then": "总分精确相同，不出现二进制浮点尾差"
+        },
+        {
+          "given": "派生比例第三位分别为 4、5、6",
+          "when": "计算百分比/平均分",
+          "then": "统一得到 scale=2 的 HALF_UP 结果"
+        },
+        {
+          "given": "同一提交与策略版本",
+          "when": "重复或并发评分",
+          "then": "返回同一评分记录，不创建第二版本"
+        },
+        {
+          "given": "真实规模脱敏旧样本",
+          "when": "比较旧/新逐题、总分和 wire 形状",
+          "then": "差异为零或每个差异都有已接受 ADR"
+        },
+        {
+          "given": "持久层仍只能写 float",
+          "when": "尝试开启 Java 写流量",
+          "then": "切换门禁失败，先完成 additive NUMERIC/decimal 迁移"
+        }
+      ]
+    },
+    {
+      "invariant_id": "campus.refresh-and-snapshot-deduplication",
+      "owner_module": "campus",
+      "title": "教务刷新任务幂等、快照批次唯一且最近成功选择确定",
+      "legacy_evidence": [
+        "app/modules/edu_schedule/services/query_tasks.py:_dedupe_key",
+        "app/models/edu_schedule.py:EduGradeSnapshot unique user_id+refresh_id+xnm+xqm",
+        "app/models/edu_schedule.py:EduGradeOverviewSnapshot unique user_id+refresh_id",
+        "app/models/edu_schedule.py:EduScheduleSnapshot has no unique refresh constraint"
+      ],
+      "legacy_gap": "Redis 去重键有 TTL 且不是最终事实；课表快照缺少 refresh_id/唯一约束，进程重启或重试可绕过去重。",
+      "command_scope": "RefreshCampusData(actorId, accountFingerprint, kind, canonicalTerms, refreshId, idempotencyKey)",
+      "idempotency_key": "actor + account fingerprint + kind + canonical sorted terms + Idempotency-Key；服务端 refreshId 是首次结果的一部分。",
+      "transaction_boundary": "任务事实先在 campus 的 PostgreSQL 事务中唯一占位；每个成功刷新批次的快照、overview、任务终态和事件原子提交，外部调用不包在数据库事务内。",
+      "concurrency_rule": "数据库唯一键是权威去重，Redis 只做限流/协调。grade 唯一键为 userId+refreshId+xnm+xqm，overview 为 userId+refreshId；schedule 在开放写流量前新增 refreshId 与 userId+refreshId+xnm+xqm 唯一键。刷新发布用任务 lease/version compare-and-set。",
+      "rule": "同一刷新命令只创建一个任务和一个快照批次；相同 key 不同摘要冲突。失败批次不能成为最近成功快照；最近成功按单调 refreshOrder、fetchedAt、id 的固定 tie-breaker 选择。不同 refreshId 可保留历史，即使 payload 相同；禁止用 payload 相同误删合法历史。",
+      "success_observation": "网络重试、进程重启或多实例竞争后仍只有一个任务/批次；每个 term 一行，overview 一行；读取始终选择完整的最近成功批次。",
+      "failure_observation": "上游失败、凭据绑定变化、lease 丢失或部分 term 持久化失败时批次不发布为成功，继续提供上一份最近成功快照且错误脱敏。",
+      "verification_scenarios": [
+        {
+          "given": "相同刷新命令",
+          "when": "两个实例并发提交",
+          "then": "数据库只创建一个任务，另一个返回同一 task/refreshId"
+        },
+        {
+          "given": "Redis 去重键过期或 Redis 不可用",
+          "when": "重放已提交 key",
+          "then": "仍由 PostgreSQL 返回首次任务，不重复调用上游"
+        },
+        {
+          "given": "grade 批次含多个 term",
+          "when": "某 term 持久化失败",
+          "then": "整个批次不成为成功，overview 不单独发布"
+        },
+        {
+          "given": "课表写流量准备切换但唯一迁移未完成",
+          "when": "执行切换门禁",
+          "then": "门禁失败，不允许 Java 成为 writer"
+        },
+        {
+          "given": "新刷新失败且存在旧成功快照",
+          "when": "读取最近结果",
+          "then": "返回旧成功快照并标记陈旧/刷新失败，不返回半批次"
+        }
+      ]
+    }
+  ]
+}
