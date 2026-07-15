@@ -311,7 +311,7 @@ function buildLatestGradeSummary(rows) {
     var latest = gradeRows.find(function (row) { return normalizeList(row.grades).length > 0; }) || gradeRows[0] || null;
     if (!latest) {
         return {
-            title: '最近一学期成绩',
+            title: '最近成绩',
             subtitle: '暂无成绩快照',
             termTitle: '暂无成绩',
             summaryText: '刷新成绩后展示课程、学分与 GPA',
@@ -328,7 +328,7 @@ function buildLatestGradeSummary(rows) {
     var totalCredits = cleanText(latest.totalCredits, '-');
     var gpa = cleanText(latest.gpa, '-');
     return {
-        title: '最近一学期成绩',
+        title: '最近成绩',
         subtitle: gradeTermFallback(latest),
         termTitle: gradeTermFallback(latest),
         summaryText: cleanText(latest.summaryText, "".concat(courseCount, " \u95E8\u8BFE / ").concat(totalCredits, " \u5B66\u5206 / GPA ").concat(gpa)),
@@ -384,7 +384,7 @@ function buildCampusActions(eduBound, statusFailed) {
         },
     ];
 }
-function buildCampusHighlights(today, latestGrade, eduBound) {
+function buildCampusHighlights(today, gradeMetrics, eduBound) {
     return [
         {
             key: 'today',
@@ -394,9 +394,9 @@ function buildCampusHighlights(today, latestGrade, eduBound) {
         },
         {
             key: 'grade',
-            label: '最新 GPA',
-            value: latestGrade.gpa || '-',
-            hint: latestGrade.hasGrades ? latestGrade.termTitle : '待同步',
+            label: '总绩点',
+            value: gradeMetrics.allCoursesGpa || '-',
+            hint: gradeMetrics.allCoursesGpa === '-' ? '待同步' : '全部课程',
         },
         {
             key: 'binding',

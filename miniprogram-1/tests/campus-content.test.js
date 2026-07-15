@@ -422,7 +422,7 @@ test('buildLatestGradeSummary highlights latest term grades and GPA', () => {
 
   const summary = buildLatestGradeSummary(rows);
 
-  assert.equal(summary.title, '最近一学期成绩');
+  assert.equal(summary.title, '最近成绩');
   assert.equal(summary.termTitle, '2025-2026 第一学期');
   assert.equal(summary.courseCount, 2);
   assert.equal(summary.totalCredits, '6');
@@ -436,11 +436,24 @@ test('buildLatestGradeSummary highlights latest term grades and GPA', () => {
 
 test('campus actions and highlights stay useful without data', () => {
   const today = buildTodayScheduleSummary([], new Date(2026, 5, 22));
-  const grades = buildLatestGradeSummary([]);
+  const gradeMetrics = buildGradeMetrics([], null, []);
   const actions = buildCampusActions(false, false);
-  const highlights = buildCampusHighlights(today, grades, false);
+  const highlights = buildCampusHighlights(today, gradeMetrics, false);
 
   assert.deepEqual(actions.map((item) => item.key), ['schedule', 'grades', 'binding', 'evaluation', 'more']);
   assert.equal(actions.find((item) => item.key === 'evaluation').disabled, true);
   assert.deepEqual(highlights.map((item) => item.value), ['0', '-', '待绑定']);
+});
+
+test('campus highlights use cumulative GPA as total GPA', () => {
+  const today = buildTodayScheduleSummary([], new Date(2026, 5, 22));
+  const gradeMetrics = buildGradeMetrics([], { display_gpa: 3.42 }, []);
+  const highlights = buildCampusHighlights(today, gradeMetrics, true);
+
+  assert.deepEqual(highlights[1], {
+    key: 'grade',
+    label: '总绩点',
+    value: '3.42',
+    hint: '全部课程',
+  });
 });

@@ -257,15 +257,17 @@ var ACADEMIC_YEAR_OPTIONS = buildAcademicYearOptions(defaultYear);
 var DEFAULT_ACADEMIC_YEAR_INDEX = ACADEMIC_YEAR_PAST_COUNT;
 var DEFAULT_TODAY_SUMMARY = (0, campus_content_1.buildTodayScheduleSummary)([]);
 var DEFAULT_GRADE_SUMMARY = (0, campus_content_1.buildLatestGradeSummary)([]);
+var DEFAULT_GRADE_METRICS = (0, campus_content_1.buildGradeMetrics)([], null, []);
 function buildCampusOverviewPatch(scheduleRows, gradeRows, gradeOverview, academicYearAverages, eduBound, statusFailed) {
     var todayCourses = (0, campus_content_1.buildTodayScheduleSummary)(scheduleRows);
     var latestGradeSummary = (0, campus_content_1.buildLatestGradeSummary)(gradeRows);
+    var gradeMetrics = (0, campus_content_1.buildGradeMetrics)(gradeRows, gradeOverview, academicYearAverages);
     return {
         todayCourses: todayCourses,
         latestGradeSummary: latestGradeSummary,
-        gradeMetrics: (0, campus_content_1.buildGradeMetrics)(gradeRows, gradeOverview, academicYearAverages),
+        gradeMetrics: gradeMetrics,
         campusActions: (0, campus_content_1.buildCampusActions)(eduBound, statusFailed),
-        campusHighlights: (0, campus_content_1.buildCampusHighlights)(todayCourses, latestGradeSummary, eduBound),
+        campusHighlights: (0, campus_content_1.buildCampusHighlights)(todayCourses, gradeMetrics, eduBound),
     };
 }
 Page({
@@ -295,9 +297,9 @@ Page({
         pageTitle: '校园',
         todayCourses: DEFAULT_TODAY_SUMMARY,
         latestGradeSummary: DEFAULT_GRADE_SUMMARY,
-        gradeMetrics: (0, campus_content_1.buildGradeMetrics)([], null, []),
+        gradeMetrics: DEFAULT_GRADE_METRICS,
         campusActions: (0, campus_content_1.buildCampusActions)(false, false),
-        campusHighlights: (0, campus_content_1.buildCampusHighlights)(DEFAULT_TODAY_SUMMARY, DEFAULT_GRADE_SUMMARY, false),
+        campusHighlights: (0, campus_content_1.buildCampusHighlights)(DEFAULT_TODAY_SUMMARY, DEFAULT_GRADE_METRICS, false),
         snapshotTerms: [],
         snapshotTermLabels: [],
         snapshotTermIndex: 0,
@@ -525,7 +527,7 @@ Page({
             patch.eduBound = credential.has_credentials;
             patch.eduUsernameHint = credential.username_hint;
             patch.campusActions = (0, campus_content_1.buildCampusActions)(credential.has_credentials, false);
-            patch.campusHighlights = (0, campus_content_1.buildCampusHighlights)(patch.todayCourses, patch.latestGradeSummary, credential.has_credentials);
+            patch.campusHighlights = (0, campus_content_1.buildCampusHighlights)(patch.todayCourses, patch.gradeMetrics, credential.has_credentials);
         }
         this.setData(patch, function () {
             if (_this.data.mode === mode)

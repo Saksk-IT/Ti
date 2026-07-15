@@ -248,6 +248,7 @@ const ACADEMIC_YEAR_OPTIONS = buildAcademicYearOptions(defaultYear);
 const DEFAULT_ACADEMIC_YEAR_INDEX = ACADEMIC_YEAR_PAST_COUNT;
 const DEFAULT_TODAY_SUMMARY = buildTodayScheduleSummary([]);
 const DEFAULT_GRADE_SUMMARY = buildLatestGradeSummary([]);
+const DEFAULT_GRADE_METRICS = buildGradeMetrics([], null, []);
 
 function buildCampusOverviewPatch(
   scheduleRows: any[],
@@ -259,12 +260,13 @@ function buildCampusOverviewPatch(
 ): any {
   const todayCourses = buildTodayScheduleSummary(scheduleRows);
   const latestGradeSummary = buildLatestGradeSummary(gradeRows);
+  const gradeMetrics = buildGradeMetrics(gradeRows, gradeOverview, academicYearAverages);
   return {
     todayCourses,
     latestGradeSummary,
-    gradeMetrics: buildGradeMetrics(gradeRows, gradeOverview, academicYearAverages),
+    gradeMetrics,
     campusActions: buildCampusActions(eduBound, statusFailed),
-    campusHighlights: buildCampusHighlights(todayCourses, latestGradeSummary, eduBound),
+    campusHighlights: buildCampusHighlights(todayCourses, gradeMetrics, eduBound),
   };
 }
 
@@ -295,9 +297,9 @@ Page({
     pageTitle: '校园',
     todayCourses: DEFAULT_TODAY_SUMMARY as any,
     latestGradeSummary: DEFAULT_GRADE_SUMMARY as any,
-    gradeMetrics: buildGradeMetrics([], null, []) as any,
+    gradeMetrics: DEFAULT_GRADE_METRICS as any,
     campusActions: buildCampusActions(false, false) as any[],
-    campusHighlights: buildCampusHighlights(DEFAULT_TODAY_SUMMARY, DEFAULT_GRADE_SUMMARY, false) as any[],
+    campusHighlights: buildCampusHighlights(DEFAULT_TODAY_SUMMARY, DEFAULT_GRADE_METRICS, false) as any[],
     snapshotTerms: [] as SnapshotOption[],
     snapshotTermLabels: [] as string[],
     snapshotTermIndex: 0,
@@ -540,7 +542,7 @@ Page({
       patch.eduBound = credential.has_credentials;
       patch.eduUsernameHint = credential.username_hint;
       patch.campusActions = buildCampusActions(credential.has_credentials, false);
-      patch.campusHighlights = buildCampusHighlights(patch.todayCourses, patch.latestGradeSummary, credential.has_credentials);
+      patch.campusHighlights = buildCampusHighlights(patch.todayCourses, patch.gradeMetrics, credential.has_credentials);
     }
     this.setData(patch, () => {
       if (this.data.mode === mode) this.syncSnapshotBrowserForMode(mode);

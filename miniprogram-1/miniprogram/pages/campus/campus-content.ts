@@ -397,7 +397,7 @@ export function buildLatestGradeSummary(rows: unknown[]): CampusLatestGradeSumma
   const latest = gradeRows.find((row) => normalizeList(row.grades).length > 0) || gradeRows[0] || null;
   if (!latest) {
     return {
-      title: '最近一学期成绩',
+      title: '最近成绩',
       subtitle: '暂无成绩快照',
       termTitle: '暂无成绩',
       summaryText: '刷新成绩后展示课程、学分与 GPA',
@@ -415,7 +415,7 @@ export function buildLatestGradeSummary(rows: unknown[]): CampusLatestGradeSumma
   const totalCredits = cleanText(latest.totalCredits, '-');
   const gpa = cleanText(latest.gpa, '-');
   return {
-    title: '最近一学期成绩',
+    title: '最近成绩',
     subtitle: gradeTermFallback(latest),
     termTitle: gradeTermFallback(latest),
     summaryText: cleanText(latest.summaryText, `${courseCount} 门课 / ${totalCredits} 学分 / GPA ${gpa}`),
@@ -475,7 +475,7 @@ export function buildCampusActions(eduBound: boolean, statusFailed: boolean): Ca
 
 export function buildCampusHighlights(
   today: CampusTodaySummary,
-  latestGrade: CampusLatestGradeSummary,
+  gradeMetrics: CampusGradeMetrics,
   eduBound: boolean
 ): CampusHighlightItem[] {
   return [
@@ -487,9 +487,9 @@ export function buildCampusHighlights(
     },
     {
       key: 'grade',
-      label: '最新 GPA',
-      value: latestGrade.gpa || '-',
-      hint: latestGrade.hasGrades ? latestGrade.termTitle : '待同步',
+      label: '总绩点',
+      value: gradeMetrics.allCoursesGpa || '-',
+      hint: gradeMetrics.allCoursesGpa === '-' ? '待同步' : '全部课程',
     },
     {
       key: 'binding',

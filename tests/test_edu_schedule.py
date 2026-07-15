@@ -674,7 +674,7 @@ def test_miniprogram_campus_tab_exposes_schedule_and_grade_queries():
     assert "statusLoading || !this.data.statusReady" in ts
     assert "this.data.statusFailed" in ts
     assert "今天要上的课" in content_ts
-    assert "最近一学期成绩" in content_ts
+    assert "最近成绩" in content_ts
     assert "一键教评" in content_ts
     assert "buildCampusActions" in content_ts
     assert "一键教评" in (feature_dir / "campus-feature.ts").read_text(encoding="utf-8")
@@ -697,13 +697,22 @@ def test_miniprogram_campus_grade_metrics_use_backend_overview_fields():
         encoding="utf-8"
     )
 
-    for page_wxml in (campus_wxml, grades_wxml):
-        assert "本学期绩点" in page_wxml
-        assert "所有课程绩点" in page_wxml
-        assert "本学年学分加权平均分" in page_wxml
-        assert "gradeMetrics.semesterGpa" in page_wxml
-        assert "gradeMetrics.allCoursesGpa" in page_wxml
-        assert "gradeMetrics.academicYearWeightedAverage" in page_wxml
+    assert "最新学期绩点" in campus_wxml
+    assert "本学年学分加权平均分" in campus_wxml
+    assert "gradeMetrics.semesterGpa" in campus_wxml
+    assert "gradeMetrics.allCoursesGpa" not in campus_wxml
+    assert "gradeMetrics.academicYearWeightedAverage" in campus_wxml
+    assert "所有课程绩点" not in campus_wxml
+
+    assert "本学期绩点" in grades_wxml
+    assert "所有课程绩点" in grades_wxml
+    assert "本学年学分加权平均分" in grades_wxml
+    assert "gradeMetrics.semesterGpa" in grades_wxml
+    assert "gradeMetrics.allCoursesGpa" in grades_wxml
+    assert "gradeMetrics.academicYearWeightedAverage" in grades_wxml
+
+    assert "总绩点" in content_ts
+    assert "allCoursesGpa" in content_ts
 
     assert "buildGradeMetrics" in content_ts
     assert "display_gpa" in content_ts
