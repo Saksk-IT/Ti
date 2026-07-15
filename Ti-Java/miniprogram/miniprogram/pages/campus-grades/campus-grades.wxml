@@ -1,0 +1,142 @@
+<view class="page-root campus-page campus-query-page campus-grades-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <view class="campus-bg"></view>
+  <navigation-bar title="{{pageTitle}}" back="{{true}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent">
+    <view slot="right" class="nav-right">
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <view class="page-container">
+    <scroll-view class="content-area" scroll-y bounces="{{false}}" refresher-enabled="{{true}}" bindrefresherrefresh="onRefresh">
+      <view class="container query-container">
+        <view class="campus-query-progress" wx:if="{{queryProgressVisible}}">
+          <view class="progress-head">
+            <view class="progress-title-wrap">
+              <image class="progress-icon" src="/images/icons/refresh-cw.svg" mode="aspectFit"></image>
+              <text class="progress-title">查询进度</text>
+            </view>
+            <text class="progress-status">{{queryProgressStatus}}</text>
+          </view>
+          <view class="query-progress-track">
+            <view class="query-progress-fill" style="width: {{queryProgressPercent}}%;"></view>
+          </view>
+          <text class="progress-detail">{{queryProgressDetail}}</text>
+          <text class="progress-meta" wx:if="{{queryProgressMeta}}">{{queryProgressMeta}}</text>
+        </view>
+
+        <view class="msg error" wx:if="{{errorMsg}}">
+          <text>{{errorMsg}}</text>
+        </view>
+
+        <view class="bind-prompt" wx:if="{{statusReady && !statusFailed && !eduBound && !statusLoading}}">
+          <view class="prompt-head">
+            <view class="prompt-icon-wrap">
+              <image class="prompt-icon" src="/images/icons/settings.svg" mode="aspectFit"></image>
+            </view>
+            <view class="prompt-copy">
+              <text class="prompt-title">未绑定教务系统账号</text>
+              <text class="prompt-sub">绑定后可在此查询成绩。</text>
+            </view>
+          </view>
+          <view class="prompt-action" bindtap="onGoEduBindingTap" aria-role="button" aria-label="去绑定教务系统账号">
+            <image class="prompt-action-icon" src="/images/icons/settings.svg" mode="aspectFit"></image>
+            <text>去绑定</text>
+          </view>
+        </view>
+
+        <view class="grade-overview-panel" wx:if="{{eduBound}}" aria-label="成绩概览">
+          <view class="grade-overview-head">
+            <text class="grade-overview-title">成绩概览</text>
+            <text class="grade-overview-term">{{snapshotSelectedTermKey ? selectedTermLabel : '暂无成绩'}}</text>
+          </view>
+          <view class="grade-overview-metrics">
+            <view class="grade-overview-metric" aria-role="text" aria-label="本学期绩点 {{gradeMetrics.semesterGpa}}">
+              <text class="grade-overview-value">{{gradeMetrics.semesterGpa}}</text>
+              <text class="grade-overview-label">本学期绩点</text>
+            </view>
+            <view class="grade-overview-metric" aria-role="text" aria-label="所有课程绩点 {{gradeMetrics.allCoursesGpa}}">
+              <text class="grade-overview-value">{{gradeMetrics.allCoursesGpa}}</text>
+              <text class="grade-overview-label">所有课程绩点</text>
+            </view>
+            <view class="grade-overview-metric grade-overview-metric-wide" aria-role="text" aria-label="本学年学分加权平均分 {{gradeMetrics.academicYearWeightedAverage}}">
+              <text class="grade-overview-value">{{gradeMetrics.academicYearWeightedAverage}}</text>
+              <text class="grade-overview-label">本学年学分加权平均分</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="snapshot-browser" wx:if="{{snapshotTerms.length}}">
+          <view class="snapshot-selector-group" aria-label="历史成绩筛选">
+            <scroll-view class="snapshot-selector-scroll snapshot-term-list" scroll-x show-scrollbar="{{false}}" enhanced="{{true}}">
+              <view class="snapshot-chip-row">
+                <view
+                  class="snapshot-chip snapshot-term-chip {{item.active ? 'active' : ''}}"
+                  wx:for="{{snapshotTerms}}"
+                  wx:key="value"
+                  data-value="{{item.value}}"
+                  bindtap="onSnapshotTermTap"
+                  aria-role="button"
+                  aria-label="选择{{item.label}}"
+                >
+                  <text>{{item.label}}</text>
+                  <text class="chip-count">{{item.count}}</text>
+                </view>
+              </view>
+            </scroll-view>
+          </view>
+        </view>
+
+        <view class="term-list" wx:if="{{gradeResults.length}}">
+          <view class="term-card" wx:for="{{gradeResults}}" wx:key="title">
+            <view class="term-head">
+              <text class="term-title">{{item.title}}</text>
+              <text class="term-meta">{{item.summaryText}}</text>
+            </view>
+            <view class="grade-row" wx:for="{{item.grades}}" wx:for-item="grade" wx:key="course_name">
+              <view class="grade-main">
+                <text class="course-name">{{grade.course_name}}</text>
+                <text class="course-detail">{{grade.teacher || grade.assessment || '-'}}</text>
+              </view>
+              <view class="grade-score">
+                <text class="score">{{grade.score}}</text>
+                <text class="score-sub">{{grade.credits}} 学分 / 绩点 {{grade.grade_point}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+        <view class="empty-state" wx:elif="{{eduBound && !loading}}">
+          <text>暂无成绩记录。</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view class="floating-query-bubble {{loading ? 'disabled' : ''}}" bindtap="onQueryTap" aria-role="button" aria-label="查询成绩">
+    <image class="floating-query-icon" src="/images/icons/chart.svg" mode="aspectFit"></image>
+    <text>{{loading ? '提交中...' : '查询成绩'}}</text>
+  </view>
+
+  <view class="campus-captcha-dialog" wx:if="{{captchaVisible}}">
+    <view class="captcha-mask" bindtap="onCaptchaCancelTap"></view>
+    <view class="captcha-panel">
+      <view class="captcha-head">
+        <text class="captcha-title">输入 WebVPN 验证码</text>
+        <text class="captcha-sub">成绩查询需要刷新登录态</text>
+      </view>
+      <text class="captcha-message">{{captchaMessage}}</text>
+      <image class="captcha-image" wx:if="{{captchaImage}}" src="{{captchaImage}}" mode="aspectFit"></image>
+      <input class="captcha-input" value="{{captchaCode}}" maxlength="10" placeholder="请输入验证码" bindinput="onCaptchaInput" />
+      <view class="captcha-actions">
+        <view class="captcha-action ghost" bindtap="onCaptchaCancelTap" aria-role="button" aria-label="取消验证码输入">取消</view>
+        <view class="captcha-action primary {{captchaSubmitting ? 'disabled' : ''}}" bindtap="onCaptchaSubmitTap" aria-role="button" aria-label="提交验证码">
+          {{captchaSubmitting ? '提交中...' : '继续查询'}}
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

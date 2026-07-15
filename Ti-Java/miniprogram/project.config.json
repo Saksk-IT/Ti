@@ -1,0 +1,83 @@
+{
+  "description": "项目配置文件",
+  "miniprogramRoot": "miniprogram/",
+  "compileType": "miniprogram",
+  "setting": {
+    "useCompilerPlugins": [
+      "typescript",
+      "less"
+    ],
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    },
+    "coverView": false,
+    "postcss": false,
+    "minified": true,
+    "enhance": true,
+    "showShadowRootInWxmlPanel": false,
+    "packNpmRelationList": [],
+    "ignoreUploadUnusedFiles": true,
+    "compileHotReLoad": false,
+    "skylineRenderEnable": true,
+    "es6": true,
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "packNpmManually": false,
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true,
+    "disableUseStrict": false
+  },
+  "simulatorType": "wechat",
+  "simulatorPluginLibVersion": {
+    "wxext14566970e7e9f62": "2.27.3"
+  },
+  "condition": {},
+  "srcMiniprogramRoot": "miniprogram/",
+  "editorSetting": {
+    "tabIndent": "insertSpaces",
+    "tabSize": 2
+  },
+  "libVersion": "3.14.2",
+  "packOptions": {
+    "ignore": [],
+    "include": [
+      {
+        "type": "folder",
+        "value": "pages/bank-detail/behaviors"
+      },
+      {
+        "type": "folder",
+        "value": "pages/bank-detail/components"
+      },
+      {
+        "type": "folder",
+        "value": "pages/bank-detail/modules"
+      },
+      {
+        "type": "folder",
+        "value": "pages/bank-detail/utils"
+      },
+      {
+        "type": "folder",
+        "value": "pages/quiz/behaviors"
+      },
+      {
+        "type": "folder",
+        "value": "pages/quiz/modules"
+      },
+      {
+        "type": "folder",
+        "value": "pages/quiz/utils"
+      }
+    ]
+  },
+  "appid": "wxfc4c270f007773ab",
+  "projectArchitecture": "multiPlatform"
+}

@@ -1,0 +1,130 @@
+<!--settings-about-v2.wxml - -->
+<view class="page-root mine-linked-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="关于" back="{{true}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent">
+    <view slot="right" class="nav-right">
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <view class="page-container">
+    <scroll-view class="content-area" scroll-y bounces="{{false}}">
+      <view class="container">
+        <view class="card hero" aria-label="关于页概览">
+          <text class="hero-title">关于</text>
+          <text class="hero-sub">应用信息与相关协议。</text>
+        </view>
+
+        <view class="subtabs" aria-label="关于分区">
+          <view class="subtab {{aboutTab==='app' ? 'active' : ''}}" bindtap="onAboutTabTap" data-tab="app"><text>应用信息</text></view>
+          <view class="subtab {{aboutTab==='legal' ? 'active' : ''}}" bindtap="onAboutTabTap" data-tab="legal"><text>协议</text></view>
+        </view>
+
+        <view class="msg error" wx:if="{{errorMsg}}">
+          <text>{{errorMsg}}</text>
+        </view>
+
+        <view class="card section-card" wx:if="{{aboutTab==='app'}}" aria-label="应用信息">
+          <text class="section-title">应用信息</text>
+          <text class="section-sub">保持专注的练习体验与一致的数据语义。</text>
+          <view class="divider"></view>
+
+          <view class="about-row">
+            <view class="about-left">
+              <text class="about-name">产品</text>
+              <text class="about-desc">SAK 题库与练习系统</text>
+            </view>
+            <text class="about-link">小程序</text>
+          </view>
+
+          <view class="about-row">
+            <view class="about-left">
+              <text class="about-name">当前账号</text>
+              <text class="about-desc">{{currentUsername}}</text>
+            </view>
+            <view class="about-link tap" bindtap="onGoProfile"><text>查看</text></view>
+          </view>
+
+          <view class="about-row tap" bindtap="onToggleContact">
+            <view class="about-left">
+              <text class="about-name">联系管理员</text>
+              <text class="about-desc">点击展开站内 Chat、邮箱、微信联系方式。</text>
+            </view>
+            <view class="about-toggle">
+              <text class="about-link">联系</text>
+              <view class="toggle-icon {{contactOpen ? 'open' : ''}}"><text>+</text></view>
+            </view>
+          </view>
+
+          <view class="contact-panel" wx:if="{{contactOpen}}">
+            <text class="contact-meta">当前管理员：{{adminUsername || '未设置'}}</text>
+
+            <view class="contact-item">
+              <view class="contact-left">
+                <text class="contact-title">站内 Chat</text>
+                <text class="contact-desc">小程序暂不支持站内聊天，可在 Web 端发起。</text>
+              </view>
+              <view class="contact-right">
+                <view class="btn btn-primary {{chatDisabled ? 'disabled' : ''}}" bindtap="onContactChat">
+                  <text>{{chatDisabled ? '不可用' : '开始聊天'}}</text>
+                </view>
+              </view>
+            </view>
+
+            <view class="contact-item">
+              <view class="contact-left">
+                <text class="contact-title">邮箱</text>
+                <text class="contact-desc">发送问题与建议到管理员邮箱。</text>
+              </view>
+              <view class="contact-right">
+                <view class="contact-value {{adminEmail ? '' : 'muted'}}" bindtap="onCopy" data-value="{{adminEmail}}">
+                  <text>{{adminEmail || '未设置'}}</text>
+                </view>
+              </view>
+            </view>
+
+            <view class="contact-item">
+              <view class="contact-left">
+                <text class="contact-title">微信</text>
+                <text class="contact-desc">添加管理员微信进行沟通。</text>
+              </view>
+              <view class="contact-right">
+                <view class="contact-value {{adminWechat ? '' : 'muted'}}" bindtap="onCopy" data-value="{{adminWechat}}">
+                  <text>{{adminWechat || '未设置'}}</text>
+                </view>
+              </view>
+            </view>
+
+            <text class="contact-meta" wx:if="{{chatDisabled && chatDisabledReason}}">{{chatDisabledReason}}</text>
+          </view>
+        </view>
+
+        <view class="card section-card" wx:if="{{aboutTab==='legal'}}" aria-label="协议">
+          <text class="section-title">协议</text>
+          <text class="section-sub">使用前请阅读并理解相关条款。</text>
+          <view class="divider"></view>
+
+          <view class="about-row tap" bindtap="onOpenTerms">
+            <view class="about-left">
+              <text class="about-name">服务协议</text>
+              <text class="about-desc">产品服务条款与用户责任。</text>
+            </view>
+            <text class="about-link">查看</text>
+          </view>
+
+          <view class="about-row tap" bindtap="onOpenPrivacy">
+            <view class="about-left">
+              <text class="about-name">隐私保护协议</text>
+              <text class="about-desc">数据处理与隐私说明。</text>
+            </view>
+            <text class="about-link">查看</text>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

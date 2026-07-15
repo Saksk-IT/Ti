@@ -1,0 +1,316 @@
+<!-- v2-drawer.wxml - 移动端可收起侧边栏（对齐 Web app_shell 行为） -->
+<view class="drawer-root {{open ? 'open' : ''}} {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <view class="drawer-overlay" catchtap="onClose"></view>
+
+  <view class="drawer-panel" catchtap="stopTap">
+    <view class="drawer-head">
+      <view
+        class="brand"
+        bindtap="onNavTap"
+        data-nav-type="switchTab"
+        data-url="/pages/hub-v2/hub-v2"
+        aria-role="button"
+        aria-label="返回首页"
+      >
+        <view class="brand-dot"></view>
+        <text class="brand-text">SAK</text>
+      </view>
+    </view>
+
+    <scroll-view class="drawer-scroll" scroll-y bounces="{{false}}">
+      <view class="search-box" aria-label="全局搜索">
+        <input
+          class="search-input"
+          placeholder="搜索题干/答案/解析"
+          value="{{searchKeyword}}"
+          bindinput="onSearchInput"
+          confirm-type="search"
+          bindconfirm="onSearchSubmit"
+        />
+        <view class="search-btn" bindtap="onSearchSubmit" aria-role="button" aria-label="搜索">
+          <image class="search-icon-img" src="/images/icons/search.svg" mode="aspectFit"></image>
+        </view>
+      </view>
+
+      <view class="nav">
+        <view class="nav-section">
+          <text class="nav-title">概览</text>
+          <view class="nav-group">
+            <view class="nav-item {{activeKey==='hub' ? 'active' : ''}}" bindtap="onNavTap" data-nav-type="switchTab" data-url="/pages/hub-v2/hub-v2">
+              <view class="nav-leftRow">
+                <image class="nav-icon" src="/images/icons/home.svg" mode="aspectFit"></image>
+                <text class="nav-label">首页</text>
+              </view>
+              <text class="nav-chev">›</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="nav-section">
+          <text class="nav-title">题库</text>
+          <view class="nav-group">
+            <view class="nav-item {{activeKey==='public' ? 'active' : ''}}" bindtap="onNavTap" data-nav-type="redirectTo" data-url="/pages/public-bank-v2/public-bank-v2">
+              <view class="nav-leftRow">
+                <image class="nav-icon" src="/images/icons/book-open.svg" mode="aspectFit"></image>
+                <text class="nav-label">题库广场</text>
+              </view>
+              <text class="nav-chev">›</text>
+            </view>
+            <view class="nav-item {{activeKey==='banks' ? 'active' : ''}}" bindtap="onNavTap" data-nav-type="redirectTo" data-url="/pages/my-banks-v2/my-banks-v2">
+              <view class="nav-leftRow">
+                <image class="nav-icon" src="/images/icons/bar-chart.svg" mode="aspectFit"></image>
+                <text class="nav-label">个人题库</text>
+              </view>
+              <text class="nav-chev">›</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="nav-section">
+          <text class="nav-title">复盘</text>
+          <view class="nav-group">
+            <view class="nav-item {{activeKey==='review' ? 'active' : ''}}" bindtap="onNavTap" data-nav-type="redirectTo" data-url="/pages/review-hub-v3/review-hub-v3">
+              <view class="nav-leftRow">
+                <image class="nav-icon" src="/images/icons/refresh-cw.svg" mode="aspectFit"></image>
+                <text class="nav-label">复盘</text>
+              </view>
+              <text class="nav-chev">›</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="nav-section">
+          <text class="nav-title">成长</text>
+          <view class="nav-group">
+            <view class="nav-item {{activeKey==='data' ? 'active' : ''}}" bindtap="onNavTap" data-nav-type="redirectTo" data-url="/packages/data/pages/data-center-v2/data-center-v2">
+              <view class="nav-leftRow">
+                <image class="nav-icon" src="/images/icons/chart.svg" mode="aspectFit"></image>
+                <text class="nav-label">数据</text>
+              </view>
+              <text class="nav-chev">›</text>
+            </view>
+            <view class="nav-item {{activeKey==='exams' ? 'active' : ''}}" bindtap="onNavTap" data-nav-type="redirectTo" data-url="/pages/exams-select-v2/exams-select-v2">
+              <view class="nav-leftRow">
+                <image class="nav-icon" src="/images/icons/clipboard-check.svg" mode="aspectFit"></image>
+                <text class="nav-label">考试</text>
+              </view>
+              <text class="nav-chev">›</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="nav-section">
+          <text class="nav-title">更多</text>
+          <view class="nav-group">
+            <view class="nav-item {{activeKey==='search' ? 'active' : ''}}" wx:if="{{false}}" bindtap="onNavTap" data-nav-type="navigateTo" data-url="/pages/search-v2/search-v2">
+              <text class="nav-label">搜索</text>
+              <text class="nav-chev">›</text>
+            </view>
+            <view class="nav-item {{activeKey==='notifications' ? 'active' : ''}}" bindtap="onNavTap" data-nav-type="redirectTo" data-url="/pages/notifications-v2/notifications-v2">
+              <view class="nav-leftRow">
+                <image class="nav-icon" src="/images/icons/bell.svg" mode="aspectFit"></image>
+                <text class="nav-label">通知</text>
+                <view class="nav-badge" wx:if="{{unreadNotiCount > 0}}">
+                  <text>{{unreadNotiText}}</text>
+                </view>
+              </view>
+              <text class="nav-chev">›</text>
+            </view>
+            <!-- 论坛：按需求移除 -->
+            <view class="nav-item {{activeKey==='coding' ? 'active' : ''}}" bindtap="onNavTap" data-nav-type="redirectTo" data-url="/pages/coding-v2/coding-v2">
+              <view class="nav-leftRow">
+                <image class="nav-icon" src="/images/icons/code.svg" mode="aspectFit"></image>
+                <text class="nav-label">编程</text>
+              </view>
+              <text class="nav-chev">›</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="nav-section" wx:if="{{canShowAdmin}}">
+          <text class="nav-title">系统</text>
+          <view class="nav-group">
+            <view class="nav-subgroup" wx:if="{{false}}">
+              <view class="nav-item sub" bindtap="onNavTap" data-nav-type="redirectTo" data-url="/pages/settings-center-v2/settings-center-v2">
+                <text class="nav-label">个人资料</text>
+                <text class="nav-chev">›</text>
+              </view>
+              <view class="nav-item sub" bindtap="onNavTap" data-nav-type="redirectTo" data-url="/pages/settings-center-v2/settings-center-v2?navKey=theme">
+                <text class="nav-label">主题</text>
+                <text class="nav-chev">›</text>
+              </view>
+              <view class="nav-item sub" bindtap="onNavTap" data-nav-type="redirectTo" data-url="/pages/settings-center-v2/settings-center-v2?navKey=about">
+                <text class="nav-label">关于</text>
+                <text class="nav-chev">›</text>
+              </view>
+            </view>
+            <view class="nav-item {{activeKey==='admin' ? 'active' : ''}}" wx:if="{{canShowAdmin}}" bindtap="onNavTap" data-nav-type="redirectTo" data-url="/pages/admin-v2/admin-v2">
+              <view class="nav-leftRow">
+                <image class="nav-icon" src="/images/icons/sliders.svg" mode="aspectFit"></image>
+                <text class="nav-label">管理</text>
+              </view>
+              <text class="nav-chev">›</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="nav-section" wx:if="{{false}}">
+          <text class="nav-title">旧版</text>
+          <view class="nav-group">
+            <view class="nav-item" bindtap="onNavTap" data-nav-type="redirectTo" data-url="/pages/index-v2/index-v2">
+              <text class="nav-label">旧首页</text>
+              <text class="nav-chev">›</text>
+            </view>
+            <view class="nav-item" bindtap="onNavTap" data-nav-type="switchTab" data-url="/pages/subjects/subjects">
+              <text class="nav-label">旧科目</text>
+              <text class="nav-chev">›</text>
+            </view>
+            <view class="nav-item" bindtap="onNavTap" data-nav-type="switchTab" data-url="/pages/my-banks-v2/my-banks-v2">
+              <text class="nav-label">旧题库</text>
+              <text class="nav-chev">›</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="section" wx:if="{{false}}">
+        <text class="section-title">主题风格</text>
+        <view class="chips">
+          <view class="chip {{themeStyle === 'default' ? 'active' : ''}}" bindtap="onStyleTap" data-style="default">
+            <text>默认</text>
+          </view>
+          <view class="chip {{themeStyle === 'mist' ? 'active' : ''}}" bindtap="onStyleTap" data-style="mist">
+            <text>雾蓝</text>
+          </view>
+          <view class="chip {{themeStyle === 'dune' ? 'active' : ''}}" bindtap="onStyleTap" data-style="dune">
+            <text>暖砂</text>
+          </view>
+          <view class="chip {{themeStyle === 'pine' ? 'active' : ''}}" bindtap="onStyleTap" data-style="pine">
+            <text>岩松</text>
+          </view>
+          <view class="chip {{themeStyle === 'celadon' ? 'active' : ''}}" bindtap="onStyleTap" data-style="celadon">
+            <text>影青</text>
+          </view>
+        </view>
+        <text class="section-sub">该风格会与 Web 端设置同步</text>
+      </view>
+    </scroll-view>
+
+    <!-- 底部快捷菜单（个人资料 / 主题 / 字体 / 设置 / 退出登录） -->
+    <view class="quick-menu-layer" wx:if="{{actionMenuOpen || themeMenuOpen || fontMenuOpen}}">
+      <view class="quick-menu-mask" catchtap="onQuickMenuMaskTap"></view>
+
+      <view class="quick-menu-pop" wx:if="{{actionMenuOpen}}" catchtap="stopTap" aria-label="侧边栏快捷菜单">
+        <view class="quick-item" bindtap="onQuickNavTap" data-nav-type="redirectTo" data-url="/pages/profile-view-v2/profile-view-v2" aria-role="button" aria-label="个人资料">
+          <image class="quick-icon" src="/images/icons/edit.svg" mode="aspectFit"></image>
+          <text class="quick-text">个人资料</text>
+        </view>
+        <view class="quick-item" bindtap="onOpenThemeMenu" aria-role="button" aria-label="主题">
+          <image class="quick-icon" src="/images/icons/sun.svg" mode="aspectFit"></image>
+          <text class="quick-text">主题</text>
+          <text class="quick-chev">›</text>
+        </view>
+        <view class="quick-item" bindtap="onOpenFontMenu" aria-role="button" aria-label="字体">
+          <image class="quick-icon" src="/images/icons/type.svg" mode="aspectFit"></image>
+          <text class="quick-text">字体</text>
+          <text class="quick-chev">›</text>
+        </view>
+        <view class="quick-item" bindtap="onQuickNavTap" data-nav-type="redirectTo" data-url="/pages/settings-center-v2/settings-center-v2" aria-role="button" aria-label="设置">
+          <image class="quick-icon" src="/images/icons/settings.svg" mode="aspectFit"></image>
+          <text class="quick-text">设置</text>
+        </view>
+        <view class="quick-item danger" bindtap="onLogoutTap" aria-role="button" aria-label="退出登录">
+          <image class="quick-icon" src="/images/icons/logout.svg" mode="aspectFit"></image>
+          <text class="quick-text">退出登录</text>
+        </view>
+      </view>
+
+      <view class="quick-menu-pop theme" wx:if="{{themeMenuOpen}}" catchtap="stopTap" aria-label="主题选择">
+        <view class="quick-head">
+          <view class="quick-back" bindtap="onBackToQuickMenu" aria-role="button" aria-label="返回">
+            <text class="quick-back-text">‹</text>
+          </view>
+          <text class="quick-title">主题</text>
+          <view class="quick-head-spacer"></view>
+        </view>
+
+        <scroll-view class="quick-scroll" scroll-y bounces="{{false}}">
+          <view class="theme-group">
+            <view class="theme-item {{themeStyle==='dark' ? 'active' : ''}}" bindtap="onThemeStyleTap" data-style="dark" aria-role="button" aria-label="深色">
+              <text class="theme-text">深色</text>
+              <text class="theme-check" wx:if="{{themeStyle==='dark'}}">✓</text>
+            </view>
+            <view class="theme-item {{themeStyle==='default' ? 'active' : ''}}" bindtap="onThemeStyleTap" data-style="default" aria-role="button" aria-label="灰白">
+              <text class="theme-text">灰白</text>
+              <text class="theme-check" wx:if="{{themeStyle==='default'}}">✓</text>
+            </view>
+            <view class="theme-item {{themeStyle==='mist' ? 'active' : ''}}" bindtap="onThemeStyleTap" data-style="mist" aria-role="button" aria-label="雾蓝">
+              <text class="theme-text">雾蓝</text>
+              <text class="theme-check" wx:if="{{themeStyle==='mist'}}">✓</text>
+            </view>
+            <view class="theme-item {{themeStyle==='dune' ? 'active' : ''}}" bindtap="onThemeStyleTap" data-style="dune" aria-role="button" aria-label="暖砂">
+              <text class="theme-text">暖砂</text>
+              <text class="theme-check" wx:if="{{themeStyle==='dune'}}">✓</text>
+            </view>
+            <view class="theme-item {{themeStyle==='pine' ? 'active' : ''}}" bindtap="onThemeStyleTap" data-style="pine" aria-role="button" aria-label="岩松">
+              <text class="theme-text">岩松</text>
+              <text class="theme-check" wx:if="{{themeStyle==='pine'}}">✓</text>
+            </view>
+            <view class="theme-item {{themeStyle==='celadon' ? 'active' : ''}}" bindtap="onThemeStyleTap" data-style="celadon" aria-role="button" aria-label="影青">
+              <text class="theme-text">影青</text>
+              <text class="theme-check" wx:if="{{themeStyle==='celadon'}}">✓</text>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+
+      <view class="quick-menu-pop font" wx:if="{{fontMenuOpen}}" catchtap="stopTap" aria-label="字体选择">
+        <view class="quick-head">
+          <view class="quick-back" bindtap="onBackToQuickMenu" aria-role="button" aria-label="返回">
+            <text class="quick-back-text">‹</text>
+          </view>
+          <text class="quick-title">字体</text>
+          <view class="quick-head-spacer"></view>
+        </view>
+
+        <scroll-view class="quick-scroll" scroll-y bounces="{{false}}">
+          <view class="theme-group">
+            <view class="theme-item {{fontStyle==='system' ? 'active' : ''}}" bindtap="onFontStyleTap" data-style="system" aria-role="button" aria-label="系统默认">
+              <text class="theme-text">系统默认</text>
+              <text class="theme-check" wx:if="{{fontStyle==='system'}}">✓</text>
+            </view>
+            <view class="theme-item {{fontStyle==='elegant' ? 'active' : ''}}" bindtap="onFontStyleTap" data-style="elegant" aria-role="button" aria-label="优雅">
+              <text class="theme-text">优雅</text>
+              <text class="theme-check" wx:if="{{fontStyle==='elegant'}}">✓</text>
+            </view>
+            <view class="theme-item {{fontStyle==='modern' ? 'active' : ''}}" bindtap="onFontStyleTap" data-style="modern" aria-role="button" aria-label="现代">
+              <text class="theme-text">现代</text>
+              <text class="theme-check" wx:if="{{fontStyle==='modern'}}">✓</text>
+            </view>
+            <view class="theme-item {{fontStyle==='rounded' ? 'active' : ''}}" bindtap="onFontStyleTap" data-style="rounded" aria-role="button" aria-label="圆润">
+              <text class="theme-text">圆润</text>
+              <text class="theme-check" wx:if="{{fontStyle==='rounded'}}">✓</text>
+            </view>
+            <view class="theme-item {{fontStyle==='classic' ? 'active' : ''}}" bindtap="onFontStyleTap" data-style="classic" aria-role="button" aria-label="经典">
+              <text class="theme-text">经典</text>
+              <text class="theme-check" wx:if="{{fontStyle==='classic'}}">✓</text>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+    </view>
+
+    <view class="profile-card {{activeKey==='profile' ? 'active' : ''}}" bindtap="onMoreTap" aria-role="button" aria-label="打开快捷菜单">
+      <image class="profile-avatar" src="{{userAvatar || '/images/default-avatar.png'}}" mode="aspectFill" binderror="onProfileAvatarError"></image>
+      <view class="profile-left">
+        <text class="profile-name">{{userName}}</text>
+        <text class="profile-sub">打开快捷菜单</text>
+      </view>
+      <view class="profile-dots" aria-hidden="true">
+        <view class="dot"></view>
+        <view class="dot"></view>
+        <view class="dot"></view>
+      </view>
+    </view>
+  </view>
+</view>

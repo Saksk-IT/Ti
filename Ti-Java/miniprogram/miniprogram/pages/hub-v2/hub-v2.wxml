@@ -1,0 +1,495 @@
+<!-- hub-v2.wxml - 小程序首页（玻璃拟态 + 渐变风格） -->
+<view class="page-root {{themeClass}} {{themeStyleClass}} {{pageVisible ? 'page-visible' : ''}}">
+  <!-- 渐变背景层 -->
+  <view class="gradient-bg">
+    <view class="gradient-orb orb-1"></view>
+    <view class="gradient-orb orb-2"></view>
+    <view class="gradient-orb orb-3"></view>
+  </view>
+
+  <!-- 顶部导航 -->
+  <!--
+    navigation-bar 默认会把 left 区域宽度限制为胶囊按钮右侧留白（padRight）。
+    hub-v2 左侧有 2 个 icon-btn（通知/主题），在部分机型会溢出导致末尾按钮无法点击。
+    使用 compact 让 left 区域按内容自适应，确保点击区域完整。
+  -->
+  <navigation-bar title="首页" back="{{false}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent">
+    <view slot="left" class="nav-left">
+      <view class="icon-btn" bindtap="onGoNotifications" aria-role="button" aria-label="通知">
+        <image class="icon" src="/images/icons/bell.svg" mode="aspectFit"></image>
+      </view>
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <scroll-view class="content-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+    <skeleton-screen wx:if="{{!inited}}" layout="hub" showCards="{{3}}" rows="{{3}}" />
+    <!-- Hero 区域：个性化问候 + 签到 -->
+    <view class="hero-section">
+      <view class="hero-content animate-fade-in">
+        <!-- 用户信息行 -->
+        <view class="user-greeting">
+          <view class="avatar-wrapper" bindtap="onAvatarTap">
+            <image class="user-avatar" src="{{userAvatar || '/images/default-avatar.png'}}" mode="aspectFill" binderror="onUserAvatarError"></image>
+            <view class="avatar-ring"></view>
+          </view>
+          <view class="greeting-text">
+            <text class="greeting-time">{{greetingText}}</text>
+            <text class="user-name">{{userName || '同学'}}</text>
+          </view>
+        </view>
+
+        <!-- 签到卡片（已登录显示） -->
+        <view class="checkin-card glass-card {{checkin.checked_in_today ? 'checked' : ''}}" wx:if="{{isLoggedIn}}" bindtap="onCheckinTap">
+          <view class="checkin-left">
+            <view class="checkin-icon-wrap">
+              <image class="checkin-icon" src="/images/icons/check-circle.svg" mode="aspectFit"></image>
+            </view>
+            <view class="checkin-info">
+              <text class="checkin-title">{{checkin.checked_in_today ? '今日已签到' : '每日签到'}}</text>
+              <text class="checkin-subtitle" wx:if="{{checkin.streak_days > 0}}">连续 {{checkin.streak_days}} 天</text>
+              <text class="checkin-subtitle" wx:else>开始你的学习之旅</text>
+            </view>
+          </view>
+          <view class="checkin-right">
+            <view class="checkin-days">
+              <text class="days-num">{{checkin.total_days || 0}}</text>
+              <text class="days-label">累计天数</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 登录入口卡片（未登录显示） -->
+        <view class="checkin-card glass-card" wx:else bindtap="onGoLoginTap">
+          <view class="checkin-left">
+            <view class="checkin-icon-wrap">
+              <image class="checkin-icon" src="/images/icons/user.svg" mode="aspectFit"></image>
+            </view>
+            <view class="checkin-info">
+              <text class="checkin-title">登录账号</text>
+              <text class="checkin-subtitle">登录后解锁更多功能</text>
+            </view>
+          </view>
+          <view class="checkin-right">
+            <view class="checkin-days">
+              <text class="days-label">去登录</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 主内容区 -->
+    <view class="main-content">
+      <!-- 继续练习（强引导卡片） -->
+      <view class="section animate-slide-up" wx:if="{{lastPractice.has_practice}}" style="animation-delay: 0.1s">
+        <view class="continue-card glass-card-strong" bindtap="onContinuePractice">
+          <view class="continue-badge">继续学习</view>
+          <view class="continue-body">
+            <view class="continue-info">
+              <text class="continue-title">{{lastPractice.subject_name || '上次练习'}}</text>
+              <text class="continue-meta">{{lastPractice.last_at_display || ''}}</text>
+            </view>
+            <view class="continue-action">
+              <view class="action-arrow">
+                <image class="arrow-icon" src="/images/icons/arrow-left.svg" mode="aspectFit"></image>
+              </view>
+            </view>
+          </view>
+          <view class="continue-glow"></view>
+        </view>
+      </view>
+
+      <!-- 学习数据概览 -->
+      <view class="section animate-slide-up" style="animation-delay: 0.15s">
+        <view class="section-header">
+          <text class="section-title">学习概览</text>
+          <text class="section-link" bindtap="onGoHistory">查看详情</text>
+        </view>
+        <view class="stats-row">
+          <view class="stat-card glass-card">
+            <view class="stat-icon-wrap">
+              <image class="stat-icon" src="/images/icons/edit.svg" mode="aspectFit"></image>
+            </view>
+            <text class="stat-value">{{stats.answered || 0}}</text>
+            <text class="stat-label">已答题</text>
+          </view>
+          <view class="stat-card glass-card">
+            <view class="stat-icon-wrap">
+              <image class="stat-icon" src="/images/icons/chart.svg" mode="aspectFit"></image>
+            </view>
+            <text class="stat-value">{{stats.accuracy || 0}}<text class="stat-unit">%</text></text>
+            <text class="stat-label">正确率</text>
+          </view>
+          <view class="stat-card glass-card">
+            <view class="stat-icon-wrap">
+              <image class="stat-icon" src="/images/icons/star.svg" mode="aspectFit"></image>
+            </view>
+            <text class="stat-value">{{stats.favorites || 0}}</text>
+            <text class="stat-label">收藏</text>
+          </view>
+          <view class="stat-card glass-card">
+            <view class="stat-icon-wrap">
+              <image class="stat-icon" src="/images/icons/alert-triangle.svg" mode="aspectFit"></image>
+            </view>
+            <text class="stat-value">{{stats.mistakes || 0}}</text>
+            <text class="stat-label">错题</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 今日学习建议 -->
+      <view class="section animate-slide-up" wx:if="{{studyAdvice.length}}" style="animation-delay: 0.18s">
+        <view class="section-header">
+          <text class="section-title">今日学习建议</text>
+        </view>
+        <view class="advice-list">
+          <view
+            class="advice-card glass-card"
+            wx:for="{{studyAdvice}}"
+            wx:key="key"
+            bindtap="onAdviceTap"
+            data-target="{{item.target}}"
+          >
+            <view class="advice-icon advice-icon-{{item.icon}}">
+              <text>{{index + 1}}</text>
+            </view>
+            <view class="advice-copy">
+              <text class="advice-title">{{item.title}}</text>
+              <text class="advice-subtitle">{{item.subtitle}}</text>
+            </view>
+            <view class="advice-action">
+              <text>{{item.action}}</text>
+              <image class="action-icon" src="/images/icons/arrow-left.svg" mode="aspectFit"></image>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 最近使用的题库 -->
+      <view class="section animate-slide-up" wx:if="{{recentBanks.length}}" style="animation-delay: 0.19s">
+        <view class="section-header">
+          <text class="section-title">最近使用</text>
+          <text class="section-link" bindtap="onGoMyBanks">我的题库</text>
+        </view>
+        <scroll-view class="recent-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+          <view class="recent-row">
+            <view
+              class="recent-card glass-card"
+              wx:for="{{recentBanks}}"
+              wx:key="key"
+              bindtap="onRecentBankTap"
+              data-target="{{item.target}}"
+              data-source-type="{{item.source_type}}"
+              data-source-id="{{item.source_id}}"
+            >
+              <view class="recent-mark">
+                <text>{{index + 1}}</text>
+              </view>
+              <text class="recent-title">{{item.title}}</text>
+              <text class="recent-meta">{{item.meta}}</text>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+
+      <!-- 校园服务 -->
+      <view class="section campus-home-section animate-slide-up" style="animation-delay: 0.195s">
+        <view class="section-header">
+          <text class="section-title">校园服务</text>
+          <text class="section-link" bindtap="onGoCampus">进入校园</text>
+        </view>
+        <view class="campus-home-card glass-card-strong">
+          <view class="campus-home-main" bindtap="onGoCampus" aria-role="button" aria-label="进入校园服务">
+            <view class="campus-home-icon-wrap">
+              <image class="campus-home-icon" src="/images/icons/campus.svg" mode="aspectFit"></image>
+            </view>
+            <view class="campus-home-copy">
+              <view class="campus-home-title-row">
+                <text class="campus-home-title">{{campusSummary.title}}</text>
+                <view class="campus-home-status status-{{campusSummary.statusTone}}">
+                  <text>{{campusSummary.statusLabel}}</text>
+                </view>
+              </view>
+              <text class="campus-home-subtitle">{{campusSummary.subtitle}}</text>
+            </view>
+          </view>
+          <view class="campus-home-metrics campus-home-overview-metrics">
+            <view class="campus-home-metric">
+              <text class="campus-home-metric-value">{{campusSummary.latestGradeCourseCount}}</text>
+              <text class="campus-home-metric-label">最新学期课程</text>
+            </view>
+            <view class="campus-home-divider"></view>
+            <view class="campus-home-metric">
+              <text class="campus-home-metric-value">{{campusSummary.latestGradeGpa}}</text>
+              <text class="campus-home-metric-label">绩点</text>
+            </view>
+            <view class="campus-home-divider"></view>
+            <view class="campus-home-metric">
+              <text class="campus-home-metric-value">{{campusSummary.latestGradeCredits}}</text>
+              <text class="campus-home-metric-label">学分</text>
+            </view>
+          </view>
+          <view class="campus-home-today">
+            <view class="campus-home-today-head">
+              <view class="campus-home-today-copy">
+                <text class="campus-home-today-title">今日课程</text>
+                <text class="campus-home-today-subtitle">{{campusSummary.todayCourseSubtitle}}</text>
+              </view>
+              <view class="campus-home-today-badge">
+                <text>{{campusSummary.todayCourseCount}} 门</text>
+              </view>
+            </view>
+            <view class="campus-home-course-list" wx:if="{{campusSummary.hasTodayCourses}}">
+              <view class="campus-home-course-row" wx:for="{{campusSummary.todayCourses}}" wx:key="key">
+                <text class="campus-home-course-section">{{item.section}}</text>
+                <view class="campus-home-course-copy">
+                  <text class="campus-home-course-name">{{item.course_name}}</text>
+                  <text class="campus-home-course-detail">{{item.detail}}</text>
+                </view>
+              </view>
+            </view>
+            <view class="campus-home-course-empty" wx:else>
+              <text>{{campusSummary.todayCourseEmptyText}}</text>
+            </view>
+          </view>
+          <view class="campus-home-actions">
+            <view class="campus-home-action primary" bindtap="onCampusPrimaryAction" aria-role="button" aria-label="{{campusSummary.primaryAction}}">
+              <image class="campus-home-action-icon" src="/images/icons/book-open.svg" mode="aspectFit"></image>
+              <text>{{campusSummary.primaryAction}}</text>
+            </view>
+            <view class="campus-home-action" bindtap="onCampusSecondaryAction" aria-role="button" aria-label="{{campusSummary.secondaryAction}}">
+              <image class="campus-home-action-icon" src="/images/icons/chart.svg" mode="aspectFit"></image>
+              <text>{{campusSummary.secondaryAction}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 快捷入口 -->
+      <view class="section animate-slide-up" style="animation-delay: 0.2s">
+        <view class="section-header">
+          <text class="section-title">快捷入口</text>
+        </view>
+        <view class="quick-grid">
+          <view class="quick-card glass-card" bindtap="onGoPublicBank">
+            <view class="quick-icon-wrap">
+              <image class="quick-icon" src="/images/icons/book-open.svg" mode="aspectFit"></image>
+            </view>
+            <text class="quick-label">题库广场</text>
+          </view>
+          <view class="quick-card glass-card" bindtap="onGoMyBanks">
+            <view class="quick-icon-wrap">
+              <image class="quick-icon" src="/images/icons/bar-chart.svg" mode="aspectFit"></image>
+            </view>
+            <text class="quick-label">个人题库</text>
+          </view>
+          <view class="quick-card glass-card" bindtap="onGoReview">
+            <view class="quick-icon-wrap">
+              <image class="quick-icon" src="/images/icons/alert-triangle.svg" mode="aspectFit"></image>
+            </view>
+            <text class="quick-label">错题本</text>
+          </view>
+          <view class="quick-card glass-card" bindtap="onGoFavorites">
+            <view class="quick-icon-wrap">
+              <image class="quick-icon" src="/images/icons/heart.svg" mode="aspectFit"></image>
+            </view>
+            <text class="quick-label">收藏</text>
+          </view>
+          <view class="quick-card glass-card" bindtap="onGoExamCenter">
+            <view class="quick-icon-wrap">
+              <image class="quick-icon" src="/images/icons/edit.svg" mode="aspectFit"></image>
+            </view>
+            <text class="quick-label">考试</text>
+          </view>
+          <view class="quick-card glass-card" bindtap="onGoCampus">
+            <view class="quick-icon-wrap">
+              <image class="quick-icon" src="/images/icons/campus.svg" mode="aspectFit"></image>
+            </view>
+            <text class="quick-label">校园</text>
+          </view>
+          <view class="quick-card glass-card" bindtap="onGoHistory">
+            <view class="quick-icon-wrap">
+              <image class="quick-icon" src="/images/icons/chart.svg" mode="aspectFit"></image>
+            </view>
+            <text class="quick-label">数据</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 薄弱环节提示 -->
+      <view class="section animate-slide-up" style="animation-delay: 0.25s">
+        <view class="section-header">
+          <text class="section-title">薄弱环节</text>
+          <text class="section-link" wx:if="{{weakness.length > 0}}" bindtap="onGoHistory">查看全部</text>
+        </view>
+        <view class="weakness-list" wx:if="{{weakness.length > 0}}">
+          <view 
+            class="weakness-card glass-card" 
+            wx:for="{{weakness}}" 
+            wx:key="index"
+            bindtap="onWeaknessItemTap"
+            data-item="{{item}}"
+          >
+            <view class="weakness-info">
+              <text class="weakness-title">{{item.subject}}</text>
+              <text class="weakness-type">{{item.q_type}}</text>
+            </view>
+            <view class="weakness-stats">
+              <view class="weakness-accuracy">
+                <text class="accuracy-value">{{item.accuracy}}%</text>
+                <text class="accuracy-label">正确率</text>
+              </view>
+              <view class="weakness-action">
+                <text class="action-text">强化</text>
+                <image class="action-icon" src="/images/icons/arrow-left.svg" mode="aspectFit"></image>
+              </view>
+            </view>
+          </view>
+        </view>
+        <view class="weakness-empty-list" wx:else>
+          <view
+            class="weakness-empty-card glass-card"
+            wx:for="{{weaknessEmptyActions}}"
+            wx:key="key"
+            bindtap="onWeaknessEmptyActionTap"
+            data-target="{{item.target}}"
+          >
+            <view class="weakness-empty-copy">
+              <text class="weakness-empty-title">{{item.title}}</text>
+              <text class="weakness-empty-subtitle">{{item.subtitle}}</text>
+            </view>
+            <view class="weakness-empty-action">
+              <text>{{item.action}}</text>
+              <image class="action-icon" src="/images/icons/arrow-left.svg" mode="aspectFit"></image>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 页脚 -->
+      <view class="footer animate-fade-in" style="animation-delay: 0.3s">
+        <text class="footer-brand">SAK 题库</text>
+        <view class="footer-divider"></view>
+        <text class="footer-link" bindtap="onAboutTap">关于</text>
+        <view class="footer-divider"></view>
+        <text class="footer-link" bindtap="onGoSettings">设置</text>
+      </view>
+    </view>
+
+    <!-- 加载状态 -->
+    <view class="loading-overlay" wx:if="{{loading}}">
+      <view class="loading-spinner"></view>
+    </view>
+  </scroll-view>
+
+  <!-- 新用户资料设置弹窗 -->
+  <view class="profile-setup-mask" wx:if="{{showProfileSetupModal}}" catchtap="onCloseProfileSetupModal">
+    <view class="profile-setup-modal glass-card-strong" catchtap="preventBubble">
+      <view class="setup-header">
+        <text class="setup-title">{{setupStep === 'profile' ? '完善个人资料' : '设置登录密码'}}</text>
+        <text class="setup-subtitle">{{setupStep === 'profile' ? '设置头像和昵称，让大家认识你' : '设置密码后可使用账号密码登录'}}</text>
+      </view>
+
+      <!-- 资料设置步骤 -->
+      <view class="setup-body" wx:if="{{setupStep === 'profile'}}">
+        <!-- 头像选择 -->
+        <view class="setup-avatar-section">
+          <button class="setup-avatar-btn" open-type="chooseAvatar" bindchooseavatar="onSetupChooseAvatar">
+            <image class="setup-avatar-preview" src="{{setupAvatarTempPath || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+            <view class="setup-avatar-edit">
+              <image class="edit-icon" src="/images/icons/edit.svg" mode="aspectFit"></image>
+            </view>
+          </button>
+          <text class="setup-avatar-hint">点击选择微信头像</text>
+        </view>
+
+        <!-- 昵称输入 -->
+        <view class="setup-nickname-section">
+          <view class="setup-label-row">
+            <text class="setup-label">昵称</text>
+            <view class="setup-random-btn" bindtap="onRefreshSetupNickname">
+              <text>换一个</text>
+            </view>
+          </view>
+          <input
+            class="setup-nickname-input {{usernameStatus === 'error' ? 'input-error' : usernameStatus === 'ok' ? 'input-ok' : ''}}"
+            type="nickname"
+            placeholder="汉字、字母、数字"
+            maxlength="8"
+            value="{{setupNickName}}"
+            bindinput="onSetupNickNameInput"
+            bindchange="onSetupNickNameChange"
+          />
+          <text class="setup-nickname-status {{usernameStatus}}" wx:if="{{usernameStatusText}}">{{usernameStatusText}}</text>
+        </view>
+
+        <!-- 提示信息 -->
+        <view class="setup-tip">
+          <text class="tip-icon">💡</text>
+          <text class="tip-text">昵称只能使用汉字、字母、数字，最多8个字符</text>
+        </view>
+      </view>
+
+      <!-- 密码设置步骤 -->
+      <view class="setup-body" wx:if="{{setupStep === 'password'}}">
+        <view class="setup-password-section">
+          <text class="setup-label">设置密码</text>
+          <input
+            class="setup-password-input"
+            type="text"
+            password="{{!showPassword}}"
+            placeholder="至少8位，包含字母和数字"
+            value="{{setupPassword}}"
+            bindinput="onSetupPasswordInput"
+          />
+          <view class="password-toggle" bindtap="onToggleShowPassword">
+            <image class="toggle-icon" src="{{showPassword ? '/images/icons/eye.svg' : '/images/icons/eye-off.svg'}}" mode="aspectFit"></image>
+          </view>
+        </view>
+
+        <view class="setup-password-section">
+          <text class="setup-label">确认密码</text>
+          <input
+            class="setup-password-input"
+            type="text"
+            password="{{!showPassword}}"
+            placeholder="请再次输入密码"
+            value="{{setupPasswordConfirm}}"
+            bindinput="onSetupPasswordConfirmInput"
+          />
+        </view>
+
+        <!-- 提示信息 -->
+        <view class="setup-tip">
+          <text class="tip-icon">🔐</text>
+          <text class="tip-text">设置密码后，可使用「{{setupNickName || userName}}」+ 密码登录</text>
+        </view>
+      </view>
+
+      <view class="setup-actions">
+        <block wx:if="{{setupStep === 'profile'}}">
+          <button class="setup-btn setup-btn-primary" bindtap="onSaveProfileSetup" loading="{{savingProfile}}" disabled="{{usernameStatus === 'checking' || usernameStatus === 'error'}}">
+            <text>{{needsPasswordSetup ? '保存并继续' : '保存'}}</text>
+          </button>
+          <button wx:if="{{!requiresNicknameSetup}}" class="setup-btn" bindtap="onSkipProfileSetup">
+            <text>跳过</text>
+          </button>
+        </block>
+        <block wx:if="{{setupStep === 'password'}}">
+          <button class="setup-btn setup-btn-primary" bindtap="onSavePasswordSetup" loading="{{savingPassword}}">
+            <text>设置密码</text>
+          </button>
+          <button class="setup-btn" bindtap="onSkipPasswordSetup">
+            <text>稍后设置</text>
+          </button>
+        </block>
+      </view>
+    </view>
+  </view>
+</view>

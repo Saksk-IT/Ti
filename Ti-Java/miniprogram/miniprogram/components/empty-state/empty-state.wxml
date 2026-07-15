@@ -1,0 +1,8 @@
+<view class="empty-state-wrap empty-state-{{size || 'normal'}}">
+  <view class="empty-icon empty-icon-{{icon || 'default'}}"></view>
+  <text class="empty-title" wx:if="{{title}}">{{title}}</text>
+  <text class="empty-hint" wx:if="{{hint}}">{{hint}}</text>
+  <view class="empty-action" wx:if="{{actionText}}" bindtap="onAction">
+    <text>{{actionText}}</text>
+  </view>
+</view>

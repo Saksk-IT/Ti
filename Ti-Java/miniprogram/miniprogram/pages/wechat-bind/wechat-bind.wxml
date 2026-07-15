@@ -1,0 +1,115 @@
+<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="账号选择" back="{{false}}" color="var(--app-nav-fg)" background="var(--app-bg)"></navigation-bar>
+
+  <view class="page-container">
+    <view class="card">
+      <view class="hero">
+        <text class="hero-title">账号选择</text>
+        <text class="hero-sub">首次微信登录，请选择创建新账号或绑定已有账号</text>
+      </view>
+
+      <view class="card-body">
+        <view class="msg error" wx:if="{{error}}">
+          <text>{{error}}</text>
+        </view>
+
+        <!-- 选择面板 -->
+        <view wx:if="{{step === 'choice'}}" class="choice-panel">
+          <view class="choice-card {{actionDisabled ? 'disabled' : ''}}" bindtap="onGoCreate">
+            <view class="choice-icon">
+              <view class="choice-icon-inner icon-create"></view>
+            </view>
+            <view class="choice-meta">
+              <text class="choice-name">创建新账号</text>
+              <text class="choice-desc">使用微信快速创建一个全新账号</text>
+            </view>
+            <view class="choice-arrow"></view>
+          </view>
+
+          <view class="choice-card {{actionDisabled ? 'disabled' : ''}}" bindtap="onGoBind">
+            <view class="choice-icon">
+              <view class="choice-icon-inner icon-link"></view>
+            </view>
+            <view class="choice-meta">
+              <text class="choice-name">绑定已有账号</text>
+              <text class="choice-desc">将微信绑定到已有的账号</text>
+            </view>
+            <view class="choice-arrow"></view>
+          </view>
+        </view>
+
+        <!-- 昵称设置面板 -->
+        <view wx:if="{{step === 'nickname'}}" class="nickname-panel">
+          <view class="form-grid">
+            <view class="field">
+              <view class="label-row">
+                <text class="label">昵称</text>
+                <view class="text-btn {{loadingCreate ? 'disabled' : ''}}" bindtap="onRefreshNickname">
+                  <text>换一个</text>
+                </view>
+              </view>
+              <input class="input" placeholder="汉字、字母、数字" placeholder-class="placeholder" maxlength="8" value="{{createNickname}}" bindinput="onNickname" />
+            </view>
+          </view>
+
+          <view class="actions">
+            <button class="btn btn-primary {{actionDisabled ? 'disabled' : ''}}" bindtap="onCreate" disabled="{{actionDisabled}}" loading="{{loadingCreate}}">
+              <text>确认创建</text>
+            </button>
+            <button class="btn {{actionDisabled ? 'disabled' : ''}}" bindtap="onBack" disabled="{{actionDisabled}}">
+              <text>返回</text>
+            </button>
+          </view>
+        </view>
+
+        <!-- 绑定面板 -->
+        <view wx:if="{{step === 'bind'}}" class="bind-panel">
+          <view class="nav-card">
+            <view class="tabs">
+              <view class="tab {{mode==='password' ? 'active' : ''}}" bindtap="setMode" data-mode="password"><text>密码</text></view>
+              <view class="tab {{mode==='email_code' ? 'active' : ''}}" bindtap="setMode" data-mode="email_code"><text>邮箱</text></view>
+            </view>
+          </view>
+
+          <!-- 密码绑定 -->
+          <view wx:if="{{mode==='password'}}" class="form-grid">
+            <view class="field">
+              <text class="label">账号</text>
+              <input class="input" placeholder="用户名/邮箱" placeholder-class="placeholder" value="{{account}}" bindinput="onAccount" />
+            </view>
+            <view class="field">
+              <text class="label">密码</text>
+              <input class="input" password placeholder="密码" placeholder-class="placeholder" value="{{password}}" bindinput="onPassword" />
+            </view>
+          </view>
+
+          <!-- 邮箱绑定 -->
+          <view wx:if="{{mode==='email_code'}}" class="form-grid">
+            <view class="field">
+              <text class="label">邮箱</text>
+              <input class="input" placeholder="邮箱" placeholder-class="placeholder" value="{{email}}" bindinput="onEmail" />
+            </view>
+            <view class="field">
+              <text class="label">验证码</text>
+              <view class="input-row">
+                <input class="input" placeholder="6 位验证码" placeholder-class="placeholder" maxlength="6" value="{{code}}" bindinput="onCode" />
+                <view class="code-btn {{sendCodeDisabled ? 'disabled' : ''}}" bindtap="onSendCode">
+                  <text>{{codeSending ? countdown + 's' : '发送'}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view class="actions">
+            <button class="btn btn-primary {{actionDisabled ? 'disabled' : ''}}" bindtap="onBind" disabled="{{actionDisabled}}" loading="{{loadingBind}}">
+              <text>确认绑定</text>
+            </button>
+            <button class="btn {{actionDisabled ? 'disabled' : ''}}" bindtap="onBack" disabled="{{actionDisabled}}">
+              <text>返回</text>
+            </button>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

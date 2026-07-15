@@ -1,0 +1,199 @@
+<!--notifications-v2.wxml - -->
+<view class="page-root mine-linked-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="通知" back="{{true}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent">
+    <view slot="right" class="nav-right">
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <view class="page-container">
+    <scroll-view class="content-area" scroll-y type="list" bounces="{{false}}" refresher-enabled="{{true}}" bindrefresherrefresh="onPullDownRefresh">
+      <view class="container">
+        <view class="card hero" aria-label="通知中心概览">
+          <view class="hero-head">
+            <view class="hero-copy">
+              <text class="hero-title">通知中心</text>
+              <text class="hero-sub">未读置顶重点呈现；已读按类型归档，展开即可查看完整内容。</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="basebar" role="tablist" aria-label="通知基础栏">
+          <view class="basebar-hd">
+            <text class="basebar-title">基础</text>
+            <view class="icon-btn icon-btn-sm" bindtap="onRefreshTap" aria-role="button" aria-label="刷新通知">
+              <view class="icon-refresh"></view>
+            </view>
+          </view>
+
+          <view class="tabs">
+            <view class="tab tab-pill {{tab==='unread' ? 'active' : ''}}" bindtap="onTabTap" data-tab="unread" role="tab" aria-selected="{{tab==='unread'}}">
+              <text>未读</text>
+              <view class="pill pill-unread">
+                <text>{{unreadCount}}</text>
+              </view>
+            </view>
+            <view class="tab tab-pill {{tab==='read' ? 'active' : ''}}" bindtap="onTabTap" data-tab="read" role="tab" aria-selected="{{tab==='read'}}">
+              <text>已读</text>
+              <view class="pill">
+                <text>{{readCount}}</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="divider"></view>
+
+          <view class="actions" wx:if="{{tab==='unread'}}">
+            <view class="btn btn-primary {{(loading || unreadCount===0 || markAllLoading) ? 'disabled' : ''}}" bindtap="onMarkAllRead">
+              <text>{{markAllLoading ? '处理中…' : '全部标记已读'}}</text>
+            </view>
+          </view>
+
+          <view class="read-controls" wx:if="{{tab==='read'}}">
+            <view class="control" wx:if="{{readTypeFacets.total > 0}}">
+              <text class="label">分类</text>
+              <view class="chips chips-nowrap">
+                <view class="chip {{readTypeFilter==='all' ? 'active' : ''}}" bindtap="onReadTypeTap" data-type="all">
+                  <text>全部</text>
+                  <view class="mini-pill">
+                    <text>{{readTypeFacets.total}}</text>
+                  </view>
+                </view>
+                <view
+                  class="chip {{readTypeFilter===item.type ? 'active' : ''}}"
+                  wx:for="{{readTypeFacets.items}}"
+                  wx:key="type"
+                  bindtap="onReadTypeTap"
+                  data-type="{{item.type}}"
+                >
+                  <view class="dot" style="background: {{item.color}};"></view>
+                  <text>{{item.label}}</text>
+                  <view class="mini-pill">
+                    <text>{{item.count}}</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view class="hint">
+            <text>小提示：未读默认展示完整信息；已读默认折叠为摘要，点开即可查看详情。</text>
+          </view>
+        </view>
+
+        <view class="panel" wx:if="{{tab==='unread'}}">
+          <view class="panel-hd">
+            <text class="panel-title">未读通知</text>
+            <text class="panel-sub">{{unreadSub}}</text>
+          </view>
+
+          <view class="alert error" wx:if="{{errorMsg}}">
+            <text>{{errorMsg}}</text>
+          </view>
+
+          <view class="loading" wx:if="{{loading}}">
+            <text>加载中…</text>
+          </view>
+
+          <view class="empty" wx:if="{{!loading && unreadList.length===0}}">
+            <text class="empty-text">暂无未读通知。你可以切换到“已读”查看历史消息。</text>
+            <view class="empty-actions">
+              <view class="btn" bindtap="onTabTap" data-tab="read"><text>查看已读</text></view>
+            </view>
+          </view>
+
+          <view class="noti-list" wx:if="{{!loading && unreadList.length>0}}">
+            <view class="noti-card unread" wx:for="{{unreadList}}" wx:key="id" aria-label="未读通知">
+              <view class="noti-top">
+                <view class="noti-top-left">
+                  <text class="noti-title">{{item.title || '通知'}}</text>
+                  <view class="noti-meta">
+                    <view class="badge {{item.typeKey}}">
+                      <text>{{item.typeLabel}}</text>
+                    </view>
+                    <text class="time">{{item.timeText}}</text>
+                  </view>
+                </view>
+              </view>
+              <view class="noti-content">
+                <text>{{item.content}}</text>
+              </view>
+              <view class="noti-actions">
+                <view class="btn btn-primary {{(markingId===item.id) ? 'disabled' : ''}}" bindtap="onMarkRead" data-id="{{item.id}}">
+                  <text>{{markingId===item.id ? '处理中…' : '标记已读'}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="panel" wx:else>
+          <view class="panel-hd">
+            <text class="panel-title">已读通知</text>
+            <text class="panel-sub">{{readSub}}</text>
+          </view>
+
+          <view class="alert error" wx:if="{{errorMsg}}">
+            <text>{{errorMsg}}</text>
+          </view>
+
+          <view class="loading" wx:if="{{loading}}">
+            <text>加载中…</text>
+          </view>
+
+          <view class="empty" wx:if="{{!loading && readAll.length===0}}">
+            <text class="empty-text">暂无已读通知。处理未读后，这里会按“通知类型”自动归档。</text>
+            <view class="empty-actions">
+              <view class="btn" bindtap="onTabTap" data-tab="unread"><text>回到未读</text></view>
+            </view>
+          </view>
+
+          <view class="empty" wx:if="{{!loading && readAll.length>0 && readFilteredCount===0}}">
+            <text class="empty-text">当前分类暂无已读通知。试试切换到“全部”。</text>
+            <view class="empty-actions">
+              <view class="btn" bindtap="onReadTypeTap" data-type="all"><text>查看全部</text></view>
+            </view>
+          </view>
+
+          <view class="read-groups" wx:if="{{!loading && readGroups.length>0}}">
+            <view class="group" wx:for="{{readGroups}}" wx:for-item="g" wx:key="type" aria-label="已读通知分组">
+              <view class="group-hd">
+                <text class="group-title">{{g.label}}</text>
+                <text class="group-count">{{g.count}} 条</text>
+              </view>
+
+              <view class="read-list">
+                <view class="read-item" wx:for="{{g.items}}" wx:for-item="n" wx:key="id">
+                  <view class="read-summary" bindtap="onToggleReadExpand" data-id="{{n.id}}" aria-role="button" aria-label="展开或折叠通知">
+                    <view class="sum-left">
+                      <text class="sum-title">{{n.title || '通知'}}</text>
+                      <text class="sum-snippet">{{n.snippet || '（无内容）'}}</text>
+                    </view>
+                    <view class="sum-right">
+                      <view class="badge {{n.typeKey}}">
+                        <text>{{n.typeLabel}}</text>
+                      </view>
+                      <text class="time">{{n.timeText}}</text>
+                      <text class="chev">{{n.expanded ? '▲' : '▼'}}</text>
+                    </view>
+                  </view>
+
+                  <view class="read-body" wx:if="{{n.expanded}}">
+                    <view class="noti-content">
+                      <text>{{n.content}}</text>
+                    </view>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

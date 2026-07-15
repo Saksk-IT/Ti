@@ -1,0 +1,148 @@
+<view class="page-root mine-linked-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="题库数据" back="{{true}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent"></navigation-bar>
+
+  <view class="page-container">
+    <scroll-view
+      class="content-area"
+      scroll-y
+      bounces="{{false}}"
+      refresher-enabled="{{true}}"
+      bindrefresherrefresh="onPullDownRefresh"
+    >
+      <view class="container">
+        <view class="card hero" aria-label="题库数据">
+          <view class="hero-head">
+            <view class="hero-left">
+              <text class="hero-title">题库数据</text>
+              <text class="hero-sub">个人题库 × 公共题库的规模、质量与投入对比。</text>
+              <text class="hero-sub">最近活跃：{{lastActivityText}}</text>
+            </view>
+            <view class="hero-right">
+              <view class="days-tabs" aria-label="趋势窗口">
+                <view class="days-tab {{days===7 ? 'active' : ''}}" bindtap="onDaysTap" data-days="7"><text>7天</text></view>
+                <view class="days-tab {{days===30 ? 'active' : ''}}" bindtap="onDaysTap" data-days="30"><text>30天</text></view>
+                <view class="days-tab {{days===90 ? 'active' : ''}}" bindtap="onDaysTap" data-days="90"><text>90天</text></view>
+              </view>
+            </view>
+          </view>
+          <view class="data-tabs" aria-label="数据中心导航">
+            <view class="data-tab" bindtap="onTabTap" data-tab="overview"><text>概览</text></view>
+            <view class="data-tab active"><text>题库</text></view>
+            <view class="data-tab" bindtap="onTabTap" data-tab="trend"><text>趋势</text></view>
+            <view class="data-tab" bindtap="onTabTap" data-tab="ai"><text>AI助手</text></view>
+          </view>
+        </view>
+
+        <view class="card section-card" aria-label="题库概览">
+          <text class="section-title">题库概览</text>
+          <text class="section-sub">先看规模，再看质量；优先处理高价值题库。</text>
+
+          <view class="kpi-grid">
+            <view class="kpi">
+              <text class="kpi-label">个人题库数</text>
+              <text class="kpi-value">{{bankTotal}}</text>
+              <text class="kpi-meta">已做 {{bankAnswered}} · 正确率 {{bankAccuracy}}%</text>
+            </view>
+            <view class="kpi">
+              <text class="kpi-label">个人完成度</text>
+              <text class="kpi-value">{{bankCompletion}}%</text>
+              <text class="kpi-meta">总题 {{bankTotalQuestions}}</text>
+            </view>
+            <view class="kpi">
+              <text class="kpi-label">公共已做</text>
+              <text class="kpi-value">{{publicAnswered}}</text>
+              <text class="kpi-meta">正确率 {{publicAccuracy}}%</text>
+            </view>
+            <view class="kpi">
+              <text class="kpi-label">整体正确率</text>
+              <text class="kpi-value">{{allAccuracy}}%</text>
+              <text class="kpi-meta">错题 {{allMistakes}} · 收藏 {{allFavorites}}</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="card section-card" aria-label="题库分布">
+          <text class="section-title">题库分布</text>
+          <text class="section-sub">公共/个人投入比例与分类聚焦度。</text>
+
+          <view class="chart-grid">
+            <view class="chart-card">
+              <text class="chart-title">公共 vs 个人</text>
+              <text class="chart-sub">按“已做题”占比</text>
+              <view class="chart-visual">
+                <view class="rank-item">
+                  <text class="rank-name">公共题库</text>
+                  <text class="rank-meta">{{publicAnswered}} 题 · {{sharePublicPct}}%</text>
+                  <view class="rank-bar"><view class="rank-fill" style="width: {{sharePublicPct}}%;"></view></view>
+                </view>
+                <view class="rank-item" style="margin-top:10rpx;">
+                  <text class="rank-name">个人题库</text>
+                  <text class="rank-meta">{{bankAnswered}} 题 · {{shareBankPct}}%</text>
+                  <view class="rank-bar"><view class="rank-fill" style="width: {{shareBankPct}}%;"></view></view>
+                </view>
+              </view>
+            </view>
+
+            <view class="chart-card">
+              <text class="chart-title">分类分布</text>
+              <text class="chart-sub">按“已做题”排序</text>
+              <view class="chart-visual">
+                <view class="rank-list">
+                  <view class="rank-item" wx:for="{{categoryRows}}" wx:for-item="c" wx:key="category_id">
+                    <text class="rank-name">{{c.category_name}}</text>
+                    <text class="rank-meta">已做 {{c.answered}} · 正确率 {{c.accuracy}}%</text>
+                    <view class="rank-bar"><view class="rank-fill" style="width: {{c.barPct}}%;"></view></view>
+                  </view>
+                </view>
+                <view class="tag-pills">
+                  <view class="tag-pill" wx:for="{{categoryRows}}" wx:key="category_id">
+                    <text>{{item.category_name}}</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="card section-card" aria-label="题库排行">
+          <text class="section-title">题库排行</text>
+          <text class="section-sub">按“已做题”排序，优先攻克高投入题库。</text>
+
+          <view class="rank-list">
+            <view class="rank-item" wx:for="{{bankTopRows}}" wx:for-item="b" wx:key="bank_id">
+              <text class="rank-name">{{b.name}}</text>
+              <text class="rank-meta">已做 {{b.answered}} · 正确率 {{b.accuracy}}%</text>
+              <view class="rank-bar"><view class="rank-fill" style="width: {{b.barPct}}%;"></view></view>
+            </view>
+          </view>
+        </view>
+
+        <view class="card section-card" aria-label="题库列表">
+          <text class="section-title">题库列表</text>
+          <text class="section-sub">进入练习或管理题库。</text>
+
+          <view class="note-list" wx:if="{{bankRows.length}}">
+            <view class="note" wx:for="{{bankRows}}" wx:key="bank_id">
+              <text class="note-title">{{item.name}}</text>
+              <text class="note-sub">分类 {{item.category_name}} · 总题 {{item.total}} · 已做 {{item.answered}} · 正确率 {{item.accuracy}}%</text>
+              <view class="note-actions">
+                <view class="mini-btn primary" bindtap="onGoBankPractice" data-bank-id="{{item.bank_id}}"><text>进入练习</text></view>
+                <view class="mini-btn" bindtap="onGoBankManage" data-bank-id="{{item.bank_id}}"><text>管理</text></view>
+              </view>
+            </view>
+          </view>
+          <view class="empty" wx:else>
+            <text>你还没有创建个人题库，先去「我的题库」创建一个吧。</text>
+          </view>
+        </view>
+
+        <view class="msg error" wx:if="{{errorMsg}}">
+          <text>{{errorMsg}}</text>
+        </view>
+        <view class="loading" wx:if="{{loading}}">
+          <text>正在加载数据...</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

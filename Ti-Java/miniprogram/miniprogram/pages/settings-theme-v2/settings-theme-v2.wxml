@@ -1,0 +1,70 @@
+<!--settings-theme-v2.wxml - -->
+<view class="page-root mine-linked-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="主题" back="{{true}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent">
+    <view slot="right" class="nav-right">
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <view class="page-container">
+    <scroll-view class="content-area" scroll-y bounces="{{false}}">
+      <view class="container">
+        <view class="card hero" aria-label="主题页概览">
+          <text class="hero-title">主题</text>
+          <text class="hero-sub">调整页面主色与背景氛围。</text>
+        </view>
+
+        <view class="msg" wx:if="{{msg}}">
+          <text>{{msg}}</text>
+        </view>
+
+        <view class="card section-card" aria-label="主题模式">
+          <text class="section-title">主题模式</text>
+          <text class="section-sub">浅色 / 深色 / 跟随系统（本机生效，不同步）。</text>
+          <view class="chips">
+            <view class="chip {{themeMode==='light' ? 'active' : ''}}" bindtap="onModeTap" data-mode="light"><text>浅色</text></view>
+            <view class="chip {{themeMode==='dark' ? 'active' : ''}}" bindtap="onModeTap" data-mode="dark"><text>深色</text></view>
+            <view class="chip {{themeMode==='system' ? 'active' : ''}}" bindtap="onModeTap" data-mode="system"><text>跟随系统</text></view>
+          </view>
+        </view>
+
+        <view class="card section-card" aria-label="页面风格主题">
+          <text class="section-title">页面风格主题</text>
+          <text class="section-sub">该风格会与 Web 端设置同步（已登录）。</text>
+          <view class="chips">
+            <view class="chip {{themeStyle==='default' ? 'active' : ''}}" bindtap="onStyleTap" data-style="default"><text>默认</text></view>
+            <view class="chip {{themeStyle==='mist' ? 'active' : ''}}" bindtap="onStyleTap" data-style="mist"><text>雾蓝</text></view>
+            <view class="chip {{themeStyle==='dune' ? 'active' : ''}}" bindtap="onStyleTap" data-style="dune"><text>暖砂</text></view>
+            <view class="chip {{themeStyle==='pine' ? 'active' : ''}}" bindtap="onStyleTap" data-style="pine"><text>岩松</text></view>
+            <view class="chip {{themeStyle==='celadon' ? 'active' : ''}}" bindtap="onStyleTap" data-style="celadon"><text>影青</text></view>
+          </view>
+        </view>
+
+        <view class="card section-card" aria-label="字体样式">
+          <text class="section-title">字体样式</text>
+          <text class="section-sub">调整全局字体风格（本机生效，不同步）。</text>
+          <view class="msg" wx:if="{{fontMsg}}">
+            <text>{{fontMsg}}</text>
+          </view>
+          <view class="font-chips">
+            <view
+              class="font-chip {{fontStyle===item.id ? 'active' : ''}}"
+              wx:for="{{fontStyleList}}"
+              wx:key="id"
+              bindtap="onFontStyleTap"
+              data-style="{{item.id}}"
+            >
+              <text class="font-chip-name">{{item.name}}</text>
+              <text class="font-chip-desc">{{item.description}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

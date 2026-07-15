@@ -1,0 +1,118 @@
+@import "./data-center.less";
+
+.ring-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12rpx;
+}
+
+.gauge {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 999px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  background: conic-gradient(var(--app-cta) calc(var(--val) * 1%), var(--app-fill) 0);
+  border: 1rpx solid var(--app-border);
+}
+
+.gauge::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 124rpx;
+  height: 124rpx;
+  border-radius: 999px;
+  background: var(--app-surface-2);
+}
+
+.gauge-value {
+  position: relative;
+  z-index: 1;
+  font-size: 44rpx;
+  font-weight: 950;
+  line-height: 1;
+  color: var(--app-text);
+}
+
+.ring-card {
+  padding: 14rpx 12rpx;
+  border-radius: 18rpx;
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.ring {
+  width: 110rpx;
+  height: 110rpx;
+  border-radius: 999px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  background: conic-gradient(var(--app-primary) calc(var(--val) * 1%), var(--app-fill) 0);
+  border: 1rpx solid var(--app-border);
+}
+
+.ring::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: 999px;
+  background: var(--app-surface-2);
+}
+
+.ring-value {
+  position: relative;
+  z-index: 1;
+  font-size: 22rpx;
+  font-weight: 950;
+  color: var(--app-text);
+}
+
+.ring-sub {
+  font-size: 22rpx;
+  color: var(--app-muted);
+}
+
+.kpi-grid.kpi-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.muted {
+  color: var(--app-muted);
+}
+
+.dc-lazy-card {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 26rpx 18rpx;
+  color: var(--app-muted);
+}
+
+.dc-lazy-title {
+  font-size: 26rpx;
+  font-weight: 800;
+  color: var(--app-text);
+}
+
+.dc-lazy-sub {
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  color: var(--app-muted);
+}

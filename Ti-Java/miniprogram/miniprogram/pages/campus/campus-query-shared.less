@@ -1,0 +1,54 @@
+@import "./campus.less";
+
+.query-container {
+  padding-bottom: calc(150rpx + env(safe-area-inset-bottom));
+}
+
+.schedule-control-band,
+.schedule-week-panel,
+.schedule-table-shell {
+  border: 1rpx solid var(--app-border);
+  border-radius: var(--app-radius-lg);
+  background: var(--app-surface-glass);
+  box-shadow: var(--app-shadow-soft);
+  backdrop-filter: blur(24rpx);
+  -webkit-backdrop-filter: blur(24rpx);
+  box-sizing: border-box;
+}
+
+.floating-query-bubble {
+  position: fixed;
+  right: 28rpx;
+  bottom: calc(38rpx + env(safe-area-inset-bottom));
+  z-index: 30;
+  min-width: 210rpx;
+  min-height: 82rpx;
+  padding: 0 28rpx;
+  border-radius: 999rpx;
+  background: var(--app-text);
+  color: var(--app-bg);
+  box-shadow: 0 18rpx 44rpx rgba(15, 23, 42, 0.22);
+  border: 1rpx solid color-mix(in srgb, var(--app-bg) 16%, transparent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  font-size: 27rpx;
+  font-weight: 950;
+  box-sizing: border-box;
+}
+
+.floating-query-bubble:active {
+  opacity: 0.92;
+  transform: scale(0.99);
+}
+
+.floating-query-bubble.disabled {
+  opacity: 0.58;
+}
+
+.floating-query-icon {
+  width: 34rpx;
+  height: 34rpx;
+  filter: brightness(0) invert(1);
+}

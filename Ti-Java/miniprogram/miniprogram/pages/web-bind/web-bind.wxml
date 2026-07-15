@@ -1,0 +1,35 @@
+<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="绑定微信" back="{{false}}" color="var(--app-nav-fg)" background="var(--app-bg)"></navigation-bar>
+
+  <view class="page-container">
+    <view class="card">
+      <view class="hero">
+        <text class="hero-title">绑定微信</text>
+        <text class="hero-sub">确认后，将把当前微信绑定到网页账号</text>
+      </view>
+
+      <view class="card-body">
+        <view class="meta" wx:if="{{sid}}">
+          <text class="meta-item">会话：{{sid}}</text>
+        </view>
+
+        <view class="msg error" wx:if="{{error}}">
+          <text>{{error}}</text>
+        </view>
+
+        <view class="msg success" wx:if="{{done}}">
+          <text>绑定成功</text>
+        </view>
+
+        <view class="actions">
+          <button class="btn btn-primary {{(loading || done) ? 'disabled' : ''}}" bindtap="onConfirm" disabled="{{loading || done}}" loading="{{loading}}">
+            <text>确认绑定</text>
+          </button>
+          <button class="btn {{loading ? 'disabled' : ''}}" bindtap="onCancel" disabled="{{loading}}">
+            <text>取消</text>
+          </button>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

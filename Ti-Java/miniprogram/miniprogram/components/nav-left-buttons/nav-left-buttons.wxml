@@ -1,0 +1,11 @@
+<view class="nav-left">
+  <view class="icon-btn" bindtap="onHamburger" aria-role="button" aria-label="打开侧边栏">
+    <view class="icon-hamburger"></view>
+  </view>
+  <view class="icon-btn" bindtap="onCycleTheme" aria-role="button" aria-label="切换主题模式">
+    <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+    <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+      <text>A</text>
+    </view>
+  </view>
+</view>

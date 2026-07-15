@@ -1,0 +1,33 @@
+{
+  "domain": "identity",
+  "legacy_contract_source": "isolated Flask test client at commit 700006dfdfa063deb4387be572911e782bcea0d9",
+  "request": {
+    "method": "POST",
+    "path": "/api/login",
+    "json": {
+      "username": "golden_user@test.example.com",
+      "password": "<redacted-test-password>",
+      "remember": false,
+      "redirect": "/"
+    },
+    "headers": {}
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "needs_password_set": false,
+      "redirect": "/",
+      "remember": false,
+      "status": "success",
+      "message": "",
+      "data": {
+        "needs_password_set": false,
+        "redirect": "/",
+        "remember": false
+      }
+    }
+  }
+}

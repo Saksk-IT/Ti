@@ -1,0 +1,108 @@
+<!-- public-bank-v2.wxml - 对齐 Web /（题库广场） -->
+<view class="page-root mine-linked-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <view class="gradient-bg">
+    <view class="gradient-orb orb-1"></view>
+    <view class="gradient-orb orb-2"></view>
+    <view class="gradient-orb orb-3"></view>
+  </view>
+
+  <navigation-bar title="题库广场" back="{{false}}" color="var(--app-nav-fg)" background="transparent">
+    <view slot="left" class="nav-left">
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <view class="page-container">
+    <scroll-view class="content-area" scroll-y bounces="{{false}}" lower-threshold="120" bindscrolltolower="onScrollToLower">
+      <view class="container">
+        <view class="card pb-hero" aria-label="题库广场概览">
+          <view class="pb-hero-top">
+            <view class="pb-hero-left">
+              <view class="pb-title-row">
+                <text class="pb-title">题库广场</text>
+                <view class="pill pb-count"><text>{{total}} 个题库</text></view>
+              </view>
+              <text class="pb-sub">系统题库 + 用户公开题库，一处完成筛选与进入练习设置。</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="pb-tool-area" aria-label="题库搜索与排序">
+          <view class="search-wrap">
+            <text class="search-icon">⌕</text>
+            <input class="search-input" type="text" placeholder="搜索题库/科目" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" />
+            <view class="search-clear" wx:if="{{keyword}}" bindtap="onClearKeyword" aria-role="button" aria-label="清空搜索">
+              <text>×</text>
+            </view>
+          </view>
+
+          <picker class="sort-picker" mode="selector" range="{{sortLabels}}" value="{{sortIndex}}" bindchange="onSortChange">
+            <view class="sort-trigger" aria-role="button" aria-label="选择排序方式">
+              <text>{{sortLabels[sortIndex]}}</text>
+              <text class="sort-chevron">⌄</text>
+            </view>
+          </picker>
+        </view>
+
+        <view class="pb-loading" wx:if="{{loading && !banks.length}}">
+          <text>正在加载...</text>
+        </view>
+
+        <view class="pb-grid" wx:elif="{{banks.length}}">
+          <view class="pb-card" wx:for="{{banks}}" wx:key="key" bindtap="onBankTap" data-id="{{item.id}}" data-bank-type="{{item.bank_type}}" data-name="{{item.name}}">
+            <view class="pb-cover {{item.has_cover ? 'has-cover' : ''}}">
+              <image wx:if="{{item.has_cover}}" src="{{item.cover_url}}" mode="aspectFill"></image>
+              <view wx:else class="pb-cover-fallback">
+                <view class="mini-cover-grid"></view>
+                <view class="mini-cover-emblem" aria-hidden="true">
+                  <view class="mini-cover-book-icon"></view>
+                </view>
+                <view class="mini-cover-copy">
+                  <text class="mini-cover-kicker">Sak AI</text>
+                  <view class="mini-cover-title"><text>{{item.name}}</text></view>
+                  <text class="mini-cover-sub">题库</text>
+                </view>
+              </view>
+            </view>
+            <view class="pb-card-body">
+              <view class="pb-card-main">
+                <view class="pb-card-top">
+                  <text class="pb-card-title">{{item.name}}</text>
+                </view>
+                <text class="pb-desc" wx:if="{{item.description}}">{{item.description}}</text>
+              </view>
+              <view class="pb-card-meta">
+                <text class="pb-chip pb-chip-shared" wx:if="{{item.is_shared}}">分享</text>
+                <text class="pb-chip pb-chip-joined" wx:if="{{item.is_joined}}">已加入</text>
+                <view class="pb-owner" aria-label="题库作者">
+                  <image class="pb-owner-avatar" src="{{item.owner_avatar_url}}" mode="aspectFill"></image>
+                  <text class="pb-owner-name">{{item.owner_label}}</text>
+                </view>
+                <text class="pb-dot">·</text>
+                <text>{{item.question_count}} 题</text>
+                <text class="pb-dot">·</text>
+                <text>创建 {{item.created_label}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="pb-empty" wx:else>
+          <text>{{keyword ? '没有匹配的题库。' : '暂无可用题库。'}}</text>
+        </view>
+
+        <view class="pb-more" wx:if="{{banks.length && hasMore && !loading}}">
+          <text>上拉加载更多</text>
+        </view>
+        <view class="pb-more" wx:if="{{banks.length && loading}}">
+          <text>正在加载...</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

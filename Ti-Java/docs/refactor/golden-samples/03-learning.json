@@ -1,0 +1,40 @@
+{
+  "domain": "learning",
+  "legacy_contract_source": "isolated Flask test client at commit 700006dfdfa063deb4387be572911e782bcea0d9",
+  "request": {
+    "method": "POST",
+    "path": "/api/record_result",
+    "json": {
+      "question_id": 1,
+      "is_correct": true,
+      "clear_mistake_on_correct": true
+    },
+    "headers": {
+      "X-Requested-With": "XMLHttpRequest"
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "action": "removed_mistake",
+      "status": "success",
+      "message": "",
+      "data": {
+        "action": "removed_mistake"
+      }
+    }
+  },
+  "postconditions": {
+    "user_answers_count": 1,
+    "latest_answer": {
+      "user_id": 1,
+      "question_id": 1,
+      "is_correct": true,
+      "user_answer": null
+    },
+    "mistakes_count": 0
+  }
+}

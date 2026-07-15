@@ -1,0 +1,563 @@
+<!-- index-v2.wxml - 考试中心 -->
+<view class="page-root mine-linked-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="考试中心" back="{{true}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent">
+    <view slot="right" class="nav-right">
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <view class="page-container">
+    <scroll-view class="content-area" scroll-y type="list" bounces="{{false}}">
+      <view class="container">
+        <view class="hero">
+          <view class="hero-copy">
+            <text class="hero-title">考试中心</text>
+            <text class="hero-sub">统一管理考试创建、模板、记录与数据分析，公共题库与个人题库共用同一套语义。</text>
+          </view>
+          <view class="hero-actions">
+            <view class="btn btn-primary" bindtap="onGoNewTab" wx:if="{{tab !== 'new'}}"><text>新建考试</text></view>
+            <view class="btn" bindtap="onGoTemplatesTab" wx:if="{{tab !== 'templates'}}"><text>考试模板</text></view>
+          </view>
+        </view>
+
+        <view class="basebar" role="tablist" aria-label="考试子页面">
+          <view class="tabs">
+            <view class="tab {{tab==='new' ? 'active' : ''}}" bindtap="onTabTap" data-tab="new"><text>新建考试</text></view>
+            <view class="tab {{tab==='templates' ? 'active' : ''}}" bindtap="onTabTap" data-tab="templates"><text>考试模板</text></view>
+            <view class="tab {{tab==='records' ? 'active' : ''}}" bindtap="onTabTap" data-tab="records"><text>考试记录</text></view>
+            <view class="tab {{tab==='data' ? 'active' : ''}}" bindtap="onTabTap" data-tab="data"><text>考试数据</text></view>
+            <view class="tab {{tab==='settings' ? 'active' : ''}}" bindtap="onTabTap" data-tab="settings"><text>考试设置</text></view>
+          </view>
+        </view>
+
+        <view wx:if="{{tab === 'new'}}">
+          <view class="card">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">考试范围</text>
+                <text class="card-sub">选择题库来源和具体范围。</text>
+              </view>
+              <view class="card-head-right">
+                <view class="btn" bindtap="onGoTemplatesTab"><text>使用模板</text></view>
+              </view>
+            </view>
+
+            <view class="section">
+              <view class="toggle" role="group" aria-label="题库来源">
+                <view class="toggle-btn {{examSource==='public' ? 'active' : ''}}" bindtap="onExamSourceTap" data-source="public">
+                  <text>公共题库</text>
+                </view>
+                <view class="toggle-btn {{examSource==='user_bank' ? 'active' : ''}}" bindtap="onExamSourceTap" data-source="user_bank">
+                  <text>个人题库</text>
+                </view>
+              </view>
+
+              <view class="fields">
+                <view class="field" wx:if="{{examSource==='public'}}">
+                  <text class="field-label">科目</text>
+                  <picker mode="selector" range="{{subjectOptions}}" range-key="label" value="{{examSubjectIndex}}" bindchange="onExamSubjectPicker">
+                    <view class="select">
+                      <text class="select-text">{{examSubjectLabel}}</text>
+                      <text class="select-arrow">›</text>
+                    </view>
+                  </picker>
+                </view>
+
+                <view class="field" wx:if="{{examSource==='user_bank'}}">
+                  <text class="field-label">个人题库</text>
+                  <picker mode="selector" range="{{bankOptions}}" range-key="label" value="{{examBankIndex}}" bindchange="onExamBankPicker">
+                    <view class="select">
+                      <text class="select-text">{{examBankLabel}}</text>
+                      <text class="select-arrow">›</text>
+                    </view>
+                  </picker>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <v2-exam-builder
+            source="{{examSource}}"
+            subject="{{examSubject}}"
+            bankId="{{examBankId}}"
+            bankName="{{examBankLabel}}"
+          />
+        </view>
+
+        <view class="card" wx:if="{{tab === 'templates'}}">
+          <view class="card-head">
+            <view class="card-head-left">
+              <text class="card-title">考试模板</text>
+              <text class="card-sub">选择范围后，一键生成题型配置。模板会自动适配题型列表。</text>
+            </view>
+          </view>
+
+          <view class="section">
+            <text class="section-title">模板范围</text>
+            <view class="fields">
+              <view class="field">
+                <text class="field-label">题库来源</text>
+                <view class="toggle" role="group" aria-label="题库来源">
+                  <view class="toggle-btn {{tplSource==='public' ? 'active' : ''}}" bindtap="onTplSourceTap" data-source="public">
+                    <text>公共题库</text>
+                  </view>
+                  <view class="toggle-btn {{tplSource==='user_bank' ? 'active' : ''}}" bindtap="onTplSourceTap" data-source="user_bank">
+                    <text>个人题库</text>
+                  </view>
+                </view>
+              </view>
+
+              <view class="field" wx:if="{{tplSource==='public'}}">
+                <text class="field-label">科目（公共题库）</text>
+                <picker mode="selector" range="{{subjectOptions}}" range-key="label" value="{{tplSubjectIndex}}" bindchange="onTplSubjectPicker">
+                  <view class="select">
+                    <text class="select-text">{{tplSubjectLabel}}</text>
+                    <text class="select-arrow">›</text>
+                  </view>
+                </picker>
+              </view>
+
+              <view class="field" wx:if="{{tplSource==='user_bank'}}">
+                <text class="field-label">个人题库</text>
+                <picker mode="selector" range="{{bankOptions}}" range-key="label" value="{{tplBankIndex}}" bindchange="onTplBankPicker">
+                  <view class="select">
+                    <text class="select-text">{{tplBankLabel}}</text>
+                    <text class="select-arrow">›</text>
+                  </view>
+                </picker>
+              </view>
+            </view>
+          </view>
+
+          <view class="section">
+            <text class="section-title">我的模板</text>
+            <text class="section-sub">保存为模板后会同步到云端。</text>
+            <view class="template-grid">
+              <view class="template-empty" wx:if="{{templatesLoading}}">
+                <text>模板加载中…</text>
+              </view>
+              <view class="template-empty" wx:if="{{!templatesLoading && userTemplatesLoaded && userTemplateCards.length === 0}}">
+                <text>暂无自定义模板。</text>
+              </view>
+              <view class="template-card" wx:for="{{userTemplateCards}}" wx:key="id">
+                <text class="template-title">{{item.title}}</text>
+                <text class="template-meta">{{item.meta}}</text>
+                <view class="template-tags">
+                  <view class="pill" wx:for="{{item.tags}}" wx:key="*this"><text>{{item}}</text></view>
+                </view>
+                <view class="template-actions">
+                  <view class="btn" bindtap="onUserTemplateApplyTap" data-id="{{item.id}}"><text>应用到新建</text></view>
+                  <view class="btn btn-primary" bindtap="onUserTemplateStartTap" data-id="{{item.id}}"><text>一键开始</text></view>
+                  <view class="btn btn-danger" bindtap="onUserTemplateDeleteTap" data-id="{{item.id}}"><text>删除</text></view>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view class="section">
+            <text class="section-title">系统模板</text>
+            <view class="template-grid">
+              <view class="template-card" wx:for="{{systemTemplates}}" wx:key="id">
+                <text class="template-title">{{item.title}}</text>
+                <text class="template-meta">{{item.duration}} 分钟 · {{item.total}} 题 · {{item.note}}</text>
+                <view class="template-tags">
+                  <view class="pill" wx:for="{{item.tags}}" wx:key="*this"><text>{{item}}</text></view>
+                </view>
+                <view class="template-actions">
+                  <view class="btn" bindtap="onSystemTemplateApplyTap" data-id="{{item.id}}"><text>应用到新建</text></view>
+                  <view class="btn btn-primary" bindtap="onSystemTemplateStartTap" data-id="{{item.id}}"><text>一键开始</text></view>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view class="msg {{templateMsgKind}}" wx:if="{{templateMsg}}">
+            <text>{{templateMsg}}</text>
+          </view>
+        </view>
+
+        <view wx:if="{{tab === 'records'}}">
+          <view class="card">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">筛选</text>
+                <text class="card-sub">按题库来源/科目/个人题库筛选记录。</text>
+              </view>
+              <view class="pill" wx:if="{{recordsLoading}}"><text>加载中</text></view>
+            </view>
+
+            <view class="fields">
+              <view class="field">
+                <text class="field-label">来源</text>
+                <view class="toggle" role="group" aria-label="题库来源">
+                  <view class="toggle-btn {{recordsSource==='all' ? 'active' : ''}}" bindtap="onRecordsSourceTap" data-source="all">
+                    <text>全部</text>
+                  </view>
+                  <view class="toggle-btn {{recordsSource==='public' ? 'active' : ''}}" bindtap="onRecordsSourceTap" data-source="public">
+                    <text>公共</text>
+                  </view>
+                  <view class="toggle-btn {{recordsSource==='user_bank' ? 'active' : ''}}" bindtap="onRecordsSourceTap" data-source="user_bank">
+                    <text>个人</text>
+                  </view>
+                </view>
+              </view>
+
+              <view class="field">
+                <text class="field-label">科目</text>
+                <picker
+                  mode="selector"
+                  range="{{subjectOptions}}"
+                  range-key="label"
+                  value="{{recordsSubjectIndex}}"
+                  bindchange="onRecordsSubjectPicker"
+                  disabled="{{recordsSource==='user_bank'}}"
+                >
+                  <view class="select {{recordsSource==='user_bank' ? 'disabled' : ''}}">
+                    <text class="select-text">{{recordsSubjectLabel}}</text>
+                    <text class="select-arrow">▾</text>
+                  </view>
+                </picker>
+              </view>
+
+              <view class="field">
+                <text class="field-label">个人题库</text>
+                <picker
+                  mode="selector"
+                  range="{{recordsBankOptions}}"
+                  range-key="label"
+                  value="{{recordsBankIndex}}"
+                  bindchange="onRecordsBankPicker"
+                  disabled="{{recordsSource==='public'}}"
+                >
+                  <view class="select {{recordsSource==='public' ? 'disabled' : ''}}">
+                    <text class="select-text">{{recordsBankLabel}}</text>
+                    <text class="select-arrow">▾</text>
+                  </view>
+                </picker>
+              </view>
+            </view>
+
+            <view class="msg {{recordsMsgKind}}" wx:if="{{recordsMsg}}">
+              <text>{{recordsMsg}}</text>
+            </view>
+          </view>
+
+          <view class="records-layout">
+            <view class="card">
+              <view class="card-head">
+                <view class="card-head-left">
+                  <text class="card-title">进行中</text>
+                  <text class="card-sub">随时继续未提交的考试。</text>
+                </view>
+                <view class="pill"><text>{{recordsOngoing.length}} 场</text></view>
+              </view>
+
+              <view class="exam-list">
+                <view class="exam-empty" wx:if="{{recordsLoading}}">
+                  <text>加载中…</text>
+                </view>
+                <view class="exam-empty" wx:elif="{{!recordsLoading && recordsOngoing.length === 0}}">
+                  <text>暂无进行中的考试</text>
+                </view>
+                <view class="exam-item" wx:for="{{recordsOngoing}}" wx:key="id">
+                  <view class="exam-main">
+                    <text class="exam-title">考试 #{{item.id}}</text>
+                    <text class="exam-meta">
+                      {{item.source === 'user_bank' ? '个人题库' : '公共题库'}}
+                      · {{item.subject || '全部科目'}}
+                      · {{item.q_total || 0}} 题
+                      · {{item.duration_minutes}} 分钟
+                    </text>
+                  </view>
+                  <view class="exam-actions">
+                    <view class="btn btn-primary btn-sm" bindtap="onExamContinueTap" data-id="{{item.id}}"><text>继续</text></view>
+                    <view class="btn btn-danger btn-sm" bindtap="onExamDeleteTap" data-id="{{item.id}}"><text>删除</text></view>
+                  </view>
+                </view>
+              </view>
+            </view>
+
+            <view class="card">
+              <view class="card-head">
+                <view class="card-head-left">
+                  <text class="card-title">已提交</text>
+                  <text class="card-sub">支持回顾、查看详情与加入错题本。</text>
+                </view>
+                <view class="card-head-right">
+                  <picker mode="selector" range="{{recordsSizeOptions}}" range-key="label" value="{{recordsSizeIndex}}" bindchange="onRecordsSizePicker">
+                    <view class="select select-mini">
+                      <text class="select-text">{{recordsSizeLabel}}</text>
+                      <text class="select-arrow">▾</text>
+                    </view>
+                  </picker>
+                </view>
+              </view>
+
+              <view class="exam-list">
+                <view class="exam-empty" wx:if="{{recordsLoading}}">
+                  <text>加载中…</text>
+                </view>
+                <view class="exam-empty" wx:elif="{{!recordsLoading && recordsSubmitted.length === 0}}">
+                  <text>暂无已提交的考试</text>
+                </view>
+                <view class="exam-item" wx:for="{{recordsSubmitted}}" wx:key="id">
+                  <view class="exam-main">
+                    <text class="exam-title">考试 #{{item.id}}</text>
+                    <text class="exam-meta">
+                      {{item.source === 'user_bank' ? '个人题库' : '公共题库'}}
+                      · {{item.subject || '全部科目'}}
+                      · {{item.q_correct || 0}}/{{item.q_total || 0}} 题
+                      · 正确率 {{item.accuracy || 0}}%
+                      · {{item.submitted_at}}
+                    </text>
+                  </view>
+                  <view class="exam-actions">
+                    <view class="btn btn-sm" bindtap="onExamDetailTap" data-id="{{item.id}}"><text>详情</text></view>
+                    <view class="btn btn-sm" bindtap="onExamContinueTap" data-id="{{item.id}}"><text>回顾</text></view>
+                    <view class="btn btn-sm" bindtap="onExamToMistakesTap" data-id="{{item.id}}"><text>加入错题本</text></view>
+                    <view class="btn btn-danger btn-sm" bindtap="onExamDeleteTap" data-id="{{item.id}}"><text>删除</text></view>
+                  </view>
+                </view>
+              </view>
+
+              <view class="pager">
+                <view class="pager-left">
+                  <text class="muted">第</text>
+                  <text class="mono">{{recordsPage}}</text>
+                  <text class="muted">/</text>
+                  <text class="mono">{{recordsTotalPages}}</text>
+                  <text class="muted">页</text>
+                </view>
+                <view class="pager-actions">
+                  <view class="btn btn-sm {{recordsPage <= 1 ? 'disabled' : ''}}" bindtap="onRecordsPrevPage"><text>上一页</text></view>
+                  <view class="btn btn-sm {{recordsPage >= recordsTotalPages ? 'disabled' : ''}}" bindtap="onRecordsNextPage"><text>下一页</text></view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view wx:if="{{tab === 'data'}}">
+          <view class="card">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">范围</text>
+                <text class="card-sub">按题库来源/科目/个人题库过滤数据。</text>
+              </view>
+              <view class="pill" wx:if="{{statsLoading}}"><text>加载中</text></view>
+            </view>
+
+            <view class="fields">
+              <view class="field">
+                <text class="field-label">来源</text>
+                <view class="toggle" role="group" aria-label="题库来源">
+                  <view class="toggle-btn {{recordsSource==='all' ? 'active' : ''}}" bindtap="onRecordsSourceTap" data-source="all">
+                    <text>全部</text>
+                  </view>
+                  <view class="toggle-btn {{recordsSource==='public' ? 'active' : ''}}" bindtap="onRecordsSourceTap" data-source="public">
+                    <text>公共</text>
+                  </view>
+                  <view class="toggle-btn {{recordsSource==='user_bank' ? 'active' : ''}}" bindtap="onRecordsSourceTap" data-source="user_bank">
+                    <text>个人</text>
+                  </view>
+                </view>
+              </view>
+
+              <view class="field">
+                <text class="field-label">科目</text>
+                <picker
+                  mode="selector"
+                  range="{{subjectOptions}}"
+                  range-key="label"
+                  value="{{recordsSubjectIndex}}"
+                  bindchange="onRecordsSubjectPicker"
+                  disabled="{{recordsSource==='user_bank'}}"
+                >
+                  <view class="select {{recordsSource==='user_bank' ? 'disabled' : ''}}">
+                    <text class="select-text">{{recordsSubjectLabel}}</text>
+                    <text class="select-arrow">▾</text>
+                  </view>
+                </picker>
+              </view>
+
+              <view class="field">
+                <text class="field-label">个人题库</text>
+                <picker
+                  mode="selector"
+                  range="{{recordsBankOptions}}"
+                  range-key="label"
+                  value="{{recordsBankIndex}}"
+                  bindchange="onRecordsBankPicker"
+                  disabled="{{recordsSource==='public'}}"
+                >
+                  <view class="select {{recordsSource==='public' ? 'disabled' : ''}}">
+                    <text class="select-text">{{recordsBankLabel}}</text>
+                    <text class="select-arrow">▾</text>
+                  </view>
+                </picker>
+              </view>
+            </view>
+          </view>
+
+          <view class="metrics">
+            <view class="card metric-card">
+              <view class="metric">
+                <text class="metric-label">已提交考试</text>
+                <text class="metric-value mono">{{statsOverview.submitted_count}}</text>
+              </view>
+            </view>
+            <view class="card metric-card">
+              <view class="metric">
+                <text class="metric-label">平均得分</text>
+                <text class="metric-value mono">{{statsOverview.avg_score}}</text>
+              </view>
+            </view>
+            <view class="card metric-card ring-card">
+              <view class="ring" style="--val: {{statsOverview.avg_accuracy}};">
+                <text class="mono">{{statsOverview.avg_accuracy}}%</text>
+              </view>
+              <text class="muted ring-sub">平均正确率</text>
+            </view>
+            <view class="card metric-card">
+              <view class="metric">
+                <text class="metric-label">近 7 天提交</text>
+                <text class="metric-value mono">{{statsOverview.last7_count}}</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="chart-grid">
+            <view class="card">
+              <view class="card-head">
+                <view class="card-head-left">
+                  <text class="card-title">近 7 次正确率趋势</text>
+                  <text class="card-sub">范围：{{statsScopeText}} · 基于最近提交的考试展示波动。</text>
+                </view>
+              </view>
+
+              <view class="mini-bars" wx:if="{{recentExams.length}}">
+                <view class="mini-bar" wx:for="{{recentExams}}" wx:key="id">
+                  <view class="mini-bar-inner" style="height: {{item.accuracy || 0}}%;"></view>
+                </view>
+              </view>
+              <view class="mini-labels" wx:if="{{recentExams.length}}">
+                <view class="mini-label" wx:for="{{recentExams}}" wx:key="id">
+                  <text class="mono">{{item.accuracy || 0}}%</text>
+                </view>
+              </view>
+              <view class="exam-empty" wx:if="{{!statsLoading && recentExams.length === 0}}">
+                <text>暂无趋势数据</text>
+              </view>
+            </view>
+
+            <view class="card">
+              <view class="card-head">
+                <view class="card-head-left">
+                  <text class="card-title">题型分布（近 30 天）</text>
+                  <text class="card-sub">范围：{{statsScopeText}} · 近 30 天统计。</text>
+                </view>
+              </view>
+
+              <view class="barlist" wx:if="{{typeDist.length}}">
+                <view class="baritem" wx:for="{{typeDist}}" wx:key="q_type">
+                  <view class="baritem-top">
+                    <text class="baritem-name">{{item.q_type}}</text>
+                    <text class="baritem-count mono">{{item.count}}</text>
+                  </view>
+                  <view class="bar">
+                    <view class="bar-inner" style="width: {{item.pct}}%;"></view>
+                  </view>
+                </view>
+              </view>
+              <view class="exam-empty" wx:if="{{!statsLoading && typeDist.length === 0}}">
+                <text>暂无题型数据</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="card">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">最近考试列表</text>
+                <text class="card-sub">快速进入详情或回顾。</text>
+              </view>
+            </view>
+
+            <view class="exam-list">
+              <view class="exam-empty" wx:if="{{statsLoading}}">
+                <text>加载中…</text>
+              </view>
+              <view class="exam-empty" wx:elif="{{!statsLoading && recentExams.length === 0}}">
+                <text>暂无数据</text>
+              </view>
+              <view class="exam-item" wx:for="{{recentExams}}" wx:key="id">
+                <view class="exam-main">
+                  <text class="exam-title">考试 #{{item.id}}</text>
+                  <text class="exam-meta">
+                    {{item.source === 'user_bank' ? '个人题库' : '公共题库'}}
+                    · {{item.subject || '全部科目'}} · {{item.submitted_at}}
+                    · 得分 {{item.total_score || 0}} · 正确率 {{item.accuracy || 0}}%
+                  </text>
+                </view>
+                <view class="exam-actions">
+                  <view class="btn btn-sm" bindtap="onExamDetailTap" data-id="{{item.id}}"><text>详情</text></view>
+                  <view class="btn btn-sm" bindtap="onExamContinueTap" data-id="{{item.id}}"><text>回顾</text></view>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view class="card" wx:if="{{statsAdvice.length}}">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">建议</text>
+                <text class="card-sub">基于当前范围自动生成。</text>
+              </view>
+            </view>
+            <view class="advice-list">
+              <view class="advice-item" wx:for="{{statsAdvice}}" wx:key="title">
+                <text class="advice-title">{{item.title}}</text>
+                <text class="advice-content">{{item.content}}</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="msg {{statsMsgKind}}" wx:if="{{statsMsg}}">
+            <text>{{statsMsg}}</text>
+          </view>
+        </view>
+
+        <view class="card" wx:if="{{tab === 'settings'}}">
+          <view class="card-head"><text class="card-title">考试设置</text></view>
+          <view class="placeholder"><text>（占位）</text></view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view class="modal-root" wx:if="{{saveModalOpen}}">
+    <view class="modal-overlay" bindtap="onCloseSaveModal"></view>
+    <view class="modal-panel" catchtap="stopTap">
+      <text class="modal-title">保存为模板</text>
+      <text class="modal-sub">请输入模板名称（云端同步）</text>
+      <input
+        class="modal-input"
+        value="{{saveTemplateTitle}}"
+        bindinput="onSaveTemplateTitleInput"
+        placeholder="例如：自定义模板 2026-01-13"
+        maxlength="30"
+      />
+      <view class="modal-actions">
+        <view class="btn" bindtap="onCloseSaveModal"><text>取消</text></view>
+        <view class="btn btn-primary {{savingTemplate ? 'disabled' : ''}}" bindtap="onConfirmSaveTemplate">
+          <text>{{savingTemplate ? '保存中…' : '保存'}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

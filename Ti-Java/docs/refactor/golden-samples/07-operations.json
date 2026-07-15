@@ -1,0 +1,24 @@
+{
+  "domain": "operations",
+  "legacy_contract_source": "isolated Flask test client at commit 700006dfdfa063deb4387be572911e782bcea0d9",
+  "request": {
+    "method": "GET",
+    "path": "/admin/api/subjects",
+    "json": null,
+    "headers": {}
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": [
+      {
+        "id": 1,
+        "is_locked": 0,
+        "name": "Golden Subject",
+        "question_count": 1
+      }
+    ]
+  }
+}

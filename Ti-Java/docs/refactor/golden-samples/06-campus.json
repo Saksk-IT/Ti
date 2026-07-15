@@ -1,0 +1,36 @@
+{
+  "domain": "campus",
+  "legacy_contract_source": "isolated Flask test client at commit 700006dfdfa063deb4387be572911e782bcea0d9",
+  "request": {
+    "method": "GET",
+    "path": "/api/edu-schedule/status",
+    "json": null,
+    "headers": {}
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "code": 0,
+      "data": {
+        "academic_year_averages": [],
+        "credential": {
+          "has_credentials": false,
+          "username_hint": ""
+        },
+        "grade_overview": null,
+        "grade_snapshots": [],
+        "recent_tasks": {
+          "grades": null,
+          "items": [],
+          "schedule": null
+        },
+        "snapshots": []
+      },
+      "status": "success",
+      "message": ""
+    }
+  }
+}

@@ -1,0 +1,248 @@
+/* 首页同款二级页视觉：显式复用 hub-v2 的柔光背景、玻璃卡片与按钮倒角 */
+.page-root {
+  position: relative;
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+.gradient-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.gradient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120rpx);
+  background: var(--app-primary-soft);
+  pointer-events: none;
+  animation: hub-inspired-float 20s ease-in-out infinite;
+}
+
+.orb-1 {
+  width: 500rpx;
+  height: 500rpx;
+  top: -100rpx;
+  right: -100rpx;
+  opacity: 0.8;
+  animation-delay: 0s;
+}
+
+.orb-2 {
+  width: 400rpx;
+  height: 400rpx;
+  bottom: 200rpx;
+  left: -80rpx;
+  opacity: 0.6;
+  animation-delay: -7s;
+}
+
+.orb-3 {
+  width: 350rpx;
+  height: 350rpx;
+  right: 100rpx;
+  bottom: -50rpx;
+  opacity: 0.5;
+  animation-delay: -14s;
+}
+
+@keyframes hub-inspired-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30rpx, -30rpx) scale(1.05); }
+  50% { transform: translate(-20rpx, 20rpx) scale(0.95); }
+  75% { transform: translate(-30rpx, -20rpx) scale(1.02); }
+}
+
+.page-container,
+.content-area,
+.bank-join-container {
+  position: relative;
+  z-index: 1;
+}
+
+.content-area {
+  z-index: 2;
+}
+
+.card,
+.section-card,
+.nav-card,
+.basebar,
+.pb-hero,
+.pb-toolbar,
+.mb-hero,
+.mb-toolbar,
+.public-card,
+.join-panel,
+.info-list,
+.profile-head,
+.profile-card,
+.status-list,
+.form-card,
+.message-card,
+.setting-card,
+.qdetail-sheet,
+.taborder-sheet,
+.mb-modal-sheet {
+  border-radius: var(--app-radius-lg);
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface-glass);
+  box-shadow: var(--app-shadow-soft);
+  backdrop-filter: blur(24rpx);
+  -webkit-backdrop-filter: blur(24rpx);
+}
+
+.hero,
+.pb-hero,
+.mb-hero,
+.practice-hero,
+.public-card,
+.profile-head {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--app-surface-glass), var(--app-surface));
+}
+
+.hero::before,
+.pb-hero::before,
+.mb-hero::before,
+.practice-hero::before,
+.public-card::before,
+.profile-head::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--app-primary-soft);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.hero > view,
+.hero > text,
+.pb-hero > view,
+.pb-hero > text,
+.mb-hero > view,
+.mb-hero > text,
+.practice-hero > view,
+.practice-hero > text,
+.public-card > view,
+.public-card > text,
+.profile-head > view,
+.profile-head > text {
+  position: relative;
+  z-index: 1;
+}
+
+.btn,
+.pill-btn,
+.mini-btn,
+.icon-btn,
+.tab,
+.subtab,
+.chip,
+.badge,
+.profile-chip,
+.status-chip,
+.pb-seg,
+.pb-seg-btn,
+.seg,
+.seg-btn,
+.pb-card-arrow,
+.mb-manage,
+.alt-btn,
+.action-btn,
+.tab-order-btn {
+  border-radius: 18rpx;
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface-glass);
+  box-shadow: var(--app-shadow-soft);
+  backdrop-filter: blur(18rpx);
+  -webkit-backdrop-filter: blur(18rpx);
+  transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+}
+
+.btn:active,
+.pill-btn:active,
+.mini-btn:active,
+.icon-btn:active,
+.tab:active,
+.subtab:active,
+.chip:active,
+.badge:active,
+.profile-chip:active,
+.status-chip:active,
+.pb-seg-btn:active,
+.seg-btn:active,
+.pb-card:active,
+.mb-card:active,
+.public-card:active,
+.meta-item:active,
+.info-row:active,
+.kpi-card:active,
+.setting-row:active,
+.qdetail-block:active,
+.reinforce-row:active,
+.pair-row:active,
+.result-item:active,
+.action-btn:active,
+.tab-order-btn:active {
+  transform: scale(0.98);
+  opacity: 0.92;
+}
+
+.btn-primary {
+  border-color: transparent;
+  background: var(--app-cta);
+  color: var(--app-primary-contrast);
+}
+
+.btn-primary text {
+  color: var(--app-primary-contrast);
+}
+
+.btn-danger {
+  border-color: color-mix(in srgb, var(--app-danger) 24%, var(--app-border));
+  background: color-mix(in srgb, var(--app-danger) 10%, var(--app-surface));
+}
+
+.pb-card,
+.mb-card,
+.meta-item,
+.info-row,
+.kpi-card,
+.setting-row,
+.status-row,
+.qdetail-block,
+.stat,
+.toggle,
+.danger-action,
+.reinforce-row,
+.pair-row,
+.pair-bubble,
+.result-item {
+  border-radius: var(--app-radius-lg);
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface-glass);
+  box-shadow: var(--app-shadow-soft);
+  backdrop-filter: blur(24rpx);
+  -webkit-backdrop-filter: blur(24rpx);
+}
+
+.search-wrap,
+.input,
+.acc-input,
+.acc-textarea,
+.mb-input,
+.mb-textarea,
+.search-input {
+  border-radius: 18rpx;
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface-glass);
+  box-shadow: var(--app-shadow-soft);
+}

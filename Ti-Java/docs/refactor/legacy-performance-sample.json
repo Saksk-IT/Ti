@@ -1,0 +1,84 @@
+{
+  "captured_at": "2026-07-16",
+  "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "environment": {
+    "mode": "Flask testing profile with temporary SQLite",
+    "python": "3.11.15",
+    "platform": "darwin",
+    "samples_per_endpoint": 5,
+    "cache_state": "one in-process warm-up before each endpoint"
+  },
+  "safety": "No production or persistent local database; background tasks disabled; localhost network not used.",
+  "startup": {
+    "legacy_import_and_create_app_ms": 875.873,
+    "rss_before_import_mib": 18.562,
+    "rss_after_create_app_mib": 163.391,
+    "rss_delta_mib": 144.829
+  },
+  "requests": {
+    "/api/ping": {
+      "samples": 5,
+      "statuses": [
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "latency_ms_median": 0.184,
+      "latency_ms_p95": 0.231,
+      "sql_count_min": 0,
+      "sql_count_max": 0,
+      "sql_duration_ms_median": 0
+    },
+    "/api/public/banks/summary": {
+      "samples": 5,
+      "statuses": [
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "latency_ms_median": 1.08,
+      "latency_ms_p95": 1.514,
+      "sql_count_min": 7,
+      "sql_count_max": 7,
+      "sql_duration_ms_median": 0.126
+    },
+    "/api/questions/count": {
+      "samples": 5,
+      "statuses": [
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "latency_ms_median": 0.255,
+      "latency_ms_p95": 0.289,
+      "sql_count_min": 1,
+      "sql_count_max": 1,
+      "sql_duration_ms_median": 0.006
+    },
+    "/hub": {
+      "samples": 5,
+      "statuses": [
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "latency_ms_median": 0.408,
+      "latency_ms_p95": 0.662,
+      "sql_count_min": 2,
+      "sql_count_max": 2,
+      "sql_duration_ms_median": 0.012
+    }
+  },
+  "limitations": [
+    "Empty SQLite fixtures do not represent PostgreSQL query plans or production data scale.",
+    "Numbers are regression orientation only, not the phase-9 performance acceptance baseline."
+  ]
+}

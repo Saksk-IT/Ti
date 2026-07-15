@@ -1,0 +1,5 @@
+# The controlled mini-program snapshot must stay byte-identical to its pinned Git source.
+miniprogram/** -whitespace
+
+# Deterministic inventories are generated with LF on every platform.
+docs/refactor/*.csv text eol=lf

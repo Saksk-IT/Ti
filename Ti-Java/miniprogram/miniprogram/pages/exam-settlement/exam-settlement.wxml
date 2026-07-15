@@ -1,0 +1,146 @@
+<!-- exam-settlement.wxml - 考试结算页 -->
+<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar
+    title="结算"
+    back="{{true}}"
+    color="var(--app-nav-fg)"
+    background="var(--app-nav-bg)"
+  />
+
+  <view class="page-container">
+    <scroll-view
+      class="content-area"
+      scroll-y
+      bounces="{{false}}"
+      refresher-enabled="{{true}}"
+      refresher-triggered="{{loading}}"
+      bindrefresherrefresh="onPullDownRefresh"
+    >
+      <view class="container">
+        <view class="loading" wx:if="{{loading}}">
+          <text>加载中...</text>
+        </view>
+
+        <view class="error" wx:if="{{!loading && errorText}}">
+          <text>{{errorText}}</text>
+        </view>
+
+        <view wx:if="{{!loading && !errorText && exam}}" class="stack">
+          <view class="card summary" aria-label="本次结算">
+            <view class="summary-hd">
+              <view class="summary-main">
+                <text class="summary-title">{{exam.subject || '考试'}}</text>
+
+                <view class="chips" wx:if="{{subChips && subChips.length}}">
+                  <view
+                    class="chip {{index === 0 ? 'chip--accent' : ''}}"
+                    wx:for="{{subChips}}"
+                    wx:for-item="item"
+                    wx:for-index="index"
+                    wx:key="*this"
+                  >
+                    <text>{{item}}</text>
+                  </view>
+                </view>
+              </view>
+
+              <view class="badge"><text>{{statusText}}</text></view>
+            </view>
+
+            <view class="stats" aria-label="成绩概览">
+              <view class="stat stat--accent">
+                <text class="k">得分</text>
+                <text class="v num">{{totalScore}}</text>
+              </view>
+              <view class="stat">
+                <text class="k">正确率</text>
+                <text class="v num">{{accuracy}}%</text>
+              </view>
+              <view class="stat stat--success">
+                <text class="k">答对</text>
+                <text class="v num">{{correct}}</text>
+              </view>
+              <view class="stat stat--danger">
+                <text class="k">答错</text>
+                <text class="v num">{{wrong}}</text>
+              </view>
+            </view>
+
+            <view class="progress" aria-label="答题进度">
+              <view class="progress-row">
+                <text class="k">已答</text>
+                <text class="v num">{{answered}} / {{total}}</text>
+              </view>
+              <view class="track">
+                <view class="fill" style="width: {{answeredPercent}}%;"></view>
+              </view>
+            </view>
+
+            <view class="note note--warn" wx:if="{{autoSubmitted}}">
+              <text>时间到，已自动交卷。</text>
+            </view>
+          </view>
+
+          <view class="card details" aria-label="考试信息">
+            <view class="details-grid">
+              <view class="detail">
+                <text class="k">未答</text>
+                <text class="v num">{{unanswered}}</text>
+              </view>
+              <view class="detail">
+                <text class="k">用时</text>
+                <text class="v num mono">{{timeUsedText}}</text>
+              </view>
+              <view class="detail">
+                <text class="k">开始</text>
+                <text class="v mono">{{startedAt}}</text>
+              </view>
+              <view class="detail">
+                <text class="k">提交</text>
+                <text class="v mono">{{submittedAt}}</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="card actions" aria-label="快捷操作">
+            <button class="btn btn-primary" bindtap="onTapReview">回顾题目</button>
+
+            <view class="action-grid">
+              <button
+                class="btn btn-tile"
+                bindtap="onTapMistakes"
+                loading="{{toMistakesLoading}}"
+                disabled="{{toMistakesLoading}}"
+              >
+                <text class="t">错题强化</text>
+                <text class="d">同步到错题本</text>
+              </button>
+
+              <button class="btn btn-tile" bindtap="onTapNewExam">
+                <text class="t">再来一套</text>
+                <text class="d">重新开始考试</text>
+              </button>
+
+              <button class="btn btn-tile" open-type="share">
+                <text class="t">分享成绩</text>
+                <text class="d">分享本次结果</text>
+              </button>
+
+              <button class="btn btn-tile" bindtap="onTapExit">
+                <text class="t">返回首页</text>
+                <text class="d">回到题库首页</text>
+              </button>
+            </view>
+
+            <view class="note note--ok" wx:if="{{toMistakesDone && toMistakesCount > 0}}">
+              <text>提示：已同步到错题本（{{toMistakesCount}} 题）。</text>
+            </view>
+            <view class="note note--warn" wx:elif="{{toMistakesDone}}">
+              <text>提示：本次没有错题，无需同步。</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

@@ -1,0 +1,91 @@
+@import "../campus/campus-query-shared.less";
+
+.grade-overview-panel {
+  margin-bottom: 16rpx;
+  padding: 20rpx;
+  border: 1rpx solid var(--app-border);
+  border-radius: var(--app-radius-lg);
+  background: var(--app-surface-glass);
+  box-shadow: var(--app-shadow-soft);
+  backdrop-filter: blur(24rpx);
+  -webkit-backdrop-filter: blur(24rpx);
+  box-sizing: border-box;
+}
+
+.grade-overview-head {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-bottom: 16rpx;
+}
+
+.grade-overview-title {
+  flex: 0 0 auto;
+  color: var(--app-text);
+  font-size: 30rpx;
+  line-height: 1.25;
+  font-weight: 900;
+}
+
+.grade-overview-term {
+  min-width: 0;
+  color: var(--app-text-secondary);
+  font-size: 22rpx;
+  line-height: 1.35;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grade-overview-metrics {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  border-top: 1rpx solid var(--app-border);
+}
+
+.grade-overview-metric {
+  min-width: 0;
+  min-height: 122rpx;
+  padding: 16rpx 10rpx 4rpx;
+  border-left: 1rpx solid var(--app-border);
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 8rpx;
+  box-sizing: border-box;
+}
+
+.grade-overview-metric:first-child {
+  border-left: 0;
+}
+
+.grade-overview-metric-wide {
+  grid-column: 1 / -1;
+  min-height: 96rpx;
+  border-top: 1rpx solid var(--app-border);
+  border-left: 0;
+}
+
+.grade-overview-value {
+  max-width: 100%;
+  color: var(--app-text);
+  font-size: 34rpx;
+  line-height: 1.1;
+  font-weight: 950;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grade-overview-label {
+  width: 100%;
+  color: var(--app-text-secondary);
+  font-size: 20rpx;
+  line-height: 1.35;
+  font-weight: 800;
+  text-align: center;
+  word-break: break-all;
+}

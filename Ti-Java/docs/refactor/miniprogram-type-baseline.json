@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-07-16",
+  "typescript_exit_code": 2,
+  "legacy": {
+    "errors": 392,
+    "codes": [
+      "TS18047",
+      "TS2306",
+      "TS2322",
+      "TS2339",
+      "TS2344",
+      "TS2345",
+      "TS2353",
+      "TS2393",
+      "TS2448",
+      "TS2454",
+      "TS2532",
+      "TS2538",
+      "TS2550",
+      "TS2554",
+      "TS2694",
+      "TS6133",
+      "TS6196",
+      "TS7006",
+      "TS7030"
+    ]
+  },
+  "controlled_copy": {
+    "errors": 386,
+    "codes": [
+      "TS18047",
+      "TS2306",
+      "TS2322",
+      "TS2339",
+      "TS2344",
+      "TS2345",
+      "TS2353",
+      "TS2448",
+      "TS2454",
+      "TS2532",
+      "TS2538",
+      "TS2550",
+      "TS2554",
+      "TS2694",
+      "TS6133",
+      "TS6196",
+      "TS7006",
+      "TS7030"
+    ]
+  },
+  "intentional_difference": {
+    "errors": 6,
+    "code": "TS2393",
+    "source_prefix": "_archived/",
+    "reason": "The controlled Ti-Java copy deliberately excludes archived source."
+  }
+}

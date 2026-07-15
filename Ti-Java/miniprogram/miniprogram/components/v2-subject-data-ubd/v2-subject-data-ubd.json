@@ -1,0 +1,6 @@
+{
+  "component": true,
+  "usingComponents": {
+    "ec-canvas": "../../pages/subject-detail-v2/components/ec-canvas/ec-canvas"
+  }
+}

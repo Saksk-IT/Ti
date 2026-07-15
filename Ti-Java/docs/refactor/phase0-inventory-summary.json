@@ -1,0 +1,205 @@
+{
+  "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "registered_url_rules": 592,
+  "route_identity_sha256": "781c3c4bcf524988ef97738780b1e0b0c203216bf83b8b12ba7c8ce84c5c08b5",
+  "route_contract_sha256": "362c620798fbcb7ceed293cf8c46500e4bd382dce6afabc4b5e62f4ca629b7e8",
+  "source_route_decorators": 538,
+  "registered_decorator_rules": 528,
+  "unregistered_route_decorators": 10,
+  "unregistered_route_definitions": [
+    {
+      "source": "app/modules/admin/routes/api_components/popups.py:100",
+      "declared_path": "/popups/<int:pid>",
+      "methods": [
+        "PUT"
+      ]
+    },
+    {
+      "source": "app/modules/admin/routes/api_components/popups.py:162",
+      "declared_path": "/popups/<int:pid>",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "source": "app/modules/admin/routes/api_components/popups.py:18",
+      "declared_path": "/popups",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "source": "app/modules/admin/routes/api_components/popups.py:190",
+      "declared_path": "/popups/stats",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "source": "app/modules/admin/routes/api_components/popups.py:214",
+      "declared_path": "/popups/<int:pid>/stats",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "source": "app/modules/admin/routes/api_components/popups.py:38",
+      "declared_path": "/popups",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "source": "app/modules/admin/routes/api_components/popups.py:80",
+      "declared_path": "/popups/<int:pid>",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "source": "app/modules/popups/routes/api.py:18",
+      "declared_path": "/popups/active",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "source": "app/modules/popups/routes/api.py:45",
+      "declared_path": "/popups/<int:popup_id>/dismiss",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "source": "app/modules/popups/routes/api.py:74",
+      "declared_path": "/popups/<int:popup_id>/view",
+      "methods": [
+        "POST"
+      ]
+    }
+  ],
+  "route_registration_kinds": {
+    "application_compatibility_alias": 9,
+    "application_decorator": 1,
+    "blueprint_compatibility_alias": 54,
+    "blueprint_decorator": 527,
+    "framework_static": 1
+  },
+  "miniprogram_call_expressions": 116,
+  "miniprogram_unique_calls": 113,
+  "miniprogram_registered_rules": 102,
+  "route_methods": {
+    "DELETE": 34,
+    "DELETE,GET": 1,
+    "DELETE,GET,POST": 5,
+    "DELETE,POST": 1,
+    "GET": 322,
+    "GET,POST": 6,
+    "GET,PUT": 1,
+    "PATCH": 1,
+    "POST": 204,
+    "PUT": 17
+  },
+  "auth_semantics": {
+    "[\"global_anonymous_allow_exact\",\"route_auth:none\"]": 25,
+    "[\"global_anonymous_allow_except_mode_favorites_or_mistakes_returns_401\",\"route_auth:none\"]": 1,
+    "[\"global_anonymous_allow_fast_path\",\"route_auth:none\"]": 2,
+    "[\"global_anonymous_allow_notification_route_inline_policy\",\"route_auth:none\"]": 1,
+    "[\"global_anonymous_allow_notification_route_inline_policy\",\"route_decorator:session_or_jwt\"]": 2,
+    "[\"global_anonymous_allow_public_bank_prefix\",\"route_auth:none\"]": 6,
+    "[\"global_anonymous_allow_public_bank_prefix\",\"route_decorator:session_or_jwt\"]": 1,
+    "[\"global_anonymous_allow_returns_zero_counts\",\"route_auth:none\"]": 1,
+    "[\"global_anonymous_allow_web_login_prefix\",\"route_auth:none\"]": 1,
+    "[\"global_anonymous_login_redirect\",\"admin_blueprint_hook:session_or_jwt_plus_role_if_global_gate_passes\",\"route_auth:none\"]": 45,
+    "[\"global_anonymous_login_redirect\",\"admin_blueprint_hook:session_or_jwt_plus_role_if_global_gate_passes\",\"route_decorator:session+admin_role\"]": 79,
+    "[\"global_anonymous_login_redirect\",\"admin_blueprint_hook:session_or_jwt_plus_role_if_global_gate_passes\",\"route_decorator:session+notification_admin_role\"]": 6,
+    "[\"global_anonymous_login_redirect\",\"admin_blueprint_hook:session_or_jwt_plus_role_if_global_gate_passes\",\"route_decorator:session+subject_admin_role\"]": 28,
+    "[\"global_anonymous_login_redirect\",\"route_auth:none\"]": 51,
+    "[\"global_anonymous_login_redirect\",\"route_decorator:session\"]": 51,
+    "[\"global_anonymous_login_redirect\",\"route_decorator:session+admin_role\"]": 14,
+    "[\"global_anonymous_login_redirect\",\"route_decorator:session_or_jwt\"]": 55,
+    "[\"global_anonymous_returns_401\",\"route_auth:none\"]": 1,
+    "[\"global_record_token_or_bearer_bypass_else_login_redirect\",\"admin_blueprint_hook:session_or_jwt_plus_role_if_global_gate_passes\",\"route_decorator:record_token_or_bearer\"]": 2,
+    "[\"global_session_or_valid_jwt_else_401\",\"route_auth:none\"]": 28,
+    "[\"global_session_or_valid_jwt_else_401\",\"route_decorator:jwt\"]": 1,
+    "[\"global_session_or_valid_jwt_else_401\",\"route_decorator:session_or_jwt\"]": 65,
+    "[\"global_session_or_valid_jwt_else_backup_error_401\",\"admin_blueprint_hook:session_or_jwt_plus_role_if_global_gate_passes\",\"route_decorator:session+admin_role\"]": 7,
+    "[\"global_write_csrf_for_DELETE+POST:valid_jwt_or_xhr_required\",\"global_anonymous_allow_public_bank_prefix\",\"route_decorator:session_or_jwt\"]": 1,
+    "[\"global_write_csrf_for_DELETE+POST:valid_jwt_or_xhr_required\",\"global_session_or_valid_jwt_else_401\",\"route_decorator:session_or_jwt\"]": 4,
+    "[\"global_write_csrf_for_DELETE:valid_jwt_or_xhr_required\",\"global_session_or_valid_jwt_else_401\",\"route_decorator:session_or_jwt\"]": 12,
+    "[\"global_write_csrf_for_PATCH:valid_jwt_or_xhr_required\",\"global_session_or_valid_jwt_else_401\",\"route_decorator:session_or_jwt\"]": 1,
+    "[\"global_write_csrf_for_POST:valid_jwt_or_xhr_required\",\"global_anonymous_allow_notification_route_inline_policy\",\"route_decorator:session_or_jwt\"]": 2,
+    "[\"global_write_csrf_for_POST:valid_jwt_or_xhr_required\",\"global_anonymous_allow_public_bank_prefix\",\"route_decorator:session_or_jwt\"]": 1,
+    "[\"global_write_csrf_for_POST:valid_jwt_or_xhr_required\",\"global_anonymous_allow_web_login_prefix\",\"route_auth:none\"]": 2,
+    "[\"global_write_csrf_for_POST:valid_jwt_or_xhr_required\",\"global_anonymous_allow_web_login_prefix\",\"route_decorator:jwt\"]": 2,
+    "[\"global_write_csrf_for_POST:valid_jwt_or_xhr_required\",\"global_session_or_valid_jwt_else_401\",\"route_auth:none\"]": 16,
+    "[\"global_write_csrf_for_POST:valid_jwt_or_xhr_required\",\"global_session_or_valid_jwt_else_401\",\"route_decorator:jwt\"]": 1,
+    "[\"global_write_csrf_for_POST:valid_jwt_or_xhr_required\",\"global_session_or_valid_jwt_else_401\",\"route_decorator:session_or_jwt\"]": 72,
+    "[\"global_write_csrf_for_PUT:valid_jwt_or_xhr_required\",\"global_session_or_valid_jwt_else_401\",\"route_decorator:session_or_jwt\"]": 5
+  },
+  "target_modules": {
+    "assessment": 14,
+    "campus": 24,
+    "catalog": 14,
+    "coding": 42,
+    "community": 57,
+    "identity": 69,
+    "intelligence": 17,
+    "learning": 60,
+    "messaging": 45,
+    "operations": 118,
+    "personalbank": 131,
+    "web": 1
+  },
+  "client_surfaces": {
+    "miniprogram": 55,
+    "miniprogram;tests": 18,
+    "miniprogram;tests;web": 8,
+    "miniprogram;web": 21,
+    "not_found_static_scan": 196,
+    "tests": 42,
+    "tests;web": 49,
+    "web": 203
+  },
+  "data_resources": 154,
+  "data_resource_identity_sha256": "445dd5765bb14830d545033ce478f78cfc4f2f6fd70803408c7924fe68fa492d",
+  "data_contract_sha256": "46f61947aa4b58fca9ee576ba0e6345d47229fa8b5c6a324aa19e48673f7e6df",
+  "resource_kinds": {
+    "db_kv_namespace": 15,
+    "external_api": 10,
+    "object_prefix": 11,
+    "queue": 2,
+    "queue_task": 4,
+    "realtime_channel": 2,
+    "redis_key": 34,
+    "scheduled_or_background_task": 6,
+    "table": 70
+  },
+  "tables": 70,
+  "application_tables": 69,
+  "orm_application_columns": 615,
+  "migration_only_application_columns": 1,
+  "migration_tooling_columns": 1,
+  "known_physical_columns": 617,
+  "package_discovered_tables": 67,
+  "all_model_modules_tables": 69,
+  "imported_model_modules": 18,
+  "alembic_head": "f5b6c7d8e9f0",
+  "alembic_revisions": 22,
+  "migration_explicit_indexes": 59,
+  "external_resources": 84,
+  "target_owners": {
+    "assessment": 3,
+    "campus": 12,
+    "catalog": 16,
+    "coding": 6,
+    "community": 16,
+    "identity": 21,
+    "intelligence": 9,
+    "learning": 24,
+    "messaging": 14,
+    "operations": 21,
+    "personalbank": 10,
+    "web": 2
+  }
+}

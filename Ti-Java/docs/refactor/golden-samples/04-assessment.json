@@ -1,0 +1,32 @@
+{
+  "domain": "assessment",
+  "legacy_contract_source": "isolated Flask test client at commit 700006dfdfa063deb4387be572911e782bcea0d9",
+  "request": {
+    "method": "GET",
+    "path": "/api/exams/records",
+    "json": null,
+    "headers": {}
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "data": {
+        "filter": {
+          "bank_id": null,
+          "source": "all",
+          "subject": "all"
+        },
+        "ongoing": [],
+        "page": 1,
+        "size": 10,
+        "submitted": [],
+        "total": 0
+      },
+      "status": "success",
+      "message": ""
+    }
+  }
+}

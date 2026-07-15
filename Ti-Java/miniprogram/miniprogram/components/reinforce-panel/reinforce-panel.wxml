@@ -1,0 +1,109 @@
+<view wx:if="{{subTab === 'wrong'}}">
+  <view class="card" aria-label="错题加强训练">
+    <view class="card-head">
+      <view class="card-head-left">
+        <text class="card-title">错题加强</text>
+        <text class="card-sub">{{wrongState.desc}}</text>
+      </view>
+    </view>
+    <view class="actions">
+      <view class="btn btn-primary btn-primary-soft {{(wrongState.recommendIds && wrongState.recommendIds.length) ? '' : 'disabled'}}" bindtap="onStartWrong">
+        <text>开始加强</text>
+      </view>
+      <view class="btn {{wrongState.wrongTotal > 0 ? '' : 'disabled'}}" bindtap="onStartWrongAll">
+        <text>练全部错题</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="reinforce-results" aria-label="高频错题">
+    <view class="card-head">
+      <view class="card-head-left">
+        <text class="card-title">高频错题</text>
+        <text class="card-sub">{{wrongState.listMeta}}</text>
+      </view>
+    </view>
+
+    <view class="loading" wx:if="{{wrongState.loading}}"><text>正在加载...</text></view>
+    <view class="msg error" wx:elif="{{wrongState.error}}" bindtap="onRetry"><text>{{wrongState.error}}，点此重试</text></view>
+
+    <view class="reinforce-list" wx:elif="{{wrongState.top && wrongState.top.length}}">
+      <view class="reinforce-row" wx:for="{{wrongState.top}}" wx:key="question_id">
+        <view class="reinforce-row-main">
+          <text class="reinforce-row-title">{{item.content_preview || ('题目 #' + item.question_id)}}</text>
+          <view class="reinforce-row-meta">
+            <text class="meta-pill">#{{item.question_id}}</text>
+            <text class="meta-pill" wx:if="{{item.q_type}}">{{item.q_type}}</text>
+          </view>
+        </view>
+        <view class="reinforce-row-right">
+          <text class="reinforce-badge">错 {{item.wrong_count}} 次</text>
+          <view class="action-btn" bindtap="onStartWrongOne" data-id="{{item.question_id}}"><text>练这题</text></view>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty-state" wx:else>
+      <text class="empty-text">{{wrongState.wrongTotal > 0 ? '暂无可展示的高频错题' : '暂无错题记录'}}</text>
+      <text class="empty-hint">{{wrongState.wrongTotal > 0 ? '可先点击"开始加强"或去练习页继续做题' : '继续保持，先去做几题再回来看看'}}</text>
+    </view>
+  </view>
+</view>
+
+<view wx:elif="{{subTab === 'similar'}}">
+  <view class="card" aria-label="相似题加强训练">
+    <view class="card-head">
+      <view class="card-head-left">
+        <text class="card-title">相似题加强</text>
+        <text class="card-sub">{{similarState.desc}}</text>
+      </view>
+    </view>
+    <view class="actions actions-single">
+      <view class="btn btn-primary btn-primary-soft {{(similarState.startIds && similarState.startIds.length) ? '' : 'disabled'}}" bindtap="onStartSimilar">
+        <text>开始加强</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="reinforce-results" aria-label="相似题目">
+    <view class="card-head">
+      <view class="card-head-left">
+        <text class="card-title">相似题目</text>
+        <text class="card-sub">{{similarState.listMeta}}</text>
+      </view>
+    </view>
+
+    <view class="loading" wx:if="{{similarState.loading}}"><text>正在加载...</text></view>
+    <view class="msg error" wx:elif="{{similarState.error}}" bindtap="onRetry"><text>{{similarState.error}}，点此重试</text></view>
+
+    <view class="reinforce-list" wx:elif="{{similarState.pairs && similarState.pairs.length}}">
+      <view class="pair-row" wx:for="{{similarState.pairs}}" wx:key="key">
+        <view class="pair-grid">
+          <view class="pair-bubble">
+            <text class="pair-title">{{item.a_preview || ('题目 #' + item.a_id)}}</text>
+            <view class="pair-meta">
+              <text class="meta-pill">#{{item.a_id}}</text>
+              <text class="meta-pill" wx:if="{{item.a_type}}">{{item.a_type}}</text>
+            </view>
+          </view>
+          <view class="pair-bubble">
+            <text class="pair-title">{{item.b_preview || ('题目 #' + item.b_id)}}</text>
+            <view class="pair-meta">
+              <text class="meta-pill">#{{item.b_id}}</text>
+              <text class="meta-pill" wx:if="{{item.b_type}}">{{item.b_type}}</text>
+            </view>
+          </view>
+        </view>
+        <view class="pair-actions">
+          <text class="reinforce-badge">{{item.sim_pct_text || '相似'}}</text>
+          <view class="action-btn" bindtap="onStartSimilarPair" data-a="{{item.a_id}}" data-b="{{item.b_id}}"><text>练这一组</text></view>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty-state" wx:else>
+      <text class="empty-text">暂无可展示的相似题目</text>
+      <text class="empty-hint">题库有变化时会自动重新计算（已做云端缓存）。</text>
+    </view>
+  </view>
+</view>

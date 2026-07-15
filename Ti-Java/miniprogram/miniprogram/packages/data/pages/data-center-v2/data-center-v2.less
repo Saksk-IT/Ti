@@ -1,0 +1,28 @@
+@import "../../../../styles/data-suite.less";
+
+/* 强制 KPI 卡片 2×2 布局 - 统一高宽，左右布局 */
+.dc-hero-kpis .dc-kpi-pill {
+  height: 100rpx;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+  overflow: hidden;
+}
+
+.dc-hero-kpis .dc-kpi-pill .k {
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dc-hero-kpis .dc-kpi-pill .v {
+  font-size: 36rpx;
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

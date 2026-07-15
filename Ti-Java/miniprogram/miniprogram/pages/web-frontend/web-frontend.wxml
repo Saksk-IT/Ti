@@ -1,0 +1,20 @@
+<!-- web-frontend.wxml - Web 前台（web-view 1:1 复刻） -->
+<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="Web前台" back="{{true}}" color="var(--app-nav-fg)" background="var(--app-nav-bg)"></navigation-bar>
+
+  <view class="page-container">
+    <view class="loading" wx:if="{{loading}}">
+      <text>正在加载…</text>
+    </view>
+
+    <web-view wx:if="{{src}}" src="{{src}}" bindload="onWebLoad" binderror="onWebError"></web-view>
+
+    <view class="error" wx:if="{{!loading && !src}}">
+      <text class="error-title">加载失败</text>
+      <text class="error-sub">请检查网络/业务域名配置后重试</text>
+      <view class="error-btn" bindtap="onRetryTap">
+        <text>重试</text>
+      </view>
+    </view>
+  </view>
+</view>

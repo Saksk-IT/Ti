@@ -1,0 +1,156 @@
+<!-- 开发设置：手动切换生产/自定义 API -->
+<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="开发设置" back="{{true}}" color="var(--app-nav-fg)" background="var(--app-nav-bg)"></navigation-bar>
+
+  <view class="page-container">
+    <scroll-view class="content-area" scroll-y type="list" bounces="{{false}}">
+      <view class="container">
+        <view class="card">
+          <view class="card-title">后端 API</view>
+
+          <view class="mode-tabs" aria-role="tablist">
+            <view
+              class="mode-tab {{mode === 'prod' ? 'active' : ''}}"
+              data-mode="prod"
+              bindtap="onModeTap"
+              aria-role="tab"
+              aria-selected="{{mode === 'prod'}}"
+            >
+              生产
+            </view>
+            <view
+              class="mode-tab {{mode === 'custom' ? 'active' : ''}}"
+              data-mode="custom"
+              bindtap="onModeTap"
+              aria-role="tab"
+              aria-selected="{{mode === 'custom'}}"
+            >
+              自定义
+            </view>
+          </view>
+
+          <view class="hint" wx:if="{{mode === 'prod'}}">
+            <text>当前生产地址：</text>
+            <text selectable="{{true}}">{{prodApiUrl}}</text>
+            <text class="hint-sub">你可以在下方修改生产/预发地址，并保存为预设一键切换。</text>
+          </view>
+
+          <view wx:if="{{mode === 'prod'}}">
+            <view class="field">
+              <view class="label">生产/预发 BaseURL</view>
+              <input
+                class="input"
+                placeholder="如 https://saksk.top/api 或 https://pre.saksk.top/api"
+                placeholder-class="placeholder"
+                value="{{prodUrlInput}}"
+                bindinput="onProdUrlInput"
+              />
+            </view>
+
+            <view class="actions-row">
+              <button class="btn-inline primary" bindtap="onSaveProdTap">保存生产地址</button>
+              <button class="btn-inline" bindtap="onClearProdTap">恢复默认生产</button>
+            </view>
+
+            <view class="field">
+              <view class="label">保存为预设（名称）</view>
+              <input
+                class="input"
+                placeholder="如 预发/灰度/备用"
+                placeholder-class="placeholder"
+                value="{{prodPresetName}}"
+                bindinput="onProdPresetNameInput"
+              />
+            </view>
+            <view class="actions-row">
+              <button class="btn-inline" bindtap="onSaveProdPresetTap">保存为预设</button>
+            </view>
+
+            <view class="preset-list" wx:if="{{prodPresets && prodPresets.length}}">
+              <view class="preset-row" wx:for="{{prodPresets}}" wx:key="url">
+                <view class="preset-main">
+                  <text class="preset-name">{{item.name}}</text>
+                  <text class="preset-url" selectable="{{true}}">{{item.url}}</text>
+                </view>
+                <view class="preset-actions">
+                  <button class="preset-btn" data-idx="{{index}}" bindtap="onApplyProdPresetTap">使用</button>
+                  <button class="preset-btn danger" data-idx="{{index}}" bindtap="onDeleteProdPresetTap">删</button>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view wx:if="{{mode === 'custom'}}">
+            <view class="field">
+              <view class="label">Host / 完整 URL</view>
+              <input
+                class="input"
+                placeholder="如 192.168.1.100 或 https://saksk.top/api"
+                placeholder-class="placeholder"
+                value="{{host}}"
+                bindinput="onHostInput"
+              />
+            </view>
+
+            <view class="field">
+              <view class="label">Port（可选）</view>
+              <input
+                class="input"
+                type="number"
+                placeholder="5000"
+                placeholder-class="placeholder"
+                value="{{port}}"
+                bindinput="onPortInput"
+              />
+            </view>
+
+            <view class="hint">
+              <text>真机预览无法访问电脑的 localhost/127.0.0.1。</text>
+              <text>请填写电脑局域网 IP，并确保手机与电脑同一 Wi-Fi。</text>
+              <text>后端建议：python run.py（监听 0.0.0.0:5000）。</text>
+              <text wx:if="{{customPreview}}">预览：{{customPreview}}</text>
+            </view>
+          </view>
+
+          <view class="actions">
+            <button
+              class="btn primary"
+              wx:if="{{mode === 'custom'}}"
+              bindtap="onSaveTap"
+              loading="{{saving}}"
+              disabled="{{saving}}"
+            >
+              保存并启用自定义
+            </button>
+
+            <button class="btn" bindtap="onTestTap" loading="{{testing}}" disabled="{{testing}}">
+              测试连接
+            </button>
+
+            <button class="btn" bindtap="onUseProdTap" disabled="{{saving || testing}}">
+              使用生产
+            </button>
+
+            <button class="btn" bindtap="onUseCustomTap" disabled="{{saving || testing}}">
+              使用自定义
+            </button>
+
+            <button class="btn danger" bindtap="onResetTap" disabled="{{saving || testing}}">
+              清除自定义
+            </button>
+          </view>
+
+          <view class="current">
+            <text class="current-label">当前生效：</text>
+            <text class="current-value" selectable="{{true}}">{{apiUrl}}</text>
+          </view>
+        </view>
+
+        <view class="card" wx:if="{{testResult}}">
+          <view class="card-title">测试结果</view>
+          <text class="result" selectable="{{true}}">{{testResult}}</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

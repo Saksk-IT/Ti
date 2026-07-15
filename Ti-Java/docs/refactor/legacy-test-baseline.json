@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-07-16",
+  "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "isolation": "temporary DATA_DIR, in-memory rate-limit storage, no pytest cache",
+  "expected": {
+    "collected": 659,
+    "passed": 654,
+    "failed": 2,
+    "skipped": 3,
+    "errors": 0
+  },
+  "warning_count_range": [364, 366],
+  "allowed_failures": [
+    {
+      "file": "tests/test_rate_limit_policy.py",
+      "test_name": "test_production_policy_expands_decorator_and_manual_limits",
+      "expected_message_fragment": "assert '3/minute;10 per hour' == '300/minute;1000 per hour'",
+      "classification": "full-suite context coupling",
+      "isolated_result": "passes when run with the PDF node in a fresh temporary DATA_DIR",
+      "signature": "assert '3/minute;10 per hour' == '300/minute;1000 per hour' because the full-suite session Flask app remains in testing profile"
+    },
+    {
+      "file": "tests/test_user_bank_document_export.py",
+      "test_name": "test_export_pdf_returns_pdf_download",
+      "expected_message_fragment": "assert 500 == 200",
+      "classification": "host native dependency missing",
+      "isolated_result": "fails with HTTP 500 on this macOS host",
+      "signature": "cannot load library 'libpango-1.0-0'"
+    }
+  ]
+}

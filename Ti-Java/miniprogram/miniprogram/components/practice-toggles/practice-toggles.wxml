@@ -1,0 +1,16 @@
+<view class="toggles {{compact ? 'toggles-compact' : ''}}">
+  <view class="toggle">
+    <view class="toggle-left">
+      <text class="label">打乱题目</text>
+      <text class="desc">顺序随机，更接近实战。</text>
+    </view>
+    <view class="switch {{shuffleQuestions ? 'on' : ''}}" bindtap="onToggleQuestions" aria-role="switch" aria-checked="{{shuffleQuestions}}"></view>
+  </view>
+  <view class="toggle">
+    <view class="toggle-left">
+      <text class="label">打乱选项</text>
+      <text class="desc">选择题更抗"背选项"（仅选择/多选可用）。</text>
+    </view>
+    <view class="switch {{shuffleOptions ? 'on' : ''}} {{shuffleOptionsDisabled ? 'is-disabled' : ''}}" bindtap="onToggleOptions" aria-role="switch" aria-checked="{{shuffleOptions}}" aria-disabled="{{shuffleOptionsDisabled}}"></view>
+  </view>
+</view>

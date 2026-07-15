@@ -1,0 +1,548 @@
+/** app.wxss **/
+@import './styles/animations.less';
+@import './styles/mine-linked-pages.less';
+
+page {
+  --app-bg: #F2F2F7;
+  --app-surface: rgba(255, 255, 255, 0.86);
+  --app-surface-glass: rgba(255, 255, 255, 0.72);
+  --app-surface-solid: #FFFFFF;
+  --app-fill: rgba(60, 60, 67, 0.08);
+  --app-fill-solid: #F8F8F8;
+  --app-border: rgba(0, 0, 0, 0.06);
+  --app-border-weak: rgba(0, 0, 0, 0.05);
+  --app-border-strong: rgba(0, 0, 0, 0.08);
+  --app-divider: #F0F0F0;
+  --app-stroke: #E5E5EA;
+
+  --app-text: #111111;
+  --app-text-secondary: rgba(60, 60, 67, 0.6);
+  --app-text-tertiary: rgba(60, 60, 67, 0.35);
+  --app-text-placeholder: #A1A1A6;
+
+  --app-strong-bg: #111111;
+  --app-strong-fg: #FFFFFF;
+
+  --app-accent: #007AFF;
+  --app-accent-tag-bg: #E3F2FD;
+  --app-success: #34C759;
+  --app-success-bg-soft: #E8F5E9;
+  --app-danger: #FF3B30;
+  --app-danger-bg-soft: #FFF5F5;
+  --app-warning: #FF9500;
+
+  --app-nav-bg: #FFFFFF;
+  --app-nav-fg: rgba(0, 0, 0, 0.9);
+
+  --app-mask: rgba(0, 0, 0, 0.35);
+
+  /* v2（对齐 Web app_shell /exams） */
+  --app-surface-2: var(--app-surface-glass);
+  --app-muted: var(--app-text-secondary);
+  --app-primary: var(--app-text);
+  --app-primary-soft: rgba(17, 17, 17, 0.08);
+  --app-primary-contrast: var(--app-strong-fg);
+  --app-cta: var(--app-accent);
+  --app-shadow: 0 16rpx 44rpx rgba(0, 0, 0, 0.08);
+  --app-shadow-soft: 0 10rpx 26rpx rgba(0, 0, 0, 0.05);
+  --app-radius-xl: 36rpx;
+  --app-radius-lg: 28rpx;
+  --app-radius-md: 24rpx;
+  --app-radius-sm: 20rpx;
+
+  /* 让原生 window backgroundColor（可通过 wx.setBackgroundColor 动态更新）透出，避免切页露出浅色底 */
+  background: transparent;
+  color: var(--app-text);
+}
+
+@media (prefers-color-scheme: dark) {
+  page {
+    --app-bg: #000000;
+    --app-surface: rgba(28, 28, 30, 0.86);
+    --app-surface-glass: rgba(28, 28, 30, 0.72);
+    --app-surface-solid: #1C1C1E;
+    --app-fill: rgba(235, 235, 245, 0.12);
+    --app-fill-solid: rgba(235, 235, 245, 0.08);
+    --app-border: rgba(255, 255, 255, 0.08);
+    --app-border-weak: rgba(255, 255, 255, 0.1);
+    --app-border-strong: rgba(255, 255, 255, 0.12);
+    --app-divider: rgba(255, 255, 255, 0.06);
+    --app-stroke: rgba(84, 84, 88, 0.65);
+
+    --app-text: #FFFFFF;
+    --app-text-secondary: rgba(235, 235, 245, 0.6);
+    --app-text-tertiary: rgba(235, 235, 245, 0.35);
+    --app-text-placeholder: rgba(235, 235, 245, 0.35);
+
+    --app-strong-bg: #FFFFFF;
+    --app-strong-fg: #111111;
+
+    --app-nav-bg: #000000;
+    --app-nav-fg: rgba(235, 235, 245, 0.9);
+
+    --app-accent-tag-bg: rgba(0, 122, 255, 0.18);
+    --app-success-bg-soft: rgba(52, 199, 89, 0.18);
+    --app-danger-bg-soft: rgba(255, 59, 48, 0.18);
+
+    --app-mask: rgba(0, 0, 0, 0.6);
+
+    /* v2（对齐 Web app_shell /exams） */
+    --app-surface-2: var(--app-surface-glass);
+    --app-muted: var(--app-text-secondary);
+    --app-primary: var(--app-text);
+    --app-primary-soft: rgba(255, 255, 255, 0.12);
+    --app-primary-contrast: var(--app-strong-fg);
+    --app-cta: var(--app-accent);
+    --app-shadow: 0 16rpx 44rpx rgba(0, 0, 0, 0.35);
+    --app-shadow-soft: 0 8rpx 22rpx rgba(0, 0, 0, 0.25);
+    --app-radius-xl: 36rpx;
+    --app-radius-lg: 28rpx;
+    --app-radius-md: 24rpx;
+    --app-radius-sm: 20rpx;
+  }
+}
+
+.theme-light {
+  --app-bg: #F2F2F7;
+  --app-surface: rgba(255, 255, 255, 0.86);
+  --app-surface-glass: rgba(255, 255, 255, 0.72);
+  --app-surface-solid: #FFFFFF;
+  --app-fill: rgba(60, 60, 67, 0.08);
+  --app-fill-solid: #F8F8F8;
+  --app-border: rgba(0, 0, 0, 0.06);
+  --app-border-weak: rgba(0, 0, 0, 0.05);
+  --app-border-strong: rgba(0, 0, 0, 0.08);
+  --app-divider: #F0F0F0;
+  --app-stroke: #E5E5EA;
+
+  --app-text: #111111;
+  --app-text-secondary: rgba(60, 60, 67, 0.6);
+  --app-text-tertiary: rgba(60, 60, 67, 0.35);
+  --app-text-placeholder: #A1A1A6;
+
+  --app-strong-bg: #111111;
+  --app-strong-fg: #FFFFFF;
+
+  --app-accent: #007AFF;
+  --app-accent-tag-bg: #E3F2FD;
+  --app-success: #34C759;
+  --app-success-bg-soft: #E8F5E9;
+  --app-danger: #FF3B30;
+  --app-danger-bg-soft: #FFF5F5;
+  --app-warning: #FF9500;
+
+  --app-nav-bg: #FFFFFF;
+  --app-nav-fg: rgba(0, 0, 0, 0.9);
+
+  --app-mask: rgba(0, 0, 0, 0.35);
+
+  /* v2（对齐 Web app_shell /exams） */
+  --app-surface-2: var(--app-surface-glass);
+  --app-muted: var(--app-text-secondary);
+  --app-primary: var(--app-text);
+  --app-primary-soft: rgba(17, 17, 17, 0.08);
+  --app-primary-contrast: var(--app-strong-fg);
+  --app-cta: var(--app-accent);
+  --app-shadow: 0 16rpx 44rpx rgba(0, 0, 0, 0.08);
+  --app-shadow-soft: 0 10rpx 26rpx rgba(0, 0, 0, 0.05);
+  --app-radius-xl: 36rpx;
+  --app-radius-lg: 28rpx;
+  --app-radius-md: 24rpx;
+  --app-radius-sm: 20rpx;
+
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+.theme-dark {
+  --app-bg: #000000;
+  --app-surface: rgba(28, 28, 30, 0.86);
+  --app-surface-glass: rgba(28, 28, 30, 0.72);
+  --app-surface-solid: #1C1C1E;
+  --app-fill: rgba(235, 235, 245, 0.12);
+  --app-fill-solid: rgba(235, 235, 245, 0.08);
+  --app-border: rgba(255, 255, 255, 0.08);
+  --app-border-weak: rgba(255, 255, 255, 0.1);
+  --app-border-strong: rgba(255, 255, 255, 0.12);
+  --app-divider: rgba(255, 255, 255, 0.06);
+  --app-stroke: rgba(84, 84, 88, 0.65);
+
+  --app-text: #FFFFFF;
+  --app-text-secondary: rgba(235, 235, 245, 0.6);
+  --app-text-tertiary: rgba(235, 235, 245, 0.35);
+  --app-text-placeholder: rgba(235, 235, 245, 0.35);
+
+  --app-strong-bg: #FFFFFF;
+  --app-strong-fg: #111111;
+
+  --app-accent: #007AFF;
+  --app-accent-tag-bg: rgba(0, 122, 255, 0.18);
+  --app-success: #34C759;
+  --app-success-bg-soft: rgba(52, 199, 89, 0.18);
+  --app-danger: #FF3B30;
+  --app-danger-bg-soft: rgba(255, 59, 48, 0.18);
+  --app-warning: #FF9500;
+
+  --app-nav-bg: #000000;
+  --app-nav-fg: rgba(235, 235, 245, 0.9);
+
+  --app-mask: rgba(0, 0, 0, 0.6);
+
+  /* v2（对齐 Web app_shell /exams） */
+  --app-surface-2: var(--app-surface-glass);
+  --app-muted: var(--app-text-secondary);
+  --app-primary: var(--app-text);
+  --app-primary-soft: rgba(255, 255, 255, 0.12);
+  --app-primary-contrast: var(--app-strong-fg);
+  --app-cta: var(--app-accent);
+  --app-shadow: 0 16rpx 44rpx rgba(0, 0, 0, 0.35);
+  --app-shadow-soft: 0 8rpx 22rpx rgba(0, 0, 0, 0.25);
+  --app-radius-xl: 36rpx;
+  --app-radius-lg: 28rpx;
+  --app-radius-md: 24rpx;
+  --app-radius-sm: 20rpx;
+
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+.theme-style-mist {
+  --app-bg: #EEF2FF;
+  --app-surface-solid: #FFFFFF;
+  --app-surface: rgba(255, 255, 255, 0.86);
+  --app-surface-glass: rgba(255, 255, 255, 0.72);
+  --app-border: #C7D2FE;
+  --app-border-weak: rgba(199, 210, 254, 0.7);
+  --app-border-strong: rgba(199, 210, 254, 0.9);
+  --app-primary: #4F46E5;
+  --app-primary-soft: rgba(79, 70, 229, 0.16);
+  --app-cta: #F97316;
+}
+
+.theme-style-dune {
+  --app-bg: #FDFBF7;
+  --app-surface-solid: #FFFDF9;
+  --app-surface: rgba(255, 253, 249, 0.86);
+  --app-surface-glass: rgba(255, 253, 249, 0.72);
+  --app-border: #E8E0D3;
+  --app-border-weak: rgba(232, 224, 211, 0.75);
+  --app-border-strong: rgba(232, 224, 211, 0.92);
+  --app-primary: #E07A2C;
+  --app-primary-soft: rgba(224, 122, 44, 0.16);
+  --app-cta: #EA580C;
+}
+
+.theme-style-pine {
+  --app-bg: #F3F7F4;
+  --app-surface-solid: #FFFFFF;
+  --app-surface: rgba(255, 255, 255, 0.86);
+  --app-surface-glass: rgba(255, 255, 255, 0.72);
+  --app-border: #D8E4DD;
+  --app-border-weak: rgba(216, 228, 221, 0.75);
+  --app-border-strong: rgba(216, 228, 221, 0.92);
+  --app-primary: #2DBA7D;
+  --app-primary-soft: rgba(45, 186, 125, 0.16);
+  --app-cta: #2DBA7D;
+}
+
+.theme-style-celadon {
+  --app-bg: #F0FDFA;
+  --app-surface-solid: #FFFFFF;
+  --app-surface: rgba(255, 255, 255, 0.86);
+  --app-surface-glass: rgba(255, 255, 255, 0.72);
+  --app-border: #5EEAD4;
+  --app-border-weak: rgba(94, 234, 212, 0.6);
+  --app-border-strong: rgba(94, 234, 212, 0.85);
+  --app-primary: #0D9488;
+  --app-primary-soft: rgba(13, 148, 136, 0.16);
+  --app-cta: #EA580C;
+}
+
+.theme-dark.theme-style-mist {
+  --app-bg: #0C111A;
+  --app-surface-solid: #141B27;
+  --app-surface: rgba(20, 27, 39, 0.86);
+  --app-surface-glass: rgba(20, 27, 39, 0.72);
+  --app-border: rgba(199, 210, 254, 0.16);
+  --app-border-weak: rgba(199, 210, 254, 0.14);
+  --app-border-strong: rgba(199, 210, 254, 0.2);
+  --app-primary: #818CF8;
+  --app-primary-soft: rgba(129, 140, 248, 0.2);
+  --app-cta: #F97316;
+}
+
+.theme-dark.theme-style-dune {
+  --app-bg: #15110D;
+  --app-surface-solid: #1D1813;
+  --app-surface: rgba(29, 24, 19, 0.86);
+  --app-surface-glass: rgba(29, 24, 19, 0.72);
+  --app-border: rgba(224, 194, 162, 0.16);
+  --app-border-weak: rgba(224, 194, 162, 0.14);
+  --app-border-strong: rgba(224, 194, 162, 0.2);
+  --app-primary: #E7A46A;
+  --app-primary-soft: rgba(231, 164, 106, 0.2);
+  --app-cta: #E7A46A;
+}
+
+.theme-dark.theme-style-pine {
+  --app-bg: #0E1411;
+  --app-surface-solid: #121C17;
+  --app-surface: rgba(18, 28, 23, 0.86);
+  --app-surface-glass: rgba(18, 28, 23, 0.72);
+  --app-border: rgba(170, 210, 190, 0.16);
+  --app-border-weak: rgba(170, 210, 190, 0.14);
+  --app-border-strong: rgba(170, 210, 190, 0.2);
+  --app-primary: #63D29C;
+  --app-primary-soft: rgba(99, 210, 156, 0.2);
+  --app-cta: #63D29C;
+}
+
+.theme-dark.theme-style-celadon {
+  --app-bg: #0D1314;
+  --app-surface-solid: #121A1B;
+  --app-surface: rgba(18, 26, 27, 0.86);
+  --app-surface-glass: rgba(18, 26, 27, 0.72);
+  --app-border: rgba(94, 234, 212, 0.18);
+  --app-border-weak: rgba(94, 234, 212, 0.16);
+  --app-border-strong: rgba(94, 234, 212, 0.22);
+  --app-primary: #2DD4BF;
+  --app-primary-soft: rgba(45, 212, 191, 0.2);
+  --app-cta: #EA580C;
+}
+
+.container {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ========================================
+   字体样式系统 (Font Style System)
+   ======================================== */
+
+/* 系统字体栈 */
+@font-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+@font-serif: "Noto Serif SC", "Source Han Serif SC", "Source Han Serif CN", "STSong", "SimSun", Georgia, "Times New Roman", serif;
+@font-sans: "Noto Sans SC", "Source Han Sans SC", "Source Han Sans CN", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+@font-rounded: "Yuanti SC", "Yuanti TC", "PingFang SC", -apple-system, BlinkMacSystemFont, sans-serif;
+@font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+/* 默认字体变量 */
+page {
+  /* 字体家族 */
+  --font-title: @font-system;
+  --font-body: @font-system;
+  --font-mono: @font-mono;
+
+  /* 字体大小 */
+  --font-size-h1: 44rpx;
+  --font-size-h2: 40rpx;
+  --font-size-h3: 36rpx;
+  --font-size-h4: 32rpx;
+  --font-size-body-lg: 30rpx;
+  --font-size-body: 28rpx;
+  --font-size-body-sm: 26rpx;
+  --font-size-caption: 24rpx;
+  --font-size-small: 22rpx;
+  --font-size-tiny: 20rpx;
+  --font-size-btn: 28rpx;
+  --font-size-btn-sm: 24rpx;
+  --font-size-tag: 22rpx;
+  --font-size-tag-sm: 20rpx;
+
+  /* 字重 */
+  --font-weight-thin: 100;
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  --font-weight-black: 900;
+
+  /* 行高 */
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.375;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.625;
+  --line-height-loose: 2;
+
+  /* 字间距 */
+  --letter-spacing-tight: -0.02em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 0.02em;
+  --letter-spacing-wider: 0.05em;
+
+  /* 应用默认字体 */
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-normal);
+}
+
+/* ========================================
+   字体样式：优雅 (Elegant)
+   思源宋体，文艺气质
+   ======================================== */
+.font-style-elegant {
+  --font-title: "Noto Serif SC", @font-serif, @font-sans;
+  --font-body: "Noto Serif SC", @font-serif, @font-sans;
+  --font-mono: "JetBrains Mono", "Fira Code", @font-mono;
+  font-family: "Noto Serif SC", @font-serif, @font-sans;
+}
+
+/* ========================================
+   字体样式：现代 (Modern)
+   思源黑体，简约专业
+   ======================================== */
+.font-style-modern {
+  --font-title: "Noto Sans SC", @font-sans;
+  --font-body: "Noto Sans SC", @font-sans;
+  --font-mono: "JetBrains Mono", "Fira Code", @font-mono;
+  font-family: "Noto Sans SC", @font-sans;
+}
+
+/* ========================================
+   字体样式：圆润 (Rounded)
+   站酷快乐体，亲和可爱
+   ======================================== */
+.font-style-rounded {
+  --font-title: "ZCOOL KuaiLe", @font-rounded;
+  --font-body: "ZCOOL KuaiLe", @font-rounded;
+  --font-mono: @font-mono;
+  font-family: "ZCOOL KuaiLe", @font-rounded;
+}
+
+/* ========================================
+   字体样式：经典 (Classic)
+   思源宋体，传统稳重
+   ======================================== */
+.font-style-classic {
+  --font-title: "Noto Serif SC", @font-serif;
+  --font-body: "Noto Serif SC", @font-serif, @font-sans;
+  --font-mono: "Courier New", Courier, "Liberation Mono", monospace;
+  font-family: "Noto Serif SC", @font-serif, @font-sans;
+}
+
+/* ========================================
+   语义化字体类 (Semantic Font Classes)
+   ======================================== */
+
+/* 标题字体 */
+.font-title {
+  font-family: var(--font-title);
+}
+
+/* 正文字体 */
+.font-body {
+  font-family: var(--font-body);
+}
+
+/* 等宽字体（代码） */
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* ========================================
+   字体大小工具类 (Font Size Utilities)
+   ======================================== */
+.text-h1 { font-size: var(--font-size-h1); font-family: var(--font-title); font-weight: var(--font-weight-bold); line-height: var(--line-height-tight); }
+.text-h2 { font-size: var(--font-size-h2); font-family: var(--font-title); font-weight: var(--font-weight-bold); line-height: var(--line-height-tight); }
+.text-h3 { font-size: var(--font-size-h3); font-family: var(--font-title); font-weight: var(--font-weight-semibold); line-height: var(--line-height-snug); }
+.text-h4 { font-size: var(--font-size-h4); font-family: var(--font-title); font-weight: var(--font-weight-semibold); line-height: var(--line-height-snug); }
+.text-body-lg { font-size: var(--font-size-body-lg); line-height: var(--line-height-normal); }
+.text-body { font-size: var(--font-size-body); line-height: var(--line-height-normal); }
+.text-body-sm { font-size: var(--font-size-body-sm); line-height: var(--line-height-normal); }
+.text-caption { font-size: var(--font-size-caption); line-height: var(--line-height-normal); color: var(--app-text-secondary); }
+.text-small { font-size: var(--font-size-small); line-height: var(--line-height-normal); }
+.text-tiny { font-size: var(--font-size-tiny); line-height: var(--line-height-normal); }
+
+/* ========================================
+   字重工具类 (Font Weight Utilities)
+   ======================================== */
+.font-thin { font-weight: var(--font-weight-thin); }
+.font-light { font-weight: var(--font-weight-light); }
+.font-regular { font-weight: var(--font-weight-regular); }
+.font-medium { font-weight: var(--font-weight-medium); }
+.font-semibold { font-weight: var(--font-weight-semibold); }
+.font-bold { font-weight: var(--font-weight-bold); }
+.font-extrabold { font-weight: var(--font-weight-extrabold); }
+.font-black { font-weight: var(--font-weight-black); }
+
+/* ========================================
+   行高工具类 (Line Height Utilities)
+   ======================================== */
+.leading-tight { line-height: var(--line-height-tight); }
+.leading-snug { line-height: var(--line-height-snug); }
+.leading-normal { line-height: var(--line-height-normal); }
+.leading-relaxed { line-height: var(--line-height-relaxed); }
+.leading-loose { line-height: var(--line-height-loose); }
+
+/* ========================================
+   代码区域样式 (Code Block Styles)
+   ======================================== */
+.code-block,
+code,
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-relaxed);
+  background: var(--app-fill);
+  border-radius: var(--app-radius-sm);
+}
+
+/* 内联代码 */
+code {
+  padding: 4rpx 10rpx;
+  border-radius: 8rpx;
+}
+
+/* 代码块 */
+pre {
+  padding: 20rpx 24rpx;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+pre code {
+  padding: 0;
+  background: transparent;
+}
+
+/* ========================================
+   用户生成内容区域 (User Generated Content)
+   保留原样式，不受字体切换影响
+   ======================================== */
+.ugc-content,
+.user-content,
+.rich-text-content {
+  /* 使用系统默认字体，不继承自定义字体 */
+  font-family: @font-system !important;
+
+  /* 保持基础排版 */
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-relaxed);
+
+  /* 内部代码块仍使用等宽字体 */
+  code, pre {
+    font-family: var(--font-mono) !important;
+  }
+}
+
+/* ========================================
+   无障碍字体缩放 (Accessibility Font Scaling)
+   最小字号不低于 20rpx (约 10px)
+   ======================================== */
+/* 注：WXSS 不支持 @media (prefers-reduced-motion) 和通配符选择器 */
+
+/* 大字体模式支持（预留） */
+.font-scale-large {
+  --font-size-h1: 48rpx;
+  --font-size-h2: 44rpx;
+  --font-size-h3: 40rpx;
+  --font-size-h4: 36rpx;
+  --font-size-body-lg: 34rpx;
+  --font-size-body: 32rpx;
+  --font-size-body-sm: 30rpx;
+  --font-size-caption: 28rpx;
+  --font-size-small: 26rpx;
+  --font-size-tiny: 24rpx;
+}

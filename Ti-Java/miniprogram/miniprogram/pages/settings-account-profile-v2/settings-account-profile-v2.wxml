@@ -1,0 +1,126 @@
+<!--settings-account-profile-v2.wxml - -->
+<view class="page-root mine-linked-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="个人资料" back="{{true}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent">
+    <view slot="right" class="nav-right">
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <view class="page-container">
+    <scroll-view class="content-area" scroll-y bounces="{{false}}" refresher-enabled="{{true}}" bindrefresherrefresh="onPullDownRefresh">
+      <view class="container">
+        <view class="card hero" aria-label="账号资料概览">
+          <text class="hero-title">个人资料</text>
+          <text class="hero-sub">头像、昵称、学院与个人签名等信息。</text>
+        </view>
+
+        <view class="subtabs" aria-label="账号管理子导航">
+          <view class="subtab {{accTab==='profile' ? 'active' : ''}}" bindtap="onAccountSubTap" data-key="profile"><text>个人资料</text></view>
+          <view class="subtab {{accTab==='security' ? 'active' : ''}}" bindtap="onAccountSubTap" data-key="security"><text>账号安全</text></view>
+          <view class="subtab {{accTab==='bindings' ? 'active' : ''}}" bindtap="onAccountSubTap" data-key="bindings"><text>账号绑定</text></view>
+        </view>
+
+        <view class="msg error" wx:if="{{errorMsg}}">
+          <text>{{errorMsg}}</text>
+        </view>
+        <view class="msg" wx:if="{{msg}}">
+          <text>{{msg}}</text>
+        </view>
+
+        <view class="card section-card" aria-label="资料">
+          <text class="section-title">资料</text>
+          <text class="section-sub">用于展示与账号识别。仅包含必要信息。</text>
+          <view class="divider"></view>
+
+          <view class="profile-head">
+            <view class="avatar-btn" bindtap="onAvatarTap" aria-role="button" aria-label="头像操作">
+              <image class="avatar-img" wx:if="{{avatarUrl}}" src="{{avatarUrl}}" mode="aspectFill" binderror="onAvatarError" lazy-load="{{true}}"></image>
+              <view class="avatar-text" wx:else><text>{{avatarInitial}}</text></view>
+              <view class="avatar-overlay"><text>更换</text></view>
+            </view>
+
+            <view class="profile-meta">
+              <text class="profile-name">{{username}}</text>
+              <view class="profile-meta-row">
+                <view class="profile-chip"><text>{{roleText}}</text></view>
+                <view class="profile-chip"><text>{{createdAtText}}</text></view>
+              </view>
+            </view>
+
+            <view class="profile-actions">
+              <view class="btn btn-quiet" wx:if="{{!editing}}" bindtap="onEdit"><text>编辑</text></view>
+              <view class="btn btn-primary {{saving ? 'disabled' : ''}}" wx:if="{{editing}}" bindtap="onSave"><text>{{saving ? '保存中…' : '保存'}}</text></view>
+              <view class="btn" wx:if="{{editing}}" bindtap="onCancel"><text>取消</text></view>
+            </view>
+          </view>
+
+          <view class="profile-grid">
+            <view class="acc-field">
+              <text class="acc-label">昵称</text>
+              <input class="acc-input" value="{{username}}" disabled="{{!editing}}" placeholder="未设置" placeholder-class="placeholder" maxlength="8" bindinput="onUsernameInput" />
+              <text class="acc-help">仅支持汉字、字母、数字，最多8个字符。</text>
+            </view>
+
+            <view class="acc-field">
+              <text class="acc-label">学院</text>
+              <input class="acc-input" value="{{college}}" disabled="{{!editing}}" placeholder="未设置" placeholder-class="placeholder" maxlength="40" bindinput="onCollegeInput" />
+            </view>
+
+            <view class="acc-field span-2">
+              <view class="sig-row">
+                <text class="acc-label">个人签名</text>
+                <text class="sig-count">{{signatureCount}}/80</text>
+              </view>
+              <textarea
+                class="acc-textarea"
+                value="{{signature}}"
+                disabled="{{!editing}}"
+                placeholder="未设置"
+                placeholder-class="placeholder"
+                maxlength="80"
+                bindinput="onSignatureInput"
+              ></textarea>
+            </view>
+
+            <view class="acc-field span-2">
+              <text class="acc-label">联系方式</text>
+              <input class="acc-input" value="{{contact}}" disabled="{{!editing}}" placeholder="未设置" placeholder-class="placeholder" maxlength="60" bindinput="onContactInput" />
+            </view>
+          </view>
+        </view>
+
+        <view class="card section-card" aria-label="账号状态">
+          <text class="section-title">账号状态</text>
+          <text class="section-sub">用于识别与安全状态。</text>
+          <view class="divider"></view>
+
+          <view class="status-list">
+            <view class="status-row">
+              <text class="status-label">邮箱</text>
+              <text class="status-value">{{emailMasked}}</text>
+              <text class="status-badge">{{emailBadge}}</text>
+            </view>
+            <view class="status-row">
+              <text class="status-label">登录密码</text>
+              <text class="status-value muted">{{passwordBadge}}</text>
+            </view>
+            <view class="status-row">
+              <text class="status-label">微信绑定</text>
+              <text class="status-value muted">{{wechatBadge}}</text>
+            </view>
+          </view>
+
+          <view class="panel-actions">
+            <view class="btn btn-quiet" bindtap="onAccountSubTap" data-key="security" aria-role="button" aria-label="前往账号安全"><text>账号安全</text></view>
+            <view class="btn" bindtap="onAccountSubTap" data-key="bindings" aria-role="button" aria-label="前往账号绑定"><text>账号绑定</text></view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

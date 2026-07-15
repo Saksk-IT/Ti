@@ -1,0 +1,200 @@
+<!-- mine.wxml - 我的 -->
+<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="我的" back="{{false}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent"></navigation-bar>
+
+  <view class="page-container">
+    <scroll-view class="content-area" scroll-y type="list" bounces="{{false}}">
+      <view class="container">
+        <view class="profile-card">
+          <view class="profile-left">
+            <image
+              class="avatar"
+              src="{{(userInfo && (userInfo.avatar || userInfo.avatar_url)) || '/images/default-avatar.png'}}"
+              mode="aspectFill"
+            ></image>
+            <view class="profile-text">
+              <text class="name">{{(userInfo && (userInfo.username || userInfo.nickname)) || '用户'}}</text>
+              <text class="sub">账号信息与数据已同步云端</text>
+            </view>
+          </view>
+          <view class="profile-action" bindtap="onGoProfileTap" aria-role="button" aria-label="个人资料">
+            <image class="profile-action-icon" src="/images/icons/edit.svg" mode="aspectFit"></image>
+          </view>
+        </view>
+
+        <view class="bento-grid">
+          <view class="bento-card" bindtap="onGoFavoritesTap">
+            <view class="bento-icon-wrap">
+              <image class="bento-icon" src="/images/icons/heart.svg" mode="aspectFit"></image>
+            </view>
+            <view class="bento-copy">
+              <text class="bento-value">{{stats.favorites || 0}}</text>
+              <text class="bento-label">收藏</text>
+            </view>
+          </view>
+          <view class="bento-card" bindtap="onGoMistakesTap">
+            <view class="bento-icon-wrap warn">
+              <image class="bento-icon" src="/images/icons/alert-triangle.svg" mode="aspectFit"></image>
+            </view>
+            <view class="bento-copy">
+              <text class="bento-value">{{stats.mistakes || 0}}</text>
+              <text class="bento-label">错题</text>
+            </view>
+          </view>
+          <view class="bento-card" bindtap="onGoDataTap">
+            <view class="bento-icon-wrap">
+              <image class="bento-icon" src="/images/icons/chart.svg" mode="aspectFit"></image>
+            </view>
+            <view class="bento-copy">
+              <text class="bento-action-title">数据</text>
+              <text class="bento-action-sub">学习统计</text>
+            </view>
+          </view>
+          <view class="bento-card" bindtap="onGoExamTap">
+            <view class="bento-icon-wrap">
+              <image class="bento-icon" src="/images/icons/clipboard-check.svg" mode="aspectFit"></image>
+            </view>
+            <view class="bento-copy">
+              <text class="bento-action-title">考试</text>
+              <text class="bento-action-sub">模拟测验</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="menu-section">
+          <text class="menu-section-title">账号</text>
+          <view class="menu-card">
+            <view class="menu-item" bindtap="onGoProfileTap">
+              <view class="menu-icon-wrap">
+                <image class="menu-icon" src="/images/icons/edit.svg" mode="aspectFit"></image>
+              </view>
+              <view class="menu-main">
+                <text class="menu-text">个人资料</text>
+                <text class="menu-sub">头像、昵称与公开资料</text>
+              </view>
+              <text class="menu-arrow">›</text>
+            </view>
+            <view class="menu-item" bindtap="onGoAccountTap">
+              <view class="menu-icon-wrap">
+                <image class="menu-icon" src="/images/icons/settings.svg" mode="aspectFit"></image>
+              </view>
+              <view class="menu-main">
+                <text class="menu-text">账号安全</text>
+                <text class="menu-sub">密码、邮箱与绑定</text>
+              </view>
+              <text class="menu-arrow">›</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="menu-section">
+          <text class="menu-section-title">学习</text>
+          <view class="menu-card">
+            <view class="menu-item" bindtap="onGoReviewTap">
+              <view class="menu-icon-wrap">
+                <image class="menu-icon" src="/images/icons/refresh-cw.svg" mode="aspectFit"></image>
+              </view>
+              <view class="menu-main">
+                <text class="menu-text">复盘</text>
+                <text class="menu-sub">错题、收藏与标签回看</text>
+              </view>
+              <text class="menu-arrow">›</text>
+            </view>
+            <view class="menu-item" bindtap="onGoDataTap">
+              <view class="menu-icon-wrap">
+                <image class="menu-icon" src="/images/icons/chart.svg" mode="aspectFit"></image>
+              </view>
+              <view class="menu-main">
+                <text class="menu-text">数据中心</text>
+                <text class="menu-sub">全局统计与题库表现</text>
+              </view>
+              <text class="menu-arrow">›</text>
+            </view>
+            <view class="menu-item" bindtap="onGoExamTap">
+              <view class="menu-icon-wrap">
+                <image class="menu-icon" src="/images/icons/clipboard-check.svg" mode="aspectFit"></image>
+              </view>
+              <view class="menu-main">
+                <text class="menu-text">考试</text>
+                <text class="menu-sub">创建或继续模拟考试</text>
+              </view>
+              <text class="menu-arrow">›</text>
+            </view>
+            <view class="menu-item" bindtap="onGoCodingTap">
+              <view class="menu-icon-wrap">
+                <image class="menu-icon" src="/images/icons/code.svg" mode="aspectFit"></image>
+              </view>
+              <view class="menu-main">
+                <text class="menu-text">编程</text>
+                <text class="menu-sub">代码练习入口</text>
+              </view>
+              <text class="menu-arrow">›</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="menu-section">
+          <text class="menu-section-title">消息</text>
+          <view class="menu-card">
+            <view class="menu-item" bindtap="onGoNotificationsTap">
+              <view class="menu-icon-wrap">
+                <image class="menu-icon" src="/images/icons/bell.svg" mode="aspectFit"></image>
+              </view>
+              <view class="menu-main">
+                <text class="menu-text">通知</text>
+                <text class="menu-sub">系统消息与学习提醒</text>
+              </view>
+              <text class="menu-arrow">›</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="menu-section">
+          <text class="menu-section-title">设置</text>
+          <view class="menu-card">
+            <view class="menu-item" bindtap="onGoThemeTap">
+              <view class="menu-icon-wrap">
+                <image class="menu-icon" src="/images/icons/sun.svg" mode="aspectFit"></image>
+              </view>
+              <view class="menu-main">
+                <text class="menu-text">主题与字体</text>
+                <text class="menu-sub">深浅色、主题风格和字体</text>
+              </view>
+              <text class="menu-arrow">›</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="menu-section">
+          <text class="menu-section-title">系统</text>
+          <view class="menu-card">
+            <view class="menu-item" wx:if="{{canShowAdmin}}" bindtap="onGoAdminTap">
+              <view class="menu-icon-wrap">
+                <image class="menu-icon" src="/images/icons/sliders.svg" mode="aspectFit"></image>
+              </view>
+              <view class="menu-main">
+                <text class="menu-text">管理</text>
+                <text class="menu-sub">后台管理入口</text>
+              </view>
+              <text class="menu-arrow">›</text>
+            </view>
+            <view class="menu-item" bindtap="onLogoutTap">
+              <view class="menu-icon-wrap danger">
+                <image class="menu-icon" src="/images/icons/logout.svg" mode="aspectFit"></image>
+              </view>
+              <view class="menu-main">
+                <text class="menu-text danger">退出登录</text>
+                <text class="menu-sub">清除当前登录状态</text>
+              </view>
+              <text class="menu-arrow">›</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="loading" wx:if="{{loading}}">
+          <text>加载中...</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

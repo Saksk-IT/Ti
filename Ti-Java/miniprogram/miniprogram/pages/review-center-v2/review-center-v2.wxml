@@ -1,0 +1,476 @@
+<!-- review-center-v2.wxml - 错题/收藏/标签中心（练习/搜索/数据） -->
+<view class="page-root mine-linked-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="{{navTitle}}" back="{{true}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent">
+    <view slot="right" class="nav-right">
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <view class="page-container">
+    <scroll-view
+      class="content-area"
+      scroll-y
+      bounces="{{false}}"
+      bindscrolltolower="onReachBottom"
+      refresher-enabled="{{true}}"
+      bindrefresherrefresh="onPullDownRefresh"
+    >
+      <view class="container">
+        <view class="card hero" aria-label="复盘中心概览">
+          <view class="hero-copy">
+            <text class="hero-title">{{pageTitle}}</text>
+            <text class="hero-sub">{{pageSubtitle}}</text>
+          </view>
+
+          <view class="hero-actions hero-actions-kpis" aria-label="当前范围">
+            <view class="pill" aria-label="范围">
+              <text class="k">范围</text>
+              <text class="v">{{scopeLabel}}</text>
+            </view>
+            <view class="pill" aria-label="题库" wx:if="{{scopeName}}">
+              <text class="k">题库</text>
+              <text class="v">{{scopeName}}</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="basebar kindbar" role="tablist" aria-label="复盘资产切换">
+          <view class="tabs">
+            <view class="tab {{kind==='mistakes' ? 'active' : ''}}" bindtap="onKindTap" data-kind="mistakes"><text>错题</text></view>
+            <view class="tab {{kind==='favorites' ? 'active' : ''}}" bindtap="onKindTap" data-kind="favorites"><text>收藏</text></view>
+            <view class="tab {{kind==='tags' ? 'active' : ''}}" bindtap="onKindTap" data-kind="tags"><text>标签</text></view>
+          </view>
+        </view>
+
+        <view class="basebar" role="tablist" aria-label="复盘中心子页面">
+          <view class="tabs">
+            <view class="tab {{tab==='practice' ? 'active' : ''}}" bindtap="onTabTap" data-tab="practice"><text>练习</text></view>
+            <view class="tab {{tab==='search' ? 'active' : ''}}" bindtap="onTabTap" data-tab="search"><text>搜索</text></view>
+            <view class="tab {{tab==='data' ? 'active' : ''}}" bindtap="onTabTap" data-tab="data"><text>数据</text></view>
+          </view>
+        </view>
+
+        <!-- 练习 -->
+        <view wx:if="{{tab==='practice'}}">
+          <view class="card card-mt" aria-label="练习概览">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">{{practiceMeta.title}}</text>
+                <text class="card-sub">{{practiceMeta.subtitle}}</text>
+              </view>
+            </view>
+            <view class="stats">
+              <view class="stat">
+                <text class="k">{{practiceMeta.countLabel}}</text>
+                <text class="v">{{startCountText}}</text>
+              </view>
+              <view class="stat">
+                <text class="k">推荐</text>
+                <text class="v stat-muted">{{practiceMeta.recommend}}</text>
+              </view>
+              <view class="stat">
+                <text class="k">提示</text>
+                <text class="v stat-muted">{{practiceMeta.tip}}</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="card card-mt" aria-label="题型选择" wx:if="{{types.length}}">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">题型</text>
+                <text class="card-sub">{{isTagsMode ? '标签中心支持题型筛选，便于针对性复习。' : '混合练习建议保持“全部题型”。'}}</text>
+              </view>
+            </view>
+            <view class="card-body">
+              <view class="chips" aria-label="题型列表">
+                <view class="chip {{qType==='all' ? 'active' : ''}}" bindtap="onTypeTap" data-type="all"><text>全部题型</text></view>
+                <view class="chip {{qType===item ? 'active' : ''}}" wx:for="{{types}}" wx:key="*this" bindtap="onTypeTap" data-type="{{item}}">
+                  <text>{{item}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view class="card card-mt" aria-label="标签选择" wx:if="{{tagChips.length}}">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">标签</text>
+                <text class="card-sub">{{isTagsMode ? '可先选标签做专项复习，也可保持“全部标签”直接开始。' : '仅对当前用户生效，用于把题目聚类到你的复习清单。'}}</text>
+              </view>
+            </view>
+            <view class="card-body">
+              <view class="chips" aria-label="标签列表">
+                <view class="chip {{tag==='all' ? 'active' : ''}}" bindtap="onTagTap" data-tag="all"><text>全部标签</text></view>
+                <view class="chip {{tag===item.name ? 'active' : ''}}" wx:for="{{tagChips}}" wx:key="name" bindtap="onTagTap" data-tag="{{item.name}}">
+                  <text>{{item.name}}</text>
+                  <text class="chip-count" wx:if="{{item.count != null}}">{{item.count}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view class="card card-mt" aria-label="练习选项">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">练习选项</text>
+                <text class="card-sub">{{filterHint}}</text>
+              </view>
+            </view>
+
+            <view class="toggles" aria-label="练习选项">
+              <view class="toggle">
+                <view class="toggle-left">
+                  <text class="label">打乱题目</text>
+                  <text class="desc">顺序随机，更接近实战。</text>
+                </view>
+                <view
+                  class="switch {{shuffleQuestions ? 'on' : ''}}"
+                  bindtap="onToggleTap"
+                  data-key="shuffleQuestions"
+                  aria-role="switch"
+                  aria-label="打乱题目"
+                  aria-checked="{{shuffleQuestions}}"
+                ></view>
+              </view>
+
+              <view class="toggle">
+                <view class="toggle-left">
+                  <text class="label">打乱选项</text>
+                  <text class="desc">仅选择/多选可用（更抗“背选项”）。</text>
+                </view>
+                <view
+                  class="switch {{shuffleOptions ? 'on' : ''}} {{shuffleOptionsDisabled ? 'is-disabled' : ''}}"
+                  bindtap="onToggleTap"
+                  data-key="shuffleOptions"
+                  aria-role="switch"
+                  aria-label="打乱选项"
+                  aria-checked="{{shuffleOptions}}"
+                  aria-disabled="{{shuffleOptionsDisabled}}"
+                ></view>
+              </view>
+            </view>
+          </view>
+
+          <view class="card card-mt" aria-label="开始">
+            <view class="card-head">
+              <view class="card-head-left">
+                <text class="card-title">开始</text>
+              </view>
+            </view>
+            <view class="start-meta">
+              <view class="start-count {{startCountText==='…' ? 'loading' : ''}}">
+                <text>当前筛选</text>
+                <text class="num">{{startCountText}}</text>
+                <text>题</text>
+              </view>
+              <view class="start-error" wx:if="{{startError}}"><text>{{startError}}</text></view>
+            </view>
+            <view class="actions">
+              <view class="btn btn-primary {{startDisabled ? 'disabled' : ''}}" bindtap="onStartQuiz"><text>{{startQuizLabel}}</text></view>
+              <view class="btn {{startDisabled ? 'disabled' : ''}}" bindtap="onStartMemo"><text>{{startMemoLabel}}</text></view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 搜索 -->
+        <view wx:elif="{{tab==='search'}}">
+          <view class="card search-hero" aria-label="搜索">
+            <view class="search-hero-head">
+              <view class="search-hero-left">
+                <text class="search-title">搜索</text>
+                <text class="search-sub">仅在当前题库范围内搜索，支持按题型与标签过滤。</text>
+              </view>
+              <view class="search-hero-side"><text>{{pageTitle}}</text></view>
+            </view>
+
+            <view class="search-form">
+              <view class="search-input-wrap">
+                <image class="search-icon-img" src="/images/icons/search.svg" mode="aspectFit"></image>
+                <input
+                  class="search-input"
+                  placeholder="输入关键词"
+                  value="{{searchKeyword}}"
+                  bindinput="onSearchKeywordInput"
+                  confirm-type="search"
+                  bindconfirm="onSearch"
+                  maxlength="60"
+                />
+                <view class="search-clear" wx:if="{{searchKeyword}}" bindtap="onClearSearchKeyword" aria-role="button" aria-label="清空关键词">
+                  <text>×</text>
+                </view>
+              </view>
+              <view class="search-btn {{searchKeyword ? '' : 'disabled'}}" bindtap="onSearch">
+                <text>{{searchLoading ? '搜索中…' : '搜索'}}</text>
+              </view>
+            </view>
+
+            <view class="filters">
+              <view class="filter" wx:if="{{typeOptions.length}}">
+                <text class="filter-label">题型</text>
+                <picker mode="selector" range="{{typeOptions}}" range-key="label" value="{{typeIndex}}" bindchange="onTypePickerChange">
+                  <view class="select">
+                    <text class="select-text">{{qType === 'all' ? '全部题型' : qType}}</text>
+                    <text class="select-arrow">›</text>
+                  </view>
+                </picker>
+              </view>
+              <view class="filter" wx:if="{{tagOptions.length}}">
+                <text class="filter-label">标签</text>
+                <picker mode="selector" range="{{tagOptions}}" range-key="label" value="{{tagIndex}}" bindchange="onTagPickerChange">
+                  <view class="select">
+                    <text class="select-text">{{tag === 'all' ? '全部标签' : tag}}</text>
+                    <text class="select-arrow">›</text>
+                  </view>
+                </picker>
+              </view>
+            </view>
+          </view>
+
+          <view class="card summary" wx:if="{{searched}}">
+            <view class="summary-left">
+              <view class="summary-pill" wx:if="{{searchKeyword}}">
+                <text class="summary-pill-text">关键词：{{searchKeyword}}</text>
+              </view>
+              <text class="summary-count">共 {{total}} 条</text>
+            </view>
+            <view class="summary-right">
+              <view class="tag-pill" wx:if="{{qType !== 'all'}}"><text>{{qType}}</text></view>
+              <view class="tag-pill" wx:if="{{tag !== 'all'}}"><text>{{tag}}</text></view>
+            </view>
+          </view>
+
+          <view class="result-list">
+            <view
+              class="result-item"
+              wx:for="{{questions}}"
+              wx:key="id"
+              bindtap="onResultTap"
+              data-id="{{item.id}}"
+            >
+              <text class="result-content">{{item.content_preview || item.content}}</text>
+              <view class="result-meta">
+                <view class="meta-pill"><text>{{item.q_type || '-'}}</text></view>
+                <view class="meta-pill meta-fav" wx:if="{{item.is_fav}}"><text>收藏</text></view>
+                <view class="meta-pill meta-mis" wx:if="{{item.is_mistake}}"><text>错题</text></view>
+              </view>
+            </view>
+          </view>
+
+          <view class="loading" wx:if="{{searchLoading}}">
+            <text>加载中...</text>
+          </view>
+
+          <view class="no-more" wx:if="{{!searchLoading && searched && !hasMore && questions.length > 0}}">
+            <text>没有更多了</text>
+          </view>
+
+          <view class="empty" wx:if="{{!searchLoading && searched && questions.length === 0}}">
+            <text>暂无结果</text>
+          </view>
+        </view>
+
+        <!-- 数据 -->
+        <view wx:else>
+          <view class="empty" wx:if="{{dataHint}}">
+            <text>{{dataHint}}</text>
+          </view>
+
+          <view class="card section-card" aria-label="统计概览" wx:if="{{!dataHint}}">
+            <view class="kpi-grid">
+              <view class="kpi">
+                <text class="kpi-label">{{dataTotalLabel}}</text>
+                <text class="kpi-value mono">{{dataTotal}}</text>
+                <text class="kpi-meta">按当前题型/标签筛选</text>
+              </view>
+              <view class="kpi">
+                <text class="kpi-label">已做</text>
+                <text class="kpi-value mono">{{dataAnswered}}</text>
+                <text class="kpi-meta">正确 {{dataCorrect}} · 错误 {{dataWrong}}</text>
+              </view>
+              <view class="kpi">
+                <text class="kpi-label">正确率</text>
+                <text class="kpi-value mono">{{dataAccuracy}}%</text>
+                <text class="kpi-meta">正确/已做</text>
+              </view>
+              <view class="kpi">
+                <text class="kpi-label">覆盖率</text>
+                <text class="kpi-value mono">{{dataCompletion}}%</text>
+                <text class="kpi-meta">已做/题目</text>
+              </view>
+              <view class="kpi">
+                <text class="kpi-label">收藏</text>
+                <text class="kpi-value mono">{{dataFavorites}}</text>
+                <text class="kpi-meta">当前范围内</text>
+              </view>
+              <view class="kpi">
+                <text class="kpi-label">错题</text>
+                <text class="kpi-value mono">{{dataMistakes}}</text>
+                <text class="kpi-meta">当前范围内</text>
+              </view>
+              <view class="kpi" wx:if="{{kind === 'mistakes'}}">
+                <text class="kpi-label">错题次数</text>
+                <text class="kpi-value mono">{{dataMistakesTimes}}</text>
+                <text class="kpi-meta">累计错误记录</text>
+              </view>
+              <view class="kpi">
+                <text class="kpi-label">连续天数</text>
+                <text class="kpi-value mono">{{dataStreakDays}}</text>
+                <text class="kpi-meta">近 1 天内算连续</text>
+              </view>
+              <view class="kpi">
+                <text class="kpi-label">题型种类</text>
+                <text class="kpi-value mono">{{dataTypeCount}}</text>
+                <text class="kpi-meta">仅统计有题目的题型</text>
+              </view>
+            </view>
+            <text class="section-sub">最近一次：{{dataLastActivityText}}</text>
+          </view>
+
+          <view class="card section-card" aria-label="趋势" wx:if="{{!dataHint}}">
+            <view class="section-head">
+              <text class="section-title">趋势</text>
+              <text class="section-hint">近 {{dataTrendDays}} 天</text>
+            </view>
+            <text class="section-sub">柱高表示正确率（%）；总览/分布为全量数据。</text>
+
+            <view class="chips" aria-label="趋势窗口">
+              <view class="chip {{dataDays===7 ? 'active' : ''}}" bindtap="onDataDaysTap" data-days="7"><text>7天</text></view>
+              <view class="chip {{dataDays===14 ? 'active' : ''}}" bindtap="onDataDaysTap" data-days="14"><text>14天</text></view>
+              <view class="chip {{dataDays===30 ? 'active' : ''}}" bindtap="onDataDaysTap" data-days="30"><text>30天</text></view>
+              <view class="chip {{dataDays===90 ? 'active' : ''}}" bindtap="onDataDaysTap" data-days="90"><text>90天</text></view>
+            </view>
+
+            <view class="loading" wx:if="{{dataLoading}}">
+              <text>加载中...</text>
+            </view>
+
+            <view class="empty" wx:if="{{!dataLoading && trendBars.length === 0}}">
+              <text>暂无趋势数据。</text>
+            </view>
+
+            <view class="mini-bars" wx:if="{{!dataLoading && trendBars.length}}">
+              <view class="mini-bar" wx:for="{{trendBars}}" wx:key="day">
+                <view class="mini-bar-inner" style="height: {{item.accuracy}}%;"></view>
+              </view>
+            </view>
+            <view class="mini-labels" wx:if="{{!dataLoading && trendBars.length}}">
+              <view class="mini-label" wx:for="{{trendBars}}" wx:key="day">
+                <text class="mono">{{item.accuracy}}%</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="card section-card" aria-label="题型分布" wx:if="{{!dataHint}}">
+            <view class="section-head">
+              <text class="section-title">题型分布</text>
+              <text class="section-hint">{{dataTypeCount}} 种</text>
+            </view>
+            <text class="section-sub">按数量排序；点击可直接切到对应题型练习。</text>
+
+            <view class="loading" wx:if="{{dataLoading}}">
+              <text>加载中...</text>
+            </view>
+
+            <view class="empty" wx:if="{{!dataLoading && typeStats.length === 0}}">
+              <text>暂无数据。</text>
+            </view>
+
+            <view class="weak-list" wx:if="{{!dataLoading && typeStats.length}}">
+              <view class="weak-row" wx:for="{{typeStats}}" wx:key="q_type">
+                <view class="weak-main">
+                  <text class="weak-title">{{item.q_type}}</text>
+                  <text class="weak-meta">{{item.count}} 题 · 已做 {{item.answered}} · 正确率 {{item.accuracy}}%</text>
+                  <view class="weak-bar">
+                    <view class="progress"><view class="progress-inner" style="width: {{item.pct}}%;"></view></view>
+                  </view>
+                </view>
+                <view class="weak-actions">
+                  <view class="mini-btn" bindtap="onJumpPracticeType" data-type="{{item.q_type}}">
+                    <text>去练习</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view class="card section-card" aria-label="难度分布" wx:if="{{!dataHint && diffStats.length}}">
+            <view class="section-head">
+              <text class="section-title">难度分布</text>
+              <text class="section-hint">按题量</text>
+            </view>
+            <text class="section-sub">仅在题库支持难度字段时显示。</text>
+
+            <view class="weak-list">
+              <view class="weak-row" wx:for="{{diffStats}}" wx:key="label">
+                <view class="weak-main">
+                  <text class="weak-title">{{item.label}}</text>
+                  <text class="weak-meta">{{item.count}} 题 · 已做 {{item.answered}} · 正确率 {{item.accuracy}}%</text>
+                  <view class="weak-bar">
+                    <view class="progress"><view class="progress-inner" style="width: {{item.pct}}%;"></view></view>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view class="card section-card" aria-label="标签分布" wx:if="{{kind === 'tags' && tagStatsAll.length}}">
+            <view class="section-head">
+              <text class="section-title">标签分布</text>
+              <view class="section-actions">
+                <text class="section-hint">显示 {{tagStats.length}} / {{tagStatsAll.length}}</text>
+                <view class="mini-btn" wx:if="{{tagStatsAll.length > 12}}" bindtap="onToggleTagStatsExpanded">
+                  <text>{{tagStatsExpanded ? '收起' : '展开'}}</text>
+                </view>
+              </view>
+            </view>
+            <text class="section-sub">标签可叠加：同一题可同时属于多个标签。</text>
+
+            <view class="weak-list">
+              <view class="weak-row" wx:for="{{tagStats}}" wx:key="name">
+                <view class="weak-main">
+                  <text class="weak-title">{{item.name}}</text>
+                  <text class="weak-meta">{{item.count}} 题</text>
+                  <view class="weak-bar">
+                    <view class="progress"><view class="progress-inner" style="width: {{item.pct}}%;"></view></view>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view class="card section-card" aria-label="学习建议" wx:if="{{!dataHint && advice.length}}">
+            <view class="section-head">
+              <text class="section-title">学习建议</text>
+              <text class="section-hint">可执行</text>
+            </view>
+            <text class="section-sub">基于当前筛选范围自动生成。</text>
+
+            <view class="weak-list">
+              <view class="weak-row" wx:for="{{advice}}" wx:key="title">
+                <view class="weak-main">
+                  <text class="weak-title">{{item.title}}</text>
+                  <text class="weak-meta">{{item.content}}</text>
+                </view>
+                <view class="weak-actions" wx:if="{{item.action}}">
+                  <view class="mini-btn" bindtap="onAdviceActionTap" data-idx="{{index}}">
+                    <text>{{item.action.label}}</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="loading" wx:if="{{loading}}">
+          <text>加载中...</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

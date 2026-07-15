@@ -1,0 +1,78 @@
+<view class="card" aria-label="搜索">
+  <view class="card-head">
+    <view class="card-head-left">
+      <text class="card-title">搜索</text>
+      <text class="card-sub">范围限定在{{scopeLabel}}。</text>
+    </view>
+  </view>
+  <view class="search">
+    <input
+      class="search-input"
+      placeholder="搜索题干/答案/解析/关键词"
+      value="{{keyword}}"
+      bindinput="onInput"
+      confirm-type="search"
+      bindconfirm="onSearch"
+      maxlength="60"
+    />
+    <view class="btn btn-primary {{keyword ? '' : 'disabled'}}" bindtap="onSearch">
+      <text>搜索</text>
+    </view>
+  </view>
+</view>
+
+<view class="card" aria-label="题型筛选-搜索">
+  <view class="card-head">
+    <view class="card-head-left">
+      <text class="card-title">题型筛选</text>
+      <text class="card-sub">仅影响本页搜索结果，不影响练习/收藏/错题的筛选。</text>
+    </view>
+  </view>
+  <view class="chips" aria-label="搜索题型列表">
+    <view class="chip {{searchType==='all' ? 'active' : ''}}" bindtap="onTypeTap" data-type="all">
+      <text>全部题型</text>
+    </view>
+    <view class="chip {{searchType===item ? 'active' : ''}}" wx:for="{{types}}" wx:key="*this" bindtap="onTypeTap" data-type="{{item}}">
+      <text>{{item}}</text>
+    </view>
+  </view>
+</view>
+
+<view class="search-results" aria-label="搜索结果" wx:if="{{searched}}">
+  <view class="card-head">
+    <view class="card-head-left">
+      <text class="card-title">搜索结果</text>
+      <text class="card-sub" wx:if="{{keyword}}">关键词：{{keyword}} · {{results.length}} / {{total || 0}}</text>
+      <text class="card-sub" wx:else>请输入关键词并搜索。</text>
+      <text class="card-sub" wx:if="{{results.length > 0}}">提示：点击题目气泡查看详细信息。</text>
+    </view>
+  </view>
+
+  <view class="msg error" wx:if="{{searchError}}" role="alert">
+    <text>{{searchError}}</text>
+  </view>
+
+  <view class="result-list" wx:if="{{results.length > 0}}">
+    <view class="result-item" wx:for="{{results}}" wx:key="id" bindtap="onResultTap" data-id="{{item.id}}">
+      <text class="result-content">{{item.content_preview || item.content}}</text>
+      <view class="result-meta">
+        <view class="meta-pill"><text>{{item.q_type || '-'}}</text></view>
+        <view class="meta-pill meta-fav" wx:if="{{item.is_fav}}"><text>收藏</text></view>
+        <view class="meta-pill meta-mis" wx:if="{{item.is_mistake}}"><text>错题</text></view>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty-state" wx:if="{{!loading && results.length === 0}}">
+    <text>暂无结果</text>
+  </view>
+
+  <view class="loading" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+
+  <view class="links">
+    <view class="link" wx:if="{{!loading && results.length < (total || 0)}}" bindtap="onLoadMore"><text>加载更多</text></view>
+    <view class="link" wx:if="{{results.length > 0}}" bindtap="onClear"><text>清空结果</text></view>
+  </view>
+</view>

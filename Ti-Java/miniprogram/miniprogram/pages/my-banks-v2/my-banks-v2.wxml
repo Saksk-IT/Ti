@@ -1,0 +1,168 @@
+<!-- my-banks-v2.wxml - 对齐 Web /user/banks（我的题库） -->
+<view class="page-root mine-linked-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <view class="gradient-bg">
+    <view class="gradient-orb orb-1"></view>
+    <view class="gradient-orb orb-2"></view>
+    <view class="gradient-orb orb-3"></view>
+  </view>
+
+  <navigation-bar title="我的题库" back="{{false}}" color="var(--app-nav-fg)" background="transparent">
+    <view slot="left" class="nav-left">
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <view class="page-container">
+    <scroll-view class="content-area" scroll-y bounces="{{false}}">
+      <view class="container">
+        <view class="card mb-hero" aria-label="我的题库概览">
+          <view class="mb-hero-top">
+            <view class="mb-hero-left">
+              <view class="mb-title-row">
+                <text class="mb-title">我的题库</text>
+                <view class="pill mb-count"><text>{{filteredBanks.length}} 个题库</text></view>
+              </view>
+              <text class="mb-sub">我创建、公开加入和分享加入的题库</text>
+            </view>
+            <view class="mb-hero-actions">
+              <view class="btn" bindtap="onGoCreateBank"><text>创建题库</text></view>
+            </view>
+          </view>
+        </view>
+
+        <view class="mb-tool-area" aria-label="题库搜索与筛选">
+          <view class="search-wrap">
+            <text class="search-icon">⌕</text>
+            <input class="search-input" type="text" placeholder="搜索题库名称/描述" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" />
+            <view class="search-clear" wx:if="{{keyword}}" bindtap="onClearKeyword" aria-role="button" aria-label="清空搜索">
+              <text>×</text>
+            </view>
+          </view>
+
+          <picker class="source-picker" mode="selector" range="{{sourceLabels}}" value="{{sourceIndex}}" bindchange="onSourceChange">
+            <view class="source-trigger" aria-role="button" aria-label="筛选题库来源">
+              <text>{{sourceLabels[sourceIndex]}}</text>
+              <text class="source-chevron">⌄</text>
+            </view>
+          </picker>
+        </view>
+
+        <view class="mb-loading" wx:if="{{loading}}">
+          <text>正在加载...</text>
+        </view>
+
+        <view class="mb-empty" wx:elif="{{!filteredBanks.length}}">
+          <text wx:if="{{banks.length}}">还没有匹配的题库。</text>
+          <text wx:else>你还没有创建或加入题库。</text>
+          <view class="empty-actions">
+            <view class="btn" bindtap="onGoCreateBank"><text>创建题库</text></view>
+          </view>
+        </view>
+
+        <view class="mb-list" wx:else>
+          <view class="mb-card" wx:for="{{filteredBanks}}" wx:key="key" bindtap="onBankTap" data-id="{{item.id}}" data-key="{{item.key}}">
+            <view class="mb-cover {{item.has_cover ? 'has-cover' : ''}}">
+              <image wx:if="{{item.has_cover}}" src="{{item.cover_url}}" mode="aspectFill"></image>
+              <view wx:else class="mb-cover-fallback">
+                <view class="mini-cover-grid"></view>
+                <view class="mini-cover-emblem" aria-hidden="true">
+                  <view class="mini-cover-book-icon"></view>
+                </view>
+                <view class="mini-cover-copy">
+                  <text class="mini-cover-kicker">Sak AI</text>
+                  <view class="mini-cover-title"><text>{{item.name}}</text></view>
+                  <text class="mini-cover-sub" wx:if="{{item.source === 'created'}}">{{item.is_public ? '公开' : '私密'}}</text>
+                  <text class="mini-cover-sub" wx:elif="{{item.relation === 'both'}}">公开+分享</text>
+                  <text class="mini-cover-sub" wx:elif="{{item.source === 'public'}}">公开加入</text>
+                  <text class="mini-cover-sub" wx:else>分享加入</text>
+                </view>
+              </view>
+            </view>
+            <view class="mb-card-body">
+              <view class="mb-card-main">
+                <view class="mb-top">
+                  <text class="mb-name">{{item.name}}</text>
+                </view>
+                <text class="mb-desc" wx:if="{{item.description}}">{{item.description}}</text>
+              </view>
+
+              <view class="mb-meta">
+                <text class="mb-chip" wx:if="{{item.source === 'created'}}">{{item.is_public ? '公开' : '私密'}}</text>
+                <text class="mb-chip" wx:elif="{{item.relation === 'both'}}">公开+分享</text>
+                <text class="mb-chip" wx:elif="{{item.source === 'public'}}">公开加入</text>
+                <text class="mb-chip" wx:else>分享加入</text>
+                <view class="mb-owner" aria-label="题库作者">
+                  <image class="mb-owner-avatar" src="{{item.owner_avatar_url}}" mode="aspectFill"></image>
+                  <text class="mb-owner-name">{{item.owner_label}}</text>
+                </view>
+                <text class="mb-dot">·</text>
+                <text>{{item.question_count || 0}} 题</text>
+                <text class="mb-dot">·</text>
+                <text>{{item.source === 'created' ? '创建' : '加入'}} {{item.created_at_fmt || item.updated_at_fmt || '-'}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view class="mb-modal-overlay" wx:if="{{createOpen}}" catchtap="onCreateClose" catchtouchmove="onCreateSheetTap">
+    <view class="mb-modal-sheet" catchtap="onCreateSheetTap" aria-label="新建题库">
+      <view class="mb-modal-head">
+        <view class="mb-modal-head-left">
+          <text class="mb-modal-title">新建题库</text>
+          <text class="mb-modal-sub">名称必填，描述可选</text>
+        </view>
+        <view class="mb-modal-x {{creating ? 'disabled' : ''}}" catchtap="onCreateClose" aria-role="button" aria-label="关闭">
+          <text>×</text>
+        </view>
+      </view>
+
+      <view class="mb-modal-body">
+        <view class="mb-field">
+          <text class="mb-label">题库名称</text>
+          <input
+            class="mb-input"
+            type="text"
+            placeholder="例如：C语言-PTA题库"
+            maxlength="50"
+            value="{{createName}}"
+            bindinput="onCreateNameInput"
+            focus="{{createOpen}}"
+          />
+          <text class="mb-help">{{createName.length}}/50</text>
+        </view>
+
+        <view class="mb-field">
+          <text class="mb-label">题库描述（可选）</text>
+          <textarea
+            class="mb-textarea"
+            placeholder="写一句用途/范围，方便后续筛选"
+            maxlength="200"
+            value="{{createDesc}}"
+            bindinput="onCreateDescInput"
+            auto-height
+          ></textarea>
+          <text class="mb-help">{{createDesc.length}}/200</text>
+        </view>
+
+        <view class="mb-error" wx:if="{{createError}}" role="alert">
+          <text>{{createError}}</text>
+        </view>
+      </view>
+
+      <view class="mb-modal-actions">
+        <view class="btn {{creating ? 'disabled' : ''}}" catchtap="onCreateClose"><text>取消</text></view>
+        <view class="btn btn-primary {{creating ? 'disabled' : ''}}" catchtap="onCreateSubmit">
+          <text>{{creating ? '创建中...' : '创建题库'}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

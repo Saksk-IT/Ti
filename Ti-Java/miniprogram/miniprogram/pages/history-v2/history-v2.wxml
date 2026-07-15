@@ -1,0 +1,201 @@
+<view class="page-root mine-linked-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="数据中心" back="{{true}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent"></navigation-bar>
+
+  <view class="page-container">
+    <scroll-view
+      class="content-area"
+      scroll-y
+      bounces="{{false}}"
+      refresher-enabled="{{true}}"
+      bindrefresherrefresh="onPullDownRefresh"
+    >
+      <view class="container">
+        <view class="card hero" aria-label="数据中心概览">
+          <view class="hero-head">
+            <view class="hero-left">
+              <text class="hero-title">数据中心</text>
+              <text class="hero-sub">公共题库 + 个人题库的学习进度、质量与节奏全景。</text>
+              <text class="hero-sub">最近活跃：{{lastActivityText}}</text>
+            </view>
+            <view class="hero-right">
+              <view class="days-tabs" aria-label="趋势窗口">
+                <view class="days-tab {{days===7 ? 'active' : ''}}" bindtap="onDaysTap" data-days="7"><text>7天</text></view>
+                <view class="days-tab {{days===30 ? 'active' : ''}}" bindtap="onDaysTap" data-days="30"><text>30天</text></view>
+                <view class="days-tab {{days===90 ? 'active' : ''}}" bindtap="onDaysTap" data-days="90"><text>90天</text></view>
+              </view>
+            </view>
+          </view>
+          <view class="data-tabs" aria-label="数据中心导航">
+            <view class="data-tab active"><text>概览</text></view>
+            <view class="data-tab" bindtap="onTabTap" data-tab="banks"><text>题库</text></view>
+            <view class="data-tab" bindtap="onTabTap" data-tab="trend"><text>趋势</text></view>
+            <view class="data-tab" bindtap="onTabTap" data-tab="ai"><text>AI助手</text></view>
+          </view>
+        </view>
+
+        <view class="card section-card" aria-label="总览">
+          <text class="section-title">总览</text>
+          <text class="section-sub">统计范围已按科目权限与锁定规则过滤。</text>
+
+          <view class="kpi-grid">
+            <view class="kpi">
+              <text class="kpi-label">已做题</text>
+              <text class="kpi-value">{{answeredCount}}</text>
+              <text class="kpi-meta">公共 {{publicAnswered}} · 个人 {{bankAnswered}}</text>
+              <view class="progress"><view class="progress-inner" style="width: {{completion}}%;"></view></view>
+            </view>
+            <view class="kpi">
+              <text class="kpi-label">正确率</text>
+              <text class="kpi-value">{{accuracy}}%</text>
+              <text class="kpi-meta">正确 {{correctCount}} / {{answeredCount}}</text>
+              <view class="progress"><view class="progress-inner" style="width: {{accuracy}}%;"></view></view>
+            </view>
+            <view class="kpi">
+              <text class="kpi-label">完成度</text>
+              <text class="kpi-value">{{completion}}%</text>
+              <text class="kpi-meta">总题 {{totalQuestions}}</text>
+            </view>
+            <view class="kpi">
+              <text class="kpi-label">连续天数</text>
+              <text class="kpi-value">{{streakDays}}</text>
+              <text class="kpi-meta">窗口 {{days}} 天</text>
+            </view>
+            <view class="kpi">
+              <text class="kpi-label">错题</text>
+              <text class="kpi-value">{{mistakesCount}}</text>
+              <text class="kpi-meta">累计错 {{mistakesTimes}} 次</text>
+            </view>
+            <view class="kpi">
+              <text class="kpi-label">收藏</text>
+              <text class="kpi-value">{{favoritesCount}}</text>
+              <text class="kpi-meta">用于高价值复习</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="card section-card" aria-label="图表概览">
+          <text class="section-title">图表概览</text>
+          <text class="section-sub">趋势 × 热力图：用节奏提升效率。</text>
+
+          <view class="chart-grid">
+            <view class="chart-card">
+              <text class="chart-title">趋势（近{{days}}天）</text>
+              <text class="chart-sub">窗口已做 {{windowAnswered}} · 正确率 {{windowAccuracy}}%</text>
+              <view class="chart-visual">
+                <scroll-view class="trend-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+                  <view class="trend-bars">
+                    <view
+                      class="trend-bar"
+                      wx:for="{{trendBars}}"
+                      wx:for-item="bar"
+                      wx:key="day"
+                      style="height: {{bar.barPct}}%;"
+                      bindtap="onDayBarTap"
+                      data-day="{{bar.day}}"
+                      data-total="{{bar.total}}"
+                      data-accuracy="{{bar.accuracy}}"
+                    >
+                      <view class="trend-fill" style="height: {{bar.fillPct}}%;"></view>
+                    </view>
+                  </view>
+                </scroll-view>
+              </view>
+            </view>
+
+            <view class="chart-card">
+              <text class="chart-title">活跃热力图</text>
+              <text class="chart-sub">周 × 小时 · 越深越高频</text>
+              <view class="chart-visual">
+                <view class="heatmap-grid">
+                  <view class="heatmap-row" wx:for="{{heatmapRows}}" wx:for-item="row" wx:key="dayIndex">
+                    <view
+                      class="heat-cell heat-lv{{cell.level}}"
+                      wx:for="{{row.cells}}"
+                      wx:for-item="cell"
+                      wx:key="index"
+                    ></view>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="card section-card" aria-label="能力画像">
+          <text class="section-title">能力画像</text>
+          <text class="section-sub">覆盖率 × 正确率 × 连续性 × 错题治理。</text>
+
+          <view class="rank-list">
+            <view class="rank-item" wx:for="{{abilityList}}" wx:for-item="ab" wx:key="name">
+              <text class="rank-name">{{ab.name}}</text>
+              <text class="rank-meta">{{ab.value}} 分</text>
+              <view class="rank-bar"><view class="rank-fill" style="width: {{ab.value}}%;"></view></view>
+            </view>
+          </view>
+        </view>
+
+        <view class="card section-card" aria-label="Top 题库与科目">
+          <text class="section-title">Top 题库/科目</text>
+          <text class="section-sub">按“已做题”排序，快速锁定高投入区域。</text>
+
+          <view class="rank-list">
+            <view class="rank-item" wx:for="{{topMix}}" wx:for-item="it" wx:key="name">
+              <text class="rank-name">{{it.name}}</text>
+              <text class="rank-meta">已做 {{it.answered}} · 正确率 {{it.accuracy}}%</text>
+              <view class="rank-bar"><view class="rank-fill" style="width: {{it.barPct}}%;"></view></view>
+            </view>
+          </view>
+        </view>
+
+        <view class="card section-card" aria-label="下一步建议">
+          <text class="section-title">下一步建议</text>
+          <text class="section-sub">先刷错题，再重练；先覆盖，再提速。</text>
+
+          <view class="note-list" wx:if="{{nextActions.length}}">
+            <view class="note" wx:for="{{nextActions}}" wx:key="title">
+              <text class="note-title">{{item.title}}</text>
+              <text class="note-sub">{{item.meta}}</text>
+              <view class="note-actions">
+                <view class="mini-btn primary" bindtap="onGoQuiz" data-subject="{{item.subject}}" data-type="{{item.q_type}}" data-source="mistakes"><text>刷错题</text></view>
+                <view class="mini-btn" bindtap="onGoQuiz" data-subject="{{item.subject}}" data-type="{{item.q_type}}" data-source="all"><text>重练</text></view>
+              </view>
+            </view>
+          </view>
+          <view class="empty" wx:else>
+            <text>先做几道题再来看，会更有指导意义。</text>
+          </view>
+        </view>
+
+        <view class="card section-card" aria-label="薄弱点排行">
+          <text class="section-title">薄弱点</text>
+          <text class="section-sub">按正确率从低到高排序（至少做过 5 题）。</text>
+
+          <view class="weak-list" wx:if="{{weaknessRows.length}}">
+            <view class="weak-row" wx:for="{{weaknessRows}}" wx:key="key">
+              <view class="weak-main">
+                <text class="weak-title">{{item.subject}} · {{item.q_type}}</text>
+                <text class="weak-meta">正确率 {{item.accuracy}}% · 已做 {{item.answered}}</text>
+                <view class="weak-bar">
+                  <view class="progress"><view class="progress-inner" style="width: {{item.accuracy}}%;"></view></view>
+                </view>
+              </view>
+              <view class="weak-actions">
+                <view class="mini-btn primary" bindtap="onGoQuiz" data-subject="{{item.subject}}" data-type="{{item.q_type}}" data-source="mistakes"><text>刷错题</text></view>
+              </view>
+            </view>
+          </view>
+          <view class="empty" wx:else>
+            <text>暂无可用薄弱点排行。</text>
+          </view>
+        </view>
+
+        <view class="msg error" wx:if="{{errorMsg}}">
+          <text>{{errorMsg}}</text>
+        </view>
+        <view class="loading" wx:if="{{loading}}">
+          <text>正在加载数据...</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

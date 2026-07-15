@@ -1,0 +1,8 @@
+node_modules/
+.cloudbase/
+_archived/
+analyse-data.json
+log.txt
+project.private.config.json
+*.log
+

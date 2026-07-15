@@ -1,0 +1,136 @@
+page {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.page-root {
+  min-height: 100vh;
+  background: var(--app-bg);
+  color: var(--app-text);
+  position: relative;
+  overflow: hidden;
+}
+
+.campus-feature-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 82% 8%, var(--app-primary-soft) 0%, transparent 34%),
+    linear-gradient(180deg, var(--app-surface-glass) 0%, transparent 52%, var(--app-bg) 100%);
+  opacity: 0.92;
+  z-index: 0;
+}
+
+.nav-right {
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.icon-btn {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 18rpx;
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.icon-btn:active,
+.feature-status:active {
+  opacity: 0.92;
+  transform: scale(0.99);
+}
+
+.icon {
+  width: 36rpx;
+  height: 36rpx;
+}
+
+.theme-auto {
+  position: absolute;
+  right: 10rpx;
+  bottom: 10rpx;
+  width: 26rpx;
+  height: 26rpx;
+  border-radius: 8rpx;
+  background: var(--app-fill);
+  border: 1rpx solid var(--app-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16rpx;
+  font-weight: 900;
+  color: var(--app-text-secondary);
+}
+
+.feature-container {
+  position: relative;
+  z-index: 1;
+  padding: 28rpx 24rpx calc(60rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+.feature-card {
+  min-height: 420rpx;
+  border: 1rpx solid var(--app-border);
+  border-radius: var(--app-radius-lg);
+  background: linear-gradient(135deg, var(--app-surface-glass), var(--app-surface));
+  box-shadow: var(--app-shadow-soft);
+  backdrop-filter: blur(24rpx);
+  -webkit-backdrop-filter: blur(24rpx);
+  padding: 42rpx 28rpx;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 18rpx;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.feature-icon-wrap {
+  width: 92rpx;
+  height: 92rpx;
+  border-radius: 24rpx;
+  background: var(--app-primary-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feature-icon {
+  width: 46rpx;
+  height: 46rpx;
+}
+
+.feature-title {
+  color: var(--app-text);
+  font-size: 38rpx;
+  line-height: 1.18;
+  font-weight: 950;
+}
+
+.feature-subtitle {
+  max-width: 560rpx;
+  color: var(--app-text-secondary);
+  font-size: 25rpx;
+  line-height: 1.48;
+}
+
+.feature-status {
+  min-height: 68rpx;
+  padding: 0 22rpx;
+  border-radius: 18rpx;
+  background: var(--app-text);
+  color: var(--app-bg);
+  font-size: 25rpx;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

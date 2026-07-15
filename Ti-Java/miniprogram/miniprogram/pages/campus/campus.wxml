@@ -1,0 +1,141 @@
+<!-- campus.wxml - 校园 -->
+<view class="page-root campus-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <view class="campus-bg"></view>
+  <navigation-bar title="校园" back="{{false}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent">
+    <view slot="right" class="nav-right">
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <view class="page-container">
+    <scroll-view class="content-area" scroll-y bounces="{{false}}" refresher-enabled="{{true}}" bindrefresherrefresh="onRefresh">
+      <view class="container">
+        <view class="campus-hero">
+          <view class="hero-main">
+            <view class="hero-icon-wrap">
+              <image class="hero-icon" src="/images/icons/campus.svg" mode="aspectFit"></image>
+            </view>
+            <view class="hero-copy">
+              <text class="hero-title">校园</text>
+              <text class="hero-status">{{statusMsg || '教务系统账号状态同步中'}}</text>
+              <view class="hero-meta-row">
+                <view class="hero-pill {{eduBound ? 'ok' : 'warn'}}">
+                  <text>{{eduBound ? '已绑定' : '待绑定'}}</text>
+                </view>
+                <view class="hero-pill">
+                  <text>{{mode === 'grades' ? '成绩查询' : '课表查询'}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+          <view class="hero-action {{statusFailed || !eduBound ? 'warn' : ''}}" bindtap="onHeroActionTap" aria-role="button" aria-label="教务系统账号操作">
+            <image class="hero-action-icon" src="{{statusFailed ? '/images/icons/refresh-cw.svg' : '/images/icons/settings.svg'}}" mode="aspectFit"></image>
+            <text>{{statusFailed ? '重试' : (eduBound ? '更换绑定' : '去绑定')}}</text>
+          </view>
+          <view class="hero-glow"></view>
+        </view>
+
+        <view class="campus-highlights" aria-label="校园概览">
+          <view class="highlight-card" wx:for="{{campusHighlights}}" wx:key="key">
+            <text class="highlight-value">{{item.value}}</text>
+            <text class="highlight-label">{{item.label}}</text>
+            <text class="highlight-hint">{{item.hint}}</text>
+          </view>
+        </view>
+
+        <view class="campus-overview">
+          <view class="overview-card today-card">
+            <view class="overview-head">
+              <view class="overview-title-wrap">
+                <view class="overview-icon-wrap">
+                  <image class="overview-icon" src="/images/icons/book-open.svg" mode="aspectFit"></image>
+                </view>
+                <view class="overview-title-copy">
+                  <text class="overview-title">{{todayCourses.title}}</text>
+                  <text class="overview-subtitle">{{todayCourses.subtitle}}</text>
+                </view>
+              </view>
+              <view class="overview-badge">
+                <text>{{todayCourses.courseCount}} 门</text>
+              </view>
+            </view>
+            <view class="today-course-list" wx:if="{{todayCourses.hasCourses}}">
+              <view class="today-course-row" wx:for="{{todayCourses.courses}}" wx:key="key">
+                <text class="today-section">{{item.section}}</text>
+                <view class="today-course-copy">
+                  <text class="today-course-name">{{item.course_name}}</text>
+                  <text class="today-course-detail">{{item.detail}}</text>
+                </view>
+              </view>
+            </view>
+            <view class="overview-empty" wx:else>
+              <text>{{todayCourses.emptyText}}</text>
+            </view>
+          </view>
+
+          <view class="overview-card grade-card">
+            <view class="overview-head">
+              <view class="overview-title-wrap">
+                <view class="overview-icon-wrap grade">
+                  <image class="overview-icon" src="/images/icons/chart.svg" mode="aspectFit"></image>
+                </view>
+                <view class="overview-title-copy">
+                  <text class="overview-title">{{latestGradeSummary.title}}</text>
+                  <text class="overview-subtitle">{{latestGradeSummary.subtitle}}</text>
+                </view>
+              </view>
+            </view>
+            <view class="grade-metric-row">
+              <view class="grade-metric" aria-role="text" aria-label="最新学期绩点 {{gradeMetrics.semesterGpa}}">
+                <text class="grade-metric-value">{{gradeMetrics.semesterGpa}}</text>
+                <text class="grade-metric-label">最新学期绩点</text>
+              </view>
+              <view class="grade-metric" aria-role="text" aria-label="本学年学分加权平均分 {{gradeMetrics.academicYearWeightedAverage}}">
+                <text class="grade-metric-value">{{gradeMetrics.academicYearWeightedAverage}}</text>
+                <text class="grade-metric-label">本学年学分加权平均分</text>
+              </view>
+            </view>
+            <view class="latest-grade-list" wx:if="{{latestGradeSummary.hasGrades}}">
+              <view class="latest-grade-row" wx:for="{{latestGradeSummary.grades}}" wx:key="course_name">
+                <text class="latest-grade-name">{{item.course_name}}</text>
+                <text class="latest-grade-score">{{item.score}}</text>
+              </view>
+            </view>
+            <view class="overview-empty" wx:else>
+              <text>{{latestGradeSummary.emptyText}}</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="campus-section-head">
+          <text class="campus-section-title">校园功能</text>
+          <text class="campus-section-sub">进入二级页面处理</text>
+        </view>
+        <view class="campus-action-grid" aria-label="校园功能入口">
+          <view
+            class="campus-action-card tone-{{item.tone}} {{item.disabled ? 'disabled' : ''}}"
+            wx:for="{{campusActions}}"
+            wx:key="key"
+            data-key="{{item.key}}"
+            bindtap="onCampusActionTap"
+            aria-role="button"
+            aria-label="{{item.title}}"
+          >
+            <view class="campus-action-icon-wrap">
+              <image class="campus-action-icon" src="{{item.icon}}" mode="aspectFit"></image>
+            </view>
+            <view class="campus-action-copy">
+              <text class="campus-action-title">{{item.title}}</text>
+              <text class="campus-action-sub">{{item.subtitle}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

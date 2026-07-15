@@ -1,0 +1,179 @@
+<!--settings-account-bindings-v2.wxml - -->
+<view class="page-root mine-linked-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="账号绑定" back="{{true}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent">
+    <view slot="right" class="nav-right">
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <view class="page-container">
+    <scroll-view class="content-area" scroll-y bounces="{{false}}" refresher-enabled="{{true}}" bindrefresherrefresh="onPullDownRefresh">
+      <view class="container">
+        <view class="card hero" aria-label="账号绑定概览">
+          <text class="hero-title">账号绑定</text>
+          <text class="hero-sub">管理邮箱、微信与教务系统绑定状态。</text>
+        </view>
+
+        <view class="subtabs" aria-label="账号管理子导航">
+          <view class="subtab {{accTab==='profile' ? 'active' : ''}}" bindtap="onAccountSubTap" data-key="profile"><text>个人资料</text></view>
+          <view class="subtab {{accTab==='security' ? 'active' : ''}}" bindtap="onAccountSubTap" data-key="security"><text>账号安全</text></view>
+          <view class="subtab {{accTab==='bindings' ? 'active' : ''}}" bindtap="onAccountSubTap" data-key="bindings"><text>账号绑定</text></view>
+        </view>
+
+        <view class="msg error" wx:if="{{errorMsg}}">
+          <text>{{errorMsg}}</text>
+        </view>
+        <view class="msg" wx:if="{{msg}}">
+          <text>{{msg}}</text>
+        </view>
+
+        <!-- 邮箱 -->
+        <view class="card section-card" aria-label="邮箱绑定">
+          <view class="bind-row">
+            <view class="bind-meta">
+              <text class="bind-name">邮箱</text>
+              <text class="bind-desc">{{emailDesc}}</text>
+            </view>
+            <view class="bind-actions">
+              <view class="status-chip"><text>{{emailChip}}</text></view>
+              <view class="btn btn-quiet {{loading ? 'disabled' : ''}}" bindtap="onEmailActionTap" aria-role="button" aria-label="绑定或更换邮箱">
+                <text>{{emailActionText}}</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="bind-form" wx:if="{{emailFormOpen}}">
+            <view class="divider"></view>
+            <view class="form-grid">
+              <view class="acc-field">
+                <text class="acc-label">邮箱地址</text>
+                <input
+                  class="acc-input"
+                  value="{{bindEmail}}"
+                  type="text"
+                  placeholder="请输入邮箱地址"
+                  placeholder-class="placeholder"
+                  bindinput="onBindEmailInput"
+                />
+              </view>
+
+              <view class="acc-field">
+                <text class="acc-label">验证码</text>
+                <view class="input-row">
+                  <input
+                    class="acc-input"
+                    value="{{bindCode}}"
+                    type="number"
+                    maxlength="6"
+                    placeholder="6 位验证码"
+                    placeholder-class="placeholder"
+                    bindinput="onBindCodeInput"
+                  />
+                  <view class="mini-btn {{sendCodeDisabled ? 'disabled' : ''}}" bindtap="onSendCodeTap" aria-role="button" aria-label="发送验证码">
+                    <text>{{sendCodeText}}</text>
+                  </view>
+                </view>
+              </view>
+
+              <view class="form-actions">
+                <view class="btn btn-primary {{bindingEmail ? 'disabled' : ''}}" bindtap="onBindEmailTap" aria-role="button" aria-label="确认绑定邮箱">
+                  <text>{{bindingEmail ? '绑定中…' : '确认绑定'}}</text>
+                </view>
+                <view class="btn {{bindingEmail ? 'disabled' : ''}}" bindtap="onCloseEmailFormTap" aria-role="button" aria-label="取消绑定邮箱">
+                  <text>取消</text>
+                </view>
+              </view>
+
+              <text class="acc-help">绑定邮箱用于接收验证码与找回账号。</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 微信 -->
+        <view class="card section-card" aria-label="微信绑定">
+          <view class="bind-row">
+            <view class="bind-meta">
+              <text class="bind-name">微信</text>
+              <text class="bind-desc">{{wechatDesc}}</text>
+            </view>
+            <view class="bind-actions">
+              <view class="status-chip"><text>{{wechatChip}}</text></view>
+              <view class="btn btn-quiet {{bindingWechat ? 'disabled' : ''}}" wx:if="{{!wechatBound}}" bindtap="onWechatBindTap" aria-role="button" aria-label="绑定微信">
+                <text>{{bindingWechat ? '绑定中…' : '一键绑定'}}</text>
+              </view>
+              <view class="btn {{unbindingWechat ? 'disabled' : ''}}" wx:if="{{wechatBound}}" bindtap="onWechatUnbindTap" aria-role="button" aria-label="解绑微信">
+                <text>{{unbindingWechat ? '解绑中…' : '解绑'}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 教务系统 -->
+        <view class="card section-card" aria-label="教务系统绑定">
+          <view class="bind-row">
+            <view class="bind-meta">
+              <text class="bind-name">教务系统</text>
+              <text class="bind-desc">{{eduDesc}}</text>
+            </view>
+            <view class="bind-actions">
+              <view class="status-chip"><text>{{eduChip}}</text></view>
+              <view class="btn btn-quiet {{bindingEdu ? 'disabled' : ''}}" bindtap="onEduActionTap" aria-role="button" aria-label="绑定或更换教务系统账号">
+                <text>{{bindingEdu ? '保存中…' : eduActionText}}</text>
+              </view>
+              <view class="btn {{deletingEdu ? 'disabled' : ''}}" wx:if="{{eduBound}}" bindtap="onDeleteEduCredentialsTap" aria-role="button" aria-label="解绑教务系统账号">
+                <text>{{deletingEdu ? '解绑中…' : '解绑'}}</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="bind-form" wx:if="{{eduFormOpen}}">
+            <view class="divider"></view>
+            <view class="form-grid">
+              <view class="acc-field">
+                <text class="acc-label">教务账号</text>
+                <input
+                  class="acc-input"
+                  value="{{bindEduUsername}}"
+                  type="text"
+                  maxlength="64"
+                  placeholder="学号/工号"
+                  placeholder-class="placeholder"
+                  bindinput="onBindEduUsernameInput"
+                />
+              </view>
+
+              <view class="acc-field">
+                <text class="acc-label">教务密码</text>
+                <input
+                  class="acc-input"
+                  value="{{bindEduPassword}}"
+                  password="{{true}}"
+                  maxlength="128"
+                  placeholder="教务系统密码"
+                  placeholder-class="placeholder"
+                  bindinput="onBindEduPasswordInput"
+                />
+              </view>
+
+              <view class="form-actions">
+                <view class="btn btn-primary {{bindingEdu ? 'disabled' : ''}}" bindtap="onBindEduCredentialsTap" aria-role="button" aria-label="保存教务系统账号绑定">
+                  <text>{{bindingEdu ? '保存中…' : '保存绑定'}}</text>
+                </view>
+                <view class="btn {{bindingEdu ? 'disabled' : ''}}" bindtap="onCloseEduFormTap" aria-role="button" aria-label="取消绑定教务系统账号">
+                  <text>取消</text>
+                </view>
+              </view>
+
+              <text class="acc-help">绑定后，课表和成绩查询只需要选择学年与学期。</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

@@ -1,0 +1,93 @@
+<!--登录页面-->
+<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="登录" back="{{false}}" color="var(--app-nav-fg)" background="var(--app-bg)"></navigation-bar>
+
+  <view class="page-container">
+    <view class="card">
+      <view class="hero">
+        <text class="hero-title">登录</text>
+        <text class="hero-sub">{{loginHeroSub}}</text>
+      </view>
+
+      <view class="card-body">
+        <view class="nav-card">
+          <view class="tabs">
+            <view wx:if="{{wechatLoginEnabled}}" class="tab {{mode==='wechat' ? 'active' : ''}}" data-mode="wechat" bindtap="onSwitchMode"><text>微信</text></view>
+            <view class="tab {{mode==='password' ? 'active' : ''}}" data-mode="password" bindtap="onSwitchMode"><text>密码</text></view>
+            <view class="tab {{mode==='email' ? 'active' : ''}}" data-mode="email" bindtap="onSwitchMode"><text>邮箱</text></view>
+          </view>
+        </view>
+
+        <view class="panel-container">
+          <!-- 微信登录 -->
+          <view wx:if="{{mode==='wechat'}}" class="panel wechat-panel">
+            <view class="wechat-icon">
+              <view class="wechat-icon-inner"></view>
+            </view>
+            <button class="btn btn-primary {{loading ? 'disabled' : ''}}" bindtap="onLoginTap" disabled="{{loading}}" loading="{{loading}}">
+              <text>微信登录</text>
+            </button>
+            <view class="hint">首次微信登录会提示创建/绑定已有账号</view>
+          </view>
+
+          <!-- 密码登录 -->
+          <view wx:if="{{mode==='password'}}" class="panel">
+            <view class="form-grid">
+              <view class="field">
+                <text class="label">账号</text>
+                <input class="input" placeholder="请输入账号" placeholder-class="placeholder" value="{{username}}" bindinput="onUsernameInput" />
+              </view>
+              <view class="field">
+                <text class="label">密码</text>
+                <input class="input" password placeholder="密码" placeholder-class="placeholder" value="{{password}}" bindinput="onPasswordInput" />
+              </view>
+            </view>
+            <button class="btn btn-primary {{loading ? 'disabled' : ''}}" bindtap="onPasswordLoginTap" disabled="{{loading}}" loading="{{loading}}">
+              <text>登录</text>
+            </button>
+            <view class="hint" bindtap="onForgotPasswordTap">忘记密码？</view>
+          </view>
+
+          <!-- 邮箱登录 -->
+          <view wx:if="{{mode==='email'}}" class="panel">
+            <view class="form-grid">
+              <view class="field">
+                <text class="label">邮箱</text>
+                <input class="input" placeholder="邮箱" placeholder-class="placeholder" value="{{email}}" bindinput="onEmailInput" />
+              </view>
+              <view class="field">
+                <text class="label">验证码</text>
+                <view class="input-row">
+                  <input class="input" placeholder="验证码" placeholder-class="placeholder" maxlength="8" value="{{code}}" bindinput="onCodeInput" />
+                  <view class="code-btn {{(codeSending || loading) ? 'disabled' : ''}}" bindtap="onSendCodeTap">
+                    <text>{{codeSending ? countdown + 's' : '发送'}}</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+            <button class="btn btn-primary {{loading ? 'disabled' : ''}}" bindtap="onEmailLoginTap" disabled="{{loading}}" loading="{{loading}}">
+              <text>登录</text>
+            </button>
+            <view class="hint">邮箱验证码登录支持自动注册</view>
+          </view>
+        </view>
+
+        <view class="dev-tools" wx:if="{{showDevTools}}">
+          <view class="dev-row">
+            <text class="dev-label">当前 API</text>
+            <text class="dev-value" bindtap="onCopyApiTap">{{apiUrl}}</text>
+          </view>
+          <view class="dev-actions">
+            <text class="dev-action" bindtap="onOpenDevSettingsTap">开发设置</text>
+            <text class="dev-action" bindtap="onCopyApiTap">复制</text>
+          </view>
+        </view>
+
+        <!-- 返回首页（游客模式） -->
+        <view class="guest-entry">
+          <text class="guest-text" bindtap="onBackHomeTap">暂不登录，先看看</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

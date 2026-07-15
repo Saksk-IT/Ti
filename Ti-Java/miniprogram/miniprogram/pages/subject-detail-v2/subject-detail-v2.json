@@ -1,0 +1,8 @@
+{
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "navigation-bar": "../../components/navigation-bar/navigation-bar",
+    "v2-exam-builder": "../../components/v2-exam-builder/v2-exam-builder",
+    "v2-subject-data-ubd": "./components/v2-subject-data-ubd/v2-subject-data-ubd"
+  }
+}

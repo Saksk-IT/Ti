@@ -1,0 +1,359 @@
+page {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.page-root {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+.page-container {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24rpx;
+  box-sizing: border-box;
+}
+
+.card {
+  width: 100%;
+  max-width: 620rpx;
+  border: 1rpx solid var(--app-border);
+  border-radius: var(--app-radius-xl);
+  background: var(--app-surface-2);
+  box-shadow: var(--app-shadow-soft);
+  overflow: hidden;
+}
+
+.hero {
+  padding: 24rpx 24rpx 20rpx;
+  background:
+    radial-gradient(120% 140% at 0% -10%, color-mix(in srgb, var(--app-primary) 10%, transparent), transparent 60%),
+    var(--app-surface-2);
+}
+
+.hero-title {
+  font-size: 40rpx;
+  font-weight: 950;
+  color: var(--app-text);
+}
+
+.hero-sub {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  line-height: 1.65;
+  color: var(--app-muted);
+  display: block;
+}
+
+.card-body {
+  padding: 0 24rpx 24rpx;
+}
+
+/* 标签页导航 */
+.nav-card {
+  padding: 10rpx;
+  border-radius: var(--app-radius-xl);
+  background: color-mix(in srgb, var(--app-surface) 78%, transparent);
+  border: 1rpx solid var(--app-border);
+  box-shadow: var(--app-shadow-soft);
+}
+
+.tabs {
+  display: flex;
+  gap: 10rpx;
+}
+
+.tab {
+  flex: 1;
+  height: 64rpx;
+  padding: 0 16rpx;
+  border-radius: 999px;
+  border: 1rpx solid transparent;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  font-weight: 900;
+  color: var(--app-muted);
+  white-space: nowrap;
+}
+
+.tab:active {
+  opacity: 0.92;
+}
+
+.tab.active {
+  background: var(--app-primary-soft);
+  border-color: color-mix(in srgb, var(--app-primary) 35%, var(--app-border));
+  color: var(--app-text);
+}
+
+/* 面板容器 - 固定高度防止跳动 */
+.panel-container {
+  margin-top: 18rpx;
+  min-height: 340rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 表单区域 */
+.form-grid {
+  display: grid;
+  gap: 14rpx;
+  flex: 1;
+}
+
+.field {
+  display: grid;
+  gap: 10rpx;
+}
+
+.label {
+  font-size: 24rpx;
+  font-weight: 950;
+  color: var(--app-text);
+}
+
+.input {
+  width: 100%;
+  border-radius: 18rpx;
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface);
+  color: var(--app-text);
+  font-size: 26rpx;
+  box-sizing: border-box;
+  height: 88rpx;
+  line-height: 88rpx;
+  padding: 0 16rpx;
+}
+
+.placeholder {
+  color: var(--app-text-placeholder);
+}
+
+/* 验证码行 */
+.input-row {
+  display: flex;
+  align-items: stretch;
+  gap: 10rpx;
+}
+
+.input-row .input {
+  flex: 1;
+  min-width: 0;
+}
+
+.code-btn {
+  height: 88rpx;
+  padding: 0 18rpx;
+  border-radius: 18rpx;
+  border: 1rpx solid var(--app-border);
+  background: color-mix(in srgb, var(--app-surface) 88%, transparent);
+  box-shadow: var(--app-shadow-soft);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  font-weight: 900;
+  color: var(--app-text);
+  flex: 0 0 auto;
+  white-space: nowrap;
+  min-width: 140rpx;
+}
+
+.code-btn:active {
+  opacity: 0.92;
+  transform: scale(0.99);
+}
+
+.code-btn.disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* 按钮 */
+.btn {
+  height: 88rpx;
+  padding: 0 24rpx;
+  border-radius: 999px;
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 900;
+  color: var(--app-text);
+  margin-top: auto;
+}
+
+.btn::after {
+  border: none;
+}
+
+.btn:active {
+  opacity: 0.92;
+  transform: scale(0.99);
+}
+
+.btn-primary {
+  border-color: color-mix(in srgb, var(--app-cta) 28%, var(--app-border));
+  background: color-mix(in srgb, var(--app-cta) 12%, var(--app-surface));
+}
+
+.btn-strong {
+  background: var(--app-primary);
+  border-color: var(--app-primary);
+  color: #FFFFFF;
+}
+
+.btn.disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* 提示文字 */
+.hint {
+  margin-top: 14rpx;
+  font-size: 22rpx;
+  color: var(--app-muted);
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* 微信登录面板 - 居中布局 */
+.wechat-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24rpx 0;
+}
+
+.wechat-icon {
+  width: 100rpx;
+  height: 100rpx;
+  margin-bottom: 20rpx;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--app-primary) 12%, var(--app-surface));
+  border: 1rpx solid color-mix(in srgb, var(--app-primary) 25%, var(--app-border));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wechat-icon-inner {
+  width: 48rpx;
+  height: 48rpx;
+  background: var(--app-primary);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 0 1 .598.082l1.584.926a.272.272 0 0 0 .14.047c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.582.582 0 0 1-.023-.156.49.49 0 0 1 .201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-6.656-6.088-.181-.013-.363-.025-.547-.034h-.06zm-2.353 3.028c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.97-.982zm4.844 0c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.97-.982z'/%3E%3C/svg%3E") no-repeat center;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 0 1 .598.082l1.584.926a.272.272 0 0 0 .14.047c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.582.582 0 0 1-.023-.156.49.49 0 0 1 .201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-6.656-6.088-.181-.013-.363-.025-.547-.034h-.06zm-2.353 3.028c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.97-.982zm4.844 0c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.97-.982z'/%3E%3C/svg%3E") no-repeat center;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
+
+.wechat-panel .btn {
+  width: 100%;
+  max-width: 400rpx;
+}
+
+/* 开发工具区域 */
+.dev-tools {
+  margin-top: 18rpx;
+  padding: 14rpx;
+  border-radius: 18rpx;
+  border: 1rpx solid var(--app-border);
+  background: var(--app-surface);
+}
+
+.dev-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.dev-label {
+  font-size: 22rpx;
+  color: var(--app-muted);
+  flex: 0 0 auto;
+}
+
+.dev-value {
+  font-size: 22rpx;
+  color: var(--app-muted);
+  flex: 1;
+  min-width: 0;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dev-actions {
+  margin-top: 10rpx;
+  display: flex;
+  justify-content: flex-end;
+  gap: 16rpx;
+}
+
+.dev-action {
+  font-size: 22rpx;
+  color: var(--app-cta);
+  padding: 4rpx 0;
+}
+
+.dev-action:active {
+  opacity: 0.85;
+}
+
+/* 游客入口 */
+.guest-entry {
+  margin-top: 20rpx;
+  text-align: center;
+}
+
+.guest-text {
+  font-size: 24rpx;
+  color: var(--app-muted);
+  padding: 8rpx 16rpx;
+}
+
+.guest-text:active {
+  opacity: 0.75;
+}
+
+/* 响应式适配 */
+@media (max-width: 360px) {
+  .page-container {
+    padding: 16rpx;
+  }
+
+  .card {
+    max-width: 100%;
+  }
+
+  .input-row {
+    flex-direction: column;
+  }
+
+  .code-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

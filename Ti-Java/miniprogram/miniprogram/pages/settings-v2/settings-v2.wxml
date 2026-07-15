@@ -1,0 +1,124 @@
+<!-- settings-v2.wxml - 对齐 Web /settings（原生组件复刻，移动端布局） -->
+<view class="page-root mine-linked-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="设置" back="{{true}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent">
+    <view slot="right" class="nav-right">
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <view class="page-container">
+    <scroll-view class="content-area" scroll-y bounces="{{false}}">
+      <view class="container">
+        <view class="card hero" aria-label="设置页概览">
+          <text class="hero-title">设置</text>
+          <text class="hero-sub">账号、练习与主题设置（与 Web 端语义对齐）。</text>
+        </view>
+
+        <view class="card section-card" aria-label="设置分区">
+          <text class="section-title">设置分区</text>
+          <text class="section-sub">与 Web /settings/* 对齐的子页面（*-v2）。</text>
+          <view class="nav-list">
+            <view class="nav-row" bindtap="onGoSubpage" data-url="/pages/settings-account-profile-v2/settings-account-profile-v2">
+              <text class="nav-label">账号管理 · 个人资料</text>
+              <text class="nav-chev">›</text>
+            </view>
+            <view class="nav-row" bindtap="onGoSubpage" data-url="/pages/settings-account-security-v2/settings-account-security-v2">
+              <text class="nav-label">账号管理 · 账号安全</text>
+              <text class="nav-chev">›</text>
+            </view>
+            <view class="nav-row" bindtap="onGoSubpage" data-url="/pages/settings-account-bindings-v2/settings-account-bindings-v2">
+              <text class="nav-label">账号管理 · 账号绑定</text>
+              <text class="nav-chev">›</text>
+            </view>
+            <view class="nav-row" bindtap="onGoSubpage" data-url="/pages/settings-theme-v2/settings-theme-v2">
+              <text class="nav-label">主题</text>
+              <text class="nav-chev">›</text>
+            </view>
+            <view class="nav-row" bindtap="onGoSubpage" data-url="/pages/settings-about-v2/settings-about-v2">
+              <text class="nav-label">关于</text>
+              <text class="nav-chev">›</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="card section-card" aria-label="主题模式">
+          <text class="section-title">主题模式</text>
+          <text class="section-sub">浅色 / 深色 / 跟随系统。</text>
+          <view class="chips">
+            <view class="chip {{themeMode==='light' ? 'active' : ''}}" bindtap="onModeTap" data-mode="light"><text>浅色</text></view>
+            <view class="chip {{themeMode==='dark' ? 'active' : ''}}" bindtap="onModeTap" data-mode="dark"><text>深色</text></view>
+            <view class="chip {{themeMode==='system' ? 'active' : ''}}" bindtap="onModeTap" data-mode="system"><text>跟随系统</text></view>
+          </view>
+        </view>
+
+        <view class="card section-card" aria-label="主题风格">
+          <text class="section-title">主题风格</text>
+          <text class="section-sub">该风格会与 Web 端设置同步。</text>
+          <view class="chips">
+            <view class="chip {{themeStyle==='default' ? 'active' : ''}}" bindtap="onStyleTap" data-style="default"><text>默认</text></view>
+            <view class="chip {{themeStyle==='mist' ? 'active' : ''}}" bindtap="onStyleTap" data-style="mist"><text>雾蓝</text></view>
+            <view class="chip {{themeStyle==='dune' ? 'active' : ''}}" bindtap="onStyleTap" data-style="dune"><text>暖砂</text></view>
+            <view class="chip {{themeStyle==='pine' ? 'active' : ''}}" bindtap="onStyleTap" data-style="pine"><text>岩松</text></view>
+            <view class="chip {{themeStyle==='celadon' ? 'active' : ''}}" bindtap="onStyleTap" data-style="celadon"><text>影青</text></view>
+          </view>
+        </view>
+
+        <view class="card section-card" aria-label="刷题设置">
+          <text class="section-title">刷题设置</text>
+          <text class="section-sub">仅影响小程序端刷题体验。</text>
+
+          <view class="settings-row">
+            <view class="settings-left">
+              <text class="settings-label">答对自动切题</text>
+              <text class="settings-desc">答错不切题</text>
+            </view>
+            <switch checked="{{practiceSettings.autoNextOnCorrect}}" bindchange="onPracticeSwitch" data-key="autoNextOnCorrect" />
+          </view>
+          <view class="settings-row">
+            <view class="settings-left">
+              <text class="settings-label">做错自动收藏</text>
+              <text class="settings-desc">方便集中复盘</text>
+            </view>
+            <switch checked="{{practiceSettings.autoFavoriteOnWrong}}" bindchange="onPracticeSwitch" data-key="autoFavoriteOnWrong" />
+          </view>
+          <view class="settings-row">
+            <view class="settings-left">
+              <text class="settings-label">震动反馈</text>
+              <text class="settings-desc">仅对可判分题型生效</text>
+            </view>
+            <switch checked="{{practiceSettings.vibrationFeedback}}" bindchange="onPracticeSwitch" data-key="vibrationFeedback" />
+          </view>
+        </view>
+
+        <view class="card section-card" aria-label="账号">
+          <text class="section-title">账号</text>
+          <text class="section-sub">当前登录信息与快捷操作。</text>
+
+          <view class="account-box">
+            <text class="account-name">{{userName}}</text>
+            <text class="account-meta">{{userMeta}}</text>
+          </view>
+
+          <view class="account-actions">
+            <view class="btn" bindtap="onGoMine"><text>我的</text></view>
+            <view class="btn btn-danger" bindtap="onLogout"><text>退出登录</text></view>
+          </view>
+        </view>
+
+        <view class="card section-card" aria-label="关于">
+          <text class="section-title">关于</text>
+          <text class="section-sub">版本与说明。</text>
+          <view class="about-box">
+            <text class="about-line">SAK 题库中心（小程序）</text>
+            <text class="about-line muted">版本：{{appVersion}}</text>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

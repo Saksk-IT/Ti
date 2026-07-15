@@ -1,0 +1,252 @@
+<view class="page-root mine-linked-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="数据" back="{{true}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent">
+    <view slot="left" class="nav-left">
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <view class="page-container">
+    <scroll-view
+      class="content-area"
+      scroll-y
+      bounces="{{false}}"
+      refresher-enabled="{{true}}"
+      bindrefresherrefresh="onPullDownRefresh"
+    >
+      <view class="container">
+        <view class="dc-hero" aria-label="数据中心 · 标签">
+          <view class="dc-hero-main">
+            <view class="dc-hero-title" style="min-width:0;">
+              <text class="dc-h1">数据中心 · 标签</text>
+              <text class="dc-p">标签让题目资产结构化：复盘与专项训练更容易“复用”。</text>
+            </view>
+
+            <view class="dc-hero-actions" aria-label="时间窗口与操作">
+              <view class="dc-window" aria-label="时间窗口">
+                <view class="dc-window-tab {{days===7 ? 'active' : ''}}" bindtap="onDaysTap" data-days="7"><text>7天</text></view>
+                <view class="dc-window-tab {{days===30 ? 'active' : ''}}" bindtap="onDaysTap" data-days="30"><text>30天</text></view>
+                <view class="dc-window-tab {{days===90 ? 'active' : ''}}" bindtap="onDaysTap" data-days="90"><text>90天</text></view>
+              </view>
+            </view>
+          </view>
+
+          <view class="dc-hero-kpis" aria-label="关键指标">
+            <view class="dc-kpi-pill">
+              <text class="k">标签总数</text>
+              <text class="v mono">{{tags_kpis.all_tag_count}}</text>
+            </view>
+            <view class="dc-kpi-pill">
+              <text class="k">已打标签题</text>
+              <text class="v mono">{{tags_kpis.all_tagged_questions}}</text>
+            </view>
+            <view class="dc-kpi-pill">
+              <text class="k">覆盖率</text>
+              <text class="v mono">{{tags_kpis.tagged_answered_coverage}}%</text>
+            </view>
+            <view class="dc-kpi-pill">
+              <text class="k">健康分</text>
+              <text class="v mono">{{health_score}}</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="dc-basebar" aria-label="数据中心导航">
+          <scroll-view class="dc-tabs" scroll-x enhanced show-scrollbar="{{false}}">
+            <view class="dc-tabs-inner">
+              <view class="dc-tab" bindtap="onTabTap" data-tab="global"><text>全局</text></view>
+              <view class="dc-tab" bindtap="onTabTap" data-tab="banks"><text>题库</text></view>
+              <view class="dc-tab" bindtap="onTabTap" data-tab="mistakes"><text>错题</text></view>
+              <view class="dc-tab" bindtap="onTabTap" data-tab="favorites"><text>收藏</text></view>
+              <view class="dc-tab active"><text>标签</text></view>
+            </view>
+          </scroll-view>
+        </view>
+
+        <view class="dc-bento" aria-label="标签数据看板">
+          <view class="dc-card dc-span-4" aria-label="标签总览">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">标签总览</text>
+                <text class="dc-card-sub">标签让“题目资产”结构化：从复盘到专项训练，再到考试冲刺，都能复用同一套语义。</text>
+              </view>
+              <view class="dc-mini-btn" bindtap="onGoTagsCenter" aria-role="button"><text>标签中心</text></view>
+            </view>
+
+            <view class="dc-list">
+              <view class="dc-item">
+                <view class="dc-item-top">
+                  <view style="min-width:0;">
+                    <text class="dc-item-title">标签总数</text>
+                    <text class="dc-item-meta"> {{tags_kpis.all_tag_count}}（公共 {{tags_kpis.public_tag_count}} · 个人 {{tags_kpis.banks_tag_count}}）</text>
+                  </view>
+                </view>
+              </view>
+              <view class="dc-item">
+                <view class="dc-item-top">
+                  <view style="min-width:0;">
+                    <text class="dc-item-title">已打标签题目</text>
+                    <text class="dc-item-meta">{{tags_kpis.all_tagged_questions}}（公共 {{tags_kpis.public_tagged_questions}} · 个人 {{tags_kpis.banks_tagged_questions}}）</text>
+                  </view>
+                </view>
+              </view>
+              <view class="dc-item">
+                <view class="dc-item-top">
+                  <view style="min-width:0;">
+                    <text class="dc-item-title">标签覆盖率</text>
+                    <text class="dc-item-meta">{{tags_kpis.tagged_answered_coverage}}%（已做题中：有标签的比例）</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+
+            <view class="dc-item-actions" style="margin-top:20rpx;">
+              <view class="dc-mini-btn primary" bindtap="onGoTagsCenter" aria-role="button"><text>去整理标签</text></view>
+              <view class="dc-mini-btn" bindtap="onTabTap" data-tab="global" aria-role="button"><text>回全局</text></view>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-8" aria-label="标签共现网络">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">标签共现网络</text>
+                <text class="dc-card-sub">结构 × 共现：看清你的标签体系是否“可复用”，以及哪些标签正在成为主线。</text>
+              </view>
+            </view>
+            <view class="dc-chart lg" aria-label="标签共现网络图">
+              <ec-canvas id="dcTagGraphChart" canvas-id="dcTagGraphChart" ec="{{ecLazy}}" class="dc-echart"></ec-canvas>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-12 dc-lazy-card" wx:if="{{lazyStage < 2}}" id="dcLazyStage2Trigger" aria-label="继续下滑加载更多">
+            <text class="dc-lazy-title">继续下滑加载更多</text>
+            <text class="dc-lazy-sub">下方结构图与榜单将按需渲染</text>
+          </view>
+
+          <block wx:if="{{lazyStage >= 2}}">
+          <view class="dc-card dc-span-6" aria-label="标签结构（Treemap）">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">标签结构</text>
+                <text class="dc-card-sub">按题目数：大块代表“高频资产”，适合沉淀为专项。</text>
+              </view>
+            </view>
+            <view class="dc-chart lg" aria-label="标签结构 Treemap">
+              <ec-canvas id="dcTagTreemapChart" canvas-id="dcTagTreemapChart" ec="{{ecLazy}}" class="dc-echart"></ec-canvas>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-6" aria-label="标签 Top">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">标签 Top</text>
+                <text class="dc-card-sub">按题目数排序：优先把 Top 标签整理成“专项清单”。</text>
+              </view>
+            </view>
+            <view class="dc-chart lg" aria-label="标签 Top 图">
+              <ec-canvas id="dcTagTopChart" canvas-id="dcTagTopChart" ec="{{ecLazy}}" class="dc-echart"></ec-canvas>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-12" aria-label="标签质量（正确率/覆盖）">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">标签质量</text>
+                <text class="dc-card-sub">正确率 × 覆盖：把“高频且薄弱”的标签优先闭环。</text>
+              </view>
+            </view>
+            <view class="dc-chart lg" aria-label="标签质量散点图">
+              <ec-canvas id="dcTagAccuracyChart" canvas-id="dcTagAccuracyChart" ec="{{ecLazy}}" class="dc-echart"></ec-canvas>
+            </view>
+          </view>
+
+          <view class="dc-card dc-span-12" aria-label="标签列表（公共/个人）">
+            <view class="dc-card-head">
+              <view style="min-width:0;">
+                <text class="dc-h2">标签列表</text>
+                <text class="dc-card-sub">把标签当成“专题目录”：每次复习按标签推进，会越来越像自己的知识库。</text>
+              </view>
+            </view>
+
+            <view class="dc-bento" aria-label="标签列表分栏">
+              <view class="dc-span-6">
+                <view class="dc-card-head">
+                  <view style="min-width:0;">
+                    <text class="dc-h3">公共题库标签</text>
+                    <text class="dc-card-sub">可在标签中心按科目/题库继续下钻。</text>
+                  </view>
+                </view>
+                <view class="dc-list" wx:if="{{tags_public.length}}">
+                  <view class="dc-item" wx:for="{{tags_public}}" wx:for-item="t" wx:key="key">
+                    <view class="dc-item-top">
+                      <view style="min-width:0;">
+                        <text class="dc-item-title">{{t.tag}}</text>
+                        <text class="dc-item-meta">题目 {{t.count}} · 已做 {{t.answered}} · 正确率 {{t.accuracy}}% · 错题次数 {{t.mistakes_times}} · 收藏 {{t.favorites}}</text>
+                      </view>
+                      <view class="dc-item-actions">
+                        <view class="dc-mini-btn primary" bindtap="onGoTagCenterPublic" data-tag="{{t.tag}}" aria-role="button"><text>按标签练习</text></view>
+                        <view class="dc-mini-btn" bindtap="onGoTagsCenter" aria-role="button"><text>去中心</text></view>
+                      </view>
+                    </view>
+                    <view class="dc-bars" aria-hidden="true">
+                      <view class="dc-bar">
+                        <view class="dc-bar-inner" style="width: {{t.bar_count_pct}}%;"></view>
+                      </view>
+                      <view class="dc-bar secondary">
+                        <view class="dc-bar-inner" style="width: {{t.accuracy}}%;"></view>
+                      </view>
+                    </view>
+                  </view>
+                </view>
+                <view class="dc-empty" wx:else>你还没有在公共题库给题目打标签。</view>
+              </view>
+
+              <view class="dc-span-6">
+                <view class="dc-card-head">
+                  <view style="min-width:0;">
+                    <text class="dc-h3">个人题库标签</text>
+                    <text class="dc-card-sub">把个人题库标签对齐公共语义，复习更顺畅。</text>
+                  </view>
+                </view>
+                <view class="dc-list" wx:if="{{tags_banks.length}}">
+                  <view class="dc-item" wx:for="{{tags_banks}}" wx:for-item="t" wx:key="key">
+                    <view class="dc-item-top">
+                      <view style="min-width:0;">
+                        <text class="dc-item-title">{{t.tag}}</text>
+                        <text class="dc-item-meta">题目 {{t.count}} · 已做 {{t.answered}} · 正确率 {{t.accuracy}}% · 错题次数 {{t.mistakes_times}} · 收藏 {{t.favorites}}</text>
+                      </view>
+                      <view class="dc-item-actions">
+                        <view class="dc-mini-btn primary" bindtap="onGoTagCenterBanks" data-tag="{{t.tag}}" aria-role="button"><text>去中心下钻</text></view>
+                      </view>
+                    </view>
+                    <view class="dc-bars" aria-hidden="true">
+                      <view class="dc-bar">
+                        <view class="dc-bar-inner" style="width: {{t.bar_count_pct}}%;"></view>
+                      </view>
+                      <view class="dc-bar secondary">
+                        <view class="dc-bar-inner" style="width: {{t.accuracy}}%;"></view>
+                      </view>
+                    </view>
+                  </view>
+                </view>
+                <view class="dc-empty" wx:else>你还没有在个人题库给题目打标签。</view>
+              </view>
+            </view>
+          </view>
+          </block>
+        </view>
+
+        <view class="msg error" wx:if="{{errorMsg}}">
+          <text>{{errorMsg}}</text>
+        </view>
+        <view class="loading" wx:if="{{loading}}">
+          <text>正在加载数据...</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

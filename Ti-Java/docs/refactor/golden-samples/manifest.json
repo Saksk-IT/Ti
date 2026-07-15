@@ -1,0 +1,16 @@
+{
+  "captured_at": "2026-07-16",
+  "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "isolation": "temporary SQLite database; no production or local persistent database access",
+  "redaction": "test-only identity; passwords replaced in recorded requests; cookies and request IDs omitted",
+  "samples": [
+    "01-identity.json",
+    "02-catalog.json",
+    "03-learning.json",
+    "04-assessment.json",
+    "05-community.json",
+    "06-campus.json",
+    "07-operations.json"
+  ],
+  "all_success": true
+}

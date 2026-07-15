@@ -1,0 +1,26 @@
+<view class="sticky-stack">
+  <view class="basebar detail-basebar" role="tablist" aria-label="题库详情子页">
+    <view class="tabs">
+      <view
+        class="tab {{activeTab===item.key ? 'active' : ''}}"
+        wx:for="{{tabs}}"
+        wx:key="key"
+        bindtap="onTabTap"
+        data-tab="{{item.key}}"
+      >
+        <text>{{item.label}}</text>
+      </view>
+    </view>
+    <view class="tab-order-btn" bindtap="onOpenTabOrder" aria-role="button" aria-label="自定义排序">
+      <image class="tab-order-icon" src="/images/icons/list.svg" mode="aspectFit"></image>
+      <text class="tab-order-text">排序</text>
+    </view>
+  </view>
+
+  <view class="basebar reinforce-subbar" wx:if="{{showReinforceBar}}" role="tablist" aria-label="加强子页">
+    <view class="tabs">
+      <view class="tab {{reinforceSubTab==='wrong' ? 'active' : ''}}" bindtap="onReinforceSubTabTap" data-subtab="wrong"><text>错题</text></view>
+      <view class="tab {{reinforceSubTab==='similar' ? 'active' : ''}}" bindtap="onReinforceSubTabTap" data-subtab="similar"><text>相似题</text></view>
+    </view>
+  </view>
+</view>

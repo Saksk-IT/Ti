@@ -1,0 +1,48 @@
+<!-- bank-add-v2.wxml - 对齐 Web /user/banks/add（新建题库） -->
+<view class="page-root {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="新建题库" back="{{true}}" color="var(--app-nav-fg)" background="var(--app-nav-bg)">
+    <view slot="left" class="nav-left">
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <view class="page-container">
+    <scroll-view class="content-area" scroll-y bounces="{{false}}">
+      <view class="container">
+        <view class="card">
+          <view class="card-head">
+            <text class="card-title">新建题库</text>
+            <text class="card-sub">用于专项沉淀与维护。创建后可进入题库详情页继续导入题目与配置练习。</text>
+          </view>
+
+          <view class="form">
+            <view class="field">
+              <text class="label">题库名称</text>
+              <input class="input" placeholder="例如：数据结构专项" value="{{name}}" maxlength="50" bindinput="onNameInput" />
+              <text class="hint">2-50 个字符</text>
+            </view>
+
+            <view class="field">
+              <text class="label">题库描述（可选）</text>
+              <textarea class="textarea" placeholder="简单描述用途、范围、来源等" value="{{description}}" maxlength="200" bindinput="onDescInput" auto-height />
+              <text class="hint">最多 200 个字符</text>
+            </view>
+
+            <view class="actions">
+              <view class="btn btn-primary {{creating ? 'disabled' : ''}}" bindtap="onSubmit">
+                <text>{{creating ? '创建中...' : '创建题库'}}</text>
+              </view>
+              <view class="btn" bindtap="onOpenWebCreate" wx:if="{{!creating}}"><text>复制网页链接</text></view>
+              <view class="btn" bindtap="onCancel" wx:if="{{!creating}}"><text>取消</text></view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

@@ -1,0 +1,116 @@
+<!--settings-account-security-v2.wxml - -->
+<view class="page-root mine-linked-page {{themeClass}} {{themeStyleClass}} {{fontStyleClass}}">
+  <navigation-bar title="账号安全" back="{{true}}" compact="{{true}}" color="var(--app-nav-fg)" background="transparent">
+    <view slot="right" class="nav-right">
+      <view class="icon-btn" bindtap="onCycleThemeModeTap" aria-role="button" aria-label="切换主题模式">
+        <image class="icon" src="{{isDarkMode ? '/images/icons/moon.svg' : '/images/icons/sun.svg'}}" mode="aspectFit"></image>
+        <view class="theme-auto" wx:if="{{themeMode === 'system'}}">
+          <text>A</text>
+        </view>
+      </view>
+    </view>
+  </navigation-bar>
+
+  <view class="page-container">
+    <scroll-view class="content-area" scroll-y bounces="{{false}}" refresher-enabled="{{true}}" bindrefresherrefresh="onPullDownRefresh">
+      <view class="container">
+        <view class="card hero" aria-label="账号安全概览">
+          <text class="hero-title">账号安全</text>
+          <text class="hero-sub">用于修改或设置登录密码。</text>
+        </view>
+
+        <view class="subtabs" aria-label="账号管理子导航">
+          <view class="subtab {{accTab==='profile' ? 'active' : ''}}" bindtap="onAccountSubTap" data-key="profile"><text>个人资料</text></view>
+          <view class="subtab {{accTab==='security' ? 'active' : ''}}" bindtap="onAccountSubTap" data-key="security"><text>账号安全</text></view>
+          <view class="subtab {{accTab==='bindings' ? 'active' : ''}}" bindtap="onAccountSubTap" data-key="bindings"><text>账号绑定</text></view>
+        </view>
+
+        <view class="msg error" wx:if="{{errorMsg}}">
+          <text>{{errorMsg}}</text>
+        </view>
+        <view class="msg" wx:if="{{msg}}">
+          <text>{{msg}}</text>
+        </view>
+
+        <view class="card section-card" aria-label="密码设置">
+          <view class="section-head">
+            <view class="section-head-left">
+              <text class="section-title">密码</text>
+              <text class="section-sub">{{pwdSub}}</text>
+            </view>
+            <view class="status-chip" aria-label="密码状态">
+              <text>{{pwdChip}}</text>
+            </view>
+          </view>
+
+          <view class="divider"></view>
+
+          <view class="form-grid">
+            <view class="acc-field" wx:if="{{hasPasswordSet}}">
+              <text class="acc-label">当前密码</text>
+              <view class="input-row">
+                <input
+                  class="acc-input"
+                  value="{{currentPassword}}"
+                  password="{{!showCurrent}}"
+                  placeholder="请输入当前密码"
+                  placeholder-class="placeholder"
+                  bindinput="onCurrentInput"
+                />
+                <view class="mini-btn" bindtap="onToggleShow" data-target="current" aria-role="button" aria-label="显示或隐藏当前密码">
+                  <text>{{showCurrent ? '隐藏' : '显示'}}</text>
+                </view>
+              </view>
+            </view>
+
+            <view class="acc-field">
+              <text class="acc-label">新密码</text>
+              <view class="input-row">
+                <input
+                  class="acc-input"
+                  value="{{newPassword}}"
+                  password="{{!showNew}}"
+                  placeholder="请输入新密码"
+                  placeholder-class="placeholder"
+                  bindinput="onNewInput"
+                />
+                <view class="mini-btn" bindtap="onToggleShow" data-target="new" aria-role="button" aria-label="显示或隐藏新密码">
+                  <text>{{showNew ? '隐藏' : '显示'}}</text>
+                </view>
+              </view>
+              <text class="acc-help">至少 8 位，且同时包含字母与数字。</text>
+            </view>
+
+            <view class="acc-field">
+              <text class="acc-label">确认新密码</text>
+              <view class="input-row">
+                <input
+                  class="acc-input"
+                  value="{{confirmPassword}}"
+                  password="{{!showConfirm}}"
+                  placeholder="请再次输入新密码"
+                  placeholder-class="placeholder"
+                  bindinput="onConfirmInput"
+                />
+                <view class="mini-btn" bindtap="onToggleShow" data-target="confirm" aria-role="button" aria-label="显示或隐藏确认密码">
+                  <text>{{showConfirm ? '隐藏' : '显示'}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view class="divider"></view>
+
+          <view class="form-actions">
+            <view class="btn btn-primary {{submitting ? 'disabled' : ''}}" bindtap="onSubmit" aria-role="button" aria-label="提交密码">
+              <text>{{submitText}}</text>
+            </view>
+            <view class="btn btn-quiet {{submitting ? 'disabled' : ''}}" bindtap="onReset" aria-role="button" aria-label="清空表单">
+              <text>清空</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>
