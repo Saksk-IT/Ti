@@ -12,6 +12,7 @@ from app.core.utils.decorators import auth_required, current_user_id
 
 from ..schemas import EduScheduleCredentialSchema, EduScheduleQuerySchema
 from ..services.client import ScheduleAuthError, ScheduleClientError
+from ..services.grade_snapshot_batch import summarize_grade_snapshot_batch
 from ..services.query_tasks import EduScheduleQueryTaskService
 from ..services.schedule_service import EduScheduleService, user_safe_error
 from ..services.webvpn_refresh import (
@@ -44,6 +45,8 @@ def _task_response(task: dict, message: str):
             "results": task.get("results") or [],
             "snapshots": task.get("snapshots") or [],
             "credential": task.get("credential") or {},
+            "grade_overview": task.get("grade_overview"),
+            "academic_year_averages": task.get("academic_year_averages") or [],
         },
         message=message,
     )
@@ -59,15 +62,28 @@ def _recent_tasks_payload(user_id: int) -> dict:
     }
 
 
+def _grade_cache_payload(user_id: int) -> tuple[list[dict], dict | None, list[dict]]:
+    snapshots = EduScheduleService.list_grade_snapshots(user_id)
+    overview, year_averages = summarize_grade_snapshot_batch(
+        user_id,
+        EduScheduleService.get_bound_account_key(user_id),
+        snapshots,
+    )
+    return snapshots, overview, year_averages
+
+
 @edu_schedule_api_bp.route("/edu-schedule/status", methods=["GET"])
 @auth_required
 def api_schedule_status():
     user_id = int(current_user_id() or 0)
+    grade_snapshots, grade_overview, year_averages = _grade_cache_payload(user_id)
     return success_response(
         data={
             "credential": EduScheduleService.credential_status(user_id),
             "snapshots": EduScheduleService.list_snapshots(user_id),
-            "grade_snapshots": EduScheduleService.list_grade_snapshots(user_id),
+            "grade_snapshots": grade_snapshots,
+            "grade_overview": grade_overview,
+            "academic_year_averages": year_averages,
             "recent_tasks": _recent_tasks_payload(user_id),
         }
     )
@@ -208,4 +224,11 @@ def api_list_schedule_snapshots():
 @auth_required
 def api_list_grade_snapshots():
     user_id = int(current_user_id() or 0)
-    return success_response(data={"snapshots": EduScheduleService.list_grade_snapshots(user_id)})
+    snapshots, grade_overview, year_averages = _grade_cache_payload(user_id)
+    return success_response(
+        data={
+            "snapshots": snapshots,
+            "grade_overview": grade_overview,
+            "academic_year_averages": year_averages,
+        }
+    )

@@ -9,6 +9,7 @@ import json
 import re
 import time
 from dataclasses import dataclass
+from decimal import Decimal
 from http.cookiejar import Cookie
 from ipaddress import ip_address, ip_network
 from typing import Any, Dict
@@ -16,6 +17,8 @@ from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlunparse
 
 import requests
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
+
+from .grade_overview import GradeOverviewParseError, parse_official_gpa_html
 
 
 class ScheduleClientError(RuntimeError):
@@ -43,6 +46,14 @@ _BLOCKED_NETWORKS = tuple(
 
 _DEFAULT_GRADE_PATH = "/cjcx/cjcx_cxXsgrcj.html?doType=query&gnmkdm=N305005"
 _LEGACY_GRADE_PATH = "/cjcx/cjcx_cxDgXscj.html?doType=query&gnmkdm=N305005"
+_DEFAULT_GRADE_OVERVIEW_PATH = (
+    "/xsxy/xsxyqk_cxXsxyqkIndex.html?gnmkdm=N105515&layout=default"
+)
+_WEBVPN_COOKIE_NAMES = frozenset(
+    {"_astraeus_session", "_webvpn_key", "webvpn_username", "serverid"}
+)
+_JWXT_SHARED_COOKIE_NAMES = frozenset({"_webvpn_key", "webvpn_username"})
+_JWXT_SESSION_COOKIE_NAMES = frozenset({"jsessionid", "route"})
 WEBVPN_INTERACTIVE_CHALLENGE_MESSAGE = "WebVPN 登录需要验证码或二次验证，无法仅凭账号密码自动登录"
 
 
@@ -59,9 +70,25 @@ class ClientConfig:
     jwxt_login_path: str
     schedule_path: str
     grade_path: str
+    grade_overview_path: str
     request_timeout: int
     verify_tls: bool
     allowed_hosts: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class AuthenticatedGradeResult:
+    """保留本次成绩查询的已认证会话，供累计 GPA 查询复用。"""
+
+    payload: Dict[str, Any]
+    client: "JWXTClient"
+    session: requests.Session
+
+    def fetch_official_gpa(self) -> Decimal:
+        return self.client._query_grade_overview(self.session)
+
+    def close(self) -> None:
+        self.session.close()
 
 
 def _validate_url(url: str, allowed_hosts: tuple[str, ...]) -> str:
@@ -99,6 +126,7 @@ class JWXTClient:
             jwxt_login_path=str(config.get("jwxt_login_path") or "/xtgl/login_slogin.html"),
             schedule_path=str(config.get("schedule_path") or "/kbcx/xskbcx_cxXsgrkb.html?gnmkdm=N253508"),
             grade_path=str(config.get("grade_path") or _DEFAULT_GRADE_PATH),
+            grade_overview_path=str(config.get("grade_overview_path") or _DEFAULT_GRADE_OVERVIEW_PATH),
             request_timeout=int(config.get("request_timeout") or 20),
             verify_tls=bool(config.get("verify_tls", True)),
             allowed_hosts=allowed_hosts,
@@ -131,6 +159,13 @@ class JWXTClient:
         return self._query_grades(session, xnm, xqm)
 
     def fetch_all_grades(self, username: str, password: str) -> Dict[str, Any]:
+        result = self.fetch_all_grades_authenticated(username, password)
+        try:
+            return result.payload
+        finally:
+            result.close()
+
+    def fetch_all_grades_authenticated(self, username: str, password: str) -> AuthenticatedGradeResult:
         if not self.config.enabled:
             raise ScheduleClientError("成绩查询功能未开启")
         session = requests.Session()
@@ -138,10 +173,15 @@ class JWXTClient:
             "User-Agent": "Mozilla/5.0 (compatible; TiEduSchedule/1.0)",
             "Accept-Language": "zh-CN,zh;q=0.9",
         })
-        if self.config.use_webvpn:
-            self._prepare_webvpn(session)
-        self._login_jwxt(session, username, password)
-        return self._query_grades(session, "", "")
+        try:
+            if self.config.use_webvpn:
+                self._prepare_webvpn(session)
+            self._login_jwxt(session, username, password)
+            payload = self._query_grades(session, "", "")
+            return AuthenticatedGradeResult(payload=payload, client=self, session=session)
+        except Exception:
+            session.close()
+            raise
 
     def _request(self, session: requests.Session, method: str, url: str, **kwargs):
         follow_redirects = bool(kwargs.pop("allow_redirects", False))
@@ -182,9 +222,16 @@ class JWXTClient:
 
     def _prepare_webvpn(self, session: requests.Session) -> None:
         if self.config.webvpn_cookie:
-            _load_cookie_header(session, self.config.webvpn_cookie, self.config.webvpn_base_url)
-            _load_cookie_header(session, self.config.webvpn_cookie, self.config.jwxt_base_url)
-            return
+            webvpn_cookie = sanitize_webvpn_cookie_header(self.config.webvpn_cookie)
+            if webvpn_cookie:
+                _load_cookie_header(session, webvpn_cookie, self.config.webvpn_base_url)
+                jwxt_cookie = _filter_cookie_header(
+                    self.config.webvpn_cookie,
+                    _JWXT_SHARED_COOKIE_NAMES,
+                )
+                if jwxt_cookie:
+                    _load_cookie_header(session, jwxt_cookie, self.config.jwxt_base_url)
+                return
         if not self.config.webvpn_username or not self.config.webvpn_password:
             raise ScheduleAuthError("WebVPN 未配置可用登录态")
 
@@ -217,6 +264,7 @@ class JWXTClient:
             raise ScheduleAuthError("WebVPN 账号或密码校验失败")
 
     def _login_jwxt(self, session: requests.Session, username: str, password: str) -> None:
+        self._clear_jwxt_session_cookies(session)
         login_url = urljoin(self.config.jwxt_base_url.rstrip("/") + "/", self.config.jwxt_login_path.lstrip("/"))
         page = self._request(session, "GET", login_url, allow_redirects=True)
         if _looks_logged_in(page.text):
@@ -233,6 +281,20 @@ class JWXTClient:
         result = self._request(session, "POST", login_url, data=data, allow_redirects=True)
         if "用户名或密码" in result.text or "登录" in result.url and "login_slogin" in result.url:
             raise ScheduleAuthError("教务系统账号或密码错误")
+
+    def _clear_jwxt_session_cookies(self, session: requests.Session) -> None:
+        jwxt_host = urlparse(self.config.jwxt_base_url).hostname or ""
+        for cookie in list(session.cookies):
+            if cookie.name.lower() not in _JWXT_SESSION_COOKIE_NAMES:
+                continue
+            cookie_domain = cookie.domain.lstrip(".").lower()
+            normalized_jwxt_host = jwxt_host.lower()
+            if not (
+                normalized_jwxt_host == cookie_domain
+                or normalized_jwxt_host.endswith(f".{cookie_domain}")
+            ):
+                continue
+            session.cookies.clear(domain=cookie.domain, path=cookie.path, name=cookie.name)
 
     def _encrypt_jwxt_password(self, session: requests.Session, password: str) -> str:
         key_url = urljoin(self.config.jwxt_base_url.rstrip("/") + "/", "xtgl/login_getPublicKey.html")
@@ -305,6 +367,37 @@ class JWXTClient:
             last_error = ScheduleClientError("教务成绩数据不完整")
 
         raise ScheduleClientError("教务成绩返回格式不正确") from last_error
+
+    def _query_grade_overview(self, session: requests.Session) -> Decimal:
+        url = urljoin(
+            self.config.jwxt_base_url.rstrip("/") + "/",
+            self.config.grade_overview_path.lstrip("/"),
+        )
+        response = self._request(
+            session,
+            "GET",
+            url,
+            headers={
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Referer": self.config.jwxt_base_url.rstrip("/") + "/",
+            },
+            allow_redirects=True,
+        )
+        if int(getattr(response, "status_code", 200) or 200) >= 400:
+            raise ScheduleClientError("官方 GPA 页面请求失败")
+        response_url = str(getattr(response, "url", "") or "")
+        response_text = str(getattr(response, "text", "") or "")
+        if "login_slogin" in response_url or (
+            "login_slogin" in response_text and "用户登录" in response_text
+        ):
+            raise ScheduleAuthError("教务系统登录态已失效")
+        content_type = str(getattr(response, "headers", {}).get("Content-Type", "") or "").lower()
+        if content_type and "html" not in content_type and "xml" not in content_type:
+            raise ScheduleClientError("官方 GPA 页面返回格式不正确")
+        try:
+            return parse_official_gpa_html(response_text)
+        except GradeOverviewParseError as exc:
+            raise ScheduleClientError(str(exc)) from exc
 
 
 def _extract_input_value(html_text: str, name: str) -> str:
@@ -400,6 +493,24 @@ def _load_cookie_header(session: requests.Session, cookie_header: str, base_url:
             rfc2109=False,
         )
         session.cookies.set_cookie(cookie)
+
+
+def _filter_cookie_header(cookie_text: str, allowed_names: frozenset[str]) -> str:
+    pairs = []
+    for item in _normalize_cookie_header(cookie_text).split(";"):
+        if "=" not in item:
+            continue
+        name, value = item.split("=", 1)
+        normalized_name = name.strip()
+        if normalized_name.lower() not in allowed_names:
+            continue
+        pairs.append(f"{normalized_name}={value.strip()}")
+    return "; ".join(pairs)
+
+
+def sanitize_webvpn_cookie_header(cookie_text: str) -> str:
+    """仅保留 WebVPN 登录所需 Cookie，拒绝持久化教务会话 Cookie。"""
+    return _filter_cookie_header(cookie_text, _WEBVPN_COOKIE_NAMES)
 
 
 def _normalize_cookie_header(cookie_text: str) -> str:

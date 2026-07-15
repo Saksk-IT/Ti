@@ -36,7 +36,12 @@ from .system import (
     SystemConfig, UserSubject, UserQuestionTagItem,
     DuplicateCheckRecord, ReinforceSimilarCache, SchemaMigration,
 )
-from .edu_schedule import EduGradeSnapshot, EduScheduleCredential, EduScheduleSnapshot
+from .edu_schedule import (
+    EduGradeOverviewSnapshot,
+    EduGradeSnapshot,
+    EduScheduleCredential,
+    EduScheduleSnapshot,
+)
 
 __all__ = [
     'db',
@@ -74,4 +79,5 @@ __all__ = [
     'DuplicateCheckRecord', 'ReinforceSimilarCache', 'SchemaMigration',
     # edu schedule
     'EduScheduleCredential', 'EduScheduleSnapshot', 'EduGradeSnapshot',
+    'EduGradeOverviewSnapshot',
 ]

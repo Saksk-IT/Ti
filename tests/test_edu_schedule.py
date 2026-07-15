@@ -744,7 +744,10 @@ def test_admin_can_save_webvpn_schedule_config_masked(app, seed_user):
             "webvpn_base_url": "https://webvpn.synu.edu.cn",
             "webvpn_username": "vpn-admin",
             "webvpn_password": "VpnSecret123!",
-            "webvpn_cookie": "JSESSIONID=abc; route=def",
+            "webvpn_cookie": (
+                "JSESSIONID=abc; route=def; _webvpn_key=vpn-key; "
+                "webvpn_username=vpn-user"
+            ),
             "jwxt_base_url": "https://jwxt.webvpn.synu.edu.cn/jwglxt",
             "request_timeout": 20,
             "verify_tls": True,
@@ -757,7 +760,15 @@ def test_admin_can_save_webvpn_schedule_config_masked(app, seed_user):
     body = response.get_json()
     assert body["status"] == "success"
     assert body["data"]["webvpn_password"] == "Vpn****23!"
-    assert body["data"]["webvpn_cookie"] == "JSE****def"
+    assert body["data"]["webvpn_cookie"] == "_we****ser"
+
+    with app.app_context():
+        from app.modules.admin.services.system_config_service import SystemConfigService
+
+        saved_cookie = SystemConfigService.get_edu_schedule_config()["webvpn_cookie"]
+    assert saved_cookie == "_webvpn_key=vpn-key; webvpn_username=vpn-user"
+    assert "JSESSIONID" not in saved_cookie
+    assert "route=" not in saved_cookie
 
     page = client.get("/admin/settings/edu-schedule")
     assert page.status_code == 200
@@ -2210,10 +2221,22 @@ def test_query_multiple_terms_saves_grade_snapshots(app, auth_client, monkeypatc
         def __init__(self, config):
             self.config = config
 
-        def fetch_all_grades(self, username, password):
+        def fetch_all_grades_authenticated(self, username, password):
             assert username == "stu_demo_2026"
             assert password == "DemoSecret123!"
-            return _sample_all_grade_payload()
+
+            class Result:
+                payload = _sample_all_grade_payload()
+
+                @staticmethod
+                def fetch_official_gpa():
+                    return 3.67
+
+                @staticmethod
+                def close():
+                    return None
+
+            return Result()
 
     monkeypatch.setattr(schedule_service, "JWXTClient", FakeJWXTClient)
     monkeypatch.setattr(
@@ -2278,13 +2301,14 @@ def test_user_snapshot_lists_keep_latest_entry_per_term(app, auth_client, seed_u
 
     user_id = int(seed_user["id"])
     snapshot_fixtures = [
-        ("schedule", "旧课表课程", "2026-01-01 08:00:00"),
-        ("schedule", "最新课表课程", "2026-01-01 09:00:00"),
-        ("grades", "旧成绩课程", "2026-01-01 08:30:00"),
-        ("grades", "最新成绩课程", "2026-01-01 09:30:00"),
+        ("schedule", "旧课表课程", "2039-01-01 08:00:00"),
+        ("schedule", "最新课表课程", "2039-01-01 09:00:00"),
+        ("grades", "旧成绩课程", "2039-01-01 08:30:00"),
+        ("grades", "最新成绩课程", "2039-01-01 09:30:00"),
     ]
 
     with app.app_context():
+        EduScheduleService.save_credentials(user_id, "stu_demo_2026", "DemoSecret123!")
         for kind, course_name, fetched_at in snapshot_fixtures:
             if kind == "schedule":
                 raw = _sample_schedule_payload(xnm="2026", xqm="12")
@@ -2306,6 +2330,8 @@ def test_user_snapshot_lists_keep_latest_entry_per_term(app, auth_client, seed_u
                     "12",
                     normalize_grade_payload(raw, "2026", "12"),
                     raw,
+                    username="stu_demo_2026",
+                    password="DemoSecret123!",
                 )
                 table_name = "edu_grade_snapshots"
 

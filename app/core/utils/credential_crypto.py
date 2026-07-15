@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import hmac
 import os
 
 from cryptography.fernet import Fernet, InvalidToken
@@ -61,3 +62,12 @@ def decrypt_secret(value: str) -> str:
 
 def is_encrypted_secret(value: str) -> bool:
     return bool(value) and str(value).startswith(_PREFIX)
+
+
+def credential_fingerprint(value: str, *, purpose: str = "credential") -> str:
+    """生成不可逆、可稳定比对的凭据标识，不保存凭据明文。"""
+    normalized = str(value or "").strip()
+    signing_key = hashlib.sha256(
+        f"ti:{purpose}:{_secret_material()}".encode("utf-8")
+    ).digest()
+    return hmac.new(signing_key, normalized.encode("utf-8"), hashlib.sha256).hexdigest()

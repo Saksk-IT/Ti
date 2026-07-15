@@ -20,6 +20,28 @@
       </form>
     </div>
 
+    <section class="grade-overview" aria-labelledby="gradeOverviewLabel" aria-live="polite">
+      <div class="grade-overview-main">
+        <span id="gradeOverviewLabel">当前所有课程平均学分绩点（GPA）</span>
+        <strong id="gradeOverviewValue">--</strong>
+      </div>
+      <div class="grade-overview-meta">
+        <span id="gradeOverviewSource">刷新全部成绩后显示官方结果</span>
+        <span id="gradeOverviewUpdated"></span>
+        <span id="gradeOverviewCalculated" hidden></span>
+      </div>
+    </section>
+
+    <section class="academic-year-summary" aria-labelledby="academicYearAverageLabel" aria-live="polite">
+      <div class="academic-year-summary-head">
+        <h2 id="academicYearAverageLabel">每学年学分加权平均分</h2>
+        <span>仅纳入有绩点课程，按教务百分制折算分计算</span>
+      </div>
+      <div class="academic-year-average-list" id="academicYearAverages">
+        <p class="academic-year-average-empty">刷新全部成绩后显示</p>
+      </div>
+    </section>
+
     <div class="grade-state" id="gradeState" role="status"></div>
     <div class="query-progress" id="gradeQueryProgress" hidden>
       <div class="query-progress-head">
@@ -69,6 +91,8 @@
     gap: 18px;
   }
   .grade-toolbar,
+  .grade-overview,
+  .academic-year-summary,
   .term-panel {
     border: 1px solid var(--app-border);
     background: var(--app-surface);
@@ -77,6 +101,84 @@
   }
   .grade-toolbar {
     padding: 16px;
+  }
+  .grade-overview {
+    margin-top: 18px;
+    padding: 18px;
+    display: grid;
+    grid-template-columns: minmax(210px, 1fr) minmax(220px, auto);
+    gap: 16px;
+    align-items: end;
+  }
+  .grade-overview-main,
+  .grade-overview-meta {
+    display: grid;
+    gap: 6px;
+  }
+  .grade-overview-main span,
+  .grade-overview-meta {
+    color: var(--app-muted);
+    font-size: 13px;
+  }
+  .grade-overview-main strong {
+    color: var(--app-text);
+    font-size: clamp(34px, 6vw, 52px);
+    line-height: 1;
+    font-weight: 950;
+    font-variant-numeric: tabular-nums;
+  }
+  .grade-overview-meta {
+    justify-items: end;
+    text-align: right;
+  }
+  #gradeOverviewSource {
+    color: var(--app-text);
+    font-weight: 850;
+  }
+  .academic-year-summary {
+    padding: 18px;
+  }
+  .academic-year-summary-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .academic-year-summary-head h2 {
+    margin: 0;
+    color: var(--app-text);
+    font-size: 17px;
+  }
+  .academic-year-summary-head span,
+  .academic-year-average-empty,
+  .academic-year-average-meta {
+    color: var(--app-muted);
+    font-size: 13px;
+  }
+  .academic-year-average-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    border-top: 1px solid var(--app-border);
+  }
+  .academic-year-average-item {
+    display: grid;
+    gap: 5px;
+    padding: 14px 12px 4px 0;
+  }
+  .academic-year-average-item strong {
+    color: var(--app-text);
+    font-size: 30px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .academic-year-average-title {
+    color: var(--app-text);
+    font-size: 14px;
+    font-weight: 850;
+  }
+  .academic-year-average-empty {
+    margin: 14px 0 0;
   }
   .grade-form {
     display: grid;
@@ -302,6 +404,20 @@
     .grade-toolbar {
       padding: 12px;
     }
+    .grade-overview {
+      grid-template-columns: 1fr;
+      padding: 14px;
+    }
+    .academic-year-summary {
+      padding: 14px;
+    }
+    .academic-year-summary-head {
+      display: grid;
+    }
+    .grade-overview-meta {
+      justify-items: start;
+      text-align: left;
+    }
   }
 </style>
 {% include "edu_schedule/_query_progress_styles.html" %}
@@ -315,6 +431,11 @@
   const state = document.getElementById('gradeState');
   const results = document.getElementById('gradeResults');
   const submitBtn = document.getElementById('gradeSubmit');
+  const gradeOverviewValue = document.getElementById('gradeOverviewValue');
+  const gradeOverviewSource = document.getElementById('gradeOverviewSource');
+  const gradeOverviewUpdated = document.getElementById('gradeOverviewUpdated');
+  const gradeOverviewCalculated = document.getElementById('gradeOverviewCalculated');
+  const academicYearAverages = document.getElementById('academicYearAverages');
   const queryProgress = document.getElementById('gradeQueryProgress');
   const queryProgressStatus = document.getElementById('gradeQueryProgressStatus');
   const queryProgressBar = document.getElementById('gradeQueryProgressBar');
@@ -351,6 +472,66 @@
   function setState(text, type) {
     state.textContent = text || '';
     state.className = type ? 'grade-state ' + type : 'grade-state';
+  }
+
+  function formatGpa(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number.toFixed(2) : '--';
+  }
+
+  function renderGradeOverview(overview) {
+    if (!overview || overview.display_gpa === null || overview.display_gpa === undefined) {
+      gradeOverviewValue.textContent = '--';
+      gradeOverviewSource.textContent = '刷新全部成绩后显示官方结果';
+      gradeOverviewUpdated.textContent = '';
+      gradeOverviewCalculated.textContent = '';
+      gradeOverviewCalculated.hidden = true;
+      return;
+    }
+
+    gradeOverviewValue.textContent = formatGpa(overview.display_gpa);
+    gradeOverviewSource.textContent = overview.source_label || (
+      overview.source === 'official' ? '教务系统官方' : '系统估算'
+    );
+    const fetchedAt = overview.fetched_at ? new Date(overview.fetched_at) : null;
+    gradeOverviewUpdated.textContent = fetchedAt && !Number.isNaN(fetchedAt.getTime())
+      ? '更新时间：' + fetchedAt.toLocaleString('zh-CN', { hour12: false })
+      : '';
+    const hasCalculated = overview.source === 'official'
+      && overview.calculated_gpa !== null
+      && overview.calculated_gpa !== undefined;
+    gradeOverviewCalculated.hidden = !hasCalculated;
+    gradeOverviewCalculated.textContent = hasCalculated
+      ? '系统估算：' + formatGpa(overview.calculated_gpa) + '（仅供核对）'
+      : '';
+  }
+
+  function renderAcademicYearAverages(items) {
+    academicYearAverages.replaceChildren();
+    const rows = Array.isArray(items) ? items : [];
+    if (!rows.length) {
+      const empty = document.createElement('p');
+      empty.className = 'academic-year-average-empty';
+      empty.textContent = '刷新全部成绩后显示';
+      academicYearAverages.appendChild(empty);
+      return;
+    }
+    rows.forEach((item) => {
+      const row = document.createElement('div');
+      row.className = 'academic-year-average-item';
+      const title = document.createElement('span');
+      title.className = 'academic-year-average-title';
+      title.textContent = (item.year_name || item.xnm || '未知学年')
+        + ' · 第' + (item.year_number || '-') + '学年';
+      const value = document.createElement('strong');
+      value.textContent = formatGpa(item.weighted_average);
+      const meta = document.createElement('span');
+      meta.className = 'academic-year-average-meta';
+      meta.textContent = '纳入 ' + (item.included_course_count || 0) + ' 门 · '
+        + formatGpa(item.included_credits) + ' 学分';
+      row.append(title, value, meta);
+      academicYearAverages.appendChild(row);
+    });
   }
 
 {% include "edu_schedule/_query_replace_helpers.html" %}
@@ -523,6 +704,12 @@
       throw new Error('查询任务状态不正确');
     }
     rememberActiveTask(task);
+    if (Object.prototype.hasOwnProperty.call(task, 'grade_overview')) {
+      renderGradeOverview(task.grade_overview);
+    }
+    if (Object.prototype.hasOwnProperty.call(task, 'academic_year_averages')) {
+      renderAcademicYearAverages(task.academic_year_averages);
+    }
     renderTaskProgress(task);
     if (task.status === 'cancelled') {
       stopTaskPolling();
@@ -640,6 +827,8 @@
       return;
     }
     renderResults(data.data && data.data.results);
+    renderGradeOverview(data.data && data.data.grade_overview);
+    renderAcademicYearAverages(data.data && data.data.academic_year_averages);
     setState('全部成绩已同步', '');
   }
 
@@ -663,6 +852,8 @@
       const data = await response.json();
       if (data.status !== 'success') return;
       const statusData = data.data || {};
+      renderGradeOverview(statusData.grade_overview);
+      renderAcademicYearAverages(statusData.academic_year_averages);
       const credential = statusData.credential;
       const snapshots = statusData.grade_snapshots;
       if (credential && credential.has_credentials) {

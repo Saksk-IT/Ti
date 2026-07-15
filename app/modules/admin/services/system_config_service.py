@@ -647,6 +647,7 @@ class SystemConfigService:
     @staticmethod
     def save_edu_schedule_config(data: Dict[str, Any], admin_id: Optional[int] = None) -> Dict[str, Any]:
         from app.core.utils.credential_crypto import encrypt_secret
+        from app.modules.edu_schedule.services.client import sanitize_webvpn_cookie_header
 
         plain_fields = {
             'edu_schedule_enabled': 'true' if _as_bool(data.get('enabled'), False) else 'false',
@@ -679,10 +680,13 @@ class SystemConfigService:
         for key, value in plain_fields.items():
             SystemConfigService.update_config(key, value, descriptions[key], admin_id)
 
+        cookie_value = str(data.get('webvpn_cookie') or '')
+        if cookie_value and not SystemConfigService.is_masked_secret(cookie_value):
+            cookie_value = sanitize_webvpn_cookie_header(cookie_value)
         secret_fields = {
             'edu_schedule_webvpn_username': str(data.get('webvpn_username') or '').strip(),
             'edu_schedule_webvpn_password': str(data.get('webvpn_password') or ''),
-            'edu_schedule_webvpn_cookie': str(data.get('webvpn_cookie') or ''),
+            'edu_schedule_webvpn_cookie': cookie_value,
         }
         for key, value in secret_fields.items():
             if SystemConfigService.is_masked_secret(value):
@@ -694,8 +698,9 @@ class SystemConfigService:
     @staticmethod
     def save_edu_schedule_webvpn_cookie(cookie_header: str, admin_id: Optional[int] = None) -> Dict[str, Any]:
         from app.core.utils.credential_crypto import encrypt_secret
+        from app.modules.edu_schedule.services.client import sanitize_webvpn_cookie_header
 
-        value = str(cookie_header or '').strip()
+        value = sanitize_webvpn_cookie_header(str(cookie_header or '').strip())
         SystemConfigService.update_config(
             'edu_schedule_webvpn_cookie',
             encrypt_secret(value) if value else '',

@@ -803,6 +803,7 @@ def delete_user(user_id):
         db.session.execute(text('DELETE FROM edu_schedule_credentials WHERE user_id=:uid'), _p)
         db.session.execute(text('DELETE FROM edu_schedule_snapshots WHERE user_id=:uid'), _p)
         db.session.execute(text('DELETE FROM edu_grade_snapshots WHERE user_id=:uid'), _p)
+        db.session.execute(text('DELETE FROM edu_grade_overview_snapshots WHERE user_id=:uid'), _p)
 
         # 7. 更新引用该用户的字段（SET NULL 处理）
         db.session.execute(text('UPDATE questions SET created_by=NULL WHERE created_by=:uid'), _p)
