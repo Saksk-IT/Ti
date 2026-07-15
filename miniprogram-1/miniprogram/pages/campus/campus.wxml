@@ -91,17 +91,17 @@
               </view>
             </view>
             <view class="grade-metric-row">
-              <view class="grade-metric">
-                <text class="grade-metric-value">{{latestGradeSummary.courseCount}}</text>
-                <text class="grade-metric-label">课程</text>
+              <view class="grade-metric" aria-role="text" aria-label="本学期绩点 {{gradeMetrics.semesterGpa}}">
+                <text class="grade-metric-value">{{gradeMetrics.semesterGpa}}</text>
+                <text class="grade-metric-label">本学期绩点</text>
               </view>
-              <view class="grade-metric">
-                <text class="grade-metric-value">{{latestGradeSummary.totalCredits}}</text>
-                <text class="grade-metric-label">学分</text>
+              <view class="grade-metric" aria-role="text" aria-label="所有课程绩点 {{gradeMetrics.allCoursesGpa}}">
+                <text class="grade-metric-value">{{gradeMetrics.allCoursesGpa}}</text>
+                <text class="grade-metric-label">所有课程绩点</text>
               </view>
-              <view class="grade-metric">
-                <text class="grade-metric-value">{{latestGradeSummary.gpa}}</text>
-                <text class="grade-metric-label">GPA</text>
+              <view class="grade-metric grade-metric-wide" aria-role="text" aria-label="本学年学分加权平均分 {{gradeMetrics.academicYearWeightedAverage}}">
+                <text class="grade-metric-value">{{gradeMetrics.academicYearWeightedAverage}}</text>
+                <text class="grade-metric-label">本学年学分加权平均分</text>
               </view>
             </view>
             <view class="latest-grade-list" wx:if="{{latestGradeSummary.hasGrades}}">

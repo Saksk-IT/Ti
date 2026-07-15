@@ -436,10 +436,19 @@ function buildScheduleTable(rows, weekInput) {
 }
 function taskRowsSource(task, data) {
     var credential = (data === null || data === void 0 ? void 0 : data.credential) || (task === null || task === void 0 ? void 0 : task.credential) || {};
+    var gradeMetadata = __assign(__assign({}, (Object.prototype.hasOwnProperty.call(data || {}, 'grade_overview')
+        ? { grade_overview: data.grade_overview }
+        : Object.prototype.hasOwnProperty.call(task || {}, 'grade_overview')
+            ? { grade_overview: task.grade_overview }
+            : {})), (Object.prototype.hasOwnProperty.call(data || {}, 'academic_year_averages')
+        ? { academic_year_averages: data.academic_year_averages }
+        : Object.prototype.hasOwnProperty.call(task || {}, 'academic_year_averages')
+            ? { academic_year_averages: task.academic_year_averages }
+            : {}));
     if (Array.isArray(task === null || task === void 0 ? void 0 : task.results) && task.results.length)
-        return { results: task.results, credential: credential };
+        return __assign({ results: task.results, credential: credential }, gradeMetadata);
     if (Array.isArray(task === null || task === void 0 ? void 0 : task.snapshots) && task.snapshots.length)
-        return { results: task.snapshots, credential: credential };
+        return __assign({ results: task.snapshots, credential: credential }, gradeMetadata);
     return data || {};
 }
 function emptyProgress() {
@@ -481,6 +490,9 @@ function createCampusQueryPage(config) {
             eduUsernameHint: '',
             allScheduleResults: [],
             allGradeResults: [],
+            gradeOverview: null,
+            academicYearAverages: [],
+            gradeMetrics: (0, campus_content_1.buildGradeMetrics)([], null, []),
             scheduleResults: [],
             gradeResults: [],
             visibleScheduleResults: [],
@@ -583,6 +595,8 @@ function createCampusQueryPage(config) {
                 statusMsg: credential.has_credentials ? "\u5DF2\u7ED1\u5B9A\u6559\u52A1\u7CFB\u7EDF\u8D26\u53F7\uFF1A".concat(credential.username_hint || '已保存') : '未绑定教务系统账号',
                 allScheduleResults: allScheduleResults,
                 allGradeResults: allGradeResults,
+                gradeOverview: (data === null || data === void 0 ? void 0 : data.grade_overview) || null,
+                academicYearAverages: Array.isArray(data === null || data === void 0 ? void 0 : data.academic_year_averages) ? data.academic_year_averages : [],
             }, function () {
                 _this.syncSnapshotBrowserForMode(fixedMode);
                 _this.restoreRecentCampusTasks((data === null || data === void 0 ? void 0 : data.recent_tasks) || {});
@@ -660,9 +674,13 @@ function createCampusQueryPage(config) {
                 snapshotTermIndex: selectedTermIndex,
                 snapshotDrawerOpen: false,
             };
-            patch[mode === 'grades' ? 'gradeResults' : 'scheduleResults'] = selectedTermKey
+            var selectedRows = selectedTermKey
                 ? filterSnapshotRows(rows, selectedTermKey)
                 : [];
+            patch[mode === 'grades' ? 'gradeResults' : 'scheduleResults'] = selectedRows;
+            if (mode === 'grades') {
+                patch.gradeMetrics = (0, campus_content_1.buildGradeMetrics)(selectedRows, this.data.gradeOverview, this.data.academicYearAverages);
+            }
             this.setData(__assign(__assign({}, patch), (selectedTermKey ? __assign(__assign({}, termSelectionPatchFromKey(selectedTermKey)), scheduleStartPatchForTerm(yearValueFromTermKey(selectedTermKey), semesterValueFromTermKey(selectedTermKey), this.data.selectedWeek)) : {})), function () {
                 if (mode === 'schedule')
                     _this.rebuildScheduleDisplay();
@@ -775,6 +793,12 @@ function createCampusQueryPage(config) {
             var mergedRows = mergeCampusRows(this.data[sourceKey] || [], rows);
             var credential = (data === null || data === void 0 ? void 0 : data.credential) ? normalizeCredential(data.credential) : null;
             patch[sourceKey] = mergedRows;
+            if (mode === 'grades' && Object.prototype.hasOwnProperty.call(data || {}, 'grade_overview')) {
+                patch.gradeOverview = data.grade_overview || null;
+            }
+            if (mode === 'grades' && Object.prototype.hasOwnProperty.call(data || {}, 'academic_year_averages')) {
+                patch.academicYearAverages = Array.isArray(data.academic_year_averages) ? data.academic_year_averages : [];
+            }
             if (statusMsg)
                 patch.statusMsg = statusMsg;
             if (credential) {

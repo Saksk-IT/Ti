@@ -8,6 +8,20 @@ import { memoryCache } from './memory-cache';
 export { getApiOrigin, resolveUploadUrl, normalizeImageUrls };
 export { request };
 
+interface EduGradeOverview {
+  display_gpa?: number | null;
+  source_label?: string;
+  is_cached?: boolean;
+}
+
+interface EduAcademicYearAverage {
+  xnm?: string;
+  year_name?: string;
+  weighted_average?: number | null;
+  included_credits?: number;
+  included_course_count?: number;
+}
+
 let hasShownUploadDevHostHint = false;
 function maybeShowUploadDevHostHint(apiBaseUrl: string, message: string): void {
   if (hasShownUploadDevHostHint) return;
@@ -479,6 +493,8 @@ export const api = {
       credential?: { has_credentials?: boolean; username_hint?: string };
       snapshots?: any[];
       grade_snapshots?: any[];
+      grade_overview?: EduGradeOverview | null;
+      academic_year_averages?: EduAcademicYearAverage[];
       recent_tasks?: any;
     }>,
 
@@ -496,6 +512,8 @@ export const api = {
       results?: any[];
       snapshots?: any[];
       credential?: { has_credentials?: boolean; username_hint?: string };
+      grade_overview?: EduGradeOverview | null;
+      academic_year_averages?: EduAcademicYearAverage[];
     }>,
 
   getEduQueryTask: (taskId: string) =>
@@ -504,6 +522,8 @@ export const api = {
       results?: any[];
       snapshots?: any[];
       credential?: { has_credentials?: boolean; username_hint?: string };
+      grade_overview?: EduGradeOverview | null;
+      academic_year_averages?: EduAcademicYearAverage[];
     }>,
 
   cancelEduQueryTask: (taskId: string) =>
@@ -512,6 +532,8 @@ export const api = {
       results?: any[];
       snapshots?: any[];
       credential?: { has_credentials?: boolean; username_hint?: string };
+      grade_overview?: EduGradeOverview | null;
+      academic_year_averages?: EduAcademicYearAverage[];
     }>,
 
   completeEduWebvpnSession: (challengeId: string, captchaCode: string) =>

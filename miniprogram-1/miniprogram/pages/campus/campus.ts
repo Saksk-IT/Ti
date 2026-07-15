@@ -6,6 +6,7 @@ import {
   buildCampusActions,
   buildCampusHighlights,
   buildCampusTerms,
+  buildGradeMetrics,
   buildLatestGradeSummary,
   buildTodayScheduleSummary,
   campusFriendlyError,
@@ -215,8 +216,20 @@ function buildGradeQueryTerms(yearInput: unknown): Array<{ xnm: string; xqm: str
 
 function taskRowsSource(task: any, data: any): any {
   const credential = data?.credential || task?.credential || {};
-  if (Array.isArray(task?.results) && task.results.length) return { results: task.results, credential };
-  if (Array.isArray(task?.snapshots) && task.snapshots.length) return { results: task.snapshots, credential };
+  const gradeMetadata = {
+    ...(Object.prototype.hasOwnProperty.call(data || {}, 'grade_overview')
+      ? { grade_overview: data.grade_overview }
+      : Object.prototype.hasOwnProperty.call(task || {}, 'grade_overview')
+        ? { grade_overview: task.grade_overview }
+        : {}),
+    ...(Object.prototype.hasOwnProperty.call(data || {}, 'academic_year_averages')
+      ? { academic_year_averages: data.academic_year_averages }
+      : Object.prototype.hasOwnProperty.call(task || {}, 'academic_year_averages')
+        ? { academic_year_averages: task.academic_year_averages }
+        : {}),
+  };
+  if (Array.isArray(task?.results) && task.results.length) return { results: task.results, credential, ...gradeMetadata };
+  if (Array.isArray(task?.snapshots) && task.snapshots.length) return { results: task.snapshots, credential, ...gradeMetadata };
   return data || {};
 }
 
@@ -236,12 +249,20 @@ const DEFAULT_ACADEMIC_YEAR_INDEX = ACADEMIC_YEAR_PAST_COUNT;
 const DEFAULT_TODAY_SUMMARY = buildTodayScheduleSummary([]);
 const DEFAULT_GRADE_SUMMARY = buildLatestGradeSummary([]);
 
-function buildCampusOverviewPatch(scheduleRows: any[], gradeRows: any[], eduBound: boolean, statusFailed: boolean): any {
+function buildCampusOverviewPatch(
+  scheduleRows: any[],
+  gradeRows: any[],
+  gradeOverview: any,
+  academicYearAverages: any[],
+  eduBound: boolean,
+  statusFailed: boolean
+): any {
   const todayCourses = buildTodayScheduleSummary(scheduleRows);
   const latestGradeSummary = buildLatestGradeSummary(gradeRows);
   return {
     todayCourses,
     latestGradeSummary,
+    gradeMetrics: buildGradeMetrics(gradeRows, gradeOverview, academicYearAverages),
     campusActions: buildCampusActions(eduBound, statusFailed),
     campusHighlights: buildCampusHighlights(todayCourses, latestGradeSummary, eduBound),
   };
@@ -266,12 +287,15 @@ Page({
     eduUsernameHint: '',
     allScheduleResults: [] as any[],
     allGradeResults: [] as any[],
+    gradeOverview: null as any,
+    academicYearAverages: [] as any[],
     scheduleResults: [] as any[],
     gradeResults: [] as any[],
     isQueryPage: false,
     pageTitle: '校园',
     todayCourses: DEFAULT_TODAY_SUMMARY as any,
     latestGradeSummary: DEFAULT_GRADE_SUMMARY as any,
+    gradeMetrics: buildGradeMetrics([], null, []) as any,
     campusActions: buildCampusActions(false, false) as any[],
     campusHighlights: buildCampusHighlights(DEFAULT_TODAY_SUMMARY, DEFAULT_GRADE_SUMMARY, false) as any[],
     snapshotTerms: [] as SnapshotOption[],
@@ -392,7 +416,16 @@ Page({
       statusMsg: credential.has_credentials ? `已绑定教务系统账号：${credential.username_hint || '已保存'}` : '未绑定教务系统账号',
       allScheduleResults,
       allGradeResults,
-      ...buildCampusOverviewPatch(allScheduleResults, allGradeResults, credential.has_credentials, false),
+      gradeOverview: data?.grade_overview || null,
+      academicYearAverages: Array.isArray(data?.academic_year_averages) ? data.academic_year_averages : [],
+      ...buildCampusOverviewPatch(
+        allScheduleResults,
+        allGradeResults,
+        data?.grade_overview || null,
+        Array.isArray(data?.academic_year_averages) ? data.academic_year_averages : [],
+        credential.has_credentials,
+        false
+      ),
     }, () => {
       this.syncSnapshotBrowserForMode(this.data.mode as CampusMode);
     });
@@ -417,7 +450,14 @@ Page({
         eduBound: false,
         statusMsg: message,
         errorMsg: message,
-        ...buildCampusOverviewPatch(this.data.allScheduleResults || [], this.data.allGradeResults || [], false, true),
+        ...buildCampusOverviewPatch(
+          this.data.allScheduleResults || [],
+          this.data.allGradeResults || [],
+          this.data.gradeOverview,
+          this.data.academicYearAverages || [],
+          false,
+          true
+        ),
       });
     } finally {
       this.setData({ statusLoading: false });
@@ -480,8 +520,21 @@ Page({
     const eduBound = credential ? credential.has_credentials : this.data.eduBound;
     const scheduleRows = mode === 'schedule' ? mergedRows : (this.data.allScheduleResults || []);
     const gradeRows = mode === 'grades' ? mergedRows : (this.data.allGradeResults || []);
+    const gradeOverview = mode === 'grades' && Object.prototype.hasOwnProperty.call(data || {}, 'grade_overview')
+      ? data.grade_overview || null
+      : this.data.gradeOverview;
+    const academicYearAverages = mode === 'grades' && Object.prototype.hasOwnProperty.call(data || {}, 'academic_year_averages')
+      ? (Array.isArray(data.academic_year_averages) ? data.academic_year_averages : [])
+      : (this.data.academicYearAverages || []);
     patch[sourceKey] = mergedRows;
-    Object.assign(patch, buildCampusOverviewPatch(scheduleRows, gradeRows, eduBound, false));
+    if (mode === 'grades') {
+      patch.gradeOverview = gradeOverview;
+      patch.academicYearAverages = academicYearAverages;
+    }
+    Object.assign(
+      patch,
+      buildCampusOverviewPatch(scheduleRows, gradeRows, gradeOverview, academicYearAverages, eduBound, false)
+    );
     if (statusMsg) patch.statusMsg = statusMsg;
     if (credential) {
       patch.eduBound = credential.has_credentials;

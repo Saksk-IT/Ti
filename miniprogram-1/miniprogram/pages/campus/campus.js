@@ -228,10 +228,19 @@ function buildGradeQueryTerms(yearInput) {
 }
 function taskRowsSource(task, data) {
     var credential = (data === null || data === void 0 ? void 0 : data.credential) || (task === null || task === void 0 ? void 0 : task.credential) || {};
+    var gradeMetadata = __assign(__assign({}, (Object.prototype.hasOwnProperty.call(data || {}, 'grade_overview')
+        ? { grade_overview: data.grade_overview }
+        : Object.prototype.hasOwnProperty.call(task || {}, 'grade_overview')
+            ? { grade_overview: task.grade_overview }
+            : {})), (Object.prototype.hasOwnProperty.call(data || {}, 'academic_year_averages')
+        ? { academic_year_averages: data.academic_year_averages }
+        : Object.prototype.hasOwnProperty.call(task || {}, 'academic_year_averages')
+            ? { academic_year_averages: task.academic_year_averages }
+            : {}));
     if (Array.isArray(task === null || task === void 0 ? void 0 : task.results) && task.results.length)
-        return { results: task.results, credential: credential };
+        return __assign({ results: task.results, credential: credential }, gradeMetadata);
     if (Array.isArray(task === null || task === void 0 ? void 0 : task.snapshots) && task.snapshots.length)
-        return { results: task.snapshots, credential: credential };
+        return __assign({ results: task.snapshots, credential: credential }, gradeMetadata);
     return data || {};
 }
 function emptyProgress() {
@@ -248,12 +257,13 @@ var ACADEMIC_YEAR_OPTIONS = buildAcademicYearOptions(defaultYear);
 var DEFAULT_ACADEMIC_YEAR_INDEX = ACADEMIC_YEAR_PAST_COUNT;
 var DEFAULT_TODAY_SUMMARY = (0, campus_content_1.buildTodayScheduleSummary)([]);
 var DEFAULT_GRADE_SUMMARY = (0, campus_content_1.buildLatestGradeSummary)([]);
-function buildCampusOverviewPatch(scheduleRows, gradeRows, eduBound, statusFailed) {
+function buildCampusOverviewPatch(scheduleRows, gradeRows, gradeOverview, academicYearAverages, eduBound, statusFailed) {
     var todayCourses = (0, campus_content_1.buildTodayScheduleSummary)(scheduleRows);
     var latestGradeSummary = (0, campus_content_1.buildLatestGradeSummary)(gradeRows);
     return {
         todayCourses: todayCourses,
         latestGradeSummary: latestGradeSummary,
+        gradeMetrics: (0, campus_content_1.buildGradeMetrics)(gradeRows, gradeOverview, academicYearAverages),
         campusActions: (0, campus_content_1.buildCampusActions)(eduBound, statusFailed),
         campusHighlights: (0, campus_content_1.buildCampusHighlights)(todayCourses, latestGradeSummary, eduBound),
     };
@@ -277,12 +287,15 @@ Page({
         eduUsernameHint: '',
         allScheduleResults: [],
         allGradeResults: [],
+        gradeOverview: null,
+        academicYearAverages: [],
         scheduleResults: [],
         gradeResults: [],
         isQueryPage: false,
         pageTitle: '校园',
         todayCourses: DEFAULT_TODAY_SUMMARY,
         latestGradeSummary: DEFAULT_GRADE_SUMMARY,
+        gradeMetrics: (0, campus_content_1.buildGradeMetrics)([], null, []),
         campusActions: (0, campus_content_1.buildCampusActions)(false, false),
         campusHighlights: (0, campus_content_1.buildCampusHighlights)(DEFAULT_TODAY_SUMMARY, DEFAULT_GRADE_SUMMARY, false),
         snapshotTerms: [],
@@ -393,7 +406,7 @@ Page({
         var credential = normalizeCredential(data === null || data === void 0 ? void 0 : data.credential);
         var allScheduleResults = (0, campus_content_1.normalizeScheduleSnapshots)((data === null || data === void 0 ? void 0 : data.snapshots) || []);
         var allGradeResults = (0, campus_content_1.normalizeGradeSnapshots)((data === null || data === void 0 ? void 0 : data.grade_snapshots) || []);
-        this.setData(__assign({ statusReady: true, statusFailed: false, eduBound: credential.has_credentials, eduUsernameHint: credential.username_hint, statusMsg: credential.has_credentials ? "\u5DF2\u7ED1\u5B9A\u6559\u52A1\u7CFB\u7EDF\u8D26\u53F7\uFF1A".concat(credential.username_hint || '已保存') : '未绑定教务系统账号', allScheduleResults: allScheduleResults, allGradeResults: allGradeResults }, buildCampusOverviewPatch(allScheduleResults, allGradeResults, credential.has_credentials, false)), function () {
+        this.setData(__assign({ statusReady: true, statusFailed: false, eduBound: credential.has_credentials, eduUsernameHint: credential.username_hint, statusMsg: credential.has_credentials ? "\u5DF2\u7ED1\u5B9A\u6559\u52A1\u7CFB\u7EDF\u8D26\u53F7\uFF1A".concat(credential.username_hint || '已保存') : '未绑定教务系统账号', allScheduleResults: allScheduleResults, allGradeResults: allGradeResults, gradeOverview: (data === null || data === void 0 ? void 0 : data.grade_overview) || null, academicYearAverages: Array.isArray(data === null || data === void 0 ? void 0 : data.academic_year_averages) ? data.academic_year_averages : [] }, buildCampusOverviewPatch(allScheduleResults, allGradeResults, (data === null || data === void 0 ? void 0 : data.grade_overview) || null, Array.isArray(data === null || data === void 0 ? void 0 : data.academic_year_averages) ? data.academic_year_averages : [], credential.has_credentials, false)), function () {
             _this.syncSnapshotBrowserForMode(_this.data.mode);
         });
     },
@@ -422,7 +435,7 @@ Page({
                     case 3:
                         e_1 = _a.sent();
                         message = (0, campus_content_1.campusFriendlyError)(e_1, '教务账号状态加载失败');
-                        this.setData(__assign({ statusReady: true, statusFailed: true, eduBound: false, statusMsg: message, errorMsg: message }, buildCampusOverviewPatch(this.data.allScheduleResults || [], this.data.allGradeResults || [], false, true)));
+                        this.setData(__assign({ statusReady: true, statusFailed: true, eduBound: false, statusMsg: message, errorMsg: message }, buildCampusOverviewPatch(this.data.allScheduleResults || [], this.data.allGradeResults || [], this.data.gradeOverview, this.data.academicYearAverages || [], false, true)));
                         return [3 /*break*/, 5];
                     case 4:
                         this.setData({ statusLoading: false });
@@ -494,8 +507,18 @@ Page({
         var eduBound = credential ? credential.has_credentials : this.data.eduBound;
         var scheduleRows = mode === 'schedule' ? mergedRows : (this.data.allScheduleResults || []);
         var gradeRows = mode === 'grades' ? mergedRows : (this.data.allGradeResults || []);
+        var gradeOverview = mode === 'grades' && Object.prototype.hasOwnProperty.call(data || {}, 'grade_overview')
+            ? data.grade_overview || null
+            : this.data.gradeOverview;
+        var academicYearAverages = mode === 'grades' && Object.prototype.hasOwnProperty.call(data || {}, 'academic_year_averages')
+            ? (Array.isArray(data.academic_year_averages) ? data.academic_year_averages : [])
+            : (this.data.academicYearAverages || []);
         patch[sourceKey] = mergedRows;
-        Object.assign(patch, buildCampusOverviewPatch(scheduleRows, gradeRows, eduBound, false));
+        if (mode === 'grades') {
+            patch.gradeOverview = gradeOverview;
+            patch.academicYearAverages = academicYearAverages;
+        }
+        Object.assign(patch, buildCampusOverviewPatch(scheduleRows, gradeRows, gradeOverview, academicYearAverages, eduBound, false));
         if (statusMsg)
             patch.statusMsg = statusMsg;
         if (credential) {

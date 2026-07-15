@@ -451,12 +451,12 @@ page {
 
 .grade-metric-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 10rpx;
 }
 
 .grade-metric {
-  min-height: 92rpx;
+  min-height: 100rpx;
   border-radius: 16rpx;
   background: var(--app-surface);
   display: grid;
@@ -465,6 +465,10 @@ page {
   gap: 4rpx;
   padding: 10rpx;
   box-sizing: border-box;
+}
+
+.grade-metric-wide {
+  grid-column: 1 / -1;
 }
 
 .grade-metric-value {
@@ -479,9 +483,13 @@ page {
 }
 
 .grade-metric-label {
+  width: 100%;
   color: var(--app-text-secondary);
   font-size: 21rpx;
+  line-height: 1.35;
   font-weight: 800;
+  text-align: center;
+  word-break: break-all;
 }
 
 .latest-grade-row {

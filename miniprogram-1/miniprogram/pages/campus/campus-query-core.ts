@@ -3,6 +3,7 @@ import { checkLogin } from '../../utils/auth';
 import { safeNavigate } from '../../utils/nav';
 import { themeManager, ThemeMode } from '../../utils/theme';
 import {
+  buildGradeMetrics,
   buildCampusTerms,
   campusFriendlyError,
   CampusMode,
@@ -454,8 +455,20 @@ function buildScheduleTable(rows: any[], weekInput: unknown): { days: string[]; 
 
 function taskRowsSource(task: any, data: any): any {
   const credential = data?.credential || task?.credential || {};
-  if (Array.isArray(task?.results) && task.results.length) return { results: task.results, credential };
-  if (Array.isArray(task?.snapshots) && task.snapshots.length) return { results: task.snapshots, credential };
+  const gradeMetadata = {
+    ...(Object.prototype.hasOwnProperty.call(data || {}, 'grade_overview')
+      ? { grade_overview: data.grade_overview }
+      : Object.prototype.hasOwnProperty.call(task || {}, 'grade_overview')
+        ? { grade_overview: task.grade_overview }
+        : {}),
+    ...(Object.prototype.hasOwnProperty.call(data || {}, 'academic_year_averages')
+      ? { academic_year_averages: data.academic_year_averages }
+      : Object.prototype.hasOwnProperty.call(task || {}, 'academic_year_averages')
+        ? { academic_year_averages: task.academic_year_averages }
+        : {}),
+  };
+  if (Array.isArray(task?.results) && task.results.length) return { results: task.results, credential, ...gradeMetadata };
+  if (Array.isArray(task?.snapshots) && task.snapshots.length) return { results: task.snapshots, credential, ...gradeMetadata };
   return data || {};
 }
 
@@ -501,6 +514,9 @@ export function createCampusQueryPage(config: CampusQueryPageConfig): any {
     eduUsernameHint: '',
     allScheduleResults: [] as any[],
     allGradeResults: [] as any[],
+    gradeOverview: null as any,
+    academicYearAverages: [] as any[],
+    gradeMetrics: buildGradeMetrics([], null, []) as any,
     scheduleResults: [] as any[],
     gradeResults: [] as any[],
     visibleScheduleResults: [] as any[],
@@ -616,6 +632,8 @@ export function createCampusQueryPage(config: CampusQueryPageConfig): any {
       statusMsg: credential.has_credentials ? `已绑定教务系统账号：${credential.username_hint || '已保存'}` : '未绑定教务系统账号',
       allScheduleResults,
       allGradeResults,
+      gradeOverview: data?.grade_overview || null,
+      academicYearAverages: Array.isArray(data?.academic_year_averages) ? data.academic_year_averages : [],
     }, () => {
       this.syncSnapshotBrowserForMode(fixedMode);
       this.restoreRecentCampusTasks(data?.recent_tasks || {});
@@ -675,9 +693,17 @@ export function createCampusQueryPage(config: CampusQueryPageConfig): any {
       snapshotTermIndex: selectedTermIndex,
       snapshotDrawerOpen: false,
     };
-    patch[mode === 'grades' ? 'gradeResults' : 'scheduleResults'] = selectedTermKey
+    const selectedRows = selectedTermKey
       ? filterSnapshotRows(rows, selectedTermKey)
       : [];
+    patch[mode === 'grades' ? 'gradeResults' : 'scheduleResults'] = selectedRows;
+    if (mode === 'grades') {
+      patch.gradeMetrics = buildGradeMetrics(
+        selectedRows,
+        this.data.gradeOverview,
+        this.data.academicYearAverages
+      );
+    }
     this.setData({
       ...patch,
       ...(selectedTermKey ? {
@@ -794,6 +820,12 @@ export function createCampusQueryPage(config: CampusQueryPageConfig): any {
     const mergedRows = mergeCampusRows(this.data[sourceKey] || [], rows);
     const credential = data?.credential ? normalizeCredential(data.credential) : null;
     patch[sourceKey] = mergedRows;
+    if (mode === 'grades' && Object.prototype.hasOwnProperty.call(data || {}, 'grade_overview')) {
+      patch.gradeOverview = data.grade_overview || null;
+    }
+    if (mode === 'grades' && Object.prototype.hasOwnProperty.call(data || {}, 'academic_year_averages')) {
+      patch.academicYearAverages = Array.isArray(data.academic_year_averages) ? data.academic_year_averages : [];
+    }
     if (statusMsg) patch.statusMsg = statusMsg;
     if (credential) {
       patch.eduBound = credential.has_credentials;

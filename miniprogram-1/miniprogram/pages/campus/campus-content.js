@@ -15,6 +15,7 @@ exports.campusFriendlyError = campusFriendlyError;
 exports.buildCampusTerms = buildCampusTerms;
 exports.normalizeScheduleSnapshots = normalizeScheduleSnapshots;
 exports.normalizeGradeSnapshots = normalizeGradeSnapshots;
+exports.buildGradeMetrics = buildGradeMetrics;
 exports.normalizeTermResults = normalizeTermResults;
 exports.buildTodayScheduleSummary = buildTodayScheduleSummary;
 exports.buildLatestGradeSummary = buildLatestGradeSummary;
@@ -55,11 +56,21 @@ function unwrapPayload(row) {
     }
     return row && typeof row === 'object' ? row : {};
 }
-function trimNumberText(value) {
-    var text = cleanText(value, '0');
+function trimNumberText(value, fallback) {
+    if (fallback === void 0) { fallback = '0'; }
+    var raw = value === null || value === undefined ? '' : String(value).trim();
+    var text = raw || fallback;
     if (!text.includes('.'))
         return text;
     return text.replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
+}
+function gradeMetricText(value) {
+    if (value === null || value === undefined)
+        return '-';
+    var text = String(value).trim();
+    if (!text || !Number.isFinite(Number(text)))
+        return '-';
+    return trimNumberText(text);
 }
 function termYearValue(row) {
     var year = Number((row === null || row === void 0 ? void 0 : row.xnm) || 0);
@@ -220,10 +231,28 @@ function normalizeGradeSnapshots(rows) {
         var summary = payload.summary && typeof payload.summary === 'object' ? payload.summary : {};
         var courseCount = trimNumberText(summary.course_count);
         var credits = trimNumberText(summary.total_credits);
-        var gpa = trimNumberText(summary.gpa);
+        var gpa = trimNumberText(summary.gpa, '-');
         return __assign(__assign({}, termMeta), { summaryText: "".concat(courseCount, " \u95E8\u8BFE / ").concat(credits, " \u5B66\u5206 / GPA ").concat(gpa), courseCount: courseCount, totalCredits: credits, gpa: gpa, grades: normalizeList(payload.grades).map(normalizeGrade) });
     })
         .filter(function (item) { return item.grades.length > 0 || item.title !== '成绩'; });
+}
+function buildGradeMetrics(rows, gradeOverviewInput, academicYearAveragesInput) {
+    var gradeRows = normalizeList(rows)
+        .filter(function (row) { return row && typeof row === 'object'; })
+        .slice()
+        .sort(compareTermDesc);
+    var current = gradeRows.find(function (row) { return normalizeList(row.grades).length > 0; }) || gradeRows[0] || null;
+    var academicYear = cleanText(current === null || current === void 0 ? void 0 : current.xnm);
+    var gradeOverview = gradeOverviewInput && typeof gradeOverviewInput === 'object'
+        ? gradeOverviewInput
+        : {};
+    var academicYearAverage = normalizeList(academicYearAveragesInput).find(function (item) { return item && typeof item === 'object' && cleanText(item.xnm) === academicYear; });
+    return {
+        semesterGpa: gradeMetricText(current === null || current === void 0 ? void 0 : current.gpa),
+        allCoursesGpa: gradeMetricText(gradeOverview.display_gpa),
+        academicYearWeightedAverage: gradeMetricText(academicYearAverage === null || academicYearAverage === void 0 ? void 0 : academicYearAverage.weighted_average),
+        academicYear: academicYear,
+    };
 }
 function normalizeTermResults(input, mode) {
     var payload = input && typeof input === 'object' ? input : {};

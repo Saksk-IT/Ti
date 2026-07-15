@@ -5,6 +5,7 @@ const {
   buildCampusActions,
   buildCampusHighlights,
   buildCampusTerms,
+  buildGradeMetrics,
   buildLatestGradeSummary,
   buildTodayScheduleSummary,
   campusFriendlyError,
@@ -13,9 +14,22 @@ const {
   normalizeTermResults,
 } = require('../miniprogram/pages/campus/campus-content');
 const {
+  createCampusQueryPage,
   filterScheduleRowsByWeek,
   getScheduleStartDateStorageKey,
 } = require('../miniprogram/pages/campus/campus-query-core');
+
+function createPageHarness(config) {
+  const definition = createCampusQueryPage(config);
+  return {
+    ...definition,
+    data: { ...definition.data },
+    setData(patch, callback) {
+      this.data = { ...this.data, ...patch };
+      if (callback) callback.call(this);
+    },
+  };
+}
 
 test('buildCampusTerms builds all semesters for a year range', () => {
   assert.deepEqual(buildCampusTerms(2024, 2025, 'all'), [
@@ -63,6 +77,121 @@ test('normalizeGradeSnapshots maps summary and grade rows for campus cards', () 
     rows[0].grades.map((item) => item.course_name),
     ['数据结构', '创新实践']
   );
+});
+
+test('buildGradeMetrics combines semester, cumulative and matching academic year values', () => {
+  const rows = normalizeGradeSnapshots([
+    {
+      payload: {
+        term: { xnm: '2025', xqm: '3', label: '2025-2026 第一学期' },
+        summary: { course_count: 2, total_credits: 6, gpa: 3.67 },
+        grades: [
+          { course_name: '数据结构', score: '92', credits: '4.0', grade_point: '4.00' },
+        ],
+      },
+    },
+  ]);
+
+  const metrics = buildGradeMetrics(
+    rows,
+    { display_gpa: 3.42 },
+    [
+      { xnm: '2024', weighted_average: 86.54 },
+      { xnm: '2025', weighted_average: 88.16 },
+    ]
+  );
+
+  assert.deepEqual(metrics, {
+    semesterGpa: '3.67',
+    allCoursesGpa: '3.42',
+    academicYearWeightedAverage: '88.16',
+    academicYear: '2025',
+  });
+});
+
+test('buildGradeMetrics keeps zero values and falls back safely for old snapshots', () => {
+  const currentRows = normalizeGradeSnapshots([
+    {
+      payload: {
+        term: { xnm: '2025', xqm: '12', label: '2025-2026 第二学期' },
+        summary: { course_count: 1, total_credits: 2, gpa: 0 },
+        grades: [{ course_name: '待重修课程', score: '0', credits: '2', grade_point: '0' }],
+      },
+    },
+  ]);
+
+  assert.deepEqual(
+    buildGradeMetrics(currentRows, { display_gpa: 0 }, [{ xnm: '2025', weighted_average: 0 }]),
+    {
+      semesterGpa: '0',
+      allCoursesGpa: '0',
+      academicYearWeightedAverage: '0',
+      academicYear: '2025',
+    }
+  );
+  assert.deepEqual(
+    buildGradeMetrics(currentRows, null, [{ xnm: '2024', weighted_average: 91.25 }]),
+    {
+      semesterGpa: '0',
+      allCoursesGpa: '-',
+      academicYearWeightedAverage: '-',
+      academicYear: '2025',
+    }
+  );
+  const oldRows = normalizeGradeSnapshots([
+    {
+      payload: {
+        term: { xnm: '2025', xqm: '3', label: '2025-2026 第一学期' },
+        summary: { course_count: 1, total_credits: 2 },
+        grades: [{ course_name: '旧快照课程', score: '80', credits: '2' }],
+      },
+    },
+  ]);
+  assert.equal(buildGradeMetrics(oldRows, null, []).semesterGpa, '-');
+});
+
+test('grade query page updates metrics from status and completed task payloads', () => {
+  const page = createPageHarness({ mode: 'grades', pageTitle: '成绩查询' });
+  page.applyEduStatus({
+    credential: { has_credentials: true, username_hint: '20***01' },
+    grade_snapshots: [
+      {
+        payload: {
+          term: { xnm: '2024', xqm: '12', label: '2024-2025 第二学期' },
+          summary: { course_count: 1, total_credits: 2, gpa: 3.25 },
+          grades: [{ course_name: '数据库原理', score: '85', credits: '2', grade_point: '3.25' }],
+        },
+      },
+    ],
+    grade_overview: { display_gpa: 3.18 },
+    academic_year_averages: [{ xnm: '2024', weighted_average: 84.5 }],
+    recent_tasks: {},
+  });
+
+  assert.equal(page.data.gradeMetrics.semesterGpa, '3.25');
+  assert.equal(page.data.gradeMetrics.allCoursesGpa, '3.18');
+  assert.equal(page.data.gradeMetrics.academicYearWeightedAverage, '84.5');
+
+  page.setData({ snapshotSelectedTermKey: '2025-3' });
+  page.handleTaskState({
+    task_id: 'grade-task-1',
+    status: 'succeeded',
+    message: '全部成绩已同步',
+    results: [
+      {
+        term: { xnm: '2025', xqm: '3', label: '2025-2026 第一学期' },
+        summary: { course_count: 1, total_credits: 3, gpa: 3.8 },
+        grades: [{ course_name: '操作系统', score: '90', credits: '3', grade_point: '3.8' }],
+      },
+    ],
+    grade_overview: { display_gpa: 3.44 },
+    academic_year_averages: [{ xnm: '2025', weighted_average: 89.6 }],
+    terms: [{ xnm: '2025', xqm: '3' }],
+  }, { terms: [{ xnm: '2025', xqm: '3' }] }, 'grades', {});
+
+  assert.equal(page.data.gradeMetrics.semesterGpa, '3.8');
+  assert.equal(page.data.gradeMetrics.allCoursesGpa, '3.44');
+  assert.equal(page.data.gradeMetrics.academicYearWeightedAverage, '89.6');
 });
 
 test('normalizeScheduleSnapshots maps week table and practice courses', () => {

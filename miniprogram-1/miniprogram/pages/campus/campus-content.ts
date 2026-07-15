@@ -41,6 +41,13 @@ export interface CampusLatestGradeSummary {
   grades: any[];
 }
 
+export interface CampusGradeMetrics {
+  semesterGpa: string;
+  allCoursesGpa: string;
+  academicYearWeightedAverage: string;
+  academicYear: string;
+}
+
 export interface CampusActionItem {
   key: CampusActionKey;
   title: string;
@@ -99,10 +106,18 @@ function unwrapPayload(row: any): any {
   return row && typeof row === 'object' ? row : {};
 }
 
-function trimNumberText(value: unknown): string {
-  const text = cleanText(value, '0');
+function trimNumberText(value: unknown, fallback = '0'): string {
+  const raw = value === null || value === undefined ? '' : String(value).trim();
+  const text = raw || fallback;
   if (!text.includes('.')) return text;
   return text.replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
+}
+
+function gradeMetricText(value: unknown): string {
+  if (value === null || value === undefined) return '-';
+  const text = String(value).trim();
+  if (!text || !Number.isFinite(Number(text))) return '-';
+  return trimNumberText(text);
 }
 
 function termYearValue(row: any): number {
@@ -283,7 +298,7 @@ export function normalizeGradeSnapshots(rows: unknown[]): any[] {
       const summary = payload.summary && typeof payload.summary === 'object' ? payload.summary : {};
       const courseCount = trimNumberText(summary.course_count);
       const credits = trimNumberText(summary.total_credits);
-      const gpa = trimNumberText(summary.gpa);
+      const gpa = trimNumberText(summary.gpa, '-');
       return {
         ...termMeta,
         summaryText: `${courseCount} 门课 / ${credits} 学分 / GPA ${gpa}`,
@@ -294,6 +309,32 @@ export function normalizeGradeSnapshots(rows: unknown[]): any[] {
       };
     })
     .filter((item) => item.grades.length > 0 || item.title !== '成绩');
+}
+
+export function buildGradeMetrics(
+  rows: unknown[],
+  gradeOverviewInput: unknown,
+  academicYearAveragesInput: unknown
+): CampusGradeMetrics {
+  const gradeRows = normalizeList(rows)
+    .filter((row) => row && typeof row === 'object')
+    .slice()
+    .sort(compareTermDesc);
+  const current = gradeRows.find((row) => normalizeList(row.grades).length > 0) || gradeRows[0] || null;
+  const academicYear = cleanText(current?.xnm);
+  const gradeOverview = gradeOverviewInput && typeof gradeOverviewInput === 'object'
+    ? gradeOverviewInput as { display_gpa?: unknown }
+    : {};
+  const academicYearAverage = normalizeList(academicYearAveragesInput).find(
+    (item) => item && typeof item === 'object' && cleanText(item.xnm) === academicYear
+  );
+
+  return {
+    semesterGpa: gradeMetricText(current?.gpa),
+    allCoursesGpa: gradeMetricText(gradeOverview.display_gpa),
+    academicYearWeightedAverage: gradeMetricText(academicYearAverage?.weighted_average),
+    academicYear,
+  };
 }
 
 export function normalizeTermResults(input: any, mode: CampusMode): any[] {

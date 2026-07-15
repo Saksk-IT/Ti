@@ -684,6 +684,35 @@ def test_miniprogram_campus_tab_exposes_schedule_and_grade_queries():
     assert "request('/edu-schedule/grades/query'" in api
 
 
+def test_miniprogram_campus_grade_metrics_use_backend_overview_fields():
+    campus_dir = Path("miniprogram-1/miniprogram/pages/campus")
+    campus_wxml = (campus_dir / "campus.wxml").read_text(encoding="utf-8")
+    grades_wxml = Path(
+        "miniprogram-1/miniprogram/pages/campus-grades/campus-grades.wxml"
+    ).read_text(encoding="utf-8")
+    content_ts = (campus_dir / "campus-content.ts").read_text(encoding="utf-8")
+    campus_ts = (campus_dir / "campus.ts").read_text(encoding="utf-8")
+    core_ts = (campus_dir / "campus-query-core.ts").read_text(encoding="utf-8")
+    api_ts = Path("miniprogram-1/miniprogram/utils/api-endpoints.ts").read_text(
+        encoding="utf-8"
+    )
+
+    for page_wxml in (campus_wxml, grades_wxml):
+        assert "本学期绩点" in page_wxml
+        assert "所有课程绩点" in page_wxml
+        assert "本学年学分加权平均分" in page_wxml
+        assert "gradeMetrics.semesterGpa" in page_wxml
+        assert "gradeMetrics.allCoursesGpa" in page_wxml
+        assert "gradeMetrics.academicYearWeightedAverage" in page_wxml
+
+    assert "buildGradeMetrics" in content_ts
+    assert "display_gpa" in content_ts
+    assert "weighted_average" in content_ts
+    for source in (campus_ts, core_ts, api_ts):
+        assert "grade_overview" in source
+        assert "academic_year_averages" in source
+
+
 def test_miniprogram_campus_page_matches_background_query_flow():
     campus_dir = Path("miniprogram-1/miniprogram/pages/campus")
     schedule_dir = Path("miniprogram-1/miniprogram/pages/campus-schedule")

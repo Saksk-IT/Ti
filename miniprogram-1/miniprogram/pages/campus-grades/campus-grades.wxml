@@ -49,6 +49,27 @@
           </view>
         </view>
 
+        <view class="grade-overview-panel" wx:if="{{eduBound}}" aria-label="成绩概览">
+          <view class="grade-overview-head">
+            <text class="grade-overview-title">成绩概览</text>
+            <text class="grade-overview-term">{{snapshotSelectedTermKey ? selectedTermLabel : '暂无成绩'}}</text>
+          </view>
+          <view class="grade-overview-metrics">
+            <view class="grade-overview-metric" aria-role="text" aria-label="本学期绩点 {{gradeMetrics.semesterGpa}}">
+              <text class="grade-overview-value">{{gradeMetrics.semesterGpa}}</text>
+              <text class="grade-overview-label">本学期绩点</text>
+            </view>
+            <view class="grade-overview-metric" aria-role="text" aria-label="所有课程绩点 {{gradeMetrics.allCoursesGpa}}">
+              <text class="grade-overview-value">{{gradeMetrics.allCoursesGpa}}</text>
+              <text class="grade-overview-label">所有课程绩点</text>
+            </view>
+            <view class="grade-overview-metric grade-overview-metric-wide" aria-role="text" aria-label="本学年学分加权平均分 {{gradeMetrics.academicYearWeightedAverage}}">
+              <text class="grade-overview-value">{{gradeMetrics.academicYearWeightedAverage}}</text>
+              <text class="grade-overview-label">本学年学分加权平均分</text>
+            </view>
+          </view>
+        </view>
+
         <view class="snapshot-browser" wx:if="{{snapshotTerms.length}}">
           <view class="snapshot-selector-group" aria-label="历史成绩筛选">
             <scroll-view class="snapshot-selector-scroll snapshot-term-list" scroll-x show-scrollbar="{{false}}" enhanced="{{true}}">
