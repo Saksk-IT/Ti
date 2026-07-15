@@ -4,11 +4,11 @@
 
 ## 当前阶段
 
-- **阶段 2：Java 基础骨架（进行中）**。
+- **阶段 3：新旧项目对比工具与认证兼容（进行中）**。
 - 基线提交：旧 Ti `700006dfdfa063deb4387be572911e782bcea0d9`。
 - 盘点日期：2026-07-16（Asia/Shanghai）。
-- 最近通过的提交：`627bfa096186ff400f916c6b7b0bef246ed0bb7e`（`docs(refactor): freeze architecture contracts`）。
-- 阶段 0 与阶段 1 均已通过结构化门禁、负向测试和独立审计；当前从该绿色检查点进入阶段 2。
+- 最近通过的提交：`8d8b7487369b4da15a38109c3bb08b9256debee2`（`feat(java): establish modular server foundation`）。
+- 阶段 0、阶段 1 与阶段 2 均已通过结构化门禁、负向测试和独立审计；当前从该绿色检查点进入阶段 3。
 - 旧项目目录只读；当前实施范围仅为 `Ti-Java/`，未连接生产环境、未读取真实密钥、未切换部署或 DNS。
 
 ## 本轮已完成
@@ -36,6 +36,17 @@
 - 固定无副作用只读对比、同源隔离写对比、最终停写、整套入口切换及写前/写后回滚；禁止双写、逐路由/比例拆流和 shadow write，写后优先前向修复或第三套库反向迁移。
 - 增加阶段 1 聚合门禁，串联 ADR/互链、OpenAPI 确定性、覆盖、所有权、DAG、不变量、回滚语义、可移植性/敏感信息扫描和 23 项正反向测试。
 
+## 阶段 2 已完成
+
+- 创建独立 `server/`、Maven Wrapper 3.3.4，并固定 Java 25、Maven 3.9.16、Spring Boot 4.1.0、Spring MVC 与 Spring Modulith 2.1.0；依赖门禁拒绝 WebFlux、R2DBC、Flyway 和非稳定版本。
+- 把阶段 1 机器合同落实为 11 个业务模块及 `sharedkernel`、`web`；真实 Modulith 校验、ArchUnit 边界、11 个独立模块上下文测试和故意非法依赖负例均通过。
+- 建立 Request ID、统一成功/错误/分页合同、UTC/Jackson 3 序列化、默认拒绝安全策略、结构化脱敏日志、liveness/readiness、Micrometer 与内部 Prometheus 管理端口。
+- 明确阶段 2 仍为 **0 条迁移路由、0 个公开业务操作**；11 个公开应用 API 只保留空边界，未根据名称虚构 DTO、方法或事件载荷。
+- 建立 PostgreSQL 18.4/16.14 与 Redis 7.4.7 Testcontainers；Hibernate 仅 `validate`，最小 `subjects` 9 列只读探针及数据库 ACL 在关闭会话默认只读后仍拒绝 DML、DDL 与 TEMP DDL。
+- 对显式授权的本地非生产参考库执行 schema-only 隔离恢复：PostgreSQL 18.4、70 表/617 列、Alembic `f5b6c7d8e9f0`；当前 Java build context 通过 Hibernate validate/readiness，生产数据库版本仍为 unknown，未创建 Flyway baseline。
+- 建立固定 digest、非 root、只读根的 Java 镜像和独立 Compose；API/PG 使用专用宿主接入网与 internal backend，Redis 仅 internal backend，旧 Flask 入口、容器、卷和可写数据库均未接入。
+- 原目录和仅复制 `Ti-Java/` 的临时目录均完成 `clean verify`：36 个单元/架构/模块测试 + 4 个 PostgreSQL/Redis 集成测试，0 failure/error/skip；独立抽取还通过静态门禁、Dockerfile check、镜像构建与 Compose 启动，结束后无临时资源残留。
+
 ## 验证命令与结果
 
 | 验证 | 结果 | 判定 |
@@ -61,6 +72,12 @@
 | `python3 Ti-Java/tools/validate_phase1_openapi.py` | 592 rules / 611 legacy methods / 610 rendered + 1 shadow | 绿色；逐字节重生成、引用、安全、成熟度和目标接口闭环 |
 | `python3 Ti-Java/tools/validate_phase1_boundaries.py` | 11 业务模块 + 1 Web；70 表 + 84 非表资源；6 不变量 | 绿色；唯一所有权、无环 DAG、无共享 Entity 与回滚协议通过 |
 | `python3 Ti-Java/tools/validate_phase1.py` | 23 项测试通过 | 绿色；10 ADR + OpenAPI + 边界 + 文档/可移植性聚合门禁 |
+| `./infra/phase2/verify-in-maven-container.sh clean verify` | 36 个 surefire + 4 个 failsafe，0 failure/error/skip；JAR 撤销 class 门禁通过 | 绿色；固定 Java 25/Maven 3.9.16，真实 PG18/PG16/Redis Testcontainers |
+| `./infra/phase2/verify-static.sh` | 通过 | 绿色；固定 digest、Compose 拓扑、只读 ACL、真实结构报告与 Java build-context 新鲜度闭环 |
+| `verify-local-reference-wormhole.sh --source-container ti-postgres-1 ...` | PG18.4，70 表/617 列，schema-only 隔离恢复；完整 ACL、Hibernate validate/readiness 通过 | 绿色；仅为显式授权本地开发参考，报告无 DSN/Secret/schema，生产版本 unknown |
+| Phase 2 Compose 空卷构建与运行 | live/readiness 200，未声明路由 401，业务端口 metrics 404；内部 9090 有 JVM 指标；PG 25432 可达，Redis/9090 无宿主映射 | 绿色；UID 10001、只读根、cap drop、Secret 不进 inspect，API 重启后恢复健康 |
+| 仅复制 `Ti-Java/` 后的完整验收 | 静态门禁、40 项 `clean verify`、Dockerfile check、镜像构建、独立端口 Compose 启动均通过 | 绿色；未读取父目录，临时目录/容器/网络/卷清理后残留为 0 |
+| wormhole 失败路径 | 报告越界被拒绝且原文件不变；源容器命名冲突被拒绝且源仍运行；失败不覆盖既有报告 | 绿色；源只读与清理边界由负向执行证明 |
 | `npx --yes @redocly/cli@2.39.0 lint ... --extends=minimal` | OpenAPI valid，0 error，48 warnings | 绿色；30 组旧路径歧义、4 个尾斜杠和 14 个预声明组件均已结构化解释 |
 
 完整命令、两个 pytest 失败说明及初步性能数字见 `07-baseline-results.md`。
@@ -70,7 +87,7 @@
 - **路由：** 592/592 仍属于旧 Flask 运行时；阶段 0 仅完成盘点，没有任何路由迁入 Java。矩阵中的迁移状态应保持 `pending`，直到对应兼容契约和实现通过验证。
 - **表：** 69/69 应用表仍由旧项目拥有；阶段 0 只分配初始目标模块，没有切换运行时写所有权，也没有建立 Flyway 正式 baseline。
 - **客户端：** Web 仍是 Jinja/原生 JavaScript，小程序当前只是固定来源副本；Vue、OpenAPI 生成客户端和适配尚未开始。
-- **部署：** Java 服务、独立 PostgreSQL/Redis、网关和新项目 Compose 尚未建立；不得让 Flask 与未来 Java 实例同时写同一数据库。
+- **部署：** Java 骨架、独立 PostgreSQL/Redis 测试设施和本地 Compose 已建立，但生产 Compose、网关入口、备份/恢复与切换均未实施；Java 当前没有业务写接口，Flask 与 Java 仍不得同时写同一数据库。
 
 ## 已知风险与未收口项
 
@@ -83,14 +100,18 @@
 - 黄金样本除真实答题写入外，大多来自最小/空测试数据集，只能固定基础响应与空值语义；不能替代脱敏非空快照、权限矩阵、错误路径、分页边界与幂等验证。
 - 黄金样本捕获器已删除 `request_id`、`trace_id`、`correlation_id` 等动态标识；日期窗口等稳定结构中的运行日期仍需由后续对比器按 `08-golden-samples.md` 明确归一化。
 - 小程序旧树 392/受控副本 386 个既有 TypeScript 错误仍会降低后续回归信噪比；当前已用结构化多重集门禁锁定，后续禁止跳过或放宽检查掩盖新增错误。
-- 当前机器没有 JDK/Maven；阶段 2 应使用固定 JDK 25 环境与 Maven Wrapper，不依赖全局 Maven。
+- 生产 PostgreSQL 版本与完整生产 schema 仍为 unknown；阶段 2 的 70 表/617 列证据只来自显式授权的本地开发参考，不能替代阶段 8 的生产备份恢复与 Flyway baseline 演练。
+- Mockito/Byte Buddy 在 Java 25 测试中仍发出动态 attach 警告；JDK 默认禁用动态 agent 前须改为显式 `-javaagent`，不得仅隐藏警告。Maven/Jansi 与 Testcontainers/JNA 的 native access 警告也需随工具链升级收口。
+- identity 在路由矩阵中有 69 行、OpenAPI 合并后 68 个 operation；当前仅 `POST /api/login` 为 `observed`，其余 67 个仍为 `inferred`，阶段 3 不能用桩接口或单个失败分支冒充认证兼容完成。
+- 目前只对获准本地副本观察到 Werkzeug scrypt 哈希，生产/历史 PBKDF2 等前缀清单未知；阶段 3 只能支持脱敏清单和固定向量证明存在的格式，不能按猜测扩大接受面。
+- `users.openid` 旧结构只有普通索引而无唯一约束；阶段 8 正式迁移前必须检测重复并拒绝并发冲突，不能宣称数据库已经保证微信身份唯一。
 - 正式性能基线尚未完成独立数据、独立 Redis、SQL 数、启动耗时和页面指标采集；当前小样本不可作为验收门槛。
 - `page/partial` 与动态模板映射是明确标注的迁移启发式，不能在阶段 6 直接当作分支级精确契约；须结合真实请求与页面测试收口。
 
 ## 下一项具体动作
 
-1. 创建 `Ti-Java/server/`、Maven Wrapper、Java 25/Spring Boot 4.1.0/Modulith 2.1.0 固定依赖和可重复构建入口。
-2. 建立 Spring MVC 应用、分层配置、Request ID、结构化日志/脱敏、统一安全错误、健康检查、Actuator readiness/liveness 与 Micrometer。
-3. 把 `module-contracts.json` 落实为 package、`@ApplicationModule(allowedDependencies=...)`、Named Interface、公开 API 占位合同和 Modulith/ArchUnit 负向架构测试。
-4. 建立 PostgreSQL/Redis Testcontainers 与测试 Profile，使用 `ddl-auto=validate` 映射最小旧结构只读实体；不得提前创建正式 Flyway baseline。
-5. 增加 Java Dockerfile 和独立 `compose.dev.yml`，验证不同端口、容器名和卷启动，不修改旧 Flask 入口或共享可写数据设施。
+1. 先生成固定测试 Secret 下的跨语言认证向量与机器清单：Flask timed Session、旧 HS256 JWT、Werkzeug scrypt/PBKDF2、角色/锁定/`session_version`/微信绑定；只提交合成输入和不可逆摘要，严禁真实 Cookie、JWT、openid 或 Secret。
+2. 在 `infra/phase3/` 建立仅用于本地/测试的确定性比较器核心，默认只接受回环测试源并拒绝同 URL、同数据库/Redis/卷、疑似生产和只读模式下的非 GET/HEAD；先用两个桩服务证明原始/结构化响应、缺失/null、顺序、状态码和 Content-Type 差异。
+3. 在 `identity` 内以测试先行实现严格 HS256、受限 Flask Session 与有成本上限的 Werkzeug 验证器，再接 PostgreSQL 权威用户状态；禁止 Flask introspection、身份 Header 授权、Cookie 角色授权和旧 Redis 权威化。
+4. 完成 `POST /api/login` 的真实垂直切片：隔离写库中的密码验证、失败计数/锁定、成功服务端 Session 与安全 Cookie、事务和响应合同都要与 observed 黄金证据对比；同步更新 identity API 形状状态，但其他 67 个 inferred operation 继续 pending。
+5. 再建立同源快照的两套隔离写比较与“旧停止 → 恢复副本 → Java 启动”/反向回滚演练脚本；来源/目标相同、空环境或疑似生产必须 fail closed，任何阶段都不得双写。
