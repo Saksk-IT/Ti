@@ -7,8 +7,8 @@
 - **阶段 4A：目录与公共题库（进行中）**；受保护科目目录与公共题库 7 条 GET 的 Java shadow 切片均已实现，题目类型、题量、单题详情、后台题目摘要集合与后台科目库存摘要的 catalog 内部读取能力也已实现。两条后台题型、两条单题详情、两条后台题目集合与一条后台科目库存 HTTP operation 仍由 `operations` 持有，两条题量 HTTP operation 延后由 Phase 4C 的 `learning` 组合；九条路由都保持 pending，全部保持 `production cutover=0`。
 - 基线提交：旧 Ti `700006dfdfa063deb4387be572911e782bcea0d9`。
 - 盘点日期：2026-07-16（Asia/Shanghai）。
-- 题目类型元数据已提交并推送的绿色检查点：`1444814`（`feat(java): add question metadata catalog capability`）；题量为 `eda7f43`（`feat(java): add catalog question count capability`）；单题详情为 `75d4cc8`（`feat(java): add catalog question detail capability`）；后台题目摘要集合为 `a32caeb`（`feat(java): add catalog question summary capability`）。其后的后台科目库存摘要内部能力已完成源码、全量和 WORM 门禁，尚待独立抽取与本切片提交。
-- 阶段 0、阶段 1、阶段 2 与阶段 3 均已通过各自结构化门禁、负向测试和独立审计；当前 Phase 4A 实现已在上述检查点之后完成后台科目库存摘要内部读取，但整个长期重构目标仍未完成。
+- 题目类型元数据已提交并推送的绿色检查点：`1444814`（`feat(java): add question metadata catalog capability`）；题量为 `eda7f43`（`feat(java): add catalog question count capability`）；单题详情为 `75d4cc8`（`feat(java): add catalog question detail capability`）；后台题目摘要集合为 `a32caeb`（`feat(java): add catalog question summary capability`）；后台科目库存摘要为 `6493cb2`（`feat(java): add catalog subject inventory capability`）。
+- 阶段 0、阶段 1、阶段 2 与阶段 3 均已通过各自结构化门禁、负向测试和独立审计；截至上述检查点，当前 Phase 4A 已完成后台科目库存摘要内部读取，但整个长期重构目标仍未完成。
 - 旧项目目录只读；当前实施范围仅为 `Ti-Java/`，未连接生产环境、未读取真实密钥、未切换部署或 DNS。
 
 ## 本轮已完成
@@ -103,6 +103,7 @@
 - Java 导出的唯一库存 SQL 已在 PostgreSQL 18.4 的 5,002 科目、150,000 题目夹具上形成固定观测；0 bind、1 statement、`subjects/questions` 各扫描一次、loops=1、TEMP=0、严格 signed `id ASC`。计划文件 SHA-256 为 `f7c684273579e676b9da0024f76593ae9fb69bde47309e6d396c6fdf5a1cfb0c`，runtime manifest SHA-256 为 `3c514f7f1ac79fe8d393f973fa19f136023be70e06968676f6a584d6199f09d7`；它不是生产 SLA。
 - 库存切片 Java/合同定向 28/28、PostgreSQL 16.14/18.4 compatibility 2/2、golden/计划工具 24/24、全部 source tools 132/132 均通过；完整 `clean verify` 为 379 个 surefire + 54 个 failsafe，0 failure/error/skip。
 - WORM 绑定 build-context SHA-256 `befc34d1f79baab4ad7c895ca2718ed1d8e2efbf964978313f35806ff0ab8403`，通过 PostgreSQL 18.4、70 表/617 列、只读 ACL、Hibernate `validate` 与 readiness，报告 SHA-256 为 `da9a55b6df570904760d868696497cd046030b67789d1457d8e94cd8af6f53ca`。
+- 仅复制 1,180 个受控文件、0 个符号链接且不含缓存或构建产物的独立副本已完成最终验收；验收时源/副本相对路径文件清单 SHA-256 均为 `c6a4156f180676e39717abc49a945fc9b4178b867e5dd2791a368693ca2622b7`，build-context 均为 `befc34d1f79baab4ad7c895ca2718ed1d8e2efbf964978313f35806ff0ab8403`。权威 Maven 轮使用固定 Maven 3.9.16/Java 25 容器和全新空 artifact cache；三轮 Maven Central 直连传输失败均已作废，最终仅将 `central` 下载代理到阿里云公共中央仓库，379+54 全绿，Maven 总用时 03:59。同一内容的重建副本还通过 Phase 1、Phase 2/3 静态门禁、独立数据面、镜像构建、3/3 Compose readiness、API 重启恢复与 8-bind source 审计；源工作树 bind 为 0，临时资源和端口均清理至 0。
 - 有效路由状态现为 **11 migrated、600 pending、0 production cutover**；有效资源为 **159 个且 159 个均有唯一 owner**。`migrated` 只表示 Java 实现与兼容证据已物化，旧 Flask 仍是生产 owner，整个长期重构目标仍未完成。
 
 ## 验证命令与结果
@@ -185,10 +186,11 @@
 | Phase 4A 后台科目库存 Java/证据定向 | Java/合同 28/28；PG16.14/PG18.4 compatibility 2/2；库存 Python 工具 24/24；全部 source tools 132/132 | 绿色；四字段、signed ID、nullable lock、零题科目、证据哈希和单条 pending operation 已由机器合同闭环 |
 | Phase 4A 后台科目库存切片 `./infra/phase2/verify-in-maven-container.sh clean verify` | 379 个 surefire + 54 个 failsafe，0 failure/error/skip；最终源目录总用时 01:03 | 绿色；固定 Java 25/Maven 3.9.16，包含 PG18/PG16/Redis Testcontainers |
 | Phase 4A 后台科目库存切片 WORM + Phase 2 静态门禁 | PG18.4、70 表/617 列、只读 ACL、Hibernate `validate`、readiness；build-context SHA-256 `befc34d1f79baab4ad7c895ca2718ed1d8e2efbf964978313f35806ff0ab8403` | 绿色；报告 SHA-256 `da9a55b6df570904760d868696497cd046030b67789d1457d8e94cd8af6f53ca`，未保存 schema dump/DSN/Secret，临时资源已清理 |
+| Phase 4A 后台科目库存切片独立抽取 | 1,180 个受控文件；空缓存固定 Maven 3.9.16/Java 25 容器串行 379+54（03:59）、Phase 1/2/3 静态、独立数据面、镜像、3/3 Compose readiness、重启恢复与 8-bind source 审计全绿 | 绿色；验收时清单 SHA-256 `c6a4156f180676e39717abc49a945fc9b4178b867e5dd2791a368693ca2622b7`，0 符号链接、源工作树 bind=0、临时资源/端口=0；三轮 Central 直连失败均作废，最终仅代理 `central` 下载 |
 | Phase 4A 科目目录检查点独立抽取 | 1,251 个文件；Phase 1、Phase 2/3 静态门禁、231+28 Maven 全绿 | 绿色；这是科目目录检查点证据；无符号链接、无父目录运行时读取，临时副本和容器无残留 |
 | Phase 4A 旧栈回归 | 374 个 Python 文件 compileall；654 passed、2 个登记失败、3 skipped；两套小程序各 36/36 | 绿色；登记基线和 warning 窗口保持一致 |
 
-上表已记录后台科目库存摘要内部能力切片当前真实运行的全量、WORM、静态与定向结果；独立抽取通过后再补入最终一行。后台题目集合、单题详情、题量、题型、公共题库与更早历史检查点均单独标明，不与当前切片混用。
+上表已记录后台科目库存摘要内部能力切片当前真实运行的全量、WORM、静态、定向与独立抽取结果。后台题目集合、单题详情、题量、题型、公共题库与更早历史检查点均单独标明，不与当前切片混用。
 
 完整命令、两个 pytest 失败说明及初步性能数字见 `07-baseline-results.md`。
 
