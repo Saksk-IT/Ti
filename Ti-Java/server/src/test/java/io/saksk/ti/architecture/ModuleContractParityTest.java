@@ -135,9 +135,9 @@ class ModuleContractParityTest {
 
     @Test
     void latestPublicShapesExactlyMatchImplementedOperationsAndKeepTheRestDeferred() throws Exception {
-        assertThat(shapeStatusRoot.path("migrated_route_count").asInt()).isEqualTo(4);
-        assertThat(shapeStatusRoot.path("implemented_route_backed_operation_count").asInt()).isEqualTo(4);
-        assertThat(shapeStatusRoot.path("implemented_public_application_method_count").asInt()).isEqualTo(7);
+        assertThat(shapeStatusRoot.path("migrated_route_count").asInt()).isEqualTo(11);
+        assertThat(shapeStatusRoot.path("implemented_route_backed_operation_count").asInt()).isEqualTo(11);
+        assertThat(shapeStatusRoot.path("implemented_public_application_method_count").asInt()).isEqualTo(12);
         assertThat(shapeStatusRoot.path("event_payload_shape_status").asString())
                 .isEqualTo("deferred_to_phase5");
 
@@ -192,7 +192,24 @@ class ModuleContractParityTest {
                 Class<?> additionalType = Class.forName(additionalClassName);
                 assertThat(additionalType.isInterface()).isTrue();
                 assertThat(Modifier.isPublic(additionalType.getModifiers())).isTrue();
-                assertThat(additionalApi.path("direct_http_operation").asBoolean()).isFalse();
+                boolean directHttpOperation =
+                        additionalApi.path("direct_http_operation").asBoolean();
+                if (directHttpOperation) {
+                    assertThat(module.id()).isEqualTo("catalog");
+                    assertThat(additionalClassName)
+                            .isEqualTo("io.saksk.ti.catalog.api.PublicBankCatalogApi");
+                    assertThat(additionalApi.path("lifecycle").asString())
+                            .isEqualTo("catalog_public_bank_snapshot_query_boundary");
+                    assertThat(strings(status.path("implemented_route_ids")))
+                            .contains(
+                                    "14642ebe7c1d",
+                                    "db1ac691d6fb",
+                                    "8cfb837021af",
+                                    "a473896ff467",
+                                    "b7e49e77a026",
+                                    "f3644c1474f3",
+                                    "37cd782b28dc");
+                }
                 JsonNode additionalMethods = additionalApi.path("methods");
                 assertExactMethodShapes(additionalType, additionalMethods);
                 implementedMethodCount += additionalMethods.size();
@@ -426,10 +443,24 @@ class ModuleContractParityTest {
     }
 
     @Test
-    void phase4aSubjectContractsMaterializeTwoAdditionalCatalogOperations() throws Exception {
+    void phase4aSubjectAndPublicBankContractsFormOneMachineClosedLoop() throws Exception {
         Path baselinePath = resolveInsideTiJava("docs/refactor/02-route-parity-matrix.csv");
         Path phase3DeltaPath = resolveInsideTiJava("docs/refactor/phase3/route-parity-delta.csv");
         Path phase4aDeltaPath = resolveInsideTiJava("docs/refactor/phase4a/route-parity-delta.csv");
+        Path ownershipDeltaPath = resolveInsideTiJava(
+                "docs/refactor/phase4a/data-ownership-delta.csv");
+        Path publicOpenApiPath = resolveInsideTiJava(
+                "openapi/phase4a-public-bank.openapi.json");
+        Path publicGoldenPath = resolveInsideTiJava(
+                "docs/refactor/phase4a/golden-public-bank-reads.json");
+        Path publicRateContractPath = resolveInsideTiJava(
+                "docs/refactor/phase4a/public-bank-rate-limit-contract.json");
+        Path publicReadContractPath = resolveInsideTiJava(
+                "docs/refactor/phase4a/public-bank-read-contract.json");
+        Path publicQueryPlanPath = resolveInsideTiJava(
+                "docs/refactor/phase4a/public-bank-query-plan-evidence.json");
+        Path approvedDifferencesPath = resolveInsideTiJava(
+                "docs/refactor/phase4a/approved-differences.md");
         JsonNode effective = JSON.readTree(Files.readString(
                 resolveInsideTiJava("docs/refactor/phase4a/effective-route-parity-status.json"),
                 StandardCharsets.UTF_8));
@@ -451,6 +482,16 @@ class ModuleContractParityTest {
         JsonNode ownership = JSON.readTree(Files.readString(
                 resolveInsideTiJava("docs/refactor/phase4a/effective-data-ownership-status.json"),
                 StandardCharsets.UTF_8));
+        JsonNode publicOpenApi = JSON.readTree(Files.readString(
+                publicOpenApiPath, StandardCharsets.UTF_8));
+        JsonNode publicGolden = JSON.readTree(Files.readString(
+                publicGoldenPath, StandardCharsets.UTF_8));
+        JsonNode publicRateContract = JSON.readTree(Files.readString(
+                publicRateContractPath, StandardCharsets.UTF_8));
+        JsonNode publicReadContract = JSON.readTree(Files.readString(
+                publicReadContractPath, StandardCharsets.UTF_8));
+        JsonNode publicQueryPlan = JSON.readTree(Files.readString(
+                publicQueryPlanPath, StandardCharsets.UTF_8));
 
         assertThat(sha256(baselinePath))
                 .isEqualTo(effective.path("baseline").path("sha256").asString());
@@ -461,21 +502,60 @@ class ModuleContractParityTest {
         assertThat(sha256(resolveInsideTiJava("contracts/openapi.json")))
                 .isEqualTo(openApi.path("x-ti-base-contract").path("sha256").asString());
         assertThat(openApi.path("x-ti-base-contract").path("immutable").asBoolean()).isTrue();
+        assertThat(sha256(resolveInsideTiJava("contracts/openapi.json")))
+                .isEqualTo(publicOpenApi.path("x-ti-base-contract").path("sha256").asString());
+        assertThat(publicOpenApi.path("x-ti-base-contract").path("immutable").asBoolean())
+                .isTrue();
         assertThat(sha256(resolveInsideTiJava("docs/refactor/03-data-ownership.csv")))
                 .isEqualTo(ownership.path("baseline").path("sha256").asString());
-        assertThat(sha256(resolveInsideTiJava(
-                        "docs/refactor/phase4a/data-ownership-delta.csv")))
+        assertThat(sha256(ownershipDeltaPath))
                 .isEqualTo(ownership.path("delta").path("sha256").asString());
-        assertThat(ownership.path("effective").path("resource_count").asInt()).isEqualTo(155);
+        assertThat(ownership.path("delta").path("new_resource_count").asInt()).isEqualTo(5);
+        assertThat(ownership.path("effective").path("resource_count").asInt()).isEqualTo(159);
         assertThat(ownership.path("effective").path("resources_with_exactly_one_owner").asInt())
-                .isEqualTo(155);
-        JsonNode limiterOwnership = ownership.path("effective").path("new_resources").get(0);
-        assertThat(limiterOwnership.path("owner").asString()).isEqualTo("catalog");
-        assertThat(limiterOwnership.path("resource_name").asString())
+                .isEqualTo(159);
+        Set<String> expectedNewResources = Set.of(
+                "ti-java:catalog:subject-read-rate:<route>:identity:v1:<hmac_sha256>:<window>:<bucket>",
+                "public_bank_plaza_viewer_state",
+                "public_bank_plaza_snapshot_state",
+                "ti-java:catalog:public-bank-read-rate:<route>:<identity|ip>:v1:"
+                        + "<hmac_sha256>:<second|hour|day>",
+                "ti-java:catalog:public-bank-snapshot:refresh-lock");
+        JsonNode newResources = ownership.path("effective").path("new_resources");
+        assertThat(newResources).hasSize(5);
+        Set<String> observedNewResources = new LinkedHashSet<>();
+        for (JsonNode resource : newResources) {
+            assertThat(observedNewResources.add(resource.path("resource_name").asString()))
+                    .as("duplicate Phase 4A ownership resource")
+                    .isTrue();
+            assertThat(resource.path("owner").asString()).isEqualTo("catalog");
+            assertThat(resource.path("business_fact").asBoolean()).isFalse();
+            assertThat(resource.path("production_cutover").asBoolean()).isFalse();
+        }
+        assertThat(observedNewResources)
+                .containsExactlyInAnyOrderElementsOf(expectedNewResources);
+        String subjectLimiter = observedNewResources.stream()
+                .filter(name -> name.startsWith("ti-java:catalog:subject-read-rate:"))
+                .findFirst()
+                .orElseThrow();
+        assertThat(subjectLimiter)
                 .contains(":identity:v1:<hmac_sha256>:")
                 .doesNotContain("identity_id", ":uid:");
-        assertThat(limiterOwnership.path("business_fact").asBoolean()).isFalse();
-        assertThat(limiterOwnership.path("production_cutover").asBoolean()).isFalse();
+
+        List<String> ownershipDeltaLines = Files.readAllLines(
+                ownershipDeltaPath, StandardCharsets.UTF_8);
+        assertThat(ownershipDeltaLines).hasSize(6);
+        List<String> ownershipDeltaHeader = parseCsvLine(ownershipDeltaLines.getFirst());
+        Set<String> observedOwnershipDeltaNames = new LinkedHashSet<>();
+        for (String line : ownershipDeltaLines.subList(1, ownershipDeltaLines.size())) {
+            Map<String, String> delta = csvRow(ownershipDeltaHeader, parseCsvLine(line));
+            assertThat(observedOwnershipDeltaNames.add(delta.get("resource_name"))).isTrue();
+            assertThat(delta.get("base_resource")).isEqualTo("false");
+            assertThat(delta.get("phase4a_owner")).isEqualTo("catalog");
+            assertThat(delta.get("production_cutover")).isEqualTo("false");
+        }
+        assertThat(observedOwnershipDeltaNames)
+                .containsExactlyInAnyOrderElementsOf(expectedNewResources);
 
         List<String> baselineLines = Files.readAllLines(baselinePath, StandardCharsets.UTF_8);
         List<String> baselineHeader = parseCsvLine(baselineLines.getFirst());
@@ -502,11 +582,49 @@ class ModuleContractParityTest {
                 "parity_evidence",
                 "approved_difference_ids",
                 "production_cutover");
-        assertThat(deltaLines).hasSize(3);
+        assertThat(deltaLines).hasSize(10);
+        assertThat(effective.path("deltas").get(1).path("operation_count").asInt())
+                .isEqualTo(9);
 
-        Set<RouteKey> expected = Set.of(
+        Set<RouteKey> expectedSubjects = Set.of(
                 new RouteKey("d3cd12aaca90", "/api/quiz/subjects", "GET"),
                 new RouteKey("7fd9b0fc8111", "/api/quiz/subjects/meta", "GET"));
+        Map<RouteKey, String> expectedPublicApis = Map.ofEntries(
+                Map.entry(
+                        new RouteKey("14642ebe7c1d", "/api/public/banks", "GET"),
+                        "io.saksk.ti.catalog.api.PublicBankCatalogApi#search"),
+                Map.entry(
+                        new RouteKey("db1ac691d6fb", "/api/public/banks/boards", "GET"),
+                        "io.saksk.ti.catalog.api.PublicBankCatalogApi#boards"),
+                Map.entry(
+                        new RouteKey(
+                                "8cfb837021af",
+                                "/api/public/banks/card/<source_type>/<int:bank_id>",
+                                "GET"),
+                        "io.saksk.ti.catalog.api.PublicBankCatalogApi#detail"),
+                Map.entry(
+                        new RouteKey("a473896ff467", "/api/public/banks/hot", "GET"),
+                        "io.saksk.ti.catalog.api.PublicBankCatalogApi#hot"),
+                Map.entry(
+                        new RouteKey("b7e49e77a026", "/api/public/banks/list", "GET"),
+                        "io.saksk.ti.catalog.api.PublicBankCatalogApi#search"),
+                Map.entry(
+                        new RouteKey("f3644c1474f3", "/api/public/banks/summary", "GET"),
+                        "io.saksk.ti.catalog.api.PublicBankCatalogApi#summary"),
+                Map.entry(
+                        new RouteKey(
+                                "37cd782b28dc", "/api/public/banks/<int:bank_id>", "GET"),
+                        "io.saksk.ti.catalog.api.PublicBankCatalogApi#detail"));
+        Set<RouteKey> expected = new LinkedHashSet<>(expectedSubjects);
+        expected.addAll(expectedPublicApis.keySet());
+        Set<String> expectedPublicDifferences = Set.of(
+                "P4A-CATALOG-004",
+                "P4A-CATALOG-005",
+                "P4A-CATALOG-006",
+                "P4A-CATALOG-007",
+                "P4A-CATALOG-008",
+                "P4A-CATALOG-009");
+        Set<String> observedPublicDifferences = new LinkedHashSet<>();
         Map<RouteKey, Map<String, String>> deltas = new LinkedHashMap<>();
         for (String line : deltaLines.subList(1, deltaLines.size())) {
             Map<String, String> delta = csvRow(deltaHeader, parseCsvLine(line));
@@ -515,34 +633,71 @@ class ModuleContractParityTest {
             Map<String, String> baseline = baselineOperations.get(key);
             assertThat(baseline).isNotNull();
             assertThat(delta.get("base_target_module")).isEqualTo(baseline.get("target_module"));
-            assertThat(delta.get("base_target_module")).isEqualTo("learning");
             assertThat(delta.get("phase4a_target_module")).isEqualTo("catalog");
             assertThat(delta.get("base_migration_status")).isEqualTo("pending");
             assertThat(delta.get("phase4a_migration_status")).isEqualTo("migrated");
-            assertThat(delta.get("application_api"))
-                    .isEqualTo("io.saksk.ti.catalog.api.CatalogApplicationApi#subjectCatalog");
-            assertThat(delta.get("parity_evidence"))
-                    .contains("sha256:" + sha256(resolveInsideTiJava(
-                            "docs/refactor/phase4a/golden-subject-reads.json")));
-            assertThat(delta.get("approved_difference_ids"))
-                    .isEqualTo("P4A-CATALOG-001;P4A-CATALOG-002;P4A-CATALOG-003");
             assertThat(delta.get("production_cutover")).isEqualTo("false");
+            if (expectedSubjects.contains(key)) {
+                assertThat(delta.get("base_target_module")).isEqualTo("learning");
+                assertThat(delta.get("application_api"))
+                        .isEqualTo("io.saksk.ti.catalog.api.CatalogApplicationApi#subjectCatalog");
+                assertThat(delta.get("parity_evidence"))
+                        .contains("sha256:" + sha256(resolveInsideTiJava(
+                                "docs/refactor/phase4a/golden-subject-reads.json")));
+                assertThat(delta.get("approved_difference_ids"))
+                        .isEqualTo("P4A-CATALOG-001;P4A-CATALOG-002;P4A-CATALOG-003");
+            } else {
+                assertThat(delta.get("base_target_module")).isEqualTo("catalog");
+                assertThat(delta.get("application_api")).isEqualTo(expectedPublicApis.get(key));
+                assertThat(delta.get("parity_evidence"))
+                        .contains(
+                                "sha256:" + sha256(publicGoldenPath),
+                                "sha256:" + sha256(publicQueryPlanPath));
+                Set<String> operationDifferences = Set.copyOf(
+                        Arrays.asList(delta.get("approved_difference_ids").split(";")));
+                assertThat(operationDifferences)
+                        .isSubsetOf(expectedPublicDifferences)
+                        .contains(
+                                "P4A-CATALOG-004",
+                                "P4A-CATALOG-005",
+                                "P4A-CATALOG-007",
+                                "P4A-CATALOG-008",
+                                "P4A-CATALOG-009");
+                observedPublicDifferences.addAll(operationDifferences);
+            }
         }
         assertThat(deltas.keySet()).containsExactlyInAnyOrderElementsOf(expected);
+        assertThat(observedPublicDifferences)
+                .containsExactlyInAnyOrderElementsOf(expectedPublicDifferences);
 
         assertThat(effective.path("effective").path("expanded_operation_count").asInt()).isEqualTo(611);
-        assertThat(effective.path("effective").path("overridden_operation_count").asInt()).isEqualTo(4);
+        assertThat(effective.path("effective").path("overridden_operation_count").asInt()).isEqualTo(11);
         assertThat(effective.path("effective").path("migration_status").path("migrated").asInt())
-                .isEqualTo(4);
+                .isEqualTo(11);
         assertThat(effective.path("effective").path("migration_status").path("pending").asInt())
-                .isEqualTo(607);
+                .isEqualTo(600);
         assertThat(effective.path("effective").path("production_cutover_operation_count").asInt())
                 .isZero();
-        assertThat(effective.path("effective").path("migrated_operations")).hasSize(4);
+        JsonNode migratedOperations = effective.path("effective").path("migrated_operations");
+        assertThat(migratedOperations).hasSize(11);
+        Set<RouteKey> effectiveMigratedKeys = new LinkedHashSet<>();
+        for (JsonNode operation : migratedOperations) {
+            assertThat(effectiveMigratedKeys.add(new RouteKey(
+                            operation.path("route_id").asString(),
+                            operation.path("path").asString(),
+                            operation.path("method").asString())))
+                    .isTrue();
+        }
+        Set<RouteKey> expectedEffective = new LinkedHashSet<>(expected);
+        expectedEffective.add(new RouteKey("02366fc520ac", "/api/login", "POST"));
+        expectedEffective.add(new RouteKey(
+                "88d7dc05cdbb", "/api/auth/login-methods", "GET"));
+        assertThat(effectiveMigratedKeys)
+                .containsExactlyInAnyOrderElementsOf(expectedEffective);
 
         assertThat(openApi.path("openapi").asString()).isEqualTo("3.1.2");
         assertThat(openApi.path("paths")).hasSize(2);
-        for (RouteKey key : expected) {
+        for (RouteKey key : expectedSubjects) {
             JsonNode operation = openApi.path("paths").path(key.path()).path("get");
             assertThat(operation.path("x-ti-route-id").asString()).isEqualTo(key.routeId());
             assertThat(operation.path("x-ti-application-api").asString())
@@ -627,6 +782,200 @@ class ModuleContractParityTest {
                 .contains("total of three");
         assertThat(businessInvariants.path("invariants").get(8).path("statement").asString())
                 .contains("Bearer", "target Session", "Flask Session");
+
+        JsonNode publicEvidence = publicOpenApi.path("x-ti-evidence");
+        assertThat(sha256(publicGoldenPath))
+                .isEqualTo(publicEvidence.path("legacyGolden").path("sha256").asString());
+        int publicGoldenCaseCount = publicGolden.path("case_count").asInt();
+        assertThat(publicGoldenCaseCount).isGreaterThanOrEqualTo(44);
+        assertThat(publicEvidence.path("legacyGolden").path("caseCount").asInt())
+                .isEqualTo(publicGoldenCaseCount);
+        assertThat(sha256(publicRateContractPath))
+                .isEqualTo(publicEvidence.path("rateLimitContract").path("sha256").asString());
+        assertThat(sha256(publicReadContractPath))
+                .isEqualTo(publicEvidence.path("readContract").path("sha256").asString());
+        assertThat(sha256(publicQueryPlanPath))
+                .isEqualTo(publicEvidence.path("queryPlan").path("sha256").asString());
+        assertThat(sha256(approvedDifferencesPath))
+                .isEqualTo(publicEvidence.path("approvedDifferences").path("sha256").asString());
+
+        Set<String> expectedPublicOpenApiPaths = Set.of(
+                "/api/public/banks",
+                "/api/public/banks/boards",
+                "/api/public/banks/card/{source_type}/{bank_id}",
+                "/api/public/banks/hot",
+                "/api/public/banks/list",
+                "/api/public/banks/summary",
+                "/api/public/banks/{bank_id}");
+        assertThat(publicOpenApi.path("openapi").asString()).isEqualTo("3.1.2");
+        assertThat(publicOpenApi.path("paths")).hasSize(7);
+        Set<String> observedPublicOpenApiPaths = new LinkedHashSet<>();
+        Map<String, JsonNode> publicOperationsByRouteId = new LinkedHashMap<>();
+        publicOpenApi.path("paths").propertyNames().forEach(path -> {
+            observedPublicOpenApiPaths.add(path);
+            JsonNode operation = publicOpenApi.path("paths").path(path).path("get");
+            String routeId = operation.path("x-ti-route-id").asString();
+            assertThat(publicOperationsByRouteId.put(routeId, operation))
+                    .as("duplicate public-bank OpenAPI route id %s", routeId)
+                    .isNull();
+        });
+        assertThat(observedPublicOpenApiPaths)
+                .containsExactlyInAnyOrderElementsOf(expectedPublicOpenApiPaths);
+        assertThat(publicOperationsByRouteId.keySet())
+                .containsExactlyInAnyOrderElementsOf(expectedPublicApis.keySet().stream()
+                        .map(RouteKey::routeId)
+                        .toList());
+        for (Map.Entry<RouteKey, String> expectedOperation : expectedPublicApis.entrySet()) {
+            RouteKey key = expectedOperation.getKey();
+            JsonNode operation = publicOperationsByRouteId.get(key.routeId());
+            assertThat(operation.path("x-ti-application-api").asString())
+                    .isEqualTo(expectedOperation.getValue())
+                    .isEqualTo(deltas.get(key).get("application_api"));
+            assertThat(operation.path("x-ti-migration").path("status").asString())
+                    .isEqualTo("migrated");
+            assertThat(operation.path("x-ti-migration").path("productionCutover").asBoolean())
+                    .isFalse();
+            assertThat(strings(operation.path("x-ti-approved-differences")))
+                    .containsExactlyInAnyOrderElementsOf(Arrays.asList(
+                            deltas.get(key).get("approved_difference_ids").split(";")));
+        }
+
+        assertThat(publicGolden.path("cases")).hasSize(publicGoldenCaseCount);
+        assertThat(publicGolden.path("warm_side_effect_free").asBoolean()).isTrue();
+        assertThat(publicGolden.path("covered_routes")).hasSize(7);
+        Set<String> publicGoldenRouteIds = new LinkedHashSet<>();
+        for (JsonNode route : publicGolden.path("covered_routes")) {
+            assertThat(publicGoldenRouteIds.add(route.path("route_id").asString())).isTrue();
+        }
+        assertThat(publicGoldenRouteIds)
+                .containsExactlyInAnyOrderElementsOf(publicOperationsByRouteId.keySet());
+        assertThat(publicRateContract.path("endpoints")).hasSize(7);
+        assertThat(publicReadContract.path("operations")).hasSize(7);
+        Set<String> publicReadRouteIds = new LinkedHashSet<>();
+        for (JsonNode operation : publicReadContract.path("operations")) {
+            assertThat(publicReadRouteIds.add(operation.path("route_id").asString())).isTrue();
+        }
+        assertThat(publicReadRouteIds)
+                .containsExactlyInAnyOrderElementsOf(publicOperationsByRouteId.keySet());
+
+        JsonNode approvedDifferenceItems = publicReadContract.path("approved_differences")
+                .path("items");
+        assertThat(approvedDifferenceItems).hasSize(6);
+        Set<String> readContractDifferenceIds = new LinkedHashSet<>();
+        for (JsonNode difference : approvedDifferenceItems) {
+            assertThat(readContractDifferenceIds.add(difference.path("id").asString())).isTrue();
+        }
+        assertThat(readContractDifferenceIds)
+                .containsExactlyInAnyOrderElementsOf(expectedPublicDifferences);
+        String approvedDifferences = Files.readString(
+                approvedDifferencesPath, StandardCharsets.UTF_8);
+        for (String differenceId : expectedPublicDifferences) {
+            assertThat(approvedDifferences).contains("## " + differenceId);
+        }
+
+        JsonNode exactRuntimeInputs = publicQueryPlan.path("inputs");
+        assertThat(exactRuntimeInputs.path("adapter").asString())
+                .isEqualTo("server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/"
+                        + "JdbcPublicBankSnapshotQueryAdapter.java");
+        assertThat(sha256(resolveInsideTiJava(exactRuntimeInputs.path("adapter").asString())))
+                .isEqualTo(exactRuntimeInputs.path("adapter_sha256").asString());
+        assertThat(exactRuntimeInputs.path("runtime_sql_exporter").asString())
+                .isEqualTo("server/src/test/java/io/saksk/ti/catalog/infrastructure/persistence/"
+                        + "PublicBankRuntimeSqlManifestTest.java");
+        assertThat(sha256(resolveInsideTiJava(
+                        exactRuntimeInputs.path("runtime_sql_exporter").asString())))
+                .isEqualTo(exactRuntimeInputs.path("runtime_sql_exporter_sha256").asString());
+        assertThat(exactRuntimeInputs.path("schema").asString())
+                .isEqualTo("server/src/test/resources/db/phase4a/042-public-bank-snapshot-schema.sql");
+        assertThat(sha256(resolveInsideTiJava(exactRuntimeInputs.path("schema").asString())))
+                .isEqualTo(exactRuntimeInputs.path("schema_sha256").asString());
+        assertThat(sha256(resolveInsideTiJava(
+                        "tools/capture_phase4a_public_bank_query_plans.py")))
+                .isEqualTo(exactRuntimeInputs.path("capture_tool_sha256").asString());
+        assertThat(exactRuntimeInputs.path("runtime_sql_manifest").asString())
+                .isEqualTo("server/target/phase4a-public-bank-runtime-sql.json");
+        assertThat(exactRuntimeInputs.path("runtime_sql_manifest_sha256").asString())
+                .matches("[0-9a-f]{64}");
+
+        assertThat(publicQueryPlan.path("data_set").path("actual_row_counts_and_distribution")
+                        .path("metrics").asInt())
+                .isGreaterThanOrEqualTo(50_000);
+        assertThat(publicQueryPlan.path("data_set").path("actual_row_counts_and_distribution")
+                        .path("viewer_states").asInt())
+                .isGreaterThanOrEqualTo(100_000);
+        JsonNode measuredQueries = publicQueryPlan.path("measurement").path("queries");
+        assertThat(measuredQueries).hasSize(7);
+        Set<String> expectedQueryIds = Set.of(
+                "search-count-keyword",
+                "search-page-latest",
+                "search-page-latest-keyword",
+                "boards-directory",
+                "hot-top-five",
+                "summary-rolling-seven-days",
+                "detail-with-both-relation");
+        Set<String> observedQueryIds = new LinkedHashSet<>();
+        for (JsonNode measuredQuery : measuredQueries) {
+            assertThat(observedQueryIds.add(measuredQuery.path("query_id").asString())).isTrue();
+            assertThat(measuredQuery.path("source").asString())
+                    .isEqualTo(exactRuntimeInputs.path("adapter").asString());
+            assertThat(measuredQuery.path("sql_statement_count").asInt()).isEqualTo(1);
+            assertThat(measuredQuery.path("sql").asString()).isNotBlank();
+            assertThat(sha256Utf8(measuredQuery.path("sql").asString()))
+                    .isEqualTo(measuredQuery.path("sql_sha256").asString());
+        }
+        assertThat(observedQueryIds).containsExactlyInAnyOrderElementsOf(expectedQueryIds);
+        assertThat(publicQueryPlan.path("assertions").path("status").asString())
+                .isEqualTo("passed");
+        assertThat(publicQueryPlan.path("assertions").path("fixed_sql_budget_no_n_plus_one")
+                        .asBoolean())
+                .isTrue();
+        assertThat(publicQueryPlan.path("assertions").path("data_scale")
+                        .path("metrics_at_least_50000").asBoolean())
+                .isTrue();
+        assertThat(publicQueryPlan.path("assertions").path("data_scale")
+                        .path("viewer_rows_at_least_100000").asBoolean())
+                .isTrue();
+
+        JsonNode adapterBoundary = publicOpenApi.path("x-ti-http-adapter-boundary");
+        assertThat(adapterBoundary.path("applicationApi").asString())
+                .isEqualTo("io.saksk.ti.catalog.api.PublicBankCatalogApi");
+        assertThat(strings(adapterBoundary.path("applicationCardFieldsExcluded")))
+                .containsExactlyInAnyOrder(
+                        "source_type", "source_label", "detail_url", "practice_url");
+        assertThat(strings(adapterBoundary.path("webAdapterOwnedFields")))
+                .containsExactlyInAnyOrder(
+                        "source_type", "source_label", "detail_url", "practice_url");
+        assertThat(publicReadContract.path("application_api_shape").path("interface").asString())
+                .isEqualTo("PublicBankCatalogApi");
+        assertThat(publicReadContract.path("application_api_shape").path("methods"))
+                .hasSize(5);
+        assertThat(publicReadContract.path("application_api_shape").path("http_neutrality")
+                        .asString())
+                .contains("web adapter owns");
+
+        Class<?> cardView = Class.forName("io.saksk.ti.catalog.api.PublicBankCardView");
+        assertThat(cardView.isRecord()).isTrue();
+        assertThat(Arrays.stream(cardView.getRecordComponents())
+                        .map(component -> component.getName()))
+                .doesNotContain("detailUrl", "practiceUrl", "sourceLabel");
+        Class<?> sourceType = Class.forName("io.saksk.ti.catalog.api.PublicBankSource");
+        assertThat(sourceType.isEnum()).isTrue();
+        assertThat(Arrays.stream(sourceType.getDeclaredMethods())
+                        .map(method -> method.getName()))
+                .doesNotContain("databaseValue", "displayLabel", "fromDatabaseValue");
+        JsonNode catalogShape = java.util.stream.StreamSupport.stream(
+                        shapeStatusRoot.path("modules").spliterator(), false)
+                .filter(module -> module.path("module_id").asString().equals("catalog"))
+                .findFirst()
+                .orElseThrow();
+        assertThat(strings(catalogShape.path("implemented_route_ids")))
+                .containsExactlyInAnyOrderElementsOf(expected.stream()
+                        .map(RouteKey::routeId)
+                        .toList());
+        assertThat(catalogShape.path("additional_public_apis")).hasSize(1);
+        assertThat(catalogShape.path("additional_public_apis").get(0)
+                        .path("java_api").asString())
+                .isEqualTo("io.saksk.ti.catalog.api.PublicBankCatalogApi");
     }
 
     private static void assertPublicApplicationContract(ContractModule module) throws ClassNotFoundException {
@@ -759,6 +1108,16 @@ class ModuleContractParityTest {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             return HexFormat.of().formatHex(digest.digest(Files.readAllBytes(path)));
+        } catch (java.security.NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 is unavailable", exception);
+        }
+    }
+
+    private static String sha256Utf8(String value) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of().formatHex(
+                    digest.digest(value.getBytes(StandardCharsets.UTF_8)));
         } catch (java.security.NoSuchAlgorithmException exception) {
             throw new IllegalStateException("SHA-256 is unavailable", exception);
         }

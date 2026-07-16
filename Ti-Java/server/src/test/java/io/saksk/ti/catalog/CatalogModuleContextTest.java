@@ -13,6 +13,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.modulith.test.ApplicationModuleTest;
 import org.springframework.modulith.test.ApplicationModuleTest.BootstrapMode;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.PlatformTransactionManager;
 
 /** Phase 2 boundary-context smoke test; this does not claim catalog behavior has migrated. */
 @ApplicationModuleTest(mode = BootstrapMode.STANDALONE, webEnvironment = SpringBootTest.WebEnvironment.NONE)
@@ -47,6 +48,11 @@ class CatalogModuleContextTest extends AbstractPhase2ModuleContextTest {
         @Bean
         JdbcClient jdbcClient() {
             return org.mockito.Mockito.mock(JdbcClient.class);
+        }
+
+        @Bean
+        PlatformTransactionManager transactionManager() {
+            return org.mockito.Mockito.mock(PlatformTransactionManager.class);
         }
 
         @Bean

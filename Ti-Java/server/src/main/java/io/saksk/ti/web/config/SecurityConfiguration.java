@@ -2,12 +2,16 @@ package io.saksk.ti.web.config;
 
 import io.saksk.ti.web.error.ErrorCode;
 import io.saksk.ti.web.error.SafeSecurityErrorWriter;
+import io.saksk.ti.web.compat.LegacyPublicBankSecurityErrorWriter;
 import io.saksk.ti.web.compat.LegacySubjectSecurityErrorWriter;
 import io.saksk.ti.web.security.SessionBoundCsrfTokens;
 import io.saksk.ti.web.security.ClientAddressResolver;
 import io.saksk.ti.web.security.CsrfIssuanceRateLimitFilter;
 import io.saksk.ti.web.security.CsrfIssuanceRateLimitProperties;
 import io.saksk.ti.web.security.CsrfIssuanceRateLimiter;
+import io.saksk.ti.web.security.PublicBankReadRequestResolver;
+import io.saksk.ti.web.security.PublicBankReadRateLimitFilter;
+import io.saksk.ti.web.security.PublicBankReadRateLimiter;
 import io.saksk.ti.web.security.TargetSessionProperties;
 import io.saksk.ti.web.security.TargetSessionAuthenticationFilter;
 import io.saksk.ti.web.security.SubjectReadRateLimitFilter;
@@ -67,7 +71,10 @@ public class SecurityConfiguration {
             ObjectProvider<CsrfIssuanceRateLimiter> csrfIssuanceRateLimiter,
             ObjectProvider<ClientAddressResolver> clientAddresses,
             ObjectProvider<SubjectReadRateLimiter> subjectReadRateLimiter,
-            ObjectProvider<SubjectReadRequestResolver> subjectReadRequestResolver
+            ObjectProvider<SubjectReadRequestResolver> subjectReadRequestResolver,
+            ObjectProvider<PublicBankReadRequestResolver> publicBankReadRequestResolver,
+            ObjectProvider<PublicBankReadRateLimiter> publicBankReadRateLimiter,
+            ObjectProvider<LegacyPublicBankSecurityErrorWriter> legacyPublicBankErrorWriter
     ) throws Exception {
         LegacySubjectSecurityErrorWriter legacySubjectErrors =
                 legacySubjectErrorWriter.getIfAvailable();
@@ -75,8 +82,14 @@ public class SecurityConfiguration {
                 subjectReadRequestResolver.getIfAvailable();
         RequestMatcher subjectReadMatcher = request ->
                 subjectReadRoutes != null && subjectReadRoutes.matches(request);
+        PublicBankReadRequestResolver publicBankReadRoutes =
+                publicBankReadRequestResolver.getIfAvailable();
+        RequestMatcher publicBankReadMatcher = request ->
+                publicBankReadRoutes != null && publicBankReadRoutes.matches(request);
         RequestMatcher legacyCompatibilityReads = request ->
-                LEGACY_LOGIN_METHODS_READ.matches(request) || subjectReadMatcher.matches(request);
+                LEGACY_LOGIN_METHODS_READ.matches(request)
+                        || subjectReadMatcher.matches(request)
+                        || publicBankReadMatcher.matches(request);
         RequestMatcher otherRequests = new NegatedRequestMatcher(legacyCompatibilityReads);
         http
                 .csrf(csrf -> csrf
@@ -97,6 +110,7 @@ public class SecurityConfiguration {
                                 "/api/csrf",
                                 "/api/login"
                         ).permitAll()
+                        .requestMatchers(publicBankReadMatcher).permitAll()
                         .requestMatchers(subjectReadMatcher).authenticated()
                         .anyRequest().denyAll())
                 .exceptionHandling(exceptions -> exceptions
@@ -151,8 +165,33 @@ public class SecurityConfiguration {
                 http.addFilterAfter(subjectReadFilter, SecurityContextHolderFilter.class);
             }
         }
-        CsrfIssuanceRateLimiter issuanceRateLimiter = csrfIssuanceRateLimiter.getIfAvailable();
+        PublicBankReadRateLimiter publicBankLimiter = publicBankReadRateLimiter.getIfAvailable();
+        LegacyPublicBankSecurityErrorWriter legacyPublicBankErrors =
+                legacyPublicBankErrorWriter.getIfAvailable();
         ClientAddressResolver addressResolver = clientAddresses.getIfAvailable();
+        if (publicBankLimiter != null) {
+            if (legacyPublicBankErrors == null
+                    || publicBankReadRoutes == null
+                    || addressResolver == null) {
+                throw new IllegalStateException(
+                        "Public-bank read limiter requires its route resolver, address resolver, "
+                                + "and error writer");
+            }
+            PublicBankReadRateLimitFilter publicBankReadFilter =
+                    new PublicBankReadRateLimitFilter(
+                            publicBankLimiter,
+                            legacyPublicBankErrors,
+                            publicBankReadRoutes,
+                            addressResolver);
+            if (authenticationFilter != null) {
+                http.addFilterAfter(
+                        publicBankReadFilter,
+                        TargetSessionAuthenticationFilter.class);
+            } else {
+                http.addFilterAfter(publicBankReadFilter, SecurityContextHolderFilter.class);
+            }
+        }
+        CsrfIssuanceRateLimiter issuanceRateLimiter = csrfIssuanceRateLimiter.getIfAvailable();
         if (issuanceRateLimiter != null && addressResolver != null) {
             http.addFilterBefore(
                     new CsrfIssuanceRateLimitFilter(

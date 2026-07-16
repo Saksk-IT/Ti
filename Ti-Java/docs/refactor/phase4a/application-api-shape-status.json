@@ -4,12 +4,12 @@
   "source_contract": "../phase1/module-contracts.json",
   "previous_shape_status": "../phase3/application-api-shape-status.json",
   "route_status_delta": "route-parity-delta.csv",
-  "phase": "4A-subject-directory-slice",
-  "migrated_route_count": 4,
-  "implemented_route_backed_operation_count": 4,
-  "implemented_public_application_method_count": 7,
+  "phase": "4A-subject-directory-and-public-bank-read-slices",
+  "migrated_route_count": 11,
+  "implemented_route_backed_operation_count": 11,
+  "implemented_public_application_method_count": 12,
   "event_payload_shape_status": "deferred_to_phase5",
-  "policy": "Phase 3 methods remain accepted. Phase 4A adds only the route-backed catalog query and the reviewed identity visibility boundary proven by subject-read contracts.",
+  "policy": "Phase 3 methods remain accepted. Phase 4A adds the protected subject query boundary, the reviewed identity visibility boundary and a separate HTTP-neutral public-bank snapshot query API proven by isolated compatibility contracts.",
   "modules": [
     {
       "module_id": "identity",
@@ -86,7 +86,17 @@
       "phase1_inputs": ["QuestionId", "CategoryId", "CatalogQuery"],
       "phase1_outputs": ["QuestionView", "CatalogPage"],
       "shape_status": "partially_implemented",
-      "implemented_route_ids": ["d3cd12aaca90", "7fd9b0fc8111"],
+      "implemented_route_ids": [
+        "d3cd12aaca90",
+        "7fd9b0fc8111",
+        "14642ebe7c1d",
+        "db1ac691d6fb",
+        "8cfb837021af",
+        "a473896ff467",
+        "b7e49e77a026",
+        "f3644c1474f3",
+        "37cd782b28dc"
+      ],
       "methods": [
         {
           "name": "subjectCatalog",
@@ -94,7 +104,74 @@
           "parameter_types": ["io.saksk.ti.catalog.api.AuthenticatedCatalogViewer"]
         }
       ],
-      "implemented_types": ["AuthenticatedCatalogViewer", "SubjectCatalogView", "SubjectSummaryView"]
+      "implemented_types": [
+        "AuthenticatedCatalogViewer",
+        "SubjectCatalogView",
+        "SubjectSummaryView",
+        "PublicBankBoardRef",
+        "PublicBankBoardView",
+        "PublicBankCardView",
+        "PublicBankDetailView",
+        "PublicBankFilter",
+        "PublicBankHotQuery",
+        "PublicBankPageView",
+        "PublicBankRef",
+        "PublicBankRelation",
+        "PublicBankRelationView",
+        "PublicBankSearchQuery",
+        "PublicBankSnapshotFreshness",
+        "PublicBankSnapshotUnavailableException",
+        "PublicBankSort",
+        "PublicBankSource",
+        "PublicBankSourceBreakdownView",
+        "PublicBankSummaryView"
+      ],
+      "additional_public_apis": [
+        {
+          "java_api": "io.saksk.ti.catalog.api.PublicBankCatalogApi",
+          "lifecycle": "catalog_public_bank_snapshot_query_boundary",
+          "direct_http_operation": true,
+          "methods": [
+            {
+              "name": "search",
+              "return_type": "io.saksk.ti.catalog.api.PublicBankPageView",
+              "parameter_types": [
+                "io.saksk.ti.catalog.api.PublicBankSearchQuery",
+                "java.util.Optional"
+              ]
+            },
+            {
+              "name": "boards",
+              "return_type": "java.util.List",
+              "generic_return_type": "java.util.List<io.saksk.ti.catalog.api.PublicBankBoardView>",
+              "parameter_types": ["io.saksk.ti.catalog.api.PublicBankFilter"]
+            },
+            {
+              "name": "hot",
+              "return_type": "java.util.List",
+              "generic_return_type": "java.util.List<io.saksk.ti.catalog.api.PublicBankCardView>",
+              "parameter_types": [
+                "io.saksk.ti.catalog.api.PublicBankHotQuery",
+                "java.util.Optional"
+              ]
+            },
+            {
+              "name": "summary",
+              "return_type": "io.saksk.ti.catalog.api.PublicBankSummaryView",
+              "parameter_types": ["io.saksk.ti.catalog.api.PublicBankFilter"]
+            },
+            {
+              "name": "detail",
+              "return_type": "java.util.Optional",
+              "generic_return_type": "java.util.Optional<io.saksk.ti.catalog.api.PublicBankDetailView>",
+              "parameter_types": [
+                "io.saksk.ti.catalog.api.PublicBankRef",
+                "java.util.Optional"
+              ]
+            }
+          ]
+        }
+      ]
     },
     {
       "module_id": "personalbank",

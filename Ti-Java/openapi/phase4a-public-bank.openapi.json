@@ -1,0 +1,1429 @@
+{
+  "openapi": "3.1.2",
+  "info": {
+    "title": "Ti Phase 4A Public Bank Read Compatibility Delta",
+    "version": "0.4.0-phase4a-public-bank",
+    "description": "Self-contained Java overlay for the seven anonymous public-bank catalog reads with optional authenticated viewer enrichment. The Phase 1 baseline remains immutable and production cutover remains disabled."
+  },
+  "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "servers": [
+    {
+      "url": "http://127.0.0.1:{port}",
+      "description": "Phase 4A local/test Java runtime only",
+      "variables": {
+        "port": {"default": "18080"}
+      }
+    }
+  ],
+  "tags": [
+    {
+      "name": "catalog-public-bank",
+      "description": "Catalog-owned, snapshot-backed public-bank reads"
+    }
+  ],
+  "paths": {
+    "/api/public/banks": {
+      "get": {
+        "operationId": "legacy_14642ebe7c1d_get",
+        "summary": "List public banks for the legacy mini-program surface",
+        "tags": ["catalog-public-bank"],
+        "security": [
+          {},
+          {"targetSession": []},
+          {"legacyBearer": []},
+          {"legacyFlaskSession": []}
+        ],
+        "parameters": [
+          {"$ref": "#/components/parameters/LegacySort"},
+          {"$ref": "#/components/parameters/LegacySourceType"},
+          {"$ref": "#/components/parameters/Keyword"},
+          {"$ref": "#/components/parameters/Page"},
+          {"$ref": "#/components/parameters/LegacyPageSize"}
+        ],
+        "responses": {
+          "200": {"$ref": "#/components/responses/LegacyListSuccess"},
+          "400": {"$ref": "#/components/responses/PathFirewallRejected"},
+          "429": {"$ref": "#/components/responses/RateLimited"},
+          "500": {"$ref": "#/components/responses/SafeInternalFailure"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"}
+        },
+        "x-ti-route-id": "14642ebe7c1d",
+        "x-ti-application-api": "io.saksk.ti.catalog.api.PublicBankCatalogApi#search",
+        "x-ti-query-budget": {
+          "anonymousBusinessSelects": 2,
+          "validOptionalCredentialAuthoritySelects": 1,
+          "validOptionalCredentialMaximumHttpSelects": 3,
+          "growthWithResultCount": 0,
+          "nPlusOneForbidden": true
+        },
+        "x-ti-approved-differences": [
+          "P4A-CATALOG-004",
+          "P4A-CATALOG-005",
+          "P4A-CATALOG-007",
+          "P4A-CATALOG-008",
+          "P4A-CATALOG-009"
+        ],
+        "x-ti-migration": {"status": "migrated", "productionCutover": false}
+      }
+    },
+    "/api/public/banks/boards": {
+      "get": {
+        "operationId": "legacy_db1ac691d6fb_get",
+        "summary": "List active plaza boards with projected bank counts",
+        "tags": ["catalog-public-bank"],
+        "security": [
+          {},
+          {"targetSession": []},
+          {"legacyBearer": []},
+          {"legacyFlaskSession": []}
+        ],
+        "parameters": [
+          {"$ref": "#/components/parameters/Keyword"}
+        ],
+        "responses": {
+          "200": {"$ref": "#/components/responses/BoardsSuccess"},
+          "400": {"$ref": "#/components/responses/PathFirewallRejected"},
+          "429": {"$ref": "#/components/responses/RateLimited"},
+          "500": {"$ref": "#/components/responses/SafeInternalFailure"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"}
+        },
+        "x-ti-route-id": "db1ac691d6fb",
+        "x-ti-application-api": "io.saksk.ti.catalog.api.PublicBankCatalogApi#boards",
+        "x-ti-query-budget": {
+          "anonymousBusinessSelects": 1,
+          "validOptionalCredentialAuthoritySelects": 1,
+          "validOptionalCredentialMaximumHttpSelects": 2,
+          "growthWithResultCount": 0,
+          "nPlusOneForbidden": true
+        },
+        "x-ti-approved-differences": [
+          "P4A-CATALOG-004",
+          "P4A-CATALOG-005",
+          "P4A-CATALOG-007",
+          "P4A-CATALOG-008",
+          "P4A-CATALOG-009"
+        ],
+        "x-ti-migration": {"status": "migrated", "productionCutover": false}
+      }
+    },
+    "/api/public/banks/card/{source_type}/{bank_id}": {
+      "get": {
+        "operationId": "legacy_8cfb837021af_get",
+        "summary": "Read a public-bank card for the mini-program join flow",
+        "tags": ["catalog-public-bank"],
+        "security": [
+          {},
+          {"targetSession": []},
+          {"legacyBearer": []},
+          {"legacyFlaskSession": []}
+        ],
+        "parameters": [
+          {"$ref": "#/components/parameters/CardSourceType"},
+          {"$ref": "#/components/parameters/BankId"}
+        ],
+        "responses": {
+          "200": {"$ref": "#/components/responses/DetailSuccess"},
+          "400": {"$ref": "#/components/responses/PathFirewallRejected"},
+          "404": {
+            "description": "Either a counted business miss for a converter-valid signed-64-bit ID, or an uncounted Werkzeug-converter miss for a negative segment or one containing a non-Nd code point. Unicode decimal digits (General_Category=Nd), including Arabic-Indic and fullwidth forms, reach the handler after integer normalization. Media type, body fields and rate-limit headers distinguish the variants.",
+            "x-ti-variants": {
+              "businessNotFound": {
+                "counted": true,
+                "contentType": "application/json; charset=utf-8",
+                "rateLimitHeaders": true
+              },
+              "converterNotFound": {
+                "counted": false,
+                "contentType": "application/json",
+                "rateLimitHeaders": false
+              }
+            },
+            "headers": {
+              "Vary": {"$ref": "#/components/headers/VaryOriginCookie"},
+              "X-Request-ID": {"$ref": "#/components/headers/RequestId"},
+              "X-RateLimit-Limit": {"$ref": "#/components/headers/RateLimitLimit"},
+              "X-RateLimit-Remaining": {"$ref": "#/components/headers/RateLimitRemaining"},
+              "X-RateLimit-Reset": {"$ref": "#/components/headers/RateLimitReset"},
+              "Retry-After": {"$ref": "#/components/headers/RetryAfter"}
+            },
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {"$ref": "#/components/schemas/BusinessNotFoundError"}
+              },
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ConverterNotFoundError"}
+              }
+            }
+          },
+          "429": {"$ref": "#/components/responses/RateLimited"},
+          "500": {"$ref": "#/components/responses/SafeInternalFailure"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"}
+        },
+        "x-ti-route-id": "8cfb837021af",
+        "x-ti-application-api": "io.saksk.ti.catalog.api.PublicBankCatalogApi#detail",
+        "x-ti-query-budget": {
+          "anonymousBusinessSelects": 1,
+          "validOptionalCredentialAuthoritySelects": 1,
+          "validOptionalCredentialMaximumHttpSelects": 2,
+          "growthWithResultCount": 0,
+          "nPlusOneForbidden": true
+        },
+        "x-ti-approved-differences": [
+          "P4A-CATALOG-004",
+          "P4A-CATALOG-005",
+          "P4A-CATALOG-007",
+          "P4A-CATALOG-008",
+          "P4A-CATALOG-009"
+        ],
+        "x-ti-migration": {"status": "migrated", "productionCutover": false}
+      }
+    },
+    "/api/public/banks/hot": {
+      "get": {
+        "operationId": "legacy_a473896ff467_get",
+        "summary": "List a bounded set of hot public banks",
+        "description": "Credential processing remains optional, but this legacy endpoint intentionally returns anonymous relation fields and does not pass a viewer into PublicBankCatalogApi#hot.",
+        "tags": ["catalog-public-bank"],
+        "security": [
+          {},
+          {"targetSession": []},
+          {"legacyBearer": []},
+          {"legacyFlaskSession": []}
+        ],
+        "parameters": [
+          {"$ref": "#/components/parameters/BoardId"},
+          {"$ref": "#/components/parameters/Keyword"},
+          {"$ref": "#/components/parameters/HotLimit"}
+        ],
+        "responses": {
+          "200": {"$ref": "#/components/responses/HotSuccess"},
+          "400": {"$ref": "#/components/responses/PathFirewallRejected"},
+          "429": {"$ref": "#/components/responses/RateLimited"},
+          "500": {"$ref": "#/components/responses/SafeInternalFailure"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"}
+        },
+        "x-ti-route-id": "a473896ff467",
+        "x-ti-application-api": "io.saksk.ti.catalog.api.PublicBankCatalogApi#hot",
+        "x-ti-query-budget": {
+          "anonymousBusinessSelects": 1,
+          "validOptionalCredentialAuthoritySelects": 1,
+          "validOptionalCredentialMaximumHttpSelects": 2,
+          "growthWithResultCount": 0,
+          "nPlusOneForbidden": true
+        },
+        "x-ti-approved-differences": [
+          "P4A-CATALOG-004",
+          "P4A-CATALOG-005",
+          "P4A-CATALOG-007",
+          "P4A-CATALOG-008",
+          "P4A-CATALOG-009"
+        ],
+        "x-ti-migration": {"status": "migrated", "productionCutover": false}
+      }
+    },
+    "/api/public/banks/list": {
+      "get": {
+        "operationId": "legacy_b7e49e77a026_get",
+        "summary": "Read the full public-bank plaza page",
+        "tags": ["catalog-public-bank"],
+        "security": [
+          {},
+          {"targetSession": []},
+          {"legacyBearer": []},
+          {"legacyFlaskSession": []}
+        ],
+        "parameters": [
+          {"$ref": "#/components/parameters/PlazaTab"},
+          {"$ref": "#/components/parameters/BoardId"},
+          {"$ref": "#/components/parameters/Keyword"},
+          {"$ref": "#/components/parameters/Page"},
+          {"$ref": "#/components/parameters/PlazaPageSize"}
+        ],
+        "responses": {
+          "200": {"$ref": "#/components/responses/PlazaListSuccess"},
+          "400": {"$ref": "#/components/responses/PathFirewallRejected"},
+          "429": {"$ref": "#/components/responses/RateLimited"},
+          "500": {"$ref": "#/components/responses/SafeInternalFailure"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"}
+        },
+        "x-ti-route-id": "b7e49e77a026",
+        "x-ti-application-api": "io.saksk.ti.catalog.api.PublicBankCatalogApi#search",
+        "x-ti-query-budget": {
+          "anonymousBusinessSelects": 2,
+          "validOptionalCredentialAuthoritySelects": 1,
+          "validOptionalCredentialMaximumHttpSelects": 3,
+          "growthWithResultCount": 0,
+          "nPlusOneForbidden": true,
+          "transaction": "read-only REPEATABLE_READ"
+        },
+        "x-ti-approved-differences": [
+          "P4A-CATALOG-004",
+          "P4A-CATALOG-005",
+          "P4A-CATALOG-007",
+          "P4A-CATALOG-008",
+          "P4A-CATALOG-009"
+        ],
+        "x-ti-migration": {"status": "migrated", "productionCutover": false}
+      }
+    },
+    "/api/public/banks/summary": {
+      "get": {
+        "operationId": "legacy_f3644c1474f3_get",
+        "summary": "Read filtered public-bank plaza aggregates",
+        "tags": ["catalog-public-bank"],
+        "security": [
+          {},
+          {"targetSession": []},
+          {"legacyBearer": []},
+          {"legacyFlaskSession": []}
+        ],
+        "parameters": [
+          {"$ref": "#/components/parameters/BoardId"},
+          {"$ref": "#/components/parameters/Keyword"}
+        ],
+        "responses": {
+          "200": {"$ref": "#/components/responses/SummarySuccess"},
+          "400": {"$ref": "#/components/responses/PathFirewallRejected"},
+          "429": {"$ref": "#/components/responses/RateLimited"},
+          "500": {"$ref": "#/components/responses/SafeInternalFailure"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"}
+        },
+        "x-ti-route-id": "f3644c1474f3",
+        "x-ti-application-api": "io.saksk.ti.catalog.api.PublicBankCatalogApi#summary",
+        "x-ti-query-budget": {
+          "anonymousBusinessSelects": 1,
+          "validOptionalCredentialAuthoritySelects": 1,
+          "validOptionalCredentialMaximumHttpSelects": 2,
+          "growthWithResultCount": 0,
+          "nPlusOneForbidden": true
+        },
+        "x-ti-time-semantics": {
+          "cutoff": "one inclusive server Clock Instant at now minus seven days",
+          "publishedAtBinding": "Asia/Shanghai LocalDateTime",
+          "viewerActivityBinding": "the same absolute Instant"
+        },
+        "x-ti-approved-differences": [
+          "P4A-CATALOG-004",
+          "P4A-CATALOG-005",
+          "P4A-CATALOG-006",
+          "P4A-CATALOG-007",
+          "P4A-CATALOG-008",
+          "P4A-CATALOG-009"
+        ],
+        "x-ti-migration": {"status": "migrated", "productionCutover": false}
+      }
+    },
+    "/api/public/banks/{bank_id}": {
+      "get": {
+        "operationId": "legacy_37cd782b28dc_get",
+        "summary": "Read a public bank through the legacy detail alias",
+        "tags": ["catalog-public-bank"],
+        "security": [
+          {},
+          {"targetSession": []},
+          {"legacyBearer": []},
+          {"legacyFlaskSession": []}
+        ],
+        "parameters": [
+          {"$ref": "#/components/parameters/BankId"},
+          {"$ref": "#/components/parameters/DetailSourceType"}
+        ],
+        "responses": {
+          "200": {"$ref": "#/components/responses/DetailSuccess"},
+          "400": {"$ref": "#/components/responses/PathFirewallRejected"},
+          "404": {
+            "description": "Either a counted business miss for a converter-valid signed-64-bit ID, or an uncounted Werkzeug-converter miss for a negative segment or one containing a non-Nd code point. Unicode decimal digits (General_Category=Nd), including Arabic-Indic and fullwidth forms, reach the handler after integer normalization. Media type, body fields and rate-limit headers distinguish the variants.",
+            "x-ti-variants": {
+              "businessNotFound": {
+                "counted": true,
+                "contentType": "application/json; charset=utf-8",
+                "rateLimitHeaders": true
+              },
+              "converterNotFound": {
+                "counted": false,
+                "contentType": "application/json",
+                "rateLimitHeaders": false
+              }
+            },
+            "headers": {
+              "Vary": {"$ref": "#/components/headers/VaryOriginCookie"},
+              "X-Request-ID": {"$ref": "#/components/headers/RequestId"},
+              "X-RateLimit-Limit": {"$ref": "#/components/headers/RateLimitLimit"},
+              "X-RateLimit-Remaining": {"$ref": "#/components/headers/RateLimitRemaining"},
+              "X-RateLimit-Reset": {"$ref": "#/components/headers/RateLimitReset"},
+              "Retry-After": {"$ref": "#/components/headers/RetryAfter"}
+            },
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {"$ref": "#/components/schemas/BusinessNotFoundError"}
+              },
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ConverterNotFoundError"}
+              }
+            }
+          },
+          "429": {"$ref": "#/components/responses/RateLimited"},
+          "500": {"$ref": "#/components/responses/SafeInternalFailure"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"}
+        },
+        "x-ti-route-id": "37cd782b28dc",
+        "x-ti-application-api": "io.saksk.ti.catalog.api.PublicBankCatalogApi#detail",
+        "x-ti-query-budget": {
+          "anonymousBusinessSelects": 1,
+          "validOptionalCredentialAuthoritySelects": 1,
+          "validOptionalCredentialMaximumHttpSelects": 2,
+          "growthWithResultCount": 0,
+          "nPlusOneForbidden": true
+        },
+        "x-ti-approved-differences": [
+          "P4A-CATALOG-004",
+          "P4A-CATALOG-005",
+          "P4A-CATALOG-007",
+          "P4A-CATALOG-008",
+          "P4A-CATALOG-009"
+        ],
+        "x-ti-migration": {"status": "migrated", "productionCutover": false}
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "targetSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "ti_dev_session",
+        "description": "Optional authoritative server-side target Session. The production cookie name is __Host-ti_session. A valid principal enriches supported relation/owner fields and becomes the public-read limiter actor."
+      },
+      "legacyBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Optional kill-switched compatibility credential. If accepted it resolves a server-derived viewer; an invalid optional credential that is not stopped by the compatibility layer is treated as anonymous."
+      },
+      "legacyFlaskSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "session",
+        "description": "Optional kill-switched signed Flask Session compatibility credential. Successful first exchange may create bounded authentication runtime state before this catalog read."
+      }
+    },
+    "parameters": {
+      "LegacySort": {
+        "name": "sort",
+        "in": "query",
+        "required": false,
+        "description": "Legacy coercion: trim; popular selects hot, questions selects question count, newest selects latest, and every missing or other value selects latest.",
+        "schema": {"type": "string", "default": "newest"},
+        "x-ti-coercion": {
+          "trim": true,
+          "recognized": {"newest": "latest", "popular": "hot", "questions": "questions"},
+          "fallback": "latest",
+          "caseSensitive": true
+        }
+      },
+      "LegacySourceType": {
+        "name": "type",
+        "in": "query",
+        "required": false,
+        "description": "Exact, untrimmed system or user filters that source; missing and every other value select both sources.",
+        "schema": {"type": "string", "default": ""},
+        "x-ti-coercion": {
+          "recognized": {"system": "system", "user": "user_public"},
+          "fallback": "all",
+          "trim": false,
+          "caseSensitive": true
+        }
+      },
+      "Keyword": {
+        "name": "keyword",
+        "in": "query",
+        "required": false,
+        "description": "Missing becomes empty. The value is trimmed, lower-cased and internal whitespace is collapsed before literal matching and deterministic search ranking.",
+        "schema": {"type": "string", "default": ""},
+        "x-ti-coercion": {
+          "trim": true,
+          "lowerCase": true,
+          "collapseInternalWhitespace": true,
+          "sqlWildcardsEscaped": false,
+          "wildcardSemantics": "Bound parameters keep legacy SQL LIKE percent/underscore wildcard behavior without allowing SQL-fragment injection."
+        }
+      },
+      "Page": {
+        "name": "page",
+        "in": "query",
+        "required": false,
+        "description": "Parsed as an arbitrary-precision base-10 integer. Missing or malformed becomes 1; values below 1 become 1; values above 2147483647 become 2147483647.",
+        "schema": {"type": "string", "default": "1"},
+        "x-ti-normalized-schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647,
+          "default": 1
+        }
+      },
+      "LegacyPageSize": {
+        "name": "per_page",
+        "in": "query",
+        "required": false,
+        "description": "Parsed as an arbitrary-precision base-10 integer. Missing or malformed becomes 20; zero becomes 12; negatives become 1; positives are capped at 50.",
+        "schema": {"type": "string", "default": "20"},
+        "x-ti-normalized-schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50,
+          "missingOrMalformed": 20,
+          "zero": 12
+        }
+      },
+      "PlazaPageSize": {
+        "name": "per_page",
+        "in": "query",
+        "required": false,
+        "description": "Parsed as an arbitrary-precision base-10 integer. Missing, malformed or zero becomes 12; negatives become 1; positives are capped at 50.",
+        "schema": {"type": "string", "default": "12"},
+        "x-ti-normalized-schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50,
+          "missingMalformedOrZero": 12
+        }
+      },
+      "BoardId": {
+        "name": "board_id",
+        "in": "query",
+        "required": false,
+        "description": "Missing, blank, malformed, zero and negative values normalize to no board filter. Positive arbitrary-precision values are capped at Java Long.MAX_VALUE.",
+        "schema": {"type": "string"},
+        "x-ti-normalized-schema": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "integer", "minimum": 1, "maximum": 9223372036854775807}
+          ]
+        }
+      },
+      "HotLimit": {
+        "name": "limit",
+        "in": "query",
+        "required": false,
+        "description": "Parsed as an arbitrary-precision base-10 integer. Missing, malformed or zero becomes 5; negatives become 1; positives are capped at 10.",
+        "schema": {"type": "string", "default": "5"},
+        "x-ti-normalized-schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "missingMalformedOrZero": 5
+        }
+      },
+      "PlazaTab": {
+        "name": "tab",
+        "in": "query",
+        "required": false,
+        "description": "Trim and lower-case. latest, hot, active, featured and questions are recognized; every other value becomes latest.",
+        "schema": {"type": "string", "default": "latest"},
+        "x-ti-coercion": {
+          "trim": true,
+          "lowerCase": true,
+          "recognized": ["latest", "hot", "active", "featured", "questions"],
+          "fallback": "latest"
+        }
+      },
+      "CardSourceType": {
+        "name": "source_type",
+        "in": "path",
+        "required": true,
+        "description": "A nonempty Flask string-converter segment. After trimming, exact lowercase system selects system; every other nonempty value selects user_public.",
+        "schema": {"type": "string", "minLength": 1},
+        "x-ti-coercion": {
+          "trim": true,
+          "exactSystem": "system",
+          "fallback": "user_public",
+          "caseSensitive": true
+        }
+      },
+      "BankId": {
+        "name": "bank_id",
+        "in": "path",
+        "required": true,
+        "description": "The valid operation parameter is one or more Unicode decimal digits with General_Category=Nd, matching Werkzeug's nonnegative arbitrary-precision int converter. Arabic-Indic and fullwidth Nd digits reach the handler and normalize to the same integer as their ASCII decimal equivalents. Negative segments and any segment containing a non-Nd code point bypass the handler and return the uncounted converter 404. A converter-valid value above signed 64-bit range is counted and returns the approved fixed safe 500 instead of leaking the legacy conversion exception.",
+        "schema": {
+          "type": "string",
+          "pattern": "^\\p{Nd}+$",
+          "examples": [
+            "5401",
+            "٥٤٠١",
+            "５３０１",
+            "999999999999999999999999999999999999999999999999"
+          ]
+        },
+        "x-ti-coercion": {
+          "converter": "one or more Unicode decimal digits (General_Category=Nd) interpreted as an arbitrary-precision nonnegative integer",
+          "unicodeDecimalNormalization": "each Nd code point contributes its decimal value; the handler receives the normalized integer",
+          "negativeOrContainingNonNd": "converter 404 before public-bank limiter, with no rate-limit headers",
+          "signed64Range": "catalog detail lookup",
+          "aboveSigned64Range": "counted approved safe 500 under P4A-CATALOG-007"
+        },
+        "x-ti-observed-unicode-decimal-cases": {
+          "caseIds": ["detail-unicode-decimal-id", "card-unicode-decimal-id"],
+          "normalizedIds": {
+            "detail-unicode-decimal-id": "5401",
+            "card-unicode-decimal-id": "5301"
+          },
+          "legacy": "Werkzeug reaches the handler, counts the request and returns the same response body as the corresponding ASCII-decimal path"
+        },
+        "x-ti-observed-48-digit-cases": {
+          "caseIds": ["detail-arbitrary-precision-id", "card-arbitrary-precision-id"],
+          "legacy": "handler reached, limiter counted, two read-only SQL statements, unstable application/json 500 with exception text",
+          "java": "resolver and limiter reached, no catalog lookup after range classification, application/json; charset=utf-8 safe 500 with four rate-limit headers"
+        }
+      },
+      "DetailSourceType": {
+        "name": "type",
+        "in": "query",
+        "required": false,
+        "description": "Trim; exact lowercase system selects system. Missing and every other value select user_public.",
+        "schema": {"type": "string", "default": "user"},
+        "x-ti-coercion": {
+          "trim": true,
+          "exactSystem": "system",
+          "fallback": "user_public",
+          "caseSensitive": true
+        }
+      }
+    },
+    "headers": {
+      "VaryOriginCookie": {
+        "description": "Compatibility CORS/cache variance. Golden normalization treats token order as insignificant.",
+        "schema": {"const": "Origin, Cookie"}
+      },
+      "RequestId": {
+        "description": "Effective request identifier, echoed in the body.",
+        "schema": {"type": "string", "minLength": 1, "maxLength": 128}
+      },
+      "RateLimitLimit": {
+        "description": "Effective limit for the reported public-bank fixed window.",
+        "schema": {"type": "integer", "minimum": 1}
+      },
+      "RateLimitRemaining": {
+        "description": "Remaining requests in the reported window.",
+        "schema": {"type": "integer", "minimum": 0}
+      },
+      "RateLimitReset": {
+        "description": "Legacy-compatible reset epoch second: floor((now milliseconds + Redis PTTL) / 1000) + 1.",
+        "schema": {"type": "integer", "minimum": 1}
+      },
+      "RetryAfter": {
+        "description": "At least one second until the reported public-bank window or credential-exchange budget resets.",
+        "schema": {"type": "integer", "minimum": 1, "maximum": 604800}
+      }
+    },
+    "responses": {
+      "LegacyListSuccess": {
+        "description": "Normalized page with exact filtered total and stable ordering. A beyond-last page has an empty banks array and preserves total/page.",
+        "headers": {
+          "Vary": {"$ref": "#/components/headers/VaryOriginCookie"},
+          "X-Request-ID": {"$ref": "#/components/headers/RequestId"},
+          "X-RateLimit-Limit": {"$ref": "#/components/headers/RateLimitLimit"},
+          "X-RateLimit-Remaining": {"$ref": "#/components/headers/RateLimitRemaining"},
+          "X-RateLimit-Reset": {"$ref": "#/components/headers/RateLimitReset"},
+          "Retry-After": {"$ref": "#/components/headers/RetryAfter"}
+        },
+        "content": {
+          "application/json; charset=utf-8": {
+            "schema": {"$ref": "#/components/schemas/LegacyListResponse"}
+          }
+        }
+      },
+      "BoardsSuccess": {
+        "description": "Active boards ordered by sort_order ascending, bank_count descending and board ID ascending.",
+        "headers": {
+          "Vary": {"$ref": "#/components/headers/VaryOriginCookie"},
+          "X-Request-ID": {"$ref": "#/components/headers/RequestId"},
+          "X-RateLimit-Limit": {"$ref": "#/components/headers/RateLimitLimit"},
+          "X-RateLimit-Remaining": {"$ref": "#/components/headers/RateLimitRemaining"},
+          "X-RateLimit-Reset": {"$ref": "#/components/headers/RateLimitReset"},
+          "Retry-After": {"$ref": "#/components/headers/RetryAfter"}
+        },
+        "content": {
+          "application/json; charset=utf-8": {
+            "schema": {"$ref": "#/components/schemas/BoardsResponse"}
+          }
+        }
+      },
+      "HotSuccess": {
+        "description": "Bounded hot-score ordering without a total-count query.",
+        "headers": {
+          "Vary": {"$ref": "#/components/headers/VaryOriginCookie"},
+          "X-Request-ID": {"$ref": "#/components/headers/RequestId"},
+          "X-RateLimit-Limit": {"$ref": "#/components/headers/RateLimitLimit"},
+          "X-RateLimit-Remaining": {"$ref": "#/components/headers/RateLimitRemaining"},
+          "X-RateLimit-Reset": {"$ref": "#/components/headers/RateLimitReset"},
+          "Retry-After": {"$ref": "#/components/headers/RetryAfter"}
+        },
+        "content": {
+          "application/json; charset=utf-8": {
+            "schema": {"$ref": "#/components/schemas/HotResponse"}
+          }
+        }
+      },
+      "PlazaListSuccess": {
+        "description": "Normalized full plaza page. A beyond-last page has empty items and preserves exact total and normalized parameters.",
+        "headers": {
+          "Vary": {"$ref": "#/components/headers/VaryOriginCookie"},
+          "X-Request-ID": {"$ref": "#/components/headers/RequestId"},
+          "X-RateLimit-Limit": {"$ref": "#/components/headers/RateLimitLimit"},
+          "X-RateLimit-Remaining": {"$ref": "#/components/headers/RateLimitRemaining"},
+          "X-RateLimit-Reset": {"$ref": "#/components/headers/RateLimitReset"},
+          "Retry-After": {"$ref": "#/components/headers/RetryAfter"}
+        },
+        "content": {
+          "application/json; charset=utf-8": {
+            "schema": {"$ref": "#/components/schemas/PlazaListResponse"}
+          }
+        }
+      },
+      "SummarySuccess": {
+        "description": "Filtered aggregate with true inclusive rolling-seven-day counts.",
+        "headers": {
+          "Vary": {"$ref": "#/components/headers/VaryOriginCookie"},
+          "X-Request-ID": {"$ref": "#/components/headers/RequestId"},
+          "X-RateLimit-Limit": {"$ref": "#/components/headers/RateLimitLimit"},
+          "X-RateLimit-Remaining": {"$ref": "#/components/headers/RateLimitRemaining"},
+          "X-RateLimit-Reset": {"$ref": "#/components/headers/RateLimitReset"},
+          "Retry-After": {"$ref": "#/components/headers/RetryAfter"}
+        },
+        "content": {
+          "application/json; charset=utf-8": {
+            "schema": {"$ref": "#/components/schemas/SummaryResponse"}
+          }
+        }
+      },
+      "DetailSuccess": {
+        "description": "System or user-public detail. Optional accepted identity only enriches relation and user ownership fields.",
+        "headers": {
+          "Vary": {"$ref": "#/components/headers/VaryOriginCookie"},
+          "X-Request-ID": {"$ref": "#/components/headers/RequestId"},
+          "X-RateLimit-Limit": {"$ref": "#/components/headers/RateLimitLimit"},
+          "X-RateLimit-Remaining": {"$ref": "#/components/headers/RateLimitRemaining"},
+          "X-RateLimit-Reset": {"$ref": "#/components/headers/RateLimitReset"},
+          "Retry-After": {"$ref": "#/components/headers/RetryAfter"}
+        },
+        "content": {
+          "application/json; charset=utf-8": {
+            "schema": {"$ref": "#/components/schemas/DetailResponse"}
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "First request beyond the endpoint-and-actor public-read fixed window, or a credential-exchange security budget reached before this operation.",
+        "x-ti-public-bank-fixed-windows": [
+          {"duration": "1 second", "baseLimit": 10},
+          {"duration": "1 hour", "baseLimit": 500},
+          {"duration": "1 day", "baseLimit": 5000}
+        ],
+        "x-ti-header-variants": {
+          "publicBankRateLimit": ["Vary", "X-Request-ID", "X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset", "Retry-After"],
+          "credentialExchangeAttemptLimit": ["X-RateLimit-Limit", "X-RateLimit-Remaining", "Retry-After"],
+          "credentialExchangeCredentialLimit": ["Retry-After"]
+        },
+        "headers": {
+          "Vary": {"$ref": "#/components/headers/VaryOriginCookie"},
+          "X-Request-ID": {"$ref": "#/components/headers/RequestId"},
+          "X-RateLimit-Limit": {"$ref": "#/components/headers/RateLimitLimit"},
+          "X-RateLimit-Remaining": {"$ref": "#/components/headers/RateLimitRemaining"},
+          "X-RateLimit-Reset": {"$ref": "#/components/headers/RateLimitReset"},
+          "Retry-After": {"$ref": "#/components/headers/RetryAfter"}
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "oneOf": [
+                {"$ref": "#/components/schemas/PublicBankRateLimitError"},
+                {"$ref": "#/components/schemas/SecurityRateLimitErrorEnvelope"}
+              ]
+            }
+          }
+        }
+      },
+      "SafeInternalFailure": {
+        "description": "Counted fixed safe response for an unexpected catalog failure. This includes converter-valid arbitrary-precision bank IDs above signed 64-bit range; legacy exception text is never returned.",
+        "headers": {
+          "Vary": {"$ref": "#/components/headers/VaryOriginCookie"},
+          "X-Request-ID": {"$ref": "#/components/headers/RequestId"},
+          "X-RateLimit-Limit": {"$ref": "#/components/headers/RateLimitLimit"},
+          "X-RateLimit-Remaining": {"$ref": "#/components/headers/RateLimitRemaining"},
+          "X-RateLimit-Reset": {"$ref": "#/components/headers/RateLimitReset"},
+          "Retry-After": {"$ref": "#/components/headers/RetryAfter"}
+        },
+        "content": {
+          "application/json; charset=utf-8": {
+            "schema": {"$ref": "#/components/schemas/SafeInternalError"}
+          }
+        }
+      },
+      "ServiceUnavailable": {
+        "description": "Stable unavailable response. Snapshot cold/partial/hard-expired is produced after a successful limiter decision; Redis public-rate failure is produced before a decision and has no rate headers; Session/exchange authority may also fail before this operation.",
+        "x-ti-header-variants": {
+          "snapshotUnavailable": ["Vary", "X-Request-ID", "X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset", "Retry-After"],
+          "publicRateStoreUnavailable": ["Vary", "X-Request-ID"],
+          "sessionOrExchangeAuthorityUnavailable": []
+        },
+        "headers": {
+          "Vary": {"$ref": "#/components/headers/VaryOriginCookie"},
+          "X-Request-ID": {"$ref": "#/components/headers/RequestId"},
+          "X-RateLimit-Limit": {"$ref": "#/components/headers/RateLimitLimit"},
+          "X-RateLimit-Remaining": {"$ref": "#/components/headers/RateLimitRemaining"},
+          "X-RateLimit-Reset": {"$ref": "#/components/headers/RateLimitReset"},
+          "Retry-After": {"$ref": "#/components/headers/RetryAfter"}
+        },
+        "content": {
+          "application/json; charset=utf-8": {
+            "schema": {"$ref": "#/components/schemas/ServiceUnavailableError"}
+          },
+          "application/json": {
+            "schema": {"$ref": "#/components/schemas/SecurityUnavailableErrorEnvelope"}
+          }
+        }
+      },
+      "PathFirewallRejected": {
+        "description": "A semicolon-bearing ambiguous path is rejected by StrictHttpFirewall before public route resolution, limiter reservation and MVC invocation.",
+        "x-ti-out-of-template-path-only": true,
+        "x-ti-observed-contract": "Only HTTP 400 and zero catalog/limiter interactions are asserted. Body, Content-Type and headers are intentionally unspecified because they were not frozen as compatibility contract."
+      }
+    },
+    "schemas": {
+      "LegacyListResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "code", "data", "message", "request_id"],
+        "properties": {
+          "status": {"const": "success"},
+          "code": {"const": 0},
+          "data": {"$ref": "#/components/schemas/LegacyListData"},
+          "message": {"const": ""},
+          "request_id": {"$ref": "#/components/schemas/RequestIdValue"}
+        }
+      },
+      "LegacyListData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["banks", "total", "page"],
+        "properties": {
+          "banks": {
+            "type": "array",
+            "maxItems": 50,
+            "items": {"$ref": "#/components/schemas/LegacyBank"}
+          },
+          "total": {"$ref": "#/components/schemas/NonnegativeLong"},
+          "page": {"type": "integer", "minimum": 1, "maximum": 2147483647}
+        }
+      },
+      "LegacyBank": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "description",
+          "cover_image",
+          "question_count",
+          "use_count",
+          "allow_copy",
+          "public_at",
+          "created_at",
+          "owner_nickname",
+          "owner_avatar",
+          "join_mode",
+          "join_note",
+          "relation",
+          "source_type",
+          "source_label",
+          "participants_total",
+          "answer_users_7d",
+          "bank_type",
+          "is_shared"
+        ],
+        "properties": {
+          "id": {"$ref": "#/components/schemas/PositiveLong"},
+          "name": {"type": "string", "minLength": 1},
+          "description": {"type": "string"},
+          "cover_image": {"$ref": "#/components/schemas/NullableString"},
+          "question_count": {"$ref": "#/components/schemas/NonnegativeLong"},
+          "use_count": {"$ref": "#/components/schemas/NonnegativeLong"},
+          "allow_copy": {"type": "boolean"},
+          "public_at": {"$ref": "#/components/schemas/LegacyDateTime"},
+          "created_at": {"$ref": "#/components/schemas/LegacyDateTime"},
+          "owner_nickname": {"type": "string"},
+          "owner_avatar": {"$ref": "#/components/schemas/NullableString"},
+          "join_mode": {"type": "string", "minLength": 1},
+          "join_note": {"type": "string"},
+          "relation": {"$ref": "#/components/schemas/PublicBankRelation"},
+          "source_type": {"enum": ["system", "user_public"]},
+          "source_label": {"enum": ["系统题库", "用户公开"]},
+          "participants_total": {"$ref": "#/components/schemas/NonnegativeLong"},
+          "answer_users_7d": {"$ref": "#/components/schemas/NonnegativeLong"},
+          "bank_type": {"enum": ["system", "user"]},
+          "is_shared": {"const": 0}
+        }
+      },
+      "BoardsResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "code", "data", "message", "request_id"],
+        "properties": {
+          "status": {"const": "success"},
+          "code": {"const": 0},
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["items"],
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {"$ref": "#/components/schemas/PublicBankBoard"}
+              }
+            }
+          },
+          "message": {"const": ""},
+          "request_id": {"$ref": "#/components/schemas/RequestIdValue"}
+        }
+      },
+      "PublicBankBoard": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "slug", "name", "description", "bank_count"],
+        "properties": {
+          "id": {"type": "integer", "minimum": 1, "maximum": 2147483647},
+          "slug": {"type": "string", "minLength": 1},
+          "name": {"type": "string", "minLength": 1},
+          "description": {"type": "string"},
+          "bank_count": {"$ref": "#/components/schemas/NonnegativeLong"}
+        }
+      },
+      "HotResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "code", "data", "message", "request_id"],
+        "properties": {
+          "status": {"const": "success"},
+          "code": {"const": 0},
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["items"],
+            "properties": {
+              "items": {
+                "type": "array",
+                "maxItems": 10,
+                "items": {"$ref": "#/components/schemas/PublicBankCard"}
+              }
+            }
+          },
+          "message": {"const": ""},
+          "request_id": {"$ref": "#/components/schemas/RequestIdValue"}
+        }
+      },
+      "PlazaListResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "code", "data", "message", "request_id"],
+        "properties": {
+          "status": {"const": "success"},
+          "code": {"const": 0},
+          "data": {"$ref": "#/components/schemas/PlazaListData"},
+          "message": {"const": ""},
+          "request_id": {"$ref": "#/components/schemas/RequestIdValue"}
+        }
+      },
+      "PlazaListData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "total",
+          "page",
+          "per_page",
+          "tab",
+          "keyword",
+          "board_id",
+          "available_tabs"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "maxItems": 50,
+            "items": {"$ref": "#/components/schemas/PublicBankCard"}
+          },
+          "total": {"$ref": "#/components/schemas/NonnegativeLong"},
+          "page": {"type": "integer", "minimum": 1, "maximum": 2147483647},
+          "per_page": {"type": "integer", "minimum": 1, "maximum": 50},
+          "tab": {"enum": ["latest", "hot", "active", "featured", "questions"]},
+          "keyword": {"type": "string"},
+          "board_id": {
+            "type": ["integer", "null"],
+            "minimum": 1,
+            "maximum": 9223372036854775807
+          },
+          "available_tabs": {
+            "type": "array",
+            "prefixItems": [
+              {"const": "latest"},
+              {"const": "hot"},
+              {"const": "active"},
+              {"const": "featured"}
+            ],
+            "items": false,
+            "minItems": 4,
+            "maxItems": 4,
+            "uniqueItems": true
+          }
+        }
+      },
+      "SummaryResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "code", "data", "message", "request_id"],
+        "properties": {
+          "status": {"const": "success"},
+          "code": {"const": 0},
+          "data": {"$ref": "#/components/schemas/PublicBankSummary"},
+          "message": {"const": ""},
+          "request_id": {"$ref": "#/components/schemas/RequestIdValue"}
+        }
+      },
+      "PublicBankSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "total_banks",
+          "total_questions",
+          "total_boards",
+          "new_banks_7d",
+          "active_users_7d",
+          "source_breakdown"
+        ],
+        "properties": {
+          "total_banks": {"$ref": "#/components/schemas/NonnegativeLong"},
+          "total_questions": {"$ref": "#/components/schemas/NonnegativeLong"},
+          "total_boards": {"$ref": "#/components/schemas/NonnegativeLong"},
+          "new_banks_7d": {"$ref": "#/components/schemas/NonnegativeLong"},
+          "active_users_7d": {"$ref": "#/components/schemas/NonnegativeLong"},
+          "source_breakdown": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["system", "user_public"],
+            "properties": {
+              "system": {"$ref": "#/components/schemas/NonnegativeLong"},
+              "user_public": {"$ref": "#/components/schemas/NonnegativeLong"}
+            }
+          }
+        }
+      },
+      "DetailResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "code", "data", "message", "request_id"],
+        "properties": {
+          "status": {"const": "success"},
+          "code": {"const": 0},
+          "data": {"$ref": "#/components/schemas/PublicBankDetail"},
+          "message": {"const": ""},
+          "request_id": {"$ref": "#/components/schemas/RequestIdValue"}
+        }
+      },
+      "PublicBankCard": {
+        "type": "object",
+        "allOf": [
+          {"$ref": "#/components/schemas/PublicBankCardFields"}
+        ],
+        "unevaluatedProperties": false
+      },
+      "PublicBankCardFields": {
+        "type": "object",
+        "required": [
+          "id",
+          "source_type",
+          "name",
+          "description",
+          "cover_image",
+          "owner_label",
+          "owner_avatar",
+          "question_count",
+          "participants_total",
+          "join_users_7d",
+          "answer_users_7d",
+          "answer_count_7d",
+          "hot_score",
+          "active_score",
+          "recommended_score",
+          "published_at",
+          "last_activity_at",
+          "is_featured",
+          "featured_weight",
+          "board",
+          "detail_url",
+          "practice_url",
+          "source_label",
+          "join_mode",
+          "join_note",
+          "allow_copy",
+          "relation"
+        ],
+        "properties": {
+          "id": {"$ref": "#/components/schemas/PositiveLong"},
+          "source_type": {"enum": ["system", "user_public"]},
+          "name": {"type": "string", "minLength": 1},
+          "description": {"type": "string"},
+          "cover_image": {"$ref": "#/components/schemas/NullableString"},
+          "owner_label": {"type": "string"},
+          "owner_avatar": {"$ref": "#/components/schemas/NullableString"},
+          "question_count": {"$ref": "#/components/schemas/NonnegativeLong"},
+          "participants_total": {"$ref": "#/components/schemas/NonnegativeLong"},
+          "join_users_7d": {"$ref": "#/components/schemas/NonnegativeLong"},
+          "answer_users_7d": {"$ref": "#/components/schemas/NonnegativeLong"},
+          "answer_count_7d": {"$ref": "#/components/schemas/NonnegativeLong"},
+          "hot_score": {"type": "number"},
+          "active_score": {"type": "number"},
+          "recommended_score": {"type": "number"},
+          "published_at": {"$ref": "#/components/schemas/LegacyDateTime"},
+          "last_activity_at": {"$ref": "#/components/schemas/LegacyDateTime"},
+          "is_featured": {"type": "boolean"},
+          "featured_weight": {"type": "integer", "minimum": 0, "maximum": 2147483647},
+          "board": {"$ref": "#/components/schemas/PublicBankBoardRef"},
+          "detail_url": {
+            "type": "string",
+            "pattern": "^/public/banks/card/(system|user)/[1-9][0-9]*$"
+          },
+          "practice_url": {
+            "type": "string",
+            "pattern": "^(/subjects/[1-9][0-9]*|/user/banks/[1-9][0-9]*/practice)$"
+          },
+          "source_label": {"enum": ["系统题库", "用户公开"]},
+          "join_mode": {"type": "string", "minLength": 1},
+          "join_note": {"type": "string"},
+          "allow_copy": {"type": "boolean"},
+          "relation": {"$ref": "#/components/schemas/PublicBankRelation"}
+        }
+      },
+      "PublicBankBoardRef": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "slug", "name"],
+        "properties": {
+          "id": {"type": ["integer", "null"], "minimum": 1, "maximum": 2147483647},
+          "slug": {"type": ["string", "null"], "minLength": 1},
+          "name": {"type": "string", "minLength": 1}
+        }
+      },
+      "PublicBankRelation": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["joined_via", "is_joined"],
+            "properties": {
+              "joined_via": {"const": "none"},
+              "is_joined": {"const": false}
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["joined_via", "is_joined"],
+            "properties": {
+              "joined_via": {"enum": ["public", "shared", "both"]},
+              "is_joined": {"const": true}
+            }
+          }
+        ]
+      },
+      "PublicBankDetail": {
+        "oneOf": [
+          {"$ref": "#/components/schemas/SystemPublicBankDetail"},
+          {"$ref": "#/components/schemas/UserPublicBankDetail"}
+        ]
+      },
+      "SystemPublicBankDetail": {
+        "type": "object",
+        "allOf": [
+          {"$ref": "#/components/schemas/PublicBankCardFields"},
+          {
+            "type": "object",
+            "required": ["source_type", "bank_type"],
+            "properties": {
+              "source_type": {"const": "system"},
+              "source_label": {"const": "系统题库"},
+              "bank_type": {"const": "system"},
+              "join_mode": {"const": "free"},
+              "join_note": {"const": "系统题库当前支持免费加入。"},
+              "allow_copy": {"const": false}
+            }
+          }
+        ],
+        "unevaluatedProperties": false
+      },
+      "UserPublicBankDetail": {
+        "type": "object",
+        "allOf": [
+          {"$ref": "#/components/schemas/PublicBankCardFields"},
+          {
+            "type": "object",
+            "required": ["source_type", "bank_type", "share_count", "author_id", "is_owner"],
+            "properties": {
+              "source_type": {"const": "user_public"},
+              "source_label": {"const": "用户公开"},
+              "bank_type": {"const": "user"},
+              "share_count": {"$ref": "#/components/schemas/NonnegativeLong"},
+              "author_id": {"type": ["integer", "null"], "minimum": 1, "maximum": 9223372036854775807},
+              "is_owner": {"type": "boolean"}
+            }
+          }
+        ],
+        "unevaluatedProperties": false
+      },
+      "BusinessNotFoundError": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "code", "message", "status_code", "request_id"],
+        "properties": {
+          "status": {"const": "error"},
+          "code": {"const": 1},
+          "message": {"const": "题库不存在或未公开"},
+          "status_code": {"const": 404},
+          "request_id": {"$ref": "#/components/schemas/RequestIdValue"}
+        }
+      },
+      "ConverterNotFoundError": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "message", "status_code", "payload", "request_id"],
+        "properties": {
+          "status": {"const": "error"},
+          "message": {"const": "The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again."},
+          "status_code": {"const": 404},
+          "payload": {"type": "null"},
+          "request_id": {"$ref": "#/components/schemas/RequestIdValue"}
+        }
+      },
+      "PublicBankRateLimitError": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "message", "payload", "status_code", "request_id"],
+        "properties": {
+          "status": {"const": "error"},
+          "message": {"type": "string", "pattern": "^[1-9][0-9]* per 1 (second|hour|day)$"},
+          "payload": {"type": "null"},
+          "status_code": {"const": 429},
+          "request_id": {"$ref": "#/components/schemas/RequestIdValue"}
+        }
+      },
+      "SafeInternalError": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "code", "message", "status_code", "request_id"],
+        "properties": {
+          "status": {"const": "error"},
+          "code": {"const": 1},
+          "message": {"const": "服务暂时不可用"},
+          "status_code": {"const": 500},
+          "request_id": {"$ref": "#/components/schemas/RequestIdValue"}
+        }
+      },
+      "ServiceUnavailableError": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "code", "message", "status_code", "request_id"],
+        "properties": {
+          "status": {"const": "error"},
+          "code": {"const": 1},
+          "message": {"const": "服务暂时不可用"},
+          "status_code": {"const": 503},
+          "request_id": {"$ref": "#/components/schemas/RequestIdValue"}
+        }
+      },
+      "SecurityRateLimitErrorEnvelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["success", "error", "meta"],
+        "properties": {
+          "success": {"const": false},
+          "error": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["code", "message", "details"],
+            "properties": {
+              "code": {"const": "RATE_LIMITED"},
+              "message": {"const": "请求过于频繁"},
+              "details": {"type": "array", "maxItems": 0}
+            }
+          },
+          "meta": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["request_id"],
+            "properties": {
+              "request_id": {"$ref": "#/components/schemas/RequestIdValue"}
+            }
+          }
+        }
+      },
+      "SecurityUnavailableErrorEnvelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["success", "error", "meta"],
+        "properties": {
+          "success": {"const": false},
+          "error": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["code", "message", "details"],
+            "properties": {
+              "code": {"const": "SERVICE_UNAVAILABLE"},
+              "message": {"const": "服务暂时不可用"},
+              "details": {"type": "array", "maxItems": 0}
+            }
+          },
+          "meta": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["request_id"],
+            "properties": {
+              "request_id": {"$ref": "#/components/schemas/RequestIdValue"}
+            }
+          }
+        }
+      },
+      "RequestIdValue": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "PositiveLong": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 9223372036854775807
+      },
+      "NonnegativeLong": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 9223372036854775807
+      },
+      "NullableString": {
+        "type": ["string", "null"]
+      },
+      "LegacyDateTime": {
+        "type": ["string", "null"],
+        "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$",
+        "description": "Legacy Beijing-local second-precision datetime or JSON null."
+      }
+    }
+  },
+  "x-ti-base-contract": {
+    "path": "contracts/openapi.json",
+    "sha256": "41e0ad0e1eca3ba8731242dea7a638cd348069aad1331382f5f1bf6d4a08d64e",
+    "immutable": true
+  },
+  "x-ti-credential-semantics": {
+    "anonymousAllowed": true,
+    "precedence": ["Authorization", "targetSession", "legacyFlaskSession"],
+    "viewerSource": "server-derived TargetAuthenticatedPrincipal only",
+    "invalidOptionalCredential": "when the existing compatibility layer does not stop the request, continue anonymously",
+    "catalogMembershipAndOrderingIndependentOfViewer": true,
+    "businessOrApplicationCacheWrites": 0,
+    "authenticationRuntimeException": "Session access/reconciliation and first Flask Session exchange may write existing bounded authentication runtime state"
+  },
+  "x-ti-http-adapter-boundary": {
+    "applicationApi": "io.saksk.ti.catalog.api.PublicBankCatalogApi",
+    "applicationCardFieldsExcluded": ["source_type", "source_label", "detail_url", "practice_url"],
+    "webAdapterOwnedFields": ["source_type", "source_label", "detail_url", "practice_url"],
+    "mapping": {
+      "source_type": "PublicBankSource enum to system or user_public",
+      "source_label": "PublicBankSource enum to 系统题库 or 用户公开",
+      "detail_url": "legacy source segment and positive projected ID",
+      "practice_url": "system subject path or user-bank practice path"
+    },
+    "goldenCompatibility": "field presence, null behavior and values remain frozen by the 46-case fixed-commit artifact"
+  },
+  "x-ti-rate-limit-contract": {
+    "scope": "independent per endpoint and actor",
+    "actorPriority": ["authenticated target identity", "trusted-proxy-resolved client address"],
+    "actorKeysPseudonymous": true,
+    "fixedWindows": [
+      {"baseLimit": 10, "durationMilliseconds": 1000},
+      {"baseLimit": 500, "durationMilliseconds": 3600000},
+      {"baseLimit": 5000, "durationMilliseconds": 86400000}
+    ],
+    "productionDefaultMultiplier": 100,
+    "firstHitAnchored": true,
+    "failOnFirstBreach": true,
+    "business404Counted": true,
+    "converter404Counted": false,
+    "converter404Identifiers": "negative path segments or segments containing any non-Nd code point",
+    "arbitraryPrecisionUnicodeDecimalDigits": "counted after Unicode decimal normalization; values above signed 64-bit range return P4A-CATALOG-007 safe 500",
+    "redisFailure": "fail closed with stable 503 and no rate-limit headers"
+  },
+  "x-ti-snapshot-state-machine": {
+    "fresh": "complete age from 0 through 300 seconds; serve",
+    "softStale": "complete age greater than 300 through 900 seconds; serve unchanged and emit internal stale metrics",
+    "hardExpired": "complete age greater than 900 seconds; stable 503",
+    "cold": "no complete marker; stable 503",
+    "partialOrInconsistent": "marker and projection generation/count/digest/boundary disagreement; stable 503",
+    "readiness": "not ready for cold, partial/inconsistent or hard-expired state",
+    "atomicPublication": "metrics, viewer state and complete marker become visible in one PostgreSQL transaction",
+    "getIntegrityCheck": "constant-size marker plus first/last indexed generation-and-digest boundary samples",
+    "getRefreshAttempts": 0
+  },
+  "x-ti-side-effect-contract": {
+    "getDatabaseWrites": 0,
+    "getCatalogRedisBusinessWrites": 0,
+    "getApplicationCacheWrites": 0,
+    "getRefreshLockAttempts": 0,
+    "getBackgroundJobEnqueues": 0,
+    "publicRateLimiterSecurityWrites": "up to three fixed-window counters for the resolved endpoint and pseudonymous actor; fail-on-first-breach skips longer windows",
+    "sourceOwnerTablesInGetSql": []
+  },
+  "x-ti-ordering-contract": {
+    "latest": "published_at DESC, source_id DESC, source_type ASC",
+    "hot": "hot_score DESC, published_at DESC, source_id DESC, source_type ASC",
+    "active": "active_score DESC, last_activity_at DESC, source_id DESC, source_type ASC",
+    "featured": "featured_weight DESC, recommended_score DESC, published_at DESC, source_id DESC, source_type ASC; is_featured=true only",
+    "questions": "question_count_total DESC, published_at DESC, source_id DESC, source_type ASC",
+    "keywordPrefix": "search_rank DESC before the selected tab order",
+    "dynamicSql": "only enum-selected constant ORDER BY fragments; no raw request value enters SQL",
+    "summaryActiveUsers": "one identity active in multiple selected banks is counted once"
+  },
+  "x-ti-firewall-contract": {
+    "semicolonPaths": "StrictHttpFirewall 400 before route resolver, public limiter and controller",
+    "approvedDifference": "P4A-CATALOG-009",
+    "oasLimitation": "The rejected request target is outside every legal OpenAPI path template; the 400 response attached to each operation is documentary and not ordinary parameter validation."
+  },
+  "x-ti-evidence": {
+    "legacyGolden": {
+      "path": "docs/refactor/phase4a/golden-public-bank-reads.json",
+      "sha256": "a63240ac2d22b0faff6daa143782eaa748bb54cda60b6c7ec9843a959eb486b5",
+      "casesSha256": "931a9646847bac303637ba1c1896260e293e7a18c1bf6eed0962a7f31bbf4ea7",
+      "legacyCommit": "700006dfdfa063deb4387be572911e782bcea0d9",
+      "caseCount": 46
+    },
+    "readContract": {
+      "path": "docs/refactor/phase4a/public-bank-read-contract.json",
+      "sha256": "a06c8a0aba7dfc9f127b2b934c8c69237ff7d238cb6e3387cb1155a828c576b8"
+    },
+    "rateLimitContract": {
+      "path": "docs/refactor/phase4a/public-bank-rate-limit-contract.json",
+      "sha256": "7c18e0db41069ebc481764f7fb84c39c926aae5d5827691b574477b1e44205f7"
+    },
+    "queryPlan": {
+      "path": "docs/refactor/phase4a/public-bank-query-plan-evidence.json",
+      "sha256": "570e471e85374f32f3d50c33b9b4d199a3230f17c2893c37a2fcf7469e1f2476",
+      "postgresql": "18.4",
+      "metricsRows": 50000,
+      "viewerStateRows": 100000,
+      "status": "exact runtime SQL observational evidence only; not a production latency SLA"
+    },
+    "approvedDifferences": {
+      "path": "docs/refactor/phase4a/approved-differences.md",
+      "sha256": "2ac257e41214f3005eaa022965038bf429d35e3ba04dc83b81ac8a90abd63fd2"
+    },
+    "postgresCompatibility": ["16.14", "18.4"]
+  }
+}

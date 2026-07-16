@@ -4,11 +4,11 @@
 
 ## 当前阶段
 
-- **阶段 4A：目录与公共题库（进行中）**；受保护科目目录切片已完成并推送，当前进入 7 条公共题库读取切片。
+- **阶段 4A：目录与公共题库（进行中）**；受保护科目目录与公共题库 7 条 GET 的 Java shadow 切片均已实现，全部保持 `production cutover=0`，下一项是题目元数据与剩余目录读取的真实路由选择和黄金样本。
 - 基线提交：旧 Ti `700006dfdfa063deb4387be572911e782bcea0d9`。
 - 盘点日期：2026-07-16（Asia/Shanghai）。
-- 最近已提交并推送的绿色检查点：`0ca33703e109de11f93296aa30aa6a786df45232`（`feat(java): migrate protected subject directory reads`）。
-- 阶段 0、阶段 1、阶段 2 与阶段 3 均已通过各自结构化门禁、负向测试和独立审计；当前从该绿色检查点进入阶段 4A。
+- 公共题库切片之前已提交并推送的绿色检查点：`0ca33703e109de11f93296aa30aa6a786df45232`（`feat(java): migrate protected subject directory reads`）。
+- 阶段 0、阶段 1、阶段 2 与阶段 3 均已通过各自结构化门禁、负向测试和独立审计；当前 Phase 4A 实现已在该检查点之后完成上述两个读取切片，但整个长期重构目标仍未完成。
 - 旧项目目录只读；当前实施范围仅为 `Ti-Java/`，未连接生产环境、未读取真实密钥、未切换部署或 DNS。
 
 ## 本轮已完成
@@ -60,15 +60,20 @@
 - 最终 WORM 使用临时生成且只读 configtree 挂载的登录限流 HMAC Secret，通过 PostgreSQL 18.4、70 表/617 列的 schema-only 隔离恢复、ACL、Hibernate `validate` 和 readiness；临时 Secret、容器和恢复数据均已清理。
 - 仅复制当前 `Ti-Java/` 的独立目录已通过 Phase 1、Phase 2/3 静态门禁、Phase 3 数据面、完整 Maven 208+22、镜像构建、Compose 健康检查和运行态 bind source 审计。Docker Desktop `/host_mnt` 前缀按仓库现有守卫规则等价归一化后，所有挂载均位于独立副本内且不引用原仓库；临时目录、容器、网络和卷无残留。
 
-## 阶段 4A：受保护科目目录切片已完成
+## 阶段 4A：科目目录与公共题库读取切片已实现
 
 - 已把 `GET /api/quiz/subjects` 与 `GET /api/quiz/subjects/meta` 作为同一 catalog 垂直切片迁入 Java；catalog 只通过 identity 的 `SubjectAccessPolicyApi` 获取当前身份、管理员和受限科目决定，不共享 Entity，也不跨模块直查身份表。
-- 已保存 7 组非空、脱敏、可确定重捕的旧栈 golden，覆盖普通用户、管理员、受限科目、空目录与两个响应形状；旧栈捕获和 Java 集成测试均证明业务数据库无写入。Java 明确采用每次请求 fresh read，不引入应用数据缓存。
+- 已保存 7 组非空、脱敏、可确定重捕的科目旧栈 golden，覆盖普通用户、管理员、受限科目、空目录与两个响应形状；旧栈捕获和 Java 集成测试均证明业务数据库无写入。Java 明确采用每次请求 fresh read，不引入应用数据缓存。
 - 首个受保护路由权限矩阵已覆盖旧 Bearer、首次 Flask Session 兑换与目标 Session。三类凭据的正常 HTTP 请求均固定为 3 条 SELECT（1 条 Session authority、1 条 identity 可见性、1 条 catalog 聚合），业务 use case 自身为 2 条 SELECT，无 N+1。
 - 已实现科目路由专用 Redis 分钟/小时限流：本地/测试使用基数，生产倍率 100；身份限流键使用独立域分隔的 HMAC-SHA256 伪名，不保存原始身份 ID。Redis 或 Secret 不可用时 fail closed 503，超过额度返回带 `Retry-After` 的 429。
 - Security、限流和 Controller 共用严格 RFC 3986 unreserved 路径解析器；真实 MockMvc 已证明单层编码合法路径受保护，保留字符、错误编码和双重编码不能绕过认证或落入错误响应形状。
-- PostgreSQL 16.14 与 18.4 兼容测试均通过；5,000 科目、50,000 题目、50,000 限制关系的查询计划已冻结，黄金响应、查询预算、OpenAPI、route delta、data ownership delta 与批准差异由机器合同互相校验。
-- 有效路由状态现为 **4 migrated、607 pending、0 production cutover**；有效资源为 155 个且全部唯一 owner，其中新增 1 个 catalog 运行期限流 Redis Key，69 张应用表仍由旧项目拥有。
+- PostgreSQL 16.14 与 18.4 的科目兼容测试均通过；5,000 科目、50,000 题目、50,000 限制关系的查询计划已冻结，黄金响应、查询预算、OpenAPI、route delta、data ownership delta 与批准差异由机器合同互相校验。
+- 已实现公共题库 search/list、summary、hot、boards、detail、card 共 7 条匿名或可选身份 GET。固定旧提交 `700006dfdfa063deb4387be572911e782bcea0d9` 的完整应用归档包含 46 个 case，覆盖 Unicode `Nd`（含阿拉伯-印度数字和全角数字）、任意精度路径/查询整数及错误形状；归档 SHA-256 为 `a63240ac2d22b0faff6daa143782eaa748bb54cda60b6c7ec9843a959eb486b5`。
+- Java GET 只读取一次后台事务原子发布的 complete snapshot，不继承旧 GET 的惰性刷新写入。`<= 300s` 为 fresh，`300–900s` 服务最后完整快照并记录 stale，`> 900s`、冷启动或结构不一致均稳定 503 且 readiness fail closed。
+- Snapshot maintenance 已在 PostgreSQL 16.14/18.4 证明失败回滚保留旧 complete、发布原子性和事务级 advisory lock 单写者；Redis 锁仅作短期协调，已证明真实过期后新 owner 接管，旧 token 不能删除新 token。刷新 Redis 不可用时降级到 PostgreSQL 最终锁，而不是放弃单写约束。
+- 精确运行时 SQL 在 PostgreSQL 18.4 的 50,000 条 metrics、100,000 条 viewer state 合成夹具上捕获 7 条查询，无 N+1；计划证据 SHA-256 为 `570e471e85374f32f3d50c33b9b4d199a3230f17c2893c37a2fcf7469e1f2476`。该证据是观察结果，不是生产延迟 SLA。
+- 公共题库 HTTP CatalogIT 7/7、Unicode/控制器/限流/黄金定向 24/24、刷新 Coordinator 6/6、Redis 3/3、PostgreSQL 16/18 maintenance 2/2 均通过；本切片后的完整 `clean verify` 为 323 个 surefire + 44 个 failsafe，0 failure/error/skip。
+- 有效路由状态现为 **11 migrated、600 pending、0 production cutover**；有效资源为 **159 个且 159 个均有唯一 owner**。`migrated` 只表示 Java 实现与兼容证据已物化，旧 Flask 仍是生产 owner，整个长期重构目标仍未完成。
 
 ## 验证命令与结果
 
@@ -110,19 +115,28 @@
 | 仅复制 `Ti-Java/` 后的完整验收 | 当前副本通过 Phase 1、Phase 2/3 静态门禁、Phase 3 数据面、208+22 Maven、镜像构建、独立 Compose 健康检查与 bind source 审计 | 绿色；不读取父目录或原仓库，Docker Desktop `/host_mnt` 映射已等价核验，清理后无临时目录/容器/网络/卷 |
 | wormhole 失败路径 | 报告越界被拒绝且原文件不变；源容器命名冲突被拒绝且源仍运行；失败不覆盖既有报告 | 绿色；源只读与清理边界由负向执行证明 |
 | `npx --yes @redocly/cli@2.39.0 lint ... --extends=minimal` | OpenAPI valid，0 error，48 warnings | 绿色；30 组旧路径歧义、4 个尾斜杠和 14 个预声明组件均已结构化解释 |
-| Phase 4A `./infra/phase2/verify-in-maven-container.sh clean verify` | 231 个 surefire + 28 个 failsafe，0 failure/error/skip | 绿色；subject 权限矩阵、三类凭据 SQL 预算、PG16/PG18、Redis 限流与完整模块门禁通过 |
-| Phase 4A golden 确定性重捕 | 7/7 cases，逐字节一致，SHA-256 `54a7441ed7b7b9a0b49d60bc84d6a06f0387a3eee009370960ac65a19293a35f` | 绿色；旧栈临时数据库无业务副作用 |
-| Phase 4A 查询计划捕获 | PG18.4；5,000 科目、50,000 题目、50,000 限制关系；SHA-256 `530409a4b1ffd8a9159e3241dce0997c368371aeba7c0c2c06a39f240f8059ea` | 绿色；业务 2 SELECT、正常 HTTP 3 SELECT，无 N+1 |
+| Phase 4A 科目目录检查点 `./infra/phase2/verify-in-maven-container.sh clean verify` | 231 个 surefire + 28 个 failsafe，0 failure/error/skip | 绿色；这是公共题库切片之前的已保存全量结果，不作为本轮新的最终 `clean verify` 计数 |
+| Phase 4A 科目 golden 确定性重捕 | 7/7 cases，逐字节一致，SHA-256 `54a7441ed7b7b9a0b49d60bc84d6a06f0387a3eee009370960ac65a19293a35f` | 绿色；旧栈临时数据库无业务副作用 |
+| Phase 4A 科目查询计划捕获 | PG18.4；5,000 科目、50,000 题目、50,000 限制关系；SHA-256 `530409a4b1ffd8a9159e3241dce0997c368371aeba7c0c2c06a39f240f8059ea` | 绿色；业务 2 SELECT、正常 HTTP 3 SELECT，无 N+1 |
 | `npx --yes @redocly/cli@2.39.0 lint openapi/phase4a-subject-directory.openapi.json --extends=minimal` | OpenAPI valid，0 error，0 warning | 绿色；429/503 双响应信封与动态响应头均显式建模 |
-| Phase 4A 当前快照独立抽取 | 1,251 个文件；Phase 1、Phase 2/3 静态门禁、231+28 Maven 全绿 | 绿色；无符号链接、无父目录运行时读取，临时副本和容器无残留 |
+| Phase 4A 公共题库固定提交完整应用归档 | 46 cases；SHA-256 `a63240ac2d22b0faff6daa143782eaa748bb54cda60b6c7ec9843a959eb486b5` | 绿色；固定旧提交 `700006dfdfa063deb4387be572911e782bcea0d9`，覆盖 Unicode Nd、任意精度参数和批准错误形状 |
+| Phase 4A 公共题库精确运行时 SQL 计划 | PG18.4；50,000 metrics、100,000 viewer state、7 queries；SHA-256 `570e471e85374f32f3d50c33b9b4d199a3230f17c2893c37a2fcf7469e1f2476` | 绿色；运行时 SQL 固定预算，无 N+1；不是生产延迟 SLA |
+| Phase 4A 公共题库 HTTP 与兼容定向 | CatalogIT 7/7；Unicode/控制器/限流/黄金 24/24 | 绿色；7 条 GET 的身份、路径、限流、响应、300/900 freshness、fail-closed readiness 与 golden 定向通过 |
+| Phase 4A 公共题库 snapshot P1 定向 | Coordinator 6/6；Redis 3/3；PG16/PG18 maintenance 2/2 | 绿色；覆盖失败回滚、原子发布、最终单写者锁和 Redis 过期接管 |
+| Phase 4A 公共题库切片 `./infra/phase2/verify-in-maven-container.sh clean verify` | 323 个 surefire + 44 个 failsafe，0 failure/error/skip；总用时 48.796s | 绿色；固定 Java 25/Maven 3.9.16，包含 PG18/PG16/Redis Testcontainers |
+| Phase 4A 公共题库切片 WORM + Phase 2 静态门禁 | PG18.4、70 表/617 列、Hibernate `validate`、readiness 通过；当前 build-context 摘要记录于结构化报告 | 绿色；证据不保存 schema dump/DSN/Secret，临时资源已清理 |
+| Phase 4A 公共题库切片独立抽取 | 1,091 个受控源文件；Phase 1 聚合门禁、Phase 2/3 静态门禁、323+44 Maven、独立 PostgreSQL/Redis 数据面全绿 | 绿色；副本不含 ignored 产物/本地配置，无符号链接或父目录源码读取；临时副本、容器和专用 Maven 缓存卷无残留 |
+| Phase 4A 科目目录检查点独立抽取 | 1,251 个文件；Phase 1、Phase 2/3 静态门禁、231+28 Maven 全绿 | 绿色；这是科目目录检查点证据；无符号链接、无父目录运行时读取，临时副本和容器无残留 |
 | Phase 4A 旧栈回归 | 374 个 Python 文件 compileall；654 passed、2 个登记失败、3 skipped；两套小程序各 36/36 | 绿色；登记基线和 warning 窗口保持一致 |
+
+上表已记录公共题库 P1 修复后真实运行的全量、WORM、静态及定向结果；历史检查点均单独标明，不与当前切片混用。
 
 完整命令、两个 pytest 失败说明及初步性能数字见 `07-baseline-results.md`。
 
 ## 尚未迁移的路由与数据
 
-- **路由：** Phase 0 冻结矩阵仍保存 592 条规则/611 个 operation 的历史 `pending` 事实；Phase 3 与 Phase 4A delta 已把认证 2 条和受保护科目目录 2 条物化为 4 个 `migrated`，其余 607 个 operation 仍 pending。生产切换数为 0，旧 Flask 仍是当前运行所有者。
-- **表与非表资源：** 69/69 应用表仍由旧项目拥有；新增的科目读取限流 Redis Key 由 catalog 唯一拥有，但只是可重建运行态资源且未生产切换。仍未建立 Flyway 正式 baseline。
+- **路由：** Phase 0 冻结矩阵仍保存 592 条规则/611 个 operation 的历史 `pending` 事实；Phase 3 与 Phase 4A delta 已把认证 2 条、受保护科目目录 2 条和公共题库 GET 7 条物化为 **11 个 `migrated`**，其余 **600 个 operation 仍 pending**。生产切换数为 0，旧 Flask 仍是当前运行所有者。
+- **表与非表资源：** 当前有效资源为 **159 个且全部唯一 owner**。Phase 4A 新增的科目/公共题库限流 Redis Key、公共题库 snapshot/viewer 投影控制表和刷新锁均归 catalog，但只是可重建辅助状态且 `production_cutover=false`；旧业务事实表未因 shadow 读取切片而转移生产所有权，仍未建立 Flyway 正式 baseline。
 - **客户端：** Web 仍是 Jinja/原生 JavaScript，小程序当前只是固定来源副本；Vue、OpenAPI 生成客户端和适配尚未开始。
 - **部署：** Java 骨架、独立 PostgreSQL/Redis 测试设施及 Phase 3 本地对比/切换工具已建立；p3-009 已对固定本地镜像完成真实恢复、切换和回滚。生产 Compose、网关入口和整体生产切换仍未实施；Flask 与 Java 仍不得同时写同一数据库。
 
@@ -148,11 +162,12 @@
 - 旧 JWT 当前请求认证、Flask Session 换发与目标 Session 每请求 PostgreSQL authority 已接入 Security filter；受保护科目目录已补齐角色、锁定、session version 与三类凭据 HTTP 权限矩阵。legacy bean 仍默认关闭，生产启用需独立批准，阶段 10 必须删除兼容 Secret、兑换入口与 kill switch。
 - 旧 `POST /api/login` 没有持久失败次数/自动锁定写入；Java 只尊重既有 `is_locked` 并使用限流/KDF 容量控制，不应在没有 schema 与产品证据时虚构失败计数。
 - 过渡密码目标已固定为 Flask/Java 都接受的 Werkzeug `scrypt:32768:8:1`，旧栈永久退出前禁止写入 Spring 专有格式。公开 PBKDF2 夹具已由 Java 实际升级，并在 `ROLLBACK rb001` 后由固定 Flask/Werkzeug 3.1.4 登录接受且保持 hash 不变；生产/历史前缀清单仍 unknown，不能由公开夹具外推。
+- 公共题库 snapshot 已证明本地原子性、新鲜度和刷新协调，但旧 Flask 写路径尚未向 Java 发布题库撤回、权限收紧、板块变化等即时失效事件，生产刷新调度、真实数据、Redis `noeviction`、HMAC Secret 和入口切换也未获批；因此 7 条 GET 必须保持 `production cutover=0`。
 
 ## 下一项具体动作
 
-1. 以同一公共题库用例迁移 7 条匿名/可选身份 GET：列表、摘要、热门、板块、详情和卡片；先冻结每条路由的非空 golden、分页/排序/筛选、可选身份关系和错误形状。
-2. 把旧 `ensure_plaza_metrics()` 的冷读写副作用与暖读结果分别留证；Java GET 不直接继承隐式 delete/insert/commit，先形成 metrics snapshot 新鲜度、刷新 owner、锁和失败降级 ADR，再实现只读查询。
-3. 设计 catalog Application API 与 PostgreSQL 16/18 JDBC 查询，给列表总数、详情聚合和 optional viewer 设置明确 SQL 预算，在大题库夹具上证明无 N+1 并保存 `EXPLAIN (ANALYZE, BUFFERS)`。
-4. 同步 Phase 4A OpenAPI、route/data delta、批准差异和独立抽取门禁；7 条公共题库读取整体绿色后再提交推送，随后继续题目元数据与广场剩余读取。
-5. 生产 Redis `noeviction`、至少 32 字节 HMAC Secret、生产数据、metrics 刷新调度与入口切换仍需另行获批；本地证据不授权生产操作。
+1. 盘点 Phase 4A 题目元数据与剩余目录读取的真实 Flask 路由选择、注册顺序、调用方和数据库访问；先决定精确兼容 operation，不能从相似函数名或计划中的目标 API 猜测路由。
+2. 对选定 operation 从固定旧提交重捕非空、脱敏 golden，覆盖身份、分页/排序/筛选、Unicode/数值边界、空值与错误形状，并证明 GET 的数据库和可重建运行态副作用。
+3. 固定这些读取的模块 owner、Application API、数据所有权、PostgreSQL 16/18 SQL 预算和无 N+1 证据，再更新 route/OpenAPI delta；未完成机器合同与定向验证前不得标为 `migrated`。
+4. 公共题库生产 Redis、HMAC Secret、真实数据、刷新调度、即时撤回事件桥接和入口切换仍需另行获批；本地 shadow 证据不授权生产操作。
+5. 下一绿色检查点前运行当时完整的静态、契约和 Maven 门禁并记录真实结果；在实际执行前不预填新的最终 `clean verify` 数量。

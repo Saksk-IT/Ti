@@ -1,0 +1,511 @@
+{
+  "contract_id": "ti.phase4a.public-bank-read-contract",
+  "schema_version": 1,
+  "status": "accepted_and_implemented_shadow",
+  "scope": "seven anonymous public-bank catalog GET operations with optional authenticated enrichment",
+  "legacy_evidence": [
+    "../../../../app/modules/user_bank/routes/public.py",
+    "../../../../app/modules/user_bank/services/plaza_query_service.py",
+    "../../../../app/modules/user_bank/services/plaza_metrics_service.py",
+    "../../../../tests/test_public_bank_plaza_sync.py",
+    "../golden-samples/02-catalog.json",
+    "../02-route-parity-matrix.csv",
+    "../03-data-ownership.csv"
+  ],
+  "module_boundary": {
+    "http_adapter": "web",
+    "use_case_owner": "catalog",
+    "application_api": "io.saksk.ti.catalog.api.PublicBankCatalogApi",
+    "optional_viewer_type": "java.util.Optional<io.saksk.ti.catalog.api.AuthenticatedCatalogViewer>",
+    "viewer_source": "server-derived TargetAuthenticatedPrincipal only",
+    "catalog_owned_target_projection": [
+      "public_bank_plaza_metrics",
+      "public_bank_plaza_viewer_state",
+      "public_bank_plaza_snapshot_state",
+      "plaza_boards"
+    ],
+    "source_fact_owners_unchanged": {
+      "catalog": ["subjects", "questions", "public_subject_users"],
+      "personalbank": [
+        "user_question_banks",
+        "public_bank_users",
+        "bank_shares",
+        "bank_share_records"
+      ],
+      "learning": ["user_answers", "user_bank_answers"],
+      "identity": ["users"]
+    },
+    "tables_forbidden_in_get_sql": [
+      "subjects",
+      "questions",
+      "public_subject_users",
+      "user_question_banks",
+      "public_bank_users",
+      "bank_shares",
+      "bank_share_records",
+      "user_answers",
+      "user_bank_answers",
+      "users"
+    ],
+    "boundary_rule": "GET execution reads only the complete catalog-owned projection; source modules update that projection after commit or through an explicit background/bootstrap projector"
+  },
+  "application_api_shape": {
+    "interface": "PublicBankCatalogApi",
+    "methods": [
+      "PublicBankPageView search(PublicBankSearchQuery query, Optional<AuthenticatedCatalogViewer> viewer)",
+      "List<PublicBankBoardView> boards(PublicBankFilter filter)",
+      "List<PublicBankCardView> hot(PublicBankHotQuery query, Optional<AuthenticatedCatalogViewer> viewer)",
+      "PublicBankSummaryView summary(PublicBankFilter filter)",
+      "Optional<PublicBankDetailView> detail(PublicBankRef ref, Optional<AuthenticatedCatalogViewer> viewer)"
+    ],
+    "required_dtos": [
+      "PublicBankRef",
+      "PublicBankSource",
+      "PublicBankFilter",
+      "PublicBankSearchQuery",
+      "PublicBankHotQuery",
+      "PublicBankSort",
+      "PublicBankPageView",
+      "PublicBankCardView",
+      "PublicBankDetailView",
+      "PublicBankBoardView",
+      "PublicBankSummaryView",
+      "PublicBankRelationView",
+      "PublicBankSnapshotFreshness"
+    ],
+    "required_ports": [
+      "PublicBankSnapshotQueryPort",
+      "PublicBankSnapshotMaintenancePort"
+    ],
+    "http_neutrality": "application DTOs contain catalog values and relationships, while the web adapter owns legacy envelopes, legacy field aliases and parameter coercion"
+  },
+  "common_http_contract": {
+    "authentication": "anonymous allowed; target Session and transitional legacy JWT/Flask Session may add a server-derived viewer",
+    "invalid_optional_credential": "when the existing authentication compatibility layer does not stop the request, treat it as anonymous and never return a caller-supplied identity",
+    "success_status": 200,
+    "success_content_type": "application/json; charset=utf-8",
+    "success_top_level_fields": ["status", "code", "data", "message", "request_id"],
+    "success_constants": {
+      "status": "success",
+      "code": 0,
+      "message": ""
+    },
+    "not_found": {
+      "applies_to": [
+        "GET /api/public/banks/{bank_id}",
+        "GET /api/public/banks/card/{source_type}/{bank_id}"
+      ],
+      "status": 404,
+      "body": {
+        "status": "error",
+        "code": 1,
+        "message": "题库不存在或未公开",
+        "status_code": 404,
+        "request_id": "<dynamic-request-id>"
+      }
+    },
+    "safe_internal_failure": {
+      "status": 500,
+      "body": {
+        "status": "error",
+        "code": 1,
+        "message": "服务暂时不可用",
+        "status_code": 500,
+        "request_id": "<dynamic-request-id>"
+      },
+      "exception_text_forbidden": true,
+      "approved_difference": "P4A-CATALOG-007"
+    },
+    "snapshot_unavailable": {
+      "conditions": [
+        "no complete snapshot marker exists",
+        "last successful complete snapshot is older than 900 seconds",
+        "the snapshot completeness marker and projected row set disagree"
+      ],
+      "status": 503,
+      "body": {
+        "status": "error",
+        "code": 1,
+        "message": "服务暂时不可用",
+        "status_code": 503,
+        "request_id": "<dynamic-request-id>"
+      },
+      "approved_difference": "P4A-CATALOG-004"
+    },
+    "path_integer_compatibility": {
+      "matched": "one or more Unicode decimal digits (general category Nd), including ASCII, Arabic-Indic and fullwidth forms, zero and values above signed 64-bit range; matched requests consume the public-bank rate limit and normalize digit values before lookup",
+      "in_range": "zero through Long.MAX_VALUE enter the catalog query boundary",
+      "out_of_range": "values above Long.MAX_VALUE return the fixed P4A-CATALOG-007 safe 500 without invoking catalog SQL",
+      "converter_404": "negative and non-decimal-integer segments return compatibility 404 before the public-bank limiter and expose no rate-limit headers; numeric characters outside Unicode category Nd do not match"
+    }
+  },
+  "operations": [
+    {
+      "route_id": "14642ebe7c1d",
+      "method": "GET",
+      "path": "/api/public/banks",
+      "purpose": "legacy public-bank page used by the mini program",
+      "parameters": {
+        "sort": "default newest; trim then newest->latest, popular->hot, questions->questions, otherwise latest",
+        "type": "default empty; exact system or user selects that source, every other value selects both",
+        "keyword": "default empty; trim, lower-case and collapse internal whitespace before matching",
+        "page": "default 1; malformed uses default; values below 1 normalize to 1",
+        "per_page": "default 20; malformed uses 20; zero becomes 12 in the shared legacy list layer; negative clamps to 1; maximum 50"
+      },
+      "data_fields": ["banks", "total", "page"],
+      "bank_fields": [
+        "id",
+        "name",
+        "description",
+        "cover_image",
+        "question_count",
+        "use_count",
+        "allow_copy",
+        "public_at",
+        "created_at",
+        "owner_nickname",
+        "owner_avatar",
+        "join_mode",
+        "join_note",
+        "relation",
+        "source_type",
+        "source_label",
+        "participants_total",
+        "answer_users_7d",
+        "bank_type",
+        "is_shared"
+      ],
+      "business_selects": 2,
+      "business_selects_detail": ["total", "ordered page with optional viewer-state join"]
+    },
+    {
+      "route_id": "db1ac691d6fb",
+      "method": "GET",
+      "path": "/api/public/banks/boards",
+      "purpose": "active plaza boards and visible projected-bank counts",
+      "parameters": {
+        "keyword": "default empty; same normalized matching as list"
+      },
+      "data_fields": ["items"],
+      "item_fields": ["id", "slug", "name", "description", "bank_count"],
+      "ordering": "sort_order ASC, bank_count DESC, board id ASC",
+      "business_selects": 1
+    },
+    {
+      "route_id": "8cfb837021af",
+      "method": "GET",
+      "path": "/api/public/banks/card/{source_type}/{bank_id}",
+      "purpose": "public-bank card detail used by the mini program join flow",
+      "parameters": {
+        "source_type": "trimmed exact system selects system; every other nonempty Flask string converter value selects user",
+        "bank_id": "nonnegative Flask int converter semantics"
+      },
+      "data_shape": "PublicBankDetailView",
+      "business_selects": 1
+    },
+    {
+      "route_id": "a473896ff467",
+      "method": "GET",
+      "path": "/api/public/banks/hot",
+      "purpose": "bounded hot-bank list without a total-count query",
+      "parameters": {
+        "board_id": "default null; malformed, zero and negative normalize to null",
+        "keyword": "default empty; same normalized matching as list",
+        "limit": "default 5; malformed or zero uses default; negative clamps to 1; maximum 10"
+      },
+      "data_fields": ["items"],
+      "item_shape": "PublicBankCardView",
+      "ordering": "hot_score DESC, published_at DESC, source_id DESC, source_type ASC",
+      "business_selects": 1
+    },
+    {
+      "route_id": "b7e49e77a026",
+      "method": "GET",
+      "path": "/api/public/banks/list",
+      "purpose": "full plaza page",
+      "parameters": {
+        "tab": "default latest; trim and lower-case; latest, hot, active, featured and questions are valid; otherwise latest",
+        "board_id": "default null; malformed, zero and negative normalize to null",
+        "keyword": "default empty; trim, lower-case and collapse internal whitespace before matching",
+        "page": "default 1; malformed uses default; values below 1 normalize to 1",
+        "per_page": "default 12; malformed or zero uses default; negative clamps to 1; maximum 50"
+      },
+      "data_fields": [
+        "items",
+        "total",
+        "page",
+        "per_page",
+        "tab",
+        "keyword",
+        "board_id",
+        "available_tabs"
+      ],
+      "item_shape": "PublicBankCardView",
+      "business_selects": 2,
+      "business_selects_detail": ["total", "ordered page with optional viewer-state join"]
+    },
+    {
+      "route_id": "f3644c1474f3",
+      "method": "GET",
+      "path": "/api/public/banks/summary",
+      "purpose": "filtered plaza aggregate",
+      "parameters": {
+        "board_id": "default null; malformed, zero and negative normalize to null",
+        "keyword": "default empty; same normalized matching as list"
+      },
+      "data_fields": [
+        "total_banks",
+        "total_questions",
+        "total_boards",
+        "new_banks_7d",
+        "active_users_7d",
+        "source_breakdown"
+      ],
+      "source_breakdown_fields": ["system", "user_public"],
+      "business_selects": 1,
+      "approved_semantic_correction": "new_banks_7d and active_users_7d use a true rolling seven-day cutoff rather than the legacy current-day-midnight cutoff; see P4A-CATALOG-006",
+      "rolling_cutoff_binding": "one inclusive Instant cutoff; published_at timestamp without time zone compares against its Asia/Shanghai LocalDateTime, while viewer last_activity_at timestamptz compares against the same absolute instant"
+    },
+    {
+      "route_id": "37cd782b28dc",
+      "method": "GET",
+      "path": "/api/public/banks/{bank_id}",
+      "purpose": "legacy detail alias",
+      "parameters": {
+        "bank_id": "nonnegative Flask int converter semantics",
+        "type": "default user; trimmed exact system selects system; every other value selects user"
+      },
+      "data_shape": "PublicBankDetailView",
+      "business_selects": 1
+    }
+  ],
+  "projection_shapes": {
+    "legacy_http_public_bank_card_fields": [
+      "id",
+      "source_type",
+      "name",
+      "description",
+      "cover_image",
+      "owner_label",
+      "owner_avatar",
+      "question_count",
+      "participants_total",
+      "join_users_7d",
+      "answer_users_7d",
+      "answer_count_7d",
+      "hot_score",
+      "active_score",
+      "recommended_score",
+      "published_at",
+      "last_activity_at",
+      "is_featured",
+      "featured_weight",
+      "board",
+      "detail_url",
+      "practice_url",
+      "source_label",
+      "join_mode",
+      "join_note",
+      "allow_copy",
+      "relation"
+    ],
+    "application_public_bank_card_fields": [
+      "id",
+      "source",
+      "name",
+      "description",
+      "cover_image",
+      "owner_label",
+      "owner_avatar",
+      "question_count",
+      "participants_total",
+      "join_users_7d",
+      "answer_users_7d",
+      "answer_count_7d",
+      "hot_score",
+      "active_score",
+      "recommended_score",
+      "published_at",
+      "last_activity_at",
+      "featured",
+      "featured_weight",
+      "board",
+      "join_mode",
+      "join_note",
+      "allow_copy",
+      "relation"
+    ],
+    "web_adapter_only_fields": ["source_type", "source_label", "detail_url", "practice_url"],
+    "board_fields": ["id", "slug", "name"],
+    "relation_fields": ["joined_via", "is_joined"],
+    "public_bank_detail_additional_fields": [
+      "bank_type",
+      "share_count",
+      "author_id",
+      "is_owner"
+    ],
+    "user_only_detail_fields": ["share_count", "author_id", "is_owner"],
+    "datetime_format": "yyyy-MM-dd HH:mm:ss or JSON null",
+    "count_type": "JSON integer backed by Java long",
+    "score_type": "JSON number backed by Java double",
+    "empty_page": "HTTP 200, empty items or banks, original normalized page and exact total",
+    "null_and_presence_rule": "exact null and field-presence behavior must be frozen by isolated goldens before implementation is accepted"
+  },
+  "ordering": {
+    "latest": "published_at DESC, source_id DESC, source_type ASC",
+    "hot": "hot_score DESC, published_at DESC, source_id DESC, source_type ASC",
+    "active": "active_score DESC, last_activity_at DESC, source_id DESC, source_type ASC",
+    "featured": "featured_weight DESC, recommended_score DESC, published_at DESC, source_id DESC, source_type ASC; only is_featured=true",
+    "questions": "question_count_total DESC, published_at DESC, source_id DESC, source_type ASC",
+    "search_prefix": "search_rank DESC before the selected tab order",
+    "search_rank": "exact normalized-name match, name prefix, name contains, description prefix/contains and owner-label contains using fixed weights from the legacy implementation",
+    "dynamic_sql_rule": "only enum-selected constant ORDER BY fragments are permitted; raw request values never enter SQL"
+  },
+  "query_budget": {
+    "scope": "successful GET without exceptional authentication cleanup or snapshot refresh, which GET never initiates",
+    "anonymous": {
+      "paged_list_selects": 2,
+      "boards_selects": 1,
+      "hot_selects": 1,
+      "summary_selects": 1,
+      "detail_selects": 1
+    },
+    "valid_optional_credential": {
+      "authentication_authority_selects": 1,
+      "paged_list_maximum_http_selects": 3,
+      "boards_maximum_http_selects": 2,
+      "hot_maximum_http_selects": 2,
+      "summary_maximum_http_selects": 2,
+      "detail_maximum_http_selects": 2
+    },
+    "snapshot_state_check": "folded into the listed business queries and does not add a SELECT",
+    "viewer_relation": "folded into the page/detail query through public_bank_plaza_viewer_state and does not add a SELECT",
+    "growth_with_result_count": 0,
+    "n_plus_one_forbidden": true,
+    "paged_transaction": "read-only REPEATABLE_READ so total and items observe one PostgreSQL snapshot"
+  },
+  "snapshot_freshness": {
+    "fresh": "complete snapshot age from 0 through 300 seconds; serve normally",
+    "soft_stale": "complete snapshot age greater than 300 and at most 900 seconds; serve the last complete snapshot, emit internal stale metrics, and do not alter the compatibility response",
+    "hard_expired": "complete snapshot age greater than 900 seconds; return the stable 503 snapshot-unavailable shape",
+    "cold": "no complete snapshot marker; return the stable 503 snapshot-unavailable shape",
+    "partial": "row data without a matching complete snapshot marker, wrong row counts or wrong digest is unavailable even when MAX(updated_at) appears recent",
+    "readiness": "not ready for cold, partial or hard-expired state",
+    "visibility_events": "publish, unpublish, delete, subject lock and equivalent visibility changes require immediate after-commit projection update or tombstone and may not wait for the soft/hard window",
+    "approved_differences": ["P4A-CATALOG-004", "P4A-CATALOG-005"]
+  },
+  "transaction_and_side_effects": {
+    "get_database_writes": 0,
+    "get_redis_business_state_writes": 0,
+    "get_redis_application_cache_writes": 0,
+    "get_refresh_lock_attempts": 0,
+    "get_background_job_enqueues": 0,
+    "background_refresh": "one writer builds metrics, viewer state and the complete snapshot marker in one transaction",
+    "background_coordination": "Redis token lock is advisory; a PostgreSQL lock is the final single-writer boundary",
+    "redis_lock_release": "atomic compare-and-delete Lua using the acquisition token",
+    "redis_lock_ttl": "must exceed or be renewed beyond the measured refresh p99; expiration alone is not a fencing guarantee",
+    "authentication_runtime_exception": "target Session access/reconciliation or Flask Session exchange may write existing bounded authentication runtime state; these effects are not catalog business state"
+  },
+  "postgresql_compatibility": {
+    "required_versions": ["16.14", "18.4"],
+    "same_adapter_contract_suite": true,
+    "required_cases": [
+      "all sort modes and deterministic tie breakers",
+      "board, source and normalized keyword filters",
+      "first, middle and beyond-last pages with exact total",
+      "empty but complete snapshot",
+      "anonymous and authenticated relation projection",
+      "system and user detail plus 404",
+      "distinct active user across more than one bank",
+      "fresh, soft-stale, hard-expired, cold and partial snapshots",
+      "concurrent refresh keeps the previous complete snapshot visible until commit"
+    ],
+    "query_plan_evidence": "capture EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) on bounded large fixtures; index use and absence of N+1 are contract evidence, while elapsed time is observational rather than a production SLA",
+    "extension_policy": "do not require pg_trgm or another extension without explicit PostgreSQL 16/18 availability and restore evidence"
+  },
+  "business_invariants": [
+    {
+      "id": "p4a-public-bank-001",
+      "statement": "Every GET is database- and catalog-Redis-read-only and never initiates a refresh."
+    },
+    {
+      "id": "p4a-public-bank-002",
+      "statement": "Anonymous and authenticated callers see the same catalog membership and ordering; authentication only enriches owner/relation fields."
+    },
+    {
+      "id": "p4a-public-bank-003",
+      "statement": "Catalog GET SQL reads no source-owner table and no result-size-dependent query is allowed."
+    },
+    {
+      "id": "p4a-public-bank-004",
+      "statement": "A valid page beyond the last item remains empty while preserving the exact filtered total."
+    },
+    {
+      "id": "p4a-public-bank-005",
+      "statement": "An item is never served from a cold, partial or hard-expired snapshot, regardless of a recent row-level updated_at value."
+    },
+    {
+      "id": "p4a-public-bank-006",
+      "statement": "A refresh commit exposes metrics, viewer state and completeness metadata atomically; readers observe either the prior complete version or the new complete version."
+    },
+    {
+      "id": "p4a-public-bank-007",
+      "statement": "One identity active in multiple selected banks counts once in active_users_7d."
+    },
+    {
+      "id": "p4a-public-bank-008",
+      "statement": "Visibility removal produces an immediate projection tombstone and cannot wait for periodic freshness expiry."
+    },
+    {
+      "id": "p4a-public-bank-009",
+      "statement": "Every order has a deterministic source_id tie breaker and raw request values never become SQL fragments."
+    },
+    {
+      "id": "p4a-public-bank-010",
+      "statement": "The same JDBC adapter contract passes on PostgreSQL 16.14 and 18.4."
+    }
+  ],
+  "approved_differences": {
+    "status": "accepted_in_approved-differences.md",
+    "items": [
+      {
+        "id": "P4A-CATALOG-004",
+        "title": "public-bank GET never refreshes and cold or hard-expired snapshot returns stable 503"
+      },
+      {
+        "id": "P4A-CATALOG-005",
+        "title": "serve an atomically complete catalog snapshot with 300-second soft and 900-second hard freshness boundaries"
+      },
+      {
+        "id": "P4A-CATALOG-006",
+        "title": "new_banks_7d and active_users_7d become true rolling seven-day measures instead of legacy current-day measures"
+      },
+      {
+        "id": "P4A-CATALOG-007",
+        "title": "public-bank unexpected failures use a fixed safe legacy-shaped message rather than exception text"
+      },
+      {
+        "id": "P4A-CATALOG-008",
+        "title": "public-bank rate-limit storage failures fail closed with a stable safe 503"
+      },
+      {
+        "id": "P4A-CATALOG-009",
+        "title": "semicolon path ambiguity is rejected by the strict HTTP firewall before routing and limiting"
+      }
+    ]
+  },
+  "definition_of_done": [
+    "all seven route IDs have isolated Flask goldens with response status, content type, body field presence and null behavior",
+    "legacy hot and cold behavior is recorded separately and goldens used for parity are captured after explicit snapshot preparation",
+    "all parameter coercion, pagination and ordering cases are controller and integration tested",
+    "request-level SQL counts match this contract for anonymous and valid optional credentials",
+    "database and Redis before/after evidence proves every GET is catalog-business-state read-only",
+    "fresh, soft-stale, hard-expired, cold and partial snapshot states are integration tested",
+    "visibility tombstone tests prove that unpublished or locked content disappears immediately after commit",
+    "the same JDBC contract suite passes on PostgreSQL 16.14 and 18.4",
+    "large-fixture query plan evidence is captured without treating one timing observation as an SLA",
+    "Spring Modulith and SQL ownership tests prove catalog does not depend on or query source-module internals",
+    "OpenAPI, route delta, data-ownership delta, approved differences and all hashes are updated after acceptance",
+    "the effective route status is migrated=11, pending=600 and cutover=0"
+  ]
+}

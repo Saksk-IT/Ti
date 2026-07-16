@@ -13,7 +13,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
         LegacySessionExchangeProperties.class,
         TargetSessionLimitProperties.class,
         ClientAddressProperties.class,
-        SubjectReadRateLimitProperties.class
+        SubjectReadRateLimitProperties.class,
+        PublicBankReadRateLimitProperties.class
 })
 class LoginRateLimitConfiguration {
 
@@ -68,5 +69,19 @@ class LoginRateLimitConfiguration {
             Clock clock
     ) {
         return new RedisSubjectReadRateLimiter(redis, properties, loginProperties, clock);
+    }
+
+    @Bean
+    PublicBankReadRateLimiter publicBankReadRateLimiter(
+            StringRedisTemplate redis,
+            PublicBankReadRateLimitProperties properties,
+            LoginRateLimitProperties loginProperties,
+            Clock clock
+    ) {
+        return new RedisPublicBankReadRateLimiter(
+                redis,
+                properties,
+                loginProperties,
+                clock);
     }
 }

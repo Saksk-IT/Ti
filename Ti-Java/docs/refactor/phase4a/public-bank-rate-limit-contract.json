@@ -1,0 +1,210 @@
+{
+  "schema_version": 1,
+  "contract_id": "P4A-PUBLIC-BANK-RATE-LIMIT-001",
+  "legacy_evidence": {
+    "repository_commit": "7931a7763fc8adb3df54b6cac5e1c3da27a3cefc",
+    "audited_at": "2026-07-16",
+    "flask_limiter_version": "3.11.0",
+    "limits_version": "4.2",
+    "development_and_test_default": "5000 per day;500 per hour;10 per second",
+    "production_default_multiplier": 100,
+    "production_default_when_not_overridden": "500000/day;50000/hour;1000/second"
+  },
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/api/public/banks",
+      "route": "LEGACY_LIST",
+      "redis_scope": "legacy-list"
+    },
+    {
+      "method": "GET",
+      "path": "/api/public/banks/boards",
+      "route": "BOARDS",
+      "redis_scope": "boards"
+    },
+    {
+      "method": "GET",
+      "path": "/api/public/banks/card/<source_type>/<int:bank_id>",
+      "route": "CARD_DETAIL",
+      "redis_scope": "card-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/api/public/banks/hot",
+      "route": "HOT",
+      "redis_scope": "hot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/public/banks/list",
+      "route": "PLAZA_LIST",
+      "redis_scope": "plaza-list"
+    },
+    {
+      "method": "GET",
+      "path": "/api/public/banks/summary",
+      "route": "SUMMARY",
+      "redis_scope": "summary"
+    },
+    {
+      "method": "GET",
+      "path": "/api/public/banks/<int:bank_id>",
+      "route": "DETAIL",
+      "redis_scope": "detail"
+    }
+  ],
+  "scope": {
+    "sharing": "none",
+    "rule": "each endpoint has an independent counter set for each actor"
+  },
+  "actor": {
+    "priority": [
+      "authenticated TargetAuthenticatedPrincipal identityId",
+      "TrustedProxyClientAddressResolver client address"
+    ],
+    "redis_values_are_pseudonymous": true,
+    "hmac_algorithm": "HmacSHA256",
+    "key_secret_source": "ti.security.login-rate-limit.key-secret",
+    "identity_domain": "ti-java:catalog:public-bank-read-rate:identity:v1\\0",
+    "ip_domain": "ti-java:catalog:public-bank-read-rate:ip:v1\\0",
+    "raw_identity_or_ip_in_redis_key": false
+  },
+  "windows": [
+    {
+      "name": "second",
+      "base_limit": 10,
+      "duration_millis": 1000,
+      "legacy_description": "10 per 1 second"
+    },
+    {
+      "name": "hour",
+      "base_limit": 500,
+      "duration_millis": 3600000,
+      "legacy_description": "500 per 1 hour"
+    },
+    {
+      "name": "day",
+      "base_limit": 5000,
+      "duration_millis": 86400000,
+      "legacy_description": "5000 per 1 day"
+    }
+  ],
+  "multiplier": {
+    "effective_limit_formula": "base_limit * multiplier",
+    "java_shadow_default": 1,
+    "java_production_default": 100,
+    "environment": "TI_PUBLIC_BANK_RATE_LIMIT_MULTIPLIER with TI_RATE_LIMIT_MULTIPLIER fallback"
+  },
+  "fixed_window": {
+    "strategy": "first-hit fixed window",
+    "redis_expiry_command": "PEXPIRE only when INCR returns 1",
+    "evaluation_order": [
+      "second",
+      "hour",
+      "day"
+    ],
+    "fail_on_first_breach": true,
+    "short_window_rejection_deducts_longer_windows": false,
+    "arbitrary_precision_path_id_consumes_limit": true,
+    "success_header_window": "second",
+    "rejection_header_window": "breached window",
+    "reset_at_expression": "floor((now_epoch_millis + redis_pttl_millis) / 1000) + 1",
+    "legacy_reset_at_expression": "int(storage_expiry + 1)",
+    "retry_after_expression": "max(1, int(reset_at_epoch_second - now_epoch_seconds))"
+  },
+  "headers": [
+    "X-RateLimit-Limit",
+    "X-RateLimit-Remaining",
+    "X-RateLimit-Reset",
+    "Retry-After"
+  ],
+  "responses": {
+    "success": {
+      "counted": true,
+      "rate_limit_headers": true
+    },
+    "business_404": {
+      "counted": true,
+      "rate_limit_headers": true,
+      "example_message": "题库不存在或未公开"
+    },
+    "rate_limited_429": {
+      "content_type": "application/json",
+      "rate_limit_headers": true,
+      "body": {
+        "status": "error",
+        "message": "<effective limit> per 1 <window>",
+        "payload": null,
+        "status_code": 429,
+        "request_id": "<request id>"
+      },
+      "code_field_present": false
+    },
+    "converter_404": {
+      "matched_identifiers": "one or more Unicode decimal digits in general category Nd, including 0 and arbitrary-precision digit strings; digits normalize by numeric value before lookup",
+      "bypassed_identifiers": "negative or non-decimal-integer identifiers, including numeric characters outside Unicode category Nd",
+      "counted": false,
+      "rate_limit_headers": false,
+      "content_type": "application/json",
+      "body_fields": [
+        "status",
+        "message",
+        "payload",
+        "status_code",
+        "request_id"
+      ]
+    },
+    "arbitrary_precision_path_id_500": {
+      "approved_difference": "P4A-CATALOG-007",
+      "applies_to": "Unicode decimal digit identifiers whose normalized value is greater than Long.MAX_VALUE",
+      "catalog_called": false,
+      "rate_limit_headers": true,
+      "body": {
+        "status": "error",
+        "code": 1,
+        "message": "服务暂时不可用",
+        "status_code": 500,
+        "request_id": "<request id>"
+      }
+    },
+    "redis_failure_503": {
+      "approved_difference": "P4A-CATALOG-008",
+      "counted_state_known": false,
+      "rate_limit_headers": false,
+      "body": {
+        "status": "error",
+        "code": 1,
+        "message": "服务暂时不可用",
+        "status_code": 503,
+        "request_id": "<request id>"
+      }
+    }
+  },
+  "observed_fixed_clock_examples": [
+    {
+      "now": 1784174400.0,
+      "window": "second",
+      "reset": 1784174402,
+      "retry_after": 2
+    },
+    {
+      "now": 1784400000.25,
+      "window": "second",
+      "reset": 1784400002,
+      "retry_after": 1
+    },
+    {
+      "window": "hour",
+      "limit": 500,
+      "first_rejected_request": 501,
+      "message": "500 per 1 hour"
+    },
+    {
+      "window": "day",
+      "limit": 5000,
+      "first_rejected_request": 5001,
+      "message": "5000 per 1 day"
+    }
+  ]
+}

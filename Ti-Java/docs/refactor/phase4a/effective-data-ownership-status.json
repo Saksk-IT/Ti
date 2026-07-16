@@ -9,18 +9,50 @@
   },
   "delta": {
     "source": "data-ownership-delta.csv",
-    "sha256": "defae3ef1daf1f6151d8fbad9618222578af3c5f24bb34e8c440b635ffd31d0b",
-    "new_resource_count": 1
+    "sha256": "4c355d87f07f75333cfceace9660eb6aa8967dfad9362630f4f6c3c7138e3044",
+    "new_resource_count": 5
   },
   "effective": {
-    "resource_count": 155,
-    "resources_with_exactly_one_owner": 155,
+    "resource_count": 159,
+    "resources_with_exactly_one_owner": 159,
     "new_resources": [
       {
         "resource_kind": "redis_key",
         "resource_name": "ti-java:catalog:subject-read-rate:<route>:identity:v1:<hmac_sha256>:<window>:<bucket>",
         "owner": "catalog",
         "persistence_role": "runtime_rate_limit",
+        "business_fact": false,
+        "production_cutover": false
+      },
+      {
+        "resource_kind": "table",
+        "resource_name": "public_bank_plaza_viewer_state",
+        "owner": "catalog",
+        "persistence_role": "rebuildable_projection",
+        "business_fact": false,
+        "production_cutover": false
+      },
+      {
+        "resource_kind": "table",
+        "resource_name": "public_bank_plaza_snapshot_state",
+        "owner": "catalog",
+        "persistence_role": "projection_integrity_control",
+        "business_fact": false,
+        "production_cutover": false
+      },
+      {
+        "resource_kind": "redis_key",
+        "resource_name": "ti-java:catalog:public-bank-read-rate:<route>:<identity|ip>:v1:<hmac_sha256>:<second|hour|day>",
+        "owner": "catalog",
+        "persistence_role": "runtime_rate_limit",
+        "business_fact": false,
+        "production_cutover": false
+      },
+      {
+        "resource_kind": "redis_key",
+        "resource_name": "ti-java:catalog:public-bank-snapshot:refresh-lock",
+        "owner": "catalog",
+        "persistence_role": "ephemeral_refresh_coordination",
         "business_fact": false,
         "production_cutover": false
       }

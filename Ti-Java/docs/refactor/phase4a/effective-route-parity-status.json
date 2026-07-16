@@ -16,10 +16,10 @@
       "operation_count": 2
     },
     {
-      "phase": "4A-subject-directory-slice",
+      "phase": "4A-subject-directory-and-public-bank-read-slices",
       "source": "route-parity-delta.csv",
-      "sha256": "433bd6c7207e30844456ef07a388530f605fd4c124c02ae0aa4506cd646d6ca1",
-      "operation_count": 2
+      "sha256": "0d82f1f1d58d4a2ff124f5e3ec7bb183b35811dcbabb26271d1ba246579afff8",
+      "operation_count": 9
     }
   ],
   "materialization_policy": {
@@ -32,8 +32,8 @@
   "effective": {
     "rule_count": 592,
     "expanded_operation_count": 611,
-    "overridden_operation_count": 4,
-    "migration_status": {"pending": 607, "migrated": 4},
+    "overridden_operation_count": 11,
+    "migration_status": {"pending": 600, "migrated": 11},
     "production_cutover_operation_count": 0,
     "migrated_operations": [
       {
@@ -55,16 +55,65 @@
         "path": "/api/quiz/subjects",
         "method": "GET",
         "target_module": "catalog",
-        "introduced_in": "4A-subject-directory-slice"
+        "introduced_in": "4A-subject-directory-and-public-bank-read-slices"
       },
       {
         "route_id": "7fd9b0fc8111",
         "path": "/api/quiz/subjects/meta",
         "method": "GET",
         "target_module": "catalog",
-        "introduced_in": "4A-subject-directory-slice"
+        "introduced_in": "4A-subject-directory-and-public-bank-read-slices"
+      },
+      {
+        "route_id": "14642ebe7c1d",
+        "path": "/api/public/banks",
+        "method": "GET",
+        "target_module": "catalog",
+        "introduced_in": "4A-subject-directory-and-public-bank-read-slices"
+      },
+      {
+        "route_id": "db1ac691d6fb",
+        "path": "/api/public/banks/boards",
+        "method": "GET",
+        "target_module": "catalog",
+        "introduced_in": "4A-subject-directory-and-public-bank-read-slices"
+      },
+      {
+        "route_id": "8cfb837021af",
+        "path": "/api/public/banks/card/<source_type>/<int:bank_id>",
+        "method": "GET",
+        "target_module": "catalog",
+        "introduced_in": "4A-subject-directory-and-public-bank-read-slices"
+      },
+      {
+        "route_id": "a473896ff467",
+        "path": "/api/public/banks/hot",
+        "method": "GET",
+        "target_module": "catalog",
+        "introduced_in": "4A-subject-directory-and-public-bank-read-slices"
+      },
+      {
+        "route_id": "b7e49e77a026",
+        "path": "/api/public/banks/list",
+        "method": "GET",
+        "target_module": "catalog",
+        "introduced_in": "4A-subject-directory-and-public-bank-read-slices"
+      },
+      {
+        "route_id": "f3644c1474f3",
+        "path": "/api/public/banks/summary",
+        "method": "GET",
+        "target_module": "catalog",
+        "introduced_in": "4A-subject-directory-and-public-bank-read-slices"
+      },
+      {
+        "route_id": "37cd782b28dc",
+        "path": "/api/public/banks/<int:bank_id>",
+        "method": "GET",
+        "target_module": "catalog",
+        "introduced_in": "4A-subject-directory-and-public-bank-read-slices"
       }
     ]
   },
-  "scope_note": "migrated means the four operations are implemented in Java and backed by their phase-specific compatibility evidence. Production cutover remains zero; the other 607 operations remain pending."
+  "scope_note": "migrated means the two Phase 3 operations and nine Phase 4A catalog reads are implemented in Java and backed by phase-specific compatibility evidence. Production cutover remains zero; the other 600 operations remain pending."
 }

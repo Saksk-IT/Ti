@@ -40,6 +40,12 @@ ti:
       requests-per-minute: ${TI_SUBJECT_READ_REQUESTS_PER_MINUTE:60}
       requests-per-hour: ${TI_SUBJECT_READ_REQUESTS_PER_HOUR:600}
       multiplier: ${TI_RATE_LIMIT_MULTIPLIER:100}
+    public-bank-read-rate-limit:
+      namespace: ${TI_PUBLIC_BANK_READ_RATE_LIMIT_NAMESPACE:ti-java:catalog:public-bank-read-rate}
+      requests-per-second: ${TI_PUBLIC_BANK_READ_REQUESTS_PER_SECOND:10}
+      requests-per-hour: ${TI_PUBLIC_BANK_READ_REQUESTS_PER_HOUR:500}
+      requests-per-day: ${TI_PUBLIC_BANK_READ_REQUESTS_PER_DAY:5000}
+      multiplier: ${TI_PUBLIC_BANK_RATE_LIMIT_MULTIPLIER:${TI_RATE_LIMIT_MULTIPLIER:100}}
     session:
       cookie-name: __Host-ti_session
       csrf-cookie-name: __Host-ti_csrf

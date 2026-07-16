@@ -77,6 +77,11 @@ class WebFoundationIntegrationTest {
         HealthIndicator unavailableDatabase() {
             return () -> Health.down().build();
         }
+
+        @Bean
+        HealthIndicator publicBankSnapshotHealthIndicator() {
+            return () -> Health.up().build();
+        }
     }
 
     @Autowired
