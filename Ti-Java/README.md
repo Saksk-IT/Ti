@@ -87,7 +87,7 @@ Java 导出的四条摘要 SQL 在 PostgreSQL 18.4 的 150,000 题目、5,000 �
 
 build-context SHA-256 `befc34d1f79baab4ad7c895ca2718ed1d8e2efbf964978313f35806ff0ab8403` 的 WORM 已通过 PostgreSQL 18.4、70 表/617 列、只读 ACL、Hibernate `validate` 与 readiness；结构化报告 SHA-256 为 `da9a55b6df570904760d868696497cd046030b67789d1457d8e94cd8af6f53ca`。该路由继续是 `operations,pending,production_cutover=false`。
 
-仅复制 1,180 个受控文件、0 个符号链接且不含缓存或构建产物的独立 `Ti-Java/` 副本已完成最终验收；验收时源/副本的“相对路径 + 文件 SHA-256”清单均为 `c6a4156f180676e39717abc49a945fc9b4178b867e5dd2791a368693ca2622b7`，两者 build-context 均为 `befc34d1f79baab4ad7c895ca2718ed1d8e2efbf964978313f35806ff0ab8403`。权威 Maven 轮使用固定 Maven 3.9.16/Java 25 容器和全新空 artifact cache；三轮 Maven Central 直连传输失败均已作废，最终仅将 `central` 下载代理到阿里云公共中央仓库，379+54 测试全部通过，Maven 总用时 03:59。同一受控内容的重建副本还通过 Phase 1、Phase 2/3 静态门禁、独立 PostgreSQL/Redis 数据面、镜像构建、3/3 Compose readiness、API 重启恢复与 bind-source 审计；8 个只读 bind 全部来自副本，源工作树 bind 为 0，临时目录、容器、网络、卷、镜像标签、专用缓存卷和测试端口均已清理至 0 残留。
+仅复制 1,180 个受控文件、0 个符号链接且不含缓存或构建产物的独立 `Ti-Java/` 副本已完成最终验收；验收时源/副本的“相对路径 + 文件 SHA-256”清单均为 `c6a4156f180676e39717abc49a945fc9b4178b867e5dd2791a368693ca2622b7`，两者 build-context 均为 `befc34d1f79baab4ad7c895ca2718ed1d8e2efbf964978313f35806ff0ab8403`。权威 Maven 轮使用专用隔离缓存和原始 `./infra/phase2/verify-in-maven-container.sh clean verify` 命令，全程只有一个 Maven 容器，379+54 测试全部通过，墙钟 189 秒、Maven 计时 03:03；前置 Maven Central 传输中断及遗留工具 cell 并发轮全部作废，不计入通过证据。同一受控内容的重建副本还通过 Phase 1、Phase 2/3 静态门禁、独立 PostgreSQL/Redis 数据面、镜像构建、3/3 Compose readiness、API 重启恢复与 bind-source 审计；8 个只读 bind 全部来自副本，源工作树 bind 为 0，临时目录、容器、网络、卷、镜像标签、专用缓存卷和测试端口均已清理至 0 残留。
 
 ## 启动独立开发 Compose
 

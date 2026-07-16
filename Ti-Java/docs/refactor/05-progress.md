@@ -103,7 +103,7 @@
 - Java 导出的唯一库存 SQL 已在 PostgreSQL 18.4 的 5,002 科目、150,000 题目夹具上形成固定观测；0 bind、1 statement、`subjects/questions` 各扫描一次、loops=1、TEMP=0、严格 signed `id ASC`。计划文件 SHA-256 为 `f7c684273579e676b9da0024f76593ae9fb69bde47309e6d396c6fdf5a1cfb0c`，runtime manifest SHA-256 为 `3c514f7f1ac79fe8d393f973fa19f136023be70e06968676f6a584d6199f09d7`；它不是生产 SLA。
 - 库存切片 Java/合同定向 28/28、PostgreSQL 16.14/18.4 compatibility 2/2、golden/计划工具 24/24、全部 source tools 132/132 均通过；完整 `clean verify` 为 379 个 surefire + 54 个 failsafe，0 failure/error/skip。
 - WORM 绑定 build-context SHA-256 `befc34d1f79baab4ad7c895ca2718ed1d8e2efbf964978313f35806ff0ab8403`，通过 PostgreSQL 18.4、70 表/617 列、只读 ACL、Hibernate `validate` 与 readiness，报告 SHA-256 为 `da9a55b6df570904760d868696497cd046030b67789d1457d8e94cd8af6f53ca`。
-- 仅复制 1,180 个受控文件、0 个符号链接且不含缓存或构建产物的独立副本已完成最终验收；验收时源/副本相对路径文件清单 SHA-256 均为 `c6a4156f180676e39717abc49a945fc9b4178b867e5dd2791a368693ca2622b7`，build-context 均为 `befc34d1f79baab4ad7c895ca2718ed1d8e2efbf964978313f35806ff0ab8403`。权威 Maven 轮使用固定 Maven 3.9.16/Java 25 容器和全新空 artifact cache；三轮 Maven Central 直连传输失败均已作废，最终仅将 `central` 下载代理到阿里云公共中央仓库，379+54 全绿，Maven 总用时 03:59。同一内容的重建副本还通过 Phase 1、Phase 2/3 静态门禁、独立数据面、镜像构建、3/3 Compose readiness、API 重启恢复与 8-bind source 审计；源工作树 bind 为 0，临时资源和端口均清理至 0。
+- 仅复制 1,180 个受控文件、0 个符号链接且不含缓存或构建产物的独立副本已完成最终验收；验收时源/副本相对路径文件清单 SHA-256 均为 `c6a4156f180676e39717abc49a945fc9b4178b867e5dd2791a368693ca2622b7`，build-context 均为 `befc34d1f79baab4ad7c895ca2718ed1d8e2efbf964978313f35806ff0ab8403`。权威原始命令 Maven 轮全程仅一个容器，379+54 全绿，墙钟 189 秒、Maven 03:03；前置网络中断及遗留工具 cell 并发轮均作废。同一内容的重建副本还通过 Phase 1、Phase 2/3 静态门禁、独立数据面、镜像构建、3/3 Compose readiness、API 重启恢复与 8-bind source 审计；源工作树 bind 为 0，临时资源和端口均清理至 0。
 - 有效路由状态现为 **11 migrated、600 pending、0 production cutover**；有效资源为 **159 个且 159 个均有唯一 owner**。`migrated` 只表示 Java 实现与兼容证据已物化，旧 Flask 仍是生产 owner，整个长期重构目标仍未完成。
 
 ## 验证命令与结果
@@ -186,7 +186,7 @@
 | Phase 4A 后台科目库存 Java/证据定向 | Java/合同 28/28；PG16.14/PG18.4 compatibility 2/2；库存 Python 工具 24/24；全部 source tools 132/132 | 绿色；四字段、signed ID、nullable lock、零题科目、证据哈希和单条 pending operation 已由机器合同闭环 |
 | Phase 4A 后台科目库存切片 `./infra/phase2/verify-in-maven-container.sh clean verify` | 379 个 surefire + 54 个 failsafe，0 failure/error/skip；最终源目录总用时 01:03 | 绿色；固定 Java 25/Maven 3.9.16，包含 PG18/PG16/Redis Testcontainers |
 | Phase 4A 后台科目库存切片 WORM + Phase 2 静态门禁 | PG18.4、70 表/617 列、只读 ACL、Hibernate `validate`、readiness；build-context SHA-256 `befc34d1f79baab4ad7c895ca2718ed1d8e2efbf964978313f35806ff0ab8403` | 绿色；报告 SHA-256 `da9a55b6df570904760d868696497cd046030b67789d1457d8e94cd8af6f53ca`，未保存 schema dump/DSN/Secret，临时资源已清理 |
-| Phase 4A 后台科目库存切片独立抽取 | 1,180 个受控文件；空缓存固定 Maven 3.9.16/Java 25 容器串行 379+54（03:59）、Phase 1/2/3 静态、独立数据面、镜像、3/3 Compose readiness、重启恢复与 8-bind source 审计全绿 | 绿色；验收时清单 SHA-256 `c6a4156f180676e39717abc49a945fc9b4178b867e5dd2791a368693ca2622b7`，0 符号链接、源工作树 bind=0、临时资源/端口=0；三轮 Central 直连失败均作废，最终仅代理 `central` 下载 |
+| Phase 4A 后台科目库存切片独立抽取 | 1,180 个受控文件；原始命令串行 379+54 Maven、Phase 1/2/3 静态、独立数据面、镜像、3/3 Compose readiness、重启恢复与 8-bind source 审计全绿 | 绿色；验收时清单 SHA-256 `c6a4156f180676e39717abc49a945fc9b4178b867e5dd2791a368693ca2622b7`，0 符号链接、源工作树 bind=0、临时资源/端口=0；作废轮不计入通过证据 |
 | Phase 4A 科目目录检查点独立抽取 | 1,251 个文件；Phase 1、Phase 2/3 静态门禁、231+28 Maven 全绿 | 绿色；这是科目目录检查点证据；无符号链接、无父目录运行时读取，临时副本和容器无残留 |
 | Phase 4A 旧栈回归 | 374 个 Python 文件 compileall；654 passed、2 个登记失败、3 skipped；两套小程序各 36/36 | 绿色；登记基线和 warning 窗口保持一致 |
 

@@ -190,9 +190,9 @@ catalog 内部能力。
 验收时源/副本的“相对路径 + 文件 SHA-256”清单均为
 `c6a4156f180676e39717abc49a945fc9b4178b867e5dd2791a368693ca2622b7`，build-context 均为
 `befc34d1f79baab4ad7c895ca2718ed1d8e2efbf964978313f35806ff0ab8403`。权威 Maven 轮使用
-固定 Maven 3.9.16/Java 25 容器和全新空 artifact cache；三轮 Maven Central 直连传输失败
-均已作废，最终仅将 `central` 下载代理到阿里云公共中央仓库，379+54 测试全部通过，Maven
-总用时 03:59。同一受控内容的重建副本还通过
+专用隔离缓存和原始 `./infra/phase2/verify-in-maven-container.sh clean verify` 命令，全程只有
+一个 Maven 容器；379+54 测试全部通过，墙钟 189 秒、Maven 计时 03:03。前置 Maven Central
+传输中断及遗留工具 cell 并发轮全部作废，不计入通过证据。同一受控内容的重建副本还通过
 Phase 1、Phase 2/3 静态门禁、独立 PostgreSQL/Redis 数据面、镜像构建、3/3 Compose
 readiness、API 重启恢复与 bind-source 审计；8 个只读 bind 全部来自副本，源工作树 bind 为
 0，临时目录、容器、网络、卷、镜像标签、专用缓存卷和测试端口均已清理至 0 残留。
