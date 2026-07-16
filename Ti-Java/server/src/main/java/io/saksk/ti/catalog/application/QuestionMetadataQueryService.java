@@ -2,10 +2,13 @@ package io.saksk.ti.catalog.application;
 
 import io.saksk.ti.catalog.api.QuestionMetadataApplicationApi;
 import io.saksk.ti.catalog.api.QuestionCatalogCountQuery;
+import io.saksk.ti.catalog.api.QuestionCatalogListQuery;
 import io.saksk.ti.catalog.api.QuestionCatalogRecordView;
+import io.saksk.ti.catalog.api.QuestionCatalogSummaryView;
 import io.saksk.ti.catalog.api.QuestionTypeCatalogView;
 import io.saksk.ti.catalog.application.port.QuestionCountQueryPort;
 import io.saksk.ti.catalog.application.port.QuestionDetailQueryPort;
+import io.saksk.ti.catalog.application.port.QuestionSummaryQueryPort;
 import io.saksk.ti.catalog.application.port.QuestionTypeQueryPort;
 import java.util.List;
 import java.util.Objects;
@@ -19,15 +22,18 @@ class QuestionMetadataQueryService implements QuestionMetadataApplicationApi {
     private final QuestionTypeQueryPort questionTypes;
     private final QuestionCountQueryPort questionCounts;
     private final QuestionDetailQueryPort questionDetails;
+    private final QuestionSummaryQueryPort questionSummaries;
 
     QuestionMetadataQueryService(
             QuestionTypeQueryPort questionTypes,
             QuestionCountQueryPort questionCounts,
-            QuestionDetailQueryPort questionDetails
+            QuestionDetailQueryPort questionDetails,
+            QuestionSummaryQueryPort questionSummaries
     ) {
         this.questionTypes = questionTypes;
         this.questionCounts = questionCounts;
         this.questionDetails = questionDetails;
+        this.questionSummaries = questionSummaries;
     }
 
     @Override
@@ -57,5 +63,12 @@ class QuestionMetadataQueryService implements QuestionMetadataApplicationApi {
             throw new IllegalArgumentException("questionId must not be negative");
         }
         return questionDetails.findQuestionById(questionId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<QuestionCatalogSummaryView> listQuestionSummaries(QuestionCatalogListQuery query) {
+        Objects.requireNonNull(query, "query");
+        return List.copyOf(questionSummaries.listQuestionSummaries(query));
     }
 }

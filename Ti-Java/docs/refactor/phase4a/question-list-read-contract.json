@@ -1,0 +1,283 @@
+{
+  "contract_id": "ti.phase4a.question-list-read-contract",
+  "schema_version": 1,
+  "status": "catalog_internal_capability_implemented_http_operations_deferred",
+  "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "evidence": {
+    "golden": {
+      "source": "golden-question-list-reads.json",
+      "file_sha256": "bc107912c61ee632457cb8563b29f9d69e99126d5c4be212d90dbdca40aac3b6",
+      "case_count": 50,
+      "case_payload_sha256": "cba2ad0d1a9e1ae75476fcf7e15d9821a65151930713da58a7ec595fc83ed1bc"
+    },
+    "query_plan": {
+      "source": "question-list-query-plan-evidence.json",
+      "file_sha256": "af368af15be3557882bf0e673271e0c685b43d23738f9226c8e908d95928c525",
+      "runtime_sql_manifest_sha256": "98787090da5c5a0cdb95b6b9dddd8f7763caec872f3c7796c4a998930ed32fd5",
+      "runtime_query_count": 4
+    },
+    "frozen_route_matrix": {
+      "source": "../02-route-parity-matrix.csv",
+      "sha256": "fdbdfedf3dd70cd09778b2a7072711d103eee8461d0e7dd356d797006fc92c74"
+    },
+    "data_ownership": {
+      "source": "../03-data-ownership.csv",
+      "sha256": "3f9cb0650c523593d7037dc24df902dbccdb3885f261f530e1725a9dc7a31748",
+      "resource": "table:questions",
+      "target_owner": "catalog",
+      "delta_required": false
+    },
+    "approved_differences": {
+      "source": "approved-differences.md",
+      "sha256": "2ac257e41214f3005eaa022965038bf429d35e3ba04dc83b81ac8a90abd63fd2",
+      "new_difference_ids": [],
+      "statement": "No HTTP behavior difference is approved in this internal capability slice. Authentication, raw query parsing, creator-name enrichment, route-specific type normalization, presentation projection and safe errors remain future operations-owned parity requirements."
+    }
+  },
+  "module_boundary": {
+    "data_owner": "catalog",
+    "catalog_owned_table": "questions",
+    "internal_application_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi#listQuestionSummaries",
+    "query": "io.saksk.ti.catalog.api.QuestionCatalogListQuery",
+    "immutable_result": "io.saksk.ti.catalog.api.QuestionCatalogSummaryView",
+    "http_operation_owner": "operations",
+    "http_adapter_status": "not_implemented",
+    "http_owner_dependency_status": "operations_to_catalog_api_and_identity_api_dependencies_not_yet_approved_or_implemented",
+    "deferred_phase": "4H",
+    "forbidden_in_this_slice": [
+      "HTTP controller, security matcher, role decision or rate limiter",
+      "operations module dependency change",
+      "users or subjects join inside the catalog adapter",
+      "creator username lookup or row-driven identity calls",
+      "portable question format, Chinese label, tags or image projection inside catalog",
+      "route parity delta or OpenAPI operation migration",
+      "production cutover"
+    ]
+  },
+  "route_status": {
+    "migrated_route_count_before": 11,
+    "migrated_route_count_after": 11,
+    "pending_route_count_before": 600,
+    "pending_route_count_after": 600,
+    "production_cutover_count": 0,
+    "operations": [
+      {
+        "route_id": "1437bc4bf41b",
+        "method": "GET",
+        "path": "/admin/api/questions",
+        "legacy_route_template": "/admin/api/questions",
+        "legacy_handler": "admin.admin_api.get_filtered_questions",
+        "target_module": "operations",
+        "migration_status": "pending",
+        "contract_maturity": "inferred",
+        "response_schema": "unknown",
+        "production_cutover": false
+      },
+      {
+        "route_id": "6cd7322bea3b",
+        "method": "GET",
+        "path": "/admin/questions",
+        "legacy_route_template": "/admin/questions",
+        "legacy_handler": "admin.admin_api_legacy.get_filtered_questions",
+        "target_module": "operations",
+        "migration_status": "pending",
+        "contract_maturity": "inferred",
+        "response_schema": "unknown",
+        "production_cutover": false
+      }
+    ]
+  },
+  "catalog_application_contract": {
+    "method": "List<QuestionCatalogSummaryView> listQuestionSummaries(QuestionCatalogListQuery query)",
+    "transaction": "read-only",
+    "runtime_sql": "one of four explicit nine-column SELECT variants over questions with optional typed filters and fixed q.id DESC ordering",
+    "statement_count_per_invocation": 1,
+    "filters": [
+      {
+        "name": "subjectId",
+        "container": "java.util.Optional<java.lang.Integer>",
+        "postgres_type": "integer",
+        "bind_name": "subject_id",
+        "absent": "omit the predicate",
+        "present": "bind the complete signed integer domain exactly, including zero and negative values"
+      },
+      {
+        "name": "questionType",
+        "container": "java.util.Optional<java.lang.String>",
+        "postgres_type": "text",
+        "bind_name": "question_type",
+        "absent": "omit the predicate",
+        "present": "bind exact text without trimming, case folding, alias conversion or treating all specially"
+      }
+    ],
+    "runtime_variants": [
+      {
+        "query_id": "question-summaries-all",
+        "bind_count": 0,
+        "predicates": []
+      },
+      {
+        "query_id": "question-summaries-by-subject",
+        "bind_count": 1,
+        "predicates": ["q.subject_id = :subject_id"]
+      },
+      {
+        "query_id": "question-summaries-by-type",
+        "bind_count": 1,
+        "predicates": ["q.type = :question_type"]
+      },
+      {
+        "query_id": "question-summaries-by-subject-and-type",
+        "bind_count": 2,
+        "predicates": [
+          "q.subject_id = :subject_id",
+          "q.type = :question_type"
+        ]
+      }
+    ],
+    "result_fields": [
+      {
+        "name": "id",
+        "java_type": "long",
+        "nullable": false
+      },
+      {
+        "name": "subjectId",
+        "java_type": "java.lang.Long",
+        "nullable": true
+      },
+      {
+        "name": "type",
+        "java_type": "java.lang.String",
+        "nullable": false
+      },
+      {
+        "name": "content",
+        "java_type": "java.lang.String",
+        "nullable": false
+      },
+      {
+        "name": "difficulty",
+        "java_type": "java.lang.Integer",
+        "nullable": true
+      },
+      {
+        "name": "tagsRaw",
+        "java_type": "java.lang.String",
+        "nullable": true
+      },
+      {
+        "name": "imagePathRaw",
+        "java_type": "java.lang.String",
+        "nullable": true
+      },
+      {
+        "name": "createdBy",
+        "java_type": "java.lang.Long",
+        "nullable": true
+      },
+      {
+        "name": "updatedAt",
+        "java_type": "java.time.LocalDateTime",
+        "nullable": true
+      }
+    ],
+    "result_semantics": {
+      "ordering": "strict q.id DESC for every variant",
+      "cardinality": "unbounded list matching the legacy collection fact; no hidden limit or pagination is introduced",
+      "empty": "an immutable empty list",
+      "signed_id": "negative, zero and positive question IDs remain representable because the collection route has no integer path converter and the legacy schema has no nonnegative check",
+      "raw_text": "type, content, tags and image path remain unparsed and unmodified",
+      "nullable_columns": "all schema-compatible nullable legacy columns remain null",
+      "creator": "createdBy is the raw questions.created_by ID; catalog never resolves a username",
+      "failure": "the original persistence exception propagates unchanged so operations can apply the reviewed HTTP policy"
+    },
+    "query_budget": {
+      "catalog_selects": 1,
+      "catalog_writes": 0,
+      "relations": ["questions"],
+      "joins": 0,
+      "temporary_state": false,
+      "bind_count_range": [0, 2],
+      "statement_growth_with_result_count": 0,
+      "n_plus_one_forbidden": true
+    }
+  },
+  "legacy_http_contract": {
+    "shared_authentication": {
+      "administrator_session": "200 and one question-collection SELECT",
+      "subject_administrator_session": "200 and one question-collection SELECT",
+      "ordinary_session": "403 before question-collection SQL",
+      "anonymous": "302 Location /login before question-collection SQL",
+      "valid_administrator_bearer_only": "302 Location /login because the global admin Web gate does not accept Bearer-only access",
+      "ordinary_session_plus_valid_administrator_bearer": "302 Location /login because the Bearer header bypasses the Web-session branch of the global gate"
+    },
+    "shared_query_semantics": {
+      "subject_missing_or_empty": "no subject predicate",
+      "subject_zero_or_negative": "the raw first value is bound and can match",
+      "subject_blank_or_out_of_range": "the captured SQLite contract returns an empty list after one collection SELECT; future operations owns this raw-string edge",
+      "subject_duplicate": "the first query-string value wins",
+      "type_missing_or_lowercase_all": "no type predicate",
+      "ordering": "strict id DESC including a captured negative question ID",
+      "pagination": "none; success is a naked JSON array"
+    },
+    "type_normalization": {
+      "modern": "any_type_to_portable_type maps Chinese choice, single_choice and single to single_choice; empty, uppercase ALL and unknown values map to essay",
+      "legacy": "q_type_to_portable_type maps the Chinese choice label to single_choice but single_choice, single, empty, uppercase ALL and unknown values to essay",
+      "catalog_boundary": "operations must pass the already reviewed database type as an exact optional filter; catalog performs no alias conversion"
+    },
+    "modern_projection": {
+      "path": "/admin/api/questions",
+      "content": "portable normalization trims or rewrites fill placeholders",
+      "tags": "valid arrays become comma-joined strings, malformed text is retained, null becomes empty",
+      "image_path": "non-array scalar text is wrapped as array JSON text and null or empty becomes []",
+      "creator": "the legacy users join returns username as created_by; missing or orphan creators become null",
+      "additional_fields": ["q_type"]
+    },
+    "legacy_projection": {
+      "path": "/admin/questions",
+      "content": "raw database text",
+      "tags": "valid arrays remain arrays, malformed text is retained, null remains null",
+      "image_path": "the same legacy JSON string normalization is applied",
+      "creator": "the legacy users join returns username as created_by; missing or orphan creators become null",
+      "additional_fields": ["q_type"]
+    },
+    "failure_semantics": {
+      "database_failure_accept_any": "500 fixed generic Chinese HTML error page after one attempted collection SELECT",
+      "database_failure_accept_json": "500 generic safe JSON error envelope after one attempted collection SELECT"
+    },
+    "cross_cutting_effects": {
+      "route_body_question_writes": 0,
+      "questions_fingerprint": "all fifteen questions columns remain unchanged for every case",
+      "session_activity": "Session-only requests can update users.last_active once before the collection handler; this identity effect is outside the catalog primitive and is separately ledgered",
+      "blocked_bearer_paths": "anonymous, Bearer-only and Session-plus-Bearer redirect before any SQL in the captured cases",
+      "rate_limit": "neither route declares a route-specific limit; future operations must preserve the applicable global policy rather than invent an endpoint limit"
+    }
+  },
+  "invariants": [
+    "The catalog capability reads only the catalog-owned questions table and never joins users or subjects.",
+    "Every invocation executes exactly one fixed bound SELECT and no DML, DDL or TEMP operation.",
+    "All nine selected columns map to immutable raw summaries without dropping signed IDs, malformed text or nullable values.",
+    "Every result is strictly ordered by id descending, including zero and negative historical keys.",
+    "No HTTP authentication, raw query parsing, PQF mapping, creator username, Chinese label, image rewrite or response envelope enters catalog.",
+    "Persistence failures remain untranslated at the catalog boundary.",
+    "PostgreSQL 16.14 and 18.4 execute the same four adapter SQL variants.",
+    "Synthetic query-plan indexes are test-only observations and do not authorize a production migration or claim a production index.",
+    "Both HTTP operations remain operations-owned and pending; this capability changes no route, OpenAPI migration status or production traffic."
+  ],
+  "acceptance": {
+    "catalog_internal_capability": "implemented",
+    "http_operation_migration": "deferred_to_phase4h",
+    "production_cutover": false,
+    "required_before_phase4h_route_migration": [
+      "approve and machine-check operations dependencies on catalog and identity public APIs",
+      "implement the complete shared global-gate, role and users.last_active behavior",
+      "parse raw subject/type inputs and reproduce both route-specific type normalizers",
+      "resolve creator IDs in one bounded identity batch rather than one call per row",
+      "implement both distinct content/tags/image projections without changing raw catalog summaries",
+      "preserve the safe Accept-dependent error and global rate-limit policies",
+      "add route delta and OpenAPI migration only after all 50 golden cases pass"
+    ],
+    "next_phase4a_work": "continue the next catalog-only read after this capability passes full isolated acceptance"
+  }
+}

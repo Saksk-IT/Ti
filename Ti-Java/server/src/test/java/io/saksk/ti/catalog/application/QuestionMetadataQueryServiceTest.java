@@ -4,11 +4,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.saksk.ti.catalog.api.QuestionCatalogCountQuery;
+import io.saksk.ti.catalog.api.QuestionCatalogListQuery;
 import io.saksk.ti.catalog.api.QuestionCatalogRecordView;
+import io.saksk.ti.catalog.api.QuestionCatalogSummaryView;
 import io.saksk.ti.catalog.api.QuestionSubjectAssignmentScope;
 import io.saksk.ti.catalog.application.port.QuestionCountQueryPort;
 import io.saksk.ti.catalog.application.port.QuestionDetailQueryPort;
+import io.saksk.ti.catalog.application.port.QuestionSummaryQueryPort;
 import io.saksk.ti.catalog.application.port.QuestionTypeQueryPort;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -37,7 +41,10 @@ class QuestionMetadataQueryServiceTest {
                     "boolean"));
         };
         var service = new QuestionMetadataQueryService(
-                port, unusedQuestionCountPort(), unusedQuestionDetailPort());
+                port,
+                unusedQuestionCountPort(),
+                unusedQuestionDetailPort(),
+                unusedQuestionSummaryPort());
 
         var result = service.questionTypes();
 
@@ -57,7 +64,10 @@ class QuestionMetadataQueryServiceTest {
             throw failure;
         };
         var service = new QuestionMetadataQueryService(
-                port, unusedQuestionCountPort(), unusedQuestionDetailPort());
+                port,
+                unusedQuestionCountPort(),
+                unusedQuestionDetailPort(),
+                unusedQuestionSummaryPort());
 
         assertThatThrownBy(service::questionTypes).isSameAs(failure);
         assertThat(calls).hasValue(1);
@@ -66,7 +76,10 @@ class QuestionMetadataQueryServiceTest {
     @Test
     void returnsAnImmutableEmptyCatalogWhenThePortHasNoRows() {
         var service = new QuestionMetadataQueryService(
-                List::of, unusedQuestionCountPort(), unusedQuestionDetailPort());
+                List::of,
+                unusedQuestionCountPort(),
+                unusedQuestionDetailPort(),
+                unusedQuestionSummaryPort());
 
         assertThat(service.questionTypes().questionTypes()).isEmpty();
     }
@@ -79,7 +92,7 @@ class QuestionMetadataQueryServiceTest {
             return 99;
         };
         var service = new QuestionMetadataQueryService(
-                List::of, port, unusedQuestionDetailPort());
+                List::of, port, unusedQuestionDetailPort(), unusedQuestionSummaryPort());
 
         long result = service.countQuestions(countQuery(Optional.of(List.of())));
 
@@ -97,7 +110,7 @@ class QuestionMetadataQueryServiceTest {
             return 17;
         };
         var service = new QuestionMetadataQueryService(
-                List::of, port, unusedQuestionDetailPort());
+                List::of, port, unusedQuestionDetailPort(), unusedQuestionSummaryPort());
         var query = new QuestionCatalogCountQuery(
                 Optional.of("数学"),
                 Optional.of("single_choice"),
@@ -124,7 +137,7 @@ class QuestionMetadataQueryServiceTest {
             throw failure;
         };
         var service = new QuestionMetadataQueryService(
-                List::of, port, unusedQuestionDetailPort());
+                List::of, port, unusedQuestionDetailPort(), unusedQuestionSummaryPort());
 
         assertThatThrownBy(() -> service.countQuestions(countQuery(Optional.empty())))
                 .isSameAs(failure);
@@ -166,7 +179,8 @@ class QuestionMetadataQueryServiceTest {
             received.set(questionId);
             return Optional.of(expected);
         };
-        var service = new QuestionMetadataQueryService(List::of, unusedQuestionCountPort(), port);
+        var service = new QuestionMetadataQueryService(
+                List::of, unusedQuestionCountPort(), port, unusedQuestionSummaryPort());
 
         assertThat(service.findQuestionById(42)).containsSame(expected);
         assertThat(received).hasValue(42L);
@@ -176,7 +190,10 @@ class QuestionMetadataQueryServiceTest {
     @Test
     void preservesAnEmptyQuestionDetailAndPropagatesPortFailure() {
         var missing = new QuestionMetadataQueryService(
-                List::of, unusedQuestionCountPort(), questionId -> Optional.empty());
+                List::of,
+                unusedQuestionCountPort(),
+                questionId -> Optional.empty(),
+                unusedQuestionSummaryPort());
         assertThat(missing.findQuestionById(0)).isEmpty();
 
         IllegalStateException failure = new IllegalStateException("detail unavailable");
@@ -185,7 +202,8 @@ class QuestionMetadataQueryServiceTest {
                 unusedQuestionCountPort(),
                 questionId -> {
                     throw failure;
-                });
+                },
+                unusedQuestionSummaryPort());
         assertThatThrownBy(() -> failing.findQuestionById(1)).isSameAs(failure);
     }
 
@@ -199,7 +217,8 @@ class QuestionMetadataQueryServiceTest {
                 questionId -> {
                     calls.incrementAndGet();
                     return Optional.empty();
-                });
+                },
+                unusedQuestionSummaryPort());
 
         assertThatThrownBy(() -> service.findQuestionById(-1))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -207,6 +226,75 @@ class QuestionMetadataQueryServiceTest {
 
         Transactional transactional = QuestionMetadataQueryService.class
                 .getDeclaredMethod("findQuestionById", long.class)
+                .getAnnotation(Transactional.class);
+        assertThat(transactional).isNotNull();
+        assertThat(transactional.readOnly()).isTrue();
+    }
+
+    @Test
+    void delegatesQuestionSummaryQueryExactlyOnceAndReturnsAnImmutableRawList() {
+        AtomicInteger calls = new AtomicInteger();
+        AtomicReference<QuestionCatalogListQuery> received = new AtomicReference<>();
+        var raw = new QuestionCatalogSummaryView(
+                0,
+                -7L,
+                "",
+                "raw content",
+                null,
+                "{not-json-tags",
+                "[not-json-image",
+                null,
+                LocalDateTime.of(2026, 7, 16, 12, 13, 14));
+        var portRows = new ArrayList<>(List.of(raw));
+        QuestionSummaryQueryPort port = query -> {
+            calls.incrementAndGet();
+            received.set(query);
+            return portRows;
+        };
+        var service = new QuestionMetadataQueryService(
+                List::of, unusedQuestionCountPort(), unusedQuestionDetailPort(), port);
+        var query = new QuestionCatalogListQuery(Optional.of(-7), Optional.of(""));
+
+        List<QuestionCatalogSummaryView> result = service.listQuestionSummaries(query);
+
+        assertThat(result).containsExactly(raw);
+        assertThat(result.getFirst()).isSameAs(raw);
+        assertThat(received).hasValue(query);
+        assertThat(calls).hasValue(1);
+        portRows.clear();
+        assertThat(result).containsExactly(raw);
+        assertThatThrownBy(() -> result.add(raw))
+                .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void rejectsNullSummaryQueryBeforeThePortAndPropagatesPortFailures() throws Exception {
+        AtomicInteger calls = new AtomicInteger();
+        QuestionSummaryQueryPort counting = query -> {
+            calls.incrementAndGet();
+            return List.of();
+        };
+        var guarded = new QuestionMetadataQueryService(
+                List::of, unusedQuestionCountPort(), unusedQuestionDetailPort(), counting);
+
+        assertThatThrownBy(() -> guarded.listQuestionSummaries(null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessage("query");
+        assertThat(calls).hasValue(0);
+
+        IllegalStateException failure = new IllegalStateException("summary unavailable");
+        var failing = new QuestionMetadataQueryService(
+                List::of,
+                unusedQuestionCountPort(),
+                unusedQuestionDetailPort(),
+                query -> {
+                    throw failure;
+                });
+        var query = new QuestionCatalogListQuery(Optional.empty(), Optional.empty());
+        assertThatThrownBy(() -> failing.listQuestionSummaries(query)).isSameAs(failure);
+
+        Transactional transactional = QuestionMetadataQueryService.class
+                .getDeclaredMethod("listQuestionSummaries", QuestionCatalogListQuery.class)
                 .getAnnotation(Transactional.class);
         assertThat(transactional).isNotNull();
         assertThat(transactional.readOnly()).isTrue();
@@ -221,6 +309,12 @@ class QuestionMetadataQueryServiceTest {
     private static QuestionDetailQueryPort unusedQuestionDetailPort() {
         return questionId -> {
             throw new AssertionError("question-detail port must not be called");
+        };
+    }
+
+    private static QuestionSummaryQueryPort unusedQuestionSummaryPort() {
+        return query -> {
+            throw new AssertionError("question-summary port must not be called");
         };
     }
 

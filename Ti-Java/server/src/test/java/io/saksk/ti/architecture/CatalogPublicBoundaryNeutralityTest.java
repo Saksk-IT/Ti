@@ -3,7 +3,9 @@ package io.saksk.ti.architecture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.saksk.ti.catalog.api.QuestionCatalogCountQuery;
+import io.saksk.ti.catalog.api.QuestionCatalogListQuery;
 import io.saksk.ti.catalog.api.QuestionCatalogRecordView;
+import io.saksk.ti.catalog.api.QuestionCatalogSummaryView;
 import io.saksk.ti.catalog.api.QuestionSubjectAssignmentScope;
 import io.saksk.ti.catalog.api.PublicBankCardView;
 import io.saksk.ti.catalog.api.PublicBankSource;
@@ -104,6 +106,33 @@ class CatalogPublicBoundaryNeutralityTest {
                         "portableOptions",
                         "questionImageGroups",
                         "username",
+                        "owner");
+    }
+
+    @Test
+    void questionSummaryBoundaryExposesOnlyRawCatalogFiltersAndFacts() {
+        assertThat(Arrays.stream(QuestionCatalogListQuery.class.getRecordComponents())
+                        .map(RecordComponent::getName))
+                .containsExactly("subjectId", "questionType")
+                .doesNotContain("subjectName", "mode", "source", "tag", "username", "userId");
+        assertThat(Arrays.stream(QuestionCatalogSummaryView.class.getRecordComponents())
+                        .map(RecordComponent::getName))
+                .containsExactly(
+                        "id",
+                        "subjectId",
+                        "type",
+                        "content",
+                        "difficulty",
+                        "tagsRaw",
+                        "imagePathRaw",
+                        "createdBy",
+                        "updatedAt")
+                .doesNotContain(
+                        "qType",
+                        "portableType",
+                        "portableContent",
+                        "username",
+                        "createdByUsername",
                         "owner");
     }
 
