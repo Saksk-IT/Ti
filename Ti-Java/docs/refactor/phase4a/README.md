@@ -3,10 +3,10 @@
 本目录保存 Phase 4A 的可执行契约、黄金样本、差异报告和性能证据。旧 Flask
 只作为测试期契约来源；Java 生产运行时不得读取父目录或回调 Flask。
 
-受保护科目目录与公共题库 7 条 GET 的 Java shadow 切片均已实现；题目类型元数据与
-题目数量的 catalog 内部读取能力也已实现。两条后台题型 HTTP operation 仍由 `operations`
-持有，两条题量 HTTP operation 经审计应由 Phase 4C 的 `learning` 组合，四条路径都保持
-pending。当前有效状态为 **11 migrated、600 pending、0 production cutover**，有效
+受保护科目目录与公共题库 7 条 GET 的 Java shadow 切片均已实现；题目类型、题目数量与
+单题详情的 catalog 内部读取能力也已实现。两条后台题型与两条单题详情 HTTP operation
+仍由 `operations` 持有，两条题量 HTTP operation 经审计应由 Phase 4C 的 `learning` 组合，
+六条路径都保持 pending。当前有效状态为 **11 migrated、600 pending、0 production cutover**，有效
 资源为 **159 个且全部唯一 owner**；旧 Flask 仍是生产运行所有者，Phase 4A 后续切片和
 整个长期重构目标都尚未完成。
 
@@ -19,8 +19,10 @@ pending。当前有效状态为 **11 migrated、600 pending、0 production cutov
    HTTP operation 延后到 4H，当前不写 route/OpenAPI delta；
 4. 题目数量：已审计双路由并实现只读 `questions/subjects` 的 catalog 计数原语；收藏、错题、
    私有标签、条件认证、缓存和限流组成完整用例，延后到 4C 由 `learning` 一次迁移双路由；
-5. 公共题库剩余读取：下一项，继续按真实 Flask 路由选择冻结 golden；
-6. 在 4C 由 `learning` 组合 `GET /api/quiz/subjects/{subject}/info` 中的作答、错题和收藏统计。
+5. 单题详情：已固定双路由真实 Flask 行为并实现 15 列原始 `questions` 事实读取；现代/legacy
+   响应投影和鉴权保留给 `operations`，延后到 4H，当前不写 route/OpenAPI delta；
+6. 公共题库剩余读取：下一项，继续按真实 Flask 路由选择冻结 golden；
+7. 在 4C 由 `learning` 组合 `GET /api/quiz/subjects/{subject}/info` 中的作答、错题和收藏统计。
 
 切片 1 不越权读取 `identity.user_subjects`：`catalog` 通过 `identity::api` 获取用户黑名单，
 再在内存中与目录自有读取结果求差。它也不读取 `learning` 所有的 `user_answers`、
@@ -65,6 +67,16 @@ pending。当前有效状态为 **11 migrated、600 pending、0 production cutov
 - `question-count-query-plan-evidence.json`：从 Java adapter 导出的固定 SQL 变体，在 PostgreSQL
   18.4 合成夹具上验证 catalog-only 关系预算，以及 65,536/100,000 个候选 ID 始终只占一个
   `bigint[]` bind parameter；它不是生产延迟或容量 SLA。
+- `golden-question-detail-reads.json`：固定旧提交完整 `app/` 归档的 46-case 双路由证据，覆盖
+  六类鉴权、正常与畸形题目、路径 ID 边界和 HTML/JSON 数据库故障；所有请求前后 15 列
+  `questions` 指纹不变，DML=0；文件 SHA-256 为
+  `7920f17a7d28b647fd8d7ec59eebaa9f7fdd91e1f016cf4d2d78908d41b77155`；
+- `question-detail-read-contract.json`：把 catalog 的 15 列原始事实 DTO 与 `operations` 未来负责的
+  鉴权、modern/legacy 响应投影、路径转换和安全错误信封分开；内部能力不授权 route/OpenAPI delta；
+- `question-detail-query-plan-evidence.json`：从 Java adapter 导出的精确单行 SQL，在 PostgreSQL
+  18.4 的 150,000 题目夹具上固定 5 个 ID 观测，每次只用一个 `bigint` bind 与
+  `questions_pkey` Index Scan，loops=1、TEMP=0；SHA-256 为
+  `9cdac9cbc8709ee47049e09dc58612aadc77a236ab64e5ef086d0d45af41b4dc`，不是生产延迟或容量 SLA。
 
 Java 迁移路由不启用应用数据缓存；身份策略与目录两条业务查询读取同一只读、可重复读事务中的当前数据库状态；这是
 `approved-differences.md` 中批准的过渡差异。业务用例是身份策略与目录各一条 SELECT，HTTP
@@ -108,3 +120,15 @@ SQL 变体、7 个 PG18.4 观测和 65,536/100,000 候选数组的计划证据 S
 无符号链接的独立副本也通过 Phase 1、Phase 2/3 静态门禁、346+48 Maven、独立数据面、镜像
 构建、Compose readiness 和 bind-source 审计，清理后无临时资源残留。固定旧提交归档的
 重新捕获只在完整源仓库执行；独立副本消费已固定的合同与证据，不在运行时读取父目录。
+
+单题详情内部能力加入后的完整 `clean verify` 为 355 个 surefire + 50 个 failsafe，
+0 failure/error/skip。46-case golden 的 payload SHA-256 为
+`5f7fc1ba7f13cf790bb5c130d5b1d39933217dd3b62a3cb91e4551fe72f19e16`；runtime SQL manifest
+SHA-256 为 `e861c39afe6c11b431cac0379e8174f842a31e988941baf3edde00e6a4e5cac1`。build-context
+SHA-256 `50550a7f5f07ae1dd02ef11a16a71045c43aee5ec0d90e0d0ce81b2b8cc67783` 的 WORM 已通过
+PostgreSQL 18.4、70 表/617 列、只读 ACL、Hibernate `validate` 与 readiness；结构化报告
+SHA-256 为 `a6a88bc98b047896bf97046bfec1292610f01f620684a63171afcebbb9758b91`。仅复制 1,142 个
+受控文件且无符号链接、缓存或构建产物的独立副本还通过 Phase 1、Phase 2/3、355+50 Maven、
+独立 PostgreSQL/Redis 数据面、镜像构建、Compose readiness 与 bind-source 审计；8 个 bind
+均来自副本且清理后无临时资源残留。两条详情 HTTP operation 继续是
+`operations,pending,production_cutover=false`，本证据只接受 catalog 内部能力。

@@ -1,0 +1,690 @@
+{
+  "evidence_id": "ti.phase4a.question-detail-query-plan",
+  "schema_version": 1,
+  "captured_on": "2026-07-16",
+  "scope": "catalog-owned-question-detail-internal-read-primitive",
+  "route_migration_status": {
+    "route_ids": [
+      "8cb323acac12",
+      "d7d727b88aea"
+    ],
+    "http_owner": "operations",
+    "status": "pending",
+    "production_cutover": false
+  },
+  "runtime_sql_contract": {
+    "source": "Java adapter runtime SQL manifest exported before capture",
+    "manifest_id": "ti.phase4a.question-detail-runtime-sql",
+    "manifest_schema_version": 1,
+    "adapter_class": "io.saksk.ti.catalog.infrastructure.persistence.JdbcQuestionDetailQueryAdapter",
+    "query_id": "question-detail-by-id",
+    "operation": "question-detail",
+    "sql": "SELECT q.id,\n       q.subject_id,\n       q.type,\n       q.content,\n       q.options,\n       q.answer,\n       q.analysis,\n       q.tags,\n       q.difficulty,\n       q.image_path,\n       q.source,\n       q.created_by,\n       q.updated_by,\n       q.created_at,\n       q.updated_at\nFROM questions q\nWHERE q.id = :question_id",
+    "sql_sha256": "1ed405165278c346ff34c116f4384bc0de6746509261f61d3b96172c61faf9b7",
+    "parameter_names": [
+      "question_id"
+    ],
+    "parameter_postgres_types": {
+      "question_id": "bigint"
+    },
+    "sql_statement_count": 1,
+    "forbidden_runtime_effects": [
+      "DML",
+      "DDL",
+      "TEMP"
+    ]
+  },
+  "environment": {
+    "container_image": "postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
+    "expected_digest": "sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
+    "resolved_image_id": "sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
+    "resolved_repo_digests": [
+      "postgres@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15"
+    ],
+    "os": "linux",
+    "architecture": "arm64",
+    "network": "none",
+    "database": "phase4a_question_detail_plan",
+    "postgresql": {
+      "server_version": "18.4",
+      "server_version_num": "180004",
+      "block_size_bytes": "8192",
+      "shared_buffers": "128MB",
+      "work_mem": "4MB",
+      "effective_cache_size": "4GB",
+      "random_page_cost": "4",
+      "max_parallel_workers_per_gather": "2",
+      "jit": "on"
+    }
+  },
+  "inputs": {
+    "adapter": "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcQuestionDetailQueryAdapter.java",
+    "adapter_sha256": "6861c6659eb1537710377a8f4819477031098dffc3fd7708c56b667dbafc84a2",
+    "runtime_sql_manifest": "server/target/phase4a-question-detail-runtime-sql.json",
+    "runtime_sql_manifest_sha256": "e861c39afe6c11b431cac0379e8174f842a31e988941baf3edde00e6a4e5cac1",
+    "runtime_sql_exporter": "server/src/test/java/io/saksk/ti/catalog/infrastructure/persistence/QuestionDetailRuntimeSqlManifestTest.java",
+    "runtime_sql_exporter_sha256": "58ef1987655189efbe864ba0b9f5dd94b0b94cea9f99e208d9e1ffe77e620ee4",
+    "capture_tool": "tools/capture_phase4a_question_detail_query_plan.py",
+    "capture_tool_sha256": "4c0b90dff094e6b64eab41bbcf55e7ac5c7345a02eb2643896e77a8e336f4306",
+    "capture_tool_test": "tools/test_capture_phase4a_question_detail_query_plan.py",
+    "capture_tool_test_sha256": "36266b587922ef1baa45f4b930b15cafceae1edb6b1c4e69dfdb17ebb45a62b5",
+    "fixture_sql_sha256": "ac8dfce9a8ced94227dd863b3d27de1e8a52a45bbaa0751c0e660244737afa5c"
+  },
+  "data_set": {
+    "kind": "public deterministic synthetic fixture",
+    "parameters": {
+      "question_count": 150000,
+      "subject_count": 5000,
+      "question_type_count": 5
+    },
+    "actual": {
+      "questions": 150000,
+      "minimum_question_id": 1,
+      "maximum_question_id": 150000,
+      "distinct_subject_ids": 5000,
+      "distinct_question_types": 5
+    },
+    "fixture_sql_sha256": "ac8dfce9a8ced94227dd863b3d27de1e8a52a45bbaa0751c0e660244737afa5c",
+    "statistics": "VACUUM (ANALYZE) questions completed before capture",
+    "index_definitions": [
+      {
+        "table": "questions",
+        "name": "questions_pkey",
+        "definition": "CREATE UNIQUE INDEX questions_pkey ON public.questions USING btree (id)"
+      }
+    ],
+    "index_decision": "observe the existing questions primary key only; no new production index is introduced by this evidence"
+  },
+  "measurement": {
+    "command": "EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) exact Java runtime SQL",
+    "runs_per_observation": 1,
+    "observation_count": 5,
+    "runtime_query_count": 1,
+    "sql_statement_count_per_observation": 1,
+    "bound_parameter_count_per_observation": 1,
+    "required_index": "questions_pkey",
+    "required_maximum_actual_loops": 1,
+    "observations": [
+      {
+        "observation_id": "first-existing-question",
+        "runtime_query_id": "question-detail-by-id",
+        "question_id": 1,
+        "expected_rows": 1,
+        "sql_statement_count": 1,
+        "binding": {
+          "mode": "prepare-execute",
+          "bound_parameter_count": 1,
+          "named_parameter_count": 1,
+          "occurrence_names": [
+            "question_id"
+          ],
+          "positional_sql_sha256": "50d3ed7a48233d74aae5e2d9bc79964474218de0b6aabe58caa59a80d1dcba72",
+          "parameters": {
+            "question_id": {
+              "bind_kind": "jdbc-scalar",
+              "postgres_type": "bigint",
+              "value": 1
+            }
+          }
+        },
+        "temp_blocks_observed": {
+          "Temp Read Blocks": 0.0,
+          "Temp Written Blocks": 0.0
+        },
+        "assertions_passed": [
+          "expected-found-or-missing-row-count",
+          "single-execution-no-row-driven-loop",
+          "bounded-plan-shape",
+          "one-catalog-questions-relation-scan",
+          "questions-primary-key-index-observed",
+          "selective-index-scan-only",
+          "zero-temp-blocks",
+          "buffers-captured-before-normalization",
+          "one-bigint-bind-one-select-statement"
+        ],
+        "plan_summary": {
+          "root_node_type": "Index Scan",
+          "result_row_count": 1,
+          "root_actual_loops": 1,
+          "node_count": 1,
+          "maximum_depth": 0,
+          "maximum_actual_loops": 1,
+          "node_type_counts": {
+            "Index Scan": 1
+          },
+          "relation_scan_occurrences": {
+            "questions": 1
+          },
+          "index_names": [
+            "questions_pkey"
+          ],
+          "buffer_fields_observed_before_normalization": [
+            "Local Dirtied Blocks",
+            "Local Hit Blocks",
+            "Local Read Blocks",
+            "Local Written Blocks",
+            "Shared Dirtied Blocks",
+            "Shared Hit Blocks",
+            "Shared Read Blocks",
+            "Shared Written Blocks",
+            "Temp Read Blocks",
+            "Temp Written Blocks"
+          ],
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Index Scan",
+              "Relation Name": "questions",
+              "Alias": "q",
+              "Index Name": "questions_pkey",
+              "Scan Direction": "Forward",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Plan Rows": 1,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 18,
+                "sha256": "ac4cd28e0b40b644ad3b50f5f3a4db8d9e35ea87e957c87bd4286c428fa215e5"
+              }
+            }
+          ]
+        },
+        "normalized_explain_analyze": {
+          "Plan": {
+            "Node Type": "Index Scan",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Scan Direction": "Forward",
+            "Index Name": "questions_pkey",
+            "Relation Name": "questions",
+            "Alias": "q",
+            "Startup Cost": 0.42,
+            "Total Cost": 8.44,
+            "Plan Rows": 1,
+            "Plan Width": 181,
+            "Actual Rows": 1.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Index Cond": {
+              "redacted": "planner expression omitted",
+              "character_count": 18,
+              "sha256": "ac4cd28e0b40b644ad3b50f5f3a4db8d9e35ea87e957c87bd4286c428fa215e5"
+            },
+            "Rows Removed by Index Recheck": 0,
+            "Index Searches": 1
+          }
+        }
+      },
+      {
+        "observation_id": "middle-existing-question",
+        "runtime_query_id": "question-detail-by-id",
+        "question_id": 75000,
+        "expected_rows": 1,
+        "sql_statement_count": 1,
+        "binding": {
+          "mode": "prepare-execute",
+          "bound_parameter_count": 1,
+          "named_parameter_count": 1,
+          "occurrence_names": [
+            "question_id"
+          ],
+          "positional_sql_sha256": "50d3ed7a48233d74aae5e2d9bc79964474218de0b6aabe58caa59a80d1dcba72",
+          "parameters": {
+            "question_id": {
+              "bind_kind": "jdbc-scalar",
+              "postgres_type": "bigint",
+              "value": 75000
+            }
+          }
+        },
+        "temp_blocks_observed": {
+          "Temp Read Blocks": 0.0,
+          "Temp Written Blocks": 0.0
+        },
+        "assertions_passed": [
+          "expected-found-or-missing-row-count",
+          "single-execution-no-row-driven-loop",
+          "bounded-plan-shape",
+          "one-catalog-questions-relation-scan",
+          "questions-primary-key-index-observed",
+          "selective-index-scan-only",
+          "zero-temp-blocks",
+          "buffers-captured-before-normalization",
+          "one-bigint-bind-one-select-statement"
+        ],
+        "plan_summary": {
+          "root_node_type": "Index Scan",
+          "result_row_count": 1,
+          "root_actual_loops": 1,
+          "node_count": 1,
+          "maximum_depth": 0,
+          "maximum_actual_loops": 1,
+          "node_type_counts": {
+            "Index Scan": 1
+          },
+          "relation_scan_occurrences": {
+            "questions": 1
+          },
+          "index_names": [
+            "questions_pkey"
+          ],
+          "buffer_fields_observed_before_normalization": [
+            "Local Dirtied Blocks",
+            "Local Hit Blocks",
+            "Local Read Blocks",
+            "Local Written Blocks",
+            "Shared Dirtied Blocks",
+            "Shared Hit Blocks",
+            "Shared Read Blocks",
+            "Shared Written Blocks",
+            "Temp Read Blocks",
+            "Temp Written Blocks"
+          ],
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Index Scan",
+              "Relation Name": "questions",
+              "Alias": "q",
+              "Index Name": "questions_pkey",
+              "Scan Direction": "Forward",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Plan Rows": 1,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 22,
+                "sha256": "6b2861a73f9eadc6d8306d660af471bbc34d5e814e45d529a659fb28bde0d0ce"
+              }
+            }
+          ]
+        },
+        "normalized_explain_analyze": {
+          "Plan": {
+            "Node Type": "Index Scan",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Scan Direction": "Forward",
+            "Index Name": "questions_pkey",
+            "Relation Name": "questions",
+            "Alias": "q",
+            "Startup Cost": 0.42,
+            "Total Cost": 8.44,
+            "Plan Rows": 1,
+            "Plan Width": 181,
+            "Actual Rows": 1.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Index Cond": {
+              "redacted": "planner expression omitted",
+              "character_count": 22,
+              "sha256": "6b2861a73f9eadc6d8306d660af471bbc34d5e814e45d529a659fb28bde0d0ce"
+            },
+            "Rows Removed by Index Recheck": 0,
+            "Index Searches": 1
+          }
+        }
+      },
+      {
+        "observation_id": "last-existing-question",
+        "runtime_query_id": "question-detail-by-id",
+        "question_id": 150000,
+        "expected_rows": 1,
+        "sql_statement_count": 1,
+        "binding": {
+          "mode": "prepare-execute",
+          "bound_parameter_count": 1,
+          "named_parameter_count": 1,
+          "occurrence_names": [
+            "question_id"
+          ],
+          "positional_sql_sha256": "50d3ed7a48233d74aae5e2d9bc79964474218de0b6aabe58caa59a80d1dcba72",
+          "parameters": {
+            "question_id": {
+              "bind_kind": "jdbc-scalar",
+              "postgres_type": "bigint",
+              "value": 150000
+            }
+          }
+        },
+        "temp_blocks_observed": {
+          "Temp Read Blocks": 0.0,
+          "Temp Written Blocks": 0.0
+        },
+        "assertions_passed": [
+          "expected-found-or-missing-row-count",
+          "single-execution-no-row-driven-loop",
+          "bounded-plan-shape",
+          "one-catalog-questions-relation-scan",
+          "questions-primary-key-index-observed",
+          "selective-index-scan-only",
+          "zero-temp-blocks",
+          "buffers-captured-before-normalization",
+          "one-bigint-bind-one-select-statement"
+        ],
+        "plan_summary": {
+          "root_node_type": "Index Scan",
+          "result_row_count": 1,
+          "root_actual_loops": 1,
+          "node_count": 1,
+          "maximum_depth": 0,
+          "maximum_actual_loops": 1,
+          "node_type_counts": {
+            "Index Scan": 1
+          },
+          "relation_scan_occurrences": {
+            "questions": 1
+          },
+          "index_names": [
+            "questions_pkey"
+          ],
+          "buffer_fields_observed_before_normalization": [
+            "Local Dirtied Blocks",
+            "Local Hit Blocks",
+            "Local Read Blocks",
+            "Local Written Blocks",
+            "Shared Dirtied Blocks",
+            "Shared Hit Blocks",
+            "Shared Read Blocks",
+            "Shared Written Blocks",
+            "Temp Read Blocks",
+            "Temp Written Blocks"
+          ],
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Index Scan",
+              "Relation Name": "questions",
+              "Alias": "q",
+              "Index Name": "questions_pkey",
+              "Scan Direction": "Forward",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Plan Rows": 1,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 23,
+                "sha256": "89d7d1d12a0b9c396f9639ded8654f1aae2dc29a42e593a093a691d82634a607"
+              }
+            }
+          ]
+        },
+        "normalized_explain_analyze": {
+          "Plan": {
+            "Node Type": "Index Scan",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Scan Direction": "Forward",
+            "Index Name": "questions_pkey",
+            "Relation Name": "questions",
+            "Alias": "q",
+            "Startup Cost": 0.42,
+            "Total Cost": 8.44,
+            "Plan Rows": 1,
+            "Plan Width": 181,
+            "Actual Rows": 1.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Index Cond": {
+              "redacted": "planner expression omitted",
+              "character_count": 23,
+              "sha256": "89d7d1d12a0b9c396f9639ded8654f1aae2dc29a42e593a093a691d82634a607"
+            },
+            "Rows Removed by Index Recheck": 0,
+            "Index Searches": 1
+          }
+        }
+      },
+      {
+        "observation_id": "first-missing-question",
+        "runtime_query_id": "question-detail-by-id",
+        "question_id": 150001,
+        "expected_rows": 0,
+        "sql_statement_count": 1,
+        "binding": {
+          "mode": "prepare-execute",
+          "bound_parameter_count": 1,
+          "named_parameter_count": 1,
+          "occurrence_names": [
+            "question_id"
+          ],
+          "positional_sql_sha256": "50d3ed7a48233d74aae5e2d9bc79964474218de0b6aabe58caa59a80d1dcba72",
+          "parameters": {
+            "question_id": {
+              "bind_kind": "jdbc-scalar",
+              "postgres_type": "bigint",
+              "value": 150001
+            }
+          }
+        },
+        "temp_blocks_observed": {
+          "Temp Read Blocks": 0.0,
+          "Temp Written Blocks": 0.0
+        },
+        "assertions_passed": [
+          "expected-found-or-missing-row-count",
+          "single-execution-no-row-driven-loop",
+          "bounded-plan-shape",
+          "one-catalog-questions-relation-scan",
+          "questions-primary-key-index-observed",
+          "selective-index-scan-only",
+          "zero-temp-blocks",
+          "buffers-captured-before-normalization",
+          "one-bigint-bind-one-select-statement"
+        ],
+        "plan_summary": {
+          "root_node_type": "Index Scan",
+          "result_row_count": 0,
+          "root_actual_loops": 1,
+          "node_count": 1,
+          "maximum_depth": 0,
+          "maximum_actual_loops": 1,
+          "node_type_counts": {
+            "Index Scan": 1
+          },
+          "relation_scan_occurrences": {
+            "questions": 1
+          },
+          "index_names": [
+            "questions_pkey"
+          ],
+          "buffer_fields_observed_before_normalization": [
+            "Local Dirtied Blocks",
+            "Local Hit Blocks",
+            "Local Read Blocks",
+            "Local Written Blocks",
+            "Shared Dirtied Blocks",
+            "Shared Hit Blocks",
+            "Shared Read Blocks",
+            "Shared Written Blocks",
+            "Temp Read Blocks",
+            "Temp Written Blocks"
+          ],
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Index Scan",
+              "Relation Name": "questions",
+              "Alias": "q",
+              "Index Name": "questions_pkey",
+              "Scan Direction": "Forward",
+              "Actual Rows": 0.0,
+              "Actual Loops": 1,
+              "Plan Rows": 1,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 23,
+                "sha256": "0e435b2f429909eb200bbd3cf3ea787f646fffefc400c69c3f70771ecf7e2d7b"
+              }
+            }
+          ]
+        },
+        "normalized_explain_analyze": {
+          "Plan": {
+            "Node Type": "Index Scan",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Scan Direction": "Forward",
+            "Index Name": "questions_pkey",
+            "Relation Name": "questions",
+            "Alias": "q",
+            "Startup Cost": 0.42,
+            "Total Cost": 8.44,
+            "Plan Rows": 1,
+            "Plan Width": 181,
+            "Actual Rows": 0.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Index Cond": {
+              "redacted": "planner expression omitted",
+              "character_count": 23,
+              "sha256": "0e435b2f429909eb200bbd3cf3ea787f646fffefc400c69c3f70771ecf7e2d7b"
+            },
+            "Rows Removed by Index Recheck": 0,
+            "Index Searches": 1
+          }
+        }
+      },
+      {
+        "observation_id": "signed-bigint-maximum-missing-question",
+        "runtime_query_id": "question-detail-by-id",
+        "question_id": 9223372036854775807,
+        "expected_rows": 0,
+        "sql_statement_count": 1,
+        "binding": {
+          "mode": "prepare-execute",
+          "bound_parameter_count": 1,
+          "named_parameter_count": 1,
+          "occurrence_names": [
+            "question_id"
+          ],
+          "positional_sql_sha256": "50d3ed7a48233d74aae5e2d9bc79964474218de0b6aabe58caa59a80d1dcba72",
+          "parameters": {
+            "question_id": {
+              "bind_kind": "jdbc-scalar",
+              "postgres_type": "bigint",
+              "value": 9223372036854775807
+            }
+          }
+        },
+        "temp_blocks_observed": {
+          "Temp Read Blocks": 0.0,
+          "Temp Written Blocks": 0.0
+        },
+        "assertions_passed": [
+          "expected-found-or-missing-row-count",
+          "single-execution-no-row-driven-loop",
+          "bounded-plan-shape",
+          "one-catalog-questions-relation-scan",
+          "questions-primary-key-index-observed",
+          "selective-index-scan-only",
+          "zero-temp-blocks",
+          "buffers-captured-before-normalization",
+          "one-bigint-bind-one-select-statement"
+        ],
+        "plan_summary": {
+          "root_node_type": "Index Scan",
+          "result_row_count": 0,
+          "root_actual_loops": 1,
+          "node_count": 1,
+          "maximum_depth": 0,
+          "maximum_actual_loops": 1,
+          "node_type_counts": {
+            "Index Scan": 1
+          },
+          "relation_scan_occurrences": {
+            "questions": 1
+          },
+          "index_names": [
+            "questions_pkey"
+          ],
+          "buffer_fields_observed_before_normalization": [
+            "Local Dirtied Blocks",
+            "Local Hit Blocks",
+            "Local Read Blocks",
+            "Local Written Blocks",
+            "Shared Dirtied Blocks",
+            "Shared Hit Blocks",
+            "Shared Read Blocks",
+            "Shared Written Blocks",
+            "Temp Read Blocks",
+            "Temp Written Blocks"
+          ],
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Index Scan",
+              "Relation Name": "questions",
+              "Alias": "q",
+              "Index Name": "questions_pkey",
+              "Scan Direction": "Forward",
+              "Actual Rows": 0.0,
+              "Actual Loops": 1,
+              "Plan Rows": 1,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 36,
+                "sha256": "e009396554b6ed0f8ccdfafd3ad80de588acceaa3c7b01f91c439acd96f249c1"
+              }
+            }
+          ]
+        },
+        "normalized_explain_analyze": {
+          "Plan": {
+            "Node Type": "Index Scan",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Scan Direction": "Forward",
+            "Index Name": "questions_pkey",
+            "Relation Name": "questions",
+            "Alias": "q",
+            "Startup Cost": 0.42,
+            "Total Cost": 8.44,
+            "Plan Rows": 1,
+            "Plan Width": 181,
+            "Actual Rows": 0.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Index Cond": {
+              "redacted": "planner expression omitted",
+              "character_count": 36,
+              "sha256": "e009396554b6ed0f8ccdfafd3ad80de588acceaa3c7b01f91c439acd96f249c1"
+            },
+            "Rows Removed by Index Recheck": 0,
+            "Index Searches": 1
+          }
+        }
+      }
+    ]
+  },
+  "normalization": {
+    "removed": [
+      "planning and execution timing",
+      "per-node actual timing",
+      "cache-dependent buffer block counts",
+      "runtime memory counters",
+      "parallel worker identities and counters",
+      "container ID and container name"
+    ],
+    "redacted": [
+      "planner filter and index expressions, retaining length and SHA-256"
+    ],
+    "retained": [
+      "plan node types and depth",
+      "actual rows and loops",
+      "plan row estimates and costs",
+      "relation and index names",
+      "which BUFFERS fields were emitted"
+    ]
+  },
+  "interpretation": {
+    "status": "observational_evidence_only",
+    "statement": "This isolated PostgreSQL 18.4 synthetic capture proves five single-bind primary-key observations for the exact Java runtime SQL. It is not a production latency or capacity SLA."
+  },
+  "reproduction": {
+    "working_directory": "repository root containing Ti-Java",
+    "command": "python3 Ti-Java/tools/capture_phase4a_question_detail_query_plan.py --output Ti-Java/docs/refactor/phase4a/question-detail-query-plan-evidence.json",
+    "prerequisites": "Docker and the repository Maven verification image",
+    "isolation": "ephemeral network-disabled container removed on success or failure"
+  }
+}

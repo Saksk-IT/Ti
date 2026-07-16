@@ -1,0 +1,212 @@
+{
+  "contract_id": "ti.phase4a.question-detail-read-contract",
+  "schema_version": 1,
+  "status": "catalog_internal_capability_implemented_http_operations_deferred",
+  "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "evidence": {
+    "golden": {
+      "source": "golden-question-detail-reads.json",
+      "file_sha256": "7920f17a7d28b647fd8d7ec59eebaa9f7fdd91e1f016cf4d2d78908d41b77155",
+      "case_count": 46,
+      "case_payload_sha256": "5f7fc1ba7f13cf790bb5c130d5b1d39933217dd3b62a3cb91e4551fe72f19e16"
+    },
+    "query_plan": {
+      "source": "question-detail-query-plan-evidence.json",
+      "file_sha256": "9cdac9cbc8709ee47049e09dc58612aadc77a236ab64e5ef086d0d45af41b4dc",
+      "runtime_sql_sha256": "1ed405165278c346ff34c116f4384bc0de6746509261f61d3b96172c61faf9b7",
+      "runtime_sql_manifest_sha256": "e861c39afe6c11b431cac0379e8174f842a31e988941baf3edde00e6a4e5cac1"
+    },
+    "frozen_route_matrix": {
+      "source": "../02-route-parity-matrix.csv",
+      "sha256": "fdbdfedf3dd70cd09778b2a7072711d103eee8461d0e7dd356d797006fc92c74"
+    },
+    "data_ownership": {
+      "source": "../03-data-ownership.csv",
+      "sha256": "3f9cb0650c523593d7037dc24df902dbccdb3885f261f530e1725a9dc7a31748",
+      "resource": "table:questions",
+      "target_owner": "catalog",
+      "delta_required": false
+    },
+    "approved_differences": {
+      "source": "approved-differences.md",
+      "sha256": "2ac257e41214f3005eaa022965038bf429d35e3ba04dc83b81ac8a90abd63fd2",
+      "new_difference_ids": [],
+      "statement": "No behavior difference is approved in this internal capability slice. Modern-versus-legacy response projections, authentication, path conversion and safe errors remain future operations-owned parity requirements."
+    }
+  },
+  "module_boundary": {
+    "data_owner": "catalog",
+    "catalog_owned_table": "questions",
+    "internal_application_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi#findQuestionById",
+    "immutable_result": "io.saksk.ti.catalog.api.QuestionCatalogRecordView",
+    "http_operation_owner": "operations",
+    "http_adapter_status": "not_implemented",
+    "http_owner_dependency_status": "operations_to_catalog_api_dependency_not_yet_approved_or_implemented",
+    "deferred_phase": "4H",
+    "forbidden_in_this_slice": [
+      "HTTP controller, security matcher, role decision or rate limiter",
+      "operations module dependency change",
+      "portable question format or Chinese label projection inside catalog",
+      "image-path rewriting or response-envelope construction inside catalog",
+      "route parity delta or OpenAPI operation migration",
+      "production cutover"
+    ]
+  },
+  "route_status": {
+    "migrated_route_count_before": 11,
+    "migrated_route_count_after": 11,
+    "pending_route_count_before": 600,
+    "pending_route_count_after": 600,
+    "production_cutover_count": 0,
+    "operations": [
+      {
+        "route_id": "8cb323acac12",
+        "method": "GET",
+        "path": "/admin/api/questions/{question_id}",
+        "legacy_route_template": "/admin/api/questions/<int:question_id>",
+        "legacy_handler": "admin.admin_api.get_single_question",
+        "target_module": "operations",
+        "migration_status": "pending",
+        "production_cutover": false
+      },
+      {
+        "route_id": "d7d727b88aea",
+        "method": "GET",
+        "path": "/admin/questions/{question_id}",
+        "legacy_route_template": "/admin/questions/<int:question_id>",
+        "legacy_handler": "admin.admin_api_legacy.get_single_question",
+        "target_module": "operations",
+        "migration_status": "pending",
+        "production_cutover": false
+      }
+    ]
+  },
+  "catalog_application_contract": {
+    "method": "Optional<QuestionCatalogRecordView> findQuestionById(long questionId)",
+    "transaction": "read-only",
+    "runtime_sql": "one explicit fifteen-column SELECT from questions by q.id = :question_id",
+    "statement_count": 1,
+    "parameter": {
+      "name": "question_id",
+      "java_type": "long",
+      "postgres_type": "bigint",
+      "bind_count": 1,
+      "interpolation": false
+    },
+    "result_fields": [
+      {"name": "id", "java_type": "long", "nullable": false},
+      {"name": "subjectId", "java_type": "java.lang.Long", "nullable": true},
+      {"name": "type", "java_type": "java.lang.String", "nullable": false},
+      {"name": "content", "java_type": "java.lang.String", "nullable": false},
+      {"name": "optionsRaw", "java_type": "java.lang.String", "nullable": true},
+      {"name": "answerRaw", "java_type": "java.lang.String", "nullable": true},
+      {"name": "analysis", "java_type": "java.lang.String", "nullable": true},
+      {"name": "tagsRaw", "java_type": "java.lang.String", "nullable": true},
+      {"name": "difficulty", "java_type": "java.lang.Integer", "nullable": true},
+      {"name": "imagePathRaw", "java_type": "java.lang.String", "nullable": true},
+      {"name": "source", "java_type": "java.lang.String", "nullable": true},
+      {"name": "createdBy", "java_type": "java.lang.Long", "nullable": true},
+      {"name": "updatedBy", "java_type": "java.lang.Long", "nullable": true},
+      {"name": "createdAt", "java_type": "java.time.LocalDateTime", "nullable": true},
+      {"name": "updatedAt", "java_type": "java.time.LocalDateTime", "nullable": true}
+    ],
+    "result_semantics": {
+      "found": "one immutable raw catalog record",
+      "missing": "Optional.empty without retry or fallback",
+      "zero_id": "queried and representable because the frozen legacy contract contains a readable zero-id row",
+      "negative_id": "rejected by the application service before persistence",
+      "long_max_value": "bound once and returns Optional.empty when absent",
+      "raw_text": "options, answer, tags and image path are preserved byte-for-text without JSON parsing, alias mapping or path rewriting",
+      "nullable_columns": "all schema-compatible nullable legacy columns remain null",
+      "failure": "the original persistence exception propagates unchanged so operations can apply the reviewed HTTP policy"
+    },
+    "query_budget": {
+      "catalog_selects": 1,
+      "catalog_writes": 0,
+      "relations": ["questions"],
+      "joins": 0,
+      "temporary_state": false,
+      "growth_with_result_count": 0,
+      "n_plus_one_forbidden": true
+    }
+  },
+  "legacy_http_contract": {
+    "shared_authentication": {
+      "administrator_session": "200 and one question-detail SELECT",
+      "subject_administrator_session": "200 and one question-detail SELECT",
+      "ordinary_session": "403 JSON before question-detail SQL",
+      "anonymous": "302 Location /login before question-detail SQL",
+      "valid_administrator_bearer_only": "302 Location /login because the global admin Web gate does not accept Bearer-only access",
+      "ordinary_session_plus_valid_administrator_bearer": "302 Location /login because the Bearer header bypasses the Web-session branch of the global gate"
+    },
+    "shared_path_and_failure_semantics": {
+      "zero": "a matching id=0 row returns 200",
+      "unicode_decimal_digits": "accepted by the legacy integer converter and can resolve an existing row",
+      "leading_zeroes": "accepted and can resolve an existing row",
+      "missing_or_long_max": "404 JSON error not found after one question-detail SELECT",
+      "negative": "404 text/html from routing before question-detail SQL",
+      "beyond_signed_64_bit": "500 generic safe JSON after the database bind attempt",
+      "database_failure_accept_any": "500 fixed generic Chinese HTML error page",
+      "database_failure_accept_json": "500 generic safe JSON error envelope"
+    },
+    "modern_projection": {
+      "path": "/admin/api/questions/{question_id}",
+      "options": "raw database text",
+      "answer": "legacy compatibility string derived from the raw answer: choice indexes become letters, multiple letters concatenate, booleans use the Chinese compatibility value, fills join with semicolons, and malformed or null input becomes empty",
+      "tags": "a valid JSON array is joined with commas; malformed non-JSON text is preserved and null becomes an empty string",
+      "image_path": "an existing JSON array remains array JSON text; a nonempty scalar or grouped-object text value is wrapped as one JSON-array string element; null or empty becomes [] and legacy upload prefixes remain",
+      "additional_fields": ["q_type", "explanation"],
+      "malformed_json": "raw options and tags remain visible, the compatibility answer becomes empty, and scalar image text is wrapped rather than normalized"
+    },
+    "legacy_projection": {
+      "path": "/admin/questions/{question_id}",
+      "options": "display list with A/B/C prefixes",
+      "answer": "raw compatibility text plus portable_answer",
+      "tags": "list plus portable_tags",
+      "image_path": "normalized JSON text plus image_path_json and grouped image fields",
+      "additional_fields": [
+        "portable_type",
+        "portable_content",
+        "portable_options",
+        "portable_answer",
+        "portable_tags",
+        "content_images",
+        "answer_images",
+        "explanation_images",
+        "question_image_groups"
+      ],
+      "malformed_json": "malformed options and tags project to empty lists while the raw catalog source remains untouched"
+    },
+    "cross_cutting_effects": {
+      "route_body_question_writes": 0,
+      "route_specific_rate_limit": "10 per minute observed on both operations",
+      "allowed_runtime_effects": "global session, identity and configuration reads remain outside the catalog primitive",
+      "golden_side_effect_assertion": "the complete fifteen-column questions fingerprint remains unchanged before and after every case"
+    }
+  },
+  "invariants": [
+    "The catalog capability reads only the catalog-owned questions table.",
+    "One non-negative invocation executes exactly one bound SELECT and no DML, DDL or TEMP operation.",
+    "All fifteen selected columns map to one immutable record without dropping malformed raw text or nullable values.",
+    "A historical zero-id row is representable; negative IDs are rejected before JDBC.",
+    "No HTTP authentication, PQF mapping, Chinese label, image rewrite or response envelope enters catalog.",
+    "Persistence failures remain untranslated at the catalog boundary.",
+    "The PostgreSQL 18.4 150,000-row evidence uses questions_pkey once for existing, missing and Long.MAX_VALUE observations with no TEMP blocks.",
+    "PostgreSQL 16.14 and 18.4 execute the same adapter SQL and preserve all nullable and malformed raw columns.",
+    "Both HTTP operations remain operations-owned and pending; this capability changes no route, OpenAPI migration status or production traffic."
+  ],
+  "acceptance": {
+    "catalog_internal_capability": "implemented",
+    "http_operation_migration": "deferred_to_phase4h",
+    "production_cutover": false,
+    "required_before_phase4h_route_migration": [
+      "approve and machine-check the operations-to-catalog API dependency direction",
+      "implement the complete shared global-gate and role behavior",
+      "implement both distinct response projections without changing the raw catalog record",
+      "match the legacy integer path converter and generic safe failure policy",
+      "preserve the endpoint-specific rate limit and side-effect budget",
+      "add route delta and OpenAPI migration only after all 46 golden cases pass"
+    ],
+    "next_phase4a_work": "continue the next catalog-only read after this capability passes full isolated acceptance"
+  }
+}

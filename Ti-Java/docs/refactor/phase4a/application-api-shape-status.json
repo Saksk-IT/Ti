@@ -7,9 +7,9 @@
   "phase": "4A-subject-directory-and-public-bank-read-slices",
   "migrated_route_count": 11,
   "implemented_route_backed_operation_count": 11,
-  "implemented_public_application_method_count": 14,
+  "implemented_public_application_method_count": 15,
   "event_payload_shape_status": "deferred_to_phase5",
-  "policy": "Phase 3 methods remain accepted. Phase 4A adds the protected subject query boundary, the reviewed identity visibility boundary, a separate HTTP-neutral public-bank snapshot query API, an HTTP-neutral raw question-type query and a catalog-only question-count primitive. The two operations-owned admin type routes and two learning-owned question-count routes remain pending and are not counted as route-backed operations.",
+  "policy": "Phase 3 methods remain accepted. Phase 4A adds the protected subject query boundary, the reviewed identity visibility boundary, a separate HTTP-neutral public-bank snapshot query API, HTTP-neutral raw question-type and single-question queries, and a catalog-only question-count primitive. The operations-owned admin type/detail routes and learning-owned question-count routes remain pending and are not counted as route-backed operations.",
   "modules": [
     {
       "module_id": "identity",
@@ -127,7 +127,8 @@
         "PublicBankSummaryView",
         "QuestionTypeCatalogView",
         "QuestionCatalogCountQuery",
-        "QuestionSubjectAssignmentScope"
+        "QuestionSubjectAssignmentScope",
+        "QuestionCatalogRecordView"
       ],
       "additional_public_apis": [
         {
@@ -176,10 +177,16 @@
         },
         {
           "java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi",
-          "lifecycle": "catalog_question_metadata_and_count_query_boundary",
+          "lifecycle": "catalog_question_metadata_count_and_detail_query_boundary",
           "direct_http_operation": false,
           "deferred_http_route_ids": ["e4cbe4d6bcc8", "3a346cb29186"],
           "deferred_http_owner": "operations",
+          "deferred_question_detail_http_route_ids": [
+            "8cb323acac12",
+            "d7d727b88aea"
+          ],
+          "deferred_question_detail_http_owner": "operations",
+          "deferred_question_detail_phase": "4H",
           "deferred_learning_http_route_ids": ["c618fb5f9f97", "bb21e7730d04"],
           "deferred_learning_http_owner": "learning",
           "deferred_learning_phase": "4C",
@@ -194,6 +201,14 @@
               "return_type": "long",
               "parameter_types": [
                 "io.saksk.ti.catalog.api.QuestionCatalogCountQuery"
+              ]
+            },
+            {
+              "name": "findQuestionById",
+              "return_type": "java.util.Optional",
+              "generic_return_type": "java.util.Optional<io.saksk.ti.catalog.api.QuestionCatalogRecordView>",
+              "parameter_types": [
+                "long"
               ]
             }
           ]

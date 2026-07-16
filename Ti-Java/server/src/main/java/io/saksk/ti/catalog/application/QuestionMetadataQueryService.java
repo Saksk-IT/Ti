@@ -2,11 +2,14 @@ package io.saksk.ti.catalog.application;
 
 import io.saksk.ti.catalog.api.QuestionMetadataApplicationApi;
 import io.saksk.ti.catalog.api.QuestionCatalogCountQuery;
+import io.saksk.ti.catalog.api.QuestionCatalogRecordView;
 import io.saksk.ti.catalog.api.QuestionTypeCatalogView;
 import io.saksk.ti.catalog.application.port.QuestionCountQueryPort;
+import io.saksk.ti.catalog.application.port.QuestionDetailQueryPort;
 import io.saksk.ti.catalog.application.port.QuestionTypeQueryPort;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,13 +18,16 @@ class QuestionMetadataQueryService implements QuestionMetadataApplicationApi {
 
     private final QuestionTypeQueryPort questionTypes;
     private final QuestionCountQueryPort questionCounts;
+    private final QuestionDetailQueryPort questionDetails;
 
     QuestionMetadataQueryService(
             QuestionTypeQueryPort questionTypes,
-            QuestionCountQueryPort questionCounts
+            QuestionCountQueryPort questionCounts,
+            QuestionDetailQueryPort questionDetails
     ) {
         this.questionTypes = questionTypes;
         this.questionCounts = questionCounts;
+        this.questionDetails = questionDetails;
     }
 
     @Override
@@ -42,5 +48,14 @@ class QuestionMetadataQueryService implements QuestionMetadataApplicationApi {
             return 0;
         }
         return questionCounts.countQuestions(query);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<QuestionCatalogRecordView> findQuestionById(long questionId) {
+        if (questionId < 0) {
+            throw new IllegalArgumentException("questionId must not be negative");
+        }
+        return questionDetails.findQuestionById(questionId);
     }
 }

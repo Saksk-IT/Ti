@@ -3,6 +3,7 @@ package io.saksk.ti.architecture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.saksk.ti.catalog.api.QuestionCatalogCountQuery;
+import io.saksk.ti.catalog.api.QuestionCatalogRecordView;
 import io.saksk.ti.catalog.api.QuestionSubjectAssignmentScope;
 import io.saksk.ti.catalog.api.PublicBankCardView;
 import io.saksk.ti.catalog.api.PublicBankSource;
@@ -75,6 +76,35 @@ class CatalogPublicBoundaryNeutralityTest {
         assertThat(QuestionSubjectAssignmentScope.values()).containsExactly(
                 QuestionSubjectAssignmentScope.INCLUDE_UNASSIGNED,
                 QuestionSubjectAssignmentScope.REQUIRE_EXISTING_SUBJECT);
+    }
+
+    @Test
+    void questionDetailBoundaryExposesOnlyRawCatalogFacts() {
+        assertThat(Arrays.stream(QuestionCatalogRecordView.class.getRecordComponents())
+                        .map(RecordComponent::getName))
+                .containsExactly(
+                        "id",
+                        "subjectId",
+                        "type",
+                        "content",
+                        "optionsRaw",
+                        "answerRaw",
+                        "analysis",
+                        "tagsRaw",
+                        "difficulty",
+                        "imagePathRaw",
+                        "source",
+                        "createdBy",
+                        "updatedBy",
+                        "createdAt",
+                        "updatedAt")
+                .doesNotContain(
+                        "qType",
+                        "explanation",
+                        "portableOptions",
+                        "questionImageGroups",
+                        "username",
+                        "owner");
     }
 
     @Test
