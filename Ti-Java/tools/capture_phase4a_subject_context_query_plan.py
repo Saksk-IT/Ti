@@ -2,7 +2,7 @@
 """Capture deterministic PG18 plans for the subject context lookup.
 
 The runtime SELECT is exported from the Java JDBC adapter before a normal
-capture. This tool owns only the public synthetic fixture, five fixed bigint
+capture. This tool owns only the public synthetic fixture, eight fixed bigint
 bindings, normalized plan observations, and fail-closed evidence gates. It
 does not carry an independently executable copy of the runtime query.
 """
@@ -28,19 +28,20 @@ DEFAULT_IMAGE = (
 )
 DEFAULT_DATABASE = "phase4a_subject_context_plan"
 DEFAULT_SUBJECT_COUNT = 150_000
+INTEGER_MAX_VALUE = 2_147_483_647
 LONG_MAX_VALUE = 9_223_372_036_854_775_807
 
 MANIFEST_ID = "ti.phase4a.subject-context-runtime-sql"
 ADAPTER_CLASS = (
     "io.saksk.ti.catalog.infrastructure.persistence."
-    "JdbcSubjectContextQueryAdapter"
+    "JdbcSubjectDetailQueryAdapter"
 )
 QUERY_ID = "subject-context-by-id"
 OPERATION = "subject-context"
 PARAMETER_NAME = "subject_id"
 ROUTE_IDS = ("52ad8f899d66", "5548b24849ed")
 EXPECTED_NORMALIZED_SQL = (
-    "select s.id as subject_id, s.name as subject_name "
+    "select s.id, s.name "
     "from subjects s where s.id = :subject_id"
 )
 
@@ -436,12 +437,21 @@ INSERT INTO subjects (id, name)
 SELECT n, 'Synthetic subject ' || n
 FROM generate_series(1, {DEFAULT_SUBJECT_COUNT}) AS generated(n);
 
+INSERT INTO subjects (id, name) VALUES
+    (0, 'Synthetic zero-ID subject'),
+    ({INTEGER_MAX_VALUE}, 'Synthetic integer-maximum subject');
+
 VACUUM (ANALYZE) subjects;
 """
 
 
 def observation_specs() -> list[dict[str, Any]]:
     return [
+        {
+            "observation_id": "zero-existing-subject",
+            "subject_id": 0,
+            "expected_rows": 1,
+        },
         {
             "observation_id": "first-existing-subject",
             "subject_id": 1,
@@ -458,8 +468,18 @@ def observation_specs() -> list[dict[str, Any]]:
             "expected_rows": 1,
         },
         {
+            "observation_id": "signed-integer-maximum-existing-subject",
+            "subject_id": INTEGER_MAX_VALUE,
+            "expected_rows": 1,
+        },
+        {
             "observation_id": "first-missing-subject",
             "subject_id": DEFAULT_SUBJECT_COUNT + 1,
+            "expected_rows": 0,
+        },
+        {
+            "observation_id": "signed-integer-maximum-plus-one-missing-subject",
+            "subject_id": INTEGER_MAX_VALUE + 1,
             "expected_rows": 0,
         },
         {
@@ -740,7 +760,7 @@ def required_input_paths(root: Path, manifest_path: Path) -> dict[str, Path]:
     return {
         "adapter": root
         / "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/"
-        "JdbcSubjectContextQueryAdapter.java",
+        "JdbcSubjectDetailQueryAdapter.java",
         "runtime_sql_manifest": manifest_path,
         "runtime_sql_exporter": root
         / "server/src/test/java/io/saksk/ti/catalog/infrastructure/persistence/"
@@ -763,8 +783,8 @@ def capture(
     observations = [
         capture_observation(container, query, spec) for spec in specs
     ]
-    if len(observations) != 5:
-        raise AssertionError("subject-context capture must contain five observations")
+    if len(observations) != 8:
+        raise AssertionError("subject-context capture must contain eight observations")
     bind_counts = {
         item["binding"]["bound_parameter_count"] for item in observations
     }
@@ -778,10 +798,13 @@ def capture(
         )
     observed_ids = [item["subject_id"] for item in observations]
     expected_ids = [
+        0,
         1,
         75_000,
         DEFAULT_SUBJECT_COUNT,
+        INTEGER_MAX_VALUE,
         DEFAULT_SUBJECT_COUNT + 1,
+        INTEGER_MAX_VALUE + 1,
         LONG_MAX_VALUE,
     ]
     if observed_ids != expected_ids:
@@ -791,9 +814,9 @@ def capture(
 
     dataset = dataset_metadata(container)
     expected_dataset = {
-        "subjects": DEFAULT_SUBJECT_COUNT,
-        "minimum_subject_id": 1,
-        "maximum_subject_id": DEFAULT_SUBJECT_COUNT,
+        "subjects": DEFAULT_SUBJECT_COUNT + 2,
+        "minimum_subject_id": 0,
+        "maximum_subject_id": INTEGER_MAX_VALUE,
         "contiguous_positive_subjects": DEFAULT_SUBJECT_COUNT,
     }
     if dataset != expected_dataset:
@@ -869,6 +892,7 @@ def capture(
             "parameters": {
                 "contiguous_positive_subject_count": DEFAULT_SUBJECT_COUNT,
                 "subject_ids": "1..150000",
+                "special_subject_ids": [0, INTEGER_MAX_VALUE],
             },
             "actual": dataset,
             "fixture_sql_sha256": sha256_text(fixture),
@@ -916,7 +940,7 @@ def capture(
         "interpretation": {
             "status": "observational_evidence_only",
             "statement": (
-                "This isolated PostgreSQL 18.4 synthetic capture proves five "
+                "This isolated PostgreSQL 18.4 synthetic capture proves eight "
                 "single-bigint-bind primary-key observations for the exact Java "
                 "runtime SQL. It is not a production latency or capacity SLA."
             ),

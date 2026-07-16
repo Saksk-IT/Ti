@@ -5,13 +5,13 @@ import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 import org.junit.jupiter.api.Test;
 
-class SubjectContextViewTest {
+class SubjectCatalogRecordViewTest {
 
     @Test
     void preservesSignedIdsAndExactNamesWithoutTrimmingOrBlankRejection() {
-        var minimum = new SubjectContextView(Integer.MIN_VALUE, "");
-        var zero = new SubjectContextView(0, "  ");
-        var maximum = new SubjectContextView(Integer.MAX_VALUE, "科目 🧪");
+        var minimum = new SubjectCatalogRecordView(Integer.MIN_VALUE, "");
+        var zero = new SubjectCatalogRecordView(0, "  ");
+        var maximum = new SubjectCatalogRecordView(Integer.MAX_VALUE, "科目 🧪");
 
         assertThat(minimum.id()).isEqualTo(Integer.MIN_VALUE);
         assertThat(minimum.name()).isEmpty();
@@ -24,8 +24,7 @@ class SubjectContextViewTest {
     @Test
     void rejectsOnlyAMissingRequiredName() {
         assertThatNullPointerException()
-                .isThrownBy(() -> new SubjectContextView(1, null))
+                .isThrownBy(() -> new SubjectCatalogRecordView(1, null))
                 .withMessage("name");
     }
 }
-

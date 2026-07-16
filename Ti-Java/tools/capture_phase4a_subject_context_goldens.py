@@ -63,8 +63,27 @@ KEY_SOURCE_FILES = (
     "app/modules/admin/templates/admin/subjects/_question_scripts.html",
     "app/modules/admin/templates/admin/subjects/_question_styles.html",
     "app/modules/admin/templates/admin/subjects/_scripts.html",
+    "app/modules/admin/templates/admin/subjects/legacy.html",
 )
 DYNAMIC_CALLERS = (
+    {
+        "path": "app/modules/admin/templates/admin/subjects/duplicate_check.html",
+        "line": 347,
+        "text": (
+            "            <a href=\"/admin/subjects/{{ subject_id }}/questions\" "
+            "class=\"btn btn-secondary\">"
+        ),
+        "target_route_id": "52ad8f899d66",
+    },
+    {
+        "path": "app/modules/admin/templates/admin/subjects/legacy.html",
+        "line": 268,
+        "text": (
+            "                    <a class=\"btn-quiet\" "
+            "href=\"/admin/subjects/${subject.id}/questions\">题集管理</a>"
+        ),
+        "target_route_id": "52ad8f899d66",
+    },
     {
         "path": "app/modules/admin/templates/admin/subjects/_question_scripts.html",
         "line": 788,
@@ -144,8 +163,11 @@ QUESTIONS = {
     "orphan_subject": 97305,
 }
 UNICODE_ND_NORMAL_ID = "٩٧٢٠٤"
+INT_MAX = "2147483647"
+INT_MAX_PLUS_ONE = "2147483648"
 LONG_MAX = "9223372036854775807"
-LONG_OVERFLOW = "9223372036854775808"
+LONG_MAX_PLUS_ONE = "9223372036854775808"
+NONNUMERIC_SUBJECT_ID = "not-a-subject"
 
 
 @dataclass(frozen=True)
@@ -212,34 +234,46 @@ def build_case_specs() -> tuple[CaseSpec, ...]:
                 route, "data", str(SUBJECTS["unicode_html_name"]),
             ),
             CaseSpec(
-                f"integer-zero-id-found-{route}",
-                route, "integer", str(SUBJECTS["zero"]),
+                f"data-zero-id-found-{route}",
+                route, "data", str(SUBJECTS["zero"]),
             ),
             CaseSpec(
-                f"integer-unicode-nd-id-found-{route}",
-                route, "integer", UNICODE_ND_NORMAL_ID,
+                f"data-unicode-nd-id-found-{route}",
+                route, "data", UNICODE_ND_NORMAL_ID,
             ),
             CaseSpec(
-                f"integer-leading-zero-id-found-{route}",
-                route, "integer", f"000{normal}",
+                f"data-leading-zero-id-found-{route}",
+                route, "data", f"000{normal}",
             ),
             CaseSpec(
-                f"integer-missing-positive-id-{route}",
-                route, "integer", str(MISSING_SUBJECT_ID),
+                f"data-missing-positive-id-{route}",
+                route, "data", str(MISSING_SUBJECT_ID),
                 accept="application/json", expected_status=404,
             ),
             CaseSpec(
-                f"integer-long-max-missing-{route}",
-                route, "integer", LONG_MAX, expected_status=404,
+                f"data-int-max-missing-{route}",
+                route, "data", INT_MAX, expected_status=404,
             ),
             CaseSpec(
-                f"integer-long-overflow-bind-failure-{route}",
-                route, "integer", LONG_OVERFLOW,
+                f"data-int-max-plus-one-missing-{route}",
+                route, "data", INT_MAX_PLUS_ONE, expected_status=404,
+            ),
+            CaseSpec(
+                f"data-long-max-missing-{route}",
+                route, "data", LONG_MAX, expected_status=404,
+            ),
+            CaseSpec(
+                f"data-long-max-plus-one-bind-failure-{route}",
+                route, "data", LONG_MAX_PLUS_ONE,
                 accept="application/json", expected_status=500,
             ),
             CaseSpec(
-                f"integer-negative-route-miss-{route}",
-                route, "integer", "-1", expected_status=404,
+                f"data-negative-route-miss-{route}",
+                route, "data", "-1", expected_status=404,
+            ),
+            CaseSpec(
+                f"data-nonnumeric-route-miss-{route}",
+                route, "data", NONNUMERIC_SUBJECT_ID, expected_status=404,
             ),
             CaseSpec(
                 f"fault-injected-db-failure-html-{route}",
@@ -826,6 +860,7 @@ def capture_case(
                 "raw_text": spec.raw_subject_id,
                 "python_int_value": python_int_value,
                 "flask_int_converter_match": converter_match,
+                "handler_subject_id": python_int_value if converter_match else None,
             },
             "query": [],
             "query_string": "",
@@ -856,8 +891,8 @@ def capture_case(
 
 def assert_case_contracts(cases: list[dict[str, Any]]) -> None:
     by_id = {case["case_id"]: case for case in cases}
-    if len(CASE_SPECS) != 38 or len(cases) != 38 or len(by_id) != 38:
-        raise AssertionError("subject-context case set drifted, duplicated, or is not exactly 38")
+    if len(CASE_SPECS) != 44 or len(cases) != 44 or len(by_id) != 44:
+        raise AssertionError("subject-context case set drifted, duplicated, or is not exactly 44")
 
     no_subject_select_suffixes = {
         "auth-ordinary-session-forbidden",
@@ -865,7 +900,8 @@ def assert_case_contracts(cases: list[dict[str, Any]]) -> None:
         "auth-anonymous-redirect-login",
         "auth-admin-bearer-only-redirect-login",
         "auth-ordinary-session-plus-admin-bearer-redirect-login",
-        "integer-negative-route-miss",
+        "data-negative-route-miss",
+        "data-nonnumeric-route-miss",
     }
     for spec in CASE_SPECS:
         case = by_id[spec.case_id]
@@ -956,20 +992,26 @@ def assert_case_contracts(cases: list[dict[str, Any]]) -> None:
                 raise AssertionError(f"{auth_case}-{route} redirect drifted")
 
         matched_missing = (
-            by_id[f"integer-missing-positive-id-{route}"]["response"],
-            by_id[f"integer-long-max-missing-{route}"]["response"],
+            by_id[f"data-missing-positive-id-{route}"]["response"],
+            by_id[f"data-int-max-missing-{route}"]["response"],
+            by_id[f"data-int-max-plus-one-missing-{route}"]["response"],
+            by_id[f"data-long-max-missing-{route}"]["response"],
         )
-        negative = by_id[f"integer-negative-route-miss-{route}"]["response"]
-        overflow = by_id[f"integer-long-overflow-bind-failure-{route}"]["response"]
+        route_misses = (
+            by_id[f"data-negative-route-miss-{route}"]["response"],
+            by_id[f"data-nonnumeric-route-miss-{route}"]["response"],
+        )
+        overflow = by_id[f"data-long-max-plus-one-bind-failure-{route}"]["response"]
         for response in matched_missing:
             if (response["status"], response["body_kind"], response["body"]) != (
                 404, "text", "科目不存在"
             ):
                 raise AssertionError(f"direct missing-subject 404 drifted for {route}")
-        if negative["status"] != 404 or negative["body_kind"] != "text":
-            raise AssertionError(f"route-level 404 drifted for {route}")
-        if "404 - 页面未找到" not in negative["body"]:
-            raise AssertionError(f"route-level 404 lost generic HTML for {route}")
+        for route_miss in route_misses:
+            if route_miss["status"] != 404 or route_miss["body_kind"] != "text":
+                raise AssertionError(f"route-level 404 drifted for {route}")
+            if "404 - 页面未找到" not in route_miss["body"]:
+                raise AssertionError(f"route-level 404 lost generic HTML for {route}")
         if (
             overflow["status"],
             overflow["body_kind"],
@@ -1006,7 +1048,7 @@ def capture_document(legacy_root: Path) -> dict[str, Any]:
             "complete_app_archive": archived.attestation,
             "frozen_route_matrix": matrix_attestation(),
             "subject_context_key_sources": key_source_attestation(archived),
-            "dynamic_template_callers": dynamic_caller_attestation(archived),
+            "audited_template_callers": dynamic_caller_attestation(archived),
         }
         with tempfile.TemporaryDirectory(prefix="ti-java-phase4a-subject-context-data-") as data_dir:
             with capture_environment(data_dir):
@@ -1133,16 +1175,20 @@ def capture_document(legacy_root: Path) -> dict[str, Any]:
                 "orphan_subject_id": ORPHAN_SUBJECT_ID,
                 "questions": QUESTIONS,
                 "unicode_nd_normal_id": UNICODE_ND_NORMAL_ID,
+                "signed_int_max": INT_MAX,
+                "signed_int_max_plus_one": INT_MAX_PLUS_ONE,
+                "signed_long_max": LONG_MAX,
+                "signed_long_max_plus_one": LONG_MAX_PLUS_ONE,
+                "nonnumeric_subject_id": NONNUMERIC_SUBJECT_ID,
                 "full_subjects_fingerprint": full_fixture["subjects"],
                 "full_questions_fingerprint": full_fixture["questions"],
             },
             "case_matrix": {
-                "per_route": 19,
+                "per_route": 22,
                 "routes": 2,
                 "categories_per_route": {
                     "auth": 7,
-                    "data": 3,
-                    "integer": 7,
+                    "data": 13,
                     "fault": 2,
                 },
             },

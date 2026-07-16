@@ -23,9 +23,9 @@ import capture_phase4a_subject_context_goldens as capture  # noqa: E402
 
 
 LEGACY_COMMIT = "700006dfdfa063deb4387be572911e782bcea0d9"
-GOLDEN_FILE_SHA256 = "fe9d29a6e3731062f2b00b5b9e953cb940c93a13cb4a146a7617875b8413945d"
-CASE_PAYLOAD_SHA256 = "fce72c233b1d9637e066d15803b55f4310a5452d6e9bf07f13367632c3a946c8"
-DOCUMENT_PAYLOAD_SHA256 = "027179c2141c1b0a8510a9e50e511ea16b13aca32f58f6b33c4ff0519dc2e0e5"
+GOLDEN_FILE_SHA256 = "95cec51d9a687caf210cf52b9958f351a37fc077d457abea2ab89d87c99eea70"
+CASE_PAYLOAD_SHA256 = "9fc1e0659dc21f715aa9c27be98b5eae6be38c901adb8c9e5b7874cf8226ac1f"
+DOCUMENT_PAYLOAD_SHA256 = "76d35a53590ee11813c19c6d8dfbc6e06ae1eb0a7bebfa35ae38b2b6ba858f51"
 MATRIX_SHA256 = "fdbdfedf3dd70cd09778b2a7072711d103eee8461d0e7dd356d797006fc92c74"
 EXPECTED_SOURCE_SHA256 = {
     "app/__init__.py": "9b2efe8a539ee47f7bcf475708466a64669b6bb36804ccf2b1cc5a63fcb21668",
@@ -60,6 +60,9 @@ EXPECTED_SOURCE_SHA256 = {
     "app/modules/admin/templates/admin/subjects/_scripts.html": (
         "25c127df0dce2b7559bf7c85b76f9a75d7d70d720eeba1a8e8f23bca34f4fd3b"
     ),
+    "app/modules/admin/templates/admin/subjects/legacy.html": (
+        "b9d205b3b0fe0abb0dc0777e74708157a75997700ecf213c287fa77a35dcb4c1"
+    ),
 }
 CASE_PREFIXES = (
     "auth-admin-session-found",
@@ -72,13 +75,16 @@ CASE_PREFIXES = (
     "data-locked-subject-found",
     "data-empty-name-found",
     "data-unicode-html-name-found",
-    "integer-zero-id-found",
-    "integer-unicode-nd-id-found",
-    "integer-leading-zero-id-found",
-    "integer-missing-positive-id",
-    "integer-long-max-missing",
-    "integer-long-overflow-bind-failure",
-    "integer-negative-route-miss",
+    "data-zero-id-found",
+    "data-unicode-nd-id-found",
+    "data-leading-zero-id-found",
+    "data-missing-positive-id",
+    "data-int-max-missing",
+    "data-int-max-plus-one-missing",
+    "data-long-max-missing",
+    "data-long-max-plus-one-bind-failure",
+    "data-negative-route-miss",
+    "data-nonnumeric-route-miss",
     "fault-injected-db-failure-html",
     "fault-injected-db-failure-json",
 )
@@ -99,8 +105,8 @@ class SubjectContextGoldenContractTest(unittest.TestCase):
         self.assertEqual("ti.phase4a.subject-context-read-goldens", document["contract_id"])
         self.assertEqual(LEGACY_COMMIT, capture.pinned_source.LEGACY_COMMIT)
         self.assertEqual(LEGACY_COMMIT, document["legacy_commit"])
-        self.assertEqual(38, document["case_count"])
-        self.assertEqual(38, len(document["cases"]))
+        self.assertEqual(44, document["case_count"])
+        self.assertEqual(44, len(document["cases"]))
         self.assertEqual(CASE_PAYLOAD_SHA256, document["case_payload_sha256"])
         self.assertEqual(CASE_PAYLOAD_SHA256, capture.sha256_json(document["cases"]))
         self.assertEqual(DOCUMENT_PAYLOAD_SHA256, document["document_payload_sha256"])
@@ -117,7 +123,7 @@ class SubjectContextGoldenContractTest(unittest.TestCase):
             re.compile(r'"last_active":\s*"20\d\d-', re.MULTILINE),
         )
 
-    def test_complete_archive_matrix_key_sources_and_dynamic_callers_are_attested(self) -> None:
+    def test_complete_archive_matrix_key_sources_and_template_callers_are_attested(self) -> None:
         recorded = self.document["legacy_source_attestation"]
         matrix = recorded["frozen_route_matrix"]
         self.assertEqual(MATRIX_SHA256, matrix["sha256"])
@@ -147,20 +153,25 @@ class SubjectContextGoldenContractTest(unittest.TestCase):
                     )
             self.assertEqual(
                 capture.dynamic_caller_attestation(archived),
-                recorded["dynamic_template_callers"],
+                recorded["audited_template_callers"],
             )
 
         self.assertIsNotNone(workspace)
         self.assertFalse(workspace.exists())
-        callers = recorded["dynamic_template_callers"]
+        callers = recorded["audited_template_callers"]
         self.assertEqual(
             {
+                ("app/modules/admin/templates/admin/subjects/duplicate_check.html", 347),
+                ("app/modules/admin/templates/admin/subjects/legacy.html", 268),
                 ("app/modules/admin/templates/admin/subjects/_question_scripts.html", 788),
                 ("app/modules/admin/templates/admin/subjects/_scripts.html", 789),
             },
             {(caller["path"], caller["line"]) for caller in callers},
         )
-        self.assertEqual({"5548b24849ed"}, {caller["target_route_id"] for caller in callers})
+        self.assertEqual(
+            {"52ad8f899d66", "5548b24849ed"},
+            {caller["target_route_id"] for caller in callers},
+        )
 
     def test_routes_stay_operations_pending_without_http_or_cutover_delta(self) -> None:
         status = self.document["route_status"]
@@ -182,31 +193,26 @@ class SubjectContextGoldenContractTest(unittest.TestCase):
         self.assertEqual(0, primitive["questions_query_count"])
         self.assertIsNone(primitive["pagination"])
 
-    def test_exact_19_per_route_case_matrix_has_no_gap_or_duplicate(self) -> None:
+    def test_exact_22_per_route_case_matrix_has_no_gap_or_duplicate(self) -> None:
         expected = {
             f"{prefix}-{route}"
             for route in capture.ROUTES
             for prefix in CASE_PREFIXES
         }
-        self.assertEqual(38, len(capture.CASE_SPECS))
+        self.assertEqual(44, len(capture.CASE_SPECS))
         self.assertEqual(expected, {spec.case_id for spec in capture.CASE_SPECS})
         self.assertEqual(expected, set(self.by_id))
-        self.assertEqual(38, len(self.by_id))
-        self.assertEqual({"questions-page": 19, "duplicate-check-page": 19}, dict(
+        self.assertEqual(44, len(self.by_id))
+        self.assertEqual({"questions-page": 22, "duplicate-check-page": 22}, dict(
             Counter(case["route_key"] for case in self.document["cases"])
         ))
-        self.assertEqual({"auth": 14, "data": 6, "integer": 14, "fault": 4}, dict(
+        self.assertEqual({"auth": 14, "data": 26, "fault": 4}, dict(
             Counter(case["category"] for case in self.document["cases"])
         ))
         self.assertEqual({
-            "per_route": 19,
+            "per_route": 22,
             "routes": 2,
-            "categories_per_route": {"auth": 7, "data": 3, "integer": 7, "fault": 2},
-        }, self.document["case_matrix"])
-        self.assertEqual({
-            "per_route": 19,
-            "routes": 2,
-            "categories_per_route": {"auth": 7, "data": 3, "integer": 7, "fault": 2},
+            "categories_per_route": {"auth": 7, "data": 13, "fault": 2},
         }, self.document["case_matrix"])
         for case in self.document["cases"]:
             self.assertEqual("GET", case["request"]["method"])
@@ -291,7 +297,7 @@ class SubjectContextGoldenContractTest(unittest.TestCase):
                     self.assertIn('<span class="subject-badge"></span>', empty)
                     self.assertIn("const subjectId = 97201;", locked)
 
-    def test_integer_converter_direct_404_and_generic_404_boundaries_are_frozen(self) -> None:
+    def test_data_id_converter_direct_404_and_generic_404_boundaries_are_frozen(self) -> None:
         safe_error = {
             "message": "An unexpected server error occurred.",
             "payload": None,
@@ -300,12 +306,13 @@ class SubjectContextGoldenContractTest(unittest.TestCase):
             "status_code": 500,
         }
         for route in capture.ROUTES:
-            zero = self.by_id[f"integer-zero-id-found-{route}"]
-            unicode_id = self.by_id[f"integer-unicode-nd-id-found-{route}"]
-            leading = self.by_id[f"integer-leading-zero-id-found-{route}"]
+            zero = self.by_id[f"data-zero-id-found-{route}"]
+            unicode_id = self.by_id[f"data-unicode-nd-id-found-{route}"]
+            leading = self.by_id[f"data-leading-zero-id-found-{route}"]
             normal = self.by_id[f"auth-admin-session-found-{route}"]
             self.assertEqual(200, zero["response"]["status"])
             self.assertEqual(0, zero["request"]["path_parameter"]["python_int_value"])
+            self.assertEqual(0, zero["request"]["path_parameter"]["handler_subject_id"])
             self.assertEqual(capture.UNICODE_ND_NORMAL_ID, unicode_id["request"][
                 "path_parameter"
             ]["raw_text"])
@@ -315,12 +322,23 @@ class SubjectContextGoldenContractTest(unittest.TestCase):
             self.assertTrue(unicode_id["request"]["path_parameter"][
                 "flask_int_converter_match"
             ])
-            self.assertEqual(normal["response"]["body_sha256"], unicode_id["response"]["body_sha256"])
-            self.assertEqual(normal["response"]["body_sha256"], leading["response"]["body_sha256"])
+            self.assertEqual(capture.SUBJECTS["normal"], unicode_id["request"][
+                "path_parameter"
+            ]["handler_subject_id"])
+            self.assertEqual(
+                normal["response"]["body_sha256"],
+                unicode_id["response"]["body_sha256"],
+            )
+            self.assertEqual(
+                normal["response"]["body_sha256"],
+                leading["response"]["body_sha256"],
+            )
 
             matched_missing = (
-                ("integer-missing-positive-id", capture.MISSING_SUBJECT_ID),
-                ("integer-long-max-missing", int(capture.LONG_MAX)),
+                ("data-missing-positive-id", capture.MISSING_SUBJECT_ID),
+                ("data-int-max-missing", int(capture.INT_MAX)),
+                ("data-int-max-plus-one-missing", int(capture.INT_MAX_PLUS_ONE)),
+                ("data-long-max-missing", int(capture.LONG_MAX)),
             )
             for prefix, expected_id in matched_missing:
                 missing = self.by_id[f"{prefix}-{route}"]
@@ -334,46 +352,55 @@ class SubjectContextGoldenContractTest(unittest.TestCase):
                         ["text/html; charset=utf-8"],
                         missing["response"]["headers"]["Content-Type"],
                     )
-                    self.assertTrue(missing["request"]["path_parameter"][
-                        "flask_int_converter_match"
-                    ])
-                    self.assertEqual(expected_id, missing["request"]["path_parameter"][
-                        "python_int_value"
-                    ])
+                    parameter = missing["request"]["path_parameter"]
+                    self.assertTrue(parameter["flask_int_converter_match"])
+                    self.assertEqual(expected_id, parameter["python_int_value"])
+                    self.assertEqual(expected_id, parameter["handler_subject_id"])
                     self.assertEqual(1, missing["observed_get_effects"]["sql"][
                         "subject_context_select_attempts"
                     ])
 
-            overflow = self.by_id[f"integer-long-overflow-bind-failure-{route}"]
+            overflow = self.by_id[f"data-long-max-plus-one-bind-failure-{route}"]
             self.assertEqual((500, "json", safe_error), (
                 overflow["response"]["status"],
                 overflow["response"]["body_kind"],
                 overflow["response"]["body"],
             ))
             self.assertEqual(
-                int(capture.LONG_OVERFLOW),
+                int(capture.LONG_MAX_PLUS_ONE),
                 overflow["request"]["path_parameter"]["python_int_value"],
+            )
+            self.assertEqual(
+                int(capture.LONG_MAX_PLUS_ONE),
+                overflow["request"]["path_parameter"]["handler_subject_id"],
             )
             self.assertEqual(1, overflow["observed_get_effects"]["sql"][
                 "subject_context_select_attempts"
             ])
 
-            route_miss = self.by_id[f"integer-negative-route-miss-{route}"]
-            parameter = route_miss["request"]["path_parameter"]
-            self.assertFalse(parameter["flask_int_converter_match"])
-            self.assertEqual(-1, parameter["python_int_value"])
-            self.assertEqual((404, "text"), (
-                route_miss["response"]["status"],
-                route_miss["response"]["body_kind"],
-            ))
-            self.assertIn("404 - 页面未找到", route_miss["response"]["body"])
-            self.assertEqual(0, route_miss["observed_get_effects"]["sql"][
-                "subject_context_select_attempts"
-            ])
-            self.assertEqual(
-                [capture.ACTORS["administrator"]],
-                route_miss["observed_get_effects"]["user_last_active_changed_user_ids"],
-            )
+            for prefix, expected_python_value in (
+                ("data-negative-route-miss", -1),
+                ("data-nonnumeric-route-miss", None),
+            ):
+                route_miss = self.by_id[f"{prefix}-{route}"]
+                parameter = route_miss["request"]["path_parameter"]
+                self.assertFalse(parameter["flask_int_converter_match"])
+                self.assertEqual(expected_python_value, parameter["python_int_value"])
+                self.assertIsNone(parameter["handler_subject_id"])
+                self.assertEqual((404, "text"), (
+                    route_miss["response"]["status"],
+                    route_miss["response"]["body_kind"],
+                ))
+                self.assertIn("404 - 页面未找到", route_miss["response"]["body"])
+                self.assertEqual(0, route_miss["observed_get_effects"]["sql"][
+                    "subject_context_select_attempts"
+                ])
+                self.assertEqual(
+                    [capture.ACTORS["administrator"]],
+                    route_miss["observed_get_effects"][
+                        "user_last_active_changed_user_ids"
+                    ],
+                )
 
     def test_html_and_json_database_faults_are_safe_and_attempt_exact_lookup(self) -> None:
         for route in capture.ROUTES:

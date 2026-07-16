@@ -17,11 +17,11 @@
     "source": "Java adapter runtime SQL manifest exported before capture",
     "manifest_id": "ti.phase4a.subject-context-runtime-sql",
     "manifest_schema_version": 1,
-    "adapter_class": "io.saksk.ti.catalog.infrastructure.persistence.JdbcSubjectContextQueryAdapter",
+    "adapter_class": "io.saksk.ti.catalog.infrastructure.persistence.JdbcSubjectDetailQueryAdapter",
     "query_id": "subject-context-by-id",
     "operation": "subject-context",
-    "sql": "SELECT s.id AS subject_id,\n       s.name AS subject_name\nFROM subjects s\nWHERE s.id = :subject_id",
-    "sql_sha256": "14bf6e9159ab2bdf87903cb27c6dd48c0413e7057a358da99a517b229d387546",
+    "sql": "SELECT s.id,\n       s.name\nFROM subjects s\nWHERE s.id = :subject_id",
+    "sql_sha256": "fb24b0e11aef5bc34e0e26f6d17ecd654a423cd6f5c96cbee646cecb89294631",
     "parameter_names": [
       "subject_id"
     ],
@@ -62,31 +62,35 @@
     }
   },
   "inputs": {
-    "adapter": "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcSubjectContextQueryAdapter.java",
-    "adapter_sha256": "e3555ed59030c2024fbbb0bb0d752292fda42581ced0abb6e89fa4af4b256bdc",
+    "adapter": "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcSubjectDetailQueryAdapter.java",
+    "adapter_sha256": "085081dc0b83324c5105d194e0c194af5fd8e6455d2af3a1f4944df092319713",
     "runtime_sql_manifest": "server/target/phase4a-subject-context-runtime-sql.json",
-    "runtime_sql_manifest_sha256": "dfbdd1e8efa66892d0efaa040690c412256b0b7c692f8d01098851509fa63e9c",
+    "runtime_sql_manifest_sha256": "3949b7cf9d1f73c989198bf1278c5c6c3e558950af69051ecb7ab229e317515e",
     "runtime_sql_exporter": "server/src/test/java/io/saksk/ti/catalog/infrastructure/persistence/SubjectContextRuntimeSqlManifestTest.java",
-    "runtime_sql_exporter_sha256": "75af33902ae6f1051088032b5f123e935ceed9dfb2f8fc54ebe44911dbde9519",
+    "runtime_sql_exporter_sha256": "6ac5de3c685a3f5e6182e0ef73054517dc497d31bb78a98e75e4e07a1681cdde",
     "capture_tool": "tools/capture_phase4a_subject_context_query_plan.py",
-    "capture_tool_sha256": "87e8b8b426e3234d98bdcbc505ba74d7d10b3e9d83371e0c3403acbb83bce6a5",
+    "capture_tool_sha256": "7556cfb48a1152e80c4f926f3058bfa83711af6d51022d93f953b1982667946e",
     "capture_tool_test": "tools/test_capture_phase4a_subject_context_query_plan.py",
-    "capture_tool_test_sha256": "9553e59c212c8f98f8598955f197682cf35f8c50423c795edaa00f81ba93e946",
-    "fixture_sql_sha256": "8aad0bf513e2a6d95a6038f7fd5929ff4a60cbbdcd934bed1f87cf4f3987eb5a"
+    "capture_tool_test_sha256": "c14aaa09171219dd3257c586ac8bfd0f198bf6a4b4d21c07e56c7fbc9ba520a2",
+    "fixture_sql_sha256": "536046361caeb5f387ad8cce97f146875f3619fae2a25a49a6761f9d72f5247b"
   },
   "data_set": {
     "kind": "public deterministic synthetic fixture",
     "parameters": {
       "contiguous_positive_subject_count": 150000,
-      "subject_ids": "1..150000"
+      "subject_ids": "1..150000",
+      "special_subject_ids": [
+        0,
+        2147483647
+      ]
     },
     "actual": {
-      "subjects": 150000,
-      "minimum_subject_id": 1,
-      "maximum_subject_id": 150000,
+      "subjects": 150002,
+      "minimum_subject_id": 0,
+      "maximum_subject_id": 2147483647,
       "contiguous_positive_subjects": 150000
     },
-    "fixture_sql_sha256": "8aad0bf513e2a6d95a6038f7fd5929ff4a60cbbdcd934bed1f87cf4f3987eb5a",
+    "fixture_sql_sha256": "536046361caeb5f387ad8cce97f146875f3619fae2a25a49a6761f9d72f5247b",
     "statistics": "VACUUM (ANALYZE) subjects completed before capture",
     "index_definitions": [
       {
@@ -100,7 +104,7 @@
   "measurement": {
     "command": "EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) exact Java runtime SQL",
     "runs_per_observation": 1,
-    "observation_count": 5,
+    "observation_count": 8,
     "runtime_query_count": 1,
     "sql_statement_count_per_observation": 1,
     "bound_parameter_count_per_observation": 1,
@@ -108,6 +112,116 @@
     "required_index": "subjects_pkey",
     "required_maximum_actual_loops": 1,
     "observations": [
+      {
+        "observation_id": "zero-existing-subject",
+        "runtime_query_id": "subject-context-by-id",
+        "subject_id": 0,
+        "expected_rows": 1,
+        "sql_statement_count": 1,
+        "binding": {
+          "mode": "prepare-execute",
+          "bound_parameter_count": 1,
+          "named_parameter_count": 1,
+          "occurrence_names": [
+            "subject_id"
+          ],
+          "positional_sql_sha256": "4bf07d4548b93e8d327f86930083cdbf1b990843d1ae0686e489f4dc3e402b99",
+          "parameters": {
+            "subject_id": {
+              "bind_kind": "jdbc-scalar",
+              "postgres_type": "bigint",
+              "value": 0
+            }
+          }
+        },
+        "temp_blocks_observed": {
+          "Temp Read Blocks": 0.0,
+          "Temp Written Blocks": 0.0
+        },
+        "assertions_passed": [
+          "expected-zero-or-one-row",
+          "single-execution-no-row-driven-loop",
+          "bounded-plan-shape",
+          "one-catalog-subjects-relation-scan",
+          "subjects-primary-key-index-observed",
+          "selective-index-scan-without-join",
+          "zero-temp-blocks",
+          "buffers-captured-before-normalization",
+          "one-bigint-bind-one-select-statement"
+        ],
+        "plan_summary": {
+          "root_node_type": "Index Scan",
+          "result_row_count": 1,
+          "root_actual_loops": 1,
+          "node_count": 1,
+          "maximum_depth": 0,
+          "maximum_actual_loops": 1,
+          "node_type_counts": {
+            "Index Scan": 1
+          },
+          "relation_scan_occurrences": {
+            "subjects": 1
+          },
+          "index_names": [
+            "subjects_pkey"
+          ],
+          "buffer_fields_observed_before_normalization": [
+            "Local Dirtied Blocks",
+            "Local Hit Blocks",
+            "Local Read Blocks",
+            "Local Written Blocks",
+            "Shared Dirtied Blocks",
+            "Shared Hit Blocks",
+            "Shared Read Blocks",
+            "Shared Written Blocks",
+            "Temp Read Blocks",
+            "Temp Written Blocks"
+          ],
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Index Scan",
+              "Relation Name": "subjects",
+              "Alias": "s",
+              "Index Name": "subjects_pkey",
+              "Scan Direction": "Forward",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Plan Rows": 1,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 18,
+                "sha256": "f525e11584c44315b669d98312e65265fc95e2a7e00996a5fecde948f6bf0959"
+              }
+            }
+          ]
+        },
+        "normalized_explain_analyze": {
+          "Plan": {
+            "Node Type": "Index Scan",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Scan Direction": "Forward",
+            "Index Name": "subjects_pkey",
+            "Relation Name": "subjects",
+            "Alias": "s",
+            "Startup Cost": 0.42,
+            "Total Cost": 8.44,
+            "Plan Rows": 1,
+            "Plan Width": 28,
+            "Actual Rows": 1.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Index Cond": {
+              "redacted": "planner expression omitted",
+              "character_count": 18,
+              "sha256": "f525e11584c44315b669d98312e65265fc95e2a7e00996a5fecde948f6bf0959"
+            },
+            "Rows Removed by Index Recheck": 0,
+            "Index Searches": 1
+          }
+        }
+      },
       {
         "observation_id": "first-existing-subject",
         "runtime_query_id": "subject-context-by-id",
@@ -121,7 +235,7 @@
           "occurrence_names": [
             "subject_id"
           ],
-          "positional_sql_sha256": "769868fea689d520e344d5a136c88f1fe52b55871c79eb742fcce5bbfac859bc",
+          "positional_sql_sha256": "4bf07d4548b93e8d327f86930083cdbf1b990843d1ae0686e489f4dc3e402b99",
           "parameters": {
             "subject_id": {
               "bind_kind": "jdbc-scalar",
@@ -231,7 +345,7 @@
           "occurrence_names": [
             "subject_id"
           ],
-          "positional_sql_sha256": "769868fea689d520e344d5a136c88f1fe52b55871c79eb742fcce5bbfac859bc",
+          "positional_sql_sha256": "4bf07d4548b93e8d327f86930083cdbf1b990843d1ae0686e489f4dc3e402b99",
           "parameters": {
             "subject_id": {
               "bind_kind": "jdbc-scalar",
@@ -341,7 +455,7 @@
           "occurrence_names": [
             "subject_id"
           ],
-          "positional_sql_sha256": "769868fea689d520e344d5a136c88f1fe52b55871c79eb742fcce5bbfac859bc",
+          "positional_sql_sha256": "4bf07d4548b93e8d327f86930083cdbf1b990843d1ae0686e489f4dc3e402b99",
           "parameters": {
             "subject_id": {
               "bind_kind": "jdbc-scalar",
@@ -439,6 +553,116 @@
         }
       },
       {
+        "observation_id": "signed-integer-maximum-existing-subject",
+        "runtime_query_id": "subject-context-by-id",
+        "subject_id": 2147483647,
+        "expected_rows": 1,
+        "sql_statement_count": 1,
+        "binding": {
+          "mode": "prepare-execute",
+          "bound_parameter_count": 1,
+          "named_parameter_count": 1,
+          "occurrence_names": [
+            "subject_id"
+          ],
+          "positional_sql_sha256": "4bf07d4548b93e8d327f86930083cdbf1b990843d1ae0686e489f4dc3e402b99",
+          "parameters": {
+            "subject_id": {
+              "bind_kind": "jdbc-scalar",
+              "postgres_type": "bigint",
+              "value": 2147483647
+            }
+          }
+        },
+        "temp_blocks_observed": {
+          "Temp Read Blocks": 0.0,
+          "Temp Written Blocks": 0.0
+        },
+        "assertions_passed": [
+          "expected-zero-or-one-row",
+          "single-execution-no-row-driven-loop",
+          "bounded-plan-shape",
+          "one-catalog-subjects-relation-scan",
+          "subjects-primary-key-index-observed",
+          "selective-index-scan-without-join",
+          "zero-temp-blocks",
+          "buffers-captured-before-normalization",
+          "one-bigint-bind-one-select-statement"
+        ],
+        "plan_summary": {
+          "root_node_type": "Index Scan",
+          "result_row_count": 1,
+          "root_actual_loops": 1,
+          "node_count": 1,
+          "maximum_depth": 0,
+          "maximum_actual_loops": 1,
+          "node_type_counts": {
+            "Index Scan": 1
+          },
+          "relation_scan_occurrences": {
+            "subjects": 1
+          },
+          "index_names": [
+            "subjects_pkey"
+          ],
+          "buffer_fields_observed_before_normalization": [
+            "Local Dirtied Blocks",
+            "Local Hit Blocks",
+            "Local Read Blocks",
+            "Local Written Blocks",
+            "Shared Dirtied Blocks",
+            "Shared Hit Blocks",
+            "Shared Read Blocks",
+            "Shared Written Blocks",
+            "Temp Read Blocks",
+            "Temp Written Blocks"
+          ],
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Index Scan",
+              "Relation Name": "subjects",
+              "Alias": "s",
+              "Index Name": "subjects_pkey",
+              "Scan Direction": "Forward",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Plan Rows": 1,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 27,
+                "sha256": "b9527c013c21f275a92f5fea6c65854ef19f9d9a4086b0092521202d16264f7a"
+              }
+            }
+          ]
+        },
+        "normalized_explain_analyze": {
+          "Plan": {
+            "Node Type": "Index Scan",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Scan Direction": "Forward",
+            "Index Name": "subjects_pkey",
+            "Relation Name": "subjects",
+            "Alias": "s",
+            "Startup Cost": 0.42,
+            "Total Cost": 8.44,
+            "Plan Rows": 1,
+            "Plan Width": 28,
+            "Actual Rows": 1.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Index Cond": {
+              "redacted": "planner expression omitted",
+              "character_count": 27,
+              "sha256": "b9527c013c21f275a92f5fea6c65854ef19f9d9a4086b0092521202d16264f7a"
+            },
+            "Rows Removed by Index Recheck": 0,
+            "Index Searches": 1
+          }
+        }
+      },
+      {
         "observation_id": "first-missing-subject",
         "runtime_query_id": "subject-context-by-id",
         "subject_id": 150001,
@@ -451,7 +675,7 @@
           "occurrence_names": [
             "subject_id"
           ],
-          "positional_sql_sha256": "769868fea689d520e344d5a136c88f1fe52b55871c79eb742fcce5bbfac859bc",
+          "positional_sql_sha256": "4bf07d4548b93e8d327f86930083cdbf1b990843d1ae0686e489f4dc3e402b99",
           "parameters": {
             "subject_id": {
               "bind_kind": "jdbc-scalar",
@@ -549,6 +773,116 @@
         }
       },
       {
+        "observation_id": "signed-integer-maximum-plus-one-missing-subject",
+        "runtime_query_id": "subject-context-by-id",
+        "subject_id": 2147483648,
+        "expected_rows": 0,
+        "sql_statement_count": 1,
+        "binding": {
+          "mode": "prepare-execute",
+          "bound_parameter_count": 1,
+          "named_parameter_count": 1,
+          "occurrence_names": [
+            "subject_id"
+          ],
+          "positional_sql_sha256": "4bf07d4548b93e8d327f86930083cdbf1b990843d1ae0686e489f4dc3e402b99",
+          "parameters": {
+            "subject_id": {
+              "bind_kind": "jdbc-scalar",
+              "postgres_type": "bigint",
+              "value": 2147483648
+            }
+          }
+        },
+        "temp_blocks_observed": {
+          "Temp Read Blocks": 0.0,
+          "Temp Written Blocks": 0.0
+        },
+        "assertions_passed": [
+          "expected-zero-or-one-row",
+          "single-execution-no-row-driven-loop",
+          "bounded-plan-shape",
+          "one-catalog-subjects-relation-scan",
+          "subjects-primary-key-index-observed",
+          "selective-index-scan-without-join",
+          "zero-temp-blocks",
+          "buffers-captured-before-normalization",
+          "one-bigint-bind-one-select-statement"
+        ],
+        "plan_summary": {
+          "root_node_type": "Index Scan",
+          "result_row_count": 0,
+          "root_actual_loops": 1,
+          "node_count": 1,
+          "maximum_depth": 0,
+          "maximum_actual_loops": 1,
+          "node_type_counts": {
+            "Index Scan": 1
+          },
+          "relation_scan_occurrences": {
+            "subjects": 1
+          },
+          "index_names": [
+            "subjects_pkey"
+          ],
+          "buffer_fields_observed_before_normalization": [
+            "Local Dirtied Blocks",
+            "Local Hit Blocks",
+            "Local Read Blocks",
+            "Local Written Blocks",
+            "Shared Dirtied Blocks",
+            "Shared Hit Blocks",
+            "Shared Read Blocks",
+            "Shared Written Blocks",
+            "Temp Read Blocks",
+            "Temp Written Blocks"
+          ],
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Index Scan",
+              "Relation Name": "subjects",
+              "Alias": "s",
+              "Index Name": "subjects_pkey",
+              "Scan Direction": "Forward",
+              "Actual Rows": 0.0,
+              "Actual Loops": 1,
+              "Plan Rows": 1,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 27,
+                "sha256": "b87f4002b472c13800c4b811e3b5aa71f7f7b12323b78e72ad5f9b23009f44cf"
+              }
+            }
+          ]
+        },
+        "normalized_explain_analyze": {
+          "Plan": {
+            "Node Type": "Index Scan",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Scan Direction": "Forward",
+            "Index Name": "subjects_pkey",
+            "Relation Name": "subjects",
+            "Alias": "s",
+            "Startup Cost": 0.42,
+            "Total Cost": 8.44,
+            "Plan Rows": 1,
+            "Plan Width": 28,
+            "Actual Rows": 0.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Index Cond": {
+              "redacted": "planner expression omitted",
+              "character_count": 27,
+              "sha256": "b87f4002b472c13800c4b811e3b5aa71f7f7b12323b78e72ad5f9b23009f44cf"
+            },
+            "Rows Removed by Index Recheck": 0,
+            "Index Searches": 1
+          }
+        }
+      },
+      {
         "observation_id": "signed-bigint-maximum-missing-subject",
         "runtime_query_id": "subject-context-by-id",
         "subject_id": 9223372036854775807,
@@ -561,7 +895,7 @@
           "occurrence_names": [
             "subject_id"
           ],
-          "positional_sql_sha256": "769868fea689d520e344d5a136c88f1fe52b55871c79eb742fcce5bbfac859bc",
+          "positional_sql_sha256": "4bf07d4548b93e8d327f86930083cdbf1b990843d1ae0686e489f4dc3e402b99",
           "parameters": {
             "subject_id": {
               "bind_kind": "jdbc-scalar",
@@ -682,7 +1016,7 @@
   },
   "interpretation": {
     "status": "observational_evidence_only",
-    "statement": "This isolated PostgreSQL 18.4 synthetic capture proves five single-bigint-bind primary-key observations for the exact Java runtime SQL. It is not a production latency or capacity SLA."
+    "statement": "This isolated PostgreSQL 18.4 synthetic capture proves eight single-bigint-bind primary-key observations for the exact Java runtime SQL. It is not a production latency or capacity SLA."
   },
   "reproduction": {
     "working_directory": "repository root containing Ti-Java",

@@ -195,7 +195,7 @@ class SubjectInventoryContractParityTest {
                 "java_api",
                 "io.saksk.ti.catalog.api.SubjectMetadataApplicationApi");
         assertThat(apiShape.path("lifecycle").asString())
-                .isEqualTo("catalog_subject_metadata_query_boundary");
+                .isEqualTo("catalog_subject_inventory_and_context_query_boundary");
         assertThat(apiShape.path("direct_http_operation").asBoolean()).isFalse();
         assertThat(strings(apiShape.path("deferred_http_route_ids")))
                 .containsExactly("6e1a36f5052d");

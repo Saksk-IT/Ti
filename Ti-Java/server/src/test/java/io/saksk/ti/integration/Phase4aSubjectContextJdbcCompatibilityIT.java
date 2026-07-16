@@ -3,9 +3,9 @@ package io.saksk.ti.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.saksk.ti.catalog.api.SubjectContextView;
-import io.saksk.ti.catalog.application.port.SubjectContextQueryPort;
-import io.saksk.ti.catalog.infrastructure.persistence.JdbcSubjectContextQueryAdapterTestAccess;
+import io.saksk.ti.catalog.api.SubjectCatalogRecordView;
+import io.saksk.ti.catalog.application.port.SubjectDetailQueryPort;
+import io.saksk.ti.catalog.infrastructure.persistence.JdbcSubjectDetailQueryAdapterTestAccess;
 import io.saksk.ti.support.Phase2ContainerImages;
 import io.saksk.ti.support.Phase2PostgresContainers;
 import org.junit.jupiter.api.Test;
@@ -66,28 +66,29 @@ class Phase4aSubjectContextJdbcCompatibilityIT {
     ) {
         JdbcClient jdbc = JdbcClient.create(new DriverManagerDataSource(
                 postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword()));
-        SubjectContextQueryPort subjects = JdbcSubjectContextQueryAdapterTestAccess.create(jdbc);
+        SubjectDetailQueryPort subjects = JdbcSubjectDetailQueryAdapterTestAccess.create(jdbc);
 
         assertThat(postgres.getDockerImageName()).isEqualTo(expectedImage);
         assertThat(jdbc.sql("SHOW server_version").query(String.class).single())
                 .isEqualTo(expectedVersion);
 
-        assertThat(subjects.findSubjectById(Integer.MIN_VALUE))
-                .contains(new SubjectContextView(Integer.MIN_VALUE, ""));
         assertThat(subjects.findSubjectById(0L))
-                .contains(new SubjectContextView(0, "  "));
+                .contains(new SubjectCatalogRecordView(0, ""));
         assertThat(subjects.findSubjectById(4901L))
-                .contains(new SubjectContextView(
+                .contains(new SubjectCatalogRecordView(
                         4901, "科目 🧪 <strong>raw</strong>"));
+        assertThat(subjects.findSubjectById(4902L))
+                .contains(new SubjectCatalogRecordView(4902, "  "));
         assertThat(subjects.findSubjectById(Integer.MAX_VALUE))
-                .contains(new SubjectContextView(
+                .contains(new SubjectCatalogRecordView(
                         Integer.MAX_VALUE, "Maximum signed subject ID"));
         assertThat(subjects.findSubjectById(4903L)).isEmpty();
+        assertThat(subjects.findSubjectById(2_147_483_648L)).isEmpty();
         assertThat(subjects.findSubjectById(Long.MAX_VALUE)).isEmpty();
 
         assertThat(jdbc.sql("SELECT COUNT(*) FROM subjects")
                 .query(Long.class)
-                .single()).isEqualTo(5);
+                .single()).isEqualTo(4);
         assertThat(jdbc.sql("SELECT is_locked FROM subjects WHERE id = 4901")
                 .query(Boolean.class)
                 .single()).isTrue();

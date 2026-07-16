@@ -9,7 +9,7 @@ import io.saksk.ti.catalog.api.QuestionCatalogSummaryView;
 import io.saksk.ti.catalog.api.QuestionSubjectAssignmentScope;
 import io.saksk.ti.catalog.api.PublicBankCardView;
 import io.saksk.ti.catalog.api.PublicBankSource;
-import io.saksk.ti.catalog.api.SubjectContextView;
+import io.saksk.ti.catalog.api.SubjectCatalogRecordView;
 import io.saksk.ti.catalog.api.SubjectInventorySummaryView;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
@@ -153,7 +153,7 @@ class CatalogPublicBoundaryNeutralityTest {
 
     @Test
     void subjectContextBoundaryExposesOnlyRawCatalogFacts() {
-        assertThat(Arrays.stream(SubjectContextView.class.getRecordComponents())
+        assertThat(Arrays.stream(SubjectCatalogRecordView.class.getRecordComponents())
                         .map(RecordComponent::getName))
                 .containsExactly("id", "name")
                 .doesNotContain(

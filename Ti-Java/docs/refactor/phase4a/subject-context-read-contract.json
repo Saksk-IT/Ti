@@ -6,24 +6,24 @@
   "evidence": {
     "golden": {
       "source": "golden-subject-context-reads.json",
-      "file_sha256": "fe9d29a6e3731062f2b00b5b9e953cb940c93a13cb4a146a7617875b8413945d",
-      "case_count": 38,
-      "case_payload_sha256": "fce72c233b1d9637e066d15803b55f4310a5452d6e9bf07f13367632c3a946c8",
-      "document_payload_sha256": "027179c2141c1b0a8510a9e50e511ea16b13aca32f58f6b33c4ff0519dc2e0e5",
-      "capture_tool_sha256": "09092766d8483044e63ada18142cc548fc46ee0e0bbe1c25c3df7d8f3bc80335",
-      "capture_tool_test_sha256": "dd7c66e259da3212ec5d5fe6cb2e997b008ffe4b8e63b49b3d86ef86e5b2e3e5"
+      "file_sha256": "95cec51d9a687caf210cf52b9958f351a37fc077d457abea2ab89d87c99eea70",
+      "case_count": 44,
+      "case_payload_sha256": "9fc1e0659dc21f715aa9c27be98b5eae6be38c901adb8c9e5b7874cf8226ac1f",
+      "document_payload_sha256": "76d35a53590ee11813c19c6d8dfbc6e06ae1eb0a7bebfa35ae38b2b6ba858f51",
+      "capture_tool_sha256": "bd108bc46a89e96bb3be58e050fcde7502187218bc4f7eb3be2b6202a360aee4",
+      "capture_tool_test_sha256": "935d2036283c7aa4c43129ce49512c1e8e2a74e8aef43d7d210d94655fb133a1"
     },
     "query_plan": {
       "source": "subject-context-query-plan-evidence.json",
-      "file_sha256": "f602a76a4764d098bb86aa9a8ef2a44048b0bcb977ed46cb675024e51c6d6db3",
-      "runtime_sql_manifest_sha256": "dfbdd1e8efa66892d0efaa040690c412256b0b7c692f8d01098851509fa63e9c",
-      "runtime_sql_sha256": "14bf6e9159ab2bdf87903cb27c6dd48c0413e7057a358da99a517b229d387546",
-      "adapter_sha256": "e3555ed59030c2024fbbb0bb0d752292fda42581ced0abb6e89fa4af4b256bdc",
-      "runtime_sql_exporter_sha256": "75af33902ae6f1051088032b5f123e935ceed9dfb2f8fc54ebe44911dbde9519",
-      "capture_tool_sha256": "87e8b8b426e3234d98bdcbc505ba74d7d10b3e9d83371e0c3403acbb83bce6a5",
-      "capture_tool_test_sha256": "9553e59c212c8f98f8598955f197682cf35f8c50423c795edaa00f81ba93e946",
+      "file_sha256": "5c83272b2b0ab46c626846afc760330c4aa0a742f0475abbc727c600973ba8e5",
+      "runtime_sql_manifest_sha256": "3949b7cf9d1f73c989198bf1278c5c6c3e558950af69051ecb7ab229e317515e",
+      "runtime_sql_sha256": "fb24b0e11aef5bc34e0e26f6d17ecd654a423cd6f5c96cbee646cecb89294631",
+      "adapter_sha256": "085081dc0b83324c5105d194e0c194af5fd8e6455d2af3a1f4944df092319713",
+      "runtime_sql_exporter_sha256": "6ac5de3c685a3f5e6182e0ef73054517dc497d31bb78a98e75e4e07a1681cdde",
+      "capture_tool_sha256": "7556cfb48a1152e80c4f926f3058bfa83711af6d51022d93f953b1982667946e",
+      "capture_tool_test_sha256": "c14aaa09171219dd3257c586ac8bfd0f198bf6a4b4d21c07e56c7fbc9ba520a2",
       "runtime_query_count": 1,
-      "observation_count": 5
+      "observation_count": 8
     },
     "frozen_route_matrix": {
       "source": "../02-route-parity-matrix.csv",
@@ -44,13 +44,13 @@
       "statement": "No HTTP behavior difference is approved in this internal capability slice."
     },
     "implementation": {
-      "view_sha256": "06e3eab29561ff51b93e4c5357357ad1bba2726cb15e0f34e4fae469fe071dae",
-      "application_api_sha256": "ef6b469d8d4838d39d35888e05ebe23c66dfd8722c318d0401cff965274eb1e5",
-      "application_service_sha256": "1aac46da47fe15f9dd74083cd45490cab274415d16d4c3acb280d9b12ca31966",
-      "query_port_sha256": "51c2881c1de7bf353784e2b86b700f7f73adf2904cd838470a6ec0d0d937368b",
-      "jdbc_adapter_sha256": "e3555ed59030c2024fbbb0bb0d752292fda42581ced0abb6e89fa4af4b256bdc",
-      "postgres_compatibility_test_sha256": "35c3ad0284a422e5dc08c9d6b973a4c31c31b10043dac07b8a365be69dba46ea",
-      "postgres_fixture_sha256": "3b98832ea17cd2a9532ac5ff5d9588b1e0444d6064562865673baef5119b227e"
+      "view_sha256": "6a3263d1362603054dc69d91d0b912845cc3348cb35c2a26288fcb9badd3c715",
+      "application_api_sha256": "5368604c6f402c71654d8d41873f923239bfc875946f01a1e107a3c8bc3a94e7",
+      "application_service_sha256": "3e1f7a4852fb1e758d204a262c4387d3e1f89f56cc0aa18ca21ed10bb850e215",
+      "query_port_sha256": "fad7f6fc48544303a4346ebbbd5227790d9bb5f128fd96c08e625255591179d4",
+      "jdbc_adapter_sha256": "085081dc0b83324c5105d194e0c194af5fd8e6455d2af3a1f4944df092319713",
+      "postgres_compatibility_test_sha256": "d5206197a855da1e896abf28cb32282d239ce09f0876d73931729a866977455b",
+      "postgres_fixture_sha256": "c9b6321d1d5e81cad3320a0731b796d6dcb8d12cb48a42cb2e26055e406cf7f4"
     },
     "legacy_sources": [
       {
@@ -84,9 +84,23 @@
       {
         "source": "app/modules/admin/templates/admin/subjects/_scripts.html",
         "sha256": "25c127df0dce2b7559bf7c85b76f9a75d7d70d720eeba1a8e8f23bca34f4fd3b"
+      },
+      {
+        "source": "app/modules/admin/templates/admin/subjects/legacy.html",
+        "sha256": "b9d205b3b0fe0abb0dc0777e74708157a75997700ecf213c287fa77a35dcb4c1"
       }
     ],
-    "dynamic_web_callers": [
+    "audited_web_callers": [
+      {
+        "source": "app/modules/admin/templates/admin/subjects/duplicate_check.html",
+        "line": 347,
+        "target_route_id": "52ad8f899d66"
+      },
+      {
+        "source": "app/modules/admin/templates/admin/subjects/legacy.html",
+        "line": 268,
+        "target_route_id": "52ad8f899d66"
+      },
       {
         "source": "app/modules/admin/templates/admin/subjects/_question_scripts.html",
         "line": 788,
@@ -103,9 +117,9 @@
     "data_owner": "catalog",
     "catalog_owned_table": "subjects",
     "internal_application_api": "io.saksk.ti.catalog.api.SubjectMetadataApplicationApi#findSubjectById",
-    "immutable_result": "io.saksk.ti.catalog.api.SubjectContextView",
-    "query_port": "io.saksk.ti.catalog.application.port.SubjectContextQueryPort",
-    "jdbc_adapter": "io.saksk.ti.catalog.infrastructure.persistence.JdbcSubjectContextQueryAdapter",
+    "immutable_result": "io.saksk.ti.catalog.api.SubjectCatalogRecordView",
+    "query_port": "io.saksk.ti.catalog.application.port.SubjectDetailQueryPort",
+    "jdbc_adapter": "io.saksk.ti.catalog.infrastructure.persistence.JdbcSubjectDetailQueryAdapter",
     "http_operation_owner": "operations",
     "http_adapter_status": "not_implemented",
     "http_owner_dependency_status": "operations_to_catalog_api_dependency_not_yet_approved_or_implemented",
@@ -158,11 +172,11 @@
     ]
   },
   "catalog_application_contract": {
-    "method": "Optional<SubjectContextView> findSubjectById(long subjectId)",
+    "method": "Optional<SubjectCatalogRecordView> findSubjectById(long subjectId)",
     "transaction": "read-only",
     "negative_subject_id": "reject with IllegalArgumentException before invoking the query port",
     "nonnegative_subject_id": "forward unchanged, including zero and Long.MAX_VALUE",
-    "runtime_sql": "SELECT s.id AS subject_id, s.name AS subject_name FROM subjects s WHERE s.id = :subject_id",
+    "runtime_sql": "SELECT s.id, s.name FROM subjects s WHERE s.id = :subject_id",
     "statement_count_per_invocation": 1,
     "binds": [
       {
@@ -217,13 +231,14 @@
       "valid_administrator_bearer_only": "302 Location /login before all SQL and activity",
       "ordinary_session_plus_valid_administrator_bearer": "302 Location /login before all SQL and activity"
     },
-    "integer_converter": {
+    "path_identifier_and_data_boundaries": {
       "zero": "matched and rendered when the row exists",
       "unicode_nd_digits": "matched, converted to the same integer and rendered",
       "leading_zero_digits": "matched, converted to the same integer and rendered",
-      "missing_positive_or_long_max": "one subject SELECT, then exact plain Chinese 404 body even for Accept application/json",
+      "missing_positive_int_max_int_max_plus_one_or_long_max": "one subject SELECT, then exact plain Chinese 404 body even for Accept application/json",
       "long_max_plus_one": "one attempted subject SELECT, then a safe JSON 500 after SQLite bind overflow",
-      "negative": "route-level generic HTML 404, no subject SQL, administrator last_active still updated"
+      "negative": "route-level generic HTML 404, no subject SQL, administrator last_active still updated",
+      "nonnumeric": "route-level generic HTML 404, no subject SQL, administrator last_active still updated"
     },
     "page_rendering": {
       "questions_page": "renders admin/subjects/questions.html with exact subject id and name",
@@ -246,13 +261,17 @@
   "query_plan_contract": {
     "environment": "PostgreSQL 18.4 pinned digest on ARM64 with network none and public synthetic data",
     "data_set": {
-      "subjects": 150000,
-      "subject_ids": "1..150000",
+      "subjects": 150002,
+      "subject_ids": "0, 1..150000, 2147483647",
       "indexes": [
         "subjects_pkey"
       ]
     },
     "observations": [
+      {
+        "subject_id": 0,
+        "expected_rows": 1
+      },
       {
         "subject_id": 1,
         "expected_rows": 1
@@ -266,7 +285,15 @@
         "expected_rows": 1
       },
       {
+        "subject_id": 2147483647,
+        "expected_rows": 1
+      },
+      {
         "subject_id": 150001,
+        "expected_rows": 0
+      },
+      {
+        "subject_id": 2147483648,
         "expected_rows": 0
       },
       {
@@ -309,7 +336,7 @@
       "implement the global Web gate, administrator or subject-administrator role policy and users.last_active behavior",
       "preserve both page templates, exact escaping and all converter boundaries",
       "preserve plain Chinese missing-subject 404 and Accept-dependent safe database failures",
-      "add route delta, controller and OpenAPI migration only after all 38 golden cases pass"
+      "add route delta, controller and OpenAPI migration only after all 44 golden cases pass"
     ],
     "next_phase4a_work": "continue the next catalog-only read after full isolated acceptance"
   }

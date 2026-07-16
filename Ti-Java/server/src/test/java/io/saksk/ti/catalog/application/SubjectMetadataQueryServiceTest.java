@@ -3,9 +3,9 @@ package io.saksk.ti.catalog.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.saksk.ti.catalog.api.SubjectContextView;
+import io.saksk.ti.catalog.api.SubjectCatalogRecordView;
 import io.saksk.ti.catalog.api.SubjectInventorySummaryView;
-import io.saksk.ti.catalog.application.port.SubjectContextQueryPort;
+import io.saksk.ti.catalog.application.port.SubjectDetailQueryPort;
 import io.saksk.ti.catalog.application.port.SubjectInventoryQueryPort;
 import java.util.ArrayList;
 import java.util.List;
@@ -72,8 +72,8 @@ class SubjectMetadataQueryServiceTest {
     void delegatesSubjectContextExactlyOnceAndPreservesTheRawProjection() {
         AtomicInteger calls = new AtomicInteger();
         AtomicLong received = new AtomicLong(Long.MIN_VALUE);
-        var expected = new SubjectContextView(0, "  ");
-        SubjectContextQueryPort port = subjectId -> {
+        var expected = new SubjectCatalogRecordView(0, "  ");
+        SubjectDetailQueryPort port = subjectId -> {
             calls.incrementAndGet();
             received.set(subjectId);
             return Optional.of(expected);
@@ -144,7 +144,7 @@ class SubjectMetadataQueryServiceTest {
         };
     }
 
-    private static SubjectContextQueryPort unusedSubjectContextPort() {
+    private static SubjectDetailQueryPort unusedSubjectContextPort() {
         return subjectId -> {
             throw new AssertionError("subject-context port must not be called");
         };

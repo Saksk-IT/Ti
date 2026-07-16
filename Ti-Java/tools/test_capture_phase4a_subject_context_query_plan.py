@@ -23,8 +23,8 @@ TOOL = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(TOOL)
 
 
-RUNTIME_SQL = """SELECT s.id AS subject_id,
-       s.name AS subject_name
+RUNTIME_SQL = """SELECT s.id,
+       s.name
 FROM subjects s
 WHERE s.id = :subject_id"""
 
@@ -149,10 +149,10 @@ class RuntimeSqlManifestTest(unittest.TestCase):
     def test_rejects_projection_relation_predicate_join_bind_and_mutation_drift(self) -> None:
         unsafe = (
             RUNTIME_SQL.replace(
-                "s.id AS subject_id,\n       s.name AS subject_name",
-                "s.name AS subject_name,\n       s.id AS subject_id",
+                "s.id,\n       s.name",
+                "s.name,\n       s.id",
             ),
-            RUNTIME_SQL.replace("s.name AS subject_name", "s.description AS subject_name"),
+            RUNTIME_SQL.replace("s.name", "s.description"),
             RUNTIME_SQL.replace("subjects s", "questions s"),
             RUNTIME_SQL.replace("s.id = :subject_id", "s.name = :subject_id"),
             RUNTIME_SQL + " AND s.is_locked = false",
@@ -170,20 +170,23 @@ class RuntimeSqlManifestTest(unittest.TestCase):
 
 class BindSurfaceTest(unittest.TestCase):
 
-    def test_all_five_ids_remain_one_bigint_bind_and_one_statement(self) -> None:
+    def test_all_eight_ids_remain_one_bigint_bind_and_one_statement(self) -> None:
         specs = TOOL.observation_specs()
         self.assertEqual(
             [
+                0,
                 1,
                 75_000,
                 150_000,
+                TOOL.INTEGER_MAX_VALUE,
                 150_001,
+                TOOL.INTEGER_MAX_VALUE + 1,
                 TOOL.LONG_MAX_VALUE,
             ],
             [spec["subject_id"] for spec in specs],
         )
         self.assertEqual(
-            [1, 1, 1, 0, 0],
+            [1, 1, 1, 1, 1, 0, 0, 0],
             [spec["expected_rows"] for spec in specs],
         )
 
@@ -337,6 +340,8 @@ class FixtureAndInputContractTest(unittest.TestCase):
             "CREATE TABLE subjects",
             "PRIMARY KEY",
             "generate_series(1, 150000)",
+            "(0, 'Synthetic zero-ID subject')",
+            "(2147483647, 'Synthetic integer-maximum subject')",
             "VACUUM (ANALYZE) subjects",
         ):
             self.assertIn(fragment, sql)
@@ -360,7 +365,7 @@ class FixtureAndInputContractTest(unittest.TestCase):
             set(paths),
         )
         self.assertTrue(
-            str(paths["adapter"]).endswith("JdbcSubjectContextQueryAdapter.java")
+            str(paths["adapter"]).endswith("JdbcSubjectDetailQueryAdapter.java")
         )
         self.assertTrue(
             str(paths["runtime_sql_exporter"]).endswith(
@@ -368,15 +373,15 @@ class FixtureAndInputContractTest(unittest.TestCase):
             )
         )
 
-    def test_dataset_expected_shape_is_exactly_150000_subjects(self) -> None:
+    def test_dataset_expected_shape_is_exactly_150002_subjects(self) -> None:
         expected = {
-            "subjects": TOOL.DEFAULT_SUBJECT_COUNT,
-            "minimum_subject_id": 1,
-            "maximum_subject_id": TOOL.DEFAULT_SUBJECT_COUNT,
+            "subjects": TOOL.DEFAULT_SUBJECT_COUNT + 2,
+            "minimum_subject_id": 0,
+            "maximum_subject_id": TOOL.INTEGER_MAX_VALUE,
             "contiguous_positive_subjects": TOOL.DEFAULT_SUBJECT_COUNT,
         }
-        self.assertEqual(150_000, expected["subjects"])
-        self.assertEqual(150_000, expected["maximum_subject_id"])
+        self.assertEqual(150_002, expected["subjects"])
+        self.assertEqual(2_147_483_647, expected["maximum_subject_id"])
 
 
 if __name__ == "__main__":

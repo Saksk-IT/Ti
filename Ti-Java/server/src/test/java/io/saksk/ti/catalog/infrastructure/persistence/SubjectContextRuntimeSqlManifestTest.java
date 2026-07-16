@@ -20,13 +20,13 @@ class SubjectContextRuntimeSqlManifestTest {
         Map<String, Object> query = new LinkedHashMap<>();
         query.put("query_id", "subject-context-by-id");
         query.put("operation", "subject-context");
-        query.put("sql", JdbcSubjectContextQueryAdapter.SELECT_SUBJECT_CONTEXT_BY_ID);
+        query.put("sql", JdbcSubjectDetailQueryAdapter.SELECT_SUBJECT_BY_ID);
         query.put("parameters", Map.of("subject_id", "bigint"));
 
         Map<String, Object> manifest = new LinkedHashMap<>();
         manifest.put("manifest_id", "ti.phase4a.subject-context-runtime-sql");
         manifest.put("schema_version", 1);
-        manifest.put("adapter_class", JdbcSubjectContextQueryAdapter.class.getName());
+        manifest.put("adapter_class", JdbcSubjectDetailQueryAdapter.class.getName());
         manifest.put("query_count", 1);
         manifest.put("queries", List.of(query));
 

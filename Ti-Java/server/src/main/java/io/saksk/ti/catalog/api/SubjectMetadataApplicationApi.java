@@ -8,5 +8,5 @@ public interface SubjectMetadataApplicationApi {
 
     List<SubjectInventorySummaryView> listSubjectInventorySummaries();
 
-    Optional<SubjectContextView> findSubjectById(long subjectId);
+    Optional<SubjectCatalogRecordView> findSubjectById(long subjectId);
 }
