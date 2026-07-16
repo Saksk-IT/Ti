@@ -1,0 +1,316 @@
+{
+  "contract_id": "ti.phase4a.subject-context-read-contract",
+  "schema_version": 1,
+  "status": "catalog_internal_capability_implemented_http_operations_deferred",
+  "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "evidence": {
+    "golden": {
+      "source": "golden-subject-context-reads.json",
+      "file_sha256": "fe9d29a6e3731062f2b00b5b9e953cb940c93a13cb4a146a7617875b8413945d",
+      "case_count": 38,
+      "case_payload_sha256": "fce72c233b1d9637e066d15803b55f4310a5452d6e9bf07f13367632c3a946c8",
+      "document_payload_sha256": "027179c2141c1b0a8510a9e50e511ea16b13aca32f58f6b33c4ff0519dc2e0e5",
+      "capture_tool_sha256": "09092766d8483044e63ada18142cc548fc46ee0e0bbe1c25c3df7d8f3bc80335",
+      "capture_tool_test_sha256": "dd7c66e259da3212ec5d5fe6cb2e997b008ffe4b8e63b49b3d86ef86e5b2e3e5"
+    },
+    "query_plan": {
+      "source": "subject-context-query-plan-evidence.json",
+      "file_sha256": "f602a76a4764d098bb86aa9a8ef2a44048b0bcb977ed46cb675024e51c6d6db3",
+      "runtime_sql_manifest_sha256": "dfbdd1e8efa66892d0efaa040690c412256b0b7c692f8d01098851509fa63e9c",
+      "runtime_sql_sha256": "14bf6e9159ab2bdf87903cb27c6dd48c0413e7057a358da99a517b229d387546",
+      "adapter_sha256": "e3555ed59030c2024fbbb0bb0d752292fda42581ced0abb6e89fa4af4b256bdc",
+      "runtime_sql_exporter_sha256": "75af33902ae6f1051088032b5f123e935ceed9dfb2f8fc54ebe44911dbde9519",
+      "capture_tool_sha256": "87e8b8b426e3234d98bdcbc505ba74d7d10b3e9d83371e0c3403acbb83bce6a5",
+      "capture_tool_test_sha256": "9553e59c212c8f98f8598955f197682cf35f8c50423c795edaa00f81ba93e946",
+      "runtime_query_count": 1,
+      "observation_count": 5
+    },
+    "frozen_route_matrix": {
+      "source": "../02-route-parity-matrix.csv",
+      "sha256": "fdbdfedf3dd70cd09778b2a7072711d103eee8461d0e7dd356d797006fc92c74",
+      "selected_rows_sha256": "d5a3e517f37c925b0611fc46a4bdeb70429ced394be20b860d88c6409d8b0a9c"
+    },
+    "data_ownership": {
+      "source": "../03-data-ownership.csv",
+      "sha256": "3f9cb0650c523593d7037dc24df902dbccdb3885f261f530e1725a9dc7a31748",
+      "resource": "table:subjects",
+      "target_owner": "catalog",
+      "delta_required": false
+    },
+    "approved_differences": {
+      "source": "approved-differences.md",
+      "sha256": "2ac257e41214f3005eaa022965038bf429d35e3ba04dc83b81ac8a90abd63fd2",
+      "new_difference_ids": [],
+      "statement": "No HTTP behavior difference is approved in this internal capability slice."
+    },
+    "implementation": {
+      "view_sha256": "06e3eab29561ff51b93e4c5357357ad1bba2726cb15e0f34e4fae469fe071dae",
+      "application_api_sha256": "ef6b469d8d4838d39d35888e05ebe23c66dfd8722c318d0401cff965274eb1e5",
+      "application_service_sha256": "1aac46da47fe15f9dd74083cd45490cab274415d16d4c3acb280d9b12ca31966",
+      "query_port_sha256": "51c2881c1de7bf353784e2b86b700f7f73adf2904cd838470a6ec0d0d937368b",
+      "jdbc_adapter_sha256": "e3555ed59030c2024fbbb0bb0d752292fda42581ced0abb6e89fa4af4b256bdc",
+      "postgres_compatibility_test_sha256": "35c3ad0284a422e5dc08c9d6b973a4c31c31b10043dac07b8a365be69dba46ea",
+      "postgres_fixture_sha256": "3b98832ea17cd2a9532ac5ff5d9588b1e0444d6064562865673baef5119b227e"
+    },
+    "legacy_sources": [
+      {
+        "source": "app/modules/admin/routes/pages.py",
+        "sha256": "653a5694b64358ff0310e8cb3ace0d25f5dbce4c0c1f6bee4149185e591233fa"
+      },
+      {
+        "source": "app/modules/admin/__init__.py",
+        "sha256": "06ff47e53bb93c5e484544ff3d63188fa913bfd47d26d8f43034cb60a7f2573d"
+      },
+      {
+        "source": "app/__init__.py",
+        "sha256": "9b2efe8a539ee47f7bcf475708466a64669b6bb36804ccf2b1cc5a63fcb21668"
+      },
+      {
+        "source": "app/modules/admin/templates/admin/subjects/questions.html",
+        "sha256": "c787dc4341cd421c0398b12e9d68b0fe0034ca188189d7a1863ece84676d369c"
+      },
+      {
+        "source": "app/modules/admin/templates/admin/subjects/duplicate_check.html",
+        "sha256": "1e39ac2812dfabbe7930ec0f60d49fa7120995eeb267178597893cc377efd879"
+      },
+      {
+        "source": "app/modules/admin/templates/admin/subjects/_question_list.html",
+        "sha256": "95351a5bc100a721c70c29336fdec1caaa767fd68f38067abb14916587bbe147"
+      },
+      {
+        "source": "app/modules/admin/templates/admin/subjects/_question_scripts.html",
+        "sha256": "db4c3443ecbaef95d25ae86a20ca3dd39dec9a44a1106865897dcb6717a37523"
+      },
+      {
+        "source": "app/modules/admin/templates/admin/subjects/_scripts.html",
+        "sha256": "25c127df0dce2b7559bf7c85b76f9a75d7d70d720eeba1a8e8f23bca34f4fd3b"
+      }
+    ],
+    "dynamic_web_callers": [
+      {
+        "source": "app/modules/admin/templates/admin/subjects/_question_scripts.html",
+        "line": 788,
+        "target_route_id": "5548b24849ed"
+      },
+      {
+        "source": "app/modules/admin/templates/admin/subjects/_scripts.html",
+        "line": 789,
+        "target_route_id": "5548b24849ed"
+      }
+    ]
+  },
+  "module_boundary": {
+    "data_owner": "catalog",
+    "catalog_owned_table": "subjects",
+    "internal_application_api": "io.saksk.ti.catalog.api.SubjectMetadataApplicationApi#findSubjectById",
+    "immutable_result": "io.saksk.ti.catalog.api.SubjectContextView",
+    "query_port": "io.saksk.ti.catalog.application.port.SubjectContextQueryPort",
+    "jdbc_adapter": "io.saksk.ti.catalog.infrastructure.persistence.JdbcSubjectContextQueryAdapter",
+    "http_operation_owner": "operations",
+    "http_adapter_status": "not_implemented",
+    "http_owner_dependency_status": "operations_to_catalog_api_dependency_not_yet_approved_or_implemented",
+    "deferred_phase": "4H",
+    "forbidden_reuse": [
+      "io.saksk.ti.catalog.api.CatalogApplicationApi#subjectCatalog",
+      "io.saksk.ti.catalog.application.SubjectCatalogQueryService",
+      "io.saksk.ti.catalog.api.SubjectMetadataApplicationApi#listSubjectInventorySummaries",
+      "io.saksk.ti.catalog.application.port.SubjectInventoryQueryPort",
+      "io.saksk.ti.catalog.application.port.SubjectReadPort",
+      "io.saksk.ti.catalog.infrastructure.persistence.JpaSubjectReadAdapter"
+    ],
+    "forbidden_in_this_slice": [
+      "HTTP controller, security matcher, role decision, rendering or error translation",
+      "operations module dependency change",
+      "questions, users, user_subjects, public-bank or identity-policy lookup",
+      "route parity delta or OpenAPI operation migration",
+      "production cutover"
+    ]
+  },
+  "route_status": {
+    "migrated_route_count_before": 11,
+    "migrated_route_count_after": 11,
+    "pending_route_count_before": 600,
+    "pending_route_count_after": 600,
+    "production_cutover_count": 0,
+    "operations": [
+      {
+        "route_id": "52ad8f899d66",
+        "method": "GET",
+        "path": "/admin/subjects/{subject_id}/questions",
+        "legacy_route_template": "/admin/subjects/<int:subject_id>/questions",
+        "legacy_handler": "admin.admin_pages.admin_questions_page",
+        "target_module": "operations",
+        "migration_status": "pending",
+        "contract_maturity": "inferred",
+        "production_cutover": false
+      },
+      {
+        "route_id": "5548b24849ed",
+        "method": "GET",
+        "path": "/admin/subjects/{subject_id}/questions/duplicate-check",
+        "legacy_route_template": "/admin/subjects/<int:subject_id>/questions/duplicate-check",
+        "legacy_handler": "admin.admin_pages.admin_duplicate_check_page",
+        "target_module": "operations",
+        "migration_status": "pending",
+        "contract_maturity": "inferred",
+        "production_cutover": false
+      }
+    ]
+  },
+  "catalog_application_contract": {
+    "method": "Optional<SubjectContextView> findSubjectById(long subjectId)",
+    "transaction": "read-only",
+    "negative_subject_id": "reject with IllegalArgumentException before invoking the query port",
+    "nonnegative_subject_id": "forward unchanged, including zero and Long.MAX_VALUE",
+    "runtime_sql": "SELECT s.id AS subject_id, s.name AS subject_name FROM subjects s WHERE s.id = :subject_id",
+    "statement_count_per_invocation": 1,
+    "binds": [
+      {
+        "name": "subject_id",
+        "java_type": "long",
+        "jdbc_type": "BIGINT",
+        "postgres_type": "bigint",
+        "occurrences": 1
+      }
+    ],
+    "result_fields": [
+      {
+        "name": "id",
+        "java_type": "int",
+        "postgres_type": "integer",
+        "nullable": false
+      },
+      {
+        "name": "name",
+        "java_type": "java.lang.String",
+        "postgres_type": "text",
+        "nullable": false
+      }
+    ],
+    "result_semantics": {
+      "cardinality": "zero or one row",
+      "found": "Optional containing the exact signed integer ID and exact non-null name",
+      "missing": "Optional.empty",
+      "name": "empty, whitespace-only, Unicode and HTML-like text remain exact",
+      "failure": "the original persistence exception propagates unchanged for future operations-owned translation"
+    },
+    "query_budget": {
+      "catalog_selects": 1,
+      "catalog_writes": 0,
+      "relations": [
+        "subjects"
+      ],
+      "joins": 0,
+      "temporary_state": false,
+      "bind_count": 1,
+      "maximum_rows": 1,
+      "n_plus_one_forbidden": true
+    }
+  },
+  "legacy_http_contract": {
+    "authentication": {
+      "administrator_session": "200, one subject SELECT and one users.last_active update",
+      "subject_administrator_session": "200, one subject SELECT and one users.last_active update",
+      "ordinary_session": "403 safe JSON before subject SQL, with one users.last_active update",
+      "notification_administrator_session": "403 safe JSON before subject SQL, with one users.last_active update",
+      "anonymous": "302 Location /login before all SQL and activity",
+      "valid_administrator_bearer_only": "302 Location /login before all SQL and activity",
+      "ordinary_session_plus_valid_administrator_bearer": "302 Location /login before all SQL and activity"
+    },
+    "integer_converter": {
+      "zero": "matched and rendered when the row exists",
+      "unicode_nd_digits": "matched, converted to the same integer and rendered",
+      "leading_zero_digits": "matched, converted to the same integer and rendered",
+      "missing_positive_or_long_max": "one subject SELECT, then exact plain Chinese 404 body even for Accept application/json",
+      "long_max_plus_one": "one attempted subject SELECT, then a safe JSON 500 after SQLite bind overflow",
+      "negative": "route-level generic HTML 404, no subject SQL, administrator last_active still updated"
+    },
+    "page_rendering": {
+      "questions_page": "renders admin/subjects/questions.html with exact subject id and name",
+      "duplicate_check_page": "renders admin/subjects/duplicate_check.html with exact subject id and name",
+      "empty_and_unicode_names": "empty names remain empty and HTML-sensitive Unicode names remain escaped"
+    },
+    "failure_semantics": {
+      "database_failure_accept_any": "500 fixed generic Chinese HTML page after one attempted lookup",
+      "database_failure_accept_json": "500 generic safe JSON envelope after one attempted lookup"
+    },
+    "cross_cutting_effects": {
+      "route_body_subject_writes": 0,
+      "route_body_question_reads": 0,
+      "route_body_question_writes": 0,
+      "subjects_fingerprint": "all nine subject columns remain unchanged in every case",
+      "questions_fingerprint": "all fifteen question columns remain unchanged in every case",
+      "session_activity": "session-only requests can update users.last_active before authorization, route matching, lookup or rendering"
+    }
+  },
+  "query_plan_contract": {
+    "environment": "PostgreSQL 18.4 pinned digest on ARM64 with network none and public synthetic data",
+    "data_set": {
+      "subjects": 150000,
+      "subject_ids": "1..150000",
+      "indexes": [
+        "subjects_pkey"
+      ]
+    },
+    "observations": [
+      {
+        "subject_id": 1,
+        "expected_rows": 1
+      },
+      {
+        "subject_id": 75000,
+        "expected_rows": 1
+      },
+      {
+        "subject_id": 150000,
+        "expected_rows": 1
+      },
+      {
+        "subject_id": 150001,
+        "expected_rows": 0
+      },
+      {
+        "subject_id": 9223372036854775807,
+        "expected_rows": 0
+      }
+    ],
+    "gates": {
+      "root_node_type": "Index Scan",
+      "required_index": "subjects_pkey",
+      "relation_scan_occurrences": 1,
+      "root_actual_loops": 1,
+      "maximum_actual_loops": 1,
+      "maximum_nodes": 2,
+      "maximum_depth": 1,
+      "temp_read_blocks": 0,
+      "temp_written_blocks": 0,
+      "statement_count": 1,
+      "bigint_bind_count": 1,
+      "maximum_result_rows": 1
+    },
+    "interpretation": "observational evidence only; not a production latency SLA, capacity claim, index recommendation or migration authorization"
+  },
+  "invariants": [
+    "The capability reads only catalog-owned subjects and never consults questions, identity visibility, inventory aggregates or public-bank projections.",
+    "Every nonnegative invocation executes exactly one one-bind SELECT and no DML, DDL, TEMP or JOIN.",
+    "Negative identifiers are rejected before the port; zero and Long.MAX_VALUE are forwarded unchanged.",
+    "Found rows preserve exact signed IDs and exact names; missing rows remain Optional.empty.",
+    "No HTTP authentication, last_active behavior, rendering, response envelope or error translation enters catalog.",
+    "PostgreSQL 16.14 and 18.4 execute the same adapter SQL and preserve boundary values.",
+    "Synthetic query-plan evidence authorizes neither a production migration nor a new production index.",
+    "Both HTTP operations remain operations-owned and pending; this slice changes no route, OpenAPI migration status, dependency or production traffic."
+  ],
+  "acceptance": {
+    "catalog_internal_capability": "implemented",
+    "http_operation_migration": "deferred_to_phase4h",
+    "production_cutover": false,
+    "required_before_phase4h_route_migration": [
+      "approve and machine-check the operations dependency on catalog::api",
+      "implement the global Web gate, administrator or subject-administrator role policy and users.last_active behavior",
+      "preserve both page templates, exact escaping and all converter boundaries",
+      "preserve plain Chinese missing-subject 404 and Accept-dependent safe database failures",
+      "add route delta, controller and OpenAPI migration only after all 38 golden cases pass"
+    ],
+    "next_phase4a_work": "continue the next catalog-only read after full isolated acceptance"
+  }
+}

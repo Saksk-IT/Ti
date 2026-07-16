@@ -137,7 +137,7 @@ class ModuleContractParityTest {
     void latestPublicShapesExactlyMatchImplementedOperationsAndKeepTheRestDeferred() throws Exception {
         assertThat(shapeStatusRoot.path("migrated_route_count").asInt()).isEqualTo(11);
         assertThat(shapeStatusRoot.path("implemented_route_backed_operation_count").asInt()).isEqualTo(11);
-        assertThat(shapeStatusRoot.path("implemented_public_application_method_count").asInt()).isEqualTo(17);
+        assertThat(shapeStatusRoot.path("implemented_public_application_method_count").asInt()).isEqualTo(18);
         assertThat(shapeStatusRoot.path("event_payload_shape_status").asString())
                 .isEqualTo("deferred_to_phase5");
 

@@ -7,9 +7,9 @@
   "phase": "4A-subject-directory-and-public-bank-read-slices",
   "migrated_route_count": 11,
   "implemented_route_backed_operation_count": 11,
-  "implemented_public_application_method_count": 17,
+  "implemented_public_application_method_count": 18,
   "event_payload_shape_status": "deferred_to_phase5",
-  "policy": "Phase 3 methods remain accepted. Phase 4A adds the protected subject query boundary, the reviewed identity visibility boundary, a separate HTTP-neutral public-bank snapshot query API, HTTP-neutral raw subject-inventory, question-type, single-question and question-summary queries, and a catalog-only question-count primitive. The operations-owned admin subject-inventory/type/detail/list routes and learning-owned question-count routes remain pending and are not counted as route-backed operations.",
+  "policy": "Phase 3 methods remain accepted. Phase 4A adds the protected subject query boundary, the reviewed identity visibility boundary, a separate HTTP-neutral public-bank snapshot query API, HTTP-neutral raw subject-inventory, subject-context, question-type, single-question and question-summary queries, and a catalog-only question-count primitive. The operations-owned admin subject-inventory/context/type/detail/list routes and learning-owned question-count routes remain pending and are not counted as route-backed operations.",
   "modules": [
     {
       "module_id": "identity",
@@ -131,7 +131,8 @@
         "QuestionCatalogSummaryView",
         "QuestionSubjectAssignmentScope",
         "QuestionCatalogRecordView",
-        "SubjectInventorySummaryView"
+        "SubjectInventorySummaryView",
+        "SubjectContextView"
       ],
       "additional_public_apis": [
         {
@@ -232,19 +233,31 @@
       },
       {
         "java_api": "io.saksk.ti.catalog.api.SubjectMetadataApplicationApi",
-        "lifecycle": "catalog_subject_inventory_query_boundary",
+        "lifecycle": "catalog_subject_metadata_query_boundary",
         "direct_http_operation": false,
         "deferred_http_route_ids": [
           "6e1a36f5052d"
         ],
         "deferred_http_owner": "operations",
         "deferred_http_phase": "4H",
+        "deferred_subject_context_http_route_ids": [
+          "52ad8f899d66",
+          "5548b24849ed"
+        ],
+        "deferred_subject_context_http_owner": "operations",
+        "deferred_subject_context_http_phase": "4H",
         "methods": [
           {
             "name": "listSubjectInventorySummaries",
             "return_type": "java.util.List",
             "generic_return_type": "java.util.List<io.saksk.ti.catalog.api.SubjectInventorySummaryView>",
             "parameter_types": []
+          },
+          {
+            "name": "findSubjectById",
+            "return_type": "java.util.Optional",
+            "generic_return_type": "java.util.Optional<io.saksk.ti.catalog.api.SubjectContextView>",
+            "parameter_types": ["long"]
           }
         ]
       }

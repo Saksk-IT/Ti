@@ -9,6 +9,7 @@ import io.saksk.ti.catalog.api.QuestionCatalogSummaryView;
 import io.saksk.ti.catalog.api.QuestionSubjectAssignmentScope;
 import io.saksk.ti.catalog.api.PublicBankCardView;
 import io.saksk.ti.catalog.api.PublicBankSource;
+import io.saksk.ti.catalog.api.SubjectContextView;
 import io.saksk.ti.catalog.api.SubjectInventorySummaryView;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
@@ -146,6 +147,21 @@ class CatalogPublicBoundaryNeutralityTest {
                         "visible",
                         "restricted",
                         "restrictedSubjectIds",
+                        "viewerId",
+                        "detailUrl");
+    }
+
+    @Test
+    void subjectContextBoundaryExposesOnlyRawCatalogFacts() {
+        assertThat(Arrays.stream(SubjectContextView.class.getRecordComponents())
+                        .map(RecordComponent::getName))
+                .containsExactly("id", "name")
+                .doesNotContain(
+                        "description",
+                        "isLocked",
+                        "questionCount",
+                        "visible",
+                        "restricted",
                         "viewerId",
                         "detailUrl");
     }

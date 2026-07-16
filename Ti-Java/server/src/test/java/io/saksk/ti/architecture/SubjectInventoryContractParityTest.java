@@ -186,7 +186,7 @@ class SubjectInventoryContractParityTest {
         JsonNode shape = readJson(
                 "docs/refactor/phase4a/application-api-shape-status.json");
         assertThat(shape.path("implemented_public_application_method_count").asInt())
-                .isEqualTo(17);
+                .isEqualTo(18);
         JsonNode catalog = findBy(shape.path("modules"), "module_id", "catalog");
         assertThat(strings(catalog.path("implemented_route_ids")))
                 .doesNotContain("6e1a36f5052d");
@@ -195,14 +195,20 @@ class SubjectInventoryContractParityTest {
                 "java_api",
                 "io.saksk.ti.catalog.api.SubjectMetadataApplicationApi");
         assertThat(apiShape.path("lifecycle").asString())
-                .isEqualTo("catalog_subject_inventory_query_boundary");
+                .isEqualTo("catalog_subject_metadata_query_boundary");
         assertThat(apiShape.path("direct_http_operation").asBoolean()).isFalse();
         assertThat(strings(apiShape.path("deferred_http_route_ids")))
                 .containsExactly("6e1a36f5052d");
         assertThat(apiShape.path("deferred_http_owner").asString())
                 .isEqualTo("operations");
         assertThat(apiShape.path("deferred_http_phase").asString()).isEqualTo("4H");
-        assertThat(apiShape.path("methods")).hasSize(1);
+        assertThat(strings(apiShape.path("deferred_subject_context_http_route_ids")))
+                .containsExactlyInAnyOrder("52ad8f899d66", "5548b24849ed");
+        assertThat(apiShape.path("deferred_subject_context_http_owner").asString())
+                .isEqualTo("operations");
+        assertThat(apiShape.path("deferred_subject_context_http_phase").asString())
+                .isEqualTo("4H");
+        assertThat(apiShape.path("methods")).hasSize(2);
 
         Class<?> api = Class.forName(
                 "io.saksk.ti.catalog.api.SubjectMetadataApplicationApi");
