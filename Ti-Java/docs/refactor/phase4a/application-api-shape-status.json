@@ -132,7 +132,7 @@
         "QuestionSubjectAssignmentScope",
         "QuestionCatalogRecordView",
         "SubjectInventorySummaryView",
-        "SubjectCatalogRecordView"
+        "SubjectContextView"
       ],
       "additional_public_apis": [
         {
@@ -233,7 +233,7 @@
       },
       {
         "java_api": "io.saksk.ti.catalog.api.SubjectMetadataApplicationApi",
-        "lifecycle": "catalog_subject_inventory_and_context_query_boundary",
+        "lifecycle": "catalog_subject_metadata_query_boundary",
         "direct_http_operation": false,
         "deferred_http_route_ids": [
           "6e1a36f5052d"
@@ -256,7 +256,7 @@
           {
             "name": "findSubjectById",
             "return_type": "java.util.Optional",
-            "generic_return_type": "java.util.Optional<io.saksk.ti.catalog.api.SubjectCatalogRecordView>",
+            "generic_return_type": "java.util.Optional<io.saksk.ti.catalog.api.SubjectContextView>",
             "parameter_types": ["long"]
           }
         ]

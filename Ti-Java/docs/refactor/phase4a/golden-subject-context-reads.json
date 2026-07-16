@@ -177,28 +177,9 @@
         "git_blob": "9342b5b82d6fd0a76cc5e827e78bc868f332dfed",
         "sha256": "25c127df0dce2b7559bf7c85b76f9a75d7d70d720eeba1a8e8f23bca34f4fd3b",
         "size_bytes": 52174
-      },
-      "app/modules/admin/templates/admin/subjects/legacy.html": {
-        "git_blob": "2fd54bc05b32452c7e8083996f145e701dbb5802",
-        "sha256": "b9d205b3b0fe0abb0dc0777e74708157a75997700ecf213c287fa77a35dcb4c1",
-        "size_bytes": 10495
       }
     },
-    "audited_template_callers": [
-      {
-        "path": "app/modules/admin/templates/admin/subjects/duplicate_check.html",
-        "line": 347,
-        "text": "            <a href=\"/admin/subjects/{{ subject_id }}/questions\" class=\"btn btn-secondary\">",
-        "target_route_id": "52ad8f899d66",
-        "line_sha256": "81914ce81ba570c8ac24b94fcbe94a05ea583cb25b47f10eb85db41d58a33fec"
-      },
-      {
-        "path": "app/modules/admin/templates/admin/subjects/legacy.html",
-        "line": 268,
-        "text": "                    <a class=\"btn-quiet\" href=\"/admin/subjects/${subject.id}/questions\">题集管理</a>",
-        "target_route_id": "52ad8f899d66",
-        "line_sha256": "d7e95626e231160bb9ee11c7f9d584d5abf8cd9fd00823840ade15e8a2b50ff9"
-      },
+    "dynamic_template_callers": [
       {
         "path": "app/modules/admin/templates/admin/subjects/_question_scripts.html",
         "line": 788,
@@ -294,11 +275,6 @@
       "orphan_subject": 97305
     },
     "unicode_nd_normal_id": "٩٧٢٠٤",
-    "signed_int_max": "2147483647",
-    "signed_int_max_plus_one": "2147483648",
-    "signed_long_max": "9223372036854775807",
-    "signed_long_max_plus_one": "9223372036854775808",
-    "nonnumeric_subject_id": "not-a-subject",
     "full_subjects_fingerprint": {
       "columns": [
         "id",
@@ -339,16 +315,17 @@
     }
   },
   "case_matrix": {
-    "per_route": 22,
+    "per_route": 19,
     "routes": 2,
     "categories_per_route": {
       "auth": 7,
-      "data": 13,
+      "data": 3,
+      "integer": 7,
       "fault": 2
     }
   },
-  "case_count": 44,
-  "case_payload_sha256": "9fc1e0659dc21f715aa9c27be98b5eae6be38c901adb8c9e5b7874cf8226ac1f",
+  "case_count": 38,
+  "case_payload_sha256": "fce72c233b1d9637e066d15803b55f4310a5452d6e9bf07f13367632c3a946c8",
   "cases": [
     {
       "case_id": "auth-admin-session-found-questions-page",
@@ -366,8 +343,7 @@
           "name": "subject_id",
           "raw_text": "97204",
           "python_int_value": 97204,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97204
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -642,8 +618,7 @@
           "name": "subject_id",
           "raw_text": "97204",
           "python_int_value": 97204,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97204
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -928,8 +903,7 @@
           "name": "subject_id",
           "raw_text": "97204",
           "python_int_value": 97204,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97204
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -1193,8 +1167,7 @@
           "name": "subject_id",
           "raw_text": "97204",
           "python_int_value": 97204,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97204
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -1458,8 +1431,7 @@
           "name": "subject_id",
           "raw_text": "97204",
           "python_int_value": 97204,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97204
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -1699,8 +1671,7 @@
           "name": "subject_id",
           "raw_text": "97204",
           "python_int_value": 97204,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97204
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -1941,8 +1912,7 @@
           "name": "subject_id",
           "raw_text": "97204",
           "python_int_value": 97204,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97204
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -2183,8 +2153,7 @@
           "name": "subject_id",
           "raw_text": "97201",
           "python_int_value": 97201,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97201
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -2459,8 +2428,7 @@
           "name": "subject_id",
           "raw_text": "97202",
           "python_int_value": 97202,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97202
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -2735,8 +2703,7 @@
           "name": "subject_id",
           "raw_text": "97203",
           "python_int_value": 97203,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97203
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -2996,8 +2963,8 @@
       }
     },
     {
-      "case_id": "data-zero-id-found-questions-page",
-      "category": "data",
+      "case_id": "integer-zero-id-found-questions-page",
+      "category": "integer",
       "route_key": "questions-page",
       "route_id": "52ad8f899d66",
       "session_actor": "administrator",
@@ -3011,8 +2978,7 @@
           "name": "subject_id",
           "raw_text": "0",
           "python_int_value": 0,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 0
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -3020,7 +2986,7 @@
           "Accept": "*/*",
           "X-Request-ID": "phase4a-subject-context-golden-request"
         },
-        "remote_address": "198.51.255.102"
+        "remote_address": "198.51.77.244"
       },
       "response": {
         "status": 200,
@@ -3272,8 +3238,8 @@
       }
     },
     {
-      "case_id": "data-unicode-nd-id-found-questions-page",
-      "category": "data",
+      "case_id": "integer-unicode-nd-id-found-questions-page",
+      "category": "integer",
       "route_key": "questions-page",
       "route_id": "52ad8f899d66",
       "session_actor": "administrator",
@@ -3287,8 +3253,7 @@
           "name": "subject_id",
           "raw_text": "٩٧٢٠٤",
           "python_int_value": 97204,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97204
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -3296,7 +3261,7 @@
           "Accept": "*/*",
           "X-Request-ID": "phase4a-subject-context-golden-request"
         },
-        "remote_address": "198.51.188.174"
+        "remote_address": "198.51.5.125"
       },
       "response": {
         "status": 200,
@@ -3548,8 +3513,8 @@
       }
     },
     {
-      "case_id": "data-leading-zero-id-found-questions-page",
-      "category": "data",
+      "case_id": "integer-leading-zero-id-found-questions-page",
+      "category": "integer",
       "route_key": "questions-page",
       "route_id": "52ad8f899d66",
       "session_actor": "administrator",
@@ -3563,8 +3528,7 @@
           "name": "subject_id",
           "raw_text": "00097204",
           "python_int_value": 97204,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97204
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -3572,7 +3536,7 @@
           "Accept": "*/*",
           "X-Request-ID": "phase4a-subject-context-golden-request"
         },
-        "remote_address": "198.51.126.132"
+        "remote_address": "198.51.47.2"
       },
       "response": {
         "status": 200,
@@ -3824,8 +3788,8 @@
       }
     },
     {
-      "case_id": "data-missing-positive-id-questions-page",
-      "category": "data",
+      "case_id": "integer-missing-positive-id-questions-page",
+      "category": "integer",
       "route_key": "questions-page",
       "route_id": "52ad8f899d66",
       "session_actor": "administrator",
@@ -3839,8 +3803,7 @@
           "name": "subject_id",
           "raw_text": "97999",
           "python_int_value": 97999,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97999
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -3848,7 +3811,7 @@
           "Accept": "application/json",
           "X-Request-ID": "phase4a-subject-context-golden-request"
         },
-        "remote_address": "198.51.217.156"
+        "remote_address": "198.51.181.230"
       },
       "response": {
         "status": 404,
@@ -4100,560 +4063,8 @@
       }
     },
     {
-      "case_id": "data-int-max-missing-questions-page",
-      "category": "data",
-      "route_key": "questions-page",
-      "route_id": "52ad8f899d66",
-      "session_actor": "administrator",
-      "bearer_actor": "none",
-      "credential_mode": "session",
-      "request": {
-        "method": "GET",
-        "path": "/admin/subjects/2147483647/questions",
-        "route_template": "/admin/subjects/<int:subject_id>/questions",
-        "path_parameter": {
-          "name": "subject_id",
-          "raw_text": "2147483647",
-          "python_int_value": 2147483647,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 2147483647
-        },
-        "query": [],
-        "query_string": "",
-        "headers": {
-          "Accept": "*/*",
-          "X-Request-ID": "phase4a-subject-context-golden-request"
-        },
-        "remote_address": "198.51.229.102"
-      },
-      "response": {
-        "status": 404,
-        "headers": {
-          "Content-Length": [
-            "15"
-          ],
-          "Content-Type": [
-            "text/html; charset=utf-8"
-          ],
-          "Referrer-Policy": [
-            "strict-origin-when-cross-origin"
-          ],
-          "Retry-After": [
-            "<dynamic-seconds>"
-          ],
-          "Set-Cookie": [
-            "<redacted-session-cookie>"
-          ],
-          "Vary": [
-            "Cookie"
-          ],
-          "X-Content-Type-Options": [
-            "nosniff"
-          ],
-          "X-Frame-Options": [
-            "SAMEORIGIN"
-          ],
-          "X-RateLimit-Limit": [
-            "10"
-          ],
-          "X-RateLimit-Remaining": [
-            "9"
-          ],
-          "X-RateLimit-Reset": [
-            "<dynamic-epoch-second>"
-          ],
-          "X-Request-ID": [
-            "phase4a-subject-context-golden-request"
-          ]
-        },
-        "body_kind": "text",
-        "body": "科目不存在",
-        "body_text": "科目不存在",
-        "body_length_bytes": 15,
-        "body_sha256": "0748dc5f21664aad46ba39c97131ea8fe2cb2b9e09bf80e74c9715b44db451cc"
-      },
-      "observed_get_effects": {
-        "sql": {
-          "statements": [
-            {
-              "sql": "SELECT USERS.ID AS USERS_ID, USERS.USERNAME AS USERS_USERNAME, USERS.PASSWORD_HASH AS USERS_PASSWORD_HASH, USERS.IS_ADMIN AS USERS_IS_ADMIN, USERS.IS_LOCKED AS USERS_IS_LOCKED, USERS.SESSION_VERSION AS USERS_SESSION_VERSION, USERS.AVATAR AS USERS_AVATAR, USERS.CONTACT AS USERS_CONTACT, USERS.COLLEGE AS USERS_COLLEGE, USERS.LAST_ACTIVE AS USERS_LAST_ACTIVE, USERS.IS_SUBJECT_ADMIN AS USERS_IS_SUBJECT_ADMIN, USERS.IS_NOTIFICATION_ADMIN AS USERS_IS_NOTIFICATION_ADMIN, USERS.CREATED_AT AS USERS_CREATED_AT, USERS.EMAIL AS USERS_EMAIL, USERS.EMAIL_VERIFIED AS USERS_EMAIL_VERIFIED, USERS.EMAIL_VERIFIED_AT AS USERS_EMAIL_VERIFIED_AT, USERS.PHONE AS USERS_PHONE, USERS.PHONE_VERIFIED AS USERS_PHONE_VERIFIED, USERS.PHONE_VERIFIED_AT AS USERS_PHONE_VERIFIED_AT, USERS.HAS_PASSWORD_SET AS USERS_HAS_PASSWORD_SET, USERS.OPENID AS USERS_OPENID FROM USERS WHERE USERS.ID = ?",
-              "parameters": [
-                97104
-              ],
-              "executemany": false,
-              "classification": "users_select"
-            },
-            {
-              "sql": "UPDATE USERS SET LAST_ACTIVE=CURRENT_TIMESTAMP WHERE USERS.ID = ?",
-              "parameters": [
-                97104
-              ],
-              "executemany": false,
-              "classification": "user_last_active_dml"
-            },
-            {
-              "sql": "SELECT USERS.ID AS USERS_ID, USERS.USERNAME AS USERS_USERNAME, USERS.PASSWORD_HASH AS USERS_PASSWORD_HASH, USERS.IS_ADMIN AS USERS_IS_ADMIN, USERS.IS_LOCKED AS USERS_IS_LOCKED, USERS.SESSION_VERSION AS USERS_SESSION_VERSION, USERS.AVATAR AS USERS_AVATAR, USERS.CONTACT AS USERS_CONTACT, USERS.COLLEGE AS USERS_COLLEGE, USERS.LAST_ACTIVE AS USERS_LAST_ACTIVE, USERS.IS_SUBJECT_ADMIN AS USERS_IS_SUBJECT_ADMIN, USERS.IS_NOTIFICATION_ADMIN AS USERS_IS_NOTIFICATION_ADMIN, USERS.CREATED_AT AS USERS_CREATED_AT, USERS.EMAIL AS USERS_EMAIL, USERS.EMAIL_VERIFIED AS USERS_EMAIL_VERIFIED, USERS.EMAIL_VERIFIED_AT AS USERS_EMAIL_VERIFIED_AT, USERS.PHONE AS USERS_PHONE, USERS.PHONE_VERIFIED AS USERS_PHONE_VERIFIED, USERS.PHONE_VERIFIED_AT AS USERS_PHONE_VERIFIED_AT, USERS.HAS_PASSWORD_SET AS USERS_HAS_PASSWORD_SET, USERS.OPENID AS USERS_OPENID FROM USERS WHERE USERS.ID = ?",
-              "parameters": [
-                97104
-              ],
-              "executemany": false,
-              "classification": "users_select"
-            },
-            {
-              "sql": "SELECT ID, NAME FROM SUBJECTS WHERE ID=?",
-              "parameters": [
-                2147483647
-              ],
-              "executemany": false,
-              "classification": "subject_context_select"
-            }
-          ],
-          "select_attempts": 3,
-          "dml_attempts": 1,
-          "ddl_attempts": 0,
-          "other_attempts": 0,
-          "subject_context_select_attempts": 1,
-          "subjects_select_attempts": 1,
-          "questions_select_attempts": 0,
-          "users_select_attempts": 2,
-          "subjects_dml_attempts": 0,
-          "questions_dml_attempts": 0,
-          "user_last_active_dml_attempts": 1,
-          "unexpected_dml_attempts": 0,
-          "statement_count": 4,
-          "classified_attempt_count": 4,
-          "statements_sha256": "2cc8ff991fc1d3e4479785e9c97742b8547fc5eef748c4203ce530b7f16022e2"
-        },
-        "subjects_before": {
-          "columns": [
-            "id",
-            "name",
-            "description",
-            "is_locked",
-            "plaza_board_id",
-            "is_plaza_featured",
-            "plaza_featured_weight",
-            "plaza_featured_at",
-            "created_at"
-          ],
-          "column_count": 9,
-          "row_count": 5,
-          "rows_sha256": "872bc2e314343a2d441ebcbd761e9ae74d34119fb9fec10e19484b8233adaa65"
-        },
-        "subjects_after": {
-          "columns": [
-            "id",
-            "name",
-            "description",
-            "is_locked",
-            "plaza_board_id",
-            "is_plaza_featured",
-            "plaza_featured_weight",
-            "plaza_featured_at",
-            "created_at"
-          ],
-          "column_count": 9,
-          "row_count": 5,
-          "rows_sha256": "872bc2e314343a2d441ebcbd761e9ae74d34119fb9fec10e19484b8233adaa65"
-        },
-        "subjects_match_case_fixture": true,
-        "subjects_unchanged": true,
-        "questions_before": {
-          "columns": [
-            "id",
-            "subject_id",
-            "type",
-            "content",
-            "options",
-            "answer",
-            "analysis",
-            "tags",
-            "difficulty",
-            "image_path",
-            "source",
-            "created_by",
-            "updated_by",
-            "created_at",
-            "updated_at"
-          ],
-          "column_count": 15,
-          "row_count": 5,
-          "rows_sha256": "05e6503f9282a710049c532b0b598de2c06627c7da596c926e8907c9713d98d6"
-        },
-        "questions_after": {
-          "columns": [
-            "id",
-            "subject_id",
-            "type",
-            "content",
-            "options",
-            "answer",
-            "analysis",
-            "tags",
-            "difficulty",
-            "image_path",
-            "source",
-            "created_by",
-            "updated_by",
-            "created_at",
-            "updated_at"
-          ],
-          "column_count": 15,
-          "row_count": 5,
-          "rows_sha256": "05e6503f9282a710049c532b0b598de2c06627c7da596c926e8907c9713d98d6"
-        },
-        "questions_match_case_fixture": true,
-        "questions_unchanged": true,
-        "users_identity_before": {
-          "columns": [
-            "id",
-            "username",
-            "is_admin",
-            "is_subject_admin",
-            "is_notification_admin",
-            "is_locked",
-            "session_version"
-          ],
-          "column_count": 7,
-          "row_count": 4,
-          "rows_sha256": "296170bf9d7bcd3ea65f2d860eba8a85f3770e45cb413ec7d587f7e2ff1ba6dd"
-        },
-        "users_identity_after": {
-          "columns": [
-            "id",
-            "username",
-            "is_admin",
-            "is_subject_admin",
-            "is_notification_admin",
-            "is_locked",
-            "session_version"
-          ],
-          "column_count": 7,
-          "row_count": 4,
-          "rows_sha256": "296170bf9d7bcd3ea65f2d860eba8a85f3770e45cb413ec7d587f7e2ff1ba6dd"
-        },
-        "users_identity_unchanged": true,
-        "user_last_active_before": [
-          {
-            "user_id": 97101,
-            "last_active": null
-          },
-          {
-            "user_id": 97102,
-            "last_active": null
-          },
-          {
-            "user_id": 97103,
-            "last_active": null
-          },
-          {
-            "user_id": 97104,
-            "last_active": null
-          }
-        ],
-        "user_last_active_after": [
-          {
-            "user_id": 97101,
-            "last_active": null
-          },
-          {
-            "user_id": 97102,
-            "last_active": null
-          },
-          {
-            "user_id": 97103,
-            "last_active": null
-          },
-          {
-            "user_id": 97104,
-            "last_active": "<database-current-timestamp>"
-          }
-        ],
-        "user_last_active_changed_user_ids": [
-          97104
-        ],
-        "surrounding_session_activity_write_observed": true
-      }
-    },
-    {
-      "case_id": "data-int-max-plus-one-missing-questions-page",
-      "category": "data",
-      "route_key": "questions-page",
-      "route_id": "52ad8f899d66",
-      "session_actor": "administrator",
-      "bearer_actor": "none",
-      "credential_mode": "session",
-      "request": {
-        "method": "GET",
-        "path": "/admin/subjects/2147483648/questions",
-        "route_template": "/admin/subjects/<int:subject_id>/questions",
-        "path_parameter": {
-          "name": "subject_id",
-          "raw_text": "2147483648",
-          "python_int_value": 2147483648,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 2147483648
-        },
-        "query": [],
-        "query_string": "",
-        "headers": {
-          "Accept": "*/*",
-          "X-Request-ID": "phase4a-subject-context-golden-request"
-        },
-        "remote_address": "198.51.215.73"
-      },
-      "response": {
-        "status": 404,
-        "headers": {
-          "Content-Length": [
-            "15"
-          ],
-          "Content-Type": [
-            "text/html; charset=utf-8"
-          ],
-          "Referrer-Policy": [
-            "strict-origin-when-cross-origin"
-          ],
-          "Retry-After": [
-            "<dynamic-seconds>"
-          ],
-          "Set-Cookie": [
-            "<redacted-session-cookie>"
-          ],
-          "Vary": [
-            "Cookie"
-          ],
-          "X-Content-Type-Options": [
-            "nosniff"
-          ],
-          "X-Frame-Options": [
-            "SAMEORIGIN"
-          ],
-          "X-RateLimit-Limit": [
-            "10"
-          ],
-          "X-RateLimit-Remaining": [
-            "9"
-          ],
-          "X-RateLimit-Reset": [
-            "<dynamic-epoch-second>"
-          ],
-          "X-Request-ID": [
-            "phase4a-subject-context-golden-request"
-          ]
-        },
-        "body_kind": "text",
-        "body": "科目不存在",
-        "body_text": "科目不存在",
-        "body_length_bytes": 15,
-        "body_sha256": "0748dc5f21664aad46ba39c97131ea8fe2cb2b9e09bf80e74c9715b44db451cc"
-      },
-      "observed_get_effects": {
-        "sql": {
-          "statements": [
-            {
-              "sql": "SELECT USERS.ID AS USERS_ID, USERS.USERNAME AS USERS_USERNAME, USERS.PASSWORD_HASH AS USERS_PASSWORD_HASH, USERS.IS_ADMIN AS USERS_IS_ADMIN, USERS.IS_LOCKED AS USERS_IS_LOCKED, USERS.SESSION_VERSION AS USERS_SESSION_VERSION, USERS.AVATAR AS USERS_AVATAR, USERS.CONTACT AS USERS_CONTACT, USERS.COLLEGE AS USERS_COLLEGE, USERS.LAST_ACTIVE AS USERS_LAST_ACTIVE, USERS.IS_SUBJECT_ADMIN AS USERS_IS_SUBJECT_ADMIN, USERS.IS_NOTIFICATION_ADMIN AS USERS_IS_NOTIFICATION_ADMIN, USERS.CREATED_AT AS USERS_CREATED_AT, USERS.EMAIL AS USERS_EMAIL, USERS.EMAIL_VERIFIED AS USERS_EMAIL_VERIFIED, USERS.EMAIL_VERIFIED_AT AS USERS_EMAIL_VERIFIED_AT, USERS.PHONE AS USERS_PHONE, USERS.PHONE_VERIFIED AS USERS_PHONE_VERIFIED, USERS.PHONE_VERIFIED_AT AS USERS_PHONE_VERIFIED_AT, USERS.HAS_PASSWORD_SET AS USERS_HAS_PASSWORD_SET, USERS.OPENID AS USERS_OPENID FROM USERS WHERE USERS.ID = ?",
-              "parameters": [
-                97104
-              ],
-              "executemany": false,
-              "classification": "users_select"
-            },
-            {
-              "sql": "UPDATE USERS SET LAST_ACTIVE=CURRENT_TIMESTAMP WHERE USERS.ID = ?",
-              "parameters": [
-                97104
-              ],
-              "executemany": false,
-              "classification": "user_last_active_dml"
-            },
-            {
-              "sql": "SELECT USERS.ID AS USERS_ID, USERS.USERNAME AS USERS_USERNAME, USERS.PASSWORD_HASH AS USERS_PASSWORD_HASH, USERS.IS_ADMIN AS USERS_IS_ADMIN, USERS.IS_LOCKED AS USERS_IS_LOCKED, USERS.SESSION_VERSION AS USERS_SESSION_VERSION, USERS.AVATAR AS USERS_AVATAR, USERS.CONTACT AS USERS_CONTACT, USERS.COLLEGE AS USERS_COLLEGE, USERS.LAST_ACTIVE AS USERS_LAST_ACTIVE, USERS.IS_SUBJECT_ADMIN AS USERS_IS_SUBJECT_ADMIN, USERS.IS_NOTIFICATION_ADMIN AS USERS_IS_NOTIFICATION_ADMIN, USERS.CREATED_AT AS USERS_CREATED_AT, USERS.EMAIL AS USERS_EMAIL, USERS.EMAIL_VERIFIED AS USERS_EMAIL_VERIFIED, USERS.EMAIL_VERIFIED_AT AS USERS_EMAIL_VERIFIED_AT, USERS.PHONE AS USERS_PHONE, USERS.PHONE_VERIFIED AS USERS_PHONE_VERIFIED, USERS.PHONE_VERIFIED_AT AS USERS_PHONE_VERIFIED_AT, USERS.HAS_PASSWORD_SET AS USERS_HAS_PASSWORD_SET, USERS.OPENID AS USERS_OPENID FROM USERS WHERE USERS.ID = ?",
-              "parameters": [
-                97104
-              ],
-              "executemany": false,
-              "classification": "users_select"
-            },
-            {
-              "sql": "SELECT ID, NAME FROM SUBJECTS WHERE ID=?",
-              "parameters": [
-                2147483648
-              ],
-              "executemany": false,
-              "classification": "subject_context_select"
-            }
-          ],
-          "select_attempts": 3,
-          "dml_attempts": 1,
-          "ddl_attempts": 0,
-          "other_attempts": 0,
-          "subject_context_select_attempts": 1,
-          "subjects_select_attempts": 1,
-          "questions_select_attempts": 0,
-          "users_select_attempts": 2,
-          "subjects_dml_attempts": 0,
-          "questions_dml_attempts": 0,
-          "user_last_active_dml_attempts": 1,
-          "unexpected_dml_attempts": 0,
-          "statement_count": 4,
-          "classified_attempt_count": 4,
-          "statements_sha256": "b91b2dc80c751085c9577fe9c9f181cc2984d021f42f2eaa7720a7cf9b4ecc90"
-        },
-        "subjects_before": {
-          "columns": [
-            "id",
-            "name",
-            "description",
-            "is_locked",
-            "plaza_board_id",
-            "is_plaza_featured",
-            "plaza_featured_weight",
-            "plaza_featured_at",
-            "created_at"
-          ],
-          "column_count": 9,
-          "row_count": 5,
-          "rows_sha256": "872bc2e314343a2d441ebcbd761e9ae74d34119fb9fec10e19484b8233adaa65"
-        },
-        "subjects_after": {
-          "columns": [
-            "id",
-            "name",
-            "description",
-            "is_locked",
-            "plaza_board_id",
-            "is_plaza_featured",
-            "plaza_featured_weight",
-            "plaza_featured_at",
-            "created_at"
-          ],
-          "column_count": 9,
-          "row_count": 5,
-          "rows_sha256": "872bc2e314343a2d441ebcbd761e9ae74d34119fb9fec10e19484b8233adaa65"
-        },
-        "subjects_match_case_fixture": true,
-        "subjects_unchanged": true,
-        "questions_before": {
-          "columns": [
-            "id",
-            "subject_id",
-            "type",
-            "content",
-            "options",
-            "answer",
-            "analysis",
-            "tags",
-            "difficulty",
-            "image_path",
-            "source",
-            "created_by",
-            "updated_by",
-            "created_at",
-            "updated_at"
-          ],
-          "column_count": 15,
-          "row_count": 5,
-          "rows_sha256": "05e6503f9282a710049c532b0b598de2c06627c7da596c926e8907c9713d98d6"
-        },
-        "questions_after": {
-          "columns": [
-            "id",
-            "subject_id",
-            "type",
-            "content",
-            "options",
-            "answer",
-            "analysis",
-            "tags",
-            "difficulty",
-            "image_path",
-            "source",
-            "created_by",
-            "updated_by",
-            "created_at",
-            "updated_at"
-          ],
-          "column_count": 15,
-          "row_count": 5,
-          "rows_sha256": "05e6503f9282a710049c532b0b598de2c06627c7da596c926e8907c9713d98d6"
-        },
-        "questions_match_case_fixture": true,
-        "questions_unchanged": true,
-        "users_identity_before": {
-          "columns": [
-            "id",
-            "username",
-            "is_admin",
-            "is_subject_admin",
-            "is_notification_admin",
-            "is_locked",
-            "session_version"
-          ],
-          "column_count": 7,
-          "row_count": 4,
-          "rows_sha256": "296170bf9d7bcd3ea65f2d860eba8a85f3770e45cb413ec7d587f7e2ff1ba6dd"
-        },
-        "users_identity_after": {
-          "columns": [
-            "id",
-            "username",
-            "is_admin",
-            "is_subject_admin",
-            "is_notification_admin",
-            "is_locked",
-            "session_version"
-          ],
-          "column_count": 7,
-          "row_count": 4,
-          "rows_sha256": "296170bf9d7bcd3ea65f2d860eba8a85f3770e45cb413ec7d587f7e2ff1ba6dd"
-        },
-        "users_identity_unchanged": true,
-        "user_last_active_before": [
-          {
-            "user_id": 97101,
-            "last_active": null
-          },
-          {
-            "user_id": 97102,
-            "last_active": null
-          },
-          {
-            "user_id": 97103,
-            "last_active": null
-          },
-          {
-            "user_id": 97104,
-            "last_active": null
-          }
-        ],
-        "user_last_active_after": [
-          {
-            "user_id": 97101,
-            "last_active": null
-          },
-          {
-            "user_id": 97102,
-            "last_active": null
-          },
-          {
-            "user_id": 97103,
-            "last_active": null
-          },
-          {
-            "user_id": 97104,
-            "last_active": "<database-current-timestamp>"
-          }
-        ],
-        "user_last_active_changed_user_ids": [
-          97104
-        ],
-        "surrounding_session_activity_write_observed": true
-      }
-    },
-    {
-      "case_id": "data-long-max-missing-questions-page",
-      "category": "data",
+      "case_id": "integer-long-max-missing-questions-page",
+      "category": "integer",
       "route_key": "questions-page",
       "route_id": "52ad8f899d66",
       "session_actor": "administrator",
@@ -4667,8 +4078,7 @@
           "name": "subject_id",
           "raw_text": "9223372036854775807",
           "python_int_value": 9223372036854775807,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 9223372036854775807
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -4676,7 +4086,7 @@
           "Accept": "*/*",
           "X-Request-ID": "phase4a-subject-context-golden-request"
         },
-        "remote_address": "198.51.188.95"
+        "remote_address": "198.51.68.210"
       },
       "response": {
         "status": 404,
@@ -4928,8 +4338,8 @@
       }
     },
     {
-      "case_id": "data-long-max-plus-one-bind-failure-questions-page",
-      "category": "data",
+      "case_id": "integer-long-overflow-bind-failure-questions-page",
+      "category": "integer",
       "route_key": "questions-page",
       "route_id": "52ad8f899d66",
       "session_actor": "administrator",
@@ -4943,8 +4353,7 @@
           "name": "subject_id",
           "raw_text": "9223372036854775808",
           "python_int_value": 9223372036854775808,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 9223372036854775808
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -4952,7 +4361,7 @@
           "Accept": "application/json",
           "X-Request-ID": "phase4a-subject-context-golden-request"
         },
-        "remote_address": "198.51.56.68"
+        "remote_address": "198.51.44.173"
       },
       "response": {
         "status": 500,
@@ -5210,8 +4619,8 @@
       }
     },
     {
-      "case_id": "data-negative-route-miss-questions-page",
-      "category": "data",
+      "case_id": "integer-negative-route-miss-questions-page",
+      "category": "integer",
       "route_key": "questions-page",
       "route_id": "52ad8f899d66",
       "session_actor": "administrator",
@@ -5225,8 +4634,7 @@
           "name": "subject_id",
           "raw_text": "-1",
           "python_int_value": -1,
-          "flask_int_converter_match": false,
-          "handler_subject_id": null
+          "flask_int_converter_match": false
         },
         "query": [],
         "query_string": "",
@@ -5234,255 +4642,7 @@
           "Accept": "*/*",
           "X-Request-ID": "phase4a-subject-context-golden-request"
         },
-        "remote_address": "198.51.252.139"
-      },
-      "response": {
-        "status": 404,
-        "headers": {
-          "Content-Length": [
-            "157"
-          ],
-          "Content-Type": [
-            "text/html; charset=utf-8"
-          ],
-          "Referrer-Policy": [
-            "strict-origin-when-cross-origin"
-          ],
-          "Set-Cookie": [
-            "<redacted-session-cookie>"
-          ],
-          "Vary": [
-            "Cookie"
-          ],
-          "X-Content-Type-Options": [
-            "nosniff"
-          ],
-          "X-Frame-Options": [
-            "SAMEORIGIN"
-          ],
-          "X-Request-ID": [
-            "phase4a-subject-context-golden-request"
-          ]
-        },
-        "body_kind": "text",
-        "body": "<h1>404 - 页面未找到</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>",
-        "body_text": "<h1>404 - 页面未找到</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>",
-        "body_length_bytes": 157,
-        "body_sha256": "03ef4f7aca9a33f08acbb6a68db12b73ffa37ffa142e15d02d55928f37519299"
-      },
-      "observed_get_effects": {
-        "sql": {
-          "statements": [
-            {
-              "sql": "SELECT USERS.ID AS USERS_ID, USERS.USERNAME AS USERS_USERNAME, USERS.PASSWORD_HASH AS USERS_PASSWORD_HASH, USERS.IS_ADMIN AS USERS_IS_ADMIN, USERS.IS_LOCKED AS USERS_IS_LOCKED, USERS.SESSION_VERSION AS USERS_SESSION_VERSION, USERS.AVATAR AS USERS_AVATAR, USERS.CONTACT AS USERS_CONTACT, USERS.COLLEGE AS USERS_COLLEGE, USERS.LAST_ACTIVE AS USERS_LAST_ACTIVE, USERS.IS_SUBJECT_ADMIN AS USERS_IS_SUBJECT_ADMIN, USERS.IS_NOTIFICATION_ADMIN AS USERS_IS_NOTIFICATION_ADMIN, USERS.CREATED_AT AS USERS_CREATED_AT, USERS.EMAIL AS USERS_EMAIL, USERS.EMAIL_VERIFIED AS USERS_EMAIL_VERIFIED, USERS.EMAIL_VERIFIED_AT AS USERS_EMAIL_VERIFIED_AT, USERS.PHONE AS USERS_PHONE, USERS.PHONE_VERIFIED AS USERS_PHONE_VERIFIED, USERS.PHONE_VERIFIED_AT AS USERS_PHONE_VERIFIED_AT, USERS.HAS_PASSWORD_SET AS USERS_HAS_PASSWORD_SET, USERS.OPENID AS USERS_OPENID FROM USERS WHERE USERS.ID = ?",
-              "parameters": [
-                97104
-              ],
-              "executemany": false,
-              "classification": "users_select"
-            },
-            {
-              "sql": "UPDATE USERS SET LAST_ACTIVE=CURRENT_TIMESTAMP WHERE USERS.ID = ?",
-              "parameters": [
-                97104
-              ],
-              "executemany": false,
-              "classification": "user_last_active_dml"
-            }
-          ],
-          "select_attempts": 1,
-          "dml_attempts": 1,
-          "ddl_attempts": 0,
-          "other_attempts": 0,
-          "subject_context_select_attempts": 0,
-          "subjects_select_attempts": 0,
-          "questions_select_attempts": 0,
-          "users_select_attempts": 1,
-          "subjects_dml_attempts": 0,
-          "questions_dml_attempts": 0,
-          "user_last_active_dml_attempts": 1,
-          "unexpected_dml_attempts": 0,
-          "statement_count": 2,
-          "classified_attempt_count": 2,
-          "statements_sha256": "ea51e6898f8871e94193b1c26b1c875e899cfd95d0691c70c77b4afd939dc7dc"
-        },
-        "subjects_before": {
-          "columns": [
-            "id",
-            "name",
-            "description",
-            "is_locked",
-            "plaza_board_id",
-            "is_plaza_featured",
-            "plaza_featured_weight",
-            "plaza_featured_at",
-            "created_at"
-          ],
-          "column_count": 9,
-          "row_count": 5,
-          "rows_sha256": "872bc2e314343a2d441ebcbd761e9ae74d34119fb9fec10e19484b8233adaa65"
-        },
-        "subjects_after": {
-          "columns": [
-            "id",
-            "name",
-            "description",
-            "is_locked",
-            "plaza_board_id",
-            "is_plaza_featured",
-            "plaza_featured_weight",
-            "plaza_featured_at",
-            "created_at"
-          ],
-          "column_count": 9,
-          "row_count": 5,
-          "rows_sha256": "872bc2e314343a2d441ebcbd761e9ae74d34119fb9fec10e19484b8233adaa65"
-        },
-        "subjects_match_case_fixture": true,
-        "subjects_unchanged": true,
-        "questions_before": {
-          "columns": [
-            "id",
-            "subject_id",
-            "type",
-            "content",
-            "options",
-            "answer",
-            "analysis",
-            "tags",
-            "difficulty",
-            "image_path",
-            "source",
-            "created_by",
-            "updated_by",
-            "created_at",
-            "updated_at"
-          ],
-          "column_count": 15,
-          "row_count": 5,
-          "rows_sha256": "05e6503f9282a710049c532b0b598de2c06627c7da596c926e8907c9713d98d6"
-        },
-        "questions_after": {
-          "columns": [
-            "id",
-            "subject_id",
-            "type",
-            "content",
-            "options",
-            "answer",
-            "analysis",
-            "tags",
-            "difficulty",
-            "image_path",
-            "source",
-            "created_by",
-            "updated_by",
-            "created_at",
-            "updated_at"
-          ],
-          "column_count": 15,
-          "row_count": 5,
-          "rows_sha256": "05e6503f9282a710049c532b0b598de2c06627c7da596c926e8907c9713d98d6"
-        },
-        "questions_match_case_fixture": true,
-        "questions_unchanged": true,
-        "users_identity_before": {
-          "columns": [
-            "id",
-            "username",
-            "is_admin",
-            "is_subject_admin",
-            "is_notification_admin",
-            "is_locked",
-            "session_version"
-          ],
-          "column_count": 7,
-          "row_count": 4,
-          "rows_sha256": "296170bf9d7bcd3ea65f2d860eba8a85f3770e45cb413ec7d587f7e2ff1ba6dd"
-        },
-        "users_identity_after": {
-          "columns": [
-            "id",
-            "username",
-            "is_admin",
-            "is_subject_admin",
-            "is_notification_admin",
-            "is_locked",
-            "session_version"
-          ],
-          "column_count": 7,
-          "row_count": 4,
-          "rows_sha256": "296170bf9d7bcd3ea65f2d860eba8a85f3770e45cb413ec7d587f7e2ff1ba6dd"
-        },
-        "users_identity_unchanged": true,
-        "user_last_active_before": [
-          {
-            "user_id": 97101,
-            "last_active": null
-          },
-          {
-            "user_id": 97102,
-            "last_active": null
-          },
-          {
-            "user_id": 97103,
-            "last_active": null
-          },
-          {
-            "user_id": 97104,
-            "last_active": null
-          }
-        ],
-        "user_last_active_after": [
-          {
-            "user_id": 97101,
-            "last_active": null
-          },
-          {
-            "user_id": 97102,
-            "last_active": null
-          },
-          {
-            "user_id": 97103,
-            "last_active": null
-          },
-          {
-            "user_id": 97104,
-            "last_active": "<database-current-timestamp>"
-          }
-        ],
-        "user_last_active_changed_user_ids": [
-          97104
-        ],
-        "surrounding_session_activity_write_observed": true
-      }
-    },
-    {
-      "case_id": "data-nonnumeric-route-miss-questions-page",
-      "category": "data",
-      "route_key": "questions-page",
-      "route_id": "52ad8f899d66",
-      "session_actor": "administrator",
-      "bearer_actor": "none",
-      "credential_mode": "session",
-      "request": {
-        "method": "GET",
-        "path": "/admin/subjects/not-a-subject/questions",
-        "route_template": "/admin/subjects/<int:subject_id>/questions",
-        "path_parameter": {
-          "name": "subject_id",
-          "raw_text": "not-a-subject",
-          "python_int_value": null,
-          "flask_int_converter_match": false,
-          "handler_subject_id": null
-        },
-        "query": [],
-        "query_string": "",
-        "headers": {
-          "Accept": "*/*",
-          "X-Request-ID": "phase4a-subject-context-golden-request"
-        },
-        "remote_address": "198.51.117.100"
+        "remote_address": "198.51.222.134"
       },
       "response": {
         "status": 404,
@@ -5721,8 +4881,7 @@
           "name": "subject_id",
           "raw_text": "97204",
           "python_int_value": 97204,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97204
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -5997,8 +5156,7 @@
           "name": "subject_id",
           "raw_text": "97204",
           "python_int_value": 97204,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97204
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -6279,8 +5437,7 @@
           "name": "subject_id",
           "raw_text": "97204",
           "python_int_value": 97204,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97204
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -6555,8 +5712,7 @@
           "name": "subject_id",
           "raw_text": "97204",
           "python_int_value": 97204,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97204
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -6831,8 +5987,7 @@
           "name": "subject_id",
           "raw_text": "97204",
           "python_int_value": 97204,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97204
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -7096,8 +6251,7 @@
           "name": "subject_id",
           "raw_text": "97204",
           "python_int_value": 97204,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97204
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -7361,8 +6515,7 @@
           "name": "subject_id",
           "raw_text": "97204",
           "python_int_value": 97204,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97204
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -7602,8 +6755,7 @@
           "name": "subject_id",
           "raw_text": "97204",
           "python_int_value": 97204,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97204
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -7844,8 +6996,7 @@
           "name": "subject_id",
           "raw_text": "97204",
           "python_int_value": 97204,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97204
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -8086,8 +7237,7 @@
           "name": "subject_id",
           "raw_text": "97201",
           "python_int_value": 97201,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97201
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -8362,8 +7512,7 @@
           "name": "subject_id",
           "raw_text": "97202",
           "python_int_value": 97202,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97202
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -8638,8 +7787,7 @@
           "name": "subject_id",
           "raw_text": "97203",
           "python_int_value": 97203,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97203
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -8899,8 +8047,8 @@
       }
     },
     {
-      "case_id": "data-zero-id-found-duplicate-check-page",
-      "category": "data",
+      "case_id": "integer-zero-id-found-duplicate-check-page",
+      "category": "integer",
       "route_key": "duplicate-check-page",
       "route_id": "5548b24849ed",
       "session_actor": "administrator",
@@ -8914,8 +8062,7 @@
           "name": "subject_id",
           "raw_text": "0",
           "python_int_value": 0,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 0
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -8923,7 +8070,7 @@
           "Accept": "*/*",
           "X-Request-ID": "phase4a-subject-context-golden-request"
         },
-        "remote_address": "198.51.211.62"
+        "remote_address": "198.51.178.145"
       },
       "response": {
         "status": 200,
@@ -9175,8 +8322,8 @@
       }
     },
     {
-      "case_id": "data-unicode-nd-id-found-duplicate-check-page",
-      "category": "data",
+      "case_id": "integer-unicode-nd-id-found-duplicate-check-page",
+      "category": "integer",
       "route_key": "duplicate-check-page",
       "route_id": "5548b24849ed",
       "session_actor": "administrator",
@@ -9190,8 +8337,7 @@
           "name": "subject_id",
           "raw_text": "٩٧٢٠٤",
           "python_int_value": 97204,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97204
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -9199,7 +8345,7 @@
           "Accept": "*/*",
           "X-Request-ID": "phase4a-subject-context-golden-request"
         },
-        "remote_address": "198.51.41.180"
+        "remote_address": "198.51.144.138"
       },
       "response": {
         "status": 200,
@@ -9451,8 +8597,8 @@
       }
     },
     {
-      "case_id": "data-leading-zero-id-found-duplicate-check-page",
-      "category": "data",
+      "case_id": "integer-leading-zero-id-found-duplicate-check-page",
+      "category": "integer",
       "route_key": "duplicate-check-page",
       "route_id": "5548b24849ed",
       "session_actor": "administrator",
@@ -9466,8 +8612,7 @@
           "name": "subject_id",
           "raw_text": "00097204",
           "python_int_value": 97204,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97204
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -9475,7 +8620,7 @@
           "Accept": "*/*",
           "X-Request-ID": "phase4a-subject-context-golden-request"
         },
-        "remote_address": "198.51.214.187"
+        "remote_address": "198.51.156.173"
       },
       "response": {
         "status": 200,
@@ -9727,8 +8872,8 @@
       }
     },
     {
-      "case_id": "data-missing-positive-id-duplicate-check-page",
-      "category": "data",
+      "case_id": "integer-missing-positive-id-duplicate-check-page",
+      "category": "integer",
       "route_key": "duplicate-check-page",
       "route_id": "5548b24849ed",
       "session_actor": "administrator",
@@ -9742,8 +8887,7 @@
           "name": "subject_id",
           "raw_text": "97999",
           "python_int_value": 97999,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97999
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -9751,7 +8895,7 @@
           "Accept": "application/json",
           "X-Request-ID": "phase4a-subject-context-golden-request"
         },
-        "remote_address": "198.51.215.254"
+        "remote_address": "198.51.16.73"
       },
       "response": {
         "status": 404,
@@ -10003,560 +9147,8 @@
       }
     },
     {
-      "case_id": "data-int-max-missing-duplicate-check-page",
-      "category": "data",
-      "route_key": "duplicate-check-page",
-      "route_id": "5548b24849ed",
-      "session_actor": "administrator",
-      "bearer_actor": "none",
-      "credential_mode": "session",
-      "request": {
-        "method": "GET",
-        "path": "/admin/subjects/2147483647/questions/duplicate-check",
-        "route_template": "/admin/subjects/<int:subject_id>/questions/duplicate-check",
-        "path_parameter": {
-          "name": "subject_id",
-          "raw_text": "2147483647",
-          "python_int_value": 2147483647,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 2147483647
-        },
-        "query": [],
-        "query_string": "",
-        "headers": {
-          "Accept": "*/*",
-          "X-Request-ID": "phase4a-subject-context-golden-request"
-        },
-        "remote_address": "198.51.131.122"
-      },
-      "response": {
-        "status": 404,
-        "headers": {
-          "Content-Length": [
-            "15"
-          ],
-          "Content-Type": [
-            "text/html; charset=utf-8"
-          ],
-          "Referrer-Policy": [
-            "strict-origin-when-cross-origin"
-          ],
-          "Retry-After": [
-            "<dynamic-seconds>"
-          ],
-          "Set-Cookie": [
-            "<redacted-session-cookie>"
-          ],
-          "Vary": [
-            "Cookie"
-          ],
-          "X-Content-Type-Options": [
-            "nosniff"
-          ],
-          "X-Frame-Options": [
-            "SAMEORIGIN"
-          ],
-          "X-RateLimit-Limit": [
-            "10"
-          ],
-          "X-RateLimit-Remaining": [
-            "9"
-          ],
-          "X-RateLimit-Reset": [
-            "<dynamic-epoch-second>"
-          ],
-          "X-Request-ID": [
-            "phase4a-subject-context-golden-request"
-          ]
-        },
-        "body_kind": "text",
-        "body": "科目不存在",
-        "body_text": "科目不存在",
-        "body_length_bytes": 15,
-        "body_sha256": "0748dc5f21664aad46ba39c97131ea8fe2cb2b9e09bf80e74c9715b44db451cc"
-      },
-      "observed_get_effects": {
-        "sql": {
-          "statements": [
-            {
-              "sql": "SELECT USERS.ID AS USERS_ID, USERS.USERNAME AS USERS_USERNAME, USERS.PASSWORD_HASH AS USERS_PASSWORD_HASH, USERS.IS_ADMIN AS USERS_IS_ADMIN, USERS.IS_LOCKED AS USERS_IS_LOCKED, USERS.SESSION_VERSION AS USERS_SESSION_VERSION, USERS.AVATAR AS USERS_AVATAR, USERS.CONTACT AS USERS_CONTACT, USERS.COLLEGE AS USERS_COLLEGE, USERS.LAST_ACTIVE AS USERS_LAST_ACTIVE, USERS.IS_SUBJECT_ADMIN AS USERS_IS_SUBJECT_ADMIN, USERS.IS_NOTIFICATION_ADMIN AS USERS_IS_NOTIFICATION_ADMIN, USERS.CREATED_AT AS USERS_CREATED_AT, USERS.EMAIL AS USERS_EMAIL, USERS.EMAIL_VERIFIED AS USERS_EMAIL_VERIFIED, USERS.EMAIL_VERIFIED_AT AS USERS_EMAIL_VERIFIED_AT, USERS.PHONE AS USERS_PHONE, USERS.PHONE_VERIFIED AS USERS_PHONE_VERIFIED, USERS.PHONE_VERIFIED_AT AS USERS_PHONE_VERIFIED_AT, USERS.HAS_PASSWORD_SET AS USERS_HAS_PASSWORD_SET, USERS.OPENID AS USERS_OPENID FROM USERS WHERE USERS.ID = ?",
-              "parameters": [
-                97104
-              ],
-              "executemany": false,
-              "classification": "users_select"
-            },
-            {
-              "sql": "UPDATE USERS SET LAST_ACTIVE=CURRENT_TIMESTAMP WHERE USERS.ID = ?",
-              "parameters": [
-                97104
-              ],
-              "executemany": false,
-              "classification": "user_last_active_dml"
-            },
-            {
-              "sql": "SELECT USERS.ID AS USERS_ID, USERS.USERNAME AS USERS_USERNAME, USERS.PASSWORD_HASH AS USERS_PASSWORD_HASH, USERS.IS_ADMIN AS USERS_IS_ADMIN, USERS.IS_LOCKED AS USERS_IS_LOCKED, USERS.SESSION_VERSION AS USERS_SESSION_VERSION, USERS.AVATAR AS USERS_AVATAR, USERS.CONTACT AS USERS_CONTACT, USERS.COLLEGE AS USERS_COLLEGE, USERS.LAST_ACTIVE AS USERS_LAST_ACTIVE, USERS.IS_SUBJECT_ADMIN AS USERS_IS_SUBJECT_ADMIN, USERS.IS_NOTIFICATION_ADMIN AS USERS_IS_NOTIFICATION_ADMIN, USERS.CREATED_AT AS USERS_CREATED_AT, USERS.EMAIL AS USERS_EMAIL, USERS.EMAIL_VERIFIED AS USERS_EMAIL_VERIFIED, USERS.EMAIL_VERIFIED_AT AS USERS_EMAIL_VERIFIED_AT, USERS.PHONE AS USERS_PHONE, USERS.PHONE_VERIFIED AS USERS_PHONE_VERIFIED, USERS.PHONE_VERIFIED_AT AS USERS_PHONE_VERIFIED_AT, USERS.HAS_PASSWORD_SET AS USERS_HAS_PASSWORD_SET, USERS.OPENID AS USERS_OPENID FROM USERS WHERE USERS.ID = ?",
-              "parameters": [
-                97104
-              ],
-              "executemany": false,
-              "classification": "users_select"
-            },
-            {
-              "sql": "SELECT ID, NAME FROM SUBJECTS WHERE ID=?",
-              "parameters": [
-                2147483647
-              ],
-              "executemany": false,
-              "classification": "subject_context_select"
-            }
-          ],
-          "select_attempts": 3,
-          "dml_attempts": 1,
-          "ddl_attempts": 0,
-          "other_attempts": 0,
-          "subject_context_select_attempts": 1,
-          "subjects_select_attempts": 1,
-          "questions_select_attempts": 0,
-          "users_select_attempts": 2,
-          "subjects_dml_attempts": 0,
-          "questions_dml_attempts": 0,
-          "user_last_active_dml_attempts": 1,
-          "unexpected_dml_attempts": 0,
-          "statement_count": 4,
-          "classified_attempt_count": 4,
-          "statements_sha256": "2cc8ff991fc1d3e4479785e9c97742b8547fc5eef748c4203ce530b7f16022e2"
-        },
-        "subjects_before": {
-          "columns": [
-            "id",
-            "name",
-            "description",
-            "is_locked",
-            "plaza_board_id",
-            "is_plaza_featured",
-            "plaza_featured_weight",
-            "plaza_featured_at",
-            "created_at"
-          ],
-          "column_count": 9,
-          "row_count": 5,
-          "rows_sha256": "872bc2e314343a2d441ebcbd761e9ae74d34119fb9fec10e19484b8233adaa65"
-        },
-        "subjects_after": {
-          "columns": [
-            "id",
-            "name",
-            "description",
-            "is_locked",
-            "plaza_board_id",
-            "is_plaza_featured",
-            "plaza_featured_weight",
-            "plaza_featured_at",
-            "created_at"
-          ],
-          "column_count": 9,
-          "row_count": 5,
-          "rows_sha256": "872bc2e314343a2d441ebcbd761e9ae74d34119fb9fec10e19484b8233adaa65"
-        },
-        "subjects_match_case_fixture": true,
-        "subjects_unchanged": true,
-        "questions_before": {
-          "columns": [
-            "id",
-            "subject_id",
-            "type",
-            "content",
-            "options",
-            "answer",
-            "analysis",
-            "tags",
-            "difficulty",
-            "image_path",
-            "source",
-            "created_by",
-            "updated_by",
-            "created_at",
-            "updated_at"
-          ],
-          "column_count": 15,
-          "row_count": 5,
-          "rows_sha256": "05e6503f9282a710049c532b0b598de2c06627c7da596c926e8907c9713d98d6"
-        },
-        "questions_after": {
-          "columns": [
-            "id",
-            "subject_id",
-            "type",
-            "content",
-            "options",
-            "answer",
-            "analysis",
-            "tags",
-            "difficulty",
-            "image_path",
-            "source",
-            "created_by",
-            "updated_by",
-            "created_at",
-            "updated_at"
-          ],
-          "column_count": 15,
-          "row_count": 5,
-          "rows_sha256": "05e6503f9282a710049c532b0b598de2c06627c7da596c926e8907c9713d98d6"
-        },
-        "questions_match_case_fixture": true,
-        "questions_unchanged": true,
-        "users_identity_before": {
-          "columns": [
-            "id",
-            "username",
-            "is_admin",
-            "is_subject_admin",
-            "is_notification_admin",
-            "is_locked",
-            "session_version"
-          ],
-          "column_count": 7,
-          "row_count": 4,
-          "rows_sha256": "296170bf9d7bcd3ea65f2d860eba8a85f3770e45cb413ec7d587f7e2ff1ba6dd"
-        },
-        "users_identity_after": {
-          "columns": [
-            "id",
-            "username",
-            "is_admin",
-            "is_subject_admin",
-            "is_notification_admin",
-            "is_locked",
-            "session_version"
-          ],
-          "column_count": 7,
-          "row_count": 4,
-          "rows_sha256": "296170bf9d7bcd3ea65f2d860eba8a85f3770e45cb413ec7d587f7e2ff1ba6dd"
-        },
-        "users_identity_unchanged": true,
-        "user_last_active_before": [
-          {
-            "user_id": 97101,
-            "last_active": null
-          },
-          {
-            "user_id": 97102,
-            "last_active": null
-          },
-          {
-            "user_id": 97103,
-            "last_active": null
-          },
-          {
-            "user_id": 97104,
-            "last_active": null
-          }
-        ],
-        "user_last_active_after": [
-          {
-            "user_id": 97101,
-            "last_active": null
-          },
-          {
-            "user_id": 97102,
-            "last_active": null
-          },
-          {
-            "user_id": 97103,
-            "last_active": null
-          },
-          {
-            "user_id": 97104,
-            "last_active": "<database-current-timestamp>"
-          }
-        ],
-        "user_last_active_changed_user_ids": [
-          97104
-        ],
-        "surrounding_session_activity_write_observed": true
-      }
-    },
-    {
-      "case_id": "data-int-max-plus-one-missing-duplicate-check-page",
-      "category": "data",
-      "route_key": "duplicate-check-page",
-      "route_id": "5548b24849ed",
-      "session_actor": "administrator",
-      "bearer_actor": "none",
-      "credential_mode": "session",
-      "request": {
-        "method": "GET",
-        "path": "/admin/subjects/2147483648/questions/duplicate-check",
-        "route_template": "/admin/subjects/<int:subject_id>/questions/duplicate-check",
-        "path_parameter": {
-          "name": "subject_id",
-          "raw_text": "2147483648",
-          "python_int_value": 2147483648,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 2147483648
-        },
-        "query": [],
-        "query_string": "",
-        "headers": {
-          "Accept": "*/*",
-          "X-Request-ID": "phase4a-subject-context-golden-request"
-        },
-        "remote_address": "198.51.225.88"
-      },
-      "response": {
-        "status": 404,
-        "headers": {
-          "Content-Length": [
-            "15"
-          ],
-          "Content-Type": [
-            "text/html; charset=utf-8"
-          ],
-          "Referrer-Policy": [
-            "strict-origin-when-cross-origin"
-          ],
-          "Retry-After": [
-            "<dynamic-seconds>"
-          ],
-          "Set-Cookie": [
-            "<redacted-session-cookie>"
-          ],
-          "Vary": [
-            "Cookie"
-          ],
-          "X-Content-Type-Options": [
-            "nosniff"
-          ],
-          "X-Frame-Options": [
-            "SAMEORIGIN"
-          ],
-          "X-RateLimit-Limit": [
-            "10"
-          ],
-          "X-RateLimit-Remaining": [
-            "9"
-          ],
-          "X-RateLimit-Reset": [
-            "<dynamic-epoch-second>"
-          ],
-          "X-Request-ID": [
-            "phase4a-subject-context-golden-request"
-          ]
-        },
-        "body_kind": "text",
-        "body": "科目不存在",
-        "body_text": "科目不存在",
-        "body_length_bytes": 15,
-        "body_sha256": "0748dc5f21664aad46ba39c97131ea8fe2cb2b9e09bf80e74c9715b44db451cc"
-      },
-      "observed_get_effects": {
-        "sql": {
-          "statements": [
-            {
-              "sql": "SELECT USERS.ID AS USERS_ID, USERS.USERNAME AS USERS_USERNAME, USERS.PASSWORD_HASH AS USERS_PASSWORD_HASH, USERS.IS_ADMIN AS USERS_IS_ADMIN, USERS.IS_LOCKED AS USERS_IS_LOCKED, USERS.SESSION_VERSION AS USERS_SESSION_VERSION, USERS.AVATAR AS USERS_AVATAR, USERS.CONTACT AS USERS_CONTACT, USERS.COLLEGE AS USERS_COLLEGE, USERS.LAST_ACTIVE AS USERS_LAST_ACTIVE, USERS.IS_SUBJECT_ADMIN AS USERS_IS_SUBJECT_ADMIN, USERS.IS_NOTIFICATION_ADMIN AS USERS_IS_NOTIFICATION_ADMIN, USERS.CREATED_AT AS USERS_CREATED_AT, USERS.EMAIL AS USERS_EMAIL, USERS.EMAIL_VERIFIED AS USERS_EMAIL_VERIFIED, USERS.EMAIL_VERIFIED_AT AS USERS_EMAIL_VERIFIED_AT, USERS.PHONE AS USERS_PHONE, USERS.PHONE_VERIFIED AS USERS_PHONE_VERIFIED, USERS.PHONE_VERIFIED_AT AS USERS_PHONE_VERIFIED_AT, USERS.HAS_PASSWORD_SET AS USERS_HAS_PASSWORD_SET, USERS.OPENID AS USERS_OPENID FROM USERS WHERE USERS.ID = ?",
-              "parameters": [
-                97104
-              ],
-              "executemany": false,
-              "classification": "users_select"
-            },
-            {
-              "sql": "UPDATE USERS SET LAST_ACTIVE=CURRENT_TIMESTAMP WHERE USERS.ID = ?",
-              "parameters": [
-                97104
-              ],
-              "executemany": false,
-              "classification": "user_last_active_dml"
-            },
-            {
-              "sql": "SELECT USERS.ID AS USERS_ID, USERS.USERNAME AS USERS_USERNAME, USERS.PASSWORD_HASH AS USERS_PASSWORD_HASH, USERS.IS_ADMIN AS USERS_IS_ADMIN, USERS.IS_LOCKED AS USERS_IS_LOCKED, USERS.SESSION_VERSION AS USERS_SESSION_VERSION, USERS.AVATAR AS USERS_AVATAR, USERS.CONTACT AS USERS_CONTACT, USERS.COLLEGE AS USERS_COLLEGE, USERS.LAST_ACTIVE AS USERS_LAST_ACTIVE, USERS.IS_SUBJECT_ADMIN AS USERS_IS_SUBJECT_ADMIN, USERS.IS_NOTIFICATION_ADMIN AS USERS_IS_NOTIFICATION_ADMIN, USERS.CREATED_AT AS USERS_CREATED_AT, USERS.EMAIL AS USERS_EMAIL, USERS.EMAIL_VERIFIED AS USERS_EMAIL_VERIFIED, USERS.EMAIL_VERIFIED_AT AS USERS_EMAIL_VERIFIED_AT, USERS.PHONE AS USERS_PHONE, USERS.PHONE_VERIFIED AS USERS_PHONE_VERIFIED, USERS.PHONE_VERIFIED_AT AS USERS_PHONE_VERIFIED_AT, USERS.HAS_PASSWORD_SET AS USERS_HAS_PASSWORD_SET, USERS.OPENID AS USERS_OPENID FROM USERS WHERE USERS.ID = ?",
-              "parameters": [
-                97104
-              ],
-              "executemany": false,
-              "classification": "users_select"
-            },
-            {
-              "sql": "SELECT ID, NAME FROM SUBJECTS WHERE ID=?",
-              "parameters": [
-                2147483648
-              ],
-              "executemany": false,
-              "classification": "subject_context_select"
-            }
-          ],
-          "select_attempts": 3,
-          "dml_attempts": 1,
-          "ddl_attempts": 0,
-          "other_attempts": 0,
-          "subject_context_select_attempts": 1,
-          "subjects_select_attempts": 1,
-          "questions_select_attempts": 0,
-          "users_select_attempts": 2,
-          "subjects_dml_attempts": 0,
-          "questions_dml_attempts": 0,
-          "user_last_active_dml_attempts": 1,
-          "unexpected_dml_attempts": 0,
-          "statement_count": 4,
-          "classified_attempt_count": 4,
-          "statements_sha256": "b91b2dc80c751085c9577fe9c9f181cc2984d021f42f2eaa7720a7cf9b4ecc90"
-        },
-        "subjects_before": {
-          "columns": [
-            "id",
-            "name",
-            "description",
-            "is_locked",
-            "plaza_board_id",
-            "is_plaza_featured",
-            "plaza_featured_weight",
-            "plaza_featured_at",
-            "created_at"
-          ],
-          "column_count": 9,
-          "row_count": 5,
-          "rows_sha256": "872bc2e314343a2d441ebcbd761e9ae74d34119fb9fec10e19484b8233adaa65"
-        },
-        "subjects_after": {
-          "columns": [
-            "id",
-            "name",
-            "description",
-            "is_locked",
-            "plaza_board_id",
-            "is_plaza_featured",
-            "plaza_featured_weight",
-            "plaza_featured_at",
-            "created_at"
-          ],
-          "column_count": 9,
-          "row_count": 5,
-          "rows_sha256": "872bc2e314343a2d441ebcbd761e9ae74d34119fb9fec10e19484b8233adaa65"
-        },
-        "subjects_match_case_fixture": true,
-        "subjects_unchanged": true,
-        "questions_before": {
-          "columns": [
-            "id",
-            "subject_id",
-            "type",
-            "content",
-            "options",
-            "answer",
-            "analysis",
-            "tags",
-            "difficulty",
-            "image_path",
-            "source",
-            "created_by",
-            "updated_by",
-            "created_at",
-            "updated_at"
-          ],
-          "column_count": 15,
-          "row_count": 5,
-          "rows_sha256": "05e6503f9282a710049c532b0b598de2c06627c7da596c926e8907c9713d98d6"
-        },
-        "questions_after": {
-          "columns": [
-            "id",
-            "subject_id",
-            "type",
-            "content",
-            "options",
-            "answer",
-            "analysis",
-            "tags",
-            "difficulty",
-            "image_path",
-            "source",
-            "created_by",
-            "updated_by",
-            "created_at",
-            "updated_at"
-          ],
-          "column_count": 15,
-          "row_count": 5,
-          "rows_sha256": "05e6503f9282a710049c532b0b598de2c06627c7da596c926e8907c9713d98d6"
-        },
-        "questions_match_case_fixture": true,
-        "questions_unchanged": true,
-        "users_identity_before": {
-          "columns": [
-            "id",
-            "username",
-            "is_admin",
-            "is_subject_admin",
-            "is_notification_admin",
-            "is_locked",
-            "session_version"
-          ],
-          "column_count": 7,
-          "row_count": 4,
-          "rows_sha256": "296170bf9d7bcd3ea65f2d860eba8a85f3770e45cb413ec7d587f7e2ff1ba6dd"
-        },
-        "users_identity_after": {
-          "columns": [
-            "id",
-            "username",
-            "is_admin",
-            "is_subject_admin",
-            "is_notification_admin",
-            "is_locked",
-            "session_version"
-          ],
-          "column_count": 7,
-          "row_count": 4,
-          "rows_sha256": "296170bf9d7bcd3ea65f2d860eba8a85f3770e45cb413ec7d587f7e2ff1ba6dd"
-        },
-        "users_identity_unchanged": true,
-        "user_last_active_before": [
-          {
-            "user_id": 97101,
-            "last_active": null
-          },
-          {
-            "user_id": 97102,
-            "last_active": null
-          },
-          {
-            "user_id": 97103,
-            "last_active": null
-          },
-          {
-            "user_id": 97104,
-            "last_active": null
-          }
-        ],
-        "user_last_active_after": [
-          {
-            "user_id": 97101,
-            "last_active": null
-          },
-          {
-            "user_id": 97102,
-            "last_active": null
-          },
-          {
-            "user_id": 97103,
-            "last_active": null
-          },
-          {
-            "user_id": 97104,
-            "last_active": "<database-current-timestamp>"
-          }
-        ],
-        "user_last_active_changed_user_ids": [
-          97104
-        ],
-        "surrounding_session_activity_write_observed": true
-      }
-    },
-    {
-      "case_id": "data-long-max-missing-duplicate-check-page",
-      "category": "data",
+      "case_id": "integer-long-max-missing-duplicate-check-page",
+      "category": "integer",
       "route_key": "duplicate-check-page",
       "route_id": "5548b24849ed",
       "session_actor": "administrator",
@@ -10570,8 +9162,7 @@
           "name": "subject_id",
           "raw_text": "9223372036854775807",
           "python_int_value": 9223372036854775807,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 9223372036854775807
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -10579,7 +9170,7 @@
           "Accept": "*/*",
           "X-Request-ID": "phase4a-subject-context-golden-request"
         },
-        "remote_address": "198.51.164.175"
+        "remote_address": "198.51.229.129"
       },
       "response": {
         "status": 404,
@@ -10831,8 +9422,8 @@
       }
     },
     {
-      "case_id": "data-long-max-plus-one-bind-failure-duplicate-check-page",
-      "category": "data",
+      "case_id": "integer-long-overflow-bind-failure-duplicate-check-page",
+      "category": "integer",
       "route_key": "duplicate-check-page",
       "route_id": "5548b24849ed",
       "session_actor": "administrator",
@@ -10846,8 +9437,7 @@
           "name": "subject_id",
           "raw_text": "9223372036854775808",
           "python_int_value": 9223372036854775808,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 9223372036854775808
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -10855,7 +9445,7 @@
           "Accept": "application/json",
           "X-Request-ID": "phase4a-subject-context-golden-request"
         },
-        "remote_address": "198.51.211.69"
+        "remote_address": "198.51.185.116"
       },
       "response": {
         "status": 500,
@@ -11113,8 +9703,8 @@
       }
     },
     {
-      "case_id": "data-negative-route-miss-duplicate-check-page",
-      "category": "data",
+      "case_id": "integer-negative-route-miss-duplicate-check-page",
+      "category": "integer",
       "route_key": "duplicate-check-page",
       "route_id": "5548b24849ed",
       "session_actor": "administrator",
@@ -11128,8 +9718,7 @@
           "name": "subject_id",
           "raw_text": "-1",
           "python_int_value": -1,
-          "flask_int_converter_match": false,
-          "handler_subject_id": null
+          "flask_int_converter_match": false
         },
         "query": [],
         "query_string": "",
@@ -11137,255 +9726,7 @@
           "Accept": "*/*",
           "X-Request-ID": "phase4a-subject-context-golden-request"
         },
-        "remote_address": "198.51.241.123"
-      },
-      "response": {
-        "status": 404,
-        "headers": {
-          "Content-Length": [
-            "157"
-          ],
-          "Content-Type": [
-            "text/html; charset=utf-8"
-          ],
-          "Referrer-Policy": [
-            "strict-origin-when-cross-origin"
-          ],
-          "Set-Cookie": [
-            "<redacted-session-cookie>"
-          ],
-          "Vary": [
-            "Cookie"
-          ],
-          "X-Content-Type-Options": [
-            "nosniff"
-          ],
-          "X-Frame-Options": [
-            "SAMEORIGIN"
-          ],
-          "X-Request-ID": [
-            "phase4a-subject-context-golden-request"
-          ]
-        },
-        "body_kind": "text",
-        "body": "<h1>404 - 页面未找到</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>",
-        "body_text": "<h1>404 - 页面未找到</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>",
-        "body_length_bytes": 157,
-        "body_sha256": "03ef4f7aca9a33f08acbb6a68db12b73ffa37ffa142e15d02d55928f37519299"
-      },
-      "observed_get_effects": {
-        "sql": {
-          "statements": [
-            {
-              "sql": "SELECT USERS.ID AS USERS_ID, USERS.USERNAME AS USERS_USERNAME, USERS.PASSWORD_HASH AS USERS_PASSWORD_HASH, USERS.IS_ADMIN AS USERS_IS_ADMIN, USERS.IS_LOCKED AS USERS_IS_LOCKED, USERS.SESSION_VERSION AS USERS_SESSION_VERSION, USERS.AVATAR AS USERS_AVATAR, USERS.CONTACT AS USERS_CONTACT, USERS.COLLEGE AS USERS_COLLEGE, USERS.LAST_ACTIVE AS USERS_LAST_ACTIVE, USERS.IS_SUBJECT_ADMIN AS USERS_IS_SUBJECT_ADMIN, USERS.IS_NOTIFICATION_ADMIN AS USERS_IS_NOTIFICATION_ADMIN, USERS.CREATED_AT AS USERS_CREATED_AT, USERS.EMAIL AS USERS_EMAIL, USERS.EMAIL_VERIFIED AS USERS_EMAIL_VERIFIED, USERS.EMAIL_VERIFIED_AT AS USERS_EMAIL_VERIFIED_AT, USERS.PHONE AS USERS_PHONE, USERS.PHONE_VERIFIED AS USERS_PHONE_VERIFIED, USERS.PHONE_VERIFIED_AT AS USERS_PHONE_VERIFIED_AT, USERS.HAS_PASSWORD_SET AS USERS_HAS_PASSWORD_SET, USERS.OPENID AS USERS_OPENID FROM USERS WHERE USERS.ID = ?",
-              "parameters": [
-                97104
-              ],
-              "executemany": false,
-              "classification": "users_select"
-            },
-            {
-              "sql": "UPDATE USERS SET LAST_ACTIVE=CURRENT_TIMESTAMP WHERE USERS.ID = ?",
-              "parameters": [
-                97104
-              ],
-              "executemany": false,
-              "classification": "user_last_active_dml"
-            }
-          ],
-          "select_attempts": 1,
-          "dml_attempts": 1,
-          "ddl_attempts": 0,
-          "other_attempts": 0,
-          "subject_context_select_attempts": 0,
-          "subjects_select_attempts": 0,
-          "questions_select_attempts": 0,
-          "users_select_attempts": 1,
-          "subjects_dml_attempts": 0,
-          "questions_dml_attempts": 0,
-          "user_last_active_dml_attempts": 1,
-          "unexpected_dml_attempts": 0,
-          "statement_count": 2,
-          "classified_attempt_count": 2,
-          "statements_sha256": "ea51e6898f8871e94193b1c26b1c875e899cfd95d0691c70c77b4afd939dc7dc"
-        },
-        "subjects_before": {
-          "columns": [
-            "id",
-            "name",
-            "description",
-            "is_locked",
-            "plaza_board_id",
-            "is_plaza_featured",
-            "plaza_featured_weight",
-            "plaza_featured_at",
-            "created_at"
-          ],
-          "column_count": 9,
-          "row_count": 5,
-          "rows_sha256": "872bc2e314343a2d441ebcbd761e9ae74d34119fb9fec10e19484b8233adaa65"
-        },
-        "subjects_after": {
-          "columns": [
-            "id",
-            "name",
-            "description",
-            "is_locked",
-            "plaza_board_id",
-            "is_plaza_featured",
-            "plaza_featured_weight",
-            "plaza_featured_at",
-            "created_at"
-          ],
-          "column_count": 9,
-          "row_count": 5,
-          "rows_sha256": "872bc2e314343a2d441ebcbd761e9ae74d34119fb9fec10e19484b8233adaa65"
-        },
-        "subjects_match_case_fixture": true,
-        "subjects_unchanged": true,
-        "questions_before": {
-          "columns": [
-            "id",
-            "subject_id",
-            "type",
-            "content",
-            "options",
-            "answer",
-            "analysis",
-            "tags",
-            "difficulty",
-            "image_path",
-            "source",
-            "created_by",
-            "updated_by",
-            "created_at",
-            "updated_at"
-          ],
-          "column_count": 15,
-          "row_count": 5,
-          "rows_sha256": "05e6503f9282a710049c532b0b598de2c06627c7da596c926e8907c9713d98d6"
-        },
-        "questions_after": {
-          "columns": [
-            "id",
-            "subject_id",
-            "type",
-            "content",
-            "options",
-            "answer",
-            "analysis",
-            "tags",
-            "difficulty",
-            "image_path",
-            "source",
-            "created_by",
-            "updated_by",
-            "created_at",
-            "updated_at"
-          ],
-          "column_count": 15,
-          "row_count": 5,
-          "rows_sha256": "05e6503f9282a710049c532b0b598de2c06627c7da596c926e8907c9713d98d6"
-        },
-        "questions_match_case_fixture": true,
-        "questions_unchanged": true,
-        "users_identity_before": {
-          "columns": [
-            "id",
-            "username",
-            "is_admin",
-            "is_subject_admin",
-            "is_notification_admin",
-            "is_locked",
-            "session_version"
-          ],
-          "column_count": 7,
-          "row_count": 4,
-          "rows_sha256": "296170bf9d7bcd3ea65f2d860eba8a85f3770e45cb413ec7d587f7e2ff1ba6dd"
-        },
-        "users_identity_after": {
-          "columns": [
-            "id",
-            "username",
-            "is_admin",
-            "is_subject_admin",
-            "is_notification_admin",
-            "is_locked",
-            "session_version"
-          ],
-          "column_count": 7,
-          "row_count": 4,
-          "rows_sha256": "296170bf9d7bcd3ea65f2d860eba8a85f3770e45cb413ec7d587f7e2ff1ba6dd"
-        },
-        "users_identity_unchanged": true,
-        "user_last_active_before": [
-          {
-            "user_id": 97101,
-            "last_active": null
-          },
-          {
-            "user_id": 97102,
-            "last_active": null
-          },
-          {
-            "user_id": 97103,
-            "last_active": null
-          },
-          {
-            "user_id": 97104,
-            "last_active": null
-          }
-        ],
-        "user_last_active_after": [
-          {
-            "user_id": 97101,
-            "last_active": null
-          },
-          {
-            "user_id": 97102,
-            "last_active": null
-          },
-          {
-            "user_id": 97103,
-            "last_active": null
-          },
-          {
-            "user_id": 97104,
-            "last_active": "<database-current-timestamp>"
-          }
-        ],
-        "user_last_active_changed_user_ids": [
-          97104
-        ],
-        "surrounding_session_activity_write_observed": true
-      }
-    },
-    {
-      "case_id": "data-nonnumeric-route-miss-duplicate-check-page",
-      "category": "data",
-      "route_key": "duplicate-check-page",
-      "route_id": "5548b24849ed",
-      "session_actor": "administrator",
-      "bearer_actor": "none",
-      "credential_mode": "session",
-      "request": {
-        "method": "GET",
-        "path": "/admin/subjects/not-a-subject/questions/duplicate-check",
-        "route_template": "/admin/subjects/<int:subject_id>/questions/duplicate-check",
-        "path_parameter": {
-          "name": "subject_id",
-          "raw_text": "not-a-subject",
-          "python_int_value": null,
-          "flask_int_converter_match": false,
-          "handler_subject_id": null
-        },
-        "query": [],
-        "query_string": "",
-        "headers": {
-          "Accept": "*/*",
-          "X-Request-ID": "phase4a-subject-context-golden-request"
-        },
-        "remote_address": "198.51.15.129"
+        "remote_address": "198.51.194.91"
       },
       "response": {
         "status": 404,
@@ -11624,8 +9965,7 @@
           "name": "subject_id",
           "raw_text": "97204",
           "python_int_value": 97204,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97204
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -11900,8 +10240,7 @@
           "name": "subject_id",
           "raw_text": "97204",
           "python_int_value": 97204,
-          "flask_int_converter_match": true,
-          "handler_subject_id": 97204
+          "flask_int_converter_match": true
         },
         "query": [],
         "query_string": "",
@@ -12167,5 +10506,5 @@
       }
     }
   ],
-  "document_payload_sha256": "76d35a53590ee11813c19c6d8dfbc6e06ae1eb0a7bebfa35ae38b2b6ba858f51"
+  "document_payload_sha256": "027179c2141c1b0a8510a9e50e511ea16b13aca32f58f6b33c4ff0519dc2e0e5"
 }

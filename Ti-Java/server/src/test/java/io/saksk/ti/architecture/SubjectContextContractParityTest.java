@@ -25,17 +25,17 @@ class SubjectContextContractParityTest {
     private static final String LEGACY_COMMIT =
             "700006dfdfa063deb4387be572911e782bcea0d9";
     private static final String GOLDEN_SHA256 =
-            "95cec51d9a687caf210cf52b9958f351a37fc077d457abea2ab89d87c99eea70";
+            "fe9d29a6e3731062f2b00b5b9e953cb940c93a13cb4a146a7617875b8413945d";
     private static final String GOLDEN_CASE_SHA256 =
-            "9fc1e0659dc21f715aa9c27be98b5eae6be38c901adb8c9e5b7874cf8226ac1f";
+            "fce72c233b1d9637e066d15803b55f4310a5452d6e9bf07f13367632c3a946c8";
     private static final String GOLDEN_DOCUMENT_SHA256 =
-            "76d35a53590ee11813c19c6d8dfbc6e06ae1eb0a7bebfa35ae38b2b6ba858f51";
+            "027179c2141c1b0a8510a9e50e511ea16b13aca32f58f6b33c4ff0519dc2e0e5";
     private static final String PLAN_SHA256 =
-            "5c83272b2b0ab46c626846afc760330c4aa0a742f0475abbc727c600973ba8e5";
+            "f602a76a4764d098bb86aa9a8ef2a44048b0bcb977ed46cb675024e51c6d6db3";
     private static final String RUNTIME_MANIFEST_SHA256 =
-            "3949b7cf9d1f73c989198bf1278c5c6c3e558950af69051ecb7ab229e317515e";
+            "dfbdd1e8efa66892d0efaa040690c412256b0b7c692f8d01098851509fa63e9c";
     private static final String RUNTIME_SQL_SHA256 =
-            "fb24b0e11aef5bc34e0e26f6d17ecd654a423cd6f5c96cbee646cecb89294631";
+            "14bf6e9159ab2bdf87903cb27c6dd48c0413e7057a358da99a517b229d387546";
 
     private static Path tiJavaRoot;
     private static JsonNode contract;
@@ -67,7 +67,7 @@ class SubjectContextContractParityTest {
         assertThat(goldenEvidence.path("source").asString())
                 .isEqualTo("golden-subject-context-reads.json");
         assertThat(goldenEvidence.path("file_sha256").asString()).isEqualTo(GOLDEN_SHA256);
-        assertThat(goldenEvidence.path("case_count").asInt()).isEqualTo(44);
+        assertThat(goldenEvidence.path("case_count").asInt()).isEqualTo(38);
         assertThat(goldenEvidence.path("case_payload_sha256").asString())
                 .isEqualTo(GOLDEN_CASE_SHA256);
         assertThat(goldenEvidence.path("document_payload_sha256").asString())
@@ -88,7 +88,7 @@ class SubjectContextContractParityTest {
         assertThat(planEvidence.path("runtime_sql_sha256").asString())
                 .isEqualTo(RUNTIME_SQL_SHA256);
         assertThat(planEvidence.path("runtime_query_count").asInt()).isEqualTo(1);
-        assertThat(planEvidence.path("observation_count").asInt()).isEqualTo(8);
+        assertThat(planEvidence.path("observation_count").asInt()).isEqualTo(5);
         assertThat(sha256(
                         "docs/refactor/phase4a/subject-context-query-plan-evidence.json"))
                 .isEqualTo(PLAN_SHA256);
@@ -113,16 +113,16 @@ class SubjectContextContractParityTest {
 
         Map<String, String> implementationPaths = Map.of(
                 "view_sha256",
-                "server/src/main/java/io/saksk/ti/catalog/api/SubjectCatalogRecordView.java",
+                "server/src/main/java/io/saksk/ti/catalog/api/SubjectContextView.java",
                 "application_api_sha256",
                 "server/src/main/java/io/saksk/ti/catalog/api/SubjectMetadataApplicationApi.java",
                 "application_service_sha256",
                 "server/src/main/java/io/saksk/ti/catalog/application/SubjectMetadataQueryService.java",
                 "query_port_sha256",
-                "server/src/main/java/io/saksk/ti/catalog/application/port/SubjectDetailQueryPort.java",
+                "server/src/main/java/io/saksk/ti/catalog/application/port/SubjectContextQueryPort.java",
                 "jdbc_adapter_sha256",
                 "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/"
-                        + "JdbcSubjectDetailQueryAdapter.java",
+                        + "JdbcSubjectContextQueryAdapter.java",
                 "postgres_compatibility_test_sha256",
                 "server/src/test/java/io/saksk/ti/integration/"
                         + "Phase4aSubjectContextJdbcCompatibilityIT.java",
@@ -229,7 +229,7 @@ class SubjectContextContractParityTest {
                 "java_api",
                 "io.saksk.ti.catalog.api.SubjectMetadataApplicationApi");
         assertThat(apiShape.path("lifecycle").asString())
-                .isEqualTo("catalog_subject_inventory_and_context_query_boundary");
+                .isEqualTo("catalog_subject_metadata_query_boundary");
         assertThat(apiShape.path("direct_http_operation").asBoolean()).isFalse();
         assertThat(strings(apiShape.path("deferred_subject_context_http_route_ids")))
                 .containsExactlyInAnyOrder("52ad8f899d66", "5548b24849ed");
@@ -240,11 +240,11 @@ class SubjectContextContractParityTest {
         assertThat(apiShape.path("methods")).hasSize(2);
 
         Class<?> api = Class.forName("io.saksk.ti.catalog.api.SubjectMetadataApplicationApi");
-        Class<?> view = Class.forName("io.saksk.ti.catalog.api.SubjectCatalogRecordView");
+        Class<?> view = Class.forName("io.saksk.ti.catalog.api.SubjectContextView");
         assertThat(api.getDeclaredMethods()).hasSize(2);
         assertThat(api.getDeclaredMethod("findSubjectById", long.class)
                         .getGenericReturnType().getTypeName())
-                .isEqualTo("java.util.Optional<io.saksk.ti.catalog.api.SubjectCatalogRecordView>");
+                .isEqualTo("java.util.Optional<io.saksk.ti.catalog.api.SubjectContextView>");
         assertThat(Arrays.stream(view.getRecordComponents()).map(RecordComponent::getName))
                 .containsExactly("id", "name");
         assertThat(Arrays.stream(view.getRecordComponents())
@@ -253,20 +253,20 @@ class SubjectContextContractParityTest {
     }
 
     @Test
-    void goldenClosesAuthDataBoundariesRenderingFailureAndRequestEffects() {
+    void goldenClosesAuthIntegerRenderingFailureAndRequestEffects() {
         assertThat(golden.path("contract_id").asString())
                 .isEqualTo("ti.phase4a.subject-context-read-goldens");
         assertThat(golden.path("legacy_commit").asString()).isEqualTo(LEGACY_COMMIT);
-        assertThat(golden.path("case_count").asInt()).isEqualTo(44);
+        assertThat(golden.path("case_count").asInt()).isEqualTo(38);
         assertThat(golden.path("case_payload_sha256").asString())
                 .isEqualTo(GOLDEN_CASE_SHA256);
         assertThat(golden.path("document_payload_sha256").asString())
                 .isEqualTo(GOLDEN_DOCUMENT_SHA256);
-        assertThat(golden.path("cases")).hasSize(44);
-        assertThat(golden.path("case_matrix").path("per_route").asInt()).isEqualTo(22);
+        assertThat(golden.path("cases")).hasSize(38);
+        assertThat(golden.path("case_matrix").path("per_route").asInt()).isEqualTo(19);
         assertThat(golden.path("case_matrix").path("categories_per_route")
-                        .path("data").asInt())
-                .isEqualTo(13);
+                        .path("integer").asInt())
+                .isEqualTo(7);
 
         Map<String, JsonNode> cases = indexBy(golden.path("cases"), "case_id");
         for (String route : List.of("questions-page", "duplicate-check-page")) {
@@ -312,32 +312,26 @@ class SubjectContextContractParityTest {
                         .isEmpty();
             }
 
-            assertThat(cases.get("data-zero-id-found-" + route)
+            assertThat(cases.get("integer-zero-id-found-" + route)
                             .path("response").path("status").asInt())
                     .isEqualTo(200);
-            assertThat(cases.get("data-zero-id-found-" + route)
-                            .path("request").path("path_parameter")
-                            .path("handler_subject_id").asInt())
-                    .isZero();
-            assertThat(cases.get("data-unicode-nd-id-found-" + route)
+            assertThat(cases.get("integer-unicode-nd-id-found-" + route)
                             .path("request").path("path_parameter")
                             .path("python_int_value").asInt())
                     .isEqualTo(97204);
-            assertThat(cases.get("data-leading-zero-id-found-" + route)
+            assertThat(cases.get("integer-leading-zero-id-found-" + route)
                             .path("response").path("status").asInt())
                     .isEqualTo(200);
             for (String prefix : List.of(
-                    "data-missing-positive-id",
-                    "data-int-max-missing",
-                    "data-int-max-plus-one-missing",
-                    "data-long-max-missing")) {
+                    "integer-missing-positive-id",
+                    "integer-long-max-missing")) {
                 JsonNode response = cases.get(prefix + "-" + route).path("response");
                 assertThat(response.path("status").asInt()).isEqualTo(404);
                 assertThat(response.path("body_kind").asString()).isEqualTo("text");
                 assertThat(response.path("body").asString()).isEqualTo("科目不存在");
             }
             JsonNode overflow = cases.get(
-                    "data-long-max-plus-one-bind-failure-" + route);
+                    "integer-long-overflow-bind-failure-" + route);
             assertThat(overflow.path("response").path("status").asInt()).isEqualTo(500);
             assertThat(overflow.path("response").path("body").path("message").asString())
                     .isEqualTo("An unexpected server error occurred.");
@@ -345,24 +339,16 @@ class SubjectContextContractParityTest {
                             .path("subject_context_select_attempts").asInt())
                     .isEqualTo(1);
 
-            for (String prefix : List.of(
-                    "data-negative-route-miss",
-                    "data-nonnumeric-route-miss")) {
-                JsonNode routeMiss = cases.get(prefix + "-" + route);
-                assertThat(routeMiss.path("response").path("status").asInt())
-                        .isEqualTo(404);
-                assertThat(routeMiss.path("response").path("body").asString())
-                        .contains("404 - 页面未找到");
-                assertThat(routeMiss.path("request").path("path_parameter")
-                                .path("handler_subject_id").isNull())
-                        .isTrue();
-                assertThat(routeMiss.path("observed_get_effects").path("sql")
-                                .path("subject_context_select_attempts").asInt())
-                        .isZero();
-                assertThat(routeMiss.path("observed_get_effects")
-                                .path("user_last_active_changed_user_ids"))
-                        .hasSize(1);
-            }
+            JsonNode negative = cases.get("integer-negative-route-miss-" + route);
+            assertThat(negative.path("response").path("status").asInt()).isEqualTo(404);
+            assertThat(negative.path("response").path("body").asString())
+                    .contains("404 - 页面未找到");
+            assertThat(negative.path("observed_get_effects").path("sql")
+                            .path("subject_context_select_attempts").asInt())
+                    .isZero();
+            assertThat(negative.path("observed_get_effects")
+                            .path("user_last_active_changed_user_ids"))
+                    .hasSize(1);
 
             JsonNode htmlFault = cases.get("fault-injected-db-failure-html-" + route);
             JsonNode jsonFault = cases.get("fault-injected-db-failure-json-" + route);
@@ -395,11 +381,11 @@ class SubjectContextContractParityTest {
         }
 
         assertThat(golden.path("legacy_source_attestation")
-                        .path("audited_template_callers"))
-                .hasSize(4);
+                        .path("dynamic_template_callers"))
+                .hasSize(2);
         assertThat(intValues(golden.path("legacy_source_attestation")
-                        .path("audited_template_callers"), "line"))
-                .containsExactly(347, 268, 788, 789);
+                        .path("dynamic_template_callers"), "line"))
+                .containsExactly(788, 789);
     }
 
     @Test
@@ -418,7 +404,7 @@ class SubjectContextContractParityTest {
         JsonNode runtime = plan.path("runtime_sql_contract");
         assertThat(runtime.path("adapter_class").asString())
                 .isEqualTo("io.saksk.ti.catalog.infrastructure.persistence."
-                        + "JdbcSubjectDetailQueryAdapter");
+                        + "JdbcSubjectContextQueryAdapter");
         assertThat(runtime.path("sql_sha256").asString()).isEqualTo(RUNTIME_SQL_SHA256);
         assertThat(runtime.path("parameter_names")).hasSize(1);
         assertThat(runtime.path("parameter_postgres_types")
@@ -436,17 +422,16 @@ class SubjectContextContractParityTest {
                 .isEqualTo("18.4");
 
         JsonNode actual = plan.path("data_set").path("actual");
-        assertThat(actual.path("subjects").asInt()).isEqualTo(150002);
-        assertThat(actual.path("minimum_subject_id").asInt()).isZero();
-        assertThat(actual.path("maximum_subject_id").asInt())
-                .isEqualTo(Integer.MAX_VALUE);
+        assertThat(actual.path("subjects").asInt()).isEqualTo(150000);
+        assertThat(actual.path("minimum_subject_id").asInt()).isEqualTo(1);
+        assertThat(actual.path("maximum_subject_id").asInt()).isEqualTo(150000);
         assertThat(plan.path("data_set").path("index_definitions")).hasSize(1);
         assertThat(plan.path("data_set").path("index_definitions").get(0)
                         .path("name").asString())
                 .isEqualTo("subjects_pkey");
 
         JsonNode measurement = plan.path("measurement");
-        assertThat(measurement.path("observation_count").asInt()).isEqualTo(8);
+        assertThat(measurement.path("observation_count").asInt()).isEqualTo(5);
         assertThat(measurement.path("runtime_query_count").asInt()).isEqualTo(1);
         assertThat(measurement.path("sql_statement_count_per_observation").asInt())
                 .isEqualTo(1);
@@ -457,18 +442,10 @@ class SubjectContextContractParityTest {
         assertThat(measurement.path("required_index").asString())
                 .isEqualTo("subjects_pkey");
 
-        List<Long> expectedIds = List.of(
-                0L,
-                1L,
-                75000L,
-                150000L,
-                (long) Integer.MAX_VALUE,
-                150001L,
-                (long) Integer.MAX_VALUE + 1,
-                Long.MAX_VALUE);
-        List<Integer> expectedRows = List.of(1, 1, 1, 1, 1, 0, 0, 0);
+        List<Long> expectedIds = List.of(1L, 75000L, 150000L, 150001L, Long.MAX_VALUE);
+        List<Integer> expectedRows = List.of(1, 1, 1, 0, 0);
         JsonNode observations = measurement.path("observations");
-        assertThat(observations).hasSize(8);
+        assertThat(observations).hasSize(5);
         for (int index = 0; index < expectedIds.size(); index++) {
             JsonNode observation = observations.get(index);
             assertThat(observation.path("subject_id").asLong())

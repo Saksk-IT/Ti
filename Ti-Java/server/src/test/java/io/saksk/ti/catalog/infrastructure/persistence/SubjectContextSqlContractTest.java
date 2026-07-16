@@ -9,11 +9,11 @@ class SubjectContextSqlContractTest {
 
     @Test
     void runtimeQueryIsTheSingleExplicitBigintBoundSubjectProjection() {
-        String sql = JdbcSubjectDetailQueryAdapter.SELECT_SUBJECT_BY_ID;
+        String sql = JdbcSubjectContextQueryAdapter.SELECT_SUBJECT_CONTEXT_BY_ID;
 
         assertThat(sql).isEqualTo("""
-                SELECT s.id,
-                       s.name
+                SELECT s.id AS subject_id,
+                       s.name AS subject_name
                 FROM subjects s
                 WHERE s.id = :subject_id""");
         assertThat(sql)
