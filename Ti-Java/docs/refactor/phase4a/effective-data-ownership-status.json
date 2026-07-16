@@ -1,0 +1,29 @@
+{
+  "contract_id": "ti.phase4a.effective-data-ownership-status",
+  "schema_version": 1,
+  "baseline": {
+    "source": "../03-data-ownership.csv",
+    "sha256": "3f9cb0650c523593d7037dc24df902dbccdb3885f261f530e1725a9dc7a31748",
+    "resource_count": 154,
+    "immutable": true
+  },
+  "delta": {
+    "source": "data-ownership-delta.csv",
+    "sha256": "defae3ef1daf1f6151d8fbad9618222578af3c5f24bb34e8c440b635ffd31d0b",
+    "new_resource_count": 1
+  },
+  "effective": {
+    "resource_count": 155,
+    "resources_with_exactly_one_owner": 155,
+    "new_resources": [
+      {
+        "resource_kind": "redis_key",
+        "resource_name": "ti-java:catalog:subject-read-rate:<route>:identity:v1:<hmac_sha256>:<window>:<bucket>",
+        "owner": "catalog",
+        "persistence_role": "runtime_rate_limit",
+        "business_fact": false,
+        "production_cutover": false
+      }
+    ]
+  }
+}

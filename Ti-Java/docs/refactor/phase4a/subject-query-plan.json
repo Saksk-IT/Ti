@@ -1,0 +1,635 @@
+{
+  "evidence_id": "ti.phase4a.subject-query-plan",
+  "schema_version": 1,
+  "generated_at": "2026-07-16T08:13:54.441491Z",
+  "scope": "protected-subject-directory-business-queries",
+  "scope_note": "This artifact covers the two SELECTs owned by the catalog business use case. The separate authentication-authority SELECT is covered by request-level integration evidence, making three SELECTs on the normal successful HTTP path.",
+  "environment": {
+    "container_image": "postgres:18",
+    "container_image_id": "sha256:c2d42a104eb6b37b286a2d9c5cf83f349de4d6516d513d00a2bd9610e2c2e5e4",
+    "container_image_digest": [
+      "postgres@sha256:c2d42a104eb6b37b286a2d9c5cf83f349de4d6516d513d00a2bd9610e2c2e5e4"
+    ],
+    "container_os": "linux",
+    "container_architecture": "arm64",
+    "network": "none",
+    "database": "phase4a_query_plan",
+    "postgresql": {
+      "version": "PostgreSQL 18.4 (Debian 18.4-1.pgdg13+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+      "server_version": "18.4 (Debian 18.4-1.pgdg13+1)",
+      "server_version_num": "180004",
+      "block_size_bytes": "8192",
+      "shared_buffers": "128MB",
+      "work_mem": "4MB",
+      "effective_cache_size": "4GB",
+      "random_page_cost": "4",
+      "effective_io_concurrency": "16",
+      "max_parallel_workers_per_gather": "2",
+      "jit": "on"
+    }
+  },
+  "data_set": {
+    "kind": "public deterministic synthetic fixture",
+    "parameters": {
+      "subject_count": 5000,
+      "question_count": 50000,
+      "question_subject_count": 4000,
+      "user_count": 200,
+      "restrictions_per_user": 250,
+      "identity_id": 4101
+    },
+    "actual_row_counts": {
+      "subjects": 5000,
+      "visible_subjects": 4750,
+      "locked_subjects": 250,
+      "nullable_lock_subjects": 250,
+      "questions": 50000,
+      "subjects_with_questions": 4000,
+      "visible_subjects_with_zero_questions": 950,
+      "users": 200,
+      "restriction_relations": 50000,
+      "selected_identity_id": 4101,
+      "selected_identity_restrictions": 250
+    },
+    "distribution": {
+      "locked_subject": "subject_id % 20 = 0",
+      "nullable_is_locked": "subject_id % 20 = 1",
+      "question_subject": "round-robin over the first 80 percent of subjects",
+      "restriction_subject": "deterministic rotating unique subject IDs per user"
+    },
+    "index_definitions": [
+      "CREATE INDEX ix_questions_subject_id ON public.questions USING btree (subject_id)",
+      "CREATE INDEX ix_questions_subject_type ON public.questions USING btree (subject_id, type)",
+      "CREATE UNIQUE INDEX questions_pkey ON public.questions USING btree (id)",
+      "CREATE UNIQUE INDEX subjects_name_key ON public.subjects USING btree (name)",
+      "CREATE UNIQUE INDEX subjects_pkey ON public.subjects USING btree (id)",
+      "CREATE INDEX ix_user_subjects_user_id ON public.user_subjects USING btree (user_id)",
+      "CREATE UNIQUE INDEX uq_user_subjects_user_subject ON public.user_subjects USING btree (user_id, subject_id)",
+      "CREATE UNIQUE INDEX user_subjects_pkey ON public.user_subjects USING btree (id)",
+      "CREATE INDEX users_email_idx ON public.users USING btree (email)",
+      "CREATE UNIQUE INDEX users_phone_key ON public.users USING btree (phone)",
+      "CREATE UNIQUE INDEX users_pkey ON public.users USING btree (id)",
+      "CREATE UNIQUE INDEX users_username_key ON public.users USING btree (username)"
+    ],
+    "statistics": "VACUUM (ANALYZE) completed for all four queried tables before capture"
+  },
+  "measurement": {
+    "command": "EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)",
+    "runs_per_query": 1,
+    "cache_state": "not controlled; capture follows fixture loading and VACUUM (ANALYZE)",
+    "queries": [
+      {
+        "query_id": "catalog-unlocked-subjects-with-question-counts",
+        "source": "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcSubjectCatalogQueryAdapter.java",
+        "parameters": {},
+        "sql": "SELECT s.id AS subject_id,\n       s.name AS subject_name,\n       COUNT(q.id) AS question_count\nFROM subjects s\nLEFT JOIN questions q ON q.subject_id = s.id\nWHERE s.is_locked = false OR s.is_locked IS NULL\nGROUP BY s.id, s.name\nORDER BY s.id ASC",
+        "sql_sha256": "2edec6c8f1fb08ee1df8e800542d53d9978c270b14a3fe882cf67734a9e1f7e6",
+        "plan_summary": {
+          "result_row_count": 4750,
+          "planning_time_ms": 0.835,
+          "actual_execution_time_ms": 34.03,
+          "root": {
+            "node_type": "Sort",
+            "plan_rows": 4762,
+            "actual_rows": 4750.0,
+            "actual_loops": 1,
+            "actual_startup_time_ms": 33.159,
+            "actual_total_time_ms": 33.607
+          },
+          "node_type_counts": {
+            "Aggregate": 1,
+            "Hash": 1,
+            "Hash Join": 1,
+            "Seq Scan": 2,
+            "Sort": 1
+          },
+          "index_names": [],
+          "relation_names": [
+            "questions",
+            "subjects"
+          ],
+          "root_buffers": {
+            "Shared Hit Blocks": 791,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0
+          },
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Sort",
+              "Actual Startup Time": 33.159,
+              "Actual Total Time": 33.607,
+              "Actual Rows": 4750.0,
+              "Actual Loops": 1,
+              "Sort Key": [
+                "s.id"
+              ]
+            },
+            {
+              "depth": 1,
+              "Node Type": "Aggregate",
+              "Strategy": "Hashed",
+              "Actual Startup Time": 31.098,
+              "Actual Total Time": 31.956,
+              "Actual Rows": 4750.0,
+              "Actual Loops": 1,
+              "Group Key": [
+                "s.name"
+              ]
+            },
+            {
+              "depth": 2,
+              "Node Type": "Hash Join",
+              "Join Type": "Right",
+              "Actual Startup Time": 1.543,
+              "Actual Total Time": 19.201,
+              "Actual Rows": 48450.0,
+              "Actual Loops": 1,
+              "Hash Cond": "(q.subject_id = s.id)"
+            },
+            {
+              "depth": 3,
+              "Node Type": "Seq Scan",
+              "Relation Name": "questions",
+              "Alias": "q",
+              "Actual Startup Time": 0.013,
+              "Actual Total Time": 4.497,
+              "Actual Rows": 50000.0,
+              "Actual Loops": 1
+            },
+            {
+              "depth": 3,
+              "Node Type": "Hash",
+              "Actual Startup Time": 1.502,
+              "Actual Total Time": 1.505,
+              "Actual Rows": 4750.0,
+              "Actual Loops": 1
+            },
+            {
+              "depth": 4,
+              "Node Type": "Seq Scan",
+              "Relation Name": "subjects",
+              "Alias": "s",
+              "Actual Startup Time": 0.01,
+              "Actual Total Time": 0.77,
+              "Actual Rows": 4750.0,
+              "Actual Loops": 1,
+              "Rows Removed by Filter": 250,
+              "Filter": "((NOT is_locked) OR (is_locked IS NULL))"
+            }
+          ]
+        },
+        "explain_analyze": {
+          "Plan": {
+            "Node Type": "Sort",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 2105.5,
+            "Total Cost": 2117.41,
+            "Plan Rows": 4762,
+            "Plan Width": 33,
+            "Actual Startup Time": 33.159,
+            "Actual Total Time": 33.607,
+            "Actual Rows": 4750.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Sort Key": [
+              "s.id"
+            ],
+            "Sort Method": "quicksort",
+            "Sort Space Used": 452,
+            "Sort Space Type": "Memory",
+            "Shared Hit Blocks": 791,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "Aggregate",
+                "Strategy": "Hashed",
+                "Partial Mode": "Simple",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Startup Cost": 1766.99,
+                "Total Cost": 1814.61,
+                "Plan Rows": 4762,
+                "Plan Width": 33,
+                "Actual Startup Time": 31.098,
+                "Actual Total Time": 31.956,
+                "Actual Rows": 4750.0,
+                "Actual Loops": 1,
+                "Disabled": false,
+                "Group Key": [
+                  "s.name"
+                ],
+                "Planned Partitions": 0,
+                "HashAgg Batches": 1,
+                "Peak Memory Usage": 665,
+                "Disk Usage": 0,
+                "Shared Hit Blocks": 788,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0,
+                "Plans": [
+                  {
+                    "Node Type": "Hash Join",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Join Type": "Right",
+                    "Startup Cost": 186.53,
+                    "Total Cost": 1528.89,
+                    "Plan Rows": 47620,
+                    "Plan Width": 29,
+                    "Actual Startup Time": 1.543,
+                    "Actual Total Time": 19.201,
+                    "Actual Rows": 48450.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Inner Unique": true,
+                    "Hash Cond": "(q.subject_id = s.id)",
+                    "Shared Hit Blocks": 788,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Relation Name": "questions",
+                        "Alias": "q",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 1211.0,
+                        "Plan Rows": 50000,
+                        "Plan Width": 8,
+                        "Actual Startup Time": 0.013,
+                        "Actual Total Time": 4.497,
+                        "Actual Rows": 50000.0,
+                        "Actual Loops": 1,
+                        "Disabled": false,
+                        "Shared Hit Blocks": 711,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      },
+                      {
+                        "Node Type": "Hash",
+                        "Parent Relationship": "Inner",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Startup Cost": 127.0,
+                        "Total Cost": 127.0,
+                        "Plan Rows": 4762,
+                        "Plan Width": 25,
+                        "Actual Startup Time": 1.502,
+                        "Actual Total Time": 1.505,
+                        "Actual Rows": 4750.0,
+                        "Actual Loops": 1,
+                        "Disabled": false,
+                        "Hash Buckets": 8192,
+                        "Original Hash Buckets": 8192,
+                        "Hash Batches": 1,
+                        "Original Hash Batches": 1,
+                        "Peak Memory Usage": 329,
+                        "Shared Hit Blocks": 77,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Seq Scan",
+                            "Parent Relationship": "Outer",
+                            "Parallel Aware": false,
+                            "Async Capable": false,
+                            "Relation Name": "subjects",
+                            "Alias": "s",
+                            "Startup Cost": 0.0,
+                            "Total Cost": 127.0,
+                            "Plan Rows": 4762,
+                            "Plan Width": 25,
+                            "Actual Startup Time": 0.01,
+                            "Actual Total Time": 0.77,
+                            "Actual Rows": 4750.0,
+                            "Actual Loops": 1,
+                            "Disabled": false,
+                            "Filter": "((NOT is_locked) OR (is_locked IS NULL))",
+                            "Rows Removed by Filter": 250,
+                            "Shared Hit Blocks": 77,
+                            "Shared Read Blocks": 0,
+                            "Shared Dirtied Blocks": 0,
+                            "Shared Written Blocks": 0,
+                            "Local Hit Blocks": 0,
+                            "Local Read Blocks": 0,
+                            "Local Dirtied Blocks": 0,
+                            "Local Written Blocks": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "Planning": {
+            "Shared Hit Blocks": 182,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0
+          },
+          "Planning Time": 0.835,
+          "Triggers": [],
+          "Execution Time": 34.03
+        }
+      },
+      {
+        "query_id": "identity-subject-access",
+        "source": "server/src/main/java/io/saksk/ti/identity/infrastructure/persistence/JdbcSubjectAccessReadAdapter.java",
+        "parameters": {
+          "identity_id": 4101,
+          "administrator": false
+        },
+        "sql": "SELECT u.is_admin AS administrator,\n       us.subject_id AS restricted_subject_id\nFROM users u\nLEFT JOIN user_subjects us ON us.user_id = u.id\nWHERE u.id = 4101\nORDER BY us.subject_id ASC NULLS FIRST",
+        "sql_sha256": "eaa003d35fcb5aa5fe45cf948d5d0a03ec488bb0b5dc8a2b54e0372779eebba1",
+        "plan_summary": {
+          "result_row_count": 250,
+          "planning_time_ms": 0.538,
+          "actual_execution_time_ms": 0.484,
+          "root": {
+            "node_type": "Sort",
+            "plan_rows": 249,
+            "actual_rows": 250.0,
+            "actual_loops": 1,
+            "actual_startup_time_ms": 0.249,
+            "actual_total_time_ms": 0.261
+          },
+          "node_type_counts": {
+            "Index Only Scan": 1,
+            "Nested Loop": 1,
+            "Seq Scan": 1,
+            "Sort": 1
+          },
+          "index_names": [
+            "uq_user_subjects_user_subject"
+          ],
+          "relation_names": [
+            "user_subjects",
+            "users"
+          ],
+          "root_buffers": {
+            "Shared Hit Blocks": 13,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0
+          },
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Sort",
+              "Actual Startup Time": 0.249,
+              "Actual Total Time": 0.261,
+              "Actual Rows": 250.0,
+              "Actual Loops": 1,
+              "Sort Key": [
+                "us.subject_id NULLS FIRST"
+              ]
+            },
+            {
+              "depth": 1,
+              "Node Type": "Nested Loop",
+              "Join Type": "Left",
+              "Actual Startup Time": 0.117,
+              "Actual Total Time": 0.195,
+              "Actual Rows": 250.0,
+              "Actual Loops": 1
+            },
+            {
+              "depth": 2,
+              "Node Type": "Seq Scan",
+              "Relation Name": "users",
+              "Alias": "u",
+              "Actual Startup Time": 0.016,
+              "Actual Total Time": 0.033,
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Rows Removed by Filter": 199,
+              "Filter": "(id = 4101)"
+            },
+            {
+              "depth": 2,
+              "Node Type": "Index Only Scan",
+              "Relation Name": "user_subjects",
+              "Alias": "us",
+              "Index Name": "uq_user_subjects_user_subject",
+              "Actual Startup Time": 0.097,
+              "Actual Total Time": 0.121,
+              "Actual Rows": 250.0,
+              "Actual Loops": 1,
+              "Index Cond": "(user_id = 4101)"
+            }
+          ]
+        },
+        "explain_analyze": {
+          "Plan": {
+            "Node Type": "Sort",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 31.55,
+            "Total Cost": 32.17,
+            "Plan Rows": 249,
+            "Plan Width": 5,
+            "Actual Startup Time": 0.249,
+            "Actual Total Time": 0.261,
+            "Actual Rows": 250.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Sort Key": [
+              "us.subject_id NULLS FIRST"
+            ],
+            "Sort Method": "quicksort",
+            "Sort Space Used": 30,
+            "Sort Space Type": "Memory",
+            "Shared Hit Blocks": 13,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Left",
+                "Startup Cost": 0.29,
+                "Total Cost": 21.64,
+                "Plan Rows": 249,
+                "Plan Width": 5,
+                "Actual Startup Time": 0.117,
+                "Actual Total Time": 0.195,
+                "Actual Rows": 250.0,
+                "Actual Loops": 1,
+                "Disabled": false,
+                "Inner Unique": false,
+                "Shared Hit Blocks": 10,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0,
+                "Plans": [
+                  {
+                    "Node Type": "Seq Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Relation Name": "users",
+                    "Alias": "u",
+                    "Startup Cost": 0.0,
+                    "Total Cost": 6.5,
+                    "Plan Rows": 1,
+                    "Plan Width": 9,
+                    "Actual Startup Time": 0.016,
+                    "Actual Total Time": 0.033,
+                    "Actual Rows": 1.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Filter": "(id = 4101)",
+                    "Rows Removed by Filter": 199,
+                    "Shared Hit Blocks": 4,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  },
+                  {
+                    "Node Type": "Index Only Scan",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "uq_user_subjects_user_subject",
+                    "Relation Name": "user_subjects",
+                    "Alias": "us",
+                    "Startup Cost": 0.29,
+                    "Total Cost": 12.65,
+                    "Plan Rows": 249,
+                    "Plan Width": 12,
+                    "Actual Startup Time": 0.097,
+                    "Actual Total Time": 0.121,
+                    "Actual Rows": 250.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Index Cond": "(user_id = 4101)",
+                    "Rows Removed by Index Recheck": 0,
+                    "Heap Fetches": 0,
+                    "Index Searches": 1,
+                    "Shared Hit Blocks": 6,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "Planning": {
+            "Shared Hit Blocks": 271,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0
+          },
+          "Planning Time": 0.538,
+          "Triggers": [],
+          "Execution Time": 0.484
+        }
+      }
+    ]
+  },
+  "interpretation": {
+    "status": "observational_evidence_only",
+    "statement": "The recorded plans and execution times describe one isolated synthetic PostgreSQL 18 run. No hard latency threshold, production capacity claim, or pass/fail performance conclusion is inferred from this artifact."
+  },
+  "reproduction": {
+    "working_directory": "repository root containing Ti-Java",
+    "command": "python3 Ti-Java/tools/capture_phase4a_subject_query_plan.py --output Ti-Java/docs/refactor/phase4a/subject-query-plan.json",
+    "prerequisite": "Docker with access to the postgres:18 image",
+    "isolation": "ephemeral network-disabled container; removed on success or failure"
+  }
+}

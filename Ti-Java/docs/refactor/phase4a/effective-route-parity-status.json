@@ -1,0 +1,70 @@
+{
+  "contract_id": "ti.phase4a.effective-route-parity-status",
+  "schema_version": 1,
+  "baseline": {
+    "source": "../02-route-parity-matrix.csv",
+    "sha256": "fdbdfedf3dd70cd09778b2a7072711d103eee8461d0e7dd356d797006fc92c74",
+    "rule_count": 592,
+    "expanded_operation_count": 611,
+    "migration_status": {"pending": 611, "migrated": 0}
+  },
+  "deltas": [
+    {
+      "phase": 3,
+      "source": "../phase3/route-parity-delta.csv",
+      "sha256": "8576d9e3311538af7cc5f47bbe1cefe78c3b65f007fae54aa6c06500c03ea323",
+      "operation_count": 2
+    },
+    {
+      "phase": "4A-subject-directory-slice",
+      "source": "route-parity-delta.csv",
+      "sha256": "433bd6c7207e30844456ef07a388530f605fd4c124c02ae0aa4506cd646d6ca1",
+      "operation_count": 2
+    }
+  ],
+  "materialization_policy": {
+    "key": ["route_id", "path", "method"],
+    "precedence": "phase4a_delta_over_phase3_delta_over_frozen_baseline",
+    "unmatched_baseline_status": "preserve",
+    "unknown_delta_key": "reject",
+    "duplicate_delta_key": "reject"
+  },
+  "effective": {
+    "rule_count": 592,
+    "expanded_operation_count": 611,
+    "overridden_operation_count": 4,
+    "migration_status": {"pending": 607, "migrated": 4},
+    "production_cutover_operation_count": 0,
+    "migrated_operations": [
+      {
+        "route_id": "02366fc520ac",
+        "path": "/api/login",
+        "method": "POST",
+        "target_module": "identity",
+        "introduced_in": 3
+      },
+      {
+        "route_id": "88d7dc05cdbb",
+        "path": "/api/auth/login-methods",
+        "method": "GET",
+        "target_module": "operations",
+        "introduced_in": 3
+      },
+      {
+        "route_id": "d3cd12aaca90",
+        "path": "/api/quiz/subjects",
+        "method": "GET",
+        "target_module": "catalog",
+        "introduced_in": "4A-subject-directory-slice"
+      },
+      {
+        "route_id": "7fd9b0fc8111",
+        "path": "/api/quiz/subjects/meta",
+        "method": "GET",
+        "target_module": "catalog",
+        "introduced_in": "4A-subject-directory-slice"
+      }
+    ]
+  },
+  "scope_note": "migrated means the four operations are implemented in Java and backed by their phase-specific compatibility evidence. Production cutover remains zero; the other 607 operations remain pending."
+}

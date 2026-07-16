@@ -12,7 +12,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
         CsrfIssuanceRateLimitProperties.class,
         LegacySessionExchangeProperties.class,
         TargetSessionLimitProperties.class,
-        ClientAddressProperties.class
+        ClientAddressProperties.class,
+        SubjectReadRateLimitProperties.class
 })
 class LoginRateLimitConfiguration {
 
@@ -57,5 +58,15 @@ class LoginRateLimitConfiguration {
             LoginRateLimitProperties loginProperties
     ) {
         return new RedisTargetSessionRegistry(redis, properties, loginProperties);
+    }
+
+    @Bean
+    SubjectReadRateLimiter subjectReadRateLimiter(
+            StringRedisTemplate redis,
+            SubjectReadRateLimitProperties properties,
+            LoginRateLimitProperties loginProperties,
+            Clock clock
+    ) {
+        return new RedisSubjectReadRateLimiter(redis, properties, loginProperties, clock);
     }
 }

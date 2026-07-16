@@ -1,0 +1,2 @@
+resource_kind,resource_name,base_resource,phase4a_owner,persistence_role,lifecycle,evidence,production_cutover
+redis_key,ti-java:catalog:subject-read-rate:<route>:identity:v1:<hmac_sha256>:<window>:<bucket>,false,catalog,runtime_rate_limit,domain-separated HMAC pseudonym; atomic INCR of minute/hour keys; TTL 120s/7200s; payload is an integer counter only,RedisSubjectReadRateLimiter + Phase4aSubjectCatalogIT,false

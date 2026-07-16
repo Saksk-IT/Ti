@@ -2,6 +2,7 @@ package io.saksk.ti.web.config;
 
 import io.saksk.ti.web.error.ErrorCode;
 import io.saksk.ti.web.error.SafeSecurityErrorWriter;
+import io.saksk.ti.web.compat.LegacySubjectSecurityErrorWriter;
 import io.saksk.ti.web.security.SessionBoundCsrfTokens;
 import io.saksk.ti.web.security.ClientAddressResolver;
 import io.saksk.ti.web.security.CsrfIssuanceRateLimitFilter;
@@ -9,6 +10,9 @@ import io.saksk.ti.web.security.CsrfIssuanceRateLimitProperties;
 import io.saksk.ti.web.security.CsrfIssuanceRateLimiter;
 import io.saksk.ti.web.security.TargetSessionProperties;
 import io.saksk.ti.web.security.TargetSessionAuthenticationFilter;
+import io.saksk.ti.web.security.SubjectReadRateLimitFilter;
+import io.saksk.ti.web.security.SubjectReadRateLimiter;
+import io.saksk.ti.web.security.SubjectReadRequestResolver;
 import jakarta.servlet.DispatcherType;
 import java.time.Clock;
 import org.springframework.beans.factory.ObjectProvider;
@@ -44,9 +48,6 @@ public class SecurityConfiguration {
         String requestUri = request.getRequestURI();
         return requestUri.substring(contextPath.length()).equals("/api/auth/login-methods");
     };
-    private static final RequestMatcher OTHER_REQUESTS =
-            new NegatedRequestMatcher(LEGACY_LOGIN_METHODS_READ);
-
     @Bean
     CsrfTokenRepository csrfTokenRepository(
             TargetSessionProperties sessionProperties,
@@ -60,11 +61,23 @@ public class SecurityConfiguration {
     SecurityFilterChain applicationSecurityFilterChain(
             HttpSecurity http,
             SafeSecurityErrorWriter errorWriter,
+            ObjectProvider<LegacySubjectSecurityErrorWriter> legacySubjectErrorWriter,
             CsrfTokenRepository csrfTokens,
             ObjectProvider<TargetSessionAuthenticationFilter> sessionAuthentication,
             ObjectProvider<CsrfIssuanceRateLimiter> csrfIssuanceRateLimiter,
-            ObjectProvider<ClientAddressResolver> clientAddresses
+            ObjectProvider<ClientAddressResolver> clientAddresses,
+            ObjectProvider<SubjectReadRateLimiter> subjectReadRateLimiter,
+            ObjectProvider<SubjectReadRequestResolver> subjectReadRequestResolver
     ) throws Exception {
+        LegacySubjectSecurityErrorWriter legacySubjectErrors =
+                legacySubjectErrorWriter.getIfAvailable();
+        SubjectReadRequestResolver subjectReadRoutes =
+                subjectReadRequestResolver.getIfAvailable();
+        RequestMatcher subjectReadMatcher = request ->
+                subjectReadRoutes != null && subjectReadRoutes.matches(request);
+        RequestMatcher legacyCompatibilityReads = request ->
+                LEGACY_LOGIN_METHODS_READ.matches(request) || subjectReadMatcher.matches(request);
+        RequestMatcher otherRequests = new NegatedRequestMatcher(legacyCompatibilityReads);
         http
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(csrfTokens)
@@ -84,23 +97,33 @@ public class SecurityConfiguration {
                                 "/api/csrf",
                                 "/api/login"
                         ).permitAll()
+                        .requestMatchers(subjectReadMatcher).authenticated()
                         .anyRequest().denyAll())
                 .exceptionHandling(exceptions -> exceptions
-                        .authenticationEntryPoint((request, response, exception) ->
-                                errorWriter.write(request, response, ErrorCode.AUTHENTICATION_REQUIRED))
+                        .authenticationEntryPoint((request, response, exception) -> {
+                            if (subjectReadMatcher.matches(request)
+                                    && legacySubjectErrors != null) {
+                                legacySubjectErrors.writeAuthenticationRequired(request, response);
+                                return;
+                            }
+                            errorWriter.write(
+                                    request,
+                                    response,
+                                    ErrorCode.AUTHENTICATION_REQUIRED);
+                        })
                         .accessDeniedHandler((request, response, exception) ->
                                 errorWriter.write(request, response, ErrorCode.FORBIDDEN)))
                 .headers(headers -> headers
                         .cacheControl(cache -> cache.disable())
                         .frameOptions(frame -> frame.disable())
                         .addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
-                                OTHER_REQUESTS,
+                                otherRequests,
                                 new CacheControlHeadersWriter()))
                         .addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
-                                LEGACY_LOGIN_METHODS_READ,
+                                legacyCompatibilityReads,
                                 new XFrameOptionsHeaderWriter(XFrameOptionsMode.SAMEORIGIN)))
                         .addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
-                                OTHER_REQUESTS,
+                                otherRequests,
                                 new XFrameOptionsHeaderWriter(XFrameOptionsMode.DENY))))
                 .requestCache(cache -> cache.disable())
                 .formLogin(AbstractHttpConfigurer::disable)
@@ -110,6 +133,23 @@ public class SecurityConfiguration {
         TargetSessionAuthenticationFilter authenticationFilter = sessionAuthentication.getIfAvailable();
         if (authenticationFilter != null) {
             http.addFilterAfter(authenticationFilter, SecurityContextHolderFilter.class);
+        }
+        SubjectReadRateLimiter subjectLimiter = subjectReadRateLimiter.getIfAvailable();
+        if (subjectLimiter != null) {
+            if (legacySubjectErrors == null || subjectReadRoutes == null) {
+                throw new IllegalStateException(
+                        "Subject read limiter requires its route resolver and error writer");
+            }
+            SubjectReadRateLimitFilter subjectReadFilter =
+                    new SubjectReadRateLimitFilter(
+                            subjectLimiter,
+                            legacySubjectErrors,
+                            subjectReadRoutes);
+            if (authenticationFilter != null) {
+                http.addFilterAfter(subjectReadFilter, TargetSessionAuthenticationFilter.class);
+            } else {
+                http.addFilterAfter(subjectReadFilter, SecurityContextHolderFilter.class);
+            }
         }
         CsrfIssuanceRateLimiter issuanceRateLimiter = csrfIssuanceRateLimiter.getIfAvailable();
         ClientAddressResolver addressResolver = clientAddresses.getIfAvailable();

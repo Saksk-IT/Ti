@@ -7,4 +7,6 @@ package io.saksk.ti.catalog.api;
  * Phase 4 adds only DTOs and methods proven by route and OpenAPI contract tests.</p>
  */
 public interface CatalogApplicationApi {
+
+    SubjectCatalogView subjectCatalog(AuthenticatedCatalogViewer viewer);
 }

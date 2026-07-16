@@ -1,0 +1,243 @@
+{
+  "contract_id": "ti.phase4a.subject-read-goldens",
+  "schema_version": 1,
+  "captured_at": "2026-07-16",
+  "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "isolation": "temporary SQLite database; no production or persistent local data",
+  "cache_mode": "legacy QUIZ_API_CACHE_ENABLED=false; rate limiting remains enabled",
+  "redaction": "synthetic identities only; JWTs omitted; request IDs normalized out",
+  "database_side_effect_free": true,
+  "cases": [
+    {
+      "case_id": "subjects-ordinary",
+      "actor": "ordinary",
+      "request": {
+        "method": "GET",
+        "path": "/api/quiz/subjects",
+        "headers": {
+          "Authorization": "Bearer <redacted-test-jwt>"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json; charset=utf-8",
+          "Vary": "Origin, Cookie",
+          "X-RateLimit-Limit": "60",
+          "X-RateLimit-Remaining": "59",
+          "X-RateLimit-Reset": "<dynamic-epoch-second>",
+          "Retry-After": "<dynamic-positive-seconds>"
+        },
+        "body": {
+          "status": "success",
+          "subjects": [
+            "算法基础",
+            "数据库系统"
+          ],
+          "message": "",
+          "data": {
+            "subjects": [
+              "算法基础",
+              "数据库系统"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "case_id": "subjects-administrator",
+      "actor": "administrator",
+      "request": {
+        "method": "GET",
+        "path": "/api/quiz/subjects",
+        "headers": {
+          "Authorization": "Bearer <redacted-test-jwt>"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json; charset=utf-8",
+          "Vary": "Origin, Cookie",
+          "X-RateLimit-Limit": "60",
+          "X-RateLimit-Remaining": "59",
+          "X-RateLimit-Reset": "<dynamic-epoch-second>",
+          "Retry-After": "<dynamic-positive-seconds>"
+        },
+        "body": {
+          "status": "success",
+          "subjects": [
+            "算法基础",
+            "数据库系统",
+            "受限科目"
+          ],
+          "message": "",
+          "data": {
+            "subjects": [
+              "算法基础",
+              "数据库系统",
+              "受限科目"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "case_id": "subjects-unauthenticated",
+      "actor": "anonymous",
+      "request": {
+        "method": "GET",
+        "path": "/api/quiz/subjects",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "Content-Type": "application/json; charset=utf-8",
+          "Vary": "Origin, Cookie"
+        },
+        "body": {
+          "message": "请先登录",
+          "status": "unauthorized",
+          "status_code": 401
+        }
+      }
+    },
+    {
+      "case_id": "subjects-meta-ordinary",
+      "actor": "ordinary",
+      "request": {
+        "method": "GET",
+        "path": "/api/quiz/subjects/meta",
+        "headers": {
+          "Authorization": "Bearer <redacted-test-jwt>"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json; charset=utf-8",
+          "Vary": "Origin, Cookie",
+          "X-RateLimit-Limit": "60",
+          "X-RateLimit-Remaining": "59",
+          "X-RateLimit-Reset": "<dynamic-epoch-second>",
+          "Retry-After": "<dynamic-positive-seconds>"
+        },
+        "body": {
+          "data": {
+            "quiz_count": 2,
+            "subjects": [
+              {
+                "id": 4201,
+                "name": "算法基础",
+                "question_count": 2
+              },
+              {
+                "id": 4202,
+                "name": "数据库系统",
+                "question_count": 0
+              }
+            ]
+          },
+          "status": "success",
+          "message": ""
+        }
+      }
+    },
+    {
+      "case_id": "subjects-meta-administrator",
+      "actor": "administrator",
+      "request": {
+        "method": "GET",
+        "path": "/api/quiz/subjects/meta",
+        "headers": {
+          "Authorization": "Bearer <redacted-test-jwt>"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json; charset=utf-8",
+          "Vary": "Origin, Cookie",
+          "X-RateLimit-Limit": "60",
+          "X-RateLimit-Remaining": "59",
+          "X-RateLimit-Reset": "<dynamic-epoch-second>",
+          "Retry-After": "<dynamic-positive-seconds>"
+        },
+        "body": {
+          "data": {
+            "quiz_count": 3,
+            "subjects": [
+              {
+                "id": 4201,
+                "name": "算法基础",
+                "question_count": 2
+              },
+              {
+                "id": 4202,
+                "name": "数据库系统",
+                "question_count": 0
+              },
+              {
+                "id": 4204,
+                "name": "受限科目",
+                "question_count": 1
+              }
+            ]
+          },
+          "status": "success",
+          "message": ""
+        }
+      }
+    },
+    {
+      "case_id": "subjects-meta-unauthenticated",
+      "actor": "anonymous",
+      "request": {
+        "method": "GET",
+        "path": "/api/quiz/subjects/meta",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "Content-Type": "application/json; charset=utf-8",
+          "Vary": "Origin, Cookie"
+        },
+        "body": {
+          "message": "请先登录",
+          "status": "unauthorized",
+          "status_code": 401
+        }
+      }
+    },
+    {
+      "case_id": "subjects-rate-limited",
+      "actor": "ordinary",
+      "request": {
+        "method": "GET",
+        "path": "/api/quiz/subjects",
+        "headers": {
+          "Authorization": "Bearer <redacted-test-jwt>"
+        }
+      },
+      "response": {
+        "status": 429,
+        "headers": {
+          "Content-Type": "application/json",
+          "Vary": "Origin, Cookie",
+          "X-RateLimit-Limit": "60",
+          "X-RateLimit-Remaining": "0",
+          "X-RateLimit-Reset": "<dynamic-epoch-second>",
+          "Retry-After": "<dynamic-positive-seconds>"
+        },
+        "body": {
+          "message": "60 per 1 minute",
+          "payload": null,
+          "status": "error",
+          "status_code": 429
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "contract_id": "ti.phase4a.business-invariants",
+  "schema_version": 1,
+  "slice": "protected-subject-directory-reads",
+  "invariants": [
+    {
+      "id": "p4a-subject-001",
+      "statement": "An unauthenticated request cannot observe any subject name or count.",
+      "proof": ["HTTP integration: both routes return the legacy 401 envelope"]
+    },
+    {
+      "id": "p4a-subject-002",
+      "statement": "A locked subject is invisible to ordinary users and administrators; null is_locked remains visible.",
+      "proof": ["golden parity", "catalog adapter integration"]
+    },
+    {
+      "id": "p4a-subject-003",
+      "statement": "An ordinary user's identity-owned blacklist removes the same subject from names, metadata and quiz_count.",
+      "proof": ["cross-module application test", "HTTP integration"]
+    },
+    {
+      "id": "p4a-subject-004",
+      "statement": "Administrators bypass user_subjects restrictions but never bypass subject locking.",
+      "proof": ["application unit test", "HTTP integration"]
+    },
+    {
+      "id": "p4a-subject-005",
+      "statement": "Visible subjects are ordered by numeric subject ID and repeated reads preserve the same order.",
+      "proof": ["adapter integration with names deliberately out of lexical order"]
+    },
+    {
+      "id": "p4a-subject-006",
+      "statement": "Subjects with zero questions remain present with question_count 0 and do not change quiz_count.",
+      "proof": ["golden parity", "HTTP integration"]
+    },
+    {
+      "id": "p4a-subject-007",
+      "statement": "The subject list top-level subjects and data.subjects arrays are equal by value and order.",
+      "proof": ["controller contract test"]
+    },
+    {
+      "id": "p4a-subject-008",
+      "statement": "The result count does not increase SQL statement count; the business use case uses exactly one identity-policy SELECT plus one catalog SELECT, while a normal successful HTTP request adds exactly one authentication-authority SELECT for a total of three.",
+      "proof": ["JDBC adapter structure test", "large-fixture business query-count assertion", "request-level SQL count integration"]
+    },
+    {
+      "id": "p4a-subject-009",
+      "statement": "GET execution performs no PostgreSQL or Redis business-state mutation and writes no application data cache. Bearer-only requests only add expiring subject-rate counters keyed by a domain-separated HMAC identity pseudonym; target Session requests may refresh Session and registry/index runtime state; first-use Flask Session exchange also creates bounded exchange/replay and target Session runtime state. No raw identity ID enters a Redis key.",
+      "proof": ["before/after database fingerprint", "credential-specific Redis key allowlist", "raw identity key exclusion", "absence of application data cache keys"]
+    },
+    {
+      "id": "p4a-subject-010",
+      "statement": "Catalog never imports identity internals or queries users/user_subjects; learning-owned statistics remain outside this slice.",
+      "proof": ["Spring Modulith verification", "SQL ownership scan"]
+    },
+    {
+      "id": "p4a-subject-011",
+      "statement": "The 61st request in the test profile returns the observed legacy 429 envelope and required rate-limit headers; unauthenticated requests consume no identity budget.",
+      "proof": ["isolated Flask golden", "HTTP integration", "Redis limiter unit tests"]
+    },
+    {
+      "id": "p4a-subject-012",
+      "statement": "Database and catalog failures keep route-specific empty 500 shapes while never returning exception text, credentials or internal addresses.",
+      "proof": ["controller failure contract test", "P4A-CATALOG-003"]
+    }
+  ]
+}

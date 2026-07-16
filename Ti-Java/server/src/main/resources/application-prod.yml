@@ -35,6 +35,11 @@ ti:
       namespace: ${TI_LOGIN_RATE_LIMIT_NAMESPACE:ti-java:identity:login-rate}
       requests-per-minute: ${TI_LOGIN_RATE_LIMIT_REQUESTS_PER_MINUTE:5}
       key-secret: ${ti.login-rate-limit.key-secret:${TI_LOGIN_RATE_LIMIT_KEY_SECRET}}
+    subject-read-rate-limit:
+      namespace: ${TI_SUBJECT_READ_RATE_LIMIT_NAMESPACE:ti-java:catalog:subject-read-rate}
+      requests-per-minute: ${TI_SUBJECT_READ_REQUESTS_PER_MINUTE:60}
+      requests-per-hour: ${TI_SUBJECT_READ_REQUESTS_PER_HOUR:600}
+      multiplier: ${TI_RATE_LIMIT_MULTIPLIER:100}
     session:
       cookie-name: __Host-ti_session
       csrf-cookie-name: __Host-ti_csrf

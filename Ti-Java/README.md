@@ -2,15 +2,15 @@
 
 Ti-Java 是 Ti 的独立重构项目，目标是以 Java 25、Spring Boot 4.1、Spring MVC 和 Spring Modulith 重新实现现有业务，并逐步加入 Vue 3 + TypeScript Web 与项目自有的小程序。
 
-阶段 0 事实基线与阶段 1 架构/契约已经固化，阶段 2 Java 基础骨架与阶段 3 认证兼容切片也已通过门禁；阶段 3 实现 `POST /api/login` 与 `GET /api/auth/login-methods`，完成 p3-009 同快照读写比较、本地切换/回滚、最终 WORM 和独立抽取验收。当前有效状态仍只是 **2 个 migrated operation、609 个 pending、0 个 production cutover**，不能替代旧 Flask 项目，也不代表完整重构已经完成。
+阶段 0 事实基线与阶段 1 架构/契约已经固化，阶段 2 Java 基础骨架与阶段 3 认证兼容切片也已通过门禁；阶段 4A 已完成受保护科目目录首个垂直切片。当前有效状态是 **4 个 migrated operation、607 个 pending、0 个 production cutover**，仍不能替代旧 Flask 项目，也不代表完整重构已经完成。
 
 ## 当前技术与边界
 
 - `server/` 固定使用 Java 25、Maven Wrapper 3.9.16、Spring Boot 4.1.0 和 Spring Modulith 2.1.0；默认采用 Spring MVC，不引入 WebFlux、R2DBC 或阶段 8 之前的 Flyway。
 - 模块化单体包含 `identity`、`catalog`、`personalbank`、`learning`、`assessment`、`community`、`messaging`、`campus`、`coding`、`intelligence`、`operations` 11 个业务模块，以及 `sharedkernel`、`web` 两个支撑模块。
-- `identity` 与 `operations` 已按两条 Phase 3 路由部分实现，共有 5 个受机器合同约束的公开应用方法；其余 9 个业务模块仍保持延后形状，不能从占位名称推断为已迁移能力。
+- `identity`、`catalog` 与 `operations` 已部分实现，共有 7 个受机器合同约束的公开应用方法；其余 8 个业务模块仍保持延后形状，不能从占位名称推断为已迁移能力。
 - PostgreSQL 是唯一业务事实源；Redis 只用于可重建的辅助状态。Hibernate 始终使用 `ddl-auto=validate`，禁止 ORM 自动建表或改表。
-- `catalog` 内的 `subjects` 映射只是内部只读兼容探针，不是公开 API，也不拥有写入权。
+- `catalog` 已通过 `identity::api` 迁移 `GET /api/quiz/subjects` 与 `/meta`；业务用例固定两条 SELECT，加上 HTTP 认证权威查询后正常成功请求总计三条 SELECT。读取保持稳定 ID 顺序和 per-identity/per-route Redis 限流，不拥有写入权，也未启用无法完整失效的应用数据缓存。
 
 ## 目录
 
@@ -20,8 +20,10 @@ Ti-Java 是 Ti 的独立重构项目，目标是以 Java 25、Spring Boot 4.1、
 - `compose.dev.yml`：与旧项目隔离的阶段 2 本地 Compose。
 - `docs/refactor/phase2/`：阶段 2 范围、证据和未完成边界。
 - `docs/refactor/phase3/`：阶段 3 路由增量、认证兼容、批准差异和 p3-009 双运行时证据。
+- `docs/refactor/phase4a/`：科目读取金样、业务不变量、批准差异、累计路由/API 形状和查询计划证据。
 - `contracts/`：确定性生成的 OpenAPI 3.1.2 初稿与人工证据 override。
 - `openapi/phase3-authentication.openapi.json`：两条 Phase 3 operation 的自包含 OpenAPI 3.1.2 增量。
+- `openapi/phase4a-subject-directory.openapi.json`：两条科目目录 operation 的自包含 OpenAPI 3.1.2 增量。
 - `docs/refactor/adr/`：已接受的架构决策。
 - `docs/refactor/phase1/`：API 约定、模块合同、关键不变量和对比/切换协议。
 - `docs/refactor/`：事实盘点、迁移矩阵、数据所有权、运行手册与连续进度。

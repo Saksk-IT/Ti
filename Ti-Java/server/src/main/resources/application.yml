@@ -113,6 +113,11 @@ ti:
       namespace: ${TI_LOGIN_RATE_LIMIT_NAMESPACE:ti-java:identity:login-rate}
       requests-per-minute: ${TI_LOGIN_RATE_LIMIT_REQUESTS_PER_MINUTE:5}
       key-secret: ${TI_LOGIN_RATE_LIMIT_KEY_SECRET:local-only-login-rate-limit-key-0001}
+    subject-read-rate-limit:
+      namespace: ${TI_SUBJECT_READ_RATE_LIMIT_NAMESPACE:ti-java:catalog:subject-read-rate}
+      requests-per-minute: ${TI_SUBJECT_READ_REQUESTS_PER_MINUTE:60}
+      requests-per-hour: ${TI_SUBJECT_READ_REQUESTS_PER_HOUR:600}
+      multiplier: ${TI_RATE_LIMIT_MULTIPLIER:1}
     csrf-issuance-rate-limit:
       namespace: ${TI_CSRF_ISSUANCE_RATE_LIMIT_NAMESPACE:ti-java:identity:csrf-issuance-rate}
       requests-per-minute: ${TI_CSRF_ISSUANCE_RATE_LIMIT_REQUESTS_PER_MINUTE:30}

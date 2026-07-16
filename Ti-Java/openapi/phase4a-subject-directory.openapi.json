@@ -1,0 +1,407 @@
+{
+  "openapi": "3.1.2",
+  "info": {
+    "title": "Ti Phase 4A Subject Directory Compatibility Delta",
+    "version": "0.4.0-phase4a-subjects",
+    "description": "Self-contained Java overlay for the two protected subject-directory reads. The Phase 1 baseline remains immutable."
+  },
+  "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "servers": [
+    {
+      "url": "http://127.0.0.1:{port}",
+      "description": "Phase 4A local/test Java runtime only",
+      "variables": {"port": {"default": "18080"}}
+    }
+  ],
+  "tags": [
+    {"name": "catalog", "description": "Catalog-owned protected subject directory reads"}
+  ],
+  "paths": {
+    "/api/quiz/subjects": {
+      "get": {
+        "operationId": "legacy_d3cd12aaca90_get",
+        "summary": "List visible subject names",
+        "tags": ["catalog"],
+        "security": [
+          {"targetSession": []},
+          {"legacyBearer": []},
+          {"legacyFlaskSession": []}
+        ],
+        "responses": {
+          "200": {
+            "description": "Visible unlocked subjects in stable numeric subject-ID order.",
+            "headers": {
+              "Vary": {"schema": {"const": "Origin, Cookie"}},
+              "X-RateLimit-Limit": {"$ref": "#/components/headers/RateLimitLimit"},
+              "X-RateLimit-Remaining": {"$ref": "#/components/headers/RateLimitRemaining"},
+              "X-RateLimit-Reset": {"$ref": "#/components/headers/RateLimitReset"},
+              "Retry-After": {"$ref": "#/components/headers/RetryAfter"}
+            },
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {"$ref": "#/components/schemas/SubjectNamesResponse"}
+              }
+            }
+          },
+          "401": {"$ref": "#/components/responses/AuthenticationRequired"},
+          "429": {"$ref": "#/components/responses/RateLimited"},
+          "500": {"$ref": "#/components/responses/SubjectNamesFailure"},
+          "503": {"$ref": "#/components/responses/RuntimeUnavailable"}
+        },
+        "x-ti-route-id": "d3cd12aaca90",
+        "x-ti-application-api": "io.saksk.ti.catalog.api.CatalogApplicationApi#subjectCatalog",
+        "x-ti-query-budget": {
+          "authenticationAuthoritySelects": 1,
+          "businessUseCaseSelects": 2,
+          "normalSuccessfulHttpSelects": 3
+        },
+        "x-ti-approved-differences": ["P4A-CATALOG-001", "P4A-CATALOG-002", "P4A-CATALOG-003"],
+        "x-ti-migration": {
+          "status": "migrated",
+          "productionCutover": false,
+          "legacyGolden": "sha256:54a7441ed7b7b9a0b49d60bc84d6a06f0387a3eee009370960ac65a19293a35f"
+        }
+      }
+    },
+    "/api/quiz/subjects/meta": {
+      "get": {
+        "operationId": "legacy_7fd9b0fc8111_get",
+        "summary": "Read visible subject metadata and question counts",
+        "tags": ["catalog"],
+        "security": [
+          {"targetSession": []},
+          {"legacyBearer": []},
+          {"legacyFlaskSession": []}
+        ],
+        "responses": {
+          "200": {
+            "description": "Visible unlocked subjects including zero-question subjects and their aggregate quiz count.",
+            "headers": {
+              "Vary": {"schema": {"const": "Origin, Cookie"}},
+              "X-RateLimit-Limit": {"$ref": "#/components/headers/RateLimitLimit"},
+              "X-RateLimit-Remaining": {"$ref": "#/components/headers/RateLimitRemaining"},
+              "X-RateLimit-Reset": {"$ref": "#/components/headers/RateLimitReset"},
+              "Retry-After": {"$ref": "#/components/headers/RetryAfter"}
+            },
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {"$ref": "#/components/schemas/SubjectMetadataResponse"}
+              }
+            }
+          },
+          "401": {"$ref": "#/components/responses/AuthenticationRequired"},
+          "429": {"$ref": "#/components/responses/RateLimited"},
+          "500": {"$ref": "#/components/responses/SubjectMetadataFailure"},
+          "503": {"$ref": "#/components/responses/RuntimeUnavailable"}
+        },
+        "x-ti-route-id": "7fd9b0fc8111",
+        "x-ti-application-api": "io.saksk.ti.catalog.api.CatalogApplicationApi#subjectCatalog",
+        "x-ti-query-budget": {
+          "authenticationAuthoritySelects": 1,
+          "businessUseCaseSelects": 2,
+          "normalSuccessfulHttpSelects": 3
+        },
+        "x-ti-approved-differences": ["P4A-CATALOG-001", "P4A-CATALOG-002", "P4A-CATALOG-003"],
+        "x-ti-migration": {
+          "status": "migrated",
+          "productionCutover": false,
+          "legacyGolden": "sha256:54a7441ed7b7b9a0b49d60bc84d6a06f0387a3eee009370960ac65a19293a35f",
+          "postgresCompatibility": ["16.14", "18.4"],
+          "queryPlanEvidence": "sha256:530409a4b1ffd8a9159e3241dce0997c368371aeba7c0c2c06a39f240f8059ea"
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "targetSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "ti_dev_session",
+        "description": "Authoritative server-side target Session. Production cookie name is __Host-ti_session. Access metadata and the bounded registry/index may be refreshed before the subject limiter is recorded."
+      },
+      "legacyBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Temporary kill-switched compatibility credential. When sent without a target Session cookie it creates no Session state and only records subject limiter counters under a domain-separated HMAC identity pseudonym."
+      },
+      "legacyFlaskSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "session",
+        "description": "Temporary kill-switched signed Flask Session compatibility credential. First successful use records bounded exchange/replay state and creates a target Session plus registry/index before the subject limiter is recorded."
+      }
+    },
+    "headers": {
+      "RateLimitLimit": {
+        "description": "Effective request limit for the reported window.",
+        "schema": {"type": "integer", "minimum": 1}
+      },
+      "RateLimitRemaining": {
+        "description": "Remaining requests in the limiting window.",
+        "schema": {"type": "integer", "minimum": 0}
+      },
+      "RateLimitReset": {
+        "description": "Legacy-compatible reset epoch second.",
+        "schema": {"type": "integer", "minimum": 1}
+      },
+      "RetryAfter": {
+        "description": "Seconds until the subject fixed window or the Flask Session exchange credential quota resets.",
+        "schema": {"type": "integer", "minimum": 1, "maximum": 604800}
+      }
+    },
+    "responses": {
+      "AuthenticationRequired": {
+        "description": "Observed legacy authentication-required envelope; no rate budget is consumed.",
+        "headers": {"Vary": {"schema": {"const": "Origin, Cookie"}}},
+        "content": {
+          "application/json; charset=utf-8": {
+            "schema": {"$ref": "#/components/schemas/AuthenticationError"}
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "The first request over either the per-route subject budget or a Flask Session exchange budget.",
+        "x-ti-header-variants": {
+          "subjectRateLimit": ["Vary", "X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset", "Retry-After"],
+          "flaskExchangeAttemptLimit": ["X-RateLimit-Limit", "X-RateLimit-Remaining", "Retry-After"],
+          "flaskExchangeCredentialLimit": ["Retry-After"]
+        },
+        "headers": {
+          "Vary": {"schema": {"const": "Origin, Cookie"}},
+          "X-RateLimit-Limit": {"$ref": "#/components/headers/RateLimitLimit"},
+          "X-RateLimit-Remaining": {"$ref": "#/components/headers/RateLimitRemaining"},
+          "X-RateLimit-Reset": {"$ref": "#/components/headers/RateLimitReset"},
+          "Retry-After": {"$ref": "#/components/headers/RetryAfter"}
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "oneOf": [
+                {"$ref": "#/components/schemas/RateLimitError"},
+                {"$ref": "#/components/schemas/SecurityRateLimitErrorEnvelope"}
+              ]
+            }
+          }
+        }
+      },
+      "RuntimeUnavailable": {
+        "description": "Fail-closed response when subject-rate recording or Session/exchange runtime authority is unavailable.",
+        "x-ti-header-variants": {
+          "subjectRateStoreUnavailable": ["Vary"],
+          "sessionOrExchangeRuntimeUnavailable": []
+        },
+        "headers": {"Vary": {"schema": {"const": "Origin, Cookie"}}},
+        "content": {
+          "application/json": {
+            "schema": {
+              "oneOf": [
+                {"$ref": "#/components/schemas/UnavailableError"},
+                {"$ref": "#/components/schemas/SecurityUnavailableErrorEnvelope"}
+              ]
+            }
+          }
+        }
+      },
+      "SubjectNamesFailure": {
+        "description": "Safe approved replacement for the legacy exception-text 500 response.",
+        "headers": {"Vary": {"schema": {"const": "Origin, Cookie"}}},
+        "content": {
+          "application/json; charset=utf-8": {
+            "schema": {"$ref": "#/components/schemas/SubjectNamesFailure"}
+          }
+        }
+      },
+      "SubjectMetadataFailure": {
+        "description": "Safe approved replacement for the legacy exception-text 500 response.",
+        "headers": {"Vary": {"schema": {"const": "Origin, Cookie"}}},
+        "content": {
+          "application/json; charset=utf-8": {
+            "schema": {"$ref": "#/components/schemas/SubjectMetadataFailure"}
+          }
+        }
+      }
+    },
+    "schemas": {
+      "SubjectNamesResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "subjects", "message", "data", "request_id"],
+        "properties": {
+          "status": {"const": "success"},
+          "subjects": {"$ref": "#/components/schemas/SubjectNames"},
+          "message": {"const": ""},
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["subjects"],
+            "properties": {"subjects": {"$ref": "#/components/schemas/SubjectNames"}}
+          },
+          "request_id": {"type": "string", "minLength": 1, "maxLength": 128}
+        }
+      },
+      "SubjectNames": {
+        "type": "array",
+        "items": {"type": "string", "minLength": 1}
+      },
+      "SubjectMetadataResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "data", "message", "request_id"],
+        "properties": {
+          "status": {"const": "success"},
+          "message": {"const": ""},
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["subjects", "quiz_count"],
+            "properties": {
+              "subjects": {"type": "array", "items": {"$ref": "#/components/schemas/SubjectMetadata"}},
+              "quiz_count": {"type": "integer", "minimum": 0}
+            }
+          },
+          "request_id": {"type": "string", "minLength": 1, "maxLength": 128}
+        }
+      },
+      "SubjectMetadata": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "question_count"],
+        "properties": {
+          "id": {"type": "integer", "minimum": 1},
+          "name": {"type": "string", "minLength": 1},
+          "question_count": {"type": "integer", "minimum": 0}
+        }
+      },
+      "AuthenticationError": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "message", "status_code", "request_id"],
+        "properties": {
+          "status": {"const": "unauthorized"},
+          "message": {"const": "请先登录"},
+          "status_code": {"const": 401},
+          "request_id": {"type": "string", "minLength": 1, "maxLength": 128}
+        }
+      },
+      "RateLimitError": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "message", "payload", "status_code", "request_id"],
+        "properties": {
+          "status": {"const": "error"},
+          "message": {"type": "string", "pattern": "^[1-9][0-9]* per 1 (minute|hour)$"},
+          "payload": {"type": "null"},
+          "status_code": {"const": 429},
+          "request_id": {"type": "string", "minLength": 1, "maxLength": 128}
+        }
+      },
+      "SecurityRateLimitErrorEnvelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["success", "error", "meta"],
+        "properties": {
+          "success": {"const": false},
+          "error": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["code", "message", "details"],
+            "properties": {
+              "code": {"const": "RATE_LIMITED"},
+              "message": {"const": "请求过于频繁"},
+              "details": {"type": "array", "maxItems": 0}
+            }
+          },
+          "meta": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["request_id"],
+            "properties": {
+              "request_id": {"type": "string", "minLength": 1, "maxLength": 128}
+            }
+          }
+        }
+      },
+      "UnavailableError": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "message", "status_code", "request_id"],
+        "properties": {
+          "status": {"const": "error"},
+          "message": {"const": "服务暂时不可用"},
+          "status_code": {"const": 503},
+          "request_id": {"type": "string", "minLength": 1, "maxLength": 128}
+        }
+      },
+      "SecurityUnavailableErrorEnvelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["success", "error", "meta"],
+        "properties": {
+          "success": {"const": false},
+          "error": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["code", "message", "details"],
+            "properties": {
+              "code": {"const": "SERVICE_UNAVAILABLE"},
+              "message": {"const": "服务暂时不可用"},
+              "details": {"type": "array", "maxItems": 0}
+            }
+          },
+          "meta": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["request_id"],
+            "properties": {
+              "request_id": {"type": "string", "minLength": 1, "maxLength": 128}
+            }
+          }
+        }
+      },
+      "SubjectNamesFailure": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "message", "subjects", "status_code", "request_id"],
+        "properties": {
+          "status": {"const": "error"},
+          "message": {"const": "服务暂时不可用"},
+          "subjects": {"type": "array", "maxItems": 0},
+          "status_code": {"const": 500},
+          "request_id": {"type": "string", "minLength": 1, "maxLength": 128}
+        }
+      },
+      "SubjectMetadataFailure": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "message", "data", "status_code", "request_id"],
+        "properties": {
+          "status": {"const": "error"},
+          "message": {"const": "服务暂时不可用"},
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["subjects", "quiz_count"],
+            "properties": {
+              "subjects": {"type": "array", "maxItems": 0},
+              "quiz_count": {"const": 0}
+            }
+          },
+          "status_code": {"const": 500},
+          "request_id": {"type": "string", "minLength": 1, "maxLength": 128}
+        }
+      }
+    }
+  },
+  "x-ti-base-contract": {
+    "path": "contracts/openapi.json",
+    "sha256": "41e0ad0e1eca3ba8731242dea7a638cd348069aad1331382f5f1bf6d4a08d64e",
+    "immutable": true
+  },
+  "x-ti-credential-semantics": {
+    "precedence": ["Authorization", "targetSession", "legacyFlaskSession"],
+    "businessOrApplicationCacheWrites": 0,
+    "note": "Authorization takes precedence but an accompanying target Session may still be reconciled. Redis changes are credential-specific authentication and rate-limit runtime state only."
+  }
+}

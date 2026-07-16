@@ -42,7 +42,7 @@ class ModuleContractParityTest {
         contractRoot = JSON.readTree(Files.readString(
                 resolveInsideTiJava("docs/refactor/phase1/module-contracts.json"), StandardCharsets.UTF_8));
         shapeStatusRoot = JSON.readTree(Files.readString(
-                resolveInsideTiJava("docs/refactor/phase3/application-api-shape-status.json"),
+                resolveInsideTiJava("docs/refactor/phase4a/application-api-shape-status.json"),
                 StandardCharsets.UTF_8));
         contractModules = readModules(contractRoot);
         eventOnlyEdges = readEventOnlyEdges(contractRoot);
@@ -134,17 +134,17 @@ class ModuleContractParityTest {
     }
 
     @Test
-    void phase3PublicShapesExactlyMatchImplementedOperationsAndKeepTheRestDeferred() throws Exception {
-        assertThat(shapeStatusRoot.path("migrated_route_count").asInt()).isEqualTo(2);
-        assertThat(shapeStatusRoot.path("implemented_route_backed_operation_count").asInt()).isEqualTo(2);
-        assertThat(shapeStatusRoot.path("implemented_public_application_method_count").asInt()).isEqualTo(5);
+    void latestPublicShapesExactlyMatchImplementedOperationsAndKeepTheRestDeferred() throws Exception {
+        assertThat(shapeStatusRoot.path("migrated_route_count").asInt()).isEqualTo(4);
+        assertThat(shapeStatusRoot.path("implemented_route_backed_operation_count").asInt()).isEqualTo(4);
+        assertThat(shapeStatusRoot.path("implemented_public_application_method_count").asInt()).isEqualTo(7);
         assertThat(shapeStatusRoot.path("event_payload_shape_status").asString())
                 .isEqualTo("deferred_to_phase5");
 
         Map<String, JsonNode> statusByModule = new LinkedHashMap<>();
         for (JsonNode status : shapeStatusRoot.path("modules")) {
             JsonNode previous = statusByModule.put(status.path("module_id").asString(), status);
-            assertThat(previous).as("duplicate Phase 3 API status row").isNull();
+            assertThat(previous).as("duplicate latest API status row").isNull();
         }
         assertThat(statusByModule.keySet())
                 .containsExactlyInAnyOrderElementsOf(
@@ -178,7 +178,7 @@ class ModuleContractParityTest {
                         .isEmpty();
             } else {
                 assertThat(status.path("shape_status").asString()).isEqualTo("partially_implemented");
-                assertThat(module.id()).isIn("identity", "operations");
+                assertThat(module.id()).isIn("identity", "catalog", "operations");
                 assertExactMethodShapes(apiType, methods);
                 implementedMethodCount += methods.size();
             }
@@ -210,7 +210,7 @@ class ModuleContractParityTest {
                     .filter(path -> path.contains("/api/") && path.endsWith("Api.java"))
                     .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
             assertThat(actualApiSources)
-                    .as("every public application API source must be tracked by the Phase 3 shape status")
+                    .as("every public application API source must be tracked by the latest shape status")
                     .containsExactlyInAnyOrderElementsOf(trackedApiSources);
         }
         try (var sources = Files.walk(javaRoot)) {
@@ -423,6 +423,210 @@ class ModuleContractParityTest {
                             "#/components/schemas/SecurityErrorEnvelope");
         }
         assertThat(renderedOperations).isEqualTo(2);
+    }
+
+    @Test
+    void phase4aSubjectContractsMaterializeTwoAdditionalCatalogOperations() throws Exception {
+        Path baselinePath = resolveInsideTiJava("docs/refactor/02-route-parity-matrix.csv");
+        Path phase3DeltaPath = resolveInsideTiJava("docs/refactor/phase3/route-parity-delta.csv");
+        Path phase4aDeltaPath = resolveInsideTiJava("docs/refactor/phase4a/route-parity-delta.csv");
+        JsonNode effective = JSON.readTree(Files.readString(
+                resolveInsideTiJava("docs/refactor/phase4a/effective-route-parity-status.json"),
+                StandardCharsets.UTF_8));
+        JsonNode openApi = JSON.readTree(Files.readString(
+                resolveInsideTiJava("openapi/phase4a-subject-directory.openapi.json"),
+                StandardCharsets.UTF_8));
+        JsonNode golden = JSON.readTree(Files.readString(
+                resolveInsideTiJava("docs/refactor/phase4a/golden-subject-reads.json"),
+                StandardCharsets.UTF_8));
+        JsonNode queryPlan = JSON.readTree(Files.readString(
+                resolveInsideTiJava("docs/refactor/phase4a/subject-query-plan.json"),
+                StandardCharsets.UTF_8));
+        JsonNode subjectContract = JSON.readTree(Files.readString(
+                resolveInsideTiJava("docs/refactor/phase4a/subject-read-contract.json"),
+                StandardCharsets.UTF_8));
+        JsonNode businessInvariants = JSON.readTree(Files.readString(
+                resolveInsideTiJava("docs/refactor/phase4a/business-invariants.json"),
+                StandardCharsets.UTF_8));
+        JsonNode ownership = JSON.readTree(Files.readString(
+                resolveInsideTiJava("docs/refactor/phase4a/effective-data-ownership-status.json"),
+                StandardCharsets.UTF_8));
+
+        assertThat(sha256(baselinePath))
+                .isEqualTo(effective.path("baseline").path("sha256").asString());
+        assertThat(sha256(phase3DeltaPath))
+                .isEqualTo(effective.path("deltas").get(0).path("sha256").asString());
+        assertThat(sha256(phase4aDeltaPath))
+                .isEqualTo(effective.path("deltas").get(1).path("sha256").asString());
+        assertThat(sha256(resolveInsideTiJava("contracts/openapi.json")))
+                .isEqualTo(openApi.path("x-ti-base-contract").path("sha256").asString());
+        assertThat(openApi.path("x-ti-base-contract").path("immutable").asBoolean()).isTrue();
+        assertThat(sha256(resolveInsideTiJava("docs/refactor/03-data-ownership.csv")))
+                .isEqualTo(ownership.path("baseline").path("sha256").asString());
+        assertThat(sha256(resolveInsideTiJava(
+                        "docs/refactor/phase4a/data-ownership-delta.csv")))
+                .isEqualTo(ownership.path("delta").path("sha256").asString());
+        assertThat(ownership.path("effective").path("resource_count").asInt()).isEqualTo(155);
+        assertThat(ownership.path("effective").path("resources_with_exactly_one_owner").asInt())
+                .isEqualTo(155);
+        JsonNode limiterOwnership = ownership.path("effective").path("new_resources").get(0);
+        assertThat(limiterOwnership.path("owner").asString()).isEqualTo("catalog");
+        assertThat(limiterOwnership.path("resource_name").asString())
+                .contains(":identity:v1:<hmac_sha256>:")
+                .doesNotContain("identity_id", ":uid:");
+        assertThat(limiterOwnership.path("business_fact").asBoolean()).isFalse();
+        assertThat(limiterOwnership.path("production_cutover").asBoolean()).isFalse();
+
+        List<String> baselineLines = Files.readAllLines(baselinePath, StandardCharsets.UTF_8);
+        List<String> baselineHeader = parseCsvLine(baselineLines.getFirst());
+        Map<RouteKey, Map<String, String>> baselineOperations = new LinkedHashMap<>();
+        for (String line : baselineLines.subList(1, baselineLines.size())) {
+            Map<String, String> row = csvRow(baselineHeader, parseCsvLine(line));
+            for (String method : row.get("methods").split(",")) {
+                baselineOperations.put(new RouteKey(row.get("route_id"), row.get("path"), method), row);
+            }
+        }
+
+        List<String> deltaLines = Files.readAllLines(phase4aDeltaPath, StandardCharsets.UTF_8);
+        List<String> deltaHeader = parseCsvLine(deltaLines.getFirst());
+        assertThat(deltaHeader).containsExactly(
+                "route_id",
+                "path",
+                "method",
+                "base_target_module",
+                "phase4a_target_module",
+                "base_migration_status",
+                "phase4a_migration_status",
+                "application_api",
+                "java_evidence",
+                "parity_evidence",
+                "approved_difference_ids",
+                "production_cutover");
+        assertThat(deltaLines).hasSize(3);
+
+        Set<RouteKey> expected = Set.of(
+                new RouteKey("d3cd12aaca90", "/api/quiz/subjects", "GET"),
+                new RouteKey("7fd9b0fc8111", "/api/quiz/subjects/meta", "GET"));
+        Map<RouteKey, Map<String, String>> deltas = new LinkedHashMap<>();
+        for (String line : deltaLines.subList(1, deltaLines.size())) {
+            Map<String, String> delta = csvRow(deltaHeader, parseCsvLine(line));
+            RouteKey key = new RouteKey(delta.get("route_id"), delta.get("path"), delta.get("method"));
+            assertThat(deltas.put(key, delta)).as("duplicate Phase 4A delta %s", key).isNull();
+            Map<String, String> baseline = baselineOperations.get(key);
+            assertThat(baseline).isNotNull();
+            assertThat(delta.get("base_target_module")).isEqualTo(baseline.get("target_module"));
+            assertThat(delta.get("base_target_module")).isEqualTo("learning");
+            assertThat(delta.get("phase4a_target_module")).isEqualTo("catalog");
+            assertThat(delta.get("base_migration_status")).isEqualTo("pending");
+            assertThat(delta.get("phase4a_migration_status")).isEqualTo("migrated");
+            assertThat(delta.get("application_api"))
+                    .isEqualTo("io.saksk.ti.catalog.api.CatalogApplicationApi#subjectCatalog");
+            assertThat(delta.get("parity_evidence"))
+                    .contains("sha256:" + sha256(resolveInsideTiJava(
+                            "docs/refactor/phase4a/golden-subject-reads.json")));
+            assertThat(delta.get("approved_difference_ids"))
+                    .isEqualTo("P4A-CATALOG-001;P4A-CATALOG-002;P4A-CATALOG-003");
+            assertThat(delta.get("production_cutover")).isEqualTo("false");
+        }
+        assertThat(deltas.keySet()).containsExactlyInAnyOrderElementsOf(expected);
+
+        assertThat(effective.path("effective").path("expanded_operation_count").asInt()).isEqualTo(611);
+        assertThat(effective.path("effective").path("overridden_operation_count").asInt()).isEqualTo(4);
+        assertThat(effective.path("effective").path("migration_status").path("migrated").asInt())
+                .isEqualTo(4);
+        assertThat(effective.path("effective").path("migration_status").path("pending").asInt())
+                .isEqualTo(607);
+        assertThat(effective.path("effective").path("production_cutover_operation_count").asInt())
+                .isZero();
+        assertThat(effective.path("effective").path("migrated_operations")).hasSize(4);
+
+        assertThat(openApi.path("openapi").asString()).isEqualTo("3.1.2");
+        assertThat(openApi.path("paths")).hasSize(2);
+        for (RouteKey key : expected) {
+            JsonNode operation = openApi.path("paths").path(key.path()).path("get");
+            assertThat(operation.path("x-ti-route-id").asString()).isEqualTo(key.routeId());
+            assertThat(operation.path("x-ti-application-api").asString())
+                    .isEqualTo(deltas.get(key).get("application_api"));
+            assertThat(operation.path("x-ti-migration").path("status").asString())
+                    .isEqualTo("migrated");
+            assertThat(operation.path("x-ti-migration").path("productionCutover").asBoolean())
+                    .isFalse();
+            assertThat(strings(operation.path("x-ti-approved-differences")))
+                    .containsExactlyInAnyOrder(
+                            "P4A-CATALOG-001",
+                            "P4A-CATALOG-002",
+                            "P4A-CATALOG-003");
+            assertThat(operation.path("x-ti-query-budget")
+                            .path("authenticationAuthoritySelects").asInt())
+                    .isEqualTo(1);
+            assertThat(operation.path("x-ti-query-budget")
+                            .path("businessUseCaseSelects").asInt())
+                    .isEqualTo(2);
+            assertThat(operation.path("x-ti-query-budget")
+                            .path("normalSuccessfulHttpSelects").asInt())
+                    .isEqualTo(3);
+            assertThat(operation.path("security")).hasSize(3);
+            for (String status : List.of("200", "401", "429", "500", "503")) {
+                assertThat(operation.path("responses").has(status)).isTrue();
+            }
+        }
+        assertThat(java.util.stream.StreamSupport.stream(
+                        openApi.path("x-ti-credential-semantics")
+                                .path("precedence").spliterator(),
+                        false)
+                .map(JsonNode::asString)
+                .toList())
+                .containsExactly("Authorization", "targetSession", "legacyFlaskSession");
+        for (String responseName : List.of("RateLimited", "RuntimeUnavailable")) {
+            assertThat(openApi.path("components").path("responses").path(responseName)
+                            .path("content").path("application/json").path("schema")
+                            .path("oneOf"))
+                    .hasSize(2);
+        }
+
+        assertThat(golden.path("database_side_effect_free").asBoolean()).isTrue();
+        assertThat(golden.path("cases")).hasSize(7);
+        JsonNode rateGolden = java.util.stream.StreamSupport.stream(
+                        golden.path("cases").spliterator(), false)
+                .filter(node -> node.path("case_id").asString().equals("subjects-rate-limited"))
+                .findFirst()
+                .orElseThrow();
+        assertThat(rateGolden.path("response").path("status").asInt()).isEqualTo(429);
+        assertThat(rateGolden.path("response").path("body").path("payload").isNull()).isTrue();
+        assertThat(rateGolden.path("response").path("headers").path("X-RateLimit-Limit").asString())
+                .isEqualTo("60");
+
+        assertThat(queryPlan.path("data_set").path("actual_row_counts").path("subjects").asInt())
+                .isGreaterThanOrEqualTo(5_000);
+        assertThat(queryPlan.path("data_set").path("actual_row_counts").path("questions").asInt())
+                .isGreaterThanOrEqualTo(50_000);
+        assertThat(queryPlan.path("measurement").path("queries")).hasSize(2);
+        assertThat(queryPlan.path("scope").asString())
+                .isEqualTo("protected-subject-directory-business-queries");
+        assertThat(queryPlan.path("scope_note").asString())
+                .contains("two SELECTs", "authentication-authority SELECT", "three SELECTs");
+        assertThat(queryPlan.path("interpretation").path("status").asString())
+                .isEqualTo("observational_evidence_only");
+        assertThat(openApi.path("paths").path("/api/quiz/subjects/meta").path("get")
+                        .path("x-ti-migration").path("queryPlanEvidence").asString())
+                .isEqualTo("sha256:" + sha256(resolveInsideTiJava(
+                        "docs/refactor/phase4a/subject-query-plan.json")));
+
+        JsonNode queryBudget = subjectContract.path("query_budget");
+        assertThat(queryBudget.path("authentication_authority_selects").asInt()).isEqualTo(1);
+        assertThat(queryBudget.path("business_use_case_selects").asInt()).isEqualTo(2);
+        assertThat(queryBudget.path("maximum_selects_per_http_request").asInt()).isEqualTo(3);
+        JsonNode runtimeWrites = subjectContract.path("transaction")
+                .path("redis_runtime_writes_by_credential");
+        assertThat(runtimeWrites).hasSize(3);
+        assertThat(runtimeWrites.has("legacy_bearer")).isTrue();
+        assertThat(runtimeWrites.has("target_session")).isTrue();
+        assertThat(runtimeWrites.has("legacy_flask_session_exchange")).isTrue();
+        assertThat(businessInvariants.path("invariants")).hasSize(12);
+        assertThat(businessInvariants.path("invariants").get(7).path("statement").asString())
+                .contains("total of three");
+        assertThat(businessInvariants.path("invariants").get(8).path("statement").asString())
+                .contains("Bearer", "target Session", "Flask Session");
     }
 
     private static void assertPublicApplicationContract(ContractModule module) throws ClassNotFoundException {

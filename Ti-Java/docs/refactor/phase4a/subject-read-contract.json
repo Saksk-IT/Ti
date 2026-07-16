@@ -1,0 +1,138 @@
+{
+  "contract_id": "ti.phase4a.subject-read-contract",
+  "schema_version": 1,
+  "status": "accepted_before_implementation",
+  "legacy_evidence": [
+    "golden-subject-reads.json",
+    "../../../../app/modules/quiz/routes/api_components/subjects.py",
+    "../../../../app/core/utils/subject_permissions.py"
+  ],
+  "module_boundary": {
+    "http_adapter": "web",
+    "use_case_owner": "catalog",
+    "catalog_owned_tables": ["subjects", "questions"],
+    "identity_boundary": "io.saksk.ti.identity.api.SubjectAccessPolicyApi",
+    "identity_owned_tables_not_read_by_catalog": ["user_subjects", "users"],
+    "learning_owned_tables_not_read_by_catalog": ["user_answers", "mistakes", "favorites"],
+    "deferred_composite_route": "/api/quiz/subjects/{subject}/info",
+    "deferred_composite_route_owner": "learning",
+    "deferred_phase": "4C"
+  },
+  "operations": [
+    {
+      "route_id": "d3cd12aaca90",
+      "method": "GET",
+      "path": "/api/quiz/subjects",
+      "authentication": "required; target Session and transitional legacy JWT/Flask Session",
+      "success_status": 200,
+      "success_body": {
+        "required_top_level_fields": ["status", "subjects", "message", "data", "request_id"],
+        "status": "success",
+        "message": "",
+        "request_id": "per-request nonblank value; normalized out of golden comparison",
+        "data_semantics": "data.subjects is an exact duplicate of top-level subjects"
+      },
+      "unauthenticated": {
+        "status": 401,
+        "body": {
+          "status": "unauthorized",
+          "message": "请先登录",
+          "status_code": 401,
+          "request_id": "per-request nonblank value"
+        }
+      },
+      "rate_limit": {
+        "base": "60 per minute; 600 per hour per authenticated identity and exact route",
+        "production_multiplier": 100,
+        "first_rejected_request_in_test_profile": 61,
+        "status": 429,
+        "message": "60 per 1 minute",
+        "payload": null,
+        "headers": ["X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset", "Retry-After"]
+      }
+    },
+    {
+      "route_id": "7fd9b0fc8111",
+      "method": "GET",
+      "path": "/api/quiz/subjects/meta",
+      "authentication": "required; target Session and transitional legacy JWT/Flask Session",
+      "success_status": 200,
+      "success_body": {
+        "required_top_level_fields": ["status", "data", "message", "request_id"],
+        "status": "success",
+        "message": "",
+        "request_id": "per-request nonblank value; normalized out of golden comparison",
+        "data_fields": ["subjects", "quiz_count"],
+        "subject_fields": ["id", "name", "question_count"]
+      },
+      "unauthenticated": {
+        "status": 401,
+        "body": {
+          "status": "unauthorized",
+          "message": "请先登录",
+          "status_code": 401,
+          "request_id": "per-request nonblank value"
+        }
+      },
+      "rate_limit": {
+        "base": "60 per minute; 600 per hour per authenticated identity and exact route",
+        "production_multiplier": 100,
+        "status": 429,
+        "headers": ["X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset", "Retry-After"]
+      }
+    }
+  ],
+  "selection_semantics": {
+    "administrator": "all subjects where is_locked is false or null",
+    "ordinary_user": "administrator set minus identity-owned restricted subject IDs",
+    "empty_name": "omitted; a whitespace-only non-empty legacy name remains visible",
+    "ordering": "subjects.id ascending",
+    "question_count": "COUNT of every questions row for the visible subject",
+    "quiz_count": "sum of question_count for visible, nonblank-name subjects",
+    "empty_result": "HTTP 200 with empty arrays and quiz_count 0",
+    "nullable_is_locked": "null is visible for legacy compatibility",
+    "count_type": "JSON integer backed by Java long"
+  },
+  "query_budget": {
+    "scope": "successful authenticated HTTP request without exceptional cleanup",
+    "authentication_authority_selects": 1,
+    "administrator_identity_policy_selects": 1,
+    "administrator_catalog_selects": 1,
+    "ordinary_identity_policy_selects": 1,
+    "ordinary_catalog_selects": 1,
+    "business_use_case_selects": 2,
+    "maximum_selects_per_http_request": 3,
+    "growth_with_result_count": 0,
+    "n_plus_one_forbidden": true
+  },
+  "transaction": {
+    "authentication_authority": "read-only request preflight outside the catalog repeatable-read transaction",
+    "catalog_service": "read-only",
+    "identity_policy_service": "read-only",
+    "database_writes": 0,
+    "redis_business_state_writes": 0,
+    "redis_application_data_cache_writes": 0,
+    "redis_runtime_writes_by_credential": {
+      "legacy_bearer": "two expiring rate-limit counters per domain-separated HMAC identity pseudonym and exact route; no raw identity ID enters the key and no target Session is created",
+      "target_session": "target Session access metadata and registry/index reconciliation may be refreshed, plus two expiring subject rate-limit counters",
+      "legacy_flask_session_exchange": "bounded exchange/replay markers, a new target Session and registry/index entries, plus two expiring subject rate-limit counters"
+    },
+    "redis_failure_path_runtime_effects": {
+      "invalid_legacy_flask_session": "may consume a bounded pre-verification exchange-attempt counter",
+      "invalid_target_session": "may delete the stale target Session and unregister its index entry"
+    }
+  },
+  "failure_policy": {
+    "catalog_or_database_failure_status": 500,
+    "list_shape": "status/error + safe message + subjects=[] + status_code + request_id",
+    "metadata_shape": "status/error + safe message + empty data subjects/quiz_count + status_code + request_id",
+    "approved_difference": "P4A-CATALOG-003 replaces legacy exception text with a fixed safe message"
+  },
+  "cache_transition": {
+    "legacy_capture": "QUIZ_API_CACHE_ENABLED=false",
+    "initial_java_slice": "no application data cache",
+    "reason": "do not introduce a cache until identity restriction and catalog question/subject after-commit invalidation is implemented",
+    "approved_difference": "P4A-CATALOG-001",
+    "completion_decision": "deliberate always-fresh behavior approved for the migration window; add caching only after every catalog and identity visibility write has complete after-commit invalidation"
+  }
+}
