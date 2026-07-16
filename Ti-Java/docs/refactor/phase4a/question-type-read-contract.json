@@ -1,0 +1,181 @@
+{
+  "contract_id": "ti.phase4a.question-type-read-contract",
+  "schema_version": 1,
+  "status": "catalog_internal_capability_implemented_http_operations_deferred",
+  "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "evidence": {
+    "golden": {
+      "source": "golden-question-type-reads.json",
+      "file_sha256": "928e278edb35043126628c1050280c4792142c38088d47fefa86a12d401d8d6b",
+      "case_count": 22,
+      "case_payload_sha256": "eecedd275bcc4545f96fc00962fbd3f78d81772e9f89d5fbbaa25d9fc2a35374"
+    },
+    "query_plan": {
+      "source": "question-type-query-plan-evidence.json",
+      "file_sha256": "28f7221cb09fbc1f23ed1a2c92acf77e283d38874199b22465868a5f43f23853",
+      "runtime_sql_sha256": "072c4dd0ca4fbdc4697016dce1318978e14aa073d1f954d6148df66e1df4abf8"
+    },
+    "frozen_route_matrix": {
+      "source": "../02-route-parity-matrix.csv",
+      "sha256": "fdbdfedf3dd70cd09778b2a7072711d103eee8461d0e7dd356d797006fc92c74"
+    },
+    "data_ownership": {
+      "source": "../03-data-ownership.csv",
+      "sha256": "3f9cb0650c523593d7037dc24df902dbccdb3885f261f530e1725a9dc7a31748",
+      "resource": "table:questions",
+      "target_owner": "catalog",
+      "delta_required": false
+    },
+    "approved_differences": {
+      "source": "approved-differences.md",
+      "sha256": "2ac257e41214f3005eaa022965038bf429d35e3ba04dc83b81ac8a90abd63fd2",
+      "new_difference_ids": [],
+      "statement": "No behavior difference is approved in this internal capability slice. The observed differences between the two legacy routes are future parity requirements, not migration differences."
+    }
+  },
+  "module_boundary": {
+    "data_owner": "catalog",
+    "catalog_owned_table": "questions",
+    "internal_application_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi#questionTypes",
+    "immutable_result": "io.saksk.ti.catalog.api.QuestionTypeCatalogView",
+    "http_operation_owner": "operations",
+    "http_adapter_status": "not_implemented",
+    "http_owner_dependency_status": "operations_to_catalog_api_dependency_not_yet_approved_or_implemented",
+    "deferred_phase": "4H",
+    "forbidden_in_this_slice": [
+      "HTTP controller or security rule",
+      "operations module dependency change",
+      "route parity delta",
+      "OpenAPI operation migration",
+      "production cutover",
+      "Chinese presentation mapping inside catalog"
+    ]
+  },
+  "route_status": {
+    "migrated_route_count_before": 11,
+    "migrated_route_count_after": 11,
+    "pending_route_count_before": 600,
+    "pending_route_count_after": 600,
+    "production_cutover_count": 0,
+    "operations": [
+      {
+        "route_id": "e4cbe4d6bcc8",
+        "method": "GET",
+        "path": "/admin/api/types",
+        "legacy_handler": "admin.admin_api.get_question_types",
+        "target_module": "operations",
+        "migration_status": "pending",
+        "production_cutover": false
+      },
+      {
+        "route_id": "3a346cb29186",
+        "method": "GET",
+        "path": "/admin/types",
+        "legacy_handler": "admin.admin_api_legacy.get_question_types",
+        "target_module": "operations",
+        "migration_status": "pending",
+        "production_cutover": false
+      }
+    ]
+  },
+  "catalog_application_contract": {
+    "runtime_sql": "SELECT DISTINCT q.type AS question_type FROM questions q",
+    "statement_count": 1,
+    "parameters": [],
+    "transaction": "read-only",
+    "result_field": "questionTypes",
+    "result_semantics": {
+      "source_values": "exact questions.type values; no trim, case folding, alias conversion or Chinese label mapping",
+      "null": "defensively excluded by the application service; production schema declares questions.type NOT NULL",
+      "exact_empty_string": "preserved",
+      "whitespace_only": "preserved exactly, including non-ASCII whitespace",
+      "duplicates": "removed defensively after the database DISTINCT",
+      "ordering": "stable Java natural String order for the raw internal view; it is not the final HTTP label order",
+      "immutability": "the returned list is an unmodifiable copy",
+      "failure": "the original persistence exception propagates unchanged; route-specific translation is deferred to operations"
+    },
+    "query_budget": {
+      "catalog_selects": 1,
+      "catalog_writes": 0,
+      "growth_with_result_count": 0,
+      "n_plus_one_forbidden": true,
+      "authentication_selects": "not applicable to this internal capability; HTTP ownership remains deferred"
+    }
+  },
+  "legacy_http_contract": {
+    "shared_success": {
+      "status": 200,
+      "body": "top-level JSON array of mapped Chinese labels",
+      "mapping_order": "map every eligible raw value, then deduplicate labels, then Python-sort the Chinese labels",
+      "canonical_order": ["判断题", "填空题", "多选题", "简答题", "选择题"],
+      "null_and_exact_empty": "excluded by both routes",
+      "unknown_nonempty": "mapped to 简答题 rather than discarded"
+    },
+    "authentication": {
+      "anonymous": "both routes return 302 Location /login before catalog SQL",
+      "ordinary_session": {
+        "/admin/api/types": "403 JSON message 需要管理员权限",
+        "/admin/types": "403 JSON message 需要管理员或科目管理员权限"
+      },
+      "subject_admin_session": {
+        "/admin/api/types": "403 JSON message 需要管理员权限",
+        "/admin/types": "200 and one catalog SELECT"
+      },
+      "administrator_session": "both routes return 200 and execute one catalog SELECT",
+      "valid_administrator_bearer_only": "both routes return 302 Location /login because the global /admin gate does not treat the path as /api",
+      "administrator_session_plus_valid_bearer": "both routes still return 302 Location /login because a valid Bearer bypasses the Web-session branch"
+    },
+    "route_specific_data_semantics": {
+      "/admin/api/types": "strip the raw value first and omit values that become empty",
+      "/admin/types": "test raw Python truthiness first; a whitespace-only nonempty value survives and maps to 简答题",
+      "python_whitespace_requirement": "Future projection must match Python str.strip semantics; Java trim or strip alone is not accepted without Unicode parity tests"
+    },
+    "failure_semantics": {
+      "/admin/api/types": {
+        "database_failure_accept_any": "500 text/html with the fixed Chinese generic error page",
+        "database_failure_accept_json": "500 JSON generic safe error envelope"
+      },
+      "/admin/types": {
+        "database_failure_accept_any": "200 []",
+        "database_failure_accept_json": "200 []"
+      }
+    },
+    "cross_cutting_effects": {
+      "route_body_catalog_writes": 0,
+      "route_specific_cache_or_limiter": "none",
+      "allowed_runtime_effects": "global session/user-state activity and possible users.last_active refresh are outside catalog facts",
+      "golden_side_effect_assertion": "questions full-row fingerprint remains unchanged before and after every case"
+    }
+  },
+  "legacy_type_mapping": {
+    "选择题": ["single", "single_choice", "singlechoice"],
+    "多选题": ["multi", "multiple", "multi_choice", "multichoice"],
+    "判断题": ["boolean", "bool", "judge", "true_false", "truefalse"],
+    "填空题": ["fill", "fill_in_the_blank", "fill-in-the-blank", "fillblank", "fill_in_the_blank_question"],
+    "简答题": ["essay", "short_answer", "shortanswer", "every other eligible nonempty value"]
+  },
+  "invariants": [
+    "The catalog capability reads only the catalog-owned questions table.",
+    "One invocation executes one parameter-free SELECT and no catalog write.",
+    "Raw empty and whitespace values remain distinguishable for the future route-specific adapter.",
+    "No Chinese display label or HTTP error policy enters the catalog API, application service or domain.",
+    "Persistence failures propagate from catalog so operations can preserve each route's distinct failure policy.",
+    "The two HTTP operations remain operations-owned and pending; internal capability does not imply route migration.",
+    "The 50,000-row plan executes once, scans questions once and introduces no N+1 query.",
+    "PostgreSQL 16.14 and 18.4 execute the same adapter SQL against the production-compatible NOT NULL type schema.",
+    "No production type-only index is introduced without production telemetry and a separate migration decision."
+  ],
+  "acceptance": {
+    "catalog_internal_capability": "implemented",
+    "http_operation_migration": "deferred",
+    "production_cutover": false,
+    "required_before_phase4h_route_migration": [
+      "approve and machine-check the HTTP owner dependency direction",
+      "implement both route-specific authentication policies",
+      "implement Python-compatible Unicode whitespace and alias projection",
+      "implement modern 500 and legacy catch-to-empty failure adapters",
+      "add route delta and OpenAPI only after full golden parity",
+      "keep questions under the sole catalog data owner"
+    ]
+  }
+}

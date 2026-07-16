@@ -1,0 +1,1778 @@
+{
+  "contract_id": "ti.phase4a.question-type-read-goldens",
+  "schema_version": 1,
+  "captured_at": "2026-07-16",
+  "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "legacy_source_attestation": {
+    "complete_app_archive": {
+      "archive_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+      "archive_tree": "db528464896085fe14849baef3c5e686ad1bc253",
+      "archive_scope": [
+        "app/"
+      ],
+      "archive_sha256": "4f196047cefcb7c73984b0661a50cfec50f79926543593bdc32152ea1fc99034",
+      "commit_object_verified": true,
+      "complete_app_tree_verified": true,
+      "extracted_file_count": 645,
+      "git_object_format": "sha1",
+      "key_sources": {
+        "app/__init__.py": {
+          "git_blob": "1f945e13969e2d4bebf8925e65f483f2a1d4cef3",
+          "sha256": "9b2efe8a539ee47f7bcf475708466a64669b6bb36804ccf2b1cc5a63fcb21668",
+          "size_bytes": 43489
+        },
+        "app/core/extensions.py": {
+          "git_blob": "963753e44321f8e884f8d4ea701aa61c5b0a3263",
+          "sha256": "293c63c5ea2d548e1389f221909dced878a861d28f8073f305fb98d6ff334052",
+          "size_bytes": 2150
+        },
+        "app/core/utils/api_response.py": {
+          "git_blob": "48a052d8c27eea94c396e9a9656f2e4d2d23bbbb",
+          "sha256": "76fe1a04c1a9849264502054002f5b89e3a8a62a973df6c6c5ecc1ea7aead5b3",
+          "size_bytes": 1072
+        },
+        "app/modules/user_bank/routes/public.py": {
+          "git_blob": "26044f0af2097b490e36a501894cb056aac654ae",
+          "sha256": "6f3455e825b0316272d298d35782e73dd3230e9b2fc5271f1c078009b389a663",
+          "size_bytes": 12723
+        },
+        "app/modules/user_bank/services/plaza_metrics_service.py": {
+          "git_blob": "147979ec1e0370d2d1cb946b4a8a6859f04478b0",
+          "sha256": "a356ca751c30e50b5bb3d5fcab2742ce2ca6ac8a71dc6c82b974bdb63bb51d82",
+          "size_bytes": 13375
+        },
+        "app/modules/user_bank/services/plaza_query_service.py": {
+          "git_blob": "4d1bd61921437fa9ec8b1463e68e3b6dffe8782f",
+          "sha256": "4d26b12bc756a40a5c89cf9ee373753f73bd2d5eed6ee3b11c916192c58aa057",
+          "size_bytes": 42772
+        }
+      },
+      "member_count": 792,
+      "source_transport": "git archive --format=tar (read-only, fixed commit)",
+      "temporary_extraction_cleanup": "enforced and checked on context exit"
+    },
+    "question_type_key_sources": {
+      "app/__init__.py": {
+        "git_blob": "1f945e13969e2d4bebf8925e65f483f2a1d4cef3",
+        "sha256": "9b2efe8a539ee47f7bcf475708466a64669b6bb36804ccf2b1cc5a63fcb21668",
+        "size_bytes": 43489
+      },
+      "app/core/errors.py": {
+        "git_blob": "28a07dd252a880a2c458b5a44d2a9ca6ef8e7392",
+        "sha256": "e27f21eb06a9041f28378e5d7aa5e13cfa0aec89bf173855a0a03ba21f55935b",
+        "size_bytes": 5616
+      },
+      "app/core/utils/decorators.py": {
+        "git_blob": "07a31eca9ce85e7a60ad84e0888cbdb03f2d2251",
+        "sha256": "6c301dc92868eb701764722f06224e614e0d0b0f82a4c4f6f406e7ded15cd653",
+        "size_bytes": 11355
+      },
+      "app/core/utils/portable_question_format.py": {
+        "git_blob": "afd112c33c117fb946280f5628c86246df7f1956",
+        "sha256": "229c3d5a4d26b68020ed7b8e305ffa0ebf902faf597e7e9584fc172b5add8112",
+        "size_bytes": 15274
+      },
+      "app/modules/admin/__init__.py": {
+        "git_blob": "e7fe1ad8c197be6da2e5ab15e2c8af72768bb2db",
+        "sha256": "06ff47e53bb93c5e484544ff3d63188fa913bfd47d26d8f43034cb60a7f2573d",
+        "size_bytes": 5189
+      },
+      "app/modules/admin/routes/api_components/questions.py": {
+        "git_blob": "22b573f9a74b14a4b021678559b31ef97e05b76b",
+        "sha256": "da2408b27412a364ebad39a2c075ddbc7df9f977025af4629212a97535fa3e98",
+        "size_bytes": 28706
+      },
+      "app/modules/admin/routes/api_legacy.py": {
+        "git_blob": "2bf3b5f76fb493eb40f1087b51cd0efb93a56019",
+        "sha256": "f4d4ca3bd9cd0981360b514c93a19117f3c92f2f0fa59ee846b4fc20e3b3a5d1",
+        "size_bytes": 53339
+      }
+    }
+  },
+  "route_status": {
+    "http_owner": "operations",
+    "migration_status": "pending",
+    "production_cutover": false,
+    "routes": [
+      {
+        "route_id": "e4cbe4d6bcc8",
+        "path": "/admin/api/types",
+        "legacy_handler": "admin.admin_api.get_question_types"
+      },
+      {
+        "route_id": "3a346cb29186",
+        "path": "/admin/types",
+        "legacy_handler": "admin.admin_api_legacy.get_question_types"
+      }
+    ]
+  },
+  "isolation": "complete app/ tree from fixed read-only git archive; temporary SQLite; no current working-tree legacy import and no persistent data",
+  "case_isolation": "the global in-memory limiter is reset and a deterministic synthetic remote address is assigned before each independent case; neither route declares a route-specific limiter",
+  "redaction": "synthetic identities only; valid JWT values omitted; fixed request ID",
+  "case_count": 22,
+  "case_payload_sha256": "eecedd275bcc4545f96fc00962fbd3f78d81772e9f89d5fbbaa25d9fc2a35374",
+  "cases": [
+    {
+      "case_id": "populated-admin-modern",
+      "route": "modern",
+      "route_id": "e4cbe4d6bcc8",
+      "actor": "administrator",
+      "credential_mode": "session",
+      "request": {
+        "method": "GET",
+        "path": "/admin/api/types",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-question-type-golden-request"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json",
+          "Vary": "Cookie"
+        },
+        "body": [
+          "判断题",
+          "填空题",
+          "多选题",
+          "简答题",
+          "选择题"
+        ],
+        "body_sha256": "f8dba9ffbf8354c8668b8ef9b09a0f66ec3407681b7dd4e0e7925ca010ac86e6",
+        "mimetype": "application/json",
+        "content_type": "application/json"
+      },
+      "catalog_effects": {
+        "question_type_select_attempts": 1,
+        "question_write_statements": 0,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 26,
+          "sha256": "c03a77b63245e08be4cb7f549e18a1d82f228d6097d79d197d0af8435f389e6d"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 26,
+          "sha256": "c03a77b63245e08be4cb7f549e18a1d82f228d6097d79d197d0af8435f389e6d"
+        },
+        "questions_unchanged": true
+      }
+    },
+    {
+      "case_id": "subject-admin-modern",
+      "route": "modern",
+      "route_id": "e4cbe4d6bcc8",
+      "actor": "subject_admin",
+      "credential_mode": "session",
+      "request": {
+        "method": "GET",
+        "path": "/admin/api/types",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-question-type-golden-request"
+        }
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "Content-Type": "application/json; charset=utf-8",
+          "Vary": "Cookie"
+        },
+        "body": {
+          "message": "需要管理员权限",
+          "status": "forbidden",
+          "request_id": "phase4a-question-type-golden-request",
+          "status_code": 403
+        },
+        "body_sha256": "c995fbb0b7ec4e3f2924ea2511a4792c3c7b00b23653b8795fe8138499e18e4f",
+        "mimetype": "application/json",
+        "content_type": "application/json; charset=utf-8"
+      },
+      "catalog_effects": {
+        "question_type_select_attempts": 0,
+        "question_write_statements": 0,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 26,
+          "sha256": "c03a77b63245e08be4cb7f549e18a1d82f228d6097d79d197d0af8435f389e6d"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 26,
+          "sha256": "c03a77b63245e08be4cb7f549e18a1d82f228d6097d79d197d0af8435f389e6d"
+        },
+        "questions_unchanged": true
+      }
+    },
+    {
+      "case_id": "ordinary-modern",
+      "route": "modern",
+      "route_id": "e4cbe4d6bcc8",
+      "actor": "ordinary",
+      "credential_mode": "session",
+      "request": {
+        "method": "GET",
+        "path": "/admin/api/types",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-question-type-golden-request"
+        }
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "Content-Type": "application/json; charset=utf-8",
+          "Vary": "Cookie"
+        },
+        "body": {
+          "message": "需要管理员权限",
+          "status": "forbidden",
+          "request_id": "phase4a-question-type-golden-request",
+          "status_code": 403
+        },
+        "body_sha256": "c995fbb0b7ec4e3f2924ea2511a4792c3c7b00b23653b8795fe8138499e18e4f",
+        "mimetype": "application/json",
+        "content_type": "application/json; charset=utf-8"
+      },
+      "catalog_effects": {
+        "question_type_select_attempts": 0,
+        "question_write_statements": 0,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 26,
+          "sha256": "c03a77b63245e08be4cb7f549e18a1d82f228d6097d79d197d0af8435f389e6d"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 26,
+          "sha256": "c03a77b63245e08be4cb7f549e18a1d82f228d6097d79d197d0af8435f389e6d"
+        },
+        "questions_unchanged": true
+      }
+    },
+    {
+      "case_id": "anonymous-modern",
+      "route": "modern",
+      "route_id": "e4cbe4d6bcc8",
+      "actor": "anonymous",
+      "credential_mode": "none",
+      "request": {
+        "method": "GET",
+        "path": "/admin/api/types",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-question-type-golden-request"
+        }
+      },
+      "response": {
+        "status": 302,
+        "headers": {
+          "Content-Type": "text/html; charset=utf-8",
+          "Location": "/login",
+          "Vary": "Cookie"
+        },
+        "body": "<!doctype html>\n<html lang=en>\n<title>Redirecting...</title>\n<h1>Redirecting...</h1>\n<p>You should be redirected automatically to the target URL: <a href=\"/login\">/login</a>. If not, click the link.\n",
+        "body_sha256": "5da82accbf2ff96f465a16f1cdcc2d40c70e57c66897bcdc06a6925f033102ee",
+        "mimetype": "text/html",
+        "content_type": "text/html; charset=utf-8"
+      },
+      "catalog_effects": {
+        "question_type_select_attempts": 0,
+        "question_write_statements": 0,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 26,
+          "sha256": "c03a77b63245e08be4cb7f549e18a1d82f228d6097d79d197d0af8435f389e6d"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 26,
+          "sha256": "c03a77b63245e08be4cb7f549e18a1d82f228d6097d79d197d0af8435f389e6d"
+        },
+        "questions_unchanged": true
+      }
+    },
+    {
+      "case_id": "bearer-only-modern",
+      "route": "modern",
+      "route_id": "e4cbe4d6bcc8",
+      "actor": "anonymous",
+      "credential_mode": "valid_bearer_only",
+      "request": {
+        "method": "GET",
+        "path": "/admin/api/types",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-question-type-golden-request",
+          "Authorization": "Bearer <redacted-valid-synthetic-jwt>"
+        }
+      },
+      "response": {
+        "status": 302,
+        "headers": {
+          "Content-Type": "text/html; charset=utf-8",
+          "Location": "/login",
+          "Vary": "Cookie"
+        },
+        "body": "<!doctype html>\n<html lang=en>\n<title>Redirecting...</title>\n<h1>Redirecting...</h1>\n<p>You should be redirected automatically to the target URL: <a href=\"/login\">/login</a>. If not, click the link.\n",
+        "body_sha256": "5da82accbf2ff96f465a16f1cdcc2d40c70e57c66897bcdc06a6925f033102ee",
+        "mimetype": "text/html",
+        "content_type": "text/html; charset=utf-8"
+      },
+      "catalog_effects": {
+        "question_type_select_attempts": 0,
+        "question_write_statements": 0,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 26,
+          "sha256": "c03a77b63245e08be4cb7f549e18a1d82f228d6097d79d197d0af8435f389e6d"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 26,
+          "sha256": "c03a77b63245e08be4cb7f549e18a1d82f228d6097d79d197d0af8435f389e6d"
+        },
+        "questions_unchanged": true
+      }
+    },
+    {
+      "case_id": "session-plus-bearer-modern",
+      "route": "modern",
+      "route_id": "e4cbe4d6bcc8",
+      "actor": "administrator",
+      "credential_mode": "session+valid_bearer",
+      "request": {
+        "method": "GET",
+        "path": "/admin/api/types",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-question-type-golden-request",
+          "Authorization": "Bearer <redacted-valid-synthetic-jwt>"
+        }
+      },
+      "response": {
+        "status": 302,
+        "headers": {
+          "Content-Type": "text/html; charset=utf-8",
+          "Location": "/login",
+          "Vary": "Cookie"
+        },
+        "body": "<!doctype html>\n<html lang=en>\n<title>Redirecting...</title>\n<h1>Redirecting...</h1>\n<p>You should be redirected automatically to the target URL: <a href=\"/login\">/login</a>. If not, click the link.\n",
+        "body_sha256": "5da82accbf2ff96f465a16f1cdcc2d40c70e57c66897bcdc06a6925f033102ee",
+        "mimetype": "text/html",
+        "content_type": "text/html; charset=utf-8"
+      },
+      "catalog_effects": {
+        "question_type_select_attempts": 0,
+        "question_write_statements": 0,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 26,
+          "sha256": "c03a77b63245e08be4cb7f549e18a1d82f228d6097d79d197d0af8435f389e6d"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 26,
+          "sha256": "c03a77b63245e08be4cb7f549e18a1d82f228d6097d79d197d0af8435f389e6d"
+        },
+        "questions_unchanged": true
+      }
+    },
+    {
+      "case_id": "populated-admin-legacy",
+      "route": "legacy",
+      "route_id": "3a346cb29186",
+      "actor": "administrator",
+      "credential_mode": "session",
+      "request": {
+        "method": "GET",
+        "path": "/admin/types",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-question-type-golden-request"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json",
+          "Vary": "Cookie"
+        },
+        "body": [
+          "判断题",
+          "填空题",
+          "多选题",
+          "简答题",
+          "选择题"
+        ],
+        "body_sha256": "f8dba9ffbf8354c8668b8ef9b09a0f66ec3407681b7dd4e0e7925ca010ac86e6",
+        "mimetype": "application/json",
+        "content_type": "application/json"
+      },
+      "catalog_effects": {
+        "question_type_select_attempts": 1,
+        "question_write_statements": 0,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 26,
+          "sha256": "c03a77b63245e08be4cb7f549e18a1d82f228d6097d79d197d0af8435f389e6d"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 26,
+          "sha256": "c03a77b63245e08be4cb7f549e18a1d82f228d6097d79d197d0af8435f389e6d"
+        },
+        "questions_unchanged": true
+      }
+    },
+    {
+      "case_id": "subject-admin-legacy",
+      "route": "legacy",
+      "route_id": "3a346cb29186",
+      "actor": "subject_admin",
+      "credential_mode": "session",
+      "request": {
+        "method": "GET",
+        "path": "/admin/types",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-question-type-golden-request"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json",
+          "Vary": "Cookie"
+        },
+        "body": [
+          "判断题",
+          "填空题",
+          "多选题",
+          "简答题",
+          "选择题"
+        ],
+        "body_sha256": "f8dba9ffbf8354c8668b8ef9b09a0f66ec3407681b7dd4e0e7925ca010ac86e6",
+        "mimetype": "application/json",
+        "content_type": "application/json"
+      },
+      "catalog_effects": {
+        "question_type_select_attempts": 1,
+        "question_write_statements": 0,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 26,
+          "sha256": "c03a77b63245e08be4cb7f549e18a1d82f228d6097d79d197d0af8435f389e6d"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 26,
+          "sha256": "c03a77b63245e08be4cb7f549e18a1d82f228d6097d79d197d0af8435f389e6d"
+        },
+        "questions_unchanged": true
+      }
+    },
+    {
+      "case_id": "ordinary-legacy",
+      "route": "legacy",
+      "route_id": "3a346cb29186",
+      "actor": "ordinary",
+      "credential_mode": "session",
+      "request": {
+        "method": "GET",
+        "path": "/admin/types",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-question-type-golden-request"
+        }
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "Content-Type": "application/json; charset=utf-8",
+          "Vary": "Cookie"
+        },
+        "body": {
+          "message": "需要管理员或科目管理员权限",
+          "status": "forbidden",
+          "request_id": "phase4a-question-type-golden-request",
+          "status_code": 403
+        },
+        "body_sha256": "cfe2fe8498d50aaf515d8aa746beacc10ad77c4d46a6e1a34bcac980510256a4",
+        "mimetype": "application/json",
+        "content_type": "application/json; charset=utf-8"
+      },
+      "catalog_effects": {
+        "question_type_select_attempts": 0,
+        "question_write_statements": 0,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 26,
+          "sha256": "c03a77b63245e08be4cb7f549e18a1d82f228d6097d79d197d0af8435f389e6d"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 26,
+          "sha256": "c03a77b63245e08be4cb7f549e18a1d82f228d6097d79d197d0af8435f389e6d"
+        },
+        "questions_unchanged": true
+      }
+    },
+    {
+      "case_id": "anonymous-legacy",
+      "route": "legacy",
+      "route_id": "3a346cb29186",
+      "actor": "anonymous",
+      "credential_mode": "none",
+      "request": {
+        "method": "GET",
+        "path": "/admin/types",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-question-type-golden-request"
+        }
+      },
+      "response": {
+        "status": 302,
+        "headers": {
+          "Content-Type": "text/html; charset=utf-8",
+          "Location": "/login",
+          "Vary": "Cookie"
+        },
+        "body": "<!doctype html>\n<html lang=en>\n<title>Redirecting...</title>\n<h1>Redirecting...</h1>\n<p>You should be redirected automatically to the target URL: <a href=\"/login\">/login</a>. If not, click the link.\n",
+        "body_sha256": "5da82accbf2ff96f465a16f1cdcc2d40c70e57c66897bcdc06a6925f033102ee",
+        "mimetype": "text/html",
+        "content_type": "text/html; charset=utf-8"
+      },
+      "catalog_effects": {
+        "question_type_select_attempts": 0,
+        "question_write_statements": 0,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 26,
+          "sha256": "c03a77b63245e08be4cb7f549e18a1d82f228d6097d79d197d0af8435f389e6d"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 26,
+          "sha256": "c03a77b63245e08be4cb7f549e18a1d82f228d6097d79d197d0af8435f389e6d"
+        },
+        "questions_unchanged": true
+      }
+    },
+    {
+      "case_id": "bearer-only-legacy",
+      "route": "legacy",
+      "route_id": "3a346cb29186",
+      "actor": "anonymous",
+      "credential_mode": "valid_bearer_only",
+      "request": {
+        "method": "GET",
+        "path": "/admin/types",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-question-type-golden-request",
+          "Authorization": "Bearer <redacted-valid-synthetic-jwt>"
+        }
+      },
+      "response": {
+        "status": 302,
+        "headers": {
+          "Content-Type": "text/html; charset=utf-8",
+          "Location": "/login",
+          "Vary": "Cookie"
+        },
+        "body": "<!doctype html>\n<html lang=en>\n<title>Redirecting...</title>\n<h1>Redirecting...</h1>\n<p>You should be redirected automatically to the target URL: <a href=\"/login\">/login</a>. If not, click the link.\n",
+        "body_sha256": "5da82accbf2ff96f465a16f1cdcc2d40c70e57c66897bcdc06a6925f033102ee",
+        "mimetype": "text/html",
+        "content_type": "text/html; charset=utf-8"
+      },
+      "catalog_effects": {
+        "question_type_select_attempts": 0,
+        "question_write_statements": 0,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 26,
+          "sha256": "c03a77b63245e08be4cb7f549e18a1d82f228d6097d79d197d0af8435f389e6d"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 26,
+          "sha256": "c03a77b63245e08be4cb7f549e18a1d82f228d6097d79d197d0af8435f389e6d"
+        },
+        "questions_unchanged": true
+      }
+    },
+    {
+      "case_id": "session-plus-bearer-legacy",
+      "route": "legacy",
+      "route_id": "3a346cb29186",
+      "actor": "administrator",
+      "credential_mode": "session+valid_bearer",
+      "request": {
+        "method": "GET",
+        "path": "/admin/types",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-question-type-golden-request",
+          "Authorization": "Bearer <redacted-valid-synthetic-jwt>"
+        }
+      },
+      "response": {
+        "status": 302,
+        "headers": {
+          "Content-Type": "text/html; charset=utf-8",
+          "Location": "/login",
+          "Vary": "Cookie"
+        },
+        "body": "<!doctype html>\n<html lang=en>\n<title>Redirecting...</title>\n<h1>Redirecting...</h1>\n<p>You should be redirected automatically to the target URL: <a href=\"/login\">/login</a>. If not, click the link.\n",
+        "body_sha256": "5da82accbf2ff96f465a16f1cdcc2d40c70e57c66897bcdc06a6925f033102ee",
+        "mimetype": "text/html",
+        "content_type": "text/html; charset=utf-8"
+      },
+      "catalog_effects": {
+        "question_type_select_attempts": 0,
+        "question_write_statements": 0,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 26,
+          "sha256": "c03a77b63245e08be4cb7f549e18a1d82f228d6097d79d197d0af8435f389e6d"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 26,
+          "sha256": "c03a77b63245e08be4cb7f549e18a1d82f228d6097d79d197d0af8435f389e6d"
+        },
+        "questions_unchanged": true
+      }
+    },
+    {
+      "case_id": "empty-admin-modern",
+      "route": "modern",
+      "route_id": "e4cbe4d6bcc8",
+      "actor": "administrator",
+      "credential_mode": "session",
+      "request": {
+        "method": "GET",
+        "path": "/admin/api/types",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-question-type-golden-request"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json",
+          "Vary": "Cookie"
+        },
+        "body": [],
+        "body_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "mimetype": "application/json",
+        "content_type": "application/json"
+      },
+      "catalog_effects": {
+        "question_type_select_attempts": 1,
+        "question_write_statements": 0,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "questions_unchanged": true
+      }
+    },
+    {
+      "case_id": "empty-admin-legacy",
+      "route": "legacy",
+      "route_id": "3a346cb29186",
+      "actor": "administrator",
+      "credential_mode": "session",
+      "request": {
+        "method": "GET",
+        "path": "/admin/types",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-question-type-golden-request"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json",
+          "Vary": "Cookie"
+        },
+        "body": [],
+        "body_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "mimetype": "application/json",
+        "content_type": "application/json"
+      },
+      "catalog_effects": {
+        "question_type_select_attempts": 1,
+        "question_write_statements": 0,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "questions_unchanged": true
+      }
+    },
+    {
+      "case_id": "whitespace-admin-modern",
+      "route": "modern",
+      "route_id": "e4cbe4d6bcc8",
+      "actor": "administrator",
+      "credential_mode": "session",
+      "request": {
+        "method": "GET",
+        "path": "/admin/api/types",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-question-type-golden-request"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json",
+          "Vary": "Cookie"
+        },
+        "body": [],
+        "body_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "mimetype": "application/json",
+        "content_type": "application/json"
+      },
+      "catalog_effects": {
+        "question_type_select_attempts": 1,
+        "question_write_statements": 0,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 4,
+          "sha256": "f6111ed49852787e39bc5b29a35d9fd2fc9206b16d798408bf5f8d276cc59134"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 4,
+          "sha256": "f6111ed49852787e39bc5b29a35d9fd2fc9206b16d798408bf5f8d276cc59134"
+        },
+        "questions_unchanged": true
+      }
+    },
+    {
+      "case_id": "whitespace-admin-legacy",
+      "route": "legacy",
+      "route_id": "3a346cb29186",
+      "actor": "administrator",
+      "credential_mode": "session",
+      "request": {
+        "method": "GET",
+        "path": "/admin/types",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-question-type-golden-request"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json",
+          "Vary": "Cookie"
+        },
+        "body": [
+          "简答题"
+        ],
+        "body_sha256": "65426cebd3cdbf16b80e6554b9f7b73e882d5012cc64915f942c292a2a3f6985",
+        "mimetype": "application/json",
+        "content_type": "application/json"
+      },
+      "catalog_effects": {
+        "question_type_select_attempts": 1,
+        "question_write_statements": 0,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 4,
+          "sha256": "f6111ed49852787e39bc5b29a35d9fd2fc9206b16d798408bf5f8d276cc59134"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 4,
+          "sha256": "f6111ed49852787e39bc5b29a35d9fd2fc9206b16d798408bf5f8d276cc59134"
+        },
+        "questions_unchanged": true
+      }
+    },
+    {
+      "case_id": "mixed-whitespace-admin-modern",
+      "route": "modern",
+      "route_id": "e4cbe4d6bcc8",
+      "actor": "administrator",
+      "credential_mode": "session",
+      "request": {
+        "method": "GET",
+        "path": "/admin/api/types",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-question-type-golden-request"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json",
+          "Vary": "Cookie"
+        },
+        "body": [
+          "选择题"
+        ],
+        "body_sha256": "b3e0a8d4e3a44fffd7d3c301b9cdc77589e9183d75f868ba2a9b602899be3e4d",
+        "mimetype": "application/json",
+        "content_type": "application/json"
+      },
+      "catalog_effects": {
+        "question_type_select_attempts": 1,
+        "question_write_statements": 0,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 5,
+          "sha256": "17a4682f07b218b72cdd9eb4a13139198605225363f8d8b0c3a419a56f471cbe"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 5,
+          "sha256": "17a4682f07b218b72cdd9eb4a13139198605225363f8d8b0c3a419a56f471cbe"
+        },
+        "questions_unchanged": true
+      }
+    },
+    {
+      "case_id": "mixed-whitespace-admin-legacy",
+      "route": "legacy",
+      "route_id": "3a346cb29186",
+      "actor": "administrator",
+      "credential_mode": "session",
+      "request": {
+        "method": "GET",
+        "path": "/admin/types",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-question-type-golden-request"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json",
+          "Vary": "Cookie"
+        },
+        "body": [
+          "简答题",
+          "选择题"
+        ],
+        "body_sha256": "ef5002c7c51bbff40be3170b9e82a653d71d3ac59c6be07a4d385d9d693ef4c0",
+        "mimetype": "application/json",
+        "content_type": "application/json"
+      },
+      "catalog_effects": {
+        "question_type_select_attempts": 1,
+        "question_write_statements": 0,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 5,
+          "sha256": "17a4682f07b218b72cdd9eb4a13139198605225363f8d8b0c3a419a56f471cbe"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 5,
+          "sha256": "17a4682f07b218b72cdd9eb4a13139198605225363f8d8b0c3a419a56f471cbe"
+        },
+        "questions_unchanged": true
+      }
+    },
+    {
+      "case_id": "fault-html-modern",
+      "route": "modern",
+      "route_id": "e4cbe4d6bcc8",
+      "actor": "administrator",
+      "credential_mode": "session",
+      "request": {
+        "method": "GET",
+        "path": "/admin/api/types",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-question-type-golden-request"
+        }
+      },
+      "response": {
+        "status": 500,
+        "headers": {
+          "Content-Type": "text/html; charset=utf-8",
+          "Vary": "Cookie"
+        },
+        "body": "<h1>500 - 服务器错误</h1><p>发生了一个意外错误，请稍后再试。</p>",
+        "body_sha256": "5481a8374472ee08b36dea63cc2901a44718eb6b7364b426fed5b8130c6b23ac",
+        "mimetype": "text/html",
+        "content_type": "text/html; charset=utf-8"
+      },
+      "catalog_effects": {
+        "question_type_select_attempts": 1,
+        "question_write_statements": 0,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 1,
+          "sha256": "481a8a148f039d1f0796d70c92f0cbc6c5e49fb92c709d7ccc4e293fc86fdb8b"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 1,
+          "sha256": "481a8a148f039d1f0796d70c92f0cbc6c5e49fb92c709d7ccc4e293fc86fdb8b"
+        },
+        "questions_unchanged": true
+      }
+    },
+    {
+      "case_id": "fault-json-modern",
+      "route": "modern",
+      "route_id": "e4cbe4d6bcc8",
+      "actor": "administrator",
+      "credential_mode": "session",
+      "request": {
+        "method": "GET",
+        "path": "/admin/api/types",
+        "headers": {
+          "Accept": "application/json",
+          "X-Request-ID": "phase4a-question-type-golden-request"
+        }
+      },
+      "response": {
+        "status": 500,
+        "headers": {
+          "Content-Type": "application/json",
+          "Vary": "Cookie"
+        },
+        "body": {
+          "message": "An unexpected server error occurred.",
+          "payload": null,
+          "request_id": "phase4a-question-type-golden-request",
+          "status": "error",
+          "status_code": 500
+        },
+        "body_sha256": "206684b15aad5722e9016a8c13e89a8188de43add41d12a8e904ec8de0d8372b",
+        "mimetype": "application/json",
+        "content_type": "application/json"
+      },
+      "catalog_effects": {
+        "question_type_select_attempts": 1,
+        "question_write_statements": 0,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 1,
+          "sha256": "481a8a148f039d1f0796d70c92f0cbc6c5e49fb92c709d7ccc4e293fc86fdb8b"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 1,
+          "sha256": "481a8a148f039d1f0796d70c92f0cbc6c5e49fb92c709d7ccc4e293fc86fdb8b"
+        },
+        "questions_unchanged": true
+      }
+    },
+    {
+      "case_id": "fault-html-legacy",
+      "route": "legacy",
+      "route_id": "3a346cb29186",
+      "actor": "administrator",
+      "credential_mode": "session",
+      "request": {
+        "method": "GET",
+        "path": "/admin/types",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-question-type-golden-request"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json",
+          "Vary": "Cookie"
+        },
+        "body": [],
+        "body_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "mimetype": "application/json",
+        "content_type": "application/json"
+      },
+      "catalog_effects": {
+        "question_type_select_attempts": 1,
+        "question_write_statements": 0,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 1,
+          "sha256": "481a8a148f039d1f0796d70c92f0cbc6c5e49fb92c709d7ccc4e293fc86fdb8b"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 1,
+          "sha256": "481a8a148f039d1f0796d70c92f0cbc6c5e49fb92c709d7ccc4e293fc86fdb8b"
+        },
+        "questions_unchanged": true
+      }
+    },
+    {
+      "case_id": "fault-json-legacy",
+      "route": "legacy",
+      "route_id": "3a346cb29186",
+      "actor": "administrator",
+      "credential_mode": "session",
+      "request": {
+        "method": "GET",
+        "path": "/admin/types",
+        "headers": {
+          "Accept": "application/json",
+          "X-Request-ID": "phase4a-question-type-golden-request"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json",
+          "Vary": "Cookie"
+        },
+        "body": [],
+        "body_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "mimetype": "application/json",
+        "content_type": "application/json"
+      },
+      "catalog_effects": {
+        "question_type_select_attempts": 1,
+        "question_write_statements": 0,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 1,
+          "sha256": "481a8a148f039d1f0796d70c92f0cbc6c5e49fb92c709d7ccc4e293fc86fdb8b"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "row_count": 1,
+          "sha256": "481a8a148f039d1f0796d70c92f0cbc6c5e49fb92c709d7ccc4e293fc86fdb8b"
+        },
+        "questions_unchanged": true
+      }
+    }
+  ]
+}

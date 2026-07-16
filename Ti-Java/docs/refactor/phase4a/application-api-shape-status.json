@@ -7,9 +7,9 @@
   "phase": "4A-subject-directory-and-public-bank-read-slices",
   "migrated_route_count": 11,
   "implemented_route_backed_operation_count": 11,
-  "implemented_public_application_method_count": 12,
+  "implemented_public_application_method_count": 13,
   "event_payload_shape_status": "deferred_to_phase5",
-  "policy": "Phase 3 methods remain accepted. Phase 4A adds the protected subject query boundary, the reviewed identity visibility boundary and a separate HTTP-neutral public-bank snapshot query API proven by isolated compatibility contracts.",
+  "policy": "Phase 3 methods remain accepted. Phase 4A adds the protected subject query boundary, the reviewed identity visibility boundary, a separate HTTP-neutral public-bank snapshot query API and an HTTP-neutral raw question-metadata query capability. The two operations-owned admin type routes remain pending and are not counted as route-backed operations.",
   "modules": [
     {
       "module_id": "identity",
@@ -124,7 +124,8 @@
         "PublicBankSort",
         "PublicBankSource",
         "PublicBankSourceBreakdownView",
-        "PublicBankSummaryView"
+        "PublicBankSummaryView",
+        "QuestionTypeCatalogView"
       ],
       "additional_public_apis": [
         {
@@ -168,6 +169,20 @@
                 "io.saksk.ti.catalog.api.PublicBankRef",
                 "java.util.Optional"
               ]
+            }
+          ]
+        },
+        {
+          "java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi",
+          "lifecycle": "catalog_question_metadata_query_boundary",
+          "direct_http_operation": false,
+          "deferred_http_route_ids": ["e4cbe4d6bcc8", "3a346cb29186"],
+          "deferred_http_owner": "operations",
+          "methods": [
+            {
+              "name": "questionTypes",
+              "return_type": "io.saksk.ti.catalog.api.QuestionTypeCatalogView",
+              "parameter_types": []
             }
           ]
         }

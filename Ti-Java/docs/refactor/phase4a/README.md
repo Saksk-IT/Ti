@@ -3,17 +3,21 @@
 本目录保存 Phase 4A 的可执行契约、黄金样本、差异报告和性能证据。旧 Flask
 只作为测试期契约来源；Java 生产运行时不得读取父目录或回调 Flask。
 
-受保护科目目录与公共题库 7 条 GET 的 Java shadow 切片均已实现。当前有效状态为
-**11 migrated、600 pending、0 production cutover**，有效资源为 **159 个且全部唯一 owner**；
-旧 Flask 仍是生产运行所有者，Phase 4A 后续切片和整个长期重构目标都尚未完成。
+受保护科目目录与公共题库 7 条 GET 的 Java shadow 切片均已实现；题目类型元数据的
+catalog 内部读取能力也已实现，但对应两条后台 HTTP operation 仍由 `operations` 持有并
+保持 pending。当前有效状态为 **11 migrated、600 pending、0 production cutover**，有效
+资源为 **159 个且全部唯一 owner**；旧 Flask 仍是生产运行所有者，Phase 4A 后续切片和
+整个长期重构目标都尚未完成。
 
 ## 垂直切片顺序
 
 1. `GET /api/quiz/subjects` 与 `GET /api/quiz/subjects/meta`：受保护科目目录读取，已实现；
 2. 公共题库广场 search/list、summary、hot、boards、detail、card 共 7 条 GET：已实现
    complete snapshot 只读边界，并隔离旧实现 GET 中的惰性刷新写入；
-3. 题目元数据与公共题库剩余读取：下一项，先确定真实 Flask 路由选择并冻结 golden；
-4. 在 4C 由 `learning` 组合 `GET /api/quiz/subjects/{subject}/info` 中的作答、错题和收藏统计。
+3. 题目类型元数据：已固定双路由真实 Flask 行为并实现原始类型 catalog 内部 API；两条
+   HTTP operation 延后到 4H，当前不写 route/OpenAPI delta；
+4. 公共题库剩余读取：下一项，继续按真实 Flask 路由选择冻结 golden；
+5. 在 4C 由 `learning` 组合 `GET /api/quiz/subjects/{subject}/info` 中的作答、错题和收藏统计。
 
 切片 1 不越权读取 `identity.user_subjects`：`catalog` 通过 `identity::api` 获取用户黑名单，
 再在内存中与目录自有读取结果求差。它也不读取 `learning` 所有的 `user_answers`、
@@ -43,6 +47,14 @@
   `570e471e85374f32f3d50c33b9b4d199a3230f17c2893c37a2fcf7469e1f2476`，不是生产延迟 SLA；
 - `effective-route-parity-status.json` 与 `effective-data-ownership-status.json`：物化
   11/600/0 路由状态和 159/159 唯一资源 owner，不把 `migrated` 等同于生产切流。
+- `golden-question-type-reads.json`：固定旧提交完整 `app/` 归档的 22-case 双路由证据，
+  覆盖角色、匿名、Bearer 分流、空表、Unicode 空白、别名/未知值和 HTML/JSON 数据库故障；
+  SHA-256 为 `928e278edb35043126628c1050280c4792142c38088d47fefa86a12d401d8d6b`；
+- `question-type-read-contract.json`：明确 catalog 返回未经 trim/映射的原始题型值，
+  `operations` 以后负责两条路径不同的认证、空白投影和故障信封；
+- `question-type-query-plan-evidence.json`：从 Java adapter 导出的精确 SQL，在 PostgreSQL
+  18.4 的 50,000 题目夹具上固定一次查询、一次 `questions` 扫描和无 N+1；SHA-256 为
+  `28f7221cb09fbc1f23ed1a2c92acf77e283d38874199b22465868a5f43f23853`，不是生产延迟 SLA。
 
 Java 迁移路由不启用应用数据缓存；身份策略与目录两条业务查询读取同一只读、可重复读事务中的当前数据库状态；这是
 `approved-differences.md` 中批准的过渡差异。业务用例是身份策略与目录各一条 SELECT，HTTP
@@ -68,3 +80,9 @@ surefire + 44 个 failsafe，0 failure/error/skip。当前 build-context 的 WOR
 Phase 1、Phase 2/3、323+44 Maven 和 PostgreSQL/Redis 数据面门禁，清理后无临时资源残留。旧 Flask
 写路径的即时撤回事件、生产刷新调度、真实数据、Redis/HMAC
 配置和入口切换仍未完成或获批，因此这 7 条 GET 必须保持 `production cutover=0`。
+
+题型内部能力加入后的当前完整 `clean verify` 为 329 个 surefire + 46 个 failsafe，
+0 failure/error/skip。build-context SHA-256
+`fdc94000537d266595a22082ee28df0e7f04414855d6f4b36ba2125707153a8d` 的 WORM、Phase 2
+静态门禁与 Phase 3 数据面均已通过；仅含 1,109 个受控源文件的独立副本也通过 Phase 1、
+Phase 2/3 静态门禁、329+46 Maven 和 PostgreSQL/Redis 数据面门禁，清理后无临时资源残留。
