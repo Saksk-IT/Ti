@@ -4,11 +4,11 @@
 
 ## 当前阶段
 
-- **阶段 4A：目录与公共题库（进行中）**；受保护科目目录与公共题库 7 条 GET 的 Java shadow 切片均已实现，题目类型、题量、单题详情、后台题目摘要集合、后台科目库存摘要与后台题集页面科目上下文的 catalog 内部读取能力也已实现。两条后台题型、两条单题详情、两条后台题目集合、一条后台科目库存与两条后台科目上下文 HTTP operation 仍由 `operations` 持有，两条题量 HTTP operation 延后由 Phase 4C 的 `learning` 组合；十一条路由都保持 pending，全部保持 `production cutover=0`。
+- **阶段 4A：目录与公共题库（已完成有界 closure）；下一阶段为 4B personalbank**。受保护科目目录与公共题库 7 条 GET 的 Java shadow 切片均已实现，题目类型、题量、单题详情、后台题目摘要集合、后台科目库存摘要、后台题集页面科目上下文与后台题目导出的 catalog 内部读取能力也已实现。两条后台题型、两条单题详情、两条后台题目集合、一条后台科目库存、两条后台科目上下文与两条后台题目导出 HTTP operation 仍由 `operations` 持有，两条题量 HTTP operation 延后由 Phase 4C 的 `learning` 组合；十三条路由都保持 pending，全部保持 `production cutover=0`。独立的 `phase4a-final-acceptance.json` 已完成 Phase 4A closure，只授权 Phase 4B 的两条 personal-bank category alias 作为下一步。
 - 基线提交：旧 Ti `700006dfdfa063deb4387be572911e782bcea0d9`。
-- 盘点日期：2026-07-16（Asia/Shanghai）。
+- 盘点日期：2026-07-17（Asia/Shanghai）。
 - 题目类型元数据已提交并推送的绿色检查点：`1444814`（`feat(java): add question metadata catalog capability`）；题量为 `eda7f43`（`feat(java): add catalog question count capability`）；单题详情为 `75d4cc8`（`feat(java): add catalog question detail capability`）；后台题目摘要集合为 `a32caeb`（`feat(java): add catalog question summary capability`）；后台科目库存摘要为 `6493cb2`（`feat(java): add catalog subject inventory capability`）；后台科目上下文为 `643c3b3`（`feat(java): add catalog subject context capability`）。
-- 阶段 0、阶段 1、阶段 2 与阶段 3 均已通过各自结构化门禁、负向测试和独立审计；截至上述检查点，当前 Phase 4A 已完成后台科目上下文内部读取，但整个长期重构目标仍未完成。
+- 阶段 0、阶段 1、阶段 2 与阶段 3 均已通过各自结构化门禁、负向测试和独立审计；Phase 4A 的 catalog 有界范围、WORM、独立副本与 closure gate 均已完成，但整个长期重构目标仍未完成。
 - 旧项目目录只读；当前实施范围仅为 `Ti-Java/`，未连接生产环境、未读取真实密钥、未切换部署或 DNS。
 
 ## 本轮已完成
@@ -60,7 +60,7 @@
 - 最终 WORM 使用临时生成且只读 configtree 挂载的登录限流 HMAC Secret，通过 PostgreSQL 18.4、70 表/617 列的 schema-only 隔离恢复、ACL、Hibernate `validate` 和 readiness；临时 Secret、容器和恢复数据均已清理。
 - 仅复制当前 `Ti-Java/` 的独立目录已通过 Phase 1、Phase 2/3 静态门禁、Phase 3 数据面、完整 Maven 208+22、镜像构建、Compose 健康检查和运行态 bind source 审计。Docker Desktop `/host_mnt` 前缀按仓库现有守卫规则等价归一化后，所有挂载均位于独立副本内且不引用原仓库；临时目录、容器、网络和卷无残留。
 
-## 阶段 4A：科目目录、公共题库、题目类型、题量、单题详情、题目摘要、科目库存与科目上下文元数据
+## 阶段 4A：科目目录、公共题库、题目类型、题量、单题详情、题目摘要、科目库存、科目上下文与题目导出元数据
 
 - 已把 `GET /api/quiz/subjects` 与 `GET /api/quiz/subjects/meta` 作为同一 catalog 垂直切片迁入 Java；catalog 只通过 identity 的 `SubjectAccessPolicyApi` 获取当前身份、管理员和受限科目决定，不共享 Entity，也不跨模块直查身份表。
 - 已保存 7 组非空、脱敏、可确定重捕的科目旧栈 golden，覆盖普通用户、管理员、受限科目、空目录与两个响应形状；旧栈捕获和 Java 集成测试均证明业务数据库无写入。Java 明确采用每次请求 fresh read，不引入应用数据缓存。
@@ -110,6 +110,12 @@
 - Java 导出的唯一科目上下文 SQL 已在 PostgreSQL 18.4 的 150,000 科目夹具上形成 5 个观测：ID 1/75,000/150,000 命中，150,001 与 `Long.MAX_VALUE` 未命中；每次 1 个 `bigint` bind、1 statement、一次 `subjects_pkey` Index Scan、loops=1、TEMP=0。计划文件 SHA-256 为 `f602a76a4764d098bb86aa9a8ef2a44048b0bcb977ed46cb675024e51c6d6db3`，runtime manifest SHA-256 为 `dfbdd1e8efa66892d0efaa040690c412256b0b7c692f8d01098851509fa63e9c`；它不是生产 SLA。
 - 科目上下文切片 Java/合同定向 36/36、PostgreSQL 16.14/18.4 compatibility 2/2、golden/计划工具 23/23、全部 source tools 155/155 均通过；源目录与独立副本完整 `clean verify` 都为 391 个 surefire + 56 个 failsafe，0 failure/error/skip，独立轮 Maven 02:13。
 - WORM 绑定 build-context SHA-256 `19a4cf2f629762362c6d7104e88ec726266ff50da2a4a045faeb581a2e0fe6d9`，通过 PostgreSQL 18.4、70 表/617 列、只读 ACL、Hibernate `validate` 与 readiness，报告 SHA-256 为 `ad0a89753d7dd4aa884f95fe3a8e76b394869f69732414996d1042170bcf5c11`。仅复制 1,197 个受控文件、0 个符号链接且不含缓存或构建产物的独立副本还通过 Phase 1、Phase 2/3 静态门禁、独立数据面、镜像构建、3/3 Compose readiness、API 重启恢复与 8-bind source 审计；临时资源与端口均清理至 0。
+- 已审计 `GET /admin/api/questions/export`（`4a33d8e15da5`）与 `GET /admin/questions/export`（`712a47789f1d`）的注册、全局 gate、角色鉴权、首个原始 `subject_id`、导出投影、modern/legacy 信封、故障语义与模板调用链。两条路由仍为 `operations,pending`，延后到 Phase 4H；本切片不新增 Controller、`operations -> catalog::api`、route/OpenAPI/data ownership delta 或 cutover。
+- 已新增 HTTP-neutral 的 `QuestionMetadataApplicationApi#listQuestionExportRecords`、`QuestionExportQuery` 与不可变 `QuestionExportRecordView`。catalog 按可选 `Optional<Integer> subjectId` 选择两条固定 SQL，只读 `questions LEFT JOIN subjects` 的十字段原始快照并严格 `q.id ASC`；不做默认值、JSON 解析、信封或错误投影。公开应用方法数从 18 增为 19，migrated route 仍为 11。
+- 固定旧提交完整 `app/` 归档的题目导出 golden 为 44 个隔离 case、每条路由 22 个；文件 SHA-256 为 `89ce148cb32d1ca26d2f9d617385ae86243cf264f6d33dede97018435d00530d`。所有 case 的 `questions`、`subjects` 与身份事实指纹不变，catalog DML/DDL=0；Session `users.last_active` 身份写单独记账。
+- Java 导出的两条固定 SQL 已在 PostgreSQL 18.4 的 150,000 题目、5,002 科目夹具上形成 9 个观测；全量结果的单个 Memoize 节点有 5,004 个 distinct subject-key probe，每次只有 1 statement、两表各 1 scan node、root loops=1、TEMP=0 且严格 `q.id ASC`。计划文件 SHA-256 为 `96f04c1018f5c3a826c48972c2273096f8507e45900616ca6c842ee0318ae541`；它不是生产 SLA。
+- 题目导出切片 Java/合同定向 53/53、PostgreSQL 16.14/18.4 compatibility 2/2、全部 source tools 215/215 均通过；最终完整 `clean verify` 为 406 个 surefire + 58 个 failsafe，0 failure/error/skip。WORM build-context SHA-256 为 `9fbff246ce5f7ca8fc7fb3e723261c1b5a75f39ac43e935974be6025b663741e`，报告 SHA-256 为 `f245d1def582c0527ad419e5fad8bcafbfff40270dec15007a8dec77f453c410`。仅复制 1,220 个受控文件的独立副本已通过静态、Maven、数据面、镜像、Compose、重启与 bind-source 验收并清理至 0 残留；独立最终合同再绑定当前 1,220 个受控文件中除自身外的 1,219 文件清单，Phase 4A closure 已完成。
+- 24 个有界候选的精确处置为 Phase 4H 16 条、Phase 4C 4 条、Phase 6 4 条、implement-now 0 条；有效状态保持 11 migrated、600 pending、0 production cutover，159/159 资源仍有唯一 owner。下一步只授权 Phase 4B 的 `19b37a262989` 与 `e32aec766730` 两条 personal-bank category alias，它们本身仍为 pending 且未切流。
 - 有效路由状态现为 **11 migrated、600 pending、0 production cutover**；有效资源为 **159 个且 159 个均有唯一 owner**。`migrated` 只表示 Java 实现与兼容证据已物化，旧 Flask 仍是生产 owner，整个长期重构目标仍未完成。
 
 ## 验证命令与结果
@@ -199,10 +205,15 @@
 | Phase 4A 后台科目上下文切片 `./infra/phase2/verify-in-maven-container.sh clean verify` | 391 个 surefire + 56 个 failsafe，0 failure/error/skip；源目录与独立副本均通过，独立轮 Maven 02:13 | 绿色；固定 Java 25/Maven 3.9.16，包含 PG18/PG16/Redis Testcontainers |
 | Phase 4A 后台科目上下文切片 WORM + Phase 2 静态门禁 | PG18.4、70 表/617 列、只读 ACL、Hibernate `validate`、readiness；build-context SHA-256 `19a4cf2f629762362c6d7104e88ec726266ff50da2a4a045faeb581a2e0fe6d9` | 绿色；报告 SHA-256 `ad0a89753d7dd4aa884f95fe3a8e76b394869f69732414996d1042170bcf5c11`，未保存 schema dump/DSN/Secret，临时资源已清理 |
 | Phase 4A 后台科目上下文切片独立抽取 | 1,197 个受控文件；原始命令 391+56 Maven、Phase 1/2/3 静态、独立数据面、镜像、3/3 Compose readiness、重启恢复与 8-bind source 审计全绿 | 绿色；0 符号链接，所有 bind 来自副本；临时目录、容器、网络、卷、镜像标签、专用缓存卷与端口均为 0 残留 |
+| Phase 4A 后台题目导出固定提交 golden | 44 cases、每路由 22；文件 SHA-256 `89ce148cb32d1ca26d2f9d617385ae86243cf264f6d33dede97018435d00530d` | 绿色；覆盖认证/角色、原始过滤、投影/信封、故障与 Session 身份写，catalog 事实指纹不变 |
+| Phase 4A 后台题目导出精确运行时 SQL 计划 | PG18.4；150,000 题目、5,002 科目、2 SQL、9 observations；SHA-256 `96f04c1018f5c3a826c48972c2273096f8507e45900616ca6c842ee0318ae541` | 绿色；全量 Memoize 5,004 个 distinct probe，每次 1 statement、两表各 1 scan node、root loops=1、TEMP=0；不是生产 SLA |
+| Phase 4A 后台题目导出 Java/source 验证 | Java/合同 53/53；PG16.14/PG18.4 compatibility 2/2；全部 source tools 215/215；`clean verify` 406+58 | 绿色；0 failure/error/skip；只接受 catalog 原始快照，两条 operations HTTP 路由继续 pending |
+| Phase 4A 后台题目导出 WORM | PG18.4、70 表/617 列、只读 ACL、Hibernate `validate`、启动与 readiness；build-context SHA-256 `9fbff246ce5f7ca8fc7fb3e723261c1b5a75f39ac43e935974be6025b663741e` | 绿色；报告 SHA-256 `f245d1def582c0527ad419e5fad8bcafbfff40270dec15007a8dec77f453c410`，中断轮不计入证据 |
+| Phase 4A 最终独立抽取与 closure | 运行态副本 1,220 个受控文件；最终控制面 1,220 个受控文件并对除验收合同自身外的 1,219 个文件做清单；0 symlink/forbidden artifact；Phase 1/2/3 静态、36 node、空缓存 406+58 Maven、独立数据面、唯一镜像、3/3 Compose readiness、重启与 8-bind 审计全绿 | 绿色；8 个只读 bind 全部来自副本、源工作树为 0；临时目录、容器、网络、卷、镜像标签、缓存卷和端口均为 0 残留；候选静态审计与最终 closure 分属两个合同，24 个候选处置为 16/4/4/0 |
 | Phase 4A 科目目录检查点独立抽取 | 1,251 个文件；Phase 1、Phase 2/3 静态门禁、231+28 Maven 全绿 | 绿色；这是科目目录检查点证据；无符号链接、无父目录运行时读取，临时副本和容器无残留 |
 | Phase 4A 旧栈回归 | 374 个 Python 文件 compileall；654 passed、2 个登记失败、3 skipped；两套小程序各 36/36 | 绿色；登记基线和 warning 窗口保持一致 |
 
-上表已记录后台科目上下文内部能力切片当前真实运行的全量、WORM、静态、定向与独立抽取结果。后台科目库存、后台题目集合、单题详情、题量、题型、公共题库与更早历史检查点均单独标明，不与当前切片混用。
+上表保留后台科目上下文 38-case 切片的历史全量、WORM、静态、定向与独立抽取证据，并记录后台题目导出及 Phase 4A 最终 closure 的当前结果。后台科目库存、后台题目集合、单题详情、题量、题型、公共题库与更早检查点均单独标明，不与最终 406+58 运行态副本或非递归控制面清单混用。
 
 完整命令、两个 pytest 失败说明及初步性能数字见 `07-baseline-results.md`。
 
@@ -239,8 +250,8 @@
 
 ## 下一项具体动作
 
-1. 从冻结路由矩阵继续审计下一条可形成完整单 owner 边界的 catalog-only 候选：先锁定精确 operation ID、注册顺序、真实调用方、数据关系与副作用，再固定旧栈 golden 和查询预算；如果用例实际组合 identity/learning/operations，就停止 catalog 内部实现并按模块 DAG 延后，不以零散 DAO 或占位 API 冒充迁移。
+1. 开始 Phase 4B `personalbank` 的两条 category list alias：`19b37a262989|GET|/api/user/banks/api/categories` 与 `e32aec766730|GET|/user/banks/api/categories`。先固定双 alias 的鉴权、字段、空值、排序、调用方与查询预算，再建立 `personalbank` 单 owner 内部读取；当前两条 operation 仍为 pending，尚未授权 route/OpenAPI delta 或生产切流。
 2. 在 Phase 4C 由 `learning` 完整迁移题量双路由与 `GET /api/quiz/subjects/{subject}/info` 的跨 `catalog`、`identity`、`learning` 组合；复用 catalog 题量原语，禁止 catalog 直查作答、错题、收藏或私有标签事实。题量切片必须先显式迁移旧 `question_tags_v1`，再批准移除 GET 内 DDL/DML、缓存和故障策略差异。
-3. 两条后台题型、两条单题详情、两条后台题目集合、一条后台科目库存与两条后台科目上下文 HTTP operation 延后到 4H；实现前必须正式批准并机器化 `operations -> catalog::api`（当前 `operations` 只允许依赖 `sharedkernel`），再由适配层分别复现题型的 Python Unicode whitespace/故障差异、详情的鉴权/路径整数/modern/legacy 投影、集合的原始查询解析/用户名/PQF/题型投影、科目库存的全局 gate/角色/裸数组/null，以及科目上下文页面的 Session gate、404、模板渲染和 HTML/JSON 故障语义。当前内部 API 不授权 route/OpenAPI delta。
+3. 两条后台题型、两条单题详情、两条后台题目集合、一条后台科目库存、两条后台科目上下文与两条后台题目导出 HTTP operation 延后到 4H；实现前必须正式批准并机器化 `operations -> catalog::api`（当前 `operations` 只允许依赖 `sharedkernel`），再由适配层分别复现题型的 Python Unicode whitespace/故障差异、详情的鉴权/路径整数/modern/legacy 投影、集合的原始查询解析/用户名/PQF/题型投影、科目库存的全局 gate/角色/裸数组/null、科目上下文页面的 Session gate/404/模板渲染，以及导出的鉴权、首个原始参数、JSON safe-load/default、modern/legacy 信封和 HTML/JSON 故障语义。当前内部 API 不授权 route/OpenAPI delta。
 4. 公共题库生产 Redis、HMAC Secret、真实数据、刷新调度、即时撤回事件桥接和入口切换仍需另行获批；本地 shadow 证据不授权生产操作。
-5. 后续每个切片都必须重新执行并记录与其风险相称的全量静态、契约、Maven、WORM 和独立抽取门禁；不得复用本轮 391+56 或 build-context 哈希冒充新切片证据。
+5. 后续每个切片都必须重新执行并记录与其风险相称的全量静态、契约、Maven、WORM 和独立抽取门禁；不得复用本轮 406+58 或 build-context SHA-256 `9fbff246ce5f7ca8fc7fb3e723261c1b5a75f39ac43e935974be6025b663741e` 冒充新切片证据。

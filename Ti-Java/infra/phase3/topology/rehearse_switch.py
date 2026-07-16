@@ -279,9 +279,26 @@ class DockerRunner:
         ]
 
     @staticmethod
-    def reject_remote_docker_environment() -> None:
-        for key in ("DOCKER_HOST", "DOCKER_CONTEXT", "DOCKER_TLS_VERIFY", "DOCKER_CERT_PATH"):
-            require(not os.environ.get(key), f"REMOTE_DOCKER_FORBIDDEN: {key}")
+    def _require_local_unix_socket(endpoint: str, label: str) -> None:
+        require(endpoint.startswith("unix://"), f"REMOTE_DOCKER_FORBIDDEN: {label}")
+        socket_path = pathlib.Path(endpoint.removeprefix("unix://"))
+        require(socket_path.is_absolute(), f"REMOTE_DOCKER_FORBIDDEN: {label}")
+        try:
+            mode = socket_path.stat().st_mode
+        except OSError as exc:
+            raise RehearsalError(f"REMOTE_DOCKER_FORBIDDEN: {label}") from exc
+        require(stat.S_ISSOCK(mode), f"REMOTE_DOCKER_FORBIDDEN: {label}")
+
+    def reject_remote_docker_environment(self) -> str | None:
+        for key in (
+            "DOCKER_CONTEXT", "DOCKER_TLS", "DOCKER_TLS_VERIFY", "DOCKER_CERT_PATH",
+        ):
+            require(key not in self.environment, f"REMOTE_DOCKER_FORBIDDEN: {key}")
+        if "DOCKER_HOST" not in self.environment:
+            return None
+        docker_host = self.environment["DOCKER_HOST"]
+        self._require_local_unix_socket(docker_host, "DOCKER_HOST")
+        return docker_host
 
     def _execute(
         self,
@@ -385,13 +402,14 @@ class DockerRunner:
                 else "sha256:" + digest.hexdigest()
 
     def preflight_local_context(self) -> None:
-        self.reject_remote_docker_environment()
+        docker_host = self.reject_remote_docker_environment()
         endpoint = self.docker(
             ["context", "inspect", "--format", "{{.Endpoints.docker.Host}}"], capture=True
         ).stdout.decode("utf-8", "strict").strip()
-        require(endpoint.startswith("unix://"), "REMOTE_DOCKER_FORBIDDEN: non-Unix endpoint")
-        socket_path = pathlib.Path(endpoint.removeprefix("unix://"))
-        require(socket_path.is_absolute(), "Docker Unix socket path must be absolute")
+        if docker_host is not None:
+            require(endpoint == docker_host, "REMOTE_DOCKER_FORBIDDEN: endpoint mismatch")
+        self._require_local_unix_socket(endpoint, "non-local endpoint")
+        self.environment["DOCKER_HOST"] = endpoint
         self.compose(["config", "--quiet"])
 
     def compose_ids(self, service: str, *, running_only: bool) -> list[str]:

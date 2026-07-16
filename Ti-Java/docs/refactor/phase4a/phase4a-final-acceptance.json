@@ -1,0 +1,201 @@
+{
+  "contract_id": "ti.phase4a.final-acceptance",
+  "schema_version": 1,
+  "status": "passed",
+  "scope": "bounded-catalog-closure-and-phase4b-handoff",
+  "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "captured_at": "2026-07-16T20:56:31Z",
+  "integrity_policy": {
+    "algorithm": "sha256",
+    "self_hash": null,
+    "controlled_manifest_excluded_paths": [
+      "docs/refactor/phase4a/phase4a-final-acceptance.json"
+    ],
+    "reason": "The final contract is the only excluded controlled file so its embedded manifest hash is non-recursive; every other tracked or untracked non-ignored Ti-Java file is hashed by relative path and content."
+  },
+  "source_contracts": {
+    "catalog_candidate_disposition": {
+      "source": "catalog-candidate-disposition.json",
+      "sha256": "05dbf35d60be799597a605663adb76882ff35914b9e8658d0f78cc04db225be5"
+    },
+    "question_export_golden": {
+      "source": "golden-question-export-reads.json",
+      "sha256": "89ce148cb32d1ca26d2f9d617385ae86243cf264f6d33dede97018435d00530d"
+    },
+    "question_export_read_contract": {
+      "source": "question-export-read-contract.json",
+      "sha256": "4bb990dad2235ec15f865e643b90a7654a52ddda6f26046c0f471169ce56fe6c"
+    },
+    "question_export_query_plan": {
+      "source": "question-export-query-plan-evidence.json",
+      "sha256": "96f04c1018f5c3a826c48972c2273096f8507e45900616ca6c842ee0318ae541"
+    },
+    "worm": {
+      "source": "../../../infra/phase2/local-reference-verification.json",
+      "sha256": "f245d1def582c0527ad419e5fad8bcafbfff40270dec15007a8dec77f453c410"
+    },
+    "independent_acceptance_runner": {
+      "source": "../../../tools/run_phase4a_independent_acceptance.sh",
+      "sha256": "fa1121f31b69574e86ecf57db4e1fa475b59ac489ebcd41ea2b53bfcb0240276"
+    }
+  },
+  "question_export_acceptance": {
+    "golden_case_count": 44,
+    "golden_file_sha256": "89ce148cb32d1ca26d2f9d617385ae86243cf264f6d33dede97018435d00530d",
+    "read_contract_sha256": "4bb990dad2235ec15f865e643b90a7654a52ddda6f26046c0f471169ce56fe6c",
+    "query_plan_file_sha256": "96f04c1018f5c3a826c48972c2273096f8507e45900616ca6c842ee0318ae541",
+    "runtime_sql_manifest_sha256": "1b29fce339b455d35ca2a11b4c445a898201f588610cc4fa0a96c676247f4fb0",
+    "runtime_query_count": 2,
+    "query_plan_observation_count": 9,
+    "focused_java_and_contract_tests": 53,
+    "postgres_compatibility_tests": 2,
+    "passed": true
+  },
+  "worm_acceptance": {
+    "captured_at": "2026-07-16T19:21:38Z",
+    "postgresql": "18.4",
+    "public_base_tables": 70,
+    "public_columns": 617,
+    "read_only_acl_passed": true,
+    "hibernate_validate_passed": true,
+    "startup_passed": true,
+    "readiness_passed": true,
+    "build_context_sha256": "9fbff246ce5f7ca8fc7fb3e723261c1b5a75f39ac43e935974be6025b663741e",
+    "report_sha256": "f245d1def582c0527ad419e5fad8bcafbfff40270dec15007a8dec77f453c410",
+    "production_database_version": "unknown",
+    "flyway_baseline_created": false,
+    "passed": true
+  },
+  "independent_full_acceptance": {
+    "scope": "phase4a-prefinal-independent-copy",
+    "captured_at": "2026-07-16T20:55:13Z",
+    "raw_report_sha256": "457cd6741870a7765086d43cbad89b14608668eea7c16aeb6244173a546f12cf",
+    "ignored_local_raw_report": "server/target/phase4a-independent-acceptance-20260716T205211Z-91253-435.json",
+    "raw_report_tracked": false,
+    "controlled_file_count": 1220,
+    "source_manifest_sha256": "afeccea487c8e9a273678a319ff44821187d84d7ef5c68b01adbb617b371e6b2",
+    "copy_manifest_sha256": "afeccea487c8e9a273678a319ff44821187d84d7ef5c68b01adbb617b371e6b2",
+    "source_equals_copy": true,
+    "symlink_count": 0,
+    "forbidden_artifact_count": 0,
+    "forbidden_jar_count": 0,
+    "source_tool_tests": 215,
+    "deferred_final_contract_assertion_groups": 1,
+    "final_contract_closure_deferred": true,
+    "miniprogram_node_tests": 36,
+    "build_context_sha256": "9fbff246ce5f7ca8fc7fb3e723261c1b5a75f39ac43e935974be6025b663741e",
+    "maven": {
+      "surefire": 406,
+      "failsafe": 58,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "compose": {
+      "healthy_services": 3,
+      "expected_healthy_services": 3,
+      "livez_status": 200,
+      "readyz_status": 200,
+      "unknown_status": 401,
+      "external_metrics_status": 404,
+      "internal_metrics_status": 200,
+      "postgres_ready": true,
+      "read_only_bind_count": 8,
+      "source_worktree_bind_count": 0,
+      "redis_host_bind_count": 0,
+      "management_host_bind_count": 0,
+      "api_user": "10001:10001",
+      "exact_runtime_policy_services": 3,
+      "restarted_services": 3,
+      "api_restart_recovery_passed": true,
+      "all_services_healthy_after_restart": true
+    },
+    "checks": {
+      "docker_client_isolation": true,
+      "maven_container_socket_binding": true,
+      "phase3_docker_host_pinning": true,
+      "phase1": true,
+      "phase2_static": true,
+      "phase3_static": true,
+      "phase3_topology_static": true,
+      "miniprogram": true,
+      "data_plane": true,
+      "empty_maven_cache": true,
+      "maven": true,
+      "unique_image_built_and_removed": true,
+      "compose_http_and_database": true,
+      "exact_runtime_policy": true,
+      "restart_recovery": true,
+      "baseline_resources_preserved": true
+    },
+    "cleanup": {
+      "container_residue": 0,
+      "network_residue": 0,
+      "volume_residue": 0,
+      "new_container_residue": 0,
+      "new_network_residue": 0,
+      "new_volume_residue": 0,
+      "deleted_baseline_container_count": 0,
+      "deleted_baseline_network_count": 0,
+      "deleted_baseline_volume_count": 0,
+      "image_residue": 0,
+      "cache_volume_residue": 0,
+      "port_residue": 0
+    },
+    "production_cutover": false,
+    "passed": true
+  },
+  "final_control_plane": {
+    "captured_at": "2026-07-16T20:56:31Z",
+    "controlled_file_count": 1220,
+    "manifest_excluded_file_count": 1,
+    "manifest_included_file_count": 1219,
+    "source_manifest_sha256": "85ea7ac102a9def29d92a90e7a7c52ae7df2e6ca83bf73ce218264c0b330d872",
+    "copy_manifest_sha256": "85ea7ac102a9def29d92a90e7a7c52ae7df2e6ca83bf73ce218264c0b330d872",
+    "source_equals_copy": true,
+    "symlink_count": 0,
+    "forbidden_artifact_count": 0,
+    "java_build_context_sha256": "9fbff246ce5f7ca8fc7fb3e723261c1b5a75f39ac43e935974be6025b663741e",
+    "java_build_context_matches_full_acceptance": true,
+    "static_checks": {
+      "phase1": true,
+      "phase2": true,
+      "phase3": true,
+      "phase3_topology": true,
+      "source_tools_215": true,
+      "miniprogram_node_36": true
+    }
+  },
+  "effective_status": {
+    "expanded_operation_count": 611,
+    "migrated": 11,
+    "pending": 600,
+    "production_cutover": 0,
+    "effective_resource_count": 159,
+    "resources_with_exactly_one_owner": 159
+  },
+  "phase4a_closure": {
+    "catalog_candidate_disposition_audit_complete": true,
+    "no_additional_implement_now_catalog_candidate": true,
+    "question_export_acceptance_passed": true,
+    "worm_acceptance_passed": true,
+    "independent_full_acceptance_passed": true,
+    "final_control_plane_passed": true,
+    "phase4a_closed": true,
+    "production_cutover": false,
+    "next_phase": "4B"
+  },
+  "authorized_next_slice": {
+    "phase": "4B",
+    "module": "personalbank",
+    "capability": "personal bank category list aliases",
+    "scope": "implementation_and_parity_evidence_only",
+    "only_operation_keys": [
+      "19b37a262989|GET|/api/user/banks/api/categories",
+      "e32aec766730|GET|/user/banks/api/categories"
+    ],
+    "route_openapi_delta_authorized": false,
+    "production_cutover_authorized": false,
+    "reason": "The two aliases are the only Phase 4B implementation and parity-evidence slice authorized after every Phase 4A closure dimension passes; both remain pending until their own route delta is independently approved."
+  }
+}

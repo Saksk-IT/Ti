@@ -1,0 +1,2759 @@
+{
+  "evidence_id": "ti.phase4a.question-export-query-plan",
+  "schema_version": 1,
+  "captured_on": "2026-07-17",
+  "scope": "catalog-owned-question-export-snapshot-internal-read-primitive",
+  "runtime_sql_contract": {
+    "source": "Java adapter runtime SQL manifest exported before capture",
+    "manifest_id": "ti.phase4a.question-export-runtime-sql",
+    "manifest_schema_version": 1,
+    "adapter_class": "io.saksk.ti.catalog.infrastructure.persistence.JdbcQuestionExportQueryAdapter",
+    "query_ids_in_manifest_order": [
+      "question-export-all",
+      "question-export-by-subject"
+    ],
+    "operation": "question-export-snapshot",
+    "explicit_column_count": 10,
+    "explicit_columns": [
+      "q.id",
+      "q.subject_id",
+      "s.name as subject_name",
+      "q.type",
+      "q.content",
+      "q.options",
+      "q.answer",
+      "q.analysis",
+      "q.difficulty",
+      "q.tags"
+    ],
+    "fixed_order": "q.id ASC",
+    "join": "questions LEFT JOIN subjects on q.subject_id = s.id",
+    "query_sql_sha256": {
+      "question-export-all": "bee0615897acb6a23e29d83b22853d13a80943c1fd964811a1f48b5f76a3b713",
+      "question-export-by-subject": "fb68333e48eda511974b5c0c956031e59d3f7f3942ec2230a3839841e9386a38"
+    },
+    "parameter_postgres_types": {
+      "question-export-all": {},
+      "question-export-by-subject": {
+        "subject_id": "integer"
+      }
+    },
+    "sql_statement_count_per_execution": 1,
+    "relation_budget": {
+      "questions": 1,
+      "subjects": 1,
+      "joins": 1,
+      "other_relations": 0
+    },
+    "forbidden_runtime_shapes": [
+      "DML",
+      "DDL",
+      "TEMP",
+      "extra joins",
+      "wildcards",
+      "LIMIT/OFFSET/FETCH",
+      "statement separators"
+    ]
+  },
+  "environment": {
+    "container_image": "postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
+    "expected_digest": "sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
+    "resolved_image_id": "sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
+    "resolved_repo_digests": [
+      "postgres@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15"
+    ],
+    "os": "linux",
+    "architecture": "arm64",
+    "network": "none",
+    "database": "phase4a_question_export_plan",
+    "postgresql": {
+      "server_version": "18.4",
+      "server_version_num": "180004",
+      "block_size_bytes": "8192",
+      "shared_buffers": "128MB",
+      "work_mem": "64MB",
+      "max_parallel_workers_per_gather": "0",
+      "jit": "on"
+    },
+    "deterministic_session_settings": {
+      "max_parallel_workers_per_gather": 0,
+      "work_mem": "64MB"
+    }
+  },
+  "inputs": {
+    "adapter": "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcQuestionExportQueryAdapter.java",
+    "adapter_sha256": "4cec329e1774bd3e255c37dc0b24cf6f45141febd0039e626b070663dd400388",
+    "runtime_sql_manifest": "server/target/phase4a-question-export-runtime-sql.json",
+    "runtime_sql_manifest_sha256": "1b29fce339b455d35ca2a11b4c445a898201f588610cc4fa0a96c676247f4fb0",
+    "runtime_sql_exporter": "server/src/test/java/io/saksk/ti/catalog/infrastructure/persistence/QuestionExportRuntimeSqlManifestTest.java",
+    "runtime_sql_exporter_sha256": "5101f1761e8ecde3124b159ed2402355519b971aa5d6086166e76c681d5fb716",
+    "capture_tool": "tools/capture_phase4a_question_export_query_plan.py",
+    "capture_tool_sha256": "fb9f3ee4d61d59db0913456f0f7e7f881d8306330995ebb3174187a430900dd4",
+    "capture_tool_test": "tools/test_capture_phase4a_question_export_query_plan.py",
+    "capture_tool_test_sha256": "2e1efac4b582394b3b1d11f207f6f29766b64df1d71f61ca484157e464c5d8d6",
+    "fixture_sql_sha256": "f67832c556be702bc74a60356c5ca21461265ac58948f7a4578382ad90c050b2"
+  },
+  "data_set": {
+    "kind": "public deterministic synthetic fixture",
+    "parameters": {
+      "question_count": 150000,
+      "positive_subject_count": 5000,
+      "signed_edge_subject_count": 2,
+      "total_subject_count": 5002,
+      "question_id_range": [
+        -1,
+        149998
+      ],
+      "positive_subject_id_range": [
+        1,
+        5000
+      ],
+      "signed_subject_ids": [
+        -1,
+        0
+      ],
+      "orphan_subject_id": 6001,
+      "question_types": [
+        "single_choice",
+        "multi_choice",
+        "boolean",
+        "fill",
+        "essay"
+      ],
+      "raw_and_nullable_distribution": "fixed public edge rows plus sparse deterministic nulls"
+    },
+    "actual": {
+      "questions": 150000,
+      "subjects": 5002,
+      "minimum_question_id": -1,
+      "maximum_question_id": 149998,
+      "minimum_subject_id": -1,
+      "maximum_subject_id": 5000,
+      "negative_subject_ids": 1,
+      "zero_subject_ids": 1,
+      "empty_subject_names": 1,
+      "unicode_subject_names": 1,
+      "null_question_subject_rows": 1,
+      "orphan_question_subject_rows": 1,
+      "unicode_payload_rows": 1,
+      "raw_malformed_payload_rows": 1,
+      "nullable_options_rows": 148,
+      "nullable_answer_rows": 148,
+      "nullable_analysis_rows": 147,
+      "nullable_difficulty_rows": 150,
+      "nullable_tags_rows": 151
+    },
+    "fixture_sql_sha256": "f67832c556be702bc74a60356c5ca21461265ac58948f7a4578382ad90c050b2",
+    "statistics": "VACUUM (ANALYZE) completed before capture",
+    "deterministic_statistics": "subject_id uses test-only statistics target 10000",
+    "index_definitions": [
+      {
+        "table": "questions",
+        "name": "ix_questions_subject_id",
+        "definition": "CREATE INDEX ix_questions_subject_id ON public.questions USING btree (subject_id)"
+      },
+      {
+        "table": "questions",
+        "name": "questions_pkey",
+        "definition": "CREATE UNIQUE INDEX questions_pkey ON public.questions USING btree (id)"
+      },
+      {
+        "table": "subjects",
+        "name": "subjects_pkey",
+        "definition": "CREATE UNIQUE INDEX subjects_pkey ON public.subjects USING btree (id)"
+      }
+    ],
+    "index_boundary": {
+      "status": "test_only_synthetic_observation",
+      "statement": "ix_questions_subject_id exists only in the isolated fixture to observe PG18.4 choices; it does not approve a production index or migration.",
+      "production_index_state": "unknown_not_asserted",
+      "production_migration_added": false
+    },
+    "edge_attestation": {
+      "negative_and_zero_ids": "present",
+      "nullable_subject": "present",
+      "missing_join_target": "present",
+      "empty_subject_name": "present",
+      "unicode_payload_and_name": "present",
+      "raw_malformed_text_payloads": "present"
+    }
+  },
+  "measurement": {
+    "command": "execute and EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) each exact Java runtime SELECT through PREPARE/EXECUTE",
+    "runs_per_observation": 1,
+    "observation_count": 9,
+    "runtime_query_count": 2,
+    "sql_statement_count_per_execution": 1,
+    "required_root_actual_loops": 1,
+    "required_question_relation_scan_actual_loops": 1,
+    "subject_relation_loop_contract": "exact distinct-key memoized probes for all rows; exact zero-or-one probe for filtered rows",
+    "required_temp_blocks": 0,
+    "observations": [
+      {
+        "observation_id": "all-questions",
+        "runtime_query_id": "question-export-all",
+        "expected": {
+          "row_count": 150000,
+          "minimum_id": -1,
+          "middle_id": 74999,
+          "maximum_id": 149998,
+          "first_ids_asc": [
+            -1,
+            0,
+            1
+          ],
+          "last_ids_asc": [
+            149996,
+            149997,
+            149998
+          ]
+        },
+        "runtime_result": {
+          "row_count": 150000,
+          "minimum_id": -1,
+          "middle_id": 74999,
+          "maximum_id": 149998,
+          "first_ids_asc": [
+            -1,
+            0,
+            1
+          ],
+          "last_ids_asc": [
+            149996,
+            149997,
+            149998
+          ],
+          "strictly_ascending_by_id": true,
+          "row_column_count": 10,
+          "null_subject_id_rows": 1,
+          "null_subject_name_rows": 2,
+          "empty_subject_name_rows": 1,
+          "unicode_subject_name_rows": 1,
+          "unicode_payload_rows": 1,
+          "raw_malformed_payload_rows": 1,
+          "edge_rows": {
+            "-1": {
+              "question_id": -1,
+              "subject_id": -1,
+              "subject_name_state": "empty",
+              "unicode_payload": true,
+              "raw_malformed_payload": true,
+              "row_sha256": "cd0c2c527aada5776a9d38ddea35ca88579964721dad085c0e6d08accbae90fb"
+            },
+            "0": {
+              "question_id": 0,
+              "subject_id": 0,
+              "subject_name_state": "unicode",
+              "unicode_payload": false,
+              "raw_malformed_payload": false,
+              "row_sha256": "28f0eb1bf58b8de36d2b3da7b4c9e7f4982a6e9a8dfd523bc0d7c3a756220082"
+            },
+            "1": {
+              "question_id": 1,
+              "subject_id": null,
+              "subject_name_state": "null",
+              "unicode_payload": false,
+              "raw_malformed_payload": false,
+              "row_sha256": "0a180c714df85266346eb82d75f408538066197157333c824a02a0e8e81e924a"
+            },
+            "2": {
+              "question_id": 2,
+              "subject_id": 6001,
+              "subject_name_state": "null",
+              "unicode_payload": false,
+              "raw_malformed_payload": false,
+              "row_sha256": "2ca017c7525ed996db5f5c9222fa18c422f1f46e21eca45010449656858357e7"
+            }
+          },
+          "canonical_psql_rows_sha256": "f315b681e3c0772a92d20650008bfd25bdd39b00f26f3e4babbeb1a03a19cece"
+        },
+        "sql_statement_count": 1,
+        "binding": {
+          "mode": "prepare-execute",
+          "runtime_statement_count": 1,
+          "bound_parameter_count": 0,
+          "named_parameter_count": 0,
+          "occurrence_names": [],
+          "positional_sql_sha256": "bee0615897acb6a23e29d83b22853d13a80943c1fd964811a1f48b5f76a3b713",
+          "parameters": {}
+        },
+        "temp_blocks_observed": {
+          "Temp Read Blocks": 0.0,
+          "Temp Written Blocks": 0.0
+        },
+        "assertions_passed": [
+          "ten-column-result-count-boundaries-and-digest",
+          "plan-row-count-matches-runtime-result",
+          "strict-id-asc-runtime-order",
+          "exact-pg184-root-helper-and-relation-loop-contract",
+          "bounded-plan-shape",
+          "questions-and-subjects-scanned-once-only",
+          "one-outer-join-left-right-planner-swap-allowed",
+          "zero-temp-blocks",
+          "buffers-captured-before-normalization",
+          "one-select-fixed-typed-bind-cardinality",
+          "expected-test-only-question-index-observed"
+        ],
+        "plan_summary": {
+          "root_node_type": "Nested Loop",
+          "result_row_count": 150000,
+          "root_actual_loops": 1,
+          "node_count": 4,
+          "maximum_depth": 2,
+          "maximum_actual_loops": 150000,
+          "maximum_relation_scan_actual_loops": 5004,
+          "relation_scan_actual_loops": {
+            "questions": [
+              1
+            ],
+            "subjects": [
+              5004
+            ]
+          },
+          "node_type_counts": {
+            "Index Scan": 2,
+            "Memoize": 1,
+            "Nested Loop": 1
+          },
+          "relation_scan_occurrences": {
+            "questions": 1,
+            "subjects": 1
+          },
+          "join_nodes": [
+            {
+              "node_type": "Nested Loop",
+              "join_type": "Left",
+              "actual_rows": 150000.0,
+              "actual_loops": 1
+            }
+          ],
+          "index_names": [
+            "questions_pkey",
+            "subjects_pkey"
+          ],
+          "buffer_fields_observed_before_normalization": [
+            "Local Dirtied Blocks",
+            "Local Hit Blocks",
+            "Local Read Blocks",
+            "Local Written Blocks",
+            "Shared Dirtied Blocks",
+            "Shared Hit Blocks",
+            "Shared Read Blocks",
+            "Shared Written Blocks",
+            "Temp Read Blocks",
+            "Temp Written Blocks"
+          ],
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Nested Loop",
+              "Join Type": "Left",
+              "Actual Rows": 150000.0,
+              "Actual Loops": 1
+            },
+            {
+              "depth": 1,
+              "Node Type": "Index Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "questions",
+              "Alias": "q",
+              "Index Name": "questions_pkey",
+              "Scan Direction": "Forward",
+              "Actual Rows": 150000.0,
+              "Actual Loops": 1,
+              "Index Searches": 1
+            },
+            {
+              "depth": 1,
+              "Node Type": "Memoize",
+              "Parent Relationship": "Inner",
+              "Actual Rows": 1.0,
+              "Actual Loops": 150000
+            },
+            {
+              "depth": 2,
+              "Node Type": "Index Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "subjects",
+              "Alias": "s",
+              "Index Name": "subjects_pkey",
+              "Scan Direction": "Forward",
+              "Actual Rows": 1.0,
+              "Actual Loops": 5004,
+              "Rows Removed by Index Recheck": 0,
+              "Index Searches": 5003,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 21,
+                "sha256": "e3b8e1254eeda87699c65c644ff44b7b670509488aee898c56d31b5e517a9d17"
+              }
+            }
+          ]
+        },
+        "normalized_explain_analyze": {
+          "Plan": {
+            "Node Type": "Nested Loop",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Join Type": "Left",
+            "Actual Rows": 150000.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Inner Unique": true,
+            "Plans": [
+              {
+                "Node Type": "Index Scan",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Scan Direction": "Forward",
+                "Index Name": "questions_pkey",
+                "Relation Name": "questions",
+                "Alias": "q",
+                "Actual Rows": 150000.0,
+                "Actual Loops": 1,
+                "Disabled": false,
+                "Index Searches": 1
+              },
+              {
+                "Node Type": "Memoize",
+                "Parent Relationship": "Inner",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Actual Rows": 1.0,
+                "Actual Loops": 150000,
+                "Disabled": false,
+                "Cache Key": "q.subject_id",
+                "Cache Mode": "logical",
+                "Cache Hits": 144996,
+                "Cache Misses": 5004,
+                "Cache Evictions": 0,
+                "Cache Overflows": 0,
+                "Plans": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "subjects_pkey",
+                    "Relation Name": "subjects",
+                    "Alias": "s",
+                    "Actual Rows": 1.0,
+                    "Actual Loops": 5004,
+                    "Disabled": false,
+                    "Index Cond": {
+                      "redacted": "planner expression omitted",
+                      "character_count": 21,
+                      "sha256": "e3b8e1254eeda87699c65c644ff44b7b670509488aee898c56d31b5e517a9d17"
+                    },
+                    "Rows Removed by Index Recheck": 0,
+                    "Index Searches": 5003
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "observation_id": "first-subject",
+        "runtime_query_id": "question-export-by-subject",
+        "expected": {
+          "row_count": 30,
+          "minimum_id": 3,
+          "middle_id": 75003,
+          "maximum_id": 145003,
+          "first_ids_asc": [
+            3,
+            5003,
+            10003
+          ],
+          "last_ids_asc": [
+            135003,
+            140003,
+            145003
+          ]
+        },
+        "runtime_result": {
+          "row_count": 30,
+          "minimum_id": 3,
+          "middle_id": 75003,
+          "maximum_id": 145003,
+          "first_ids_asc": [
+            3,
+            5003,
+            10003
+          ],
+          "last_ids_asc": [
+            135003,
+            140003,
+            145003
+          ],
+          "strictly_ascending_by_id": true,
+          "row_column_count": 10,
+          "null_subject_id_rows": 0,
+          "null_subject_name_rows": 0,
+          "empty_subject_name_rows": 0,
+          "unicode_subject_name_rows": 0,
+          "unicode_payload_rows": 0,
+          "raw_malformed_payload_rows": 0,
+          "edge_rows": {},
+          "canonical_psql_rows_sha256": "3ca6edd6792061a0014a07bf7f2939d786c5a3117ef25a23f489258fdfa33e06"
+        },
+        "sql_statement_count": 1,
+        "binding": {
+          "mode": "prepare-execute",
+          "runtime_statement_count": 1,
+          "bound_parameter_count": 1,
+          "named_parameter_count": 1,
+          "occurrence_names": [
+            "subject_id"
+          ],
+          "positional_sql_sha256": "e4cc45fede2f73879d5bdeda84becdd47152b7eafc7b48b1b450f0a21cd35056",
+          "parameters": {
+            "subject_id": {
+              "bind_kind": "jdbc-scalar",
+              "postgres_type": "integer",
+              "value": 1
+            }
+          }
+        },
+        "temp_blocks_observed": {
+          "Temp Read Blocks": 0.0,
+          "Temp Written Blocks": 0.0
+        },
+        "assertions_passed": [
+          "ten-column-result-count-boundaries-and-digest",
+          "plan-row-count-matches-runtime-result",
+          "strict-id-asc-runtime-order",
+          "exact-pg184-root-helper-and-relation-loop-contract",
+          "bounded-plan-shape",
+          "questions-and-subjects-scanned-once-only",
+          "one-outer-join-left-right-planner-swap-allowed",
+          "zero-temp-blocks",
+          "buffers-captured-before-normalization",
+          "one-select-fixed-typed-bind-cardinality",
+          "expected-test-only-question-index-observed"
+        ],
+        "plan_summary": {
+          "root_node_type": "Sort",
+          "result_row_count": 30,
+          "root_actual_loops": 1,
+          "node_count": 6,
+          "maximum_depth": 3,
+          "maximum_actual_loops": 30,
+          "maximum_relation_scan_actual_loops": 1,
+          "relation_scan_actual_loops": {
+            "questions": [
+              1
+            ],
+            "subjects": [
+              1
+            ]
+          },
+          "node_type_counts": {
+            "Bitmap Heap Scan": 1,
+            "Bitmap Index Scan": 1,
+            "Index Scan": 1,
+            "Materialize": 1,
+            "Nested Loop": 1,
+            "Sort": 1
+          },
+          "relation_scan_occurrences": {
+            "questions": 1,
+            "subjects": 1
+          },
+          "join_nodes": [
+            {
+              "node_type": "Nested Loop",
+              "join_type": "Left",
+              "actual_rows": 30.0,
+              "actual_loops": 1
+            }
+          ],
+          "index_names": [
+            "ix_questions_subject_id",
+            "subjects_pkey"
+          ],
+          "buffer_fields_observed_before_normalization": [
+            "Exact Heap Blocks",
+            "Local Dirtied Blocks",
+            "Local Hit Blocks",
+            "Local Read Blocks",
+            "Local Written Blocks",
+            "Lossy Heap Blocks",
+            "Shared Dirtied Blocks",
+            "Shared Hit Blocks",
+            "Shared Read Blocks",
+            "Shared Written Blocks",
+            "Temp Read Blocks",
+            "Temp Written Blocks"
+          ],
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Sort",
+              "Sort Method": "quicksort",
+              "Actual Rows": 30.0,
+              "Actual Loops": 1,
+              "Sort Key": {
+                "redacted": "planner expression omitted",
+                "character_count": 8,
+                "sha256": "82d162f988cb7e9653f7e95ce901875a929b67df9ac272e46742883df6380679"
+              }
+            },
+            {
+              "depth": 1,
+              "Node Type": "Nested Loop",
+              "Parent Relationship": "Outer",
+              "Join Type": "Left",
+              "Actual Rows": 30.0,
+              "Actual Loops": 1
+            },
+            {
+              "depth": 2,
+              "Node Type": "Bitmap Heap Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "questions",
+              "Alias": "q",
+              "Actual Rows": 30.0,
+              "Actual Loops": 1,
+              "Rows Removed by Index Recheck": 0,
+              "Recheck Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 18,
+                "sha256": "b2c48db735e7a34e159b6b4664305317aa1e882458ff113bafde61968855cdd3"
+              }
+            },
+            {
+              "depth": 3,
+              "Node Type": "Bitmap Index Scan",
+              "Parent Relationship": "Outer",
+              "Index Name": "ix_questions_subject_id",
+              "Actual Rows": 30.0,
+              "Actual Loops": 1,
+              "Index Searches": 1,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 18,
+                "sha256": "b2c48db735e7a34e159b6b4664305317aa1e882458ff113bafde61968855cdd3"
+              }
+            },
+            {
+              "depth": 2,
+              "Node Type": "Materialize",
+              "Parent Relationship": "Inner",
+              "Actual Rows": 1.0,
+              "Actual Loops": 30
+            },
+            {
+              "depth": 3,
+              "Node Type": "Index Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "subjects",
+              "Alias": "s",
+              "Index Name": "subjects_pkey",
+              "Scan Direction": "Forward",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Rows Removed by Index Recheck": 0,
+              "Index Searches": 1,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 10,
+                "sha256": "a57f23acd9b69164bbb5cc186623b48a404c68661963a933177cd1c6126e9db7"
+              }
+            }
+          ]
+        },
+        "normalized_explain_analyze": {
+          "Plan": {
+            "Node Type": "Sort",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Actual Rows": 30.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Sort Key": {
+              "redacted": "planner expression omitted",
+              "character_count": 8,
+              "sha256": "82d162f988cb7e9653f7e95ce901875a929b67df9ac272e46742883df6380679"
+            },
+            "Sort Method": "quicksort",
+            "Sort Space Type": "Memory",
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Left",
+                "Actual Rows": 30.0,
+                "Actual Loops": 1,
+                "Disabled": false,
+                "Inner Unique": true,
+                "Plans": [
+                  {
+                    "Node Type": "Bitmap Heap Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Relation Name": "questions",
+                    "Alias": "q",
+                    "Actual Rows": 30.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Recheck Cond": {
+                      "redacted": "planner expression omitted",
+                      "character_count": 18,
+                      "sha256": "b2c48db735e7a34e159b6b4664305317aa1e882458ff113bafde61968855cdd3"
+                    },
+                    "Rows Removed by Index Recheck": 0,
+                    "Plans": [
+                      {
+                        "Node Type": "Bitmap Index Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Index Name": "ix_questions_subject_id",
+                        "Actual Rows": 30.0,
+                        "Actual Loops": 1,
+                        "Disabled": false,
+                        "Index Cond": {
+                          "redacted": "planner expression omitted",
+                          "character_count": 18,
+                          "sha256": "b2c48db735e7a34e159b6b4664305317aa1e882458ff113bafde61968855cdd3"
+                        },
+                        "Index Searches": 1
+                      }
+                    ]
+                  },
+                  {
+                    "Node Type": "Materialize",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Actual Rows": 1.0,
+                    "Actual Loops": 30,
+                    "Disabled": false,
+                    "Storage": "Memory",
+                    "Maximum Storage": 17,
+                    "Plans": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "subjects_pkey",
+                        "Relation Name": "subjects",
+                        "Alias": "s",
+                        "Actual Rows": 1.0,
+                        "Actual Loops": 1,
+                        "Disabled": false,
+                        "Index Cond": {
+                          "redacted": "planner expression omitted",
+                          "character_count": 10,
+                          "sha256": "a57f23acd9b69164bbb5cc186623b48a404c68661963a933177cd1c6126e9db7"
+                        },
+                        "Rows Removed by Index Recheck": 0,
+                        "Index Searches": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "observation_id": "middle-subject",
+        "runtime_query_id": "question-export-by-subject",
+        "expected": {
+          "row_count": 30,
+          "minimum_id": 2502,
+          "middle_id": 77502,
+          "maximum_id": 147502,
+          "first_ids_asc": [
+            2502,
+            7502,
+            12502
+          ],
+          "last_ids_asc": [
+            137502,
+            142502,
+            147502
+          ]
+        },
+        "runtime_result": {
+          "row_count": 30,
+          "minimum_id": 2502,
+          "middle_id": 77502,
+          "maximum_id": 147502,
+          "first_ids_asc": [
+            2502,
+            7502,
+            12502
+          ],
+          "last_ids_asc": [
+            137502,
+            142502,
+            147502
+          ],
+          "strictly_ascending_by_id": true,
+          "row_column_count": 10,
+          "null_subject_id_rows": 0,
+          "null_subject_name_rows": 0,
+          "empty_subject_name_rows": 0,
+          "unicode_subject_name_rows": 0,
+          "unicode_payload_rows": 0,
+          "raw_malformed_payload_rows": 0,
+          "edge_rows": {},
+          "canonical_psql_rows_sha256": "8b08dc619cdcd1e2a26bc3a536fe8cadb1ac6a6925ee75fa9099169756f4aceb"
+        },
+        "sql_statement_count": 1,
+        "binding": {
+          "mode": "prepare-execute",
+          "runtime_statement_count": 1,
+          "bound_parameter_count": 1,
+          "named_parameter_count": 1,
+          "occurrence_names": [
+            "subject_id"
+          ],
+          "positional_sql_sha256": "e4cc45fede2f73879d5bdeda84becdd47152b7eafc7b48b1b450f0a21cd35056",
+          "parameters": {
+            "subject_id": {
+              "bind_kind": "jdbc-scalar",
+              "postgres_type": "integer",
+              "value": 2500
+            }
+          }
+        },
+        "temp_blocks_observed": {
+          "Temp Read Blocks": 0.0,
+          "Temp Written Blocks": 0.0
+        },
+        "assertions_passed": [
+          "ten-column-result-count-boundaries-and-digest",
+          "plan-row-count-matches-runtime-result",
+          "strict-id-asc-runtime-order",
+          "exact-pg184-root-helper-and-relation-loop-contract",
+          "bounded-plan-shape",
+          "questions-and-subjects-scanned-once-only",
+          "one-outer-join-left-right-planner-swap-allowed",
+          "zero-temp-blocks",
+          "buffers-captured-before-normalization",
+          "one-select-fixed-typed-bind-cardinality",
+          "expected-test-only-question-index-observed"
+        ],
+        "plan_summary": {
+          "root_node_type": "Sort",
+          "result_row_count": 30,
+          "root_actual_loops": 1,
+          "node_count": 6,
+          "maximum_depth": 3,
+          "maximum_actual_loops": 30,
+          "maximum_relation_scan_actual_loops": 1,
+          "relation_scan_actual_loops": {
+            "questions": [
+              1
+            ],
+            "subjects": [
+              1
+            ]
+          },
+          "node_type_counts": {
+            "Bitmap Heap Scan": 1,
+            "Bitmap Index Scan": 1,
+            "Index Scan": 1,
+            "Materialize": 1,
+            "Nested Loop": 1,
+            "Sort": 1
+          },
+          "relation_scan_occurrences": {
+            "questions": 1,
+            "subjects": 1
+          },
+          "join_nodes": [
+            {
+              "node_type": "Nested Loop",
+              "join_type": "Left",
+              "actual_rows": 30.0,
+              "actual_loops": 1
+            }
+          ],
+          "index_names": [
+            "ix_questions_subject_id",
+            "subjects_pkey"
+          ],
+          "buffer_fields_observed_before_normalization": [
+            "Exact Heap Blocks",
+            "Local Dirtied Blocks",
+            "Local Hit Blocks",
+            "Local Read Blocks",
+            "Local Written Blocks",
+            "Lossy Heap Blocks",
+            "Shared Dirtied Blocks",
+            "Shared Hit Blocks",
+            "Shared Read Blocks",
+            "Shared Written Blocks",
+            "Temp Read Blocks",
+            "Temp Written Blocks"
+          ],
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Sort",
+              "Sort Method": "quicksort",
+              "Actual Rows": 30.0,
+              "Actual Loops": 1,
+              "Sort Key": {
+                "redacted": "planner expression omitted",
+                "character_count": 8,
+                "sha256": "82d162f988cb7e9653f7e95ce901875a929b67df9ac272e46742883df6380679"
+              }
+            },
+            {
+              "depth": 1,
+              "Node Type": "Nested Loop",
+              "Parent Relationship": "Outer",
+              "Join Type": "Left",
+              "Actual Rows": 30.0,
+              "Actual Loops": 1
+            },
+            {
+              "depth": 2,
+              "Node Type": "Bitmap Heap Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "questions",
+              "Alias": "q",
+              "Actual Rows": 30.0,
+              "Actual Loops": 1,
+              "Rows Removed by Index Recheck": 0,
+              "Recheck Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 21,
+                "sha256": "e3898b3083ee079c94d3b67521946f4576097862d5e6bdd0a0d039652f114e46"
+              }
+            },
+            {
+              "depth": 3,
+              "Node Type": "Bitmap Index Scan",
+              "Parent Relationship": "Outer",
+              "Index Name": "ix_questions_subject_id",
+              "Actual Rows": 30.0,
+              "Actual Loops": 1,
+              "Index Searches": 1,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 21,
+                "sha256": "e3898b3083ee079c94d3b67521946f4576097862d5e6bdd0a0d039652f114e46"
+              }
+            },
+            {
+              "depth": 2,
+              "Node Type": "Materialize",
+              "Parent Relationship": "Inner",
+              "Actual Rows": 1.0,
+              "Actual Loops": 30
+            },
+            {
+              "depth": 3,
+              "Node Type": "Index Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "subjects",
+              "Alias": "s",
+              "Index Name": "subjects_pkey",
+              "Scan Direction": "Forward",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Rows Removed by Index Recheck": 0,
+              "Index Searches": 1,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 13,
+                "sha256": "a50bcc4a6bcf5551cc9234f885e497656e3c3ac779c143e8d7fd53c38ebdd0cc"
+              }
+            }
+          ]
+        },
+        "normalized_explain_analyze": {
+          "Plan": {
+            "Node Type": "Sort",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Actual Rows": 30.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Sort Key": {
+              "redacted": "planner expression omitted",
+              "character_count": 8,
+              "sha256": "82d162f988cb7e9653f7e95ce901875a929b67df9ac272e46742883df6380679"
+            },
+            "Sort Method": "quicksort",
+            "Sort Space Type": "Memory",
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Left",
+                "Actual Rows": 30.0,
+                "Actual Loops": 1,
+                "Disabled": false,
+                "Inner Unique": true,
+                "Plans": [
+                  {
+                    "Node Type": "Bitmap Heap Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Relation Name": "questions",
+                    "Alias": "q",
+                    "Actual Rows": 30.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Recheck Cond": {
+                      "redacted": "planner expression omitted",
+                      "character_count": 21,
+                      "sha256": "e3898b3083ee079c94d3b67521946f4576097862d5e6bdd0a0d039652f114e46"
+                    },
+                    "Rows Removed by Index Recheck": 0,
+                    "Plans": [
+                      {
+                        "Node Type": "Bitmap Index Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Index Name": "ix_questions_subject_id",
+                        "Actual Rows": 30.0,
+                        "Actual Loops": 1,
+                        "Disabled": false,
+                        "Index Cond": {
+                          "redacted": "planner expression omitted",
+                          "character_count": 21,
+                          "sha256": "e3898b3083ee079c94d3b67521946f4576097862d5e6bdd0a0d039652f114e46"
+                        },
+                        "Index Searches": 1
+                      }
+                    ]
+                  },
+                  {
+                    "Node Type": "Materialize",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Actual Rows": 1.0,
+                    "Actual Loops": 30,
+                    "Disabled": false,
+                    "Storage": "Memory",
+                    "Maximum Storage": 17,
+                    "Plans": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "subjects_pkey",
+                        "Relation Name": "subjects",
+                        "Alias": "s",
+                        "Actual Rows": 1.0,
+                        "Actual Loops": 1,
+                        "Disabled": false,
+                        "Index Cond": {
+                          "redacted": "planner expression omitted",
+                          "character_count": 13,
+                          "sha256": "a50bcc4a6bcf5551cc9234f885e497656e3c3ac779c143e8d7fd53c38ebdd0cc"
+                        },
+                        "Rows Removed by Index Recheck": 0,
+                        "Index Searches": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "observation_id": "last-subject",
+        "runtime_query_id": "question-export-by-subject",
+        "expected": {
+          "row_count": 29,
+          "minimum_id": 5002,
+          "middle_id": 75002,
+          "maximum_id": 145002,
+          "first_ids_asc": [
+            5002,
+            10002,
+            15002
+          ],
+          "last_ids_asc": [
+            135002,
+            140002,
+            145002
+          ]
+        },
+        "runtime_result": {
+          "row_count": 29,
+          "minimum_id": 5002,
+          "middle_id": 75002,
+          "maximum_id": 145002,
+          "first_ids_asc": [
+            5002,
+            10002,
+            15002
+          ],
+          "last_ids_asc": [
+            135002,
+            140002,
+            145002
+          ],
+          "strictly_ascending_by_id": true,
+          "row_column_count": 10,
+          "null_subject_id_rows": 0,
+          "null_subject_name_rows": 0,
+          "empty_subject_name_rows": 0,
+          "unicode_subject_name_rows": 0,
+          "unicode_payload_rows": 0,
+          "raw_malformed_payload_rows": 0,
+          "edge_rows": {},
+          "canonical_psql_rows_sha256": "5db9f1b1a4116e8397b97fdca60c53b83e9f22fa4de9dc28af83baeacb2873d4"
+        },
+        "sql_statement_count": 1,
+        "binding": {
+          "mode": "prepare-execute",
+          "runtime_statement_count": 1,
+          "bound_parameter_count": 1,
+          "named_parameter_count": 1,
+          "occurrence_names": [
+            "subject_id"
+          ],
+          "positional_sql_sha256": "e4cc45fede2f73879d5bdeda84becdd47152b7eafc7b48b1b450f0a21cd35056",
+          "parameters": {
+            "subject_id": {
+              "bind_kind": "jdbc-scalar",
+              "postgres_type": "integer",
+              "value": 5000
+            }
+          }
+        },
+        "temp_blocks_observed": {
+          "Temp Read Blocks": 0.0,
+          "Temp Written Blocks": 0.0
+        },
+        "assertions_passed": [
+          "ten-column-result-count-boundaries-and-digest",
+          "plan-row-count-matches-runtime-result",
+          "strict-id-asc-runtime-order",
+          "exact-pg184-root-helper-and-relation-loop-contract",
+          "bounded-plan-shape",
+          "questions-and-subjects-scanned-once-only",
+          "one-outer-join-left-right-planner-swap-allowed",
+          "zero-temp-blocks",
+          "buffers-captured-before-normalization",
+          "one-select-fixed-typed-bind-cardinality",
+          "expected-test-only-question-index-observed"
+        ],
+        "plan_summary": {
+          "root_node_type": "Sort",
+          "result_row_count": 29,
+          "root_actual_loops": 1,
+          "node_count": 6,
+          "maximum_depth": 3,
+          "maximum_actual_loops": 29,
+          "maximum_relation_scan_actual_loops": 1,
+          "relation_scan_actual_loops": {
+            "questions": [
+              1
+            ],
+            "subjects": [
+              1
+            ]
+          },
+          "node_type_counts": {
+            "Bitmap Heap Scan": 1,
+            "Bitmap Index Scan": 1,
+            "Index Scan": 1,
+            "Materialize": 1,
+            "Nested Loop": 1,
+            "Sort": 1
+          },
+          "relation_scan_occurrences": {
+            "questions": 1,
+            "subjects": 1
+          },
+          "join_nodes": [
+            {
+              "node_type": "Nested Loop",
+              "join_type": "Left",
+              "actual_rows": 29.0,
+              "actual_loops": 1
+            }
+          ],
+          "index_names": [
+            "ix_questions_subject_id",
+            "subjects_pkey"
+          ],
+          "buffer_fields_observed_before_normalization": [
+            "Exact Heap Blocks",
+            "Local Dirtied Blocks",
+            "Local Hit Blocks",
+            "Local Read Blocks",
+            "Local Written Blocks",
+            "Lossy Heap Blocks",
+            "Shared Dirtied Blocks",
+            "Shared Hit Blocks",
+            "Shared Read Blocks",
+            "Shared Written Blocks",
+            "Temp Read Blocks",
+            "Temp Written Blocks"
+          ],
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Sort",
+              "Sort Method": "quicksort",
+              "Actual Rows": 29.0,
+              "Actual Loops": 1,
+              "Sort Key": {
+                "redacted": "planner expression omitted",
+                "character_count": 8,
+                "sha256": "82d162f988cb7e9653f7e95ce901875a929b67df9ac272e46742883df6380679"
+              }
+            },
+            {
+              "depth": 1,
+              "Node Type": "Nested Loop",
+              "Parent Relationship": "Outer",
+              "Join Type": "Left",
+              "Actual Rows": 29.0,
+              "Actual Loops": 1
+            },
+            {
+              "depth": 2,
+              "Node Type": "Bitmap Heap Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "questions",
+              "Alias": "q",
+              "Actual Rows": 29.0,
+              "Actual Loops": 1,
+              "Rows Removed by Index Recheck": 0,
+              "Recheck Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 21,
+                "sha256": "48a2cef890c980e098b19cf85012f5e57b493017d4f00cd9bb7bd8d09912e168"
+              }
+            },
+            {
+              "depth": 3,
+              "Node Type": "Bitmap Index Scan",
+              "Parent Relationship": "Outer",
+              "Index Name": "ix_questions_subject_id",
+              "Actual Rows": 29.0,
+              "Actual Loops": 1,
+              "Index Searches": 1,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 21,
+                "sha256": "48a2cef890c980e098b19cf85012f5e57b493017d4f00cd9bb7bd8d09912e168"
+              }
+            },
+            {
+              "depth": 2,
+              "Node Type": "Materialize",
+              "Parent Relationship": "Inner",
+              "Actual Rows": 1.0,
+              "Actual Loops": 29
+            },
+            {
+              "depth": 3,
+              "Node Type": "Index Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "subjects",
+              "Alias": "s",
+              "Index Name": "subjects_pkey",
+              "Scan Direction": "Forward",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Rows Removed by Index Recheck": 0,
+              "Index Searches": 1,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 13,
+                "sha256": "a8216fee4501c1c607f78230410dad8a393392d74e829062b029e87d60a90e7b"
+              }
+            }
+          ]
+        },
+        "normalized_explain_analyze": {
+          "Plan": {
+            "Node Type": "Sort",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Actual Rows": 29.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Sort Key": {
+              "redacted": "planner expression omitted",
+              "character_count": 8,
+              "sha256": "82d162f988cb7e9653f7e95ce901875a929b67df9ac272e46742883df6380679"
+            },
+            "Sort Method": "quicksort",
+            "Sort Space Type": "Memory",
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Left",
+                "Actual Rows": 29.0,
+                "Actual Loops": 1,
+                "Disabled": false,
+                "Inner Unique": true,
+                "Plans": [
+                  {
+                    "Node Type": "Bitmap Heap Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Relation Name": "questions",
+                    "Alias": "q",
+                    "Actual Rows": 29.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Recheck Cond": {
+                      "redacted": "planner expression omitted",
+                      "character_count": 21,
+                      "sha256": "48a2cef890c980e098b19cf85012f5e57b493017d4f00cd9bb7bd8d09912e168"
+                    },
+                    "Rows Removed by Index Recheck": 0,
+                    "Plans": [
+                      {
+                        "Node Type": "Bitmap Index Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Index Name": "ix_questions_subject_id",
+                        "Actual Rows": 29.0,
+                        "Actual Loops": 1,
+                        "Disabled": false,
+                        "Index Cond": {
+                          "redacted": "planner expression omitted",
+                          "character_count": 21,
+                          "sha256": "48a2cef890c980e098b19cf85012f5e57b493017d4f00cd9bb7bd8d09912e168"
+                        },
+                        "Index Searches": 1
+                      }
+                    ]
+                  },
+                  {
+                    "Node Type": "Materialize",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Actual Rows": 1.0,
+                    "Actual Loops": 29,
+                    "Disabled": false,
+                    "Storage": "Memory",
+                    "Maximum Storage": 17,
+                    "Plans": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "subjects_pkey",
+                        "Relation Name": "subjects",
+                        "Alias": "s",
+                        "Actual Rows": 1.0,
+                        "Actual Loops": 1,
+                        "Disabled": false,
+                        "Index Cond": {
+                          "redacted": "planner expression omitted",
+                          "character_count": 13,
+                          "sha256": "a8216fee4501c1c607f78230410dad8a393392d74e829062b029e87d60a90e7b"
+                        },
+                        "Rows Removed by Index Recheck": 0,
+                        "Index Searches": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "observation_id": "zero-subject",
+        "runtime_query_id": "question-export-by-subject",
+        "expected": {
+          "row_count": 1,
+          "minimum_id": 0,
+          "middle_id": 0,
+          "maximum_id": 0,
+          "first_ids_asc": [
+            0
+          ],
+          "last_ids_asc": [
+            0
+          ]
+        },
+        "runtime_result": {
+          "row_count": 1,
+          "minimum_id": 0,
+          "middle_id": 0,
+          "maximum_id": 0,
+          "first_ids_asc": [
+            0
+          ],
+          "last_ids_asc": [
+            0
+          ],
+          "strictly_ascending_by_id": true,
+          "row_column_count": 10,
+          "null_subject_id_rows": 0,
+          "null_subject_name_rows": 0,
+          "empty_subject_name_rows": 0,
+          "unicode_subject_name_rows": 1,
+          "unicode_payload_rows": 0,
+          "raw_malformed_payload_rows": 0,
+          "edge_rows": {
+            "0": {
+              "question_id": 0,
+              "subject_id": 0,
+              "subject_name_state": "unicode",
+              "unicode_payload": false,
+              "raw_malformed_payload": false,
+              "row_sha256": "28f0eb1bf58b8de36d2b3da7b4c9e7f4982a6e9a8dfd523bc0d7c3a756220082"
+            }
+          },
+          "canonical_psql_rows_sha256": "28f0eb1bf58b8de36d2b3da7b4c9e7f4982a6e9a8dfd523bc0d7c3a756220082"
+        },
+        "sql_statement_count": 1,
+        "binding": {
+          "mode": "prepare-execute",
+          "runtime_statement_count": 1,
+          "bound_parameter_count": 1,
+          "named_parameter_count": 1,
+          "occurrence_names": [
+            "subject_id"
+          ],
+          "positional_sql_sha256": "e4cc45fede2f73879d5bdeda84becdd47152b7eafc7b48b1b450f0a21cd35056",
+          "parameters": {
+            "subject_id": {
+              "bind_kind": "jdbc-scalar",
+              "postgres_type": "integer",
+              "value": 0
+            }
+          }
+        },
+        "temp_blocks_observed": {
+          "Temp Read Blocks": 0.0,
+          "Temp Written Blocks": 0.0
+        },
+        "assertions_passed": [
+          "ten-column-result-count-boundaries-and-digest",
+          "plan-row-count-matches-runtime-result",
+          "strict-id-asc-runtime-order",
+          "exact-pg184-root-helper-and-relation-loop-contract",
+          "bounded-plan-shape",
+          "questions-and-subjects-scanned-once-only",
+          "one-outer-join-left-right-planner-swap-allowed",
+          "zero-temp-blocks",
+          "buffers-captured-before-normalization",
+          "one-select-fixed-typed-bind-cardinality",
+          "expected-test-only-question-index-observed"
+        ],
+        "plan_summary": {
+          "root_node_type": "Sort",
+          "result_row_count": 1,
+          "root_actual_loops": 1,
+          "node_count": 4,
+          "maximum_depth": 2,
+          "maximum_actual_loops": 1,
+          "maximum_relation_scan_actual_loops": 1,
+          "relation_scan_actual_loops": {
+            "questions": [
+              1
+            ],
+            "subjects": [
+              1
+            ]
+          },
+          "node_type_counts": {
+            "Index Scan": 2,
+            "Nested Loop": 1,
+            "Sort": 1
+          },
+          "relation_scan_occurrences": {
+            "questions": 1,
+            "subjects": 1
+          },
+          "join_nodes": [
+            {
+              "node_type": "Nested Loop",
+              "join_type": "Left",
+              "actual_rows": 1.0,
+              "actual_loops": 1
+            }
+          ],
+          "index_names": [
+            "ix_questions_subject_id",
+            "subjects_pkey"
+          ],
+          "buffer_fields_observed_before_normalization": [
+            "Local Dirtied Blocks",
+            "Local Hit Blocks",
+            "Local Read Blocks",
+            "Local Written Blocks",
+            "Shared Dirtied Blocks",
+            "Shared Hit Blocks",
+            "Shared Read Blocks",
+            "Shared Written Blocks",
+            "Temp Read Blocks",
+            "Temp Written Blocks"
+          ],
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Sort",
+              "Sort Method": "quicksort",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Sort Key": {
+                "redacted": "planner expression omitted",
+                "character_count": 8,
+                "sha256": "82d162f988cb7e9653f7e95ce901875a929b67df9ac272e46742883df6380679"
+              }
+            },
+            {
+              "depth": 1,
+              "Node Type": "Nested Loop",
+              "Parent Relationship": "Outer",
+              "Join Type": "Left",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1
+            },
+            {
+              "depth": 2,
+              "Node Type": "Index Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "questions",
+              "Alias": "q",
+              "Index Name": "ix_questions_subject_id",
+              "Scan Direction": "Forward",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Rows Removed by Index Recheck": 0,
+              "Index Searches": 1,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 18,
+                "sha256": "2816b385a3d359659b252bb2814e34c64a9571dab2fadf6be5cd3e3215eb2b95"
+              }
+            },
+            {
+              "depth": 2,
+              "Node Type": "Index Scan",
+              "Parent Relationship": "Inner",
+              "Relation Name": "subjects",
+              "Alias": "s",
+              "Index Name": "subjects_pkey",
+              "Scan Direction": "Forward",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Rows Removed by Index Recheck": 0,
+              "Index Searches": 1,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 10,
+                "sha256": "3fd814fd84bf5d5cbeb0589b537d900bc10847e1b1099280ca3ca86dc762cdf0"
+              }
+            }
+          ]
+        },
+        "normalized_explain_analyze": {
+          "Plan": {
+            "Node Type": "Sort",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Actual Rows": 1.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Sort Key": {
+              "redacted": "planner expression omitted",
+              "character_count": 8,
+              "sha256": "82d162f988cb7e9653f7e95ce901875a929b67df9ac272e46742883df6380679"
+            },
+            "Sort Method": "quicksort",
+            "Sort Space Type": "Memory",
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Left",
+                "Actual Rows": 1.0,
+                "Actual Loops": 1,
+                "Disabled": false,
+                "Inner Unique": true,
+                "Plans": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "ix_questions_subject_id",
+                    "Relation Name": "questions",
+                    "Alias": "q",
+                    "Actual Rows": 1.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Index Cond": {
+                      "redacted": "planner expression omitted",
+                      "character_count": 18,
+                      "sha256": "2816b385a3d359659b252bb2814e34c64a9571dab2fadf6be5cd3e3215eb2b95"
+                    },
+                    "Rows Removed by Index Recheck": 0,
+                    "Index Searches": 1
+                  },
+                  {
+                    "Node Type": "Index Scan",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "subjects_pkey",
+                    "Relation Name": "subjects",
+                    "Alias": "s",
+                    "Actual Rows": 1.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Index Cond": {
+                      "redacted": "planner expression omitted",
+                      "character_count": 10,
+                      "sha256": "3fd814fd84bf5d5cbeb0589b537d900bc10847e1b1099280ca3ca86dc762cdf0"
+                    },
+                    "Rows Removed by Index Recheck": 0,
+                    "Index Searches": 1
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "observation_id": "negative-subject",
+        "runtime_query_id": "question-export-by-subject",
+        "expected": {
+          "row_count": 1,
+          "minimum_id": -1,
+          "middle_id": -1,
+          "maximum_id": -1,
+          "first_ids_asc": [
+            -1
+          ],
+          "last_ids_asc": [
+            -1
+          ]
+        },
+        "runtime_result": {
+          "row_count": 1,
+          "minimum_id": -1,
+          "middle_id": -1,
+          "maximum_id": -1,
+          "first_ids_asc": [
+            -1
+          ],
+          "last_ids_asc": [
+            -1
+          ],
+          "strictly_ascending_by_id": true,
+          "row_column_count": 10,
+          "null_subject_id_rows": 0,
+          "null_subject_name_rows": 0,
+          "empty_subject_name_rows": 1,
+          "unicode_subject_name_rows": 0,
+          "unicode_payload_rows": 1,
+          "raw_malformed_payload_rows": 1,
+          "edge_rows": {
+            "-1": {
+              "question_id": -1,
+              "subject_id": -1,
+              "subject_name_state": "empty",
+              "unicode_payload": true,
+              "raw_malformed_payload": true,
+              "row_sha256": "cd0c2c527aada5776a9d38ddea35ca88579964721dad085c0e6d08accbae90fb"
+            }
+          },
+          "canonical_psql_rows_sha256": "cd0c2c527aada5776a9d38ddea35ca88579964721dad085c0e6d08accbae90fb"
+        },
+        "sql_statement_count": 1,
+        "binding": {
+          "mode": "prepare-execute",
+          "runtime_statement_count": 1,
+          "bound_parameter_count": 1,
+          "named_parameter_count": 1,
+          "occurrence_names": [
+            "subject_id"
+          ],
+          "positional_sql_sha256": "e4cc45fede2f73879d5bdeda84becdd47152b7eafc7b48b1b450f0a21cd35056",
+          "parameters": {
+            "subject_id": {
+              "bind_kind": "jdbc-scalar",
+              "postgres_type": "integer",
+              "value": -1
+            }
+          }
+        },
+        "temp_blocks_observed": {
+          "Temp Read Blocks": 0.0,
+          "Temp Written Blocks": 0.0
+        },
+        "assertions_passed": [
+          "ten-column-result-count-boundaries-and-digest",
+          "plan-row-count-matches-runtime-result",
+          "strict-id-asc-runtime-order",
+          "exact-pg184-root-helper-and-relation-loop-contract",
+          "bounded-plan-shape",
+          "questions-and-subjects-scanned-once-only",
+          "one-outer-join-left-right-planner-swap-allowed",
+          "zero-temp-blocks",
+          "buffers-captured-before-normalization",
+          "one-select-fixed-typed-bind-cardinality",
+          "expected-test-only-question-index-observed"
+        ],
+        "plan_summary": {
+          "root_node_type": "Sort",
+          "result_row_count": 1,
+          "root_actual_loops": 1,
+          "node_count": 4,
+          "maximum_depth": 2,
+          "maximum_actual_loops": 1,
+          "maximum_relation_scan_actual_loops": 1,
+          "relation_scan_actual_loops": {
+            "questions": [
+              1
+            ],
+            "subjects": [
+              1
+            ]
+          },
+          "node_type_counts": {
+            "Index Scan": 2,
+            "Nested Loop": 1,
+            "Sort": 1
+          },
+          "relation_scan_occurrences": {
+            "questions": 1,
+            "subjects": 1
+          },
+          "join_nodes": [
+            {
+              "node_type": "Nested Loop",
+              "join_type": "Left",
+              "actual_rows": 1.0,
+              "actual_loops": 1
+            }
+          ],
+          "index_names": [
+            "ix_questions_subject_id",
+            "subjects_pkey"
+          ],
+          "buffer_fields_observed_before_normalization": [
+            "Local Dirtied Blocks",
+            "Local Hit Blocks",
+            "Local Read Blocks",
+            "Local Written Blocks",
+            "Shared Dirtied Blocks",
+            "Shared Hit Blocks",
+            "Shared Read Blocks",
+            "Shared Written Blocks",
+            "Temp Read Blocks",
+            "Temp Written Blocks"
+          ],
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Sort",
+              "Sort Method": "quicksort",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Sort Key": {
+                "redacted": "planner expression omitted",
+                "character_count": 8,
+                "sha256": "82d162f988cb7e9653f7e95ce901875a929b67df9ac272e46742883df6380679"
+              }
+            },
+            {
+              "depth": 1,
+              "Node Type": "Nested Loop",
+              "Parent Relationship": "Outer",
+              "Join Type": "Left",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1
+            },
+            {
+              "depth": 2,
+              "Node Type": "Index Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "questions",
+              "Alias": "q",
+              "Index Name": "ix_questions_subject_id",
+              "Scan Direction": "Forward",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Rows Removed by Index Recheck": 0,
+              "Index Searches": 1,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 30,
+                "sha256": "b4d2e9298ff298d981c940caffeebaf2c6d2a33e9e6251604fe77e312613acef"
+              }
+            },
+            {
+              "depth": 2,
+              "Node Type": "Index Scan",
+              "Parent Relationship": "Inner",
+              "Relation Name": "subjects",
+              "Alias": "s",
+              "Index Name": "subjects_pkey",
+              "Scan Direction": "Forward",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Rows Removed by Index Recheck": 0,
+              "Index Searches": 1,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 22,
+                "sha256": "c26b7f7b671d8a5c6baa63e1d4f9c4bb96e21ea29269aa8ae03589eaff6abace"
+              }
+            }
+          ]
+        },
+        "normalized_explain_analyze": {
+          "Plan": {
+            "Node Type": "Sort",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Actual Rows": 1.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Sort Key": {
+              "redacted": "planner expression omitted",
+              "character_count": 8,
+              "sha256": "82d162f988cb7e9653f7e95ce901875a929b67df9ac272e46742883df6380679"
+            },
+            "Sort Method": "quicksort",
+            "Sort Space Type": "Memory",
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Left",
+                "Actual Rows": 1.0,
+                "Actual Loops": 1,
+                "Disabled": false,
+                "Inner Unique": true,
+                "Plans": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "ix_questions_subject_id",
+                    "Relation Name": "questions",
+                    "Alias": "q",
+                    "Actual Rows": 1.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Index Cond": {
+                      "redacted": "planner expression omitted",
+                      "character_count": 30,
+                      "sha256": "b4d2e9298ff298d981c940caffeebaf2c6d2a33e9e6251604fe77e312613acef"
+                    },
+                    "Rows Removed by Index Recheck": 0,
+                    "Index Searches": 1
+                  },
+                  {
+                    "Node Type": "Index Scan",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "subjects_pkey",
+                    "Relation Name": "subjects",
+                    "Alias": "s",
+                    "Actual Rows": 1.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Index Cond": {
+                      "redacted": "planner expression omitted",
+                      "character_count": 22,
+                      "sha256": "c26b7f7b671d8a5c6baa63e1d4f9c4bb96e21ea29269aa8ae03589eaff6abace"
+                    },
+                    "Rows Removed by Index Recheck": 0,
+                    "Index Searches": 1
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "observation_id": "missing-subject-reference",
+        "runtime_query_id": "question-export-by-subject",
+        "expected": {
+          "row_count": 1,
+          "minimum_id": 2,
+          "middle_id": 2,
+          "maximum_id": 2,
+          "first_ids_asc": [
+            2
+          ],
+          "last_ids_asc": [
+            2
+          ]
+        },
+        "runtime_result": {
+          "row_count": 1,
+          "minimum_id": 2,
+          "middle_id": 2,
+          "maximum_id": 2,
+          "first_ids_asc": [
+            2
+          ],
+          "last_ids_asc": [
+            2
+          ],
+          "strictly_ascending_by_id": true,
+          "row_column_count": 10,
+          "null_subject_id_rows": 0,
+          "null_subject_name_rows": 1,
+          "empty_subject_name_rows": 0,
+          "unicode_subject_name_rows": 0,
+          "unicode_payload_rows": 0,
+          "raw_malformed_payload_rows": 0,
+          "edge_rows": {
+            "2": {
+              "question_id": 2,
+              "subject_id": 6001,
+              "subject_name_state": "null",
+              "unicode_payload": false,
+              "raw_malformed_payload": false,
+              "row_sha256": "2ca017c7525ed996db5f5c9222fa18c422f1f46e21eca45010449656858357e7"
+            }
+          },
+          "canonical_psql_rows_sha256": "2ca017c7525ed996db5f5c9222fa18c422f1f46e21eca45010449656858357e7"
+        },
+        "sql_statement_count": 1,
+        "binding": {
+          "mode": "prepare-execute",
+          "runtime_statement_count": 1,
+          "bound_parameter_count": 1,
+          "named_parameter_count": 1,
+          "occurrence_names": [
+            "subject_id"
+          ],
+          "positional_sql_sha256": "e4cc45fede2f73879d5bdeda84becdd47152b7eafc7b48b1b450f0a21cd35056",
+          "parameters": {
+            "subject_id": {
+              "bind_kind": "jdbc-scalar",
+              "postgres_type": "integer",
+              "value": 6001
+            }
+          }
+        },
+        "temp_blocks_observed": {
+          "Temp Read Blocks": 0.0,
+          "Temp Written Blocks": 0.0
+        },
+        "assertions_passed": [
+          "ten-column-result-count-boundaries-and-digest",
+          "plan-row-count-matches-runtime-result",
+          "strict-id-asc-runtime-order",
+          "exact-pg184-root-helper-and-relation-loop-contract",
+          "bounded-plan-shape",
+          "questions-and-subjects-scanned-once-only",
+          "one-outer-join-left-right-planner-swap-allowed",
+          "zero-temp-blocks",
+          "buffers-captured-before-normalization",
+          "one-select-fixed-typed-bind-cardinality",
+          "expected-test-only-question-index-observed"
+        ],
+        "plan_summary": {
+          "root_node_type": "Sort",
+          "result_row_count": 1,
+          "root_actual_loops": 1,
+          "node_count": 4,
+          "maximum_depth": 2,
+          "maximum_actual_loops": 1,
+          "maximum_relation_scan_actual_loops": 1,
+          "relation_scan_actual_loops": {
+            "questions": [
+              1
+            ],
+            "subjects": [
+              1
+            ]
+          },
+          "node_type_counts": {
+            "Index Scan": 2,
+            "Nested Loop": 1,
+            "Sort": 1
+          },
+          "relation_scan_occurrences": {
+            "questions": 1,
+            "subjects": 1
+          },
+          "join_nodes": [
+            {
+              "node_type": "Nested Loop",
+              "join_type": "Left",
+              "actual_rows": 1.0,
+              "actual_loops": 1
+            }
+          ],
+          "index_names": [
+            "ix_questions_subject_id",
+            "subjects_pkey"
+          ],
+          "buffer_fields_observed_before_normalization": [
+            "Local Dirtied Blocks",
+            "Local Hit Blocks",
+            "Local Read Blocks",
+            "Local Written Blocks",
+            "Shared Dirtied Blocks",
+            "Shared Hit Blocks",
+            "Shared Read Blocks",
+            "Shared Written Blocks",
+            "Temp Read Blocks",
+            "Temp Written Blocks"
+          ],
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Sort",
+              "Sort Method": "quicksort",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Sort Key": {
+                "redacted": "planner expression omitted",
+                "character_count": 8,
+                "sha256": "82d162f988cb7e9653f7e95ce901875a929b67df9ac272e46742883df6380679"
+              }
+            },
+            {
+              "depth": 1,
+              "Node Type": "Nested Loop",
+              "Parent Relationship": "Outer",
+              "Join Type": "Left",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1
+            },
+            {
+              "depth": 2,
+              "Node Type": "Index Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "questions",
+              "Alias": "q",
+              "Index Name": "ix_questions_subject_id",
+              "Scan Direction": "Forward",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Rows Removed by Index Recheck": 0,
+              "Index Searches": 1,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 21,
+                "sha256": "d926cbffb692923b309c9a9447efcdcf90f81efdcdde42ce687411b164ead0a3"
+              }
+            },
+            {
+              "depth": 2,
+              "Node Type": "Index Scan",
+              "Parent Relationship": "Inner",
+              "Relation Name": "subjects",
+              "Alias": "s",
+              "Index Name": "subjects_pkey",
+              "Scan Direction": "Forward",
+              "Actual Rows": 0.0,
+              "Actual Loops": 1,
+              "Rows Removed by Index Recheck": 0,
+              "Index Searches": 1,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 13,
+                "sha256": "30f361fa8da2ccb5fd6689b69216e08880afcf8c06c91c99a4729830346eb426"
+              }
+            }
+          ]
+        },
+        "normalized_explain_analyze": {
+          "Plan": {
+            "Node Type": "Sort",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Actual Rows": 1.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Sort Key": {
+              "redacted": "planner expression omitted",
+              "character_count": 8,
+              "sha256": "82d162f988cb7e9653f7e95ce901875a929b67df9ac272e46742883df6380679"
+            },
+            "Sort Method": "quicksort",
+            "Sort Space Type": "Memory",
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Left",
+                "Actual Rows": 1.0,
+                "Actual Loops": 1,
+                "Disabled": false,
+                "Inner Unique": true,
+                "Plans": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "ix_questions_subject_id",
+                    "Relation Name": "questions",
+                    "Alias": "q",
+                    "Actual Rows": 1.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Index Cond": {
+                      "redacted": "planner expression omitted",
+                      "character_count": 21,
+                      "sha256": "d926cbffb692923b309c9a9447efcdcf90f81efdcdde42ce687411b164ead0a3"
+                    },
+                    "Rows Removed by Index Recheck": 0,
+                    "Index Searches": 1
+                  },
+                  {
+                    "Node Type": "Index Scan",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "subjects_pkey",
+                    "Relation Name": "subjects",
+                    "Alias": "s",
+                    "Actual Rows": 0.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Index Cond": {
+                      "redacted": "planner expression omitted",
+                      "character_count": 13,
+                      "sha256": "30f361fa8da2ccb5fd6689b69216e08880afcf8c06c91c99a4729830346eb426"
+                    },
+                    "Rows Removed by Index Recheck": 0,
+                    "Index Searches": 1
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "observation_id": "integer-min-subject",
+        "runtime_query_id": "question-export-by-subject",
+        "expected": {
+          "row_count": 0,
+          "minimum_id": null,
+          "middle_id": null,
+          "maximum_id": null,
+          "first_ids_asc": [],
+          "last_ids_asc": []
+        },
+        "runtime_result": {
+          "row_count": 0,
+          "minimum_id": null,
+          "middle_id": null,
+          "maximum_id": null,
+          "first_ids_asc": [],
+          "last_ids_asc": [],
+          "strictly_ascending_by_id": true,
+          "row_column_count": 10,
+          "null_subject_id_rows": 0,
+          "null_subject_name_rows": 0,
+          "empty_subject_name_rows": 0,
+          "unicode_subject_name_rows": 0,
+          "unicode_payload_rows": 0,
+          "raw_malformed_payload_rows": 0,
+          "edge_rows": {},
+          "canonical_psql_rows_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "sql_statement_count": 1,
+        "binding": {
+          "mode": "prepare-execute",
+          "runtime_statement_count": 1,
+          "bound_parameter_count": 1,
+          "named_parameter_count": 1,
+          "occurrence_names": [
+            "subject_id"
+          ],
+          "positional_sql_sha256": "e4cc45fede2f73879d5bdeda84becdd47152b7eafc7b48b1b450f0a21cd35056",
+          "parameters": {
+            "subject_id": {
+              "bind_kind": "jdbc-scalar",
+              "postgres_type": "integer",
+              "value": -2147483648
+            }
+          }
+        },
+        "temp_blocks_observed": {
+          "Temp Read Blocks": 0.0,
+          "Temp Written Blocks": 0.0
+        },
+        "assertions_passed": [
+          "ten-column-result-count-boundaries-and-digest",
+          "plan-row-count-matches-runtime-result",
+          "strict-id-asc-runtime-order",
+          "exact-pg184-root-helper-and-relation-loop-contract",
+          "bounded-plan-shape",
+          "questions-and-subjects-scanned-once-only",
+          "one-outer-join-left-right-planner-swap-allowed",
+          "zero-temp-blocks",
+          "buffers-captured-before-normalization",
+          "one-select-fixed-typed-bind-cardinality",
+          "expected-test-only-question-index-observed"
+        ],
+        "plan_summary": {
+          "root_node_type": "Sort",
+          "result_row_count": 0,
+          "root_actual_loops": 1,
+          "node_count": 4,
+          "maximum_depth": 2,
+          "maximum_actual_loops": 1,
+          "maximum_relation_scan_actual_loops": 1,
+          "relation_scan_actual_loops": {
+            "questions": [
+              1
+            ],
+            "subjects": [
+              0
+            ]
+          },
+          "node_type_counts": {
+            "Index Scan": 2,
+            "Nested Loop": 1,
+            "Sort": 1
+          },
+          "relation_scan_occurrences": {
+            "questions": 1,
+            "subjects": 1
+          },
+          "join_nodes": [
+            {
+              "node_type": "Nested Loop",
+              "join_type": "Left",
+              "actual_rows": 0.0,
+              "actual_loops": 1
+            }
+          ],
+          "index_names": [
+            "ix_questions_subject_id",
+            "subjects_pkey"
+          ],
+          "buffer_fields_observed_before_normalization": [
+            "Local Dirtied Blocks",
+            "Local Hit Blocks",
+            "Local Read Blocks",
+            "Local Written Blocks",
+            "Shared Dirtied Blocks",
+            "Shared Hit Blocks",
+            "Shared Read Blocks",
+            "Shared Written Blocks",
+            "Temp Read Blocks",
+            "Temp Written Blocks"
+          ],
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Sort",
+              "Sort Method": "quicksort",
+              "Actual Rows": 0.0,
+              "Actual Loops": 1,
+              "Sort Key": {
+                "redacted": "planner expression omitted",
+                "character_count": 8,
+                "sha256": "82d162f988cb7e9653f7e95ce901875a929b67df9ac272e46742883df6380679"
+              }
+            },
+            {
+              "depth": 1,
+              "Node Type": "Nested Loop",
+              "Parent Relationship": "Outer",
+              "Join Type": "Left",
+              "Actual Rows": 0.0,
+              "Actual Loops": 1
+            },
+            {
+              "depth": 2,
+              "Node Type": "Index Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "questions",
+              "Alias": "q",
+              "Index Name": "ix_questions_subject_id",
+              "Scan Direction": "Forward",
+              "Actual Rows": 0.0,
+              "Actual Loops": 1,
+              "Rows Removed by Index Recheck": 0,
+              "Index Searches": 1,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 39,
+                "sha256": "a040642d51431f742184a2727490806f6a8237ea436986ebff4bd52eba70abed"
+              }
+            },
+            {
+              "depth": 2,
+              "Node Type": "Index Scan",
+              "Parent Relationship": "Inner",
+              "Relation Name": "subjects",
+              "Alias": "s",
+              "Index Name": "subjects_pkey",
+              "Scan Direction": "Forward",
+              "Actual Rows": 0,
+              "Actual Loops": 0,
+              "Rows Removed by Index Recheck": 0,
+              "Index Searches": 0,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 31,
+                "sha256": "5acb82b2c2905eb981a3cb4df0effc853b5ac43d538051694a3dd8e709bfe0b0"
+              }
+            }
+          ]
+        },
+        "normalized_explain_analyze": {
+          "Plan": {
+            "Node Type": "Sort",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Actual Rows": 0.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Sort Key": {
+              "redacted": "planner expression omitted",
+              "character_count": 8,
+              "sha256": "82d162f988cb7e9653f7e95ce901875a929b67df9ac272e46742883df6380679"
+            },
+            "Sort Method": "quicksort",
+            "Sort Space Type": "Memory",
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Left",
+                "Actual Rows": 0.0,
+                "Actual Loops": 1,
+                "Disabled": false,
+                "Inner Unique": true,
+                "Plans": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "ix_questions_subject_id",
+                    "Relation Name": "questions",
+                    "Alias": "q",
+                    "Actual Rows": 0.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Index Cond": {
+                      "redacted": "planner expression omitted",
+                      "character_count": 39,
+                      "sha256": "a040642d51431f742184a2727490806f6a8237ea436986ebff4bd52eba70abed"
+                    },
+                    "Rows Removed by Index Recheck": 0,
+                    "Index Searches": 1
+                  },
+                  {
+                    "Node Type": "Index Scan",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "subjects_pkey",
+                    "Relation Name": "subjects",
+                    "Alias": "s",
+                    "Actual Rows": 0,
+                    "Actual Loops": 0,
+                    "Disabled": false,
+                    "Index Cond": {
+                      "redacted": "planner expression omitted",
+                      "character_count": 31,
+                      "sha256": "5acb82b2c2905eb981a3cb4df0effc853b5ac43d538051694a3dd8e709bfe0b0"
+                    },
+                    "Rows Removed by Index Recheck": 0,
+                    "Index Searches": 0
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "observation_id": "integer-max-subject",
+        "runtime_query_id": "question-export-by-subject",
+        "expected": {
+          "row_count": 0,
+          "minimum_id": null,
+          "middle_id": null,
+          "maximum_id": null,
+          "first_ids_asc": [],
+          "last_ids_asc": []
+        },
+        "runtime_result": {
+          "row_count": 0,
+          "minimum_id": null,
+          "middle_id": null,
+          "maximum_id": null,
+          "first_ids_asc": [],
+          "last_ids_asc": [],
+          "strictly_ascending_by_id": true,
+          "row_column_count": 10,
+          "null_subject_id_rows": 0,
+          "null_subject_name_rows": 0,
+          "empty_subject_name_rows": 0,
+          "unicode_subject_name_rows": 0,
+          "unicode_payload_rows": 0,
+          "raw_malformed_payload_rows": 0,
+          "edge_rows": {},
+          "canonical_psql_rows_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "sql_statement_count": 1,
+        "binding": {
+          "mode": "prepare-execute",
+          "runtime_statement_count": 1,
+          "bound_parameter_count": 1,
+          "named_parameter_count": 1,
+          "occurrence_names": [
+            "subject_id"
+          ],
+          "positional_sql_sha256": "e4cc45fede2f73879d5bdeda84becdd47152b7eafc7b48b1b450f0a21cd35056",
+          "parameters": {
+            "subject_id": {
+              "bind_kind": "jdbc-scalar",
+              "postgres_type": "integer",
+              "value": 2147483647
+            }
+          }
+        },
+        "temp_blocks_observed": {
+          "Temp Read Blocks": 0.0,
+          "Temp Written Blocks": 0.0
+        },
+        "assertions_passed": [
+          "ten-column-result-count-boundaries-and-digest",
+          "plan-row-count-matches-runtime-result",
+          "strict-id-asc-runtime-order",
+          "exact-pg184-root-helper-and-relation-loop-contract",
+          "bounded-plan-shape",
+          "questions-and-subjects-scanned-once-only",
+          "one-outer-join-left-right-planner-swap-allowed",
+          "zero-temp-blocks",
+          "buffers-captured-before-normalization",
+          "one-select-fixed-typed-bind-cardinality",
+          "expected-test-only-question-index-observed"
+        ],
+        "plan_summary": {
+          "root_node_type": "Sort",
+          "result_row_count": 0,
+          "root_actual_loops": 1,
+          "node_count": 4,
+          "maximum_depth": 2,
+          "maximum_actual_loops": 1,
+          "maximum_relation_scan_actual_loops": 1,
+          "relation_scan_actual_loops": {
+            "questions": [
+              1
+            ],
+            "subjects": [
+              0
+            ]
+          },
+          "node_type_counts": {
+            "Index Scan": 2,
+            "Nested Loop": 1,
+            "Sort": 1
+          },
+          "relation_scan_occurrences": {
+            "questions": 1,
+            "subjects": 1
+          },
+          "join_nodes": [
+            {
+              "node_type": "Nested Loop",
+              "join_type": "Left",
+              "actual_rows": 0.0,
+              "actual_loops": 1
+            }
+          ],
+          "index_names": [
+            "ix_questions_subject_id",
+            "subjects_pkey"
+          ],
+          "buffer_fields_observed_before_normalization": [
+            "Local Dirtied Blocks",
+            "Local Hit Blocks",
+            "Local Read Blocks",
+            "Local Written Blocks",
+            "Shared Dirtied Blocks",
+            "Shared Hit Blocks",
+            "Shared Read Blocks",
+            "Shared Written Blocks",
+            "Temp Read Blocks",
+            "Temp Written Blocks"
+          ],
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Sort",
+              "Sort Method": "quicksort",
+              "Actual Rows": 0.0,
+              "Actual Loops": 1,
+              "Sort Key": {
+                "redacted": "planner expression omitted",
+                "character_count": 8,
+                "sha256": "82d162f988cb7e9653f7e95ce901875a929b67df9ac272e46742883df6380679"
+              }
+            },
+            {
+              "depth": 1,
+              "Node Type": "Nested Loop",
+              "Parent Relationship": "Outer",
+              "Join Type": "Left",
+              "Actual Rows": 0.0,
+              "Actual Loops": 1
+            },
+            {
+              "depth": 2,
+              "Node Type": "Index Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "questions",
+              "Alias": "q",
+              "Index Name": "ix_questions_subject_id",
+              "Scan Direction": "Forward",
+              "Actual Rows": 0.0,
+              "Actual Loops": 1,
+              "Rows Removed by Index Recheck": 0,
+              "Index Searches": 1,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 27,
+                "sha256": "f07316d0b2057c1ee8de40e91f804ec0165e07c093a4138f35940de230be94ab"
+              }
+            },
+            {
+              "depth": 2,
+              "Node Type": "Index Scan",
+              "Parent Relationship": "Inner",
+              "Relation Name": "subjects",
+              "Alias": "s",
+              "Index Name": "subjects_pkey",
+              "Scan Direction": "Forward",
+              "Actual Rows": 0,
+              "Actual Loops": 0,
+              "Rows Removed by Index Recheck": 0,
+              "Index Searches": 0,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 19,
+                "sha256": "8a452e84d2fadc67b0f9b03ce03d49eaa69898532eba6d463a24748e20989708"
+              }
+            }
+          ]
+        },
+        "normalized_explain_analyze": {
+          "Plan": {
+            "Node Type": "Sort",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Actual Rows": 0.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Sort Key": {
+              "redacted": "planner expression omitted",
+              "character_count": 8,
+              "sha256": "82d162f988cb7e9653f7e95ce901875a929b67df9ac272e46742883df6380679"
+            },
+            "Sort Method": "quicksort",
+            "Sort Space Type": "Memory",
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Left",
+                "Actual Rows": 0.0,
+                "Actual Loops": 1,
+                "Disabled": false,
+                "Inner Unique": true,
+                "Plans": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "ix_questions_subject_id",
+                    "Relation Name": "questions",
+                    "Alias": "q",
+                    "Actual Rows": 0.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Index Cond": {
+                      "redacted": "planner expression omitted",
+                      "character_count": 27,
+                      "sha256": "f07316d0b2057c1ee8de40e91f804ec0165e07c093a4138f35940de230be94ab"
+                    },
+                    "Rows Removed by Index Recheck": 0,
+                    "Index Searches": 1
+                  },
+                  {
+                    "Node Type": "Index Scan",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "subjects_pkey",
+                    "Relation Name": "subjects",
+                    "Alias": "s",
+                    "Actual Rows": 0,
+                    "Actual Loops": 0,
+                    "Disabled": false,
+                    "Index Cond": {
+                      "redacted": "planner expression omitted",
+                      "character_count": 19,
+                      "sha256": "8a452e84d2fadc67b0f9b03ce03d49eaa69898532eba6d463a24748e20989708"
+                    },
+                    "Rows Removed by Index Recheck": 0,
+                    "Index Searches": 0
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "cross_observation_assertions": {
+    "status": "passed",
+    "observation_boundary_coverage": [
+      "all-questions",
+      "first-subject",
+      "integer-max-subject",
+      "integer-min-subject",
+      "last-subject",
+      "middle-subject",
+      "missing-subject-reference",
+      "negative-subject",
+      "zero-subject"
+    ],
+    "runtime_variant_coverage": [
+      "question-export-all",
+      "question-export-by-subject"
+    ],
+    "bound_parameter_counts_by_runtime_query": {
+      "question-export-all": [
+        0
+      ],
+      "question-export-by-subject": [
+        1
+      ]
+    },
+    "expected_bound_parameter_counts_by_runtime_query": {
+      "question-export-all": [
+        0
+      ],
+      "question-export-by-subject": [
+        1
+      ]
+    },
+    "bind_count_independent_of_result_row_count": true,
+    "questions_relation_scans_per_observation": 1,
+    "subjects_relation_scans_per_observation": 1,
+    "outer_joins_per_observation": 1,
+    "strict_id_asc_all_nontrivial_results": true,
+    "ten_columns_all_observations": true,
+    "zero_temp_blocks_all_observations": true,
+    "result_digest_all_observations": true
+  },
+  "normalization": {
+    "removed": [
+      "planning and execution timing",
+      "per-node actual timing",
+      "cache-dependent buffer block counts",
+      "runtime memory and hash counters",
+      "sample-dependent planner costs and row estimates",
+      "parallel worker identities and counters",
+      "container ID and container name"
+    ],
+    "redacted": [
+      "planner filter, join, sort, and index expressions with SHA-256 retained"
+    ],
+    "retained": [
+      "plan node types and depth",
+      "actual rows and loops",
+      "relation, join type, and observed index names",
+      "scan direction and sort shape",
+      "which BUFFERS fields were emitted"
+    ]
+  },
+  "interpretation": {
+    "status": "bounded_synthetic_plan_evidence_only",
+    "statement": "This isolated PostgreSQL 18.4 capture closes ten-column row shape, result digests, signed and nullable edges, strict ascending order, typed binds, one outer join, one scan of each relation, bounded loops, and zero TEMP for the exact Java SQL. It is not a production latency, capacity, or index-approval claim."
+  },
+  "reproduction": {
+    "working_directory": "repository root containing Ti-Java",
+    "command": "python3 Ti-Java/tools/capture_phase4a_question_export_query_plan.py --output Ti-Java/docs/refactor/phase4a/question-export-query-plan-evidence.json",
+    "prerequisites": "Docker and the repository Maven verification image",
+    "isolation": "ephemeral network-disabled container removed on success or failure"
+  },
+  "attestation": {
+    "status": "passed",
+    "algorithm": "sha256",
+    "canonical_payload_excluding_attestation_sha256": "f4d35ee60754732a8b15ecb75348a8f11b7394192a46d1a4c7475457793c4a17",
+    "closures": [
+      "exact-java-runtime-sql-export",
+      "manifest-schema-query-parameter-and-sql-shape",
+      "public-synthetic-dataset-and-result-digests",
+      "postgresql-18.4-immutable-image",
+      "normalized-plans-relations-joins-loops-and-temp",
+      "input-and-runtime-sql-post-capture-hashes"
+    ]
+  }
+}

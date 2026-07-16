@@ -13,4 +13,6 @@ public interface QuestionMetadataApplicationApi {
     Optional<QuestionCatalogRecordView> findQuestionById(long questionId);
 
     List<QuestionCatalogSummaryView> listQuestionSummaries(QuestionCatalogListQuery query);
+
+    List<QuestionExportRecordView> listQuestionExportRecords(QuestionExportQuery query);
 }

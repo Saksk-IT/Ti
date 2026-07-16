@@ -2,13 +2,13 @@
 
 Ti-Java 是 Ti 的独立重构项目，目标是以 Java 25、Spring Boot 4.1、Spring MVC 和 Spring Modulith 重新实现现有业务，并逐步加入 Vue 3 + TypeScript Web 与项目自有的小程序。
 
-阶段 0 事实基线与阶段 1 架构/契约已经固化，阶段 2 Java 基础骨架与阶段 3 认证兼容切片也已通过门禁；阶段 4A 已实现受保护科目目录和公共题库 7 条 GET 的 Java shadow 切片，并补齐题目类型、题量、单题详情、后台题目摘要集合、后台科目库存摘要与后台题集页面科目上下文的 catalog 内部读取能力。当前有效状态仍是 **11 个 migrated operation、600 个 pending、0 个 production cutover**；两条后台题型、两条单题详情、两条后台题目集合、一条后台科目库存与两条后台科目上下文 HTTP 路由继续由 `operations` 持有，两条题量 HTTP 路由延后由 Phase 4C 的 `learning` 组合，这十一条路径都保持 pending。旧 Flask 仍是生产运行所有者，整个长期重构目标也尚未完成。
+阶段 0 事实基线与阶段 1 架构/契约已经固化，阶段 2 Java 基础骨架与阶段 3 认证兼容切片也已通过门禁；阶段 4A 已实现受保护科目目录和公共题库 7 条 GET 的 Java shadow 切片，并补齐题目类型、题量、单题详情、后台题目摘要集合、后台科目库存摘要、后台题集页面科目上下文与后台题目导出的 catalog 内部读取能力。Phase 4A 的有界 catalog 范围已由 `docs/refactor/phase4a/phase4a-final-acceptance.json` 完成最终 closure，下一条唯一获准切片是 Phase 4B 的两条 personal-bank category alias；当前有效状态仍是 **11 个 migrated operation、600 个 pending、0 个 production cutover**。两条后台题型、两条单题详情、两条后台题目集合、一条后台科目库存、两条后台科目上下文与两条后台题目导出 HTTP 路由继续由 `operations` 持有，两条题量 HTTP 路由延后由 Phase 4C 的 `learning` 组合，这十三条路径都保持 pending。旧 Flask 仍是生产运行所有者，整个长期重构目标尚未完成。
 
 ## 当前技术与边界
 
 - `server/` 固定使用 Java 25、Maven Wrapper 3.9.16、Spring Boot 4.1.0 和 Spring Modulith 2.1.0；默认采用 Spring MVC，不引入 WebFlux、R2DBC 或阶段 8 之前的 Flyway。
 - 模块化单体包含 `identity`、`catalog`、`personalbank`、`learning`、`assessment`、`community`、`messaging`、`campus`、`coding`、`intelligence`、`operations` 11 个业务模块，以及 `sharedkernel`、`web` 两个支撑模块。
-- `identity`、`catalog` 与 `operations` 已部分实现，共有 18 个受机器合同约束的公开应用方法；其余 8 个业务模块仍保持延后形状，不能从占位名称推断为已迁移能力。
+- `identity`、`catalog` 与 `operations` 已部分实现，共有 19 个受机器合同约束的公开应用方法；其余 8 个业务模块仍保持延后形状，不能从占位名称推断为已迁移能力。
 - PostgreSQL 是唯一业务事实源；Redis 只用于可重建的辅助状态。Hibernate 始终使用 `ddl-auto=validate`，禁止 ORM 自动建表或改表。
 - `catalog` 已通过 `identity::api` 迁移 `GET /api/quiz/subjects` 与 `/meta`；业务用例固定两条 SELECT，加上 HTTP 认证权威查询后正常成功请求总计三条 SELECT。读取保持稳定 ID 顺序和 per-identity/per-route Redis 限流，不拥有写入权，也未启用无法完整失效的应用数据缓存。
 - `catalog` 还已实现公共题库 search/list/summary/hot/boards/detail/card 共 7 条旧路径兼容 GET。GET 只读取原子发布的完整 snapshot：`<= 300s` 正常服务、`300–900s` 服务最后完整快照并记陈旧指标、`> 900s` 或冷/残缺状态稳定返回 503 且 readiness fail closed；PostgreSQL 事务级 advisory lock 是最终单写者边界，Redis 仅作可过期、可接管的刷新协调。
@@ -18,6 +18,7 @@ Ti-Java 是 Ti 的独立重构项目，目标是以 Java 25、Spring Boot 4.1、
 - 同一 API 的 `listQuestionSummaries(QuestionCatalogListQuery)` 只从 `questions` 读取 9 个原始事实字段，按可选 signed integer `subjectId` 与精确文本 `questionType` 选择四条固定 SQL，并始终 `q.id DESC`。返回不可变、无隐藏分页的集合；`createdBy` 只是原始 ID，catalog 不连接 `users/subjects`，也不做用户名、PQF、题型别名、tags/image 或 modern/legacy 投影。`GET /admin/api/questions` 与 `GET /admin/questions` 仍由 `operations` 持有并保持 pending。
 - `catalog` 的 `SubjectMetadataApplicationApi#listSubjectInventorySummaries` 以一条无参数聚合查询返回 `id/name/isLocked/questionCount` 四个原始库存事实，保留 signed ID、空名称、nullable lock 和零题科目，并严格按 `id ASC` 返回不可变集合。它不复用会过滤锁定、空名称或受限科目的公共目录；`GET /admin/api/subjects` 仍由 `operations` 持有并保持 pending。
 - 同一 API 的 `findSubjectById(long)` 返回 `Optional<SubjectContextView>`，只以一个 PostgreSQL `bigint` bind 读取 `subjects.id/name`；负 ID 在 JDBC 前拒绝，0 与 `Long.MAX_VALUE` 下沉查询。它不复用公共目录或库存聚合，也不加入 Controller、route/OpenAPI delta 或 cutover；`GET /admin/subjects/{subject_id}/questions` 与其 `/duplicate-check` 页面仍由 `operations` 持有并保持 pending。
+- `QuestionMetadataApplicationApi#listQuestionExportRecords` 按可选的 `Optional<Integer> subjectId` 在两条固定 SQL 中二选一，以 `questions LEFT JOIN subjects` 返回严格 `q.id ASC` 的不可变十字段原始快照。catalog 保留 nullable/孤儿科目、空名称与畸形 JSON 文本，不做默认值、JSON 解析、认证、响应信封或安全错误投影；`GET /admin/api/questions/export` 与 `GET /admin/questions/export` 仍由 `operations` 持有，延后到 Phase 4H 并保持 pending。
 - 当前有效数据所有权为 **159 个资源且 159 个均有唯一 owner**。公共题库新增的 snapshot/viewer 投影控制表、读取限流键和刷新锁均是可重建辅助状态，`production cutover=0`，不能据此宣称接管旧业务事实或生产流量。
 
 ## 目录
@@ -28,7 +29,7 @@ Ti-Java 是 Ti 的独立重构项目，目标是以 Java 25、Spring Boot 4.1、
 - `compose.dev.yml`：与旧项目隔离的阶段 2 本地 Compose。
 - `docs/refactor/phase2/`：阶段 2 范围、证据和未完成边界。
 - `docs/refactor/phase3/`：阶段 3 路由增量、认证兼容、批准差异和 p3-009 双运行时证据。
-- `docs/refactor/phase4a/`：科目、公共题库、题型、题量、单题详情、后台题目摘要集合、后台科目库存摘要与后台科目上下文的读取金样、snapshot 决策、业务不变量、批准差异、累计路由/API 形状和查询计划证据。
+- `docs/refactor/phase4a/`：科目、公共题库、题型、题量、单题详情、后台题目摘要集合、后台科目库存摘要、后台科目上下文与后台题目导出的读取金样、snapshot 决策、业务不变量、批准差异、累计路由/API 形状、查询计划证据、24-operation 候选处置与 Phase 4A closure 记录。
 - `contracts/`：确定性生成的 OpenAPI 3.1.2 初稿与人工证据 override。
 - `openapi/phase3-authentication.openapi.json`：两条 Phase 3 operation 的自包含 OpenAPI 3.1.2 增量。
 - `openapi/phase4a-subject-directory.openapi.json`：两条科目目录 operation 的自包含 OpenAPI 3.1.2 增量。
@@ -95,6 +96,12 @@ build-context SHA-256 `befc34d1f79baab4ad7c895ca2718ed1d8e2efbf964978313f35806ff
 精确 Java 运行时 SQL 在 PostgreSQL 18.4 的 150,000 科目夹具上固定 5 个观测：ID 1/75,000/150,000 命中，150,001 与 `Long.MAX_VALUE` 未命中；每次均为 1 个 `bigint` bind、1 条 SELECT、1 次 `subjects_pkey` Index Scan、loops=1、TEMP=0。计划 SHA-256 为 `f602a76a4764d098bb86aa9a8ef2a44048b0bcb977ed46cb675024e51c6d6db3`，runtime SQL manifest SHA-256 为 `dfbdd1e8efa66892d0efaa040690c412256b0b7c692f8d01098851509fa63e9c`；这是合成数据观察，不是生产延迟或容量 SLA。
 
 该切片 Java/合同定向 36/36、PostgreSQL 16.14/18.4 compatibility 2/2、golden/计划工具 23/23、全部 source tools 155/155 均通过；源目录与仅复制 1,197 个受控文件的独立副本都以原始命令通过 391 个 surefire + 56 个 failsafe，0 failure/error/skip，独立轮 Maven 计时 02:13。build-context SHA-256 `19a4cf2f629762362c6d7104e88ec726266ff50da2a4a045faeb581a2e0fe6d9` 的 WORM 已通过 PostgreSQL 18.4、70 表/617 列、只读 ACL、Hibernate `validate` 与 readiness，报告 SHA-256 为 `ad0a89753d7dd4aa884f95fe3a8e76b394869f69732414996d1042170bcf5c11`。独立副本还通过 Phase 1、Phase 2/3 静态门禁、PostgreSQL/Redis 数据面、镜像构建、3/3 Compose readiness、API 重启恢复与 8-bind source 审计；临时目录、容器、网络、卷、镜像标签、专用缓存卷和测试端口均已清理至 0 残留。对应绿色功能检查点为 `643c3b3`。
+
+后台题目导出 catalog-only 能力的固定旧提交 golden 为 44 个隔离 case、每条路由 22 个，文件 SHA-256 为 `89ce148cb32d1ca26d2f9d617385ae86243cf264f6d33dede97018435d00530d`。它固定两条路由的认证/角色、首个原始 `subject_id`、十字段导出投影、modern/legacy 信封、Accept 相关故障与 Session `users.last_active` 身份副作用；所有 case 的 `questions`、`subjects` 和身份事实指纹保持不变，catalog DML/DDL 为 0。
+
+Java 导出的两条固定 SQL 已在 PostgreSQL 18.4 的 150,000 题目、5,002 科目夹具上形成 9 个观测；全量查询的单个 Memoize 节点有 5,004 个 distinct subject-key probe，每次执行仍只有 1 条 statement、`questions/subjects` 各 1 个 scan node、root loops=1、TEMP=0 且严格 `q.id ASC`。计划 SHA-256 为 `96f04c1018f5c3a826c48972c2273096f8507e45900616ca6c842ee0318ae541`；这是合成观测，不是生产延迟、容量或索引 SLA。
+
+题目导出切片的 Java/合同定向 53/53、PostgreSQL 16.14/18.4 compatibility 2/2、全部 source tools 215/215 与最终完整 `clean verify` 406 个 surefire + 58 个 failsafe 已通过，0 failure/error/skip。WORM 以 build-context SHA-256 `9fbff246ce5f7ca8fc7fb3e723261c1b5a75f39ac43e935974be6025b663741e` 通过 PostgreSQL 18.4、70 表/617 列、只读 ACL、Hibernate `validate` 与 readiness，报告 SHA-256 为 `f245d1def582c0527ad419e5fad8bcafbfff40270dec15007a8dec77f453c410`。完整运行态验收在仅复制 1,220 个受控文件、0 个符号链接且不含缓存或构建产物的独立副本中，以专用空 Maven 缓存通过 Phase 1、Phase 2/3 静态门禁、406+58 Maven、独立 PostgreSQL/Redis 数据面、唯一镜像、3/3 Compose readiness、API 重启恢复与 8-bind source 审计；8 个只读 bind 全部来自副本，源工作树 bind 为 0，清理后临时目录、容器、网络、卷、镜像标签、缓存卷和端口均为 0 残留。随后 `phase4a-final-acceptance.json` 绑定该原始报告、WORM 与候选处置，并对当前 1,220 个受控文件中的其余 1,219 个文件做非递归最终清单（只排除合同自身）。两条导出 HTTP operation 仍是 `operations,pending,production_cutover=false` 并延后到 Phase 4H；24 个有界候选已处置为 Phase 4H 16 条、Phase 4C 4 条、Phase 6 4 条、implement-now 0 条。最终合同只授权 Phase 4B 的 `19b37a262989` 与 `e32aec766730` 两条 category alias 作为下一步，二者本身仍是 pending 且未切流。
 
 ## 启动独立开发 Compose
 

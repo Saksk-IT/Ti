@@ -1,0 +1,474 @@
+{
+  "contract_id": "ti.phase4a.question-export-read-contract",
+  "schema_version": 1,
+  "status": "catalog_raw_snapshot_implemented_http_operations_deferred",
+  "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "evidence": {
+    "golden": {
+      "source": "golden-question-export-reads.json",
+      "file_sha256": "89ce148cb32d1ca26d2f9d617385ae86243cf264f6d33dede97018435d00530d",
+      "case_count": 44,
+      "case_payload_sha256": "e1471ea32eb6e0e6ea5819f7df391a423ec3c036574205b801dab6fa09ba1584",
+      "document_payload_sha256": "6c818e96ff2fdc547920a532884c5e868628a06ad2ccca08ab514240dbdbcfea",
+      "capture_tool_sha256": "549ba5e988b7a91812895b0b0b692204e9a5e1165f7ec39d04d856e66e6bb534",
+      "capture_tool_test_sha256": "703bac42214f15ddb8bb206baa9e66a75a7c2e6165f65fbc1cb2c52777b816d5"
+    },
+    "query_plan": {
+      "source": "question-export-query-plan-evidence.json",
+      "file_sha256": "96f04c1018f5c3a826c48972c2273096f8507e45900616ca6c842ee0318ae541",
+      "runtime_sql_manifest_sha256": "1b29fce339b455d35ca2a11b4c445a898201f588610cc4fa0a96c676247f4fb0",
+      "runtime_sql_sha256": {
+        "question-export-all": "bee0615897acb6a23e29d83b22853d13a80943c1fd964811a1f48b5f76a3b713",
+        "question-export-by-subject": "fb68333e48eda511974b5c0c956031e59d3f7f3942ec2230a3839841e9386a38"
+      },
+      "adapter_sha256": "4cec329e1774bd3e255c37dc0b24cf6f45141febd0039e626b070663dd400388",
+      "runtime_sql_exporter_sha256": "5101f1761e8ecde3124b159ed2402355519b971aa5d6086166e76c681d5fb716",
+      "capture_tool_sha256": "fb9f3ee4d61d59db0913456f0f7e7f881d8306330995ebb3174187a430900dd4",
+      "capture_tool_test_sha256": "2e1efac4b582394b3b1d11f207f6f29766b64df1d71f61ca484157e464c5d8d6",
+      "runtime_query_count": 2,
+      "observation_count": 9
+    },
+    "frozen_route_matrix": {
+      "source": "../02-route-parity-matrix.csv",
+      "sha256": "fdbdfedf3dd70cd09778b2a7072711d103eee8461d0e7dd356d797006fc92c74",
+      "selected_rows_sha256": "d8fb45b8997343b9e283bf0a31116373a5fbc0296861b8000e00d0b7d36aaaad"
+    },
+    "complete_legacy_archive": {
+      "scope": "app/",
+      "archive_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+      "archive_tree": "db528464896085fe14849baef3c5e686ad1bc253",
+      "archive_sha256": "4f196047cefcb7c73984b0661a50cfec50f79926543593bdc32152ea1fc99034",
+      "complete_app_tree_verified": true,
+      "extracted_file_count": 645,
+      "member_count": 792
+    },
+    "template_callers": {
+      "attestation_sha256": "699bdb17776a1ce9f1369c1aa10f1c20dc91bdc2fabb9559b777c83b468899c2",
+      "active_chain": "questions.html:15 includes _question_scripts.html; lines 751-752 call route 712a47789f1d",
+      "dormant_modern_source": "_scripts.html lines 752-753 call route 4a33d8e15da5 but have zero inbound template includes in the complete archived app tree",
+      "dormant_legacy_fragment": "_styles.html includes _question_scripts.html but itself has zero inbound template includes"
+    },
+    "data_ownership": {
+      "source": "../03-data-ownership.csv",
+      "sha256": "3f9cb0650c523593d7037dc24df902dbccdb3885f261f530e1725a9dc7a31748",
+      "resources": [
+        "table:questions",
+        "table:subjects"
+      ],
+      "target_owner": "catalog",
+      "delta_required": false
+    },
+    "approved_differences": {
+      "source": "approved-differences.md",
+      "sha256": "2ac257e41214f3005eaa022965038bf429d35e3ba04dc83b81ac8a90abd63fd2",
+      "new_difference_ids": [],
+      "statement": "No HTTP behavior difference is approved. The implemented Java boundary is a raw catalog snapshot only; authentication, raw parameter parsing, defaults, JSON projection, envelopes and safe errors remain operations-owned."
+    },
+    "implementation": {
+      "query_sha256": "dd0086e3691cf2ab5aed417f39d9d717571550893dfddfaa1091c31ad9421c7c",
+      "view_sha256": "59c549ea0e6aac5c84516ff657a4cc1f8d427a21e9a67f64a5662a3d8584c8fa",
+      "application_api_sha256": "3301f5d0776bf0309bdf5d91b3669fdfeefde2ff1a5c5264dc47faa38ca66954",
+      "application_service_sha256": "403dfa12af0a0c8b061931bf70965bce9e6582c413aec4905d68cd770cb48ab3",
+      "query_port_sha256": "98220fdd2d6865c850622ec58a15a923830391d8a00d39375cfa2d1d4c1601fb",
+      "jdbc_adapter_sha256": "4cec329e1774bd3e255c37dc0b24cf6f45141febd0039e626b070663dd400388",
+      "sql_contract_test_sha256": "d84ebb6562df0aa02bdf8a3d2a9f152f4e2f461b780b591083373d6e0751538d",
+      "postgres_compatibility_test_sha256": "892198746dfd4eb0df58231208fe224ada0bc9c7cc5264342e9b9bf1601c901c",
+      "postgres_fixture_sha256": "63014c8b2ef876a14648d740e96a24c412d2160e14ca95618052cd96c39ba0c1"
+    }
+  },
+  "module_boundary": {
+    "data_owner": "catalog",
+    "catalog_owned_tables": [
+      "questions",
+      "subjects"
+    ],
+    "internal_application_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi#listQuestionExportRecords",
+    "method": "List<QuestionExportRecordView> listQuestionExportRecords(QuestionExportQuery query)",
+    "query": "io.saksk.ti.catalog.api.QuestionExportQuery",
+    "query_shape": "Optional<Integer> subjectId",
+    "immutable_result": "io.saksk.ti.catalog.api.QuestionExportRecordView",
+    "result_field_order": [
+      "id",
+      "subjectId",
+      "subjectName",
+      "type",
+      "content",
+      "optionsRaw",
+      "answerRaw",
+      "analysis",
+      "difficulty",
+      "tagsRaw"
+    ],
+    "http_operation_owner": "operations",
+    "http_adapter_status": "not_implemented",
+    "http_owner_dependency_status": "operations_to_catalog_api_dependency_not_yet_approved_or_implemented",
+    "deferred_phase": "4H",
+    "catalog_projection_policy": "preserve raw nullable database values; do not apply truthy defaults, safe_load, subject-name fallback, envelope fields or error translation",
+    "operations_owned_policy": [
+      "Session and Bearer authentication plus administrator or subject-administrator authorization",
+      "users.last_active compatibility side effect",
+      "raw query-string first-value, truthiness, integer parsing and invalid or out-of-range policy",
+      "type, content, analysis, difficulty and subject-name defaults",
+      "options, answer and tags safe_load projection",
+      "modern and legacy response envelopes, meta and count",
+      "Accept-dependent safe error translation and rate-limit response"
+    ],
+    "forbidden_in_catalog": [
+      "HTTP controller, security matcher, role decision, Session or Bearer parsing",
+      "request.args-compatible raw text coercion",
+      "default subject name or truthy scalar projection",
+      "JSON parsing or malformed JSON replacement",
+      "success, error, request_id, message, data, meta or count envelope construction",
+      "HTTP exception translation or rate-limit policy",
+      "route parity delta, OpenAPI operation migration or production cutover"
+    ]
+  },
+  "route_status": {
+    "migrated_route_count_before": 11,
+    "migrated_route_count_after": 11,
+    "pending_route_count_before": 600,
+    "pending_route_count_after": 600,
+    "production_cutover_count": 0,
+    "operations": [
+      {
+        "route_id": "4a33d8e15da5",
+        "method": "GET",
+        "path": "/admin/api/questions/export",
+        "legacy_route_template": "/admin/api/questions/export",
+        "legacy_handler": "admin.admin_api.export_questions_api",
+        "source_decorator": "subject_admin_required",
+        "target_module": "operations",
+        "migration_status": "pending",
+        "contract_maturity": "inferred",
+        "production_cutover": false
+      },
+      {
+        "route_id": "712a47789f1d",
+        "method": "GET",
+        "path": "/admin/questions/export",
+        "legacy_route_template": "/admin/questions/export",
+        "legacy_handler": "admin.admin_api_legacy.export_questions_api",
+        "source_decorator": "none",
+        "target_module": "operations",
+        "migration_status": "pending",
+        "contract_maturity": "inferred",
+        "production_cutover": false
+      }
+    ]
+  },
+  "catalog_application_contract": {
+    "method": "List<QuestionExportRecordView> listQuestionExportRecords(QuestionExportQuery query)",
+    "transaction": "read-only",
+    "query": {
+      "field": "subjectId",
+      "java_type": "java.util.Optional<java.lang.Integer>",
+      "absent": "select every export record",
+      "present": "bind one exact signed PostgreSQL integer value including zero or negative values",
+      "null_query_or_optional": "reject at the Java boundary"
+    },
+    "runtime_sql": {
+      "all": "one explicit ten-column SELECT from questions LEFT JOIN subjects ordered by q.id ASC with zero binds",
+      "filtered": "the same SELECT with WHERE q.subject_id = :subject_id and one typed bind",
+      "statement_count_per_invocation": 1,
+      "relations": [
+        "questions",
+        "subjects"
+      ],
+      "join": "LEFT JOIN subjects s ON q.subject_id = s.id",
+      "n_plus_one_forbidden": true
+    },
+    "result_fields": [
+      {
+        "name": "id",
+        "java_type": "long",
+        "source": "q.id",
+        "nullable": false
+      },
+      {
+        "name": "subjectId",
+        "java_type": "java.lang.Long",
+        "source": "q.subject_id",
+        "nullable": true
+      },
+      {
+        "name": "subjectName",
+        "java_type": "java.lang.String",
+        "source": "s.name",
+        "nullable": true
+      },
+      {
+        "name": "type",
+        "java_type": "java.lang.String",
+        "source": "q.type",
+        "nullable": true
+      },
+      {
+        "name": "content",
+        "java_type": "java.lang.String",
+        "source": "q.content",
+        "nullable": true
+      },
+      {
+        "name": "optionsRaw",
+        "java_type": "java.lang.String",
+        "source": "q.options",
+        "nullable": true
+      },
+      {
+        "name": "answerRaw",
+        "java_type": "java.lang.String",
+        "source": "q.answer",
+        "nullable": true
+      },
+      {
+        "name": "analysis",
+        "java_type": "java.lang.String",
+        "source": "q.analysis",
+        "nullable": true
+      },
+      {
+        "name": "difficulty",
+        "java_type": "java.lang.Integer",
+        "source": "q.difficulty",
+        "nullable": true
+      },
+      {
+        "name": "tagsRaw",
+        "java_type": "java.lang.String",
+        "source": "q.tags",
+        "nullable": true
+      }
+    ],
+    "result_semantics": {
+      "ordering": "strict q.id ASC including negative, zero and positive historical IDs",
+      "empty": "an immutable empty list",
+      "subject_join": "null or orphan subject IDs and empty subject names remain raw; catalog does not substitute 默认科目",
+      "raw_json_text": "optionsRaw, answerRaw and tagsRaw remain exact nullable text including empty, malformed, array, object, scalar and JSON-null spellings",
+      "raw_defaults": "type, content, analysis and difficulty remain database values; catalog does not apply legacy truthy defaults",
+      "locked_subject": "subject lock state is not a catalog export filter; a matching locked subject remains eligible and its joined name stays raw",
+      "failure": "the original persistence exception propagates unchanged for future operations-owned translation"
+    }
+  },
+  "query_plan_contract": {
+    "environment": "PostgreSQL 18.4 pinned digest on ARM64 with network none, parallel gather disabled and public deterministic synthetic data",
+    "data_set": {
+      "questions": 150000,
+      "subjects": 5002,
+      "question_ids": "-1, 0 and 1..149998",
+      "subject_ids": "-1, 0 and 1..5000",
+      "null_subject_rows": 1,
+      "orphan_subject_rows": 1,
+      "test_only_subject_index": "ix_questions_subject_id",
+      "production_index_approval": false
+    },
+    "runtime_queries": {
+      "question-export-all": {
+        "result_rows": 150000,
+        "result_columns": 10,
+        "statement_count": 1,
+        "bind_count": 0,
+        "strict_id_asc": true,
+        "subject_probe_shape": "one Memoize node with 5004 distinct subject-key misses/probes across the full result"
+      },
+      "question-export-by-subject": {
+        "observation_count": 8,
+        "result_row_range": "0..30 in the captured boundary observations",
+        "result_columns": 10,
+        "statement_count": 1,
+        "bind_count": 1,
+        "bind_postgres_type": "integer",
+        "strict_id_asc": true,
+        "subject_probe_shape": "zero subject probes for an empty filtered result and one subject probe for a non-empty filtered result"
+      }
+    },
+    "gates": {
+      "runtime_query_count": 2,
+      "observation_count": 9,
+      "sql_statement_count_per_execution": 1,
+      "explicit_result_columns": 10,
+      "questions_scan_nodes_per_observation": 1,
+      "subjects_scan_nodes_per_observation": 1,
+      "left_join_nodes_per_observation": 1,
+      "root_actual_loops": 1,
+      "full_result_memoize_distinct_subject_probes": 5004,
+      "filtered_result_subject_probe_minimum": 0,
+      "filtered_result_subject_probe_maximum": 1,
+      "temp_read_blocks": 0,
+      "temp_written_blocks": 0,
+      "strict_id_asc_for_every_nontrivial_result": true
+    },
+    "interpretation": "bounded PostgreSQL 18.4 synthetic evidence only; it is not a production latency SLA, capacity claim, production index recommendation or route migration authorization"
+  },
+  "legacy_http_contract": {
+    "shared_authentication": {
+      "administrator_session": "200, one export SELECT and one users.last_active update",
+      "subject_administrator_session": "200, one export SELECT and one users.last_active update",
+      "ordinary_session": "403 safe JSON before export SQL, with one users.last_active update",
+      "notification_administrator_session": "403 safe JSON before export SQL, with one users.last_active update",
+      "anonymous": "302 Location /login before all SQL and activity",
+      "valid_administrator_bearer_only": "302 Location /login before all SQL and activity",
+      "ordinary_session_plus_valid_administrator_bearer": "302 Location /login before all SQL and activity",
+      "source_difference": "modern declares subject_admin_required while legacy has no route decorator; the frozen global gate plus admin blueprint hook makes the observed external status, body and query-stop behavior equal"
+    },
+    "query_string": {
+      "missing": "no predicate and no meta.subject_id",
+      "empty": "Python-false, so no predicate and no meta.subject_id",
+      "truthy": "the first raw string is bound unchanged and copied unchanged to meta.subject_id",
+      "duplicate": "request.args.get selects the first value",
+      "unrelated_type": "the JSON export ignores the type query parameter even though the separate package-export routes consume it",
+      "zero_and_negative": "truthy raw strings can match signed subject IDs",
+      "exact_and_missing": "exact match returns only that subject; unmatched valid text returns an empty success",
+      "sqlite_observation": "blank, invalid, Unicode Nd and 2147483648 each return a 200 empty result after one raw-text bind in the archived SQLite testing engine",
+      "postgres_non_claim": "the SQLite raw-text comparison result is not PostgreSQL evidence; PostgreSQL may reject invalid or out-of-range integer input at the DBAPI boundary"
+    },
+    "shared_success_projection": {
+      "query": "one ten-column questions LEFT JOIN subjects SELECT ordered by q.id ASC",
+      "item_field_order": [
+        "id",
+        "type",
+        "content",
+        "options",
+        "answer",
+        "analysis",
+        "tags",
+        "difficulty",
+        "subject_id",
+        "subject_name"
+      ],
+      "id": "int(raw id), retaining captured negative, zero and positive values",
+      "type_content_analysis": "raw or empty string",
+      "difficulty": "int(raw or 1), so null and zero become 1 while negative values remain",
+      "subject_id": "raw nullable q.subject_id",
+      "subject_name": "raw truthy s.name or 默认科目 for null join, orphan subject or empty name",
+      "subject_lock": "locked subjects and their questions are not filtered from this export",
+      "options_answer_tags": {
+        "database_null": "[]",
+        "empty_or_whitespace": "[]",
+        "malformed": "[]",
+        "json_null_literal": "null",
+        "array": "parsed array unchanged",
+        "object": "parsed object unchanged",
+        "scalar": "parsed string, number or boolean unchanged"
+      },
+      "meta": "scope=question_center plus raw meta.subject_id only when the first value is truthy",
+      "count": "exact questions array length",
+      "pagination": "none"
+    },
+    "modern_envelope": {
+      "handler_fields": [
+        "status",
+        "meta",
+        "count",
+        "questions"
+      ],
+      "after_request_fields": [
+        "request_id",
+        "message",
+        "data"
+      ],
+      "status": "success",
+      "message": "empty string",
+      "data": "exact mirror object containing meta, count and questions"
+    },
+    "legacy_envelope": {
+      "handler_fields": [
+        "meta",
+        "count",
+        "questions"
+      ],
+      "after_request_fields": [
+        "request_id"
+      ],
+      "absent_fields": [
+        "status",
+        "message",
+        "data"
+      ]
+    },
+    "failure_semantics": {
+      "database_failure_accept_any": "500 fixed generic Chinese HTML page after one attempted export SELECT",
+      "database_failure_accept_json": "500 generic safe JSON envelope after one attempted export SELECT",
+      "safe_json": {
+        "status": "error",
+        "message": "An unexpected server error occurred.",
+        "payload": null,
+        "status_code": 500
+      }
+    },
+    "cross_cutting_effects": {
+      "catalog_fact_writes": 0,
+      "request_ddl": 0,
+      "questions_fingerprint": "all fifteen columns remain unchanged in every case",
+      "subjects_fingerprint": "all nine columns remain unchanged in every case",
+      "identity_fingerprint": "all seven captured identity and role columns remain unchanged in every case",
+      "session_activity": "Session-only requests can update users.last_active before authorization, export execution or injected failure"
+    }
+  },
+  "caller_contract": {
+    "active": {
+      "page": "app/modules/admin/templates/admin/subjects/questions.html",
+      "include_line": 15,
+      "script": "app/modules/admin/templates/admin/subjects/_question_scripts.html",
+      "call_lines": [
+        751,
+        752
+      ],
+      "route_id": "712a47789f1d"
+    },
+    "dormant": {
+      "script": "app/modules/admin/templates/admin/subjects/_scripts.html",
+      "call_lines": [
+        752,
+        753
+      ],
+      "inbound_include_count": 0,
+      "route_id": "4a33d8e15da5"
+    },
+    "matrix_limitation": "both frozen matrix rows report not_found_static_scan; the complete archived template scan above is the stronger caller evidence"
+  },
+  "engine_boundary": {
+    "golden_engine": "temporary SQLite created by the archived Flask testing configuration",
+    "portable_claims": [
+      "handler source and complete archived app provenance",
+      "first-value and Python-truthiness parsing",
+      "SQL construction and q.id ASC ordering",
+      "projection, safe_load, envelope and Accept negotiation",
+      "auth query stops and Session activity in the captured engine"
+    ],
+    "engine_specific_claims": [
+      "blank raw text compared with an integer column returns no SQLite rows",
+      "invalid raw text compared with an integer column returns no SQLite rows",
+      "Unicode Nd raw text compared with an integer column returns no SQLite rows",
+      "2147483648 compared with the SQLite integer column returns no rows"
+    ],
+    "required_phase4h_evidence": "run the operations-owned raw HTTP boundary against PostgreSQL 16.14 and 18.4 before either route can migrate, freezing invalid, Unicode and out-of-int4 behavior without relying on SQLite coercion"
+  },
+  "invariants": [
+    "Catalog returns one immutable raw ten-field snapshot per matching LEFT JOIN row and never applies HTTP defaults or JSON parsing.",
+    "The absent or typed subject filter executes one fixed SELECT, uses at most one bind and preserves strict q.id ASC order.",
+    "Raw nullable and malformed values remain intact across the catalog boundary so operations can reproduce legacy projections without data loss.",
+    "Operations owns both routes, authentication, query-string parsing, Session activity, defaults, envelopes and safe errors.",
+    "The modern and legacy success envelopes remain intentionally distinct and no approved difference erases that distinction.",
+    "The active frozen Web caller targets the legacy path; the modern caller template is dormant and is not represented as active traffic.",
+    "SQLite raw-text integer comparison observations are explicitly engine-scoped and cannot authorize PostgreSQL route migration.",
+    "All 44 cases preserve complete questions, subjects and identity fact fingerprints and attempt no catalog DML or DDL.",
+    "Both HTTP operations remain pending with zero production cutover and no route or OpenAPI migration delta."
+  ],
+  "acceptance": {
+    "catalog_raw_snapshot": "implemented",
+    "http_operation_migration": "deferred_to_phase4h",
+    "production_cutover": false,
+    "required_before_phase4h_route_migration": [
+      "approve and machine-check the operations-to-catalog application API dependency",
+      "implement the complete shared global gate, role checks and users.last_active behavior",
+      "parse the first raw subject_id into Optional<Integer> with explicitly reviewed invalid, Unicode and out-of-range behavior",
+      "add PostgreSQL 16.14 and 18.4 HTTP compatibility evidence for raw parameter boundaries",
+      "project all legacy defaults and safe_load categories outside catalog",
+      "preserve the distinct modern after_request envelope and legacy minimal envelope",
+      "match Accept-dependent safe failures and effective rate-limit behavior",
+      "verify the active legacy template journey and decide explicitly whether the dormant modern caller should be revived",
+      "add route delta and OpenAPI migration only after all 44 golden cases pass"
+    ],
+    "next_phase4a_work": "none; Phase 4A is closed after bounded catalog-candidate disposition and full isolated acceptance; begin the Phase 4B personal-bank category read"
+  }
+}

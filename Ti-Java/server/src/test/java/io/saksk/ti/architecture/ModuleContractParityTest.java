@@ -137,7 +137,7 @@ class ModuleContractParityTest {
     void latestPublicShapesExactlyMatchImplementedOperationsAndKeepTheRestDeferred() throws Exception {
         assertThat(shapeStatusRoot.path("migrated_route_count").asInt()).isEqualTo(11);
         assertThat(shapeStatusRoot.path("implemented_route_backed_operation_count").asInt()).isEqualTo(11);
-        assertThat(shapeStatusRoot.path("implemented_public_application_method_count").asInt()).isEqualTo(18);
+        assertThat(shapeStatusRoot.path("implemented_public_application_method_count").asInt()).isEqualTo(19);
         assertThat(shapeStatusRoot.path("event_payload_shape_status").asString())
                 .isEqualTo("deferred_to_phase5");
 
@@ -1080,7 +1080,8 @@ class ModuleContractParityTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(metadataApi.path("lifecycle").asString())
-                .isEqualTo("catalog_question_metadata_count_detail_and_summary_query_boundary");
+                .isEqualTo(
+                        "catalog_question_metadata_count_detail_summary_and_export_query_boundary");
         assertThat(metadataApi.path("direct_http_operation").asBoolean()).isFalse();
         assertThat(strings(metadataApi.path("deferred_http_route_ids")))
                 .containsExactlyInAnyOrder("e4cbe4d6bcc8", "3a346cb29186");
@@ -1102,13 +1103,21 @@ class ModuleContractParityTest {
                 .isEqualTo("operations");
         assertThat(metadataApi.path("deferred_question_list_phase").asString())
                 .isEqualTo("4H");
-        assertThat(metadataApi.path("methods")).hasSize(4);
+        assertThat(strings(metadataApi.path("deferred_question_export_http_route_ids")))
+                .containsExactlyInAnyOrder("4a33d8e15da5", "712a47789f1d");
+        assertThat(metadataApi.path("deferred_question_export_http_owner").asString())
+                .isEqualTo("operations");
+        assertThat(metadataApi.path("deferred_question_export_phase").asString())
+                .isEqualTo("4H");
+        assertThat(metadataApi.path("methods")).hasSize(5);
         assertThat(strings(catalogShape.path("implemented_types")))
                 .contains(
                         "QuestionTypeCatalogView",
                         "QuestionCatalogCountQuery",
                         "QuestionCatalogListQuery",
                         "QuestionCatalogSummaryView",
+                        "QuestionExportQuery",
+                        "QuestionExportRecordView",
                         "QuestionSubjectAssignmentScope",
                         "QuestionCatalogRecordView");
         Class<?> api = Class.forName(
@@ -1129,6 +1138,11 @@ class ModuleContractParityTest {
                         Class.forName("io.saksk.ti.catalog.api.QuestionCatalogListQuery"))
                         .getGenericReturnType().getTypeName())
                 .isEqualTo("java.util.List<io.saksk.ti.catalog.api.QuestionCatalogSummaryView>");
+        assertThat(api.getDeclaredMethod(
+                        "listQuestionExportRecords",
+                        Class.forName("io.saksk.ti.catalog.api.QuestionExportQuery"))
+                        .getGenericReturnType().getTypeName())
+                .isEqualTo("java.util.List<io.saksk.ti.catalog.api.QuestionExportRecordView>");
         Class<?> view = Class.forName("io.saksk.ti.catalog.api.QuestionTypeCatalogView");
         assertThat(view.isRecord()).isTrue();
         assertThat(Arrays.stream(view.getRecordComponents()).map(component -> component.getName()))
@@ -1717,7 +1731,7 @@ class ModuleContractParityTest {
                 .isEqualTo("operations");
         assertThat(metadataApi.path("deferred_question_list_phase").asString())
                 .isEqualTo("4H");
-        assertThat(metadataApi.path("methods")).hasSize(4);
+        assertThat(metadataApi.path("methods")).hasSize(5);
 
         JsonNode applicationContract = requiredObject(contract, "catalog_application_contract");
         assertThat(requiredText(applicationContract, "method"))
@@ -2329,7 +2343,7 @@ class ModuleContractParityTest {
                 .isEqualTo("operations");
         assertThat(metadataApi.path("deferred_question_detail_phase").asString())
                 .isEqualTo("4H");
-        assertThat(metadataApi.path("methods")).hasSize(4);
+        assertThat(metadataApi.path("methods")).hasSize(5);
 
         Class<?> api = Class.forName("io.saksk.ti.catalog.api.QuestionMetadataApplicationApi");
         assertThat(api.getDeclaredMethod("findQuestionById", long.class)

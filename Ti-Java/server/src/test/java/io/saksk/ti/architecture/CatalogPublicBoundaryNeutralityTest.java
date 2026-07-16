@@ -6,6 +6,8 @@ import io.saksk.ti.catalog.api.QuestionCatalogCountQuery;
 import io.saksk.ti.catalog.api.QuestionCatalogListQuery;
 import io.saksk.ti.catalog.api.QuestionCatalogRecordView;
 import io.saksk.ti.catalog.api.QuestionCatalogSummaryView;
+import io.saksk.ti.catalog.api.QuestionExportQuery;
+import io.saksk.ti.catalog.api.QuestionExportRecordView;
 import io.saksk.ti.catalog.api.QuestionSubjectAssignmentScope;
 import io.saksk.ti.catalog.api.PublicBankCardView;
 import io.saksk.ti.catalog.api.PublicBankSource;
@@ -136,6 +138,33 @@ class CatalogPublicBoundaryNeutralityTest {
                         "username",
                         "createdByUsername",
                         "owner");
+    }
+
+    @Test
+    void questionExportBoundaryExposesOnlyTypedCatalogCriteriaAndRawFacts() {
+        assertThat(Arrays.stream(QuestionExportQuery.class.getRecordComponents())
+                        .map(RecordComponent::getName))
+                .containsExactly("subjectId")
+                .doesNotContain("rawSubjectId", "request", "meta", "status", "userId");
+        assertThat(Arrays.stream(QuestionExportRecordView.class.getRecordComponents())
+                        .map(RecordComponent::getName))
+                .containsExactly(
+                        "id",
+                        "subjectId",
+                        "subjectName",
+                        "type",
+                        "content",
+                        "optionsRaw",
+                        "answerRaw",
+                        "analysis",
+                        "difficulty",
+                        "tagsRaw")
+                .doesNotContain(
+                        "defaultSubjectName",
+                        "portableOptions",
+                        "projectedAnswer",
+                        "message",
+                        "requestId");
     }
 
     @Test

@@ -5,9 +5,12 @@ import io.saksk.ti.catalog.api.QuestionCatalogCountQuery;
 import io.saksk.ti.catalog.api.QuestionCatalogListQuery;
 import io.saksk.ti.catalog.api.QuestionCatalogRecordView;
 import io.saksk.ti.catalog.api.QuestionCatalogSummaryView;
+import io.saksk.ti.catalog.api.QuestionExportQuery;
+import io.saksk.ti.catalog.api.QuestionExportRecordView;
 import io.saksk.ti.catalog.api.QuestionTypeCatalogView;
 import io.saksk.ti.catalog.application.port.QuestionCountQueryPort;
 import io.saksk.ti.catalog.application.port.QuestionDetailQueryPort;
+import io.saksk.ti.catalog.application.port.QuestionExportQueryPort;
 import io.saksk.ti.catalog.application.port.QuestionSummaryQueryPort;
 import io.saksk.ti.catalog.application.port.QuestionTypeQueryPort;
 import java.util.List;
@@ -23,17 +26,20 @@ class QuestionMetadataQueryService implements QuestionMetadataApplicationApi {
     private final QuestionCountQueryPort questionCounts;
     private final QuestionDetailQueryPort questionDetails;
     private final QuestionSummaryQueryPort questionSummaries;
+    private final QuestionExportQueryPort questionExports;
 
     QuestionMetadataQueryService(
             QuestionTypeQueryPort questionTypes,
             QuestionCountQueryPort questionCounts,
             QuestionDetailQueryPort questionDetails,
-            QuestionSummaryQueryPort questionSummaries
+            QuestionSummaryQueryPort questionSummaries,
+            QuestionExportQueryPort questionExports
     ) {
         this.questionTypes = questionTypes;
         this.questionCounts = questionCounts;
         this.questionDetails = questionDetails;
         this.questionSummaries = questionSummaries;
+        this.questionExports = questionExports;
     }
 
     @Override
@@ -70,5 +76,12 @@ class QuestionMetadataQueryService implements QuestionMetadataApplicationApi {
     public List<QuestionCatalogSummaryView> listQuestionSummaries(QuestionCatalogListQuery query) {
         Objects.requireNonNull(query, "query");
         return List.copyOf(questionSummaries.listQuestionSummaries(query));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<QuestionExportRecordView> listQuestionExportRecords(QuestionExportQuery query) {
+        Objects.requireNonNull(query, "query");
+        return List.copyOf(questionExports.listQuestionExportRecords(query));
     }
 }

@@ -40,8 +40,11 @@
   从未创建。目标健康前来源不会重启；目标健康后来源容器移除但三个来源卷保留。
 - 失败路径先停止/移除目标容器，只删除本轮刚创建且名称已门禁的目标卷，再恢复来源数据面
   和来源 API；若清理报告为失败，应保持人工接管，禁止手工同时启动两边 API。
-- 审练只连接本机 Unix Docker socket。设置 `DOCKER_HOST`、`DOCKER_CONTEXT`、TLS 远端变量
-  或使用 TCP/SSH endpoint 都会在任何停服动作前失败。
+- 审练只连接真实存在的本机 Unix Docker socket。`DOCKER_HOST` 仅可显式固定到该 socket，
+  且 Docker 实际解析出的 endpoint 必须逐字一致；`DOCKER_CONTEXT`、TLS 变量、TCP/SSH
+  endpoint、相对路径、不存在路径或普通文件都会在任何停服动作前失败。调用方未提供
+  `DOCKER_HOST` 时，预检会在验证当前 endpoint 后立即把同一冻结子进程环境固定到它，
+  后续命令不再依赖可变的 `currentContext`。
 
 ## 准备一次运行
 

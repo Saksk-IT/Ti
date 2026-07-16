@@ -1,0 +1,799 @@
+{
+  "contract_id": "ti.phase4a.catalog-candidate-disposition",
+  "schema_version": 1,
+  "status": "disposition_audit_complete",
+  "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "integrity_policy": {
+    "self_hash": null,
+    "reason": "The document is validated structurally and against immutable source hashes; no recursive self-hash is used."
+  },
+  "source_contracts": {
+    "frozen_route_matrix": {
+      "source": "../02-route-parity-matrix.csv",
+      "sha256": "fdbdfedf3dd70cd09778b2a7072711d103eee8461d0e7dd356d797006fc92c74"
+    },
+    "phase1_openapi": {
+      "source": "../../../contracts/openapi.json",
+      "sha256": "41e0ad0e1eca3ba8731242dea7a638cd348069aad1331382f5f1bf6d4a08d64e"
+    },
+    "frozen_data_ownership": {
+      "source": "../03-data-ownership.csv",
+      "sha256": "3f9cb0650c523593d7037dc24df902dbccdb3885f261f530e1725a9dc7a31748"
+    },
+    "effective_route_status": {
+      "source": "effective-route-parity-status.json",
+      "sha256": "1c4645354be4d4a778ec7d68d2957130718e826648e420dd3d1fec7bea5339d4"
+    },
+    "effective_data_ownership": {
+      "source": "effective-data-ownership-status.json",
+      "sha256": "455b45b6c838c2308b3018e690bd444b503d3493b6290fa3e5083c4f84e01127"
+    },
+    "application_api_shape": {
+      "source": "application-api-shape-status.json",
+      "sha256": "74782a5a26b1f32f85869cafa931acf4a7c7e1398b3b2e9dab0d0ded93c448ca"
+    },
+    "module_boundaries": {
+      "source": "../phase1/module-contracts.json",
+      "sha256": "3b0044b32876de9d467ae06040d7fffcd8d07ed1bea44a74cbbe43227f91c41a"
+    },
+    "question_export_query_plan_evidence": {
+      "source": "question-export-query-plan-evidence.json",
+      "sha256": "96f04c1018f5c3a826c48972c2273096f8507e45900616ca6c842ee0318ae541"
+    }
+  },
+  "coverage_rule": {
+    "description": "Expand every method in frozen matrix order. Select every effective-pending operation whose frozen target_module is catalog, then union it with the exact reviewed catalog-adjacent registry below. The union is the complete scope of this bounded audit; it does not claim review of every one of the other pending operations.",
+    "matrix_method_split": "split the methods cell on comma, trim, preserve listed method order",
+    "effective_pending_rule": "operation key is absent from effective.migrated_operations and its frozen migration_status remains pending",
+    "operation_key": [
+      "route_id",
+      "method",
+      "path"
+    ],
+    "baseline_catalog_pending_operation_count": 8,
+    "reviewed_catalog_adjacent_operation_count": 16,
+    "expected_union_operation_count": 24,
+    "scope_exclusion": "No statement in this contract classifies the remaining effective-pending operations outside this exact union."
+  },
+  "reviewed_registry": {
+    "internal_capability_complete_http_deferred_4h": [
+      {
+        "contract": "question-type-read-contract.json",
+        "sha256": "e947e7ce7755d594f79e56f35f334765893d11724bc27e7a52982d9077f8517a",
+        "route_ids": ["e4cbe4d6bcc8", "3a346cb29186"],
+        "java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi",
+        "method": "QuestionTypeCatalogView questionTypes()"
+      },
+      {
+        "contract": "question-detail-read-contract.json",
+        "sha256": "cc0151548085786ffacfe3c9aa8834799954244dcfea3b07c18da13c76236266",
+        "route_ids": ["8cb323acac12", "d7d727b88aea"],
+        "java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi",
+        "method": "Optional<QuestionCatalogRecordView> findQuestionById(long questionId)"
+      },
+      {
+        "contract": "question-list-read-contract.json",
+        "sha256": "3eac95e1a2e247262280ab7b15a9a04b3c0c40f600ca26016862565ae5088935",
+        "route_ids": ["1437bc4bf41b", "6cd7322bea3b"],
+        "java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi",
+        "method": "List<QuestionCatalogSummaryView> listQuestionSummaries(QuestionCatalogListQuery query)"
+      },
+      {
+        "contract": "subject-inventory-read-contract.json",
+        "sha256": "f2deb8ae1a8a5dffba7f321897e2e01a366bdc6e649d8d415dc79c93786c08da",
+        "route_ids": ["6e1a36f5052d"],
+        "java_api": "io.saksk.ti.catalog.api.SubjectMetadataApplicationApi",
+        "method": "List<SubjectInventorySummaryView> listSubjectInventorySummaries()"
+      },
+      {
+        "contract": "subject-context-read-contract.json",
+        "sha256": "ff98d6542c89d9bb6d53dce310c9319c7d8a5d155fee282ec84ac12e47c646eb",
+        "route_ids": ["52ad8f899d66", "5548b24849ed"],
+        "java_api": "io.saksk.ti.catalog.api.SubjectMetadataApplicationApi",
+        "method": "Optional<SubjectContextView> findSubjectById(long subjectId)"
+      },
+      {
+        "contract": "question-export-read-contract.json",
+        "sha256": "4bb990dad2235ec15f865e643b90a7654a52ddda6f26046c0f471169ce56fe6c",
+        "route_ids": ["4a33d8e15da5", "712a47789f1d"],
+        "java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi",
+        "method": "List<QuestionExportRecordView> listQuestionExportRecords(QuestionExportQuery query)"
+      }
+    ],
+    "additional_reviewed_operations": [
+      "85ef5dd3d649|GET|/admin/api/questions/export/excel",
+      "494bec0d49fe|GET|/admin/api/questions/export/word",
+      "e86553f044c7|GET|/admin/api/questions/export_package",
+      "031479f5ae97|GET|/admin/questions/export_package",
+      "b4ae9918923b|GET|/admin/api/questions/duplicate-check/results"
+    ]
+  },
+  "legacy_truth_evidence": {
+    "count_routes": {
+      "operation_keys": [
+        "c618fb5f9f97|GET|/api/questions/count",
+        "bb21e7730d04|GET|/api/quiz/questions/count"
+      ],
+      "resource_sources": [
+        {
+          "resource": {"kind": "redis_key", "name": "cache:quiz:questions_count:<sha256(params)>", "owner": "catalog"},
+          "assertions": [
+            {"source": "app/modules/quiz/routes/api_components/core_counts.py:48-85", "contains": ["make_cache_key(", "quiz:questions_count", "redis_get_json(cache_key)"]},
+            {"source": "app/core/utils/cache_utils.py:26-31", "contains": ["hashlib.sha256", "return f\"{_CACHE_KEY_PREFIX}{feature}:{digest}\""]}
+          ]
+        },
+        {
+          "resource": {"kind": "redis_key", "name": "LIMITS:*", "owner": "operations"},
+          "assertions": [
+            {"source": "app/modules/quiz/routes/api_components/core_counts.py:34-36", "contains": ["@limiter.limit(\"60 per minute;600 per hour\")"]}
+          ]
+        },
+        {
+          "resource": {"kind": "db_kv_namespace", "name": "question_tags_v1", "owner": "learning"},
+          "assertions": [
+            {"source": "app/modules/quiz/services/question_tags_service.py:19-19", "contains": ["TAG_STORE_KEY = \"question_tags_v1\""]},
+            {"source": "app/modules/quiz/services/question_tags_service.py:435-465", "contains": ["_ensure_migrated(conn, user_id)", "ensure_tag_tables(conn)"]}
+          ]
+        },
+        {
+          "resource": {"kind": "redis_key", "name": "cache:ver:quiz:questions", "owner": "catalog"},
+          "assertions": [
+            {"source": "app/modules/quiz/routes/api_components/core_counts.py:66-79", "contains": ["get_questions_version()"]},
+            {"source": "app/core/utils/cache_utils.py:63-64", "contains": ["return get_version(\"quiz:questions\", default=1)"]}
+          ]
+        },
+        {
+          "resource": {"kind": "redis_key", "name": "cache:ver:quiz:subjects", "owner": "catalog"},
+          "assertions": [
+            {"source": "app/modules/quiz/routes/api_components/core_counts.py:66-79", "contains": ["get_subjects_version()"]},
+            {"source": "app/core/utils/cache_utils.py:71-72", "contains": ["return get_version(\"quiz:subjects\", default=1)"]}
+          ]
+        },
+        {
+          "resource": {"kind": "redis_key", "name": "cache:ver:quiz:u:<user_id>", "owner": "learning"},
+          "assertions": [
+            {"source": "app/modules/quiz/routes/api_components/core_counts.py:66-79", "contains": ["get_user_quiz_version(int(uid))"]},
+            {"source": "app/core/utils/cache_utils.py:79-80", "contains": ["return get_version(f\"quiz:u:{int(user_id)}\", default=1)"]}
+          ]
+        }
+      ],
+      "side_effect_sources": [
+        {
+          "effect": "writes or refreshes the shared count response cache",
+          "assertions": [
+            {"source": "app/modules/quiz/routes/api_components/core_counts.py:48-57", "contains": ["redis_set_json(cache_key, payload", "ttl_seconds=cache_ttl"]}
+          ]
+        },
+        {
+          "effect": "writes endpoint limiter counters",
+          "assertions": [
+            {"source": "app/modules/quiz/routes/api_components/core_counts.py:34-36", "contains": ["@limiter.limit(\"60 per minute;600 per hour\")"]}
+          ]
+        },
+        {
+          "effect": "tag reads can issue CREATE TABLE/INDEX and lazily copy legacy tags into user_question_tag_items",
+          "assertions": [
+            {"source": "app/modules/quiz/routes/api_components/core_counts.py:131-151", "contains": ["get_question_ids_by_tag(db.session.connection(), uid, tag)"]},
+            {"source": "app/modules/quiz/services/question_tags_service.py:96-132", "contains": ["_load_store_from_user_progress", "_ensure_user_tag_exists", "_uq_set_question_tags"]},
+            {"source": "app/core/utils/user_question_tags.py:45-65", "contains": ["CREATE TABLE IF NOT EXISTS user_question_tag_items", "CREATE INDEX IF NOT EXISTS"]}
+          ]
+        },
+        {
+          "effect": "Session identity synchronization may update users.last_active",
+          "assertions": [
+            {"source": "app/__init__.py:629-751", "contains": ["if session.get('user_id') and not has_jwt_token", "user.last_active = sa_func.now()", "_db.session.commit()"]}
+          ]
+        },
+        {
+          "effect": "GET may write missing cache version defaults because get_questions_version, get_subjects_version, and get_user_quiz_version delegate to redis_set_text(..., nx=True)",
+          "assertions": [
+            {"source": "app/modules/quiz/routes/api_components/core_counts.py:66-79", "contains": ["get_user_quiz_version", "get_questions_version", "get_subjects_version"]},
+            {"source": "app/core/utils/cache_utils.py:39-80", "contains": ["redis_set_text(k, str(int(default)), nx=True)", "get_questions_version", "get_subjects_version", "get_user_quiz_version"]}
+          ]
+        }
+      ]
+    },
+    "search_route": {
+      "operation_key": "4289bc27d0bb|GET|/search",
+      "side_effect_sources": [
+        {
+          "effect": "public-bank search can synchronously refresh public_bank_plaza_metrics with DELETE/INSERT/commit when stale",
+          "assertions": [
+            {"source": "app/modules/main/routes/pages_components/search.py:202-228", "contains": ["plaza_query_service.list_public_banks("]},
+            {"source": "app/modules/user_bank/services/plaza_query_service.py:20-30", "contains": ["ensure_plaza_metrics()"]},
+            {"source": "app/modules/user_bank/services/plaza_metrics_service.py:116-145", "contains": ["DELETE FROM public_bank_plaza_metrics", "INSERT INTO public_bank_plaza_metrics", "db.session.commit()"]}
+          ]
+        },
+        {
+          "effect": "refresh acquires and releases the Redis metrics lock",
+          "assertions": [
+            {"source": "app/modules/user_bank/services/plaza_metrics_service.py:21-21", "contains": ["METRICS_REFRESH_LOCK_KEY = 'plaza:metrics:refresh:lock'"]},
+            {"source": "app/modules/user_bank/services/plaza_metrics_service.py:65-89", "contains": ["conn.set(", "conn.delete(METRICS_REFRESH_LOCK_KEY)"]}
+          ]
+        },
+        {
+          "effect": "the page composes independently paginated question, bank and forum results",
+          "assertions": [
+            {"source": "app/modules/main/routes/pages_components/search.py:10-269", "contains": ["QUESTION_PER_PAGE", "BANK_PER_PAGE", "FORUM_PER_PAGE", "plaza_query_service.list_public_banks(", "post_service.get_posts("]}
+          ]
+        },
+        {
+          "effect": "a Session request may update users.last_active",
+          "assertions": [
+            {"source": "app/__init__.py:629-751", "contains": ["if session.get('user_id') and not has_jwt_token", "user.last_active = sa_func.now()", "_db.session.commit()"]}
+          ]
+        }
+      ]
+    },
+    "public_bank_page_routes": [
+      {
+        "operation_key": "6a8ad5f06651|GET|/public/banks",
+        "side_effect_sources": [
+          {
+            "effect": "route body only renders a template with Session-derived page context",
+            "assertions": [
+              {"source": "app/modules/user_bank/routes/public.py:34-37", "contains": ["return render_template('user_bank/public/plaza.html', **_page_context())"]},
+              {"source": "app/modules/user_bank/routes/public.py:346-353", "contains": ["uid = session.get('user_id')", "'username': session.get('username')"]}
+            ]
+          },
+          {
+            "effect": "client JavaScript performs the catalog API reads",
+            "assertions": [
+              {"source": "static/js/public_bank_plaza.js:336-372", "contains": ["/api/public/banks/summary", "/api/public/banks/boards", "/api/public/banks/hot", "/api/public/banks/list"]}
+            ]
+          },
+          {
+            "effect": "Session request may update users.last_active",
+            "assertions": [
+              {"source": "app/__init__.py:629-751", "contains": ["if session.get('user_id') and not has_jwt_token", "user.last_active = sa_func.now()", "_db.session.commit()"]}
+            ]
+          }
+        ]
+      },
+      {
+        "operation_key": "cda75caa95a8|GET|/public/banks/card/<source_type>/<int:bank_id>",
+        "side_effect_sources": [
+          {
+            "effect": "route body normalizes source_type and renders a template with Session-derived context",
+            "assertions": [
+              {"source": "app/modules/user_bank/routes/public.py:40-49", "contains": ["safe_source_type = 'system'", "render_template(", "**_page_context()"]},
+              {"source": "app/modules/user_bank/routes/public.py:346-353", "contains": ["uid = session.get('user_id')", "'username': session.get('username')"]}
+            ]
+          },
+          {
+            "effect": "client JavaScript calls the route-backed public-bank detail API",
+            "assertions": [
+              {"source": "static/js/public_bank_card_detail.js:28-37", "contains": ["/api/public/banks/card/", "return fetch(url"]}
+            ]
+          },
+          {
+            "effect": "Session request may update users.last_active",
+            "assertions": [
+              {"source": "app/__init__.py:629-751", "contains": ["if session.get('user_id') and not has_jwt_token", "user.last_active = sa_func.now()", "_db.session.commit()"]}
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "expected_effective_status": {
+    "expanded_operation_count": 611,
+    "migrated": 11,
+    "pending": 600,
+    "production_cutover": 0,
+    "effective_resource_count": 159,
+    "resources_with_exactly_one_owner": 159
+  },
+  "disposition_summary": {
+    "reviewed_operation_count": 24,
+    "phase4h_operations": 16,
+    "phase4c_operations": 4,
+    "phase6_operations": 4,
+    "implement_now_operations": 0,
+    "additional_safe_catalog_only_reads_found": 0,
+    "production_cutover_true_operations": 0
+  },
+  "operations": [
+    {
+      "route_id": "1437bc4bf41b",
+      "method": "GET",
+      "path": "/admin/api/questions",
+      "source_order": {"baseline_rule_ordinal": 52, "expanded_operation_ordinal": 52, "method_ordinal_within_rule": 1, "endpoint": "admin.admin_api.get_filtered_questions", "source": "app/modules/admin/routes/api_components/questions.py:56", "registration_source": "app/modules/admin/routes/api_components/questions.py:56", "registration_kind": "blueprint_decorator"},
+      "caller_evidence": [{"surface": "web", "source": "app/modules/admin/templates/admin/subjects/_scripts.html:82", "kind": "fetch_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}],
+      "read_relations": [{"kind": "table", "name": "questions", "owner": "catalog"}, {"kind": "table", "name": "users", "owner": "identity"}],
+      "non_table_resources": [],
+      "side_effects": ["route body performs no question write", "a Session request may update identity-owned users.last_active before the handler"],
+      "baseline_owner": "operations",
+      "reviewed_target_owner": "operations",
+      "disposition_phase": "4H",
+      "disposition_class": "catalog_fact_complete_http_adapter_deferred",
+      "reason": "Catalog already supplies the raw nine-column summary and exact filters/order, but operations must still own admin authorization, username projection, raw query parsing, PQF projection and HTTP failure behavior.",
+      "required_existing_catalog_apis": [{"java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi", "method": "List<QuestionCatalogSummaryView> listQuestionSummaries(QuestionCatalogListQuery query)", "coverage": "catalog_fact_complete"}],
+      "single_owner_catalog_candidate": false,
+      "migration_status": "pending",
+      "production_cutover": false
+    },
+    {
+      "route_id": "8cb323acac12",
+      "method": "GET",
+      "path": "/admin/api/questions/<int:question_id>",
+      "source_order": {"baseline_rule_ordinal": 55, "expanded_operation_ordinal": 55, "method_ordinal_within_rule": 1, "endpoint": "admin.admin_api.get_single_question", "source": "app/modules/admin/routes/api_components/questions.py:128", "registration_source": "app/modules/admin/routes/api_components/questions.py:128", "registration_kind": "blueprint_decorator"},
+      "caller_evidence": [{"surface": "web", "source": "app/modules/admin/templates/admin/subjects/_scripts.html:447", "kind": "fetch_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}, {"surface": "web", "source": "app/modules/admin/templates/admin/subjects/duplicate_check.html:585", "kind": "fetch_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}],
+      "read_relations": [{"kind": "table", "name": "questions", "owner": "catalog"}],
+      "non_table_resources": [{"kind": "redis_key", "name": "LIMITS:*", "owner": "operations"}],
+      "side_effects": ["route body performs no question write", "effective per-route limiting writes library-managed runtime counters", "a Session request may update identity-owned users.last_active"],
+      "baseline_owner": "operations",
+      "reviewed_target_owner": "operations",
+      "disposition_phase": "4H",
+      "disposition_class": "catalog_fact_complete_http_adapter_deferred",
+      "reason": "The fifteen-column raw fact lookup is implemented, while operations still owns role checks, Werkzeug integer boundaries, modern projection, safe errors and rate limiting.",
+      "required_existing_catalog_apis": [{"java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi", "method": "Optional<QuestionCatalogRecordView> findQuestionById(long questionId)", "coverage": "catalog_fact_complete"}],
+      "single_owner_catalog_candidate": false,
+      "migration_status": "pending",
+      "production_cutover": false
+    },
+    {
+      "route_id": "b4ae9918923b",
+      "method": "GET",
+      "path": "/admin/api/questions/duplicate-check/results",
+      "source_order": {"baseline_rule_ordinal": 61, "expanded_operation_ordinal": 61, "method_ordinal_within_rule": 1, "endpoint": "admin.admin_api.get_duplicate_check_results", "source": "app/modules/admin/routes/api_components/questions.py:652", "registration_source": "app/modules/admin/routes/api_components/questions.py:652", "registration_kind": "blueprint_decorator"},
+      "caller_evidence": [{"surface": "web", "source": "app/modules/admin/templates/admin/subjects/duplicate_check.html:399", "kind": "dynamic_fetch_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9", "matrix_static_scan": "not_found_static_scan"}],
+      "read_relations": [{"kind": "table", "name": "duplicate_check_records", "owner": "operations"}, {"kind": "table", "name": "subjects", "owner": "catalog"}, {"kind": "table", "name": "questions", "owner": "catalog"}],
+      "non_table_resources": [],
+      "side_effects": ["force_new=true or missing history performs an O(n^2) similarity scan", "the GET conditionally inserts and commits an operations-owned duplicate_check_records row", "a Session request may update identity-owned users.last_active"],
+      "baseline_owner": "operations",
+      "reviewed_target_owner": "operations",
+      "disposition_phase": "4H",
+      "disposition_class": "side_effecting_get_deferred",
+      "reason": "This is not a safe read: normal GET control flow can compute a new snapshot and commit a duplicate-check record, crossing operations and catalog ownership.",
+      "required_existing_catalog_apis": [{"java_api": "io.saksk.ti.catalog.api.SubjectMetadataApplicationApi", "method": "Optional<SubjectContextView> findSubjectById(long subjectId)", "coverage": "partial_prerequisite"}, {"java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi", "method": "List<QuestionExportRecordView> listQuestionExportRecords(QuestionExportQuery query)", "coverage": "partial_prerequisite_not_a_duplicate_check_contract"}],
+      "single_owner_catalog_candidate": false,
+      "migration_status": "pending",
+      "production_cutover": false
+    },
+    {
+      "route_id": "4a33d8e15da5",
+      "method": "GET",
+      "path": "/admin/api/questions/export",
+      "source_order": {"baseline_rule_ordinal": 63, "expanded_operation_ordinal": 63, "method_ordinal_within_rule": 1, "endpoint": "admin.admin_api.export_questions_api", "source": "app/modules/admin/routes/api_components/questions_io.py:158", "registration_source": "app/modules/admin/routes/api_components/questions_io.py:158", "registration_kind": "blueprint_decorator"},
+      "caller_evidence": [{"surface": "web", "source": "app/modules/admin/templates/admin/subjects/_scripts.html:752", "kind": "dynamic_window_open", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9", "matrix_static_scan": "not_found_static_scan"}, {"surface": "web", "source": "app/modules/admin/templates/admin/subjects/_scripts.html:753", "kind": "window_open_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}],
+      "read_relations": [{"kind": "table", "name": "questions", "owner": "catalog"}, {"kind": "table", "name": "subjects", "owner": "catalog"}],
+      "non_table_resources": [],
+      "side_effects": ["route body performs no catalog write or request-time DDL", "a Session request may update identity-owned users.last_active"],
+      "baseline_owner": "operations",
+      "reviewed_target_owner": "operations",
+      "disposition_phase": "4H",
+      "disposition_class": "catalog_fact_complete_http_adapter_deferred",
+      "reason": "The exact raw JSON-export snapshot input exists; operations still owns authorization, raw subject_id coercion, defaults, safe_load and the modern response envelope.",
+      "required_existing_catalog_apis": [{"java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi", "method": "List<QuestionExportRecordView> listQuestionExportRecords(QuestionExportQuery query)", "coverage": "catalog_fact_complete"}],
+      "single_owner_catalog_candidate": false,
+      "migration_status": "pending",
+      "production_cutover": false
+    },
+    {
+      "route_id": "85ef5dd3d649",
+      "method": "GET",
+      "path": "/admin/api/questions/export/excel",
+      "source_order": {"baseline_rule_ordinal": 64, "expanded_operation_ordinal": 64, "method_ordinal_within_rule": 1, "endpoint": "admin.admin_api.export_questions_to_excel", "source": "app/modules/admin/routes/api_components/questions_io.py:372", "registration_source": "app/modules/admin/routes/api_components/questions_io.py:372", "registration_kind": "blueprint_decorator"},
+      "caller_evidence": [{"surface": "web", "source": "app/modules/admin/templates/admin/subjects/_question_scripts.html:755", "kind": "dynamic_window_open", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9", "matrix_static_scan": "not_found_static_scan"}, {"surface": "web", "source": "app/modules/admin/templates/admin/subjects/_scripts.html:756", "kind": "dynamic_window_open", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}],
+      "read_relations": [{"kind": "table", "name": "questions", "owner": "catalog"}, {"kind": "table", "name": "subjects", "owner": "catalog"}],
+      "non_table_resources": [],
+      "side_effects": ["generates an XLSX attachment in memory through pandas and openpyxl", "route body performs no catalog write", "a Session request may update identity-owned users.last_active"],
+      "baseline_owner": "operations",
+      "reviewed_target_owner": "operations",
+      "disposition_phase": "4H",
+      "disposition_class": "file_generating_adapter_deferred",
+      "reason": "File-format generation, legacy type projection, filename rules and error envelopes are operations concerns; the existing catalog export API is only a partial input because this route also filters by type.",
+      "required_existing_catalog_apis": [{"java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi", "method": "List<QuestionExportRecordView> listQuestionExportRecords(QuestionExportQuery query)", "coverage": "partial_prerequisite_missing_type_filter"}],
+      "single_owner_catalog_candidate": false,
+      "migration_status": "pending",
+      "production_cutover": false
+    },
+    {
+      "route_id": "494bec0d49fe",
+      "method": "GET",
+      "path": "/admin/api/questions/export/word",
+      "source_order": {"baseline_rule_ordinal": 65, "expanded_operation_ordinal": 65, "method_ordinal_within_rule": 1, "endpoint": "admin.admin_api.export_questions_to_word", "source": "app/modules/admin/routes/api_components/questions_io.py:514", "registration_source": "app/modules/admin/routes/api_components/questions_io.py:514", "registration_kind": "blueprint_decorator"},
+      "caller_evidence": [{"surface": "web", "source": "app/modules/admin/templates/admin/subjects/_question_scripts.html:764", "kind": "dynamic_window_open", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9", "matrix_static_scan": "not_found_static_scan"}, {"surface": "web", "source": "app/modules/admin/templates/admin/subjects/_scripts.html:765", "kind": "dynamic_window_open", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}],
+      "read_relations": [{"kind": "table", "name": "questions", "owner": "catalog"}, {"kind": "table", "name": "subjects", "owner": "catalog"}],
+      "non_table_resources": [],
+      "side_effects": ["generates a DOCX attachment in memory through python-docx", "route body performs no catalog write", "a Session request may update identity-owned users.last_active"],
+      "baseline_owner": "operations",
+      "reviewed_target_owner": "operations",
+      "disposition_phase": "4H",
+      "disposition_class": "file_generating_adapter_deferred",
+      "reason": "Document layout, type projection, attachment naming and dependency/error behavior belong to operations; the existing catalog export API lacks this route's type filter.",
+      "required_existing_catalog_apis": [{"java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi", "method": "List<QuestionExportRecordView> listQuestionExportRecords(QuestionExportQuery query)", "coverage": "partial_prerequisite_missing_type_filter"}],
+      "single_owner_catalog_candidate": false,
+      "migration_status": "pending",
+      "production_cutover": false
+    },
+    {
+      "route_id": "e86553f044c7",
+      "method": "GET",
+      "path": "/admin/api/questions/export_package",
+      "source_order": {"baseline_rule_ordinal": 66, "expanded_operation_ordinal": 66, "method_ordinal_within_rule": 1, "endpoint": "admin.admin_api.export_questions_package", "source": "app/modules/admin/routes/api_components/questions_io.py:714", "registration_source": "app/modules/admin/routes/api_components/questions_io.py:714", "registration_kind": "blueprint_decorator"},
+      "caller_evidence": [{"surface": "web", "source": "app/modules/admin/templates/admin/subjects/_scripts.html:774", "kind": "dynamic_window_open", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9", "matrix_static_scan": "not_found_static_scan"}],
+      "read_relations": [{"kind": "table", "name": "questions", "owner": "catalog"}, {"kind": "table", "name": "subjects", "owner": "catalog"}],
+      "non_table_resources": [{"kind": "object_prefix", "name": "uploads/question_images/", "owner": "catalog"}],
+      "side_effects": ["reads catalog-owned image files and generates an in-memory ZIP plus data.json", "missing or unreadable images are skipped", "route body performs no catalog write", "a Session request may update identity-owned users.last_active"],
+      "baseline_owner": "operations",
+      "reviewed_target_owner": "operations",
+      "disposition_phase": "4H",
+      "disposition_class": "file_generating_adapter_deferred",
+      "reason": "Package assembly crosses relational and durable-file resources and needs type filtering, image-path projection, ZIP safety and attachment semantics not present in the raw JSON API.",
+      "required_existing_catalog_apis": [{"java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi", "method": "List<QuestionExportRecordView> listQuestionExportRecords(QuestionExportQuery query)", "coverage": "partial_prerequisite_missing_type_filter_and_image_path"}],
+      "single_owner_catalog_candidate": false,
+      "migration_status": "pending",
+      "production_cutover": false
+    },
+    {
+      "route_id": "6e1a36f5052d",
+      "method": "GET",
+      "path": "/admin/api/subjects",
+      "source_order": {"baseline_rule_ordinal": 95, "expanded_operation_ordinal": 95, "method_ordinal_within_rule": 1, "endpoint": "admin.admin_api.api_get_subjects", "source": "app/modules/admin/routes/api_components/subjects.py:28", "registration_source": "app/modules/admin/routes/api_components/subjects.py:28", "registration_kind": "blueprint_decorator"},
+      "caller_evidence": [{"surface": "web", "source": "app/modules/admin/templates/admin/subjects/_question_scripts.html:650", "kind": "fetch_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}, {"surface": "web", "source": "app/modules/admin/templates/admin/subjects/_scripts.html:651", "kind": "fetch_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}],
+      "read_relations": [{"kind": "table", "name": "subjects", "owner": "catalog"}, {"kind": "table", "name": "questions", "owner": "catalog"}],
+      "non_table_resources": [],
+      "side_effects": ["route body performs no subject or question write", "a Session request may update identity-owned users.last_active before authorization"],
+      "baseline_owner": "operations",
+      "reviewed_target_owner": "operations",
+      "disposition_phase": "4H",
+      "disposition_class": "catalog_fact_complete_http_adapter_deferred",
+      "reason": "Catalog has the exact four-field inventory and count query, while operations still owns the global admin gate, role policy, naked-array projection and safe failures.",
+      "required_existing_catalog_apis": [{"java_api": "io.saksk.ti.catalog.api.SubjectMetadataApplicationApi", "method": "List<SubjectInventorySummaryView> listSubjectInventorySummaries()", "coverage": "catalog_fact_complete"}],
+      "single_owner_catalog_candidate": false,
+      "migration_status": "pending",
+      "production_cutover": false
+    },
+    {
+      "route_id": "e4cbe4d6bcc8",
+      "method": "GET",
+      "path": "/admin/api/types",
+      "source_order": {"baseline_rule_ordinal": 104, "expanded_operation_ordinal": 105, "method_ordinal_within_rule": 1, "endpoint": "admin.admin_api.get_question_types", "source": "app/modules/admin/routes/api_components/questions.py:36", "registration_source": "app/modules/admin/routes/api_components/questions.py:36", "registration_kind": "blueprint_decorator"},
+      "caller_evidence": [{"surface": "web", "source": "app/modules/admin/templates/admin/subjects/_scripts.html:69", "kind": "fetch_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}],
+      "read_relations": [{"kind": "table", "name": "questions", "owner": "catalog"}],
+      "non_table_resources": [],
+      "side_effects": ["route body performs no catalog write", "a Session request may update identity-owned users.last_active"],
+      "baseline_owner": "operations",
+      "reviewed_target_owner": "operations",
+      "disposition_phase": "4H",
+      "disposition_class": "catalog_fact_complete_http_adapter_deferred",
+      "reason": "Raw distinct type facts exist, but operations must reproduce this route's stricter role policy, Python Unicode whitespace behavior, Chinese mapping and 500 policy.",
+      "required_existing_catalog_apis": [{"java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi", "method": "QuestionTypeCatalogView questionTypes()", "coverage": "catalog_fact_complete"}],
+      "single_owner_catalog_candidate": false,
+      "migration_status": "pending",
+      "production_cutover": false
+    },
+    {
+      "route_id": "6cd7322bea3b",
+      "method": "GET",
+      "path": "/admin/questions",
+      "source_order": {"baseline_rule_ordinal": 151, "expanded_operation_ordinal": 152, "method_ordinal_within_rule": 1, "endpoint": "admin.admin_api_legacy.get_filtered_questions", "source": "app/modules/admin/routes/api_legacy.py:45", "registration_source": "app/modules/admin/routes/api_legacy.py:45", "registration_kind": "blueprint_decorator"},
+      "caller_evidence": [{"surface": "web", "source": "app/modules/admin/templates/admin/subjects/_question_scripts.html:81", "kind": "fetch_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}],
+      "read_relations": [{"kind": "table", "name": "questions", "owner": "catalog"}, {"kind": "table", "name": "users", "owner": "identity"}],
+      "non_table_resources": [],
+      "side_effects": ["route body performs no question write", "legacy before_request logs use", "a Session request may update identity-owned users.last_active"],
+      "baseline_owner": "operations",
+      "reviewed_target_owner": "operations",
+      "disposition_phase": "4H",
+      "disposition_class": "catalog_fact_complete_http_adapter_deferred",
+      "reason": "Catalog summary facts are implemented; operations must preserve the legacy type conversion, username join, raw field projection, auth and error behavior.",
+      "required_existing_catalog_apis": [{"java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi", "method": "List<QuestionCatalogSummaryView> listQuestionSummaries(QuestionCatalogListQuery query)", "coverage": "catalog_fact_complete"}],
+      "single_owner_catalog_candidate": false,
+      "migration_status": "pending",
+      "production_cutover": false
+    },
+    {
+      "route_id": "d7d727b88aea",
+      "method": "GET",
+      "path": "/admin/questions/<int:question_id>",
+      "source_order": {"baseline_rule_ordinal": 154, "expanded_operation_ordinal": 155, "method_ordinal_within_rule": 1, "endpoint": "admin.admin_api_legacy.get_single_question", "source": "app/modules/admin/routes/api_legacy.py:165", "registration_source": "app/modules/admin/routes/api_legacy.py:165", "registration_kind": "blueprint_decorator"},
+      "caller_evidence": [{"surface": "web", "source": "app/modules/admin/templates/admin/subjects/_question_scripts.html:446", "kind": "fetch_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}],
+      "read_relations": [{"kind": "table", "name": "questions", "owner": "catalog"}],
+      "non_table_resources": [{"kind": "redis_key", "name": "LIMITS:*", "owner": "operations"}],
+      "side_effects": ["route body performs no question write", "effective per-route limiting writes library-managed runtime counters", "legacy before_request logs use", "a Session request may update identity-owned users.last_active"],
+      "baseline_owner": "operations",
+      "reviewed_target_owner": "operations",
+      "disposition_phase": "4H",
+      "disposition_class": "catalog_fact_complete_http_adapter_deferred",
+      "reason": "The same raw lookup feeds a different legacy projection; operations owns that projection, path/auth semantics, safe errors and rate limiting.",
+      "required_existing_catalog_apis": [{"java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi", "method": "Optional<QuestionCatalogRecordView> findQuestionById(long questionId)", "coverage": "catalog_fact_complete"}],
+      "single_owner_catalog_candidate": false,
+      "migration_status": "pending",
+      "production_cutover": false
+    },
+    {
+      "route_id": "712a47789f1d",
+      "method": "GET",
+      "path": "/admin/questions/export",
+      "source_order": {"baseline_rule_ordinal": 159, "expanded_operation_ordinal": 160, "method_ordinal_within_rule": 1, "endpoint": "admin.admin_api_legacy.export_questions_api", "source": "app/modules/admin/routes/api_legacy.py:851", "registration_source": "app/modules/admin/routes/api_legacy.py:851", "registration_kind": "blueprint_decorator"},
+      "caller_evidence": [{"surface": "web", "source": "app/modules/admin/templates/admin/subjects/_question_scripts.html:751", "kind": "dynamic_window_open", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9", "matrix_static_scan": "not_found_static_scan"}, {"surface": "web", "source": "app/modules/admin/templates/admin/subjects/_question_scripts.html:752", "kind": "window_open_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}],
+      "read_relations": [{"kind": "table", "name": "questions", "owner": "catalog"}, {"kind": "table", "name": "subjects", "owner": "catalog"}],
+      "non_table_resources": [],
+      "side_effects": ["route body performs no catalog write or request-time DDL", "legacy before_request logs use", "a Session request may update identity-owned users.last_active"],
+      "baseline_owner": "operations",
+      "reviewed_target_owner": "operations",
+      "disposition_phase": "4H",
+      "disposition_class": "catalog_fact_complete_http_adapter_deferred",
+      "reason": "The raw snapshot input is implemented, but operations must preserve the legacy minimal envelope, coercion, auth and failure differences.",
+      "required_existing_catalog_apis": [{"java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi", "method": "List<QuestionExportRecordView> listQuestionExportRecords(QuestionExportQuery query)", "coverage": "catalog_fact_complete"}],
+      "single_owner_catalog_candidate": false,
+      "migration_status": "pending",
+      "production_cutover": false
+    },
+    {
+      "route_id": "031479f5ae97",
+      "method": "GET",
+      "path": "/admin/questions/export_package",
+      "source_order": {"baseline_rule_ordinal": 160, "expanded_operation_ordinal": 161, "method_ordinal_within_rule": 1, "endpoint": "admin.admin_api_legacy.export_questions_package", "source": "app/modules/admin/routes/api_legacy.py:896", "registration_source": "app/modules/admin/routes/api_legacy.py:896", "registration_kind": "blueprint_decorator"},
+      "caller_evidence": [{"surface": "web", "source": "app/modules/admin/templates/admin/subjects/_question_scripts.html:773", "kind": "dynamic_window_open", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9", "matrix_static_scan": "not_found_static_scan"}],
+      "read_relations": [{"kind": "table", "name": "questions", "owner": "catalog"}, {"kind": "table", "name": "subjects", "owner": "catalog"}],
+      "non_table_resources": [{"kind": "object_prefix", "name": "uploads/question_images/", "owner": "catalog"}],
+      "side_effects": ["reads catalog-owned image files and generates an in-memory ZIP plus data.json", "missing or unreadable images are skipped", "legacy before_request logs use", "route body performs no catalog write", "a Session request may update identity-owned users.last_active"],
+      "baseline_owner": "operations",
+      "reviewed_target_owner": "operations",
+      "disposition_phase": "4H",
+      "disposition_class": "file_generating_adapter_deferred",
+      "reason": "The legacy package has its own type conversion and envelope behavior and needs image-path/file safety beyond the existing raw export API.",
+      "required_existing_catalog_apis": [{"java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi", "method": "List<QuestionExportRecordView> listQuestionExportRecords(QuestionExportQuery query)", "coverage": "partial_prerequisite_missing_type_filter_and_image_path"}],
+      "single_owner_catalog_candidate": false,
+      "migration_status": "pending",
+      "production_cutover": false
+    },
+    {
+      "route_id": "52ad8f899d66",
+      "method": "GET",
+      "path": "/admin/subjects/<int:subject_id>/questions",
+      "source_order": {"baseline_rule_ordinal": 175, "expanded_operation_ordinal": 176, "method_ordinal_within_rule": 1, "endpoint": "admin.admin_pages.admin_questions_page", "source": "app/modules/admin/routes/pages.py:81", "registration_source": "app/modules/admin/routes/pages.py:81", "registration_kind": "blueprint_decorator"},
+      "caller_evidence": [{"surface": "web", "source": "app/modules/admin/templates/admin/subjects/duplicate_check.html:347", "kind": "navigation_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}, {"surface": "web", "source": "app/modules/admin/templates/admin/subjects/legacy.html:268", "kind": "dynamic_navigation_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}],
+      "read_relations": [{"kind": "table", "name": "subjects", "owner": "catalog"}],
+      "non_table_resources": [],
+      "side_effects": ["route body reads no questions and performs no catalog write", "a Session request may update identity-owned users.last_active before authorization or rendering"],
+      "baseline_owner": "operations",
+      "reviewed_target_owner": "operations",
+      "disposition_phase": "4H",
+      "disposition_class": "catalog_fact_complete_http_adapter_deferred",
+      "reason": "The exact subject id/name context lookup exists; operations still owns the Web admin gate, 404, template rendering and HTML/JSON failure semantics.",
+      "required_existing_catalog_apis": [{"java_api": "io.saksk.ti.catalog.api.SubjectMetadataApplicationApi", "method": "Optional<SubjectContextView> findSubjectById(long subjectId)", "coverage": "catalog_fact_complete"}],
+      "single_owner_catalog_candidate": false,
+      "migration_status": "pending",
+      "production_cutover": false
+    },
+    {
+      "route_id": "5548b24849ed",
+      "method": "GET",
+      "path": "/admin/subjects/<int:subject_id>/questions/duplicate-check",
+      "source_order": {"baseline_rule_ordinal": 176, "expanded_operation_ordinal": 177, "method_ordinal_within_rule": 1, "endpoint": "admin.admin_pages.admin_duplicate_check_page", "source": "app/modules/admin/routes/pages.py:93", "registration_source": "app/modules/admin/routes/pages.py:93", "registration_kind": "blueprint_decorator"},
+      "caller_evidence": [{"surface": "web", "source": "app/modules/admin/templates/admin/subjects/_question_scripts.html:788", "kind": "dynamic_navigation_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9", "matrix_static_scan": "not_found_static_scan"}, {"surface": "web", "source": "app/modules/admin/templates/admin/subjects/_scripts.html:789", "kind": "dynamic_navigation_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}],
+      "read_relations": [{"kind": "table", "name": "subjects", "owner": "catalog"}],
+      "non_table_resources": [],
+      "side_effects": ["page route body reads no questions and performs no catalog write", "the rendered page later calls the side-effecting duplicate-check results GET", "a Session request may update identity-owned users.last_active"],
+      "baseline_owner": "operations",
+      "reviewed_target_owner": "operations",
+      "disposition_phase": "4H",
+      "disposition_class": "catalog_fact_complete_http_adapter_deferred",
+      "reason": "The subject context is complete, but the page is an operations-owned admin shell and leads to a conditionally writing duplicate-check use case.",
+      "required_existing_catalog_apis": [{"java_api": "io.saksk.ti.catalog.api.SubjectMetadataApplicationApi", "method": "Optional<SubjectContextView> findSubjectById(long subjectId)", "coverage": "catalog_fact_complete"}],
+      "single_owner_catalog_candidate": false,
+      "migration_status": "pending",
+      "production_cutover": false
+    },
+    {
+      "route_id": "3a346cb29186",
+      "method": "GET",
+      "path": "/admin/types",
+      "source_order": {"baseline_rule_ordinal": 177, "expanded_operation_ordinal": 178, "method_ordinal_within_rule": 1, "endpoint": "admin.admin_api_legacy.get_question_types", "source": "app/modules/admin/routes/api_legacy.py:27", "registration_source": "app/modules/admin/routes/api_legacy.py:27", "registration_kind": "blueprint_decorator"},
+      "caller_evidence": [{"surface": "web", "source": "app/modules/admin/templates/admin/subjects/_question_scripts.html:68", "kind": "fetch_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}],
+      "read_relations": [{"kind": "table", "name": "questions", "owner": "catalog"}],
+      "non_table_resources": [],
+      "side_effects": ["route body performs no catalog write", "legacy before_request logs use", "a Session request may update identity-owned users.last_active"],
+      "baseline_owner": "operations",
+      "reviewed_target_owner": "operations",
+      "disposition_phase": "4H",
+      "disposition_class": "catalog_fact_complete_http_adapter_deferred",
+      "reason": "Raw type facts exist, while operations must preserve the legacy role policy, truthiness-before-mapping behavior and catch-to-empty failure semantics.",
+      "required_existing_catalog_apis": [{"java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi", "method": "QuestionTypeCatalogView questionTypes()", "coverage": "catalog_fact_complete"}],
+      "single_owner_catalog_candidate": false,
+      "migration_status": "pending",
+      "production_cutover": false
+    },
+    {
+      "route_id": "c618fb5f9f97",
+      "method": "GET",
+      "path": "/api/questions/count",
+      "source_order": {"baseline_rule_ordinal": 307, "expanded_operation_ordinal": 314, "method_ordinal_within_rule": 1, "endpoint": "api_questions_count", "source": "app/modules/quiz/routes/api_components/core_counts.py:34", "registration_source": "app/modules/quiz/__init__.py::add_url_rule", "registration_kind": "application_compatibility_alias"},
+      "caller_evidence": [{"surface": "web", "source": "app/modules/main/templates/main/favorites/favorites_detail.html:317", "kind": "fetch_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}, {"surface": "web", "source": "app/modules/main/templates/main/mistakes/mistakes_detail.html:319", "kind": "fetch_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}, {"surface": "web", "source": "app/modules/main/templates/main/subject/subject_detail/body_end/_01_core.html:732", "kind": "fetch_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}, {"surface": "web", "source": "app/modules/main/templates/main/subject/subject_detail/body_end/_07_export.html:67", "kind": "fetch_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}],
+      "read_relations": [{"kind": "table", "name": "questions", "owner": "catalog"}, {"kind": "table", "name": "subjects", "owner": "catalog"}, {"kind": "table", "name": "favorites", "owner": "learning"}, {"kind": "table", "name": "mistakes", "owner": "learning"}, {"kind": "table", "name": "user_progress", "owner": "learning"}, {"kind": "table", "name": "user_question_tag_items", "owner": "learning"}, {"kind": "table", "name": "users", "owner": "identity"}, {"kind": "table", "name": "user_subjects", "owner": "identity"}],
+      "non_table_resources": [{"kind": "redis_key", "name": "cache:quiz:questions_count:<sha256(params)>", "owner": "catalog"}, {"kind": "redis_key", "name": "LIMITS:*", "owner": "operations"}, {"kind": "db_kv_namespace", "name": "question_tags_v1", "owner": "learning"}, {"kind": "redis_key", "name": "cache:ver:quiz:questions", "owner": "catalog"}, {"kind": "redis_key", "name": "cache:ver:quiz:subjects", "owner": "catalog"}, {"kind": "redis_key", "name": "cache:ver:quiz:u:<user_id>", "owner": "learning"}],
+      "side_effects": ["writes or refreshes the shared count response cache", "writes endpoint limiter counters", "tag reads can issue CREATE TABLE/INDEX and lazily copy legacy tags into user_question_tag_items", "Session identity synchronization may update users.last_active", "GET may write missing cache version defaults because get_questions_version, get_subjects_version, and get_user_quiz_version delegate to redis_set_text(..., nx=True)"],
+      "baseline_owner": "catalog",
+      "reviewed_target_owner": "learning",
+      "disposition_phase": "4C",
+      "disposition_class": "cross_owner_count_composition_deferred",
+      "reason": "The complete use case combines catalog visibility with learning-owned favorites, mistakes and private tags plus identity policy, cache and conditional authentication.",
+      "required_existing_catalog_apis": [{"java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi", "method": "long countQuestions(QuestionCatalogCountQuery query)", "coverage": "catalog_count_primitive_complete"}],
+      "single_owner_catalog_candidate": false,
+      "migration_status": "pending",
+      "production_cutover": false
+    },
+    {
+      "route_id": "bb21e7730d04",
+      "method": "GET",
+      "path": "/api/quiz/questions/count",
+      "source_order": {"baseline_rule_ordinal": 323, "expanded_operation_ordinal": 333, "method_ordinal_within_rule": 1, "endpoint": "quiz_api.api_questions_count", "source": "app/modules/quiz/routes/api_components/core_counts.py:34", "registration_source": "app/modules/quiz/routes/api_components/core_counts.py:34", "registration_kind": "blueprint_decorator"},
+      "caller_evidence": [{"surface": "miniprogram", "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts:323", "kind": "request", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}],
+      "read_relations": [{"kind": "table", "name": "questions", "owner": "catalog"}, {"kind": "table", "name": "subjects", "owner": "catalog"}, {"kind": "table", "name": "favorites", "owner": "learning"}, {"kind": "table", "name": "mistakes", "owner": "learning"}, {"kind": "table", "name": "user_progress", "owner": "learning"}, {"kind": "table", "name": "user_question_tag_items", "owner": "learning"}, {"kind": "table", "name": "users", "owner": "identity"}, {"kind": "table", "name": "user_subjects", "owner": "identity"}],
+      "non_table_resources": [{"kind": "redis_key", "name": "cache:quiz:questions_count:<sha256(params)>", "owner": "catalog"}, {"kind": "redis_key", "name": "LIMITS:*", "owner": "operations"}, {"kind": "db_kv_namespace", "name": "question_tags_v1", "owner": "learning"}, {"kind": "redis_key", "name": "cache:ver:quiz:questions", "owner": "catalog"}, {"kind": "redis_key", "name": "cache:ver:quiz:subjects", "owner": "catalog"}, {"kind": "redis_key", "name": "cache:ver:quiz:u:<user_id>", "owner": "learning"}],
+      "side_effects": ["writes or refreshes the shared count response cache", "writes endpoint limiter counters", "tag reads can issue CREATE TABLE/INDEX and lazily copy legacy tags into user_question_tag_items", "Session identity synchronization may update users.last_active", "GET may write missing cache version defaults because get_questions_version, get_subjects_version, and get_user_quiz_version delegate to redis_set_text(..., nx=True)"],
+      "baseline_owner": "catalog",
+      "reviewed_target_owner": "learning",
+      "disposition_phase": "4C",
+      "disposition_class": "cross_owner_count_composition_deferred",
+      "reason": "This alias shares the cross-owner count handler but has distinct authentication and caller semantics, so both routes must migrate together in learning.",
+      "required_existing_catalog_apis": [{"java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi", "method": "long countQuestions(QuestionCatalogCountQuery query)", "coverage": "catalog_count_primitive_complete"}],
+      "single_owner_catalog_candidate": false,
+      "migration_status": "pending",
+      "production_cutover": false
+    },
+    {
+      "route_id": "6d9f94eaf417",
+      "method": "GET",
+      "path": "/api/subjects/<int:subject_id>/export",
+      "source_order": {"baseline_rule_ordinal": 352, "expanded_operation_ordinal": 364, "method_ordinal_within_rule": 1, "endpoint": "main.main_api.export_subject_questions", "source": "app/modules/main/routes/api.py:22", "registration_source": "app/modules/main/routes/api.py:22", "registration_kind": "blueprint_decorator"},
+      "caller_evidence": [{"surface": "miniprogram", "source": "miniprogram-1/miniprogram/pages/subject-detail-v2/subject-detail-v2.ts:1697", "kind": "wx_downloadFile", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}],
+      "read_relations": [{"kind": "table", "name": "subjects", "owner": "catalog"}, {"kind": "table", "name": "questions", "owner": "catalog"}, {"kind": "table", "name": "favorites", "owner": "learning"}, {"kind": "table", "name": "mistakes", "owner": "learning"}, {"kind": "table", "name": "user_progress", "owner": "learning"}, {"kind": "table", "name": "user_question_tag_items", "owner": "learning"}],
+      "non_table_resources": [{"kind": "db_kv_namespace", "name": "question_tags_v1", "owner": "learning"}, {"kind": "object_prefix", "name": "uploads/question_images/", "owner": "catalog"}, {"kind": "redis_key", "name": "LIMITS:*", "owner": "operations"}],
+      "side_effects": ["scope favorites or mistakes and private-tag filters read learning facts", "tag reads can execute lazy tag DDL/DML", "reads uploaded images and code-owned Word/PDF assets then generates an attachment in memory", "writes limiter counters", "Session identity synchronization may update users.last_active"],
+      "baseline_owner": "catalog",
+      "reviewed_target_owner": "learning",
+      "disposition_phase": "4C",
+      "disposition_class": "cross_owner_learning_export_deferred",
+      "reason": "The export is a learning composition because user favorites, mistakes and private tags select catalog questions; its file generators and two HTTP methods must migrate as one use case after explicit tag migration.",
+      "required_existing_catalog_apis": [{"java_api": "io.saksk.ti.catalog.api.SubjectMetadataApplicationApi", "method": "Optional<SubjectContextView> findSubjectById(long subjectId)", "coverage": "partial_prerequisite"}, {"java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi", "method": "List<QuestionExportRecordView> listQuestionExportRecords(QuestionExportQuery query)", "coverage": "partial_prerequisite_missing_image_path_and_learning_selection"}],
+      "single_owner_catalog_candidate": false,
+      "migration_status": "pending",
+      "production_cutover": false
+    },
+    {
+      "route_id": "6d9f94eaf417",
+      "method": "POST",
+      "path": "/api/subjects/<int:subject_id>/export",
+      "source_order": {"baseline_rule_ordinal": 352, "expanded_operation_ordinal": 365, "method_ordinal_within_rule": 2, "endpoint": "main.main_api.export_subject_questions", "source": "app/modules/main/routes/api.py:22", "registration_source": "app/modules/main/routes/api.py:22", "registration_kind": "blueprint_decorator"},
+      "caller_evidence": [{"surface": "web", "source": "app/modules/main/templates/main/subject/subject_detail/body_end/_07_export.html:104", "kind": "fetch_post", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}],
+      "read_relations": [{"kind": "table", "name": "subjects", "owner": "catalog"}, {"kind": "table", "name": "questions", "owner": "catalog"}, {"kind": "table", "name": "favorites", "owner": "learning"}, {"kind": "table", "name": "mistakes", "owner": "learning"}, {"kind": "table", "name": "user_progress", "owner": "learning"}, {"kind": "table", "name": "user_question_tag_items", "owner": "learning"}],
+      "non_table_resources": [{"kind": "db_kv_namespace", "name": "question_tags_v1", "owner": "learning"}, {"kind": "object_prefix", "name": "uploads/question_images/", "owner": "catalog"}, {"kind": "redis_key", "name": "LIMITS:*", "owner": "operations"}],
+      "side_effects": ["shares the learning selection and file-generation effects of the GET variant", "POST additionally passes the global write-CSRF/XHR rule", "tag reads can execute lazy tag DDL/DML", "writes limiter counters", "Session identity synchronization may update users.last_active"],
+      "baseline_owner": "catalog",
+      "reviewed_target_owner": "learning",
+      "disposition_phase": "4C",
+      "disposition_class": "cross_owner_learning_export_deferred",
+      "reason": "The POST is the same cross-owner export use case with a distinct request body and CSRF contract; it cannot be split from the GET route or implemented in catalog.",
+      "required_existing_catalog_apis": [{"java_api": "io.saksk.ti.catalog.api.SubjectMetadataApplicationApi", "method": "Optional<SubjectContextView> findSubjectById(long subjectId)", "coverage": "partial_prerequisite"}, {"java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi", "method": "List<QuestionExportRecordView> listQuestionExportRecords(QuestionExportQuery query)", "coverage": "partial_prerequisite_missing_image_path_and_learning_selection"}],
+      "single_owner_catalog_candidate": false,
+      "migration_status": "pending",
+      "production_cutover": false
+    },
+    {
+      "route_id": "6a8ad5f06651",
+      "method": "GET",
+      "path": "/public/banks",
+      "source_order": {"baseline_rule_ordinal": 493, "expanded_operation_ordinal": 509, "method_ordinal_within_rule": 1, "endpoint": "public_bank.bank_plaza", "source": "app/modules/user_bank/routes/public.py:34", "registration_source": "app/modules/user_bank/routes/public.py:34", "registration_kind": "blueprint_decorator"},
+      "caller_evidence": [{"surface": "web", "source": "app/modules/main/templates/main/hub/hub.html:1089", "kind": "navigation_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}, {"surface": "web", "source": "app/modules/main/templates/main/shared/_app_sidebar.html:556", "kind": "navigation_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}, {"surface": "tests", "source": "tests/test_smoke_api.py:56", "kind": "test_client_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}],
+      "read_relations": [],
+      "non_table_resources": [],
+      "side_effects": ["route body only renders a template with Session-derived page context", "client JavaScript performs the catalog API reads", "Session request may update users.last_active"],
+      "baseline_owner": "catalog",
+      "reviewed_target_owner": "web",
+      "disposition_phase": "6",
+      "disposition_class": "web_page_shell_deferred",
+      "reason": "This operation is a server-rendered page shell, not a catalog application read; its data APIs are already separate and its template/static migration belongs to Phase 6.",
+      "required_existing_catalog_apis": [{"java_api": "io.saksk.ti.catalog.api.PublicBankCatalogApi", "method": "PublicBankPageView search(PublicBankSearchQuery query, Optional<AuthenticatedCatalogViewer> viewer)", "coverage": "existing_route_backed_api"}, {"java_api": "io.saksk.ti.catalog.api.PublicBankCatalogApi", "method": "List<PublicBankBoardView> boards(PublicBankFilter filter)", "coverage": "existing_route_backed_api"}, {"java_api": "io.saksk.ti.catalog.api.PublicBankCatalogApi", "method": "List<PublicBankCardView> hot(PublicBankHotQuery query, Optional<AuthenticatedCatalogViewer> viewer)", "coverage": "existing_route_backed_api"}, {"java_api": "io.saksk.ti.catalog.api.PublicBankCatalogApi", "method": "PublicBankSummaryView summary(PublicBankFilter filter)", "coverage": "existing_route_backed_api"}],
+      "single_owner_catalog_candidate": false,
+      "migration_status": "pending",
+      "production_cutover": false
+    },
+    {
+      "route_id": "cda75caa95a8",
+      "method": "GET",
+      "path": "/public/banks/card/<source_type>/<int:bank_id>",
+      "source_order": {"baseline_rule_ordinal": 494, "expanded_operation_ordinal": 510, "method_ordinal_within_rule": 1, "endpoint": "public_bank.public_bank_card_page", "source": "app/modules/user_bank/routes/public.py:40", "registration_source": "app/modules/user_bank/routes/public.py:40", "registration_kind": "blueprint_decorator"},
+      "caller_evidence": [{"surface": "web", "source": "app/modules/main/templates/main/search/search.html:1410", "kind": "dynamic_navigation_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9", "matrix_static_scan": "not_found_static_scan"}, {"surface": "legacy_service", "source": "app/modules/user_bank/services/plaza_query_service.py:891", "kind": "generated_detail_url", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}],
+      "read_relations": [],
+      "non_table_resources": [],
+      "side_effects": ["route body normalizes source_type and renders a template with Session-derived context", "client JavaScript calls the route-backed public-bank detail API", "Session request may update users.last_active"],
+      "baseline_owner": "catalog",
+      "reviewed_target_owner": "web",
+      "disposition_phase": "6",
+      "disposition_class": "web_page_shell_deferred",
+      "reason": "The operation is a detail page shell whose catalog data comes from an existing API; rendering and static bootstrap belong to Phase 6.",
+      "required_existing_catalog_apis": [{"java_api": "io.saksk.ti.catalog.api.PublicBankCatalogApi", "method": "Optional<PublicBankDetailView> detail(PublicBankRef ref, Optional<AuthenticatedCatalogViewer> viewer)", "coverage": "existing_route_backed_api"}],
+      "single_owner_catalog_candidate": false,
+      "migration_status": "pending",
+      "production_cutover": false
+    },
+    {
+      "route_id": "4289bc27d0bb",
+      "method": "GET",
+      "path": "/search",
+      "source_order": {"baseline_rule_ordinal": 502, "expanded_operation_ordinal": 518, "method_ordinal_within_rule": 1, "endpoint": "main.main_pages.search_page", "source": "app/modules/main/routes/pages_components/search.py:16", "registration_source": "app/modules/main/routes/pages_components/search.py:16", "registration_kind": "blueprint_decorator"},
+      "caller_evidence": [{"surface": "web", "source": "app/modules/main/templates/main/hub/hub.html:1220", "kind": "navigation_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}, {"surface": "web", "source": "app/modules/main/templates/main/shared/app_shell.html:865", "kind": "form_action_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}],
+      "read_relations": [{"kind": "table", "name": "questions", "owner": "catalog"}, {"kind": "table", "name": "subjects", "owner": "catalog"}, {"kind": "table", "name": "favorites", "owner": "learning"}, {"kind": "table", "name": "mistakes", "owner": "learning"}, {"kind": "table", "name": "users", "owner": "identity"}, {"kind": "table", "name": "user_subjects", "owner": "identity"}, {"kind": "table", "name": "public_bank_plaza_metrics", "owner": "catalog"}, {"kind": "table", "name": "plaza_boards", "owner": "catalog"}, {"kind": "table", "name": "user_question_banks", "owner": "personalbank"}, {"kind": "table", "name": "public_bank_users", "owner": "personalbank"}, {"kind": "table", "name": "bank_share_records", "owner": "personalbank"}, {"kind": "table", "name": "bank_shares", "owner": "personalbank"}, {"kind": "table", "name": "user_bank_answers", "owner": "learning"}, {"kind": "table", "name": "user_answers", "owner": "learning"}, {"kind": "table", "name": "public_subject_users", "owner": "catalog"}, {"kind": "table", "name": "forum_posts", "owner": "community"}, {"kind": "table", "name": "forum_boards", "owner": "community"}, {"kind": "table", "name": "forum_likes", "owner": "community"}, {"kind": "table", "name": "forum_favorites", "owner": "community"}],
+      "read_relation_evidence": [{"resource": "bank_shares", "source": "app/modules/user_bank/services/plaza_query_service.py:812-826", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}, {"resource": "user_answers", "source": "app/modules/user_bank/services/plaza_metrics_service.py:189-195", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}],
+      "non_table_resources": [{"kind": "redis_key", "name": "plaza:metrics:refresh:lock", "owner": "catalog"}],
+      "side_effects": ["public-bank search can synchronously refresh public_bank_plaza_metrics with DELETE/INSERT/commit when stale", "refresh acquires and releases the Redis metrics lock", "the page composes independently paginated question, bank and forum results", "a Session request may update users.last_active"],
+      "baseline_owner": "catalog",
+      "reviewed_target_owner": "web",
+      "disposition_phase": "6",
+      "disposition_class": "cross_owner_web_composition_deferred",
+      "reason": "Global search composes catalog, identity, learning, personalbank and community reads, includes legacy refresh writes, and renders a page; it is not a single-owner catalog candidate.",
+      "required_existing_catalog_apis": [{"java_api": "io.saksk.ti.catalog.api.PublicBankCatalogApi", "method": "PublicBankPageView search(PublicBankSearchQuery query, Optional<AuthenticatedCatalogViewer> viewer)", "coverage": "partial_public_bank_tab_only"}, {"java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi", "method": "QuestionTypeCatalogView questionTypes()", "coverage": "partial_filter_metadata_only"}],
+      "single_owner_catalog_candidate": false,
+      "migration_status": "pending",
+      "production_cutover": false
+    },
+    {
+      "route_id": "1267362d8beb",
+      "method": "GET",
+      "path": "/subjects/<int:subject_id>",
+      "source_order": {"baseline_rule_ordinal": 512, "expanded_operation_ordinal": 528, "method_ordinal_within_rule": 1, "endpoint": "main.main_pages.subject_detail_page", "source": "app/modules/main/routes/pages_components/subjects.py:13", "registration_source": "app/modules/main/routes/pages_components/subjects.py:13", "registration_kind": "blueprint_decorator"},
+      "caller_evidence": [{"surface": "web", "source": "app/modules/main/templates/main/bank/public_bank.html:191", "kind": "navigation_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}, {"surface": "web", "source": "static/js/public_bank_plaza_v2.js:135", "kind": "dynamic_navigation_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}, {"surface": "web", "source": "app/modules/main/templates/main/search/search.html:1408", "kind": "dynamic_navigation_literal", "pinned_commit": "700006dfdfa063deb4387be572911e782bcea0d9"}],
+      "read_relations": [{"kind": "table", "name": "subjects", "owner": "catalog"}, {"kind": "table", "name": "questions", "owner": "catalog"}, {"kind": "table", "name": "users", "owner": "identity"}, {"kind": "table", "name": "user_subjects", "owner": "identity"}, {"kind": "table", "name": "favorites", "owner": "learning"}, {"kind": "table", "name": "mistakes", "owner": "learning"}, {"kind": "table", "name": "user_answers", "owner": "learning"}, {"kind": "table", "name": "user_progress", "owner": "learning"}, {"kind": "table", "name": "user_question_tag_items", "owner": "learning"}],
+      "non_table_resources": [{"kind": "db_kv_namespace", "name": "question_tags_v1", "owner": "learning"}],
+      "side_effects": ["private-tag reads can trigger lazy tag schema/data migration", "the page composes catalog counts/types with identity visibility and learning favorites, mistakes and answer statistics", "a Session request may update users.last_active"],
+      "baseline_owner": "catalog",
+      "reviewed_target_owner": "web",
+      "disposition_phase": "6",
+      "disposition_class": "cross_owner_web_composition_deferred",
+      "reason": "The subject detail page is a Web composition over catalog, identity and learning facts and contains read-time tag side effects; it is not a catalog-only route.",
+      "required_existing_catalog_apis": [{"java_api": "io.saksk.ti.catalog.api.SubjectMetadataApplicationApi", "method": "Optional<SubjectContextView> findSubjectById(long subjectId)", "coverage": "partial_missing_lock_projection"}, {"java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi", "method": "long countQuestions(QuestionCatalogCountQuery query)", "coverage": "catalog_count_primitive_only"}, {"java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi", "method": "QuestionTypeCatalogView questionTypes()", "coverage": "partial_global_not_subject_scoped"}],
+      "single_owner_catalog_candidate": false,
+      "migration_status": "pending",
+      "production_cutover": false
+    }
+  ],
+  "quality_coverage": {
+    "filter": {"status": "bounded", "evidence": ["public-bank-read-contract.json", "question-list-read-contract.json", "question-count-read-contract.json", "question-export-read-contract.json"], "finding": "Exact catalog filters are fixed where an internal API exists; cross-owner search, learning selection and file-export type/image filters remain with their deferred owners."},
+    "sort": {"status": "bounded", "evidence": ["public-bank-read-contract.json", "question-type-read-contract.json", "question-list-read-contract.json", "subject-inventory-read-contract.json", "question-export-read-contract.json"], "finding": "Catalog order is explicit for implemented slices; future HTTP adapters must not substitute their own ordering."},
+    "pagination": {"status": "deferred_where_composed", "evidence": ["public-bank-read-contract.json", "question-list-read-contract.json", "question-export-read-contract.json"], "finding": "Public-bank API pagination is covered; admin list/export operations are intentionally unpaginated; the three-tab Web search pagination remains Phase 6."},
+    "visibility": {"status": "split_by_owner", "evidence": ["subject-read-contract.json", "public-bank-read-contract.json", "question-count-read-contract.json"], "finding": "Catalog visibility is implemented only behind published identity policy; learning and Web compositions cannot bypass identity or owner APIs."},
+    "permissions": {"status": "http_deferred", "evidence": ["question-type-read-contract.json", "question-detail-read-contract.json", "question-list-read-contract.json", "subject-inventory-read-contract.json", "subject-context-read-contract.json", "question-export-read-contract.json"], "finding": "Legacy role/auth matrices are captured, but internal catalog APIs do not authorize the eleven operations-owned routes."},
+    "cache": {"status": "mixed_explicit", "evidence": ["public-bank-metrics-snapshot-decision.md", "question-count-read-contract.json"], "finding": "Migrated public-bank reads use a complete snapshot; count cache policy and removal of read-time tag migration remain Phase 4C; legacy global search refresh writes prohibit a read-only claim."},
+    "n_plus_one": {"status": "covered_for_implemented_catalog_primitives", "evidence": ["question-type-query-plan-evidence.json", "question-detail-query-plan-evidence.json", "question-list-query-plan-evidence.json", "question-export-query-plan-evidence.json", "subject-inventory-query-plan-evidence.json", "subject-context-query-plan-evidence.json", "question-count-query-plan-evidence.json"], "finding": "Implemented primitives have fixed statement budgets and prohibit result-size query growth; no claim is made for deferred owner orchestration."},
+    "count": {"status": "primitive_complete_composition_deferred", "evidence": ["question-count-read-contract.json", "subject-inventory-read-contract.json"], "finding": "Catalog count and inventory aggregates are implemented; favorites, mistakes, tags, cache and conditional auth keep the HTTP count routes in Phase 4C."},
+    "query_plans": {"status": "complete_for_bounded_phase4a_catalog_primitives", "evidence": ["question-type-query-plan-evidence.json", "question-count-query-plan-evidence.json", "question-detail-query-plan-evidence.json", "question-list-query-plan-evidence.json", "question-export-query-plan-evidence.json", "subject-inventory-query-plan-evidence.json", "subject-context-query-plan-evidence.json"], "finding": "Every implemented bounded catalog primitive has exact runtime query-plan evidence; this disposition audit does not certify the independent full-build or Phase 4A closure."}
+  },
+  "stop_conditions": [
+    "Stop if any frozen matrix, OpenAPI or ownership source hash differs.",
+    "Stop if any selected matrix row, method order, source, registration source, endpoint, baseline owner or pending status changes.",
+    "Stop if effective counts differ from 11 migrated, 600 pending and 0 production cutover.",
+    "Stop if the coverage union is not exactly 24 unique operation keys or any operation is unclassified.",
+    "Stop if any reviewed operation is marked implement-now, single_owner_catalog_candidate=true, migrated or production_cutover=true.",
+    "Stop if the eleven deferred route IDs or any exact catalog API signature drifts, including listQuestionExportRecords.",
+    "Stop if operations-to-catalog dependency is introduced before Phase 4H approval and full HTTP parity evidence.",
+    "Stop if Phase 4B starts before a separate final-acceptance contract records the current Phase 4A full acceptance.",
+    "Stop rather than treating this disposition audit as closure evidence; query-plan, PostgreSQL compatibility, full Maven, WORM and independent-copy evidence belong to the separate final-acceptance contract."
+  ],
+  "phase4a_handoff_requirements": {
+    "disposition_audit_complete": true,
+    "no_additional_implement_now_catalog_candidate": true,
+    "closure_owned_by_this_contract": false,
+    "required_external_acceptance_dimensions": ["catalog contract and focused tests", "PostgreSQL 16.14 and 18.4 compatibility", "runtime query-plan evidence", "full clean Maven verify", "frozen source tools", "WORM build-context validation", "independent Ti-Java copy validation and cleanup"],
+    "reason": "This contract freezes candidate classification only. A separate non-recursive final-acceptance contract must bind these facts to runtime, build and cleanup evidence before Phase 4B authorization."
+  },
+  "recommended_next_slice": {
+    "phase": "4B",
+    "module": "personalbank",
+    "capability": "personal bank category list aliases",
+    "only_operation_keys": [
+      "19b37a262989|GET|/api/user/banks/api/categories",
+      "e32aec766730|GET|/user/banks/api/categories"
+    ],
+    "operations": [
+      {"route_id": "19b37a262989", "method": "GET", "path": "/api/user/banks/api/categories", "baseline_rule_ordinal": 404, "expanded_operation_ordinal": 420, "registration_source": "app/modules/user_bank/__init__.py::user_bank_api_root", "registration_kind": "blueprint_compatibility_alias", "source": "app/modules/user_bank/routes/api_categories.py:15", "target_owner": "personalbank", "migration_status": "pending", "production_cutover": false},
+      {"route_id": "e32aec766730", "method": "GET", "path": "/user/banks/api/categories", "baseline_rule_ordinal": 578, "expanded_operation_ordinal": 597, "registration_source": "app/modules/user_bank/routes/api_categories.py:15", "registration_kind": "blueprint_decorator", "source": "app/modules/user_bank/routes/api_categories.py:15", "target_owner": "personalbank", "migration_status": "pending", "production_cutover": false}
+    ],
+    "single_owner_basis": [{"kind": "table", "name": "user_bank_categories", "owner": "personalbank"}, {"kind": "table", "name": "user_question_banks", "owner": "personalbank"}],
+    "reason": "Both aliases share one read handler and only personalbank-owned business relations, so they are the recommended first Phase 4B slice. This audit does not authorize implementation, route/OpenAPI delta or production cutover."
+  }
+}

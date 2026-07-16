@@ -4,12 +4,13 @@
 只作为测试期契约来源；Java 生产运行时不得读取父目录或回调 Flask。
 
 受保护科目目录与公共题库 7 条 GET 的 Java shadow 切片均已实现；题目类型、题目数量、
-单题详情、后台题目摘要集合、后台科目库存摘要与后台题集页面科目上下文的 catalog 内部读取能力也已实现。
-两条后台题型、两条单题详情、两条后台题目集合、一条后台科目库存与两条后台科目上下文 HTTP operation
-仍由 `operations` 持有，两条题量 HTTP operation 经审计应由 Phase 4C 的 `learning` 组合，十一条路径都保持 pending。当前有效状态为
+单题详情、后台题目摘要集合、后台科目库存摘要、后台题集页面科目上下文与后台题目导出的 catalog 内部读取能力也已实现。
+两条后台题型、两条单题详情、两条后台题目集合、一条后台科目库存、两条后台科目上下文与两条后台题目导出 HTTP operation
+仍由 `operations` 持有，两条题量 HTTP operation 经审计应由 Phase 4C 的 `learning` 组合，十三条路径都保持 pending。当前有效状态为
 **11 migrated、600 pending、0 production cutover**，有效
-资源为 **159 个且全部唯一 owner**；旧 Flask 仍是生产运行所有者，Phase 4A 后续切片和
-整个长期重构目标都尚未完成。
+资源为 **159 个且全部唯一 owner**；Phase 4A 的有界 catalog 范围已由独立的
+`phase4a-final-acceptance.json` 通过最终 closure，
+但旧 Flask 仍是生产运行所有者，0 条生产切流，整个长期重构目标尚未完成。
 
 ## 垂直切片顺序
 
@@ -28,7 +29,12 @@
    内部 `subjects/questions` 聚合读取；HTTP operation 延后到 4H；
 8. 后台题集页面科目上下文：已固定两条页面的 38-case 真实 golden，并实现单科目 `id/name`
    catalog 内部读取；不复用公共目录或库存聚合，两条 HTTP operation 延后到 4H；
-9. 在 4C 由 `learning` 组合 `GET /api/quiz/subjects/{subject}/info` 中的作答、错题和收藏统计。
+9. 后台题目导出：已固定两条 JSON 导出路由的 44-case 真实 golden，并实现
+   `questions LEFT JOIN subjects` 的十字段 catalog 原始快照；两条 HTTP operation 延后到 4H；
+10. 有界候选 disposition：已审计 24 个 unique operation，处置为 Phase 4H 16 条、Phase 4C
+    4 条、Phase 6 4 条、implement-now 0 条；当前路由状态与数据所有权不变；
+11. 最终验收合同下一步仅授权 Phase 4B 的两条 personal-bank category alias；在 4C 再由 `learning`
+    组合 `GET /api/quiz/subjects/{subject}/info` 中的作答、错题和收藏统计。
 
 切片 1 不越权读取 `identity.user_subjects`：`catalog` 通过 `identity::api` 获取用户黑名单，
 再在内存中与目录自有读取结果求差。它也不读取 `learning` 所有的 `user_answers`、
@@ -116,6 +122,23 @@
   的 150,000 科目夹具上固定 5 个 ID 观测，每次均为 1 statement、1 个 `bigint` bind、一次
   `subjects_pkey` Index Scan、loops=1、TEMP=0；SHA-256 为
   `f602a76a4764d098bb86aa9a8ef2a44048b0bcb977ed46cb675024e51c6d6db3`，不是生产延迟或容量 SLA。
+- `golden-question-export-reads.json`：固定旧提交完整 `app/` 归档的 44-case 双路由证据，每条
+  路由 22 个 case，覆盖认证/角色、首个原始 `subject_id`、nullable/畸形值、modern/legacy 信封、
+  HTML/JSON 故障与 Session 活跃度；文件 SHA-256 为
+  `89ce148cb32d1ca26d2f9d617385ae86243cf264f6d33dede97018435d00530d`；
+- `question-export-read-contract.json`：固定可选 `Integer` 科目过滤、十字段原始 DTO、严格 `q.id ASC`、
+  nullable/孤儿科目与原始 JSON 文本，并把认证、原始查询字符串解析、默认值、投影、信封和
+  安全错误留给 Phase 4H `operations` 适配层；
+- `question-export-query-plan-evidence.json`：从 Java adapter 导出两条固定 SQL，在 PostgreSQL 18.4
+  的 150,000 题目、5,002 科目夹具上固定 9 个观测；全量结果的单个 Memoize 节点有
+  5,004 个 distinct subject-key probe，每次 1 statement、两表各 1 个 scan node、root loops=1、TEMP=0。
+  SHA-256 为 `96f04c1018f5c3a826c48972c2273096f8507e45900616ca6c842ee0318ae541`，不是生产 SLA。
+- `catalog-candidate-disposition.json`：精确覆盖 24 个有界候选及其真实调用方、关系、非表资源与
+  GET 副作用，处置结果为 Phase 4H 16 条、Phase 4C 4 条、Phase 6 4 条、implement-now 0 条；
+  该文件只冻结静态处置，不自证 closure；
+- `phase4a-final-acceptance.json`：绑定题目导出、WORM、完整独立副本运行态与非递归最终控制面
+  清单，并在所有维度通过后只授权 `19b37a262989|GET|/api/user/banks/api/categories` 与
+  `e32aec766730|GET|/user/banks/api/categories` 作为下一条 Phase 4B 切片，两条 operation 仍为 pending。
 
 Java 迁移路由不启用应用数据缓存；身份策略与目录两条业务查询读取同一只读、可重复读事务中的当前数据库状态；这是
 `approved-differences.md` 中批准的过渡差异。业务用例是身份策略与目录各一条 SELECT，HTTP
@@ -222,3 +245,25 @@ build-context SHA-256 `19a4cf2f629762362c6d7104e88ec726266ff50da2a4a045faeb581a2
 Phase 2/3 静态门禁、独立 PostgreSQL/Redis 数据面、镜像构建、3/3 Compose readiness、API
 重启恢复与 bind-source 审计。8 个只读 bind 全部来自副本；临时目录、容器、网络、卷、镜像标签、
 专用缓存卷和测试端口均已清理至 0 残留。对应绿色功能检查点为 `643c3b3`。
+
+后台题目导出 catalog-only 能力的 Java/合同定向为 53/53，PostgreSQL 16.14/18.4
+compatibility 为 2/2，全部 source tools 为 215/215；最终完整 `clean verify` 为
+406 个 surefire + 58 个 failsafe，0 failure/error/skip。44-case golden 文件 SHA-256 为
+`89ce148cb32d1ca26d2f9d617385ae86243cf264f6d33dede97018435d00530d`；PostgreSQL 18.4 两条
+SQL/9 个观测的计划 SHA-256 为
+`96f04c1018f5c3a826c48972c2273096f8507e45900616ca6c842ee0318ae541`。
+
+`GET /admin/api/questions/export` 与 `GET /admin/questions/export` 继续是
+`operations,pending,production_cutover=false`，延后到 Phase 4H，本证据只接受 catalog 内部原始快照。
+WORM 以 build-context SHA-256 `9fbff246ce5f7ca8fc7fb3e723261c1b5a75f39ac43e935974be6025b663741e`
+通过 PostgreSQL 18.4、70 表/617 列、只读 ACL、Hibernate `validate` 与 readiness；结构化报告
+SHA-256 为 `f245d1def582c0527ad419e5fad8bcafbfff40270dec15007a8dec77f453c410`。完整运行态轮仅复制 1,220 个受控文件、
+0 个符号链接且不含缓存或构建产物的独立副本，以专用空 Maven 缓存通过 Phase 1、Phase 2/3
+静态门禁、406+58 Maven、独立 PostgreSQL/Redis 数据面、唯一镜像、3/3 Compose readiness、
+API 重启恢复与 8-bind source 审计；源工作树 bind 为 0，清理后所有临时资源与测试端口为 0 残留。
+
+最终控制面包含 1,220 个受控文件，并对除 `phase4a-final-acceptance.json` 自身之外的 1,219 个文件
+生成源/副本一致的非递归清单。24 个有界候选已处置为 Phase 4H 16 条、Phase 4C 4 条、Phase 6 4 条、implement-now 0 条；
+有效状态保持 11 migrated、600 pending、0 production cutover，159/159 资源仍有唯一 owner。
+Phase 4A 最终验收合同已通过，下一步仅授权 Phase 4B 的两条 personal-bank category alias；这不把
+两条 alias 标成 migrated，也不授权任何生产切流。

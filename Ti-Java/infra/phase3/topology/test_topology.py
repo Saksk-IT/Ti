@@ -9,8 +9,10 @@ import json
 import os
 import pathlib
 import shutil
+import socket
 import subprocess
 import sys
+import tempfile
 import unittest
 import uuid
 from dataclasses import dataclass
@@ -40,6 +42,67 @@ ALL_SERVICES = (
     "legacy-api", "legacy-postgres", "legacy-redis",
     "java-api", "java-postgres", "java-redis",
 )
+
+
+class DockerClientBoundaryTests(unittest.TestCase):
+    @staticmethod
+    def runner(environment: dict[str, str], inspected_endpoint: str):
+        runner = object.__new__(rehearse_switch.DockerRunner)
+        runner.environment = dict(environment)
+        result = subprocess.CompletedProcess(
+            args=["docker", "context", "inspect"],
+            returncode=0,
+            stdout=(inspected_endpoint + "\n").encode(),
+            stderr=b"",
+        )
+        runner.docker = mock.Mock(return_value=result)
+        runner.compose = mock.Mock(return_value=result)
+        return runner
+
+    def test_local_socket_host_is_the_only_accepted_docker_override(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="ti-phase3-docker-boundary-") as raw:
+            root = pathlib.Path(raw)
+            socket_path = root / "docker.sock"
+            regular_path = root / "not-a-socket"
+            regular_path.write_text("not a socket\n", encoding="utf-8")
+            with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as local_socket:
+                local_socket.bind(str(socket_path))
+                endpoint = f"unix://{socket_path}"
+
+                for environment in ({}, {"DOCKER_HOST": endpoint}):
+                    with self.subTest(accepted_environment=environment):
+                        runner = self.runner(environment, endpoint)
+                        runner.preflight_local_context()
+                        self.assertEqual(endpoint, runner.environment["DOCKER_HOST"])
+                        runner.docker.assert_called_once()
+                        runner.compose.assert_called_once_with(["config", "--quiet"])
+
+                frozen = self.runner({"DOCKER_HOST": endpoint}, endpoint)
+                with mock.patch.dict(os.environ, {"DOCKER_HOST": "tcp://remote:2376"}):
+                    frozen.preflight_local_context()
+
+                rejected = (
+                    ({"DOCKER_HOST": ""}, endpoint, "DOCKER_HOST"),
+                    ({"DOCKER_HOST": "tcp://remote:2376"}, endpoint, "DOCKER_HOST"),
+                    ({"DOCKER_HOST": "unix://relative.sock"}, endpoint, "DOCKER_HOST"),
+                    ({"DOCKER_HOST": f"unix://{root / 'missing.sock'}"}, endpoint, "DOCKER_HOST"),
+                    ({"DOCKER_HOST": f"unix://{regular_path}"}, endpoint, "DOCKER_HOST"),
+                    ({"DOCKER_CONTEXT": ""}, endpoint, "DOCKER_CONTEXT"),
+                    ({"DOCKER_TLS": ""}, endpoint, "DOCKER_TLS"),
+                    ({"DOCKER_TLS_VERIFY": ""}, endpoint, "DOCKER_TLS_VERIFY"),
+                    ({"DOCKER_CERT_PATH": ""}, endpoint, "DOCKER_CERT_PATH"),
+                    ({"DOCKER_HOST": endpoint}, "unix:///different.sock", "endpoint mismatch"),
+                    ({}, "tcp://remote:2376", "non-local endpoint"),
+                    ({}, "ssh://remote", "non-local endpoint"),
+                    ({}, "unix://relative.sock", "non-local endpoint"),
+                    ({}, f"unix://{root / 'missing.sock'}", "non-local endpoint"),
+                    ({}, f"unix://{regular_path}", "non-local endpoint"),
+                )
+                for environment, inspected, message in rejected:
+                    with self.subTest(rejected_environment=environment, inspected=inspected):
+                        runner = self.runner(environment, inspected)
+                        with self.assertRaisesRegex(rehearse_switch.RehearsalError, message):
+                            runner.preflight_local_context()
 
 
 def unique_run_id(prefix: str) -> str:

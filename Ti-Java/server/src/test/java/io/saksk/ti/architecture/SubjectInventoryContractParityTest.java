@@ -186,7 +186,7 @@ class SubjectInventoryContractParityTest {
         JsonNode shape = readJson(
                 "docs/refactor/phase4a/application-api-shape-status.json");
         assertThat(shape.path("implemented_public_application_method_count").asInt())
-                .isEqualTo(18);
+                .isEqualTo(19);
         JsonNode catalog = findBy(shape.path("modules"), "module_id", "catalog");
         assertThat(strings(catalog.path("implemented_route_ids")))
                 .doesNotContain("6e1a36f5052d");
