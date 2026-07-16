@@ -2,6 +2,8 @@ package io.saksk.ti.architecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.saksk.ti.catalog.api.QuestionCatalogCountQuery;
+import io.saksk.ti.catalog.api.QuestionSubjectAssignmentScope;
 import io.saksk.ti.catalog.api.PublicBankCardView;
 import io.saksk.ti.catalog.api.PublicBankSource;
 import java.io.IOException;
@@ -57,6 +59,22 @@ class CatalogPublicBoundaryNeutralityTest {
                         .filter(method -> Modifier.isPublic(method.getModifiers()))
                         .map(java.lang.reflect.Method::getName))
                 .containsExactlyInAnyOrder("values", "valueOf");
+    }
+
+    @Test
+    void questionCountBoundaryExposesOnlyCatalogCriteria() {
+        assertThat(Arrays.stream(QuestionCatalogCountQuery.class.getRecordComponents())
+                        .map(RecordComponent::getName))
+                .containsExactly(
+                        "subjectName",
+                        "questionType",
+                        "subjectAssignmentScope",
+                        "excludedSubjectIds",
+                        "candidateQuestionIds")
+                .doesNotContain("mode", "source", "tag", "userId", "favorites", "mistakes");
+        assertThat(QuestionSubjectAssignmentScope.values()).containsExactly(
+                QuestionSubjectAssignmentScope.INCLUDE_UNASSIGNED,
+                QuestionSubjectAssignmentScope.REQUIRE_EXISTING_SUBJECT);
     }
 
     @Test

@@ -1,0 +1,198 @@
+{
+  "contract_id": "ti.phase4a.question-count-read-contract",
+  "schema_version": 1,
+  "status": "catalog_internal_capability_implemented_http_operations_deferred_to_phase4c",
+  "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "evidence": {
+    "golden": {
+      "source": "golden-question-count-reads.json",
+      "file_sha256": "8da18675ed9f2c38fdf4444606ecbd1b465fd08e8084829b6d20314271c62b00",
+      "case_count": 36,
+      "case_payload_sha256": "db02705cf8de357398c888f1575cd591d7091324c23a409b48ab1f3a6efb397d"
+    },
+    "query_plan": {
+      "source": "question-count-query-plan-evidence.json",
+      "file_sha256": "d1958ab2b471f5454614c20018e85840aed82d68ddea6575efe3cc33132161db",
+      "runtime_sql_manifest_sha256": "4e49b6aa19f6d0d5370b1be3ff5fa4ac00f683c8a7a537e455d112db155cca7c"
+    },
+    "frozen_route_matrix": {
+      "source": "../02-route-parity-matrix.csv",
+      "sha256": "fdbdfedf3dd70cd09778b2a7072711d103eee8461d0e7dd356d797006fc92c74"
+    },
+    "data_ownership": {
+      "source": "../03-data-ownership.csv",
+      "sha256": "3f9cb0650c523593d7037dc24df902dbccdb3885f261f530e1725a9dc7a31748",
+      "catalog_resources": ["table:questions", "table:subjects"],
+      "future_learning_resources": [
+        "table:favorites",
+        "table:mistakes",
+        "table:user_progress",
+        "table:user_question_tag_items"
+      ],
+      "future_identity_resources": ["table:users", "table:user_subjects"],
+      "delta_required": false
+    },
+    "approved_differences": {
+      "source": "approved-differences.md",
+      "sha256": "2ac257e41214f3005eaa022965038bf429d35e3ba04dc83b81ac8a90abd63fd2",
+      "new_difference_ids": [],
+      "statement": "No behavior difference is approved in this internal capability slice. Cache removal, read-time tag migration removal, rate-limit fail-closed behavior and safe HTTP errors require explicit Phase 4C approval before either route can migrate."
+    }
+  },
+  "module_boundary": {
+    "catalog_application_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi#countQuestions",
+    "query_type": "io.saksk.ti.catalog.api.QuestionCatalogCountQuery",
+    "assignment_scope_type": "io.saksk.ti.catalog.api.QuestionSubjectAssignmentScope",
+    "catalog_owned_tables": ["questions", "subjects"],
+    "http_operation_owner": "learning",
+    "http_adapter_status": "not_implemented",
+    "deferred_phase": "4C",
+    "dependency_status": "accepted learning-to-catalog-api edge; catalog-to-learning remains forbidden",
+    "forbidden_in_this_slice": [
+      "HTTP controller, security matcher or rate limiter",
+      "route parity delta or OpenAPI operation migration",
+      "favorites, mistakes, user_progress or user_question_tag_items query",
+      "users or user_subjects query",
+      "response cache or cache-version write",
+      "tag DDL, lazy migration or any other DML",
+      "production cutover"
+    ]
+  },
+  "route_status": {
+    "migrated_route_count_before": 11,
+    "migrated_route_count_after": 11,
+    "pending_route_count_before": 600,
+    "pending_route_count_after": 600,
+    "production_cutover_count": 0,
+    "operations": [
+      {
+        "route_id": "c618fb5f9f97",
+        "method": "GET",
+        "path": "/api/questions/count",
+        "legacy_handler": "api_questions_count",
+        "baseline_target_module": "catalog",
+        "reviewed_http_owner": "learning",
+        "migration_status": "pending",
+        "production_cutover": false
+      },
+      {
+        "route_id": "bb21e7730d04",
+        "method": "GET",
+        "path": "/api/quiz/questions/count",
+        "legacy_handler": "quiz_api.api_questions_count",
+        "baseline_target_module": "catalog",
+        "reviewed_http_owner": "learning",
+        "migration_status": "pending",
+        "production_cutover": false
+      }
+    ]
+  },
+  "catalog_application_contract": {
+    "method": "long countQuestions(QuestionCatalogCountQuery query)",
+    "transaction": "read-only",
+    "result": "non-negative scalar count",
+    "subject_assignment_scope": {
+      "INCLUDE_UNASSIGNED": "Legacy-anonymous semantics: unlocked existing subjects plus rows whose LEFT JOIN subject is absent; excludedSubjectIds must be empty.",
+      "REQUIRE_EXISTING_SUBJECT": "Legacy-authenticated semantics: require a matching unlocked subject even for administrators; optionally exclude identity-owned restricted subject IDs."
+    },
+    "filters": {
+      "subjectName": "Optional exact subjects.name equality; no trim, case folding or HTTP all-sentinel handling in catalog.",
+      "questionType": "Optional exact questions.type equality; no alias, Chinese or unknown-value conversion in catalog.",
+      "excludedSubjectIds": "Defensively copied positive integer set; bound as one PostgreSQL integer array and applied with ALL.",
+      "candidateQuestionIds": "Absent means all catalog candidates; present-empty returns zero before JDBC; present-nonempty is defensively copied, de-duplicated, sorted and bound as one PostgreSQL bigint array with ANY."
+    },
+    "query_shape": {
+      "base": "questions LEFT JOIN subjects with false-or-null lock predicate",
+      "statement_variants": "Fixed reviewed fragments only; user values are never interpolated into SQL.",
+      "catalog_relations": ["questions", "subjects"],
+      "cross_owner_relations": [],
+      "dynamic_in_parameters": false,
+      "temporary_table": false,
+      "ddl_or_dml": false
+    },
+    "query_budget": {
+      "explicit_empty_candidates": 0,
+      "all_other_queries": 1,
+      "array_bind_parameter_count_growth_with_candidate_count": 0,
+      "n_plus_one_forbidden": true
+    }
+  },
+  "legacy_http_contract": {
+    "shared_success": {
+      "status": 200,
+      "body": {
+        "status": "success",
+        "count": "non-negative integer",
+        "message": "",
+        "data": {"count": "same value as top-level count"},
+        "request_id": "dynamic request identifier"
+      }
+    },
+    "authentication": {
+      "/api/questions/count": {
+        "anonymous_default": "allowed",
+        "anonymous_mode_favorites_or_mistakes": "401 请先登录后使用此功能",
+        "anonymous_source_favorites_or_mistakes": "allowed through the global gate, then 200 count 0",
+        "invalid_bearer_general": "treated as anonymous",
+        "session_and_valid_bearer": "global gate accepts Bearer but handler selects Session identity first"
+      },
+      "/api/quiz/questions/count": {
+        "anonymous_or_invalid_bearer": "401 请先登录",
+        "valid_session_or_bearer": "allowed",
+        "session_and_valid_bearer": "handler selects Session identity first"
+      }
+    },
+    "parameters": {
+      "subject": "First value; default exact lowercase all; no trim or case folding; all other values compare exactly to subjects.name.",
+      "type": "First value; default exact lowercase all; all other values pass through legacy portable-type normalization, and unknown, empty or uppercase ALL maps to essay.",
+      "mode": "First value; default empty; lower-case only without trim.",
+      "source": "First value; default empty; lower-case only without trim; valid favorites or mistakes takes precedence over mode.",
+      "tag": "First value; Python strip, then legacy tag normalization collapses whitespace and truncates to 20 code points; case-insensitive all disables tag filtering."
+    },
+    "catalog_visibility": {
+      "locked_subject": "excluded",
+      "anonymous_null_or_missing_subject": "included when no exact subject filter is active",
+      "authenticated_null_or_missing_subject": "excluded",
+      "ordinary_identity": "identity-owned restricted subjects excluded",
+      "administrator": "restrictions bypassed but locking and existing-subject requirement remain"
+    },
+    "learning_selection": {
+      "favorites": "Inner join the authenticated identity's unique favorites.",
+      "mistakes": "Inner join the authenticated identity's unique mistakes.",
+      "tag": "Private tag selection; no identity or no match returns zero; legacy uses IN up to 900 IDs and application-side intersection above 900."
+    },
+    "cross_cutting_effects": {
+      "rate_limit": "Flask-Limiter 60/minute and 600/hour per endpoint.",
+      "response_cache": "Both routes share cache:quiz:questions_count:<sha256(params)> with user/question/subject version inputs; read/write failures are swallowed.",
+      "tag_read_side_effect": "A tag GET can execute CREATE TABLE/INDEX and lazily copy question_tags_v1 from user_progress into user_question_tag_items.",
+      "identity_runtime_effects": "Session/user synchronization and users.last_active can change outside catalog facts."
+    },
+    "failure": {
+      "cache_or_version_store": "fall back to database",
+      "permission_or_business_query": "safe generic 500 envelope",
+      "future_java_policy": "not approved in this slice"
+    }
+  },
+  "phase4c_requirements": [
+    "LearningApplicationApi must own one complete question-count use case and call only published catalog/identity APIs.",
+    "Learning persistence may read favorites, mistakes, user_progress and user_question_tag_items but catalog persistence may not.",
+    "The target GET must not perform DDL, DML or lazy tag migration; an explicit idempotent migration must precede cutover and the difference must be approved.",
+    "Both HTTP paths must migrate together with their distinct conditional authentication semantics, endpoint-isolated 60/minute and 600/hour budgets, safe failures and cache decision.",
+    "Only after full golden parity may route delta, OpenAPI and migrated counts change; production cutover remains a separate approval."
+  ],
+  "invariants": [
+    "Catalog question counts read only questions and subjects.",
+    "Anonymous and authenticated empty restriction sets are not conflated: assignment scope separately controls null or missing subjects.",
+    "One non-empty catalog invocation executes one SELECT regardless of candidate count.",
+    "A 100,000-ID candidate selection uses one bigint-array bind parameter rather than dynamic placeholders, batching or TEMP state.",
+    "An explicit empty candidate list returns zero without invoking JDBC.",
+    "Subject and question-type strings are preserved exactly inside catalog; HTTP sentinel and alias conversion remain outside the module.",
+    "No route is marked migrated and no production traffic is switched by adding this internal capability."
+  ],
+  "acceptance": {
+    "catalog_internal_capability": "implemented",
+    "http_operation_migration": "deferred_to_phase4c",
+    "production_cutover": false,
+    "next_phase4a_work": "continue the next catalog-only read after this capability passes full isolated acceptance"
+  }
+}

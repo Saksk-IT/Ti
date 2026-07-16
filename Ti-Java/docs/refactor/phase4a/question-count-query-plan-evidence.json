@@ -1,0 +1,1880 @@
+{
+  "evidence_id": "ti.phase4a.question-count-query-plan",
+  "schema_version": 1,
+  "captured_on": "2026-07-16",
+  "scope": "catalog-owned-question-count-primitives",
+  "runtime_sql_contract": {
+    "source": "Java adapter runtime SQL manifest exported before capture",
+    "manifest_id": "ti.phase4a.question-count-runtime-sql",
+    "manifest_schema_version": 1,
+    "manifest_sha256": "4e49b6aa19f6d0d5370b1be3ff5fa4ac00f683c8a7a537e455d112db155cca7c",
+    "adapter_class": "io.saksk.ti.catalog.infrastructure.persistence.JdbcQuestionCountQueryAdapter",
+    "query_ids": [
+      "question-count-anonymous-all",
+      "question-count-auth-restricted",
+      "question-count-auth-unrestricted",
+      "question-count-candidate-large",
+      "question-count-subject-type"
+    ],
+    "forbidden_runtime_effects": [
+      "DML",
+      "DDL",
+      "TEMP objects",
+      "multiple SQL statements"
+    ]
+  },
+  "inputs": {
+    "adapter": "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcQuestionCountQueryAdapter.java",
+    "adapter_sha256": "adc6bcf5cfc0621e14421ec716536f7af879881a9577361d1be1c25cec5739c3",
+    "runtime_sql_manifest": "server/target/phase4a-question-count-runtime-sql.json",
+    "runtime_sql_manifest_sha256": "4e49b6aa19f6d0d5370b1be3ff5fa4ac00f683c8a7a537e455d112db155cca7c",
+    "runtime_sql_exporter": "server/src/test/java/io/saksk/ti/catalog/infrastructure/persistence/QuestionCountRuntimeSqlManifestTest.java",
+    "runtime_sql_exporter_sha256": "d07084a8ff9f0b08b2a78abf812a7c6e5d334deb60260025a6a2eb14142178e3",
+    "capture_tool_sha256": "a3fc87c0433f71fc3b1e54cf4c28e78bb87653f377e69fee29c71b049e149058"
+  },
+  "environment": {
+    "container_image": "postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
+    "container_image_id": "sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
+    "container_image_digest": [
+      "postgres@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15"
+    ],
+    "container_os": "linux",
+    "container_architecture": "arm64",
+    "network": "none",
+    "database": "phase4a_question_count_plan",
+    "postgresql": {
+      "server_version": "18.4",
+      "server_version_num": "180004",
+      "max_parallel_workers_per_gather": "0",
+      "jit": "off",
+      "work_mem": "4MB"
+    }
+  },
+  "data_set": {
+    "kind": "public deterministic synthetic fixture",
+    "subject_count": 5000,
+    "baseline_question_count": 50000,
+    "large_question_count": 150000,
+    "large_candidate_count": 65536,
+    "large_candidate_boundary": "65536 IDs in one bigint[] bind, above 65535",
+    "unassigned_distribution": "question_id % 1000 = 0",
+    "locked_distribution": "subject_id % 20 = 0",
+    "nullable_lock_distribution": "subject_id % 20 = 1",
+    "index_definitions": [
+      {
+        "table": "questions",
+        "name": "ix_questions_subject_id",
+        "definition": "CREATE INDEX ix_questions_subject_id ON public.questions USING btree (subject_id)"
+      },
+      {
+        "table": "questions",
+        "name": "ix_questions_subject_type",
+        "definition": "CREATE INDEX ix_questions_subject_type ON public.questions USING btree (subject_id, type)"
+      },
+      {
+        "table": "questions",
+        "name": "questions_pkey",
+        "definition": "CREATE UNIQUE INDEX questions_pkey ON public.questions USING btree (id)"
+      },
+      {
+        "table": "subjects",
+        "name": "subjects_name_key",
+        "definition": "CREATE UNIQUE INDEX subjects_name_key ON public.subjects USING btree (name)"
+      },
+      {
+        "table": "subjects",
+        "name": "subjects_pkey",
+        "definition": "CREATE UNIQUE INDEX subjects_pkey ON public.subjects USING btree (id)"
+      }
+    ],
+    "statistics": "VACUUM (ANALYZE) completed after each fixture stage"
+  },
+  "measurement": {
+    "command": "EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)",
+    "timing_retained": false,
+    "plan_expression_values_retained": false,
+    "runs_per_observation": 1,
+    "observations": [
+      {
+        "observation_id": "anonymous-all-baseline-50000",
+        "runtime_query_id": "question-count-anonymous-all",
+        "source": "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcQuestionCountQueryAdapter.java",
+        "fixture_question_count": 50000,
+        "sql": "SELECT COUNT(1)\nFROM questions q\nLEFT JOIN subjects s ON s.id = q.subject_id\nWHERE (s.is_locked = false OR s.is_locked IS NULL)",
+        "sql_sha256": "42171fd106acd3987d7dfd29691544c1e4862bc927068a2726f557bb48dcb878",
+        "sql_statement_count": 1,
+        "scalar_count": 47550,
+        "expected_scalar_count": 47550,
+        "binding": {
+          "mode": "direct",
+          "bound_parameter_count": 0,
+          "named_parameter_count": 0,
+          "positional_sql_sha256": "42171fd106acd3987d7dfd29691544c1e4862bc927068a2726f557bb48dcb878",
+          "parameters": {},
+          "occurrence_names": []
+        },
+        "temp_blocks_observed": {
+          "Temp Read Blocks": 0.0,
+          "Temp Written Blocks": 0.0
+        },
+        "assertions_passed": [
+          "expected-scalar-count",
+          "single-result-single-root-execution",
+          "bounded-plan-shape",
+          "no-row-driven-node-loop",
+          "catalog-only-fixed-relation-scan-budget",
+          "no-temp-blocks",
+          "single-select-constant-bind-surface"
+        ],
+        "plan_summary": {
+          "root_node_type": "Aggregate",
+          "result_row_count": 1,
+          "root_actual_loops": 1,
+          "node_count": 5,
+          "maximum_depth": 3,
+          "maximum_actual_loops": 1,
+          "node_type_counts": {
+            "Aggregate": 1,
+            "Hash": 1,
+            "Hash Join": 1,
+            "Index Only Scan": 1,
+            "Seq Scan": 1
+          },
+          "relation_scan_occurrences": {
+            "questions": 1,
+            "subjects": 1
+          },
+          "index_names": [
+            "ix_questions_subject_id"
+          ],
+          "buffer_fields_observed_before_normalization": [
+            "Heap Fetches",
+            "Local Dirtied Blocks",
+            "Local Hit Blocks",
+            "Local Read Blocks",
+            "Local Written Blocks",
+            "Shared Dirtied Blocks",
+            "Shared Hit Blocks",
+            "Shared Read Blocks",
+            "Shared Written Blocks",
+            "Temp Read Blocks",
+            "Temp Written Blocks"
+          ],
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Aggregate",
+              "Strategy": "Plain",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Plan Rows": 1
+            },
+            {
+              "depth": 1,
+              "Node Type": "Hash Join",
+              "Parent Relationship": "Outer",
+              "Join Type": "Left",
+              "Actual Rows": 47550.0,
+              "Actual Loops": 1,
+              "Rows Removed by Filter": 2450,
+              "Plan Rows": 47625,
+              "Filter": {
+                "redacted": "planner expression omitted",
+                "character_count": 44,
+                "sha256": "8ceff2e27d78497913b49dec247f3795b3dd3c9ca86e9bc939047a15d0f12bed"
+              },
+              "Hash Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 21,
+                "sha256": "4bfecca575599f83bb6990cb3d2609407f5ab47a8fb19aea98b5ecfb29e5c5d5"
+              }
+            },
+            {
+              "depth": 2,
+              "Node Type": "Index Only Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "questions",
+              "Alias": "q",
+              "Index Name": "ix_questions_subject_id",
+              "Actual Rows": 50000.0,
+              "Actual Loops": 1,
+              "Plan Rows": 50000
+            },
+            {
+              "depth": 2,
+              "Node Type": "Hash",
+              "Parent Relationship": "Inner",
+              "Actual Rows": 5000.0,
+              "Actual Loops": 1,
+              "Plan Rows": 5000
+            },
+            {
+              "depth": 3,
+              "Node Type": "Seq Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "subjects",
+              "Alias": "s",
+              "Actual Rows": 5000.0,
+              "Actual Loops": 1,
+              "Plan Rows": 5000
+            }
+          ]
+        },
+        "normalized_explain_analyze": {
+          "Plan": {
+            "Node Type": "Aggregate",
+            "Strategy": "Plain",
+            "Partial Mode": "Simple",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 1459.21,
+            "Total Cost": 1459.22,
+            "Plan Rows": 1,
+            "Plan Width": 8,
+            "Actual Rows": 1.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Plans": [
+              {
+                "Node Type": "Hash Join",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Left",
+                "Startup Cost": 174.79,
+                "Total Cost": 1340.15,
+                "Plan Rows": 47625,
+                "Plan Width": 0,
+                "Actual Rows": 47550.0,
+                "Actual Loops": 1,
+                "Disabled": false,
+                "Inner Unique": true,
+                "Hash Cond": {
+                  "redacted": "planner expression omitted",
+                  "character_count": 21,
+                  "sha256": "4bfecca575599f83bb6990cb3d2609407f5ab47a8fb19aea98b5ecfb29e5c5d5"
+                },
+                "Filter": {
+                  "redacted": "planner expression omitted",
+                  "character_count": 44,
+                  "sha256": "8ceff2e27d78497913b49dec247f3795b3dd3c9ca86e9bc939047a15d0f12bed"
+                },
+                "Rows Removed by Filter": 2450,
+                "Plans": [
+                  {
+                    "Node Type": "Index Only Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "ix_questions_subject_id",
+                    "Relation Name": "questions",
+                    "Alias": "q",
+                    "Startup Cost": 0.29,
+                    "Total Cost": 1034.29,
+                    "Plan Rows": 50000,
+                    "Plan Width": 4,
+                    "Actual Rows": 50000.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Index Searches": 1
+                  },
+                  {
+                    "Node Type": "Hash",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Startup Cost": 112.0,
+                    "Total Cost": 112.0,
+                    "Plan Rows": 5000,
+                    "Plan Width": 5,
+                    "Actual Rows": 5000.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Hash Buckets": 8192,
+                    "Original Hash Buckets": 8192,
+                    "Hash Batches": 1,
+                    "Original Hash Batches": 1,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Relation Name": "subjects",
+                        "Alias": "s",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 112.0,
+                        "Plan Rows": 5000,
+                        "Plan Width": 5,
+                        "Actual Rows": 5000.0,
+                        "Actual Loops": 1,
+                        "Disabled": false
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "observation_id": "authenticated-unrestricted-baseline-50000",
+        "runtime_query_id": "question-count-auth-unrestricted",
+        "source": "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcQuestionCountQueryAdapter.java",
+        "fixture_question_count": 50000,
+        "sql": "SELECT COUNT(1)\nFROM questions q\nLEFT JOIN subjects s ON s.id = q.subject_id\nWHERE (s.is_locked = false OR s.is_locked IS NULL)\nAND s.id IS NOT NULL",
+        "sql_sha256": "f3c7be8e7e6c4f7d02e17436c89ba9265c4b633688ed6f12fa5f14cfce57e30b",
+        "sql_statement_count": 1,
+        "scalar_count": 47500,
+        "expected_scalar_count": 47500,
+        "binding": {
+          "mode": "direct",
+          "bound_parameter_count": 0,
+          "named_parameter_count": 0,
+          "positional_sql_sha256": "f3c7be8e7e6c4f7d02e17436c89ba9265c4b633688ed6f12fa5f14cfce57e30b",
+          "parameters": {},
+          "occurrence_names": []
+        },
+        "temp_blocks_observed": {
+          "Temp Read Blocks": 0.0,
+          "Temp Written Blocks": 0.0
+        },
+        "assertions_passed": [
+          "expected-scalar-count",
+          "single-result-single-root-execution",
+          "bounded-plan-shape",
+          "no-row-driven-node-loop",
+          "catalog-only-fixed-relation-scan-budget",
+          "no-temp-blocks",
+          "single-select-constant-bind-surface"
+        ],
+        "plan_summary": {
+          "root_node_type": "Aggregate",
+          "result_row_count": 1,
+          "root_actual_loops": 1,
+          "node_count": 5,
+          "maximum_depth": 3,
+          "maximum_actual_loops": 1,
+          "node_type_counts": {
+            "Aggregate": 1,
+            "Hash": 1,
+            "Hash Join": 1,
+            "Index Only Scan": 1,
+            "Seq Scan": 1
+          },
+          "relation_scan_occurrences": {
+            "questions": 1,
+            "subjects": 1
+          },
+          "index_names": [
+            "ix_questions_subject_id"
+          ],
+          "buffer_fields_observed_before_normalization": [
+            "Heap Fetches",
+            "Local Dirtied Blocks",
+            "Local Hit Blocks",
+            "Local Read Blocks",
+            "Local Written Blocks",
+            "Shared Dirtied Blocks",
+            "Shared Hit Blocks",
+            "Shared Read Blocks",
+            "Shared Written Blocks",
+            "Temp Read Blocks",
+            "Temp Written Blocks"
+          ],
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Aggregate",
+              "Strategy": "Plain",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Plan Rows": 1
+            },
+            {
+              "depth": 1,
+              "Node Type": "Hash Join",
+              "Parent Relationship": "Outer",
+              "Join Type": "Inner",
+              "Actual Rows": 47500.0,
+              "Actual Loops": 1,
+              "Plan Rows": 47620,
+              "Hash Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 21,
+                "sha256": "4bfecca575599f83bb6990cb3d2609407f5ab47a8fb19aea98b5ecfb29e5c5d5"
+              }
+            },
+            {
+              "depth": 2,
+              "Node Type": "Index Only Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "questions",
+              "Alias": "q",
+              "Index Name": "ix_questions_subject_id",
+              "Actual Rows": 50000.0,
+              "Actual Loops": 1,
+              "Plan Rows": 50000
+            },
+            {
+              "depth": 2,
+              "Node Type": "Hash",
+              "Parent Relationship": "Inner",
+              "Actual Rows": 4750.0,
+              "Actual Loops": 1,
+              "Plan Rows": 4762
+            },
+            {
+              "depth": 3,
+              "Node Type": "Seq Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "subjects",
+              "Alias": "s",
+              "Actual Rows": 4750.0,
+              "Actual Loops": 1,
+              "Rows Removed by Filter": 250,
+              "Plan Rows": 4762,
+              "Filter": {
+                "redacted": "planner expression omitted",
+                "character_count": 40,
+                "sha256": "b975c2028c9359e1ee915e479e801599426da45dbafd1e91c5d6d4fb6109f601"
+              }
+            }
+          ]
+        },
+        "normalized_explain_analyze": {
+          "Plan": {
+            "Node Type": "Aggregate",
+            "Strategy": "Plain",
+            "Partial Mode": "Simple",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 1456.23,
+            "Total Cost": 1456.24,
+            "Plan Rows": 1,
+            "Plan Width": 8,
+            "Actual Rows": 1.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Plans": [
+              {
+                "Node Type": "Hash Join",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Inner",
+                "Startup Cost": 171.81,
+                "Total Cost": 1337.18,
+                "Plan Rows": 47620,
+                "Plan Width": 0,
+                "Actual Rows": 47500.0,
+                "Actual Loops": 1,
+                "Disabled": false,
+                "Inner Unique": true,
+                "Hash Cond": {
+                  "redacted": "planner expression omitted",
+                  "character_count": 21,
+                  "sha256": "4bfecca575599f83bb6990cb3d2609407f5ab47a8fb19aea98b5ecfb29e5c5d5"
+                },
+                "Plans": [
+                  {
+                    "Node Type": "Index Only Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "ix_questions_subject_id",
+                    "Relation Name": "questions",
+                    "Alias": "q",
+                    "Startup Cost": 0.29,
+                    "Total Cost": 1034.29,
+                    "Plan Rows": 50000,
+                    "Plan Width": 4,
+                    "Actual Rows": 50000.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Index Searches": 1
+                  },
+                  {
+                    "Node Type": "Hash",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Startup Cost": 112.0,
+                    "Total Cost": 112.0,
+                    "Plan Rows": 4762,
+                    "Plan Width": 4,
+                    "Actual Rows": 4750.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Hash Buckets": 8192,
+                    "Original Hash Buckets": 8192,
+                    "Hash Batches": 1,
+                    "Original Hash Batches": 1,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Relation Name": "subjects",
+                        "Alias": "s",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 112.0,
+                        "Plan Rows": 4762,
+                        "Plan Width": 4,
+                        "Actual Rows": 4750.0,
+                        "Actual Loops": 1,
+                        "Disabled": false,
+                        "Filter": {
+                          "redacted": "planner expression omitted",
+                          "character_count": 40,
+                          "sha256": "b975c2028c9359e1ee915e479e801599426da45dbafd1e91c5d6d4fb6109f601"
+                        },
+                        "Rows Removed by Filter": 250
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "observation_id": "authenticated-restricted-baseline-50000",
+        "runtime_query_id": "question-count-auth-restricted",
+        "source": "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcQuestionCountQueryAdapter.java",
+        "fixture_question_count": 50000,
+        "sql": "SELECT COUNT(1)\nFROM questions q\nLEFT JOIN subjects s ON s.id = q.subject_id\nWHERE (s.is_locked = false OR s.is_locked IS NULL)\nAND s.id IS NOT NULL\nAND s.id <> ALL(CAST(:excluded_subject_ids AS integer[]))",
+        "sql_sha256": "81312ab72cdc96583c0951f405d779ce7202b4a35105dbfe66f64836c11acaae",
+        "sql_statement_count": 1,
+        "scalar_count": 47480,
+        "expected_scalar_count": 47480,
+        "binding": {
+          "mode": "prepare-execute",
+          "bound_parameter_count": 1,
+          "named_parameter_count": 1,
+          "positional_sql_sha256": "399f13ad5e045d6e7452c97eef0f648a68bd000c029f4528f233533e9e1f5db3",
+          "parameters": {
+            "excluded_subject_ids": {
+              "bind_kind": "jdbc-sql-array",
+              "postgres_type": "integer[]",
+              "value_kind": "array",
+              "element_count": 2,
+              "value_sha256": "f25ed8cd5464710aff6e5d655a575ac273cb9c19d696e53fa13de05db97454ca",
+              "canonical_decimal_lines_sha256": "7b90b6c82d45cab1f3b5f170e4b90c5545cd08cf90f6e6c28877b72e54da852b",
+              "first_values": [
+                2,
+                4
+              ],
+              "last_values": [
+                2,
+                4
+              ],
+              "manifest_contract": {
+                "element_count": 2,
+                "canonical_encoding": "utf8-decimal-lines-with-final-newline",
+                "sha256": "7b90b6c82d45cab1f3b5f170e4b90c5545cd08cf90f6e6c28877b72e54da852b",
+                "value_generator": {
+                  "kind": "inclusive-integer-range",
+                  "start": 2,
+                  "end": 4,
+                  "step": 2
+                }
+              },
+              "matches_manifest_value": true
+            }
+          },
+          "occurrence_names": [
+            "excluded_subject_ids"
+          ]
+        },
+        "temp_blocks_observed": {
+          "Temp Read Blocks": 0.0,
+          "Temp Written Blocks": 0.0
+        },
+        "assertions_passed": [
+          "expected-scalar-count",
+          "single-result-single-root-execution",
+          "bounded-plan-shape",
+          "no-row-driven-node-loop",
+          "catalog-only-fixed-relation-scan-budget",
+          "no-temp-blocks",
+          "single-select-constant-bind-surface"
+        ],
+        "plan_summary": {
+          "root_node_type": "Aggregate",
+          "result_row_count": 1,
+          "root_actual_loops": 1,
+          "node_count": 5,
+          "maximum_depth": 3,
+          "maximum_actual_loops": 1,
+          "node_type_counts": {
+            "Aggregate": 1,
+            "Hash": 1,
+            "Hash Join": 1,
+            "Index Only Scan": 1,
+            "Seq Scan": 1
+          },
+          "relation_scan_occurrences": {
+            "questions": 1,
+            "subjects": 1
+          },
+          "index_names": [
+            "ix_questions_subject_id"
+          ],
+          "buffer_fields_observed_before_normalization": [
+            "Heap Fetches",
+            "Local Dirtied Blocks",
+            "Local Hit Blocks",
+            "Local Read Blocks",
+            "Local Written Blocks",
+            "Shared Dirtied Blocks",
+            "Shared Hit Blocks",
+            "Shared Read Blocks",
+            "Shared Written Blocks",
+            "Temp Read Blocks",
+            "Temp Written Blocks"
+          ],
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Aggregate",
+              "Strategy": "Plain",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Plan Rows": 1
+            },
+            {
+              "depth": 1,
+              "Node Type": "Hash Join",
+              "Parent Relationship": "Outer",
+              "Join Type": "Inner",
+              "Actual Rows": 47480.0,
+              "Actual Loops": 1,
+              "Plan Rows": 47610,
+              "Hash Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 21,
+                "sha256": "4bfecca575599f83bb6990cb3d2609407f5ab47a8fb19aea98b5ecfb29e5c5d5"
+              }
+            },
+            {
+              "depth": 2,
+              "Node Type": "Index Only Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "questions",
+              "Alias": "q",
+              "Index Name": "ix_questions_subject_id",
+              "Actual Rows": 50000.0,
+              "Actual Loops": 1,
+              "Plan Rows": 50000
+            },
+            {
+              "depth": 2,
+              "Node Type": "Hash",
+              "Parent Relationship": "Inner",
+              "Actual Rows": 4748.0,
+              "Actual Loops": 1,
+              "Plan Rows": 4761
+            },
+            {
+              "depth": 3,
+              "Node Type": "Seq Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "subjects",
+              "Alias": "s",
+              "Actual Rows": 4748.0,
+              "Actual Loops": 1,
+              "Rows Removed by Filter": 252,
+              "Plan Rows": 4761,
+              "Filter": {
+                "redacted": "planner expression omitted",
+                "character_count": 79,
+                "sha256": "59b907e92a580417cb64ce09438987a17145b257d669372da23821721290a341"
+              }
+            }
+          ]
+        },
+        "normalized_explain_analyze": {
+          "Plan": {
+            "Node Type": "Aggregate",
+            "Strategy": "Plain",
+            "Partial Mode": "Simple",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 1468.69,
+            "Total Cost": 1468.7,
+            "Plan Rows": 1,
+            "Plan Width": 8,
+            "Actual Rows": 1.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Plans": [
+              {
+                "Node Type": "Hash Join",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Inner",
+                "Startup Cost": 184.3,
+                "Total Cost": 1349.66,
+                "Plan Rows": 47610,
+                "Plan Width": 0,
+                "Actual Rows": 47480.0,
+                "Actual Loops": 1,
+                "Disabled": false,
+                "Inner Unique": true,
+                "Hash Cond": {
+                  "redacted": "planner expression omitted",
+                  "character_count": 21,
+                  "sha256": "4bfecca575599f83bb6990cb3d2609407f5ab47a8fb19aea98b5ecfb29e5c5d5"
+                },
+                "Plans": [
+                  {
+                    "Node Type": "Index Only Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "ix_questions_subject_id",
+                    "Relation Name": "questions",
+                    "Alias": "q",
+                    "Startup Cost": 0.29,
+                    "Total Cost": 1034.29,
+                    "Plan Rows": 50000,
+                    "Plan Width": 4,
+                    "Actual Rows": 50000.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Index Searches": 1
+                  },
+                  {
+                    "Node Type": "Hash",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Startup Cost": 124.5,
+                    "Total Cost": 124.5,
+                    "Plan Rows": 4761,
+                    "Plan Width": 4,
+                    "Actual Rows": 4748.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Hash Buckets": 8192,
+                    "Original Hash Buckets": 8192,
+                    "Hash Batches": 1,
+                    "Original Hash Batches": 1,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Relation Name": "subjects",
+                        "Alias": "s",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 124.5,
+                        "Plan Rows": 4761,
+                        "Plan Width": 4,
+                        "Actual Rows": 4748.0,
+                        "Actual Loops": 1,
+                        "Disabled": false,
+                        "Filter": {
+                          "redacted": "planner expression omitted",
+                          "character_count": 79,
+                          "sha256": "59b907e92a580417cb64ce09438987a17145b257d669372da23821721290a341"
+                        },
+                        "Rows Removed by Filter": 252
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "observation_id": "subject-type-baseline-50000",
+        "runtime_query_id": "question-count-subject-type",
+        "source": "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcQuestionCountQueryAdapter.java",
+        "fixture_question_count": 50000,
+        "sql": "SELECT COUNT(1)\nFROM questions q\nLEFT JOIN subjects s ON s.id = q.subject_id\nWHERE (s.is_locked = false OR s.is_locked IS NULL)\nAND s.id IS NOT NULL\nAND s.name = :subject_name\nAND q.type = :question_type",
+        "sql_sha256": "bcf1fd72c60f3f77b7270b52545a2503b36fd6eac03ed9110a52fe9c2a8060ab",
+        "sql_statement_count": 1,
+        "scalar_count": 10,
+        "expected_scalar_count": 10,
+        "binding": {
+          "mode": "prepare-execute",
+          "bound_parameter_count": 2,
+          "named_parameter_count": 2,
+          "positional_sql_sha256": "8f967fdda9de6b3fc2fb5089a4960f128f65e010c6380851dca744cb9a79ef69",
+          "parameters": {
+            "question_type": {
+              "bind_kind": "jdbc-scalar",
+              "postgres_type": "text",
+              "value_kind": "scalar",
+              "value": "boolean"
+            },
+            "subject_name": {
+              "bind_kind": "jdbc-scalar",
+              "postgres_type": "text",
+              "value_kind": "scalar",
+              "value": "Subject 00002"
+            }
+          },
+          "occurrence_names": [
+            "subject_name",
+            "question_type"
+          ]
+        },
+        "temp_blocks_observed": {
+          "Temp Read Blocks": 0.0,
+          "Temp Written Blocks": 0.0
+        },
+        "assertions_passed": [
+          "expected-scalar-count",
+          "single-result-single-root-execution",
+          "bounded-plan-shape",
+          "no-row-driven-node-loop",
+          "catalog-only-fixed-relation-scan-budget",
+          "no-temp-blocks",
+          "selective-filter-index-observed",
+          "single-select-constant-bind-surface"
+        ],
+        "plan_summary": {
+          "root_node_type": "Aggregate",
+          "result_row_count": 1,
+          "root_actual_loops": 1,
+          "node_count": 4,
+          "maximum_depth": 2,
+          "maximum_actual_loops": 1,
+          "node_type_counts": {
+            "Aggregate": 1,
+            "Index Only Scan": 1,
+            "Index Scan": 1,
+            "Nested Loop": 1
+          },
+          "relation_scan_occurrences": {
+            "questions": 1,
+            "subjects": 1
+          },
+          "index_names": [
+            "ix_questions_subject_type",
+            "subjects_name_key"
+          ],
+          "buffer_fields_observed_before_normalization": [
+            "Heap Fetches",
+            "Local Dirtied Blocks",
+            "Local Hit Blocks",
+            "Local Read Blocks",
+            "Local Written Blocks",
+            "Shared Dirtied Blocks",
+            "Shared Hit Blocks",
+            "Shared Read Blocks",
+            "Shared Written Blocks",
+            "Temp Read Blocks",
+            "Temp Written Blocks"
+          ],
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Aggregate",
+              "Strategy": "Plain",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Plan Rows": 1
+            },
+            {
+              "depth": 1,
+              "Node Type": "Nested Loop",
+              "Parent Relationship": "Outer",
+              "Join Type": "Inner",
+              "Actual Rows": 10.0,
+              "Actual Loops": 1,
+              "Plan Rows": 2
+            },
+            {
+              "depth": 2,
+              "Node Type": "Index Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "subjects",
+              "Alias": "s",
+              "Index Name": "subjects_name_key",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Rows Removed by Filter": 0,
+              "Plan Rows": 1,
+              "Filter": {
+                "redacted": "planner expression omitted",
+                "character_count": 40,
+                "sha256": "b975c2028c9359e1ee915e479e801599426da45dbafd1e91c5d6d4fb6109f601"
+              },
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 30,
+                "sha256": "545cea3a70b6ac6f433cc350cbbefcd4b629bf8d7fdd907ddd942cd32c70d547"
+              }
+            },
+            {
+              "depth": 2,
+              "Node Type": "Index Only Scan",
+              "Parent Relationship": "Inner",
+              "Relation Name": "questions",
+              "Alias": "q",
+              "Index Name": "ix_questions_subject_type",
+              "Actual Rows": 10.0,
+              "Actual Loops": 1,
+              "Plan Rows": 2,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 50,
+                "sha256": "a7a2538cf25d93b2e9e537548454a97381fb7ea586a07dee677d83b3eb20ea83"
+              }
+            }
+          ]
+        },
+        "normalized_explain_analyze": {
+          "Plan": {
+            "Node Type": "Aggregate",
+            "Strategy": "Plain",
+            "Partial Mode": "Simple",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 12.65,
+            "Total Cost": 12.66,
+            "Plan Rows": 1,
+            "Plan Width": 8,
+            "Actual Rows": 1.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Inner",
+                "Startup Cost": 0.57,
+                "Total Cost": 12.65,
+                "Plan Rows": 2,
+                "Plan Width": 0,
+                "Actual Rows": 10.0,
+                "Actual Loops": 1,
+                "Disabled": false,
+                "Inner Unique": false,
+                "Plans": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "subjects_name_key",
+                    "Relation Name": "subjects",
+                    "Alias": "s",
+                    "Startup Cost": 0.28,
+                    "Total Cost": 8.3,
+                    "Plan Rows": 1,
+                    "Plan Width": 4,
+                    "Actual Rows": 1.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Index Cond": {
+                      "redacted": "planner expression omitted",
+                      "character_count": 30,
+                      "sha256": "545cea3a70b6ac6f433cc350cbbefcd4b629bf8d7fdd907ddd942cd32c70d547"
+                    },
+                    "Rows Removed by Index Recheck": 0,
+                    "Filter": {
+                      "redacted": "planner expression omitted",
+                      "character_count": 40,
+                      "sha256": "b975c2028c9359e1ee915e479e801599426da45dbafd1e91c5d6d4fb6109f601"
+                    },
+                    "Rows Removed by Filter": 0,
+                    "Index Searches": 1
+                  },
+                  {
+                    "Node Type": "Index Only Scan",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "ix_questions_subject_type",
+                    "Relation Name": "questions",
+                    "Alias": "q",
+                    "Startup Cost": 0.29,
+                    "Total Cost": 4.33,
+                    "Plan Rows": 2,
+                    "Plan Width": 4,
+                    "Actual Rows": 10.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Index Cond": {
+                      "redacted": "planner expression omitted",
+                      "character_count": 50,
+                      "sha256": "a7a2538cf25d93b2e9e537548454a97381fb7ea586a07dee677d83b3eb20ea83"
+                    },
+                    "Rows Removed by Index Recheck": 0,
+                    "Index Searches": 1
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "observation_id": "candidate-manifest-100000-baseline-50000",
+        "runtime_query_id": "question-count-candidate-large",
+        "source": "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcQuestionCountQueryAdapter.java",
+        "fixture_question_count": 50000,
+        "sql": "SELECT COUNT(1)\nFROM questions q\nLEFT JOIN subjects s ON s.id = q.subject_id\nWHERE (s.is_locked = false OR s.is_locked IS NULL)\nAND q.id = ANY(CAST(:candidate_question_ids AS bigint[]))",
+        "sql_sha256": "5be49a290669d3636934d12a7d0d2fceb327210d02c0a8d62de9d57dcb4ef524",
+        "sql_statement_count": 1,
+        "scalar_count": 47550,
+        "expected_scalar_count": 47550,
+        "binding": {
+          "mode": "prepare-execute",
+          "bound_parameter_count": 1,
+          "named_parameter_count": 1,
+          "positional_sql_sha256": "c1f21cb43eb147d810a571c5e2767b9693bc4b57438977223c33d67701a51d09",
+          "parameters": {
+            "candidate_question_ids": {
+              "bind_kind": "jdbc-sql-array",
+              "postgres_type": "bigint[]",
+              "value_kind": "array",
+              "element_count": 100000,
+              "value_sha256": "f23ed6841e69e84ec8ef96d7f068e4aa65a08a33afd4ade7ed9218996a7fa69c",
+              "canonical_decimal_lines_sha256": "b2bc7d3f8b652d2ec96865b68ad8f80e22cca174abe1aed7889e242a747d590f",
+              "first_values": [
+                1,
+                2,
+                3
+              ],
+              "last_values": [
+                99998,
+                99999,
+                100000
+              ],
+              "manifest_contract": {
+                "element_count": 100000,
+                "canonical_encoding": "utf8-decimal-lines-with-final-newline",
+                "sha256": "b2bc7d3f8b652d2ec96865b68ad8f80e22cca174abe1aed7889e242a747d590f",
+                "value_generator": {
+                  "kind": "inclusive-integer-range",
+                  "start": 1,
+                  "end": 100000,
+                  "step": 1
+                }
+              },
+              "matches_manifest_value": true
+            }
+          },
+          "occurrence_names": [
+            "candidate_question_ids"
+          ]
+        },
+        "temp_blocks_observed": {
+          "Temp Read Blocks": 0.0,
+          "Temp Written Blocks": 0.0
+        },
+        "assertions_passed": [
+          "expected-scalar-count",
+          "single-result-single-root-execution",
+          "bounded-plan-shape",
+          "no-row-driven-node-loop",
+          "catalog-only-fixed-relation-scan-budget",
+          "no-temp-blocks",
+          "single-select-constant-bind-surface"
+        ],
+        "plan_summary": {
+          "root_node_type": "Aggregate",
+          "result_row_count": 1,
+          "root_actual_loops": 1,
+          "node_count": 5,
+          "maximum_depth": 3,
+          "maximum_actual_loops": 1,
+          "node_type_counts": {
+            "Aggregate": 1,
+            "Hash": 1,
+            "Hash Join": 1,
+            "Index Scan": 1,
+            "Seq Scan": 1
+          },
+          "relation_scan_occurrences": {
+            "questions": 1,
+            "subjects": 1
+          },
+          "index_names": [
+            "questions_pkey"
+          ],
+          "buffer_fields_observed_before_normalization": [
+            "Local Dirtied Blocks",
+            "Local Hit Blocks",
+            "Local Read Blocks",
+            "Local Written Blocks",
+            "Shared Dirtied Blocks",
+            "Shared Hit Blocks",
+            "Shared Read Blocks",
+            "Shared Written Blocks",
+            "Temp Read Blocks",
+            "Temp Written Blocks"
+          ],
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Aggregate",
+              "Strategy": "Plain",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Plan Rows": 1
+            },
+            {
+              "depth": 1,
+              "Node Type": "Hash Join",
+              "Parent Relationship": "Outer",
+              "Join Type": "Left",
+              "Actual Rows": 47550.0,
+              "Actual Loops": 1,
+              "Rows Removed by Filter": 2450,
+              "Plan Rows": 41179,
+              "Filter": {
+                "redacted": "planner expression omitted",
+                "character_count": 44,
+                "sha256": "8ceff2e27d78497913b49dec247f3795b3dd3c9ca86e9bc939047a15d0f12bed"
+              },
+              "Hash Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 21,
+                "sha256": "4bfecca575599f83bb6990cb3d2609407f5ab47a8fb19aea98b5ecfb29e5c5d5"
+              }
+            },
+            {
+              "depth": 2,
+              "Node Type": "Index Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "questions",
+              "Alias": "q",
+              "Index Name": "questions_pkey",
+              "Actual Rows": 50000.0,
+              "Actual Loops": 1,
+              "Plan Rows": 43233,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 588921,
+                "sha256": "d61dd658d444af202ce4ec65b8f42abd340a2af9740a939ec801c3169b13f0e8"
+              }
+            },
+            {
+              "depth": 2,
+              "Node Type": "Hash",
+              "Parent Relationship": "Inner",
+              "Actual Rows": 5000.0,
+              "Actual Loops": 1,
+              "Plan Rows": 5000
+            },
+            {
+              "depth": 3,
+              "Node Type": "Seq Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "subjects",
+              "Alias": "s",
+              "Actual Rows": 5000.0,
+              "Actual Loops": 1,
+              "Plan Rows": 5000
+            }
+          ]
+        },
+        "normalized_explain_analyze": {
+          "Plan": {
+            "Node Type": "Aggregate",
+            "Strategy": "Plain",
+            "Partial Mode": "Simple",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 2133.29,
+            "Total Cost": 2133.3,
+            "Plan Rows": 1,
+            "Plan Width": 8,
+            "Actual Rows": 1.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Plans": [
+              {
+                "Node Type": "Hash Join",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Left",
+                "Startup Cost": 174.79,
+                "Total Cost": 2030.35,
+                "Plan Rows": 41179,
+                "Plan Width": 0,
+                "Actual Rows": 47550.0,
+                "Actual Loops": 1,
+                "Disabled": false,
+                "Inner Unique": true,
+                "Hash Cond": {
+                  "redacted": "planner expression omitted",
+                  "character_count": 21,
+                  "sha256": "4bfecca575599f83bb6990cb3d2609407f5ab47a8fb19aea98b5ecfb29e5c5d5"
+                },
+                "Filter": {
+                  "redacted": "planner expression omitted",
+                  "character_count": 44,
+                  "sha256": "8ceff2e27d78497913b49dec247f3795b3dd3c9ca86e9bc939047a15d0f12bed"
+                },
+                "Rows Removed by Filter": 2450,
+                "Plans": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "questions_pkey",
+                    "Relation Name": "questions",
+                    "Alias": "q",
+                    "Startup Cost": 0.29,
+                    "Total Cost": 1742.26,
+                    "Plan Rows": 43233,
+                    "Plan Width": 4,
+                    "Actual Rows": 50000.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Index Cond": {
+                      "redacted": "planner expression omitted",
+                      "character_count": 588921,
+                      "sha256": "d61dd658d444af202ce4ec65b8f42abd340a2af9740a939ec801c3169b13f0e8"
+                    },
+                    "Rows Removed by Index Recheck": 0,
+                    "Index Searches": 1
+                  },
+                  {
+                    "Node Type": "Hash",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Startup Cost": 112.0,
+                    "Total Cost": 112.0,
+                    "Plan Rows": 5000,
+                    "Plan Width": 5,
+                    "Actual Rows": 5000.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Hash Buckets": 8192,
+                    "Original Hash Buckets": 8192,
+                    "Hash Batches": 1,
+                    "Original Hash Batches": 1,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Relation Name": "subjects",
+                        "Alias": "s",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 112.0,
+                        "Plan Rows": 5000,
+                        "Plan Width": 5,
+                        "Actual Rows": 5000.0,
+                        "Actual Loops": 1,
+                        "Disabled": false
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "observation_id": "candidate-manifest-100000-large-150000",
+        "runtime_query_id": "question-count-candidate-large",
+        "source": "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcQuestionCountQueryAdapter.java",
+        "fixture_question_count": 150000,
+        "sql": "SELECT COUNT(1)\nFROM questions q\nLEFT JOIN subjects s ON s.id = q.subject_id\nWHERE (s.is_locked = false OR s.is_locked IS NULL)\nAND q.id = ANY(CAST(:candidate_question_ids AS bigint[]))",
+        "sql_sha256": "5be49a290669d3636934d12a7d0d2fceb327210d02c0a8d62de9d57dcb4ef524",
+        "sql_statement_count": 1,
+        "scalar_count": 95100,
+        "expected_scalar_count": 95100,
+        "binding": {
+          "mode": "prepare-execute",
+          "bound_parameter_count": 1,
+          "named_parameter_count": 1,
+          "positional_sql_sha256": "c1f21cb43eb147d810a571c5e2767b9693bc4b57438977223c33d67701a51d09",
+          "parameters": {
+            "candidate_question_ids": {
+              "bind_kind": "jdbc-sql-array",
+              "postgres_type": "bigint[]",
+              "value_kind": "array",
+              "element_count": 100000,
+              "value_sha256": "f23ed6841e69e84ec8ef96d7f068e4aa65a08a33afd4ade7ed9218996a7fa69c",
+              "canonical_decimal_lines_sha256": "b2bc7d3f8b652d2ec96865b68ad8f80e22cca174abe1aed7889e242a747d590f",
+              "first_values": [
+                1,
+                2,
+                3
+              ],
+              "last_values": [
+                99998,
+                99999,
+                100000
+              ],
+              "manifest_contract": {
+                "element_count": 100000,
+                "canonical_encoding": "utf8-decimal-lines-with-final-newline",
+                "sha256": "b2bc7d3f8b652d2ec96865b68ad8f80e22cca174abe1aed7889e242a747d590f",
+                "value_generator": {
+                  "kind": "inclusive-integer-range",
+                  "start": 1,
+                  "end": 100000,
+                  "step": 1
+                }
+              },
+              "matches_manifest_value": true
+            }
+          },
+          "occurrence_names": [
+            "candidate_question_ids"
+          ]
+        },
+        "temp_blocks_observed": {
+          "Temp Read Blocks": 0.0,
+          "Temp Written Blocks": 0.0
+        },
+        "assertions_passed": [
+          "expected-scalar-count",
+          "single-result-single-root-execution",
+          "bounded-plan-shape",
+          "no-row-driven-node-loop",
+          "catalog-only-fixed-relation-scan-budget",
+          "no-temp-blocks",
+          "single-select-constant-bind-surface"
+        ],
+        "plan_summary": {
+          "root_node_type": "Aggregate",
+          "result_row_count": 1,
+          "root_actual_loops": 1,
+          "node_count": 5,
+          "maximum_depth": 3,
+          "maximum_actual_loops": 1,
+          "node_type_counts": {
+            "Aggregate": 1,
+            "Hash": 1,
+            "Hash Join": 1,
+            "Index Scan": 1,
+            "Seq Scan": 1
+          },
+          "relation_scan_occurrences": {
+            "questions": 1,
+            "subjects": 1
+          },
+          "index_names": [
+            "questions_pkey"
+          ],
+          "buffer_fields_observed_before_normalization": [
+            "Local Dirtied Blocks",
+            "Local Hit Blocks",
+            "Local Read Blocks",
+            "Local Written Blocks",
+            "Shared Dirtied Blocks",
+            "Shared Hit Blocks",
+            "Shared Read Blocks",
+            "Shared Written Blocks",
+            "Temp Read Blocks",
+            "Temp Written Blocks"
+          ],
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Aggregate",
+              "Strategy": "Plain",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Plan Rows": 1
+            },
+            {
+              "depth": 1,
+              "Node Type": "Hash Join",
+              "Parent Relationship": "Outer",
+              "Join Type": "Left",
+              "Actual Rows": 95100.0,
+              "Actual Loops": 1,
+              "Rows Removed by Filter": 4900,
+              "Plan Rows": 95250,
+              "Filter": {
+                "redacted": "planner expression omitted",
+                "character_count": 44,
+                "sha256": "8ceff2e27d78497913b49dec247f3795b3dd3c9ca86e9bc939047a15d0f12bed"
+              },
+              "Hash Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 21,
+                "sha256": "4bfecca575599f83bb6990cb3d2609407f5ab47a8fb19aea98b5ecfb29e5c5d5"
+              }
+            },
+            {
+              "depth": 2,
+              "Node Type": "Index Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "questions",
+              "Alias": "q",
+              "Index Name": "questions_pkey",
+              "Actual Rows": 100000.0,
+              "Actual Loops": 1,
+              "Plan Rows": 100000,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 588921,
+                "sha256": "d61dd658d444af202ce4ec65b8f42abd340a2af9740a939ec801c3169b13f0e8"
+              }
+            },
+            {
+              "depth": 2,
+              "Node Type": "Hash",
+              "Parent Relationship": "Inner",
+              "Actual Rows": 5000.0,
+              "Actual Loops": 1,
+              "Plan Rows": 5000
+            },
+            {
+              "depth": 3,
+              "Node Type": "Seq Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "subjects",
+              "Alias": "s",
+              "Actual Rows": 5000.0,
+              "Actual Loops": 1,
+              "Plan Rows": 5000
+            }
+          ]
+        },
+        "normalized_explain_analyze": {
+          "Plan": {
+            "Node Type": "Aggregate",
+            "Strategy": "Plain",
+            "Partial Mode": "Simple",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 4961.68,
+            "Total Cost": 4961.69,
+            "Plan Rows": 1,
+            "Plan Width": 8,
+            "Actual Rows": 1.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Plans": [
+              {
+                "Node Type": "Hash Join",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Left",
+                "Startup Cost": 174.92,
+                "Total Cost": 4723.56,
+                "Plan Rows": 95250,
+                "Plan Width": 0,
+                "Actual Rows": 95100.0,
+                "Actual Loops": 1,
+                "Disabled": false,
+                "Inner Unique": true,
+                "Hash Cond": {
+                  "redacted": "planner expression omitted",
+                  "character_count": 21,
+                  "sha256": "4bfecca575599f83bb6990cb3d2609407f5ab47a8fb19aea98b5ecfb29e5c5d5"
+                },
+                "Filter": {
+                  "redacted": "planner expression omitted",
+                  "character_count": 44,
+                  "sha256": "8ceff2e27d78497913b49dec247f3795b3dd3c9ca86e9bc939047a15d0f12bed"
+                },
+                "Rows Removed by Filter": 4900,
+                "Plans": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "questions_pkey",
+                    "Relation Name": "questions",
+                    "Alias": "q",
+                    "Startup Cost": 0.42,
+                    "Total Cost": 4286.34,
+                    "Plan Rows": 100000,
+                    "Plan Width": 4,
+                    "Actual Rows": 100000.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Index Cond": {
+                      "redacted": "planner expression omitted",
+                      "character_count": 588921,
+                      "sha256": "d61dd658d444af202ce4ec65b8f42abd340a2af9740a939ec801c3169b13f0e8"
+                    },
+                    "Rows Removed by Index Recheck": 0,
+                    "Index Searches": 1
+                  },
+                  {
+                    "Node Type": "Hash",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Startup Cost": 112.0,
+                    "Total Cost": 112.0,
+                    "Plan Rows": 5000,
+                    "Plan Width": 5,
+                    "Actual Rows": 5000.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Hash Buckets": 8192,
+                    "Original Hash Buckets": 8192,
+                    "Hash Batches": 1,
+                    "Original Hash Batches": 1,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Relation Name": "subjects",
+                        "Alias": "s",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 112.0,
+                        "Plan Rows": 5000,
+                        "Plan Width": 5,
+                        "Actual Rows": 5000.0,
+                        "Actual Loops": 1,
+                        "Disabled": false
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "observation_id": "candidate-boundary-65536-large-150000",
+        "runtime_query_id": "question-count-candidate-large",
+        "source": "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcQuestionCountQueryAdapter.java",
+        "fixture_question_count": 150000,
+        "sql": "SELECT COUNT(1)\nFROM questions q\nLEFT JOIN subjects s ON s.id = q.subject_id\nWHERE (s.is_locked = false OR s.is_locked IS NULL)\nAND q.id = ANY(CAST(:candidate_question_ids AS bigint[]))",
+        "sql_sha256": "5be49a290669d3636934d12a7d0d2fceb327210d02c0a8d62de9d57dcb4ef524",
+        "sql_statement_count": 1,
+        "scalar_count": 62325,
+        "expected_scalar_count": 62325,
+        "binding": {
+          "mode": "prepare-execute",
+          "bound_parameter_count": 1,
+          "named_parameter_count": 1,
+          "positional_sql_sha256": "c1f21cb43eb147d810a571c5e2767b9693bc4b57438977223c33d67701a51d09",
+          "parameters": {
+            "candidate_question_ids": {
+              "bind_kind": "jdbc-sql-array",
+              "postgres_type": "bigint[]",
+              "value_kind": "array",
+              "element_count": 65536,
+              "value_sha256": "eb4855adb3e720efc331e0467c3ed79aed0d588eb1b442f39a8a50720bcc4a96",
+              "canonical_decimal_lines_sha256": "d689103f30b183c0952dc7d04b5e7ae6163269e04c8f7724a0769490a6016a44",
+              "first_values": [
+                1,
+                2,
+                3
+              ],
+              "last_values": [
+                65534,
+                65535,
+                65536
+              ],
+              "manifest_contract": {
+                "element_count": 100000,
+                "canonical_encoding": "utf8-decimal-lines-with-final-newline",
+                "sha256": "b2bc7d3f8b652d2ec96865b68ad8f80e22cca174abe1aed7889e242a747d590f",
+                "value_generator": {
+                  "kind": "inclusive-integer-range",
+                  "start": 1,
+                  "end": 100000,
+                  "step": 1
+                }
+              },
+              "matches_manifest_value": false
+            }
+          },
+          "occurrence_names": [
+            "candidate_question_ids"
+          ]
+        },
+        "temp_blocks_observed": {
+          "Temp Read Blocks": 0.0,
+          "Temp Written Blocks": 0.0
+        },
+        "assertions_passed": [
+          "expected-scalar-count",
+          "single-result-single-root-execution",
+          "bounded-plan-shape",
+          "no-row-driven-node-loop",
+          "catalog-only-fixed-relation-scan-budget",
+          "no-temp-blocks",
+          "single-select-constant-bind-surface"
+        ],
+        "plan_summary": {
+          "root_node_type": "Aggregate",
+          "result_row_count": 1,
+          "root_actual_loops": 1,
+          "node_count": 5,
+          "maximum_depth": 3,
+          "maximum_actual_loops": 1,
+          "node_type_counts": {
+            "Aggregate": 1,
+            "Hash": 1,
+            "Hash Join": 1,
+            "Index Scan": 1,
+            "Seq Scan": 1
+          },
+          "relation_scan_occurrences": {
+            "questions": 1,
+            "subjects": 1
+          },
+          "index_names": [
+            "questions_pkey"
+          ],
+          "buffer_fields_observed_before_normalization": [
+            "Local Dirtied Blocks",
+            "Local Hit Blocks",
+            "Local Read Blocks",
+            "Local Written Blocks",
+            "Shared Dirtied Blocks",
+            "Shared Hit Blocks",
+            "Shared Read Blocks",
+            "Shared Written Blocks",
+            "Temp Read Blocks",
+            "Temp Written Blocks"
+          ],
+          "nodes": [
+            {
+              "depth": 0,
+              "Node Type": "Aggregate",
+              "Strategy": "Plain",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Plan Rows": 1
+            },
+            {
+              "depth": 1,
+              "Node Type": "Hash Join",
+              "Parent Relationship": "Outer",
+              "Join Type": "Left",
+              "Actual Rows": 62325.0,
+              "Actual Loops": 1,
+              "Rows Removed by Filter": 3211,
+              "Plan Rows": 62423,
+              "Filter": {
+                "redacted": "planner expression omitted",
+                "character_count": 44,
+                "sha256": "8ceff2e27d78497913b49dec247f3795b3dd3c9ca86e9bc939047a15d0f12bed"
+              },
+              "Hash Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 21,
+                "sha256": "4bfecca575599f83bb6990cb3d2609407f5ab47a8fb19aea98b5ecfb29e5c5d5"
+              }
+            },
+            {
+              "depth": 2,
+              "Node Type": "Index Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "questions",
+              "Alias": "q",
+              "Index Name": "questions_pkey",
+              "Actual Rows": 65536.0,
+              "Actual Loops": 1,
+              "Plan Rows": 65536,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 382136,
+                "sha256": "941154256a23b3d7c0cbae8414aa1da25fff99fe79565532bf52f6bc5d43d1e8"
+              }
+            },
+            {
+              "depth": 2,
+              "Node Type": "Hash",
+              "Parent Relationship": "Inner",
+              "Actual Rows": 5000.0,
+              "Actual Loops": 1,
+              "Plan Rows": 5000
+            },
+            {
+              "depth": 3,
+              "Node Type": "Seq Scan",
+              "Parent Relationship": "Outer",
+              "Relation Name": "subjects",
+              "Alias": "s",
+              "Actual Rows": 5000.0,
+              "Actual Loops": 1,
+              "Plan Rows": 5000
+            }
+          ]
+        },
+        "normalized_explain_analyze": {
+          "Plan": {
+            "Node Type": "Aggregate",
+            "Strategy": "Plain",
+            "Partial Mode": "Simple",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 3436.68,
+            "Total Cost": 3436.69,
+            "Plan Rows": 1,
+            "Plan Width": 8,
+            "Actual Rows": 1.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Plans": [
+              {
+                "Node Type": "Hash Join",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Left",
+                "Startup Cost": 174.92,
+                "Total Cost": 3280.62,
+                "Plan Rows": 62423,
+                "Plan Width": 0,
+                "Actual Rows": 62325.0,
+                "Actual Loops": 1,
+                "Disabled": false,
+                "Inner Unique": true,
+                "Hash Cond": {
+                  "redacted": "planner expression omitted",
+                  "character_count": 21,
+                  "sha256": "4bfecca575599f83bb6990cb3d2609407f5ab47a8fb19aea98b5ecfb29e5c5d5"
+                },
+                "Filter": {
+                  "redacted": "planner expression omitted",
+                  "character_count": 44,
+                  "sha256": "8ceff2e27d78497913b49dec247f3795b3dd3c9ca86e9bc939047a15d0f12bed"
+                },
+                "Rows Removed by Filter": 3211,
+                "Plans": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "questions_pkey",
+                    "Relation Name": "questions",
+                    "Alias": "q",
+                    "Startup Cost": 0.42,
+                    "Total Cost": 2933.95,
+                    "Plan Rows": 65536,
+                    "Plan Width": 4,
+                    "Actual Rows": 65536.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Index Cond": {
+                      "redacted": "planner expression omitted",
+                      "character_count": 382136,
+                      "sha256": "941154256a23b3d7c0cbae8414aa1da25fff99fe79565532bf52f6bc5d43d1e8"
+                    },
+                    "Rows Removed by Index Recheck": 0,
+                    "Index Searches": 1
+                  },
+                  {
+                    "Node Type": "Hash",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Startup Cost": 112.0,
+                    "Total Cost": 112.0,
+                    "Plan Rows": 5000,
+                    "Plan Width": 5,
+                    "Actual Rows": 5000.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Hash Buckets": 8192,
+                    "Original Hash Buckets": 8192,
+                    "Hash Batches": 1,
+                    "Original Hash Batches": 1,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Relation Name": "subjects",
+                        "Alias": "s",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 112.0,
+                        "Plan Rows": 5000,
+                        "Plan Width": 5,
+                        "Actual Rows": 5000.0,
+                        "Actual Loops": 1,
+                        "Disabled": false
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "cross_observation_assertions": {
+    "status": "passed",
+    "runtime_variant_count": 5,
+    "baseline_runtime_variant_coverage": [
+      "question-count-anonymous-all",
+      "question-count-auth-restricted",
+      "question-count-auth-unrestricted",
+      "question-count-candidate-large",
+      "question-count-subject-type"
+    ],
+    "bound_parameter_counts_by_runtime_query": {
+      "question-count-anonymous-all": [
+        0
+      ],
+      "question-count-auth-restricted": [
+        1
+      ],
+      "question-count-auth-unrestricted": [
+        0
+      ],
+      "question-count-candidate-large": [
+        1
+      ],
+      "question-count-subject-type": [
+        2
+      ]
+    },
+    "candidate_named_parameter_count": 1,
+    "candidate_bound_parameter_count": 1,
+    "candidate_element_counts": [
+      65536,
+      100000
+    ],
+    "sql_statement_count_per_observation": 1,
+    "n_plus_one": false,
+    "runtime_dml_ddl_temp": false
+  },
+  "interpretation": {
+    "status": "bounded_synthetic_plan_evidence_only",
+    "statement": "The artifact fixes exact Java runtime SQL hashes, constant array-bind cardinality, catalog-only relation scan budgets, result counts, plan shape bounds, and absence of TEMP spill. Timing and buffer values are observed only and are not production latency or capacity claims."
+  },
+  "reproduction": {
+    "working_directory": "repository root containing Ti-Java",
+    "command": "python3 Ti-Java/tools/capture_phase4a_question_count_query_plans.py --output Ti-Java/docs/refactor/phase4a/question-count-query-plan-evidence.json",
+    "isolation": "ephemeral network-disabled container; removed in finally"
+  }
+}

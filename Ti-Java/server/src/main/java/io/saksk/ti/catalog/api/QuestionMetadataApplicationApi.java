@@ -4,4 +4,6 @@ package io.saksk.ti.catalog.api;
 public interface QuestionMetadataApplicationApi {
 
     QuestionTypeCatalogView questionTypes();
+
+    long countQuestions(QuestionCatalogCountQuery query);
 }

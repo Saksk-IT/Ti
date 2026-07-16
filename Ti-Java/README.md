@@ -2,17 +2,18 @@
 
 Ti-Java 是 Ti 的独立重构项目，目标是以 Java 25、Spring Boot 4.1、Spring MVC 和 Spring Modulith 重新实现现有业务，并逐步加入 Vue 3 + TypeScript Web 与项目自有的小程序。
 
-阶段 0 事实基线与阶段 1 架构/契约已经固化，阶段 2 Java 基础骨架与阶段 3 认证兼容切片也已通过门禁；阶段 4A 已实现受保护科目目录和公共题库 7 条 GET 的 Java shadow 切片，并补齐题目类型元数据的 catalog 内部读取能力。当前有效状态仍是 **11 个 migrated operation、600 个 pending、0 个 production cutover**；两条后台题型 HTTP 路由继续由 `operations` 持有且保持 pending，旧 Flask 仍是生产运行所有者，整个长期重构目标也尚未完成。
+阶段 0 事实基线与阶段 1 架构/契约已经固化，阶段 2 Java 基础骨架与阶段 3 认证兼容切片也已通过门禁；阶段 4A 已实现受保护科目目录和公共题库 7 条 GET 的 Java shadow 切片，并补齐题目类型与题量的 catalog 内部读取能力。当前有效状态仍是 **11 个 migrated operation、600 个 pending、0 个 production cutover**；两条后台题型 HTTP 路由继续由 `operations` 持有，两条题量 HTTP 路由延后由 Phase 4C 的 `learning` 组合，四条路径都保持 pending。旧 Flask 仍是生产运行所有者，整个长期重构目标也尚未完成。
 
 ## 当前技术与边界
 
 - `server/` 固定使用 Java 25、Maven Wrapper 3.9.16、Spring Boot 4.1.0 和 Spring Modulith 2.1.0；默认采用 Spring MVC，不引入 WebFlux、R2DBC 或阶段 8 之前的 Flyway。
 - 模块化单体包含 `identity`、`catalog`、`personalbank`、`learning`、`assessment`、`community`、`messaging`、`campus`、`coding`、`intelligence`、`operations` 11 个业务模块，以及 `sharedkernel`、`web` 两个支撑模块。
-- `identity`、`catalog` 与 `operations` 已部分实现，共有 13 个受机器合同约束的公开应用方法；其余 8 个业务模块仍保持延后形状，不能从占位名称推断为已迁移能力。
+- `identity`、`catalog` 与 `operations` 已部分实现，共有 14 个受机器合同约束的公开应用方法；其余 8 个业务模块仍保持延后形状，不能从占位名称推断为已迁移能力。
 - PostgreSQL 是唯一业务事实源；Redis 只用于可重建的辅助状态。Hibernate 始终使用 `ddl-auto=validate`，禁止 ORM 自动建表或改表。
 - `catalog` 已通过 `identity::api` 迁移 `GET /api/quiz/subjects` 与 `/meta`；业务用例固定两条 SELECT，加上 HTTP 认证权威查询后正常成功请求总计三条 SELECT。读取保持稳定 ID 顺序和 per-identity/per-route Redis 限流，不拥有写入权，也未启用无法完整失效的应用数据缓存。
 - `catalog` 还已实现公共题库 search/list/summary/hot/boards/detail/card 共 7 条旧路径兼容 GET。GET 只读取原子发布的完整 snapshot：`<= 300s` 正常服务、`300–900s` 服务最后完整快照并记陈旧指标、`> 900s` 或冷/残缺状态稳定返回 503 且 readiness fail closed；PostgreSQL 事务级 advisory lock 是最终单写者边界，Redis 仅作可过期、可接管的刷新协调。
 - `catalog` 的 `QuestionMetadataApplicationApi` 以一条精确 `SELECT DISTINCT questions.type` 返回不可变的原始题型值，保留空串与 Unicode 空白供未来路径级兼容投影使用。它不包含中文展示、认证或错误信封；`GET /admin/api/types` 与 `GET /admin/types` 尚未迁入 Java HTTP 层，也不计入 migrated operation。
+- 同一 API 还提供只读题量原语：显式区分匿名可保留 null 科目与认证必须匹配现存科目，支持精确科目/题型、受限科目和候选题集合。65,536 或 100,000 个候选 ID 仍使用一个 PostgreSQL `bigint[]` 参数，不展开动态 `IN`、不创建临时表，也不读取 learning/identity 自有表。`GET /api/questions/count` 与 `/api/quiz/questions/count` 的收藏、错题、私有标签、条件认证、缓存和限流仍待 Phase 4C 完整迁移。
 - 当前有效数据所有权为 **159 个资源且 159 个均有唯一 owner**。公共题库新增的 snapshot/viewer 投影控制表、读取限流键和刷新锁均是可重建辅助状态，`production cutover=0`，不能据此宣称接管旧业务事实或生产流量。
 
 ## 目录
@@ -23,7 +24,7 @@ Ti-Java 是 Ti 的独立重构项目，目标是以 Java 25、Spring Boot 4.1、
 - `compose.dev.yml`：与旧项目隔离的阶段 2 本地 Compose。
 - `docs/refactor/phase2/`：阶段 2 范围、证据和未完成边界。
 - `docs/refactor/phase3/`：阶段 3 路由增量、认证兼容、批准差异和 p3-009 双运行时证据。
-- `docs/refactor/phase4a/`：科目、公共题库与题目类型元数据的读取金样、snapshot 决策、业务不变量、批准差异、累计路由/API 形状和查询计划证据。
+- `docs/refactor/phase4a/`：科目、公共题库、题型与题量的读取金样、snapshot 决策、业务不变量、批准差异、累计路由/API 形状和查询计划证据。
 - `contracts/`：确定性生成的 OpenAPI 3.1.2 初稿与人工证据 override。
 - `openapi/phase3-authentication.openapi.json`：两条 Phase 3 operation 的自包含 OpenAPI 3.1.2 增量。
 - `openapi/phase4a-subject-directory.openapi.json`：两条科目目录 operation 的自包含 OpenAPI 3.1.2 增量。
@@ -62,6 +63,10 @@ cd server
 题目类型元数据内部能力的固定旧提交 golden 为 22 个独立 case，覆盖 full admin、科目管理员、普通用户、匿名、Bearer-only、Session+Bearer、空表、Unicode 空白、别名/未知值和两种数据库故障信封；文件 SHA-256 为 `928e278edb35043126628c1050280c4792142c38088d47fefa86a12d401d8d6b`。精确 Java 运行时 SQL 在 PostgreSQL 18.4 的 50,000 题目夹具上固定为一次查询、一次 `questions` 扫描和 12 个原始值，无 N+1；计划 SHA-256 为 `28f7221cb09fbc1f23ed1a2c92acf77e283d38874199b22465868a5f43f23853`，并在 PostgreSQL 16.14/18.4 兼容测试中通过。该证据只接受 catalog 内部能力，不接受两条后台 HTTP operation 已迁移。
 
 题型内部能力切片的完整 `clean verify` 已通过 329 个 surefire 与 46 个 failsafe，0 failure/error/skip。当前 Java build-context SHA-256 `fdc94000537d266595a22082ee28df0e7f04414855d6f4b36ba2125707153a8d` 的 WORM 已通过 PostgreSQL 18.4、70 表/617 列、只读 ACL、Hibernate `validate` 与 readiness，并通过 Phase 2 静态新鲜度门禁。仅复制 1,109 个受控源文件的独立 `Ti-Java/` 副本还通过 Phase 1、Phase 2/3 静态门禁、329+46 Maven 与独立 PostgreSQL/Redis 数据面往返；临时副本、容器和专用缓存卷均已清理。
+
+题量内部能力的固定旧提交 golden 为 36 个独立 case，覆盖双路由条件认证、Session/Bearer 优先级、首参数和 source/mode 优先级、锁定/受限/null 科目、题型转换、收藏/错题/标签及 GET 时缓存、限流、DDL 和故障副作用；文件 SHA-256 为 `8da18675ed9f2c38fdf4444606ecbd1b465fd08e8084829b6d20314271c62b00`。精确 Java 运行时 SQL 在 PostgreSQL 18.4 的 50,000/150,000 题目夹具上覆盖 5 个固定变体和 7 个观测；65,536/100,000 个候选 ID 均保持一个 `bigint[]` bind，计划 SHA-256 为 `d1958ab2b471f5454614c20018e85840aed82d68ddea6575efe3cc33132161db`。该证据只接受 catalog 内部能力，不接受两条题量 HTTP operation 已迁移。
+
+题量内部能力切片的完整 `clean verify` 已通过 346 个 surefire 与 48 个 failsafe，0 failure/error/skip。当前 Java build-context SHA-256 `cc9bed50c29c379b6e2183b66e82f5c042c72ad934bfe3391c503639f3d9a9d7` 的 WORM 已通过 PostgreSQL 18.4、70 表/617 列、只读 ACL、Hibernate `validate` 与 readiness；结构化报告 SHA-256 为 `e1b5d3a7a66864c31d0b6fb9d2e5d0494b58338d97f446b751d20acab0853842`。仅复制 1,126 个受控文件的独立 `Ti-Java/` 副本还通过 Phase 1、Phase 2/3 静态门禁、346+48 Maven、独立 PostgreSQL/Redis 数据面、镜像构建、Compose readiness 与 bind-source 审计；临时副本、容器、网络和卷均已清理。
 
 ## 启动独立开发 Compose
 

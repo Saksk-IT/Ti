@@ -137,7 +137,7 @@ class ModuleContractParityTest {
     void latestPublicShapesExactlyMatchImplementedOperationsAndKeepTheRestDeferred() throws Exception {
         assertThat(shapeStatusRoot.path("migrated_route_count").asInt()).isEqualTo(11);
         assertThat(shapeStatusRoot.path("implemented_route_backed_operation_count").asInt()).isEqualTo(11);
-        assertThat(shapeStatusRoot.path("implemented_public_application_method_count").asInt()).isEqualTo(13);
+        assertThat(shapeStatusRoot.path("implemented_public_application_method_count").asInt()).isEqualTo(14);
         assertThat(shapeStatusRoot.path("event_payload_shape_status").asString())
                 .isEqualTo("deferred_to_phase5");
 
@@ -1080,19 +1080,32 @@ class ModuleContractParityTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(metadataApi.path("lifecycle").asString())
-                .isEqualTo("catalog_question_metadata_query_boundary");
+                .isEqualTo("catalog_question_metadata_and_count_query_boundary");
         assertThat(metadataApi.path("direct_http_operation").asBoolean()).isFalse();
         assertThat(strings(metadataApi.path("deferred_http_route_ids")))
                 .containsExactlyInAnyOrder("e4cbe4d6bcc8", "3a346cb29186");
         assertThat(metadataApi.path("deferred_http_owner").asString()).isEqualTo("operations");
-        assertThat(metadataApi.path("methods")).hasSize(1);
+        assertThat(strings(metadataApi.path("deferred_learning_http_route_ids")))
+                .containsExactlyInAnyOrder("c618fb5f9f97", "bb21e7730d04");
+        assertThat(metadataApi.path("deferred_learning_http_owner").asString())
+                .isEqualTo("learning");
+        assertThat(metadataApi.path("deferred_learning_phase").asString()).isEqualTo("4C");
+        assertThat(metadataApi.path("methods")).hasSize(2);
         assertThat(strings(catalogShape.path("implemented_types")))
-                .contains("QuestionTypeCatalogView");
+                .contains(
+                        "QuestionTypeCatalogView",
+                        "QuestionCatalogCountQuery",
+                        "QuestionSubjectAssignmentScope");
         Class<?> api = Class.forName(
                 "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi");
         assertThat(api.isInterface()).isTrue();
         assertThat(api.getDeclaredMethod("questionTypes").getReturnType().getName())
                 .isEqualTo("io.saksk.ti.catalog.api.QuestionTypeCatalogView");
+        assertThat(api.getDeclaredMethod(
+                        "countQuestions",
+                        Class.forName("io.saksk.ti.catalog.api.QuestionCatalogCountQuery"))
+                .getReturnType())
+                .isEqualTo(long.class);
         Class<?> view = Class.forName("io.saksk.ti.catalog.api.QuestionTypeCatalogView");
         assertThat(view.isRecord()).isTrue();
         assertThat(Arrays.stream(view.getRecordComponents()).map(component -> component.getName()))
@@ -1189,6 +1202,297 @@ class ModuleContractParityTest {
         assertThat(measuredQuery.path("plan_summary").path("node_type_counts")
                         .has("Nested Loop"))
                 .isFalse();
+    }
+
+    @Test
+    void phase4aQuestionCountCapabilityIsMachineClosedWithoutMigratingItsHttpRoutes()
+            throws Exception {
+        Path contractPath = resolveInsideTiJava(
+                "docs/refactor/phase4a/question-count-read-contract.json");
+        Path goldenPath = resolveInsideTiJava(
+                "docs/refactor/phase4a/golden-question-count-reads.json");
+        Path queryPlanPath = resolveInsideTiJava(
+                "docs/refactor/phase4a/question-count-query-plan-evidence.json");
+        Path routeBaselinePath = resolveInsideTiJava(
+                "docs/refactor/02-route-parity-matrix.csv");
+        Path routeDeltaPath = resolveInsideTiJava(
+                "docs/refactor/phase4a/route-parity-delta.csv");
+        Path ownershipPath = resolveInsideTiJava(
+                "docs/refactor/03-data-ownership.csv");
+        Path approvedDifferencesPath = resolveInsideTiJava(
+                "docs/refactor/phase4a/approved-differences.md");
+        JsonNode contract = JSON.readTree(Files.readString(contractPath, StandardCharsets.UTF_8));
+        JsonNode golden = JSON.readTree(Files.readString(goldenPath, StandardCharsets.UTF_8));
+        JsonNode queryPlan = JSON.readTree(Files.readString(queryPlanPath, StandardCharsets.UTF_8));
+        JsonNode effective = JSON.readTree(Files.readString(
+                resolveInsideTiJava("docs/refactor/phase4a/effective-route-parity-status.json"),
+                StandardCharsets.UTF_8));
+        JsonNode openApi = JSON.readTree(Files.readString(
+                resolveInsideTiJava("contracts/openapi.json"), StandardCharsets.UTF_8));
+
+        assertThat(contract.path("contract_id").asString())
+                .isEqualTo("ti.phase4a.question-count-read-contract");
+        assertThat(contract.path("status").asString())
+                .isEqualTo(
+                        "catalog_internal_capability_implemented_http_operations_deferred_to_phase4c");
+        assertThat(sha256(goldenPath))
+                .isEqualTo(contract.path("evidence").path("golden")
+                        .path("file_sha256").asString());
+        assertThat(sha256(queryPlanPath))
+                .isEqualTo(contract.path("evidence").path("query_plan")
+                        .path("file_sha256").asString());
+        assertThat(sha256(routeBaselinePath))
+                .isEqualTo(contract.path("evidence").path("frozen_route_matrix")
+                        .path("sha256").asString());
+        assertThat(sha256(ownershipPath))
+                .isEqualTo(contract.path("evidence").path("data_ownership")
+                        .path("sha256").asString());
+        assertThat(sha256(approvedDifferencesPath))
+                .isEqualTo(contract.path("evidence").path("approved_differences")
+                        .path("sha256").asString());
+        assertThat(contract.path("evidence").path("approved_differences")
+                        .path("new_difference_ids"))
+                .isEmpty();
+        assertThat(contract.path("evidence").path("data_ownership")
+                        .path("delta_required").asBoolean())
+                .isFalse();
+
+        Map<ResourceKey, String> owners = resourceOwnersFromCsv(ownershipPath);
+        assertThat(owners)
+                .containsEntry(new ResourceKey("table", "questions"), "catalog")
+                .containsEntry(new ResourceKey("table", "subjects"), "catalog")
+                .containsEntry(new ResourceKey("table", "favorites"), "learning")
+                .containsEntry(new ResourceKey("table", "mistakes"), "learning")
+                .containsEntry(new ResourceKey("table", "user_progress"), "learning")
+                .containsEntry(new ResourceKey("table", "user_question_tag_items"), "learning")
+                .containsEntry(new ResourceKey("table", "users"), "identity")
+                .containsEntry(new ResourceKey("table", "user_subjects"), "identity");
+        assertThat(contractModules.get("learning").allowedDependencies()).contains("catalog");
+        assertThat(contractModules.get("catalog").allowedDependencies()).doesNotContain("learning");
+
+        Set<RouteKey> deferred = Set.of(
+                new RouteKey("c618fb5f9f97", "/api/questions/count", "GET"),
+                new RouteKey("bb21e7730d04", "/api/quiz/questions/count", "GET"));
+        List<String> baselineLines = Files.readAllLines(routeBaselinePath, StandardCharsets.UTF_8);
+        List<String> baselineHeader = parseCsvLine(baselineLines.getFirst());
+        Map<RouteKey, Map<String, String>> baselineOperations = new LinkedHashMap<>();
+        for (String line : baselineLines.subList(1, baselineLines.size())) {
+            Map<String, String> row = csvRow(baselineHeader, parseCsvLine(line));
+            for (String method : row.get("methods").split(",")) {
+                baselineOperations.put(
+                        new RouteKey(row.get("route_id"), row.get("path"), method), row);
+            }
+        }
+        for (RouteKey route : deferred) {
+            assertThat(baselineOperations.get(route)).isNotNull();
+            assertThat(baselineOperations.get(route).get("target_module")).isEqualTo("catalog");
+            assertThat(baselineOperations.get(route).get("migration_status")).isEqualTo("pending");
+        }
+        assertThat(contract.path("route_status").path("operations")).hasSize(2);
+        for (JsonNode operation : contract.path("route_status").path("operations")) {
+            assertThat(deferred).contains(new RouteKey(
+                    operation.path("route_id").asString(),
+                    operation.path("path").asString(),
+                    operation.path("method").asString()));
+            assertThat(operation.path("baseline_target_module").asString()).isEqualTo("catalog");
+            assertThat(operation.path("reviewed_http_owner").asString()).isEqualTo("learning");
+            assertThat(operation.path("migration_status").asString()).isEqualTo("pending");
+            assertThat(operation.path("production_cutover").asBoolean()).isFalse();
+        }
+        String routeDelta = Files.readString(routeDeltaPath, StandardCharsets.UTF_8);
+        assertThat(routeDelta).doesNotContain("c618fb5f9f97", "bb21e7730d04");
+        Set<String> migratedIds = new LinkedHashSet<>();
+        for (JsonNode operation : effective.path("effective").path("migrated_operations")) {
+            migratedIds.add(operation.path("route_id").asString());
+        }
+        assertThat(migratedIds).doesNotContain("c618fb5f9f97", "bb21e7730d04");
+        assertThat(effective.path("effective").path("migration_status").path("migrated").asInt())
+                .isEqualTo(11);
+        assertThat(effective.path("effective").path("migration_status").path("pending").asInt())
+                .isEqualTo(600);
+        assertThat(effective.path("effective").path("production_cutover_operation_count").asInt())
+                .isZero();
+        for (String path : List.of("/api/questions/count", "/api/quiz/questions/count")) {
+            JsonNode operation = openApi.path("paths").path(path).path("get");
+            assertThat(operation.path("x-ti-migration").path("status").asString())
+                    .isEqualTo("pending");
+            assertThat(operation.path("x-ti-migration").path("targetModule").asString())
+                    .isEqualTo("catalog");
+            assertThat(operation.path("x-ti-contract-maturity").asString())
+                    .isEqualTo("inferred");
+        }
+
+        JsonNode catalogShape = java.util.stream.StreamSupport.stream(
+                        shapeStatusRoot.path("modules").spliterator(), false)
+                .filter(module -> module.path("module_id").asString().equals("catalog"))
+                .findFirst()
+                .orElseThrow();
+        assertThat(strings(catalogShape.path("implemented_route_ids")))
+                .doesNotContain("c618fb5f9f97", "bb21e7730d04");
+        JsonNode metadataApi = java.util.stream.StreamSupport.stream(
+                        catalogShape.path("additional_public_apis").spliterator(), false)
+                .filter(api -> api.path("java_api").asString()
+                        .equals("io.saksk.ti.catalog.api.QuestionMetadataApplicationApi"))
+                .findFirst()
+                .orElseThrow();
+        assertThat(metadataApi.path("direct_http_operation").asBoolean()).isFalse();
+        assertThat(strings(metadataApi.path("deferred_learning_http_route_ids")))
+                .containsExactlyInAnyOrder("c618fb5f9f97", "bb21e7730d04");
+        assertThat(metadataApi.path("deferred_learning_http_owner").asString())
+                .isEqualTo("learning");
+        assertThat(metadataApi.path("deferred_learning_phase").asString()).isEqualTo("4C");
+
+        Class<?> api = Class.forName("io.saksk.ti.catalog.api.QuestionMetadataApplicationApi");
+        Class<?> queryType = Class.forName("io.saksk.ti.catalog.api.QuestionCatalogCountQuery");
+        Class<?> assignmentScope = Class.forName(
+                "io.saksk.ti.catalog.api.QuestionSubjectAssignmentScope");
+        assertThat(api.getDeclaredMethod("countQuestions", queryType).getReturnType())
+                .isEqualTo(long.class);
+        assertThat(queryType.isRecord()).isTrue();
+        assertThat(Arrays.stream(queryType.getRecordComponents())
+                        .map(component -> component.getName()))
+                .containsExactly(
+                        "subjectName",
+                        "questionType",
+                        "subjectAssignmentScope",
+                        "excludedSubjectIds",
+                        "candidateQuestionIds");
+        assertThat(Arrays.stream(queryType.getRecordComponents())
+                        .map(component -> component.getGenericType().getTypeName()))
+                .containsExactly(
+                        "java.util.Optional<java.lang.String>",
+                        "java.util.Optional<java.lang.String>",
+                        "io.saksk.ti.catalog.api.QuestionSubjectAssignmentScope",
+                        "java.util.Set<java.lang.Integer>",
+                        "java.util.Optional<java.util.List<java.lang.Long>>");
+        assertThat(assignmentScope.isEnum()).isTrue();
+        assertThat(Arrays.stream(assignmentScope.getEnumConstants()).map(Object::toString))
+                .containsExactly("INCLUDE_UNASSIGNED", "REQUIRE_EXISTING_SUBJECT");
+
+        assertThat(golden.path("contract_id").asString())
+                .isEqualTo("ti.phase4a.question-count-read-goldens");
+        assertThat(golden.path("legacy_commit").asString())
+                .isEqualTo("700006dfdfa063deb4387be572911e782bcea0d9");
+        assertThat(golden.path("case_count").asInt()).isEqualTo(36);
+        assertThat(golden.path("cases")).hasSize(36);
+        assertThat(golden.path("case_payload_sha256").asString())
+                .isEqualTo(contract.path("evidence").path("golden")
+                        .path("case_payload_sha256").asString());
+        assertThat(golden.path("route_status").path("migration_status").asString())
+                .isEqualTo("pending");
+        Map<String, JsonNode> cases = new LinkedHashMap<>();
+        for (JsonNode sample : golden.path("cases")) {
+            assertThat(cases.put(sample.path("case_id").asString(), sample))
+                    .as("duplicate question-count golden case")
+                    .isNull();
+            JsonNode effects = sample.path("observed_get_effects");
+            assertThat(effects.path("tables_unchanged").asBoolean()).isTrue();
+            assertThat(effects.path("sql").path("question_write_attempts").asInt()).isZero();
+            assertThat(effects.path("sql").path("learning_data_write_attempts").asInt()).isZero();
+        }
+        assertThat(cases.get("alias-anonymous-default")
+                        .path("response").path("body").path("count").asInt())
+                .isEqualTo(5);
+        assertThat(cases.get("blueprint-anonymous-default")
+                        .path("response").path("status").asInt())
+                .isEqualTo(401);
+        assertThat(cases.get("alias-invalid-bearer")
+                        .path("response").path("status").asInt())
+                .isEqualTo(200);
+        assertThat(cases.get("blueprint-invalid-bearer")
+                        .path("response").path("status").asInt())
+                .isEqualTo(401);
+        assertThat(cases.get("alias-source-over-mode")
+                        .path("response").path("body").path("count").asInt())
+                .isEqualTo(1);
+        assertThat(cases.get("blueprint-source-over-mode")
+                        .path("response").path("body").path("count").asInt())
+                .isEqualTo(1);
+        assertThat(cases.get("blueprint-session-over-bearer")
+                        .path("response").path("body").path("count").asInt())
+                .isEqualTo(4);
+        assertThat(cases.get("alias-legacy-tag-store")
+                        .path("observed_get_effects").path("sql")
+                        .path("tag_schema_ddl_attempts").asInt())
+                .isGreaterThan(0);
+        assertThat(cases.get("alias-legacy-tag-store")
+                        .path("response").path("body").path("count").asInt())
+                .isZero();
+        assertThat(cases.get("alias-count-failure")
+                        .path("response").path("status").asInt())
+                .isEqualTo(500);
+
+        assertThat(queryPlan.path("evidence_id").asString())
+                .isEqualTo("ti.phase4a.question-count-query-plan");
+        JsonNode runtimeContract = queryPlan.path("runtime_sql_contract");
+        assertThat(runtimeContract.path("adapter_class").asString())
+                .isEqualTo("io.saksk.ti.catalog.infrastructure.persistence."
+                        + "JdbcQuestionCountQueryAdapter");
+        assertThat(strings(runtimeContract.path("query_ids")))
+                .containsExactlyInAnyOrder(
+                        "question-count-anonymous-all",
+                        "question-count-auth-unrestricted",
+                        "question-count-auth-restricted",
+                        "question-count-subject-type",
+                        "question-count-candidate-large");
+        assertThat(runtimeContract.path("manifest_sha256").asString())
+                .isEqualTo(contract.path("evidence").path("query_plan")
+                        .path("runtime_sql_manifest_sha256").asString());
+        JsonNode inputs = queryPlan.path("inputs");
+        assertThat(inputs.path("adapter").asString())
+                .isEqualTo("server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/"
+                        + "JdbcQuestionCountQueryAdapter.java");
+        assertThat(sha256(resolveInsideTiJava(inputs.path("adapter").asString())))
+                .isEqualTo(inputs.path("adapter_sha256").asString());
+        assertThat(inputs.path("runtime_sql_exporter").asString())
+                .isEqualTo("server/src/test/java/io/saksk/ti/catalog/infrastructure/persistence/"
+                        + "QuestionCountRuntimeSqlManifestTest.java");
+        assertThat(sha256(resolveInsideTiJava(inputs.path("runtime_sql_exporter").asString())))
+                .isEqualTo(inputs.path("runtime_sql_exporter_sha256").asString());
+        assertThat(sha256(resolveInsideTiJava(
+                        "tools/capture_phase4a_question_count_query_plans.py")))
+                .isEqualTo(inputs.path("capture_tool_sha256").asString());
+        assertThat(inputs.path("runtime_sql_manifest").asString())
+                .isEqualTo("server/target/phase4a-question-count-runtime-sql.json");
+        assertThat(inputs.path("runtime_sql_manifest_sha256").asString())
+                .isEqualTo(runtimeContract.path("manifest_sha256").asString());
+
+        assertThat(queryPlan.path("measurement").path("observations")).hasSize(7);
+        Set<String> observationIds = new LinkedHashSet<>();
+        Set<Integer> candidateElementCounts = new LinkedHashSet<>();
+        for (JsonNode observation : queryPlan.path("measurement").path("observations")) {
+            assertThat(observationIds.add(observation.path("observation_id").asString()))
+                    .as("duplicate question-count plan observation")
+                    .isTrue();
+            assertThat(observation.path("sql_statement_count").asInt()).isEqualTo(1);
+            assertThat(observation.path("temp_blocks_observed")
+                            .path("Temp Read Blocks").asDouble())
+                    .isZero();
+            assertThat(observation.path("temp_blocks_observed")
+                            .path("Temp Written Blocks").asDouble())
+                    .isZero();
+            Set<String> relations = new LinkedHashSet<>();
+            observation.path("plan_summary").path("relation_scan_occurrences")
+                    .propertyNames().forEach(relations::add);
+            assertThat(relations).containsOnly("questions", "subjects");
+            assertThat(observation.path("plan_summary").path("maximum_actual_loops").asInt())
+                    .isEqualTo(1);
+            if (observation.path("runtime_query_id").asString()
+                    .equals("question-count-candidate-large")) {
+                JsonNode binding = observation.path("binding");
+                assertThat(binding.path("bound_parameter_count").asInt()).isEqualTo(1);
+                assertThat(binding.path("named_parameter_count").asInt()).isEqualTo(1);
+                candidateElementCounts.add(binding.path("parameters")
+                        .path("candidate_question_ids").path("element_count").asInt());
+            }
+        }
+        assertThat(candidateElementCounts).containsExactlyInAnyOrder(65_536, 100_000);
+        JsonNode crossChecks = queryPlan.path("cross_observation_assertions");
+        assertThat(crossChecks.path("status").asString()).isEqualTo("passed");
+        assertThat(crossChecks.path("runtime_variant_count").asInt()).isEqualTo(5);
+        assertThat(crossChecks.path("candidate_bound_parameter_count").asInt()).isEqualTo(1);
+        assertThat(crossChecks.path("n_plus_one").asBoolean()).isFalse();
+        assertThat(crossChecks.path("runtime_dml_ddl_temp").asBoolean()).isFalse();
     }
 
     private static void assertPublicApplicationContract(ContractModule module) throws ClassNotFoundException {
