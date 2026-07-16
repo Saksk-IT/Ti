@@ -1,0 +1,417 @@
+{
+  "evidence_id": "ti.phase4a.subject-inventory-query-plan",
+  "schema_version": 1,
+  "captured_at": "2026-07-16",
+  "scope": "catalog-subject-inventory-internal-read-capability",
+  "route_migration_status": {
+    "route_ids": [
+      "6e1a36f5052d"
+    ],
+    "http_owner": "operations",
+    "status": "pending",
+    "production_cutover": false
+  },
+  "environment": {
+    "container_image": "postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
+    "expected_digest": "sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
+    "resolved_image_id": "sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
+    "resolved_repo_digests": [
+      "postgres@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15"
+    ],
+    "os": "linux",
+    "architecture": "arm64",
+    "network": "none",
+    "database": "phase4a_subject_inventory_plan",
+    "postgresql": {
+      "server_version": "18.4",
+      "server_version_num": "180004",
+      "block_size_bytes": "8192",
+      "shared_buffers": "128MB",
+      "work_mem": "64MB",
+      "effective_cache_size": "4GB",
+      "random_page_cost": "4",
+      "max_parallel_workers_per_gather": "0",
+      "jit": "on"
+    }
+  },
+  "inputs": {
+    "adapter": "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcSubjectInventoryQueryAdapter.java",
+    "adapter_sha256": "105c356e48a432ac29c7b34ac24615eef54a5ddb492acb30a31dbeb9cc744a03",
+    "runtime_sql_manifest": "server/target/phase4a-subject-inventory-runtime-sql.json",
+    "runtime_sql_manifest_sha256": "3c514f7f1ac79fe8d393f973fa19f136023be70e06968676f6a584d6199f09d7",
+    "runtime_sql_exporter": "server/src/test/java/io/saksk/ti/catalog/infrastructure/persistence/SubjectInventoryRuntimeSqlManifestTest.java",
+    "runtime_sql_exporter_sha256": "e7168e6aba56dcb7a4b81de381f07ac32f1f6f3c4fde12d3e8b27c1d3d65ed9f",
+    "capture_tool": "tools/capture_phase4a_subject_inventory_query_plan.py",
+    "capture_tool_sha256": "855be74fdad9ce3cc418a053778f8de07d6d7299d0c4063812e21b6a62ae045d",
+    "capture_tool_test": "tools/test_capture_phase4a_subject_inventory_query_plan.py",
+    "capture_tool_test_sha256": "841eeed4d8a8408cad060fdf4bd49d4c17997d032e1e87fe5846b49c3bc90827"
+  },
+  "data_set": {
+    "kind": "public deterministic synthetic fixture",
+    "parameters": {
+      "positive_subject_count": 5000,
+      "signed_edge_subject_count": 2,
+      "total_subject_count": 5002,
+      "question_count": 150000,
+      "assigned_positive_subject_count": 4000
+    },
+    "actual": {
+      "subjects": 5002,
+      "questions": 150000,
+      "minimum_subject_id": -1,
+      "maximum_subject_id": 5000,
+      "locked_subjects": 251,
+      "unlocked_subjects": 4500,
+      "nullable_lock_subjects": 251,
+      "empty_name_subjects": 1,
+      "unicode_name_subjects": 1,
+      "zero_question_subjects": 1001,
+      "null_question_assignments": 151,
+      "orphan_question_assignments": 1,
+      "assigned_question_count": 149848
+    },
+    "distribution": {
+      "subject_ids": "-1, 0, and the inclusive range 1..5000",
+      "locked": "positive subject_id divisible by 20, plus subject 0",
+      "nullable_lock": "positive subject_id congruent to 1 mod 20, plus -1",
+      "question_subject": "round-robin over the first 80 percent of positive subjects; every 997th generated question and id 0 are unassigned",
+      "orphan_assignment": "one explicit test-only restored inconsistency",
+      "names": "one exact empty string and one public Unicode synthetic name"
+    },
+    "statistics": "questions.subject_id statistics target 10000; VACUUM (ANALYZE) completed for both relations before capture",
+    "index_definitions": [
+      {
+        "table": "questions",
+        "name": "ix_questions_subject_id",
+        "definition": "CREATE INDEX ix_questions_subject_id ON public.questions USING btree (subject_id)"
+      },
+      {
+        "table": "questions",
+        "name": "ix_questions_subject_type",
+        "definition": "CREATE INDEX ix_questions_subject_type ON public.questions USING btree (subject_id, type)"
+      },
+      {
+        "table": "questions",
+        "name": "questions_pkey",
+        "definition": "CREATE UNIQUE INDEX questions_pkey ON public.questions USING btree (id)"
+      },
+      {
+        "table": "subjects",
+        "name": "subjects_name_key",
+        "definition": "CREATE UNIQUE INDEX subjects_name_key ON public.subjects USING btree (name)"
+      },
+      {
+        "table": "subjects",
+        "name": "subjects_pkey",
+        "definition": "CREATE UNIQUE INDEX subjects_pkey ON public.subjects USING btree (id)"
+      }
+    ],
+    "index_decision": "observe existing primary, subject_id and subject_id+type indexes only; this synthetic evidence does not approve a production index"
+  },
+  "measurement": {
+    "command": "EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) exact Java runtime SQL",
+    "runs_per_query": 1,
+    "query_count": 1,
+    "sql_statement_count": 1,
+    "growth_with_result_count": 0,
+    "n_plus_one_forbidden": true,
+    "observation": {
+      "observation_id": "all-subject-inventory",
+      "runtime_query_id": "subject-inventory-summaries",
+      "operation": "subject-inventory",
+      "source": "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcSubjectInventoryQueryAdapter.java",
+      "sql": "SELECT s.id AS subject_id,\n       s.name AS subject_name,\n       s.is_locked AS subject_locked,\n       COUNT(q.id) AS question_count\nFROM subjects s\nLEFT JOIN questions q ON s.id = q.subject_id\nGROUP BY s.id, s.name, s.is_locked\nORDER BY s.id ASC",
+      "sql_sha256": "16f06c965f73013065ade620b908c8e015f1265f64e7d40f2ab409f94402adb5",
+      "binding": {
+        "mode": "parameter-free",
+        "bound_parameter_count": 0,
+        "named_parameter_count": 0,
+        "occurrence_names": [],
+        "parameters": {}
+      },
+      "runtime_result": {
+        "row_count": 5002,
+        "minimum_id": -1,
+        "maximum_id": 5000,
+        "first_ids_asc": [
+          -1,
+          0,
+          1
+        ],
+        "last_ids_asc": [
+          4998,
+          4999,
+          5000
+        ],
+        "strictly_ascending_by_id": true,
+        "row_column_count": 4,
+        "lock_value_counts": {
+          "false": 4500,
+          "null": 251,
+          "true": 251
+        },
+        "empty_name_count": 1,
+        "unicode_name_count": 1,
+        "zero_question_subject_count": 1001,
+        "question_count_sum": 149848,
+        "edge_rows": {
+          "-1": {
+            "id": -1,
+            "name": "",
+            "is_locked": null,
+            "question_count": 1
+          },
+          "0": {
+            "id": 0,
+            "name": "科目 🧪",
+            "is_locked": true,
+            "question_count": 0
+          },
+          "5000": {
+            "id": 5000,
+            "name": "Synthetic subject 5000",
+            "is_locked": true,
+            "question_count": 0
+          }
+        },
+        "canonical_psql_rows_sha256": "80cc184e3b7307b473f29e5b5397b712348a1f27eeddffdbbcc194bf1e82586d"
+      },
+      "temp_blocks_observed": {
+        "Temp Read Blocks": 0.0,
+        "Temp Written Blocks": 0.0
+      },
+      "assertions_passed": [
+        "four-column-exact-result-shape",
+        "strict-signed-id-asc-runtime-order",
+        "true-false-null-locks-preserved",
+        "empty-and-unicode-names-preserved",
+        "zero-question-subjects-preserved",
+        "count-q-id-excludes-null-and-orphan-assignments",
+        "plan-row-count-matches-all-subjects",
+        "single-execution-no-row-driven-loop",
+        "bounded-plan-shape",
+        "subjects-and-questions-scanned-once-only",
+        "one-outer-join-left-right-planner-swap-allowed",
+        "one-question-count-aggregate",
+        "zero-temp-blocks",
+        "buffers-captured-before-normalization",
+        "one-select-zero-bind-fixed-cardinality"
+      ],
+      "plan_summary": {
+        "root_node_type": "Sort",
+        "result_row_count": 5002,
+        "root_actual_loops": 1,
+        "node_count": 6,
+        "maximum_depth": 4,
+        "maximum_actual_loops": 1,
+        "node_type_counts": {
+          "Aggregate": 1,
+          "Hash": 1,
+          "Hash Join": 1,
+          "Seq Scan": 2,
+          "Sort": 1
+        },
+        "relation_scan_occurrences": {
+          "questions": 1,
+          "subjects": 1
+        },
+        "index_names": [],
+        "buffer_fields_observed_before_normalization": [
+          "Local Dirtied Blocks",
+          "Local Hit Blocks",
+          "Local Read Blocks",
+          "Local Written Blocks",
+          "Shared Dirtied Blocks",
+          "Shared Hit Blocks",
+          "Shared Read Blocks",
+          "Shared Written Blocks",
+          "Temp Read Blocks",
+          "Temp Written Blocks"
+        ],
+        "nodes": [
+          {
+            "depth": 0,
+            "Node Type": "Sort",
+            "Sort Method": "quicksort",
+            "Actual Rows": 5002.0,
+            "Actual Loops": 1,
+            "Sort Key": {
+              "redacted": "planner expression omitted",
+              "character_count": 8,
+              "sha256": "54d94e4363136ebb6589ab3f0e01de3cd34fc0dd67c3579ed53556cd69755be2"
+            }
+          },
+          {
+            "depth": 1,
+            "Node Type": "Aggregate",
+            "Parent Relationship": "Outer",
+            "Strategy": "Hashed",
+            "Actual Rows": 5002.0,
+            "Actual Loops": 1,
+            "Group Key": {
+              "redacted": "planner expression omitted",
+              "character_count": 10,
+              "sha256": "025679ad6ac32ee20062a62978ab2c681279d985946ce50f8d352d21344bb372"
+            }
+          },
+          {
+            "depth": 2,
+            "Node Type": "Hash Join",
+            "Parent Relationship": "Outer",
+            "Join Type": "Right",
+            "Actual Rows": 150849.0,
+            "Actual Loops": 1,
+            "Hash Cond": {
+              "redacted": "planner expression omitted",
+              "character_count": 23,
+              "sha256": "168fc5b1345ad4538fc5a4677b668a94e646cc65a79421c84f7b31b93f1bb3ff"
+            }
+          },
+          {
+            "depth": 3,
+            "Node Type": "Seq Scan",
+            "Parent Relationship": "Outer",
+            "Relation Name": "questions",
+            "Alias": "q",
+            "Actual Rows": 150000.0,
+            "Actual Loops": 1
+          },
+          {
+            "depth": 3,
+            "Node Type": "Hash",
+            "Parent Relationship": "Inner",
+            "Actual Rows": 5002.0,
+            "Actual Loops": 1
+          },
+          {
+            "depth": 4,
+            "Node Type": "Seq Scan",
+            "Parent Relationship": "Outer",
+            "Relation Name": "subjects",
+            "Alias": "s",
+            "Actual Rows": 5002.0,
+            "Actual Loops": 1
+          }
+        ]
+      },
+      "normalized_explain_analyze": {
+        "Plan": {
+          "Node Type": "Sort",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Actual Rows": 5002.0,
+          "Actual Loops": 1,
+          "Disabled": false,
+          "Sort Key": {
+            "redacted": "planner expression omitted",
+            "character_count": 8,
+            "sha256": "54d94e4363136ebb6589ab3f0e01de3cd34fc0dd67c3579ed53556cd69755be2"
+          },
+          "Sort Method": "quicksort",
+          "Sort Space Type": "Memory",
+          "Plans": [
+            {
+              "Node Type": "Aggregate",
+              "Strategy": "Hashed",
+              "Partial Mode": "Simple",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Actual Rows": 5002.0,
+              "Actual Loops": 1,
+              "Disabled": false,
+              "Group Key": {
+                "redacted": "planner expression omitted",
+                "character_count": 10,
+                "sha256": "025679ad6ac32ee20062a62978ab2c681279d985946ce50f8d352d21344bb372"
+              },
+              "Planned Partitions": 0,
+              "HashAgg Batches": 1,
+              "Plans": [
+                {
+                  "Node Type": "Hash Join",
+                  "Parent Relationship": "Outer",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Join Type": "Right",
+                  "Actual Rows": 150849.0,
+                  "Actual Loops": 1,
+                  "Disabled": false,
+                  "Inner Unique": true,
+                  "Hash Cond": {
+                    "redacted": "planner expression omitted",
+                    "character_count": 23,
+                    "sha256": "168fc5b1345ad4538fc5a4677b668a94e646cc65a79421c84f7b31b93f1bb3ff"
+                  },
+                  "Plans": [
+                    {
+                      "Node Type": "Seq Scan",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Relation Name": "questions",
+                      "Alias": "q",
+                      "Actual Rows": 150000.0,
+                      "Actual Loops": 1,
+                      "Disabled": false
+                    },
+                    {
+                      "Node Type": "Hash",
+                      "Parent Relationship": "Inner",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Actual Rows": 5002.0,
+                      "Actual Loops": 1,
+                      "Disabled": false,
+                      "Plans": [
+                        {
+                          "Node Type": "Seq Scan",
+                          "Parent Relationship": "Outer",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Relation Name": "subjects",
+                          "Alias": "s",
+                          "Actual Rows": 5002.0,
+                          "Actual Loops": 1,
+                          "Disabled": false
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "normalization": {
+    "removed": [
+      "planning and execution timing",
+      "per-node actual timing",
+      "cache-dependent buffer block counts",
+      "planner estimates and costs",
+      "runtime memory, hash and worker counters",
+      "container ID and ephemeral container name"
+    ],
+    "retained": [
+      "plan node types and depth",
+      "actual rows and loops",
+      "outer join and aggregate strategy",
+      "relation and index names",
+      "redacted hashes of planner expressions",
+      "which BUFFERS fields were emitted"
+    ]
+  },
+  "interpretation": {
+    "status": "observational_evidence_only",
+    "statement": "This isolated synthetic capture proves one bounded execution, exact signed-id ordering, LEFT-join inventory semantics and no N+1. It is not a production latency SLA, capacity claim or index recommendation."
+  },
+  "reproduction": {
+    "working_directory": "repository root containing Ti-Java",
+    "command": "python3 Ti-Java/tools/capture_phase4a_subject_inventory_query_plan.py --output Ti-Java/docs/refactor/phase4a/subject-inventory-query-plan-evidence.json",
+    "prerequisites": "Docker and the repository Maven verification image",
+    "isolation": "ephemeral network-disabled container removed on all exits"
+  }
+}

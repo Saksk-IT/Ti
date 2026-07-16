@@ -1,0 +1,275 @@
+{
+  "contract_id": "ti.phase4a.subject-inventory-read-contract",
+  "schema_version": 1,
+  "status": "catalog_internal_capability_implemented_http_operation_deferred",
+  "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "evidence": {
+    "golden": {
+      "source": "golden-subject-inventory-reads.json",
+      "file_sha256": "6ce049b13741c2f095ca988fe4f02afc58951389ebdc9c40cf092555d9bb5d07",
+      "case_count": 11,
+      "case_payload_sha256": "f1ae276b9922cc66b1e8d2c613f060d7f30a4700cfac41a4b8a05f54adcaf0f9",
+      "document_payload_sha256": "7573787ef73af757fd598a7290ab725b6994c4d41b67acaf722898c6e3137af8"
+    },
+    "query_plan": {
+      "source": "subject-inventory-query-plan-evidence.json",
+      "file_sha256": "f7c684273579e676b9da0024f76593ae9fb69bde47309e6d396c6fdf5a1cfb0c",
+      "runtime_sql_manifest_sha256": "3c514f7f1ac79fe8d393f973fa19f136023be70e06968676f6a584d6199f09d7",
+      "runtime_sql_sha256": "16f06c965f73013065ade620b908c8e015f1265f64e7d40f2ab409f94402adb5",
+      "adapter_sha256": "105c356e48a432ac29c7b34ac24615eef54a5ddb492acb30a31dbeb9cc744a03",
+      "runtime_sql_exporter_sha256": "e7168e6aba56dcb7a4b81de381f07ac32f1f6f3c4fde12d3e8b27c1d3d65ed9f",
+      "capture_tool_sha256": "855be74fdad9ce3cc418a053778f8de07d6d7299d0c4063812e21b6a62ae045d",
+      "capture_tool_test_sha256": "841eeed4d8a8408cad060fdf4bd49d4c17997d032e1e87fe5846b49c3bc90827",
+      "runtime_query_count": 1
+    },
+    "frozen_route_matrix": {
+      "source": "../02-route-parity-matrix.csv",
+      "sha256": "fdbdfedf3dd70cd09778b2a7072711d103eee8461d0e7dd356d797006fc92c74"
+    },
+    "data_ownership": {
+      "source": "../03-data-ownership.csv",
+      "sha256": "3f9cb0650c523593d7037dc24df902dbccdb3885f261f530e1725a9dc7a31748",
+      "resources": [
+        {
+          "resource": "table:subjects",
+          "target_owner": "catalog"
+        },
+        {
+          "resource": "table:questions",
+          "target_owner": "catalog"
+        }
+      ],
+      "delta_required": false
+    },
+    "approved_differences": {
+      "source": "approved-differences.md",
+      "sha256": "2ac257e41214f3005eaa022965038bf429d35e3ba04dc83b81ac8a90abd63fd2",
+      "new_difference_ids": [],
+      "statement": "No HTTP behavior difference is approved in this internal capability slice. Authentication, identity activity, snake-case projection and safe errors remain future operations-owned parity requirements."
+    },
+    "audited_web_callers": [
+      {
+        "source": "app/modules/admin/templates/admin/subjects/_question_scripts.html",
+        "legacy_source_sha256": "db4c3443ecbaef95d25ae86a20ca3dd39dec9a44a1106865897dcb6717a37523"
+      },
+      {
+        "source": "app/modules/admin/templates/admin/subjects/_scripts.html",
+        "legacy_source_sha256": "25c127df0dce2b7559bf7c85b76f9a75d7d70d720eeba1a8e8f23bca34f4fd3b"
+      },
+      {
+        "source": "app/modules/admin/templates/admin/subjects/legacy.html",
+        "legacy_source_sha256": "b9d205b3b0fe0abb0dc0777e74708157a75997700ecf213c287fa77a35dcb4c1"
+      }
+    ]
+  },
+  "module_boundary": {
+    "data_owner": "catalog",
+    "catalog_owned_tables": [
+      "subjects",
+      "questions"
+    ],
+    "internal_application_api": "io.saksk.ti.catalog.api.SubjectMetadataApplicationApi#listSubjectInventorySummaries",
+    "immutable_result": "io.saksk.ti.catalog.api.SubjectInventorySummaryView",
+    "query_port": "io.saksk.ti.catalog.application.port.SubjectInventoryQueryPort",
+    "jdbc_adapter": "io.saksk.ti.catalog.infrastructure.persistence.JdbcSubjectInventoryQueryAdapter",
+    "http_operation_owner": "operations",
+    "http_adapter_status": "not_implemented",
+    "http_owner_dependency_status": "operations_to_catalog_api_dependency_not_yet_approved_or_implemented",
+    "deferred_phase": "4H",
+    "forbidden_reuse": [
+      "io.saksk.ti.catalog.api.CatalogApplicationApi#subjectCatalog",
+      "io.saksk.ti.catalog.application.SubjectCatalogQueryService",
+      "io.saksk.ti.catalog.application.port.SubjectCatalogQueryPort",
+      "io.saksk.ti.catalog.domain.SubjectCatalogEntry",
+      "io.saksk.ti.catalog.api.SubjectSummaryView"
+    ],
+    "forbidden_in_this_slice": [
+      "HTTP controller, security matcher, role decision or rate limiter",
+      "operations module dependency change",
+      "users, user_subjects, public-bank snapshot or identity-policy lookup",
+      "locked, null-lock, empty-name, signed-ID or zero-question filtering",
+      "route parity delta or OpenAPI operation migration",
+      "production cutover"
+    ]
+  },
+  "route_status": {
+    "migrated_route_count_before": 11,
+    "migrated_route_count_after": 11,
+    "pending_route_count_before": 600,
+    "pending_route_count_after": 600,
+    "production_cutover_count": 0,
+    "operation": {
+      "route_id": "6e1a36f5052d",
+      "method": "GET",
+      "path": "/admin/api/subjects",
+      "legacy_route_template": "/admin/api/subjects",
+      "legacy_handler": "admin.admin_api.api_get_subjects",
+      "target_module": "operations",
+      "migration_status": "pending",
+      "contract_maturity": "observed",
+      "success_response_schema": "golden-sample-observed",
+      "default_response_schema": "LegacyOpaquePayload/unknown",
+      "production_cutover": false
+    }
+  },
+  "catalog_application_contract": {
+    "method": "List<SubjectInventorySummaryView> listSubjectInventorySummaries()",
+    "transaction": "read-only",
+    "runtime_sql": "one explicit four-column SELECT over subjects LEFT JOIN questions with COUNT(q.id), no predicates or binds, GROUP BY all subject facts and fixed s.id ASC ordering",
+    "statement_count_per_invocation": 1,
+    "bind_count": 0,
+    "result_fields": [
+      {
+        "name": "id",
+        "java_type": "int",
+        "postgres_type": "integer",
+        "nullable": false
+      },
+      {
+        "name": "name",
+        "java_type": "java.lang.String",
+        "postgres_type": "text",
+        "nullable": false
+      },
+      {
+        "name": "isLocked",
+        "java_type": "java.lang.Boolean",
+        "postgres_type": "boolean",
+        "nullable": true
+      },
+      {
+        "name": "questionCount",
+        "java_type": "long",
+        "postgres_type": "bigint",
+        "nullable": false
+      }
+    ],
+    "result_semantics": {
+      "ordering": "strict signed s.id ASC",
+      "cardinality": "one row for every subjects row; no filters, limit or pagination",
+      "empty": "an immutable empty list",
+      "signed_id": "the complete Java/PostgreSQL signed integer domain remains representable, including zero and negative historical keys",
+      "name": "empty, whitespace-only and Unicode names remain exact",
+      "lock": "true, false and null remain distinct; no primitive boolean or COALESCE is allowed",
+      "question_count": "COUNT(q.id) is a nonnegative long; subjects with no matching questions remain present with zero",
+      "unassigned_or_orphan_questions": "questions with null or nonmatching subject_id do not contribute to any subject count",
+      "failure": "the original persistence exception propagates unchanged so operations can apply the reviewed HTTP policy"
+    },
+    "query_budget": {
+      "catalog_selects": 1,
+      "catalog_writes": 0,
+      "relations": [
+        "subjects",
+        "questions"
+      ],
+      "joins": 1,
+      "join_type": "LEFT",
+      "temporary_state": false,
+      "bind_count": 0,
+      "statement_growth_with_result_count": 0,
+      "n_plus_one_forbidden": true
+    }
+  },
+  "legacy_http_contract": {
+    "authentication": {
+      "administrator_session": "200 and one subject-inventory SELECT",
+      "subject_administrator_session": "200 and one subject-inventory SELECT",
+      "ordinary_session": "403 before subject-inventory SQL",
+      "anonymous": "302 Location /login before SQL",
+      "valid_administrator_bearer_only": "302 Location /login because the global Web gate blocks Bearer-only access",
+      "ordinary_session_plus_valid_administrator_bearer": "302 Location /login because the Bearer header bypasses the Web-session branch of the global gate"
+    },
+    "request_semantics": {
+      "parameters": [],
+      "filters": [],
+      "pagination": null,
+      "success": "HTTP 200 naked JSON array",
+      "ordering": "strict signed id ASC"
+    },
+    "success_projection": {
+      "fields": [
+        "id",
+        "name",
+        "is_locked",
+        "question_count"
+      ],
+      "locked_values": "PostgreSQL JSON booleans are true/false/null; the pinned SQLite legacy capture observes 1/0/null and is explicitly a dialect observation",
+      "question_count": "JSON integer backed by SQL COUNT(q.id)"
+    },
+    "failure_semantics": {
+      "database_failure_accept_any": "500 fixed generic Chinese HTML error page after one attempted inventory SELECT",
+      "database_failure_accept_json": "500 generic safe JSON error envelope after one attempted inventory SELECT"
+    },
+    "cross_cutting_effects": {
+      "route_body_subject_writes": 0,
+      "route_body_question_writes": 0,
+      "subjects_fingerprint": "all nine subjects columns remain unchanged for every case",
+      "questions_fingerprint": "all fifteen questions columns remain unchanged for every case",
+      "session_activity": "Session-only requests, including an eventually forbidden ordinary session, can update users.last_active once before authorization; this identity effect is outside the catalog primitive and separately ledgered",
+      "blocked_bearer_paths": "anonymous, Bearer-only and Session-plus-Bearer redirect before business SQL",
+      "rate_limit": "the route declares no route-specific limit; future operations must preserve the applicable global policy rather than invent one"
+    }
+  },
+  "query_plan_contract": {
+    "environment": "PostgreSQL 18.4 pinned digest with network none, parallel gather disabled and public synthetic data",
+    "data_set": {
+      "subjects": 5002,
+      "questions": 150000,
+      "subject_ids": "-1, 0 and 1..5000",
+      "assigned_questions": 149848,
+      "null_assignments": 151,
+      "orphan_assignments": 1,
+      "zero_question_subjects": 1001
+    },
+    "observation": {
+      "id": "all-subject-inventory",
+      "result_rows": 5002,
+      "result_columns": 4,
+      "first_ids_asc": [
+        -1,
+        0,
+        1
+      ],
+      "last_ids_asc": [
+        4998,
+        4999,
+        5000
+      ],
+      "statement_count": 1,
+      "bind_count": 0,
+      "relation_scan_occurrences": {
+        "subjects": 1,
+        "questions": 1
+      },
+      "root_actual_loops": 1,
+      "maximum_actual_loops": 1,
+      "temp_read_blocks": 0,
+      "temp_written_blocks": 0
+    },
+    "interpretation": "observational evidence only; it is not a production latency SLA, capacity claim, index recommendation or migration authorization"
+  },
+  "invariants": [
+    "The catalog capability reads only catalog-owned subjects and questions and never consults identity visibility or public-bank projections.",
+    "Every invocation executes exactly one parameter-free SELECT and no DML, DDL or TEMP operation.",
+    "LEFT JOIN and COUNT(q.id) preserve every subject and emit zero for subjects without assigned questions.",
+    "All four subject facts preserve signed IDs, exact names and nullable lock values in strict signed ID ascending order.",
+    "No HTTP authentication, users.last_active behavior, snake-case projection, response envelope or safe-error translation enters catalog.",
+    "Persistence failures remain untranslated at the catalog boundary.",
+    "PostgreSQL 16.14 and 18.4 execute the same adapter SQL and preserve the same boundary values.",
+    "Synthetic query-plan indexes are observational only and authorize neither a production migration nor a production index.",
+    "The HTTP operation remains operations-owned and pending; this capability changes no route, OpenAPI migration status, module dependency or production traffic."
+  ],
+  "acceptance": {
+    "catalog_internal_capability": "implemented",
+    "http_operation_migration": "deferred_to_phase4h",
+    "production_cutover": false,
+    "required_before_phase4h_route_migration": [
+      "approve and machine-check the operations dependency on catalog::api",
+      "implement the complete global gate, subject-admin role and users.last_active behavior",
+      "project isLocked and questionCount to exact is_locked and question_count JSON fields without collapsing null",
+      "preserve naked-array success and Accept-dependent safe failures",
+      "add route delta and OpenAPI migration only after all 11 golden cases pass"
+    ],
+    "next_phase4a_work": "continue the next catalog-only read after this capability passes full isolated acceptance"
+  }
+}

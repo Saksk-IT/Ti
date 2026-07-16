@@ -1,0 +1,3086 @@
+{
+  "contract_id": "ti.phase4a.subject-inventory-read-goldens",
+  "schema_version": 1,
+  "captured_at": "2026-07-16",
+  "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "legacy_source_attestation": {
+    "complete_app_archive": {
+      "archive_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+      "archive_tree": "db528464896085fe14849baef3c5e686ad1bc253",
+      "archive_scope": [
+        "app/"
+      ],
+      "archive_sha256": "4f196047cefcb7c73984b0661a50cfec50f79926543593bdc32152ea1fc99034",
+      "commit_object_verified": true,
+      "complete_app_tree_verified": true,
+      "extracted_file_count": 645,
+      "git_object_format": "sha1",
+      "key_sources": {
+        "app/__init__.py": {
+          "git_blob": "1f945e13969e2d4bebf8925e65f483f2a1d4cef3",
+          "sha256": "9b2efe8a539ee47f7bcf475708466a64669b6bb36804ccf2b1cc5a63fcb21668",
+          "size_bytes": 43489
+        },
+        "app/core/extensions.py": {
+          "git_blob": "963753e44321f8e884f8d4ea701aa61c5b0a3263",
+          "sha256": "293c63c5ea2d548e1389f221909dced878a861d28f8073f305fb98d6ff334052",
+          "size_bytes": 2150
+        },
+        "app/core/utils/api_response.py": {
+          "git_blob": "48a052d8c27eea94c396e9a9656f2e4d2d23bbbb",
+          "sha256": "76fe1a04c1a9849264502054002f5b89e3a8a62a973df6c6c5ecc1ea7aead5b3",
+          "size_bytes": 1072
+        },
+        "app/modules/user_bank/routes/public.py": {
+          "git_blob": "26044f0af2097b490e36a501894cb056aac654ae",
+          "sha256": "6f3455e825b0316272d298d35782e73dd3230e9b2fc5271f1c078009b389a663",
+          "size_bytes": 12723
+        },
+        "app/modules/user_bank/services/plaza_metrics_service.py": {
+          "git_blob": "147979ec1e0370d2d1cb946b4a8a6859f04478b0",
+          "sha256": "a356ca751c30e50b5bb3d5fcab2742ce2ca6ac8a71dc6c82b974bdb63bb51d82",
+          "size_bytes": 13375
+        },
+        "app/modules/user_bank/services/plaza_query_service.py": {
+          "git_blob": "4d1bd61921437fa9ec8b1463e68e3b6dffe8782f",
+          "sha256": "4d26b12bc756a40a5c89cf9ee373753f73bd2d5eed6ee3b11c916192c58aa057",
+          "size_bytes": 42772
+        }
+      },
+      "member_count": 792,
+      "source_transport": "git archive --format=tar (read-only, fixed commit)",
+      "temporary_extraction_cleanup": "enforced and checked on context exit"
+    },
+    "frozen_route_matrix": {
+      "path": "docs/refactor/02-route-parity-matrix.csv",
+      "sha256": "fdbdfedf3dd70cd09778b2a7072711d103eee8461d0e7dd356d797006fc92c74",
+      "size_bytes": 416225,
+      "selected_rows_sha256": "c8e549db43ccd4ffad1e5eb35a6b46195c1e2faac0b3f3adca3bb54c7aed677b",
+      "selected_rows": [
+        {
+          "route_id": "6e1a36f5052d",
+          "path": "/admin/api/subjects",
+          "methods": "GET",
+          "endpoint": "admin.admin_api.api_get_subjects",
+          "legacy_module": "admin",
+          "source": "app/modules/admin/routes/api_components/subjects.py:28",
+          "registration_source": "app/modules/admin/routes/api_components/subjects.py:28",
+          "registration_kind": "blueprint_decorator",
+          "decorators": "[\"subject_admin_required\"]",
+          "inline_auth_signals": "[]",
+          "auth_semantics": "[\"global_anonymous_login_redirect\",\"admin_blueprint_hook:session_or_jwt_plus_role_if_global_gate_passes\",\"route_decorator:session+subject_admin_role\"]",
+          "client_surfaces": "web",
+          "client_references": "{\"web\":[\"app/modules/admin/templates/admin/subjects/_question_scripts.html:650:fetch_literal\",\"app/modules/admin/templates/admin/subjects/_scripts.html:651:fetch_literal\"]}",
+          "contract_source": "runtime:url_map;source:app/modules/admin/routes/api_components/subjects.py:28",
+          "target_module": "operations",
+          "migration_status": "pending",
+          "compatibility_notes": "preserve path/method/status/envelope/auth/null/pagination"
+        }
+      ]
+    },
+    "subject_inventory_key_sources": {
+      "app/__init__.py": {
+        "git_blob": "1f945e13969e2d4bebf8925e65f483f2a1d4cef3",
+        "sha256": "9b2efe8a539ee47f7bcf475708466a64669b6bb36804ccf2b1cc5a63fcb21668",
+        "size_bytes": 43489
+      },
+      "app/core/errors.py": {
+        "git_blob": "28a07dd252a880a2c458b5a44d2a9ca6ef8e7392",
+        "sha256": "e27f21eb06a9041f28378e5d7aa5e13cfa0aec89bf173855a0a03ba21f55935b",
+        "size_bytes": 5616
+      },
+      "app/core/extensions.py": {
+        "git_blob": "963753e44321f8e884f8d4ea701aa61c5b0a3263",
+        "sha256": "293c63c5ea2d548e1389f221909dced878a861d28f8073f305fb98d6ff334052",
+        "size_bytes": 2150
+      },
+      "app/core/utils/decorators.py": {
+        "git_blob": "07a31eca9ce85e7a60ad84e0888cbdb03f2d2251",
+        "sha256": "6c301dc92868eb701764722f06224e614e0d0b0f82a4c4f6f406e7ded15cd653",
+        "size_bytes": 11355
+      },
+      "app/models/subject.py": {
+        "git_blob": "3402284c90034313e892423d842c21de1f1e0b71",
+        "sha256": "e0e2d38d702d986912efb16b1b57d7f4e30318c4e9d56c004d2b4107d5e67757",
+        "size_bytes": 2191
+      },
+      "app/models/user.py": {
+        "git_blob": "973c9c0d1a7462be67954366bb275de77b54dab8",
+        "sha256": "4e7c64b3acc98412a0a9ff861aa13aa5a9fba1ca2ebc4f8c07c97666cc9e7da5",
+        "size_bytes": 2565
+      },
+      "app/modules/admin/__init__.py": {
+        "git_blob": "e7fe1ad8c197be6da2e5ab15e2c8af72768bb2db",
+        "sha256": "06ff47e53bb93c5e484544ff3d63188fa913bfd47d26d8f43034cb60a7f2573d",
+        "size_bytes": 5189
+      },
+      "app/modules/admin/routes/api.py": {
+        "git_blob": "1666cb0d74a77dcdeef92bf1b76b3294c13d2403",
+        "sha256": "f74226d3f7bbbd30b665ea6ef2395f2d5666721941a097baf6c72eeffc7710c7",
+        "size_bytes": 1492
+      },
+      "app/modules/admin/routes/api_bp.py": {
+        "git_blob": "fbc8e064bc4b0bfa703c1bdbc3892862bce2d0ef",
+        "sha256": "8e260c59ba36eebab6548195d8c5ccd07b2c3bebaa242b8a49b12b94ec7dd152",
+        "size_bytes": 317
+      },
+      "app/modules/admin/routes/api_components/subjects.py": {
+        "git_blob": "72354ca3b93d57d5f5148a48da45f80bc3ce01e9",
+        "sha256": "03eb7c9942727d3df5aa5ff9996415241fe08269b8e4691d3d2e9ea1767de708",
+        "size_bytes": 6564
+      },
+      "app/modules/admin/templates/admin/subjects/_question_scripts.html": {
+        "git_blob": "a2bd457f51d2d0e75975a602971842fb309316e0",
+        "sha256": "db4c3443ecbaef95d25ae86a20ca3dd39dec9a44a1106865897dcb6717a37523",
+        "size_bytes": 52076
+      },
+      "app/modules/admin/templates/admin/subjects/_scripts.html": {
+        "git_blob": "9342b5b82d6fd0a76cc5e827e78bc868f332dfed",
+        "sha256": "25c127df0dce2b7559bf7c85b76f9a75d7d70d720eeba1a8e8f23bca34f4fd3b",
+        "size_bytes": 52174
+      },
+      "app/modules/admin/templates/admin/subjects/legacy.html": {
+        "git_blob": "2fd54bc05b32452c7e8083996f145e701dbb5802",
+        "sha256": "b9d205b3b0fe0abb0dc0777e74708157a75997700ecf213c287fa77a35dcb4c1",
+        "size_bytes": 10495
+      }
+    }
+  },
+  "route_status": {
+    "target_internal_owner": "catalog",
+    "http_owner": "operations",
+    "migration_status": "pending",
+    "production_cutover": false,
+    "route": {
+      "route_id": "6e1a36f5052d",
+      "path": "/admin/api/subjects",
+      "route_template": "/admin/api/subjects",
+      "legacy_handler": "admin.admin_api.api_get_subjects"
+    },
+    "controller_added": false,
+    "openapi_delta": false,
+    "route_delta": false
+  },
+  "catalog_internal_primitive": {
+    "capability": "read every subject inventory summary with assigned question count",
+    "tables": [
+      "subjects",
+      "questions"
+    ],
+    "selected_columns": [
+      "id",
+      "name",
+      "is_locked",
+      "question_count"
+    ],
+    "selected_column_count": 4,
+    "query_variant_count": 1,
+    "bind_count": 0,
+    "filters": [],
+    "pagination": null,
+    "ordering": "signed s.id ASC",
+    "count_semantics": "COUNT(q.id) after subjects LEFT JOIN questions on subject_id",
+    "http_projection_owner": "operations until auth and payload parity are migrated"
+  },
+  "request_effect_scope": {
+    "subject_inventory_handler": "one SELECT-only subjects/questions aggregate; no catalog DML or DDL",
+    "surrounding_web_session": "may SELECT users and commit users.last_active before the inventory handler",
+    "claim_boundary": "per-case ledgers separate the inventory read from authentication activity; this evidence does not claim that the entire HTTP request is write-free"
+  },
+  "isolation": "complete app/ tree from fixed read-only git archive; temporary SQLite with foreign-key enforcement disabled only to model legacy orphan data; in-memory limiter; no current working-tree legacy import or persistent data",
+  "dialect_observation": "the pinned raw text query on isolated SQLite serializes non-null booleans as JSON 0/1 and preserves null; PostgreSQL Boolean runtime parity is a separate gate",
+  "case_isolation": "every request resets empty, single, or full subjects/questions facts and actor last_active outside its SQL ledger, gets a fresh explicit Session scenario, reset limiter, deterministic remote address, pre/post 9-column subjects and 15-column questions fingerprints, stable user-identity fingerprint, and a separate last_active ledger",
+  "response_capture": "full response body text and parsed body, body length/hash, and every test-client response header; session cookies are redacted and wall-clock activity values are represented by explicit deterministic placeholders",
+  "redaction": "synthetic identities only; JWT, password hash, session-cookie values, and database-current last_active timestamps omitted; fixed request ID",
+  "fixture": {
+    "actors": {
+      "ordinary": 94001,
+      "subject_admin": 94002,
+      "administrator": 94003
+    },
+    "subjects": {
+      "negative_unlocked": -9,
+      "zero_null_locked_empty_name": 0,
+      "unicode_locked": 95001,
+      "positive_unlocked": 95002
+    },
+    "single_subject_id": -3,
+    "questions": {
+      "negative_subject": 96001,
+      "unicode_subject_first": 96002,
+      "unicode_subject_second": 96003,
+      "positive_subject": 96004,
+      "null_subject": 96005,
+      "orphan_subject": 96006
+    },
+    "orphan_subject_id": 95999,
+    "full_subjects_fingerprint": {
+      "columns": [
+        "id",
+        "name",
+        "description",
+        "is_locked",
+        "plaza_board_id",
+        "is_plaza_featured",
+        "plaza_featured_weight",
+        "plaza_featured_at",
+        "created_at"
+      ],
+      "column_count": 9,
+      "row_count": 4,
+      "rows_sha256": "e44fc56d12449ddf4e86874d0daa0699b5a2206074f092c28baaa51cf77f2499"
+    },
+    "full_questions_fingerprint": {
+      "columns": [
+        "id",
+        "subject_id",
+        "type",
+        "content",
+        "options",
+        "answer",
+        "analysis",
+        "tags",
+        "difficulty",
+        "image_path",
+        "source",
+        "created_by",
+        "updated_by",
+        "created_at",
+        "updated_at"
+      ],
+      "column_count": 15,
+      "row_count": 6,
+      "rows_sha256": "0c08e83af9aa03cdb7e21a02f2cc78ad8012533d7f09fd92700535a12d8df3de"
+    },
+    "full_association_facts": {
+      "assigned_question_count": 4,
+      "null_subject_question_count": 1,
+      "orphan_subject_question_count": 1,
+      "response_question_count_sum": 4
+    }
+  },
+  "case_count": 11,
+  "case_payload_sha256": "f1ae276b9922cc66b1e8d2c613f060d7f30a4700cfac41a4b8a05f54adcaf0f9",
+  "cases": [
+    {
+      "case_id": "auth-administrator",
+      "route_id": "6e1a36f5052d",
+      "session_actor": "administrator",
+      "bearer_actor": "none",
+      "credential_mode": "session",
+      "fixture_mode": "full",
+      "request": {
+        "method": "GET",
+        "path": "/admin/api/subjects",
+        "route_template": "/admin/api/subjects",
+        "query": [],
+        "query_string": "",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-subject-inventory-golden-request"
+        },
+        "remote_address": "198.51.235.72"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Length": [
+            "457"
+          ],
+          "Content-Type": [
+            "application/json"
+          ],
+          "Referrer-Policy": [
+            "strict-origin-when-cross-origin"
+          ],
+          "Retry-After": [
+            "<dynamic-seconds>"
+          ],
+          "Set-Cookie": [
+            "<redacted-session-cookie>"
+          ],
+          "Vary": [
+            "Cookie"
+          ],
+          "X-Content-Type-Options": [
+            "nosniff"
+          ],
+          "X-Frame-Options": [
+            "SAMEORIGIN"
+          ],
+          "X-RateLimit-Limit": [
+            "10"
+          ],
+          "X-RateLimit-Remaining": [
+            "9"
+          ],
+          "X-RateLimit-Reset": [
+            "<dynamic-epoch-second>"
+          ],
+          "X-Request-ID": [
+            "phase4a-subject-inventory-golden-request"
+          ]
+        },
+        "body_kind": "json",
+        "body": [
+          {
+            "id": -9,
+            "is_locked": 0,
+            "name": "负主键科目",
+            "question_count": 1
+          },
+          {
+            "id": 0,
+            "is_locked": null,
+            "name": "",
+            "question_count": 0
+          },
+          {
+            "id": 95001,
+            "is_locked": 1,
+            "name": "算法基础・α／中文",
+            "question_count": 2
+          },
+          {
+            "id": 95002,
+            "is_locked": 0,
+            "name": "数据库系统",
+            "question_count": 1
+          }
+        ],
+        "body_text": "[\n  {\n    \"id\": -9,\n    \"is_locked\": 0,\n    \"name\": \"\\u8d1f\\u4e3b\\u952e\\u79d1\\u76ee\",\n    \"question_count\": 1\n  },\n  {\n    \"id\": 0,\n    \"is_locked\": null,\n    \"name\": \"\",\n    \"question_count\": 0\n  },\n  {\n    \"id\": 95001,\n    \"is_locked\": 1,\n    \"name\": \"\\u7b97\\u6cd5\\u57fa\\u7840\\u30fb\\u03b1\\uff0f\\u4e2d\\u6587\",\n    \"question_count\": 2\n  },\n  {\n    \"id\": 95002,\n    \"is_locked\": 0,\n    \"name\": \"\\u6570\\u636e\\u5e93\\u7cfb\\u7edf\",\n    \"question_count\": 1\n  }\n]\n",
+        "body_length_bytes": 457,
+        "body_sha256": "0160f868784c62e8dc3774192c954d94ac2ee0253e0c86d963731c408c1b2148"
+      },
+      "observed_get_effects": {
+        "sql": {
+          "statements": [
+            {
+              "sql": "SELECT USERS.ID AS USERS_ID, USERS.USERNAME AS USERS_USERNAME, USERS.PASSWORD_HASH AS USERS_PASSWORD_HASH, USERS.IS_ADMIN AS USERS_IS_ADMIN, USERS.IS_LOCKED AS USERS_IS_LOCKED, USERS.SESSION_VERSION AS USERS_SESSION_VERSION, USERS.AVATAR AS USERS_AVATAR, USERS.CONTACT AS USERS_CONTACT, USERS.COLLEGE AS USERS_COLLEGE, USERS.LAST_ACTIVE AS USERS_LAST_ACTIVE, USERS.IS_SUBJECT_ADMIN AS USERS_IS_SUBJECT_ADMIN, USERS.IS_NOTIFICATION_ADMIN AS USERS_IS_NOTIFICATION_ADMIN, USERS.CREATED_AT AS USERS_CREATED_AT, USERS.EMAIL AS USERS_EMAIL, USERS.EMAIL_VERIFIED AS USERS_EMAIL_VERIFIED, USERS.EMAIL_VERIFIED_AT AS USERS_EMAIL_VERIFIED_AT, USERS.PHONE AS USERS_PHONE, USERS.PHONE_VERIFIED AS USERS_PHONE_VERIFIED, USERS.PHONE_VERIFIED_AT AS USERS_PHONE_VERIFIED_AT, USERS.HAS_PASSWORD_SET AS USERS_HAS_PASSWORD_SET, USERS.OPENID AS USERS_OPENID FROM USERS WHERE USERS.ID = ?",
+              "parameters": [
+                94003
+              ],
+              "executemany": false,
+              "classification": "users_select"
+            },
+            {
+              "sql": "UPDATE USERS SET LAST_ACTIVE=CURRENT_TIMESTAMP WHERE USERS.ID = ?",
+              "parameters": [
+                94003
+              ],
+              "executemany": false,
+              "classification": "user_last_active_dml"
+            },
+            {
+              "sql": "SELECT USERS.ID AS USERS_ID, USERS.USERNAME AS USERS_USERNAME, USERS.PASSWORD_HASH AS USERS_PASSWORD_HASH, USERS.IS_ADMIN AS USERS_IS_ADMIN, USERS.IS_LOCKED AS USERS_IS_LOCKED, USERS.SESSION_VERSION AS USERS_SESSION_VERSION, USERS.AVATAR AS USERS_AVATAR, USERS.CONTACT AS USERS_CONTACT, USERS.COLLEGE AS USERS_COLLEGE, USERS.LAST_ACTIVE AS USERS_LAST_ACTIVE, USERS.IS_SUBJECT_ADMIN AS USERS_IS_SUBJECT_ADMIN, USERS.IS_NOTIFICATION_ADMIN AS USERS_IS_NOTIFICATION_ADMIN, USERS.CREATED_AT AS USERS_CREATED_AT, USERS.EMAIL AS USERS_EMAIL, USERS.EMAIL_VERIFIED AS USERS_EMAIL_VERIFIED, USERS.EMAIL_VERIFIED_AT AS USERS_EMAIL_VERIFIED_AT, USERS.PHONE AS USERS_PHONE, USERS.PHONE_VERIFIED AS USERS_PHONE_VERIFIED, USERS.PHONE_VERIFIED_AT AS USERS_PHONE_VERIFIED_AT, USERS.HAS_PASSWORD_SET AS USERS_HAS_PASSWORD_SET, USERS.OPENID AS USERS_OPENID FROM USERS WHERE USERS.ID = ?",
+              "parameters": [
+                94003
+              ],
+              "executemany": false,
+              "classification": "users_select"
+            },
+            {
+              "sql": "SELECT S.ID, S.NAME, S.IS_LOCKED, COUNT(Q.ID) AS QUESTION_COUNT FROM SUBJECTS S LEFT JOIN QUESTIONS Q ON S.ID = Q.SUBJECT_ID GROUP BY S.ID, S.NAME, S.IS_LOCKED ORDER BY S.ID",
+              "parameters": [],
+              "executemany": false,
+              "classification": "subject_inventory_select"
+            }
+          ],
+          "select_attempts": 3,
+          "dml_attempts": 1,
+          "ddl_attempts": 0,
+          "other_attempts": 0,
+          "subject_inventory_select_attempts": 1,
+          "subjects_select_attempts": 1,
+          "questions_select_attempts": 1,
+          "users_select_attempts": 2,
+          "subjects_dml_attempts": 0,
+          "questions_dml_attempts": 0,
+          "user_last_active_dml_attempts": 1,
+          "statement_count": 4,
+          "classified_attempt_count": 4,
+          "statements_sha256": "fac746f4f9197ba60b6a30bd93c0c71ca242b52e4c2af25cb4df4bf14f061e91"
+        },
+        "subjects_before": {
+          "columns": [
+            "id",
+            "name",
+            "description",
+            "is_locked",
+            "plaza_board_id",
+            "is_plaza_featured",
+            "plaza_featured_weight",
+            "plaza_featured_at",
+            "created_at"
+          ],
+          "column_count": 9,
+          "row_count": 4,
+          "rows_sha256": "e44fc56d12449ddf4e86874d0daa0699b5a2206074f092c28baaa51cf77f2499"
+        },
+        "subjects_after": {
+          "columns": [
+            "id",
+            "name",
+            "description",
+            "is_locked",
+            "plaza_board_id",
+            "is_plaza_featured",
+            "plaza_featured_weight",
+            "plaza_featured_at",
+            "created_at"
+          ],
+          "column_count": 9,
+          "row_count": 4,
+          "rows_sha256": "e44fc56d12449ddf4e86874d0daa0699b5a2206074f092c28baaa51cf77f2499"
+        },
+        "subjects_match_case_fixture": true,
+        "subjects_unchanged": true,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "column_count": 15,
+          "row_count": 6,
+          "rows_sha256": "0c08e83af9aa03cdb7e21a02f2cc78ad8012533d7f09fd92700535a12d8df3de"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "column_count": 15,
+          "row_count": 6,
+          "rows_sha256": "0c08e83af9aa03cdb7e21a02f2cc78ad8012533d7f09fd92700535a12d8df3de"
+        },
+        "questions_match_case_fixture": true,
+        "questions_unchanged": true,
+        "users_identity_before": {
+          "columns": [
+            "id",
+            "username",
+            "is_admin",
+            "is_subject_admin",
+            "is_notification_admin",
+            "is_locked",
+            "session_version"
+          ],
+          "column_count": 7,
+          "row_count": 3,
+          "rows_sha256": "faac5b4ef87dea869d3cc24198a027d6ac40bc484556c43654352407d47ebe04"
+        },
+        "users_identity_after": {
+          "columns": [
+            "id",
+            "username",
+            "is_admin",
+            "is_subject_admin",
+            "is_notification_admin",
+            "is_locked",
+            "session_version"
+          ],
+          "column_count": 7,
+          "row_count": 3,
+          "rows_sha256": "faac5b4ef87dea869d3cc24198a027d6ac40bc484556c43654352407d47ebe04"
+        },
+        "users_identity_unchanged": true,
+        "user_last_active_before": [
+          {
+            "user_id": 94001,
+            "last_active": null
+          },
+          {
+            "user_id": 94002,
+            "last_active": null
+          },
+          {
+            "user_id": 94003,
+            "last_active": null
+          }
+        ],
+        "user_last_active_after": [
+          {
+            "user_id": 94001,
+            "last_active": null
+          },
+          {
+            "user_id": 94002,
+            "last_active": null
+          },
+          {
+            "user_id": 94003,
+            "last_active": "<database-current-timestamp>"
+          }
+        ],
+        "user_last_active_changed_user_ids": [
+          94003
+        ],
+        "surrounding_session_activity_write_observed": true
+      }
+    },
+    {
+      "case_id": "auth-subject-admin",
+      "route_id": "6e1a36f5052d",
+      "session_actor": "subject_admin",
+      "bearer_actor": "none",
+      "credential_mode": "session",
+      "fixture_mode": "full",
+      "request": {
+        "method": "GET",
+        "path": "/admin/api/subjects",
+        "route_template": "/admin/api/subjects",
+        "query": [],
+        "query_string": "",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-subject-inventory-golden-request"
+        },
+        "remote_address": "198.51.158.249"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Length": [
+            "457"
+          ],
+          "Content-Type": [
+            "application/json"
+          ],
+          "Referrer-Policy": [
+            "strict-origin-when-cross-origin"
+          ],
+          "Retry-After": [
+            "<dynamic-seconds>"
+          ],
+          "Set-Cookie": [
+            "<redacted-session-cookie>"
+          ],
+          "Vary": [
+            "Cookie"
+          ],
+          "X-Content-Type-Options": [
+            "nosniff"
+          ],
+          "X-Frame-Options": [
+            "SAMEORIGIN"
+          ],
+          "X-RateLimit-Limit": [
+            "10"
+          ],
+          "X-RateLimit-Remaining": [
+            "9"
+          ],
+          "X-RateLimit-Reset": [
+            "<dynamic-epoch-second>"
+          ],
+          "X-Request-ID": [
+            "phase4a-subject-inventory-golden-request"
+          ]
+        },
+        "body_kind": "json",
+        "body": [
+          {
+            "id": -9,
+            "is_locked": 0,
+            "name": "负主键科目",
+            "question_count": 1
+          },
+          {
+            "id": 0,
+            "is_locked": null,
+            "name": "",
+            "question_count": 0
+          },
+          {
+            "id": 95001,
+            "is_locked": 1,
+            "name": "算法基础・α／中文",
+            "question_count": 2
+          },
+          {
+            "id": 95002,
+            "is_locked": 0,
+            "name": "数据库系统",
+            "question_count": 1
+          }
+        ],
+        "body_text": "[\n  {\n    \"id\": -9,\n    \"is_locked\": 0,\n    \"name\": \"\\u8d1f\\u4e3b\\u952e\\u79d1\\u76ee\",\n    \"question_count\": 1\n  },\n  {\n    \"id\": 0,\n    \"is_locked\": null,\n    \"name\": \"\",\n    \"question_count\": 0\n  },\n  {\n    \"id\": 95001,\n    \"is_locked\": 1,\n    \"name\": \"\\u7b97\\u6cd5\\u57fa\\u7840\\u30fb\\u03b1\\uff0f\\u4e2d\\u6587\",\n    \"question_count\": 2\n  },\n  {\n    \"id\": 95002,\n    \"is_locked\": 0,\n    \"name\": \"\\u6570\\u636e\\u5e93\\u7cfb\\u7edf\",\n    \"question_count\": 1\n  }\n]\n",
+        "body_length_bytes": 457,
+        "body_sha256": "0160f868784c62e8dc3774192c954d94ac2ee0253e0c86d963731c408c1b2148"
+      },
+      "observed_get_effects": {
+        "sql": {
+          "statements": [
+            {
+              "sql": "SELECT USERS.ID AS USERS_ID, USERS.USERNAME AS USERS_USERNAME, USERS.PASSWORD_HASH AS USERS_PASSWORD_HASH, USERS.IS_ADMIN AS USERS_IS_ADMIN, USERS.IS_LOCKED AS USERS_IS_LOCKED, USERS.SESSION_VERSION AS USERS_SESSION_VERSION, USERS.AVATAR AS USERS_AVATAR, USERS.CONTACT AS USERS_CONTACT, USERS.COLLEGE AS USERS_COLLEGE, USERS.LAST_ACTIVE AS USERS_LAST_ACTIVE, USERS.IS_SUBJECT_ADMIN AS USERS_IS_SUBJECT_ADMIN, USERS.IS_NOTIFICATION_ADMIN AS USERS_IS_NOTIFICATION_ADMIN, USERS.CREATED_AT AS USERS_CREATED_AT, USERS.EMAIL AS USERS_EMAIL, USERS.EMAIL_VERIFIED AS USERS_EMAIL_VERIFIED, USERS.EMAIL_VERIFIED_AT AS USERS_EMAIL_VERIFIED_AT, USERS.PHONE AS USERS_PHONE, USERS.PHONE_VERIFIED AS USERS_PHONE_VERIFIED, USERS.PHONE_VERIFIED_AT AS USERS_PHONE_VERIFIED_AT, USERS.HAS_PASSWORD_SET AS USERS_HAS_PASSWORD_SET, USERS.OPENID AS USERS_OPENID FROM USERS WHERE USERS.ID = ?",
+              "parameters": [
+                94002
+              ],
+              "executemany": false,
+              "classification": "users_select"
+            },
+            {
+              "sql": "SELECT SYSTEM_CONFIG.ID AS SYSTEM_CONFIG_ID, SYSTEM_CONFIG.CONFIG_KEY AS SYSTEM_CONFIG_CONFIG_KEY, SYSTEM_CONFIG.CONFIG_VALUE AS SYSTEM_CONFIG_CONFIG_VALUE, SYSTEM_CONFIG.DESCRIPTION AS SYSTEM_CONFIG_DESCRIPTION, SYSTEM_CONFIG.UPDATED_AT AS SYSTEM_CONFIG_UPDATED_AT, SYSTEM_CONFIG.UPDATED_BY AS SYSTEM_CONFIG_UPDATED_BY FROM SYSTEM_CONFIG WHERE SYSTEM_CONFIG.CONFIG_KEY = ? LIMIT ? OFFSET ?",
+              "parameters": [
+                "email_bind_required",
+                1,
+                0
+              ],
+              "executemany": false,
+              "classification": "select"
+            },
+            {
+              "sql": "UPDATE USERS SET LAST_ACTIVE=CURRENT_TIMESTAMP WHERE USERS.ID = ?",
+              "parameters": [
+                94002
+              ],
+              "executemany": false,
+              "classification": "user_last_active_dml"
+            },
+            {
+              "sql": "SELECT USERS.ID AS USERS_ID, USERS.USERNAME AS USERS_USERNAME, USERS.PASSWORD_HASH AS USERS_PASSWORD_HASH, USERS.IS_ADMIN AS USERS_IS_ADMIN, USERS.IS_LOCKED AS USERS_IS_LOCKED, USERS.SESSION_VERSION AS USERS_SESSION_VERSION, USERS.AVATAR AS USERS_AVATAR, USERS.CONTACT AS USERS_CONTACT, USERS.COLLEGE AS USERS_COLLEGE, USERS.LAST_ACTIVE AS USERS_LAST_ACTIVE, USERS.IS_SUBJECT_ADMIN AS USERS_IS_SUBJECT_ADMIN, USERS.IS_NOTIFICATION_ADMIN AS USERS_IS_NOTIFICATION_ADMIN, USERS.CREATED_AT AS USERS_CREATED_AT, USERS.EMAIL AS USERS_EMAIL, USERS.EMAIL_VERIFIED AS USERS_EMAIL_VERIFIED, USERS.EMAIL_VERIFIED_AT AS USERS_EMAIL_VERIFIED_AT, USERS.PHONE AS USERS_PHONE, USERS.PHONE_VERIFIED AS USERS_PHONE_VERIFIED, USERS.PHONE_VERIFIED_AT AS USERS_PHONE_VERIFIED_AT, USERS.HAS_PASSWORD_SET AS USERS_HAS_PASSWORD_SET, USERS.OPENID AS USERS_OPENID FROM USERS WHERE USERS.ID = ?",
+              "parameters": [
+                94002
+              ],
+              "executemany": false,
+              "classification": "users_select"
+            },
+            {
+              "sql": "SELECT S.ID, S.NAME, S.IS_LOCKED, COUNT(Q.ID) AS QUESTION_COUNT FROM SUBJECTS S LEFT JOIN QUESTIONS Q ON S.ID = Q.SUBJECT_ID GROUP BY S.ID, S.NAME, S.IS_LOCKED ORDER BY S.ID",
+              "parameters": [],
+              "executemany": false,
+              "classification": "subject_inventory_select"
+            }
+          ],
+          "select_attempts": 4,
+          "dml_attempts": 1,
+          "ddl_attempts": 0,
+          "other_attempts": 0,
+          "subject_inventory_select_attempts": 1,
+          "subjects_select_attempts": 1,
+          "questions_select_attempts": 1,
+          "users_select_attempts": 2,
+          "subjects_dml_attempts": 0,
+          "questions_dml_attempts": 0,
+          "user_last_active_dml_attempts": 1,
+          "statement_count": 5,
+          "classified_attempt_count": 5,
+          "statements_sha256": "1818cf6dd38c317069fa9baec40ccfd4d5be9b5d739d85c2e79bda50e3e1dad4"
+        },
+        "subjects_before": {
+          "columns": [
+            "id",
+            "name",
+            "description",
+            "is_locked",
+            "plaza_board_id",
+            "is_plaza_featured",
+            "plaza_featured_weight",
+            "plaza_featured_at",
+            "created_at"
+          ],
+          "column_count": 9,
+          "row_count": 4,
+          "rows_sha256": "e44fc56d12449ddf4e86874d0daa0699b5a2206074f092c28baaa51cf77f2499"
+        },
+        "subjects_after": {
+          "columns": [
+            "id",
+            "name",
+            "description",
+            "is_locked",
+            "plaza_board_id",
+            "is_plaza_featured",
+            "plaza_featured_weight",
+            "plaza_featured_at",
+            "created_at"
+          ],
+          "column_count": 9,
+          "row_count": 4,
+          "rows_sha256": "e44fc56d12449ddf4e86874d0daa0699b5a2206074f092c28baaa51cf77f2499"
+        },
+        "subjects_match_case_fixture": true,
+        "subjects_unchanged": true,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "column_count": 15,
+          "row_count": 6,
+          "rows_sha256": "0c08e83af9aa03cdb7e21a02f2cc78ad8012533d7f09fd92700535a12d8df3de"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "column_count": 15,
+          "row_count": 6,
+          "rows_sha256": "0c08e83af9aa03cdb7e21a02f2cc78ad8012533d7f09fd92700535a12d8df3de"
+        },
+        "questions_match_case_fixture": true,
+        "questions_unchanged": true,
+        "users_identity_before": {
+          "columns": [
+            "id",
+            "username",
+            "is_admin",
+            "is_subject_admin",
+            "is_notification_admin",
+            "is_locked",
+            "session_version"
+          ],
+          "column_count": 7,
+          "row_count": 3,
+          "rows_sha256": "faac5b4ef87dea869d3cc24198a027d6ac40bc484556c43654352407d47ebe04"
+        },
+        "users_identity_after": {
+          "columns": [
+            "id",
+            "username",
+            "is_admin",
+            "is_subject_admin",
+            "is_notification_admin",
+            "is_locked",
+            "session_version"
+          ],
+          "column_count": 7,
+          "row_count": 3,
+          "rows_sha256": "faac5b4ef87dea869d3cc24198a027d6ac40bc484556c43654352407d47ebe04"
+        },
+        "users_identity_unchanged": true,
+        "user_last_active_before": [
+          {
+            "user_id": 94001,
+            "last_active": null
+          },
+          {
+            "user_id": 94002,
+            "last_active": null
+          },
+          {
+            "user_id": 94003,
+            "last_active": null
+          }
+        ],
+        "user_last_active_after": [
+          {
+            "user_id": 94001,
+            "last_active": null
+          },
+          {
+            "user_id": 94002,
+            "last_active": "<database-current-timestamp>"
+          },
+          {
+            "user_id": 94003,
+            "last_active": null
+          }
+        ],
+        "user_last_active_changed_user_ids": [
+          94002
+        ],
+        "surrounding_session_activity_write_observed": true
+      }
+    },
+    {
+      "case_id": "auth-ordinary",
+      "route_id": "6e1a36f5052d",
+      "session_actor": "ordinary",
+      "bearer_actor": "none",
+      "credential_mode": "session",
+      "fixture_mode": "full",
+      "request": {
+        "method": "GET",
+        "path": "/admin/api/subjects",
+        "route_template": "/admin/api/subjects",
+        "query": [],
+        "query_string": "",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-subject-inventory-golden-request"
+        },
+        "remote_address": "198.51.120.46"
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "Content-Length": [
+            "155"
+          ],
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Referrer-Policy": [
+            "strict-origin-when-cross-origin"
+          ],
+          "Retry-After": [
+            "<dynamic-seconds>"
+          ],
+          "Set-Cookie": [
+            "<redacted-session-cookie>"
+          ],
+          "Vary": [
+            "Cookie"
+          ],
+          "X-Content-Type-Options": [
+            "nosniff"
+          ],
+          "X-Frame-Options": [
+            "SAMEORIGIN"
+          ],
+          "X-RateLimit-Limit": [
+            "10"
+          ],
+          "X-RateLimit-Remaining": [
+            "9"
+          ],
+          "X-RateLimit-Reset": [
+            "<dynamic-epoch-second>"
+          ],
+          "X-Request-ID": [
+            "phase4a-subject-inventory-golden-request"
+          ]
+        },
+        "body_kind": "json",
+        "body": {
+          "message": "需要管理员或科目管理员权限",
+          "request_id": "phase4a-subject-inventory-golden-request",
+          "status": "forbidden",
+          "status_code": 403
+        },
+        "body_text": "{\"message\": \"需要管理员或科目管理员权限\", \"status\": \"forbidden\", \"request_id\": \"phase4a-subject-inventory-golden-request\", \"status_code\": 403}",
+        "body_length_bytes": 155,
+        "body_sha256": "6794c6d6a0fdebedb6eeae90e40e8d0d3b3720db3722f94e25dd4de7e81c7701"
+      },
+      "observed_get_effects": {
+        "sql": {
+          "statements": [
+            {
+              "sql": "SELECT USERS.ID AS USERS_ID, USERS.USERNAME AS USERS_USERNAME, USERS.PASSWORD_HASH AS USERS_PASSWORD_HASH, USERS.IS_ADMIN AS USERS_IS_ADMIN, USERS.IS_LOCKED AS USERS_IS_LOCKED, USERS.SESSION_VERSION AS USERS_SESSION_VERSION, USERS.AVATAR AS USERS_AVATAR, USERS.CONTACT AS USERS_CONTACT, USERS.COLLEGE AS USERS_COLLEGE, USERS.LAST_ACTIVE AS USERS_LAST_ACTIVE, USERS.IS_SUBJECT_ADMIN AS USERS_IS_SUBJECT_ADMIN, USERS.IS_NOTIFICATION_ADMIN AS USERS_IS_NOTIFICATION_ADMIN, USERS.CREATED_AT AS USERS_CREATED_AT, USERS.EMAIL AS USERS_EMAIL, USERS.EMAIL_VERIFIED AS USERS_EMAIL_VERIFIED, USERS.EMAIL_VERIFIED_AT AS USERS_EMAIL_VERIFIED_AT, USERS.PHONE AS USERS_PHONE, USERS.PHONE_VERIFIED AS USERS_PHONE_VERIFIED, USERS.PHONE_VERIFIED_AT AS USERS_PHONE_VERIFIED_AT, USERS.HAS_PASSWORD_SET AS USERS_HAS_PASSWORD_SET, USERS.OPENID AS USERS_OPENID FROM USERS WHERE USERS.ID = ?",
+              "parameters": [
+                94001
+              ],
+              "executemany": false,
+              "classification": "users_select"
+            },
+            {
+              "sql": "UPDATE USERS SET LAST_ACTIVE=CURRENT_TIMESTAMP WHERE USERS.ID = ?",
+              "parameters": [
+                94001
+              ],
+              "executemany": false,
+              "classification": "user_last_active_dml"
+            }
+          ],
+          "select_attempts": 1,
+          "dml_attempts": 1,
+          "ddl_attempts": 0,
+          "other_attempts": 0,
+          "subject_inventory_select_attempts": 0,
+          "subjects_select_attempts": 0,
+          "questions_select_attempts": 0,
+          "users_select_attempts": 1,
+          "subjects_dml_attempts": 0,
+          "questions_dml_attempts": 0,
+          "user_last_active_dml_attempts": 1,
+          "statement_count": 2,
+          "classified_attempt_count": 2,
+          "statements_sha256": "25ca41661cd6fb7dd4732a206415edbfc8aa6918df991c8daf1ee79757584bd5"
+        },
+        "subjects_before": {
+          "columns": [
+            "id",
+            "name",
+            "description",
+            "is_locked",
+            "plaza_board_id",
+            "is_plaza_featured",
+            "plaza_featured_weight",
+            "plaza_featured_at",
+            "created_at"
+          ],
+          "column_count": 9,
+          "row_count": 4,
+          "rows_sha256": "e44fc56d12449ddf4e86874d0daa0699b5a2206074f092c28baaa51cf77f2499"
+        },
+        "subjects_after": {
+          "columns": [
+            "id",
+            "name",
+            "description",
+            "is_locked",
+            "plaza_board_id",
+            "is_plaza_featured",
+            "plaza_featured_weight",
+            "plaza_featured_at",
+            "created_at"
+          ],
+          "column_count": 9,
+          "row_count": 4,
+          "rows_sha256": "e44fc56d12449ddf4e86874d0daa0699b5a2206074f092c28baaa51cf77f2499"
+        },
+        "subjects_match_case_fixture": true,
+        "subjects_unchanged": true,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "column_count": 15,
+          "row_count": 6,
+          "rows_sha256": "0c08e83af9aa03cdb7e21a02f2cc78ad8012533d7f09fd92700535a12d8df3de"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "column_count": 15,
+          "row_count": 6,
+          "rows_sha256": "0c08e83af9aa03cdb7e21a02f2cc78ad8012533d7f09fd92700535a12d8df3de"
+        },
+        "questions_match_case_fixture": true,
+        "questions_unchanged": true,
+        "users_identity_before": {
+          "columns": [
+            "id",
+            "username",
+            "is_admin",
+            "is_subject_admin",
+            "is_notification_admin",
+            "is_locked",
+            "session_version"
+          ],
+          "column_count": 7,
+          "row_count": 3,
+          "rows_sha256": "faac5b4ef87dea869d3cc24198a027d6ac40bc484556c43654352407d47ebe04"
+        },
+        "users_identity_after": {
+          "columns": [
+            "id",
+            "username",
+            "is_admin",
+            "is_subject_admin",
+            "is_notification_admin",
+            "is_locked",
+            "session_version"
+          ],
+          "column_count": 7,
+          "row_count": 3,
+          "rows_sha256": "faac5b4ef87dea869d3cc24198a027d6ac40bc484556c43654352407d47ebe04"
+        },
+        "users_identity_unchanged": true,
+        "user_last_active_before": [
+          {
+            "user_id": 94001,
+            "last_active": null
+          },
+          {
+            "user_id": 94002,
+            "last_active": null
+          },
+          {
+            "user_id": 94003,
+            "last_active": null
+          }
+        ],
+        "user_last_active_after": [
+          {
+            "user_id": 94001,
+            "last_active": "<database-current-timestamp>"
+          },
+          {
+            "user_id": 94002,
+            "last_active": null
+          },
+          {
+            "user_id": 94003,
+            "last_active": null
+          }
+        ],
+        "user_last_active_changed_user_ids": [
+          94001
+        ],
+        "surrounding_session_activity_write_observed": true
+      }
+    },
+    {
+      "case_id": "auth-anonymous",
+      "route_id": "6e1a36f5052d",
+      "session_actor": "anonymous",
+      "bearer_actor": "none",
+      "credential_mode": "none",
+      "fixture_mode": "full",
+      "request": {
+        "method": "GET",
+        "path": "/admin/api/subjects",
+        "route_template": "/admin/api/subjects",
+        "query": [],
+        "query_string": "",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-subject-inventory-golden-request"
+        },
+        "remote_address": "198.51.180.211"
+      },
+      "response": {
+        "status": 302,
+        "headers": {
+          "Content-Length": [
+            "199"
+          ],
+          "Content-Type": [
+            "text/html; charset=utf-8"
+          ],
+          "Location": [
+            "/login"
+          ],
+          "Referrer-Policy": [
+            "strict-origin-when-cross-origin"
+          ],
+          "Retry-After": [
+            "<dynamic-seconds>"
+          ],
+          "Vary": [
+            "Cookie"
+          ],
+          "X-Content-Type-Options": [
+            "nosniff"
+          ],
+          "X-Frame-Options": [
+            "SAMEORIGIN"
+          ],
+          "X-RateLimit-Limit": [
+            "10"
+          ],
+          "X-RateLimit-Remaining": [
+            "9"
+          ],
+          "X-RateLimit-Reset": [
+            "<dynamic-epoch-second>"
+          ],
+          "X-Request-ID": [
+            "phase4a-subject-inventory-golden-request"
+          ]
+        },
+        "body_kind": "text",
+        "body": "<!doctype html>\n<html lang=en>\n<title>Redirecting...</title>\n<h1>Redirecting...</h1>\n<p>You should be redirected automatically to the target URL: <a href=\"/login\">/login</a>. If not, click the link.\n",
+        "body_text": "<!doctype html>\n<html lang=en>\n<title>Redirecting...</title>\n<h1>Redirecting...</h1>\n<p>You should be redirected automatically to the target URL: <a href=\"/login\">/login</a>. If not, click the link.\n",
+        "body_length_bytes": 199,
+        "body_sha256": "5da82accbf2ff96f465a16f1cdcc2d40c70e57c66897bcdc06a6925f033102ee"
+      },
+      "observed_get_effects": {
+        "sql": {
+          "statements": [],
+          "select_attempts": 0,
+          "dml_attempts": 0,
+          "ddl_attempts": 0,
+          "other_attempts": 0,
+          "subject_inventory_select_attempts": 0,
+          "subjects_select_attempts": 0,
+          "questions_select_attempts": 0,
+          "users_select_attempts": 0,
+          "subjects_dml_attempts": 0,
+          "questions_dml_attempts": 0,
+          "user_last_active_dml_attempts": 0,
+          "statement_count": 0,
+          "classified_attempt_count": 0,
+          "statements_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "subjects_before": {
+          "columns": [
+            "id",
+            "name",
+            "description",
+            "is_locked",
+            "plaza_board_id",
+            "is_plaza_featured",
+            "plaza_featured_weight",
+            "plaza_featured_at",
+            "created_at"
+          ],
+          "column_count": 9,
+          "row_count": 4,
+          "rows_sha256": "e44fc56d12449ddf4e86874d0daa0699b5a2206074f092c28baaa51cf77f2499"
+        },
+        "subjects_after": {
+          "columns": [
+            "id",
+            "name",
+            "description",
+            "is_locked",
+            "plaza_board_id",
+            "is_plaza_featured",
+            "plaza_featured_weight",
+            "plaza_featured_at",
+            "created_at"
+          ],
+          "column_count": 9,
+          "row_count": 4,
+          "rows_sha256": "e44fc56d12449ddf4e86874d0daa0699b5a2206074f092c28baaa51cf77f2499"
+        },
+        "subjects_match_case_fixture": true,
+        "subjects_unchanged": true,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "column_count": 15,
+          "row_count": 6,
+          "rows_sha256": "0c08e83af9aa03cdb7e21a02f2cc78ad8012533d7f09fd92700535a12d8df3de"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "column_count": 15,
+          "row_count": 6,
+          "rows_sha256": "0c08e83af9aa03cdb7e21a02f2cc78ad8012533d7f09fd92700535a12d8df3de"
+        },
+        "questions_match_case_fixture": true,
+        "questions_unchanged": true,
+        "users_identity_before": {
+          "columns": [
+            "id",
+            "username",
+            "is_admin",
+            "is_subject_admin",
+            "is_notification_admin",
+            "is_locked",
+            "session_version"
+          ],
+          "column_count": 7,
+          "row_count": 3,
+          "rows_sha256": "faac5b4ef87dea869d3cc24198a027d6ac40bc484556c43654352407d47ebe04"
+        },
+        "users_identity_after": {
+          "columns": [
+            "id",
+            "username",
+            "is_admin",
+            "is_subject_admin",
+            "is_notification_admin",
+            "is_locked",
+            "session_version"
+          ],
+          "column_count": 7,
+          "row_count": 3,
+          "rows_sha256": "faac5b4ef87dea869d3cc24198a027d6ac40bc484556c43654352407d47ebe04"
+        },
+        "users_identity_unchanged": true,
+        "user_last_active_before": [
+          {
+            "user_id": 94001,
+            "last_active": null
+          },
+          {
+            "user_id": 94002,
+            "last_active": null
+          },
+          {
+            "user_id": 94003,
+            "last_active": null
+          }
+        ],
+        "user_last_active_after": [
+          {
+            "user_id": 94001,
+            "last_active": null
+          },
+          {
+            "user_id": 94002,
+            "last_active": null
+          },
+          {
+            "user_id": 94003,
+            "last_active": null
+          }
+        ],
+        "user_last_active_changed_user_ids": [],
+        "surrounding_session_activity_write_observed": false
+      }
+    },
+    {
+      "case_id": "auth-bearer-only",
+      "route_id": "6e1a36f5052d",
+      "session_actor": "anonymous",
+      "bearer_actor": "administrator",
+      "credential_mode": "valid_bearer_only",
+      "fixture_mode": "full",
+      "request": {
+        "method": "GET",
+        "path": "/admin/api/subjects",
+        "route_template": "/admin/api/subjects",
+        "query": [],
+        "query_string": "",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-subject-inventory-golden-request",
+          "Authorization": "Bearer <redacted-valid-synthetic-jwt>"
+        },
+        "remote_address": "198.51.161.163"
+      },
+      "response": {
+        "status": 302,
+        "headers": {
+          "Content-Length": [
+            "199"
+          ],
+          "Content-Type": [
+            "text/html; charset=utf-8"
+          ],
+          "Location": [
+            "/login"
+          ],
+          "Referrer-Policy": [
+            "strict-origin-when-cross-origin"
+          ],
+          "Retry-After": [
+            "<dynamic-seconds>"
+          ],
+          "Vary": [
+            "Cookie"
+          ],
+          "X-Content-Type-Options": [
+            "nosniff"
+          ],
+          "X-Frame-Options": [
+            "SAMEORIGIN"
+          ],
+          "X-RateLimit-Limit": [
+            "10"
+          ],
+          "X-RateLimit-Remaining": [
+            "9"
+          ],
+          "X-RateLimit-Reset": [
+            "<dynamic-epoch-second>"
+          ],
+          "X-Request-ID": [
+            "phase4a-subject-inventory-golden-request"
+          ]
+        },
+        "body_kind": "text",
+        "body": "<!doctype html>\n<html lang=en>\n<title>Redirecting...</title>\n<h1>Redirecting...</h1>\n<p>You should be redirected automatically to the target URL: <a href=\"/login\">/login</a>. If not, click the link.\n",
+        "body_text": "<!doctype html>\n<html lang=en>\n<title>Redirecting...</title>\n<h1>Redirecting...</h1>\n<p>You should be redirected automatically to the target URL: <a href=\"/login\">/login</a>. If not, click the link.\n",
+        "body_length_bytes": 199,
+        "body_sha256": "5da82accbf2ff96f465a16f1cdcc2d40c70e57c66897bcdc06a6925f033102ee"
+      },
+      "observed_get_effects": {
+        "sql": {
+          "statements": [],
+          "select_attempts": 0,
+          "dml_attempts": 0,
+          "ddl_attempts": 0,
+          "other_attempts": 0,
+          "subject_inventory_select_attempts": 0,
+          "subjects_select_attempts": 0,
+          "questions_select_attempts": 0,
+          "users_select_attempts": 0,
+          "subjects_dml_attempts": 0,
+          "questions_dml_attempts": 0,
+          "user_last_active_dml_attempts": 0,
+          "statement_count": 0,
+          "classified_attempt_count": 0,
+          "statements_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "subjects_before": {
+          "columns": [
+            "id",
+            "name",
+            "description",
+            "is_locked",
+            "plaza_board_id",
+            "is_plaza_featured",
+            "plaza_featured_weight",
+            "plaza_featured_at",
+            "created_at"
+          ],
+          "column_count": 9,
+          "row_count": 4,
+          "rows_sha256": "e44fc56d12449ddf4e86874d0daa0699b5a2206074f092c28baaa51cf77f2499"
+        },
+        "subjects_after": {
+          "columns": [
+            "id",
+            "name",
+            "description",
+            "is_locked",
+            "plaza_board_id",
+            "is_plaza_featured",
+            "plaza_featured_weight",
+            "plaza_featured_at",
+            "created_at"
+          ],
+          "column_count": 9,
+          "row_count": 4,
+          "rows_sha256": "e44fc56d12449ddf4e86874d0daa0699b5a2206074f092c28baaa51cf77f2499"
+        },
+        "subjects_match_case_fixture": true,
+        "subjects_unchanged": true,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "column_count": 15,
+          "row_count": 6,
+          "rows_sha256": "0c08e83af9aa03cdb7e21a02f2cc78ad8012533d7f09fd92700535a12d8df3de"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "column_count": 15,
+          "row_count": 6,
+          "rows_sha256": "0c08e83af9aa03cdb7e21a02f2cc78ad8012533d7f09fd92700535a12d8df3de"
+        },
+        "questions_match_case_fixture": true,
+        "questions_unchanged": true,
+        "users_identity_before": {
+          "columns": [
+            "id",
+            "username",
+            "is_admin",
+            "is_subject_admin",
+            "is_notification_admin",
+            "is_locked",
+            "session_version"
+          ],
+          "column_count": 7,
+          "row_count": 3,
+          "rows_sha256": "faac5b4ef87dea869d3cc24198a027d6ac40bc484556c43654352407d47ebe04"
+        },
+        "users_identity_after": {
+          "columns": [
+            "id",
+            "username",
+            "is_admin",
+            "is_subject_admin",
+            "is_notification_admin",
+            "is_locked",
+            "session_version"
+          ],
+          "column_count": 7,
+          "row_count": 3,
+          "rows_sha256": "faac5b4ef87dea869d3cc24198a027d6ac40bc484556c43654352407d47ebe04"
+        },
+        "users_identity_unchanged": true,
+        "user_last_active_before": [
+          {
+            "user_id": 94001,
+            "last_active": null
+          },
+          {
+            "user_id": 94002,
+            "last_active": null
+          },
+          {
+            "user_id": 94003,
+            "last_active": null
+          }
+        ],
+        "user_last_active_after": [
+          {
+            "user_id": 94001,
+            "last_active": null
+          },
+          {
+            "user_id": 94002,
+            "last_active": null
+          },
+          {
+            "user_id": 94003,
+            "last_active": null
+          }
+        ],
+        "user_last_active_changed_user_ids": [],
+        "surrounding_session_activity_write_observed": false
+      }
+    },
+    {
+      "case_id": "auth-ordinary-session-plus-admin-bearer",
+      "route_id": "6e1a36f5052d",
+      "session_actor": "ordinary",
+      "bearer_actor": "administrator",
+      "credential_mode": "session+valid_bearer",
+      "fixture_mode": "full",
+      "request": {
+        "method": "GET",
+        "path": "/admin/api/subjects",
+        "route_template": "/admin/api/subjects",
+        "query": [],
+        "query_string": "",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-subject-inventory-golden-request",
+          "Authorization": "Bearer <redacted-valid-synthetic-jwt>"
+        },
+        "remote_address": "198.51.54.211"
+      },
+      "response": {
+        "status": 302,
+        "headers": {
+          "Content-Length": [
+            "199"
+          ],
+          "Content-Type": [
+            "text/html; charset=utf-8"
+          ],
+          "Location": [
+            "/login"
+          ],
+          "Referrer-Policy": [
+            "strict-origin-when-cross-origin"
+          ],
+          "Retry-After": [
+            "<dynamic-seconds>"
+          ],
+          "Vary": [
+            "Cookie"
+          ],
+          "X-Content-Type-Options": [
+            "nosniff"
+          ],
+          "X-Frame-Options": [
+            "SAMEORIGIN"
+          ],
+          "X-RateLimit-Limit": [
+            "10"
+          ],
+          "X-RateLimit-Remaining": [
+            "9"
+          ],
+          "X-RateLimit-Reset": [
+            "<dynamic-epoch-second>"
+          ],
+          "X-Request-ID": [
+            "phase4a-subject-inventory-golden-request"
+          ]
+        },
+        "body_kind": "text",
+        "body": "<!doctype html>\n<html lang=en>\n<title>Redirecting...</title>\n<h1>Redirecting...</h1>\n<p>You should be redirected automatically to the target URL: <a href=\"/login\">/login</a>. If not, click the link.\n",
+        "body_text": "<!doctype html>\n<html lang=en>\n<title>Redirecting...</title>\n<h1>Redirecting...</h1>\n<p>You should be redirected automatically to the target URL: <a href=\"/login\">/login</a>. If not, click the link.\n",
+        "body_length_bytes": 199,
+        "body_sha256": "5da82accbf2ff96f465a16f1cdcc2d40c70e57c66897bcdc06a6925f033102ee"
+      },
+      "observed_get_effects": {
+        "sql": {
+          "statements": [],
+          "select_attempts": 0,
+          "dml_attempts": 0,
+          "ddl_attempts": 0,
+          "other_attempts": 0,
+          "subject_inventory_select_attempts": 0,
+          "subjects_select_attempts": 0,
+          "questions_select_attempts": 0,
+          "users_select_attempts": 0,
+          "subjects_dml_attempts": 0,
+          "questions_dml_attempts": 0,
+          "user_last_active_dml_attempts": 0,
+          "statement_count": 0,
+          "classified_attempt_count": 0,
+          "statements_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "subjects_before": {
+          "columns": [
+            "id",
+            "name",
+            "description",
+            "is_locked",
+            "plaza_board_id",
+            "is_plaza_featured",
+            "plaza_featured_weight",
+            "plaza_featured_at",
+            "created_at"
+          ],
+          "column_count": 9,
+          "row_count": 4,
+          "rows_sha256": "e44fc56d12449ddf4e86874d0daa0699b5a2206074f092c28baaa51cf77f2499"
+        },
+        "subjects_after": {
+          "columns": [
+            "id",
+            "name",
+            "description",
+            "is_locked",
+            "plaza_board_id",
+            "is_plaza_featured",
+            "plaza_featured_weight",
+            "plaza_featured_at",
+            "created_at"
+          ],
+          "column_count": 9,
+          "row_count": 4,
+          "rows_sha256": "e44fc56d12449ddf4e86874d0daa0699b5a2206074f092c28baaa51cf77f2499"
+        },
+        "subjects_match_case_fixture": true,
+        "subjects_unchanged": true,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "column_count": 15,
+          "row_count": 6,
+          "rows_sha256": "0c08e83af9aa03cdb7e21a02f2cc78ad8012533d7f09fd92700535a12d8df3de"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "column_count": 15,
+          "row_count": 6,
+          "rows_sha256": "0c08e83af9aa03cdb7e21a02f2cc78ad8012533d7f09fd92700535a12d8df3de"
+        },
+        "questions_match_case_fixture": true,
+        "questions_unchanged": true,
+        "users_identity_before": {
+          "columns": [
+            "id",
+            "username",
+            "is_admin",
+            "is_subject_admin",
+            "is_notification_admin",
+            "is_locked",
+            "session_version"
+          ],
+          "column_count": 7,
+          "row_count": 3,
+          "rows_sha256": "faac5b4ef87dea869d3cc24198a027d6ac40bc484556c43654352407d47ebe04"
+        },
+        "users_identity_after": {
+          "columns": [
+            "id",
+            "username",
+            "is_admin",
+            "is_subject_admin",
+            "is_notification_admin",
+            "is_locked",
+            "session_version"
+          ],
+          "column_count": 7,
+          "row_count": 3,
+          "rows_sha256": "faac5b4ef87dea869d3cc24198a027d6ac40bc484556c43654352407d47ebe04"
+        },
+        "users_identity_unchanged": true,
+        "user_last_active_before": [
+          {
+            "user_id": 94001,
+            "last_active": null
+          },
+          {
+            "user_id": 94002,
+            "last_active": null
+          },
+          {
+            "user_id": 94003,
+            "last_active": null
+          }
+        ],
+        "user_last_active_after": [
+          {
+            "user_id": 94001,
+            "last_active": null
+          },
+          {
+            "user_id": 94002,
+            "last_active": null
+          },
+          {
+            "user_id": 94003,
+            "last_active": null
+          }
+        ],
+        "user_last_active_changed_user_ids": [],
+        "surrounding_session_activity_write_observed": false
+      }
+    },
+    {
+      "case_id": "data-empty-tables",
+      "route_id": "6e1a36f5052d",
+      "session_actor": "administrator",
+      "bearer_actor": "none",
+      "credential_mode": "session",
+      "fixture_mode": "empty",
+      "request": {
+        "method": "GET",
+        "path": "/admin/api/subjects",
+        "route_template": "/admin/api/subjects",
+        "query": [],
+        "query_string": "",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-subject-inventory-golden-request"
+        },
+        "remote_address": "198.51.125.103"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Length": [
+            "3"
+          ],
+          "Content-Type": [
+            "application/json"
+          ],
+          "Referrer-Policy": [
+            "strict-origin-when-cross-origin"
+          ],
+          "Retry-After": [
+            "<dynamic-seconds>"
+          ],
+          "Set-Cookie": [
+            "<redacted-session-cookie>"
+          ],
+          "Vary": [
+            "Cookie"
+          ],
+          "X-Content-Type-Options": [
+            "nosniff"
+          ],
+          "X-Frame-Options": [
+            "SAMEORIGIN"
+          ],
+          "X-RateLimit-Limit": [
+            "10"
+          ],
+          "X-RateLimit-Remaining": [
+            "9"
+          ],
+          "X-RateLimit-Reset": [
+            "<dynamic-epoch-second>"
+          ],
+          "X-Request-ID": [
+            "phase4a-subject-inventory-golden-request"
+          ]
+        },
+        "body_kind": "json",
+        "body": [],
+        "body_text": "[]\n",
+        "body_length_bytes": 3,
+        "body_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+      },
+      "observed_get_effects": {
+        "sql": {
+          "statements": [
+            {
+              "sql": "SELECT USERS.ID AS USERS_ID, USERS.USERNAME AS USERS_USERNAME, USERS.PASSWORD_HASH AS USERS_PASSWORD_HASH, USERS.IS_ADMIN AS USERS_IS_ADMIN, USERS.IS_LOCKED AS USERS_IS_LOCKED, USERS.SESSION_VERSION AS USERS_SESSION_VERSION, USERS.AVATAR AS USERS_AVATAR, USERS.CONTACT AS USERS_CONTACT, USERS.COLLEGE AS USERS_COLLEGE, USERS.LAST_ACTIVE AS USERS_LAST_ACTIVE, USERS.IS_SUBJECT_ADMIN AS USERS_IS_SUBJECT_ADMIN, USERS.IS_NOTIFICATION_ADMIN AS USERS_IS_NOTIFICATION_ADMIN, USERS.CREATED_AT AS USERS_CREATED_AT, USERS.EMAIL AS USERS_EMAIL, USERS.EMAIL_VERIFIED AS USERS_EMAIL_VERIFIED, USERS.EMAIL_VERIFIED_AT AS USERS_EMAIL_VERIFIED_AT, USERS.PHONE AS USERS_PHONE, USERS.PHONE_VERIFIED AS USERS_PHONE_VERIFIED, USERS.PHONE_VERIFIED_AT AS USERS_PHONE_VERIFIED_AT, USERS.HAS_PASSWORD_SET AS USERS_HAS_PASSWORD_SET, USERS.OPENID AS USERS_OPENID FROM USERS WHERE USERS.ID = ?",
+              "parameters": [
+                94003
+              ],
+              "executemany": false,
+              "classification": "users_select"
+            },
+            {
+              "sql": "UPDATE USERS SET LAST_ACTIVE=CURRENT_TIMESTAMP WHERE USERS.ID = ?",
+              "parameters": [
+                94003
+              ],
+              "executemany": false,
+              "classification": "user_last_active_dml"
+            },
+            {
+              "sql": "SELECT USERS.ID AS USERS_ID, USERS.USERNAME AS USERS_USERNAME, USERS.PASSWORD_HASH AS USERS_PASSWORD_HASH, USERS.IS_ADMIN AS USERS_IS_ADMIN, USERS.IS_LOCKED AS USERS_IS_LOCKED, USERS.SESSION_VERSION AS USERS_SESSION_VERSION, USERS.AVATAR AS USERS_AVATAR, USERS.CONTACT AS USERS_CONTACT, USERS.COLLEGE AS USERS_COLLEGE, USERS.LAST_ACTIVE AS USERS_LAST_ACTIVE, USERS.IS_SUBJECT_ADMIN AS USERS_IS_SUBJECT_ADMIN, USERS.IS_NOTIFICATION_ADMIN AS USERS_IS_NOTIFICATION_ADMIN, USERS.CREATED_AT AS USERS_CREATED_AT, USERS.EMAIL AS USERS_EMAIL, USERS.EMAIL_VERIFIED AS USERS_EMAIL_VERIFIED, USERS.EMAIL_VERIFIED_AT AS USERS_EMAIL_VERIFIED_AT, USERS.PHONE AS USERS_PHONE, USERS.PHONE_VERIFIED AS USERS_PHONE_VERIFIED, USERS.PHONE_VERIFIED_AT AS USERS_PHONE_VERIFIED_AT, USERS.HAS_PASSWORD_SET AS USERS_HAS_PASSWORD_SET, USERS.OPENID AS USERS_OPENID FROM USERS WHERE USERS.ID = ?",
+              "parameters": [
+                94003
+              ],
+              "executemany": false,
+              "classification": "users_select"
+            },
+            {
+              "sql": "SELECT S.ID, S.NAME, S.IS_LOCKED, COUNT(Q.ID) AS QUESTION_COUNT FROM SUBJECTS S LEFT JOIN QUESTIONS Q ON S.ID = Q.SUBJECT_ID GROUP BY S.ID, S.NAME, S.IS_LOCKED ORDER BY S.ID",
+              "parameters": [],
+              "executemany": false,
+              "classification": "subject_inventory_select"
+            }
+          ],
+          "select_attempts": 3,
+          "dml_attempts": 1,
+          "ddl_attempts": 0,
+          "other_attempts": 0,
+          "subject_inventory_select_attempts": 1,
+          "subjects_select_attempts": 1,
+          "questions_select_attempts": 1,
+          "users_select_attempts": 2,
+          "subjects_dml_attempts": 0,
+          "questions_dml_attempts": 0,
+          "user_last_active_dml_attempts": 1,
+          "statement_count": 4,
+          "classified_attempt_count": 4,
+          "statements_sha256": "fac746f4f9197ba60b6a30bd93c0c71ca242b52e4c2af25cb4df4bf14f061e91"
+        },
+        "subjects_before": {
+          "columns": [
+            "id",
+            "name",
+            "description",
+            "is_locked",
+            "plaza_board_id",
+            "is_plaza_featured",
+            "plaza_featured_weight",
+            "plaza_featured_at",
+            "created_at"
+          ],
+          "column_count": 9,
+          "row_count": 0,
+          "rows_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "subjects_after": {
+          "columns": [
+            "id",
+            "name",
+            "description",
+            "is_locked",
+            "plaza_board_id",
+            "is_plaza_featured",
+            "plaza_featured_weight",
+            "plaza_featured_at",
+            "created_at"
+          ],
+          "column_count": 9,
+          "row_count": 0,
+          "rows_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "subjects_match_case_fixture": true,
+        "subjects_unchanged": true,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "column_count": 15,
+          "row_count": 0,
+          "rows_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "column_count": 15,
+          "row_count": 0,
+          "rows_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "questions_match_case_fixture": true,
+        "questions_unchanged": true,
+        "users_identity_before": {
+          "columns": [
+            "id",
+            "username",
+            "is_admin",
+            "is_subject_admin",
+            "is_notification_admin",
+            "is_locked",
+            "session_version"
+          ],
+          "column_count": 7,
+          "row_count": 3,
+          "rows_sha256": "faac5b4ef87dea869d3cc24198a027d6ac40bc484556c43654352407d47ebe04"
+        },
+        "users_identity_after": {
+          "columns": [
+            "id",
+            "username",
+            "is_admin",
+            "is_subject_admin",
+            "is_notification_admin",
+            "is_locked",
+            "session_version"
+          ],
+          "column_count": 7,
+          "row_count": 3,
+          "rows_sha256": "faac5b4ef87dea869d3cc24198a027d6ac40bc484556c43654352407d47ebe04"
+        },
+        "users_identity_unchanged": true,
+        "user_last_active_before": [
+          {
+            "user_id": 94001,
+            "last_active": null
+          },
+          {
+            "user_id": 94002,
+            "last_active": null
+          },
+          {
+            "user_id": 94003,
+            "last_active": null
+          }
+        ],
+        "user_last_active_after": [
+          {
+            "user_id": 94001,
+            "last_active": null
+          },
+          {
+            "user_id": 94002,
+            "last_active": null
+          },
+          {
+            "user_id": 94003,
+            "last_active": "<database-current-timestamp>"
+          }
+        ],
+        "user_last_active_changed_user_ids": [
+          94003
+        ],
+        "surrounding_session_activity_write_observed": true
+      }
+    },
+    {
+      "case_id": "data-single-subject",
+      "route_id": "6e1a36f5052d",
+      "session_actor": "administrator",
+      "bearer_actor": "none",
+      "credential_mode": "session",
+      "fixture_mode": "single",
+      "request": {
+        "method": "GET",
+        "path": "/admin/api/subjects",
+        "route_template": "/admin/api/subjects",
+        "query": [],
+        "query_string": "",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-subject-inventory-golden-request"
+        },
+        "remote_address": "198.51.18.19"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Length": [
+            "122"
+          ],
+          "Content-Type": [
+            "application/json"
+          ],
+          "Referrer-Policy": [
+            "strict-origin-when-cross-origin"
+          ],
+          "Retry-After": [
+            "<dynamic-seconds>"
+          ],
+          "Set-Cookie": [
+            "<redacted-session-cookie>"
+          ],
+          "Vary": [
+            "Cookie"
+          ],
+          "X-Content-Type-Options": [
+            "nosniff"
+          ],
+          "X-Frame-Options": [
+            "SAMEORIGIN"
+          ],
+          "X-RateLimit-Limit": [
+            "10"
+          ],
+          "X-RateLimit-Remaining": [
+            "9"
+          ],
+          "X-RateLimit-Reset": [
+            "<dynamic-epoch-second>"
+          ],
+          "X-Request-ID": [
+            "phase4a-subject-inventory-golden-request"
+          ]
+        },
+        "body_kind": "json",
+        "body": [
+          {
+            "id": -3,
+            "is_locked": 1,
+            "name": "单一科目・β",
+            "question_count": 2
+          }
+        ],
+        "body_text": "[\n  {\n    \"id\": -3,\n    \"is_locked\": 1,\n    \"name\": \"\\u5355\\u4e00\\u79d1\\u76ee\\u30fb\\u03b2\",\n    \"question_count\": 2\n  }\n]\n",
+        "body_length_bytes": 122,
+        "body_sha256": "dbd5df1da95e6c949c9bebb34cc7eb7739f4a26492f8c32ec2864288f5df038b"
+      },
+      "observed_get_effects": {
+        "sql": {
+          "statements": [
+            {
+              "sql": "SELECT USERS.ID AS USERS_ID, USERS.USERNAME AS USERS_USERNAME, USERS.PASSWORD_HASH AS USERS_PASSWORD_HASH, USERS.IS_ADMIN AS USERS_IS_ADMIN, USERS.IS_LOCKED AS USERS_IS_LOCKED, USERS.SESSION_VERSION AS USERS_SESSION_VERSION, USERS.AVATAR AS USERS_AVATAR, USERS.CONTACT AS USERS_CONTACT, USERS.COLLEGE AS USERS_COLLEGE, USERS.LAST_ACTIVE AS USERS_LAST_ACTIVE, USERS.IS_SUBJECT_ADMIN AS USERS_IS_SUBJECT_ADMIN, USERS.IS_NOTIFICATION_ADMIN AS USERS_IS_NOTIFICATION_ADMIN, USERS.CREATED_AT AS USERS_CREATED_AT, USERS.EMAIL AS USERS_EMAIL, USERS.EMAIL_VERIFIED AS USERS_EMAIL_VERIFIED, USERS.EMAIL_VERIFIED_AT AS USERS_EMAIL_VERIFIED_AT, USERS.PHONE AS USERS_PHONE, USERS.PHONE_VERIFIED AS USERS_PHONE_VERIFIED, USERS.PHONE_VERIFIED_AT AS USERS_PHONE_VERIFIED_AT, USERS.HAS_PASSWORD_SET AS USERS_HAS_PASSWORD_SET, USERS.OPENID AS USERS_OPENID FROM USERS WHERE USERS.ID = ?",
+              "parameters": [
+                94003
+              ],
+              "executemany": false,
+              "classification": "users_select"
+            },
+            {
+              "sql": "UPDATE USERS SET LAST_ACTIVE=CURRENT_TIMESTAMP WHERE USERS.ID = ?",
+              "parameters": [
+                94003
+              ],
+              "executemany": false,
+              "classification": "user_last_active_dml"
+            },
+            {
+              "sql": "SELECT USERS.ID AS USERS_ID, USERS.USERNAME AS USERS_USERNAME, USERS.PASSWORD_HASH AS USERS_PASSWORD_HASH, USERS.IS_ADMIN AS USERS_IS_ADMIN, USERS.IS_LOCKED AS USERS_IS_LOCKED, USERS.SESSION_VERSION AS USERS_SESSION_VERSION, USERS.AVATAR AS USERS_AVATAR, USERS.CONTACT AS USERS_CONTACT, USERS.COLLEGE AS USERS_COLLEGE, USERS.LAST_ACTIVE AS USERS_LAST_ACTIVE, USERS.IS_SUBJECT_ADMIN AS USERS_IS_SUBJECT_ADMIN, USERS.IS_NOTIFICATION_ADMIN AS USERS_IS_NOTIFICATION_ADMIN, USERS.CREATED_AT AS USERS_CREATED_AT, USERS.EMAIL AS USERS_EMAIL, USERS.EMAIL_VERIFIED AS USERS_EMAIL_VERIFIED, USERS.EMAIL_VERIFIED_AT AS USERS_EMAIL_VERIFIED_AT, USERS.PHONE AS USERS_PHONE, USERS.PHONE_VERIFIED AS USERS_PHONE_VERIFIED, USERS.PHONE_VERIFIED_AT AS USERS_PHONE_VERIFIED_AT, USERS.HAS_PASSWORD_SET AS USERS_HAS_PASSWORD_SET, USERS.OPENID AS USERS_OPENID FROM USERS WHERE USERS.ID = ?",
+              "parameters": [
+                94003
+              ],
+              "executemany": false,
+              "classification": "users_select"
+            },
+            {
+              "sql": "SELECT S.ID, S.NAME, S.IS_LOCKED, COUNT(Q.ID) AS QUESTION_COUNT FROM SUBJECTS S LEFT JOIN QUESTIONS Q ON S.ID = Q.SUBJECT_ID GROUP BY S.ID, S.NAME, S.IS_LOCKED ORDER BY S.ID",
+              "parameters": [],
+              "executemany": false,
+              "classification": "subject_inventory_select"
+            }
+          ],
+          "select_attempts": 3,
+          "dml_attempts": 1,
+          "ddl_attempts": 0,
+          "other_attempts": 0,
+          "subject_inventory_select_attempts": 1,
+          "subjects_select_attempts": 1,
+          "questions_select_attempts": 1,
+          "users_select_attempts": 2,
+          "subjects_dml_attempts": 0,
+          "questions_dml_attempts": 0,
+          "user_last_active_dml_attempts": 1,
+          "statement_count": 4,
+          "classified_attempt_count": 4,
+          "statements_sha256": "fac746f4f9197ba60b6a30bd93c0c71ca242b52e4c2af25cb4df4bf14f061e91"
+        },
+        "subjects_before": {
+          "columns": [
+            "id",
+            "name",
+            "description",
+            "is_locked",
+            "plaza_board_id",
+            "is_plaza_featured",
+            "plaza_featured_weight",
+            "plaza_featured_at",
+            "created_at"
+          ],
+          "column_count": 9,
+          "row_count": 1,
+          "rows_sha256": "affc27257ea2a50d18d0d5cc065bb3ae68f54218ea8b8162967d5cda6a1cf71b"
+        },
+        "subjects_after": {
+          "columns": [
+            "id",
+            "name",
+            "description",
+            "is_locked",
+            "plaza_board_id",
+            "is_plaza_featured",
+            "plaza_featured_weight",
+            "plaza_featured_at",
+            "created_at"
+          ],
+          "column_count": 9,
+          "row_count": 1,
+          "rows_sha256": "affc27257ea2a50d18d0d5cc065bb3ae68f54218ea8b8162967d5cda6a1cf71b"
+        },
+        "subjects_match_case_fixture": true,
+        "subjects_unchanged": true,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "column_count": 15,
+          "row_count": 4,
+          "rows_sha256": "824bfc9f1028818ee8877da385809ec847db5cf4db9b47e07a58d13b9f99c0e6"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "column_count": 15,
+          "row_count": 4,
+          "rows_sha256": "824bfc9f1028818ee8877da385809ec847db5cf4db9b47e07a58d13b9f99c0e6"
+        },
+        "questions_match_case_fixture": true,
+        "questions_unchanged": true,
+        "users_identity_before": {
+          "columns": [
+            "id",
+            "username",
+            "is_admin",
+            "is_subject_admin",
+            "is_notification_admin",
+            "is_locked",
+            "session_version"
+          ],
+          "column_count": 7,
+          "row_count": 3,
+          "rows_sha256": "faac5b4ef87dea869d3cc24198a027d6ac40bc484556c43654352407d47ebe04"
+        },
+        "users_identity_after": {
+          "columns": [
+            "id",
+            "username",
+            "is_admin",
+            "is_subject_admin",
+            "is_notification_admin",
+            "is_locked",
+            "session_version"
+          ],
+          "column_count": 7,
+          "row_count": 3,
+          "rows_sha256": "faac5b4ef87dea869d3cc24198a027d6ac40bc484556c43654352407d47ebe04"
+        },
+        "users_identity_unchanged": true,
+        "user_last_active_before": [
+          {
+            "user_id": 94001,
+            "last_active": null
+          },
+          {
+            "user_id": 94002,
+            "last_active": null
+          },
+          {
+            "user_id": 94003,
+            "last_active": null
+          }
+        ],
+        "user_last_active_after": [
+          {
+            "user_id": 94001,
+            "last_active": null
+          },
+          {
+            "user_id": 94002,
+            "last_active": null
+          },
+          {
+            "user_id": 94003,
+            "last_active": "<database-current-timestamp>"
+          }
+        ],
+        "user_last_active_changed_user_ids": [
+          94003
+        ],
+        "surrounding_session_activity_write_observed": true
+      }
+    },
+    {
+      "case_id": "data-multi-subject-edges",
+      "route_id": "6e1a36f5052d",
+      "session_actor": "administrator",
+      "bearer_actor": "none",
+      "credential_mode": "session",
+      "fixture_mode": "full",
+      "request": {
+        "method": "GET",
+        "path": "/admin/api/subjects",
+        "route_template": "/admin/api/subjects",
+        "query": [],
+        "query_string": "",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-subject-inventory-golden-request"
+        },
+        "remote_address": "198.51.223.74"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Length": [
+            "457"
+          ],
+          "Content-Type": [
+            "application/json"
+          ],
+          "Referrer-Policy": [
+            "strict-origin-when-cross-origin"
+          ],
+          "Retry-After": [
+            "<dynamic-seconds>"
+          ],
+          "Set-Cookie": [
+            "<redacted-session-cookie>"
+          ],
+          "Vary": [
+            "Cookie"
+          ],
+          "X-Content-Type-Options": [
+            "nosniff"
+          ],
+          "X-Frame-Options": [
+            "SAMEORIGIN"
+          ],
+          "X-RateLimit-Limit": [
+            "10"
+          ],
+          "X-RateLimit-Remaining": [
+            "9"
+          ],
+          "X-RateLimit-Reset": [
+            "<dynamic-epoch-second>"
+          ],
+          "X-Request-ID": [
+            "phase4a-subject-inventory-golden-request"
+          ]
+        },
+        "body_kind": "json",
+        "body": [
+          {
+            "id": -9,
+            "is_locked": 0,
+            "name": "负主键科目",
+            "question_count": 1
+          },
+          {
+            "id": 0,
+            "is_locked": null,
+            "name": "",
+            "question_count": 0
+          },
+          {
+            "id": 95001,
+            "is_locked": 1,
+            "name": "算法基础・α／中文",
+            "question_count": 2
+          },
+          {
+            "id": 95002,
+            "is_locked": 0,
+            "name": "数据库系统",
+            "question_count": 1
+          }
+        ],
+        "body_text": "[\n  {\n    \"id\": -9,\n    \"is_locked\": 0,\n    \"name\": \"\\u8d1f\\u4e3b\\u952e\\u79d1\\u76ee\",\n    \"question_count\": 1\n  },\n  {\n    \"id\": 0,\n    \"is_locked\": null,\n    \"name\": \"\",\n    \"question_count\": 0\n  },\n  {\n    \"id\": 95001,\n    \"is_locked\": 1,\n    \"name\": \"\\u7b97\\u6cd5\\u57fa\\u7840\\u30fb\\u03b1\\uff0f\\u4e2d\\u6587\",\n    \"question_count\": 2\n  },\n  {\n    \"id\": 95002,\n    \"is_locked\": 0,\n    \"name\": \"\\u6570\\u636e\\u5e93\\u7cfb\\u7edf\",\n    \"question_count\": 1\n  }\n]\n",
+        "body_length_bytes": 457,
+        "body_sha256": "0160f868784c62e8dc3774192c954d94ac2ee0253e0c86d963731c408c1b2148"
+      },
+      "observed_get_effects": {
+        "sql": {
+          "statements": [
+            {
+              "sql": "SELECT USERS.ID AS USERS_ID, USERS.USERNAME AS USERS_USERNAME, USERS.PASSWORD_HASH AS USERS_PASSWORD_HASH, USERS.IS_ADMIN AS USERS_IS_ADMIN, USERS.IS_LOCKED AS USERS_IS_LOCKED, USERS.SESSION_VERSION AS USERS_SESSION_VERSION, USERS.AVATAR AS USERS_AVATAR, USERS.CONTACT AS USERS_CONTACT, USERS.COLLEGE AS USERS_COLLEGE, USERS.LAST_ACTIVE AS USERS_LAST_ACTIVE, USERS.IS_SUBJECT_ADMIN AS USERS_IS_SUBJECT_ADMIN, USERS.IS_NOTIFICATION_ADMIN AS USERS_IS_NOTIFICATION_ADMIN, USERS.CREATED_AT AS USERS_CREATED_AT, USERS.EMAIL AS USERS_EMAIL, USERS.EMAIL_VERIFIED AS USERS_EMAIL_VERIFIED, USERS.EMAIL_VERIFIED_AT AS USERS_EMAIL_VERIFIED_AT, USERS.PHONE AS USERS_PHONE, USERS.PHONE_VERIFIED AS USERS_PHONE_VERIFIED, USERS.PHONE_VERIFIED_AT AS USERS_PHONE_VERIFIED_AT, USERS.HAS_PASSWORD_SET AS USERS_HAS_PASSWORD_SET, USERS.OPENID AS USERS_OPENID FROM USERS WHERE USERS.ID = ?",
+              "parameters": [
+                94003
+              ],
+              "executemany": false,
+              "classification": "users_select"
+            },
+            {
+              "sql": "UPDATE USERS SET LAST_ACTIVE=CURRENT_TIMESTAMP WHERE USERS.ID = ?",
+              "parameters": [
+                94003
+              ],
+              "executemany": false,
+              "classification": "user_last_active_dml"
+            },
+            {
+              "sql": "SELECT USERS.ID AS USERS_ID, USERS.USERNAME AS USERS_USERNAME, USERS.PASSWORD_HASH AS USERS_PASSWORD_HASH, USERS.IS_ADMIN AS USERS_IS_ADMIN, USERS.IS_LOCKED AS USERS_IS_LOCKED, USERS.SESSION_VERSION AS USERS_SESSION_VERSION, USERS.AVATAR AS USERS_AVATAR, USERS.CONTACT AS USERS_CONTACT, USERS.COLLEGE AS USERS_COLLEGE, USERS.LAST_ACTIVE AS USERS_LAST_ACTIVE, USERS.IS_SUBJECT_ADMIN AS USERS_IS_SUBJECT_ADMIN, USERS.IS_NOTIFICATION_ADMIN AS USERS_IS_NOTIFICATION_ADMIN, USERS.CREATED_AT AS USERS_CREATED_AT, USERS.EMAIL AS USERS_EMAIL, USERS.EMAIL_VERIFIED AS USERS_EMAIL_VERIFIED, USERS.EMAIL_VERIFIED_AT AS USERS_EMAIL_VERIFIED_AT, USERS.PHONE AS USERS_PHONE, USERS.PHONE_VERIFIED AS USERS_PHONE_VERIFIED, USERS.PHONE_VERIFIED_AT AS USERS_PHONE_VERIFIED_AT, USERS.HAS_PASSWORD_SET AS USERS_HAS_PASSWORD_SET, USERS.OPENID AS USERS_OPENID FROM USERS WHERE USERS.ID = ?",
+              "parameters": [
+                94003
+              ],
+              "executemany": false,
+              "classification": "users_select"
+            },
+            {
+              "sql": "SELECT S.ID, S.NAME, S.IS_LOCKED, COUNT(Q.ID) AS QUESTION_COUNT FROM SUBJECTS S LEFT JOIN QUESTIONS Q ON S.ID = Q.SUBJECT_ID GROUP BY S.ID, S.NAME, S.IS_LOCKED ORDER BY S.ID",
+              "parameters": [],
+              "executemany": false,
+              "classification": "subject_inventory_select"
+            }
+          ],
+          "select_attempts": 3,
+          "dml_attempts": 1,
+          "ddl_attempts": 0,
+          "other_attempts": 0,
+          "subject_inventory_select_attempts": 1,
+          "subjects_select_attempts": 1,
+          "questions_select_attempts": 1,
+          "users_select_attempts": 2,
+          "subjects_dml_attempts": 0,
+          "questions_dml_attempts": 0,
+          "user_last_active_dml_attempts": 1,
+          "statement_count": 4,
+          "classified_attempt_count": 4,
+          "statements_sha256": "fac746f4f9197ba60b6a30bd93c0c71ca242b52e4c2af25cb4df4bf14f061e91"
+        },
+        "subjects_before": {
+          "columns": [
+            "id",
+            "name",
+            "description",
+            "is_locked",
+            "plaza_board_id",
+            "is_plaza_featured",
+            "plaza_featured_weight",
+            "plaza_featured_at",
+            "created_at"
+          ],
+          "column_count": 9,
+          "row_count": 4,
+          "rows_sha256": "e44fc56d12449ddf4e86874d0daa0699b5a2206074f092c28baaa51cf77f2499"
+        },
+        "subjects_after": {
+          "columns": [
+            "id",
+            "name",
+            "description",
+            "is_locked",
+            "plaza_board_id",
+            "is_plaza_featured",
+            "plaza_featured_weight",
+            "plaza_featured_at",
+            "created_at"
+          ],
+          "column_count": 9,
+          "row_count": 4,
+          "rows_sha256": "e44fc56d12449ddf4e86874d0daa0699b5a2206074f092c28baaa51cf77f2499"
+        },
+        "subjects_match_case_fixture": true,
+        "subjects_unchanged": true,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "column_count": 15,
+          "row_count": 6,
+          "rows_sha256": "0c08e83af9aa03cdb7e21a02f2cc78ad8012533d7f09fd92700535a12d8df3de"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "column_count": 15,
+          "row_count": 6,
+          "rows_sha256": "0c08e83af9aa03cdb7e21a02f2cc78ad8012533d7f09fd92700535a12d8df3de"
+        },
+        "questions_match_case_fixture": true,
+        "questions_unchanged": true,
+        "users_identity_before": {
+          "columns": [
+            "id",
+            "username",
+            "is_admin",
+            "is_subject_admin",
+            "is_notification_admin",
+            "is_locked",
+            "session_version"
+          ],
+          "column_count": 7,
+          "row_count": 3,
+          "rows_sha256": "faac5b4ef87dea869d3cc24198a027d6ac40bc484556c43654352407d47ebe04"
+        },
+        "users_identity_after": {
+          "columns": [
+            "id",
+            "username",
+            "is_admin",
+            "is_subject_admin",
+            "is_notification_admin",
+            "is_locked",
+            "session_version"
+          ],
+          "column_count": 7,
+          "row_count": 3,
+          "rows_sha256": "faac5b4ef87dea869d3cc24198a027d6ac40bc484556c43654352407d47ebe04"
+        },
+        "users_identity_unchanged": true,
+        "user_last_active_before": [
+          {
+            "user_id": 94001,
+            "last_active": null
+          },
+          {
+            "user_id": 94002,
+            "last_active": null
+          },
+          {
+            "user_id": 94003,
+            "last_active": null
+          }
+        ],
+        "user_last_active_after": [
+          {
+            "user_id": 94001,
+            "last_active": null
+          },
+          {
+            "user_id": 94002,
+            "last_active": null
+          },
+          {
+            "user_id": 94003,
+            "last_active": "<database-current-timestamp>"
+          }
+        ],
+        "user_last_active_changed_user_ids": [
+          94003
+        ],
+        "surrounding_session_activity_write_observed": true
+      }
+    },
+    {
+      "case_id": "fault-html",
+      "route_id": "6e1a36f5052d",
+      "session_actor": "administrator",
+      "bearer_actor": "none",
+      "credential_mode": "session",
+      "fixture_mode": "full",
+      "request": {
+        "method": "GET",
+        "path": "/admin/api/subjects",
+        "route_template": "/admin/api/subjects",
+        "query": [],
+        "query_string": "",
+        "headers": {
+          "Accept": "*/*",
+          "X-Request-ID": "phase4a-subject-inventory-golden-request"
+        },
+        "remote_address": "198.51.76.171"
+      },
+      "response": {
+        "status": 500,
+        "headers": {
+          "Content-Length": [
+            "85"
+          ],
+          "Content-Type": [
+            "text/html; charset=utf-8"
+          ],
+          "Referrer-Policy": [
+            "strict-origin-when-cross-origin"
+          ],
+          "Retry-After": [
+            "<dynamic-seconds>"
+          ],
+          "Set-Cookie": [
+            "<redacted-session-cookie>"
+          ],
+          "Vary": [
+            "Cookie"
+          ],
+          "X-Content-Type-Options": [
+            "nosniff"
+          ],
+          "X-Frame-Options": [
+            "SAMEORIGIN"
+          ],
+          "X-RateLimit-Limit": [
+            "10"
+          ],
+          "X-RateLimit-Remaining": [
+            "9"
+          ],
+          "X-RateLimit-Reset": [
+            "<dynamic-epoch-second>"
+          ],
+          "X-Request-ID": [
+            "phase4a-subject-inventory-golden-request"
+          ]
+        },
+        "body_kind": "text",
+        "body": "<h1>500 - 服务器错误</h1><p>发生了一个意外错误，请稍后再试。</p>",
+        "body_text": "<h1>500 - 服务器错误</h1><p>发生了一个意外错误，请稍后再试。</p>",
+        "body_length_bytes": 85,
+        "body_sha256": "5481a8374472ee08b36dea63cc2901a44718eb6b7364b426fed5b8130c6b23ac"
+      },
+      "observed_get_effects": {
+        "sql": {
+          "statements": [
+            {
+              "sql": "SELECT USERS.ID AS USERS_ID, USERS.USERNAME AS USERS_USERNAME, USERS.PASSWORD_HASH AS USERS_PASSWORD_HASH, USERS.IS_ADMIN AS USERS_IS_ADMIN, USERS.IS_LOCKED AS USERS_IS_LOCKED, USERS.SESSION_VERSION AS USERS_SESSION_VERSION, USERS.AVATAR AS USERS_AVATAR, USERS.CONTACT AS USERS_CONTACT, USERS.COLLEGE AS USERS_COLLEGE, USERS.LAST_ACTIVE AS USERS_LAST_ACTIVE, USERS.IS_SUBJECT_ADMIN AS USERS_IS_SUBJECT_ADMIN, USERS.IS_NOTIFICATION_ADMIN AS USERS_IS_NOTIFICATION_ADMIN, USERS.CREATED_AT AS USERS_CREATED_AT, USERS.EMAIL AS USERS_EMAIL, USERS.EMAIL_VERIFIED AS USERS_EMAIL_VERIFIED, USERS.EMAIL_VERIFIED_AT AS USERS_EMAIL_VERIFIED_AT, USERS.PHONE AS USERS_PHONE, USERS.PHONE_VERIFIED AS USERS_PHONE_VERIFIED, USERS.PHONE_VERIFIED_AT AS USERS_PHONE_VERIFIED_AT, USERS.HAS_PASSWORD_SET AS USERS_HAS_PASSWORD_SET, USERS.OPENID AS USERS_OPENID FROM USERS WHERE USERS.ID = ?",
+              "parameters": [
+                94003
+              ],
+              "executemany": false,
+              "classification": "users_select"
+            },
+            {
+              "sql": "UPDATE USERS SET LAST_ACTIVE=CURRENT_TIMESTAMP WHERE USERS.ID = ?",
+              "parameters": [
+                94003
+              ],
+              "executemany": false,
+              "classification": "user_last_active_dml"
+            },
+            {
+              "sql": "SELECT USERS.ID AS USERS_ID, USERS.USERNAME AS USERS_USERNAME, USERS.PASSWORD_HASH AS USERS_PASSWORD_HASH, USERS.IS_ADMIN AS USERS_IS_ADMIN, USERS.IS_LOCKED AS USERS_IS_LOCKED, USERS.SESSION_VERSION AS USERS_SESSION_VERSION, USERS.AVATAR AS USERS_AVATAR, USERS.CONTACT AS USERS_CONTACT, USERS.COLLEGE AS USERS_COLLEGE, USERS.LAST_ACTIVE AS USERS_LAST_ACTIVE, USERS.IS_SUBJECT_ADMIN AS USERS_IS_SUBJECT_ADMIN, USERS.IS_NOTIFICATION_ADMIN AS USERS_IS_NOTIFICATION_ADMIN, USERS.CREATED_AT AS USERS_CREATED_AT, USERS.EMAIL AS USERS_EMAIL, USERS.EMAIL_VERIFIED AS USERS_EMAIL_VERIFIED, USERS.EMAIL_VERIFIED_AT AS USERS_EMAIL_VERIFIED_AT, USERS.PHONE AS USERS_PHONE, USERS.PHONE_VERIFIED AS USERS_PHONE_VERIFIED, USERS.PHONE_VERIFIED_AT AS USERS_PHONE_VERIFIED_AT, USERS.HAS_PASSWORD_SET AS USERS_HAS_PASSWORD_SET, USERS.OPENID AS USERS_OPENID FROM USERS WHERE USERS.ID = ?",
+              "parameters": [
+                94003
+              ],
+              "executemany": false,
+              "classification": "users_select"
+            },
+            {
+              "sql": "SELECT S.ID, S.NAME, S.IS_LOCKED, COUNT(Q.ID) AS QUESTION_COUNT FROM SUBJECTS S LEFT JOIN QUESTIONS Q ON S.ID = Q.SUBJECT_ID GROUP BY S.ID, S.NAME, S.IS_LOCKED ORDER BY S.ID",
+              "parameters": [],
+              "executemany": false,
+              "classification": "subject_inventory_select"
+            }
+          ],
+          "select_attempts": 3,
+          "dml_attempts": 1,
+          "ddl_attempts": 0,
+          "other_attempts": 0,
+          "subject_inventory_select_attempts": 1,
+          "subjects_select_attempts": 1,
+          "questions_select_attempts": 1,
+          "users_select_attempts": 2,
+          "subjects_dml_attempts": 0,
+          "questions_dml_attempts": 0,
+          "user_last_active_dml_attempts": 1,
+          "statement_count": 4,
+          "classified_attempt_count": 4,
+          "statements_sha256": "fac746f4f9197ba60b6a30bd93c0c71ca242b52e4c2af25cb4df4bf14f061e91"
+        },
+        "subjects_before": {
+          "columns": [
+            "id",
+            "name",
+            "description",
+            "is_locked",
+            "plaza_board_id",
+            "is_plaza_featured",
+            "plaza_featured_weight",
+            "plaza_featured_at",
+            "created_at"
+          ],
+          "column_count": 9,
+          "row_count": 4,
+          "rows_sha256": "e44fc56d12449ddf4e86874d0daa0699b5a2206074f092c28baaa51cf77f2499"
+        },
+        "subjects_after": {
+          "columns": [
+            "id",
+            "name",
+            "description",
+            "is_locked",
+            "plaza_board_id",
+            "is_plaza_featured",
+            "plaza_featured_weight",
+            "plaza_featured_at",
+            "created_at"
+          ],
+          "column_count": 9,
+          "row_count": 4,
+          "rows_sha256": "e44fc56d12449ddf4e86874d0daa0699b5a2206074f092c28baaa51cf77f2499"
+        },
+        "subjects_match_case_fixture": true,
+        "subjects_unchanged": true,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "column_count": 15,
+          "row_count": 6,
+          "rows_sha256": "0c08e83af9aa03cdb7e21a02f2cc78ad8012533d7f09fd92700535a12d8df3de"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "column_count": 15,
+          "row_count": 6,
+          "rows_sha256": "0c08e83af9aa03cdb7e21a02f2cc78ad8012533d7f09fd92700535a12d8df3de"
+        },
+        "questions_match_case_fixture": true,
+        "questions_unchanged": true,
+        "users_identity_before": {
+          "columns": [
+            "id",
+            "username",
+            "is_admin",
+            "is_subject_admin",
+            "is_notification_admin",
+            "is_locked",
+            "session_version"
+          ],
+          "column_count": 7,
+          "row_count": 3,
+          "rows_sha256": "faac5b4ef87dea869d3cc24198a027d6ac40bc484556c43654352407d47ebe04"
+        },
+        "users_identity_after": {
+          "columns": [
+            "id",
+            "username",
+            "is_admin",
+            "is_subject_admin",
+            "is_notification_admin",
+            "is_locked",
+            "session_version"
+          ],
+          "column_count": 7,
+          "row_count": 3,
+          "rows_sha256": "faac5b4ef87dea869d3cc24198a027d6ac40bc484556c43654352407d47ebe04"
+        },
+        "users_identity_unchanged": true,
+        "user_last_active_before": [
+          {
+            "user_id": 94001,
+            "last_active": null
+          },
+          {
+            "user_id": 94002,
+            "last_active": null
+          },
+          {
+            "user_id": 94003,
+            "last_active": null
+          }
+        ],
+        "user_last_active_after": [
+          {
+            "user_id": 94001,
+            "last_active": null
+          },
+          {
+            "user_id": 94002,
+            "last_active": null
+          },
+          {
+            "user_id": 94003,
+            "last_active": "<database-current-timestamp>"
+          }
+        ],
+        "user_last_active_changed_user_ids": [
+          94003
+        ],
+        "surrounding_session_activity_write_observed": true
+      }
+    },
+    {
+      "case_id": "fault-json",
+      "route_id": "6e1a36f5052d",
+      "session_actor": "administrator",
+      "bearer_actor": "none",
+      "credential_mode": "session",
+      "fixture_mode": "full",
+      "request": {
+        "method": "GET",
+        "path": "/admin/api/subjects",
+        "route_template": "/admin/api/subjects",
+        "query": [],
+        "query_string": "",
+        "headers": {
+          "Accept": "application/json",
+          "X-Request-ID": "phase4a-subject-inventory-golden-request"
+        },
+        "remote_address": "198.51.107.92"
+      },
+      "response": {
+        "status": 500,
+        "headers": {
+          "Content-Length": [
+            "178"
+          ],
+          "Content-Type": [
+            "application/json"
+          ],
+          "Referrer-Policy": [
+            "strict-origin-when-cross-origin"
+          ],
+          "Retry-After": [
+            "<dynamic-seconds>"
+          ],
+          "Set-Cookie": [
+            "<redacted-session-cookie>"
+          ],
+          "Vary": [
+            "Cookie"
+          ],
+          "X-Content-Type-Options": [
+            "nosniff"
+          ],
+          "X-Frame-Options": [
+            "SAMEORIGIN"
+          ],
+          "X-RateLimit-Limit": [
+            "10"
+          ],
+          "X-RateLimit-Remaining": [
+            "9"
+          ],
+          "X-RateLimit-Reset": [
+            "<dynamic-epoch-second>"
+          ],
+          "X-Request-ID": [
+            "phase4a-subject-inventory-golden-request"
+          ]
+        },
+        "body_kind": "json",
+        "body": {
+          "message": "An unexpected server error occurred.",
+          "payload": null,
+          "request_id": "phase4a-subject-inventory-golden-request",
+          "status": "error",
+          "status_code": 500
+        },
+        "body_text": "{\n  \"message\": \"An unexpected server error occurred.\",\n  \"payload\": null,\n  \"request_id\": \"phase4a-subject-inventory-golden-request\",\n  \"status\": \"error\",\n  \"status_code\": 500\n}\n",
+        "body_length_bytes": 178,
+        "body_sha256": "ece2f6be87930683a2f08c9204135123efac6b7f568d2efed2312d4670751610"
+      },
+      "observed_get_effects": {
+        "sql": {
+          "statements": [
+            {
+              "sql": "SELECT USERS.ID AS USERS_ID, USERS.USERNAME AS USERS_USERNAME, USERS.PASSWORD_HASH AS USERS_PASSWORD_HASH, USERS.IS_ADMIN AS USERS_IS_ADMIN, USERS.IS_LOCKED AS USERS_IS_LOCKED, USERS.SESSION_VERSION AS USERS_SESSION_VERSION, USERS.AVATAR AS USERS_AVATAR, USERS.CONTACT AS USERS_CONTACT, USERS.COLLEGE AS USERS_COLLEGE, USERS.LAST_ACTIVE AS USERS_LAST_ACTIVE, USERS.IS_SUBJECT_ADMIN AS USERS_IS_SUBJECT_ADMIN, USERS.IS_NOTIFICATION_ADMIN AS USERS_IS_NOTIFICATION_ADMIN, USERS.CREATED_AT AS USERS_CREATED_AT, USERS.EMAIL AS USERS_EMAIL, USERS.EMAIL_VERIFIED AS USERS_EMAIL_VERIFIED, USERS.EMAIL_VERIFIED_AT AS USERS_EMAIL_VERIFIED_AT, USERS.PHONE AS USERS_PHONE, USERS.PHONE_VERIFIED AS USERS_PHONE_VERIFIED, USERS.PHONE_VERIFIED_AT AS USERS_PHONE_VERIFIED_AT, USERS.HAS_PASSWORD_SET AS USERS_HAS_PASSWORD_SET, USERS.OPENID AS USERS_OPENID FROM USERS WHERE USERS.ID = ?",
+              "parameters": [
+                94003
+              ],
+              "executemany": false,
+              "classification": "users_select"
+            },
+            {
+              "sql": "UPDATE USERS SET LAST_ACTIVE=CURRENT_TIMESTAMP WHERE USERS.ID = ?",
+              "parameters": [
+                94003
+              ],
+              "executemany": false,
+              "classification": "user_last_active_dml"
+            },
+            {
+              "sql": "SELECT USERS.ID AS USERS_ID, USERS.USERNAME AS USERS_USERNAME, USERS.PASSWORD_HASH AS USERS_PASSWORD_HASH, USERS.IS_ADMIN AS USERS_IS_ADMIN, USERS.IS_LOCKED AS USERS_IS_LOCKED, USERS.SESSION_VERSION AS USERS_SESSION_VERSION, USERS.AVATAR AS USERS_AVATAR, USERS.CONTACT AS USERS_CONTACT, USERS.COLLEGE AS USERS_COLLEGE, USERS.LAST_ACTIVE AS USERS_LAST_ACTIVE, USERS.IS_SUBJECT_ADMIN AS USERS_IS_SUBJECT_ADMIN, USERS.IS_NOTIFICATION_ADMIN AS USERS_IS_NOTIFICATION_ADMIN, USERS.CREATED_AT AS USERS_CREATED_AT, USERS.EMAIL AS USERS_EMAIL, USERS.EMAIL_VERIFIED AS USERS_EMAIL_VERIFIED, USERS.EMAIL_VERIFIED_AT AS USERS_EMAIL_VERIFIED_AT, USERS.PHONE AS USERS_PHONE, USERS.PHONE_VERIFIED AS USERS_PHONE_VERIFIED, USERS.PHONE_VERIFIED_AT AS USERS_PHONE_VERIFIED_AT, USERS.HAS_PASSWORD_SET AS USERS_HAS_PASSWORD_SET, USERS.OPENID AS USERS_OPENID FROM USERS WHERE USERS.ID = ?",
+              "parameters": [
+                94003
+              ],
+              "executemany": false,
+              "classification": "users_select"
+            },
+            {
+              "sql": "SELECT S.ID, S.NAME, S.IS_LOCKED, COUNT(Q.ID) AS QUESTION_COUNT FROM SUBJECTS S LEFT JOIN QUESTIONS Q ON S.ID = Q.SUBJECT_ID GROUP BY S.ID, S.NAME, S.IS_LOCKED ORDER BY S.ID",
+              "parameters": [],
+              "executemany": false,
+              "classification": "subject_inventory_select"
+            }
+          ],
+          "select_attempts": 3,
+          "dml_attempts": 1,
+          "ddl_attempts": 0,
+          "other_attempts": 0,
+          "subject_inventory_select_attempts": 1,
+          "subjects_select_attempts": 1,
+          "questions_select_attempts": 1,
+          "users_select_attempts": 2,
+          "subjects_dml_attempts": 0,
+          "questions_dml_attempts": 0,
+          "user_last_active_dml_attempts": 1,
+          "statement_count": 4,
+          "classified_attempt_count": 4,
+          "statements_sha256": "fac746f4f9197ba60b6a30bd93c0c71ca242b52e4c2af25cb4df4bf14f061e91"
+        },
+        "subjects_before": {
+          "columns": [
+            "id",
+            "name",
+            "description",
+            "is_locked",
+            "plaza_board_id",
+            "is_plaza_featured",
+            "plaza_featured_weight",
+            "plaza_featured_at",
+            "created_at"
+          ],
+          "column_count": 9,
+          "row_count": 4,
+          "rows_sha256": "e44fc56d12449ddf4e86874d0daa0699b5a2206074f092c28baaa51cf77f2499"
+        },
+        "subjects_after": {
+          "columns": [
+            "id",
+            "name",
+            "description",
+            "is_locked",
+            "plaza_board_id",
+            "is_plaza_featured",
+            "plaza_featured_weight",
+            "plaza_featured_at",
+            "created_at"
+          ],
+          "column_count": 9,
+          "row_count": 4,
+          "rows_sha256": "e44fc56d12449ddf4e86874d0daa0699b5a2206074f092c28baaa51cf77f2499"
+        },
+        "subjects_match_case_fixture": true,
+        "subjects_unchanged": true,
+        "questions_before": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "column_count": 15,
+          "row_count": 6,
+          "rows_sha256": "0c08e83af9aa03cdb7e21a02f2cc78ad8012533d7f09fd92700535a12d8df3de"
+        },
+        "questions_after": {
+          "columns": [
+            "id",
+            "subject_id",
+            "type",
+            "content",
+            "options",
+            "answer",
+            "analysis",
+            "tags",
+            "difficulty",
+            "image_path",
+            "source",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ],
+          "column_count": 15,
+          "row_count": 6,
+          "rows_sha256": "0c08e83af9aa03cdb7e21a02f2cc78ad8012533d7f09fd92700535a12d8df3de"
+        },
+        "questions_match_case_fixture": true,
+        "questions_unchanged": true,
+        "users_identity_before": {
+          "columns": [
+            "id",
+            "username",
+            "is_admin",
+            "is_subject_admin",
+            "is_notification_admin",
+            "is_locked",
+            "session_version"
+          ],
+          "column_count": 7,
+          "row_count": 3,
+          "rows_sha256": "faac5b4ef87dea869d3cc24198a027d6ac40bc484556c43654352407d47ebe04"
+        },
+        "users_identity_after": {
+          "columns": [
+            "id",
+            "username",
+            "is_admin",
+            "is_subject_admin",
+            "is_notification_admin",
+            "is_locked",
+            "session_version"
+          ],
+          "column_count": 7,
+          "row_count": 3,
+          "rows_sha256": "faac5b4ef87dea869d3cc24198a027d6ac40bc484556c43654352407d47ebe04"
+        },
+        "users_identity_unchanged": true,
+        "user_last_active_before": [
+          {
+            "user_id": 94001,
+            "last_active": null
+          },
+          {
+            "user_id": 94002,
+            "last_active": null
+          },
+          {
+            "user_id": 94003,
+            "last_active": null
+          }
+        ],
+        "user_last_active_after": [
+          {
+            "user_id": 94001,
+            "last_active": null
+          },
+          {
+            "user_id": 94002,
+            "last_active": null
+          },
+          {
+            "user_id": 94003,
+            "last_active": "<database-current-timestamp>"
+          }
+        ],
+        "user_last_active_changed_user_ids": [
+          94003
+        ],
+        "surrounding_session_activity_write_observed": true
+      }
+    }
+  ],
+  "document_payload_sha256": "7573787ef73af757fd598a7290ab725b6994c4d41b67acaf722898c6e3137af8"
+}

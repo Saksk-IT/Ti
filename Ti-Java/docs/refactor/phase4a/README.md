@@ -4,9 +4,9 @@
 只作为测试期契约来源；Java 生产运行时不得读取父目录或回调 Flask。
 
 受保护科目目录与公共题库 7 条 GET 的 Java shadow 切片均已实现；题目类型、题目数量、
-单题详情与后台题目摘要集合的 catalog 内部读取能力也已实现。两条后台题型、两条单题详情
-与两条后台题目集合 HTTP operation 仍由 `operations` 持有，两条题量 HTTP operation 经审计
-应由 Phase 4C 的 `learning` 组合，八条路径都保持 pending。当前有效状态为
+单题详情、后台题目摘要集合与后台科目库存摘要的 catalog 内部读取能力也已实现。两条后台题型、
+两条单题详情、两条后台题目集合与一条后台科目库存 HTTP operation 仍由 `operations` 持有，
+两条题量 HTTP operation 经审计应由 Phase 4C 的 `learning` 组合，九条路径都保持 pending。当前有效状态为
 **11 migrated、600 pending、0 production cutover**，有效
 资源为 **159 个且全部唯一 owner**；旧 Flask 仍是生产运行所有者，Phase 4A 后续切片和
 整个长期重构目标都尚未完成。
@@ -24,9 +24,11 @@
    响应投影和鉴权保留给 `operations`，延后到 4H，当前不写 route/OpenAPI delta；
 6. 后台题目摘要集合：已固定双路由真实 Flask 行为并实现 9 列原始 `questions` 事实读取；
    catalog 只做精确可选过滤与 `id DESC`，两条 HTTP operation 延后到 4H；
-7. 后台科目库存摘要：下一项，冻结 `GET /admin/api/subjects` 真实 golden，只实现 catalog
-   内部 `subjects/questions` 聚合读取，不迁移 HTTP operation；
-8. 在 4C 由 `learning` 组合 `GET /api/quiz/subjects/{subject}/info` 中的作答、错题和收藏统计。
+7. 后台科目库存摘要：已固定 `GET /admin/api/subjects` 的 11-case 真实 golden，并实现 catalog
+   内部 `subjects/questions` 聚合读取；HTTP operation 延后到 4H；
+8. 后台题集页面科目上下文：下一项，以 `GET /admin/subjects/<int:subject_id>/questions` 为主、
+   duplicate-check 页面为共享语义对照，固定单科目 `id/name` 读取而不迁移两条 HTTP operation；
+9. 在 4C 由 `learning` 组合 `GET /api/quiz/subjects/{subject}/info` 中的作答、错题和收藏统计。
 
 切片 1 不越权读取 `identity.user_subjects`：`catalog` 通过 `identity::api` 获取用户黑名单，
 再在内存中与目录自有读取结果求差。它也不读取 `learning` 所有的 `user_answers`、
@@ -93,6 +95,16 @@
   statement、一次 `questions` 扫描、loops=1、TEMP=0、严格 `id DESC`，且 `users/subjects`
   零扫描。SHA-256 为 `af368af15be3557882bf0e673271e0c685b43d23738f9226c8e908d95928c525`；
   test-only synthetic indexes 不授权生产 migration 或延迟 SLA。
+- `golden-subject-inventory-reads.json`：固定旧提交完整 `app/` 归档的 11-case 单路由证据，覆盖
+  六类鉴权、空/单/多科目、signed ID、空/Unicode 名称、nullable lock、零题科目、孤儿/NULL
+  题目归属及 HTML/JSON 数据库故障；Session `users.last_active` 单列记账与 catalog 业务零写入
+  分开记录。文件 SHA-256 为 `6ce049b13741c2f095ca988fe4f02afc58951389ebdc9c40cf092555d9bb5d07`；
+- `subject-inventory-read-contract.json`：固定四字段原始库存 DTO、严格 signed `id ASC`、禁止复用
+  公共科目目录，以及无 Controller、模块依赖、route/OpenAPI delta 或 cutover 的边界；
+- `subject-inventory-query-plan-evidence.json`：从 Java adapter 导出唯一无参数 SQL，在 PostgreSQL
+  18.4 的 5,002 科目、150,000 题目夹具上固定 1 statement、0 bind、两表各扫描一次、
+  loops=1、TEMP=0；SHA-256 为 `f7c684273579e676b9da0024f76593ae9fb69bde47309e6d396c6fdf5a1cfb0c`，
+  仅为合成观测，不是生产延迟或容量 SLA。
 
 Java 迁移路由不启用应用数据缓存；身份策略与目录两条业务查询读取同一只读、可重复读事务中的当前数据库状态；这是
 `approved-differences.md` 中批准的过渡差异。业务用例是身份策略与目录各一条 SELECT，HTTP
@@ -162,3 +174,14 @@ operation 继续是 `operations,pending,production_cutover=false`，本证据只
 缓存通过 Phase 1、Phase 2/3 静态门禁、367+52 Maven、独立 PostgreSQL/Redis 数据面、镜像
 构建、3/3 Compose readiness、重启恢复与 bind-source 审计。8 个只读 bind 全部来自副本，
 源工作树 bind 为 0；临时目录、容器、网络、卷、镜像标签、专用缓存卷与端口均已清理至 0 残留。
+
+后台科目库存摘要内部能力的 Java/合同定向为 28/28，PostgreSQL 16.14/18.4 compatibility 为
+2/2，golden/计划工具为 24/24，全部 source tools 为 132/132。完整 `clean verify` 为 379 个
+surefire + 54 个 failsafe，0 failure/error/skip。runtime SQL manifest SHA-256 为
+`3c514f7f1ac79fe8d393f973fa19f136023be70e06968676f6a584d6199f09d7`。
+
+build-context SHA-256 `befc34d1f79baab4ad7c895ca2718ed1d8e2efbf964978313f35806ff0ab8403`
+的 WORM 已通过 PostgreSQL 18.4、70 表/617 列、只读 ACL、Hibernate `validate` 与 readiness；
+结构化报告 SHA-256 为 `da9a55b6df570904760d868696497cd046030b67789d1457d8e94cd8af6f53ca`。
+`GET /admin/api/subjects` 继续是 `operations,pending,production_cutover=false`，本证据只接受
+catalog 内部能力。

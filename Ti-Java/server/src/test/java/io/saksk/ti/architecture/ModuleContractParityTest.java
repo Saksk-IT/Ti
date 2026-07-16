@@ -137,7 +137,7 @@ class ModuleContractParityTest {
     void latestPublicShapesExactlyMatchImplementedOperationsAndKeepTheRestDeferred() throws Exception {
         assertThat(shapeStatusRoot.path("migrated_route_count").asInt()).isEqualTo(11);
         assertThat(shapeStatusRoot.path("implemented_route_backed_operation_count").asInt()).isEqualTo(11);
-        assertThat(shapeStatusRoot.path("implemented_public_application_method_count").asInt()).isEqualTo(16);
+        assertThat(shapeStatusRoot.path("implemented_public_application_method_count").asInt()).isEqualTo(17);
         assertThat(shapeStatusRoot.path("event_payload_shape_status").asString())
                 .isEqualTo("deferred_to_phase5");
 
@@ -972,7 +972,7 @@ class ModuleContractParityTest {
                 .containsExactlyInAnyOrderElementsOf(expected.stream()
                         .map(RouteKey::routeId)
                         .toList());
-        assertThat(catalogShape.path("additional_public_apis")).hasSize(2);
+        assertThat(catalogShape.path("additional_public_apis")).hasSize(3);
         JsonNode publicBankApi = java.util.stream.StreamSupport.stream(
                         catalogShape.path("additional_public_apis").spliterator(), false)
                 .filter(api -> api.path("java_api").asString()
