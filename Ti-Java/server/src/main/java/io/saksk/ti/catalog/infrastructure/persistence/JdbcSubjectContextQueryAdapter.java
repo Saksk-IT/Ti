@@ -32,3 +32,4 @@ class JdbcSubjectContextQueryAdapter implements SubjectContextQueryPort {
                 .optional();
     }
 }
+

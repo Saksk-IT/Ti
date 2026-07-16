@@ -9,3 +9,4 @@ public record SubjectContextView(int id, String name) {
         Objects.requireNonNull(name, "name");
     }
 }
+

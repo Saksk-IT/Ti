@@ -13,3 +13,4 @@ public final class JdbcSubjectContextQueryAdapterTestAccess {
         return new JdbcSubjectContextQueryAdapter(jdbc);
     }
 }
+

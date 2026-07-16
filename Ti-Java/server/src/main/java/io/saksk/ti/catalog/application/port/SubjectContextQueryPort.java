@@ -8,3 +8,4 @@ public interface SubjectContextQueryPort {
 
     Optional<SubjectContextView> findSubjectById(long subjectId);
 }
+
