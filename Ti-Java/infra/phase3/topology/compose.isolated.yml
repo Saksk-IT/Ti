@@ -1,0 +1,368 @@
+name: ${TI_PHASE3_PROJECT:?TI_PHASE3_PROJECT is required}
+
+x-hardening: &hardening
+  read_only: true
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  init: true
+  restart: "no"
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "2"
+
+x-postgres: &postgres
+  <<: *hardening
+  image: postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15
+  user: "70:70"
+  tmpfs:
+    - /tmp:rw,noexec,nosuid,size=64m,uid=70,gid=70,mode=1770
+    - /var/run/postgresql:rw,noexec,nosuid,size=16m,uid=70,gid=70,mode=0770
+  healthcheck:
+    test:
+      - CMD-SHELL
+      - pg_isready --quiet --username "$${POSTGRES_USER}" --dbname "$${POSTGRES_DB}"
+    interval: 2s
+    timeout: 3s
+    retries: 30
+    start_period: 5s
+  mem_limit: 768m
+  pids_limit: 256
+
+x-redis: &redis
+  <<: *hardening
+  image: redis:7.4.7-alpine@sha256:02f2cc4882f8bf87c79a220ac958f58c700bdec0dfb9b9ea61b62fb0e8f1bfcf
+  user: "999:1000"
+  tmpfs:
+    - /tmp:rw,noexec,nosuid,size=32m,uid=999,gid=1000,mode=1770
+  healthcheck:
+    test:
+      - CMD-SHELL
+      - REDISCLI_AUTH="$$(cat /run/secrets/redis.password)" redis-cli --no-auth-warning ping | grep -qx PONG
+    interval: 2s
+    timeout: 3s
+    retries: 30
+    start_period: 3s
+  mem_limit: 256m
+  pids_limit: 128
+
+services:
+  legacy-postgres:
+    <<: *postgres
+    hostname: legacy-postgres
+    environment:
+      POSTGRES_DB: ${TI_PHASE3_LEGACY_DB_NAME:?legacy database name is required}
+      POSTGRES_USER: ${TI_PHASE3_LEGACY_DB_OWNER:?legacy owner is required}
+      POSTGRES_PASSWORD_FILE: /run/secrets/db.owner.password
+      TI_PHASE3_DB_APP_USER: ${TI_PHASE3_LEGACY_DB_APP:?legacy app role is required}
+      TI_PHASE3_DB_AUDIT_USER: ${TI_PHASE3_LEGACY_DB_AUDIT:?legacy audit role is required}
+    secrets:
+      - source: legacy_db_owner_password
+        target: db.owner.password
+      - source: legacy_db_app_password
+        target: db.app.password
+      - source: legacy_db_audit_password
+        target: db.audit.password
+    volumes:
+      - type: volume
+        source: legacy_postgres_data
+        target: /var/lib/postgresql
+      - type: bind
+        source: ./postgres/010-bootstrap-roles.sh
+        target: /docker-entrypoint-initdb.d/010-bootstrap-roles.sh
+        read_only: true
+      - type: bind
+        source: ./postgres/grant-after-restore.sql
+        target: /usr/local/share/grant-after-restore.sql
+        read_only: true
+    ports:
+      - "127.0.0.1:${TI_PHASE3_LEGACY_POSTGRES_PORT:?legacy PostgreSQL port is required}:5432"
+    networks:
+      - legacy_backend
+      - legacy_host_access
+
+  legacy-redis:
+    <<: *redis
+    hostname: legacy-redis
+    command:
+      - /phase3/redis-entrypoint.sh
+    secrets:
+      - source: legacy_redis_password
+        target: redis.password
+    volumes:
+      - type: volume
+        source: legacy_redis_data
+        target: /data
+      - type: bind
+        source: ./runtime/redis-entrypoint.sh
+        target: /phase3/redis-entrypoint.sh
+        read_only: true
+    ports:
+      - "127.0.0.1:${TI_PHASE3_LEGACY_REDIS_PORT:?legacy Redis port is required}:6379"
+    networks:
+      - legacy_backend
+      - legacy_host_access
+
+  legacy-api:
+    <<: *hardening
+    profiles:
+      - runtime
+    image: ${TI_PHASE3_LEGACY_IMAGE:?legacy image digest is required}
+    pull_policy: never
+    hostname: legacy-api
+    entrypoint:
+      - /phase3/legacy-entrypoint.sh
+    command:
+      - flask
+      - run
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --no-debugger
+      - --no-reload
+    environment:
+      FLASK_APP: run.py
+      FLASK_ENV: development
+      FLASK_DEBUG: "0"
+      DATA_DIR: /data
+      TI_PHASE3_DB_HOST: legacy-postgres
+      TI_PHASE3_DB_NAME: ${TI_PHASE3_LEGACY_DB_NAME:?legacy database name is required}
+      TI_PHASE3_DB_USER: ${TI_PHASE3_LEGACY_DB_APP:?legacy app role is required}
+      TI_PHASE3_DB_PASSWORD_FILE: /run/secrets/db.app.password
+      TI_PHASE3_REDIS_HOST: legacy-redis
+      TI_PHASE3_REDIS_PASSWORD_FILE: /run/secrets/redis.password
+      TI_PHASE3_FLASK_SECRET_FILE: /run/secrets/flask.secret
+      RATELIMIT_STORAGE_URI: redis://legacy-redis:6379/0
+      SSE_ENABLED: "false"
+      PROXY_FIX_ENABLED: "false"
+      MAIL_ENABLED: "false"
+      MAIL_CONSOLE_OUTPUT: "false"
+      SMS_ENABLED: "false"
+      SMS_CONSOLE_OUTPUT: "false"
+      WECHAT_APPID: ""
+      WECHAT_SECRET: ""
+      AI_PROVIDER: ""
+      AI_API_KEY: ""
+      OPENAI_API_KEY: ""
+      DASHSCOPE_API_KEY: ""
+    secrets:
+      - source: legacy_db_app_password
+        target: db.app.password
+      - source: legacy_redis_password
+        target: redis.password
+      - source: legacy_flask_secret
+        target: flask.secret
+    volumes:
+      - type: volume
+        source: legacy_app_data
+        target: /data
+      - type: bind
+        source: ./runtime/legacy-entrypoint.sh
+        target: /phase3/legacy-entrypoint.sh
+        read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=128m
+    ports:
+      - "127.0.0.1:${TI_PHASE3_LEGACY_API_PORT:?legacy API port is required}:8000"
+    networks:
+      - legacy_backend
+      - legacy_host_access
+    depends_on:
+      legacy-postgres:
+        condition: service_healthy
+      legacy-redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import urllib.request;
+          urllib.request.urlopen('http://127.0.0.1:8000/api/ping', timeout=2).read()
+      interval: 3s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
+    mem_limit: 768m
+    pids_limit: 256
+
+  java-postgres:
+    <<: *postgres
+    hostname: java-postgres
+    environment:
+      POSTGRES_DB: ${TI_PHASE3_JAVA_DB_NAME:?Java database name is required}
+      POSTGRES_USER: ${TI_PHASE3_JAVA_DB_OWNER:?Java owner is required}
+      POSTGRES_PASSWORD_FILE: /run/secrets/db.owner.password
+      TI_PHASE3_DB_APP_USER: ${TI_PHASE3_JAVA_DB_APP:?Java app role is required}
+      TI_PHASE3_DB_AUDIT_USER: ${TI_PHASE3_JAVA_DB_AUDIT:?Java audit role is required}
+    secrets:
+      - source: java_db_owner_password
+        target: db.owner.password
+      - source: java_db_app_password
+        target: db.app.password
+      - source: java_db_audit_password
+        target: db.audit.password
+    volumes:
+      - type: volume
+        source: java_postgres_data
+        target: /var/lib/postgresql
+      - type: bind
+        source: ./postgres/010-bootstrap-roles.sh
+        target: /docker-entrypoint-initdb.d/010-bootstrap-roles.sh
+        read_only: true
+      - type: bind
+        source: ./postgres/grant-after-restore.sql
+        target: /usr/local/share/grant-after-restore.sql
+        read_only: true
+    ports:
+      - "127.0.0.1:${TI_PHASE3_JAVA_POSTGRES_PORT:?Java PostgreSQL port is required}:5432"
+    networks:
+      - java_backend
+      - java_host_access
+
+  java-redis:
+    <<: *redis
+    hostname: java-redis
+    command:
+      - /phase3/redis-entrypoint.sh
+    secrets:
+      - source: java_redis_password
+        target: redis.password
+    volumes:
+      - type: volume
+        source: java_redis_data
+        target: /data
+      - type: bind
+        source: ./runtime/redis-entrypoint.sh
+        target: /phase3/redis-entrypoint.sh
+        read_only: true
+    ports:
+      - "127.0.0.1:${TI_PHASE3_JAVA_REDIS_PORT:?Java Redis port is required}:6379"
+    networks:
+      - java_backend
+      - java_host_access
+
+  java-api:
+    <<: *hardening
+    profiles:
+      - runtime
+    image: ${TI_PHASE3_JAVA_IMAGE:?Java image digest is required}
+    pull_policy: never
+    hostname: java-api
+    entrypoint:
+      - /phase3/java-entrypoint.sh
+    command:
+      - java
+      - -XX:MaxRAMPercentage=75.0
+      - -Djava.io.tmpdir=/tmp
+      - -jar
+      - /app/application.jar
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      TI_SERVER_ADDRESS: 0.0.0.0
+      TI_SERVER_PORT: "8080"
+      TI_DB_URL: jdbc:postgresql://java-postgres:5432/${TI_PHASE3_JAVA_DB_NAME:?Java database name is required}
+      TI_DB_USERNAME: ${TI_PHASE3_JAVA_DB_APP:?Java app role is required}
+      TI_PHASE3_DB_PASSWORD_FILE: /run/secrets/ti.db.password
+      TI_REDIS_HOST: java-redis
+      TI_REDIS_PORT: "6379"
+      TI_PHASE3_REDIS_PASSWORD_FILE: /run/secrets/ti.redis.password
+      TI_SESSION_REDIS_NAMESPACE: ${TI_PHASE3_JAVA_SESSION_NAMESPACE:?Java session namespace is required}
+      TI_SECURITY_SESSION_COOKIE_NAME: ti_phase3_java_session
+      TI_SECURITY_SESSION_CSRF_COOKIE_NAME: ti_phase3_java_csrf
+      TI_SECURITY_SESSION_SECURE_COOKIE: "false"
+      TI_MANAGEMENT_ADDRESS: 0.0.0.0
+      TI_MANAGEMENT_PORT: "9090"
+    secrets:
+      - source: java_db_app_password
+        target: ti.db.password
+      - source: java_redis_password
+        target: ti.redis.password
+    volumes:
+      - type: volume
+        source: java_app_data
+        target: /app/data
+      - type: bind
+        source: ./runtime/java-entrypoint.sh
+        target: /phase3/java-entrypoint.sh
+        read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=128m,uid=10001,gid=10001,mode=1770
+    ports:
+      - "127.0.0.1:${TI_PHASE3_JAVA_API_PORT:?Java API port is required}:8080"
+    expose:
+      - "9090"
+    networks:
+      - java_backend
+      - java_host_access
+    depends_on:
+      java-postgres:
+        condition: service_healthy
+      java-redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - bash
+        - -ec
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/8080;
+          printf 'GET /readyz HTTP/1.0\r\nHost: localhost\r\n\r\n' >&3;
+          grep -q '"status":"UP"' <&3
+      interval: 3s
+      timeout: 3s
+      retries: 30
+      start_period: 15s
+    mem_limit: 768m
+    pids_limit: 256
+
+networks:
+  legacy_backend:
+    name: ${TI_PHASE3_PROJECT:?project is required}-legacy-backend
+    internal: true
+  legacy_host_access:
+    name: ${TI_PHASE3_PROJECT:?project is required}-legacy-host-access
+  java_backend:
+    name: ${TI_PHASE3_PROJECT:?project is required}-java-backend
+    internal: true
+  java_host_access:
+    name: ${TI_PHASE3_PROJECT:?project is required}-java-host-access
+
+volumes:
+  legacy_postgres_data:
+    name: ${TI_PHASE3_LEGACY_PG_VOLUME:?legacy PostgreSQL volume is required}
+  legacy_redis_data:
+    name: ${TI_PHASE3_LEGACY_REDIS_VOLUME:?legacy Redis volume is required}
+  legacy_app_data:
+    name: ${TI_PHASE3_LEGACY_APP_VOLUME:?legacy app volume is required}
+  java_postgres_data:
+    name: ${TI_PHASE3_JAVA_PG_VOLUME:?Java PostgreSQL volume is required}
+  java_redis_data:
+    name: ${TI_PHASE3_JAVA_REDIS_VOLUME:?Java Redis volume is required}
+  java_app_data:
+    name: ${TI_PHASE3_JAVA_APP_VOLUME:?Java app volume is required}
+
+secrets:
+  legacy_db_owner_password:
+    file: ${TI_PHASE3_LEGACY_DB_OWNER_SECRET_FILE:?legacy owner secret file is required}
+  legacy_db_app_password:
+    file: ${TI_PHASE3_LEGACY_DB_APP_SECRET_FILE:?legacy app secret file is required}
+  legacy_db_audit_password:
+    file: ${TI_PHASE3_LEGACY_DB_AUDIT_SECRET_FILE:?legacy audit secret file is required}
+  legacy_redis_password:
+    file: ${TI_PHASE3_LEGACY_REDIS_SECRET_FILE:?legacy Redis secret file is required}
+  legacy_flask_secret:
+    file: ${TI_PHASE3_LEGACY_FLASK_SECRET_FILE:?legacy Flask secret file is required}
+  java_db_owner_password:
+    file: ${TI_PHASE3_JAVA_DB_OWNER_SECRET_FILE:?Java owner secret file is required}
+  java_db_app_password:
+    file: ${TI_PHASE3_JAVA_DB_APP_SECRET_FILE:?Java app secret file is required}
+  java_db_audit_password:
+    file: ${TI_PHASE3_JAVA_DB_AUDIT_SECRET_FILE:?Java audit secret file is required}
+  java_redis_password:
+    file: ${TI_PHASE3_JAVA_REDIS_SECRET_FILE:?Java Redis secret file is required}

@@ -16,7 +16,7 @@ docker compose --env-file .env \
 
 ## 安全边界
 
-`.env.example` 和 `secrets/*.example` 只含明确标记的非生产占位值。私有本地值应复制为去掉 `.example` 后缀的文件；`Ti-Java/.gitignore` 会忽略这些文件。Compose 通过 `/run/secrets` configtree 把数据库、Redis 密码交给应用，不把密码放进环境变量或命令行参数。
+`.env.example` 和 `secrets/*.example` 只含明确标记的非生产占位值。私有本地值应复制为去掉 `.example` 后缀的文件；`Ti-Java/.gitignore` 会忽略这些文件。Compose 通过 `/run/secrets` configtree 把数据库、Redis 密码和登录限流 HMAC key 交给应用，不把这些值放进环境变量或命令行参数，也不跨阶段复用 Secret 文件。
 
 API、PostgreSQL 和 Redis 均启用只读根文件系统、临时目录、`cap_drop: ALL`、`no-new-privileges`、PID/内存边界及日志轮转。PostgreSQL 应用角色只有 `SELECT` 与连接权限；建表角色只在初始化容器内部使用。
 

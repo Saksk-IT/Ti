@@ -1,0 +1,11 @@
+{
+  "schema_version": "1",
+  "ruleset_version": "phase3-read-normalization-v1",
+  "operations": {
+    "88d7dc05cdbb": {
+      "ignore_json_pointers": [],
+      "unordered_array_json_pointers": [],
+      "ignore_response_headers": []
+    }
+  }
+}

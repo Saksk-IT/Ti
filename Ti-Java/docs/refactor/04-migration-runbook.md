@@ -2,7 +2,7 @@
 
 ## 1. 状态与安全边界
 
-本文已在阶段 1 固化为整体部署迁移手册，并由 `phase1/comparison-cutover-protocol.md` 给出可机器检查的只读对比、隔离写对比、停写、切换及写前/写后回滚协议。它不是生产变更授权，也不表示对比工具、切换脚本、Flyway baseline 或新 Java 运行时已经完成。
+本文已在阶段 1 固化为整体部署迁移手册，并由 `phase1/comparison-cutover-protocol.md` 给出可机器检查的只读对比、隔离写对比、停写、切换及写前/写后回滚协议。它不授权执行生产操作；现有 Phase 3 本地工具也不表示 Flyway baseline、生产备份、整体切换或回滚自动化已经完成。
 
 当前任务明确禁止：
 
@@ -13,6 +13,17 @@
 - 将影子流量、逐路由代理或双写作为迁移方案。
 
 当前及后续无额外授权的演练只能使用本地夹具或经过授权且脱敏的备份副本。涉及生产的步骤必须在未来取得当前变更窗口的明确授权、完成阶段 10 前置门槛并由责任人复核后才能执行。
+
+### 1.1 Phase 3 已落地工具与证据边界
+
+阶段 3 已在 `infra/phase3/` 增加两组只用于 local/test 的独立工具：
+
+- `read_compare.py` 只对不同回环端口发送 GET/HEAD，并要求旧/新数据库、Redis、卷的身份指纹全部不同；每边请求前后由独立 auditor 提供状态摘要，任何摘要变化都使当次报告失败。operation 级规范化只能忽略已批准的动态标量，missing/null、数组顺序、状态码和 Content-Type 仍是契约。p3-009 冷请求因旧 Flask 首次创建 1 个明确排除的 Flask-Limiter 可重建运行时 Key 而以唯一计数差异预期失败；它没有业务事实或持久文件副作用。预热后必须重新采样并取得双方 before=after 的暖报告，不能把冷变化篡改成“绝对零 Redis 写入”。
+- `topology/` 固定两套 API、PostgreSQL、Redis、网络和命名卷，通过“停来源 → 捕获受控快照 → 恢复全新目标 → 启目标”及反向新 generation 卷完成本地状态机演练；没有代理、影子请求或双写模式。
+
+p3-009 使用固定 legacy `sha256:324b50f5ac0b5daa4d0e96cd6c495221e241b4fb0df90efe4de94a73387fb1b4` 与 Java `sha256:1dfca1d79f5b6fe8fa40ec9958028f14ee6c68db5371ac6c331231bf6a4c6077`，真实完成 `CUTOVER initial`、冷/暖 GET、同快照隔离登录写和 `ROLLBACK rb001`。切换、暖读、隔离写、回滚报告 SHA-256 分别为 `ece1199c3e0bd3ca90df4756cc6709c1d211e03a621d2dce6cad5e5ebcf89091`、`37128ff0786211474f84f60a131934ebcbaac4c8cc0fa02bd5299f46a19590aa`、`3dc21a524bfae335d763ac49d4f480962c536ec5c99af021ac27b583ae9c40f5`、`3fca94f6841ade5a26f0f53669026a04ee7c5293616a5754ab20c745d9c6fc1a`。公开 PBKDF2 夹具由 Java 实际升级后，固定 Flask/Werkzeug 3.1.4 在 rollback 环境接受目标 scrypt 且不改写。当前证据边界见 [`phase3/dual-stack-and-cutover-evidence.md`](phase3/dual-stack-and-cutover-evidence.md)；两条路由由 [`phase3/route-parity-delta.csv`](phase3/route-parity-delta.csv) 覆盖冻结矩阵，`migrated` 不表示生产入口已切换。
+
+认证前置保护也属于 Java 本地实现，不是比较器或生产代理：无既有 Session 时，`GET`/框架派生 `HEAD /api/csrf` 与所有 unsafe 请求先经过 Redis global + HMAC-IP 分钟桶，随后才允许创建匿名 CSRF Session；匿名 Session 默认 10 分钟。`POST /api/login` 在 KDF 前执行 global + HMAC-IP + HMAC-account 三维限流，并在解析 JSON 前按真实请求流限制为 16 KiB，声明长度或实际流量超限均返回 413。旧 Flask Cookie 在验签前经过 global + HMAC-IP 限流，验签和数据库权威核对后再用 HMAC credential marker 拒绝重放，并按身份/version 最多兑换 3 次。密码登录和旧 Cookie 兑换共用每身份最多 3 个目标 Session 的签发器、Redis immediate 持久化和链尾协调清理；remember Session 每次权威重授权后滑动刷新 7 天 Cookie，Bearer 仅认证当前请求且不续期 Session。生产必须提供至少 32 字节的 HMAC key Secret，并确保承载限流、兑换 marker、Session 索引和 Session hash 的 Redis 使用 `noeviction`；local Compose 与 Phase 3 Testcontainers 已固定该策略，生产运行态仍须在获批环境留证。
 
 ## 2. 不变量与环境拓扑
 
@@ -80,7 +91,7 @@ stateDiagram-v2
 
 ### 4.2 执行与比较
 
-对旧 Flask 和新 Java 分别发送相同请求，保存原始脱敏响应和规范化响应。只允许规范化明确的易变字段，如 Request ID、服务器时间和已记录为非契约的追踪信息；不得忽略排序、分页、空值或业务字段。
+对旧 Flask 和新 Java 分别发送相同请求；原始响应正文只在比较器内存中处理，不保存原始正文、请求头、Cookie 或 Token。持久化报告只包含状态、Content-Type、安全响应头、长度、摘要、规范化摘要和经过脱敏的结构化差异。只允许规范化明确的易变字段，如 Request ID、服务器时间和已记录为非契约的追踪信息；不得忽略排序、分页、空值或业务字段。
 
 逐项比较：
 
@@ -98,7 +109,7 @@ stateDiagram-v2
 - 本批矩阵路由全部执行，不能用抽样代替覆盖率结论；
 - 状态码、信封和关键字段完全相等；
 - 批准差异均有 ADR、客户端兼容分析和回退方案；
-- 任何查询不得改变数据库、Redis 业务状态或持久文件；
+- 任何查询不得改变数据库、Redis 业务状态或持久文件；明确排除的可重建运行时 Key 仍必须单独计数，冷请求变化使当次报告失败，只有稳定暖态 before=after 才可放行；
 - 性能数据记录样本数、并发、缓存状态和数据规模，核心 p95 不比基线恶化超过 20%，或已有经批准的正确性收益说明。
 
 ## 5. 写请求双快照对比
@@ -293,19 +304,19 @@ stateDiagram-v2
 
 ## 11. 当前阶段可执行范围
 
-阶段 1 当前允许复核文档、运行旧系统只读基线、在临时 SQLite/本地独立容器生成脱敏黄金样本，以及执行不连接运行环境的契约门禁：
+阶段 3 当前允许复核文档、运行旧系统只读基线、在临时 SQLite 或隔离的 local/test 容器生成脱敏黄金样本，并执行已落地的契约、比较、拓扑、数据面和 Java 验证：
 
 ```bash
 python3 Ti-Java/tools/validate_phase1_openapi.py
 python3 Ti-Java/tools/validate_phase1_boundaries.py
+cd Ti-Java
+./infra/phase2/verify-static.sh
+./infra/phase2/verify-in-maven-container.sh clean verify
+./infra/phase3/verify-static.sh
+./infra/phase3/topology/verify-static.sh
+./infra/phase3/topology/verify-data-plane.sh
 ```
 
-`module-contracts.json`、`business-invariants.json` 与 `comparison-cutover-protocol.md` 只定义后续实现和演练必须满足的边界；它们不授权执行生产操作。以下工具在后续阶段创建前仍只是计划名称，不得伪称已存在：
-
-- 独立旧/新数据库恢复脚本；
-- HTTP 结构化对比工具；
-- 双快照写后状态比较器；
-- Flyway baseline、迁移和反向迁移脚本；
-- 生产备份、整体切换和回滚自动化。
+`read_compare.py`、`isolated_write_compare.py` 与 `topology/` 已存在，但只允许 local/test、独立资源和显式确认；它们不是生产代理或部署授权。Flyway baseline/迁移/反向迁移，以及生产备份、整体切换和回滚自动化仍是后续阶段能力，不得伪称已存在或已演练。
 
 在用户另行明确授权前，本手册的生产部分只能评审和演练，不能执行。

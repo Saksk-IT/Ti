@@ -237,19 +237,23 @@ schema_dump="$work_dir/reference-schema.sql"
 owner_password_file="$work_dir/postgres.owner.password"
 read_password_file="$work_dir/ti.db.password"
 redis_password_file="$work_dir/ti.redis.password"
+login_rate_limit_key_secret_file="$work_dir/ti.login-rate-limit.key-secret"
 redis_config_file="$work_dir/redis.conf"
 sql_error_file="$work_dir/read-role-error.log"
 
 owner_password="phase2-$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')"
 read_password="phase2-$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')"
 redis_password="phase2-$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')"
+login_rate_limit_key_secret="phase2-$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')"
 printf '%s\n' "$owner_password" > "$owner_password_file"
 printf '%s\n' "$read_password" > "$read_password_file"
 printf '%s\n' "$redis_password" > "$redis_password_file"
+printf '%s\n' "$login_rate_limit_key_secret" > "$login_rate_limit_key_secret_file"
 printf 'bind 0.0.0.0\nprotected-mode no\nrequirepass %s\nappendonly no\nsave ""\n' \
     "$redis_password" > "$redis_config_file"
 chmod 0444 "$owner_password_file" "$read_password_file" \
-    "$redis_password_file" "$redis_config_file"
+    "$redis_password_file" "$login_rate_limit_key_secret_file" \
+    "$redis_config_file"
 
 expected_legacy_commit=$(sed -n 's/.*"legacySourceCommit": "\([^"]*\)".*/\1/p' \
     "$DRIFT_MANIFEST" | head -n 1)
@@ -470,6 +474,7 @@ java_container_id=$(docker run --detach \
     --tmpfs /tmp:rw,noexec,nosuid,size=128m,uid=10001,gid=10001,mode=1770 \
     --mount "type=bind,source=$read_password_file,target=/run/secrets/ti.db.password,readonly" \
     --mount "type=bind,source=$redis_password_file,target=/run/secrets/ti.redis.password,readonly" \
+    --mount "type=bind,source=$login_rate_limit_key_secret_file,target=/run/secrets/ti.login-rate-limit.key-secret,readonly" \
     --env SPRING_PROFILES_ACTIVE=prod \
     --env TI_DB_URL=jdbc:postgresql://postgres:5432/ti_phase2_wormhole \
     --env TI_DB_USERNAME=ti_phase2_read \

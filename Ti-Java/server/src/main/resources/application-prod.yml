@@ -21,9 +21,21 @@ spring:
       connect-timeout: ${TI_REDIS_CONNECT_TIMEOUT:2s}
 
 server:
-  forward-headers-strategy: framework
+  # Forwarding headers remain raw so the explicit trusted-proxy allowlist below is authoritative.
+  forward-headers-strategy: none
 
 management:
   server:
     address: ${TI_MANAGEMENT_ADDRESS:127.0.0.1}
     port: ${TI_MANAGEMENT_PORT:9090}
+
+ti:
+  security:
+    login-rate-limit:
+      namespace: ${TI_LOGIN_RATE_LIMIT_NAMESPACE:ti-java:identity:login-rate}
+      requests-per-minute: ${TI_LOGIN_RATE_LIMIT_REQUESTS_PER_MINUTE:5}
+      key-secret: ${ti.login-rate-limit.key-secret:${TI_LOGIN_RATE_LIMIT_KEY_SECRET}}
+    session:
+      cookie-name: __Host-ti_session
+      csrf-cookie-name: __Host-ti_csrf
+      secure-cookie: true

@@ -16,7 +16,25 @@ public class ProductionSecretsConfiguration {
         requireNonBlank(environment, "spring.datasource.password");
         requireNonBlank(environment, "spring.data.redis.host");
         requireNonBlank(environment, "spring.data.redis.password");
+        requireNonBlank(environment, "ti.security.login-rate-limit.key-secret");
+        requireSecureHostCookie(environment, "ti.security.session.cookie-name");
+        requireSecureHostCookie(environment, "ti.security.session.csrf-cookie-name");
+        if (!environment.getProperty("ti.security.session.secure-cookie", Boolean.class, false)) {
+            throw new IllegalStateException("Production session cookies must be secure");
+        }
+        if (environment.getProperty("ti.security.legacy-auth.enabled", Boolean.class, false)) {
+            requireNonBlank(environment, "ti.security.legacy-auth.accept-until");
+            requireNonBlank(environment, "ti.security.legacy-auth.secret");
+        }
         return new ProductionSecretsGuard();
+    }
+
+    private void requireSecureHostCookie(Environment environment, String propertyName) {
+        String value = environment.getRequiredProperty(propertyName);
+        if (!value.startsWith("__Host-") || value.length() <= "__Host-".length()) {
+            throw new IllegalStateException(
+                    "Production cookie must use the __Host- prefix: " + propertyName);
+        }
     }
 
     private void requireNonBlank(Environment environment, String propertyName) {

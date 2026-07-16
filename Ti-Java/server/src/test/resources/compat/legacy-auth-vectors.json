@@ -1,0 +1,89 @@
+{
+  "classification": "PUBLIC TEST-ONLY SYNTHETIC DATA; NEVER USE AS REAL CREDENTIALS",
+  "fixed_time_epoch_seconds": 1784160000,
+  "formats": {
+    "flask_session": {
+      "digest": "SHA-1 (legacy HMAC compatibility only)",
+      "key_derivation": "hmac",
+      "max_age_seconds": 604800,
+      "salt": "cookie-session",
+      "serializer": "TaggedJSONSerializer restricted to fixed flat scalars"
+    },
+    "jwt": {
+      "algorithm": "HS256",
+      "maximum_lifetime_seconds": 1296000
+    },
+    "password": {
+      "pbkdf2_digest": "SHA-256",
+      "pbkdf2_iterations_maximum": 1000000,
+      "pbkdf2_iterations_minimum": 50000,
+      "scrypt": "32768:8:1"
+    }
+  },
+  "flask_sessions": [
+    {
+      "compressed": false,
+      "cookie": "eyJ1c2VyX2lkIjo0MjQyLCJ1c2VybmFtZSI6InB1YmxpYy10ZXN0LXVzZXIiLCJzZXNzaW9uX3ZlcnNpb24iOjd9.algfAA.2MKiYJEd1JyxZRTsHzK5YeHSlcc",
+      "identity": {
+        "session_version": 7,
+        "user_id": 4242,
+        "username": "public-test-user"
+      },
+      "name": "uncompressed"
+    },
+    {
+      "compressed": true,
+      "cookie": ".eJy9j7EKwzAMRP9Fs72EQME_YxxHAaW2HCS5UEr_vQkhS7v3FnH3QNy9IG4oNTGyQTDp6KArSqQZwjiMw2k5VYQAW58KZW-o5tMfBA5IY5or8VVu99qnFbP95NyMFsrJqPEFl1R0p4qqR_pAOS6EmwPBinVCuT5klSVauyN_LW1cnv6g_qTvDyJUcTk.algfAA.hxnxUEoB7DU1eUh9pGuK7IidQ48",
+      "identity": {
+        "session_version": 7,
+        "user_id": 4242,
+        "username": "public-test-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "name": "compressed_roles_ignored"
+    }
+  ],
+  "generated_by": {
+    "flask": "3.1.2",
+    "itsdangerous": "2.2.0",
+    "pyjwt": "2.8.0",
+    "werkzeug": "3.1.4"
+  },
+  "jwt": {
+    "claims": {
+      "exp": 1785456000,
+      "iat": 1784160000,
+      "jti": "0123456789abcdef0123456789abcdef",
+      "openid": "o-public-test-only-openid-0001",
+      "session_version": 7,
+      "user_id": 4242
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo0MjQyLCJvcGVuaWQiOiJvLXB1YmxpYy10ZXN0LW9ubHktb3BlbmlkLTAwMDEiLCJzZXNzaW9uX3ZlcnNpb24iOjcsImV4cCI6MTc4NTQ1NjAwMCwiaWF0IjoxNzg0MTYwMDAwLCJqdGkiOiIwMTIzNDU2Nzg5YWJjZGVmMDEyMzQ1Njc4OWFiY2RlZiJ9.INHxsA823tfMH7tNtr969VfncXQ8fMfI54llSX2ovGk"
+  },
+  "observed_legacy_inventory": {
+    "legacy_source_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+    "password_hash_formats": [
+      {
+        "count": 8,
+        "method": "scrypt:32768:8:1"
+      }
+    ],
+    "password_hash_rows": 8,
+    "production_inventory": "unknown; never queried",
+    "snapshot_date": "2026-07-16",
+    "source": "authorized local development database aggregate; no hashes or credentials"
+  },
+  "passwords": [
+    {
+      "hash": "scrypt:32768:8:1$PublicSalt123456$1cfde846b842e31ba36d7c9a7f55beb23395332274230dae40c8d89d7660651da42fff3d8b5918d898465e477379787c9523da58e804edb352688c0af428bb9c",
+      "method": "scrypt:32768:8:1",
+      "password": "PUBLIC-TEST-ONLY-Passw0rd!"
+    },
+    {
+      "hash": "pbkdf2:sha256:600000$PublicSalt654321$6761a5705972a3a2a381cfecc1452be7c8ea01275768cf24a2b8309731cc6c31",
+      "method": "pbkdf2:sha256:600000",
+      "password": "PUBLIC-TEST-ONLY-密码🔒"
+    }
+  ],
+  "schema_version": 1,
+  "shared_secret": "PUBLIC-TEST-ONLY-ti-legacy-secret-32-bytes-minimum"
+}

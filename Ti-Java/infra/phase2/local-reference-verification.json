@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "capturedAt": "2026-07-15T22:48:01Z",
+  "capturedAt": "2026-07-16T06:34:11Z",
   "source": {
     "classification": "explicitly-approved-local-development-reference",
     "legacySourceCommit": "700006dfdfa063deb4387be572911e782bcea0d9",
@@ -32,7 +32,7 @@
   },
   "java": {
     "dockerfileSha256": "bb99afb7264a3a0d64b2e76d07a663bfe4a08cacca0387dff07635818a1ef499",
-    "buildContextSha256": "74cbf56ebf91e504e197a58c0ae7cd671b954ec2f90242227d5077b4a31535a5",
+    "buildContextSha256": "16bc7054396973d3c95f7cdd506325e13ffc97a069e9771c34378fe9e5594f0b",
     "hibernateDdlAuto": "validate",
     "startupPassed": true,
     "readinessPassed": true

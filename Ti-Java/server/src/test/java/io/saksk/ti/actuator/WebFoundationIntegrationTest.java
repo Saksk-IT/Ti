@@ -40,6 +40,7 @@ import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration;
 import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
 import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration;
+import org.springframework.boot.session.data.redis.autoconfigure.SessionDataRedisAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Bean;
@@ -59,6 +60,7 @@ class WebFoundationIntegrationTest {
             DataSourceAutoConfiguration.class,
             HibernateJpaAutoConfiguration.class,
             DataJpaRepositoriesAutoConfiguration.class,
+            SessionDataRedisAutoConfiguration.class,
             UserDetailsServiceAutoConfiguration.class
     })
     @Import({

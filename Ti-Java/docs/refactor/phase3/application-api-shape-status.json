@@ -1,0 +1,172 @@
+{
+  "contract_id": "ti.phase3.application-api-shape-status",
+  "schema_version": 1,
+  "source_contract": "../phase1/module-contracts.json",
+  "previous_shape_status": "../phase2/application-api-shape-status.json",
+  "route_status_delta": "route-parity-delta.csv",
+  "phase": 3,
+  "migrated_route_count": 2,
+  "implemented_route_backed_operation_count": 2,
+  "implemented_public_application_method_count": 5,
+  "event_payload_shape_status": "deferred_to_phase5",
+  "policy": "Only route-backed methods or explicitly reviewed authentication-transition authority boundaries backed by Phase 3 evidence may exist. Every other planned Phase 1 shape remains deferred.",
+  "modules": [
+    {
+      "module_id": "identity",
+      "java_api": "io.saksk.ti.identity.api.IdentityApplicationApi",
+      "phase1_inputs": ["AuthenticateCommand", "RefreshSessionCommand", "IdentityId"],
+      "phase1_outputs": ["AuthenticationResult", "IdentitySummary"],
+      "shape_status": "partially_implemented",
+      "implemented_route_ids": ["02366fc520ac"],
+      "methods": [
+        {
+          "name": "authenticate",
+          "return_type": "io.saksk.ti.identity.api.AuthenticationResult",
+          "parameter_types": ["io.saksk.ti.identity.api.AuthenticateCommand"]
+        }
+      ],
+      "implemented_types": [
+        "AuthenticateCommand",
+        "AuthenticationOutcome",
+        "AuthenticationResult",
+        "IdentitySummary",
+        "LegacyAuthenticationResult",
+        "SessionAuthorizationResult"
+      ],
+      "additional_public_apis": [
+        {
+          "java_api": "io.saksk.ti.identity.api.LegacyCredentialAuthenticationApi",
+          "lifecycle": "temporary_kill_switched_transition_boundary",
+          "direct_http_operation": false,
+          "java_evidence": [
+            "LegacyAuthenticationConfigurationTest",
+            "LegacyAuthenticationCompatibilityServiceTest",
+            "TargetSessionAuthenticationFilterTest"
+          ],
+          "methods": [
+            {
+              "name": "authenticateJwt",
+              "return_type": "java.util.Optional",
+              "generic_return_type": "java.util.Optional<io.saksk.ti.identity.api.LegacyAuthenticationResult>",
+              "parameter_types": ["java.lang.String"]
+            },
+            {
+              "name": "authenticateFlaskSession",
+              "return_type": "java.util.Optional",
+              "generic_return_type": "java.util.Optional<io.saksk.ti.identity.api.LegacyAuthenticationResult>",
+              "parameter_types": ["java.lang.String"]
+            }
+          ]
+        },
+        {
+          "java_api": "io.saksk.ti.identity.api.SessionAuthorityApi",
+          "lifecycle": "target_session_postgresql_authority_boundary",
+          "direct_http_operation": false,
+          "java_evidence": [
+            "LegacyAuthenticationAuthorityTest",
+            "TargetSessionAuthenticationFilterTest"
+          ],
+          "methods": [
+            {
+              "name": "authorize",
+              "return_type": "io.saksk.ti.identity.api.SessionAuthorizationResult",
+              "parameter_types": ["long", "int"]
+            }
+          ]
+        }
+      ],
+      "remaining_deferred_inputs": ["RefreshSessionCommand", "IdentityId"]
+    },
+    {
+      "module_id": "catalog",
+      "java_api": "io.saksk.ti.catalog.api.CatalogApplicationApi",
+      "phase1_inputs": ["QuestionId", "CategoryId", "CatalogQuery"],
+      "phase1_outputs": ["QuestionView", "CatalogPage"],
+      "shape_status": "deferred_shape",
+      "methods": [],
+      "phase2_internal_probe": "io.saksk.ti.catalog.application.port.SubjectReadPort",
+      "phase2_internal_probe_is_public_contract": false
+    },
+    {
+      "module_id": "personalbank",
+      "java_api": "io.saksk.ti.personalbank.api.PersonalBankApplicationApi",
+      "phase1_inputs": ["ActorId", "BankId", "BankCommand"],
+      "phase1_outputs": ["BankView", "BankPermissionDecision"],
+      "shape_status": "deferred_shape",
+      "methods": []
+    },
+    {
+      "module_id": "assessment",
+      "java_api": "io.saksk.ti.assessment.api.AssessmentApplicationApi",
+      "phase1_inputs": ["ActorId", "ExamId", "SubmissionId", "AssessmentCommand"],
+      "phase1_outputs": ["AssessmentResult", "ScoreView"],
+      "shape_status": "deferred_shape",
+      "methods": []
+    },
+    {
+      "module_id": "learning",
+      "java_api": "io.saksk.ti.learning.api.LearningApplicationApi",
+      "phase1_inputs": ["ActorId", "QuestionId", "AttemptId", "LearningCommand"],
+      "phase1_outputs": ["AnswerResult", "LearningProgressView"],
+      "shape_status": "deferred_shape",
+      "methods": []
+    },
+    {
+      "module_id": "community",
+      "java_api": "io.saksk.ti.community.api.CommunityApplicationApi",
+      "phase1_inputs": ["ActorId", "PostId", "CommunityCommand"],
+      "phase1_outputs": ["PostView", "CommunityPage"],
+      "shape_status": "deferred_shape",
+      "methods": []
+    },
+    {
+      "module_id": "campus",
+      "java_api": "io.saksk.ti.campus.api.CampusApplicationApi",
+      "phase1_inputs": ["ActorId", "CampusAccountId", "RefreshId", "CampusQuery"],
+      "phase1_outputs": ["RefreshReceipt", "CampusSnapshotView"],
+      "shape_status": "deferred_shape",
+      "methods": []
+    },
+    {
+      "module_id": "coding",
+      "java_api": "io.saksk.ti.coding.api.CodingApplicationApi",
+      "phase1_inputs": ["ActorId", "CodingProblemId", "CodeSubmissionId"],
+      "phase1_outputs": ["SubmissionReceipt", "JudgeResultView"],
+      "shape_status": "deferred_shape",
+      "methods": []
+    },
+    {
+      "module_id": "intelligence",
+      "java_api": "io.saksk.ti.intelligence.api.IntelligenceApplicationApi",
+      "phase1_inputs": ["ActorId", "IntelligenceRequestId", "PromptCommand"],
+      "phase1_outputs": ["IntelligenceResult", "UsageView"],
+      "shape_status": "deferred_shape",
+      "methods": []
+    },
+    {
+      "module_id": "messaging",
+      "java_api": "io.saksk.ti.messaging.api.MessagingApplicationApi",
+      "phase1_inputs": ["ActorId", "MessageId", "DeliveryCommand"],
+      "phase1_outputs": ["MessageView", "DeliveryReceipt"],
+      "shape_status": "deferred_shape",
+      "methods": []
+    },
+    {
+      "module_id": "operations",
+      "java_api": "io.saksk.ti.operations.api.OperationsApplicationApi",
+      "phase1_inputs": ["OperatorId", "OperationId", "OperationsCommand"],
+      "phase1_outputs": ["OperationReceipt", "OperationsStatusView"],
+      "shape_status": "partially_implemented",
+      "implemented_route_ids": ["88d7dc05cdbb"],
+      "methods": [
+        {
+          "name": "getLoginMethods",
+          "return_type": "io.saksk.ti.operations.api.LoginMethodsView",
+          "parameter_types": []
+        }
+      ],
+      "implemented_types": ["LoginMethodsView"],
+      "remaining_deferred_inputs": ["OperatorId", "OperationId", "OperationsCommand"]
+    }
+  ]
+}

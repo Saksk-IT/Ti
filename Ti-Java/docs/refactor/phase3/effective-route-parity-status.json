@@ -1,0 +1,50 @@
+{
+  "contract_id": "ti.phase3.effective-route-parity-status",
+  "schema_version": 1,
+  "baseline": {
+    "source": "../02-route-parity-matrix.csv",
+    "sha256": "fdbdfedf3dd70cd09778b2a7072711d103eee8461d0e7dd356d797006fc92c74",
+    "rule_count": 592,
+    "expanded_operation_count": 611,
+    "migration_status": {
+      "pending": 611,
+      "migrated": 0
+    }
+  },
+  "delta": {
+    "source": "route-parity-delta.csv",
+    "sha256": "8576d9e3311538af7cc5f47bbe1cefe78c3b65f007fae54aa6c06500c03ea323"
+  },
+  "materialization_policy": {
+    "key": ["route_id", "path", "method"],
+    "precedence": "phase3_delta_over_frozen_baseline",
+    "unmatched_baseline_status": "preserve",
+    "unknown_delta_key": "reject",
+    "duplicate_delta_key": "reject"
+  },
+  "effective": {
+    "rule_count": 592,
+    "expanded_operation_count": 611,
+    "overridden_operation_count": 2,
+    "migration_status": {
+      "pending": 609,
+      "migrated": 2
+    },
+    "production_cutover_operation_count": 0,
+    "migrated_operations": [
+      {
+        "route_id": "02366fc520ac",
+        "path": "/api/login",
+        "method": "POST",
+        "target_module": "identity"
+      },
+      {
+        "route_id": "88d7dc05cdbb",
+        "path": "/api/auth/login-methods",
+        "method": "GET",
+        "target_module": "operations"
+      }
+    ]
+  },
+  "scope_note": "migrated means implemented in Java and covered by the cited Java contract/integration evidence. The two Phase 3 operations also carry completed p3-009 same-snapshot parity evidence. Neither fact means production cutover or acceptance of the remaining 609 operations; those remain separately tracked."
+}

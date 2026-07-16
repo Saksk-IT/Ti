@@ -27,6 +27,15 @@ spring:
   sql:
     init:
       mode: never
+  session:
+    data:
+      redis:
+        # Spring Boot 4.1's non-indexed repository stores exactly one hash per Session.
+        repository-type: default
+        namespace: ${TI_SESSION_REDIS_NAMESPACE:ti-java:identity:sessions}
+        # The hard Session registry evicts immediately, so the Session hash must exist first.
+        flush-mode: immediate
+        save-mode: on-set-attribute
   task:
     execution:
       pool:
@@ -47,6 +56,9 @@ spring:
 server:
   port: ${TI_SERVER_PORT:8080}
   shutdown: graceful
+  servlet:
+    session:
+      timeout: 7d
   tomcat:
     accesslog:
       enabled: false
@@ -75,7 +87,7 @@ management:
           include: livenessState
           additional-path: server:/livez
         readiness:
-          include: readinessState,db
+          include: readinessState,db,redis
           additional-path: server:/readyz
   info:
     env:
@@ -88,3 +100,37 @@ logging:
   level:
     org.springframework.web: INFO
     org.springframework.security: INFO
+
+ti:
+  security:
+    client-address:
+      trusted-proxy-cidrs: ${TI_TRUSTED_PROXY_CIDRS:}
+    legacy-auth:
+      enabled: ${TI_LEGACY_AUTH_ENABLED:false}
+      accept-until: ${TI_LEGACY_AUTH_ACCEPT_UNTIL:1970-01-01T00:00:00Z}
+      secret: ${ti.legacy-auth.secret:${TI_LEGACY_AUTH_SECRET:}}
+    login-rate-limit:
+      namespace: ${TI_LOGIN_RATE_LIMIT_NAMESPACE:ti-java:identity:login-rate}
+      requests-per-minute: ${TI_LOGIN_RATE_LIMIT_REQUESTS_PER_MINUTE:5}
+      key-secret: ${TI_LOGIN_RATE_LIMIT_KEY_SECRET:local-only-login-rate-limit-key-0001}
+    csrf-issuance-rate-limit:
+      namespace: ${TI_CSRF_ISSUANCE_RATE_LIMIT_NAMESPACE:ti-java:identity:csrf-issuance-rate}
+      requests-per-minute: ${TI_CSRF_ISSUANCE_RATE_LIMIT_REQUESTS_PER_MINUTE:30}
+      global-requests-per-minute: ${TI_CSRF_ISSUANCE_RATE_LIMIT_GLOBAL_REQUESTS_PER_MINUTE:1000}
+      anonymous-session-timeout: ${TI_CSRF_ANONYMOUS_SESSION_TIMEOUT:10m}
+    legacy-session-exchange:
+      namespace: ${TI_LEGACY_SESSION_EXCHANGE_NAMESPACE:ti-java:identity:legacy-session-exchange}
+      requests-per-minute: ${TI_LEGACY_SESSION_EXCHANGE_REQUESTS_PER_MINUTE:10}
+      global-requests-per-minute: ${TI_LEGACY_SESSION_EXCHANGE_GLOBAL_REQUESTS_PER_MINUTE:100}
+      max-exchanges-per-identity: ${TI_LEGACY_SESSION_EXCHANGE_MAX_PER_IDENTITY:3}
+      max-replay-markers: ${TI_LEGACY_SESSION_EXCHANGE_MAX_REPLAY_MARKERS:10000}
+      replay-marker-ttl: ${TI_LEGACY_SESSION_EXCHANGE_REPLAY_MARKER_TTL:7d}
+    target-session-limit:
+      namespace: ${TI_TARGET_SESSION_LIMIT_NAMESPACE:ti-java:identity:target-session-index}
+      max-sessions-per-identity: ${TI_TARGET_SESSION_MAX_PER_IDENTITY:3}
+      max-total-sessions: ${TI_TARGET_SESSION_MAX_TOTAL:10000}
+      registry-ttl: ${TI_TARGET_SESSION_REGISTRY_TTL:7d}
+    session:
+      cookie-name: ti_dev_session
+      csrf-cookie-name: ti_dev_csrf
+      secure-cookie: false

@@ -85,6 +85,28 @@ require(normalized_ports("postgres") == [{
 require(normalized_ports("redis") == [], "redis must publish no host ports")
 require(services.get("api", {}).get("expose") == ["9090"],
         "api management port 9090 must be expose-only")
+
+api_secrets = services.get("api", {}).get("secrets", [])
+require(api_secrets == [
+            {"source": "ti_db_password", "target": "ti.db.password"},
+            {"source": "ti_redis_password", "target": "ti.redis.password"},
+            {
+                "source": "ti_login_rate_limit_key_secret",
+                "target": "ti.login-rate-limit.key-secret",
+            },
+        ], "api must mount the exact database, Redis, and login-HMAC configtree secrets")
+
+redis_command = services.get("redis", {}).get("command", [])
+require(isinstance(redis_command, list), "redis command must render as an argv list")
+redis_command_text = " ".join(redis_command)
+for directive in (
+        "appendonly yes",
+        "appendfsync everysec",
+        "maxmemory 128mb",
+        "maxmemory-policy noeviction",
+):
+    require(directive in redis_command_text,
+            f"redis command must enforce {directive}")
 '
 
 actual_schema_sha=$(sha256_file "$SCHEMA_FILE")
@@ -142,11 +164,26 @@ assert_file_contains "Compose Redis image" \
 assert_file_contains "Testcontainers Redis image" \
     "redis:7.4.7-alpine@sha256:02f2cc4882f8bf87c79a220ac958f58c700bdec0dfb9b9ea61b62fb0e8f1bfcf" \
     "$CONTAINER_IMAGES_FILE"
+assert_file_contains "Phase 2 login-HMAC env-file boundary" \
+    "TI_JAVA_LOGIN_RATE_LIMIT_KEY_SECRET_FILE=./infra/phase2/secrets/ti-login-rate-limit-key-secret.example" \
+    "$ENV_FILE"
+assert_file_contains "Phase 2 login-HMAC Compose default" \
+    'TI_JAVA_LOGIN_RATE_LIMIT_KEY_SECRET_FILE:-./infra/phase2/secrets/ti-login-rate-limit-key-secret.example' \
+    "$COMPOSE_FILE"
+assert_file_contains "Phase 2 public login-HMAC placeholder" \
+    "PUBLIC-TEST-ONLY-phase2-login-rate-hmac-key-0001" \
+    "$TI_JAVA_DIR/infra/phase2/secrets/ti-login-rate-limit-key-secret.example"
 assert_file_contains "Wormhole PostgreSQL 18 image" \
     "postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15" \
     "$WORMHOLE_FILE"
 assert_file_contains "Wormhole Redis image" \
     "redis:7.4.7-alpine@sha256:02f2cc4882f8bf87c79a220ac958f58c700bdec0dfb9b9ea61b62fb0e8f1bfcf" \
+    "$WORMHOLE_FILE"
+assert_file_contains "Wormhole ephemeral login-HMAC secret" \
+    'login_rate_limit_key_secret="phase2-$(od -An -N32 -tx1 /dev/urandom' \
+    "$WORMHOLE_FILE"
+assert_file_contains "Wormhole login-HMAC configtree mount" \
+    'target=/run/secrets/ti.login-rate-limit.key-secret,readonly' \
     "$WORMHOLE_FILE"
 
 assert_file_contains "Observed FK delete rule" "ON DELETE SET NULL" "$SCHEMA_FILE"

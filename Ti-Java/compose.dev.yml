@@ -77,7 +77,7 @@ services:
         test -n "$${redis_password}";
         escaped_password="$$(printf '%s' "$${redis_password}" | sed 's/\\/\\\\/g; s/"/\\"/g')";
         umask 077;
-        printf 'requirepass "%s"\nappendonly yes\nappendfsync everysec\nmaxmemory 128mb\nmaxmemory-policy allkeys-lru\n'
+        printf 'requirepass "%s"\nappendonly yes\nappendfsync everysec\nmaxmemory 128mb\nmaxmemory-policy noeviction\n'
         "$${escaped_password}" > /tmp/redis.conf;
         unset redis_password escaped_password;
         exec redis-server /tmp/redis.conf
@@ -126,6 +126,8 @@ services:
         target: ti.db.password
       - source: ti_redis_password
         target: ti.redis.password
+      - source: ti_login_rate_limit_key_secret
+        target: ti.login-rate-limit.key-secret
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=128m,uid=10001,gid=10001,mode=1770
     ports:
@@ -176,3 +178,5 @@ secrets:
     file: ${TI_JAVA_DB_PASSWORD_FILE:-./infra/phase2/secrets/ti-db-password.example}
   ti_redis_password:
     file: ${TI_JAVA_REDIS_PASSWORD_FILE:-./infra/phase2/secrets/ti-redis-password.example}
+  ti_login_rate_limit_key_secret:
+    file: ${TI_JAVA_LOGIN_RATE_LIMIT_KEY_SECRET_FILE:-./infra/phase2/secrets/ti-login-rate-limit-key-secret.example}

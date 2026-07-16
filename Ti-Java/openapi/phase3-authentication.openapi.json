@@ -1,0 +1,346 @@
+{
+  "openapi": "3.1.2",
+  "info": {
+    "title": "Ti Phase 3 Authentication Compatibility Delta",
+    "version": "0.3.0-phase3",
+    "description": "A self-contained Phase 3 overlay for the two Java compatibility operations. The immutable Phase 1 baseline remains contracts/openapi.json."
+  },
+  "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "servers": [
+    {
+      "url": "http://127.0.0.1:{port}",
+      "description": "Phase 3 local/test Java runtime only",
+      "variables": {
+        "port": {"default": "18080"}
+      }
+    }
+  ],
+  "tags": [
+    {"name": "identity", "description": "Identity-owned authentication commands"},
+    {"name": "operations", "description": "Operations-owned public runtime configuration reads"}
+  ],
+  "paths": {
+    "/api/auth/login-methods": {
+      "get": {
+        "operationId": "legacy_88d7dc05cdbb_get",
+        "summary": "Read the public login-method switches",
+        "tags": ["operations"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "The observed legacy envelope backed by the current system_config values or legacy-compatible environment defaults.",
+            "headers": {
+              "Vary": {"schema": {"const": "Origin, Cookie"}},
+              "X-Content-Type-Options": {"schema": {"const": "nosniff"}},
+              "X-Frame-Options": {"schema": {"const": "SAMEORIGIN"}},
+              "X-Request-ID": {"schema": {"type": "string", "minLength": 1, "maxLength": 128}}
+            },
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {"$ref": "#/components/schemas/LoginMethodsResponse"}
+              }
+            }
+          }
+        },
+        "x-ti-route-id": "88d7dc05cdbb",
+        "x-ti-contract-maturity": "java-integration-observed",
+        "x-ti-application-api": "io.saksk.ti.operations.api.OperationsApplicationApi#getLoginMethods",
+        "x-ti-migration": {
+          "status": "migrated",
+          "productionCutover": false,
+          "liveDualRuntimeReadReport": "sha256:37128ff0786211474f84f60a131934ebcbaac4c8cc0fa02bd5299f46a19590aa",
+          "coldReadProbeReport": "sha256:d733dc7f62c7b86dd185d0f2c731069cad6a2d2b82926d346ef2fd4ff8c275c2",
+          "coldReadProbeOutcome": "expected-fail:one-excluded-flask-limiter-runtime-key:no-business-or-persistent-side-effect"
+        },
+        "x-ti-side-effect-proof": "Phase3AuthenticationIT fingerprints PostgreSQL and Redis before and after the GET"
+      }
+    },
+    "/api/login": {
+      "post": {
+        "operationId": "legacy_02366fc520ac_post",
+        "summary": "Log in with a bound email address or mainland-China mobile number and password",
+        "tags": ["identity"],
+        "security": [
+          {"targetCsrfHeader": []}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/LoginRequest"}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authenticated. The old Flask session cookie is expired and a target server-side session is issued.",
+            "headers": {
+              "Set-Cookie": {
+                "description": "Includes the target Session cookie, an expired legacy session cookie, and expiry of the pre-login CSRF mirror after Session rotation. The client obtains a fresh CSRF token before its next write. Local names are ti_dev_session/ti_dev_csrf; production names are __Host-ti_session/__Host-ti_csrf.",
+                "schema": {"type": "string"}
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/LoginSuccess"}
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed input, unsupported username login, or invalid credentials.",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/LegacyLoginError"}
+              }
+            }
+          },
+          "403": {
+            "description": "Locked account, or the Spring Security CSRF filter rejected the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {"$ref": "#/components/schemas/LegacyLoginError"},
+                    {"$ref": "#/components/schemas/SecurityErrorEnvelope"}
+                  ]
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The bounded pre-authentication filter rejected a declared, chunked, or otherwise streamed login body larger than 16 KiB before JSON parsing or CSRF Session materialization.",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/PayloadTooLargeSecurityErrorEnvelope"}
+              }
+            }
+          },
+          "429": {
+            "description": "The Redis-backed fixed-minute limiter rejected the global gate, HMAC-pseudonymized client-IP bucket, or HMAC-pseudonymized normalized-account bucket.",
+            "headers": {
+              "Retry-After": {"schema": {"type": "integer", "minimum": 1, "maximum": 60}},
+              "X-RateLimit-Limit": {"schema": {"type": "integer", "minimum": 1}},
+              "X-RateLimit-Remaining": {"schema": {"type": "integer", "minimum": 0}}
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {"$ref": "#/components/schemas/LegacyLoginError"},
+                    {"$ref": "#/components/schemas/SecurityErrorEnvelope"}
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Redis login/session authority, PostgreSQL, or the bounded password-KDF capacity is unavailable. Authentication and target Session issuance fail closed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {"$ref": "#/components/schemas/LegacyLoginError"},
+                    {"$ref": "#/components/schemas/SecurityErrorEnvelope"}
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "x-ti-route-id": "02366fc520ac",
+        "x-ti-contract-maturity": "golden-and-java-integration-observed",
+        "x-ti-application-api": "io.saksk.ti.identity.api.IdentityApplicationApi#authenticate",
+        "x-ti-migration": {
+          "status": "migrated",
+          "productionCutover": false,
+          "isolatedSameSnapshotWriteReport": "sha256:3dc21a524bfae335d763ac49d4f480962c536ec5c99af021ac27b583ae9c40f5"
+        },
+        "x-ti-approved-differences": [
+          "P3-AUTH-001",
+          "P3-AUTH-002",
+          "P3-AUTH-003",
+          "P3-AUTH-004",
+          "P3-AUTH-005"
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "targetCsrfHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-CSRF-TOKEN",
+        "description": "Anonymous login still requires the value exposed through the target CSRF cookie mirror obtained from GET /api/csrf; the authoritative token is bound to the server-side Session, so copying the cookie alone is insufficient."
+      }
+    },
+    "schemas": {
+      "LoginMethodsResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "code", "data", "request_id", "message"],
+        "properties": {
+          "status": {"const": "success"},
+          "code": {"const": 0},
+          "data": {"$ref": "#/components/schemas/LoginMethodsData"},
+          "request_id": {"type": "string", "minLength": 1, "maxLength": 128},
+          "message": {"const": ""}
+        }
+      },
+      "LoginMethodsData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["phone_login_enabled", "wechat_login_enabled", "default_mode"],
+        "properties": {
+          "phone_login_enabled": {"type": "boolean"},
+          "wechat_login_enabled": {"type": "boolean"},
+          "default_mode": {"type": "string", "enum": ["phone", "qr", "password"]}
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["username", "password"],
+        "properties": {
+          "username": {"type": "string", "maxLength": 1024},
+          "password": {"type": "string", "minLength": 1, "maxLength": 1024, "writeOnly": true},
+          "remember": {
+            "default": false,
+            "oneOf": [
+              {"type": "boolean"},
+              {"type": "integer", "enum": [0, 1]},
+              {
+                "type": "string",
+                "enum": ["true", "false", "1", "0", "yes", "no", "on", "off", "y", "n"],
+                "x-ti-trimmed": true,
+                "x-ti-case-insensitive": true
+              }
+            ]
+          },
+          "redirect": {
+            "type": ["string", "null"],
+            "default": "/",
+            "description": "Unsafe, malformed, external, control-character, or over-2048-character values are accepted as input but sanitized to /."
+          }
+        }
+      },
+      "LoginSuccess": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "redirect", "remember", "needs_password_set", "message", "data", "request_id"],
+        "properties": {
+          "status": {"const": "success"},
+          "redirect": {"type": "string"},
+          "remember": {"type": "boolean"},
+          "needs_password_set": {"const": false},
+          "message": {"const": ""},
+          "data": {"$ref": "#/components/schemas/LoginSuccessData"},
+          "request_id": {"type": "string", "minLength": 1, "maxLength": 128}
+        }
+      },
+      "LoginSuccessData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["redirect", "remember", "needs_password_set"],
+        "properties": {
+          "redirect": {"type": "string"},
+          "remember": {"type": "boolean"},
+          "needs_password_set": {"const": false}
+        }
+      },
+      "LegacyLoginError": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "message", "status_code", "request_id"],
+        "properties": {
+          "status": {"const": "error"},
+          "message": {"type": "string"},
+          "status_code": {"type": "integer", "enum": [400, 403, 429, 503]},
+          "request_id": {"type": "string", "minLength": 1, "maxLength": 128}
+        }
+      },
+      "SecurityErrorEnvelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["success", "error", "meta"],
+        "properties": {
+          "success": {"const": false},
+          "error": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["code", "message", "details"],
+            "properties": {
+              "code": {"const": "FORBIDDEN"},
+              "message": {"const": "无权执行此操作"},
+              "details": {"type": "array", "maxItems": 0}
+            }
+          },
+          "meta": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["request_id"],
+            "properties": {
+              "request_id": {"type": "string", "minLength": 1, "maxLength": 128}
+            }
+          }
+        }
+      },
+      "PayloadTooLargeSecurityErrorEnvelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["success", "error", "meta"],
+        "properties": {
+          "success": {"const": false},
+          "error": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["code", "message", "details"],
+            "properties": {
+              "code": {"const": "PAYLOAD_TOO_LARGE"},
+              "message": {"const": "请求内容过大"},
+              "details": {"type": "array", "maxItems": 0}
+            }
+          },
+          "meta": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["request_id"],
+            "properties": {
+              "request_id": {"type": "string", "minLength": 1, "maxLength": 128}
+            }
+          }
+        }
+      }
+    }
+  },
+  "x-ti-base-contract": {
+    "source": "../contracts/openapi.json",
+    "sha256": "41e0ad0e1eca3ba8731242dea7a638cd348069aad1331382f5f1bf6d4a08d64e",
+    "immutable": true
+  },
+  "x-ti-delta-semantics": {
+    "operationKey": ["x-ti-route-id", "path", "method"],
+    "precedence": "this Phase 3 operation replaces only the same operation in the immutable Phase 1 baseline",
+    "unmatchedBaselineOperations": "preserve",
+    "clientGenerationStatus": "not_yet_materialized_into_the_Vue_client"
+  },
+  "x-ti-supporting-security-endpoints": [
+    {
+      "path": "/api/csrf",
+      "method": "GET",
+      "purpose": "Issue or expose the server-session-authoritative CSRF token through a JavaScript-readable cookie mirror and response body.",
+      "issuanceProtection": "GET and HEAD issuance plus every unsafe request that could materialize a deferred CSRF Session pass global and HMAC-pseudonymized client-IP fixed-minute gates first.",
+      "anonymousSessionTimeoutSeconds": 600,
+      "legacyMigrationRoute": false,
+      "countsTowardMigratedRouteTotal": false,
+      "pathContractStatus": "deferred_to_target_security_api_catalog"
+    }
+  ],
+  "x-ti-supporting-authentication-transition": {
+    "legacyBearerBehavior": "An explicit Authorization header selects Bearer authentication for the current request only. Invalid, duplicate, or malformed headers fail closed without falling back to target or Flask cookies, and a valid token never creates or extends a target session.",
+    "legacyFlaskCookieBehavior": "Only a verified legacy Flask session cookie may be exchanged when no Authorization header or valid target identity is present. Verification is preceded by global/IP admission control, followed by an HMAC credential replay marker and a three-exchange identity cap; the resulting target Session shares the three-active-Session identity cap used by password login.",
+    "approvedDifferenceIds": ["P3-AUTH-006"],
+    "legacyMigrationRoute": false,
+    "countsTowardMigratedRouteTotal": false
+  }
+}
