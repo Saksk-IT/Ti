@@ -1,0 +1,798 @@
+{
+  "contract_id": "ti.phase4b.personal-bank-share-list-caller-attestation",
+  "schema_version": 1,
+  "captured_at": "2026-07-17",
+  "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "routes": [
+    {
+      "route_id": "e817f8083d74",
+      "path": "/api/user/banks/api/<int:bank_id>/shares",
+      "surface": "miniprogram"
+    },
+    {
+      "route_id": "c50102968322",
+      "path": "/user/banks/api/<int:bank_id>/shares",
+      "surface": "web"
+    }
+  ],
+  "full_repository_scan": {
+    "command": "git grep -n -I -E <pattern> <fixed-commit> -- . <exclusions>",
+    "pattern": "getBankShares|/shares|bank_manage_shares|bank-share",
+    "scope": "all executable, template, test and configuration text blobs at the fixed legacy commit",
+    "excluded_generated_inventory_files": [
+      "miniprogram-1/analyse-data.json"
+    ],
+    "exclusion_reason": "analyse-data.json is a one-line generated bundle inventory, not executable source; its embedded filenames would duplicate source matches and inflate the evidence",
+    "match_count": 46,
+    "matched_source_count": 19,
+    "matched_source_roots": [
+      "app",
+      "miniprogram-1",
+      "tests"
+    ],
+    "matches_sha256": "e6fb8dbc6620f90f0dd4a7e0d6e119ef28f85c317027517d146cbdaddf8fc93b",
+    "matches": [
+      {
+        "source": "app/modules/user_bank/routes/api_shares.py",
+        "line": 29,
+        "text": "@user_bank_api_bp.route('/<int:bank_id>/shares', methods=['GET'])"
+      },
+      {
+        "source": "app/modules/user_bank/routes/api_shares.py",
+        "line": 152,
+        "text": "@user_bank_api_bp.route('/shares/all', methods=['GET'])"
+      },
+      {
+        "source": "app/modules/user_bank/routes/api_shares.py",
+        "line": 183,
+        "text": "@user_bank_api_bp.route('/<int:bank_id>/shares', methods=['POST'])"
+      },
+      {
+        "source": "app/modules/user_bank/routes/api_shares.py",
+        "line": 272,
+        "text": "@user_bank_api_bp.route('/<int:bank_id>/shares/<int:share_id>', methods=['DELETE'])"
+      },
+      {
+        "source": "app/modules/user_bank/routes/api_shares.py",
+        "line": 292,
+        "text": "@user_bank_api_bp.route('/<int:bank_id>/shares/<int:share_id>/records', methods=['GET'])"
+      },
+      {
+        "source": "app/modules/user_bank/routes/api_shares.py",
+        "line": 322,
+        "text": "@user_bank_api_bp.route('/<int:bank_id>/shares/<int:share_id>/records/<int:target_user_id>', methods=['DELETE'])"
+      },
+      {
+        "source": "app/modules/user_bank/routes/pages.py",
+        "line": 36,
+        "text": "@user_bank_pages_bp.route('/manage/shares')"
+      },
+      {
+        "source": "app/modules/user_bank/routes/pages.py",
+        "line": 769,
+        "text": "@user_bank_pages_bp.route('/<int:bank_id>/shares')"
+      },
+      {
+        "source": "app/modules/user_bank/routes/pages.py",
+        "line": 785,
+        "text": "'user_bank/manage/bank_manage_shares.html',"
+      },
+      {
+        "source": "app/modules/user_bank/templates/user_bank/bank/bank_practice/body_end/_09_share_manage.html",
+        "line": 117,
+        "text": "const resp = await fetch(`/user/banks/api/${BANK_ID}/shares`, {"
+      },
+      {
+        "source": "app/modules/user_bank/templates/user_bank/bank/bank_practice/body_end/_09_share_manage.html",
+        "line": 139,
+        "text": "const resp = await fetch(`/user/banks/api/${BANK_ID}/shares`, { credentials: 'same-origin' });"
+      },
+      {
+        "source": "app/modules/user_bank/templates/user_bank/bank/bank_practice/body_end/_09_share_manage.html",
+        "line": 267,
+        "text": "const resp = await fetch(`/user/banks/api/${BANK_ID}/shares/${shareId}`, { method: 'DELETE', credentials: 'same-origin' });"
+      },
+      {
+        "source": "app/modules/user_bank/templates/user_bank/manage/_bank_manage_basebar.html",
+        "line": 9,
+        "text": "href=\"/user/banks/{{ bank_id }}/shares\""
+      },
+      {
+        "source": "app/modules/user_bank/templates/user_bank/manage/bank_manage_shares.html",
+        "line": 220,
+        "text": "const res = await window.ubmApi(`/user/banks/api/${encodeURIComponent(bankId)}/shares`);"
+      },
+      {
+        "source": "app/modules/user_bank/templates/user_bank/manage/bank_manage_shares.html",
+        "line": 323,
+        "text": "await window.ubmApi(`/user/banks/api/${encodeURIComponent(bankId)}/shares/${encodeURIComponent(String(shareId))}`, { method: 'DELETE' });"
+      },
+      {
+        "source": "app/modules/user_bank/templates/user_bank/manage/bank_manage_shares.html",
+        "line": 349,
+        "text": "const res = await window.ubmApi(`/user/banks/api/${encodeURIComponent(bankId)}/shares`, {"
+      },
+      {
+        "source": "app/modules/user_bank/templates/user_bank/manage/banks.html",
+        "line": 1043,
+        "text": "<a href=\"/user/banks/${bank.id}/shares\" class=\"action-item\">"
+      },
+      {
+        "source": "app/modules/user_bank/templates/user_bank/manage/manage_base.html",
+        "line": 357,
+        "text": "<a class=\"ubm-basebar-tab {% if _manage_tab == 'share' %}active{% endif %}\" href=\"/user/banks/{{ bank_id }}/shares\" role=\"tab\" aria-selected=\"{{ 'true' if _manage_tab == 'share' else 'false' }}\">分享</a>"
+      },
+      {
+        "source": "app/modules/user_bank/templates/user_bank/manage/shares.html",
+        "line": 210,
+        "text": "const res = await api(`/user/banks/api/${bankId}/shares`);"
+      },
+      {
+        "source": "app/modules/user_bank/templates/user_bank/manage/shares.html",
+        "line": 280,
+        "text": "const res = await api(`/user/banks/api/${bankId}/shares`, {"
+      },
+      {
+        "source": "app/modules/user_bank/templates/user_bank/manage/shares.html",
+        "line": 319,
+        "text": "await api(`/user/banks/api/${bankId}/shares/${shareId}`, { method: 'DELETE' });"
+      },
+      {
+        "source": "app/modules/user_bank/templates/user_bank/manage/shares_manage_all.html",
+        "line": 185,
+        "text": "const res = await api('/user/banks/api/shares/all');"
+      },
+      {
+        "source": "app/modules/user_bank/templates/user_bank/manage/shares_manage_all.html",
+        "line": 243,
+        "text": "await api(`/user/banks/api/${bankId}/shares/${shareId}`, { method: 'DELETE' });"
+      },
+      {
+        "source": "app/modules/user_bank/templates/user_bank/manage/shares_manage_all.html",
+        "line": 260,
+        "text": "const res = await api(`/user/banks/api/${bankId}/shares/${shareId}/records`);"
+      },
+      {
+        "source": "app/modules/user_bank/templates/user_bank/manage/shares_manage_all.html",
+        "line": 355,
+        "text": "<a class=\"btn btn-secondary btn-sm\" href=\"/user/banks/${s.bank_id}/shares\">进入该题库分享页</a>"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/app.json",
+        "line": 51,
+        "text": "\"pages/bank-share/bank-share\","
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.js",
+        "line": 2043,
+        "text": "return [4 /*yield*/, api_1.api.getBankShares(bankId)];"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+        "line": 1888,
+        "text": "const res: any = await api.getBankShares(bankId);"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-share/bank-share.js",
+        "line": 39,
+        "text": "// bank-share.ts - 个人题库分享设置页面"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-share/bank-share.js",
+        "line": 86,
+        "text": "api_1.api.getBankShares(this.data.bankId)"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-share/bank-share.less",
+        "line": 1,
+        "text": "/* bank-share.less - 个人题库分享设置页面样式 */"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-share/bank-share.ts",
+        "line": 1,
+        "text": "// bank-share.ts - 个人题库分享设置页面"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-share/bank-share.ts",
+        "line": 56,
+        "text": "api.getBankShares(this.data.bankId)"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-share/bank-share.wxml",
+        "line": 1,
+        "text": "<!--bank-share.wxml - 个人题库分享设置页面-->"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.js",
+        "line": 433,
+        "text": "getBankShares: function (bankId) {"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.js",
+        "line": 434,
+        "text": "return (0, api_client_1.request)(\"/user/banks/api/\".concat(bankId, \"/shares\"), 'GET');"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.js",
+        "line": 441,
+        "text": "createBankShare: function (bankId, data) { return (0, api_client_1.request)(\"/user/banks/api/\".concat(bankId, \"/shares\"), 'POST', data); },"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.js",
+        "line": 444,
+        "text": "return (0, api_client_1.request)(\"/user/banks/api/\".concat(bankId, \"/shares/\").concat(shareId), 'DELETE');"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+        "line": 779,
+        "text": "getBankShares: (bankId: number) =>"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+        "line": 780,
+        "text": "request(`/user/banks/api/${bankId}/shares`, 'GET'),"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+        "line": 792,
+        "text": "}) => request(`/user/banks/api/${bankId}/shares`, 'POST', data),"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+        "line": 796,
+        "text": "request(`/user/banks/api/${bankId}/shares/${shareId}`, 'DELETE'),"
+      },
+      {
+        "source": "tests/test_user_bank_shares.py",
+        "line": 103,
+        "text": "f\"/api/user/banks/api/{bank_id}/shares\","
+      },
+      {
+        "source": "tests/test_user_bank_shares.py",
+        "line": 129,
+        "text": "f\"/api/user/banks/api/{bank_id}/shares\","
+      },
+      {
+        "source": "tests/test_user_bank_shares.py",
+        "line": 168,
+        "text": "f\"/api/user/banks/api/{bank_id}/shares\","
+      },
+      {
+        "source": "tests/test_user_bank_shares.py",
+        "line": 190,
+        "text": "f\"/api/user/banks/api/{bank_id}/shares/{share_id}\","
+      }
+    ]
+  },
+  "callers": {
+    "web": {
+      "state": "active",
+      "actual_alias": "/user/banks/api/<bank_id>/shares",
+      "page_route": {
+        "source": "app/modules/user_bank/routes/pages.py",
+        "line": 769,
+        "text": "@user_bank_pages_bp.route('/<int:bank_id>/shares')",
+        "source_sha256": "9c87e370051c0eecfddda4a07140a49b9ca6ce36cde99c8c68889bdde18a32b5",
+        "source_size_bytes": 27900
+      },
+      "render_reference": {
+        "source": "app/modules/user_bank/routes/pages.py",
+        "line": 785,
+        "text": "'user_bank/manage/bank_manage_shares.html',",
+        "source_sha256": "9c87e370051c0eecfddda4a07140a49b9ca6ce36cde99c8c68889bdde18a32b5",
+        "source_size_bytes": 27900
+      },
+      "navigation_references": [
+        {
+          "source": "app/modules/user_bank/templates/user_bank/manage/_bank_manage_basebar.html",
+          "line": 9,
+          "text": "href=\"/user/banks/{{ bank_id }}/shares\"",
+          "source_sha256": "ce278d565a2f1000fa4912363acb69657f6c927c62b07c76d510cfe829d3d205",
+          "source_size_bytes": 1334
+        },
+        {
+          "source": "app/modules/user_bank/templates/user_bank/manage/manage_base.html",
+          "line": 357,
+          "text": "<a class=\"ubm-basebar-tab {% if _manage_tab == 'share' %}active{% endif %}\" href=\"/user/banks/{{ bank_id }}/shares\" role=\"tab\" aria-selected=\"{{ 'true' if _manage_tab == 'share' else 'false' }}\">分享</a>",
+          "source_sha256": "fc4488f4f7648b09e21991e383f821b2f8b005063ab9258cb52b295dcd04e15d",
+          "source_size_bytes": 14625
+        },
+        {
+          "source": "app/modules/user_bank/templates/user_bank/manage/banks.html",
+          "line": 1043,
+          "text": "<a href=\"/user/banks/${bank.id}/shares\" class=\"action-item\">",
+          "source_sha256": "200a6e408e54e5bece95c7e88c699d172ad19d7f97a779290ea57749e01be067",
+          "source_size_bytes": 40660
+        }
+      ],
+      "private_bank_only_guard": {
+        "source": "app/modules/user_bank/templates/user_bank/manage/bank_manage_shares.html",
+        "line": 160,
+        "text": "{% if not is_public %}",
+        "source_sha256": "a959a9d33d221133c6abca47394d443753b00c5288ef663b4c9235ec80f9ea3d",
+        "source_size_bytes": 17105
+      },
+      "page_load_trigger": {
+        "source": "app/modules/user_bank/templates/user_bank/manage/bank_manage_shares.html",
+        "line": 430,
+        "text": "loadShares();",
+        "source_sha256": "a959a9d33d221133c6abca47394d443753b00c5288ef663b4c9235ec80f9ea3d",
+        "source_size_bytes": 17105
+      },
+      "direct_get": {
+        "source": "app/modules/user_bank/templates/user_bank/manage/bank_manage_shares.html",
+        "line": 220,
+        "text": "const res = await window.ubmApi(`/user/banks/api/${encodeURIComponent(bankId)}/shares`);",
+        "source_sha256": "a959a9d33d221133c6abca47394d443753b00c5288ef663b4c9235ec80f9ea3d",
+        "source_size_bytes": 17105
+      },
+      "optional_share_link_branch": {
+        "guard": {
+          "source": "app/modules/user_bank/templates/user_bank/manage/bank_manage_shares.html",
+          "line": 293,
+          "text": "if (s.share_link) {",
+          "source_sha256": "a959a9d33d221133c6abca47394d443753b00c5288ef663b4c9235ec80f9ea3d",
+          "source_size_bytes": 17105
+        },
+        "copy_action": {
+          "source": "app/modules/user_bank/templates/user_bank/manage/bank_manage_shares.html",
+          "line": 298,
+          "text": "btn.addEventListener('click', () => window.ubmCopyText(String(s.share_link)));",
+          "source_sha256": "a959a9d33d221133c6abca47394d443753b00c5288ef663b4c9235ec80f9ea3d",
+          "source_size_bytes": 17105
+        },
+        "server_contract": "optional client compatibility branch only; share_link is absent from the legacy eleven-column bank_shares projection and must not be synthesized"
+      },
+      "response_envelope": "code/status plus data.shares array",
+      "consumed_fields": {
+        "id": "revocation action",
+        "share_code": "label and copy action",
+        "current_uses": "usage label",
+        "max_uses": "usage limit label",
+        "expires_at": "expiry label",
+        "created_at": "creation label",
+        "is_active": "inactive badge and revocation visibility",
+        "share_link": "optional copy-link branch; absent from the legacy raw table projection"
+      },
+      "error_behavior": "load failure clears the list and renders the thrown message",
+      "reason": "the owner-only page route renders the direct caller, the private-bank script invokes it on page load, and multiple live management surfaces navigate to that page"
+    },
+    "miniprogram": {
+      "actual_alias": "/api/user/banks/api/<bank_id>/shares",
+      "path_derivation": {
+        "production_api_base": {
+          "source": "miniprogram-1/miniprogram/utils/config.ts",
+          "line": 18,
+          "text": "const PROD_API_BASE_URL = 'https://saksk.top/api';",
+          "source_sha256": "ed3acf56d1b17bb46a051862e177a75c6837834dc43bbf403d23ee98bc51132f",
+          "source_size_bytes": 9325
+        },
+        "relative_endpoint": {
+          "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+          "line": 780,
+          "text": "request(`/user/banks/api/${bankId}/shares`, 'GET'),",
+          "source_sha256": "0954859eade86b09c7002a6b8948c7264d5da984947f67be4d63aee192b55702",
+          "source_size_bytes": 31851
+        },
+        "compiled_relative_endpoint": {
+          "source": "miniprogram-1/miniprogram/utils/api-endpoints.js",
+          "line": 434,
+          "text": "return (0, api_client_1.request)(\"/user/banks/api/\".concat(bankId, \"/shares\"), 'GET');",
+          "source_sha256": "7d4cc3b79ccd150948b88a90a4e85071d6608b07408b0ed0e13c021be152d261",
+          "source_size_bytes": 27686
+        },
+        "request_url_composition": {
+          "base_lookup": {
+            "source": "miniprogram-1/miniprogram/utils/api-client.ts",
+            "line": 105,
+            "text": "const apiBaseUrl = getApiBaseUrl();",
+            "source_sha256": "42c3ebc26b9d20f663d4bf182da762a81ee4d2cd53c03fbb248ef415389a973d",
+            "source_size_bytes": 9157
+          },
+          "concatenation": {
+            "source": "miniprogram-1/miniprogram/utils/api-client.ts",
+            "line": 110,
+            "text": "url: `${apiBaseUrl}${url}`,",
+            "source_sha256": "42c3ebc26b9d20f663d4bf182da762a81ee4d2cd53c03fbb248ef415389a973d",
+            "source_size_bytes": 9157
+          }
+        },
+        "result": "the /api base plus /user/banks/api/... selects the compatibility alias"
+      },
+      "active_bank_detail": {
+        "state": "active",
+        "subpackage_registration": {
+          "source": "miniprogram-1/miniprogram/app.json",
+          "line": 83,
+          "text": "\"root\": \"pages/bank-detail\",",
+          "source_sha256": "db035b7721418254d79e97f51a499190c07b36c694d45092b045f7c9e38277ad",
+          "source_size_bytes": 4954
+        },
+        "navigation_reference": {
+          "source": "miniprogram-1/miniprogram/pages/my-banks-v2/my-banks-v2.ts",
+          "line": 250,
+          "text": "safeNavigate(bank?.detail_path || `/pages/bank-detail/bank-detail?id=${id}`, 'navigateTo');",
+          "source_sha256": "21060b0be4ea22a73d2a30ad976f4d73ac33707f14b902a93f41144e7e73bd56",
+          "source_size_bytes": 10961
+        },
+        "share_tab_activation": {
+          "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+          "line": 542,
+          "text": "if (tab === 'share' && canManageShare) {",
+          "source_sha256": "91c4a5b256014c4e6ce34cb9c96624282b5f8cf84fc81301b6551661d1f6e409",
+          "source_size_bytes": 75328
+        },
+        "call": {
+          "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+          "line": 1888,
+          "text": "const res: any = await api.getBankShares(bankId);",
+          "source_sha256": "91c4a5b256014c4e6ce34cb9c96624282b5f8cf84fc81301b6551661d1f6e409",
+          "source_size_bytes": 75328
+        },
+        "compiled_runtime": {
+          "call": {
+            "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.js",
+            "line": 2043,
+            "text": "return [4 /*yield*/, api_1.api.getBankShares(bankId)];",
+            "source_sha256": "df334e67086e237c2d1a930c5c3ab22c947c9f2b777f38beddea7a9ca6cede77",
+            "source_size_bytes": 128551
+          },
+          "active_filter": {
+            "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.js",
+            "line": 2049,
+            "text": ".filter(function (s) { return !!(s === null || s === void 0 ? void 0 : s.is_active); })",
+            "source_sha256": "df334e67086e237c2d1a930c5c3ab22c947c9f2b777f38beddea7a9ca6cede77",
+            "source_size_bytes": 128551
+          },
+          "token_picker_call": {
+            "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.js",
+            "line": 2055,
+            "text": "picked = this.pickShareTokenFromShares(shares);",
+            "source_sha256": "df334e67086e237c2d1a930c5c3ab22c947c9f2b777f38beddea7a9ca6cede77",
+            "source_size_bytes": 128551
+          },
+          "order_preserving_iteration": {
+            "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.js",
+            "line": 2096,
+            "text": "for (var _i = 0, list_1 = list; _i < list_1.length; _i++) {",
+            "source_sha256": "df334e67086e237c2d1a930c5c3ab22c947c9f2b777f38beddea7a9ca6cede77",
+            "source_size_bytes": 128551
+          },
+          "first_valid_return": {
+            "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.js",
+            "line": 2107,
+            "text": "return token;",
+            "source_sha256": "df334e67086e237c2d1a930c5c3ab22c947c9f2b777f38beddea7a9ca6cede77",
+            "source_size_bytes": 128551
+          },
+          "ordering_contract": "the compiled runtime filters in response order, iterates without sorting or reversing, and returns the first active non-expired token"
+        },
+        "wxml_consumption": {
+          "fields": [
+            "id",
+            "share_code",
+            "current_uses",
+            "expires_at",
+            "expires_at_display",
+            "is_active"
+          ],
+          "sources": [
+            {
+              "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.wxml",
+              "line": 767,
+              "text": "<view class=\"share-item\" wx:for=\"{{shares}}\" wx:key=\"id\">",
+              "source_sha256": "47bcb77c82921a1284b53348fa7d0e7e560c534e08f47e1c2a155ef52fdc358c",
+              "source_size_bytes": 46511
+            },
+            {
+              "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.wxml",
+              "line": 770,
+              "text": "<text class=\"share-code\">{{item.share_code || '微信分享'}}</text>",
+              "source_sha256": "47bcb77c82921a1284b53348fa7d0e7e560c534e08f47e1c2a155ef52fdc358c",
+              "source_size_bytes": 46511
+            },
+            {
+              "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.wxml",
+              "line": 774,
+              "text": "<text class=\"meta-text\">使用 {{item.current_uses || 0}} 次</text>",
+              "source_sha256": "47bcb77c82921a1284b53348fa7d0e7e560c534e08f47e1c2a155ef52fdc358c",
+              "source_size_bytes": 46511
+            },
+            {
+              "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.wxml",
+              "line": 775,
+              "text": "<text class=\"meta-text\" wx:if=\"{{item.expires_at}}\">有效期至 {{item.expires_at_display}}</text>",
+              "source_sha256": "47bcb77c82921a1284b53348fa7d0e7e560c534e08f47e1c2a155ef52fdc358c",
+              "source_size_bytes": 46511
+            },
+            {
+              "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.wxml",
+              "line": 780,
+              "text": "<view class=\"action-btn copy\" wx:if=\"{{item.share_code}}\" bindtap=\"onCopyShareCode\" data-code=\"{{item.share_code}}\">",
+              "source_sha256": "47bcb77c82921a1284b53348fa7d0e7e560c534e08f47e1c2a155ef52fdc358c",
+              "source_size_bytes": 46511
+            },
+            {
+              "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.wxml",
+              "line": 783,
+              "text": "<view class=\"action-btn delete\" wx:if=\"{{item.is_active}}\" bindtap=\"onDeleteShare\" data-id=\"{{item.id}}\">",
+              "source_sha256": "47bcb77c82921a1284b53348fa7d0e7e560c534e08f47e1c2a155ef52fdc358c",
+              "source_size_bytes": 46511
+            }
+          ]
+        },
+        "wechat_share_prepare_trigger": {
+          "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+          "line": 1955,
+          "text": "await this.loadShares();",
+          "source_sha256": "91c4a5b256014c4e6ce34cb9c96624282b5f8cf84fc81301b6551661d1f6e409",
+          "source_size_bytes": 75328
+        },
+        "ordinary_tab_tap_observation": {
+          "source": {
+            "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+            "line": 634,
+            "text": "this.loadUsageStats();",
+            "source_sha256": "91c4a5b256014c4e6ce34cb9c96624282b5f8cf84fc81301b6551661d1f6e409",
+            "source_size_bytes": 75328
+          },
+          "behavior": "an ordinary share-tab tap loads usage stats only; it does not itself call loadShares, while initial tab=share, WeChat preparation, create and revoke flows can call or refresh the list"
+        },
+        "join_deep_link": {
+          "source": {
+            "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+            "line": 2117,
+            "text": "path: `/pages/bank-join/bank-join?token=${encodeURIComponent(token)}`",
+            "source_sha256": "91c4a5b256014c4e6ce34cb9c96624282b5f8cf84fc81301b6551661d1f6e409",
+            "source_size_bytes": 75328
+          },
+          "relationship": "consumes a share_token selected from the list but does not call either GET alias"
+        }
+      },
+      "dedicated_bank_share_page": {
+        "state": "dormant_external_entry_candidate",
+        "registration": {
+          "source": "miniprogram-1/miniprogram/app.json",
+          "line": 51,
+          "text": "\"pages/bank-share/bank-share\",",
+          "source_sha256": "db035b7721418254d79e97f51a499190c07b36c694d45092b045f7c9e38277ad",
+          "source_size_bytes": 4954
+        },
+        "call": {
+          "source": "miniprogram-1/miniprogram/pages/bank-share/bank-share.ts",
+          "line": 56,
+          "text": "api.getBankShares(this.data.bankId)",
+          "source_sha256": "a0f6615618ca03284573e1cdbe66388a8b95cbb99fd09309323b9c0f0392852e",
+          "source_size_bytes": 7781
+        },
+        "compiled_runtime": {
+          "call": {
+            "source": "miniprogram-1/miniprogram/pages/bank-share/bank-share.js",
+            "line": 86,
+            "text": "api_1.api.getBankShares(this.data.bankId)",
+            "source_sha256": "1ddb1e933a19271243c8449e7db9abdc596a666035cd0072614cf2d3fcbc14fd",
+            "source_size_bytes": 16868
+          },
+          "active_filter": {
+            "source": "miniprogram-1/miniprogram/pages/bank-share/bank-share.js",
+            "line": 95,
+            "text": ".filter(function (s) { return !!(s === null || s === void 0 ? void 0 : s.is_active); })",
+            "source_sha256": "1ddb1e933a19271243c8449e7db9abdc596a666035cd0072614cf2d3fcbc14fd",
+            "source_size_bytes": 16868
+          },
+          "token_picker_call": {
+            "source": "miniprogram-1/miniprogram/pages/bank-share/bank-share.js",
+            "line": 108,
+            "text": "wechatShareToken: this.pickShareTokenFromShares(shares),",
+            "source_sha256": "1ddb1e933a19271243c8449e7db9abdc596a666035cd0072614cf2d3fcbc14fd",
+            "source_size_bytes": 16868
+          },
+          "order_preserving_iteration": {
+            "source": "miniprogram-1/miniprogram/pages/bank-share/bank-share.js",
+            "line": 137,
+            "text": "for (var _i = 0, list_1 = list; _i < list_1.length; _i++) {",
+            "source_sha256": "1ddb1e933a19271243c8449e7db9abdc596a666035cd0072614cf2d3fcbc14fd",
+            "source_size_bytes": 16868
+          },
+          "first_valid_return": {
+            "source": "miniprogram-1/miniprogram/pages/bank-share/bank-share.js",
+            "line": 146,
+            "text": "return token;",
+            "source_sha256": "1ddb1e933a19271243c8449e7db9abdc596a666035cd0072614cf2d3fcbc14fd",
+            "source_size_bytes": 16868
+          },
+          "ordering_contract": "the compiled runtime filters in response order, iterates without sorting or reversing, and returns the first active non-expired token"
+        },
+        "wxml_consumption": {
+          "fields": [
+            "id",
+            "share_code",
+            "current_uses",
+            "expires_at",
+            "expires_at_display"
+          ],
+          "sources": [
+            {
+              "source": "miniprogram-1/miniprogram/pages/bank-share/bank-share.wxml",
+              "line": 41,
+              "text": "<view class=\"share-item\" wx:for=\"{{shares}}\" wx:key=\"id\">",
+              "source_sha256": "201397913c8b9560218d97ae0c9eae3b3fec348177c0656178894858d5b04008",
+              "source_size_bytes": 4212
+            },
+            {
+              "source": "miniprogram-1/miniprogram/pages/bank-share/bank-share.wxml",
+              "line": 44,
+              "text": "<text class=\"share-code\">{{item.share_code || '微信分享'}}</text>",
+              "source_sha256": "201397913c8b9560218d97ae0c9eae3b3fec348177c0656178894858d5b04008",
+              "source_size_bytes": 4212
+            },
+            {
+              "source": "miniprogram-1/miniprogram/pages/bank-share/bank-share.wxml",
+              "line": 48,
+              "text": "<text class=\"meta-text\">使用 {{item.current_uses || 0}} 次</text>",
+              "source_sha256": "201397913c8b9560218d97ae0c9eae3b3fec348177c0656178894858d5b04008",
+              "source_size_bytes": 4212
+            },
+            {
+              "source": "miniprogram-1/miniprogram/pages/bank-share/bank-share.wxml",
+              "line": 49,
+              "text": "<text class=\"meta-text\" wx:if=\"{{item.expires_at}}\">有效期至 {{item.expires_at_display}}</text>",
+              "source_sha256": "201397913c8b9560218d97ae0c9eae3b3fec348177c0656178894858d5b04008",
+              "source_size_bytes": 4212
+            },
+            {
+              "source": "miniprogram-1/miniprogram/pages/bank-share/bank-share.wxml",
+              "line": 54,
+              "text": "<view class=\"action-btn copy\" wx:if=\"{{item.share_code}}\" bindtap=\"onCopyCode\" data-code=\"{{item.share_code}}\">",
+              "source_sha256": "201397913c8b9560218d97ae0c9eae3b3fec348177c0656178894858d5b04008",
+              "source_size_bytes": 4212
+            },
+            {
+              "source": "miniprogram-1/miniprogram/pages/bank-share/bank-share.wxml",
+              "line": 57,
+              "text": "<view class=\"action-btn delete\" bindtap=\"onDeleteShare\" data-id=\"{{item.id}}\">",
+              "source_sha256": "201397913c8b9560218d97ae0c9eae3b3fec348177c0656178894858d5b04008",
+              "source_size_bytes": 4212
+            }
+          ]
+        },
+        "reason": "the page is registered and executable for a direct external entry, but the fixed-commit repository scan contains no internal navigation to it"
+      },
+      "response_envelope": "the shared request client unwraps successful result.data before page code reads shares",
+      "consumed_fields": {
+        "id": "list key and revoke action",
+        "share_code": "display and copy action",
+        "share_token": "first active non-expired WeChat share candidate",
+        "expires_at": "display and client-side expiry filtering",
+        "current_uses": "usage label",
+        "is_active": "client-side list filter and revoke visibility"
+      },
+      "client_filter": "both pages remove rows whose is_active value is falsy",
+      "ordering_dependency": "pickShareTokenFromShares selects the first active non-expired share_token, so the server order remains observable"
+    },
+    "dormant_or_orphan_callers": [
+      {
+        "state": "orphan_template",
+        "direct_get": {
+          "source": "app/modules/user_bank/templates/user_bank/manage/shares.html",
+          "line": 210,
+          "text": "const res = await api(`/user/banks/api/${bankId}/shares`);",
+          "source_sha256": "bb8d2e5fed3167b5cbd417eaada0f342843309d61028c431bed56495cd7e8a14",
+          "source_size_bytes": 12089
+        },
+        "render_or_include_references": []
+      },
+      {
+        "state": "orphan_partial",
+        "direct_get": {
+          "source": "app/modules/user_bank/templates/user_bank/bank/bank_practice/body_end/_09_share_manage.html",
+          "line": 139,
+          "text": "const resp = await fetch(`/user/banks/api/${BANK_ID}/shares`, { credentials: 'same-origin' });",
+          "source_sha256": "c3d6834ab1e668dd4b0527cd7ca3911baa882a1495f0fc5048fc02191040f127",
+          "source_size_bytes": 9753
+        },
+        "render_or_include_references": [],
+        "active_composition_proof": {
+          "source": "app/modules/user_bank/templates/user_bank/bank/bank_practice/_body_end.html",
+          "line": 9,
+          "text": "{% include \"user_bank/bank/bank_practice/body_end/_07_share_basic.html\" %}",
+          "source_sha256": "c0a394a4a6373ce28a6446898d8ad15e83898b75f9ff46daff03502d485c521b",
+          "source_size_bytes": 764
+        },
+        "reason": "the active composition includes _07_share_basic and never includes _09_share_manage"
+      }
+    ],
+    "generated_mirrors": [
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+        "generated": "miniprogram-1/miniprogram/utils/api-endpoints.js",
+        "source_sha256": "0954859eade86b09c7002a6b8948c7264d5da984947f67be4d63aee192b55702",
+        "generated_sha256": "7d4cc3b79ccd150948b88a90a4e85071d6608b07408b0ed0e13c021be152d261",
+        "caller_counting": "one logical caller; generated JavaScript is not counted twice"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+        "generated": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.js",
+        "source_sha256": "91c4a5b256014c4e6ce34cb9c96624282b5f8cf84fc81301b6551661d1f6e409",
+        "generated_sha256": "df334e67086e237c2d1a930c5c3ab22c947c9f2b777f38beddea7a9ca6cede77",
+        "caller_counting": "one logical caller; generated JavaScript is not counted twice"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-share/bank-share.ts",
+        "generated": "miniprogram-1/miniprogram/pages/bank-share/bank-share.js",
+        "source_sha256": "a0f6615618ca03284573e1cdbe66388a8b95cbb99fd09309323b9c0f0392852e",
+        "generated_sha256": "1ddb1e933a19271243c8449e7db9abdc596a666035cd0072614cf2d3fcbc14fd",
+        "caller_counting": "one logical caller; generated JavaScript is not counted twice"
+      }
+    ],
+    "backend_test_coverage": {
+      "state": "no_direct_get_coverage",
+      "source": "tests/test_user_bank_shares.py",
+      "same_path_occurrences": [
+        {
+          "method": "POST",
+          "source": {
+            "source": "tests/test_user_bank_shares.py",
+            "line": 103,
+            "text": "f\"/api/user/banks/api/{bank_id}/shares\",",
+            "source_sha256": "6087d0b8a054565c2f923452deb3c764d1fafb7333584ceda7f64c731e219f26",
+            "source_size_bytes": 7467
+          }
+        },
+        {
+          "method": "POST",
+          "source": {
+            "source": "tests/test_user_bank_shares.py",
+            "line": 129,
+            "text": "f\"/api/user/banks/api/{bank_id}/shares\",",
+            "source_sha256": "6087d0b8a054565c2f923452deb3c764d1fafb7333584ceda7f64c731e219f26",
+            "source_size_bytes": 7467
+          }
+        },
+        {
+          "method": "POST",
+          "source": {
+            "source": "tests/test_user_bank_shares.py",
+            "line": 168,
+            "text": "f\"/api/user/banks/api/{bank_id}/shares\",",
+            "source_sha256": "6087d0b8a054565c2f923452deb3c764d1fafb7333584ceda7f64c731e219f26",
+            "source_size_bytes": 7467
+          }
+        }
+      ],
+      "delete_occurrence": {
+        "method": "DELETE",
+        "source": {
+          "source": "tests/test_user_bank_shares.py",
+          "line": 190,
+          "text": "f\"/api/user/banks/api/{bank_id}/shares/{share_id}\",",
+          "source_sha256": "6087d0b8a054565c2f923452deb3c764d1fafb7333584ceda7f64c731e219f26",
+          "source_size_bytes": 7467
+        }
+      },
+      "reason": "same-path POST and child-path DELETE coverage must not be counted as GET coverage"
+    }
+  },
+  "frozen_route_matrix_disposition": {
+    "matrix_is_immutable": true,
+    "matrix_rows_are_not_a_complete_caller_inventory": true,
+    "api_row_only_names_the_miniprogram_endpoint_definition": true,
+    "web_row_names_an_orphan_partial_instead_of_the_rendered_management_page": true,
+    "resolution": "this fixed-commit attestation is the additive Phase 4B caller authority"
+  },
+  "closure": {
+    "fixed_commit_resolved": true,
+    "full_repository_scan_captured": true,
+    "active_web_caller_closed": true,
+    "active_miniprogram_caller_closed": true,
+    "deep_link_capable_page_closed": true,
+    "dormant_and_generated_sources_classified": true,
+    "request_url_composition_closed": true,
+    "compiled_runtime_behavior_closed": true,
+    "wxml_consumption_closed": true,
+    "optional_share_link_branch_closed": true,
+    "caller_attestation_complete": true
+  },
+  "attestation_sha256": "561123a3cdb5ec8fd546ea748a51eca2b12438e13ac3ebd30f4de362b5e741e6",
+  "document_payload_sha256": "035ae8b4cab7367bcd01f786c8f7442c710905497947f12863e35c59a3d89eb6"
+}

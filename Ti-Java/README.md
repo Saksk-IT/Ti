@@ -2,7 +2,7 @@
 
 Ti-Java 是 Ti 的独立重构项目，目标是以 Java 25、Spring Boot 4.1、Spring MVC 和 Spring Modulith 重新实现现有业务，并逐步加入 Vue 3 + TypeScript Web 与项目自有的小程序。
 
-阶段 0 事实基线与阶段 1 架构/契约已经固化，阶段 2 Java 基础骨架与阶段 3 认证兼容切片也已通过门禁；阶段 4A 的有界 catalog 范围已由 `docs/refactor/phase4a/phase4a-final-acceptance.json` 完成最终 closure。Phase 4B 的 personal-bank category HTTP-neutral 分类读取也已由 `docs/refactor/phase4b/personal-bank-category-acceptance.json` 完成内部能力 closure，但两条 HTTP operation 本身仍未迁移；当前有效状态保持 **11 个 migrated operation、600 个 pending、0 个 production cutover**。两条后台题型、两条单题详情、两条后台题目集合、一条后台科目库存、两条后台科目上下文与两条后台题目导出 HTTP 路由继续由 `operations` 持有，两条题量 HTTP 路由延后由 Phase 4C 的 `learning` 组合，这十三条路径都保持 pending。旧 Flask 仍是生产运行所有者，整个长期重构目标尚未完成。
+阶段 0 事实基线与阶段 1 架构/契约已经固化，阶段 2 Java 基础骨架与阶段 3 认证兼容切片也已通过门禁；阶段 4A 的有界 catalog 范围已由 `docs/refactor/phase4a/phase4a-final-acceptance.json` 完成最终 closure。Phase 4B 的 personal-bank category HTTP-neutral 分类读取也已由 `docs/refactor/phase4b/personal-bank-category-acceptance.json` 完成内部能力 closure，但两条 HTTP operation 本身仍未迁移。下一组 personal-bank share list 双 alias 已完成调用方、40-case golden 和 PG16.14/18.4 preimplementation SQL/计划入口证据，且 `personal-bank-share-list-entry-contract.json` 已通过跨文件 parity；其状态仍明确为 **implementation not started**，下一步只授权 HTTP-neutral 内部实现。当前有效状态保持 **11 个 migrated operation、600 个 pending、0 个 production cutover**。两条后台题型、两条单题详情、两条后台题目集合、一条后台科目库存、两条后台科目上下文与两条后台题目导出 HTTP 路由继续由 `operations` 持有，两条题量 HTTP 路由延后由 Phase 4C 的 `learning` 组合，这十三条路径都保持 pending。旧 Flask 仍是生产运行所有者，整个长期重构目标尚未完成。
 
 ## 当前技术与边界
 
@@ -20,6 +20,7 @@ Ti-Java 是 Ti 的独立重构项目，目标是以 Java 25、Spring Boot 4.1、
 - 同一 API 的 `findSubjectById(long)` 返回 `Optional<SubjectContextView>`，只以一个 PostgreSQL `bigint` bind 读取 `subjects.id/name`；负 ID 在 JDBC 前拒绝，0 与 `Long.MAX_VALUE` 下沉查询。它不复用公共目录或库存聚合，也不加入 Controller、route/OpenAPI delta 或 cutover；`GET /admin/subjects/{subject_id}/questions` 与其 `/duplicate-check` 页面仍由 `operations` 持有并保持 pending。
 - `QuestionMetadataApplicationApi#listQuestionExportRecords` 按可选的 `Optional<Integer> subjectId` 在两条固定 SQL 中二选一，以 `questions LEFT JOIN subjects` 返回严格 `q.id ASC` 的不可变十字段原始快照。catalog 保留 nullable/孤儿科目、空名称与畸形 JSON 文本，不做默认值、JSON 解析、认证、响应信封或安全错误投影；`GET /admin/api/questions/export` 与 `GET /admin/questions/export` 仍由 `operations` 持有，延后到 Phase 4H 并保持 pending。
 - `PersonalBankApplicationApi#listCategories` 在只读事务中以一条固定 SQL 返回当前身份的不可变八字段分类事实；只统计关联到分类且 `status = 1` 的题库，保留旧栈的跨 owner 关联计数，并严格 `sort_order ASC NULLS LAST, id ASC`。双 alias 的认证、信封、日期/null 序列化、Session `last_active` 与安全故障投影尚未进入 Java HTTP 层，因此仍为 pending。
+- personal-bank share list 当前只有实现前入口证据：固定提交调用方闭合、双 alias 40-case golden，以及 PG16.14/18.4 的 test-only 两查询证据。入口合同已固定 `viewer long → JDBC bigint → legacy int4`、`Optional.empty` 与 present-empty 的区别及 11 字段 DTO 形状；生产源码尚无分享 DTO、应用方法、service、port 或 adapter。下一步只能新增 HTTP-neutral 内部读取，不能新增 Controller、route/OpenAPI、schema/index 或 cutover。
 - 当前有效数据所有权为 **159 个资源且 159 个均有唯一 owner**。公共题库新增的 snapshot/viewer 投影控制表、读取限流键和刷新锁均是可重建辅助状态，`production cutover=0`，不能据此宣称接管旧业务事实或生产流量。
 
 ## 目录
@@ -31,7 +32,7 @@ Ti-Java 是 Ti 的独立重构项目，目标是以 Java 25、Spring Boot 4.1、
 - `docs/refactor/phase2/`：阶段 2 范围、证据和未完成边界。
 - `docs/refactor/phase3/`：阶段 3 路由增量、认证兼容、批准差异和 p3-009 双运行时证据。
 - `docs/refactor/phase4a/`：科目、公共题库、题型、题量、单题详情、后台题目摘要集合、后台科目库存摘要、后台科目上下文与后台题目导出的读取金样、snapshot 决策、业务不变量、批准差异、累计路由/API 形状、查询计划证据、24-operation 候选处置与 Phase 4A closure 记录。
-- `docs/refactor/phase4b/`：个人题库分类读取的 22-case 旧栈金样、内部 API 形状、PostgreSQL 查询计划、PG16/18 JDBC、不可变 WORM 快照、最终验收合同和切流禁止边界。
+- `docs/refactor/phase4b/`：个人题库分类读取的最终验收证据，以及分享列表的调用方、40-case golden、PG16/18 preimplementation SQL/计划与已通过的入口合同；分享列表生产实现仍待完成。
 - `contracts/`：确定性生成的 OpenAPI 3.1.2 初稿与人工证据 override。
 - `openapi/phase3-authentication.openapi.json`：两条 Phase 3 operation 的自包含 OpenAPI 3.1.2 增量。
 - `openapi/phase4a-subject-directory.openapi.json`：两条科目目录 operation 的自包含 OpenAPI 3.1.2 增量。
@@ -106,6 +107,8 @@ Java 导出的两条固定 SQL 已在 PostgreSQL 18.4 的 150,000 题目、5,002
 题目导出切片的 Java/合同定向 53/53、PostgreSQL 16.14/18.4 compatibility 2/2、全部 source tools 215/215 与最终完整 `clean verify` 406 个 surefire + 58 个 failsafe 已通过，0 failure/error/skip。WORM 以 build-context SHA-256 `9fbff246ce5f7ca8fc7fb3e723261c1b5a75f39ac43e935974be6025b663741e` 通过 PostgreSQL 18.4、70 表/617 列、只读 ACL、Hibernate `validate` 与 readiness，报告 SHA-256 为 `f245d1def582c0527ad419e5fad8bcafbfff40270dec15007a8dec77f453c410`。完整运行态验收在仅复制 1,220 个受控文件、0 个符号链接且不含缓存或构建产物的独立副本中，以专用空 Maven 缓存通过 Phase 1、Phase 2/3 静态门禁、406+58 Maven、独立 PostgreSQL/Redis 数据面、唯一镜像、3/3 Compose readiness、API 重启恢复与 8-bind source 审计；8 个只读 bind 全部来自副本，源工作树 bind 为 0，清理后临时目录、容器、网络、卷、镜像标签、缓存卷和端口均为 0 残留。随后 `phase4a-final-acceptance.json` 绑定该原始报告、WORM 与候选处置，并对当前 1,220 个受控文件中的其余 1,219 个文件做非递归最终清单（只排除合同自身）。两条导出 HTTP operation 仍是 `operations,pending,production_cutover=false` 并延后到 Phase 4H；24 个有界候选已处置为 Phase 4H 16 条、Phase 4C 4 条、Phase 6 4 条、implement-now 0 条。最终合同只授权 Phase 4B 的 `19b37a262989` 与 `e32aec766730` 两条 category alias 作为下一步，二者本身仍是 pending 且未切流。
 
 个人题库分类内部读取的旧栈 golden 共 22 个 case，文件 SHA-256 为 `c81ad22b70e1e9e25eed96e2f06a475ba590eb7ae00b7a106c6bcedac3818515`；PG18 查询计划证据 SHA-256 为 `0b23e9af5cdbaec543fb798a45dd3c6fcd5c8a11cd9f7d27aeb92550cc80cffc`。PostgreSQL 16.14/18.4 JDBC 兼容测试、全部 source tools 248/248 与完整 `clean verify` 424 个 surefire + 60 个 failsafe 均通过，0 failure/error/skip。build-context SHA-256 `51d381c5b85885b9fe902d7afd20324a34525f3cbc97acde27673ea6a7a11154` 的 WORM 已通过 PostgreSQL 18.4、70 表/617 列、只读 ACL、Hibernate `validate` 与 readiness；结构化快照 SHA-256 为 `778519fffe693f37ddec34cb458bc712c40d90054e99606a6e9c4b8abc64e0d3`。仅复制 1,249 个受控文件的独立副本还通过 Phase 1/2/3 静态门禁、36 项小程序测试、空缓存 424+60 Maven、独立数据面、镜像、3/3 Compose readiness、重启与 bind-source 审计，并对除最终合同自身外的 1,248 个文件形成非递归清单。该结果只接受 personalbank 内部能力；两条 category alias 仍是 `pending,production_cutover=false`。
+
+分享列表入口证据已经闭合固定提交上的活跃 Web、小程序 `bank-detail`、可外部直达的 `bank-share` 页面及 dormant/orphan 来源，并以 40 个双 alias case 固定认证、owner/status 短路、11 个 nullable 原始字段、故障与可观察排序。PG16.14/18.4 证据只在 `src/test` 固定 owner/status probe → share list 两条顺序 SQL、显式 `DESC NULLS FIRST`、无 JOIN/无 `id` tie-breaker；三组证据工具 22/22、入口合同 7/7、全部 source tools 277/277 与入口检查点完整 Maven 429+62 均通过。该门禁只授权下一步 HTTP-neutral 内部实现，不接受分享列表已实现；生产 API/DTO/service/adapter、实现后的完整 Maven、WORM、独立抽取和 HTTP/cutover 都仍待完成。
 
 ## 启动独立开发 Compose
 

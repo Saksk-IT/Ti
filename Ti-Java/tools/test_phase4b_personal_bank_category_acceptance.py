@@ -17,6 +17,7 @@ TI_JAVA_ROOT = pathlib.Path(__file__).resolve().parents[1]
 REPOSITORY_ROOT = TI_JAVA_ROOT.parent
 PHASE4B_ROOT = TI_JAVA_ROOT / "docs" / "refactor" / "phase4b"
 ACCEPTANCE_PATH = PHASE4B_ROOT / "personal-bank-category-acceptance.json"
+SHARE_ENTRY_PATH = PHASE4B_ROOT / "personal-bank-share-list-entry-contract.json"
 ACCEPTANCE_RELATIVE = "docs/refactor/phase4b/personal-bank-category-acceptance.json"
 PHASE4A_FINAL_SHA256 = (
     "9eeec781af91c0994c750ea2641653183f36eb4492d4ff9bd6809679c723620f"
@@ -409,20 +410,39 @@ class Phase4bPersonalBankCategoryAcceptanceTest(unittest.TestCase):
         total, included, manifest = canonical_control_manifest()
         control = contract["final_control_plane"]
         self.assertTrue(control["passed"])
-        self.assertEqual(total, control["controlled_file_count"])
         self.assertEqual(1, control["manifest_excluded_file_count"])
-        self.assertEqual(included, control["manifest_included_file_count"])
-        self.assertEqual(manifest, control["source_manifest_sha256"])
-        self.assertEqual(manifest, control["copy_manifest_sha256"])
         self.assertTrue(control["source_equals_copy"])
-        self.assertEqual(total, raw["controlled_file_count"])
-        self.assertEqual(included, raw["non_recursive_manifest_included_file_count"])
-        self.assertEqual(
-            manifest, raw["source_non_recursive_manifest_sha256"]
-        )
-        self.assertEqual(
-            manifest, raw["copy_non_recursive_manifest_sha256"]
-        )
+        if SHARE_ENTRY_PATH.is_file():
+            downstream = load_json(SHARE_ENTRY_PATH)
+            self.assertEqual(
+                sha256(ACCEPTANCE_PATH), downstream["predecessor"]["sha256"]
+            )
+            self.assertEqual(
+                "docs/refactor/phase4b/personal-bank-category-acceptance.json",
+                downstream["predecessor"]["source"],
+            )
+            self.assertTrue(downstream["entry_gate"]["passed"])
+            self.assertEqual(SHARE_ROUTE_KEYS, set(
+                downstream["authorized_slice"]["only_operation_keys"]
+            ))
+            self.assertGreater(total, control["controlled_file_count"])
+            self.assertGreater(included, control["manifest_included_file_count"])
+            self.assertNotEqual(manifest, control["source_manifest_sha256"])
+        else:
+            self.assertEqual(total, control["controlled_file_count"])
+            self.assertEqual(included, control["manifest_included_file_count"])
+            self.assertEqual(manifest, control["source_manifest_sha256"])
+            self.assertEqual(manifest, control["copy_manifest_sha256"])
+            self.assertEqual(total, raw["controlled_file_count"])
+            self.assertEqual(
+                included, raw["non_recursive_manifest_included_file_count"]
+            )
+            self.assertEqual(
+                manifest, raw["source_non_recursive_manifest_sha256"]
+            )
+            self.assertEqual(
+                manifest, raw["copy_non_recursive_manifest_sha256"]
+            )
         self.assertEqual(worm["build_context_sha256"], raw["build_context_sha256"])
         self.assertEqual(worm["build_context_sha256"], control["java_build_context_sha256"])
 
