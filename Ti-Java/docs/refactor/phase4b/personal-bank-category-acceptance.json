@@ -1,0 +1,236 @@
+{
+  "contract_id": "ti.phase4b.personal-bank-category-acceptance",
+  "schema_version": 1,
+  "status": "passed",
+  "scope": "personalbank-category-internal-read-closure-and-next-slice-handoff",
+  "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "captured_at": "2026-07-16T22:40:33Z",
+  "integrity_policy": {
+    "algorithm": "sha256",
+    "self_hash": null,
+    "controlled_manifest_excluded_paths": [
+      "docs/refactor/phase4b/personal-bank-category-acceptance.json"
+    ],
+    "reason": "The final contract is the only excluded controlled file so its embedded manifest is non-recursive; the independent runner and final control plane both bind every other tracked or untracked non-ignored Ti-Java file by relative path and content."
+  },
+  "source_contracts": {
+    "phase4a_final_acceptance": {
+      "source": "../phase4a/phase4a-final-acceptance.json",
+      "sha256": "9eeec781af91c0994c750ea2641653183f36eb4492d4ff9bd6809679c723620f"
+    },
+    "application_api_shape": {
+      "source": "application-api-shape-status.json",
+      "sha256": "6efda6464411c6a355ea29ab51f0afa63804ea5110a862b9269c4e30e5f8adb6"
+    },
+    "golden": {
+      "source": "golden-personal-bank-category-reads.json",
+      "sha256": "c81ad22b70e1e9e25eed96e2f06a475ba590eb7ae00b7a106c6bcedac3818515"
+    },
+    "query_plan": {
+      "source": "personal-bank-category-query-plan-evidence.json",
+      "sha256": "0b23e9af5cdbaec543fb798a45dd3c6fcd5c8a11cd9f7d27aeb92550cc80cffc"
+    },
+    "read_contract": {
+      "source": "personal-bank-category-read-contract.json",
+      "sha256": "8ef4b9a1eafeff9813f009a406d6863ac25b92ff438415ed674c758a5a2ff2c7"
+    },
+    "contract_parity_test": {
+      "source": "../../../server/src/test/java/io/saksk/ti/architecture/PersonalBankCategoryContractParityTest.java",
+      "sha256": "b4fdc285c80f2d2479fc94018fecb5687e889bc6a9d37c87e299a04a7aa100f4"
+    },
+    "worm": {
+      "source": "personal-bank-category-worm-evidence.json",
+      "sha256": "778519fffe693f37ddec34cb458bc712c40d90054e99606a6e9c4b8abc64e0d3"
+    },
+    "independent_acceptance_runner": {
+      "source": "../../../tools/run_phase4b_category_independent_acceptance.sh",
+      "sha256": "542975c8fb3d8befcc5575370f0706e19d66bd859857e31abf9d47a0458c1da2"
+    }
+  },
+  "category_acceptance": {
+    "golden_case_count": 22,
+    "golden_file_sha256": "c81ad22b70e1e9e25eed96e2f06a475ba590eb7ae00b7a106c6bcedac3818515",
+    "golden_case_payload_sha256": "66590670726216ad48cb5e5b2f858da16529c2a1ff976c70dbb92f2ca2e6e6cc",
+    "read_contract_sha256": "8ef4b9a1eafeff9813f009a406d6863ac25b92ff438415ed674c758a5a2ff2c7",
+    "query_plan_file_sha256": "0b23e9af5cdbaec543fb798a45dd3c6fcd5c8a11cd9f7d27aeb92550cc80cffc",
+    "runtime_sql_manifest_sha256": "d9e55d45d46fe8ea223bfe1c5d85a3602befd10e92c9f274900c9f4a924526f5",
+    "runtime_sql_sha256": "81d455611c86bd51ad637130ffaeee82cdbf2a4b49f5e269a08fba8c280c6bee",
+    "runtime_query_count": 1,
+    "query_plan_observation_count": 1,
+    "postgres_compatibility_tests": 2,
+    "source_tool_tests": 248,
+    "maven": {
+      "surefire": 424,
+      "failsafe": 60,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "http_aliases_migrated": false,
+    "production_cutover": false,
+    "passed": true
+  },
+  "worm_acceptance": {
+    "captured_at": "2026-07-16T22:17:53Z",
+    "postgresql": "18.4",
+    "public_base_tables": 70,
+    "public_columns": 617,
+    "read_only_acl_passed": true,
+    "hibernate_validate_passed": true,
+    "startup_passed": true,
+    "readiness_passed": true,
+    "build_context_sha256": "51d381c5b85885b9fe902d7afd20324a34525f3cbc97acde27673ea6a7a11154",
+    "report_sha256": "778519fffe693f37ddec34cb458bc712c40d90054e99606a6e9c4b8abc64e0d3",
+    "production_database_version": "unknown",
+    "flyway_baseline_created": false,
+    "passed": true
+  },
+  "independent_full_acceptance": {
+    "scope": "phase4b-category-prefinal-independent-copy",
+    "captured_at": "2026-07-16T22:40:21Z",
+    "raw_report_sha256": "554a691fe61e3c7aa5de4d7c502dd902d742c0690e736f951c39b57207165195",
+    "ignored_local_raw_report": "server/target/phase4b-category-independent-acceptance-20260716T223721Z-79457-14408.json",
+    "raw_report_tracked": false,
+    "controlled_file_count": 1249,
+    "source_manifest_sha256": "fcd83404937f2e6d3f870b557353ae2c84e27e6128d92c32b90087a94681d667",
+    "copy_manifest_sha256": "fcd83404937f2e6d3f870b557353ae2c84e27e6128d92c32b90087a94681d667",
+    "source_equals_copy": true,
+    "non_recursive_manifest_excluded_paths": [
+      "docs/refactor/phase4b/personal-bank-category-acceptance.json"
+    ],
+    "non_recursive_manifest_excluded_file_count": 1,
+    "non_recursive_manifest_included_file_count": 1248,
+    "source_non_recursive_manifest_sha256": "ab2cca23b3441b007112ec83e6f09875fd4b8d862c2bab9d2e33e93b235ec0e1",
+    "copy_non_recursive_manifest_sha256": "ab2cca23b3441b007112ec83e6f09875fd4b8d862c2bab9d2e33e93b235ec0e1",
+    "source_non_recursive_equals_copy": true,
+    "symlink_count": 0,
+    "forbidden_artifact_count": 0,
+    "forbidden_jar_count": 0,
+    "source_tool_tests": 248,
+    "deferred_final_contract_assertion_groups": 1,
+    "final_contract_closure_deferred": true,
+    "miniprogram_node_tests": 36,
+    "build_context_sha256": "51d381c5b85885b9fe902d7afd20324a34525f3cbc97acde27673ea6a7a11154",
+    "maven_attempts": 1,
+    "maven_max_attempts": 3,
+    "maven": {
+      "surefire": 424,
+      "failsafe": 60,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "compose": {
+      "healthy_services": 3,
+      "expected_healthy_services": 3,
+      "livez_status": 200,
+      "readyz_status": 200,
+      "unknown_status": 401,
+      "external_metrics_status": 404,
+      "internal_metrics_status": 200,
+      "postgres_ready": true,
+      "read_only_bind_count": 8,
+      "source_worktree_bind_count": 0,
+      "redis_host_bind_count": 0,
+      "management_host_bind_count": 0,
+      "api_user": "10001:10001",
+      "exact_runtime_policy_services": 3,
+      "restarted_services": 3,
+      "api_restart_recovery_passed": true,
+      "all_services_healthy_after_restart": true
+    },
+    "checks": {
+      "docker_client_isolation": true,
+      "maven_container_socket_binding": true,
+      "phase3_docker_host_pinning": true,
+      "phase1": true,
+      "phase2_static": true,
+      "phase3_static": true,
+      "phase3_topology_static": true,
+      "miniprogram": true,
+      "data_plane": true,
+      "empty_maven_cache": true,
+      "maven": true,
+      "unique_image_built_and_removed": true,
+      "compose_http_and_database": true,
+      "exact_runtime_policy": true,
+      "restart_recovery": true,
+      "baseline_resources_preserved": true
+    },
+    "cleanup": {
+      "container_residue": 0,
+      "network_residue": 0,
+      "volume_residue": 0,
+      "new_container_residue": 0,
+      "new_network_residue": 0,
+      "new_volume_residue": 0,
+      "deleted_baseline_container_count": 0,
+      "deleted_baseline_network_count": 0,
+      "deleted_baseline_volume_count": 0,
+      "image_residue": 0,
+      "cache_volume_residue": 0,
+      "port_residue": 0
+    },
+    "production_cutover": false,
+    "passed": true
+  },
+  "final_control_plane": {
+    "captured_at": "2026-07-16T22:40:33Z",
+    "controlled_file_count": 1249,
+    "manifest_excluded_file_count": 1,
+    "manifest_included_file_count": 1248,
+    "source_manifest_sha256": "ab2cca23b3441b007112ec83e6f09875fd4b8d862c2bab9d2e33e93b235ec0e1",
+    "copy_manifest_sha256": "ab2cca23b3441b007112ec83e6f09875fd4b8d862c2bab9d2e33e93b235ec0e1",
+    "source_equals_copy": true,
+    "symlink_count": 0,
+    "forbidden_artifact_count": 0,
+    "java_build_context_sha256": "51d381c5b85885b9fe902d7afd20324a34525f3cbc97acde27673ea6a7a11154",
+    "java_build_context_matches_full_acceptance": true,
+    "static_checks": {
+      "phase1": true,
+      "phase2": true,
+      "phase3": true,
+      "phase3_topology": true,
+      "source_tools_248": true,
+      "miniprogram_node_36": true
+    },
+    "passed": true
+  },
+  "effective_status": {
+    "expanded_operation_count": 611,
+    "migrated": 11,
+    "pending": 600,
+    "production_cutover": 0,
+    "effective_resource_count": 159,
+    "resources_with_exactly_one_owner": 159
+  },
+  "category_closure": {
+    "contract_and_implementation_passed": true,
+    "worm_acceptance_passed": true,
+    "independent_full_acceptance_passed": true,
+    "final_control_plane_passed": true,
+    "category_internal_read_closed": true,
+    "http_aliases_migrated": false,
+    "production_cutover": false
+  },
+  "authorized_next_slice": {
+    "phase": "4B",
+    "module": "personalbank",
+    "capability": "personal bank share list aliases",
+    "scope": "implementation_and_parity_evidence_only",
+    "only_operation_keys": [
+      "e817f8083d74|GET|/api/user/banks/api/<int:bank_id>/shares",
+      "c50102968322|GET|/user/banks/api/<int:bank_id>/shares"
+    ],
+    "required_before_implementation": [
+      "complete_caller_attestation",
+      "capture_first_and_second_query_failure_boundaries",
+      "verify_postgresql_16_14_and_18_4_jdbc_and_query_plans",
+      "freeze_null_ordering_and_dialect_behavior"
+    ],
+    "legacy_query_shape_to_preserve": "owner_status_probe_then_share_list",
+    "route_openapi_delta_authorized": false,
+    "production_cutover_authorized": false,
+    "reason": "The two share-list aliases are the only next Phase 4B evidence and HTTP-neutral implementation slice authorized after category closure. Caller attestation and the two sequential legacy query failure boundaries must close first; create/delete/join/records/stats/cache/index/schema and all HTTP or cutover deltas remain outside scope."
+  }
+}

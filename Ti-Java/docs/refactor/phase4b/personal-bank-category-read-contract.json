@@ -1,0 +1,416 @@
+{
+  "contract_id": "ti.phase4b.personal-bank-category-read-contract",
+  "schema_version": 1,
+  "status": "personalbank_internal_category_read_implemented_http_aliases_deferred",
+  "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "evidence": {
+    "phase4a_final_acceptance": {
+      "source": "../phase4a/phase4a-final-acceptance.json",
+      "sha256": "9eeec781af91c0994c750ea2641653183f36eb4492d4ff9bd6809679c723620f",
+      "status": "passed_and_immutable_input"
+    },
+    "application_api_shape": {
+      "source": "application-api-shape-status.json",
+      "sha256": "6efda6464411c6a355ea29ab51f0afa63804ea5110a862b9269c4e30e5f8adb6",
+      "migrated_route_count": 11,
+      "implemented_route_backed_operation_count": 11,
+      "implemented_public_application_method_count": 20,
+      "personalbank_public_method_count": 1,
+      "deferred_route_ids": [
+        "19b37a262989",
+        "e32aec766730"
+      ]
+    },
+    "golden": {
+      "source": "golden-personal-bank-category-reads.json",
+      "file_sha256": "c81ad22b70e1e9e25eed96e2f06a475ba590eb7ae00b7a106c6bcedac3818515",
+      "case_count": 22,
+      "case_payload_sha256": "66590670726216ad48cb5e5b2f858da16529c2a1ff976c70dbb92f2ca2e6e6cc",
+      "document_payload_sha256": "ef04369ba1ba04768bc75a88c254e1b1ae3af9f0cdefc16272d331ad9f5982fc",
+      "capture_tool_sha256": "6442f6aff7691b82c15343b64ab481c1b9783608c109490f259063ab69fc4d92",
+      "capture_tool_test_sha256": "6330bee534fb6a1ac3d7c0d1f3d9cd0ef7ae4335fc494df07125bd782f92d226",
+      "determinism": "two consecutive fixed-commit captures were byte-for-byte identical"
+    },
+    "query_plan": {
+      "source": "personal-bank-category-query-plan-evidence.json",
+      "file_sha256": "0b23e9af5cdbaec543fb798a45dd3c6fcd5c8a11cd9f7d27aeb92550cc80cffc",
+      "runtime_sql_manifest_sha256": "d9e55d45d46fe8ea223bfe1c5d85a3602befd10e92c9f274900c9f4a924526f5",
+      "runtime_sql_sha256": "81d455611c86bd51ad637130ffaeee82cdbf2a4b49f5e269a08fba8c280c6bee",
+      "adapter_sha256": "749a70cad4c83acdca9ef5a68ef31a48901e394718a95363ae910a0d2102a2ad",
+      "runtime_sql_exporter_sha256": "6f7729d2a899e9df2fe31273c4d4dc8a2e4438f9de648c050ad3f35d3cc2f494",
+      "capture_tool_sha256": "dd28715c5f1c2133cb810c398a4181ddae53f2855d781d70b524e15909553861",
+      "capture_tool_test_sha256": "62871539717cace18661bfe9b9c8cf7907db8ba45164a99349f853203f64c88b",
+      "runtime_query_count": 1,
+      "observation_count": 1,
+      "determinism": "two consecutive network-disabled PostgreSQL 18.4 captures were byte-for-byte identical"
+    },
+    "frozen_route_matrix": {
+      "source": "../02-route-parity-matrix.csv",
+      "sha256": "fdbdfedf3dd70cd09778b2a7072711d103eee8461d0e7dd356d797006fc92c74",
+      "selected_route_ids": [
+        "19b37a262989",
+        "e32aec766730"
+      ]
+    },
+    "complete_legacy_archive": {
+      "source": "golden-personal-bank-category-reads.json#legacy_source_attestation.complete_app_archive",
+      "scope": "app/",
+      "archive_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+      "archive_tree": "db528464896085fe14849baef3c5e686ad1bc253",
+      "archive_sha256": "4f196047cefcb7c73984b0661a50cfec50f79926543593bdc32152ea1fc99034",
+      "complete_app_tree_verified": true,
+      "extracted_file_count": 645,
+      "member_count": 792
+    },
+    "caller_attestation": {
+      "sha256": "1496c5ccb93bed488ad5e6009fec926f50dd6fe817d3f0fc9b0977a5578d7add",
+      "state": "dormant",
+      "web_alias_direct_source": "app/modules/user_bank/templates/user_bank/public/categories.html:115",
+      "api_alias_direct_sources": [],
+      "template_render_references": []
+    },
+    "data_ownership": {
+      "source": "../03-data-ownership.csv",
+      "sha256": "3f9cb0650c523593d7037dc24df902dbccdb3885f261f530e1725a9dc7a31748",
+      "resources": [
+        "table:user_bank_categories",
+        "table:user_question_banks"
+      ],
+      "target_owner": "personalbank",
+      "delta_required": false
+    },
+    "implementation": {
+      "source_files": {
+        "viewer": "server/src/main/java/io/saksk/ti/personalbank/api/AuthenticatedPersonalBankViewer.java",
+        "view": "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankCategoryView.java",
+        "application_api": "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankApplicationApi.java",
+        "application_service": "server/src/main/java/io/saksk/ti/personalbank/application/PersonalBankQueryService.java",
+        "query_port": "server/src/main/java/io/saksk/ti/personalbank/application/port/PersonalBankCategoryQueryPort.java",
+        "jdbc_adapter": "server/src/main/java/io/saksk/ti/personalbank/infrastructure/persistence/JdbcPersonalBankCategoryQueryAdapter.java",
+        "test_access": "server/src/test/java/io/saksk/ti/personalbank/infrastructure/persistence/JdbcPersonalBankCategoryQueryAdapterTestAccess.java",
+        "sql_manifest_test": "server/src/test/java/io/saksk/ti/personalbank/infrastructure/persistence/PersonalBankCategoryRuntimeSqlManifestTest.java",
+        "sql_contract_test": "server/src/test/java/io/saksk/ti/personalbank/infrastructure/persistence/PersonalBankCategorySqlContractTest.java",
+        "postgres_compatibility_test": "server/src/test/java/io/saksk/ti/integration/Phase4bPersonalBankCategoryJdbcCompatibilityIT.java",
+        "postgres_schema": "server/src/test/resources/db/phase4b/060-personal-bank-category-schema.sql",
+        "postgres_fixture": "server/src/test/resources/db/phase4b/061-personal-bank-category-seed.sql"
+      },
+      "source_sha256": {
+        "viewer": "a1d0fe3791ced4e45bbeb6ce254eda704bb3f81a49c4ba3cd068cc52db315760",
+        "view": "70435695f616c48306ad1d0b622ad3243a9cb1ad5cca303cfd3b6329f339bab5",
+        "application_api": "58435de470bda3ecdf4668f3968d201dde04d861f6989a379b6bb83ccc90f08c",
+        "application_service": "c66fbf299d68b57fa0ca11f1135b203479b801b1ee3ced01dd7e20739ea99820",
+        "query_port": "f611707567dc2e425ace5851802f61cdd9c9ff3fc518aebdb7c79d98a7b975ca",
+        "jdbc_adapter": "749a70cad4c83acdca9ef5a68ef31a48901e394718a95363ae910a0d2102a2ad",
+        "test_access": "a12bd8f9eee57d7839c18bfe2ab5f401cdcde8ef68330e1c426ddbc18b0bc77b",
+        "sql_manifest_test": "6f7729d2a899e9df2fe31273c4d4dc8a2e4438f9de648c050ad3f35d3cc2f494",
+        "sql_contract_test": "41164b6c832a00c14d1dfdc5fb799dee8abe842188b9b743f30d3d3bb2efa217",
+        "postgres_compatibility_test": "a0dca8b954837277d080da585072c0da04664fd8559b9d8a81395af1603d4e9f",
+        "postgres_schema": "2c5c341a061752b05ef07317d06aa40efdffe4f18a0be25508008db65512a22e",
+        "postgres_fixture": "36b7b01357c52cb97564b22e217202fea02119afefae9f0efdfa323342d36af4"
+      },
+      "postgres_compatibility": {
+        "engines": [
+          "PostgreSQL 16.14",
+          "PostgreSQL 18.4"
+        ],
+        "test_count": 2,
+        "legacy_user_id_column_type": "integer",
+        "java_bind_type": "bigint",
+        "result": "passed",
+        "verification_record": {
+          "executed_at": "2026-07-17",
+          "working_directory": "Ti-Java",
+          "command": "./infra/phase2/verify-in-maven-container.sh -q -Dtest=PersonalBankCategorySqlContractTest,PersonalBankCategoryRuntimeSqlManifestTest -Dit.test=Phase4bPersonalBankCategoryJdbcCompatibilityIT verify",
+          "exit_code": 0,
+          "status": "passed",
+          "execution_evidence_scope": "These counts and the passed status record the current-worktree execution from this Phase 4B run; input hashes elsewhere are provenance only",
+          "source_sha256": {
+            "postgres_compatibility_test": "a0dca8b954837277d080da585072c0da04664fd8559b9d8a81395af1603d4e9f",
+            "postgres_schema": "2c5c341a061752b05ef07317d06aa40efdffe4f18a0be25508008db65512a22e",
+            "postgres_fixture": "36b7b01357c52cb97564b22e217202fea02119afefae9f0efdfa323342d36af4"
+          },
+          "test_reports": [
+            {
+              "suite": "PersonalBankCategorySqlContractTest",
+              "runner": "surefire",
+              "tests": 3,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "suite": "PersonalBankCategoryRuntimeSqlManifestTest",
+              "runner": "surefire",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "suite": "Phase4bPersonalBankCategoryJdbcCompatibilityIT",
+              "runner": "failsafe",
+              "tests": 2,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0,
+              "engine_cases": [
+                "PostgreSQL 16.14",
+                "PostgreSQL 18.4"
+              ]
+            }
+          ],
+          "runner_totals": {
+            "surefire": {
+              "tests": 4,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0,
+              "composition": "PersonalBankCategorySqlContractTest 3 plus PersonalBankCategoryRuntimeSqlManifestTest 1"
+            },
+            "failsafe": {
+              "tests": 2,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0,
+              "composition": "Phase4bPersonalBankCategoryJdbcCompatibilityIT: PostgreSQL 16.14 plus PostgreSQL 18.4"
+            }
+          },
+          "scope": "Current-worktree Maven execution record for the internal JDBC adapter and SQL contract; not HTTP route parity or production cutover evidence"
+        }
+      }
+    }
+  },
+  "module_boundary": {
+    "data_owner": "personalbank",
+    "owned_tables_read": [
+      "user_bank_categories",
+      "user_question_banks"
+    ],
+    "public_application_api": "io.saksk.ti.personalbank.api.PersonalBankApplicationApi#listCategories",
+    "method": "List<PersonalBankCategoryView> listCategories(AuthenticatedPersonalBankViewer viewer)",
+    "viewer": "io.saksk.ti.personalbank.api.AuthenticatedPersonalBankViewer",
+    "viewer_shape": "long identityId",
+    "viewer_identity_invariant": {
+      "rule": "identityId must be positive",
+      "origin": "accepted Phase 3 target identity authority chain and the existing AuthenticatedCatalogViewer convention",
+      "classification": "inherited target identity invariant, not a new Phase 4B behavior difference",
+      "golden_scope": "realistic positive synthetic identities only"
+    },
+    "immutable_result": "io.saksk.ti.personalbank.api.PersonalBankCategoryView",
+    "result_field_order": [
+      "id",
+      "userId",
+      "name",
+      "description",
+      "sortOrder",
+      "createdAt",
+      "updatedAt",
+      "bankCount"
+    ],
+    "http_adapter_status": "not_implemented",
+    "security_matcher_status": "not_implemented",
+    "openapi_delta_status": "not_authorized_or_implemented",
+    "route_delta_status": "not_authorized_or_implemented",
+    "production_cutover": false
+  },
+  "route_status": {
+    "migrated_route_count_before": 11,
+    "migrated_route_count_after": 11,
+    "implemented_route_backed_operation_count_before": 11,
+    "implemented_route_backed_operation_count_after": 11,
+    "pending_route_count_before": 600,
+    "pending_route_count_after": 600,
+    "production_cutover_count": 0,
+    "operations": [
+      {
+        "route_id": "19b37a262989",
+        "method": "GET",
+        "path": "/api/user/banks/api/categories",
+        "legacy_handler": "user_bank_api_root.user_bank_api.get_categories",
+        "registration_kind": "blueprint_compatibility_alias",
+        "target_module": "personalbank",
+        "migration_status": "pending",
+        "contract_maturity": "inferred",
+        "openapi_response_schema_status": "unknown",
+        "production_cutover": false
+      },
+      {
+        "route_id": "e32aec766730",
+        "method": "GET",
+        "path": "/user/banks/api/categories",
+        "legacy_handler": "user_bank.user_bank_api.get_categories",
+        "registration_kind": "blueprint_decorator",
+        "target_module": "personalbank",
+        "migration_status": "pending",
+        "contract_maturity": "inferred",
+        "openapi_response_schema_status": "unknown",
+        "production_cutover": false
+      }
+    ]
+  },
+  "personalbank_application_contract": {
+    "transaction": "read-only",
+    "return_collection": "immutable defensive List.copyOf result",
+    "runtime_sql": {
+      "statement_count_per_invocation": 1,
+      "selected_column_count": 8,
+      "binds": {
+        "user_id": {
+          "java_type": "long",
+          "jdbc_manifest_type": "bigint",
+          "legacy_database_column_type": "integer",
+          "occurrences": 1
+        }
+      },
+      "relations": [
+        "user_bank_categories c",
+        "user_question_banks b"
+      ],
+      "join": "LEFT JOIN b ON b.category_id = c.id AND b.status = 1",
+      "category_filter": "c.user_id = :user_id",
+      "bank_owner_filter": null,
+      "grouping": "all seven category columns",
+      "ordering": "c.sort_order ASC NULLS LAST, c.id ASC",
+      "pagination": null,
+      "n_plus_one_forbidden": true
+    },
+    "result_fields": [
+      {"name": "id", "java_type": "int", "source": "c.id", "nullable": false},
+      {"name": "userId", "java_type": "long", "source": "c.user_id", "nullable": false},
+      {"name": "name", "java_type": "String", "source": "c.name", "nullable": false},
+      {"name": "description", "java_type": "String", "source": "c.description", "nullable": true},
+      {"name": "sortOrder", "java_type": "Integer", "source": "c.sort_order", "nullable": true},
+      {"name": "createdAt", "java_type": "LocalDateTime", "source": "c.created_at", "nullable": true},
+      {"name": "updatedAt", "java_type": "LocalDateTime", "source": "c.updated_at", "nullable": true},
+      {"name": "bankCount", "java_type": "long", "source": "COUNT(b.id)", "nullable": false}
+    ],
+    "result_semantics": {
+      "category_visibility": "only categories whose c.user_id equals the authenticated identity",
+      "bank_count": "count only rows with the same category_id and status exactly 1",
+      "non_active_statuses": "status 0, negative, 2 and NULL do not count",
+      "cross_owner_association": "a status=1 bank counts even when b.user_id differs from c.user_id",
+      "signed_category_ids": "negative, zero and positive historical integer IDs remain raw",
+      "nullable_fields": "description, sortOrder, createdAt and updatedAt remain raw nulls",
+      "empty_and_unicode_text": "empty and Unicode names/descriptions remain raw",
+      "empty_result": "an immutable empty list",
+      "failure": "the original persistence exception propagates for future HTTP-owned translation"
+    }
+  },
+  "legacy_http_contract_deferred": {
+    "shared_handler": "both aliases execute get_categories from api_categories.py",
+    "query_parameters": "all query parameters, including repeated values, are ignored",
+    "success": {
+      "status": 200,
+      "envelope": "status=success, code=0, data.categories array",
+      "category_object_fields": [
+        "id",
+        "user_id",
+        "name",
+        "description",
+        "sort_order",
+        "created_at",
+        "updated_at",
+        "bank_count"
+      ]
+    },
+    "authentication_matrix": {
+      "api_alias": {
+        "Session": 200,
+        "valid_Bearer": 200,
+        "Session_plus_valid_Bearer": "Bearer identity wins and request succeeds",
+        "Session_plus_invalid_Bearer": "invalid token falls back to Session",
+        "anonymous": "401 JSON"
+      },
+      "web_alias": {
+        "Session": 200,
+        "valid_Bearer_only": "302 /login before route decorator",
+        "Session_plus_valid_Bearer": "302 /login because the valid token bypasses Session validation but the non-/api global gate still redirects",
+        "Session_plus_invalid_Bearer": "invalid token falls back to Session",
+        "anonymous": "302 /login"
+      }
+    },
+    "session_side_effect": "a Session-authenticated request can update users.last_active before the category SELECT; valid Bearer requests do not",
+    "fault_translation": {
+      "api_alias_default": "500 safe JSON",
+      "web_alias_default": "500 generic Chinese HTML",
+      "either_alias_accept_application_json": "500 safe JSON",
+      "injected_persistence_message_leaks": false
+    },
+    "serialization_risks_before_route_migration": [
+      "Flask PostgreSQL datetimes serialize as RFC1123 HTTP-date values, while Java LocalDateTime defaults to ISO formatting",
+      "Flask c.* dictionaries retain nullable keys, while global Jackson non_null inclusion can omit them",
+      "SQLite golden timestamp strings and SQLite ASC null placement are not PostgreSQL HTTP/order evidence"
+    ],
+    "required_before_route_delta": [
+      "PostgreSQL-backed legacy handler response serialization for created_at and updated_at",
+      "explicit Java compatibility DTO/envelope retaining all nullable keys",
+      "both alias authentication and global-gate behavior",
+      "last_active compatibility effect and safe fault translation"
+    ],
+    "implemented_in_this_slice": false
+  },
+  "query_plan_contract": {
+    "environment": "PostgreSQL 18.4 pinned digest on ARM64, network none, parallel gather disabled, work_mem 64MB",
+    "data_set": {
+      "category_user_id_column_type": "integer (int4)",
+      "bank_user_id_column_type": "integer (int4)",
+      "runtime_user_id_bind_type": "bigint (int8)",
+      "categories_total": 5003,
+      "current_user_categories": 5002,
+      "other_user_categories": 1,
+      "banks_total": 150000,
+      "status_one_banks": 132365,
+      "status_zero_banks": 14708,
+      "status_two_banks": 1485,
+      "status_null_banks": 1442,
+      "non_one_banks": 17635,
+      "cross_owner_active_associations": 18909,
+      "current_user_active_associations": 132364,
+      "zero_active_bank_categories": 1400,
+      "null_sort_categories": 1,
+      "empty_name_categories": 1,
+      "unicode_name_categories": 1
+    },
+    "runtime_result": {
+      "row_count": 5002,
+      "row_column_count": 8,
+      "active_bank_count_sum": 132364,
+      "zero_bank_count_rows": 1400,
+      "null_sort_rows": 1,
+      "strict_sort_order_asc_nulls_last_then_id_asc": true,
+      "first_id": -1,
+      "last_id": 5000,
+      "canonical_psql_rows_sha256": "b09c0f2fd9064f0676f632897995b1c24163e7b5acda60ec9b5c27db5c533683"
+    },
+    "plan": {
+      "root_node_type": "Sort",
+      "node_count": 6,
+      "root_actual_loops": 1,
+      "maximum_relation_scan_actual_loops": 1,
+      "relation_scan_occurrences": {
+        "user_bank_categories": 1,
+        "user_question_banks": 1
+      },
+      "node_type_counts": {
+        "Aggregate": 1,
+        "Hash": 1,
+        "Hash Join": 1,
+        "Seq Scan": 2,
+        "Sort": 1
+      },
+      "temp_read_blocks": 0,
+      "temp_written_blocks": 0
+    },
+    "interpretation": "observational synthetic evidence only; not a production latency SLA, capacity claim, HTTP parity claim or index recommendation"
+  },
+  "cutover_guard": {
+    "controller_added": false,
+    "security_matcher_added": false,
+    "openapi_delta_added": false,
+    "route_parity_delta_added": false,
+    "production_cutover": false,
+    "legacy_writer_changed": false,
+    "phase4a_acceptance_changed": false,
+    "statement": "This slice implements and verifies only the HTTP-neutral personalbank category read boundary. Both aliases remain pending until a separately approved route delta closes authentication, serialization, envelope, error and last_active parity."
+  }
+}

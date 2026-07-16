@@ -1,5 +1,9 @@
 package io.saksk.ti.personalbank.api;
 
-/** Public personal-bank boundary; operation and DTO shapes are deferred to the Phase 4 slice. */
+import java.util.List;
+
+/** Public HTTP-neutral application boundary for personal-bank use cases. */
 public interface PersonalBankApplicationApi {
+
+    List<PersonalBankCategoryView> listCategories(AuthenticatedPersonalBankViewer viewer);
 }

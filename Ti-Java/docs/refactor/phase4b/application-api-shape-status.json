@@ -1,0 +1,387 @@
+{
+  "contract_id": "ti.phase4b.application-api-shape-status",
+  "schema_version": 1,
+  "source_contract": "../phase1/module-contracts.json",
+  "previous_shape_status": "../phase4a/application-api-shape-status.json",
+  "previous_shape_status_sha256": "74782a5a26b1f32f85869cafa931acf4a7c7e1398b3b2e9dab0d0ded93c448ca",
+  "phase4a_final_acceptance": "../phase4a/phase4a-final-acceptance.json",
+  "phase4a_final_acceptance_sha256": "9eeec781af91c0994c750ea2641653183f36eb4492d4ff9bd6809679c723620f",
+  "route_status_source": "../phase4a/effective-route-parity-status.json",
+  "route_status_delta": null,
+  "route_openapi_delta_authorized": false,
+  "production_cutover_authorized": false,
+  "phase": "4B-personal-bank-category-read-slice",
+  "migrated_route_count": 11,
+  "implemented_route_backed_operation_count": 11,
+  "implemented_public_application_method_count": 20,
+  "event_payload_shape_status": "deferred_to_phase5",
+  "policy": "All accepted Phase 3 and Phase 4A shapes remain unchanged. Phase 4B adds only one HTTP-neutral personal-bank category query method and its reviewed immutable input/output records. The two legacy category-list aliases remain pending, are not route-backed operations, have no route or OpenAPI delta, and have no production cutover.",
+  "modules": [
+    {
+      "module_id": "identity",
+      "java_api": "io.saksk.ti.identity.api.IdentityApplicationApi",
+      "phase1_inputs": ["AuthenticateCommand", "RefreshSessionCommand", "IdentityId"],
+      "phase1_outputs": ["AuthenticationResult", "IdentitySummary"],
+      "shape_status": "partially_implemented",
+      "implemented_route_ids": ["02366fc520ac"],
+      "methods": [
+        {
+          "name": "authenticate",
+          "return_type": "io.saksk.ti.identity.api.AuthenticationResult",
+          "parameter_types": ["io.saksk.ti.identity.api.AuthenticateCommand"]
+        }
+      ],
+      "implemented_types": [
+        "AuthenticateCommand",
+        "AuthenticationOutcome",
+        "AuthenticationResult",
+        "IdentitySummary",
+        "LegacyAuthenticationResult",
+        "SessionAuthorizationResult",
+        "SubjectAccessDecision"
+      ],
+      "additional_public_apis": [
+        {
+          "java_api": "io.saksk.ti.identity.api.LegacyCredentialAuthenticationApi",
+          "lifecycle": "temporary_kill_switched_transition_boundary",
+          "direct_http_operation": false,
+          "methods": [
+            {
+              "name": "authenticateJwt",
+              "return_type": "java.util.Optional",
+              "generic_return_type": "java.util.Optional<io.saksk.ti.identity.api.LegacyAuthenticationResult>",
+              "parameter_types": ["java.lang.String"]
+            },
+            {
+              "name": "authenticateFlaskSession",
+              "return_type": "java.util.Optional",
+              "generic_return_type": "java.util.Optional<io.saksk.ti.identity.api.LegacyAuthenticationResult>",
+              "parameter_types": ["java.lang.String"]
+            }
+          ]
+        },
+        {
+          "java_api": "io.saksk.ti.identity.api.SessionAuthorityApi",
+          "lifecycle": "target_session_postgresql_authority_boundary",
+          "direct_http_operation": false,
+          "methods": [
+            {
+              "name": "authorize",
+              "return_type": "io.saksk.ti.identity.api.SessionAuthorizationResult",
+              "parameter_types": ["long", "int"]
+            }
+          ]
+        },
+        {
+          "java_api": "io.saksk.ti.identity.api.SubjectAccessPolicyApi",
+          "lifecycle": "catalog_subject_visibility_boundary",
+          "direct_http_operation": false,
+          "methods": [
+            {
+              "name": "subjectAccess",
+              "return_type": "io.saksk.ti.identity.api.SubjectAccessDecision",
+              "parameter_types": ["long"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "module_id": "catalog",
+      "java_api": "io.saksk.ti.catalog.api.CatalogApplicationApi",
+      "phase1_inputs": ["QuestionId", "CategoryId", "CatalogQuery"],
+      "phase1_outputs": ["QuestionView", "CatalogPage"],
+      "shape_status": "partially_implemented",
+      "implemented_route_ids": [
+        "d3cd12aaca90",
+        "7fd9b0fc8111",
+        "14642ebe7c1d",
+        "db1ac691d6fb",
+        "8cfb837021af",
+        "a473896ff467",
+        "b7e49e77a026",
+        "f3644c1474f3",
+        "37cd782b28dc"
+      ],
+      "methods": [
+        {
+          "name": "subjectCatalog",
+          "return_type": "io.saksk.ti.catalog.api.SubjectCatalogView",
+          "parameter_types": ["io.saksk.ti.catalog.api.AuthenticatedCatalogViewer"]
+        }
+      ],
+      "implemented_types": [
+        "AuthenticatedCatalogViewer",
+        "SubjectCatalogView",
+        "SubjectSummaryView",
+        "PublicBankBoardRef",
+        "PublicBankBoardView",
+        "PublicBankCardView",
+        "PublicBankDetailView",
+        "PublicBankFilter",
+        "PublicBankHotQuery",
+        "PublicBankPageView",
+        "PublicBankRef",
+        "PublicBankRelation",
+        "PublicBankRelationView",
+        "PublicBankSearchQuery",
+        "PublicBankSnapshotFreshness",
+        "PublicBankSnapshotUnavailableException",
+        "PublicBankSort",
+        "PublicBankSource",
+        "PublicBankSourceBreakdownView",
+        "PublicBankSummaryView",
+        "QuestionTypeCatalogView",
+        "QuestionCatalogCountQuery",
+        "QuestionCatalogListQuery",
+        "QuestionCatalogSummaryView",
+        "QuestionExportQuery",
+        "QuestionExportRecordView",
+        "QuestionSubjectAssignmentScope",
+        "QuestionCatalogRecordView",
+        "SubjectInventorySummaryView",
+        "SubjectContextView"
+      ],
+      "additional_public_apis": [
+        {
+          "java_api": "io.saksk.ti.catalog.api.PublicBankCatalogApi",
+          "lifecycle": "catalog_public_bank_snapshot_query_boundary",
+          "direct_http_operation": true,
+        "methods": [
+            {
+              "name": "search",
+              "return_type": "io.saksk.ti.catalog.api.PublicBankPageView",
+              "parameter_types": [
+                "io.saksk.ti.catalog.api.PublicBankSearchQuery",
+                "java.util.Optional"
+              ]
+            },
+            {
+              "name": "boards",
+              "return_type": "java.util.List",
+              "generic_return_type": "java.util.List<io.saksk.ti.catalog.api.PublicBankBoardView>",
+              "parameter_types": ["io.saksk.ti.catalog.api.PublicBankFilter"]
+            },
+            {
+              "name": "hot",
+              "return_type": "java.util.List",
+              "generic_return_type": "java.util.List<io.saksk.ti.catalog.api.PublicBankCardView>",
+              "parameter_types": [
+                "io.saksk.ti.catalog.api.PublicBankHotQuery",
+                "java.util.Optional"
+              ]
+            },
+            {
+              "name": "summary",
+              "return_type": "io.saksk.ti.catalog.api.PublicBankSummaryView",
+              "parameter_types": ["io.saksk.ti.catalog.api.PublicBankFilter"]
+            },
+            {
+              "name": "detail",
+              "return_type": "java.util.Optional",
+              "generic_return_type": "java.util.Optional<io.saksk.ti.catalog.api.PublicBankDetailView>",
+              "parameter_types": [
+                "io.saksk.ti.catalog.api.PublicBankRef",
+                "java.util.Optional"
+              ]
+            }
+          ]
+        },
+        {
+          "java_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi",
+          "lifecycle": "catalog_question_metadata_count_detail_summary_and_export_query_boundary",
+          "direct_http_operation": false,
+          "deferred_http_route_ids": ["e4cbe4d6bcc8", "3a346cb29186"],
+          "deferred_http_owner": "operations",
+          "deferred_question_detail_http_route_ids": [
+            "8cb323acac12",
+            "d7d727b88aea"
+          ],
+          "deferred_question_detail_http_owner": "operations",
+          "deferred_question_detail_phase": "4H",
+          "deferred_question_list_http_route_ids": [
+            "1437bc4bf41b",
+            "6cd7322bea3b"
+          ],
+          "deferred_question_list_http_owner": "operations",
+          "deferred_question_list_phase": "4H",
+          "deferred_question_export_http_route_ids": [
+            "4a33d8e15da5",
+            "712a47789f1d"
+          ],
+          "deferred_question_export_http_owner": "operations",
+          "deferred_question_export_phase": "4H",
+          "deferred_learning_http_route_ids": ["c618fb5f9f97", "bb21e7730d04"],
+          "deferred_learning_http_owner": "learning",
+          "deferred_learning_phase": "4C",
+          "methods": [
+            {
+              "name": "questionTypes",
+              "return_type": "io.saksk.ti.catalog.api.QuestionTypeCatalogView",
+              "parameter_types": []
+            },
+            {
+              "name": "countQuestions",
+              "return_type": "long",
+              "parameter_types": [
+                "io.saksk.ti.catalog.api.QuestionCatalogCountQuery"
+              ]
+            },
+            {
+              "name": "findQuestionById",
+              "return_type": "java.util.Optional",
+              "generic_return_type": "java.util.Optional<io.saksk.ti.catalog.api.QuestionCatalogRecordView>",
+              "parameter_types": [
+                "long"
+              ]
+            },
+            {
+              "name": "listQuestionSummaries",
+              "return_type": "java.util.List",
+              "generic_return_type": "java.util.List<io.saksk.ti.catalog.api.QuestionCatalogSummaryView>",
+              "parameter_types": [
+                "io.saksk.ti.catalog.api.QuestionCatalogListQuery"
+              ]
+            },
+            {
+              "name": "listQuestionExportRecords",
+              "return_type": "java.util.List",
+              "generic_return_type": "java.util.List<io.saksk.ti.catalog.api.QuestionExportRecordView>",
+              "parameter_types": [
+                "io.saksk.ti.catalog.api.QuestionExportQuery"
+              ]
+            }
+          ]
+      },
+      {
+        "java_api": "io.saksk.ti.catalog.api.SubjectMetadataApplicationApi",
+        "lifecycle": "catalog_subject_metadata_query_boundary",
+        "direct_http_operation": false,
+        "deferred_http_route_ids": [
+          "6e1a36f5052d"
+        ],
+        "deferred_http_owner": "operations",
+        "deferred_http_phase": "4H",
+        "deferred_subject_context_http_route_ids": [
+          "52ad8f899d66",
+          "5548b24849ed"
+        ],
+        "deferred_subject_context_http_owner": "operations",
+        "deferred_subject_context_http_phase": "4H",
+        "methods": [
+          {
+            "name": "listSubjectInventorySummaries",
+            "return_type": "java.util.List",
+            "generic_return_type": "java.util.List<io.saksk.ti.catalog.api.SubjectInventorySummaryView>",
+            "parameter_types": []
+          },
+          {
+            "name": "findSubjectById",
+            "return_type": "java.util.Optional",
+            "generic_return_type": "java.util.Optional<io.saksk.ti.catalog.api.SubjectContextView>",
+            "parameter_types": ["long"]
+          }
+        ]
+      }
+    ]
+    },
+    {
+      "module_id": "personalbank",
+      "java_api": "io.saksk.ti.personalbank.api.PersonalBankApplicationApi",
+      "phase1_inputs": ["ActorId", "BankId", "BankCommand"],
+      "phase1_outputs": ["BankView", "BankPermissionDecision"],
+      "shape_status": "partially_implemented",
+      "implemented_route_ids": [],
+      "direct_http_operation": false,
+      "deferred_http_route_ids": ["19b37a262989", "e32aec766730"],
+      "deferred_http_owner": "personalbank",
+      "deferred_http_phase": "4B",
+      "methods": [
+        {
+          "name": "listCategories",
+          "return_type": "java.util.List",
+          "generic_return_type": "java.util.List<io.saksk.ti.personalbank.api.PersonalBankCategoryView>",
+          "parameter_types": [
+            "io.saksk.ti.personalbank.api.AuthenticatedPersonalBankViewer"
+          ]
+        }
+      ],
+      "implemented_types": [
+        "AuthenticatedPersonalBankViewer",
+        "PersonalBankCategoryView"
+      ]
+    },
+    {
+      "module_id": "assessment",
+      "java_api": "io.saksk.ti.assessment.api.AssessmentApplicationApi",
+      "phase1_inputs": ["ActorId", "ExamId", "SubmissionId", "AssessmentCommand"],
+      "phase1_outputs": ["AssessmentResult", "ScoreView"],
+      "shape_status": "deferred_shape",
+      "methods": []
+    },
+    {
+      "module_id": "learning",
+      "java_api": "io.saksk.ti.learning.api.LearningApplicationApi",
+      "phase1_inputs": ["ActorId", "QuestionId", "AttemptId", "LearningCommand"],
+      "phase1_outputs": ["AnswerResult", "LearningProgressView"],
+      "shape_status": "deferred_shape",
+      "methods": []
+    },
+    {
+      "module_id": "community",
+      "java_api": "io.saksk.ti.community.api.CommunityApplicationApi",
+      "phase1_inputs": ["ActorId", "PostId", "CommunityCommand"],
+      "phase1_outputs": ["PostView", "CommunityPage"],
+      "shape_status": "deferred_shape",
+      "methods": []
+    },
+    {
+      "module_id": "campus",
+      "java_api": "io.saksk.ti.campus.api.CampusApplicationApi",
+      "phase1_inputs": ["ActorId", "CampusAccountId", "RefreshId", "CampusQuery"],
+      "phase1_outputs": ["RefreshReceipt", "CampusSnapshotView"],
+      "shape_status": "deferred_shape",
+      "methods": []
+    },
+    {
+      "module_id": "coding",
+      "java_api": "io.saksk.ti.coding.api.CodingApplicationApi",
+      "phase1_inputs": ["ActorId", "CodingProblemId", "CodeSubmissionId"],
+      "phase1_outputs": ["SubmissionReceipt", "JudgeResultView"],
+      "shape_status": "deferred_shape",
+      "methods": []
+    },
+    {
+      "module_id": "intelligence",
+      "java_api": "io.saksk.ti.intelligence.api.IntelligenceApplicationApi",
+      "phase1_inputs": ["ActorId", "IntelligenceRequestId", "PromptCommand"],
+      "phase1_outputs": ["IntelligenceResult", "UsageView"],
+      "shape_status": "deferred_shape",
+      "methods": []
+    },
+    {
+      "module_id": "messaging",
+      "java_api": "io.saksk.ti.messaging.api.MessagingApplicationApi",
+      "phase1_inputs": ["ActorId", "MessageId", "DeliveryCommand"],
+      "phase1_outputs": ["MessageView", "DeliveryReceipt"],
+      "shape_status": "deferred_shape",
+      "methods": []
+    },
+    {
+      "module_id": "operations",
+      "java_api": "io.saksk.ti.operations.api.OperationsApplicationApi",
+      "phase1_inputs": ["OperatorId", "OperationId", "OperationsCommand"],
+      "phase1_outputs": ["OperationReceipt", "OperationsStatusView"],
+      "shape_status": "partially_implemented",
+      "implemented_route_ids": ["88d7dc05cdbb"],
+      "methods": [
+        {
+          "name": "getLoginMethods",
+          "return_type": "io.saksk.ti.operations.api.LoginMethodsView",
+          "parameter_types": []
+        }
+      ],
+      "implemented_types": ["LoginMethodsView"]
+    }
+  ]
+}

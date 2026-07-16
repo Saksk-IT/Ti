@@ -42,7 +42,7 @@ class ModuleContractParityTest {
         contractRoot = JSON.readTree(Files.readString(
                 resolveInsideTiJava("docs/refactor/phase1/module-contracts.json"), StandardCharsets.UTF_8));
         shapeStatusRoot = JSON.readTree(Files.readString(
-                resolveInsideTiJava("docs/refactor/phase4a/application-api-shape-status.json"),
+                resolveInsideTiJava("docs/refactor/phase4b/application-api-shape-status.json"),
                 StandardCharsets.UTF_8));
         contractModules = readModules(contractRoot);
         eventOnlyEdges = readEventOnlyEdges(contractRoot);
@@ -137,7 +137,7 @@ class ModuleContractParityTest {
     void latestPublicShapesExactlyMatchImplementedOperationsAndKeepTheRestDeferred() throws Exception {
         assertThat(shapeStatusRoot.path("migrated_route_count").asInt()).isEqualTo(11);
         assertThat(shapeStatusRoot.path("implemented_route_backed_operation_count").asInt()).isEqualTo(11);
-        assertThat(shapeStatusRoot.path("implemented_public_application_method_count").asInt()).isEqualTo(19);
+        assertThat(shapeStatusRoot.path("implemented_public_application_method_count").asInt()).isEqualTo(20);
         assertThat(shapeStatusRoot.path("event_payload_shape_status").asString())
                 .isEqualTo("deferred_to_phase5");
 
@@ -178,7 +178,7 @@ class ModuleContractParityTest {
                         .isEmpty();
             } else {
                 assertThat(status.path("shape_status").asString()).isEqualTo("partially_implemented");
-                assertThat(module.id()).isIn("identity", "catalog", "operations");
+                assertThat(module.id()).isIn("identity", "catalog", "operations", "personalbank");
                 assertExactMethodShapes(apiType, methods);
                 implementedMethodCount += methods.size();
             }

@@ -19,8 +19,11 @@ REPOSITORY_ROOT = TI_JAVA_ROOT.parent
 PHASE4A_ROOT = TI_JAVA_ROOT / "docs" / "refactor" / "phase4a"
 CONTRACT_PATH = PHASE4A_ROOT / "catalog-candidate-disposition.json"
 FINAL_ACCEPTANCE_PATH = PHASE4A_ROOT / "phase4a-final-acceptance.json"
-FINAL_ACCEPTANCE_REPOSITORY_PATH = (
-    "Ti-Java/docs/refactor/phase4a/phase4a-final-acceptance.json"
+FINAL_ACCEPTANCE_SHA256 = (
+    "9eeec781af91c0994c750ea2641653183f36eb4492d4ff9bd6809679c723620f"
+)
+FINAL_CONTROL_MANIFEST_SHA256 = (
+    "85ea7ac102a9def29d92a90e7a7c52ae7df2e6ca83bf73ce218264c0b330d872"
 )
 HTTP_METHODS = {"get", "post", "put", "delete", "patch", "options", "head"}
 CALLER_KIND_CLUES = {
@@ -73,48 +76,6 @@ def _git(*args: str) -> str:
             f"git {' '.join(args)} failed ({completed.returncode}): {completed.stderr.strip()}"
         )
     return completed.stdout
-
-
-def _controlled_manifest_without_final_acceptance() -> tuple[int, int, str]:
-    paths = sorted(
-        {
-            item
-            for item in _git(
-                "ls-files",
-                "-co",
-                "--exclude-standard",
-                "-z",
-                "--",
-                "Ti-Java",
-            ).split("\0")
-            if item and (REPOSITORY_ROOT / item).is_file()
-        }
-    )
-    if FINAL_ACCEPTANCE_REPOSITORY_PATH not in paths:
-        raise AssertionError("final acceptance contract is absent from the controlled file set")
-    records = []
-    for relative in paths:
-        path = REPOSITORY_ROOT / relative
-        if path.is_symlink():
-            raise AssertionError(f"controlled symlink is forbidden: {relative}")
-        if relative == FINAL_ACCEPTANCE_REPOSITORY_PATH:
-            continue
-        records.append(
-            {
-                "path": relative.removeprefix("Ti-Java/"),
-                "sha256": _sha256(path),
-            }
-        )
-    payload = (
-        json.dumps(
-            records,
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-        )
-        + "\n"
-    ).encode()
-    return len(paths), len(records), hashlib.sha256(payload).hexdigest()
 
 
 def _resource_triples(resources):
@@ -699,6 +660,7 @@ class Phase4aCatalogCandidateDispositionTest(unittest.TestCase):
         self.assertEqual("ti.phase4a.final-acceptance", final["contract_id"])
         self.assertEqual(1, final["schema_version"])
         self.assertEqual("passed", final["status"])
+        self.assertEqual(FINAL_ACCEPTANCE_SHA256, _sha256(FINAL_ACCEPTANCE_PATH))
         integrity = final["integrity_policy"]
         self.assertEqual("sha256", integrity["algorithm"])
         self.assertIsNone(integrity["self_hash"])
@@ -711,6 +673,20 @@ class Phase4aCatalogCandidateDispositionTest(unittest.TestCase):
             self.assertEqual({"source", "sha256"}, set(reference), name)
             source = (PHASE4A_ROOT / reference["source"]).resolve()
             self.assertTrue(source.is_file(), (name, source))
+            if name == "worm":
+                # This shared location is intentionally refreshed by later phase
+                # WORM runs. Phase 4A binds its historical report digest in the
+                # immutable final contract instead of claiming the latest report
+                # is still the Phase 4A report.
+                self.assertEqual(
+                    "../../../infra/phase2/local-reference-verification.json",
+                    reference["source"],
+                )
+                self.assertEqual(
+                    "f245d1def582c0527ad419e5fad8bcafbfff40270dec15007a8dec77f453c410",
+                    reference["sha256"],
+                )
+                continue
             self.assertEqual(reference["sha256"], _sha256(source), name)
         candidate_reference = final["source_contracts"]["catalog_candidate_disposition"]
         self.assertEqual("catalog-candidate-disposition.json", candidate_reference["source"])
@@ -747,15 +723,21 @@ class Phase4aCatalogCandidateDispositionTest(unittest.TestCase):
         self.assertTrue(all(raw["checks"].values()))
         self.assertTrue(all(value == 0 for value in raw["cleanup"].values()))
 
-        controlled_count, included_count, manifest_sha256 = (
-            _controlled_manifest_without_final_acceptance()
-        )
         control = final["final_control_plane"]
-        self.assertEqual(controlled_count, control["controlled_file_count"])
-        self.assertEqual(included_count, control["manifest_included_file_count"])
+        # Phase 4A's final manifest is a historical closure snapshot. Later phases
+        # must bind this immutable contract, not reinterpret it as a manifest of
+        # the growing current tree.
+        self.assertEqual(1220, control["controlled_file_count"])
+        self.assertEqual(1219, control["manifest_included_file_count"])
         self.assertEqual(1, control["manifest_excluded_file_count"])
-        self.assertEqual(manifest_sha256, control["source_manifest_sha256"])
-        self.assertEqual(manifest_sha256, control["copy_manifest_sha256"])
+        self.assertEqual(
+            FINAL_CONTROL_MANIFEST_SHA256,
+            control["source_manifest_sha256"],
+        )
+        self.assertEqual(
+            FINAL_CONTROL_MANIFEST_SHA256,
+            control["copy_manifest_sha256"],
+        )
         self.assertTrue(control["source_equals_copy"])
         self.assertTrue(all(control["static_checks"].values()))
         self.assertTrue(control["java_build_context_matches_full_acceptance"])

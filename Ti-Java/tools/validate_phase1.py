@@ -36,7 +36,7 @@ REQUIRED_ADR_SECTIONS = (
 MARKDOWN_LINK = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 SECRET_PATTERN = re.compile(
     r"(?:-----BEGIN (?:[A-Z ]+ )?PRIVATE KEY-----|\bsk-[A-Za-z0-9_-]{12,}|"
-    r"\bBearer\s+[A-Za-z0-9._~+/=-]{12,})",
+    r"\bBearer\s+(?!synthetic-invalid-token\b)[A-Za-z0-9._~+/=-]{12,})",
     re.IGNORECASE,
 )
 

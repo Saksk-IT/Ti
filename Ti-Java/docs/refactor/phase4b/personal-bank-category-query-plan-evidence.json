@@ -1,0 +1,315 @@
+{
+  "evidence_id": "ti.phase4b.personal-bank-category-query-plan",
+  "schema_version": 1,
+  "captured_at": "2026-07-17",
+  "scope": "personalbank-category-list-internal-read-capability",
+  "route_migration_status": {
+    "route_ids": [
+      "19b37a262989",
+      "e32aec766730"
+    ],
+    "http_owner": "personalbank",
+    "status": "pending",
+    "production_cutover": false
+  },
+  "environment": {
+    "container_image": "postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
+    "expected_digest": "sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
+    "resolved_image_id": "sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
+    "resolved_repo_digests": [
+      "postgres@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15"
+    ],
+    "os": "linux",
+    "architecture": "arm64",
+    "network": "none",
+    "database": "phase4b_personal_bank_category_plan",
+    "postgresql": {
+      "server_version": "18.4",
+      "server_version_num": "180004",
+      "max_parallel_workers_per_gather": 0,
+      "work_mem": "64MB"
+    }
+  },
+  "inputs": {
+    "adapter": "server/src/main/java/io/saksk/ti/personalbank/infrastructure/persistence/JdbcPersonalBankCategoryQueryAdapter.java",
+    "adapter_sha256": "749a70cad4c83acdca9ef5a68ef31a48901e394718a95363ae910a0d2102a2ad",
+    "runtime_sql_manifest": "server/target/phase4b-personal-bank-category-runtime-sql.json",
+    "runtime_sql_manifest_sha256": "d9e55d45d46fe8ea223bfe1c5d85a3602befd10e92c9f274900c9f4a924526f5",
+    "runtime_sql_exporter": "server/src/test/java/io/saksk/ti/personalbank/infrastructure/persistence/PersonalBankCategoryRuntimeSqlManifestTest.java",
+    "runtime_sql_exporter_sha256": "6f7729d2a899e9df2fe31273c4d4dc8a2e4438f9de648c050ad3f35d3cc2f494",
+    "postgres_compatibility_test": "server/src/test/java/io/saksk/ti/integration/Phase4bPersonalBankCategoryJdbcCompatibilityIT.java",
+    "postgres_compatibility_test_sha256": "a0dca8b954837277d080da585072c0da04664fd8559b9d8a81395af1603d4e9f",
+    "postgres_schema": "server/src/test/resources/db/phase4b/060-personal-bank-category-schema.sql",
+    "postgres_schema_sha256": "2c5c341a061752b05ef07317d06aa40efdffe4f18a0be25508008db65512a22e",
+    "postgres_fixture": "server/src/test/resources/db/phase4b/061-personal-bank-category-seed.sql",
+    "postgres_fixture_sha256": "36b7b01357c52cb97564b22e217202fea02119afefae9f0efdfa323342d36af4",
+    "capture_tool": "tools/capture_phase4b_personal_bank_category_query_plan.py",
+    "capture_tool_sha256": "dd28715c5f1c2133cb810c398a4181ddae53f2855d781d70b524e15909553861",
+    "capture_tool_test": "tools/test_capture_phase4b_personal_bank_category_query_plan.py",
+    "capture_tool_test_sha256": "62871539717cace18661bfe9b9c8cf7907db8ba45164a99349f853203f64c88b"
+  },
+  "data_set": {
+    "kind": "public deterministic synthetic fixture",
+    "parameters": {
+      "positive_category_count": 5000,
+      "signed_edge_category_count": 2,
+      "other_identity_category_count": 1,
+      "bank_count": 150000,
+      "current_user_id": 9001,
+      "other_user_id": 9002
+    },
+    "actual": {
+      "category_user_id_type": "integer",
+      "bank_user_id_type": "integer",
+      "category_rows": 5003,
+      "current_user_category_rows": 5002,
+      "other_user_category_rows": 1,
+      "bank_rows": 150000,
+      "status_one_bank_rows": 132365,
+      "status_zero_bank_rows": 14708,
+      "status_two_bank_rows": 1485,
+      "status_null_bank_rows": 1442,
+      "non_one_bank_rows": 17635,
+      "cross_owner_active_associations": 18909,
+      "current_user_active_associations": 132364,
+      "zero_active_bank_categories": 1400,
+      "null_sort_categories": 1,
+      "empty_name_categories": 1,
+      "unicode_name_categories": 1
+    },
+    "schema_and_bind_boundary": {
+      "user_bank_categories.user_id": "integer (int4)",
+      "user_question_banks.user_id": "integer (int4)",
+      "runtime_user_id_bind": "bigint (int8)",
+      "compatibility_statement": "This PostgreSQL 18.4 PREPARE(bigint) capture proves its int8 parameter compares to the synthetic legacy-shaped int4 owner columns at user_id 9001; it does not claim JDBC or PostgreSQL 16 execution",
+      "hashed_compatibility_inputs_scope": "The PostgreSQL JDBC integration test, schema and fixture hashes identify source provenance only; execution results belong to the read contract's separately rerun verification record"
+    },
+    "distribution": {
+      "current_user_category_ids": "-1, 0 and inclusive 1..5000",
+      "other_identity_category_id": 6000,
+      "sort_order": "negative edge -5; zero and positive modulo 50 ties; final positive category NULL to prove PostgreSQL NULLS LAST",
+      "bank_status": "rows divisible by 101 use status=2, then rows divisible by 103 use NULL, then remaining rows divisible by 10 use 0; only all other rows use 1",
+      "bank_owner": "every seventh bank belongs to the other identity while category counts remain association-based",
+      "category_assignment": "two signed edges, one other-identity category, then round-robin over the first 80 percent of positive current-user categories"
+    },
+    "statistics": "user_question_banks.category_id statistics target 10000 and VACUUM (ANALYZE) completed for both relations",
+    "index_definitions": [
+      {
+        "table": "user_bank_categories",
+        "name": "uq_user_bank_categories_user_name",
+        "definition": "CREATE UNIQUE INDEX uq_user_bank_categories_user_name ON public.user_bank_categories USING btree (user_id, name)"
+      },
+      {
+        "table": "user_bank_categories",
+        "name": "user_bank_categories_pkey",
+        "definition": "CREATE UNIQUE INDEX user_bank_categories_pkey ON public.user_bank_categories USING btree (id)"
+      },
+      {
+        "table": "user_question_banks",
+        "name": "user_question_banks_pkey",
+        "definition": "CREATE UNIQUE INDEX user_question_banks_pkey ON public.user_question_banks USING btree (id)"
+      }
+    ],
+    "index_decision": "observe only fixture primary/unique indexes matching legacy constraints; this evidence does not approve a production index"
+  },
+  "measurement": {
+    "command": "PREPARE(bigint) plus EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON, TIMING FALSE, SUMMARY FALSE) EXECUTE exact Java runtime SQL",
+    "runs_per_query": 1,
+    "query_count": 1,
+    "sql_statement_count": 1,
+    "growth_with_result_count": 0,
+    "n_plus_one_forbidden": true,
+    "observation": {
+      "observation_id": "current-user-category-list",
+      "runtime_query_id": "personal-bank-category-list",
+      "operation": "personal-bank-category-list",
+      "source": "server/src/main/java/io/saksk/ti/personalbank/infrastructure/persistence/JdbcPersonalBankCategoryQueryAdapter.java",
+      "sql": "SELECT c.id AS category_id,\n       c.user_id AS category_user_id,\n       c.name AS category_name,\n       c.description AS category_description,\n       c.sort_order AS category_sort_order,\n       c.created_at AS category_created_at,\n       c.updated_at AS category_updated_at,\n       COUNT(b.id) AS bank_count\nFROM user_bank_categories c\nLEFT JOIN user_question_banks b\n       ON b.category_id = c.id\n      AND b.status = 1\nWHERE c.user_id = :user_id\nGROUP BY c.id,\n         c.user_id,\n         c.name,\n         c.description,\n         c.sort_order,\n         c.created_at,\n         c.updated_at\nORDER BY c.sort_order ASC NULLS LAST, c.id ASC",
+      "sql_sha256": "81d455611c86bd51ad637130ffaeee82cdbf2a4b49f5e269a08fba8c280c6bee",
+      "binding": {
+        "mode": "postgresql-prepare-execute",
+        "runtime_statement_count": 1,
+        "bound_parameter_count": 1,
+        "named_parameter_count": 1,
+        "occurrence_names": [
+          "user_id"
+        ],
+        "positional_sql_sha256": "79e1b5587db5cbc8ce57c682b409c475fd72423b75c2d6ce3241ce2270f93996",
+        "parameters": {
+          "user_id": {
+            "bind_kind": "postgresql-prepared-statement-parameter",
+            "postgres_type": "bigint",
+            "value": 9001
+          }
+        }
+      },
+      "runtime_result": {
+        "row_count": 5002,
+        "row_column_count": 8,
+        "first_ids": [
+          -1,
+          0,
+          50
+        ],
+        "last_ids": [
+          4949,
+          4999,
+          5000
+        ],
+        "first_id": -1,
+        "last_id": 5000,
+        "all_current_user": true,
+        "strict_sort_order_asc_nulls_last_then_id_asc": true,
+        "null_sort_rows": 1,
+        "null_description_rows": 294,
+        "null_created_at_rows": 263,
+        "null_updated_at_rows": 217,
+        "empty_name_rows": 1,
+        "unicode_name_rows": 1,
+        "zero_bank_count_rows": 1400,
+        "active_bank_count_sum": 132364,
+        "negative_category_bank_count": 1,
+        "zero_category_bank_count": 1,
+        "canonical_psql_rows_sha256": "b09c0f2fd9064f0676f632897995b1c24163e7b5acda60ec9b5c27db5c533683"
+      },
+      "temp_blocks_observed": {
+        "Temp Read Blocks": 0.0,
+        "Temp Written Blocks": 0.0
+      },
+      "buffer_fields_observed_before_normalization": [
+        "Local Dirtied Blocks",
+        "Local Hit Blocks",
+        "Local Read Blocks",
+        "Local Written Blocks",
+        "Shared Dirtied Blocks",
+        "Shared Hit Blocks",
+        "Shared Read Blocks",
+        "Shared Written Blocks",
+        "Temp Read Blocks",
+        "Temp Written Blocks"
+      ],
+      "assertions_passed": [
+        "one runtime SELECT with one bigint user_id bind",
+        "eight-column current-user projection returned every category",
+        "status=1 only aggregate includes cross-owner category associations",
+        "PostgreSQL ASC NULLS LAST then signed id ASC order preserved",
+        "both relations scanned once with one root loop and no N+1",
+        "zero temporary read/write blocks at the synthetic evidence scale"
+      ],
+      "plan_summary": {
+        "root_node_type": "Sort",
+        "result_row_count": 5002,
+        "root_actual_loops": 1,
+        "node_count": 6,
+        "maximum_depth": 4,
+        "maximum_actual_loops": 1,
+        "maximum_relation_scan_actual_loops": 1,
+        "node_type_counts": {
+          "Aggregate": 1,
+          "Hash": 1,
+          "Hash Join": 1,
+          "Seq Scan": 2,
+          "Sort": 1
+        },
+        "relation_scan_occurrences": {
+          "user_bank_categories": 1,
+          "user_question_banks": 1
+        },
+        "relation_scan_actual_loops": {
+          "user_bank_categories": [
+            1
+          ],
+          "user_question_banks": [
+            1
+          ]
+        },
+        "index_names": [],
+        "nodes": [
+          {
+            "depth": 0,
+            "Node Type": "Sort",
+            "Sort Method": "quicksort",
+            "Actual Rows": 5002.0,
+            "Actual Loops": 1,
+            "Sort Key": [
+              "c.sort_order",
+              "c.id"
+            ]
+          },
+          {
+            "depth": 1,
+            "Node Type": "Aggregate",
+            "Parent Relationship": "Outer",
+            "Strategy": "Hashed",
+            "Actual Rows": 5002.0,
+            "Actual Loops": 1,
+            "Group Key": [
+              "c.id"
+            ]
+          },
+          {
+            "depth": 2,
+            "Node Type": "Hash Join",
+            "Parent Relationship": "Outer",
+            "Join Type": "Right",
+            "Actual Rows": 133764.0,
+            "Actual Loops": 1
+          },
+          {
+            "depth": 3,
+            "Node Type": "Seq Scan",
+            "Parent Relationship": "Outer",
+            "Relation Name": "user_question_banks",
+            "Alias": "b",
+            "Actual Rows": 132365.0,
+            "Actual Loops": 1,
+            "Rows Removed by Filter": 17635
+          },
+          {
+            "depth": 3,
+            "Node Type": "Hash",
+            "Parent Relationship": "Inner",
+            "Actual Rows": 5002.0,
+            "Actual Loops": 1
+          },
+          {
+            "depth": 4,
+            "Node Type": "Seq Scan",
+            "Parent Relationship": "Outer",
+            "Relation Name": "user_bank_categories",
+            "Alias": "c",
+            "Actual Rows": 5002.0,
+            "Actual Loops": 1,
+            "Rows Removed by Filter": 1
+          }
+        ]
+      }
+    }
+  },
+  "normalization": {
+    "removed": [
+      "planning and execution timing",
+      "per-node actual timing",
+      "cache-dependent buffer block counts",
+      "planner estimates and costs",
+      "runtime memory/hash counters",
+      "container ID and ephemeral container name"
+    ],
+    "retained": [
+      "plan node types/depth and actual rows/loops",
+      "join/aggregate/sort strategy",
+      "relation and index names",
+      "which BUFFERS fields were emitted and zero temp-block assertion"
+    ]
+  },
+  "interpretation": {
+    "status": "observational_evidence_only",
+    "statement": "This isolated deterministic capture proves exact internal query semantics and bounded relation scans at the recorded scale. It is not a production latency SLA, capacity claim, HTTP parity claim or index recommendation."
+  },
+  "reproduction": {
+    "working_directory": "repository root containing Ti-Java",
+    "command": "python3 Ti-Java/tools/capture_phase4b_personal_bank_category_query_plan.py --output Ti-Java/docs/refactor/phase4b/personal-bank-category-query-plan-evidence.json",
+    "prerequisites": "Docker and the repository Maven verification image",
+    "isolation": "ephemeral network-disabled container removed on every exit"
+  }
+}
