@@ -14,6 +14,7 @@ TI_JAVA_ROOT = pathlib.Path(__file__).resolve().parents[1]
 PHASE4B_ROOT = TI_JAVA_ROOT / "docs" / "refactor" / "phase4b"
 CONTRACT_PATH = PHASE4B_ROOT / "personal-bank-share-list-entry-contract.json"
 SUCCESSOR_PATH = PHASE4B_ROOT / "personal-bank-share-list-read-contract.json"
+TERMINAL_PATH = PHASE4B_ROOT / "personal-bank-all-shares-read-contract.json"
 
 ROUTE_KEYS = {
     "e817f8083d74|GET|/api/user/banks/api/<int:bank_id>/shares",
@@ -135,6 +136,7 @@ class Phase4bPersonalBankShareListEntryContractTest(unittest.TestCase):
         )
         cls.openapi = load_json(TI_JAVA_ROOT / "contracts/openapi.json")
         cls.successor = load_json(SUCCESSOR_PATH)
+        cls.terminal = load_json(TERMINAL_PATH)
 
     def test_01_predecessor_scope_and_all_source_hashes_are_closed(self):
         contract = self.contract
@@ -162,8 +164,8 @@ class Phase4bPersonalBankShareListEntryContractTest(unittest.TestCase):
             source = TI_JAVA_ROOT / reference["source"]
             self.assertTrue(source.is_file(), name)
             if name == "application_api":
-                successor_files = self.successor["implementation"]["main_source_files"]
-                successor_hashes = self.successor["implementation"]["main_source_sha256"]
+                successor_files = self.terminal["implementation"]["main_source_files"]
+                successor_hashes = self.terminal["implementation"]["main_source_sha256"]
                 self.assertEqual(reference["source"], successor_files[name])
                 self.assertEqual(successor_hashes[name], sha256(source), name)
                 self.assertNotEqual(reference["sha256"], sha256(source), name)
@@ -171,14 +173,14 @@ class Phase4bPersonalBankShareListEntryContractTest(unittest.TestCase):
                 "entry_contract_test",
                 "category_acceptance_forward_handoff_test",
             }:
-                successor_files = self.successor["implementation"][
+                successor_files = self.terminal["implementation"][
                     "verification_source_files"
                 ]
-                successor_hashes = self.successor["implementation"][
+                successor_hashes = self.terminal["implementation"][
                     "verification_source_sha256"
                 ]
                 successor_name = {
-                    "entry_contract_test": "entry_forward_handoff_test",
+                    "entry_contract_test": "share_list_entry_forward_handoff_test",
                     "category_acceptance_forward_handoff_test":
                         "category_acceptance_forward_handoff_test",
                 }[name]
@@ -565,15 +567,9 @@ class Phase4bPersonalBankShareListEntryContractTest(unittest.TestCase):
         self.assertFalse(self.contract["implementation_state"]["implementation_started"])
         self.assertEqual([], self.contract["implementation_state"]["main_source_files_added"])
 
-        successor_files = self.successor["implementation"]["main_source_files"]
-        successor_hashes = self.successor["implementation"]["main_source_sha256"]
-        expected_current_manifest = {
-            successor_files[name]: successor_hashes[name]
-            for name in successor_files
-        }
-        for path, digest in EXPECTED_MAIN_SOURCE_MANIFEST.items():
-            if path.endswith("package-info.java"):
-                expected_current_manifest[path] = digest
+        expected_current_manifest = self.terminal["implementation"][
+            "personalbank_main_source_manifest"
+        ]
         self.assertEqual(expected_current_manifest, actual_manifest)
 
         with (TI_JAVA_ROOT / "docs/refactor/02-route-parity-matrix.csv").open(

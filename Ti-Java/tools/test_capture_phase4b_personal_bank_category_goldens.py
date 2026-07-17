@@ -22,6 +22,9 @@ PHASE4A_FINAL = TI_JAVA / "docs/refactor/phase4a/phase4a-final-acceptance.json"
 SHARE_READ_CONTRACT = (
     TI_JAVA / "docs/refactor/phase4b/personal-bank-share-list-read-contract.json"
 )
+ALL_SHARES_READ_CONTRACT = (
+    TI_JAVA / "docs/refactor/phase4b/personal-bank-all-shares-read-contract.json"
+)
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(TOOLS_DIR))
 
@@ -76,6 +79,9 @@ class PersonalBankCategoryGoldenContractTest(unittest.TestCase):
         cls.shape = json.loads(SHAPE.read_text(encoding="utf-8"))
         cls.share_read_contract = json.loads(
             SHARE_READ_CONTRACT.read_text(encoding="utf-8")
+        )
+        cls.all_shares_read_contract = json.loads(
+            ALL_SHARES_READ_CONTRACT.read_text(encoding="utf-8")
         )
 
     def test_checked_in_hashes_case_set_and_redaction_close(self) -> None:
@@ -193,10 +199,16 @@ class PersonalBankCategoryGoldenContractTest(unittest.TestCase):
         self.assertEqual(DOCUMENT_PAYLOAD_SHA256, golden["document_payload_sha256"])
         self.assertEqual(CAPTURE_TOOL_SHA256, golden["capture_tool_sha256"])
         current_test_hash = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
-        successor_test_hash = self.share_read_contract["implementation"][
+        successor_test_hash = self.all_shares_read_contract["implementation"][
             "verification_source_sha256"
         ]["category_golden_forward_handoff_test"]
         self.assertEqual(successor_test_hash, current_test_hash)
+        self.assertNotEqual(
+            successor_test_hash,
+            self.share_read_contract["implementation"][
+                "verification_source_sha256"
+            ]["category_golden_forward_handoff_test"],
+        )
         self.assertNotEqual(current_test_hash, golden["capture_tool_test_sha256"])
 
         plan = evidence["query_plan"]
@@ -221,7 +233,7 @@ class PersonalBankCategoryGoldenContractTest(unittest.TestCase):
         for field, relative in implementation["source_files"].items():
             current_hash = hashlib.sha256((TI_JAVA / relative).read_bytes()).hexdigest()
             if field in {"application_api", "application_service"}:
-                successor = self.share_read_contract["implementation"]
+                successor = self.all_shares_read_contract["implementation"]
                 self.assertEqual(relative, successor["main_source_files"][field])
                 self.assertEqual(current_hash, successor["main_source_sha256"][field])
                 self.assertNotEqual(current_hash, implementation["source_sha256"][field])

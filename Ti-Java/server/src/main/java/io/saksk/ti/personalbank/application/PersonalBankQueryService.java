@@ -3,8 +3,10 @@ package io.saksk.ti.personalbank.application;
 import io.saksk.ti.personalbank.api.AuthenticatedPersonalBankViewer;
 import io.saksk.ti.personalbank.api.PersonalBankApplicationApi;
 import io.saksk.ti.personalbank.api.PersonalBankCategoryView;
+import io.saksk.ti.personalbank.api.PersonalBankOwnedShareView;
 import io.saksk.ti.personalbank.api.PersonalBankShareListView;
 import io.saksk.ti.personalbank.application.port.PersonalBankCategoryQueryPort;
+import io.saksk.ti.personalbank.application.port.PersonalBankOwnedShareQueryPort;
 import io.saksk.ti.personalbank.application.port.PersonalBankShareQueryPort;
 import java.util.List;
 import java.util.Objects;
@@ -17,13 +19,16 @@ class PersonalBankQueryService implements PersonalBankApplicationApi {
 
     private final PersonalBankCategoryQueryPort categories;
     private final PersonalBankShareQueryPort shares;
+    private final PersonalBankOwnedShareQueryPort ownedShares;
 
     PersonalBankQueryService(
             PersonalBankCategoryQueryPort categories,
-            PersonalBankShareQueryPort shares
+            PersonalBankShareQueryPort shares,
+            PersonalBankOwnedShareQueryPort ownedShares
     ) {
         this.categories = categories;
         this.shares = shares;
+        this.ownedShares = ownedShares;
     }
 
     @Override
@@ -44,5 +49,14 @@ class PersonalBankQueryService implements PersonalBankApplicationApi {
         Objects.requireNonNull(viewer, "viewer");
         return shares.findShares(viewer.identityId(), bankId)
                 .map(PersonalBankShareListView::new);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PersonalBankOwnedShareView> listOwnedShares(
+            AuthenticatedPersonalBankViewer viewer
+    ) {
+        Objects.requireNonNull(viewer, "viewer");
+        return List.copyOf(ownedShares.listOwnedShares(viewer.identityId()));
     }
 }

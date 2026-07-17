@@ -48,7 +48,7 @@ class ModuleContractParityTest {
         personalBankShareShapeRoot = JSON.readTree(Files.readString(
                 resolveInsideTiJava(
                         "docs/refactor/phase4b/"
-                                + "personal-bank-share-list-application-api-shape.json"),
+                                + "personal-bank-all-shares-application-api-shape.json"),
                 StandardCharsets.UTF_8));
         contractModules = readModules(contractRoot);
         eventOnlyEdges = readEventOnlyEdges(contractRoot);
@@ -148,7 +148,7 @@ class ModuleContractParityTest {
                 .isEqualTo(11);
         assertThat(personalBankShareShapeRoot
                         .path("implemented_public_application_method_count").asInt())
-                .isEqualTo(21);
+                .isEqualTo(22);
         assertThat(shapeStatusRoot.path("event_payload_shape_status").asString())
                 .isEqualTo("deferred_to_phase5");
 

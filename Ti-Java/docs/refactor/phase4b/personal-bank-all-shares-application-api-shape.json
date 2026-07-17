@@ -1,0 +1,74 @@
+{
+  "contract_id": "ti.phase4b.personal-bank-all-shares-application-api-shape",
+  "schema_version": 1,
+  "phase": "4B-personal-bank-all-shares-read-slice",
+  "predecessor": {
+    "source": "personal-bank-share-list-application-api-shape.json",
+    "sha256": "7d2cc27f5ab288d7c968f1936a7b88b00b588bf87605ceb7e98bf99005de5c61",
+    "implemented_public_application_method_count": 21
+  },
+  "migrated_route_count": 11,
+  "implemented_route_backed_operation_count": 11,
+  "implemented_public_application_method_count": 22,
+  "pending_route_count": 600,
+  "production_cutover_count": 0,
+  "event_payload_shape_status": "deferred_to_phase5",
+  "route_openapi_delta_authorized": false,
+  "personalbank": {
+    "module_id": "personalbank",
+    "java_api": "io.saksk.ti.personalbank.api.PersonalBankApplicationApi",
+    "phase1_inputs": ["ActorId", "BankId", "BankCommand"],
+    "phase1_outputs": ["BankView", "BankPermissionDecision"],
+    "shape_status": "partially_implemented",
+    "implemented_route_ids": [],
+    "direct_http_operation": false,
+    "deferred_http_route_ids": [
+      "19b37a262989",
+      "e32aec766730",
+      "e817f8083d74",
+      "c50102968322",
+      "a6fda3638fc3",
+      "0fdd3026f636"
+    ],
+    "deferred_category_http_route_ids": ["19b37a262989", "e32aec766730"],
+    "deferred_share_list_http_route_ids": ["e817f8083d74", "c50102968322"],
+    "deferred_all_shares_http_route_ids": ["a6fda3638fc3", "0fdd3026f636"],
+    "deferred_http_owner": "personalbank",
+    "deferred_http_phase": "4B",
+    "methods": [
+      {
+        "name": "listCategories",
+        "return_type": "java.util.List",
+        "generic_return_type": "java.util.List<io.saksk.ti.personalbank.api.PersonalBankCategoryView>",
+        "parameter_types": [
+          "io.saksk.ti.personalbank.api.AuthenticatedPersonalBankViewer"
+        ]
+      },
+      {
+        "name": "findShares",
+        "return_type": "java.util.Optional",
+        "generic_return_type": "java.util.Optional<io.saksk.ti.personalbank.api.PersonalBankShareListView>",
+        "parameter_types": [
+          "io.saksk.ti.personalbank.api.AuthenticatedPersonalBankViewer",
+          "int"
+        ]
+      },
+      {
+        "name": "listOwnedShares",
+        "return_type": "java.util.List",
+        "generic_return_type": "java.util.List<io.saksk.ti.personalbank.api.PersonalBankOwnedShareView>",
+        "parameter_types": [
+          "io.saksk.ti.personalbank.api.AuthenticatedPersonalBankViewer"
+        ]
+      }
+    ],
+    "implemented_types": [
+      "AuthenticatedPersonalBankViewer",
+      "PersonalBankCategoryView",
+      "PersonalBankOwnedShareView",
+      "PersonalBankShareListView",
+      "PersonalBankShareView"
+    ]
+  },
+  "policy": "The cumulative Phase 4B shape adds only the HTTP-neutral all-shares method and one raw immutable record to the accepted category and share-list shape. All six personal-bank aliases remain pending with no route, OpenAPI, controller, security matcher, or production cutover delta."
+}

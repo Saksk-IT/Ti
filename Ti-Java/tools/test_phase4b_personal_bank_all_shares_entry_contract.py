@@ -13,6 +13,7 @@ import unittest
 TI_JAVA_ROOT = Path(__file__).resolve().parents[1]
 PHASE4B_ROOT = TI_JAVA_ROOT / "docs" / "refactor" / "phase4b"
 CONTRACT_PATH = PHASE4B_ROOT / "personal-bank-all-shares-entry-contract.json"
+SUCCESSOR_PATH = PHASE4B_ROOT / "personal-bank-all-shares-read-contract.json"
 
 ROUTE_KEYS = {
     "a6fda3638fc3|GET|/api/user/banks/api/shares/all",
@@ -102,6 +103,7 @@ class Phase4bPersonalBankAllSharesEntryContractTest(unittest.TestCase):
             PHASE4B_ROOT / "personal-bank-all-shares-query-plan-evidence.json"
         )
         cls.openapi = load_json(TI_JAVA_ROOT / "contracts" / "openapi.json")
+        cls.successor = load_json(SUCCESSOR_PATH)
 
     def test_01_identity_predecessor_and_all_source_hashes_are_closed(self):
         contract = self.contract
@@ -135,7 +137,41 @@ class Phase4bPersonalBankAllSharesEntryContractTest(unittest.TestCase):
         for name, reference in contract["source_contracts"].items():
             source = TI_JAVA_ROOT / reference["source"]
             self.assertTrue(source.is_file(), name)
-            self.assertEqual(reference["sha256"], sha256(source), name)
+            successor_name = {
+                "application_api": "application_api",
+                "share_list_read_forward_handoff_test": "share_read_contract_test",
+                "share_list_java_forward_handoff_test":
+                    "share_list_contract_parity_test",
+                "entry_contract_test": "entry_forward_handoff_test",
+                "progress_forward_handoff": "progress_forward_handoff",
+            }.get(name)
+            if successor_name == "application_api":
+                files = self.successor["implementation"]["main_source_files"]
+                hashes = self.successor["implementation"]["main_source_sha256"]
+                self.assertEqual(reference["source"], files[successor_name])
+                self.assertEqual(hashes[successor_name], sha256(source), name)
+                self.assertNotEqual(reference["sha256"], sha256(source), name)
+            elif successor_name is not None:
+                files = self.successor["implementation"]["verification_source_files"]
+                hashes = self.successor["implementation"]["verification_source_sha256"]
+                self.assertEqual(reference["source"], files[successor_name])
+                self.assertEqual(hashes[successor_name], sha256(source), name)
+                if name != "progress_forward_handoff":
+                    self.assertNotEqual(reference["sha256"], sha256(source), name)
+            else:
+                self.assertEqual(reference["sha256"], sha256(source), name)
+
+        self.assertEqual(
+            "ti.phase4b.personal-bank-all-shares-read-contract",
+            self.successor["contract_id"],
+        )
+        self.assertEqual(
+            CONTRACT_PATH.relative_to(TI_JAVA_ROOT).as_posix(),
+            self.successor["predecessor"]["source"],
+        )
+        self.assertEqual(
+            sha256(CONTRACT_PATH), self.successor["predecessor"]["sha256"]
+        )
 
         self.assertEqual(
             contract["document_payload_sha256"],
@@ -347,24 +383,35 @@ class Phase4bPersonalBankAllSharesEntryContractTest(unittest.TestCase):
         implementation = self.contract["implementation_state"]
         self.assertFalse(implementation["implementation_started"])
         self.assertFalse(implementation["production_source_added"])
+        successor_main_files = self.successor["implementation"]["main_source_files"]
+        successor_main_hashes = self.successor["implementation"]["main_source_sha256"]
         for relative in implementation["future_main_source_files"]:
-            self.assertFalse((TI_JAVA_ROOT / relative).exists(), relative)
+            path = TI_JAVA_ROOT / relative
+            self.assertTrue(path.is_file(), relative)
+            matching = [
+                name for name, successor_relative in successor_main_files.items()
+                if successor_relative == relative
+            ]
+            self.assertEqual(1, len(matching), relative)
+            self.assertEqual(successor_main_hashes[matching[0]], sha256(path), relative)
 
         main_root = TI_JAVA_ROOT / "server/src/main/java/io/saksk/ti/personalbank"
         actual = {
             path.relative_to(TI_JAVA_ROOT).as_posix(): sha256(path)
             for path in sorted(main_root.rglob("*.java"))
         }
+        self.assertNotEqual(
+            self.contract["unchanged_state"]["personalbank_main_source_manifest"], actual
+        )
         self.assertEqual(
-            self.contract["unchanged_state"]["personalbank_main_source_manifest"],
-            actual,
+            self.successor["implementation"]["personalbank_main_source_manifest"], actual
         )
         application_api = (
             TI_JAVA_ROOT
             / "server/src/main/java/io/saksk/ti/personalbank/api/"
             "PersonalBankApplicationApi.java"
         ).read_text(encoding="utf-8")
-        self.assertNotIn("listOwnedShares", application_api)
+        self.assertIn("listOwnedShares", application_api)
 
     def test_06_scope_denials_and_entry_decision_fail_closed(self):
         frozen = self.contract["frozen_internal_contract"]

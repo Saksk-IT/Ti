@@ -68,6 +68,7 @@ class PersonalBankCategoryContractParityTest {
     private static JsonNode queryPlan;
     private static JsonNode contract;
     private static JsonNode shareListContract;
+    private static JsonNode allSharesContract;
 
     @BeforeAll
     static void loadMachineEvidence() throws Exception {
@@ -85,6 +86,8 @@ class PersonalBankCategoryContractParityTest {
                 "docs/refactor/phase4b/personal-bank-category-read-contract.json");
         shareListContract = readJson(
                 "docs/refactor/phase4b/personal-bank-share-list-read-contract.json");
+        allSharesContract = readJson(
+                "docs/refactor/phase4b/personal-bank-all-shares-read-contract.json");
     }
 
     @Test
@@ -434,13 +437,19 @@ class PersonalBankCategoryContractParityTest {
         assertThat(sha256(
                         "docs/refactor/phase4b/personal-bank-share-list-entry-contract.json"))
                 .isEqualTo(shareListContract.path("predecessor").path("sha256").asString());
+        assertThat(allSharesContract.path("predecessor").path("source").asString())
+                .isEqualTo(
+                        "docs/refactor/phase4b/"
+                                + "personal-bank-all-shares-entry-contract.json");
+        assertThat(sha256(allSharesContract.path("predecessor").path("source").asString()))
+                .isEqualTo(allSharesContract.path("predecessor").path("sha256").asString());
         for (String key : expectedSourceKeys) {
             String source = sourceFiles.path(key).asString();
             assertThat(source).as("implementation path for %s", key).isNotBlank();
             if (key.equals("application_api") || key.equals("application_service")) {
-                JsonNode successorFiles = shareListContract.path("implementation")
+                JsonNode successorFiles = allSharesContract.path("implementation")
                         .path("main_source_files");
-                JsonNode successorHashes = shareListContract.path("implementation")
+                JsonNode successorHashes = allSharesContract.path("implementation")
                         .path("main_source_sha256");
                 assertThat(successorFiles.path(key).asString()).isEqualTo(source);
                 assertThat(sha256(source))

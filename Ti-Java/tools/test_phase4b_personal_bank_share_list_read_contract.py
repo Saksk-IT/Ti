@@ -22,6 +22,7 @@ ALL_SHARES_ENTRY_PATH = PHASE4B / "personal-bank-all-shares-entry-contract.json"
 ALL_SHARES_ENTRY_RELATIVE = (
     "docs/refactor/phase4b/personal-bank-all-shares-entry-contract.json"
 )
+ALL_SHARES_READ_PATH = PHASE4B / "personal-bank-all-shares-read-contract.json"
 ALL_SHARES_ROUTE_KEYS = {
     "a6fda3638fc3|GET|/api/user/banks/api/shares/all",
     "0fdd3026f636|GET|/user/banks/api/shares/all",
@@ -185,6 +186,7 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
             PHASE4B / "personal-bank-share-list-query-plan-evidence.json"
         )
         cls.openapi = load_json(ROOT / "contracts" / "openapi.json")
+        cls.terminal = load_json(ALL_SHARES_READ_PATH)
 
     def test_01_predecessor_shape_golden_and_plan_are_transitively_bound(self):
         contract = self.contract
@@ -269,17 +271,36 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
                 path = ROOT / relative
                 self.assertTrue(path.is_file(), name)
                 current_hash = sha256(path)
-                if (
-                        name == "share_read_contract_test"
-                        and ALL_SHARES_ENTRY_PATH.is_file()
-                ):
-                    successor = load_json(ALL_SHARES_ENTRY_PATH)
-                    handoff = successor["source_contracts"][
-                        "share_list_read_forward_handoff_test"
-                    ]
-                    self.assertEqual(relative, handoff["source"])
-                    self.assertEqual(current_hash, handoff["sha256"])
+                terminal_name = None
+                if files_key == "main_source_files" and name in {
+                        "application_api", "application_service"
+                }:
+                    terminal_name = name
+                elif files_key == "verification_source_files" and name in {
+                        "service_test",
+                        "entry_forward_handoff_test",
+                        "category_acceptance_forward_handoff_test",
+                        "category_golden_forward_handoff_test",
+                        "category_contract_forward_handoff_test",
+                        "share_read_contract_test",
+                }:
+                    terminal_name = {
+                        "entry_forward_handoff_test":
+                            "share_list_entry_forward_handoff_test",
+                    }.get(name, name)
+                if terminal_name is not None:
+                    terminal_files = self.terminal["implementation"][files_key]
+                    terminal_hashes = self.terminal["implementation"][hashes_key]
+                    self.assertEqual(relative, terminal_files[terminal_name])
+                    self.assertEqual(current_hash, terminal_hashes[terminal_name])
                     self.assertNotEqual(hashes[name], current_hash)
+                    if name == "share_read_contract_test":
+                        handoff = load_json(ALL_SHARES_ENTRY_PATH)["source_contracts"][
+                            "share_list_read_forward_handoff_test"
+                        ]
+                        self.assertEqual(relative, handoff["source"])
+                        self.assertNotEqual(current_hash, handoff["sha256"])
+                        self.assertNotEqual(hashes[name], handoff["sha256"])
                 else:
                     self.assertEqual(hashes[name], current_hash, name)
 
@@ -503,6 +524,7 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
         historical_hash_overrides: dict[str, str] = {}
         if ALL_SHARES_ENTRY_PATH.is_file():
             successor = load_json(ALL_SHARES_ENTRY_PATH)
+            terminal = self.terminal
             self.assertEqual(
                 "ti.phase4b.personal-bank-all-shares-entry-contract",
                 successor["contract_id"],
@@ -520,6 +542,18 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
             )
             self.assertTrue(successor["entry_gate"]["implementation_authorized"])
             self.assertFalse(successor["entry_gate"]["http_migration_authorized"])
+            self.assertEqual(
+                "ti.phase4b.personal-bank-all-shares-read-contract",
+                terminal["contract_id"],
+            )
+            self.assertEqual(
+                ALL_SHARES_ENTRY_RELATIVE,
+                terminal["predecessor"]["source"],
+            )
+            self.assertEqual(
+                sha256(ALL_SHARES_ENTRY_PATH),
+                terminal["predecessor"]["sha256"],
+            )
             successor_sources = {
                 f"Ti-Java/{reference['source']}"
                 for reference in successor["source_contracts"].values()
@@ -534,9 +568,13 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
                 "share_list_java_forward_handoff_test"
             ]
             self.assertEqual(SHARE_READ_JAVA_PARITY_RELATIVE, java_handoff["source"])
+            self.assertNotEqual(
+                sha256(ROOT / SHARE_READ_JAVA_PARITY_RELATIVE), java_handoff["sha256"]
+            )
             self.assertEqual(
                 sha256(ROOT / SHARE_READ_JAVA_PARITY_RELATIVE),
-                java_handoff["sha256"],
+                terminal["implementation"]["verification_source_sha256"]
+                ["share_list_contract_parity_test"],
             )
             phase3_handoff = successor["source_contracts"][
                 "phase3_auth_time_forward_handoff_test"
@@ -555,21 +593,13 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
             )
             self.assertEqual(
                 sha256(ROOT / PROGRESS_FORWARD_HANDOFF_RELATIVE),
-                progress_handoff["sha256"],
+                terminal["implementation"]["verification_source_sha256"]
+                ["progress_forward_handoff"],
             )
-            forward_additions = ALL_SHARES_FORWARD_ADDITIONS
-            historical_hash_overrides = {
-                SHARE_READ_FORWARD_TEST_RELATIVE:
-                    self.contract["implementation"]["verification_source_sha256"][
-                        "share_read_contract_test"
-                    ],
-                SHARE_READ_JAVA_PARITY_RELATIVE:
-                    SHARE_READ_JAVA_PARITY_HISTORICAL_SHA256,
-                PHASE3_AUTH_TIME_TEST_RELATIVE:
-                    PHASE3_AUTH_TIME_TEST_HISTORICAL_SHA256,
-                PROGRESS_FORWARD_HANDOFF_RELATIVE:
-                    PROGRESS_HISTORICAL_SHA256,
-            }
+            forward_additions = set(terminal["forward_handoff"]["forward_additions"])
+            historical_hash_overrides = terminal["forward_handoff"][
+                "historical_hash_overrides"
+            ]
 
         total, included, manifest = canonical_control_manifest(
             forward_additions,

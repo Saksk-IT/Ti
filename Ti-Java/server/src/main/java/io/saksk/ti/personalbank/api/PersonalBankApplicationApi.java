@@ -12,4 +12,8 @@ public interface PersonalBankApplicationApi {
             AuthenticatedPersonalBankViewer viewer,
             int bankId
     );
+
+    List<PersonalBankOwnedShareView> listOwnedShares(
+            AuthenticatedPersonalBankViewer viewer
+    );
 }

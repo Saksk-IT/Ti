@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.saksk.ti.personalbank.api.AuthenticatedPersonalBankViewer;
 import io.saksk.ti.personalbank.api.PersonalBankApplicationApi;
 import io.saksk.ti.personalbank.api.PersonalBankCategoryView;
+import io.saksk.ti.personalbank.api.PersonalBankOwnedShareView;
 import io.saksk.ti.personalbank.api.PersonalBankShareListView;
 import io.saksk.ti.personalbank.api.PersonalBankShareView;
 import java.io.IOException;
@@ -39,6 +40,8 @@ class PersonalBankPublicBoundaryNeutralityTest {
             "/user/banks/api/categories",
             "/api/user/banks/api/<int:bank_id>/shares",
             "/user/banks/api/<int:bank_id>/shares",
+            "/api/user/banks/api/shares/all",
+            "/user/banks/api/shares/all",
             "success_response",
             "successResponse");
     private static final Pattern CHINESE_STRING_LITERAL =
@@ -150,6 +153,57 @@ class PersonalBankPublicBoundaryNeutralityTest {
                         "java.lang.Integer",
                         "java.lang.Boolean",
                         "java.time.LocalDateTime");
+    }
+
+    @Test
+    void ownedShareQueryExposesOnlyTheJoinedBankNameAndTwelveRawFacts()
+            throws Exception {
+        var method = PersonalBankApplicationApi.class.getDeclaredMethod(
+                "listOwnedShares", AuthenticatedPersonalBankViewer.class);
+        assertThat(method.getGenericReturnType().getTypeName())
+                .isEqualTo(
+                        "java.util.List<io.saksk.ti.personalbank.api.PersonalBankOwnedShareView>");
+        assertThat(method.getParameterTypes())
+                .containsExactly(AuthenticatedPersonalBankViewer.class);
+        assertThat(Modifier.isPublic(method.getModifiers())).isTrue();
+        assertThat(Modifier.isAbstract(method.getModifiers())).isTrue();
+
+        assertThat(PersonalBankOwnedShareView.class.isRecord()).isTrue();
+        assertThat(componentNames(PersonalBankOwnedShareView.class))
+                .containsExactly(
+                        "id",
+                        "bankId",
+                        "ownerId",
+                        "shareCode",
+                        "shareToken",
+                        "permission",
+                        "expiresAt",
+                        "maxUses",
+                        "currentUses",
+                        "isActive",
+                        "createdAt",
+                        "bankName")
+                .doesNotContain(
+                        "shareLink",
+                        "url",
+                        "success",
+                        "message",
+                        "code",
+                        "requestId");
+        assertThat(componentTypes(PersonalBankOwnedShareView.class))
+                .containsExactly(
+                        "int",
+                        "int",
+                        "long",
+                        "java.lang.String",
+                        "java.lang.String",
+                        "java.lang.String",
+                        "java.time.LocalDateTime",
+                        "java.lang.Integer",
+                        "java.lang.Integer",
+                        "java.lang.Boolean",
+                        "java.time.LocalDateTime",
+                        "java.lang.String");
     }
 
     @Test
