@@ -8,12 +8,20 @@ import json
 from pathlib import Path
 
 try:
+    from tools.phase4c_http_entry_successor_acceptance import (
+        accepted_sha256 as http_entry_accepted_sha256,
+        successor_sha256 as http_entry_successor_sha256,
+    )
     from tools.phase4c_successor_acceptance import (
         SUCCESSOR_SOURCES as COMPOSITION_SUCCESSOR_SOURCES,
         successor_sha256 as composition_successor_sha256,
         validate_successor_contract as validate_composition_contract,
     )
 except ModuleNotFoundError:  # Direct script execution from tools/.
+    from phase4c_http_entry_successor_acceptance import (
+        accepted_sha256 as http_entry_accepted_sha256,
+        successor_sha256 as http_entry_successor_sha256,
+    )
     from phase4c_successor_acceptance import (
         SUCCESSOR_SOURCES as COMPOSITION_SUCCESSOR_SOURCES,
         successor_sha256 as composition_successor_sha256,
@@ -187,7 +195,15 @@ def validate_read_successor_contract(contract: dict, ti_java_root: Path) -> None
             raise AssertionError(
                 f"read successor path escaped or vanished: {relative}"
             ) from error
-        if not resolved.is_file() or _sha256(resolved) != successor_hash:
+        physical_hash = successor_hash
+        http_successor = http_entry_successor_sha256(root, relative)
+        if http_successor is not None:
+            if http_entry_accepted_sha256(relative) != successor_hash:
+                raise AssertionError(
+                    f"HTTP entry did not accept the exact read successor for {relative}"
+                )
+            physical_hash = http_successor
+        if not resolved.is_file() or _sha256(resolved) != physical_hash:
             raise AssertionError(f"read successor file hash drift for {relative}")
 
 
@@ -207,6 +223,9 @@ def load_composition_predecessor_contract(ti_java_root: Path) -> dict | None:
 def successor_sha256(ti_java_root: Path, relative: str) -> str | None:
     contract = load_read_successor_contract(ti_java_root)
     if contract is not None:
+        http_successor = http_entry_successor_sha256(ti_java_root, relative)
+        if http_successor is not None:
+            return http_successor
         fixed = {
             **PYTHON_SOURCES,
             **JAVA_SOURCES,

@@ -8,13 +8,17 @@ import hashlib
 import json
 from pathlib import Path
 import re
-import subprocess
-import sys
-import tempfile
 import unittest
 
 try:
     from tools import build_phase4c_personal_bank_user_counts_read_contract as builder
+    from tools.phase4c_http_entry_successor_acceptance import (
+        PREDECESSOR_PAYLOAD_SHA256 as IMMUTABLE_READ_PAYLOAD_SHA256,
+        PREDECESSOR_SHA256 as IMMUTABLE_READ_SHA256,
+        SUCCESSOR_SOURCES as HTTP_ENTRY_SUCCESSOR_SOURCES,
+        load_http_entry_successor_contract,
+        successor_sha256 as http_entry_successor_sha256,
+    )
     from tools.phase4c_read_successor_acceptance import (
         CONTRACT_ID,
         CONTRACT_STATUS,
@@ -24,6 +28,13 @@ try:
     )
 except ModuleNotFoundError:  # Direct script execution from tools/.
     import build_phase4c_personal_bank_user_counts_read_contract as builder
+    from phase4c_http_entry_successor_acceptance import (
+        PREDECESSOR_PAYLOAD_SHA256 as IMMUTABLE_READ_PAYLOAD_SHA256,
+        PREDECESSOR_SHA256 as IMMUTABLE_READ_SHA256,
+        SUCCESSOR_SOURCES as HTTP_ENTRY_SUCCESSOR_SOURCES,
+        load_http_entry_successor_contract,
+        successor_sha256 as http_entry_successor_sha256,
+    )
     from phase4c_read_successor_acceptance import (
         CONTRACT_ID,
         CONTRACT_STATUS,
@@ -77,6 +88,9 @@ class Phase4cPersonalBankUserCountsReadContractTest(unittest.TestCase):
         cls.contract = load_read_successor_contract(ROOT)
         if cls.contract is None:
             raise AssertionError("Phase4C read contract is required")
+        cls.http_entry = load_http_entry_successor_contract(ROOT)
+        if cls.http_entry is None:
+            raise AssertionError("Phase4C HTTP entry successor contract is required")
         cls.composition = json.loads(COMPOSITION_PATH.read_text(encoding="utf-8"))
         cls.requirements = cls.composition["successor_handoff"][
             "future_read_contract_requirements"
@@ -101,24 +115,35 @@ class Phase4cPersonalBankUserCountsReadContractTest(unittest.TestCase):
             contract["document_payload_sha256"],
             document_payload_sha256(contract),
         )
+        self.assertEqual(IMMUTABLE_READ_SHA256, sha256(CONTRACT_PATH))
+        self.assertEqual(
+            IMMUTABLE_READ_PAYLOAD_SHA256,
+            contract["document_payload_sha256"],
+        )
         for name, reference in contract["source_contracts"].items():
-            source = ROOT / reference["source"]
+            relative = reference["source"]
+            source = ROOT / relative
             self.assertTrue(source.is_file(), name)
-            self.assertEqual(reference["sha256"], sha256(source), name)
-
-        with tempfile.TemporaryDirectory(prefix="ti-phase4c-read-") as temporary:
-            generated = Path(temporary) / "read-contract.json"
-            subprocess.run(
-                [
-                    sys.executable,
-                    str(ROOT / "tools/build_phase4c_personal_bank_user_counts_read_contract.py"),
-                    "--output",
-                    str(generated),
-                ],
-                cwd=ROOT,
-                check=True,
+            override = HTTP_ENTRY_SUCCESSOR_SOURCES.get(relative)
+            if override is None:
+                self.assertEqual(reference["sha256"], sha256(source), name)
+                continue
+            self.assertEqual(
+                reference["sha256"], override["accepted_sha256"], name
             )
-            self.assertEqual(CONTRACT_PATH.read_bytes(), generated.read_bytes())
+            self.assertEqual(
+                sha256(source), override["successor_sha256"], name
+            )
+
+        # The predecessor builder incorporates mutable documentation sources.
+        # Once the reviewed HTTP successor exists, rerunning it would create a
+        # different document and would rewrite history.  The new successor has
+        # its own independent determinism test; this test fixes the immutable
+        # predecessor bytes and payload instead.
+        self.assertEqual(
+            IMMUTABLE_READ_SHA256,
+            self.http_entry["predecessor"]["sha256"],
+        )
 
     def test_02_exact_main_and_runtime_surface_delta_is_only_seventeen_plus_one(self):
         implementation = self.contract["implementation"]
@@ -342,7 +367,10 @@ class Phase4cPersonalBankUserCountsReadContractTest(unittest.TestCase):
         ):
             for relative, reference in source_map.items():
                 self.assertEqual(relative, reference["source"])
-                self.assertEqual(sha256(ROOT / relative), reference["successor_sha256"])
+                expected = http_entry_successor_sha256(ROOT, relative)
+                if expected is None:
+                    expected = reference["successor_sha256"]
+                self.assertEqual(sha256(ROOT / relative), expected)
                 self.assertNotEqual(reference["accepted_sha256"], "")
 
         tampered = copy.deepcopy(self.contract)

@@ -13,12 +13,20 @@ import tempfile
 import unittest
 
 try:
+    from tools.phase4c_http_entry_successor_acceptance import (
+        accepted_sha256 as http_entry_accepted_sha256,
+        successor_sha256 as http_entry_successor_sha256,
+    )
     from tools.phase4c_successor_acceptance import validate_successor_contract
     from tools.phase4c_read_successor_acceptance import (
         load_read_successor_contract,
         validate_read_successor_contract,
     )
 except ModuleNotFoundError:  # Direct script execution from tools/.
+    from phase4c_http_entry_successor_acceptance import (
+        accepted_sha256 as http_entry_accepted_sha256,
+        successor_sha256 as http_entry_successor_sha256,
+    )
     from phase4c_successor_acceptance import validate_successor_contract
     from phase4c_read_successor_acceptance import (
         load_read_successor_contract,
@@ -205,6 +213,20 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
             self.assertTrue(source.is_file(), name)
             current_hash = sha256(source)
             if current_hash != reference["sha256"]:
+                http_successor = http_entry_successor_sha256(
+                    ROOT, reference["source"]
+                )
+                if http_successor is not None:
+                    accepted_http_predecessor = read_sources.get(
+                        reference["source"], reference["sha256"]
+                    )
+                    self.assertEqual(
+                        accepted_http_predecessor,
+                        http_entry_accepted_sha256(reference["source"]),
+                        name,
+                    )
+                    self.assertEqual(current_hash, http_successor, name)
+                    continue
                 self.assertIsNotNone(self.read_successor, name)
                 self.assertEqual(
                     current_hash,
@@ -255,11 +277,16 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
                     second_handoff["accepted_sha256"],
                     relative,
                 )
+                if current_hash == second_handoff["successor_sha256"]:
+                    continue
+                http_successor = http_entry_successor_sha256(ROOT, relative)
+                self.assertIsNotNone(http_successor, relative)
                 self.assertEqual(
-                    current_hash,
                     second_handoff["successor_sha256"],
+                    http_entry_accepted_sha256(relative),
                     relative,
                 )
+                self.assertEqual(current_hash, http_successor, relative)
         validate_successor_contract(contract)
         tampered = json.loads(json.dumps(contract))
         tampered_relative = (

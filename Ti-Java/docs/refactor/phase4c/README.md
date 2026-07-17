@@ -41,3 +41,38 @@ operator 实现必须在 dedicated connection 上用 session-level advisory lock
 并在 apply 前复核；还必须用持久 migration ledger/version 或等价 tombstone 防止目标被有意清空后
 从保留的 legacy source 复活标签。因此完整迁移设计和生产执行器均尚未闭合。两条 HTTP alias 仍需独立的 Security、限流、
 Controller、OpenAPI、双运行时对比与切流门禁。
+
+## User-counts HTTP entry gate
+
+HTTP 入口通过第三层显式 successor 承接已经实现的 HTTP-neutral read，而不改写历史合同。
+`personal-bank-user-counts-read-contract.json` 的物理 SHA-256
+`458ba5aafe10a451ab05d05f1edf2ac1d5e20a93e01c20fc1b8fe1d2eb750f73`
+保持不可变；HTTP entry gate 只能精确绑定它并记录后续 source allowlist，不能从当前工作树、HEAD
+或任意新哈希反向放宽 predecessor。
+
+固定旧提交的 HTTP boundary evidence 最终包含 62 个双 alias case，并额外执行 8 个
+CORS/OPTIONS 运行时观察，覆盖 GET/HEAD/OPTIONS、API/Web 认证协商、首参数、路径整数、错误信封、
+请求 ID、CORS 与无业务副作用边界。其 case payload SHA-256 为
+`f577ff99a7f04030fd5f4dae0f95610351d4fcfff92de7e9ca0c406516725dbf`，document payload
+SHA-256 为 `3e8f7c24548d979723d2601c11221b9e569de7b342e6c3c0d8daa25de74cdd2f`。
+这只是固定旧栈观察，不代表 Java HTTP 已实现，也不替代浏览器、真实 Servlet、反向代理或生产流量证据。
+
+独立 rate-limit evidence 固定 7 组旧栈事实：`10/second`、`500/hour`、`5000/day` 三个窗口，
+两个注册 endpoint 的 alias scope，API/Web 429 内容协商，Session/Bearer/IP key 选择，以及 Redis
+连接拒绝。`10/500/5000` 是旧 base 配置；固定生产部署默认乘数为 100，实际默认是
+`1000/second;50000/hour;500000/day`，并可由部署环境显式覆盖。该证据不宣称真实生产吞吐、
+多 worker 收敛、Redis 恢复连续性或可信代理地址链已验证。
+
+`P4C-LEARNING-007` 至 `P4C-LEARNING-012` 是本入口的批准差异集合，依次固定：显式 Bearer
+选择与统一拒绝、user-counts 不写 `users.last_active`、按有效 actor 的 HMAC 假名独立限流与 Redis
+故障 503、仅 API alias 的 CORS 和无副作用 OPTIONS、Unicode `Nd`/溢出/防火墙路径边界，以及
+HEAD 与 GET 同语义但所有状态零字节响应体。后续实现必须逐项携带差异 ID、强制测试和可观察影响，
+不得把批准差异解释为绕过证据或切流门禁。
+
+当前 entry gate 的状态是“只授权未来精确 HTTP slice，生产实现尚未开始”：公开应用方法仍为 27 个，
+有效迁移状态仍为 **11 migrated、600 pending、0 production cutover**。相对 HTTP-neutral read
+predecessor，`server/src/main`、`server/src/main/resources`、OpenAPI 和 route 状态均为零变更；两条
+user-counts operation 仍未实现、未迁移、未切流。本门禁只允许下一步新增精确 Controller、
+route-specific Security/error writer、独立 rate limiter、路由级 CORS、必要配置与 OpenAPI；
+operator、schema/index、真实迁移、全局 preflight 和 production cutover 继续禁止。下一生产切片改变
+main/resources/OpenAPI 后必须生成并验证新的追加式 WORM，当前 read WORM 不能为未来生产面背书。

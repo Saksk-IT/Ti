@@ -43,6 +43,7 @@ final class Phase4cReadSuccessorAcceptance {
 
     static JsonNode load(Path tiJavaRoot) throws IOException {
         Path root = tiJavaRoot.toRealPath();
+        Phase4cHttpEntrySuccessorAcceptance.load(root);
         JsonNode contract = JSON.readTree(Files.readString(
                 fixedRegularFile(root, CONTRACT_RELATIVE), StandardCharsets.UTF_8));
         validate(contract);
@@ -113,6 +114,12 @@ final class Phase4cReadSuccessorAcceptance {
     }
 
     static String successorHash(JsonNode contract, String relative) {
+        String httpEntrySuccessor =
+                Phase4cHttpEntrySuccessorAcceptance.successorHash(relative);
+        if (httpEntrySuccessor != null) {
+            validate(contract);
+            return httpEntrySuccessor;
+        }
         FixedSource fixed = JAVA_SOURCES.get(relative);
         if (fixed == null) {
             fixed = PYTHON_SOURCES.get(relative);
@@ -133,7 +140,18 @@ final class Phase4cReadSuccessorAcceptance {
     ) throws IOException {
         for (Map.Entry<String, FixedSource> entry : sources.entrySet()) {
             Path source = fixedRegularFile(root, entry.getKey());
-            require(entry.getValue().successorSha256().equals(sha256(source)),
+            String expected = entry.getValue().successorSha256();
+            String httpEntrySuccessor =
+                    Phase4cHttpEntrySuccessorAcceptance.successorHash(entry.getKey());
+            if (httpEntrySuccessor != null) {
+                require(expected.equals(
+                                Phase4cHttpEntrySuccessorAcceptance.acceptedHash(
+                                        entry.getKey())),
+                        "HTTP entry did not accept the exact read successor for "
+                                + entry.getKey());
+                expected = httpEntrySuccessor;
+            }
+            require(expected.equals(sha256(source)),
                     "Phase4C read successor file hash drift for " + entry.getKey());
         }
     }

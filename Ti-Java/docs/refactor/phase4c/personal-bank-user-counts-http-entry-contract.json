@@ -1,0 +1,943 @@
+{
+  "contract_id": "ti.phase4c.personal-bank-user-counts-http-entry-contract",
+  "schema_version": 1,
+  "captured_at": "2026-07-17",
+  "status": "entry_gate_passed_http_implementation_not_started",
+  "scope": "phase4c-personal-bank-user-counts-http-entry-gate",
+  "predecessor": {
+    "source": "docs/refactor/phase4c/personal-bank-user-counts-read-contract.json",
+    "sha256": "458ba5aafe10a451ab05d05f1edf2ac1d5e20a93e01c20fc1b8fe1d2eb750f73",
+    "document_payload_sha256": "216cf664c4d74e67169f4f5c8091f80296964938d31911e3a32aeb3630a3d7a5",
+    "contract_id": "ti.phase4c.personal-bank-user-counts-read-contract",
+    "status": "implemented_and_targeted_verified_http_aliases_deferred",
+    "immutable": true
+  },
+  "source_contracts": {
+    "application_config_baseline": {
+      "source": "server/src/main/resources/application.yml",
+      "sha256": "c760cebe37e4433874c1171782163a3572e92a73c565120b0fa2a52d45a40c5e"
+    },
+    "approved_differences": {
+      "source": "docs/refactor/phase4c/approved-differences.md",
+      "sha256": "921d6626ab11d59a9667e1942953807b0aa1a81c06c01094cc109312f9d6b300"
+    },
+    "boundary_capture_test": {
+      "source": "tools/test_capture_phase4c_personal_bank_user_counts_http_boundary_evidence.py",
+      "sha256": "5d0c4add2dbb252d31b943602ef4745f103484e8cd71d0de60ab584ccbcf97b4"
+    },
+    "boundary_capture_tool": {
+      "source": "tools/capture_phase4c_personal_bank_user_counts_http_boundary_evidence.py",
+      "sha256": "7d73d7973119f07cd013aaa02ff2306d3346e59b4fd182df84a95ec1db640e87"
+    },
+    "contract_builder": {
+      "source": "tools/build_phase4c_personal_bank_user_counts_http_entry_contract.py",
+      "sha256": "78ba1d51fe0aacc8af6d85a9e4d755c4eaee9f1b1f2d59624e4236950f556c2a"
+    },
+    "contract_test": {
+      "source": "tools/test_phase4c_personal_bank_user_counts_http_entry_contract.py",
+      "sha256": "fdbf282f7be37e6138702e973bf67737c940e7944ac6103f8954902d5b8621e4"
+    },
+    "decimal_path_integer": {
+      "source": "server/src/main/java/io/saksk/ti/web/LegacyDecimalPathInteger.java",
+      "sha256": "cfa4050ce58d9a32c6f04e451528a9fa15ccc8ca3d2f6ee89c7500bccbbfe45f"
+    },
+    "historical_composition_contract_test": {
+      "source": "tools/test_phase4c_personal_bank_user_counts_composition_contract.py",
+      "sha256": "c08ff0263d0da2c4e08733685256d7946a316a06772b8959c3520cc7947aaa76"
+    },
+    "historical_java_read_bridge": {
+      "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cReadSuccessorAcceptance.java",
+      "sha256": "8a008483f70788ffc10158ae789b7b318e8478ad249514f0551d8b0361dcf52b"
+    },
+    "historical_python_read_bridge": {
+      "source": "tools/phase4c_read_successor_acceptance.py",
+      "sha256": "8b4a57393021a304640797cc64a7f4d44aad83ab6d57c50d81f8158aa9008f82"
+    },
+    "historical_read_contract_test": {
+      "source": "tools/test_phase4c_personal_bank_user_counts_read_contract.py",
+      "sha256": "6d493304cc01fcbc801b066700b98bb6b0a1750ee9e3d9ce03867ee6e92991cc"
+    },
+    "http_boundary_evidence": {
+      "source": "docs/refactor/phase4c/personal-bank-user-counts-http-boundary-evidence.json",
+      "sha256": "bb08482f2628dccdf8e5a4fc7c1e669b28787f0c4309f5c65707d0a29e1867c9"
+    },
+    "java_successor_bridge": {
+      "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpEntrySuccessorAcceptance.java",
+      "sha256": "57930b46f1bcd0f0df4bedce1fb41de7b63c53f58b3a45eae49ab858ea1c277a"
+    },
+    "phase3_authentication_differences": {
+      "source": "docs/refactor/phase3/approved-authentication-differences.md",
+      "sha256": "0b8b819720a264dc7a6083792c30fa5e68e0dafc9a55a8488ea4e18c30b320ac"
+    },
+    "phase4b_callers": {
+      "source": "docs/refactor/phase4b/personal-bank-user-counts-callers.json",
+      "sha256": "bad7e19e44710f57841a2681f1b45bfcce85c67b46f1882d2f22f45da86961fc"
+    },
+    "phase4b_entry": {
+      "source": "docs/refactor/phase4b/personal-bank-user-counts-entry-contract.json",
+      "sha256": "1ec41fde1e17dd1f09a9aa737aadd9ada1f64c41f4e44f1df87dbf0613c30ee6"
+    },
+    "phase4b_goldens": {
+      "source": "docs/refactor/phase4b/golden-personal-bank-user-counts-reads.json",
+      "sha256": "71f3be3e1ac821c7d3287ab2fbb19ce166828b0ca4da44716d540597eb380bd1"
+    },
+    "phase4c_readme": {
+      "source": "docs/refactor/phase4c/README.md",
+      "sha256": "07852f793ed84c90212c5b52dedcf82ed9b52ce9b229e35c56c94eafea253a8b"
+    },
+    "predecessor": {
+      "source": "docs/refactor/phase4c/personal-bank-user-counts-read-contract.json",
+      "sha256": "458ba5aafe10a451ab05d05f1edf2ac1d5e20a93e01c20fc1b8fe1d2eb750f73"
+    },
+    "production_config_baseline": {
+      "source": "server/src/main/resources/application-prod.yml",
+      "sha256": "c7a804c93e0937676c4f398899700830df854bdcc404cc72361423d92525ce3f"
+    },
+    "progress": {
+      "source": "docs/refactor/05-progress.md",
+      "sha256": "f44a6efdec4342f13ea1f28831bdca9b36b84f48e932bd4f1d257070af555c7e"
+    },
+    "project_readme": {
+      "source": "README.md",
+      "sha256": "3d18a7b86354b8cad4d54a76a9a3722435dd570b612a5a9e65ca9a4aed2864b6"
+    },
+    "python_successor_bridge": {
+      "source": "tools/phase4c_http_entry_successor_acceptance.py",
+      "sha256": "f66bdc4746f3ee720bfc13213e24c44e30140d4b0f311d2f8a53cd01b8e90f11"
+    },
+    "rate_capture_test": {
+      "source": "tools/test_capture_phase4c_personal_bank_user_counts_rate_limit_evidence.py",
+      "sha256": "72ca166e97a5728b53ae435d5bddc73bcd7b5a4ee02544ed2ad56fd89ce581f7"
+    },
+    "rate_capture_tool": {
+      "source": "tools/capture_phase4c_personal_bank_user_counts_rate_limit_evidence.py",
+      "sha256": "8c3e88e1cbeb8b931cadcdc83c046c2cccb662ed514e29711895fcf92e771ddc"
+    },
+    "rate_limit_evidence": {
+      "source": "docs/refactor/phase4c/personal-bank-user-counts-rate-limit-evidence.json",
+      "sha256": "b0f08ddba54641e776df368ecb10361154a7434aee5d734c379a34d42538e66b"
+    },
+    "rate_wiring_baseline": {
+      "source": "server/src/main/java/io/saksk/ti/web/security/LoginRateLimitConfiguration.java",
+      "sha256": "e681903ee752b3452bdbe5e7a4f2e93f60f95c7b34c77e6f1e552a7e891c08fe"
+    },
+    "request_id": {
+      "source": "server/src/main/java/io/saksk/ti/web/request/RequestId.java",
+      "sha256": "149305482d48bb5dcbb4325c0ce42e261ec2bd653bb1f87d43a86b6f8e591c61"
+    },
+    "request_id_filter": {
+      "source": "server/src/main/java/io/saksk/ti/web/request/RequestIdFilter.java",
+      "sha256": "751438cfaa2bdc1fdcb62227d7879bd177496942bfd4b94bfcf3eac76158084a"
+    },
+    "request_id_filter_test": {
+      "source": "server/src/test/java/io/saksk/ti/web/request/RequestIdFilterTest.java",
+      "sha256": "3f82af4f002fe8fbe0694c2868f3f1f569f24ecb6dcf37762b670366745f0df8"
+    },
+    "security_baseline": {
+      "source": "server/src/main/java/io/saksk/ti/web/config/SecurityConfiguration.java",
+      "sha256": "aaf0b5cd5431dbaa6033bae195dcd42d04c3000d3c3f9ce1083abac54b18cb5a"
+    },
+    "worm_tip": {
+      "source": "docs/refactor/phase4c/personal-bank-user-counts-read-access-worm-evidence.json",
+      "sha256": "a393e79afb76c53a1aca8be1e4709506b58ad062e3c6536c26c12f10b29d1ec6"
+    }
+  },
+  "historical_successor_acceptance": {
+    "predecessor_sha256": "458ba5aafe10a451ab05d05f1edf2ac1d5e20a93e01c20fc1b8fe1d2eb750f73",
+    "read_source_overrides": {
+      "README.md": {
+        "source": "README.md",
+        "accepted_sha256": "685ffde5088acb7e6c1a8e7825d9d7549f0f0567faf7dadf74a6c045a4bd4832",
+        "successor_sha256": "3d18a7b86354b8cad4d54a76a9a3722435dd570b612a5a9e65ca9a4aed2864b6"
+      },
+      "docs/refactor/05-progress.md": {
+        "source": "docs/refactor/05-progress.md",
+        "accepted_sha256": "71407c0fd99d1b8f982ea4e108e1dc5e0d9d472584824fb7a8ade325be65f1c2",
+        "successor_sha256": "f44a6efdec4342f13ea1f28831bdca9b36b84f48e932bd4f1d257070af555c7e"
+      },
+      "docs/refactor/phase4c/README.md": {
+        "source": "docs/refactor/phase4c/README.md",
+        "accepted_sha256": "1b685c0e61e9db4aeecf52595760f579bb8fad2b167dd9c8ca6646487d4b2101",
+        "successor_sha256": "07852f793ed84c90212c5b52dedcf82ed9b52ce9b229e35c56c94eafea253a8b"
+      },
+      "docs/refactor/phase4c/approved-differences.md": {
+        "source": "docs/refactor/phase4c/approved-differences.md",
+        "accepted_sha256": "c8081e7adc62f6119b00a7f91cf5354da649510e6b3bde547670a807e9a52586",
+        "successor_sha256": "921d6626ab11d59a9667e1942953807b0aa1a81c06c01094cc109312f9d6b300"
+      },
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cReadSuccessorAcceptance.java": {
+        "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cReadSuccessorAcceptance.java",
+        "accepted_sha256": "8fec859106edd58364c04632afb978a2f7d7c36114e10d33157a60d1be17027d",
+        "successor_sha256": "8a008483f70788ffc10158ae789b7b318e8478ad249514f0551d8b0361dcf52b"
+      },
+      "tools/phase4c_read_successor_acceptance.py": {
+        "source": "tools/phase4c_read_successor_acceptance.py",
+        "accepted_sha256": "732a03f5a736079676259b302d90252e045444ef0d9986d619785d283553bbe3",
+        "successor_sha256": "8b4a57393021a304640797cc64a7f4d44aad83ab6d57c50d81f8158aa9008f82"
+      },
+      "tools/test_phase4c_personal_bank_user_counts_composition_contract.py": {
+        "source": "tools/test_phase4c_personal_bank_user_counts_composition_contract.py",
+        "accepted_sha256": "08e82154d66ab4a112091ee97b40bc1c155aae14a4bd9ca0b6afbb9032e71bdd",
+        "successor_sha256": "c08ff0263d0da2c4e08733685256d7946a316a06772b8959c3520cc7947aaa76"
+      },
+      "tools/test_phase4c_personal_bank_user_counts_read_contract.py": {
+        "source": "tools/test_phase4c_personal_bank_user_counts_read_contract.py",
+        "accepted_sha256": "95adccd41a0bec4780f881adf845a6c65df67ec42b0d1925d81dbe4b971d8195",
+        "successor_sha256": "6d493304cc01fcbc801b066700b98bb6b0a1750ee9e3d9ce03867ee6e92991cc"
+      }
+    },
+    "successor_allowlist_exact": true,
+    "arbitrary_source_hash_lookup_forbidden": true,
+    "bridge_self_authorization_forbidden": true
+  },
+  "current_state": {
+    "implementation_started": false,
+    "controller_present": false,
+    "route_security_present": false,
+    "route_rate_limiter_present": false,
+    "route_cors_present": false,
+    "openapi_overlay_present": false,
+    "current_production_surface": {
+      "public_application_method_count": 27,
+      "public_application_methods": [
+        {
+          "owner_api": "io.saksk.ti.identity.api.IdentityApplicationApi",
+          "name": "authenticate",
+          "return_type": "io.saksk.ti.identity.api.AuthenticationResult",
+          "parameter_types": [
+            "io.saksk.ti.identity.api.AuthenticateCommand"
+          ]
+        },
+        {
+          "owner_api": "io.saksk.ti.identity.api.LegacyCredentialAuthenticationApi",
+          "name": "authenticateJwt",
+          "return_type": "java.util.Optional",
+          "parameter_types": [
+            "java.lang.String"
+          ],
+          "generic_return_type": "java.util.Optional<io.saksk.ti.identity.api.LegacyAuthenticationResult>"
+        },
+        {
+          "owner_api": "io.saksk.ti.identity.api.LegacyCredentialAuthenticationApi",
+          "name": "authenticateFlaskSession",
+          "return_type": "java.util.Optional",
+          "parameter_types": [
+            "java.lang.String"
+          ],
+          "generic_return_type": "java.util.Optional<io.saksk.ti.identity.api.LegacyAuthenticationResult>"
+        },
+        {
+          "owner_api": "io.saksk.ti.identity.api.SessionAuthorityApi",
+          "name": "authorize",
+          "return_type": "io.saksk.ti.identity.api.SessionAuthorizationResult",
+          "parameter_types": [
+            "long",
+            "int"
+          ]
+        },
+        {
+          "owner_api": "io.saksk.ti.identity.api.SubjectAccessPolicyApi",
+          "name": "subjectAccess",
+          "return_type": "io.saksk.ti.identity.api.SubjectAccessDecision",
+          "parameter_types": [
+            "long"
+          ]
+        },
+        {
+          "owner_api": "io.saksk.ti.catalog.api.CatalogApplicationApi",
+          "name": "subjectCatalog",
+          "return_type": "io.saksk.ti.catalog.api.SubjectCatalogView",
+          "parameter_types": [
+            "io.saksk.ti.catalog.api.AuthenticatedCatalogViewer"
+          ]
+        },
+        {
+          "owner_api": "io.saksk.ti.catalog.api.PublicBankCatalogApi",
+          "name": "search",
+          "return_type": "io.saksk.ti.catalog.api.PublicBankPageView",
+          "parameter_types": [
+            "io.saksk.ti.catalog.api.PublicBankSearchQuery",
+            "java.util.Optional"
+          ]
+        },
+        {
+          "owner_api": "io.saksk.ti.catalog.api.PublicBankCatalogApi",
+          "name": "boards",
+          "return_type": "java.util.List",
+          "parameter_types": [
+            "io.saksk.ti.catalog.api.PublicBankFilter"
+          ],
+          "generic_return_type": "java.util.List<io.saksk.ti.catalog.api.PublicBankBoardView>"
+        },
+        {
+          "owner_api": "io.saksk.ti.catalog.api.PublicBankCatalogApi",
+          "name": "hot",
+          "return_type": "java.util.List",
+          "parameter_types": [
+            "io.saksk.ti.catalog.api.PublicBankHotQuery",
+            "java.util.Optional"
+          ],
+          "generic_return_type": "java.util.List<io.saksk.ti.catalog.api.PublicBankCardView>"
+        },
+        {
+          "owner_api": "io.saksk.ti.catalog.api.PublicBankCatalogApi",
+          "name": "summary",
+          "return_type": "io.saksk.ti.catalog.api.PublicBankSummaryView",
+          "parameter_types": [
+            "io.saksk.ti.catalog.api.PublicBankFilter"
+          ]
+        },
+        {
+          "owner_api": "io.saksk.ti.catalog.api.PublicBankCatalogApi",
+          "name": "detail",
+          "return_type": "java.util.Optional",
+          "parameter_types": [
+            "io.saksk.ti.catalog.api.PublicBankRef",
+            "java.util.Optional"
+          ],
+          "generic_return_type": "java.util.Optional<io.saksk.ti.catalog.api.PublicBankDetailView>"
+        },
+        {
+          "owner_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi",
+          "name": "questionTypes",
+          "return_type": "io.saksk.ti.catalog.api.QuestionTypeCatalogView",
+          "parameter_types": []
+        },
+        {
+          "owner_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi",
+          "name": "countQuestions",
+          "return_type": "long",
+          "parameter_types": [
+            "io.saksk.ti.catalog.api.QuestionCatalogCountQuery"
+          ]
+        },
+        {
+          "owner_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi",
+          "name": "findQuestionById",
+          "return_type": "java.util.Optional",
+          "parameter_types": [
+            "long"
+          ],
+          "generic_return_type": "java.util.Optional<io.saksk.ti.catalog.api.QuestionCatalogRecordView>"
+        },
+        {
+          "owner_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi",
+          "name": "listQuestionSummaries",
+          "return_type": "java.util.List",
+          "parameter_types": [
+            "io.saksk.ti.catalog.api.QuestionCatalogListQuery"
+          ],
+          "generic_return_type": "java.util.List<io.saksk.ti.catalog.api.QuestionCatalogSummaryView>"
+        },
+        {
+          "owner_api": "io.saksk.ti.catalog.api.QuestionMetadataApplicationApi",
+          "name": "listQuestionExportRecords",
+          "return_type": "java.util.List",
+          "parameter_types": [
+            "io.saksk.ti.catalog.api.QuestionExportQuery"
+          ],
+          "generic_return_type": "java.util.List<io.saksk.ti.catalog.api.QuestionExportRecordView>"
+        },
+        {
+          "owner_api": "io.saksk.ti.catalog.api.SubjectMetadataApplicationApi",
+          "name": "listSubjectInventorySummaries",
+          "return_type": "java.util.List",
+          "parameter_types": [],
+          "generic_return_type": "java.util.List<io.saksk.ti.catalog.api.SubjectInventorySummaryView>"
+        },
+        {
+          "owner_api": "io.saksk.ti.catalog.api.SubjectMetadataApplicationApi",
+          "name": "findSubjectById",
+          "return_type": "java.util.Optional",
+          "parameter_types": [
+            "long"
+          ],
+          "generic_return_type": "java.util.Optional<io.saksk.ti.catalog.api.SubjectContextView>"
+        },
+        {
+          "owner_api": "io.saksk.ti.personalbank.api.PersonalBankApplicationApi",
+          "name": "listCategories",
+          "return_type": "java.util.List",
+          "parameter_types": [
+            "io.saksk.ti.personalbank.api.AuthenticatedPersonalBankViewer"
+          ],
+          "generic_return_type": "java.util.List<io.saksk.ti.personalbank.api.PersonalBankCategoryView>"
+        },
+        {
+          "owner_api": "io.saksk.ti.personalbank.api.PersonalBankApplicationApi",
+          "name": "findShares",
+          "return_type": "java.util.Optional",
+          "parameter_types": [
+            "io.saksk.ti.personalbank.api.AuthenticatedPersonalBankViewer",
+            "int"
+          ],
+          "generic_return_type": "java.util.Optional<io.saksk.ti.personalbank.api.PersonalBankShareListView>"
+        },
+        {
+          "owner_api": "io.saksk.ti.personalbank.api.PersonalBankApplicationApi",
+          "name": "listOwnedShares",
+          "return_type": "java.util.List",
+          "parameter_types": [
+            "io.saksk.ti.personalbank.api.AuthenticatedPersonalBankViewer"
+          ],
+          "generic_return_type": "java.util.List<io.saksk.ti.personalbank.api.PersonalBankOwnedShareView>"
+        },
+        {
+          "owner_api": "io.saksk.ti.personalbank.api.PersonalBankApplicationApi",
+          "name": "findUsageStats",
+          "return_type": "io.saksk.ti.personalbank.api.PersonalBankUsageStatsResult",
+          "parameter_types": [
+            "io.saksk.ti.personalbank.api.AuthenticatedPersonalBankViewer",
+            "int"
+          ],
+          "generic_return_type": "io.saksk.ti.personalbank.api.PersonalBankUsageStatsResult"
+        },
+        {
+          "owner_api": "io.saksk.ti.operations.api.OperationsApplicationApi",
+          "name": "getLoginMethods",
+          "return_type": "io.saksk.ti.operations.api.LoginMethodsView",
+          "parameter_types": []
+        },
+        {
+          "owner_api": "io.saksk.ti.learning.api.LearningApplicationApi",
+          "name": "findPersonalBankUserCounts",
+          "return_type": "io.saksk.ti.learning.api.PersonalBankUserCountsResult",
+          "parameter_types": [
+            "io.saksk.ti.learning.api.AuthenticatedLearningViewer",
+            "io.saksk.ti.learning.api.PersonalBankUserCountsQuery"
+          ]
+        },
+        {
+          "owner_api": "io.saksk.ti.personalbank.api.PersonalBankQuestionFactsApi",
+          "name": "checkQuestionAccess",
+          "return_type": "io.saksk.ti.personalbank.api.PersonalBankQuestionAccessResult",
+          "parameter_types": [
+            "io.saksk.ti.personalbank.api.AuthenticatedPersonalBankViewer",
+            "int"
+          ]
+        },
+        {
+          "owner_api": "io.saksk.ti.personalbank.api.PersonalBankQuestionFactsApi",
+          "name": "summarizeQuestions",
+          "return_type": "io.saksk.ti.personalbank.api.PersonalBankQuestionFactsResult",
+          "parameter_types": [
+            "io.saksk.ti.personalbank.api.AuthenticatedPersonalBankViewer",
+            "io.saksk.ti.personalbank.api.PersonalBankQuestionSelection"
+          ]
+        },
+        {
+          "owner_api": "io.saksk.ti.personalbank.api.PersonalBankQuestionFactsApi",
+          "name": "inspectQuestionMembership",
+          "return_type": "io.saksk.ti.personalbank.api.PersonalBankQuestionMembershipView",
+          "parameter_types": [
+            "int",
+            "java.util.List"
+          ]
+        }
+      ],
+      "learning_and_personalbank_main_source_file_count": 40,
+      "learning_and_personalbank_main_source_manifest_sha256": "d20c124c587dff562781dd6b9f7978300b292ff07d5f8fb4463d5a0448b197a1",
+      "production_runtime_file_count": 288,
+      "production_runtime_manifest_sha256": "145bcd8d5e662cffb87744b39b8eae03cdf5761b7fc9096d90300dd4742905dc",
+      "route_status_file_count": 5,
+      "route_status_manifest_sha256": "6f9cfdd6ba849233c51a27ed281856681d8a6ec3a0bda628da9184ec284e4b86",
+      "java_build_context_sha256": "935e6a95a33621b01e1e04d752a09513c8037cffe807a73fa1ce9850fb5912f0",
+      "server_src_main_changed_by_gate": false,
+      "production_resources_changed_by_gate": false,
+      "openapi_or_contracts_changed_by_gate": false,
+      "route_status_changed_by_gate": false
+    },
+    "migrated_operation_count": 11,
+    "pending_operation_count": 600,
+    "production_cutover_operation_count": 0,
+    "routes": [
+      {
+        "alias": "api",
+        "route_id": "6858f6fa506f",
+        "method": "GET",
+        "legacy_path": "/api/user/banks/api/<int:bank_id>/user-counts",
+        "target_path": "/api/user/banks/api/{bank_id}/user-counts",
+        "http_owner": "learning",
+        "migration_status": "pending",
+        "production_cutover": false
+      },
+      {
+        "alias": "web",
+        "route_id": "006913d0d956",
+        "method": "GET",
+        "legacy_path": "/user/banks/api/<int:bank_id>/user-counts",
+        "target_path": "/user/banks/api/{bank_id}/user-counts",
+        "http_owner": "learning",
+        "migration_status": "pending",
+        "production_cutover": false
+      }
+    ]
+  },
+  "evidence": {
+    "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+    "phase4b_entry": {
+      "source": "docs/refactor/phase4b/personal-bank-user-counts-entry-contract.json",
+      "sha256": "1ec41fde1e17dd1f09a9aa737aadd9ada1f64c41f4e44f1df87dbf0613c30ee6"
+    },
+    "callers": {
+      "source": "docs/refactor/phase4b/personal-bank-user-counts-callers.json",
+      "sha256": "bad7e19e44710f57841a2681f1b45bfcce85c67b46f1882d2f22f45da86961fc",
+      "attestation_sha256": "1b650434114f6824ae65e20bc2ead275e651853c026387ddd3461690009dc3fb",
+      "document_payload_sha256": "0470c6d6a5daa33474f0c2b794cce7bebcbc86c763eec31f190864fd8d858669",
+      "repository_match_count": 43,
+      "matched_source_count": 24,
+      "closed": true
+    },
+    "phase4b_goldens": {
+      "source": "docs/refactor/phase4b/golden-personal-bank-user-counts-reads.json",
+      "sha256": "71f3be3e1ac821c7d3287ab2fbb19ce166828b0ca4da44716d540597eb380bd1",
+      "case_count": 59,
+      "case_payload_sha256": "0ace2f642523a62e802db3dc3d045d601743a277e7edf7e2cf214d00619a51bf",
+      "document_payload_sha256": "e2415f68b5324c60a073a6dec47f069488c72b9ed2605aea2de34241728c4110"
+    },
+    "http_boundary": {
+      "source": "docs/refactor/phase4c/personal-bank-user-counts-http-boundary-evidence.json",
+      "sha256": "bb08482f2628dccdf8e5a4fc7c1e669b28787f0c4309f5c65707d0a29e1867c9",
+      "case_count": 62,
+      "case_payload_sha256": "f577ff99a7f04030fd5f4dae0f95610351d4fcfff92de7e9ca0c406516725dbf",
+      "document_payload_sha256": "3e8f7c24548d979723d2601c11221b9e569de7b342e6c3c0d8daa25de74cdd2f",
+      "runtime_route_map_sha256": "1f95547d515cf881f2ae2a3e71fc957230845125371e299bcaa6ffb23b201925",
+      "complete_app_archive_sha256": "4f196047cefcb7c73984b0661a50cfec50f79926543593bdc32152ea1fc99034",
+      "capture_tool_sha256": "7d73d7973119f07cd013aaa02ff2306d3346e59b4fd182df84a95ec1db640e87",
+      "capture_test_sha256": "5d0c4add2dbb252d31b943602ef4745f103484e8cd71d0de60ab584ccbcf97b4",
+      "cors_runtime_covered": true
+    },
+    "rate_limit": {
+      "source": "docs/refactor/phase4c/personal-bank-user-counts-rate-limit-evidence.json",
+      "sha256": "b0f08ddba54641e776df368ecb10361154a7434aee5d734c379a34d42538e66b",
+      "document_payload_sha256": "13dc4604b83be5b46f6931f3bc513cdfb3ee2dd6503891973d8797715bad44fc",
+      "runtime_evidence_payload_sha256": "3300a3b3257bd1a8ae8e8fde4abdedf31dd481f510738ba25c2ac8661f3d5ba4",
+      "capture_tool_sha256": "8c3e88e1cbeb8b931cadcdc83c046c2cccb662ed514e29711895fcf92e771ddc",
+      "capture_test_sha256": "72ca166e97a5728b53ae435d5bddc73bcd7b5a4ee02544ed2ad56fd89ce581f7",
+      "base_windows": [
+        {
+          "count": 10,
+          "unit": "second"
+        },
+        {
+          "count": 500,
+          "unit": "hour"
+        },
+        {
+          "count": 5000,
+          "unit": "day"
+        }
+      ],
+      "production_default_multiplier": 100,
+      "production_default_effective_value": "500000/day;50000/hour;1000/second",
+      "alias_buckets": "independent_per_registered_endpoint",
+      "redis_connection_refusal_status": 500
+    }
+  },
+  "stable_differences": [
+    "P3-AUTH-006",
+    "P4C-LEARNING-001",
+    "P4C-LEARNING-002",
+    "P4C-LEARNING-003",
+    "P4C-LEARNING-004",
+    "P4C-LEARNING-005",
+    "P4C-LEARNING-006",
+    "P4C-LEARNING-007",
+    "P4C-LEARNING-008",
+    "P4C-LEARNING-009",
+    "P4C-LEARNING-010",
+    "P4C-LEARNING-011",
+    "P4C-LEARNING-012"
+  ],
+  "target_http_contract": {
+    "ownership": {
+      "http_owner": "learning",
+      "application_api": "io.saksk.ti.learning.api.LearningApplicationApi#findPersonalBankUserCounts",
+      "viewer_source": "authoritative authenticated principal only",
+      "client_supplied_viewer_id_forbidden": true,
+      "cross_module_direction": "learning -> personalbank::api"
+    },
+    "authentication": {
+      "api_alias": [
+        "authoritative target Session",
+        "successfully exchanged legacy Flask Session",
+        "valid legacy Bearer for this request only"
+      ],
+      "web_alias": [
+        "authoritative target Session",
+        "successfully exchanged legacy Flask Session"
+      ],
+      "explicit_authorization_selects_bearer": true,
+      "cookie_fallback_after_authorization_forbidden": true,
+      "web_any_authorization_result": "302 Location /login",
+      "api_rejected_bearer_or_anonymous": {
+        "status": 401,
+        "body": {
+          "status": "unauthorized",
+          "message": "请先登录",
+          "status_code": 401,
+          "request_id": "<request-id>"
+        }
+      },
+      "enumeration_resistant_rejections": [
+        "anonymous",
+        "malformed or duplicate Authorization",
+        "invalid signature",
+        "expired token",
+        "stale session_version",
+        "revoked, missing, or locked identity"
+      ],
+      "inherited_difference": "P3-AUTH-006",
+      "stable_difference": "P4C-LEARNING-007",
+      "email_bind_required_parity_claimed": false
+    },
+    "query_parameters": {
+      "repeated_parameter_rule": "first value wins",
+      "q_type": {
+        "default": "",
+        "normalization": "trim; case-insensitive all means no filter",
+        "unknown": "essay"
+      },
+      "source": {
+        "default": "all",
+        "special_exact_lowercase_values": [
+          "favorites",
+          "mistakes"
+        ],
+        "other": "all"
+      },
+      "tag": {
+        "default": "",
+        "bypass_only_exact_lowercase": "all",
+        "other_nonempty": "normalized learning-owned tag filter"
+      }
+    },
+    "application_result": {
+      "available_status": 200,
+      "available_body_fields_exact": [
+        "status",
+        "code",
+        "data",
+        "message",
+        "request_id"
+      ],
+      "data_fields_exact": [
+        "total",
+        "favorites",
+        "mistakes",
+        "types",
+        "shuffle_options_available"
+      ],
+      "count_domain": "signed JSON integer backed by Java long",
+      "denied_status": 403,
+      "denied_body": {
+        "status": "error",
+        "code": 403,
+        "message": "无权访问此题库",
+        "status_code": 403,
+        "request_id": "<request-id>"
+      },
+      "denied_forbids_fields": [
+        "data",
+        "payload"
+      ],
+      "terminal_denial": true,
+      "permission_recheck_before_zero_or_tag_return": true,
+      "optional_field_fail_soft_only_for_infrastructure_or_query_failure": true,
+      "policy_sources": [
+        "P4C-LEARNING-002",
+        "P4C-LEARNING-005",
+        "P4C-LEARNING-006"
+      ]
+    },
+    "path": {
+      "normalizer": "io.saksk.ti.web.LegacyDecimalPathInteger",
+      "matches": "one nonempty segment consisting only of Unicode Nd code points",
+      "leading_zero_and_unicode_nd": "normalize by numeric value",
+      "percent_encoded_ascii_or_utf8_nd": "strictly decode once, then apply the same Unicode Nd rule",
+      "zero": {
+        "status": 403,
+        "authentication": true,
+        "rate_limited": true,
+        "application_called": false
+      },
+      "application_domain": "1..2147483647",
+      "above_integer_max": {
+        "status": 500,
+        "authentication": true,
+        "rate_limited": true,
+        "application_called": false,
+        "business_sql": 0,
+        "bounded_parse": "length and lexical comparison before integer conversion"
+      },
+      "converter_miss": {
+        "examples": [
+          "negative",
+          "empty",
+          "non-Nd",
+          "extra segment"
+        ],
+        "status": 404,
+        "rate_limited": false,
+        "application_called": false
+      },
+      "encoded_slash_or_ambiguous_path": {
+        "status": 400,
+        "layer": "StrictHttpFirewall",
+        "rate_limited": false,
+        "application_called": false
+      },
+      "semicolon_matrix": {
+        "status": 400,
+        "layer": "StrictHttpFirewall",
+        "rate_limited": false,
+        "application_called": false
+      },
+      "stable_difference": "P4C-LEARNING-011"
+    },
+    "methods": {
+      "get": "authenticate, rate limit, invoke learning application API",
+      "head": {
+        "same_status_auth_rate_application_and_sql_as_get": true,
+        "body_bytes_for_every_status": 0,
+        "stable_difference": "P4C-LEARNING-012"
+      },
+      "bare_options": {
+        "status": 204,
+        "body_bytes": 0,
+        "allow": [
+          "GET",
+          "HEAD",
+          "OPTIONS"
+        ],
+        "authentication": false,
+        "rate_limited": false,
+        "session_mutation": false,
+        "application_called": false,
+        "sql": 0
+      }
+    },
+    "cors": {
+      "scope": "API alias only",
+      "web_alias_acao": false,
+      "allowed_origin_sources": [
+        "https://servicewechat.com",
+        "explicit configured origins",
+        "development-profile localhost/127.0.0.1 ports 5000 and 3000"
+      ],
+      "wildcard_origin": false,
+      "credentials": false,
+      "allowed_methods": [
+        "GET",
+        "HEAD",
+        "OPTIONS"
+      ],
+      "allowed_headers": [
+        "Content-Type",
+        "Authorization",
+        "X-Request-ID"
+      ],
+      "allowed_simple_api_request": "continue to authentication, rate limit, and the application path",
+      "disallowed_simple_api_request": {
+        "status": 403,
+        "body_bytes": 0,
+        "access_control_allow_origin": false,
+        "authentication": false,
+        "rate_limited": false,
+        "session_mutation": false,
+        "application_called": false,
+        "sql": 0
+      },
+      "valid_preflight": {
+        "status": 204,
+        "body_bytes": 0,
+        "authentication": false,
+        "rate_limited": false,
+        "session_mutation": false,
+        "application_called": false,
+        "sql": 0
+      },
+      "invalid_preflight": {
+        "status": 403,
+        "body_bytes": 0,
+        "access_control_allow_origin": false,
+        "side_effects": 0
+      },
+      "stable_difference": "P4C-LEARNING-010"
+    },
+    "rate_limit": {
+      "algorithm": "atomic Redis fixed windows; stop after first breached window",
+      "base_limits": {
+        "per_second": 10,
+        "per_hour": 500,
+        "per_day": 5000
+      },
+      "development_default_multiplier": 1,
+      "production_default_multiplier": 100,
+      "production_effective_defaults": {
+        "per_second": 1000,
+        "per_hour": 50000,
+        "per_day": 500000
+      },
+      "deployment_override": "route-specific override then TI_RATE_LIMIT_MULTIPLIER",
+      "alias_buckets": "independent",
+      "actor": "authoritative effective TargetAuthenticatedPrincipal; trusted client address fallback for rejected credentials",
+      "raw_identity_or_address_in_redis": false,
+      "keying": "domain-separated HMAC-SHA-256 pseudonym",
+      "response_headers": [
+        "X-RateLimit-Limit",
+        "X-RateLimit-Remaining",
+        "X-RateLimit-Reset",
+        "Retry-After"
+      ],
+      "rate_limited_status": 429,
+      "rate_limited_body_fields_exact": [
+        "status",
+        "message",
+        "payload",
+        "status_code",
+        "request_id"
+      ],
+      "rate_limited_payload": null,
+      "storage_failure": {
+        "status": 503,
+        "fail_closed": true,
+        "rate_headers": false,
+        "internal_details": false
+      },
+      "stable_difference": "P4C-LEARNING-009"
+    },
+    "failure_negotiation": {
+      "api_500": {
+        "content_type": "application/json",
+        "body": {
+          "status": "error",
+          "message": "An unexpected server error occurred.",
+          "payload": null,
+          "status_code": 500,
+          "request_id": "<request-id>"
+        }
+      },
+      "web_500_default_html": "<h1>500 - 服务器错误</h1><p>发生了一个意外错误，请稍后再试。</p>",
+      "web_500_json_when_raw_accept_starts_with": "application/json",
+      "global_exception_handler_changes_forbidden": true
+    },
+    "request_id": {
+      "source": "io.saksk.ti.web.request.RequestId#from",
+      "client_header_validation_owned_by_existing_filter": true,
+      "body_and_response_header_must_match": true
+    },
+    "identity_activity": {
+      "users_last_active_dml": 0,
+      "methods": [
+        "GET",
+        "HEAD",
+        "OPTIONS"
+      ],
+      "allowed_runtime_effects": [
+        "authoritative Session registry/cookie reconciliation",
+        "successful legacy Flask Session exchange"
+      ],
+      "stable_difference": "P4C-LEARNING-008"
+    },
+    "headers": {
+      "security": [
+        "X-Content-Type-Options: nosniff",
+        "X-Frame-Options: SAMEORIGIN",
+        "Referrer-Policy: strict-origin-when-cross-origin"
+      ],
+      "api_vary_tokens": [
+        "Origin",
+        "Cookie"
+      ],
+      "web_vary_tokens": [
+        "Cookie"
+      ],
+      "vary_tokens_must_be_merged": true
+    }
+  },
+  "authorization": {
+    "current_http_implementation_started": false,
+    "future_controller": true,
+    "future_route_specific_security": true,
+    "future_route_specific_rate_limit": true,
+    "future_route_specific_cors": true,
+    "future_route_and_openapi_delta": true,
+    "future_required_configuration": true,
+    "identity_api_or_global_auth_filter_change": false,
+    "learning_or_personalbank_persistence_change": false,
+    "production_schema_or_index": false,
+    "operator_migration_implementation": false,
+    "real_data_migration_execution": false,
+    "migration_global_preflight_closed": false,
+    "client_change": false,
+    "gateway_or_proxy_change": false,
+    "production_cutover": false
+  },
+  "authorized_future_slice": {
+    "implementation_started": false,
+    "new_main_sources_exact": [
+      "server/src/main/java/io/saksk/ti/web/compat/LegacyPersonalBankUserCountsController.java",
+      "server/src/main/java/io/saksk/ti/web/compat/LegacyPersonalBankUserCountsSecurityErrorWriter.java",
+      "server/src/main/java/io/saksk/ti/web/security/PersonalBankUserCountsReadRequestResolver.java",
+      "server/src/main/java/io/saksk/ti/web/security/PersonalBankUserCountsReadRateLimiter.java",
+      "server/src/main/java/io/saksk/ti/web/security/PersonalBankUserCountsReadRateLimitProperties.java",
+      "server/src/main/java/io/saksk/ti/web/security/RedisPersonalBankUserCountsReadRateLimiter.java",
+      "server/src/main/java/io/saksk/ti/web/security/PersonalBankUserCountsReadRateLimitFilter.java",
+      "server/src/main/java/io/saksk/ti/web/security/PersonalBankUserCountsCorsConfigurationSource.java"
+    ],
+    "changed_main_sources_exact": [
+      "server/src/main/java/io/saksk/ti/web/config/SecurityConfiguration.java",
+      "server/src/main/java/io/saksk/ti/web/security/LoginRateLimitConfiguration.java"
+    ],
+    "changed_resources_exact": [
+      "server/src/main/resources/application.yml",
+      "server/src/main/resources/application-prod.yml",
+      ".env.example",
+      "compose.dev.yml"
+    ],
+    "new_openapi_overlay_exact": "openapi/phase4c-personal-bank-user-counts.openapi.json",
+    "required_route_delta_rows": 2,
+    "future_migrated_operation_count": 13,
+    "future_pending_operation_count": 598,
+    "production_cutover_operation_count": 0,
+    "forbidden_main_sources": [
+      "server/src/main/java/io/saksk/ti/identity/api/LegacyCredentialAuthenticationApi.java",
+      "server/src/main/java/io/saksk/ti/web/security/TargetSessionAuthenticationFilter.java",
+      "server/src/main/java/io/saksk/ti/web/request/RequestId.java",
+      "server/src/main/java/io/saksk/ti/web/request/RequestIdFilter.java",
+      "server/src/main/java/io/saksk/ti/web/LegacyDecimalPathInteger.java",
+      "server/src/main/java/io/saksk/ti/web/error/GlobalExceptionHandler.java",
+      "server/src/main/java/io/saksk/ti/web/error/SafeErrorController.java"
+    ],
+    "required_test_families": [
+      "request resolver and Unicode/path boundary unit tests",
+      "full filter-chain authentication and authorization tests",
+      "route-scoped CORS and response-header tests",
+      "GET/HEAD/OPTIONS method and zero-body tests",
+      "three-window limiter unit, Redis integration, concurrency and TTL tests",
+      "controller envelope, negotiation and terminal-denial tests",
+      "PostgreSQL 16.14 and 18.4 HTTP/query/fingerprint integration tests",
+      "OpenAPI overlay and generated contract tests",
+      "59-case golden parity with only approved differences",
+      "production manifest, route status, WORM and build-context gates"
+    ]
+  },
+  "worm_evidence": {
+    "source": "docs/refactor/phase4c/personal-bank-user-counts-read-access-worm-evidence.json",
+    "sha256": "a393e79afb76c53a1aca8be1e4709506b58ad062e3c6536c26c12f10b29d1ec6",
+    "java_build_context_sha256": "935e6a95a33621b01e1e04d752a09513c8037cffe807a73fa1ce9850fb5912f0",
+    "new_worm_required_for_current_gate": false,
+    "new_worm_required_after_future_production_change": true
+  },
+  "acceptance": {
+    "entry_evidence_closed": true,
+    "current_http_implementation_started": false,
+    "future_exact_http_slice_authorized": true,
+    "routes_remain_pending": true,
+    "operator_and_real_migration_remain_blocked": true,
+    "production_cutover": false,
+    "next_gate": "implement_and_verify_exact_http_slice_without_operator_or_cutover"
+  },
+  "document_payload_sha256": "ca430ec715d3b673e00f72fd8e290bed4b228970b9940864745e9c6d560a7402"
+}

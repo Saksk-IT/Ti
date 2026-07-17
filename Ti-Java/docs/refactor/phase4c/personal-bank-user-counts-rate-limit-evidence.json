@@ -1,0 +1,2050 @@
+{
+  "contract_id": "ti.phase4c.personal-bank-user-counts-rate-limit-evidence",
+  "schema_version": 1,
+  "captured_at": "2026-07-17",
+  "status": "fixed_legacy_observation_only_target_proposal_not_authorized",
+  "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "scope": "dual-alias personal-bank user-counts rate-limit pre-entry evidence",
+  "classification": {
+    "legacy_source_facts": "immutable fixed-commit source and deployment declarations",
+    "legacy_runtime_observations": "real fixed-commit Flask routes in isolated test applications; not deployed production traffic",
+    "proposed_target_contract": "design proposal only; not authorization, implementation, or cutover evidence"
+  },
+  "legacy_source_attestation": {
+    "complete_app_archive": {
+      "archive_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+      "archive_tree": "db528464896085fe14849baef3c5e686ad1bc253",
+      "archive_scope": [
+        "app/"
+      ],
+      "archive_sha256": "4f196047cefcb7c73984b0661a50cfec50f79926543593bdc32152ea1fc99034",
+      "commit_object_verified": true,
+      "complete_app_tree_verified": true,
+      "extracted_file_count": 645,
+      "git_object_format": "sha1",
+      "key_sources": {
+        "app/__init__.py": {
+          "git_blob": "1f945e13969e2d4bebf8925e65f483f2a1d4cef3",
+          "sha256": "9b2efe8a539ee47f7bcf475708466a64669b6bb36804ccf2b1cc5a63fcb21668",
+          "size_bytes": 43489
+        },
+        "app/core/extensions.py": {
+          "git_blob": "963753e44321f8e884f8d4ea701aa61c5b0a3263",
+          "sha256": "293c63c5ea2d548e1389f221909dced878a861d28f8073f305fb98d6ff334052",
+          "size_bytes": 2150
+        },
+        "app/core/utils/api_response.py": {
+          "git_blob": "48a052d8c27eea94c396e9a9656f2e4d2d23bbbb",
+          "sha256": "76fe1a04c1a9849264502054002f5b89e3a8a62a973df6c6c5ecc1ea7aead5b3",
+          "size_bytes": 1072
+        },
+        "app/modules/user_bank/routes/public.py": {
+          "git_blob": "26044f0af2097b490e36a501894cb056aac654ae",
+          "sha256": "6f3455e825b0316272d298d35782e73dd3230e9b2fc5271f1c078009b389a663",
+          "size_bytes": 12723
+        },
+        "app/modules/user_bank/services/plaza_metrics_service.py": {
+          "git_blob": "147979ec1e0370d2d1cb946b4a8a6859f04478b0",
+          "sha256": "a356ca751c30e50b5bb3d5fcab2742ce2ca6ac8a71dc6c82b974bdb63bb51d82",
+          "size_bytes": 13375
+        },
+        "app/modules/user_bank/services/plaza_query_service.py": {
+          "git_blob": "4d1bd61921437fa9ec8b1463e68e3b6dffe8782f",
+          "sha256": "4d26b12bc756a40a5c89cf9ee373753f73bd2d5eed6ee3b11c916192c58aa057",
+          "size_bytes": 42772
+        }
+      },
+      "member_count": 792,
+      "source_transport": "git archive --format=tar (read-only, fixed commit)",
+      "temporary_extraction_cleanup": "enforced and checked on context exit"
+    },
+    "key_sources": {
+      "requirements.txt": {
+        "git_blob": "0c23c9ec99b3b1af872dbfaa707f10898a32fffb",
+        "sha256": "157cf8a1e2bd57090e95b29ce00595c9ce34044996a6c8b30b44639867c9b66c",
+        "size_bytes": 3976,
+        "transport": "git show from verified fixed commit"
+      },
+      ".env.example": {
+        "git_blob": "43f564b3be7c950d4dfed2355c88a2417f12fcf7",
+        "sha256": "5ed1e7b26a1e369b29683bd027bcd4e63b6a934dd668dde44b85cbb591fd8b8f",
+        "size_bytes": 7302,
+        "transport": "git show from verified fixed commit"
+      },
+      "compose.prod.yml": {
+        "git_blob": "029c6842eff064e1d079371c213eae343953c9b2",
+        "sha256": "b7afc48dce5969055be30ce4636296e13ea4db1d725c08ccdbfea9f17e62b41d",
+        "size_bytes": 10498,
+        "transport": "git show from verified fixed commit"
+      },
+      "app/__init__.py": {
+        "git_blob": "1f945e13969e2d4bebf8925e65f483f2a1d4cef3",
+        "sha256": "9b2efe8a539ee47f7bcf475708466a64669b6bb36804ccf2b1cc5a63fcb21668",
+        "size_bytes": 43489,
+        "transport": "verified complete app/ archive"
+      },
+      "app/core/config.py": {
+        "git_blob": "9ec08bf5b2ff7459a974091e43dd21e53c5898ee",
+        "sha256": "6cc8a7432c2a147c527fe336df98cc0b1c34deb3300970b1568ba588117bbcfd",
+        "size_bytes": 15418,
+        "transport": "verified complete app/ archive"
+      },
+      "app/core/errors.py": {
+        "git_blob": "28a07dd252a880a2c458b5a44d2a9ca6ef8e7392",
+        "sha256": "e27f21eb06a9041f28378e5d7aa5e13cfa0aec89bf173855a0a03ba21f55935b",
+        "size_bytes": 5616,
+        "transport": "verified complete app/ archive"
+      },
+      "app/core/extensions.py": {
+        "git_blob": "963753e44321f8e884f8d4ea701aa61c5b0a3263",
+        "sha256": "293c63c5ea2d548e1389f221909dced878a861d28f8073f305fb98d6ff334052",
+        "size_bytes": 2150,
+        "transport": "verified complete app/ archive"
+      },
+      "app/core/utils/rate_limit.py": {
+        "git_blob": "9cce997729ab979da970646f43ed55c4ef698697",
+        "sha256": "ed6868f842700b19dfdb824c7f7a7f195ba06b4b704bbd80981190887b292208",
+        "size_bytes": 2002,
+        "transport": "verified complete app/ archive"
+      },
+      "app/core/utils/rate_limit_policy.py": {
+        "git_blob": "4de71250926dbac270a4d59cdc2e1c85fb89ae13",
+        "sha256": "1e8ee9dc24f9f924a0cb3c7344b829bb0145e626626b4048ea44d96507c24ae9",
+        "size_bytes": 3939,
+        "transport": "verified complete app/ archive"
+      },
+      "app/modules/user_bank/__init__.py": {
+        "git_blob": "eb1fabe59a874b1732a111d3778fcf36a1e9f70c",
+        "sha256": "b83eaf9a77d6d01e0b631b42bc05cdb4e6c5a6346d4662da29e5f5c289928acd",
+        "size_bytes": 1259,
+        "transport": "verified complete app/ archive"
+      },
+      "app/modules/user_bank/routes/api_base.py": {
+        "git_blob": "7f2bb5df556a54c8e91d5017253c43e78d5aedab",
+        "sha256": "7900df043ca86d07f90f883622ad4f6795e1e1666b44955116653e683eced0ea",
+        "size_bytes": 3213,
+        "transport": "verified complete app/ archive"
+      },
+      "app/modules/user_bank/routes/api_quiz.py": {
+        "git_blob": "c007675756a3e483fe0abc8be306210c6a891363",
+        "sha256": "4aa201c2f095fef754384fdc83280e75ac1c94f0fb3957e9c0b007779760d5c2",
+        "size_bytes": 36301,
+        "transport": "verified complete app/ archive"
+      }
+    }
+  },
+  "legacy_source_facts": {
+    "handler": {
+      "source": "app/modules/user_bank/routes/api_quiz.py",
+      "function": "get_user_counts",
+      "decorators": [
+        "user_bank_api_bp.route('/<int:bank_id>/user-counts', methods=['GET'])",
+        "auth_required"
+      ],
+      "route_specific_limiter": false,
+      "limiter_source": "application-wide RATELIMIT_DEFAULT"
+    },
+    "aliases": {
+      "state": "one shared handler registered as two distinct Flask endpoints",
+      "routes": {
+        "api-alias": {
+          "route_id": "6858f6fa506f",
+          "path": "/api/user/banks/api/99999/user-counts",
+          "owner_bank_path": "/api/user/banks/api/99551/user-counts",
+          "template": "/api/user/banks/api/<int:bank_id>/user-counts",
+          "expected_endpoint": "user_bank_api_root.user_bank_api.get_user_counts"
+        },
+        "web-alias": {
+          "route_id": "006913d0d956",
+          "path": "/user/banks/api/99999/user-counts",
+          "owner_bank_path": "/user/banks/api/99551/user-counts",
+          "template": "/user/banks/api/<int:bank_id>/user-counts",
+          "expected_endpoint": "user_bank.user_bank_api.get_user_counts"
+        }
+      }
+    },
+    "base_configuration": {
+      "value": "5000 per day;500 per hour;10 per second",
+      "windows": [
+        {
+          "count": 10,
+          "unit": "second"
+        },
+        {
+          "count": 500,
+          "unit": "hour"
+        },
+        {
+          "count": 5000,
+          "unit": "day"
+        }
+      ],
+      "headers_enabled": true,
+      "applies_to": "base Config and inherited development/testing config"
+    },
+    "production_configuration": {
+      "default_multiplier": 100,
+      "default_effective_value": "500000/day;50000/hour;1000/second",
+      "compose_default_value": "500000/day;50000/hour;1000/second",
+      "environment_override": "RATELIMIT_DEFAULT may replace the fallback",
+      "base_values_are_not_fixed_commit_production_defaults": true,
+      "redis_required": true,
+      "memory_storage_rejected_when_not DEBUG or TESTING": true
+    },
+    "key_resolution": {
+      "priority": [
+        "g.current_user_id",
+        "Session user_id",
+        "decoded optional Bearer JWT user_id",
+        "request remote address"
+      ],
+      "authenticated_shape": "uid:<raw-user-id>",
+      "anonymous_shape": "ip:<request-remote-address>",
+      "raw_keys_captured": false,
+      "proxy_note": "get_remote_address reads request.remote_addr; production ProxyFix may rewrite it, but trusted-proxy behavior is outside this capture"
+    },
+    "library_pins": {
+      "Flask-Limiter": "3.11.0",
+      "limits": "4.2",
+      "redis": ">=5.0.0,<6"
+    }
+  },
+  "legacy_runtime_observations": {
+    "base_10_per_second": {
+      "observation_kind": "fixed_commit_real_route_combined_base_config",
+      "production_observation": false,
+      "runtime": {
+        "configured_default": "5000 per day;500 per hour;10 per second",
+        "headers_enabled": true,
+        "storage_class": "limits.storage.memory.MemoryStorage",
+        "strategy_class": "limits.strategies.FixedWindowRateLimiter"
+      },
+      "registered_endpoints": {
+        "/user/banks/api/<int:bank_id>/user-counts": "user_bank.user_bank_api.get_user_counts",
+        "/api/user/banks/api/<int:bank_id>/user-counts": "user_bank_api_root.user_bank_api.get_user_counts"
+      },
+      "route": "api-alias",
+      "configured_limits": "5000 per day;500 per hour;10 per second",
+      "isolated_window_override": null,
+      "limit_under_test": "10 per second",
+      "sequence": {
+        "attempt_count": 11,
+        "status_counts": {
+          "403": 10,
+          "429": 1
+        },
+        "status_sequence_sha256": "934324d8b8bfed26ff84fb48e67d6dfddf4d1129def599221cc5270fbb1f19ce",
+        "handler_bank_access_probe_count": 10,
+        "sql_statement_count": 22,
+        "samples": [
+          {
+            "attempt": 1,
+            "response": {
+              "status": 403,
+              "headers": {
+                "Content-Length": [
+                  "140"
+                ],
+                "Content-Type": [
+                  "application/json; charset=utf-8"
+                ],
+                "Retry-After": [
+                  "<dynamic-seconds>"
+                ],
+                "Vary": [
+                  "Origin, Cookie"
+                ],
+                "X-RateLimit-Limit": [
+                  "10"
+                ],
+                "X-RateLimit-Remaining": [
+                  "9"
+                ],
+                "X-RateLimit-Reset": [
+                  "<rate-limit-reset-epoch>"
+                ],
+                "X-Request-ID": [
+                  "phase4c-user-counts-rate-10-second"
+                ]
+              },
+              "body_kind": "json",
+              "body": {
+                "code": 403,
+                "message": "无权访问此题库",
+                "request_id": "phase4c-user-counts-rate-10-second",
+                "status": "error",
+                "status_code": 403
+              },
+              "body_text": "{\"code\": 403, \"message\": \"无权访问此题库\", \"status\": \"error\", \"request_id\": \"phase4c-user-counts-rate-10-second\", \"status_code\": 403}",
+              "body_length_bytes": 140,
+              "body_sha256": "a9e3c7fbe600070056177ecf7526294360dbe30460dee0de12af79196ecd7cf0"
+            },
+            "handler_bank_access_probe_delta": 1,
+            "sql_statement_delta": 4
+          },
+          {
+            "attempt": 10,
+            "response": {
+              "status": 403,
+              "headers": {
+                "Content-Length": [
+                  "140"
+                ],
+                "Content-Type": [
+                  "application/json; charset=utf-8"
+                ],
+                "Retry-After": [
+                  "<dynamic-seconds>"
+                ],
+                "Vary": [
+                  "Origin, Cookie"
+                ],
+                "X-RateLimit-Limit": [
+                  "10"
+                ],
+                "X-RateLimit-Remaining": [
+                  "0"
+                ],
+                "X-RateLimit-Reset": [
+                  "<rate-limit-reset-epoch>"
+                ],
+                "X-Request-ID": [
+                  "phase4c-user-counts-rate-10-second"
+                ]
+              },
+              "body_kind": "json",
+              "body": {
+                "code": 403,
+                "message": "无权访问此题库",
+                "request_id": "phase4c-user-counts-rate-10-second",
+                "status": "error",
+                "status_code": 403
+              },
+              "body_text": "{\"code\": 403, \"message\": \"无权访问此题库\", \"status\": \"error\", \"request_id\": \"phase4c-user-counts-rate-10-second\", \"status_code\": 403}",
+              "body_length_bytes": 140,
+              "body_sha256": "a9e3c7fbe600070056177ecf7526294360dbe30460dee0de12af79196ecd7cf0"
+            },
+            "handler_bank_access_probe_delta": 1,
+            "sql_statement_delta": 2
+          },
+          {
+            "attempt": 11,
+            "response": {
+              "status": 429,
+              "headers": {
+                "Content-Length": [
+                  "151"
+                ],
+                "Content-Type": [
+                  "application/json"
+                ],
+                "Retry-After": [
+                  "<dynamic-seconds>"
+                ],
+                "Vary": [
+                  "Origin, Cookie"
+                ],
+                "X-RateLimit-Limit": [
+                  "10"
+                ],
+                "X-RateLimit-Remaining": [
+                  "0"
+                ],
+                "X-RateLimit-Reset": [
+                  "<rate-limit-reset-epoch>"
+                ],
+                "X-Request-ID": [
+                  "phase4c-user-counts-rate-10-second"
+                ]
+              },
+              "body_kind": "json",
+              "body": {
+                "message": "10 per 1 second",
+                "payload": null,
+                "request_id": "phase4c-user-counts-rate-10-second",
+                "status": "error",
+                "status_code": 429
+              },
+              "body_text": "{\n  \"message\": \"10 per 1 second\",\n  \"payload\": null,\n  \"request_id\": \"phase4c-user-counts-rate-10-second\",\n  \"status\": \"error\",\n  \"status_code\": 429\n}\n",
+              "body_length_bytes": 151,
+              "body_sha256": "64d4189240bbb61597e5962c09d47673c4e85e04eae4610b3b7e3b08de2a948d"
+            },
+            "handler_bank_access_probe_delta": 0,
+            "sql_statement_delta": 0
+          }
+        ]
+      }
+    },
+    "isolated_500_per_hour": {
+      "observation_kind": "fixed_commit_real_route_single_window_diagnostic",
+      "production_observation": false,
+      "runtime": {
+        "configured_default": "500 per hour",
+        "headers_enabled": true,
+        "storage_class": "limits.storage.memory.MemoryStorage",
+        "strategy_class": "limits.strategies.FixedWindowRateLimiter"
+      },
+      "route": "api-alias",
+      "configured_limits": "500 per hour",
+      "isolated_window_override": {
+        "source_mutated": false,
+        "runtime_config_override": "RATELIMIT_DEFAULT=500 per hour",
+        "purpose": "isolate this fixed-source clause because the combined 10/second window otherwise masks a burst test of the longer window"
+      },
+      "limit_under_test": "500 per hour",
+      "sequence": {
+        "attempt_count": 501,
+        "status_counts": {
+          "403": 500,
+          "429": 1
+        },
+        "status_sequence_sha256": "ee152e52b0dc255761179dca726ed23aa71477ee24d911408146f35c4b532950",
+        "handler_bank_access_probe_count": 500,
+        "sql_statement_count": 1002,
+        "samples": [
+          {
+            "attempt": 1,
+            "response": {
+              "status": 403,
+              "headers": {
+                "Content-Length": [
+                  "139"
+                ],
+                "Content-Type": [
+                  "application/json; charset=utf-8"
+                ],
+                "Retry-After": [
+                  "<dynamic-seconds>"
+                ],
+                "Vary": [
+                  "Origin, Cookie"
+                ],
+                "X-RateLimit-Limit": [
+                  "500"
+                ],
+                "X-RateLimit-Remaining": [
+                  "499"
+                ],
+                "X-RateLimit-Reset": [
+                  "<rate-limit-reset-epoch>"
+                ],
+                "X-Request-ID": [
+                  "phase4c-user-counts-rate-500-hour"
+                ]
+              },
+              "body_kind": "json",
+              "body": {
+                "code": 403,
+                "message": "无权访问此题库",
+                "request_id": "phase4c-user-counts-rate-500-hour",
+                "status": "error",
+                "status_code": 403
+              },
+              "body_text": "{\"code\": 403, \"message\": \"无权访问此题库\", \"status\": \"error\", \"request_id\": \"phase4c-user-counts-rate-500-hour\", \"status_code\": 403}",
+              "body_length_bytes": 139,
+              "body_sha256": "ab7887a676e7cec4e4d18a51d723cdc074e7409b5e8561e97243869559609648"
+            },
+            "handler_bank_access_probe_delta": 1,
+            "sql_statement_delta": 4
+          },
+          {
+            "attempt": 500,
+            "response": {
+              "status": 403,
+              "headers": {
+                "Content-Length": [
+                  "139"
+                ],
+                "Content-Type": [
+                  "application/json; charset=utf-8"
+                ],
+                "Retry-After": [
+                  "<dynamic-seconds>"
+                ],
+                "Vary": [
+                  "Origin, Cookie"
+                ],
+                "X-RateLimit-Limit": [
+                  "500"
+                ],
+                "X-RateLimit-Remaining": [
+                  "0"
+                ],
+                "X-RateLimit-Reset": [
+                  "<rate-limit-reset-epoch>"
+                ],
+                "X-Request-ID": [
+                  "phase4c-user-counts-rate-500-hour"
+                ]
+              },
+              "body_kind": "json",
+              "body": {
+                "code": 403,
+                "message": "无权访问此题库",
+                "request_id": "phase4c-user-counts-rate-500-hour",
+                "status": "error",
+                "status_code": 403
+              },
+              "body_text": "{\"code\": 403, \"message\": \"无权访问此题库\", \"status\": \"error\", \"request_id\": \"phase4c-user-counts-rate-500-hour\", \"status_code\": 403}",
+              "body_length_bytes": 139,
+              "body_sha256": "ab7887a676e7cec4e4d18a51d723cdc074e7409b5e8561e97243869559609648"
+            },
+            "handler_bank_access_probe_delta": 1,
+            "sql_statement_delta": 2
+          },
+          {
+            "attempt": 501,
+            "response": {
+              "status": 429,
+              "headers": {
+                "Content-Length": [
+                  "149"
+                ],
+                "Content-Type": [
+                  "application/json"
+                ],
+                "Retry-After": [
+                  "<dynamic-seconds>"
+                ],
+                "Vary": [
+                  "Origin, Cookie"
+                ],
+                "X-RateLimit-Limit": [
+                  "500"
+                ],
+                "X-RateLimit-Remaining": [
+                  "0"
+                ],
+                "X-RateLimit-Reset": [
+                  "<rate-limit-reset-epoch>"
+                ],
+                "X-Request-ID": [
+                  "phase4c-user-counts-rate-500-hour"
+                ]
+              },
+              "body_kind": "json",
+              "body": {
+                "message": "500 per 1 hour",
+                "payload": null,
+                "request_id": "phase4c-user-counts-rate-500-hour",
+                "status": "error",
+                "status_code": 429
+              },
+              "body_text": "{\n  \"message\": \"500 per 1 hour\",\n  \"payload\": null,\n  \"request_id\": \"phase4c-user-counts-rate-500-hour\",\n  \"status\": \"error\",\n  \"status_code\": 429\n}\n",
+              "body_length_bytes": 149,
+              "body_sha256": "bfcb1b41692615dc4f7bfd5aea0f98d33bcc8b0631f7f6e827394e632e699265"
+            },
+            "handler_bank_access_probe_delta": 0,
+            "sql_statement_delta": 0
+          }
+        ]
+      }
+    },
+    "isolated_5000_per_day": {
+      "observation_kind": "fixed_commit_real_route_single_window_diagnostic",
+      "production_observation": false,
+      "runtime": {
+        "configured_default": "5000 per day",
+        "headers_enabled": true,
+        "storage_class": "limits.storage.memory.MemoryStorage",
+        "strategy_class": "limits.strategies.FixedWindowRateLimiter"
+      },
+      "route": "api-alias",
+      "configured_limits": "5000 per day",
+      "isolated_window_override": {
+        "source_mutated": false,
+        "runtime_config_override": "RATELIMIT_DEFAULT=5000 per day",
+        "purpose": "isolate this fixed-source clause because the combined 10/second window otherwise masks a burst test of the longer window"
+      },
+      "limit_under_test": "5000 per day",
+      "sequence": {
+        "attempt_count": 5001,
+        "status_counts": {
+          "403": 5000,
+          "429": 1
+        },
+        "status_sequence_sha256": "d538c7ad6fa85dae9862cc08dca617d37c6d9a068f3fe479d77af4ae42f4d758",
+        "handler_bank_access_probe_count": 5000,
+        "sql_statement_count": 10002,
+        "samples": [
+          {
+            "attempt": 1,
+            "response": {
+              "status": 403,
+              "headers": {
+                "Content-Length": [
+                  "139"
+                ],
+                "Content-Type": [
+                  "application/json; charset=utf-8"
+                ],
+                "Retry-After": [
+                  "<dynamic-seconds>"
+                ],
+                "Vary": [
+                  "Origin, Cookie"
+                ],
+                "X-RateLimit-Limit": [
+                  "5000"
+                ],
+                "X-RateLimit-Remaining": [
+                  "4999"
+                ],
+                "X-RateLimit-Reset": [
+                  "<rate-limit-reset-epoch>"
+                ],
+                "X-Request-ID": [
+                  "phase4c-user-counts-rate-5000-day"
+                ]
+              },
+              "body_kind": "json",
+              "body": {
+                "code": 403,
+                "message": "无权访问此题库",
+                "request_id": "phase4c-user-counts-rate-5000-day",
+                "status": "error",
+                "status_code": 403
+              },
+              "body_text": "{\"code\": 403, \"message\": \"无权访问此题库\", \"status\": \"error\", \"request_id\": \"phase4c-user-counts-rate-5000-day\", \"status_code\": 403}",
+              "body_length_bytes": 139,
+              "body_sha256": "a07112c76146340a57dad2cbcf0ba20fb7e10b28816ec56a61cfe051239365e0"
+            },
+            "handler_bank_access_probe_delta": 1,
+            "sql_statement_delta": 4
+          },
+          {
+            "attempt": 5000,
+            "response": {
+              "status": 403,
+              "headers": {
+                "Content-Length": [
+                  "139"
+                ],
+                "Content-Type": [
+                  "application/json; charset=utf-8"
+                ],
+                "Retry-After": [
+                  "<dynamic-seconds>"
+                ],
+                "Vary": [
+                  "Origin, Cookie"
+                ],
+                "X-RateLimit-Limit": [
+                  "5000"
+                ],
+                "X-RateLimit-Remaining": [
+                  "0"
+                ],
+                "X-RateLimit-Reset": [
+                  "<rate-limit-reset-epoch>"
+                ],
+                "X-Request-ID": [
+                  "phase4c-user-counts-rate-5000-day"
+                ]
+              },
+              "body_kind": "json",
+              "body": {
+                "code": 403,
+                "message": "无权访问此题库",
+                "request_id": "phase4c-user-counts-rate-5000-day",
+                "status": "error",
+                "status_code": 403
+              },
+              "body_text": "{\"code\": 403, \"message\": \"无权访问此题库\", \"status\": \"error\", \"request_id\": \"phase4c-user-counts-rate-5000-day\", \"status_code\": 403}",
+              "body_length_bytes": 139,
+              "body_sha256": "a07112c76146340a57dad2cbcf0ba20fb7e10b28816ec56a61cfe051239365e0"
+            },
+            "handler_bank_access_probe_delta": 1,
+            "sql_statement_delta": 2
+          },
+          {
+            "attempt": 5001,
+            "response": {
+              "status": 429,
+              "headers": {
+                "Content-Length": [
+                  "149"
+                ],
+                "Content-Type": [
+                  "application/json"
+                ],
+                "Retry-After": [
+                  "<dynamic-seconds>"
+                ],
+                "Vary": [
+                  "Origin, Cookie"
+                ],
+                "X-RateLimit-Limit": [
+                  "5000"
+                ],
+                "X-RateLimit-Remaining": [
+                  "0"
+                ],
+                "X-RateLimit-Reset": [
+                  "<rate-limit-reset-epoch>"
+                ],
+                "X-Request-ID": [
+                  "phase4c-user-counts-rate-5000-day"
+                ]
+              },
+              "body_kind": "json",
+              "body": {
+                "message": "5000 per 1 day",
+                "payload": null,
+                "request_id": "phase4c-user-counts-rate-5000-day",
+                "status": "error",
+                "status_code": 429
+              },
+              "body_text": "{\n  \"message\": \"5000 per 1 day\",\n  \"payload\": null,\n  \"request_id\": \"phase4c-user-counts-rate-5000-day\",\n  \"status\": \"error\",\n  \"status_code\": 429\n}\n",
+              "body_length_bytes": 149,
+              "body_sha256": "23151f8ce8a36b11a65c4a1d959ce6619e2f00987508e6b3d4d678d877f96742"
+            },
+            "handler_bank_access_probe_delta": 0,
+            "sql_statement_delta": 0
+          }
+        ]
+      }
+    },
+    "scope_identity_and_negotiation": {
+      "observation_kind": "fixed_commit_real_route_scope_and_key_diagnostic",
+      "production_observation": false,
+      "runtime": {
+        "configured_default": "10 per day",
+        "headers_enabled": true,
+        "storage_class": "limits.storage.memory.MemoryStorage",
+        "strategy_class": "limits.strategies.FixedWindowRateLimiter"
+      },
+      "isolated_window_override": {
+        "source_mutated": false,
+        "runtime_config_override": "RATELIMIT_DEFAULT=10 per day",
+        "purpose": "avoid wall-clock rollover while proving endpoint and key scope"
+      },
+      "alias_buckets": {
+        "result": "independent_per_registered_endpoint",
+        "api_first_ten": {
+          "attempt_count": 10,
+          "status_counts": {
+            "403": 10
+          },
+          "status_sequence_sha256": "7194a4932ce7d8d57d54327bfb8f0ca26417a30ebf9fca40416db42b060c6b2f",
+          "handler_bank_access_probe_count": 10,
+          "sql_statement_count": 22,
+          "samples": [
+            {
+              "attempt": 10,
+              "response": {
+                "status": 403,
+                "headers": {
+                  "Content-Length": [
+                    "130"
+                  ],
+                  "Content-Type": [
+                    "application/json; charset=utf-8"
+                  ],
+                  "Retry-After": [
+                    "<dynamic-seconds>"
+                  ],
+                  "Vary": [
+                    "Origin, Cookie"
+                  ],
+                  "X-RateLimit-Limit": [
+                    "10"
+                  ],
+                  "X-RateLimit-Remaining": [
+                    "0"
+                  ],
+                  "X-RateLimit-Reset": [
+                    "<rate-limit-reset-epoch>"
+                  ],
+                  "X-Request-ID": [
+                    "phase4c-rate-alias-scope"
+                  ]
+                },
+                "body_kind": "json",
+                "body": {
+                  "code": 403,
+                  "message": "无权访问此题库",
+                  "request_id": "phase4c-rate-alias-scope",
+                  "status": "error",
+                  "status_code": 403
+                },
+                "body_text": "{\"code\": 403, \"message\": \"无权访问此题库\", \"status\": \"error\", \"request_id\": \"phase4c-rate-alias-scope\", \"status_code\": 403}",
+                "body_length_bytes": 130,
+                "body_sha256": "dfad9efc2cbdb5dd1f0b2b25096003216b2bb87c9ead7743a88d1153a9638c5f"
+              },
+              "handler_bank_access_probe_delta": 1,
+              "sql_statement_delta": 2
+            }
+          ]
+        },
+        "web_attempt_one_after_api_exhaustion": {
+          "status": 403,
+          "headers": {
+            "Content-Length": [
+              "130"
+            ],
+            "Content-Type": [
+              "application/json; charset=utf-8"
+            ],
+            "Retry-After": [
+              "<dynamic-seconds>"
+            ],
+            "Vary": [
+              "Cookie"
+            ],
+            "X-RateLimit-Limit": [
+              "10"
+            ],
+            "X-RateLimit-Remaining": [
+              "9"
+            ],
+            "X-RateLimit-Reset": [
+              "<rate-limit-reset-epoch>"
+            ],
+            "X-Request-ID": [
+              "phase4c-rate-alias-scope"
+            ]
+          },
+          "body_kind": "json",
+          "body": {
+            "code": 403,
+            "message": "无权访问此题库",
+            "request_id": "phase4c-rate-alias-scope",
+            "status": "error",
+            "status_code": 403
+          },
+          "body_text": "{\"code\": 403, \"message\": \"无权访问此题库\", \"status\": \"error\", \"request_id\": \"phase4c-rate-alias-scope\", \"status_code\": 403}",
+          "body_length_bytes": 130,
+          "body_sha256": "dfad9efc2cbdb5dd1f0b2b25096003216b2bb87c9ead7743a88d1153a9638c5f"
+        },
+        "api_attempt_eleven": {
+          "status": 429,
+          "headers": {
+            "Content-Length": [
+              "138"
+            ],
+            "Content-Type": [
+              "application/json"
+            ],
+            "Retry-After": [
+              "<dynamic-seconds>"
+            ],
+            "Vary": [
+              "Origin, Cookie"
+            ],
+            "X-RateLimit-Limit": [
+              "10"
+            ],
+            "X-RateLimit-Remaining": [
+              "0"
+            ],
+            "X-RateLimit-Reset": [
+              "<rate-limit-reset-epoch>"
+            ],
+            "X-Request-ID": [
+              "phase4c-rate-alias-scope"
+            ]
+          },
+          "body_kind": "json",
+          "body": {
+            "message": "10 per 1 day",
+            "payload": null,
+            "request_id": "phase4c-rate-alias-scope",
+            "status": "error",
+            "status_code": 429
+          },
+          "body_text": "{\n  \"message\": \"10 per 1 day\",\n  \"payload\": null,\n  \"request_id\": \"phase4c-rate-alias-scope\",\n  \"status\": \"error\",\n  \"status_code\": 429\n}\n",
+          "body_length_bytes": 138,
+          "body_sha256": "9811081d8d82bf8871d4ab3882de9d23a18872ac5fc75ca375249e40ff2f22c6"
+        },
+        "web_remaining_attempts_two_through_eleven": {
+          "attempt_count": 10,
+          "status_counts": {
+            "403": 9,
+            "429": 1
+          },
+          "status_sequence_sha256": "0efcda40353a2f21e10602995330a1d0a47ac98c9f9d708bdce6131838a0e2d3",
+          "handler_bank_access_probe_count": 9,
+          "sql_statement_count": 18,
+          "samples": [
+            {
+              "attempt": 9,
+              "response": {
+                "status": 403,
+                "headers": {
+                  "Content-Length": [
+                    "130"
+                  ],
+                  "Content-Type": [
+                    "application/json; charset=utf-8"
+                  ],
+                  "Retry-After": [
+                    "<dynamic-seconds>"
+                  ],
+                  "Vary": [
+                    "Cookie"
+                  ],
+                  "X-RateLimit-Limit": [
+                    "10"
+                  ],
+                  "X-RateLimit-Remaining": [
+                    "0"
+                  ],
+                  "X-RateLimit-Reset": [
+                    "<rate-limit-reset-epoch>"
+                  ],
+                  "X-Request-ID": [
+                    "phase4c-rate-alias-scope"
+                  ]
+                },
+                "body_kind": "json",
+                "body": {
+                  "code": 403,
+                  "message": "无权访问此题库",
+                  "request_id": "phase4c-rate-alias-scope",
+                  "status": "error",
+                  "status_code": 403
+                },
+                "body_text": "{\"code\": 403, \"message\": \"无权访问此题库\", \"status\": \"error\", \"request_id\": \"phase4c-rate-alias-scope\", \"status_code\": 403}",
+                "body_length_bytes": 130,
+                "body_sha256": "dfad9efc2cbdb5dd1f0b2b25096003216b2bb87c9ead7743a88d1153a9638c5f"
+              },
+              "handler_bank_access_probe_delta": 1,
+              "sql_statement_delta": 2
+            },
+            {
+              "attempt": 10,
+              "response": {
+                "status": 429,
+                "headers": {
+                  "Content-Length": [
+                    "51"
+                  ],
+                  "Content-Type": [
+                    "text/html; charset=utf-8"
+                  ],
+                  "Retry-After": [
+                    "<dynamic-seconds>"
+                  ],
+                  "Vary": [
+                    "Cookie"
+                  ],
+                  "X-RateLimit-Limit": [
+                    "10"
+                  ],
+                  "X-RateLimit-Remaining": [
+                    "0"
+                  ],
+                  "X-RateLimit-Reset": [
+                    "<rate-limit-reset-epoch>"
+                  ]
+                },
+                "body_kind": "text",
+                "body": "<h1>429 - Too Many Requests</h1><p>10 per 1 day</p>",
+                "body_text": "<h1>429 - Too Many Requests</h1><p>10 per 1 day</p>",
+                "body_length_bytes": 51,
+                "body_sha256": "98fa478037e7def1d76d7974266b5792121d61f1f42125b408b7d6ecc987ac51"
+              },
+              "handler_bank_access_probe_delta": 0,
+              "sql_statement_delta": 0
+            }
+          ]
+        }
+      },
+      "response_negotiation": {
+        "api_json_429": {
+          "status": 429,
+          "headers": {
+            "Content-Length": [
+              "138"
+            ],
+            "Content-Type": [
+              "application/json"
+            ],
+            "Retry-After": [
+              "<dynamic-seconds>"
+            ],
+            "Vary": [
+              "Origin, Cookie"
+            ],
+            "X-RateLimit-Limit": [
+              "10"
+            ],
+            "X-RateLimit-Remaining": [
+              "0"
+            ],
+            "X-RateLimit-Reset": [
+              "<rate-limit-reset-epoch>"
+            ],
+            "X-Request-ID": [
+              "phase4c-rate-alias-scope"
+            ]
+          },
+          "body_kind": "json",
+          "body": {
+            "message": "10 per 1 day",
+            "payload": null,
+            "request_id": "phase4c-rate-alias-scope",
+            "status": "error",
+            "status_code": 429
+          },
+          "body_text": "{\n  \"message\": \"10 per 1 day\",\n  \"payload\": null,\n  \"request_id\": \"phase4c-rate-alias-scope\",\n  \"status\": \"error\",\n  \"status_code\": 429\n}\n",
+          "body_length_bytes": 138,
+          "body_sha256": "9811081d8d82bf8871d4ab3882de9d23a18872ac5fc75ca375249e40ff2f22c6"
+        },
+        "web_default_html_429": {
+          "status": 429,
+          "headers": {
+            "Content-Length": [
+              "51"
+            ],
+            "Content-Type": [
+              "text/html; charset=utf-8"
+            ],
+            "Retry-After": [
+              "<dynamic-seconds>"
+            ],
+            "Vary": [
+              "Cookie"
+            ],
+            "X-RateLimit-Limit": [
+              "10"
+            ],
+            "X-RateLimit-Remaining": [
+              "0"
+            ],
+            "X-RateLimit-Reset": [
+              "<rate-limit-reset-epoch>"
+            ]
+          },
+          "body_kind": "text",
+          "body": "<h1>429 - Too Many Requests</h1><p>10 per 1 day</p>",
+          "body_text": "<h1>429 - Too Many Requests</h1><p>10 per 1 day</p>",
+          "body_length_bytes": 51,
+          "body_sha256": "98fa478037e7def1d76d7974266b5792121d61f1f42125b408b7d6ecc987ac51"
+        },
+        "web_accept_json_429": {
+          "status": 429,
+          "headers": {
+            "Content-Length": [
+              "135"
+            ],
+            "Content-Type": [
+              "application/json"
+            ],
+            "Retry-After": [
+              "<dynamic-seconds>"
+            ],
+            "Vary": [
+              "Cookie"
+            ],
+            "X-RateLimit-Limit": [
+              "10"
+            ],
+            "X-RateLimit-Remaining": [
+              "0"
+            ],
+            "X-RateLimit-Reset": [
+              "<rate-limit-reset-epoch>"
+            ],
+            "X-Request-ID": [
+              "phase4c-rate-web-json"
+            ]
+          },
+          "body_kind": "json",
+          "body": {
+            "message": "10 per 1 day",
+            "payload": null,
+            "request_id": "phase4c-rate-web-json",
+            "status": "error",
+            "status_code": 429
+          },
+          "body_text": "{\n  \"message\": \"10 per 1 day\",\n  \"payload\": null,\n  \"request_id\": \"phase4c-rate-web-json\",\n  \"status\": \"error\",\n  \"status_code\": 429\n}\n",
+          "body_length_bytes": 135,
+          "body_sha256": "bd9d492477d5b25db77f2a90b55a6583c71e4b71ac6e511cc33a63243ced6799"
+        }
+      },
+      "key_behavior": {
+        "same_session_across_remote_addresses": {
+          "attempt_count": 11,
+          "status_counts": {
+            "403": 10,
+            "429": 1
+          },
+          "status_sequence_sha256": "934324d8b8bfed26ff84fb48e67d6dfddf4d1129def599221cc5270fbb1f19ce",
+          "handler_bank_access_probe_count": 10,
+          "sql_statement_count": 20,
+          "samples": [
+            {
+              "attempt": 1,
+              "response": {
+                "status": 403,
+                "headers": {
+                  "Content-Length": [
+                    "136"
+                  ],
+                  "Content-Type": [
+                    "application/json; charset=utf-8"
+                  ],
+                  "Retry-After": [
+                    "<dynamic-seconds>"
+                  ],
+                  "Vary": [
+                    "Origin, Cookie"
+                  ],
+                  "X-RateLimit-Limit": [
+                    "10"
+                  ],
+                  "X-RateLimit-Remaining": [
+                    "9"
+                  ],
+                  "X-RateLimit-Reset": [
+                    "<rate-limit-reset-epoch>"
+                  ],
+                  "X-Request-ID": [
+                    "phase4c-rate-session-across-ip"
+                  ]
+                },
+                "body_kind": "json",
+                "body": {
+                  "code": 403,
+                  "message": "无权访问此题库",
+                  "request_id": "phase4c-rate-session-across-ip",
+                  "status": "error",
+                  "status_code": 403
+                },
+                "body_text": "{\"code\": 403, \"message\": \"无权访问此题库\", \"status\": \"error\", \"request_id\": \"phase4c-rate-session-across-ip\", \"status_code\": 403}",
+                "body_length_bytes": 136,
+                "body_sha256": "8b9844318e051865c6b8eea4448afef1ec97eb94324403ffcd8fec97852f5de7"
+              },
+              "handler_bank_access_probe_delta": 1,
+              "sql_statement_delta": 2
+            },
+            {
+              "attempt": 10,
+              "response": {
+                "status": 403,
+                "headers": {
+                  "Content-Length": [
+                    "136"
+                  ],
+                  "Content-Type": [
+                    "application/json; charset=utf-8"
+                  ],
+                  "Retry-After": [
+                    "<dynamic-seconds>"
+                  ],
+                  "Vary": [
+                    "Origin, Cookie"
+                  ],
+                  "X-RateLimit-Limit": [
+                    "10"
+                  ],
+                  "X-RateLimit-Remaining": [
+                    "0"
+                  ],
+                  "X-RateLimit-Reset": [
+                    "<rate-limit-reset-epoch>"
+                  ],
+                  "X-Request-ID": [
+                    "phase4c-rate-session-across-ip"
+                  ]
+                },
+                "body_kind": "json",
+                "body": {
+                  "code": 403,
+                  "message": "无权访问此题库",
+                  "request_id": "phase4c-rate-session-across-ip",
+                  "status": "error",
+                  "status_code": 403
+                },
+                "body_text": "{\"code\": 403, \"message\": \"无权访问此题库\", \"status\": \"error\", \"request_id\": \"phase4c-rate-session-across-ip\", \"status_code\": 403}",
+                "body_length_bytes": 136,
+                "body_sha256": "8b9844318e051865c6b8eea4448afef1ec97eb94324403ffcd8fec97852f5de7"
+              },
+              "handler_bank_access_probe_delta": 1,
+              "sql_statement_delta": 2
+            },
+            {
+              "attempt": 11,
+              "response": {
+                "status": 429,
+                "headers": {
+                  "Content-Length": [
+                    "144"
+                  ],
+                  "Content-Type": [
+                    "application/json"
+                  ],
+                  "Retry-After": [
+                    "<dynamic-seconds>"
+                  ],
+                  "Vary": [
+                    "Origin, Cookie"
+                  ],
+                  "X-RateLimit-Limit": [
+                    "10"
+                  ],
+                  "X-RateLimit-Remaining": [
+                    "0"
+                  ],
+                  "X-RateLimit-Reset": [
+                    "<rate-limit-reset-epoch>"
+                  ],
+                  "X-Request-ID": [
+                    "phase4c-rate-session-across-ip"
+                  ]
+                },
+                "body_kind": "json",
+                "body": {
+                  "message": "10 per 1 day",
+                  "payload": null,
+                  "request_id": "phase4c-rate-session-across-ip",
+                  "status": "error",
+                  "status_code": 429
+                },
+                "body_text": "{\n  \"message\": \"10 per 1 day\",\n  \"payload\": null,\n  \"request_id\": \"phase4c-rate-session-across-ip\",\n  \"status\": \"error\",\n  \"status_code\": 429\n}\n",
+                "body_length_bytes": 144,
+                "body_sha256": "96aceec2b1c5bd5db1714011b1578c6d3f16838b406cfcb0a4eee87865b68bde"
+              },
+              "handler_bank_access_probe_delta": 0,
+              "sql_statement_delta": 0
+            }
+          ]
+        },
+        "anonymous_same_remote_address": {
+          "attempt_count": 11,
+          "status_counts": {
+            "401": 10,
+            "429": 1
+          },
+          "status_sequence_sha256": "0239df0aff67e0c6093798d7b7d8fd51aef6d6aa9ae6065f39cadae927879eed",
+          "handler_bank_access_probe_count": 0,
+          "sql_statement_count": 0,
+          "samples": [
+            {
+              "attempt": 1,
+              "response": {
+                "status": 401,
+                "headers": {
+                  "Content-Length": [
+                    "116"
+                  ],
+                  "Content-Type": [
+                    "application/json; charset=utf-8"
+                  ],
+                  "Retry-After": [
+                    "<dynamic-seconds>"
+                  ],
+                  "Vary": [
+                    "Origin, Cookie"
+                  ],
+                  "X-RateLimit-Limit": [
+                    "10"
+                  ],
+                  "X-RateLimit-Remaining": [
+                    "9"
+                  ],
+                  "X-RateLimit-Reset": [
+                    "<rate-limit-reset-epoch>"
+                  ],
+                  "X-Request-ID": [
+                    "phase4c-rate-anonymous-ip"
+                  ]
+                },
+                "body_kind": "json",
+                "body": {
+                  "message": "请先登录",
+                  "request_id": "phase4c-rate-anonymous-ip",
+                  "status": "unauthorized",
+                  "status_code": 401
+                },
+                "body_text": "{\"message\": \"请先登录\", \"request_id\": \"phase4c-rate-anonymous-ip\", \"status\": \"unauthorized\", \"status_code\": 401}",
+                "body_length_bytes": 116,
+                "body_sha256": "cf15eca8cfe595fb2af21260435ca3965d00d6d38f17b7a13f3fd433e726b84b"
+              },
+              "handler_bank_access_probe_delta": 0,
+              "sql_statement_delta": 0
+            },
+            {
+              "attempt": 10,
+              "response": {
+                "status": 401,
+                "headers": {
+                  "Content-Length": [
+                    "116"
+                  ],
+                  "Content-Type": [
+                    "application/json; charset=utf-8"
+                  ],
+                  "Retry-After": [
+                    "<dynamic-seconds>"
+                  ],
+                  "Vary": [
+                    "Origin, Cookie"
+                  ],
+                  "X-RateLimit-Limit": [
+                    "10"
+                  ],
+                  "X-RateLimit-Remaining": [
+                    "0"
+                  ],
+                  "X-RateLimit-Reset": [
+                    "<rate-limit-reset-epoch>"
+                  ],
+                  "X-Request-ID": [
+                    "phase4c-rate-anonymous-ip"
+                  ]
+                },
+                "body_kind": "json",
+                "body": {
+                  "message": "请先登录",
+                  "request_id": "phase4c-rate-anonymous-ip",
+                  "status": "unauthorized",
+                  "status_code": 401
+                },
+                "body_text": "{\"message\": \"请先登录\", \"request_id\": \"phase4c-rate-anonymous-ip\", \"status\": \"unauthorized\", \"status_code\": 401}",
+                "body_length_bytes": 116,
+                "body_sha256": "cf15eca8cfe595fb2af21260435ca3965d00d6d38f17b7a13f3fd433e726b84b"
+              },
+              "handler_bank_access_probe_delta": 0,
+              "sql_statement_delta": 0
+            },
+            {
+              "attempt": 11,
+              "response": {
+                "status": 429,
+                "headers": {
+                  "Content-Length": [
+                    "139"
+                  ],
+                  "Content-Type": [
+                    "application/json"
+                  ],
+                  "Retry-After": [
+                    "<dynamic-seconds>"
+                  ],
+                  "Vary": [
+                    "Origin, Cookie"
+                  ],
+                  "X-RateLimit-Limit": [
+                    "10"
+                  ],
+                  "X-RateLimit-Remaining": [
+                    "0"
+                  ],
+                  "X-RateLimit-Reset": [
+                    "<rate-limit-reset-epoch>"
+                  ],
+                  "X-Request-ID": [
+                    "phase4c-rate-anonymous-ip"
+                  ]
+                },
+                "body_kind": "json",
+                "body": {
+                  "message": "10 per 1 day",
+                  "payload": null,
+                  "request_id": "phase4c-rate-anonymous-ip",
+                  "status": "error",
+                  "status_code": 429
+                },
+                "body_text": "{\n  \"message\": \"10 per 1 day\",\n  \"payload\": null,\n  \"request_id\": \"phase4c-rate-anonymous-ip\",\n  \"status\": \"error\",\n  \"status_code\": 429\n}\n",
+                "body_length_bytes": 139,
+                "body_sha256": "050e64f65b9387933c42450ff4a80cef829c45bac088c19503c372f44f1e092e"
+              },
+              "handler_bank_access_probe_delta": 0,
+              "sql_statement_delta": 0
+            }
+          ]
+        },
+        "anonymous_new_remote_address_after_breach": {
+          "status": 401,
+          "headers": {
+            "Content-Length": [
+              "122"
+            ],
+            "Content-Type": [
+              "application/json; charset=utf-8"
+            ],
+            "Retry-After": [
+              "<dynamic-seconds>"
+            ],
+            "Vary": [
+              "Origin, Cookie"
+            ],
+            "X-RateLimit-Limit": [
+              "10"
+            ],
+            "X-RateLimit-Remaining": [
+              "9"
+            ],
+            "X-RateLimit-Reset": [
+              "<rate-limit-reset-epoch>"
+            ],
+            "X-Request-ID": [
+              "phase4c-rate-anonymous-other-ip"
+            ]
+          },
+          "body_kind": "json",
+          "body": {
+            "message": "请先登录",
+            "request_id": "phase4c-rate-anonymous-other-ip",
+            "status": "unauthorized",
+            "status_code": 401
+          },
+          "body_text": "{\"message\": \"请先登录\", \"request_id\": \"phase4c-rate-anonymous-other-ip\", \"status\": \"unauthorized\", \"status_code\": 401}",
+          "body_length_bytes": 122,
+          "body_sha256": "18ecb4aa8706e6f8fd6fbd6a9d2d46034834e4024552bf4fd4a5b1cc9efd9fb5"
+        },
+        "distinct_sessions_same_remote_address": {
+          "owner_first_ten": {
+            "attempt_count": 10,
+            "status_counts": {
+              "403": 10
+            },
+            "status_sequence_sha256": "7194a4932ce7d8d57d54327bfb8f0ca26417a30ebf9fca40416db42b060c6b2f",
+            "handler_bank_access_probe_count": 10,
+            "sql_statement_count": 20,
+            "samples": [
+              {
+                "attempt": 10,
+                "response": {
+                  "status": 403,
+                  "headers": {
+                    "Content-Length": [
+                      "135"
+                    ],
+                    "Content-Type": [
+                      "application/json; charset=utf-8"
+                    ],
+                    "Retry-After": [
+                      "<dynamic-seconds>"
+                    ],
+                    "Vary": [
+                      "Origin, Cookie"
+                    ],
+                    "X-RateLimit-Limit": [
+                      "10"
+                    ],
+                    "X-RateLimit-Remaining": [
+                      "0"
+                    ],
+                    "X-RateLimit-Reset": [
+                      "<rate-limit-reset-epoch>"
+                    ],
+                    "X-Request-ID": [
+                      "phase4c-rate-distinct-session"
+                    ]
+                  },
+                  "body_kind": "json",
+                  "body": {
+                    "code": 403,
+                    "message": "无权访问此题库",
+                    "request_id": "phase4c-rate-distinct-session",
+                    "status": "error",
+                    "status_code": 403
+                  },
+                  "body_text": "{\"code\": 403, \"message\": \"无权访问此题库\", \"status\": \"error\", \"request_id\": \"phase4c-rate-distinct-session\", \"status_code\": 403}",
+                  "body_length_bytes": 135,
+                  "body_sha256": "d93c63ef32be3b8349232152d922da770ff35e5a0bf003431963c0648e52e420"
+                },
+                "handler_bank_access_probe_delta": 1,
+                "sql_statement_delta": 2
+              }
+            ]
+          },
+          "other_first": {
+            "status": 403,
+            "headers": {
+              "Content-Length": [
+                "135"
+              ],
+              "Content-Type": [
+                "application/json; charset=utf-8"
+              ],
+              "Retry-After": [
+                "<dynamic-seconds>"
+              ],
+              "Vary": [
+                "Origin, Cookie"
+              ],
+              "X-RateLimit-Limit": [
+                "10"
+              ],
+              "X-RateLimit-Remaining": [
+                "9"
+              ],
+              "X-RateLimit-Reset": [
+                "<rate-limit-reset-epoch>"
+              ],
+              "X-Request-ID": [
+                "phase4c-rate-distinct-session"
+              ]
+            },
+            "body_kind": "json",
+            "body": {
+              "code": 403,
+              "message": "无权访问此题库",
+              "request_id": "phase4c-rate-distinct-session",
+              "status": "error",
+              "status_code": 403
+            },
+            "body_text": "{\"code\": 403, \"message\": \"无权访问此题库\", \"status\": \"error\", \"request_id\": \"phase4c-rate-distinct-session\", \"status_code\": 403}",
+            "body_length_bytes": 135,
+            "body_sha256": "d93c63ef32be3b8349232152d922da770ff35e5a0bf003431963c0648e52e420"
+          },
+          "owner_attempt_eleven": {
+            "status": 429,
+            "headers": {
+              "Content-Length": [
+                "143"
+              ],
+              "Content-Type": [
+                "application/json"
+              ],
+              "Retry-After": [
+                "<dynamic-seconds>"
+              ],
+              "Vary": [
+                "Origin, Cookie"
+              ],
+              "X-RateLimit-Limit": [
+                "10"
+              ],
+              "X-RateLimit-Remaining": [
+                "0"
+              ],
+              "X-RateLimit-Reset": [
+                "<rate-limit-reset-epoch>"
+              ],
+              "X-Request-ID": [
+                "phase4c-rate-distinct-session"
+              ]
+            },
+            "body_kind": "json",
+            "body": {
+              "message": "10 per 1 day",
+              "payload": null,
+              "request_id": "phase4c-rate-distinct-session",
+              "status": "error",
+              "status_code": 429
+            },
+            "body_text": "{\n  \"message\": \"10 per 1 day\",\n  \"payload\": null,\n  \"request_id\": \"phase4c-rate-distinct-session\",\n  \"status\": \"error\",\n  \"status_code\": 429\n}\n",
+            "body_length_bytes": 143,
+            "body_sha256": "48fbd59a48b3db1874d9ac3baaedb18240ac9240e891c91cd2825cc99c4a5a96"
+          }
+        },
+        "session_precedes_conflicting_bearer_for_limiter_key": {
+          "session_owner_plus_bearer_other_first_ten": {
+            "attempt_count": 10,
+            "status_counts": {
+              "403": 10
+            },
+            "status_sequence_sha256": "7194a4932ce7d8d57d54327bfb8f0ca26417a30ebf9fca40416db42b060c6b2f",
+            "handler_bank_access_probe_count": 10,
+            "sql_statement_count": 30,
+            "samples": [
+              {
+                "attempt": 1,
+                "response": {
+                  "status": 403,
+                  "headers": {
+                    "Content-Length": [
+                      "142"
+                    ],
+                    "Content-Type": [
+                      "application/json; charset=utf-8"
+                    ],
+                    "Retry-After": [
+                      "<dynamic-seconds>"
+                    ],
+                    "Vary": [
+                      "Origin, Cookie"
+                    ],
+                    "X-RateLimit-Limit": [
+                      "10"
+                    ],
+                    "X-RateLimit-Remaining": [
+                      "9"
+                    ],
+                    "X-RateLimit-Reset": [
+                      "<rate-limit-reset-epoch>"
+                    ],
+                    "X-Request-ID": [
+                      "phase4c-rate-session-bearer-conflict"
+                    ]
+                  },
+                  "body_kind": "json",
+                  "body": {
+                    "code": 403,
+                    "message": "无权访问此题库",
+                    "request_id": "phase4c-rate-session-bearer-conflict",
+                    "status": "error",
+                    "status_code": 403
+                  },
+                  "body_text": "{\"code\": 403, \"message\": \"无权访问此题库\", \"status\": \"error\", \"request_id\": \"phase4c-rate-session-bearer-conflict\", \"status_code\": 403}",
+                  "body_length_bytes": 142,
+                  "body_sha256": "502cd9e7597a3bc5f5354e50e54f59deaa12a7582bb573ca2b6a3221ac38fbfe"
+                },
+                "handler_bank_access_probe_delta": 1,
+                "sql_statement_delta": 3
+              },
+              {
+                "attempt": 10,
+                "response": {
+                  "status": 403,
+                  "headers": {
+                    "Content-Length": [
+                      "142"
+                    ],
+                    "Content-Type": [
+                      "application/json; charset=utf-8"
+                    ],
+                    "Retry-After": [
+                      "<dynamic-seconds>"
+                    ],
+                    "Vary": [
+                      "Origin, Cookie"
+                    ],
+                    "X-RateLimit-Limit": [
+                      "10"
+                    ],
+                    "X-RateLimit-Remaining": [
+                      "0"
+                    ],
+                    "X-RateLimit-Reset": [
+                      "<rate-limit-reset-epoch>"
+                    ],
+                    "X-Request-ID": [
+                      "phase4c-rate-session-bearer-conflict"
+                    ]
+                  },
+                  "body_kind": "json",
+                  "body": {
+                    "code": 403,
+                    "message": "无权访问此题库",
+                    "request_id": "phase4c-rate-session-bearer-conflict",
+                    "status": "error",
+                    "status_code": 403
+                  },
+                  "body_text": "{\"code\": 403, \"message\": \"无权访问此题库\", \"status\": \"error\", \"request_id\": \"phase4c-rate-session-bearer-conflict\", \"status_code\": 403}",
+                  "body_length_bytes": 142,
+                  "body_sha256": "502cd9e7597a3bc5f5354e50e54f59deaa12a7582bb573ca2b6a3221ac38fbfe"
+                },
+                "handler_bank_access_probe_delta": 1,
+                "sql_statement_delta": 3
+              }
+            ]
+          },
+          "session_owner_without_bearer_attempt_eleven": {
+            "status": 429,
+            "headers": {
+              "Content-Length": [
+                "150"
+              ],
+              "Content-Type": [
+                "application/json"
+              ],
+              "Retry-After": [
+                "<dynamic-seconds>"
+              ],
+              "Vary": [
+                "Origin, Cookie"
+              ],
+              "X-RateLimit-Limit": [
+                "10"
+              ],
+              "X-RateLimit-Remaining": [
+                "0"
+              ],
+              "X-RateLimit-Reset": [
+                "<rate-limit-reset-epoch>"
+              ],
+              "X-Request-ID": [
+                "phase4c-rate-session-bearer-conflict"
+              ]
+            },
+            "body_kind": "json",
+            "body": {
+              "message": "10 per 1 day",
+              "payload": null,
+              "request_id": "phase4c-rate-session-bearer-conflict",
+              "status": "error",
+              "status_code": 429
+            },
+            "body_text": "{\n  \"message\": \"10 per 1 day\",\n  \"payload\": null,\n  \"request_id\": \"phase4c-rate-session-bearer-conflict\",\n  \"status\": \"error\",\n  \"status_code\": 429\n}\n",
+            "body_length_bytes": 150,
+            "body_sha256": "888fde73d95827cbb85430b62183e150f426eae72cbd8ecf7371565574615d20"
+          },
+          "session_owner_after_reset_baseline": {
+            "status": 200,
+            "headers": {
+              "Content-Length": [
+                "291"
+              ],
+              "Content-Type": [
+                "application/json; charset=utf-8"
+              ],
+              "Retry-After": [
+                "<dynamic-seconds>"
+              ],
+              "Vary": [
+                "Origin, Cookie"
+              ],
+              "X-RateLimit-Limit": [
+                "10"
+              ],
+              "X-RateLimit-Remaining": [
+                "9"
+              ],
+              "X-RateLimit-Reset": [
+                "<rate-limit-reset-epoch>"
+              ],
+              "X-Request-ID": [
+                "phase4c-rate-session-owner-baseline"
+              ]
+            },
+            "body_kind": "json",
+            "body": {
+              "code": 0,
+              "data": {
+                "favorites": 5,
+                "mistakes": 3,
+                "shuffle_options_available": false,
+                "total": 9,
+                "types": [
+                  "判断题",
+                  "简答题",
+                  "填空题",
+                  "多选题",
+                  "选择题",
+                  "选择题",
+                  "简答题"
+                ]
+              },
+              "message": "",
+              "request_id": "phase4c-rate-session-owner-baseline",
+              "status": "success"
+            },
+            "body_text": "{\"code\": 0, \"data\": {\"favorites\": 5, \"mistakes\": 3, \"shuffle_options_available\": false, \"total\": 9, \"types\": [\"判断题\", \"简答题\", \"填空题\", \"多选题\", \"选择题\", \"选择题\", \"简答题\"]}, \"status\": \"success\", \"request_id\": \"phase4c-rate-session-owner-baseline\", \"message\": \"\"}",
+            "body_length_bytes": 291,
+            "body_sha256": "c5ae8509a0be5d32b54f23c988e7e1c51597b6275424bbc6e775876d44f08c20"
+          },
+          "interpretation": "the limiter charges the Session owner before auth_required selects the conflicting Bearer actor for the handler"
+        },
+        "bearer_only_same_actor_across_remote_addresses": {
+          "attempt_count": 11,
+          "status_counts": {
+            "200": 10,
+            "429": 1
+          },
+          "status_sequence_sha256": "044fc133a8f6d015811931f9b5b2dcdf171ceab8e6996653144129520991cc12",
+          "handler_bank_access_probe_count": 10,
+          "sql_statement_count": 60,
+          "samples": [
+            {
+              "attempt": 1,
+              "response": {
+                "status": 200,
+                "headers": {
+                  "Content-Length": [
+                    "285"
+                  ],
+                  "Content-Type": [
+                    "application/json; charset=utf-8"
+                  ],
+                  "Retry-After": [
+                    "<dynamic-seconds>"
+                  ],
+                  "Vary": [
+                    "Origin, Cookie"
+                  ],
+                  "X-RateLimit-Limit": [
+                    "10"
+                  ],
+                  "X-RateLimit-Remaining": [
+                    "9"
+                  ],
+                  "X-RateLimit-Reset": [
+                    "<rate-limit-reset-epoch>"
+                  ],
+                  "X-Request-ID": [
+                    "phase4c-rate-bearer-across-ip"
+                  ]
+                },
+                "body_kind": "json",
+                "body": {
+                  "code": 0,
+                  "data": {
+                    "favorites": 5,
+                    "mistakes": 3,
+                    "shuffle_options_available": false,
+                    "total": 9,
+                    "types": [
+                      "判断题",
+                      "简答题",
+                      "填空题",
+                      "多选题",
+                      "选择题",
+                      "选择题",
+                      "简答题"
+                    ]
+                  },
+                  "message": "",
+                  "request_id": "phase4c-rate-bearer-across-ip",
+                  "status": "success"
+                },
+                "body_text": "{\"code\": 0, \"data\": {\"favorites\": 5, \"mistakes\": 3, \"shuffle_options_available\": false, \"total\": 9, \"types\": [\"判断题\", \"简答题\", \"填空题\", \"多选题\", \"选择题\", \"选择题\", \"简答题\"]}, \"status\": \"success\", \"request_id\": \"phase4c-rate-bearer-across-ip\", \"message\": \"\"}",
+                "body_length_bytes": 285,
+                "body_sha256": "a97cd222691cca64ac98343acbd5d94ca0c777551f6f90c8e1cff74cb876a520"
+              },
+              "handler_bank_access_probe_delta": 1,
+              "sql_statement_delta": 6
+            },
+            {
+              "attempt": 10,
+              "response": {
+                "status": 200,
+                "headers": {
+                  "Content-Length": [
+                    "285"
+                  ],
+                  "Content-Type": [
+                    "application/json; charset=utf-8"
+                  ],
+                  "Retry-After": [
+                    "<dynamic-seconds>"
+                  ],
+                  "Vary": [
+                    "Origin, Cookie"
+                  ],
+                  "X-RateLimit-Limit": [
+                    "10"
+                  ],
+                  "X-RateLimit-Remaining": [
+                    "0"
+                  ],
+                  "X-RateLimit-Reset": [
+                    "<rate-limit-reset-epoch>"
+                  ],
+                  "X-Request-ID": [
+                    "phase4c-rate-bearer-across-ip"
+                  ]
+                },
+                "body_kind": "json",
+                "body": {
+                  "code": 0,
+                  "data": {
+                    "favorites": 5,
+                    "mistakes": 3,
+                    "shuffle_options_available": false,
+                    "total": 9,
+                    "types": [
+                      "判断题",
+                      "简答题",
+                      "填空题",
+                      "多选题",
+                      "选择题",
+                      "选择题",
+                      "简答题"
+                    ]
+                  },
+                  "message": "",
+                  "request_id": "phase4c-rate-bearer-across-ip",
+                  "status": "success"
+                },
+                "body_text": "{\"code\": 0, \"data\": {\"favorites\": 5, \"mistakes\": 3, \"shuffle_options_available\": false, \"total\": 9, \"types\": [\"判断题\", \"简答题\", \"填空题\", \"多选题\", \"选择题\", \"选择题\", \"简答题\"]}, \"status\": \"success\", \"request_id\": \"phase4c-rate-bearer-across-ip\", \"message\": \"\"}",
+                "body_length_bytes": 285,
+                "body_sha256": "a97cd222691cca64ac98343acbd5d94ca0c777551f6f90c8e1cff74cb876a520"
+              },
+              "handler_bank_access_probe_delta": 1,
+              "sql_statement_delta": 6
+            },
+            {
+              "attempt": 11,
+              "response": {
+                "status": 429,
+                "headers": {
+                  "Content-Length": [
+                    "143"
+                  ],
+                  "Content-Type": [
+                    "application/json"
+                  ],
+                  "Retry-After": [
+                    "<dynamic-seconds>"
+                  ],
+                  "Vary": [
+                    "Origin, Cookie"
+                  ],
+                  "X-RateLimit-Limit": [
+                    "10"
+                  ],
+                  "X-RateLimit-Remaining": [
+                    "0"
+                  ],
+                  "X-RateLimit-Reset": [
+                    "<rate-limit-reset-epoch>"
+                  ],
+                  "X-Request-ID": [
+                    "phase4c-rate-bearer-across-ip"
+                  ]
+                },
+                "body_kind": "json",
+                "body": {
+                  "message": "10 per 1 day",
+                  "payload": null,
+                  "request_id": "phase4c-rate-bearer-across-ip",
+                  "status": "error",
+                  "status_code": 429
+                },
+                "body_text": "{\n  \"message\": \"10 per 1 day\",\n  \"payload\": null,\n  \"request_id\": \"phase4c-rate-bearer-across-ip\",\n  \"status\": \"error\",\n  \"status_code\": 429\n}\n",
+                "body_length_bytes": 143,
+                "body_sha256": "033e534386ea50134e9b4b37627202832e86893468ec46421e393fc62c48f62d"
+              },
+              "handler_bank_access_probe_delta": 0,
+              "sql_statement_delta": 0
+            }
+          ]
+        }
+      }
+    },
+    "redis_storage_failure": {
+      "observation_kind": "fixed_commit_real_redis_client_connection_refusal",
+      "production_observation": false,
+      "storage_endpoint": "redis://127.0.0.1:<bound-non-listening-port>/15?socket_connect_timeout=<short>&socket_timeout=<short>",
+      "mocked_storage": false,
+      "live_redis_server_started_then_failed": false,
+      "failure_mechanism": "real redis-py/limits client connection to a locally bound but non-listening TCP port",
+      "runtime": {
+        "configured_default": "5000 per day;500 per hour;10 per second",
+        "headers_enabled": true,
+        "storage_class": "limits.storage.redis.RedisStorage",
+        "strategy_class": "limits.strategies.FixedWindowRateLimiter"
+      },
+      "response": {
+        "status": 500,
+        "headers": {
+          "Content-Length": [
+            "168"
+          ],
+          "Content-Type": [
+            "application/json"
+          ],
+          "Vary": [
+            "Origin, Cookie"
+          ],
+          "X-Request-ID": [
+            "phase4c-rate-redis-unavailable"
+          ]
+        },
+        "body_kind": "json",
+        "body": {
+          "message": "An unexpected server error occurred.",
+          "payload": null,
+          "request_id": "phase4c-rate-redis-unavailable",
+          "status": "error",
+          "status_code": 500
+        },
+        "body_text": "{\n  \"message\": \"An unexpected server error occurred.\",\n  \"payload\": null,\n  \"request_id\": \"phase4c-rate-redis-unavailable\",\n  \"status\": \"error\",\n  \"status_code\": 500\n}\n",
+        "body_length_bytes": 168,
+        "body_sha256": "60a1a008db509eedfac0c152cf1f411b4bd94fdab57f0707f64e9f24560310a8"
+      },
+      "handler_bank_access_probe_count": 0,
+      "sql_statement_count": 0,
+      "observed_semantics": "request denied before handler with safe generic HTTP 500; no rate-limit headers and no Redis exception text in the response"
+    }
+  },
+  "proposed_target_contract": {
+    "status": "proposal_only_not_implemented_or_authorized",
+    "budget": {
+      "proposal": "10/second;500/hour;5000/day",
+      "reason": "preserve the fixed base configuration named by the HTTP-entry brief",
+      "unresolved_difference": "the fixed commit's default production deployment uses a 100x multiplier"
+    },
+    "key": {
+      "proposal": "use the authenticated effective actor after authentication; use trusted remote address only if an explicitly authorized anonymous path exists",
+      "intentional_difference_requiring_approval": "do not preserve the legacy Session-before-conflicting-Bearer limiter mismatch",
+      "raw_identity_in_redis": false,
+      "pseudonymized_identity": true
+    },
+    "alias_buckets": {
+      "proposal": "independent",
+      "reason": "preserve observed per-registered-endpoint Flask behavior"
+    },
+    "429": {
+      "proposal": "preserve API JSON envelope, null payload, request_id, limit description, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset and Retry-After",
+      "web_content_negotiation": "requires explicit entry-contract choice because the legacy Web alias emits HTML by default and JSON only for Accept application/json"
+    },
+    "storage_failure": {
+      "policy": "fail_closed",
+      "proposed_status": 503,
+      "proposed_envelope": "safe stable service-unavailable JSON without Redis details or rate-limit headers",
+      "intentional_difference_requiring_approval": "legacy observed generic 500; proposed 503 distinguishes dependency outage from both application failure and quota breach",
+      "fail_open": "not proposed and not authorized"
+    }
+  },
+  "remaining_authorization_gaps": [
+    "choose base 10/500/5000 budgets or fixed-production default 1000/50000/500000 budgets",
+    "approve effective authenticated actor instead of legacy Session-before-Bearer keying",
+    "approve independent alias buckets or intentionally merge them",
+    "approve legacy Web HTML/Accept negotiation or a JSON-only target surface",
+    "approve proposed fail-closed 503 instead of the observed generic 500",
+    "run a live Redis server interruption test if process-level recovery, multi-worker sharing, or post-recovery counter continuity is required",
+    "separately authorize trusted-proxy/X-Forwarded-For behavior; this capture uses direct REMOTE_ADDR"
+  ],
+  "redis_gap": {
+    "connection_refusal_closed": true,
+    "real_redis_client_used": true,
+    "mocked_storage": false,
+    "live_server_started_then_interrupted": false,
+    "what_is_not_proved": [
+      "counter continuity after Redis restarts",
+      "partial Lua/transaction failure",
+      "multi-worker convergence",
+      "network timeout duration under deployed settings"
+    ]
+  },
+  "redaction": {
+    "jwt": "never serialized",
+    "session_cookie": "normalized placeholder when present",
+    "raw_limiter_keys": "not captured because legacy keys contain raw user IDs/IPs",
+    "redis_probe_port": "normalized placeholder",
+    "reset_epoch": "normalized placeholder",
+    "retry_after": "normalized placeholder",
+    "credentials_and_synthetic_emails": "not serialized"
+  },
+  "provenance": {
+    "capture_tool": {
+      "path": "tools/capture_phase4c_personal_bank_user_counts_rate_limit_evidence.py",
+      "sha256": "8c3e88e1cbeb8b931cadcdc83c046c2cccb662ed514e29711895fcf92e771ddc"
+    },
+    "capture_test": {
+      "path": "tools/test_capture_phase4c_personal_bank_user_counts_rate_limit_evidence.py",
+      "sha256": "72ca166e97a5728b53ae435d5bddc73bcd7b5a4ee02544ed2ad56fd89ce581f7"
+    },
+    "support_sources": {
+      "tools/capture_phase4a_public_bank_goldens.py": "5b46112b59f90cbd30effe1c544365a48a45a55c42fe38588c98fd312737761b",
+      "tools/capture_phase4b_personal_bank_category_goldens.py": "6442f6aff7691b82c15343b64ab481c1b9783608c109490f259063ab69fc4d92",
+      "tools/capture_phase4b_personal_bank_share_list_goldens.py": "f0cc13428ca3b4e5cef9845cfca5cb937f8b1ee1fece0b808f47839d1c45dca3",
+      "tools/capture_phase4b_personal_bank_user_counts_goldens.py": "d238d6d37cc0a75351a0f2c16384768e4c07c50779ed69a3d0bb7525f26fb5ad"
+    },
+    "runtime_versions": {
+      "python": "3.11.15",
+      "Flask": "3.1.2",
+      "Flask-Limiter": "3.11.0",
+      "limits": "4.2",
+      "redis": "5.2.1",
+      "SQLAlchemy": "2.0.51",
+      "Flask-SQLAlchemy": "3.1.1"
+    },
+    "execution_model": "complete app/ archive from the immutable git commit; isolated legacy imports; real Flask routes; temporary SQLite; synthetic identities; in-memory limits storage except the explicit real-client Redis refusal probe",
+    "hashes": {
+      "source_payload_sha256": "d558a550038c796db3dec78d7e35f410a5738dfd833ca27f1bbaa3bd5ebcf96c",
+      "runtime_evidence_payload_sha256": "3300a3b3257bd1a8ae8e8fde4abdedf31dd481f510738ba25c2ac8661f3d5ba4",
+      "capture_tool_sha256": "8c3e88e1cbeb8b931cadcdc83c046c2cccb662ed514e29711895fcf92e771ddc",
+      "capture_test_sha256": "72ca166e97a5728b53ae435d5bddc73bcd7b5a4ee02544ed2ad56fd89ce581f7"
+    }
+  },
+  "document_payload_sha256": "13dc4604b83be5b46f6931f3bc513cdfb3ee2dd6503891973d8797715bad44fc"
+}

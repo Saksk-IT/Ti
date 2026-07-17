@@ -110,3 +110,188 @@
   夹具验证 join、权限、排序、到期边界及复核调用。
 - **切流门禁：** 未通过这些固定安全测试前，不得实现 HTTP Controller、Security matcher、
   route/OpenAPI 或生产切流；read-contract 不得自行声明 operator 或全局迁移 preflight 已授权。
+
+## P4C-LEARNING-007：显式 Bearer 选择不回退 Session，且拒绝文案去枚举化
+
+- **旧行为：** API alias 接受 Session 或有效 legacy Bearer，Web alias 仅接受 Session；但旧
+  `auth_required` 在显式 Authorization 无效时仍会回退到同一请求的有效 Session。旧凭据层还可按
+  malformed、expired、stale、revoked 或 locked 结果暴露不同拒绝提示，而目标
+  `LegacyCredentialAuthenticationApi` 的 `Optional` 边界不承诺这种枚举。
+- **Java 目标行为：** 继承 `P3-AUTH-006`：一旦请求显式携带 Authorization，就只能走 Bearer
+  分支；重复、畸形、签名错误、过期、version 过时、已撤销或账号锁定都 fail closed，禁止回退到
+  目标或 Flask Session。API alias 仍接受权威 Session、经权威复核的旧 Flask Session 以及有效
+  legacy Bearer；Web alias 只接受 Session，任何显式 Authorization（包括有效 Bearer 与 Session
+  并存）都返回 `302 Location: /login`。
+- **统一失败信封：** API alias 不向客户端区分上述 Bearer 拒绝原因，统一为
+  `{"status":"unauthorized","message":"请先登录","status_code":401,"request_id":...}`；
+  Web alias 统一为登录重定向。目标 Session 权威存储不可用仍是可区分的安全 503，不伪装成 401。
+- **批准理由：** 禁止凭据混淆比保留可被用于账号状态枚举的细粒度文案更重要；这也与已实现的
+  Phase 3 认证边界一致，不在本路由反向扩张 identity API。
+- **保持/影响：** 有效凭据的 alias 选择、当前 `session_version`/锁定复核、请求 ID 与权限判定
+  保持。依赖“旧 Bearer + 有效 Cookie”回退的调用方将改为 API 401 或 Web 302，且不再获得
+  stale/locked 的特定文案。
+- **强制测试：** 两个 alias 都要覆盖目标/legacy Session、Bearer-only、有效 Session + 冲突
+  Bearer、重复头、malformed/expired/stale/revoked/locked 及权威存储不可用；断言失败前零
+  learning 应用调用、零业务 SQL，并继续通过 `P3-AUTH-006` 的回归测试。
+- **切流边界：** 当前只批准后续精确 Security matcher/error writer 的行为合同；在上述双 alias
+  矩阵与 OpenAPI 差异 ID 入库前，不得登记 migrated 或切流。
+
+## P4C-LEARNING-008：user-counts HTTP 不再写 `users.last_active`
+
+- **旧行为：** 旧全局 Session 活动钩子会在 user-counts 业务结果之前尝试更新
+  `users.last_active`；因此已认证 Session 的 GET/HEAD 即使最终是 403 或 500，也可能先留下
+  identity DML。Bearer-only 与匿名请求不写，固定的匿名 CORS preflight/OPTIONS 观察也没有进入
+  该写入。
+- **Java 目标行为：** 两个 alias 的 GET、HEAD 和 OPTIONS，无论 2xx/3xx/4xx/5xx，都不得更新
+  `users.last_active`，也不得新增 learning 到 identity persistence 的依赖。在线活动只允许由
+  identity/session 层的既有 Redis Session 机制表示；Bearer 不伪造 Session，CORS preflight
+  不创建、续期或刷新 presence。
+- **批准理由：** learning-owned 读路由不应拥有 identity 写事务；为保留隐式 GET DML 而扩张
+  API 会破坏模块 DAG，也会让失败请求产生不可预期副作用。
+- **保持/影响：** 题库访问、计数、认证失效与 Redis Session 行为不变。但仅通过这两条 Java 路由
+  活动的用户不再刷新旧关系列；仍读 `users.last_active` 的旧在线用户列表、后台页面与聊天排序
+  可能暂时低估或后移这些用户。该影响必须在 Phase 7 的 identity-owned presence/online
+  projection 迁移中消除，不得由 learning 反向补写。
+- **强制测试：** 对 API/Web、GET/HEAD/OPTIONS、Session/Bearer/匿名及
+  200/302/400/401/403/404/429/500/503 断言 identity 表指纹不变、`last_active` DML 为零；
+  合法 preflight 还必须零 Session 副作用。
+- **切流边界：** 切流前必须将旧在线/后台/聊天消费者的暂时可见性影响纳入 runbook 和监控，并
+  追踪 Phase 7 presence 退出条件；本差异不授权修改 identity API/数据库。
+
+## P4C-LEARNING-009：受保护限流按有效 actor 计费并在 Redis 故障时返回 503
+
+- **旧行为：** 两条 alias 继承 Flask 全局 fixed-window 限流，基础配置为
+  `10/second;500/hour;5000/day`；固定提交的 compose 生产默认再乘 100，为
+  `1000/second;50000/hour;500000/day`，且可被环境显式覆盖。两个注册 endpoint 使用独立桶；
+  但旧 key 优先选 Session，导致“Session owner + 冲突 Bearer actor”请求向 Session 桶计费，
+  业务却以 Bearer actor 执行。旧 Redis 连接拒绝在 handler 前返回通用 500，不带限流头。
+- **Java 目标行为：** 保留 10/500/5000 基础三窗口和生产默认 100 倍，两个 alias 使用彼此独立
+  且与 public-bank 分离的 route namespace。先完成认证选择，再以同一个有效 principal 计费；
+  无有效 principal 时才使用已信任的 client IP。显式 Bearer 与 Session 冲突时以 Bearer actor
+  为准，Bearer 拒绝时不得偷用 Session actor 的桶。
+- **Key 与故障边界：** actor/IP 在进入 Redis 前使用独立 secret 的 HMAC 假名，禁止写入 raw
+  user ID、IP、Cookie 或 Bearer。任一窗口无法原子记录时 fail closed 为固定安全 503，不带
+  Redis 地址/异常文本或伪造的限流头，也不得放行业务调用。
+- **批准理由：** 有效 actor 必须与实际授权主体相同，否则可用冲突凭据消耗他人配额或规避自身
+  配额。HMAC 避免 Redis key 成为身份目录；503 把配额存储故障与真正 429 分开，且在计数状态
+  不可知时不默认放行。
+- **保持/影响：** 保留 alias 独立、部署可覆盖的生产预算、API JSON 429、Web 默认 HTML/显式
+  JSON 协商、`Retry-After` 与三个 `X-RateLimit-*` 头。可观察差异是冲突 Bearer 改向真正
+  actor 计费、Redis 故障从 500 改为 503，以及 Redis key 不再可读原始身份。
+- **强制测试：** 用可控时钟覆盖秒/时/日窗口、生产倍率和环境覆盖；覆盖 alias 互不泄漏、同
+  actor 跨 IP、不同 actor 同 IP、匿名/IP 兜底、Session/Bearer 冲突、无原始 key、429
+  信封/四个头以及 Redis 连接拒绝/中断的 503。
+- **切流边界：** 禁止直接复用 public-bank limiter 的 route 枚举、bean 或 Redis namespace；
+  必须先有真实 Redis 的多请求、隔离、故障恢复和多实例证据。当前固定旧栈捕获不是生产流量证明，
+  也不单独授权实现或切流。
+
+## P4C-LEARNING-010：CORS 只限 API alias，OPTIONS 在认证与业务前安全终止
+
+- **旧行为：** Flask-CORS 作用于全局 `/api/*`，允许固定的 servicewechat origin、显式部署
+  origin 与 debug localhost，配置方法是 GET/POST/PUT/DELETE/OPTIONS，允许头只有
+  Content-Type/Authorization，`supports_credentials=false`。固定观察中，allowlisted API GET
+  以 200 执行业务并回显 ACAO；非 allowlisted API GET 也以 200 执行业务，只是不发 ACAO。
+  合法 API preflight 先被全局认证拒绝为 401，但仍带 ACAO、不包含 X-Request-ID 的 ACAH 及
+  过宽的 ACAM；非法 origin 是无 CORS 头的 401，Web preflight 是 `/login` 302。
+- **Java simple-request 行为：** CORS 只匹配精确 API alias，allowlist 是
+  `https://servicewechat.com` 加显式部署配置，dev profile 才增加 localhost/127.0.0.1 的
+  5000/3000 端口。无 Origin 的 GET/HEAD 正常进入 auth→user-count limiter→业务且不发
+  `Access-Control-*`；allowlisted Origin 也走同一业务链，只精确回显单一 ACAO，绝不使用
+  wildcard 或 ACA-Credentials，普通响应不发 ACAM/ACAH。非 allowlisted Origin 固定为 403
+  空体，在 target auth、route limiter、Session、Controller、应用层与 SQL 前终止，无
+  `Access-Control-*` 或 `Set-Cookie`。
+- **合法 API preflight：** 仅当 OPTIONS 同时具备 allowlisted Origin、
+  `Access-Control-Request-Method: GET|HEAD`，且 requested headers 是
+  {Authorization, Content-Type, X-Request-ID} 的大小写不敏感子集时返回 204 空体。
+  `Allow` 和 ACAM 集合均为 {GET, HEAD, OPTIONS}，ACAH 只列出请求中的允许子集，ACAO 精确
+  回显 origin；不发 wildcard、ACA-Credentials 或未冻结的 Max-Age。`Vary` 必须合并
+  {Origin, Access-Control-Request-Method, Access-Control-Request-Headers, Cookie}。
+- **非法与普通 OPTIONS：** preflight 的 origin、method 或 header 任一不允许时固定 403 空体，
+  无 `Access-Control-*`/`Set-Cookie`，但保留 `X-Request-ID`、安全头和同一组 `Vary` token。
+  精确 converter-valid API alias 的 bare OPTIONS 固定为 204 空体，`Allow` 集合为
+  {GET, HEAD, OPTIONS}，无 `Access-Control-*`，`Vary` 为 {Origin, Cookie}。合法、非法与
+  bare OPTIONS 都必须为零 target auth、零 user-count rate acquire、零 Session
+  create/refresh/invalidate、零 Controller/application/SQL。
+- **Web alias：** Web 不是 CORS resource，任意 Origin 都不改变 GET/HEAD 的正常 Web 认证与
+  业务状态，也绝不输出 `Access-Control-*`。精确 converter-valid Web alias 的 OPTIONS 固定
+  204 空体，`Allow` 集合为 {GET, HEAD, OPTIONS}、`Vary: Cookie`，且同样零认证、限流、
+  Session、应用调用、SQL 和 `Set-Cookie`。
+- **批准理由：** 浏览器 preflight 不携带业务凭据，先要求登录会使合法跨域 API 读取不可用；
+  同时精确路由、origin、方法和头白名单阻止预检豁免扩散成新的全局匿名面。主动拒绝非 allowlisted
+  simple request 还避免服务端在明确不受信任的跨域意图下执行受保护业务。
+- **保持/影响：** allowlisted API simple request 的认证、限流和业务不变；API 响应必须合并
+  `Vary: Origin, Cookie`，Web 响应为 `Vary: Cookie`。可观察差异包括非 allowlisted API GET/HEAD
+  从“执行后仅无 ACAO”改为前置 403、X-Request-ID 加入允许头、合法 preflight 从 401 改为 204、
+  非法 preflight 从 401/302 改为 403，以及 Web/bare OPTIONS 收敛为无副作用 204。
+- **强制测试：** 覆盖双 alias、无/允许/拒绝 Origin、GET/HEAD、requested headers 全子集和超集、
+  method 越界、credentials/wildcard/Max-Age 缺失、`Allow`/`Vary`/Request ID，并在每个 204/403
+  上断言 auth、限流、Session、Controller、learning/personalbank 调用、SQL 与 Set-Cookie 全为零。
+- **切流边界：** 只允许后续新增路由级 CORS source，禁止用全局 `/**` permitAll 或改变其他 API。
+  应用内测试客户端证据不等于浏览器 cookie enforcement 或反向代理 header-preservation 证据；
+  完整链与部署证据未闭合前不得切流。
+
+## P4C-LEARNING-011：保留 Unicode Nd 数字语义并安全收敛路径溢出与歧义
+
+- **旧行为：** Werkzeug `<int:bank_id>` 接受前导零、Unicode `Nd` 与 percent-decoded ASCII
+  数字；0 匹配后返回 403，负数/非数字/分号 matrix 不匹配为 404，encoded slash 观察为 308。
+  Python `int` 无界，`2147483648` 在固定夹具中到达访问检查后为 403，而
+  `9223372036854775808` 在数据库绑定前失败为安全 500。
+- **规范化目标：** 必须先做严格 canonical percent decode；unreserved ASCII 数字与严格 UTF-8
+  编码的 Unicode `Nd` 都进入同一解析器。复用 `LegacyDecimalPathInteger`，逐 Unicode code
+  point 只接受 `Nd` 并按 digit value 规范化为 ASCII；去除前导零后按字符串 length/lexicographic
+  比较边界，禁止先用 `int`、`long` 或 `BigInteger` 解析任意精度输入。
+- **合法与零值：** ASCII、前导零、混合 Unicode `Nd`、percent-encoded ASCII/UTF-8 `Nd` 均保持
+  converter-valid。任意全零表示 0，在有效认证和 alias 限流计费后固定返回 legacy
+  “无权访问此题库”403，不调用 `LearningApplicationApi`、不发业务 SQL。规范化值
+  1..2147483647 才构造 `PersonalBankUserCountsQuery` 并进入应用层。
+- **Converter miss：** 负数、`+1`、小数、空 segment、字母/混合非数字、Unicode numeric 但非
+  `Nd`、额外 segment 与 trailing slash 固定为 404，不扣 user-count route 额度、不进应用或业务
+  SQL。既有全局 `TargetSessionAuthenticationFilter` 仍可能读取显式凭据/已有 Session；“404
+  不扣额”不得被误写成“全局认证过滤器绝不运行”。
+- **溢出与防火墙：** 规范化值只要大于 `Integer.MAX_VALUE`，无论是否超过 `Long.MAX_VALUE`，
+  都在有效认证、alias 限流计费后固定为不泄漏输入或异常文本的安全 500，并且不构造 query、零
+  应用调用、零业务 SQL；前导零不改变该边界。literal/encoded slash 和 literal/encoded semicolon
+  中，literal slash 形成 extra segment 并按 converter miss 返回 404；encoded slash 以及
+  literal/encoded semicolon 由 `StrictHttpFirewall`/保留字符 canonicalization 在 route authz、
+  user-count limiter、MVC 与应用前固定拒绝为安全 400，不得先解码为可匹配路径。
+- **批准理由：** 明确的字符串边界比较能在进入 Java `int` 业务边界前固定任意精度溢出结果，
+  同时保留旧栈真正支持的国际化数字。将 encoded slash/semicolon 歧义提前拒绝，避免代理、
+  Servlet、Security matcher 与 MVC 对同一 raw target 产生不同理解。
+- **保持/影响：** 合法 ID、Unicode/leading-zero、0 和普通 converter 404 的相对顺序保持。差异是
+  `2147483648` 从旧夹具 403 收敛为统一溢出 500，encoded slash 从 308、semicolon 从 404 收敛
+  为 firewall 400。404 仍按 alias/Accept 走既定协商；overflow 500 为 API 固定安全 JSON、Web
+  默认 HTML/显式 JSON，400 只承诺安全状态、无内部信息和 Request ID，不虚构 legacy JSON。
+- **强制测试：** 双 alias 覆盖 ASCII/阿拉伯-印度/全角/混合 `Nd`、前导零、percent-encoded
+  ASCII/UTF-8 `Nd`、0、负数、非 `Nd`、空/额外/trailing、encoded slash/semicolon、
+  `Integer.MAX_VALUE`、max+1、`Long.MAX_VALUE` 与 long max+1；逐例断言
+  firewall→route authz→limit→parse→application 的实际终止点、计费和 SQL 边界。
+- **切流边界：** 必须有真实 Servlet HTTP 与入口代理 raw-target 测试，证明编码分隔符没有在上游
+  被改写；在 400/404/500 发生层级、限流计费、错误协商和零业务 SQL 未固定前不得切流。
+
+## P4C-LEARNING-012：HEAD 执行 GET 同等语义，但所有结果都是零字节响应体
+
+- **旧行为：** Flask 的 GET 登记自动派生 HEAD；已认证 HEAD 会进入与 GET 相同的业务路径，再由
+  HTTP 层剥离响应体。不同拒绝分散在认证、限流、converter 和异常处理，不能只用 200 用例推断
+  所有 Spring filter/security writer 产生的 HEAD 都会自动空体。
+- **Java 目标行为：** HEAD 与对应 GET 共用完全相同的 raw path 解析、alias 认证、有效 actor、
+  限流桶/计费、参数规范化、learning/personalbank 调用、SQL 预算、状态码和语义响应头；唯一
+  差别是实际响应体始终为零字节。`Content-Length` 可省略或表示对应 GET representation 的长度，
+  不要求其值为 0，硬约束是网络响应体字节数为 0。
+- **零体矩阵：** 200 成功、302 登录重定向、400 firewall、401 认证拒绝、403 题库拒绝、404
+  converter miss、429 限流、500 业务故障/溢出和 503 权威或 Redis 不可用都不得写 JSON、HTML、
+  重定向页或异常文本。`Location`、CORS、`Vary`、安全头、限流头、`X-Request-ID` 与对应 GET
+  的 `Set-Cookie` 失效/刷新语义仍须保留。
+- **执行顺序：** 业务 403 仍实际扣额并调用业务，path 0 的 403 则扣额但零应用调用；converter
+  404 不扣 user-count 额度；429 实际 acquire 后拒绝并保留四个限流头；path overflow 在扣额后
+  以零应用/SQL 返回 500。认证 authority 503 在 user-count limiter 前，无该 route 的限流头；
+  rate-store 503 发生在认证后，但不能伪造完整限流 decision。
+- **批准理由：** HEAD 是 GET 的元数据视图，不应成为绕过权限、限流或业务复核的第三条路由；
+  同时由每个 writer 显式抑制 body，避免不同 Servlet/filter 终止点产生不一致结果。
+- **保持/影响：** 除实际 body 字节外，不降级任何 GET 认证、Session 失效/刷新、限流、权限撤销
+  复核、字段降级或 alias 错误协商语义。`users.last_active` 依
+  `P4C-LEARNING-008` 始终零 DML，不因“与 GET 同等”而恢复旧身份写入。
+- **强制测试：** 用同一夹具成对执行 GET/HEAD，比较双 alias 的路径分类、主体、限流计数、应用
+  调用、SQL、状态码和语义头，并在上述每个状态断言实际 body length 为 0。必须直接覆盖
+  Controller、Security error writer、rate filter、firewall、Session writer 与全局安全故障路径。
+- **切流边界：** 不得用 MockMvc 的单一 200 结果替代真实 Servlet 容器完整链零体证据；任一
+  filter/writer/异常分支在 HEAD 泄漏 body，都阻断 route/OpenAPI 登记与生产切流。
