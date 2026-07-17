@@ -9,6 +9,11 @@ import json
 from pathlib import Path
 import unittest
 
+try:
+    from tools.phase4c_successor_acceptance import successor_sha256
+except ModuleNotFoundError:  # Direct script execution from tools/.
+    from phase4c_successor_acceptance import successor_sha256
+
 
 ROOT = Path(__file__).resolve().parents[1]
 PHASE4B = ROOT / "docs" / "refactor" / "phase4b"
@@ -30,6 +35,9 @@ USER_COUNTS_ENTRY_RELATIVE = (
 )
 USER_COUNTS_GOLDEN_PATH = (
     PHASE4B / "golden-personal-bank-user-counts-reads.json"
+)
+PHASE4C_COMPOSITION_PATH = (
+    ROOT / "docs/refactor/phase4c/personal-bank-user-counts-composition-contract.json"
 )
 
 QUERY_IDS = [
@@ -382,6 +390,10 @@ def payload_sha256(document: dict) -> str:
     return hashlib.sha256(canonical_json(payload).encode("utf-8")).hexdigest()
 
 
+def phase4c_successor_hash(relative: str) -> str | None:
+    return successor_sha256(ROOT, relative)
+
+
 class Phase4bPersonalBankUsageStatsReadContractTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -589,11 +601,21 @@ class Phase4bPersonalBankUsageStatsReadContractTest(unittest.TestCase):
             set(implementation["verification_source_sha256"]),
         )
         for name, relative in VERIFICATION_SOURCE_FILES.items():
-            self.assertEqual(
-                sha256(ROOT / relative),
-                implementation["verification_source_sha256"][name],
-                name,
-            )
+            current_hash = sha256(ROOT / relative)
+            phase4c_hash = phase4c_successor_hash(relative)
+            if phase4c_hash is None:
+                self.assertEqual(
+                    current_hash,
+                    implementation["verification_source_sha256"][name],
+                    name,
+                )
+            else:
+                self.assertEqual(current_hash, phase4c_hash, name)
+                self.assertNotEqual(
+                    current_hash,
+                    implementation["verification_source_sha256"][name],
+                    name,
+                )
 
         current_manifest = {
             path.relative_to(ROOT).as_posix(): sha256(path)

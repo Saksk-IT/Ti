@@ -79,6 +79,7 @@ class PersonalBankUsageStatsContractParityTest {
     private static JsonNode plan;
     private static JsonNode userCountsEntry;
     private static JsonNode userCountsGolden;
+    private static JsonNode phase4cComposition;
 
     @BeforeAll
     static void loadEvidence() throws Exception {
@@ -102,6 +103,10 @@ class PersonalBankUsageStatsContractParityTest {
                 "docs/refactor/phase4b/personal-bank-user-counts-entry-contract.json");
         userCountsGolden = readJson(
                 "docs/refactor/phase4b/golden-personal-bank-user-counts-reads.json");
+        phase4cComposition = readJson(
+                "docs/refactor/phase4c/"
+                        + "personal-bank-user-counts-composition-contract.json");
+        Phase4cSuccessorAcceptance.validate(phase4cComposition);
     }
 
     @Test
@@ -507,10 +512,24 @@ class PersonalBankUsageStatsContractParityTest {
         assertThat(propertyNames(files))
                 .containsExactlyInAnyOrderElementsOf(propertyNames(hashes));
         for (String key : propertyNames(files)) {
-            assertThat(sha256(files.path(key).asString()))
-                    .as("source hash for %s", key)
-                    .isEqualTo(hashes.path(key).asString());
+            String relative = files.path(key).asString();
+            String currentHash = sha256(relative);
+            String successorHash = phase4cSuccessorHash(relative);
+            if (successorHash == null) {
+                assertThat(currentHash)
+                        .as("source hash for %s", key)
+                        .isEqualTo(hashes.path(key).asString());
+            } else {
+                assertThat(currentHash)
+                        .as("Phase4C source hash for %s", key)
+                        .isEqualTo(successorHash)
+                        .isNotEqualTo(hashes.path(key).asString());
+            }
         }
+    }
+
+    private static String phase4cSuccessorHash(String relative) {
+        return Phase4cSuccessorAcceptance.successorHash(phase4cComposition, relative);
     }
 
     private static void assertMainSourceManifest(JsonNode manifest) throws Exception {

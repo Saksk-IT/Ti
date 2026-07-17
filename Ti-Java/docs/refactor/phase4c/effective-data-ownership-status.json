@@ -1,0 +1,32 @@
+{
+  "contract_id": "ti.phase4c.effective-data-ownership-status",
+  "schema_version": 1,
+  "captured_at": "2026-07-17",
+  "predecessor": {
+    "source": "../phase4a/effective-data-ownership-status.json",
+    "sha256": "455b45b6c838c2308b3018e690bd444b503d3493b6290fa3e5083c4f84e01127",
+    "resource_count": 159,
+    "immutable": true
+  },
+  "delta": {
+    "source": "data-ownership-delta.csv",
+    "sha256": "b7ce8ba5a8ed221bd89c8b2287cb7fdc77caa424614097e62f141d923cc66b40",
+    "owner_override_count": 1,
+    "new_resource_count": 0
+  },
+  "effective": {
+    "resource_count": 159,
+    "resources_with_exactly_one_owner": 159,
+    "canonical_owner_manifest_sha256": "76b6143812e7a352dd0c4eb515260d956ac963a26bc211f85c9bab182df45a3b",
+    "owner_overrides": [
+      {
+        "resource_kind": "db_kv_namespace",
+        "resource_name": "bank_<bank_id>_tags",
+        "base_owner": "personalbank",
+        "owner": "learning",
+        "production_cutover": false
+      }
+    ]
+  },
+  "document_payload_sha256": "e3c7e2cde4853c241fccc5626da4ed9690d09c74f4bd8c3075d1b2fe5f2b75d9"
+}

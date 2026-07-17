@@ -10,6 +10,21 @@ from pathlib import Path
 import re
 import unittest
 
+try:
+    from tools.phase4c_successor_acceptance import (
+        ACCEPTED_COMMIT,
+        ACCEPTED_PREDECESSOR_SHA256,
+        load_successor_contract,
+        successor_sha256,
+    )
+except ModuleNotFoundError:  # Direct script execution from tools/.
+    from phase4c_successor_acceptance import (
+        ACCEPTED_COMMIT,
+        ACCEPTED_PREDECESSOR_SHA256,
+        load_successor_contract,
+        successor_sha256,
+    )
+
 
 ROOT = Path(__file__).resolve().parents[1]
 PHASE4B = ROOT / "docs/refactor/phase4b"
@@ -25,6 +40,12 @@ OWNERSHIP_PATH = ROOT / "docs/refactor/03-data-ownership.csv"
 MODULES_PATH = ROOT / "docs/refactor/phase1/module-contracts.json"
 OPENAPI_PATH = ROOT / "contracts/openapi.json"
 ROUTE_DELTA_PATH = ROOT / "docs/refactor/phase4a/route-parity-delta.csv"
+PHASE4C_COMPOSITION_PATH = (
+    ROOT / "docs/refactor/phase4c/personal-bank-user-counts-composition-contract.json"
+)
+PHASE4C_READ_PATH = (
+    ROOT / "docs/refactor/phase4c/personal-bank-user-counts-read-contract.json"
+)
 
 ROUTE_KEYS = {
     "6858f6fa506f|GET|/api/user/banks/api/<int:bank_id>/user-counts",
@@ -112,6 +133,24 @@ def java_test_count(path: Path) -> int:
     ))
 
 
+def learning_and_personalbank_main_source_manifest() -> dict[str, str]:
+    root = ROOT / "server/src/main/java/io/saksk/ti"
+    paths = []
+    for module in ("learning", "personalbank"):
+        paths.extend((root / module).rglob("*.java"))
+    return {
+        path.relative_to(ROOT).as_posix(): sha256(path)
+        for path in sorted(paths)
+    }
+
+
+def compact_java_code(path: Path) -> str:
+    source = path.read_text(encoding="utf-8")
+    source = re.sub(r"/\*.*?\*/", "", source, flags=re.DOTALL)
+    source = re.sub(r"//[^\n]*", "", source)
+    return re.sub(r"\s+", "", source)
+
+
 class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -124,6 +163,12 @@ class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
         cls.effective = load_json(EFFECTIVE_PATH)
         cls.modules = load_json(MODULES_PATH)
         cls.openapi = load_json(OPENAPI_PATH)
+        cls.phase4c_composition = load_successor_contract(ROOT)
+        if cls.phase4c_composition is None:
+            raise AssertionError("Phase4C composition contract is required")
+        cls.phase4c_read = (
+            load_json(PHASE4C_READ_PATH) if PHASE4C_READ_PATH.is_file() else None
+        )
 
     def test_01_identity_predecessor_sources_payload_and_forward_handoff_close(self):
         contract = self.contract
@@ -162,11 +207,37 @@ class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
         for name, reference in contract["source_contracts"].items():
             source = ROOT / reference["source"]
             self.assertTrue(source.is_file(), name)
-            self.assertEqual(reference["sha256"], sha256(source), name)
+            if name == "entry_contract_test":
+                self.assertEqual(
+                    self.phase4c_composition["historical_acceptance"]
+                    ["accepted_file_sha256"][reference["source"]],
+                    reference["sha256"],
+                )
+                self.assertEqual(
+                    sha256(source),
+                    successor_sha256(ROOT, reference["source"]),
+                    name,
+                )
+                self.assertNotEqual(reference["sha256"], sha256(source), name)
+            else:
+                self.assertEqual(reference["sha256"], sha256(source), name)
         self.assertEqual(
             contract["document_payload_sha256"],
             document_payload_sha256(contract),
         )
+        successor = self.phase4c_composition
+        self.assertEqual(
+            "ti.phase4c.personal-bank-user-counts-composition-contract",
+            successor["contract_id"],
+        )
+        self.assertEqual(
+            "docs/refactor/phase4b/personal-bank-user-counts-entry-contract.json",
+            successor["predecessor"]["source"],
+        )
+        self.assertEqual(ACCEPTED_COMMIT, successor["predecessor"]["accepted_commit"])
+        self.assertEqual(ACCEPTED_PREDECESSOR_SHA256, sha256(CONTRACT_PATH))
+        self.assertEqual(sha256(CONTRACT_PATH), successor["predecessor"]["sha256"])
+        self.assertEqual(contract["contract_id"], successor["predecessor"]["contract_id"])
 
     def test_02_application_shape_stays_at_23_and_production_java_is_unchanged(self):
         baseline = self.contract["production_baseline"]
@@ -187,19 +258,121 @@ class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
             self.predecessor["implementation"]["personalbank_main_source_manifest"],
             baseline["personalbank_main_source_manifest"],
         )
-        for relative, expected_hash in baseline[
-            "personalbank_main_source_manifest"
-        ].items():
-            self.assertEqual(expected_hash, sha256(ROOT / relative), relative)
-
         production_root = ROOT / "server/src/main/java/io/saksk/ti"
-        user_count_sources = list(production_root.rglob("*UserCounts*.java"))
-        self.assertEqual([], user_count_sources)
-        api_source = (
-            ROOT / "server/src/main/java/io/saksk/ti/personalbank/api/"
-            "PersonalBankApplicationApi.java"
-        ).read_text(encoding="utf-8")
-        self.assertNotIn("findUserCounts", api_source)
+        if self.phase4c_read is None:
+            for relative, expected_hash in baseline[
+                "personalbank_main_source_manifest"
+            ].items():
+                self.assertEqual(expected_hash, sha256(ROOT / relative), relative)
+            self.assertEqual([], list(production_root.rglob("*UserCounts*.java")))
+            api_source = (
+                ROOT / "server/src/main/java/io/saksk/ti/personalbank/api/"
+                "PersonalBankApplicationApi.java"
+            ).read_text(encoding="utf-8")
+            self.assertNotIn("findUserCounts", api_source)
+            self.assertEqual(
+                0,
+                self.phase4c_composition["change_budget"][
+                    "production_java_files_added"
+                ],
+            )
+        else:
+            read_contract = self.phase4c_read
+            requirements = self.phase4c_composition["successor_handoff"][
+                "future_read_contract_requirements"
+            ]
+            self.assertEqual(requirements["contract_id"], read_contract["contract_id"])
+            self.assertEqual(requirements["status"], read_contract["status"])
+            self.assertEqual(
+                read_contract["document_payload_sha256"],
+                document_payload_sha256(read_contract),
+            )
+            read_predecessor = read_contract["predecessor"]
+            self.assertEqual(
+                requirements["predecessor_source"], read_predecessor["source"]
+            )
+            self.assertEqual(
+                sha256(PHASE4C_COMPOSITION_PATH), read_predecessor["sha256"]
+            )
+            self.assertEqual(
+                self.phase4c_composition["contract_id"],
+                read_predecessor["contract_id"],
+            )
+
+            successor = read_contract["implementation"]
+            self.assertTrue(successor["http_neutral_java_implemented"])
+            self.assertEqual(
+                requirements["implemented_public_application_method_count"],
+                successor["implemented_public_application_method_count"],
+            )
+            current_manifest = learning_and_personalbank_main_source_manifest()
+            self.assertTrue(current_manifest)
+            self.assertEqual(
+                current_manifest,
+                successor["learning_and_personalbank_main_source_manifest"],
+            )
+            self.assertEqual(
+                requirements["exact_main_source_scope"],
+                successor["main_source_scope"],
+            )
+            historical_manifest = self.phase4c_composition["production_baseline"][
+                "learning_and_personalbank_main_source_manifest"
+            ]
+            self.assertNotEqual(historical_manifest, current_manifest)
+            for relative in requirements["expected_changed_main_sources"]:
+                self.assertIn(relative, historical_manifest)
+                self.assertIn(relative, current_manifest)
+                self.assertNotEqual(
+                    historical_manifest[relative], current_manifest[relative], relative
+                )
+            for relative, fragments in requirements[
+                    "expected_added_main_sources"
+            ].items():
+                self.assertNotIn(relative, historical_manifest)
+                self.assertIn(relative, current_manifest)
+                compact = compact_java_code(ROOT / relative)
+                for fragment in fragments:
+                    self.assertIn(fragment, compact, relative)
+            for relative, fragments in requirements[
+                    "changed_source_compact_java_fragments"
+            ].items():
+                compact = compact_java_code(ROOT / relative)
+                for fragment in fragments:
+                    self.assertIn(fragment, compact, relative)
+
+            verification_files = successor["verification_source_files"]
+            verification_hashes = successor["verification_source_sha256"]
+            self.assertEqual(set(verification_files), set(verification_hashes))
+            for name, relative in requirements[
+                    "required_verification_sources"
+            ].items():
+                self.assertEqual(relative, verification_files[name])
+                source = ROOT / relative
+                self.assertTrue(source.is_file(), name)
+                self.assertEqual(sha256(source), verification_hashes[name])
+                parity_code = compact_java_code(source)
+                self.assertIn("@Test", parity_code)
+                if name == "api_shape_contract_parity_test":
+                    for method_name in (
+                        "findPersonalBankUserCounts",
+                        "checkQuestionAccess",
+                        "summarizeQuestions",
+                        "inspectQuestionMembership",
+                    ):
+                        self.assertIn(method_name, parity_code)
+            self.assertTrue(all(
+                requirements["required_behavior_evidence"].values()
+            ))
+            authorization = read_contract["authorization"]
+            for key in requirements["forbidden_authorizations"]:
+                self.assertFalse(authorization[key], key)
+            operator_requirement = requirements[
+                "operator_migration_implementation_requires"
+            ]
+            if authorization["operator_migration_implementation"]:
+                self.assertTrue(authorization[operator_requirement])
+            self.assertTrue(read_contract["acceptance"]["routes_remain_pending"])
+            self.assertFalse(read_contract["acceptance"]["production_cutover"])
 
     def test_03_routes_retain_personalbank_baseline_but_review_to_learning(self):
         operations = self.contract["route_status"]["operations"]

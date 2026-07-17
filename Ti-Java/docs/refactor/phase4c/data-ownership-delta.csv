@@ -1,0 +1,2 @@
+resource_kind,resource_name,base_owner,phase4c_owner,persistence_role,lifecycle,evidence,production_cutover
+db_kv_namespace,bank_<bank_id>_tags,personalbank,learning,legacy_compatibility_state,operator-only explicit migration; source retained; normal GET and startup migration forbidden,phase4b personal-bank-user-counts entry/golden plus Phase4C composition and migration evidence,false

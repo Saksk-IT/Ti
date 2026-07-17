@@ -9,6 +9,11 @@ import json
 from pathlib import Path
 import unittest
 
+try:
+    from tools.phase4c_successor_acceptance import successor_sha256
+except ModuleNotFoundError:  # Direct script execution from tools/.
+    from phase4c_successor_acceptance import successor_sha256
+
 
 TI_JAVA_ROOT = Path(__file__).resolve().parents[1]
 PHASE4B_ROOT = TI_JAVA_ROOT / "docs" / "refactor" / "phase4b"
@@ -22,6 +27,10 @@ USAGE_STATS_READ_PATH = (
 )
 USAGE_STATS_ENTRY_RELATIVE = (
     "docs/refactor/phase4b/personal-bank-usage-stats-entry-contract.json"
+)
+PHASE4C_COMPOSITION_PATH = (
+    TI_JAVA_ROOT
+    / "docs/refactor/phase4c/personal-bank-user-counts-composition-contract.json"
 )
 TERMINAL_SOURCE_HANDOFFS = {
     "application_api": ("main_source", "application_api"),
@@ -110,6 +119,10 @@ def document_payload_sha256(document: dict) -> str:
     })
 
 
+def phase4c_successor_hash(relative: str) -> str | None:
+    return successor_sha256(TI_JAVA_ROOT, relative)
+
+
 class Phase4bPersonalBankAllSharesEntryContractTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -172,7 +185,12 @@ class Phase4bPersonalBankAllSharesEntryContractTest(unittest.TestCase):
             files = self.terminal["implementation"][f"{section}_files"]
             hashes = self.terminal["implementation"][f"{section}_sha256"]
             self.assertEqual(reference["source"], files[terminal_name])
-            self.assertEqual(hashes[terminal_name], current_hash, name)
+            phase4c_hash = phase4c_successor_hash(reference["source"])
+            if phase4c_hash is None:
+                self.assertEqual(hashes[terminal_name], current_hash, name)
+            else:
+                self.assertEqual(phase4c_hash, current_hash, name)
+                self.assertNotEqual(hashes[terminal_name], current_hash, name)
             self.assertNotEqual(reference["sha256"], current_hash, name)
 
         self.assertEqual(

@@ -10,6 +10,11 @@ from pathlib import Path
 import re
 import unittest
 
+try:
+    from tools.phase4c_successor_acceptance import successor_sha256
+except ModuleNotFoundError:  # Direct script execution from tools/.
+    from phase4c_successor_acceptance import successor_sha256
+
 
 ROOT = Path(__file__).resolve().parents[1]
 PHASE4B = ROOT / "docs" / "refactor" / "phase4b"
@@ -24,6 +29,9 @@ GOLDEN_PATH = PHASE4B / "golden-personal-bank-usage-stats-reads.json"
 PLAN_PATH = PHASE4B / "personal-bank-usage-stats-query-plan-evidence.json"
 EFFECTIVE_PATH = ROOT / "docs" / "refactor" / "phase4a" / (
     "effective-route-parity-status.json"
+)
+PHASE4C_COMPOSITION_PATH = (
+    ROOT / "docs/refactor/phase4c/personal-bank-user-counts-composition-contract.json"
 )
 
 ROUTE_KEYS = {
@@ -112,6 +120,10 @@ def document_payload_sha256(document: dict) -> str:
     })
 
 
+def phase4c_successor_hash(relative: str) -> str | None:
+    return successor_sha256(ROOT, relative)
+
+
 def python_test_count(path: Path) -> int:
     return len(re.findall(r"^\s+def test_[A-Za-z0-9_]+\(", path.read_text(
         encoding="utf-8"
@@ -194,7 +206,12 @@ class Phase4bPersonalBankUsageStatsEntryContractTest(unittest.TestCase):
             files = successor["implementation"][f"{section}_files"]
             hashes = successor["implementation"][f"{section}_sha256"]
             self.assertEqual(reference["source"], files[successor_name], name)
-            self.assertEqual(current_hash, hashes[successor_name], name)
+            phase4c_hash = phase4c_successor_hash(reference["source"])
+            if phase4c_hash is None:
+                self.assertEqual(current_hash, hashes[successor_name], name)
+            else:
+                self.assertEqual(current_hash, phase4c_hash, name)
+                self.assertNotEqual(current_hash, hashes[successor_name], name)
             self.assertNotEqual(reference["sha256"], current_hash, name)
 
         java_handoff = contract["source_contracts"][

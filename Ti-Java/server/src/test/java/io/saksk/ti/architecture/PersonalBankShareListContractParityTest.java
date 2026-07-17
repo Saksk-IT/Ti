@@ -50,6 +50,7 @@ class PersonalBankShareListContractParityTest {
     private static JsonNode allSharesContract;
     private static JsonNode usageStatsEntry;
     private static JsonNode usageStatsContract;
+    private static JsonNode phase4cComposition;
 
     @BeforeAll
     static void loadEvidence() throws Exception {
@@ -76,6 +77,10 @@ class PersonalBankShareListContractParityTest {
                 "docs/refactor/phase4b/personal-bank-usage-stats-entry-contract.json");
         usageStatsContract = readJson(
                 "docs/refactor/phase4b/personal-bank-usage-stats-read-contract.json");
+        phase4cComposition = readJson(
+                "docs/refactor/phase4c/"
+                        + "personal-bank-user-counts-composition-contract.json");
+        Phase4cSuccessorAcceptance.validate(phase4cComposition);
     }
 
     @Test
@@ -144,7 +149,8 @@ class PersonalBankShareListContractParityTest {
         assertThat(transitiveHandoff.path("source").asString())
                 .isEqualTo(handoff.path("source").asString());
         assertThat(sha256(handoff.path("source").asString()))
-                .isEqualTo(terminalHash)
+                .isEqualTo(phase4cSuccessorHash(handoff.path("source").asString()))
+                .isNotEqualTo(terminalHash)
                 .isNotEqualTo(transitiveHandoff.path("sha256").asString())
                 .isNotEqualTo(allSharesTerminalHash)
                 .isNotEqualTo(handoff.path("sha256").asString());
@@ -331,11 +337,22 @@ class PersonalBankShareListContractParityTest {
                         .as("source hash for %s", key)
                         .isEqualTo(hashes.path(key).asString());
             } else {
-                assertThat(currentHash).as("terminal source hash for %s", key)
-                        .isEqualTo(terminalHash);
+                String successorHash = phase4cSuccessorHash(relative);
+                if (successorHash == null) {
+                    assertThat(currentHash).as("terminal source hash for %s", key)
+                            .isEqualTo(terminalHash);
+                } else {
+                    assertThat(currentHash).as("Phase4C source hash for %s", key)
+                            .isEqualTo(successorHash)
+                            .isNotEqualTo(terminalHash);
+                }
                 assertThat(hashes.path(key).asString()).isNotEqualTo(currentHash);
             }
         }
+    }
+
+    private static String phase4cSuccessorHash(String relative) {
+        return Phase4cSuccessorAcceptance.successorHash(phase4cComposition, relative);
     }
 
     private static String terminalHash(

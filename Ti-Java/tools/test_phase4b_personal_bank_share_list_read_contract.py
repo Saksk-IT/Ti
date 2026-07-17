@@ -12,6 +12,17 @@ import re
 import subprocess
 import unittest
 
+try:
+    from tools.phase4c_successor_acceptance import (
+        load_successor_contract,
+        successor_sha256,
+    )
+except ModuleNotFoundError:  # Direct script execution from tools/.
+    from phase4c_successor_acceptance import (
+        load_successor_contract,
+        successor_sha256,
+    )
+
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 REPOSITORY_ROOT = ROOT.parent
@@ -34,6 +45,9 @@ USAGE_STATS_ENTRY_RELATIVE = (
 USAGE_STATS_READ_PATH = PHASE4B / "personal-bank-usage-stats-read-contract.json"
 USAGE_STATS_READ_RELATIVE = (
     "docs/refactor/phase4b/personal-bank-usage-stats-read-contract.json"
+)
+PHASE4C_COMPOSITION_PATH = (
+    ROOT / "docs/refactor/phase4c/personal-bank-user-counts-composition-contract.json"
 )
 USAGE_STATS_ROUTE_KEYS = {
     "d67a16965b08|GET|/api/user/banks/api/<int:bank_id>/usage-stats",
@@ -247,6 +261,10 @@ def sha256(path: pathlib.Path) -> str:
     return digest.hexdigest()
 
 
+def phase4c_successor_hash(relative: str) -> str | None:
+    return successor_sha256(ROOT, relative)
+
+
 def canonical_control_manifest(
         forward_additions: set[str] | None = None,
         historical_hash_overrides: dict[str, str] | None = None,
@@ -432,7 +450,14 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
                     terminal_files = self.terminal["implementation"][files_key]
                     terminal_hashes = self.terminal["implementation"][hashes_key]
                     self.assertEqual(relative, terminal_files[terminal_name])
-                    self.assertEqual(current_hash, terminal_hashes[terminal_name])
+                    phase4c_hash = phase4c_successor_hash(relative)
+                    if phase4c_hash is not None:
+                        self.assertEqual(current_hash, phase4c_hash)
+                        self.assertNotEqual(
+                            current_hash, terminal_hashes[terminal_name]
+                        )
+                    else:
+                        self.assertEqual(current_hash, terminal_hashes[terminal_name])
                     self.assertNotEqual(hashes[name], current_hash)
                     if name == "share_read_contract_test":
                         handoff = load_json(ALL_SHARES_ENTRY_PATH)["source_contracts"][
@@ -838,7 +863,16 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
                 ("progress_forward_handoff", PROGRESS_FORWARD_HANDOFF_RELATIVE),
             ):
                 self.assertEqual(relative, terminal_files[key], key)
-                self.assertEqual(sha256(ROOT / relative), terminal_hashes[key], key)
+                phase4c_hash = phase4c_successor_hash(relative)
+                if phase4c_hash is not None:
+                    self.assertEqual(sha256(ROOT / relative), phase4c_hash, key)
+                    self.assertNotEqual(
+                        sha256(ROOT / relative), terminal_hashes[key], key
+                    )
+                else:
+                    self.assertEqual(
+                        sha256(ROOT / relative), terminal_hashes[key], key
+                    )
 
             usage_forward_additions = set(
                 terminal["forward_handoff"]["forward_additions"]
@@ -852,6 +886,35 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
                     "historical_hash_overrides"
             ].items():
                 historical_hash_overrides.setdefault(relative, historical_hash)
+
+        if PHASE4C_COMPOSITION_PATH.is_file():
+            phase4c = load_successor_contract(ROOT)
+            self.assertIsNotNone(phase4c)
+            self.assertEqual(
+                "docs/refactor/phase4b/personal-bank-user-counts-entry-contract.json",
+                phase4c["predecessor"]["source"],
+            )
+            successor_test = phase4c["source_contracts"][
+                "share_list_acceptance_successor_test"
+            ]
+            self.assertEqual(
+                SHARE_READ_FORWARD_TEST_RELATIVE,
+                successor_test["source"],
+            )
+            self.assertEqual(
+                sha256(ROOT / SHARE_READ_FORWARD_TEST_RELATIVE),
+                successor_test["sha256"],
+            )
+            handoff = phase4c["forward_handoff"]
+            self.assertEqual(14, len(handoff["forward_additions"]))
+            forward_additions |= set(handoff["forward_additions"])
+            for relative, historical_hash in handoff[
+                    "historical_hash_overrides"
+            ].items():
+                previous = historical_hash_overrides.setdefault(
+                    relative, historical_hash
+                )
+                self.assertEqual(previous, historical_hash, relative)
 
         total, included, manifest = canonical_control_manifest(
             forward_additions,

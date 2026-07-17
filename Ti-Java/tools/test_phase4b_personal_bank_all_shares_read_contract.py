@@ -9,6 +9,11 @@ import json
 from pathlib import Path
 import unittest
 
+try:
+    from tools.phase4c_successor_acceptance import successor_sha256
+except ModuleNotFoundError:  # Direct script execution from tools/.
+    from phase4c_successor_acceptance import successor_sha256
+
 
 ROOT = Path(__file__).resolve().parents[1]
 PHASE4B = ROOT / "docs" / "refactor" / "phase4b"
@@ -21,6 +26,9 @@ USAGE_STATS_ENTRY_RELATIVE = (
     "docs/refactor/phase4b/personal-bank-usage-stats-entry-contract.json"
 )
 USAGE_STATS_READ_PATH = PHASE4B / "personal-bank-usage-stats-read-contract.json"
+PHASE4C_COMPOSITION_PATH = (
+    ROOT / "docs/refactor/phase4c/personal-bank-user-counts-composition-contract.json"
+)
 ROUTE_KEYS = {
     "a6fda3638fc3|GET|/api/user/banks/api/shares/all",
     "0fdd3026f636|GET|/user/banks/api/shares/all",
@@ -88,6 +96,10 @@ def payload_sha256(document: dict) -> str:
         if key != "document_payload_sha256"
     }
     return hashlib.sha256(canonical_json(payload).encode()).hexdigest()
+
+
+def phase4c_successor_hash(relative: str) -> str | None:
+    return successor_sha256(ROOT, relative)
 
 
 class Phase4bPersonalBankAllSharesReadContractTest(unittest.TestCase):
@@ -159,7 +171,16 @@ class Phase4bPersonalBankAllSharesReadContractTest(unittest.TestCase):
                         f"{section}_sha256"
                     ]
                     self.assertEqual(relative, successor_files[handoff_name])
-                    self.assertEqual(current_hash, successor_hashes[handoff_name], name)
+                    phase4c_hash = phase4c_successor_hash(relative)
+                    if phase4c_hash is None:
+                        self.assertEqual(
+                            current_hash, successor_hashes[handoff_name], name
+                        )
+                    else:
+                        self.assertEqual(current_hash, phase4c_hash, name)
+                        self.assertNotEqual(
+                            current_hash, successor_hashes[handoff_name], name
+                        )
                     self.assertNotEqual(hashes[name], current_hash, name)
         self.assertEqual(
             contract["document_payload_sha256"], payload_sha256(contract)

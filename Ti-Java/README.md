@@ -2,13 +2,13 @@
 
 Ti-Java 是 Ti 的独立重构项目，目标是以 Java 25、Spring Boot 4.1、Spring MVC 和 Spring Modulith 重新实现现有业务，并逐步加入 Vue 3 + TypeScript Web 与项目自有的小程序。
 
-阶段 0 事实基线与阶段 1 架构/契约已经固化，阶段 2 Java 基础骨架与阶段 3 认证兼容切片也已通过门禁；阶段 4A 的有界 catalog 范围已由 `docs/refactor/phase4a/phase4a-final-acceptance.json` 完成最终 closure。Phase 4B 的 personal-bank category HTTP-neutral 分类读取已完成内部能力 closure；personal-bank share list 也已在保留历史入口快照的前提下新增 DTO、应用方法、只读 service、port 与 JDBC adapter，并由累计 shape 和 `personal-bank-share-list-read-contract.json` 锁定。实现后全部 source tools 284/284、完整 Maven 446+64、PostgreSQL 16.14/18.4 adapter 验证及 build-context SHA-256 `7e1da0e1af1d249b6bf5e13d3b6de94ea92920a95620294ffea369e84d448e16` 的 WORM 均通过；仅复制受控 `Ti-Java/` 文件的独立副本也通过静态门禁、36 项小程序测试、专用空缓存 446+64 Maven、独立数据面、镜像、3/3 Compose readiness、重启恢复与 bind-source 审计，最终非递归清单只排除 read-contract 自身。四条 category/share-list HTTP operation 均未迁移，当前有效状态保持 **11 个 migrated operation、600 个 pending、0 个 production cutover**。两条后台题型、两条单题详情、两条后台题目集合、一条后台科目库存、两条后台科目上下文与两条后台题目导出 HTTP 路由继续由 `operations` 持有，两条题量 HTTP 路由延后由 Phase 4C 的 `learning` 组合，这十三条路径都保持 pending。旧 Flask 仍是生产运行所有者，整个长期重构目标尚未完成。
+阶段 0 事实基线与阶段 1 架构/契约已经固化，阶段 2 Java 基础骨架与阶段 3 认证兼容切片也已通过门禁；阶段 4A 的有界 catalog 范围已由 `docs/refactor/phase4a/phase4a-final-acceptance.json` 完成最终 closure。Phase 4B 已完成 personal-bank 分类、按题库分享列表、我创建的全部分享和使用人数统计四项 HTTP-neutral 内部读取能力；user-counts 双 alias 的调用方、59-case golden、八个 SQL family 与 PostgreSQL 16.14/18.4 实现前证据也已闭合，但所有八条 personalbank HTTP operation 都保持 pending。Phase 4C 首先冻结 `learning -> personalbank::api` 的 user-counts 组合、`bank_<bank_id>_tags` 所有权 overlay、显式 operator-only 迁移和批准差异；当前仍未新增 production user-counts Java、Controller、Security/OpenAPI、schema/index 或切流。有效状态保持 **11 个 migrated operation、600 个 pending、0 个 production cutover**。旧 Flask 仍是生产运行所有者，整个长期重构目标尚未完成。
 
 ## 当前技术与边界
 
 - `server/` 固定使用 Java 25、Maven Wrapper 3.9.16、Spring Boot 4.1.0 和 Spring Modulith 2.1.0；默认采用 Spring MVC，不引入 WebFlux、R2DBC 或阶段 8 之前的 Flyway。
 - 模块化单体包含 `identity`、`catalog`、`personalbank`、`learning`、`assessment`、`community`、`messaging`、`campus`、`coding`、`intelligence`、`operations` 11 个业务模块，以及 `sharedkernel`、`web` 两个支撑模块。
-- `identity`、`catalog`、`operations` 与 `personalbank` 已部分实现，共有 21 个受机器合同约束的公开应用方法；其余 7 个业务模块仍保持延后形状，不能从占位名称推断为已迁移能力。
+- `identity`、`catalog`、`operations` 与 `personalbank` 已部分实现，共有 23 个受机器合同约束的公开应用方法；其余 7 个业务模块仍保持延后形状。Phase 4C 合同只授权下一检查点实现 `learning` 组合，当前不能从计划 DTO 名称推断为已实现能力。
 - PostgreSQL 是唯一业务事实源；Redis 只用于可重建的辅助状态。Hibernate 始终使用 `ddl-auto=validate`，禁止 ORM 自动建表或改表。
 - `catalog` 已通过 `identity::api` 迁移 `GET /api/quiz/subjects` 与 `/meta`；业务用例固定两条 SELECT，加上 HTTP 认证权威查询后正常成功请求总计三条 SELECT。读取保持稳定 ID 顺序和 per-identity/per-route Redis 限流，不拥有写入权，也未启用无法完整失效的应用数据缓存。
 - `catalog` 还已实现公共题库 search/list/summary/hot/boards/detail/card 共 7 条旧路径兼容 GET。GET 只读取原子发布的完整 snapshot：`<= 300s` 正常服务、`300–900s` 服务最后完整快照并记陈旧指标、`> 900s` 或冷/残缺状态稳定返回 503 且 readiness fail closed；PostgreSQL 事务级 advisory lock 是最终单写者边界，Redis 仅作可过期、可接管的刷新协调。
@@ -33,6 +33,7 @@ Ti-Java 是 Ti 的独立重构项目，目标是以 Java 25、Spring Boot 4.1、
 - `docs/refactor/phase3/`：阶段 3 路由增量、认证兼容、批准差异和 p3-009 双运行时证据。
 - `docs/refactor/phase4a/`：科目、公共题库、题型、题量、单题详情、后台题目摘要集合、后台科目库存摘要、后台科目上下文与后台题目导出的读取金样、snapshot 决策、业务不变量、批准差异、累计路由/API 形状、查询计划证据、24-operation 候选处置与 Phase 4A closure 记录。
 - `docs/refactor/phase4b/`：个人题库分类读取的最终验收证据，以及分享列表的调用方、40-case golden、PG16/18 SQL/计划、历史入口合同、累计 API shape 与已通过完整 Maven 的内部实现合同。
+- `docs/refactor/phase4c/`：learning 组合、个人题库标签 compatibility namespace 所有权 overlay、显式迁移证据与批准差异；HTTP 和生产切流仍需后续门禁。
 - `contracts/`：确定性生成的 OpenAPI 3.1.2 初稿与人工证据 override。
 - `openapi/phase3-authentication.openapi.json`：两条 Phase 3 operation 的自包含 OpenAPI 3.1.2 增量。
 - `openapi/phase4a-subject-directory.openapi.json`：两条科目目录 operation 的自包含 OpenAPI 3.1.2 增量。
