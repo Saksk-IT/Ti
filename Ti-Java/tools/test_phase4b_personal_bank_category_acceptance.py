@@ -18,6 +18,7 @@ REPOSITORY_ROOT = TI_JAVA_ROOT.parent
 PHASE4B_ROOT = TI_JAVA_ROOT / "docs" / "refactor" / "phase4b"
 ACCEPTANCE_PATH = PHASE4B_ROOT / "personal-bank-category-acceptance.json"
 SHARE_ENTRY_PATH = PHASE4B_ROOT / "personal-bank-share-list-entry-contract.json"
+SHARE_READ_PATH = PHASE4B_ROOT / "personal-bank-share-list-read-contract.json"
 ACCEPTANCE_RELATIVE = "docs/refactor/phase4b/personal-bank-category-acceptance.json"
 PHASE4A_FINAL_SHA256 = (
     "9eeec781af91c0994c750ea2641653183f36eb4492d4ff9bd6809679c723620f"
@@ -145,6 +146,7 @@ class Phase4bPersonalBankCategoryAcceptanceTest(unittest.TestCase):
         cls.read_contract = load_json(
             PHASE4B_ROOT / "personal-bank-category-read-contract.json"
         )
+        cls.share_read_contract = load_json(SHARE_READ_PATH)
 
     def test_01_schema_predecessor_and_source_contracts(self):
         contract = self.acceptance
@@ -238,11 +240,14 @@ class Phase4bPersonalBankCategoryAcceptanceTest(unittest.TestCase):
         implementation = self.read_contract["evidence"]["implementation"]
         self.assertEqual(set(implementation["source_files"]), set(implementation["source_sha256"]))
         for name, relative in implementation["source_files"].items():
-            self.assertEqual(
-                implementation["source_sha256"][name],
-                sha256(TI_JAVA_ROOT / relative),
-                name,
-            )
+            current_hash = sha256(TI_JAVA_ROOT / relative)
+            if name in {"application_api", "application_service"}:
+                successor = self.share_read_contract["implementation"]
+                self.assertEqual(relative, successor["main_source_files"][name])
+                self.assertEqual(successor["main_source_sha256"][name], current_hash, name)
+                self.assertNotEqual(implementation["source_sha256"][name], current_hash)
+            else:
+                self.assertEqual(implementation["source_sha256"][name], current_hash, name)
         inputs = self.plan["inputs"]
         for key in (
             "adapter",
@@ -295,7 +300,24 @@ class Phase4bPersonalBankCategoryAcceptanceTest(unittest.TestCase):
             source = (PHASE4B_ROOT / reference["source"]).resolve()
             self.assertTrue(source.is_file(), name)
             self.assertRegex(reference["sha256"], r"^[0-9a-f]{64}$")
-            self.assertEqual(reference["sha256"], sha256(source), name)
+            if name in {"contract_parity_test", "independent_acceptance_runner"}:
+                successor = self.share_read_contract["implementation"]
+                successor_name = {
+                    "contract_parity_test": "category_contract_forward_handoff_test",
+                    "independent_acceptance_runner": "independent_acceptance_runner",
+                }[name]
+                self.assertEqual(
+                    source.relative_to(TI_JAVA_ROOT).as_posix(),
+                    successor["verification_source_files"][successor_name],
+                )
+                self.assertEqual(
+                    successor["verification_source_sha256"][successor_name],
+                    sha256(source),
+                    name,
+                )
+                self.assertNotEqual(reference["sha256"], sha256(source), name)
+            else:
+                self.assertEqual(reference["sha256"], sha256(source), name)
 
         worm = contract["worm_acceptance"]
         worm_reference = contract["source_contracts"]["worm"]

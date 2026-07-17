@@ -67,6 +67,7 @@ class PersonalBankCategoryContractParityTest {
     private static JsonNode golden;
     private static JsonNode queryPlan;
     private static JsonNode contract;
+    private static JsonNode shareListContract;
 
     @BeforeAll
     static void loadMachineEvidence() throws Exception {
@@ -82,6 +83,8 @@ class PersonalBankCategoryContractParityTest {
                 "docs/refactor/phase4b/personal-bank-category-query-plan-evidence.json");
         contract = readJson(
                 "docs/refactor/phase4b/personal-bank-category-read-contract.json");
+        shareListContract = readJson(
+                "docs/refactor/phase4b/personal-bank-share-list-read-contract.json");
     }
 
     @Test
@@ -426,12 +429,29 @@ class PersonalBankCategoryContractParityTest {
                 .containsExactlyInAnyOrderElementsOf(expectedSourceKeys);
         assertThat(propertyNames(sourceHashes))
                 .containsExactlyInAnyOrderElementsOf(expectedSourceKeys);
+        assertThat(shareListContract.path("status").asString())
+                .isEqualTo("implemented_and_targeted_verified_http_aliases_deferred");
+        assertThat(sha256(
+                        "docs/refactor/phase4b/personal-bank-share-list-entry-contract.json"))
+                .isEqualTo(shareListContract.path("predecessor").path("sha256").asString());
         for (String key : expectedSourceKeys) {
             String source = sourceFiles.path(key).asString();
             assertThat(source).as("implementation path for %s", key).isNotBlank();
-            assertThat(sha256(source))
-                    .as("implementation SHA-256 for %s", key)
-                    .isEqualTo(sourceHashes.path(key).asString());
+            if (key.equals("application_api") || key.equals("application_service")) {
+                JsonNode successorFiles = shareListContract.path("implementation")
+                        .path("main_source_files");
+                JsonNode successorHashes = shareListContract.path("implementation")
+                        .path("main_source_sha256");
+                assertThat(successorFiles.path(key).asString()).isEqualTo(source);
+                assertThat(sha256(source))
+                        .as("successor implementation SHA-256 for %s", key)
+                        .isEqualTo(successorHashes.path(key).asString())
+                        .isNotEqualTo(sourceHashes.path(key).asString());
+            } else {
+                assertThat(sha256(source))
+                        .as("implementation SHA-256 for %s", key)
+                        .isEqualTo(sourceHashes.path(key).asString());
+            }
         }
         assertThat(sourceHashes.path("jdbc_adapter").asString()).isEqualTo(ADAPTER_SHA256);
 

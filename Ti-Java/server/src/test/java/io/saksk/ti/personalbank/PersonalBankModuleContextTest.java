@@ -11,7 +11,7 @@ import org.springframework.modulith.test.ApplicationModuleTest.BootstrapMode;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.PlatformTransactionManager;
 
-/** Standalone boundary-context smoke test; Phase 4B category HTTP routes remain pending. */
+/** Standalone boundary smoke test; Phase 4B category and share-list HTTP routes remain pending. */
 @ApplicationModuleTest(mode = BootstrapMode.STANDALONE, webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @ActiveProfiles("unit")
 @Import(PersonalBankModuleContextTest.ReadDependency.class)

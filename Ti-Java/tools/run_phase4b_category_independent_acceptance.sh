@@ -15,10 +15,11 @@ SOURCE_PYTHON="${SOURCE_PYTHON:-$EXPECTED_SOURCE_PYTHON}"
 ORIGINAL_DOCKER_CONFIG="${DOCKER_CONFIG:-${HOME:?HOME is required to locate Docker CLI plugins}/.docker}"
 KEEP_WORKDIR=false
 REPORT=""
+PROFILE="category"
 
 usage() {
     printf '%s\n' \
-        "Usage: $0 [--report TARGET_PATH] [--keep-workdir]" \
+        "Usage: $0 [--profile category|share-list] [--report TARGET_PATH] [--keep-workdir]" \
         "" \
         "TARGET_PATH must remain below server/target and must not already exist." \
         "SOURCE_PYTHON may name the repository .venv interpreter used for the" \
@@ -27,6 +28,11 @@ usage() {
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
+        --profile)
+            [ "$#" -ge 2 ] || { usage >&2; exit 2; }
+            PROFILE="$2"
+            shift 2
+            ;;
         --report)
             [ "$#" -ge 2 ] || { usage >&2; exit 2; }
             REPORT="$2"
@@ -46,6 +52,36 @@ while [ "$#" -gt 0 ]; do
             ;;
     esac
 done
+
+case "$PROFILE" in
+    category)
+        PROFILE_SLUG="category"
+        PROFILE_LABEL="category"
+        ACCEPTANCE_CONTROLLED_PATH="Ti-Java/docs/refactor/phase4b/personal-bank-category-acceptance.json"
+        PREFINAL_ENV="TI_PHASE4B_CATEGORY_PREFINAL_ACCEPTANCE"
+        PREFINAL_TOKEN_ENV="TI_PHASE4B_CATEGORY_PREFINAL_LOCK_TOKEN"
+        EXPECTED_SOURCE_TOOL_TESTS=248
+        EXPECTED_SUREFIRE_TESTS=424
+        EXPECTED_FAILSAFE_TESTS=60
+        ;;
+    share-list)
+        PROFILE_SLUG="share-list"
+        PROFILE_LABEL="personal-bank share-list"
+        ACCEPTANCE_CONTROLLED_PATH="Ti-Java/docs/refactor/phase4b/personal-bank-share-list-read-contract.json"
+        PREFINAL_ENV="TI_PHASE4B_SHARE_LIST_PREFINAL_ACCEPTANCE"
+        PREFINAL_TOKEN_ENV="TI_PHASE4B_SHARE_LIST_PREFINAL_LOCK_TOKEN"
+        EXPECTED_SOURCE_TOOL_TESTS=284
+        EXPECTED_SUREFIRE_TESTS=446
+        EXPECTED_FAILSAFE_TESTS=64
+        ;;
+    *)
+        usage >&2
+        exit 2
+        ;;
+esac
+readonly PROFILE PROFILE_SLUG PROFILE_LABEL ACCEPTANCE_CONTROLLED_PATH
+readonly PREFINAL_ENV PREFINAL_TOKEN_ENV EXPECTED_SOURCE_TOOL_TESTS
+readonly EXPECTED_SUREFIRE_TESTS EXPECTED_FAILSAFE_TESTS
 
 for command_name in docker git rsync python3 node curl jq; do
     command -v "$command_name" >/dev/null 2>&1 || {
@@ -114,7 +150,7 @@ LOCAL_DOCKER_SOCKET="${DOCKER_ENDPOINT#unix://}"
 }
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)-$$-${RANDOM}"
 LOWER_STAMP="$(printf '%s' "$STAMP" | tr '[:upper:]' '[:lower:]')"
-WORK="$(mktemp -d "${TMPDIR:-/tmp}/ti-phase4b-category-independent.XXXXXX")"
+WORK="$(mktemp -d "${TMPDIR:-/tmp}/ti-phase4b-${PROFILE_SLUG}-independent.XXXXXX")"
 DOCKER_CONFIG="$WORK/docker-config"
 EXPECTED_DOCKER_CONFIG="$WORK/docker-config.expected.json"
 BUILDX_CONFIG="$WORK/buildx-config"
@@ -127,15 +163,14 @@ readonly DOCKER_CONFIG BUILDX_CONFIG
 STAGE="$WORK/stage"
 COPY="$STAGE/Ti-Java"
 LIST0="$WORK/controlled-files.nul"
-PROJECT="ti-p4b-category-$LOWER_STAMP"
-IMAGE="ti-java-phase4b-category:$LOWER_STAMP"
-MAVEN_CACHE="ti-java-phase4b-category-m2-$LOWER_STAMP"
+PROJECT="ti-p4b-${PROFILE_SLUG}-$LOWER_STAMP"
+IMAGE="ti-java-phase4b-${PROFILE_SLUG}:$LOWER_STAMP"
+MAVEN_CACHE="ti-java-phase4b-${PROFILE_SLUG}-m2-$LOWER_STAMP"
 OVERRIDE="$WORK/compose.acceptance.yml"
 SOURCE_MANIFEST="$WORK/source-manifest.json"
 COPY_MANIFEST="$WORK/copy-manifest.json"
 SOURCE_NONRECURSIVE_MANIFEST="$WORK/source-manifest-nonrecursive.json"
 COPY_NONRECURSIVE_MANIFEST="$WORK/copy-manifest-nonrecursive.json"
-ACCEPTANCE_CONTROLLED_PATH="Ti-Java/docs/refactor/phase4b/personal-bank-category-acceptance.json"
 SOURCE_TOOLS_LOG="$WORK/source-tools.log"
 NODE_LOG="$WORK/miniprogram-node.log"
 MAVEN_LOG="$WORK/maven.log"
@@ -150,7 +185,7 @@ WORK_CLEANED=false
 API_PORT=""
 POSTGRES_PORT=""
 REPORT_ROOT="$SOURCE/server/target"
-LOCK_DIR="$REPORT_ROOT/phase4b-category-independent-acceptance.lock"
+LOCK_DIR="$REPORT_ROOT/phase4b-${PROFILE_SLUG}-independent-acceptance.lock"
 LOCK_OWNER="$LOCK_DIR/owner-token"
 LOCK_HELD=false
 LOCK_TOKEN=""
@@ -250,7 +285,8 @@ trap 'exit 130' HUP INT TERM
 mkdir -p "$REPORT_ROOT"
 [ -d "$REPORT_ROOT" ] && [ ! -L "$REPORT_ROOT" ]
 if ! mkdir -- "$LOCK_DIR"; then
-    printf '%s\n' 'Another Phase 4B category independent acceptance run holds the lock' >&2
+    printf 'Another Phase 4B %s independent acceptance run holds the lock\n' \
+        "$PROFILE_LABEL" >&2
     exit 1
 fi
 LOCK_HELD=true
@@ -335,7 +371,7 @@ docker info >/dev/null 2>&1 || {
 }
 verify_docker_client_isolation
 if [ -z "$REPORT" ]; then
-    REPORT="$REPORT_ROOT/phase4b-category-independent-acceptance-$STAMP.json"
+    REPORT="$REPORT_ROOT/phase4b-${PROFILE_SLUG}-independent-acceptance-$STAMP.json"
 fi
 REPORT="$(python3 - "$REPORT_ROOT" "$REPORT" <<'PY'
 import pathlib
@@ -475,20 +511,26 @@ NONRECURSIVE_MANIFEST_SHA256="$(hash_file "$SOURCE_NONRECURSIVE_MANIFEST")"
 printf '%s\n' 'Running canonical frozen-source tests (explicitly outside the independent copy)'
 (
     cd "$SOURCE"
-    TI_PHASE4B_CATEGORY_PREFINAL_ACCEPTANCE=1 \
-        TI_PHASE4B_CATEGORY_PREFINAL_LOCK_TOKEN="$LOCK_TOKEN" \
-        PYTHONDONTWRITEBYTECODE=1 \
-        "$SOURCE_PYTHON" -B \
+    unset TI_PHASE4B_CATEGORY_PREFINAL_ACCEPTANCE
+    unset TI_PHASE4B_CATEGORY_PREFINAL_LOCK_TOKEN
+    unset TI_PHASE4B_SHARE_LIST_PREFINAL_ACCEPTANCE
+    unset TI_PHASE4B_SHARE_LIST_PREFINAL_LOCK_TOKEN
+    export "$PREFINAL_ENV=1"
+    export "$PREFINAL_TOKEN_ENV=$LOCK_TOKEN"
+    PYTHONDONTWRITEBYTECODE=1 "$SOURCE_PYTHON" -B \
         -m unittest discover -s tools -p 'test_*.py'
 ) 2>&1 | tee "$SOURCE_TOOLS_LOG"
-python3 - "$SOURCE_TOOLS_LOG" <<'PY'
+python3 - "$SOURCE_TOOLS_LOG" "$EXPECTED_SOURCE_TOOL_TESTS" <<'PY'
 import pathlib
 import re
 import sys
 text = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")
+expected = int(sys.argv[2])
 match = re.search(r"Ran (\d+) tests?", text)
-if not match or int(match.group(1)) != 248 or not re.search(r"^OK$", text, re.MULTILINE):
-    raise SystemExit("canonical frozen-source tests did not report 248/248")
+if not match or int(match.group(1)) != expected or not re.search(r"^OK$", text, re.MULTILINE):
+    raise SystemExit(
+        f"canonical frozen-source tests did not report {expected}/{expected}"
+    )
 PY
 
 AFTER_TOOLS_LIST0="$WORK/controlled-files-after-tools.nul"
@@ -598,7 +640,8 @@ done
 verify_maven_container_socket_binding
 verify_docker_client_isolation
 
-python3 - "$COPY/server/target" "$WORK/maven-summary.json" <<'PY'
+python3 - "$COPY/server/target" "$WORK/maven-summary.json" \
+    "$EXPECTED_SUREFIRE_TESTS" "$EXPECTED_FAILSAFE_TESTS" <<'PY'
 import json
 import pathlib
 import sys
@@ -606,7 +649,10 @@ import xml.etree.ElementTree as ET
 
 target = pathlib.Path(sys.argv[1])
 output = pathlib.Path(sys.argv[2])
-expected = {"surefire-reports": 424, "failsafe-reports": 60}
+expected = {
+    "surefire-reports": int(sys.argv[3]),
+    "failsafe-reports": int(sys.argv[4]),
+}
 summary = {}
 for folder, expected_tests in expected.items():
     totals = {key: 0 for key in ("tests", "failures", "errors", "skipped")}
@@ -974,10 +1020,12 @@ cmp "$SOURCE_NONRECURSIVE_MANIFEST" "$FINAL_SOURCE_NONRECURSIVE_MANIFEST"
 cmp "$SOURCE_NONRECURSIVE_MANIFEST" "$FINAL_COPY_NONRECURSIVE_MANIFEST"
 
 [ -d "$REPORT_ROOT" ] && [ ! -L "$REPORT_ROOT" ]
-REPORT_TEMP="$(mktemp "$REPORT_ROOT/.phase4b-category-independent-report.XXXXXX")"
+REPORT_TEMP="$(mktemp "$REPORT_ROOT/.phase4b-${PROFILE_SLUG}-independent-report.XXXXXX")"
 CAPTURED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 jq -n \
     --arg capturedAt "$CAPTURED_AT" \
+    --arg scope "phase4b-${PROFILE_SLUG}-prefinal-independent-copy" \
+    --arg acceptanceExcludedPath "${ACCEPTANCE_CONTROLLED_PATH#Ti-Java/}" \
     --arg manifestSha256 "$MANIFEST_SHA256" \
     --arg nonRecursiveManifestSha256 "$NONRECURSIVE_MANIFEST_SHA256" \
     --arg buildContextSha256 "$SOURCE_BUILD_SHA256" \
@@ -991,10 +1039,13 @@ jq -n \
     --argjson forbiddenJarCount "$FORBIDDEN_JAR_COUNT" \
     --argjson mavenAttempts "$MAVEN_ATTEMPTS" \
     --argjson mavenMaxAttempts "$MAVEN_MAX_ATTEMPTS" \
+    --argjson sourceToolTests "$EXPECTED_SOURCE_TOOL_TESTS" \
+    --argjson surefireTests "$EXPECTED_SUREFIRE_TESTS" \
+    --argjson failsafeTests "$EXPECTED_FAILSAFE_TESTS" \
     '{
         schemaVersion: 1,
         status: "passed",
-        scope: "phase4b-category-prefinal-independent-copy",
+        scope: $scope,
         capturedAt: $capturedAt,
         dockerClientIsolation: {
             localUnixDaemonVerified: true,
@@ -1019,7 +1070,7 @@ jq -n \
             interpreterProvidedExplicitly: $sourcePythonExplicit,
             repositoryLegacyVenv: true,
             legacyDependenciesVerified: true,
-            tests: 248,
+            tests: $sourceToolTests,
             failures: 0,
             errors: 0,
             skipped: 0,
@@ -1032,7 +1083,7 @@ jq -n \
             copyManifestSha256: $manifestSha256,
             sourceEqualsCopy: true,
             nonRecursiveManifestExcludedPaths: [
-                "docs/refactor/phase4b/personal-bank-category-acceptance.json"
+                $acceptanceExcludedPath
             ],
             nonRecursiveManifestExcludedFileCount: 1,
             nonRecursiveManifestIncludedFileCount: $nonRecursiveFileCount,
@@ -1054,8 +1105,8 @@ jq -n \
             mavenAttempts: $mavenAttempts,
             mavenMaxAttempts: $mavenMaxAttempts,
             maven: {
-                surefire: {tests: 424, failures: 0, errors: 0, skipped: 0},
-                failsafe: {tests: 60, failures: 0, errors: 0, skipped: 0}
+                surefire: {tests: $surefireTests, failures: 0, errors: 0, skipped: 0},
+                failsafe: {tests: $failsafeTests, failures: 0, errors: 0, skipped: 0}
             },
             image: {uniqueTag: $image, built: true, removed: true},
             compose: {
@@ -1125,7 +1176,7 @@ if [ "$KEEP_WORKDIR" != true ]; then
 fi
 
 REPORT_SHA256="$(hash_file "$REPORT")"
-printf 'Phase 4B category prefinal independent acceptance passed\n'
+printf 'Phase 4B %s prefinal independent acceptance passed\n' "$PROFILE_LABEL"
 printf 'report=%s\n' "$REPORT"
 printf 'report_sha256=%s\n' "$REPORT_SHA256"
 printf 'controlled_file_count=%s\n' "$CONTROLLED_FILE_COUNT"

@@ -1,0 +1,434 @@
+#!/usr/bin/env python3
+"""Fail-closed parity for the implemented Phase 4B personal-bank share list."""
+
+from __future__ import annotations
+
+import csv
+import hashlib
+import json
+import os
+import pathlib
+import re
+import subprocess
+import unittest
+
+
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+REPOSITORY_ROOT = ROOT.parent
+PHASE4B = ROOT / "docs" / "refactor" / "phase4b"
+CONTRACT_PATH = PHASE4B / "personal-bank-share-list-read-contract.json"
+CONTRACT_RELATIVE = "docs/refactor/phase4b/personal-bank-share-list-read-contract.json"
+ROUTE_KEYS = {
+    "e817f8083d74|GET|/api/user/banks/api/<int:bank_id>/shares",
+    "c50102968322|GET|/user/banks/api/<int:bank_id>/shares",
+}
+EXPECTED_COMPONENTS = [
+    ("id", "int", False),
+    ("bankId", "int", False),
+    ("ownerId", "long", False),
+    ("shareCode", "java.lang.String", True),
+    ("shareToken", "java.lang.String", True),
+    ("permission", "java.lang.String", True),
+    ("expiresAt", "java.time.LocalDateTime", True),
+    ("maxUses", "java.lang.Integer", True),
+    ("currentUses", "java.lang.Integer", True),
+    ("isActive", "java.lang.Boolean", True),
+    ("createdAt", "java.time.LocalDateTime", True),
+]
+
+
+def load_json(path: pathlib.Path):
+    with path.open("r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def sha256(path: pathlib.Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def canonical_control_manifest() -> tuple[int, int, str]:
+    completed = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(REPOSITORY_ROOT),
+            "ls-files",
+            "-co",
+            "--exclude-standard",
+            "-z",
+            "--",
+            "Ti-Java",
+        ],
+        check=True,
+        capture_output=True,
+    )
+    controlled = sorted({
+        os.fsdecode(item)
+        for item in completed.stdout.split(b"\0")
+        if item
+    })
+    excluded = f"Ti-Java/{CONTRACT_RELATIVE}"
+    if controlled.count(excluded) != 1:
+        raise AssertionError("read contract must be the sole explicit exclusion")
+    included = []
+    for relative in controlled:
+        path = REPOSITORY_ROOT / relative
+        if path.is_symlink() or not path.is_file():
+            raise AssertionError(f"invalid controlled path: {relative}")
+        if relative == excluded:
+            continue
+        included.append({
+            "path": relative.removeprefix("Ti-Java/"),
+            "sha256": sha256(path),
+        })
+    payload = (json.dumps(
+        included,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ) + "\n").encode()
+    return len(controlled), len(included), hashlib.sha256(payload).hexdigest()
+
+
+class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.contract = load_json(CONTRACT_PATH)
+        cls.entry = load_json(PHASE4B / "personal-bank-share-list-entry-contract.json")
+        cls.shape = load_json(
+            PHASE4B / "personal-bank-share-list-application-api-shape.json"
+        )
+        cls.golden = load_json(
+            PHASE4B / "golden-personal-bank-share-list-reads.json"
+        )
+        cls.plan = load_json(
+            PHASE4B / "personal-bank-share-list-query-plan-evidence.json"
+        )
+        cls.openapi = load_json(ROOT / "contracts" / "openapi.json")
+
+    def test_01_predecessor_shape_golden_and_plan_are_transitively_bound(self):
+        contract = self.contract
+        self.assertEqual(
+            "ti.phase4b.personal-bank-share-list-read-contract",
+            contract["contract_id"],
+        )
+        self.assertEqual(1, contract["schema_version"])
+        self.assertEqual(
+            "implemented_and_targeted_verified_http_aliases_deferred",
+            contract["status"],
+        )
+        self.assertEqual(
+            sha256(PHASE4B / contract["predecessor"]["source"]),
+            contract["predecessor"]["sha256"],
+        )
+        self.assertTrue(self.entry["entry_gate"]["passed"])
+        self.assertFalse(self.entry["implementation_state"]["implementation_started"])
+
+        evidence = contract["evidence"]
+        for key in ("application_api_shape", "golden", "query_plan"):
+            reference = evidence[key]
+            self.assertEqual(
+                reference["sha256"], sha256(PHASE4B / reference["source"]), key
+            )
+        self.assertEqual(40, self.golden["case_count"])
+        self.assertEqual(
+            4,
+            sum(len(engine["observations"]) for engine in self.plan["engines"]),
+        )
+        self.assertEqual(["16.14", "18.4"], [
+            engine["server_version"] for engine in self.plan["engines"]
+        ])
+
+        worm = contract["worm_verification"]
+        worm_path = PHASE4B / worm["source"]
+        self.assertEqual(worm["sha256"], sha256(worm_path))
+        worm_document = load_json(worm_path)
+        self.assertEqual(worm["captured_at"], worm_document["capturedAt"])
+        self.assertEqual(worm["postgresql"], worm_document["restore"]["serverVersion"])
+        self.assertEqual(
+            worm["public_base_tables"], worm_document["restore"]["publicBaseTables"]
+        )
+        self.assertEqual(
+            worm["public_columns"], worm_document["restore"]["publicColumns"]
+        )
+        self.assertEqual(
+            worm["build_context_sha256"],
+            worm_document["java"]["buildContextSha256"],
+        )
+        self.assertTrue(worm["passed"])
+        self.assertFalse(worm["schema_dump_persisted"])
+
+    def test_02_cumulative_shape_adds_only_the_internal_share_method(self):
+        shape = self.shape
+        self.assertEqual(11, shape["migrated_route_count"])
+        self.assertEqual(11, shape["implemented_route_backed_operation_count"])
+        self.assertEqual(21, shape["implemented_public_application_method_count"])
+        self.assertEqual(600, shape["pending_route_count"])
+        self.assertEqual(0, shape["production_cutover_count"])
+        personalbank = shape["personalbank"]
+        self.assertEqual(["listCategories", "findShares"], [
+            method["name"] for method in personalbank["methods"]
+        ])
+        self.assertEqual([], personalbank["implemented_route_ids"])
+        self.assertFalse(personalbank["direct_http_operation"])
+        self.assertEqual(
+            {"e817f8083d74", "c50102968322"},
+            set(personalbank["deferred_share_list_http_route_ids"]),
+        )
+
+    def test_03_all_implementation_and_verification_source_hashes_match(self):
+        implementation = self.contract["implementation"]
+        for files_key, hashes_key in (
+            ("main_source_files", "main_source_sha256"),
+            ("verification_source_files", "verification_source_sha256"),
+        ):
+            files = implementation[files_key]
+            hashes = implementation[hashes_key]
+            self.assertEqual(set(files), set(hashes))
+            for name, relative in files.items():
+                path = ROOT / relative
+                self.assertTrue(path.is_file(), name)
+                self.assertEqual(hashes[name], sha256(path), name)
+
+    def test_04_api_dto_optional_and_immutability_shapes_are_exact(self):
+        application = self.contract["application_contract"]
+        self.assertEqual(
+            "Optional<PersonalBankShareListView> findShares("
+            "AuthenticatedPersonalBankViewer viewer, int bankId)",
+            application["method"],
+        )
+        self.assertEqual("Optional.empty", application["unavailable"])
+        self.assertIn("immutable empty shares", application["available_empty"])
+        self.assertFalse(application["bank_id_positive_validation"])
+        self.assertEqual("long", application["viewer_identity_type"])
+        self.assertEqual("List.copyOf", application["share_list_collection"])
+        self.assertEqual(EXPECTED_COMPONENTS, [
+            (item["name"], item["java_type"], item["nullable"])
+            for item in self.contract["share_record_components"]
+        ])
+
+    def test_05_two_exact_queries_keep_short_circuit_binds_and_raw_order(self):
+        persistence = self.contract["persistence_contract"]
+        self.assertEqual(
+            "SELECT id\nFROM user_question_banks\nWHERE id = :bank_id\n"
+            "  AND user_id = :viewer_id\n  AND status = 1\n",
+            persistence["owner_probe_sql"],
+        )
+        self.assertEqual(
+            "SELECT id,\n       bank_id,\n       owner_id,\n       share_code,\n"
+            "       share_token,\n       permission,\n       expires_at,\n"
+            "       max_uses,\n       current_uses,\n       is_active,\n"
+            "       created_at\nFROM bank_shares\nWHERE bank_id = :bank_id\n"
+            "ORDER BY created_at DESC NULLS FIRST\n",
+            persistence["share_list_sql"],
+        )
+        self.assertEqual(
+            {"bank_id": "integer", "viewer_id": "bigint"},
+            persistence["bind_types"],
+        )
+        self.assertTrue(persistence["sequential_execution"])
+        self.assertFalse(persistence["second_query_on_probe_miss"])
+        for key in (
+            "exceptions_translated",
+            "join_or_parallelization",
+            "java_secondary_sorting",
+            "extra_filters",
+            "pagination",
+            "schema_or_index_delta",
+        ):
+            self.assertFalse(persistence[key], key)
+
+    def test_06_routes_and_openapi_remain_pending_inferred_and_opaque(self):
+        route_state = self.contract["route_state"]
+        self.assertEqual(11, route_state["migrated_route_count"])
+        self.assertEqual(600, route_state["pending_route_count"])
+        self.assertEqual(0, route_state["production_cutover_count"])
+        actual_keys = {
+            f'{item["route_id"]}|{item["method"]}|{item["path"]}'
+            for item in route_state["operations"]
+        }
+        self.assertEqual(ROUTE_KEYS, actual_keys)
+
+        with (ROOT / "docs/refactor/02-route-parity-matrix.csv").open(
+            newline="", encoding="utf-8"
+        ) as handle:
+            rows = list(csv.DictReader(handle))
+        selected = {
+            row["route_id"]: row for row in rows
+            if row["route_id"] in {key.split("|", 1)[0] for key in ROUTE_KEYS}
+        }
+        self.assertEqual(2, len(selected))
+        self.assertTrue(all(row["migration_status"] == "pending" for row in selected.values()))
+        self.assertTrue(all(row["target_module"] == "personalbank" for row in selected.values()))
+
+        for item in route_state["operations"]:
+            path = item["path"].replace("<int:bank_id>", "{bank_id}")
+            operation = self.openapi["paths"][path]["get"]
+            self.assertEqual("pending", operation["x-ti-migration"]["status"])
+            self.assertEqual("personalbank", operation["x-ti-migration"]["targetModule"])
+            self.assertEqual("inferred", operation["x-ti-contract-maturity"])
+            self.assertEqual(
+                "#/components/schemas/LegacyOpaquePayload",
+                operation["responses"]["default"]["content"]["*/*"]
+                ["schema"]["$ref"],
+            )
+
+    def test_07_no_forbidden_scope_was_smuggled_into_the_internal_slice(self):
+        self.assertTrue(self.contract["targeted_verification"]["passed"])
+        self.assertTrue(all(
+            value is False for value in self.contract["forbidden_scope"].values()
+        ))
+        source_root = ROOT / "server/src/main/java/io/saksk/ti/personalbank"
+        combined = "\n".join(
+            path.read_text(encoding="utf-8")
+            for path in sorted(source_root.rglob("*.java"))
+        )
+        for forbidden in (
+            "@RestController",
+            "@Controller",
+            "@GetMapping",
+            "@RequestMapping",
+            "ResponseEntity",
+            "SecurityFilterChain",
+            "shareLink",
+            "Comparator",
+            ".sorted(",
+            "CREATE INDEX",
+        ):
+            self.assertNotIn(forbidden, combined)
+        self._assert_final_acceptance()
+
+    def _assert_final_acceptance(self):
+        final = self.contract["final_acceptance"]
+        integrity = final["integrity_policy"]
+        self.assertEqual("sha256", integrity["algorithm"])
+        self.assertIsNone(integrity["self_hash"])
+        self.assertEqual(
+            [CONTRACT_RELATIVE],
+            integrity["controlled_manifest_excluded_paths"],
+        )
+        self.assertEqual(284, final["source_tool_tests"])
+        self.assertEqual(
+            {
+                "surefire": 446,
+                "failsafe": 64,
+                "failures": 0,
+                "errors": 0,
+                "skipped": 0,
+            },
+            final["maven"],
+        )
+
+        if os.environ.get("TI_PHASE4B_SHARE_LIST_PREFINAL_ACCEPTANCE") == "1":
+            token = os.environ.get(
+                "TI_PHASE4B_SHARE_LIST_PREFINAL_LOCK_TOKEN", ""
+            )
+            self.assertRegex(token, r"^[0-9a-f]{64}$")
+            lock = ROOT / "server" / "target" / (
+                "phase4b-share-list-independent-acceptance.lock"
+            )
+            self.assertTrue(lock.is_dir())
+            self.assertFalse(lock.is_symlink())
+            owner = lock / "owner-token"
+            self.assertTrue(owner.is_file())
+            self.assertFalse(owner.is_symlink())
+            self.assertEqual(token, owner.read_text(encoding="utf-8").strip())
+            self.assertEqual("pending", final["status"])
+            self.assertFalse(final["passed"])
+            self.assertTrue(self.contract["next_gate"]["independent_extraction_required"])
+            return
+
+        self.assertEqual("passed", final["status"])
+        self.assertTrue(final["passed"])
+        self.assertRegex(final["captured_at"], r"^2026-07-\d\dT\d\d:\d\d:\d\dZ$")
+        self.assertFalse(self.contract["next_gate"]["independent_extraction_required"])
+
+        independent = final["independent_copy"]
+        self.assertTrue(independent["passed"])
+        self.assertEqual(
+            "phase4b-share-list-prefinal-independent-copy",
+            independent["scope"],
+        )
+        self.assertEqual(
+            independent["source_manifest_sha256"],
+            independent["copy_manifest_sha256"],
+        )
+        self.assertTrue(independent["source_equals_copy"])
+        self.assertEqual(
+            [CONTRACT_RELATIVE],
+            independent["non_recursive_manifest_excluded_paths"],
+        )
+        self.assertEqual(1, independent["non_recursive_manifest_excluded_file_count"])
+        self.assertTrue(independent["source_non_recursive_equals_copy"])
+        self.assertEqual(284, independent["source_tool_tests"])
+        self.assertEqual(final["maven"], independent["maven"])
+        self.assertEqual(
+            self.contract["worm_verification"]["build_context_sha256"],
+            independent["build_context_sha256"],
+        )
+        self.assertEqual(36, independent["miniprogram_node_tests"])
+        self.assertEqual(0, independent["symlink_count"])
+        self.assertEqual(0, independent["forbidden_artifact_count"])
+        self.assertEqual(0, independent["forbidden_jar_count"])
+        self.assertTrue(all(independent["checks"].values()))
+        self.assertTrue(all(value == 0 for value in independent["cleanup"].values()))
+        self.assertFalse(independent["raw_report_tracked"])
+        self.assertFalse(independent["production_cutover"])
+        self.assertRegex(independent["raw_report_sha256"], r"^[0-9a-f]{64}$")
+
+        local_report = (ROOT / independent["ignored_local_raw_report"]).resolve()
+        self.assertEqual((ROOT / "server" / "target").resolve(), local_report.parent)
+        if local_report.is_file():
+            self.assertEqual(independent["raw_report_sha256"], sha256(local_report))
+            raw = load_json(local_report)
+            self.assertEqual("passed", raw["status"])
+            self.assertEqual(independent["scope"], raw["scope"])
+            self.assertEqual(independent["captured_at"], raw["capturedAt"])
+            self.assertFalse(raw["productionCutover"])
+            raw_copy = raw["independentCopy"]
+            self.assertEqual(
+                independent["controlled_file_count"],
+                raw_copy["controlledFileCount"],
+            )
+            self.assertEqual(
+                independent["source_manifest_sha256"],
+                raw_copy["sourceManifestSha256"],
+            )
+            self.assertEqual(
+                independent["source_non_recursive_manifest_sha256"],
+                raw_copy["sourceNonRecursiveManifestSha256"],
+            )
+            self.assertEqual(
+                independent["build_context_sha256"],
+                raw_copy["buildContextSha256"],
+            )
+            self.assertEqual(284, raw["sourceTools"]["tests"])
+            self.assertEqual(446, raw_copy["maven"]["surefire"]["tests"])
+            self.assertEqual(64, raw_copy["maven"]["failsafe"]["tests"])
+
+        total, included, manifest = canonical_control_manifest()
+        control = final["final_control_plane"]
+        self.assertTrue(control["passed"])
+        self.assertEqual(total, control["controlled_file_count"])
+        self.assertEqual(total - 1, included)
+        self.assertEqual(1, control["manifest_excluded_file_count"])
+        self.assertEqual(included, control["manifest_included_file_count"])
+        self.assertEqual(manifest, control["source_manifest_sha256"])
+        self.assertEqual(manifest, control["copy_manifest_sha256"])
+        self.assertTrue(control["source_equals_copy"])
+        self.assertEqual(
+            independent["source_non_recursive_manifest_sha256"], manifest
+        )
+        self.assertEqual(
+            independent["build_context_sha256"],
+            control["java_build_context_sha256"],
+        )
+        self.assertTrue(control["java_build_context_matches_full_acceptance"])
+
+
+if __name__ == "__main__":
+    unittest.main()
