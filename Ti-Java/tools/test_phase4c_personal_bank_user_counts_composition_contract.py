@@ -14,8 +14,16 @@ import unittest
 
 try:
     from tools.phase4c_successor_acceptance import validate_successor_contract
+    from tools.phase4c_read_successor_acceptance import (
+        load_read_successor_contract,
+        validate_read_successor_contract,
+    )
 except ModuleNotFoundError:  # Direct script execution from tools/.
     from phase4c_successor_acceptance import validate_successor_contract
+    from phase4c_read_successor_acceptance import (
+        load_read_successor_contract,
+        validate_read_successor_contract,
+    )
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -155,6 +163,7 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
         cls.contract = load_json(CONTRACT_PATH)
         cls.predecessor = load_json(PREDECESSOR_PATH)
         cls.effective = load_json(EFFECTIVE_PATH)
+        cls.read_successor = load_read_successor_contract(ROOT)
 
     def test_01_identity_predecessor_sources_payload_and_determinism_close(self):
         contract = self.contract
@@ -185,10 +194,23 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
             "tools/validate_phase1.py",
             contract["source_contracts"]["phase1_validator"]["source"],
         )
+        read_sources = {
+            reference["source"]: reference["sha256"]
+            for reference in (self.read_successor or {}).get(
+                "source_contracts", {}
+            ).values()
+        }
         for name, reference in contract["source_contracts"].items():
             source = ROOT / reference["source"]
             self.assertTrue(source.is_file(), name)
-            self.assertEqual(reference["sha256"], sha256(source), name)
+            current_hash = sha256(source)
+            if current_hash != reference["sha256"]:
+                self.assertIsNotNone(self.read_successor, name)
+                self.assertEqual(
+                    current_hash,
+                    read_sources.get(reference["source"]),
+                    name,
+                )
         self.assertEqual(
             contract["document_payload_sha256"],
             document_payload_sha256(contract),
@@ -215,8 +237,29 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
                 handoff["source_contract_key"]
             ]
             self.assertEqual(relative, reference["source"], relative)
-            self.assertEqual(sha256(ROOT / relative), handoff["successor_sha256"])
             self.assertEqual(reference["sha256"], handoff["successor_sha256"])
+            current_hash = sha256(ROOT / relative)
+            if current_hash != handoff["successor_sha256"]:
+                self.assertIsNotNone(self.read_successor, relative)
+                read_history = self.read_successor[
+                    "historical_successor_acceptance"
+                ]
+                second_handoff = {
+                    **read_history["python_sources"],
+                    **read_history["java_sources"],
+                    **read_history["auxiliary_sources"],
+                }.get(relative)
+                self.assertIsNotNone(second_handoff, relative)
+                self.assertEqual(
+                    handoff["successor_sha256"],
+                    second_handoff["accepted_sha256"],
+                    relative,
+                )
+                self.assertEqual(
+                    current_hash,
+                    second_handoff["successor_sha256"],
+                    relative,
+                )
         validate_successor_contract(contract)
         tampered = json.loads(json.dumps(contract))
         tampered_relative = (
@@ -250,22 +293,36 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
         ):
             validate_successor_contract(missing_auxiliary)
 
-        with tempfile.TemporaryDirectory(prefix="ti-phase4c-composition-") as temp:
-            output = Path(temp)
-            subprocess.run(
-                [sys.executable, str(BUILDER_PATH), "--output-dir", str(output)],
-                cwd=ROOT,
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
+        if self.read_successor is None:
+            with tempfile.TemporaryDirectory(prefix="ti-phase4c-composition-") as temp:
+                output = Path(temp)
+                subprocess.run(
+                    [sys.executable, str(BUILDER_PATH), "--output-dir", str(output)],
+                    cwd=ROOT,
+                    check=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                )
+                for name in (
+                    "data-ownership-delta.csv",
+                    "effective-data-ownership-status.json",
+                    "personal-bank-user-counts-composition-contract.json",
+                ):
+                    self.assertEqual(
+                        (PHASE4C / name).read_bytes(),
+                        (output / name).read_bytes(),
+                    )
+        else:
+            validate_read_successor_contract(self.read_successor, ROOT)
+            self.assertEqual(
+                sha256(CONTRACT_PATH),
+                self.read_successor["predecessor"]["sha256"],
             )
-            for name in (
-                "data-ownership-delta.csv",
-                "effective-data-ownership-status.json",
-                "personal-bank-user-counts-composition-contract.json",
-            ):
-                self.assertEqual((PHASE4C / name).read_bytes(), (output / name).read_bytes())
+            self.assertEqual(
+                contract["contract_id"],
+                self.read_successor["predecessor"]["contract_id"],
+            )
 
     def test_02_namespace_owner_overlay_is_exact_and_preserves_phase1_history(self):
         rows = list(csv.DictReader(
@@ -511,18 +568,47 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
         for module in ("learning", "personalbank"):
             for path in sorted((main_root / module).rglob("*.java")):
                 current[path.relative_to(ROOT).as_posix()] = sha256(path)
-        self.assertEqual(manifest, current)
-        self.assertEqual([], list(main_root.rglob("*UserCounts*.java")))
         baseline = self.contract["production_baseline"]
         self.assertEqual(ACCEPTED_COMMIT, baseline["accepted_commit"])
         runtime = baseline["production_runtime_surface"]
         current_runtime = production_runtime_manifest()
-        self.assertEqual(current_runtime, runtime["files"])
-        self.assertEqual(len(current_runtime), runtime["file_count"])
-        self.assertEqual(
-            ACCEPTED_PRODUCTION_SURFACE_SHA256,
-            manifest_sha256(current_runtime),
-        )
+        if self.read_successor is None:
+            self.assertEqual(manifest, current)
+            self.assertEqual([], list(main_root.rglob("*UserCounts*.java")))
+            self.assertEqual(current_runtime, runtime["files"])
+            self.assertEqual(len(current_runtime), runtime["file_count"])
+            self.assertEqual(
+                ACCEPTED_PRODUCTION_SURFACE_SHA256,
+                manifest_sha256(current_runtime),
+            )
+        else:
+            implementation = self.read_successor["implementation"]
+            self.assertEqual(
+                implementation["learning_and_personalbank_main_source_manifest"],
+                current,
+            )
+            self.assertEqual(40, len(current))
+            self.assertEqual(
+                implementation["production_runtime_surface"]["files"],
+                current_runtime,
+            )
+            self.assertEqual(288, len(current_runtime))
+            requirements = self.contract["successor_handoff"][
+                "future_read_contract_requirements"
+            ]
+            self.assertEqual(
+                set(requirements["expected_added_main_sources"]),
+                set(current) - set(manifest),
+            )
+            self.assertEqual(set(), set(manifest) - set(current))
+            self.assertEqual(
+                set(requirements["expected_changed_main_sources"]),
+                {
+                    relative
+                    for relative in set(manifest) & set(current)
+                    if manifest[relative] != current[relative]
+                },
+            )
         self.assertEqual(
             ACCEPTED_PRODUCTION_SURFACE_SHA256,
             runtime["manifest_sha256"],
@@ -543,8 +629,15 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
             stderr=subprocess.PIPE,
             text=True,
         ).stdout.strip()
-        self.assertEqual(ACCEPTED_JAVA_BUILD_CONTEXT_SHA256, build_context)
-        self.assertEqual(build_context, baseline["java_build_context_sha256"])
+        if self.read_successor is None:
+            self.assertEqual(ACCEPTED_JAVA_BUILD_CONTEXT_SHA256, build_context)
+            self.assertEqual(build_context, baseline["java_build_context_sha256"])
+        else:
+            self.assertEqual(
+                self.read_successor["implementation"]["java_build_context_sha256"],
+                build_context,
+            )
+            self.assertNotEqual(baseline["java_build_context_sha256"], build_context)
         migration_root = ROOT / "server/src/main/resources/db"
         self.assertEqual([], list(migration_root.rglob("*")) if migration_root.exists() else [])
         self.assertEqual(11, baseline["migrated_route_count"])

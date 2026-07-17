@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-07-17T13:19:15Z",
+  "source": {
+    "classification": "explicitly-approved-local-development-reference",
+    "legacySourceCommit": "700006dfdfa063deb4387be572911e782bcea0d9",
+    "alembicHead": "f5b6c7d8e9f0",
+    "serverVersion": "18.4",
+    "serverVersionNum": "180004",
+    "publicBaseTables": 70,
+    "publicColumns": 617
+  },
+  "restore": {
+    "image": "postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
+    "serverVersion": "18.4",
+    "serverVersionNum": "180004",
+    "publicBaseTables": 70,
+    "publicColumns": 617,
+    "canonicalSchemaDumpSha256": "96a5fda32a6ac4cb1e09cbb8bb0c1c5b33ff6d479cdaefb1d02fcf655a84d38b",
+    "schemaDumpPersisted": false
+  },
+  "readRole": {
+    "selectPassed": true,
+    "defaultTransactionReadOnly": true,
+    "temporaryPrivilege": false,
+    "aclVerifiedWithReadOnlyDefaultDisabled": true,
+    "insertRejected": true,
+    "updateRejected": true,
+    "deleteRejected": true,
+    "ddlRejected": true,
+    "temporaryDdlRejected": true
+  },
+  "java": {
+    "dockerfileSha256": "bb99afb7264a3a0d64b2e76d07a663bfe4a08cacca0387dff07635818a1ef499",
+    "buildContextSha256": "b616ee8c53eaee58d1771422607d3e9215977a47245aa41e4f3553aee62d64fb",
+    "hibernateDdlAuto": "validate",
+    "startupPassed": true,
+    "readinessPassed": true
+  },
+  "productionDatabaseVersion": "unknown",
+  "flywayBaselineCreated": false
+}

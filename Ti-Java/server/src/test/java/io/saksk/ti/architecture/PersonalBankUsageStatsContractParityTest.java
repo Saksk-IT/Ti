@@ -79,7 +79,7 @@ class PersonalBankUsageStatsContractParityTest {
     private static JsonNode plan;
     private static JsonNode userCountsEntry;
     private static JsonNode userCountsGolden;
-    private static JsonNode phase4cComposition;
+    private static JsonNode phase4cReadContract;
 
     @BeforeAll
     static void loadEvidence() throws Exception {
@@ -103,10 +103,7 @@ class PersonalBankUsageStatsContractParityTest {
                 "docs/refactor/phase4b/personal-bank-user-counts-entry-contract.json");
         userCountsGolden = readJson(
                 "docs/refactor/phase4b/golden-personal-bank-user-counts-reads.json");
-        phase4cComposition = readJson(
-                "docs/refactor/phase4c/"
-                        + "personal-bank-user-counts-composition-contract.json");
-        Phase4cSuccessorAcceptance.validate(phase4cComposition);
+        phase4cReadContract = Phase4cReadSuccessorAcceptance.load(tiJavaRoot);
     }
 
     @Test
@@ -514,7 +511,7 @@ class PersonalBankUsageStatsContractParityTest {
         for (String key : propertyNames(files)) {
             String relative = files.path(key).asString();
             String currentHash = sha256(relative);
-            String successorHash = phase4cSuccessorHash(relative);
+            String successorHash = phase4cReadSuccessorHash(relative);
             if (successorHash == null) {
                 assertThat(currentHash)
                         .as("source hash for %s", key)
@@ -528,11 +525,15 @@ class PersonalBankUsageStatsContractParityTest {
         }
     }
 
-    private static String phase4cSuccessorHash(String relative) {
-        return Phase4cSuccessorAcceptance.successorHash(phase4cComposition, relative);
+    private static String phase4cReadSuccessorHash(String relative) {
+        return Phase4cReadSuccessorAcceptance.successorHash(
+                phase4cReadContract, relative);
     }
 
-    private static void assertMainSourceManifest(JsonNode manifest) throws Exception {
+    private static void assertMainSourceManifest(JsonNode historicalManifest) throws Exception {
+        JsonNode currentManifest = phase4cReadContract.path("implementation")
+                .path("learning_and_personalbank_main_source_manifest");
+        assertThat(currentManifest).hasSize(40);
         Path sourceRoot = resolve("server/src/main/java/io/saksk/ti/personalbank");
         List<String> current = new ArrayList<>();
         try (var paths = Files.walk(sourceRoot)) {
@@ -541,10 +542,20 @@ class PersonalBankUsageStatsContractParityTest {
                     .forEach(path -> current.add(
                             tiJavaRoot.relativize(path).toString().replace('\\', '/')));
         }
-        assertThat(propertyNames(manifest)).containsExactlyInAnyOrderElementsOf(current);
+        List<String> currentPersonalbank = propertyNames(currentManifest).stream()
+                .filter(relative -> relative.startsWith(
+                        "server/src/main/java/io/saksk/ti/personalbank/"))
+                .toList();
+        assertThat(currentPersonalbank).containsExactlyInAnyOrderElementsOf(current);
         for (String relative : current) {
-            assertThat(manifest.path(relative).asString())
+            assertThat(currentManifest.path(relative).asString())
                     .as("main source manifest hash for %s", relative)
+                    .isEqualTo(sha256(relative));
+        }
+        for (String relative : propertyNames(historicalManifest)) {
+            assertThat(current).contains(relative);
+            assertThat(historicalManifest.path(relative).asString())
+                    .as("historical main source manifest hash for %s", relative)
                     .isEqualTo(sha256(relative));
         }
     }

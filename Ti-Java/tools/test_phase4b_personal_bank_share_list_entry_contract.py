@@ -9,6 +9,17 @@ import json
 import pathlib
 import unittest
 
+try:
+    from tools.phase4c_read_successor_acceptance import (
+        load_read_successor_contract,
+        successor_sha256,
+    )
+except ModuleNotFoundError:  # Direct script execution from tools/.
+    from phase4c_read_successor_acceptance import (
+        load_read_successor_contract,
+        successor_sha256,
+    )
+
 
 TI_JAVA_ROOT = pathlib.Path(__file__).resolve().parents[1]
 PHASE4B_ROOT = TI_JAVA_ROOT / "docs" / "refactor" / "phase4b"
@@ -117,9 +128,21 @@ def document_payload_sha256(document: dict) -> str:
     })
 
 
+def learning_and_personalbank_main_source_manifest() -> dict[str, str]:
+    main_root = TI_JAVA_ROOT / "server/src/main/java/io/saksk/ti"
+    paths = []
+    for module in ("learning", "personalbank"):
+        paths.extend((main_root / module).rglob("*.java"))
+    return {
+        path.relative_to(TI_JAVA_ROOT).as_posix(): sha256(path)
+        for path in sorted(paths)
+    }
+
+
 class Phase4bPersonalBankShareListEntryContractTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.read_successor = load_read_successor_contract(TI_JAVA_ROOT)
         cls.contract = load_json(CONTRACT_PATH)
         cls.category = load_json(
             PHASE4B_ROOT / "personal-bank-category-acceptance.json"
@@ -167,7 +190,17 @@ class Phase4bPersonalBankShareListEntryContractTest(unittest.TestCase):
                 successor_files = self.terminal["implementation"]["main_source_files"]
                 successor_hashes = self.terminal["implementation"]["main_source_sha256"]
                 self.assertEqual(reference["source"], successor_files[name])
-                self.assertEqual(successor_hashes[name], sha256(source), name)
+                current_hash = sha256(source)
+                if self.read_successor is None:
+                    self.assertEqual(successor_hashes[name], current_hash, name)
+                else:
+                    self.assertEqual(
+                        self.read_successor["implementation"]
+                        ["learning_and_personalbank_main_source_manifest"]
+                        [reference["source"]],
+                        current_hash,
+                        name,
+                    )
                 self.assertNotEqual(reference["sha256"], sha256(source), name)
             elif name in {
                 "entry_contract_test",
@@ -185,9 +218,21 @@ class Phase4bPersonalBankShareListEntryContractTest(unittest.TestCase):
                         "category_acceptance_forward_handoff_test",
                 }[name]
                 self.assertEqual(reference["source"], successor_files[successor_name])
-                self.assertEqual(
-                    successor_hashes[successor_name], sha256(source), name
-                )
+                current_hash = sha256(source)
+                if self.read_successor is None:
+                    self.assertEqual(
+                        successor_hashes[successor_name], current_hash, name
+                    )
+                else:
+                    read_hash = successor_sha256(
+                        TI_JAVA_ROOT, reference["source"]
+                    )
+                    if read_hash is None:
+                        self.assertEqual(
+                            successor_hashes[successor_name], current_hash, name
+                        )
+                    else:
+                        self.assertEqual(read_hash, current_hash, name)
                 self.assertNotEqual(reference["sha256"], sha256(source), name)
             else:
                 self.assertEqual(reference["sha256"], sha256(source), name)
@@ -574,7 +619,16 @@ class Phase4bPersonalBankShareListEntryContractTest(unittest.TestCase):
         expected_current_manifest = self.terminal["implementation"][
             "personalbank_main_source_manifest"
         ]
-        self.assertEqual(expected_current_manifest, actual_manifest)
+        if self.read_successor is None:
+            self.assertEqual(expected_current_manifest, actual_manifest)
+        else:
+            current_manifest = learning_and_personalbank_main_source_manifest()
+            self.assertEqual(40, len(current_manifest))
+            self.assertEqual(
+                self.read_successor["implementation"]
+                ["learning_and_personalbank_main_source_manifest"],
+                current_manifest,
+            )
 
         with (TI_JAVA_ROOT / "docs/refactor/02-route-parity-matrix.csv").open(
             newline="", encoding="utf-8"

@@ -58,7 +58,7 @@ API、PostgreSQL 和 Redis 均启用只读根文件系统、临时目录、`cap_
 
 脚本只接受显式源参数，不接受或搜寻源密码，也不读取 `Ti-Java/` 父目录。`--report` 必填，且必须指向 `Ti-Java/` 内父目录已存在的全新版本化文件；任何已存在文件、符号链接或目录都会被拒绝，最终报告以同目录 hard-link 原子 no-clobber 发布。它执行 `schema-only`、`no-owner`、`no-acl` 导出，恢复到 digest 固定的隔离 PostgreSQL 18.4，验证 70 表/617 列、固定 canonical schema SHA 和服务端版本；随后创建只读角色，主动关闭该会话的默认只读开关，仍要求 DML、普通 DDL 和 TEMP DDL 全部被 ACL 拒绝。最后用 Dockerfile 构建的 Java 镜像连接恢复副本，以 `ddl-auto=validate` 启动并通过 readiness；构建前与 readiness 后的 Dockerfile/build-context SHA 必须完全一致。
 
-schema dump、随机 Secret、容器、网络、卷和临时 Java 镜像会在退出时清理。仓库只保留不含 schema、DSN 或 Secret 的版本化报告；[`local-reference-verification.json`](local-reference-verification.json) 是不可变历史锚点，后续报告必须由 [`phase2_wormhole_successor_acceptance.py`](../../tools/phase2_wormhole_successor_acceptance.py) 以固定路径、报告 SHA、前驱 SHA、Dockerfile SHA 和 Java build-context SHA 显式加入后继链。静态门禁只接受固定链的最后一个 tip，不扫描目录，也不接受任意报告路径。所有报告仍仅代表获准本地开发参考实例，不确认生产版本，也不创建 Flyway baseline。
+schema dump、随机 Secret、容器、网络、卷和临时 Java 镜像会在退出时清理。仓库只保留不含 schema、DSN 或 Secret 的版本化报告；[`local-reference-verification.json`](local-reference-verification.json) 是不可变历史锚点，后续报告必须由 [`phase2_wormhole_successor_acceptance.py`](../../tools/phase2_wormhole_successor_acceptance.py) 以固定路径、报告 SHA、前驱 SHA、Dockerfile SHA 和 Java build-context SHA 显式加入后继链。当前固定链为 Phase 4B 锚点 → Phase 4C user-counts 入口 → Phase 4C HTTP-neutral read → Phase 4C HTTP-neutral read access，最后一个 tip 是 `personal-bank-user-counts-read-access-worm-evidence.json`，绑定 Java build-context `935e6a95a33621b01e1e04d752a09513c8037cffe807a73fa1ce9850fb5912f0`。静态门禁只接受固定链的最后一个 tip，不扫描目录，也不接受任意报告路径。所有报告仍仅代表获准本地开发参考实例，不确认生产版本，也不创建 Flyway baseline。
 
 ## 启动开发 Compose
 

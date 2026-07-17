@@ -15,6 +15,10 @@ try:
         ACCEPTED_COMMIT,
         ACCEPTED_PREDECESSOR_SHA256,
         load_successor_contract,
+    )
+    from tools.phase4c_read_successor_acceptance import (
+        load_composition_predecessor_contract,
+        load_read_successor_contract,
         successor_sha256,
     )
 except ModuleNotFoundError:  # Direct script execution from tools/.
@@ -22,6 +26,10 @@ except ModuleNotFoundError:  # Direct script execution from tools/.
         ACCEPTED_COMMIT,
         ACCEPTED_PREDECESSOR_SHA256,
         load_successor_contract,
+    )
+    from phase4c_read_successor_acceptance import (
+        load_composition_predecessor_contract,
+        load_read_successor_contract,
         successor_sha256,
     )
 
@@ -43,10 +51,6 @@ ROUTE_DELTA_PATH = ROOT / "docs/refactor/phase4a/route-parity-delta.csv"
 PHASE4C_COMPOSITION_PATH = (
     ROOT / "docs/refactor/phase4c/personal-bank-user-counts-composition-contract.json"
 )
-PHASE4C_READ_PATH = (
-    ROOT / "docs/refactor/phase4c/personal-bank-user-counts-read-contract.json"
-)
-
 ROUTE_KEYS = {
     "6858f6fa506f|GET|/api/user/banks/api/<int:bank_id>/user-counts",
     "006913d0d956|GET|/user/banks/api/<int:bank_id>/user-counts",
@@ -203,6 +207,7 @@ def junit_test_methods(path: Path) -> set[str]:
 class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.phase4c_read = load_read_successor_contract(ROOT)
         cls.contract = load_json(CONTRACT_PATH)
         cls.predecessor = load_json(PREDECESSOR_PATH)
         cls.shape = load_json(SHAPE_PATH)
@@ -212,12 +217,13 @@ class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
         cls.effective = load_json(EFFECTIVE_PATH)
         cls.modules = load_json(MODULES_PATH)
         cls.openapi = load_json(OPENAPI_PATH)
-        cls.phase4c_composition = load_successor_contract(ROOT)
+        cls.phase4c_composition = (
+            load_composition_predecessor_contract(ROOT)
+            if cls.phase4c_read is not None
+            else load_successor_contract(ROOT)
+        )
         if cls.phase4c_composition is None:
             raise AssertionError("Phase4C composition contract is required")
-        cls.phase4c_read = (
-            load_json(PHASE4C_READ_PATH) if PHASE4C_READ_PATH.is_file() else None
-        )
 
     def test_01_identity_predecessor_sources_payload_and_forward_handoff_close(self):
         contract = self.contract
@@ -356,6 +362,7 @@ class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
             )
             current_manifest = learning_and_personalbank_main_source_manifest()
             self.assertTrue(current_manifest)
+            self.assertEqual(40, len(current_manifest))
             self.assertEqual(
                 current_manifest,
                 successor["learning_and_personalbank_main_source_manifest"],

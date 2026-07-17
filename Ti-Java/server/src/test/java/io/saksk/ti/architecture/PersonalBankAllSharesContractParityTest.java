@@ -35,7 +35,7 @@ class PersonalBankAllSharesContractParityTest {
     private static JsonNode plan;
     private static JsonNode usageStatsEntry;
     private static JsonNode usageStatsContract;
-    private static JsonNode phase4cComposition;
+    private static JsonNode phase4cReadContract;
 
     @BeforeAll
     static void loadEvidence() throws Exception {
@@ -58,10 +58,7 @@ class PersonalBankAllSharesContractParityTest {
                 "docs/refactor/phase4b/personal-bank-usage-stats-entry-contract.json");
         usageStatsContract = readJson(
                 "docs/refactor/phase4b/personal-bank-usage-stats-read-contract.json");
-        phase4cComposition = readJson(
-                "docs/refactor/phase4c/"
-                        + "personal-bank-user-counts-composition-contract.json");
-        Phase4cSuccessorAcceptance.validate(phase4cComposition);
+        phase4cReadContract = Phase4cReadSuccessorAcceptance.load(tiJavaRoot);
     }
 
     @Test
@@ -263,7 +260,7 @@ class PersonalBankAllSharesContractParityTest {
                         .isEqualTo(hashes.path(key).asString());
                 continue;
             }
-            String successorHash = phase4cSuccessorHash(relative);
+            String successorHash = phase4cReadSuccessorHash(relative);
             if (successorHash == null) {
                 assertThat(currentHash).as("terminal source hash for %s", key)
                         .isEqualTo(terminalHash);
@@ -276,8 +273,9 @@ class PersonalBankAllSharesContractParityTest {
         }
     }
 
-    private static String phase4cSuccessorHash(String relative) {
-        return Phase4cSuccessorAcceptance.successorHash(phase4cComposition, relative);
+    private static String phase4cReadSuccessorHash(String relative) {
+        return Phase4cReadSuccessorAcceptance.successorHash(
+                phase4cReadContract, relative);
     }
 
     private static String terminalHash(

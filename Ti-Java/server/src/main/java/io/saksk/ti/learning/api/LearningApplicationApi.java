@@ -1,5 +1,9 @@
 package io.saksk.ti.learning.api;
 
-/** Public learning boundary; answer and progress shapes are deferred to the Phase 4 slice. */
+/** Public learning boundary for HTTP-neutral answer and progress use cases. */
 public interface LearningApplicationApi {
+
+    PersonalBankUserCountsResult findPersonalBankUserCounts(
+            AuthenticatedLearningViewer viewer,
+            PersonalBankUserCountsQuery query);
 }

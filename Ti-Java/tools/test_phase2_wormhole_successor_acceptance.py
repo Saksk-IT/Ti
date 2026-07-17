@@ -150,6 +150,25 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
             encoding="utf-8",
         )
 
+    def _successor_after(
+        self,
+        predecessor: EvidenceDescriptor,
+        *,
+        filename: str,
+        label: str,
+        build_context: str,
+    ) -> tuple[Path, EvidenceDescriptor]:
+        path = self.root / f"reports/{filename}"
+        self._write_report(path, build_context, self.successor_dockerfile)
+        return path, EvidenceDescriptor(
+            label=label,
+            relative_path=f"reports/{filename}",
+            sha256=sha256(path),
+            build_context_sha256=build_context,
+            dockerfile_sha256=self.successor_dockerfile,
+            predecessor_sha256=predecessor.sha256,
+        )
+
     def _validate(
         self,
         *,
@@ -206,6 +225,81 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
             EvidenceValidationError, "duplicate evidence build-context"
         ):
             self._validate(chain=(self.anchor, duplicate))
+
+    def test_four_node_chain_requires_each_exact_predecessor(self) -> None:
+        _, third = self._successor_after(
+            self.successor,
+            filename="third.json",
+            label="second-reviewed-successor",
+            build_context="e" * 64,
+        )
+        _, fourth = self._successor_after(
+            third,
+            filename="fourth.json",
+            label="third-reviewed-successor",
+            build_context="f" * 64,
+        )
+        self.assertEqual(
+            fourth,
+            self._validate(
+                chain=(self.anchor, self.successor, third, fourth),
+                current_build=fourth.build_context_sha256,
+            ),
+        )
+
+        broken_third = replace(third, predecessor_sha256=self.anchor.sha256)
+        with self.assertRaisesRegex(EvidenceValidationError, "broken predecessor"):
+            self._validate(
+                chain=(self.anchor, self.successor, broken_third, fourth),
+                current_build=fourth.build_context_sha256,
+            )
+
+        broken_fourth = replace(fourth, predecessor_sha256=self.successor.sha256)
+        with self.assertRaisesRegex(EvidenceValidationError, "broken predecessor"):
+            self._validate(
+                chain=(self.anchor, self.successor, third, broken_fourth),
+                current_build=fourth.build_context_sha256,
+            )
+
+    def test_fourth_node_tampering_fails_even_when_digest_is_reaccepted(self) -> None:
+        _, third = self._successor_after(
+            self.successor,
+            filename="third.json",
+            label="second-reviewed-successor",
+            build_context="e" * 64,
+        )
+        fourth_path, fourth = self._successor_after(
+            third,
+            filename="fourth.json",
+            label="third-reviewed-successor",
+            build_context="f" * 64,
+        )
+        chain = (self.anchor, self.successor, third, fourth)
+        self.assertEqual(
+            fourth,
+            self._validate(
+                chain=chain,
+                current_build=fourth.build_context_sha256,
+            ),
+        )
+
+        document = json.loads(fourth_path.read_text(encoding="utf-8"))
+        document["readRole"]["deleteRejected"] = False
+        fourth_path.write_text(
+            json.dumps(document, indent=2) + "\n", encoding="utf-8"
+        )
+        with self.assertRaisesRegex(EvidenceValidationError, "report digest drift"):
+            self._validate(
+                chain=chain,
+                current_build=fourth.build_context_sha256,
+            )
+
+        reaccepted = replace(fourth, sha256=sha256(fourth_path))
+        with self.assertRaisesRegex(EvidenceValidationError, "read-role ACL"):
+            self._validate(
+                chain=(self.anchor, self.successor, third, reaccepted),
+                current_build=fourth.build_context_sha256,
+            )
 
     def test_only_fixed_tip_may_match_current_build_context(self) -> None:
         with self.assertRaisesRegex(EvidenceValidationError, "tip is stale"):
@@ -274,6 +368,16 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
             / (
                 "docs/refactor/phase4c/"
                 "personal-bank-user-counts-entry-worm-evidence.json"
+            ),
+            ROOT
+            / (
+                "docs/refactor/phase4c/"
+                "personal-bank-user-counts-read-worm-evidence.json"
+            ),
+            ROOT
+            / (
+                "docs/refactor/phase4c/"
+                "personal-bank-user-counts-read-access-worm-evidence.json"
             ),
         ]
         before = {path: sha256(path) for path in immutable_paths}

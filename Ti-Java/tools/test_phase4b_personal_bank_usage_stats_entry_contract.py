@@ -11,9 +11,15 @@ import re
 import unittest
 
 try:
-    from tools.phase4c_successor_acceptance import successor_sha256
+    from tools.phase4c_read_successor_acceptance import (
+        load_read_successor_contract,
+        successor_sha256,
+    )
 except ModuleNotFoundError:  # Direct script execution from tools/.
-    from phase4c_successor_acceptance import successor_sha256
+    from phase4c_read_successor_acceptance import (
+        load_read_successor_contract,
+        successor_sha256,
+    )
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -124,6 +130,17 @@ def phase4c_successor_hash(relative: str) -> str | None:
     return successor_sha256(ROOT, relative)
 
 
+def learning_and_personalbank_main_source_manifest() -> dict[str, str]:
+    main_root = ROOT / "server/src/main/java/io/saksk/ti"
+    paths = []
+    for module in ("learning", "personalbank"):
+        paths.extend((main_root / module).rglob("*.java"))
+    return {
+        path.relative_to(ROOT).as_posix(): sha256(path)
+        for path in sorted(paths)
+    }
+
+
 def python_test_count(path: Path) -> int:
     return len(re.findall(r"^\s+def test_[A-Za-z0-9_]+\(", path.read_text(
         encoding="utf-8"
@@ -139,6 +156,7 @@ def java_test_count(path: Path) -> int:
 class Phase4bPersonalBankUsageStatsEntryContractTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.read_successor = load_read_successor_contract(ROOT)
         cls.contract = load_json(CONTRACT_PATH)
         cls.predecessor = load_json(PREDECESSOR_PATH)
         cls.successor = load_json(SUCCESSOR_PATH)
@@ -207,7 +225,12 @@ class Phase4bPersonalBankUsageStatsEntryContractTest(unittest.TestCase):
             hashes = successor["implementation"][f"{section}_sha256"]
             self.assertEqual(reference["source"], files[successor_name], name)
             phase4c_hash = phase4c_successor_hash(reference["source"])
-            if phase4c_hash is None:
+            if self.read_successor is not None:
+                if phase4c_hash is None:
+                    self.assertEqual(current_hash, hashes[successor_name], name)
+                else:
+                    self.assertEqual(current_hash, phase4c_hash, name)
+            elif phase4c_hash is None:
                 self.assertEqual(current_hash, hashes[successor_name], name)
             else:
                 self.assertEqual(current_hash, phase4c_hash, name)
@@ -403,7 +426,18 @@ class Phase4bPersonalBankUsageStatsEntryContractTest(unittest.TestCase):
                 if successor_relative == relative
             ]
             self.assertEqual(1, len(matching), relative)
-            self.assertEqual(successor_main_hashes[matching[0]], sha256(path), relative)
+            current_hash = sha256(path)
+            if self.read_successor is None:
+                self.assertEqual(
+                    successor_main_hashes[matching[0]], current_hash, relative
+                )
+            else:
+                self.assertEqual(
+                    self.read_successor["implementation"]
+                    ["learning_and_personalbank_main_source_manifest"][relative],
+                    current_hash,
+                    relative,
+                )
 
         api = (ROOT / "server/src/main/java/io/saksk/ti/personalbank/api/"
                "PersonalBankApplicationApi.java").read_text(encoding="utf-8")
@@ -418,10 +452,19 @@ class Phase4bPersonalBankUsageStatsEntryContractTest(unittest.TestCase):
         unchanged = self.contract["unchanged_state"]
         self.assertNotEqual(unchanged["personalbank_main_source_manifest"],
                             current_manifest)
-        self.assertEqual(
-            self.successor["implementation"]["personalbank_main_source_manifest"],
-            current_manifest,
-        )
+        if self.read_successor is None:
+            self.assertEqual(
+                self.successor["implementation"]["personalbank_main_source_manifest"],
+                current_manifest,
+            )
+        else:
+            read_manifest = learning_and_personalbank_main_source_manifest()
+            self.assertEqual(40, len(read_manifest))
+            self.assertEqual(
+                self.read_successor["implementation"]
+                ["learning_and_personalbank_main_source_manifest"],
+                read_manifest,
+            )
         self.assertEqual(22, unchanged["implemented_public_application_method_count"])
         self.assertEqual(3, unchanged["personalbank_public_method_count"])
         self.assertEqual(23, unchanged["future_public_application_method_count"])

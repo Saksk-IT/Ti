@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -34,6 +35,7 @@ class ModuleContractParityTest {
     private static JsonNode contractRoot;
     private static JsonNode shapeStatusRoot;
     private static JsonNode personalBankShapeRoot;
+    private static JsonNode phase4cReadContract;
     private static Map<String, ContractModule> contractModules;
     private static Set<Edge> eventOnlyEdges;
 
@@ -50,6 +52,7 @@ class ModuleContractParityTest {
                         "docs/refactor/phase4b/"
                                 + "personal-bank-usage-stats-application-api-shape.json"),
                 StandardCharsets.UTF_8));
+        phase4cReadContract = Phase4cReadSuccessorAcceptance.load(tiJavaRoot);
         contractModules = readModules(contractRoot);
         eventOnlyEdges = readEventOnlyEdges(contractRoot);
     }
@@ -185,9 +188,15 @@ class ModuleContractParityTest {
             JsonNode methods = status.path("methods");
             if (status.path("shape_status").asString().equals("deferred_shape")) {
                 assertThat(methods).isEmpty();
-                assertThat(apiType.getDeclaredMethods())
-                        .as("deferred API %s must not invent methods", className)
-                        .isEmpty();
+                if (module.id().equals("learning")) {
+                    assertThat(apiType.getDeclaredMethods())
+                            .as("fixed Phase4C learning successor")
+                            .hasSize(1);
+                } else {
+                    assertThat(apiType.getDeclaredMethods())
+                            .as("deferred API %s must not invent methods", className)
+                            .isEmpty();
+                }
             } else {
                 assertThat(status.path("shape_status").asString()).isEqualTo("partially_implemented");
                 assertThat(module.id()).isIn("identity", "catalog", "operations", "personalbank");
@@ -230,6 +239,19 @@ class ModuleContractParityTest {
         assertThat(implementedMethodCount)
                 .isEqualTo(personalBankShapeRoot
                         .path("implemented_public_application_method_count").asInt());
+        assertThat(implementedMethodCount).isEqualTo(23);
+
+        JsonNode currentImplementation = phase4cReadContract.path("implementation");
+        assertThat(currentImplementation.path("implemented_public_application_method_count")
+                        .asInt())
+                .isEqualTo(27);
+        Set<String> currentOwnerApis = assertCurrentPublicApplicationMethods(
+                currentImplementation.path("public_application_methods"));
+        currentOwnerApis.stream()
+                .map(className -> className.replace('.', '/') + ".java")
+                .forEach(trackedApiSources::add);
+        assertCurrentLearningAndPersonalbankManifest(
+                currentImplementation.path("learning_and_personalbank_main_source_manifest"));
 
         Path javaRoot = resolveInsideTiJava("server/src/main/java");
         try (var sources = Files.walk(javaRoot)) {
@@ -2784,6 +2806,88 @@ class ModuleContractParityTest {
             values.add(node.path(field).asLong());
         }
         return List.copyOf(values);
+    }
+
+    private static Set<String> assertCurrentPublicApplicationMethods(JsonNode methods)
+            throws Exception {
+        assertThat(methods).hasSize(27);
+        Map<String, List<JsonNode>> byOwner = new LinkedHashMap<>();
+        Set<String> contractSignatures = new LinkedHashSet<>();
+        for (JsonNode methodShape : methods) {
+            String owner = methodShape.path("owner_api").asString();
+            String signature = owner + "#" + methodShape.path("name").asString()
+                    + orderedStrings(methodShape.path("parameter_types"));
+            assertThat(contractSignatures.add(signature))
+                    .as("duplicate current public method %s", signature)
+                    .isTrue();
+            byOwner.computeIfAbsent(owner, ignored -> new ArrayList<>()).add(methodShape);
+        }
+
+        for (Map.Entry<String, List<JsonNode>> entry : byOwner.entrySet()) {
+            Class<?> apiType = Class.forName(entry.getKey());
+            assertThat(apiType.isInterface()).as(entry.getKey()).isTrue();
+            assertThat(Modifier.isPublic(apiType.getModifiers())).as(entry.getKey()).isTrue();
+            assertThat(apiType.getDeclaredMethods()).hasSize(entry.getValue().size());
+            for (JsonNode methodShape : entry.getValue()) {
+                List<String> parameterTypes = orderedStrings(
+                        methodShape.path("parameter_types"));
+                List<Method> matches = Arrays.stream(apiType.getDeclaredMethods())
+                        .filter(method -> method.getName().equals(
+                                methodShape.path("name").asString()))
+                        .filter(method -> Arrays.stream(method.getParameterTypes())
+                                .map(Class::getName)
+                                .toList()
+                                .equals(parameterTypes))
+                        .toList();
+                assertThat(matches)
+                        .as("current method %s#%s%s",
+                                entry.getKey(),
+                                methodShape.path("name").asString(),
+                                parameterTypes)
+                        .hasSize(1);
+                Method method = matches.getFirst();
+                assertThat(method.getReturnType().getName())
+                        .isEqualTo(methodShape.path("return_type").asString());
+                if (methodShape.has("generic_return_type")) {
+                    assertThat(method.getGenericReturnType().getTypeName())
+                            .isEqualTo(methodShape.path("generic_return_type").asString());
+                }
+                assertThat(Modifier.isPublic(method.getModifiers())).isTrue();
+                assertThat(Modifier.isAbstract(method.getModifiers())).isTrue();
+            }
+        }
+        return Set.copyOf(byOwner.keySet());
+    }
+
+    private static void assertCurrentLearningAndPersonalbankManifest(JsonNode manifest)
+            throws IOException {
+        assertThat(manifest).hasSize(40);
+        Map<String, String> actual = new TreeMap<>();
+        for (String module : List.of("learning", "personalbank")) {
+            Path moduleRoot = resolveInsideTiJava(
+                    "server/src/main/java/io/saksk/ti/" + module);
+            try (var sources = Files.walk(moduleRoot)) {
+                for (Path source : sources
+                        .filter(Files::isRegularFile)
+                        .filter(path -> path.toString().endsWith(".java"))
+                        .toList()) {
+                    String relative = tiJavaRoot.relativize(source)
+                            .toString()
+                            .replace('\\', '/');
+                    assertThat(actual.put(relative, sha256(source)))
+                            .as("duplicate current main source %s", relative)
+                            .isNull();
+                }
+            }
+        }
+        assertThat(actual).hasSize(40);
+        assertThat(manifest.propertyNames())
+                .containsExactlyInAnyOrderElementsOf(actual.keySet());
+        for (Map.Entry<String, String> entry : actual.entrySet()) {
+            assertThat(manifest.path(entry.getKey()).asString())
+                    .as("current main source %s", entry.getKey())
+                    .isEqualTo(entry.getValue());
+        }
     }
 
     private static void assertExactMethodShapes(Class<?> apiType, JsonNode methods) throws Exception {

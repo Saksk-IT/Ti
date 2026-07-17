@@ -50,7 +50,7 @@ class PersonalBankShareListContractParityTest {
     private static JsonNode allSharesContract;
     private static JsonNode usageStatsEntry;
     private static JsonNode usageStatsContract;
-    private static JsonNode phase4cComposition;
+    private static JsonNode phase4cReadContract;
 
     @BeforeAll
     static void loadEvidence() throws Exception {
@@ -77,10 +77,7 @@ class PersonalBankShareListContractParityTest {
                 "docs/refactor/phase4b/personal-bank-usage-stats-entry-contract.json");
         usageStatsContract = readJson(
                 "docs/refactor/phase4b/personal-bank-usage-stats-read-contract.json");
-        phase4cComposition = readJson(
-                "docs/refactor/phase4c/"
-                        + "personal-bank-user-counts-composition-contract.json");
-        Phase4cSuccessorAcceptance.validate(phase4cComposition);
+        phase4cReadContract = Phase4cReadSuccessorAcceptance.load(tiJavaRoot);
     }
 
     @Test
@@ -149,7 +146,7 @@ class PersonalBankShareListContractParityTest {
         assertThat(transitiveHandoff.path("source").asString())
                 .isEqualTo(handoff.path("source").asString());
         assertThat(sha256(handoff.path("source").asString()))
-                .isEqualTo(phase4cSuccessorHash(handoff.path("source").asString()))
+                .isEqualTo(phase4cReadSuccessorHash(handoff.path("source").asString()))
                 .isNotEqualTo(terminalHash)
                 .isNotEqualTo(transitiveHandoff.path("sha256").asString())
                 .isNotEqualTo(allSharesTerminalHash)
@@ -337,7 +334,7 @@ class PersonalBankShareListContractParityTest {
                         .as("source hash for %s", key)
                         .isEqualTo(hashes.path(key).asString());
             } else {
-                String successorHash = phase4cSuccessorHash(relative);
+                String successorHash = phase4cReadSuccessorHash(relative);
                 if (successorHash == null) {
                     assertThat(currentHash).as("terminal source hash for %s", key)
                             .isEqualTo(terminalHash);
@@ -351,8 +348,9 @@ class PersonalBankShareListContractParityTest {
         }
     }
 
-    private static String phase4cSuccessorHash(String relative) {
-        return Phase4cSuccessorAcceptance.successorHash(phase4cComposition, relative);
+    private static String phase4cReadSuccessorHash(String relative) {
+        return Phase4cReadSuccessorAcceptance.successorHash(
+                phase4cReadContract, relative);
     }
 
     private static String terminalHash(

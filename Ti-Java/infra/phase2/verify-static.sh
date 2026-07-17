@@ -194,6 +194,12 @@ assert_file_contains "Fixed historical WORM trust root" \
 assert_file_contains "Fixed Phase 4C WORM successor" \
     'cfb262319ded0840218fd9bfb4deff1e7bc9c66b5849e3ff05f49a459e686884' \
     "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C read WORM successor" \
+    'fade745bfa0da6ea7d4fc6a16dcee499149ee06dc1113fc92b5256df23cc42e9' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C read-access WORM successor" \
+    'a393e79afb76c53a1aca8be1e4709506b58ad062e3c6536c26c12f10b29d1ec6' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
 
 assert_file_contains "Observed FK delete rule" "ON DELETE SET NULL" "$SCHEMA_FILE"
 assert_file_contains "JDBC FK delete-rule assertion" "importedKeySetNull" "$REFERENCE_ASSERTIONS"

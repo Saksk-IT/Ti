@@ -10,9 +10,15 @@ from pathlib import Path
 import unittest
 
 try:
-    from tools.phase4c_successor_acceptance import successor_sha256
+    from tools.phase4c_read_successor_acceptance import (
+        load_read_successor_contract,
+        successor_sha256,
+    )
 except ModuleNotFoundError:  # Direct script execution from tools/.
-    from phase4c_successor_acceptance import successor_sha256
+    from phase4c_read_successor_acceptance import (
+        load_read_successor_contract,
+        successor_sha256,
+    )
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -102,9 +108,21 @@ def phase4c_successor_hash(relative: str) -> str | None:
     return successor_sha256(ROOT, relative)
 
 
+def learning_and_personalbank_main_source_manifest() -> dict[str, str]:
+    main_root = ROOT / "server/src/main/java/io/saksk/ti"
+    paths = []
+    for module in ("learning", "personalbank"):
+        paths.extend((main_root / module).rglob("*.java"))
+    return {
+        path.relative_to(ROOT).as_posix(): sha256(path)
+        for path in sorted(paths)
+    }
+
+
 class Phase4bPersonalBankAllSharesReadContractTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.read_successor = load_read_successor_contract(ROOT)
         cls.contract = load_json(CONTRACT_PATH)
         cls.entry = load_json(
             PHASE4B / "personal-bank-all-shares-entry-contract.json"
@@ -172,7 +190,14 @@ class Phase4bPersonalBankAllSharesReadContractTest(unittest.TestCase):
                     ]
                     self.assertEqual(relative, successor_files[handoff_name])
                     phase4c_hash = phase4c_successor_hash(relative)
-                    if phase4c_hash is None:
+                    if self.read_successor is not None:
+                        if phase4c_hash is None:
+                            self.assertEqual(
+                                current_hash, successor_hashes[handoff_name], name
+                            )
+                        else:
+                            self.assertEqual(current_hash, phase4c_hash, name)
+                    elif phase4c_hash is None:
                         self.assertEqual(
                             current_hash, successor_hashes[handoff_name], name
                         )
@@ -185,6 +210,14 @@ class Phase4bPersonalBankAllSharesReadContractTest(unittest.TestCase):
         self.assertEqual(
             contract["document_payload_sha256"], payload_sha256(contract)
         )
+        if self.read_successor is not None:
+            current_manifest = learning_and_personalbank_main_source_manifest()
+            self.assertEqual(40, len(current_manifest))
+            self.assertEqual(
+                self.read_successor["implementation"]
+                ["learning_and_personalbank_main_source_manifest"],
+                current_manifest,
+            )
 
     def test_02_shape_api_dto_and_service_are_exactly_http_neutral(self):
         shape = self.shape

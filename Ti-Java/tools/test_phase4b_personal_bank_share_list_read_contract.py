@@ -13,13 +13,17 @@ import subprocess
 import unittest
 
 try:
-    from tools.phase4c_successor_acceptance import (
-        load_successor_contract,
+    from tools.phase4c_successor_acceptance import load_successor_contract
+    from tools.phase4c_read_successor_acceptance import (
+        load_composition_predecessor_contract,
+        load_read_successor_contract,
         successor_sha256,
     )
 except ModuleNotFoundError:  # Direct script execution from tools/.
-    from phase4c_successor_acceptance import (
-        load_successor_contract,
+    from phase4c_successor_acceptance import load_successor_contract
+    from phase4c_read_successor_acceptance import (
+        load_composition_predecessor_contract,
+        load_read_successor_contract,
         successor_sha256,
     )
 
@@ -265,6 +269,17 @@ def phase4c_successor_hash(relative: str) -> str | None:
     return successor_sha256(ROOT, relative)
 
 
+def learning_and_personalbank_main_source_manifest() -> dict[str, str]:
+    main_root = ROOT / "server/src/main/java/io/saksk/ti"
+    paths = []
+    for module in ("learning", "personalbank"):
+        paths.extend((main_root / module).rglob("*.java"))
+    return {
+        path.relative_to(ROOT).as_posix(): sha256(path)
+        for path in sorted(paths)
+    }
+
+
 def canonical_control_manifest(
         forward_additions: set[str] | None = None,
         historical_hash_overrides: dict[str, str] | None = None,
@@ -330,6 +345,7 @@ def canonical_control_manifest(
 class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.read_successor = load_read_successor_contract(ROOT)
         cls.contract = load_json(CONTRACT_PATH)
         cls.entry = load_json(PHASE4B / "personal-bank-share-list-entry-contract.json")
         cls.shape = load_json(
@@ -451,7 +467,14 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
                     terminal_hashes = self.terminal["implementation"][hashes_key]
                     self.assertEqual(relative, terminal_files[terminal_name])
                     phase4c_hash = phase4c_successor_hash(relative)
-                    if phase4c_hash is not None:
+                    if self.read_successor is not None:
+                        if phase4c_hash is None:
+                            self.assertEqual(
+                                current_hash, terminal_hashes[terminal_name]
+                            )
+                        else:
+                            self.assertEqual(current_hash, phase4c_hash)
+                    elif phase4c_hash is not None:
                         self.assertEqual(current_hash, phase4c_hash)
                         self.assertNotEqual(
                             current_hash, terminal_hashes[terminal_name]
@@ -468,6 +491,15 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
                         self.assertNotEqual(hashes[name], handoff["sha256"])
                 else:
                     self.assertEqual(hashes[name], current_hash, name)
+
+        if self.read_successor is not None:
+            current_manifest = learning_and_personalbank_main_source_manifest()
+            self.assertEqual(40, len(current_manifest))
+            self.assertEqual(
+                self.read_successor["implementation"]
+                ["learning_and_personalbank_main_source_manifest"],
+                current_manifest,
+            )
 
     def test_04_api_dto_optional_and_immutability_shapes_are_exact(self):
         application = self.contract["application_contract"]
@@ -557,10 +589,20 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
         self.assertTrue(all(
             value is False for value in self.contract["forbidden_scope"].values()
         ))
-        source_root = ROOT / "server/src/main/java/io/saksk/ti/personalbank"
+        if self.read_successor is None:
+            source_paths = sorted(
+                (ROOT / "server/src/main/java/io/saksk/ti/personalbank")
+                .rglob("*.java")
+            )
+        else:
+            source_paths = [
+                ROOT / relative
+                for relative in self.contract["implementation"]
+                ["main_source_files"].values()
+            ]
         combined = "\n".join(
             path.read_text(encoding="utf-8")
-            for path in sorted(source_root.rglob("*.java"))
+            for path in source_paths
         )
         for forbidden in (
             "@RestController",
@@ -864,7 +906,14 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
             ):
                 self.assertEqual(relative, terminal_files[key], key)
                 phase4c_hash = phase4c_successor_hash(relative)
-                if phase4c_hash is not None:
+                if self.read_successor is not None:
+                    if phase4c_hash is None:
+                        self.assertEqual(
+                            sha256(ROOT / relative), terminal_hashes[key], key
+                        )
+                    else:
+                        self.assertEqual(sha256(ROOT / relative), phase4c_hash, key)
+                elif phase4c_hash is not None:
                     self.assertEqual(sha256(ROOT / relative), phase4c_hash, key)
                     self.assertNotEqual(
                         sha256(ROOT / relative), terminal_hashes[key], key
@@ -888,7 +937,11 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
                 historical_hash_overrides.setdefault(relative, historical_hash)
 
         if PHASE4C_COMPOSITION_PATH.is_file():
-            phase4c = load_successor_contract(ROOT)
+            phase4c = (
+                load_composition_predecessor_contract(ROOT)
+                if self.read_successor is not None
+                else load_successor_contract(ROOT)
+            )
             self.assertIsNotNone(phase4c)
             self.assertEqual(
                 "docs/refactor/phase4b/personal-bank-user-counts-entry-contract.json",
@@ -901,10 +954,15 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
                 SHARE_READ_FORWARD_TEST_RELATIVE,
                 successor_test["source"],
             )
-            self.assertEqual(
-                sha256(ROOT / SHARE_READ_FORWARD_TEST_RELATIVE),
-                successor_test["sha256"],
-            )
+            current_hash = sha256(ROOT / SHARE_READ_FORWARD_TEST_RELATIVE)
+            if self.read_successor is None:
+                self.assertEqual(current_hash, successor_test["sha256"])
+            else:
+                self.assertEqual(
+                    successor_sha256(ROOT, SHARE_READ_FORWARD_TEST_RELATIVE),
+                    current_hash,
+                )
+                self.assertNotEqual(current_hash, successor_test["sha256"])
             handoff = phase4c["forward_handoff"]
             self.assertEqual(17, len(handoff["forward_additions"]))
             forward_additions |= set(handoff["forward_additions"])
@@ -916,12 +974,36 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
                 )
                 self.assertEqual(previous, historical_hash, relative)
 
+        control = final["final_control_plane"]
+        self.assertTrue(control["passed"])
+        if self.read_successor is not None:
+            # The current tree is intentionally larger than this historical
+            # control plane. The fixed read-successor bridge validates every
+            # admitted changed historical source, while test_03 validates the
+            # complete current 40-file module manifest.
+            self.assertEqual(1280, control["controlled_file_count"])
+            self.assertEqual(1, control["manifest_excluded_file_count"])
+            self.assertEqual(1279, control["manifest_included_file_count"])
+            self.assertEqual(
+                independent["source_non_recursive_manifest_sha256"],
+                control["source_manifest_sha256"],
+            )
+            self.assertEqual(
+                control["source_manifest_sha256"],
+                control["copy_manifest_sha256"],
+            )
+            self.assertTrue(control["source_equals_copy"])
+            self.assertEqual(
+                independent["build_context_sha256"],
+                control["java_build_context_sha256"],
+            )
+            self.assertTrue(control["java_build_context_matches_full_acceptance"])
+            return
+
         total, included, manifest = canonical_control_manifest(
             forward_additions,
             historical_hash_overrides,
         )
-        control = final["final_control_plane"]
-        self.assertTrue(control["passed"])
         self.assertEqual(total, control["controlled_file_count"])
         self.assertEqual(total - 1, included)
         self.assertEqual(1, control["manifest_excluded_file_count"])

@@ -10,9 +10,15 @@ from pathlib import Path
 import unittest
 
 try:
-    from tools.phase4c_successor_acceptance import successor_sha256
+    from tools.phase4c_read_successor_acceptance import (
+        load_read_successor_contract,
+        successor_sha256,
+    )
 except ModuleNotFoundError:  # Direct script execution from tools/.
-    from phase4c_successor_acceptance import successor_sha256
+    from phase4c_read_successor_acceptance import (
+        load_read_successor_contract,
+        successor_sha256,
+    )
 
 
 TI_JAVA_ROOT = Path(__file__).resolve().parents[1]
@@ -123,9 +129,21 @@ def phase4c_successor_hash(relative: str) -> str | None:
     return successor_sha256(TI_JAVA_ROOT, relative)
 
 
+def learning_and_personalbank_main_source_manifest() -> dict[str, str]:
+    main_root = TI_JAVA_ROOT / "server/src/main/java/io/saksk/ti"
+    paths = []
+    for module in ("learning", "personalbank"):
+        paths.extend((main_root / module).rglob("*.java"))
+    return {
+        path.relative_to(TI_JAVA_ROOT).as_posix(): sha256(path)
+        for path in sorted(paths)
+    }
+
+
 class Phase4bPersonalBankAllSharesEntryContractTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.read_successor = load_read_successor_contract(TI_JAVA_ROOT)
         cls.contract = load_json(CONTRACT_PATH)
         cls.predecessor = load_json(
             PHASE4B_ROOT / "personal-bank-share-list-read-contract.json"
@@ -186,7 +204,12 @@ class Phase4bPersonalBankAllSharesEntryContractTest(unittest.TestCase):
             hashes = self.terminal["implementation"][f"{section}_sha256"]
             self.assertEqual(reference["source"], files[terminal_name])
             phase4c_hash = phase4c_successor_hash(reference["source"])
-            if phase4c_hash is None:
+            if self.read_successor is not None:
+                if phase4c_hash is None:
+                    self.assertEqual(hashes[terminal_name], current_hash, name)
+                else:
+                    self.assertEqual(phase4c_hash, current_hash, name)
+            elif phase4c_hash is None:
                 self.assertEqual(hashes[terminal_name], current_hash, name)
             else:
                 self.assertEqual(phase4c_hash, current_hash, name)
@@ -441,7 +464,18 @@ class Phase4bPersonalBankAllSharesEntryContractTest(unittest.TestCase):
                 if successor_relative == relative
             ]
             self.assertEqual(1, len(matching), relative)
-            self.assertEqual(successor_main_hashes[matching[0]], sha256(path), relative)
+            current_hash = sha256(path)
+            if self.read_successor is None:
+                self.assertEqual(
+                    successor_main_hashes[matching[0]], current_hash, relative
+                )
+            else:
+                self.assertEqual(
+                    self.read_successor["implementation"]
+                    ["learning_and_personalbank_main_source_manifest"][relative],
+                    current_hash,
+                    relative,
+                )
 
         main_root = TI_JAVA_ROOT / "server/src/main/java/io/saksk/ti/personalbank"
         actual = {
@@ -451,9 +485,19 @@ class Phase4bPersonalBankAllSharesEntryContractTest(unittest.TestCase):
         self.assertNotEqual(
             self.contract["unchanged_state"]["personalbank_main_source_manifest"], actual
         )
-        self.assertEqual(
-            self.terminal["implementation"]["personalbank_main_source_manifest"], actual
-        )
+        if self.read_successor is None:
+            self.assertEqual(
+                self.terminal["implementation"]["personalbank_main_source_manifest"],
+                actual,
+            )
+        else:
+            current_manifest = learning_and_personalbank_main_source_manifest()
+            self.assertEqual(40, len(current_manifest))
+            self.assertEqual(
+                self.read_successor["implementation"]
+                ["learning_and_personalbank_main_source_manifest"],
+                current_manifest,
+            )
         application_api = (
             TI_JAVA_ROOT
             / "server/src/main/java/io/saksk/ti/personalbank/api/"

@@ -10,9 +10,15 @@ from pathlib import Path
 import unittest
 
 try:
-    from tools.phase4c_successor_acceptance import successor_sha256
+    from tools.phase4c_read_successor_acceptance import (
+        load_read_successor_contract,
+        successor_sha256,
+    )
 except ModuleNotFoundError:  # Direct script execution from tools/.
-    from phase4c_successor_acceptance import successor_sha256
+    from phase4c_read_successor_acceptance import (
+        load_read_successor_contract,
+        successor_sha256,
+    )
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -394,9 +400,21 @@ def phase4c_successor_hash(relative: str) -> str | None:
     return successor_sha256(ROOT, relative)
 
 
+def learning_and_personalbank_main_source_manifest() -> dict[str, str]:
+    main_root = ROOT / "server/src/main/java/io/saksk/ti"
+    paths = []
+    for module in ("learning", "personalbank"):
+        paths.extend((main_root / module).rglob("*.java"))
+    return {
+        path.relative_to(ROOT).as_posix(): sha256(path)
+        for path in sorted(paths)
+    }
+
+
 class Phase4bPersonalBankUsageStatsReadContractTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.read_successor = load_read_successor_contract(ROOT)
         cls.contract = load_json(CONTRACT_PATH)
         cls.entry = load_json(ENTRY_PATH)
         cls.shape = load_json(SHAPE_PATH)
@@ -587,11 +605,20 @@ class Phase4bPersonalBankUsageStatsReadContractTest(unittest.TestCase):
             set(MAIN_SOURCE_FILES), set(implementation["main_source_sha256"])
         )
         for name, relative in MAIN_SOURCE_FILES.items():
-            self.assertEqual(
-                sha256(ROOT / relative),
-                implementation["main_source_sha256"][name],
-                name,
-            )
+            current_hash = sha256(ROOT / relative)
+            if self.read_successor is None:
+                self.assertEqual(
+                    current_hash,
+                    implementation["main_source_sha256"][name],
+                    name,
+                )
+            else:
+                self.assertEqual(
+                    self.read_successor["implementation"]
+                    ["learning_and_personalbank_main_source_manifest"][relative],
+                    current_hash,
+                    name,
+                )
 
         self.assertEqual(
             VERIFICATION_SOURCE_FILES, implementation["verification_source_files"]
@@ -603,7 +630,16 @@ class Phase4bPersonalBankUsageStatsReadContractTest(unittest.TestCase):
         for name, relative in VERIFICATION_SOURCE_FILES.items():
             current_hash = sha256(ROOT / relative)
             phase4c_hash = phase4c_successor_hash(relative)
-            if phase4c_hash is None:
+            if self.read_successor is not None:
+                if phase4c_hash is None:
+                    self.assertEqual(
+                        current_hash,
+                        implementation["verification_source_sha256"][name],
+                        name,
+                    )
+                else:
+                    self.assertEqual(current_hash, phase4c_hash, name)
+            elif phase4c_hash is None:
                 self.assertEqual(
                     current_hash,
                     implementation["verification_source_sha256"][name],
@@ -626,9 +662,18 @@ class Phase4bPersonalBankUsageStatsReadContractTest(unittest.TestCase):
                 ).rglob("*.java")
             )
         }
-        self.assertEqual(
-            current_manifest, implementation["personalbank_main_source_manifest"]
-        )
+        if self.read_successor is None:
+            self.assertEqual(
+                current_manifest, implementation["personalbank_main_source_manifest"]
+            )
+        else:
+            read_manifest = learning_and_personalbank_main_source_manifest()
+            self.assertEqual(40, len(read_manifest))
+            self.assertEqual(
+                self.read_successor["implementation"]
+                ["learning_and_personalbank_main_source_manifest"],
+                read_manifest,
+            )
 
         verification = self.contract["verification"]
         self.assertEqual(30, verification["targeted_unit_tests"])
