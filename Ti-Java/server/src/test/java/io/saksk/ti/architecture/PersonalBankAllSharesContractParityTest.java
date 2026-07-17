@@ -33,6 +33,7 @@ class PersonalBankAllSharesContractParityTest {
     private static JsonNode shape;
     private static JsonNode golden;
     private static JsonNode plan;
+    private static JsonNode usageStatsEntry;
 
     @BeforeAll
     static void loadEvidence() throws Exception {
@@ -51,6 +52,8 @@ class PersonalBankAllSharesContractParityTest {
                 "docs/refactor/phase4b/golden-personal-bank-all-shares-reads.json");
         plan = readJson(
                 "docs/refactor/phase4b/personal-bank-all-shares-query-plan-evidence.json");
+        usageStatsEntry = readJson(
+                "docs/refactor/phase4b/personal-bank-usage-stats-entry-contract.json");
     }
 
     @Test
@@ -79,6 +82,26 @@ class PersonalBankAllSharesContractParityTest {
         assertThat(plan.path("engines")).hasSize(2);
         assertThat(strings(plan.path("engines"), "server_version"))
                 .containsExactly("16.14", "18.4");
+
+        assertThat(usageStatsEntry.path("contract_id").asString())
+                .isEqualTo("ti.phase4b.personal-bank-usage-stats-entry-contract");
+        assertThat(usageStatsEntry.path("status").asString())
+                .isEqualTo("entry_gate_passed_implementation_not_started");
+        assertThat(usageStatsEntry.path("predecessor").path("source").asString())
+                .isEqualTo(
+                        "docs/refactor/phase4b/"
+                                + "personal-bank-all-shares-read-contract.json");
+        assertThat(usageStatsEntry.path("predecessor").path("sha256").asString())
+                .isEqualTo(sha256(
+                        "docs/refactor/phase4b/"
+                                + "personal-bank-all-shares-read-contract.json"));
+        assertThat(strings(usageStatsEntry.path("authorized_slice")
+                        .path("only_operation_keys")))
+                .containsExactlyInAnyOrder(
+                        "d67a16965b08|GET|/api/user/banks/api/"
+                                + "<int:bank_id>/usage-stats",
+                        "22aecd49a3c2|GET|/user/banks/api/"
+                                + "<int:bank_id>/usage-stats");
 
         JsonNode verification = contract.path("verification");
         assertThat(verification.path("full_source_tools").path("tests").asInt())
@@ -144,7 +167,7 @@ class PersonalBankAllSharesContractParityTest {
         assertSourceHashes(
                 contract.path("implementation").path("main_source_files"),
                 contract.path("implementation").path("main_source_sha256"));
-        assertSourceHashes(
+        assertVerificationSourceHashesWithForwardHandoff(
                 contract.path("implementation").path("verification_source_files"),
                 contract.path("implementation").path("verification_source_sha256"));
 
@@ -216,6 +239,40 @@ class PersonalBankAllSharesContractParityTest {
             assertThat(sha256(files.path(key).asString()))
                     .as("source hash for %s", key)
                     .isEqualTo(hashes.path(key).asString());
+        }
+    }
+
+    private static void assertVerificationSourceHashesWithForwardHandoff(
+            JsonNode files,
+            JsonNode hashes
+    ) throws Exception {
+        assertThat(propertyNames(files))
+                .containsExactlyInAnyOrderElementsOf(propertyNames(hashes));
+        for (String key : propertyNames(files)) {
+            String relative = files.path(key).asString();
+            String currentHash = sha256(relative);
+            String handoffKey = switch (key) {
+                case "contract_parity_test" -> "all_shares_java_forward_handoff_test";
+                case "read_contract_test" -> "all_shares_read_forward_handoff_test";
+                case "entry_forward_handoff_test" ->
+                        "all_shares_entry_forward_handoff_test";
+                case "share_read_contract_test" ->
+                        "share_list_read_transitive_forward_handoff_test";
+                case "share_list_contract_parity_test" ->
+                        "share_list_java_transitive_forward_handoff_test";
+                case "progress_forward_handoff" -> "progress_forward_handoff";
+                default -> null;
+            };
+            if (handoffKey == null) {
+                assertThat(currentHash)
+                        .as("source hash for %s", key)
+                        .isEqualTo(hashes.path(key).asString());
+                continue;
+            }
+            JsonNode handoff = usageStatsEntry.path("source_contracts").path(handoffKey);
+            assertThat(handoff.path("source").asString()).isEqualTo(relative);
+            assertThat(handoff.path("sha256").asString()).isEqualTo(currentHash);
+            assertThat(hashes.path(key).asString()).isNotEqualTo(currentHash);
         }
     }
 

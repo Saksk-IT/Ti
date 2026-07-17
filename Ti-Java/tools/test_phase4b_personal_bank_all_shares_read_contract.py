@@ -13,9 +13,27 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 PHASE4B = ROOT / "docs" / "refactor" / "phase4b"
 CONTRACT_PATH = PHASE4B / "personal-bank-all-shares-read-contract.json"
+CONTRACT_RELATIVE = (
+    "docs/refactor/phase4b/personal-bank-all-shares-read-contract.json"
+)
+USAGE_STATS_ENTRY_PATH = PHASE4B / "personal-bank-usage-stats-entry-contract.json"
 ROUTE_KEYS = {
     "a6fda3638fc3|GET|/api/user/banks/api/shares/all",
     "0fdd3026f636|GET|/user/banks/api/shares/all",
+}
+USAGE_STATS_ROUTE_KEYS = {
+    "d67a16965b08|GET|/api/user/banks/api/<int:bank_id>/usage-stats",
+    "22aecd49a3c2|GET|/user/banks/api/<int:bank_id>/usage-stats",
+}
+USAGE_STATS_FORWARD_HANDOFFS = {
+    "contract_parity_test": "all_shares_java_forward_handoff_test",
+    "read_contract_test": "all_shares_read_forward_handoff_test",
+    "entry_forward_handoff_test": "all_shares_entry_forward_handoff_test",
+    "share_read_contract_test":
+        "share_list_read_transitive_forward_handoff_test",
+    "share_list_contract_parity_test":
+        "share_list_java_transitive_forward_handoff_test",
+    "progress_forward_handoff": "progress_forward_handoff",
 }
 COMPONENTS = [
     {"name": "id", "java_type": "int", "nullable": False},
@@ -75,6 +93,7 @@ class Phase4bPersonalBankAllSharesReadContractTest(unittest.TestCase):
         cls.plan = load_json(
             PHASE4B / "personal-bank-all-shares-query-plan-evidence.json"
         )
+        cls.usage_stats_entry = load_json(USAGE_STATS_ENTRY_PATH)
         cls.openapi = load_json(ROOT / "contracts" / "openapi.json")
 
     def test_01_predecessor_evidence_sources_and_payload_are_closed(self):
@@ -108,7 +127,21 @@ class Phase4bPersonalBankAllSharesReadContractTest(unittest.TestCase):
             hashes = contract["implementation"][f"{section}_sha256"]
             self.assertEqual(set(files), set(hashes))
             for name, relative in files.items():
-                self.assertEqual(hashes[name], sha256(ROOT / relative), name)
+                current_hash = sha256(ROOT / relative)
+                handoff_name = (
+                    USAGE_STATS_FORWARD_HANDOFFS.get(name)
+                    if section == "verification_source"
+                    else None
+                )
+                if handoff_name is None:
+                    self.assertEqual(hashes[name], current_hash, name)
+                else:
+                    handoff = self.usage_stats_entry["source_contracts"][
+                        handoff_name
+                    ]
+                    self.assertEqual(relative, handoff["source"])
+                    self.assertEqual(current_hash, handoff["sha256"], name)
+                    self.assertNotEqual(hashes[name], current_hash, name)
         self.assertEqual(
             contract["document_payload_sha256"], payload_sha256(contract)
         )
@@ -260,6 +293,39 @@ class Phase4bPersonalBankAllSharesReadContractTest(unittest.TestCase):
         self.assertTrue(all(
             value is False for value in self.contract["forbidden_scope"].values()
         ))
+
+    def test_06_usage_stats_entry_is_the_only_authorized_successor(self):
+        successor = self.usage_stats_entry
+        self.assertEqual(
+            "ti.phase4b.personal-bank-usage-stats-entry-contract",
+            successor["contract_id"],
+        )
+        self.assertEqual(
+            "entry_gate_passed_implementation_not_started", successor["status"]
+        )
+        self.assertEqual(CONTRACT_RELATIVE, successor["predecessor"]["source"])
+        self.assertEqual(
+            sha256(CONTRACT_PATH), successor["predecessor"]["sha256"]
+        )
+        self.assertEqual(
+            USAGE_STATS_ROUTE_KEYS,
+            set(successor["authorized_slice"]["only_operation_keys"]),
+        )
+        self.assertTrue(successor["entry_gate"]["implementation_authorized"])
+        self.assertFalse(successor["entry_gate"]["http_migration_authorized"])
+        self.assertFalse(successor["entry_gate"]["production_cutover_authorized"])
+        self.assertFalse(
+            successor["implementation_state"]["implementation_started"]
+        )
+        self.assertFalse(successor["implementation_state"]["production_source_added"])
+
+        unchanged = successor["unchanged_state"]
+        self.assertEqual(22, unchanged["implemented_public_application_method_count"])
+        self.assertEqual(3, unchanged["personalbank_public_method_count"])
+        self.assertEqual(11, unchanged["implemented_route_backed_operation_count"])
+        self.assertEqual(11, unchanged["migrated_route_count"])
+        self.assertEqual(600, unchanged["effective_pending_operation_count"])
+        self.assertEqual(0, unchanged["production_cutover_count"])
 
 
 if __name__ == "__main__":

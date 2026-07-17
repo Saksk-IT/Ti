@@ -48,6 +48,7 @@ class PersonalBankShareListContractParityTest {
     private static JsonNode plan;
     private static JsonNode allSharesEntry;
     private static JsonNode allSharesContract;
+    private static JsonNode usageStatsEntry;
 
     @BeforeAll
     static void loadEvidence() throws Exception {
@@ -70,6 +71,8 @@ class PersonalBankShareListContractParityTest {
                 "docs/refactor/phase4b/personal-bank-all-shares-entry-contract.json");
         allSharesContract = readJson(
                 "docs/refactor/phase4b/personal-bank-all-shares-read-contract.json");
+        usageStatsEntry = readJson(
+                "docs/refactor/phase4b/personal-bank-usage-stats-entry-contract.json");
     }
 
     @Test
@@ -127,11 +130,18 @@ class PersonalBankShareListContractParityTest {
                 .isEqualTo(
                         "server/src/test/java/io/saksk/ti/architecture/"
                                 + "PersonalBankShareListContractParityTest.java");
+        String terminalHash = allSharesContract.path("implementation")
+                .path("verification_source_sha256")
+                .path("share_list_contract_parity_test").asString();
+        JsonNode transitiveHandoff = usageStatsEntry.path("source_contracts")
+                .path("share_list_java_transitive_forward_handoff_test");
+        assertThat(transitiveHandoff.path("source").asString())
+                .isEqualTo(handoff.path("source").asString());
         assertThat(sha256(handoff.path("source").asString()))
-                .isNotEqualTo(handoff.path("sha256").asString())
-                .isEqualTo(allSharesContract.path("implementation")
-                        .path("verification_source_sha256")
-                        .path("share_list_contract_parity_test").asString());
+                .isEqualTo(transitiveHandoff.path("sha256").asString())
+                .isNotEqualTo(terminalHash)
+                .isNotEqualTo(handoff.path("sha256").asString());
+        assertThat(terminalHash).isNotEqualTo(handoff.path("sha256").asString());
         assertThat(handoff.path("sha256").asString())
                 .isEqualTo("6be0ab4a9446ce7b3659dcc69fdec4077a16e5a2cdf367418432aed207fc11ce");
         assertThat(allSharesEntry.path("predecessor").path("sha256").asString())
@@ -351,15 +361,24 @@ class PersonalBankShareListContractParityTest {
                 JsonNode terminalHashes = allSharesContract.path("implementation")
                         .path("verification_source_sha256");
                 assertThat(terminalFiles.path(terminalKey).asString()).isEqualTo(relative);
-                assertThat(terminalHashes.path(terminalKey).asString()).isEqualTo(currentHash);
                 assertThat(hashes.path(key).asString()).isNotEqualTo(currentHash);
                 if (key.equals("share_read_contract_test")) {
+                    JsonNode transitiveHandoff = usageStatsEntry.path("source_contracts")
+                            .path("share_list_read_transitive_forward_handoff_test");
+                    assertThat(transitiveHandoff.path("source").asString())
+                            .isEqualTo(relative);
+                    assertThat(transitiveHandoff.path("sha256").asString())
+                            .isEqualTo(currentHash)
+                            .isNotEqualTo(terminalHashes.path(terminalKey).asString());
                     JsonNode handoff = allSharesEntry.path("source_contracts")
                             .path("share_list_read_forward_handoff_test");
                     assertThat(handoff.path("source").asString()).isEqualTo(relative);
                     assertThat(handoff.path("sha256").asString())
                             .isNotEqualTo(currentHash)
                             .isNotEqualTo(hashes.path(key).asString());
+                } else {
+                    assertThat(terminalHashes.path(terminalKey).asString())
+                            .isEqualTo(currentHash);
                 }
             } else {
                 assertThat(currentHash)

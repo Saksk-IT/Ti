@@ -27,6 +27,48 @@ ALL_SHARES_ROUTE_KEYS = {
     "a6fda3638fc3|GET|/api/user/banks/api/shares/all",
     "0fdd3026f636|GET|/user/banks/api/shares/all",
 }
+USAGE_STATS_ENTRY_PATH = PHASE4B / "personal-bank-usage-stats-entry-contract.json"
+USAGE_STATS_ENTRY_RELATIVE = (
+    "docs/refactor/phase4b/personal-bank-usage-stats-entry-contract.json"
+)
+USAGE_STATS_ROUTE_KEYS = {
+    "d67a16965b08|GET|/api/user/banks/api/<int:bank_id>/usage-stats",
+    "22aecd49a3c2|GET|/user/banks/api/<int:bank_id>/usage-stats",
+}
+USAGE_STATS_FORWARD_ADDITIONS = {
+    f"Ti-Java/{USAGE_STATS_ENTRY_RELATIVE}",
+    "Ti-Java/docs/refactor/phase4b/golden-personal-bank-usage-stats-reads.json",
+    "Ti-Java/docs/refactor/phase4b/personal-bank-usage-stats-callers.json",
+    (
+        "Ti-Java/docs/refactor/phase4b/"
+        "personal-bank-usage-stats-query-plan-evidence.json"
+    ),
+    (
+        "Ti-Java/server/src/test/java/io/saksk/ti/integration/"
+        "Phase4bPersonalBankUsageStatsEvidenceJdbcCompatibilityIT.java"
+    ),
+    (
+        "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/infrastructure/"
+        "persistence/PersonalBankUsageStatsEvidenceSql.java"
+    ),
+    (
+        "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/infrastructure/"
+        "persistence/PersonalBankUsageStatsEvidenceSqlContractTest.java"
+    ),
+    (
+        "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/infrastructure/"
+        "persistence/PersonalBankUsageStatsEvidenceSqlManifestTest.java"
+    ),
+    "Ti-Java/server/src/test/resources/db/phase4b/065-personal-bank-usage-stats-schema.sql",
+    "Ti-Java/server/src/test/resources/db/phase4b/066-personal-bank-usage-stats-seed.sql",
+    "Ti-Java/tools/capture_phase4b_personal_bank_usage_stats_callers.py",
+    "Ti-Java/tools/capture_phase4b_personal_bank_usage_stats_goldens.py",
+    "Ti-Java/tools/capture_phase4b_personal_bank_usage_stats_query_plans.py",
+    "Ti-Java/tools/test_capture_phase4b_personal_bank_usage_stats_callers.py",
+    "Ti-Java/tools/test_capture_phase4b_personal_bank_usage_stats_goldens.py",
+    "Ti-Java/tools/test_capture_phase4b_personal_bank_usage_stats_query_plans.py",
+    "Ti-Java/tools/test_phase4b_personal_bank_usage_stats_entry_contract.py",
+}
 ALL_SHARES_FORWARD_ADDITIONS = {
     f"Ti-Java/{ALL_SHARES_ENTRY_RELATIVE}",
     "Ti-Java/docs/refactor/phase4b/golden-personal-bank-all-shares-reads.json",
@@ -187,6 +229,7 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
         )
         cls.openapi = load_json(ROOT / "contracts" / "openapi.json")
         cls.terminal = load_json(ALL_SHARES_READ_PATH)
+        cls.usage_stats_entry = load_json(USAGE_STATS_ENTRY_PATH)
 
     def test_01_predecessor_shape_golden_and_plan_are_transitively_bound(self):
         contract = self.contract
@@ -292,7 +335,17 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
                     terminal_files = self.terminal["implementation"][files_key]
                     terminal_hashes = self.terminal["implementation"][hashes_key]
                     self.assertEqual(relative, terminal_files[terminal_name])
-                    self.assertEqual(current_hash, terminal_hashes[terminal_name])
+                    if name == "share_read_contract_test":
+                        usage_handoff = self.usage_stats_entry["source_contracts"][
+                            "share_list_read_transitive_forward_handoff_test"
+                        ]
+                        self.assertEqual(relative, usage_handoff["source"])
+                        self.assertEqual(current_hash, usage_handoff["sha256"])
+                        self.assertNotEqual(
+                            current_hash, terminal_hashes[terminal_name]
+                        )
+                    else:
+                        self.assertEqual(current_hash, terminal_hashes[terminal_name])
                     self.assertNotEqual(hashes[name], current_hash)
                     if name == "share_read_contract_test":
                         handoff = load_json(ALL_SHARES_ENTRY_PATH)["source_contracts"][
@@ -571,11 +624,24 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
             self.assertNotEqual(
                 sha256(ROOT / SHARE_READ_JAVA_PARITY_RELATIVE), java_handoff["sha256"]
             )
-            self.assertEqual(
-                sha256(ROOT / SHARE_READ_JAVA_PARITY_RELATIVE),
-                terminal["implementation"]["verification_source_sha256"]
-                ["share_list_contract_parity_test"],
-            )
+            current_java_hash = sha256(ROOT / SHARE_READ_JAVA_PARITY_RELATIVE)
+            terminal_java_hash = terminal["implementation"][
+                "verification_source_sha256"
+            ]["share_list_contract_parity_test"]
+            if USAGE_STATS_ENTRY_PATH.is_file():
+                transitive_java_handoff = self.usage_stats_entry[
+                    "source_contracts"
+                ]["share_list_java_transitive_forward_handoff_test"]
+                self.assertEqual(
+                    SHARE_READ_JAVA_PARITY_RELATIVE,
+                    transitive_java_handoff["source"],
+                )
+                self.assertEqual(
+                    current_java_hash, transitive_java_handoff["sha256"]
+                )
+                self.assertNotEqual(current_java_hash, terminal_java_hash)
+            else:
+                self.assertEqual(current_java_hash, terminal_java_hash)
             phase3_handoff = successor["source_contracts"][
                 "phase3_auth_time_forward_handoff_test"
             ]
@@ -591,15 +657,91 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
                 PROGRESS_FORWARD_HANDOFF_RELATIVE,
                 progress_handoff["source"],
             )
-            self.assertEqual(
-                sha256(ROOT / PROGRESS_FORWARD_HANDOFF_RELATIVE),
-                terminal["implementation"]["verification_source_sha256"]
-                ["progress_forward_handoff"],
+            current_progress_hash = sha256(
+                ROOT / PROGRESS_FORWARD_HANDOFF_RELATIVE
             )
+            terminal_progress_hash = terminal["implementation"][
+                "verification_source_sha256"
+            ]["progress_forward_handoff"]
+            if USAGE_STATS_ENTRY_PATH.is_file():
+                self.assertNotEqual(current_progress_hash, terminal_progress_hash)
+            else:
+                self.assertEqual(current_progress_hash, terminal_progress_hash)
             forward_additions = set(terminal["forward_handoff"]["forward_additions"])
             historical_hash_overrides = terminal["forward_handoff"][
                 "historical_hash_overrides"
             ]
+
+        if USAGE_STATS_ENTRY_PATH.is_file():
+            successor = self.usage_stats_entry
+            self.assertEqual(
+                "ti.phase4b.personal-bank-usage-stats-entry-contract",
+                successor["contract_id"],
+            )
+            self.assertEqual(
+                "entry_gate_passed_implementation_not_started",
+                successor["status"],
+            )
+            self.assertEqual(
+                "docs/refactor/phase4b/personal-bank-all-shares-read-contract.json",
+                successor["predecessor"]["source"],
+            )
+            self.assertEqual(
+                sha256(ALL_SHARES_READ_PATH), successor["predecessor"]["sha256"]
+            )
+            self.assertEqual(
+                USAGE_STATS_ROUTE_KEYS,
+                set(successor["authorized_slice"]["only_operation_keys"]),
+            )
+            self.assertTrue(successor["entry_gate"]["implementation_authorized"])
+            self.assertFalse(successor["entry_gate"]["http_migration_authorized"])
+            self.assertFalse(
+                successor["entry_gate"]["production_cutover_authorized"]
+            )
+            successor_sources = {
+                f"Ti-Java/{reference['source']}"
+                for reference in successor["source_contracts"].values()
+            }
+            self.assertEqual(
+                USAGE_STATS_FORWARD_ADDITIONS - {
+                    f"Ti-Java/{USAGE_STATS_ENTRY_RELATIVE}"
+                },
+                USAGE_STATS_FORWARD_ADDITIONS.intersection(successor_sources),
+            )
+            share_list_handoff = successor["source_contracts"][
+                "share_list_read_transitive_forward_handoff_test"
+            ]
+            self.assertEqual(
+                SHARE_READ_FORWARD_TEST_RELATIVE,
+                share_list_handoff["source"],
+            )
+            self.assertEqual(
+                sha256(ROOT / SHARE_READ_FORWARD_TEST_RELATIVE),
+                share_list_handoff["sha256"],
+            )
+            share_list_java_handoff = successor["source_contracts"][
+                "share_list_java_transitive_forward_handoff_test"
+            ]
+            self.assertEqual(
+                SHARE_READ_JAVA_PARITY_RELATIVE,
+                share_list_java_handoff["source"],
+            )
+            self.assertEqual(
+                sha256(ROOT / SHARE_READ_JAVA_PARITY_RELATIVE),
+                share_list_java_handoff["sha256"],
+            )
+            progress_handoff = successor["source_contracts"][
+                "progress_forward_handoff"
+            ]
+            self.assertEqual(
+                PROGRESS_FORWARD_HANDOFF_RELATIVE,
+                progress_handoff["source"],
+            )
+            self.assertEqual(
+                sha256(ROOT / PROGRESS_FORWARD_HANDOFF_RELATIVE),
+                progress_handoff["sha256"],
+            )
+            forward_additions |= USAGE_STATS_FORWARD_ADDITIONS
 
         total, included, manifest = canonical_control_manifest(
             forward_additions,

@@ -1,0 +1,812 @@
+{
+  "contract_id": "ti.phase4b.personal-bank-usage-stats-caller-attestation",
+  "schema_version": 1,
+  "captured_at": "2026-07-17",
+  "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "routes": [
+    {
+      "route_id": "d67a16965b08",
+      "path": "/api/user/banks/api/<int:bank_id>/usage-stats",
+      "surface": "miniprogram_compatibility_alias"
+    },
+    {
+      "route_id": "22aecd49a3c2",
+      "path": "/user/banks/api/<int:bank_id>/usage-stats",
+      "surface": "web_compatibility_alias"
+    }
+  ],
+  "full_repository_scan": {
+    "command": "git grep -n -I -E <pattern> <fixed-commit> -- . <exclusions>",
+    "pattern": "usage-stats|getBankUsageStats|loadUsageStats|usageStats",
+    "scope": "all executable, template, test and configuration text blobs at the fixed legacy commit",
+    "excluded_generated_inventory_files": [
+      "miniprogram-1/analyse-data.json"
+    ],
+    "exclusion_reason": "analyse-data.json is a generated one-line bundle inventory; embedded source text would duplicate real callers and inflate the attestation",
+    "match_count": 39,
+    "matched_source_count": 7,
+    "matched_source_roots": [
+      "app",
+      "miniprogram-1"
+    ],
+    "matches_sha256": "6cd10b27c1ce82c8ff59b42f9ce978660f54e1e18600dd581adf566a09c1ec7d",
+    "matches": [
+      {
+        "source": "app/modules/user_bank/routes/api_shares.py",
+        "line": 56,
+        "text": "@user_bank_api_bp.route('/<int:bank_id>/usage-stats', methods=['GET'])"
+      },
+      {
+        "source": "app/modules/user_bank/templates/user_bank/manage/bank_manage_shares.html",
+        "line": 229,
+        "text": "async function loadUsageStats() {"
+      },
+      {
+        "source": "app/modules/user_bank/templates/user_bank/manage/bank_manage_shares.html",
+        "line": 232,
+        "text": "const res = await window.ubmApi(`/user/banks/api/${encodeURIComponent(bankId)}/usage-stats`);"
+      },
+      {
+        "source": "app/modules/user_bank/templates/user_bank/manage/bank_manage_shares.html",
+        "line": 326,
+        "text": "loadUsageStats();"
+      },
+      {
+        "source": "app/modules/user_bank/templates/user_bank/manage/bank_manage_shares.html",
+        "line": 359,
+        "text": "loadUsageStats();"
+      },
+      {
+        "source": "app/modules/user_bank/templates/user_bank/manage/bank_manage_shares.html",
+        "line": 431,
+        "text": "loadUsageStats();"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.js",
+        "line": 220,
+        "text": "usageStats: { shared_users: 0, public_users: 0, total_users: 0 },"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.js",
+        "line": 221,
+        "text": "usageStatsLoaded: false,"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.js",
+        "line": 222,
+        "text": "usageStatsLoading: false,"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.js",
+        "line": 297,
+        "text": "this.loadUsageStats();"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.js",
+        "line": 609,
+        "text": "_this.loadUsageStats();"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.js",
+        "line": 672,
+        "text": "_this.loadUsageStats();"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.js",
+        "line": 2153,
+        "text": "this.loadUsageStats();"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.js",
+        "line": 2168,
+        "text": "loadUsageStats: function () {"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.js",
+        "line": 2179,
+        "text": "if (this.data.usageStatsLoading)"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.js",
+        "line": 2181,
+        "text": "this.patchData({ usageStatsLoading: true });"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.js",
+        "line": 2185,
+        "text": "return [4 /*yield*/, api_1.api.getBankUsageStats(bankId)];"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.js",
+        "line": 2199,
+        "text": "this.patchData({ usageStats: stats, usageStatsLoaded: true, usageStatsLoading: false });"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.js",
+        "line": 2203,
+        "text": "this.patchData({ usageStatsLoaded: false, usageStatsLoading: false });"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.js",
+        "line": 2347,
+        "text": "this.loadUsageStats();"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+        "line": 240,
+        "text": "usageStats: { shared_users: 0, public_users: 0, total_users: 0 } as BankUsageStats,"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+        "line": 241,
+        "text": "usageStatsLoaded: false,"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+        "line": 242,
+        "text": "usageStatsLoading: false,"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+        "line": 322,
+        "text": "this.loadUsageStats();"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+        "line": 634,
+        "text": "this.loadUsageStats();"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+        "line": 701,
+        "text": "this.loadUsageStats();"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+        "line": 1972,
+        "text": "this.loadUsageStats();"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+        "line": 1983,
+        "text": "async loadUsageStats() {"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+        "line": 1987,
+        "text": "if (this.data.usageStatsLoading) return;"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+        "line": 1989,
+        "text": "this.patchData({ usageStatsLoading: true });"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+        "line": 1991,
+        "text": "const res: any = await api.getBankUsageStats(bankId);"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+        "line": 2003,
+        "text": "this.patchData({ usageStats: stats, usageStatsLoaded: true, usageStatsLoading: false });"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+        "line": 2005,
+        "text": "this.patchData({ usageStatsLoaded: false, usageStatsLoading: false });"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+        "line": 2099,
+        "text": "this.loadUsageStats();"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.wxml",
+        "line": 741,
+        "text": "<text class=\"card-sub\" wx:if=\"{{usageStatsLoaded}}\">可访问人数：{{usageStats.total_users || 0}}（含你）</text>"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.js",
+        "line": 437,
+        "text": "getBankUsageStats: function (bankId) {"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.js",
+        "line": 438,
+        "text": "return (0, api_client_1.request)(\"/user/banks/api/\".concat(bankId, \"/usage-stats\"), 'GET');"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+        "line": 783,
+        "text": "getBankUsageStats: (bankId: number) =>"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+        "line": 784,
+        "text": "request(`/user/banks/api/${bankId}/usage-stats`, 'GET'),"
+      }
+    ]
+  },
+  "handler_and_aliases": {
+    "state": "one_registered_handler_serves_both_aliases",
+    "relative_route": {
+      "source": "app/modules/user_bank/routes/api_shares.py",
+      "line": 56,
+      "text": "@user_bank_api_bp.route('/<int:bank_id>/usage-stats', methods=['GET'])",
+      "source_sha256": "ea2074c97cd5f6840dd1f6e738404d41c08f4b3e3a0b8cb7f8886ec2a58e4993",
+      "source_size_bytes": 19411
+    },
+    "authentication": {
+      "source": "app/modules/user_bank/routes/api_shares.py",
+      "line": 57,
+      "text": "@auth_required",
+      "source_sha256": "ea2074c97cd5f6840dd1f6e738404d41c08f4b3e3a0b8cb7f8886ec2a58e4993",
+      "source_size_bytes": 19411
+    },
+    "handler": {
+      "source": "app/modules/user_bank/routes/api_shares.py",
+      "line": 58,
+      "text": "def get_bank_usage_stats(bank_id):",
+      "source_sha256": "ea2074c97cd5f6840dd1f6e738404d41c08f4b3e3a0b8cb7f8886ec2a58e4993",
+      "source_size_bytes": 19411
+    },
+    "response_fields": {
+      "bank_id": {
+        "source": "app/modules/user_bank/routes/api_shares.py",
+        "line": 140,
+        "text": "'bank_id': int(bank_id),",
+        "source_sha256": "ea2074c97cd5f6840dd1f6e738404d41c08f4b3e3a0b8cb7f8886ec2a58e4993",
+        "source_size_bytes": 19411
+      },
+      "is_public": {
+        "source": "app/modules/user_bank/routes/api_shares.py",
+        "line": 141,
+        "text": "'is_public': bool(bank.get('is_public')),",
+        "source_sha256": "ea2074c97cd5f6840dd1f6e738404d41c08f4b3e3a0b8cb7f8886ec2a58e4993",
+        "source_size_bytes": 19411
+      },
+      "owner_id": {
+        "source": "app/modules/user_bank/routes/api_shares.py",
+        "line": 142,
+        "text": "'owner_id': owner_id,",
+        "source_sha256": "ea2074c97cd5f6840dd1f6e738404d41c08f4b3e3a0b8cb7f8886ec2a58e4993",
+        "source_size_bytes": 19411
+      },
+      "owner_count": {
+        "source": "app/modules/user_bank/routes/api_shares.py",
+        "line": 143,
+        "text": "'owner_count': 1,",
+        "source_sha256": "ea2074c97cd5f6840dd1f6e738404d41c08f4b3e3a0b8cb7f8886ec2a58e4993",
+        "source_size_bytes": 19411
+      },
+      "shared_users": {
+        "source": "app/modules/user_bank/routes/api_shares.py",
+        "line": 144,
+        "text": "'shared_users': len(shared_ex_owner),",
+        "source_sha256": "ea2074c97cd5f6840dd1f6e738404d41c08f4b3e3a0b8cb7f8886ec2a58e4993",
+        "source_size_bytes": 19411
+      },
+      "public_users": {
+        "source": "app/modules/user_bank/routes/api_shares.py",
+        "line": 145,
+        "text": "'public_users': len(public_ex_owner),",
+        "source_sha256": "ea2074c97cd5f6840dd1f6e738404d41c08f4b3e3a0b8cb7f8886ec2a58e4993",
+        "source_size_bytes": 19411
+      },
+      "total_users": {
+        "source": "app/modules/user_bank/routes/api_shares.py",
+        "line": 146,
+        "text": "'total_users': len(all_ids),",
+        "source_sha256": "ea2074c97cd5f6840dd1f6e738404d41c08f4b3e3a0b8cb7f8886ec2a58e4993",
+        "source_size_bytes": 19411
+      },
+      "total_users_excluding_owner": {
+        "source": "app/modules/user_bank/routes/api_shares.py",
+        "line": 147,
+        "text": "'total_users_excluding_owner': len(total_ex_owner),",
+        "source_sha256": "ea2074c97cd5f6840dd1f6e738404d41c08f4b3e3a0b8cb7f8886ec2a58e4993",
+        "source_size_bytes": 19411
+      }
+    },
+    "web_alias_registration": {
+      "outer_prefix": {
+        "source": "app/modules/user_bank/__init__.py",
+        "line": 15,
+        "text": "user_bank_bp = Blueprint('user_bank', __name__, url_prefix='/user/banks', template_folder=template_dir)",
+        "source_sha256": "b83eaf9a77d6d01e0b631b42bc05cdb4e6c5a6346d4662da29e5f5c289928acd",
+        "source_size_bytes": 1259
+      },
+      "nested_prefix": {
+        "source": "app/modules/user_bank/__init__.py",
+        "line": 17,
+        "text": "user_bank_bp.register_blueprint(user_bank_api_bp, url_prefix='/api')",
+        "source_sha256": "b83eaf9a77d6d01e0b631b42bc05cdb4e6c5a6346d4662da29e5f5c289928acd",
+        "source_size_bytes": 1259
+      },
+      "application_registration": {
+        "source": "app/modules/user_bank/__init__.py",
+        "line": 18,
+        "text": "app.register_blueprint(user_bank_bp)",
+        "source_sha256": "b83eaf9a77d6d01e0b631b42bc05cdb4e6c5a6346d4662da29e5f5c289928acd",
+        "source_size_bytes": 1259
+      },
+      "composed_path": "/user/banks/api/<int:bank_id>/usage-stats",
+      "route_id": "22aecd49a3c2"
+    },
+    "api_alias_registration": {
+      "outer_prefix": {
+        "source": "app/modules/user_bank/__init__.py",
+        "line": 23,
+        "text": "api_root_bp = Blueprint('user_bank_api_root', __name__, url_prefix='/api')",
+        "source_sha256": "b83eaf9a77d6d01e0b631b42bc05cdb4e6c5a6346d4662da29e5f5c289928acd",
+        "source_size_bytes": 1259
+      },
+      "nested_prefix": {
+        "source": "app/modules/user_bank/__init__.py",
+        "line": 24,
+        "text": "api_root_bp.register_blueprint(user_bank_api_bp, url_prefix='/user/banks/api')",
+        "source_sha256": "b83eaf9a77d6d01e0b631b42bc05cdb4e6c5a6346d4662da29e5f5c289928acd",
+        "source_size_bytes": 1259
+      },
+      "application_registration": {
+        "source": "app/modules/user_bank/__init__.py",
+        "line": 25,
+        "text": "app.register_blueprint(api_root_bp)",
+        "source_sha256": "b83eaf9a77d6d01e0b631b42bc05cdb4e6c5a6346d4662da29e5f5c289928acd",
+        "source_size_bytes": 1259
+      },
+      "composed_path": "/api/user/banks/api/<int:bank_id>/usage-stats",
+      "route_id": "d67a16965b08"
+    }
+  },
+  "callers": {
+    "web_template": {
+      "state": "active",
+      "logical_caller_id": "legacy-web-bank-share-management",
+      "actual_alias": "/user/banks/api/<bank_id>/usage-stats",
+      "page_route": {
+        "source": "app/modules/user_bank/routes/pages.py",
+        "line": 769,
+        "text": "@user_bank_pages_bp.route('/<int:bank_id>/shares')",
+        "source_sha256": "9c87e370051c0eecfddda4a07140a49b9ca6ce36cde99c8c68889bdde18a32b5",
+        "source_size_bytes": 27900
+      },
+      "render_reference": {
+        "source": "app/modules/user_bank/routes/pages.py",
+        "line": 785,
+        "text": "'user_bank/manage/bank_manage_shares.html',",
+        "source_sha256": "9c87e370051c0eecfddda4a07140a49b9ca6ce36cde99c8c68889bdde18a32b5",
+        "source_size_bytes": 27900
+      },
+      "navigation_references": [
+        {
+          "source": "app/modules/user_bank/templates/user_bank/manage/_bank_manage_basebar.html",
+          "line": 9,
+          "text": "href=\"/user/banks/{{ bank_id }}/shares\"",
+          "source_sha256": "ce278d565a2f1000fa4912363acb69657f6c927c62b07c76d510cfe829d3d205",
+          "source_size_bytes": 1334
+        },
+        {
+          "source": "app/modules/user_bank/templates/user_bank/manage/manage_base.html",
+          "line": 357,
+          "text": "<a class=\"ubm-basebar-tab {% if _manage_tab == 'share' %}active{% endif %}\" href=\"/user/banks/{{ bank_id }}/shares\" role=\"tab\" aria-selected=\"{{ 'true' if _manage_tab == 'share' else 'false' }}\">分享</a>",
+          "source_sha256": "fc4488f4f7648b09e21991e383f821b2f8b005063ab9258cb52b295dcd04e15d",
+          "source_size_bytes": 14625
+        },
+        {
+          "source": "app/modules/user_bank/templates/user_bank/manage/banks.html",
+          "line": 1043,
+          "text": "<a href=\"/user/banks/${bank.id}/shares\" class=\"action-item\">",
+          "source_sha256": "200a6e408e54e5bece95c7e88c699d172ad19d7f97a779290ea57749e01be067",
+          "source_size_bytes": 40660
+        }
+      ],
+      "private_bank_guard": {
+        "source": "app/modules/user_bank/templates/user_bank/manage/bank_manage_shares.html",
+        "line": 160,
+        "text": "{% if not is_public %}",
+        "source_sha256": "a959a9d33d221133c6abca47394d443753b00c5288ef663b4c9235ec80f9ea3d",
+        "source_size_bytes": 17105
+      },
+      "function": {
+        "source": "app/modules/user_bank/templates/user_bank/manage/bank_manage_shares.html",
+        "line": 229,
+        "text": "async function loadUsageStats() {",
+        "source_sha256": "a959a9d33d221133c6abca47394d443753b00c5288ef663b4c9235ec80f9ea3d",
+        "source_size_bytes": 17105
+      },
+      "direct_get": {
+        "source": "app/modules/user_bank/templates/user_bank/manage/bank_manage_shares.html",
+        "line": 232,
+        "text": "const res = await window.ubmApi(`/user/banks/api/${encodeURIComponent(bankId)}/usage-stats`);",
+        "source_sha256": "a959a9d33d221133c6abca47394d443753b00c5288ef663b4c9235ec80f9ea3d",
+        "source_size_bytes": 17105
+      },
+      "response_extraction": {
+        "source": "app/modules/user_bank/templates/user_bank/manage/bank_manage_shares.html",
+        "line": 233,
+        "text": "const d = (res && res.data) ? res.data : (res || {});",
+        "source_sha256": "a959a9d33d221133c6abca47394d443753b00c5288ef663b4c9235ec80f9ea3d",
+        "source_size_bytes": 17105
+      },
+      "consumed_field": {
+        "source": "app/modules/user_bank/templates/user_bank/manage/bank_manage_shares.html",
+        "line": 234,
+        "text": "const total = Number(d.total_users || 0);",
+        "source_sha256": "a959a9d33d221133c6abca47394d443753b00c5288ef663b4c9235ec80f9ea3d",
+        "source_size_bytes": 17105
+      },
+      "render": {
+        "source": "app/modules/user_bank/templates/user_bank/manage/bank_manage_shares.html",
+        "line": 235,
+        "text": "usageEl.textContent = `可访问人数：${total}（含你）`;",
+        "source_sha256": "a959a9d33d221133c6abca47394d443753b00c5288ef663b4c9235ec80f9ea3d",
+        "source_size_bytes": 17105
+      },
+      "activation": {
+        "initial_page_load": {
+          "source": "app/modules/user_bank/templates/user_bank/manage/bank_manage_shares.html",
+          "line": 431,
+          "text": "loadUsageStats();",
+          "source_sha256": "a959a9d33d221133c6abca47394d443753b00c5288ef663b4c9235ec80f9ea3d",
+          "source_size_bytes": 17105
+        },
+        "after_revoke": {
+          "source": "app/modules/user_bank/templates/user_bank/manage/bank_manage_shares.html",
+          "line": 326,
+          "text": "loadUsageStats();",
+          "source_sha256": "a959a9d33d221133c6abca47394d443753b00c5288ef663b4c9235ec80f9ea3d",
+          "source_size_bytes": 17105
+        },
+        "after_create": {
+          "source": "app/modules/user_bank/templates/user_bank/manage/bank_manage_shares.html",
+          "line": 359,
+          "text": "loadUsageStats();",
+          "source_sha256": "a959a9d33d221133c6abca47394d443753b00c5288ef663b4c9235ec80f9ea3d",
+          "source_size_bytes": 17105
+        }
+      },
+      "failure_render": {
+        "source": "app/modules/user_bank/templates/user_bank/manage/bank_manage_shares.html",
+        "line": 237,
+        "text": "usageEl.textContent = '可访问人数：—';",
+        "source_sha256": "a959a9d33d221133c6abca47394d443753b00c5288ef663b4c9235ec80f9ea3d",
+        "source_size_bytes": 17105
+      },
+      "reason": "the owner-only share-management page is rendered from a registered route, is linked from live management surfaces, and invokes the Web alias on initial load and refreshes"
+    },
+    "legacy_miniprogram_typescript": {
+      "state": "active",
+      "logical_caller_id": "legacy-miniprogram-bank-detail",
+      "actual_alias": "/api/user/banks/api/<bank_id>/usage-stats",
+      "path_derivation": {
+        "production_api_base": {
+          "source": "miniprogram-1/miniprogram/utils/config.ts",
+          "line": 18,
+          "text": "const PROD_API_BASE_URL = 'https://saksk.top/api';",
+          "source_sha256": "ed3acf56d1b17bb46a051862e177a75c6837834dc43bbf403d23ee98bc51132f",
+          "source_size_bytes": 9325
+        },
+        "typescript_symbol": {
+          "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+          "line": 783,
+          "text": "getBankUsageStats: (bankId: number) =>",
+          "source_sha256": "0954859eade86b09c7002a6b8948c7264d5da984947f67be4d63aee192b55702",
+          "source_size_bytes": 31851
+        },
+        "relative_endpoint": {
+          "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+          "line": 784,
+          "text": "request(`/user/banks/api/${bankId}/usage-stats`, 'GET'),",
+          "source_sha256": "0954859eade86b09c7002a6b8948c7264d5da984947f67be4d63aee192b55702",
+          "source_size_bytes": 31851
+        },
+        "request_url_composition": {
+          "base_lookup": {
+            "source": "miniprogram-1/miniprogram/utils/api-client.ts",
+            "line": 105,
+            "text": "const apiBaseUrl = getApiBaseUrl();",
+            "source_sha256": "42c3ebc26b9d20f663d4bf182da762a81ee4d2cd53c03fbb248ef415389a973d",
+            "source_size_bytes": 9157
+          },
+          "concatenation": {
+            "source": "miniprogram-1/miniprogram/utils/api-client.ts",
+            "line": 110,
+            "text": "url: `${apiBaseUrl}${url}`,",
+            "source_sha256": "42c3ebc26b9d20f663d4bf182da762a81ee4d2cd53c03fbb248ef415389a973d",
+            "source_size_bytes": 9157
+          }
+        },
+        "result": "the /api base plus the relative /user/banks/api path selects the API alias"
+      },
+      "page_activation": {
+        "subpackage_registration": {
+          "source": "miniprogram-1/miniprogram/app.json",
+          "line": 83,
+          "text": "\"root\": \"pages/bank-detail\",",
+          "source_sha256": "db035b7721418254d79e97f51a499190c07b36c694d45092b045f7c9e38277ad",
+          "source_size_bytes": 4954
+        },
+        "navigation_reference": {
+          "source": "miniprogram-1/miniprogram/pages/my-banks-v2/my-banks-v2.ts",
+          "line": 250,
+          "text": "safeNavigate(bank?.detail_path || `/pages/bank-detail/bank-detail?id=${id}`, 'navigateTo');",
+          "source_sha256": "21060b0be4ea22a73d2a30ad976f4d73ac33707f14b902a93f41144e7e73bd56",
+          "source_size_bytes": 10961
+        },
+        "on_show_share_tab": {
+          "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+          "line": 322,
+          "text": "this.loadUsageStats();",
+          "source_sha256": "91c4a5b256014c4e6ce34cb9c96624282b5f8cf84fc81301b6551661d1f6e409",
+          "source_size_bytes": 75328
+        },
+        "tab_tap": {
+          "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+          "line": 634,
+          "text": "this.loadUsageStats();",
+          "source_sha256": "91c4a5b256014c4e6ce34cb9c96624282b5f8cf84fc81301b6551661d1f6e409",
+          "source_size_bytes": 75328
+        },
+        "go_share_tab": {
+          "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+          "line": 701,
+          "text": "this.loadUsageStats();",
+          "source_sha256": "91c4a5b256014c4e6ce34cb9c96624282b5f8cf84fc81301b6551661d1f6e409",
+          "source_size_bytes": 75328
+        },
+        "after_share_prepare": {
+          "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+          "line": 1972,
+          "text": "this.loadUsageStats();",
+          "source_sha256": "91c4a5b256014c4e6ce34cb9c96624282b5f8cf84fc81301b6551661d1f6e409",
+          "source_size_bytes": 75328
+        },
+        "after_revoke": {
+          "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+          "line": 2099,
+          "text": "this.loadUsageStats();",
+          "source_sha256": "91c4a5b256014c4e6ce34cb9c96624282b5f8cf84fc81301b6551661d1f6e409",
+          "source_size_bytes": 75328
+        }
+      },
+      "load_function": {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+        "line": 1983,
+        "text": "async loadUsageStats() {",
+        "source_sha256": "91c4a5b256014c4e6ce34cb9c96624282b5f8cf84fc81301b6551661d1f6e409",
+        "source_size_bytes": 75328
+      },
+      "owner_guard": {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+        "line": 1986,
+        "text": "if (!this.data.canManageShare) return;",
+        "source_sha256": "91c4a5b256014c4e6ce34cb9c96624282b5f8cf84fc81301b6551661d1f6e409",
+        "source_size_bytes": 75328
+      },
+      "direct_call": {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+        "line": 1991,
+        "text": "const res: any = await api.getBankUsageStats(bankId);",
+        "source_sha256": "91c4a5b256014c4e6ce34cb9c96624282b5f8cf84fc81301b6551661d1f6e409",
+        "source_size_bytes": 75328
+      },
+      "mapped_response_fields": {
+        "is_public": {
+          "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+          "line": 1995,
+          "text": "is_public: !!data.is_public,",
+          "source_sha256": "91c4a5b256014c4e6ce34cb9c96624282b5f8cf84fc81301b6551661d1f6e409",
+          "source_size_bytes": 75328
+        },
+        "owner_id": {
+          "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+          "line": 1996,
+          "text": "owner_id: Number(data.owner_id || 0),",
+          "source_sha256": "91c4a5b256014c4e6ce34cb9c96624282b5f8cf84fc81301b6551661d1f6e409",
+          "source_size_bytes": 75328
+        },
+        "owner_count": {
+          "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+          "line": 1997,
+          "text": "owner_count: Number(data.owner_count || 1),",
+          "source_sha256": "91c4a5b256014c4e6ce34cb9c96624282b5f8cf84fc81301b6551661d1f6e409",
+          "source_size_bytes": 75328
+        },
+        "shared_users": {
+          "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+          "line": 1998,
+          "text": "shared_users: Number(data.shared_users || 0),",
+          "source_sha256": "91c4a5b256014c4e6ce34cb9c96624282b5f8cf84fc81301b6551661d1f6e409",
+          "source_size_bytes": 75328
+        },
+        "public_users": {
+          "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+          "line": 1999,
+          "text": "public_users: Number(data.public_users || 0),",
+          "source_sha256": "91c4a5b256014c4e6ce34cb9c96624282b5f8cf84fc81301b6551661d1f6e409",
+          "source_size_bytes": 75328
+        },
+        "total_users": {
+          "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+          "line": 2000,
+          "text": "total_users: Number(data.total_users || 0),",
+          "source_sha256": "91c4a5b256014c4e6ce34cb9c96624282b5f8cf84fc81301b6551661d1f6e409",
+          "source_size_bytes": 75328
+        },
+        "total_users_excluding_owner": {
+          "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+          "line": 2001,
+          "text": "total_users_excluding_owner: Number(data.total_users_excluding_owner || 0)",
+          "source_sha256": "91c4a5b256014c4e6ce34cb9c96624282b5f8cf84fc81301b6551661d1f6e409",
+          "source_size_bytes": 75328
+        }
+      },
+      "rendered_field": {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.wxml",
+        "line": 741,
+        "text": "<text class=\"card-sub\" wx:if=\"{{usageStatsLoaded}}\">可访问人数：{{usageStats.total_users || 0}}（含你）</text>",
+        "source_sha256": "47bcb77c82921a1284b53348fa7d0e7e560c534e08f47e1c2a155ef52fdc358c",
+        "source_size_bytes": 46511
+      },
+      "reason": "the registered bank-detail page is reachable from the bank list and invokes the TypeScript endpoint for owner share-tab and share lifecycle flows"
+    },
+    "legacy_miniprogram_generated_javascript": {
+      "state": "generated_runtime_mirror_of_typescript_caller",
+      "compiled_endpoint_symbol": {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.js",
+        "line": 437,
+        "text": "getBankUsageStats: function (bankId) {",
+        "source_sha256": "7d4cc3b79ccd150948b88a90a4e85071d6608b07408b0ed0e13c021be152d261",
+        "source_size_bytes": 27686
+      },
+      "compiled_relative_endpoint": {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.js",
+        "line": 438,
+        "text": "return (0, api_client_1.request)(\"/user/banks/api/\".concat(bankId, \"/usage-stats\"), 'GET');",
+        "source_sha256": "7d4cc3b79ccd150948b88a90a4e85071d6608b07408b0ed0e13c021be152d261",
+        "source_size_bytes": 27686
+      },
+      "compiled_direct_call": {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.js",
+        "line": 2185,
+        "text": "return [4 /*yield*/, api_1.api.getBankUsageStats(bankId)];",
+        "source_sha256": "df334e67086e237c2d1a930c5c3ab22c947c9f2b777f38beddea7a9ca6cede77",
+        "source_size_bytes": 128551
+      },
+      "compiled_total_users_mapping": {
+        "source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.js",
+        "line": 2196,
+        "text": "total_users: Number(data.total_users || 0),",
+        "source_sha256": "df334e67086e237c2d1a930c5c3ab22c947c9f2b777f38beddea7a9ca6cede77",
+        "source_size_bytes": 128551
+      },
+      "source_generated_pairs": [
+        {
+          "typescript_source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+          "typescript_sha256": "0954859eade86b09c7002a6b8948c7264d5da984947f67be4d63aee192b55702",
+          "generated_javascript": "miniprogram-1/miniprogram/utils/api-endpoints.js",
+          "generated_javascript_sha256": "7d4cc3b79ccd150948b88a90a4e85071d6608b07408b0ed0e13c021be152d261",
+          "caller_counting": "one logical caller family; generated JavaScript is executable evidence but is not counted as an independent source-authored caller"
+        },
+        {
+          "typescript_source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+          "typescript_sha256": "91c4a5b256014c4e6ce34cb9c96624282b5f8cf84fc81301b6551661d1f6e409",
+          "generated_javascript": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.js",
+          "generated_javascript_sha256": "df334e67086e237c2d1a930c5c3ab22c947c9f2b777f38beddea7a9ca6cede77",
+          "caller_counting": "one logical caller family; generated JavaScript is executable evidence but is not counted as an independent source-authored caller"
+        }
+      ],
+      "additional_independent_caller_count": 0
+    },
+    "ti_java_controlled_miniprogram_copy": {
+      "state": "active_controlled_migration_copy",
+      "scope": "Ti-Java/miniprogram",
+      "baseline_relationship": "the independently maintained Ti-Java miniprogram copy retains the exact fixed-commit usage-stats caller bytes; it is attested separately from legacy caller counting",
+      "typescript_endpoint": {
+        "source": "miniprogram/miniprogram/utils/api-endpoints.ts",
+        "line": 784,
+        "text": "request(`/user/banks/api/${bankId}/usage-stats`, 'GET'),",
+        "source_sha256": "0954859eade86b09c7002a6b8948c7264d5da984947f67be4d63aee192b55702",
+        "source_size_bytes": 31851
+      },
+      "typescript_direct_call": {
+        "source": "miniprogram/miniprogram/pages/bank-detail/bank-detail.ts",
+        "line": 1991,
+        "text": "const res: any = await api.getBankUsageStats(bankId);",
+        "source_sha256": "91c4a5b256014c4e6ce34cb9c96624282b5f8cf84fc81301b6551661d1f6e409",
+        "source_size_bytes": 75328
+      },
+      "generated_javascript_endpoint": {
+        "source": "miniprogram/miniprogram/utils/api-endpoints.js",
+        "line": 438,
+        "text": "return (0, api_client_1.request)(\"/user/banks/api/\".concat(bankId, \"/usage-stats\"), 'GET');",
+        "source_sha256": "7d4cc3b79ccd150948b88a90a4e85071d6608b07408b0ed0e13c021be152d261",
+        "source_size_bytes": 27686
+      },
+      "generated_javascript_call": {
+        "source": "miniprogram/miniprogram/pages/bank-detail/bank-detail.js",
+        "line": 2185,
+        "text": "return [4 /*yield*/, api_1.api.getBankUsageStats(bankId)];",
+        "source_sha256": "df334e67086e237c2d1a930c5c3ab22c947c9f2b777f38beddea7a9ca6cede77",
+        "source_size_bytes": 128551
+      },
+      "rendered_field": {
+        "source": "miniprogram/miniprogram/pages/bank-detail/bank-detail.wxml",
+        "line": 741,
+        "text": "<text class=\"card-sub\" wx:if=\"{{usageStatsLoaded}}\">可访问人数：{{usageStats.total_users || 0}}（含你）</text>",
+        "source_sha256": "47bcb77c82921a1284b53348fa7d0e7e560c534e08f47e1c2a155ef52fdc358c",
+        "source_size_bytes": 46511
+      },
+      "byte_equal_files": [
+        {
+          "legacy_source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+          "controlled_source": "miniprogram/miniprogram/utils/api-endpoints.ts",
+          "legacy_sha256": "0954859eade86b09c7002a6b8948c7264d5da984947f67be4d63aee192b55702",
+          "controlled_sha256": "0954859eade86b09c7002a6b8948c7264d5da984947f67be4d63aee192b55702",
+          "byte_equal": true
+        },
+        {
+          "legacy_source": "miniprogram-1/miniprogram/utils/api-endpoints.js",
+          "controlled_source": "miniprogram/miniprogram/utils/api-endpoints.js",
+          "legacy_sha256": "7d4cc3b79ccd150948b88a90a4e85071d6608b07408b0ed0e13c021be152d261",
+          "controlled_sha256": "7d4cc3b79ccd150948b88a90a4e85071d6608b07408b0ed0e13c021be152d261",
+          "byte_equal": true
+        },
+        {
+          "legacy_source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.ts",
+          "controlled_source": "miniprogram/miniprogram/pages/bank-detail/bank-detail.ts",
+          "legacy_sha256": "91c4a5b256014c4e6ce34cb9c96624282b5f8cf84fc81301b6551661d1f6e409",
+          "controlled_sha256": "91c4a5b256014c4e6ce34cb9c96624282b5f8cf84fc81301b6551661d1f6e409",
+          "byte_equal": true
+        },
+        {
+          "legacy_source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.js",
+          "controlled_source": "miniprogram/miniprogram/pages/bank-detail/bank-detail.js",
+          "legacy_sha256": "df334e67086e237c2d1a930c5c3ab22c947c9f2b777f38beddea7a9ca6cede77",
+          "controlled_sha256": "df334e67086e237c2d1a930c5c3ab22c947c9f2b777f38beddea7a9ca6cede77",
+          "byte_equal": true
+        },
+        {
+          "legacy_source": "miniprogram-1/miniprogram/pages/bank-detail/bank-detail.wxml",
+          "controlled_source": "miniprogram/miniprogram/pages/bank-detail/bank-detail.wxml",
+          "legacy_sha256": "47bcb77c82921a1284b53348fa7d0e7e560c534e08f47e1c2a155ef52fdc358c",
+          "controlled_sha256": "47bcb77c82921a1284b53348fa7d0e7e560c534e08f47e1c2a155ef52fdc358c",
+          "byte_equal": true
+        }
+      ],
+      "generated_javascript_additional_independent_caller_count": 0
+    }
+  },
+  "caller_counting": {
+    "fixed_commit_legacy_logical_caller_count": 2,
+    "fixed_commit_legacy_logical_callers": [
+      "legacy-web-bank-share-management",
+      "legacy-miniprogram-bank-detail"
+    ],
+    "generated_javascript_additional_count": 0,
+    "controlled_copy_counting": "separate migration-project counterpart; not added to the fixed-commit legacy count",
+    "both_legacy_caller_families_active": true
+  },
+  "frozen_route_matrix_disposition": {
+    "matrix_is_immutable": true,
+    "matrix_static_scan_is_not_a_complete_caller_inventory": true,
+    "dynamic_web_template_caller_is_closed_here": true,
+    "resolution": "this additive fixed-commit attestation records active callers without editing the route matrix, OpenAPI, production Java or migration contracts"
+  },
+  "closure": {
+    "fixed_commit_resolved": true,
+    "full_repository_scan_captured": true,
+    "shared_handler_closed": true,
+    "both_registered_aliases_closed": true,
+    "active_web_caller_closed": true,
+    "active_legacy_miniprogram_caller_closed": true,
+    "typescript_generated_mirror_closed": true,
+    "controlled_miniprogram_copy_closed": true,
+    "generated_files_not_double_counted": true,
+    "caller_attestation_complete": true
+  },
+  "attestation_sha256": "3164e3202058b9396157a2f34003c2de5d6c6f8ff70c3d33071e358cb9c6d8b0",
+  "document_payload_sha256": "479042d6e9d7cc160aaf8ad7649a8b6e438b1f8b9efb4f10681788bcfcf9cf08"
+}

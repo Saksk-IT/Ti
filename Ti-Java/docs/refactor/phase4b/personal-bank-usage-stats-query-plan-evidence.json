@@ -1,0 +1,1329 @@
+{
+  "contract_id": "ti.phase4b.personal-bank-usage-stats-query-plan-evidence",
+  "schema_version": 1,
+  "captured_at": "2026-07-17",
+  "scope": "test-only preimplementation usage-stats SQL and plan evidence",
+  "route_migration_status": {
+    "route_ids": [
+      "d67a16965b08",
+      "22aecd49a3c2"
+    ],
+    "http_owner": "personalbank",
+    "status": "pending",
+    "production_cutover": false
+  },
+  "provenance": {
+    "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+    "legacy_source": "app/modules/user_bank/routes/api_shares.py:56-149",
+    "runtime_dependency_on_legacy_source": false,
+    "manifest_exported_by_maven_test": true,
+    "query_input_kind": "Java test-only preimplementation evidence manifest"
+  },
+  "inputs": {
+    "sql_manifest_path": "server/target/phase4b-personal-bank-usage-stats-evidence-sql.json",
+    "sql_manifest_sha256": "ede61d619773ca959cf46ec69231ba816809808718d238ce1315990e8274525a",
+    "sql_manifest_payload_sha256": "2b85b4e8f65cafe803efb0161c7f87c7fa8a095cf47234552590379a67265aff",
+    "evidence_sql": "server/src/test/java/io/saksk/ti/personalbank/infrastructure/persistence/PersonalBankUsageStatsEvidenceSql.java",
+    "evidence_sql_sha256": "d7b09cc29d6ab79b4ca1718be2cc7e70eb4f7e17c83ec6079e71926b392f9f71",
+    "sql_contract_test": "server/src/test/java/io/saksk/ti/personalbank/infrastructure/persistence/PersonalBankUsageStatsEvidenceSqlContractTest.java",
+    "sql_contract_test_sha256": "c606a07055cbb9fd7ca985f9fac662ed730ccf8346e29628b1259682cf2068dd",
+    "sql_manifest_exporter": "server/src/test/java/io/saksk/ti/personalbank/infrastructure/persistence/PersonalBankUsageStatsEvidenceSqlManifestTest.java",
+    "sql_manifest_exporter_sha256": "0abcd3fe04117e2871ef4a61afaa3acf6b033f36a8485a37b87c9a237d77a813",
+    "jdbc_compatibility_test": "server/src/test/java/io/saksk/ti/integration/Phase4bPersonalBankUsageStatsEvidenceJdbcCompatibilityIT.java",
+    "jdbc_compatibility_test_sha256": "3af3610d1f2d17fce341547a85d30f3dc12818d91922e8b73208e0e3fb00a3cc",
+    "base_capture_support": "tools/capture_phase4b_personal_bank_share_list_query_plans.py",
+    "base_capture_support_sha256": "c39b69d524c7b749411a71654973617c3a40719e79ea6e21138ab675145d750d",
+    "capture_tool": "tools/capture_phase4b_personal_bank_usage_stats_query_plans.py",
+    "capture_tool_sha256": "9eab3f5a53ff1d5aba7b9dc93b00ab4c37556a17d23aec6bd406b607e4b6f27c",
+    "capture_tool_test": "tools/test_capture_phase4b_personal_bank_usage_stats_query_plans.py",
+    "capture_tool_test_sha256": "28ab2a7158e7d0c552310c0f3d40b59be172e5d9dbfcb431b74b1ee497dd8dbf",
+    "fixture_1": "server/src/test/resources/db/phase3/030-auth-schema.sql",
+    "fixture_1_sha256": "9f9546be5f32bd1babcb9a4711c2cc9b3641e4c22ff051738ba9d735a150c87e",
+    "fixture_2": "server/src/test/resources/db/phase4b/062-personal-bank-share-list-schema.sql",
+    "fixture_2_sha256": "d0e51e7cd16d0275611a82c984a52538beb14b10b19c50925646dd48a4d1c29d",
+    "fixture_3": "server/src/test/resources/db/phase4b/063-personal-bank-share-list-seed.sql",
+    "fixture_3_sha256": "626406876dfa0deecb8c0cd030b84848facd01b0baf1bcffdcffb64822a10fd5",
+    "fixture_4": "server/src/test/resources/db/phase4b/064-personal-bank-all-shares-seed.sql",
+    "fixture_4_sha256": "c93eab269a4d33efd11bd9eaf187523cb79490d1936f44b1c9b7228f38c73268",
+    "fixture_5": "server/src/test/resources/db/phase4b/065-personal-bank-usage-stats-schema.sql",
+    "fixture_5_sha256": "90d94b6c90c09586908e3108626ddbace04a83b56ed2018a55709ccdc7a2f684",
+    "fixture_6": "server/src/test/resources/db/phase4b/066-personal-bank-usage-stats-seed.sql",
+    "fixture_6_sha256": "edba4e7587c757bf090f1cc2cdb9ba866e24061eb6656146865369786db89251"
+  },
+  "sql_contract": {
+    "manifest": {
+      "manifest_id": "ti.phase4b.personal-bank-usage-stats-preimplementation-sql",
+      "schema_version": 1,
+      "source_class": "io.saksk.ti.personalbank.infrastructure.persistence.PersonalBankUsageStatsEvidenceSql",
+      "scope": "test-only-preimplementation-evidence",
+      "sequential_execution_required": true,
+      "short_circuit_after_bank_probe": true,
+      "shared_and_public_failure_boundaries": "independently_degrade_to_empty",
+      "query_count": 3,
+      "queries": [
+        {
+          "ordinal": 1,
+          "query_id": "personal-bank-usage-stats-bank-probe",
+          "operation": "bank-probe",
+          "sql": "SELECT id,\n       user_id,\n       is_public,\n       status\nFROM user_question_banks\nWHERE id = :bank_id\n",
+          "parameter_order": [
+            "bank_id"
+          ],
+          "parameters": {
+            "bank_id": "integer"
+          }
+        },
+        {
+          "ordinal": 2,
+          "query_id": "personal-bank-usage-stats-shared-users",
+          "operation": "shared-users",
+          "sql": "SELECT DISTINCT bsr.user_id AS user_id,\n                bs.expires_at AS expires_at\nFROM bank_share_records bsr\nJOIN bank_shares bs ON bsr.share_id = bs.id\nWHERE bsr.bank_id = :bank_id\n  AND bsr.status = 1\n  AND bs.is_active = TRUE\n",
+          "parameter_order": [
+            "bank_id"
+          ],
+          "parameters": {
+            "bank_id": "integer"
+          }
+        },
+        {
+          "ordinal": 3,
+          "query_id": "personal-bank-usage-stats-public-users",
+          "operation": "public-users",
+          "sql": "SELECT DISTINCT user_id\nFROM public_bank_users\nWHERE bank_id = :bank_id\n",
+          "parameter_order": [
+            "bank_id"
+          ],
+          "parameters": {
+            "bank_id": "integer"
+          }
+        }
+      ]
+    },
+    "query_order": [
+      "personal-bank-usage-stats-bank-probe",
+      "personal-bank-usage-stats-shared-users",
+      "personal-bank-usage-stats-public-users"
+    ],
+    "query_count": 3,
+    "sequential_execution_required": true,
+    "short_circuit_after_bank_probe": true,
+    "shared_and_public_failure_boundaries": "independently_degrade_to_empty",
+    "query_payload_sha256": "81eaf8e86cce033f17523875ba003ab380af2da8c5195cc7003d2f743d3072f8",
+    "production_source_added": false
+  },
+  "data_set": {
+    "kind": "public deterministic repository fixtures plus synthetic scale rows",
+    "repository_fixture_load_order": [
+      "server/src/test/resources/db/phase3/030-auth-schema.sql",
+      "server/src/test/resources/db/phase4b/062-personal-bank-share-list-schema.sql",
+      "server/src/test/resources/db/phase4b/063-personal-bank-share-list-seed.sql",
+      "server/src/test/resources/db/phase4b/064-personal-bank-all-shares-seed.sql",
+      "server/src/test/resources/db/phase4b/065-personal-bank-usage-stats-schema.sql",
+      "server/src/test/resources/db/phase4b/066-personal-bank-usage-stats-seed.sql"
+    ],
+    "parameters": {
+      "generated_bank_count": 5000,
+      "generated_share_record_count": 150000,
+      "generated_public_user_count": 150000,
+      "target_bank_id": 7101,
+      "target_record_interval": 3,
+      "target_public_interval": 500
+    },
+    "scale_fixture_sql_sha256": "ac95f3bba7e6115ce192fa14d3593d966d9dd1d7f871a3cccdf8d00ef847dfe4",
+    "production_or_test_schema_index_added": false,
+    "legacy_index_observation": "bank_share_records has no bank_id-leading index; public_bank_users has the existing UNIQUE(bank_id,user_id) index created by fixture 065"
+  },
+  "engines": [
+    {
+      "label": "PostgreSQL 16.14",
+      "image": "postgres:16.14-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777",
+      "image_id": "sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777",
+      "network": "none",
+      "server_version": "16.14",
+      "server_version_num": "160014",
+      "data_set": {
+        "users": 150008,
+        "user_question_banks": 5007,
+        "bank_shares": 150020,
+        "bank_share_records": 150010,
+        "public_bank_users": 150005,
+        "target_bank_share_records": 50010,
+        "target_public_bank_users": 304
+      },
+      "schema_fingerprint_before_after_sha256": "612cbc83e2d0607e77ba928900c5e0536d68a52b32a6ac99d11dfd5300e2b657",
+      "data_fingerprint_before_after_sha256": "237209ae735b7fbe243e39fcb41fb5a3124572b0d77621aaf3e3beec2ed44e08",
+      "read_only_capture_fingerprints_unchanged": true,
+      "observations": [
+        {
+          "ordinal": 1,
+          "query_id": "personal-bank-usage-stats-bank-probe",
+          "operation": "bank-probe",
+          "sql": "SELECT id,\n       user_id,\n       is_public,\n       status\nFROM user_question_banks\nWHERE id = :bank_id\n",
+          "sql_sha256": "609a874bcfeca2e0dea2041ebabfad8f9251c073e7f38ffd8182eef5877aca94",
+          "normalized_sql_sha256": "ee05b96abd3002956d890acfebab441d34dcfa5288043e0901eb47fd917064a3",
+          "binding": {
+            "mode": "postgresql-prepare-execute",
+            "prepared_name": "phase4b_usage_bank_probe",
+            "session_settings": {
+              "max_parallel_workers_per_gather": "0",
+              "jit": "off",
+              "work_mem": "64MB"
+            },
+            "runtime_statement_count": 1,
+            "bound_parameter_count": 1,
+            "occurrence_names": [
+              "bank_id"
+            ],
+            "positional_sql_sha256": "6d3ac1315364647c819cd91bf2c12ac3812d36eee5337ede18845fd5154e0982",
+            "parameters": {
+              "bank_id": {
+                "postgres_type": "integer",
+                "value": 7101
+              }
+            }
+          },
+          "result": {
+            "row_count": 1,
+            "column_count": 4,
+            "exact_rows": [
+              [
+                "7101",
+                "7001",
+                "f",
+                "1"
+              ]
+            ],
+            "rows_sha256": "0abdd98e5212ddc329303a91e2974de644110dae02536cfda192641d60a48ac7"
+          },
+          "assertions_passed": [
+            "exact-result-row-count",
+            "root-executed-once",
+            "required-relations-scanned",
+            "raw-timing-and-buffer-fields-observed",
+            "zero-temp-blocks"
+          ],
+          "plan_summary": {
+            "root_node_type": "Index Scan",
+            "root_actual_rows": 1,
+            "root_actual_loops": 1,
+            "node_count": 1,
+            "maximum_depth": 0,
+            "maximum_actual_loops": 1,
+            "node_types_preorder": [
+              "Index Scan"
+            ],
+            "node_type_counts": {
+              "Index Scan": 1
+            },
+            "relation_scan_occurrences": {
+              "user_question_banks": 1
+            },
+            "index_names": [
+              "user_question_banks_pkey"
+            ],
+            "buffer_fields_observed_before_normalization": [
+              "Local Dirtied Blocks",
+              "Local Hit Blocks",
+              "Local Read Blocks",
+              "Local Written Blocks",
+              "Shared Dirtied Blocks",
+              "Shared Hit Blocks",
+              "Shared Read Blocks",
+              "Shared Written Blocks",
+              "Temp Read Blocks",
+              "Temp Written Blocks"
+            ],
+            "timing_fields_observed_before_normalization": [
+              "Actual Startup Time",
+              "Actual Total Time",
+              "Execution Time",
+              "Planning Time"
+            ],
+            "temp_read_blocks_observed": 0.0,
+            "temp_written_blocks_observed": 0.0,
+            "nodes": [
+              {
+                "depth": 0,
+                "Node Type": "Index Scan",
+                "Relation Name": "user_question_banks",
+                "Alias": "user_question_banks",
+                "Index Name": "user_question_banks_pkey",
+                "Scan Direction": "Forward",
+                "Actual Rows": 1,
+                "Actual Loops": 1,
+                "Rows Removed by Index Recheck": 0,
+                "Index Cond": {
+                  "redacted": "planner expression omitted",
+                  "character_count": 13,
+                  "sha256": "0d5579eeebcc96c51a73cd7b16ecc46b1a1674af8c554f87cbf4c29838e81395"
+                }
+              }
+            ]
+          },
+          "normalized_explain_analyze": {
+            "Plan": {
+              "Node Type": "Index Scan",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Scan Direction": "Forward",
+              "Index Name": "user_question_banks_pkey",
+              "Relation Name": "user_question_banks",
+              "Alias": "user_question_banks",
+              "Actual Rows": 1,
+              "Actual Loops": 1,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 13,
+                "sha256": "0d5579eeebcc96c51a73cd7b16ecc46b1a1674af8c554f87cbf4c29838e81395"
+              },
+              "Rows Removed by Index Recheck": 0
+            }
+          }
+        },
+        {
+          "ordinal": 2,
+          "query_id": "personal-bank-usage-stats-shared-users",
+          "operation": "shared-users",
+          "sql": "SELECT DISTINCT bsr.user_id AS user_id,\n                bs.expires_at AS expires_at\nFROM bank_share_records bsr\nJOIN bank_shares bs ON bsr.share_id = bs.id\nWHERE bsr.bank_id = :bank_id\n  AND bsr.status = 1\n  AND bs.is_active = TRUE\n",
+          "sql_sha256": "fa42ff44f6482fb9c576c08181b7ffeb641cfe783eb1a94915639931369cbaca",
+          "normalized_sql_sha256": "7231e8f4817d38f06134e8b5882ed91fbc2e29dc5477fc2de995ec439b9f9759",
+          "binding": {
+            "mode": "postgresql-prepare-execute",
+            "prepared_name": "phase4b_usage_shared_users",
+            "session_settings": {
+              "max_parallel_workers_per_gather": "0",
+              "jit": "off",
+              "work_mem": "64MB"
+            },
+            "runtime_statement_count": 1,
+            "bound_parameter_count": 1,
+            "occurrence_names": [
+              "bank_id"
+            ],
+            "positional_sql_sha256": "e093a64ffa94224fa0b1ac717f35abaa63eb98d98b2152e12e077143f1732017",
+            "parameters": {
+              "bank_id": {
+                "postgres_type": "integer",
+                "value": 7101
+              }
+            }
+          },
+          "result": {
+            "row_count": 41180,
+            "column_count": 2,
+            "distinct_user_count": 41179,
+            "pair_distinct_duplicate_user_count": 1,
+            "expiry_value_counts": {
+              "future": 38771,
+              "null": 1081,
+              "past": 1328
+            },
+            "fixed_edge_rows": [
+              [
+                "7001",
+                "<NULL>"
+              ],
+              [
+                "7003",
+                "2099-01-01 00:00:00"
+              ],
+              [
+                "7003",
+                "<NULL>"
+              ],
+              [
+                "7004",
+                "2020-01-01 00:00:00"
+              ],
+              [
+                "7005",
+                "<NULL>"
+              ],
+              [
+                "7006",
+                "<NULL>"
+              ],
+              [
+                "7007",
+                "<NULL>"
+              ]
+            ],
+            "minimum_generated_user_id": 100003,
+            "maximum_generated_user_id": 250000,
+            "unordered_rows_sha256": "e8f26bd73b2bd376d358f92a61524ce9ae14d1d8911e26d563cb584901b72649"
+          },
+          "assertions_passed": [
+            "exact-result-row-count",
+            "root-executed-once",
+            "required-relations-scanned",
+            "raw-timing-and-buffer-fields-observed",
+            "zero-temp-blocks"
+          ],
+          "plan_summary": {
+            "root_node_type": "Aggregate",
+            "root_actual_rows": 41180,
+            "root_actual_loops": 1,
+            "node_count": 5,
+            "maximum_depth": 3,
+            "maximum_actual_loops": 1,
+            "node_types_preorder": [
+              "Aggregate",
+              "Hash Join",
+              "Seq Scan",
+              "Hash",
+              "Seq Scan"
+            ],
+            "node_type_counts": {
+              "Aggregate": 1,
+              "Hash": 1,
+              "Hash Join": 1,
+              "Seq Scan": 2
+            },
+            "relation_scan_occurrences": {
+              "bank_share_records": 1,
+              "bank_shares": 1
+            },
+            "index_names": [],
+            "buffer_fields_observed_before_normalization": [
+              "Local Dirtied Blocks",
+              "Local Hit Blocks",
+              "Local Read Blocks",
+              "Local Written Blocks",
+              "Shared Dirtied Blocks",
+              "Shared Hit Blocks",
+              "Shared Read Blocks",
+              "Shared Written Blocks",
+              "Temp Read Blocks",
+              "Temp Written Blocks"
+            ],
+            "timing_fields_observed_before_normalization": [
+              "Actual Startup Time",
+              "Actual Total Time",
+              "Execution Time",
+              "Planning Time"
+            ],
+            "temp_read_blocks_observed": 0.0,
+            "temp_written_blocks_observed": 0.0,
+            "nodes": [
+              {
+                "depth": 0,
+                "Node Type": "Aggregate",
+                "Strategy": "Hashed",
+                "Actual Rows": 41180,
+                "Actual Loops": 1,
+                "Group Key": {
+                  "redacted": "planner expression omitted",
+                  "character_count": 32,
+                  "sha256": "b4c083ec305d31129f0c84bfd76d63a86bf7419ceb1ed09f28a2a49d0653fc37"
+                }
+              },
+              {
+                "depth": 1,
+                "Node Type": "Hash Join",
+                "Parent Relationship": "Outer",
+                "Join Type": "Inner",
+                "Actual Rows": 41180,
+                "Actual Loops": 1,
+                "Hash Cond": {
+                  "redacted": "planner expression omitted",
+                  "character_count": 24,
+                  "sha256": "2f2449eeb6d1fc9798024c63a6b4cad332c310c3125d93715f07aeba5bbf87e0"
+                }
+              },
+              {
+                "depth": 2,
+                "Node Type": "Seq Scan",
+                "Parent Relationship": "Outer",
+                "Relation Name": "bank_shares",
+                "Alias": "bs",
+                "Actual Rows": 135943,
+                "Actual Loops": 1,
+                "Rows Removed by Filter": 14077,
+                "Filter": {
+                  "redacted": "planner expression omitted",
+                  "character_count": 11,
+                  "sha256": "f3107dbdaf2b83825ad2d79441dac3dbb7a15b1fae9032bbaf1e43837456110f"
+                }
+              },
+              {
+                "depth": 2,
+                "Node Type": "Hash",
+                "Parent Relationship": "Inner",
+                "Actual Rows": 45445,
+                "Actual Loops": 1
+              },
+              {
+                "depth": 3,
+                "Node Type": "Seq Scan",
+                "Parent Relationship": "Outer",
+                "Relation Name": "bank_share_records",
+                "Alias": "bsr",
+                "Actual Rows": 45445,
+                "Actual Loops": 1,
+                "Rows Removed by Filter": 104565,
+                "Filter": {
+                  "redacted": "planner expression omitted",
+                  "character_count": 37,
+                  "sha256": "3e7c005b4f15dc09788f3c2a7c6c4ec858854d9c79c1ea5b99ad6b753b1fd1a5"
+                }
+              }
+            ]
+          },
+          "normalized_explain_analyze": {
+            "Plan": {
+              "Node Type": "Aggregate",
+              "Strategy": "Hashed",
+              "Partial Mode": "Simple",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Actual Rows": 41180,
+              "Actual Loops": 1,
+              "Group Key": {
+                "redacted": "planner expression omitted",
+                "character_count": 32,
+                "sha256": "b4c083ec305d31129f0c84bfd76d63a86bf7419ceb1ed09f28a2a49d0653fc37"
+              },
+              "Planned Partitions": 0,
+              "HashAgg Batches": 1,
+              "Plans": [
+                {
+                  "Node Type": "Hash Join",
+                  "Parent Relationship": "Outer",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Join Type": "Inner",
+                  "Actual Rows": 41180,
+                  "Actual Loops": 1,
+                  "Inner Unique": false,
+                  "Hash Cond": {
+                    "redacted": "planner expression omitted",
+                    "character_count": 24,
+                    "sha256": "2f2449eeb6d1fc9798024c63a6b4cad332c310c3125d93715f07aeba5bbf87e0"
+                  },
+                  "Plans": [
+                    {
+                      "Node Type": "Seq Scan",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Relation Name": "bank_shares",
+                      "Alias": "bs",
+                      "Actual Rows": 135943,
+                      "Actual Loops": 1,
+                      "Filter": {
+                        "redacted": "planner expression omitted",
+                        "character_count": 11,
+                        "sha256": "f3107dbdaf2b83825ad2d79441dac3dbb7a15b1fae9032bbaf1e43837456110f"
+                      },
+                      "Rows Removed by Filter": 14077
+                    },
+                    {
+                      "Node Type": "Hash",
+                      "Parent Relationship": "Inner",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Actual Rows": 45445,
+                      "Actual Loops": 1,
+                      "Plans": [
+                        {
+                          "Node Type": "Seq Scan",
+                          "Parent Relationship": "Outer",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Relation Name": "bank_share_records",
+                          "Alias": "bsr",
+                          "Actual Rows": 45445,
+                          "Actual Loops": 1,
+                          "Filter": {
+                            "redacted": "planner expression omitted",
+                            "character_count": 37,
+                            "sha256": "3e7c005b4f15dc09788f3c2a7c6c4ec858854d9c79c1ea5b99ad6b753b1fd1a5"
+                          },
+                          "Rows Removed by Filter": 104565
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "ordinal": 3,
+          "query_id": "personal-bank-usage-stats-public-users",
+          "operation": "public-users",
+          "sql": "SELECT DISTINCT user_id\nFROM public_bank_users\nWHERE bank_id = :bank_id\n",
+          "sql_sha256": "09a706a4289f5c0cd3ed4d79c1d369aee16b3ae390c7ca838a6a7b9b961c3baa",
+          "normalized_sql_sha256": "dff74398febb7e8b3d9846f74cdf5d5b1902d26153dac668ff5a51359cb79991",
+          "binding": {
+            "mode": "postgresql-prepare-execute",
+            "prepared_name": "phase4b_usage_public_users",
+            "session_settings": {
+              "max_parallel_workers_per_gather": "0",
+              "jit": "off",
+              "work_mem": "64MB"
+            },
+            "runtime_statement_count": 1,
+            "bound_parameter_count": 1,
+            "occurrence_names": [
+              "bank_id"
+            ],
+            "positional_sql_sha256": "09a93086a30f67bc251d9f5ff9b98b8c46a862976b16f191b68ddf149a87e6a7",
+            "parameters": {
+              "bank_id": {
+                "postgres_type": "integer",
+                "value": 7101
+              }
+            }
+          },
+          "result": {
+            "row_count": 304,
+            "column_count": 1,
+            "distinct_user_count": 304,
+            "fixed_edge_user_ids": [
+              7001,
+              7003,
+              7006,
+              7007
+            ],
+            "minimum_generated_user_id": 100500,
+            "maximum_generated_user_id": 250000,
+            "canonical_user_ids_sha256": "527b6c01dd238cb827dd9f647fb14f7dc16fa3014a1c4d117c9a0db7ab412a61"
+          },
+          "assertions_passed": [
+            "exact-result-row-count",
+            "root-executed-once",
+            "required-relations-scanned",
+            "raw-timing-and-buffer-fields-observed",
+            "zero-temp-blocks"
+          ],
+          "plan_summary": {
+            "root_node_type": "Unique",
+            "root_actual_rows": 304,
+            "root_actual_loops": 1,
+            "node_count": 2,
+            "maximum_depth": 1,
+            "maximum_actual_loops": 1,
+            "node_types_preorder": [
+              "Unique",
+              "Index Only Scan"
+            ],
+            "node_type_counts": {
+              "Index Only Scan": 1,
+              "Unique": 1
+            },
+            "relation_scan_occurrences": {
+              "public_bank_users": 1
+            },
+            "index_names": [
+              "public_bank_users_bank_id_user_id_key"
+            ],
+            "buffer_fields_observed_before_normalization": [
+              "Heap Fetches",
+              "Local Dirtied Blocks",
+              "Local Hit Blocks",
+              "Local Read Blocks",
+              "Local Written Blocks",
+              "Shared Dirtied Blocks",
+              "Shared Hit Blocks",
+              "Shared Read Blocks",
+              "Shared Written Blocks",
+              "Temp Read Blocks",
+              "Temp Written Blocks"
+            ],
+            "timing_fields_observed_before_normalization": [
+              "Actual Startup Time",
+              "Actual Total Time",
+              "Execution Time",
+              "Planning Time"
+            ],
+            "temp_read_blocks_observed": 0.0,
+            "temp_written_blocks_observed": 0.0,
+            "nodes": [
+              {
+                "depth": 0,
+                "Node Type": "Unique",
+                "Actual Rows": 304,
+                "Actual Loops": 1
+              },
+              {
+                "depth": 1,
+                "Node Type": "Index Only Scan",
+                "Parent Relationship": "Outer",
+                "Relation Name": "public_bank_users",
+                "Alias": "public_bank_users",
+                "Index Name": "public_bank_users_bank_id_user_id_key",
+                "Scan Direction": "Forward",
+                "Actual Rows": 304,
+                "Actual Loops": 1,
+                "Rows Removed by Index Recheck": 0,
+                "Index Cond": {
+                  "redacted": "planner expression omitted",
+                  "character_count": 18,
+                  "sha256": "e2dff79ef8b31d1cde769104afc7da84668e8550f3765c0b595d1adbd89b4319"
+                }
+              }
+            ]
+          },
+          "normalized_explain_analyze": {
+            "Plan": {
+              "Node Type": "Unique",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Actual Rows": 304,
+              "Actual Loops": 1,
+              "Plans": [
+                {
+                  "Node Type": "Index Only Scan",
+                  "Parent Relationship": "Outer",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "public_bank_users_bank_id_user_id_key",
+                  "Relation Name": "public_bank_users",
+                  "Alias": "public_bank_users",
+                  "Actual Rows": 304,
+                  "Actual Loops": 1,
+                  "Index Cond": {
+                    "redacted": "planner expression omitted",
+                    "character_count": 18,
+                    "sha256": "e2dff79ef8b31d1cde769104afc7da84668e8550f3765c0b595d1adbd89b4319"
+                  },
+                  "Rows Removed by Index Recheck": 0
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "label": "PostgreSQL 18.4",
+      "image": "postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
+      "image_id": "sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
+      "network": "none",
+      "server_version": "18.4",
+      "server_version_num": "180004",
+      "data_set": {
+        "users": 150008,
+        "user_question_banks": 5007,
+        "bank_shares": 150020,
+        "bank_share_records": 150010,
+        "public_bank_users": 150005,
+        "target_bank_share_records": 50010,
+        "target_public_bank_users": 304
+      },
+      "schema_fingerprint_before_after_sha256": "612cbc83e2d0607e77ba928900c5e0536d68a52b32a6ac99d11dfd5300e2b657",
+      "data_fingerprint_before_after_sha256": "237209ae735b7fbe243e39fcb41fb5a3124572b0d77621aaf3e3beec2ed44e08",
+      "read_only_capture_fingerprints_unchanged": true,
+      "observations": [
+        {
+          "ordinal": 1,
+          "query_id": "personal-bank-usage-stats-bank-probe",
+          "operation": "bank-probe",
+          "sql": "SELECT id,\n       user_id,\n       is_public,\n       status\nFROM user_question_banks\nWHERE id = :bank_id\n",
+          "sql_sha256": "609a874bcfeca2e0dea2041ebabfad8f9251c073e7f38ffd8182eef5877aca94",
+          "normalized_sql_sha256": "ee05b96abd3002956d890acfebab441d34dcfa5288043e0901eb47fd917064a3",
+          "binding": {
+            "mode": "postgresql-prepare-execute",
+            "prepared_name": "phase4b_usage_bank_probe",
+            "session_settings": {
+              "max_parallel_workers_per_gather": "0",
+              "jit": "off",
+              "work_mem": "64MB"
+            },
+            "runtime_statement_count": 1,
+            "bound_parameter_count": 1,
+            "occurrence_names": [
+              "bank_id"
+            ],
+            "positional_sql_sha256": "6d3ac1315364647c819cd91bf2c12ac3812d36eee5337ede18845fd5154e0982",
+            "parameters": {
+              "bank_id": {
+                "postgres_type": "integer",
+                "value": 7101
+              }
+            }
+          },
+          "result": {
+            "row_count": 1,
+            "column_count": 4,
+            "exact_rows": [
+              [
+                "7101",
+                "7001",
+                "f",
+                "1"
+              ]
+            ],
+            "rows_sha256": "0abdd98e5212ddc329303a91e2974de644110dae02536cfda192641d60a48ac7"
+          },
+          "assertions_passed": [
+            "exact-result-row-count",
+            "root-executed-once",
+            "required-relations-scanned",
+            "raw-timing-and-buffer-fields-observed",
+            "zero-temp-blocks"
+          ],
+          "plan_summary": {
+            "root_node_type": "Index Scan",
+            "root_actual_rows": 1,
+            "root_actual_loops": 1,
+            "node_count": 1,
+            "maximum_depth": 0,
+            "maximum_actual_loops": 1,
+            "node_types_preorder": [
+              "Index Scan"
+            ],
+            "node_type_counts": {
+              "Index Scan": 1
+            },
+            "relation_scan_occurrences": {
+              "user_question_banks": 1
+            },
+            "index_names": [
+              "user_question_banks_pkey"
+            ],
+            "buffer_fields_observed_before_normalization": [
+              "Local Dirtied Blocks",
+              "Local Hit Blocks",
+              "Local Read Blocks",
+              "Local Written Blocks",
+              "Shared Dirtied Blocks",
+              "Shared Hit Blocks",
+              "Shared Read Blocks",
+              "Shared Written Blocks",
+              "Temp Read Blocks",
+              "Temp Written Blocks"
+            ],
+            "timing_fields_observed_before_normalization": [
+              "Actual Startup Time",
+              "Actual Total Time",
+              "Execution Time",
+              "Planning Time"
+            ],
+            "temp_read_blocks_observed": 0.0,
+            "temp_written_blocks_observed": 0.0,
+            "nodes": [
+              {
+                "depth": 0,
+                "Node Type": "Index Scan",
+                "Relation Name": "user_question_banks",
+                "Alias": "user_question_banks",
+                "Index Name": "user_question_banks_pkey",
+                "Scan Direction": "Forward",
+                "Actual Rows": 1.0,
+                "Actual Loops": 1,
+                "Rows Removed by Index Recheck": 0,
+                "Index Cond": {
+                  "redacted": "planner expression omitted",
+                  "character_count": 13,
+                  "sha256": "0d5579eeebcc96c51a73cd7b16ecc46b1a1674af8c554f87cbf4c29838e81395"
+                }
+              }
+            ]
+          },
+          "normalized_explain_analyze": {
+            "Plan": {
+              "Node Type": "Index Scan",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Scan Direction": "Forward",
+              "Index Name": "user_question_banks_pkey",
+              "Relation Name": "user_question_banks",
+              "Alias": "user_question_banks",
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Disabled": false,
+              "Index Cond": {
+                "redacted": "planner expression omitted",
+                "character_count": 13,
+                "sha256": "0d5579eeebcc96c51a73cd7b16ecc46b1a1674af8c554f87cbf4c29838e81395"
+              },
+              "Rows Removed by Index Recheck": 0,
+              "Index Searches": 1
+            }
+          }
+        },
+        {
+          "ordinal": 2,
+          "query_id": "personal-bank-usage-stats-shared-users",
+          "operation": "shared-users",
+          "sql": "SELECT DISTINCT bsr.user_id AS user_id,\n                bs.expires_at AS expires_at\nFROM bank_share_records bsr\nJOIN bank_shares bs ON bsr.share_id = bs.id\nWHERE bsr.bank_id = :bank_id\n  AND bsr.status = 1\n  AND bs.is_active = TRUE\n",
+          "sql_sha256": "fa42ff44f6482fb9c576c08181b7ffeb641cfe783eb1a94915639931369cbaca",
+          "normalized_sql_sha256": "7231e8f4817d38f06134e8b5882ed91fbc2e29dc5477fc2de995ec439b9f9759",
+          "binding": {
+            "mode": "postgresql-prepare-execute",
+            "prepared_name": "phase4b_usage_shared_users",
+            "session_settings": {
+              "max_parallel_workers_per_gather": "0",
+              "jit": "off",
+              "work_mem": "64MB"
+            },
+            "runtime_statement_count": 1,
+            "bound_parameter_count": 1,
+            "occurrence_names": [
+              "bank_id"
+            ],
+            "positional_sql_sha256": "e093a64ffa94224fa0b1ac717f35abaa63eb98d98b2152e12e077143f1732017",
+            "parameters": {
+              "bank_id": {
+                "postgres_type": "integer",
+                "value": 7101
+              }
+            }
+          },
+          "result": {
+            "row_count": 41180,
+            "column_count": 2,
+            "distinct_user_count": 41179,
+            "pair_distinct_duplicate_user_count": 1,
+            "expiry_value_counts": {
+              "future": 38771,
+              "null": 1081,
+              "past": 1328
+            },
+            "fixed_edge_rows": [
+              [
+                "7001",
+                "<NULL>"
+              ],
+              [
+                "7003",
+                "2099-01-01 00:00:00"
+              ],
+              [
+                "7003",
+                "<NULL>"
+              ],
+              [
+                "7004",
+                "2020-01-01 00:00:00"
+              ],
+              [
+                "7005",
+                "<NULL>"
+              ],
+              [
+                "7006",
+                "<NULL>"
+              ],
+              [
+                "7007",
+                "<NULL>"
+              ]
+            ],
+            "minimum_generated_user_id": 100003,
+            "maximum_generated_user_id": 250000,
+            "unordered_rows_sha256": "e8f26bd73b2bd376d358f92a61524ce9ae14d1d8911e26d563cb584901b72649"
+          },
+          "assertions_passed": [
+            "exact-result-row-count",
+            "root-executed-once",
+            "required-relations-scanned",
+            "raw-timing-and-buffer-fields-observed",
+            "zero-temp-blocks"
+          ],
+          "plan_summary": {
+            "root_node_type": "Aggregate",
+            "root_actual_rows": 41180,
+            "root_actual_loops": 1,
+            "node_count": 5,
+            "maximum_depth": 3,
+            "maximum_actual_loops": 1,
+            "node_types_preorder": [
+              "Aggregate",
+              "Hash Join",
+              "Seq Scan",
+              "Hash",
+              "Seq Scan"
+            ],
+            "node_type_counts": {
+              "Aggregate": 1,
+              "Hash": 1,
+              "Hash Join": 1,
+              "Seq Scan": 2
+            },
+            "relation_scan_occurrences": {
+              "bank_share_records": 1,
+              "bank_shares": 1
+            },
+            "index_names": [],
+            "buffer_fields_observed_before_normalization": [
+              "Local Dirtied Blocks",
+              "Local Hit Blocks",
+              "Local Read Blocks",
+              "Local Written Blocks",
+              "Shared Dirtied Blocks",
+              "Shared Hit Blocks",
+              "Shared Read Blocks",
+              "Shared Written Blocks",
+              "Temp Read Blocks",
+              "Temp Written Blocks"
+            ],
+            "timing_fields_observed_before_normalization": [
+              "Actual Startup Time",
+              "Actual Total Time",
+              "Execution Time",
+              "Planning Time"
+            ],
+            "temp_read_blocks_observed": 0.0,
+            "temp_written_blocks_observed": 0.0,
+            "nodes": [
+              {
+                "depth": 0,
+                "Node Type": "Aggregate",
+                "Strategy": "Hashed",
+                "Actual Rows": 41180.0,
+                "Actual Loops": 1,
+                "Group Key": {
+                  "redacted": "planner expression omitted",
+                  "character_count": 32,
+                  "sha256": "b4c083ec305d31129f0c84bfd76d63a86bf7419ceb1ed09f28a2a49d0653fc37"
+                }
+              },
+              {
+                "depth": 1,
+                "Node Type": "Hash Join",
+                "Parent Relationship": "Outer",
+                "Join Type": "Inner",
+                "Actual Rows": 41180.0,
+                "Actual Loops": 1,
+                "Hash Cond": {
+                  "redacted": "planner expression omitted",
+                  "character_count": 24,
+                  "sha256": "2f2449eeb6d1fc9798024c63a6b4cad332c310c3125d93715f07aeba5bbf87e0"
+                }
+              },
+              {
+                "depth": 2,
+                "Node Type": "Seq Scan",
+                "Parent Relationship": "Outer",
+                "Relation Name": "bank_shares",
+                "Alias": "bs",
+                "Actual Rows": 135943.0,
+                "Actual Loops": 1,
+                "Rows Removed by Filter": 14077,
+                "Filter": {
+                  "redacted": "planner expression omitted",
+                  "character_count": 11,
+                  "sha256": "f3107dbdaf2b83825ad2d79441dac3dbb7a15b1fae9032bbaf1e43837456110f"
+                }
+              },
+              {
+                "depth": 2,
+                "Node Type": "Hash",
+                "Parent Relationship": "Inner",
+                "Actual Rows": 45445.0,
+                "Actual Loops": 1
+              },
+              {
+                "depth": 3,
+                "Node Type": "Seq Scan",
+                "Parent Relationship": "Outer",
+                "Relation Name": "bank_share_records",
+                "Alias": "bsr",
+                "Actual Rows": 45445.0,
+                "Actual Loops": 1,
+                "Rows Removed by Filter": 104565,
+                "Filter": {
+                  "redacted": "planner expression omitted",
+                  "character_count": 37,
+                  "sha256": "3e7c005b4f15dc09788f3c2a7c6c4ec858854d9c79c1ea5b99ad6b753b1fd1a5"
+                }
+              }
+            ]
+          },
+          "normalized_explain_analyze": {
+            "Plan": {
+              "Node Type": "Aggregate",
+              "Strategy": "Hashed",
+              "Partial Mode": "Simple",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Actual Rows": 41180.0,
+              "Actual Loops": 1,
+              "Disabled": false,
+              "Group Key": {
+                "redacted": "planner expression omitted",
+                "character_count": 32,
+                "sha256": "b4c083ec305d31129f0c84bfd76d63a86bf7419ceb1ed09f28a2a49d0653fc37"
+              },
+              "Planned Partitions": 0,
+              "HashAgg Batches": 1,
+              "Plans": [
+                {
+                  "Node Type": "Hash Join",
+                  "Parent Relationship": "Outer",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Join Type": "Inner",
+                  "Actual Rows": 41180.0,
+                  "Actual Loops": 1,
+                  "Disabled": false,
+                  "Inner Unique": false,
+                  "Hash Cond": {
+                    "redacted": "planner expression omitted",
+                    "character_count": 24,
+                    "sha256": "2f2449eeb6d1fc9798024c63a6b4cad332c310c3125d93715f07aeba5bbf87e0"
+                  },
+                  "Plans": [
+                    {
+                      "Node Type": "Seq Scan",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Relation Name": "bank_shares",
+                      "Alias": "bs",
+                      "Actual Rows": 135943.0,
+                      "Actual Loops": 1,
+                      "Disabled": false,
+                      "Filter": {
+                        "redacted": "planner expression omitted",
+                        "character_count": 11,
+                        "sha256": "f3107dbdaf2b83825ad2d79441dac3dbb7a15b1fae9032bbaf1e43837456110f"
+                      },
+                      "Rows Removed by Filter": 14077
+                    },
+                    {
+                      "Node Type": "Hash",
+                      "Parent Relationship": "Inner",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Actual Rows": 45445.0,
+                      "Actual Loops": 1,
+                      "Disabled": false,
+                      "Plans": [
+                        {
+                          "Node Type": "Seq Scan",
+                          "Parent Relationship": "Outer",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Relation Name": "bank_share_records",
+                          "Alias": "bsr",
+                          "Actual Rows": 45445.0,
+                          "Actual Loops": 1,
+                          "Disabled": false,
+                          "Filter": {
+                            "redacted": "planner expression omitted",
+                            "character_count": 37,
+                            "sha256": "3e7c005b4f15dc09788f3c2a7c6c4ec858854d9c79c1ea5b99ad6b753b1fd1a5"
+                          },
+                          "Rows Removed by Filter": 104565
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "ordinal": 3,
+          "query_id": "personal-bank-usage-stats-public-users",
+          "operation": "public-users",
+          "sql": "SELECT DISTINCT user_id\nFROM public_bank_users\nWHERE bank_id = :bank_id\n",
+          "sql_sha256": "09a706a4289f5c0cd3ed4d79c1d369aee16b3ae390c7ca838a6a7b9b961c3baa",
+          "normalized_sql_sha256": "dff74398febb7e8b3d9846f74cdf5d5b1902d26153dac668ff5a51359cb79991",
+          "binding": {
+            "mode": "postgresql-prepare-execute",
+            "prepared_name": "phase4b_usage_public_users",
+            "session_settings": {
+              "max_parallel_workers_per_gather": "0",
+              "jit": "off",
+              "work_mem": "64MB"
+            },
+            "runtime_statement_count": 1,
+            "bound_parameter_count": 1,
+            "occurrence_names": [
+              "bank_id"
+            ],
+            "positional_sql_sha256": "09a93086a30f67bc251d9f5ff9b98b8c46a862976b16f191b68ddf149a87e6a7",
+            "parameters": {
+              "bank_id": {
+                "postgres_type": "integer",
+                "value": 7101
+              }
+            }
+          },
+          "result": {
+            "row_count": 304,
+            "column_count": 1,
+            "distinct_user_count": 304,
+            "fixed_edge_user_ids": [
+              7001,
+              7003,
+              7006,
+              7007
+            ],
+            "minimum_generated_user_id": 100500,
+            "maximum_generated_user_id": 250000,
+            "canonical_user_ids_sha256": "527b6c01dd238cb827dd9f647fb14f7dc16fa3014a1c4d117c9a0db7ab412a61"
+          },
+          "assertions_passed": [
+            "exact-result-row-count",
+            "root-executed-once",
+            "required-relations-scanned",
+            "raw-timing-and-buffer-fields-observed",
+            "zero-temp-blocks"
+          ],
+          "plan_summary": {
+            "root_node_type": "Unique",
+            "root_actual_rows": 304,
+            "root_actual_loops": 1,
+            "node_count": 2,
+            "maximum_depth": 1,
+            "maximum_actual_loops": 1,
+            "node_types_preorder": [
+              "Unique",
+              "Index Only Scan"
+            ],
+            "node_type_counts": {
+              "Index Only Scan": 1,
+              "Unique": 1
+            },
+            "relation_scan_occurrences": {
+              "public_bank_users": 1
+            },
+            "index_names": [
+              "public_bank_users_bank_id_user_id_key"
+            ],
+            "buffer_fields_observed_before_normalization": [
+              "Heap Fetches",
+              "Local Dirtied Blocks",
+              "Local Hit Blocks",
+              "Local Read Blocks",
+              "Local Written Blocks",
+              "Shared Dirtied Blocks",
+              "Shared Hit Blocks",
+              "Shared Read Blocks",
+              "Shared Written Blocks",
+              "Temp Read Blocks",
+              "Temp Written Blocks"
+            ],
+            "timing_fields_observed_before_normalization": [
+              "Actual Startup Time",
+              "Actual Total Time",
+              "Execution Time",
+              "Planning Time"
+            ],
+            "temp_read_blocks_observed": 0.0,
+            "temp_written_blocks_observed": 0.0,
+            "nodes": [
+              {
+                "depth": 0,
+                "Node Type": "Unique",
+                "Actual Rows": 304.0,
+                "Actual Loops": 1
+              },
+              {
+                "depth": 1,
+                "Node Type": "Index Only Scan",
+                "Parent Relationship": "Outer",
+                "Relation Name": "public_bank_users",
+                "Alias": "public_bank_users",
+                "Index Name": "public_bank_users_bank_id_user_id_key",
+                "Scan Direction": "Forward",
+                "Actual Rows": 304.0,
+                "Actual Loops": 1,
+                "Rows Removed by Index Recheck": 0,
+                "Index Cond": {
+                  "redacted": "planner expression omitted",
+                  "character_count": 18,
+                  "sha256": "e2dff79ef8b31d1cde769104afc7da84668e8550f3765c0b595d1adbd89b4319"
+                }
+              }
+            ]
+          },
+          "normalized_explain_analyze": {
+            "Plan": {
+              "Node Type": "Unique",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Actual Rows": 304.0,
+              "Actual Loops": 1,
+              "Disabled": false,
+              "Plans": [
+                {
+                  "Node Type": "Index Only Scan",
+                  "Parent Relationship": "Outer",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "public_bank_users_bank_id_user_id_key",
+                  "Relation Name": "public_bank_users",
+                  "Alias": "public_bank_users",
+                  "Actual Rows": 304.0,
+                  "Actual Loops": 1,
+                  "Disabled": false,
+                  "Index Cond": {
+                    "redacted": "planner expression omitted",
+                    "character_count": 18,
+                    "sha256": "e2dff79ef8b31d1cde769104afc7da84668e8550f3765c0b595d1adbd89b4319"
+                  },
+                  "Rows Removed by Index Recheck": 0,
+                  "Index Searches": 1
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "cross_version_contract": {
+    "required_versions": [
+      "16.14",
+      "18.4"
+    ],
+    "observed_versions": [
+      "16.14",
+      "18.4"
+    ],
+    "three_queries_observed_in_order_per_version": true,
+    "exact_query_results_equal_across_versions": true,
+    "bank_probe_uses_primary_key": true,
+    "shared_users_exposes_missing_bank_id_index": true,
+    "temp_blocks_zero": true,
+    "read_only_capture_fingerprints_unchanged": true,
+    "passed": true
+  },
+  "normalization": {
+    "removed": [
+      "planning and execution timing values",
+      "per-node actual timing values",
+      "cache-dependent buffer block counts except TEMP zero assertions",
+      "planner estimates and costs",
+      "runtime memory, hash and worker counters",
+      "container ID and ephemeral container name"
+    ],
+    "retained": [
+      "exact result counts and canonical result hashes",
+      "plan root and node types",
+      "actual rows and loops",
+      "relation and index names",
+      "redacted hashes of planner expressions",
+      "names of raw timing and BUFFERS fields observed before normalization",
+      "TEMP read and write block zero values"
+    ],
+    "reason": "Adjacent plan gates remove volatile timing, cost and cache counters so a fresh dual-version capture is byte-identical instead of presenting random latency as a stable contract."
+  },
+  "claim_limits": {
+    "observational_evidence_only": true,
+    "production_sla_claimed": false,
+    "index_change_authorized": false,
+    "schema_change_authorized": false,
+    "http_parity_claimed": false,
+    "production_cutover_claimed": false,
+    "note": "The scale fixture exposes the current bank_share_records scan and does not authorize an index, schema, HTTP, or production change."
+  },
+  "reproduction": {
+    "working_directory": "repository root containing Ti-Java",
+    "command": "python3 Ti-Java/tools/capture_phase4b_personal_bank_usage_stats_query_plans.py",
+    "prerequisites": "Docker and the repository Maven verification image",
+    "isolation": "ephemeral network-disabled containers removed on all exits"
+  },
+  "document_payload_sha256": "293732bb88969bab9a0d3ffab6f33f3c73b78049d4e295d1aef4eda4a9353b03"
+}
