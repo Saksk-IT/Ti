@@ -126,8 +126,44 @@ USAGE_STATS_IMPLEMENTATION_FORWARD_ADDITIONS = {
     ),
     "Ti-Java/tools/test_phase4b_personal_bank_usage_stats_read_contract.py",
 }
+USER_COUNTS_ENTRY_FORWARD_ADDITIONS = {
+    "Ti-Java/docs/refactor/phase4b/golden-personal-bank-user-counts-reads.json",
+    "Ti-Java/docs/refactor/phase4b/personal-bank-user-counts-callers.json",
+    "Ti-Java/docs/refactor/phase4b/personal-bank-user-counts-entry-contract.json",
+    (
+        "Ti-Java/docs/refactor/phase4b/"
+        "personal-bank-user-counts-query-plan-evidence.json"
+    ),
+    (
+        "Ti-Java/server/src/test/java/io/saksk/ti/integration/"
+        "Phase4bPersonalBankUserCountsEvidenceJdbcCompatibilityIT.java"
+    ),
+    (
+        "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/infrastructure/"
+        "persistence/PersonalBankUserCountsEvidenceSql.java"
+    ),
+    (
+        "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/infrastructure/"
+        "persistence/PersonalBankUserCountsEvidenceSqlContractTest.java"
+    ),
+    (
+        "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/infrastructure/"
+        "persistence/PersonalBankUserCountsEvidenceSqlManifestTest.java"
+    ),
+    "Ti-Java/server/src/test/resources/db/phase4b/067-personal-bank-user-counts-schema.sql",
+    "Ti-Java/server/src/test/resources/db/phase4b/068-personal-bank-user-counts-seed.sql",
+    "Ti-Java/tools/capture_phase4b_personal_bank_user_counts_callers.py",
+    "Ti-Java/tools/capture_phase4b_personal_bank_user_counts_goldens.py",
+    "Ti-Java/tools/capture_phase4b_personal_bank_user_counts_query_plans.py",
+    "Ti-Java/tools/test_capture_phase4b_personal_bank_user_counts_callers.py",
+    "Ti-Java/tools/test_capture_phase4b_personal_bank_user_counts_goldens.py",
+    "Ti-Java/tools/test_capture_phase4b_personal_bank_user_counts_query_plans.py",
+    "Ti-Java/tools/test_phase4b_personal_bank_user_counts_entry_contract.py",
+}
 USAGE_STATS_TERMINAL_FORWARD_ADDITIONS = (
-    USAGE_STATS_FORWARD_ADDITIONS | USAGE_STATS_IMPLEMENTATION_FORWARD_ADDITIONS
+    USAGE_STATS_FORWARD_ADDITIONS
+    | USAGE_STATS_IMPLEMENTATION_FORWARD_ADDITIONS
+    | USER_COUNTS_ENTRY_FORWARD_ADDITIONS
 )
 ALL_SHARES_FORWARD_ADDITIONS = {
     f"Ti-Java/{ALL_SHARES_ENTRY_RELATIVE}",

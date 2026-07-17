@@ -13,12 +13,24 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 PHASE4B = ROOT / "docs" / "refactor" / "phase4b"
 CONTRACT_PATH = PHASE4B / "personal-bank-usage-stats-read-contract.json"
+CONTRACT_RELATIVE = (
+    "docs/refactor/phase4b/personal-bank-usage-stats-read-contract.json"
+)
 ENTRY_PATH = PHASE4B / "personal-bank-usage-stats-entry-contract.json"
 SHAPE_PATH = (
     PHASE4B / "personal-bank-usage-stats-application-api-shape.json"
 )
 GOLDEN_PATH = PHASE4B / "golden-personal-bank-usage-stats-reads.json"
 PLAN_PATH = PHASE4B / "personal-bank-usage-stats-query-plan-evidence.json"
+USER_COUNTS_ENTRY_PATH = (
+    PHASE4B / "personal-bank-user-counts-entry-contract.json"
+)
+USER_COUNTS_ENTRY_RELATIVE = (
+    "docs/refactor/phase4b/personal-bank-user-counts-entry-contract.json"
+)
+USER_COUNTS_GOLDEN_PATH = (
+    PHASE4B / "golden-personal-bank-user-counts-reads.json"
+)
 
 QUERY_IDS = [
     "personal-bank-usage-stats-bank-probe",
@@ -49,6 +61,25 @@ FORBIDDEN_SCOPE_KEYS = {
     "parallel_query_execution_added",
     "http_status_or_envelope_implementation_added",
     "production_cutover",
+}
+USER_COUNTS_AUTHORIZATION_KEYS = {
+    "direct_personalbank_implementation",
+    "learning_composition_implementation",
+    "http_implementation",
+    "production_schema_delta",
+    "production_index_delta",
+    "production_cutover",
+}
+USER_COUNTS_CHANGE_BUDGET_KEYS = {
+    "production_java_files_added",
+    "production_java_files_modified",
+    "http_controllers_added",
+    "application_methods_added",
+    "production_schema_files_added",
+    "production_indexes_added",
+    "route_delta_rows_added",
+    "openapi_operations_migrated",
+    "production_cutover_operations",
 }
 VIEW_COMPONENTS = [
     {"name": "bankId", "java_type": "int", "nullable": False},
@@ -284,6 +315,44 @@ FORWARD_ADDITIONS = {
     "Ti-Java/tools/test_capture_phase4b_personal_bank_usage_stats_query_plans.py",
     "Ti-Java/tools/test_phase4b_personal_bank_usage_stats_entry_contract.py",
     "Ti-Java/tools/test_phase4b_personal_bank_usage_stats_read_contract.py",
+    "Ti-Java/docs/refactor/phase4b/golden-personal-bank-user-counts-reads.json",
+    "Ti-Java/docs/refactor/phase4b/personal-bank-user-counts-callers.json",
+    "Ti-Java/docs/refactor/phase4b/personal-bank-user-counts-entry-contract.json",
+    (
+        "Ti-Java/docs/refactor/phase4b/"
+        "personal-bank-user-counts-query-plan-evidence.json"
+    ),
+    (
+        "Ti-Java/server/src/test/java/io/saksk/ti/integration/"
+        "Phase4bPersonalBankUserCountsEvidenceJdbcCompatibilityIT.java"
+    ),
+    (
+        "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/infrastructure/"
+        "persistence/PersonalBankUserCountsEvidenceSql.java"
+    ),
+    (
+        "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/infrastructure/"
+        "persistence/PersonalBankUserCountsEvidenceSqlContractTest.java"
+    ),
+    (
+        "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/infrastructure/"
+        "persistence/PersonalBankUserCountsEvidenceSqlManifestTest.java"
+    ),
+    (
+        "Ti-Java/server/src/test/resources/db/phase4b/"
+        "067-personal-bank-user-counts-schema.sql"
+    ),
+    (
+        "Ti-Java/server/src/test/resources/db/phase4b/"
+        "068-personal-bank-user-counts-seed.sql"
+    ),
+    "Ti-Java/tools/capture_phase4b_personal_bank_user_counts_callers.py",
+    "Ti-Java/tools/capture_phase4b_personal_bank_user_counts_goldens.py",
+    "Ti-Java/tools/capture_phase4b_personal_bank_user_counts_query_plans.py",
+    "Ti-Java/tools/test_capture_phase4b_personal_bank_user_counts_callers.py",
+    "Ti-Java/tools/test_capture_phase4b_personal_bank_user_counts_goldens.py",
+    "Ti-Java/tools/test_capture_phase4b_personal_bank_user_counts_query_plans.py",
+    "Ti-Java/tools/test_phase4b_personal_bank_user_counts_entry_contract.py",
 }
 
 
@@ -321,6 +390,8 @@ class Phase4bPersonalBankUsageStatsReadContractTest(unittest.TestCase):
         cls.shape = load_json(SHAPE_PATH)
         cls.golden = load_json(GOLDEN_PATH)
         cls.plan = load_json(PLAN_PATH)
+        cls.user_counts_entry = load_json(USER_COUNTS_ENTRY_PATH)
+        cls.user_counts_golden = load_json(USER_COUNTS_GOLDEN_PATH)
         cls.openapi = load_json(ROOT / "contracts" / "openapi.json")
 
     def test_01_predecessor_evidence_and_payload_are_closed(self):
@@ -612,11 +683,93 @@ class Phase4bPersonalBankUsageStatsReadContractTest(unittest.TestCase):
         self.assertTrue(all(value is False for value in forbidden.values()))
         forward = self.contract["forward_handoff"]
         self.assertEqual(FORWARD_ADDITIONS, set(forward["forward_additions"]))
-        self.assertEqual(32, len(forward["forward_additions"]))
+        self.assertEqual(49, len(forward["forward_additions"]))
         for repository_relative in forward["forward_additions"]:
             self.assertTrue(
                 (ROOT.parent / repository_relative).is_file(), repository_relative
             )
+
+    def test_06_user_counts_successor_closes_evidence_without_authorization(self):
+        successor = self.user_counts_entry
+        self.assertEqual(
+            "ti.phase4b.personal-bank-user-counts-entry-contract",
+            successor["contract_id"],
+        )
+        self.assertEqual(
+            "evidence_closed_but_production_implementation_blocked_"
+            "pending_learning_composition",
+            successor["status"],
+        )
+        self.assertEqual(CONTRACT_RELATIVE, successor["predecessor"]["source"])
+        self.assertEqual(
+            sha256(CONTRACT_PATH), successor["predecessor"]["sha256"]
+        )
+
+        decision = successor["entry_decision"]
+        self.assertTrue(decision["evidence_closed"])
+        self.assertFalse(decision["implementation_authorized"])
+        self.assertEqual("personalbank", decision["baseline_route_owner"])
+        self.assertEqual("learning", decision["reviewed_use_case_owner"])
+        self.assertEqual("learning", decision["reviewed_http_owner"])
+        authorizations = decision["authorizations"]
+        self.assertEqual(USER_COUNTS_AUTHORIZATION_KEYS, set(authorizations))
+        self.assertTrue(all(value is False for value in authorizations.values()))
+
+        boundary = successor["module_boundary_decision"]
+        self.assertEqual(
+            "learning_to_personalbank_api",
+            boundary["required_composition_direction"],
+        )
+        self.assertEqual("learning", boundary["complete_use_case_owner"])
+        self.assertEqual("personalbank::api", boundary["personalbank_call_surface"])
+        self.assertEqual(
+            [
+                "user_bank_favorites",
+                "user_bank_mistakes",
+                "user_progress",
+                "user_question_tag_items",
+            ],
+            boundary["personalbank_forbidden_learning_tables"],
+        )
+
+        prerequisites = successor["entry_prerequisites"]
+        for evidence_name in (
+            "caller_attestation",
+            "fixed_commit_golden",
+            "jdbc_and_query_plans",
+        ):
+            reference = prerequisites[evidence_name]
+            evidence_path = ROOT / reference["evidence_source"]
+            self.assertTrue(evidence_path.is_file(), evidence_name)
+            self.assertEqual(
+                sha256(evidence_path), reference["file_sha256"], evidence_name
+            )
+        self.assertEqual(
+            59, prerequisites["fixed_commit_golden"]["case_count"]
+        )
+        self.assertTrue(prerequisites["fixed_commit_golden"]["passed"])
+        self.assertTrue(prerequisites["jdbc_and_query_plans"]["passed"])
+        self.assertEqual(59, self.user_counts_golden["case_count"])
+
+        unchanged = successor["unchanged_state"]
+        self.assertEqual(23, unchanged["implemented_public_application_method_count"])
+        self.assertEqual(11, unchanged["migrated_route_count"])
+        self.assertEqual(600, unchanged["pending_route_count"])
+        self.assertEqual(0, unchanged["production_cutover_count"])
+
+        acceptance = successor["acceptance"]
+        self.assertTrue(acceptance["evidence_closed"])
+        self.assertFalse(acceptance["implementation_authorized"])
+        self.assertEqual(
+            "pending_learning_composition_contract",
+            acceptance["next_required_gate"],
+        )
+        self.assertFalse(acceptance["production_cutover"])
+
+        change_budget = successor["change_budget"]
+        self.assertEqual(USER_COUNTS_CHANGE_BUDGET_KEYS, set(change_budget))
+        self.assertTrue(all(value == 0 for value in change_budget.values()))
+        self.assertNotIn("PENDING", json.dumps(successor, sort_keys=True))
 
 
 if __name__ == "__main__":

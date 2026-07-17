@@ -209,13 +209,13 @@
       "sql_contract_test": "6c6df77f702f965e4a0256b09e89a55a1693f22bb087bd66a8e6c93169ca17a7",
       "runtime_sql_manifest_test": "fbcdd909ef5ea8c0e4016696249fb4274e57d0494948dcb0958efec3963d3101",
       "jdbc_compatibility_test": "ead7d9b57a4c462b758e6ba773daac3f4fe63eb9a05d4b2c505e8566d155928c",
-      "contract_parity_test": "cc7fe3718caa60f047cd887bfab67bde0e039db442887de306f04c89e7bd416a",
-      "read_contract_test": "7af573fdc1696848bae7c278908e1228eec390694bff55450f22e7f64de323e9",
+      "contract_parity_test": "343b8b4cf4e9df575e1a5f14743d39c2d31e2b7b20f9c604bcab3f17081e6a1e",
+      "read_contract_test": "60c6dc113f42093c2ff2ff21405cdebadb76fd99886fc94c1b15ab616955aac4",
       "entry_forward_handoff_test": "0eb5fa3ae1eab5001e1a44e77d312ad425967d746370b8f6da6f18a202089f8d",
       "all_shares_read_forward_handoff_test": "75e4235fad3bbe8edfd34829a82ff4a6cff8798fee1ac6cfeab072e6f2f81913",
       "all_shares_entry_forward_handoff_test": "0c2be82c561aa7f02e6db4b71d4f91ebf1b772f92d4e193a3812e92722c2ba2a",
       "all_shares_contract_parity_test": "0716fcfa788c530517f2da5ef87a943c3ed2d960e50e599d66756e6e84d29973",
-      "share_read_contract_test": "c1ff198075009a5beeaf0b06c6dd44ff7c593412f0635916bd91f35f0fecb606",
+      "share_read_contract_test": "65fe01833802612620ffa26e1771cd9215c5866d65a933bc34be4a806ee42c63",
       "share_list_entry_forward_handoff_test": "866b749cdc00fe22451e4a4663702d98e4917e0d546f996f0d6cac6326f39d75",
       "share_list_contract_parity_test": "d6326b2aa91ceb2bb502bc8847d233c26a2741996a7bc3bf627c9731c6318523",
       "category_acceptance_forward_handoff_test": "fdc43d61e5b221fb5f0dd3e2d5789e9677323cca7741be7d7c5efa548a775956",
@@ -224,7 +224,7 @@
       "public_boundary_test": "f128aa1af058cd4e1c4eb910aefd4f01a69e39e952fb052ab009469415262aba",
       "module_contract_parity_test": "35e25fa5ed4d5771701f8c1819b615bee9af441a6c64cbf1386df168f16610cb",
       "module_context_test": "aad88abf399c1a382f1a7e3eb323bf68d75c322ee844c614f7b48a9ca69d2bd5",
-      "progress_forward_handoff": "a8cace69f9273d282bc28c471ad2cd3c6841219f2dc544c4b3b8a939cb0b44a5"
+      "progress_forward_handoff": "0d08ea5c4c6f0c61c6d8c2a722d1e95ce0bfe999d523db2c0b9cdca7bc213bb9"
     },
     "personalbank_main_source_manifest": {
       "server/src/main/java/io/saksk/ti/personalbank/api/AuthenticatedPersonalBankViewer.java": "a1d0fe3791ced4e45bbeb6ce254eda704bb3f81a49c4ba3cd068cc52db315760",
@@ -281,7 +281,24 @@
       "Ti-Java/tools/test_capture_phase4b_personal_bank_usage_stats_goldens.py",
       "Ti-Java/tools/test_capture_phase4b_personal_bank_usage_stats_query_plans.py",
       "Ti-Java/tools/test_phase4b_personal_bank_usage_stats_entry_contract.py",
-      "Ti-Java/tools/test_phase4b_personal_bank_usage_stats_read_contract.py"
+      "Ti-Java/tools/test_phase4b_personal_bank_usage_stats_read_contract.py",
+      "Ti-Java/docs/refactor/phase4b/golden-personal-bank-user-counts-reads.json",
+      "Ti-Java/docs/refactor/phase4b/personal-bank-user-counts-callers.json",
+      "Ti-Java/docs/refactor/phase4b/personal-bank-user-counts-entry-contract.json",
+      "Ti-Java/docs/refactor/phase4b/personal-bank-user-counts-query-plan-evidence.json",
+      "Ti-Java/server/src/test/java/io/saksk/ti/integration/Phase4bPersonalBankUserCountsEvidenceJdbcCompatibilityIT.java",
+      "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/infrastructure/persistence/PersonalBankUserCountsEvidenceSql.java",
+      "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/infrastructure/persistence/PersonalBankUserCountsEvidenceSqlContractTest.java",
+      "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/infrastructure/persistence/PersonalBankUserCountsEvidenceSqlManifestTest.java",
+      "Ti-Java/server/src/test/resources/db/phase4b/067-personal-bank-user-counts-schema.sql",
+      "Ti-Java/server/src/test/resources/db/phase4b/068-personal-bank-user-counts-seed.sql",
+      "Ti-Java/tools/capture_phase4b_personal_bank_user_counts_callers.py",
+      "Ti-Java/tools/capture_phase4b_personal_bank_user_counts_goldens.py",
+      "Ti-Java/tools/capture_phase4b_personal_bank_user_counts_query_plans.py",
+      "Ti-Java/tools/test_capture_phase4b_personal_bank_user_counts_callers.py",
+      "Ti-Java/tools/test_capture_phase4b_personal_bank_user_counts_goldens.py",
+      "Ti-Java/tools/test_capture_phase4b_personal_bank_user_counts_query_plans.py",
+      "Ti-Java/tools/test_phase4b_personal_bank_user_counts_entry_contract.py"
     ],
     "historical_hash_overrides": {
       "docs/refactor/05-progress.md": "89fa432fba5b793b002cc034dda4c7a92a666e0b871c1ef744ed0d90a55b7e63",
@@ -363,5 +380,5 @@
     "http_status_or_envelope_implementation_added": false,
     "production_cutover": false
   },
-  "document_payload_sha256": "f920c4ef06e10ba0574fb833c2c0cc59ca65f1672c96f9ca60a893bafd650516"
+  "document_payload_sha256": "3dde6fa5a34159c1aa2489c1bd9e3eb564c5431820b34fb73e04a116c338b234"
 }

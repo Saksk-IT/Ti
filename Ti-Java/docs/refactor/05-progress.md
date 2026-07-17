@@ -5,6 +5,7 @@
 ## 当前阶段
 
 - **阶段 4B：personalbank（分类、按题库分享列表、“我创建的全部分享”和使用人数统计四项 HTTP-neutral 内部读取能力已完成）**。usage-stats 以入口冻结的两个活跃调用方、32-case golden 与三条顺序 SQL 为依据，已实现 DTO/API/service/port/JDBC；bank probe 保持短路，两个可选查询顺序执行并分别使用 `REQUIRES_NEW` 只读事务实现独立 fail-soft，所有者鉴权、北京时钟、到期边界、ID 转换/去重与三态结果均由定向测试闭合。PG16.14/18.4 runtime adapter 各 1/1、全部 source tools 364/364 与完整 `clean verify` 494 个 surefire + 72 个 failsafe 均通过，0 failure/error/skip。累计 shape 为 23 个公开应用方法，其中 personalbank 4 个；八条 personalbank HTTP operation 都保持 pending，未新增 Controller、Security matcher、route/OpenAPI delta、schema/index、生产 DDL/DML 或生产切流；有效状态仍为 11 migrated、600 pending、0 production cutover。
+- **user-counts 实现前证据与归属决策已闭合，但生产实现未获授权。** 双 alias 的固定提交调用方、59-case golden、八个 SQL family、PG16.14/18.4 JDBC 与每版 14 个查询计划观测均已冻结；15 万题目未过滤路径、900-tag 证据边界以及真实 `42703 -> 25P02 -> ROLLBACK` 恢复链已通过，schema/index/data 指纹不变。所有权审计确认完整 use case 与 HTTP owner 应为 `learning`，只能由 `learning -> personalbank::api` 组合；`personalbank` 禁止直读 `user_bank_favorites`、`user_bank_mistakes`、`user_progress`、`user_question_tag_items`。全部 source tools 413/413 与完整 `clean verify` 503 个 surefire + 74 个 failsafe 均通过，0 failure/error/skip；仍为 23 个公开应用方法、11 migrated、600 pending、0 cutover，且未新增任何生产 Java、HTTP、schema/index 或生产切流。
 - 基线提交：旧 Ti `700006dfdfa063deb4387be572911e782bcea0d9`。
 - 盘点日期：2026-07-17（Asia/Shanghai）。
 - 题目类型元数据已提交并推送的绿色检查点：`1444814`（`feat(java): add question metadata catalog capability`）；题量为 `eda7f43`（`feat(java): add catalog question count capability`）；单题详情为 `75d4cc8`（`feat(java): add catalog question detail capability`）；后台题目摘要集合为 `a32caeb`（`feat(java): add catalog question summary capability`）；后台科目库存摘要为 `6493cb2`（`feat(java): add catalog subject inventory capability`）；后台科目上下文为 `643c3b3`（`feat(java): add catalog subject context capability`）。
@@ -241,10 +242,11 @@
 | Phase 4B personalbank 全部分享内部实现 | 累计 shape 22 个公开方法、personalbank 3 个；生产 DTO/API/service/port/adapter；PG16.14/18.4 runtime adapter 2/2；全部 source tools 317/317；`clean verify` 465+68 | 实现合同绿色；精确单 SQL、nullable/raw、BIGINT、不可变列表与排序语义闭合，六条 personalbank HTTP operation 仍 pending |
 | Phase 4B personalbank 使用人数统计实现前入口门禁 | 两个活跃调用方；caller 工具 8/8；32-case golden 工具 11/11；双 PostgreSQL 三 SQL 计划工具 16/16；SQL unit 5/5；PG16.14/18.4 compatibility 2/2；全部 source tools 359/359；`clean verify` 470+70 | 入口合同绿色；0 failure/error/skip，implementation not started，只授权下一提交的 HTTP-neutral DTO/API/service/port/JDBC，不授权 HTTP、schema/index 或 cutover |
 | Phase 4B personalbank 使用人数统计内部实现 | 累计 shape 23 个公开方法、personalbank 4 个；生产 DTO/API/service/port/adapter；定向 unit 30/30；PG16.14/18.4 runtime adapter 2/2；全部 source tools 364/364；`clean verify` 494+72 | 实现合同绿色；三条顺序 SQL、INTEGER bind、owner 短路、北京时钟、ID 转换/去重与 `REQUIRES_NEW` 可选查询独立 fail-soft 语义闭合，八条 personalbank HTTP operation 仍 pending |
+| Phase 4B user-counts 实现前证据与归属入口门禁 | caller 12/12；双 alias 59-case golden 9/9；八个 SQL family unit 8/8；PG16.14/18.4 JDBC 2/2；每版 14 observations、15 万题目与 900-tag 边界的 query-plan 工具 17/17；entry 10/10；全部 source tools 413/413；`clean verify` 503+74 | 证据绿色但 implementation blocked；完整 use case/HTTP owner 评审为 `learning`，必须通过 `learning -> personalbank::api` 组合与显式 tag 迁移契约后另行授权；当前生产 Java/HTTP/schema/index/cutover 增量均为 0 |
 | Phase 4A 科目目录检查点独立抽取 | 1,251 个文件；Phase 1、Phase 2/3 静态门禁、231+28 Maven 全绿 | 绿色；这是科目目录检查点证据；无符号链接、无父目录运行时读取，临时副本和容器无残留 |
 | Phase 4A 旧栈回归 | 374 个 Python 文件 compileall；654 passed、2 个登记失败、3 skipped；两套小程序各 36/36 | 绿色；登记基线和 warning 窗口保持一致 |
 
-上表保留 Phase 4A 各历史切片并记录最终 closure，同时区分 Phase 4B personalbank 分类最终证据，以及分享列表、全部分享和 usage-stats 各自的实现前入口与内部实现。分类的 424+60/WORM/独立清单、分享列表入口的 429+62、全部分享入口的 451+66、全部分享实现的 317 项 source tools/465+68 Maven，以及 usage-stats 入口的 359 项 source tools/470+70 Maven 均不得冒充 usage-stats 实现验收；usage-stats 实现以定向 unit 30、PG runtime adapter 2、全部 source tools 364 与 Maven 494+72 独立闭合，但仍不授权 HTTP、schema/index 或生产切流。
+上表保留 Phase 4A 各历史切片并记录最终 closure，同时区分 Phase 4B personalbank 分类最终证据，以及分享列表、全部分享和 usage-stats 各自的实现前入口与内部实现。分类的 424+60/WORM/独立清单、分享列表入口的 429+62、全部分享入口的 451+66、全部分享实现的 317 项 source tools/465+68 Maven，以及 usage-stats 入口的 359 项 source tools/470+70 Maven 均不得冒充 usage-stats 实现验收；usage-stats 实现以定向 unit 30、PG runtime adapter 2、全部 source tools 364 与 Maven 494+72 独立闭合，但仍不授权 HTTP、schema/index 或生产切流。user-counts 的 413 项 source tools 与 503+74 Maven 只闭合实现前证据和 owner 决策，不得冒充内部能力、HTTP 路由或生产迁移完成。
 
 完整命令、两个 pytest 失败说明及初步性能数字见 `07-baseline-results.md`。
 
@@ -281,7 +283,7 @@
 
 ## 下一项具体动作
 
-1. 从 personalbank 路由矩阵选择下一组完整用例并先做实现前证据门禁；优先盘点双 alias `GET /api/user/banks/api/{bank_id}/user-counts` 与 `GET /user/banks/api/{bank_id}/user-counts` 的 Web、小程序、测试调用方、鉴权、SQL、统计口径、时区、空值与失败语义。在 golden/契约/查询计划和双 PostgreSQL 证据闭合前不得新增生产实现；当前八条 personalbank HTTP operation 继续 pending，不得新增 Controller、Security matcher、route/OpenAPI delta、schema/index 或生产切流。
+1. 为 user-counts 建立 Phase 4C `learning` 组合契约：定义完整 `LearningApplicationApi` 请求/结果，定义 `personalbank::api` 仅暴露的最小题库/题目事实，并冻结 `learning -> personalbank::api` 单向依赖、事务与 optional-query 失败边界。必须先用显式、幂等且由 learning 拥有的迁移替代 GET 内 tag DDL/DML，并批准相应行为差异；在该 gate 通过前，不得新增生产 Java、Controller、Security matcher、route/OpenAPI delta、schema/index 或生产切流。
 2. 在 Phase 4C 由 `learning` 完整迁移题量双路由与 `GET /api/quiz/subjects/{subject}/info` 的跨 `catalog`、`identity`、`learning` 组合；复用 catalog 题量原语，禁止 catalog 直查作答、错题、收藏或私有标签事实。题量切片必须先显式迁移旧 `question_tags_v1`，再批准移除 GET 内 DDL/DML、缓存和故障策略差异。
 3. 两条后台题型、两条单题详情、两条后台题目集合、一条后台科目库存、两条后台科目上下文与两条后台题目导出 HTTP operation 延后到 4H；实现前必须正式批准并机器化 `operations -> catalog::api`（当前 `operations` 只允许依赖 `sharedkernel`），再由适配层分别复现题型的 Python Unicode whitespace/故障差异、详情的鉴权/路径整数/modern/legacy 投影、集合的原始查询解析/用户名/PQF/题型投影、科目库存的全局 gate/角色/裸数组/null、科目上下文页面的 Session gate/404/模板渲染，以及导出的鉴权、首个原始参数、JSON safe-load/default、modern/legacy 信封和 HTML/JSON 故障语义。当前内部 API 不授权 route/OpenAPI delta。
 4. 公共题库生产 Redis、HMAC Secret、真实数据、刷新调度、即时撤回事件桥接和入口切换仍需另行获批；本地 shadow 证据不授权生产操作。

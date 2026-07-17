@@ -46,6 +46,30 @@ class PersonalBankUsageStatsContractParityTest {
             "personal-bank-usage-stats-public-users");
     private static final List<String> ADAPTER_FIELDS = List.of(
             "SELECT_BANK", "SELECT_SHARED_USERS", "SELECT_PUBLIC_USER_IDS");
+    private static final List<String> USER_COUNTS_FORWARD_ADDITIONS = List.of(
+            "Ti-Java/docs/refactor/phase4b/golden-personal-bank-user-counts-reads.json",
+            "Ti-Java/docs/refactor/phase4b/personal-bank-user-counts-callers.json",
+            "Ti-Java/docs/refactor/phase4b/personal-bank-user-counts-entry-contract.json",
+            "Ti-Java/docs/refactor/phase4b/personal-bank-user-counts-query-plan-evidence.json",
+            "Ti-Java/server/src/test/java/io/saksk/ti/integration/"
+                    + "Phase4bPersonalBankUserCountsEvidenceJdbcCompatibilityIT.java",
+            "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/infrastructure/"
+                    + "persistence/PersonalBankUserCountsEvidenceSql.java",
+            "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/infrastructure/"
+                    + "persistence/PersonalBankUserCountsEvidenceSqlContractTest.java",
+            "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/infrastructure/"
+                    + "persistence/PersonalBankUserCountsEvidenceSqlManifestTest.java",
+            "Ti-Java/server/src/test/resources/db/phase4b/"
+                    + "067-personal-bank-user-counts-schema.sql",
+            "Ti-Java/server/src/test/resources/db/phase4b/"
+                    + "068-personal-bank-user-counts-seed.sql",
+            "Ti-Java/tools/capture_phase4b_personal_bank_user_counts_callers.py",
+            "Ti-Java/tools/capture_phase4b_personal_bank_user_counts_goldens.py",
+            "Ti-Java/tools/capture_phase4b_personal_bank_user_counts_query_plans.py",
+            "Ti-Java/tools/test_capture_phase4b_personal_bank_user_counts_callers.py",
+            "Ti-Java/tools/test_capture_phase4b_personal_bank_user_counts_goldens.py",
+            "Ti-Java/tools/test_capture_phase4b_personal_bank_user_counts_query_plans.py",
+            "Ti-Java/tools/test_phase4b_personal_bank_user_counts_entry_contract.py");
 
     private static Path tiJavaRoot;
     private static JsonNode contract;
@@ -53,6 +77,8 @@ class PersonalBankUsageStatsContractParityTest {
     private static JsonNode shape;
     private static JsonNode golden;
     private static JsonNode plan;
+    private static JsonNode userCountsEntry;
+    private static JsonNode userCountsGolden;
 
     @BeforeAll
     static void loadEvidence() throws Exception {
@@ -72,6 +98,10 @@ class PersonalBankUsageStatsContractParityTest {
         plan = readJson(
                 "docs/refactor/phase4b/"
                         + "personal-bank-usage-stats-query-plan-evidence.json");
+        userCountsEntry = readJson(
+                "docs/refactor/phase4b/personal-bank-user-counts-entry-contract.json");
+        userCountsGolden = readJson(
+                "docs/refactor/phase4b/golden-personal-bank-user-counts-reads.json");
     }
 
     @Test
@@ -349,6 +379,108 @@ class PersonalBankUsageStatsContractParityTest {
         assertThat(shape.path("route_openapi_delta_authorized").asBoolean()).isFalse();
         contract.path("forbidden_scope").properties().forEach(entry ->
                 assertThat(entry.getValue().asBoolean()).as(entry.getKey()).isFalse());
+    }
+
+    @Test
+    void userCountsSuccessorClosesEvidenceButAuthorizesNoProductionChange()
+            throws Exception {
+        assertThat(userCountsEntry.path("contract_id").asString())
+                .isEqualTo("ti.phase4b.personal-bank-user-counts-entry-contract");
+        assertThat(userCountsEntry.path("status").asString())
+                .isEqualTo(
+                        "evidence_closed_but_production_implementation_blocked_"
+                                + "pending_learning_composition");
+        assertThat(userCountsEntry.path("predecessor").path("source").asString())
+                .isEqualTo(
+                        "docs/refactor/phase4b/"
+                                + "personal-bank-usage-stats-read-contract.json");
+        assertThat(userCountsEntry.path("predecessor").path("sha256").asString())
+                .isEqualTo(sha256(
+                        "docs/refactor/phase4b/"
+                                + "personal-bank-usage-stats-read-contract.json"));
+
+        JsonNode decision = userCountsEntry.path("entry_decision");
+        assertThat(decision.path("evidence_closed").asBoolean()).isTrue();
+        assertThat(decision.path("implementation_authorized").asBoolean()).isFalse();
+        assertThat(decision.path("baseline_route_owner").asString())
+                .isEqualTo("personalbank");
+        assertThat(decision.path("reviewed_use_case_owner").asString())
+                .isEqualTo("learning");
+        assertThat(decision.path("reviewed_http_owner").asString())
+                .isEqualTo("learning");
+        assertThat(propertyNames(decision.path("authorizations")))
+                .containsExactlyInAnyOrder(
+                        "direct_personalbank_implementation",
+                        "learning_composition_implementation",
+                        "http_implementation",
+                        "production_schema_delta",
+                        "production_index_delta",
+                        "production_cutover");
+        decision.path("authorizations").properties().forEach(entry ->
+                assertThat(entry.getValue().asBoolean()).as(entry.getKey()).isFalse());
+
+        JsonNode boundary = userCountsEntry.path("module_boundary_decision");
+        assertThat(boundary.path("required_composition_direction").asString())
+                .isEqualTo("learning_to_personalbank_api");
+        assertThat(boundary.path("complete_use_case_owner").asString())
+                .isEqualTo("learning");
+        assertThat(boundary.path("personalbank_call_surface").asString())
+                .isEqualTo("personalbank::api");
+        assertThat(strings(boundary.path("personalbank_forbidden_learning_tables")))
+                .containsExactly(
+                        "user_bank_favorites",
+                        "user_bank_mistakes",
+                        "user_progress",
+                        "user_question_tag_items");
+
+        JsonNode prerequisites = userCountsEntry.path("entry_prerequisites");
+        for (String evidenceName : List.of(
+                "caller_attestation", "fixed_commit_golden", "jdbc_and_query_plans")) {
+            JsonNode reference = prerequisites.path(evidenceName);
+            assertThat(reference.path("file_sha256").asString())
+                    .as(evidenceName)
+                    .isEqualTo(sha256(reference.path("evidence_source").asString()));
+        }
+        assertThat(prerequisites.path("fixed_commit_golden").path("case_count").asInt())
+                .isEqualTo(59);
+        assertThat(prerequisites.path("fixed_commit_golden").path("passed").asBoolean())
+                .isTrue();
+        assertThat(prerequisites.path("jdbc_and_query_plans").path("passed").asBoolean())
+                .isTrue();
+        assertThat(userCountsGolden.path("case_count").asInt()).isEqualTo(59);
+
+        JsonNode unchanged = userCountsEntry.path("unchanged_state");
+        assertThat(unchanged.path("implemented_public_application_method_count").asInt())
+                .isEqualTo(23);
+        assertThat(unchanged.path("migrated_route_count").asInt()).isEqualTo(11);
+        assertThat(unchanged.path("pending_route_count").asInt()).isEqualTo(600);
+        assertThat(unchanged.path("production_cutover_count").asInt()).isZero();
+
+        JsonNode acceptance = userCountsEntry.path("acceptance");
+        assertThat(acceptance.path("evidence_closed").asBoolean()).isTrue();
+        assertThat(acceptance.path("implementation_authorized").asBoolean()).isFalse();
+        assertThat(acceptance.path("next_required_gate").asString())
+                .isEqualTo("pending_learning_composition_contract");
+        assertThat(acceptance.path("production_cutover").asBoolean()).isFalse();
+
+        assertThat(propertyNames(userCountsEntry.path("change_budget")))
+                .containsExactlyInAnyOrder(
+                        "production_java_files_added",
+                        "production_java_files_modified",
+                        "http_controllers_added",
+                        "application_methods_added",
+                        "production_schema_files_added",
+                        "production_indexes_added",
+                        "route_delta_rows_added",
+                        "openapi_operations_migrated",
+                        "production_cutover_operations");
+        userCountsEntry.path("change_budget").properties().forEach(entry ->
+                assertThat(entry.getValue().asInt()).as(entry.getKey()).isZero());
+        assertThat(userCountsEntry.toString()).doesNotContain("PENDING");
+
+        assertThat(strings(contract.path("forward_handoff").path("forward_additions")))
+                .hasSize(49)
+                .containsAll(USER_COUNTS_FORWARD_ADDITIONS);
     }
 
     private static void assertEvidenceHash(String name, String expectedSource)
