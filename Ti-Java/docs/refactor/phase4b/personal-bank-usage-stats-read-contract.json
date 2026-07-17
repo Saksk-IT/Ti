@@ -1,0 +1,367 @@
+{
+  "contract_id": "ti.phase4b.personal-bank-usage-stats-read-contract",
+  "schema_version": 1,
+  "phase": "4B-personal-bank-usage-stats-read-slice",
+  "status": "implemented_and_targeted_verified_http_aliases_deferred",
+  "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "predecessor": {
+    "source": "docs/refactor/phase4b/personal-bank-usage-stats-entry-contract.json",
+    "sha256": "48642f6341e8f950bbacede8488ccea9db4fcb0cfaa4b8226e427ea0caca6b08",
+    "historical_status": "entry_gate_passed_implementation_not_started"
+  },
+  "evidence": {
+    "application_api_shape": {
+      "source": "docs/refactor/phase4b/personal-bank-usage-stats-application-api-shape.json",
+      "sha256": "98e480bde24850d99215cf002ae84ac69839a8013ee6a3012f40fe208616f64b"
+    },
+    "golden": {
+      "source": "docs/refactor/phase4b/golden-personal-bank-usage-stats-reads.json",
+      "sha256": "cfa005c001e19aefd93894d0c7334fb458b5608f73c00ec5910b11328f43dec5"
+    },
+    "preimplementation_sql": {
+      "source": "server/src/test/java/io/saksk/ti/personalbank/infrastructure/persistence/PersonalBankUsageStatsEvidenceSql.java",
+      "sha256": "d7b09cc29d6ab79b4ca1718be2cc7e70eb4f7e17c83ec6079e71926b392f9f71"
+    },
+    "query_plan": {
+      "source": "docs/refactor/phase4b/personal-bank-usage-stats-query-plan-evidence.json",
+      "sha256": "115bc3b0fb59fde1cd78183643e3b087367827886a514131ab00b25216cb3fad"
+    }
+  },
+  "application_contract": {
+    "public_api": "io.saksk.ti.personalbank.api.PersonalBankApplicationApi",
+    "method": "PersonalBankUsageStatsResult findUsageStats(AuthenticatedPersonalBankViewer viewer, int bankId)",
+    "viewer_identity_type": "long",
+    "bank_id_type": "int",
+    "null_viewer": "requireNonNull_before_port",
+    "result_outcomes": ["AVAILABLE", "NOT_FOUND", "FORBIDDEN"],
+    "result_payload_invariant": "non-null view only for AVAILABLE",
+    "transaction_read_only": true,
+    "http_status_and_envelope_mapping": "deferred to a future HTTP adapter"
+  },
+  "result_contract": {
+    "record": "io.saksk.ti.personalbank.api.PersonalBankUsageStatsResult",
+    "components": ["outcome", "view"],
+    "outcomes": ["AVAILABLE", "NOT_FOUND", "FORBIDDEN"],
+    "available_factory": "available(PersonalBankUsageStatsView)",
+    "not_found_factory": "notFound()",
+    "forbidden_factory": "forbidden()",
+    "non_available_view": null
+  },
+  "usage_stats_view_components": [
+    {"name": "bankId", "java_type": "int", "nullable": false},
+    {"name": "publicBank", "java_type": "boolean", "nullable": false},
+    {"name": "ownerId", "java_type": "long", "nullable": false},
+    {"name": "ownerCount", "java_type": "int", "nullable": false},
+    {"name": "sharedUsers", "java_type": "int", "nullable": false},
+    {"name": "publicUsers", "java_type": "int", "nullable": false},
+    {"name": "totalUsers", "java_type": "int", "nullable": false},
+    {"name": "totalUsersExcludingOwner", "java_type": "int", "nullable": false}
+  ],
+  "query_port_contract": {
+    "port": "io.saksk.ti.personalbank.application.port.PersonalBankUsageStatsQueryPort",
+    "methods": [
+      {
+        "name": "findBank",
+        "signature": "Optional<BankAccess> findBank(int bankId)"
+      },
+      {
+        "name": "listSharedUsers",
+        "signature": "List<SharedUserAccess> listSharedUsers(int bankId)"
+      },
+      {
+        "name": "listPublicUserIds",
+        "signature": "List<Object> listPublicUserIds(int bankId)"
+      }
+    ],
+    "bank_access_components": [
+      {"name": "bankId", "java_type": "int", "nullable": false},
+      {"name": "ownerId", "java_type": "java.lang.Long", "nullable": true},
+      {"name": "publicBank", "java_type": "java.lang.Boolean", "nullable": true},
+      {"name": "status", "java_type": "java.lang.Integer", "nullable": true}
+    ],
+    "shared_user_access_components": [
+      {"name": "userId", "java_type": "java.lang.Object", "nullable": true},
+      {"name": "expiresAt", "java_type": "java.lang.Object", "nullable": true}
+    ]
+  },
+  "time_semantics": {
+    "injectable_clock": "java.time.Clock",
+    "zone": "Asia/Shanghai",
+    "comparison_model": "naive Beijing local datetime",
+    "expired_when": "expires_at < now",
+    "equal_to_now": "valid",
+    "null_expiry": "valid",
+    "empty_string_expiry": "valid",
+    "zero_or_false_expiry": "valid",
+    "truthy_malformed_expiry": "expired",
+    "aware_vs_naive_comparison_error": "expired"
+  },
+  "usage_count_semantics": {
+    "shared_sql_distinct_key": ["user_id", "expires_at"],
+    "shared_set_key_after_expiry_filter": "user_id",
+    "user_id_conversion": "int(value or 0); conversion failures ignored",
+    "zero_user_id": "ignored",
+    "negative_user_id": "counted",
+    "owner_excluded_from_shared_users": true,
+    "owner_excluded_from_public_users": true,
+    "shared_and_public_categories_count_independently": true,
+    "total_users": "owner plus shared/public set union",
+    "total_users_excluding_owner": "nonzero total union excluding owner",
+    "owner_count": 1
+  },
+  "failure_contract": {
+    "bank_probe_failure": "propagate",
+    "bank_missing_or_inactive": "return NOT_FOUND and execute no later query",
+    "viewer_or_owner_invalid_or_mismatched": "return FORBIDDEN and execute no later query",
+    "shared_query_failure": "independently degrade to empty set",
+    "public_query_failure": "independently degrade to empty set",
+    "both_optional_queries_fail": "AVAILABLE owner-only counts"
+  },
+  "persistence_contract": {
+    "query_count": 3,
+    "query_order": [
+      "personal-bank-usage-stats-bank-probe",
+      "personal-bank-usage-stats-shared-users",
+      "personal-bank-usage-stats-public-users"
+    ],
+    "sequential_execution_required": true,
+    "short_circuit_after_bank_probe": true,
+    "optional_query_transaction_boundary": "REQUIRES_NEW read-only transaction per shared/public query",
+    "join_or_query_collapse_authorized": false,
+    "parallel_execution_authorized": false,
+    "bank_id_jdbc_bind_type": "integer",
+    "schema_or_index_delta": false,
+    "queries": [
+      {
+        "query_id": "personal-bank-usage-stats-bank-probe",
+        "adapter_field": "SELECT_BANK",
+        "sql": "SELECT id,\n       user_id,\n       is_public,\n       status\nFROM user_question_banks\nWHERE id = :bank_id\n",
+        "parameter_order": ["bank_id"],
+        "parameters": {"bank_id": "integer"}
+      },
+      {
+        "query_id": "personal-bank-usage-stats-shared-users",
+        "adapter_field": "SELECT_SHARED_USERS",
+        "sql": "SELECT DISTINCT bsr.user_id AS user_id,\n                bs.expires_at AS expires_at\nFROM bank_share_records bsr\nJOIN bank_shares bs ON bsr.share_id = bs.id\nWHERE bsr.bank_id = :bank_id\n  AND bsr.status = 1\n  AND bs.is_active = TRUE\n",
+        "parameter_order": ["bank_id"],
+        "parameters": {"bank_id": "integer"}
+      },
+      {
+        "query_id": "personal-bank-usage-stats-public-users",
+        "adapter_field": "SELECT_PUBLIC_USER_IDS",
+        "sql": "SELECT DISTINCT user_id\nFROM public_bank_users\nWHERE bank_id = :bank_id\n",
+        "parameter_order": ["bank_id"],
+        "parameters": {"bank_id": "integer"}
+      }
+    ],
+    "raw_nullable_projection_preserved": true,
+    "business_table_writes": 0
+  },
+  "implementation": {
+    "main_source_files": {
+      "application_api": "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankApplicationApi.java",
+      "usage_stats_result": "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankUsageStatsResult.java",
+      "usage_stats_view": "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankUsageStatsView.java",
+      "application_service": "server/src/main/java/io/saksk/ti/personalbank/application/PersonalBankQueryService.java",
+      "query_port": "server/src/main/java/io/saksk/ti/personalbank/application/port/PersonalBankUsageStatsQueryPort.java",
+      "jdbc_adapter": "server/src/main/java/io/saksk/ti/personalbank/infrastructure/persistence/JdbcPersonalBankUsageStatsQueryAdapter.java"
+    },
+    "main_source_sha256": {
+      "application_api": "8b3e8751e2a356f4a33bfa8ae77cf4299e0c11fdfb0e01574ffd95065ff71e1d",
+      "usage_stats_result": "830c886e3ff043a94ed3857e9eb20b436520448d6f7689cca0b17739c8def288",
+      "usage_stats_view": "7f60075308fcb52922a97f85cf7c83e857d6bde01a310936b441eb1cc1f1f294",
+      "application_service": "bbf9d0a5c2374a9d3c8c69eea5c65305010a2cdc7b0ed0eb5a0159b0fcead268",
+      "query_port": "fea992277c1e8ba3611c0310f91998aa1b0cef8f1c6a39ef89ba91adfa8323e6",
+      "jdbc_adapter": "14ce375e206cf8fd1868b5d4a0b85a0044a85e67a33b86728a76583f10cb65fb"
+    },
+    "verification_source_files": {
+      "result_test": "server/src/test/java/io/saksk/ti/personalbank/api/PersonalBankUsageStatsResultTest.java",
+      "view_test": "server/src/test/java/io/saksk/ti/personalbank/api/PersonalBankUsageStatsViewTest.java",
+      "service_test": "server/src/test/java/io/saksk/ti/personalbank/application/PersonalBankQueryServiceTest.java",
+      "adapter_test": "server/src/test/java/io/saksk/ti/personalbank/infrastructure/persistence/JdbcPersonalBankUsageStatsQueryAdapterTest.java",
+      "adapter_test_access": "server/src/test/java/io/saksk/ti/personalbank/infrastructure/persistence/JdbcPersonalBankUsageStatsQueryAdapterTestAccess.java",
+      "sql_contract_test": "server/src/test/java/io/saksk/ti/personalbank/infrastructure/persistence/PersonalBankUsageStatsSqlContractTest.java",
+      "runtime_sql_manifest_test": "server/src/test/java/io/saksk/ti/personalbank/infrastructure/persistence/PersonalBankUsageStatsRuntimeSqlManifestTest.java",
+      "jdbc_compatibility_test": "server/src/test/java/io/saksk/ti/integration/Phase4bPersonalBankUsageStatsJdbcCompatibilityIT.java",
+      "contract_parity_test": "server/src/test/java/io/saksk/ti/architecture/PersonalBankUsageStatsContractParityTest.java",
+      "read_contract_test": "tools/test_phase4b_personal_bank_usage_stats_read_contract.py",
+      "entry_forward_handoff_test": "tools/test_phase4b_personal_bank_usage_stats_entry_contract.py",
+      "all_shares_read_forward_handoff_test": "tools/test_phase4b_personal_bank_all_shares_read_contract.py",
+      "all_shares_entry_forward_handoff_test": "tools/test_phase4b_personal_bank_all_shares_entry_contract.py",
+      "all_shares_contract_parity_test": "server/src/test/java/io/saksk/ti/architecture/PersonalBankAllSharesContractParityTest.java",
+      "share_read_contract_test": "tools/test_phase4b_personal_bank_share_list_read_contract.py",
+      "share_list_entry_forward_handoff_test": "tools/test_phase4b_personal_bank_share_list_entry_contract.py",
+      "share_list_contract_parity_test": "server/src/test/java/io/saksk/ti/architecture/PersonalBankShareListContractParityTest.java",
+      "category_acceptance_forward_handoff_test": "tools/test_phase4b_personal_bank_category_acceptance.py",
+      "category_golden_forward_handoff_test": "tools/test_capture_phase4b_personal_bank_category_goldens.py",
+      "category_contract_forward_handoff_test": "server/src/test/java/io/saksk/ti/architecture/PersonalBankCategoryContractParityTest.java",
+      "public_boundary_test": "server/src/test/java/io/saksk/ti/architecture/PersonalBankPublicBoundaryNeutralityTest.java",
+      "module_contract_parity_test": "server/src/test/java/io/saksk/ti/architecture/ModuleContractParityTest.java",
+      "module_context_test": "server/src/test/java/io/saksk/ti/personalbank/PersonalBankModuleContextTest.java",
+      "progress_forward_handoff": "docs/refactor/05-progress.md"
+    },
+    "verification_source_sha256": {
+      "result_test": "080b0bd5f725ebd2c3accdd10aee0902f6477d7e9b78253090791df73560340e",
+      "view_test": "242791b31f10d3dd2aa7591eb307e354ac60307078d281226467d25d3e474c66",
+      "service_test": "80c984cb461b98e2bf69a37459252ae69886d6e3bb6e5cb7f4601e02ff4f59b0",
+      "adapter_test": "0dc19d5eb2c11b60bdcecc0e75b3f485bb6679c2e7daeeeb1520e75354f8034a",
+      "adapter_test_access": "616191188263ebf3a382d6de44a77439f2d7d74b83c41b07ce43bbca71c41ae2",
+      "sql_contract_test": "6c6df77f702f965e4a0256b09e89a55a1693f22bb087bd66a8e6c93169ca17a7",
+      "runtime_sql_manifest_test": "fbcdd909ef5ea8c0e4016696249fb4274e57d0494948dcb0958efec3963d3101",
+      "jdbc_compatibility_test": "ead7d9b57a4c462b758e6ba773daac3f4fe63eb9a05d4b2c505e8566d155928c",
+      "contract_parity_test": "cc7fe3718caa60f047cd887bfab67bde0e039db442887de306f04c89e7bd416a",
+      "read_contract_test": "7af573fdc1696848bae7c278908e1228eec390694bff55450f22e7f64de323e9",
+      "entry_forward_handoff_test": "0eb5fa3ae1eab5001e1a44e77d312ad425967d746370b8f6da6f18a202089f8d",
+      "all_shares_read_forward_handoff_test": "75e4235fad3bbe8edfd34829a82ff4a6cff8798fee1ac6cfeab072e6f2f81913",
+      "all_shares_entry_forward_handoff_test": "0c2be82c561aa7f02e6db4b71d4f91ebf1b772f92d4e193a3812e92722c2ba2a",
+      "all_shares_contract_parity_test": "0716fcfa788c530517f2da5ef87a943c3ed2d960e50e599d66756e6e84d29973",
+      "share_read_contract_test": "c1ff198075009a5beeaf0b06c6dd44ff7c593412f0635916bd91f35f0fecb606",
+      "share_list_entry_forward_handoff_test": "866b749cdc00fe22451e4a4663702d98e4917e0d546f996f0d6cac6326f39d75",
+      "share_list_contract_parity_test": "d6326b2aa91ceb2bb502bc8847d233c26a2741996a7bc3bf627c9731c6318523",
+      "category_acceptance_forward_handoff_test": "fdc43d61e5b221fb5f0dd3e2d5789e9677323cca7741be7d7c5efa548a775956",
+      "category_golden_forward_handoff_test": "b9696c00ec7b5a57bc1e1c4048764169ab5dab7991608655502b766df24b9f30",
+      "category_contract_forward_handoff_test": "6af743e5dd2d77a7f10fdd81c6b7bd7c1b66382f4eaa135505867c91a341a2b7",
+      "public_boundary_test": "f128aa1af058cd4e1c4eb910aefd4f01a69e39e952fb052ab009469415262aba",
+      "module_contract_parity_test": "35e25fa5ed4d5771701f8c1819b615bee9af441a6c64cbf1386df168f16610cb",
+      "module_context_test": "aad88abf399c1a382f1a7e3eb323bf68d75c322ee844c614f7b48a9ca69d2bd5",
+      "progress_forward_handoff": "a8cace69f9273d282bc28c471ad2cd3c6841219f2dc544c4b3b8a939cb0b44a5"
+    },
+    "personalbank_main_source_manifest": {
+      "server/src/main/java/io/saksk/ti/personalbank/api/AuthenticatedPersonalBankViewer.java": "a1d0fe3791ced4e45bbeb6ce254eda704bb3f81a49c4ba3cd068cc52db315760",
+      "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankApplicationApi.java": "8b3e8751e2a356f4a33bfa8ae77cf4299e0c11fdfb0e01574ffd95065ff71e1d",
+      "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankCategoryView.java": "70435695f616c48306ad1d0b622ad3243a9cb1ad5cca303cfd3b6329f339bab5",
+      "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankOwnedShareView.java": "56bda793e32604ca661791fbcada5423d019c2fc6adfc170e263311dd88aa820",
+      "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankShareListView.java": "e8e0431e2f1473656b870fd163e92c2aff94596fdae8d2ea4b178fd9bdc1fa3a",
+      "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankShareView.java": "a2e6b27712fa0e6cc3b29474ae57a6a68870dc8583855d81597b338d8f226119",
+      "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankUsageStatsResult.java": "830c886e3ff043a94ed3857e9eb20b436520448d6f7689cca0b17739c8def288",
+      "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankUsageStatsView.java": "7f60075308fcb52922a97f85cf7c83e857d6bde01a310936b441eb1cc1f1f294",
+      "server/src/main/java/io/saksk/ti/personalbank/api/package-info.java": "575e22a59276f7ef2f94eef87fceed201cb4428caa7270051d10019ea7ae2966",
+      "server/src/main/java/io/saksk/ti/personalbank/application/PersonalBankQueryService.java": "bbf9d0a5c2374a9d3c8c69eea5c65305010a2cdc7b0ed0eb5a0159b0fcead268",
+      "server/src/main/java/io/saksk/ti/personalbank/application/port/PersonalBankCategoryQueryPort.java": "f611707567dc2e425ace5851802f61cdd9c9ff3fc518aebdb7c79d98a7b975ca",
+      "server/src/main/java/io/saksk/ti/personalbank/application/port/PersonalBankOwnedShareQueryPort.java": "a34708d1331ba877705967edf44594ca53ff6544778c7a751d4232e528e3fd86",
+      "server/src/main/java/io/saksk/ti/personalbank/application/port/PersonalBankShareQueryPort.java": "6919432092777d124a2193e74f27b362216bdbe1c32edb57e972ba5d7e5e0f69",
+      "server/src/main/java/io/saksk/ti/personalbank/application/port/PersonalBankUsageStatsQueryPort.java": "fea992277c1e8ba3611c0310f91998aa1b0cef8f1c6a39ef89ba91adfa8323e6",
+      "server/src/main/java/io/saksk/ti/personalbank/infrastructure/persistence/JdbcPersonalBankCategoryQueryAdapter.java": "749a70cad4c83acdca9ef5a68ef31a48901e394718a95363ae910a0d2102a2ad",
+      "server/src/main/java/io/saksk/ti/personalbank/infrastructure/persistence/JdbcPersonalBankOwnedShareQueryAdapter.java": "25eca27538ae0b0a28d1a63e6e06b34ad2da70349a432b688608d8657203cdb0",
+      "server/src/main/java/io/saksk/ti/personalbank/infrastructure/persistence/JdbcPersonalBankShareQueryAdapter.java": "1851bd512cf5fef0c5b3e2a0e0b4cef7f9ff7ee6ca348053ca87be7a1d467d65",
+      "server/src/main/java/io/saksk/ti/personalbank/infrastructure/persistence/JdbcPersonalBankUsageStatsQueryAdapter.java": "14ce375e206cf8fd1868b5d4a0b85a0044a85e67a33b86728a76583f10cb65fb",
+      "server/src/main/java/io/saksk/ti/personalbank/package-info.java": "d5d53fe893de9d408a2e45ffb03597c57b72dad3f4ce765b5ab4d902f3d2699f"
+    }
+  },
+  "forward_handoff": {
+    "forward_additions": [
+      "Ti-Java/docs/refactor/phase4b/golden-personal-bank-usage-stats-reads.json",
+      "Ti-Java/docs/refactor/phase4b/personal-bank-usage-stats-application-api-shape.json",
+      "Ti-Java/docs/refactor/phase4b/personal-bank-usage-stats-callers.json",
+      "Ti-Java/docs/refactor/phase4b/personal-bank-usage-stats-entry-contract.json",
+      "Ti-Java/docs/refactor/phase4b/personal-bank-usage-stats-query-plan-evidence.json",
+      "Ti-Java/docs/refactor/phase4b/personal-bank-usage-stats-read-contract.json",
+      "Ti-Java/server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankUsageStatsResult.java",
+      "Ti-Java/server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankUsageStatsView.java",
+      "Ti-Java/server/src/main/java/io/saksk/ti/personalbank/application/port/PersonalBankUsageStatsQueryPort.java",
+      "Ti-Java/server/src/main/java/io/saksk/ti/personalbank/infrastructure/persistence/JdbcPersonalBankUsageStatsQueryAdapter.java",
+      "Ti-Java/server/src/test/java/io/saksk/ti/architecture/PersonalBankUsageStatsContractParityTest.java",
+      "Ti-Java/server/src/test/java/io/saksk/ti/integration/Phase4bPersonalBankUsageStatsEvidenceJdbcCompatibilityIT.java",
+      "Ti-Java/server/src/test/java/io/saksk/ti/integration/Phase4bPersonalBankUsageStatsJdbcCompatibilityIT.java",
+      "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/api/PersonalBankUsageStatsResultTest.java",
+      "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/api/PersonalBankUsageStatsViewTest.java",
+      "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/infrastructure/persistence/JdbcPersonalBankUsageStatsQueryAdapterTest.java",
+      "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/infrastructure/persistence/JdbcPersonalBankUsageStatsQueryAdapterTestAccess.java",
+      "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/infrastructure/persistence/PersonalBankUsageStatsEvidenceSql.java",
+      "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/infrastructure/persistence/PersonalBankUsageStatsEvidenceSqlContractTest.java",
+      "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/infrastructure/persistence/PersonalBankUsageStatsEvidenceSqlManifestTest.java",
+      "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/infrastructure/persistence/PersonalBankUsageStatsRuntimeSqlManifestTest.java",
+      "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/infrastructure/persistence/PersonalBankUsageStatsSqlContractTest.java",
+      "Ti-Java/server/src/test/resources/db/phase4b/065-personal-bank-usage-stats-schema.sql",
+      "Ti-Java/server/src/test/resources/db/phase4b/066-personal-bank-usage-stats-seed.sql",
+      "Ti-Java/tools/capture_phase4b_personal_bank_usage_stats_callers.py",
+      "Ti-Java/tools/capture_phase4b_personal_bank_usage_stats_goldens.py",
+      "Ti-Java/tools/capture_phase4b_personal_bank_usage_stats_query_plans.py",
+      "Ti-Java/tools/test_capture_phase4b_personal_bank_usage_stats_callers.py",
+      "Ti-Java/tools/test_capture_phase4b_personal_bank_usage_stats_goldens.py",
+      "Ti-Java/tools/test_capture_phase4b_personal_bank_usage_stats_query_plans.py",
+      "Ti-Java/tools/test_phase4b_personal_bank_usage_stats_entry_contract.py",
+      "Ti-Java/tools/test_phase4b_personal_bank_usage_stats_read_contract.py"
+    ],
+    "historical_hash_overrides": {
+      "docs/refactor/05-progress.md": "89fa432fba5b793b002cc034dda4c7a92a666e0b871c1ef744ed0d90a55b7e63",
+      "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankApplicationApi.java": "90232e603d65e9fbae14fd30b7d5c605951be67a9bbe0e77b86680eb2bebbbec",
+      "server/src/main/java/io/saksk/ti/personalbank/application/PersonalBankQueryService.java": "f9051dd597a731629c6074bc45ef95e4e4c4f2c67823eac2e96b4fe5f83d48e4",
+      "server/src/test/java/io/saksk/ti/architecture/ModuleContractParityTest.java": "e90d84191ae87ee0fd5da5a7d8b154a72b25297ec743e0ef7504a28b221aea4b",
+      "server/src/test/java/io/saksk/ti/architecture/PersonalBankAllSharesContractParityTest.java": "9fa934116dc01ea7b88b2ac85ae41f1d354efb96e8a20fcbc7de6b00cfdf93d5",
+      "server/src/test/java/io/saksk/ti/architecture/PersonalBankCategoryContractParityTest.java": "49e56df1a650979a8e9b88307b53e73c159bd265c61e58845b9373f0a1dc5a6a",
+      "server/src/test/java/io/saksk/ti/architecture/PersonalBankPublicBoundaryNeutralityTest.java": "68aae6664cdf2a4e2410b5c5b01fdc2d2b5d52a707d45303c86ce56039386443",
+      "server/src/test/java/io/saksk/ti/architecture/PersonalBankShareListContractParityTest.java": "b37147f2f1fc0bd4dbe7582d5457026e46d0e5ee323eb8b1480325eca8658fdb",
+      "server/src/test/java/io/saksk/ti/personalbank/PersonalBankModuleContextTest.java": "4738c248e58be76db18b37e832f86a0e9e9c7c924bd793bcf5f7b3f06a6b1b87",
+      "server/src/test/java/io/saksk/ti/personalbank/application/PersonalBankQueryServiceTest.java": "0fabc2f416d1a70858ef4acb677ba681bcdb09928e9d4108c66bc3fd5b2b169b",
+      "tools/test_capture_phase4b_personal_bank_category_goldens.py": "e203a63fb469a26705a8f0a6d6dea254ad953751213aa937b9314bfa90972d19",
+      "tools/test_phase4b_personal_bank_all_shares_entry_contract.py": "cc4d90ece5436c7f0841e417581f9a9bb6fef6251e247faa0136b4e3694228cc",
+      "tools/test_phase4b_personal_bank_all_shares_read_contract.py": "c8a1b8180513bf7ca7b5cbb8f0b428b54d11b6972dc93175485447ab93863570",
+      "tools/test_phase4b_personal_bank_category_acceptance.py": "596c18155cff25792cc6fdc9c30cf4301cfc6936a6a51680932e7de5db0521e5",
+      "tools/test_phase4b_personal_bank_share_list_entry_contract.py": "05da11f6c2b48d240c3d89fbce3cf9bf307b998f00299a95dfaa71913fdd4597",
+      "tools/test_phase4b_personal_bank_share_list_read_contract.py": "76cf1941682ad21197920b874855cfcd0f5e851bcc714ead071671aba5502d6f",
+      "tools/test_phase4b_personal_bank_usage_stats_entry_contract.py": "3e4428cc2a57b2531f8fbee9de0fb5de01542dff7124e249bf88325625086962"
+    }
+  },
+  "route_state": {
+    "migrated_route_count": 11,
+    "pending_route_count": 600,
+    "production_cutover_count": 0,
+    "route_delta_count": 0,
+    "openapi_delta_count": 0,
+    "operations": [
+      {
+        "route_id": "d67a16965b08",
+        "method": "GET",
+        "path": "/api/user/banks/api/<int:bank_id>/usage-stats",
+        "openapi_path": "/api/user/banks/api/{bank_id}/usage-stats",
+        "migration_status": "pending",
+        "contract_maturity": "inferred",
+        "production_cutover": false
+      },
+      {
+        "route_id": "22aecd49a3c2",
+        "method": "GET",
+        "path": "/user/banks/api/<int:bank_id>/usage-stats",
+        "openapi_path": "/user/banks/api/{bank_id}/usage-stats",
+        "migration_status": "pending",
+        "contract_maturity": "inferred",
+        "production_cutover": false
+      }
+    ]
+  },
+  "verification": {
+    "targeted_unit_tests": 30,
+    "postgresql_adapter_tests": 2,
+    "postgresql_versions": ["16.14", "18.4"],
+    "targeted_failures": 0,
+    "targeted_errors": 0,
+    "targeted_skipped": 0,
+    "targeted_passed": true,
+    "full_source_tools": {
+      "tests": 364,
+      "failures": 0,
+      "errors": 0
+    },
+    "full_maven": {
+      "surefire": 494,
+      "failsafe": 72,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "forbidden_scope": {
+    "controller_added": false,
+    "security_matcher_added": false,
+    "route_or_openapi_delta_added": false,
+    "cache_or_rate_limit_added": false,
+    "schema_or_index_added": false,
+    "production_ddl_or_dml_added": false,
+    "query_join_or_collapse_added": false,
+    "parallel_query_execution_added": false,
+    "http_status_or_envelope_implementation_added": false,
+    "production_cutover": false
+  },
+  "document_payload_sha256": "f920c4ef06e10ba0574fb833c2c0cc59ca65f1672c96f9ca60a893bafd650516"
+}

@@ -34,6 +34,7 @@ class PersonalBankAllSharesContractParityTest {
     private static JsonNode golden;
     private static JsonNode plan;
     private static JsonNode usageStatsEntry;
+    private static JsonNode usageStatsContract;
 
     @BeforeAll
     static void loadEvidence() throws Exception {
@@ -54,6 +55,8 @@ class PersonalBankAllSharesContractParityTest {
                 "docs/refactor/phase4b/personal-bank-all-shares-query-plan-evidence.json");
         usageStatsEntry = readJson(
                 "docs/refactor/phase4b/personal-bank-usage-stats-entry-contract.json");
+        usageStatsContract = readJson(
+                "docs/refactor/phase4b/personal-bank-usage-stats-read-contract.json");
     }
 
     @Test
@@ -164,12 +167,16 @@ class PersonalBankAllSharesContractParityTest {
 
     @Test
     void implementationHashesAndExactRuntimeStatementMatchTheContract() throws Exception {
-        assertSourceHashes(
+        assertSourceHashesWithTerminalHandoff(
                 contract.path("implementation").path("main_source_files"),
-                contract.path("implementation").path("main_source_sha256"));
-        assertVerificationSourceHashesWithForwardHandoff(
+                contract.path("implementation").path("main_source_sha256"),
+                "main_source_files",
+                "main_source_sha256");
+        assertSourceHashesWithTerminalHandoff(
                 contract.path("implementation").path("verification_source_files"),
-                contract.path("implementation").path("verification_source_sha256"));
+                contract.path("implementation").path("verification_source_sha256"),
+                "verification_source_files",
+                "verification_source_sha256");
 
         Class<?> adapter = Class.forName(
                 "io.saksk.ti.personalbank.infrastructure.persistence."
@@ -232,48 +239,44 @@ class PersonalBankAllSharesContractParityTest {
                 .isEqualTo(sha256(reference.path("source").asString()));
     }
 
-    private static void assertSourceHashes(JsonNode files, JsonNode hashes) throws Exception {
-        assertThat(propertyNames(files))
-                .containsExactlyInAnyOrderElementsOf(propertyNames(hashes));
-        for (String key : propertyNames(files)) {
-            assertThat(sha256(files.path(key).asString()))
-                    .as("source hash for %s", key)
-                    .isEqualTo(hashes.path(key).asString());
-        }
-    }
-
-    private static void assertVerificationSourceHashesWithForwardHandoff(
+    private static void assertSourceHashesWithTerminalHandoff(
             JsonNode files,
-            JsonNode hashes
+            JsonNode hashes,
+            String terminalFilesKey,
+            String terminalHashesKey
     ) throws Exception {
         assertThat(propertyNames(files))
                 .containsExactlyInAnyOrderElementsOf(propertyNames(hashes));
         for (String key : propertyNames(files)) {
             String relative = files.path(key).asString();
             String currentHash = sha256(relative);
-            String handoffKey = switch (key) {
-                case "contract_parity_test" -> "all_shares_java_forward_handoff_test";
-                case "read_contract_test" -> "all_shares_read_forward_handoff_test";
-                case "entry_forward_handoff_test" ->
-                        "all_shares_entry_forward_handoff_test";
-                case "share_read_contract_test" ->
-                        "share_list_read_transitive_forward_handoff_test";
-                case "share_list_contract_parity_test" ->
-                        "share_list_java_transitive_forward_handoff_test";
-                case "progress_forward_handoff" -> "progress_forward_handoff";
-                default -> null;
-            };
-            if (handoffKey == null) {
+            String terminalHash = terminalHash(
+                    terminalFilesKey, terminalHashesKey, relative);
+            if (terminalHash == null) {
                 assertThat(currentHash)
                         .as("source hash for %s", key)
                         .isEqualTo(hashes.path(key).asString());
                 continue;
             }
-            JsonNode handoff = usageStatsEntry.path("source_contracts").path(handoffKey);
-            assertThat(handoff.path("source").asString()).isEqualTo(relative);
-            assertThat(handoff.path("sha256").asString()).isEqualTo(currentHash);
+            assertThat(currentHash).as("terminal source hash for %s", key)
+                    .isEqualTo(terminalHash);
             assertThat(hashes.path(key).asString()).isNotEqualTo(currentHash);
         }
+    }
+
+    private static String terminalHash(
+            String filesKey,
+            String hashesKey,
+            String relative
+    ) {
+        JsonNode files = usageStatsContract.path("implementation").path(filesKey);
+        JsonNode hashes = usageStatsContract.path("implementation").path(hashesKey);
+        for (String key : propertyNames(files)) {
+            if (files.path(key).asString().equals(relative)) {
+                return hashes.path(key).asString();
+            }
+        }
+        return null;
     }
 
     private static String staticString(Class<?> type, String fieldName) throws Exception {

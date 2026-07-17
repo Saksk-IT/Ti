@@ -14,7 +14,11 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 PHASE4B = ROOT / "docs" / "refactor" / "phase4b"
 CONTRACT_PATH = PHASE4B / "personal-bank-usage-stats-entry-contract.json"
+CONTRACT_RELATIVE = (
+    "docs/refactor/phase4b/personal-bank-usage-stats-entry-contract.json"
+)
 PREDECESSOR_PATH = PHASE4B / "personal-bank-all-shares-read-contract.json"
+SUCCESSOR_PATH = PHASE4B / "personal-bank-usage-stats-read-contract.json"
 CALLERS_PATH = PHASE4B / "personal-bank-usage-stats-callers.json"
 GOLDEN_PATH = PHASE4B / "golden-personal-bank-usage-stats-reads.json"
 PLAN_PATH = PHASE4B / "personal-bank-usage-stats-query-plan-evidence.json"
@@ -52,6 +56,31 @@ VIEW_COMPONENTS = [
         "nullable": False,
     },
 ]
+SOURCE_HANDOFFS = {
+    "application_api": ("main_source", "application_api"),
+    "application_service": ("main_source", "application_service"),
+    "entry_contract_test": (
+        "verification_source", "entry_forward_handoff_test"
+    ),
+    "all_shares_entry_forward_handoff_test": (
+        "verification_source", "all_shares_entry_forward_handoff_test"
+    ),
+    "all_shares_read_forward_handoff_test": (
+        "verification_source", "all_shares_read_forward_handoff_test"
+    ),
+    "all_shares_java_forward_handoff_test": (
+        "verification_source", "all_shares_contract_parity_test"
+    ),
+    "share_list_read_transitive_forward_handoff_test": (
+        "verification_source", "share_read_contract_test"
+    ),
+    "share_list_java_transitive_forward_handoff_test": (
+        "verification_source", "share_list_contract_parity_test"
+    ),
+    "progress_forward_handoff": (
+        "verification_source", "progress_forward_handoff"
+    ),
+}
 
 
 def load_json(path: Path):
@@ -100,6 +129,7 @@ class Phase4bPersonalBankUsageStatsEntryContractTest(unittest.TestCase):
     def setUpClass(cls):
         cls.contract = load_json(CONTRACT_PATH)
         cls.predecessor = load_json(PREDECESSOR_PATH)
+        cls.successor = load_json(SUCCESSOR_PATH)
         cls.callers = load_json(CALLERS_PATH)
         cls.golden = load_json(GOLDEN_PATH)
         cls.plan = load_json(PLAN_PATH)
@@ -144,10 +174,28 @@ class Phase4bPersonalBankUsageStatsEntryContractTest(unittest.TestCase):
         self.assertFalse(predecessor["all_shares_http_aliases_migrated"])
         self.assertFalse(predecessor["production_cutover"])
 
+        successor = self.successor
+        self.assertEqual(
+            "ti.phase4b.personal-bank-usage-stats-read-contract",
+            successor["contract_id"],
+        )
+        self.assertEqual(CONTRACT_RELATIVE, successor["predecessor"]["source"])
+        self.assertEqual(sha256(CONTRACT_PATH), successor["predecessor"]["sha256"])
+
         for name, reference in contract["source_contracts"].items():
             source = ROOT / reference["source"]
             self.assertTrue(source.is_file(), name)
-            self.assertEqual(reference["sha256"], sha256(source), name)
+            current_hash = sha256(source)
+            handoff = SOURCE_HANDOFFS.get(name)
+            if handoff is None:
+                self.assertEqual(reference["sha256"], current_hash, name)
+                continue
+            section, successor_name = handoff
+            files = successor["implementation"][f"{section}_files"]
+            hashes = successor["implementation"][f"{section}_sha256"]
+            self.assertEqual(reference["source"], files[successor_name], name)
+            self.assertEqual(current_hash, hashes[successor_name], name)
+            self.assertNotEqual(reference["sha256"], current_hash, name)
 
         java_handoff = contract["source_contracts"][
             "share_list_java_transitive_forward_handoff_test"
@@ -292,7 +340,7 @@ class Phase4bPersonalBankUsageStatsEntryContractTest(unittest.TestCase):
                          counts["total_users"])
         self.assertEqual(1, counts["owner_count"])
 
-    def test_04_explicit_tristate_view_and_future_shape_are_exact(self):
+    def test_04_explicit_tristate_view_and_implemented_successor_are_exact(self):
         shape = self.contract["expected_application_shape"]
         self.assertEqual(
             "io.saksk.ti.personalbank.api.PersonalBankApplicationApi",
@@ -328,13 +376,22 @@ class Phase4bPersonalBankUsageStatsEntryContractTest(unittest.TestCase):
         self.assertFalse(implementation["production_source_added"])
         self.assertEqual([], implementation["main_source_files_added"])
         self.assertFalse(implementation["schema_or_index_delta_added"])
+        successor_main_files = self.successor["implementation"]["main_source_files"]
+        successor_main_hashes = self.successor["implementation"]["main_source_sha256"]
         for relative in implementation["future_main_source_files"]:
-            self.assertFalse((ROOT / relative).exists(), relative)
+            path = ROOT / relative
+            self.assertTrue(path.is_file(), relative)
+            matching = [
+                name for name, successor_relative in successor_main_files.items()
+                if successor_relative == relative
+            ]
+            self.assertEqual(1, len(matching), relative)
+            self.assertEqual(successor_main_hashes[matching[0]], sha256(path), relative)
 
         api = (ROOT / "server/src/main/java/io/saksk/ti/personalbank/api/"
                "PersonalBankApplicationApi.java").read_text(encoding="utf-8")
-        self.assertNotIn("findUsageStats", api)
-        self.assertNotIn("PersonalBankUsageStats", api)
+        self.assertIn("findUsageStats", api)
+        self.assertIn("PersonalBankUsageStatsResult", api)
 
         current_manifest = {
             path.relative_to(ROOT).as_posix(): sha256(path)
@@ -342,8 +399,12 @@ class Phase4bPersonalBankUsageStatsEntryContractTest(unittest.TestCase):
                                .rglob("*.java"))
         }
         unchanged = self.contract["unchanged_state"]
-        self.assertEqual(unchanged["personalbank_main_source_manifest"],
-                         current_manifest)
+        self.assertNotEqual(unchanged["personalbank_main_source_manifest"],
+                            current_manifest)
+        self.assertEqual(
+            self.successor["implementation"]["personalbank_main_source_manifest"],
+            current_manifest,
+        )
         self.assertEqual(22, unchanged["implemented_public_application_method_count"])
         self.assertEqual(3, unchanged["personalbank_public_method_count"])
         self.assertEqual(23, unchanged["future_public_application_method_count"])

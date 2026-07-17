@@ -3,16 +3,30 @@ package io.saksk.ti.personalbank.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import io.saksk.ti.personalbank.api.AuthenticatedPersonalBankViewer;
 import io.saksk.ti.personalbank.api.PersonalBankCategoryView;
 import io.saksk.ti.personalbank.api.PersonalBankOwnedShareView;
 import io.saksk.ti.personalbank.api.PersonalBankShareView;
+import io.saksk.ti.personalbank.api.PersonalBankUsageStatsResult;
+import io.saksk.ti.personalbank.api.PersonalBankUsageStatsResult.Outcome;
+import io.saksk.ti.personalbank.api.PersonalBankUsageStatsView;
 import io.saksk.ti.personalbank.application.port.PersonalBankCategoryQueryPort;
 import io.saksk.ti.personalbank.application.port.PersonalBankOwnedShareQueryPort;
 import io.saksk.ti.personalbank.application.port.PersonalBankShareQueryPort;
+import io.saksk.ti.personalbank.application.port.PersonalBankUsageStatsQueryPort;
+import io.saksk.ti.personalbank.application.port.PersonalBankUsageStatsQueryPort.BankAccess;
+import io.saksk.ti.personalbank.application.port.PersonalBankUsageStatsQueryPort.SharedUserAccess;
+import java.math.BigInteger;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -21,6 +35,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.transaction.annotation.Transactional;
 
 class PersonalBankQueryServiceTest {
+
+    private static final Instant FIXED_INSTANT = Instant.parse("2026-07-17T04:00:00Z");
+    private static final ZoneId BEIJING = ZoneId.of("Asia/Shanghai");
+    private static final LocalDateTime BEIJING_NOON =
+            LocalDateTime.of(2026, 7, 17, 12, 0);
 
     @Test
     void delegatesTheViewerIdentityExactlyOnceAndReturnsAnImmutableRawSnapshot() {
@@ -35,7 +54,8 @@ class PersonalBankQueryServiceTest {
             return portRows;
         };
         var service = new PersonalBankQueryService(
-                port, unusedSharePort(), unusedOwnedSharePort());
+                port, unusedSharePort(), unusedOwnedSharePort(),
+                unusedUsagePort(), fixedClock());
 
         List<PersonalBankCategoryView> result =
                 service.listCategories(new AuthenticatedPersonalBankViewer(41));
@@ -56,7 +76,8 @@ class PersonalBankQueryServiceTest {
         var service = new PersonalBankQueryService(userId -> {
             calls.incrementAndGet();
             return List.of();
-        }, unusedSharePort(), unusedOwnedSharePort());
+        }, unusedSharePort(), unusedOwnedSharePort(),
+                unusedUsagePort(), fixedClock());
 
         assertThatNullPointerException()
                 .isThrownBy(() -> service.listCategories(null))
@@ -67,7 +88,8 @@ class PersonalBankQueryServiceTest {
     @Test
     void preservesEmptyResultsAndPropagatesPortFailuresWithoutRetryOrTranslation() {
         assertThat(new PersonalBankQueryService(
-                userId -> List.of(), unusedSharePort(), unusedOwnedSharePort())
+                userId -> List.of(), unusedSharePort(), unusedOwnedSharePort(),
+                unusedUsagePort(), fixedClock())
                 .listCategories(new AuthenticatedPersonalBankViewer(1)))
                 .isEmpty();
 
@@ -76,7 +98,8 @@ class PersonalBankQueryServiceTest {
         var failing = new PersonalBankQueryService(userId -> {
             calls.incrementAndGet();
             throw failure;
-        }, unusedSharePort(), unusedOwnedSharePort());
+        }, unusedSharePort(), unusedOwnedSharePort(),
+                unusedUsagePort(), fixedClock());
 
         assertThatThrownBy(() -> failing.listCategories(new AuthenticatedPersonalBankViewer(2)))
                 .isSameAs(failure);
@@ -112,7 +135,8 @@ class PersonalBankQueryServiceTest {
             return Optional.of(portRows);
         };
         var service = new PersonalBankQueryService(
-                userId -> List.of(), port, unusedOwnedSharePort());
+                userId -> List.of(), port, unusedOwnedSharePort(),
+                unusedUsagePort(), fixedClock());
 
         var result = service.findShares(new AuthenticatedPersonalBankViewer(41), 0);
 
@@ -137,7 +161,7 @@ class PersonalBankQueryServiceTest {
                     assertThat(viewerId).isEqualTo(9L);
                     assertThat(bankId).isEqualTo(-7);
                     return Optional.empty();
-                }, unusedOwnedSharePort());
+                }, unusedOwnedSharePort(), unusedUsagePort(), fixedClock());
 
         assertThat(unavailable.findShares(new AuthenticatedPersonalBankViewer(9), -7))
                 .isEmpty();
@@ -146,7 +170,7 @@ class PersonalBankQueryServiceTest {
         var presentEmpty = new PersonalBankQueryService(
                 userId -> List.of(),
                 (viewerId, bankId) -> Optional.of(List.of()),
-                unusedOwnedSharePort());
+                unusedOwnedSharePort(), unusedUsagePort(), fixedClock());
         assertThat(presentEmpty.findShares(new AuthenticatedPersonalBankViewer(9), 0))
                 .isPresent()
                 .get()
@@ -163,7 +187,7 @@ class PersonalBankQueryServiceTest {
                 (viewerId, bankId) -> {
                     calls.incrementAndGet();
                     throw failure;
-                }, unusedOwnedSharePort());
+                }, unusedOwnedSharePort(), unusedUsagePort(), fixedClock());
 
         assertThatNullPointerException()
                 .isThrownBy(() -> service.findShares(null, 1))
@@ -205,7 +229,8 @@ class PersonalBankQueryServiceTest {
             return portRows;
         };
         var service = new PersonalBankQueryService(
-                userId -> List.of(), unusedSharePort(), port);
+                userId -> List.of(), unusedSharePort(), port,
+                unusedUsagePort(), fixedClock());
 
         List<PersonalBankOwnedShareView> result = service.listOwnedShares(
                 new AuthenticatedPersonalBankViewer((long) Integer.MAX_VALUE + 1L));
@@ -228,14 +253,15 @@ class PersonalBankQueryServiceTest {
                 viewerId -> {
                     nullCalls.incrementAndGet();
                     return List.of();
-                });
+                }, unusedUsagePort(), fixedClock());
         assertThatNullPointerException()
                 .isThrownBy(() -> nullService.listOwnedShares(null))
                 .withMessage("viewer");
         assertThat(nullCalls).hasValue(0);
 
         assertThat(new PersonalBankQueryService(
-                userId -> List.of(), unusedSharePort(), viewerId -> List.of())
+                userId -> List.of(), unusedSharePort(), viewerId -> List.of(),
+                unusedUsagePort(), fixedClock())
                 .listOwnedShares(new AuthenticatedPersonalBankViewer(1)))
                 .isEmpty();
 
@@ -248,7 +274,7 @@ class PersonalBankQueryServiceTest {
                 viewerId -> {
                     failureCalls.incrementAndGet();
                     throw failure;
-                });
+                }, unusedUsagePort(), fixedClock());
         assertThatThrownBy(() -> failing.listOwnedShares(
                 new AuthenticatedPersonalBankViewer(2)))
                 .isSameAs(failure);
@@ -266,6 +292,168 @@ class PersonalBankQueryServiceTest {
         assertThat(transactional.readOnly()).isTrue();
     }
 
+    @Test
+    void usageStatsPropagatesTheBankProbeFailureAndNeverRunsLaterQueries() {
+        var port = new RecordingUsagePort();
+        IllegalStateException failure = new IllegalStateException("bank probe unavailable");
+        port.bankFailure = failure;
+
+        assertThatThrownBy(() -> usageService(port).findUsageStats(
+                new AuthenticatedPersonalBankViewer(41), 77))
+                .isSameAs(failure);
+        assertThat(port.calls).containsExactly("bank:77");
+    }
+
+    @Test
+    void usageStatsReturnsNotFoundForMissingOrInactiveBanksAndShortCircuits() {
+        var missing = new RecordingUsagePort();
+        missing.bank = Optional.empty();
+        assertThat(usageService(missing).findUsageStats(
+                new AuthenticatedPersonalBankViewer(41), -7))
+                .isEqualTo(PersonalBankUsageStatsResult.notFound());
+        assertThat(missing.calls).containsExactly("bank:-7");
+
+        for (Integer status : Arrays.asList(null, -1, 0, 2)) {
+            var inactive = new RecordingUsagePort();
+            inactive.bank = Optional.of(new BankAccess(77, 41L, true, status));
+
+            assertThat(usageService(inactive).findUsageStats(
+                    new AuthenticatedPersonalBankViewer(41), 77))
+                    .as("status %s", status)
+                    .isEqualTo(PersonalBankUsageStatsResult.notFound());
+            assertThat(inactive.calls).containsExactly("bank:77");
+        }
+    }
+
+    @Test
+    void usageStatsReturnsForbiddenForInvalidOwnerOrMismatchedViewerAndShortCircuits() {
+        for (Long ownerId : Arrays.asList(null, -1L, 0L, 42L)) {
+            var port = new RecordingUsagePort();
+            port.bank = Optional.of(new BankAccess(77, ownerId, false, 1));
+
+            assertThat(usageService(port).findUsageStats(
+                    new AuthenticatedPersonalBankViewer(41), 77))
+                    .as("owner %s", ownerId)
+                    .isEqualTo(PersonalBankUsageStatsResult.forbidden());
+            assertThat(port.calls).containsExactly("bank:77");
+        }
+    }
+
+    @Test
+    void usageStatsDefensivelyRejectsNonpositiveViewerIdentitiesAfterTheProbe() {
+        for (long viewerId : new long[]{-1L, 0L}) {
+            AuthenticatedPersonalBankViewer viewer = mock(AuthenticatedPersonalBankViewer.class);
+            when(viewer.identityId()).thenReturn(viewerId);
+            var port = new RecordingUsagePort();
+            port.bank = Optional.of(new BankAccess(77, 41L, false, 1));
+
+            assertThat(usageService(port).findUsageStats(viewer, 77))
+                    .as("viewer %s", viewerId)
+                    .isEqualTo(PersonalBankUsageStatsResult.forbidden());
+            assertThat(port.calls).containsExactly("bank:77");
+        }
+    }
+
+    @Test
+    void usageStatsPreservesBeijingExpiryCoercionAndLegacySetCounting() {
+        var port = new RecordingUsagePort();
+        port.bank = Optional.of(new BankAccess(77, 41L, null, 1));
+        port.shared = List.of(
+                new SharedUserAccess(41L, null),
+                new SharedUserAccess(1L, BEIJING_NOON.minusNanos(1)),
+                new SharedUserAccess(2L, BEIJING_NOON),
+                new SharedUserAccess(3L, null),
+                new SharedUserAccess(4L, ""),
+                new SharedUserAccess(5L, 0),
+                new SharedUserAccess(6L, false),
+                new SharedUserAccess(7L, "not-a-date"),
+                new SharedUserAccess(8L, OffsetDateTime.parse("2026-07-17T12:00:00+08:00")),
+                new SharedUserAccess("9", BEIJING_NOON.plusNanos(1)),
+                new SharedUserAccess("not-an-id", null),
+                new SharedUserAccess(null, null),
+                new SharedUserAccess(0L, null),
+                new SharedUserAccess(-10L, null),
+                new SharedUserAccess(3L, BEIJING_NOON.plusHours(1)),
+                new SharedUserAccess(Long.MAX_VALUE, null),
+                new SharedUserAccess("1_000", null),
+                new SharedUserAccess("１２３４", null),
+                new SharedUserAccess("1__2", null),
+                new SharedUserAccess(new BigInteger("9223372036854775808"), null),
+                new SharedUserAccess(Double.POSITIVE_INFINITY, null),
+                new SharedUserAccess(13L, "2099-01-01"),
+                new SharedUserAccess(14L, "2020-01-01"));
+        port.publicIds = Arrays.asList(
+                41L, 3L, 9L, 11L, "12", 0L, null, "not-an-id",
+                -10L, -13L, 11L, Long.MAX_VALUE, "1_000",
+                "１２３４", new BigInteger("9223372036854775808"),
+                Double.NEGATIVE_INFINITY);
+
+        Clock utcClock = Clock.fixed(FIXED_INSTANT, ZoneId.of("UTC"));
+        PersonalBankUsageStatsResult result = usageService(port, utcClock).findUsageStats(
+                new AuthenticatedPersonalBankViewer(41), 77);
+
+        assertThat(result.outcome()).isEqualTo(Outcome.AVAILABLE);
+        assertThat(result.view()).isEqualTo(new PersonalBankUsageStatsView(
+                77, false, 41L, 1, 12, 10, 16, 15));
+        assertThat(port.calls).containsExactly("bank:77", "shared:77", "public:77");
+    }
+
+    @Test
+    void usageStatsDegradesEachOptionalQueryIndependentlyAndStillRunsTheOther() {
+        var sharedFails = new RecordingUsagePort();
+        sharedFails.bank = Optional.of(new BankAccess(77, 41L, true, 1));
+        sharedFails.sharedFailure = new IllegalStateException("shared unavailable");
+        sharedFails.publicIds = List.of(2L, 3L, 41L);
+        assertThat(usageService(sharedFails).findUsageStats(
+                new AuthenticatedPersonalBankViewer(41), 77).view())
+                .isEqualTo(new PersonalBankUsageStatsView(
+                        77, true, 41L, 1, 0, 2, 3, 2));
+        assertThat(sharedFails.calls)
+                .containsExactly("bank:77", "shared:77", "public:77");
+
+        var publicFails = new RecordingUsagePort();
+        publicFails.bank = Optional.of(new BankAccess(77, 41L, false, 1));
+        publicFails.shared = List.of(
+                new SharedUserAccess(2L, null),
+                new SharedUserAccess(41L, null));
+        publicFails.publicFailure = new IllegalArgumentException("public unavailable");
+        assertThat(usageService(publicFails).findUsageStats(
+                new AuthenticatedPersonalBankViewer(41), 77).view())
+                .isEqualTo(new PersonalBankUsageStatsView(
+                        77, false, 41L, 1, 1, 0, 2, 1));
+        assertThat(publicFails.calls)
+                .containsExactly("bank:77", "shared:77", "public:77");
+
+        var bothFail = new RecordingUsagePort();
+        bothFail.bank = Optional.of(new BankAccess(77, 41L, false, 1));
+        bothFail.sharedFailure = new IllegalStateException("shared unavailable");
+        bothFail.publicFailure = new IllegalStateException("public unavailable");
+        assertThat(usageService(bothFail).findUsageStats(
+                new AuthenticatedPersonalBankViewer(41), 77).view())
+                .isEqualTo(new PersonalBankUsageStatsView(
+                        77, false, 41L, 1, 0, 0, 1, 0));
+        assertThat(bothFail.calls)
+                .containsExactly("bank:77", "shared:77", "public:77");
+    }
+
+    @Test
+    void usageStatsRejectsNullBeforeTheProbeAndDeclaresAReadOnlyTransaction()
+            throws Exception {
+        var port = new RecordingUsagePort();
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> usageService(port).findUsageStats(null, 77))
+                .withMessage("viewer");
+        assertThat(port.calls).isEmpty();
+
+        Transactional transactional = PersonalBankQueryService.class
+                .getDeclaredMethod(
+                        "findUsageStats", AuthenticatedPersonalBankViewer.class, int.class)
+                .getAnnotation(Transactional.class);
+        assertThat(transactional).isNotNull();
+        assertThat(transactional.readOnly()).isTrue();
+    }
+
     private static PersonalBankShareQueryPort unusedSharePort() {
         return (viewerId, bankId) -> {
             throw new AssertionError("share port must not be called");
@@ -276,5 +464,79 @@ class PersonalBankQueryServiceTest {
         return viewerId -> {
             throw new AssertionError("owned-share port must not be called");
         };
+    }
+
+    private static PersonalBankUsageStatsQueryPort unusedUsagePort() {
+        return new PersonalBankUsageStatsQueryPort() {
+            @Override
+            public Optional<BankAccess> findBank(int bankId) {
+                throw new AssertionError("usage-stats bank probe must not be called");
+            }
+
+            @Override
+            public List<SharedUserAccess> listSharedUsers(int bankId) {
+                throw new AssertionError("usage-stats shared-users query must not be called");
+            }
+
+            @Override
+            public List<Object> listPublicUserIds(int bankId) {
+                throw new AssertionError("usage-stats public-users query must not be called");
+            }
+        };
+    }
+
+    private static Clock fixedClock() {
+        return Clock.fixed(FIXED_INSTANT, BEIJING);
+    }
+
+    private static PersonalBankQueryService usageService(RecordingUsagePort usage) {
+        return usageService(usage, fixedClock());
+    }
+
+    private static PersonalBankQueryService usageService(
+            RecordingUsagePort usage,
+            Clock clock
+    ) {
+        return new PersonalBankQueryService(
+                userId -> List.of(), unusedSharePort(), unusedOwnedSharePort(),
+                usage, clock);
+    }
+
+    private static final class RecordingUsagePort implements PersonalBankUsageStatsQueryPort {
+
+        private Optional<BankAccess> bank = Optional.empty();
+        private List<SharedUserAccess> shared = List.of();
+        private List<Object> publicIds = List.of();
+        private RuntimeException bankFailure;
+        private RuntimeException sharedFailure;
+        private RuntimeException publicFailure;
+        private final List<String> calls = new ArrayList<>();
+
+        @Override
+        public Optional<BankAccess> findBank(int bankId) {
+            calls.add("bank:" + bankId);
+            if (bankFailure != null) {
+                throw bankFailure;
+            }
+            return bank;
+        }
+
+        @Override
+        public List<SharedUserAccess> listSharedUsers(int bankId) {
+            calls.add("shared:" + bankId);
+            if (sharedFailure != null) {
+                throw sharedFailure;
+            }
+            return shared;
+        }
+
+        @Override
+        public List<Object> listPublicUserIds(int bankId) {
+            calls.add("public:" + bankId);
+            if (publicFailure != null) {
+                throw publicFailure;
+            }
+            return publicIds;
+        }
     }
 }

@@ -69,6 +69,7 @@ class PersonalBankCategoryContractParityTest {
     private static JsonNode contract;
     private static JsonNode shareListContract;
     private static JsonNode allSharesContract;
+    private static JsonNode usageStatsContract;
 
     @BeforeAll
     static void loadMachineEvidence() throws Exception {
@@ -88,6 +89,8 @@ class PersonalBankCategoryContractParityTest {
                 "docs/refactor/phase4b/personal-bank-share-list-read-contract.json");
         allSharesContract = readJson(
                 "docs/refactor/phase4b/personal-bank-all-shares-read-contract.json");
+        usageStatsContract = readJson(
+                "docs/refactor/phase4b/personal-bank-usage-stats-read-contract.json");
     }
 
     @Test
@@ -447,9 +450,9 @@ class PersonalBankCategoryContractParityTest {
             String source = sourceFiles.path(key).asString();
             assertThat(source).as("implementation path for %s", key).isNotBlank();
             if (key.equals("application_api") || key.equals("application_service")) {
-                JsonNode successorFiles = allSharesContract.path("implementation")
+                JsonNode successorFiles = usageStatsContract.path("implementation")
                         .path("main_source_files");
-                JsonNode successorHashes = allSharesContract.path("implementation")
+                JsonNode successorHashes = usageStatsContract.path("implementation")
                         .path("main_source_sha256");
                 assertThat(successorFiles.path(key).asString()).isEqualTo(source);
                 assertThat(sha256(source))

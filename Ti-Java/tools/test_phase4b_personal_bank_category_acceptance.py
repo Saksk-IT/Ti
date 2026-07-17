@@ -19,7 +19,7 @@ PHASE4B_ROOT = TI_JAVA_ROOT / "docs" / "refactor" / "phase4b"
 ACCEPTANCE_PATH = PHASE4B_ROOT / "personal-bank-category-acceptance.json"
 SHARE_ENTRY_PATH = PHASE4B_ROOT / "personal-bank-share-list-entry-contract.json"
 SHARE_READ_PATH = PHASE4B_ROOT / "personal-bank-share-list-read-contract.json"
-ALL_SHARES_READ_PATH = PHASE4B_ROOT / "personal-bank-all-shares-read-contract.json"
+TERMINAL_READ_PATH = PHASE4B_ROOT / "personal-bank-usage-stats-read-contract.json"
 ACCEPTANCE_RELATIVE = "docs/refactor/phase4b/personal-bank-category-acceptance.json"
 PHASE4A_FINAL_SHA256 = (
     "9eeec781af91c0994c750ea2641653183f36eb4492d4ff9bd6809679c723620f"
@@ -148,7 +148,7 @@ class Phase4bPersonalBankCategoryAcceptanceTest(unittest.TestCase):
             PHASE4B_ROOT / "personal-bank-category-read-contract.json"
         )
         cls.share_read_contract = load_json(SHARE_READ_PATH)
-        cls.all_shares_read_contract = load_json(ALL_SHARES_READ_PATH)
+        cls.terminal_read_contract = load_json(TERMINAL_READ_PATH)
 
     def test_01_schema_predecessor_and_source_contracts(self):
         contract = self.acceptance
@@ -244,7 +244,7 @@ class Phase4bPersonalBankCategoryAcceptanceTest(unittest.TestCase):
         for name, relative in implementation["source_files"].items():
             current_hash = sha256(TI_JAVA_ROOT / relative)
             if name in {"application_api", "application_service"}:
-                successor = self.all_shares_read_contract["implementation"]
+                successor = self.terminal_read_contract["implementation"]
                 self.assertEqual(relative, successor["main_source_files"][name])
                 self.assertEqual(successor["main_source_sha256"][name], current_hash, name)
                 self.assertNotEqual(implementation["source_sha256"][name], current_hash)
@@ -304,7 +304,7 @@ class Phase4bPersonalBankCategoryAcceptanceTest(unittest.TestCase):
             self.assertRegex(reference["sha256"], r"^[0-9a-f]{64}$")
             if name in {"contract_parity_test", "independent_acceptance_runner"}:
                 if name == "contract_parity_test":
-                    successor = self.all_shares_read_contract["implementation"]
+                    successor = self.terminal_read_contract["implementation"]
                     successor_name = "category_contract_forward_handoff_test"
                 else:
                     successor = self.share_read_contract["implementation"]

@@ -14,7 +14,7 @@ TI_JAVA_ROOT = pathlib.Path(__file__).resolve().parents[1]
 PHASE4B_ROOT = TI_JAVA_ROOT / "docs" / "refactor" / "phase4b"
 CONTRACT_PATH = PHASE4B_ROOT / "personal-bank-share-list-entry-contract.json"
 SUCCESSOR_PATH = PHASE4B_ROOT / "personal-bank-share-list-read-contract.json"
-TERMINAL_PATH = PHASE4B_ROOT / "personal-bank-all-shares-read-contract.json"
+TERMINAL_PATH = PHASE4B_ROOT / "personal-bank-usage-stats-read-contract.json"
 
 ROUTE_KEYS = {
     "e817f8083d74|GET|/api/user/banks/api/<int:bank_id>/shares",
@@ -205,6 +205,10 @@ class Phase4bPersonalBankShareListEntryContractTest(unittest.TestCase):
         )
         self.assertEqual(
             sha256(CONTRACT_PATH), self.successor["predecessor"]["sha256"]
+        )
+        self.assertEqual(
+            "ti.phase4b.personal-bank-usage-stats-read-contract",
+            self.terminal["contract_id"],
         )
 
         self.assertEqual(

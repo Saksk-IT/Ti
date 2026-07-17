@@ -8,6 +8,8 @@ import io.saksk.ti.personalbank.api.PersonalBankCategoryView;
 import io.saksk.ti.personalbank.api.PersonalBankOwnedShareView;
 import io.saksk.ti.personalbank.api.PersonalBankShareListView;
 import io.saksk.ti.personalbank.api.PersonalBankShareView;
+import io.saksk.ti.personalbank.api.PersonalBankUsageStatsResult;
+import io.saksk.ti.personalbank.api.PersonalBankUsageStatsView;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.RecordComponent;
@@ -42,6 +44,8 @@ class PersonalBankPublicBoundaryNeutralityTest {
             "/user/banks/api/<int:bank_id>/shares",
             "/api/user/banks/api/shares/all",
             "/user/banks/api/shares/all",
+            "/api/user/banks/api/<int:bank_id>/usage-stats",
+            "/user/banks/api/<int:bank_id>/usage-stats",
             "success_response",
             "successResponse");
     private static final Pattern CHINESE_STRING_LITERAL =
@@ -204,6 +208,48 @@ class PersonalBankPublicBoundaryNeutralityTest {
                         "java.lang.Boolean",
                         "java.time.LocalDateTime",
                         "java.lang.String");
+    }
+
+    @Test
+    void usageStatisticsExposeOnlyTheTriStateAndEightComputedFacts()
+            throws Exception {
+        var method = PersonalBankApplicationApi.class.getDeclaredMethod(
+                "findUsageStats", AuthenticatedPersonalBankViewer.class, int.class);
+        assertThat(method.getReturnType()).isEqualTo(PersonalBankUsageStatsResult.class);
+        assertThat(method.getParameterTypes())
+                .containsExactly(AuthenticatedPersonalBankViewer.class, int.class);
+        assertThat(Modifier.isPublic(method.getModifiers())).isTrue();
+        assertThat(Modifier.isAbstract(method.getModifiers())).isTrue();
+
+        assertThat(PersonalBankUsageStatsResult.class.isRecord()).isTrue();
+        assertThat(componentNames(PersonalBankUsageStatsResult.class))
+                .containsExactly("outcome", "view")
+                .doesNotContain("success", "message", "code", "requestId", "status");
+        assertThat(componentTypes(PersonalBankUsageStatsResult.class))
+                .containsExactly(
+                        "io.saksk.ti.personalbank.api.PersonalBankUsageStatsResult$Outcome",
+                        "io.saksk.ti.personalbank.api.PersonalBankUsageStatsView");
+        assertThat(Arrays.asList(PersonalBankUsageStatsResult.Outcome.values()))
+                .containsExactly(
+                        PersonalBankUsageStatsResult.Outcome.AVAILABLE,
+                        PersonalBankUsageStatsResult.Outcome.NOT_FOUND,
+                        PersonalBankUsageStatsResult.Outcome.FORBIDDEN);
+
+        assertThat(PersonalBankUsageStatsView.class.isRecord()).isTrue();
+        assertThat(componentNames(PersonalBankUsageStatsView.class))
+                .containsExactly(
+                        "bankId",
+                        "publicBank",
+                        "ownerId",
+                        "ownerCount",
+                        "sharedUsers",
+                        "publicUsers",
+                        "totalUsers",
+                        "totalUsersExcludingOwner")
+                .doesNotContain("success", "message", "code", "requestId");
+        assertThat(componentTypes(PersonalBankUsageStatsView.class))
+                .containsExactly(
+                        "int", "boolean", "long", "int", "int", "int", "int", "int");
     }
 
     @Test

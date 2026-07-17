@@ -17,6 +17,10 @@ CONTRACT_RELATIVE = (
     "docs/refactor/phase4b/personal-bank-all-shares-read-contract.json"
 )
 USAGE_STATS_ENTRY_PATH = PHASE4B / "personal-bank-usage-stats-entry-contract.json"
+USAGE_STATS_ENTRY_RELATIVE = (
+    "docs/refactor/phase4b/personal-bank-usage-stats-entry-contract.json"
+)
+USAGE_STATS_READ_PATH = PHASE4B / "personal-bank-usage-stats-read-contract.json"
 ROUTE_KEYS = {
     "a6fda3638fc3|GET|/api/user/banks/api/shares/all",
     "0fdd3026f636|GET|/user/banks/api/shares/all",
@@ -25,14 +29,23 @@ USAGE_STATS_ROUTE_KEYS = {
     "d67a16965b08|GET|/api/user/banks/api/<int:bank_id>/usage-stats",
     "22aecd49a3c2|GET|/user/banks/api/<int:bank_id>/usage-stats",
 }
-USAGE_STATS_FORWARD_HANDOFFS = {
-    "contract_parity_test": "all_shares_java_forward_handoff_test",
+USAGE_STATS_READ_HANDOFFS = {
+    "service_test": "service_test",
+    "contract_parity_test": "all_shares_contract_parity_test",
+    "public_boundary_test": "public_boundary_test",
+    "module_contract_parity_test": "module_contract_parity_test",
     "read_contract_test": "all_shares_read_forward_handoff_test",
     "entry_forward_handoff_test": "all_shares_entry_forward_handoff_test",
-    "share_read_contract_test":
-        "share_list_read_transitive_forward_handoff_test",
-    "share_list_contract_parity_test":
-        "share_list_java_transitive_forward_handoff_test",
+    "share_read_contract_test": "share_read_contract_test",
+    "share_list_contract_parity_test": "share_list_contract_parity_test",
+    "share_list_entry_forward_handoff_test":
+        "share_list_entry_forward_handoff_test",
+    "category_acceptance_forward_handoff_test":
+        "category_acceptance_forward_handoff_test",
+    "category_golden_forward_handoff_test":
+        "category_golden_forward_handoff_test",
+    "category_contract_forward_handoff_test":
+        "category_contract_forward_handoff_test",
     "progress_forward_handoff": "progress_forward_handoff",
 }
 COMPONENTS = [
@@ -94,6 +107,7 @@ class Phase4bPersonalBankAllSharesReadContractTest(unittest.TestCase):
             PHASE4B / "personal-bank-all-shares-query-plan-evidence.json"
         )
         cls.usage_stats_entry = load_json(USAGE_STATS_ENTRY_PATH)
+        cls.usage_stats_read = load_json(USAGE_STATS_READ_PATH)
         cls.openapi = load_json(ROOT / "contracts" / "openapi.json")
 
     def test_01_predecessor_evidence_sources_and_payload_are_closed(self):
@@ -128,19 +142,24 @@ class Phase4bPersonalBankAllSharesReadContractTest(unittest.TestCase):
             self.assertEqual(set(files), set(hashes))
             for name, relative in files.items():
                 current_hash = sha256(ROOT / relative)
-                handoff_name = (
-                    USAGE_STATS_FORWARD_HANDOFFS.get(name)
-                    if section == "verification_source"
-                    else None
-                )
+                handoff_name = None
+                if section == "main_source" and name in {
+                        "application_api", "application_service"
+                }:
+                    handoff_name = name
+                elif section == "verification_source":
+                    handoff_name = USAGE_STATS_READ_HANDOFFS.get(name)
                 if handoff_name is None:
                     self.assertEqual(hashes[name], current_hash, name)
                 else:
-                    handoff = self.usage_stats_entry["source_contracts"][
-                        handoff_name
+                    successor_files = self.usage_stats_read["implementation"][
+                        f"{section}_files"
                     ]
-                    self.assertEqual(relative, handoff["source"])
-                    self.assertEqual(current_hash, handoff["sha256"], name)
+                    successor_hashes = self.usage_stats_read["implementation"][
+                        f"{section}_sha256"
+                    ]
+                    self.assertEqual(relative, successor_files[handoff_name])
+                    self.assertEqual(current_hash, successor_hashes[handoff_name], name)
                     self.assertNotEqual(hashes[name], current_hash, name)
         self.assertEqual(
             contract["document_payload_sha256"], payload_sha256(contract)
@@ -294,7 +313,7 @@ class Phase4bPersonalBankAllSharesReadContractTest(unittest.TestCase):
             value is False for value in self.contract["forbidden_scope"].values()
         ))
 
-    def test_06_usage_stats_entry_is_the_only_authorized_successor(self):
+    def test_06_usage_stats_entry_and_read_form_the_authorized_successor_chain(self):
         successor = self.usage_stats_entry
         self.assertEqual(
             "ti.phase4b.personal-bank-usage-stats-entry-contract",
@@ -326,6 +345,23 @@ class Phase4bPersonalBankAllSharesReadContractTest(unittest.TestCase):
         self.assertEqual(11, unchanged["migrated_route_count"])
         self.assertEqual(600, unchanged["effective_pending_operation_count"])
         self.assertEqual(0, unchanged["production_cutover_count"])
+
+        terminal = self.usage_stats_read
+        self.assertEqual(
+            "ti.phase4b.personal-bank-usage-stats-read-contract",
+            terminal["contract_id"],
+        )
+        self.assertEqual(USAGE_STATS_ENTRY_RELATIVE,
+                         terminal["predecessor"]["source"])
+        self.assertEqual(sha256(USAGE_STATS_ENTRY_PATH),
+                         terminal["predecessor"]["sha256"])
+        self.assertEqual(
+            "implemented_and_targeted_verified_http_aliases_deferred",
+            terminal["status"],
+        )
+        self.assertEqual(11, terminal["route_state"]["migrated_route_count"])
+        self.assertEqual(600, terminal["route_state"]["pending_route_count"])
+        self.assertEqual(0, terminal["route_state"]["production_cutover_count"])
 
 
 if __name__ == "__main__":

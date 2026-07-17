@@ -33,7 +33,7 @@ class ModuleContractParityTest {
     private static Path tiJavaRoot;
     private static JsonNode contractRoot;
     private static JsonNode shapeStatusRoot;
-    private static JsonNode personalBankShareShapeRoot;
+    private static JsonNode personalBankShapeRoot;
     private static Map<String, ContractModule> contractModules;
     private static Set<Edge> eventOnlyEdges;
 
@@ -45,10 +45,10 @@ class ModuleContractParityTest {
         shapeStatusRoot = JSON.readTree(Files.readString(
                 resolveInsideTiJava("docs/refactor/phase4b/application-api-shape-status.json"),
                 StandardCharsets.UTF_8));
-        personalBankShareShapeRoot = JSON.readTree(Files.readString(
+        personalBankShapeRoot = JSON.readTree(Files.readString(
                 resolveInsideTiJava(
                         "docs/refactor/phase4b/"
-                                + "personal-bank-all-shares-application-api-shape.json"),
+                                + "personal-bank-usage-stats-application-api-shape.json"),
                 StandardCharsets.UTF_8));
         contractModules = readModules(contractRoot);
         eventOnlyEdges = readEventOnlyEdges(contractRoot);
@@ -141,14 +141,14 @@ class ModuleContractParityTest {
 
     @Test
     void latestPublicShapesExactlyMatchImplementedOperationsAndKeepTheRestDeferred() throws Exception {
-        assertThat(personalBankShareShapeRoot.path("migrated_route_count").asInt())
+        assertThat(personalBankShapeRoot.path("migrated_route_count").asInt())
                 .isEqualTo(11);
-        assertThat(personalBankShareShapeRoot
+        assertThat(personalBankShapeRoot
                         .path("implemented_route_backed_operation_count").asInt())
                 .isEqualTo(11);
-        assertThat(personalBankShareShapeRoot
+        assertThat(personalBankShapeRoot
                         .path("implemented_public_application_method_count").asInt())
-                .isEqualTo(22);
+                .isEqualTo(23);
         assertThat(shapeStatusRoot.path("event_payload_shape_status").asString())
                 .isEqualTo("deferred_to_phase5");
 
@@ -157,7 +157,7 @@ class ModuleContractParityTest {
             JsonNode previous = statusByModule.put(status.path("module_id").asString(), status);
             assertThat(previous).as("duplicate latest API status row").isNull();
         }
-        statusByModule.put("personalbank", personalBankShareShapeRoot.path("personalbank"));
+        statusByModule.put("personalbank", personalBankShapeRoot.path("personalbank"));
         assertThat(statusByModule.keySet())
                 .containsExactlyInAnyOrderElementsOf(
                         contractModules.keySet().stream().filter(id -> !id.equals("web")).toList());
@@ -228,7 +228,7 @@ class ModuleContractParityTest {
             }
         }
         assertThat(implementedMethodCount)
-                .isEqualTo(personalBankShareShapeRoot
+                .isEqualTo(personalBankShapeRoot
                         .path("implemented_public_application_method_count").asInt());
 
         Path javaRoot = resolveInsideTiJava("server/src/main/java");
