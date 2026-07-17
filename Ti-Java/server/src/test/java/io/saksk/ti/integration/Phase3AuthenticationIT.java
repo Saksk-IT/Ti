@@ -25,6 +25,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -78,6 +79,8 @@ class Phase3AuthenticationIT {
     private static final String LEGACY_PASSWORD = "PUBLIC-TEST-ONLY-Passw0rd!";
     private static final String LEGACY_HASH =
             "scrypt:32768:8:1$PublicSalt123456$1cfde846b842e31ba36d7c9a7f55beb23395332274230dae40c8d89d7660651da42fff3d8b5918d898465e477379787c9523da58e804edb352688c0af428bb9c";
+    private static final Instant FIXED_NOW = Instant.now();
+    private static final Instant CREDENTIAL_EXPIRES_AT = FIXED_NOW.plus(Duration.ofHours(1));
 
     @Container
     static final PostgreSQLContainer POSTGRES = Phase2PostgresContainers.reference18()
@@ -114,7 +117,9 @@ class Phase3AuthenticationIT {
         registry.add("ti.security.target-session-limit.max-total-sessions", () -> "3");
         registry.add("ti.security.legacy-session-exchange.max-replay-markers", () -> "3");
         registry.add("ti.security.legacy-auth.enabled", () -> "true");
-        registry.add("ti.security.legacy-auth.accept-until", () -> "2026-07-18T00:00:00Z");
+        registry.add(
+                "ti.security.legacy-auth.accept-until",
+                () -> FIXED_NOW.plus(Duration.ofDays(1)).toString());
         registry.add("ti.security.legacy-auth.secret",
                 () -> "PUBLIC-TEST-ONLY-ti-legacy-secret-32-bytes-minimum");
     }
@@ -633,14 +638,14 @@ class Phase3AuthenticationIT {
                             "identity-cookie-" + index,
                             42,
                             7,
-                            Instant.parse("2026-07-17T01:00:00Z")).status())
+                            CREDENTIAL_EXPIRES_AT).status())
                     .isEqualTo(LegacySessionExchangeGuard.CredentialStatus.ACQUIRED);
         }
         assertThat(legacySessionExchangeGuard.acquireCredential(
                         "identity-cookie-over-limit",
                         42,
                         7,
-                        Instant.parse("2026-07-17T01:00:00Z")).status())
+                        CREDENTIAL_EXPIRES_AT).status())
                 .isEqualTo(LegacySessionExchangeGuard.CredentialStatus.IDENTITY_LIMITED);
 
         try (RedisConnection connection = redis.getConnectionFactory().getConnection()) {
@@ -650,13 +655,13 @@ class Phase3AuthenticationIT {
                         "identity-version-7",
                         42,
                         7,
-                        Instant.parse("2026-07-17T01:00:00Z")).status())
+                        CREDENTIAL_EXPIRES_AT).status())
                 .isEqualTo(LegacySessionExchangeGuard.CredentialStatus.ACQUIRED);
         assertThat(legacySessionExchangeGuard.acquireCredential(
                         "identity-version-8",
                         42,
                         8,
-                        Instant.parse("2026-07-17T01:00:00Z")).status())
+                        CREDENTIAL_EXPIRES_AT).status())
                 .isEqualTo(LegacySessionExchangeGuard.CredentialStatus.ACQUIRED);
         assertThat(redis.keys("ti-java:identity:legacy-session-exchange:identity:*"))
                 .as("one authoritative identity must have a distinct quota per Session version")
@@ -672,7 +677,7 @@ class Phase3AuthenticationIT {
                             "global-cookie-" + index,
                             100 + index,
                             1,
-                            Instant.parse("2026-07-17T01:00:00Z"));
+                            CREDENTIAL_EXPIRES_AT);
             if (index == 0) {
                 firstGlobal = acquired;
             }
@@ -683,7 +688,7 @@ class Phase3AuthenticationIT {
                         "global-cookie-over-limit",
                         999,
                         1,
-                        Instant.parse("2026-07-17T01:00:00Z")).status())
+                        CREDENTIAL_EXPIRES_AT).status())
                 .isEqualTo(LegacySessionExchangeGuard.CredentialStatus.GLOBAL_LIMITED);
 
         assertThat(firstGlobal).isNotNull();
@@ -693,7 +698,7 @@ class Phase3AuthenticationIT {
                         "global-cookie-0",
                         100,
                         1,
-                        Instant.parse("2026-07-17T01:00:00Z")).status())
+                        CREDENTIAL_EXPIRES_AT).status())
                 .as("a stale release token must not delete a newer reservation")
                 .isEqualTo(LegacySessionExchangeGuard.CredentialStatus.REPLAY);
         legacySessionExchangeGuard.releaseCredential(
@@ -702,7 +707,7 @@ class Phase3AuthenticationIT {
                         "global-cookie-over-limit",
                         999,
                         1,
-                        Instant.parse("2026-07-17T01:00:00Z")).status())
+                        CREDENTIAL_EXPIRES_AT).status())
                 .isEqualTo(LegacySessionExchangeGuard.CredentialStatus.ACQUIRED);
         Set<String> markerKeys = redis.keys("ti-java:identity:legacy-session-exchange:*");
         assertThat(markerKeys).filteredOn(key -> key.contains(":credential:")).hasSize(3);
@@ -836,7 +841,7 @@ class Phase3AuthenticationIT {
                 .stream()
                 .findFirst()
                 .orElseThrow();
-        long fixedNow = Instant.parse("2026-07-16T01:00:00Z").getEpochSecond();
+        long fixedNow = FIXED_NOW.getEpochSecond();
         redis.opsForHash().put(
                 sessionKey,
                 "sessionAttr:anonymous_expires_at",
@@ -949,7 +954,7 @@ class Phase3AuthenticationIT {
         @Bean
         @Primary
         Clock phase3AuthenticationClock() {
-            return Clock.fixed(Instant.parse("2026-07-16T01:00:00Z"), ZoneOffset.UTC);
+            return Clock.fixed(FIXED_NOW, ZoneOffset.UTC);
         }
     }
 }

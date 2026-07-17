@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-- **阶段 4B：personalbank（分类与分享列表 HTTP-neutral 内部读取 closure 已完成）**。两条 category alias 的 HTTP-neutral 能力已经最终验收；`e817f8083d74|GET|/api/user/banks/api/<int:bank_id>/shares` 与 `c50102968322|GET|/user/banks/api/<int:bank_id>/shares` 的入口快照、累计 shape 和 read-contract 已形成连续哈希链。生产 DTO/API/service/port/JDBC adapter 严格保留两条顺序 SQL、`viewer long/JDBC bigint/legacy int4`、短路与 `Optional` 的 absent/present-empty 区别；PostgreSQL 16.14/18.4 adapter IT、全部 source tools 284/284、实现后完整 Maven 446+64、build-context SHA-256 `7e1da0e1af1d249b6bf5e13d3b6de94ea92920a95620294ffea369e84d448e16` 的 WORM，以及只排除 read-contract 自身的独立副本最终控制面均全绿。四条 HTTP operation 都保持 pending，未新增 Controller、Security matcher、route/OpenAPI delta 或生产切流；有效状态仍为 11 migrated、600 pending、0 production cutover。
+- **阶段 4B：personalbank（分类与分享列表 HTTP-neutral 内部读取 closure 已完成；全部分享入口门禁已通过）**。两条 category alias 与两条按题库分享列表 alias 的 HTTP-neutral 能力已经最终验收；下一切片 `a6fda3638fc3|GET|/api/user/banks/api/shares/all` 与 `0fdd3026f636|GET|/user/banks/api/shares/all` 已完成固定提交调用方、20-case golden、PG16.14/18.4 SQL/JDBC 与 PG18.4 大夹具计划证据，状态仍为 `entry_gate_passed_implementation_not_started`。本轮完整验证为 source tools 312/312、Maven 451+66；只授权 DTO/API/service/port/JDBC 的 HTTP-neutral 内部实现。六条 HTTP operation 都保持 pending，未新增 Controller、Security matcher、route/OpenAPI delta、schema/index 或生产切流；有效状态仍为 11 migrated、600 pending、0 production cutover。
 - 基线提交：旧 Ti `700006dfdfa063deb4387be572911e782bcea0d9`。
 - 盘点日期：2026-07-17（Asia/Shanghai）。
 - 题目类型元数据已提交并推送的绿色检查点：`1444814`（`feat(java): add question metadata catalog capability`）；题量为 `eda7f43`（`feat(java): add catalog question count capability`）；单题详情为 `75d4cc8`（`feat(java): add catalog question detail capability`）；后台题目摘要集合为 `a32caeb`（`feat(java): add catalog question summary capability`）；后台科目库存摘要为 `6493cb2`（`feat(java): add catalog subject inventory capability`）；后台科目上下文为 `643c3b3`（`feat(java): add catalog subject context capability`）。
@@ -125,6 +125,9 @@
 - 已新增 `PersonalBankShareView/PersonalBankShareListView`、`PersonalBankApplicationApi#findShares`、只读应用 service、share query port 与 JDBC adapter。生产 SQL 与 PG16.14/18.4 preimplementation 证据逐字一致：owner/status probe 无行时不触发列表查询，命中后只按 `bank_id` 读取 11 列，显式 `DESC NULLS FIRST`、无 JOIN/无 `id` tie-breaker；`List.copyOf` 保持结果不可变。PG16.14/18.4 adapter IT、实现/历史交接 parity、全部 source tools 284/284 与完整 `clean verify` 446+64 均通过，0 failure/error/skip。
 - 分享列表 WORM 以 build-context SHA-256 `7e1da0e1af1d249b6bf5e13d3b6de94ea92920a95620294ffea369e84d448e16` 通过 PostgreSQL 18.4、70 表/617 列、只读 ACL、Hibernate `validate`、启动与 readiness；不可变报告 SHA-256 为 `779154127fc700e213fbb3d5f83c112c090d3481236dcd361dbd72b74a0bd1ad`，schema dump 未持久化，临时容器/网络/卷/镜像均清理。
 - 分享列表独立副本以专用空 Maven 缓存通过 Phase 1/2/3 静态门禁、36 项小程序测试、446+64 Maven、独立 PostgreSQL/Redis 数据面、唯一镜像、3/3 Compose readiness、重启恢复与 8-bind source 审计；源工作树 bind 为 0，临时目录、容器、网络、卷、镜像、缓存卷和端口均清理至 0。read-contract 的 `final_acceptance` 只排除自身并绑定其余受控文件的非递归清单。
+- 已完成“我创建的全部分享”实现前入口闭合：固定提交全仓仅发现退役 404 页面模板中的 1 个直接调用，小程序无调用，但两条 alias 仍可外部访问；20 个隔离 golden case 固定 Session/Bearer/匿名分流、owner 与 active-bank 过滤、12 个原始字段、查询参数忽略、`created_at DESC`、条件 `share_link`、安全 500 信封、身份侧 `last_active` 与业务表零写入。
+- 全部分享目标 SQL 只允许一个 `viewer_id bigint` bind、一条 `bank_shares JOIN user_question_banks` 查询，不过滤分享 active/expiry/uses/token，也不分页或增加 tie-breaker。PG16.14/18.4 JDBC 各 1/1 通过；PG18.4/PG16.14 均在 149,811 返回行的大夹具上观察到 Sort → Hash Join → 两个 Seq Scan、loops=1、TEMP=0，当前证据不授权生产索引或延迟 SLA。
+- 全部分享入口合同、调用方、golden、SQL manifest 与计划证据已通过全部 source tools 312/312；完整 `clean verify` 为 451 个 surefire + 66 个 failsafe，0 failure/error/skip。Phase 3 认证集成测试的固定绝对截止时间已改为单次测试进程内一致的相对未来时间，消除日历越界导致的伪失败而不改变生产逻辑。入口状态保持 implementation not started，只授权后续 HTTP-neutral 内部能力。
 - 有效路由状态现为 **11 migrated、600 pending、0 production cutover**；有效资源为 **159 个且 159 个均有唯一 owner**。`migrated` 只表示 Java 实现与兼容证据已物化，旧 Flask 仍是生产 owner，整个长期重构目标仍未完成。
 
 ## 验证命令与结果
@@ -229,10 +232,11 @@
 | Phase 4B personalbank 分享列表内部实现 | 累计 shape 21 个公开方法；生产 DTO/API/service/port/adapter；PG16.14/18.4 runtime adapter 2/2；全部 source tools 284/284；`clean verify` 446+64 | 实现合同绿色；两条 SQL、Optional、nullable/raw 与排序语义闭合，HTTP/cutover 仍未授权 |
 | Phase 4B personalbank 分享列表 WORM | PG18.4、70 表/617 列、只读 ACL、Hibernate `validate`、启动与 readiness；build-context SHA-256 `7e1da0e1af1d249b6bf5e13d3b6de94ea92920a95620294ffea369e84d448e16` | 绿色；报告 SHA-256 `779154127fc700e213fbb3d5f83c112c090d3481236dcd361dbd72b74a0bd1ad`，schema dump 未持久化且临时资源已清理 |
 | Phase 4B personalbank 分享列表最终独立抽取与 closure | 仅复制受控 `Ti-Java/` 文件；Phase 1/2/3 静态、36 node、空缓存 446+64 Maven、独立数据面、镜像、3/3 Compose readiness、重启与 8-bind 审计全绿；最终清单只排除 read-contract 自身 | 绿色；0 symlink/forbidden artifact，源工作树 bind=0，临时目录、容器、网络、卷、镜像、缓存卷和端口均为 0；两条分享列表 HTTP operation 仍 pending |
+| Phase 4B personalbank 全部分享实现前入口门禁 | 固定提交调用方闭合；双 alias 共 20-case golden；PG16.14/18.4 单 SQL JDBC 2/2；149,811 返回行计划证据；全部 source tools 312/312；`clean verify` 451+66 | 入口合同绿色；implementation not started，只授权 HTTP-neutral DTO/API/service/port/JDBC，不授权 HTTP、schema/index 或 cutover |
 | Phase 4A 科目目录检查点独立抽取 | 1,251 个文件；Phase 1、Phase 2/3 静态门禁、231+28 Maven 全绿 | 绿色；这是科目目录检查点证据；无符号链接、无父目录运行时读取，临时副本和容器无残留 |
 | Phase 4A 旧栈回归 | 374 个 Python 文件 compileall；654 passed、2 个登记失败、3 skipped；两套小程序各 36/36 | 绿色；登记基线和 warning 窗口保持一致 |
 
-上表保留 Phase 4A 各历史切片并记录最终 closure，同时区分 Phase 4B personalbank 分类最终证据、分享列表实现前入口快照与当前内部实现。分类的 424+60/WORM/独立清单和入口的 429+62 都不得冒充实现验收；当前实现由自身 446+64 完整 Maven、WORM 与独立副本控制面闭合。
+上表保留 Phase 4A 各历史切片并记录最终 closure，同时区分 Phase 4B personalbank 分类最终证据、分享列表实现前入口快照及内部实现、全部分享实现前入口快照。分类的 424+60/WORM/独立清单、分享列表入口的 429+62 和全部分享入口的 451+66 都不得冒充全部分享实现验收；分享列表当前实现由自身 446+64 完整 Maven、WORM 与独立副本控制面闭合。
 
 完整命令、两个 pytest 失败说明及初步性能数字见 `07-baseline-results.md`。
 
@@ -269,7 +273,7 @@
 
 ## 下一项具体动作
 
-1. 以已闭合的 personal-bank share list read-contract 为前驱，重新审计 Phase 4B 的下一候选能力并先形成调用方、认证、数据与故障边界入口合同；当前 closure 不自动授权四条 personalbank HTTP alias、route/OpenAPI/安全匹配器、创建/删除/统计、schema/index 或生产切流。
+1. 按已通过的 personal-bank all-shares 入口合同实现唯一获准的 HTTP-neutral 内部能力：新增不可变 `PersonalBankOwnedShareView`、`PersonalBankOwnedShareQueryPort`、精确单 SQL JDBC adapter，并扩展 `PersonalBankApplicationApi` 与只读 service；不得新增 Controller、Security matcher、分享链接投影、route/OpenAPI delta、schema/index 或生产切流。
 2. 在 Phase 4C 由 `learning` 完整迁移题量双路由与 `GET /api/quiz/subjects/{subject}/info` 的跨 `catalog`、`identity`、`learning` 组合；复用 catalog 题量原语，禁止 catalog 直查作答、错题、收藏或私有标签事实。题量切片必须先显式迁移旧 `question_tags_v1`，再批准移除 GET 内 DDL/DML、缓存和故障策略差异。
 3. 两条后台题型、两条单题详情、两条后台题目集合、一条后台科目库存、两条后台科目上下文与两条后台题目导出 HTTP operation 延后到 4H；实现前必须正式批准并机器化 `operations -> catalog::api`（当前 `operations` 只允许依赖 `sharedkernel`），再由适配层分别复现题型的 Python Unicode whitespace/故障差异、详情的鉴权/路径整数/modern/legacy 投影、集合的原始查询解析/用户名/PQF/题型投影、科目库存的全局 gate/角色/裸数组/null、科目上下文页面的 Session gate/404/模板渲染，以及导出的鉴权、首个原始参数、JSON safe-load/default、modern/legacy 信封和 HTML/JSON 故障语义。当前内部 API 不授权 route/OpenAPI delta。
 4. 公共题库生产 Redis、HMAC Secret、真实数据、刷新调度、即时撤回事件桥接和入口切换仍需另行获批；本地 shadow 证据不授权生产操作。

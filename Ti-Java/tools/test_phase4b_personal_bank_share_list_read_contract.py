@@ -18,6 +18,64 @@ REPOSITORY_ROOT = ROOT.parent
 PHASE4B = ROOT / "docs" / "refactor" / "phase4b"
 CONTRACT_PATH = PHASE4B / "personal-bank-share-list-read-contract.json"
 CONTRACT_RELATIVE = "docs/refactor/phase4b/personal-bank-share-list-read-contract.json"
+ALL_SHARES_ENTRY_PATH = PHASE4B / "personal-bank-all-shares-entry-contract.json"
+ALL_SHARES_ENTRY_RELATIVE = (
+    "docs/refactor/phase4b/personal-bank-all-shares-entry-contract.json"
+)
+ALL_SHARES_ROUTE_KEYS = {
+    "a6fda3638fc3|GET|/api/user/banks/api/shares/all",
+    "0fdd3026f636|GET|/user/banks/api/shares/all",
+}
+ALL_SHARES_FORWARD_ADDITIONS = {
+    f"Ti-Java/{ALL_SHARES_ENTRY_RELATIVE}",
+    "Ti-Java/docs/refactor/phase4b/golden-personal-bank-all-shares-reads.json",
+    "Ti-Java/docs/refactor/phase4b/personal-bank-all-shares-callers.json",
+    "Ti-Java/docs/refactor/phase4b/personal-bank-all-shares-query-plan-evidence.json",
+    (
+        "Ti-Java/server/src/test/java/io/saksk/ti/integration/"
+        "Phase4bPersonalBankAllSharesEvidenceJdbcCompatibilityIT.java"
+    ),
+    (
+        "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/infrastructure/"
+        "persistence/PersonalBankAllSharesEvidenceSql.java"
+    ),
+    (
+        "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/infrastructure/"
+        "persistence/PersonalBankAllSharesEvidenceSqlContractTest.java"
+    ),
+    (
+        "Ti-Java/server/src/test/java/io/saksk/ti/personalbank/infrastructure/"
+        "persistence/PersonalBankAllSharesEvidenceSqlManifestTest.java"
+    ),
+    "Ti-Java/server/src/test/resources/db/phase4b/064-personal-bank-all-shares-seed.sql",
+    "Ti-Java/tools/capture_phase4b_personal_bank_all_shares_callers.py",
+    "Ti-Java/tools/capture_phase4b_personal_bank_all_shares_goldens.py",
+    "Ti-Java/tools/capture_phase4b_personal_bank_all_shares_query_plans.py",
+    "Ti-Java/tools/test_capture_phase4b_personal_bank_all_shares_callers.py",
+    "Ti-Java/tools/test_capture_phase4b_personal_bank_all_shares_goldens.py",
+    "Ti-Java/tools/test_capture_phase4b_personal_bank_all_shares_query_plans.py",
+    "Ti-Java/tools/test_phase4b_personal_bank_all_shares_entry_contract.py",
+}
+SHARE_READ_FORWARD_TEST_RELATIVE = (
+    "tools/test_phase4b_personal_bank_share_list_read_contract.py"
+)
+SHARE_READ_JAVA_PARITY_RELATIVE = (
+    "server/src/test/java/io/saksk/ti/architecture/"
+    "PersonalBankShareListContractParityTest.java"
+)
+SHARE_READ_JAVA_PARITY_HISTORICAL_SHA256 = (
+    "b37147f2f1fc0bd4dbe7582d5457026e46d0e5ee323eb8b1480325eca8658fdb"
+)
+PHASE3_AUTH_TIME_TEST_RELATIVE = (
+    "server/src/test/java/io/saksk/ti/integration/Phase3AuthenticationIT.java"
+)
+PHASE3_AUTH_TIME_TEST_HISTORICAL_SHA256 = (
+    "059abbf9fdf6d07acf4aebef55a6da1705f66142e4daea77ac093553441d0c76"
+)
+PROGRESS_FORWARD_HANDOFF_RELATIVE = "docs/refactor/05-progress.md"
+PROGRESS_HISTORICAL_SHA256 = (
+    "89fa432fba5b793b002cc034dda4c7a92a666e0b871c1ef744ed0d90a55b7e63"
+)
 ROUTE_KEYS = {
     "e817f8083d74|GET|/api/user/banks/api/<int:bank_id>/shares",
     "c50102968322|GET|/user/banks/api/<int:bank_id>/shares",
@@ -50,7 +108,10 @@ def sha256(path: pathlib.Path) -> str:
     return digest.hexdigest()
 
 
-def canonical_control_manifest() -> tuple[int, int, str]:
+def canonical_control_manifest(
+        forward_additions: set[str] | None = None,
+        historical_hash_overrides: dict[str, str] | None = None,
+) -> tuple[int, int, str]:
     completed = subprocess.run(
         [
             "git",
@@ -71,11 +132,20 @@ def canonical_control_manifest() -> tuple[int, int, str]:
         for item in completed.stdout.split(b"\0")
         if item
     })
-    excluded = f"Ti-Java/{CONTRACT_RELATIVE}"
-    if controlled.count(excluded) != 1:
+    forward_additions = forward_additions or set()
+    historical_hash_overrides = historical_hash_overrides or {}
+    self_path = f"Ti-Java/{CONTRACT_RELATIVE}"
+    missing = forward_additions - set(controlled)
+    if missing:
+        raise AssertionError(f"missing forward-controlled paths: {sorted(missing)}")
+    historical_controlled = [
+        relative for relative in controlled if relative not in forward_additions
+    ]
+    excluded = self_path
+    if historical_controlled.count(excluded) != 1:
         raise AssertionError("read contract must be the sole explicit exclusion")
     included = []
-    for relative in controlled:
+    for relative in historical_controlled:
         path = REPOSITORY_ROOT / relative
         if path.is_symlink() or not path.is_file():
             raise AssertionError(f"invalid controlled path: {relative}")
@@ -83,7 +153,9 @@ def canonical_control_manifest() -> tuple[int, int, str]:
             continue
         included.append({
             "path": relative.removeprefix("Ti-Java/"),
-            "sha256": sha256(path),
+            "sha256": historical_hash_overrides.get(
+                relative.removeprefix("Ti-Java/"), sha256(path)
+            ),
         })
     payload = (json.dumps(
         included,
@@ -91,7 +163,11 @@ def canonical_control_manifest() -> tuple[int, int, str]:
         sort_keys=True,
         separators=(",", ":"),
     ) + "\n").encode()
-    return len(controlled), len(included), hashlib.sha256(payload).hexdigest()
+    return (
+        len(historical_controlled),
+        len(included),
+        hashlib.sha256(payload).hexdigest(),
+    )
 
 
 class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
@@ -192,7 +268,20 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
             for name, relative in files.items():
                 path = ROOT / relative
                 self.assertTrue(path.is_file(), name)
-                self.assertEqual(hashes[name], sha256(path), name)
+                current_hash = sha256(path)
+                if (
+                        name == "share_read_contract_test"
+                        and ALL_SHARES_ENTRY_PATH.is_file()
+                ):
+                    successor = load_json(ALL_SHARES_ENTRY_PATH)
+                    handoff = successor["source_contracts"][
+                        "share_list_read_forward_handoff_test"
+                    ]
+                    self.assertEqual(relative, handoff["source"])
+                    self.assertEqual(current_hash, handoff["sha256"])
+                    self.assertNotEqual(hashes[name], current_hash)
+                else:
+                    self.assertEqual(hashes[name], current_hash, name)
 
     def test_04_api_dto_optional_and_immutability_shapes_are_exact(self):
         application = self.contract["application_contract"]
@@ -410,7 +499,82 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
             self.assertEqual(446, raw_copy["maven"]["surefire"]["tests"])
             self.assertEqual(64, raw_copy["maven"]["failsafe"]["tests"])
 
-        total, included, manifest = canonical_control_manifest()
+        forward_additions: set[str] = set()
+        historical_hash_overrides: dict[str, str] = {}
+        if ALL_SHARES_ENTRY_PATH.is_file():
+            successor = load_json(ALL_SHARES_ENTRY_PATH)
+            self.assertEqual(
+                "ti.phase4b.personal-bank-all-shares-entry-contract",
+                successor["contract_id"],
+            )
+            self.assertEqual("entry_gate_passed_implementation_not_started", successor["status"])
+            self.assertEqual(
+                CONTRACT_RELATIVE, successor["predecessor"]["source"]
+            )
+            self.assertEqual(
+                sha256(CONTRACT_PATH), successor["predecessor"]["sha256"]
+            )
+            self.assertEqual(
+                ALL_SHARES_ROUTE_KEYS,
+                set(successor["authorized_slice"]["only_operation_keys"]),
+            )
+            self.assertTrue(successor["entry_gate"]["implementation_authorized"])
+            self.assertFalse(successor["entry_gate"]["http_migration_authorized"])
+            successor_sources = {
+                f"Ti-Java/{reference['source']}"
+                for reference in successor["source_contracts"].values()
+            }
+            self.assertEqual(
+                ALL_SHARES_FORWARD_ADDITIONS - {
+                    f"Ti-Java/{ALL_SHARES_ENTRY_RELATIVE}"
+                },
+                ALL_SHARES_FORWARD_ADDITIONS.intersection(successor_sources),
+            )
+            java_handoff = successor["source_contracts"][
+                "share_list_java_forward_handoff_test"
+            ]
+            self.assertEqual(SHARE_READ_JAVA_PARITY_RELATIVE, java_handoff["source"])
+            self.assertEqual(
+                sha256(ROOT / SHARE_READ_JAVA_PARITY_RELATIVE),
+                java_handoff["sha256"],
+            )
+            phase3_handoff = successor["source_contracts"][
+                "phase3_auth_time_forward_handoff_test"
+            ]
+            self.assertEqual(PHASE3_AUTH_TIME_TEST_RELATIVE, phase3_handoff["source"])
+            self.assertEqual(
+                sha256(ROOT / PHASE3_AUTH_TIME_TEST_RELATIVE),
+                phase3_handoff["sha256"],
+            )
+            progress_handoff = successor["source_contracts"][
+                "progress_forward_handoff"
+            ]
+            self.assertEqual(
+                PROGRESS_FORWARD_HANDOFF_RELATIVE,
+                progress_handoff["source"],
+            )
+            self.assertEqual(
+                sha256(ROOT / PROGRESS_FORWARD_HANDOFF_RELATIVE),
+                progress_handoff["sha256"],
+            )
+            forward_additions = ALL_SHARES_FORWARD_ADDITIONS
+            historical_hash_overrides = {
+                SHARE_READ_FORWARD_TEST_RELATIVE:
+                    self.contract["implementation"]["verification_source_sha256"][
+                        "share_read_contract_test"
+                    ],
+                SHARE_READ_JAVA_PARITY_RELATIVE:
+                    SHARE_READ_JAVA_PARITY_HISTORICAL_SHA256,
+                PHASE3_AUTH_TIME_TEST_RELATIVE:
+                    PHASE3_AUTH_TIME_TEST_HISTORICAL_SHA256,
+                PROGRESS_FORWARD_HANDOFF_RELATIVE:
+                    PROGRESS_HISTORICAL_SHA256,
+            }
+
+        total, included, manifest = canonical_control_manifest(
+            forward_additions,
+            historical_hash_overrides,
+        )
         control = final["final_control_plane"]
         self.assertTrue(control["passed"])
         self.assertEqual(total, control["controlled_file_count"])

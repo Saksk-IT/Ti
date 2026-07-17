@@ -1,0 +1,470 @@
+{
+  "contract_id": "ti.phase4b.personal-bank-all-shares-query-plan-evidence",
+  "schema_version": 1,
+  "captured_at": "2026-07-17",
+  "scope": "test-only preimplementation JDBC SQL and query-plan evidence",
+  "inputs": {
+    "sql_manifest_path": "server/target/phase4b-personal-bank-all-shares-evidence-sql.json",
+    "sql_manifest_sha256": "5cc824125c455439eb2ea53e7db026e31132b75147708ee12ba3b7e300331709",
+    "sql_manifest_payload_sha256": "947a96157924017eab9f6be2c3d453dd6b3fb14eba062f571dbcbac846f175cc",
+    "evidence_sql_sha256": "3d01381c0293266d0d27833ec704e631176db3288d00276eb7c59fb8fd68beae",
+    "sql_contract_test_sha256": "572141ae45927b1375f2fa6089aff24b360c64e2e9fe58dcb8159457c38ef803",
+    "sql_manifest_exporter_sha256": "4e2cc9a9034922577119846156e8bbc55278175a03bb9d3db0c2a24727997199",
+    "jdbc_compatibility_test_sha256": "1a84ead2808b152225831564044ce513fafa0dd9b7209589b92bba79b48a011f",
+    "schema_sha256": "d0e51e7cd16d0275611a82c984a52538beb14b10b19c50925646dd48a4d1c29d",
+    "predecessor_seed_sha256": "626406876dfa0deecb8c0cd030b84848facd01b0baf1bcffdcffb64822a10fd5",
+    "all_shares_seed_sha256": "c93eab269a4d33efd11bd9eaf187523cb79490d1936f44b1c9b7228f38c73268",
+    "base_capture_support_sha256": "c39b69d524c7b749411a71654973617c3a40719e79ea6e21138ab675145d750d",
+    "capture_tool_sha256": "e7f3f734c20ffc57c5c6e2c57533c0e6b2cb11c1fca2eab5c52ecbd720de7820",
+    "capture_tool_test_sha256": "05892c7e61f4d50468db4508fe894b309c2148cc766a6215cfcdcac483df3c45"
+  },
+  "sql_contract": {
+    "manifest": {
+      "manifest_id": "ti.phase4b.personal-bank-all-shares-preimplementation-sql",
+      "schema_version": 1,
+      "source_class": "io.saksk.ti.personalbank.infrastructure.persistence.PersonalBankAllSharesEvidenceSql",
+      "scope": "test-only-preimplementation-evidence",
+      "sequential_execution_required": false,
+      "join_authorized": true,
+      "http_derived_fields_excluded": [
+        "share_link"
+      ],
+      "query_count": 1,
+      "queries": [
+        {
+          "ordinal": 1,
+          "query_id": "personal-bank-all-shares",
+          "operation": "all-shares",
+          "sql": "SELECT bs.id,\n       bs.bank_id,\n       bs.owner_id,\n       bs.share_code,\n       bs.share_token,\n       bs.permission,\n       bs.expires_at,\n       bs.max_uses,\n       bs.current_uses,\n       bs.is_active,\n       bs.created_at,\n       b.name AS bank_name\nFROM bank_shares bs\nJOIN user_question_banks b ON bs.bank_id = b.id\nWHERE bs.owner_id = :viewer_id\n  AND b.status = 1\nORDER BY bs.created_at DESC NULLS FIRST\n",
+          "parameter_order": [
+            "viewer_id"
+          ],
+          "parameters": {
+            "viewer_id": "bigint"
+          }
+        }
+      ]
+    },
+    "query_order": [
+      "personal-bank-all-shares"
+    ],
+    "query_count": 1,
+    "join_authorized": true,
+    "http_derived_fields_excluded": [
+      "share_link"
+    ],
+    "production_source_added": false
+  },
+  "fixture": {
+    "bank_count_argument": 5000,
+    "generated_bank_count": 5004,
+    "share_count_argument": 150000,
+    "generated_share_count": 150007,
+    "target_viewer_id": 4201,
+    "expected_result_count": 149811,
+    "target_null_interval": 5000,
+    "schema_has_owner_id_or_created_at_index": false,
+    "fixture_sql_sha256": "e943c898cebc1d358c52e53ef70b57da99522b16a5e885d81e430a831a6952f8"
+  },
+  "plan_capture_environment": {
+    "session_settings": {
+      "max_parallel_workers_per_gather": "0",
+      "jit": "off",
+      "work_mem": "64MB"
+    },
+    "same_settings_for_all_engines": true
+  },
+  "engines": [
+    {
+      "label": "PostgreSQL 16.14",
+      "image": "postgres:16.14-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777",
+      "image_id": "sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777",
+      "server_version": "16.14",
+      "server_version_num": "160014",
+      "observations": [
+        {
+          "ordinal": 1,
+          "query_id": "personal-bank-all-shares",
+          "operation": "all-shares",
+          "sql": "SELECT bs.id,\n       bs.bank_id,\n       bs.owner_id,\n       bs.share_code,\n       bs.share_token,\n       bs.permission,\n       bs.expires_at,\n       bs.max_uses,\n       bs.current_uses,\n       bs.is_active,\n       bs.created_at,\n       b.name AS bank_name\nFROM bank_shares bs\nJOIN user_question_banks b ON bs.bank_id = b.id\nWHERE bs.owner_id = :viewer_id\n  AND b.status = 1\nORDER BY bs.created_at DESC NULLS FIRST\n",
+          "sql_sha256": "d6023fef32cf70e97e57eb58494864010b9da460edc50faecfc677856a16f0ca",
+          "normalized_sql_sha256": "ed88112a7c9588f28b33b0d1a964bfaf42c430b4c4cd203d3b0e5c2ee1484080",
+          "binding": {
+            "mode": "postgresql-prepare-execute",
+            "prepared_name": "phase4b_all_shares",
+            "session_settings": {
+              "max_parallel_workers_per_gather": "0",
+              "jit": "off",
+              "work_mem": "64MB"
+            },
+            "runtime_statement_count": 1,
+            "bound_parameter_count": 1,
+            "occurrence_names": [
+              "viewer_id"
+            ],
+            "positional_sql_sha256": "d49fd8004a765d42635209ebacfb32ccf427c29104a18c4ce17f2abd3b45749f",
+            "parameters": {
+              "viewer_id": {
+                "postgres_type": "bigint",
+                "value": 4201
+              }
+            }
+          },
+          "result": {
+            "row_count": 149811,
+            "column_count": 12,
+            "rows_sha256": "1db97e69f94629b6be866cd4fd3be264cb25d8d43a2d5184b72b04215b4bb578",
+            "unordered_rows_sha256": "223aac72ab456bd834e807537cba6fb49c7fcddf2eece34cb53d0f6509eb7bee",
+            "leading_null_created_at_count": 31,
+            "all_null_created_at_rows_are_leading": true,
+            "non_null_created_at_descending": true,
+            "equal_created_at_group_count": 30,
+            "maximum_equal_created_at_group_size": 5000,
+            "equal_created_at_order_contract": "unordered_within_group",
+            "postgres_boolean_values": [
+              "<NULL>",
+              "f",
+              "t"
+            ],
+            "owner_filter_verified": true,
+            "active_bank_filter_verified": true,
+            "cross_bank_owner_row_present": true,
+            "inactive_expired_overused_share_present": true,
+            "unconstrained_permission_row_present": true,
+            "http_derived_share_link_absent": true,
+            "first_ten_ids": [
+              20000,
+              5000,
+              10000,
+              -6,
+              15000,
+              25000,
+              40000,
+              30000,
+              35000,
+              50000
+            ],
+            "last_ten_ids": [
+              32549,
+              47729,
+              44099,
+              40079,
+              54749,
+              55649,
+              51629,
+              41219,
+              46679,
+              31589
+            ]
+          },
+          "plan_summary": {
+            "root_node_type": "Sort",
+            "root_actual_rows": 149811,
+            "node_types_preorder": [
+              "Sort",
+              "Hash Join",
+              "Seq Scan",
+              "Hash",
+              "Seq Scan"
+            ],
+            "node_count": 5,
+            "relation_scan_occurrences": {
+              "bank_shares": 1,
+              "user_question_banks": 1
+            },
+            "index_names": [],
+            "maximum_actual_loops": 1,
+            "temp_read_blocks": 0,
+            "temp_written_blocks": 0,
+            "sort_methods": [
+              "quicksort"
+            ],
+            "sort_space_types": [
+              "Memory"
+            ]
+          },
+          "sanitized_explain": [
+            {
+              "Plan": {
+                "Node Type": "Sort",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Actual Rows": 149811,
+                "Actual Loops": 1,
+                "Sort Key": [
+                  "bs.created_at DESC"
+                ],
+                "Sort Method": "quicksort",
+                "Sort Space Type": "Memory",
+                "Plans": [
+                  {
+                    "Node Type": "Hash Join",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Join Type": "Inner",
+                    "Actual Rows": 149811,
+                    "Actual Loops": 1,
+                    "Inner Unique": true,
+                    "Hash Cond": "(bs.bank_id = b.id)",
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Relation Name": "bank_shares",
+                        "Alias": "bs",
+                        "Actual Rows": 149813,
+                        "Actual Loops": 1,
+                        "Filter": "(owner_id = '4201'::bigint)",
+                        "Rows Removed by Filter": 194
+                      },
+                      {
+                        "Node Type": "Hash",
+                        "Parent Relationship": "Inner",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Actual Rows": 5002,
+                        "Actual Loops": 1,
+                        "Plans": [
+                          {
+                            "Node Type": "Seq Scan",
+                            "Parent Relationship": "Outer",
+                            "Parallel Aware": false,
+                            "Async Capable": false,
+                            "Relation Name": "user_question_banks",
+                            "Alias": "b",
+                            "Actual Rows": 5002,
+                            "Actual Loops": 1,
+                            "Filter": "(status = 1)",
+                            "Rows Removed by Filter": 2
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "Planning": {},
+              "Triggers": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "PostgreSQL 18.4",
+      "image": "postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
+      "image_id": "sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
+      "server_version": "18.4",
+      "server_version_num": "180004",
+      "observations": [
+        {
+          "ordinal": 1,
+          "query_id": "personal-bank-all-shares",
+          "operation": "all-shares",
+          "sql": "SELECT bs.id,\n       bs.bank_id,\n       bs.owner_id,\n       bs.share_code,\n       bs.share_token,\n       bs.permission,\n       bs.expires_at,\n       bs.max_uses,\n       bs.current_uses,\n       bs.is_active,\n       bs.created_at,\n       b.name AS bank_name\nFROM bank_shares bs\nJOIN user_question_banks b ON bs.bank_id = b.id\nWHERE bs.owner_id = :viewer_id\n  AND b.status = 1\nORDER BY bs.created_at DESC NULLS FIRST\n",
+          "sql_sha256": "d6023fef32cf70e97e57eb58494864010b9da460edc50faecfc677856a16f0ca",
+          "normalized_sql_sha256": "ed88112a7c9588f28b33b0d1a964bfaf42c430b4c4cd203d3b0e5c2ee1484080",
+          "binding": {
+            "mode": "postgresql-prepare-execute",
+            "prepared_name": "phase4b_all_shares",
+            "session_settings": {
+              "max_parallel_workers_per_gather": "0",
+              "jit": "off",
+              "work_mem": "64MB"
+            },
+            "runtime_statement_count": 1,
+            "bound_parameter_count": 1,
+            "occurrence_names": [
+              "viewer_id"
+            ],
+            "positional_sql_sha256": "d49fd8004a765d42635209ebacfb32ccf427c29104a18c4ce17f2abd3b45749f",
+            "parameters": {
+              "viewer_id": {
+                "postgres_type": "bigint",
+                "value": 4201
+              }
+            }
+          },
+          "result": {
+            "row_count": 149811,
+            "column_count": 12,
+            "rows_sha256": "a072c2a9292c769b6e5fcf9e302e095071c8489d21840872a715c27b804de41d",
+            "unordered_rows_sha256": "223aac72ab456bd834e807537cba6fb49c7fcddf2eece34cb53d0f6509eb7bee",
+            "leading_null_created_at_count": 31,
+            "all_null_created_at_rows_are_leading": true,
+            "non_null_created_at_descending": true,
+            "equal_created_at_group_count": 30,
+            "maximum_equal_created_at_group_size": 5000,
+            "equal_created_at_order_contract": "unordered_within_group",
+            "postgres_boolean_values": [
+              "<NULL>",
+              "f",
+              "t"
+            ],
+            "owner_filter_verified": true,
+            "active_bank_filter_verified": true,
+            "cross_bank_owner_row_present": true,
+            "inactive_expired_overused_share_present": true,
+            "unconstrained_permission_row_present": true,
+            "http_derived_share_link_absent": true,
+            "first_ten_ids": [
+              10000,
+              5000,
+              20000,
+              25000,
+              15000,
+              30000,
+              -6,
+              60000,
+              35000,
+              50000
+            ],
+            "last_ten_ids": [
+              45989,
+              50009,
+              37919,
+              39539,
+              55049,
+              31949,
+              56909,
+              50969,
+              48809,
+              60569
+            ]
+          },
+          "plan_summary": {
+            "root_node_type": "Sort",
+            "root_actual_rows": 149811.0,
+            "node_types_preorder": [
+              "Sort",
+              "Hash Join",
+              "Seq Scan",
+              "Hash",
+              "Seq Scan"
+            ],
+            "node_count": 5,
+            "relation_scan_occurrences": {
+              "bank_shares": 1,
+              "user_question_banks": 1
+            },
+            "index_names": [],
+            "maximum_actual_loops": 1,
+            "temp_read_blocks": 0,
+            "temp_written_blocks": 0,
+            "sort_methods": [
+              "quicksort"
+            ],
+            "sort_space_types": [
+              "Memory"
+            ]
+          },
+          "sanitized_explain": [
+            {
+              "Plan": {
+                "Node Type": "Sort",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Actual Rows": 149811.0,
+                "Actual Loops": 1,
+                "Disabled": false,
+                "Sort Key": [
+                  "bs.created_at DESC"
+                ],
+                "Sort Method": "quicksort",
+                "Sort Space Type": "Memory",
+                "Plans": [
+                  {
+                    "Node Type": "Hash Join",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Join Type": "Inner",
+                    "Actual Rows": 149811.0,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Inner Unique": true,
+                    "Hash Cond": "(bs.bank_id = b.id)",
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Relation Name": "bank_shares",
+                        "Alias": "bs",
+                        "Actual Rows": 149813.0,
+                        "Actual Loops": 1,
+                        "Disabled": false,
+                        "Filter": "(owner_id = '4201'::bigint)",
+                        "Rows Removed by Filter": 194
+                      },
+                      {
+                        "Node Type": "Hash",
+                        "Parent Relationship": "Inner",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Actual Rows": 5002.0,
+                        "Actual Loops": 1,
+                        "Disabled": false,
+                        "Plans": [
+                          {
+                            "Node Type": "Seq Scan",
+                            "Parent Relationship": "Outer",
+                            "Parallel Aware": false,
+                            "Async Capable": false,
+                            "Relation Name": "user_question_banks",
+                            "Alias": "b",
+                            "Actual Rows": 5002.0,
+                            "Actual Loops": 1,
+                            "Disabled": false,
+                            "Filter": "(status = 1)",
+                            "Rows Removed by Filter": 2
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "Planning": {},
+              "Triggers": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cross_version_contract": {
+    "required_versions": [
+      "16.14",
+      "18.4"
+    ],
+    "observed_versions": [
+      "16.14",
+      "18.4"
+    ],
+    "single_query_observed_per_version": true,
+    "ordered_result_payloads_identical": false,
+    "ordered_result_payload_equality_required": false,
+    "unordered_result_multisets_identical": true,
+    "seq_scan_join_and_sort_without_index": true,
+    "desc_nulls_first_verified": true,
+    "equal_timestamp_order_strengthened": false,
+    "http_derived_share_link_in_sql": false,
+    "temporary_blocks_zero": true,
+    "passed": true
+  },
+  "claim_limits": {
+    "observational_evidence_only": true,
+    "production_sla_claimed": false,
+    "index_change_authorized": false,
+    "schema_change_authorized": false,
+    "http_parity_claimed": false,
+    "production_cutover_claimed": false,
+    "note": "The no-index join plan freezes the legacy risk and does not authorize an index, schema, HTTP, or production change."
+  },
+  "document_payload_sha256": "6b9a906d0e9cc51d2703cf2c0edaced6159c6b9f70df821970403091785bb59b"
+}

@@ -1,0 +1,316 @@
+{
+  "contract_id": "ti.phase4b.personal-bank-all-shares-caller-attestation",
+  "schema_version": 1,
+  "captured_at": "2026-07-17",
+  "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "routes": [
+    {
+      "route_id": "a6fda3638fc3",
+      "path": "/api/user/banks/api/shares/all",
+      "surface": "external_api_compatibility_alias"
+    },
+    {
+      "route_id": "0fdd3026f636",
+      "path": "/user/banks/api/shares/all",
+      "surface": "external_web_compatibility_alias"
+    }
+  ],
+  "full_repository_capability_scan": {
+    "command": "git grep -n -I with fixed strings or extended regex at the fixed commit",
+    "match_mode": "extended_regex",
+    "patterns": [
+      "shares/all|getAllShares|allShares|shares_manage_all|manage/shares"
+    ],
+    "scope_paths": [
+      "."
+    ],
+    "excluded_generated_inventory_files": [
+      "miniprogram-1/analyse-data.json"
+    ],
+    "match_count": 6,
+    "matched_source_count": 3,
+    "matched_source_roots": [
+      "app"
+    ],
+    "matches_sha256": "16e0de56a351c80696e3d628a5afa0ce3a3210b9bf81cf4f8055637d8f329206",
+    "matches": [
+      {
+        "source": "app/modules/user_bank/routes/api_shares.py",
+        "line": 152,
+        "text": "@user_bank_api_bp.route('/shares/all', methods=['GET'])"
+      },
+      {
+        "source": "app/modules/user_bank/routes/pages.py",
+        "line": 36,
+        "text": "@user_bank_pages_bp.route('/manage/shares')"
+      },
+      {
+        "source": "app/modules/user_bank/templates/user_bank/manage/shares_manage_all.html",
+        "line": 179,
+        "text": "let allShares = [];"
+      },
+      {
+        "source": "app/modules/user_bank/templates/user_bank/manage/shares_manage_all.html",
+        "line": 185,
+        "text": "const res = await api('/user/banks/api/shares/all');"
+      },
+      {
+        "source": "app/modules/user_bank/templates/user_bank/manage/shares_manage_all.html",
+        "line": 186,
+        "text": "allShares = res.data.shares || [];"
+      },
+      {
+        "source": "app/modules/user_bank/templates/user_bank/manage/shares_manage_all.html",
+        "line": 198,
+        "text": "return (allShares || []).filter(s => {"
+      }
+    ]
+  },
+  "callers": {
+    "direct": {
+      "state": "unique_direct_caller_in_dormant_template",
+      "actual_alias": "/user/banks/api/shares/all",
+      "full_repository_direct_alias_scan": {
+        "command": "git grep -n -I with fixed strings or extended regex at the fixed commit",
+        "match_mode": "fixed_string",
+        "patterns": [
+          "/api/user/banks/api/shares/all",
+          "/user/banks/api/shares/all"
+        ],
+        "scope_paths": [
+          "."
+        ],
+        "excluded_generated_inventory_files": [
+          "miniprogram-1/analyse-data.json"
+        ],
+        "match_count": 1,
+        "matched_source_count": 1,
+        "matched_source_roots": [
+          "app"
+        ],
+        "matches_sha256": "e64347b4e5d11ba060f45202ce3e4d66b808e007b2b8cd3b96d719ca19ee33cc",
+        "matches": [
+          {
+            "source": "app/modules/user_bank/templates/user_bank/manage/shares_manage_all.html",
+            "line": 185,
+            "text": "const res = await api('/user/banks/api/shares/all');"
+          }
+        ]
+      },
+      "direct_get": {
+        "source": "app/modules/user_bank/templates/user_bank/manage/shares_manage_all.html",
+        "line": 185,
+        "text": "const res = await api('/user/banks/api/shares/all');",
+        "source_sha256": "7546338067c2af927ed613a8f5dd6527f0f57680dad5c6fcece972a4714fb280",
+        "source_size_bytes": 12716
+      },
+      "response_extraction": {
+        "source": "app/modules/user_bank/templates/user_bank/manage/shares_manage_all.html",
+        "line": 186,
+        "text": "allShares = res.data.shares || [];",
+        "source_sha256": "7546338067c2af927ed613a8f5dd6527f0f57680dad5c6fcece972a4714fb280",
+        "source_size_bytes": 12716
+      },
+      "load_trigger": {
+        "source": "app/modules/user_bank/templates/user_bank/manage/shares_manage_all.html",
+        "line": 370,
+        "text": "loadShares();",
+        "source_sha256": "7546338067c2af927ed613a8f5dd6527f0f57680dad5c6fcece972a4714fb280",
+        "source_size_bytes": 12716
+      },
+      "consumed_fields": {
+        "bank_name": "client-side keyword filter and card title",
+        "share_code": "keyword filter, display and copy action",
+        "share_token": "client-side keyword filter",
+        "is_active": "status filter, badge and revoke visibility",
+        "permission": "permission filter",
+        "created_at": "creation label",
+        "expires_at": "expiry label",
+        "used_count": "usage display; this legacy client field name does not match the raw bank_shares.current_uses projection",
+        "max_uses": "usage limit label",
+        "share_link": "link display and copy action",
+        "bank_id": "child share page, records and revoke actions",
+        "id": "records and revoke actions"
+      },
+      "usage_count_field_mismatch": {
+        "client_read": {
+          "source": "app/modules/user_bank/templates/user_bank/manage/shares_manage_all.html",
+          "line": 348,
+          "text": "<div class=\"v\">${safeText((s.used_count || 0) + (s.max_uses ? ` / ${s.max_uses}` : ''))}</div>",
+          "source_sha256": "7546338067c2af927ed613a8f5dd6527f0f57680dad5c6fcece972a4714fb280",
+          "source_size_bytes": 12716
+        },
+        "server_raw_projection": {
+          "source": "app/modules/user_bank/routes/api_shares.py",
+          "line": 159,
+          "text": "SELECT bs.*,",
+          "source_sha256": "ea2074c97cd5f6840dd1f6e738404d41c08f4b3e3a0b8cb7f8886ec2a58e4993",
+          "source_size_bytes": 19411
+        },
+        "legacy_server_column": "current_uses",
+        "behavior": "the dormant template reads used_count, while bs.* exposes current_uses; the display therefore falls back to zero unless an external layer adds used_count"
+      }
+    },
+    "page_entry": {
+      "state": "page_entry_retired_with_404",
+      "route": {
+        "source": "app/modules/user_bank/routes/pages.py",
+        "line": 36,
+        "text": "@user_bank_pages_bp.route('/manage/shares')",
+        "source_sha256": "9c87e370051c0eecfddda4a07140a49b9ca6ce36cde99c8c68889bdde18a32b5",
+        "source_size_bytes": 27900
+      },
+      "authentication": {
+        "source": "app/modules/user_bank/routes/pages.py",
+        "line": 37,
+        "text": "@login_required",
+        "source_sha256": "9c87e370051c0eecfddda4a07140a49b9ca6ce36cde99c8c68889bdde18a32b5",
+        "source_size_bytes": 27900
+      },
+      "handler": {
+        "source": "app/modules/user_bank/routes/pages.py",
+        "line": 38,
+        "text": "def manage_shares():",
+        "source_sha256": "9c87e370051c0eecfddda4a07140a49b9ca6ce36cde99c8c68889bdde18a32b5",
+        "source_size_bytes": 27900
+      },
+      "terminal_response": {
+        "source": "app/modules/user_bank/routes/pages.py",
+        "line": 40,
+        "text": "return \"页面已下线\", 404",
+        "source_sha256": "9c87e370051c0eecfddda4a07140a49b9ca6ce36cde99c8c68889bdde18a32b5",
+        "source_size_bytes": 27900
+      },
+      "template_render_or_include_scan": {
+        "command": "git grep -n -I with fixed strings or extended regex at the fixed commit",
+        "match_mode": "fixed_string",
+        "patterns": [
+          "shares_manage_all.html"
+        ],
+        "scope_paths": [
+          "."
+        ],
+        "excluded_generated_inventory_files": [
+          "miniprogram-1/analyse-data.json"
+        ],
+        "match_count": 0,
+        "matched_source_count": 0,
+        "matched_source_roots": [],
+        "matches_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "matches": []
+      },
+      "conclusion": "the only direct caller remains in an orphan template; the registered page entry returns 404 and the fixed commit has no render/include reference to that template"
+    },
+    "miniprogram": {
+      "state": "no_miniprogram_caller",
+      "full_miniprogram_text_scan": {
+        "command": "git grep -n -I with fixed strings or extended regex at the fixed commit",
+        "match_mode": "extended_regex",
+        "patterns": [
+          "shares/all|getAllShares|allShares|shares_manage_all|manage/shares"
+        ],
+        "scope_paths": [
+          "miniprogram-1"
+        ],
+        "excluded_generated_inventory_files": [
+          "miniprogram-1/analyse-data.json"
+        ],
+        "match_count": 0,
+        "matched_source_count": 0,
+        "matched_source_roots": [],
+        "matches_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "matches": []
+      },
+      "conclusion": "no endpoint literal, wrapper symbol, template name or page-entry token for the all-shares capability exists in fixed-commit miniprogram text blobs"
+    }
+  },
+  "external_compatibility": {
+    "state": "both_http_aliases_remain_externally_registered",
+    "relative_route": {
+      "source": "app/modules/user_bank/routes/api_shares.py",
+      "line": 152,
+      "text": "@user_bank_api_bp.route('/shares/all', methods=['GET'])",
+      "source_sha256": "ea2074c97cd5f6840dd1f6e738404d41c08f4b3e3a0b8cb7f8886ec2a58e4993",
+      "source_size_bytes": 19411
+    },
+    "handler": {
+      "source": "app/modules/user_bank/routes/api_shares.py",
+      "line": 154,
+      "text": "def get_all_shares():",
+      "source_sha256": "ea2074c97cd5f6840dd1f6e738404d41c08f4b3e3a0b8cb7f8886ec2a58e4993",
+      "source_size_bytes": 19411
+    },
+    "web_alias_registration": {
+      "outer_prefix": {
+        "source": "app/modules/user_bank/__init__.py",
+        "line": 15,
+        "text": "user_bank_bp = Blueprint('user_bank', __name__, url_prefix='/user/banks', template_folder=template_dir)",
+        "source_sha256": "b83eaf9a77d6d01e0b631b42bc05cdb4e6c5a6346d4662da29e5f5c289928acd",
+        "source_size_bytes": 1259
+      },
+      "nested_prefix": {
+        "source": "app/modules/user_bank/__init__.py",
+        "line": 17,
+        "text": "user_bank_bp.register_blueprint(user_bank_api_bp, url_prefix='/api')",
+        "source_sha256": "b83eaf9a77d6d01e0b631b42bc05cdb4e6c5a6346d4662da29e5f5c289928acd",
+        "source_size_bytes": 1259
+      },
+      "application_registration": {
+        "source": "app/modules/user_bank/__init__.py",
+        "line": 18,
+        "text": "app.register_blueprint(user_bank_bp)",
+        "source_sha256": "b83eaf9a77d6d01e0b631b42bc05cdb4e6c5a6346d4662da29e5f5c289928acd",
+        "source_size_bytes": 1259
+      },
+      "composed_path": "/user/banks/api/shares/all",
+      "route_id": "0fdd3026f636"
+    },
+    "api_alias_registration": {
+      "outer_prefix": {
+        "source": "app/modules/user_bank/__init__.py",
+        "line": 23,
+        "text": "api_root_bp = Blueprint('user_bank_api_root', __name__, url_prefix='/api')",
+        "source_sha256": "b83eaf9a77d6d01e0b631b42bc05cdb4e6c5a6346d4662da29e5f5c289928acd",
+        "source_size_bytes": 1259
+      },
+      "nested_prefix": {
+        "source": "app/modules/user_bank/__init__.py",
+        "line": 24,
+        "text": "api_root_bp.register_blueprint(user_bank_api_bp, url_prefix='/user/banks/api')",
+        "source_sha256": "b83eaf9a77d6d01e0b631b42bc05cdb4e6c5a6346d4662da29e5f5c289928acd",
+        "source_size_bytes": 1259
+      },
+      "application_registration": {
+        "source": "app/modules/user_bank/__init__.py",
+        "line": 25,
+        "text": "app.register_blueprint(api_root_bp)",
+        "source_sha256": "b83eaf9a77d6d01e0b631b42bc05cdb4e6c5a6346d4662da29e5f5c289928acd",
+        "source_size_bytes": 1259
+      },
+      "composed_path": "/api/user/banks/api/shares/all",
+      "route_id": "a6fda3638fc3"
+    },
+    "compatibility_boundary": "caller dormancy does not authorize deleting either registered legacy GET alias; both remain external compatibility operations"
+  },
+  "frozen_route_matrix_disposition": {
+    "matrix_is_immutable": true,
+    "both_rows_report_not_found_static_scan": true,
+    "fixed_commit_scan_proves_one_direct_web_caller": true,
+    "caller_is_not_an_active_page_entry": true,
+    "resolution": "this additive fixed-commit attestation closes caller discovery without editing the frozen route matrix or the historical share-list evidence"
+  },
+  "closure": {
+    "fixed_commit_resolved": true,
+    "full_repository_capability_scan_captured": true,
+    "unique_direct_caller_closed": true,
+    "unique_direct_caller_is_dormant": true,
+    "page_entry_404_tombstone_closed": true,
+    "template_render_or_include_absence_closed": true,
+    "miniprogram_caller_absence_closed": true,
+    "web_external_compatibility_alias_closed": true,
+    "api_external_compatibility_alias_closed": true,
+    "caller_attestation_complete": true
+  },
+  "attestation_sha256": "1aa666fdd04e15e4509e8ee6c45d00ff4783141c9b767bd7a0fa7082e20d79d0",
+  "document_payload_sha256": "5da7eb9a7cc771fc4c5e22d1cc5413f955a7f46bb6d02283241876e3c99f2166"
+}
