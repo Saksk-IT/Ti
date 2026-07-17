@@ -21,7 +21,7 @@
     },
     "phase4b_entry_contract_test": {
       "source": "tools/test_phase4b_personal_bank_user_counts_entry_contract.py",
-      "sha256": "7c44500e3f06424fcf7af7a6e00570a7f4fa22217d394627b58e063a78c54b00"
+      "sha256": "9fcd432a81f78eb78f0001e4e6d029e01f27047e56714c96d7fd47607d98c016"
     },
     "phase4b_golden": {
       "source": "docs/refactor/phase4b/golden-personal-bank-user-counts-reads.json",
@@ -103,6 +103,38 @@
       "source": "infra/phase2/hash-java-build-context.sh",
       "sha256": "e8e618ce08128e4fbf7b090b5b0709ed1d6bc5d1638f1f2838ff6d7409a0dea6"
     },
+    "phase2_static_verifier": {
+      "source": "infra/phase2/verify-static.sh",
+      "sha256": "7589dee01dd9af059ff3dd021e63dc7000e681d292cb748ab03318ebc3465ca5"
+    },
+    "phase2_wormhole_runner": {
+      "source": "infra/phase2/verify-local-reference-wormhole.sh",
+      "sha256": "645ea7b35f66c26be93ab53314eeed1d3af68263b94c6c613e25935d8b864a8c"
+    },
+    "phase2_wormhole_readme": {
+      "source": "infra/phase2/README.md",
+      "sha256": "a8e60b2432a3dffa56a648f5e235d1cff8854584cdfee9a59a3c4a1571d32b54"
+    },
+    "phase2_historical_worm_report": {
+      "source": "infra/phase2/local-reference-verification.json",
+      "sha256": "779154127fc700e213fbb3d5f83c112c090d3481236dcd361dbd72b74a0bd1ad"
+    },
+    "phase4b_historical_worm_report": {
+      "source": "docs/refactor/phase4b/personal-bank-share-list-worm-evidence.json",
+      "sha256": "779154127fc700e213fbb3d5f83c112c090d3481236dcd361dbd72b74a0bd1ad"
+    },
+    "phase4c_entry_worm_report": {
+      "source": "docs/refactor/phase4c/personal-bank-user-counts-entry-worm-evidence.json",
+      "sha256": "cfb262319ded0840218fd9bfb4deff1e7bc9c66b5849e3ff05f49a459e686884"
+    },
+    "phase2_worm_successor_gate": {
+      "source": "tools/phase2_wormhole_successor_acceptance.py",
+      "sha256": "1e4dab89bfb58a2d9f10a63e812e26a4b2790a76a9bb02cd9d2d076596ee354e"
+    },
+    "phase2_worm_successor_test": {
+      "source": "tools/test_phase2_wormhole_successor_acceptance.py",
+      "sha256": "c3d6532757c5adf08689773827725e4753267d9d76231ea9fec5103bc1b96b49"
+    },
     "base_data_ownership": {
       "source": "docs/refactor/03-data-ownership.csv",
       "sha256": "3f9cb0650c523593d7037dc24df902dbccdb3885f261f530e1725a9dc7a31748"
@@ -121,31 +153,35 @@
     },
     "approved_differences": {
       "source": "docs/refactor/phase4c/approved-differences.md",
-      "sha256": "af39b9f6d02dbb57b1b0144ca366b857a098c5ba649186e2d9b6f7677b0b96ce"
+      "sha256": "c8081e7adc62f6119b00a7f91cf5354da649510e6b3bde547670a807e9a52586"
     },
     "project_readme": {
       "source": "README.md",
-      "sha256": "4f11ee96812b1de36e63be5937200eac70169a2814b35e255025bb961c6f598d"
+      "sha256": "82bf2409b6ae382c8bc83f6a2086e6c02c97f33ad12cba3950324a756cf97899"
     },
     "phase4c_readme": {
       "source": "docs/refactor/phase4c/README.md",
-      "sha256": "0329c5544262bb17bfa24d90d6f2360abb2dcd00f268c5d13a61782b10488ff5"
+      "sha256": "4629a47855ecb262cede7efcf0d2e97dc999eb1f70f24b2a39f7563b9381e39b"
     },
     "progress": {
       "source": "docs/refactor/05-progress.md",
-      "sha256": "6c8c6e4b1490333429d022d296bef52c6097be9394dee9915f23ec3badb7a5be"
+      "sha256": "47ec2b9a2178dee8db91f0461b9abffbbe9dea0a5ba4dd3694d4f33643735bbf"
+    },
+    "phase1_validator": {
+      "source": "tools/validate_phase1.py",
+      "sha256": "e343c9f72de83444c60268c8f328fa1626982ccf74ec96027c05485818541c6d"
     },
     "migration_evidence_java": {
       "source": "server/src/test/java/io/saksk/ti/learning/infrastructure/persistence/LegacyPersonalBankTagMigrationEvidence.java",
-      "sha256": "381cb7db4b688616576054ff93a18fbcb9705a21c45ac28de3dfd24ac8abdda2"
+      "sha256": "978437b09667155250d7ef14f59ad841eeb7637bf9324953b41256ce8512cc96"
     },
     "migration_evidence_unit_test": {
       "source": "server/src/test/java/io/saksk/ti/learning/infrastructure/persistence/LegacyPersonalBankTagMigrationEvidenceTest.java",
-      "sha256": "62ff5994522a350291492db123109dca30ed4978981ef86f49ffb64f8fc6cced"
+      "sha256": "ccfacca97b2c249f830f28046b4f465d26d47dc6bb00d6f804d18565f70e5ce4"
     },
     "migration_evidence_jdbc_test": {
       "source": "server/src/test/java/io/saksk/ti/integration/Phase4cLegacyPersonalBankTagMigrationEvidenceIT.java",
-      "sha256": "04b0a0c04a3cffa5e96bcee61668720ab31c326da3ee3732291afe751e8ca8a3"
+      "sha256": "0f76421bcb6d609897359c03d8e2abd650076fe4db3bead6f402914175e2e70f"
     },
     "migration_schema_fixture": {
       "source": "server/src/test/resources/db/phase4c/069-legacy-personal-bank-tag-migration-schema.sql",
@@ -153,27 +189,27 @@
     },
     "migration_seed_fixture": {
       "source": "server/src/test/resources/db/phase4c/070-legacy-personal-bank-tag-migration-seed.sql",
-      "sha256": "ed728f97c6a5d24c019db64f2ef3ae4d5a2fe2e2f52bdbb3cabff4f7b01ee342"
+      "sha256": "c079c66fe31d5a9594341e8d296fbc1fc3bde8790eb7d09952e68f17ae424323"
     },
     "contract_builder": {
       "source": "tools/build_phase4c_personal_bank_user_counts_composition_contract.py",
-      "sha256": "07aeed7d8444e57ab6fc8fede68b5e39f8d47ceae3fc5aa7bc8a59e4cb3e6c0b"
+      "sha256": "bd95d15e301d809308e9b1a77c491b1654b0ac27ae7b82c72a4eb73b1669b45f"
     },
     "successor_acceptance_bridge": {
       "source": "tools/phase4c_successor_acceptance.py",
-      "sha256": "c1a191b81a682918c5c42f2cdc0ae37505ed860d64c785f45e45b9dac3e741a0"
+      "sha256": "1606307e7c6edc3328178744727b15997c1a5102fdcb950f9746cfce59a1f485"
     },
     "successor_acceptance_java_bridge": {
       "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cSuccessorAcceptance.java",
-      "sha256": "e8c19414d3cb24b118559b88d1eb09883cc9b251df185d67cb849708b20b3d1a"
+      "sha256": "b958f4c7a022c83f6f2adada4b502d517c1e008efb86ad98c8bb8b1dd7d436e4"
     },
     "contract_test": {
       "source": "tools/test_phase4c_personal_bank_user_counts_composition_contract.py",
-      "sha256": "01332d2d9d01b7070f6c0426b9154f2c7e73ecd1a32d09dcd0eef913ca2c032f"
+      "sha256": "c5c0a52d90553acc3699dab2534f6dc1ac0261940be6611f57ca293f3fb92207"
     },
     "share_list_acceptance_successor_test": {
       "source": "tools/test_phase4b_personal_bank_share_list_read_contract.py",
-      "sha256": "5dff6470e92f50d1a86fe2347479657e4adfad8b828954c8cc8010a0e1b5fe26"
+      "sha256": "3459e74ed669e3f0aa6e4bc3e2e600f4a4b644a03fc7a382cd01a78ce873d254"
     },
     "all_shares_entry_successor_test": {
       "source": "tools/test_phase4b_personal_bank_all_shares_entry_contract.py",
@@ -226,7 +262,7 @@
     "successor_aware_test_files": {
       "docs/refactor/05-progress.md": {
         "accepted_sha256": "0d08ea5c4c6f0c61c6d8c2a722d1e95ce0bfe999d523db2c0b9cdca7bc213bb9",
-        "successor_sha256": "6c8c6e4b1490333429d022d296bef52c6097be9394dee9915f23ec3badb7a5be",
+        "successor_sha256": "47ec2b9a2178dee8db91f0461b9abffbbe9dea0a5ba4dd3694d4f33643735bbf",
         "source_contract_key": "progress"
       },
       "server/src/test/java/io/saksk/ti/architecture/PersonalBankAllSharesContractParityTest.java": {
@@ -256,7 +292,7 @@
       },
       "tools/test_phase4b_personal_bank_share_list_read_contract.py": {
         "accepted_sha256": "65fe01833802612620ffa26e1771cd9215c5866d65a933bc34be4a806ee42c63",
-        "successor_sha256": "5dff6470e92f50d1a86fe2347479657e4adfad8b828954c8cc8010a0e1b5fe26",
+        "successor_sha256": "3459e74ed669e3f0aa6e4bc3e2e600f4a4b644a03fc7a382cd01a78ce873d254",
         "source_contract_key": "share_list_acceptance_successor_test"
       },
       "tools/test_phase4b_personal_bank_usage_stats_entry_contract.py": {
@@ -271,7 +307,7 @@
       },
       "tools/test_phase4b_personal_bank_user_counts_entry_contract.py": {
         "accepted_sha256": "f5329e12eac3b18e2742c85d40d7c25591fb83fc2cdb3c0d215e240fa0566def",
-        "successor_sha256": "7c44500e3f06424fcf7af7a6e00570a7f4fa22217d394627b58e063a78c54b00",
+        "successor_sha256": "9fcd432a81f78eb78f0001e4e6d029e01f27047e56714c96d7fd47607d98c016",
         "source_contract_key": "phase4b_entry_contract_test"
       }
     },
@@ -404,7 +440,19 @@
         "counts_are_non_negative_long": true,
         "facts_result_data_present_iff_available": true,
         "membership_ids_are_positive_distinct_sorted": true,
-        "membership_digest": "lowercase SHA-256 over canonical membership"
+        "membership_digest": {
+          "algorithm": "SHA-256",
+          "encoding": "UTF-8",
+          "hex": "64 lowercase characters",
+          "canonical_json_key_order": [
+            "bank_id",
+            "bank_exists",
+            "existing_question_ids"
+          ],
+          "canonical_json_whitespace": "none",
+          "ids": "positive distinct ascending",
+          "example": "{\"bank_id\":7101,\"bank_exists\":true,\"existing_question_ids\":[8101,8102]}"
+        }
       },
       "selection_semantics": {
         "bank_id": "required int",
@@ -590,27 +638,68 @@
       "unresolved_or_orphan_blocks_apply": true
     },
     "target_precedence": {
-      "any_existing_scope_row_skips_all_writes": true,
+      "existing_scope_rows_prevent_automatic_writes": true,
+      "precedence_requires_valid_source_plan": true,
+      "source_plan_must_be_subset_of_target": true,
+      "target_tags_must_be_canonical": true,
+      "positive_target_questions_must_belong_to_bank": true,
       "automatic_merge": false,
       "source_not_subset_of_target": "target_conflict blocks cutover"
+    },
+    "target_absence_after_prior_migration": {
+      "ambiguous_without_durable_marker": true,
+      "test_primitive_behavior": "retained compatibility source can repopulate an emptied target",
+      "operator_requirement": "a durable migration ledger/version or equivalent tombstone must distinguish never-migrated state from intentional target deletion",
+      "operator_design_closed": false
     },
     "transaction": {
       "global_single_runner": "dedicated connection holds one session-level PostgreSQL advisory lock across the complete preflight and every row transaction",
       "unit_of_work": "one user_progress source row",
       "source_lock": "SELECT FOR UPDATE",
-      "isolation": "SERIALIZABLE with bounded 40001/deadlock retry in production",
-      "failure": "rollback every target insert for that source row",
+      "isolation": "SERIALIZABLE",
+      "test_primitive_retry": false,
+      "production_operator_retry_requirement": "bounded retry for SQLSTATE 40001 and 40P01",
+      "failure": "attempt rollback for a pre-commit failure; only a successful rollback or a non-ambiguous SQLSTATE proves zero committed rows after writes; rollback failure is orthogonal, while SQLSTATE class 08, 40003 or an absent SQLSTATE during commit after changed rows remains unknown",
       "operator_design_status": "not closed until write freezes/version rechecks and global blocker aggregation are independently evidenced"
     },
-    "dispositions": [
-      "migrated",
-      "empty_noop",
-      "target_precedence",
-      "target_conflict",
-      "invalid",
-      "orphan",
-      "failed"
+    "row_outcomes": [
+      "MIGRATED",
+      "EMPTY_NOOP",
+      "TARGET_ALREADY_PRESENT",
+      "TARGET_CONFLICT",
+      "INVALID_KEY",
+      "INVALID_DATA",
+      "BANK_MISSING",
+      "ORPHAN_QUESTION",
+      "SOURCE_DISAPPEARED",
+      "FAILED_ROLLED_BACK",
+      "ROLLBACK_FAILED",
+      "COMMIT_OUTCOME_UNKNOWN"
     ],
+    "reporting_groups": {
+      "eligible": [
+        "MIGRATED",
+        "EMPTY_NOOP",
+        "TARGET_ALREADY_PRESENT"
+      ],
+      "conflict": [
+        "TARGET_CONFLICT"
+      ],
+      "invalid": [
+        "INVALID_KEY",
+        "INVALID_DATA"
+      ],
+      "unresolved": [
+        "BANK_MISSING",
+        "ORPHAN_QUESTION",
+        "SOURCE_DISAPPEARED"
+      ],
+      "transaction_failed": [
+        "FAILED_ROLLED_BACK",
+        "ROLLBACK_FAILED",
+        "COMMIT_OUTCOME_UNKNOWN"
+      ]
+    },
     "apply_preconditions": [
       "legacy source bank-tag writes are frozen",
       "normalized target tag writes are frozen or use a common version/lock protocol",
@@ -618,7 +707,7 @@
       "dry-run unresolved/conflict/orphan/invalid counts are zero or approved",
       "backup and rollback evidence exists"
     ],
-    "idempotency": "second execution performs zero DML and preserves the same semantic digest",
+    "idempotency": "an immediate second execution while normalized target rows remain performs zero DML; deletion/tombstone behavior requires a durable migration marker",
     "get_runtime_ddl": false,
     "get_runtime_dml": false,
     "production_schema_or_index_delta": false,
@@ -631,7 +720,8 @@
       "P4C-LEARNING-002",
       "P4C-LEARNING-003",
       "P4C-LEARNING-004",
-      "P4C-LEARNING-005"
+      "P4C-LEARNING-005",
+      "P4C-LEARNING-006"
     ]
   },
   "migration_evidence": {
@@ -642,10 +732,15 @@
     ],
     "proves": [
       "strict namespace selection",
+      "strict JSON rejects duplicate object keys and trailing tokens",
+      "Python-compatible Unicode whitespace normalization",
       "invalid raw field, normalized-ID and truncation conflicts become blockers",
       "legacy JSON-array-string and comma-separated tag values are normalized",
-      "target-any-row precedence",
+      "target precedence only after a valid source plan is proven a target subset",
+      "proper-subset target evidence and source drift target_conflict",
+      "target tag canonicality and positive-question bank membership validation",
       "source-row lock and per-row atomic rollback",
+      "rollback failure is tracked orthogonally and only ambiguous post-write commit outcomes remain unknown",
       "insert-only ON CONFLICT statement is accepted and executed",
       "second fixture sweep is zero DML through target precedence",
       "source, non-target namespace, schema and index fingerprints unchanged"
@@ -653,13 +748,31 @@
     "does_not_prove": [
       "global dry-run/preflight or all-or-block apply decision",
       "global aggregation and approval of invalid or target-conflict dispositions",
+      "real network commit-response loss or ambiguous commit recovery",
       "concurrent lock contention or ON CONFLICT race resolution",
+      "post-migration target deletion, tombstones or durable migration-ledger behavior",
+      "connection acquisition, setup or close failure aggregation across the sweep",
       "source, normalized-target and membership write-freeze protocol",
       "production data cleanliness or scale",
       "production operator credentials or backup readiness",
       "production implementation completion",
       "HTTP parity or production cutover"
     ]
+  },
+  "security_access_policy": {
+    "cross_bank_share_coherence_closed": true,
+    "requested_bank_join_required": true,
+    "share_record_bank_and_share_bank_must_match": true,
+    "valid_grant_selection": "any deterministic same-bank active grant with a null or strictly future Beijing-local expiry grants read access",
+    "allowed_share_permissions": [
+      "read",
+      "copy"
+    ],
+    "unknown_or_null_permission": "deny",
+    "equal_expiry_is_denied": true,
+    "cross_bank_fixture_expected_outcome": "DENIED",
+    "multiple_share_rows_are_not_fetchone_order_dependent": true,
+    "source_evidence": "phase4b golden access-shared-cross-bank-record and access-shared-fetchone-first-row"
   },
   "production_baseline": {
     "implemented_public_application_method_count": 23,
@@ -694,8 +807,8 @@
     "accepted_commit": "2ca3e16d9585de55313fd2de9b1429a6351d9683",
     "java_build_context_sha256": "c59ee688646b7c23f0f883b4c1377d2a33b507e7dd08b978e98cf3ebdc11825c",
     "production_runtime_surface": {
-      "file_count": 265,
-      "manifest_sha256": "318a3a373589f986f29a72691982e840cec2648ac7619e0651e8dce103a450b7",
+      "file_count": 271,
+      "manifest_sha256": "7d6113701aac8268f22e8b58b3c52d7d8ea388ddaa06aa2d3d7bd334edd17ebd",
       "files": {
         ".env.example": "6922f0b9583ecf4a2b14fdc534895450f9604c95c657731956433e37be89a3bf",
         "compose.dev.yml": "7f70291ec1f0466f093aebe19ddfd3af3f1aa0483e822ae4d6d45094a92bf540",
@@ -705,7 +818,13 @@
         "openapi/phase3-authentication.openapi.json": "7b014165a027ae3dbdbf8597ca910db8ab153b0437156f6d0fdd07985f348fab",
         "openapi/phase4a-public-bank.openapi.json": "1f163574d9fb5b25d58df4a4a75ffca6b74b874dfbf66551cf46408d67110a34",
         "openapi/phase4a-subject-directory.openapi.json": "8344f0173f523939abae203430cf92455d6240404e3d8ffe7a002507cadd2169",
+        "server/.dockerignore": "d8b374c8ff5bb7579923a18973052a4cf1e3536319a767fbc53d6af49455f041",
+        "server/.mvn/wrapper/maven-wrapper.jar": "4e2fbf6554bc8a4702cdfdd3bef464f423393d784ddbb037216320ce55d5e4e1",
+        "server/.mvn/wrapper/maven-wrapper.properties": "ec15e462d862b9ba5dc9d8cdf249576bfdad7c70ccd441d64117d9abcd808dab",
         "server/Dockerfile": "bb99afb7264a3a0d64b2e76d07a663bfe4a08cacca0387dff07635818a1ef499",
+        "server/build-versions.properties": "1fec094f44293d7e09a496125d8e16550c71326f72c5c64b0c5a5678d5b8a121",
+        "server/mvnw": "07e72ac35ecf8c24db67498fc6a9a8e7c64b31ab3798a7119fe73fb7cd6c0331",
+        "server/mvnw.cmd": "8c720db91d96ba5f67afa4083726b20eb4be399d86bb859e09eb67436bb230f5",
         "server/pom.xml": "24b45d68c44c64a6b2fda2fbf6f342889640f7c3dbc088015703cd1a68ff916b",
         "server/src/main/java/io/saksk/ti/TiApplication.java": "f25402f1507dd4a97d7ded1e8d2a2716696f3eeda0eeca8850e33f9a70e59e0f",
         "server/src/main/java/io/saksk/ti/assessment/api/AssessmentApplicationApi.java": "09592178eb664f210e608f75fbbc0767a7a905c554666e40f9cf89baf9fbff21",
@@ -979,6 +1098,11 @@
       "server/src/main/**",
       "server/pom.xml",
       "server/Dockerfile",
+      "server/.dockerignore",
+      "server/.mvn/**",
+      "server/mvnw",
+      "server/mvnw.cmd",
+      "server/build-versions.properties",
       "compose.dev.yml",
       ".env.example",
       "contracts/**",
@@ -986,6 +1110,28 @@
     ],
     "route_rule_count": 592,
     "expanded_route_operation_count": 611
+  },
+  "worm_successor_evidence": {
+    "status": "versioned_successor_tip_verified_historical_reports_immutable",
+    "historical_anchor": {
+      "phase2_source": "infra/phase2/local-reference-verification.json",
+      "phase4b_copy_source": "docs/refactor/phase4b/personal-bank-share-list-worm-evidence.json",
+      "sha256": "779154127fc700e213fbb3d5f83c112c090d3481236dcd361dbd72b74a0bd1ad"
+    },
+    "current_tip": {
+      "source": "docs/refactor/phase4c/personal-bank-user-counts-entry-worm-evidence.json",
+      "sha256": "cfb262319ded0840218fd9bfb4deff1e7bc9c66b5849e3ff05f49a459e686884",
+      "java_build_context_sha256": "c59ee688646b7c23f0f883b4c1377d2a33b507e7dd08b978e98cf3ebdc11825c",
+      "dockerfile_sha256": "bb99afb7264a3a0d64b2e76d07a663bfe4a08cacca0387dff07635818a1ef499",
+      "postgresql_version": "18.4",
+      "public_base_tables": 70,
+      "public_columns": 617,
+      "readiness_passed": true
+    },
+    "fixed_allowlist_gate": "tools/phase2_wormhole_successor_acceptance.py",
+    "arbitrary_report_lookup_forbidden": true,
+    "runner_requires_explicit_versioned_report": true,
+    "historical_report_overwrite_forbidden": true
   },
   "successor_handoff": {
     "phase4b_entry_test": "tools/test_phase4b_personal_bank_user_counts_entry_contract.py",
@@ -1085,6 +1231,36 @@
         "personalbank_adapter_test": "server/src/test/java/io/saksk/ti/personalbank/infrastructure/persistence/JdbcPersonalBankQuestionFactsQueryAdapterTest.java",
         "postgresql_compatibility_it": "server/src/test/java/io/saksk/ti/integration/Phase4cPersonalBankUserCountsJdbcCompatibilityIT.java"
       },
+      "required_verification_test_methods": {
+        "api_shape_contract_parity_test": [
+          "exposesExactTwentySevenMethodHttpNeutralShape",
+          "keepsLearningToPersonalbankApiDependencyOneWay"
+        ],
+        "learning_composition_test": [
+          "rechecksAccessBeforeReturningZeroView",
+          "deniedFromAnyPersonalbankCallIsTerminal",
+          "optionalFailuresRemainFieldLocal",
+          "preservesOrderedLegacyQuerySequence"
+        ],
+        "personalbank_facts_service_test": [
+          "rejectsCrossBankShareGrant",
+          "selectsDeterministicValidSameBankGrant",
+          "rechecksAccessForEveryFactsCall"
+        ],
+        "learning_adapter_test": [
+          "bindsCandidateIdsAsSinglePostgresqlIntegerArray",
+          "keepsOptionalQueriesInIndependentReadOnlyTransactions"
+        ],
+        "personalbank_adapter_test": [
+          "joinsShareRecordToRequestedBank",
+          "preservesMembershipDigestAndTypedIds"
+        ],
+        "postgresql_compatibility_it": [
+          "runsOnPostgres16And18",
+          "recoversFromTwentyFiveP02WithIndependentTransactions",
+          "preservesSchemaAndBusinessRows"
+        ]
+      },
       "required_behavior_evidence": {
         "tag_zero_view_access_recheck": true,
         "denied_is_terminal_at_every_personalbank_call": true,
@@ -1097,10 +1273,13 @@
           "18.4"
         ],
         "postgresql_25p02_recovery_uses_independent_transactions": true,
-        "schema_and_business_rows_unchanged": true
+        "schema_and_business_rows_unchanged": true,
+        "cross_bank_share_coherence_closed": true,
+        "deterministic_share_grant_selection": true,
+        "unknown_share_permission_denied": true
       },
       "production_surface_delta": {
-        "baseline_manifest_sha256": "318a3a373589f986f29a72691982e840cec2648ac7619e0651e8dce103a450b7",
+        "baseline_manifest_sha256": "7d6113701aac8268f22e8b58b3c52d7d8ea388ddaa06aa2d3d7bd334edd17ebd",
         "baseline_java_build_context_sha256": "c59ee688646b7c23f0f883b4c1377d2a33b507e7dd08b978e98cf3ebdc11825c",
         "exact_changed_or_added_main_sources": 18,
         "main_source_deletions": 0,
@@ -1109,6 +1288,8 @@
       },
       "forbidden_authorizations": [
         "real_data_migration_execution",
+        "operator_migration_implementation",
+        "migration_global_preflight_evidence_closed",
         "http_controller",
         "security_or_rate_limit",
         "route_or_openapi_delta",
@@ -1156,6 +1337,7 @@
       "Ti-Java/docs/refactor/phase4c/data-ownership-delta.csv",
       "Ti-Java/docs/refactor/phase4c/effective-data-ownership-status.json",
       "Ti-Java/docs/refactor/phase4c/personal-bank-user-counts-composition-contract.json",
+      "Ti-Java/docs/refactor/phase4c/personal-bank-user-counts-entry-worm-evidence.json",
       "Ti-Java/server/src/test/java/io/saksk/ti/architecture/Phase4cSuccessorAcceptance.java",
       "Ti-Java/server/src/test/java/io/saksk/ti/integration/Phase4cLegacyPersonalBankTagMigrationEvidenceIT.java",
       "Ti-Java/server/src/test/java/io/saksk/ti/learning/infrastructure/persistence/LegacyPersonalBankTagMigrationEvidence.java",
@@ -1163,12 +1345,17 @@
       "Ti-Java/server/src/test/resources/db/phase4c/069-legacy-personal-bank-tag-migration-schema.sql",
       "Ti-Java/server/src/test/resources/db/phase4c/070-legacy-personal-bank-tag-migration-seed.sql",
       "Ti-Java/tools/build_phase4c_personal_bank_user_counts_composition_contract.py",
+      "Ti-Java/tools/phase2_wormhole_successor_acceptance.py",
       "Ti-Java/tools/phase4c_successor_acceptance.py",
+      "Ti-Java/tools/test_phase2_wormhole_successor_acceptance.py",
       "Ti-Java/tools/test_phase4c_personal_bank_user_counts_composition_contract.py"
     ],
     "historical_hash_overrides": {
       "README.md": "df70f0038f03c71bcbeb01a0f5edb75b6c115e2f1844a774350b0d269bfd3787",
       "docs/refactor/05-progress.md": "89fa432fba5b793b002cc034dda4c7a92a666e0b871c1ef744ed0d90a55b7e63",
+      "infra/phase2/README.md": "4dd7e88f99cb8639e91acd181c3f07749a1ff38dc95256eda6d6e55566623ef2",
+      "infra/phase2/verify-local-reference-wormhole.sh": "9aebdb8a7e477c464a6750b73c76f9336d1191230762ae8369ebe8cc1b82ad49",
+      "infra/phase2/verify-static.sh": "5a9cd32fa094f25d32fcd71da6cd17d0fdc353d02fdfc6c2886ac5128777102d",
       "server/src/test/java/io/saksk/ti/architecture/PersonalBankAllSharesContractParityTest.java": "9fa934116dc01ea7b88b2ac85ae41f1d354efb96e8a20fcbc7de6b00cfdf93d5",
       "server/src/test/java/io/saksk/ti/architecture/PersonalBankShareListContractParityTest.java": "b37147f2f1fc0bd4dbe7582d5457026e46d0e5ee323eb8b1480325eca8658fdb",
       "server/src/test/java/io/saksk/ti/architecture/PersonalBankUsageStatsContractParityTest.java": "343b8b4cf4e9df575e1a5f14743d39c2d31e2b7b20f9c604bcab3f17081e6a1e",
@@ -1177,7 +1364,8 @@
       "tools/test_phase4b_personal_bank_share_list_read_contract.py": "76cf1941682ad21197920b874855cfcd0f5e851bcc714ead071671aba5502d6f",
       "tools/test_phase4b_personal_bank_usage_stats_entry_contract.py": "3e4428cc2a57b2531f8fbee9de0fb5de01542dff7124e249bf88325625086962",
       "tools/test_phase4b_personal_bank_usage_stats_read_contract.py": "60c6dc113f42093c2ff2ff21405cdebadb76fd99886fc94c1b15ab616955aac4",
-      "tools/test_phase4b_personal_bank_user_counts_entry_contract.py": "f5329e12eac3b18e2742c85d40d7c25591fb83fc2cdb3c0d215e240fa0566def"
+      "tools/test_phase4b_personal_bank_user_counts_entry_contract.py": "f5329e12eac3b18e2742c85d40d7c25591fb83fc2cdb3c0d215e240fa0566def",
+      "tools/validate_phase1.py": "a38fce0e7f13530196ab424f7f7da75816c3e32ae6ac149986a5914875a62c5e"
     }
   },
   "route_status": {
@@ -1227,13 +1415,19 @@
     "project_readme_files_modified": 1,
     "successor_bridge_python_files_added": 1,
     "successor_bridge_java_files_added": 1,
-    "production_surface_manifest_sha256": "318a3a373589f986f29a72691982e840cec2648ac7619e0651e8dce103a450b7",
+    "phase2_worm_successor_files_added": 1,
+    "phase2_worm_successor_tests_added": 1,
+    "versioned_worm_reports_added": 1,
+    "phase2_verification_files_modified": 2,
+    "phase2_readme_files_modified": 1,
+    "phase1_verification_files_modified": 1,
+    "production_surface_manifest_sha256": "7d6113701aac8268f22e8b58b3c52d7d8ea388ddaa06aa2d3d7bd334edd17ebd",
     "java_build_context_sha256": "c59ee688646b7c23f0f883b4c1377d2a33b507e7dd08b978e98cf3ebdc11825c"
   },
   "authorization": {
     "composition_contract_closed": true,
     "ownership_conflict_closed": true,
-    "migration_design_closed": true,
+    "migration_design_closed": false,
     "migration_row_primitive_design_closed": true,
     "migration_row_transaction_primitive_evidence_closed": true,
     "migration_global_preflight_evidence_closed": false,
@@ -1248,10 +1442,10 @@
   },
   "acceptance": {
     "passed": true,
-    "next_gate": "implement_http_neutral_learning_composition_and_close_operator_global_preflight_evidence",
+    "next_gate": "implement_http_neutral_learning_composition_while_operator_global_preflight_remains_blocked",
     "future_shape_method_count": 27,
     "routes_remain_pending": true,
     "production_cutover": false
   },
-  "document_payload_sha256": "bf680fd685b63867f03bf914b2618ae4ff3867e8a127251e962edee2ea3d81bd"
+  "document_payload_sha256": "b7cdfcfe3ec0ca29a397c608439c18810c3d55c42b64ad94368d1a0337771409"
 }

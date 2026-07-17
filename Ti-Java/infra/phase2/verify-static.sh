@@ -117,7 +117,7 @@ fi
 
 CONTAINER_IMAGES_FILE="$TI_JAVA_DIR/server/src/test/java/io/saksk/ti/support/Phase2ContainerImages.java"
 WORMHOLE_FILE="$TI_JAVA_DIR/infra/phase2/verify-local-reference-wormhole.sh"
-WORMHOLE_REPORT="$TI_JAVA_DIR/infra/phase2/local-reference-verification.json"
+WORMHOLE_SUCCESSOR_VALIDATOR="$TI_JAVA_DIR/tools/phase2_wormhole_successor_acceptance.py"
 READ_ONLY_INIT="$TI_JAVA_DIR/infra/phase2/postgres/020-create-readonly-role.sh"
 REFERENCE_ASSERTIONS="$TI_JAVA_DIR/server/src/test/java/io/saksk/ti/support/ReferenceSchemaAssertions.java"
 DRIFT_MANIFEST="$TI_JAVA_DIR/infra/phase2/reference-drift-manifest.json"
@@ -185,6 +185,15 @@ assert_file_contains "Wormhole ephemeral login-HMAC secret" \
 assert_file_contains "Wormhole login-HMAC configtree mount" \
     'target=/run/secrets/ti.login-rate-limit.key-secret,readonly' \
     "$WORMHOLE_FILE"
+assert_file_contains "Wormhole explicit versioned report" \
+    '--report is required and must name a new versioned evidence file' \
+    "$WORMHOLE_FILE"
+assert_file_contains "Fixed historical WORM trust root" \
+    '779154127fc700e213fbb3d5f83c112c090d3481236dcd361dbd72b74a0bd1ad' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C WORM successor" \
+    'cfb262319ded0840218fd9bfb4deff1e7bc9c66b5849e3ff05f49a459e686884' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
 
 assert_file_contains "Observed FK delete rule" "ON DELETE SET NULL" "$SCHEMA_FILE"
 assert_file_contains "JDBC FK delete-rule assertion" "importedKeySetNull" "$REFERENCE_ASSERTIONS"
@@ -198,102 +207,11 @@ assert_file_contains "Read-role ACL override assertion" \
 
 current_dockerfile_sha=$(sha256_file "$TI_JAVA_DIR/server/Dockerfile")
 current_build_context_sha=$("$BUILD_CONTEXT_HASHER")
-python3 - "$WORMHOLE_REPORT" "$DRIFT_MANIFEST" \
-    "$current_dockerfile_sha" "$current_build_context_sha" <<'PY'
-import datetime as dt
-import json
-import pathlib
-import re
-import sys
-
-report_path, manifest_path, dockerfile_sha, build_context_sha = sys.argv[1:]
-with pathlib.Path(report_path).open(encoding="utf-8") as handle:
-    report = json.load(handle)
-with pathlib.Path(manifest_path).open(encoding="utf-8") as handle:
-    manifest = json.load(handle)
-
-def require(condition, message):
-    if not condition:
-        raise SystemExit(f"Wormhole evidence invalid: {message}")
-
-require(report.get("schemaVersion") == 1, "schemaVersion")
-captured_at = report.get("capturedAt")
-require(isinstance(captured_at, str), "capturedAt type")
-try:
-    dt.datetime.fromisoformat(captured_at.replace("Z", "+00:00"))
-except ValueError as error:
-    raise SystemExit("Wormhole evidence invalid: capturedAt format") from error
-
-observed = manifest["observedReference"]
-source = report.get("source", {})
-require(source.get("classification") == "explicitly-approved-local-development-reference",
-        "source classification")
-require(source.get("legacySourceCommit") == manifest.get("legacySourceCommit"),
-        "legacy source commit")
-require(source.get("alembicHead") == manifest.get("alembicHead"), "Alembic head")
-require(source.get("serverVersion") == observed.get("postgresVersion"), "source version")
-require(source.get("serverVersionNum") == str(observed.get("postgresVersionNum")),
-        "source version num")
-require(source.get("publicBaseTables") == observed.get("physicalTableCount"),
-        "source table count")
-require(source.get("publicColumns") == observed.get("physicalColumnCount"),
-        "source column count")
-
-restore = report.get("restore", {})
-require(restore.get("image") ==
-        "postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
-        "restore image")
-require(restore.get("serverVersion") == observed.get("postgresVersion"), "target version")
-require(restore.get("serverVersionNum") == str(observed.get("postgresVersionNum")),
-        "target version num")
-require(restore.get("publicBaseTables") == observed.get("physicalTableCount"),
-        "target table count")
-require(restore.get("publicColumns") == observed.get("physicalColumnCount"),
-        "target column count")
-require(re.fullmatch(r"[0-9a-f]{64}", restore.get("canonicalSchemaDumpSha256", ""))
-        is not None, "canonical schema SHA-256")
-require(restore.get("schemaDumpPersisted") is False, "schema dump cleanup")
-
-read_role = report.get("readRole", {})
-expected_read_role = {
-    "selectPassed": True,
-    "defaultTransactionReadOnly": True,
-    "temporaryPrivilege": False,
-    "aclVerifiedWithReadOnlyDefaultDisabled": True,
-    "insertRejected": True,
-    "updateRejected": True,
-    "deleteRejected": True,
-    "ddlRejected": True,
-    "temporaryDdlRejected": True,
-}
-require(read_role == expected_read_role, "complete read-role ACL evidence")
-
-java = report.get("java", {})
-require(java.get("dockerfileSha256") == dockerfile_sha, "stale Dockerfile evidence")
-require(java.get("buildContextSha256") == build_context_sha, "stale Java build-context evidence")
-require("imageId" not in java, "environment-specific image ID is forbidden")
-require(java.get("hibernateDdlAuto") == "validate", "Hibernate mode")
-require(java.get("startupPassed") is True, "Java startup")
-require(java.get("readinessPassed") is True, "Java readiness")
-require(report.get("productionDatabaseVersion") == "unknown", "production version boundary")
-require(report.get("flywayBaselineCreated") is False, "Flyway baseline boundary")
-
-def values(node):
-    if isinstance(node, dict):
-        for value in node.values():
-            yield from values(value)
-    elif isinstance(node, list):
-        for value in node:
-            yield from values(value)
-    else:
-        yield node
-
-strings = [value for value in values(report) if isinstance(value, str)]
-require(not any(value.startswith("/") for value in strings), "absolute path leaked")
-serialized = json.dumps(report, sort_keys=True).lower()
-for forbidden in ("password", "secret", "ti-postgres-1", "studyuser", "ti_db"):
-    require(forbidden not in serialized, f"sensitive/source identifier leaked: {forbidden}")
-PY
+python3 "$WORMHOLE_SUCCESSOR_VALIDATOR" \
+    --ti-java-root "$TI_JAVA_DIR" \
+    --drift-manifest "$DRIFT_MANIFEST" \
+    --dockerfile-sha256 "$current_dockerfile_sha" \
+    --build-context-sha256 "$current_build_context_sha"
 
 if grep -R --line-number --extended-regexp \
     'disabledWithoutDocker|withReuse|testcontainers\.reuse\.enable' \

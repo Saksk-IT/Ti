@@ -14,7 +14,9 @@
   apply 前必须完成全局 preflight。生产实现须在 dedicated connection 上取得 session-level advisory
   lock，并让该锁覆盖完整 preflight 与 apply；窗口内冻结 legacy source、normalized target 以及
   bank/question membership 写入，或捕获可比较的 version/digest 并在 apply 前复核。逐来源行仍需
-  加锁，并在独立事务内只执行 `INSERT ... ON CONFLICT DO NOTHING`，第二遍必须零 DML。
+  加锁，并在独立事务内只执行 `INSERT ... ON CONFLICT DO NOTHING`。由于源数据保留，operator
+  还必须用持久 migration ledger/version 或等价 tombstone 区分“从未迁移”与“迁移后用户清空目标”；
+  否则目标清空后重跑会复活旧标签。目标仍存在时的紧邻第二遍必须零 DML。
 - **兼容输入边界：** 旧 JSON-array-string 与 CSV 语义仅在能够无损解析、规范化和复现时支持。
   单个 tag 保持旧 `normalize_tags` 的 20 Unicode code point 截断语义；不同原值在清洗或截断后
   碰撞、ID 规范化冲突、raw compatibility 非法形态，以及语义可识别但无法无损复现的形态都是
@@ -52,12 +54,16 @@
   目标子集时报告 conflict，不复活用户已经删除或修改的标签。
 - **批准理由：** 数据迁移的异常不能伪装成空业务结果。显式报告让人工修复或逐项差异批准成为
   可追踪决定，且源数据始终保留。
-- **回滚：** 单来源行任何异常回滚该行全部插入；恢复 legacy 写入后禁止自动反向删除，只允许
-  回滚流量并前向修复。
+- **回滚：** 单来源行提交前故障会尝试回滚该行全部插入；只有回滚成功或 PostgreSQL 返回明确
+  非歧义 SQLSTATE 时才能证明零提交，其中 `40001`/`40P01` 供未来 operator 有界重试。回滚失败
+  且已经写入，或写入后的 SQLSTATE class 08、`40003`、缺失 SQLSTATE commit 异常，必须保持提交
+  数未知。恢复 legacy 写入后禁止自动反向删除，只允许回滚流量并前向修复。
 - **当前证据边界：** test-only fixture sweep 只证明逐来源行锁、回滚、仅插入与幂等原语；它会在
-  同一 fixture 中分别观察 blocker 与可迁移行，不是生产全局 apply。它没有证明 dry-run 汇总、
-  非法字段/规范化冲突处置、target-conflict 或“任一未处置项阻断整次 run”，不得据此授权生产
-  operator。
+  同一 fixture 中分别观察 blocker 与可迁移行，且已固定严格 JSON、Python Unicode whitespace、
+  非法字段/规范化冲突、目标真子集与 target-conflict、目标题目 membership、回滚失败及提交结果
+  未知等逐行 disposition；它仍不是生产全局 apply，也没有证明 dry-run 全量汇总、逐项批准或“任一
+  未处置项阻断整次 run”，也没有证明真实网络下的 ambiguous commit 恢复或迁移后删除/tombstone
+  语义，不得据此授权生产 operator。
 
 ## P4C-LEARNING-004：`bank_<bank_id>_tags` namespace 转交 learning
 
@@ -89,3 +95,18 @@
   仅并发权限撤销时从旧实现可能继续成功收敛为 fail closed。
 - **切流门禁：** 15 万题、收藏/错题规模和 tag typed-array 必须重新捕获计划；不得把 900 个
   test-only tag 参数当成生产上限。
+
+## P4C-LEARNING-006：共享题库授权关闭跨题库与非确定性绕过
+
+- **冻结旧行为：** Phase 4B golden 记录了 `bank_shares.bank_id` 未与
+  `bank_share_records.bank_id` 校验，以及无 `ORDER BY` 的 `fetchone()` 会让多条分享记录
+  的结果依赖数据库返回顺序；固定夹具中的跨题库记录因此错误地授予访问权。
+- **Java 行为：** `personalbank::api` 的访问查询必须同时绑定请求题库、分享记录题库和分享
+  本体题库；只接受 `read`/`copy` 权限，未知或空权限 fail closed。对同一用户/题库的多条记录
+  采用确定性排序后选择任一仍 active 且 `expires_at` 为 NULL 或严格晚于北京当前时刻的合法
+  grant；不能因一条过期记录先出现而遮蔽后续合法 grant。到期时间等于当前时刻必须拒绝。
+- **安全差异：** 跨题库夹具的目标结果由旧实现的 `200` 改为 `DENIED`；这是关闭越权而非
+  静默改变普通 owner/public/share 正常语义。实现前必须以固定 unit、adapter 和 PG16/18
+  夹具验证 join、权限、排序、到期边界及复核调用。
+- **切流门禁：** 未通过这些固定安全测试前，不得实现 HTTP Controller、Security matcher、
+  route/OpenAPI 或生产切流；read-contract 不得自行声明 operator 或全局迁移 preflight 已授权。

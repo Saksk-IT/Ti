@@ -151,6 +151,55 @@ def compact_java_code(path: Path) -> str:
     return re.sub(r"\s+", "", source)
 
 
+def file_manifest(root: Path) -> dict[str, str]:
+    if not root.exists():
+        return {}
+    paths = [root] if root.is_file() else [path for path in root.rglob("*") if path.is_file()]
+    return {
+        path.relative_to(ROOT).as_posix(): sha256(path)
+        for path in sorted(paths)
+    }
+
+
+def production_runtime_manifest() -> dict[str, str]:
+    manifest = file_manifest(ROOT / "server/src/main")
+    for relative in (
+        "server/pom.xml",
+        "server/Dockerfile",
+        "server/.dockerignore",
+        "server/.mvn",
+        "server/mvnw",
+        "server/mvnw.cmd",
+        "server/build-versions.properties",
+        "compose.dev.yml",
+        ".env.example",
+    ):
+        manifest.update(file_manifest(ROOT / relative))
+    manifest.update(file_manifest(ROOT / "contracts"))
+    manifest.update(file_manifest(ROOT / "openapi"))
+    return dict(sorted(manifest.items()))
+
+
+def route_status_manifest() -> dict[str, str]:
+    return {
+        relative: sha256(ROOT / relative)
+        for relative in (
+            "docs/refactor/02-route-parity-matrix.csv",
+            "docs/refactor/phase3/route-parity-delta.csv",
+            "docs/refactor/phase3/effective-route-parity-status.json",
+            "docs/refactor/phase4a/route-parity-delta.csv",
+            "docs/refactor/phase4a/effective-route-parity-status.json",
+        )
+    }
+
+
+def junit_test_methods(path: Path) -> set[str]:
+    return set(re.findall(
+        r"@Test\s+(?:public\s+|private\s+|protected\s+)?void\s+([A-Za-z0-9_]+)\s*\(",
+        path.read_text(encoding="utf-8"),
+    ))
+
+
 class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -319,6 +368,20 @@ class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
                 "learning_and_personalbank_main_source_manifest"
             ]
             self.assertNotEqual(historical_manifest, current_manifest)
+            expected_changed = set(requirements["expected_changed_main_sources"])
+            expected_added = set(requirements["expected_added_main_sources"])
+            self.assertEqual(
+                expected_added,
+                set(current_manifest) - set(historical_manifest),
+            )
+            self.assertEqual(set(), set(historical_manifest) - set(current_manifest))
+            self.assertEqual(
+                expected_changed,
+                {
+                    relative for relative in set(historical_manifest) & set(current_manifest)
+                    if historical_manifest[relative] != current_manifest[relative]
+                },
+            )
             for relative in requirements["expected_changed_main_sources"]:
                 self.assertIn(relative, historical_manifest)
                 self.assertIn(relative, current_manifest)
@@ -326,13 +389,32 @@ class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
                     historical_manifest[relative], current_manifest[relative], relative
                 )
             for relative, fragments in requirements[
-                    "expected_added_main_sources"
+                "expected_added_main_sources"
             ].items():
                 self.assertNotIn(relative, historical_manifest)
                 self.assertIn(relative, current_manifest)
                 compact = compact_java_code(ROOT / relative)
                 for fragment in fragments:
                     self.assertIn(fragment, compact, relative)
+
+            baseline_surface = self.phase4c_composition["production_baseline"][
+                "production_runtime_surface"
+            ]["files"]
+            current_surface = production_runtime_manifest()
+            self.assertEqual(expected_added, set(current_surface) - set(baseline_surface))
+            self.assertEqual(set(), set(baseline_surface) - set(current_surface))
+            self.assertEqual(
+                expected_changed,
+                {
+                    relative for relative in set(baseline_surface) & set(current_surface)
+                    if baseline_surface[relative] != current_surface[relative]
+                },
+            )
+            self.assertEqual(
+                self.phase4c_composition["production_baseline"]
+                ["route_status_surface"]["files"],
+                route_status_manifest(),
+            )
             for relative, fragments in requirements[
                     "changed_source_compact_java_fragments"
             ].items():
@@ -343,6 +425,10 @@ class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
             verification_files = successor["verification_source_files"]
             verification_hashes = successor["verification_source_sha256"]
             self.assertEqual(set(verification_files), set(verification_hashes))
+            self.assertEqual(
+                set(requirements["required_verification_sources"]),
+                set(verification_files),
+            )
             for name, relative in requirements[
                     "required_verification_sources"
             ].items():
@@ -352,6 +438,11 @@ class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
                 self.assertEqual(sha256(source), verification_hashes[name])
                 parity_code = compact_java_code(source)
                 self.assertIn("@Test", parity_code)
+                required_methods = requirements["required_verification_test_methods"][name]
+                actual_methods = junit_test_methods(source)
+                self.assertTrue(set(required_methods).issubset(actual_methods), name)
+                for method_name in required_methods:
+                    self.assertIn(f"@Testvoid{method_name}(", parity_code, name)
                 if name == "api_shape_contract_parity_test":
                     for method_name in (
                         "findPersonalBankUserCounts",
@@ -360,17 +451,21 @@ class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
                         "inspectQuestionMembership",
                     ):
                         self.assertIn(method_name, parity_code)
+            behavior = requirements["required_behavior_evidence"]
+            self.assertEqual(["16.14", "18.4"], behavior["postgresql_versions"])
             self.assertTrue(all(
-                requirements["required_behavior_evidence"].values()
+                value for key, value in behavior.items()
+                if key != "postgresql_versions"
             ))
+            self.assertEqual(
+                self.phase4c_composition["security_access_policy"],
+                read_contract["security_access_policy"],
+            )
             authorization = read_contract["authorization"]
             for key in requirements["forbidden_authorizations"]:
                 self.assertFalse(authorization[key], key)
-            operator_requirement = requirements[
-                "operator_migration_implementation_requires"
-            ]
-            if authorization["operator_migration_implementation"]:
-                self.assertTrue(authorization[operator_requirement])
+            self.assertFalse(authorization["operator_migration_implementation"])
+            self.assertFalse(authorization["migration_global_preflight_evidence_closed"])
             self.assertTrue(read_contract["acceptance"]["routes_remain_pending"])
             self.assertFalse(read_contract["acceptance"]["production_cutover"])
 

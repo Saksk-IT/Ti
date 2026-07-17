@@ -22,10 +22,16 @@ PHASE4C_ENTRY_JAVA_BUILD_CONTEXT_SHA256 = (
     "c59ee688646b7c23f0f883b4c1377d2a33b507e7dd08b978e98cf3ebdc11825c"
 )
 PHASE4C_ENTRY_PRODUCTION_SURFACE_MANIFEST_SHA256 = (
-    "318a3a373589f986f29a72691982e840cec2648ac7619e0651e8dce103a450b7"
+    "7d6113701aac8268f22e8b58b3c52d7d8ea388ddaa06aa2d3d7bd334edd17ebd"
 )
 PHASE4C_ENTRY_ROUTE_SURFACE_MANIFEST_SHA256 = (
     "6f9cfdd6ba849233c51a27ed281856681d8a6ec3a0bda628da9184ec284e4b86"
+)
+PHASE4B_WORM_REPORT_SHA256 = (
+    "779154127fc700e213fbb3d5f83c112c090d3481236dcd361dbd72b74a0bd1ad"
+)
+PHASE4C_ENTRY_WORM_REPORT_SHA256 = (
+    "cfb262319ded0840218fd9bfb4deff1e7bc9c66b5849e3ff05f49a459e686884"
 )
 NAMESPACE = "bank_<bank_id>_tags"
 ROUTES = [
@@ -78,6 +84,12 @@ PHASE4C_FORWARD_ADDITIONS = [
     "Ti-Java/tools/build_phase4c_personal_bank_user_counts_composition_contract.py",
     "Ti-Java/tools/phase4c_successor_acceptance.py",
     "Ti-Java/tools/test_phase4c_personal_bank_user_counts_composition_contract.py",
+    (
+        "Ti-Java/docs/refactor/phase4c/"
+        "personal-bank-user-counts-entry-worm-evidence.json"
+    ),
+    "Ti-Java/tools/phase2_wormhole_successor_acceptance.py",
+    "Ti-Java/tools/test_phase2_wormhole_successor_acceptance.py",
 ]
 PHASE4B_ACCEPTED_FILE_SHA256 = {
     "README.md": "df70f0038f03c71bcbeb01a0f5edb75b6c115e2f1844a774350b0d269bfd3787",
@@ -152,6 +164,18 @@ PHASE4B_SUCCESSOR_SOURCE_KEYS = {
 # older than the files accepted at the immediate Phase4B predecessor commit.
 WORM_HISTORICAL_HASH_OVERRIDES = {
     "README.md": PHASE4B_ACCEPTED_FILE_SHA256["README.md"],
+    "infra/phase2/README.md": (
+        "4dd7e88f99cb8639e91acd181c3f07749a1ff38dc95256eda6d6e55566623ef2"
+    ),
+    "infra/phase2/verify-local-reference-wormhole.sh": (
+        "9aebdb8a7e477c464a6750b73c76f9336d1191230762ae8369ebe8cc1b82ad49"
+    ),
+    "infra/phase2/verify-static.sh": (
+        "5a9cd32fa094f25d32fcd71da6cd17d0fdc353d02fdfc6c2886ac5128777102d"
+    ),
+    "tools/validate_phase1.py": (
+        "a38fce0e7f13530196ab424f7f7da75816c3e32ae6ac149986a5914875a62c5e"
+    ),
     "docs/refactor/05-progress.md": (
         "89fa432fba5b793b002cc034dda4c7a92a666e0b871c1ef744ed0d90a55b7e63"
     ),
@@ -422,6 +446,11 @@ def production_runtime_manifest() -> dict[str, str]:
     for relative in (
         "server/pom.xml",
         "server/Dockerfile",
+        "server/.dockerignore",
+        "server/.mvn",
+        "server/mvnw",
+        "server/mvnw.cmd",
+        "server/build-versions.properties",
         "compose.dev.yml",
         ".env.example",
     ):
@@ -546,6 +575,29 @@ def build_contract(output_dir: Path, delta_path: Path, effective_path: Path) -> 
         "java_build_context_hasher": source_reference(
             "infra/phase2/hash-java-build-context.sh"
         ),
+        "phase2_static_verifier": source_reference(
+            "infra/phase2/verify-static.sh"
+        ),
+        "phase2_wormhole_runner": source_reference(
+            "infra/phase2/verify-local-reference-wormhole.sh"
+        ),
+        "phase2_wormhole_readme": source_reference("infra/phase2/README.md"),
+        "phase2_historical_worm_report": source_reference(
+            "infra/phase2/local-reference-verification.json"
+        ),
+        "phase4b_historical_worm_report": source_reference(
+            "docs/refactor/phase4b/personal-bank-share-list-worm-evidence.json"
+        ),
+        "phase4c_entry_worm_report": source_reference(
+            "docs/refactor/phase4c/"
+            "personal-bank-user-counts-entry-worm-evidence.json"
+        ),
+        "phase2_worm_successor_gate": source_reference(
+            "tools/phase2_wormhole_successor_acceptance.py"
+        ),
+        "phase2_worm_successor_test": source_reference(
+            "tools/test_phase2_wormhole_successor_acceptance.py"
+        ),
         "base_data_ownership": source_reference(
             "docs/refactor/03-data-ownership.csv"
         ),
@@ -566,6 +618,7 @@ def build_contract(output_dir: Path, delta_path: Path, effective_path: Path) -> 
         "project_readme": source_reference("README.md"),
         "phase4c_readme": source_reference("docs/refactor/phase4c/README.md"),
         "progress": source_reference("docs/refactor/05-progress.md"),
+        "phase1_validator": source_reference("tools/validate_phase1.py"),
         "migration_evidence_java": source_reference(
             "server/src/test/java/io/saksk/ti/learning/infrastructure/persistence/"
             "LegacyPersonalBankTagMigrationEvidence.java"
@@ -634,6 +687,7 @@ def build_contract(output_dir: Path, delta_path: Path, effective_path: Path) -> 
         "P4C-LEARNING-003",
         "P4C-LEARNING-004",
         "P4C-LEARNING-005",
+        "P4C-LEARNING-006",
     ]
     current_method_count = shape["implemented_public_application_method_count"]
     successor_files = {}
@@ -657,6 +711,21 @@ def build_contract(output_dir: Path, delta_path: Path, effective_path: Path) -> 
     if route_surface["manifest_sha256"] != PHASE4C_ENTRY_ROUTE_SURFACE_MANIFEST_SHA256:
         raise ValueError("Phase4C entry route surface differs from accepted commit")
     build_context_sha256 = java_build_context_sha256()
+    historical_worm = source_contracts["phase2_historical_worm_report"]
+    phase4b_historical_worm = source_contracts["phase4b_historical_worm_report"]
+    phase4c_worm = source_contracts["phase4c_entry_worm_report"]
+    if historical_worm["sha256"] != PHASE4B_WORM_REPORT_SHA256:
+        raise ValueError("Phase2 historical WORM report changed")
+    if phase4b_historical_worm["sha256"] != PHASE4B_WORM_REPORT_SHA256:
+        raise ValueError("Phase4B historical WORM report changed")
+    if phase4c_worm["sha256"] != PHASE4C_ENTRY_WORM_REPORT_SHA256:
+        raise ValueError("Phase4C entry WORM report changed")
+    phase4c_worm_document = load_json(ROOT / phase4c_worm["source"])
+    if (
+        phase4c_worm_document.get("java", {}).get("buildContextSha256")
+        != PHASE4C_ENTRY_JAVA_BUILD_CONTEXT_SHA256
+    ):
+        raise ValueError("Phase4C entry WORM build context changed")
     contract = {
         "contract_id": "ti.phase4c.personal-bank-user-counts-composition-contract",
         "schema_version": 1,
@@ -831,7 +900,22 @@ def build_contract(output_dir: Path, delta_path: Path, effective_path: Path) -> 
                     "counts_are_non_negative_long": True,
                     "facts_result_data_present_iff_available": True,
                     "membership_ids_are_positive_distinct_sorted": True,
-                    "membership_digest": "lowercase SHA-256 over canonical membership",
+                    "membership_digest": {
+                        "algorithm": "SHA-256",
+                        "encoding": "UTF-8",
+                        "hex": "64 lowercase characters",
+                        "canonical_json_key_order": [
+                            "bank_id",
+                            "bank_exists",
+                            "existing_question_ids",
+                        ],
+                        "canonical_json_whitespace": "none",
+                        "ids": "positive distinct ascending",
+                        "example": (
+                            '{"bank_id":7101,"bank_exists":true,'
+                            '"existing_question_ids":[8101,8102]}'
+                        ),
+                    },
                 },
                 "selection_semantics": {
                     "bank_id": "required int",
@@ -1054,9 +1138,24 @@ def build_contract(output_dir: Path, delta_path: Path, effective_path: Path) -> 
                 "unresolved_or_orphan_blocks_apply": True,
             },
             "target_precedence": {
-                "any_existing_scope_row_skips_all_writes": True,
+                "existing_scope_rows_prevent_automatic_writes": True,
+                "precedence_requires_valid_source_plan": True,
+                "source_plan_must_be_subset_of_target": True,
+                "target_tags_must_be_canonical": True,
+                "positive_target_questions_must_belong_to_bank": True,
                 "automatic_merge": False,
                 "source_not_subset_of_target": "target_conflict blocks cutover",
+            },
+            "target_absence_after_prior_migration": {
+                "ambiguous_without_durable_marker": True,
+                "test_primitive_behavior": (
+                    "retained compatibility source can repopulate an emptied target"
+                ),
+                "operator_requirement": (
+                    "a durable migration ledger/version or equivalent tombstone must "
+                    "distinguish never-migrated state from intentional target deletion"
+                ),
+                "operator_design_closed": False,
             },
             "transaction": {
                 "global_single_runner": (
@@ -1065,22 +1164,55 @@ def build_contract(output_dir: Path, delta_path: Path, effective_path: Path) -> 
                 ),
                 "unit_of_work": "one user_progress source row",
                 "source_lock": "SELECT FOR UPDATE",
-                "isolation": "SERIALIZABLE with bounded 40001/deadlock retry in production",
-                "failure": "rollback every target insert for that source row",
+                "isolation": "SERIALIZABLE",
+                "test_primitive_retry": False,
+                "production_operator_retry_requirement": (
+                    "bounded retry for SQLSTATE 40001 and 40P01"
+                ),
+                "failure": (
+                    "attempt rollback for a pre-commit failure; only a successful rollback "
+                    "or a non-ambiguous SQLSTATE proves zero committed rows after writes; "
+                    "rollback failure is orthogonal, while SQLSTATE class 08, 40003 or an "
+                    "absent SQLSTATE during commit after changed rows remains unknown"
+                ),
                 "operator_design_status": (
                     "not closed until write freezes/version rechecks and global blocker "
                     "aggregation are independently evidenced"
                 ),
             },
-            "dispositions": [
-                "migrated",
-                "empty_noop",
-                "target_precedence",
-                "target_conflict",
-                "invalid",
-                "orphan",
-                "failed",
+            "row_outcomes": [
+                "MIGRATED",
+                "EMPTY_NOOP",
+                "TARGET_ALREADY_PRESENT",
+                "TARGET_CONFLICT",
+                "INVALID_KEY",
+                "INVALID_DATA",
+                "BANK_MISSING",
+                "ORPHAN_QUESTION",
+                "SOURCE_DISAPPEARED",
+                "FAILED_ROLLED_BACK",
+                "ROLLBACK_FAILED",
+                "COMMIT_OUTCOME_UNKNOWN",
             ],
+            "reporting_groups": {
+                "eligible": [
+                    "MIGRATED",
+                    "EMPTY_NOOP",
+                    "TARGET_ALREADY_PRESENT",
+                ],
+                "conflict": ["TARGET_CONFLICT"],
+                "invalid": ["INVALID_KEY", "INVALID_DATA"],
+                "unresolved": [
+                    "BANK_MISSING",
+                    "ORPHAN_QUESTION",
+                    "SOURCE_DISAPPEARED",
+                ],
+                "transaction_failed": [
+                    "FAILED_ROLLED_BACK",
+                    "ROLLBACK_FAILED",
+                    "COMMIT_OUTCOME_UNKNOWN",
+                ],
+            },
             "apply_preconditions": [
                 "legacy source bank-tag writes are frozen",
                 "normalized target tag writes are frozen or use a common version/lock protocol",
@@ -1089,7 +1221,8 @@ def build_contract(output_dir: Path, delta_path: Path, effective_path: Path) -> 
                 "backup and rollback evidence exists",
             ],
             "idempotency": (
-                "second execution performs zero DML and preserves the same semantic digest"
+                "an immediate second execution while normalized target rows remain performs "
+                "zero DML; deletion/tombstone behavior requires a durable migration marker"
             ),
             "get_runtime_ddl": False,
             "get_runtime_dml": False,
@@ -1108,10 +1241,18 @@ def build_contract(output_dir: Path, delta_path: Path, effective_path: Path) -> 
             "postgresql_versions": ["16.14", "18.4"],
             "proves": [
                 "strict namespace selection",
+                "strict JSON rejects duplicate object keys and trailing tokens",
+                "Python-compatible Unicode whitespace normalization",
                 "invalid raw field, normalized-ID and truncation conflicts become blockers",
                 "legacy JSON-array-string and comma-separated tag values are normalized",
-                "target-any-row precedence",
+                "target precedence only after a valid source plan is proven a target subset",
+                "proper-subset target evidence and source drift target_conflict",
+                "target tag canonicality and positive-question bank membership validation",
                 "source-row lock and per-row atomic rollback",
+                (
+                    "rollback failure is tracked orthogonally and only ambiguous "
+                    "post-write commit outcomes remain unknown"
+                ),
                 "insert-only ON CONFLICT statement is accepted and executed",
                 "second fixture sweep is zero DML through target precedence",
                 "source, non-target namespace, schema and index fingerprints unchanged",
@@ -1119,13 +1260,34 @@ def build_contract(output_dir: Path, delta_path: Path, effective_path: Path) -> 
             "does_not_prove": [
                 "global dry-run/preflight or all-or-block apply decision",
                 "global aggregation and approval of invalid or target-conflict dispositions",
+                "real network commit-response loss or ambiguous commit recovery",
                 "concurrent lock contention or ON CONFLICT race resolution",
+                "post-migration target deletion, tombstones or durable migration-ledger behavior",
+                "connection acquisition, setup or close failure aggregation across the sweep",
                 "source, normalized-target and membership write-freeze protocol",
                 "production data cleanliness or scale",
                 "production operator credentials or backup readiness",
                 "production implementation completion",
                 "HTTP parity or production cutover",
             ],
+        },
+        "security_access_policy": {
+            "cross_bank_share_coherence_closed": True,
+            "requested_bank_join_required": True,
+            "share_record_bank_and_share_bank_must_match": True,
+            "valid_grant_selection": (
+                "any deterministic same-bank active grant with a null or strictly future "
+                "Beijing-local expiry grants read access"
+            ),
+            "allowed_share_permissions": ["read", "copy"],
+            "unknown_or_null_permission": "deny",
+            "equal_expiry_is_denied": True,
+            "cross_bank_fixture_expected_outcome": "DENIED",
+            "multiple_share_rows_are_not_fetchone_order_dependent": True,
+            "source_evidence": (
+                "phase4b golden access-shared-cross-bank-record and "
+                "access-shared-fetchone-first-row"
+            ),
         },
         "production_baseline": {
             "implemented_public_application_method_count": current_method_count,
@@ -1143,6 +1305,11 @@ def build_contract(output_dir: Path, delta_path: Path, effective_path: Path) -> 
                 "server/src/main/**",
                 "server/pom.xml",
                 "server/Dockerfile",
+                "server/.dockerignore",
+                "server/.mvn/**",
+                "server/mvnw",
+                "server/mvnw.cmd",
+                "server/build-versions.properties",
                 "compose.dev.yml",
                 ".env.example",
                 "contracts/**",
@@ -1152,6 +1319,42 @@ def build_contract(output_dir: Path, delta_path: Path, effective_path: Path) -> 
             "expanded_route_operation_count": effective_route[
                 "expanded_operation_count"
             ],
+        },
+        "worm_successor_evidence": {
+            "status": "versioned_successor_tip_verified_historical_reports_immutable",
+            "historical_anchor": {
+                "phase2_source": historical_worm["source"],
+                "phase4b_copy_source": phase4b_historical_worm["source"],
+                "sha256": PHASE4B_WORM_REPORT_SHA256,
+            },
+            "current_tip": {
+                "source": phase4c_worm["source"],
+                "sha256": PHASE4C_ENTRY_WORM_REPORT_SHA256,
+                "java_build_context_sha256": (
+                    PHASE4C_ENTRY_JAVA_BUILD_CONTEXT_SHA256
+                ),
+                "dockerfile_sha256": phase4c_worm_document["java"][
+                    "dockerfileSha256"
+                ],
+                "postgresql_version": phase4c_worm_document["restore"][
+                    "serverVersion"
+                ],
+                "public_base_tables": phase4c_worm_document["restore"][
+                    "publicBaseTables"
+                ],
+                "public_columns": phase4c_worm_document["restore"][
+                    "publicColumns"
+                ],
+                "readiness_passed": phase4c_worm_document["java"][
+                    "readinessPassed"
+                ],
+            },
+            "fixed_allowlist_gate": source_contracts[
+                "phase2_worm_successor_gate"
+            ]["source"],
+            "arbitrary_report_lookup_forbidden": True,
+            "runner_requires_explicit_versioned_report": True,
+            "historical_report_overwrite_forbidden": True,
         },
         "successor_handoff": {
             "phase4b_entry_test": (
@@ -1347,6 +1550,36 @@ def build_contract(output_dir: Path, delta_path: Path, effective_path: Path) -> 
                         "Phase4cPersonalBankUserCountsJdbcCompatibilityIT.java"
                     ),
                 },
+                "required_verification_test_methods": {
+                    "api_shape_contract_parity_test": [
+                        "exposesExactTwentySevenMethodHttpNeutralShape",
+                        "keepsLearningToPersonalbankApiDependencyOneWay",
+                    ],
+                    "learning_composition_test": [
+                        "rechecksAccessBeforeReturningZeroView",
+                        "deniedFromAnyPersonalbankCallIsTerminal",
+                        "optionalFailuresRemainFieldLocal",
+                        "preservesOrderedLegacyQuerySequence",
+                    ],
+                    "personalbank_facts_service_test": [
+                        "rejectsCrossBankShareGrant",
+                        "selectsDeterministicValidSameBankGrant",
+                        "rechecksAccessForEveryFactsCall",
+                    ],
+                    "learning_adapter_test": [
+                        "bindsCandidateIdsAsSinglePostgresqlIntegerArray",
+                        "keepsOptionalQueriesInIndependentReadOnlyTransactions",
+                    ],
+                    "personalbank_adapter_test": [
+                        "joinsShareRecordToRequestedBank",
+                        "preservesMembershipDigestAndTypedIds",
+                    ],
+                    "postgresql_compatibility_it": [
+                        "runsOnPostgres16And18",
+                        "recoversFromTwentyFiveP02WithIndependentTransactions",
+                        "preservesSchemaAndBusinessRows",
+                    ],
+                },
                 "required_behavior_evidence": {
                     "tag_zero_view_access_recheck": True,
                     "denied_is_terminal_at_every_personalbank_call": True,
@@ -1357,6 +1590,9 @@ def build_contract(output_dir: Path, delta_path: Path, effective_path: Path) -> 
                     "postgresql_versions": ["16.14", "18.4"],
                     "postgresql_25p02_recovery_uses_independent_transactions": True,
                     "schema_and_business_rows_unchanged": True,
+                    "cross_bank_share_coherence_closed": True,
+                    "deterministic_share_grant_selection": True,
+                    "unknown_share_permission_denied": True,
                 },
                 "production_surface_delta": {
                     "baseline_manifest_sha256": (
@@ -1374,6 +1610,8 @@ def build_contract(output_dir: Path, delta_path: Path, effective_path: Path) -> 
                 },
                 "forbidden_authorizations": [
                     "real_data_migration_execution",
+                    "operator_migration_implementation",
+                    "migration_global_preflight_evidence_closed",
                     "http_controller",
                     "security_or_rate_limit",
                     "route_or_openapi_delta",
@@ -1438,6 +1676,12 @@ def build_contract(output_dir: Path, delta_path: Path, effective_path: Path) -> 
             "project_readme_files_modified": 1,
             "successor_bridge_python_files_added": 1,
             "successor_bridge_java_files_added": 1,
+            "phase2_worm_successor_files_added": 1,
+            "phase2_worm_successor_tests_added": 1,
+            "versioned_worm_reports_added": 1,
+            "phase2_verification_files_modified": 2,
+            "phase2_readme_files_modified": 1,
+            "phase1_verification_files_modified": 1,
             "production_surface_manifest_sha256": (
                 PHASE4C_ENTRY_PRODUCTION_SURFACE_MANIFEST_SHA256
             ),
@@ -1446,7 +1690,7 @@ def build_contract(output_dir: Path, delta_path: Path, effective_path: Path) -> 
         "authorization": {
             "composition_contract_closed": True,
             "ownership_conflict_closed": True,
-            "migration_design_closed": True,
+            "migration_design_closed": False,
             "migration_row_primitive_design_closed": True,
             "migration_row_transaction_primitive_evidence_closed": True,
             "migration_global_preflight_evidence_closed": False,
@@ -1462,8 +1706,8 @@ def build_contract(output_dir: Path, delta_path: Path, effective_path: Path) -> 
         "acceptance": {
             "passed": True,
             "next_gate": (
-                "implement_http_neutral_learning_composition_and_close_operator_"
-                "global_preflight_evidence"
+                "implement_http_neutral_learning_composition_while_operator_"
+                "global_preflight_remains_blocked"
             ),
             "future_shape_method_count": current_method_count + 4,
             "routes_remain_pending": True,

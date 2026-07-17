@@ -146,12 +146,12 @@ class Phase4cLegacyPersonalBankTagMigrationEvidenceIT {
         RunResult first = operator.runFixturePrimitiveSweep();
         assertThat(sourceRowIds(first)).containsExactlyElementsOf(DISCOVERED_SOURCE_IDS);
         assertThat(first.rollbackFailureCount()).isZero();
-        assertThat(first.blockingRowCount()).isEqualTo(3);
+        assertThat(first.blockingRowCount()).isEqualTo(4);
         assertThat(first.isApplyEligible()).isFalse();
         assertThat(first.insertStatementsAttempted()).isEqualTo(13);
         assertThat(first.insertedRowsCommitted()).isEqualTo(13);
         assertThat(first.row(INHERITED_PRECEDENCE_SOURCE_ID).outcome())
-                .isEqualTo(RowOutcome.TARGET_ALREADY_PRESENT);
+                .isEqualTo(RowOutcome.TARGET_CONFLICT);
         assertThat(first.row(NORMAL_SOURCE_ID).outcome()).isEqualTo(RowOutcome.MIGRATED);
         assertThat(first.row(PRECEDENCE_SOURCE_ID).outcome())
                 .isEqualTo(RowOutcome.TARGET_ALREADY_PRESENT);
@@ -179,7 +179,9 @@ class Phase4cLegacyPersonalBankTagMigrationEvidenceIT {
         assertThat(targetRows(jdbc, 7_601L, 7_601))
                 .noneMatch(row -> row.questionId() == 8_699 || row.tag().equals("foreign"));
         assertThat(targetRows(jdbc, 7_602L, 7_602))
-                .containsExactly(new TagInsert(0, "target-wins"));
+                .containsExactly(
+                        new TagInsert(0, "target-extra"),
+                        new TagInsert(0, "target-wins"));
         assertThat(targetRows(jdbc, 7_603L, 7_603)).containsExactly(
                 new TagInsert(0, "rollback-a"),
                 new TagInsert(0, "rollback-b"),
@@ -192,11 +194,13 @@ class Phase4cLegacyPersonalBankTagMigrationEvidenceIT {
         RunResult second = operator.runFixturePrimitiveSweep();
         assertThat(sourceRowIds(second)).containsExactlyElementsOf(DISCOVERED_SOURCE_IDS);
         assertThat(second.rollbackFailureCount()).isZero();
-        assertThat(second.blockingRowCount()).isEqualTo(3);
+        assertThat(second.blockingRowCount()).isEqualTo(4);
         assertThat(second.isApplyEligible()).isFalse();
         assertThat(second.insertStatementsAttempted()).isZero();
         assertThat(second.insertedRowsCommitted()).isZero();
         assertThat(second.row(INHERITED_PRECEDENCE_SOURCE_ID).outcome())
+                .isEqualTo(RowOutcome.TARGET_CONFLICT);
+        assertThat(second.row(PRECEDENCE_SOURCE_ID).outcome())
                 .isEqualTo(RowOutcome.TARGET_ALREADY_PRESENT);
         assertThat(second.row(NORMAL_SOURCE_ID).outcome())
                 .isEqualTo(RowOutcome.TARGET_ALREADY_PRESENT);

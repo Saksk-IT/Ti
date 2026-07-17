@@ -12,6 +12,11 @@ import sys
 import tempfile
 import unittest
 
+try:
+    from tools.phase4c_successor_acceptance import validate_successor_contract
+except ModuleNotFoundError:  # Direct script execution from tools/.
+    from phase4c_successor_acceptance import validate_successor_contract
+
 
 ROOT = Path(__file__).resolve().parents[1]
 PHASE4C = ROOT / "docs/refactor/phase4c"
@@ -33,10 +38,16 @@ ACCEPTED_JAVA_BUILD_CONTEXT_SHA256 = (
     "c59ee688646b7c23f0f883b4c1377d2a33b507e7dd08b978e98cf3ebdc11825c"
 )
 ACCEPTED_PRODUCTION_SURFACE_SHA256 = (
-    "318a3a373589f986f29a72691982e840cec2648ac7619e0651e8dce103a450b7"
+    "7d6113701aac8268f22e8b58b3c52d7d8ea388ddaa06aa2d3d7bd334edd17ebd"
 )
 ACCEPTED_ROUTE_SURFACE_SHA256 = (
     "6f9cfdd6ba849233c51a27ed281856681d8a6ec3a0bda628da9184ec284e4b86"
+)
+ACCEPTED_PHASE4B_WORM_SHA256 = (
+    "779154127fc700e213fbb3d5f83c112c090d3481236dcd361dbd72b74a0bd1ad"
+)
+ACCEPTED_PHASE4C_WORM_SHA256 = (
+    "cfb262319ded0840218fd9bfb4deff1e7bc9c66b5849e3ff05f49a459e686884"
 )
 
 
@@ -80,6 +91,11 @@ def production_runtime_manifest() -> dict[str, str]:
     for relative in (
         "server/pom.xml",
         "server/Dockerfile",
+        "server/.dockerignore",
+        "server/.mvn",
+        "server/mvnw",
+        "server/mvnw.cmd",
+        "server/build-versions.properties",
         "compose.dev.yml",
         ".env.example",
     ):
@@ -165,6 +181,10 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
         self.assertTrue(predecessor["evidence_closed"])
         self.assertFalse(predecessor["implementation_authorized"])
 
+        self.assertEqual(
+            "tools/validate_phase1.py",
+            contract["source_contracts"]["phase1_validator"]["source"],
+        )
         for name, reference in contract["source_contracts"].items():
             source = ROOT / reference["source"]
             self.assertTrue(source.is_file(), name)
@@ -197,6 +217,38 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
             self.assertEqual(relative, reference["source"], relative)
             self.assertEqual(sha256(ROOT / relative), handoff["successor_sha256"])
             self.assertEqual(reference["sha256"], handoff["successor_sha256"])
+        validate_successor_contract(contract)
+        tampered = json.loads(json.dumps(contract))
+        tampered_relative = (
+            "tools/test_phase4b_personal_bank_user_counts_entry_contract.py"
+        )
+        tampered_hash = "0" * 64
+        tampered["historical_acceptance"]["successor_aware_test_files"][
+            tampered_relative
+        ]["successor_sha256"] = tampered_hash
+        tampered["source_contracts"]["phase4b_entry_contract_test"][
+            "sha256"
+        ] = tampered_hash
+        with self.assertRaisesRegex(AssertionError, "successor hash is not fixed"):
+            validate_successor_contract(tampered)
+
+        tampered_auxiliary = json.loads(json.dumps(contract))
+        tampered_auxiliary["source_contracts"]["phase2_worm_successor_gate"][
+            "sha256"
+        ] = tampered_hash
+        with self.assertRaisesRegex(
+            AssertionError, "auxiliary successor hash is not fixed"
+        ):
+            validate_successor_contract(tampered_auxiliary)
+
+        missing_auxiliary = json.loads(json.dumps(contract))
+        missing_auxiliary["forward_handoff"]["forward_additions"].remove(
+            "Ti-Java/tools/phase2_wormhole_successor_acceptance.py"
+        )
+        with self.assertRaisesRegex(
+            AssertionError, "new auxiliary successor is not admitted"
+        ):
+            validate_successor_contract(missing_auxiliary)
 
         with tempfile.TemporaryDirectory(prefix="ti-phase4c-composition-") as temp:
             output = Path(temp)
@@ -575,11 +627,47 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
             "block production apply",
             migration["legacy_mapping"]["tag_cleaning_collision"],
         )
-        self.assertTrue(migration["target_precedence"][
-            "any_existing_scope_row_skips_all_writes"
+        precedence = migration["target_precedence"]
+        self.assertTrue(precedence["existing_scope_rows_prevent_automatic_writes"])
+        self.assertTrue(precedence["precedence_requires_valid_source_plan"])
+        self.assertTrue(precedence["source_plan_must_be_subset_of_target"])
+        self.assertTrue(precedence["target_tags_must_be_canonical"])
+        self.assertTrue(precedence[
+            "positive_target_questions_must_belong_to_bank"
         ])
         self.assertFalse(migration["target_precedence"]["automatic_merge"])
+        absence = migration["target_absence_after_prior_migration"]
+        self.assertTrue(absence["ambiguous_without_durable_marker"])
+        self.assertIn("repopulate", absence["test_primitive_behavior"])
+        self.assertIn("durable migration ledger", absence["operator_requirement"])
+        self.assertFalse(absence["operator_design_closed"])
+        row_outcomes = {
+            "MIGRATED",
+            "EMPTY_NOOP",
+            "TARGET_ALREADY_PRESENT",
+            "TARGET_CONFLICT",
+            "INVALID_KEY",
+            "INVALID_DATA",
+            "BANK_MISSING",
+            "ORPHAN_QUESTION",
+            "SOURCE_DISAPPEARED",
+            "FAILED_ROLLED_BACK",
+            "ROLLBACK_FAILED",
+            "COMMIT_OUTCOME_UNKNOWN",
+        }
+        self.assertEqual(row_outcomes, set(migration["row_outcomes"]))
+        groups = migration["reporting_groups"]
+        grouped = [outcome for values in groups.values() for outcome in values]
+        self.assertEqual(row_outcomes, set(grouped))
+        self.assertEqual(len(row_outcomes), len(grouped))
         self.assertEqual("SELECT FOR UPDATE", migration["transaction"]["source_lock"])
+        self.assertFalse(migration["transaction"]["test_primitive_retry"])
+        self.assertIn(
+            "40001 and 40P01",
+            migration["transaction"]["production_operator_retry_requirement"],
+        )
+        self.assertIn("SQLSTATE class 08", migration["transaction"]["failure"])
+        self.assertIn("40003", migration["transaction"]["failure"])
         self.assertIn(
             "session-level PostgreSQL advisory lock",
             migration["transaction"]["global_single_runner"],
@@ -594,6 +682,22 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
         self.assertFalse(migration["get_runtime_dml"])
         self.assertFalse(migration["production_schema_or_index_delta"])
         self.assertFalse(migration["real_data_execution_authorized"])
+
+        digest = self.contract["planned_public_api_shape"]["personalbank"][
+            "immutability_and_validation"
+        ]["membership_digest"]
+        self.assertEqual("SHA-256", digest["algorithm"])
+        self.assertEqual("UTF-8", digest["encoding"])
+        self.assertEqual(
+            ["bank_id", "bank_exists", "existing_question_ids"],
+            digest["canonical_json_key_order"],
+        )
+        self.assertEqual("none", digest["canonical_json_whitespace"])
+        self.assertEqual(
+            '{"bank_id":7101,"bank_exists":true,'
+            '"existing_question_ids":[8101,8102]}',
+            digest["example"],
+        )
 
         evidence_path = ROOT / self.contract["source_contracts"][
             "migration_evidence_java"
@@ -624,9 +728,18 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
         self.assertIn("fingerprints unchanged", proves)
         self.assertIn("invalid raw field", proves)
         self.assertIn("JSON-array-string", proves)
+        self.assertIn("proper-subset target evidence", proves)
+        self.assertIn("duplicate object keys", proves)
+        self.assertIn("Python-compatible Unicode whitespace", proves)
+        self.assertIn("positive-question bank membership", proves)
+        self.assertIn("rollback failure is tracked orthogonally", proves)
+        self.assertIn("only ambiguous post-write commit outcomes remain unknown", proves)
         limits = " ".join(evidence["does_not_prove"])
         self.assertIn("global dry-run/preflight", limits)
         self.assertIn("target-conflict", limits)
+        self.assertIn("real network commit-response loss", limits)
+        self.assertIn("target deletion", limits)
+        self.assertIn("connection acquisition", limits)
         self.assertIn("ON CONFLICT race", limits)
         self.assertIn("write-freeze", limits)
         self.assertIn("production data", limits)
@@ -649,6 +762,7 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
             "P4C-LEARNING-003",
             "P4C-LEARNING-004",
             "P4C-LEARNING-005",
+            "P4C-LEARNING-006",
         }
         self.assertEqual(expected_ids, set(self.contract["approved_differences"]["ids"]))
         approved = APPROVED_PATH.read_text(encoding="utf-8")
@@ -701,6 +815,12 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
         self.assertEqual(1, changes["project_readme_files_modified"])
         self.assertEqual(1, changes["successor_bridge_python_files_added"])
         self.assertEqual(1, changes["successor_bridge_java_files_added"])
+        self.assertEqual(1, changes["phase2_worm_successor_files_added"])
+        self.assertEqual(1, changes["phase2_worm_successor_tests_added"])
+        self.assertEqual(1, changes["versioned_worm_reports_added"])
+        self.assertEqual(2, changes["phase2_verification_files_modified"])
+        self.assertEqual(1, changes["phase2_readme_files_modified"])
+        self.assertEqual(1, changes["phase1_verification_files_modified"])
         self.assertEqual(
             ACCEPTED_PRODUCTION_SURFACE_SHA256,
             changes["production_surface_manifest_sha256"],
@@ -713,7 +833,7 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
         authorization = self.contract["authorization"]
         self.assertTrue(authorization["composition_contract_closed"])
         self.assertTrue(authorization["ownership_conflict_closed"])
-        self.assertTrue(authorization["migration_design_closed"])
+        self.assertFalse(authorization["migration_design_closed"])
         self.assertTrue(authorization["migration_row_primitive_design_closed"])
         self.assertTrue(authorization[
             "migration_row_transaction_primitive_evidence_closed"
@@ -730,8 +850,87 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
             "route_or_openapi_delta",
             "production_schema_or_index",
             "production_cutover",
+            "operator_migration_implementation",
+            "migration_global_preflight_evidence_closed",
         ):
             self.assertFalse(authorization[key], key)
+        security = self.contract["security_access_policy"]
+        self.assertTrue(security["cross_bank_share_coherence_closed"])
+        self.assertTrue(security["requested_bank_join_required"])
+        self.assertTrue(security["share_record_bank_and_share_bank_must_match"])
+        self.assertEqual(["read", "copy"], security["allowed_share_permissions"])
+        self.assertEqual("deny", security["unknown_or_null_permission"])
+        self.assertTrue(security["equal_expiry_is_denied"])
+        self.assertEqual("DENIED", security["cross_bank_fixture_expected_outcome"])
+        self.assertTrue(security["multiple_share_rows_are_not_fetchone_order_dependent"])
+        worm = self.contract["worm_successor_evidence"]
+        self.assertEqual(
+            "versioned_successor_tip_verified_historical_reports_immutable",
+            worm["status"],
+        )
+        self.assertEqual(
+            ACCEPTED_PHASE4B_WORM_SHA256,
+            worm["historical_anchor"]["sha256"],
+        )
+        self.assertEqual(
+            ACCEPTED_PHASE4C_WORM_SHA256,
+            worm["current_tip"]["sha256"],
+        )
+        self.assertEqual(
+            ACCEPTED_JAVA_BUILD_CONTEXT_SHA256,
+            worm["current_tip"]["java_build_context_sha256"],
+        )
+        self.assertEqual("18.4", worm["current_tip"]["postgresql_version"])
+        self.assertEqual(70, worm["current_tip"]["public_base_tables"])
+        self.assertEqual(617, worm["current_tip"]["public_columns"])
+        self.assertTrue(worm["current_tip"]["readiness_passed"])
+        self.assertTrue(worm["arbitrary_report_lookup_forbidden"])
+        self.assertTrue(worm["runner_requires_explicit_versioned_report"])
+        self.assertTrue(worm["historical_report_overwrite_forbidden"])
+        requirements = self.contract["successor_handoff"][
+            "future_read_contract_requirements"
+        ]
+        self.assertEqual(
+            {
+                "api_shape_contract_parity_test": [
+                    "exposesExactTwentySevenMethodHttpNeutralShape",
+                    "keepsLearningToPersonalbankApiDependencyOneWay",
+                ],
+                "learning_composition_test": [
+                    "rechecksAccessBeforeReturningZeroView",
+                    "deniedFromAnyPersonalbankCallIsTerminal",
+                    "optionalFailuresRemainFieldLocal",
+                    "preservesOrderedLegacyQuerySequence",
+                ],
+                "personalbank_facts_service_test": [
+                    "rejectsCrossBankShareGrant",
+                    "selectsDeterministicValidSameBankGrant",
+                    "rechecksAccessForEveryFactsCall",
+                ],
+                "learning_adapter_test": [
+                    "bindsCandidateIdsAsSinglePostgresqlIntegerArray",
+                    "keepsOptionalQueriesInIndependentReadOnlyTransactions",
+                ],
+                "personalbank_adapter_test": [
+                    "joinsShareRecordToRequestedBank",
+                    "preservesMembershipDigestAndTypedIds",
+                ],
+                "postgresql_compatibility_it": [
+                    "runsOnPostgres16And18",
+                    "recoversFromTwentyFiveP02WithIndependentTransactions",
+                    "preservesSchemaAndBusinessRows",
+                ],
+            },
+            requirements["required_verification_test_methods"],
+        )
+        self.assertIn(
+            "operator_migration_implementation",
+            requirements["forbidden_authorizations"],
+        )
+        self.assertIn(
+            "migration_global_preflight_evidence_closed",
+            requirements["forbidden_authorizations"],
+        )
         acceptance = self.contract["acceptance"]
         self.assertTrue(acceptance["passed"])
         self.assertEqual(27, acceptance["future_shape_method_count"])
@@ -739,7 +938,7 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
         self.assertFalse(acceptance["production_cutover"])
 
         handoff = self.contract["forward_handoff"]
-        self.assertEqual(14, len(handoff["forward_additions"]))
+        self.assertEqual(17, len(handoff["forward_additions"]))
         self.assertEqual(
             {
                 "Ti-Java/docs/refactor/phase4c/README.md",
@@ -785,12 +984,28 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
                     "Ti-Java/tools/"
                     "test_phase4c_personal_bank_user_counts_composition_contract.py"
                 ),
+                (
+                    "Ti-Java/docs/refactor/phase4c/"
+                    "personal-bank-user-counts-entry-worm-evidence.json"
+                ),
+                "Ti-Java/tools/phase2_wormhole_successor_acceptance.py",
+                "Ti-Java/tools/test_phase2_wormhole_successor_acceptance.py",
             },
             set(handoff["forward_additions"]),
         )
+        accepted_history = set(
+            self.contract["historical_acceptance"]["accepted_file_sha256"]
+        )
+        worm_overrides = set(handoff["historical_hash_overrides"])
+        self.assertTrue(accepted_history.issubset(worm_overrides))
         self.assertEqual(
-            set(self.contract["historical_acceptance"]["accepted_file_sha256"]),
-            set(handoff["historical_hash_overrides"]),
+            {
+                "infra/phase2/README.md",
+                "infra/phase2/verify-local-reference-wormhole.sh",
+                "infra/phase2/verify-static.sh",
+                "tools/validate_phase1.py",
+            },
+            worm_overrides - accepted_history,
         )
         historical = handoff["historical_acceptance"]
         self.assertEqual(ACCEPTED_COMMIT, historical["accepted_commit"])

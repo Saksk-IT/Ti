@@ -36,9 +36,34 @@ REQUIRED_ADR_SECTIONS = (
 MARKDOWN_LINK = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 SECRET_PATTERN = re.compile(
     r"(?:-----BEGIN (?:[A-Z ]+ )?PRIVATE KEY-----|\bsk-[A-Za-z0-9_-]{12,}|"
-    r"\bBearer\s+(?!synthetic-invalid-token\b)[A-Za-z0-9._~+/=-]{12,})",
+    r"\bBearer\s+(?!(?:synthetic-invalid-token|authentication)"
+    r"(?=[^A-Za-z0-9._~+/=-]|$))"
+    r"[A-Za-z0-9._~+/=-]{12,})",
     re.IGNORECASE,
 )
+
+
+def validate_secret_pattern_contract(errors: list[str]) -> None:
+    """Keep prose exclusions narrow without weakening actual-secret detection."""
+    positive_samples = (
+        "-----BEGIN " + "PRIVATE KEY-----",
+        "sk-" + "scanner-probe-1234",
+        "Bearer " + "scanner-probe-token-1234",
+        "Bearer " + "abcdefghijklmnop",
+        "Bearer " + "authentication.jwt-like-123",
+        "Bearer " + "synthetic-invalid-token.attacker-123",
+    )
+    negative_samples = (
+        "Bearer authentication",
+        "Bearer synthetic-invalid-token",
+        "Bearer ${tokenAtRequest}",
+    )
+    for sample in positive_samples:
+        if SECRET_PATTERN.search(sample) is None:
+            errors.append("Phase 1 secret scanner no longer detects a positive probe")
+    for sample in negative_samples:
+        if SECRET_PATTERN.search(sample) is not None:
+            errors.append("Phase 1 secret scanner rejects an approved non-secret probe")
 
 
 def validate_adrs(errors: list[str]) -> None:
@@ -157,6 +182,7 @@ def run_gate(arguments: list[str], errors: list[str]) -> None:
 
 def main() -> int:
     errors: list[str] = []
+    validate_secret_pattern_contract(errors)
     validate_adrs(errors)
     validate_cross_document_contracts(errors)
     validate_portability_and_secrets(errors)

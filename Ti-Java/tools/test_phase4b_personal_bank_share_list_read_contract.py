@@ -906,7 +906,7 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
                 successor_test["sha256"],
             )
             handoff = phase4c["forward_handoff"]
-            self.assertEqual(14, len(handoff["forward_additions"]))
+            self.assertEqual(17, len(handoff["forward_additions"]))
             forward_additions |= set(handoff["forward_additions"])
             for relative, historical_hash in handoff[
                     "historical_hash_overrides"

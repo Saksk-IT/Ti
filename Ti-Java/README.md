@@ -2,7 +2,7 @@
 
 Ti-Java 是 Ti 的独立重构项目，目标是以 Java 25、Spring Boot 4.1、Spring MVC 和 Spring Modulith 重新实现现有业务，并逐步加入 Vue 3 + TypeScript Web 与项目自有的小程序。
 
-阶段 0 事实基线与阶段 1 架构/契约已经固化，阶段 2 Java 基础骨架与阶段 3 认证兼容切片也已通过门禁；阶段 4A 的有界 catalog 范围已由 `docs/refactor/phase4a/phase4a-final-acceptance.json` 完成最终 closure。Phase 4B 已完成 personal-bank 分类、按题库分享列表、我创建的全部分享和使用人数统计四项 HTTP-neutral 内部读取能力；user-counts 双 alias 的调用方、59-case golden、八个 SQL family 与 PostgreSQL 16.14/18.4 实现前证据也已闭合，但所有八条 personalbank HTTP operation 都保持 pending。Phase 4C 首先冻结 `learning -> personalbank::api` 的 user-counts 组合、`bank_<bank_id>_tags` 所有权 overlay、显式 operator-only 迁移和批准差异；当前仍未新增 production user-counts Java、Controller、Security/OpenAPI、schema/index 或切流。有效状态保持 **11 个 migrated operation、600 个 pending、0 个 production cutover**。旧 Flask 仍是生产运行所有者，整个长期重构目标尚未完成。
+阶段 0 事实基线与阶段 1 架构/契约已经固化，阶段 2 Java 基础骨架与阶段 3 认证兼容切片也已通过门禁；阶段 4A 的有界 catalog 范围已由 `docs/refactor/phase4a/phase4a-final-acceptance.json` 完成最终 closure。Phase 4B 已完成 personal-bank 分类、按题库分享列表、我创建的全部分享和使用人数统计四项 HTTP-neutral 内部读取能力；user-counts 双 alias 的调用方、59-case golden、八个 SQL family 与 PostgreSQL 16.14/18.4 实现前证据也已闭合，但所有八条 personalbank HTTP operation 都保持 pending。Phase 4C 首先冻结 `learning -> personalbank::api` 的 user-counts 组合、`bank_<bank_id>_tags` 所有权 overlay、逐行迁移原语和批准差异，并关闭跨题库分享授权绕过；完整迁移设计仍因全局 preflight、持久 migration ledger/tombstone 与真实 ambiguous-commit 恢复未闭合而保持未授权。当前仍未新增 production user-counts Java、Controller、Security/OpenAPI、schema/index 或切流。有效状态保持 **11 个 migrated operation、600 个 pending、0 个 production cutover**。旧 Flask 仍是生产运行所有者，整个长期重构目标尚未完成。
 
 ## 当前技术与边界
 

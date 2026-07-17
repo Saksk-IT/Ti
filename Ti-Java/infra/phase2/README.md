@@ -52,12 +52,13 @@ API、PostgreSQL 和 Redis 均启用只读根文件系统、临时目录、`cap_
 ./infra/phase2/verify-local-reference-wormhole.sh \
   --source-container ti-postgres-1 \
   --source-user studyuser \
-  --source-db ti_db
+  --source-db ti_db \
+  --report docs/refactor/phase4c/next-slice-worm-evidence.json
 ```
 
-脚本只接受显式源参数，不接受或搜寻源密码，也不读取 `Ti-Java/` 父目录。它执行 `schema-only`、`no-owner`、`no-acl` 导出，恢复到 digest 固定的隔离 PostgreSQL 18.4，验证 70 表/617 列、稳定 schema SHA 和服务端版本；随后创建只读角色，主动关闭该会话的默认只读开关，仍要求 DML、普通 DDL 和 TEMP DDL 全部被 ACL 拒绝。最后用 Dockerfile 构建的 Java 镜像连接恢复副本，以 `ddl-auto=validate` 启动并通过 readiness。
+脚本只接受显式源参数，不接受或搜寻源密码，也不读取 `Ti-Java/` 父目录。`--report` 必填，且必须指向 `Ti-Java/` 内父目录已存在的全新版本化文件；任何已存在文件、符号链接或目录都会被拒绝，最终报告以同目录 hard-link 原子 no-clobber 发布。它执行 `schema-only`、`no-owner`、`no-acl` 导出，恢复到 digest 固定的隔离 PostgreSQL 18.4，验证 70 表/617 列、固定 canonical schema SHA 和服务端版本；随后创建只读角色，主动关闭该会话的默认只读开关，仍要求 DML、普通 DDL 和 TEMP DDL 全部被 ACL 拒绝。最后用 Dockerfile 构建的 Java 镜像连接恢复副本，以 `ddl-auto=validate` 启动并通过 readiness；构建前与 readiness 后的 Dockerfile/build-context SHA 必须完全一致。
 
-schema dump、随机 Secret、容器、网络、卷和临时 Java 镜像会在退出时清理。仓库只保留不含 schema、DSN 或 Secret 的 [`local-reference-verification.json`](local-reference-verification.json) 证据；该报告仍仅代表获准本地开发参考实例，不确认生产版本，也不创建 Flyway baseline。
+schema dump、随机 Secret、容器、网络、卷和临时 Java 镜像会在退出时清理。仓库只保留不含 schema、DSN 或 Secret 的版本化报告；[`local-reference-verification.json`](local-reference-verification.json) 是不可变历史锚点，后续报告必须由 [`phase2_wormhole_successor_acceptance.py`](../../tools/phase2_wormhole_successor_acceptance.py) 以固定路径、报告 SHA、前驱 SHA、Dockerfile SHA 和 Java build-context SHA 显式加入后继链。静态门禁只接受固定链的最后一个 tip，不扫描目录，也不接受任意报告路径。所有报告仍仅代表获准本地开发参考实例，不确认生产版本，也不创建 Flyway baseline。
 
 ## 启动开发 Compose
 

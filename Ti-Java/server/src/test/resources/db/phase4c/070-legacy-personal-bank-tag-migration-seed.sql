@@ -33,11 +33,12 @@ INSERT INTO user_bank_questions (
     (8631, 7604, 7604, 'essay', 'after failure membership'),
     (8699, 7602, 7602, 'essay', 'foreign-bank membership control');
 
--- Any target row wins for the complete (user, bank) namespace. The source row
--- for this tuple must not fill, replace, delete, or update anything.
+-- Existing target state prevents automatic writes only after the source-derived
+-- plan is proven to be a subset. The extra target row proves proper-subset behavior.
 INSERT INTO user_question_tag_items (
     user_id, scope, scope_id, question_id, tag
 ) VALUES
+    (7602, 'user_bank', 7602, 0, 'target-extra'),
     (7602, 'user_bank', 7602, 0, 'target-wins');
 
 INSERT INTO user_progress (
@@ -48,7 +49,7 @@ INSERT INTO user_progress (
      '{"tags":[" alpha ","ALL","123456789012345678901234","alpha"],"question_tags":{"8601":["alpha","beta","all"],"8602":"gamma，beta"}}',
      TIMESTAMP '2026-07-17 01:00:00', TIMESTAMP '2026-07-17 01:00:00'),
     (8702, 7602, 'bank_7602_tags',
-     '{"tags":["legacy-must-not-fill"],"question_tags":{"8611":["legacy-must-not-fill"]}}',
+     '{"tags":["target-wins"],"question_tags":{}}',
      TIMESTAMP '2026-07-17 02:00:00', TIMESTAMP '2026-07-17 02:00:00'),
     (8703, 7603, 'bank_7603_tags',
      '{"tags":["rollback-a","rollback-b"],"question_tags":{"8621":["rollback-a"]}}',

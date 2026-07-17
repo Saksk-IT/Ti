@@ -15,7 +15,7 @@ EXPECTED_TARGET_VERSION_NUM='180004'
 source_container=''
 source_user=''
 source_db=''
-report_file="$SCRIPT_DIR/local-reference-verification.json"
+report_file=''
 
 usage() {
     cat <<'EOF'
@@ -24,11 +24,13 @@ Usage:
     --source-container NAME \
     --source-user USER \
     --source-db DATABASE \
-    [--report /path/inside/Ti-Java/report.json]
+    --report /versioned/path/inside/Ti-Java/report.json
 
 The source must be an explicitly approved, non-production local PostgreSQL
 container. No source password is accepted: access uses the source container's
 existing local-socket authentication. The schema dump is transient and deleted.
+Historical WORM reports are immutable; every new run must use a new, explicit
+versioned report path that is later admitted by the fixed successor gate.
 EOF
 }
 
@@ -66,6 +68,11 @@ if [ -z "$source_container" ] || [ -z "$source_user" ] || [ -z "$source_db" ]; t
     usage >&2
     exit 2
 fi
+if [ -z "$report_file" ]; then
+    echo "--report is required and must name a new versioned evidence file" >&2
+    usage >&2
+    exit 2
+fi
 
 case "$report_file" in
     /*) ;;
@@ -95,8 +102,8 @@ case "$report_name" in
         ;;
 esac
 report_file="$report_dir/$report_name"
-if [ -L "$report_file" ] || [ -d "$report_file" ]; then
-    echo "Report target must be a regular file, not a symlink or directory: $report_file" >&2
+if [ -e "$report_file" ] || [ -L "$report_file" ]; then
+    echo "Refusing to overwrite existing WORM report target: $report_file" >&2
     exit 2
 fi
 
@@ -458,6 +465,9 @@ if [ "$redis_ready" != true ]; then
     exit 1
 fi
 
+prebuild_dockerfile_sha256=$(sha256_file "$TI_JAVA_DIR/server/Dockerfile")
+prebuild_java_build_context_sha256=$("$SCRIPT_DIR/hash-java-build-context.sh")
+
 BUILDKIT_PROGRESS=plain docker build --quiet \
     --file "$TI_JAVA_DIR/server/Dockerfile" \
     --tag "$java_image" \
@@ -512,9 +522,17 @@ if ! docker exec "$java_container" bash -ec \
     exit 1
 fi
 
+postbuild_dockerfile_sha256=$(sha256_file "$TI_JAVA_DIR/server/Dockerfile")
+postbuild_java_build_context_sha256=$("$SCRIPT_DIR/hash-java-build-context.sh")
+if [ "$postbuild_dockerfile_sha256" != "$prebuild_dockerfile_sha256" ] \
+    || [ "$postbuild_java_build_context_sha256" != "$prebuild_java_build_context_sha256" ]; then
+    echo "Java Dockerfile or build context changed during WORM build/readiness verification" >&2
+    exit 1
+fi
+
 captured_at=$(LC_ALL=C date -u '+%Y-%m-%dT%H:%M:%SZ')
-dockerfile_sha256=$(sha256_file "$TI_JAVA_DIR/server/Dockerfile")
-java_build_context_sha256=$("$SCRIPT_DIR/hash-java-build-context.sh")
+dockerfile_sha256=$prebuild_dockerfile_sha256
+java_build_context_sha256=$prebuild_java_build_context_sha256
 
 cat > "$report_tmp" <<EOF
 {
@@ -562,7 +580,22 @@ cat > "$report_tmp" <<EOF
 EOF
 
 chmod 0644 "$report_tmp"
-mv "$report_tmp" "$report_file"
+if ! python3 - "$report_tmp" "$report_file" <<'PY'
+import os
+import sys
+
+source, target = sys.argv[1:]
+try:
+    os.link(source, target, follow_symlinks=False)
+except OSError as error:
+    raise SystemExit(f"atomic no-clobber WORM report publish failed: {error}") from error
+PY
+then
+    echo "WORM report target appeared before atomic no-clobber publish" >&2
+    exit 1
+fi
+rm -f "$report_tmp"
+report_tmp=''
 
 echo "Phase 2 local-reference wormhole passed"
 echo "Evidence report: $report_file"

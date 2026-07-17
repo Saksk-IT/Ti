@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -16,8 +17,11 @@ import java.util.OptionalInt;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.sql.DataSource;
+import tools.jackson.core.StreamReadFeature;
+import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Test-only row-transaction primitive for a future explicit migration of legacy
@@ -37,7 +41,10 @@ public final class LegacyPersonalBankTagMigrationEvidence {
             Pattern.compile("\\+?\\p{Nd}(?:_?\\p{Nd})*");
     private static final BigInteger MAX_QUESTION_ID =
             BigInteger.valueOf(Integer.MAX_VALUE);
-    private static final ObjectMapper JSON = new ObjectMapper();
+    private static final ObjectMapper JSON = JsonMapper.builder()
+            .enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION)
+            .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+            .build();
 
     static final String DISCOVER_SOURCE_IDS_SQL = """
             SELECT id
@@ -55,13 +62,13 @@ public final class LegacyPersonalBankTagMigrationEvidence {
 
     static final String TRANSACTION_ID_SQL = "SELECT txid_current()";
 
-    static final String TARGET_ANY_ROW_SQL = """
-            SELECT 1
+    static final String TARGET_ROWS_SQL = """
+            SELECT question_id, tag
             FROM user_question_tag_items
             WHERE user_id = ?
               AND scope = 'user_bank'
               AND scope_id = ?
-            LIMIT 1
+            ORDER BY question_id, tag
             """;
 
     /** Test-fixture projection only; this is not a production cross-module query/API. */
@@ -116,9 +123,11 @@ public final class LegacyPersonalBankTagMigrationEvidence {
         Objects.requireNonNull(faultInjector, "faultInjector");
 
         int attemptedInserts = 0;
+        int changedRows = 0;
         long transactionId = -1L;
         SourceRow source = null;
         Integer bankId = null;
+        TransactionState transaction = new TransactionState();
 
         try (Connection connection = dataSource.getConnection()) {
             connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
@@ -127,7 +136,7 @@ public final class LegacyPersonalBankTagMigrationEvidence {
                 transactionId = transactionId(connection);
                 Optional<SourceRow> locked = lockSourceRow(connection, sourceRowId);
                 if (locked.isEmpty()) {
-                    connection.commit();
+                    commit(connection, transaction);
                     return RowResult.skipped(
                             sourceRowId,
                             transactionId,
@@ -139,7 +148,7 @@ public final class LegacyPersonalBankTagMigrationEvidence {
 
                 OptionalInt parsedBankId = strictBankId(source.key());
                 if (parsedBankId.isEmpty()) {
-                    connection.commit();
+                    commit(connection, transaction);
                     return RowResult.skipped(
                             source.id(),
                             transactionId,
@@ -149,26 +158,43 @@ public final class LegacyPersonalBankTagMigrationEvidence {
                 }
                 bankId = parsedBankId.getAsInt();
 
-                // Existing normalized state has absolute precedence over every
-                // source-side validation or fill attempt for the tuple.
-                if (targetHasAnyRow(connection, source.userId(), bankId)) {
-                    connection.commit();
-                    return RowResult.skipped(
+                List<TagInsert> targetRows;
+                try {
+                    targetRows = targetRows(connection, source.userId(), bankId);
+                } catch (IllegalArgumentException invalidTarget) {
+                    commit(connection, transaction);
+                    return RowResult.targetConflict(
                             source.id(),
                             transactionId,
                             source.userId(),
                             bankId,
-                            RowOutcome.TARGET_ALREADY_PRESENT);
+                            "normalized target contains an invalid row: "
+                                    + invalidTarget.getMessage());
                 }
 
                 if (!bankExists(connection, bankId)) {
-                    connection.commit();
+                    commit(connection, transaction);
                     return RowResult.skipped(
                             source.id(),
                             transactionId,
                             source.userId(),
                             bankId,
                             RowOutcome.BANK_MISSING);
+                }
+
+                for (TagInsert targetRow : targetRows) {
+                    if (targetRow.questionId() != TAG_DEFINITION_QUESTION_ID
+                            && !questionBelongsToBank(
+                                    connection, bankId, targetRow.questionId())) {
+                        commit(connection, transaction);
+                        return RowResult.targetConflict(
+                                source.id(),
+                                transactionId,
+                                source.userId(),
+                                bankId,
+                                "normalized target question does not belong to bank: "
+                                        + targetRow.questionId());
+                    }
                 }
 
                 int resolvedBankId = bankId;
@@ -179,7 +205,7 @@ public final class LegacyPersonalBankTagMigrationEvidence {
                             questionId -> questionBelongsToBank(
                                     connection, resolvedBankId, questionId));
                 } catch (InvalidDataException invalid) {
-                    connection.commit();
+                    commit(connection, transaction);
                     return RowResult.invalidData(
                             source.id(),
                             transactionId,
@@ -187,7 +213,7 @@ public final class LegacyPersonalBankTagMigrationEvidence {
                             bankId,
                             invalid.getMessage());
                 } catch (OrphanQuestionException orphan) {
-                    connection.commit();
+                    commit(connection, transaction);
                     return RowResult.skipped(
                             source.id(),
                             transactionId,
@@ -196,22 +222,50 @@ public final class LegacyPersonalBankTagMigrationEvidence {
                             RowOutcome.ORPHAN_QUESTION);
                 }
 
-                int changedRows = 0;
+                if (!targetRows.isEmpty()) {
+                    if (!targetRows.containsAll(plan.inserts())) {
+                        commit(connection, transaction);
+                        return RowResult.targetConflict(
+                                source.id(),
+                                transactionId,
+                                source.userId(),
+                                bankId,
+                                "source-derived rows are not a subset of normalized target");
+                    }
+                    commit(connection, transaction);
+                    return RowResult.skipped(
+                            source.id(),
+                            transactionId,
+                            source.userId(),
+                            bankId,
+                            RowOutcome.TARGET_ALREADY_PRESENT);
+                }
+
+                if (plan.inserts().isEmpty()) {
+                    commit(connection, transaction);
+                    return RowResult.skipped(
+                            source.id(),
+                            transactionId,
+                            source.userId(),
+                            bankId,
+                            RowOutcome.EMPTY_NOOP);
+                }
+
                 try (PreparedStatement insert = connection.prepareStatement(INSERT_TARGET_SQL)) {
                     for (TagInsert item : plan.inserts()) {
                         insert.setLong(1, source.userId());
                         insert.setInt(2, bankId);
                         insert.setInt(3, item.questionId());
                         insert.setString(4, item.tag());
-                        changedRows += insert.executeUpdate();
                         attemptedInserts++;
+                        changedRows += insert.executeUpdate();
                         faultInjector.afterInsert(
                                 new SourceIdentity(source.id(), source.userId(), bankId),
                                 attemptedInserts);
                     }
                 }
 
-                connection.commit();
+                commit(connection, transaction);
                 return new RowResult(
                         source.id(),
                         transactionId,
@@ -220,22 +274,48 @@ public final class LegacyPersonalBankTagMigrationEvidence {
                         RowOutcome.MIGRATED,
                         attemptedInserts,
                         changedRows,
+                        false,
                         null);
             } catch (Exception failure) {
+                SQLException rollbackFailure = null;
                 try {
                     connection.rollback();
-                } catch (SQLException rollbackFailure) {
-                    failure.addSuppressed(rollbackFailure);
+                } catch (SQLException caught) {
+                    rollbackFailure = caught;
+                    failure.addSuppressed(caught);
                 }
+                boolean definitelyAbortedCommit = transaction.commitAttempted()
+                        && !isCommitOutcomeAmbiguous(failure);
+                boolean commitUnknownWithWrites = transaction.commitAttempted()
+                        && changedRows > 0
+                        && !definitelyAbortedCommit;
+                boolean rollbackFailedWithWrites =
+                        rollbackFailure != null
+                                && changedRows > 0
+                                && !definitelyAbortedCommit;
+                RowOutcome outcome;
+                if (definitelyAbortedCommit) {
+                    outcome = RowOutcome.FAILED_ROLLED_BACK;
+                } else if (commitUnknownWithWrites) {
+                    outcome = RowOutcome.COMMIT_OUTCOME_UNKNOWN;
+                } else if (rollbackFailure != null) {
+                    outcome = RowOutcome.ROLLBACK_FAILED;
+                } else {
+                    outcome = RowOutcome.FAILED_ROLLED_BACK;
+                }
+                Integer committedRows = commitUnknownWithWrites || rollbackFailedWithWrites
+                        ? null
+                        : 0;
                 return new RowResult(
                         sourceRowId,
                         transactionId,
                         source == null ? null : source.userId(),
                         bankId,
-                        RowOutcome.FAILED_ROLLED_BACK,
+                        outcome,
                         attemptedInserts,
-                        0,
-                        failure.getClass().getName() + ": " + String.valueOf(failure.getMessage()));
+                        committedRows,
+                        rollbackFailure != null,
+                        failureSummary(failure, rollbackFailure));
             }
         }
     }
@@ -361,18 +441,23 @@ public final class LegacyPersonalBankTagMigrationEvidence {
         }
     }
 
-    private static boolean targetHasAnyRow(
+    private static List<TagInsert> targetRows(
             Connection connection,
             long userId,
             int bankId
     ) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement(TARGET_ANY_ROW_SQL)) {
+        List<TagInsert> targetRows = new ArrayList<>();
+        try (PreparedStatement statement = connection.prepareStatement(TARGET_ROWS_SQL)) {
             statement.setLong(1, userId);
             statement.setInt(2, bankId);
             try (ResultSet row = statement.executeQuery()) {
-                return row.next();
+                while (row.next()) {
+                    targetRows.add(new TagInsert(
+                            row.getInt("question_id"), row.getString("tag")));
+                }
             }
         }
+        return List.copyOf(targetRows);
     }
 
     private static boolean bankExists(Connection connection, int bankId) throws SQLException {
@@ -416,7 +501,7 @@ public final class LegacyPersonalBankTagMigrationEvidence {
         if (rawQuestionId == null) {
             throw invalid("question_tags key must not be null");
         }
-        String candidate = rawQuestionId.strip();
+        String candidate = stripPythonWhitespace(rawQuestionId);
         if (!LEGACY_QUESTION_ID.matcher(candidate).matches()) {
             throw invalid("question_tags key is not an int-compatible positive ID: "
                     + rawQuestionId);
@@ -448,6 +533,80 @@ public final class LegacyPersonalBankTagMigrationEvidence {
         return new InvalidDataException(message);
     }
 
+    private static void commit(Connection connection, TransactionState transaction)
+            throws SQLException {
+        transaction.markCommitAttempted();
+        connection.commit();
+        transaction.markCommitCompleted();
+    }
+
+    private static String failureSummary(
+            Exception failure,
+            SQLException rollbackFailure
+    ) {
+        StringBuilder summary = new StringBuilder()
+                .append(failure.getClass().getName())
+                .append(": ")
+                .append(String.valueOf(failure.getMessage()));
+        if (failure instanceof SQLException sqlFailure && sqlFailure.getSQLState() != null) {
+            summary.append(" [sqlstate=").append(sqlFailure.getSQLState()).append(']');
+        }
+        if (rollbackFailure != null) {
+            summary.append("; rollback failed: ")
+                    .append(rollbackFailure.getClass().getName())
+                    .append(": ")
+                    .append(String.valueOf(rollbackFailure.getMessage()));
+            if (rollbackFailure.getSQLState() != null) {
+                summary.append(" [sqlstate=")
+                        .append(rollbackFailure.getSQLState())
+                        .append(']');
+            }
+        }
+        return summary.toString();
+    }
+
+    private static boolean isCommitOutcomeAmbiguous(Exception failure) {
+        if (!(failure instanceof SQLException sqlFailure)) {
+            return true;
+        }
+        String state = sqlFailure.getSQLState();
+        return state == null || state.startsWith("08") || "40003".equals(state);
+    }
+
+    static String stripPythonWhitespace(String value) {
+        int start = 0;
+        int end = value.length();
+        while (start < end) {
+            int codePoint = value.codePointAt(start);
+            if (!isPythonWhitespace(codePoint)) {
+                break;
+            }
+            start += Character.charCount(codePoint);
+        }
+        while (start < end) {
+            int codePoint = value.codePointBefore(end);
+            if (!isPythonWhitespace(codePoint)) {
+                break;
+            }
+            end -= Character.charCount(codePoint);
+        }
+        return value.substring(start, end);
+    }
+
+    private static boolean isPythonWhitespace(int codePoint) {
+        return codePoint >= 0x0009 && codePoint <= 0x000D
+                || codePoint >= 0x001C && codePoint <= 0x0020
+                || codePoint == 0x0085
+                || codePoint == 0x00A0
+                || codePoint == 0x1680
+                || codePoint >= 0x2000 && codePoint <= 0x200A
+                || codePoint == 0x2028
+                || codePoint == 0x2029
+                || codePoint == 0x202F
+                || codePoint == 0x205F
+                || codePoint == 0x3000;
+    }
+
     private static final class TagNormalizer {
         private final Map<String, String> sourceByNormalizedTag = new LinkedHashMap<>();
 
@@ -477,7 +636,7 @@ public final class LegacyPersonalBankTagMigrationEvidence {
                 throw invalid(path + " must be a string array, encoded array, or CSV string");
             }
 
-            String scalar = value.asString().strip();
+            String scalar = stripPythonWhitespace(value.asString());
             if (!scalar.startsWith("[")) {
                 return clean(List.of(scalar.replace('，', ',').split(",", -1)));
             }
@@ -499,12 +658,13 @@ public final class LegacyPersonalBankTagMigrationEvidence {
         private List<String> clean(List<String> raw) throws InvalidDataException {
             LinkedHashSet<String> cleaned = new LinkedHashSet<>();
             for (String candidate : raw) {
-                String source = candidate.strip();
+                String source = stripPythonWhitespace(candidate);
                 String tag = source;
                 if (tag.codePointCount(0, tag.length()) > MAX_TAG_LENGTH) {
-                    tag = tag.substring(0, tag.offsetByCodePoints(0, MAX_TAG_LENGTH)).strip();
+                    tag = stripPythonWhitespace(
+                            tag.substring(0, tag.offsetByCodePoints(0, MAX_TAG_LENGTH)));
                 }
-                if (tag.isEmpty() || tag.equalsIgnoreCase("all")) {
+                if (tag.isEmpty() || tag.toLowerCase(Locale.ROOT).equals("all")) {
                     continue;
                 }
                 String priorSource = sourceByNormalizedTag.putIfAbsent(tag, source);
@@ -532,23 +692,29 @@ public final class LegacyPersonalBankTagMigrationEvidence {
 
     public enum RowOutcome {
         MIGRATED,
+        EMPTY_NOOP,
         TARGET_ALREADY_PRESENT,
+        TARGET_CONFLICT,
         INVALID_KEY,
         INVALID_DATA,
         BANK_MISSING,
         ORPHAN_QUESTION,
         SOURCE_DISAPPEARED,
-        FAILED_ROLLED_BACK;
+        FAILED_ROLLED_BACK,
+        ROLLBACK_FAILED,
+        COMMIT_OUTCOME_UNKNOWN;
 
         public boolean blocksApply() {
             return switch (this) {
                 case SOURCE_DISAPPEARED,
                         INVALID_KEY,
                         INVALID_DATA,
+                        TARGET_CONFLICT,
                         BANK_MISSING,
                         ORPHAN_QUESTION,
                         FAILED_ROLLED_BACK -> true;
-                case MIGRATED, TARGET_ALREADY_PRESENT -> false;
+                case ROLLBACK_FAILED, COMMIT_OUTCOME_UNKNOWN -> true;
+                case MIGRATED, EMPTY_NOOP, TARGET_ALREADY_PRESENT -> false;
             };
         }
     }
@@ -562,8 +728,13 @@ public final class LegacyPersonalBankTagMigrationEvidence {
                 throw new IllegalArgumentException("questionId must be non-negative");
             }
             tag = Objects.requireNonNull(tag, "tag");
-            if (tag.isBlank() || tag.codePointCount(0, tag.length()) > MAX_TAG_LENGTH) {
-                throw new IllegalArgumentException("tag must be 1..20 Unicode code points");
+            String normalized = stripPythonWhitespace(tag);
+            if (normalized.isEmpty()
+                    || !normalized.equals(tag)
+                    || normalized.toLowerCase(Locale.ROOT).equals("all")
+                    || tag.codePointCount(0, tag.length()) > MAX_TAG_LENGTH) {
+                throw new IllegalArgumentException(
+                        "tag must be a canonical 1..20-code-point value");
             }
         }
     }
@@ -597,7 +768,8 @@ public final class LegacyPersonalBankTagMigrationEvidence {
             Integer bankId,
             RowOutcome outcome,
             int insertStatementsAttempted,
-            int insertedRowsCommitted,
+            Integer insertedRowsCommitted,
+            boolean rollbackFailed,
             String failure
     ) {
         private static RowResult skipped(
@@ -615,6 +787,7 @@ public final class LegacyPersonalBankTagMigrationEvidence {
                     outcome,
                     0,
                     0,
+                    false,
                     null);
         }
 
@@ -633,6 +806,26 @@ public final class LegacyPersonalBankTagMigrationEvidence {
                     RowOutcome.INVALID_DATA,
                     0,
                     0,
+                    false,
+                    detail);
+        }
+
+        private static RowResult targetConflict(
+                long sourceRowId,
+                long transactionId,
+                long userId,
+                int bankId,
+                String detail
+        ) {
+            return new RowResult(
+                    sourceRowId,
+                    transactionId,
+                    userId,
+                    bankId,
+                    RowOutcome.TARGET_CONFLICT,
+                    0,
+                    0,
+                    false,
                     detail);
         }
     }
@@ -647,12 +840,20 @@ public final class LegacyPersonalBankTagMigrationEvidence {
         }
 
         public int insertedRowsCommitted() {
+            if (rows.stream().anyMatch(row -> row.insertedRowsCommitted() == null)) {
+                throw new IllegalStateException(
+                        "committed row count is unknown for at least one source row");
+            }
             return rows.stream().mapToInt(RowResult::insertedRowsCommitted).sum();
         }
 
         public long rollbackFailureCount() {
+            return rows.stream().filter(RowResult::rollbackFailed).count();
+        }
+
+        public long commitOutcomeUnknownCount() {
             return rows.stream()
-                    .filter(row -> row.outcome() == RowOutcome.FAILED_ROLLED_BACK)
+                    .filter(row -> row.outcome() == RowOutcome.COMMIT_OUTCOME_UNKNOWN)
                     .count();
         }
 
@@ -679,6 +880,23 @@ public final class LegacyPersonalBankTagMigrationEvidence {
     private record QuestionBinding(int questionId, List<String> tags) {
         private QuestionBinding {
             tags = List.copyOf(tags);
+        }
+    }
+
+    private static final class TransactionState {
+        private boolean commitAttempted;
+        private boolean commitCompleted;
+
+        private void markCommitAttempted() {
+            commitAttempted = true;
+        }
+
+        private void markCommitCompleted() {
+            commitCompleted = true;
+        }
+
+        private boolean commitAttempted() {
+            return commitAttempted && !commitCompleted;
         }
     }
 }
